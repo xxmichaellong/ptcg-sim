@@ -1155,7 +1155,9 @@ describe('DeckBuilderSession', () => {
       open: true,
       beforeUnloadTarget: target,
     });
-    expect(session.listenerCount()).toBe(2);
+    // The deck and card-back installs, and the trays showing each seat's
+    // card back.
+    expect(session.listenerCount()).toBe(3);
     const clean = new Event('beforeunload', { cancelable: true });
     listener?.(clean as BeforeUnloadEvent);
     expect(clean.defaultPrevented).toBe(false);

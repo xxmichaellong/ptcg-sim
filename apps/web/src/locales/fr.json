@@ -13,6 +13,10 @@
     ],
     "translation": ", activé"
   },
+  "W8KEEX": {
+    "message": "{0, plural, one {# player} other {# players}}",
+    "translation": ""
+  },
   "yW-SAQ": {
     "message": "{0} ({1})",
     "translation": "{0} ({1})"
@@ -413,16 +417,23 @@
     "message": "{count} in deck",
     "translation": "{count} dans le deck"
   },
-  "hlZS8x": {
-    "message": "{days} d ago",
+  "7prUK_": {
+    "message": "{deck}, {place}, {playerName}: try it",
     "comments": [
-      "When a deck was last changed, in days; keep it short."
+      "A player's list in a tournament's standings: the deck, the placing, the player"
     ],
-    "translation": "il y a {days} j"
+    "translation": ""
   },
   "Z_tSV_": {
     "message": "{deckName} actions",
     "translation": "Actions de {deckName}"
+  },
+  "DPza0y": {
+    "message": "{deckName}, {place} of {players}, {playerName}: try it",
+    "comments": [
+      "A tournament list to load: the deck, its placing, the event size, the player"
+    ],
+    "translation": ""
   },
   "lZWlfm": {
     "message": "{deckName}: put on {seat}",
@@ -442,13 +453,6 @@
   "YWFA46": {
     "message": "{firstReloading} will reload",
     "translation": "{firstReloading} va se recharger"
-  },
-  "Tbgjwj": {
-    "message": "{hours} h ago",
-    "comments": [
-      "When a deck was last changed, in hours; keep it short."
-    ],
-    "translation": "il y a {hours} h"
   },
   "k0g2Da": {
     "message": "{hp} HP",
@@ -481,13 +485,6 @@
       "markerName is VSTAR or GX."
     ],
     "translation": "Marqueur {markerName}"
-  },
-  "LNum6A": {
-    "message": "{minutes} min ago",
-    "comments": [
-      "When a deck was last changed, in minutes; keep it short."
-    ],
-    "translation": "il y a {minutes} min"
   },
   "b3xCW_": {
     "message": "{missingLines, plural, one {# line not found} other {# lines not found}}",
@@ -761,12 +758,26 @@
     "message": "{over, plural, one {# card too many ({count}/{required}).} other {# cards too many ({count}/{required}).}}",
     "translation": "{over, plural, one {# carte en trop ({count}/{required}).} other {# cartes en trop ({count}/{required}).}}"
   },
+  "foaSz6": {
+    "message": "{place, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}",
+    "comments": [
+      "A tournament placing on a deck box sticker, as 1st"
+    ],
+    "translation": ""
+  },
   "2dJX8c": {
     "message": "{place, selectordinal, one {#st} two {#nd} few {#rd} other {#th}} of {players}",
     "comments": [
       "A deck's best finish in a tournament: its place among the players, as 1st of 285"
     ],
     "translation": "{place, selectordinal, one {#er} other {#e}} sur {players}"
+  },
+  "cVJydc": {
+    "message": "{placing, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}",
+    "comments": [
+      "A tournament placing, as 1st"
+    ],
+    "translation": ""
   },
   "nT4VV7": {
     "message": "{playerName} {markerName}",
@@ -775,6 +786,10 @@
       "A player's once-per-game marker, e.g. 'Red VSTAR'."
     ],
     "translation": "{markerName} de {playerName}"
+  },
+  "xNCVW4": {
+    "message": "{players, plural, one {# player} other {# players}}",
+    "translation": ""
   },
   "9FwPUo": {
     "message": "{price} - One-time Donation",
@@ -824,6 +839,13 @@
     ],
     "translation": "{shownPieces} sur {totalPieces, plural, one {# pièce} many {# pièces} other {# pièces}}"
   },
+  "VefMOR": {
+    "message": "{slotSeat}: {name}, {total, plural, one {# card} other {# cards}}",
+    "comments": [
+      "A seat's tray on the deck screen: the seat, its deck, its size"
+    ],
+    "translation": ""
+  },
   "w6530e": {
     "message": "{speaker}: {text}",
     "comments": [
@@ -851,6 +873,13 @@
       "Read out on a seat change: the seat, its deck, its size"
     ],
     "translation": "{targetSeat} : {seatLabel}, {seatTotal, plural, one {# carte} other {# cartes}}"
+  },
+  "jBGEib": {
+    "message": "{top8s, plural, one {# top 8} other {# top 8s}} · {lists, plural, one {# list} other {# lists}}",
+    "comments": [
+      "How a deck has done: top 8 finishes and lists seen"
+    ],
+    "translation": ""
   },
   "bTZ1TS": {
     "message": "{topName} deck",
@@ -1115,6 +1144,10 @@
     "message": "Added by hand · legality not checked",
     "translation": "Ajoutée à la main · légalité non vérifiée"
   },
+  "qe9rVr": {
+    "message": "All lists",
+    "translation": ""
+  },
   "X8Y2MP": {
     "message": "All to deck",
     "context": "shortcut key caption",
@@ -1288,6 +1321,10 @@
     "message": "Back to pile order",
     "translation": "Revenir à l'ordre de la pile"
   },
+  "JT4RmD": {
+    "message": "Back to the decks",
+    "translation": ""
+  },
   "dOqLYu": {
     "message": "Back to the table",
     "translation": "Retour à la table"
@@ -1409,6 +1446,10 @@
     "context": "special condition",
     "translation": "Brûlé"
   },
+  "EhsQ9V": {
+    "message": "Busy for a moment — try again shortly",
+    "translation": ""
+  },
   "2lorx9": {
     "message": "Can't be changed",
     "translation": "Modification impossible"
@@ -1442,9 +1483,9 @@
     "message": "Card assembled preview",
     "translation": "Aperçu de la carte assemblée"
   },
-  "ZVadGZ": {
-    "message": "Card back for {targetSeat}",
-    "translation": "Dos de carte pour {targetSeat}"
+  "M3FSd1": {
+    "message": "Card back for {slotSeat}",
+    "translation": ""
   },
   "tii3sv": {
     "message": "Card image language…",
@@ -1507,9 +1548,9 @@
     "message": "Change card back",
     "translation": "Changer le dos de carte"
   },
-  "jHQMkJ": {
-    "message": "Change card back for {targetSeat}",
-    "translation": "Changer le dos de carte de {targetSeat}"
+  "lKPW0c": {
+    "message": "Change card back for {slotSeat}",
+    "translation": ""
   },
   "SGf9Cc": {
     "message": "Change card type",
@@ -1577,9 +1618,13 @@
     "message": "Choose the deck for {slotSeat} (you)",
     "translation": "Choisissez le deck de {slotSeat} (vous)"
   },
-  "0Aq5ZG": {
-    "message": "Classic decks",
-    "translation": "Decks classiques"
+  "5rfWim": {
+    "message": "Classics",
+    "translation": ""
+  },
+  "xCJdfg": {
+    "message": "Clear",
+    "translation": ""
   },
   "XaMzSZ": {
     "message": "Clear",
@@ -1726,6 +1771,14 @@
     "message": "Couldn't join the room. Try again.",
     "translation": "Impossible de rejoindre la salle. Réessayez."
   },
+  "0htzp9": {
+    "message": "Couldn't load that list",
+    "translation": ""
+  },
+  "1Nv1R5": {
+    "message": "Couldn't load this",
+    "translation": ""
+  },
   "w--GsN": {
     "message": "Couldn't open that file",
     "translation": "Impossible d’ouvrir ce fichier"
@@ -1859,6 +1912,10 @@
     "message": "Deck name",
     "translation": "Nom du deck"
   },
+  "pZNzvd": {
+    "message": "Deck search is offline",
+    "translation": ""
+  },
   "iKEGvL": {
     "message": "Deck top",
     "context": "shortcut key caption",
@@ -1868,18 +1925,14 @@
     "message": "Decklist copied",
     "translation": "Liste de deck copiée"
   },
-  "vUTt1I": {
-    "message": "Decklist to import",
-    "translation": "Liste de deck à importer"
-  },
   "Odf26e": {
     "message": "Decks",
     "context": "go back to the saved decks",
     "translation": "Decks"
   },
-  "X7Pdd7": {
-    "message": "Decks winning now",
-    "translation": "Decks gagnants actuellement"
+  "xLeOjM": {
+    "message": "Decks you import or build are kept here",
+    "translation": ""
   },
   "gblLhJ": {
     "message": "Delete",
@@ -2038,6 +2091,13 @@
   "IsvGW6": {
     "message": "Drop to import",
     "translation": "Déposez pour importer"
+  },
+  "d3YoNV": {
+    "message": "Dropped",
+    "comments": [
+      "A player who left a tournament"
+    ],
+    "translation": ""
   },
   "kea5ff": {
     "message": "Duplicate",
@@ -2238,6 +2298,14 @@
     "message": "Find a shortcut or key",
     "translation": "Trouver un raccourci ou une touche"
   },
+  "VmizBS": {
+    "message": "Find a tournament",
+    "translation": ""
+  },
+  "znQi8E": {
+    "message": "Find an event",
+    "translation": ""
+  },
   "STV_9c": {
     "message": "Find cards",
     "translation": "Rechercher des cartes"
@@ -2321,10 +2389,6 @@
     "message": "Format",
     "context": "deck format",
     "translation": "Format"
-  },
-  "N80CjQ": {
-    "message": "From clipboard",
-    "translation": "Depuis le presse-papiers"
   },
   "qIodFG": {
     "message": "Frost",
@@ -2601,10 +2665,6 @@
     "context": "button",
     "translation": "Importer"
   },
-  "EEh2f0": {
-    "message": "Import a deck",
-    "translation": "Importer un deck"
-  },
   "aWU0gR": {
     "message": "Imported deck",
     "translation": "Deck importé"
@@ -2672,10 +2732,6 @@
   "N2lSEn": {
     "message": "Joins matching pieces",
     "translation": "Assemble les éléments correspondants"
-  },
-  "xOTzt5": {
-    "message": "just now",
-    "translation": "à l'instant"
   },
   "80Qsxy": {
     "message": "Keep",
@@ -2767,6 +2823,13 @@
     "context": "Pokémon type",
     "translation": "Électrique"
   },
+  "JL_ceN": {
+    "message": "Limitless",
+    "comments": [
+      "Open this on the site it comes from"
+    ],
+    "translation": ""
+  },
   "BvrzrK": {
     "message": "Line {line} is too long.",
     "translation": "La ligne {line} est trop longue."
@@ -2792,6 +2855,15 @@
     "context": "show the deck as",
     "translation": "Liste"
   },
+  "k0WwcP": {
+    "message": "Lists for {0}",
+    "translation": ""
+  },
+  "Ysygva": {
+    "message": "Load",
+    "context": "put a tournament list on the seat",
+    "translation": ""
+  },
   "0SqWRH": {
     "message": "Load a <0>deck</0>, then press <1>Set up</1>.",
     "translation": "Chargez un <0>deck</0>, puis appuyez sur <1>Mise en place</1>."
@@ -2811,6 +2883,10 @@
   "f55wdH": {
     "message": "Loading decks…",
     "translation": "Chargement des decks…"
+  },
+  "l2O65x": {
+    "message": "Loading events…",
+    "translation": ""
   },
   "Pwqkdw": {
     "message": "Loading…",
@@ -2926,6 +3002,13 @@
     "message": "Lost Zone and markers",
     "translation": "Zone Perdue et marqueurs"
   },
+  "LoMQBK": {
+    "message": "Majors on Limitless",
+    "comments": [
+      "A link to official major tournaments (Regionals, Worlds) on Limitless's site"
+    ],
+    "translation": ""
+  },
   "Q0rQkA": {
     "message": "Make a custom card",
     "translation": "Créer une carte personnalisée"
@@ -3021,6 +3104,16 @@
     "message": "More",
     "context": "more actions",
     "translation": "Plus"
+  },
+  "tSBn7s": {
+    "message": "More",
+    "context": "show more lists",
+    "translation": ""
+  },
+  "K7Y_ck": {
+    "message": "More",
+    "context": "show more tournaments",
+    "translation": ""
   },
   "Vk_Ar1": {
     "message": "More filters",
@@ -3219,6 +3312,24 @@
     "message": "No deck yet",
     "translation": "Pas encore de deck"
   },
+  "ATYqaZ": {
+    "message": "No decks match “{query}”",
+    "comments": [
+      "A deck search with no results; query is what was typed"
+    ],
+    "translation": ""
+  },
+  "JOqCxp": {
+    "message": "No events match “{query}”",
+    "comments": [
+      "An event search with no results"
+    ],
+    "translation": ""
+  },
+  "8zCZQf": {
+    "message": "No events yet",
+    "translation": ""
+  },
   "SkSmET": {
     "message": "No foil",
     "translation": "Sans effet brillant"
@@ -3227,9 +3338,13 @@
     "message": "No image",
     "translation": "Aucune image"
   },
-  "f5zBYV": {
-    "message": "No saved decks yet. Decks you import or build are saved here.",
-    "translation": "Aucun deck enregistré pour l'instant. Les decks que vous importez ou créez sont enregistrés ici."
+  "nivaRq": {
+    "message": "No list",
+    "translation": ""
+  },
+  "hXMFoN": {
+    "message": "No lists",
+    "translation": ""
   },
   "ebeFtm": {
     "message": "No shortcut matches “{search}”.",
@@ -3487,13 +3602,18 @@
     "message": "Pass the turn",
     "translation": "Passer le tour"
   },
+  "sihBmP": {
+    "message": "Paste",
+    "context": "paste a list from the clipboard",
+    "translation": ""
+  },
   "BRnJkz": {
     "message": "Paste a decklist first.",
     "translation": "Collez d'abord une liste de deck."
   },
-  "WXUbKm": {
-    "message": "Paste a decklist, or press Ctrl+V anywhere",
-    "translation": "Collez une liste de deck, ou appuyez sur Ctrl+V n'importe où"
+  "aGL2ob": {
+    "message": "Paste a list from the clipboard",
+    "translation": ""
   },
   "Ig8A-t": {
     "message": "Paste a valid invitation into Room ID.",
@@ -3548,12 +3668,12 @@
     "message": "Play these decks",
     "translation": "Jouer ces decks"
   },
-  "3Nh5cA": {
-    "message": "Played last · {when}",
+  "2qhgQG": {
+    "message": "Played last",
     "comments": [
-      "The deck this seat played last, and when it was changed"
+      "The deck this seat played last"
     ],
-    "translation": "Dernier joué · {when}"
+    "translation": ""
   },
   "ald_WV": {
     "message": "Player",
@@ -4069,6 +4189,10 @@
     "message": "Save {name}",
     "translation": "Enregistrer {name}"
   },
+  "3zdJQY": {
+    "message": "Save and edit {0}",
+    "translation": ""
+  },
   "Z-7fcR": {
     "message": "Save and edit {title}",
     "translation": "Enregistrer et modifier {title}"
@@ -4098,6 +4222,10 @@
     "message": "Search cards…",
     "translation": "Rechercher des cartes…"
   },
+  "cJ3-3Z": {
+    "message": "Search decks or paste a list",
+    "translation": ""
+  },
   "fU5HHP": {
     "message": "Search every format",
     "translation": "Rechercher dans tous les formats"
@@ -4117,6 +4245,10 @@
   "Rjp4L6": {
     "message": "Search syntax",
     "translation": "Syntaxe de recherche"
+  },
+  "SBTElJ": {
+    "message": "Searching…",
+    "translation": ""
   },
   "xcUq3U": {
     "message": "Season",
@@ -4543,6 +4675,10 @@
   "Tg13WJ": {
     "message": "Standard card",
     "translation": "Carte standard"
+  },
+  "kGkZLk": {
+    "message": "Standings",
+    "translation": ""
   },
   "7GpLGd": {
     "message": "Start turn",
@@ -4983,12 +5119,12 @@
     "context": "shortcut key caption",
     "translation": "Dessus"
   },
-  "20pFu_": {
-    "message": "Top finishes from <0>{sourceName}</0> online tournaments, last two weeks · updated {updated}",
+  "Q7iVQK": {
+    "message": "Top finishes on <0>{sourceName}</0>, last two weeks · {updated}",
     "comments": [
       "sourceName is a tournament site (Limitless); updated is a short date"
     ],
-    "translation": "Meilleurs résultats des tournois en ligne de <0>{sourceName}</0>, deux dernières semaines · mis à jour le {updated}"
+    "translation": ""
   },
   "qssK_n": {
     "message": "Top left",
@@ -4997,6 +5133,29 @@
   "ay4bwk": {
     "message": "Top right",
     "translation": "En haut à droite"
+  },
+  "r8DwfA": {
+    "message": "Tournament data: <0>{0}</0>",
+    "comments": [
+      "A credit line under tournament decks; source is a site's name (Limitless TCG)"
+    ],
+    "translation": ""
+  },
+  "HLA2HB": {
+    "message": "Tournament decks",
+    "translation": ""
+  },
+  "4Zz_OT": {
+    "message": "Tournament decks aren't ready yet",
+    "translation": ""
+  },
+  "iPoLT-": {
+    "message": "Tournaments",
+    "translation": ""
+  },
+  "6NffFz": {
+    "message": "Tournaments are offline",
+    "translation": ""
   },
   "Ecn3Fr": {
     "message": "Trainer",
@@ -5099,6 +5258,10 @@
   "UMxfxQ": {
     "message": "Unknown card",
     "translation": "Carte inconnue"
+  },
+  "EydT-n": {
+    "message": "Unknown deck",
+    "translation": ""
   },
   "PjF2oq": {
     "message": "Unlimited",
@@ -5221,6 +5384,10 @@
     "message": "Win",
     "context": "keyboard key (the Windows key)",
     "translation": "Win"
+  },
+  "NWGsaA": {
+    "message": "Winning now",
+    "translation": ""
   },
   "n1kezF": {
     "message": "Yes",

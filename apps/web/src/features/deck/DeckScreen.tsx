@@ -1,10 +1,11 @@
 import { ArrowLeftIcon } from '@phosphor-icons/react/dist/csr/ArrowLeft';
-import { ImageSquareIcon } from '@phosphor-icons/react/dist/csr/ImageSquare';
 import { PlayIcon } from '@phosphor-icons/react/dist/csr/Play';
 import { WarningCircleIcon } from '@phosphor-icons/react/dist/csr/WarningCircle';
 import { plural } from '@lingui/core/macro';
 import { Trans, useLingui } from '@lingui/react/macro';
 import {
+  checkDeck,
+  coverCardOf,
   deckTotals,
   withCatalogFacts,
   type DeckFormatId,
@@ -21,17 +22,21 @@ import {
 } from 'react';
 
 import { preferences } from '../../preferences/preference-store.js';
+import { DEFAULT_CARD_BACK_URL } from '../../session/browser-card-back.js';
 import { toast } from '../../ui/toast.js';
 import { Tooltip } from '../../ui/Tooltip.js';
 import type { CardCatalogSource } from './card-catalog-contract.js';
 import { readDeckFile } from './deck-browser-io.js';
+import { DeckBox, deckBoxToneOf } from './DeckBox.js';
+import { flyDeckBox } from './deck-box-flight.js';
+import { splitFinish } from './deck-home-covers.js';
 import type {
   DeckBuilderStore,
   DeckBuilderTarget,
   DeckSlotLabel,
 } from './deck-builder-store.js';
 import { DeckEditor } from './DeckEditor.js';
-import { DeckHome } from './DeckHome.js';
+import { DeckHome, wordFinish } from './DeckHome.js';
 import { importDeckText, type DeckImportLine } from './deck-import.js';
 import type {
   DeckLibrary,
@@ -41,6 +46,17 @@ import type {
 import { SEAT_NAMES } from './deck-screen-shared.js';
 import { DECK_SCREEN_PREFERENCES } from './deck-screen-preferences.js';
 import type { PopularDecklistSource } from './popular-decklists.js';
+import {
+  fetchTournamentList,
+  TournamentDataBusyError,
+  type TournamentArchetype,
+  type TournamentSummary,
+} from './tournament-decks-client.js';
+import {
+  ArchetypeView,
+  TournamentView,
+  type LoadTournamentList,
+} from './TournamentDecks.js';
 import { catalogWhenReady, useCardCatalog } from './useCardCatalog.js';
 import './deck-screen.css';
 
@@ -53,7 +69,12 @@ export type DeckScreenView =
       readonly deckId: string;
       /** Lines an import couldn't place, to show above the deck. */
       readonly missing?: readonly DeckImportLine[];
-    };
+    }
+  | {
+      readonly kind: 'tournament';
+      readonly tournament: Pick<TournamentSummary, 'id' | 'name'>;
+    }
+  | { readonly kind: 'archetype'; readonly archetype: TournamentArchetype };
 
 export interface DeckScreenProps {
   readonly store: DeckBuilderStore;
@@ -64,6 +85,8 @@ export interface DeckScreenProps {
   readonly onPlay: () => void;
   readonly onClose: () => void;
   readonly onChangeCardBack: (target: DeckBuilderTarget) => void;
+  /** Each seat's card back, as its tray's sleeve shows it. */
+  readonly cardBacks?: Readonly<Partial<Record<DeckBuilderTarget, string>>>;
   /** Deck text from the clipboard; the browser's by default. */
   readonly readClipboard?: () => Promise<string>;
 }
@@ -80,6 +103,18 @@ const isTextEntry = (element: EventTarget | null): boolean =>
 const browserClipboard = async (): Promise<string> =>
   await navigator.clipboard.readText();
 
+const DEFAULT_SLEEVE = DEFAULT_CARD_BACK_URL;
+
+/**
+ * A card back the tray can show: an address on the web or on this site,
+ * else the standard back (a back the room was given some other way still
+ * reaches the table; only its swatch here falls back).
+ */
+const cardBackSource = (url: string | undefined): string =>
+  url && /^(?:https?:\/\/|\/(?!\/)|blob:|data:image\/)/u.test(url)
+    ? url
+    : DEFAULT_SLEEVE;
+
 /**
  * The deck screen: the player's decks and the decks to try (home), and the
  * builder for one deck (edit). Whatever the view, a pasted or dropped list
@@ -95,6 +130,7 @@ export const DeckScreen = ({
   onPlay,
   onClose,
   onChangeCardBack,
+  cardBacks,
   readClipboard = browserClipboard,
 }: DeckScreenProps) => {
   const { t } = useLingui();
@@ -109,6 +145,18 @@ export const DeckScreen = ({
     library.getSnapshot
   );
   const [view, setView] = useState<DeckScreenView>({ kind: 'home' });
+  const [finderText, setFinderText] = useState('');
+  /** The box last picked off a shelf, to fly into its seat's tray. */
+  const picked = useRef<
+    | {
+        readonly box: HTMLElement;
+        readonly seat: DeckBuilderTarget;
+        readonly at: number;
+      }
+    | undefined
+  >(undefined);
+  const [pendingList, setPendingList] = useState<string>();
+  const listAbort = useRef<AbortController | undefined>(undefined);
   const [importing, setImporting] = useState(false);
   const [dragging, setDragging] = useState(false);
   const importAbort = useRef<AbortController | undefined>(undefined);
@@ -126,7 +174,13 @@ export const DeckScreen = ({
     (seats.alternateEnabled &&
       deckTotals(seats.slots.alternate.deck).total > 0);
 
-  useEffect(() => () => importAbort.current?.abort(), []);
+  useEffect(
+    () => () => {
+      importAbort.current?.abort();
+      listAbort.current?.abort();
+    },
+    []
+  );
 
   // Saved decks get the catalog's facts once it is here, so the rules check
   // them as they stand now: added for decks imported before it arrived (or
@@ -264,7 +318,12 @@ export const DeckScreen = ({
         readonly kind: 'paste' | 'file' | 'meta' | 'classic';
         readonly label?: string;
       },
-      options: { readonly save: boolean; readonly name?: string } = {
+      options: {
+        readonly save: boolean;
+        readonly name?: string;
+        /** Saved, then opened in the editor. */
+        readonly edit?: boolean;
+      } = {
         save: true,
       },
       started?: AbortController
@@ -321,11 +380,11 @@ export const DeckScreen = ({
             name: saved.name,
             format: saved.format,
           });
-          if (result.missing.length > 0) {
+          if (result.missing.length > 0 || options.edit) {
             setView({
               kind: 'edit',
               deckId: saved.id,
-              missing: result.missing,
+              ...(result.missing.length > 0 ? { missing: result.missing } : {}),
             });
           }
         } else {
@@ -424,6 +483,81 @@ export const DeckScreen = ({
       controller
     );
   }, [beginImport, endImport, runImport, samples]);
+
+  /**
+   * A tournament player's list onto the seat, as a current deck is tried
+   * (or saved and opened, to edit a copy). A newer choice cancels it.
+   */
+  const loadTournamentList = useCallback<LoadTournamentList>(
+    (request, mode) => {
+      listAbort.current?.abort();
+      const controller = new AbortController();
+      listAbort.current = controller;
+      setPendingList(`${request.tournamentId}/${request.playerId}`);
+      void fetchTournamentList(request.tournamentId, request.playerId, {
+        signal: controller.signal,
+      })
+        .then(async (list) => {
+          if (controller.signal.aborted) return;
+          await runImport(
+            list.text,
+            { kind: 'meta', label: request.name },
+            mode === 'edit'
+              ? { save: true, name: request.name, edit: true }
+              : { save: false, name: request.name }
+          );
+        })
+        .catch((error: unknown) => {
+          if (controller.signal.aborted) return;
+          toast({
+            title: t`Couldn't load that list`,
+            body:
+              error instanceof TournamentDataBusyError
+                ? t`Busy for a moment — try again shortly`
+                : t`Deck search is offline`,
+            tone: 'warning',
+          });
+        })
+        .finally(() => {
+          if (listAbort.current !== controller) return;
+          listAbort.current = undefined;
+          setPendingList(undefined);
+        });
+    },
+    [runImport, t]
+  );
+
+  // A deck put on a seat from a shelf flies into the seat's tray. The box
+  // is noted when it is pressed; the seat's new deck (at once for a saved
+  // deck, after its import for a list) sends it on its way.
+  const mainRevision = seats.slots.main.revision;
+  const alternateRevision = seats.slots.alternate.revision;
+  const lastRevisions = useRef({
+    main: mainRevision,
+    alternate: alternateRevision,
+  });
+  useEffect(() => {
+    const before = lastRevisions.current;
+    lastRevisions.current = {
+      main: mainRevision,
+      alternate: alternateRevision,
+    };
+    const pick = picked.current;
+    if (!pick || Date.now() - pick.at > 4_000 || !pick.box.isConnected) return;
+    const changed =
+      pick.seat === 'main'
+        ? mainRevision !== before.main
+        : alternateRevision !== before.alternate;
+    if (!changed) return;
+    picked.current = undefined;
+    // The tray draws its new box in this commit; fly once it has.
+    requestAnimationFrame(() => {
+      const tray = document.querySelector<HTMLElement>(
+        `#${pick.seat === 'main' ? 'nativeDeckBuilderTargetMain' : 'nativeDeckBuilderTargetAlt'} .deck-box`
+      );
+      if (tray && pick.box.isConnected) flyDeckBox(pick.box, tray);
+    });
+  }, [alternateRevision, mainRevision]);
 
   // Paste anywhere on the screen (outside a text field) imports the list.
   useEffect(() => {
@@ -583,45 +717,105 @@ export const DeckScreen = ({
             const total = deckTotals(slot.deck).total;
             const selected = slotTarget === target;
             const slotSeat = SEAT_NAMES[slotTarget];
+            const name =
+              slot.label?.name ??
+              (total > 0 ? t`Unsaved deck` : t`No deck yet`);
+            const [title, finish] = splitFinish(name);
+            const playable =
+              total > 0 &&
+              checkDeck(slot.deck, slot.label?.format ?? 'standard').valid;
+            const sleeve = cardBackSource(cardBacks?.[slotTarget]);
             return (
-              <Tooltip
+              <div
                 key={slotTarget}
-                content={
-                  seats.alternateEnabled
-                    ? slotTarget === 'main'
-                      ? t`Choose the deck for ${slotSeat} (you)`
-                      : t`Choose the deck for ${slotSeat}`
-                    : t`Your deck`
-                }
-                side="bottom"
+                className="deck-tray"
+                data-seat={slotTarget === 'main' ? 'self' : 'opponent'}
+                data-active={selected ? 'true' : undefined}
               >
-                <button
-                  id={
-                    slotTarget === 'main'
-                      ? 'nativeDeckBuilderTargetMain'
-                      : 'nativeDeckBuilderTargetAlt'
+                <Tooltip
+                  content={
+                    seats.alternateEnabled
+                      ? slotTarget === 'main'
+                        ? t`Choose the deck for ${slotSeat} (you)`
+                        : t`Choose the deck for ${slotSeat}`
+                      : t`Your deck`
                   }
-                  type="button"
-                  className="deck-screen__seat"
-                  data-seat={slotTarget === 'main' ? 'self' : 'opponent'}
-                  aria-pressed={selected}
-                  onClick={() => store.selectTarget(slotTarget)}
+                  side="bottom"
                 >
-                  <span className="deck-screen__seat-tag">
-                    {SEAT_NAMES[slotTarget]}
-                  </span>
-                  <span className="deck-screen__seat-name">
-                    {slot.label?.name ??
-                      (total > 0 ? t`Unsaved deck` : t`No deck yet`)}
-                  </span>
-                  <span
-                    className="deck-screen__seat-count ds-number"
-                    data-complete={total === 60 || undefined}
+                  <button
+                    id={
+                      slotTarget === 'main'
+                        ? 'nativeDeckBuilderTargetMain'
+                        : 'nativeDeckBuilderTargetAlt'
+                    }
+                    type="button"
+                    className="deck-screen__seat deck-tray__seat"
+                    data-seat={slotTarget === 'main' ? 'self' : 'opponent'}
+                    aria-label={t({
+                      message: `${slotSeat}: ${name}, ${plural(total, { one: '# card', other: '# cards' })}`,
+                      comment:
+                        "A seat's tray on the deck screen: the seat, its deck, its size",
+                    })}
+                    aria-pressed={selected}
+                    onClick={() => store.selectTarget(slotTarget)}
                   >
-                    {total}
-                  </span>
-                </button>
-              </Tooltip>
+                    {total > 0 ? (
+                      <DeckBox
+                        size="tray"
+                        cover={coverCardOf(slot.deck, title)}
+                        name={title}
+                        tone={deckBoxToneOf(slot.deck)}
+                        invalid={!playable}
+                      />
+                    ) : (
+                      <span className="deck-tray__empty" aria-hidden="true" />
+                    )}
+                    <span className="deck-tray__text">
+                      <span className="deck-tray__line">
+                        <span className="deck-screen__seat-tag">
+                          {SEAT_NAMES[slotTarget]}
+                        </span>
+                        <span className="deck-screen__seat-name">{title}</span>
+                      </span>
+                      {finish ? (
+                        <span className="deck-tray__finish">
+                          {wordFinish(finish)}
+                        </span>
+                      ) : null}
+                    </span>
+                    <span
+                      className="deck-screen__seat-count ds-number"
+                      data-complete={total === 60 || undefined}
+                    >
+                      {total}
+                    </span>
+                  </button>
+                </Tooltip>
+                <Tooltip content={t`Card back for ${slotSeat}`} side="bottom">
+                  <button
+                    {...(selected ? { id: 'changeCardBackButton' } : {})}
+                    type="button"
+                    className="deck-tray__sleeve"
+                    aria-label={t`Change card back for ${slotSeat}`}
+                    onClick={() => {
+                      store.selectTarget(slotTarget);
+                      onChangeCardBack(slotTarget);
+                    }}
+                  >
+                    <img
+                      src={sleeve}
+                      alt=""
+                      draggable={false}
+                      decoding="async"
+                      onError={(event) => {
+                        if (!event.currentTarget.src.endsWith(DEFAULT_SLEEVE)) {
+                          event.currentTarget.src = DEFAULT_SLEEVE;
+                        }
+                      }}
+                    />
+                  </button>
+                </Tooltip>
+              </div>
             );
           })}
         </div>
@@ -656,17 +850,6 @@ export const DeckScreen = ({
               </span>
             </Tooltip>
           ) : null}
-          <Tooltip content={t`Card back for ${targetSeat}`} side="bottom">
-            <button
-              id="changeCardBackButton"
-              type="button"
-              className="ds-button ds-button--ghost ds-button--icon"
-              aria-label={t`Change card back for ${targetSeat}`}
-              onClick={() => onChangeCardBack(target)}
-            >
-              <ImageSquareIcon {...decorative} weight="bold" />
-            </button>
-          </Tooltip>
           <Tooltip
             content={anySeatDeck ? t`Play these decks` : t`Choose a deck first`}
             side="bottom"
@@ -699,7 +882,19 @@ export const DeckScreen = ({
           if (file) void importFile(file);
         }}
       />
-      <main className="deck-screen__body">
+      <main
+        className="deck-screen__body"
+        onClickCapture={(event) => {
+          const choose =
+            event.target instanceof Element
+              ? event.target.closest('button.deck-tile__choose')
+              : null;
+          const box = choose?.querySelector<HTMLElement>('.deck-box');
+          picked.current = box
+            ? { box, seat: targetNow.current, at: Date.now() }
+            : undefined;
+        }}
+      >
         {view.kind === 'edit' && editingDeck ? (
           <DeckEditor
             key={editingDeck.id}
@@ -715,6 +910,22 @@ export const DeckScreen = ({
             }
             onBack={leaveEditor}
             onUseOnSeat={() => chooseSaved(editingDeck)}
+          />
+        ) : view.kind === 'tournament' ? (
+          <TournamentView
+            key={view.tournament.id}
+            tournament={view.tournament}
+            pending={pendingList}
+            onBack={() => setView({ kind: 'home' })}
+            onLoad={loadTournamentList}
+          />
+        ) : view.kind === 'archetype' ? (
+          <ArchetypeView
+            key={view.archetype.id}
+            archetype={view.archetype}
+            pending={pendingList}
+            onBack={() => setView({ kind: 'home' })}
+            onLoad={loadTournamentList}
           />
         ) : (
           <DeckHome
@@ -736,7 +947,11 @@ export const DeckScreen = ({
             }
             onSurprise={surprise}
             onEditList={(name, text, kind) =>
-              runImport(text, { kind, label: name }, { save: true, name })
+              runImport(
+                text,
+                { kind, label: name },
+                { save: true, name, edit: true }
+              )
             }
             onSaveSeatDeck={(slotTarget) => saveSeatDeck(slotTarget, false)}
             onEditSeatDeck={(slotTarget) => {
@@ -751,6 +966,16 @@ export const DeckScreen = ({
               store.clearDeck(slotTarget);
               rememberSeatDeck(slotTarget, undefined);
             }}
+            onLoadTournamentList={loadTournamentList}
+            pendingList={pendingList}
+            onOpenTournament={(tournament) =>
+              setView({ kind: 'tournament', tournament })
+            }
+            onOpenArchetype={(archetype) =>
+              setView({ kind: 'archetype', archetype })
+            }
+            finderText={finderText}
+            onFinderTextChange={setFinderText}
           />
         )}
       </main>

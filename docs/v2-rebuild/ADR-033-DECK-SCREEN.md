@@ -161,6 +161,49 @@ specifically without blocking, and go from deck to table in one click.
     content-hashed files are cached for good (`public/_headers`), so that
     import makes no request that could fail. Otherwise the screen loads its
     script when it opens, as before.
+13. **On the desk** (2026-10-22). The owner asked for the screen to feel
+    part of the table rather than a web page, and to be simpler to reason
+    about, keeping every feature. The realism goes on the containers, as
+    in Pokémon TCG Live, MTG Arena and Hearthstone; whatever is read stays
+    flat, high-contrast paper:
+    - **The desk.** The screen lies on the table's own desk: its wood and
+      grain and the lamp up and to the left (`deck-layer.css`). Words
+      straight on the desk wear its ink (`--color-desk-ink`); lists,
+      results and the editor's panes are paper (Day) or dark card stock
+      (Night) lifted off it.
+    - **Deck boxes.** A deck is a box (`DeckBox.tsx`): drawn in an
+      oblique view so the cover card shows undistorted through a window in
+      its front, its lid's top and right side receding, a soft shadow cast
+      away from the lamp. It is plastic in the colour of the basic Energy
+      the deck plays most of (`deckBoxToneOf`). A placing is a gold
+      sticker; a deck that can't be played as it stands has a red tab on
+      its lid; the seat a deck is on is a ribbon and a pool of that seat's
+      light under the box. Pointed at, a box lifts. The shelves are Your
+      decks, Winning now, Tournaments and Classics.
+    - **Trays.** Each seat's tray in the rack along the top replaces the
+      seat pill and the separate card-back button: it holds that seat's
+      deck box, its name (and finish), its count and its sleeve, the
+      seat's card back, which opens the card-back chooser. The active tray
+      wears its seat's colour. A box put on a seat from a shelf flies into
+      the tray (measured, then transform only; never under reduced motion
+      or at instant speed).
+    - **The finder.** One field takes a deck's name or a whole list. A
+      line of words searches tournament decks (ADR-037): each deck that
+      matches, its top 8s and lists, and its best finishes, any of which
+      goes on the seat (or is saved and opened, to edit a copy). Several
+      lines, a line starting with a count, a simulator file or a list's
+      heading are a list, imported as before; Ctrl+V anywhere still
+      imports.
+    - **Tournaments.** The recent online events, a name filter and More;
+      an event opens to its standings, with every player's deck and a
+      Load for each published list. Official majors have no API: a link
+      opens them on Limitless (phase 2 of ADR-037). Tournament data is
+      credited to Limitless TCG wherever it shows.
+    - **The editor** is the open box: the card search a stitched binder,
+      the deck a sheet beside it, both lying on the desk.
+    - **Fewer words.** Section headings name what is there ("Winning now",
+      "Classics"); the import box's heading and hints are gone; "Edit a
+      copy" now opens the copy it saves.
 
 ## Consequences
 

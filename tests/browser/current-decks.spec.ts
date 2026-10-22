@@ -71,9 +71,11 @@ test('the deck screen leads with current tournament lists and credits Limitless'
     'data-card-count',
     '60'
   );
-  await expect(page.locator('#nativeDeckBuilderTargetMain')).toContainText(
-    'Dragapult — 1st of 285'
-  );
+  // The seat's tray holds it: its name, and its finish under it.
+  const tray = page.locator('#nativeDeckBuilderTargetMain');
+  await expect(tray).toHaveAccessibleName(/Dragapult — 1st of 285/u);
+  await expect(tray.locator('.deck-screen__seat-name')).toHaveText('Dragapult');
+  await expect(tray.locator('.deck-tray__finish')).toHaveText('1st of 285');
   await expect(first.getByRole('button', { name: /try it/u })).toHaveAttribute(
     'aria-pressed',
     'true'

@@ -56,7 +56,7 @@ const recordOpeningCovers = (page: Page) =>
         // Just before the browser paints that frame.
         requestAnimationFrame(() =>
           resolve(
-            [...layer.querySelectorAll('.deck-cover img')].map((image) => ({
+            [...layer.querySelectorAll('.deck-box img')].map((image) => ({
               src: image.getAttribute('src') ?? '',
               painted:
                 image instanceof HTMLImageElement &&

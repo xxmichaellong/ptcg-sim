@@ -1,9 +1,12 @@
 /*
- * The deck screen (DeckScreen.tsx): a header with the seats and Play, then
- * either the player's decks (DeckHome) or one deck being built
- * (DeckEditor: card search beside the deck). Everything reads the design
- * tokens; nothing here transforms or filters the screen itself, so the
- * hover zoom's fixed position stays fixed to the window.
+ * The deck screen (DeckScreen.tsx), on the same desk as the table
+ * (ADR-033 §13): a rack with a tray for each seat and Play, then either
+ * the shelves of deck boxes (DeckHome), a tournament's standings, or one
+ * deck being built (DeckEditor: the binder of cards beside the deck's
+ * sheet). The realism is in the objects -- boxes, trays, sleeves, the
+ * light and shadows -- and anything read sits on flat paper. Everything
+ * reads the design tokens; nothing here transforms or filters the screen
+ * itself, so the hover zoom's fixed position stays fixed to the window.
  */
 
 .deck-screen {
@@ -19,6 +22,16 @@
   --energy-fairy: #d76fa6;
   --energy-dragon: #a08636;
   --energy-colorless: #c9c4b8;
+  /* Shadows cast on the desk, and the trays sunk into the rack. */
+  --deck-desk-shadow: rgb(20 10 4 / 0.3);
+  --deck-tray-inset:
+    inset 0 2px 5px rgb(10 6 2 / 0.5), inset 0 -1px 0 rgb(255 240 220 / 0.05);
+  /* Quieter words on the desk. */
+  --deck-desk-ink-muted: color-mix(
+    in oklab,
+    var(--color-desk-ink) 76%,
+    var(--color-desk)
+  );
 
   position: absolute;
   inset: 0;
@@ -29,18 +42,24 @@
   font-family: var(--font-ui);
 }
 
-/* ---- Header: back, seats, card back, Play ------------------------------ */
+/* ---- Header: back, the seats' trays, Play --------------------------------- */
 
+/* The rack along the desk's far edge: a tray for each seat, holding that
+   seat's deck box and its sleeve, then Play. */
 .deck-screen__bar {
+  position: relative;
+  z-index: 2;
   display: flex;
   flex: none;
   align-items: center;
   gap: var(--space-3);
-  min-height: 56px;
+  min-height: 64px;
   padding: max(var(--space-2), env(safe-area-inset-top)) var(--deck-gutter)
     var(--space-2);
-  border-bottom: 1px solid var(--color-border);
   background: var(--color-rail);
+  box-shadow:
+    0 1px 0 var(--color-border),
+    0 6px 18px var(--deck-desk-shadow);
 }
 
 .deck-screen__back {
@@ -55,27 +74,52 @@
   gap: var(--space-2);
 }
 
+/* A seat's tray: sunk into the rack, its deck box lying in it. */
+.deck-tray {
+  --seat-color: var(--color-you);
+
+  display: flex;
+  flex: 0 1 340px;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+  padding: 4px;
+  border-radius: 14px;
+  background: var(--color-surface-sunken);
+  box-shadow: var(--deck-tray-inset);
+  transition: box-shadow var(--duration-fast) var(--ease-out);
+}
+
+.deck-tray[data-seat='opponent'] {
+  --seat-color: var(--color-opponent);
+}
+
+.deck-tray[data-active='true'] {
+  box-shadow:
+    var(--deck-tray-inset),
+    0 0 0 1.5px var(--seat-color),
+    0 0 16px color-mix(in oklab, var(--seat-color) 32%, transparent);
+}
+
 .deck-screen__seat {
   --seat-color: var(--color-you);
 
-  display: inline-flex;
+  display: flex;
+  flex: 1;
   align-items: center;
   gap: var(--space-2);
   min-width: 0;
-  max-width: 320px;
-  min-height: 40px;
-  padding-block: 0;
-  padding-inline: var(--space-1-5) var(--space-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-pill);
-  background: var(--color-surface-1);
+  min-height: 48px;
+  padding: 2px var(--space-2) 2px 6px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
   color: var(--color-text-muted);
   font: inherit;
   font-size: var(--text-sm);
+  text-align: start;
   cursor: pointer;
-  transition:
-    background var(--duration-fast) var(--ease-out),
-    border-color var(--duration-fast) var(--ease-out);
+  transition: background var(--duration-fast) var(--ease-out);
 }
 
 .deck-screen__seat[data-seat='opponent'] {
@@ -88,16 +132,37 @@
   }
 }
 
+.deck-screen__seat:focus-visible {
+  outline: var(--ptcgsim-focus-ring);
+  outline-offset: 1px;
+}
+
 .deck-screen__seat[aria-pressed='true'] {
-  border-color: var(--seat-color);
-  background: var(--color-surface-2);
   color: var(--color-text);
-  box-shadow: 0 0 0 1px var(--seat-color);
+}
+
+/* An empty tray: the outline where a box would lie. */
+.deck-tray__empty {
+  flex: none;
+  width: 30px;
+  height: 40px;
+  margin: 5px 5px 0 0;
+  border: 1.5px dashed var(--color-border-strong);
+  border-radius: 4px;
+}
+
+.deck-tray__text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
 }
 
 .deck-screen__seat-tag {
   flex: none;
-  padding: 3px 8px;
+  padding: 1px 7px;
   border-radius: var(--radius-pill);
   background: var(--seat-color);
   color: #fff;
@@ -106,21 +171,84 @@
   letter-spacing: 0.04em;
 }
 
+.deck-tray__line {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  max-width: 100%;
+  min-width: 0;
+}
+
 .deck-screen__seat-name {
+  max-width: 100%;
   overflow: hidden;
   font-weight: var(--weight-semibold);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.deck-screen__seat-count {
-  flex: none;
+.deck-tray__finish {
+  max-width: 100%;
+  overflow: hidden;
   color: var(--color-text-faint);
   font-size: var(--text-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.deck-screen__seat-count {
+  flex: none;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: color-mix(in oklab, var(--color-warning) 16%, transparent);
+  color: var(--color-warning);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
 }
 
 .deck-screen__seat-count[data-complete] {
+  background: color-mix(in oklab, var(--color-success) 16%, transparent);
   color: var(--color-success);
+}
+
+/* The seat's sleeve: its card back, a swatch lying in the tray. */
+.deck-tray__sleeve {
+  flex: none;
+  width: 32px;
+  height: 44px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 3px;
+  background: var(--color-surface-3);
+  box-shadow:
+    0 1px 2px rgb(10 6 2 / 0.4),
+    0 0 0 1px rgb(0 0 0 / 0.12);
+  cursor: pointer;
+  transition:
+    translate var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
+}
+
+.deck-tray__sleeve img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .deck-tray__sleeve:hover {
+    translate: 0 -2px;
+    box-shadow:
+      0 4px 8px rgb(10 6 2 / 0.4),
+      0 0 0 1px rgb(0 0 0 / 0.12);
+  }
+}
+
+.deck-tray__sleeve:focus-visible {
+  outline: var(--ptcgsim-focus-ring);
+  outline-offset: 2px;
 }
 
 .deck-screen__bar-actions {
@@ -128,6 +256,7 @@
   flex: none;
   align-items: center;
   gap: var(--space-2);
+  margin-inline-start: auto;
 }
 
 .deck-screen__reload {
@@ -145,7 +274,9 @@
 
 .deck-screen__play {
   min-width: 112px;
+  min-height: 44px;
   gap: var(--space-1-5);
+  font-size: var(--text-md);
 }
 
 .deck-screen__body {
@@ -194,13 +325,13 @@
   outline-offset: 1px;
 }
 
-/* ---- Home: import, your decks, decks to try ---------------------------- */
+/* ---- Home: the finder, then the shelves ---------------------------------- */
 
 .deck-home {
   height: 100%;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: var(--space-5) var(--deck-gutter) var(--space-10);
+  padding: var(--space-6) var(--deck-gutter) var(--space-10);
   box-sizing: border-box;
 }
 
@@ -218,11 +349,13 @@
   margin-bottom: var(--space-3);
 }
 
+/* Words straight on the desk wear its ink (table-art.css). */
 .deck-section-title {
   display: flex;
   align-items: center;
   gap: var(--space-2);
   margin: 0 0 var(--space-3);
+  color: var(--color-desk-ink);
   font-family: var(--font-display);
   font-size: var(--text-xl);
   font-weight: var(--weight-semibold);
@@ -236,8 +369,8 @@
 .deck-section-count {
   padding: 1px 8px;
   border-radius: var(--radius-pill);
-  background: var(--color-surface-2);
-  color: var(--color-text-muted);
+  background: color-mix(in oklab, var(--color-desk-ink) 14%, transparent);
+  color: var(--color-desk-ink);
   font-size: var(--text-xs);
 }
 
@@ -248,15 +381,31 @@
   gap: var(--space-2);
 }
 
+/* A plain button on the desk reads in its ink, not the panels'. */
+.deck-home .deck-section-tools .ds-button--ghost,
+.deck-home > section > .deck-show-more,
+.deck-subhead .ds-button--ghost {
+  color: var(--color-desk-ink);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .deck-home .deck-section-tools .ds-button--ghost:hover,
+  .deck-home > section > .deck-show-more:hover,
+  .deck-subhead .ds-button--ghost:hover {
+    background: color-mix(in oklab, var(--color-desk-ink) 10%, transparent);
+  }
+}
+
 .deck-section-note {
   max-width: 72ch;
-  margin: calc(-1 * var(--space-1)) 0 var(--space-3);
-  color: var(--color-text-muted);
+  margin: calc(-1 * var(--space-2)) 0 var(--space-3);
+  color: var(--deck-desk-ink-muted);
   font-size: var(--text-sm);
 }
 
 .deck-section-note a {
-  color: var(--color-accent);
+  color: var(--color-desk-ink);
+  font-weight: var(--weight-semibold);
 }
 
 .deck-empty,
@@ -266,16 +415,17 @@
   gap: var(--space-2);
   margin: 0;
   padding: var(--space-4);
-  border: 1px dashed var(--color-border);
+  border: 1.5px dashed
+    color-mix(in oklab, var(--color-desk-ink) 30%, transparent);
   border-radius: var(--radius-lg);
-  color: var(--color-text-muted);
+  color: var(--deck-desk-ink-muted);
   font-size: var(--text-sm);
 }
 
 .deck-notice {
   margin-bottom: var(--space-3);
-  border-style: solid;
-  border-color: color-mix(in oklab, var(--color-warning) 50%, transparent);
+  border: 1px solid color-mix(in oklab, var(--color-warning) 50%, transparent);
+  background: var(--color-surface-2);
   color: var(--color-text);
 }
 
@@ -283,7 +433,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-1-5);
-  color: var(--color-text-faint);
+  color: var(--color-desk-ink);
 }
 
 .deck-filter .ds-input {
@@ -294,7 +444,20 @@
   margin-top: var(--space-3);
 }
 
-/* The paste box: one line until it holds a list. */
+/* Something read rather than handled: flat paper on the desk. */
+.deck-paper {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-2);
+  box-shadow: var(--shadow-3), var(--highlight-top);
+  color: var(--color-text);
+}
+
+/* The finder: one field for a deck's name or a whole list. */
+.deck-finder {
+  position: relative;
+}
+
 .deck-paste {
   display: flex;
   flex-wrap: wrap;
@@ -303,25 +466,45 @@
   padding: var(--space-2);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  background: var(--color-surface-1);
-  box-shadow: var(--shadow-1);
+  background: var(--color-surface-2);
+  box-shadow: var(--shadow-4), var(--highlight-top);
 }
 
 .deck-paste:focus-within {
   border-color: var(--color-accent);
 }
 
+.deck-finder[data-mode='search'] .deck-paste {
+  border-end-start-radius: 0;
+  border-end-end-radius: 0;
+}
+
+.deck-paste__icon {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin: 12px 0 0 var(--space-2);
+  color: var(--color-text-faint);
+}
+
 .deck-paste__input {
-  flex: 1 1 360px;
-  min-height: 40px;
+  flex: 1 1 300px;
+  min-height: 44px;
   max-height: 40vh;
   box-sizing: border-box;
-  padding: 10px var(--space-3);
+  padding: 11px var(--space-2);
   border: 0;
   background: transparent;
   color: var(--color-text);
   font: inherit;
-  font-size: var(--text-md);
+  font-size: var(--text-lg);
+  line-height: 22px;
+  resize: none;
+}
+
+.deck-finder[data-mode='list'] .deck-paste__input {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
   line-height: 20px;
   resize: vertical;
 }
@@ -337,75 +520,457 @@
 .deck-paste__actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: var(--space-2);
+  min-height: 44px;
 }
 
 .deck-paste__actions .ds-button {
   gap: var(--space-1-5);
 }
 
-/* Deck tiles: a deck box with its cover card. */
-.deck-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(232px, 1fr));
-  gap: var(--space-3);
+/* What a typed name finds, on the paper under the field. */
+.deck-results {
+  max-height: min(62vh, 680px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--space-1) var(--space-3) var(--space-2);
+  border: 1px solid var(--color-border);
+  border-top: 0;
+  border-end-start-radius: var(--radius-lg);
+  border-end-end-radius: var(--radius-lg);
+  background: var(--color-surface-1);
+  box-shadow: var(--shadow-4);
+}
+
+.deck-results__status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3) var(--space-2);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.deck-results__list {
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.deck-grid--lists {
-  grid-template-columns: repeat(auto-fill, minmax(232px, 1fr));
+.deck-result {
+  padding: var(--space-3) 0 var(--space-2);
+  border-bottom: 1px solid var(--color-border);
 }
 
-.deck-grid--lists .deck-tile__meta {
-  flex-wrap: nowrap;
-  white-space: nowrap;
+.deck-result:last-child {
+  border-bottom: 0;
 }
 
-.deck-tile {
-  position: relative;
+.deck-result__head {
   display: flex;
-  min-width: 0;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface-1);
-  transition:
-    border-color var(--duration-fast) var(--ease-out),
-    background var(--duration-fast) var(--ease-out),
-    transform var(--duration-fast) var(--ease-out);
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+  padding-inline: var(--space-2);
 }
 
-@media (hover: hover) and (pointer: fine) {
-  .deck-tile:hover {
-    border-color: var(--color-border-strong);
-    background: var(--color-surface-2);
-  }
+.deck-archetype-icons {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
 }
 
-.deck-tile[data-current='true'] {
-  border-color: var(--color-you);
-  box-shadow: 0 0 0 1px var(--color-you);
+.deck-archetype-icons img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
 }
 
-.deck-screen[data-seat='opponent'] .deck-tile[data-current='true'] {
-  border-color: var(--color-opponent);
-  box-shadow: 0 0 0 1px var(--color-opponent);
+.deck-archetype-icons img + img {
+  margin-inline-start: -8px;
 }
 
-.deck-tile__choose {
+.deck-result__name {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+}
+
+.deck-result__stats {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.deck-result__all {
+  gap: var(--space-1);
+  margin-inline-start: auto;
+}
+
+.deck-result__finishes {
+  display: grid;
+  gap: 2px;
+  margin: var(--space-1) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.deck-finish {
   display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.deck-finish__load {
+  display: grid;
   flex: 1;
+  grid-template-columns: 3.25rem minmax(0, 1fr) minmax(0, 11rem) 4.5rem 16px;
   align-items: center;
   gap: var(--space-3);
   min-width: 0;
-  padding: var(--space-2);
+  min-height: 44px;
+  padding: var(--space-1) var(--space-2);
   border: 0;
-  border-radius: inherit;
+  border-radius: var(--radius-md);
   background: transparent;
   color: inherit;
   font: inherit;
   text-align: start;
+  cursor: pointer;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .deck-finish__load:hover {
+    background: var(--color-surface-hover);
+  }
+}
+
+.deck-finish__load:focus-visible {
+  outline: var(--ptcgsim-focus-ring);
+  outline-offset: -2px;
+}
+
+/* The placing: a small gold medal. */
+.deck-finish__place,
+.deck-standing__place {
+  justify-self: start;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: color-mix(in oklab, var(--color-gold) 26%, transparent);
+  color: var(--color-text);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  white-space: nowrap;
+}
+
+.deck-finish__event {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.deck-finish__event-name,
+.deck-finish__player {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.deck-finish__event-name {
+  font-weight: var(--weight-medium);
+}
+
+.deck-finish__event-meta {
+  color: var(--color-text-faint);
+  font-size: var(--text-xs);
+}
+
+.deck-finish__player {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.deck-finish__record,
+.deck-standing__record {
+  color: var(--color-text-faint);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+}
+
+.deck-finish__spinner {
+  color: var(--color-accent);
+}
+
+.deck-credit {
+  margin: var(--space-2) var(--space-2) var(--space-1);
+  color: var(--color-text-faint);
+  font-size: var(--text-xs);
+}
+
+.deck-credit a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+/* The tournaments: a list on paper, newest first. */
+.deck-events {
+  padding: var(--space-1);
+}
+
+.deck-events__list {
+  max-height: 440px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  list-style: none;
+}
+
+.deck-event {
+  display: grid;
+  grid-template-columns: 5rem minmax(0, 1fr) auto auto 16px;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 44px;
+  padding: var(--space-1) var(--space-3);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .deck-event:hover {
+    background: var(--color-surface-hover);
+  }
+}
+
+.deck-event:focus-visible {
+  outline: var(--ptcgsim-focus-ring);
+  outline-offset: -2px;
+}
+
+.deck-event__date {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.deck-event__name {
+  overflow: hidden;
+  font-weight: var(--weight-medium);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.deck-event[data-lists='false'] .deck-event__name {
+  color: var(--color-text-muted);
+}
+
+.deck-event__meta {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  white-space: nowrap;
+}
+
+.deck-event__nolists {
+  color: var(--color-text-faint);
+  font-size: var(--text-xs);
+}
+
+.deck-event__go {
+  color: var(--color-text-faint);
+}
+
+.deck-majors {
+  gap: var(--space-1);
+}
+
+/* A tournament's standings, or a deck's lists: their own page. */
+.deck-subview {
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--space-5) var(--deck-gutter) var(--space-10);
+  box-sizing: border-box;
+}
+
+.deck-subview > * {
+  max-width: 1080px;
+  margin-inline: auto;
+}
+
+.deck-subhead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  color: var(--color-desk-ink);
+}
+
+.deck-subhead__back {
+  gap: var(--space-1);
+}
+
+.deck-subhead__title {
+  flex: 1;
+  min-width: 0;
+}
+
+.deck-subhead__title h2 {
+  margin: 0;
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.deck-subhead__title p {
+  margin: 2px 0 0;
+  color: var(--deck-desk-ink-muted);
+  font-size: var(--text-sm);
+}
+
+.deck-subhead .ds-button {
+  gap: var(--space-1);
+}
+
+.deck-standings {
+  padding: var(--space-1) var(--space-2);
+}
+
+.deck-standings__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.deck-standing {
+  display: grid;
+  grid-template-columns: 3.5rem minmax(0, 12rem) minmax(0, 1fr) 4.5rem auto;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 48px;
+  padding: var(--space-1) var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.deck-standing:last-child {
+  border-bottom: 0;
+}
+
+.deck-standing[data-dropped] {
+  opacity: 0.6;
+}
+
+.deck-standing__player {
+  overflow: hidden;
+  font-weight: var(--weight-medium);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.deck-standing__deck {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.deck-standing__deck > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.deck-standing__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-1);
+  min-width: 132px;
+}
+
+.deck-standing__load {
+  gap: var(--space-1);
+}
+
+.deck-standing__nolist {
+  color: var(--color-text-faint);
+  font-size: var(--text-xs);
+}
+
+/* ---- Deck boxes on a shelf --------------------------------------------- */
+
+.deck-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(144px, 1fr));
+  gap: var(--space-4) var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.deck-tile {
+  --seat-color: var(--color-you);
+
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.deck-screen[data-seat='opponent'] .deck-tile {
+  --seat-color: var(--color-opponent);
+}
+
+/* The deck on the seat: a pool of its seat's light under the box. */
+.deck-tile::before {
+  content: '';
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  width: 168px;
+  height: 160px;
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in oklab, var(--seat-color) 42%, transparent),
+    transparent
+  );
+  opacity: 0;
+  pointer-events: none;
+  translate: -50% 0;
+  transition: opacity var(--duration-normal) var(--ease-out);
+}
+
+.deck-tile[data-current='true']::before {
+  opacity: 1;
+}
+
+.deck-tile__choose {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-4) var(--space-1) var(--space-1);
+  border: 0;
+  border-radius: var(--radius-lg);
+  background: transparent;
+  color: var(--color-desk-ink);
+  font: inherit;
+  text-align: center;
   cursor: pointer;
 }
 
@@ -414,71 +979,58 @@ div.deck-tile__choose {
 }
 
 .deck-tile__choose:focus-visible {
-  outline: var(--ptcgsim-focus-ring);
+  outline: 2px solid var(--color-desk-ink);
   outline-offset: 2px;
 }
 
-.deck-cover {
-  position: relative;
-  flex: none;
-  width: 56px;
-  height: 56px;
-  overflow: hidden;
-  border-radius: var(--radius-md);
-  background: var(--color-surface-3);
-  box-shadow: inset 0 0 0 1px var(--color-border);
+/* Pointed at, the box lifts off the desk. */
+@media (hover: hover) and (pointer: fine) {
+  .deck-tile:hover .deck-box__body {
+    translate: 0 -5px;
+  }
+  .deck-tile:hover .deck-box::after {
+    opacity: 0.7;
+    transform: translateX(9px) scale(1.06, 1.25);
+  }
 }
 
-.deck-cover img {
-  /*
-   * The middle of the artwork window, never the frame: on a 63 x 88 card the
-   * art spans about 10-47% of the height (ex prints keep their Pokemon in the
-   * same band), so a square as tall as that band is 193% of the card's width
-   * wide, centred across and on the band's middle (28.5% down).
-   */
-  position: absolute;
-  top: -27%;
-  left: -46.5%;
-  width: 193%;
-  height: auto;
+.deck-tile__choose:focus-visible .deck-box__body {
+  translate: 0 -5px;
 }
 
-/* Full art: the Pokemon sits lower, under the ability text (about 33%). */
-.deck-cover[data-full-art] img {
-  top: -40%;
-}
-
-.deck-cover__initial {
-  display: grid;
-  place-items: center;
-  height: 100%;
-  color: var(--color-text-faint);
-  font-family: var(--font-display);
-  font-size: var(--text-xl);
-  font-weight: var(--weight-bold);
+.deck-tile__choose:active .deck-box__body {
+  translate: 0 -2px;
 }
 
 .deck-tile__text {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  align-items: center;
+  gap: 2px;
   min-width: 0;
+  max-width: 100%;
 }
 
 .deck-tile__name {
+  display: -webkit-box;
+  max-width: 100%;
   overflow: hidden;
   font-size: var(--text-md);
   font-weight: var(--weight-semibold);
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.25;
+  text-wrap: balance;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow-wrap: anywhere;
 }
 
 .deck-tile__meta {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: center;
   gap: 2px var(--space-2);
-  color: var(--color-text-muted);
+  color: var(--deck-desk-ink-muted);
   font-size: var(--text-xs);
 }
 
@@ -486,47 +1038,68 @@ div.deck-tile__choose {
   display: inline-flex;
   align-items: center;
   gap: 3px;
+  font-weight: var(--weight-semibold);
 }
 
-.deck-tile__count[data-valid='true'] {
-  color: var(--color-success);
+.deck-tile__count[data-valid='true'] svg {
+  color: color-mix(in oklab, var(--color-success) 70%, var(--color-desk-ink));
 }
 
-.deck-tile__count[data-valid='false'] {
-  color: var(--color-warning);
+.deck-tile__count[data-valid='false'] svg {
+  color: color-mix(in oklab, var(--color-warning) 75%, var(--color-desk-ink));
+}
+
+.deck-tile__note {
+  color: var(--deck-desk-ink-muted);
+  font-size: var(--text-2xs);
+  font-style: italic;
 }
 
 .deck-tile__trophy {
-  color: var(--color-gold);
+  color: color-mix(in oklab, var(--color-gold) 70%, var(--color-desk-ink));
 }
 
+/* A ribbon on the box: the seat it is on. */
 .deck-tile__seat {
   position: absolute;
-  top: -8px;
-  inset-inline-start: var(--space-3);
+  top: 4px;
+  inset-inline-start: calc(50% - 64px);
+  z-index: 1;
   padding: 1px 7px;
   border-radius: var(--radius-pill);
   background: var(--color-you);
   color: #fff;
   font-size: var(--text-2xs);
   font-weight: var(--weight-bold);
+  box-shadow: 0 1px 3px rgb(10 6 2 / 0.35);
 }
 
 .deck-tile__seat[data-seat='opponent'] {
   inset-inline-start: auto;
-  inset-inline-end: var(--space-3);
+  inset-inline-end: calc(50% - 64px);
   background: var(--color-opponent);
 }
 
+/* The box's own tools: on its lid's corner, as it is pointed at. */
 .deck-tile__actions {
+  position: absolute;
+  top: var(--space-4);
+  inset-inline-end: 2px;
+  z-index: 2;
   display: flex;
-  flex: none;
   flex-direction: column;
-  justify-content: center;
-  gap: 2px;
-  padding: var(--space-1);
-  opacity: 0.55;
+  gap: var(--space-1);
+  opacity: 0;
   transition: opacity var(--duration-fast) var(--ease-out);
+}
+
+.deck-tile .deck-icon-button {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+  box-shadow: var(--shadow-2);
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -534,6 +1107,7 @@ div.deck-tile__choose {
     opacity: 1;
   }
 }
+
 .deck-tile:focus-within .deck-tile__actions {
   opacity: 1;
 }
@@ -542,6 +1116,13 @@ div.deck-tile__choose {
   .deck-tile__actions {
     opacity: 1;
   }
+}
+
+/* By day the rack and trays are pale: their shadows are lighter. */
+:root[data-theme='day'] .deck-screen {
+  --deck-desk-shadow: rgb(60 36 14 / 0.18);
+  --deck-tray-inset:
+    inset 0 2px 4px rgb(60 36 14 / 0.22), inset 0 -1px 0 rgb(255 255 255 / 0.6);
 }
 
 /* ---- Editor -------------------------------------------------------------- */
@@ -558,9 +1139,12 @@ div.deck-tile__choose {
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2) var(--space-3);
-  padding: var(--space-2) var(--deck-gutter);
-  border-bottom: 1px solid var(--color-border);
-  background: color-mix(in oklab, var(--color-rail) 60%, var(--color-room));
+  margin: var(--space-3) var(--deck-gutter) 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-2);
+  box-shadow: var(--shadow-3), var(--highlight-top);
 }
 
 .deck-editor__back {
@@ -628,26 +1212,42 @@ div.deck-tile__choose {
   display: none;
 }
 
+/* The binder of cards beside the deck's sheet, both lying on the desk. */
 .deck-editor__panes {
   display: grid;
   flex: 1;
   grid-template-columns: minmax(340px, 5fr) minmax(360px, 6fr);
+  gap: var(--space-3);
   min-height: 0;
+  padding: var(--space-3) var(--deck-gutter) var(--deck-gutter);
 }
 
 .deck-editor__pane {
   min-width: 0;
   min-height: 0;
   overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-4), var(--highlight-top);
 }
 
+/* The binder: a deeper cover the cards lie in, stitched round its edge,
+   with the lamp on it. */
+.deck-editor__pane--search {
+  background:
+    radial-gradient(
+      ellipse 80% 60% at 30% 0%,
+      rgb(255 240 220 / 0.05),
+      transparent 70%
+    ),
+    var(--color-surface-sunken);
+  outline: 1.5px dashed color-mix(in oklab, var(--color-text) 14%, transparent);
+  outline-offset: -7px;
+}
+
+/* The deck's sheet: paper. */
 .deck-editor__pane--deck {
-  border-inline-start: 1px solid var(--color-border);
-  background: color-mix(
-    in oklab,
-    var(--color-surface-1) 55%,
-    var(--color-room)
-  );
+  background: var(--color-surface-2);
 }
 
 /* ---- Card search ---------------------------------------------------------- */
@@ -1198,7 +1798,7 @@ div.deck-tile__choose {
   gap: var(--space-2);
   padding: var(--space-3) var(--deck-gutter);
   border-bottom: 1px solid var(--color-border);
-  background: color-mix(in oklab, var(--color-surface-1) 92%, transparent);
+  background: color-mix(in oklab, var(--color-surface-2) 94%, transparent);
   backdrop-filter: blur(var(--surface-blur, 12px));
 }
 
@@ -1217,8 +1817,9 @@ div.deck-tile__choose {
 
 .deck-check__count strong {
   color: var(--color-text);
-  font-size: var(--text-2xl);
+  font-size: var(--text-3xl);
   font-weight: var(--weight-bold);
+  line-height: 1;
 }
 
 .deck-check__verdict {
@@ -2017,13 +2618,82 @@ button.deck-check__issue {
     flex-basis: 100%;
   }
 
-  .deck-screen__seat {
-    flex: 1;
-    max-width: none;
+  .deck-tray {
+    flex: 1 1 0;
   }
 
   .deck-screen__bar-actions {
     margin-inline-start: auto;
+  }
+
+  .deck-home,
+  .deck-subview {
+    padding-top: var(--space-4);
+  }
+
+  /* A finish: its place and event, the player under the event. */
+  .deck-finish__load {
+    grid-template-columns: 3rem minmax(0, 1fr) 16px;
+    row-gap: 0;
+  }
+
+  .deck-finish__player {
+    grid-column: 2;
+    grid-row: 2;
+    font-size: var(--text-xs);
+  }
+
+  .deck-finish__record {
+    display: none;
+  }
+
+  .deck-event {
+    grid-template-columns: 4rem minmax(0, 1fr) 16px;
+    row-gap: 0;
+  }
+
+  .deck-event__meta,
+  .deck-event__nolists {
+    grid-column: 2;
+    font-size: var(--text-xs);
+  }
+
+  .deck-event__go {
+    grid-column: 3;
+    grid-row: 1 / span 2;
+  }
+
+  .deck-standing {
+    grid-template-columns: 3rem minmax(0, 1fr) auto;
+    row-gap: 2px;
+  }
+
+  .deck-standing__deck {
+    grid-column: 2;
+    grid-row: 2;
+    font-size: var(--text-sm);
+  }
+
+  .deck-standing__record {
+    display: none;
+  }
+
+  .deck-standing__actions {
+    grid-column: 3;
+    grid-row: 1 / span 2;
+    min-width: 0;
+  }
+
+  .deck-subhead__title h2 {
+    font-size: var(--text-xl);
+  }
+
+  .deck-subhead__back-label {
+    display: none;
+  }
+
+  .deck-editor__panes {
+    padding-top: var(--space-2);
   }
 
   /* Back, name and tools on one row; the format under them. */
@@ -2159,19 +2829,13 @@ button.deck-check__issue {
     justify-self: center;
   }
 
+  /* The field across; its buttons share the row under it. */
   .deck-paste__actions {
-    display: grid;
     flex-basis: 100%;
-    grid-template-columns: 1fr 1fr;
   }
 
   .deck-paste__actions .ds-button {
-    width: 100%;
-  }
-
-  /* Import across the row; the clipboard and a file share the next. */
-  .deck-paste__actions > :first-child {
-    grid-column: 1 / -1;
+    flex: 1;
   }
 }
 
@@ -2180,8 +2844,45 @@ button.deck-check__issue {
     display: none;
   }
 
+  /* A phone's tray: the box, the seat over the deck's name, the sleeve. */
+  .deck-tray__line {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .deck-screen__seat {
+    gap: var(--space-1-5);
+    padding-inline-end: var(--space-1);
+  }
+
+  .deck-screen__seat-name {
+    font-size: var(--text-xs);
+  }
+
+  .deck-screen__seat-count,
+  .deck-tray__finish {
+    display: none;
+  }
+
+  /* Smaller boxes, two to a shelf, their tools clear of them. */
+  .deck-tile .deck-box {
+    --box-w: 88px;
+    --box-h: 118px;
+    --box-d: 12px;
+  }
+
+  .deck-tile__seat {
+    inset-inline-start: calc(50% - 56px);
+  }
+
+  .deck-tile__seat[data-seat='opponent'] {
+    inset-inline-end: calc(50% - 56px);
+  }
+
   .deck-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3) var(--space-2);
   }
 
   .deck-screen__seat-tag {

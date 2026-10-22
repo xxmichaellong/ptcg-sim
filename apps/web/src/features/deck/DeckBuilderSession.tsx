@@ -5,6 +5,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
 } from 'react';
 
 import {
@@ -371,6 +372,40 @@ export const DeckBuilderSession = ({
     onRequestClose();
   }, [flush, onRequestClose]);
 
+  // Each seat's card back for its tray: the one chosen here, else the one
+  // the room shows. Read as one string so a change elsewhere in the room
+  // doesn't redraw the screen.
+  const subscribeCardBacks = useCallback(
+    (listener: () => void) => {
+      const stopStore = cardBackStore.subscribe(listener);
+      const stopSession = session?.subscribe(listener);
+      return () => {
+        stopStore();
+        stopSession?.();
+      };
+    },
+    [cardBackStore, session]
+  );
+  const readCardBacks = useCallback(() => {
+    const { slots } = cardBackStore.getSnapshot();
+    const main = slots.main.url ?? roomCardBackOf(session, 'main') ?? '';
+    const alternate =
+      slots.alternate.url ?? roomCardBackOf(session, 'alternate') ?? '';
+    return `${main}\n${alternate}`;
+  }, [cardBackStore, session]);
+  const cardBackKey = useSyncExternalStore(
+    subscribeCardBacks,
+    readCardBacks,
+    readCardBacks
+  );
+  const cardBacks = useMemo(() => {
+    const [main, alternate] = cardBackKey.split('\n');
+    return {
+      ...(main ? { main } : {}),
+      ...(alternate ? { alternate } : {}),
+    };
+  }, [cardBackKey]);
+
   const changeCardBack = useCallback(
     (target: DeckBuilderTarget): void => {
       chooseCardBack(target);
@@ -388,6 +423,7 @@ export const DeckBuilderSession = ({
       onPlay={closeAndFlush}
       onClose={onBack ?? closeAndFlush}
       onChangeCardBack={changeCardBack}
+      cardBacks={cardBacks}
       {...(readClipboard ? { readClipboard } : {})}
     />
   );

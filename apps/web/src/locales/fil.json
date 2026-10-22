@@ -13,6 +13,10 @@
     ],
     "translation": ", naka-on"
   },
+  "W8KEEX": {
+    "message": "{0, plural, one {# player} other {# players}}",
+    "translation": ""
+  },
   "yW-SAQ": {
     "message": "{0} ({1})",
     "translation": "{0} ({1})"
@@ -413,16 +417,23 @@
     "message": "{count} in deck",
     "translation": "{count} sa deck"
   },
-  "hlZS8x": {
-    "message": "{days} d ago",
+  "7prUK_": {
+    "message": "{deck}, {place}, {playerName}: try it",
     "comments": [
-      "When a deck was last changed, in days; keep it short."
+      "A player's list in a tournament's standings: the deck, the placing, the player"
     ],
-    "translation": "{days} araw ang nakalipas"
+    "translation": ""
   },
   "Z_tSV_": {
     "message": "{deckName} actions",
     "translation": "Mga aksyon ng {deckName}"
+  },
+  "DPza0y": {
+    "message": "{deckName}, {place} of {players}, {playerName}: try it",
+    "comments": [
+      "A tournament list to load: the deck, its placing, the event size, the player"
+    ],
+    "translation": ""
   },
   "lZWlfm": {
     "message": "{deckName}: put on {seat}",
@@ -442,13 +453,6 @@
   "YWFA46": {
     "message": "{firstReloading} will reload",
     "translation": "Magre-reload ang {firstReloading}"
-  },
-  "Tbgjwj": {
-    "message": "{hours} h ago",
-    "comments": [
-      "When a deck was last changed, in hours; keep it short."
-    ],
-    "translation": "{hours} oras ang nakalipas"
   },
   "k0g2Da": {
     "message": "{hp} HP",
@@ -481,13 +485,6 @@
       "markerName is VSTAR or GX."
     ],
     "translation": "{markerName} marker"
-  },
-  "LNum6A": {
-    "message": "{minutes} min ago",
-    "comments": [
-      "When a deck was last changed, in minutes; keep it short."
-    ],
-    "translation": "{minutes} min ang nakalipas"
   },
   "b3xCW_": {
     "message": "{missingLines, plural, one {# line not found} other {# lines not found}}",
@@ -761,12 +758,26 @@
     "message": "{over, plural, one {# card too many ({count}/{required}).} other {# cards too many ({count}/{required}).}}",
     "translation": "{over, plural, one {# card ang sobra ({count}/{required}).} other {# card ang sobra ({count}/{required}).}}"
   },
+  "foaSz6": {
+    "message": "{place, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}",
+    "comments": [
+      "A tournament placing on a deck box sticker, as 1st"
+    ],
+    "translation": ""
+  },
   "2dJX8c": {
     "message": "{place, selectordinal, one {#st} two {#nd} few {#rd} other {#th}} of {players}",
     "comments": [
       "A deck's best finish in a tournament: its place among the players, as 1st of 285"
     ],
     "translation": "{place, selectordinal, other {Ika-#}} sa {players}"
+  },
+  "cVJydc": {
+    "message": "{placing, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}",
+    "comments": [
+      "A tournament placing, as 1st"
+    ],
+    "translation": ""
   },
   "nT4VV7": {
     "message": "{playerName} {markerName}",
@@ -775,6 +786,10 @@
       "A player's once-per-game marker, e.g. 'Red VSTAR'."
     ],
     "translation": "{markerName} ni {playerName}"
+  },
+  "xNCVW4": {
+    "message": "{players, plural, one {# player} other {# players}}",
+    "translation": ""
   },
   "9FwPUo": {
     "message": "{price} - One-time Donation",
@@ -824,6 +839,13 @@
     ],
     "translation": "{shownPieces} sa {totalPieces, plural, one {# piraso} other {# piraso}}"
   },
+  "VefMOR": {
+    "message": "{slotSeat}: {name}, {total, plural, one {# card} other {# cards}}",
+    "comments": [
+      "A seat's tray on the deck screen: the seat, its deck, its size"
+    ],
+    "translation": ""
+  },
   "w6530e": {
     "message": "{speaker}: {text}",
     "comments": [
@@ -851,6 +873,13 @@
       "Read out on a seat change: the seat, its deck, its size"
     ],
     "translation": "{targetSeat}: {seatLabel}, {seatTotal, plural, one {# card} other {# card}}"
+  },
+  "jBGEib": {
+    "message": "{top8s, plural, one {# top 8} other {# top 8s}} · {lists, plural, one {# list} other {# lists}}",
+    "comments": [
+      "How a deck has done: top 8 finishes and lists seen"
+    ],
+    "translation": ""
   },
   "bTZ1TS": {
     "message": "{topName} deck",
@@ -1115,6 +1144,10 @@
     "message": "Added by hand · legality not checked",
     "translation": "Manu-manong idinagdag · hindi sinuri ang legality"
   },
+  "qe9rVr": {
+    "message": "All lists",
+    "translation": ""
+  },
   "X8Y2MP": {
     "message": "All to deck",
     "context": "shortcut key caption",
@@ -1288,6 +1321,10 @@
     "message": "Back to pile order",
     "translation": "Ibalik sa order ng pile"
   },
+  "JT4RmD": {
+    "message": "Back to the decks",
+    "translation": ""
+  },
   "dOqLYu": {
     "message": "Back to the table",
     "translation": "Bumalik sa table"
@@ -1409,6 +1446,10 @@
     "context": "special condition",
     "translation": "Burned"
   },
+  "EhsQ9V": {
+    "message": "Busy for a moment — try again shortly",
+    "translation": ""
+  },
   "2lorx9": {
     "message": "Can't be changed",
     "translation": "Hindi mababago"
@@ -1442,9 +1483,9 @@
     "message": "Card assembled preview",
     "translation": "Preview ng buong card"
   },
-  "ZVadGZ": {
-    "message": "Card back for {targetSeat}",
-    "translation": "Card back para kay {targetSeat}"
+  "M3FSd1": {
+    "message": "Card back for {slotSeat}",
+    "translation": ""
   },
   "tii3sv": {
     "message": "Card image language…",
@@ -1507,9 +1548,9 @@
     "message": "Change card back",
     "translation": "Palitan ang card back"
   },
-  "jHQMkJ": {
-    "message": "Change card back for {targetSeat}",
-    "translation": "Palitan ang card back ni {targetSeat}"
+  "lKPW0c": {
+    "message": "Change card back for {slotSeat}",
+    "translation": ""
   },
   "SGf9Cc": {
     "message": "Change card type",
@@ -1577,9 +1618,13 @@
     "message": "Choose the deck for {slotSeat} (you)",
     "translation": "Piliin ang deck para kay {slotSeat} (ikaw)"
   },
-  "0Aq5ZG": {
-    "message": "Classic decks",
-    "translation": "Mga classic na deck"
+  "5rfWim": {
+    "message": "Classics",
+    "translation": ""
+  },
+  "xCJdfg": {
+    "message": "Clear",
+    "translation": ""
   },
   "XaMzSZ": {
     "message": "Clear",
@@ -1726,6 +1771,14 @@
     "message": "Couldn't join the room. Try again.",
     "translation": "Hindi makasali sa room. Subukan ulit."
   },
+  "0htzp9": {
+    "message": "Couldn't load that list",
+    "translation": ""
+  },
+  "1Nv1R5": {
+    "message": "Couldn't load this",
+    "translation": ""
+  },
   "w--GsN": {
     "message": "Couldn't open that file",
     "translation": "Hindi mabuksan ang file na iyon"
@@ -1859,6 +1912,10 @@
     "message": "Deck name",
     "translation": "Pangalan ng deck"
   },
+  "pZNzvd": {
+    "message": "Deck search is offline",
+    "translation": ""
+  },
   "iKEGvL": {
     "message": "Deck top",
     "context": "shortcut key caption",
@@ -1868,18 +1925,14 @@
     "message": "Decklist copied",
     "translation": "Nakopya ang decklist"
   },
-  "vUTt1I": {
-    "message": "Decklist to import",
-    "translation": "Decklist na i-import"
-  },
   "Odf26e": {
     "message": "Decks",
     "context": "go back to the saved decks",
     "translation": "Mga deck"
   },
-  "X7Pdd7": {
-    "message": "Decks winning now",
-    "translation": "Mga deck na nananalo ngayon"
+  "xLeOjM": {
+    "message": "Decks you import or build are kept here",
+    "translation": ""
   },
   "gblLhJ": {
     "message": "Delete",
@@ -2038,6 +2091,13 @@
   "IsvGW6": {
     "message": "Drop to import",
     "translation": "I-drop para i-import"
+  },
+  "d3YoNV": {
+    "message": "Dropped",
+    "comments": [
+      "A player who left a tournament"
+    ],
+    "translation": ""
   },
   "kea5ff": {
     "message": "Duplicate",
@@ -2238,6 +2298,14 @@
     "message": "Find a shortcut or key",
     "translation": "Maghanap ng shortcut o key"
   },
+  "VmizBS": {
+    "message": "Find a tournament",
+    "translation": ""
+  },
+  "znQi8E": {
+    "message": "Find an event",
+    "translation": ""
+  },
   "STV_9c": {
     "message": "Find cards",
     "translation": "Maghanap ng mga card"
@@ -2321,10 +2389,6 @@
     "message": "Format",
     "context": "deck format",
     "translation": "Format"
-  },
-  "N80CjQ": {
-    "message": "From clipboard",
-    "translation": "Mula sa clipboard"
   },
   "qIodFG": {
     "message": "Frost",
@@ -2601,10 +2665,6 @@
     "context": "button",
     "translation": "I-import"
   },
-  "EEh2f0": {
-    "message": "Import a deck",
-    "translation": "Mag-import ng deck"
-  },
   "aWU0gR": {
     "message": "Imported deck",
     "translation": "Na-import na deck"
@@ -2672,10 +2732,6 @@
   "N2lSEn": {
     "message": "Joins matching pieces",
     "translation": "Pinagdudugtong ang magkakaparehong piraso"
-  },
-  "xOTzt5": {
-    "message": "just now",
-    "translation": "ngayon lang"
   },
   "80Qsxy": {
     "message": "Keep",
@@ -2767,6 +2823,13 @@
     "context": "Pokémon type",
     "translation": "Lightning"
   },
+  "JL_ceN": {
+    "message": "Limitless",
+    "comments": [
+      "Open this on the site it comes from"
+    ],
+    "translation": ""
+  },
   "BvrzrK": {
     "message": "Line {line} is too long.",
     "translation": "Masyadong mahaba ang linya {line}."
@@ -2792,6 +2855,15 @@
     "context": "show the deck as",
     "translation": "Listahan"
   },
+  "k0WwcP": {
+    "message": "Lists for {0}",
+    "translation": ""
+  },
+  "Ysygva": {
+    "message": "Load",
+    "context": "put a tournament list on the seat",
+    "translation": ""
+  },
   "0SqWRH": {
     "message": "Load a <0>deck</0>, then press <1>Set up</1>.",
     "translation": "Mag-load ng <0>deck</0>, tapos pindutin ang <1>Set up</1>."
@@ -2811,6 +2883,10 @@
   "f55wdH": {
     "message": "Loading decks…",
     "translation": "Nilo-load ang mga deck…"
+  },
+  "l2O65x": {
+    "message": "Loading events…",
+    "translation": ""
   },
   "Pwqkdw": {
     "message": "Loading…",
@@ -2926,6 +3002,13 @@
     "message": "Lost Zone and markers",
     "translation": "Lost Zone at mga marker"
   },
+  "LoMQBK": {
+    "message": "Majors on Limitless",
+    "comments": [
+      "A link to official major tournaments (Regionals, Worlds) on Limitless's site"
+    ],
+    "translation": ""
+  },
   "Q0rQkA": {
     "message": "Make a custom card",
     "translation": "Gumawa ng custom na card"
@@ -3021,6 +3104,16 @@
     "message": "More",
     "context": "more actions",
     "translation": "Higit pa"
+  },
+  "tSBn7s": {
+    "message": "More",
+    "context": "show more lists",
+    "translation": ""
+  },
+  "K7Y_ck": {
+    "message": "More",
+    "context": "show more tournaments",
+    "translation": ""
   },
   "Vk_Ar1": {
     "message": "More filters",
@@ -3219,6 +3312,24 @@
     "message": "No deck yet",
     "translation": "Wala pang deck"
   },
+  "ATYqaZ": {
+    "message": "No decks match “{query}”",
+    "comments": [
+      "A deck search with no results; query is what was typed"
+    ],
+    "translation": ""
+  },
+  "JOqCxp": {
+    "message": "No events match “{query}”",
+    "comments": [
+      "An event search with no results"
+    ],
+    "translation": ""
+  },
+  "8zCZQf": {
+    "message": "No events yet",
+    "translation": ""
+  },
   "SkSmET": {
     "message": "No foil",
     "translation": "Walang foil"
@@ -3227,9 +3338,13 @@
     "message": "No image",
     "translation": "Walang image"
   },
-  "f5zBYV": {
-    "message": "No saved decks yet. Decks you import or build are saved here.",
-    "translation": "Wala pang naka-save na deck. Dito mase-save ang mga deck na ini-import o binuo mo."
+  "nivaRq": {
+    "message": "No list",
+    "translation": ""
+  },
+  "hXMFoN": {
+    "message": "No lists",
+    "translation": ""
   },
   "ebeFtm": {
     "message": "No shortcut matches “{search}”.",
@@ -3487,13 +3602,18 @@
     "message": "Pass the turn",
     "translation": "I-pass ang turn"
   },
+  "sihBmP": {
+    "message": "Paste",
+    "context": "paste a list from the clipboard",
+    "translation": ""
+  },
   "BRnJkz": {
     "message": "Paste a decklist first.",
     "translation": "Mag-paste muna ng decklist."
   },
-  "WXUbKm": {
-    "message": "Paste a decklist, or press Ctrl+V anywhere",
-    "translation": "Mag-paste ng decklist, o pindutin ang Ctrl+V kahit saan"
+  "aGL2ob": {
+    "message": "Paste a list from the clipboard",
+    "translation": ""
   },
   "Ig8A-t": {
     "message": "Paste a valid invitation into Room ID.",
@@ -3548,12 +3668,12 @@
     "message": "Play these decks",
     "translation": "Laruin ang mga deck na ito"
   },
-  "3Nh5cA": {
-    "message": "Played last · {when}",
+  "2qhgQG": {
+    "message": "Played last",
     "comments": [
-      "The deck this seat played last, and when it was changed"
+      "The deck this seat played last"
     ],
-    "translation": "Huling nilaro · {when}"
+    "translation": ""
   },
   "ald_WV": {
     "message": "Player",
@@ -4069,6 +4189,10 @@
     "message": "Save {name}",
     "translation": "I-save ang {name}"
   },
+  "3zdJQY": {
+    "message": "Save and edit {0}",
+    "translation": ""
+  },
   "Z-7fcR": {
     "message": "Save and edit {title}",
     "translation": "I-save at i-edit ang {title}"
@@ -4098,6 +4222,10 @@
     "message": "Search cards…",
     "translation": "Maghanap ng card…"
   },
+  "cJ3-3Z": {
+    "message": "Search decks or paste a list",
+    "translation": ""
+  },
   "fU5HHP": {
     "message": "Search every format",
     "translation": "Hanapin sa lahat ng format"
@@ -4117,6 +4245,10 @@
   "Rjp4L6": {
     "message": "Search syntax",
     "translation": "Syntax ng paghahanap"
+  },
+  "SBTElJ": {
+    "message": "Searching…",
+    "translation": ""
   },
   "xcUq3U": {
     "message": "Season",
@@ -4543,6 +4675,10 @@
   "Tg13WJ": {
     "message": "Standard card",
     "translation": "Karaniwang card"
+  },
+  "kGkZLk": {
+    "message": "Standings",
+    "translation": ""
   },
   "7GpLGd": {
     "message": "Start turn",
@@ -4983,12 +5119,12 @@
     "context": "shortcut key caption",
     "translation": "Itaas"
   },
-  "20pFu_": {
-    "message": "Top finishes from <0>{sourceName}</0> online tournaments, last two weeks · updated {updated}",
+  "Q7iVQK": {
+    "message": "Top finishes on <0>{sourceName}</0>, last two weeks · {updated}",
     "comments": [
       "sourceName is a tournament site (Limitless); updated is a short date"
     ],
-    "translation": "Mga nangungunang resulta mula sa mga online tournament ng <0>{sourceName}</0>, nakaraang dalawang linggo · na-update {updated}"
+    "translation": ""
   },
   "qssK_n": {
     "message": "Top left",
@@ -4997,6 +5133,29 @@
   "ay4bwk": {
     "message": "Top right",
     "translation": "Itaas na kanan"
+  },
+  "r8DwfA": {
+    "message": "Tournament data: <0>{0}</0>",
+    "comments": [
+      "A credit line under tournament decks; source is a site's name (Limitless TCG)"
+    ],
+    "translation": ""
+  },
+  "HLA2HB": {
+    "message": "Tournament decks",
+    "translation": ""
+  },
+  "4Zz_OT": {
+    "message": "Tournament decks aren't ready yet",
+    "translation": ""
+  },
+  "iPoLT-": {
+    "message": "Tournaments",
+    "translation": ""
+  },
+  "6NffFz": {
+    "message": "Tournaments are offline",
+    "translation": ""
   },
   "Ecn3Fr": {
     "message": "Trainer",
@@ -5099,6 +5258,10 @@
   "UMxfxQ": {
     "message": "Unknown card",
     "translation": "Hindi kilalang card"
+  },
+  "EydT-n": {
+    "message": "Unknown deck",
+    "translation": ""
   },
   "PjF2oq": {
     "message": "Unlimited",
@@ -5221,6 +5384,10 @@
     "message": "Win",
     "context": "keyboard key (the Windows key)",
     "translation": "Win"
+  },
+  "NWGsaA": {
+    "message": "Winning now",
+    "translation": ""
   },
   "n1kezF": {
     "message": "Yes",

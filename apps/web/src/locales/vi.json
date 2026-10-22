@@ -13,6 +13,10 @@
     ],
     "translation": ", bật"
   },
+  "W8KEEX": {
+    "message": "{0, plural, one {# player} other {# players}}",
+    "translation": ""
+  },
   "yW-SAQ": {
     "message": "{0} ({1})",
     "translation": "{0} ({1})"
@@ -413,16 +417,23 @@
     "message": "{count} in deck",
     "translation": "{count} trong bộ bài"
   },
-  "hlZS8x": {
-    "message": "{days} d ago",
+  "7prUK_": {
+    "message": "{deck}, {place}, {playerName}: try it",
     "comments": [
-      "When a deck was last changed, in days; keep it short."
+      "A player's list in a tournament's standings: the deck, the placing, the player"
     ],
-    "translation": "{days} ngày trước"
+    "translation": ""
   },
   "Z_tSV_": {
     "message": "{deckName} actions",
     "translation": "Thao tác với {deckName}"
+  },
+  "DPza0y": {
+    "message": "{deckName}, {place} of {players}, {playerName}: try it",
+    "comments": [
+      "A tournament list to load: the deck, its placing, the event size, the player"
+    ],
+    "translation": ""
   },
   "lZWlfm": {
     "message": "{deckName}: put on {seat}",
@@ -442,13 +453,6 @@
   "YWFA46": {
     "message": "{firstReloading} will reload",
     "translation": "{firstReloading} sẽ tải lại"
-  },
-  "Tbgjwj": {
-    "message": "{hours} h ago",
-    "comments": [
-      "When a deck was last changed, in hours; keep it short."
-    ],
-    "translation": "{hours} giờ trước"
   },
   "k0g2Da": {
     "message": "{hp} HP",
@@ -481,13 +485,6 @@
       "markerName is VSTAR or GX."
     ],
     "translation": "Điểm đánh dấu {markerName}"
-  },
-  "LNum6A": {
-    "message": "{minutes} min ago",
-    "comments": [
-      "When a deck was last changed, in minutes; keep it short."
-    ],
-    "translation": "{minutes} phút trước"
   },
   "b3xCW_": {
     "message": "{missingLines, plural, one {# line not found} other {# lines not found}}",
@@ -761,12 +758,26 @@
     "message": "{over, plural, one {# card too many ({count}/{required}).} other {# cards too many ({count}/{required}).}}",
     "translation": "{over, plural, other {Thừa # lá bài ({count}/{required}).}}"
   },
+  "foaSz6": {
+    "message": "{place, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}",
+    "comments": [
+      "A tournament placing on a deck box sticker, as 1st"
+    ],
+    "translation": ""
+  },
   "2dJX8c": {
     "message": "{place, selectordinal, one {#st} two {#nd} few {#rd} other {#th}} of {players}",
     "comments": [
       "A deck's best finish in a tournament: its place among the players, as 1st of 285"
     ],
     "translation": "{place, selectordinal, other {Hạng #}} trên {players}"
+  },
+  "cVJydc": {
+    "message": "{placing, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}",
+    "comments": [
+      "A tournament placing, as 1st"
+    ],
+    "translation": ""
   },
   "nT4VV7": {
     "message": "{playerName} {markerName}",
@@ -775,6 +786,10 @@
       "A player's once-per-game marker, e.g. 'Red VSTAR'."
     ],
     "translation": "{markerName} của {playerName}"
+  },
+  "xNCVW4": {
+    "message": "{players, plural, one {# player} other {# players}}",
+    "translation": ""
   },
   "9FwPUo": {
     "message": "{price} - One-time Donation",
@@ -824,6 +839,13 @@
     ],
     "translation": "{shownPieces} trong {totalPieces, plural, other {# mảnh}}"
   },
+  "VefMOR": {
+    "message": "{slotSeat}: {name}, {total, plural, one {# card} other {# cards}}",
+    "comments": [
+      "A seat's tray on the deck screen: the seat, its deck, its size"
+    ],
+    "translation": ""
+  },
   "w6530e": {
     "message": "{speaker}: {text}",
     "comments": [
@@ -851,6 +873,13 @@
       "Read out on a seat change: the seat, its deck, its size"
     ],
     "translation": "{targetSeat}: {seatLabel}, {seatTotal, plural, other {# lá bài}}"
+  },
+  "jBGEib": {
+    "message": "{top8s, plural, one {# top 8} other {# top 8s}} · {lists, plural, one {# list} other {# lists}}",
+    "comments": [
+      "How a deck has done: top 8 finishes and lists seen"
+    ],
+    "translation": ""
   },
   "bTZ1TS": {
     "message": "{topName} deck",
@@ -1115,6 +1144,10 @@
     "message": "Added by hand · legality not checked",
     "translation": "Thêm thủ công · chưa kiểm tra tính hợp lệ"
   },
+  "qe9rVr": {
+    "message": "All lists",
+    "translation": ""
+  },
   "X8Y2MP": {
     "message": "All to deck",
     "context": "shortcut key caption",
@@ -1288,6 +1321,10 @@
     "message": "Back to pile order",
     "translation": "Quay lại thứ tự trong chồng bài"
   },
+  "JT4RmD": {
+    "message": "Back to the decks",
+    "translation": ""
+  },
   "dOqLYu": {
     "message": "Back to the table",
     "translation": "Quay lại bàn chơi"
@@ -1409,6 +1446,10 @@
     "context": "special condition",
     "translation": "Bỏng"
   },
+  "EhsQ9V": {
+    "message": "Busy for a moment — try again shortly",
+    "translation": ""
+  },
   "2lorx9": {
     "message": "Can't be changed",
     "translation": "Không thể thay đổi"
@@ -1442,9 +1483,9 @@
     "message": "Card assembled preview",
     "translation": "Xem trước lá bài đã ghép"
   },
-  "ZVadGZ": {
-    "message": "Card back for {targetSeat}",
-    "translation": "Mặt sau lá bài của {targetSeat}"
+  "M3FSd1": {
+    "message": "Card back for {slotSeat}",
+    "translation": ""
   },
   "tii3sv": {
     "message": "Card image language…",
@@ -1507,9 +1548,9 @@
     "message": "Change card back",
     "translation": "Đổi mặt sau thẻ"
   },
-  "jHQMkJ": {
-    "message": "Change card back for {targetSeat}",
-    "translation": "Đổi mặt sau thẻ cho {targetSeat}"
+  "lKPW0c": {
+    "message": "Change card back for {slotSeat}",
+    "translation": ""
   },
   "SGf9Cc": {
     "message": "Change card type",
@@ -1577,9 +1618,13 @@
     "message": "Choose the deck for {slotSeat} (you)",
     "translation": "Chọn bộ bài cho {slotSeat} (bạn)"
   },
-  "0Aq5ZG": {
-    "message": "Classic decks",
-    "translation": "Bộ bài kinh điển"
+  "5rfWim": {
+    "message": "Classics",
+    "translation": ""
+  },
+  "xCJdfg": {
+    "message": "Clear",
+    "translation": ""
   },
   "XaMzSZ": {
     "message": "Clear",
@@ -1726,6 +1771,14 @@
     "message": "Couldn't join the room. Try again.",
     "translation": "Không vào được phòng. Hãy thử lại."
   },
+  "0htzp9": {
+    "message": "Couldn't load that list",
+    "translation": ""
+  },
+  "1Nv1R5": {
+    "message": "Couldn't load this",
+    "translation": ""
+  },
   "w--GsN": {
     "message": "Couldn't open that file",
     "translation": "Không mở được tệp đó"
@@ -1859,6 +1912,10 @@
     "message": "Deck name",
     "translation": "Tên bộ bài"
   },
+  "pZNzvd": {
+    "message": "Deck search is offline",
+    "translation": ""
+  },
   "iKEGvL": {
     "message": "Deck top",
     "context": "shortcut key caption",
@@ -1868,18 +1925,14 @@
     "message": "Decklist copied",
     "translation": "Đã sao chép danh sách bài"
   },
-  "vUTt1I": {
-    "message": "Decklist to import",
-    "translation": "Danh sách bài cần nhập"
-  },
   "Odf26e": {
     "message": "Decks",
     "context": "go back to the saved decks",
     "translation": "Bộ bài"
   },
-  "X7Pdd7": {
-    "message": "Decks winning now",
-    "translation": "Bộ bài đang thắng"
+  "xLeOjM": {
+    "message": "Decks you import or build are kept here",
+    "translation": ""
   },
   "gblLhJ": {
     "message": "Delete",
@@ -2038,6 +2091,13 @@
   "IsvGW6": {
     "message": "Drop to import",
     "translation": "Thả vào để nhập"
+  },
+  "d3YoNV": {
+    "message": "Dropped",
+    "comments": [
+      "A player who left a tournament"
+    ],
+    "translation": ""
   },
   "kea5ff": {
     "message": "Duplicate",
@@ -2238,6 +2298,14 @@
     "message": "Find a shortcut or key",
     "translation": "Tìm phím tắt hoặc phím"
   },
+  "VmizBS": {
+    "message": "Find a tournament",
+    "translation": ""
+  },
+  "znQi8E": {
+    "message": "Find an event",
+    "translation": ""
+  },
   "STV_9c": {
     "message": "Find cards",
     "translation": "Tìm thẻ bài"
@@ -2321,10 +2389,6 @@
     "message": "Format",
     "context": "deck format",
     "translation": "Thể thức"
-  },
-  "N80CjQ": {
-    "message": "From clipboard",
-    "translation": "Từ clipboard"
   },
   "qIodFG": {
     "message": "Frost",
@@ -2601,10 +2665,6 @@
     "context": "button",
     "translation": "Nhập"
   },
-  "EEh2f0": {
-    "message": "Import a deck",
-    "translation": "Nhập bộ bài"
-  },
   "aWU0gR": {
     "message": "Imported deck",
     "translation": "Bộ bài đã nhập"
@@ -2672,10 +2732,6 @@
   "N2lSEn": {
     "message": "Joins matching pieces",
     "translation": "Gộp các quân giống nhau"
-  },
-  "xOTzt5": {
-    "message": "just now",
-    "translation": "vừa xong"
   },
   "80Qsxy": {
     "message": "Keep",
@@ -2767,6 +2823,13 @@
     "context": "Pokémon type",
     "translation": "Lightning"
   },
+  "JL_ceN": {
+    "message": "Limitless",
+    "comments": [
+      "Open this on the site it comes from"
+    ],
+    "translation": ""
+  },
   "BvrzrK": {
     "message": "Line {line} is too long.",
     "translation": "Dòng {line} quá dài."
@@ -2792,6 +2855,15 @@
     "context": "show the deck as",
     "translation": "Danh sách"
   },
+  "k0WwcP": {
+    "message": "Lists for {0}",
+    "translation": ""
+  },
+  "Ysygva": {
+    "message": "Load",
+    "context": "put a tournament list on the seat",
+    "translation": ""
+  },
   "0SqWRH": {
     "message": "Load a <0>deck</0>, then press <1>Set up</1>.",
     "translation": "Tải một <0>bộ bài</0>, rồi nhấn <1>Thiết lập</1>."
@@ -2811,6 +2883,10 @@
   "f55wdH": {
     "message": "Loading decks…",
     "translation": "Đang tải bộ bài…"
+  },
+  "l2O65x": {
+    "message": "Loading events…",
+    "translation": ""
   },
   "Pwqkdw": {
     "message": "Loading…",
@@ -2926,6 +3002,13 @@
     "message": "Lost Zone and markers",
     "translation": "Lost Zone và marker"
   },
+  "LoMQBK": {
+    "message": "Majors on Limitless",
+    "comments": [
+      "A link to official major tournaments (Regionals, Worlds) on Limitless's site"
+    ],
+    "translation": ""
+  },
   "Q0rQkA": {
     "message": "Make a custom card",
     "translation": "Tạo lá bài tùy chỉnh"
@@ -3021,6 +3104,16 @@
     "message": "More",
     "context": "more actions",
     "translation": "Thêm"
+  },
+  "tSBn7s": {
+    "message": "More",
+    "context": "show more lists",
+    "translation": ""
+  },
+  "K7Y_ck": {
+    "message": "More",
+    "context": "show more tournaments",
+    "translation": ""
   },
   "Vk_Ar1": {
     "message": "More filters",
@@ -3219,6 +3312,24 @@
     "message": "No deck yet",
     "translation": "Chưa có bộ bài"
   },
+  "ATYqaZ": {
+    "message": "No decks match “{query}”",
+    "comments": [
+      "A deck search with no results; query is what was typed"
+    ],
+    "translation": ""
+  },
+  "JOqCxp": {
+    "message": "No events match “{query}”",
+    "comments": [
+      "An event search with no results"
+    ],
+    "translation": ""
+  },
+  "8zCZQf": {
+    "message": "No events yet",
+    "translation": ""
+  },
   "SkSmET": {
     "message": "No foil",
     "translation": "Không foil"
@@ -3227,9 +3338,13 @@
     "message": "No image",
     "translation": "Không có ảnh"
   },
-  "f5zBYV": {
-    "message": "No saved decks yet. Decks you import or build are saved here.",
-    "translation": "Chưa có bộ bài nào được lưu. Bộ bài bạn nhập hoặc xây dựng sẽ được lưu ở đây."
+  "nivaRq": {
+    "message": "No list",
+    "translation": ""
+  },
+  "hXMFoN": {
+    "message": "No lists",
+    "translation": ""
   },
   "ebeFtm": {
     "message": "No shortcut matches “{search}”.",
@@ -3487,13 +3602,18 @@
     "message": "Pass the turn",
     "translation": "Qua lượt"
   },
+  "sihBmP": {
+    "message": "Paste",
+    "context": "paste a list from the clipboard",
+    "translation": ""
+  },
   "BRnJkz": {
     "message": "Paste a decklist first.",
     "translation": "Hãy dán danh sách bộ bài trước."
   },
-  "WXUbKm": {
-    "message": "Paste a decklist, or press Ctrl+V anywhere",
-    "translation": "Dán danh sách bộ bài, hoặc nhấn Ctrl+V ở bất cứ đâu"
+  "aGL2ob": {
+    "message": "Paste a list from the clipboard",
+    "translation": ""
   },
   "Ig8A-t": {
     "message": "Paste a valid invitation into Room ID.",
@@ -3548,12 +3668,12 @@
     "message": "Play these decks",
     "translation": "Chơi các bộ bài này"
   },
-  "3Nh5cA": {
-    "message": "Played last · {when}",
+  "2qhgQG": {
+    "message": "Played last",
     "comments": [
-      "The deck this seat played last, and when it was changed"
+      "The deck this seat played last"
     ],
-    "translation": "Chơi gần nhất · {when}"
+    "translation": ""
   },
   "ald_WV": {
     "message": "Player",
@@ -4069,6 +4189,10 @@
     "message": "Save {name}",
     "translation": "Lưu {name}"
   },
+  "3zdJQY": {
+    "message": "Save and edit {0}",
+    "translation": ""
+  },
   "Z-7fcR": {
     "message": "Save and edit {title}",
     "translation": "Lưu và chỉnh sửa {title}"
@@ -4098,6 +4222,10 @@
     "message": "Search cards…",
     "translation": "Tìm lá bài…"
   },
+  "cJ3-3Z": {
+    "message": "Search decks or paste a list",
+    "translation": ""
+  },
   "fU5HHP": {
     "message": "Search every format",
     "translation": "Tìm trong mọi thể thức"
@@ -4117,6 +4245,10 @@
   "Rjp4L6": {
     "message": "Search syntax",
     "translation": "Cú pháp tìm kiếm"
+  },
+  "SBTElJ": {
+    "message": "Searching…",
+    "translation": ""
   },
   "xcUq3U": {
     "message": "Season",
@@ -4543,6 +4675,10 @@
   "Tg13WJ": {
     "message": "Standard card",
     "translation": "Thẻ tiêu chuẩn"
+  },
+  "kGkZLk": {
+    "message": "Standings",
+    "translation": ""
   },
   "7GpLGd": {
     "message": "Start turn",
@@ -4983,12 +5119,12 @@
     "context": "shortcut key caption",
     "translation": "Trên cùng"
   },
-  "20pFu_": {
-    "message": "Top finishes from <0>{sourceName}</0> online tournaments, last two weeks · updated {updated}",
+  "Q7iVQK": {
+    "message": "Top finishes on <0>{sourceName}</0>, last two weeks · {updated}",
     "comments": [
       "sourceName is a tournament site (Limitless); updated is a short date"
     ],
-    "translation": "Thành tích hàng đầu từ các giải đấu trực tuyến của <0>{sourceName}</0>, hai tuần qua · cập nhật {updated}"
+    "translation": ""
   },
   "qssK_n": {
     "message": "Top left",
@@ -4997,6 +5133,29 @@
   "ay4bwk": {
     "message": "Top right",
     "translation": "Trên cùng bên phải"
+  },
+  "r8DwfA": {
+    "message": "Tournament data: <0>{0}</0>",
+    "comments": [
+      "A credit line under tournament decks; source is a site's name (Limitless TCG)"
+    ],
+    "translation": ""
+  },
+  "HLA2HB": {
+    "message": "Tournament decks",
+    "translation": ""
+  },
+  "4Zz_OT": {
+    "message": "Tournament decks aren't ready yet",
+    "translation": ""
+  },
+  "iPoLT-": {
+    "message": "Tournaments",
+    "translation": ""
+  },
+  "6NffFz": {
+    "message": "Tournaments are offline",
+    "translation": ""
   },
   "Ecn3Fr": {
     "message": "Trainer",
@@ -5099,6 +5258,10 @@
   "UMxfxQ": {
     "message": "Unknown card",
     "translation": "Lá bài không xác định"
+  },
+  "EydT-n": {
+    "message": "Unknown deck",
+    "translation": ""
   },
   "PjF2oq": {
     "message": "Unlimited",
@@ -5221,6 +5384,10 @@
     "message": "Win",
     "context": "keyboard key (the Windows key)",
     "translation": "Win"
+  },
+  "NWGsaA": {
+    "message": "Winning now",
+    "translation": ""
   },
   "n1kezF": {
     "message": "Yes",

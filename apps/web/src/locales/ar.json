@@ -13,6 +13,10 @@
     ],
     "translation": "، قيد التشغيل"
   },
+  "W8KEEX": {
+    "message": "{0, plural, one {# player} other {# players}}",
+    "translation": ""
+  },
   "yW-SAQ": {
     "message": "{0} ({1})",
     "translation": "{0} ({1})"
@@ -413,16 +417,23 @@
     "message": "{count} in deck",
     "translation": "{count} في المجموعة"
   },
-  "hlZS8x": {
-    "message": "{days} d ago",
+  "7prUK_": {
+    "message": "{deck}, {place}, {playerName}: try it",
     "comments": [
-      "When a deck was last changed, in days; keep it short."
+      "A player's list in a tournament's standings: the deck, the placing, the player"
     ],
-    "translation": "منذ {days} ي"
+    "translation": ""
   },
   "Z_tSV_": {
     "message": "{deckName} actions",
     "translation": "إجراءات {deckName}"
+  },
+  "DPza0y": {
+    "message": "{deckName}, {place} of {players}, {playerName}: try it",
+    "comments": [
+      "A tournament list to load: the deck, its placing, the event size, the player"
+    ],
+    "translation": ""
   },
   "lZWlfm": {
     "message": "{deckName}: put on {seat}",
@@ -442,13 +453,6 @@
   "YWFA46": {
     "message": "{firstReloading} will reload",
     "translation": "سيُعاد تحميل {firstReloading}"
-  },
-  "Tbgjwj": {
-    "message": "{hours} h ago",
-    "comments": [
-      "When a deck was last changed, in hours; keep it short."
-    ],
-    "translation": "منذ {hours} س"
   },
   "k0g2Da": {
     "message": "{hp} HP",
@@ -481,13 +485,6 @@
       "markerName is VSTAR or GX."
     ],
     "translation": "علامة {markerName}"
-  },
-  "LNum6A": {
-    "message": "{minutes} min ago",
-    "comments": [
-      "When a deck was last changed, in minutes; keep it short."
-    ],
-    "translation": "منذ {minutes} د"
   },
   "b3xCW_": {
     "message": "{missingLines, plural, one {# line not found} other {# lines not found}}",
@@ -761,12 +758,26 @@
     "message": "{over, plural, one {# card too many ({count}/{required}).} other {# cards too many ({count}/{required}).}}",
     "translation": "{over, plural, one {بطاقة واحدة زائدة ({count}/{required}).} two {بطاقتان زائدتان ({count}/{required}).} few {# بطاقات زائدة ({count}/{required}).} many {# بطاقة زائدة ({count}/{required}).} other {# بطاقة زائدة ({count}/{required}).}}"
   },
+  "foaSz6": {
+    "message": "{place, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}",
+    "comments": [
+      "A tournament placing on a deck box sticker, as 1st"
+    ],
+    "translation": ""
+  },
   "2dJX8c": {
     "message": "{place, selectordinal, one {#st} two {#nd} few {#rd} other {#th}} of {players}",
     "comments": [
       "A deck's best finish in a tournament: its place among the players, as 1st of 285"
     ],
     "translation": "{place, selectordinal, other {المركز #}} من {players}"
+  },
+  "cVJydc": {
+    "message": "{placing, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}",
+    "comments": [
+      "A tournament placing, as 1st"
+    ],
+    "translation": ""
   },
   "nT4VV7": {
     "message": "{playerName} {markerName}",
@@ -775,6 +786,10 @@
       "A player's once-per-game marker, e.g. 'Red VSTAR'."
     ],
     "translation": "{markerName} {playerName}"
+  },
+  "xNCVW4": {
+    "message": "{players, plural, one {# player} other {# players}}",
+    "translation": ""
   },
   "9FwPUo": {
     "message": "{price} - One-time Donation",
@@ -824,6 +839,13 @@
     ],
     "translation": "{shownPieces} من {totalPieces, plural, zero {# قطعة} one {قطعة واحدة} two {قطعتين} few {# قطع} many {# قطعة} other {# قطعة}}"
   },
+  "VefMOR": {
+    "message": "{slotSeat}: {name}, {total, plural, one {# card} other {# cards}}",
+    "comments": [
+      "A seat's tray on the deck screen: the seat, its deck, its size"
+    ],
+    "translation": ""
+  },
   "w6530e": {
     "message": "{speaker}: {text}",
     "comments": [
@@ -851,6 +873,13 @@
       "Read out on a seat change: the seat, its deck, its size"
     ],
     "translation": "{targetSeat}: {seatLabel}، {seatTotal, plural, zero {# بطاقة} one {بطاقة واحدة} two {بطاقتان} few {# بطاقات} many {# بطاقة} other {# بطاقة}}"
+  },
+  "jBGEib": {
+    "message": "{top8s, plural, one {# top 8} other {# top 8s}} · {lists, plural, one {# list} other {# lists}}",
+    "comments": [
+      "How a deck has done: top 8 finishes and lists seen"
+    ],
+    "translation": ""
   },
   "bTZ1TS": {
     "message": "{topName} deck",
@@ -1115,6 +1144,10 @@
     "message": "Added by hand · legality not checked",
     "translation": "أُضيفت يدويًا · لم يُتحقق من الشرعية"
   },
+  "qe9rVr": {
+    "message": "All lists",
+    "translation": ""
+  },
   "X8Y2MP": {
     "message": "All to deck",
     "context": "shortcut key caption",
@@ -1288,6 +1321,10 @@
     "message": "Back to pile order",
     "translation": "العودة إلى ترتيب الكومة"
   },
+  "JT4RmD": {
+    "message": "Back to the decks",
+    "translation": ""
+  },
   "dOqLYu": {
     "message": "Back to the table",
     "translation": "العودة إلى الطاولة"
@@ -1409,6 +1446,10 @@
     "context": "special condition",
     "translation": "محروق"
   },
+  "EhsQ9V": {
+    "message": "Busy for a moment — try again shortly",
+    "translation": ""
+  },
   "2lorx9": {
     "message": "Can't be changed",
     "translation": "لا يمكن تغييره"
@@ -1442,9 +1483,9 @@
     "message": "Card assembled preview",
     "translation": "معاينة الورقة المجمّعة"
   },
-  "ZVadGZ": {
-    "message": "Card back for {targetSeat}",
-    "translation": "ظهر الورقة لـ {targetSeat}"
+  "M3FSd1": {
+    "message": "Card back for {slotSeat}",
+    "translation": ""
   },
   "tii3sv": {
     "message": "Card image language…",
@@ -1507,9 +1548,9 @@
     "message": "Change card back",
     "translation": "تغيير ظهر البطاقة"
   },
-  "jHQMkJ": {
-    "message": "Change card back for {targetSeat}",
-    "translation": "تغيير ظهر البطاقة لـ {targetSeat}"
+  "lKPW0c": {
+    "message": "Change card back for {slotSeat}",
+    "translation": ""
   },
   "SGf9Cc": {
     "message": "Change card type",
@@ -1577,9 +1618,13 @@
     "message": "Choose the deck for {slotSeat} (you)",
     "translation": "اختر الدك لـ {slotSeat} (أنت)"
   },
-  "0Aq5ZG": {
-    "message": "Classic decks",
-    "translation": "الدكات الكلاسيكية"
+  "5rfWim": {
+    "message": "Classics",
+    "translation": ""
+  },
+  "xCJdfg": {
+    "message": "Clear",
+    "translation": ""
   },
   "XaMzSZ": {
     "message": "Clear",
@@ -1726,6 +1771,14 @@
     "message": "Couldn't join the room. Try again.",
     "translation": "تعذّر الانضمام إلى الغرفة. حاول مرة أخرى."
   },
+  "0htzp9": {
+    "message": "Couldn't load that list",
+    "translation": ""
+  },
+  "1Nv1R5": {
+    "message": "Couldn't load this",
+    "translation": ""
+  },
   "w--GsN": {
     "message": "Couldn't open that file",
     "translation": "تعذّر فتح هذا الملف"
@@ -1859,6 +1912,10 @@
     "message": "Deck name",
     "translation": "اسم المجموعة"
   },
+  "pZNzvd": {
+    "message": "Deck search is offline",
+    "translation": ""
+  },
   "iKEGvL": {
     "message": "Deck top",
     "context": "shortcut key caption",
@@ -1868,18 +1925,14 @@
     "message": "Decklist copied",
     "translation": "تم نسخ قائمة المجموعة"
   },
-  "vUTt1I": {
-    "message": "Decklist to import",
-    "translation": "قائمة المجموعة المراد استيرادها"
-  },
   "Odf26e": {
     "message": "Decks",
     "context": "go back to the saved decks",
     "translation": "المجموعات"
   },
-  "X7Pdd7": {
-    "message": "Decks winning now",
-    "translation": "المجموعات الفائزة حاليًا"
+  "xLeOjM": {
+    "message": "Decks you import or build are kept here",
+    "translation": ""
   },
   "gblLhJ": {
     "message": "Delete",
@@ -2038,6 +2091,13 @@
   "IsvGW6": {
     "message": "Drop to import",
     "translation": "أفلِت للاستيراد"
+  },
+  "d3YoNV": {
+    "message": "Dropped",
+    "comments": [
+      "A player who left a tournament"
+    ],
+    "translation": ""
   },
   "kea5ff": {
     "message": "Duplicate",
@@ -2238,6 +2298,14 @@
     "message": "Find a shortcut or key",
     "translation": "البحث عن اختصار أو مفتاح"
   },
+  "VmizBS": {
+    "message": "Find a tournament",
+    "translation": ""
+  },
+  "znQi8E": {
+    "message": "Find an event",
+    "translation": ""
+  },
   "STV_9c": {
     "message": "Find cards",
     "translation": "البحث عن بطاقات"
@@ -2321,10 +2389,6 @@
     "message": "Format",
     "context": "deck format",
     "translation": "النظام"
-  },
-  "N80CjQ": {
-    "message": "From clipboard",
-    "translation": "من الحافظة"
   },
   "qIodFG": {
     "message": "Frost",
@@ -2601,10 +2665,6 @@
     "context": "button",
     "translation": "استيراد"
   },
-  "EEh2f0": {
-    "message": "Import a deck",
-    "translation": "استيراد مجموعة أوراق"
-  },
   "aWU0gR": {
     "message": "Imported deck",
     "translation": "مجموعة أوراق مستوردة"
@@ -2672,10 +2732,6 @@
   "N2lSEn": {
     "message": "Joins matching pieces",
     "translation": "يضم القطع المتطابقة"
-  },
-  "xOTzt5": {
-    "message": "just now",
-    "translation": "الآن"
   },
   "80Qsxy": {
     "message": "Keep",
@@ -2767,6 +2823,13 @@
     "context": "Pokémon type",
     "translation": "برق"
   },
+  "JL_ceN": {
+    "message": "Limitless",
+    "comments": [
+      "Open this on the site it comes from"
+    ],
+    "translation": ""
+  },
   "BvrzrK": {
     "message": "Line {line} is too long.",
     "translation": "السطر {line} طويل جدًا."
@@ -2792,6 +2855,15 @@
     "context": "show the deck as",
     "translation": "قائمة"
   },
+  "k0WwcP": {
+    "message": "Lists for {0}",
+    "translation": ""
+  },
+  "Ysygva": {
+    "message": "Load",
+    "context": "put a tournament list on the seat",
+    "translation": ""
+  },
   "0SqWRH": {
     "message": "Load a <0>deck</0>, then press <1>Set up</1>.",
     "translation": "حمّل <0>مجموعة أوراق</0>، ثم اضغط <1>تجهيز</1>."
@@ -2811,6 +2883,10 @@
   "f55wdH": {
     "message": "Loading decks…",
     "translation": "جارٍ تحميل مجموعات الأوراق…"
+  },
+  "l2O65x": {
+    "message": "Loading events…",
+    "translation": ""
   },
   "Pwqkdw": {
     "message": "Loading…",
@@ -2926,6 +3002,13 @@
     "message": "Lost Zone and markers",
     "translation": "Lost Zone والعلامات"
   },
+  "LoMQBK": {
+    "message": "Majors on Limitless",
+    "comments": [
+      "A link to official major tournaments (Regionals, Worlds) on Limitless's site"
+    ],
+    "translation": ""
+  },
   "Q0rQkA": {
     "message": "Make a custom card",
     "translation": "إنشاء بطاقة مخصصة"
@@ -3021,6 +3104,16 @@
     "message": "More",
     "context": "more actions",
     "translation": "المزيد"
+  },
+  "tSBn7s": {
+    "message": "More",
+    "context": "show more lists",
+    "translation": ""
+  },
+  "K7Y_ck": {
+    "message": "More",
+    "context": "show more tournaments",
+    "translation": ""
   },
   "Vk_Ar1": {
     "message": "More filters",
@@ -3219,6 +3312,24 @@
     "message": "No deck yet",
     "translation": "لا يوجد دك بعد"
   },
+  "ATYqaZ": {
+    "message": "No decks match “{query}”",
+    "comments": [
+      "A deck search with no results; query is what was typed"
+    ],
+    "translation": ""
+  },
+  "JOqCxp": {
+    "message": "No events match “{query}”",
+    "comments": [
+      "An event search with no results"
+    ],
+    "translation": ""
+  },
+  "8zCZQf": {
+    "message": "No events yet",
+    "translation": ""
+  },
   "SkSmET": {
     "message": "No foil",
     "translation": "بلا لمعان"
@@ -3227,9 +3338,13 @@
     "message": "No image",
     "translation": "لا توجد صورة"
   },
-  "f5zBYV": {
-    "message": "No saved decks yet. Decks you import or build are saved here.",
-    "translation": "لا توجد مجموعات محفوظة بعد. تُحفظ هنا المجموعات التي تستوردها أو تبنيها."
+  "nivaRq": {
+    "message": "No list",
+    "translation": ""
+  },
+  "hXMFoN": {
+    "message": "No lists",
+    "translation": ""
   },
   "ebeFtm": {
     "message": "No shortcut matches “{search}”.",
@@ -3487,13 +3602,18 @@
     "message": "Pass the turn",
     "translation": "تمرير الدور"
   },
+  "sihBmP": {
+    "message": "Paste",
+    "context": "paste a list from the clipboard",
+    "translation": ""
+  },
   "BRnJkz": {
     "message": "Paste a decklist first.",
     "translation": "الصق قائمة المجموعة أولًا."
   },
-  "WXUbKm": {
-    "message": "Paste a decklist, or press Ctrl+V anywhere",
-    "translation": "الصق قائمة المجموعة، أو اضغط Ctrl+V في أي مكان"
+  "aGL2ob": {
+    "message": "Paste a list from the clipboard",
+    "translation": ""
   },
   "Ig8A-t": {
     "message": "Paste a valid invitation into Room ID.",
@@ -3548,12 +3668,12 @@
     "message": "Play these decks",
     "translation": "العب بهذه المجموعات"
   },
-  "3Nh5cA": {
-    "message": "Played last · {when}",
+  "2qhgQG": {
+    "message": "Played last",
     "comments": [
-      "The deck this seat played last, and when it was changed"
+      "The deck this seat played last"
     ],
-    "translation": "آخر ما لُعب · {when}"
+    "translation": ""
   },
   "ald_WV": {
     "message": "Player",
@@ -4069,6 +4189,10 @@
     "message": "Save {name}",
     "translation": "حفظ {name}"
   },
+  "3zdJQY": {
+    "message": "Save and edit {0}",
+    "translation": ""
+  },
   "Z-7fcR": {
     "message": "Save and edit {title}",
     "translation": "حفظ {title} وتعديله"
@@ -4098,6 +4222,10 @@
     "message": "Search cards…",
     "translation": "ابحث عن البطاقات…"
   },
+  "cJ3-3Z": {
+    "message": "Search decks or paste a list",
+    "translation": ""
+  },
   "fU5HHP": {
     "message": "Search every format",
     "translation": "البحث في كل الصيغ"
@@ -4117,6 +4245,10 @@
   "Rjp4L6": {
     "message": "Search syntax",
     "translation": "صيغة البحث"
+  },
+  "SBTElJ": {
+    "message": "Searching…",
+    "translation": ""
   },
   "xcUq3U": {
     "message": "Season",
@@ -4543,6 +4675,10 @@
   "Tg13WJ": {
     "message": "Standard card",
     "translation": "بطاقة عادية"
+  },
+  "kGkZLk": {
+    "message": "Standings",
+    "translation": ""
   },
   "7GpLGd": {
     "message": "Start turn",
@@ -4983,12 +5119,12 @@
     "context": "shortcut key caption",
     "translation": "أعلى"
   },
-  "20pFu_": {
-    "message": "Top finishes from <0>{sourceName}</0> online tournaments, last two weeks · updated {updated}",
+  "Q7iVQK": {
+    "message": "Top finishes on <0>{sourceName}</0>, last two weeks · {updated}",
     "comments": [
       "sourceName is a tournament site (Limitless); updated is a short date"
     ],
-    "translation": "أفضل النتائج من بطولات <0>{sourceName}</0> عبر الإنترنت خلال الأسبوعين الماضيين · آخر تحديث {updated}"
+    "translation": ""
   },
   "qssK_n": {
     "message": "Top left",
@@ -4997,6 +5133,29 @@
   "ay4bwk": {
     "message": "Top right",
     "translation": "أعلى اليمين"
+  },
+  "r8DwfA": {
+    "message": "Tournament data: <0>{0}</0>",
+    "comments": [
+      "A credit line under tournament decks; source is a site's name (Limitless TCG)"
+    ],
+    "translation": ""
+  },
+  "HLA2HB": {
+    "message": "Tournament decks",
+    "translation": ""
+  },
+  "4Zz_OT": {
+    "message": "Tournament decks aren't ready yet",
+    "translation": ""
+  },
+  "iPoLT-": {
+    "message": "Tournaments",
+    "translation": ""
+  },
+  "6NffFz": {
+    "message": "Tournaments are offline",
+    "translation": ""
   },
   "Ecn3Fr": {
     "message": "Trainer",
@@ -5099,6 +5258,10 @@
   "UMxfxQ": {
     "message": "Unknown card",
     "translation": "بطاقة غير معروفة"
+  },
+  "EydT-n": {
+    "message": "Unknown deck",
+    "translation": ""
   },
   "PjF2oq": {
     "message": "Unlimited",
@@ -5221,6 +5384,10 @@
     "message": "Win",
     "context": "keyboard key (the Windows key)",
     "translation": "Win"
+  },
+  "NWGsaA": {
+    "message": "Winning now",
+    "translation": ""
   },
   "n1kezF": {
     "message": "Yes",

@@ -118,7 +118,13 @@ test('the Solo table owns one authority and keeps it across the menu and sheets'
   await expect(
     page.getByRole('dialog', { name: 'Change card back' })
   ).toHaveCount(0);
-  await expect.poll(() => cardBackRequests).toBe(1);
+  // The back is read once to check it, then shown as P2's sleeve in its
+  // tray.
+  await expect.poll(() => cardBackRequests).toBeGreaterThanOrEqual(1);
+  await expect(page.locator('#changeCardBackButton img')).toHaveAttribute(
+    'src',
+    SOLO_CARD_BACK_URL
+  );
   await page.locator('#nativeDeckBuilderCsvImport').setInputFiles({
     name: 'solo-player-two.csv',
     mimeType: 'text/csv',

@@ -19,7 +19,6 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import {
   checkDeck,
   coverCardOf,
-  hasRuleBox,
   deckTotals,
   formatDecklistText,
   type DeckCard,
@@ -39,9 +38,8 @@ import { confirmAction, promptValue } from '../../ui/dialog-requests.js';
 import { toast } from '../../ui/toast.js';
 import { Tooltip } from '../../ui/Tooltip.js';
 import type { CardCatalogSource } from './card-catalog-contract.js';
-import { CardImage } from './CardImage.js';
+import { DeckBox, deckBoxToneOf } from './DeckBox.js';
 import {
-  deckCardImageOf,
   deckImagesOf,
   homeGroups,
   metaShownOf,
@@ -71,65 +69,53 @@ import type {
   PopularDecklistCollection,
   PopularDecklistSource,
 } from './popular-decklists.js';
+import type {
+  TournamentArchetype,
+  TournamentSummary,
+} from './tournament-decks-client.js';
+import { useDeckSearch } from './tournament-decks-hooks.js';
+import {
+  DeckSearchResults,
+  TournamentsShelf,
+  type LoadTournamentList,
+} from './TournamentDecks.js';
 import { useCardCatalog } from './useCardCatalog.js';
 
 const decorative = { 'aria-hidden': true, focusable: 'false' } as const;
 
-const relativeTime = (time: number, now = Date.now()): string => {
-  const minutes = Math.round((now - time) / 60_000);
-  if (minutes < 1) return translate`just now`;
-  if (minutes < 60)
-    return translate({
-      message: `${minutes} min ago`,
-      comment: 'When a deck was last changed, in minutes; keep it short.',
-    });
-  const hours = Math.round(minutes / 60);
-  if (hours < 24)
-    return translate({
-      message: `${hours} h ago`,
-      comment: 'When a deck was last changed, in hours; keep it short.',
-    });
-  const days = Math.round(hours / 24);
-  if (days < 7)
-    return translate({
-      message: `${days} d ago`,
-      comment: 'When a deck was last changed, in days; keep it short.',
-    });
-  return new Date(time).toLocaleDateString(i18n.locale, {
-    month: 'short',
-    day: 'numeric',
+/** A deck's finish line in the page's language ("1st of 285"). */
+export const wordFinish = (finish: string): string => {
+  const placed = /^(\d+)(?:st|nd|rd|th) of (\d+)$/u.exec(finish);
+  if (!placed) return finish;
+  const place = Number(placed[1]);
+  const players = Number(placed[2]);
+  return translate({
+    comment:
+      "A deck's best finish in a tournament: its place among the players, as 1st of 285",
+    message: `${selectOrdinal(place, {
+      one: '#st',
+      two: '#nd',
+      few: '#rd',
+      other: '#th',
+    })} of ${players}`,
   });
 };
 
-/** A deck's picture: its cover card's artwork, framed. */
-export const DeckCover = ({
-  card,
-  name,
-}: {
-  readonly card: DeckCard | undefined;
-  readonly name: string;
-}) => (
-  <span
-    className="deck-cover"
-    // Rule-box prints are full art, their Pokémon lower than a plain card's.
-    data-full-art={card && hasRuleBox(card) ? 'true' : undefined}
-    aria-hidden="true"
-  >
-    {card ? (
-      <CardImage
-        {...deckCardImageOf(card)}
-        alt=""
-        loading="lazy"
-        decoding="async"
-        draggable={false}
-      />
-    ) : (
-      <span className="deck-cover__initial">
-        {name.slice(0, 1).toUpperCase()}
-      </span>
-    )}
-  </span>
-);
+/** The place alone, for a deck box's sticker ("1st"). */
+const wordPlace = (finish: string): string | undefined => {
+  const placed = /^(\d+)(?:st|nd|rd|th) of \d+$/u.exec(finish);
+  if (!placed) return undefined;
+  const place = Number(placed[1]);
+  return translate({
+    comment: 'A tournament placing on a deck box sticker, as 1st',
+    message: `${selectOrdinal(place, {
+      one: '#st',
+      two: '#nd',
+      few: '#rd',
+      other: '#th',
+    })}`,
+  });
+};
 
 const SeatBadges = ({
   seats,
@@ -185,6 +171,7 @@ const SavedDeckTile = ({
   const deckName = deck.name;
   const seat = SEAT_NAMES[seats.target];
   const cover = useMemo(() => savedDeckCover(deck), [deck]);
+  const tone = useMemo(() => deckBoxToneOf(deck.cards), [deck]);
   const rename = async (): Promise<void> => {
     const name = await promptValue({
       title: t`Rename deck`,
@@ -200,7 +187,6 @@ const SavedDeckTile = ({
     });
     if (name?.trim()) library.update(deck.id, { name });
   };
-  const when = relativeTime(deck.updatedAt);
   const remove = async (): Promise<void> => {
     const confirmed = await confirmAction({
       title: t`Delete ${deckName}?`,
@@ -213,6 +199,7 @@ const SavedDeckTile = ({
     <li
       className="deck-tile"
       data-current={current ? 'true' : undefined}
+      data-last-used={lastUsed ? 'true' : undefined}
       data-valid={check.valid ? 'true' : 'false'}
       // Pointed at or reached: its cards start loading for the editor.
       onPointerEnter={() => void warmCardImages(deckImagesOf(deck.cards))}
@@ -226,7 +213,12 @@ const SavedDeckTile = ({
         onClick={onChoose}
         onDoubleClick={onEdit}
       >
-        <DeckCover card={cover} name={deck.name} />
+        <DeckBox
+          cover={cover}
+          name={deck.name}
+          tone={tone}
+          invalid={!check.valid}
+        />
         <span className="deck-tile__text">
           <span className="deck-tile__name">{deck.name}</span>
           <span className="deck-tile__meta">
@@ -242,16 +234,14 @@ const SavedDeckTile = ({
               )}
               {check.total}/{check.format.deckSize}
             </span>
-            <span className="deck-tile__time">
-              {lastUsed
-                ? t({
-                    message: `Played last · ${when}`,
-                    comment:
-                      'The deck this seat played last, and when it was changed',
-                  })
-                : when}
-            </span>
           </span>
+          {lastUsed ? (
+            <span className="deck-tile__note">
+              <Trans comment="The deck this seat played last">
+                Played last
+              </Trans>
+            </span>
+          ) : null}
         </span>
         <SeatBadges seats={seats} deckId={deck.id} />
       </button>
@@ -340,6 +330,7 @@ const UnsavedSeatTile = ({
   const total = deckTotals(slot.deck).total;
   const name = slot.label?.name ?? t`Unsaved deck`;
   const seat = SEAT_NAMES[target];
+  const [title] = splitFinish(name);
   return (
     <li className="deck-tile" data-current="true" data-unsaved="true">
       <div
@@ -347,7 +338,11 @@ const UnsavedSeatTile = ({
         role="group"
         aria-label={t`${name} on ${seat}`}
       >
-        <DeckCover card={coverCardOf(slot.deck, name)} name={name} />
+        <DeckBox
+          cover={coverCardOf(slot.deck, title)}
+          name={title}
+          tone={deckBoxToneOf(slot.deck)}
+        />
         <span className="deck-tile__text">
           <span className="deck-tile__name">{name}</span>
           <span className="deck-tile__meta">
@@ -404,28 +399,6 @@ const UnsavedSeatTile = ({
   );
 };
 
-/**
- * A current deck's finish in the page's language. The deck feed names it in
- * English ("1st of 285", server/current-decks.ts); anything else is shown
- * as it came.
- */
-const wordFinish = (finish: string): string => {
-  const placed = /^(\d+)(?:st|nd|rd|th) of (\d+)$/u.exec(finish);
-  if (!placed) return finish;
-  const place = Number(placed[1]);
-  const players = Number(placed[2]);
-  return translate({
-    comment:
-      "A deck's best finish in a tournament: its place among the players, as 1st of 285",
-    message: `${selectOrdinal(place, {
-      one: '#st',
-      two: '#nd',
-      few: '#rd',
-      other: '#th',
-    })} of ${players}`,
-  });
-};
-
 const ListDeckTile = ({
   name,
   cover,
@@ -445,6 +418,7 @@ const ListDeckTile = ({
 }) => {
   const { t } = useLingui();
   const [title, finish] = splitFinish(name);
+  const tone = useMemo(() => deckBoxToneOf(cards), [cards]);
   return (
     <li
       className="deck-tile deck-tile--list"
@@ -465,7 +439,12 @@ const ListDeckTile = ({
         aria-label={t`${name}: try it`}
         onClick={onTry}
       >
-        <DeckCover card={cover} name={title} />
+        <DeckBox
+          cover={cover}
+          name={title}
+          tone={tone}
+          sticker={finish ? wordPlace(finish) : undefined}
+        />
         <span className="deck-tile__text">
           <span className="deck-tile__name">{title}</span>
           {finish ? (
@@ -494,6 +473,25 @@ const ListDeckTile = ({
       </div>
     </li>
   );
+};
+
+/**
+ * What the finder holds: nothing yet, a deck's name to look up, or a list
+ * to import (several lines, a line starting with a count, a simulator file,
+ * or a list's section heading).
+ */
+export const finderMode = (text: string): 'empty' | 'search' | 'list' => {
+  const trimmed = text.trim();
+  if (!trimmed) return 'empty';
+  if (
+    trimmed.includes('\n') ||
+    /^\d+\s+\S/u.test(trimmed) ||
+    /^QTY,/u.test(trimmed) ||
+    /^(?:Pok[ée]mon|Trainer|Energy)\s*[:(]/iu.test(trimmed)
+  ) {
+    return 'list';
+  }
+  return 'search';
 };
 
 export interface DeckHomeProps {
@@ -525,6 +523,15 @@ export interface DeckHomeProps {
   readonly onSaveSeatDeck: (target: DeckBuilderTarget) => void;
   readonly onEditSeatDeck: (target: DeckBuilderTarget) => void;
   readonly onClearSeat: (target: DeckBuilderTarget) => void;
+  /** A tournament list onto the seat (or saved to edit). */
+  readonly onLoadTournamentList: LoadTournamentList;
+  /** The list being fetched, as `tournamentId/playerId`. */
+  readonly pendingList: string | undefined;
+  readonly onOpenTournament: (tournament: TournamentSummary) => void;
+  readonly onOpenArchetype: (archetype: TournamentArchetype) => void;
+  /** What was last typed in the finder, kept across views. */
+  readonly finderText: string;
+  readonly onFinderTextChange: (text: string) => void;
 }
 
 const LIBRARY_FILTER_AT = 9;
@@ -549,13 +556,20 @@ export const DeckHome = ({
   onSaveSeatDeck,
   onEditSeatDeck,
   onClearSeat,
+  onLoadTournamentList,
+  pendingList,
+  onOpenTournament,
+  onOpenArchetype,
+  finderText,
+  onFinderTextChange,
 }: DeckHomeProps) => {
   const { t } = useLingui();
   const catalogState = useCardCatalog(catalog, open);
   const { lastDeckIds } = usePreference(DECK_SCREEN_PREFERENCES);
   const loadedCatalog =
     catalogState.status === 'ready' ? catalogState.catalog : undefined;
-  const [paste, setPaste] = useState('');
+  const paste = finderText;
+  const setPaste = onFinderTextChange;
   const [filter, setFilter] = useState('');
   // Lists already loaded (the screen warmed up ahead, or opened before)
   // draw with the screen's first frame.
@@ -567,6 +581,8 @@ export const DeckHome = ({
   const [showAllMeta, setShowAllMeta] = useState(false);
   const [surprising, setSurprising] = useState(false);
   const pasteRef = useRef<HTMLTextAreaElement>(null);
+  const mode = finderMode(paste);
+  const search = useDeckSearch(paste, open && mode === 'search');
 
   useEffect(() => {
     if (!open || collection) return;
@@ -646,7 +662,12 @@ export const DeckHome = ({
   const onPasteKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>): void => {
     if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
       event.preventDefault();
-      void submitPaste();
+      if (mode === 'list') void submitPaste();
+      return;
+    }
+    // A deck's name is one line: Enter doesn't start another.
+    if (event.key === 'Enter' && !event.shiftKey && mode !== 'list') {
+      event.preventDefault();
     }
   };
 
@@ -663,53 +684,81 @@ export const DeckHome = ({
 
   return (
     <div className="deck-home">
-      <section className="deck-home__import" aria-labelledby="deckImportTitle">
-        <h2 id="deckImportTitle" className="deck-section-title">
-          <Trans>Import a deck</Trans>
-        </h2>
+      <section
+        className="deck-finder"
+        aria-label={t`Find a deck`}
+        data-mode={mode}
+      >
         <div
           className="deck-paste"
           data-filled={paste.trim() ? 'true' : undefined}
         >
+          <MagnifyingGlassIcon
+            {...decorative}
+            weight="bold"
+            className="deck-paste__icon"
+          />
           <textarea
             ref={pasteRef}
             id="deckPasteInput"
             className="deck-paste__input"
-            aria-label={t`Decklist to import`}
+            aria-label={t`Search decks or paste a list`}
             spellCheck={false}
-            rows={paste.includes('\n') ? 6 : 1}
-            placeholder={t`Paste a decklist, or press Ctrl+V anywhere`}
+            autoComplete="off"
+            rows={mode === 'list' ? 6 : 1}
+            placeholder={t`Search decks or paste a list`}
             value={paste}
             onChange={(event) => setPaste(event.target.value)}
             onKeyDown={onPasteKeyDown}
           />
           <div className="deck-paste__actions">
-            <button
-              id="deckPasteImportButton"
-              type="button"
-              className="ds-button ds-button--primary"
-              disabled={!paste.trim() || importing}
-              onClick={() => void submitPaste()}
-            >
-              {importing ? (
-                <CircleNotchIcon
-                  {...decorative}
-                  weight="bold"
-                  className="ds-spin"
-                />
-              ) : null}
-              <Trans context="button">Import</Trans>
-            </button>
-            <button
-              id="deckClipboardButton"
-              type="button"
-              className="ds-button ds-button--secondary"
-              disabled={importing}
-              onClick={() => void onImportClipboard()}
-            >
-              <ClipboardTextIcon {...decorative} weight="bold" />
-              <Trans>From clipboard</Trans>
-            </button>
+            {mode === 'list' ? (
+              <button
+                id="deckPasteImportButton"
+                type="button"
+                className="ds-button ds-button--primary"
+                disabled={importing}
+                onClick={() => void submitPaste()}
+              >
+                {importing ? (
+                  <CircleNotchIcon
+                    {...decorative}
+                    weight="bold"
+                    className="ds-spin"
+                  />
+                ) : null}
+                <Trans context="button">Import</Trans>
+              </button>
+            ) : null}
+            {mode !== 'empty' ? (
+              <Tooltip content={t`Clear`}>
+                <button
+                  type="button"
+                  className="deck-icon-button"
+                  aria-label={t`Clear`}
+                  onClick={() => {
+                    setPaste('');
+                    pasteRef.current?.focus();
+                  }}
+                >
+                  <XIcon {...decorative} weight="bold" />
+                </button>
+              </Tooltip>
+            ) : null}
+            <Tooltip content={t`Paste a list from the clipboard`}>
+              <button
+                id="deckClipboardButton"
+                type="button"
+                className="ds-button ds-button--secondary"
+                disabled={importing}
+                onClick={() => void onImportClipboard()}
+              >
+                <ClipboardTextIcon {...decorative} weight="bold" />
+                <span className="deck-paste__label">
+                  <Trans context="paste a list from the clipboard">Paste</Trans>
+                </span>
+              </button>
+            </Tooltip>
             <Tooltip content={t`A .txt or .csv deck file`}>
               <button
                 id="nativeDeckBuilderImportCsvLabel"
@@ -719,15 +768,26 @@ export const DeckHome = ({
                 onClick={onOpenFile}
               >
                 <FileArrowUpIcon {...decorative} weight="bold" />
-                <Trans>Open file</Trans>
+                <span className="deck-paste__label">
+                  <Trans>Open file</Trans>
+                </span>
               </button>
             </Tooltip>
           </div>
         </div>
+        {mode === 'search' ? (
+          <DeckSearchResults
+            query={paste.trim()}
+            state={search}
+            pending={pendingList}
+            onLoad={onLoadTournamentList}
+            onAllLists={onOpenArchetype}
+          />
+        ) : null}
       </section>
 
       <section
-        className="deck-home__section"
+        className="deck-home__section deck-shelf"
         aria-labelledby="deckLibraryTitle"
       >
         <div className="deck-section-head">
@@ -783,9 +843,7 @@ export const DeckHome = ({
           </p>
         ) : unsavedSeats.length === 0 && libraryState.decks.length === 0 ? (
           <p className="deck-empty">
-            <Trans>
-              No saved decks yet. Decks you import or build are saved here.
-            </Trans>
+            <Trans>Decks you import or build are kept here</Trans>
           </p>
         ) : (
           <ul className="deck-grid" aria-label={t`Your decks`}>
@@ -815,10 +873,13 @@ export const DeckHome = ({
         )}
       </section>
 
-      <section className="deck-home__section" aria-labelledby="deckMetaTitle">
+      <section
+        className="deck-home__section deck-shelf"
+        aria-labelledby="deckMetaTitle"
+      >
         <div className="deck-section-head">
           <h2 id="deckMetaTitle" className="deck-section-title">
-            <Trans>Decks winning now</Trans>
+            <Trans>Winning now</Trans>
           </h2>
           <div className="deck-section-tools">
             <Tooltip content={t`Play a random deck`}>
@@ -838,15 +899,15 @@ export const DeckHome = ({
         {metaSource ? (
           <p className="deck-section-note">
             <Trans comment="sourceName is a tournament site (Limitless); updated is a short date">
-              Top finishes from{' '}
+              Top finishes on{' '}
               <a
                 href={metaSource.url}
                 target="_blank"
                 rel="noopener noreferrer"
               >
                 {sourceName}
-              </a>{' '}
-              online tournaments, last two weeks · updated {updated}
+              </a>
+              , last two weeks · {updated}
             </Trans>
           </p>
         ) : null}
@@ -899,14 +960,16 @@ export const DeckHome = ({
         )}
       </section>
 
+      <TournamentsShelf open={open} onOpen={onOpenTournament} />
+
       {classic ? (
         <section
-          className="deck-home__section"
+          className="deck-home__section deck-shelf"
           aria-labelledby="deckClassicTitle"
         >
           <div className="deck-section-head">
             <h2 id="deckClassicTitle" className="deck-section-title">
-              <Trans>Classic decks</Trans>
+              <Trans>Classics</Trans>
             </h2>
             <div className="deck-section-tools">
               <label className="deck-select">
