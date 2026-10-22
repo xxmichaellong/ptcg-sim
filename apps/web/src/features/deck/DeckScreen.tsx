@@ -490,24 +490,31 @@ export const DeckScreen = ({
    */
   const loadTournamentList = useCallback<LoadTournamentList>(
     (request, mode) => {
-      listAbort.current?.abort();
-      const controller = new AbortController();
+      // One import's lifetime from the first request: a deck chosen for the
+      // seat meanwhile (or any newer import) cancels the list, so it never
+      // lands late over that choice.
+      const controller = beginImport();
       listAbort.current = controller;
       setPendingList(`${request.tournamentId}/${request.playerId}`);
       void fetchTournamentList(request.tournamentId, request.playerId, {
         signal: controller.signal,
       })
         .then(async (list) => {
-          if (controller.signal.aborted) return;
+          if (controller.signal.aborted || importAbort.current !== controller) {
+            endImport(controller);
+            return;
+          }
           await runImport(
             list.text,
             { kind: 'meta', label: request.name },
             mode === 'edit'
               ? { save: true, name: request.name, edit: true }
-              : { save: false, name: request.name }
+              : { save: false, name: request.name },
+            controller
           );
         })
         .catch((error: unknown) => {
+          endImport(controller);
           if (controller.signal.aborted) return;
           toast({
             title: t`Couldn't load that list`,
@@ -524,7 +531,7 @@ export const DeckScreen = ({
           setPendingList(undefined);
         });
     },
-    [runImport, t]
+    [beginImport, endImport, runImport, t]
   );
 
   // A deck put on a seat from a shelf flies into the seat's tray. The box

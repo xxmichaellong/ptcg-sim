@@ -247,6 +247,25 @@ describe('discovering tournaments', () => {
     ]);
   });
 
+  it('takes a page that is not a list for a failure, not the end of the list', async () => {
+    limitless.tournaments = Array.from({ length: 1_200 }, (_, n) =>
+      tournament(1_000 + n, { players: 4, date: START - 400 * DAY })
+    );
+    // The first page answers an object, then Limitless recovers.
+    limitless.failures.push(Response.json({ error: 'maintenance' }));
+    const index = createIndex();
+    await crawlUntilIdle(index);
+    const pages = limitless.calls.filter((call) =>
+      call.startsWith('/api/tournaments?')
+    );
+    // Asked again, and the backfill goes on to the second page.
+    expect(pages.slice(0, 3)).toEqual([
+      '/api/tournaments?game=PTCG&limit=1000&page=1',
+      '/api/tournaments?game=PTCG&limit=1000&page=1',
+      '/api/tournaments?game=PTCG&limit=1000&page=2',
+    ]);
+  });
+
   it('discovers again at once when the daily cron asks', async () => {
     limitless.tournaments = [tournament(1, { players: 4 })];
     const index = createIndex();
@@ -682,6 +701,29 @@ describe('a tournament a player opens', () => {
     now = START + 13 * HOUR;
     await crawlUntilIdle(index);
     expect(limitless.standingsCalls()).toHaveLength(3);
+  });
+
+  it('waits between failed reads of an event read while young, and keeps what it read', async () => {
+    limitless.tournaments = [tournament(1, { date: START - 2 * HOUR })];
+    limitless.standings.set(id(1), [standing('p', 1, dragapult)]);
+    const index = createIndex();
+    await crawl(index, 1);
+    await index.tournament(id(1));
+    expect(limitless.standingsCalls()).toHaveLength(1);
+    // Over now, but Limitless fails every read after.
+    limitless.failStandings = 100;
+    now = START + 13 * HOUR;
+    await crawlUntil(index, START + 13 * HOUR + 30 * MINUTE);
+    expect(limitless.standingsCalls()).toHaveLength(2);
+    // An hour, then two, between tries; then it is left as it was read.
+    await crawlUntil(index, START + 14 * HOUR + 45 * MINUTE);
+    expect(limitless.standingsCalls()).toHaveLength(3);
+    await crawlUntil(index, START + 17 * HOUR + 30 * MINUTE);
+    expect(limitless.standingsCalls()).toHaveLength(4);
+    await crawlUntil(index, START + 30 * HOUR);
+    expect(limitless.standingsCalls()).toHaveLength(4);
+    const read = await index.tournament(id(1));
+    expect(read.kind).toBe('ok');
   });
 
   it('is not found when unknown, skipped, or when the index is off', async () => {

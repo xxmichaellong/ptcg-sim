@@ -750,6 +750,9 @@ const StandingRow = ({
   );
 };
 
+/** The server's widest window of days: every finish it holds. */
+const ALL_TIME_DAYS = 3650;
+
 /** Every finish one deck has, best first, a page at a time. */
 export const ArchetypeView = ({
   archetype,
@@ -763,15 +766,27 @@ export const ArchetypeView = ({
   readonly onLoad: LoadTournamentList;
 }) => {
   const { t } = useLingui();
-  const paged = usePaged(archetype.id, (cursor, options) =>
-    fetchArchetypeFinishes(archetype.id, {
-      ...options,
-      ...(cursor ? { cursor } : {}),
-    }).then((page) => ({
-      items: page.finishes,
-      nextCursor: page.nextCursor,
-    }))
-  );
+  // Recent finishes first; a deck with none recent (which search shows from
+  // all time) lists all its finishes, as its search result did.
+  const allTimeFor = useRef<string | null>(null);
+  const paged = usePaged(archetype.id, async (cursor, options) => {
+    const read = (allTime: boolean) =>
+      fetchArchetypeFinishes(archetype.id, {
+        ...options,
+        ...(cursor ? { cursor } : {}),
+        ...(allTime ? { since: ALL_TIME_DAYS } : {}),
+      });
+    let page = await read(allTimeFor.current === archetype.id);
+    if (
+      !cursor &&
+      page.finishes.length === 0 &&
+      allTimeFor.current !== archetype.id
+    ) {
+      allTimeFor.current = archetype.id;
+      page = await read(true);
+    }
+    return { items: page.finishes, nextCursor: page.nextCursor };
+  });
   const finishes = useMemo(
     () => (paged.state.status === 'ready' ? paged.state.value : []),
     [paged.state]

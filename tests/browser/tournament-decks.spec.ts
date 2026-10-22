@@ -215,3 +215,112 @@ test('deck search says quietly when it is offline', async ({ page }) => {
     '60'
   );
 });
+
+test('a list still loading gives way to a deck chosen meanwhile', async ({
+  page,
+}) => {
+  test.setTimeout(60_000);
+  await stubIndex(page);
+  // The list is slow to come; it is held until the test lets it go.
+  let release = (): void => undefined;
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route('**/v2/tournaments/*/players/*/list', async (route) => {
+    await held;
+    await route.fulfill({
+      json: {
+        text: LIST,
+        archetype: ARCHETYPE,
+        player: { id: 'redthegoat', name: 'REDTHEGOAT' },
+        tournament: TOURNAMENT,
+        url: `https://play.limitlesstcg.com/tournament/${TOURNAMENT.id}/player/redthegoat/decklist`,
+      },
+    });
+  });
+  await openDeckScreen(page);
+  // A deck of the player's own, saved, then put back on the shelf's seat.
+  await page
+    .locator('#deckPasteInput')
+    .fill(
+      [
+        'Pokémon: 4',
+        '4 Ralts ASR 60',
+        '',
+        'Energy: 56',
+        '56 Psychic Energy MEE 5',
+      ].join('\n')
+    );
+  await page.locator('#deckPasteImportButton').click();
+  const tray = page.locator('#nativeDeckBuilderTargetMain');
+  await expect(page.locator('#nativeDeckBuilderSummaryPanel')).toHaveAttribute(
+    'data-card-count',
+    '60'
+  );
+  // Named for its first Pokémon.
+  const ownName = 'Ralts deck';
+  await expect(tray).toHaveAccessibleName(new RegExp(ownName, 'u'));
+
+  await page.locator('#deckPasteInput').fill('dragapult');
+  await page
+    .getByRole('region', { name: 'Tournament decks' })
+    .getByRole('button', {
+      name: 'Dragapult Dusknoir, 1st of 67, REDTHEGOAT: try it',
+    })
+    .click();
+  await page.locator('#deckPasteInput').fill('');
+  // Chosen while the list is still on its way: the choice stands.
+  await page
+    .getByRole('button', { name: new RegExp(`^${ownName}: put on P1$`, 'u') })
+    .click();
+  release();
+  await page.waitForTimeout(1_500);
+  await expect(tray).not.toHaveAccessibleName(/Dragapult/u);
+  await expect(tray).toHaveAccessibleName(new RegExp(ownName, 'u'));
+});
+
+test('All lists for a deck with no recent finishes lists its older ones', async ({
+  page,
+}) => {
+  test.setTimeout(60_000);
+  await stubIndex(page);
+  const asked: string[] = [];
+  await page.route(`**/v2/decks/archetype/${ARCHETYPE.id}**`, (route) => {
+    const since = new URL(route.request().url()).searchParams.get('since');
+    asked.push(since ?? 'default');
+    return route.fulfill({
+      json: {
+        archetype: ARCHETYPE,
+        // Nothing in the last 90 days; a win from last year.
+        finishes:
+          since === null
+            ? []
+            : [
+                {
+                  tournament: {
+                    ...TOURNAMENT,
+                    date: '2025-09-01T19:00:00.000Z',
+                  },
+                  player: { id: 'oldwin', name: 'Old Win' },
+                  placing: 1,
+                  record: { wins: 9, losses: 0, ties: 0 },
+                },
+              ],
+        nextCursor: null,
+      },
+    });
+  });
+  await openDeckScreen(page);
+  await page.locator('#deckPasteInput').fill('dragapult');
+  await page
+    .getByRole('region', { name: 'Tournament decks' })
+    .getByRole('button', { name: /All lists/u })
+    .first()
+    .click();
+  await expect(
+    page.getByRole('list', { name: `Lists for ${ARCHETYPE.name}` })
+  ).toContainText('Old Win');
+  // Recent first (asked again under StrictMode in development), then all.
+  expect(asked[0]).toBe('default');
+  expect(asked.at(-1)).toBe('3650');
+});

@@ -379,8 +379,20 @@ export class DeckIndex {
       }
       return;
     }
-    const body = response.status === 200 ? response.body : [];
-    const raw = Array.isArray(body) ? body.length : 0;
+    const body = response.status === 200 ? response.body : undefined;
+    if (!Array.isArray(body)) {
+      // Not a page of events (Limitless answering nonsense): never the end
+      // of the list. The crawl holds back and asks for the same page again.
+      this.holdBack();
+      if (task.kind === 'discover') {
+        this.store.setMeta(
+          META.discovery,
+          JSON.stringify({ page: task.page, dueAt: 0 })
+        );
+      }
+      return;
+    }
+    const raw = body.length;
     const rows = readTournamentList(body);
     const known = this.store.recordListed(rows, this.deps.now());
     if (task.kind === 'backfill') {

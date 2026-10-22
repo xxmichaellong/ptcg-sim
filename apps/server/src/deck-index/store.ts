@@ -549,11 +549,26 @@ export class DeckIndexStore {
     const attempts = number(row.attempts) + 1;
     // A tournament already read keeps its standings; only its re-read
     // waits.
-    if (row.state === 'indexed' || row.state === 'provisional') {
+    if (row.state === 'indexed') {
       this.sql.exec(
         'UPDATE tournaments SET fetched_at = ?, attempts = ? WHERE id = ?',
         now,
         attempts,
+        tournamentId
+      );
+      return;
+    }
+    // Read while it may have been running, its read once it is over waits
+    // like any other and is given up on after as many tries: what was read
+    // stays, as its standings.
+    if (row.state === 'provisional') {
+      const givenUp = attempts >= STORE_POLICY.attempts;
+      this.sql.exec(
+        'UPDATE tournaments SET state = ?, fetched_at = ?, attempts = ?, retry_after = ? WHERE id = ?',
+        givenUp ? 'indexed' : 'provisional',
+        now,
+        attempts,
+        givenUp ? null : now + STORE_POLICY.retryBaseMs * attempts,
         tournamentId
       );
       return;
