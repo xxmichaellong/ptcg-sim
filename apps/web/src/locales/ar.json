@@ -1747,7 +1747,7 @@
   },
   "e78sgl": {
     "message": "Click your deck to look through it.",
-    "translation": "انقر على رزمتك لتصفحها."
+    "translation": "انقر على مجموعتك لتصفحها."
   },
   "yz7wBu": {
     "message": "Close",
@@ -1906,7 +1906,7 @@
   },
   "eP7qeF": {
     "message": "Couldn't start the tutorial. Try again.",
-    "translation": "تعذّر بدء الدرس التعليمي. حاول مجددًا."
+    "translation": "تعذّر بدء الدليل التعليمي. حاول مجددًا."
   },
   "nzVItu": {
     "message": "Couldn't use the clipboard. Allow access and try again.",
@@ -2041,7 +2041,7 @@
   },
   "Ocbppt": {
     "message": "Decks, playing online, the log and Settings",
-    "translation": "الدِّكات واللعب عبر الإنترنت والسجل والإعدادات"
+    "translation": "المجموعات واللعب عبر الإنترنت والسجل والإعدادات"
   },
   "gblLhJ": {
     "message": "Delete",
@@ -2195,11 +2195,11 @@
   },
   "68egXB": {
     "message": "Draw a card: drag the top of your deck into your hand, or press <0>1</0>.",
-    "translation": "اسحب بطاقة: اسحب أعلى الدِّك إلى يدك، أو اضغط <0>1</0>."
+    "translation": "اسحب بطاقة: اسحب أعلى مجموعتك إلى يدك، أو اضغط <0>1</0>."
   },
   "2o1D75": {
     "message": "Draw a card: drag the top of your deck into your hand.",
-    "translation": "اسحب بطاقة: اسحب أعلى الدِّك إلى يدك."
+    "translation": "اسحب بطاقة: اسحب أعلى مجموعتك إلى يدك."
   },
   "to34yF": {
     "message": "Draw card(s)",
@@ -5341,7 +5341,7 @@
   },
   "L7LU5x": {
     "message": "This tutorial waits in the <0>menu</0> whenever you want it.",
-    "translation": "يبقى هذا الدرس في <0>القائمة</0> متى أردته."
+    "translation": "يبقى هذا الدليل التعليمي في <0>القائمة</0> متى أردته."
   },
   "YcMvP7": {
     "message": "Tilted on wide screens, flat on phones.",
@@ -5594,7 +5594,7 @@
   },
   "XQ_0kk": {
     "message": "Tutorial complete. You're ready to play.",
-    "translation": "اكتمل الدرس. أنت جاهز للعب."
+    "translation": "اكتمل الدليل التعليمي. أنت جاهز للعب."
   },
   "-zy2Nq": {
     "message": "Type",

@@ -1648,7 +1648,7 @@
   },
   "_2MVxl": {
     "message": "Changed your mind? <0>{0}</0> takes back your last move.",
-    "translation": "마음이 바뀌었나요? <0>{0}</0>으로 마지막 동작을 되돌립니다."
+    "translation": "마음이 바뀌었나요? <0>{0}</0>(으)로 마지막 동작을 되돌립니다."
   },
   "iY-KUI": {
     "message": "Charcoal",

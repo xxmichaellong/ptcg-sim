@@ -36,7 +36,9 @@ export const DECK_SEARCH_MINIMUM = 2;
 export const useDeckSearch = (
   text: string,
   enabled: boolean,
-  search: typeof fetchDeckSearch = fetchDeckSearch
+  search: typeof fetchDeckSearch = fetchDeckSearch,
+  /** Changed, the same text is asked again. */
+  again = 0
 ): Remote<readonly DeckSearchResult[]> => {
   const [state, setState] = useState<Remote<readonly DeckSearchResult[]>>({
     status: 'idle',
@@ -76,7 +78,7 @@ export const useDeckSearch = (
       clearTimeout(timer);
       controller.abort();
     };
-  }, [active, query, search]);
+  }, [active, query, search, again]);
   return active ? state : { status: 'idle' };
 };
 

@@ -31,6 +31,7 @@ import {
   type TournamentStanding,
   type TournamentSummary,
 } from './tournament-decks-client.js';
+import { wordName } from './deck-home-covers.js';
 import { usePaged, useRemote, type Remote } from './tournament-decks-hooks.js';
 
 const decorative = { 'aria-hidden': true, focusable: 'false' } as const;
@@ -218,7 +219,7 @@ const FinishRow = ({
         <button
           type="button"
           className="deck-icon-button"
-          aria-label={t`Save and edit ${request.name}`}
+          aria-label={t`Save and edit ${wordName(request.name)}`}
           onClick={() => onLoad(request, 'edit')}
         >
           <PencilSimpleIcon {...decorative} weight="bold" />
@@ -248,23 +249,27 @@ const statusLine = (
   }
 };
 
-/** Why More brought nothing, beside it. */
+/**
+ * Why More brought nothing, beside it: a live region kept on the page, its
+ * words changed, so a reader hears them.
+ */
 const MoreFailed = ({
   failed,
   offline,
 }: {
   readonly failed: { readonly busy: boolean } | undefined;
   readonly offline: ReactNode;
-}) =>
-  failed ? (
-    <p className="deck-results__status" role="status">
-      {failed.busy ? (
+}) => (
+  <p className="deck-results__status deck-more-status" role="status">
+    {failed ? (
+      failed.busy ? (
         <Trans>Busy for a moment — try again shortly</Trans>
       ) : (
         offline
-      )}
-    </p>
-  ) : null;
+      )
+    ) : null}
+  </p>
+);
 
 /**
  * What a typed name finds: each matching deck, how it has done, and its
@@ -592,13 +597,13 @@ export const TournamentsShelf = ({
                 className="ds-spin"
               />
             ) : null}
-            <MoreFailed
-              failed={paged.moreFailed}
-              offline={<Trans>Tournaments are offline</Trans>}
-            />
             <Trans context="show more tournaments">More</Trans>
           </button>
         ) : null}
+        <MoreFailed
+          failed={paged.moreFailed}
+          offline={<Trans>Tournaments are offline</Trans>}
+        />
         <TournamentCredit />
       </div>
     </section>
@@ -839,7 +844,7 @@ const StandingRow = ({
               <button
                 type="button"
                 className="deck-icon-button"
-                aria-label={t`Save and edit ${request.name}`}
+                aria-label={t`Save and edit ${wordName(request.name)}`}
                 onClick={() => onLoad(request, 'edit')}
               >
                 <PencilSimpleIcon {...decorative} weight="bold" />

@@ -429,5 +429,11 @@ describe('a deck’s lists from the keyboard', () => {
     await settle();
     expect(host.textContent).toContain('Tournaments are offline');
     expect(shown()).toBe(2);
+    // Beside More, not part of its name.
+    const more = host.querySelector('.deck-show-more')!;
+    expect(more.textContent).toBe('More');
+    expect(
+      host.querySelector('.deck-more-status')?.closest('.deck-show-more')
+    ).toBeNull();
   });
 });

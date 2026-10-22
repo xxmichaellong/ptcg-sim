@@ -29,14 +29,14 @@ import type { CardCatalogSource } from './card-catalog-contract.js';
 import { readDeckFile } from './deck-browser-io.js';
 import { DeckBox, deckBoxToneOf } from './DeckBox.js';
 import { flyDeckBox } from './deck-box-flight.js';
-import { splitFinish } from './deck-home-covers.js';
+import { splitFinish, wordFinish, wordName } from './deck-home-covers.js';
 import type {
   DeckBuilderStore,
   DeckBuilderTarget,
   DeckSlotLabel,
 } from './deck-builder-store.js';
 import { DeckEditor } from './DeckEditor.js';
-import { DeckHome, finderMode, wordFinish, wordName } from './DeckHome.js';
+import { DeckHome, finderMode } from './DeckHome.js';
 import { importDeckText, type DeckImportLine } from './deck-import.js';
 import type {
   DeckLibrary,
@@ -366,11 +366,13 @@ export const DeckScreen = ({
           });
           return false;
         }
-        const name = options.name ?? result.name;
+        const stored = options.name ?? result.name;
+        // Said with its finish in the page's language; kept as it came.
+        const name = wordName(stored);
         const total = deckTotals(result.cards).total;
         if (options.save) {
           const saved = library.create({
-            name,
+            name: stored,
             format: result.format,
             cards: result.cards,
             source,
@@ -388,7 +390,7 @@ export const DeckScreen = ({
             });
           }
         } else {
-          placeOnSeat(result.cards, { name, format: result.format });
+          placeOnSeat(result.cards, { name: stored, format: result.format });
         }
         const seat = SEAT_NAMES[target];
         const missingLines = result.missing.length;
@@ -861,8 +863,9 @@ export const DeckScreen = ({
   );
   const editingDeck =
     view.kind === 'edit' ? library.get(view.deckId) : undefined;
-  const seatLabel =
-    seat.label?.name ?? (seatTotal > 0 ? t`Unsaved deck` : t`No deck`);
+  const seatLabel = wordName(
+    seat.label?.name ?? (seatTotal > 0 ? t`Unsaved deck` : t`No deck`)
+  );
   const playLabel = anySeatDeck
     ? t({ message: 'Play', context: 'take the decks to the table' })
     : t`Choose a deck to play`;

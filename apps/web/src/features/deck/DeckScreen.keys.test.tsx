@@ -1,5 +1,7 @@
 // @vitest-environment happy-dom
 
+import { i18n } from '@lingui/core';
+import { msg } from '@lingui/core/macro';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -487,5 +489,49 @@ describe('the deck screen from the keyboard', () => {
     });
     expect(host.querySelector('input[placeholder="Find a deck"]')).toBeNull();
     expect(names()).toHaveLength(8);
+    // A ninth again: the field is back empty, every deck shown.
+    await act(async () => {
+      library.create({
+        name: 'Deck 9',
+        format: 'standard',
+        cards: [],
+        source: { kind: 'new' },
+      });
+    });
+    expect(
+      host.querySelector<HTMLInputElement>('input[placeholder="Find a deck"]')
+        ?.value
+    ).toBe('');
+    expect(names()).toHaveLength(9);
+  });
+
+  it('says a saved deck’s finish in the page’s language', async () => {
+    const locale = i18n.locale;
+    const finish = msg({
+      comment:
+        "A deck's best finish in a tournament: its place among the players, as 1st of 285",
+      message: `{place, selectordinal, one {#st} two {#nd} few {#rd} other {#th}} of {players}`,
+    });
+    i18n.load('xx', { [finish.id!]: '{place}. von {players}' });
+    i18n.activate('xx');
+    try {
+      const library = new DeckLibrary({ backend: null });
+      library.create({
+        name: 'Dragapult — 1st of 67',
+        format: 'standard',
+        cards: [],
+        source: { kind: 'new' },
+      });
+      await render(vi.fn(), library);
+      expect(host.querySelector('.deck-tile__name')?.textContent).toBe(
+        'Dragapult — 1. von 67'
+      );
+      // Kept as it came.
+      expect(library.getSnapshot().decks[0]!.name).toBe(
+        'Dragapult — 1st of 67'
+      );
+    } finally {
+      i18n.activate(locale);
+    }
   });
 });

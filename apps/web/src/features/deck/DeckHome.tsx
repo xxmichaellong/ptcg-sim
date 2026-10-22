@@ -46,6 +46,8 @@ import {
   resolveListCover,
   savedDeckCover,
   splitFinish,
+  wordFinish,
+  wordName,
 } from './deck-home-covers.js';
 import { warmCardImages } from './warm-card-images.js';
 import type {
@@ -84,29 +86,8 @@ import { useCardCatalog } from './useCardCatalog.js';
 
 const decorative = { 'aria-hidden': true, focusable: 'false' } as const;
 
-/** A deck's finish line in the page's language ("1st of 285"). */
-export const wordFinish = (finish: string): string => {
-  const placed = /^(\d+)(?:st|nd|rd|th) of (\d+)$/u.exec(finish);
-  if (!placed) return finish;
-  const place = Number(placed[1]);
-  const players = Number(placed[2]);
-  return translate({
-    comment:
-      "A deck's best finish in a tournament: its place among the players, as 1st of 285",
-    message: `${selectOrdinal(place, {
-      one: '#st',
-      two: '#nd',
-      few: '#rd',
-      other: '#th',
-    })} of ${players}`,
-  });
-};
-
-/** A deck's name with its finish in the page's language ("… — 1st of 285"). */
-export const wordName = (name: string): string => {
-  const [title, finish] = splitFinish(name);
-  return finish ? `${title} — ${wordFinish(finish)}` : name;
-};
+// The deck screen's name helpers live with splitFinish (no import cycle).
+export { wordFinish, wordName };
 
 /** The place alone, for a deck box's sticker ("1st"). */
 const wordPlace = (finish: string): string | undefined => {
@@ -175,7 +156,8 @@ const SavedDeckTile = ({
 }) => {
   const { t } = useLingui();
   const check = useMemo(() => checkDeck(deck.cards, deck.format), [deck]);
-  const deckName = deck.name;
+  // Shown and spoken with its finish in the page's language.
+  const deckName = wordName(deck.name);
   const seat = SEAT_NAMES[seats.target];
   const cover = useMemo(() => savedDeckCover(deck), [deck]);
   const tone = useMemo(() => deckBoxToneOf(deck.cards), [deck]);
@@ -222,12 +204,12 @@ const SavedDeckTile = ({
       >
         <DeckBox
           cover={cover}
-          name={deck.name}
+          name={deckName}
           tone={tone}
           invalid={!check.valid}
         />
         <span className="deck-tile__text">
-          <span className="deck-tile__name">{deck.name}</span>
+          <span className="deck-tile__name">{deckName}</span>
           <span className="deck-tile__meta">
             <span className="deck-tile__format">{formatName(deck.format)}</span>
             <span
@@ -597,8 +579,26 @@ export const DeckHome = ({
   const [surprising, setSurprising] = useState(false);
   const pasteRef = useRef<HTMLTextAreaElement>(null);
   const mode = finderMode(paste);
-  // Kept while the screen is put away, so it opens again as it was left.
-  const search = useDeckSearch(paste, mode === 'search');
+  // Kept while the screen is put away, so it opens again as it was left
+  // -- asked again if it had failed, or the index wasn't ready.
+  const [searchAgain, setSearchAgain] = useState(0);
+  const search = useDeckSearch(
+    paste,
+    mode === 'search',
+    undefined,
+    searchAgain
+  );
+  const wasOpen = useRef(open);
+  useEffect(() => {
+    if (
+      open &&
+      !wasOpen.current &&
+      (search.status === 'failed' || search.status === 'unavailable')
+    ) {
+      setSearchAgain((count) => count + 1);
+    }
+    wasOpen.current = open;
+  }, [open, search.status]);
 
   useEffect(() => {
     if (!open || collection) return;
@@ -629,6 +629,10 @@ export const DeckHome = ({
   // The filter applies only while its field shows: below the count that
   // shows it (a deck deleted meanwhile), nothing would undo it.
   const filtering = libraryState.decks.length >= LIBRARY_FILTER_AT;
+  // Gone with its field, so it never comes back with a ninth deck.
+  useEffect(() => {
+    if (!filtering) setFilter('');
+  }, [filtering]);
   const shownDecks = useMemo(() => {
     const query = filtering ? filter.trim().toLowerCase() : '';
     return query

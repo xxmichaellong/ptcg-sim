@@ -1906,7 +1906,7 @@
   },
   "eP7qeF": {
     "message": "Couldn't start the tutorial. Try again.",
-    "translation": "เริ่มบทเรียนไม่ได้ โปรดลองอีกครั้ง"
+    "translation": "เริ่มบทช่วยสอนไม่ได้ โปรดลองอีกครั้ง"
   },
   "nzVItu": {
     "message": "Couldn't use the clipboard. Allow access and try again.",
@@ -5341,7 +5341,7 @@
   },
   "L7LU5x": {
     "message": "This tutorial waits in the <0>menu</0> whenever you want it.",
-    "translation": "บทสอนนี้อยู่ใน<0>เมนู</0> เปิดดูได้ทุกเมื่อ"
+    "translation": "บทช่วยสอนนี้อยู่ใน<0>เมนู</0> เปิดดูได้ทุกเมื่อ"
   },
   "YcMvP7": {
     "message": "Tilted on wide screens, flat on phones.",
@@ -5590,11 +5590,11 @@
   },
   "T7w4KT": {
     "message": "Tutorial",
-    "translation": "บทสอนเล่น"
+    "translation": "บทช่วยสอน"
   },
   "XQ_0kk": {
     "message": "Tutorial complete. You're ready to play.",
-    "translation": "จบบทสอนแล้ว คุณพร้อมเล่นแล้ว"
+    "translation": "จบบทช่วยสอนแล้ว คุณพร้อมเล่นแล้ว"
   },
   "-zy2Nq": {
     "message": "Type",

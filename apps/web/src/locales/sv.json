@@ -3129,7 +3129,7 @@
   },
   "qJ_tx1": {
     "message": "Look at or cover their Prizes",
-    "translation": "Titta på eller dölj deras Prizes"
+    "translation": "Titta på eller dölj deras priskort"
   },
   "bQF9w4": {
     "message": "Look at or cover your Prizes",
@@ -5270,11 +5270,11 @@
   },
   "4IfVI6": {
     "message": "Their Active Spot",
-    "translation": "Deras Active Spot"
+    "translation": "Deras aktiva plats"
   },
   "x36RVi": {
     "message": "Their Bench",
-    "translation": "Deras Bench"
+    "translation": "Deras bänk"
   },
   "BBfq5L": {
     "message": "Their deck",
@@ -5298,7 +5298,7 @@
   },
   "EO0v0p": {
     "message": "Their Prizes",
-    "translation": "Deras Prizes"
+    "translation": "Deras priskort"
   },
   "Cedl1T": {
     "message": "Their side is yours now: start their turn with <0>{0}</0>.",
@@ -5787,11 +5787,11 @@
   },
   "wkv3p1": {
     "message": "Your Active Spot",
-    "translation": "Din Active Spot"
+    "translation": "Din aktiva plats"
   },
   "rrV20L": {
     "message": "Your Bench",
-    "translation": "Din Bench"
+    "translation": "Din bänk"
   },
   "IZO0Y6": {
     "message": "Your board",
@@ -5832,7 +5832,7 @@
   },
   "XzwcHS": {
     "message": "Your Prizes",
-    "translation": "Dina Prizes"
+    "translation": "Dina priskort"
   },
   "yuM-lV": {
     "message": "Your turn",

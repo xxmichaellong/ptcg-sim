@@ -14,14 +14,18 @@ import {
   ftsQuery,
   normalizeName,
 } from './normalize.js';
-import type {
-  ArchetypeRef,
-  IndexedFormat,
-  ListedTournament,
-  StandingEntry,
+import {
+  MAX_TOURNAMENT_PLAYERS,
+  type ArchetypeRef,
+  type IndexedFormat,
+  type ListedTournament,
+  type StandingEntry,
 } from './parse.js';
 
 export type SqlValue = string | number | null;
+
+/** A username with a letter or digit in it (as `PLAYER_ID` asks). */
+const NAMED_PLAYER = `e.player_id GLOB '*[A-Za-z0-9]*'`;
 
 /** The SQL a Durable Object offers (`ctx.storage.sql`), or a test's. */
 export interface SqlLike {
@@ -219,6 +223,16 @@ const text = (value: SqlValue | undefined): string =>
   typeof value === 'string' ? value : '';
 const number = (value: SqlValue | undefined): number =>
   typeof value === 'number' ? value : 0;
+
+/**
+ * Rows stored before the reads were bounded (an event's player count, a
+ * username of dots) are read out as the reads bound them now: the app
+ * refuses a whole page over one.
+ */
+const playersOf = (value: SqlValue | undefined): number => {
+  const players = number(value);
+  return players <= MAX_TOURNAMENT_PLAYERS ? players : 0;
+};
 const nullableNumber = (value: SqlValue | undefined): number | null =>
   typeof value === 'number' ? value : null;
 const nullableText = (value: SqlValue | undefined): string | null =>
@@ -241,7 +255,7 @@ const tournamentRow = (row: Row): TournamentRow => ({
   date: number(row.date),
   format:
     row.format === 'STANDARD' || row.format === 'EXPANDED' ? row.format : null,
-  players: number(row.players),
+  players: playersOf(row.players),
   state: text(row.state) as TournamentState,
   hasLists: row.has_lists === null ? null : row.has_lists === 1,
   etag: nullableText(row.etag),
@@ -257,7 +271,7 @@ const finishRow = (row: Row): FinishRow => ({
     id: text(row.t_id),
     name: text(row.t_name),
     date: number(row.t_date),
-    players: number(row.t_players),
+    players: playersOf(row.t_players),
     format: text(row.t_format),
   },
   player: {
@@ -833,6 +847,7 @@ export class DeckIndexStore {
        JOIN tournaments t ON t.id = e.tournament_id
        WHERE e.archetype_id = ? AND t.format = ? AND e.list_hash IS NOT NULL
          AND e.placing IS NOT NULL AND t.date >= ? AND t.state = 'indexed'
+         AND ${NAMED_PLAYER}
          ${past}
        ORDER BY e.placing ASC, t.players DESC, t.date DESC, t.id ASC, e.player_id ASC
        LIMIT ?`,
@@ -887,7 +902,7 @@ export class DeckIndexStore {
     return this.rows(
       `SELECT e.*, a.name AS a_name, a.icons AS a_icons FROM entries e
        LEFT JOIN archetypes a ON a.id = e.archetype_id
-       WHERE e.tournament_id = ?
+       WHERE e.tournament_id = ? AND ${NAMED_PLAYER}
        ORDER BY e.placing IS NULL, e.placing, e.player_id`,
       tournamentId
     ).map((row) => ({

@@ -558,6 +558,11 @@
   font-size: var(--text-sm);
 }
 
+/* Kept on the page for a reader, taking no room until it has words. */
+.deck-more-status:empty {
+  padding: 0;
+}
+
 .deck-results__list {
   margin: 0;
   padding: 0;
