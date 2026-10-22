@@ -61,12 +61,15 @@ from RK9.
    - A 429, or Limitless saying none are left, stops every request until its
      window resets.
    - A failure of Limitless holds the crawl back, longer each time; a 200
-     whose body isn't a list counts as one.
+     whose body isn't a list counts as one, as do standings whose rows none
+     read (what is stored keeps answering), and a page of the list refused.
    - A tournament whose read fails is retried an hour later, then two, and
      then left to players opening it. A player's read that fails while the
      event may still be running, or before the crawl's next try is due,
      spends none of those tries.
-   - Limitless answering an id as unknown removes it.
+   - Limitless answering an id as unknown removes it; after two in a row,
+     the rest are taken for Limitless refusing (nothing more removed, the
+     crawl held back) until it answers again.
 3. **Everything from Limitless is untrusted, as in ADR-029.**
    - Responses are capped at 8 MB with a 15-second deadline.
    - Names are bounded single lines.

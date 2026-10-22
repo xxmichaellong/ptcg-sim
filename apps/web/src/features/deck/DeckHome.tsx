@@ -643,7 +643,8 @@ export const DeckHome = ({
             wordName(deck.name).toLowerCase().includes(query)
         )
       : libraryState.decks;
-  }, [filter, filtering, libraryState.decks]);
+    // `t` changes with the language, and with it the names shown.
+  }, [filter, filtering, libraryState.decks, t]);
 
   const { meta, classicGroups, classic } = homeGroups(collection, season);
   const metaSource = meta?.source;

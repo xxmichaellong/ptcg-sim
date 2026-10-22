@@ -396,6 +396,41 @@ describe('the request budget', () => {
     expect(limitless.standingsCalls()).toHaveLength(4);
   });
 
+  it('holds back when a page of the list is refused, not asking every step', async () => {
+    limitless.tournaments = [tournament(1, { date: START - 400 * DAY })];
+    for (let n = 0; n < 1_000; n += 1) {
+      limitless.failures.push(new Response('bad', { status: 400 }));
+    }
+    const index = createIndex();
+    await crawlUntil(index, START + 10 * MINUTE);
+    const pages = limitless.calls.filter((call) =>
+      call.startsWith('/api/tournaments?')
+    );
+    // Every 15 seconds it would be 40; held back, longer each time.
+    expect(pages.length).toBeLessThan(10);
+  });
+
+  it('forgets no more than a couple of events in a run Limitless calls unknown', async () => {
+    limitless.tournaments = [1, 2, 3, 4].map((n) =>
+      tournament(n, { date: START - 2 * DAY - n * HOUR })
+    );
+    for (const n of [1, 2, 3, 4]) {
+      limitless.standings.set(id(n), [standing('p', 1, dragapult)]);
+    }
+    const index = createIndex();
+    await crawlUntilIdle(index);
+    // Limitless answers every standings id as unknown (a storm, not four
+    // events gone): the weekly re-reads forget two, then hold back.
+    limitless.standings.clear();
+    now = START + 8 * DAY;
+    await crawlUntil(index, START + 8 * DAY + 10 * MINUTE);
+    const kept = [];
+    for (const n of [1, 2, 3, 4]) {
+      if ((await index.tournament(id(n))).kind === 'ok') kept.push(n);
+    }
+    expect(kept.length).toBeGreaterThanOrEqual(2);
+  });
+
   it('forgets a tournament Limitless no longer knows', async () => {
     limitless.tournaments = [tournament(1, { date: START - DAY })];
     const index = createIndex();
@@ -450,6 +485,20 @@ describe('reading standings again', () => {
     await crawlUntil(index, START + 4 * HOUR);
     // Not the whole queue worn out at the budget's pace.
     expect(limitless.standingsCalls().length).toBeLessThan(25);
+  });
+
+  it('keeps what it has when standings come back in a shape it cannot read', async () => {
+    limitless.tournaments = [tournament(1, { date: START - 2 * DAY })];
+    limitless.standings.set(id(1), [standing('p', 1, dragapult)]);
+    const index = createIndex();
+    await crawlUntilIdle(index);
+    // A week on, Limitless has changed its rows' shape.
+    limitless.standings.set(id(1), [{ player: { id: 'p' }, placing: '1st' }]);
+    now = START + 8 * DAY;
+    await crawlUntilIdle(index);
+    expect(limitless.standingsCalls()).toHaveLength(2);
+    const answer = await index.tournament(id(1));
+    expect(answer.kind === 'ok' && answer.standings).toHaveLength(1);
   });
 
   it('reads a re-categorised deck again', async () => {

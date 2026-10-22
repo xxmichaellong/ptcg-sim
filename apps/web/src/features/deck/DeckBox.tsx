@@ -119,7 +119,8 @@ export const DeckBox = ({
             />
           ) : (
             <span className="deck-box__initial">
-              {name.slice(0, 1).toUpperCase()}
+              {/* A whole character: an emoji's first half is none. */}
+              {(Array.from(name)[0] ?? '').toUpperCase()}
             </span>
           )}
         </span>

@@ -66,6 +66,11 @@ export const CRAWL_POLICY = Object.freeze({
   /** After Limitless fails, the crawl waits this long, doubling each time. */
   firstHoldMs: 30_000,
   maximumHoldMs: 30 * MINUTE_MS,
+  /**
+   * Events answered as unknown in a row before the rest are taken for
+   * Limitless refusing (nothing more forgotten, the crawl held back).
+   */
+  unknownBeforeHold: 2,
 });
 
 const META = Object.freeze({
@@ -207,6 +212,8 @@ type CrawlTask =
 export class DeckIndex {
   private readonly store: DeckIndexStore;
   private readonly reading = new Map<string, Promise<void>>();
+  /** Events answered as unknown in a row, since Limitless last answered. */
+  private unknownInARow = 0;
 
   constructor(private readonly deps: DeckIndexDependencies) {
     this.store = new DeckIndexStore(deps.storage);
@@ -347,6 +354,7 @@ export class DeckIndex {
   /** Limitless answered as it should: the next failure holds back afresh. */
   private recovered(): void {
     this.store.deleteMeta(META.failures);
+    this.unknownInARow = 0;
   }
 
   private holdBack(): void {
@@ -378,7 +386,15 @@ export class DeckIndex {
         `/api/tournaments?game=PTCG&limit=${String(size)}&page=${String(task.page)}`,
         'crawl'
       );
-    } catch {
+    } catch (error) {
+      // A page of the list refused (400, 404) is no event gone: the crawl
+      // holds back as for an outage, rather than asking every step.
+      if (
+        error instanceof LimitlessRequestError &&
+        error.code === 'not_found'
+      ) {
+        this.holdBack();
+      }
       // Tried again at the next step; the page is not lost.
       if (task.kind === 'discover') {
         this.store.setMeta(
@@ -472,6 +488,14 @@ export class DeckIndex {
     } catch (error) {
       if (error instanceof LimitlessRequestError) {
         if (error.code === 'not_found') {
+          // An event Limitless no longer knows is forgotten -- but a run of
+          // them is Limitless refusing, not events gone: nothing more is
+          // forgotten, and the crawl holds back, until it answers again.
+          this.unknownInARow += 1;
+          if (this.unknownInARow > CRAWL_POLICY.unknownBeforeHold) {
+            this.holdBack();
+            return;
+          }
           this.store.forget(tournament.id);
           return;
         }
@@ -495,8 +519,15 @@ export class DeckIndex {
       this.store.recordFailure(tournament.id, now);
       return;
     }
-    this.recovered();
     const entries = readStandings(response.body);
+    if (response.body.length > 0 && entries.length === 0) {
+      // Rows, none of them readable (Limitless changed their shape): what
+      // is stored keeps answering, the crawl holds back as for nonsense.
+      this.holdBack();
+      this.store.recordFailure(tournament.id, now);
+      return;
+    }
+    this.recovered();
     const hashes = new Map<string, string>();
     for (const entry of entries) {
       if (entry.list && !hashes.has(entry.list)) {

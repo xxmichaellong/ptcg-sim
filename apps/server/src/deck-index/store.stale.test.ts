@@ -56,6 +56,15 @@ describe('rows stored before the reads were bounded', () => {
           indexable: true,
         },
         {
+          id: hex(3),
+          name: 'Dots',
+          date: START - 3 * DAY,
+          format: 'STANDARD',
+          players: 32,
+          organizerId: 1,
+          indexable: true,
+        },
+        {
           id: hex(2),
           name: 'Big',
           date: START - 3 * DAY,
@@ -74,6 +83,12 @@ describe('rows stored before the reads were bounded', () => {
       { now: START - 2 * DAY, etag: null, provisional: false }
     );
     store.recordStandings(hex(2), [entry('bob', 1)], new Map([[LIST, 'h1']]), {
+      now: START - 2 * DAY,
+      etag: null,
+      provisional: false,
+    });
+    // Every list there held by a username of dots.
+    store.recordStandings(hex(3), [entry('..', 1)], new Map([[LIST, 'h1']]), {
       now: START - 2 * DAY,
       etag: null,
       provisional: false,
@@ -117,6 +132,8 @@ describe('rows stored before the reads were bounded', () => {
     for (const event of events.tournaments) {
       expect(event.players).toBeLessThanOrEqual(1_000_000);
     }
+    // An event whose every list went with those rows has none now.
+    expect(store.tournament(hex(3))?.hasLists).toBe(false);
     // Its count unknown now, the big event is no 16-player event.
     expect(
       index
@@ -128,6 +145,7 @@ describe('rows stored before the reads were bounded', () => {
           pageSize: 10,
         })
         .tournaments.map((event) => event.id)
-    ).toEqual([hex(1)]);
+        .sort()
+    ).toEqual([hex(1), hex(3)]);
   });
 });

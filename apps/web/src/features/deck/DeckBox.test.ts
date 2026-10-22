@@ -1,7 +1,9 @@
 import type { DeckCard, DeckList } from '@ptcgsim/deck-core';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 
-import { deckBoxToneOf } from './DeckBox.js';
+import { DeckBox, deckBoxToneOf } from './DeckBox.js';
 import { finderMode } from './DeckHome.js';
 import { importDeckText } from './deck-import.js';
 import { finishName } from './TournamentDecks.js';
@@ -13,6 +15,15 @@ const card = (
 ): DeckCard => ({ id, name, category, image: `/${id}.png` });
 
 describe('a deck box', () => {
+  it('shows a whole first character on a box with no cover, an emoji too', () => {
+    const initial = (name: string) =>
+      /class="deck-box__initial">([^<]*)</u.exec(
+        renderToStaticMarkup(createElement(DeckBox, { cover: undefined, name }))
+      )?.[1];
+    expect(initial('dragons')).toBe('D');
+    expect(initial('🐉 Dragons')).toBe('🐉');
+  });
+
   it('wears the colour of the basic Energy its deck plays most of', () => {
     const deck: DeckList = [
       { card: card('Dreepy', 'Pokémon'), count: 4 },

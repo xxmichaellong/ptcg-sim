@@ -128,7 +128,7 @@
     "comments": [
       "Log line for a Pokémon moved onto another player's side of the table. {actor} is the card owner's name, {card} a card's name, {boardOwner} the name of the player whose Active or Bench it went to; {source} is the spot it left and {target} the spot it went to."
     ],
-    "translation": "{actor} ย้าย {card} จาก{source, select, hand {มือ} prizes {การ์ดรางวัล} discard {กองทิ้ง} board {สนาม} stadium {สเตเดียม} active {แอคทีฟ} bench {เบนช์} lostZone {ลอสต์โซน} attachmentResolution {การ์ดที่แนบ} other {เด็ค}} ไปยัง{target, select, hand {มือ} prizes {การ์ดรางวัล} discard {กองทิ้ง} board {สนาม} stadium {สเตเดียม} active {แอคทีฟ} bench {เบนช์} lostZone {ลอสต์โซน} attachmentResolution {การ์ดที่แนบ} other {เด็ค}}ของ {boardOwner}"
+    "translation": "{actor} ย้าย {card} จาก{source, select, hand {มือ} prizes {การ์ดรางวัล} discard {กองทิ้ง} board {สนาม} stadium {สเตเดียม} active {แอคทีฟ} bench {ม้านั่งสำรอง} lostZone {ลอสต์โซน} attachmentResolution {การ์ดที่แนบ} other {เด็ค}} ไปยัง{target, select, hand {มือ} prizes {การ์ดรางวัล} discard {กองทิ้ง} board {สนาม} stadium {สเตเดียม} active {แอคทีฟ} bench {ม้านั่งสำรอง} lostZone {ลอสต์โซน} attachmentResolution {การ์ดที่แนบ} other {เด็ค}}ของ {boardOwner}"
   },
   "VzhIq8": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {target, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}}",
@@ -928,28 +928,28 @@
     "comments": [
       "Log line: a player began looking at a zone only they can see. {viewer} is who is looking, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "{viewer} ดู{source, select, hand {มือ} prizes {การ์ดรางวัล} discard {กองทิ้ง} board {สนาม} stadium {สเตเดียม} active {แอคทีฟ} bench {เบนช์} lostZone {ลอสต์โซน} attachmentResolution {การ์ดที่แนบ} inspection {การตรวจดู} other {เด็ค}}ของ {owner}"
+    "translation": "{viewer} ดู{source, select, hand {มือ} prizes {การ์ดรางวัล} discard {กองทิ้ง} board {สนาม} stadium {สเตเดียม} active {แอคทีฟ} bench {ม้านั่งสำรอง} lostZone {ลอสต์โซน} attachmentResolution {การ์ดที่แนบ} inspection {การตรวจดู} other {เด็ค}}ของ {owner}"
   },
   "kF6-Cq": {
     "message": "{viewer} looked at card in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line: a player began looking at a card only they can see. {viewer} is who is looking, {owner} whose card it is; {source} is the zone it is in."
     ],
-    "translation": "{viewer} ดูการ์ดใน{source, select, hand {มือ} prizes {การ์ดรางวัล} discard {กองทิ้ง} board {สนาม} stadium {สเตเดียม} active {แอคทีฟ} bench {เบนช์} lostZone {ลอสต์โซน} attachmentResolution {การ์ดที่แนบ} inspection {การตรวจดู} other {เด็ค}}ของ {owner}"
+    "translation": "{viewer} ดูการ์ดใน{source, select, hand {มือ} prizes {การ์ดรางวัล} discard {กองทิ้ง} board {สนาม} stadium {สเตเดียม} active {แอคทีฟ} bench {ม้านั่งสำรอง} lostZone {ลอสต์โซน} attachmentResolution {การ์ดที่แนบ} inspection {การตรวจดู} other {เด็ค}}ของ {owner}"
   },
   "jTec7e": {
     "message": "{viewer} stopped looking at {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line. {viewer} is who stopped looking, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "{viewer} เลิกดู{source, select, hand {มือ} prizes {การ์ดรางวัล} discard {กองทิ้ง} board {สนาม} stadium {สเตเดียม} active {แอคทีฟ} bench {เบนช์} lostZone {ลอสต์โซน} attachmentResolution {การ์ดที่แนบ} inspection {การตรวจดู} other {เด็ค}}ของ {owner}"
+    "translation": "{viewer} เลิกดู{source, select, hand {มือ} prizes {การ์ดรางวัล} discard {กองทิ้ง} board {สนาม} stadium {สเตเดียม} active {แอคทีฟ} bench {ม้านั่งสำรอง} lostZone {ลอสต์โซน} attachmentResolution {การ์ดที่แนบ} inspection {การตรวจดู} other {เด็ค}}ของ {owner}"
   },
   "FAueN1": {
     "message": "{viewer} stopped looking at card in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line. {viewer} is who stopped looking, {owner} whose card it is; {source} is the zone it is in."
     ],
-    "translation": "{viewer} เลิกดูการ์ดใน{source, select, hand {มือ} prizes {การ์ดรางวัล} discard {กองทิ้ง} board {สนาม} stadium {สเตเดียม} active {แอคทีฟ} bench {เบนช์} lostZone {ลอสต์โซน} attachmentResolution {การ์ดที่แนบ} inspection {การตรวจดู} other {เด็ค}}ของ {owner}"
+    "translation": "{viewer} เลิกดูการ์ดใน{source, select, hand {มือ} prizes {การ์ดรางวัล} discard {กองทิ้ง} board {สนาม} stadium {สเตเดียม} active {แอคทีฟ} bench {ม้านั่งสำรอง} lostZone {ลอสต์โซน} attachmentResolution {การ์ดที่แนบ} inspection {การตรวจดู} other {เด็ค}}ของ {owner}"
   },
   "JirPbT": {
     "message": "{zoneName}, {count, plural, one {# card} other {# cards}}",
@@ -5274,7 +5274,7 @@
   },
   "x36RVi": {
     "message": "Their Bench",
-    "translation": "เบนช์ของคู่ต่อสู้"
+    "translation": "ม้านั่งสำรองของคู่ต่อสู้"
   },
   "BBfq5L": {
     "message": "Their deck",
@@ -5791,7 +5791,7 @@
   },
   "rrV20L": {
     "message": "Your Bench",
-    "translation": "เบนช์ของคุณ"
+    "translation": "ม้านั่งสำรองของคุณ"
   },
   "IZO0Y6": {
     "message": "Your board",

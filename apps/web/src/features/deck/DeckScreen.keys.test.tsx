@@ -548,6 +548,11 @@ describe('the deck screen from the keyboard', () => {
         filter.dispatchEvent(new Event('input', { bubbles: true }));
       });
       expect(shown()).toEqual(['Dragapult — 1. von 67']);
+      // The language changes back: what the filter matches is asked again.
+      await act(async () => {
+        i18n.activate(locale);
+      });
+      expect(shown()).toEqual([]);
       // Kept as it came.
       expect(
         library

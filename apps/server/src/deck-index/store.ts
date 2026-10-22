@@ -74,6 +74,8 @@ const REPAIRS: Readonly<Record<string, readonly string[]>> = {
   '1': [
     `UPDATE tournaments SET players = 0 WHERE players > ${String(MAX_TOURNAMENT_PLAYERS)}`,
     `DELETE FROM entries WHERE player_id NOT GLOB '*[A-Za-z0-9]*'`,
+    // An event whose every list went with those rows has none now.
+    `UPDATE tournaments SET has_lists = 0 WHERE has_lists = 1 AND NOT EXISTS (SELECT 1 FROM entries e WHERE e.tournament_id = tournaments.id AND e.list_hash IS NOT NULL)`,
   ],
 };
 
