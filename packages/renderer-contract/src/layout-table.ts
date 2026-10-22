@@ -156,6 +156,8 @@ const HAND_COUNT_SLOT_PX = 44;
  */
 const MIN_FAR_HAND_PX = 128;
 const MARKER_ROW_PX = 36;
+/** The least an Active card keeps: a markers' row never costs the board more. */
+const MIN_BOARD_ROW_PX = 12;
 
 /**
  * Across the table the corner beside the hand lies under the app bar
@@ -254,7 +256,8 @@ interface HalfOptions {
   /**
    * The far markers sit in a row of their own below the app bar, the hand
    * strip deepened for it: a corner past the bar would leave the hand less
-   * than `MIN_FAR_HAND_PX`.
+   * than `MIN_FAR_HAND_PX`. `false`: never, the row would leave the board
+   * too little; unset, the layout decides.
    */
   readonly markersBelowBar?: boolean;
 }
@@ -393,15 +396,17 @@ const layoutHalf = (
       : activeRect.x - gap;
   const markerCount = Math.max(0, Math.min(2, options.markerCount ?? 0));
   const markerWidth = pileWidth * MARKER_COLUMN_SHARE;
+  // Markers given a row below the bar sit in it, not beside the prizes.
+  const markersBeside = markerCount > 0 && options.markersBelowBar !== true;
   const piecesWidth =
     (options.lostZoneBeside ? pileWidth + gap : 0) +
-    (markerCount > 0 ? markerWidth + gap : 0);
+    (markersBeside ? markerWidth + gap : 0);
   const besidePrizes =
     piecesWidth > 0 && boardEnd - middleLeft - piecesWidth >= pileWidth;
   let boardLeft = middleLeft;
   let lostZone = pileAt(2);
   let markers: Rect | undefined;
-  if (besidePrizes && markerCount > 0) {
+  if (besidePrizes && markersBeside) {
     markers = {
       x: boardLeft,
       y: activeTop,
@@ -475,7 +480,13 @@ const layoutHalf = (
       past &&
       handRight - Math.max(handLeft, past.x + past.width) < MIN_FAR_HAND_PX
     ) {
-      return layoutHalf(width, height, { ...options, markersBelowBar: true });
+      const below = layoutHalf(width, height, {
+        ...options,
+        markersBelowBar: true,
+      });
+      // Unless the row leaves the board next to nothing: the hand is then
+      // cramped, and the board kept.
+      if (below.cardHeights.active >= MIN_BOARD_ROW_PX) return below;
     }
   }
   const corner: Rect | undefined =
@@ -564,6 +575,7 @@ const layoutHalfPortrait = (
   const pastBar = options.handStartReservePx ?? 0;
   const markerCount = Math.max(0, Math.min(2, options.markerCount ?? 0));
   const markersBelowBar =
+    options.markersBelowBar !== false &&
     pastBar > 0 &&
     markerCount > 0 &&
     width -
@@ -591,6 +603,14 @@ const layoutHalfPortrait = (
     (width - 2 * edge) / (BENCH_FIT_CARDS * CARD_ASPECT_RATIO)
   );
   const active = bench * proportions.active;
+  // A markers' row that leaves the board next to nothing gives way: the
+  // markers take the corner past the bar, the hand cramped.
+  if (markersBelowBar && active < MIN_BOARD_ROW_PX) {
+    return layoutHalfPortrait(width, height, {
+      ...options,
+      markersBelowBar: false,
+    });
+  }
   const handStrip = Math.min(
     height,
     Math.max(bench * proportions.handStrip, minStrip)
@@ -728,6 +748,25 @@ const benchCardHeightOf = (geometry: HalfGeometry): number =>
       (BENCH_FIT_CARDS * CARD_ASPECT_RATIO)
   );
 
+/**
+ * Whether the portrait mat is the one, chosen as the half would be without
+ * its markers: where they go (past the bar or below it) costs a layout up
+ * to a row, and must not swap mat and portrait back and forth as the
+ * window grows a pixel at a time.
+ */
+const portraitChosen = (
+  options: HalfOptions,
+  candidates: (options: HalfOptions) => {
+    readonly landscape: HalfGeometry;
+    readonly portrait: HalfGeometry;
+  }
+): boolean => {
+  const { landscape, portrait } = candidates(
+    options.markerCount ? { ...options, markerCount: 0 } : options
+  );
+  return bestOf(landscape, portrait) === portrait;
+};
+
 const handWidthOf = (geometry: HalfGeometry): number =>
   geometry.regions.find((region) => region.kind === 'hand')?.rect.width ?? 0;
 
@@ -797,9 +836,17 @@ const layoutTableHalf = (
 ): HalfGeometry => {
   // Mat or portrait mat is chosen at the frame's full height, so fitting
   // the mat shorter never turns it into the other.
-  const landscape = layoutHalf(width, height, options);
-  const portrait = layoutHalfPortrait(width, height, options);
-  if (bestOf(landscape, portrait) === portrait) return portrait;
+  const candidates = (
+    chosen: HalfOptions
+  ): { readonly landscape: HalfGeometry; readonly portrait: HalfGeometry } => ({
+    landscape: layoutHalf(width, height, chosen),
+    portrait: layoutHalfPortrait(width, height, chosen),
+  });
+  const { landscape, portrait } = candidates(options);
+  const portraitWins = options.markerCount
+    ? portraitChosen(options, candidates)
+    : bestOf(landscape, portrait) === portrait;
+  if (portraitWins) return portrait;
   const fitted = options.fitHeight;
   return fitted !== undefined && fitted < height
     ? atPlayerEdge(layoutHalf(width, fitted, options), height - fitted)
@@ -825,42 +872,54 @@ const layoutSoloHalf = (
       SOLO_SEAM_BAND_PX,
       (options.seamBandPx ?? 0) + 2 * SOLO_CONTROLS_GAP_PX
     ) + (options.topReservePx ?? 0);
-  // Tall, the portrait mat takes the whole height: its rows sit at the
-  // player's edge and the rest of the height is the band already.
-  const portrait = layoutHalfPortrait(width, height, {
-    seamBandPx: 2 * soloBand,
-    ...(options.markerCount ? { markerCount: options.markerCount } : {}),
-    ...(options.handStartReservePx
-      ? { handStartReservePx: options.handStartReservePx }
-      : {}),
-    ...(options.minHandStripPx
-      ? { minHandStripPx: options.minHandStripPx }
-      : {}),
-  });
-  const fits = (candidate: number): boolean => {
-    const geometry = layoutHalf(width, candidate, options);
-    return (
-      BENCH_FIT_CARDS * geometry.cardHeights.bench * CARD_ASPECT_RATIO <=
-      geometry.middle.right - geometry.middle.left
-    );
-  };
-  const available = Math.max(0, height - soloBand);
-  let fitted = available;
-  if (!fits(available)) {
-    // Taller only ever means bigger cards and a narrower middle.
-    let low = 0;
-    let high = available;
-    for (let step = 0; step < 24; step += 1) {
-      const middle = (low + high) / 2;
-      if (fits(middle)) low = middle;
-      else high = middle;
+  const candidates = (
+    chosen: HalfOptions
+  ): { readonly landscape: HalfGeometry; readonly portrait: HalfGeometry } => {
+    // Tall, the portrait mat takes the whole height: its rows sit at the
+    // player's edge and the rest of the height is the band already.
+    const portrait = layoutHalfPortrait(width, height, {
+      seamBandPx: 2 * soloBand,
+      ...(chosen.markerCount ? { markerCount: chosen.markerCount } : {}),
+      ...(chosen.handStartReservePx
+        ? { handStartReservePx: chosen.handStartReservePx }
+        : {}),
+      ...(chosen.minHandStripPx
+        ? { minHandStripPx: chosen.minHandStripPx }
+        : {}),
+    });
+    const fits = (candidate: number): boolean => {
+      const geometry = layoutHalf(width, candidate, chosen);
+      return (
+        BENCH_FIT_CARDS * geometry.cardHeights.bench * CARD_ASPECT_RATIO <=
+        geometry.middle.right - geometry.middle.left
+      );
+    };
+    const available = Math.max(0, height - soloBand);
+    let fitted = available;
+    if (!fits(available)) {
+      // Taller only ever means bigger cards and a narrower middle.
+      let low = 0;
+      let high = available;
+      for (let step = 0; step < 24; step += 1) {
+        const middle = (low + high) / 2;
+        if (fits(middle)) low = middle;
+        else high = middle;
+      }
+      fitted = Math.max(low, height * EVEN_SPLIT_SHARE);
     }
-    fitted = Math.max(low, height * EVEN_SPLIT_SHARE);
-  }
-  return bestOf(
-    atPlayerEdge(layoutHalf(width, fitted, options), height - fitted),
-    portrait
-  );
+    return {
+      landscape: atPlayerEdge(
+        layoutHalf(width, fitted, chosen),
+        height - fitted
+      ),
+      portrait,
+    };
+  };
+  const { landscape, portrait } = candidates(options);
+  const portraitWins = options.markerCount
+    ? portraitChosen(options, candidates)
+    : bestOf(landscape, portrait) === portrait;
+  return portraitWins ? portrait : landscape;
 };
 
 /** A rect in a half's own frame placed in the window. */

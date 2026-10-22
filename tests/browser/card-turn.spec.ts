@@ -296,6 +296,14 @@ test('a turn waits, back up, for a face that is still loading', async ({
   // sampler starts while the card is still held, and a busy page can paint
   // a few of those frames, the held card's back drawn by its own image:
   // from the frame it lies back up on, it must stay so.)
+  // A slow runner (CI) can take seconds to land it: wait for it to lie
+  // there, then watch it wait.
+  await expect
+    .poll(
+      async () => (await sampled(page, false)).findIndex((frame) => frame.back),
+      { timeout: 15_000 }
+    )
+    .toBeGreaterThanOrEqual(0);
   await page.waitForTimeout(700);
   const sampledSoFar = await sampled(page, false);
   const landed = sampledSoFar.findIndex((frame) => frame.back);

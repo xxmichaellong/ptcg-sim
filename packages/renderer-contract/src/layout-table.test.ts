@@ -266,6 +266,86 @@ describe('table layout: the app bar corner (ADR-036)', () => {
     }
   });
 
+  it('never leaves the far board without rows, the markers in a row of their own only where it has room', () => {
+    const PHONE_BAR = { width: 146, height: 50 };
+    for (let width = 320; width <= 420; width += 20) {
+      for (let height = 300; height <= 420; height += 20) {
+        for (const lowerShare of [0.4, 0.5, 0.6, 0.66]) {
+          for (const markers of [0, 1, 2]) {
+            const snapshot = createTableLayoutSnapshot(
+              stateAt(width, height, {
+                shellMode: 'fullscreen',
+                appBarPx: PHONE_BAR,
+                vertical: tableVerticalLayout(lowerShare),
+                ...(markers ? { oncePerGameMarkers: markers } : {}),
+              })
+            );
+            const far = snapshot.players.find(
+              (player) => player.physicalSide === 'upper'
+            )!;
+            const at = `${String(width)}x${String(height)} split=${String(lowerShare)} markers=${String(markers)}`;
+            for (const kind of ['active', 'bench'] as const) {
+              const rect = far.regions.find(
+                (region) => region.kind === kind
+              )!.physicalDeclaredBounds;
+              expect(rect.height, `${at} ${kind}`).toBeGreaterThan(0);
+            }
+            // A markers' row holds the markers: never beside the prizes too.
+            const corner = far.extras?.corner;
+            const hand = far.regions.find(
+              (region) => region.kind === 'hand'
+            )!.physicalDeclaredBounds;
+            if (corner && Math.abs(corner.y - hand.y) > 1e-6) {
+              expect(far.extras?.markers, at).toBeUndefined();
+            }
+          }
+        }
+      }
+    }
+  });
+
+  it('turns a half from mat to portrait once at most as the window widens, markers or none', () => {
+    const kindOf = (snapshot: ReturnType<typeof createTableLayoutSnapshot>) => {
+      const far = snapshot.players.find(
+        (player) => player.physicalSide === 'upper'
+      )!;
+      const box = (kind: string) =>
+        far.regions.find((region) => region.kind === kind)!
+          .physicalDeclaredBounds;
+      // Side by side in the portrait mat's pile row; one above the other
+      // down the mat's outer column.
+      return Math.abs(box('deck').y - box('discard').y) < 1
+        ? 'portrait'
+        : 'mat';
+    };
+    for (const height of [500, 640, 1024]) {
+      for (const lowerShare of [0.5, 0.6]) {
+        for (const markers of [0, 1, 2]) {
+          let changes = 0;
+          let last: string | undefined;
+          for (let width = 360; width <= 760; width += 2) {
+            const kind = kindOf(
+              createTableLayoutSnapshot(
+                stateAt(width, height, {
+                  shellMode: 'fullscreen',
+                  appBarPx: BAR,
+                  vertical: tableVerticalLayout(lowerShare),
+                  ...(markers ? { oncePerGameMarkers: markers } : {}),
+                })
+              )
+            );
+            if (last !== undefined && kind !== last) changes += 1;
+            last = kind;
+          }
+          expect(
+            changes,
+            `${String(height)} split=${String(lowerShare)} markers=${String(markers)}`
+          ).toBeLessThanOrEqual(1);
+        }
+      }
+    }
+  });
+
   it('moves no corner where nothing lies under the bar', () => {
     const near = (snapshot: ReturnType<typeof createTableLayoutSnapshot>) =>
       snapshot.players.find((player) => player.physicalSide === 'lower')!;

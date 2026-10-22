@@ -236,8 +236,11 @@ export const TableCentre = ({
       );
     };
     check();
+    // The card's own size, and the layer's: it narrows beside a docked log,
+    // which moves the bar with it.
     const observer = new ResizeObserver(check);
     observer.observe(child);
+    observer.observe(element);
     window.addEventListener('resize', check);
     return () => {
       observer.disconnect();

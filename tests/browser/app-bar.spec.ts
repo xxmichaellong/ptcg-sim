@@ -218,6 +218,33 @@ test.describe('on a phone', () => {
   }
 });
 
+test('the welcome card moves clear of the bar when the log docks beside the table', async ({
+  page,
+}) => {
+  test.setTimeout(60_000);
+  await page.setViewportSize({ width: 1100, height: 850 });
+  await page.goto('/');
+  await expect(
+    page.locator('[data-app-route="remote-room"][data-session-phase="ready"]')
+  ).toBeVisible({ timeout: 30_000 });
+  const welcome = page.locator('.table-welcome');
+  await expect(welcome).toBeVisible();
+  // Arrived and still: its size settles before the log comes.
+  await expect.poll(async () => (await box(welcome)).width).toBe(420);
+  await page.waitForTimeout(300);
+  await openActivity(page);
+  // Once the log has slid in, the card and the bar are apart.
+  await expect
+    .poll(async () =>
+      overlaps(await box(welcome), await box(page.locator('.ptcgsim-app-bar')))
+    )
+    .toBe(false);
+  await page.waitForTimeout(600);
+  expect(
+    overlaps(await box(welcome), await box(page.locator('.ptcgsim-app-bar')))
+  ).toBe(false);
+});
+
 test('a zone’s hover name is centred, but an empty deck’s sits under its +', async ({
   page,
 }) => {

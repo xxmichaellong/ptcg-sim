@@ -63,7 +63,10 @@ here):
 - the far player's VSTAR/GX markers, where they have no room beside the
   Prize cards, get a corner of their own past the bar (`extras.corner`),
   and the far hand starts after it; where that would leave the hand less
-  than 128px (an upright phone), they take a row below the bar instead;
+  than 128px (an upright phone), they take a row below the bar instead,
+  unless the row would leave the far board under 12px of card. Mat or
+  portrait is chosen as if the half had no markers, so where they go never
+  swaps the two as the window grows;
 - a tilted far hand draws its cards in as they grow, so its outer card
   ends where the strip does;
 - a half that fills the table keeps its top clear of the bar.
