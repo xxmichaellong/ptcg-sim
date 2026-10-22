@@ -82,6 +82,12 @@ const META = Object.freeze({
   /** Failed requests in a row, and the crawl held back until when. */
   failures: 'failures',
   heldUntil: 'held-until',
+  /**
+   * Events answered as unknown in a row since a standings read last
+   * answered: kept with the index, so neither a list page nor a restart
+   * lets a storm of them forget more.
+   */
+  unknownRun: 'unknown-run',
 });
 
 export interface DeckIndexDependencies {
@@ -212,8 +218,6 @@ type CrawlTask =
 export class DeckIndex {
   private readonly store: DeckIndexStore;
   private readonly reading = new Map<string, Promise<void>>();
-  /** Events answered as unknown in a row, since Limitless last answered. */
-  private unknownInARow = 0;
 
   constructor(private readonly deps: DeckIndexDependencies) {
     this.store = new DeckIndexStore(deps.storage);
@@ -354,7 +358,6 @@ export class DeckIndex {
   /** Limitless answered as it should: the next failure holds back afresh. */
   private recovered(): void {
     this.store.deleteMeta(META.failures);
-    this.unknownInARow = 0;
   }
 
   private holdBack(): void {
@@ -490,10 +493,14 @@ export class DeckIndex {
         if (error.code === 'not_found') {
           // An event Limitless no longer knows is forgotten -- but a run of
           // them is Limitless refusing, not events gone: nothing more is
-          // forgotten, and the crawl holds back, until it answers again.
-          this.unknownInARow += 1;
-          if (this.unknownInARow > CRAWL_POLICY.unknownBeforeHold) {
+          // forgotten until a standings read answers again. The crawl holds
+          // back and moves on (a failure for this one), so an event truly
+          // gone is forgotten on its retry once the run has ended.
+          const run = Number(this.store.getMeta(META.unknownRun) ?? '0') + 1;
+          this.store.setMeta(META.unknownRun, String(run));
+          if (run > CRAWL_POLICY.unknownBeforeHold) {
             this.holdBack();
+            this.store.recordFailure(tournament.id, this.deps.now());
             return;
           }
           this.store.forget(tournament.id);
@@ -509,6 +516,7 @@ export class DeckIndex {
     const provisional = now - tournament.date < STORE_POLICY.finishedAfterMs;
     if (response.status === 304) {
       this.recovered();
+      this.store.deleteMeta(META.unknownRun);
       this.store.recordUnchanged(tournament.id, now, provisional);
       return;
     }
@@ -528,6 +536,7 @@ export class DeckIndex {
       return;
     }
     this.recovered();
+    this.store.deleteMeta(META.unknownRun);
     const hashes = new Map<string, string>();
     for (const entry of entries) {
       if (entry.list && !hashes.has(entry.list)) {

@@ -410,26 +410,96 @@ describe('the request budget', () => {
     expect(pages.length).toBeLessThan(10);
   });
 
-  it('forgets no more than a couple of events in a run Limitless calls unknown', async () => {
-    limitless.tournaments = [1, 2, 3, 4].map((n) =>
+  it('forgets no more than a couple of events in a run Limitless calls unknown, across discoveries and restarts', async () => {
+    const events = [1, 2, 3, 4, 5, 6];
+    limitless.tournaments = events.map((n) =>
       tournament(n, { date: START - 2 * DAY - n * HOUR })
     );
-    for (const n of [1, 2, 3, 4]) {
+    for (const n of events) {
       limitless.standings.set(id(n), [standing('p', 1, dragapult)]);
     }
-    const index = createIndex();
+    const storage = memoryIndexStorage();
+    const start = () => {
+      const index = new DeckIndex({
+        storage,
+        fetch: limitless.fetch,
+        now: clock,
+        enabled: true,
+      });
+      index.migrate();
+      return index;
+    };
+    let index = start();
     await crawlUntilIdle(index);
-    // Limitless answers every standings id as unknown (a storm, not four
-    // events gone): the weekly re-reads forget two, then hold back.
+    // Limitless answers every standings id as unknown (a storm, not six
+    // events gone), while its list keeps answering: the weekly re-reads
+    // forget two, then hold back -- through discoveries and a restart.
     limitless.standings.clear();
     now = START + 8 * DAY;
-    await crawlUntil(index, START + 8 * DAY + 10 * MINUTE);
+    await crawlUntil(index, START + 8 * DAY + 2 * HOUR);
+    index = start();
+    await crawlUntil(index, START + 8 * DAY + 4 * HOUR);
     const kept = [];
-    for (const n of [1, 2, 3, 4]) {
+    for (const n of events) {
       if ((await index.tournament(id(n))).kind === 'ok') kept.push(n);
     }
-    expect(kept.length).toBeGreaterThanOrEqual(2);
+    expect(kept.length).toBeGreaterThanOrEqual(events.length - 2);
   });
+
+  it('loses no history to a long storm of unknowns while the list answers, restarts and all', async () => {
+    // History still being read (old events the backfill listed), then
+    // Limitless answers every standings id as unknown for half a day while
+    // its list keeps answering, the index restarting whenever it idles.
+    const all = Array.from({ length: 600 }, (_, n) => ({
+      game: 'PTCG',
+      id: id(n + 1),
+      name: `Cup ${String(n + 1)}`,
+      date: new Date(START - 2 * DAY - n * (DAY / 10)).toISOString(),
+      format: 'STANDARD',
+      players: 64,
+    }));
+    let storm = false;
+    const fetch = (async (input: RequestInfo | URL) => {
+      const url = new URL(String(input));
+      if (url.pathname === '/api/tournaments') {
+        const limit = Number(url.searchParams.get('limit'));
+        const page = Number(url.searchParams.get('page'));
+        return Response.json(all.slice((page - 1) * limit, page * limit));
+      }
+      if (storm) return new Response('unknown', { status: 400 });
+      return Response.json([standing('p', 1, dragapult)], {
+        headers: { etag: 'W/"1"' },
+      });
+    }) as typeof globalThis.fetch;
+    const storage = memoryIndexStorage();
+    const start = () => {
+      const index = new DeckIndex({
+        storage,
+        fetch,
+        now: clock,
+        enabled: true,
+      });
+      index.migrate();
+      return index;
+    };
+    let index = start();
+    const run = async (until: number, restarting: boolean) => {
+      while (now < until) {
+        const next = await index.step();
+        if (next === null) return;
+        if (restarting && next - now > 2 * MINUTE) index = start();
+        now = Math.max(now, next);
+      }
+    };
+    await run(START + 30 * MINUTE, false);
+    storm = true;
+    await run(now + 12 * HOUR, true);
+    let gone = 0;
+    for (const event of all) {
+      if ((await index.tournament(event.id)).kind === 'not_found') gone += 1;
+    }
+    expect(gone).toBeLessThanOrEqual(CRAWL_POLICY.unknownBeforeHold);
+  }, 60_000);
 
   it('forgets a tournament Limitless no longer knows', async () => {
     limitless.tournaments = [tournament(1, { date: START - DAY })];

@@ -128,7 +128,7 @@
     "comments": [
       "Log line for a Pokémon moved onto another player's side of the table. {actor} is the card owner's name, {card} a card's name, {boardOwner} the name of the player whose Active or Bench it went to; {source} is the spot it left and {target} the spot it went to."
     ],
-    "translation": "{actor} نقل {card} من {source, select, hand {اليد} prizes {الجوائز} discard {كومة التخلص} board {الطاولة} stadium {الملعب} active {المقاتل} bench {الاحتياط} lostZone {Lost Zone} attachmentResolution {البطاقات المرفقة} other {المجموعة}} إلى {target, select, hand {اليد} prizes {الجوائز} discard {كومة التخلص} board {الطاولة} stadium {الملعب} active {المقاتل} bench {الاحتياط} lostZone {Lost Zone} attachmentResolution {البطاقات المرفقة} other {المجموعة}} عند {boardOwner}"
+    "translation": "{actor} نقل {card} من {source, select, hand {اليد} prizes {الجوائز} discard {كومة التخلص} board {الطاولة} stadium {الملعب} active {الخانة النشطة} bench {الاحتياط} lostZone {Lost Zone} attachmentResolution {البطاقات المرفقة} other {المجموعة}} إلى {target, select, hand {اليد} prizes {الجوائز} discard {كومة التخلص} board {الطاولة} stadium {الملعب} active {الخانة النشطة} bench {الاحتياط} lostZone {Lost Zone} attachmentResolution {البطاقات المرفقة} other {المجموعة}} عند {boardOwner}"
   },
   "VzhIq8": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {target, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}}",
@@ -928,28 +928,28 @@
     "comments": [
       "Log line: a player began looking at a zone only they can see. {viewer} is who is looking, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "{viewer} اطّلع على {source, select, hand {اليد} prizes {بطاقات الجوائز} discard {كومة التخلص} board {اللوحة} stadium {الملعب} active {Pokémon النشط} bench {المقعد} lostZone {Lost Zone} attachmentResolution {البطاقات المرفقة} inspection {الفحص} other {المجموعة}} لدى {owner}"
+    "translation": "{viewer} اطّلع على {source, select, hand {اليد} prizes {بطاقات الجوائز} discard {كومة التخلص} board {اللوحة} stadium {الملعب} active {Pokémon النشط} bench {الاحتياط} lostZone {Lost Zone} attachmentResolution {البطاقات المرفقة} inspection {الفحص} other {المجموعة}} لدى {owner}"
   },
   "kF6-Cq": {
     "message": "{viewer} looked at card in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line: a player began looking at a card only they can see. {viewer} is who is looking, {owner} whose card it is; {source} is the zone it is in."
     ],
-    "translation": "{viewer} اطّلع على بطاقة في {source, select, hand {اليد} prizes {بطاقات الجوائز} discard {كومة التخلص} board {اللوحة} stadium {الملعب} active {Pokémon النشط} bench {المقعد} lostZone {Lost Zone} attachmentResolution {البطاقات المرفقة} inspection {الفحص} other {المجموعة}} لدى {owner}"
+    "translation": "{viewer} اطّلع على بطاقة في {source, select, hand {اليد} prizes {بطاقات الجوائز} discard {كومة التخلص} board {اللوحة} stadium {الملعب} active {Pokémon النشط} bench {الاحتياط} lostZone {Lost Zone} attachmentResolution {البطاقات المرفقة} inspection {الفحص} other {المجموعة}} لدى {owner}"
   },
   "jTec7e": {
     "message": "{viewer} stopped looking at {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line. {viewer} is who stopped looking, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "{viewer} توقف عن الاطلاع على {source, select, hand {اليد} prizes {بطاقات الجوائز} discard {كومة التخلص} board {اللوحة} stadium {الملعب} active {Pokémon النشط} bench {المقعد} lostZone {Lost Zone} attachmentResolution {البطاقات المرفقة} inspection {الفحص} other {المجموعة}} لدى {owner}"
+    "translation": "{viewer} توقف عن الاطلاع على {source, select, hand {اليد} prizes {بطاقات الجوائز} discard {كومة التخلص} board {اللوحة} stadium {الملعب} active {Pokémon النشط} bench {الاحتياط} lostZone {Lost Zone} attachmentResolution {البطاقات المرفقة} inspection {الفحص} other {المجموعة}} لدى {owner}"
   },
   "FAueN1": {
     "message": "{viewer} stopped looking at card in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line. {viewer} is who stopped looking, {owner} whose card it is; {source} is the zone it is in."
     ],
-    "translation": "{viewer} توقف عن الاطلاع على بطاقة في {source, select, hand {اليد} prizes {بطاقات الجوائز} discard {كومة التخلص} board {اللوحة} stadium {الملعب} active {Pokémon النشط} bench {المقعد} lostZone {Lost Zone} attachmentResolution {البطاقات المرفقة} inspection {الفحص} other {المجموعة}} لدى {owner}"
+    "translation": "{viewer} توقف عن الاطلاع على بطاقة في {source, select, hand {اليد} prizes {بطاقات الجوائز} discard {كومة التخلص} board {اللوحة} stadium {الملعب} active {Pokémon النشط} bench {الاحتياط} lostZone {Lost Zone} attachmentResolution {البطاقات المرفقة} inspection {الفحص} other {المجموعة}} لدى {owner}"
   },
   "JirPbT": {
     "message": "{zoneName}, {count, plural, one {# card} other {# cards}}",
@@ -5270,11 +5270,11 @@
   },
   "4IfVI6": {
     "message": "Their Active Spot",
-    "translation": "موضع المقاتل الخاص بالخصم"
+    "translation": "الخانة النشطة للخصم"
   },
   "x36RVi": {
     "message": "Their Bench",
-    "translation": "مقاعد الخصم"
+    "translation": "احتياط الخصم"
   },
   "BBfq5L": {
     "message": "Their deck",
@@ -5787,11 +5787,11 @@
   },
   "wkv3p1": {
     "message": "Your Active Spot",
-    "translation": "موضع المقاتل الخاص بك"
+    "translation": "خانتك النشطة"
   },
   "rrV20L": {
     "message": "Your Bench",
-    "translation": "مقاعدك"
+    "translation": "احتياطك"
   },
   "IZO0Y6": {
     "message": "Your board",

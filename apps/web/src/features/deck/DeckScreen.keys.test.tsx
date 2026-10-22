@@ -406,6 +406,30 @@ describe('the deck screen from the keyboard', () => {
     expect(library.getSnapshot().decks).toEqual([]);
   });
 
+  it('puts away a new deck left as it started, the language changed meanwhile', async () => {
+    const locale = i18n.locale;
+    const untitled = msg`Untitled deck`;
+    try {
+      const library = new DeckLibrary({ backend: null });
+      await render(vi.fn(), library);
+      await act(async () =>
+        host.querySelector<HTMLButtonElement>('#deckNewButton')!.click()
+      );
+      expect(library.getSnapshot().decks).toHaveLength(1);
+      // Made in English; the page now in another language.
+      await act(async () => {
+        i18n.load('xx', { [untitled.id!]: 'Ohne Namen' });
+        i18n.activate('xx');
+      });
+      await act(async () =>
+        host.querySelector<HTMLButtonElement>('#deckEditorBackButton')!.click()
+      );
+      expect(library.getSnapshot().decks).toEqual([]);
+    } finally {
+      i18n.activate(locale);
+    }
+  });
+
   it('keeps a name typed into a new deck just before the screen goes, and the deck with it', async () => {
     const library = new DeckLibrary({ backend: null });
     await render(vi.fn(), library);

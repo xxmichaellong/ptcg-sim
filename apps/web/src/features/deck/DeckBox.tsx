@@ -71,6 +71,20 @@ export const deckBoxToneOf = (
  * its lid closed, the cover card showing through a window in its front.
  * Only a picture -- the button around it carries the name and the action.
  */
+/**
+ * The first character a reader sees: a whole flag, family or accented
+ * letter (a grapheme), never a part of one.
+ */
+const firstCharacter = (text: string): string => {
+  if (typeof Intl.Segmenter === 'function') {
+    const [first] = new Intl.Segmenter(undefined, {
+      granularity: 'grapheme',
+    }).segment(text);
+    return first?.segment ?? '';
+  }
+  return Array.from(text)[0] ?? '';
+};
+
 export const DeckBox = ({
   cover,
   name,
@@ -119,8 +133,7 @@ export const DeckBox = ({
             />
           ) : (
             <span className="deck-box__initial">
-              {/* A whole character: an emoji's first half is none. */}
-              {(Array.from(name)[0] ?? '').toUpperCase()}
+              {firstCharacter(name).toUpperCase()}
             </span>
           )}
         </span>

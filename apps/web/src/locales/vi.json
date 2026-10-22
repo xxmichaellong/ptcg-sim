@@ -51,14 +51,14 @@
     "comments": [
       "Log line. {actor} is a player's name, {card} the card attached; {source} is the zone it came from and {target} where it went."
     ],
-    "translation": "{actor} đã gắn {card} từ {source, select, hand {bài trên tay} prizes {Prize} discard {bài bỏ} board {bàn chơi} stadium {Stadium} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {thẻ gắn kèm} other {bộ bài}} vào {target, select, hand {bài trên tay} prizes {Prize} discard {bài bỏ} board {bàn chơi} stadium {Stadium} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {thẻ gắn kèm} other {bộ bài}}"
+    "translation": "{actor} đã gắn {card} từ {source, select, hand {bài trên tay} prizes {thẻ Phần thưởng} discard {bài bỏ} board {bàn chơi} stadium {Stadium} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {thẻ gắn kèm} other {bộ bài}} vào {target, select, hand {bài trên tay} prizes {thẻ Phần thưởng} discard {bài bỏ} board {bàn chơi} stadium {Stadium} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {thẻ gắn kèm} other {bộ bài}}"
   },
   "7Azhu7": {
     "message": "{actor} attached {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {targetCard}",
     "comments": [
       "Log line. {actor} is a player's name; {card} is the card attached (Energy, a Tool) and {targetCard} the Pokémon it went on; {source} is the zone it came from."
     ],
-    "translation": "{actor} đã gắn {card} từ {source, select, hand {bài trên tay} prizes {Prize} discard {bài bỏ} board {bàn chơi} stadium {Stadium} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {thẻ gắn kèm} other {bộ bài}} vào {targetCard}"
+    "translation": "{actor} đã gắn {card} từ {source, select, hand {bài trên tay} prizes {thẻ Phần thưởng} discard {bài bỏ} board {bàn chơi} stadium {Stadium} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {thẻ gắn kèm} other {bộ bài}} vào {targetCard}"
   },
   "nb_tRJ": {
     "message": "{actor} discarded {count, plural, one {# attached card(s)} other {# attached card(s)}}",
@@ -93,7 +93,7 @@
     "comments": [
       "Log line. {actor} is a player's name, {card} the card it evolved into; {target} names the zone of the Pokémon that evolved, when its name is hidden."
     ],
-    "translation": "{actor} đã tiến hóa {target, select, hand {bài trên tay} prizes {Prize} discard {bài bỏ} board {bàn chơi} stadium {Stadium} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {thẻ gắn kèm} other {bộ bài}} thành {card}"
+    "translation": "{actor} đã tiến hóa {target, select, hand {bài trên tay} prizes {thẻ Phần thưởng} discard {bài bỏ} board {bàn chơi} stadium {Stadium} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {thẻ gắn kèm} other {bộ bài}} thành {card}"
   },
   "gUuWfL": {
     "message": "{actor} evolved {targetCard} into {card}",
@@ -107,14 +107,14 @@
     "comments": [
       "Log line: a player hid a zone they had shown to everyone. {actor} is who hid it, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "{actor} đã ẩn {source, select, hand {bài trên tay} prizes {Prize} discard {bài bỏ} board {bàn chơi} stadium {Stadium} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {thẻ gắn kèm} inspection {khu xem bài} other {bộ bài}} của {owner}"
+    "translation": "{actor} đã ẩn {source, select, hand {bài trên tay} prizes {thẻ Phần thưởng} discard {bài bỏ} board {bàn chơi} stadium {Stadium} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {thẻ gắn kèm} inspection {khu xem bài} other {bộ bài}} của {owner}"
   },
   "89ICfA": {
     "message": "{actor} hid card in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line: a player hid a card they had shown to everyone. {actor} is who hid it, {owner} whose card it is; {source} is the zone it is in."
     ],
-    "translation": "{actor} đã ẩn một lá bài trong {source, select, hand {bài trên tay} prizes {Prize} discard {bài bỏ} board {bàn chơi} stadium {Stadium} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {thẻ gắn kèm} inspection {khu xem bài} other {bộ bài}} của {owner}"
+    "translation": "{actor} đã ẩn một lá bài trong {source, select, hand {bài trên tay} prizes {thẻ Phần thưởng} discard {bài bỏ} board {bàn chơi} stadium {Stadium} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {thẻ gắn kèm} inspection {khu xem bài} other {bộ bài}} của {owner}"
   },
   "PZVwKy": {
     "message": "{actor} left {count, plural, one {# attached card(s)} other {# attached card(s)}} in play",
@@ -128,42 +128,42 @@
     "comments": [
       "Log line for a Pokémon moved onto another player's side of the table. {actor} is the card owner's name, {card} a card's name, {boardOwner} the name of the player whose Active or Bench it went to; {source} is the spot it left and {target} the spot it went to."
     ],
-    "translation": "{actor} đã chuyển {card} từ {source, select, hand {tay} prizes {thẻ thưởng} discard {bài bỏ} board {bàn đấu} stadium {sân đấu} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {bài gắn kèm} other {bộ bài}} sang {target, select, hand {tay} prizes {thẻ thưởng} discard {bài bỏ} board {bàn đấu} stadium {sân đấu} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {bài gắn kèm} other {bộ bài}} của {boardOwner}"
+    "translation": "{actor} đã chuyển {card} từ {source, select, hand {tay} prizes {thẻ Phần thưởng} discard {bài bỏ} board {bàn đấu} stadium {sân đấu} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {bài gắn kèm} other {bộ bài}} sang {target, select, hand {tay} prizes {thẻ Phần thưởng} discard {bài bỏ} board {bàn đấu} stadium {sân đấu} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {bài gắn kèm} other {bộ bài}} của {boardOwner}"
   },
   "VzhIq8": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {target, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}}",
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left and {target} the zone it went to."
     ],
-    "translation": "{actor} đã chuyển {card} từ {source, select, hand {bài trên tay} prizes {Prize} discard {bài bỏ} board {bàn chơi} stadium {Stadium} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {thẻ gắn kèm} other {bộ bài}} sang {target, select, hand {bài trên tay} prizes {Prize} discard {bài bỏ} board {bàn chơi} stadium {Stadium} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {thẻ gắn kèm} other {bộ bài}}"
+    "translation": "{actor} đã chuyển {card} từ {source, select, hand {bài trên tay} prizes {thẻ Phần thưởng} discard {bài bỏ} board {bàn chơi} stadium {Stadium} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {thẻ gắn kèm} other {bộ bài}} sang {target, select, hand {bài trên tay} prizes {thẻ Phần thưởng} discard {bài bỏ} board {bàn chơi} stadium {Stadium} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {thẻ gắn kèm} other {bộ bài}}"
   },
   "elLtOc": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {targetCard}",
     "comments": [
       "Log line. {actor} is a player's name, {card} and {targetCard} card names; {source} is the zone the card left."
     ],
-    "translation": "{actor} đã chuyển {card} từ {source, select, hand {bài trên tay} prizes {Prize} discard {bài bỏ} board {bàn chơi} stadium {Stadium} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {thẻ gắn kèm} other {bộ bài}} sang {targetCard}"
+    "translation": "{actor} đã chuyển {card} từ {source, select, hand {bài trên tay} prizes {thẻ Phần thưởng} discard {bài bỏ} board {bàn chơi} stadium {Stadium} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {thẻ gắn kèm} other {bộ bài}} sang {targetCard}"
   },
   "RyQ60M": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to bottom of deck",
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left."
     ],
-    "translation": "{actor} đã chuyển {card} từ {source, select, hand {bài trên tay} prizes {Prize} discard {bài bỏ} board {bàn chơi} stadium {Stadium} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {thẻ gắn kèm} other {bộ bài}} xuống đáy bộ bài"
+    "translation": "{actor} đã chuyển {card} từ {source, select, hand {bài trên tay} prizes {thẻ Phần thưởng} discard {bài bỏ} board {bàn chơi} stadium {Stadium} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {thẻ gắn kèm} other {bộ bài}} xuống đáy bộ bài"
   },
   "CsrT9R": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to top of deck",
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left."
     ],
-    "translation": "{actor} đã chuyển {card} từ {source, select, hand {bài trên tay} prizes {Prize} discard {bài bỏ} board {bàn chơi} stadium {Stadium} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {thẻ gắn kèm} other {bộ bài}} lên đỉnh bộ bài"
+    "translation": "{actor} đã chuyển {card} từ {source, select, hand {bài trên tay} prizes {thẻ Phần thưởng} discard {bài bỏ} board {bàn chơi} stadium {Stadium} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {thẻ gắn kèm} other {bộ bài}} lên đỉnh bộ bài"
   },
   "WBnnCz": {
     "message": "{actor} moved {count, plural, one {# card(s)} other {# card(s)}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} other {deck}}",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards; {source} is the zone they left and {destination} where they went (play: onto the table)."
     ],
-    "translation": "{actor} đã chuyển {count, plural, other {# lá bài}} từ {source, select, hand {bài trên tay} prizes {Prize} discard {bài bỏ} board {bàn chơi} stadium {Stadium} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {thẻ gắn kèm} other {bộ bài}} sang {destination, select, hand {bài trên tay} discard {bài bỏ} lostZone {Lost Zone} deckBottom {đáy bộ bài} play {bàn chơi} other {bộ bài}}"
+    "translation": "{actor} đã chuyển {count, plural, other {# lá bài}} từ {source, select, hand {bài trên tay} prizes {thẻ Phần thưởng} discard {bài bỏ} board {bàn chơi} stadium {Stadium} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {thẻ gắn kèm} other {bộ bài}} sang {destination, select, hand {bài trên tay} discard {bài bỏ} lostZone {Lost Zone} deckBottom {đáy bộ bài} play {bàn chơi} other {bộ bài}}"
   },
   "P4_K0D": {
     "message": "{actor} moved a random card from {target}'s hand to board",
@@ -177,21 +177,21 @@
     "comments": [
       "Log line: a player showed one card to everyone. {actor} is who showed it, {owner} whose card it is, {card} the card's name; {source} is the zone it is in."
     ],
-    "translation": "{actor} đã lật {card} trong {source, select, hand {bài trên tay} prizes {Prize} discard {bài bỏ} board {bàn chơi} stadium {Stadium} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {thẻ gắn kèm} inspection {khu xem bài} other {bộ bài}} của {owner}"
+    "translation": "{actor} đã lật {card} trong {source, select, hand {bài trên tay} prizes {thẻ Phần thưởng} discard {bài bỏ} board {bàn chơi} stadium {Stadium} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {thẻ gắn kèm} inspection {khu xem bài} other {bộ bài}} của {owner}"
   },
   "TMqzLF": {
     "message": "{actor} revealed {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line: a player showed a whole zone to everyone. {actor} is who showed it, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "{actor} đã lật {source, select, hand {bài trên tay} prizes {Prize} discard {bài bỏ} board {bàn chơi} stadium {Stadium} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {thẻ gắn kèm} inspection {khu xem bài} other {bộ bài}} của {owner}"
+    "translation": "{actor} đã lật {source, select, hand {bài trên tay} prizes {thẻ Phần thưởng} discard {bài bỏ} board {bàn chơi} stadium {Stadium} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {thẻ gắn kèm} inspection {khu xem bài} other {bộ bài}} của {owner}"
   },
   "P2m23t": {
     "message": "{actor} shuffled {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} into deck",
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left."
     ],
-    "translation": "{actor} đã xáo {card} từ {source, select, hand {bài trên tay} prizes {Prize} discard {bài bỏ} board {bàn chơi} stadium {Stadium} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {thẻ gắn kèm} other {bộ bài}} vào bộ bài"
+    "translation": "{actor} đã xáo {card} từ {source, select, hand {bài trên tay} prizes {thẻ Phần thưởng} discard {bài bỏ} board {bàn chơi} stadium {Stadium} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {thẻ gắn kèm} other {bộ bài}} vào bộ bài"
   },
   "xEKtXt": {
     "message": "{actor} shuffled {count, plural, one {# attached card(s)} other {# attached card(s)}} into deck",
@@ -261,14 +261,14 @@
     "comments": [
       "Log line. {actor} is a player's name."
     ],
-    "translation": "{actor} đã xáo Prize xuống đáy bộ bài"
+    "translation": "{actor} đã xáo thẻ Phần thưởng xuống đáy bộ bài"
   },
   "xw6Fj3": {
     "message": "{actor} switched {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} with top of deck",
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left, and the top card of the deck took its place."
     ],
-    "translation": "{actor} đã đổi {card} từ {source, select, hand {bài trên tay} prizes {Prize} discard {bài bỏ} board {bàn chơi} stadium {Stadium} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {thẻ gắn kèm} other {bộ bài}} với lá trên đỉnh bộ bài"
+    "translation": "{actor} đã đổi {card} từ {source, select, hand {bài trên tay} prizes {thẻ Phần thưởng} discard {bài bỏ} board {bàn chơi} stadium {Stadium} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {thẻ gắn kèm} other {bộ bài}} với lá trên đỉnh bộ bài"
   },
   "QOz626": {
     "message": "{actor} took back {target}'s last move",
@@ -590,7 +590,7 @@
     "comments": [
       "Log line: a player set up for a game (seven cards in hand, Prize cards laid out). {name} is a player's name."
     ],
-    "translation": "{name} đã rút bài khởi đầu và đặt Prize"
+    "translation": "{name} đã rút bài khởi đầu và đặt thẻ Phần thưởng"
   },
   "01JuD1": {
     "message": "{name} flipped {result, select, heads {heads} other {tails}}",
@@ -696,7 +696,7 @@
     "comments": [
       "A zone's name for screen readers; name is its player. The Prize cards."
     ],
-    "translation": "Prize của {name}"
+    "translation": "Thẻ Phần thưởng của {name}"
   },
   "g7DH0W": {
     "message": "{name} reconnected",
@@ -724,7 +724,7 @@
     "comments": [
       "Log line. {name} is a player's name; {source} is the zone they shuffled, almost always their deck."
     ],
-    "translation": "{name} đã xáo {source, select, hand {bài trên tay} prizes {Prize} discard {bài bỏ} board {bàn chơi} stadium {Stadium} active {Pokémon Active} bench {Pokémon trên băng ghế} lostZone {Lost Zone} attachmentResolution {các lá bài đã gắn} other {bộ bài}}"
+    "translation": "{name} đã xáo {source, select, hand {bài trên tay} prizes {thẻ Phần thưởng} discard {bài bỏ} board {bàn chơi} stadium {Stadium} active {Pokémon Active} bench {Pokémon trên băng ghế} lostZone {Lost Zone} attachmentResolution {các lá bài đã gắn} other {bộ bài}}"
   },
   "x8Eb2i": {
     "message": "{name} started turn {turn}",

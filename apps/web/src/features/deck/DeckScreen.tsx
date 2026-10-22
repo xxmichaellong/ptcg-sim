@@ -746,14 +746,19 @@ export const DeckScreen = ({
     return () => document.removeEventListener('keydown', onKey, true);
   }, [open, subview, backToDecks]);
 
+  // Each new deck's name as made, in the language of the moment: still
+  // that name, it is untouched, whatever the language is now.
+  const madeNames = useRef(new Map<string, string>());
   const newDeck = useCallback(
     (format: DeckFormatId = 'standard') => {
+      const name = t`Untitled deck`;
       const deck = library.create({
-        name: t`Untitled deck`,
+        name,
         format,
         cards: [],
         source: { kind: 'new' },
       });
+      madeNames.current.set(deck.id, deck.name);
       setView({ kind: 'edit', deckId: deck.id });
     },
     [library, t]
@@ -798,7 +803,7 @@ export const DeckScreen = ({
         deck &&
         deck.cards.length === 0 &&
         deck.source?.kind === 'new' &&
-        deck.name === t`Untitled deck`
+        deck.name === (madeNames.current.get(deck.id) ?? t`Untitled deck`)
       ) {
         decks.remove(deck.id);
       }

@@ -22,6 +22,10 @@ describe('a deck box', () => {
       )?.[1];
     expect(initial('dragons')).toBe('D');
     expect(initial('🐉 Dragons')).toBe('🐉');
+    // A flag, a family and an accent typed apart are one character each.
+    expect(initial('🇯🇵 Japan Nats')).toBe('🇯🇵');
+    expect(initial('👨‍👩‍👧 Family')).toBe('👨‍👩‍👧');
+    expect(initial('e\u0301clair')).toBe('E\u0301');
   });
 
   it('wears the colour of the basic Energy its deck plays most of', () => {

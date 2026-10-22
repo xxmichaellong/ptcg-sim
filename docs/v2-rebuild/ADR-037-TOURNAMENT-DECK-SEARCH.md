@@ -69,7 +69,9 @@ from RK9.
      spends none of those tries.
    - Limitless answering an id as unknown removes it; after two in a row,
      the rest are taken for Limitless refusing (nothing more removed, the
-     crawl held back) until it answers again.
+     crawl held back and moving on) until a standings read answers again.
+     The run is kept with the index, so neither a list page nor a restart
+     ends it.
 3. **Everything from Limitless is untrusted, as in ADR-029.**
    - Responses are capped at 8 MB with a 15-second deadline.
    - Names are bounded single lines.
