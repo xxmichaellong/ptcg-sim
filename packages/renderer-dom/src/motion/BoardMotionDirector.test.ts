@@ -729,4 +729,65 @@ describe('BoardMotionDirector', () => {
     expect(turn.cancel).toHaveBeenCalledOnce();
     expect(test.director.active).toBe(false);
   });
+  it('carries a turn still waiting for its face over to the new node, never from Infinity', () => {
+    const test = setup();
+    const node = (ready: boolean) => {
+      const element = document.createElement('button');
+      const face = document.createElement('span');
+      face.className = 'ptcgsim-card__face';
+      const image = document.createElement('img');
+      Object.defineProperty(image, 'complete', {
+        configurable: true,
+        get: () => ready,
+      });
+      face.append(image);
+      element.append(face);
+      test.surface.append(element);
+      return { element, face, image };
+    };
+    const director = test.director as unknown as {
+      turnOver(
+        element: HTMLElement,
+        fromImageUrl: string | null,
+        startAt: number,
+        duration: number,
+        key: string
+      ): void;
+      carryTurn(from: string, element: HTMLElement, to: string): void;
+    };
+    const turnsOf = (face: Element) =>
+      recorded.filter((entry) => entry.element === face);
+    // Its face still loading: the turn waits, holding the back up.
+    const first = node(false);
+    director.turnOver(
+      first.element,
+      'back.png',
+      performance.now() + 60,
+      420,
+      'a'
+    );
+    expect(turnsOf(first.face)).toHaveLength(0);
+    // Re-aliased meanwhile onto a node whose face is ready: it turns now.
+    const second = node(true);
+    director.carryTurn('a', second.element, 'b');
+    const [turn] = turnsOf(second.face);
+    expect(turn).toBeDefined();
+    expect(Number.isFinite(turn!.options.delay)).toBe(true);
+    // And onto one whose face is still loading: it turns once that face is
+    // ready (or has failed for good).
+    director.turnOver(
+      first.element,
+      'back.png',
+      performance.now() + 60,
+      420,
+      'c'
+    );
+    const third = node(false);
+    director.carryTurn('c', third.element, 'd');
+    expect(turnsOf(third.face)).toHaveLength(0);
+    third.image.dispatchEvent(new Event('error'));
+    const [late] = turnsOf(third.face);
+    expect(late).toBeDefined();
+    expect(Number.isFinite(late!.options.delay)).toBe(true);
+  });
 });

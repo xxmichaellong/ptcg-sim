@@ -695,14 +695,18 @@ export class BoardMotionDirector {
       );
     };
     const own = faceImageOf(face);
-    if (overlay && !(startAt < now()) && !isFaceReady(own)) {
+    // Infinity: carried over from a node still waiting for its face, so it
+    // starts once this one's is ready -- at once if it is already.
+    const pending = startAt === Infinity;
+    if (overlay && (pending || !(startAt < now())) && !isFaceReady(own)) {
       turn.startAt = Infinity;
       turn.stopWaiting = whenFaceReady(own, () => {
-        turn.startAt = Math.max(now(), startAt);
+        turn.startAt = pending ? now() : Math.max(now(), startAt);
         begin();
       });
       return;
     }
+    if (pending) turn.startAt = now();
     begin();
   }
 
