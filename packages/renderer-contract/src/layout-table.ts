@@ -1517,12 +1517,18 @@ export const createTableLayoutSnapshot = (
       // better, while it keeps most of the far Active.
       const keepsActive = (candidate: typeof split): boolean =>
         activeOf(candidate) >= activeOf(unfitted) * MOVED_MARKERS_ACTIVE_SHARE;
-      // By the prizes in fact: a fit whose markers never fit there moved
-      // none, but keeps none there either.
+      const handOf = (candidate: typeof split): number =>
+        candidate.far.player.regions.find((region) => region.kind === 'hand')
+          ?.physicalDeclaredBounds.width ?? 0;
+      // By the prizes in fact (a fit whose markers never fit there moved
+      // none, but keeps none there either), and only where moving them
+      // cost the far half: a smaller Active, or a hand cramped by a fifth.
       const keepsMarkers = (candidate: typeof split): boolean =>
         !unfitted.markersMoved ||
         (candidate.far.player.extras?.markers !== undefined &&
-          keepsActive(candidate));
+          keepsActive(candidate) &&
+          (activeOf(candidate) > activeOf(unfitted) + 0.5 ||
+            handOf(candidate) > handOf(unfitted) * 1.25));
       const clear = (candidate: typeof split): boolean =>
         (candidate.fits || !plain.fits) &&
         candidate.covered <= plain.covered + STADIUM_OVERLAP_SLACK_PX2 &&
@@ -1551,14 +1557,46 @@ export const createTableLayoutSnapshot = (
         ) {
           tries.push(farScale);
         }
+        const clearButMarkers =
+          (unfitted.fits || !plain.fits) &&
+          unfitted.covered <= plain.covered + STADIUM_OVERLAP_SLACK_PX2 &&
+          keepsRow(unfitted);
+        let aboveMoved = unfitted.markersMoved;
         for (const farScale of tries) {
           const candidate = splitAt(scale, true, farScale);
+          // Between a fit whose markers were moved from under the Stadium
+          // and one with no room for them beside the prizes lies, where
+          // there is one, a window where they sit there clear -- often
+          // narrower than a step: its edge is found and tried.
+          if (
+            unfitted.markersMoved &&
+            aboveMoved &&
+            !candidate.markersMoved &&
+            candidate.far.player.extras?.markers === undefined
+          ) {
+            let high = above;
+            let low = farScale;
+            for (let step = 0; step < 16; step += 1) {
+              const middle = (low + high) / 2;
+              if (splitAt(scale, true, middle).markersMoved) high = middle;
+              else low = middle;
+            }
+            if (clear(splitAt(scale, true, low))) {
+              found = low;
+              above = high;
+              break;
+            }
+          }
+          aboveMoved = candidate.markersMoved;
           if (clear(candidate)) {
             found = farScale;
             break;
           }
-          // None clear: the one covered least, as good otherwise.
+          // None clear: the one covered least, as good otherwise -- unless
+          // the fit found was clear but for its markers, moved: it stays,
+          // never traded for less cover than the table has without the bar.
           if (
+            !clearButMarkers &&
             (candidate.fits || !unfitted.fits) &&
             keepsRow(candidate) &&
             (!unfitted.markersMoved || keepsActive(candidate)) &&

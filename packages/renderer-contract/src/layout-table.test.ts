@@ -633,7 +633,6 @@ describe('table layout: the app bar corner (ADR-036)', () => {
       seamBandPx: 42,
       oncePerGameMarkers: 2,
     });
-    expect(far(kept).extras?.markers).toBeDefined();
     expect(box(kept, 'hand').width).toBeGreaterThan(250);
     // A sliver under the Stadium takes no markers' row (the far Active a
     // third smaller for it).
@@ -663,6 +662,45 @@ describe('table layout: the app bar corner (ADR-036)', () => {
       expect(clearOfStadium(snapshot)).toBeGreaterThanOrEqual(
         snapshot.shared.stadium.physicalDeclaredBounds.width
       );
+    }
+  });
+
+  it('keeps the far half steady through a window resized a pixel at a time', () => {
+    const active = (
+      width: number,
+      height: number,
+      touch: boolean,
+      lowerShare: number,
+      markers: number
+    ) =>
+      createTableLayoutSnapshot(
+        stateAt(width, height, {
+          shellMode: 'fullscreen',
+          appBarPx: touch ? { width: 290, height: 50 } : BAR,
+          vertical: tableVerticalLayout(lowerShare),
+          seamBandPx: touch ? 46 : 42,
+          oncePerGameMarkers: markers,
+        })
+      )
+        .players.find((player) => player.physicalSide === 'upper')!
+        .regions.find((region) => region.kind === 'active')!
+        .physicalDeclaredBounds.height;
+    // A refit's narrow window missed on one pixel took a fifth off the far
+    // Active there.
+    for (const [width, height, touch, lowerShare, markers] of [
+      [632, 640, false, 0.54, 2],
+      [703, 800, false, 0.6, 2],
+      [730, 844, true, 0.54, 2],
+    ] as const) {
+      const here = active(width, height, touch, lowerShare, markers);
+      for (const beside of [width - 1, width + 1]) {
+        expect(
+          here,
+          `${String(width)}x${String(height)} beside ${String(beside)}`
+        ).toBeGreaterThan(
+          0.92 * active(beside, height, touch, lowerShare, markers)
+        );
+      }
     }
   });
 
