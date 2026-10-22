@@ -4,6 +4,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  TournamentDataBusyError,
   TournamentDataRefusedError,
   type DeckSearchResponse,
   type fetchDeckSearch,
@@ -166,6 +167,43 @@ describe('usePaged', () => {
     expect(reads).toEqual([undefined, 'next', undefined]);
     expect(latest?.state).toEqual({ status: 'ready', value: ['a', 'b'] });
   });
+  it('says why More brought nothing, until the next More', async () => {
+    let fail: Error | undefined = new TournamentDataBusyError(30);
+    const readPage = vi.fn(async (cursor: string | undefined) => {
+      if (cursor && fail) {
+        const error = fail;
+        fail = undefined;
+        throw error;
+      }
+      return cursor
+        ? { items: ['c'], nextCursor: null }
+        : { items: ['a', 'b'], nextCursor: 'next' };
+    });
+    let latest: PagedRemote<string> | undefined;
+    const Probe = () => {
+      latest = usePaged('one', readPage);
+      return null;
+    };
+    root = createRoot(host);
+    await act(async () => {
+      root!.render(<Probe />);
+      await vi.runAllTimersAsync();
+    });
+    expect(latest?.moreFailed).toBeUndefined();
+    await act(async () => {
+      latest!.more();
+      await vi.runAllTimersAsync();
+    });
+    expect(latest?.moreFailed).toEqual({ busy: true });
+    expect(latest?.state).toEqual({ status: 'ready', value: ['a', 'b'] });
+    await act(async () => {
+      latest!.more();
+      await vi.runAllTimersAsync();
+    });
+    expect(latest?.moreFailed).toBeUndefined();
+    expect(latest?.state).toEqual({ status: 'ready', value: ['a', 'b', 'c'] });
+  });
+
   it('starts over from the first page when the server refuses a cursor', async () => {
     const reads: Array<string | undefined> = [];
     const caches: Array<RequestCache | undefined> = [];

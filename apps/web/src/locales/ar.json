@@ -5329,7 +5329,7 @@
   },
   "DNMX9-": {
     "message": "They bring up the next: drag a <0>{0}</0> from their Bench to their Active Spot.",
-    "translation": "يُحضر التالي: اسحب <0>{0}</0> من مقعده الاحتياطي إلى مركزه النشط."
+    "translation": "يُحضر التالي: اسحب <0>{0}</0> من الاحتياط الخاص به إلى خانته النشطة."
   },
   "WsAkgd": {
     "message": "This browser won't keep your decks after you close the page.",

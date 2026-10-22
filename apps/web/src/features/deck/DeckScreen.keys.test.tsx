@@ -453,4 +453,39 @@ describe('the deck screen from the keyboard', () => {
     expect(filter.value).toBe('');
     expect(onClose).not.toHaveBeenCalled();
   });
+
+  it('lets go of what was typed in Find a deck once too few decks show it', async () => {
+    const library = new DeckLibrary({ backend: null });
+    const decks = Array.from({ length: 9 }, (_, n) =>
+      library.create({
+        name: `Deck ${String(n)}`,
+        format: 'standard',
+        cards: [],
+        source: { kind: 'new' },
+      })
+    );
+    await render(vi.fn(), library);
+    const filter = host.querySelector<HTMLInputElement>(
+      'input[type="search"][placeholder="Find a deck"]'
+    )!;
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(
+        HTMLInputElement.prototype,
+        'value'
+      )!.set!.call(filter, 'Deck 3');
+      filter.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    const names = () =>
+      [...host.querySelectorAll('.deck-tile__name')].map(
+        (tile) => tile.textContent
+      );
+    expect(names()).toEqual(['Deck 3']);
+    // A deck goes (another tab, its menu): the field with it, and the
+    // filter, which nothing left on screen could clear.
+    await act(async () => {
+      library.remove(decks[0]!.id);
+    });
+    expect(host.querySelector('input[placeholder="Find a deck"]')).toBeNull();
+    expect(names()).toHaveLength(8);
+  });
 });

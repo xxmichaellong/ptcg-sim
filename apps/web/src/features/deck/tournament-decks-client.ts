@@ -143,8 +143,11 @@ const MAX_ICONS = 4;
 
 /** Archetype ids and icon names: Limitless slugs. */
 const SLUG = /^[a-z0-9][a-z0-9-]{0,127}$/u;
-/** Tournament ids and player ids: no path or query characters. */
-const TOKEN = /^[A-Za-z0-9_.~-]{1,128}$/u;
+/**
+ * Tournament ids and player ids: no path or query characters, and a letter
+ * or digit (`..` would be a path of its own).
+ */
+const TOKEN = /^(?=[^A-Za-z0-9]*[A-Za-z0-9])[A-Za-z0-9_.~-]{1,128}$/u;
 /**
  * A page's cursor: base64url, as long as the server's own limit (a deck's
  * lists carry the last finish shown, its player id among it).
@@ -473,7 +476,10 @@ export const searchText = (value: string): string =>
     .replaceAll(/[\u0000-\u001f\u007f-\u009f]/gu, ' ')
     .replaceAll(/\s+/gu, ' ')
     .trim()
-    .slice(0, MAX_DECK_SEARCH_LENGTH);
+    .slice(0, MAX_DECK_SEARCH_LENGTH)
+    // Cut through an emoji, its first half alone is no character.
+    .replace(/[\uD800-\uDBFF]$/u, '')
+    .trimEnd();
 
 export const fetchDeckSearch = async (
   text: string,

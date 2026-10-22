@@ -2858,11 +2858,11 @@
   },
   "0pN9y3": {
     "message": "It stays open for another draw. Press <0>Esc</0> twice to close it.",
-    "translation": "Den förblir öppen för ytterligare ett drag. Tryck på <0>Esc</0> två gånger för att stänga den."
+    "translation": "Den förblir öppen så att du kan dra ett kort till. Tryck på <0>Esc</0> två gånger för att stänga den."
   },
   "gC8g3J": {
     "message": "It stays open for another draw. Tap outside to close it.",
-    "translation": "Den förblir öppen för ytterligare ett drag. Tryck utanför för att stänga den."
+    "translation": "Den förblir öppen så att du kan dra ett kort till. Tryck utanför för att stänga den."
   },
   "5kNRW8": {
     "message": "Item",
@@ -4026,7 +4026,7 @@
   "nT_UTA": {
     "message": "Prize",
     "context": "shortcut key caption",
-    "translation": "Prispoängskort"
+    "translation": "Priskort"
   },
   "Pe9ns3": {
     "message": "Prizes",

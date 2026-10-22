@@ -36,7 +36,7 @@ import type {
   DeckSlotLabel,
 } from './deck-builder-store.js';
 import { DeckEditor } from './DeckEditor.js';
-import { DeckHome, finderMode, wordFinish } from './DeckHome.js';
+import { DeckHome, finderMode, wordFinish, wordName } from './DeckHome.js';
 import { importDeckText, type DeckImportLine } from './deck-import.js';
 import type {
   DeckLibrary,
@@ -915,10 +915,11 @@ export const DeckScreen = ({
             const total = deckTotals(slot.deck).total;
             const selected = slotTarget === target;
             const slotSeat = SEAT_NAMES[slotTarget];
-            const name =
+            const stored =
               slot.label?.name ??
               (total > 0 ? t`Unsaved deck` : t`No deck yet`);
-            const [title, finish] = splitFinish(name);
+            const name = wordName(stored);
+            const [title, finish] = splitFinish(stored);
             const playable =
               total > 0 &&
               checkDeck(slot.deck, slot.label?.format ?? 'standard').valid;

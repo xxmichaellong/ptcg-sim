@@ -62,7 +62,9 @@ export const readTournamentList = (value: unknown): ListedTournament[] => {
       typeof id !== 'string' ||
       !LIMITLESS_TOURNAMENT_ID.test(id) ||
       name === null ||
-      !Number.isFinite(time)
+      !Number.isFinite(time) ||
+      // No event is this big: a bad value, which the app would refuse.
+      (typeof players === 'number' && players > MAX_TOURNAMENT_PLAYERS)
     ) {
       continue;
     }
@@ -111,8 +113,13 @@ export interface StandingEntry {
   readonly list: string | null;
 }
 
-/** A Limitless username: it is used in a URL path, so kept plain. */
-export const PLAYER_ID = /^[A-Za-z0-9_.-]{1,64}$/u;
+/**
+ * A Limitless username: it is used in a URL path, so kept plain, and with a
+ * letter or digit in it (`..` would be a path of its own).
+ */
+export const PLAYER_ID = /^(?=[^A-Za-z0-9]*[A-Za-z0-9])[A-Za-z0-9_.-]{1,64}$/u;
+/** The most players an event can list (the app's own bound). */
+export const MAX_TOURNAMENT_PLAYERS = 1_000_000;
 /** An archetype id: a slug like `dragapult-dusknoir` or `basic-box-m`. */
 export const ARCHETYPE_ID = /^[a-z0-9]+(?:-[a-z0-9]+){0,9}$/u;
 const ICON = /^[a-z0-9]+(?:-[a-z0-9]+){0,5}$/u;

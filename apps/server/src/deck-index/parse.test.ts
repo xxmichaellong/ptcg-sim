@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { readStandings, readTournamentList } from './parse.js';
+import { PLAYER_ID, readStandings, readTournamentList } from './parse.js';
 
 const id = (n: number) => n.toString(16).padStart(24, '0');
 
@@ -107,6 +107,26 @@ describe('the tournament list', () => {
       indexable: true,
     });
     expect(readTournamentList({ not: 'a list' })).toEqual([]);
+    // No event is this big: a bad value is left out, never shown.
+    expect(
+      readTournamentList([
+        {
+          game: 'PTCG',
+          id: id(9),
+          name: 'Huge',
+          date: '2026-10-21T19:00:00.000Z',
+          format: 'STANDARD',
+          players: 5_000_000,
+        },
+      ])
+    ).toEqual([]);
+  });
+
+  it('takes a username with a letter or digit in it, never one of dots', () => {
+    expect(PLAYER_ID.test('red.the-goat_1')).toBe(true);
+    expect(PLAYER_ID.test('..')).toBe(false);
+    expect(PLAYER_ID.test('.')).toBe(false);
+    expect(PLAYER_ID.test('-_')).toBe(false);
   });
 });
 

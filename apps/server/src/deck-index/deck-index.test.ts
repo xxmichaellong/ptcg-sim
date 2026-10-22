@@ -295,6 +295,16 @@ describe('discovering tournaments', () => {
     expect(browse.tournaments.map((row) => [row.id, row.players])).toEqual([
       [id(1), 32],
     ]);
+    // Typed, but no word in it to look for: nothing matches, not everything.
+    expect(
+      index.tournaments({
+        q: '!!',
+        format: 'STANDARD',
+        minimumPlayers: 0,
+        before: null,
+        pageSize: 10,
+      }).tournaments
+    ).toEqual([]);
     expect(await index.tournament(id(1))).toMatchObject({ kind: 'ok' });
   });
 

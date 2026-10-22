@@ -368,4 +368,66 @@ describe('a deck’s lists from the keyboard', () => {
     expect(host.querySelector('[data-open-tournament]')).not.toBeNull();
     expect(document.activeElement).toBe(document.body);
   });
+
+  it('keep their pages while the screen is put away, and say why More failed', async () => {
+    const event = (n: number) => ({
+      id: `${'g'.repeat(23)}${String(n)}`,
+      name: `Event ${String(n)}`,
+      date: '2026-10-10T19:00:00.000Z',
+      players: 64,
+      format: 'STANDARD',
+      organizer: 'League',
+      hasLists: true,
+    });
+    vi.stubGlobal('IntersectionObserver', undefined);
+    let offline = false;
+    const fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const cursor = new URL(String(input), 'http://x').searchParams.get(
+        'cursor'
+      );
+      if (cursor === 'three' && offline) {
+        return new Response('{}', { status: 500 });
+      }
+      return Response.json(
+        cursor === null
+          ? { tournaments: [event(1)], nextCursor: 'two' }
+          : cursor === 'two'
+            ? { tournaments: [event(2)], nextCursor: 'three' }
+            : { tournaments: [event(3)], nextCursor: null }
+      );
+    });
+    vi.stubGlobal('fetch', fetch);
+    const host = document.createElement('div');
+    document.body.append(host);
+    root = createRoot(host);
+    const draw = (open: boolean) =>
+      act(async () =>
+        root!.render(<TournamentsShelf open={open} onOpen={() => undefined} />)
+      );
+    const settle = () =>
+      act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      });
+    const shown = () => host.querySelectorAll('[data-open-tournament]').length;
+    await draw(true);
+    await settle();
+    await act(async () =>
+      host.querySelector<HTMLButtonElement>('.deck-show-more')!.click()
+    );
+    await settle();
+    expect(shown()).toBe(2);
+    await draw(false);
+    await draw(true);
+    await settle();
+    // Opened again as it was left, nothing asked again.
+    expect(shown()).toBe(2);
+    expect(fetch).toHaveBeenCalledTimes(2);
+    offline = true;
+    await act(async () =>
+      host.querySelector<HTMLButtonElement>('.deck-show-more')!.click()
+    );
+    await settle();
+    expect(host.textContent).toContain('Tournaments are offline');
+    expect(shown()).toBe(2);
+  });
 });

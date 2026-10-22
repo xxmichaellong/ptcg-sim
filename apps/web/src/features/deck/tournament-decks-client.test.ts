@@ -11,6 +11,7 @@ import {
   fetchTournament,
   fetchTournamentList,
   fetchTournaments,
+  searchText,
   TournamentDataBusyError,
   TournamentDataRefusedError,
 } from './tournament-decks-client.js';
@@ -119,6 +120,13 @@ describe('tournament deck search', () => {
       new URL(String(mock.mock.calls[0]![0]), 'http://x').searchParams.get('q');
     expect(q(search)).toBe('1st Gardevoir ex');
     expect(q(events)).toBe('Gdańsk Cup');
+    // Cut to length, it ends on a whole character, never a space or half
+    // an emoji, so a second pass changes nothing.
+    for (const text of [`${'a'.repeat(59)} bc`, `${'a'.repeat(59)}😀`]) {
+      const once = searchText(text);
+      expect(searchText(once)).toBe(once);
+      expect(once).toBe('a'.repeat(59));
+    }
   });
 
   it('caps what it will read', async () => {
@@ -178,6 +186,12 @@ describe('tournament deck search', () => {
       '/v2/decks/archetype/dragapult-dusknoir'
     );
     await expect(fetchArchetypeFinishes('../etc', { fetch })).rejects.toThrow();
+    // A player id of dots would be a path of its own: never asked for.
+    const never = respond({});
+    await expect(
+      fetchTournamentList(tournament.id, '..', { fetch: never })
+    ).rejects.toThrow();
+    expect(never).not.toHaveBeenCalled();
     expect(() => decodeTournaments({ ...page, nextCursor: 'a b' })).toThrow();
     // A deck's finishes page on from a long key (a long player id in it).
     const long = 'A'.repeat(180);

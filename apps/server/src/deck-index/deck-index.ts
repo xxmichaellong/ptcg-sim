@@ -623,8 +623,14 @@ export class DeckIndex {
     readonly tournaments: readonly TournamentSummary[];
     readonly next: { readonly date: number; readonly id: string } | null;
   } {
+    const terms = nameWords(query.q);
+    // Something typed with no word in it to look for matches nothing, as
+    // a deck search does, rather than every event.
+    if (query.q.trim() !== '' && terms.length === 0) {
+      return { tournaments: [], next: null };
+    }
     const rows = this.store.listTournaments({
-      terms: nameWords(query.q),
+      terms,
       format: query.format,
       minimumPlayers: query.minimumPlayers,
       before: query.before,

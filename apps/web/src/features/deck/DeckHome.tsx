@@ -102,6 +102,12 @@ export const wordFinish = (finish: string): string => {
   });
 };
 
+/** A deck's name with its finish in the page's language ("… — 1st of 285"). */
+export const wordName = (name: string): string => {
+  const [title, finish] = splitFinish(name);
+  return finish ? `${title} — ${wordFinish(finish)}` : name;
+};
+
 /** The place alone, for a deck box's sticker ("1st"). */
 const wordPlace = (finish: string): string | undefined => {
   const placed = /^(\d+)(?:st|nd|rd|th) of \d+$/u.exec(finish);
@@ -329,9 +335,9 @@ const UnsavedSeatTile = ({
   const { t } = useLingui();
   const slot = seats.slots[target];
   const total = deckTotals(slot.deck).total;
-  const name = slot.label?.name ?? t`Unsaved deck`;
+  const name = wordName(slot.label?.name ?? t`Unsaved deck`);
   const seat = SEAT_NAMES[target];
-  const [title] = splitFinish(name);
+  const [title] = splitFinish(slot.label?.name ?? name);
   return (
     <li className="deck-tile" data-current="true" data-unsaved="true">
       <div
@@ -401,7 +407,7 @@ const UnsavedSeatTile = ({
 };
 
 const ListDeckTile = ({
-  name,
+  name: stored,
   cover,
   cards,
   current,
@@ -418,7 +424,9 @@ const ListDeckTile = ({
   readonly onEdit: () => void;
 }) => {
   const { t } = useLingui();
-  const [title, finish] = splitFinish(name);
+  // Spoken with its finish in the page's language.
+  const name = wordName(stored);
+  const [title, finish] = splitFinish(stored);
   const tone = useMemo(() => deckBoxToneOf(cards), [cards]);
   return (
     <li
@@ -589,7 +597,8 @@ export const DeckHome = ({
   const [surprising, setSurprising] = useState(false);
   const pasteRef = useRef<HTMLTextAreaElement>(null);
   const mode = finderMode(paste);
-  const search = useDeckSearch(paste, open && mode === 'search');
+  // Kept while the screen is put away, so it opens again as it was left.
+  const search = useDeckSearch(paste, mode === 'search');
 
   useEffect(() => {
     if (!open || collection) return;
@@ -617,14 +626,17 @@ export const DeckHome = ({
       libraryState.decks.some((deck) => deck.id === slot.label?.deckId);
     return !savedHere && deckTotals(slot.deck).total > 0;
   });
+  // The filter applies only while its field shows: below the count that
+  // shows it (a deck deleted meanwhile), nothing would undo it.
+  const filtering = libraryState.decks.length >= LIBRARY_FILTER_AT;
   const shownDecks = useMemo(() => {
-    const query = filter.trim().toLowerCase();
+    const query = filtering ? filter.trim().toLowerCase() : '';
     return query
       ? libraryState.decks.filter((deck) =>
           deck.name.toLowerCase().includes(query)
         )
       : libraryState.decks;
-  }, [filter, libraryState.decks]);
+  }, [filter, filtering, libraryState.decks]);
 
   const { meta, classicGroups, classic } = homeGroups(collection, season);
   const metaSource = meta?.source;
@@ -813,7 +825,7 @@ export const DeckHome = ({
             ) : null}
           </h2>
           <div className="deck-section-tools">
-            {libraryState.decks.length >= LIBRARY_FILTER_AT ? (
+            {filtering ? (
               <label className="deck-filter">
                 <MagnifyingGlassIcon {...decorative} weight="bold" />
                 <input

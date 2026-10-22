@@ -7,7 +7,14 @@ import { PencilSimpleIcon } from '@phosphor-icons/react/dist/csr/PencilSimple';
 import { i18n } from '@lingui/core';
 import { plural, selectOrdinal, t as translate } from '@lingui/core/macro';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+  type RefObject,
+} from 'react';
 
 import { Tooltip } from '../../ui/Tooltip.js';
 import {
@@ -241,6 +248,24 @@ const statusLine = (
   }
 };
 
+/** Why More brought nothing, beside it. */
+const MoreFailed = ({
+  failed,
+  offline,
+}: {
+  readonly failed: { readonly busy: boolean } | undefined;
+  readonly offline: ReactNode;
+}) =>
+  failed ? (
+    <p className="deck-results__status" role="status">
+      {failed.busy ? (
+        <Trans>Busy for a moment — try again shortly</Trans>
+      ) : (
+        offline
+      )}
+    </p>
+  ) : null;
+
 /**
  * What a typed name finds: each matching deck, how it has done, and its
  * best finishes, each a list to load.
@@ -382,8 +407,10 @@ export const TournamentsShelf = ({
     observer.observe(node);
     return () => observer.disconnect();
   }, [near, open]);
+  // Once asked for, kept while the screen is put away: it opens again as
+  // it was left, the pages More brought included.
   const paged = usePaged(
-    open && near ? `events:${query}` : undefined,
+    near ? `events:${query}` : undefined,
     (cursor, options) =>
       fetchTournaments({
         ...options,
@@ -565,6 +592,10 @@ export const TournamentsShelf = ({
                 className="ds-spin"
               />
             ) : null}
+            <MoreFailed
+              failed={paged.moreFailed}
+              offline={<Trans>Tournaments are offline</Trans>}
+            />
             <Trans context="show more tournaments">More</Trans>
           </button>
         ) : null}
@@ -917,6 +948,10 @@ export const ArchetypeView = ({
                 <Trans context="a deck's lists from every date">All time</Trans>
               </button>
             ) : null}
+            <MoreFailed
+              failed={paged.moreFailed}
+              offline={<Trans>Couldn&apos;t load this</Trans>}
+            />
             <TournamentCredit />
           </>
         ) : (

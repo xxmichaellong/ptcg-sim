@@ -3475,7 +3475,7 @@
   },
   "iKrJ1Q": {
     "message": "No Basic Pokémon in your hand: that is a mulligan. Choose <0>{0}</0> under {1}.",
-    "translation": "ไม่มีโปเกมอนพื้นฐานในมือ: ต้องมัลลิแกน เลือก <0>{0}</0> ภายใต้ {1}"
+    "translation": "ไม่มีโปเกมอนเบสิกในมือ: ต้องมัลลิแกน เลือก <0>{0}</0> ภายใต้ {1}"
   },
   "6n5psS": {
     "message": "No card lines found. Try lines like \"4 Iono PAL 185\".",
@@ -5816,7 +5816,7 @@
   },
   "H5pi4B": {
     "message": "Your hand, and your 6 <0>Prize cards</0>, face down.",
-    "translation": "ไพ่บนมือของคุณ และ<0>ไพ่รางวัล</0> 6 ใบ คว่ำหน้า"
+    "translation": "มือของคุณ และ<0>การ์ดรางวัล</0> 6 ใบ คว่ำหน้า"
   },
   "BHcJOF": {
     "message": "Your Lost Zone",

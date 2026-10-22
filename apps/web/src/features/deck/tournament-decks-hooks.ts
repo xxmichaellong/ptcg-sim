@@ -90,6 +90,8 @@ export interface PagedRemote<T> {
   readonly state: Remote<readonly T[]>;
   readonly hasMore: boolean;
   readonly loadingMore: boolean;
+  /** The last More failed (busy, or offline); cleared by the next. */
+  readonly moreFailed: { readonly busy: boolean } | undefined;
   readonly more: () => void;
   readonly retry: () => void;
 }
@@ -109,6 +111,9 @@ export const usePaged = <T>(
   const [state, setState] = useState<Remote<readonly T[]>>({ status: 'idle' });
   const [cursor, setCursor] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [moreFailed, setMoreFailed] = useState<
+    { readonly busy: boolean } | undefined
+  >(undefined);
   const [attempt, setAttempt] = useState(0);
   const reader = useRef(readPage);
   reader.current = readPage;
@@ -127,6 +132,7 @@ export const usePaged = <T>(
     setState({ status: 'loading' });
     setCursor(null);
     setLoadingMore(false);
+    setMoreFailed(undefined);
     const cache = fresh.current ? ('no-cache' as const) : undefined;
     fresh.current = false;
     reader
@@ -157,6 +163,7 @@ export const usePaged = <T>(
     }
     const shown = state.value;
     setLoadingMore(true);
+    setMoreFailed(undefined);
     reader.current(cursor, { signal: controller.signal }).then(
       (page) => {
         if (controller.signal.aborted) return;
@@ -176,6 +183,8 @@ export const usePaged = <T>(
           setState({ status: 'loading' });
           setCursor(null);
           setAttempt((count) => count + 1);
+        } else {
+          setMoreFailed({ busy: error instanceof TournamentDataBusyError });
         }
       }
     );
@@ -187,6 +196,7 @@ export const usePaged = <T>(
     state,
     hasMore: cursor !== null,
     loadingMore,
+    moreFailed,
     more,
     retry,
   };

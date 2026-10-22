@@ -5302,7 +5302,7 @@
   },
   "Cedl1T": {
     "message": "Their side is yours now: start their turn with <0>{0}</0>.",
-    "translation": "이제 상대 쪽이 내 차례입니다. <0>{0}</0>(으)로 상대의 턴을 시작하세요."
+    "translation": "이제 상대편을 직접 플레이합니다. <0>{0}</0>(으)로 상대의 턴을 시작하세요."
   },
   "sMMsD3": {
     "message": "Theirs",
