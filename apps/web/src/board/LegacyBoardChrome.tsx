@@ -2,7 +2,10 @@ import { t } from '@lingui/core/macro';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { SortAscendingIcon } from '@phosphor-icons/react/dist/csr/SortAscending';
 import type { MatchViewState, PlayerId } from '@ptcgsim/game-core';
-import { TABLE_CONTROL_CORNER_HEIGHT_PX } from '@ptcgsim/renderer-contract';
+import {
+  APP_BAR_INSET_PX,
+  TABLE_CONTROL_CORNER_HEIGHT_PX,
+} from '@ptcgsim/renderer-contract';
 import type {
   BoardLayoutSnapshot,
   BoardDepthProjection,
@@ -48,11 +51,41 @@ export interface LegacyBoardChromeActions {
 }
 
 /** What the table rail along the seam holds (ADR-030). */
+/** The rail's clearance from the mat's edge and the piles beside it. */
+const RAIL_EDGE_PX = 8;
+/**
+ * How near the seam a pile must start for the rail to stop short of it: a
+ * pile's stack rises toward the seam by about this much at its tallest.
+ */
+const SEAM_PILE_REACH_PX = 40;
+
+/**
+ * Where the app bar sits (ADR-036): the corner the layout keeps clear
+ * (`appBarPx`), at the play area's top right, so a docked log beside the
+ * table keeps its own column.
+ */
+export const AppBarSlot = ({
+  layout,
+  children,
+}: {
+  readonly layout: BoardLayoutSnapshot;
+  readonly children: ReactNode;
+}) => (
+  <div
+    className="ptcgsim-app-bar-slot"
+    style={{
+      top: APP_BAR_INSET_PX,
+      right:
+        layout.viewport.width - layout.playAreaBounds.width + APP_BAR_INSET_PX,
+    }}
+  >
+    {children}
+  </div>
+);
+
 export interface LegacyBoardChromeRail {
-  /** At the left end: the app menu. */
-  readonly start?: ReactNode;
-  /** At the right end: the activity log. */
-  readonly end?: ReactNode;
+  /** The app bar, in the table's top-right corner (ADR-036). */
+  readonly bar?: ReactNode;
   /** The turn's actions, in order. */
   readonly actions: readonly RailAction[];
   /** The rarer actions, behind More. */
@@ -495,7 +528,45 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
     );
     anchor = { ...logicalAnchor, height, y: (gapTop + gapBottom - height) / 2 };
   }
-  const stadium = layout.shared.stadium.physicalDeclaredBounds;
+  // Where the seam's things lie on screen: tilted, the table narrows, so
+  // the Stadium and the piles at the seam's right end are found through
+  // the same projection the cards take.
+  const seamY = anchor.y + anchor.height / 2;
+  const screenX = (x: number): number =>
+    depth ? depth.point({ x, y: seamY }).x : x;
+  const logicalStadium = layout.shared.stadium.physicalDeclaredBounds;
+  const stadium = depth
+    ? (() => {
+        const left = screenX(logicalStadium.x);
+        const right = screenX(logicalStadium.x + logicalStadium.width);
+        return {
+          ...logicalStadium,
+          x: Math.min(left, right),
+          width: Math.abs(right - left),
+        };
+      })()
+    : logicalStadium;
+  // The actions at the seam's right end stop short of the near piles there
+  // (their stacks rise toward the seam), or of the mat's edge.
+  const bottomFrame = layout.players.find(
+    (frame) => frame.physicalSide === 'lower' && !frame.hidden
+  );
+  const seamPiles = (bottomFrame?.regions ?? [])
+    .filter(
+      (region) =>
+        (region.kind === 'deck' ||
+          region.kind === 'discard' ||
+          region.kind === 'lostZone') &&
+        region.physicalDeclaredBounds.x >
+          logicalStadium.x + logicalStadium.width &&
+        region.physicalDeclaredBounds.y <
+          logicalAnchor.y + logicalAnchor.height + SEAM_PILE_REACH_PX
+    )
+    .map((region) => screenX(region.physicalDeclaredBounds.x));
+  const railEnd = Math.min(
+    screenX(layout.playAreaBounds.width) - RAIL_EDGE_PX,
+    ...seamPiles.map((x) => x - RAIL_EDGE_PX)
+  );
 
   return (
     <div
@@ -567,13 +638,13 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
           />
         </>
       )}
+      {rail?.bar ? <AppBarSlot layout={layout}>{rail.bar}</AppBarSlot> : null}
       {rail ? (
         <TableRail
           anchor={anchor}
           width={layout.playAreaBounds.width}
           avoid={stadium}
-          {...(rail.start ? { start: rail.start } : {})}
-          {...(rail.end ? { end: rail.end } : {})}
+          end={railEnd}
           actions={rail.actions}
           {...(rail.more ? { more: rail.more } : {})}
           covered={coveredByPopup}

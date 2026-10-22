@@ -86,11 +86,11 @@ const withEmptyOwnLostZone = (): MatchViewState => {
 };
 
 /**
- * A route's rail: its menu at the left end and the board's own actions in
- * the order a route puts them, recording what the board offered each time.
+ * A route's rail: its app bar and the board's own actions in the order a
+ * route puts them, recording what the board offered each time.
  */
 const railOf = (owned?: BoardOwnRailActions[]): BoardRailModel => ({
-  start: <button id="menuStub" type="button" />,
+  bar: <button id="menuStub" type="button" />,
   compose: (own) => {
     owned?.push(own);
     return {
@@ -538,9 +538,9 @@ describe('RemoteSessionBoard replay binding', () => {
     await render('multiplayer');
     await waitForRevision(host, 10);
     expect(host.querySelector('[data-legacy-board-chrome]')).not.toBeNull();
-    // The route's menu sits at the rail's left end.
+    // The route's app bar sits in the table's top-right corner.
     expect(
-      host.querySelector('.ptcgsim-table-rail__end-group #menuStub')
+      host.querySelector('.ptcgsim-app-bar-slot #menuStub')
     ).not.toBeNull();
     const own = owned.at(-1)!;
     expect(own.turn).toMatchObject({

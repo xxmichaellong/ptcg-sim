@@ -86,6 +86,34 @@ export interface TableZoneAffordancesProps {
 }
 
 /**
+ * The seats whose empty deck shows the `+` that loads one, by the side of
+ * the table they sit on (`local` at the bottom): the board marks them so a
+ * deck's hover name gives the `+` the middle of the pile.
+ */
+export const loadDeckSides = (
+  layout: BoardLayoutSnapshot,
+  view: MatchViewState | undefined,
+  loadDeck: TableZoneAffordancesProps['loadDeck'],
+  covered: boolean
+): readonly ('local' | 'opponent')[] =>
+  loadDeck && !covered
+    ? layout.players.flatMap((frame) =>
+        showsDeckPlus(frame, view, loadDeck) ? [frame.side] : []
+      )
+    : [];
+
+/** A seat with no cards at all, whose deck the viewer may load. */
+const showsDeckPlus = (
+  frame: BoardLayoutSnapshot['players'][number],
+  view: MatchViewState | undefined,
+  loadDeck: NonNullable<TableZoneAffordancesProps['loadDeck']>
+): boolean =>
+  !frame.hidden &&
+  loadDeck.playerIds.includes(frame.playerId) &&
+  seatStage(view, frame.playerId) === 'empty' &&
+  frame.regions.some((region) => region.kind === 'deck');
+
+/**
  * What the table itself offers (ADR-030): a `+` on a seat's deck before it
  * has one; the once-per-game markers, on the mat beside each player's
  * prizes when the viewer keeps them; a small `+` in the viewer's staging
@@ -125,9 +153,7 @@ export const TableZoneAffordances = memo(function TableZoneAffordances({
   const deckButtons =
     loadDeck && !covered
       ? layout.players.flatMap((frame) => {
-          if (frame.hidden || !loadDeck.playerIds.includes(frame.playerId))
-            return [];
-          if (seatStage(view, frame.playerId) !== 'empty') return [];
+          if (!showsDeckPlus(frame, view, loadDeck)) return [];
           const deck = region(frame, 'deck');
           if (!deck) return [];
           const own = frame.playerId === layout.bottomPlayerId;

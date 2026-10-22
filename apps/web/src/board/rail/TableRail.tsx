@@ -3,16 +3,10 @@ import type { Icon } from '@phosphor-icons/react';
 import { DotsThreeIcon } from '@phosphor-icons/react/dist/csr/DotsThree';
 import type { Rect } from '@ptcgsim/renderer-contract';
 import {
-  createContext,
   forwardRef,
   memo,
-  useContext,
-  useLayoutEffect,
-  useRef,
-  useState,
   type ComponentPropsWithoutRef,
   type CSSProperties,
-  type ReactNode,
 } from 'react';
 
 import { ActionMenu, type ActionMenuEntry } from '../../ui/ActionMenu.js';
@@ -116,12 +110,13 @@ export interface TableRailProps {
     readonly height: number;
   };
   readonly width: number;
-  /** Something straddling the seam (the Stadium) the actions stop short of. */
+  /** Something straddling the seam (the Stadium) the actions keep clear of. */
   readonly avoid?: Rect;
-  /** At the left end: the app menu. */
-  readonly start?: ReactNode;
-  /** At the right end: the activity log. */
-  readonly end?: ReactNode;
+  /**
+   * Where the seam's right end is for the actions: short of the mat's edge
+   * and the piles beside it. Absent, the table's edge.
+   */
+  readonly end?: number;
   readonly actions: readonly RailAction[];
   /** The rarer actions, behind More. */
   readonly more?: readonly ActionMenuEntry[];
@@ -135,20 +130,16 @@ export interface TableRailProps {
   readonly seat?: 'you' | 'opponent';
 }
 
-/** The space kept at each end of the rail for its end controls. */
-const END_RESERVE_PX = 64;
 const EDGE_PX = 8;
 /** The gap between rail buttons (`--space-1-5`). */
 const GAP_PX = 6;
-
 /**
- * How wide the rail is, for what sits at its ends: the app toolbar lays
- * itself out in full only where the rail has room for it and the actions.
- * Absent outside a rail.
+ * The actions sit past the Stadium, at the seam's right end, where a
+ * right hand and the player's piles are (ADR-036), when at least this many
+ * buttons fit there; otherwise (an upright phone, whose Stadium sits at the
+ * right edge) before it.
  */
-const RailWidthContext = createContext<number | undefined>(undefined);
-export const useRailWidth = (): number | undefined =>
-  useContext(RailWidthContext);
+const RIGHT_END_MIN_BUTTONS = 4;
 
 /** A menu is worth opening for three choices or more; fewer sit out. */
 const MENU_MINIMUM = 3;
@@ -227,16 +218,16 @@ export const fitRailActions = (
 };
 
 /**
- * The table rail (ADR-030): one strip along the seam between the halves,
- * where the table already keeps clear. The app menu sits at its left end
- * and the activity log at its right; between them are the turn's game
- * actions, and nothing else -- view and system controls live in the menu.
+ * The table rail (ADR-030, ADR-036): the turn's game actions along the
+ * seam between the halves, where the table already keeps clear, at the
+ * seam's right end past the Stadium (before it where only that has room).
+ * Nothing else: the app's controls are in the app bar in the top-right
+ * corner.
  */
 export const TableRail = memo(function TableRail({
   anchor,
   width,
   avoid,
-  start,
   end,
   actions,
   more,
@@ -249,123 +240,99 @@ export const TableRail = memo(function TableRail({
     avoid.y < anchor.y + anchor.height &&
     avoid.y + avoid.height > anchor.y &&
     avoid.x > anchor.x;
-  // The app toolbar at the left end is as wide as its buttons; the game
-  // actions start clear of it.
-  const startGroup = useRef<HTMLDivElement>(null);
-  const [startWidth, setStartWidth] = useState(0);
-  useLayoutEffect(() => {
-    const group = startGroup.current;
-    if (!group) return;
-    const measure = (): void => setStartWidth(group.offsetWidth);
-    measure();
-    if (typeof ResizeObserver === 'undefined') return;
-    const observer = new ResizeObserver(measure);
-    observer.observe(group);
-    return () => observer.disconnect();
-  }, [start]);
-  const actionsStart = start
-    ? Math.max(anchor.x, EDGE_PX + startWidth + GAP_PX * 2)
-    : anchor.x;
-  const actionsEnd = straddles
-    ? avoid.x - EDGE_PX
-    : width - END_RESERVE_PX - EDGE_PX;
+  const rightEnd = Math.min(end ?? width - EDGE_PX, width - EDGE_PX);
+  const rightStart = straddles ? avoid.x + avoid.width + EDGE_PX : anchor.x;
+  const rightRoom = rightEnd - rightStart;
+  const atRight =
+    rightRoom >=
+    RIGHT_END_MIN_BUTTONS * anchor.height +
+      (RIGHT_END_MIN_BUTTONS - 1) * GAP_PX;
+  const actionsStart = atRight ? rightStart : anchor.x;
+  const actionsEnd = atRight
+    ? rightEnd
+    : straddles
+      ? avoid.x - EDGE_PX
+      : rightEnd;
   const actionsWidth = Math.max(0, actionsEnd - actionsStart);
   const fitted = fitRailActions(actions, more, actionsWidth, anchor.height);
   return (
-    <RailWidthContext.Provider value={width}>
+    <div
+      className="ptcgsim-table-rail"
+      data-table-rail="true"
+      style={
+        {
+          top: anchor.y,
+          // The table's width: a docked log beside it keeps its own column.
+          width,
+          height: anchor.height,
+          '--rail-height': `${anchor.height}px`,
+        } as CSSProperties
+      }
+    >
       <div
-        className="ptcgsim-table-rail"
-        data-table-rail="true"
-        style={
-          {
-            top: anchor.y,
-            // The table's width: a docked log beside it keeps its own column.
-            width,
-            height: anchor.height,
-            '--rail-height': `${anchor.height}px`,
-          } as CSSProperties
-        }
+        id="boardButtonContainer"
+        className="ptcgsim-table-rail__actions"
+        role="toolbar"
+        aria-label={t`Game actions`}
+        data-board-controls="true"
+        data-covered={covered ? 'true' : undefined}
+        // Icons only: the tooltips carry the words and the keys.
+        data-labels="none"
+        data-seat={seat}
+        // Past the Stadium the actions line up against the right end.
+        data-align={atRight ? 'end' : 'start'}
+        // A toolbar: the arrow keys move between its buttons, and the table
+        // never sees them.
+        onKeyDown={(event) => {
+          if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+          const buttons = Array.from(
+            event.currentTarget.querySelectorAll<HTMLButtonElement>(
+              'button.ptcgsim-rail-button'
+            )
+          );
+          const index = buttons.indexOf(event.target as HTMLButtonElement);
+          if (index < 0) return;
+          event.preventDefault();
+          const step = event.key === 'ArrowRight' ? 1 : -1;
+          buttons[(index + step + buttons.length) % buttons.length]?.focus();
+        }}
+        style={{ left: actionsStart, width: actionsWidth }}
       >
-        {start ? (
-          <div
-            ref={startGroup}
-            className="ptcgsim-table-rail__end-group"
-            style={{ left: EDGE_PX }}
+        {fitted.shown.map((action) => (
+          <Tooltip
+            key={action.id}
+            content={withKeyHint(action.title ?? action.label, action.hint)}
+            side="top"
           >
-            {start}
-          </div>
-        ) : null}
-        <div
-          id="boardButtonContainer"
-          className="ptcgsim-table-rail__actions"
-          role="toolbar"
-          aria-label={t`Game actions`}
-          data-board-controls="true"
-          data-covered={covered ? 'true' : undefined}
-          // Icons only: the tooltips carry the words and the keys.
-          data-labels="none"
-          data-seat={seat}
-          // A toolbar: the arrow keys move between its buttons, and the table
-          // never sees them.
-          onKeyDown={(event) => {
-            if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
-            const buttons = Array.from(
-              event.currentTarget.querySelectorAll<HTMLButtonElement>(
-                'button.ptcgsim-rail-button'
-              )
-            );
-            const index = buttons.indexOf(event.target as HTMLButtonElement);
-            if (index < 0) return;
-            event.preventDefault();
-            const step = event.key === 'ArrowRight' ? 1 : -1;
-            buttons[(index + step + buttons.length) % buttons.length]?.focus();
-          }}
-          style={{ left: actionsStart, width: actionsWidth }}
-        >
-          {fitted.shown.map((action) => (
-            <Tooltip
-              key={action.id}
-              content={withKeyHint(action.title ?? action.label, action.hint)}
-              side="top"
-            >
-              <RailButton
-                id={action.id}
-                icon={action.icon}
-                label={action.label}
-                {...(action.title ? { 'aria-label': action.title } : {})}
-                primary={action.primary === true}
-                pending={action.pending === true}
-                onClick={action.onSelect}
-              />
-            </Tooltip>
-          ))}
-          {fitted.more.length > 0 ? (
-            <ActionMenu
-              label={t`More game actions`}
-              entries={fitted.more}
-              side="top"
-              align="start"
-              tooltip={t`More game actions`}
-              trigger={
-                <RailButton
-                  id="moreActionsButton"
-                  icon={DotsThreeIcon}
-                  label={t({ message: 'More', context: 'more actions' })}
-                  iconOnly
-                />
-              }
+            <RailButton
+              id={action.id}
+              icon={action.icon}
+              label={action.label}
+              {...(action.title ? { 'aria-label': action.title } : {})}
+              primary={action.primary === true}
+              pending={action.pending === true}
+              onClick={action.onSelect}
             />
-          ) : null}
-        </div>
-        {end ? (
-          <div
-            className="ptcgsim-table-rail__end-group"
-            style={{ right: EDGE_PX }}
-          >
-            {end}
-          </div>
+          </Tooltip>
+        ))}
+        {fitted.more.length > 0 ? (
+          <ActionMenu
+            label={t`More game actions`}
+            entries={fitted.more}
+            side="top"
+            align="start"
+            tooltip={t`More game actions`}
+            trigger={
+              <RailButton
+                id="moreActionsButton"
+                icon={DotsThreeIcon}
+                label={t({ message: 'More', context: 'more actions' })}
+                iconOnly
+              />
+            }
+          />
         ) : null}
       </div>
-    </RailWidthContext.Provider>
+    </div>
   );
 });

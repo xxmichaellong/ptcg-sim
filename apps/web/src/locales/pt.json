@@ -2493,10 +2493,6 @@
     "message": "Hide opponent's hand",
     "translation": "Ocultar a mão do oponente"
   },
-  "iar5oy": {
-    "message": "Hide toolbar",
-    "translation": "Ocultar barra de ferramentas"
-  },
   "ZQLqYr": {
     "message": "Hide welcome",
     "translation": "Ocultar boas-vindas"
@@ -3026,11 +3022,6 @@
     "context": "more actions",
     "translation": "Mais"
   },
-  "XSKDQ2": {
-    "message": "More",
-    "context": "more options",
-    "translation": "Mais"
-  },
   "Vk_Ar1": {
     "message": "More filters",
     "translation": "Mais filtros"
@@ -3042,10 +3033,6 @@
   "LlDm7t": {
     "message": "More game actions",
     "translation": "Mais ações de jogo"
-  },
-  "3Siwmw": {
-    "message": "More options",
-    "translation": "Mais opções"
   },
   "itfxKl": {
     "message": "Motion",
@@ -4299,10 +4286,6 @@
   "UwltxX": {
     "message": "Show this card on the deck",
     "translation": "Mostrar esta carta no baralho"
-  },
-  "D_Orlv": {
-    "message": "Show toolbar",
-    "translation": "Mostrar barra de ferramentas"
   },
   "sf2cQK": {
     "message": "Shuffle",

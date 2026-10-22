@@ -402,38 +402,12 @@ export const BOARD_SURFACE_CSS = `
 .ptcgsim-board-surface[data-geometry='2'][data-reduced-motion='true'] .ptcgsim-zone[data-zone-outline='true'][data-zone-label]::after {
   transition: none;
 }
-/* Piles print their name under the card spot, centred, as on the mat. */
+/* A pile's name sits in the middle of its spot like every other name, a
+   size smaller for the narrower spot. (Where something lies across the
+   middle -- an empty deck's +, the web app's -- the app moves it.) */
 .ptcgsim-board-surface[data-geometry='2'] :is(.ptcgsim-zone-deck, .ptcgsim-zone-discard, .ptcgsim-zone-lostZone, .ptcgsim-zone-stadium)[data-zone-outline='true'][data-zone-label]::after {
-  inset: auto 4px 8px;
-  display: block;
-  font-size: clamp(9px, 14cqi, 13px);
-  white-space: normal;
-}
-/* Counted piles keep their name clear of the badge on the near corner. */
-.ptcgsim-board-surface[data-geometry='2'] :is(.ptcgsim-zone-deck, .ptcgsim-zone-discard, .ptcgsim-zone-lostZone)[data-zone-outline='true'][data-zone-label][data-zone-side='local']::after {
-  right: 16px;
-}
-/* The opponent's mat is turned round: a pile's name sits at its far end. */
-.ptcgsim-board-surface[data-geometry='2'] :is(.ptcgsim-zone-deck, .ptcgsim-zone-discard, .ptcgsim-zone-lostZone)[data-zone-outline='true'][data-zone-label][data-zone-side='opponent']::after {
-  left: 16px;
-  right: 4px;
-  top: 8px;
-  bottom: auto;
-}
-/* A pile as small as a phone's keeps its name inside it: smaller type,
-   edge to edge, under the card spot on either side, above the count badge
-   on its corner (a long name wraps upward). */
-.ptcgsim-board-surface[data-geometry='2'] :is(.ptcgsim-zone-deck, .ptcgsim-zone-discard, .ptcgsim-zone-lostZone, .ptcgsim-zone-stadium) {
-  container-type: inline-size;
-}
-@container (max-width: 71px) {
-  .ptcgsim-board-surface[data-geometry='2'] :is(.ptcgsim-zone-deck, .ptcgsim-zone-discard, .ptcgsim-zone-lostZone, .ptcgsim-zone-stadium)[data-zone-outline='true'][data-zone-label][data-zone-side]::after {
-    left: 2px;
-    right: 2px;
-    top: auto;
-    bottom: 14px;
-    font-size: 7.5px;
-  }
+  inset: 0 4px;
+  font-size: clamp(9px, 15cqi, 14px);
 }
 .ptcgsim-board-surface[data-geometry='2'] .ptcgsim-zone-hand {
   border-radius: 0;

@@ -57,11 +57,6 @@ vi.mock('../ui/toast.js', async (importOriginal) => {
   return { ...original, toast: vi.fn(original.toast) };
 });
 
-/**
- * The board, reduced to what the route gives it: the rail's two ends and
- * the actions the route composes around the board's own (painted here as
- * plain buttons with the rail's ids), its commands, and its props.
- */
 /** The card catalog stays idle here: these tests never search cards. */
 vi.mock('../features/deck/card-catalog-client.js', () => {
   const idle = { status: 'idle' } as const;
@@ -136,7 +131,7 @@ vi.mock('./RemoteSessionBoard.js', async (importOriginal) => {
             <output id="room-board">{state.view.revision}</output>
           ) : null}
           <div data-test-rail="true">
-            {props.rail?.start}
+            {props.rail?.bar}
             <div id="boardButtonContainer">
               {composed?.actions.map((action) => (
                 <button
@@ -167,7 +162,6 @@ vi.mock('./RemoteSessionBoard.js', async (importOriginal) => {
                     ]
               )}
             </div>
-            {props.rail?.end}
           </div>
         </>
       );
@@ -463,31 +457,24 @@ const menuIds = (): string[] =>
     (item) => item.id
   );
 
-/**
- * Opens the app menu: the open toolbar's More, or on a narrow rail its one
- * menu button.
- */
+/** Opens the app menu: the app bar's last button. */
 const openMenu = async (): Promise<void> => {
-  await click(find('#appMoreButton') ? '#appMoreButton' : '#appMenuButton');
+  await click('#appMenuButton');
   await settle();
-  expect(
-    find('[role="menu"]:is([aria-label="Menu"], [aria-label="More"])')
-  ).not.toBeNull();
+  expect(find('[role="menu"][aria-label="Menu"]')).not.toBeNull();
 };
 
 const closeMenu = async (): Promise<void> => {
-  const menu = find(
-    '[role="menu"]:is([aria-label="Menu"], [aria-label="More"])'
-  );
+  const menu = find('[role="menu"][aria-label="Menu"]');
   if (menu) await pressEscape(menu);
 };
 
 /**
- * Chooses an app entry by its id: a toolbar button directly, anything else
- * from the menu behind the toolbar's last button.
+ * Chooses an app entry by its id: a button on the app bar directly,
+ * anything else from its menu.
  */
 const chooseMenuItem = async (id: string): Promise<void> => {
-  if (!find(`.ptcgsim-app-toolbar #${id}`)) await openMenu();
+  if (!find(`.ptcgsim-app-bar #${id}`)) await openMenu();
   await click(`#${id}`);
   await settle();
 };
@@ -571,7 +558,7 @@ describe('RemoteRoomRoute', () => {
     vi.unstubAllGlobals();
   });
 
-  it('puts a live Solo table on the whole window, its menu and log on the rail', async () => {
+  it('puts a live Solo table on the whole window, its menu and log on the app bar', async () => {
     const socketFactory = new FakeSocketFactory();
     const runtime = createRuntime(socketFactory);
     const onMultiplayerNavigate = vi.fn();
@@ -604,22 +591,19 @@ describe('RemoteRoomRoute', () => {
     expect(boardHarness.props?.sidePanel).toBe(false);
     expect(boardHarness.props?.keysSuspended).toBe(false);
 
-    // The toolbar opens from its first button onto the deck, where to play,
-    // the keys and Settings; the rest is behind its last button, More.
+    // The app bar holds the deck, where to play, the palette, the log and
+    // Settings; the rest is behind its last button, the menu.
     expect(
-      [
-        ...document.querySelectorAll(
-          '.ptcgsim-app-toolbar .ptcgsim-rail-button[id]'
-        ),
-      ].map((button) => button.id)
+      [...document.querySelectorAll('.ptcgsim-app-bar button[id]')].map(
+        (button) => button.id
+      )
     ).toEqual([
-      'appMenuButton',
       'deckImportButton',
       'p2Button',
       'commandsButton',
-      'shortcutsButton',
+      'activityButton',
       'settingsButton',
-      'appMoreButton',
+      'appMenuButton',
     ]);
     await openMenu();
     expect(get('.ptcgsim-app-menu-heading').textContent).toBe('Solo table');

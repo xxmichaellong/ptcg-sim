@@ -73,7 +73,8 @@ test('the Solo table owns one authority and keeps it across the menu and sheets'
     page.locator('[data-app-route="remote-room"][data-session-phase="ready"]')
   ).toBeVisible();
   expect(creationBodies).toEqual([{ mode: 'solo' }]);
-  // The table has the window: no sidebar, the menu and the log on the rail.
+  // The table has the window: no sidebar, the menu and the log on the app
+  // bar in its corner.
   await expect(page.locator('.legacy-room-sidebar')).toHaveCount(0);
   await expect(page.locator('#appMenuButton')).toBeVisible();
   await openActivity(page);

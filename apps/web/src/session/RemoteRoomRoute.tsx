@@ -78,7 +78,7 @@ import {
 } from './browser-room-options.js';
 import { useRoomBackground } from './useRoomBackground.js';
 import { ActivityLauncher, ActivityPanel } from './shell/ActivitySheet.js';
-import { AppMenu, type AppMenuModel } from './shell/AppMenu.js';
+import { AppBar, type AppMenuModel } from './shell/AppMenu.js';
 import { DeckLayer } from './shell/DeckLayer.js';
 import { OnlineSheet } from './shell/OnlineSheet.js';
 import { SettingsSheet } from './shell/SettingsSheet.js';
@@ -629,15 +629,19 @@ export const RemoteRoomRoute = ({
         };
 
         const rail: BoardRailModel = {
-          start: <AppMenu model={menu} />,
-          end: (
-            <ActivityLauncher
-              presentation={runtime.presentation}
-              {...(state.view ? { perspective: state.view } : {})}
-              open={activity.open}
-              onToggle={() => activity.setOpen(!activity.open)}
-              ownSeat={live.ownSeat}
-              solo={solo}
+          bar: (
+            <AppBar
+              model={menu}
+              log={
+                <ActivityLauncher
+                  presentation={runtime.presentation}
+                  {...(state.view ? { perspective: state.view } : {})}
+                  open={activity.open}
+                  onToggle={() => activity.setOpen(!activity.open)}
+                  ownSeat={live.ownSeat}
+                  solo={solo}
+                />
+              }
             />
           ),
           ...(live.seatColor === 'opp-color' && !replaying

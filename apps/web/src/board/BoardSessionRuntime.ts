@@ -128,6 +128,8 @@ const sameLayoutState = (
   left.hiddenPhysicalSide === right.hiddenPhysicalSide &&
   (left.hideEmptyLostZone ?? false) === (right.hideEmptyLostZone ?? false) &&
   (left.seamBandPx ?? 0) === (right.seamBandPx ?? 0) &&
+  (left.appBarPx?.width ?? 0) === (right.appBarPx?.width ?? 0) &&
+  (left.appBarPx?.height ?? 0) === (right.appBarPx?.height ?? 0) &&
   (left.sidePanelReveal ?? 1) === (right.sidePanelReveal ?? 1) &&
   (left.oncePerGameMarkers ?? 0) === (right.oncePerGameMarkers ?? 0) &&
   (left.farCardsUpright ?? false) === (right.farCardsUpright ?? false) &&
@@ -570,6 +572,7 @@ export class BoardSessionRuntime {
     readonly hiddenPhysicalSide?: BoardPhysicalSide;
     readonly hideEmptyLostZone?: boolean;
     readonly seamBandPx?: number;
+    readonly appBarPx?: { readonly width: number; readonly height: number };
     readonly oncePerGameMarkers?: number;
     readonly farCardsUpright?: boolean;
   }): void {
@@ -577,6 +580,7 @@ export class BoardSessionRuntime {
       hiddenPhysicalSide: _previous,
       hideEmptyLostZone: _lostZone,
       seamBandPx: _seam,
+      appBarPx: _bar,
       oncePerGameMarkers: _markers,
       farCardsUpright: _upright,
       ...rest
@@ -589,6 +593,7 @@ export class BoardSessionRuntime {
         : {}),
       ...(view.hideEmptyLostZone ? { hideEmptyLostZone: true } : {}),
       ...(view.seamBandPx ? { seamBandPx: view.seamBandPx } : {}),
+      ...(view.appBarPx ? { appBarPx: view.appBarPx } : {}),
       ...(view.oncePerGameMarkers
         ? { oncePerGameMarkers: view.oncePerGameMarkers }
         : {}),

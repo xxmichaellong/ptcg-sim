@@ -67,8 +67,9 @@ const roomRouteHarness = vi.hoisted(() => ({
   onTableSettledChange: undefined as ((settled: boolean) => void) | undefined,
 }));
 
-/** Enough of a table layout for the empty table's rail to place itself. */
+/** Enough of a table layout for the empty table's app bar to place itself. */
 const EMPTY_TABLE_LAYOUT = {
+  viewport: { width: 1200, height: 800, devicePixelRatio: 1 },
   playAreaBounds: { x: 0, y: 0, width: 1200, height: 800 },
   shared: { boardControlsAnchor: { x: 120, y: 384, height: 32 } },
 } as unknown as BoardLayoutSnapshot;
@@ -126,7 +127,7 @@ vi.mock('./RemoteSessionBoard.js', () => ({
     lobbyBoardHarness.parkedRoomMode = props.roomMode;
     lobbyBoardHarness.parkedRail = props.rail;
     lobbyBoardHarness.parkedKeysSuspended = props.keysSuspended;
-    return <div data-testid="parked-solo-board">{props.rail?.start}</div>;
+    return <div data-testid="parked-solo-board">{props.rail?.bar}</div>;
   },
 }));
 
@@ -435,55 +436,39 @@ const click = async (selector: string): Promise<void> => {
   await settle();
 };
 
-/**
- * The button that opens the app menu: the open toolbar's More, or on a
- * narrow rail its one menu button.
- */
-const menuButton = (): string =>
-  present('#appMoreButton') ? '#appMoreButton' : '#appMenuButton';
-
-/** Opens the app menu at the rail's left end. */
+/** Opens the app menu: the app bar's last button. */
 const openMenu = async (): Promise<void> => {
-  await click(menuButton());
-  expect(
-    present('[role="menu"]:is([aria-label="Menu"], [aria-label="More"])')
-  ).toBe(true);
+  await click('#appMenuButton');
+  expect(present('[role="menu"][aria-label="Menu"]')).toBe(true);
 };
 
 /**
- * Chooses an app entry by its id: a toolbar button directly, anything else
- * from the menu behind the toolbar's last button.
+ * Chooses an app entry by its id: a button on the app bar directly,
+ * anything else from its menu.
  */
 const chooseMenuItem = async (id: string): Promise<void> => {
-  if (!present(`.ptcgsim-app-toolbar #${id}`)) await openMenu();
+  if (!present(`.ptcgsim-app-bar #${id}`)) await openMenu();
   await click(`#${id}`);
 };
 
 /**
- * The ids the app toolbar and its menu offer right now; the menu is closed
+ * The ids the app bar and its menu offer right now; the menu is closed
  * again after.
  */
 const menuEntryIds = async (): Promise<string[]> => {
-  const toolbar = [
-    ...document.querySelectorAll(
-      '.ptcgsim-app-toolbar .ptcgsim-rail-button[id]'
-    ),
-  ].map((entry) => entry.id);
-  const opener = menuButton();
+  const bar = [...document.querySelectorAll('.ptcgsim-app-bar button[id]')].map(
+    (entry) => entry.id
+  );
   await openMenu();
   const ids = [
-    ...toolbar.filter((id) => id !== 'appMenuButton' && id !== 'appMoreButton'),
+    ...bar.filter((id) => id !== 'appMenuButton'),
     ...[
-      ...document.querySelectorAll(
-        '[role="menu"]:is([aria-label="Menu"], [aria-label="More"]) [id]'
-      ),
+      ...document.querySelectorAll('[role="menu"][aria-label="Menu"] [id]'),
     ].map((entry) => entry.id),
   ];
   // Closed from its own button: an Escape would also reach the sheet below.
-  await click(opener);
-  expect(
-    present('[role="menu"]:is([aria-label="Menu"], [aria-label="More"])')
-  ).toBe(false);
+  await click('#appMenuButton');
+  expect(present('[role="menu"][aria-label="Menu"]')).toBe(false);
   return ids;
 };
 
@@ -592,10 +577,12 @@ describe('remote room lobby wiring', () => {
     expect(present('[data-testid="lobby-board"]')).toBe(true);
     // A visitor with no game sees an empty table, laid out like the room's.
     expect(lobbyBoardHarness.viewMatchId).toBe('lobby-empty-board');
-    // Laid out like the room's, the optional pieces off as there by default.
+    // Laid out like the room's, the optional pieces off as there by default,
+    // the app bar's corner kept clear.
     expect(lobbyBoardHarness.table).toEqual({
       lowerShare: TABLE_SPLIT.defaultLowerShare,
       seamBandPx: 42,
+      appBarPx: { width: 242, height: 42 },
       hideEmptyLostZone: true,
     });
     expect(present('[data-testid="parked-solo-board"]')).toBe(false);

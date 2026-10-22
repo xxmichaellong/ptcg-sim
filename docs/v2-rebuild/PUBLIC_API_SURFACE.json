@@ -1510,6 +1510,10 @@
           "source": "packages/renderer-contract/src/index.ts",
           "symbols": [
             {
+              "name": "APP_BAR_INSET_PX",
+              "kind": "value"
+            },
+            {
               "name": "arrangedZone",
               "kind": "value"
             },

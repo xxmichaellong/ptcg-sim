@@ -2493,10 +2493,6 @@
     "message": "Hide opponent's hand",
     "translation": "Itago ang hand ng kalaban"
   },
-  "iar5oy": {
-    "message": "Hide toolbar",
-    "translation": "Itago ang toolbar"
-  },
   "ZQLqYr": {
     "message": "Hide welcome",
     "translation": "Itago ang welcome"
@@ -3026,11 +3022,6 @@
     "context": "more actions",
     "translation": "Higit pa"
   },
-  "XSKDQ2": {
-    "message": "More",
-    "context": "more options",
-    "translation": "Higit pa"
-  },
   "Vk_Ar1": {
     "message": "More filters",
     "translation": "Higit pang filter"
@@ -3042,10 +3033,6 @@
   "LlDm7t": {
     "message": "More game actions",
     "translation": "Higit pang aksyon sa laro"
-  },
-  "3Siwmw": {
-    "message": "More options",
-    "translation": "Higit pang opsyon"
   },
   "itfxKl": {
     "message": "Motion",
@@ -4299,10 +4286,6 @@
   "UwltxX": {
     "message": "Show this card on the deck",
     "translation": "Ipakita ang card na ito sa deck"
-  },
-  "D_Orlv": {
-    "message": "Show toolbar",
-    "translation": "Ipakita ang toolbar"
   },
   "sf2cQK": {
     "message": "Shuffle",

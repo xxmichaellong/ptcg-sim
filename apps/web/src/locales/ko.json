@@ -2493,10 +2493,6 @@
     "message": "Hide opponent's hand",
     "translation": "상대 패 숨기기"
   },
-  "iar5oy": {
-    "message": "Hide toolbar",
-    "translation": "도구 모음 숨기기"
-  },
   "ZQLqYr": {
     "message": "Hide welcome",
     "translation": "환영 메시지 숨기기"
@@ -3026,11 +3022,6 @@
     "context": "more actions",
     "translation": "더보기"
   },
-  "XSKDQ2": {
-    "message": "More",
-    "context": "more options",
-    "translation": "더보기"
-  },
   "Vk_Ar1": {
     "message": "More filters",
     "translation": "필터 더보기"
@@ -3042,10 +3033,6 @@
   "LlDm7t": {
     "message": "More game actions",
     "translation": "게임 동작 더보기"
-  },
-  "3Siwmw": {
-    "message": "More options",
-    "translation": "옵션 더보기"
   },
   "itfxKl": {
     "message": "Motion",
@@ -4299,10 +4286,6 @@
   "UwltxX": {
     "message": "Show this card on the deck",
     "translation": "이 카드를 덱에 표시"
-  },
-  "D_Orlv": {
-    "message": "Show toolbar",
-    "translation": "도구 모음 표시"
   },
   "sf2cQK": {
     "message": "Shuffle",

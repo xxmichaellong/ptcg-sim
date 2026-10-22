@@ -9,8 +9,6 @@ export interface ShellPreferences {
   readonly activityDocked: boolean;
   /** The empty table's welcome card was put away. */
   readonly welcomeDismissed: boolean;
-  /** The app toolbar is folded into its menu button. */
-  readonly toolbarCollapsed: boolean;
 }
 
 export const SHELL_PREFERENCES = definePreference<ShellPreferences>({
@@ -18,7 +16,6 @@ export const SHELL_PREFERENCES = definePreference<ShellPreferences>({
   defaults: Object.freeze({
     activityDocked: false,
     welcomeDismissed: false,
-    toolbarCollapsed: false,
   }),
   parse: (value) => {
     const field = (name: keyof ShellPreferences): boolean =>
@@ -28,7 +25,6 @@ export const SHELL_PREFERENCES = definePreference<ShellPreferences>({
     return {
       activityDocked: field('activityDocked'),
       welcomeDismissed: field('welcomeDismissed'),
-      toolbarCollapsed: field('toolbarCollapsed'),
     };
   },
 });

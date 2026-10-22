@@ -51,6 +51,7 @@ import {
 import { TurnBanner } from '../board/banner/TurnBanner.js';
 import { TouchCardBar } from '../board/TouchCardBar.js';
 import {
+  loadDeckSides,
   TableZoneAffordances,
   type TableZoneAffordancesProps,
 } from '../board/TableZoneAffordances.js';
@@ -84,6 +85,7 @@ import {
   POINTER_SEAM_BAND_PX,
   TOUCH_SEAM_BAND_PX,
 } from '../board/table-seam.js';
+import { useAppBarReserve } from './shell/AppMenu.js';
 import type { DockSlide } from './shell/dock-slide.js';
 import type { ActionMenuEntry } from '../ui/ActionMenu.js';
 import { COARSE_POINTER_QUERY, useMediaQuery } from '../ui/breakpoints.js';
@@ -114,7 +116,8 @@ const layoutFor = (
   >,
   boardView: BoardViewSettings,
   sidePanel: number,
-  seamBandPx: number | undefined
+  seamBandPx: number | undefined,
+  appBarPx: BoardLayoutState['appBarPx']
 ): BoardLayoutState => {
   const firstPlayerId = view.playerOrder[0];
   const secondPlayerId = view.playerOrder[1];
@@ -137,6 +140,7 @@ const layoutFor = (
     ...(hiddenPhysicalSide ? { hiddenPhysicalSide } : {}),
     ...(boardView.lostZone ? {} : { hideEmptyLostZone: true }),
     ...(seamBandPx ? { seamBandPx } : {}),
+    ...(appBarPx ? { appBarPx } : {}),
     ...(oncePerGameMarkerCount(boardView) > 0
       ? { oncePerGameMarkers: oncePerGameMarkerCount(boardView) }
       : {}),
@@ -173,10 +177,8 @@ export interface BoardOwnRailActions {
 
 /** What a route puts on the table rail (ADR-030). */
 export interface BoardRailModel {
-  /** At the left end: the app menu. */
-  readonly start?: ReactNode;
-  /** At the right end: the activity log. */
-  readonly end?: ReactNode;
+  /** The app bar, in the table's top-right corner (ADR-036). */
+  readonly bar?: ReactNode;
   /** Whose seat the actions act for (the other one, turned around). */
   readonly seat?: 'you' | 'opponent';
   /** Orders the board's own actions among the route's. */
@@ -353,6 +355,12 @@ export const RemoteSessionBoard = ({
   const seamBandPx = coarsePointer ? TOUCH_SEAM_BAND_PX : POINTER_SEAM_BAND_PX;
   const seamBandRef = useRef(seamBandPx);
   seamBandRef.current = seamBandPx;
+  // The app bar's corner, kept clear by the table (ADR-036): only while a
+  // route puts a bar there.
+  const barReserve = useAppBarReserve();
+  const appBarPx = rail?.bar ? barReserve : undefined;
+  const appBarRef = useRef(appBarPx);
+  appBarRef.current = appBarPx;
   const preferencesRef = useRef(preferences);
   const onIntentRef = useRef(onIntent);
   const onSubmissionRef = useRef(onSubmission);
@@ -600,7 +608,8 @@ export const RemoteSessionBoard = ({
             view,
             boardViewRef.current,
             sidePanelRef.current(),
-            seamBandRef.current
+            seamBandRef.current,
+            appBarRef.current
           ),
           createRenderer,
           preferences: preferencesRef.current,
@@ -740,6 +749,7 @@ export const RemoteSessionBoard = ({
       ...(hiddenPhysicalSide ? { hiddenPhysicalSide } : {}),
       hideEmptyLostZone: !boardView.lostZone,
       ...(seamBandPx ? { seamBandPx } : {}),
+      ...(appBarPx ? { appBarPx } : {}),
       oncePerGameMarkers: markerCount,
       farCardsUpright: boardView.opponentCardsUpright,
     });
@@ -750,6 +760,7 @@ export const RemoteSessionBoard = ({
     boardView.opponentCardsUpright,
     markerCount,
     seamBandPx,
+    appBarPx,
   ]);
 
   const overlayActions = useMemo<LegacyBoardOverlayActions>(
@@ -1117,8 +1128,7 @@ export const RemoteSessionBoard = ({
     };
     const composed = rail.compose(own);
     return {
-      ...(rail.start ? { start: rail.start } : {}),
-      ...(rail.end ? { end: rail.end } : {}),
+      ...(rail.bar ? { bar: rail.bar } : {}),
       ...(rail.seat ? { seat: rail.seat } : {}),
       actions: composed.actions,
       ...(composed.more ? { more: composed.more } : {}),
@@ -1225,6 +1235,16 @@ export const RemoteSessionBoard = ({
     });
   }, [boardState?.scene]);
 
+  const deckPlusSides =
+    layout && boardState?.scene
+      ? loadDeckSides(
+          layout,
+          boardState.view,
+          loadDeck && boardState.source?.kind === 'live' ? loadDeck : undefined,
+          coveredByPopup
+        ).join(' ')
+      : '';
+
   return (
     // The table is laid out in the world, not in the page's language: it
     // stays left to right in Arabic too (ADR-034). What it raises to be
@@ -1233,6 +1253,9 @@ export const RemoteSessionBoard = ({
     <div
       className="board-spike-host"
       data-geometry={layout?.geometryVersion}
+      // The decks that show a `+` (TableZoneAffordances): their hover name
+      // moves under it.
+      data-load-deck-sides={deckPlusSides || undefined}
       dir="ltr"
     >
       <div className="renderer-surface-host" ref={hostRef} />

@@ -1,48 +1,36 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 
 /**
- * The room's shell (ADR-030): the table fills the window; the app menu sits
- * at the rail's left end and the activity log at its right; Settings, Play
- * online and the deck screen open over the table. Specs reach every one of
- * them through these helpers, so a change to the shell changes one file.
+ * The room's shell (ADR-030, ADR-036): the table fills the window; the app
+ * bar in its top-right corner holds the deck, Play online, the palette, the
+ * log, Settings and the menu; Settings, Play online and the deck screen open
+ * over the table. Specs reach every one of them through these helpers, so a
+ * change to the shell changes one file.
  */
 
 /**
- * Opens the app toolbar along the rail, if the player has closed it. (On a
- * narrow rail the same button opens a menu instead, and is left alone.)
+ * The app bar (ADR-036) is always open in the table's top-right corner;
+ * kept so older specs read the same.
  */
 export const openToolbar = async (page: Page): Promise<void> => {
-  const closed = page.locator(
-    '#appMenuButton[aria-controls="appToolbarDrawer"][aria-expanded="false"]'
-  );
-  if ((await closed.count()) === 0) return;
-  await closed.click();
-  await expect(page.locator('#appMenuButton')).toHaveAttribute(
-    'aria-expanded',
-    'true'
-  );
+  await expect(page.locator('.ptcgsim-app-bar')).toBeVisible();
 };
 
-/**
- * The button that opens the app menu: the open toolbar's last button,
- * More, or on a rail too narrow to open it along, the one menu button
- * that holds everything.
- */
+/** The button that opens the app menu: the bar's last, ☰. */
 export const appMenuOpener = async (page: Page): Promise<Locator> => {
-  await expect(page.locator('#appMenuButton')).toBeVisible();
-  await openToolbar(page);
-  const more = page.locator('#appMoreButton');
-  return (await more.count()) > 0 ? more : page.locator('#appMenuButton');
+  const menu = page.locator('#appMenuButton');
+  await expect(menu).toBeVisible();
+  return menu;
 };
 
 /**
- * The open app menu, found by the button that opened it (the toolbar's More,
- * or Menu on a narrow rail). Not by its name: the rail's own More menu,
- * still fading out after a game action, is named "More" too.
+ * The open app menu, found by the button that opened it. Not by its name:
+ * the rail's own More menu, still fading out after a game action, has a
+ * name of its own too.
  */
 export const appMenu = (page: Page): Locator =>
   page.locator(
-    '[role="menu"]:is([aria-labelledby="appMoreButton"], [aria-labelledby="appMenuButton"]):not([data-ending-style])'
+    '[role="menu"][aria-labelledby="appMenuButton"]:not([data-ending-style])'
   );
 
 /** Opens the app menu and waits for it. */
@@ -53,12 +41,11 @@ export const openAppMenu = async (page: Page): Promise<void> => {
 
 /**
  * Chooses an app entry by its id (`settingsButton`, `exportState`): a
- * toolbar button directly, anything else from the menu.
+ * button on the app bar directly, anything else from the menu (☰).
  */
 export const chooseMenuItem = async (page: Page, id: string): Promise<void> => {
   await expect(page.locator('#appMenuButton')).toBeVisible();
-  await openToolbar(page);
-  const onToolbar = page.locator(`.ptcgsim-app-toolbar #${id}`);
+  const onToolbar = page.locator(`.ptcgsim-app-bar #${id}`);
   if (await onToolbar.isVisible()) {
     await onToolbar.click();
     return;

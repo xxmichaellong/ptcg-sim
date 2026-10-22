@@ -14,7 +14,7 @@
 
 /* A pile browser or work area over the table: the game actions stay
    visible but dim, and take no presses until the panel is put away (v1's
-   #cover). The menu and the log at the ends still work. */
+   #cover). The app bar in the corner still works. */
 .ptcgsim-table-rail__actions[data-covered='true'] {
   opacity: 0.15;
 }
@@ -23,7 +23,6 @@
   pointer-events: none !important;
 }
 
-.ptcgsim-table-rail__end-group,
 .ptcgsim-table-rail__actions {
   position: absolute;
   top: 0;
@@ -36,6 +35,11 @@
 .ptcgsim-table-rail__actions {
   min-width: 0;
   transition: opacity var(--duration-fast) var(--ease-out);
+}
+
+/* Past the Stadium, the actions line up against the seam's right end. */
+.ptcgsim-table-rail__actions[data-align='end'] {
+  justify-content: flex-end;
 }
 
 .ptcgsim-rail-button {

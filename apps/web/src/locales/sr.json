@@ -2493,10 +2493,6 @@
     "message": "Hide opponent's hand",
     "translation": "Сакриј противничку руку"
   },
-  "iar5oy": {
-    "message": "Hide toolbar",
-    "translation": "Сакриј траку са алаткама"
-  },
   "ZQLqYr": {
     "message": "Hide welcome",
     "translation": "Сакриј добродошлицу"
@@ -3026,11 +3022,6 @@
     "context": "more actions",
     "translation": "Још"
   },
-  "XSKDQ2": {
-    "message": "More",
-    "context": "more options",
-    "translation": "Још"
-  },
   "Vk_Ar1": {
     "message": "More filters",
     "translation": "Још филтера"
@@ -3042,10 +3033,6 @@
   "LlDm7t": {
     "message": "More game actions",
     "translation": "Још радњи у игри"
-  },
-  "3Siwmw": {
-    "message": "More options",
-    "translation": "Још опција"
   },
   "itfxKl": {
     "message": "Motion",
@@ -4299,10 +4286,6 @@
   "UwltxX": {
     "message": "Show this card on the deck",
     "translation": "Прикажи ову карту на шпилу"
-  },
-  "D_Orlv": {
-    "message": "Show toolbar",
-    "translation": "Прикажи траку са алаткама"
   },
   "sf2cQK": {
     "message": "Shuffle",

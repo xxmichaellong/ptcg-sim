@@ -224,15 +224,15 @@ test('a dangerous command asks for a second Enter', async ({ page }) => {
 test.describe('on a phone', () => {
   test.use({ hasTouch: true, isMobile: true });
 
-  test('the toolbar’s Commands opens it across the width', async ({ page }) => {
+  test('the app bar’s Commands opens it across the width', async ({ page }) => {
     test.setTimeout(120_000);
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/');
     await expect(page.locator('[data-app-route="remote-room"]')).toBeVisible({
       timeout: 30_000,
     });
-    await page.locator('#appMenuButton').tap();
-    await page.locator('#commandsButton').tap();
+    // On a phone the app bar keeps Commands beside the log and the menu.
+    await page.locator('.ptcgsim-app-bar #commandsButton').tap();
     await expect(palette(page)).toBeVisible();
     const box = (await palette(page).boundingBox())!;
     expect(box.width).toBeGreaterThan(360);

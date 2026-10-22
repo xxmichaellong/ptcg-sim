@@ -41,6 +41,27 @@ const layoutState = (): BoardLayoutState => ({
 
 const px = (value: string): number => Number.parseFloat(value);
 
+/**
+ * Where the seam's right end is for the rail's actions: short of the near
+ * piles that start at the seam, or of the table's edge.
+ */
+const seamEnd = (layout: ReturnType<typeof createTableLayoutSnapshot>) => {
+  const stadium = layout.shared.stadium.physicalDeclaredBounds;
+  const anchor = layout.shared.boardControlsAnchor;
+  const lower = layout.players.find(
+    (frame) => frame.physicalSide === 'lower' && !frame.hidden
+  );
+  const piles = (lower?.regions ?? [])
+    .filter(
+      (region) =>
+        ['deck', 'discard', 'lostZone'].includes(region.kind) &&
+        region.physicalDeclaredBounds.x > stadium.x + stadium.width &&
+        region.physicalDeclaredBounds.y < anchor.y + anchor.height + 40
+    )
+    .map((region) => region.physicalDeclaredBounds.x - 8);
+  return Math.min(layout.playAreaBounds.width - 8, ...piles);
+};
+
 const players = {
   'spike-blue': {
     id: asPlayerId('spike-blue'),
@@ -209,7 +230,7 @@ describe('LegacyBoardChrome', () => {
     );
   });
 
-  it('lays the table rail along the seam: menu, game actions, More, the log', async () => {
+  it('lays the turn’s actions along the seam, the app bar apart in its corner', async () => {
     const host = document.createElement('div');
     document.body.append(host);
     const root = createRoot(host);
@@ -223,8 +244,7 @@ describe('LegacyBoardChrome', () => {
     const flipCoin = vi.fn();
     const mulligan = vi.fn();
     const rail = (coinPending: boolean): LegacyBoardChromeRail => ({
-      start: <button id="menuStub" type="button" />,
-      end: <button id="logStub" type="button" />,
+      bar: <button id="barStub" type="button" />,
       actions: [
         {
           id: 'turnButton',
@@ -281,8 +301,8 @@ describe('LegacyBoardChrome', () => {
       );
     await render(false);
 
-    // The rail spans the seam; the actions start at the layout's anchor and
-    // stop short of the Stadium that straddles it.
+    // The rail spans the seam; the actions run from past the Stadium that
+    // straddles it to the seam's right end (ADR-036).
     const anchor = layout.shared.boardControlsAnchor;
     const stadium = layout.shared.stadium.physicalDeclaredBounds;
     const strip = host.querySelector<HTMLElement>('[data-table-rail]')!;
@@ -294,21 +314,27 @@ describe('LegacyBoardChrome', () => {
     const actions = host.querySelector<HTMLElement>('#boardButtonContainer')!;
     expect(actions.getAttribute('role')).toBe('toolbar');
     expect(actions.getAttribute('aria-label')).toBe('Game actions');
-    expect(px(actions.style.left)).toBeCloseTo(anchor.x, 3);
-    expect(px(actions.style.left) + px(actions.style.width)).toBeCloseTo(
-      stadium.x - 8,
+    expect(actions.dataset.align).toBe('end');
+    expect(px(actions.style.left)).toBeCloseTo(
+      stadium.x + stadium.width + 8,
       3
     );
+    // ...stopping short of the near piles there.
+    expect(px(actions.style.left) + px(actions.style.width)).toBeCloseTo(
+      seamEnd(layout),
+      3
+    );
+    expect(seamEnd(layout)).toBeLessThan(layout.playAreaBounds.width - 8);
 
-    // The menu at the left end, the log at the right, outside the actions.
-    const [startGroup, endGroup] = [
-      ...host.querySelectorAll<HTMLElement>('.ptcgsim-table-rail__end-group'),
-    ];
-    expect(startGroup?.querySelector('#menuStub')).not.toBeNull();
-    expect(startGroup?.style.left).toBe('8px');
-    expect(endGroup?.querySelector('#logStub')).not.toBeNull();
-    expect(endGroup?.style.right).toBe('8px');
-    expect(actions.querySelector('#menuStub, #logStub')).toBeNull();
+    // The app bar sits apart, in the corner the layout keeps clear.
+    const slot = host.querySelector<HTMLElement>('.ptcgsim-app-bar-slot')!;
+    expect(slot.querySelector('#barStub')).not.toBeNull();
+    expect(slot.style.top).toBe('8px');
+    expect(px(slot.style.right)).toBeCloseTo(
+      layout.viewport.width - layout.playAreaBounds.width + 8,
+      3
+    );
+    expect(actions.querySelector('#barStub')).toBeNull();
 
     // A toolbar: the arrow keys move between its buttons and wrap, and the
     // table never sees them.
@@ -376,17 +402,16 @@ describe('LegacyBoardChrome', () => {
     expect(mulligan).toHaveBeenCalledOnce();
 
     // A pile browser over the table dims the actions and takes their
-    // presses, but leaves the menu and the log in reach.
+    // presses, but leaves the app bar in reach.
     await render(false, true);
     expect(actions.dataset.covered).toBe('true');
-    expect(startGroup?.closest('[data-covered]')).toBeNull();
-    expect(endGroup?.closest('[data-covered]')).toBeNull();
+    expect(slot.closest('[data-covered]')).toBeNull();
 
     await act(async () => root.unmount());
     host.remove();
   });
 
-  it('runs the actions to the end reserve when nothing straddles the seam', async () => {
+  it('lines the actions up at the seam where the Stadium leaves room', async () => {
     const host = document.createElement('div');
     document.body.append(host);
     const root = createRoot(host);
@@ -419,13 +444,20 @@ describe('LegacyBoardChrome', () => {
     );
     const actions = host.querySelector<HTMLElement>('#boardButtonContainer')!;
     const end = px(actions.style.left) + px(actions.style.width);
-    if (straddles) expect(end).toBeCloseTo(stadium.x - 8, 3);
-    else expect(end).toBeCloseTo(layout.playAreaBounds.width - 64 - 8, 3);
-    // No More without rarer actions, and no ends unless a route gives them.
+    const pastStadium = straddles ? stadium.x + stadium.width + 8 : anchor.x;
+    const roomPast = seamEnd(layout) - pastStadium;
+    if (roomPast >= 4 * anchor.height + 3 * 6) {
+      expect(actions.dataset.align).toBe('end');
+      expect(px(actions.style.left)).toBeCloseTo(pastStadium, 3);
+      expect(end).toBeCloseTo(seamEnd(layout), 3);
+    } else {
+      expect(actions.dataset.align).toBe('start');
+      expect(px(actions.style.left)).toBeCloseTo(anchor.x, 3);
+      expect(end).toBeCloseTo(straddles ? stadium.x - 8 : seamEnd(layout), 3);
+    }
+    // No More without rarer actions, and no app bar unless a route gives one.
     expect(host.querySelector('#moreActionsButton')).toBeNull();
-    expect(
-      host.querySelectorAll('.ptcgsim-table-rail__end-group')
-    ).toHaveLength(0);
+    expect(host.querySelectorAll('.ptcgsim-app-bar-slot')).toHaveLength(0);
 
     await act(async () => root.unmount());
     host.remove();

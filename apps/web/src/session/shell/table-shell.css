@@ -89,91 +89,91 @@
   pointer-events: auto;
 }
 
-/* ---- The app toolbar, at the rail's left end (AppMenu.tsx) -------------- */
+/* ---- The app bar, in the table's top-right corner (AppMenu.tsx) --------- */
 
-/* One segmented pill, so the app's buttons read as a group apart from the
-   turn's actions beside it. Its first button opens it along the rail and
-   closes it again: the pill grows from that button and shrinks back to it. */
-.ptcgsim-app-toolbar {
+/* Where the layout keeps a corner clear (`appBarPx`, APP_BAR_INSET_PX in
+   from the play area's top right). */
+.ptcgsim-app-bar-slot {
+  position: absolute;
+  z-index: var(--table-layer-rail);
+  pointer-events: none;
+}
+
+/* One pill of smoked glass over the desk, apart from the game: the deck and
+   where to play, then the palette, the log and Settings, then the menu, a
+   hairline between the groups. Its box is the one the layout keeps clear:
+   APP_BAR_PAD_PX (3px, border included) round buttons APP_BAR_GAP_PX (4px)
+   apart. */
+.ptcgsim-app-bar {
   display: flex;
   align-items: center;
+  gap: 4px;
   box-sizing: border-box;
-  height: var(--rail-height, 40px);
   padding: 2px;
-  border: 1px solid var(--color-border);
-  border-radius: calc(var(--radius-control) + 2px);
-  background: var(--color-surface-2);
-  box-shadow: var(--shadow-2), var(--highlight-top);
+  border: 1px solid oklch(1 0 0 / 0.1);
+  border-radius: calc(var(--radius-control) + 3px);
+  background: oklch(0.2 0.012 50 / 0.58);
+  box-shadow:
+    0 1px 0 oklch(1 0 0 / 0.08) inset,
+    0 6px 18px oklch(0 0 0 / 0.28),
+    0 1px 3px oklch(0 0 0 / 0.3);
+  -webkit-backdrop-filter: blur(12px) saturate(1.1);
+  backdrop-filter: blur(12px) saturate(1.1);
+  pointer-events: auto;
 }
 
-/* Its width is set as it opens and closes (AppMenu.tsx); what does not fit
-   yet is clipped, so the buttons come out of the menu button. */
-.ptcgsim-app-toolbar__drawer {
-  height: 100%;
-  overflow: hidden;
-  /* Eased at both ends, so the bar is seen to grow and to shrink rather
-     than jump most of the way at once. */
-  transition: width calc(var(--duration-slow) * var(--motion-scale, 1))
-    cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.ptcgsim-app-toolbar__items {
+.ptcgsim-app-bar__group {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 2px;
-  width: max-content;
-  height: 100%;
-  /* A hairline between the menu button and what it opens. */
-  margin-left: 2px;
-  padding-left: 3px;
-  border-left: 1px solid var(--color-border);
+  gap: 4px;
 }
 
-/* The buttons follow one another out, and go back together. */
-.ptcgsim-app-toolbar__items > .ptcgsim-rail-button {
-  transition:
-    opacity calc(var(--duration-normal) * var(--motion-scale, 1))
-      var(--ease-out),
-    translate calc(var(--duration-normal) * var(--motion-scale, 1))
-      var(--ease-out),
-    background-color var(--duration-fast) var(--ease-out);
+/* A hairline in the gap between groups. */
+.ptcgsim-app-bar__group + .ptcgsim-app-bar__group::before {
+  content: '';
+  position: absolute;
+  top: 22%;
+  bottom: 22%;
+  left: -2.5px;
+  width: 1px;
+  background: oklch(1 0 0 / 0.14);
 }
 
-.ptcgsim-app-toolbar[data-open='true']
-  .ptcgsim-app-toolbar__items
-  > .ptcgsim-rail-button {
-  transition-delay:
-    calc(var(--i, 0) * 30ms * var(--motion-scale, 1)),
-    calc(var(--i, 0) * 30ms * var(--motion-scale, 1)), 0s;
-}
-
-.ptcgsim-app-toolbar[data-open='false']
-  .ptcgsim-app-toolbar__items
-  > .ptcgsim-rail-button {
-  opacity: 0;
-  translate: -10px 0;
-}
-
-/* Open, the menu button reads as pressed in. */
-.ptcgsim-app-toolbar .ptcgsim-app-toolbar__toggle[aria-expanded='true'] {
-  background: var(--color-surface-3);
-  color: var(--color-text);
-}
-
-.ptcgsim-app-toolbar .ptcgsim-rail-button {
-  width: calc(var(--rail-height, 40px) - 6px);
+.ptcgsim-app-bar .ptcgsim-rail-button {
+  width: var(--app-bar-button, 36px);
   min-width: 0;
-  height: calc(var(--rail-height, 40px) - 6px);
+  height: var(--app-bar-button, 36px);
+  padding: 0;
   border-color: transparent;
+  border-radius: var(--radius-control);
   background: transparent;
   box-shadow: none;
+  color: oklch(0.95 0.01 80);
+  font-size: calc(var(--app-bar-button, 36px) * 0.42);
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .ptcgsim-app-toolbar .ptcgsim-rail-button:hover {
-    background-color: var(--color-surface-3);
+  .ptcgsim-app-bar .ptcgsim-rail-button:hover {
+    background-color: oklch(1 0 0 / 0.12);
     box-shadow: none;
   }
+}
+
+.ptcgsim-app-bar .ptcgsim-rail-button[aria-expanded='true'] {
+  border-color: transparent;
+  background-color: oklch(1 0 0 / 0.16);
+}
+
+.ptcgsim-app-bar .ptcgsim-rail-button__badge {
+  top: -3px;
+  right: -3px;
+}
+
+/* The log's newest lines drop below the bar, at its right edge. */
+.ptcgsim-app-bar .ptcgsim-activity-ticker {
+  top: calc(100% + var(--space-2) + 3px);
+  bottom: auto;
 }
 
 /* ---- The app menu's heading: where you are ------------------------------ */

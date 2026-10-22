@@ -5,6 +5,7 @@ import { resolveBoardDropTarget } from './drag.js';
 import { CARD_ASPECT_RATIO } from './geometry.js';
 import type { BoardLayoutState } from './layout.js';
 import {
+  APP_BAR_INSET_PX,
   DEFAULT_TABLE_VERTICAL_LAYOUT,
   TABLE_CONTROL_CORNER_PX,
   TABLE_FAR_HAND_SCALE,
@@ -55,6 +56,100 @@ const overlaps = (left: Rect, right: Rect) =>
   right.x < left.x + left.width - 0.01 &&
   left.y < right.y + right.height - 0.01 &&
   right.y < left.y + left.height - 0.01;
+
+describe('table layout: the app bar corner (ADR-036)', () => {
+  const BAR = { width: 242, height: 42 };
+  /** The bar's box, at the play area's top right. */
+  const barBox = (snapshot: ReturnType<typeof createTableLayoutSnapshot>) => ({
+    x: snapshot.playAreaBounds.width - APP_BAR_INSET_PX - BAR.width,
+    y: APP_BAR_INSET_PX,
+    width: BAR.width,
+    height: BAR.height,
+  });
+  const everything = (snapshot: ReturnType<typeof createTableLayoutSnapshot>) =>
+    snapshot.players
+      .filter((player) => !player.hidden)
+      .flatMap((player) => player.regions.map((r) => r.physicalDeclaredBounds));
+
+  it('keeps the far hand and every zone out of the bar, at every size and split', () => {
+    for (const [width, height] of [
+      [1440, 900],
+      [1280, 720],
+      [1024, 768],
+      [768, 1024],
+      [390, 844],
+      [844, 390],
+    ] as const) {
+      for (const shellMode of ['fullscreen', 'sidebar'] as const) {
+        const snapshot = createTableLayoutSnapshot(
+          stateAt(width, height, { shellMode, appBarPx: BAR })
+        );
+        for (const rect of everything(snapshot)) {
+          expect(overlaps(rect, barBox(snapshot)), `${width}x${height}`).toBe(
+            false
+          );
+        }
+        // The far hand ends a gap short of the bar.
+        const hand = region(
+          snapshot,
+          'opponent',
+          'hand'
+        ).physicalDeclaredBounds;
+        expect(hand.x + hand.width).toBeLessThanOrEqual(
+          barBox(snapshot).x - APP_BAR_INSET_PX + 0.01
+        );
+      }
+    }
+  });
+
+  it('leaves the near half where it was', () => {
+    const without = createTableLayoutSnapshot(stateAt(1440, 900));
+    const withBar = createTableLayoutSnapshot(
+      stateAt(1440, 900, { appBarPx: BAR })
+    );
+    for (const kind of ['hand', 'active', 'bench', 'prizes', 'deck']) {
+      expect(region(withBar, 'local', kind).physicalDeclaredBounds).toEqual(
+        region(without, 'local', kind).physicalDeclaredBounds
+      );
+    }
+  });
+
+  it('keeps a lone half clear of the bar from the window top', () => {
+    for (const hiddenPhysicalSide of ['upper', 'lower'] as const) {
+      for (const [width, height] of [
+        [1440, 900],
+        [390, 844],
+        [844, 390],
+      ] as const) {
+        const snapshot = createTableLayoutSnapshot(
+          stateAt(width, height, {
+            shellMode: 'fullscreen',
+            hiddenPhysicalSide,
+            appBarPx: BAR,
+          })
+        );
+        for (const rect of everything(snapshot)) {
+          expect(
+            overlaps(rect, barBox(snapshot)),
+            `${hiddenPhysicalSide} ${width}x${height}`
+          ).toBe(false);
+        }
+        const stadium = snapshot.shared.stadium.physicalDeclaredBounds;
+        expect(overlaps(stadium, barBox(snapshot))).toBe(false);
+        const controls = snapshot.shared.boardControlsAnchor;
+        expect(controls.y).toBeGreaterThanOrEqual(0);
+      }
+    }
+  });
+
+  it('refuses a bar of no sensible size', () => {
+    expect(() =>
+      createTableLayoutSnapshot(
+        stateAt(1440, 900, { appBarPx: { width: Number.NaN, height: 42 } })
+      )
+    ).toThrow(/app bar/u);
+  });
+});
 
 describe('table layout (geometry v2)', () => {
   it('gives the table everything but a clamped rail', () => {
@@ -797,10 +892,9 @@ describe('table layout (geometry v2)', () => {
         expect(piles[1]!.x).toBeLessThan(piles[2]!.x);
         // Every pile keeps its count badge clear of the screen's edge.
         expect(piles[2]!.x + piles[2]!.width).toBeLessThanOrEqual(width - 12);
-        // The rail keeps its left end for the app menu.
-        expect(snapshot.shared.boardControlsAnchor.x).toBeGreaterThanOrEqual(
-          60
-        );
+        // The rail's actions may start at the mat's edge: the app menu is
+        // in the corner now (ADR-036).
+        expect(snapshot.shared.boardControlsAnchor.x).toBeGreaterThanOrEqual(0);
       }
     });
 

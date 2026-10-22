@@ -65,27 +65,25 @@ test('icon controls name themselves, with their keys, on hover', async ({
     await hover(page, '[data-load-deck-player][aria-label="Load a deck"]')
   ).toHaveText('Load a deck');
 
-  // The rail's ends: the app toolbar (with a key) and the log.
+  // The app bar in the corner (with a key) and the log.
   await openToolbar(page);
-  await expect(await hover(page, '#shortcutsButton')).toHaveText(
-    'Keyboard shortcuts ?'
-  );
+  await expect(await hover(page, '#commandsButton')).toHaveText('Commands `');
   await expect(
     tooltip(page).locator('kbd.ptcgsim-ui-tooltip__hint')
-  ).toHaveText('?');
+  ).toHaveText('`');
   await expect(await hover(page, '#activityButton')).toHaveText('Log');
 
   // A menu's button: named while closed, quiet while its menu is open.
-  const more = await hover(page, '#appMoreButton');
-  await expect(more).toHaveText('More options');
-  await page.locator('#appMoreButton').click();
+  const menu = await hover(page, '#appMenuButton');
+  await expect(menu).toHaveText('Menu');
+  await page.locator('#appMenuButton').click();
   await expect(
-    page.locator('[role="menu"][aria-labelledby="appMoreButton"]')
+    page.locator('[role="menu"][aria-labelledby="appMenuButton"]')
   ).toBeVisible();
   await expect(tooltip(page)).toHaveCount(0);
   await page.keyboard.press('Escape');
   await expect(
-    page.locator('[role="menu"][aria-labelledby="appMoreButton"]')
+    page.locator('[role="menu"][aria-labelledby="appMenuButton"]')
   ).toHaveCount(0);
 
   // The table's own `+` for the optional pieces.

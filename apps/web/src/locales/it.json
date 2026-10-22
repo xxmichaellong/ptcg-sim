@@ -2493,10 +2493,6 @@
     "message": "Hide opponent's hand",
     "translation": "Nascondi la mano dell'avversario"
   },
-  "iar5oy": {
-    "message": "Hide toolbar",
-    "translation": "Nascondi barra degli strumenti"
-  },
   "ZQLqYr": {
     "message": "Hide welcome",
     "translation": "Nascondi benvenuto"
@@ -3026,11 +3022,6 @@
     "context": "more actions",
     "translation": "Altro"
   },
-  "XSKDQ2": {
-    "message": "More",
-    "context": "more options",
-    "translation": "Altro"
-  },
   "Vk_Ar1": {
     "message": "More filters",
     "translation": "Altri filtri"
@@ -3042,10 +3033,6 @@
   "LlDm7t": {
     "message": "More game actions",
     "translation": "Altre azioni di gioco"
-  },
-  "3Siwmw": {
-    "message": "More options",
-    "translation": "Altre opzioni"
   },
   "itfxKl": {
     "message": "Motion",
@@ -4299,10 +4286,6 @@
   "UwltxX": {
     "message": "Show this card on the deck",
     "translation": "Mostra questa carta sul mazzo"
-  },
-  "D_Orlv": {
-    "message": "Show toolbar",
-    "translation": "Mostra barra degli strumenti"
   },
   "sf2cQK": {
     "message": "Shuffle",

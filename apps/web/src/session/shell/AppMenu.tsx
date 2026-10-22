@@ -4,7 +4,6 @@ import { MagnifyingGlassIcon } from '@phosphor-icons/react/dist/csr/MagnifyingGl
 import { CloudArrowUpIcon } from '@phosphor-icons/react/dist/csr/CloudArrowUp';
 import { CopyIcon } from '@phosphor-icons/react/dist/csr/Copy';
 import { DiscordLogoIcon } from '@phosphor-icons/react/dist/csr/DiscordLogo';
-import { DotsThreeIcon } from '@phosphor-icons/react/dist/csr/DotsThree';
 import type { Icon } from '@phosphor-icons/react';
 import { CornersInIcon } from '@phosphor-icons/react/dist/csr/CornersIn';
 import { CornersOutIcon } from '@phosphor-icons/react/dist/csr/CornersOut';
@@ -21,30 +20,26 @@ import { SparkleIcon } from '@phosphor-icons/react/dist/csr/Sparkle';
 import { UserIcon } from '@phosphor-icons/react/dist/csr/User';
 import { UsersThreeIcon } from '@phosphor-icons/react/dist/csr/UsersThree';
 import { XCircleIcon } from '@phosphor-icons/react/dist/csr/XCircle';
-import {
-  useLayoutEffect,
-  useRef,
-  type CSSProperties,
-  type ReactNode,
-  type RefObject,
-} from 'react';
+import { useMemo, type CSSProperties, type ReactNode } from 'react';
 
-import { RailButton, useRailWidth } from '../../board/rail/TableRail.js';
+import { RailButton } from '../../board/rail/TableRail.js';
 import { useHotkeyHints } from '../../hotkeys/hotkey-preferences.js';
 import { openCommandPalette } from '../../commands/palette-state.js';
 import { openShortcutsDialog } from '../../hotkeys/shortcuts-dialog-state.js';
 import { ActionMenu, type ActionMenuEntry } from '../../ui/ActionMenu.js';
 import { DeckIcon } from '../../ui/DeckIcon.js';
-import { TOUCH_ONLY_QUERY, useMediaQuery } from '../../ui/breakpoints.js';
+import {
+  COARSE_POINTER_QUERY,
+  TOUCH_ONLY_QUERY,
+  useCompactLayout,
+  useMediaQuery,
+} from '../../ui/breakpoints.js';
 import {
   exitBrowserFullscreen,
   useBrowserFullscreen,
 } from '../browser-room-options.js';
-import { preferences } from '../../preferences/preference-store.js';
-import { usePreference } from '../../preferences/usePreference.js';
 import { Tooltip, withKeyHint } from '../../ui/Tooltip.js';
 import { DISCORD_URL, openHelpPage, RELEASE_NAME } from './help-pages.js';
-import { SHELL_PREFERENCES } from './shell-preferences.js';
 
 /** What the app menu can do in the current room and mode. */
 export interface AppMenuModel {
@@ -276,179 +271,163 @@ export const restEntries = (
   return entries;
 };
 
-/** A rail at least this wide has room to open the toolbar along it. */
-const TOOLBAR_MIN_RAIL_PX = 820;
+/**
+ * The app bar's buttons: 36px for a mouse, 44px under a finger, in a pill
+ * with this gap between them and this padding (border included) round
+ * them. The stylesheet takes the button size from the bar; the rest it
+ * repeats (table-shell.css), so the corner the table keeps clear
+ * (`appBarSize`) is the bar's own box.
+ */
+export const APP_BAR_GAP_PX = 4;
+export const APP_BAR_PAD_PX = 3;
+const appBarButtonPx = (coarse: boolean): number => (coarse ? 44 : 36);
 
 /**
- * Opens and closes the drawer by its width, so the rail's game actions
- * (which start clear of the toolbar, TableRail.tsx) move with it frame by
- * frame. Open and at rest it is as wide as its buttons (`auto`), so a
- * button coming or going is never clipped; a press mid-way turns it round
- * from where it is. With motion reduced the transition is instant.
+ * The most buttons the bar shows: on a phone the palette, the log and the
+ * menu; elsewhere also the deck, where to play and Settings.
  */
-const useDrawerWidth = (
-  drawer: RefObject<HTMLDivElement | null>,
-  items: RefObject<HTMLDivElement | null>,
-  open: boolean
-): void => {
-  const settled = useRef(false);
-  useLayoutEffect(() => {
-    const element = drawer.current;
-    const content = items.current;
-    if (!element || !content) return;
-    if (!settled.current) {
-      settled.current = true;
-      element.style.width = open ? 'auto' : '0px';
-      return;
-    }
-    const from = element.getBoundingClientRect().width;
-    const to = open ? content.offsetWidth : 0;
-    const finish = (): void => {
-      element.style.width = open ? 'auto' : '0px';
-    };
-    element.style.width = `${from}px`;
-    // Commit the starting width, so the change below is a transition.
-    void element.offsetWidth;
-    element.style.width = `${to}px`;
-    const seconds = Number.parseFloat(
-      getComputedStyle(element).transitionDuration
-    );
-    if (!(seconds > 0) || from === to) {
-      finish();
-      return;
-    }
-    const onEnd = (event: TransitionEvent): void => {
-      if (event.target === element && event.propertyName === 'width') {
-        finish();
-      }
-    };
-    element.addEventListener('transitionend', onEnd);
-    // Should the end never come (a hidden tab), it is settled anyway.
-    const fallback = window.setTimeout(finish, seconds * 1000 + 80);
-    return () => {
-      element.removeEventListener('transitionend', onEnd);
-      window.clearTimeout(fallback);
-    };
-  }, [drawer, items, open]);
+export const APP_BAR_SLOTS = { full: 6, compact: 3 } as const;
+
+/** The bar's box for that many buttons. */
+export const appBarSize = (
+  slots: number,
+  coarse: boolean
+): { readonly width: number; readonly height: number } => {
+  const button = appBarButtonPx(coarse);
+  return {
+    width:
+      slots * button +
+      Math.max(0, slots - 1) * APP_BAR_GAP_PX +
+      2 * APP_BAR_PAD_PX,
+    height: button + 2 * APP_BAR_PAD_PX,
+  };
 };
 
 /**
- * The app toolbar (ADR-030), at the rail's left end. Its first button
- * opens it along the rail and closes it again, and the table keeps the
- * player's choice: open, it shows the deck, where to play, the keys and
- * Settings, with everything else -- saves and replays, view, help, leaving
- * -- behind its last button. A rail too narrow to open it along has the
- * first button open one menu holding it all. Everything that is not a game
- * action and not the log lives here; the log's own actions live with it.
+ * The corner the table keeps clear for the bar (layout `appBarPx`): room
+ * for as many buttons as it can show here, whichever the room needs.
  */
-export const AppMenu = ({ model }: { readonly model: AppMenuModel }) => {
+export const useAppBarReserve = (): {
+  readonly width: number;
+  readonly height: number;
+} => {
+  const coarse = useMediaQuery(COARSE_POINTER_QUERY);
+  const compact = useCompactLayout();
+  return useMemo(
+    () =>
+      appBarSize(compact ? APP_BAR_SLOTS.compact : APP_BAR_SLOTS.full, coarse),
+    [compact, coarse]
+  );
+};
+
+/** A button on the bar, with its tooltip below it. */
+const BarButton = ({ entry }: { readonly entry: ToolbarEntry }) => (
+  <Tooltip content={withKeyHint(entry.label, entry.hint)} side="bottom">
+    <RailButton
+      id={entry.id}
+      icon={entry.icon}
+      label={entry.label}
+      iconOnly
+      onClick={() => entry.onSelect()}
+    />
+  </Tooltip>
+);
+
+/**
+ * The app bar (ADR-036), in the table's top-right corner, clear of the
+ * play: the deck and where to play, then the command palette, the log and
+ * Settings, then the menu (☰) with everything else -- the keys, full
+ * screen, saves and replays, help, leaving. On a phone the bar keeps the
+ * palette, the log and the menu, and the menu leads with the rest. The
+ * game's own actions are not here: they lie on the table, along the seam.
+ */
+export const AppBar = ({
+  model,
+  log,
+}: {
+  readonly model: AppMenuModel;
+  /** The log's button (ActivityLauncher), between the palette and Settings. */
+  readonly log?: ReactNode;
+}) => {
   const { t } = useLingui();
   const hint = useHotkeyHints();
   const touchOnly = useMediaQuery(TOUCH_ONLY_QUERY);
+  const coarse = useMediaQuery(COARSE_POINTER_QUERY);
+  const compact = useCompactLayout();
   const fullscreen = useBrowserFullscreen();
-  const shell = usePreference(SHELL_PREFERENCES);
-  const railWidth = useRailWidth();
-  const roomy = railWidth === undefined || railWidth >= TOOLBAR_MIN_RAIL_PX;
-  const open = roomy && !shell.toolbarCollapsed;
-  const drawer = useRef<HTMLDivElement>(null);
-  const items = useRef<HTMLDivElement>(null);
-  useDrawerWidth(drawer, items, open);
   const primary = primaryEntries(
     model,
     hint('table.shortcuts'),
     touchOnly,
     hint('table.commands')
   );
+  // The keys have their own key (?) and the menu; a phone's bar keeps only
+  // the palette of the rest.
+  const onBar = (entry: ToolbarEntry): boolean =>
+    compact ? entry.id === 'commandsButton' : entry.id !== 'shortcutsButton';
+  const places = primary.filter(
+    (entry) =>
+      onBar(entry) &&
+      entry.id !== 'commandsButton' &&
+      entry.id !== 'settingsButton'
+  );
+  const commands = primary.find(
+    (entry) => entry.id === 'commandsButton' && onBar(entry)
+  );
+  const settings = primary.find(
+    (entry) => entry.id === 'settingsButton' && onBar(entry)
+  );
+  const inMenu = primary.filter((entry) => !onBar(entry));
   const rest = restEntries(model, fullscreen);
+  const entries: ActionMenuEntry[] =
+    inMenu.length > 0 ? [...inMenu, { kind: 'separator' }, ...rest] : rest;
   const header = model.heading ? (
     <div className="ptcgsim-app-menu-heading">{model.heading}</div>
   ) : undefined;
-  if (!roomy) {
-    // A rail button of its own, as finger-sized as the game actions.
-    return (
-      <ActionMenu
-        label={t({ message: 'Menu', context: 'the app menu' })}
-        // Beside the button, centred on the seam, it has the window's whole
-        // height to use.
-        side="right"
-        align="center"
-        entries={[...primary, { kind: 'separator' }, ...rest]}
-        {...(header ? { header } : {})}
-        tooltip={t({ message: 'Menu', context: 'the app menu' })}
-        trigger={
-          <RailButton
-            id="appMenuButton"
-            icon={ListIcon}
-            label={t({ message: 'Menu', context: 'the app menu' })}
-            iconOnly
-          />
-        }
-      />
-    );
-  }
+  const menuLabel = t({ message: 'Menu', context: 'the app menu' });
   return (
     <div
-      className="ptcgsim-app-toolbar"
+      className="ptcgsim-app-bar"
       role="toolbar"
       aria-label={t({ message: 'App', context: 'the app toolbar' })}
-      data-open={open ? 'true' : 'false'}
+      data-compact={compact ? 'true' : undefined}
+      style={
+        {
+          '--app-bar-button': `${String(appBarButtonPx(coarse))}px`,
+        } as CSSProperties
+      }
     >
-      <Tooltip content={open ? t`Hide toolbar` : t`Show toolbar`} side="top">
-        <RailButton
-          id="appMenuButton"
-          className="ptcgsim-app-toolbar__toggle"
-          icon={ListIcon}
-          label={t({ message: 'Menu', context: 'the app menu' })}
-          iconOnly
-          aria-expanded={open}
-          aria-controls="appToolbarDrawer"
-          onClick={() =>
-            preferences().patch(SHELL_PREFERENCES, { toolbarCollapsed: open })
+      {places.length > 0 ? (
+        <div className="ptcgsim-app-bar__group">
+          {places.map((entry) => (
+            <BarButton key={entry.id} entry={entry} />
+          ))}
+        </div>
+      ) : null}
+      {commands || log || settings ? (
+        <div className="ptcgsim-app-bar__group">
+          {commands ? <BarButton entry={commands} /> : null}
+          {log}
+          {settings ? <BarButton entry={settings} /> : null}
+        </div>
+      ) : null}
+      <div className="ptcgsim-app-bar__group">
+        <ActionMenu
+          label={menuLabel}
+          side="bottom"
+          align="end"
+          entries={entries}
+          {...(header ? { header } : {})}
+          tooltip={menuLabel}
+          trigger={
+            <RailButton
+              id="appMenuButton"
+              icon={ListIcon}
+              label={menuLabel}
+              iconOnly
+            />
           }
         />
-      </Tooltip>
-      <div
-        ref={drawer}
-        id="appToolbarDrawer"
-        className="ptcgsim-app-toolbar__drawer"
-        inert={!open}
-      >
-        <div ref={items} className="ptcgsim-app-toolbar__items">
-          {primary.map((entry, index) => (
-            <Tooltip
-              key={entry.id}
-              content={withKeyHint(entry.label, entry.hint)}
-              side="top"
-            >
-              <RailButton
-                id={entry.id}
-                icon={entry.icon}
-                label={entry.label}
-                iconOnly
-                style={{ '--i': index } as CSSProperties}
-                onClick={() => entry.onSelect()}
-              />
-            </Tooltip>
-          ))}
-          <ActionMenu
-            // Named for its button, as the menu itself is.
-            label={t({ message: 'More', context: 'more options' })}
-            side="right"
-            align="center"
-            entries={rest}
-            {...(header ? { header } : {})}
-            tooltip={t`More options`}
-            trigger={
-              <RailButton
-                id="appMoreButton"
-                icon={DotsThreeIcon}
-                label={t({ message: 'More', context: 'more options' })}
-                iconOnly
-                style={{ '--i': primary.length } as CSSProperties}
-              />
-            }
-          />
-        </div>
       </div>
     </div>
   );

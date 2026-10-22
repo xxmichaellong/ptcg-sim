@@ -6,6 +6,8 @@
   reached, and how the product works on phones and touch screens
 - Builds on: ADR-027 (the redesign), ADR-028 (preferences and shortcuts)
 - Supersedes: ADR-023 (desktop browsers at a 1280×720 minimum)
+- Superseded in part: §2's rail ends and §3's toolbar by ADR-036 (the app
+  bar in the top-right corner, 2026-10-22)
 
 ## Context
 
@@ -48,6 +50,10 @@ without it.
 
 ### 2. One rail, along the seam
 
+_Since ADR-036 the rail holds only the turn's actions, at the seam's right
+end; the app's controls and the log are in the app bar in the top-right
+corner. The rest of this section describes the rail as it was._
+
 Geometry v2 keeps a clear band at the centre line between the halves; the
 **table rail** lives there (`board/rail/TableRail.tsx`, painted by
 `LegacyBoardChrome` from the layout's `boardControlsAnchor`, following the
@@ -73,6 +79,9 @@ are kept where they still name the same control (`#setupButton`,
 `#p2AttackButton`, `#turnButton`, `#flipCoinButton`, `#flipBoardButton`).
 
 ### 3. The app toolbar
+
+_Superseded by ADR-036: the toolbar is now the app bar in the top-right
+corner, always open, with the keys and the rest in its menu._
 
 A toolbar at the rail's left end (`session/shell/AppMenu.tsx`), one
 segmented group. Its first button (☰) opens it along the rail and closes it

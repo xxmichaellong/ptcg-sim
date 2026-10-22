@@ -35,7 +35,7 @@ import {
   type RendererKind,
 } from '../RendererSpikeBoard.js';
 import { resolveCoachingConsentAction } from '../board/resolveCoachingConsentAction.js';
-import { TableRail } from '../board/rail/TableRail.js';
+import { AppBarSlot } from '../board/LegacyBoardChrome.js';
 import {
   boardViewSettings,
   oncePerGameMarkerCount,
@@ -69,7 +69,11 @@ import {
   TOUCH_SEAM_BAND_PX,
 } from '../board/table-seam.js';
 import { useRoomBackground } from './useRoomBackground.js';
-import { AppMenu, type AppMenuModel } from './shell/AppMenu.js';
+import {
+  AppBar,
+  type AppMenuModel,
+  useAppBarReserve,
+} from './shell/AppMenu.js';
 import { DeckLayer } from './shell/DeckLayer.js';
 import { OnlineSheet } from './shell/OnlineSheet.js';
 import { SettingsSheet } from './shell/SettingsSheet.js';
@@ -381,17 +385,19 @@ export const RemoteRoomLobby = ({
     preferences ?? ROOM_DEFAULT_PREFERENCES
   );
   const coarsePointer = useMediaQuery(COARSE_POINTER_QUERY);
+  const appBarPx = useAppBarReserve();
   const emptyTable = useMemo(
     () => ({
       lowerShare: boardView.split,
       seamBandPx: coarsePointer ? TOUCH_SEAM_BAND_PX : POINTER_SEAM_BAND_PX,
+      appBarPx,
       // The optional pieces as the room will show them.
       ...(boardView.lostZone ? {} : { hideEmptyLostZone: true }),
       ...(oncePerGameMarkerCount(boardView) > 0
         ? { oncePerGameMarkers: oncePerGameMarkerCount(boardView) }
         : {}),
     }),
-    [boardView, coarsePointer]
+    [boardView, coarsePointer, appBarPx]
   );
   const emptyBoardPreferences = useBoardLook(
     preferences ?? DEFAULT_BOARD_PREFERENCES
@@ -1282,7 +1288,7 @@ export const RemoteRoomLobby = ({
       requestBrowserFullscreen();
     },
   };
-  const railStart = <AppMenu model={menu} />;
+  const appBar = <AppBar model={menu} />;
   return (
     <TableShell
       route="remote-room-lobby"
@@ -1305,7 +1311,7 @@ export const RemoteRoomLobby = ({
             coinFlip={parkedSolo.runtime.presentation?.coinFlip}
             preferences={boardPreferences}
             rail={{
-              start: railStart,
+              bar: appBar,
               compose: (own) => ({
                 actions: [own.turn, own.coin, own.switchSide].filter(
                   (action) => action !== undefined
@@ -1324,12 +1330,7 @@ export const RemoteRoomLobby = ({
             sessionReady={false}
             table={emptyTable}
             chrome={(layout) => (
-              <TableRail
-                anchor={layout.shared.boardControlsAnchor}
-                width={layout.playAreaBounds.width}
-                start={railStart}
-                actions={[]}
-              />
+              <AppBarSlot layout={layout}>{appBar}</AppBarSlot>
             )}
             preferences={emptyBoardPreferences}
             onSettledChange={handleEmptyTableSettled}

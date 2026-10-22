@@ -158,6 +158,12 @@ export interface BoardLayoutState {
    */
   readonly seamBandPx?: number;
   /**
+   * Geometry v2 only: the app bar in the table's top-right corner (ADR-036),
+   * its box without the inset around it. The far hand strip ends short of
+   * it, and a half that fills the table keeps its top clear of it.
+   */
+  readonly appBarPx?: { readonly width: number; readonly height: number };
+  /**
    * Geometry v2 only: how many once-per-game markers (VSTAR, GX) the viewer
    * keeps on the table, 0 to 2. They are off by default (few formats use
    * them); each half then keeps a spot for them beside its prizes.

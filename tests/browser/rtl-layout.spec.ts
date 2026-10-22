@@ -93,7 +93,8 @@ test('Arabic mirrors the chrome around the table, and English puts it back', asy
   await openTable(page);
   await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');
   const english = await tableSides(page);
-  expect(english.menu).toBeLessThan(english.log);
+  // The app bar, in the table's top-right corner: the log, then the menu.
+  expect(english.log).toBeLessThan(english.menu);
   // With the log docked at the right, the table lays itself out beside it.
   await openActivity(page);
   const englishLog = await restingLog(page, 'right');
@@ -128,8 +129,8 @@ test('Arabic mirrors the chrome around the table, and English puts it back', asy
   ).toBe('rtl');
   await closeSheet(page);
 
-  // The table does not mirror: it stays left to right, the rail the same
-  // way round.
+  // The table does not mirror: it stays left to right, the rail and the
+  // app bar in its corner the same way round.
   const table = page.locator('.board-spike-host');
   await expect(table).toHaveAttribute('dir', 'ltr');
   expect(

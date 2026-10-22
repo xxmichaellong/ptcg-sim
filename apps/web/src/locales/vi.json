@@ -2493,10 +2493,6 @@
     "message": "Hide opponent's hand",
     "translation": "Ẩn bài trên tay đối thủ"
   },
-  "iar5oy": {
-    "message": "Hide toolbar",
-    "translation": "Ẩn thanh công cụ"
-  },
   "ZQLqYr": {
     "message": "Hide welcome",
     "translation": "Ẩn lời chào"
@@ -3026,11 +3022,6 @@
     "context": "more actions",
     "translation": "Thêm"
   },
-  "XSKDQ2": {
-    "message": "More",
-    "context": "more options",
-    "translation": "Thêm"
-  },
   "Vk_Ar1": {
     "message": "More filters",
     "translation": "Thêm bộ lọc"
@@ -3042,10 +3033,6 @@
   "LlDm7t": {
     "message": "More game actions",
     "translation": "Thêm thao tác trong game"
-  },
-  "3Siwmw": {
-    "message": "More options",
-    "translation": "Thêm tùy chọn"
   },
   "itfxKl": {
     "message": "Motion",
@@ -4299,10 +4286,6 @@
   "UwltxX": {
     "message": "Show this card on the deck",
     "translation": "Hiện thẻ này trong bộ bài"
-  },
-  "D_Orlv": {
-    "message": "Show toolbar",
-    "translation": "Hiện thanh công cụ"
   },
   "sf2cQK": {
     "message": "Shuffle",

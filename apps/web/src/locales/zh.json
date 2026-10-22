@@ -2493,10 +2493,6 @@
     "message": "Hide opponent's hand",
     "translation": "隐藏对手的手牌"
   },
-  "iar5oy": {
-    "message": "Hide toolbar",
-    "translation": "隐藏工具栏"
-  },
   "ZQLqYr": {
     "message": "Hide welcome",
     "translation": "隐藏欢迎页"
@@ -3026,11 +3022,6 @@
     "context": "more actions",
     "translation": "更多"
   },
-  "XSKDQ2": {
-    "message": "More",
-    "context": "more options",
-    "translation": "更多"
-  },
   "Vk_Ar1": {
     "message": "More filters",
     "translation": "更多筛选"
@@ -3042,10 +3033,6 @@
   "LlDm7t": {
     "message": "More game actions",
     "translation": "更多游戏操作"
-  },
-  "3Siwmw": {
-    "message": "More options",
-    "translation": "更多选项"
   },
   "itfxKl": {
     "message": "Motion",
@@ -4299,10 +4286,6 @@
   "UwltxX": {
     "message": "Show this card on the deck",
     "translation": "在牌库中显示这张卡"
-  },
-  "D_Orlv": {
-    "message": "Show toolbar",
-    "translation": "显示工具栏"
   },
   "sf2cQK": {
     "message": "Shuffle",

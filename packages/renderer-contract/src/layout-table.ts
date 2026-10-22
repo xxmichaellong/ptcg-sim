@@ -184,6 +184,19 @@ interface HalfOptions {
   /** The hand strip's size against a near hand's: smaller across the table. */
   readonly handScale?: number;
   /**
+   * Room kept clear at the hand strip's start (its left in the half's own
+   * frame): across the table that is the window's top-right corner, where
+   * the app bar sits.
+   */
+  readonly handStartReservePx?: number;
+  /** The least depth of the hand strip: across the table, the bar's corner. */
+  readonly minHandStripPx?: number;
+  /**
+   * Extra clear height at the centre-line edge of a half that fills the
+   * table: its top is the window's top, where the app bar sits.
+   */
+  readonly topReservePx?: number;
+  /**
    * Lay the mat out only this tall, at the player's edge; the rest of the
    * half widens the clear band at the centre line. A table too narrow for
    * the cards its height would give keeps them smaller this way.
@@ -211,10 +224,11 @@ const SOLO_SEAM_BAND_PX = 44;
 /** The gap between those controls and the Active row beside them. */
 const SOLO_CONTROLS_GAP_PX = 6;
 /**
- * The table's controls start past this: the rail keeps its left end for the
- * app menu (a 44px button 8px in, and a gap).
+ * The app bar's inset from the window's top and right edges (ADR-036). The
+ * web app's stylesheet places the bar there; the layout keeps the same box
+ * clear, with as much again between the bar and the far hand.
  */
-const RAIL_START_RESERVE_PX = 8 + 44 + 8;
+export const APP_BAR_INSET_PX = 8;
 /**
  * The VSTAR/GX markers' column beside the prizes, as a share of a pile's
  * width; each marker is half as tall as the column is wide.
@@ -245,7 +259,15 @@ const layoutHalf = (
   // The outer columns run out close to the mat's edges.
   const side = sideMarginFor(width);
   const gap = Math.max(6, height * proportions.rowGap);
-  const handStrip = height * proportions.handStrip * (options.handScale ?? 1);
+  // Across the table on a short screen the strip is at least as deep as
+  // the app bar's corner, so nothing else lies under the bar.
+  const handStrip = Math.min(
+    height,
+    Math.max(
+      height * proportions.handStrip * (options.handScale ?? 1),
+      options.minHandStripPx ?? 0
+    )
+  );
   const rows = Math.max(0, height - handStrip - margin - 2 * gap);
   const active = rows * proportions.activeShare;
   const bench = rows - active;
@@ -386,10 +408,11 @@ const layoutHalf = (
       pileWidth + gap * 1.5 + HAND_COUNT_SLOT_PX
     );
   const handRight = width - handLeft;
+  const handStart = Math.max(handLeft, options.handStartReservePx ?? 0);
   const handRect: Rect = {
-    x: handLeft,
+    x: handStart,
     y: handTop,
-    width: Math.max(0, handRight - handLeft),
+    width: Math.max(0, handRight - handStart),
     height: handStrip,
   };
   return {
@@ -448,9 +471,14 @@ const layoutHalfPortrait = (
   const free = Math.max(0, height - margin - 3 * gap);
   // A portrait hand strip is at least tall enough for the corner's
   // controls side by side, so the pile row above stays clear of them.
+  // At least as deep as the app bar's corner, across the table.
+  const minStrip = Math.max(
+    TABLE_COMPACT_CORNER_HEIGHT_PX,
+    options.minHandStripPx ?? 0
+  );
   let bench = free / (rowsShare + proportions.handStrip);
-  if (bench * proportions.handStrip < TABLE_COMPACT_CORNER_HEIGHT_PX) {
-    bench = Math.max(0, free - TABLE_COMPACT_CORNER_HEIGHT_PX) / rowsShare;
+  if (bench * proportions.handStrip < minStrip) {
+    bench = Math.max(0, free - minStrip) / rowsShare;
   }
   bench = Math.min(
     bench,
@@ -459,7 +487,7 @@ const layoutHalfPortrait = (
   const active = bench * proportions.active;
   const handStrip = Math.min(
     height,
-    Math.max(bench * proportions.handStrip, TABLE_COMPACT_CORNER_HEIGHT_PX)
+    Math.max(bench * proportions.handStrip, minStrip)
   );
 
   // The pile row: prizes three across and two down at the outer left, the
@@ -534,13 +562,14 @@ const layoutHalfPortrait = (
     width: pileWidth,
     height: pile,
   });
+  const handStart = Math.max(
+    TABLE_CONTROL_CORNER_PX,
+    options.handStartReservePx ?? 0
+  );
   const handRect: Rect = {
-    x: TABLE_CONTROL_CORNER_PX,
+    x: handStart,
     y: handTop,
-    width: Math.max(
-      0,
-      width - edge - HAND_COUNT_SLOT_PX - TABLE_CONTROL_CORNER_PX
-    ),
+    width: Math.max(0, width - edge - HAND_COUNT_SLOT_PX - handStart),
     height: handStrip,
   };
   return {
@@ -648,15 +677,23 @@ const layoutSoloHalf = (
   height: number,
   options: HalfOptions = {}
 ): HalfGeometry => {
-  // The band must hold the table controls and their gaps either side.
-  const soloBand = Math.max(
-    SOLO_SEAM_BAND_PX,
-    (options.seamBandPx ?? 0) + 2 * SOLO_CONTROLS_GAP_PX
-  );
+  // The band must hold the table controls and their gaps either side, and
+  // below the window's top edge the app bar too.
+  const soloBand =
+    Math.max(
+      SOLO_SEAM_BAND_PX,
+      (options.seamBandPx ?? 0) + 2 * SOLO_CONTROLS_GAP_PX
+    ) + (options.topReservePx ?? 0);
   // Tall, the portrait mat takes the whole height: its rows sit at the
   // player's edge and the rest of the height is the band already.
   const portrait = layoutHalfPortrait(width, height, {
     seamBandPx: 2 * soloBand,
+    ...(options.handStartReservePx
+      ? { handStartReservePx: options.handStartReservePx }
+      : {}),
+    ...(options.minHandStripPx
+      ? { minHandStripPx: options.minHandStripPx }
+      : {}),
   });
   const fits = (candidate: number): boolean => {
     const geometry = layoutHalf(width, candidate, options);
@@ -804,6 +841,7 @@ export const createTableLayoutSnapshot = (
     hiddenPhysicalSide: _hidden,
     hideEmptyLostZone,
     seamBandPx,
+    appBarPx,
     sidePanelReveal,
     oncePerGameMarkers,
     ...semanticState
@@ -824,6 +862,26 @@ export const createTableLayoutSnapshot = (
   ) {
     throw new Error('Once-per-game markers must number 0, 1 or 2');
   }
+  if (
+    appBarPx !== undefined &&
+    !(
+      Number.isFinite(appBarPx.width) &&
+      Number.isFinite(appBarPx.height) &&
+      appBarPx.width >= 0 &&
+      appBarPx.height >= 0
+    )
+  ) {
+    throw new Error('Table app bar must have a non-negative size');
+  }
+  // The app bar's corner: the far hand ends short of it, and a half that
+  // fills the table keeps its top clear of it.
+  const barReserve = appBarPx
+    ? {
+        handStartReservePx: appBarPx.width + 2 * APP_BAR_INSET_PX,
+        minHandStripPx: appBarPx.height + 2 * APP_BAR_INSET_PX,
+        topReservePx: appBarPx.height + APP_BAR_INSET_PX,
+      }
+    : {};
   const halfOptions: HalfOptions = {
     ...(seamBandPx === undefined ? {} : { seamBandPx }),
     ...(hideEmptyLostZone ? {} : { lostZoneBeside: true }),
@@ -942,12 +1000,27 @@ export const createTableLayoutSnapshot = (
     };
   };
 
-  let lower = buildPlayer(semantics.players[0], frames.lower);
-  // Across the table, the hand is the smaller one.
-  const farOptions: HalfOptions =
-    hidden === undefined
-      ? { ...halfOptions, handScale: TABLE_FAR_HAND_SCALE }
-      : halfOptions;
+  // A half alone fills the table from the window's top: its centre-line
+  // edge keeps clear of the app bar.
+  let lower = buildPlayer(
+    semantics.players[0],
+    frames.lower,
+    hidden === 'upper' && appBarPx
+      ? { ...halfOptions, topReservePx: barReserve.topReservePx }
+      : halfOptions
+  );
+  // Across the table, the hand is the smaller one, and ends short of the
+  // app bar in the window's top-right corner.
+  const farOptions: HalfOptions = {
+    ...halfOptions,
+    ...(hidden === undefined ? { handScale: TABLE_FAR_HAND_SCALE } : {}),
+    ...(appBarPx
+      ? {
+          handStartReservePx: barReserve.handStartReservePx,
+          minHandStripPx: barReserve.minHandStripPx,
+        }
+      : {}),
+  };
   let upper = buildPlayer(semantics.players[1], frames.upper, farOptions);
   const activeOf = (player: BoardPlayerLayout): Rect =>
     player.regions.find((region) => region.kind === 'active')!
@@ -1051,7 +1124,7 @@ export const createTableLayoutSnapshot = (
       )
     );
     controls = { y: seamY - controlsHeight / 2, height: controlsHeight };
-    controlsLeft = Math.max(lower.geometry.middle.left, RAIL_START_RESERVE_PX);
+    controlsLeft = lower.geometry.middle.left;
   } else {
     // One half fills the table. The stadium sits beside its Active on the
     // player's own right (the staging area is on their left), level with
@@ -1088,7 +1161,7 @@ export const createTableLayoutSnapshot = (
           ),
       height: controlsHeight,
     };
-    controlsLeft = Math.max(shown.geometry.middle.left, RAIL_START_RESERVE_PX);
+    controlsLeft = shown.geometry.middle.left;
   }
 
   const handle = (

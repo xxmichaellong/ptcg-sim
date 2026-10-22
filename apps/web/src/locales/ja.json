@@ -2493,10 +2493,6 @@
     "message": "Hide opponent's hand",
     "translation": "相手の手札を隠す"
   },
-  "iar5oy": {
-    "message": "Hide toolbar",
-    "translation": "ツールバーを隠す"
-  },
   "ZQLqYr": {
     "message": "Hide welcome",
     "translation": "ウェルカムを隠す"
@@ -3026,11 +3022,6 @@
     "context": "more actions",
     "translation": "その他"
   },
-  "XSKDQ2": {
-    "message": "More",
-    "context": "more options",
-    "translation": "その他"
-  },
   "Vk_Ar1": {
     "message": "More filters",
     "translation": "その他のフィルター"
@@ -3042,10 +3033,6 @@
   "LlDm7t": {
     "message": "More game actions",
     "translation": "その他のゲーム操作"
-  },
-  "3Siwmw": {
-    "message": "More options",
-    "translation": "その他のオプション"
   },
   "itfxKl": {
     "message": "Motion",
@@ -4299,10 +4286,6 @@
   "UwltxX": {
     "message": "Show this card on the deck",
     "translation": "このカードをデッキに表示"
-  },
-  "D_Orlv": {
-    "message": "Show toolbar",
-    "translation": "ツールバーを表示"
   },
   "sf2cQK": {
     "message": "Shuffle",

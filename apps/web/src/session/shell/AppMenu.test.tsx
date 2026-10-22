@@ -4,9 +4,15 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { TableRail } from '../../board/rail/TableRail.js';
 import { preferences } from '../../preferences/preference-store.js';
-import { AppMenu, type AppMenuModel } from './AppMenu.js';
+import {
+  APP_BAR_GAP_PX,
+  APP_BAR_PAD_PX,
+  APP_BAR_SLOTS,
+  AppBar,
+  appBarSize,
+  type AppMenuModel,
+} from './AppMenu.js';
 import { closeHelpPage, HelpSheetHost, RELEASE_NAME } from './help-pages.js';
 import { SHELL_PREFERENCES } from './shell-preferences.js';
 
@@ -22,13 +28,19 @@ const settle = async (rounds = 3): Promise<void> => {
 };
 
 let touchOnly = false;
+let compact = false;
 let host: HTMLDivElement;
 let root: Root;
 
 beforeEach(() => {
   touchOnly = false;
+  compact = false;
   vi.stubGlobal('matchMedia', (query: string) => ({
-    matches: query.includes('hover: none') ? touchOnly : false,
+    matches: query.includes('max-width')
+      ? compact
+      : query.includes('pointer: coarse')
+        ? touchOnly
+        : false,
     media: query,
     addEventListener: () => undefined,
     removeEventListener: () => undefined,
@@ -53,20 +65,17 @@ const model = (overrides: Partial<AppMenuModel> = {}): AppMenuModel => ({
   onDeck: vi.fn(),
   onSettings: vi.fn(),
   onFullscreen: vi.fn(),
-  onReloadImages: vi.fn(),
   ...overrides,
 });
 
-/** The menu on a rail as wide as `width`, as the table draws it. */
-const render = async (menu: AppMenuModel, width = 1200): Promise<void> => {
+/** The bar as a room draws it, with a stand-in for the log's button. */
+const render = async (menu: AppMenuModel): Promise<void> => {
   await act(async () =>
     root.render(
       <>
-        <TableRail
-          anchor={{ x: 200, y: 400, height: 40 }}
-          width={width}
-          start={<AppMenu model={menu} />}
-          actions={[]}
+        <AppBar
+          model={menu}
+          log={<button id="activityButton" type="button" />}
         />
         <HelpSheetHost />
       </>
@@ -75,12 +84,10 @@ const render = async (menu: AppMenuModel, width = 1200): Promise<void> => {
   await settle(1);
 };
 
-const toolbarIds = (): string[] =>
-  [
-    ...document.querySelectorAll(
-      '.ptcgsim-app-toolbar .ptcgsim-rail-button[id]'
-    ),
-  ].map((button) => button.id);
+const barIds = (): string[] =>
+  [...document.querySelectorAll('.ptcgsim-app-bar button[id]')].map(
+    (button) => button.id
+  );
 
 const press = async (selector: string): Promise<void> => {
   await act(async () =>
@@ -104,24 +111,23 @@ const choose = async (id: string): Promise<void> => {
   await settle();
 };
 
-const toggle = (): HTMLButtonElement =>
-  document.querySelector<HTMLButtonElement>('#appMenuButton')!;
-
-describe('AppMenu', () => {
-  it('opens along the rail: the deck, where to play, Commands, the keys, Settings and More', async () => {
+describe('AppBar', () => {
+  it('shows the deck, where to play, Commands, the log, Settings and the menu, in groups', async () => {
     const menu = model();
     await render(menu);
-    expect(toolbarIds()).toEqual([
-      'appMenuButton',
+    expect(barIds()).toEqual([
       'deckImportButton',
       'p2Button',
       'commandsButton',
-      'shortcutsButton',
+      'activityButton',
       'settingsButton',
-      'appMoreButton',
+      'appMenuButton',
     ]);
-    expect(toggle().getAttribute('aria-expanded')).toBe('true');
-    expect(toggle().getAttribute('aria-controls')).toBe('appToolbarDrawer');
+    expect(
+      [...document.querySelectorAll('.ptcgsim-app-bar__group')].map(
+        (group) => group.querySelectorAll('button[id]').length
+      )
+    ).toEqual([2, 3, 1]);
     // Icons only; their names are the buttons' labels.
     expect(
       document.querySelector('#deckImportButton')?.getAttribute('aria-label')
@@ -129,9 +135,10 @@ describe('AppMenu', () => {
     await press('#settingsButton');
     expect(menu.onSettings).toHaveBeenCalledOnce();
 
-    // The rest is behind More, and nothing is offered twice.
-    const rest = await openMenu('#appMoreButton');
+    // The rest is in the menu, the keys first, and nothing is offered twice.
+    const rest = await openMenu('#appMenuButton');
     expect(rest).toEqual([
+      'shortcutsButton',
       'fullscreenButton',
       'tutorialButton',
       'changelogButton',
@@ -147,7 +154,7 @@ describe('AppMenu', () => {
 
   it('turns the way out round in a right-to-left language, and nothing else', async () => {
     await render(model({ onLeave: vi.fn(), onCopyInvitation: vi.fn() }));
-    await openMenu('#appMoreButton');
+    await openMenu('#appMenuButton');
     // Leaving points the way the line reads (ds-mirror-rtl: it turns round
     // only under dir="rtl"); a copy, a screen or a heart has no direction.
     const mirrored = [
@@ -161,55 +168,45 @@ describe('AppMenu', () => {
   it('has no keys to offer on a touch screen', async () => {
     touchOnly = true;
     await render(model());
-    expect(toolbarIds()).not.toContain('shortcutsButton');
-    expect(await openMenu('#appMoreButton')).not.toContain('shortcutsButton');
+    expect(barIds()).not.toContain('shortcutsButton');
+    expect(await openMenu('#appMenuButton')).not.toContain('shortcutsButton');
   });
 
-  it('closes into its first button and opens again from it, as the player leaves it', async () => {
+  it('keeps the palette, the log and the menu on a phone; the menu leads with the rest', async () => {
+    compact = true;
     await render(model());
-    const drawer = document.querySelector<HTMLElement>('#appToolbarDrawer')!;
-    await press('#appMenuButton');
-    expect(preferences().get(SHELL_PREFERENCES).toolbarCollapsed).toBe(true);
-    expect(toggle().getAttribute('aria-expanded')).toBe('false');
-    // Closed, its buttons are out of reach: not focusable, not clickable.
-    expect(drawer.inert).toBe(true);
-    await press('#appMenuButton');
-    expect(preferences().get(SHELL_PREFERENCES).toolbarCollapsed).toBe(false);
-    expect(toggle().getAttribute('aria-expanded')).toBe('true');
-    expect(drawer.inert).toBe(false);
-  });
-
-  it('starts as the player left it', async () => {
-    preferences().patch(SHELL_PREFERENCES, { toolbarCollapsed: true });
-    await render(model());
-    expect(toggle().getAttribute('aria-expanded')).toBe('false');
-    expect(
-      document.querySelector<HTMLElement>('#appToolbarDrawer')?.style.width
-    ).toBe('0px');
-  });
-
-  it('is one menu holding everything on a rail too narrow to open along', async () => {
-    await render(model(), 600);
-    // One rail button of its own, no toolbar to open.
-    expect(document.querySelector('.ptcgsim-app-toolbar')).toBeNull();
-    expect(document.querySelector('#appMenuButton')).not.toBeNull();
+    expect(barIds()).toEqual([
+      'commandsButton',
+      'activityButton',
+      'appMenuButton',
+    ]);
     const all = await openMenu('#appMenuButton');
-    expect(all.slice(0, 5)).toEqual([
+    expect(all.slice(0, 4)).toEqual([
       'deckImportButton',
       'p2Button',
-      'commandsButton',
       'shortcutsButton',
       'settingsButton',
     ]);
     expect(all).toContain('changelogButton');
-    expect(all).not.toContain('appMoreButton');
+  });
+
+  it('is as wide as the corner the table keeps for it', () => {
+    // Six 36px buttons 4px apart in 3px of padding and border a side.
+    expect(appBarSize(APP_BAR_SLOTS.full, false)).toEqual({
+      width: 6 * 36 + 5 * APP_BAR_GAP_PX + 2 * APP_BAR_PAD_PX,
+      height: 36 + 2 * APP_BAR_PAD_PX,
+    });
+    expect(appBarSize(APP_BAR_SLOTS.compact, true)).toEqual({
+      width: 3 * 44 + 2 * APP_BAR_GAP_PX + 2 * APP_BAR_PAD_PX,
+      height: 44 + 2 * APP_BAR_PAD_PX,
+    });
   });
 
   it('opens the community pages outside the table', async () => {
     const open = vi.fn();
     vi.stubGlobal('open', open);
     await render(model());
-    await openMenu('#appMoreButton');
+    await openMenu('#appMenuButton');
     await choose('discordButton');
     expect(open).toHaveBeenCalledWith(
       expect.stringContaining('discord.gg'),

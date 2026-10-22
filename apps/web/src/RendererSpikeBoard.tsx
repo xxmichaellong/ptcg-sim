@@ -43,6 +43,8 @@ export interface SpikeTableLayout {
   readonly lowerShare: number;
   /** The least height of the clear band at the centre line. */
   readonly seamBandPx?: number;
+  /** The app bar's corner, kept clear (ADR-036). */
+  readonly appBarPx?: { readonly width: number; readonly height: number };
   /** The optional Lost Zone is off: an empty one is not on the table. */
   readonly hideEmptyLostZone?: boolean;
   /** How many once-per-game markers lie beside each player's prizes. */
@@ -83,6 +85,7 @@ const sceneForHost = (
         shellMode: 'fullscreen',
         vertical: tableVerticalLayout(table.lowerShare),
         ...(table.seamBandPx ? { seamBandPx: table.seamBandPx } : {}),
+        ...(table.appBarPx ? { appBarPx: table.appBarPx } : {}),
         ...(table.hideEmptyLostZone ? { hideEmptyLostZone: true } : {}),
         ...(table.oncePerGameMarkers
           ? { oncePerGameMarkers: table.oncePerGameMarkers }
@@ -369,6 +372,8 @@ export const RendererSpikeBoard = ({
     view,
     table?.lowerShare,
     table?.seamBandPx,
+    table?.appBarPx?.width,
+    table?.appBarPx?.height,
     table?.hideEmptyLostZone,
     table?.oncePerGameMarkers,
   ]);

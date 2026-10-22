@@ -472,13 +472,13 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     await expect(
       playerTwo.page.locator('#settingsTable #zoneOutlinesCheckbox')
     ).toBeAttached();
-    // Settings holds settings only: the keys are on the toolbar, the help
-    // and community links in its menu.
+    // Settings holds settings only: the keys, the help and community links
+    // are in the app bar's menu.
     await expect(playerTwo.page.locator('#settings')).not.toContainText(
       'Keyboard shortcuts'
     );
     await expect(
-      playerTwo.page.locator('.ptcgsim-app-toolbar #shortcutsButton')
+      playerTwo.page.locator('.ptcgsim-app-bar #appMenuButton')
     ).toBeVisible();
     const roomRoute = playerTwo.page.locator('[data-app-route="remote-room"]');
     let customBackgroundRequests = 0;
@@ -536,7 +536,7 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     await expect(playerTwo.page.locator('#settings')).toHaveCount(0);
     // Focus goes back to the toolbar's Settings, which opened it.
     await expect(
-      playerTwo.page.locator('.ptcgsim-app-toolbar #settingsButton')
+      playerTwo.page.locator('.ptcgsim-app-bar #settingsButton')
     ).toBeFocused();
     const hiddenZone = playerTwo.page.locator('[data-zone-id]').first();
     await expect(hiddenZone).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');

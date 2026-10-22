@@ -257,7 +257,7 @@ test('Settings holds the table view, keeps its keys, and gives focus back', asyn
   test.setTimeout(120_000);
   await openSoloTable(page);
   // Settings is on the open toolbar.
-  const settingsButton = page.locator('.ptcgsim-app-toolbar #settingsButton');
+  const settingsButton = page.locator('.ptcgsim-app-bar #settingsButton');
   await openSettings(page);
   await expect(page.locator('#settingsTable #boardShowBoth')).toBeAttached();
   await page.locator('#boardShowMine').focus();
