@@ -333,10 +333,10 @@ const FAR_REFIT_FINE_STEPS = 10;
 const STADIUM_OVERLAP_SLACK_PX2 = 24;
 /**
  * A shorter far fit that keeps the markers beside the prizes (rather than
- * moved from under the Stadium) keeps at least this share of the far
- * Active.
+ * moved from under the Stadium, which costs the hand far more) keeps at
+ * least this share of the far Active.
  */
-const MOVED_MARKERS_ACTIVE_SHARE = 0.9;
+const MOVED_MARKERS_ACTIVE_SHARE = 0.85;
 /** The bench row must hold this many bench cards side by side. */
 const BENCH_FIT_CARDS = 5.5;
 
@@ -1515,11 +1515,14 @@ export const createTableLayoutSnapshot = (
       // Markers moved off the prizes cost the far half its hand's room or
       // a row: a slightly shorter fit that keeps them there, clear, is
       // better, while it keeps most of the far Active.
+      const keepsActive = (candidate: typeof split): boolean =>
+        activeOf(candidate) >= activeOf(unfitted) * MOVED_MARKERS_ACTIVE_SHARE;
+      // By the prizes in fact: a fit whose markers never fit there moved
+      // none, but keeps none there either.
       const keepsMarkers = (candidate: typeof split): boolean =>
         !unfitted.markersMoved ||
-        (!candidate.markersMoved &&
-          activeOf(candidate) >=
-            activeOf(unfitted) * MOVED_MARKERS_ACTIVE_SHARE);
+        (candidate.far.player.extras?.markers !== undefined &&
+          keepsActive(candidate));
       const clear = (candidate: typeof split): boolean =>
         (candidate.fits || !plain.fits) &&
         candidate.covered <= plain.covered + STADIUM_OVERLAP_SLACK_PX2 &&
@@ -1558,6 +1561,7 @@ export const createTableLayoutSnapshot = (
           if (
             (candidate.fits || !unfitted.fits) &&
             keepsRow(candidate) &&
+            (!unfitted.markersMoved || keepsActive(candidate)) &&
             candidate.covered < fallback.covered - STADIUM_OVERLAP_SLACK_PX2
           ) {
             fallback = candidate;

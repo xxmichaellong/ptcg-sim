@@ -624,6 +624,17 @@ describe('table layout: the app bar corner (ADR-036)', () => {
     });
     expect(far(lostZoneOnly).extras?.markers).toBeDefined();
     expect(box(lostZoneOnly, 'hand').width).toBeGreaterThan(250);
+    // A shorter fit counts as keeping the markers only with them by the
+    // prizes in fact: one where they never fit there put them in the
+    // corner, the far hand at its floor.
+    const kept = at(704, 700, {
+      appBarPx: BAR,
+      vertical: tableVerticalLayout(0.54),
+      seamBandPx: 42,
+      oncePerGameMarkers: 2,
+    });
+    expect(far(kept).extras?.markers).toBeDefined();
+    expect(box(kept, 'hand').width).toBeGreaterThan(250);
     // A sliver under the Stadium takes no markers' row (the far Active a
     // third smaller for it).
     const sliver = at(416, 568, {
