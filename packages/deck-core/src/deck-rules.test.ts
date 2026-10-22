@@ -19,6 +19,7 @@ import {
   checkDeck,
   describeDeckIssue,
   guessDeckFormat,
+  basicEnergyTypeOf,
   isBasicEnergy,
   type DeckIssue,
 } from './deck-rules.js';
@@ -341,6 +342,37 @@ describe('deck rules', () => {
         image: 'x',
       })
     ).toBe(false);
+  });
+
+  it('reads basic Energy however a list writes it, and nothing else', () => {
+    for (const [name, type] of [
+      ['Fire Energy', 'fire'],
+      ['Basic Fire Energy', 'fire'],
+      ['Basic {R} Energy', 'fire'],
+      ['Basic {M} Energy Energy', 'metal'],
+      ['Basic Fire Energy null', 'fire'],
+      ['Dark Energy', 'darkness'],
+      ['basic r energy', 'fire'],
+    ] as const) {
+      expect(basicEnergyTypeOf(name), name).toBe(type);
+      expect(
+        isBasicEnergy({
+          id: `custom:${name}`,
+          name,
+          category: 'Energy',
+          image: 'x',
+        }),
+        name
+      ).toBe(true);
+    }
+    for (const name of [
+      'Double Turbo Energy',
+      'Basic {X} Energy',
+      'Fire Energy Retrieval',
+      'Energy',
+    ]) {
+      expect(basicEnergyTypeOf(name), name).toBeUndefined();
+    }
   });
 
   it('needs a Basic Pokémon, unless a hand-typed Pokémon might be one', () => {

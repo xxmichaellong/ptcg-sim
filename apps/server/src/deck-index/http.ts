@@ -27,6 +27,7 @@ import {
   isIndexedFormat,
   type IndexedFormat,
 } from './parse.js';
+import type { FinishKey } from './store.js';
 
 export type DeckIndexRoute =
   | { readonly kind: 'search' }
@@ -93,7 +94,7 @@ export interface DeckIndexReader {
     id: string,
     format: IndexedFormat,
     sinceDays: number,
-    offset: number
+    after: FinishKey | null
   ): Promise<
     | {
         readonly kind: 'ok';
@@ -103,7 +104,7 @@ export interface DeckIndexReader {
           icons: readonly string[];
         };
         readonly finishes: readonly FinishSummary[];
-        readonly nextOffset: number | null;
+        readonly next: FinishKey | null;
       }
     | { readonly kind: 'not_found' }
   >;
@@ -127,7 +128,6 @@ export const DECK_INDEX_LIMITS = Object.freeze({
   /** An archetype's finishes from this many days back, unless asked. */
   defaultSinceDays: 90,
   maximumSinceDays: 3_650,
-  maximumOffset: 100_000,
   maximumMinimumPlayers: 100_000,
 });
 
@@ -220,16 +220,47 @@ const decodeCursor = (value: string): unknown => {
   }
 };
 
-const readOffsetCursor = (value: string | undefined): number | null => {
-  if (value === undefined) return 0;
-  const decoded = decodeCursor(value) as { o?: unknown } | undefined;
-  const offset = decoded?.o;
-  return Number.isSafeInteger(offset) &&
-    (offset as number) >= 0 &&
-    (offset as number) <= DECK_INDEX_LIMITS.maximumOffset
-    ? (offset as number)
-    : null;
+const isCount = (value: unknown): value is number =>
+  Number.isSafeInteger(value) && (value as number) >= 0;
+
+/** Where the last page of a deck's finishes ended (`FinishKey`). */
+const readFinishCursor = (
+  value: string | undefined
+): FinishKey | null | 'invalid' => {
+  if (value === undefined) return null;
+  const decoded = decodeCursor(value) as
+    | { p?: unknown; n?: unknown; d?: unknown; t?: unknown; u?: unknown }
+    | undefined;
+  const placing = decoded?.p;
+  const players = decoded?.n;
+  const date = decoded?.d;
+  const tournamentId = decoded?.t;
+  const playerId = decoded?.u;
+  return isCount(placing) &&
+    isCount(players) &&
+    Number.isSafeInteger(date) &&
+    typeof tournamentId === 'string' &&
+    LIMITLESS_TOURNAMENT_ID.test(tournamentId) &&
+    typeof playerId === 'string' &&
+    PLAYER_ID.test(playerId)
+    ? {
+        placing,
+        players,
+        date: date as number,
+        tournamentId,
+        playerId,
+      }
+    : 'invalid';
 };
+
+const finishCursor = (key: FinishKey): string =>
+  encodeCursor({
+    p: key.placing,
+    n: key.players,
+    d: key.date,
+    t: key.tournamentId,
+    u: key.playerId,
+  });
 
 const readDateCursor = (
   value: string | undefined
@@ -294,25 +325,22 @@ export const handleDeckIndexRequest = async (
         1,
         DECK_INDEX_LIMITS.maximumSinceDays
       );
-      const offset = readOffsetCursor(parameters.get('cursor'));
+      const after = readFinishCursor(parameters.get('cursor'));
       if (
         format === 'invalid' ||
         !format ||
         since === null ||
-        offset === null
+        after === 'invalid'
       ) {
         return invalid();
       }
-      const answer = await index.archetype(route.id, format, since, offset);
+      const answer = await index.archetype(route.id, format, since, after);
       if (answer.kind === 'not_found') return notFound();
       return cached(
         {
           archetype: answer.archetype,
           finishes: answer.finishes,
-          nextCursor:
-            answer.nextOffset === null
-              ? null
-              : encodeCursor({ o: answer.nextOffset }),
+          nextCursor: answer.next === null ? null : finishCursor(answer.next),
         },
         FIVE_MINUTES
       );

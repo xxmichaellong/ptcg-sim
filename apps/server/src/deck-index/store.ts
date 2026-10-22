@@ -146,6 +146,28 @@ export interface TournamentRow {
   readonly fetchedAt: number | null;
 }
 
+/**
+ * Where a finish sits in a deck's list, best first: placing, then the
+ * bigger event, the newer one, and the ids. A page of the list starts after
+ * the last one shown, so finishes indexed meanwhile neither repeat nor go
+ * missing between pages.
+ */
+export interface FinishKey {
+  readonly placing: number;
+  readonly players: number;
+  readonly date: number;
+  readonly tournamentId: string;
+  readonly playerId: string;
+}
+
+export const finishKeyOf = (finish: FinishRow): FinishKey => ({
+  placing: finish.placing,
+  players: finish.tournament.players,
+  date: finish.tournament.date,
+  tournamentId: finish.tournament.id,
+  playerId: finish.player.id,
+});
+
 export interface FinishRow {
   readonly tournament: {
     readonly id: string;
@@ -753,7 +775,7 @@ export class DeckIndexStore {
       archetypeId,
       format,
       now - STORE_POLICY.bestWindowMs,
-      0,
+      null,
       STORE_POLICY.bestPerArchetype
     );
     return recent.length > 0
@@ -762,7 +784,7 @@ export class DeckIndexStore {
           archetypeId,
           format,
           null,
-          0,
+          null,
           STORE_POLICY.bestPerArchetype
         );
   }
@@ -785,21 +807,40 @@ export class DeckIndexStore {
     archetypeId: string,
     format: IndexedFormat,
     since: number | null,
-    offset: number,
+    after: FinishKey | null,
     limit: number
   ): FinishRow[] {
+    // After `after` in the list's own order (placing up, players down, date
+    // down, then the ids up).
+    const past = after
+      ? `AND (e.placing > ? OR (e.placing = ? AND (t.players < ? OR (t.players = ? AND (t.date < ? OR (t.date = ? AND (t.id > ? OR (t.id = ? AND e.player_id > ?))))))))`
+      : '';
+    const pastBindings: SqlValue[] = after
+      ? [
+          after.placing,
+          after.placing,
+          after.players,
+          after.players,
+          after.date,
+          after.date,
+          after.tournamentId,
+          after.tournamentId,
+          after.playerId,
+        ]
+      : [];
     return this.rows(
       `SELECT ${FINISH_COLUMNS} FROM entries e
        JOIN tournaments t ON t.id = e.tournament_id
        WHERE e.archetype_id = ? AND t.format = ? AND e.list_hash IS NOT NULL
          AND e.placing IS NOT NULL AND t.date >= ? AND t.state = 'indexed'
+         ${past}
        ORDER BY e.placing ASC, t.players DESC, t.date DESC, t.id ASC, e.player_id ASC
-       LIMIT ? OFFSET ?`,
+       LIMIT ?`,
       archetypeId,
       format,
       since ?? 0,
-      limit,
-      offset
+      ...pastBindings,
+      limit
     ).map(finishRow);
   }
 

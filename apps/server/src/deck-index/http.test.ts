@@ -45,7 +45,13 @@ const reader = (overrides: Partial<DeckIndexReader> = {}): DeckIndexReader => ({
     kind: 'ok' as const,
     archetype,
     finishes: [finish],
-    nextOffset: 50,
+    next: {
+      placing: 1,
+      players: 64,
+      date: Date.parse('2026-10-01T00:00:00.000Z'),
+      tournamentId: id,
+      playerId: 'p',
+    },
   })),
   tournaments: vi.fn(async () => ({
     tournaments: [summary],
@@ -188,7 +194,7 @@ describe('deck index routes', () => {
       'dragapult-dusknoir',
       'STANDARD',
       30,
-      0
+      null
     );
     const body = (await first.json()) as { nextCursor: string };
     expect(body).toEqual({
@@ -204,7 +210,13 @@ describe('deck index routes', () => {
       'dragapult-dusknoir',
       'STANDARD',
       90,
-      50
+      {
+        placing: 1,
+        players: 64,
+        date: Date.parse('2026-10-01T00:00:00.000Z'),
+        tournamentId: id,
+        playerId: 'p',
+      }
     );
     const missing = await get(
       '/v2/decks/archetype/nope',

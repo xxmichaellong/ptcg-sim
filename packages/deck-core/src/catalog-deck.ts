@@ -2,6 +2,7 @@ import type { CatalogCard, LoadedCatalog } from './catalog.js';
 import { foldText, trainerName } from './card-query.js';
 import { catalogNumberOf, limitlessNumber } from './catalog-wire.js';
 import { printId, type DeckCard } from './deck-list.js';
+import { basicEnergyTypeOf } from './deck-rules.js';
 import {
   isUnambiguousPocketCode,
   resolvePastedDecklistImageUrl,
@@ -209,23 +210,6 @@ export const catalogIndex = (catalog: LoadedCatalog): CatalogIndex => {
   return index;
 };
 
-/** "Fire Energy", "Basic Fire Energy", and PTCGO's "Basic {R} Energy Energy". */
-const ENERGY_NAME =
-  /^(?:basic )?(grass|fire|water|lightning|psychic|fighting|darkness|metal|fairy|dark|[grwlpfdmy]) energy(?: energy)?(?: null)?$/u;
-
-const ENERGY_SYMBOLS: Readonly<Record<string, string>> = {
-  g: 'grass',
-  r: 'fire',
-  w: 'water',
-  l: 'lightning',
-  p: 'psychic',
-  f: 'fighting',
-  d: 'darkness',
-  m: 'metal',
-  y: 'fairy',
-  dark: 'darkness',
-};
-
 const isOrdinary = (card: CatalogCard): boolean =>
   card.set.official === undefined ||
   !/^\d+$/u.test(card.number) ||
@@ -313,9 +297,8 @@ export const resolveDecklistRow = (
   // same name in the other game is another card.
   const pocket =
     row.setCode !== undefined && isUnambiguousPocketCode(row.setCode);
-  const energy = pocket ? null : ENERGY_NAME.exec(name);
-  if (energy) {
-    const type = ENERGY_SYMBOLS[energy[1]!] ?? energy[1];
+  const type = pocket ? undefined : basicEnergyTypeOf(name);
+  if (type) {
     const basics = (index.byName.get(`${type} energy`) ?? []).filter(
       (card) => card.energyType === 'Basic' && !card.set.pocket
     );

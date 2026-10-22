@@ -1,5 +1,5 @@
-import type { DeckCard, DeckList } from '@ptcgsim/deck-core';
-import { hasRuleBox } from '@ptcgsim/deck-core';
+import type { BasicEnergyType, DeckCard, DeckList } from '@ptcgsim/deck-core';
+import { basicEnergyTypeOf, hasRuleBox } from '@ptcgsim/deck-core';
 import type { CSSProperties } from 'react';
 
 import { CardImage } from './CardImage.js';
@@ -18,27 +18,7 @@ export type DeckBoxTone =
   | 'Metal'
   | 'Fairy';
 
-/**
- * A basic Energy's name however a list writes it: "Fire Energy", "Basic
- * Fire Energy", Pokémon TCG Live's "Basic {R} Energy" (PTCGO's adds another
- * "Energy").
- */
-const BASIC_ENERGY =
-  /^(?:basic\s+)?(?:\{([grwlpfdmy])\}|(grass|fire|water|lightning|psychic|fighting|darkness|dark|metal|fairy))\s+energy(?:\s+energy)?$/iu;
-
-const TONE_BY_SYMBOL: Readonly<Record<string, DeckBoxTone>> = {
-  g: 'Grass',
-  r: 'Fire',
-  w: 'Water',
-  l: 'Lightning',
-  p: 'Psychic',
-  f: 'Fighting',
-  d: 'Darkness',
-  m: 'Metal',
-  y: 'Fairy',
-};
-
-const TONE_BY_NAME: Readonly<Record<string, DeckBoxTone>> = {
+const TONE_BY_TYPE: Readonly<Record<BasicEnergyType, DeckBoxTone>> = {
   grass: 'Grass',
   fire: 'Fire',
   water: 'Water',
@@ -46,7 +26,6 @@ const TONE_BY_NAME: Readonly<Record<string, DeckBoxTone>> = {
   psychic: 'Psychic',
   fighting: 'Fighting',
   darkness: 'Darkness',
-  dark: 'Darkness',
   metal: 'Metal',
   fairy: 'Fairy',
 };
@@ -57,12 +36,9 @@ const basicEnergyTone = (
   if (card.category !== 'Energy' || card.facts?.energyType === 'Special') {
     return undefined;
   }
-  const match = BASIC_ENERGY.exec(card.name.trim());
-  if (!match) return undefined;
-  const [, symbol, name] = match;
-  return symbol
-    ? TONE_BY_SYMBOL[symbol.toLowerCase()]
-    : TONE_BY_NAME[(name ?? '').toLowerCase()];
+  // The deck rules' own reading of a basic Energy's name.
+  const type = basicEnergyTypeOf(card.name);
+  return type ? TONE_BY_TYPE[type] : undefined;
 };
 
 /**

@@ -131,10 +131,51 @@ export interface DeckCheck {
   readonly total: number;
 }
 
-// By type ("Basic Fire Energy") or by its symbol, as Pokémon TCG Live
-// writes it ("Basic {R} Energy").
+/** The basic Energy types, as the catalog names them ("fire energy"). */
+export type BasicEnergyType =
+  | 'grass'
+  | 'fire'
+  | 'water'
+  | 'lightning'
+  | 'psychic'
+  | 'fighting'
+  | 'darkness'
+  | 'metal'
+  | 'fairy';
+
+const ENERGY_BY_SYMBOL: Readonly<Record<string, BasicEnergyType>> = {
+  g: 'grass',
+  r: 'fire',
+  w: 'water',
+  l: 'lightning',
+  p: 'psychic',
+  f: 'fighting',
+  d: 'darkness',
+  m: 'metal',
+  y: 'fairy',
+};
+
+// By type ("Basic Fire Energy", "Dark Energy") or by its symbol, braced as
+// Pokémon TCG Live writes it ("Basic {R} Energy") or bare once folded;
+// PTCGO's lists add another "Energy", and some exports a "null".
 const BASIC_ENERGY_NAME =
-  /^(?:basic )?(?:grass|fire|water|lightning|psychic|fighting|darkness|metal|fairy|\{[grwlpfdmy]\}) energy$/u;
+  /^(?:basic\s+)?(?:\{([grwlpfdmy])\}|([grwlpfdmy])|(grass|fire|water|lightning|psychic|fighting|darkness|dark|metal|fairy))\s+energy(?:\s+energy)?(?:\s+null)?$/iu;
+
+/**
+ * The basic Energy a card's name says it is, however a list writes it; the
+ * one rule the deck checks, the catalog's matching and the deck box share.
+ */
+export const basicEnergyTypeOf = (
+  name: string
+): BasicEnergyType | undefined => {
+  const match = BASIC_ENERGY_NAME.exec(name.trim());
+  if (!match) return undefined;
+  const [, braced, bare, word] = match;
+  const symbol = (braced ?? bare)?.toLowerCase();
+  if (symbol) return ENERGY_BY_SYMBOL[symbol];
+  const type = (word ?? '').toLowerCase();
+  return type === 'dark' ? 'darkness' : (type as BasicEnergyType);
+};
 
 /**
  * Basic Energy has no copy limit. A catalogued card says which it is; a card
@@ -144,7 +185,7 @@ export const isBasicEnergy = (card: DeckCard): boolean =>
   card.category === 'Energy' &&
   (card.facts?.energyType
     ? card.facts.energyType === 'Basic'
-    : BASIC_ENERGY_NAME.test(ruleName(card)));
+    : basicEnergyTypeOf(ruleName(card)) !== undefined);
 
 /** A Pokémon a game can start with: a Basic, or a Baby (they play as Basics). */
 export const isBasicPokemon = (card: DeckCard): boolean =>

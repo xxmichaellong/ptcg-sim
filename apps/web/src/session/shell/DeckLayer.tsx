@@ -37,6 +37,24 @@ export const DeckLayer = ({
   const { t } = useLingui();
   const layer = useRef<HTMLDivElement>(null);
   const returnFocus = useRef<Element | null>(null);
+  const close = useRef(onClose);
+  close.current = onClose;
+  // Focus lost to the page while the screen is open (a pressed button went
+  // away): a key pressed there is the screen's, and the focus comes back
+  // to it. Esc closes, unless the screen has used it already.
+  useEffect(() => {
+    if (!open) return;
+    const fromPage = (event: globalThis.KeyboardEvent): void => {
+      if (event.target !== document.body) return;
+      layer.current?.focus({ preventScroll: true });
+      if (event.key === 'Escape' && !event.defaultPrevented) {
+        event.preventDefault();
+        close.current();
+      }
+    };
+    document.addEventListener('keydown', fromPage);
+    return () => document.removeEventListener('keydown', fromPage);
+  }, [open]);
   useEffect(() => {
     if (!open) return;
     returnFocus.current = document.activeElement;

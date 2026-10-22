@@ -92,6 +92,7 @@ import {
   type DeckIndexRoute,
 } from './deck-index/http.js';
 import type { IndexedFormat } from './deck-index/parse.js';
+import type { FinishKey } from './deck-index/store.js';
 import {
   DurableRoomSnapshotStore,
   RoomAlreadyInitializedError,
@@ -1329,14 +1330,14 @@ export class PtcgDeckIndex extends DurableObject<Env> {
     id: string,
     format: IndexedFormat,
     sinceDays: number,
-    offset: number
+    after: FinishKey | null
   ): Promise<ReturnType<DeckIndex['archetype']>> {
     await this.crawl();
     return this.index.archetype(
       id,
       format,
       sinceDays,
-      offset,
+      after,
       DECK_INDEX_PAGE_SIZE
     );
   }

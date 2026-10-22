@@ -236,17 +236,18 @@ export const TableCentre = ({
       );
     };
     check();
-    // The card's own size, and the layer's: it narrows beside a docked log,
-    // which moves the bar with it.
+    // The card's own size, and the log sliding in beside the table, which
+    // narrows the layer and moves the bar with it.
     const observer = new ResizeObserver(check);
     observer.observe(child);
-    observer.observe(element);
     window.addEventListener('resize', check);
+    const unsubscribe = slide?.subscribe(check);
     return () => {
       observer.disconnect();
       window.removeEventListener('resize', check);
+      unsubscribe?.();
     };
-  }, [seam, bar]);
+  }, [seam, bar, docked, slide]);
   return (
     <div
       ref={ref}

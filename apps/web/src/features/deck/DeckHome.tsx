@@ -822,6 +822,13 @@ export const DeckHome = ({
                   aria-label={t`Find one of your decks`}
                   value={filter}
                   onChange={(event) => setFilter(event.target.value)}
+                  onKeyDown={(event) => {
+                    // Esc clears what was typed before it leaves the screen.
+                    if (event.key === 'Escape' && filter !== '') {
+                      event.preventDefault();
+                      setFilter('');
+                    }
+                  }}
                 />
               </label>
             ) : null}

@@ -37,7 +37,9 @@ import {
 import {
   DeckIndexStore,
   STORE_POLICY,
+  finishKeyOf,
   type ArchetypeResult,
+  type FinishKey,
   type FinishRow,
   type IndexStorage,
   type StandingRow,
@@ -581,14 +583,15 @@ export class DeckIndex {
     id: string,
     format: IndexedFormat,
     sinceDays: number,
-    offset: number,
+    after: FinishKey | null,
     pageSize: number
   ):
     | {
         readonly kind: 'ok';
         readonly archetype: ArchetypeResult['archetype'];
         readonly finishes: readonly FinishSummary[];
-        readonly nextOffset: number | null;
+        /** The last finish shown, when there are more after it. */
+        readonly next: FinishKey | null;
       }
     | { readonly kind: 'not_found' } {
     const archetype = this.store.archetype(id);
@@ -597,14 +600,16 @@ export class DeckIndex {
       id,
       format,
       this.deps.now() - sinceDays * 24 * HOUR_MS,
-      offset,
+      after,
       pageSize + 1
     );
+    const page = rows.slice(0, pageSize);
+    const last = page.at(-1);
     return {
       kind: 'ok',
       archetype,
-      finishes: rows.slice(0, pageSize).map(finishSummary),
-      nextOffset: rows.length > pageSize ? offset + pageSize : null,
+      finishes: page.map(finishSummary),
+      next: rows.length > pageSize && last ? finishKeyOf(last) : null,
     };
   }
 

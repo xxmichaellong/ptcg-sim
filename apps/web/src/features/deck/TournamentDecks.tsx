@@ -7,7 +7,7 @@ import { PencilSimpleIcon } from '@phosphor-icons/react/dist/csr/PencilSimple';
 import { i18n } from '@lingui/core';
 import { plural, selectOrdinal, t as translate } from '@lingui/core/macro';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 
 import { Tooltip } from '../../ui/Tooltip.js';
 import {
@@ -590,6 +590,24 @@ const SubHead = ({
 };
 
 /** A tournament's standings: every player's place, deck and list. */
+/**
+ * Keeps the focus in a view when the control that held it goes (All time,
+ * More, Try again): on the view's heading, where Esc and the keys still
+ * reach the deck screen.
+ */
+const useFocusKept = (
+  root: RefObject<HTMLElement | null>,
+  changes: readonly unknown[]
+): void => {
+  useEffect(() => {
+    const active = document.activeElement;
+    if (active !== null && active !== document.body) return;
+    root.current
+      ?.querySelector<HTMLElement>('.deck-subhead__title h2')
+      ?.focus({ preventScroll: true });
+  }, changes);
+};
+
 export const TournamentView = ({
   tournament,
   pending,
@@ -606,6 +624,8 @@ export const TournamentView = ({
     fetchTournament(tournament.id, options)
   );
   const detail = state.status === 'ready' ? state.value : undefined;
+  const view = useRef<HTMLDivElement>(null);
+  useFocusKept(view, [state.status]);
   const players = detail?.tournament.players ?? 0;
   const meta = detail
     ? [
@@ -618,7 +638,7 @@ export const TournamentView = ({
         .join(' · ')
     : undefined;
   return (
-    <div className="deck-subview" data-subview="tournament">
+    <div ref={view} className="deck-subview" data-subview="tournament">
       <SubHead
         onBack={onBack}
         title={detail?.tournament.name ?? tournament.name}
@@ -811,8 +831,10 @@ export const ArchetypeView = ({
     () => (paged.state.status === 'ready' ? paged.state.value : []),
     [paged.state]
   );
+  const view = useRef<HTMLDivElement>(null);
+  useFocusKept(view, [paged.state.status, paged.hasMore, allTime]);
   return (
-    <div className="deck-subview" data-subview="archetype">
+    <div ref={view} className="deck-subview" data-subview="archetype">
       <SubHead onBack={onBack} title={archetype.name} icons={archetype.icons} />
       <div className="deck-paper deck-standings">
         {paged.state.status === 'ready' ? (

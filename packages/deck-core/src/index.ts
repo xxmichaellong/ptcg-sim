@@ -31,12 +31,14 @@ export {
   checkDeck,
   describeDeckIssue,
   guessDeckFormat,
+  basicEnergyTypeOf,
   isBasicEnergy,
   isBasicPokemon,
   isDeckFormatId,
   isPocketCard,
 } from './deck-rules.js';
 export type {
+  BasicEnergyType,
   DeckCheck,
   DeckFormatId,
   DeckFormatRules,

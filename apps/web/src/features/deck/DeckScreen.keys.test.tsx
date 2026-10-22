@@ -101,8 +101,10 @@ afterEach(async () => {
 });
 
 /** The screen, open or put away, around one library and store. */
-const screen = (onClose = vi.fn()) => {
-  const library = new DeckLibrary({ backend: null });
+const screen = (
+  onClose = vi.fn(),
+  library = new DeckLibrary({ backend: null })
+) => {
   const store = new DeckBuilderStore();
   const draw = (open: boolean) =>
     act(async () =>
@@ -125,8 +127,11 @@ const screen = (onClose = vi.fn()) => {
   return { onClose, draw };
 };
 
-const render = async (onClose = vi.fn()) => {
-  await screen(onClose).draw(true);
+const render = async (
+  onClose = vi.fn(),
+  library = new DeckLibrary({ backend: null })
+) => {
+  await screen(onClose, library).draw(true);
   return onClose;
 };
 
@@ -274,5 +279,72 @@ describe('the deck screen from the keyboard', () => {
     } finally {
       HTMLElement.prototype.scrollIntoView = original;
     }
+  });
+
+  it('takes a deck name pasted over a tournament to the decks’ finder', async () => {
+    await render();
+    await act(async () =>
+      host
+        .querySelector<HTMLButtonElement>('[data-open-tournament="cup"]')!
+        .click()
+    );
+    await paste('Dragapult ex');
+    await act(async () => {
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+    });
+    expect(host.querySelector('#deckSubviewBackButton')).toBeNull();
+    expect(finder().value).toBe('Dragapult ex');
+    expect(document.activeElement).toBe(finder());
+    expect(toast).not.toHaveBeenCalled();
+  });
+
+  it('hears Esc with the focus fallen to the page: back to the decks, then away', async () => {
+    const onClose = await render();
+    await act(async () =>
+      host
+        .querySelector<HTMLButtonElement>('[data-open-tournament="cup"]')!
+        .click()
+    );
+    // The control that had the focus went away under it.
+    await act(async () => {
+      (document.activeElement as HTMLElement | null)?.blur();
+    });
+    expect(document.activeElement).toBe(document.body);
+    await press('Escape');
+    expect(host.querySelector('#deckSubviewBackButton')).toBeNull();
+    expect(onClose).not.toHaveBeenCalled();
+    await act(async () => {
+      (document.activeElement as HTMLElement | null)?.blur();
+    });
+    await press('Escape');
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it('clears what was typed in Find a deck on Esc before it leaves', async () => {
+    const library = new DeckLibrary({ backend: null });
+    for (let n = 0; n < 9; n += 1) {
+      library.create({
+        name: `Deck ${String(n)}`,
+        format: 'standard',
+        cards: [],
+        source: { kind: 'new' },
+      });
+    }
+    const onClose = await render(vi.fn(), library);
+    const filter = host.querySelector<HTMLInputElement>(
+      'input[type="search"][placeholder="Find a deck"]'
+    )!;
+    filter.focus();
+    await act(async () => {
+      const setValue = Object.getOwnPropertyDescriptor(
+        HTMLInputElement.prototype,
+        'value'
+      )!.set!;
+      setValue.call(filter, 'Deck 3');
+      filter.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await press('Escape');
+    expect(filter.value).toBe('');
+    expect(onClose).not.toHaveBeenCalled();
   });
 });

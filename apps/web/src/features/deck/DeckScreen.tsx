@@ -579,14 +579,28 @@ export const DeckScreen = ({
       const text = event.clipboardData?.getData('text/plain') ?? '';
       if (!text.trim()) return;
       event.preventDefault();
-      if (viewKind === 'home' && finderMode(text) === 'search') {
+      if (finderMode(text) === 'search') {
         setFinderText(text.trim());
         // Into view too: pasted with the decks scrolled down, the name and
         // what it finds would otherwise land out of sight.
-        const finder =
-          screen.current?.querySelector<HTMLTextAreaElement>('#deckPasteInput');
-        finder?.focus({ preventScroll: true });
-        finder?.scrollIntoView({ block: 'nearest' });
+        const showFinder = (): void => {
+          const finder =
+            screen.current?.querySelector<HTMLTextAreaElement>(
+              '#deckPasteInput'
+            );
+          finder?.focus({ preventScroll: true });
+          finder?.scrollIntoView({ block: 'nearest' });
+        };
+        if (viewKind === 'home') {
+          showFinder();
+          return;
+        }
+        // Over a tournament or a deck's lists, a name goes to the decks'
+        // finder too (it is never a list to import), which has the focus
+        // rather than what opened the view.
+        returnTo.current = undefined;
+        setView({ kind: 'home' });
+        requestAnimationFrame(showFinder);
         return;
       }
       void runImport(text, { kind: 'paste' });
@@ -707,7 +721,10 @@ export const DeckScreen = ({
         event.key !== 'Escape' ||
         event.defaultPrevented ||
         !(target instanceof Element) ||
-        target.closest('.ptcgsim-deck-layer') === null ||
+        // Focus lost to the page (the button pressed went away) counts as
+        // on the screen, which covers the page.
+        (target !== document.body &&
+          target.closest('.ptcgsim-deck-layer') === null) ||
         target.closest('[role="dialog"], [role="menu"], [role="listbox"]') !==
           null ||
         // A field with something typed clears it first.

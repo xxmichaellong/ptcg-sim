@@ -607,27 +607,80 @@ describe('searching by deck', () => {
     }
     const index = createIndex();
     await crawlUntilIdle(index);
-    const first = index.archetype('dragapult-dusknoir', 'STANDARD', 90, 0, 50);
+    const first = index.archetype(
+      'dragapult-dusknoir',
+      'STANDARD',
+      90,
+      null,
+      50
+    );
     expect(first.kind).toBe('ok');
     if (first.kind !== 'ok') return;
     expect(first.finishes).toHaveLength(50);
     // Biggest event first among the 1st places.
     expect(first.finishes[0]!.tournament.players).toBe(159);
-    expect(first.nextOffset).toBe(50);
+    expect(first.next).toMatchObject({ placing: 1, players: 110 });
     const second = index.archetype(
       'dragapult-dusknoir',
       'STANDARD',
       90,
-      50,
+      first.next,
       50
     );
     expect(second.kind === 'ok' && second.finishes).toHaveLength(10);
-    expect(second.kind === 'ok' && second.nextOffset).toBeNull();
-    const recent = index.archetype('dragapult-dusknoir', 'STANDARD', 2, 0, 50);
+    expect(second.kind === 'ok' && second.next).toBeNull();
+    const recent = index.archetype(
+      'dragapult-dusknoir',
+      'STANDARD',
+      2,
+      null,
+      50
+    );
     expect(recent.kind === 'ok' && recent.finishes).toHaveLength(24);
-    expect(index.archetype('nope', 'STANDARD', 90, 0, 50)).toEqual({
+    expect(index.archetype('nope', 'STANDARD', 90, null, 50)).toEqual({
       kind: 'not_found',
     });
+  });
+
+  it('pages on from the last finish shown, whatever was indexed meanwhile', async () => {
+    limitless.tournaments = [
+      tournament(1, { players: 50, date: START - 3 * DAY }),
+      tournament(2, { players: 40, date: START - 4 * DAY }),
+      tournament(3, { players: 30, date: START - 5 * DAY }),
+    ];
+    for (const row of limitless.tournaments) {
+      limitless.standings.set(row.id, [standing('p', 1, dragapult)]);
+    }
+    const index = createIndex();
+    await crawlUntilIdle(index);
+    const first = index.archetype(
+      'dragapult-dusknoir',
+      'STANDARD',
+      90,
+      null,
+      2
+    );
+    if (first.kind !== 'ok') throw new Error('not found');
+    // A bigger event's win is indexed before More is pressed: it sorts
+    // ahead of what was shown, and pushes nothing shown onto the next page.
+    limitless.tournaments.push(
+      tournament(4, { players: 300, date: START - 2 * DAY })
+    );
+    limitless.standings.set(id(4), [standing('p', 1, dragapult)]);
+    index.discoverSoon();
+    await crawlUntilIdle(index);
+    const second = index.archetype(
+      'dragapult-dusknoir',
+      'STANDARD',
+      90,
+      first.next,
+      2
+    );
+    if (second.kind !== 'ok') throw new Error('not found');
+    const shown = [...first.finishes, ...second.finishes].map(
+      (finish) => finish.tournament.id
+    );
+    expect(shown).toEqual([id(1), id(2), id(3)]);
   });
 });
 
