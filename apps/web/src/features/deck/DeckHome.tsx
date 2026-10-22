@@ -669,6 +669,12 @@ export const DeckHome = ({
     if (event.key === 'Enter' && !event.shiftKey && mode !== 'list') {
       event.preventDefault();
     }
+    // Esc clears what was typed first; only an empty field gives it to the
+    // screen, which goes back to the table.
+    if (event.key === 'Escape' && paste !== '') {
+      event.preventDefault();
+      setPaste('');
+    }
   };
 
   const surprise = async (): Promise<void> => {
