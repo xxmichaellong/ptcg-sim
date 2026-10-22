@@ -263,6 +263,12 @@ interface HalfOptions {
    */
   readonly fitHeight?: number;
   /**
+   * Fit the portrait mat to `fitHeight` too (its rows shrink to it). Only
+   * the far half refitted around the app bar asks; the split search's
+   * fitting leaves a portrait mat as it is.
+   */
+  readonly fitPortrait?: boolean;
+  /**
    * The far markers sit in a row of their own below the app bar, the hand
    * strip deepened for it: a corner past the bar would leave the hand less
    * than `MIN_FAR_HAND_PX`. `false`: never, the row would leave the board
@@ -305,6 +311,11 @@ const MARKER_COLUMN_SHARE = 0.62;
 const EXTRAS_CONTROL_PX = 26;
 /** The clear space between the Stadium and the far staging area. */
 const STADIUM_CLEARANCE_PX = 8;
+/**
+ * How far below an even split's fit the far half alone may be fitted to
+ * keep the Stadium off it with the app bar (a share of that fit).
+ */
+const FAR_REFIT_FLOOR = 0.8;
 /** The bench row must hold this many bench cards side by side. */
 const BENCH_FIT_CARDS = 5.5;
 
@@ -888,11 +899,19 @@ const layoutTableHalf = (
   const portraitWins = options.markerCount
     ? portraitChosen(options, candidates)
     : bestOf(landscape, portrait) === portrait;
-  if (portraitWins) return portrait;
   const fitted = options.fitHeight;
-  return fitted !== undefined && fitted < height
-    ? atPlayerEdge(layoutHalf(width, fitted, options), height - fitted)
-    : landscape;
+  if (fitted === undefined || fitted >= height) {
+    return portraitWins ? portrait : landscape;
+  }
+  if (portraitWins) {
+    return options.fitPortrait
+      ? atPlayerEdge(
+          layoutHalfPortrait(width, fitted, options),
+          height - fitted
+        )
+      : portrait;
+  }
+  return atPlayerEdge(layoutHalf(width, fitted, options), height - fitted);
 };
 
 /**
@@ -1299,16 +1318,19 @@ export const createTableLayoutSnapshot = (
       ...halfOptions,
       ...(farOptions.handScale ? { handScale: farOptions.handScale } : {}),
     };
-    const splitAt = (scale: number, withBar = false) => {
-      const fit = (frame: Rect): HalfOptions =>
-        scale < 1 ? { fitHeight: frame.height * scale } : {};
+    // `farScale`: the far half refitted on its own, portrait mat too.
+    const splitAt = (scale: number, withBar = false, farScale?: number) => {
+      const fit = (frame: Rect, share: number): HalfOptions =>
+        share < 1 ? { fitHeight: frame.height * share } : {};
       const near = buildPlayer(semantics.players[0], frames.lower, {
         ...halfOptions,
-        ...fit(frames.lower),
+        ...fit(frames.lower, scale),
       });
       const farFit = {
         ...(withBar ? farOptions : farWithoutBar),
-        ...fit(frames.upper),
+        ...(farScale === undefined
+          ? fit(frames.upper, scale)
+          : { ...fit(frames.upper, farScale), fitPortrait: true }),
       };
       let far = buildPlayer(semantics.players[1], frames.upper, farFit);
       const stadiumHeight = Math.min(
@@ -1351,6 +1373,23 @@ export const createTableLayoutSnapshot = (
       const staging =
         far.player.regions.find((region) => region.kind === 'board')
           ?.physicalDeclaredBounds.width ?? Infinity;
+      // How much of the far half's board the Stadium lies over.
+      let covered = 0;
+      for (const region of far.player.regions) {
+        if (region.kind === 'hand') continue;
+        const box = region.physicalDeclaredBounds;
+        covered +=
+          Math.max(
+            0,
+            Math.min(box.x + box.width, placed.x + placed.width) -
+              Math.max(box.x, placed.x)
+          ) *
+          Math.max(
+            0,
+            Math.min(box.y + box.height, placed.y + placed.height) -
+              Math.max(box.y, placed.y)
+          );
+      }
       return {
         near,
         far,
@@ -1358,6 +1397,7 @@ export const createTableLayoutSnapshot = (
         // The far staging area still holds a card beside the Stadium (with
         // a hair to spare, so the search never settles a rounding short).
         fits: staging >= stadiumWidth + 0.5,
+        covered,
       };
     };
     let scale = 1;
@@ -1378,7 +1418,35 @@ export const createTableLayoutSnapshot = (
       }
       scale = low;
     }
-    const split = splitAt(scale, true);
+    let split = splitAt(scale, true);
+    if (appBarPx) {
+      // The bar can change the far half -- a cramped hand there takes the
+      // mat, its cards bigger; a markers' row below the bar pushes its rows
+      // toward the seam -- so that the Stadium lies over more of it than it
+      // would without the bar. The far half alone then takes the tallest
+      // fit that clears it as well, the near half kept as it was.
+      const plain = splitAt(scale);
+      const clear = (candidate: typeof split): boolean =>
+        (candidate.fits || !plain.fits) &&
+        candidate.covered <= plain.covered + 1;
+      if (!clear(split)) {
+        let low =
+          Math.min(scale, EVEN_SPLIT_SHARE / DEFAULT_LOWER_SHARE) *
+          FAR_REFIT_FLOOR;
+        let high = scale;
+        const floor = splitAt(scale, true, low);
+        if (clear(floor)) {
+          for (let step = 0; step < 16; step += 1) {
+            const middle = (low + high) / 2;
+            if (clear(splitAt(scale, true, middle))) low = middle;
+            else high = middle;
+          }
+          split = splitAt(scale, true, low);
+        } else if (floor.covered < split.covered) {
+          split = floor;
+        }
+      }
+    }
     lower = split.near;
     upper = split.far;
     stadium = split.stadium;

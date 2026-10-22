@@ -71,6 +71,8 @@ const FLAT_TURN_DISTANCE = 3;
 const HAND_EDGE_GAP_PX = 6;
 /** The most a hand grows to meet a tilted mat. */
 const HAND_GROWTH_MAXIMUM = 1.4;
+/** A tilted hand keeps at least this share of its flat fan. */
+const MIN_HAND_FAN = 0.5;
 
 /** A number in [0, 1) that a key always gives, for a card's resting lie. */
 const keyedUnit = (key: string, salt: number): number => {
@@ -460,13 +462,6 @@ export class BoardDepthProjection {
         }).y;
         const reach = (near ? inner - edge : edge - inner) - HAND_EDGE_GAP_PX;
         if (!(reach > 1)) continue;
-        // Its inner edge meets the mat's; it grows as far as running off
-        // the screen's edge as before asks, within reason (a tilted phone).
-        const grow = Math.min(
-          HAND_GROWTH_MAXIMUM,
-          (strip.height + reach) / strip.height
-        );
-        const reached = near ? inner - reach : inner + reach;
         const cards = scene.cards.filter((card) => card.parentId === zone.id);
         const spread = Math.max(
           1,
@@ -474,18 +469,25 @@ export class BoardDepthProjection {
             Math.abs(card.bounds.x + card.bounds.width / 2 - middle)
           )
         );
+        const widest = Math.max(0, ...cards.map((card) => card.bounds.width));
+        // Its inner edge meets the mat's; it grows as far as running off
+        // the screen's edge as before asks, within reason (a tilted phone),
+        // and never so wide that a narrow strip leaves it less than half its
+        // fan (grown wider than the strip, it closed up into one card).
+        const grow = Math.min(
+          HAND_GROWTH_MAXIMUM,
+          (strip.height + reach) / strip.height,
+          widest > 0
+            ? Math.max(1, (strip.width - 2 * spread * MIN_HAND_FAN) / widest)
+            : Infinity
+        );
+        const reached = near ? inner - reach : inner + reach;
         // A hand that already fills its strip draws in a little, so its
         // outer cards, grown, still end where the strip does (across the
         // table, short of the app bar).
         const across = Math.max(
           0,
-          Math.min(
-            grow,
-            (strip.width / 2 -
-              (Math.max(0, ...cards.map((card) => card.bounds.width)) * grow) /
-                2) /
-              spread
-          )
+          Math.min(grow, (strip.width / 2 - (widest * grow) / 2) / spread)
         );
         handFits.set(zone.id, (rect) => {
           const centreX = middle + (rect.x + rect.width / 2 - middle) * across;

@@ -78,7 +78,11 @@ here):
 The table's split is found as without the bar, and the far half laid out
 with it at that scale, so the near half is unchanged by it; nothing on the
 table is under the bar at any size it fits in (layout-table and
-board-depth tests, app-bar.spec).
+board-depth tests, app-bar.spec). Where the bar changes the far half so
+that the Stadium lies over more of it than it would without the bar (a
+cramped hand taking the mat, its cards bigger; a markers' row pushing its
+rows toward the seam), the far half alone is fitted shorter until it
+doesn't, its portrait mat too, the near half kept as it was.
 
 ### 3. The turn's actions stay on the table, at the seam's right end
 

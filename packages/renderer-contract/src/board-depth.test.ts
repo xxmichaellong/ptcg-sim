@@ -14,6 +14,7 @@ import {
   APP_BAR_INSET_PX,
   createTableLayoutSnapshot,
   DEFAULT_TABLE_VERTICAL_LAYOUT,
+  tableVerticalLayout,
 } from './layout-table.js';
 import { createRendererSpikeView } from './spike-fixture.js';
 import {
@@ -265,6 +266,52 @@ describe('live board depth', () => {
             `${String(width)}x${String(height)} tilt ${String(tilt)}`
           ).toBeLessThanOrEqual(row!.y + 0.5);
           checked += 1;
+        }
+      }
+    }
+    expect(checked).toBeGreaterThan(0);
+  });
+
+  it('keeps a tilted hand fanned on a narrow strip, never closed up into one card', () => {
+    const view = createRendererSpikeView();
+    let checked = 0;
+    for (const width of [496, 560, 608, 640]) {
+      for (const lowerShare of [0.4, 0.54]) {
+        for (const markers of [0, 1, 2]) {
+          const layout = createTableLayoutSnapshot({
+            viewport: { width, height: 1024, devicePixelRatio: 1 },
+            playerIds: [view.playerOrder[0]!, view.playerOrder[1]!],
+            bottomPlayerId: view.playerOrder[0]!,
+            shellMode: 'fullscreen',
+            geometryVersion: 2,
+            vertical: tableVerticalLayout(lowerShare),
+            appBarPx: { width: width < 600 ? 146 : 290, height: 50 },
+            seamBandPx: 46,
+            ...(markers ? { oncePerGameMarkers: markers } : {}),
+          });
+          const scene = createBoardScene(view, layout);
+          for (const hand of scene.zones.filter(
+            (zone) => zone.kind === 'hand'
+          )) {
+            const cards = scene.cards.filter(
+              (card) => card.parentId === hand.id && card.renderKey !== null
+            );
+            if (cards.length < 2) continue;
+            const span = (xs: readonly number[]) =>
+              Math.max(...xs) - Math.min(...xs);
+            const flat = span(cards.map((card) => card.bounds.x));
+            for (const tilt of [22, 35]) {
+              const table = new BoardDepthProjection(scene, {
+                ...preferences,
+                depth: { ...preferences.depth!, tilt },
+              });
+              expect(
+                span(cards.map((card) => table.bounds(card).x)),
+                `${String(width)} split ${String(lowerShare)} markers ${String(markers)} tilt ${String(tilt)}`
+              ).toBeGreaterThanOrEqual(flat * 0.5 - 0.5);
+              checked += 1;
+            }
+          }
         }
       }
     }
