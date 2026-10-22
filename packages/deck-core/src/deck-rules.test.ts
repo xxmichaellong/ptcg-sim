@@ -353,6 +353,7 @@ describe('deck rules', () => {
       ['Basic Fire Energy null', 'fire'],
       ['Dark Energy', 'darkness'],
       ['basic r energy', 'fire'],
+      ['{R} Energy', 'fire'],
     ] as const) {
       expect(basicEnergyTypeOf(name), name).toBe(type);
       expect(
@@ -370,6 +371,9 @@ describe('deck rules', () => {
       'Basic {X} Energy',
       'Fire Energy Retrieval',
       'Energy',
+      // Team Rocket Returns' Special Energy.
+      'R Energy',
+      'r energy',
     ]) {
       expect(basicEnergyTypeOf(name), name).toBeUndefined();
     }

@@ -3,9 +3,10 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type {
-  DeckSearchResponse,
-  fetchDeckSearch,
+import {
+  TournamentDataRefusedError,
+  type DeckSearchResponse,
+  type fetchDeckSearch,
 } from './tournament-decks-client.js';
 import {
   DECK_SEARCH_DEBOUNCE_MS,
@@ -148,5 +149,41 @@ describe('usePaged', () => {
     });
     expect(reads).toEqual([undefined, 'next', undefined]);
     expect(latest?.state).toEqual({ status: 'ready', value: ['a', 'b'] });
+  });
+  it('starts over from the first page when the server refuses a cursor', async () => {
+    const reads: Array<string | undefined> = [];
+    let refuse = true;
+    const readPage = vi.fn(async (cursor: string | undefined) => {
+      reads.push(cursor);
+      if (cursor && refuse) {
+        refuse = false;
+        throw new TournamentDataRefusedError(400);
+      }
+      return cursor
+        ? { items: ['c'], nextCursor: null }
+        : { items: ['a', 'b'], nextCursor: 'stale' };
+    });
+    let latest: PagedRemote<string> | undefined;
+    const Probe = () => {
+      latest = usePaged('one', readPage);
+      return null;
+    };
+    root = createRoot(host);
+    await act(async () => {
+      root!.render(<Probe />);
+      await vi.runAllTimersAsync();
+    });
+    await act(async () => {
+      latest!.more();
+      await vi.runAllTimersAsync();
+    });
+    expect(reads).toEqual([undefined, 'stale', undefined]);
+    expect(latest?.state).toEqual({ status: 'ready', value: ['a', 'b'] });
+    expect(latest?.loadingMore).toBe(false);
+    await act(async () => {
+      latest!.more();
+      await vi.runAllTimersAsync();
+    });
+    expect(latest?.state).toEqual({ status: 'ready', value: ['a', 'b', 'c'] });
   });
 });

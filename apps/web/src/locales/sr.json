@@ -982,13 +982,12 @@
     ],
     "translation": "<0/> отвара ову листу."
   },
-  "4TpVuz": {
-    "message": "<0>{0}</0> back to your side.",
-    "translation": "<0>{0}</0> назад на твоју страну."
-  },
-  "oC5vx2": {
-    "message": "<0>{0}</0> your deck when you are done.",
-    "translation": "<0>{0}</0> шпил када завршиш."
+  "r-rySv": {
+    "message": "<0>{0}</0>: build, import or pick a deck for each side.",
+    "comments": [
+      "{0} is the Deck button's label, which opens the deck screen"
+    ],
+    "translation": "<0>{0}</0>: направи, увези или изабери шпил за сваку страну."
   },
   "F7xH8_": {
     "message": "<0>{0}</0>: every move, and the chat.",
@@ -1001,10 +1000,6 @@
   "NaneTg": {
     "message": "<0>{0}</0>: the table's look, the theme and the language.",
     "translation": "<0>{0}</0>: изглед стола, тема и језик."
-  },
-  "ieOTvn": {
-    "message": "<0>Deck</0>: build, import or pick a deck for each side.",
-    "translation": "<0>Шпил</0>: направи, увези или изабери шпил за сваку страну."
   },
   "C0rMdv": {
     "message": "− Damage",
@@ -1685,9 +1680,12 @@
     ],
     "translation": "Изабери"
   },
-  "YY29zS": {
-    "message": "Choose <0>Damage counter</0>.",
-    "translation": "Изабери <0>Marker оштећења</0>."
+  "ihLRVl": {
+    "message": "Choose <0>{0}</0>.",
+    "comments": [
+      "{0} is the Damage counter menu item's label"
+    ],
+    "translation": "Изабери <0>{0}</0>."
   },
   "PetgPp": {
     "message": "Choose a deck first",
@@ -1737,7 +1735,7 @@
   },
   "F4fFCC": {
     "message": "Click <0>{0}</0> in your hand, then press <1>{key}</1> to bench it.",
-    "translation": "Кликни на <0>{0}</0> у руци, па притисни <1>{key}</1> да је staviš на клупу."
+    "translation": "Кликни на <0>{0}</0> у руци, па притисни <1>{key}</1> да га ставиш на клупу."
   },
   "MO489z": {
     "message": "Click a shortcut to change it.",
@@ -2291,10 +2289,6 @@
     "message": "End",
     "context": "replay: go to the end",
     "translation": "Крај"
-  },
-  "ILpkuq": {
-    "message": "End your turn with <0>{0}</0>, or <1>{1}</1> without one.",
-    "translation": "Завршиш потез са <0>{0}</0>, или <1>{1}</1> без тога."
   },
   "0UuYtf": {
     "message": "Energy",
@@ -3055,9 +3049,12 @@
     "context": "put a tournament list on the seat",
     "translation": "Учитај"
   },
-  "0SqWRH": {
-    "message": "Load a <0>deck</0>, then press <1>Set up</1>.",
-    "translation": "Учитај <0>шпил</0>, па притисни <1>Постави</1>."
+  "i9q-Zv": {
+    "message": "Load a <0>deck</0>, then press <1>{setUp}</1>.",
+    "comments": [
+      "{setUp} is the Set up button's label"
+    ],
+    "translation": "Учитај <0>шпил</0>, па притисни <1>{setUp}</1>."
   },
   "Ie3cc1": {
     "message": "Load a deck",
@@ -3665,9 +3662,12 @@
     ],
     "translation": "На месту {seat}"
   },
-  "R_b7a2": {
-    "message": "On your own you play both sides. <0>{0}</0> the table to theirs.",
-    "translation": "Када си сам/а, играш обе стране. <0>{0}</0> сто на њихову."
+  "jidRIl": {
+    "message": "On your own you play both sides. Press <0>{0}</0> to turn the table to theirs.",
+    "comments": [
+      "{0} is the Flip button's label, which turns the table around"
+    ],
+    "translation": "Када играш сам, играш обе стране. Притисни <0>{0}</0> да окренеш сто на њихову страну."
   },
   "eVFY7w": {
     "message": "One half fills the table",
@@ -3961,6 +3961,20 @@
     ],
     "translation": "Притисни {keys} за <0>пречице</0>."
   },
+  "joGQW4": {
+    "message": "Press <0>{0}</0> to attack and end your turn, or <1>{1}</1> to end it without attacking.",
+    "comments": [
+      "{0} is the Attack button's label, {1} the Pass button's"
+    ],
+    "translation": "Притисни <0>{0}</0> да нападнеш и завршиш потез, или <1>{1}</1> да га завршиш без напада."
+  },
+  "LchprM": {
+    "message": "Press <0>{0}</0> to turn back to your side.",
+    "comments": [
+      "{0} is the Flip button's label, which turns the table around"
+    ],
+    "translation": "Притисни <0>{0}</0> да се вратиш на своју страну."
+  },
   "cF4opC": {
     "message": "Press <0>{0}</0>: it shuffles your deck and deals your hand.",
     "translation": "Притисни <0>{0}</0>: промешаће шпил и поделити ти руку."
@@ -3975,7 +3989,7 @@
   },
   "HUzhOi": {
     "message": "Press <0>Esc</0> or click away to close it.",
-    "translation": "Притисни <0>Esc</0> или кликни sa стране да затвориш."
+    "translation": "Притисни <0>Esc</0> или кликни ван прозора да га затвориш."
   },
   "1-TFM2": {
     "message": "Press again to confirm",
@@ -4973,7 +4987,7 @@
   },
   "7GpLGd": {
     "message": "Start turn",
-    "translation": "Започни potez"
+    "translation": "Започни потез"
   },
   "yA0PE0": {
     "message": "Start your turn with <0>{0}</0>. It draws your card.",
@@ -5225,7 +5239,7 @@
   },
   "pGaCJK": {
     "message": "The practice table didn't answer.",
-    "translation": "Тренинг sto није одговорио."
+    "translation": "Сто за вежбање није одговорио."
   },
   "N3usta": {
     "message": "The room didn't take it. Try again.",
@@ -5742,6 +5756,13 @@
   "3ePd3I": {
     "message": "What's new",
     "translation": "Шта је ново"
+  },
+  "_m-8a0": {
+    "message": "When you are done, press <0>{0}</0> to shuffle your deck.",
+    "comments": [
+      "{0} is the Shuffle button's label"
+    ],
+    "translation": "Када завршиш, притисни <0>{0}</0> да промешаш шпил."
   },
   "evSBlD": {
     "message": "Win",

@@ -982,13 +982,12 @@
     ],
     "translation": "<0/>でこの一覧を開きます。"
   },
-  "4TpVuz": {
-    "message": "<0>{0}</0> back to your side.",
-    "translation": "<0>{0}</0>で自分側に戻します。"
-  },
-  "oC5vx2": {
-    "message": "<0>{0}</0> your deck when you are done.",
-    "translation": "終わったら<0>{0}</0>で山札を戻します。"
+  "r-rySv": {
+    "message": "<0>{0}</0>: build, import or pick a deck for each side.",
+    "comments": [
+      "{0} is the Deck button's label, which opens the deck screen"
+    ],
+    "translation": "<0>{0}</0>:それぞれの側のデッキを作成、インポート、または選択します。"
   },
   "F7xH8_": {
     "message": "<0>{0}</0>: every move, and the chat.",
@@ -1001,10 +1000,6 @@
   "NaneTg": {
     "message": "<0>{0}</0>: the table's look, the theme and the language.",
     "translation": "<0>{0}</0>:テーブルの見た目、テーマ、言語を設定できます。"
-  },
-  "ieOTvn": {
-    "message": "<0>Deck</0>: build, import or pick a deck for each side.",
-    "translation": "<0>デッキ</0>:各サイドのデッキを作成、インポート、選択します。"
   },
   "C0rMdv": {
     "message": "− Damage",
@@ -1685,9 +1680,12 @@
     ],
     "translation": "選ぶ"
   },
-  "YY29zS": {
-    "message": "Choose <0>Damage counter</0>.",
-    "translation": "<0>ダメカン</0>を選びます。"
+  "ihLRVl": {
+    "message": "Choose <0>{0}</0>.",
+    "comments": [
+      "{0} is the Damage counter menu item's label"
+    ],
+    "translation": "<0>{0}</0>を選びます。"
   },
   "PetgPp": {
     "message": "Choose a deck first",
@@ -2291,10 +2289,6 @@
     "message": "End",
     "context": "replay: go to the end",
     "translation": "最後へ"
-  },
-  "ILpkuq": {
-    "message": "End your turn with <0>{0}</0>, or <1>{1}</1> without one.",
-    "translation": "<0>{0}</0>でターンを終了するか、引かずに<1>{1}</1>します。"
   },
   "0UuYtf": {
     "message": "Energy",
@@ -3055,9 +3049,12 @@
     "context": "put a tournament list on the seat",
     "translation": "読み込む"
   },
-  "0SqWRH": {
-    "message": "Load a <0>deck</0>, then press <1>Set up</1>.",
-    "translation": "<0>デッキ</0>を読み込んで、<1>セットアップ</1>を押してください。"
+  "i9q-Zv": {
+    "message": "Load a <0>deck</0>, then press <1>{setUp}</1>.",
+    "comments": [
+      "{setUp} is the Set up button's label"
+    ],
+    "translation": "<0>デッキ</0>を読み込んで、<1>{setUp}</1>を押します。"
   },
   "Ie3cc1": {
     "message": "Load a deck",
@@ -3665,9 +3662,12 @@
     ],
     "translation": "{seat}に配置"
   },
-  "R_b7a2": {
-    "message": "On your own you play both sides. <0>{0}</0> the table to theirs.",
-    "translation": "一人のときは両側を操作します。<0>{0}</0>で相手側のテーブルに切り替えます。"
+  "jidRIl": {
+    "message": "On your own you play both sides. Press <0>{0}</0> to turn the table to theirs.",
+    "comments": [
+      "{0} is the Flip button's label, which turns the table around"
+    ],
+    "translation": "ひとりのときは両方の側を操作します。<0>{0}</0>を押すと、相手側にテーブルを向けられます。"
   },
   "eVFY7w": {
     "message": "One half fills the table",
@@ -3960,6 +3960,20 @@
       "keys shows the key or keys that open the keyboard shortcuts, like ?"
     ],
     "translation": "{keys}で<0>ショートカット</0>を表示します。"
+  },
+  "joGQW4": {
+    "message": "Press <0>{0}</0> to attack and end your turn, or <1>{1}</1> to end it without attacking.",
+    "comments": [
+      "{0} is the Attack button's label, {1} the Pass button's"
+    ],
+    "translation": "<0>{0}</0>を押すとワザを使って自分の番を終了します。ワザを使わずに終了するには<1>{1}</1>を押します。"
+  },
+  "LchprM": {
+    "message": "Press <0>{0}</0> to turn back to your side.",
+    "comments": [
+      "{0} is the Flip button's label, which turns the table around"
+    ],
+    "translation": "<0>{0}</0>を押すと、自分側に戻ります。"
   },
   "cF4opC": {
     "message": "Press <0>{0}</0>: it shuffles your deck and deals your hand.",
@@ -5742,6 +5756,13 @@
   "3ePd3I": {
     "message": "What's new",
     "translation": "新機能"
+  },
+  "_m-8a0": {
+    "message": "When you are done, press <0>{0}</0> to shuffle your deck.",
+    "comments": [
+      "{0} is the Shuffle button's label"
+    ],
+    "translation": "終わったら<0>{0}</0>を押して、山札を切ります。"
   },
   "evSBlD": {
     "message": "Win",

@@ -41,13 +41,16 @@ export const DeckLayer = ({
   close.current = onClose;
   // Focus lost to the page while the screen is open (a pressed button went
   // away): a key pressed there is the screen's, and the focus comes back
-  // to it. Esc closes, unless the screen has used it already.
+  // to it. Esc closes. A key the screen has used already (Esc back to the
+  // decks) is left to it, and so is where the focus goes.
   useEffect(() => {
     if (!open) return;
     const fromPage = (event: globalThis.KeyboardEvent): void => {
-      if (event.target !== document.body) return;
-      layer.current?.focus({ preventScroll: true });
-      if (event.key === 'Escape' && !event.defaultPrevented) {
+      if (event.target !== document.body || event.defaultPrevented) return;
+      if (document.activeElement === document.body) {
+        layer.current?.focus({ preventScroll: true });
+      }
+      if (event.key === 'Escape') {
         event.preventDefault();
         close.current();
       }

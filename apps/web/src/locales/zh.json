@@ -982,13 +982,12 @@
     ],
     "translation": "按 <0/> 打开此列表。"
   },
-  "4TpVuz": {
-    "message": "<0>{0}</0> back to your side.",
-    "translation": "<0>{0}</0>,回到你这一侧。"
-  },
-  "oC5vx2": {
-    "message": "<0>{0}</0> your deck when you are done.",
-    "translation": "完成后<0>{0}</0>你的牌库。"
+  "r-rySv": {
+    "message": "<0>{0}</0>: build, import or pick a deck for each side.",
+    "comments": [
+      "{0} is the Deck button's label, which opens the deck screen"
+    ],
+    "translation": "<0>{0}</0>:为双方构筑、导入或选择牌组。"
   },
   "F7xH8_": {
     "message": "<0>{0}</0>: every move, and the chat.",
@@ -1001,10 +1000,6 @@
   "NaneTg": {
     "message": "<0>{0}</0>: the table's look, the theme and the language.",
     "translation": "<0>{0}</0>:牌桌外观、主题和语言。"
-  },
-  "ieOTvn": {
-    "message": "<0>Deck</0>: build, import or pick a deck for each side.",
-    "translation": "<0>牌库</0>:为双方构筑、导入或选择牌库。"
   },
   "C0rMdv": {
     "message": "− Damage",
@@ -1685,9 +1680,12 @@
     ],
     "translation": "选择"
   },
-  "YY29zS": {
-    "message": "Choose <0>Damage counter</0>.",
-    "translation": "选择<0>伤害指示物</0>。"
+  "ihLRVl": {
+    "message": "Choose <0>{0}</0>.",
+    "comments": [
+      "{0} is the Damage counter menu item's label"
+    ],
+    "translation": "选择<0>{0}</0>。"
   },
   "PetgPp": {
     "message": "Choose a deck first",
@@ -2291,10 +2289,6 @@
     "message": "End",
     "context": "replay: go to the end",
     "translation": "末尾"
-  },
-  "ILpkuq": {
-    "message": "End your turn with <0>{0}</0>, or <1>{1}</1> without one.",
-    "translation": "用<0>{0}</0>结束你的回合,或不用它直接<1>{1}</1>。"
   },
   "0UuYtf": {
     "message": "Energy",
@@ -3055,9 +3049,12 @@
     "context": "put a tournament list on the seat",
     "translation": "载入"
   },
-  "0SqWRH": {
-    "message": "Load a <0>deck</0>, then press <1>Set up</1>.",
-    "translation": "载入<0>牌组</0>,然后按<1>设置</1>。"
+  "i9q-Zv": {
+    "message": "Load a <0>deck</0>, then press <1>{setUp}</1>.",
+    "comments": [
+      "{setUp} is the Set up button's label"
+    ],
+    "translation": "载入<0>牌组</0>,然后按<1>{setUp}</1>。"
   },
   "Ie3cc1": {
     "message": "Load a deck",
@@ -3665,9 +3662,12 @@
     ],
     "translation": "位于{seat}"
   },
-  "R_b7a2": {
-    "message": "On your own you play both sides. <0>{0}</0> the table to theirs.",
-    "translation": "单人游玩时,双方都由你操作。<0>{0}</0>牌桌即可切换到对方。"
+  "jidRIl": {
+    "message": "On your own you play both sides. Press <0>{0}</0> to turn the table to theirs.",
+    "comments": [
+      "{0} is the Flip button's label, which turns the table around"
+    ],
+    "translation": "独自游玩时,你将操控双方。按<0>{0}</0>将牌桌转到对方视角。"
   },
   "eVFY7w": {
     "message": "One half fills the table",
@@ -3960,6 +3960,20 @@
       "keys shows the key or keys that open the keyboard shortcuts, like ?"
     ],
     "translation": "按 {keys} 查看<0>快捷键</0>。"
+  },
+  "joGQW4": {
+    "message": "Press <0>{0}</0> to attack and end your turn, or <1>{1}</1> to end it without attacking.",
+    "comments": [
+      "{0} is the Attack button's label, {1} the Pass button's"
+    ],
+    "translation": "按<0>{0}</0>使用招式并结束回合,或按<1>{1}</1>不使用招式直接结束回合。"
+  },
+  "LchprM": {
+    "message": "Press <0>{0}</0> to turn back to your side.",
+    "comments": [
+      "{0} is the Flip button's label, which turns the table around"
+    ],
+    "translation": "按<0>{0}</0>转回你的一侧。"
   },
   "cF4opC": {
     "message": "Press <0>{0}</0>: it shuffles your deck and deals your hand.",
@@ -5742,6 +5756,13 @@
   "3ePd3I": {
     "message": "What's new",
     "translation": "更新内容"
+  },
+  "_m-8a0": {
+    "message": "When you are done, press <0>{0}</0> to shuffle your deck.",
+    "comments": [
+      "{0} is the Shuffle button's label"
+    ],
+    "translation": "完成后,按<0>{0}</0>洗切你的牌库。"
   },
   "evSBlD": {
     "message": "Win",

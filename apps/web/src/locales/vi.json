@@ -982,13 +982,12 @@
     ],
     "translation": "<0/> mở danh sách này."
   },
-  "4TpVuz": {
-    "message": "<0>{0}</0> back to your side.",
-    "translation": "<0>{0}</0> về phía bạn."
-  },
-  "oC5vx2": {
-    "message": "<0>{0}</0> your deck when you are done.",
-    "translation": "<0>{0}</0> bộ bài của bạn khi xong."
+  "r-rySv": {
+    "message": "<0>{0}</0>: build, import or pick a deck for each side.",
+    "comments": [
+      "{0} is the Deck button's label, which opens the deck screen"
+    ],
+    "translation": "<0>{0}</0>: tạo, nhập hoặc chọn bộ bài cho mỗi bên."
   },
   "F7xH8_": {
     "message": "<0>{0}</0>: every move, and the chat.",
@@ -1001,10 +1000,6 @@
   "NaneTg": {
     "message": "<0>{0}</0>: the table's look, the theme and the language.",
     "translation": "<0>{0}</0>: giao diện bàn, chủ đề và ngôn ngữ."
-  },
-  "ieOTvn": {
-    "message": "<0>Deck</0>: build, import or pick a deck for each side.",
-    "translation": "<0>Bộ bài</0>: xây dựng, nhập hoặc chọn bộ bài cho mỗi bên."
   },
   "C0rMdv": {
     "message": "− Damage",
@@ -1685,9 +1680,12 @@
     ],
     "translation": "Chọn"
   },
-  "YY29zS": {
-    "message": "Choose <0>Damage counter</0>.",
-    "translation": "Chọn <0>Damage counter</0>."
+  "ihLRVl": {
+    "message": "Choose <0>{0}</0>.",
+    "comments": [
+      "{0} is the Damage counter menu item's label"
+    ],
+    "translation": "Chọn <0>{0}</0>."
   },
   "PetgPp": {
     "message": "Choose a deck first",
@@ -2291,10 +2289,6 @@
     "message": "End",
     "context": "replay: go to the end",
     "translation": "Cuối"
-  },
-  "ILpkuq": {
-    "message": "End your turn with <0>{0}</0>, or <1>{1}</1> without one.",
-    "translation": "Kết thúc lượt bằng <0>{0}</0>, hoặc <1>{1}</1> nếu không cần."
   },
   "0UuYtf": {
     "message": "Energy",
@@ -3055,9 +3049,12 @@
     "context": "put a tournament list on the seat",
     "translation": "Tải"
   },
-  "0SqWRH": {
-    "message": "Load a <0>deck</0>, then press <1>Set up</1>.",
-    "translation": "Tải một <0>bộ bài</0>, rồi nhấn <1>Thiết lập</1>."
+  "i9q-Zv": {
+    "message": "Load a <0>deck</0>, then press <1>{setUp}</1>.",
+    "comments": [
+      "{setUp} is the Set up button's label"
+    ],
+    "translation": "Tải một <0>bộ bài</0>, rồi nhấn <1>{setUp}</1>."
   },
   "Ie3cc1": {
     "message": "Load a deck",
@@ -3665,9 +3662,12 @@
     ],
     "translation": "Ở {seat}"
   },
-  "R_b7a2": {
-    "message": "On your own you play both sides. <0>{0}</0> the table to theirs.",
-    "translation": "Khi chơi một mình, bạn điều khiển cả hai bên. <0>{0}</0> bàn sang phía đối thủ."
+  "jidRIl": {
+    "message": "On your own you play both sides. Press <0>{0}</0> to turn the table to theirs.",
+    "comments": [
+      "{0} is the Flip button's label, which turns the table around"
+    ],
+    "translation": "Khi chơi một mình, bạn điều khiển cả hai bên. Nhấn <0>{0}</0> để xoay bàn sang phía đối thủ."
   },
   "eVFY7w": {
     "message": "One half fills the table",
@@ -3960,6 +3960,20 @@
       "keys shows the key or keys that open the keyboard shortcuts, like ?"
     ],
     "translation": "Nhấn {keys} để xem <0>phím tắt</0>."
+  },
+  "joGQW4": {
+    "message": "Press <0>{0}</0> to attack and end your turn, or <1>{1}</1> to end it without attacking.",
+    "comments": [
+      "{0} is the Attack button's label, {1} the Pass button's"
+    ],
+    "translation": "Nhấn <0>{0}</0> để tấn công và kết thúc lượt, hoặc <1>{1}</1> để kết thúc lượt mà không tấn công."
+  },
+  "LchprM": {
+    "message": "Press <0>{0}</0> to turn back to your side.",
+    "comments": [
+      "{0} is the Flip button's label, which turns the table around"
+    ],
+    "translation": "Nhấn <0>{0}</0> để xoay bàn về phía bạn."
   },
   "cF4opC": {
     "message": "Press <0>{0}</0>: it shuffles your deck and deals your hand.",
@@ -5742,6 +5756,13 @@
   "3ePd3I": {
     "message": "What's new",
     "translation": "Có gì mới"
+  },
+  "_m-8a0": {
+    "message": "When you are done, press <0>{0}</0> to shuffle your deck.",
+    "comments": [
+      "{0} is the Shuffle button's label"
+    ],
+    "translation": "Khi xong, nhấn <0>{0}</0> để xáo bộ bài của bạn."
   },
   "evSBlD": {
     "message": "Win",

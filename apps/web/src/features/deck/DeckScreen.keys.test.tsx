@@ -320,6 +320,40 @@ describe('the deck screen from the keyboard', () => {
     expect(onClose).toHaveBeenCalledOnce();
   });
 
+  it('gives the focus back to what opened a tournament on Esc from the page', async () => {
+    await render();
+    const opener = host.querySelector<HTMLButtonElement>(
+      '[data-open-tournament="cup"]'
+    )!;
+    opener.focus();
+    await openCup();
+    await act(async () => {
+      (document.activeElement as HTMLElement | null)?.blur();
+    });
+    await press('Escape');
+    await frames();
+    expect(host.querySelector('#deckSubviewBackButton')).toBeNull();
+    expect(document.activeElement).toBe(opener);
+  });
+
+  it('takes a name pasted onto the deck editor as lines for the deck, staying in it', async () => {
+    const library = new DeckLibrary({ backend: null });
+    await render(vi.fn(), library);
+    await act(async () =>
+      host.querySelector<HTMLButtonElement>('#deckNewButton')!.click()
+    );
+    host.querySelector<HTMLElement>('#deckEditorBackButton')!.focus();
+    await paste('Dragapult ex');
+    await frames();
+    expect(host.querySelector('#deckEditorBackButton')).not.toBeNull();
+    expect(finder()).toBeNull();
+    // Leaving by Back still puts the empty new deck away.
+    await act(async () =>
+      host.querySelector<HTMLButtonElement>('#deckEditorBackButton')!.click()
+    );
+    expect(library.getSnapshot().decks).toEqual([]);
+  });
+
   it('clears what was typed in Find a deck on Esc before it leaves', async () => {
     const library = new DeckLibrary({ backend: null });
     for (let n = 0; n < 9; n += 1) {

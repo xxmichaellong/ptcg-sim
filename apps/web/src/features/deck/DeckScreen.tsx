@@ -579,7 +579,8 @@ export const DeckScreen = ({
       const text = event.clipboardData?.getData('text/plain') ?? '';
       if (!text.trim()) return;
       event.preventDefault();
-      if (finderMode(text) === 'search') {
+      // In the editor a paste is always lines for the deck being edited.
+      if (viewKind !== 'edit' && finderMode(text) === 'search') {
         setFinderText(text.trim());
         // Into view too: pasted with the decks scrolled down, the name and
         // what it finds would otherwise land out of sight.
@@ -655,9 +656,11 @@ export const DeckScreen = ({
     if (viewKind !== 'home' || back === undefined) return;
     const home = root.querySelector<HTMLElement>('.deck-home');
     if (home) home.scrollTop = back.scrollTop;
+    // Fallen to the page, or to the layer that holds the screen.
     const lost = (): boolean =>
       document.activeElement === null ||
-      document.activeElement === document.body;
+      document.activeElement === document.body ||
+      document.activeElement === root.closest('.ptcgsim-deck-layer');
     const finder = root.querySelector<HTMLTextAreaElement>('#deckPasteInput');
     if (lost()) finder?.focus({ preventScroll: true });
     const held = finder?.value;

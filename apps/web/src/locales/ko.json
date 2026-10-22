@@ -982,13 +982,12 @@
     ],
     "translation": "<0/> 키로 이 목록을 엽니다."
   },
-  "4TpVuz": {
-    "message": "<0>{0}</0> back to your side.",
-    "translation": "<0>{0}</0>하여 내 쪽으로 되돌립니다."
-  },
-  "oC5vx2": {
-    "message": "<0>{0}</0> your deck when you are done.",
-    "translation": "끝나면 <0>{0}</0> 덱을 섞으세요."
+  "r-rySv": {
+    "message": "<0>{0}</0>: build, import or pick a deck for each side.",
+    "comments": [
+      "{0} is the Deck button's label, which opens the deck screen"
+    ],
+    "translation": "<0>{0}</0>: 각 쪽의 덱을 만들거나 가져오거나 선택하세요."
   },
   "F7xH8_": {
     "message": "<0>{0}</0>: every move, and the chat.",
@@ -1001,10 +1000,6 @@
   "NaneTg": {
     "message": "<0>{0}</0>: the table's look, the theme and the language.",
     "translation": "<0>{0}</0>: 테이블 모양, 테마, 언어를 설정합니다."
-  },
-  "ieOTvn": {
-    "message": "<0>Deck</0>: build, import or pick a deck for each side.",
-    "translation": "<0>덱</0>: 각 쪽의 덱을 만들거나 가져오거나 선택하세요."
   },
   "C0rMdv": {
     "message": "− Damage",
@@ -1685,9 +1680,12 @@
     ],
     "translation": "선택"
   },
-  "YY29zS": {
-    "message": "Choose <0>Damage counter</0>.",
-    "translation": "<0>데미지 카운터</0>를 선택하세요."
+  "ihLRVl": {
+    "message": "Choose <0>{0}</0>.",
+    "comments": [
+      "{0} is the Damage counter menu item's label"
+    ],
+    "translation": "<0>{0}</0>을(를) 선택하세요."
   },
   "PetgPp": {
     "message": "Choose a deck first",
@@ -2291,10 +2289,6 @@
     "message": "End",
     "context": "replay: go to the end",
     "translation": "끝으로"
-  },
-  "ILpkuq": {
-    "message": "End your turn with <0>{0}</0>, or <1>{1}</1> without one.",
-    "translation": "<0>{0}</0>으로 턴을 끝내거나, 없이 끝내려면 <1>{1}</1>하세요."
   },
   "0UuYtf": {
     "message": "Energy",
@@ -3055,9 +3049,12 @@
     "context": "put a tournament list on the seat",
     "translation": "불러오기"
   },
-  "0SqWRH": {
-    "message": "Load a <0>deck</0>, then press <1>Set up</1>.",
-    "translation": "<0>덱</0>을 불러온 다음 <1>세팅</1>을 누르세요."
+  "i9q-Zv": {
+    "message": "Load a <0>deck</0>, then press <1>{setUp}</1>.",
+    "comments": [
+      "{setUp} is the Set up button's label"
+    ],
+    "translation": "<0>덱</0>을 불러온 뒤 <1>{setUp}</1>을(를) 누르세요."
   },
   "Ie3cc1": {
     "message": "Load a deck",
@@ -3665,9 +3662,12 @@
     ],
     "translation": "{seat}에 있음"
   },
-  "R_b7a2": {
-    "message": "On your own you play both sides. <0>{0}</0> the table to theirs.",
-    "translation": "혼자일 때는 양쪽을 모두 플레이합니다. 테이블을 상대 쪽으로 <0>{0}</0>하세요."
+  "jidRIl": {
+    "message": "On your own you play both sides. Press <0>{0}</0> to turn the table to theirs.",
+    "comments": [
+      "{0} is the Flip button's label, which turns the table around"
+    ],
+    "translation": "혼자서는 양쪽을 모두 플레이합니다. <0>{0}</0>을(를) 눌러 상대 쪽으로 테이블을 돌리세요."
   },
   "eVFY7w": {
     "message": "One half fills the table",
@@ -3960,6 +3960,20 @@
       "keys shows the key or keys that open the keyboard shortcuts, like ?"
     ],
     "translation": "{keys} 키를 누르면 <0>단축키</0>를 볼 수 있습니다."
+  },
+  "joGQW4": {
+    "message": "Press <0>{0}</0> to attack and end your turn, or <1>{1}</1> to end it without attacking.",
+    "comments": [
+      "{0} is the Attack button's label, {1} the Pass button's"
+    ],
+    "translation": "<0>{0}</0>을(를) 눌러 기술을 쓰고 턴을 끝내거나, <1>{1}</1>을(를) 눌러 기술 없이 턴을 끝내세요."
+  },
+  "LchprM": {
+    "message": "Press <0>{0}</0> to turn back to your side.",
+    "comments": [
+      "{0} is the Flip button's label, which turns the table around"
+    ],
+    "translation": "<0>{0}</0>을(를) 눌러 내 쪽으로 다시 돌리세요."
   },
   "cF4opC": {
     "message": "Press <0>{0}</0>: it shuffles your deck and deals your hand.",
@@ -5742,6 +5756,13 @@
   "3ePd3I": {
     "message": "What's new",
     "translation": "새로운 소식"
+  },
+  "_m-8a0": {
+    "message": "When you are done, press <0>{0}</0> to shuffle your deck.",
+    "comments": [
+      "{0} is the Shuffle button's label"
+    ],
+    "translation": "끝났으면 <0>{0}</0>을(를) 눌러 덱을 섞으세요."
   },
   "evSBlD": {
     "message": "Win",

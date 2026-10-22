@@ -113,6 +113,14 @@ export interface TournamentList {
   readonly url: string;
 }
 
+/** The server refused the request (a cursor from before an update, say). */
+export class TournamentDataRefusedError extends Error {
+  constructor(readonly status: number) {
+    super(`HTTP ${String(status)}`);
+    this.name = 'TournamentDataRefusedError';
+  }
+}
+
 /** The server is busy fetching (its Limitless budget is spent for now). */
 export class TournamentDataBusyError extends Error {
   constructor(readonly retryAfterSeconds: number) {
@@ -135,8 +143,13 @@ const MAX_ICONS = 4;
 
 /** Archetype ids and icon names: Limitless slugs. */
 const SLUG = /^[a-z0-9][a-z0-9-]{0,127}$/u;
-/** Tournament ids, player ids and cursors: no path or query characters. */
+/** Tournament ids and player ids: no path or query characters. */
 const TOKEN = /^[A-Za-z0-9_.~-]{1,128}$/u;
+/**
+ * A page's cursor: base64url, as long as the server's own limit (a deck's
+ * lists carry the last finish shown, its player id among it).
+ */
+const CURSOR = /^[A-Za-z0-9_-]{1,200}$/u;
 // The decoder rejects text a list can never need; built from code points so
 // the source holds no control characters.
 const CONTROL = new RegExp(
@@ -213,7 +226,7 @@ const list = <T>(
 const cursor = (value: unknown): string | null =>
   value === null || value === undefined
     ? null
-    : matching(value, TOKEN, 'cursor');
+    : matching(value, CURSOR, 'cursor');
 
 const decodeArchetype = (value: unknown): TournamentArchetype => {
   if (!isRecord(value)) throw new DecodeError('archetype');
@@ -417,6 +430,9 @@ const getJson = async (
         // A busy answer without a body still says busy.
       }
       throw new TournamentDataBusyError(retryAfter);
+    }
+    if (response.status === 400) {
+      throw new TournamentDataRefusedError(response.status);
     }
     if (!response.ok) throw new Error(`HTTP ${String(response.status)}`);
     const body = await response.text();

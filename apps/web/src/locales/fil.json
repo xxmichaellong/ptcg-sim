@@ -982,13 +982,12 @@
     ],
     "translation": "Binubuksan ng <0/> ang listahang ito."
   },
-  "4TpVuz": {
-    "message": "<0>{0}</0> back to your side.",
-    "translation": "<0>{0}</0> pabalik sa side mo."
-  },
-  "oC5vx2": {
-    "message": "<0>{0}</0> your deck when you are done.",
-    "translation": "<0>{0}</0> ang deck mo kapag tapos ka na."
+  "r-rySv": {
+    "message": "<0>{0}</0>: build, import or pick a deck for each side.",
+    "comments": [
+      "{0} is the Deck button's label, which opens the deck screen"
+    ],
+    "translation": "<0>{0}</0>: gumawa, mag-import, o pumili ng deck para sa bawat panig."
   },
   "F7xH8_": {
     "message": "<0>{0}</0>: every move, and the chat.",
@@ -1001,10 +1000,6 @@
   "NaneTg": {
     "message": "<0>{0}</0>: the table's look, the theme and the language.",
     "translation": "<0>{0}</0>: itsura ng table, ang theme, at ang wika."
-  },
-  "ieOTvn": {
-    "message": "<0>Deck</0>: build, import or pick a deck for each side.",
-    "translation": "<0>Deck</0>: gumawa, mag-import o pumili ng deck para sa bawat panig."
   },
   "C0rMdv": {
     "message": "− Damage",
@@ -1685,9 +1680,12 @@
     ],
     "translation": "Pumili"
   },
-  "YY29zS": {
-    "message": "Choose <0>Damage counter</0>.",
-    "translation": "Piliin ang <0>Damage counter</0>."
+  "ihLRVl": {
+    "message": "Choose <0>{0}</0>.",
+    "comments": [
+      "{0} is the Damage counter menu item's label"
+    ],
+    "translation": "Piliin ang <0>{0}</0>."
   },
   "PetgPp": {
     "message": "Choose a deck first",
@@ -2291,10 +2289,6 @@
     "message": "End",
     "context": "replay: go to the end",
     "translation": "Dulo"
-  },
-  "ILpkuq": {
-    "message": "End your turn with <0>{0}</0>, or <1>{1}</1> without one.",
-    "translation": "Tapusin ang turn mo gamit ang <0>{0}</0>, o <1>{1}</1> nang wala nito."
   },
   "0UuYtf": {
     "message": "Energy",
@@ -3055,9 +3049,12 @@
     "context": "put a tournament list on the seat",
     "translation": "I-load"
   },
-  "0SqWRH": {
-    "message": "Load a <0>deck</0>, then press <1>Set up</1>.",
-    "translation": "Mag-load ng <0>deck</0>, tapos pindutin ang <1>Set up</1>."
+  "i9q-Zv": {
+    "message": "Load a <0>deck</0>, then press <1>{setUp}</1>.",
+    "comments": [
+      "{setUp} is the Set up button's label"
+    ],
+    "translation": "Mag-load ng <0>deck</0>, tapos pindutin ang <1>{setUp}</1>."
   },
   "Ie3cc1": {
     "message": "Load a deck",
@@ -3665,9 +3662,12 @@
     ],
     "translation": "Nasa {seat}"
   },
-  "R_b7a2": {
-    "message": "On your own you play both sides. <0>{0}</0> the table to theirs.",
-    "translation": "Kapag mag-isa ka, ikaw ang bahala sa dalawang side. <0>{0}</0> ang table papunta sa side nila."
+  "jidRIl": {
+    "message": "On your own you play both sides. Press <0>{0}</0> to turn the table to theirs.",
+    "comments": [
+      "{0} is the Flip button's label, which turns the table around"
+    ],
+    "translation": "Kung mag-isa ka, ikaw ang maglalaro sa dalawang panig. Pindutin ang <0>{0}</0> para iikot ang table sa panig nila."
   },
   "eVFY7w": {
     "message": "One half fills the table",
@@ -3960,6 +3960,20 @@
       "keys shows the key or keys that open the keyboard shortcuts, like ?"
     ],
     "translation": "Pindutin ang {keys} para sa <0>mga shortcut</0>."
+  },
+  "joGQW4": {
+    "message": "Press <0>{0}</0> to attack and end your turn, or <1>{1}</1> to end it without attacking.",
+    "comments": [
+      "{0} is the Attack button's label, {1} the Pass button's"
+    ],
+    "translation": "Pindutin ang <0>{0}</0> para mag-attack at tapusin ang turn mo, o ang <1>{1}</1> para tapusin ito nang hindi nag-aattack."
+  },
+  "LchprM": {
+    "message": "Press <0>{0}</0> to turn back to your side.",
+    "comments": [
+      "{0} is the Flip button's label, which turns the table around"
+    ],
+    "translation": "Pindutin ang <0>{0}</0> para bumalik sa panig mo."
   },
   "cF4opC": {
     "message": "Press <0>{0}</0>: it shuffles your deck and deals your hand.",
@@ -5742,6 +5756,13 @@
   "3ePd3I": {
     "message": "What's new",
     "translation": "Ano'ng bago"
+  },
+  "_m-8a0": {
+    "message": "When you are done, press <0>{0}</0> to shuffle your deck.",
+    "comments": [
+      "{0} is the Shuffle button's label"
+    ],
+    "translation": "Kapag tapos ka na, pindutin ang <0>{0}</0> para i-shuffle ang deck mo."
   },
   "evSBlD": {
     "message": "Win",

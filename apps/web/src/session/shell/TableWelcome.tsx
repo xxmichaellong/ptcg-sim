@@ -84,6 +84,8 @@ export const TableWelcome = ({
   readonly onDismiss?: () => void;
 }) => {
   const { t } = useLingui();
+  // The rail's own label, so the welcome names the button the player sees.
+  const setUp = t({ message: 'Set up', context: 'set up the game' });
   return (
     <section
       className="table-welcome"
@@ -147,8 +149,8 @@ export const TableWelcome = ({
         <li>
           <DeckIcon {...decorative} />
           <span>
-            <Trans>
-              Load a <strong>deck</strong>, then press <strong>Set up</strong>.
+            <Trans comment="{setUp} is the Set up button's label">
+              Load a <strong>deck</strong>, then press <strong>{setUp}</strong>.
             </Trans>
           </span>
         </li>

@@ -982,13 +982,12 @@
     ],
     "translation": "<0/> bu listeyi açar."
   },
-  "4TpVuz": {
-    "message": "<0>{0}</0> back to your side.",
-    "translation": "<0>{0}</0> ile kendi tarafına geri dön."
-  },
-  "oC5vx2": {
-    "message": "<0>{0}</0> your deck when you are done.",
-    "translation": "İşin bitince destenı <0>{0}</0>."
+  "r-rySv": {
+    "message": "<0>{0}</0>: build, import or pick a deck for each side.",
+    "comments": [
+      "{0} is the Deck button's label, which opens the deck screen"
+    ],
+    "translation": "<0>{0}</0>: her iki taraf için bir deste oluştur, içe aktar ya da seç."
   },
   "F7xH8_": {
     "message": "<0>{0}</0>: every move, and the chat.",
@@ -1001,10 +1000,6 @@
   "NaneTg": {
     "message": "<0>{0}</0>: the table's look, the theme and the language.",
     "translation": "<0>{0}</0>: masanın görünümü, tema ve dil."
-  },
-  "ieOTvn": {
-    "message": "<0>Deck</0>: build, import or pick a deck for each side.",
-    "translation": "<0>Deste</0>: her taraf için bir deste oluştur, içe aktar veya seç."
   },
   "C0rMdv": {
     "message": "− Damage",
@@ -1685,9 +1680,12 @@
     ],
     "translation": "Seç"
   },
-  "YY29zS": {
-    "message": "Choose <0>Damage counter</0>.",
-    "translation": "<0>Hasar sayacı</0> seç."
+  "ihLRVl": {
+    "message": "Choose <0>{0}</0>.",
+    "comments": [
+      "{0} is the Damage counter menu item's label"
+    ],
+    "translation": "<0>{0}</0> seçeneğini seç."
   },
   "PetgPp": {
     "message": "Choose a deck first",
@@ -2291,10 +2289,6 @@
     "message": "End",
     "context": "replay: go to the end",
     "translation": "Son"
-  },
-  "ILpkuq": {
-    "message": "End your turn with <0>{0}</0>, or <1>{1}</1> without one.",
-    "translation": "Turunu <0>{0}</0> ile bitir ya da <1>{1}</1> ile onsuz devam et."
   },
   "0UuYtf": {
     "message": "Energy",
@@ -3055,9 +3049,12 @@
     "context": "put a tournament list on the seat",
     "translation": "Yükle"
   },
-  "0SqWRH": {
-    "message": "Load a <0>deck</0>, then press <1>Set up</1>.",
-    "translation": "Bir <0>deste</0> yükle, sonra <1>Kur</1> düğmesine bas."
+  "i9q-Zv": {
+    "message": "Load a <0>deck</0>, then press <1>{setUp}</1>.",
+    "comments": [
+      "{setUp} is the Set up button's label"
+    ],
+    "translation": "Bir <0>deste</0> yükle, sonra <1>{setUp}</1> düğmesine bas."
   },
   "Ie3cc1": {
     "message": "Load a deck",
@@ -3665,9 +3662,12 @@
     ],
     "translation": "{seat} üzerinde"
   },
-  "R_b7a2": {
-    "message": "On your own you play both sides. <0>{0}</0> the table to theirs.",
-    "translation": "Tek başınayken iki tarafı da sen oynarsın. Masayı rakibin tarafına çevirmek için <0>{0}</0>."
+  "jidRIl": {
+    "message": "On your own you play both sides. Press <0>{0}</0> to turn the table to theirs.",
+    "comments": [
+      "{0} is the Flip button's label, which turns the table around"
+    ],
+    "translation": "Tek başınayken iki tarafı da sen oynarsın. Masayı karşı tarafa çevirmek için <0>{0}</0> düğmesine bas."
   },
   "eVFY7w": {
     "message": "One half fills the table",
@@ -3961,9 +3961,23 @@
     ],
     "translation": "<0>Kısayollar</0> için {keys} tuşuna bas."
   },
+  "joGQW4": {
+    "message": "Press <0>{0}</0> to attack and end your turn, or <1>{1}</1> to end it without attacking.",
+    "comments": [
+      "{0} is the Attack button's label, {1} the Pass button's"
+    ],
+    "translation": "Saldırıp turunu bitirmek için <0>{0}</0>, saldırmadan bitirmek için <1>{1}</1> düğmesine bas."
+  },
+  "LchprM": {
+    "message": "Press <0>{0}</0> to turn back to your side.",
+    "comments": [
+      "{0} is the Flip button's label, which turns the table around"
+    ],
+    "translation": "Kendi tarafına dönmek için <0>{0}</0> düğmesine bas."
+  },
   "cF4opC": {
     "message": "Press <0>{0}</0>: it shuffles your deck and deals your hand.",
-    "translation": "<0>{0}</0> tuşuna bas: destenı karıştırır ve elini dağıtır."
+    "translation": "<0>{0}</0> düğmesine bas: desteni karıştırır ve elini dağıtır."
   },
   "svdjsQ": {
     "message": "Press <0>{key}</0> any time for every key.",
@@ -5742,6 +5756,13 @@
   "3ePd3I": {
     "message": "What's new",
     "translation": "Yenilikler"
+  },
+  "_m-8a0": {
+    "message": "When you are done, press <0>{0}</0> to shuffle your deck.",
+    "comments": [
+      "{0} is the Shuffle button's label"
+    ],
+    "translation": "İşin bitince desteni karıştırmak için <0>{0}</0> düğmesine bas."
   },
   "evSBlD": {
     "message": "Win",

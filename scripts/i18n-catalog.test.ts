@@ -100,6 +100,59 @@ describe('translationProblem', () => {
     assert.equal(looksGarbled('Ã©tÃ©', 'fr'), true);
     assert.equal(looksGarbled('Зона', 'sr'), false);
     assert.equal(looksGarbled('Pokémon النشط', 'ar'), false);
+    // Latin inside an Arabic or Cyrillic word, or a Latin word the English
+    // doesn't have; names the English has stay, declined too.
+    assert.equal(looksGarbled('يخلط دecksك', 'ar', 'shuffles your deck'), true);
+    assert.equal(looksGarbled('Започни potez', 'sr', 'Start the turn'), true);
+    assert.equal(
+      looksGarbled(
+        'Изабери <0>Marker оштећења</0>.',
+        'sr',
+        'Choose <0>Damage counter</0>.'
+      ),
+      true
+    );
+    assert.equal(
+      looksGarbled(
+        'Притисни <0>Esc</0> да затвориш.',
+        'sr',
+        'Press <0>Esc</0> to close.'
+      ),
+      false
+    );
+    assert.equal(looksGarbled('из Guelpha', 'sr', 'from Guelph'), false);
+    assert.equal(
+      looksGarbled('بطاقات Trainer الأخرى', 'ar', 'Other Trainers'),
+      false
+    );
+    assert.equal(
+      looksGarbled('بطاقات TCG وPocket', 'ar', 'TCG and Pocket cards'),
+      false
+    );
+    assert.equal(
+      looksGarbled(
+        '{source, select, active {Pokémon النشط} other {المجموعة}}',
+        'ar',
+        '{source, select, active {active} other {deck}}'
+      ),
+      false
+    );
+    assert.equal(
+      looksGarbled(
+        '{count, plural, one {# карта} few {# карте} other {# карата}}',
+        'sr',
+        '{count, plural, one {# card} other {# cards}}'
+      ),
+      false
+    );
+    assert.equal(
+      looksGarbled(
+        '{side, select, main {Главни} other {Други}}',
+        'ru',
+        '{side, select, main {Main} other {Other}}'
+      ),
+      false
+    );
   });
 });
 

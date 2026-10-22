@@ -226,6 +226,8 @@ describe('the tutorial’s lessons', () => {
     i18n.load('xx', {
       [CONTROL_LABELS.commands.id!]: 'Befehle',
       [CONTROL_LABELS.setUpAgain.id!]: 'Neu aufbauen',
+      [CONTROL_LABELS.damageCounter.id!]: 'Schadensmarke',
+      [CONTROL_LABELS.deck.id!]: 'Decks',
     });
     i18n.activate('xx');
     try {
@@ -237,6 +239,12 @@ describe('the tutorial’s lessons', () => {
       expect(text({ text: () => active.stuck!(world()) })).toContain(
         'Neu aufbauen'
       );
+      const step = (id: string) =>
+        TUTORIAL_LESSONS.flatMap((lesson) => lesson.steps).find(
+          (candidate) => candidate.id === id
+        )!;
+      expect(text(step('counter'))).toContain('Schadensmarke');
+      expect(text(step('deck'))).toContain('Decks');
     } finally {
       i18n.activate(locale);
     }

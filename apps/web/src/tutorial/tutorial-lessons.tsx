@@ -448,8 +448,8 @@ const damage: TutorialLesson = {
     {
       id: 'counter',
       text: () => (
-        <Trans>
-          Choose <strong>Damage counter</strong>.
+        <Trans comment="{0} is the Damage counter menu item's label">
+          Choose <strong>{controlLabel('damageCounter')}</strong>.
         </Trans>
       ),
       targets: () => [
@@ -635,9 +635,9 @@ const deck: TutorialLesson = {
     {
       id: 'shuffle',
       text: () => (
-        <Trans>
-          <strong>{controlLabel('shuffle')}</strong> your deck when you are
-          done.
+        <Trans comment="{0} is the Shuffle button's label">
+          When you are done, press <strong>{controlLabel('shuffle')}</strong> to
+          shuffle your deck.
         </Trans>
       ),
       targets: () => [
@@ -690,9 +690,10 @@ const turns: TutorialLesson = {
     {
       id: 'attack',
       text: () => (
-        <Trans>
-          End your turn with <strong>{controlLabel('attack')}</strong>, or{' '}
-          <strong>{controlLabel('pass')}</strong> without one.
+        <Trans comment="{0} is the Attack button's label, {1} the Pass button's">
+          Press <strong>{controlLabel('attack')}</strong> to attack and end your
+          turn, or <strong>{controlLabel('pass')}</strong> to end it without
+          attacking.
         </Trans>
       ),
       targets: () => [railAction('attackButton'), railAction('passButton')],
@@ -714,9 +715,9 @@ const bothSides: TutorialLesson = {
     {
       id: 'flip',
       text: () => (
-        <Trans>
-          On your own you play both sides.{' '}
-          <strong>{controlLabel('flip')}</strong> the table to theirs.
+        <Trans comment="{0} is the Flip button's label, which turns the table around">
+          On your own you play both sides. Press{' '}
+          <strong>{controlLabel('flip')}</strong> to turn the table to theirs.
         </Trans>
       ),
       targets: () => [railAction('flipBoardButton')],
@@ -736,8 +737,9 @@ const bothSides: TutorialLesson = {
     {
       id: 'flip-back',
       text: () => (
-        <Trans>
-          <strong>{controlLabel('flip')}</strong> back to your side.
+        <Trans comment="{0} is the Flip button's label, which turns the table around">
+          Press <strong>{controlLabel('flip')}</strong> to turn back to your
+          side.
         </Trans>
       ),
       targets: () => [railAction('flipBoardButton')],
@@ -885,8 +887,9 @@ const around: TutorialLesson = {
     {
       id: 'deck',
       text: () => (
-        <Trans>
-          <strong>Deck</strong>: build, import or pick a deck for each side.
+        <Trans comment="{0} is the Deck button's label, which opens the deck screen">
+          <strong>{controlLabel('deck')}</strong>: build, import or pick a deck
+          for each side.
         </Trans>
       ),
       targets: () => [barButton('deckImportButton')],

@@ -144,6 +144,47 @@ const LOCALE_SCRIPTS: Readonly<Record<string, RegExp>> = {
 /** Languages that write accented Latin besides their own script. */
 const ALSO_WRITES_LATIN: ReadonlySet<string> = new Set(['sr']);
 
+/**
+ * Languages written in their own script, word by word, where a Latin word
+ * is a name the English has too ("Esc", "Limitless TCG", "Trainer" for
+ * "Trainers", a declined "Guelpha"): a Latin word the English lacks
+ * ("Започни potez"), or Latin inside a word ("دecksك"), is a slip of the
+ * translation. Arabic joins "و" and the like to a name ("وPocket").
+ */
+const SPACED_OWN_SCRIPT: Readonly<Record<string, RegExp>> = {
+  ar: /\p{Script=Arabic}\p{Script=Latin}+\p{Script=Arabic}/u,
+  ru: /\p{Script=Cyrillic}\p{Script=Latin}|\p{Script=Latin}\p{Script=Cyrillic}/u,
+  sr: /\p{Script=Cyrillic}\p{Script=Latin}|\p{Script=Latin}\p{Script=Cyrillic}/u,
+};
+
+/** A message's words: no tags, placeholders, or ICU keywords and case keys. */
+const proseOf = (message: string): string =>
+  message
+    .replaceAll('Pokémon', ' ')
+    .replaceAll(/<\/?\d+\/?>/gu, ' ')
+    .replaceAll(/\{\s*\w+\s*,\s*\w+\s*,?/gu, ' ')
+    .replaceAll(/\{\s*\w+\s*\}/gu, ' ')
+    .replaceAll(/[\w=]+\s*\{/gu, ' ');
+
+const strayLatin = (text: string, locale: string, source: string): boolean => {
+  const mixed = SPACED_OWN_SCRIPT[locale];
+  if (!mixed) return false;
+  const prose = proseOf(text);
+  if (mixed.test(prose)) return true;
+  const english =
+    proseOf(source)
+      .toLowerCase()
+      .match(/\p{L}+/gu) ?? [];
+  // The same word, or one stem with another ending (min three letters).
+  const sameStem = (left: string, right: string): boolean =>
+    left === right ||
+    (Math.min(left.length, right.length) >= 3 &&
+      (left.startsWith(right) || right.startsWith(left)));
+  return (prose.match(/\p{Script=Latin}{2,}/gu) ?? []).some(
+    (word) => !english.some((known) => sameStem(word.toLowerCase(), known))
+  );
+};
+
 /** UTF-8 read back as Windows-1250/1252 ("Ã©" for "é", "â€™" for "’"). */
 const MISENCODED_LATIN =
   /Ă(?![A-Za-z])|Ĺ|Ä[\u0080-¿Ā-ſ‘-™]|[ÃÅĆ][\u0080-\u009F¡-¿]|Â[\u0080-\u009F¡-¿Ā-ſ]|â€/u;
@@ -151,7 +192,7 @@ const MISENCODED_LATIN =
 /**
  * Known encoding and script mistakes, not translation quality: a literal
  * `\uXXXX`, a letter from a script the language does not write (and the
- * source does not contain), or mojibake.
+ * source does not contain), stray Latin (`strayLatin`), or mojibake.
  */
 export const looksGarbled = (
   text: string,
@@ -175,6 +216,7 @@ export const looksGarbled = (
       : !own?.test(letter);
     if (foreign) return true;
   }
+  if (strayLatin(text, locale, source)) return true;
   return writesLatin && MISENCODED_LATIN.test(text);
 };
 

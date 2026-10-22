@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   fetchDeckSearch,
   TournamentDataBusyError,
+  TournamentDataRefusedError,
   type DeckSearchResult,
   type TournamentRequestOptions,
 } from './tournament-decks-client.js';
@@ -152,8 +153,14 @@ export const usePaged = <T>(
         setCursor(page.nextCursor);
         setLoadingMore(false);
       },
-      () => {
-        if (!controller.signal.aborted) setLoadingMore(false);
+      (error: unknown) => {
+        if (controller.signal.aborted) return;
+        setLoadingMore(false);
+        // A cursor the server no longer takes (one from before an update):
+        // the list starts over from its first page.
+        if (error instanceof TournamentDataRefusedError) {
+          setAttempt((count) => count + 1);
+        }
       }
     );
   }, [cursor, loadingMore, state]);

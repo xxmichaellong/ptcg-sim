@@ -12,6 +12,7 @@ import {
   fetchTournamentList,
   fetchTournaments,
   TournamentDataBusyError,
+  TournamentDataRefusedError,
 } from './tournament-decks-client.js';
 
 const respond = (body: unknown, status = 200) =>
@@ -114,6 +115,18 @@ describe('tournament deck search', () => {
     await expect(fetchDeckSearch('x', { fetch })).rejects.toThrow(/too large/u);
   });
 
+  it('tells a refused request (a cursor from before an update) from a failure', async () => {
+    const refused = await fetchTournaments({
+      fetch: respond({ error: 'bad cursor' }, 400),
+      cursor: 'old',
+    }).catch((caught: unknown) => caught);
+    expect(refused).toBeInstanceOf(TournamentDataRefusedError);
+    const failed = await fetchTournaments({
+      fetch: respond({ error: 'oops' }, 500),
+    }).catch((caught: unknown) => caught);
+    expect(failed).not.toBeInstanceOf(TournamentDataRefusedError);
+  });
+
   it('reads a busy answer as busy, with how long to wait', async () => {
     const fetch = respond({ error: 'busy', retryAfter: 42 }, 503);
     const error = await fetchTournament(tournament.id, { fetch }).catch(
@@ -148,6 +161,14 @@ describe('tournament deck search', () => {
     );
     await expect(fetchArchetypeFinishes('../etc', { fetch })).rejects.toThrow();
     expect(() => decodeTournaments({ ...page, nextCursor: 'a b' })).toThrow();
+    // A deck's finishes page on from a long key (a long player id in it).
+    const long = 'A'.repeat(180);
+    expect(decodeTournaments({ ...page, nextCursor: long }).nextCursor).toBe(
+      long
+    );
+    expect(() =>
+      decodeTournaments({ ...page, nextCursor: 'A'.repeat(201) })
+    ).toThrow();
     // An event whose standings the server hasn't read yet: no organizer,
     // and whether it has lists isn't known.
     expect(

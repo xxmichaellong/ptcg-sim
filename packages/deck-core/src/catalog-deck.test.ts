@@ -159,6 +159,14 @@ describe('finding the printing a decklist line means', () => {
       match: 'energy',
       card: { id: 'MEE 2' },
     });
+    expect(resolveDecklistRow(index, row('8 {R} Energy'))).toMatchObject({
+      match: 'energy',
+      card: { id: 'MEE 2' },
+    });
+    // Team Rocket Returns' R Energy is a Special Energy, never Fire.
+    expect(resolveDecklistRow(index, row('3 R Energy'))).not.toMatchObject({
+      match: 'energy',
+    });
   });
 
   it("finds an old list's printing by its id, and never swaps EX for ex", () => {

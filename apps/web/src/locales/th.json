@@ -982,13 +982,12 @@
     ],
     "translation": "กด <0/> เพื่อเปิดรายการนี้"
   },
-  "4TpVuz": {
-    "message": "<0>{0}</0> back to your side.",
-    "translation": "<0>{0}</0> กลับมาฝั่งของคุณ"
-  },
-  "oC5vx2": {
-    "message": "<0>{0}</0> your deck when you are done.",
-    "translation": "<0>{0}</0> สำรับของคุณเมื่อเสร็จแล้ว"
+  "r-rySv": {
+    "message": "<0>{0}</0>: build, import or pick a deck for each side.",
+    "comments": [
+      "{0} is the Deck button's label, which opens the deck screen"
+    ],
+    "translation": "<0>{0}</0>: สร้าง นำเข้า หรือเลือกเด็คสำหรับแต่ละฝ่าย"
   },
   "F7xH8_": {
     "message": "<0>{0}</0>: every move, and the chat.",
@@ -1001,10 +1000,6 @@
   "NaneTg": {
     "message": "<0>{0}</0>: the table's look, the theme and the language.",
     "translation": "<0>{0}</0>: หน้าตาของโต๊ะ ธีม และภาษา"
-  },
-  "ieOTvn": {
-    "message": "<0>Deck</0>: build, import or pick a deck for each side.",
-    "translation": "<0>เด็ค</0>: สร้าง นำเข้า หรือเลือกเด็คสำหรับแต่ละฝั่ง"
   },
   "C0rMdv": {
     "message": "− Damage",
@@ -1685,9 +1680,12 @@
     ],
     "translation": "เลือก"
   },
-  "YY29zS": {
-    "message": "Choose <0>Damage counter</0>.",
-    "translation": "เลือก<0>ดาเมจเคาน์เตอร์</0>"
+  "ihLRVl": {
+    "message": "Choose <0>{0}</0>.",
+    "comments": [
+      "{0} is the Damage counter menu item's label"
+    ],
+    "translation": "เลือก <0>{0}</0>"
   },
   "PetgPp": {
     "message": "Choose a deck first",
@@ -2291,10 +2289,6 @@
     "message": "End",
     "context": "replay: go to the end",
     "translation": "ท้ายสุด"
-  },
-  "ILpkuq": {
-    "message": "End your turn with <0>{0}</0>, or <1>{1}</1> without one.",
-    "translation": "จบเทิร์นด้วย <0>{0}</0> หรือ <1>{1}</1> โดยไม่ทำอะไร"
   },
   "0UuYtf": {
     "message": "Energy",
@@ -3055,9 +3049,12 @@
     "context": "put a tournament list on the seat",
     "translation": "โหลด"
   },
-  "0SqWRH": {
-    "message": "Load a <0>deck</0>, then press <1>Set up</1>.",
-    "translation": "โหลด<0>เด็ค</0> แล้วกด<1>จัดเตรียม</1>"
+  "i9q-Zv": {
+    "message": "Load a <0>deck</0>, then press <1>{setUp}</1>.",
+    "comments": [
+      "{setUp} is the Set up button's label"
+    ],
+    "translation": "โหลด<0>เด็ค</0> แล้วกด <1>{setUp}</1>"
   },
   "Ie3cc1": {
     "message": "Load a deck",
@@ -3665,9 +3662,12 @@
     ],
     "translation": "อยู่ที่ {seat}"
   },
-  "R_b7a2": {
-    "message": "On your own you play both sides. <0>{0}</0> the table to theirs.",
-    "translation": "เมื่อเล่นคนเดียว คุณจะเล่นทั้งสองฝั่ง <0>{0}</0> โต๊ะไปยังฝั่งของอีกฝ่าย"
+  "jidRIl": {
+    "message": "On your own you play both sides. Press <0>{0}</0> to turn the table to theirs.",
+    "comments": [
+      "{0} is the Flip button's label, which turns the table around"
+    ],
+    "translation": "เมื่อเล่นคนเดียว คุณจะเล่นทั้งสองฝ่าย กด <0>{0}</0> เพื่อหมุนโต๊ะไปยังฝั่งของอีกฝ่าย"
   },
   "eVFY7w": {
     "message": "One half fills the table",
@@ -3960,6 +3960,20 @@
       "keys shows the key or keys that open the keyboard shortcuts, like ?"
     ],
     "translation": "กด {keys} เพื่อดู<0>ปุ่มลัด</0>"
+  },
+  "joGQW4": {
+    "message": "Press <0>{0}</0> to attack and end your turn, or <1>{1}</1> to end it without attacking.",
+    "comments": [
+      "{0} is the Attack button's label, {1} the Pass button's"
+    ],
+    "translation": "กด <0>{0}</0> เพื่อโจมตีและจบเทิร์น หรือกด <1>{1}</1> เพื่อจบเทิร์นโดยไม่โจมตี"
+  },
+  "LchprM": {
+    "message": "Press <0>{0}</0> to turn back to your side.",
+    "comments": [
+      "{0} is the Flip button's label, which turns the table around"
+    ],
+    "translation": "กด <0>{0}</0> เพื่อหมุนกลับมาฝั่งของคุณ"
   },
   "cF4opC": {
     "message": "Press <0>{0}</0>: it shuffles your deck and deals your hand.",
@@ -5742,6 +5756,13 @@
   "3ePd3I": {
     "message": "What's new",
     "translation": "มีอะไรใหม่"
+  },
+  "_m-8a0": {
+    "message": "When you are done, press <0>{0}</0> to shuffle your deck.",
+    "comments": [
+      "{0} is the Shuffle button's label"
+    ],
+    "translation": "เมื่อเสร็จแล้ว กด <0>{0}</0> เพื่อสับเด็คของคุณ"
   },
   "evSBlD": {
     "message": "Win",

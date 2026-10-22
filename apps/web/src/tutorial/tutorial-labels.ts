@@ -10,6 +10,8 @@ export const CONTROL_LABELS = {
   actions: msg({ message: 'Actions', context: "a card's actions" }),
   attack: msg({ message: 'Attack', context: 'declare an attack' }),
   commands: msg({ message: 'Commands', context: 'the command palette' }),
+  damageCounter: msg`Damage counter`,
+  deck: msg({ message: 'Deck', context: 'the deck screen' }),
   flip: msg({ message: 'Flip', context: 'turn the table around' }),
   keyboardShortcuts: msg`Keyboard shortcuts`,
   log: msg`Log`,

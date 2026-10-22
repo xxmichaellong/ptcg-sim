@@ -297,7 +297,11 @@ export const resolveDecklistRow = (
   // same name in the other game is another card.
   const pocket =
     row.setCode !== undefined && isUnambiguousPocketCode(row.setCode);
-  const type = pocket ? undefined : basicEnergyTypeOf(name);
+  // Its name as written first, while a symbol keeps its braces ("{R}
+  // Energy"), then folded.
+  const type = pocket
+    ? undefined
+    : (basicEnergyTypeOf(row.name) ?? basicEnergyTypeOf(name));
   if (type) {
     const basics = (index.byName.get(`${type} energy`) ?? []).filter(
       (card) => card.energyType === 'Basic' && !card.set.pocket

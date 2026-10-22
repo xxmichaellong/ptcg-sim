@@ -1,5 +1,7 @@
 // @vitest-environment happy-dom
 
+import { i18n } from '@lingui/core';
+import { msg } from '@lingui/core/macro';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -102,6 +104,21 @@ describe('TableWelcome', () => {
     expect(onPlayOnline).toHaveBeenCalledOnce();
     await act(async () => button('[aria-label="Hide welcome"]').click());
     expect(onDismiss).toHaveBeenCalledOnce();
+  });
+
+  it('names Set up as the rail’s button names itself, in any language', async () => {
+    const locale = i18n.locale;
+    const setUp = msg({ message: 'Set up', context: 'set up the game' });
+    i18n.load('xx', { [setUp.id!]: 'Vorbereiten' });
+    i18n.activate('xx');
+    try {
+      await render({});
+      expect(
+        host.querySelector('.table-welcome__steps')?.textContent
+      ).toContain('Vorbereiten');
+    } finally {
+      i18n.activate(locale);
+    }
   });
 
   it('leaves out what its table cannot do', async () => {

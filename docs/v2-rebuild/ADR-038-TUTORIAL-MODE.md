@@ -79,6 +79,12 @@ player sees them in their own language (ADR-034, PX-061). The room shows
 definitions under aliases, so a lesson knows a card by its name, which the
 practice table keeps unique.
 
+A lesson names a control by the control's own label, the same message
+and context (`tutorial-labels.ts`), so the word matches the button in
+every language. The label is always the thing pressed ("Press Shuffle to
+shuffle your deck"), never the sentence's verb, which many languages
+would conjugate; a translator comment says which button it is.
+
 ### 3. A step is done when the table shows it
 
 Each step says one thing to do in a line or two. Its check is a predicate

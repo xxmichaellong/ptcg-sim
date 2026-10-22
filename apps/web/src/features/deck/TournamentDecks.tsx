@@ -514,7 +514,8 @@ export const TournamentsShelf = ({
           <button
             type="button"
             className="ds-button ds-button--ghost deck-show-more"
-            disabled={paged.loadingMore}
+            // Not disabled: a disabled button drops the focus to the page.
+            aria-disabled={paged.loadingMore || undefined}
             onClick={paged.more}
           >
             {paged.loadingMore ? (
@@ -857,7 +858,8 @@ export const ArchetypeView = ({
               <button
                 type="button"
                 className="ds-button ds-button--ghost deck-show-more"
-                disabled={paged.loadingMore}
+                // Not disabled: a disabled button drops the focus to the page.
+                aria-disabled={paged.loadingMore || undefined}
                 onClick={paged.more}
               >
                 <Trans context="show more lists">More</Trans>

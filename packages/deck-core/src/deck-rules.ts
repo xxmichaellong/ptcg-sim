@@ -156,10 +156,11 @@ const ENERGY_BY_SYMBOL: Readonly<Record<string, BasicEnergyType>> = {
 };
 
 // By type ("Basic Fire Energy", "Dark Energy") or by its symbol, braced as
-// Pokémon TCG Live writes it ("Basic {R} Energy") or bare once folded;
+// Pokémon TCG Live writes it ("Basic {R} Energy") or bare once folded
+// ("basic r energy": never a bare "R Energy", a Special Energy);
 // PTCGO's lists add another "Energy", and some exports a "null".
 const BASIC_ENERGY_NAME =
-  /^(?:basic\s+)?(?:\{([grwlpfdmy])\}|([grwlpfdmy])|(grass|fire|water|lightning|psychic|fighting|darkness|dark|metal|fairy))\s+energy(?:\s+energy)?(?:\s+null)?$/iu;
+  /^(?:(?:basic\s+)?\{([grwlpfdmy])\}|basic\s+([grwlpfdmy])|(?:basic\s+)?(grass|fire|water|lightning|psychic|fighting|darkness|dark|metal|fairy))\s+energy(?:\s+energy)?(?:\s+null)?$/iu;
 
 /**
  * The basic Energy a card's name says it is, however a list writes it; the

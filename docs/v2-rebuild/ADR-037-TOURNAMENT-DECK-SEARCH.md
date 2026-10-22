@@ -98,7 +98,8 @@ from RK9.
      finish with a list, best first, 50 a page, from the last `since` days
      (90 unless asked, at most 3,650). A page starts after the last finish
      of the one before (its cursor), so events indexed meanwhile neither
-     repeat nor drop out between pages.
+     repeat nor drop out between pages. A cursor the server refuses (one
+     from before an update) starts the list over from its first page.
    - `GET /v2/tournaments?q=&format=&minPlayers=&cursor=`: newest first, 50
      a page, by name. `hasLists` is null until the standings are read, and
      `organizer` is null (naming it would cost a request per event).
