@@ -166,6 +166,24 @@ describe('placing the rail', () => {
     expect(shown(markup)).toBe(7);
   });
 
+  it('keeps its side as the game moves on, whatever the stage shows', () => {
+    // Room past the Stadium for five buttons, before it for eleven: set-up's
+    // one action would fit past it, but a turn's would not.
+    const setUp = render({
+      end: 920,
+      actions: [action('setup')],
+      more: [{ id: 'reset', label: 'reset', onSelect: vi.fn() }],
+    });
+    expect(setUp).toContain('data-align="start"');
+    expect(render({ end: 920 })).toContain('data-align="start"');
+  });
+
+  it('starts before the Stadium past what sits at the seam’s left', () => {
+    const markup = render({ end: 920, start: 120 });
+    expect(markup).toContain('data-align="start"');
+    expect(markup).toMatch(/left:\s*120px/u);
+  });
+
   it('stays before a Stadium at the right edge', () => {
     const markup = render({
       width: 400,

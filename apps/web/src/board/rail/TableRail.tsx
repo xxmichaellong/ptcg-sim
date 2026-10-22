@@ -117,6 +117,12 @@ export interface TableRailProps {
    * and the piles beside it. Absent, the table's edge.
    */
   readonly end?: number;
+  /**
+   * Where the actions may start before the Stadium: past something at the
+   * seam's left end (the near half's `+` on a small table). Absent, the
+   * anchor.
+   */
+  readonly start?: number;
   readonly actions: readonly RailAction[];
   /** The rarer actions, behind More. */
   readonly more?: readonly ActionMenuEntry[];
@@ -136,11 +142,22 @@ const GAP_PX = 6;
 /**
  * The actions sit past the Stadium, at the seam's right end, where a
  * right hand and the player's piles are (ADR-036), when at least this many
- * buttons fit there and none goes behind More that would show before it;
- * otherwise (an upright phone, whose Stadium sits at the right edge) before
- * it.
+ * buttons fit there and none of a full turn's goes behind More that would
+ * show before it; otherwise (an upright phone, whose Stadium sits at the
+ * right edge) before it.
  */
 const RIGHT_END_MIN_BUTTONS = 4;
+/**
+ * The most buttons a turn's rail holds: Turn, Attack, Pass, Coin, Undo,
+ * Switch side and More. The side is chosen for them, not for what the
+ * stage shows now, so the actions stay put as the game moves on (set-up,
+ * play, a reconnect).
+ */
+const FULL_RAIL_BUTTONS = 7;
+
+/** How many buttons fit in `room`. */
+const slotsIn = (room: number, buttonPx: number): number =>
+  Math.max(0, Math.floor((room + GAP_PX) / (buttonPx + GAP_PX)));
 
 /** A menu is worth opening for three choices or more; fewer sit out. */
 const MENU_MINIMUM = 3;
@@ -191,7 +208,7 @@ export const fitRailActions = (
       ]
     : actions;
   const extra = promotable ? [] : (more ?? []);
-  const slots = Math.max(0, Math.floor((room + GAP_PX) / (buttonPx + GAP_PX)));
+  const slots = slotsIn(room, buttonPx);
   const needed = all.length + (extra.length > 0 ? 1 : 0);
   if (needed <= slots) return { shown: all, more: extra };
   const keep = Math.max(0, slots - 1);
@@ -220,19 +237,21 @@ export const fitRailActions = (
 
 /**
  * Where the rail's actions go and which of them show: past the Stadium at
- * the seam's right end, or before it where that end has too little room or
- * would hide an action the room before the Stadium shows.
+ * the seam's right end, or before it (from `start`, past anything at the
+ * seam's left) where that end has too little room, or would hide a full
+ * turn's action the room before the Stadium shows.
  */
 export const placeRailActions = ({
   anchor,
   width,
   avoid,
   end,
+  start,
   actions,
   more,
 }: Pick<
   TableRailProps,
-  'anchor' | 'width' | 'avoid' | 'end' | 'actions' | 'more'
+  'anchor' | 'width' | 'avoid' | 'end' | 'start' | 'actions' | 'more'
 >): {
   readonly atRight: boolean;
   readonly start: number;
@@ -246,19 +265,28 @@ export const placeRailActions = ({
     avoid.x > anchor.x;
   const rightEnd = Math.min(end ?? width - EDGE_PX, width - EDGE_PX);
   const rightStart = straddles ? avoid.x + avoid.width + EDGE_PX : anchor.x;
+  const leftStart = Math.max(anchor.x, start ?? anchor.x);
   const leftEnd = straddles ? avoid.x - EDGE_PX : rightEnd;
   const rightWidth = Math.max(0, rightEnd - rightStart);
-  const leftWidth = Math.max(0, leftEnd - anchor.x);
-  const right = fitRailActions(actions, more, rightWidth, anchor.height);
-  const left = fitRailActions(actions, more, leftWidth, anchor.height);
+  const leftWidth = Math.max(0, leftEnd - leftStart);
+  const rightSlots = slotsIn(rightWidth, anchor.height);
   const atRight =
-    rightEnd - rightStart >=
-      RIGHT_END_MIN_BUTTONS * anchor.height +
-        (RIGHT_END_MIN_BUTTONS - 1) * GAP_PX &&
-    right.shown.length >= left.shown.length;
+    rightSlots >= RIGHT_END_MIN_BUTTONS &&
+    rightSlots >=
+      Math.min(slotsIn(leftWidth, anchor.height), FULL_RAIL_BUTTONS);
   return atRight
-    ? { atRight, start: rightStart, width: rightWidth, fitted: right }
-    : { atRight, start: anchor.x, width: leftWidth, fitted: left };
+    ? {
+        atRight,
+        start: rightStart,
+        width: rightWidth,
+        fitted: fitRailActions(actions, more, rightWidth, anchor.height),
+      }
+    : {
+        atRight,
+        start: leftStart,
+        width: leftWidth,
+        fitted: fitRailActions(actions, more, leftWidth, anchor.height),
+      };
 };
 
 /**
@@ -273,6 +301,7 @@ export const TableRail = memo(function TableRail({
   width,
   avoid,
   end,
+  start,
   actions,
   more,
   covered = false,
@@ -284,7 +313,7 @@ export const TableRail = memo(function TableRail({
     start: actionsStart,
     width: actionsWidth,
     fitted,
-  } = placeRailActions({ anchor, width, avoid, end, actions, more });
+  } = placeRailActions({ anchor, width, avoid, end, start, actions, more });
   return (
     <div
       className="ptcgsim-table-rail"

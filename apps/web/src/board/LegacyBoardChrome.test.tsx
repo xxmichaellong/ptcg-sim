@@ -8,6 +8,7 @@ import {
   DEFAULT_TABLE_VERTICAL_LAYOUT,
   flipBoardLayoutState,
   TABLE_LAYOUT_GEOMETRY_VERSION,
+  tableVerticalLayout,
   type BoardLayoutState,
 } from '@ptcgsim/renderer-contract';
 import { asPlayerId } from '@ptcgsim/game-core';
@@ -458,6 +459,64 @@ describe('LegacyBoardChrome', () => {
     // No More without rarer actions, and no app bar unless a route gives one.
     expect(host.querySelector('#moreActionsButton')).toBeNull();
     expect(host.querySelectorAll('.ptcgsim-app-bar-slot')).toHaveLength(0);
+
+    await act(async () => root.unmount());
+    host.remove();
+  });
+
+  it('keeps the actions clear of the near half’s `+` where it reaches into the seam', async () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+    // A small phone held sideways, the near half at its smallest.
+    const layout = createTableLayoutSnapshot({
+      ...layoutState(),
+      geometryVersion: TABLE_LAYOUT_GEOMETRY_VERSION,
+      viewport: { width: 568, height: 320, devicePixelRatio: 1 },
+      shellMode: 'fullscreen',
+      vertical: tableVerticalLayout(0.34),
+      seamBandPx: 42,
+      hideEmptyLostZone: true,
+      appBarPx: { width: 3 * 36 + 2 * 4 + 6, height: 42 },
+    });
+    const anchor = layout.shared.boardControlsAnchor;
+    const extras = layout.players.find(
+      (frame) => frame.physicalSide === 'lower'
+    )?.extras?.control;
+    expect(extras).toBeDefined();
+    expect(extras!.y).toBeLessThan(anchor.y + anchor.height);
+    const action = (id: string) => ({
+      id,
+      label: id,
+      icon: PlayIcon,
+      onSelect: vi.fn(),
+    });
+    await act(async () =>
+      root.render(
+        <LegacyBoardChrome
+          layout={layout}
+          localPlayerId={asPlayerId('spike-blue')}
+          players={players}
+          darkMode={false}
+          actions={{ toggleOncePerGame: vi.fn() }}
+          rail={{
+            actions: ['turn', 'attack', 'pass', 'coin', 'undo', 'switch'].map(
+              action
+            ),
+            more: ['a', 'b', 'c'].map((id) => ({
+              id,
+              label: id,
+              onSelect: vi.fn(),
+            })),
+          }}
+        />
+      )
+    );
+    // Wherever the actions go, they never start over the `+`.
+    const actions = host.querySelector<HTMLElement>('#boardButtonContainer')!;
+    expect(px(actions.style.left)).toBeGreaterThanOrEqual(
+      extras!.x + extras!.width
+    );
 
     await act(async () => root.unmount());
     host.remove();

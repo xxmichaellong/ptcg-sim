@@ -590,6 +590,24 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
     screenX(layout.playAreaBounds.width) - RAIL_EDGE_PX,
     ...seamPiles.map((x) => x - RAIL_EDGE_PX)
   );
+  // On a small table the near half's `+` for the optional pieces reaches
+  // into the seam before the Stadium: actions placed there start past it.
+  const extras = bottomFrame?.extras?.control;
+  const extrasTop = extras && depth ? depth.point(extras).y : extras?.y;
+  const extrasBottom =
+    extras && depth
+      ? depth.point({ x: extras.x, y: extras.y + extras.height }).y
+      : extras && extras.y + extras.height;
+  const railStart =
+    extras &&
+    extrasTop !== undefined &&
+    extrasBottom !== undefined &&
+    extrasTop < anchor.y + anchor.height &&
+    extrasBottom > anchor.y &&
+    screenX(extras.x) < stadium.x
+      ? Math.max(screenX(extras.x + extras.width), screenX(extras.x)) +
+        RAIL_EDGE_PX
+      : undefined;
 
   return (
     <div
@@ -668,6 +686,7 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
           width={layout.playAreaBounds.width}
           avoid={stadium}
           end={railEnd}
+          {...(railStart === undefined ? {} : { start: railStart })}
           actions={rail.actions}
           {...(rail.more ? { more: rail.more } : {})}
           covered={coveredByPopup}
