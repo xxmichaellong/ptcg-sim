@@ -532,6 +532,11 @@ export interface DeckHomeProps {
   /** What was last typed in the finder, kept across views. */
   readonly finderText: string;
   readonly onFinderTextChange: (text: string) => void;
+  /**
+   * Kept out of sight under a tournament or a deck's lists, so the shelf's
+   * filter and pages and the results are as they were on the way back.
+   */
+  readonly hidden?: boolean;
 }
 
 const LIBRARY_FILTER_AT = 9;
@@ -562,6 +567,7 @@ export const DeckHome = ({
   onOpenArchetype,
   finderText,
   onFinderTextChange,
+  hidden = false,
 }: DeckHomeProps) => {
   const { t } = useLingui();
   const catalogState = useCardCatalog(catalog, open);
@@ -689,7 +695,7 @@ export const DeckHome = ({
   };
 
   return (
-    <div className="deck-home">
+    <div className="deck-home" hidden={hidden}>
       <section
         className="deck-finder"
         aria-label={t`Find a deck`}

@@ -21,33 +21,48 @@ vi.mock('./tournament-decks-hooks.js', async (original) => ({
   useDeckSearch: () => ({ status: 'idle' }),
   useRemote: () => ({ state: { status: 'loading' }, retry: () => undefined }),
 }));
-// The shelf as one event, opened by its button.
-vi.mock('./TournamentDecks.js', async (original) => ({
-  ...(await original<typeof import('./TournamentDecks.js')>()),
-  TournamentsShelf: ({
-    onOpen,
-  }: {
-    readonly onOpen: (tournament: TournamentSummary) => void;
-  }) => (
-    <button
-      type="button"
-      data-open-tournament="cup"
-      onClick={() =>
-        onOpen({
-          id: 'cup',
-          name: 'League Cup',
-          date: '2026-10-21T19:00:00.000Z',
-          format: 'STANDARD',
-          players: 40,
-          organizer: null,
-          hasLists: true,
-        })
-      }
-    >
-      League Cup
-    </button>
-  ),
-}));
+// The shelf as one event, opened by its button, and pages it has loaded.
+vi.mock('./TournamentDecks.js', async (original) => {
+  const { useState } = await import('react');
+  return {
+    ...(await original<typeof import('./TournamentDecks.js')>()),
+    TournamentsShelf: ({
+      onOpen,
+    }: {
+      readonly onOpen: (tournament: TournamentSummary) => void;
+    }) => {
+      const [pages, setPages] = useState(1);
+      return (
+        <>
+          <button
+            type="button"
+            data-open-tournament="cup"
+            onClick={() =>
+              onOpen({
+                id: 'cup',
+                name: 'League Cup',
+                date: '2026-10-21T19:00:00.000Z',
+                format: 'STANDARD',
+                players: 40,
+                organizer: null,
+                hasLists: true,
+              })
+            }
+          >
+            League Cup
+          </button>
+          <button
+            type="button"
+            data-shelf-more={pages}
+            onClick={() => setPages((count) => count + 1)}
+          >
+            More
+          </button>
+        </>
+      );
+    },
+  };
+});
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -180,5 +195,24 @@ describe('the deck screen from the keyboard', () => {
     // From the decks, Esc leaves the screen.
     await press('Escape');
     expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it('comes back from a tournament to the shelf as it was left', async () => {
+    await render();
+    const more = () =>
+      host.querySelector<HTMLButtonElement>('[data-shelf-more]')!;
+    await act(async () => more().click());
+    await act(async () => more().click());
+    expect(more().dataset.shelfMore).toBe('3');
+    await act(async () =>
+      host
+        .querySelector<HTMLButtonElement>('[data-open-tournament="cup"]')!
+        .click()
+    );
+    await act(async () =>
+      host.querySelector<HTMLButtonElement>('#deckSubviewBackButton')!.click()
+    );
+    // Its pages still loaded, as the player left them.
+    expect(more().dataset.shelfMore).toBe('3');
   });
 });

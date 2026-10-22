@@ -150,6 +150,14 @@ const COMPACT_CORNER_MARKER_PX = 80;
 const HAND_COUNT_SLOT_PX = 44;
 
 /**
+ * The least a far hand keeps past the app bar on an upright screen; where
+ * the markers' corner would leave it less, they take a row of their own
+ * below the bar instead (`MARKER_ROW_PX` deep: 24px controls, 6px about).
+ */
+const MIN_FAR_HAND_PX = 128;
+const MARKER_ROW_PX = 36;
+
+/**
  * Across the table the corner beside the hand lies under the app bar
  * (ADR-036). Markers that found no place beside the prizes keep a corner
  * of their own past the bar, as deep as the hand strip, and the hand
@@ -524,12 +532,29 @@ const layoutHalfPortrait = (
   const gap = Math.max(6, Math.min(12, height * 0.02));
   const rowsShare = proportions.active + 1 + proportions.pile;
   const free = Math.max(0, height - margin - 3 * gap);
+  // Across the table the hand starts past the app bar. Its markers, in a
+  // corner past the bar, would leave it too little on a narrow screen:
+  // they sit below the bar instead, in a row the strip makes room for.
+  const pastBar = options.handStartReservePx ?? 0;
+  const markerCount = Math.max(0, Math.min(2, options.markerCount ?? 0));
+  const markersBelowBar =
+    pastBar > 0 &&
+    markerCount > 0 &&
+    width -
+      edge -
+      HAND_COUNT_SLOT_PX -
+      pastBar -
+      Math.max(
+        TABLE_CONTROL_CORNER_PX,
+        16 + markerCount * COMPACT_CORNER_MARKER_PX
+      ) <
+      MIN_FAR_HAND_PX;
   // A portrait hand strip is at least tall enough for the corner's
   // controls side by side, so the pile row above stays clear of them.
   // At least as deep as the app bar's corner, across the table.
   const minStrip = Math.max(
     TABLE_COMPACT_CORNER_HEIGHT_PX,
-    options.minHandStripPx ?? 0
+    (options.minHandStripPx ?? 0) + (markersBelowBar ? MARKER_ROW_PX : 0)
   );
   let bench = free / (rowsShare + proportions.handStrip);
   if (bench * proportions.handStrip < minStrip) {
@@ -617,22 +642,28 @@ const layoutHalfPortrait = (
     width: pileWidth,
     height: pile,
   });
-  const pastBar = options.handStartReservePx ?? 0;
-  const corner = cornerPastBar(
-    pastBar,
-    Math.max(0, Math.min(2, options.markerCount ?? 0)),
-    handTop,
-    handStrip
-  );
+  const corner: Rect | undefined = markersBelowBar
+    ? {
+        x: edge,
+        y: handTop,
+        width: Math.min(
+          width - 2 * edge,
+          16 + markerCount * COMPACT_CORNER_MARKER_PX
+        ),
+        height: MARKER_ROW_PX,
+      }
+    : cornerPastBar(pastBar, markerCount, handTop, handStrip);
   const handStart = Math.max(
     TABLE_CONTROL_CORNER_PX,
-    corner ? corner.x + corner.width : pastBar
+    corner && !markersBelowBar ? corner.x + corner.width : pastBar
   );
+  // Below the bar, the markers' row lies between the hand and the piles.
+  const handInset = markersBelowBar ? MARKER_ROW_PX : 0;
   const handRect: Rect = {
     x: handStart,
-    y: handTop,
+    y: handTop + handInset,
     width: Math.max(0, width - edge - HAND_COUNT_SLOT_PX - handStart),
-    height: handStrip,
+    height: handStrip - handInset,
   };
   return {
     regions: [

@@ -593,11 +593,11 @@ export const DeckScreen = ({
     return () => document.removeEventListener('paste', onPaste);
   }, [open, runImport, viewKind]);
 
-  // A tournament or a deck's lists open with focus on their heading, and
-  // close back to the decks where they were: scrolled as they were, focus
-  // on what opened them once the decks have drawn it again (the finder
-  // until then). Focus never falls out of the screen, where Esc and the
-  // keys would go nowhere.
+  // A tournament or a deck's lists open with focus on their heading, over
+  // the decks, which stay as they were underneath (DeckHome `hidden`), and
+  // close back to them: scrolled as they were, focus on what opened them
+  // (the finder until it shows). Focus never falls out of the screen, where
+  // Esc and the keys would go nowhere.
   const returnTo = useRef<
     { readonly opener: string; readonly scrollTop: number } | undefined
   >(undefined);
@@ -645,8 +645,9 @@ export const DeckScreen = ({
     const finder = root.querySelector<HTMLTextAreaElement>('#deckPasteInput');
     if (lost()) finder?.focus({ preventScroll: true });
     const held = finder?.value;
-    // The shelf and the results are fetched again: wait a few seconds for
-    // the opener, while the player hasn't moved on from the finder.
+    // The opener is normally there at once; a shelf or results that redrew
+    // meanwhile get a few seconds, while the player hasn't moved on from the
+    // finder.
     const until = performance.now() + 3_000;
     let frame = 0;
     const find = (): void => {
@@ -1023,68 +1024,72 @@ export const DeckScreen = ({
             onBack={leaveEditor}
             onUseOnSeat={() => chooseSaved(editingDeck)}
           />
-        ) : view.kind === 'tournament' ? (
-          <TournamentView
-            key={view.tournament.id}
-            tournament={view.tournament}
-            pending={pendingList}
-            onBack={backToDecks}
-            onLoad={loadTournamentList}
-          />
-        ) : view.kind === 'archetype' ? (
-          <ArchetypeView
-            key={view.archetype.id}
-            archetype={view.archetype}
-            pending={pendingList}
-            onBack={backToDecks}
-            onLoad={loadTournamentList}
-          />
         ) : (
-          <DeckHome
-            library={decks}
-            libraryState={libraryState}
-            catalog={catalog}
-            samples={samples}
-            seats={seats}
-            importing={importing}
-            open={open}
-            onChoose={chooseSaved}
-            onEdit={(deck) => setView({ kind: 'edit', deckId: deck.id })}
-            onNewDeck={() => newDeck()}
-            onImportText={(text) => runImport(text, { kind: 'paste' })}
-            onImportClipboard={importClipboard}
-            onOpenFile={() => fileInput.current?.click()}
-            onTryList={(name, text, kind) =>
-              runImport(text, { kind, label: name }, { save: false, name })
-            }
-            onSurprise={surprise}
-            onEditList={(name, text, kind) =>
-              runImport(
-                text,
-                { kind, label: name },
-                { save: true, name, edit: true }
-              )
-            }
-            onSaveSeatDeck={(slotTarget) => saveSeatDeck(slotTarget, false)}
-            onEditSeatDeck={(slotTarget) => {
-              const deckId =
-                store.getSnapshot().slots[slotTarget].label?.deckId;
-              const saved = deckId ? library.get(deckId) : undefined;
-              if (saved) setView({ kind: 'edit', deckId: saved.id });
-              else saveSeatDeck(slotTarget, true);
-            }}
-            onClearSeat={(slotTarget) => {
-              endImportFor(slotTarget);
-              store.clearDeck(slotTarget);
-              rememberSeatDeck(slotTarget, undefined);
-            }}
-            onLoadTournamentList={loadTournamentList}
-            pendingList={pendingList}
-            onOpenTournament={openTournament}
-            onOpenArchetype={openArchetype}
-            finderText={finderText}
-            onFinderTextChange={setFinderText}
-          />
+          <>
+            {view.kind === 'tournament' ? (
+              <TournamentView
+                key={view.tournament.id}
+                tournament={view.tournament}
+                pending={pendingList}
+                onBack={backToDecks}
+                onLoad={loadTournamentList}
+              />
+            ) : view.kind === 'archetype' ? (
+              <ArchetypeView
+                key={view.archetype.id}
+                archetype={view.archetype}
+                pending={pendingList}
+                onBack={backToDecks}
+                onLoad={loadTournamentList}
+              />
+            ) : null}
+            <DeckHome
+              library={decks}
+              libraryState={libraryState}
+              catalog={catalog}
+              samples={samples}
+              seats={seats}
+              importing={importing}
+              open={open}
+              onChoose={chooseSaved}
+              onEdit={(deck) => setView({ kind: 'edit', deckId: deck.id })}
+              onNewDeck={() => newDeck()}
+              onImportText={(text) => runImport(text, { kind: 'paste' })}
+              onImportClipboard={importClipboard}
+              onOpenFile={() => fileInput.current?.click()}
+              onTryList={(name, text, kind) =>
+                runImport(text, { kind, label: name }, { save: false, name })
+              }
+              onSurprise={surprise}
+              onEditList={(name, text, kind) =>
+                runImport(
+                  text,
+                  { kind, label: name },
+                  { save: true, name, edit: true }
+                )
+              }
+              onSaveSeatDeck={(slotTarget) => saveSeatDeck(slotTarget, false)}
+              onEditSeatDeck={(slotTarget) => {
+                const deckId =
+                  store.getSnapshot().slots[slotTarget].label?.deckId;
+                const saved = deckId ? library.get(deckId) : undefined;
+                if (saved) setView({ kind: 'edit', deckId: saved.id });
+                else saveSeatDeck(slotTarget, true);
+              }}
+              onClearSeat={(slotTarget) => {
+                endImportFor(slotTarget);
+                store.clearDeck(slotTarget);
+                rememberSeatDeck(slotTarget, undefined);
+              }}
+              onLoadTournamentList={loadTournamentList}
+              pendingList={pendingList}
+              onOpenTournament={openTournament}
+              onOpenArchetype={openArchetype}
+              finderText={finderText}
+              onFinderTextChange={setFinderText}
+              hidden={subview}
+            />
+          </>
         )}
       </main>
       {dragging ? (

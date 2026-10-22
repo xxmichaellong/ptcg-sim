@@ -329,6 +329,26 @@ test.describe('the far markers on a phone', () => {
     await showMarkers(page, 'both');
     await openTable(page);
     await expectFarMarkersClear(page, '390x844');
+    // The far hand keeps room to hold its cards apart, and the markers sit
+    // on no other zone of theirs either.
+    const hand = await box(
+      page.locator(
+        '.ptcgsim-zone[data-zone-kind="hand"][data-zone-side="opponent"]'
+      )
+    );
+    expect(hand.width).toBeGreaterThanOrEqual(128);
+    const zones = await page
+      .locator('.ptcgsim-zone[data-zone-side="opponent"]')
+      .all();
+    for (const marker of await farMarkers(page).all()) {
+      const rect = await box(marker);
+      for (const zone of zones) {
+        expect(overlaps(rect, await box(zone))).toBe(false);
+      }
+    }
+    await page.screenshot({
+      path: test.info().outputPath('far-markers-390x844.png'),
+    });
   });
 });
 

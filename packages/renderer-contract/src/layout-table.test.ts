@@ -203,13 +203,25 @@ describe('table layout: the app bar corner (ADR-036)', () => {
                 `${at} ${other.kind}`
               ).toBe(false);
             }
-            if (far.extras?.corner) {
+            // However the markers sit, the far hand keeps room to hold
+            // its cards apart.
+            expect(hand.width, at).toBeGreaterThanOrEqual(
+              Math.min(128, width / 3)
+            );
+            const corner = far.extras?.corner;
+            if (corner && Math.abs(corner.y - hand.y) < 1e-6) {
               // The corner runs the hand strip's depth, past the bar, and
               // the hand starts after it.
-              expect(far.extras.corner.y).toBeCloseTo(hand.y, 6);
-              expect(far.extras.corner.height).toBeCloseTo(hand.height, 6);
-              expect(hand.x + hand.width).toBeLessThanOrEqual(
-                far.extras.corner.x + 0.01
+              expect(corner.height).toBeCloseTo(hand.height, 6);
+              expect(hand.x + hand.width).toBeLessThanOrEqual(corner.x + 0.01);
+            } else if (corner) {
+              // Or, on a narrow upright screen, a row of its own below the
+              // bar, the hand at the edge beside the bar.
+              expect(corner.y, at).toBeGreaterThanOrEqual(
+                barRect.y + barRect.height
+              );
+              expect(corner.y, at).toBeGreaterThanOrEqual(
+                hand.y + hand.height - 0.01
               );
             }
           }
