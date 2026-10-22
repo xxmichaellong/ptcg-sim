@@ -56,10 +56,17 @@ const authorityPath = (request: Request): string | undefined => {
     : undefined;
 };
 
+// A loaded CI runner has frozen the page for about ten seconds just after
+// the lobby loaded (2026-10-22, run 39733761129: no request and no locator
+// poll answered for 9.5 s; the same load takes about a second here at 8x
+// CPU throttle). The table gets 30 s, the test room for three such loads.
+const TABLE_TIMEOUT_MS = 30_000;
+
 test('built SPA and room authority share one production-like Worker origin', async ({
   page,
   request,
 }) => {
+  test.setTimeout(150_000);
   const errors = collectRuntimeErrors(page);
   const authorityRequests: string[] = [];
   page.on('request', (browserRequest) => {
@@ -81,7 +88,9 @@ test('built SPA and room authority share one production-like Worker origin', asy
   await expect(
     page.getByRole('heading', { name: 'Renderer parity spike' })
   ).toHaveCount(0);
-  await expect(page.locator('.ptcgsim-board-surface')).toHaveCount(1);
+  await expect(page.locator('.ptcgsim-board-surface')).toHaveCount(1, {
+    timeout: TABLE_TIMEOUT_MS,
+  });
   await expect(page.locator('canvas')).toHaveCount(0);
   await expect(page.locator('[data-app-route^="dev-room"]')).toHaveCount(0);
   await expect(page.locator('[data-app-route="remote-room"]')).toHaveCount(0);
@@ -210,7 +219,9 @@ test('built SPA and room authority share one production-like Worker origin', asy
     );
     expect(spaResponse?.status()).toBe(200);
     expect(spaResponse?.headers()['content-type']).toContain('text/html');
-    await expect(page.locator('.ptcgsim-board-surface')).toHaveCount(1);
+    await expect(page.locator('.ptcgsim-board-surface')).toHaveCount(1, {
+      timeout: TABLE_TIMEOUT_MS,
+    });
     await expect(page.locator('canvas')).toHaveCount(0);
     expect(
       await page.evaluate(() => ({
@@ -239,7 +250,9 @@ test('built SPA and room authority share one production-like Worker origin', asy
   }
 
   await page.goto('/?renderer-spike=1&renderer=dom');
-  await expect(page.locator('.ptcgsim-board-surface')).toHaveCount(1);
+  await expect(page.locator('.ptcgsim-board-surface')).toHaveCount(1, {
+    timeout: TABLE_TIMEOUT_MS,
+  });
   const routeProof = await page.evaluate(async () => {
     const creation = await fetch('/v2/rooms', {
       method: 'POST',

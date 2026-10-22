@@ -1,5 +1,6 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
+import { ownRoomBudget } from './support/room-budget.js';
 import {
   closeDeck,
   closeSheet,
@@ -17,6 +18,12 @@ import {
  */
 
 type Point = { readonly x: number; readonly y: number };
+
+// Each tutorial visit makes a practice room beside the Solo one: every test
+// here has its own room budget, whatever ran before it.
+test.beforeEach(async ({ context }) => {
+  await ownRoomBudget(context);
+});
 
 const coach = (page: Page) =>
   page.locator('.tutorial-coach[data-tutorial-step]');
