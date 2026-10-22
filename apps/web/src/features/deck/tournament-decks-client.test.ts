@@ -13,6 +13,7 @@ import {
   fetchTournaments,
   searchText,
   TournamentDataBusyError,
+  TournamentDataNotFoundError,
   TournamentDataRefusedError,
 } from './tournament-decks-client.js';
 
@@ -144,6 +145,11 @@ describe('tournament deck search', () => {
       fetch: respond({ error: 'oops' }, 500),
     }).catch((caught: unknown) => caught);
     expect(failed).not.toBeInstanceOf(TournamentDataRefusedError);
+    const gone = await fetchTournamentList(tournament.id, 'someone', {
+      fetch: respond({ error: 'not found' }, 404),
+    }).catch((caught: unknown) => caught);
+    expect(gone).toBeInstanceOf(TournamentDataNotFoundError);
+    expect(failed).not.toBeInstanceOf(TournamentDataNotFoundError);
     // Asked to, it skips the browser's copy.
     const fresh = respond({ tournaments: [], nextCursor: null });
     await fetchTournaments({ fetch: fresh, cache: 'no-cache' });

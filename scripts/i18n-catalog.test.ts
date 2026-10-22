@@ -237,4 +237,24 @@ describe('the translate script', () => {
     });
     assert.throws(() => parseReply('nothing'), /no JSON object/u);
   });
+
+  it('keeps out a note its glossary gives with a term', () => {
+    let notes = 0;
+    for (const [locale, guide] of Object.entries(LANGUAGE_GUIDES))
+      for (const [english, term] of Object.entries(guide.terms)) {
+        if (!term.includes('(')) continue;
+        notes += 1;
+        assert.equal(
+          translationProblem(`Your ${english}`, `${term} 1`, locale),
+          'kept a glossary note',
+          `${locale} ${english}`
+        );
+      }
+    assert.ok(notes > 0);
+    assert.equal(
+      translationProblem('Active', 'Actief', 'nl'),
+      undefined,
+      'the short label itself'
+    );
+  });
 });

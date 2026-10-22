@@ -50,6 +50,7 @@ import type { PopularDecklistSource } from './popular-decklists.js';
 import {
   fetchTournamentList,
   TournamentDataBusyError,
+  TournamentDataNotFoundError,
   type TournamentArchetype,
   type TournamentSummary,
 } from './tournament-decks-client.js';
@@ -218,7 +219,10 @@ export const DeckScreen = ({
             format: saved.format,
           });
         } else {
-          store.replaceDeck(slotTarget, slot.deck, { name: slot.label.name });
+          store.replaceDeck(slotTarget, slot.deck, {
+            name: slot.label.name,
+            ...(slot.label.format ? { format: slot.label.format } : {}),
+          });
         }
       }
     },
@@ -519,12 +523,18 @@ export const DeckScreen = ({
         .catch((error: unknown) => {
           endImport(controller);
           if (controller.signal.aborted) return;
+          // A list that's gone (its event dropped from the index) says no
+          // more than that: the search itself is up.
           toast({
             title: t`Couldn't load that list`,
-            body:
-              error instanceof TournamentDataBusyError
-                ? t`Busy for a moment — try again shortly`
-                : t`Deck search is offline`,
+            ...(error instanceof TournamentDataNotFoundError
+              ? {}
+              : {
+                  body:
+                    error instanceof TournamentDataBusyError
+                      ? t`Busy for a moment — try again shortly`
+                      : t`Deck search is offline`,
+                }),
             tone: 'warning',
           });
         })

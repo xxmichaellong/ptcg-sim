@@ -51,14 +51,14 @@
     "comments": [
       "Log line. {actor} is a player's name, {card} the card attached; {source} is the zone it came from and {target} where it went."
     ],
-    "translation": "{actor} anexou {card} de {source, select, hand {mão} prizes {cartas de Prêmio} discard {pilha de descarte} board {campo} stadium {Estádio} active {Campo Ativo} bench {Banco} lostZone {Zona Perdida} attachmentResolution {cartas anexadas} other {baralho}} para {target, select, hand {mão} prizes {cartas de Prêmio} discard {pilha de descarte} board {campo} stadium {Estádio} active {Campo Ativo} bench {Banco} lostZone {Zona Perdida} attachmentResolution {cartas anexadas} other {baralho}}"
+    "translation": "{actor} anexou {card} de {source, select, hand {mão} prizes {cartas de Prêmio} discard {pilha de descarte} board {tabuleiro} stadium {Estádio} active {Campo Ativo} bench {Banco} lostZone {Zona Perdida} attachmentResolution {cartas anexadas} other {baralho}} para {target, select, hand {mão} prizes {cartas de Prêmio} discard {pilha de descarte} board {tabuleiro} stadium {Estádio} active {Campo Ativo} bench {Banco} lostZone {Zona Perdida} attachmentResolution {cartas anexadas} other {baralho}}"
   },
   "7Azhu7": {
     "message": "{actor} attached {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {targetCard}",
     "comments": [
       "Log line. {actor} is a player's name; {card} is the card attached (Energy, a Tool) and {targetCard} the Pokémon it went on; {source} is the zone it came from."
     ],
-    "translation": "{actor} anexou {card} de {source, select, hand {mão} prizes {cartas de Prêmio} discard {pilha de descarte} board {campo} stadium {Estádio} active {Campo Ativo} bench {Banco} lostZone {Zona Perdida} attachmentResolution {cartas anexadas} other {baralho}} em {targetCard}"
+    "translation": "{actor} anexou {card} de {source, select, hand {mão} prizes {cartas de Prêmio} discard {pilha de descarte} board {tabuleiro} stadium {Estádio} active {Campo Ativo} bench {Banco} lostZone {Zona Perdida} attachmentResolution {cartas anexadas} other {baralho}} em {targetCard}"
   },
   "nb_tRJ": {
     "message": "{actor} discarded {count, plural, one {# attached card(s)} other {# attached card(s)}}",
@@ -93,7 +93,7 @@
     "comments": [
       "Log line. {actor} is a player's name, {card} the card it evolved into; {target} names the zone of the Pokémon that evolved, when its name is hidden."
     ],
-    "translation": "{actor} evoluiu {target, select, hand {mão} prizes {cartas de Prêmio} discard {pilha de descarte} board {campo} stadium {Estádio} active {Campo Ativo} bench {Banco} lostZone {Zona Perdida} attachmentResolution {cartas anexadas} other {baralho}} para {card}"
+    "translation": "{actor} evoluiu {target, select, hand {mão} prizes {cartas de Prêmio} discard {pilha de descarte} board {tabuleiro} stadium {Estádio} active {Campo Ativo} bench {Banco} lostZone {Zona Perdida} attachmentResolution {cartas anexadas} other {baralho}} para {card}"
   },
   "gUuWfL": {
     "message": "{actor} evolved {targetCard} into {card}",
@@ -107,14 +107,14 @@
     "comments": [
       "Log line: a player hid a zone they had shown to everyone. {actor} is who hid it, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "{actor} ocultou {source, select, hand {a mão} prizes {as cartas de Prêmio} discard {a pilha de descarte} board {o campo} stadium {o Estádio} active {o Campo Ativo} bench {o Banco} lostZone {a Zona Perdida} attachmentResolution {as cartas anexadas} inspection {a inspeção} other {o baralho}} de {owner}"
+    "translation": "{actor} ocultou {source, select, hand {a mão} prizes {as cartas de Prêmio} discard {a pilha de descarte} board {o tabuleiro} stadium {o Estádio} active {o Campo Ativo} bench {o Banco} lostZone {a Zona Perdida} attachmentResolution {as cartas anexadas} inspection {a inspeção} other {o baralho}} de {owner}"
   },
   "89ICfA": {
     "message": "{actor} hid card in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line: a player hid a card they had shown to everyone. {actor} is who hid it, {owner} whose card it is; {source} is the zone it is in."
     ],
-    "translation": "{actor} ocultou uma carta em {source, select, hand {a mão} prizes {as cartas de Prêmio} discard {a pilha de descarte} board {o campo} stadium {o Estádio} active {o Campo Ativo} bench {o Banco} lostZone {a Zona Perdida} attachmentResolution {as cartas anexadas} inspection {a inspeção} other {o baralho}} de {owner}"
+    "translation": "{actor} ocultou uma carta em {source, select, hand {a mão} prizes {as cartas de Prêmio} discard {a pilha de descarte} board {o tabuleiro} stadium {o Estádio} active {o Campo Ativo} bench {o Banco} lostZone {a Zona Perdida} attachmentResolution {as cartas anexadas} inspection {a inspeção} other {o baralho}} de {owner}"
   },
   "PZVwKy": {
     "message": "{actor} left {count, plural, one {# attached card(s)} other {# attached card(s)}} in play",
@@ -128,70 +128,70 @@
     "comments": [
       "Log line for a Pokémon moved onto another player's side of the table. {actor} is the card owner's name, {card} a card's name, {boardOwner} the name of the player whose Active or Bench it went to; {source} is the spot it left and {target} the spot it went to."
     ],
-    "translation": "{actor} moveu {card} de {source, select, hand {mão} prizes {cartas de Prêmio} discard {pilha de descarte} board {mesa} stadium {Estádio} active {Campo Ativo} bench {Banco} lostZone {Zona Perdida} attachmentResolution {cartas anexadas} other {baralho}} para {target, select, hand {a mão} prizes {as cartas de Prêmio} discard {a pilha de descarte} board {a mesa} stadium {o Estádio} active {o Campo Ativo} bench {o Banco} lostZone {a Zona Perdida} attachmentResolution {as cartas anexadas} other {o baralho}} de {boardOwner}"
+    "translation": "{actor} moveu {card} de {source, select, hand {mão} prizes {cartas de Prêmio} discard {pilha de descarte} board {tabuleiro} stadium {Estádio} active {Campo Ativo} bench {Banco} lostZone {Zona Perdida} attachmentResolution {cartas anexadas} other {baralho}} para {target, select, hand {a mão} prizes {as cartas de Prêmio} discard {a pilha de descarte} board {o tabuleiro} stadium {o Estádio} active {o Campo Ativo} bench {o Banco} lostZone {a Zona Perdida} attachmentResolution {as cartas anexadas} other {o baralho}} de {boardOwner}"
   },
   "VzhIq8": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {target, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}}",
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left and {target} the zone it went to."
     ],
-    "translation": "{actor} moveu {card} de {source, select, hand {mão} prizes {cartas de Prêmio} discard {pilha de descarte} board {campo} stadium {Estádio} active {Campo Ativo} bench {Banco} lostZone {Zona Perdida} attachmentResolution {cartas anexadas} other {baralho}} para {target, select, hand {mão} prizes {cartas de Prêmio} discard {pilha de descarte} board {campo} stadium {Estádio} active {Campo Ativo} bench {Banco} lostZone {Zona Perdida} attachmentResolution {cartas anexadas} other {baralho}}"
+    "translation": "{actor} moveu {card} de {source, select, hand {mão} prizes {cartas de Prêmio} discard {pilha de descarte} board {tabuleiro} stadium {Estádio} active {Campo Ativo} bench {Banco} lostZone {Zona Perdida} attachmentResolution {cartas anexadas} other {baralho}} para {target, select, hand {mão} prizes {cartas de Prêmio} discard {pilha de descarte} board {tabuleiro} stadium {Estádio} active {Campo Ativo} bench {Banco} lostZone {Zona Perdida} attachmentResolution {cartas anexadas} other {baralho}}"
   },
   "elLtOc": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {targetCard}",
     "comments": [
       "Log line. {actor} is a player's name, {card} and {targetCard} card names; {source} is the zone the card left."
     ],
-    "translation": "{actor} moveu {card} de {source, select, hand {mão} prizes {cartas de Prêmio} discard {pilha de descarte} board {campo} stadium {Estádio} active {Campo Ativo} bench {Banco} lostZone {Zona Perdida} attachmentResolution {cartas anexadas} other {baralho}} para {targetCard}"
+    "translation": "{actor} moveu {card} de {source, select, hand {mão} prizes {cartas de Prêmio} discard {pilha de descarte} board {tabuleiro} stadium {Estádio} active {Campo Ativo} bench {Banco} lostZone {Zona Perdida} attachmentResolution {cartas anexadas} other {baralho}} para {targetCard}"
   },
   "RyQ60M": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to bottom of deck",
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left."
     ],
-    "translation": "{actor} moveu {card} de {source, select, hand {mão} prizes {cartas de Prêmio} discard {pilha de descarte} board {campo} stadium {Estádio} active {Campo Ativo} bench {Banco} lostZone {Zona Perdida} attachmentResolution {cartas anexadas} other {baralho}} para o fundo do baralho"
+    "translation": "{actor} moveu {card} de {source, select, hand {mão} prizes {cartas de Prêmio} discard {pilha de descarte} board {tabuleiro} stadium {Estádio} active {Campo Ativo} bench {Banco} lostZone {Zona Perdida} attachmentResolution {cartas anexadas} other {baralho}} para o fundo do baralho"
   },
   "CsrT9R": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to top of deck",
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left."
     ],
-    "translation": "{actor} moveu {card} de {source, select, hand {mão} prizes {cartas de Prêmio} discard {pilha de descarte} board {campo} stadium {Estádio} active {Campo Ativo} bench {Banco} lostZone {Zona Perdida} attachmentResolution {cartas anexadas} other {baralho}} para o topo do baralho"
+    "translation": "{actor} moveu {card} de {source, select, hand {mão} prizes {cartas de Prêmio} discard {pilha de descarte} board {tabuleiro} stadium {Estádio} active {Campo Ativo} bench {Banco} lostZone {Zona Perdida} attachmentResolution {cartas anexadas} other {baralho}} para o topo do baralho"
   },
   "WBnnCz": {
     "message": "{actor} moved {count, plural, one {# card(s)} other {# card(s)}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} other {deck}}",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards; {source} is the zone they left and {destination} where they went (play: onto the table)."
     ],
-    "translation": "{actor} moveu {count, plural, one {# carta} many {# de cartas} other {# cartas}} de {source, select, hand {mão} prizes {cartas de Prêmio} discard {pilha de descarte} board {campo} stadium {Estádio} active {Campo Ativo} bench {Banco} lostZone {Zona Perdida} attachmentResolution {cartas anexadas} other {baralho}} para {destination, select, hand {mão} discard {pilha de descarte} lostZone {Zona Perdida} deckBottom {fundo do baralho} play {jogo} other {baralho}}"
+    "translation": "{actor} moveu {count, plural, one {# carta} many {# de cartas} other {# cartas}} de {source, select, hand {mão} prizes {cartas de Prêmio} discard {pilha de descarte} board {tabuleiro} stadium {Estádio} active {Campo Ativo} bench {Banco} lostZone {Zona Perdida} attachmentResolution {cartas anexadas} other {baralho}} para {destination, select, hand {mão} discard {pilha de descarte} lostZone {Zona Perdida} deckBottom {fundo do baralho} play {jogo} other {baralho}}"
   },
   "P4_K0D": {
     "message": "{actor} moved a random card from {target}'s hand to board",
     "comments": [
       "Log line. {actor} is the player who moved the card, {target} the player whose hand it came from."
     ],
-    "translation": "{actor} moveu uma carta aleatória da mão de {target} para o campo"
+    "translation": "{actor} moveu uma carta aleatória da mão de {target} para o tabuleiro"
   },
   "_qgrvz": {
     "message": "{actor} revealed {card} in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line: a player showed one card to everyone. {actor} is who showed it, {owner} whose card it is, {card} the card's name; {source} is the zone it is in."
     ],
-    "translation": "{actor} revelou {card} em {source, select, hand {a mão} prizes {as cartas de Prêmio} discard {a pilha de descarte} board {o campo} stadium {o Estádio} active {o Campo Ativo} bench {o Banco} lostZone {a Zona Perdida} attachmentResolution {as cartas anexadas} inspection {a inspeção} other {o baralho}} de {owner}"
+    "translation": "{actor} revelou {card} em {source, select, hand {a mão} prizes {as cartas de Prêmio} discard {a pilha de descarte} board {o tabuleiro} stadium {o Estádio} active {o Campo Ativo} bench {o Banco} lostZone {a Zona Perdida} attachmentResolution {as cartas anexadas} inspection {a inspeção} other {o baralho}} de {owner}"
   },
   "TMqzLF": {
     "message": "{actor} revealed {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line: a player showed a whole zone to everyone. {actor} is who showed it, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "{actor} revelou {source, select, hand {a mão} prizes {as cartas de Prêmio} discard {a pilha de descarte} board {o campo} stadium {o Estádio} active {o Campo Ativo} bench {o Banco} lostZone {a Zona Perdida} attachmentResolution {as cartas anexadas} inspection {a inspeção} other {o baralho}} de {owner}"
+    "translation": "{actor} revelou {source, select, hand {a mão} prizes {as cartas de Prêmio} discard {a pilha de descarte} board {o tabuleiro} stadium {o Estádio} active {o Campo Ativo} bench {o Banco} lostZone {a Zona Perdida} attachmentResolution {as cartas anexadas} inspection {a inspeção} other {o baralho}} de {owner}"
   },
   "P2m23t": {
     "message": "{actor} shuffled {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} into deck",
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left."
     ],
-    "translation": "{actor} embaralhou {card} de {source, select, hand {mão} prizes {cartas de Prêmio} discard {pilha de descarte} board {campo} stadium {Estádio} active {Campo Ativo} bench {Banco} lostZone {Zona Perdida} attachmentResolution {cartas anexadas} other {baralho}} no baralho"
+    "translation": "{actor} embaralhou {card} de {source, select, hand {mão} prizes {cartas de Prêmio} discard {pilha de descarte} board {tabuleiro} stadium {Estádio} active {Campo Ativo} bench {Banco} lostZone {Zona Perdida} attachmentResolution {cartas anexadas} other {baralho}} no baralho"
   },
   "xEKtXt": {
     "message": "{actor} shuffled {count, plural, one {# attached card(s)} other {# attached card(s)}} into deck",
@@ -205,7 +205,7 @@
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards."
     ],
-    "translation": "{actor} embaralhou {count, plural, one {# carta} many {# de cartas} other {# cartas}} do campo no baralho"
+    "translation": "{actor} embaralhou {count, plural, one {# carta} many {# de cartas} other {# cartas}} do tabuleiro no baralho"
   },
   "PoaZgj": {
     "message": "{actor} shuffled {count, plural, one {# card(s)} other {# card(s)}} into deck",
@@ -268,7 +268,7 @@
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left, and the top card of the deck took its place."
     ],
-    "translation": "{actor} trocou {card} de {source, select, hand {mão} prizes {cartas de Prêmio} discard {pilha de descarte} board {campo} stadium {Estádio} active {Campo Ativo} bench {Banco} lostZone {Zona Perdida} attachmentResolution {cartas anexadas} other {baralho}} com o topo do baralho"
+    "translation": "{actor} trocou {card} de {source, select, hand {mão} prizes {cartas de Prêmio} discard {pilha de descarte} board {tabuleiro} stadium {Estádio} active {Campo Ativo} bench {Banco} lostZone {Zona Perdida} attachmentResolution {cartas anexadas} other {baralho}} com o topo do baralho"
   },
   "QOz626": {
     "message": "{actor} took back {target}'s last move",
@@ -724,7 +724,7 @@
     "comments": [
       "Log line. {name} is a player's name; {source} is the zone they shuffled, almost always their deck."
     ],
-    "translation": "{name} embaralhou {source, select, hand {a mão} prizes {as cartas de Prêmio} discard {a pilha de descarte} board {o campo} stadium {o Estádio} active {o Campo Ativo} bench {o Banco} lostZone {a Zona Perdida} attachmentResolution {as cartas anexadas} other {o baralho}}"
+    "translation": "{name} embaralhou {source, select, hand {a mão} prizes {as cartas de Prêmio} discard {a pilha de descarte} board {o tabuleiro} stadium {o Estádio} active {o Campo Ativo} bench {o Banco} lostZone {a Zona Perdida} attachmentResolution {as cartas anexadas} other {o baralho}}"
   },
   "x8Eb2i": {
     "message": "{name} started turn {turn}",
@@ -928,28 +928,28 @@
     "comments": [
       "Log line: a player began looking at a zone only they can see. {viewer} is who is looking, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "{viewer} olhou {source, select, hand {a mão} prizes {as cartas de Prêmio} discard {a pilha de descarte} board {o campo} stadium {o Estádio} active {o Campo Ativo} bench {o Banco} lostZone {a Zona Perdida} attachmentResolution {as cartas ligadas} inspection {a inspeção} other {o baralho}} de {owner}"
+    "translation": "{viewer} olhou {source, select, hand {a mão} prizes {as cartas de Prêmio} discard {a pilha de descarte} board {o tabuleiro} stadium {o Estádio} active {o Campo Ativo} bench {o Banco} lostZone {a Zona Perdida} attachmentResolution {as cartas ligadas} inspection {a inspeção} other {o baralho}} de {owner}"
   },
   "kF6-Cq": {
     "message": "{viewer} looked at card in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line: a player began looking at a card only they can see. {viewer} is who is looking, {owner} whose card it is; {source} is the zone it is in."
     ],
-    "translation": "{viewer} olhou uma carta {source, select, hand {da mão} prizes {das cartas de Prêmio} discard {da pilha de descarte} board {do campo} stadium {do Estádio} active {do Campo Ativo} bench {do Banco} lostZone {da Zona Perdida} attachmentResolution {das cartas ligadas} inspection {da inspeção} other {do baralho}} de {owner}"
+    "translation": "{viewer} olhou uma carta {source, select, hand {da mão} prizes {das cartas de Prêmio} discard {da pilha de descarte} board {do tabuleiro} stadium {do Estádio} active {do Campo Ativo} bench {do Banco} lostZone {da Zona Perdida} attachmentResolution {das cartas ligadas} inspection {da inspeção} other {do baralho}} de {owner}"
   },
   "jTec7e": {
     "message": "{viewer} stopped looking at {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line. {viewer} is who stopped looking, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "{viewer} parou de olhar {source, select, hand {a mão} prizes {as cartas de Prêmio} discard {a pilha de descarte} board {o campo} stadium {o Estádio} active {o Campo Ativo} bench {o Banco} lostZone {a Zona Perdida} attachmentResolution {as cartas ligadas} inspection {a inspeção} other {o baralho}} de {owner}"
+    "translation": "{viewer} parou de olhar {source, select, hand {a mão} prizes {as cartas de Prêmio} discard {a pilha de descarte} board {o tabuleiro} stadium {o Estádio} active {o Campo Ativo} bench {o Banco} lostZone {a Zona Perdida} attachmentResolution {as cartas ligadas} inspection {a inspeção} other {o baralho}} de {owner}"
   },
   "FAueN1": {
     "message": "{viewer} stopped looking at card in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line. {viewer} is who stopped looking, {owner} whose card it is; {source} is the zone it is in."
     ],
-    "translation": "{viewer} parou de olhar uma carta {source, select, hand {da mão} prizes {das cartas de Prêmio} discard {da pilha de descarte} board {do campo} stadium {do Estádio} active {do Campo Ativo} bench {do Banco} lostZone {da Zona Perdida} attachmentResolution {das cartas ligadas} inspection {da inspeção} other {do baralho}} de {owner}"
+    "translation": "{viewer} parou de olhar uma carta {source, select, hand {da mão} prizes {das cartas de Prêmio} discard {da pilha de descarte} board {do tabuleiro} stadium {do Estádio} active {do Campo Ativo} bench {do Banco} lostZone {da Zona Perdida} attachmentResolution {das cartas ligadas} inspection {da inspeção} other {do baralho}} de {owner}"
   },
   "JirPbT": {
     "message": "{zoneName}, {count, plural, one {# card} other {# cards}}",
@@ -5358,11 +5358,11 @@
   "1CZiQZ": {
     "message": "to Board",
     "context": "move a card",
-    "translation": "para a mesa"
+    "translation": "para o tabuleiro"
   },
   "nUvd-D": {
     "message": "To board",
-    "translation": "Para a mesa"
+    "translation": "Para o tabuleiro"
   },
   "FNYlfF": {
     "message": "To bottom of deck",

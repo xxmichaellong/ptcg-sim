@@ -128,7 +128,7 @@
     "comments": [
       "Log line for a Pokémon moved onto another player's side of the table. {actor} is the card owner's name, {card} a card's name, {boardOwner} the name of the player whose Active or Bench it went to; {source} is the spot it left and {target} the spot it went to."
     ],
-    "translation": "{actor} flyttade {card} från {source, select, hand {handen} prizes {priskorten} discard {kasseringshögen} board {brädet} stadium {stadion} active {aktiv plats} bench {bänken} lostZone {förlorade zonen} attachmentResolution {fästa kort} other {leken}} till {boardOwner}s {target, select, hand {hand} prizes {priskort} discard {kasseringshög} board {bräde} stadium {stadion} active {aktiv plats} bench {bänk} lostZone {förlorade zon} attachmentResolution {fästa kort} other {lek}}"
+    "translation": "{actor} flyttade {card} från {source, select, hand {handen} prizes {priskorten} discard {kasseringshögen} board {bordet} stadium {stadion} active {aktiv plats} bench {bänken} lostZone {förlorade zonen} attachmentResolution {fästa kort} other {leken}} till {boardOwner}s {target, select, hand {hand} prizes {priskort} discard {kasseringshög} board {bord} stadium {stadion} active {aktiv plats} bench {bänk} lostZone {förlorade zon} attachmentResolution {fästa kort} other {lek}}"
   },
   "VzhIq8": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {target, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}}",
@@ -724,7 +724,7 @@
     "comments": [
       "Log line. {name} is a player's name; {source} is the zone they shuffled, almost always their deck."
     ],
-    "translation": "{name} blandade {source, select, hand {handen} prizes {priskorten} discard {kasserade högen} board {brädet} stadium {stadion} active {den aktiva} bench {bänken} lostZone {Lost Zone} attachmentResolution {de fästa korten} other {leken}}"
+    "translation": "{name} blandade {source, select, hand {handen} prizes {priskorten} discard {kasserade högen} board {bordet} stadium {stadion} active {den aktiva} bench {bänken} lostZone {Lost Zone} attachmentResolution {de fästa korten} other {leken}}"
   },
   "x8Eb2i": {
     "message": "{name} started turn {turn}",
@@ -966,7 +966,7 @@
   "k26cQ0": {
     "message": "+ Stadium",
     "context": "shortcut key caption",
-    "translation": "+ Stadium"
+    "translation": "+ Stadion"
   },
   "cTPeOy": {
     "message": "<0/> already does <1>{clashNames}</1>.",
@@ -1143,7 +1143,7 @@
   },
   "6ZbKYu": {
     "message": "Add another stadium piece",
-    "translation": "Lägg till en stadiumdel till"
+    "translation": "Lägg till en stadiondel till"
   },
   "vz22MV": {
     "message": "Add damage",
@@ -4061,7 +4061,7 @@
   },
   "rkcP1p": {
     "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
-    "translation": "Lägg Pokémon-bitar i en hög och Stadium-bitar i Stadium."
+    "translation": "Lägg Pokémon-bitar i en hög och stadionbitar på stadion."
   },
   "VbWX2u": {
     "message": "Quantity",
@@ -4946,7 +4946,7 @@
   },
   "1TzAdj": {
     "message": "Stadium · 2 pieces",
-    "translation": "Stadium · 2 delar"
+    "translation": "Stadion · 2 delar"
   },
   "ikMMp4": {
     "message": "Stadiums",
@@ -5358,11 +5358,11 @@
   "1CZiQZ": {
     "message": "to Board",
     "context": "move a card",
-    "translation": "till brädet"
+    "translation": "till bordet"
   },
   "nUvd-D": {
     "message": "To board",
-    "translation": "Till brädet"
+    "translation": "Till bordet"
   },
   "FNYlfF": {
     "message": "To bottom of deck",

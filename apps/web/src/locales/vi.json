@@ -128,7 +128,7 @@
     "comments": [
       "Log line for a Pokémon moved onto another player's side of the table. {actor} is the card owner's name, {card} a card's name, {boardOwner} the name of the player whose Active or Bench it went to; {source} is the spot it left and {target} the spot it went to."
     ],
-    "translation": "{actor} đã chuyển {card} từ {source, select, hand {tay} prizes {thẻ Phần thưởng} discard {bài bỏ} board {bàn đấu} stadium {sân đấu} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {bài gắn kèm} other {bộ bài}} sang {target, select, hand {tay} prizes {thẻ Phần thưởng} discard {bài bỏ} board {bàn đấu} stadium {sân đấu} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {bài gắn kèm} other {bộ bài}} của {boardOwner}"
+    "translation": "{actor} đã chuyển {card} từ {source, select, hand {tay} prizes {thẻ Phần thưởng} discard {bài bỏ} board {bàn chơi} stadium {sân đấu} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {bài gắn kèm} other {bộ bài}} sang {target, select, hand {tay} prizes {thẻ Phần thưởng} discard {bài bỏ} board {bàn chơi} stadium {sân đấu} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {bài gắn kèm} other {bộ bài}} của {boardOwner}"
   },
   "VzhIq8": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {target, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}}",
@@ -928,28 +928,28 @@
     "comments": [
       "Log line: a player began looking at a zone only they can see. {viewer} is who is looking, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "{viewer} đã xem {source, select, hand {bài trên tay} prizes {thẻ phần thưởng} discard {bài bỏ} board {sân} stadium {Stadium} active {Pokémon Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {các lá bài gắn kèm} inspection {khu kiểm tra} other {bộ bài}} của {owner}"
+    "translation": "{viewer} đã xem {source, select, hand {bài trên tay} prizes {thẻ phần thưởng} discard {bài bỏ} board {bàn chơi} stadium {Stadium} active {Pokémon Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {các lá bài gắn kèm} inspection {khu kiểm tra} other {bộ bài}} của {owner}"
   },
   "kF6-Cq": {
     "message": "{viewer} looked at card in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line: a player began looking at a card only they can see. {viewer} is who is looking, {owner} whose card it is; {source} is the zone it is in."
     ],
-    "translation": "{viewer} đã xem một lá bài trong {source, select, hand {bài trên tay} prizes {thẻ phần thưởng} discard {bài bỏ} board {sân} stadium {Stadium} active {Pokémon Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {các lá bài gắn kèm} inspection {khu kiểm tra} other {bộ bài}} của {owner}"
+    "translation": "{viewer} đã xem một lá bài trong {source, select, hand {bài trên tay} prizes {thẻ phần thưởng} discard {bài bỏ} board {bàn chơi} stadium {Stadium} active {Pokémon Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {các lá bài gắn kèm} inspection {khu kiểm tra} other {bộ bài}} của {owner}"
   },
   "jTec7e": {
     "message": "{viewer} stopped looking at {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line. {viewer} is who stopped looking, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "{viewer} đã ngừng xem {source, select, hand {bài trên tay} prizes {thẻ phần thưởng} discard {bài bỏ} board {sân} stadium {Stadium} active {Pokémon Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {các lá bài gắn kèm} inspection {khu kiểm tra} other {bộ bài}} của {owner}"
+    "translation": "{viewer} đã ngừng xem {source, select, hand {bài trên tay} prizes {thẻ phần thưởng} discard {bài bỏ} board {bàn chơi} stadium {Stadium} active {Pokémon Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {các lá bài gắn kèm} inspection {khu kiểm tra} other {bộ bài}} của {owner}"
   },
   "FAueN1": {
     "message": "{viewer} stopped looking at card in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line. {viewer} is who stopped looking, {owner} whose card it is; {source} is the zone it is in."
     ],
-    "translation": "{viewer} đã ngừng xem một lá bài trong {source, select, hand {bài trên tay} prizes {thẻ phần thưởng} discard {bài bỏ} board {sân} stadium {Stadium} active {Pokémon Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {các lá bài gắn kèm} inspection {khu kiểm tra} other {bộ bài}} của {owner}"
+    "translation": "{viewer} đã ngừng xem một lá bài trong {source, select, hand {bài trên tay} prizes {thẻ phần thưởng} discard {bài bỏ} board {bàn chơi} stadium {Stadium} active {Pokémon Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {các lá bài gắn kèm} inspection {khu kiểm tra} other {bộ bài}} của {owner}"
   },
   "JirPbT": {
     "message": "{zoneName}, {count, plural, one {# card} other {# cards}}",

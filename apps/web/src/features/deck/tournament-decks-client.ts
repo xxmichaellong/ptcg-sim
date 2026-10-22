@@ -121,6 +121,14 @@ export class TournamentDataRefusedError extends Error {
   }
 }
 
+/** The server has no such tournament, player or list (any more). */
+export class TournamentDataNotFoundError extends Error {
+  constructor() {
+    super('HTTP 404');
+    this.name = 'TournamentDataNotFoundError';
+  }
+}
+
 /** The server is busy fetching (its Limitless budget is spent for now). */
 export class TournamentDataBusyError extends Error {
   constructor(readonly retryAfterSeconds: number) {
@@ -440,6 +448,7 @@ const getJson = async (
     if (response.status === 400) {
       throw new TournamentDataRefusedError(response.status);
     }
+    if (response.status === 404) throw new TournamentDataNotFoundError();
     if (!response.ok) throw new Error(`HTTP ${String(response.status)}`);
     const body = await response.text();
     if (body.length > MAXIMUM_RESPONSE_CODE_UNITS) {

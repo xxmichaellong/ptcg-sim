@@ -724,7 +724,7 @@
     "comments": [
       "Log line. {name} is a player's name; {source} is the zone they shuffled, almost always their deck."
     ],
-    "translation": "{name} สับ{source, select, hand {มือ} prizes {การ์ดรางวัล} discard {กองทิ้ง} board {บอร์ด} stadium {สเตเดียม} active {โปเกมอนแอคทีฟ} bench {ม้านั่งสำรอง} lostZone {ลอสต์โซน} attachmentResolution {การ์ดที่แนบ} other {เด็ค}}"
+    "translation": "{name} สับ{source, select, hand {มือ} prizes {การ์ดรางวัล} discard {กองทิ้ง} board {สนาม} stadium {สเตเดียม} active {โปเกมอนแอคทีฟ} bench {ม้านั่งสำรอง} lostZone {ลอสต์โซน} attachmentResolution {การ์ดที่แนบ} other {เด็ค}}"
   },
   "x8Eb2i": {
     "message": "{name} started turn {turn}",

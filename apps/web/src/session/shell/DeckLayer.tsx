@@ -10,6 +10,16 @@ import './deck-layer.css';
 /** Where a press of Esc belongs to something inside the deck screen. */
 const OWNS_ESCAPE = '[role="dialog"], [role="menu"], [role="listbox"]';
 
+/** Keys that only change another key's meaning. */
+const MODIFIER_KEYS = new Set([
+  'Alt',
+  'AltGraph',
+  'CapsLock',
+  'Control',
+  'Meta',
+  'Shift',
+]);
+
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
@@ -47,8 +57,14 @@ export const DeckLayer = ({
     if (!open) return;
     const fromPage = (event: globalThis.KeyboardEvent): void => {
       if (event.target !== document.body || event.defaultPrevented) return;
-      // Tab goes on from where the focus was, as the browser has it.
-      if (document.activeElement === document.body && event.key !== 'Tab') {
+      // Tab goes on from where the focus was, as the browser has it, and a
+      // modifier pressed on its own (Shift before Shift+Tab) waits for its
+      // key.
+      if (
+        document.activeElement === document.body &&
+        event.key !== 'Tab' &&
+        !MODIFIER_KEYS.has(event.key)
+      ) {
         layer.current?.focus({ preventScroll: true });
       }
       if (event.key === 'Escape') {

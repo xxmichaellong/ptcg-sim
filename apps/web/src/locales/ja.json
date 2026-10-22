@@ -724,7 +724,7 @@
     "comments": [
       "Log line. {name} is a player's name; {source} is the zone they shuffled, almost always their deck."
     ],
-    "translation": "{name}は{source, select, hand {手札} prizes {サイド} discard {トラッシュ} board {盤面} stadium {スタジアム} active {バトル場} bench {ベンチ} lostZone {ロストゾーン} attachmentResolution {付いているカード} other {山札}}を切りました"
+    "translation": "{name}は{source, select, hand {手札} prizes {サイド} discard {トラッシュ} board {場} stadium {スタジアム} active {バトル場} bench {ベンチ} lostZone {ロストゾーン} attachmentResolution {付いているカード} other {山札}}を切りました"
   },
   "x8Eb2i": {
     "message": "{name} started turn {turn}",
@@ -928,28 +928,28 @@
     "comments": [
       "Log line: a player began looking at a zone only they can see. {viewer} is who is looking, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "{viewer}が{owner}の{source, select, hand {手札} prizes {サイド} discard {トラッシュ} board {盤面} stadium {スタジアム} active {バトル場} bench {ベンチ} lostZone {ロストゾーン} attachmentResolution {つけているカード} inspection {確認エリア} other {山札}}を見ました"
+    "translation": "{viewer}が{owner}の{source, select, hand {手札} prizes {サイド} discard {トラッシュ} board {場} stadium {スタジアム} active {バトル場} bench {ベンチ} lostZone {ロストゾーン} attachmentResolution {つけているカード} inspection {確認エリア} other {山札}}を見ました"
   },
   "kF6-Cq": {
     "message": "{viewer} looked at card in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line: a player began looking at a card only they can see. {viewer} is who is looking, {owner} whose card it is; {source} is the zone it is in."
     ],
-    "translation": "{viewer}が{owner}の{source, select, hand {手札} prizes {サイド} discard {トラッシュ} board {盤面} stadium {スタジアム} active {バトル場} bench {ベンチ} lostZone {ロストゾーン} attachmentResolution {つけているカード} inspection {確認エリア} other {山札}}のカードを見ました"
+    "translation": "{viewer}が{owner}の{source, select, hand {手札} prizes {サイド} discard {トラッシュ} board {場} stadium {スタジアム} active {バトル場} bench {ベンチ} lostZone {ロストゾーン} attachmentResolution {つけているカード} inspection {確認エリア} other {山札}}のカードを見ました"
   },
   "jTec7e": {
     "message": "{viewer} stopped looking at {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line. {viewer} is who stopped looking, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "{viewer}が{owner}の{source, select, hand {手札} prizes {サイド} discard {トラッシュ} board {盤面} stadium {スタジアム} active {バトル場} bench {ベンチ} lostZone {ロストゾーン} attachmentResolution {つけているカード} inspection {確認エリア} other {山札}}を見るのをやめました"
+    "translation": "{viewer}が{owner}の{source, select, hand {手札} prizes {サイド} discard {トラッシュ} board {場} stadium {スタジアム} active {バトル場} bench {ベンチ} lostZone {ロストゾーン} attachmentResolution {つけているカード} inspection {確認エリア} other {山札}}を見るのをやめました"
   },
   "FAueN1": {
     "message": "{viewer} stopped looking at card in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line. {viewer} is who stopped looking, {owner} whose card it is; {source} is the zone it is in."
     ],
-    "translation": "{viewer}が{owner}の{source, select, hand {手札} prizes {サイド} discard {トラッシュ} board {盤面} stadium {スタジアム} active {バトル場} bench {ベンチ} lostZone {ロストゾーン} attachmentResolution {つけているカード} inspection {確認エリア} other {山札}}のカードを見るのをやめました"
+    "translation": "{viewer}が{owner}の{source, select, hand {手札} prizes {サイド} discard {トラッシュ} board {場} stadium {スタジアム} active {バトル場} bench {ベンチ} lostZone {ロストゾーン} attachmentResolution {つけているカード} inspection {確認エリア} other {山札}}のカードを見るのをやめました"
   },
   "JirPbT": {
     "message": "{zoneName}, {count, plural, one {# card} other {# cards}}",
@@ -5358,11 +5358,11 @@
   "1CZiQZ": {
     "message": "to Board",
     "context": "move a card",
-    "translation": "盤面へ"
+    "translation": "場へ"
   },
   "nUvd-D": {
     "message": "To board",
-    "translation": "盤面へ"
+    "translation": "場へ"
   },
   "FNYlfF": {
     "message": "To bottom of deck",

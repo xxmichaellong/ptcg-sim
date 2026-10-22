@@ -19,6 +19,11 @@ import type { PopularDecklistSource } from './popular-decklists.js';
 import type { TournamentSummary } from './tournament-decks-client.js';
 
 vi.mock('../../ui/toast.js', () => ({ toast: vi.fn(() => 'toast') }));
+// A deck's deletion, asked about, goes ahead.
+vi.mock('../../ui/dialog-requests.js', async (original) => ({
+  ...(await original<typeof import('../../ui/dialog-requests.js')>()),
+  confirmAction: vi.fn(async () => true),
+}));
 // No server here: the finder's search and a tournament's standings wait.
 vi.mock('./tournament-decks-hooks.js', async (original) => ({
   ...(await original<typeof import('./tournament-decks-hooks.js')>()),
@@ -346,6 +351,9 @@ describe('the deck screen from the keyboard', () => {
     await render();
     (document.activeElement as HTMLElement | null)?.blur();
     expect(document.activeElement).toBe(document.body);
+    // Shift goes down on its own before Shift+Tab.
+    await press('Shift');
+    expect(document.activeElement).toBe(document.body);
     await press('Tab');
     expect(document.activeElement).toBe(document.body);
     await press('a');
@@ -414,6 +422,56 @@ describe('the deck screen from the keyboard', () => {
     layer.focus();
     await undo(layer);
     expect(pidgeys()).toBe(1);
+  });
+
+  it('takes / from the Deck tab to the search, drawn before it takes the focus', async () => {
+    const library = new DeckLibrary({ backend: null });
+    library.create({
+      name: 'Charizard ex',
+      format: 'standard',
+      cards: [
+        {
+          card: {
+            id: 'obf-125',
+            name: 'Charizard ex',
+            category: 'Pokémon',
+            image: 'https://example.test/obf-125.png',
+          },
+          count: 3,
+        },
+      ],
+    });
+    await render(vi.fn(), library);
+    await act(async () =>
+      host
+        .querySelector<HTMLButtonElement>(
+          'button[aria-label="Edit Charizard ex"]'
+        )!
+        .click()
+    );
+    const editor = host.querySelector<HTMLElement>('.deck-editor')!;
+    await act(async () =>
+      [...host.querySelectorAll<HTMLButtonElement>('[role="tab"]')][1]!.click()
+    );
+    expect(editor.dataset.tab).toBe('deck');
+    // On a narrow window the hidden pane's search can't take the focus.
+    const search = host.querySelector<HTMLInputElement>(
+      '#nativeDeckBuilderSearchInput'
+    )!;
+    const focus = search.focus.bind(search);
+    const tabs: (string | undefined)[] = [];
+    vi.spyOn(search, 'focus').mockImplementation((options) => {
+      tabs.push(editor.dataset.tab);
+      focus(options);
+    });
+    host
+      .querySelector<HTMLButtonElement>(
+        'button[aria-label="Add one Charizard ex"]'
+      )!
+      .focus();
+    await press('/');
+    expect(tabs).toEqual(['search']);
+    expect(document.activeElement).toBe(search);
   });
 
   it('takes a name pasted onto the deck editor as lines for the deck, staying in it', async () => {
@@ -699,6 +757,46 @@ describe('the seat trays', () => {
         .querySelector('#nativeDeckBuilderTargetMain .deck-box img')
         ?.getAttribute('src')
     ).toContain('mew-16');
+  });
+
+  it('keep a deleted deck’s format, left on its seat unsaved', async () => {
+    const library = new DeckLibrary({ backend: null });
+    library.create({
+      name: 'Pocket deck',
+      format: 'pocket',
+      cards: Array.from({ length: 10 }, (_, n) => ({
+        card: {
+          ...card(`a1-${String(n)}`, `Mon ${String(n)}`),
+          facts: { stage: 'Basic', pocket: true },
+        },
+        count: 2,
+      })),
+    });
+    await render(vi.fn(), library);
+    await putOn('Pocket deck');
+    const complete = () =>
+      host
+        .querySelector('#nativeDeckBuilderTargetMain .deck-screen__seat-count')
+        ?.getAttribute('data-complete');
+    const playable = () =>
+      host.querySelector('#nativeDeckBuilderTargetMain .deck-box__tab') ===
+      null;
+    expect(complete()).toBe('true');
+    expect(playable()).toBe(true);
+    await act(async () =>
+      host
+        .querySelector<HTMLButtonElement>(
+          'button[aria-label="More for Pocket deck"]'
+        )!
+        .click()
+    );
+    const remove = [
+      ...document.querySelectorAll<HTMLElement>('.ptcgsim-action-menu__item'),
+    ].find((item) => item.textContent?.includes('Delete'))!;
+    await act(async () => remove.click());
+    expect(library.getSnapshot().decks).toHaveLength(0);
+    expect(complete()).toBe('true');
+    expect(playable()).toBe(true);
   });
 
   it('count a deck complete at its own format’s size', async () => {

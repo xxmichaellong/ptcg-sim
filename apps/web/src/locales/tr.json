@@ -724,7 +724,7 @@
     "comments": [
       "Log line. {name} is a player's name; {source} is the zone they shuffled, almost always their deck."
     ],
-    "translation": "{name} {source, select, hand {elini} prizes {ödül kartlarını} discard {atık destesini} board {tahtayı} stadium {stadyumu} active {aktif Pokémon'u} bench {yedeği} lostZone {Lost Zone'u} attachmentResolution {bağlı kartları} other {destesini}} karıştırdı"
+    "translation": "{name} {source, select, hand {elini} prizes {ödül kartlarını} discard {atık destesini} board {masayı} stadium {stadyumu} active {aktif Pokémon'u} bench {yedeği} lostZone {Lost Zone'u} attachmentResolution {bağlı kartları} other {destesini}} karıştırdı"
   },
   "x8Eb2i": {
     "message": "{name} started turn {turn}",
@@ -928,28 +928,28 @@
     "comments": [
       "Log line: a player began looking at a zone only they can see. {viewer} is who is looking, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "{viewer}, {owner} oyuncusunun {source, select, hand {eline} prizes {ödül kartlarına} discard {atık destesine} board {tahtasına} stadium {stadyumuna} active {aktif Pokémon'una} bench {yedeğine} lostZone {Lost Zone'una} attachmentResolution {bağlı kartlarına} inspection {incelemesine} other {destesine}} baktı"
+    "translation": "{viewer}, {owner} oyuncusunun {source, select, hand {eline} prizes {ödül kartlarına} discard {atık destesine} board {masasına} stadium {stadyumuna} active {aktif Pokémon'una} bench {yedeğine} lostZone {Lost Zone'una} attachmentResolution {bağlı kartlarına} inspection {incelemesine} other {destesine}} baktı"
   },
   "kF6-Cq": {
     "message": "{viewer} looked at card in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line: a player began looking at a card only they can see. {viewer} is who is looking, {owner} whose card it is; {source} is the zone it is in."
     ],
-    "translation": "{viewer}, {owner} oyuncusunun {source, select, hand {elindeki} prizes {ödül kartlarındaki} discard {atık destesindeki} board {tahtasındaki} stadium {stadyumundaki} active {aktif Pokémon'undaki} bench {yedeğindeki} lostZone {Lost Zone'undaki} attachmentResolution {bağlı kartlarındaki} inspection {incelemesindeki} other {destesindeki}} bir karta baktı"
+    "translation": "{viewer}, {owner} oyuncusunun {source, select, hand {elindeki} prizes {ödül kartlarındaki} discard {atık destesindeki} board {masasındaki} stadium {stadyumundaki} active {aktif Pokémon'undaki} bench {yedeğindeki} lostZone {Lost Zone'undaki} attachmentResolution {bağlı kartlarındaki} inspection {incelemesindeki} other {destesindeki}} bir karta baktı"
   },
   "jTec7e": {
     "message": "{viewer} stopped looking at {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line. {viewer} is who stopped looking, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "{viewer}, {owner} oyuncusunun {source, select, hand {eline} prizes {ödül kartlarına} discard {atık destesine} board {tahtasına} stadium {stadyumuna} active {aktif Pokémon'una} bench {yedeğine} lostZone {Lost Zone'una} attachmentResolution {bağlı kartlarına} inspection {incelemesine} other {destesine}} bakmayı bıraktı"
+    "translation": "{viewer}, {owner} oyuncusunun {source, select, hand {eline} prizes {ödül kartlarına} discard {atık destesine} board {masasına} stadium {stadyumuna} active {aktif Pokémon'una} bench {yedeğine} lostZone {Lost Zone'una} attachmentResolution {bağlı kartlarına} inspection {incelemesine} other {destesine}} bakmayı bıraktı"
   },
   "FAueN1": {
     "message": "{viewer} stopped looking at card in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line. {viewer} is who stopped looking, {owner} whose card it is; {source} is the zone it is in."
     ],
-    "translation": "{viewer}, {owner} oyuncusunun {source, select, hand {elindeki} prizes {ödül kartlarındaki} discard {atık destesindeki} board {tahtasındaki} stadium {stadyumundaki} active {aktif Pokémon'undaki} bench {yedeğindeki} lostZone {Lost Zone'undaki} attachmentResolution {bağlı kartlarındaki} inspection {incelemesindeki} other {destesindeki}} karta bakmayı bıraktı"
+    "translation": "{viewer}, {owner} oyuncusunun {source, select, hand {elindeki} prizes {ödül kartlarındaki} discard {atık destesindeki} board {masasındaki} stadium {stadyumundaki} active {aktif Pokémon'undaki} bench {yedeğindeki} lostZone {Lost Zone'undaki} attachmentResolution {bağlı kartlarındaki} inspection {incelemesindeki} other {destesindeki}} karta bakmayı bıraktı"
   },
   "JirPbT": {
     "message": "{zoneName}, {count, plural, one {# card} other {# cards}}",
@@ -5358,11 +5358,11 @@
   "1CZiQZ": {
     "message": "to Board",
     "context": "move a card",
-    "translation": "Tahtaya"
+    "translation": "Masaya"
   },
   "nUvd-D": {
     "message": "To board",
-    "translation": "Tahtaya"
+    "translation": "Masaya"
   },
   "FNYlfF": {
     "message": "To bottom of deck",

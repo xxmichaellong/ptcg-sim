@@ -51,14 +51,14 @@
     "comments": [
       "Log line. {actor} is a player's name, {card} the card attached; {source} is the zone it came from and {target} where it went."
     ],
-    "translation": "{actor} ألحق {card} من {source, select, hand {اليد} prizes {الجوائز} discard {كومة التخلص} board {الطاولة} stadium {الملعب} active {النشط} bench {الاحتياط} lostZone {Lost Zone} attachmentResolution {البطاقات الملحقة} other {المجموعة}} إلى {target, select, hand {اليد} prizes {الجوائز} discard {كومة التخلص} board {الطاولة} stadium {الملعب} active {النشط} bench {الاحتياط} lostZone {Lost Zone} attachmentResolution {البطاقات الملحقة} other {المجموعة}}"
+    "translation": "{actor} ألحق {card} من {source, select, hand {اليد} prizes {الجوائز} discard {كومة التخلص} board {الميدان} stadium {الملعب} active {النشط} bench {الاحتياط} lostZone {Lost Zone} attachmentResolution {البطاقات الملحقة} other {المجموعة}} إلى {target, select, hand {اليد} prizes {الجوائز} discard {كومة التخلص} board {الميدان} stadium {الملعب} active {النشط} bench {الاحتياط} lostZone {Lost Zone} attachmentResolution {البطاقات الملحقة} other {المجموعة}}"
   },
   "7Azhu7": {
     "message": "{actor} attached {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {targetCard}",
     "comments": [
       "Log line. {actor} is a player's name; {card} is the card attached (Energy, a Tool) and {targetCard} the Pokémon it went on; {source} is the zone it came from."
     ],
-    "translation": "{actor} ألحق {card} من {source, select, hand {اليد} prizes {الجوائز} discard {كومة التخلص} board {الطاولة} stadium {الملعب} active {النشط} bench {الاحتياط} lostZone {Lost Zone} attachmentResolution {البطاقات الملحقة} other {المجموعة}} بـ {targetCard}"
+    "translation": "{actor} ألحق {card} من {source, select, hand {اليد} prizes {الجوائز} discard {كومة التخلص} board {الميدان} stadium {الملعب} active {النشط} bench {الاحتياط} lostZone {Lost Zone} attachmentResolution {البطاقات الملحقة} other {المجموعة}} بـ {targetCard}"
   },
   "nb_tRJ": {
     "message": "{actor} discarded {count, plural, one {# attached card(s)} other {# attached card(s)}}",
@@ -93,7 +93,7 @@
     "comments": [
       "Log line. {actor} is a player's name, {card} the card it evolved into; {target} names the zone of the Pokémon that evolved, when its name is hidden."
     ],
-    "translation": "{actor} طوّر {target, select, hand {اليد} prizes {الجوائز} discard {كومة التخلص} board {الطاولة} stadium {الملعب} active {النشط} bench {الاحتياط} lostZone {Lost Zone} attachmentResolution {البطاقات الملحقة} other {المجموعة}} إلى {card}"
+    "translation": "{actor} طوّر {target, select, hand {اليد} prizes {الجوائز} discard {كومة التخلص} board {الميدان} stadium {الملعب} active {النشط} bench {الاحتياط} lostZone {Lost Zone} attachmentResolution {البطاقات الملحقة} other {المجموعة}} إلى {card}"
   },
   "gUuWfL": {
     "message": "{actor} evolved {targetCard} into {card}",
@@ -107,14 +107,14 @@
     "comments": [
       "Log line: a player hid a zone they had shown to everyone. {actor} is who hid it, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "{actor} أخفى {source, select, hand {يد} prizes {جوائز} discard {كومة تخلص} board {طاولة} stadium {ملعب} active {النشط} bench {احتياط} lostZone {Lost Zone} attachmentResolution {البطاقات الملحقة} inspection {الفحص} other {مجموعة}} {owner}"
+    "translation": "{actor} أخفى {source, select, hand {يد} prizes {جوائز} discard {كومة تخلص} board {ميدان} stadium {ملعب} active {النشط} bench {احتياط} lostZone {Lost Zone} attachmentResolution {البطاقات الملحقة} inspection {الفحص} other {مجموعة}} {owner}"
   },
   "89ICfA": {
     "message": "{actor} hid card in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line: a player hid a card they had shown to everyone. {actor} is who hid it, {owner} whose card it is; {source} is the zone it is in."
     ],
-    "translation": "{actor} أخفى بطاقة في {source, select, hand {يد} prizes {جوائز} discard {كومة تخلص} board {طاولة} stadium {ملعب} active {النشط} bench {احتياط} lostZone {Lost Zone} attachmentResolution {البطاقات الملحقة} inspection {الفحص} other {مجموعة}} {owner}"
+    "translation": "{actor} أخفى بطاقة في {source, select, hand {يد} prizes {جوائز} discard {كومة تخلص} board {ميدان} stadium {ملعب} active {النشط} bench {احتياط} lostZone {Lost Zone} attachmentResolution {البطاقات الملحقة} inspection {الفحص} other {مجموعة}} {owner}"
   },
   "PZVwKy": {
     "message": "{actor} left {count, plural, one {# attached card(s)} other {# attached card(s)}} in play",
@@ -128,70 +128,70 @@
     "comments": [
       "Log line for a Pokémon moved onto another player's side of the table. {actor} is the card owner's name, {card} a card's name, {boardOwner} the name of the player whose Active or Bench it went to; {source} is the spot it left and {target} the spot it went to."
     ],
-    "translation": "{actor} نقل {card} من {source, select, hand {اليد} prizes {الجوائز} discard {كومة التخلص} board {الطاولة} stadium {الملعب} active {الخانة النشطة} bench {الاحتياط} lostZone {Lost Zone} attachmentResolution {البطاقات المرفقة} other {المجموعة}} إلى {target, select, hand {اليد} prizes {الجوائز} discard {كومة التخلص} board {الطاولة} stadium {الملعب} active {الخانة النشطة} bench {الاحتياط} lostZone {Lost Zone} attachmentResolution {البطاقات المرفقة} other {المجموعة}} عند {boardOwner}"
+    "translation": "{actor} نقل {card} من {source, select, hand {اليد} prizes {الجوائز} discard {كومة التخلص} board {الميدان} stadium {الملعب} active {الخانة النشطة} bench {الاحتياط} lostZone {Lost Zone} attachmentResolution {البطاقات المرفقة} other {المجموعة}} إلى {target, select, hand {اليد} prizes {الجوائز} discard {كومة التخلص} board {الميدان} stadium {الملعب} active {الخانة النشطة} bench {الاحتياط} lostZone {Lost Zone} attachmentResolution {البطاقات المرفقة} other {المجموعة}} عند {boardOwner}"
   },
   "VzhIq8": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {target, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}}",
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left and {target} the zone it went to."
     ],
-    "translation": "{actor} نقل {card} من {source, select, hand {اليد} prizes {الجوائز} discard {كومة التخلص} board {الطاولة} stadium {الملعب} active {النشط} bench {الاحتياط} lostZone {Lost Zone} attachmentResolution {البطاقات الملحقة} other {المجموعة}} إلى {target, select, hand {اليد} prizes {الجوائز} discard {كومة التخلص} board {الطاولة} stadium {الملعب} active {النشط} bench {الاحتياط} lostZone {Lost Zone} attachmentResolution {البطاقات الملحقة} other {المجموعة}}"
+    "translation": "{actor} نقل {card} من {source, select, hand {اليد} prizes {الجوائز} discard {كومة التخلص} board {الميدان} stadium {الملعب} active {النشط} bench {الاحتياط} lostZone {Lost Zone} attachmentResolution {البطاقات الملحقة} other {المجموعة}} إلى {target, select, hand {اليد} prizes {الجوائز} discard {كومة التخلص} board {الميدان} stadium {الملعب} active {النشط} bench {الاحتياط} lostZone {Lost Zone} attachmentResolution {البطاقات الملحقة} other {المجموعة}}"
   },
   "elLtOc": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {targetCard}",
     "comments": [
       "Log line. {actor} is a player's name, {card} and {targetCard} card names; {source} is the zone the card left."
     ],
-    "translation": "{actor} نقل {card} من {source, select, hand {اليد} prizes {الجوائز} discard {كومة التخلص} board {الطاولة} stadium {الملعب} active {النشط} bench {الاحتياط} lostZone {Lost Zone} attachmentResolution {البطاقات الملحقة} other {المجموعة}} إلى {targetCard}"
+    "translation": "{actor} نقل {card} من {source, select, hand {اليد} prizes {الجوائز} discard {كومة التخلص} board {الميدان} stadium {الملعب} active {النشط} bench {الاحتياط} lostZone {Lost Zone} attachmentResolution {البطاقات الملحقة} other {المجموعة}} إلى {targetCard}"
   },
   "RyQ60M": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to bottom of deck",
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left."
     ],
-    "translation": "{actor} نقل {card} من {source, select, hand {اليد} prizes {الجوائز} discard {كومة التخلص} board {الطاولة} stadium {الملعب} active {النشط} bench {الاحتياط} lostZone {Lost Zone} attachmentResolution {البطاقات الملحقة} other {المجموعة}} إلى أسفل المجموعة"
+    "translation": "{actor} نقل {card} من {source, select, hand {اليد} prizes {الجوائز} discard {كومة التخلص} board {الميدان} stadium {الملعب} active {النشط} bench {الاحتياط} lostZone {Lost Zone} attachmentResolution {البطاقات الملحقة} other {المجموعة}} إلى أسفل المجموعة"
   },
   "CsrT9R": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to top of deck",
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left."
     ],
-    "translation": "{actor} نقل {card} من {source, select, hand {اليد} prizes {الجوائز} discard {كومة التخلص} board {الطاولة} stadium {الملعب} active {النشط} bench {الاحتياط} lostZone {Lost Zone} attachmentResolution {البطاقات الملحقة} other {المجموعة}} إلى أعلى المجموعة"
+    "translation": "{actor} نقل {card} من {source, select, hand {اليد} prizes {الجوائز} discard {كومة التخلص} board {الميدان} stadium {الملعب} active {النشط} bench {الاحتياط} lostZone {Lost Zone} attachmentResolution {البطاقات الملحقة} other {المجموعة}} إلى أعلى المجموعة"
   },
   "WBnnCz": {
     "message": "{actor} moved {count, plural, one {# card(s)} other {# card(s)}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} other {deck}}",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards; {source} is the zone they left and {destination} where they went (play: onto the table)."
     ],
-    "translation": "{actor} نقل {count, plural, zero {# بطاقة} one {بطاقة} two {بطاقتين} few {# بطاقات} many {# بطاقة} other {# بطاقة}} من {source, select, hand {اليد} prizes {الجوائز} discard {كومة التخلص} board {الطاولة} stadium {الملعب} active {النشط} bench {الاحتياط} lostZone {Lost Zone} attachmentResolution {البطاقات الملحقة} other {المجموعة}} إلى {destination, select, hand {اليد} discard {كومة التخلص} lostZone {Lost Zone} deckBottom {أسفل المجموعة} play {اللعب} other {المجموعة}}"
+    "translation": "{actor} نقل {count, plural, zero {# بطاقة} one {بطاقة} two {بطاقتين} few {# بطاقات} many {# بطاقة} other {# بطاقة}} من {source, select, hand {اليد} prizes {الجوائز} discard {كومة التخلص} board {الميدان} stadium {الملعب} active {النشط} bench {الاحتياط} lostZone {Lost Zone} attachmentResolution {البطاقات الملحقة} other {المجموعة}} إلى {destination, select, hand {اليد} discard {كومة التخلص} lostZone {Lost Zone} deckBottom {أسفل المجموعة} play {اللعب} other {المجموعة}}"
   },
   "P4_K0D": {
     "message": "{actor} moved a random card from {target}'s hand to board",
     "comments": [
       "Log line. {actor} is the player who moved the card, {target} the player whose hand it came from."
     ],
-    "translation": "{actor} نقل بطاقة عشوائية من يد {target} إلى الطاولة"
+    "translation": "{actor} نقل بطاقة عشوائية من يد {target} إلى الميدان"
   },
   "_qgrvz": {
     "message": "{actor} revealed {card} in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line: a player showed one card to everyone. {actor} is who showed it, {owner} whose card it is, {card} the card's name; {source} is the zone it is in."
     ],
-    "translation": "{actor} كشف {card} في {source, select, hand {يد} prizes {جوائز} discard {كومة تخلص} board {طاولة} stadium {ملعب} active {النشط} bench {احتياط} lostZone {Lost Zone} attachmentResolution {البطاقات الملحقة} inspection {الفحص} other {مجموعة}} {owner}"
+    "translation": "{actor} كشف {card} في {source, select, hand {يد} prizes {جوائز} discard {كومة تخلص} board {ميدان} stadium {ملعب} active {النشط} bench {احتياط} lostZone {Lost Zone} attachmentResolution {البطاقات الملحقة} inspection {الفحص} other {مجموعة}} {owner}"
   },
   "TMqzLF": {
     "message": "{actor} revealed {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line: a player showed a whole zone to everyone. {actor} is who showed it, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "{actor} كشف {source, select, hand {يد} prizes {جوائز} discard {كومة تخلص} board {طاولة} stadium {ملعب} active {النشط} bench {احتياط} lostZone {Lost Zone} attachmentResolution {البطاقات الملحقة} inspection {الفحص} other {مجموعة}} {owner}"
+    "translation": "{actor} كشف {source, select, hand {يد} prizes {جوائز} discard {كومة تخلص} board {ميدان} stadium {ملعب} active {النشط} bench {احتياط} lostZone {Lost Zone} attachmentResolution {البطاقات الملحقة} inspection {الفحص} other {مجموعة}} {owner}"
   },
   "P2m23t": {
     "message": "{actor} shuffled {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} into deck",
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left."
     ],
-    "translation": "{actor} خلط {card} من {source, select, hand {اليد} prizes {الجوائز} discard {كومة التخلص} board {الطاولة} stadium {الملعب} active {النشط} bench {الاحتياط} lostZone {Lost Zone} attachmentResolution {البطاقات الملحقة} other {المجموعة}} في المجموعة"
+    "translation": "{actor} خلط {card} من {source, select, hand {اليد} prizes {الجوائز} discard {كومة التخلص} board {الميدان} stadium {الملعب} active {النشط} bench {الاحتياط} lostZone {Lost Zone} attachmentResolution {البطاقات الملحقة} other {المجموعة}} في المجموعة"
   },
   "xEKtXt": {
     "message": "{actor} shuffled {count, plural, one {# attached card(s)} other {# attached card(s)}} into deck",
@@ -205,7 +205,7 @@
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards."
     ],
-    "translation": "{actor} خلط {count, plural, zero {# بطاقة} one {بطاقة} two {بطاقتين} few {# بطاقات} many {# بطاقة} other {# بطاقة}} من الطاولة في المجموعة"
+    "translation": "{actor} خلط {count, plural, zero {# بطاقة} one {بطاقة} two {بطاقتين} few {# بطاقات} many {# بطاقة} other {# بطاقة}} من الميدان في المجموعة"
   },
   "PoaZgj": {
     "message": "{actor} shuffled {count, plural, one {# card(s)} other {# card(s)}} into deck",
@@ -268,7 +268,7 @@
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left, and the top card of the deck took its place."
     ],
-    "translation": "{actor} بدّل {card} من {source, select, hand {اليد} prizes {الجوائز} discard {كومة التخلص} board {الطاولة} stadium {الملعب} active {النشط} bench {الاحتياط} lostZone {Lost Zone} attachmentResolution {البطاقات الملحقة} other {المجموعة}} مع أعلى المجموعة"
+    "translation": "{actor} بدّل {card} من {source, select, hand {اليد} prizes {الجوائز} discard {كومة التخلص} board {الميدان} stadium {الملعب} active {النشط} bench {الاحتياط} lostZone {Lost Zone} attachmentResolution {البطاقات الملحقة} other {المجموعة}} مع أعلى المجموعة"
   },
   "QOz626": {
     "message": "{actor} took back {target}'s last move",
@@ -724,7 +724,7 @@
     "comments": [
       "Log line. {name} is a player's name; {source} is the zone they shuffled, almost always their deck."
     ],
-    "translation": "خلط {name} {source, select, hand {اليد} prizes {الجوائز} discard {كومة التخلص} board {الطاولة} stadium {الملعب} active {النشط} bench {الاحتياط} lostZone {Lost Zone} attachmentResolution {البطاقات الملحقة} other {الرزمة}}"
+    "translation": "خلط {name} {source, select, hand {اليد} prizes {الجوائز} discard {كومة التخلص} board {الميدان} stadium {الملعب} active {النشط} bench {الاحتياط} lostZone {Lost Zone} attachmentResolution {البطاقات الملحقة} other {الرزمة}}"
   },
   "x8Eb2i": {
     "message": "{name} started turn {turn}",
@@ -928,28 +928,28 @@
     "comments": [
       "Log line: a player began looking at a zone only they can see. {viewer} is who is looking, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "{viewer} اطّلع على {source, select, hand {اليد} prizes {بطاقات الجوائز} discard {كومة التخلص} board {اللوحة} stadium {الملعب} active {Pokémon النشط} bench {الاحتياط} lostZone {Lost Zone} attachmentResolution {البطاقات المرفقة} inspection {الفحص} other {المجموعة}} لدى {owner}"
+    "translation": "{viewer} اطّلع على {source, select, hand {اليد} prizes {بطاقات الجوائز} discard {كومة التخلص} board {الميدان} stadium {الملعب} active {Pokémon النشط} bench {الاحتياط} lostZone {Lost Zone} attachmentResolution {البطاقات المرفقة} inspection {الفحص} other {المجموعة}} لدى {owner}"
   },
   "kF6-Cq": {
     "message": "{viewer} looked at card in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line: a player began looking at a card only they can see. {viewer} is who is looking, {owner} whose card it is; {source} is the zone it is in."
     ],
-    "translation": "{viewer} اطّلع على بطاقة في {source, select, hand {اليد} prizes {بطاقات الجوائز} discard {كومة التخلص} board {اللوحة} stadium {الملعب} active {Pokémon النشط} bench {الاحتياط} lostZone {Lost Zone} attachmentResolution {البطاقات المرفقة} inspection {الفحص} other {المجموعة}} لدى {owner}"
+    "translation": "{viewer} اطّلع على بطاقة في {source, select, hand {اليد} prizes {بطاقات الجوائز} discard {كومة التخلص} board {الميدان} stadium {الملعب} active {Pokémon النشط} bench {الاحتياط} lostZone {Lost Zone} attachmentResolution {البطاقات المرفقة} inspection {الفحص} other {المجموعة}} لدى {owner}"
   },
   "jTec7e": {
     "message": "{viewer} stopped looking at {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line. {viewer} is who stopped looking, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "{viewer} توقف عن الاطلاع على {source, select, hand {اليد} prizes {بطاقات الجوائز} discard {كومة التخلص} board {اللوحة} stadium {الملعب} active {Pokémon النشط} bench {الاحتياط} lostZone {Lost Zone} attachmentResolution {البطاقات المرفقة} inspection {الفحص} other {المجموعة}} لدى {owner}"
+    "translation": "{viewer} توقف عن الاطلاع على {source, select, hand {اليد} prizes {بطاقات الجوائز} discard {كومة التخلص} board {الميدان} stadium {الملعب} active {Pokémon النشط} bench {الاحتياط} lostZone {Lost Zone} attachmentResolution {البطاقات المرفقة} inspection {الفحص} other {المجموعة}} لدى {owner}"
   },
   "FAueN1": {
     "message": "{viewer} stopped looking at card in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line. {viewer} is who stopped looking, {owner} whose card it is; {source} is the zone it is in."
     ],
-    "translation": "{viewer} توقف عن الاطلاع على بطاقة في {source, select, hand {اليد} prizes {بطاقات الجوائز} discard {كومة التخلص} board {اللوحة} stadium {الملعب} active {Pokémon النشط} bench {الاحتياط} lostZone {Lost Zone} attachmentResolution {البطاقات المرفقة} inspection {الفحص} other {المجموعة}} لدى {owner}"
+    "translation": "{viewer} توقف عن الاطلاع على بطاقة في {source, select, hand {اليد} prizes {بطاقات الجوائز} discard {كومة التخلص} board {الميدان} stadium {الملعب} active {Pokémon النشط} bench {الاحتياط} lostZone {Lost Zone} attachmentResolution {البطاقات المرفقة} inspection {الفحص} other {المجموعة}} لدى {owner}"
   },
   "JirPbT": {
     "message": "{zoneName}, {count, plural, one {# card} other {# cards}}",
@@ -2081,7 +2081,7 @@
   "E8rJSo": {
     "message": "Discard",
     "context": "shortcut key caption",
-    "translation": "تجاهل"
+    "translation": "تخلص"
   },
   "uuQD5w": {
     "message": "Discard",
@@ -2097,12 +2097,12 @@
   },
   "u8xW5H": {
     "message": "Discard all",
-    "translation": "تجاهل الكل"
+    "translation": "تخلص من الكل"
   },
   "ui1b33": {
     "message": "Discard all",
     "context": "shortcut key caption",
-    "translation": "تجاهل الكل"
+    "translation": "تخلص من الكل"
   },
   "FQxE2Y": {
     "message": "Discard all on playboard",
@@ -2110,12 +2110,12 @@
   },
   "mKMb1d": {
     "message": "Discard hand",
-    "translation": "تجاهل اليد"
+    "translation": "تخلص من اليد"
   },
   "vtuFDE": {
     "message": "Discard hand",
     "context": "shortcut key caption",
-    "translation": "تجاهل اليد"
+    "translation": "تخلص من اليد"
   },
   "Nx52uj": {
     "message": "Discard hand and draw…",
@@ -5393,7 +5393,7 @@
   },
   "a0AIf-": {
     "message": "To discard",
-    "translation": "إلى كومة الاستبعاد"
+    "translation": "إلى كومة التخلص"
   },
   "NmdkBO": {
     "message": "to Energy",

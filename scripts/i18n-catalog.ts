@@ -250,6 +250,9 @@ export const looksGarbled = (
   return writesLatin && MISENCODED_LATIN.test(text);
 };
 
+/** A note the glossary (translate-glossary.ts) gives with a term. */
+const GLOSSARY_NOTE = /\(as a short label:/iu;
+
 const sameList = (left: readonly string[], right: readonly string[]) =>
   left.length === right.length &&
   left.every((value, index) => value === right[index]);
@@ -257,8 +260,8 @@ const sameList = (left: readonly string[], right: readonly string[]) =>
 /**
  * Why a translation of `source` into `locale` cannot ship, or undefined
  * when it can: blank, unparseable, a lost, renamed or extra placeholder, a
- * changed select, a plural without `other`, a lost or extra tag, or garbled
- * text.
+ * changed select, a plural without `other`, a lost or extra tag, garbled
+ * text, or a glossary note copied in.
  */
 export const translationProblem = (
   source: string,
@@ -295,6 +298,8 @@ export const translationProblem = (
   if (actual.pluralsWithoutOther.length > 0)
     return `a plural without "other" ({${actual.pluralsWithoutOther[0]}})`;
   if (!sameList(expected.tags, actual.tags)) return 'changed the tags';
+  if (GLOSSARY_NOTE.test(translation) && !GLOSSARY_NOTE.test(source))
+    return 'kept a glossary note';
   if (looksGarbled(translation, locale, source)) return 'garbled';
   return undefined;
 };

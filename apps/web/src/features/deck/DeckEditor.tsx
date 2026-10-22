@@ -33,6 +33,7 @@ import {
   useState,
   useSyncExternalStore,
 } from 'react';
+import { flushSync } from 'react-dom';
 
 import { ActionMenu } from '../../ui/ActionMenu.js';
 import { confirmAction } from '../../ui/dialog-requests.js';
@@ -302,7 +303,8 @@ export const DeckEditor = ({
       redo();
     } else if (event.key === '/' && !mod && !isTextEntry(event.target)) {
       event.preventDefault();
-      setTab('search');
+      // Drawn first: a hidden pane's search can't take the focus.
+      flushSync(() => setTab('search'));
       searchRef.current?.focus();
       searchRef.current?.select();
     }
@@ -347,7 +349,7 @@ export const DeckEditor = ({
   };
 
   const searchFor = (name: string): void => {
-    setTab('search');
+    flushSync(() => setTab('search'));
     const input = searchRef.current;
     if (!input) return;
     const setter = Object.getOwnPropertyDescriptor(

@@ -51,6 +51,7 @@ export const LANGUAGE_GUIDES: Readonly<Record<string, LanguageGuide>> = {
       HP: 'PS',
       'Standard / Expanded / Unlimited': 'Estándar / Expandido / Ilimitado',
       'VSTAR Power': 'Poder V-ASTRO',
+      'Board (the zone on the table)': 'tablero',
     },
   },
   pt: {
@@ -86,6 +87,7 @@ export const LANGUAGE_GUIDES: Readonly<Record<string, LanguageGuide>> = {
       HP: 'PS',
       'Standard / Expanded / Unlimited': 'Padrão / Expandido / Ilimitado',
       'VSTAR Power': 'Poder V-ASTRO',
+      'Board (the zone on the table)': 'tabuleiro',
     },
   },
   de: {
@@ -120,6 +122,7 @@ export const LANGUAGE_GUIDES: Readonly<Record<string, LanguageGuide>> = {
       HP: 'KP',
       'Standard / Expanded / Unlimited': 'Standard / Erweitert / Unbegrenzt',
       'VSTAR Power': 'VSTAR-Kraft',
+      'Board (the zone on the table)': 'Spielfeld',
     },
   },
   fr: {
@@ -154,6 +157,7 @@ export const LANGUAGE_GUIDES: Readonly<Record<string, LanguageGuide>> = {
       HP: 'PV',
       'Standard / Expanded / Unlimited': 'Standard / Étendu / Illimité',
       'VSTAR Power': 'Capacité VSTAR',
+      'Board (the zone on the table)': 'plateau',
     },
   },
   it: {
@@ -188,6 +192,7 @@ export const LANGUAGE_GUIDES: Readonly<Record<string, LanguageGuide>> = {
       HP: 'PS',
       'Standard / Expanded / Unlimited': 'Standard / Espanso / Illimitato',
       'VSTAR Power': 'Potere V ASTRO',
+      'Board (the zone on the table)': 'campo',
     },
   },
   ja: {
@@ -226,6 +231,7 @@ export const LANGUAGE_GUIDES: Readonly<Record<string, LanguageGuide>> = {
       'VSTAR Power': 'VSTARパワー',
       Shuffle: '切る',
       Draw: '引く',
+      'Board (the zone on the table)': '場',
     },
   },
   zh: {
@@ -261,6 +267,7 @@ export const LANGUAGE_GUIDES: Readonly<Record<string, LanguageGuide>> = {
       HP: 'HP',
       Pokémon: '宝可梦',
       'VSTAR Power': 'VSTAR力量',
+      'Board (the zone on the table)': '场地',
     },
   },
   ko: {
@@ -296,6 +303,7 @@ export const LANGUAGE_GUIDES: Readonly<Record<string, LanguageGuide>> = {
       HP: 'HP',
       Pokémon: '포켓몬',
       'VSTAR Power': 'VSTAR 파워',
+      'Board (the zone on the table)': '보드',
     },
   },
   th: {
@@ -312,13 +320,16 @@ export const LANGUAGE_GUIDES: Readonly<Record<string, LanguageGuide>> = {
       Hand: 'มือ',
       'Lost Zone': 'ลอสต์โซน',
       Stadium: 'สเตเดียม',
+      'Board (the zone on the table)': 'สนาม',
     },
   },
   id: {
     name: 'Indonesian',
     style:
       'Plain, friendly UI Indonesian (kamu), using the terms of the Indonesian Pokémon Trading Card Game where you know them.',
-    terms: {},
+    terms: {
+      'Board (the zone on the table)': 'papan',
+    },
   },
   nl: {
     name: 'Dutch',
@@ -331,12 +342,15 @@ export const LANGUAGE_GUIDES: Readonly<Record<string, LanguageGuide>> = {
       Deck: 'deck',
       'Lost Zone': 'Lost Zone',
       Stadium: 'Stadion',
+      'Board (the zone on the table)': 'bord',
     },
   },
   pl: {
     name: 'Polish',
     style: `Address the player informally. ${COMMUNITY}`,
-    terms: {},
+    terms: {
+      'Board (the zone on the table)': 'plansza',
+    },
   },
   sv: {
     name: 'Swedish',
@@ -349,22 +363,29 @@ export const LANGUAGE_GUIDES: Readonly<Record<string, LanguageGuide>> = {
       Deck: 'lek',
       'Lost Zone': 'Lost Zone',
       Stadium: 'stadion',
+      'Board (the zone on the table)': 'bord',
     },
   },
   tr: {
     name: 'Turkish',
     style: `Address the player informally (sen). ${COMMUNITY}`,
-    terms: {},
+    terms: {
+      'Board (the zone on the table)': 'masa',
+    },
   },
   ru: {
     name: 'Russian',
     style: `Address the player as ты. ${COMMUNITY}`,
-    terms: {},
+    terms: {
+      'Board (the zone on the table)': 'стол',
+    },
   },
   sr: {
     name: 'Serbian (Cyrillic)',
     style: `Write in Cyrillic; address the player as ти. ${COMMUNITY}`,
-    terms: {},
+    terms: {
+      'Board (the zone on the table)': 'табла',
+    },
   },
   ar: {
     name: 'Arabic',
@@ -378,6 +399,7 @@ export const LANGUAGE_GUIDES: Readonly<Record<string, LanguageGuide>> = {
       Hand: 'اليد',
       'Lost Zone': 'Lost Zone',
       Stadium: 'الملعب',
+      'Board (the zone on the table)': 'الميدان',
     },
   },
   vi: {
@@ -392,11 +414,14 @@ export const LANGUAGE_GUIDES: Readonly<Record<string, LanguageGuide>> = {
       Hand: 'bài trên tay',
       'Lost Zone': 'Lost Zone',
       Stadium: 'Stadium',
+      'Board (the zone on the table)': 'bàn chơi',
     },
   },
   fil: {
     name: 'Filipino',
     style: `Natural Filipino as players write it, Taglish where English game words are what people say. ${COMMUNITY}`,
-    terms: {},
+    terms: {
+      'Board (the zone on the table)': 'board',
+    },
   },
 };

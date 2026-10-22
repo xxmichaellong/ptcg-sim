@@ -724,7 +724,7 @@
     "comments": [
       "Log line. {name} is a player's name; {source} is the zone they shuffled, almost always their deck."
     ],
-    "translation": "{name} tasuje: {source, select, hand {rękę} prizes {nagrody} discard {odrzucone} board {stół} stadium {stadion} active {aktywnego Pokémona} bench {ławkę} lostZone {Lost Zone} attachmentResolution {dołączone karty} other {talię}}"
+    "translation": "{name} tasuje: {source, select, hand {rękę} prizes {nagrody} discard {odrzucone} board {planszę} stadium {stadion} active {aktywnego Pokémona} bench {ławkę} lostZone {Lost Zone} attachmentResolution {dołączone karty} other {talię}}"
   },
   "x8Eb2i": {
     "message": "{name} started turn {turn}",

@@ -128,7 +128,7 @@
     "comments": [
       "Log line for a Pokémon moved onto another player's side of the table. {actor} is the card owner's name, {card} a card's name, {boardOwner} the name of the player whose Active or Bench it went to; {source} is the spot it left and {target} the spot it went to."
     ],
-    "translation": "{actor} премешта {card} са места „{source, select, hand {рука} prizes {награде} discard {отпад} board {сто} stadium {стадион} active {активни} bench {клупа} lostZone {Lost Zone} attachmentResolution {причвршћене карте} other {шпил}}“ на место „{target, select, hand {рука} prizes {награде} discard {отпад} board {сто} stadium {стадион} active {активни} bench {клупа} lostZone {Lost Zone} attachmentResolution {причвршћене карте} other {шпил}}“ играча {boardOwner}"
+    "translation": "{actor} премешта {card} са места „{source, select, hand {рука} prizes {награде} discard {отпад} board {табла} stadium {стадион} active {активни} bench {клупа} lostZone {Lost Zone} attachmentResolution {причвршћене карте} other {шпил}}“ на место „{target, select, hand {рука} prizes {награде} discard {отпад} board {табла} stadium {стадион} active {активни} bench {клупа} lostZone {Lost Zone} attachmentResolution {причвршћене карте} other {шпил}}“ играча {boardOwner}"
   },
   "VzhIq8": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {target, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}}",
@@ -724,7 +724,7 @@
     "comments": [
       "Log line. {name} is a player's name; {source} is the zone they shuffled, almost always their deck."
     ],
-    "translation": "{name} меша: {source, select, hand {руку} prizes {награде} discard {одбачене карте} board {сто} stadium {стадион} active {активног Pokémon}  bench {клупу} lostZone {Lost Zone} attachmentResolution {приложене карте} other {шпил}}"
+    "translation": "{name} меша: {source, select, hand {руку} prizes {награде} discard {одбачене карте} board {таблу} stadium {стадион} active {активног Pokémon}  bench {клупу} lostZone {Lost Zone} attachmentResolution {приложене карте} other {шпил}}"
   },
   "x8Eb2i": {
     "message": "{name} started turn {turn}",
@@ -5358,11 +5358,11 @@
   "1CZiQZ": {
     "message": "to Board",
     "context": "move a card",
-    "translation": "на сто"
+    "translation": "на таблу"
   },
   "nUvd-D": {
     "message": "To board",
-    "translation": "На сто"
+    "translation": "На таблу"
   },
   "FNYlfF": {
     "message": "To bottom of deck",
