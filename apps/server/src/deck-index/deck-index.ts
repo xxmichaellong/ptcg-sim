@@ -584,7 +584,8 @@ export class DeckIndex {
       }
     }
     const current = this.store.tournament(id);
-    if (!current) return { kind: 'not_found' };
+    // Gone, or skipped while it was read: its format's lists aren't kept.
+    if (!current || current.state === 'skipped') return { kind: 'not_found' };
     if (current.fetchedAt === null) {
       // The read failed: nothing to show yet.
       return this.deps.enabled

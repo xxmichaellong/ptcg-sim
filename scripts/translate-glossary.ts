@@ -304,6 +304,14 @@ export const LANGUAGE_GUIDES: Readonly<Record<string, LanguageGuide>> = {
       'Polite, concise UI Thai, using the terms of the Thai Pokémon Trading Card Game where you know them; keep Pokémon names and VSTAR, GX, ACE SPEC in Latin letters.',
     terms: {
       Pokémon: 'โปเกมอน',
+      'Active Spot': 'ตำแหน่งแอคทีฟ (as a short label: แอคทีฟ)',
+      Bench: 'ม้านั่งสำรอง',
+      'Prize cards': 'การ์ดรางวัล',
+      'Discard Pile': 'กองทิ้ง',
+      Deck: 'เด็ค',
+      Hand: 'มือ',
+      'Lost Zone': 'ลอสต์โซน',
+      Stadium: 'สเตเดียม',
     },
   },
   id: {
@@ -315,7 +323,15 @@ export const LANGUAGE_GUIDES: Readonly<Record<string, LanguageGuide>> = {
   nl: {
     name: 'Dutch',
     style: `Address the player as je. ${COMMUNITY}`,
-    terms: {},
+    terms: {
+      'Active Spot': 'Actief',
+      Bench: 'Bank',
+      'Prize cards': 'Prizes',
+      'Discard Pile': 'Aflegstapel',
+      Deck: 'deck',
+      'Lost Zone': 'Lost Zone',
+      Stadium: 'Stadion',
+    },
   },
   pl: {
     name: 'Polish',
@@ -325,7 +341,15 @@ export const LANGUAGE_GUIDES: Readonly<Record<string, LanguageGuide>> = {
   sv: {
     name: 'Swedish',
     style: `Address the player as du. ${COMMUNITY}`,
-    terms: {},
+    terms: {
+      'Active Spot': 'aktiv',
+      Bench: 'bänk',
+      'Prize cards': 'priskort',
+      'Discard Pile': 'kasthög',
+      Deck: 'lek',
+      'Lost Zone': 'Lost Zone',
+      Stadium: 'Stadion',
+    },
   },
   tr: {
     name: 'Turkish',
@@ -345,12 +369,30 @@ export const LANGUAGE_GUIDES: Readonly<Record<string, LanguageGuide>> = {
   ar: {
     name: 'Arabic',
     style: `Modern Standard Arabic, concise. Keep placeholders and Latin names as they are; the layout stays left to right. ${COMMUNITY}`,
-    terms: {},
+    terms: {
+      'Active Spot': 'الخانة النشطة',
+      Bench: 'الاحتياط',
+      'Prize cards': 'الجوائز',
+      'Discard Pile': 'كومة التخلص',
+      Deck: 'المجموعة',
+      Hand: 'اليد',
+      'Lost Zone': 'Lost Zone',
+      Stadium: 'الملعب',
+    },
   },
   vi: {
     name: 'Vietnamese',
     style: `Address the player as bạn. ${COMMUNITY}`,
-    terms: {},
+    terms: {
+      'Active Spot': 'vị trí Active',
+      Bench: 'băng ghế',
+      'Prize cards': 'thẻ Phần thưởng',
+      'Discard Pile': 'chồng bài bỏ',
+      Deck: 'bộ bài',
+      Hand: 'bài trên tay',
+      'Lost Zone': 'Lost Zone',
+      Stadium: 'Stadium',
+    },
   },
   fil: {
     name: 'Filipino',

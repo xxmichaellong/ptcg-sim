@@ -627,7 +627,7 @@ export class DeckIndexStore {
     provisional: boolean
   ): void {
     this.sql.exec(
-      `UPDATE tournaments SET state = ?, fetched_at = ?, attempts = 0, retry_after = NULL WHERE id = ?`,
+      `UPDATE tournaments SET state = ?, fetched_at = ?, attempts = 0, retry_after = NULL WHERE id = ? AND state != 'skipped'`,
       provisional ? 'provisional' : 'indexed',
       now,
       tournamentId
@@ -640,7 +640,8 @@ export class DeckIndexStore {
       'SELECT attempts, state, date, retry_after FROM tournaments WHERE id = ?',
       tournamentId
     );
-    if (!row) return;
+    // Skipped while it was read: it stays out of the crawl.
+    if (!row || row.state === 'skipped') return;
     // The tries are for reading it once it is over, when the crawl is due
     // to: a read a player asked for while it may still be running, or
     // before the crawl's next try, spends none of them. What was read

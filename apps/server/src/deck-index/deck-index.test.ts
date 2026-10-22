@@ -919,6 +919,64 @@ describe('browsing tournaments', () => {
 });
 
 describe('a tournament a player opens', () => {
+  it('is not found, and stays out of the index, when its format changes while a read of it fails', async () => {
+    let format = 'STANDARD';
+    let held: ((response: Response) => void) | undefined;
+    let standingsReads = 0;
+    const fetch = (async (input: RequestInfo | URL) => {
+      const url = new URL(String(input));
+      if (url.pathname === '/api/tournaments') {
+        return Response.json([
+          {
+            game: 'PTCG',
+            id: id(1),
+            name: 'Weekly',
+            date: new Date(START - 20 * HOUR).toISOString(),
+            format,
+            players: 64,
+          },
+        ]);
+      }
+      standingsReads += 1;
+      // The player's read waits on Limitless; any later one fails at once.
+      return standingsReads === 1
+        ? new Promise<Response>((resolve) => {
+            held = resolve;
+          })
+        : new Response('down', { status: 503 });
+    }) as typeof globalThis.fetch;
+    const index = new DeckIndex({
+      storage: memoryIndexStorage(),
+      fetch,
+      now: clock,
+      enabled: true,
+    });
+    index.migrate();
+    await index.step();
+    const opened = index.tournament(id(1));
+    await vi.waitFor(() => expect(held).toBeDefined());
+    // Meanwhile its organizer changes the format to one whose lists aren't
+    // kept, and then the read fails.
+    format = 'GLC';
+    now += CRAWL_POLICY.discoveryEveryMs + 1;
+    await index.step();
+    held!(new Response('down', { status: 503 }));
+    expect(await opened).toEqual({ kind: 'not_found' });
+    // Never read or shown after.
+    await crawl(index, 10);
+    expect(standingsReads).toBe(1);
+    expect(
+      index.tournaments({
+        q: '',
+        format: null,
+        minimumPlayers: 0,
+        before: null,
+        pageSize: 10,
+      }).tournaments
+    ).toEqual([]);
+    expect(await index.tournament(id(1))).toEqual({ kind: 'not_found' });
+  });
+
   it('is read at once if it never was, and two asking together share one read', async () => {
     limitless.tournaments = [tournament(1, { date: START - 3 * DAY })];
     limitless.standings.set(id(1), [

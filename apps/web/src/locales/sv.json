@@ -604,7 +604,7 @@
     "comments": [
       "A zone's name for screen readers; name is its player."
     ],
-    "translation": "{name} hand"
+    "translation": "{name}s hand"
   },
   "WbFKTs": {
     "message": "{name} has no cards left to draw",
@@ -671,7 +671,7 @@
     "comments": [
       "A zone's name for screen readers; name is its player."
     ],
-    "translation": "{name} Lost Zone"
+    "translation": "{name}s Lost Zone"
   },
   "219rTA": {
     "message": "{name} mulligans",
@@ -696,7 +696,7 @@
     "comments": [
       "A zone's name for screen readers; name is its player. The Prize cards."
     ],
-    "translation": "{name} priskort"
+    "translation": "{name}s priskort"
   },
   "g7DH0W": {
     "message": "{name} reconnected",
