@@ -15,6 +15,7 @@ import {
   fetchArchetypeFinishes,
   fetchTournament,
   fetchTournaments,
+  searchText,
   MAJOR_TOURNAMENTS_URL,
   TOURNAMENT_DATA_SOURCE,
   type DeckSearchResult,
@@ -358,7 +359,7 @@ export const TournamentsShelf = ({
   const [filter, setFilter] = useState('');
   const [query, setQuery] = useState('');
   useEffect(() => {
-    const timer = setTimeout(() => setQuery(filter.trim()), 250);
+    const timer = setTimeout(() => setQuery(searchText(filter)), 250);
     return () => clearTimeout(timer);
   }, [filter]);
   // Asked for once the shelf comes near the screen, not on every opening.
@@ -395,21 +396,26 @@ export const TournamentsShelf = ({
       }))
   );
   const events = paged.state.status === 'ready' ? paged.state.value : [];
-  // A control that goes as the list changes -- More once the last page is
-  // in or the list starts over, Try again once it loads -- takes the focus
-  // with it: focus that fell to the page goes to the first event More
-  // brought, or More again, or else the first event, Try again, or the
-  // filter.
-  const moreFrom = useRef<number | undefined>(undefined);
+  // A control pressed here that goes as the list changes -- More once the
+  // last page is in or the list starts over, Try again once it loads --
+  // takes the focus with it: focus that fell to the page goes to the first
+  // event More brought, or More again, or else the first event, Try
+  // again, or the filter. Nothing else here moves the focus.
+  const handOff = useRef<{ readonly from?: number } | undefined>(undefined);
   const showMore = (): void => {
     if (paged.loadingMore || !paged.hasMore) return;
-    moreFrom.current = events.length;
+    handOff.current = { from: events.length };
     paged.more();
   };
+  const tryAgain = (): void => {
+    handOff.current = {};
+    paged.retry();
+  };
   useEffect(() => {
+    const pending = handOff.current;
+    if (pending === undefined) return;
     if (paged.loadingMore || paged.state.status === 'loading') return;
-    const from = moreFrom.current;
-    moreFrom.current = undefined;
+    handOff.current = undefined;
     const active = document.activeElement;
     if (active !== null && active !== document.body) return;
     const node = section.current;
@@ -418,9 +424,9 @@ export const TournamentsShelf = ({
       ...node.querySelectorAll<HTMLElement>('[data-open-tournament]'),
     ];
     const more = node.querySelector<HTMLElement>('.deck-show-more');
-    (from === undefined
+    (pending.from === undefined
       ? (opened[0] ?? more)
-      : (opened[from] ?? more ?? opened.at(-1))
+      : (opened[pending.from] ?? more ?? opened.at(-1))
     )?.focus();
     if (document.activeElement === document.body) {
       (
@@ -528,7 +534,7 @@ export const TournamentsShelf = ({
                 ) : (
                   <Trans>Tournaments are offline</Trans>
                 )}{' '}
-                <button type="button" className="ds-link" onClick={paged.retry}>
+                <button type="button" className="ds-link" onClick={tryAgain}>
                   <Trans>Try again</Trans>
                 </button>
               </>

@@ -465,8 +465,9 @@ export const MAX_DECK_SEARCH_LENGTH = 60;
 /**
  * What is typed or pasted, as the server takes a search: a tab or line
  * break (a cell pasted from a table) is a space, never a refused request.
+ * What a search checks, sends and shows is this.
  */
-const searchText = (value: string): string =>
+export const searchText = (value: string): string =>
   value
     // eslint-disable-next-line no-control-regex -- control characters are the point
     .replaceAll(/[\u0000-\u001f\u007f-\u009f]/gu, ' ')

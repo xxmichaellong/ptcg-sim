@@ -2081,7 +2081,7 @@
   "E8rJSo": {
     "message": "Discard",
     "context": "shortcut key caption",
-    "translation": "Ablegstapel"
+    "translation": "Aflegstapel"
   },
   "uuQD5w": {
     "message": "Discard",
@@ -2089,7 +2089,7 @@
     "comments": [
       "The discard pile."
     ],
-    "translation": "Ablegstapel"
+    "translation": "Aflegstapel"
   },
   "c58XOp": {
     "message": "Discard a Pokémon, take a Prize, bring up the next",
@@ -2124,7 +2124,7 @@
   "eEqZQd": {
     "message": "Discard pile",
     "context": "zone",
-    "translation": "Ablegstapel"
+    "translation": "Aflegstapel"
   },
   "OdPOhy": {
     "message": "Discord",
@@ -3208,10 +3208,6 @@
   "cnyUyK": {
     "message": "Make cover",
     "translation": "Dekking maken"
-  },
-  "v1g6xE": {
-    "message": "Make it <0>60</0>: type it, or press <1>+</1>.",
-    "translation": "Maak er <0>60</0> van: typ het in, of druk op <1>+</1>."
   },
   "brtcFm": {
     "message": "Mark {mark}",
@@ -4579,6 +4575,13 @@
     "message": "Set damage…",
     "translation": "Zet schade…"
   },
+  "OM2HHP": {
+    "message": "Set the damage to <0>60</0>: type it, or press <1>+</1>.",
+    "comments": [
+      "60 is the damage on the Pokémon, not a number of cards"
+    ],
+    "translation": "Stel de schade in op <0>60</0>: typ het in of druk op <1>+</1>."
+  },
   "DBL0AT": {
     "message": "Set up",
     "translation": "Opzetten"
@@ -5089,7 +5092,7 @@
   },
   "yJtTpT": {
     "message": "Take a <0>Prize card</0>: drag one into your hand.",
-    "translation": "Pak een <0>Prijskaart</0>: sleep er een naar je hand."
+    "translation": "Pak een <0>Prize</0>: sleep er een naar je hand."
   },
   "2g01hc": {
     "message": "Take off {count} damage",
@@ -5813,7 +5816,7 @@
   },
   "H5pi4B": {
     "message": "Your hand, and your 6 <0>Prize cards</0>, face down.",
-    "translation": "Je hand en je 6 <0>Prijskaarten</0>, met de beeldzijde omlaag."
+    "translation": "Je hand en je 6 <0>Prizes</0>, met de beeldzijde omlaag."
   },
   "BHcJOF": {
     "message": "Your Lost Zone",

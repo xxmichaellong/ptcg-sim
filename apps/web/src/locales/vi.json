@@ -3209,10 +3209,6 @@
     "message": "Make cover",
     "translation": "Tạo mặt úp"
   },
-  "v1g6xE": {
-    "message": "Make it <0>60</0>: type it, or press <1>+</1>.",
-    "translation": "Đặt thành <0>60</0>: nhập số, hoặc nhấn <1>+</1>."
-  },
   "brtcFm": {
     "message": "Mark {mark}",
     "comments": [
@@ -4578,6 +4574,13 @@
   "hsdxJE": {
     "message": "Set damage…",
     "translation": "Đặt sát thương…"
+  },
+  "OM2HHP": {
+    "message": "Set the damage to <0>60</0>: type it, or press <1>+</1>.",
+    "comments": [
+      "60 is the damage on the Pokémon, not a number of cards"
+    ],
+    "translation": "Đặt sát thương thành <0>60</0>: nhập số hoặc nhấn <1>+</1>."
   },
   "DBL0AT": {
     "message": "Set up",

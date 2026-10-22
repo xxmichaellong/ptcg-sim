@@ -2521,7 +2521,7 @@
   },
   "euYJXw": {
     "message": "Flip a coin: press your coin.",
-    "translation": "Singla slant: tryck på din mynt."
+    "translation": "Singla slant: tryck på ditt mynt."
   },
   "9Bomz3": {
     "message": "Flip coin",
@@ -3208,10 +3208,6 @@
   "cnyUyK": {
     "message": "Make cover",
     "translation": "Gör till täckt"
-  },
-  "v1g6xE": {
-    "message": "Make it <0>60</0>: type it, or press <1>+</1>.",
-    "translation": "Gör den till <0>60</0>: skriv in det, eller tryck på <1>+</1>."
   },
   "brtcFm": {
     "message": "Mark {mark}",
@@ -4578,6 +4574,13 @@
   "hsdxJE": {
     "message": "Set damage…",
     "translation": "Sätt skada…"
+  },
+  "OM2HHP": {
+    "message": "Set the damage to <0>60</0>: type it, or press <1>+</1>.",
+    "comments": [
+      "60 is the damage on the Pokémon, not a number of cards"
+    ],
+    "translation": "Ställ in skadan på <0>60</0>: skriv in den eller tryck på <1>+</1>."
   },
   "DBL0AT": {
     "message": "Set up",

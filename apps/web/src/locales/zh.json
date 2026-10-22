@@ -3209,10 +3209,6 @@
     "message": "Make cover",
     "translation": "制作卡背"
   },
-  "v1g6xE": {
-    "message": "Make it <0>60</0>: type it, or press <1>+</1>.",
-    "translation": "凑够<0>60</0>张:输入数字,或按<1>+</1>。"
-  },
   "brtcFm": {
     "message": "Mark {mark}",
     "comments": [
@@ -4578,6 +4574,13 @@
   "hsdxJE": {
     "message": "Set damage…",
     "translation": "设置伤害…"
+  },
+  "OM2HHP": {
+    "message": "Set the damage to <0>60</0>: type it, or press <1>+</1>.",
+    "comments": [
+      "60 is the damage on the Pokémon, not a number of cards"
+    ],
+    "translation": "将伤害设为<0>60</0>:输入数值,或按<1>+</1>。"
   },
   "DBL0AT": {
     "message": "Set up",

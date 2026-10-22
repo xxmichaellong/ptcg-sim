@@ -258,6 +258,14 @@ export const DeckEditor = ({
     }, 600);
     return () => clearTimeout(timer);
   }, [deck.id, deck.name, flashSaved, library, nameDraft]);
+  // A name typed but not yet saved when the editor goes with the screen (a
+  // new table or room) is kept: removing the field fires no blur.
+  const unsavedName = useRef<() => void>(() => undefined);
+  unsavedName.current = () => {
+    const clean = cleanDeckName(nameDraft);
+    if (clean && clean !== deck.name) library.update(deck.id, { name: clean });
+  };
+  useEffect(() => () => unsavedName.current(), []);
 
   const setFormat = (format: DeckFormatId): void => {
     library.update(deck.id, { format });

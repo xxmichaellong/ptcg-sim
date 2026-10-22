@@ -466,8 +466,9 @@ const damage: TutorialLesson = {
     {
       id: 'sixty',
       text: () => (
-        <Trans>
-          Make it <strong>60</strong>: type it, or press <strong>+</strong>.
+        <Trans comment="60 is the damage on the Pokémon, not a number of cards">
+          Set the damage to <strong>60</strong>: type it, or press{' '}
+          <strong>+</strong>.
         </Trans>
       ),
       targets: () => [

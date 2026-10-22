@@ -330,4 +330,42 @@ describe('a deck’s lists from the keyboard', () => {
       (document.activeElement as HTMLElement | null)?.dataset.openTournament
     ).toBe(event.id);
   });
+
+  it('leave the focus where it is when nothing on the shelf was pressed', async () => {
+    vi.stubGlobal('IntersectionObserver', undefined);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        Response.json({
+          tournaments: [
+            {
+              id: 'f'.repeat(24),
+              name: 'Event',
+              date: '2026-10-10T19:00:00.000Z',
+              players: 64,
+              format: 'STANDARD',
+              organizer: 'League',
+              hasLists: true,
+            },
+          ],
+          nextCursor: null,
+        })
+      )
+    );
+    // The focus fell to the page (a pressed Back went away) as the decks
+    // came back: the shelf mounting, and its first page, leave it there.
+    (document.activeElement as HTMLElement | null)?.blur();
+    const host = document.createElement('div');
+    document.body.append(host);
+    root = createRoot(host);
+    await act(async () =>
+      root!.render(<TournamentsShelf open onOpen={() => undefined} />)
+    );
+    expect(document.activeElement).toBe(document.body);
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    });
+    expect(host.querySelector('[data-open-tournament]')).not.toBeNull();
+    expect(document.activeElement).toBe(document.body);
+  });
 });

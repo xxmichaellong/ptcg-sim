@@ -3209,10 +3209,6 @@
     "message": "Make cover",
     "translation": "คว่ำการ์ด"
   },
-  "v1g6xE": {
-    "message": "Make it <0>60</0>: type it, or press <1>+</1>.",
-    "translation": "ทำให้เป็น <0>60</0>: พิมพ์ตัวเลข หรือกด <1>+</1>"
-  },
   "brtcFm": {
     "message": "Mark {mark}",
     "comments": [
@@ -4579,6 +4575,13 @@
     "message": "Set damage…",
     "translation": "ตั้งค่าความเสียหาย…"
   },
+  "OM2HHP": {
+    "message": "Set the damage to <0>60</0>: type it, or press <1>+</1>.",
+    "comments": [
+      "60 is the damage on the Pokémon, not a number of cards"
+    ],
+    "translation": "ตั้งค่าความเสียหายเป็น <0>60</0> โดยพิมพ์ตัวเลข หรือกด <1>+</1>"
+  },
   "DBL0AT": {
     "message": "Set up",
     "translation": "จัดเตรียม"
@@ -5326,7 +5329,7 @@
   },
   "DNMX9-": {
     "message": "They bring up the next: drag a <0>{0}</0> from their Bench to their Active Spot.",
-    "translation": "อีกฝ่ายส่งตัวถัดไปขึ้นมา: ลาก <0>{0}</0> จากเบนช์ของอีกฝ่ายไปที่ช่องแอคทีฟ"
+    "translation": "อีกฝ่ายส่งตัวถัดไปขึ้นมา: ลาก <0>{0}</0> จากม้านั่งสำรองของอีกฝ่ายไปที่ตำแหน่งแอคทีฟ"
   },
   "WsAkgd": {
     "message": "This browser won't keep your decks after you close the page.",

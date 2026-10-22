@@ -404,6 +404,28 @@ describe('the deck screen from the keyboard', () => {
     expect(library.getSnapshot().decks).toEqual([]);
   });
 
+  it('keeps a name typed into a new deck just before the screen goes, and the deck with it', async () => {
+    const library = new DeckLibrary({ backend: null });
+    await render(vi.fn(), library);
+    await act(async () =>
+      host.querySelector<HTMLButtonElement>('#deckNewButton')!.click()
+    );
+    const name = host.querySelector<HTMLInputElement>('#deckNameInput')!;
+    await act(async () => {
+      const set = Object.getOwnPropertyDescriptor(
+        HTMLInputElement.prototype,
+        'value'
+      )!.set!;
+      set.call(name, 'Charizard ex');
+      name.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    // Gone before the name's pause was over.
+    await act(async () => root.render(<div />));
+    expect(library.getSnapshot().decks.map((deck) => deck.name)).toEqual([
+      'Charizard ex',
+    ]);
+  });
+
   it('clears what was typed in Find a deck on Esc before it leaves', async () => {
     const library = new DeckLibrary({ backend: null });
     for (let n = 0; n < 9; n += 1) {

@@ -69,9 +69,10 @@ import type {
   PopularDecklistCollection,
   PopularDecklistSource,
 } from './popular-decklists.js';
-import type {
-  TournamentArchetype,
-  TournamentSummary,
+import {
+  searchText,
+  type TournamentArchetype,
+  type TournamentSummary,
 } from './tournament-decks-client.js';
 import { useDeckSearch } from './tournament-decks-hooks.js';
 import {
@@ -789,7 +790,7 @@ export const DeckHome = ({
         </div>
         {mode === 'search' ? (
           <DeckSearchResults
-            query={paste.trim()}
+            query={searchText(paste)}
             state={search}
             pending={pendingList}
             onLoad={onLoadTournamentList}

@@ -114,6 +114,22 @@ describe('useDeckSearch', () => {
     });
     expect(seen.at(-1)).toEqual({ status: 'failed', busy: false });
   });
+
+  it('asks nothing for text that is no search once control characters are spaces', async () => {
+    const search = vi.fn<typeof fetchDeckSearch>();
+    const seen: Remote<unknown>[] = [];
+    const Probe = () => {
+      seen.push(useDeckSearch('\u0085\t\u0085', true, search));
+      return null;
+    };
+    root = createRoot(host);
+    act(() => root!.render(<Probe />));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(DECK_SEARCH_DEBOUNCE_MS);
+    });
+    expect(search).not.toHaveBeenCalled();
+    expect(seen.at(-1)).toEqual({ status: 'idle' });
+  });
 });
 
 describe('usePaged', () => {

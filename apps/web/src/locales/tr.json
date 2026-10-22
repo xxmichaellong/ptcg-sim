@@ -2930,7 +2930,7 @@
   },
   "69MOGQ": {
     "message": "Knock Out their <0>{0}</0>: drag it onto their discard pile. Its Energy goes with it.",
-    "translation": "Rakibin <0>{0}</0> kartını nakavt et: ıskarta destesine sürükle. Enerjileri de onunla gider."
+    "translation": "Rakibin <0>{0}</0> kartını nakavt et: Discard yığınına sürükle. Enerjileri de onunla gider."
   },
   "vXIe7J": {
     "message": "Language",
@@ -3208,10 +3208,6 @@
   "cnyUyK": {
     "message": "Make cover",
     "translation": "Arka yüzü yap"
-  },
-  "v1g6xE": {
-    "message": "Make it <0>60</0>: type it, or press <1>+</1>.",
-    "translation": "<0>60</0> yap: yaz veya <1>+</1> tuşuna bas."
   },
   "brtcFm": {
     "message": "Mark {mark}",
@@ -4579,6 +4575,13 @@
     "message": "Set damage…",
     "translation": "Hasarı ayarla…"
   },
+  "OM2HHP": {
+    "message": "Set the damage to <0>60</0>: type it, or press <1>+</1>.",
+    "comments": [
+      "60 is the damage on the Pokémon, not a number of cards"
+    ],
+    "translation": "Hasarı <0>60</0> olarak ayarla: yaz ya da <1>+</1> tuşuna bas."
+  },
   "DBL0AT": {
     "message": "Set up",
     "translation": "Kur"
@@ -5797,7 +5800,7 @@
   },
   "dYE-zL": {
     "message": "Your deck",
-    "translation": "Senin destein"
+    "translation": "Senin desten"
   },
   "APqbzr": {
     "message": "Your decks",

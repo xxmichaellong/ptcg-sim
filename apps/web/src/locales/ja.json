@@ -1319,7 +1319,7 @@
   },
   "jrzyuC": {
     "message": "Attach and evolve",
-    "translation": "つけると進化"
+    "translation": "つけて進化させる"
   },
   "E9l6HC": {
     "message": "Attached cards being moved",
@@ -3209,10 +3209,6 @@
     "message": "Make cover",
     "translation": "カバーを作成"
   },
-  "v1g6xE": {
-    "message": "Make it <0>60</0>: type it, or press <1>+</1>.",
-    "translation": "<0>60</0>枚にします:入力するか、<1>+</1>を押します。"
-  },
   "brtcFm": {
     "message": "Mark {mark}",
     "comments": [
@@ -4578,6 +4574,13 @@
   "hsdxJE": {
     "message": "Set damage…",
     "translation": "ダメージを設定…"
+  },
+  "OM2HHP": {
+    "message": "Set the damage to <0>60</0>: type it, or press <1>+</1>.",
+    "comments": [
+      "60 is the damage on the Pokémon, not a number of cards"
+    ],
+    "translation": "ダメージを<0>60</0>に設定します。入力するか、<1>+</1>を押してください。"
   },
   "DBL0AT": {
     "message": "Set up",

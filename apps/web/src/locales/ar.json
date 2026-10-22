@@ -1421,7 +1421,7 @@
   "dkk7vA": {
     "message": "Bench",
     "context": "shortcut key caption",
-    "translation": "مقعد"
+    "translation": "الاحتياط"
   },
   "-Pxcql": {
     "message": "Bench",
@@ -1435,7 +1435,7 @@
   },
   "tffbb1": {
     "message": "Bench <0>{0}</0> from your hand.",
-    "translation": "ضع <0>{0}</0> من يدك على المقعد."
+    "translation": "ضع <0>{0}</0> من يدك على الاحتياط."
   },
   "T1zt_m": {
     "message": "Bench <0>{0}</0> too.",
@@ -1735,7 +1735,7 @@
   },
   "F4fFCC": {
     "message": "Click <0>{0}</0> in your hand, then press <1>{key}</1> to bench it.",
-    "translation": "انقر <0>{0}</0> في يدك، ثم اضغط <1>{key}</1> لوضعه على المقعد."
+    "translation": "انقر <0>{0}</0> في يدك، ثم اضغط <1>{key}</1> لوضعه على الاحتياط."
   },
   "MO489z": {
     "message": "Click a shortcut to change it.",
@@ -2306,7 +2306,7 @@
   },
   "i07JvD": {
     "message": "Energy, evolutions, Trainers and the Bench",
-    "translation": "الطاقة والتطورات وبطاقات المدرب والمقاعد"
+    "translation": "الطاقة والتطورات وبطاقات المدرب والاحتياط"
   },
   "CtX2Zh": {
     "message": "Enter",
@@ -3208,10 +3208,6 @@
   "cnyUyK": {
     "message": "Make cover",
     "translation": "إنشاء غطاء"
-  },
-  "v1g6xE": {
-    "message": "Make it <0>60</0>: type it, or press <1>+</1>.",
-    "translation": "اجعلها <0>60</0>: اكتبها، أو اضغط <1>+</1>."
   },
   "brtcFm": {
     "message": "Mark {mark}",
@@ -4578,6 +4574,13 @@
   "hsdxJE": {
     "message": "Set damage…",
     "translation": "تعيين الضرر…"
+  },
+  "OM2HHP": {
+    "message": "Set the damage to <0>60</0>: type it, or press <1>+</1>.",
+    "comments": [
+      "60 is the damage on the Pokémon, not a number of cards"
+    ],
+    "translation": "اضبط الضرر على <0>60</0>: اكتبه أو اضغط <1>+</1>."
   },
   "DBL0AT": {
     "message": "Set up",

@@ -810,14 +810,23 @@ export const DeckScreen = ({
     lastEdited.current = editedDeck;
     if (left !== undefined && left !== editedDeck) putAwayUntouched(left);
   }, [editedDeck, putAwayUntouched]);
-  useEffect(
-    () => () => {
+  const mounted = useRef(false);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
       const left = lastEdited.current;
-      lastEdited.current = undefined;
-      if (left !== undefined) putAway.current(left);
-    },
-    []
-  );
+      if (left === undefined) return;
+      // After the editor's own cleanup (which saves a name being typed),
+      // and only if the screen has really gone: a hot update or StrictMode
+      // runs this and mounts it again at once.
+      queueMicrotask(() => {
+        if (mounted.current) return;
+        lastEdited.current = undefined;
+        putAway.current(left);
+      });
+    };
+  }, []);
 
   useEffect(() => {
     if (

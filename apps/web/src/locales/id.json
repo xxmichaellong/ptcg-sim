@@ -3209,10 +3209,6 @@
     "message": "Make cover",
     "translation": "Buat sampul"
   },
-  "v1g6xE": {
-    "message": "Make it <0>60</0>: type it, or press <1>+</1>.",
-    "translation": "Jadikan <0>60</0>: ketik angkanya, atau tekan <1>+</1>."
-  },
   "brtcFm": {
     "message": "Mark {mark}",
     "comments": [
@@ -3966,7 +3962,7 @@
     "comments": [
       "{0} is the Attack button's label, {1} the Pass button's"
     ],
-    "translation": "Tekan <0>{0}</0> untuk menyerang dan mengakhiri gilirmu, atau <1>{1}</1> untuk mengakhirinya tanpa menyerang."
+    "translation": "Tekan <0>{0}</0> untuk menyerang dan mengakhiri giliranmu, atau <1>{1}</1> untuk mengakhirinya tanpa menyerang."
   },
   "LchprM": {
     "message": "Press <0>{0}</0> to turn back to your side.",
@@ -4579,6 +4575,13 @@
     "message": "Set damage…",
     "translation": "Atur damage…"
   },
+  "OM2HHP": {
+    "message": "Set the damage to <0>60</0>: type it, or press <1>+</1>.",
+    "comments": [
+      "60 is the damage on the Pokémon, not a number of cards"
+    ],
+    "translation": "Atur damage menjadi <0>60</0>: ketik angkanya, atau tekan <1>+</1>."
+  },
   "DBL0AT": {
     "message": "Set up",
     "translation": "Siapkan"
@@ -4991,7 +4994,7 @@
   },
   "yA0PE0": {
     "message": "Start your turn with <0>{0}</0>. It draws your card.",
-    "translation": "Mulai gilmu dengan <0>{0}</0>. Ini menarik kartumu."
+    "translation": "Mulai giliranmu dengan <0>{0}</0>. Ini menarik kartumu."
   },
   "p7o5f_": {
     "message": "Status",
@@ -5299,7 +5302,7 @@
   },
   "Cedl1T": {
     "message": "Their side is yours now: start their turn with <0>{0}</0>.",
-    "translation": "Sisi lawan sekarang jadi milikmu: mulai gilnya dengan <0>{0}</0>."
+    "translation": "Sisi lawan sekarang jadi milikmu: mulai giliran mereka dengan <0>{0}</0>."
   },
   "sMMsD3": {
     "message": "Theirs",

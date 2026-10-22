@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
   fetchDeckSearch,
+  searchText,
   TournamentDataBusyError,
   TournamentDataRefusedError,
   type DeckSearchResult,
@@ -40,7 +41,7 @@ export const useDeckSearch = (
   const [state, setState] = useState<Remote<readonly DeckSearchResult[]>>({
     status: 'idle',
   });
-  const query = text.trim();
+  const query = searchText(text);
   const active = enabled && query.length >= DECK_SEARCH_MINIMUM;
   useEffect(() => {
     if (!active) {
