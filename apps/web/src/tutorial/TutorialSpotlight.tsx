@@ -134,12 +134,14 @@ export const useTargetRects = (
       return;
     }
     let frame = 0;
-    let last: readonly (ScreenRect | null)[] = [];
+    // The first measure always lands: a step with nothing to point at
+    // clears what the step before pointed at.
+    let last: readonly (ScreenRect | null)[] | undefined;
     const measure = (): void => {
       const next = targetsRef.current.map((target) =>
         targetRect(document, target)
       );
-      if (!sameRects(next, last)) {
+      if (last === undefined || !sameRects(next, last)) {
         last = next;
         setRects(next);
       }

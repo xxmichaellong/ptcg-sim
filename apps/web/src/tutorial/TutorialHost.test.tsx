@@ -4,7 +4,9 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { preferences } from '../preferences/preference-store.js';
-import { fakePracticeRoom } from './practice-room.test-support.js';
+import { fakePracticeRoom, you } from './practice-room.test-support.js';
+import { tutorialCardKeyOf } from './tutorial-cards.js';
+import { zoneCards, zoneId } from './tutorial-world.js';
 import { lessonById } from './tutorial-lessons.js';
 import { TUTORIAL_PREFERENCES } from './tutorial-state.js';
 import { TutorialHost } from './TutorialHost.js';
@@ -44,8 +46,10 @@ const phone = (narrow: boolean) => {
 let root: Root | undefined;
 let exits = 0;
 
+let room = fakePracticeRoom();
+
 const render = async (lesson?: string) => {
-  const room = fakePracticeRoom();
+  room = fakePracticeRoom();
   let setFlipped: (flipped: boolean) => void = () => undefined;
   const Harness = () => {
     const [flipped, set] = useState(false);
@@ -178,6 +182,42 @@ describe('the tutorial’s coach', () => {
     expect(status?.textContent).toBe(coach()!.querySelector('p')!.textContent);
     expect(status?.textContent).not.toBe('');
     expect(document.activeElement).toBe(coach());
+  });
+});
+
+describe('a step done', () => {
+  it('counts what the player does in its done moment toward the next step', async () => {
+    phone(false);
+    await render('deck');
+    await wait(1200);
+    expect(stepOf()).toBe('deck:draw');
+    await act(async () => button(coach(), 'Skip')!.click());
+    expect(stepOf()).toBe('deck:search');
+    // The deck opens: the step is done...
+    const pile = document.createElement('div');
+    pile.dataset.legacyZoneBrowser = 'true';
+    pile.dataset.zoneBrowserKind = 'deck';
+    await act(async () => document.body.append(pile));
+    await wait(50);
+    expect(coach()?.getAttribute('data-done')).toBe('true');
+    // ...and Rare Candy goes to the hand before the next step shows.
+    const view = room.session.getSnapshot().view!;
+    const candy = zoneCards(view, you, 'deck').find(
+      (card) => tutorialCardKeyOf(view, card) === 'rareCandy'
+    )!;
+    await act(async () => {
+      room.session.submit({
+        type: 'MoveCard',
+        cardId: candy.id,
+        expectedSourceZoneId: zoneId(you, 'deck'),
+        destinationZoneId: zoneId(you, 'hand'),
+      } as never);
+    });
+    // Taking it was the next step: it is done too, and the lesson goes on.
+    for (let tries = 0; tries < 30 && stepOf() !== 'deck:shuffle'; tries += 1) {
+      await wait(100);
+    }
+    expect(stepOf()).toBe('deck:shuffle');
   });
 });
 

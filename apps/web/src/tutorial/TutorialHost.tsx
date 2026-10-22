@@ -169,6 +169,15 @@ type Phase =
        * undone, or it would tick and go straight on again.
        */
       readonly rearm?: boolean;
+      /**
+       * The table and the log the moment this step was done: the next step
+       * starts from them, so what the player does in the done moment counts
+       * toward it.
+       */
+      readonly doneAt?: {
+        readonly start: MatchViewState;
+        readonly feedFrom: number;
+      };
     }
   | { readonly kind: 'finished'; readonly lesson: TutorialLesson };
 
@@ -343,15 +352,19 @@ export const TutorialHost = ({
       if (next >= current.lesson.steps.length) {
         return { kind: 'finished', lesson: current.lesson };
       }
-      const view = session.getSnapshot().view ?? current.start;
-      return {
-        ...current,
-        step: next,
-        start: view,
+      // From where the step was done, or (Next, Skip) from now.
+      const from = (current.done ? current.doneAt : undefined) ?? {
+        start: session.getSnapshot().view ?? current.start,
         feedFrom:
           room.presentation.activityFeed.getSnapshot().newestItemId ?? -1,
+      };
+      return {
+        kind: 'playing',
+        lesson: current.lesson,
+        step: next,
+        start: from.start,
+        feedFrom: from.feedFrom,
         done: false,
-        rearm: false,
       };
     });
     setDemo(0);
@@ -361,7 +374,8 @@ export const TutorialHost = ({
     setPhase((current) =>
       current.kind === 'playing' && current.step > 0
         ? {
-            ...current,
+            kind: 'playing',
+            lesson: current.lesson,
             step: current.step - 1,
             start: session.getSnapshot().view ?? current.start,
             feedFrom:
@@ -381,8 +395,18 @@ export const TutorialHost = ({
       if (!stepDone) setPhase({ ...playing, rearm: false });
       return;
     }
-    if (stepDone) setPhase({ ...playing, done: true });
-  }, [playing, stepDone]);
+    if (stepDone) {
+      setPhase({
+        ...playing,
+        done: true,
+        doneAt: {
+          start: session.getSnapshot().view ?? playing.start,
+          feedFrom:
+            room.presentation.activityFeed.getSnapshot().newestItemId ?? -1,
+        },
+      });
+    }
+  }, [playing, stepDone, room.presentation, session]);
   useEffect(() => {
     if (!playing?.done) return;
     const timer = setTimeout(advance, STEP_DONE_MS);
