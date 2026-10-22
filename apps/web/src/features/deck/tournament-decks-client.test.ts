@@ -110,6 +110,17 @@ describe('tournament deck search', () => {
     }
   });
 
+  it('sends a pasted tab or line break in a search as a space', async () => {
+    const search = respond({ available: false });
+    await fetchDeckSearch(' 1st\tGardevoir \n ex ', { fetch: search });
+    const events = respond({ tournaments: [], nextCursor: null });
+    await fetchTournaments({ fetch: events, q: 'Gdańsk\tCup' });
+    const q = (mock: typeof search) =>
+      new URL(String(mock.mock.calls[0]![0]), 'http://x').searchParams.get('q');
+    expect(q(search)).toBe('1st Gardevoir ex');
+    expect(q(events)).toBe('Gdańsk Cup');
+  });
+
   it('caps what it will read', async () => {
     const fetch = respond('x'.repeat(4_000_001));
     await expect(fetchDeckSearch('x', { fetch })).rejects.toThrow(/too large/u);

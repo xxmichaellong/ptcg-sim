@@ -2172,7 +2172,7 @@
   },
   "n3U3s1": {
     "message": "Drag a Basic Pokémon from your hand onto your <0>Active Spot</0>.",
-    "translation": "Kéo một Pokémon Cơ Bản từ tay bạn vào <0>ô Active</0> của bạn."
+    "translation": "Kéo một Pokémon Cơ Bản từ tay bạn vào <0>Vị trí Active</0> của bạn."
   },
   "sEjSlz": {
     "message": "Dragon",
@@ -3617,11 +3617,11 @@
   },
   "acVFiv": {
     "message": "Now make it <0>Poisoned</0>: <1>{0}</1>, then <2>{1}</2>.",
-    "translation": "Giờ hãy làm nó bị <0>Trúng độc</0>: <1>{0}</1>, rồi <2>{1}</2>."
+    "translation": "Giờ hãy làm nó bị <0>Nhiễm độc</0>: <1>{0}</1>, rồi <2>{1}</2>."
   },
   "UJSKBC": {
     "message": "Now make it <0>Poisoned</0>: right-click it, then <1>{0}</1>.",
-    "translation": "Giờ hãy làm nó bị <0>Trúng độc</0>: nhấp chuột phải vào nó, rồi chọn <1>{0}</1>."
+    "translation": "Giờ hãy làm nó bị <0>Nhiễm độc</0>: nhấp chuột phải vào nó, rồi chọn <1>{0}</1>."
   },
   "LFzr4S": {
     "message": "Number of cards",

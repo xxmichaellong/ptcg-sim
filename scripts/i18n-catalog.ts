@@ -189,17 +189,18 @@ const proseOf = (message: string): string => {
     // Unparseable: `translationProblem` says so first.
     return '';
   }
-  return text
-    .join(' ')
-    .replaceAll(/<\/?\d+\s*\/?>/gu, ' ')
-    .replaceAll('Pokémon', ' ');
+  // A tag is no gap between letters ("<0>deck</0>ك" is one word).
+  return text.join(' ').replaceAll(/<\/?\d+\s*\/?>/gu, '');
 };
 
 const strayLatin = (text: string, locale: string, source: string): boolean => {
   const mixed = SPACED_OWN_SCRIPT[locale];
   if (!mixed) return false;
   const prose = proseOf(text);
+  // "Pokémon" too takes no ending glued on ("Pokémonа"); as a word it is
+  // written so in every language.
   if (mixed.test(prose)) return true;
+  const words = prose.replaceAll('Pokémon', ' ');
   const english =
     proseOf(source)
       .toLowerCase()
@@ -209,7 +210,7 @@ const strayLatin = (text: string, locale: string, source: string): boolean => {
     left === right ||
     (Math.min(left.length, right.length) >= 3 &&
       (left.startsWith(right) || right.startsWith(left)));
-  return (prose.match(/\p{Script=Latin}{2,}/gu) ?? []).some(
+  return (words.match(/\p{Script=Latin}{2,}/gu) ?? []).some(
     (word) => !english.some((known) => sameStem(word.toLowerCase(), known))
   );
 };

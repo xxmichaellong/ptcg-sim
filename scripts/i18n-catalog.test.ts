@@ -104,6 +104,23 @@ describe('translationProblem', () => {
     // doesn't have; names the English has stay, declined too.
     assert.equal(looksGarbled('يخلط دecksك', 'ar', 'shuffles your deck'), true);
     assert.equal(looksGarbled('يخلط deckك', 'ar', 'shuffles your deck'), true);
+    // An ending glued to Pokémon, or across a tag, is one too.
+    assert.equal(
+      looksGarbled('اسحب Pokémonك من يدك', 'ar', 'Drag your Pokémon'),
+      true
+    );
+    assert.equal(
+      looksGarbled('اسحب <0>deck</0>ك', 'ar', 'Drag your <0>deck</0>'),
+      true
+    );
+    assert.equal(
+      looksGarbled('Перетащи Pokémonа из руки', 'ru', 'Drag a Pokémon'),
+      true
+    );
+    assert.equal(
+      looksGarbled('Перетащи Pokémon из руки', 'ru', 'Drag a Pokémon'),
+      false
+    );
     // A word only a case of the English has is a word of it too.
     assert.equal(
       looksGarbled(

@@ -395,9 +395,11 @@ export const TournamentsShelf = ({
       }))
   );
   const events = paged.state.status === 'ready' ? paged.state.value : [];
-  // More goes once the last page is in (or the list starts over): focus
-  // that fell to the page with it goes to the first event it brought, or
-  // back to More, or the last event.
+  // A control that goes as the list changes -- More once the last page is
+  // in or the list starts over, Try again once it loads -- takes the focus
+  // with it: focus that fell to the page goes to the first event More
+  // brought, or More again, or else the first event, Try again, or the
+  // filter.
   const moreFrom = useRef<number | undefined>(undefined);
   const showMore = (): void => {
     if (paged.loadingMore || !paged.hasMore) return;
@@ -405,21 +407,27 @@ export const TournamentsShelf = ({
     paged.more();
   };
   useEffect(() => {
+    if (paged.loadingMore || paged.state.status === 'loading') return;
     const from = moreFrom.current;
-    if (from === undefined || paged.loadingMore) return;
-    if (paged.state.status !== 'ready') return;
     moreFrom.current = undefined;
     const active = document.activeElement;
     if (active !== null && active !== document.body) return;
     const node = section.current;
-    const opened = node
-      ? [...node.querySelectorAll<HTMLElement>('[data-open-tournament]')]
-      : [];
-    (
-      opened[from] ??
-      node?.querySelector<HTMLElement>('.deck-show-more') ??
-      opened.at(-1)
+    if (!node) return;
+    const opened = [
+      ...node.querySelectorAll<HTMLElement>('[data-open-tournament]'),
+    ];
+    const more = node.querySelector<HTMLElement>('.deck-show-more');
+    (from === undefined
+      ? (opened[0] ?? more)
+      : (opened[from] ?? more ?? opened.at(-1))
     )?.focus();
+    if (document.activeElement === document.body) {
+      (
+        node.querySelector<HTMLElement>('.deck-results__status button') ??
+        node.querySelector<HTMLElement>('#deckTournamentFilter')
+      )?.focus();
+    }
   }, [events.length, paged.loadingMore, paged.state.status]);
   return (
     <section

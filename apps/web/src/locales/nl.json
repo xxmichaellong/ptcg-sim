@@ -2306,7 +2306,7 @@
   },
   "i07JvD": {
     "message": "Energy, evolutions, Trainers and the Bench",
-    "translation": "Energy, evoluties, Trainers en de Bench"
+    "translation": "Energy, evoluties, Trainers en de Bank"
   },
   "CtX2Zh": {
     "message": "Enter",
@@ -3479,7 +3479,7 @@
   },
   "iKrJ1Q": {
     "message": "No Basic Pokémon in your hand: that is a mulligan. Choose <0>{0}</0> under {1}.",
-    "translation": "Geen Basic Pokémon in je hand: dat is een mulligan. Kies <0>{0}</0> onder {1}."
+    "translation": "Geen Basis-Pokémon in je hand: dat is een mulligan. Kies <0>{0}</0> onder {1}."
   },
   "6n5psS": {
     "message": "No card lines found. Try lines like \"4 Iono PAL 185\".",

@@ -244,4 +244,90 @@ describe('a deck’s lists from the keyboard', () => {
       (document.activeElement as HTMLElement | null)?.dataset.openTournament
     ).toBe(event(3).id);
   });
+
+  it('give the focus back to More when the server refuses its cursor and the list starts over', async () => {
+    const event = (n: number) => ({
+      id: `${'d'.repeat(23)}${String(n)}`,
+      name: `Event ${String(n)}`,
+      date: '2026-10-10T19:00:00.000Z',
+      players: 64,
+      format: 'STANDARD',
+      organizer: 'League',
+      hasLists: true,
+    });
+    vi.stubGlobal('IntersectionObserver', undefined);
+    const fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const cursor = new URL(String(input), 'http://x').searchParams.get(
+        'cursor'
+      );
+      return cursor === 'stale'
+        ? new Response('{}', { status: 400 })
+        : Response.json({
+            tournaments: [event(1), event(2)],
+            nextCursor: 'stale',
+          });
+    });
+    vi.stubGlobal('fetch', fetch);
+    const host = document.createElement('div');
+    document.body.append(host);
+    root = createRoot(host);
+    await act(async () =>
+      root!.render(<TournamentsShelf open onOpen={() => undefined} />)
+    );
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    });
+    const more = host.querySelector<HTMLButtonElement>('.deck-show-more')!;
+    more.focus();
+    await act(async () => more.click());
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 40));
+    });
+    // Refused, read again from the first page: More is back, with the focus.
+    expect(fetch).toHaveBeenCalledTimes(3);
+    expect(document.activeElement).toBe(host.querySelector('.deck-show-more'));
+  });
+
+  it('give the focus to the first event once Try again has loaded them', async () => {
+    const event = {
+      id: 'e'.repeat(24),
+      name: 'Event',
+      date: '2026-10-10T19:00:00.000Z',
+      players: 64,
+      format: 'STANDARD',
+      organizer: 'League',
+      hasLists: true,
+    };
+    vi.stubGlobal('IntersectionObserver', undefined);
+    let offline = true;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        offline
+          ? new Response('{}', { status: 500 })
+          : Response.json({ tournaments: [event], nextCursor: null })
+      )
+    );
+    const host = document.createElement('div');
+    document.body.append(host);
+    root = createRoot(host);
+    await act(async () =>
+      root!.render(<TournamentsShelf open onOpen={() => undefined} />)
+    );
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    });
+    const retry = host.querySelector<HTMLButtonElement>(
+      '.deck-results__status button'
+    )!;
+    retry.focus();
+    offline = false;
+    await act(async () => retry.click());
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    });
+    expect(
+      (document.activeElement as HTMLElement | null)?.dataset.openTournament
+    ).toBe(event.id);
+  });
 });

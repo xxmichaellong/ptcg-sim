@@ -2172,7 +2172,7 @@
   },
   "n3U3s1": {
     "message": "Drag a Basic Pokémon from your hand onto your <0>Active Spot</0>.",
-    "translation": "Przeciągnij Podstawowego Pokémona z ręki na swoje <0>Pole Aktywne</0>."
+    "translation": "Przeciągnij Podstawowego Pokémona z ręki na swoje <0>Aktywne miejsce</0>."
   },
   "sEjSlz": {
     "message": "Dragon",
@@ -5326,7 +5326,7 @@
   },
   "DNMX9-": {
     "message": "They bring up the next: drag a <0>{0}</0> from their Bench to their Active Spot.",
-    "translation": "Wystawiają następnego: przeciągnij <0>{0}</0> z ich Ławki na ich Pole Aktywne."
+    "translation": "Wystawiają następnego: przeciągnij <0>{0}</0> z ich Ławki na ich Aktywne miejsce."
   },
   "WsAkgd": {
     "message": "This browser won't keep your decks after you close the page.",

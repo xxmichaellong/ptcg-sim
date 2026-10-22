@@ -462,6 +462,18 @@ const query = (
 /** The search's own limits: a word or two, as the server takes it. */
 export const MAX_DECK_SEARCH_LENGTH = 60;
 
+/**
+ * What is typed or pasted, as the server takes a search: a tab or line
+ * break (a cell pasted from a table) is a space, never a refused request.
+ */
+const searchText = (value: string): string =>
+  value
+    // eslint-disable-next-line no-control-regex -- control characters are the point
+    .replaceAll(/[\u0000-\u001f\u007f-\u009f]/gu, ' ')
+    .replaceAll(/\s+/gu, ' ')
+    .trim()
+    .slice(0, MAX_DECK_SEARCH_LENGTH);
+
 export const fetchDeckSearch = async (
   text: string,
   options: TournamentRequestOptions & {
@@ -472,7 +484,7 @@ export const fetchDeckSearch = async (
   decodeDeckSearch(
     await getJson(
       `${DECK_SEARCH_PATH}${query({
-        q: text.trim().slice(0, MAX_DECK_SEARCH_LENGTH),
+        q: searchText(text),
         format: options.format,
         limit: options.limit,
       })}`,
@@ -513,7 +525,7 @@ export const fetchTournaments = async (
   decodeTournaments(
     await getJson(
       `${TOURNAMENTS_PATH}${query({
-        q: options.q?.trim().slice(0, MAX_DECK_SEARCH_LENGTH),
+        q: options.q === undefined ? undefined : searchText(options.q),
         format: options.format,
         minPlayers: options.minPlayers,
         cursor: options.cursor,

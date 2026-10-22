@@ -3617,11 +3617,11 @@
   },
   "acVFiv": {
     "message": "Now make it <0>Poisoned</0>: <1>{0}</1>, then <2>{1}</2>.",
-    "translation": "Сада га <0>отрује</0>: <1>{0}</1>, па <2>{1}</2>."
+    "translation": "Сада га учини <0>отрованим</0>: <1>{0}</1>, па <2>{1}</2>."
   },
   "UJSKBC": {
     "message": "Now make it <0>Poisoned</0>: right-click it, then <1>{0}</1>.",
-    "translation": "Сада га <0>отрује</0>: кликни десним тастером на њега, па <1>{0}</1>."
+    "translation": "Сада га учини <0>отрованим</0>: кликни десним тастером на њега, па <1>{0}</1>."
   },
   "LFzr4S": {
     "message": "Number of cards",
@@ -5813,7 +5813,7 @@
   },
   "H5pi4B": {
     "message": "Your hand, and your 6 <0>Prize cards</0>, face down.",
-    "translation": "Твоја рука и твојих 6 <0>награднин карата</0>, окренутих наопако."
+    "translation": "Твоја рука и твојих 6 <0>наградних карата</0>, окренутих наопако."
   },
   "BHcJOF": {
     "message": "Your Lost Zone",

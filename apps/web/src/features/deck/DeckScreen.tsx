@@ -785,23 +785,39 @@ export const DeckScreen = ({
 
   const leaveEditor = useCallback(() => setView({ kind: 'home' }), []);
   // A new deck left as it started is not kept, however the editor is left:
-  // by Back, or by an import that opens its own deck in its place.
+  // by Back, by an import that opens its own deck in its place, or by the
+  // screen going away with it open (a new table or room).
   const editedDeck = view.kind === 'edit' ? view.deckId : undefined;
   const lastEdited = useRef<string | undefined>(undefined);
+  const putAwayUntouched = useCallback(
+    (deckId: string): void => {
+      const deck = library.get(deckId);
+      if (
+        deck &&
+        deck.cards.length === 0 &&
+        deck.source?.kind === 'new' &&
+        deck.name === t`Untitled deck`
+      ) {
+        decks.remove(deck.id);
+      }
+    },
+    [decks, library, t]
+  );
+  const putAway = useRef(putAwayUntouched);
+  putAway.current = putAwayUntouched;
   useEffect(() => {
     const left = lastEdited.current;
     lastEdited.current = editedDeck;
-    if (left === undefined || left === editedDeck) return;
-    const deck = library.get(left);
-    if (
-      deck &&
-      deck.cards.length === 0 &&
-      deck.source?.kind === 'new' &&
-      deck.name === t`Untitled deck`
-    ) {
-      decks.remove(deck.id);
-    }
-  }, [decks, editedDeck, library, t]);
+    if (left !== undefined && left !== editedDeck) putAwayUntouched(left);
+  }, [editedDeck, putAwayUntouched]);
+  useEffect(
+    () => () => {
+      const left = lastEdited.current;
+      lastEdited.current = undefined;
+      if (left !== undefined) putAway.current(left);
+    },
+    []
+  );
 
   useEffect(() => {
     if (

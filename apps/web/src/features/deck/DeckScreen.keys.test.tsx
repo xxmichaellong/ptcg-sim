@@ -392,6 +392,18 @@ describe('the deck screen from the keyboard', () => {
     );
   });
 
+  it('puts away a new deck left as it started when the screen goes with it open', async () => {
+    const library = new DeckLibrary({ backend: null });
+    await render(vi.fn(), library);
+    await act(async () =>
+      host.querySelector<HTMLButtonElement>('#deckNewButton')!.click()
+    );
+    expect(library.getSnapshot().decks).toHaveLength(1);
+    // A new table or room: this screen goes, and another comes.
+    await act(async () => root.render(<div />));
+    expect(library.getSnapshot().decks).toEqual([]);
+  });
+
   it('clears what was typed in Find a deck on Esc before it leaves', async () => {
     const library = new DeckLibrary({ backend: null });
     for (let n = 0; n < 9; n += 1) {

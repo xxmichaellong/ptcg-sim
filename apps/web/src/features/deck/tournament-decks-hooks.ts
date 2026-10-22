@@ -170,6 +170,10 @@ export const usePaged = <T>(
         // the list starts over from its first page.
         if (error instanceof TournamentDataRefusedError) {
           fresh.current = true;
+          // Loading again at once, so nothing reads the old list as the
+          // answer to this More.
+          setState({ status: 'loading' });
+          setCursor(null);
           setAttempt((count) => count + 1);
         }
       }

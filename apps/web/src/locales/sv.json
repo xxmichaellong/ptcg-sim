@@ -5089,7 +5089,7 @@
   },
   "yJtTpT": {
     "message": "Take a <0>Prize card</0>: drag one into your hand.",
-    "translation": "Ta ett <0>Prispoängskort</0>: dra ett till din hand."
+    "translation": "Ta ett <0>priskort</0>: dra ett till din hand."
   },
   "2g01hc": {
     "message": "Take off {count} damage",
@@ -5813,7 +5813,7 @@
   },
   "H5pi4B": {
     "message": "Your hand, and your 6 <0>Prize cards</0>, face down.",
-    "translation": "Din hand och dina 6 <0>belöningskort</0>, med baksidan upp."
+    "translation": "Din hand och dina 6 <0>priskort</0>, med baksidan upp."
   },
   "BHcJOF": {
     "message": "Your Lost Zone",

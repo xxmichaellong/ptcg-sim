@@ -3617,11 +3617,11 @@
   },
   "acVFiv": {
     "message": "Now make it <0>Poisoned</0>: <1>{0}</1>, then <2>{1}</2>.",
-    "translation": "Sekarang buat jadi <0>Poisoned</0>: <1>{0}</1>, lalu <2>{1}</2>."
+    "translation": "Sekarang buat jadi <0>Keracunan</0>: <1>{0}</1>, lalu <2>{1}</2>."
   },
   "UJSKBC": {
     "message": "Now make it <0>Poisoned</0>: right-click it, then <1>{0}</1>.",
-    "translation": "Sekarang buat jadi <0>Poisoned</0>: klik kanan, lalu <1>{0}</1>."
+    "translation": "Sekarang buat jadi <0>Keracunan</0>: klik kanan, lalu <1>{0}</1>."
   },
   "LFzr4S": {
     "message": "Number of cards",
@@ -5089,7 +5089,7 @@
   },
   "yJtTpT": {
     "message": "Take a <0>Prize card</0>: drag one into your hand.",
-    "translation": "Ambil <0>Kartu Hadiah</0>: seret satu ke tanganmu."
+    "translation": "Ambil <0>kartu Prize</0>: seret satu ke tanganmu."
   },
   "2g01hc": {
     "message": "Take off {count} damage",
