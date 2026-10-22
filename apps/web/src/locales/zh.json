@@ -2857,9 +2857,9 @@
     "message": "Invitation copied to your clipboard.",
     "translation": "邀请已复制到剪贴板。"
   },
-  "MJUoRP": {
-    "message": "It stays open for another draw. Close it with <0>Esc</0>.",
-    "translation": "它会保持打开以便再次抽牌。按<0>Esc</0>关闭。"
+  "0pN9y3": {
+    "message": "It stays open for another draw. Press <0>Esc</0> twice to close it.",
+    "translation": "它会保持打开,以便再抽一次。按两次 <0>Esc</0> 关闭。"
   },
   "gC8g3J": {
     "message": "It stays open for another draw. Tap outside to close it.",
@@ -2965,6 +2965,10 @@
   "M-FK_f": {
     "message": "Leave room",
     "translation": "离开房间"
+  },
+  "82LZ4F": {
+    "message": "Leave the room to start the tutorial.",
+    "translation": "离开房间后才能开始教程。"
   },
   "clcR-H": {
     "message": "Leave the room?",

@@ -164,6 +164,11 @@ type Phase =
       readonly feedFrom: number;
       /** The step just finished: shown done a moment before the next. */
       readonly done: boolean;
+      /**
+       * Reached by Back: the step counts only once the table has shown it
+       * undone, or it would tick and go straight on again.
+       */
+      readonly rearm?: boolean;
     }
   | { readonly kind: 'finished'; readonly lesson: TutorialLesson };
 
@@ -342,6 +347,7 @@ export const TutorialHost = ({
         feedFrom:
           room.presentation.activityFeed.getSnapshot().newestItemId ?? -1,
         done: false,
+        rearm: false,
       };
     });
     setDemo(0);
@@ -357,6 +363,7 @@ export const TutorialHost = ({
             feedFrom:
               room.presentation.activityFeed.getSnapshot().newestItemId ?? -1,
             done: false,
+            rearm: true,
           }
         : current
     );
@@ -365,8 +372,12 @@ export const TutorialHost = ({
   // A step is done the moment the table shows it.
   const stepDone = Boolean(step?.done && world && step.done(world));
   useEffect(() => {
-    if (!playing || playing.done || !stepDone) return;
-    setPhase({ ...playing, done: true });
+    if (!playing || playing.done) return;
+    if (playing.rearm) {
+      if (!stepDone) setPhase({ ...playing, rearm: false });
+      return;
+    }
+    if (stepDone) setPhase({ ...playing, done: true });
   }, [playing, stepDone]);
   useEffect(() => {
     if (!playing?.done) return;
@@ -384,14 +395,17 @@ export const TutorialHost = ({
     [step, world]
   );
   // Out of the way of the deck screen and sheets, and the coach while the
-  // practice table reconnects (the lesson waits, as it was).
+  // practice table reconnects (the lesson waits, as it was). The coach is
+  // read over the command palette; the list and the other cards are not.
   const covered = screen.deckScreen || screen.sheet;
   const hidden = covered || state.phase !== 'ready';
-  const showing = Boolean(playing && !playing.done && !hidden);
-  const rects = useTargetRects(targets, showing);
+  const overlaysHidden = covered || screen.palette;
+  // Measured through a step's done moment too, so the coach stays put.
+  const measuring = Boolean(playing && !hidden);
+  const rects = useTargetRects(targets, measuring);
   const dragRects = useTargetRects(
     drag ? [drag.from, drag.to] : [],
-    showing && drag !== null
+    measuring && drag !== null
   );
   const dragShown =
     drag && dragRects.length === 2
@@ -418,7 +432,7 @@ export const TutorialHost = ({
 
   return (
     <>
-      {phase.kind === 'lessons' && !covered ? (
+      {phase.kind === 'lessons' && !overlaysHidden ? (
         <LessonList
           lessons={lessons}
           isDone={isDone}
@@ -428,14 +442,29 @@ export const TutorialHost = ({
           onExit={onExit}
         />
       ) : null}
-      {(phase.kind === 'dealing' || phase.kind === 'failed') && !covered ? (
+      {(phase.kind === 'dealing' || phase.kind === 'failed') &&
+      !overlaysHidden ? (
         <div className="tutorial-scrim" data-tutorial-dealing="true">
           <div className="tutorial-dealing" role="status">
             <span className="tutorial-dealing__title">
               {i18n._(phase.lesson.title)}
             </span>
             {phase.kind === 'dealing' ? (
-              <span className="tutorial-dealing__spinner" aria-hidden="true" />
+              <>
+                <span
+                  className="tutorial-dealing__spinner"
+                  aria-hidden="true"
+                />
+                <div className="tutorial-dealing__actions">
+                  <button
+                    type="button"
+                    className="ds-button ds-button--ghost"
+                    onClick={onExit}
+                  >
+                    <Trans>Leave tutorial</Trans>
+                  </button>
+                </div>
+              </>
             ) : (
               <>
                 <span>
@@ -466,8 +495,8 @@ export const TutorialHost = ({
       {playing && step && world && !hidden ? (
         <>
           <TutorialSpotlight
-            rects={rects}
-            drag={dragShown}
+            rects={playing.done ? [] : rects}
+            drag={playing.done ? null : dragShown}
             demo={demo}
             reducedMotion={reducedMotion}
           />
@@ -478,6 +507,7 @@ export const TutorialHost = ({
             world={world}
             done={playing.done}
             stuck={stuck}
+            paletteOpen={screen.palette}
             avoid={[
               ...rects,
               ...(dragShown ? [dragShown.from, dragShown.to] : []),
@@ -491,7 +521,7 @@ export const TutorialHost = ({
           />
         </>
       ) : null}
-      {phase.kind === 'finished' && !covered ? (
+      {phase.kind === 'finished' && !overlaysHidden ? (
         <LessonDone
           lesson={phase.lesson}
           next={nextLesson(phase.lesson)}
@@ -501,9 +531,14 @@ export const TutorialHost = ({
           onExit={onExit}
         />
       ) : null}
-      {/* Read out each step as it comes, and each done. */}
+      {/* Read out each step as it comes, and each done: one region that
+          is always there, so the first step is read too. */}
       <div className="ds-visually-hidden" role="status" aria-live="polite">
-        {playing?.done ? t`Done` : null}
+        {playing?.done
+          ? t`Done`
+          : playing && step && world && !hidden
+            ? step.text(world)
+            : null}
       </div>
     </>
   );
@@ -521,26 +556,39 @@ const overlaps = (a: ScreenRect, b: ScreenRect): boolean =>
   a.y < b.y + b.height &&
   b.y < a.y + a.height;
 
+const overlapArea = (a: ScreenRect, b: ScreenRect): number =>
+  Math.max(0, Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x)) *
+  Math.max(0, Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y));
+
+const screenRectOf = (selector: string): ScreenRect | undefined => {
+  const rect = document.querySelector(selector)?.getBoundingClientRect();
+  return rect
+    ? { x: rect.x, y: rect.y, width: rect.width, height: rect.height }
+    : undefined;
+};
+
 /**
  * Where the coach sits: the first corner that covers nothing the step
- * points at (nor the app bar), the top left by default. On a phone it
- * spans the width at the top or the bottom.
+ * points at (nor the app bar, nor the open command palette); failing that,
+ * the corner that covers least. On a phone it spans the width at the top
+ * or the bottom, the bottom above the on-screen keyboard.
  */
-const placeCoach = (
+export const placeCoach = (
   size: { readonly width: number; readonly height: number },
   avoid: readonly (ScreenRect | null)[],
   compact: boolean
 ): { readonly left: number; readonly top: number; readonly corner: Corner } => {
   const width = window.innerWidth;
-  const height = window.innerHeight;
-  const bar = document
-    .querySelector('.ptcgsim-app-bar')
-    ?.getBoundingClientRect();
+  const viewport = window.visualViewport;
+  const height = viewport
+    ? Math.min(window.innerHeight, viewport.offsetTop + viewport.height)
+    : window.innerHeight;
+  const bar = screenRectOf('.ptcgsim-app-bar');
+  const palette = screenRectOf('[data-command-palette]');
   const blockers = [
     ...avoid.filter((rect): rect is ScreenRect => rect !== null),
-    ...(bar
-      ? [{ x: bar.x, y: bar.y, width: bar.width, height: bar.height }]
-      : []),
+    ...(bar ? [bar] : []),
+    ...(palette ? [palette] : []),
   ];
   const at = (corner: Corner) => {
     const left = corner.endsWith('left')
@@ -554,12 +602,22 @@ const placeCoach = (
   const corners: readonly Corner[] = compact
     ? ['top-left', 'bottom-left']
     : ['top-left', 'bottom-left', 'top-right', 'bottom-right'];
+  let best = at(corners[0]!);
+  let leastCovered = Number.POSITIVE_INFINITY;
   for (const corner of corners) {
     const place = at(corner);
     const box = { x: place.left, y: place.top, ...size };
     if (!blockers.some((rect) => overlaps(rect, box))) return place;
+    const covered = blockers.reduce(
+      (sum, rect) => sum + overlapArea(rect, box),
+      0
+    );
+    if (covered < leastCovered) {
+      leastCovered = covered;
+      best = place;
+    }
   }
-  return at(corners[0]!);
+  return best;
 };
 
 const Coach = ({
@@ -569,6 +627,7 @@ const Coach = ({
   world,
   done,
   stuck,
+  paletteOpen,
   avoid,
   onBack,
   onNext,
@@ -583,6 +642,8 @@ const Coach = ({
   readonly world: TutorialWorld;
   readonly done: boolean;
   readonly stuck: ReactNode | null;
+  /** The command palette is open: the coach keeps clear of it. */
+  readonly paletteOpen: boolean;
   readonly avoid: readonly (ScreenRect | null)[];
   readonly onBack: (() => void) | undefined;
   readonly onNext: () => void;
@@ -620,9 +681,24 @@ const Coach = ({
       );
     };
     measure();
+    // The palette lays itself out a frame after it opens.
+    const frame = requestAnimationFrame(measure);
     window.addEventListener('resize', measure);
-    return () => window.removeEventListener('resize', measure);
-  }, [avoidKey, compact, stepIndex, done]);
+    window.visualViewport?.addEventListener('resize', measure);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('resize', measure);
+      window.visualViewport?.removeEventListener('resize', measure);
+    };
+  }, [avoidKey, compact, stepIndex, done, paletteOpen]);
+  // A lesson started from the list, which took the focus with it: the
+  // coach has it now. Focus elsewhere (the table, a card) stays.
+  useEffect(() => {
+    const active = document.activeElement;
+    if (active === null || active === document.body) {
+      ref.current?.focus({ preventScroll: true });
+    }
+  }, []);
   const count = lesson.steps.length;
   const action = step.done === undefined;
   const titleId = `tutorialCoachTitle-${lesson.id}`;
@@ -630,6 +706,7 @@ const Coach = ({
     <div
       ref={ref}
       className="tutorial-coach"
+      tabIndex={-1}
       role="dialog"
       aria-modal="false"
       aria-labelledby={titleId}
@@ -676,7 +753,7 @@ const Coach = ({
           }}
         />
       </div>
-      <p className="tutorial-coach__text" aria-live="polite">
+      <p className="tutorial-coach__text">
         {done ? (
           <CheckCircleIcon
             {...decorative}
@@ -850,28 +927,66 @@ const LessonDone = ({
   readonly onLessons: () => void;
   readonly onExit: () => void;
 }) => {
-  const { i18n } = useLingui();
+  const { t, i18n } = useLingui();
   const primary = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     primary.current?.focus({ preventScroll: true });
   }, []);
+  // Centred at the top, under the app bar where the two would meet (a
+  // phone).
+  const section = useRef<HTMLElement>(null);
+  const [top, setTop] = useState<number>();
+  useLayoutEffect(() => {
+    const measure = (): void => {
+      const element = section.current;
+      const bar = screenRectOf('.ptcgsim-app-bar');
+      if (!element || !bar) {
+        setTop(undefined);
+        return;
+      }
+      const width = element.offsetWidth;
+      const left = (window.innerWidth - width) / 2;
+      const box = { x: left, y: COACH_GAP_PX, width, height: 1 };
+      setTop(
+        overlaps(bar, { ...box, height: bar.y + bar.height })
+          ? bar.y + bar.height + COACH_GAP_PX
+          : undefined
+      );
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, []);
   const title = i18n._(lesson.title);
   return (
     <section
+      ref={section}
       className="tutorial-coach tutorial-coach--done"
       role="dialog"
       aria-modal="false"
       aria-labelledby="tutorialDoneTitle"
       data-tutorial-done={lesson.id}
+      style={top === undefined ? undefined : { top }}
     >
-      <p className="tutorial-done__title" id="tutorialDoneTitle">
-        <CheckCircleIcon {...decorative} weight="fill" />
-        {allDone && !next ? (
-          <Trans>Tutorial complete. You're ready to play.</Trans>
-        ) : (
-          <Trans>{title}: done</Trans>
-        )}
-      </p>
+      <div className="tutorial-done__head">
+        <p className="tutorial-done__title" id="tutorialDoneTitle">
+          <CheckCircleIcon {...decorative} weight="fill" />
+          {allDone && !next ? (
+            <Trans>Tutorial complete. You're ready to play.</Trans>
+          ) : (
+            <Trans>{title}: done</Trans>
+          )}
+        </p>
+        <button
+          type="button"
+          className="ds-icon-button tutorial-coach__icon"
+          aria-label={t`Leave tutorial`}
+          title={t`Leave tutorial`}
+          onClick={onExit}
+        >
+          <XIcon {...decorative} weight="bold" />
+        </button>
+      </div>
       <div className="tutorial-coach__actions">
         <button
           type="button"

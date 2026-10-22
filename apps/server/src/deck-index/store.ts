@@ -557,10 +557,23 @@ export class DeckIndexStore {
   /** A read failed: due again later, or given up on after a few tries. */
   recordFailure(tournamentId: string, now: number): void {
     const row = this.first(
-      'SELECT attempts, state FROM tournaments WHERE id = ?',
+      'SELECT attempts, state, date FROM tournaments WHERE id = ?',
       tournamentId
     );
     if (!row) return;
+    // A live re-read of an event still running: what was read stays, and
+    // the tries kept for its read once it is over are not spent.
+    if (
+      row.state === 'provisional' &&
+      now - number(row.date) < STORE_POLICY.finishedAfterMs
+    ) {
+      this.sql.exec(
+        'UPDATE tournaments SET fetched_at = ? WHERE id = ?',
+        now,
+        tournamentId
+      );
+      return;
+    }
     const attempts = number(row.attempts) + 1;
     // A tournament already read keeps its standings; only its re-read
     // waits.
@@ -667,7 +680,8 @@ export class DeckIndexStore {
       for (const finish of this.rows(
         `SELECT t.date, t.players FROM entries e
          JOIN tournaments t ON t.id = e.tournament_id
-         WHERE e.archetype_id = ? AND e.placing <= 8 AND t.format = ? AND t.date >= ?`,
+         WHERE e.archetype_id = ? AND e.placing <= 8 AND t.format = ? AND t.date >= ?
+           AND t.state != 'provisional'`,
         archetype.id,
         format,
         now - STORE_POLICY.rankingWindowMs
@@ -696,7 +710,7 @@ export class DeckIndexStore {
         `SELECT COUNT(*) AS lists, SUM(CASE WHEN e.placing <= 8 THEN 1 ELSE 0 END) AS top8s
          FROM entries e JOIN tournaments t ON t.id = e.tournament_id
          WHERE e.archetype_id = ? AND t.format = ? AND e.list_hash IS NOT NULL
-           AND e.placing IS NOT NULL`,
+           AND e.placing IS NOT NULL AND t.state != 'provisional'`,
         archetype.id,
         format
       );
@@ -760,7 +774,7 @@ export class DeckIndexStore {
       `SELECT ${FINISH_COLUMNS} FROM entries e
        JOIN tournaments t ON t.id = e.tournament_id
        WHERE e.archetype_id = ? AND t.format = ? AND e.list_hash IS NOT NULL
-         AND e.placing IS NOT NULL AND t.date >= ?
+         AND e.placing IS NOT NULL AND t.date >= ? AND t.state != 'provisional'
        ORDER BY e.placing ASC, t.players DESC, t.date DESC, t.id ASC, e.player_id ASC
        LIMIT ? OFFSET ?`,
       archetypeId,

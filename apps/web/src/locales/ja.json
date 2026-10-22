@@ -2857,9 +2857,9 @@
     "message": "Invitation copied to your clipboard.",
     "translation": "招待をクリップボードにコピーしました。"
   },
-  "MJUoRP": {
-    "message": "It stays open for another draw. Close it with <0>Esc</0>.",
-    "translation": "もう一度引けるよう開いたままです。<0>Esc</0>で閉じます。"
+  "0pN9y3": {
+    "message": "It stays open for another draw. Press <0>Esc</0> twice to close it.",
+    "translation": "次のドローのため開いたままになります。<0>Esc</0>を2回押すと閉じます。"
   },
   "gC8g3J": {
     "message": "It stays open for another draw. Tap outside to close it.",
@@ -2965,6 +2965,10 @@
   "M-FK_f": {
     "message": "Leave room",
     "translation": "ルームを退出"
+  },
+  "82LZ4F": {
+    "message": "Leave the room to start the tutorial.",
+    "translation": "チュートリアルを始めるには、ルームから退出してください。"
   },
   "clcR-H": {
     "message": "Leave the room?",

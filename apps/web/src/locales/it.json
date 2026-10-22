@@ -2857,9 +2857,9 @@
     "message": "Invitation copied to your clipboard.",
     "translation": "Invito copiato negli appunti."
   },
-  "MJUoRP": {
-    "message": "It stays open for another draw. Close it with <0>Esc</0>.",
-    "translation": "Resta aperto per un'altra pesca. Chiudilo con <0>Esc</0>."
+  "0pN9y3": {
+    "message": "It stays open for another draw. Press <0>Esc</0> twice to close it.",
+    "translation": "Resta aperto per un'altra pescata. Premi <0>Esc</0> due volte per chiuderlo."
   },
   "gC8g3J": {
     "message": "It stays open for another draw. Tap outside to close it.",
@@ -2965,6 +2965,10 @@
   "M-FK_f": {
     "message": "Leave room",
     "translation": "Esci dalla stanza"
+  },
+  "82LZ4F": {
+    "message": "Leave the room to start the tutorial.",
+    "translation": "Esci dalla stanza per iniziare il tutorial."
   },
   "clcR-H": {
     "message": "Leave the room?",

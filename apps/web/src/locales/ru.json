@@ -2857,9 +2857,9 @@
     "message": "Invitation copied to your clipboard.",
     "translation": "Приглашение скопировано в буфер обмена."
   },
-  "MJUoRP": {
-    "message": "It stays open for another draw. Close it with <0>Esc</0>.",
-    "translation": "Окно останется открытым для нового добора. Закрой его клавишей <0>Esc</0>."
+  "0pN9y3": {
+    "message": "It stays open for another draw. Press <0>Esc</0> twice to close it.",
+    "translation": "Окно остаётся открытым для ещё одного добора. Нажми <0>Esc</0> дважды, чтобы закрыть его."
   },
   "gC8g3J": {
     "message": "It stays open for another draw. Tap outside to close it.",
@@ -2965,6 +2965,10 @@
   "M-FK_f": {
     "message": "Leave room",
     "translation": "Покинуть комнату"
+  },
+  "82LZ4F": {
+    "message": "Leave the room to start the tutorial.",
+    "translation": "Выйди из комнаты, чтобы начать обучение."
   },
   "clcR-H": {
     "message": "Leave the room?",

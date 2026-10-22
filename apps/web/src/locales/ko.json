@@ -2857,9 +2857,9 @@
     "message": "Invitation copied to your clipboard.",
     "translation": "초대장이 클립보드에 복사되었습니다."
   },
-  "MJUoRP": {
-    "message": "It stays open for another draw. Close it with <0>Esc</0>.",
-    "translation": "한 번 더 뽑을 수 있도록 열려 있습니다. <0>Esc</0>로 닫으세요."
+  "0pN9y3": {
+    "message": "It stays open for another draw. Press <0>Esc</0> twice to close it.",
+    "translation": "다시 뽑을 수 있도록 열려 있습니다. 닫으려면 <0>Esc</0>를 두 번 누르세요."
   },
   "gC8g3J": {
     "message": "It stays open for another draw. Tap outside to close it.",
@@ -2965,6 +2965,10 @@
   "M-FK_f": {
     "message": "Leave room",
     "translation": "방 나가기"
+  },
+  "82LZ4F": {
+    "message": "Leave the room to start the tutorial.",
+    "translation": "튜토리얼을 시작하려면 방에서 나가세요."
   },
   "clcR-H": {
     "message": "Leave the room?",

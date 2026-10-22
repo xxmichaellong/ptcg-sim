@@ -265,6 +265,7 @@ export const RemoteSessionBoard = ({
   keysSuspended = false,
   loadDeck,
   showBothHalves = false,
+  initialFlipped = false,
   onSettledChange,
 }: {
   readonly session: RemoteBoardSession;
@@ -305,6 +306,11 @@ export const RemoteSessionBoard = ({
   readonly loadDeck?: TableZoneAffordancesProps['loadDeck'];
   /** Show both halves whatever the board view says (the tutorial). */
   readonly showBothHalves?: boolean;
+  /**
+   * Opens turned around, as the player last left this table (it was put
+   * away for the tutorial). Read once, at the first mount.
+   */
+  readonly initialFlipped?: boolean;
   /**
    * Whether the table is ready to be seen: its scene painted with the
    * chrome around it, or the renderer failed. False again whenever it
@@ -377,6 +383,7 @@ export const RemoteSessionBoard = ({
   const onIntentRef = useRef(onIntent);
   const onSubmissionRef = useRef(onSubmission);
   const onPerspectiveChangeRef = useRef(onPerspectiveChange);
+  const initialFlipRef = useRef(initialFlipped);
   const onSettledChangeRef = useRef(onSettledChange);
   onSettledChangeRef.current = onSettledChange;
   displayPolicyRef.current = {
@@ -681,6 +688,10 @@ export const RemoteSessionBoard = ({
         if (disposed) {
           runtime.dispose();
           return;
+        }
+        if (initialFlipRef.current) {
+          initialFlipRef.current = false;
+          if (view.viewer.kind === 'player') runtime.flipBoard();
         }
         unsubscribeBoard = runtime.subscribeBoard(publish);
         unsubscribeLayout = runtime.subscribeLayout(publishLayout);

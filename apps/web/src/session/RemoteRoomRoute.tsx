@@ -147,6 +147,10 @@ export interface RemoteRoomRouteProps {
    * loading screen on it (table-curtain.ts).
    */
   readonly onTableSettledChange?: (settled: boolean) => void;
+  /** The table opens turned around (RemoteSessionBoard `initialFlipped`). */
+  readonly initialFlipped?: boolean;
+  /** Whether the player has the table turned around, as it changes. */
+  readonly onFlippedChange?: (flipped: boolean) => void;
   /** Atomic owner-level replacement after a server-held save is restored. */
   readonly onResumeSavedGame?: (
     contents: string,
@@ -256,6 +260,8 @@ export const RemoteRoomRoute = ({
   onLeave,
   onNewSoloTable,
   onTableSettledChange,
+  initialFlipped,
+  onFlippedChange,
   onResumeSavedGame,
   continuationAvailable = false,
   onMultiplayerNavigate,
@@ -286,6 +292,11 @@ export const RemoteRoomRoute = ({
     readonly flipped: boolean;
     readonly actingPlayerId: string | undefined;
   }>({ flipped: false, actingPlayerId: undefined });
+  const reportFlipped = useRef(onFlippedChange);
+  reportFlipped.current = onFlippedChange;
+  useEffect(() => {
+    reportFlipped.current?.(perspective.flipped);
+  }, [perspective.flipped]);
   const [locallyActivatedDeck, setLocallyActivatedDeck] = useState(false);
   const deckActivated = deckSurfaceActivated || locallyActivatedDeck;
   const [deckTarget, setDeckTarget] = useState<DeckBuilderTarget>();
@@ -737,6 +748,7 @@ export const RemoteRoomRoute = ({
                 keysSuspended={deckOpen}
                 {...(loadDeck ? { loadDeck } : {})}
                 showBothHalves={Boolean(tutorial)}
+                {...(initialFlipped ? { initialFlipped } : {})}
                 {...(onTableSettledChange
                   ? { onSettledChange: onTableSettledChange }
                   : {})}

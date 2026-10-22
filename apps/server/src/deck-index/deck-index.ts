@@ -320,7 +320,6 @@ export class DeckIndex {
           rateLimit: response.rateLimit,
         });
       }
-      this.store.deleteMeta(META.failures);
       return response;
     } catch (error) {
       if (error instanceof LimitlessRequestError) {
@@ -339,6 +338,11 @@ export class DeckIndex {
       }
       throw error;
     }
+  }
+
+  /** Limitless answered as it should: the next failure holds back afresh. */
+  private recovered(): void {
+    this.store.deleteMeta(META.failures);
   }
 
   private holdBack(): void {
@@ -392,6 +396,7 @@ export class DeckIndex {
       }
       return;
     }
+    this.recovered();
     const raw = body.length;
     const rows = readTournamentList(body);
     const known = this.store.recordListed(rows, this.deps.now());
@@ -468,13 +473,18 @@ export class DeckIndex {
     const now = this.deps.now();
     const provisional = now - tournament.date < STORE_POLICY.finishedAfterMs;
     if (response.status === 304) {
+      this.recovered();
       this.store.recordUnchanged(tournament.id, now, provisional);
       return;
     }
     if (!Array.isArray(response.body)) {
+      // Limitless answering nonsense: the crawl holds back, as for an
+      // outage, and the tournament waits for a retry.
+      this.holdBack();
       this.store.recordFailure(tournament.id, now);
       return;
     }
+    this.recovered();
     const entries = readStandings(response.body);
     const hashes = new Map<string, string>();
     for (const entry of entries) {

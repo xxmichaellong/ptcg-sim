@@ -2857,9 +2857,9 @@
     "message": "Invitation copied to your clipboard.",
     "translation": "Nakopya sa clipboard ang imbitasyon."
   },
-  "MJUoRP": {
-    "message": "It stays open for another draw. Close it with <0>Esc</0>.",
-    "translation": "Mananatili itong bukas para sa isa pang draw. Isara gamit ang <0>Esc</0>."
+  "0pN9y3": {
+    "message": "It stays open for another draw. Press <0>Esc</0> twice to close it.",
+    "translation": "Mananatiling bukas ito para sa isa pang draw. Pindutin ang <0>Esc</0> nang dalawang beses para isara."
   },
   "gC8g3J": {
     "message": "It stays open for another draw. Tap outside to close it.",
@@ -2965,6 +2965,10 @@
   "M-FK_f": {
     "message": "Leave room",
     "translation": "Umalis sa room"
+  },
+  "82LZ4F": {
+    "message": "Leave the room to start the tutorial.",
+    "translation": "Umalis sa room para simulan ang tutorial."
   },
   "clcR-H": {
     "message": "Leave the room?",

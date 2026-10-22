@@ -39,7 +39,14 @@ const collectRuntimeErrors = (page: Page): string[] => {
 
 // Static assets and the deck screen's read-only card data (ADR-032, ADR-029)
 // are served from the same Worker but are not the room authority.
-const NOT_AUTHORITY = ['/v2/assets/', '/v2/cards/catalog', '/v2/decks/current'];
+// Read-only data beside the rooms: public art, the card catalog, the
+// current decks and the tournament deck index (ADR-037).
+const NOT_AUTHORITY = [
+  '/v2/assets/',
+  '/v2/cards/catalog',
+  '/v2/decks/',
+  '/v2/tournaments',
+];
 
 const authorityPath = (request: Request): string | undefined => {
   const pathname = new URL(request.url()).pathname;

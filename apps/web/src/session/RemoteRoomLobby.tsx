@@ -15,6 +15,7 @@ import {
 } from '@ptcgsim/renderer-contract';
 import {
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -329,6 +330,13 @@ export const RemoteRoomLobby = ({
   // it -- except the empty table while it only stands in for a Solo room
   // still being made, which the page never shows on the way to that room.
   const settledTableRef = useRef<'empty' | 'game'>(undefined);
+  // From a hand-off's swap until the lobby draws it: a table that reports
+  // in between is the one being traded away (its effects can land after
+  // the swap), and is not heard.
+  const swappingRef = useRef(false);
+  useLayoutEffect(() => {
+    swappingRef.current = false;
+  });
   const preparedDeckSessions = useRef(new WeakSet<object>());
   const restoredDeckSessions = useRef(new WeakSet<object>());
   const store = dependencies.preferences ?? pagePreferences();
@@ -361,6 +369,12 @@ export const RemoteRoomLobby = ({
   // Play online pressed on the practice table: the player's own table opens
   // to it once they are back.
   const [onlineOnReturn, setOnlineOnReturn] = useState(false);
+  // Whether the player had their own table turned around, so it comes back
+  // that way from the tutorial.
+  const [ownTableFlip, setOwnTableFlip] = useState<{
+    readonly roomCode: string;
+    readonly flipped: boolean;
+  }>();
   useEffect(() => {
     if (!tutorial && onlineOnReturn && connected) setOnlineOnReturn(false);
   }, [tutorial, onlineOnReturn, connected]);
@@ -501,10 +515,12 @@ export const RemoteRoomLobby = ({
     curtain.reveal();
   };
   const handleEmptyTableSettled = (settled: boolean): void => {
+    if (swappingRef.current) return;
     settledTableRef.current = settled ? 'empty' : undefined;
     revealSettledTable();
   };
   const handleGameTableSettled = (settled: boolean): void => {
+    if (swappingRef.current) return;
     settledTableRef.current = settled ? 'game' : undefined;
     revealSettledTable();
   };
@@ -530,6 +546,8 @@ export const RemoteRoomLobby = ({
           if (swap() === false) {
             settledTableRef.current = previous;
             revealSettledTable();
+          } else {
+            swappingRef.current = true;
           }
           resolve();
         } catch (error) {
@@ -716,9 +734,20 @@ export const RemoteRoomLobby = ({
       });
       return;
     }
-    // A room's other player would be left waiting: the tutorial is for a
-    // Solo table.
-    if (connected?.mode === 'multiplayer') return;
+    // A room's other player would be left waiting, and a room this page
+    // made would be closed on the way back: the tutorial is for a Solo
+    // table.
+    if (
+      connected?.mode === 'multiplayer' ||
+      ownerRef.current?.creator?.result.mode === 'multiplayer'
+    ) {
+      toast({
+        id: 'tutorial-failed',
+        title: t`Leave the room to start the tutorial.`,
+        tone: 'warning',
+      });
+      return;
+    }
     const active = beginOperation('tutorial');
     if (!active) return;
     try {
@@ -782,10 +811,17 @@ export const RemoteRoomLobby = ({
   };
 
   // A lesson in the page's address (`?tutorial=damage`) opens it once the
-  // table is ready; `?tutorial` alone opens the list.
+  // table is ready; `?tutorial` alone opens the list. The address forgets
+  // it, so a reload is the player's own table again.
   useEffect(() => {
-    const lesson = tutorialRequestFromUrl(globalThis.location?.search ?? '');
-    if (lesson !== undefined) startTutorial(lesson === '' ? undefined : lesson);
+    const location = globalThis.location;
+    if (!location) return;
+    const lesson = tutorialRequestFromUrl(location.search);
+    if (lesson === undefined) return;
+    startTutorial(lesson === '' ? undefined : lesson);
+    const url = new URL(location.href);
+    url.searchParams.delete('tutorial');
+    globalThis.history?.replaceState(globalThis.history.state, '', url);
   }, []);
 
   const tutorialRequest = useTutorialRequest();
@@ -1399,6 +1435,13 @@ export const RemoteRoomLobby = ({
           {...(onlineOnReturn && connected.mode === 'solo'
             ? { initialSheet: 'online' as const }
             : {})}
+          initialFlipped={
+            ownTableFlip?.roomCode === connected.runtime.roomCode &&
+            ownTableFlip.flipped
+          }
+          onFlippedChange={(flipped) =>
+            setOwnTableFlip({ roomCode: connected.runtime.roomCode, flipped })
+          }
           {...(deckCustody
             ? {
                 deckStore: deckCustody.store,

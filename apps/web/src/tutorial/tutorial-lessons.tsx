@@ -796,7 +796,8 @@ const keys: TutorialLesson = {
       id: 'palette-close',
       text: () => (
         <Trans>
-          It stays open for another draw. Close it with <kbd>Esc</kbd>.
+          It stays open for another draw. Press <kbd>Esc</kbd> twice to close
+          it.
         </Trans>
       ),
       done: (world) => !world.screen.palette,

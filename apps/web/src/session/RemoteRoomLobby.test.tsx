@@ -27,6 +27,10 @@ import type { RemoteRoomRuntime } from './RemoteRoomRuntime.js';
 import type { BoardRailModel } from './RemoteSessionBoard.js';
 import type { RoomBackground } from './browser-room-background.js';
 import { boardViewSettings } from '../board/view/board-view-settings.js';
+import {
+  pendingTutorialRequest,
+  startTutorial,
+} from '../tutorial/tutorial-state.js';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -65,6 +69,9 @@ const roomRouteHarness = vi.hoisted(() => ({
       ) => Promise<void>)
     | undefined,
   onTableSettledChange: undefined as ((settled: boolean) => void) | undefined,
+  tutorial: undefined as { readonly onExit: () => void } | undefined,
+  initialFlipped: undefined as boolean | undefined,
+  onFlippedChange: undefined as ((flipped: boolean) => void) | undefined,
 }));
 
 /** Enough of a table layout for the empty table's app bar to place itself. */
@@ -150,6 +157,9 @@ vi.mock('./RemoteRoomRoute.js', () => ({
     installDeckOnSessionAttach,
     onResumeSavedGame,
     onTableSettledChange,
+    tutorial,
+    initialFlipped,
+    onFlippedChange,
   }: {
     readonly runtime: { readonly label?: string };
     readonly onLeave?: () => void;
@@ -174,8 +184,14 @@ vi.mock('./RemoteRoomRoute.js', () => ({
       signal: AbortSignal
     ) => Promise<void>;
     readonly onTableSettledChange?: (settled: boolean) => void;
+    readonly tutorial?: { readonly onExit: () => void };
+    readonly initialFlipped?: boolean;
+    readonly onFlippedChange?: (flipped: boolean) => void;
   }) => {
     roomRouteHarness.onTableSettledChange = onTableSettledChange;
+    roomRouteHarness.tutorial = tutorial;
+    roomRouteHarness.initialFlipped = initialFlipped;
+    roomRouteHarness.onFlippedChange = onFlippedChange;
     roomRouteHarness.preferences = preferences;
     roomRouteHarness.onPreferencesChange = onPreferencesChange;
     roomRouteHarness.background = background;
@@ -190,7 +206,10 @@ vi.mock('./RemoteRoomRoute.js', () => ({
     roomRouteHarness.installDeckOnSessionAttach = installDeckOnSessionAttach;
     roomRouteHarness.onResumeSavedGame = onResumeSavedGame;
     return (
-      <main data-app-route="test-remote-room">
+      <main
+        data-app-route="test-remote-room"
+        data-tutorial={tutorial ? 'true' : undefined}
+      >
         {runtime.label}
         {onMultiplayerNavigate && (
           <button
@@ -798,6 +817,35 @@ describe('remote room lobby wiring', () => {
     expect(curtain.value.reveal).not.toHaveBeenCalled();
     // The stand-in leaving says nothing; the room's table painting lifts it.
     await reportSettled(roomRouteHarness.onTableSettledChange, false);
+    expect(curtain.value.reveal).not.toHaveBeenCalled();
+    await reportSettled(roomRouteHarness.onTableSettledChange, true);
+    expect(curtain.value.reveal).toHaveBeenCalled();
+
+    await act(async () => root.unmount());
+  });
+
+  it('keeps the loading screen down when the stand-in reports settling after the swap, before the room is drawn', async () => {
+    const curtain = testCurtain('covering');
+    const created = creationResult(runtime({ label: 'solo' }), 'solo');
+    const creation = deferred<typeof created.value>();
+    const createRoom = vi.fn(() => creation.promise);
+    const { root } = await mount(
+      { ...lobbyDependencies(custody(), createRoom), curtain: curtain.value },
+      false,
+      'solo'
+    );
+    await settle();
+    const standIn = lobbyBoardHarness.onEmptySettledChange;
+    await act(async () => {
+      creation.resolve(created.value);
+      // The room is swapped in and the Solo operation is over; the stand-in's
+      // own paint lands before the lobby draws the room.
+      for (let step = 0; step < 10; step += 1) await Promise.resolve();
+      expect(curtain.value.handOff).toHaveBeenCalledOnce();
+      expect(present('[data-app-route="test-remote-room"]')).toBe(false);
+      standIn?.(true);
+    });
+    expect(present('[data-app-route="test-remote-room"]')).toBe(true);
     expect(curtain.value.reveal).not.toHaveBeenCalled();
     await reportSettled(roomRouteHarness.onTableSettledChange, true);
     expect(curtain.value.reveal).toHaveBeenCalled();
@@ -1802,5 +1850,82 @@ describe('remote room lobby wiring', () => {
     await act(async () => root.unmount());
     expect(guest.dispose).toHaveBeenCalledOnce();
     expect(secondInvitation.dispose).toHaveBeenCalledOnce();
+  });
+
+  describe('the tutorial', () => {
+    it('is refused while a room this page made waits for its guest', async () => {
+      const created = creationResult();
+      const createRoom = vi.fn(async () => created.value);
+      const { root } = await mount(lobbyDependencies(custody(), createRoom));
+      await settle();
+      await act(async () => {
+        inputValue(element('#nameInput'), 'Blue');
+        element<HTMLButtonElement>('#generateIdButton').click();
+        await flush();
+      });
+      await settle();
+      expect(createRoom).toHaveBeenCalledOnce();
+      await act(async () => {
+        startTutorial();
+        await flush();
+      });
+      await settle();
+      // No practice table made, and the hosted room left as it was.
+      expect(pendingTutorialRequest()).toBeNull();
+      expect(createRoom).toHaveBeenCalledOnce();
+      expect(present('[data-tutorial="true"]')).toBe(false);
+      expect(created.dispose).not.toHaveBeenCalled();
+      await act(async () => root.unmount());
+    });
+
+    it('takes a lesson from the address once, and leaves the address clean', async () => {
+      history.replaceState(null, '', '/?tutorial=damage&renderer=dom');
+      const practice = creationResult(runtime({ label: 'practice' }), 'solo');
+      const createRoom = vi.fn(async () => practice.value);
+      const { root } = await mount(lobbyDependencies(custody(), createRoom));
+      await settle();
+      expect(location.search).toBe('?renderer=dom');
+      expect(present('[data-tutorial="true"]')).toBe(true);
+      await act(async () => root.unmount());
+      history.replaceState(null, '', '/');
+    });
+
+    it('gives the player their own table back turned as they left it', async () => {
+      const own = creationResult(runtime({ label: 'own' }), 'solo');
+      const practice = creationResult(runtime({ label: 'practice' }), 'solo');
+      const createRoom = vi
+        .fn()
+        .mockResolvedValueOnce(own.value)
+        .mockResolvedValueOnce(practice.value);
+      const { root } = await mount(
+        lobbyDependencies(custody(), createRoom),
+        false,
+        'solo'
+      );
+      await settle();
+      expect(
+        element('[data-app-route="test-remote-room"]').textContent
+      ).toMatch(/^own/u);
+      expect(roomRouteHarness.initialFlipped).toBe(false);
+      await act(async () => {
+        roomRouteHarness.onFlippedChange?.(true);
+        await flush();
+      });
+      await act(async () => {
+        startTutorial();
+        await flush();
+      });
+      await settle();
+      expect(present('[data-tutorial="true"]')).toBe(true);
+      await act(async () => {
+        roomRouteHarness.tutorial?.onExit();
+        await flush();
+      });
+      await settle();
+      expect(present('[data-tutorial="true"]')).toBe(false);
+      expect(practice.dispose).toHaveBeenCalledOnce();
+      expect(roomRouteHarness.initialFlipped).toBe(true);
+      await act(async () => root.unmount());
+    });
   });
 });

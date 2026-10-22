@@ -2857,9 +2857,9 @@
     "message": "Invitation copied to your clipboard.",
     "translation": "Invitation copiée dans votre presse-papiers."
   },
-  "MJUoRP": {
-    "message": "It stays open for another draw. Close it with <0>Esc</0>.",
-    "translation": "Il reste ouvert pour une autre pioche. Fermez-le avec <0>Échap</0>."
+  "0pN9y3": {
+    "message": "It stays open for another draw. Press <0>Esc</0> twice to close it.",
+    "translation": "Elle reste ouverte pour un autre tirage. Appuyez deux fois sur <0>Échap</0> pour la fermer."
   },
   "gC8g3J": {
     "message": "It stays open for another draw. Tap outside to close it.",
@@ -2965,6 +2965,10 @@
   "M-FK_f": {
     "message": "Leave room",
     "translation": "Quitter la salle"
+  },
+  "82LZ4F": {
+    "message": "Leave the room to start the tutorial.",
+    "translation": "Quittez la salle pour commencer le tutoriel."
   },
   "clcR-H": {
     "message": "Leave the room?",

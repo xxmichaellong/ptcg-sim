@@ -9,7 +9,13 @@
     "types": ["vite/client"]
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.json"],
-  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx", "lib", "dist"],
+  "exclude": [
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx",
+    "src/**/*.test-support.ts",
+    "lib",
+    "dist"
+  ],
   "references": [
     { "path": "../../packages/client-session" },
     { "path": "../../packages/deck-core" },

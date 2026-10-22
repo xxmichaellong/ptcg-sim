@@ -299,8 +299,7 @@ test('walks every lesson with a mouse, each step done by the table', async ({
   // Every lesson is kept as done on this device.
   await page
     .locator('[data-tutorial-done]')
-    .getByRole('button')
-    .first()
+    .getByRole('button', { name: 'All lessons' })
     .click();
   await expect(list.locator('[data-done="true"]')).toHaveCount(10);
   expect(errors).toEqual([]);
@@ -414,6 +413,16 @@ test('leaves the player’s own table as it was, and comes back to it', async ({
       );
   await expect.poll(async () => (await ownHand()).length).toBe(7);
   const before = await ownHand();
+  // Turned around, the player's hand is the far one.
+  const farHand = () =>
+    page
+      .locator('.ptcgsim-card[data-in-hand][data-card-side="opponent"]')
+      .evaluateAll((nodes) =>
+        nodes.map((node) => node.getAttribute('aria-label')).sort()
+      );
+  await page.locator('#boardButtonContainer #flipBoardButton').click();
+  await expect.poll(farHand).toEqual(before);
+  await idle(page);
 
   // The menu opens the tutorial on a practice table of its own.
   await openAppMenu(page);
@@ -427,10 +436,14 @@ test('leaves the player’s own table as it was, and comes back to it', async ({
     true
   );
 
-  // Its X goes back to the player's own table, just as they left it.
+  // Its X goes back to the player's own table, just as they left it:
+  // turned around too.
   await page.locator('#tutorialExitButton').click();
   await expect(page.locator('.tutorial-coach')).toHaveCount(0);
-  await expect.poll(ownHand, { timeout: 20_000 }).toEqual(before);
+  await expect.poll(farHand, { timeout: 20_000 }).toEqual(before);
+  await idle(page);
+  await page.locator('#boardButtonContainer #flipBoardButton').click();
+  await expect.poll(ownHand).toEqual(before);
   await idle(page);
 
   // Play online pressed on the practice table leaves it for the player's

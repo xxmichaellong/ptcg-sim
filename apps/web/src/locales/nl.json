@@ -2857,9 +2857,9 @@
     "message": "Invitation copied to your clipboard.",
     "translation": "Uitnodiging naar je klembord gekopieerd."
   },
-  "MJUoRP": {
-    "message": "It stays open for another draw. Close it with <0>Esc</0>.",
-    "translation": "Het blijft open voor nog een kaart. Sluit het met <0>Esc</0>."
+  "0pN9y3": {
+    "message": "It stays open for another draw. Press <0>Esc</0> twice to close it.",
+    "translation": "Blijft open voor nog een trekking. Druk twee keer op <0>Esc</0> om te sluiten."
   },
   "gC8g3J": {
     "message": "It stays open for another draw. Tap outside to close it.",
@@ -2965,6 +2965,10 @@
   "M-FK_f": {
     "message": "Leave room",
     "translation": "Kamer verlaten"
+  },
+  "82LZ4F": {
+    "message": "Leave the room to start the tutorial.",
+    "translation": "Verlaat de kamer om de tutorial te starten."
   },
   "clcR-H": {
     "message": "Leave the room?",
