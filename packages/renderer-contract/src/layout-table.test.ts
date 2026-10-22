@@ -104,14 +104,84 @@ describe('table layout: the app bar corner (ADR-036)', () => {
   });
 
   it('leaves the near half where it was', () => {
-    const without = createTableLayoutSnapshot(stateAt(1440, 900));
-    const withBar = createTableLayoutSnapshot(
-      stateAt(1440, 900, { appBarPx: BAR })
-    );
-    for (const kind of ['hand', 'active', 'bench', 'prizes', 'deck']) {
-      expect(region(withBar, 'local', kind).physicalDeclaredBounds).toEqual(
-        region(without, 'local', kind).physicalDeclaredBounds
+    // The table's split is found as without the bar, so the bar never
+    // reaches the near half: docked log or not, markers or none.
+    for (const [width, height, sidebar, markers, lowerShare] of [
+      [1440, 900, false, 0, undefined],
+      [1193, 800, true, 0, undefined],
+      [1077, 720, true, 0, undefined],
+      [724, 768, false, 2, 0.46],
+      [725, 768, false, 2, 0.46],
+      [928, 768, false, 1, undefined],
+      [600, 667, false, 2, 0.46],
+    ] as const) {
+      const state = {
+        ...(sidebar
+          ? { shellMode: 'sidebar' as const }
+          : { shellMode: 'fullscreen' as const }),
+        ...(markers ? { oncePerGameMarkers: markers } : {}),
+        ...(lowerShare === undefined
+          ? {}
+          : { vertical: tableVerticalLayout(lowerShare) }),
+        seamBandPx: 42,
+      };
+      const without = createTableLayoutSnapshot(stateAt(width, height, state));
+      const withBar = createTableLayoutSnapshot(
+        stateAt(width, height, { ...state, appBarPx: BAR })
       );
+      for (const kind of [
+        'hand',
+        'active',
+        'bench',
+        'prizes',
+        'deck',
+        'lostZone',
+      ]) {
+        expect(
+          region(withBar, 'local', kind).physicalDeclaredBounds,
+          `${String(width)}x${String(height)} ${kind}`
+        ).toEqual(region(without, 'local', kind).physicalDeclaredBounds);
+      }
+    }
+  });
+
+  it('keeps the far board rows on the shortest tables, and builds their scene', () => {
+    const view: MatchViewState = createRendererSpikeView();
+    for (const width of [320, 568, 740, 800, 844, 1280]) {
+      for (const height of [190, 218, 252, 296, 320, 360, 390]) {
+        for (const lowerShare of [0.54, 0.6, 0.66]) {
+          for (const markers of [0, 2]) {
+            for (const bar of [BAR, { width: 146, height: 50 }]) {
+              const at = `${String(width)}x${String(height)} split=${String(lowerShare)} markers=${String(markers)} bar=${String(bar.height)}`;
+              const snapshot = createTableLayoutSnapshot(
+                stateAt(width, height, {
+                  shellMode: 'fullscreen',
+                  appBarPx: bar,
+                  seamBandPx: 46,
+                  vertical: tableVerticalLayout(lowerShare),
+                  ...(markers ? { oncePerGameMarkers: markers } : {}),
+                })
+              );
+              const far = snapshot.players.find(
+                (player) => player.physicalSide === 'upper'
+              )!;
+              expect(
+                far.regions.find((region) => region.kind === 'active')!
+                  .physicalDeclaredBounds.height,
+                at
+              ).toBeGreaterThan(0);
+              expect(() => createBoardScene(view, snapshot), at).not.toThrow();
+              // A corner past the bar stays on the table.
+              const corner = far.extras?.corner;
+              if (corner) {
+                expect(corner.x, at).toBeGreaterThanOrEqual(
+                  far.frameBounds.x - 0.01
+                );
+              }
+            }
+          }
+        }
+      }
     }
   });
 

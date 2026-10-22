@@ -265,6 +265,11 @@ export interface BoardScenePlayerFrame {
   readonly bounds: Rect;
   /** Hidden by the viewer: none of this half's zones or cards are in the scene. */
   readonly hidden?: true;
+  /**
+   * Its hand stays on its strip when the table tilts: its markers' row lies
+   * between the hand and the mat (layout `extras.markersRow`).
+   */
+  readonly handHeldFlat?: true;
 }
 
 export interface BoardSceneResizeHandle {

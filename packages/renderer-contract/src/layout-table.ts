@@ -169,19 +169,26 @@ const cornerPastBar = (
   start: number,
   markerCount: number,
   stripTop: number,
-  stripHeight: number
+  stripHeight: number,
+  end: number
 ): Rect | undefined =>
   start > 0 && markerCount > 0
     ? {
         x: start,
         y: stripTop,
-        width:
-          stripHeight < TABLE_CONTROL_CORNER_HEIGHT_PX
-            ? Math.max(
-                TABLE_CONTROL_CORNER_PX,
-                16 + markerCount * COMPACT_CORNER_MARKER_PX
-              )
-            : TABLE_CONTROL_CORNER_PX,
+        // Never past the half's far edge, on the narrowest tables.
+        width: Math.max(
+          0,
+          Math.min(
+            end - start,
+            stripHeight < TABLE_CONTROL_CORNER_HEIGHT_PX
+              ? Math.max(
+                  TABLE_CONTROL_CORNER_PX,
+                  16 + markerCount * COMPACT_CORNER_MARKER_PX
+                )
+              : TABLE_CONTROL_CORNER_PX
+          )
+        ),
         height: stripHeight,
       }
     : undefined;
@@ -207,6 +214,8 @@ interface HalfGeometry {
     readonly markers?: Rect;
     readonly control: Rect;
     readonly corner?: Rect;
+    /** The corner is a row of its own, between the hand and the mat. */
+    readonly markersRow?: true;
   };
   readonly cardHeights: { readonly active: number; readonly bench: number };
   readonly middle: { readonly left: number; readonly right: number };
@@ -321,11 +330,18 @@ const layoutHalf = (
   // the app bar's corner, so nothing else lies under the bar (and the
   // markers' row below it, where they have one).
   const markerRow = options.markersBelowBar ? MARKER_ROW_PX : 0;
+  const natural = height * proportions.handStrip * (options.handScale ?? 1);
+  // Never so deep that the board keeps no rows to speak of: on the
+  // smallest tables the bar's corner gives way first.
+  const roomForStrip = Math.max(
+    natural,
+    height - margin - 2 * gap - MIN_BOARD_ROW_PX / proportions.activeShare
+  );
   const handStrip = Math.min(
     height,
     Math.max(
-      height * proportions.handStrip * (options.handScale ?? 1),
-      (options.minHandStripPx ?? 0) + markerRow
+      natural,
+      Math.min((options.minHandStripPx ?? 0) + markerRow, roomForStrip)
     )
   );
   const rows = Math.max(0, height - handStrip - margin - 2 * gap);
@@ -473,12 +489,19 @@ const layoutHalf = (
   const pastBar = options.handStartReservePx ?? 0;
   const cornerMarkers = markers ? 0 : markerCount;
   if (options.markersBelowBar !== true) {
-    const past = cornerPastBar(pastBar, cornerMarkers, handTop, handStrip);
+    const past = cornerPastBar(
+      pastBar,
+      cornerMarkers,
+      handTop,
+      handStrip,
+      width - side
+    );
     // Past the bar, the markers would leave the hand too little: they take
-    // a row below the bar instead.
+    // a row below the bar instead, where it fits wholly below it.
     if (
       past &&
-      handRight - Math.max(handLeft, past.x + past.width) < MIN_FAR_HAND_PX
+      handRight - Math.max(handLeft, past.x + past.width) < MIN_FAR_HAND_PX &&
+      (options.minHandStripPx ?? 0) + MARKER_ROW_PX <= roomForStrip
     ) {
       const below = layoutHalf(width, height, {
         ...options,
@@ -500,7 +523,7 @@ const layoutHalf = (
           ),
           height: markerRow,
         }
-      : cornerPastBar(pastBar, cornerMarkers, handTop, handStrip);
+      : cornerPastBar(pastBar, cornerMarkers, handTop, handStrip, width - side);
   const handStart = Math.max(
     handLeft,
     corner && !options.markersBelowBar ? corner.x + corner.width : pastBar
@@ -529,6 +552,9 @@ const layoutHalf = (
       ...(markers ? { markers } : {}),
       control,
       ...(corner ? { corner } : {}),
+      ...(corner && options.markersBelowBar
+        ? { markersRow: true as const }
+        : {}),
     },
   };
 };
@@ -590,9 +616,18 @@ const layoutHalfPortrait = (
   // A portrait hand strip is at least tall enough for the corner's
   // controls side by side, so the pile row above stays clear of them.
   // At least as deep as the app bar's corner, across the table.
-  const minStrip = Math.max(
+  const wantedStrip = Math.max(
     TABLE_COMPACT_CORNER_HEIGHT_PX,
     (options.minHandStripPx ?? 0) + (markersBelowBar ? MARKER_ROW_PX : 0)
+  );
+  // Never so deep that the board keeps no rows to speak of: on the
+  // smallest tables the bar's corner gives way first.
+  const minStrip = Math.min(
+    wantedStrip,
+    Math.max(
+      (free * proportions.handStrip) / (rowsShare + proportions.handStrip),
+      free - (rowsShare * MIN_BOARD_ROW_PX) / proportions.active
+    )
   );
   let bench = free / (rowsShare + proportions.handStrip);
   if (bench * proportions.handStrip < minStrip) {
@@ -605,7 +640,10 @@ const layoutHalfPortrait = (
   const active = bench * proportions.active;
   // A markers' row that leaves the board next to nothing gives way: the
   // markers take the corner past the bar, the hand cramped.
-  if (markersBelowBar && active < MIN_BOARD_ROW_PX) {
+  if (
+    markersBelowBar &&
+    (active < MIN_BOARD_ROW_PX || minStrip < wantedStrip)
+  ) {
     return layoutHalfPortrait(width, height, {
       ...options,
       markersBelowBar: false,
@@ -698,7 +736,7 @@ const layoutHalfPortrait = (
         ),
         height: MARKER_ROW_PX,
       }
-    : cornerPastBar(pastBar, markerCount, handTop, handStrip);
+    : cornerPastBar(pastBar, markerCount, handTop, handStrip, width - edge);
   const handStart = Math.max(
     TABLE_CONTROL_CORNER_PX,
     corner && !markersBelowBar ? corner.x + corner.width : pastBar
@@ -736,6 +774,7 @@ const layoutHalfPortrait = (
         height: EXTRAS_CONTROL_PX,
       },
       ...(corner ? { corner } : {}),
+      ...(corner && markersBelowBar ? { markersRow: true as const } : {}),
     },
   };
 };
@@ -822,6 +861,9 @@ const atPlayerEdge = (geometry: HalfGeometry, band: number): HalfGeometry => {
             control: lowered(geometry.extras.control),
             ...(geometry.extras.corner
               ? { corner: lowered(geometry.extras.corner) }
+              : {}),
+            ...(geometry.extras.markersRow
+              ? { markersRow: true as const }
               : {}),
           },
         }
@@ -1202,6 +1244,9 @@ export const createTableLayoutSnapshot = (
                       ),
                     }
                   : {}),
+                ...(geometry.extras.markersRow
+                  ? { markersRow: true as const }
+                  : {}),
               },
             }
           : {}),
@@ -1246,14 +1291,25 @@ export const createTableLayoutSnapshot = (
     // Both halves laid out `scale` of their frames tall, at the players'
     // edges, with the Stadium straddling the seam to the right of the
     // Actives.
-    const splitAt = (scale: number) => {
+    //
+    // The search lays the far half out as it would be without the app bar,
+    // so the bar never changes the near half (ADR-036); the far half is
+    // laid out with the bar once, at the scale found.
+    const farWithoutBar: HalfOptions = {
+      ...halfOptions,
+      ...(farOptions.handScale ? { handScale: farOptions.handScale } : {}),
+    };
+    const splitAt = (scale: number, withBar = false) => {
       const fit = (frame: Rect): HalfOptions =>
         scale < 1 ? { fitHeight: frame.height * scale } : {};
       const near = buildPlayer(semantics.players[0], frames.lower, {
         ...halfOptions,
         ...fit(frames.lower),
       });
-      const farFit = { ...farOptions, ...fit(frames.upper) };
+      const farFit = {
+        ...(withBar ? farOptions : farWithoutBar),
+        ...fit(frames.upper),
+      };
       let far = buildPlayer(semantics.players[1], frames.upper, farFit);
       const stadiumHeight = Math.min(
         near.geometry.cardHeights.bench,
@@ -1304,8 +1360,8 @@ export const createTableLayoutSnapshot = (
         fits: staging >= stadiumWidth + 0.5,
       };
     };
-    let split = splitAt(1);
-    if (!split.fits) {
+    let scale = 1;
+    if (!splitAt(1).fits) {
       // The cards the halves' heights would give leave the far staging
       // area under a card wide on this table: take the tallest mats that
       // keep it, never smaller than an even split's (taller only ever
@@ -1320,8 +1376,9 @@ export const createTableLayoutSnapshot = (
           else high = middle;
         }
       }
-      split = splitAt(low);
+      scale = low;
     }
+    const split = splitAt(scale, true);
     lower = split.near;
     upper = split.far;
     stadium = split.stadium;

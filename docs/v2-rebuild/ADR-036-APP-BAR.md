@@ -69,10 +69,16 @@ here):
   swaps the two as the window grows;
 - a tilted far hand draws its cards in as they grow, so its outer card
   ends where the strip does;
-- a half that fills the table keeps its top clear of the bar.
+- a half that fills the table keeps its top clear of the bar;
+- the far hand strip never grows so deep that the far board keeps no rows
+  (under 12px of Active card): on the smallest tables the bar's corner
+  gives way first, and a markers' row only goes where it fits wholly below
+  the bar; a tilted table keeps a hand with a markers' row on its strip.
 
-The near half is unchanged, and nothing on the table is ever under the bar
-at any size (layout-table and board-depth tests, app-bar.spec).
+The table's split is found as without the bar, and the far half laid out
+with it at that scale, so the near half is unchanged by it; nothing on the
+table is under the bar at any size it fits in (layout-table and
+board-depth tests, app-bar.spec).
 
 ### 3. The turn's actions stay on the table, at the seam's right end
 

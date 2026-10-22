@@ -290,6 +290,12 @@ export interface BoardPlayerExtrasLayout {
    * the hand after it. In physical pixels.
    */
   readonly corner?: Rect;
+  /**
+   * The corner is a row of its own between the hand and the mat (an upright
+   * phone): a tilted table keeps that hand to its strip rather than growing
+   * it over the row.
+   */
+  readonly markersRow?: true;
 }
 
 export interface BoardResizeHandleLayout {
