@@ -11,6 +11,7 @@ import { TablePoseMotion } from './table-pose-motion.js';
 import { projectTablePoint } from './table-camera.js';
 import { createBoardScene } from './scene.js';
 import {
+  APP_BAR_INSET_PX,
   createTableLayoutSnapshot,
   DEFAULT_TABLE_VERTICAL_LAYOUT,
 } from './layout-table.js';
@@ -141,6 +142,81 @@ describe('live board depth', () => {
         );
         expect(flat.pose(card).bounds).toEqual(card.bounds);
       });
+    }
+    expect(checked).toBeGreaterThan(0);
+  });
+
+  it('keeps a full hand, grown to meet the tilted mat, inside its strip and clear of the app bar', () => {
+    const base = createRendererSpikeView();
+    const bar = { width: 242, height: 42 };
+    let checked = 0;
+    for (const handSize of [7, 12, 20]) {
+      // Every hand holds `handSize` cards.
+      const zones = Object.fromEntries(
+        Object.entries(base.zones).map(([id, zone]) => {
+          if (!id.endsWith(':hand') || zone.cards.length === 0) {
+            return [id, zone];
+          }
+          const cards = Array.from({ length: handSize }, (_, index) => ({
+            ...zone.cards[index % zone.cards.length]!,
+            id: `${String(zone.cards[index % zone.cards.length]!.id)}-${String(index)}`,
+          }));
+          return [id, { ...zone, cards }];
+        })
+      ) as typeof base.zones;
+      const view = { ...base, zones } as typeof base;
+      for (const [width, height] of [
+        [1440, 900],
+        [1280, 720],
+        [1366, 768],
+        [1920, 1080],
+        [1024, 768],
+      ] as const) {
+        const layout = createTableLayoutSnapshot({
+          viewport: { width, height, devicePixelRatio: 1 },
+          playerIds: [view.playerOrder[0]!, view.playerOrder[1]!],
+          bottomPlayerId: view.playerOrder[0]!,
+          shellMode: 'fullscreen',
+          geometryVersion: 2,
+          vertical: DEFAULT_TABLE_VERTICAL_LAYOUT,
+          appBarPx: bar,
+        });
+        const scene = createBoardScene(view, layout);
+        const barBox = {
+          x: layout.playAreaBounds.width - APP_BAR_INSET_PX - bar.width,
+          y: APP_BAR_INSET_PX,
+          ...bar,
+        };
+        for (const tilt of [10, 22, 35]) {
+          const table = new BoardDepthProjection(scene, {
+            ...preferences,
+            depth: { ...preferences.depth!, tilt },
+          });
+          for (const zone of scene.zones.filter(
+            (candidate) => candidate.kind === 'hand'
+          )) {
+            for (const card of scene.cards.filter(
+              (candidate) =>
+                candidate.parentId === zone.id && candidate.renderKey !== null
+            )) {
+              const at = `${String(handSize)} ${String(width)}x${String(height)} tilt ${String(tilt)}`;
+              const bounds = table.bounds(card);
+              expect(bounds.x, at).toBeGreaterThanOrEqual(zone.bounds.x - 0.5);
+              expect(bounds.x + bounds.width, at).toBeLessThanOrEqual(
+                zone.bounds.x + zone.bounds.width + 0.5
+              );
+              expect(
+                bounds.x < barBox.x + barBox.width &&
+                  barBox.x < bounds.x + bounds.width &&
+                  bounds.y < barBox.y + barBox.height &&
+                  barBox.y < bounds.y + bounds.height,
+                at
+              ).toBe(false);
+              checked += 1;
+            }
+          }
+        }
+      }
     }
     expect(checked).toBeGreaterThan(0);
   });

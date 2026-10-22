@@ -1,6 +1,10 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
-import { chooseMoreAction, openDeck } from './support/table-shell.js';
+import {
+  chooseMoreAction,
+  openActivity,
+  openDeck,
+} from './support/table-shell.js';
 
 /**
  * The app bar (ADR-036): the app's controls in the table's top-right
@@ -223,4 +227,120 @@ test('a zone’s hover name is centred, but an empty deck’s sits under its +',
     'data-load-deck-sides',
     /./u
   );
+});
+
+/** The far player's VSTAR and GX markers, wherever the table keeps them. */
+const farMarkers = (page: Page) =>
+  page.locator(
+    '.legacy-once-per-game-button[data-player-side="opponent"], .table-markers[data-player-side="opponent"] .table-marker'
+  );
+
+/** Both markers on the table, showing `show`, from the next page load. */
+const showMarkers = (page: Page, show: 'both' | 'theirs') =>
+  page.evaluate((choice) => {
+    localStorage.setItem(
+      'ptcgsim.board-view.v1',
+      JSON.stringify({ show: choice, vstarMarker: true, gxMarker: true })
+    );
+  }, show);
+
+/** Neither of the far markers under the bar, nor on the far hand. */
+const expectFarMarkersClear = async (page: Page, at: string) => {
+  const markers = farMarkers(page);
+  await expect(markers).toHaveCount(2);
+  const barBox = await box(page.locator('.ptcgsim-app-bar'));
+  const hand = await box(
+    page.locator(
+      '.ptcgsim-zone[data-zone-kind="hand"][data-zone-side="opponent"]'
+    )
+  );
+  for (const marker of await markers.all()) {
+    const rect = await box(marker);
+    expect(overlaps(rect, barBox), `${at}: under the bar`).toBe(false);
+    expect(overlaps(rect, hand), `${at}: on the hand`).toBe(false);
+  }
+};
+
+test('the far player’s markers lie clear of the bar, past it by the hand where the prizes have no room', async ({
+  page,
+}) => {
+  test.setTimeout(120_000);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  // Their half alone, then both halves beside the docked log.
+  await showMarkers(page, 'theirs');
+  await openTable(page);
+  await expectFarMarkersClear(page, 'theirs only');
+  await showMarkers(page, 'both');
+  await openTable(page);
+  const undocked = (await box(page.locator('.ptcgsim-app-bar'))).x;
+  await openActivity(page);
+  // The table, and its bar, move over beside the log.
+  await expect
+    .poll(async () => (await box(page.locator('.ptcgsim-app-bar'))).x)
+    .toBeLessThan(undocked - 100);
+  await expect
+    .poll(async () => {
+      const first = (await box(page.locator('.ptcgsim-app-bar'))).x;
+      await page.waitForTimeout(150);
+      return first === (await box(page.locator('.ptcgsim-app-bar'))).x;
+    })
+    .toBe(true);
+  await expectFarMarkersClear(page, 'beside the docked log');
+});
+
+test.describe('the far markers on a phone', () => {
+  test.use({ hasTouch: true, isMobile: true });
+
+  test('lie past the bar, by the far hand', async ({ page }) => {
+    test.setTimeout(120_000);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/');
+    await showMarkers(page, 'both');
+    await openTable(page);
+    await expectFarMarkersClear(page, '390x844');
+  });
+});
+
+test('in Arabic the empty table keeps the bar the same way round', async ({
+  page,
+}) => {
+  test.setTimeout(60_000);
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      'ptcgsim.language.v1',
+      JSON.stringify({ language: 'ar' })
+    );
+  });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/?room-lobby=1');
+  await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+  await expect(
+    page.locator('[data-app-route="remote-room-lobby"]')
+  ).toBeVisible({ timeout: 30_000 });
+  // The table is laid out in the world, as the room's is.
+  await expect(page.locator('.board-spike-host')).toHaveAttribute('dir', 'ltr');
+  const bar = page.locator('.ptcgsim-app-bar');
+  await expect(bar).toBeVisible();
+  const buttons = await bar.locator('button[id]').evaluateAll((nodes) =>
+    nodes.map((node) => ({
+      id: node.id,
+      x: node.getBoundingClientRect().x,
+    }))
+  );
+  // Left to right as in English, the menu at the end.
+  expect(buttons.at(-1)?.id).toBe('appMenuButton');
+  const xs = buttons.map((button) => button.x);
+  expect(xs).toEqual([...xs].sort((left, right) => left - right));
+  // Each group's hairline at its start, in the gap before it.
+  const lines = await bar
+    .locator('.ptcgsim-app-bar__group + .ptcgsim-app-bar__group')
+    .evaluateAll((groups) =>
+      groups.map((group) => {
+        const line = getComputedStyle(group, '::before');
+        return { left: line.left, right: line.right };
+      })
+    );
+  expect(lines.length).toBeGreaterThan(0);
+  for (const line of lines) expect(line.left).toBe('-2.5px');
 });

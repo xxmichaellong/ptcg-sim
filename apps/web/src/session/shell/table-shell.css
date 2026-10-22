@@ -135,7 +135,7 @@
   position: absolute;
   top: 22%;
   bottom: 22%;
-  left: -2.5px;
+  inset-inline-start: -2.5px;
   width: 1px;
   background: oklch(1 0 0 / 0.14);
 }

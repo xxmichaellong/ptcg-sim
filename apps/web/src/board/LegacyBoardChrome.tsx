@@ -106,6 +106,28 @@ const handleStyle = (
   height: handle.bounds.height,
 });
 
+/**
+ * Where the corner's controls start in the half's own frame, when the
+ * layout moves the corner (`extras.corner`): across the table, past the app
+ * bar that lies over the half's own corner (ADR-036).
+ */
+const cornerOffset = (frame: BoardPlayerLayout): CSSProperties | undefined => {
+  const corner = frame.extras?.corner;
+  if (!corner) return undefined;
+  const bounds = frame.frameBounds;
+  const turned = frame.rotationQuarterTurns === 2;
+  const x = turned
+    ? bounds.x + bounds.width - (corner.x + corner.width)
+    : corner.x - bounds.x;
+  const bottom = turned
+    ? corner.y - bounds.y
+    : bounds.y + bounds.height - (corner.y + corner.height);
+  return {
+    '--table-corner-x': `${x}px`,
+    '--table-corner-bottom': `${bottom}px`,
+  } as CSSProperties;
+};
+
 const LegacyOncePerGameControls = memo(function LegacyOncePerGameControls({
   frame,
   player,
@@ -223,6 +245,7 @@ const LegacyOncePerGameControls = memo(function LegacyOncePerGameControls({
     >
       <div
         className={`legacy-once-per-game-controls legacy-once-per-game-controls--${frame.side}`}
+        style={table ? cornerOffset(frame) : undefined}
       >
         {onToggleHandSort && table && !sortInPill ? (
           <Tooltip

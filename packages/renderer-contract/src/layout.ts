@@ -283,6 +283,13 @@ export interface BoardPlayerLayout {
 export interface BoardPlayerExtrasLayout {
   readonly markers?: Rect;
   readonly control: Rect;
+  /**
+   * The corner beside the hand that holds markers with no place beside the
+   * prizes, where that is not the half's own corner: across the table the
+   * app bar lies over it (ADR-036), so the corner starts past the bar and
+   * the hand after it. In physical pixels.
+   */
+  readonly corner?: Rect;
 }
 
 export interface BoardResizeHandleLayout {

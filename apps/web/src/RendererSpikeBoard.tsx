@@ -396,7 +396,9 @@ export const RendererSpikeBoard = ({
   }, [sessionReady]);
 
   return (
-    <div className="board-spike-host">
+    // Laid out in the world, as the room's table is: left to right in
+    // Arabic too, the app bar on it the same way round (ADR-034, ADR-036).
+    <div className="board-spike-host" dir="ltr">
       <div className="renderer-surface-host" ref={hostRef} />
       {chrome && layout ? chrome(layout) : null}
       <span

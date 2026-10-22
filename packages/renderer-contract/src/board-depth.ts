@@ -467,8 +467,11 @@ export class BoardDepthProjection {
             Math.abs(card.bounds.x + card.bounds.width / 2 - middle)
           )
         );
+        // A hand that already fills its strip draws in a little, so its
+        // outer cards, grown, still end where the strip does (across the
+        // table, short of the app bar).
         const across = Math.max(
-          1,
+          0,
           Math.min(
             grow,
             (strip.width / 2 -

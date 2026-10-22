@@ -7,6 +7,7 @@ import type { BoardLayoutState } from './layout.js';
 import {
   APP_BAR_INSET_PX,
   DEFAULT_TABLE_VERTICAL_LAYOUT,
+  TABLE_CONTROL_CORNER_HEIGHT_PX,
   TABLE_CONTROL_CORNER_PX,
   TABLE_FAR_HAND_SCALE,
   TABLE_LAYOUT_GEOMETRY_VERSION,
@@ -139,6 +140,109 @@ describe('table layout: the app bar corner (ADR-036)', () => {
         const controls = snapshot.shared.boardControlsAnchor;
         expect(controls.y).toBeGreaterThanOrEqual(0);
       }
+    }
+  });
+
+  it('keeps the far markers out of the bar: beside the prizes, or in a corner past it', () => {
+    // On a phone the bar keeps three buttons, a finger's size.
+    const PHONE_BAR = { width: 146, height: 50 };
+    for (const [width, height] of [
+      [360, 640],
+      [390, 844],
+      [430, 932],
+      [844, 390],
+      [932, 430],
+      [768, 1024],
+      [820, 1180],
+      [1024, 768],
+      [1366, 1024],
+      [1280, 720],
+      [1440, 900],
+      [1920, 1080],
+    ] as const) {
+      const bar = width < 600 || height < 500 ? PHONE_BAR : BAR;
+      for (const markers of [1, 2]) {
+        for (const hiddenPhysicalSide of [undefined, 'lower'] as const) {
+          for (const lostZone of [true, false]) {
+            const snapshot = createTableLayoutSnapshot(
+              stateAt(width, height, {
+                shellMode: 'fullscreen',
+                appBarPx: bar,
+                oncePerGameMarkers: markers,
+                hideEmptyLostZone: !lostZone,
+                ...(hiddenPhysicalSide ? { hiddenPhysicalSide } : {}),
+              })
+            );
+            const far = snapshot.players.find(
+              (player) => player.physicalSide === 'upper'
+            )!;
+            const hand = far.regions.find(
+              (candidate) => candidate.kind === 'hand'
+            )!.physicalDeclaredBounds;
+            const frame = far.frameBounds;
+            // Beside the prizes, in a corner the layout moved, or else in
+            // the half's own corner beside the hand (shell.css): turned
+            // with the half, the window's top right.
+            const box = far.extras?.markers ??
+              far.extras?.corner ?? {
+                x: frame.x + frame.width - TABLE_CONTROL_CORNER_PX,
+                y: frame.y,
+                width: TABLE_CONTROL_CORNER_PX,
+                height: Math.min(hand.height, TABLE_CONTROL_CORNER_HEIGHT_PX),
+              };
+            const at = `${width}x${height} ${String(markers)} ${String(hiddenPhysicalSide)} lostZone=${String(lostZone)}`;
+            const barRect = {
+              x: snapshot.playAreaBounds.width - APP_BAR_INSET_PX - bar.width,
+              y: APP_BAR_INSET_PX,
+              ...bar,
+            };
+            expect(overlaps(box, barRect), at).toBe(false);
+            for (const other of far.regions) {
+              expect(
+                overlaps(box, other.physicalDeclaredBounds),
+                `${at} ${other.kind}`
+              ).toBe(false);
+            }
+            if (far.extras?.corner) {
+              // The corner runs the hand strip's depth, past the bar, and
+              // the hand starts after it.
+              expect(far.extras.corner.y).toBeCloseTo(hand.y, 6);
+              expect(far.extras.corner.height).toBeCloseTo(hand.height, 6);
+              expect(hand.x + hand.width).toBeLessThanOrEqual(
+                far.extras.corner.x + 0.01
+              );
+            }
+          }
+        }
+      }
+    }
+  });
+
+  it('moves no corner where nothing lies under the bar', () => {
+    const near = (snapshot: ReturnType<typeof createTableLayoutSnapshot>) =>
+      snapshot.players.find((player) => player.physicalSide === 'lower')!;
+    for (const [width, height] of [
+      [1440, 900],
+      [390, 844],
+    ] as const) {
+      // No markers shown, or no bar: the far corner stays the half's own.
+      for (const state of [
+        stateAt(width, height, { appBarPx: BAR }),
+        stateAt(width, height, { oncePerGameMarkers: 2 }),
+      ]) {
+        const snapshot = createTableLayoutSnapshot(state);
+        for (const player of snapshot.players) {
+          expect(player.extras?.corner).toBeUndefined();
+        }
+      }
+      // The near half's corner is never under the bar.
+      expect(
+        near(
+          createTableLayoutSnapshot(
+            stateAt(width, height, { appBarPx: BAR, oncePerGameMarkers: 2 })
+          )
+        ).extras?.corner
+      ).toBeUndefined();
     }
   });
 

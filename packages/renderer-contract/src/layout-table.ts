@@ -139,8 +139,42 @@ export const TABLE_CONTROL_CORNER_PX = 96;
 export const TABLE_CONTROL_CORNER_HEIGHT_PX = 104;
 export const TABLE_COMPACT_CORNER_HEIGHT_PX = 56;
 
+/**
+ * A marker's room in a corner too short to stack them, side by side (the
+ * web app's chrome): VSTAR's and GX's buttons at their largest, 87 and 68
+ * pixels, with the gaps around them.
+ */
+const COMPACT_CORNER_MARKER_PX = 80;
+
 /** Room at the far end of each hand strip for its card-count badge. */
 const HAND_COUNT_SLOT_PX = 44;
+
+/**
+ * Across the table the corner beside the hand lies under the app bar
+ * (ADR-036). Markers that found no place beside the prizes keep a corner
+ * of their own past the bar, as deep as the hand strip, and the hand
+ * starts after it. `start` is where the bar's reserve ends.
+ */
+const cornerPastBar = (
+  start: number,
+  markerCount: number,
+  stripTop: number,
+  stripHeight: number
+): Rect | undefined =>
+  start > 0 && markerCount > 0
+    ? {
+        x: start,
+        y: stripTop,
+        width:
+          stripHeight < TABLE_CONTROL_CORNER_HEIGHT_PX
+            ? Math.max(
+                TABLE_CONTROL_CORNER_PX,
+                16 + markerCount * COMPACT_CORNER_MARKER_PX
+              )
+            : TABLE_CONTROL_CORNER_PX,
+        height: stripHeight,
+      }
+    : undefined;
 /** The least clear space between a pile and the screen edge. */
 const PILE_EDGE_MARGIN_PX = 12;
 
@@ -155,8 +189,15 @@ interface LocalRegion {
 
 interface HalfGeometry {
   readonly regions: readonly LocalRegion[];
-  /** The optional pieces beside the prizes, in the half's own frame. */
-  readonly extras?: { readonly markers?: Rect; readonly control: Rect };
+  /**
+   * The optional pieces beside the prizes, and the corner past the app bar
+   * for markers that have no place there, in the half's own frame.
+   */
+  readonly extras?: {
+    readonly markers?: Rect;
+    readonly control: Rect;
+    readonly corner?: Rect;
+  };
   readonly cardHeights: { readonly active: number; readonly bench: number };
   readonly middle: { readonly left: number; readonly right: number };
   /** The clear band between this half's cards and the centre line. */
@@ -408,7 +449,17 @@ const layoutHalf = (
       pileWidth + gap * 1.5 + HAND_COUNT_SLOT_PX
     );
   const handRight = width - handLeft;
-  const handStart = Math.max(handLeft, options.handStartReservePx ?? 0);
+  const pastBar = options.handStartReservePx ?? 0;
+  const corner = cornerPastBar(
+    pastBar,
+    markers ? 0 : markerCount,
+    handTop,
+    handStrip
+  );
+  const handStart = Math.max(
+    handLeft,
+    corner ? corner.x + corner.width : pastBar
+  );
   const handRect: Rect = {
     x: handStart,
     y: handTop,
@@ -429,7 +480,11 @@ const layoutHalf = (
     cardHeights: { active, bench },
     middle: { left: middleLeft, right: Math.max(middleRight, benchRight) },
     seamMargin: margin,
-    extras: { ...(markers ? { markers } : {}), control },
+    extras: {
+      ...(markers ? { markers } : {}),
+      control,
+      ...(corner ? { corner } : {}),
+    },
   };
 };
 
@@ -562,9 +617,16 @@ const layoutHalfPortrait = (
     width: pileWidth,
     height: pile,
   });
+  const pastBar = options.handStartReservePx ?? 0;
+  const corner = cornerPastBar(
+    pastBar,
+    Math.max(0, Math.min(2, options.markerCount ?? 0)),
+    handTop,
+    handStrip
+  );
   const handStart = Math.max(
     TABLE_CONTROL_CORNER_PX,
-    options.handStartReservePx ?? 0
+    corner ? corner.x + corner.width : pastBar
   );
   const handRect: Rect = {
     x: handStart,
@@ -596,6 +658,7 @@ const layoutHalfPortrait = (
         width: EXTRAS_CONTROL_PX,
         height: EXTRAS_CONTROL_PX,
       },
+      ...(corner ? { corner } : {}),
     },
   };
 };
@@ -643,6 +706,9 @@ const atPlayerEdge = (geometry: HalfGeometry, band: number): HalfGeometry => {
               ? { markers: lowered(geometry.extras.markers) }
               : {}),
             control: lowered(geometry.extras.control),
+            ...(geometry.extras.corner
+              ? { corner: lowered(geometry.extras.corner) }
+              : {}),
           },
         }
       : {}),
@@ -688,6 +754,7 @@ const layoutSoloHalf = (
   // player's edge and the rest of the height is the band already.
   const portrait = layoutHalfPortrait(width, height, {
     seamBandPx: 2 * soloBand,
+    ...(options.markerCount ? { markerCount: options.markerCount } : {}),
     ...(options.handStartReservePx
       ? { handStartReservePx: options.handStartReservePx }
       : {}),
@@ -992,6 +1059,15 @@ export const createTableLayoutSnapshot = (
                   frameBounds,
                   template.side
                 ),
+                ...(geometry.extras.corner
+                  ? {
+                      corner: toPhysical(
+                        geometry.extras.corner,
+                        frameBounds,
+                        template.side
+                      ),
+                    }
+                  : {}),
               },
             }
           : {}),

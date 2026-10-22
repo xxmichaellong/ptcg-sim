@@ -144,13 +144,14 @@ textarea {
 /* ---- Board chrome on the play-mat table (geometry v2) ------------------
  * Each player's chrome box is their half, turned with it, so these offsets
  * are in that player's own frame: bottom is their screen edge. The corner
- * is TABLE_CONTROL_CORNER_PX (96px) wide, beside the hand.
+ * is TABLE_CONTROL_CORNER_PX (96px) wide, beside the hand; across the table
+ * it starts past the app bar (`--table-corner-x`, from the layout).
  */
 .board-spike-host[data-geometry='2'] .legacy-once-per-game-controls {
   top: auto;
   right: auto;
-  left: 12px;
-  bottom: 10px;
+  left: calc(var(--table-corner-x, 0px) + 12px);
+  bottom: calc(var(--table-corner-bottom, 0px) + 10px);
   width: 76px;
   min-width: 0;
   height: auto;
@@ -169,8 +170,8 @@ textarea {
 .board-spike-host[data-geometry='2']
   .legacy-player-frame-chrome[data-corner='compact']
   .legacy-once-per-game-controls {
-  left: 6px;
-  bottom: 6px;
+  left: calc(var(--table-corner-x, 0px) + 6px);
+  bottom: calc(var(--table-corner-bottom, 0px) + 6px);
   width: auto;
   flex-direction: row;
   justify-content: flex-start;
