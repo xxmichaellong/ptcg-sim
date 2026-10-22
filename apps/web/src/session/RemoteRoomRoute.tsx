@@ -114,6 +114,11 @@ export interface RemoteRoomRouteProps {
     readonly serial: number;
     readonly onExit: () => void;
   };
+  /**
+   * What opens over the table as it mounts: Play online, for a player who
+   * left the tutorial's practice table for it.
+   */
+  readonly initialSheet?: 'online';
   /** Retained above the route when lobby/room transitions share Deck custody. */
   readonly deckStore?: DeckBuilderStore;
   readonly cardBackStore?: CardBackCustodyStore;
@@ -236,6 +241,7 @@ export const RemoteRoomRoute = ({
   rendererKind,
   roomMode = 'multiplayer',
   tutorial,
+  initialSheet,
   deckStore,
   cardBackStore,
   requestCardBack,
@@ -273,7 +279,7 @@ export const RemoteRoomRoute = ({
     ...(onBackgroundChange ? { onBackgroundChange } : {}),
     ...(requestBackground ? { requestBackground } : {}),
   });
-  const [sheet, setSheet] = useState<RouteSheet>();
+  const [sheet, setSheet] = useState<RouteSheet | undefined>(initialSheet);
   const closeSheet = (): void => setSheet(undefined);
   const activity = useActivityDocking();
   const [perspective, setPerspective] = useState<{
@@ -730,6 +736,7 @@ export const RemoteRoomRoute = ({
                 sidePanelSlide={activity.slide}
                 keysSuspended={deckOpen}
                 {...(loadDeck ? { loadDeck } : {})}
+                showBothHalves={Boolean(tutorial)}
                 {...(onTableSettledChange
                   ? { onSettledChange: onTableSettledChange }
                   : {})}

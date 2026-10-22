@@ -1433,6 +1433,10 @@
     "context": "zone on the table",
     "translation": "Клупа"
   },
+  "tffbb1": {
+    "message": "Bench <0>{0}</0> from your hand.",
+    "translation": "Стави <0>{0}</0> из руке на клупу."
+  },
   "T1zt_m": {
     "message": "Bench <0>{0}</0> too.",
     "translation": "Постави и <0>{0}</0> на клупу."
@@ -1726,9 +1730,9 @@
     "message": "Clear log",
     "translation": "Обриши дневник"
   },
-  "vZwOAx": {
-    "message": "Click <0>{0}</0> in your hand, then press <1>B</1> to bench it.",
-    "translation": "Кликни на <0>{0}</0> у руци, па притисни <1>B</1> да је поставиш на клупу."
+  "F4fFCC": {
+    "message": "Click <0>{0}</0> in your hand, then press <1>{key}</1> to bench it.",
+    "translation": "Кликни на <0>{0}</0> у руци, па притисни <1>{key}</1> да је staviš на клупу."
   },
   "MO489z": {
     "message": "Click a shortcut to change it.",
@@ -2330,6 +2334,10 @@
     "message": "Esc",
     "context": "keyboard key",
     "translation": "Esc"
+  },
+  "ddnCsd": {
+    "message": "Every key is under <0>Keyboard shortcuts</0>, in the menu.",
+    "translation": "Све тастере налазиш у <0>Пречицама на тастатури</0>, у менију."
   },
   "yJW_id": {
     "message": "Evolution and previous stage",
@@ -3679,6 +3687,10 @@
     "message": "Only you see this. Cards without that printing keep the deck's scan.",
     "translation": "Ово видиш само ти. Карте без тог издања задржавају скен из шпила."
   },
+  "DQuk1x": {
+    "message": "Open <0>Commands</0>: every action, by name.",
+    "translation": "Отвори <0>Команде</0>: свака радња, по имену."
+  },
   "tG9S9l": {
     "message": "Open a deck file",
     "translation": "Отвори датотеку шпила"
@@ -3940,13 +3952,13 @@
     ],
     "translation": "Притисни {keys} за <0>пречице</0>."
   },
-  "YZ6jO9": {
-    "message": "Press <0>?</0> any time for every key.",
-    "translation": "Притисни <0>?</0> кад год ти требају сви тастери."
+  "svdjsQ": {
+    "message": "Press <0>{key}</0> any time for every key.",
+    "translation": "Притисни <0>{key}</0> кад год хоћеш да видиш све тастере."
   },
-  "PJOyHg": {
-    "message": "Press <0>`</0> for <1>Commands</1>: every action, by name.",
-    "translation": "Притисни <0>`</0> за <1>Команде</1>: свака радња, по имену."
+  "4x60dA": {
+    "message": "Press <0>{key}</0> for <1>Commands</1>: every action, by name.",
+    "translation": "Притисни <0>{key}</0> за <1>Команде</1>: свака радња, по имену."
   },
   "HUzhOi": {
     "message": "Press <0>Esc</0> or click away to close it.",

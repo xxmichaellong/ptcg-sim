@@ -1433,6 +1433,10 @@
     "context": "zone on the table",
     "translation": "Panchina"
   },
+  "tffbb1": {
+    "message": "Bench <0>{0}</0> from your hand.",
+    "translation": "Metti in panchina <0>{0}</0> dalla tua mano."
+  },
   "T1zt_m": {
     "message": "Bench <0>{0}</0> too.",
     "translation": "Metti in panchina anche <0>{0}</0>."
@@ -1726,9 +1730,9 @@
     "message": "Clear log",
     "translation": "Cancella registro"
   },
-  "vZwOAx": {
-    "message": "Click <0>{0}</0> in your hand, then press <1>B</1> to bench it.",
-    "translation": "Clicca <0>{0}</0> nella tua mano, poi premi <1>B</1> per metterlo in panchina."
+  "F4fFCC": {
+    "message": "Click <0>{0}</0> in your hand, then press <1>{key}</1> to bench it.",
+    "translation": "Clicca <0>{0}</0> nella tua mano, poi premi <1>{key}</1> per metterlo in panchina."
   },
   "MO489z": {
     "message": "Click a shortcut to change it.",
@@ -2330,6 +2334,10 @@
     "message": "Esc",
     "context": "keyboard key",
     "translation": "Esc"
+  },
+  "ddnCsd": {
+    "message": "Every key is under <0>Keyboard shortcuts</0>, in the menu.",
+    "translation": "Tutti i tasti sono in <0>Scorciatoie da tastiera</0>, nel menu."
   },
   "yJW_id": {
     "message": "Evolution and previous stage",
@@ -3679,6 +3687,10 @@
     "message": "Only you see this. Cards without that printing keep the deck's scan.",
     "translation": "Lo vedi solo tu. Le carte senza quella stampa mantengono la scansione del mazzo."
   },
+  "DQuk1x": {
+    "message": "Open <0>Commands</0>: every action, by name.",
+    "translation": "Apri <0>Comandi</0>: ogni azione, per nome."
+  },
   "tG9S9l": {
     "message": "Open a deck file",
     "translation": "Apri un file del mazzo"
@@ -3940,13 +3952,13 @@
     ],
     "translation": "Premi {keys} per le <0>scorciatoie</0>."
   },
-  "YZ6jO9": {
-    "message": "Press <0>?</0> any time for every key.",
-    "translation": "Premi <0>?</0> in qualsiasi momento per vedere tutti i tasti."
+  "svdjsQ": {
+    "message": "Press <0>{key}</0> any time for every key.",
+    "translation": "Premi <0>{key}</0> in qualsiasi momento per vedere tutti i tasti."
   },
-  "PJOyHg": {
-    "message": "Press <0>`</0> for <1>Commands</1>: every action, by name.",
-    "translation": "Premi <0>`</0> per i <1>Comandi</1>: ogni azione, per nome."
+  "4x60dA": {
+    "message": "Press <0>{key}</0> for <1>Commands</1>: every action, by name.",
+    "translation": "Premi <0>{key}</0> per <1>Comandi</1>: ogni azione, per nome."
   },
   "HUzhOi": {
     "message": "Press <0>Esc</0> or click away to close it.",

@@ -1,5 +1,6 @@
 import type { MatchViewState, ViewCard } from '@ptcgsim/game-core';
 
+import type { HotkeyActionId } from '../hotkeys/hotkey-catalogue.js';
 import { tutorialCardKeyOf, type TutorialCardKey } from './tutorial-cards.js';
 
 /**
@@ -42,6 +43,11 @@ export interface TutorialWorld {
   /** The table turned round: the other seat at the bottom. */
   readonly flipped: boolean;
   readonly screen: TutorialScreen;
+  /**
+   * The key the player has for an action, as written on a key cap ("B",
+   * "Ctrl+Shift+B"), or nothing when they have turned it off.
+   */
+  readonly keys: (action: HotkeyActionId) => string | undefined;
 }
 
 export const zoneId = (playerId: string, kind: string): string =>

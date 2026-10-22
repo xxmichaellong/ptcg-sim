@@ -745,12 +745,21 @@ const keys: TutorialLesson = {
   steps: [
     {
       id: 'bench-key',
-      text: () => (
-        <Trans>
-          Click <strong>{name('pidgey')}</strong> in your hand, then press{' '}
-          <kbd>B</kbd> to bench it.
-        </Trans>
-      ),
+      // The player's own key, as they have set it; with it turned off, the
+      // drag does it.
+      text: (world) => {
+        const key = world.keys('card.toBench');
+        return key ? (
+          <Trans>
+            Click <strong>{name('pidgey')}</strong> in your hand, then press{' '}
+            <kbd>{key}</kbd> to bench it.
+          </Trans>
+        ) : (
+          <Trans>
+            Bench <strong>{name('pidgey')}</strong> from your hand.
+          </Trans>
+        );
+      },
       targets: (world) => present([cardIn(world, world.you, 'hand', 'pidgey')]),
       done: (world) =>
         benchStacks(world.view, world.you).length >
@@ -758,12 +767,19 @@ const keys: TutorialLesson = {
     },
     {
       id: 'palette',
-      text: () => (
-        <Trans>
-          Press <kbd>`</kbd> for <strong>Commands</strong>: every action, by
-          name.
-        </Trans>
-      ),
+      text: (world) => {
+        const key = world.keys('table.commands');
+        return key ? (
+          <Trans>
+            Press <kbd>{key}</kbd> for <strong>Commands</strong>: every action,
+            by name.
+          </Trans>
+        ) : (
+          <Trans>
+            Open <strong>Commands</strong>: every action, by name.
+          </Trans>
+        );
+      },
       targets: () => [barButton('commandsButton')],
       done: (world) => world.screen.palette,
     },
@@ -787,11 +803,18 @@ const keys: TutorialLesson = {
     },
     {
       id: 'shortcuts',
-      text: () => (
-        <Trans>
-          Press <kbd>?</kbd> any time for every key.
-        </Trans>
-      ),
+      text: (world) => {
+        const key = world.keys('table.shortcuts');
+        return key ? (
+          <Trans>
+            Press <kbd>{key}</kbd> any time for every key.
+          </Trans>
+        ) : (
+          <Trans>
+            Every key is under <strong>Keyboard shortcuts</strong>, in the menu.
+          </Trans>
+        );
+      },
     },
   ],
 };

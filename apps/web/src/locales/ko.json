@@ -1433,6 +1433,10 @@
     "context": "zone on the table",
     "translation": "벤치"
   },
+  "tffbb1": {
+    "message": "Bench <0>{0}</0> from your hand.",
+    "translation": "패에서 <0>{0}</0>을(를) 벤치에 내놓으세요."
+  },
   "T1zt_m": {
     "message": "Bench <0>{0}</0> too.",
     "translation": "<0>{0}</0>도 벤치에 내세요."
@@ -1726,9 +1730,9 @@
     "message": "Clear log",
     "translation": "로그 지우기"
   },
-  "vZwOAx": {
-    "message": "Click <0>{0}</0> in your hand, then press <1>B</1> to bench it.",
-    "translation": "패에서 <0>{0}</0>을(를) 클릭한 다음 <1>B</1>를 눌러 벤치에 내세요."
+  "F4fFCC": {
+    "message": "Click <0>{0}</0> in your hand, then press <1>{key}</1> to bench it.",
+    "translation": "패에서 <0>{0}</0>을(를) 클릭한 다음 <1>{key}</1> 키를 눌러 벤치에 내놓으세요."
   },
   "MO489z": {
     "message": "Click a shortcut to change it.",
@@ -2330,6 +2334,10 @@
     "message": "Esc",
     "context": "keyboard key",
     "translation": "Esc"
+  },
+  "ddnCsd": {
+    "message": "Every key is under <0>Keyboard shortcuts</0>, in the menu.",
+    "translation": "모든 키는 메뉴의 <0>키보드 단축키</0>에서 확인할 수 있습니다."
   },
   "yJW_id": {
     "message": "Evolution and previous stage",
@@ -3679,6 +3687,10 @@
     "message": "Only you see this. Cards without that printing keep the deck's scan.",
     "translation": "나만 볼 수 있습니다. 해당 프린트가 없는 카드는 덱의 스캔 이미지를 유지합니다."
   },
+  "DQuk1x": {
+    "message": "Open <0>Commands</0>: every action, by name.",
+    "translation": "<0>명령</0> 열기: 모든 동작을 이름으로 실행합니다."
+  },
   "tG9S9l": {
     "message": "Open a deck file",
     "translation": "덱 파일 열기"
@@ -3940,13 +3952,13 @@
     ],
     "translation": "{keys} 키를 누르면 <0>단축키</0>를 볼 수 있습니다."
   },
-  "YZ6jO9": {
-    "message": "Press <0>?</0> any time for every key.",
-    "translation": "<0>?</0>를 누르면 언제든 모든 키를 볼 수 있습니다."
+  "svdjsQ": {
+    "message": "Press <0>{key}</0> any time for every key.",
+    "translation": "모든 키를 보려면 언제든 <0>{key}</0> 키를 누르세요."
   },
-  "PJOyHg": {
-    "message": "Press <0>`</0> for <1>Commands</1>: every action, by name.",
-    "translation": "<0>`</0>를 눌러 <1>명령</1>을 여세요: 모든 동작을 이름으로 찾을 수 있습니다."
+  "4x60dA": {
+    "message": "Press <0>{key}</0> for <1>Commands</1>: every action, by name.",
+    "translation": "<0>{key}</0> 키를 눌러 <1>명령</1>을 여세요: 모든 동작을 이름으로 실행합니다."
   },
   "HUzhOi": {
     "message": "Press <0>Esc</0> or click away to close it.",

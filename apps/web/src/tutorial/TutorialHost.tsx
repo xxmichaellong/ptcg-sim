@@ -18,6 +18,7 @@ import {
   useSyncExternalStore,
 } from 'react';
 
+import { useHotkeyHints } from '../hotkeys/hotkey-preferences.js';
 import { motionSettings } from '../motion/motion-settings.js';
 import { preferences } from '../preferences/preference-store.js';
 import { usePreference } from '../preferences/usePreference.js';
@@ -196,6 +197,7 @@ export const TutorialHost = ({
 }) => {
   const { t, i18n } = useLingui();
   const mode = useInputMode();
+  const keys = useHotkeyHints();
   const reducedMotion = useReducedMotion();
   const screen = useScreen();
   const progress = usePreference(TUTORIAL_PREFERENCES);
@@ -311,8 +313,9 @@ export const TutorialHost = ({
         })),
       flipped,
       screen,
+      keys,
     };
-  }, [playing, state.view, mode, feed, flipped, screen]);
+  }, [playing, state.view, mode, feed, flipped, screen, keys]);
 
   const markComplete = useCallback((lesson: TutorialLesson): void => {
     preferences().patch(TUTORIAL_PREFERENCES, {

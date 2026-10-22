@@ -1433,6 +1433,10 @@
     "context": "zone on the table",
     "translation": "ベンチ"
   },
+  "tffbb1": {
+    "message": "Bench <0>{0}</0> from your hand.",
+    "translation": "手札から<0>{0}</0>をベンチに出します。"
+  },
   "T1zt_m": {
     "message": "Bench <0>{0}</0> too.",
     "translation": "<0>{0}</0>もベンチに出しましょう。"
@@ -1726,9 +1730,9 @@
     "message": "Clear log",
     "translation": "ログを消去"
   },
-  "vZwOAx": {
-    "message": "Click <0>{0}</0> in your hand, then press <1>B</1> to bench it.",
-    "translation": "手札の<0>{0}</0>をクリックし、<1>B</1>を押してベンチに出します。"
+  "F4fFCC": {
+    "message": "Click <0>{0}</0> in your hand, then press <1>{key}</1> to bench it.",
+    "translation": "手札の<0>{0}</0>をクリックし、<1>{key}</1>を押してベンチに出します。"
   },
   "MO489z": {
     "message": "Click a shortcut to change it.",
@@ -2330,6 +2334,10 @@
     "message": "Esc",
     "context": "keyboard key",
     "translation": "Esc"
+  },
+  "ddnCsd": {
+    "message": "Every key is under <0>Keyboard shortcuts</0>, in the menu.",
+    "translation": "すべてのキーはメニューの<0>キーボードショートカット</0>で確認できます。"
   },
   "yJW_id": {
     "message": "Evolution and previous stage",
@@ -3679,6 +3687,10 @@
     "message": "Only you see this. Cards without that printing keep the deck's scan.",
     "translation": "あなただけに表示されます。そのプリントがないカードはデッキの画像のままになります。"
   },
+  "DQuk1x": {
+    "message": "Open <0>Commands</0>: every action, by name.",
+    "translation": "<0>コマンド</0>を開く:すべての操作を名前で実行できます。"
+  },
   "tG9S9l": {
     "message": "Open a deck file",
     "translation": "デッキファイルを開く"
@@ -3940,13 +3952,13 @@
     ],
     "translation": "{keys}で<0>ショートカット</0>を表示します。"
   },
-  "YZ6jO9": {
-    "message": "Press <0>?</0> any time for every key.",
-    "translation": "<0>?</0>を押すと、いつでもすべてのキーを確認できます。"
+  "svdjsQ": {
+    "message": "Press <0>{key}</0> any time for every key.",
+    "translation": "<0>{key}</0>を押すと、いつでもすべてのキーを確認できます。"
   },
-  "PJOyHg": {
-    "message": "Press <0>`</0> for <1>Commands</1>: every action, by name.",
-    "translation": "<0>`</0>を押すと<1>コマンド</1>が開きます。すべての操作を名前で探せます。"
+  "4x60dA": {
+    "message": "Press <0>{key}</0> for <1>Commands</1>: every action, by name.",
+    "translation": "<0>{key}</0>で<1>コマンド</1>を開く:すべての操作を名前で実行できます。"
   },
   "HUzhOi": {
     "message": "Press <0>Esc</0> or click away to close it.",

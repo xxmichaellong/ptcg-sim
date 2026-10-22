@@ -38,6 +38,10 @@ const world = (overrides: Partial<TutorialWorld> = {}): TutorialWorld => ({
   events: [],
   flipped: false,
   screen: SCREEN,
+  keys: (action) =>
+    ({ 'card.toBench': 'B', 'table.commands': '`', 'table.shortcuts': '?' })[
+      action as string
+    ],
   ...overrides,
 });
 
@@ -133,6 +137,25 @@ describe('the tutorial’s lessons', () => {
       )
     ).toBe(true);
     expect(both.steps[2]!.done!(world({ flipped: false }))).toBe(true);
+  });
+
+  it('name the keys the player has set, and do without one turned off', () => {
+    const keys = lessonById('keys')!;
+    const bench = keys.steps[0]!;
+    expect(text(bench)).toContain('<kbd>B</kbd>');
+    expect(
+      text(
+        bench,
+        world({
+          keys: (action) =>
+            action === 'card.toBench' ? 'Ctrl+Shift+B' : undefined,
+        })
+      )
+    ).toContain('<kbd>Ctrl+Shift+B</kbd>');
+    const off = world({ keys: () => undefined });
+    expect(text(bench, off)).not.toContain('<kbd>');
+    expect(text(keys.steps[1]!, off)).not.toContain('<kbd>');
+    expect(text(keys.steps.at(-1)!, off)).toContain('Keyboard shortcuts');
   });
 
   it('keep reading steps to read, and passes nothing to do over', () => {

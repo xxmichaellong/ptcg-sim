@@ -1433,6 +1433,10 @@
     "context": "zone on the table",
     "translation": "Bank"
   },
+  "tffbb1": {
+    "message": "Bench <0>{0}</0> from your hand.",
+    "translation": "Zet <0>{0}</0> vanuit je hand op de bank."
+  },
   "T1zt_m": {
     "message": "Bench <0>{0}</0> too.",
     "translation": "Zet ook <0>{0}</0> op de bank."
@@ -1726,9 +1730,9 @@
     "message": "Clear log",
     "translation": "Log wissen"
   },
-  "vZwOAx": {
-    "message": "Click <0>{0}</0> in your hand, then press <1>B</1> to bench it.",
-    "translation": "Klik op <0>{0}</0> in je hand en druk dan op <1>B</1> om de kaart op de bank te zetten."
+  "F4fFCC": {
+    "message": "Click <0>{0}</0> in your hand, then press <1>{key}</1> to bench it.",
+    "translation": "Klik op <0>{0}</0> in je hand en druk dan op <1>{key}</1> om het op de bank te zetten."
   },
   "MO489z": {
     "message": "Click a shortcut to change it.",
@@ -2330,6 +2334,10 @@
     "message": "Esc",
     "context": "keyboard key",
     "translation": "Esc"
+  },
+  "ddnCsd": {
+    "message": "Every key is under <0>Keyboard shortcuts</0>, in the menu.",
+    "translation": "Alle toetsen staan onder <0>Sneltoetsen</0> in het menu."
   },
   "yJW_id": {
     "message": "Evolution and previous stage",
@@ -3679,6 +3687,10 @@
     "message": "Only you see this. Cards without that printing keep the deck's scan.",
     "translation": "Alleen jij ziet dit. Kaarten zonder die uitgave houden de scan van het deck."
   },
+  "DQuk1x": {
+    "message": "Open <0>Commands</0>: every action, by name.",
+    "translation": "Open <0>Opdrachten</0>: elke actie, op naam."
+  },
   "tG9S9l": {
     "message": "Open a deck file",
     "translation": "Een deckbestand openen"
@@ -3940,13 +3952,13 @@
     ],
     "translation": "Druk op {keys} voor <0>sneltoetsen</0>."
   },
-  "YZ6jO9": {
-    "message": "Press <0>?</0> any time for every key.",
-    "translation": "Druk altijd op <0>?</0> voor alle toetsen."
+  "svdjsQ": {
+    "message": "Press <0>{key}</0> any time for every key.",
+    "translation": "Druk op <0>{key}</0> om altijd alle toetsen te zien."
   },
-  "PJOyHg": {
-    "message": "Press <0>`</0> for <1>Commands</1>: every action, by name.",
-    "translation": "Druk op <0>`</0> voor <1>Opdrachten</1>: elke actie, op naam."
+  "4x60dA": {
+    "message": "Press <0>{key}</0> for <1>Commands</1>: every action, by name.",
+    "translation": "Druk op <0>{key}</0> voor <1>Opdrachten</1>: elke actie, op naam."
   },
   "HUzhOi": {
     "message": "Press <0>Esc</0> or click away to close it.",

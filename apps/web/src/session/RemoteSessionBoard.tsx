@@ -264,6 +264,7 @@ export const RemoteSessionBoard = ({
   sidePanelSlide,
   keysSuspended = false,
   loadDeck,
+  showBothHalves = false,
   onSettledChange,
 }: {
   readonly session: RemoteBoardSession;
@@ -302,6 +303,8 @@ export const RemoteSessionBoard = ({
   readonly keysSuspended?: boolean;
   /** The seats whose empty deck shows a `+`, and what it opens. */
   readonly loadDeck?: TableZoneAffordancesProps['loadDeck'];
+  /** Show both halves whatever the board view says (the tutorial). */
+  readonly showBothHalves?: boolean;
   /**
    * Whether the table is ready to be seen: its scene painted with the
    * chrome around it, or the renderer failed. False again whenever it
@@ -314,9 +317,18 @@ export const RemoteSessionBoard = ({
   const identity = viewIdentity(replayState.view);
   const hostRef = useRef<HTMLDivElement>(null);
   const boardViewStore = boardViewSettings();
-  const boardView = useSyncExternalStore(
+  const storedBoardView = useSyncExternalStore(
     boardViewStore.subscribe,
     boardViewStore.getSnapshot
+  );
+  // The tutorial's lessons need both halves, whatever the player keeps for
+  // their own table; their setting is left as it is.
+  const boardView = useMemo(
+    () =>
+      showBothHalves && storedBoardView.show !== 'both'
+        ? { ...storedBoardView, show: 'both' as const }
+        : storedBoardView,
+    [showBothHalves, storedBoardView]
   );
   const boardViewRef = useRef(boardView);
   boardViewRef.current = boardView;

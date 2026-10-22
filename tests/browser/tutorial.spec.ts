@@ -425,13 +425,44 @@ test('leaves the player’s own table as it was, and comes back to it', async ({
   await expect(page.locator('.tutorial-coach')).toHaveCount(0);
   await expect.poll(ownHand, { timeout: 20_000 }).toEqual(before);
   await idle(page);
+
+  // Play online pressed on the practice table leaves it for the player's
+  // own table, with Play online open there.
+  await openAppMenu(page);
+  await page.locator('#tutorialButton').click();
+  await expect(page.locator('[data-tutorial-lessons="true"]')).toBeVisible({
+    timeout: 30_000,
+  });
+  await page.locator('[data-lesson="cards"]').click();
+  await atStep(page, 'cards:read');
+  await page.locator('.ptcgsim-app-bar #p2Button').click();
+  // Back at the player's own table first (its cards), then Play online open
+  // over it -- not only for a moment over the practice table it left.
+  await expect.poll(ownHand, { timeout: 20_000 }).toEqual(before);
+  await page.waitForTimeout(800);
+  await expect(page.locator('.tutorial-coach')).toHaveCount(0);
+  await expect(page.locator('#playOnlineSheet')).toBeVisible();
 });
 
-test('a lesson in the address starts at once', async ({ page }) => {
+test('a lesson in the address starts at once, on both halves of the table', async ({
+  page,
+}) => {
   test.setTimeout(120_000);
+  // The player keeps only their own half on their table: a lesson about
+  // the other side shows it all the same, and leaves their setting alone.
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      'ptcgsim.board-view.v1',
+      JSON.stringify({ show: 'mine' })
+    );
+  });
   await page.setViewportSize({ width: 1440, height: 900 });
   await openTutorial(page, '/?tutorial=damage');
   await atStep(page, 'damage:menu');
+  await expect(inPlay(page, 'Kirlia', 'opponent')).toBeVisible();
+  expect(
+    await page.evaluate(() => localStorage.getItem('ptcgsim.board-view.v1'))
+  ).toContain('mine');
   // Their Kirlia is lit; the coach covers none of what it points at.
   const ring = (await page.locator('.tutorial-ring').first().boundingBox())!;
   const box = (await coach(page).boundingBox())!;

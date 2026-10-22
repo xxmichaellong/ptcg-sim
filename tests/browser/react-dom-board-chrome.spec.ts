@@ -474,9 +474,17 @@ const expectBoardControlsGeometry = (
         .toBeLessThanOrEqual(control.rect.x);
     }
   });
-  const [first] = actual.controls;
-  const [sourceFirst] = expected.controls;
-  if (first && sourceFirst) near(first.rect.x, sourceFirst.rect.x, 'first.x');
+  // Where the row starts is the redesign's (ADR-036: the turn's actions sit
+  // at the seam's right end, past the Stadium), not v1's left end: the row
+  // keeps v1's line and sizes, and stays on the table.
+  const last = actual.controls.at(-1);
+  if (last) {
+    expect
+      .soft(last.rect.x + last.rect.width, `${state} last control ends`)
+      .toBeLessThanOrEqual(
+        actual.container.x + actual.container.width + GEOMETRY_TOLERANCE_PX
+      );
+  }
 };
 
 test('route-owned candidate chrome keeps v1 geometry through theme, hover, resize and flip', async ({

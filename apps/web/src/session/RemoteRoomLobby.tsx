@@ -358,6 +358,12 @@ export const RemoteRoomLobby = ({
     readonly lesson?: string;
     readonly serial: number;
   }>();
+  // Play online pressed on the practice table: the player's own table opens
+  // to it once they are back.
+  const [onlineOnReturn, setOnlineOnReturn] = useState(false);
+  useEffect(() => {
+    if (!tutorial && onlineOnReturn && connected) setOnlineOnReturn(false);
+  }, [tutorial, onlineOnReturn, connected]);
   // 'solo' is the Solo table while its room is still being created (or has
   // failed): v1 opens on Solo, so the page must not flash Play online first.
   const [activePanel, setActivePanel] = useState<'lobby' | 'solo'>(
@@ -1355,7 +1361,10 @@ export const RemoteRoomLobby = ({
         onNewSoloTable={() => void leaveTutorial()}
         multiplayerPanel={renderMultiplayerPanel}
         onMultiplayerPanelOpen={() => {
-          void leaveTutorial().then(() => setActivePanel('lobby'));
+          // As Play online pressed at that table would have it.
+          setOnlineOnReturn(true);
+          setActivePanel('lobby');
+          void leaveTutorial();
         }}
         {...(preferences ? { preferences } : {})}
         onPreferencesChange={setPreferences}
@@ -1387,6 +1396,9 @@ export const RemoteRoomLobby = ({
           runtime={connected.runtime}
           rendererKind={connected.rendererKind}
           roomMode={connected.mode}
+          {...(onlineOnReturn && connected.mode === 'solo'
+            ? { initialSheet: 'online' as const }
+            : {})}
           {...(deckCustody
             ? {
                 deckStore: deckCustody.store,
