@@ -103,7 +103,8 @@ They sit at the seam's right end, past the Stadium and short of the near
 piles there (their stacks rise toward the seam), where a right hand and the
 player's own piles are and where the genre puts its turn button. Where
 fewer than four buttons fit there (an upright phone, whose Stadium sits at
-the right edge) they sit before the Stadium instead. Tilted, the Stadium and
+the right edge), or an action would go behind More there that shows before
+the Stadium, they sit before the Stadium instead. Tilted, the Stadium and
 piles are found on screen through the table's projection.
 
 ### 4. Every zone's hover name is centred

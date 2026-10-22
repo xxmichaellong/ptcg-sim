@@ -71,7 +71,16 @@ test('icon controls name themselves, with their keys, on hover', async ({
   await expect(
     tooltip(page).locator('kbd.ptcgsim-ui-tooltip__hint')
   ).toHaveText('`');
-  await expect(await hover(page, '#activityButton')).toHaveText('Log');
+  const log = await hover(page, '#activityButton');
+  await expect(log).toHaveText('Log');
+  // Below the bar, as the others are: never over the next button along.
+  const [logBox, logButton, commands] = await Promise.all([
+    log.boundingBox(),
+    page.locator('#activityButton').boundingBox(),
+    page.locator('#commandsButton').boundingBox(),
+  ]);
+  expect(logBox!.y).toBeGreaterThanOrEqual(logButton!.y + logButton!.height);
+  expect(logBox!.y).toBeGreaterThanOrEqual(commands!.y + commands!.height);
 
   // A menu's button: named while closed, quiet while its menu is open.
   const menu = await hover(page, '#appMenuButton');

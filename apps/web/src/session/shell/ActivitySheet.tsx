@@ -357,8 +357,9 @@ export const ActivityLauncher = ({
           ))}
         </ol>
       ) : null}
-      {/* Beside the button: the newest lines rise above it. */}
-      <Tooltip content={open ? t`Hide log` : t`Log`} side="left">
+      {/* Below, as the bar's other buttons have theirs: beside, it would
+          cover the next button along. */}
+      <Tooltip content={open ? t`Hide log` : t`Log`} side="bottom">
         <RailButton
           id="activityButton"
           icon={ChatCircleTextIcon}

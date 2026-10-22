@@ -136,8 +136,9 @@ const GAP_PX = 6;
 /**
  * The actions sit past the Stadium, at the seam's right end, where a
  * right hand and the player's piles are (ADR-036), when at least this many
- * buttons fit there; otherwise (an upright phone, whose Stadium sits at the
- * right edge) before it.
+ * buttons fit there and none goes behind More that would show before it;
+ * otherwise (an upright phone, whose Stadium sits at the right edge) before
+ * it.
  */
 const RIGHT_END_MIN_BUTTONS = 4;
 
@@ -218,6 +219,49 @@ export const fitRailActions = (
 };
 
 /**
+ * Where the rail's actions go and which of them show: past the Stadium at
+ * the seam's right end, or before it where that end has too little room or
+ * would hide an action the room before the Stadium shows.
+ */
+export const placeRailActions = ({
+  anchor,
+  width,
+  avoid,
+  end,
+  actions,
+  more,
+}: Pick<
+  TableRailProps,
+  'anchor' | 'width' | 'avoid' | 'end' | 'actions' | 'more'
+>): {
+  readonly atRight: boolean;
+  readonly start: number;
+  readonly width: number;
+  readonly fitted: ReturnType<typeof fitRailActions>;
+} => {
+  const straddles =
+    avoid !== undefined &&
+    avoid.y < anchor.y + anchor.height &&
+    avoid.y + avoid.height > anchor.y &&
+    avoid.x > anchor.x;
+  const rightEnd = Math.min(end ?? width - EDGE_PX, width - EDGE_PX);
+  const rightStart = straddles ? avoid.x + avoid.width + EDGE_PX : anchor.x;
+  const leftEnd = straddles ? avoid.x - EDGE_PX : rightEnd;
+  const rightWidth = Math.max(0, rightEnd - rightStart);
+  const leftWidth = Math.max(0, leftEnd - anchor.x);
+  const right = fitRailActions(actions, more, rightWidth, anchor.height);
+  const left = fitRailActions(actions, more, leftWidth, anchor.height);
+  const atRight =
+    rightEnd - rightStart >=
+      RIGHT_END_MIN_BUTTONS * anchor.height +
+        (RIGHT_END_MIN_BUTTONS - 1) * GAP_PX &&
+    right.shown.length >= left.shown.length;
+  return atRight
+    ? { atRight, start: rightStart, width: rightWidth, fitted: right }
+    : { atRight, start: anchor.x, width: leftWidth, fitted: left };
+};
+
+/**
  * The table rail (ADR-030, ADR-036): the turn's game actions along the
  * seam between the halves, where the table already keeps clear, at the
  * seam's right end past the Stadium (before it where only that has room).
@@ -235,26 +279,12 @@ export const TableRail = memo(function TableRail({
   seat = 'you',
 }: TableRailProps) {
   const { t } = useLingui();
-  const straddles =
-    avoid !== undefined &&
-    avoid.y < anchor.y + anchor.height &&
-    avoid.y + avoid.height > anchor.y &&
-    avoid.x > anchor.x;
-  const rightEnd = Math.min(end ?? width - EDGE_PX, width - EDGE_PX);
-  const rightStart = straddles ? avoid.x + avoid.width + EDGE_PX : anchor.x;
-  const rightRoom = rightEnd - rightStart;
-  const atRight =
-    rightRoom >=
-    RIGHT_END_MIN_BUTTONS * anchor.height +
-      (RIGHT_END_MIN_BUTTONS - 1) * GAP_PX;
-  const actionsStart = atRight ? rightStart : anchor.x;
-  const actionsEnd = atRight
-    ? rightEnd
-    : straddles
-      ? avoid.x - EDGE_PX
-      : rightEnd;
-  const actionsWidth = Math.max(0, actionsEnd - actionsStart);
-  const fitted = fitRailActions(actions, more, actionsWidth, anchor.height);
+  const {
+    atRight,
+    start: actionsStart,
+    width: actionsWidth,
+    fitted,
+  } = placeRailActions({ anchor, width, avoid, end, actions, more });
   return (
     <div
       className="ptcgsim-table-rail"

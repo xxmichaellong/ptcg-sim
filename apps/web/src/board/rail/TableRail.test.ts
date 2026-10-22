@@ -1,8 +1,15 @@
 import { CoinIcon } from '@phosphor-icons/react/dist/csr/Coin';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { ActionMenuEntry } from '../../ui/ActionMenu.js';
-import { fitRailActions, type RailAction } from './TableRail.js';
+import {
+  fitRailActions,
+  type RailAction,
+  TableRail,
+  type TableRailProps,
+} from './TableRail.js';
 
 const action = (
   id: string,
@@ -121,5 +128,49 @@ describe('fitting the rail', () => {
     const short = fitRailActions(actions, both, 3 * 46 + 2 * 6, 46);
     expect(short.shown.map((shown) => shown.id)).toEqual(['turn', 'coin']);
     expect(ids(short.more)).toEqual(['setupBothButton', 'resetBothButton']);
+  });
+});
+
+describe('placing the rail', () => {
+  const playing = [1, 2, 3, 4, 5, 6].map((n) => action(`a${String(n)}`, n));
+  const rarer: ActionMenuEntry[] = ['x', 'y', 'z'].map((id) => ({
+    id,
+    label: id,
+    onSelect: vi.fn(),
+  }));
+  const shown = (markup: string): number =>
+    markup.match(/class="ptcgsim-rail-button[ "]/gu)?.length ?? 0;
+  const render = (props: Partial<TableRailProps>): string =>
+    renderToStaticMarkup(
+      createElement(TableRail, {
+        anchor: { x: 8, y: 40, height: 36 },
+        width: 1000,
+        avoid: { x: 500, y: 0, width: 200, height: 100 },
+        actions: playing,
+        more: rarer,
+        ...props,
+      })
+    );
+
+  it('goes past the Stadium when every action fits there', () => {
+    const markup = render({ width: 1400 });
+    expect(markup).toContain('data-align="end"');
+    // Six actions and More.
+    expect(shown(markup)).toBe(7);
+  });
+
+  it('stays before the Stadium where past it would hide actions that fit before it', () => {
+    // Room past the Stadium for five buttons, before it for eleven.
+    const markup = render({ end: 920 });
+    expect(markup).toContain('data-align="start"');
+    expect(shown(markup)).toBe(7);
+  });
+
+  it('stays before a Stadium at the right edge', () => {
+    const markup = render({
+      width: 400,
+      avoid: { x: 300, y: 0, width: 100, height: 100 },
+    });
+    expect(markup).toContain('data-align="start"');
   });
 });
