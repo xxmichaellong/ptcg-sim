@@ -2172,9 +2172,9 @@
     "message": "Drag a <0>{0}</0> onto {1} to attach it.",
     "translation": "Sleep een <0>{0}</0> naar {1} om hem eraan te koppelen."
   },
-  "bpYsP-": {
-    "message": "Drag a Pokémon from your hand onto your <0>Active Spot</0>.",
-    "translation": "Sleep een Pokémon uit je hand naar je <0>Active Spot</0>."
+  "n3U3s1": {
+    "message": "Drag a Basic Pokémon from your hand onto your <0>Active Spot</0>.",
+    "translation": "Sleep een Basis-Pokémon uit je hand naar je <0>Actieve positie</0>."
   },
   "sEjSlz": {
     "message": "Dragon",
@@ -3480,6 +3480,10 @@
     "message": "No actions match",
     "translation": "Geen acties gevonden"
   },
+  "uVyWzz": {
+    "message": "No Basic Pokémon in your hand: that is a mulligan. Choose <0>Set up again</0> under More.",
+    "translation": "Geen Basis-Pokémon in je hand: dat is een mulligan. Kies <0>Opnieuw opzetten</0> onder Meer."
+  },
   "6n5psS": {
     "message": "No card lines found. Try lines like \"4 Iono PAL 185\".",
     "comments": [
@@ -3548,10 +3552,6 @@
   "hXMFoN": {
     "message": "No lists",
     "translation": "Geen lijsten"
-  },
-  "Oa7VCN": {
-    "message": "No Pokémon in your hand: that is a mulligan. Choose <0>Set up again</0> under More.",
-    "translation": "Geen Pokémon in je hand: dat is een mulligan. Kies <0>Opnieuw opzetten</0> onder Meer."
   },
   "ebeFtm": {
     "message": "No shortcut matches “{search}”.",

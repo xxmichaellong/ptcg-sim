@@ -68,8 +68,8 @@ A lesson starts from a position dealt by the room's own commands
 
 The deck's next cards are then known, so a lesson can say "draw" and "find
 Rare Candy". The first lesson alone leaves your deck unshuffled for Set up
-to shuffle; a hand without a Pokémon (about one deal in seventy) says it is
-a mulligan.
+to shuffle; a hand without a Basic Pokémon (about one deal in seventy) says
+it is a mulligan, and its steps only ever point at a Basic.
 
 The deal's own log lines are cleared, and the log's lines over the table go
 with them. Each lesson can be started over from the coach.

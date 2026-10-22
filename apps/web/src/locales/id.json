@@ -2172,9 +2172,9 @@
     "message": "Drag a <0>{0}</0> onto {1} to attach it.",
     "translation": "Seret <0>{0}</0> ke {1} untuk memasangkannya."
   },
-  "bpYsP-": {
-    "message": "Drag a Pokémon from your hand onto your <0>Active Spot</0>.",
-    "translation": "Seret Pokémon dari tanganmu ke <0>Active Spot</0>-mu."
+  "n3U3s1": {
+    "message": "Drag a Basic Pokémon from your hand onto your <0>Active Spot</0>.",
+    "translation": "Seret Pokémon Basic dari tanganmu ke <0>Active Spot</0>-mu."
   },
   "sEjSlz": {
     "message": "Dragon",
@@ -3480,6 +3480,10 @@
     "message": "No actions match",
     "translation": "Tidak ada aksi yang cocok"
   },
+  "uVyWzz": {
+    "message": "No Basic Pokémon in your hand: that is a mulligan. Choose <0>Set up again</0> under More.",
+    "translation": "Tidak ada Pokémon Basic di tanganmu: itu disebut mulligan. Pilih <0>Atur ulang</0> di menu More."
+  },
   "6n5psS": {
     "message": "No card lines found. Try lines like \"4 Iono PAL 185\".",
     "comments": [
@@ -3548,10 +3552,6 @@
   "hXMFoN": {
     "message": "No lists",
     "translation": "Tidak ada daftar"
-  },
-  "Oa7VCN": {
-    "message": "No Pokémon in your hand: that is a mulligan. Choose <0>Set up again</0> under More.",
-    "translation": "Tidak ada Pokémon di tanganmu: itu mulligan. Pilih <0>Atur ulang</0> di Lainnya."
   },
   "ebeFtm": {
     "message": "No shortcut matches “{search}”.",

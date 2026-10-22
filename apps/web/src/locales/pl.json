@@ -2172,9 +2172,9 @@
     "message": "Drag a <0>{0}</0> onto {1} to attach it.",
     "translation": "Przeciągnij <0>{0}</0> na {1}, aby ją dołączyć."
   },
-  "bpYsP-": {
-    "message": "Drag a Pokémon from your hand onto your <0>Active Spot</0>.",
-    "translation": "Przeciągnij Pokémona z ręki na swoje <0>Miejsce Aktywnego</0>."
+  "n3U3s1": {
+    "message": "Drag a Basic Pokémon from your hand onto your <0>Active Spot</0>.",
+    "translation": "Przeciągnij Pokémona Basic z ręki na swoje <0>Active Spot</0>."
   },
   "sEjSlz": {
     "message": "Dragon",
@@ -3480,6 +3480,10 @@
     "message": "No actions match",
     "translation": "Brak pasujących akcji"
   },
+  "uVyWzz": {
+    "message": "No Basic Pokémon in your hand: that is a mulligan. Choose <0>Set up again</0> under More.",
+    "translation": "Brak Pokémona Basic na ręce: to mulligan. Wybierz <0>Ustaw od nowa</0> w menu Więcej."
+  },
   "6n5psS": {
     "message": "No card lines found. Try lines like \"4 Iono PAL 185\".",
     "comments": [
@@ -3548,10 +3552,6 @@
   "hXMFoN": {
     "message": "No lists",
     "translation": "Brak list"
-  },
-  "Oa7VCN": {
-    "message": "No Pokémon in your hand: that is a mulligan. Choose <0>Set up again</0> under More.",
-    "translation": "Brak Pokémon na ręce: to mulligan. Wybierz <0>Ustaw od nowa</0> w menu Więcej."
   },
   "ebeFtm": {
     "message": "No shortcut matches “{search}”.",

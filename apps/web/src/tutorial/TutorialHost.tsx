@@ -427,7 +427,9 @@ export const TutorialHost = ({
   // read over the command palette; the list and the other cards are not.
   const covered = screen.deckScreen || screen.sheet;
   const hidden = covered || state.phase !== 'ready';
-  const overlaysHidden = covered || screen.palette;
+  // The lesson list and the deal's card also step aside while the practice
+  // table reconnects or has failed: its own banner (Reconnect) shows then.
+  const overlaysHidden = covered || screen.palette || state.phase !== 'ready';
   // Measured through a step's done moment too, so the coach stays put.
   const measuring = Boolean(playing && !hidden);
   const rects = useTargetRects(targets, measuring);
@@ -534,6 +536,7 @@ export const TutorialHost = ({
             step={step}
             world={world}
             done={playing.done}
+            settled={playing.done || (stepDone && !playing.rearm)}
             stuck={stuck}
             paletteOpen={screen.palette}
             avoid={[
@@ -654,6 +657,7 @@ const Coach = ({
   step,
   world,
   done,
+  settled,
   stuck,
   paletteOpen,
   avoid,
@@ -669,6 +673,12 @@ const Coach = ({
   readonly step: TutorialStep;
   readonly world: TutorialWorld;
   readonly done: boolean;
+  /**
+   * The table already shows the step (it is done, or about to be marked
+   * so): the coach stays where it is, though what the step pointed at may
+   * have just gone (a dragged card).
+   */
+  readonly settled: boolean;
   readonly stuck: ReactNode | null;
   /** The command palette is open: the coach keeps clear of it. */
   readonly paletteOpen: boolean;
@@ -693,7 +703,7 @@ const Coach = ({
   const avoidKey = JSON.stringify(avoid);
   useLayoutEffect(() => {
     const element = ref.current;
-    if (!element) return;
+    if (!element || settled) return;
     const measure = (): void => {
       const next = placeCoach(
         { width: element.offsetWidth, height: element.offsetHeight },
@@ -718,15 +728,16 @@ const Coach = ({
       window.removeEventListener('resize', measure);
       window.visualViewport?.removeEventListener('resize', measure);
     };
-  }, [avoidKey, compact, stepIndex, done, paletteOpen]);
-  // A lesson started from the list, which took the focus with it: the
-  // coach has it now. Focus elsewhere (the table, a card) stays.
+  }, [avoidKey, compact, stepIndex, settled, paletteOpen]);
+  // A lesson started from the list, or a step whose button went away under
+  // the focus (Back to the first step, Skip while done): the coach has it
+  // now. Focus elsewhere (the table, a card) stays.
   useEffect(() => {
     const active = document.activeElement;
     if (active === null || active === document.body) {
       ref.current?.focus({ preventScroll: true });
     }
-  }, []);
+  }, [stepIndex, done]);
   const count = lesson.steps.length;
   const action = step.done === undefined;
   const titleId = `tutorialCoachTitle-${lesson.id}`;
@@ -999,7 +1010,7 @@ const LessonDone = ({
       <div className="tutorial-done__head">
         <p className="tutorial-done__title" id="tutorialDoneTitle">
           <CheckCircleIcon {...decorative} weight="fill" />
-          {allDone && !next ? (
+          {allDone ? (
             <Trans>Tutorial complete. You're ready to play.</Trans>
           ) : (
             <Trans>{title}: done</Trans>
@@ -1024,7 +1035,7 @@ const LessonDone = ({
           <Trans>All lessons</Trans>
         </button>
         <span className="tutorial-coach__spacer" />
-        {next ? (
+        {next && !allDone ? (
           <button
             ref={primary}
             type="button"

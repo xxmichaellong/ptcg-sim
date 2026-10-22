@@ -15,7 +15,7 @@ import {
   countCards,
   findCard,
   happened,
-  pokemonInHand,
+  basicInHand,
   topCard,
   zoneCards,
   zoneId,
@@ -167,21 +167,22 @@ const start: TutorialLesson = {
       id: 'active',
       text: () => (
         <Trans>
-          Drag a Pokémon from your hand onto your <strong>Active Spot</strong>.
+          Drag a Basic Pokémon from your hand onto your{' '}
+          <strong>Active Spot</strong>.
         </Trans>
       ),
       drag: (world) => {
-        const card = pokemonInHand(world.view, world.you);
+        const card = basicInHand(world.view, world.you);
         return card
           ? { from: { card: card.id }, to: slot(world.you, 'active') }
           : null;
       },
       done: (world) => activeStack(world.view, world.you) !== undefined,
       stuck: (world) =>
-        pokemonInHand(world.view, world.you) === undefined &&
+        basicInHand(world.view, world.you) === undefined &&
         activeStack(world.view, world.you) === undefined ? (
           <Trans>
-            No Pokémon in your hand: that is a mulligan. Choose{' '}
+            No Basic Pokémon in your hand: that is a mulligan. Choose{' '}
             <strong>Set up again</strong> under More.
           </Trans>
         ) : null,
@@ -194,7 +195,7 @@ const start: TutorialLesson = {
         </Trans>
       ),
       drag: (world) => {
-        const card = pokemonInHand(world.view, world.you);
+        const card = basicInHand(world.view, world.you);
         return card
           ? { from: { card: card.id }, to: slot(world.you, 'bench') }
           : null;
@@ -202,7 +203,7 @@ const start: TutorialLesson = {
       done: (world) =>
         benchStacks(world.view, world.you).length >
           benchStacks(world.start, world.you).length ||
-        pokemonInHand(world.view, world.you) === undefined,
+        basicInHand(world.view, world.you) === undefined,
       optional: true,
     },
   ],

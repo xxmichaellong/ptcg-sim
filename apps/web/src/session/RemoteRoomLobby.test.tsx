@@ -1890,6 +1890,50 @@ describe('remote room lobby wiring', () => {
       history.replaceState(null, '', '/');
     });
 
+    it('keeps the loading screen down on the way back until a new table of their own is made', async () => {
+      const curtain = testCurtain('gone');
+      const practice = creationResult(runtime({ label: 'practice' }), 'solo');
+      const solo = creationResult(runtime({ label: 'solo' }), 'solo');
+      const soloCreation = deferred<typeof solo.value>();
+      const createRoom = vi
+        .fn()
+        .mockResolvedValueOnce(practice.value)
+        .mockImplementationOnce(() => soloCreation.promise);
+      const { root } = await mount(
+        { ...lobbyDependencies(custody(), createRoom), curtain: curtain.value },
+        false,
+        'lobby'
+      );
+      await settle();
+      await act(async () => {
+        startTutorial();
+        await flush();
+      });
+      await settle();
+      await curtain.cover();
+      await settle();
+      expect(present('[data-tutorial="true"]')).toBe(true);
+      await reportSettled(roomRouteHarness.onTableSettledChange, true);
+      curtain.value.reveal.mockClear();
+      // No table of their own: the page makes a Solo one on the way back.
+      await act(async () => {
+        roomRouteHarness.tutorial?.onExit();
+        await flush();
+      });
+      await curtain.cover();
+      await settle();
+      expect(createRoom).toHaveBeenCalledTimes(2);
+      expect(curtain.value.reveal).not.toHaveBeenCalled();
+      await act(async () => {
+        soloCreation.resolve(solo.value);
+        await flush();
+      });
+      await settle();
+      await reportSettled(roomRouteHarness.onTableSettledChange, true);
+      expect(curtain.value.reveal).toHaveBeenCalled();
+      await act(async () => root.unmount());
+    });
+
     it('gives the player their own table back turned as they left it', async () => {
       const own = creationResult(runtime({ label: 'own' }), 'solo');
       const practice = creationResult(runtime({ label: 'practice' }), 'solo');

@@ -2172,9 +2172,9 @@
     "message": "Drag a <0>{0}</0> onto {1} to attach it.",
     "translation": "将<0>{0}</0>拖到{1}上进行附着。"
   },
-  "bpYsP-": {
-    "message": "Drag a Pokémon from your hand onto your <0>Active Spot</0>.",
-    "translation": "将手牌中的宝可梦拖到你的<0>战斗场</0>。"
+  "n3U3s1": {
+    "message": "Drag a Basic Pokémon from your hand onto your <0>Active Spot</0>.",
+    "translation": "将手牌中的基础宝可梦拖到你的<0>战斗场</0>上。"
   },
   "sEjSlz": {
     "message": "Dragon",
@@ -3480,6 +3480,10 @@
     "message": "No actions match",
     "translation": "没有匹配的操作"
   },
+  "uVyWzz": {
+    "message": "No Basic Pokémon in your hand: that is a mulligan. Choose <0>Set up again</0> under More.",
+    "translation": "手牌中没有基础宝可梦:需要重抽。请在“更多”中选择<0>重新准备</0>。"
+  },
   "6n5psS": {
     "message": "No card lines found. Try lines like \"4 Iono PAL 185\".",
     "comments": [
@@ -3548,10 +3552,6 @@
   "hXMFoN": {
     "message": "No lists",
     "translation": "无牌组列表"
-  },
-  "Oa7VCN": {
-    "message": "No Pokémon in your hand: that is a mulligan. Choose <0>Set up again</0> under More.",
-    "translation": "手牌中没有宝可梦:需要重抽。请在“更多”中选择<0>重新准备</0>。"
   },
   "ebeFtm": {
     "message": "No shortcut matches “{search}”.",

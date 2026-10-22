@@ -132,6 +132,11 @@ export const fakePracticeRoom = (
   return {
     sent,
     match: () => match,
+    /** The session reconnecting, failed or ready again. */
+    setPhase: (phase: ClientSessionState['phase']): void => {
+      state = { ...state, phase };
+      for (const listener of [...listeners]) listener();
+    },
     // The practice table's log, as the host reads it: empty here.
     presentation: {
       activityFeed: {

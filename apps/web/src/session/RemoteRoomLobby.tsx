@@ -804,9 +804,10 @@ export const RemoteRoomLobby = ({
       owner.tutorial?.dispose();
       delete owner.tutorial;
       setTutorial(undefined);
-      // With no table of their own to go back to, the page makes one.
-      if (!connected && !parkedSolo) return false;
     });
+    // With no table of their own to go back to, the page makes one: its
+    // operation starts before the stand-in table paints, so the loading
+    // screen stays down until the new table has.
     if (!connected && !parkedSolo) void handleSolo();
   };
 

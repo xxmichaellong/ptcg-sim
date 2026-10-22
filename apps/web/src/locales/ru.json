@@ -2172,9 +2172,9 @@
     "message": "Drag a <0>{0}</0> onto {1} to attach it.",
     "translation": "Перетащи <0>{0}</0> на {1}, чтобы прикрепить."
   },
-  "bpYsP-": {
-    "message": "Drag a Pokémon from your hand onto your <0>Active Spot</0>.",
-    "translation": "Перетащи покемона из руки на своё <0>активное место</0>."
+  "n3U3s1": {
+    "message": "Drag a Basic Pokémon from your hand onto your <0>Active Spot</0>.",
+    "translation": "Перетащи Базового Покемона из руки на своё <0>Активное место</0>."
   },
   "sEjSlz": {
     "message": "Dragon",
@@ -3480,6 +3480,10 @@
     "message": "No actions match",
     "translation": "Подходящих действий нет"
   },
+  "uVyWzz": {
+    "message": "No Basic Pokémon in your hand: that is a mulligan. Choose <0>Set up again</0> under More.",
+    "translation": "В руке нет Базового Покемона: это муллиган. Выбери <0>Начать расстановку заново</0> в меню «Ещё»."
+  },
   "6n5psS": {
     "message": "No card lines found. Try lines like \"4 Iono PAL 185\".",
     "comments": [
@@ -3548,10 +3552,6 @@
   "hXMFoN": {
     "message": "No lists",
     "translation": "Нет списков"
-  },
-  "Oa7VCN": {
-    "message": "No Pokémon in your hand: that is a mulligan. Choose <0>Set up again</0> under More.",
-    "translation": "В руке нет Покемонов — это маллиган. Выбери <0>Заново</0> в меню «Ещё»."
   },
   "ebeFtm": {
     "message": "No shortcut matches “{search}”.",

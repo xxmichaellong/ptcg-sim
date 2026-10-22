@@ -2172,9 +2172,9 @@
     "message": "Drag a <0>{0}</0> onto {1} to attach it.",
     "translation": "<0>{0}</0>을(를) {1}에 끌어다 놓아 붙이세요."
   },
-  "bpYsP-": {
-    "message": "Drag a Pokémon from your hand onto your <0>Active Spot</0>.",
-    "translation": "패의 포켓몬을 <0>배틀필드</0>로 끌어다 놓으세요."
+  "n3U3s1": {
+    "message": "Drag a Basic Pokémon from your hand onto your <0>Active Spot</0>.",
+    "translation": "패의 기본 포켓몬을 <0>배틀필드</0>로 드래그하세요."
   },
   "sEjSlz": {
     "message": "Dragon",
@@ -3480,6 +3480,10 @@
     "message": "No actions match",
     "translation": "일치하는 동작이 없습니다"
   },
+  "uVyWzz": {
+    "message": "No Basic Pokémon in your hand: that is a mulligan. Choose <0>Set up again</0> under More.",
+    "translation": "패에 기본 포켓몬이 없습니다. 이 경우 마리건입니다. 더보기에서 <0>다시 준비</0>를 선택하세요."
+  },
   "6n5psS": {
     "message": "No card lines found. Try lines like \"4 Iono PAL 185\".",
     "comments": [
@@ -3548,10 +3552,6 @@
   "hXMFoN": {
     "message": "No lists",
     "translation": "리스트 없음"
-  },
-  "Oa7VCN": {
-    "message": "No Pokémon in your hand: that is a mulligan. Choose <0>Set up again</0> under More.",
-    "translation": "패에 포켓몬이 없습니다. 멀리건입니다. 더보기에서 <0>다시 준비</0>를 선택하세요."
   },
   "ebeFtm": {
     "message": "No shortcut matches “{search}”.",

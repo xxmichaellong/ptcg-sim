@@ -2172,9 +2172,9 @@
     "message": "Drag a <0>{0}</0> onto {1} to attach it.",
     "translation": "ลาก <0>{0}</0> ไปวางบน {1} เพื่อติด"
   },
-  "bpYsP-": {
-    "message": "Drag a Pokémon from your hand onto your <0>Active Spot</0>.",
-    "translation": "ลากโปเกมอนจากมือของคุณไปที่<0>ช่องโปเกมอนสู้</0>"
+  "n3U3s1": {
+    "message": "Drag a Basic Pokémon from your hand onto your <0>Active Spot</0>.",
+    "translation": "ลากโปเกมอนเบสิกจากมือของคุณไปวางที่<0>ตำแหน่งแอคทีฟ</0>"
   },
   "sEjSlz": {
     "message": "Dragon",
@@ -3480,6 +3480,10 @@
     "message": "No actions match",
     "translation": "ไม่พบการกระทำที่ตรงกัน"
   },
+  "uVyWzz": {
+    "message": "No Basic Pokémon in your hand: that is a mulligan. Choose <0>Set up again</0> under More.",
+    "translation": "ไม่มีโปเกมอนเบสิกในมือ: นี่คือมัลลิแกน เลือก<0>จัดวางใหม่</0>ในเมนูเพิ่มเติม"
+  },
   "6n5psS": {
     "message": "No card lines found. Try lines like \"4 Iono PAL 185\".",
     "comments": [
@@ -3548,10 +3552,6 @@
   "hXMFoN": {
     "message": "No lists",
     "translation": "ไม่มีรายการเด็ค"
-  },
-  "Oa7VCN": {
-    "message": "No Pokémon in your hand: that is a mulligan. Choose <0>Set up again</0> under More.",
-    "translation": "ไม่มีโปเกมอนในมือ: ถือเป็นมัลลิแกน เลือก <0>จัดเตรียมใหม่</0> ใต้ เพิ่มเติม"
   },
   "ebeFtm": {
     "message": "No shortcut matches “{search}”.",

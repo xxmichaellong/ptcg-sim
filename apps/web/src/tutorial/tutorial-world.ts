@@ -1,7 +1,11 @@
 import type { MatchViewState, ViewCard } from '@ptcgsim/game-core';
 
 import type { HotkeyActionId } from '../hotkeys/hotkey-catalogue.js';
-import { tutorialCardKeyOf, type TutorialCardKey } from './tutorial-cards.js';
+import {
+  TUTORIAL_BASIC_POKEMON,
+  tutorialCardKeyOf,
+  type TutorialCardKey,
+} from './tutorial-cards.js';
 
 /**
  * What a lesson step reads (ADR-038): the table as the room last published
@@ -90,16 +94,16 @@ export const countCards = (
 ): number =>
   cards.filter((card) => tutorialCardKeyOf(view, card) === key).length;
 
-/** The first Pokémon in a seat's hand, if any. */
-export const pokemonInHand = (
+/** The first Basic Pokémon in a seat's hand, if any: one that can be put
+ * into play by itself. */
+export const basicInHand = (
   view: MatchViewState,
   playerId: string
 ): ViewCard | undefined =>
-  zoneCards(view, playerId, 'hand').find(
-    (card) =>
-      card.kind === 'known' &&
-      view.definitions[card.definitionId]?.category === 'Pokémon'
-  );
+  zoneCards(view, playerId, 'hand').find((card) => {
+    const key = tutorialCardKeyOf(view, card);
+    return key !== undefined && TUTORIAL_BASIC_POKEMON.has(key);
+  });
 
 /** Whether an event of this kind (by this seat) was logged since the step began. */
 export const happened = (

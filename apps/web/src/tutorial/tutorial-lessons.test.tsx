@@ -7,6 +7,7 @@ import {
   lessonsFor,
   TUTORIAL_LESSONS,
 } from './tutorial-lessons.js';
+import { TUTORIAL_CARDS } from './tutorial-cards.js';
 import type { TutorialScreen, TutorialWorld } from './tutorial-world.js';
 import type { MatchViewState } from '@ptcgsim/game-core';
 
@@ -156,6 +157,43 @@ describe('the tutorial’s lessons', () => {
     expect(text(bench, off)).not.toContain('<kbd>');
     expect(text(keys.steps[1]!, off)).not.toContain('<kbd>');
     expect(text(keys.steps.at(-1)!, off)).toContain('Keyboard shortcuts');
+  });
+
+  it('point a game’s start at a Basic Pokémon, never a Stage', () => {
+    const handOf = (keys: readonly (keyof typeof TUTORIAL_CARDS)[]) =>
+      ({
+        ...EMPTY_VIEW,
+        definitions: Object.fromEntries(
+          keys.map((key) => [
+            `def-${key}`,
+            { ...TUTORIAL_CARDS[key], id: `def-${key}` },
+          ])
+        ),
+        zones: {
+          'zone:you:hand': {
+            id: 'zone:you:hand',
+            kind: 'hand',
+            ownerId: 'you',
+            cards: keys.map((key, index) => ({
+              kind: 'known',
+              id: `card-${String(index)}`,
+              definitionId: `def-${key}`,
+            })),
+          },
+        },
+      }) as unknown as MatchViewState;
+    const active = lessonById('start')!.steps.find(
+      (step) => step.id === 'active'
+    )!;
+    const mixed = world({ view: handOf(['charmeleon', 'charmander']) });
+    expect(active.drag!(mixed)?.from).toEqual({ card: 'card-1' });
+    expect(active.stuck!(mixed)).toBeNull();
+    // Stages and Energy only: a mulligan, not a drag.
+    const stages = world({ view: handOf(['charmeleon', 'charizardEx']) });
+    expect(active.drag!(stages)).toBeNull();
+    expect(text({ text: () => active.stuck!(stages) })).toContain(
+      'No Basic Pokémon'
+    );
   });
 
   it('keep reading steps to read, and passes nothing to do over', () => {

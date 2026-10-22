@@ -7,7 +7,7 @@ import { preferences } from '../preferences/preference-store.js';
 import { fakePracticeRoom, you } from './practice-room.test-support.js';
 import { tutorialCardKeyOf } from './tutorial-cards.js';
 import { zoneCards, zoneId } from './tutorial-world.js';
-import { lessonById } from './tutorial-lessons.js';
+import { lessonById, lessonsFor } from './tutorial-lessons.js';
 import { TUTORIAL_PREFERENCES } from './tutorial-state.js';
 import { TutorialHost } from './TutorialHost.js';
 
@@ -88,8 +88,14 @@ const button = (scope: Element | null, name: string) =>
       candidate.getAttribute('aria-label') === name
   ) as HTMLButtonElement | undefined;
 
+// happy-dom reports a cancelled animation's `finished` as an unhandled
+// rejection (browsers don't, unobserved): the drag hand, which skips its
+// animation without the API, goes without it here.
+const originalAnimate = Element.prototype.animate;
+
 beforeEach(() => {
   exits = 0;
+  (Element.prototype as { animate?: unknown }).animate = undefined;
   Element.prototype.getBoundingClientRect = function (this: Element) {
     const box = placed.get(this);
     return box ? domRect(box) : originalRect.call(this);
@@ -101,6 +107,7 @@ afterEach(async () => {
   root = undefined;
   placed.clear();
   Element.prototype.getBoundingClientRect = originalRect;
+  Element.prototype.animate = originalAnimate;
   document.body.replaceChildren();
   vi.unstubAllGlobals();
 });
@@ -182,6 +189,105 @@ describe('the tutorial’s coach', () => {
     expect(status?.textContent).toBe(coach()!.querySelector('p')!.textContent);
     expect(status?.textContent).not.toBe('');
     expect(document.activeElement).toBe(coach());
+  });
+});
+
+describe('the coach, round two', () => {
+  it('stays in its corner through the done moment of a drag step', async () => {
+    phone(false);
+    await render('attach');
+    await wait(1200);
+    expect(stepOf()).toBe('attach:energy');
+    await act(async () => button(coach(), 'Skip')!.click());
+    await act(async () => button(coach(), 'Skip')!.click());
+    expect(stepOf()).toBe('attach:trainer');
+    // The drag's ends in the top-left corner, where the coach goes first.
+    const view = room.session.getSnapshot().view!;
+    const research = zoneCards(view, you, 'hand').find(
+      (card) => tutorialCardKeyOf(view, card) === 'research'
+    )!;
+    const card = document.createElement('div');
+    card.className = 'ptcgsim-card';
+    card.dataset.cardId = research.id;
+    const mat = document.createElement('div');
+    mat.className = 'ptcgsim-zone';
+    mat.dataset.zoneId = zoneId(you, 'board');
+    document.body.append(card, mat);
+    placed.set(card, { x: 0, y: 0, width: 300, height: 300 });
+    placed.set(mat, { x: 0, y: 0, width: 300, height: 300 });
+    await wait(100);
+    const before = coach()?.getAttribute('data-corner');
+    expect(before).not.toBe('top-left');
+    // Played: the card leaves the hand, and the step is done.
+    await act(async () => {
+      room.session.submit({
+        type: 'MoveCard',
+        cardId: research.id,
+        expectedSourceZoneId: zoneId(you, 'hand'),
+        destinationZoneId: zoneId(you, 'discard'),
+      } as never);
+    });
+    card.remove();
+    await wait(50);
+    expect(coach()?.getAttribute('data-done')).toBe('true');
+    expect(coach()?.getAttribute('data-corner')).toBe(before);
+  });
+
+  it('keeps the focus when Back goes to the first step', async () => {
+    phone(false);
+    await render('cards');
+    await wait(1200);
+    expect(stepOf()).toBe('cards:read');
+    await act(async () => button(coach(), 'Skip')!.click());
+    const back = button(coach(), 'Back')!;
+    back.focus();
+    await act(async () => back.click());
+    expect(stepOf()).toBe('cards:read');
+    expect(document.activeElement).toBe(coach());
+  });
+
+  it('says the tutorial is complete whichever lesson finishes it', async () => {
+    phone(false);
+    const completed: Record<string, number> = {};
+    for (const lesson of lessonsFor('mouse')) {
+      if (lesson.id !== 'both-sides') completed[lesson.id] = lesson.version;
+    }
+    preferences().patch(TUTORIAL_PREFERENCES, { completed });
+    await render('both-sides');
+    await wait(1200);
+    for (
+      let step = 0;
+      step < 6 && !document.querySelector('[data-tutorial-done]');
+      step += 1
+    ) {
+      const next =
+        button(coach(), 'Skip') ??
+        button(coach(), 'Next') ??
+        button(coach(), 'Done');
+      await act(async () => next?.click());
+      // A step the table already shows ticks done a moment first.
+      await wait(700);
+    }
+    const done = document.querySelector('[data-tutorial-done]');
+    expect(done?.querySelector('#tutorialDoneTitle')?.textContent).toContain(
+      'Tutorial complete'
+    );
+    expect([...done!.querySelectorAll('button')].at(-1)?.textContent).toBe(
+      'Back to my table'
+    );
+    preferences().patch(TUTORIAL_PREFERENCES, { completed: {} });
+  });
+
+  it('steps the lesson list aside while the practice table is down', async () => {
+    phone(false);
+    await render();
+    expect(document.querySelector('[data-tutorial-lessons]')).not.toBeNull();
+    await act(async () => room.setPhase('failed'));
+    await wait(50);
+    expect(document.querySelector('[data-tutorial-lessons]')).toBeNull();
+    await act(async () => room.setPhase('ready'));
+    await wait(50);
+    expect(document.querySelector('[data-tutorial-lessons]')).not.toBeNull();
   });
 });
 

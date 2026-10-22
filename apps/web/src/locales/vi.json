@@ -2172,9 +2172,9 @@
     "message": "Drag a <0>{0}</0> onto {1} to attach it.",
     "translation": "Kéo <0>{0}</0> vào {1} để gắn."
   },
-  "bpYsP-": {
-    "message": "Drag a Pokémon from your hand onto your <0>Active Spot</0>.",
-    "translation": "Kéo một Pokémon từ tay bạn vào <0>Vị trí Active</0> của bạn."
+  "n3U3s1": {
+    "message": "Drag a Basic Pokémon from your hand onto your <0>Active Spot</0>.",
+    "translation": "Kéo một Pokémon Cơ Bản từ tay bạn vào <0>ô Active</0> của bạn."
   },
   "sEjSlz": {
     "message": "Dragon",
@@ -3480,6 +3480,10 @@
     "message": "No actions match",
     "translation": "Không có hành động phù hợp"
   },
+  "uVyWzz": {
+    "message": "No Basic Pokémon in your hand: that is a mulligan. Choose <0>Set up again</0> under More.",
+    "translation": "Không có Pokémon Cơ Bản trong tay: đó là mulligan. Chọn <0>Chia bài lại</0> trong mục Thêm."
+  },
   "6n5psS": {
     "message": "No card lines found. Try lines like \"4 Iono PAL 185\".",
     "comments": [
@@ -3548,10 +3552,6 @@
   "hXMFoN": {
     "message": "No lists",
     "translation": "Không có danh sách"
-  },
-  "Oa7VCN": {
-    "message": "No Pokémon in your hand: that is a mulligan. Choose <0>Set up again</0> under More.",
-    "translation": "Không có Pokémon nào trên tay: đó là mulligan. Chọn <0>Chuẩn bị lại</0> trong Thêm."
   },
   "ebeFtm": {
     "message": "No shortcut matches “{search}”.",

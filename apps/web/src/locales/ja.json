@@ -2172,9 +2172,9 @@
     "message": "Drag a <0>{0}</0> onto {1} to attach it.",
     "translation": "<0>{0}</0>を{1}にドラッグしてつけます。"
   },
-  "bpYsP-": {
-    "message": "Drag a Pokémon from your hand onto your <0>Active Spot</0>.",
-    "translation": "手札のポケモンを<0>バトル場</0>にドラッグします。"
+  "n3U3s1": {
+    "message": "Drag a Basic Pokémon from your hand onto your <0>Active Spot</0>.",
+    "translation": "手札のたねポケモンを<0>バトル場</0>にドラッグします。"
   },
   "sEjSlz": {
     "message": "Dragon",
@@ -3480,6 +3480,10 @@
     "message": "No actions match",
     "translation": "一致するアクションがありません"
   },
+  "uVyWzz": {
+    "message": "No Basic Pokémon in your hand: that is a mulligan. Choose <0>Set up again</0> under More.",
+    "translation": "手札にたねポケモンがありません。これはマリガンです。「その他」の<0>やり直す</0>を選んでください。"
+  },
   "6n5psS": {
     "message": "No card lines found. Try lines like \"4 Iono PAL 185\".",
     "comments": [
@@ -3548,10 +3552,6 @@
   "hXMFoN": {
     "message": "No lists",
     "translation": "リストなし"
-  },
-  "Oa7VCN": {
-    "message": "No Pokémon in your hand: that is a mulligan. Choose <0>Set up again</0> under More.",
-    "translation": "手札にポケモンがいません。マリガンです。「その他」から<0>セットアップをやり直す</0>を選んでください。"
   },
   "ebeFtm": {
     "message": "No shortcut matches “{search}”.",

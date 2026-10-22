@@ -51,6 +51,13 @@ export const TUTORIAL_CARDS = {
 
 export type TutorialCardKey = keyof typeof TUTORIAL_CARDS;
 
+/** The Basic Pokémon among them: the ones a game starts with. */
+export const TUTORIAL_BASIC_POKEMON: ReadonlySet<TutorialCardKey> = new Set([
+  'charmander',
+  'pidgey',
+  'ralts',
+]);
+
 /** Every card the practice table can hold, for warming their images. */
 export const TUTORIAL_IMAGE_URLS: readonly string[] = Object.values(
   TUTORIAL_CARDS
