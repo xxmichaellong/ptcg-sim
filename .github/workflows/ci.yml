@@ -105,8 +105,12 @@ jobs:
           done
       - name: Install Playwright Chromium
         run: |
+          # Apt waits for a lock another install holds, and is never cut off;
+          # the browser's download, which can hang, gets five minutes a try.
+          echo 'DPkg::Lock::Timeout "600";' | sudo tee /etc/apt/apt.conf.d/90-lock-timeout > /dev/null
           for browser_install_attempt in 1 2 3; do
-            if timeout 300 corepack pnpm exec playwright install --with-deps chromium; then
+            if corepack pnpm exec playwright install-deps chromium &&
+              timeout 300 corepack pnpm exec playwright install chromium; then
               exit 0
             fi
             if [ "$browser_install_attempt" -eq 3 ]; then
@@ -181,8 +185,12 @@ jobs:
           done
       - name: Install Playwright Chromium
         run: |
+          # Apt waits for a lock another install holds, and is never cut off;
+          # the browser's download, which can hang, gets five minutes a try.
+          echo 'DPkg::Lock::Timeout "600";' | sudo tee /etc/apt/apt.conf.d/90-lock-timeout > /dev/null
           for browser_install_attempt in 1 2 3; do
-            if timeout 300 corepack pnpm exec playwright install --with-deps chromium; then
+            if corepack pnpm exec playwright install-deps chromium &&
+              timeout 300 corepack pnpm exec playwright install chromium; then
               exit 0
             fi
             if [ "$browser_install_attempt" -eq 3 ]; then
@@ -240,8 +248,12 @@ jobs:
           done
       - name: Install Playwright ${{ matrix.name }}
         run: |
+          # Apt waits for a lock another install holds, and is never cut off;
+          # the browser's download, which can hang, gets five minutes a try.
+          echo 'DPkg::Lock::Timeout "600";' | sudo tee /etc/apt/apt.conf.d/90-lock-timeout > /dev/null
           for browser_install_attempt in 1 2 3; do
-            if timeout 300 corepack pnpm exec playwright install --with-deps ${{ matrix.browser }}; then
+            if corepack pnpm exec playwright install-deps ${{ matrix.browser }} &&
+              timeout 300 corepack pnpm exec playwright install ${{ matrix.browser }}; then
               exit 0
             fi
             if [ "$browser_install_attempt" -eq 3 ]; then
