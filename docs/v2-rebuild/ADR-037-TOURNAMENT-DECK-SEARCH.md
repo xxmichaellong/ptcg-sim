@@ -105,7 +105,9 @@ from RK9.
      event under a day old is read again when asked after five minutes).
      Standings read while an event may still be running show only here: no
      deck's finishes, top 8s or ranking count them until it is read again
-     once over.
+     once over. If every read after it ends fails, they stay that way
+     (`unconfirmed`, never cached as settled) until the weekly resync reads
+     it.
    - `GET /v2/tournaments/<id>/players/<player>/list`: the list as the text
      the deck import reads (`decklistText`), with its source link. Cached a
      week once settled.

@@ -45,11 +45,20 @@ export interface IndexStorage {
  * - `indexed`: read after it was over.
  * - `retry`: a read failed and is due again later.
  * - `failed`: gave up after repeated failures.
+ * - `unconfirmed`: read while it may have been running, and every read
+ *   after it ended failed. Its standings show, but count toward no deck's
+ *   finishes; the weekly resync tries it again.
  * - `skipped`: not worth reading (a format whose lists aren't kept, too
  *   few players, a junk date).
  */
 export type TournamentState =
-  'listed' | 'provisional' | 'indexed' | 'retry' | 'failed' | 'skipped';
+  | 'listed'
+  | 'provisional'
+  | 'indexed'
+  | 'retry'
+  | 'failed'
+  | 'skipped'
+  | 'unconfirmed';
 
 const SCHEMA_VERSION = '1';
 
@@ -398,7 +407,7 @@ export class DeckIndexStore {
   nextToResync(now: number): TournamentRow | null {
     const row = this.first(
       `SELECT * FROM tournaments
-       WHERE state = 'indexed' AND date >= ? AND fetched_at <= ?
+       WHERE state IN ('indexed', 'unconfirmed') AND date >= ? AND fetched_at <= ?
        ORDER BY date DESC
        LIMIT 1`,
       now - STORE_POLICY.resyncWindowMs,
@@ -577,7 +586,7 @@ export class DeckIndexStore {
     const attempts = number(row.attempts) + 1;
     // A tournament already read keeps its standings; only its re-read
     // waits.
-    if (row.state === 'indexed') {
+    if (row.state === 'indexed' || row.state === 'unconfirmed') {
       this.sql.exec(
         'UPDATE tournaments SET fetched_at = ?, attempts = ? WHERE id = ?',
         now,
@@ -588,12 +597,12 @@ export class DeckIndexStore {
     }
     // Read while it may have been running, its read once it is over waits
     // like any other and is given up on after as many tries: what was read
-    // stays, as its standings.
+    // stays, as its standings, but never as its final placings.
     if (row.state === 'provisional') {
       const givenUp = attempts >= STORE_POLICY.attempts;
       this.sql.exec(
         'UPDATE tournaments SET state = ?, fetched_at = ?, attempts = ?, retry_after = ? WHERE id = ?',
-        givenUp ? 'indexed' : 'provisional',
+        givenUp ? 'unconfirmed' : 'provisional',
         now,
         attempts,
         givenUp ? null : now + STORE_POLICY.retryBaseMs * attempts,
@@ -681,7 +690,7 @@ export class DeckIndexStore {
         `SELECT t.date, t.players FROM entries e
          JOIN tournaments t ON t.id = e.tournament_id
          WHERE e.archetype_id = ? AND e.placing <= 8 AND t.format = ? AND t.date >= ?
-           AND t.state != 'provisional'`,
+           AND t.state = 'indexed'`,
         archetype.id,
         format,
         now - STORE_POLICY.rankingWindowMs
@@ -710,7 +719,7 @@ export class DeckIndexStore {
         `SELECT COUNT(*) AS lists, SUM(CASE WHEN e.placing <= 8 THEN 1 ELSE 0 END) AS top8s
          FROM entries e JOIN tournaments t ON t.id = e.tournament_id
          WHERE e.archetype_id = ? AND t.format = ? AND e.list_hash IS NOT NULL
-           AND e.placing IS NOT NULL AND t.state != 'provisional'`,
+           AND e.placing IS NOT NULL AND t.state = 'indexed'`,
         archetype.id,
         format
       );
@@ -774,7 +783,7 @@ export class DeckIndexStore {
       `SELECT ${FINISH_COLUMNS} FROM entries e
        JOIN tournaments t ON t.id = e.tournament_id
        WHERE e.archetype_id = ? AND t.format = ? AND e.list_hash IS NOT NULL
-         AND e.placing IS NOT NULL AND t.date >= ? AND t.state != 'provisional'
+         AND e.placing IS NOT NULL AND t.date >= ? AND t.state = 'indexed'
        ORDER BY e.placing ASC, t.players DESC, t.date DESC, t.id ASC, e.player_id ASC
        LIMIT ? OFFSET ?`,
       archetypeId,

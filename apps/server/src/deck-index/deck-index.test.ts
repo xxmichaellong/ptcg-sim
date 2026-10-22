@@ -832,6 +832,34 @@ describe('a tournament a player opens', () => {
     expect(limitless.standingsCalls()).toHaveLength(5);
   });
 
+  it('never counts an event read while running as final when every read after it fails', async () => {
+    limitless.tournaments = [
+      tournament(1, { name: 'Live Cup', players: 200, date: START - 2 * HOUR }),
+    ];
+    limitless.standings.set(id(1), [standing('b', 1, dragapult)]);
+    const index = createIndex();
+    await crawl(index, 1);
+    await index.tournament(id(1));
+    // Over, and Limitless fails every read until the tries run out.
+    limitless.failStandings = 100;
+    now = START + 13 * HOUR;
+    await crawlUntil(index, START + 30 * HOUR);
+    const unconfirmed = await index.tournament(id(1));
+    expect(unconfirmed.kind).toBe('ok');
+    expect(unconfirmed.kind === 'ok' && unconfirmed.settled).toBe(false);
+    const search = index.search('dragapult', 'STANDARD', 8);
+    expect(search.available && search.results).toEqual([]);
+    // The weekly resync reads it again, and then it counts.
+    limitless.failStandings = 0;
+    now = START + 8 * DAY;
+    await crawlUntilIdle(index);
+    const confirmed = index.search('dragapult', 'STANDARD', 8);
+    expect(
+      confirmed.available &&
+        confirmed.results[0]!.best.map((finish) => finish.player.id)
+    ).toEqual(['b']);
+  });
+
   it('is not found when unknown, skipped, or when the index is off', async () => {
     limitless.tournaments = [
       tournament(1, { date: START - 2 * DAY }),
