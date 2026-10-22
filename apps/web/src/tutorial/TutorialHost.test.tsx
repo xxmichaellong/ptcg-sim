@@ -233,6 +233,27 @@ describe('the coach, round two', () => {
     expect(coach()?.getAttribute('data-corner')).toBe(before);
   });
 
+  it('moves off the palette that opening ends a step with, in its done moment', async () => {
+    phone(true);
+    const bar = document.createElement('div');
+    bar.className = 'ptcgsim-app-bar';
+    document.body.append(bar);
+    placed.set(bar, { x: 236, y: 8, width: 146, height: 50 });
+    await render('commands');
+    await wait(1200);
+    expect(stepOf()).toBe('commands:palette');
+    expect(Number.parseFloat(coach()!.style.top)).toBeLessThan(100);
+    // Opening the palette is the step: it is done, and the coach is over
+    // the palette's field unless it moves.
+    const palette = document.createElement('div');
+    palette.setAttribute('data-command-palette', '');
+    placed.set(palette, { x: 8, y: 8, width: 374, height: 400 });
+    await act(async () => document.body.append(palette));
+    await wait(100);
+    expect(coach()?.getAttribute('data-done')).toBe('true');
+    expect(Number.parseFloat(coach()!.style.top)).toBeGreaterThanOrEqual(408);
+  });
+
   it('keeps the focus when Back goes to the first step', async () => {
     phone(false);
     await render('cards');

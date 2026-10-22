@@ -982,29 +982,29 @@
     ],
     "translation": "<0/> apre questo elenco."
   },
+  "4TpVuz": {
+    "message": "<0>{0}</0> back to your side.",
+    "translation": "<0>{0}</0> dalla tua parte."
+  },
+  "oC5vx2": {
+    "message": "<0>{0}</0> your deck when you are done.",
+    "translation": "<0>{0}</0> il tuo mazzo quando hai finito."
+  },
+  "F7xH8_": {
+    "message": "<0>{0}</0>: every move, and the chat.",
+    "translation": "<0>{0}</0>: ogni mossa e la chat."
+  },
+  "l7W_Ze": {
+    "message": "<0>{0}</0>: send a friend a link to your table.",
+    "translation": "<0>{0}</0>: manda a un amico il link al tuo tavolo."
+  },
+  "NaneTg": {
+    "message": "<0>{0}</0>: the table's look, the theme and the language.",
+    "translation": "<0>{0}</0>: l'aspetto del tavolo, il tema e la lingua."
+  },
   "ieOTvn": {
     "message": "<0>Deck</0>: build, import or pick a deck for each side.",
     "translation": "<0>Mazzo</0>: crea, importa o scegli un mazzo per ogni lato."
-  },
-  "Pzyxb1": {
-    "message": "<0>Flip</0> back to your side.",
-    "translation": "<0>Gira</0> per tornare al tuo lato."
-  },
-  "udHtRp": {
-    "message": "<0>Log</0>: every move, and the chat.",
-    "translation": "<0>Registro</0>: ogni mossa e la chat."
-  },
-  "9MOdR4": {
-    "message": "<0>Play online</0>: send a friend a link to your table.",
-    "translation": "<0>Gioca online</0>: manda a un amico il link al tuo tavolo."
-  },
-  "u4cc98": {
-    "message": "<0>Settings</0>: the table's look, the theme and the language.",
-    "translation": "<0>Impostazioni</0>: l'aspetto del tavolo, il tema e la lingua."
-  },
-  "Ni8ven": {
-    "message": "<0>Shuffle</0> your deck when you are done.",
-    "translation": "<0>Mescola</0> il mazzo quando hai finito."
   },
   "C0rMdv": {
     "message": "− Damage",
@@ -1651,9 +1651,9 @@
     "message": "Change type...",
     "translation": "Cambia tipo..."
   },
-  "9dR8ka": {
-    "message": "Changed your mind? <0>Undo</0> takes back your last move.",
-    "translation": "Hai cambiato idea? <0>Annulla</0> ripristina la tua ultima mossa."
+  "_2MVxl": {
+    "message": "Changed your mind? <0>{0}</0> takes back your last move.",
+    "translation": "Hai cambiato idea? <0>{0}</0> annulla la tua ultima mossa."
   },
   "iY-KUI": {
     "message": "Charcoal",
@@ -2292,9 +2292,9 @@
     "context": "replay: go to the end",
     "translation": "Fine"
   },
-  "ACdn17": {
-    "message": "End your turn with <0>Attack</0>, or <1>Pass</1> without one.",
-    "translation": "Termina il turno con un <0>attacco</0>, oppure <1>passa</1> senza attaccare."
+  "ILpkuq": {
+    "message": "End your turn with <0>{0}</0>, or <1>{1}</1> without one.",
+    "translation": "Termina il turno con <0>{0}</0>, oppure <1>{1}</1> senza farlo."
   },
   "0UuYtf": {
     "message": "Energy",
@@ -2340,9 +2340,9 @@
     "context": "keyboard key",
     "translation": "Esc"
   },
-  "ddnCsd": {
-    "message": "Every key is under <0>Keyboard shortcuts</0>, in the menu.",
-    "translation": "Tutti i tasti sono in <0>Scorciatoie da tastiera</0>, nel menu."
+  "y3HN5z": {
+    "message": "Every key is under <0>{0}</0>, in the menu.",
+    "translation": "Tutti i tasti sono in <0>{0}</0>, nel menu."
   },
   "yJW_id": {
     "message": "Evolution and previous stage",
@@ -3480,9 +3480,9 @@
     "message": "No actions match",
     "translation": "Nessuna azione corrisponde"
   },
-  "uVyWzz": {
-    "message": "No Basic Pokémon in your hand: that is a mulligan. Choose <0>Set up again</0> under More.",
-    "translation": "Nessun Pokémon Base nella tua mano: è un mulligan. Scegli <0>Ripeti la preparazione</0> in Altro."
+  "iKrJ1Q": {
+    "message": "No Basic Pokémon in your hand: that is a mulligan. Choose <0>{0}</0> under {1}.",
+    "translation": "Nessun Pokémon Base in mano: è un mulligan. Scegli <0>{0}</0> sotto {1}."
   },
   "6n5psS": {
     "message": "No card lines found. Try lines like \"4 Iono PAL 185\".",
@@ -3618,13 +3618,13 @@
     "message": "Nothing to import",
     "translation": "Niente da importare"
   },
-  "toaK54": {
-    "message": "Now make it <0>Poisoned</0>: <1>Actions</1>, then <2>Special condition</2>.",
-    "translation": "Ora rendilo <0>Avvelenato</0>: <1>Azioni</1>, poi <2>Condizione speciale</2>."
+  "acVFiv": {
+    "message": "Now make it <0>Poisoned</0>: <1>{0}</1>, then <2>{1}</2>.",
+    "translation": "Ora rendilo <0>Avvelenato</0>: <1>{0}</1>, poi <2>{1}</2>."
   },
-  "-yh5EP": {
-    "message": "Now make it <0>Poisoned</0>: right-click it, then <1>Special condition</1>.",
-    "translation": "Ora rendilo <0>Avvelenato</0>: fai clic destro su di esso, poi <1>Condizione speciale</1>."
+  "UJSKBC": {
+    "message": "Now make it <0>Poisoned</0>: right-click it, then <1>{0}</1>.",
+    "translation": "Ora rendilo <0>Avvelenato</0>: fai clic destro su di esso, poi <1>{0}</1>."
   },
   "LFzr4S": {
     "message": "Number of cards",
@@ -3665,9 +3665,9 @@
     ],
     "translation": "Su {seat}"
   },
-  "tgpY2G": {
-    "message": "On your own you play both sides. <0>Flip</0> the table to theirs.",
-    "translation": "Da solo giochi entrambi i lati. <0>Gira</0> il tavolo sul lato avversario."
+  "R_b7a2": {
+    "message": "On your own you play both sides. <0>{0}</0> the table to theirs.",
+    "translation": "Da solo giochi entrambi i lati. <0>{0}</0> il tavolo sul lato avversario."
   },
   "eVFY7w": {
     "message": "One half fills the table",
@@ -3696,9 +3696,9 @@
     "message": "Only you see this. Cards without that printing keep the deck's scan.",
     "translation": "Lo vedi solo tu. Le carte senza quella stampa mantengono la scansione del mazzo."
   },
-  "DQuk1x": {
-    "message": "Open <0>Commands</0>: every action, by name.",
-    "translation": "Apri <0>Comandi</0>: ogni azione, per nome."
+  "woUJjU": {
+    "message": "Open <0>{0}</0>: every action, by name.",
+    "translation": "Apri <0>{0}</0>: ogni azione, per nome."
   },
   "tG9S9l": {
     "message": "Open a deck file",
@@ -3961,21 +3961,21 @@
     ],
     "translation": "Premi {keys} per le <0>scorciatoie</0>."
   },
+  "cF4opC": {
+    "message": "Press <0>{0}</0>: it shuffles your deck and deals your hand.",
+    "translation": "Premi <0>{0}</0>: mescola il mazzo e distribuisce la mano."
+  },
   "svdjsQ": {
     "message": "Press <0>{key}</0> any time for every key.",
     "translation": "Premi <0>{key}</0> in qualsiasi momento per vedere tutti i tasti."
   },
-  "4x60dA": {
-    "message": "Press <0>{key}</0> for <1>Commands</1>: every action, by name.",
-    "translation": "Premi <0>{key}</0> per <1>Comandi</1>: ogni azione, per nome."
+  "GvtW7U": {
+    "message": "Press <0>{key}</0> for <1>{0}</1>: every action, by name.",
+    "translation": "Premi <0>{key}</0> per <1>{0}</1>: ogni azione, per nome."
   },
   "HUzhOi": {
     "message": "Press <0>Esc</0> or click away to close it.",
     "translation": "Premi <0>Esc</0> o fai clic fuori per chiudere."
-  },
-  "nhkDN0": {
-    "message": "Press <0>Set up</0>: it shuffles your deck and deals your hand.",
-    "translation": "Premi <0>Prepara</0>: mescola il mazzo e distribuisce la mano."
   },
   "1-TFM2": {
     "message": "Press again to confirm",
@@ -4975,9 +4975,9 @@
     "message": "Start turn",
     "translation": "Inizia turno"
   },
-  "RC3jt2": {
-    "message": "Start your turn with <0>Turn</0>. It draws your card.",
-    "translation": "Inizia il turno con <0>Turno</0>. Pesca la tua carta."
+  "yA0PE0": {
+    "message": "Start your turn with <0>{0}</0>. It draws your card.",
+    "translation": "Inizia il turno con <0>{0}</0>. Pesca la tua carta."
   },
   "p7o5f_": {
     "message": "Status",
@@ -5089,17 +5089,17 @@
     "message": "Take off damage…",
     "translation": "Rimuovi segnalini danno…"
   },
-  "Tw8wp3": {
-    "message": "Tap <0>{0}</0> in your hand, then <1>Read</1>.",
-    "translation": "Tocca <0>{0}</0> nella tua mano, poi <1>Leggi</1>."
+  "O3tcf1": {
+    "message": "Tap <0>{0}</0> in your hand, then <1>{1}</1>.",
+    "translation": "Tocca <0>{0}</0> nella tua mano, poi <1>{1}</1>."
   },
-  "gAdnTm": {
-    "message": "Tap <0>{0}</0>, then <1>Actions</1>: everything a card can do.",
-    "translation": "Tocca <0>{0}</0>, poi <1>Azioni</1>: tutto ciò che una carta può fare."
+  "fU8msy": {
+    "message": "Tap <0>{0}</0>, then <1>{1}</1>: everything a card can do.",
+    "translation": "Tocca <0>{0}</0>, poi <1>{1}</1>: tutto ciò che una carta può fare."
   },
-  "WPv11L": {
-    "message": "Tap <0>Commands</0>: every action, by name.",
-    "translation": "Tocca <0>Comandi</0>: ogni azione, per nome."
+  "eaLvvH": {
+    "message": "Tap <0>{0}</0>: every action, by name.",
+    "translation": "Tocca <0>{0}</0>: ogni azione, per nome."
   },
   "EyHJlN": {
     "message": "Tap a card for actions; tap again to read it.",
@@ -5113,9 +5113,9 @@
     "message": "Tap outside the menu to close it.",
     "translation": "Tocca fuori dal menu per chiuderlo."
   },
-  "lnQomU": {
-    "message": "Tap their <0>{0}</0>, then <1>Actions</1>.",
-    "translation": "Tocca <0>{0}</0> avversario, poi <1>Azioni</1>."
+  "oeltU5": {
+    "message": "Tap their <0>{0}</0>, then <1>{1}</1>.",
+    "translation": "Tocca <0>{0}</0> avversario, poi <1>{1}</1>."
   },
   "n_ll58": {
     "message": "Tap your deck to look through it.",
@@ -5283,9 +5283,9 @@
     "message": "Their Prizes",
     "translation": "Le sue carte Premio"
   },
-  "IA90Ve": {
-    "message": "Their side is yours now: start their turn with <0>Turn</0>.",
-    "translation": "Ora il suo lato è tuo: inizia il suo turno con <0>Turno</0>."
+  "Cedl1T": {
+    "message": "Their side is yours now: start their turn with <0>{0}</0>.",
+    "translation": "Ora il suo lato è tuo: inizia il suo turno con <0>{0}</0>."
   },
   "sMMsD3": {
     "message": "Theirs",

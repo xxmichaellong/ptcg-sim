@@ -982,29 +982,29 @@
     ],
     "translation": "<0/>でこの一覧を開きます。"
   },
+  "4TpVuz": {
+    "message": "<0>{0}</0> back to your side.",
+    "translation": "<0>{0}</0>で自分側に戻します。"
+  },
+  "oC5vx2": {
+    "message": "<0>{0}</0> your deck when you are done.",
+    "translation": "終わったら<0>{0}</0>で山札を戻します。"
+  },
+  "F7xH8_": {
+    "message": "<0>{0}</0>: every move, and the chat.",
+    "translation": "<0>{0}</0>:すべての操作とチャットです。"
+  },
+  "l7W_Ze": {
+    "message": "<0>{0}</0>: send a friend a link to your table.",
+    "translation": "<0>{0}</0>:テーブルのリンクを友達に送れます。"
+  },
+  "NaneTg": {
+    "message": "<0>{0}</0>: the table's look, the theme and the language.",
+    "translation": "<0>{0}</0>:テーブルの見た目、テーマ、言語を設定できます。"
+  },
   "ieOTvn": {
     "message": "<0>Deck</0>: build, import or pick a deck for each side.",
     "translation": "<0>デッキ</0>:各サイドのデッキを作成、インポート、選択します。"
-  },
-  "Pzyxb1": {
-    "message": "<0>Flip</0> back to your side.",
-    "translation": "<0>反転</0>して自分側に戻ります。"
-  },
-  "udHtRp": {
-    "message": "<0>Log</0>: every move, and the chat.",
-    "translation": "<0>ログ</0>:すべての操作とチャット。"
-  },
-  "9MOdR4": {
-    "message": "<0>Play online</0>: send a friend a link to your table.",
-    "translation": "<0>オンラインで遊ぶ</0>:テーブルのリンクを友だちに送ります。"
-  },
-  "u4cc98": {
-    "message": "<0>Settings</0>: the table's look, the theme and the language.",
-    "translation": "<0>設定</0>:テーブルの見た目、テーマ、言語。"
-  },
-  "Ni8ven": {
-    "message": "<0>Shuffle</0> your deck when you are done.",
-    "translation": "終わったら山札を<0>切り</0>ましょう。"
   },
   "C0rMdv": {
     "message": "− Damage",
@@ -1651,9 +1651,9 @@
     "message": "Change type...",
     "translation": "種類を変更…"
   },
-  "9dR8ka": {
-    "message": "Changed your mind? <0>Undo</0> takes back your last move.",
-    "translation": "やり直したい場合は、<0>元に戻す</0>で直前の操作を取り消せます。"
+  "_2MVxl": {
+    "message": "Changed your mind? <0>{0}</0> takes back your last move.",
+    "translation": "やり直したいときは<0>{0}</0>で直前の操作を取り消せます。"
   },
   "iY-KUI": {
     "message": "Charcoal",
@@ -2292,9 +2292,9 @@
     "context": "replay: go to the end",
     "translation": "最後へ"
   },
-  "ACdn17": {
-    "message": "End your turn with <0>Attack</0>, or <1>Pass</1> without one.",
-    "translation": "<0>ワザ</0>で自分の番を終えるか、ワザを使わずに<1>パス</1>します。"
+  "ILpkuq": {
+    "message": "End your turn with <0>{0}</0>, or <1>{1}</1> without one.",
+    "translation": "<0>{0}</0>でターンを終了するか、引かずに<1>{1}</1>します。"
   },
   "0UuYtf": {
     "message": "Energy",
@@ -2340,9 +2340,9 @@
     "context": "keyboard key",
     "translation": "Esc"
   },
-  "ddnCsd": {
-    "message": "Every key is under <0>Keyboard shortcuts</0>, in the menu.",
-    "translation": "すべてのキーはメニューの<0>キーボードショートカット</0>で確認できます。"
+  "y3HN5z": {
+    "message": "Every key is under <0>{0}</0>, in the menu.",
+    "translation": "すべてのキーはメニューの<0>{0}</0>にあります。"
   },
   "yJW_id": {
     "message": "Evolution and previous stage",
@@ -3480,9 +3480,9 @@
     "message": "No actions match",
     "translation": "一致するアクションがありません"
   },
-  "uVyWzz": {
-    "message": "No Basic Pokémon in your hand: that is a mulligan. Choose <0>Set up again</0> under More.",
-    "translation": "手札にたねポケモンがありません。これはマリガンです。「その他」の<0>やり直す</0>を選んでください。"
+  "iKrJ1Q": {
+    "message": "No Basic Pokémon in your hand: that is a mulligan. Choose <0>{0}</0> under {1}.",
+    "translation": "手札にたねポケモンがいません。マリガンです。{1}の下の<0>{0}</0>を選んでください。"
   },
   "6n5psS": {
     "message": "No card lines found. Try lines like \"4 Iono PAL 185\".",
@@ -3618,13 +3618,13 @@
     "message": "Nothing to import",
     "translation": "インポートするものがありません"
   },
-  "toaK54": {
-    "message": "Now make it <0>Poisoned</0>: <1>Actions</1>, then <2>Special condition</2>.",
-    "translation": "次は<0>どく</0>にしましょう。<1>アクション</1>から<2>特殊状態</2>を選びます。"
+  "acVFiv": {
+    "message": "Now make it <0>Poisoned</0>: <1>{0}</1>, then <2>{1}</2>.",
+    "translation": "次は<0>どく</0>にします。<1>{0}</1>、続けて<2>{1}</2>を選びます。"
   },
-  "-yh5EP": {
-    "message": "Now make it <0>Poisoned</0>: right-click it, then <1>Special condition</1>.",
-    "translation": "次は<0>どく</0>にしましょう。右クリックして<1>特殊状態</1>を選びます。"
+  "UJSKBC": {
+    "message": "Now make it <0>Poisoned</0>: right-click it, then <1>{0}</1>.",
+    "translation": "次は<0>どく</0>にします。右クリックして<1>{0}</1>を選びます。"
   },
   "LFzr4S": {
     "message": "Number of cards",
@@ -3665,9 +3665,9 @@
     ],
     "translation": "{seat}に配置"
   },
-  "tgpY2G": {
-    "message": "On your own you play both sides. <0>Flip</0> the table to theirs.",
-    "translation": "一人のときは両方のプレイヤーを操作します。<0>反転</0>して相手側に切り替えましょう。"
+  "R_b7a2": {
+    "message": "On your own you play both sides. <0>{0}</0> the table to theirs.",
+    "translation": "一人のときは両側を操作します。<0>{0}</0>で相手側のテーブルに切り替えます。"
   },
   "eVFY7w": {
     "message": "One half fills the table",
@@ -3696,9 +3696,9 @@
     "message": "Only you see this. Cards without that printing keep the deck's scan.",
     "translation": "あなただけに表示されます。そのプリントがないカードはデッキの画像のままになります。"
   },
-  "DQuk1x": {
-    "message": "Open <0>Commands</0>: every action, by name.",
-    "translation": "<0>コマンド</0>を開く:すべての操作を名前で実行できます。"
+  "woUJjU": {
+    "message": "Open <0>{0}</0>: every action, by name.",
+    "translation": "<0>{0}</0>を開くと、すべての操作を名前で探せます。"
   },
   "tG9S9l": {
     "message": "Open a deck file",
@@ -3961,21 +3961,21 @@
     ],
     "translation": "{keys}で<0>ショートカット</0>を表示します。"
   },
+  "cF4opC": {
+    "message": "Press <0>{0}</0>: it shuffles your deck and deals your hand.",
+    "translation": "<0>{0}</0>を押すと、山札を切って手札を配ります。"
+  },
   "svdjsQ": {
     "message": "Press <0>{key}</0> any time for every key.",
     "translation": "<0>{key}</0>を押すと、いつでもすべてのキーを確認できます。"
   },
-  "4x60dA": {
-    "message": "Press <0>{key}</0> for <1>Commands</1>: every action, by name.",
-    "translation": "<0>{key}</0>で<1>コマンド</1>を開く:すべての操作を名前で実行できます。"
+  "GvtW7U": {
+    "message": "Press <0>{key}</0> for <1>{0}</1>: every action, by name.",
+    "translation": "<0>{key}</0>で<1>{0}</1>を開きます。すべての操作を名前で探せます。"
   },
   "HUzhOi": {
     "message": "Press <0>Esc</0> or click away to close it.",
     "translation": "<0>Esc</0>を押すか、外側をクリックすると閉じます。"
-  },
-  "nhkDN0": {
-    "message": "Press <0>Set up</0>: it shuffles your deck and deals your hand.",
-    "translation": "<0>セットアップ</0>を押してください。山札を切って手札を配ります。"
   },
   "1-TFM2": {
     "message": "Press again to confirm",
@@ -4975,9 +4975,9 @@
     "message": "Start turn",
     "translation": "ターン開始"
   },
-  "RC3jt2": {
-    "message": "Start your turn with <0>Turn</0>. It draws your card.",
-    "translation": "<0>ターン</0>で自分の番を始めましょう。カードを1枚引きます。"
+  "yA0PE0": {
+    "message": "Start your turn with <0>{0}</0>. It draws your card.",
+    "translation": "<0>{0}</0>でターンを始めます。カードを1枚引きます。"
   },
   "p7o5f_": {
     "message": "Status",
@@ -5089,17 +5089,17 @@
     "message": "Take off damage…",
     "translation": "ダメカンを取る…"
   },
-  "Tw8wp3": {
-    "message": "Tap <0>{0}</0> in your hand, then <1>Read</1>.",
-    "translation": "手札の<0>{0}</0>をタップして、<1>読む</1>を選んでください。"
+  "O3tcf1": {
+    "message": "Tap <0>{0}</0> in your hand, then <1>{1}</1>.",
+    "translation": "手札の<0>{0}</0>をタップして、<1>{1}</1>を選びます。"
   },
-  "gAdnTm": {
-    "message": "Tap <0>{0}</0>, then <1>Actions</1>: everything a card can do.",
-    "translation": "<0>{0}</0>をタップして<1>アクション</1>を選ぶと、カードでできるすべての操作が出ます。"
+  "fU8msy": {
+    "message": "Tap <0>{0}</0>, then <1>{1}</1>: everything a card can do.",
+    "translation": "<0>{0}</0>をタップして<1>{1}</1>を選ぶと、カードでできることがすべて出ます。"
   },
-  "WPv11L": {
-    "message": "Tap <0>Commands</0>: every action, by name.",
-    "translation": "<0>コマンド</0>をタップ:すべての操作を名前で探せます。"
+  "eaLvvH": {
+    "message": "Tap <0>{0}</0>: every action, by name.",
+    "translation": "<0>{0}</0>をタップすると、すべての操作を名前で探せます。"
   },
   "EyHJlN": {
     "message": "Tap a card for actions; tap again to read it.",
@@ -5113,9 +5113,9 @@
     "message": "Tap outside the menu to close it.",
     "translation": "メニューの外側をタップすると閉じます。"
   },
-  "lnQomU": {
-    "message": "Tap their <0>{0}</0>, then <1>Actions</1>.",
-    "translation": "相手の<0>{0}</0>をタップして、<1>アクション</1>を選んでください。"
+  "oeltU5": {
+    "message": "Tap their <0>{0}</0>, then <1>{1}</1>.",
+    "translation": "相手の<0>{0}</0>をタップして、<1>{1}</1>を選びます。"
   },
   "n_ll58": {
     "message": "Tap your deck to look through it.",
@@ -5283,9 +5283,9 @@
     "message": "Their Prizes",
     "translation": "相手のサイド"
   },
-  "IA90Ve": {
-    "message": "Their side is yours now: start their turn with <0>Turn</0>.",
-    "translation": "相手の番はあなたのものになりました。<0>ターン</0>で相手の番を始めましょう。"
+  "Cedl1T": {
+    "message": "Their side is yours now: start their turn with <0>{0}</0>.",
+    "translation": "相手側の操作に切り替わりました。<0>{0}</0>で相手のターンを始めます。"
   },
   "sMMsD3": {
     "message": "Theirs",

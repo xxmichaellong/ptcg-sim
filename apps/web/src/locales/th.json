@@ -982,29 +982,29 @@
     ],
     "translation": "กด <0/> เพื่อเปิดรายการนี้"
   },
+  "4TpVuz": {
+    "message": "<0>{0}</0> back to your side.",
+    "translation": "<0>{0}</0> กลับมาฝั่งของคุณ"
+  },
+  "oC5vx2": {
+    "message": "<0>{0}</0> your deck when you are done.",
+    "translation": "<0>{0}</0> สำรับของคุณเมื่อเสร็จแล้ว"
+  },
+  "F7xH8_": {
+    "message": "<0>{0}</0>: every move, and the chat.",
+    "translation": "<0>{0}</0>: ทุกการเคลื่อนไหวและแชท"
+  },
+  "l7W_Ze": {
+    "message": "<0>{0}</0>: send a friend a link to your table.",
+    "translation": "<0>{0}</0>: ส่งลิงก์โต๊ะของคุณให้เพื่อน"
+  },
+  "NaneTg": {
+    "message": "<0>{0}</0>: the table's look, the theme and the language.",
+    "translation": "<0>{0}</0>: หน้าตาของโต๊ะ ธีม และภาษา"
+  },
   "ieOTvn": {
     "message": "<0>Deck</0>: build, import or pick a deck for each side.",
     "translation": "<0>เด็ค</0>: สร้าง นำเข้า หรือเลือกเด็คสำหรับแต่ละฝั่ง"
-  },
-  "Pzyxb1": {
-    "message": "<0>Flip</0> back to your side.",
-    "translation": "<0>พลิก</0>กลับมาที่ฝั่งของคุณ"
-  },
-  "udHtRp": {
-    "message": "<0>Log</0>: every move, and the chat.",
-    "translation": "<0>บันทึก</0>: ทุกการเคลื่อนไหวและแชต"
-  },
-  "9MOdR4": {
-    "message": "<0>Play online</0>: send a friend a link to your table.",
-    "translation": "<0>เล่นออนไลน์</0>: ส่งลิงก์โต๊ะของคุณให้เพื่อน"
-  },
-  "u4cc98": {
-    "message": "<0>Settings</0>: the table's look, the theme and the language.",
-    "translation": "<0>การตั้งค่า</0>: หน้าตาของโต๊ะ ธีม และภาษา"
-  },
-  "Ni8ven": {
-    "message": "<0>Shuffle</0> your deck when you are done.",
-    "translation": "<0>สับ</0>เด็คของคุณเมื่อเล่นเสร็จ"
   },
   "C0rMdv": {
     "message": "− Damage",
@@ -1651,9 +1651,9 @@
     "message": "Change type...",
     "translation": "เปลี่ยนประเภท..."
   },
-  "9dR8ka": {
-    "message": "Changed your mind? <0>Undo</0> takes back your last move.",
-    "translation": "เปลี่ยนใจแล้วใช่ไหม <0>เลิกทำ</0>จะย้อนการเคลื่อนไหวล่าสุดของคุณ"
+  "_2MVxl": {
+    "message": "Changed your mind? <0>{0}</0> takes back your last move.",
+    "translation": "เปลี่ยนใจแล้วใช่ไหม <0>{0}</0> จะย้อนการเดินล่าสุดของคุณ"
   },
   "iY-KUI": {
     "message": "Charcoal",
@@ -2292,9 +2292,9 @@
     "context": "replay: go to the end",
     "translation": "ท้ายสุด"
   },
-  "ACdn17": {
-    "message": "End your turn with <0>Attack</0>, or <1>Pass</1> without one.",
-    "translation": "จบเทิร์นด้วย<0>โจมตี</0> หรือ<1>ผ่าน</1>หากไม่โจมตี"
+  "ILpkuq": {
+    "message": "End your turn with <0>{0}</0>, or <1>{1}</1> without one.",
+    "translation": "จบเทิร์นด้วย <0>{0}</0> หรือ <1>{1}</1> โดยไม่ทำอะไร"
   },
   "0UuYtf": {
     "message": "Energy",
@@ -2340,9 +2340,9 @@
     "context": "keyboard key",
     "translation": "Esc"
   },
-  "ddnCsd": {
-    "message": "Every key is under <0>Keyboard shortcuts</0>, in the menu.",
-    "translation": "ดูปุ่มลัดทั้งหมดได้ที่ <0>แป้นพิมพ์ลัด</0> ในเมนู"
+  "y3HN5z": {
+    "message": "Every key is under <0>{0}</0>, in the menu.",
+    "translation": "ปุ่มลัดทั้งหมดอยู่ใน <0>{0}</0> ในเมนู"
   },
   "yJW_id": {
     "message": "Evolution and previous stage",
@@ -3480,9 +3480,9 @@
     "message": "No actions match",
     "translation": "ไม่พบการกระทำที่ตรงกัน"
   },
-  "uVyWzz": {
-    "message": "No Basic Pokémon in your hand: that is a mulligan. Choose <0>Set up again</0> under More.",
-    "translation": "ไม่มีโปเกมอนเบสิกในมือ: นี่คือมัลลิแกน เลือก<0>จัดวางใหม่</0>ในเมนูเพิ่มเติม"
+  "iKrJ1Q": {
+    "message": "No Basic Pokémon in your hand: that is a mulligan. Choose <0>{0}</0> under {1}.",
+    "translation": "ไม่มีโปเกมอนพื้นฐานในมือ: ต้องมัลลิแกน เลือก <0>{0}</0> ภายใต้ {1}"
   },
   "6n5psS": {
     "message": "No card lines found. Try lines like \"4 Iono PAL 185\".",
@@ -3618,13 +3618,13 @@
     "message": "Nothing to import",
     "translation": "ไม่มีอะไรให้นำเข้า"
   },
-  "toaK54": {
-    "message": "Now make it <0>Poisoned</0>: <1>Actions</1>, then <2>Special condition</2>.",
-    "translation": "ตอนนี้ทำให้ติด<0>พิษ</0>: <1>การกระทำ</1> แล้วเลือก <2>สถานะพิเศษ</2>"
+  "acVFiv": {
+    "message": "Now make it <0>Poisoned</0>: <1>{0}</1>, then <2>{1}</2>.",
+    "translation": "ตอนนี้ทำให้ติด<0>พิษ</0>: <1>{0}</1> แล้ว <2>{1}</2>"
   },
-  "-yh5EP": {
-    "message": "Now make it <0>Poisoned</0>: right-click it, then <1>Special condition</1>.",
-    "translation": "ตอนนี้ทำให้ติด<0>พิษ</0>: คลิกขวาที่การ์ด แล้วเลือก <1>สถานะพิเศษ</1>"
+  "UJSKBC": {
+    "message": "Now make it <0>Poisoned</0>: right-click it, then <1>{0}</1>.",
+    "translation": "ตอนนี้ทำให้ติด<0>พิษ</0>: คลิกขวาที่โปเกมอน แล้ว <1>{0}</1>"
   },
   "LFzr4S": {
     "message": "Number of cards",
@@ -3665,9 +3665,9 @@
     ],
     "translation": "อยู่ที่ {seat}"
   },
-  "tgpY2G": {
-    "message": "On your own you play both sides. <0>Flip</0> the table to theirs.",
-    "translation": "เมื่อเล่นคนเดียว คุณเล่นทั้งสองฝั่ง <0>พลิก</0>โต๊ะไปยังฝั่งของอีกฝ่าย"
+  "R_b7a2": {
+    "message": "On your own you play both sides. <0>{0}</0> the table to theirs.",
+    "translation": "เมื่อเล่นคนเดียว คุณจะเล่นทั้งสองฝั่ง <0>{0}</0> โต๊ะไปยังฝั่งของอีกฝ่าย"
   },
   "eVFY7w": {
     "message": "One half fills the table",
@@ -3696,9 +3696,9 @@
     "message": "Only you see this. Cards without that printing keep the deck's scan.",
     "translation": "มีเพียงคุณที่เห็นสิ่งนี้ การ์ดที่ไม่มีเวอร์ชันพิมพ์นั้นจะใช้ภาพสแกนของเด็คตามเดิม"
   },
-  "DQuk1x": {
-    "message": "Open <0>Commands</0>: every action, by name.",
-    "translation": "เปิด <0>คำสั่ง</0>: ทุกการกระทำ ค้นหาด้วยชื่อ"
+  "woUJjU": {
+    "message": "Open <0>{0}</0>: every action, by name.",
+    "translation": "เปิด <0>{0}</0>: ทุกการกระทำ ตามชื่อ"
   },
   "tG9S9l": {
     "message": "Open a deck file",
@@ -3961,21 +3961,21 @@
     ],
     "translation": "กด {keys} เพื่อดู<0>ปุ่มลัด</0>"
   },
+  "cF4opC": {
+    "message": "Press <0>{0}</0>: it shuffles your deck and deals your hand.",
+    "translation": "กด <0>{0}</0>: สับสำรับและแจกมือของคุณ"
+  },
   "svdjsQ": {
     "message": "Press <0>{key}</0> any time for every key.",
     "translation": "กด <0>{key}</0> เมื่อใดก็ได้เพื่อดูปุ่มทั้งหมด"
   },
-  "4x60dA": {
-    "message": "Press <0>{key}</0> for <1>Commands</1>: every action, by name.",
-    "translation": "กด <0>{key}</0> เพื่อเปิด <1>คำสั่ง</1>: ทุกการกระทำ ค้นหาด้วยชื่อ"
+  "GvtW7U": {
+    "message": "Press <0>{key}</0> for <1>{0}</1>: every action, by name.",
+    "translation": "กด <0>{key}</0> เพื่อ<1>{0}</1>: ทุกการกระทำ ตามชื่อ"
   },
   "HUzhOi": {
     "message": "Press <0>Esc</0> or click away to close it.",
     "translation": "กด <0>Esc</0> หรือคลิกที่อื่นเพื่อปิด"
-  },
-  "nhkDN0": {
-    "message": "Press <0>Set up</0>: it shuffles your deck and deals your hand.",
-    "translation": "กด <0>จัดเตรียม</0>: ระบบจะสับเด็คและแจกการ์ดขึ้นมือ"
   },
   "1-TFM2": {
     "message": "Press again to confirm",
@@ -4975,9 +4975,9 @@
     "message": "Start turn",
     "translation": "เริ่มเทิร์น"
   },
-  "RC3jt2": {
-    "message": "Start your turn with <0>Turn</0>. It draws your card.",
-    "translation": "เริ่มเทิร์นด้วย <0>เทิร์น</0> ระบบจะจั่วการ์ดให้คุณ"
+  "yA0PE0": {
+    "message": "Start your turn with <0>{0}</0>. It draws your card.",
+    "translation": "เริ่มเทิร์นของคุณด้วย <0>{0}</0> แล้วจะจั่วการ์ดให้คุณ"
   },
   "p7o5f_": {
     "message": "Status",
@@ -5089,17 +5089,17 @@
     "message": "Take off damage…",
     "translation": "เอาความเสียหายออก…"
   },
-  "Tw8wp3": {
-    "message": "Tap <0>{0}</0> in your hand, then <1>Read</1>.",
-    "translation": "แตะ <0>{0}</0> ในมือ แล้วเลือก <1>อ่าน</1>"
+  "O3tcf1": {
+    "message": "Tap <0>{0}</0> in your hand, then <1>{1}</1>.",
+    "translation": "แตะ <0>{0}</0> ในมือของคุณ แล้ว <1>{1}</1>"
   },
-  "gAdnTm": {
-    "message": "Tap <0>{0}</0>, then <1>Actions</1>: everything a card can do.",
-    "translation": "แตะ <0>{0}</0> แล้วเลือก <1>การกระทำ</1>: ดูทุกสิ่งที่การ์ดทำได้"
+  "fU8msy": {
+    "message": "Tap <0>{0}</0>, then <1>{1}</1>: everything a card can do.",
+    "translation": "แตะ <0>{0}</0> แล้ว <1>{1}</1>: ทุกสิ่งที่การ์ดทำได้"
   },
-  "WPv11L": {
-    "message": "Tap <0>Commands</0>: every action, by name.",
-    "translation": "แตะ <0>คำสั่ง</0>: ทุกการกระทำตามชื่อ"
+  "eaLvvH": {
+    "message": "Tap <0>{0}</0>: every action, by name.",
+    "translation": "แตะ <0>{0}</0>: ทุกการกระทำ ตามชื่อ"
   },
   "EyHJlN": {
     "message": "Tap a card for actions; tap again to read it.",
@@ -5113,9 +5113,9 @@
     "message": "Tap outside the menu to close it.",
     "translation": "แตะนอกเมนูเพื่อปิด"
   },
-  "lnQomU": {
-    "message": "Tap their <0>{0}</0>, then <1>Actions</1>.",
-    "translation": "แตะ <0>{0}</0> ของอีกฝ่าย แล้วเลือก <1>การกระทำ</1>"
+  "oeltU5": {
+    "message": "Tap their <0>{0}</0>, then <1>{1}</1>.",
+    "translation": "แตะ <0>{0}</0> ของอีกฝ่าย แล้ว <1>{1}</1>"
   },
   "n_ll58": {
     "message": "Tap your deck to look through it.",
@@ -5283,9 +5283,9 @@
     "message": "Their Prizes",
     "translation": "การ์ดรางวัลของคู่ต่อสู้"
   },
-  "IA90Ve": {
-    "message": "Their side is yours now: start their turn with <0>Turn</0>.",
-    "translation": "ตอนนี้ฝั่งของอีกฝ่ายเป็นของคุณแล้ว เริ่มเทิร์นของอีกฝ่ายด้วย <0>Turn</0>"
+  "Cedl1T": {
+    "message": "Their side is yours now: start their turn with <0>{0}</0>.",
+    "translation": "ฝั่งของอีกฝ่ายเป็นของคุณแล้ว: เริ่มเทิร์นของเขาด้วย <0>{0}</0>"
   },
   "sMMsD3": {
     "message": "Theirs",

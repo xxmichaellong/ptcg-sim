@@ -982,29 +982,29 @@
     ],
     "translation": "<0/> membuka daftar ini."
   },
+  "4TpVuz": {
+    "message": "<0>{0}</0> back to your side.",
+    "translation": "<0>{0}</0> kembali ke sisimu."
+  },
+  "oC5vx2": {
+    "message": "<0>{0}</0> your deck when you are done.",
+    "translation": "<0>{0}</0> deck-mu setelah selesai."
+  },
+  "F7xH8_": {
+    "message": "<0>{0}</0>: every move, and the chat.",
+    "translation": "<0>{0}</0>: semua langkah dan obrolan."
+  },
+  "l7W_Ze": {
+    "message": "<0>{0}</0>: send a friend a link to your table.",
+    "translation": "<0>{0}</0>: kirim tautan mejamu ke temanmu."
+  },
+  "NaneTg": {
+    "message": "<0>{0}</0>: the table's look, the theme and the language.",
+    "translation": "<0>{0}</0>: tampilan meja, tema, dan bahasa."
+  },
   "ieOTvn": {
     "message": "<0>Deck</0>: build, import or pick a deck for each side.",
     "translation": "<0>Deck</0>: buat, impor, atau pilih deck untuk setiap sisi."
-  },
-  "Pzyxb1": {
-    "message": "<0>Flip</0> back to your side.",
-    "translation": "<0>Balik</0> ke sisimu."
-  },
-  "udHtRp": {
-    "message": "<0>Log</0>: every move, and the chat.",
-    "translation": "<0>Log</0>: setiap langkah, dan obrolan."
-  },
-  "9MOdR4": {
-    "message": "<0>Play online</0>: send a friend a link to your table.",
-    "translation": "<0>Main online</0>: kirim tautan mejamu ke temanmu."
-  },
-  "u4cc98": {
-    "message": "<0>Settings</0>: the table's look, the theme and the language.",
-    "translation": "<0>Pengaturan</0>: tampilan meja, tema, dan bahasa."
-  },
-  "Ni8ven": {
-    "message": "<0>Shuffle</0> your deck when you are done.",
-    "translation": "<0>Kocok</0> deckmu setelah selesai."
   },
   "C0rMdv": {
     "message": "− Damage",
@@ -1651,9 +1651,9 @@
     "message": "Change type...",
     "translation": "Ubah tipe..."
   },
-  "9dR8ka": {
-    "message": "Changed your mind? <0>Undo</0> takes back your last move.",
-    "translation": "Berubah pikiran? <0>Urungkan</0> membatalkan langkah terakhirmu."
+  "_2MVxl": {
+    "message": "Changed your mind? <0>{0}</0> takes back your last move.",
+    "translation": "Berubah pikiran? <0>{0}</0> membatalkan langkah terakhirmu."
   },
   "iY-KUI": {
     "message": "Charcoal",
@@ -2292,9 +2292,9 @@
     "context": "replay: go to the end",
     "translation": "Akhir"
   },
-  "ACdn17": {
-    "message": "End your turn with <0>Attack</0>, or <1>Pass</1> without one.",
-    "translation": "Akhiri gilirmu dengan <0>Attack</0>, atau <1>Pass</1> tanpa menyerang."
+  "ILpkuq": {
+    "message": "End your turn with <0>{0}</0>, or <1>{1}</1> without one.",
+    "translation": "Akhiri gilmu dengan <0>{0}</0>, atau <1>{1}</1> tanpa itu."
   },
   "0UuYtf": {
     "message": "Energy",
@@ -2340,9 +2340,9 @@
     "context": "keyboard key",
     "translation": "Esc"
   },
-  "ddnCsd": {
-    "message": "Every key is under <0>Keyboard shortcuts</0>, in the menu.",
-    "translation": "Semua tombol ada di <0>Pintasan keyboard</0>, di menu."
+  "y3HN5z": {
+    "message": "Every key is under <0>{0}</0>, in the menu.",
+    "translation": "Semua tombol ada di <0>{0}</0>, di dalam menu."
   },
   "yJW_id": {
     "message": "Evolution and previous stage",
@@ -3480,9 +3480,9 @@
     "message": "No actions match",
     "translation": "Tidak ada aksi yang cocok"
   },
-  "uVyWzz": {
-    "message": "No Basic Pokémon in your hand: that is a mulligan. Choose <0>Set up again</0> under More.",
-    "translation": "Tidak ada Pokémon Basic di tanganmu: itu disebut mulligan. Pilih <0>Atur ulang</0> di menu More."
+  "iKrJ1Q": {
+    "message": "No Basic Pokémon in your hand: that is a mulligan. Choose <0>{0}</0> under {1}.",
+    "translation": "Tidak ada Pokémon Basic di tanganmu: itu mulligan. Pilih <0>{0}</0> di bawah {1}."
   },
   "6n5psS": {
     "message": "No card lines found. Try lines like \"4 Iono PAL 185\".",
@@ -3618,13 +3618,13 @@
     "message": "Nothing to import",
     "translation": "Tidak ada yang diimpor"
   },
-  "toaK54": {
-    "message": "Now make it <0>Poisoned</0>: <1>Actions</1>, then <2>Special condition</2>.",
-    "translation": "Sekarang buat jadi <0>Keracunan</0>: <1>Aksi</1>, lalu <2>Kondisi spesial</2>."
+  "acVFiv": {
+    "message": "Now make it <0>Poisoned</0>: <1>{0}</1>, then <2>{1}</2>.",
+    "translation": "Sekarang buat jadi <0>Poisoned</0>: <1>{0}</1>, lalu <2>{1}</2>."
   },
-  "-yh5EP": {
-    "message": "Now make it <0>Poisoned</0>: right-click it, then <1>Special condition</1>.",
-    "translation": "Sekarang buat jadi <0>Keracunan</0>: klik kanan, lalu <1>Kondisi spesial</1>."
+  "UJSKBC": {
+    "message": "Now make it <0>Poisoned</0>: right-click it, then <1>{0}</1>.",
+    "translation": "Sekarang buat jadi <0>Poisoned</0>: klik kanan, lalu <1>{0}</1>."
   },
   "LFzr4S": {
     "message": "Number of cards",
@@ -3665,9 +3665,9 @@
     ],
     "translation": "Di {seat}"
   },
-  "tgpY2G": {
-    "message": "On your own you play both sides. <0>Flip</0> the table to theirs.",
-    "translation": "Kalau main sendiri, kamu memainkan kedua sisi. <0>Balik</0> meja ke sisi lawan."
+  "R_b7a2": {
+    "message": "On your own you play both sides. <0>{0}</0> the table to theirs.",
+    "translation": "Kalau bermain sendiri, kamu memainkan kedua sisi. <0>{0}</0> meja ke sisi lawan."
   },
   "eVFY7w": {
     "message": "One half fills the table",
@@ -3696,9 +3696,9 @@
     "message": "Only you see this. Cards without that printing keep the deck's scan.",
     "translation": "Hanya kamu yang melihat ini. Kartu tanpa cetakan itu tetap memakai pindaian deck."
   },
-  "DQuk1x": {
-    "message": "Open <0>Commands</0>: every action, by name.",
-    "translation": "Buka <0>Perintah</0>: semua aksi, berdasarkan nama."
+  "woUJjU": {
+    "message": "Open <0>{0}</0>: every action, by name.",
+    "translation": "Buka <0>{0}</0>: semua aksi, menurut namanya."
   },
   "tG9S9l": {
     "message": "Open a deck file",
@@ -3961,21 +3961,21 @@
     ],
     "translation": "Tekan {keys} untuk <0>pintasan</0>."
   },
+  "cF4opC": {
+    "message": "Press <0>{0}</0>: it shuffles your deck and deals your hand.",
+    "translation": "Tekan <0>{0}</0>: ini mengocok deck-mu dan membagikan tanganmu."
+  },
   "svdjsQ": {
     "message": "Press <0>{key}</0> any time for every key.",
     "translation": "Tekan <0>{key}</0> kapan saja untuk melihat semua tombol."
   },
-  "4x60dA": {
-    "message": "Press <0>{key}</0> for <1>Commands</1>: every action, by name.",
-    "translation": "Tekan <0>{key}</0> untuk <1>Perintah</1>: semua aksi, berdasarkan nama."
+  "GvtW7U": {
+    "message": "Press <0>{key}</0> for <1>{0}</1>: every action, by name.",
+    "translation": "Tekan <0>{key}</0> untuk <1>{0}</1>: semua aksi, menurut namanya."
   },
   "HUzhOi": {
     "message": "Press <0>Esc</0> or click away to close it.",
     "translation": "Tekan <0>Esc</0> atau klik di luar untuk menutupnya."
-  },
-  "nhkDN0": {
-    "message": "Press <0>Set up</0>: it shuffles your deck and deals your hand.",
-    "translation": "Tekan <0>Atur</0>: deckmu diacak dan tanganmu dibagikan."
   },
   "1-TFM2": {
     "message": "Press again to confirm",
@@ -4975,9 +4975,9 @@
     "message": "Start turn",
     "translation": "Mulai giliran"
   },
-  "RC3jt2": {
-    "message": "Start your turn with <0>Turn</0>. It draws your card.",
-    "translation": "Mulai gilirannya dengan <0>Giliran</0>. Kartumu langsung diambil."
+  "yA0PE0": {
+    "message": "Start your turn with <0>{0}</0>. It draws your card.",
+    "translation": "Mulai gilmu dengan <0>{0}</0>. Ini menarik kartumu."
   },
   "p7o5f_": {
     "message": "Status",
@@ -5089,17 +5089,17 @@
     "message": "Take off damage…",
     "translation": "Kurangi damage…"
   },
-  "Tw8wp3": {
-    "message": "Tap <0>{0}</0> in your hand, then <1>Read</1>.",
-    "translation": "Ketuk <0>{0}</0> di tanganmu, lalu <1>Baca</1>."
+  "O3tcf1": {
+    "message": "Tap <0>{0}</0> in your hand, then <1>{1}</1>.",
+    "translation": "Ketuk <0>{0}</0> di tanganmu, lalu <1>{1}</1>."
   },
-  "gAdnTm": {
-    "message": "Tap <0>{0}</0>, then <1>Actions</1>: everything a card can do.",
-    "translation": "Ketuk <0>{0}</0>, lalu <1>Aksi</1>: semua yang bisa dilakukan kartu."
+  "fU8msy": {
+    "message": "Tap <0>{0}</0>, then <1>{1}</1>: everything a card can do.",
+    "translation": "Ketuk <0>{0}</0>, lalu <1>{1}</1>: semua yang bisa dilakukan kartu."
   },
-  "WPv11L": {
-    "message": "Tap <0>Commands</0>: every action, by name.",
-    "translation": "Ketuk <0>Perintah</0>: semua aksi, berdasarkan nama."
+  "eaLvvH": {
+    "message": "Tap <0>{0}</0>: every action, by name.",
+    "translation": "Ketuk <0>{0}</0>: semua aksi, menurut namanya."
   },
   "EyHJlN": {
     "message": "Tap a card for actions; tap again to read it.",
@@ -5113,9 +5113,9 @@
     "message": "Tap outside the menu to close it.",
     "translation": "Ketuk di luar menu untuk menutupnya."
   },
-  "lnQomU": {
-    "message": "Tap their <0>{0}</0>, then <1>Actions</1>.",
-    "translation": "Ketuk <0>{0}</0> milik lawan, lalu <1>Aksi</1>."
+  "oeltU5": {
+    "message": "Tap their <0>{0}</0>, then <1>{1}</1>.",
+    "translation": "Ketuk <0>{0}</0> milik lawan, lalu <1>{1}</1>."
   },
   "n_ll58": {
     "message": "Tap your deck to look through it.",
@@ -5283,9 +5283,9 @@
     "message": "Their Prizes",
     "translation": "Prize lawan"
   },
-  "IA90Ve": {
-    "message": "Their side is yours now: start their turn with <0>Turn</0>.",
-    "translation": "Sisi mereka sekarang jadi milikmu: mulai giliran mereka dengan <0>Giliran</0>."
+  "Cedl1T": {
+    "message": "Their side is yours now: start their turn with <0>{0}</0>.",
+    "translation": "Sisi lawan sekarang jadi milikmu: mulai gilnya dengan <0>{0}</0>."
   },
   "sMMsD3": {
     "message": "Theirs",

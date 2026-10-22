@@ -982,29 +982,29 @@
     ],
     "translation": "<0/> открывает этот список."
   },
+  "4TpVuz": {
+    "message": "<0>{0}</0> back to your side.",
+    "translation": "<0>{0}</0> — вернуться на свою сторону."
+  },
+  "oC5vx2": {
+    "message": "<0>{0}</0> your deck when you are done.",
+    "translation": "<0>{0}</0> колоду, когда закончишь."
+  },
+  "F7xH8_": {
+    "message": "<0>{0}</0>: every move, and the chat.",
+    "translation": "<0>{0}</0>: все ходы и чат."
+  },
+  "l7W_Ze": {
+    "message": "<0>{0}</0>: send a friend a link to your table.",
+    "translation": "<0>{0}</0>: отправь другу ссылку на свой стол."
+  },
+  "NaneTg": {
+    "message": "<0>{0}</0>: the table's look, the theme and the language.",
+    "translation": "<0>{0}</0>: вид стола, тема и язык."
+  },
   "ieOTvn": {
     "message": "<0>Deck</0>: build, import or pick a deck for each side.",
     "translation": "<0>Колода</0>: собери, импортируй или выбери колоду для каждой стороны."
-  },
-  "Pzyxb1": {
-    "message": "<0>Flip</0> back to your side.",
-    "translation": "<0>Переверни</0> стол обратно на свою сторону."
-  },
-  "udHtRp": {
-    "message": "<0>Log</0>: every move, and the chat.",
-    "translation": "<0>Журнал</0>: все ходы и чат."
-  },
-  "9MOdR4": {
-    "message": "<0>Play online</0>: send a friend a link to your table.",
-    "translation": "<0>Игра онлайн</0>: отправь другу ссылку на свой стол."
-  },
-  "u4cc98": {
-    "message": "<0>Settings</0>: the table's look, the theme and the language.",
-    "translation": "<0>Настройки</0>: вид стола, тема и язык."
-  },
-  "Ni8ven": {
-    "message": "<0>Shuffle</0> your deck when you are done.",
-    "translation": "<0>Перемешай</0> колоду, когда закончишь."
   },
   "C0rMdv": {
     "message": "− Damage",
@@ -1651,9 +1651,9 @@
     "message": "Change type...",
     "translation": "Сменить тип..."
   },
-  "9dR8ka": {
-    "message": "Changed your mind? <0>Undo</0> takes back your last move.",
-    "translation": "Передумал? <0>Отмена</0> вернёт твой последний ход."
+  "_2MVxl": {
+    "message": "Changed your mind? <0>{0}</0> takes back your last move.",
+    "translation": "Передумал? <0>{0}</0> отменяет твой последний ход."
   },
   "iY-KUI": {
     "message": "Charcoal",
@@ -2292,9 +2292,9 @@
     "context": "replay: go to the end",
     "translation": "В конец"
   },
-  "ACdn17": {
-    "message": "End your turn with <0>Attack</0>, or <1>Pass</1> without one.",
-    "translation": "Закончи ход <0>атакой</0> или <1>спасуй</1>, если не атакуешь."
+  "ILpkuq": {
+    "message": "End your turn with <0>{0}</0>, or <1>{1}</1> without one.",
+    "translation": "Заверши ход с помощью <0>{0}</0> или нажми <1>{1}</1>, если без атаки."
   },
   "0UuYtf": {
     "message": "Energy",
@@ -2340,9 +2340,9 @@
     "context": "keyboard key",
     "translation": "Esc"
   },
-  "ddnCsd": {
-    "message": "Every key is under <0>Keyboard shortcuts</0>, in the menu.",
-    "translation": "Все клавиши — в меню, в разделе <0>Горячие клавиши</0>."
+  "y3HN5z": {
+    "message": "Every key is under <0>{0}</0>, in the menu.",
+    "translation": "Все клавиши есть в разделе <0>{0}</0> в меню."
   },
   "yJW_id": {
     "message": "Evolution and previous stage",
@@ -3480,9 +3480,9 @@
     "message": "No actions match",
     "translation": "Подходящих действий нет"
   },
-  "uVyWzz": {
-    "message": "No Basic Pokémon in your hand: that is a mulligan. Choose <0>Set up again</0> under More.",
-    "translation": "В руке нет Базового Покемона: это муллиган. Выбери <0>Начать расстановку заново</0> в меню «Ещё»."
+  "iKrJ1Q": {
+    "message": "No Basic Pokémon in your hand: that is a mulligan. Choose <0>{0}</0> under {1}.",
+    "translation": "В руке нет Базового покемона: это мулиган. Выбери <0>{0}</0> под {1}."
   },
   "6n5psS": {
     "message": "No card lines found. Try lines like \"4 Iono PAL 185\".",
@@ -3618,13 +3618,13 @@
     "message": "Nothing to import",
     "translation": "Нечего импортировать"
   },
-  "toaK54": {
-    "message": "Now make it <0>Poisoned</0>: <1>Actions</1>, then <2>Special condition</2>.",
-    "translation": "Теперь сделай его <0>Отравленным</0>: <1>Действия</1>, затем <2>Особое состояние</2>."
+  "acVFiv": {
+    "message": "Now make it <0>Poisoned</0>: <1>{0}</1>, then <2>{1}</2>.",
+    "translation": "Теперь сделай его <0>отравленным</0>: <1>{0}</1>, затем <2>{1}</2>."
   },
-  "-yh5EP": {
-    "message": "Now make it <0>Poisoned</0>: right-click it, then <1>Special condition</1>.",
-    "translation": "Теперь сделай его <0>Отравленным</0>: нажми на него правой кнопкой, затем выбери <1>Особое состояние</1>."
+  "UJSKBC": {
+    "message": "Now make it <0>Poisoned</0>: right-click it, then <1>{0}</1>.",
+    "translation": "Теперь сделай его <0>отравленным</0>: щёлкни по нему правой кнопкой, затем выбери <1>{0}</1>."
   },
   "LFzr4S": {
     "message": "Number of cards",
@@ -3665,9 +3665,9 @@
     ],
     "translation": "Место: {seat}"
   },
-  "tgpY2G": {
-    "message": "On your own you play both sides. <0>Flip</0> the table to theirs.",
-    "translation": "В одиночку ты играешь за обе стороны. <0>Переверни</0> стол на их сторону."
+  "R_b7a2": {
+    "message": "On your own you play both sides. <0>{0}</0> the table to theirs.",
+    "translation": "Когда ты один, ты играешь за обе стороны. <0>{0}</0> стол на сторону соперника."
   },
   "eVFY7w": {
     "message": "One half fills the table",
@@ -3696,9 +3696,9 @@
     "message": "Only you see this. Cards without that printing keep the deck's scan.",
     "translation": "Это видишь только ты. У карт без такого издания остаётся скан из колоды."
   },
-  "DQuk1x": {
-    "message": "Open <0>Commands</0>: every action, by name.",
-    "translation": "Открой <0>Команды</0>: все действия по названию."
+  "woUJjU": {
+    "message": "Open <0>{0}</0>: every action, by name.",
+    "translation": "Открой <0>{0}</0>: все действия по названию."
   },
   "tG9S9l": {
     "message": "Open a deck file",
@@ -3961,21 +3961,21 @@
     ],
     "translation": "Нажми {keys}, чтобы открыть <0>горячие клавиши</0>."
   },
+  "cF4opC": {
+    "message": "Press <0>{0}</0>: it shuffles your deck and deals your hand.",
+    "translation": "Нажми <0>{0}</0>: колода перемешается, и ты получишь стартовую руку."
+  },
   "svdjsQ": {
     "message": "Press <0>{key}</0> any time for every key.",
     "translation": "Нажми <0>{key}</0> в любой момент, чтобы увидеть все клавиши."
   },
-  "4x60dA": {
-    "message": "Press <0>{key}</0> for <1>Commands</1>: every action, by name.",
-    "translation": "Нажми <0>{key}</0>, чтобы открыть <1>Команды</1>: все действия по названию."
+  "GvtW7U": {
+    "message": "Press <0>{key}</0> for <1>{0}</1>: every action, by name.",
+    "translation": "Нажми <0>{key}</0> для <1>{0}</1>: все действия по названию."
   },
   "HUzhOi": {
     "message": "Press <0>Esc</0> or click away to close it.",
     "translation": "Нажми <0>Esc</0> или кликни в стороне, чтобы закрыть."
-  },
-  "nhkDN0": {
-    "message": "Press <0>Set up</0>: it shuffles your deck and deals your hand.",
-    "translation": "Нажми <0>Расстановка</0>: колода перетасуется, и ты получишь руку."
   },
   "1-TFM2": {
     "message": "Press again to confirm",
@@ -4975,9 +4975,9 @@
     "message": "Start turn",
     "translation": "Начать ход"
   },
-  "RC3jt2": {
-    "message": "Start your turn with <0>Turn</0>. It draws your card.",
-    "translation": "Начни ход кнопкой <0>Ход</0>. Она возьмёт тебе карту."
+  "yA0PE0": {
+    "message": "Start your turn with <0>{0}</0>. It draws your card.",
+    "translation": "Начни свой ход с <0>{0}</0>. Ты возьмёшь карту."
   },
   "p7o5f_": {
     "message": "Status",
@@ -5089,17 +5089,17 @@
     "message": "Take off damage…",
     "translation": "Убрать урон…"
   },
-  "Tw8wp3": {
-    "message": "Tap <0>{0}</0> in your hand, then <1>Read</1>.",
-    "translation": "Коснись <0>{0}</0> в руке, затем <1>Читать</1>."
+  "O3tcf1": {
+    "message": "Tap <0>{0}</0> in your hand, then <1>{1}</1>.",
+    "translation": "Нажми <0>{0}</0> в руке, затем <1>{1}</1>."
   },
-  "gAdnTm": {
-    "message": "Tap <0>{0}</0>, then <1>Actions</1>: everything a card can do.",
-    "translation": "Коснись <0>{0}</0>, затем <1>Действия</1>: всё, что может карта."
+  "fU8msy": {
+    "message": "Tap <0>{0}</0>, then <1>{1}</1>: everything a card can do.",
+    "translation": "Нажми <0>{0}</0>, затем <1>{1}</1>: всё, что умеет карта."
   },
-  "WPv11L": {
-    "message": "Tap <0>Commands</0>: every action, by name.",
-    "translation": "Коснись <0>Команд</0>: все действия по названию."
+  "eaLvvH": {
+    "message": "Tap <0>{0}</0>: every action, by name.",
+    "translation": "Нажми <0>{0}</0>: все действия по названию."
   },
   "EyHJlN": {
     "message": "Tap a card for actions; tap again to read it.",
@@ -5113,9 +5113,9 @@
     "message": "Tap outside the menu to close it.",
     "translation": "Коснись вне меню, чтобы закрыть его."
   },
-  "lnQomU": {
-    "message": "Tap their <0>{0}</0>, then <1>Actions</1>.",
-    "translation": "Коснись их <0>{0}</0>, затем <1>Действия</1>."
+  "oeltU5": {
+    "message": "Tap their <0>{0}</0>, then <1>{1}</1>.",
+    "translation": "Нажми <0>{0}</0> соперника, затем <1>{1}</1>."
   },
   "n_ll58": {
     "message": "Tap your deck to look through it.",
@@ -5283,9 +5283,9 @@
     "message": "Their Prizes",
     "translation": "Призовые карты соперника"
   },
-  "IA90Ve": {
-    "message": "Their side is yours now: start their turn with <0>Turn</0>.",
-    "translation": "Их сторона теперь твоя: начни их ход кнопкой <0>Ход</0>."
+  "Cedl1T": {
+    "message": "Their side is yours now: start their turn with <0>{0}</0>.",
+    "translation": "Теперь его сторона твоя: начни его ход с <0>{0}</0>."
   },
   "sMMsD3": {
     "message": "Theirs",

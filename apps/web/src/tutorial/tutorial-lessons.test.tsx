@@ -8,6 +8,7 @@ import {
   TUTORIAL_LESSONS,
 } from './tutorial-lessons.js';
 import { TUTORIAL_CARDS } from './tutorial-cards.js';
+import { CONTROL_LABELS } from './tutorial-labels.js';
 import type { TutorialScreen, TutorialWorld } from './tutorial-world.js';
 import type { MatchViewState } from '@ptcgsim/game-core';
 
@@ -194,6 +195,51 @@ describe('the tutorial’s lessons', () => {
     expect(text({ text: () => active.stuck!(stages) })).toContain(
       'No Basic Pokémon'
     );
+    // Its only Basic put on the Bench first: up from there, no mulligan.
+    const benched = {
+      ...handOf(['fireEnergy']),
+      definitions: {
+        ...handOf(['fireEnergy']).definitions,
+        'def-charmander': {
+          ...TUTORIAL_CARDS.charmander,
+          id: 'def-charmander',
+        },
+      },
+      boards: { you: { activeStackId: null, benchStackIds: ['bench-stack'] } },
+      stacks: {
+        'bench-stack': {
+          id: 'bench-stack',
+          evolutionCards: [
+            { kind: 'known', id: 'bench-card', definitionId: 'def-charmander' },
+          ],
+          attachmentCards: [],
+        },
+      },
+    } as unknown as MatchViewState;
+    const onBench = world({ view: benched });
+    expect(active.stuck!(onBench)).toBeNull();
+    expect(active.drag!(onBench)?.from).toEqual({ card: 'bench-card' });
+  });
+
+  it('name the controls as the controls name themselves, in any language', () => {
+    const locale = i18n.locale;
+    i18n.load('xx', {
+      [CONTROL_LABELS.commands.id!]: 'Befehle',
+      [CONTROL_LABELS.setUpAgain.id!]: 'Neu aufbauen',
+    });
+    i18n.activate('xx');
+    try {
+      const commands = lessonById('commands')!.steps[0]!;
+      expect(text(commands, world({ mode: 'touch' }))).toContain('Befehle');
+      const active = lessonById('start')!.steps.find(
+        (step) => step.id === 'active'
+      )!;
+      expect(text({ text: () => active.stuck!(world()) })).toContain(
+        'Neu aufbauen'
+      );
+    } finally {
+      i18n.activate(locale);
+    }
   });
 
   it('keep reading steps to read, and passes nothing to do over', () => {

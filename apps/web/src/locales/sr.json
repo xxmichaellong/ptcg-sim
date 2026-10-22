@@ -982,29 +982,29 @@
     ],
     "translation": "<0/> отвара ову листу."
   },
+  "4TpVuz": {
+    "message": "<0>{0}</0> back to your side.",
+    "translation": "<0>{0}</0> назад на твоју страну."
+  },
+  "oC5vx2": {
+    "message": "<0>{0}</0> your deck when you are done.",
+    "translation": "<0>{0}</0> шпил када завршиш."
+  },
+  "F7xH8_": {
+    "message": "<0>{0}</0>: every move, and the chat.",
+    "translation": "<0>{0}</0>: сваки потез и ћаскање."
+  },
+  "l7W_Ze": {
+    "message": "<0>{0}</0>: send a friend a link to your table.",
+    "translation": "<0>{0}</0>: пошаљи пријатељу везу до свог стола."
+  },
+  "NaneTg": {
+    "message": "<0>{0}</0>: the table's look, the theme and the language.",
+    "translation": "<0>{0}</0>: изглед стола, тема и језик."
+  },
   "ieOTvn": {
     "message": "<0>Deck</0>: build, import or pick a deck for each side.",
     "translation": "<0>Шпил</0>: направи, увези или изабери шпил за сваку страну."
-  },
-  "Pzyxb1": {
-    "message": "<0>Flip</0> back to your side.",
-    "translation": "<0>Окрени</0> назад на своју страну."
-  },
-  "udHtRp": {
-    "message": "<0>Log</0>: every move, and the chat.",
-    "translation": "<0>Дневник</0>: сваки потез и ћаскање."
-  },
-  "9MOdR4": {
-    "message": "<0>Play online</0>: send a friend a link to your table.",
-    "translation": "<0>Игraј онлајн</0>: пошаљи пријатељу везу до свог стола."
-  },
-  "u4cc98": {
-    "message": "<0>Settings</0>: the table's look, the theme and the language.",
-    "translation": "<0>Подешавања</0>: изглед стола, тема и језик."
-  },
-  "Ni8ven": {
-    "message": "<0>Shuffle</0> your deck when you are done.",
-    "translation": "<0>Промешај</0> свој шпил кад завршиш."
   },
   "C0rMdv": {
     "message": "− Damage",
@@ -1651,9 +1651,9 @@
     "message": "Change type...",
     "translation": "Промени врсту..."
   },
-  "9dR8ka": {
-    "message": "Changed your mind? <0>Undo</0> takes back your last move.",
-    "translation": "Предомислио/ла си се? <0>Опозови</0> враћа твој последњи потез."
+  "_2MVxl": {
+    "message": "Changed your mind? <0>{0}</0> takes back your last move.",
+    "translation": "Предомислио/ла си се? <0>{0}</0> поништава твој последњи потез."
   },
   "iY-KUI": {
     "message": "Charcoal",
@@ -2292,9 +2292,9 @@
     "context": "replay: go to the end",
     "translation": "Крај"
   },
-  "ACdn17": {
-    "message": "End your turn with <0>Attack</0>, or <1>Pass</1> without one.",
-    "translation": "Заврши потез са <0>Нападом</0> или <1>пропусти</1> без њега."
+  "ILpkuq": {
+    "message": "End your turn with <0>{0}</0>, or <1>{1}</1> without one.",
+    "translation": "Завршиш потез са <0>{0}</0>, или <1>{1}</1> без тога."
   },
   "0UuYtf": {
     "message": "Energy",
@@ -2340,9 +2340,9 @@
     "context": "keyboard key",
     "translation": "Esc"
   },
-  "ddnCsd": {
-    "message": "Every key is under <0>Keyboard shortcuts</0>, in the menu.",
-    "translation": "Све тастере налазиш у <0>Пречицама на тастатури</0>, у менију."
+  "y3HN5z": {
+    "message": "Every key is under <0>{0}</0>, in the menu.",
+    "translation": "Сви тастери су под <0>{0}</0>, у менију."
   },
   "yJW_id": {
     "message": "Evolution and previous stage",
@@ -2932,7 +2932,7 @@
   },
   "_rugva": {
     "message": "Knock Out",
-    "translation": "Nокаут"
+    "translation": "Нокаут"
   },
   "69MOGQ": {
     "message": "Knock Out their <0>{0}</0>: drag it onto their discard pile. Its Energy goes with it.",
@@ -3480,9 +3480,9 @@
     "message": "No actions match",
     "translation": "Ниједна радња не одговара"
   },
-  "uVyWzz": {
-    "message": "No Basic Pokémon in your hand: that is a mulligan. Choose <0>Set up again</0> under More.",
-    "translation": "Немаш основног Pokémon-а у руци: то је мулиган. У менију „Још“ изабери <0>Поново постави</0>."
+  "iKrJ1Q": {
+    "message": "No Basic Pokémon in your hand: that is a mulligan. Choose <0>{0}</0> under {1}.",
+    "translation": "У руци немаш Основног Pokémon-а: то је мулиган. Изабери <0>{0}</0> под {1}."
   },
   "6n5psS": {
     "message": "No card lines found. Try lines like \"4 Iono PAL 185\".",
@@ -3618,13 +3618,13 @@
     "message": "Nothing to import",
     "translation": "Нема шта да се увезе"
   },
-  "toaK54": {
-    "message": "Now make it <0>Poisoned</0>: <1>Actions</1>, then <2>Special condition</2>.",
-    "translation": "Сада га <0>отрогај</0>: <1>Радње</1>, па <2>Посебно стање</2>."
+  "acVFiv": {
+    "message": "Now make it <0>Poisoned</0>: <1>{0}</1>, then <2>{1}</2>.",
+    "translation": "Сада га <0>отрује</0>: <1>{0}</1>, па <2>{1}</2>."
   },
-  "-yh5EP": {
-    "message": "Now make it <0>Poisoned</0>: right-click it, then <1>Special condition</1>.",
-    "translation": "Сада га <0>отрогај</0>: десни клик на њега, па <1>Посебно стање</1>."
+  "UJSKBC": {
+    "message": "Now make it <0>Poisoned</0>: right-click it, then <1>{0}</1>.",
+    "translation": "Сада га <0>отрује</0>: кликни десним тастером на њега, па <1>{0}</1>."
   },
   "LFzr4S": {
     "message": "Number of cards",
@@ -3665,9 +3665,9 @@
     ],
     "translation": "На месту {seat}"
   },
-  "tgpY2G": {
-    "message": "On your own you play both sides. <0>Flip</0> the table to theirs.",
-    "translation": "Када играш сам, играш обе стране. <0>Окрени</0> sto на њихову страну."
+  "R_b7a2": {
+    "message": "On your own you play both sides. <0>{0}</0> the table to theirs.",
+    "translation": "Када си сам/а, играш обе стране. <0>{0}</0> сто на њихову."
   },
   "eVFY7w": {
     "message": "One half fills the table",
@@ -3696,9 +3696,9 @@
     "message": "Only you see this. Cards without that printing keep the deck's scan.",
     "translation": "Ово видиш само ти. Карте без тог издања задржавају скен из шпила."
   },
-  "DQuk1x": {
-    "message": "Open <0>Commands</0>: every action, by name.",
-    "translation": "Отвори <0>Команде</0>: свака радња, по имену."
+  "woUJjU": {
+    "message": "Open <0>{0}</0>: every action, by name.",
+    "translation": "Отвори <0>{0}</0>: свака радња, по имену."
   },
   "tG9S9l": {
     "message": "Open a deck file",
@@ -3961,21 +3961,21 @@
     ],
     "translation": "Притисни {keys} за <0>пречице</0>."
   },
+  "cF4opC": {
+    "message": "Press <0>{0}</0>: it shuffles your deck and deals your hand.",
+    "translation": "Притисни <0>{0}</0>: промешаће шпил и поделити ти руку."
+  },
   "svdjsQ": {
     "message": "Press <0>{key}</0> any time for every key.",
     "translation": "Притисни <0>{key}</0> кад год хоћеш да видиш све тастере."
   },
-  "4x60dA": {
-    "message": "Press <0>{key}</0> for <1>Commands</1>: every action, by name.",
-    "translation": "Притисни <0>{key}</0> за <1>Команде</1>: свака радња, по имену."
+  "GvtW7U": {
+    "message": "Press <0>{key}</0> for <1>{0}</1>: every action, by name.",
+    "translation": "Притисни <0>{key}</0> за <1>{0}</1>: свака радња, по имену."
   },
   "HUzhOi": {
     "message": "Press <0>Esc</0> or click away to close it.",
     "translation": "Притисни <0>Esc</0> или кликни sa стране да затвориш."
-  },
-  "nhkDN0": {
-    "message": "Press <0>Set up</0>: it shuffles your deck and deals your hand.",
-    "translation": "Притисни <0>Постави</0>: промешаће шпил и поделити ти руку."
   },
   "1-TFM2": {
     "message": "Press again to confirm",
@@ -4194,7 +4194,7 @@
   },
   "3hz5zq": {
     "message": "Replay interrupted. Try again.",
-    "translation": "Репризa је прекинута. Пробај поново."
+    "translation": "Реприза је прекинута. Пробај поново."
   },
   "kWiKvV": {
     "message": "Replays aren't available right now.",
@@ -4372,7 +4372,7 @@
   },
   "GF2_ew": {
     "message": "Row {row}: unterminated quote.",
-    "translation": "Ред {row}: навodnik није затворен."
+    "translation": "Ред {row}: наводник није затворен."
   },
   "FxnMec": {
     "message": "Row {rowNumber}: card name too long.",
@@ -4541,7 +4541,7 @@
   },
   "Of0ksK": {
     "message": "Seriously do not think anyone will subscribe to this, but I would be immensely grateful.",
-    "translation": "Озбиљно, не мислим да ће се неко претплатити, али био бих изузетно захvalan."
+    "translation": "Озбиљно, не мислим да ће се неко претплатити, али био бих изузетно захвалан."
   },
   "V7pCG0": {
     "message": "Set",
@@ -4975,9 +4975,9 @@
     "message": "Start turn",
     "translation": "Започни potez"
   },
-  "RC3jt2": {
-    "message": "Start your turn with <0>Turn</0>. It draws your card.",
-    "translation": "Започни потез дугметом <0>Потез</0>. Оно вуче твоју карту."
+  "yA0PE0": {
+    "message": "Start your turn with <0>{0}</0>. It draws your card.",
+    "translation": "Започни потез са <0>{0}</0>. Вуче ти карту."
   },
   "p7o5f_": {
     "message": "Status",
@@ -5089,17 +5089,17 @@
     "message": "Take off damage…",
     "translation": "Уклони оштећења…"
   },
-  "Tw8wp3": {
-    "message": "Tap <0>{0}</0> in your hand, then <1>Read</1>.",
-    "translation": "Додирни <0>{0}</0> у руци, па <1>Читај</1>."
+  "O3tcf1": {
+    "message": "Tap <0>{0}</0> in your hand, then <1>{1}</1>.",
+    "translation": "Додирни <0>{0}</0> у руци, па <1>{1}</1>."
   },
-  "gAdnTm": {
-    "message": "Tap <0>{0}</0>, then <1>Actions</1>: everything a card can do.",
-    "translation": "Додирни <0>{0}</0>, па <1>Радње</1>: све што карта може."
+  "fU8msy": {
+    "message": "Tap <0>{0}</0>, then <1>{1}</1>: everything a card can do.",
+    "translation": "Додирни <0>{0}</0>, па <1>{1}</1>: све што карта може."
   },
-  "WPv11L": {
-    "message": "Tap <0>Commands</0>: every action, by name.",
-    "translation": "Додирни <0>Команде</0>: свака радња, по имену."
+  "eaLvvH": {
+    "message": "Tap <0>{0}</0>: every action, by name.",
+    "translation": "Додирни <0>{0}</0>: свака радња, по имену."
   },
   "EyHJlN": {
     "message": "Tap a card for actions; tap again to read it.",
@@ -5113,9 +5113,9 @@
     "message": "Tap outside the menu to close it.",
     "translation": "Додирни ван менија да га затвориш."
   },
-  "lnQomU": {
-    "message": "Tap their <0>{0}</0>, then <1>Actions</1>.",
-    "translation": "Додирни њихов <0>{0}</0>, па <1>Радње</1>."
+  "oeltU5": {
+    "message": "Tap their <0>{0}</0>, then <1>{1}</1>.",
+    "translation": "Додирни њихов <0>{0}</0>, па <1>{1}</1>."
   },
   "n_ll58": {
     "message": "Tap your deck to look through it.",
@@ -5283,9 +5283,9 @@
     "message": "Their Prizes",
     "translation": "Његове награде"
   },
-  "IA90Ve": {
-    "message": "Their side is yours now: start their turn with <0>Turn</0>.",
-    "translation": "Њихова страна је сада твоја: започни њихов потез са <0>Потез</0>."
+  "Cedl1T": {
+    "message": "Their side is yours now: start their turn with <0>{0}</0>.",
+    "translation": "Њихова страна је сада твоја: започни њихов потез са <0>{0}</0>."
   },
   "sMMsD3": {
     "message": "Theirs",

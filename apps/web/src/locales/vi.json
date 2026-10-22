@@ -982,29 +982,29 @@
     ],
     "translation": "<0/> mở danh sách này."
   },
+  "4TpVuz": {
+    "message": "<0>{0}</0> back to your side.",
+    "translation": "<0>{0}</0> về phía bạn."
+  },
+  "oC5vx2": {
+    "message": "<0>{0}</0> your deck when you are done.",
+    "translation": "<0>{0}</0> bộ bài của bạn khi xong."
+  },
+  "F7xH8_": {
+    "message": "<0>{0}</0>: every move, and the chat.",
+    "translation": "<0>{0}</0>: mọi nước đi và cuộc trò chuyện."
+  },
+  "l7W_Ze": {
+    "message": "<0>{0}</0>: send a friend a link to your table.",
+    "translation": "<0>{0}</0>: gửi cho bạn bè liên kết đến bàn của bạn."
+  },
+  "NaneTg": {
+    "message": "<0>{0}</0>: the table's look, the theme and the language.",
+    "translation": "<0>{0}</0>: giao diện bàn, chủ đề và ngôn ngữ."
+  },
   "ieOTvn": {
     "message": "<0>Deck</0>: build, import or pick a deck for each side.",
     "translation": "<0>Bộ bài</0>: xây dựng, nhập hoặc chọn bộ bài cho mỗi bên."
-  },
-  "Pzyxb1": {
-    "message": "<0>Flip</0> back to your side.",
-    "translation": "<0>Lật</0> về phía của bạn."
-  },
-  "udHtRp": {
-    "message": "<0>Log</0>: every move, and the chat.",
-    "translation": "<0>Nhật ký</0>: mọi nước đi và cuộc trò chuyện."
-  },
-  "9MOdR4": {
-    "message": "<0>Play online</0>: send a friend a link to your table.",
-    "translation": "<0>Chơi online</0>: gửi bạn bè một liên kết đến bàn của bạn."
-  },
-  "u4cc98": {
-    "message": "<0>Settings</0>: the table's look, the theme and the language.",
-    "translation": "<0>Cài đặt</0>: giao diện bàn chơi, chủ đề và ngôn ngữ."
-  },
-  "Ni8ven": {
-    "message": "<0>Shuffle</0> your deck when you are done.",
-    "translation": "<0>Xáo</0> bộ bài của bạn khi xong."
   },
   "C0rMdv": {
     "message": "− Damage",
@@ -1651,9 +1651,9 @@
     "message": "Change type...",
     "translation": "Đổi loại..."
   },
-  "9dR8ka": {
-    "message": "Changed your mind? <0>Undo</0> takes back your last move.",
-    "translation": "Đổi ý? <0>Hoàn tác</0> sẽ lấy lại nước đi gần nhất của bạn."
+  "_2MVxl": {
+    "message": "Changed your mind? <0>{0}</0> takes back your last move.",
+    "translation": "Đổi ý rồi? <0>{0}</0> sẽ hoàn tác nước đi gần nhất của bạn."
   },
   "iY-KUI": {
     "message": "Charcoal",
@@ -2292,9 +2292,9 @@
     "context": "replay: go to the end",
     "translation": "Cuối"
   },
-  "ACdn17": {
-    "message": "End your turn with <0>Attack</0>, or <1>Pass</1> without one.",
-    "translation": "Kết thúc lượt bằng <0>Tấn công</0>, hoặc <1>Bỏ lượt</1> nếu không tấn công."
+  "ILpkuq": {
+    "message": "End your turn with <0>{0}</0>, or <1>{1}</1> without one.",
+    "translation": "Kết thúc lượt bằng <0>{0}</0>, hoặc <1>{1}</1> nếu không cần."
   },
   "0UuYtf": {
     "message": "Energy",
@@ -2340,9 +2340,9 @@
     "context": "keyboard key",
     "translation": "Esc"
   },
-  "ddnCsd": {
-    "message": "Every key is under <0>Keyboard shortcuts</0>, in the menu.",
-    "translation": "Mọi phím tắt nằm trong <0>Phím tắt</0>, ở menu."
+  "y3HN5z": {
+    "message": "Every key is under <0>{0}</0>, in the menu.",
+    "translation": "Mọi phím tắt nằm trong <0>{0}</0>, ở menu."
   },
   "yJW_id": {
     "message": "Evolution and previous stage",
@@ -3480,9 +3480,9 @@
     "message": "No actions match",
     "translation": "Không có hành động phù hợp"
   },
-  "uVyWzz": {
-    "message": "No Basic Pokémon in your hand: that is a mulligan. Choose <0>Set up again</0> under More.",
-    "translation": "Không có Pokémon Cơ Bản trong tay: đó là mulligan. Chọn <0>Chia bài lại</0> trong mục Thêm."
+  "iKrJ1Q": {
+    "message": "No Basic Pokémon in your hand: that is a mulligan. Choose <0>{0}</0> under {1}.",
+    "translation": "Không có Pokémon Cơ Bản trong tay: đó là mulligan. Chọn <0>{0}</0> dưới {1}."
   },
   "6n5psS": {
     "message": "No card lines found. Try lines like \"4 Iono PAL 185\".",
@@ -3618,13 +3618,13 @@
     "message": "Nothing to import",
     "translation": "Không có gì để nhập"
   },
-  "toaK54": {
-    "message": "Now make it <0>Poisoned</0>: <1>Actions</1>, then <2>Special condition</2>.",
-    "translation": "Giờ hãy làm nó bị <0>Nhiễm độc</0>: <1>Hành động</1>, rồi <2>Trạng thái đặc biệt</2>."
+  "acVFiv": {
+    "message": "Now make it <0>Poisoned</0>: <1>{0}</1>, then <2>{1}</2>.",
+    "translation": "Giờ hãy làm nó bị <0>Trúng độc</0>: <1>{0}</1>, rồi <2>{1}</2>."
   },
-  "-yh5EP": {
-    "message": "Now make it <0>Poisoned</0>: right-click it, then <1>Special condition</1>.",
-    "translation": "Giờ hãy làm nó bị <0>Nhiễm độc</0>: nhấp chuột phải vào nó, rồi chọn <1>Trạng thái đặc biệt</1>."
+  "UJSKBC": {
+    "message": "Now make it <0>Poisoned</0>: right-click it, then <1>{0}</1>.",
+    "translation": "Giờ hãy làm nó bị <0>Trúng độc</0>: nhấp chuột phải vào nó, rồi chọn <1>{0}</1>."
   },
   "LFzr4S": {
     "message": "Number of cards",
@@ -3665,9 +3665,9 @@
     ],
     "translation": "Ở {seat}"
   },
-  "tgpY2G": {
-    "message": "On your own you play both sides. <0>Flip</0> the table to theirs.",
-    "translation": "Khi chơi một mình, bạn điều khiển cả hai bên. <0>Lật</0> bàn sang phía đối thủ."
+  "R_b7a2": {
+    "message": "On your own you play both sides. <0>{0}</0> the table to theirs.",
+    "translation": "Khi chơi một mình, bạn điều khiển cả hai bên. <0>{0}</0> bàn sang phía đối thủ."
   },
   "eVFY7w": {
     "message": "One half fills the table",
@@ -3696,9 +3696,9 @@
     "message": "Only you see this. Cards without that printing keep the deck's scan.",
     "translation": "Chỉ bạn thấy điều này. Thẻ không có bản in đó sẽ giữ ảnh của bộ bài."
   },
-  "DQuk1x": {
-    "message": "Open <0>Commands</0>: every action, by name.",
-    "translation": "Mở <0>Lệnh</0>: mọi thao tác, theo tên."
+  "woUJjU": {
+    "message": "Open <0>{0}</0>: every action, by name.",
+    "translation": "Mở <0>{0}</0>: mọi hành động, theo tên."
   },
   "tG9S9l": {
     "message": "Open a deck file",
@@ -3961,21 +3961,21 @@
     ],
     "translation": "Nhấn {keys} để xem <0>phím tắt</0>."
   },
+  "cF4opC": {
+    "message": "Press <0>{0}</0>: it shuffles your deck and deals your hand.",
+    "translation": "Nhấn <0>{0}</0>: xáo bộ bài và chia bài lên tay bạn."
+  },
   "svdjsQ": {
     "message": "Press <0>{key}</0> any time for every key.",
     "translation": "Nhấn <0>{key}</0> bất cứ lúc nào để xem mọi phím."
   },
-  "4x60dA": {
-    "message": "Press <0>{key}</0> for <1>Commands</1>: every action, by name.",
-    "translation": "Nhấn <0>{key}</0> để mở <1>Lệnh</1>: mọi thao tác, theo tên."
+  "GvtW7U": {
+    "message": "Press <0>{key}</0> for <1>{0}</1>: every action, by name.",
+    "translation": "Nhấn <0>{key}</0> để mở <1>{0}</1>: mọi hành động, theo tên."
   },
   "HUzhOi": {
     "message": "Press <0>Esc</0> or click away to close it.",
     "translation": "Nhấn <0>Esc</0> hoặc bấm ra ngoài để đóng."
-  },
-  "nhkDN0": {
-    "message": "Press <0>Set up</0>: it shuffles your deck and deals your hand.",
-    "translation": "Nhấn <0>Chuẩn bị</0>: nó xáo bộ bài và chia bài lên tay bạn."
   },
   "1-TFM2": {
     "message": "Press again to confirm",
@@ -4975,9 +4975,9 @@
     "message": "Start turn",
     "translation": "Bắt đầu lượt"
   },
-  "RC3jt2": {
-    "message": "Start your turn with <0>Turn</0>. It draws your card.",
-    "translation": "Bắt đầu lượt của bạn bằng <0>Lượt</0>. Nó rút bài cho bạn."
+  "yA0PE0": {
+    "message": "Start your turn with <0>{0}</0>. It draws your card.",
+    "translation": "Bắt đầu lượt của bạn bằng <0>{0}</0>. Bạn sẽ rút một lá bài."
   },
   "p7o5f_": {
     "message": "Status",
@@ -5089,17 +5089,17 @@
     "message": "Take off damage…",
     "translation": "Gỡ sát thương…"
   },
-  "Tw8wp3": {
-    "message": "Tap <0>{0}</0> in your hand, then <1>Read</1>.",
-    "translation": "Chạm vào <0>{0}</0> trên tay bạn, rồi chọn <1>Đọc</1>."
+  "O3tcf1": {
+    "message": "Tap <0>{0}</0> in your hand, then <1>{1}</1>.",
+    "translation": "Chạm vào <0>{0}</0> trên tay, rồi chọn <1>{1}</1>."
   },
-  "gAdnTm": {
-    "message": "Tap <0>{0}</0>, then <1>Actions</1>: everything a card can do.",
-    "translation": "Chạm vào <0>{0}</0>, rồi <1>Hành động</1>: mọi thứ một lá bài có thể làm."
+  "fU8msy": {
+    "message": "Tap <0>{0}</0>, then <1>{1}</1>: everything a card can do.",
+    "translation": "Chạm vào <0>{0}</0>, rồi chọn <1>{1}</1>: mọi thứ một lá bài có thể làm."
   },
-  "WPv11L": {
-    "message": "Tap <0>Commands</0>: every action, by name.",
-    "translation": "Chạm <0>Lệnh</0>: mọi hành động, theo tên."
+  "eaLvvH": {
+    "message": "Tap <0>{0}</0>: every action, by name.",
+    "translation": "Chạm vào <0>{0}</0>: mọi hành động, theo tên."
   },
   "EyHJlN": {
     "message": "Tap a card for actions; tap again to read it.",
@@ -5113,9 +5113,9 @@
     "message": "Tap outside the menu to close it.",
     "translation": "Chạm ra ngoài menu để đóng."
   },
-  "lnQomU": {
-    "message": "Tap their <0>{0}</0>, then <1>Actions</1>.",
-    "translation": "Chạm vào <0>{0}</0> của đối thủ, rồi <1>Hành động</1>."
+  "oeltU5": {
+    "message": "Tap their <0>{0}</0>, then <1>{1}</1>.",
+    "translation": "Chạm vào <0>{0}</0> của đối thủ, rồi chọn <1>{1}</1>."
   },
   "n_ll58": {
     "message": "Tap your deck to look through it.",
@@ -5283,9 +5283,9 @@
     "message": "Their Prizes",
     "translation": "Phần thưởng của đối thủ"
   },
-  "IA90Ve": {
-    "message": "Their side is yours now: start their turn with <0>Turn</0>.",
-    "translation": "Giờ phe đối thủ thuộc về bạn: bắt đầu lượt của họ bằng <0>Lượt</0>."
+  "Cedl1T": {
+    "message": "Their side is yours now: start their turn with <0>{0}</0>.",
+    "translation": "Giờ phía đối thủ là của bạn: bắt đầu lượt của họ bằng <0>{0}</0>."
   },
   "sMMsD3": {
     "message": "Theirs",

@@ -4,6 +4,7 @@ import { Trans } from '@lingui/react/macro';
 import type { ReactNode } from 'react';
 
 import { TUTORIAL_CARDS, type TutorialCardKey } from './tutorial-cards.js';
+import { controlLabel } from './tutorial-labels.js';
 import {
   MIDGAME_SCENARIO,
   START_SCENARIO,
@@ -145,8 +146,8 @@ const start: TutorialLesson = {
       id: 'setup',
       text: () => (
         <Trans>
-          Press <strong>Set up</strong>: it shuffles your deck and deals your
-          hand.
+          Press <strong>{controlLabel('setUp')}</strong>: it shuffles your deck
+          and deals your hand.
         </Trans>
       ),
       targets: () => [railAction('setupButton')],
@@ -172,7 +173,10 @@ const start: TutorialLesson = {
         </Trans>
       ),
       drag: (world) => {
-        const card = basicInHand(world.view, world.you);
+        // From the hand, or (its only Basic put there first) the Bench.
+        const card =
+          basicInHand(world.view, world.you) ??
+          topCard(benchStacks(world.view, world.you)[0]);
         return card
           ? { from: { card: card.id }, to: slot(world.you, 'active') }
           : null;
@@ -180,10 +184,12 @@ const start: TutorialLesson = {
       done: (world) => activeStack(world.view, world.you) !== undefined,
       stuck: (world) =>
         basicInHand(world.view, world.you) === undefined &&
-        activeStack(world.view, world.you) === undefined ? (
+        activeStack(world.view, world.you) === undefined &&
+        benchStacks(world.view, world.you).length === 0 ? (
           <Trans>
             No Basic Pokémon in your hand: that is a mulligan. Choose{' '}
-            <strong>Set up again</strong> under More.
+            <strong>{controlLabel('setUpAgain')}</strong> under{' '}
+            {controlLabel('more')}.
           </Trans>
         ) : null,
     },
@@ -224,7 +230,7 @@ const cards: TutorialLesson = {
         world.mode === 'touch' ? (
           <Trans>
             Tap <strong>{name('charmeleon')}</strong> in your hand, then{' '}
-            <strong>Read</strong>.
+            <strong>{controlLabel('read')}</strong>.
           </Trans>
         ) : (
           <Trans>
@@ -254,7 +260,8 @@ const cards: TutorialLesson = {
         world.mode === 'touch' ? (
           <Trans>
             Tap <strong>{name('charmander')}</strong>, then{' '}
-            <strong>Actions</strong>: everything a card can do.
+            <strong>{controlLabel('actions')}</strong>: everything a card can
+            do.
           </Trans>
         ) : (
           <Trans>
@@ -396,7 +403,8 @@ const attach: TutorialLesson = {
       id: 'undo',
       text: () => (
         <Trans>
-          Changed your mind? <strong>Undo</strong> takes back your last move.
+          Changed your mind? <strong>{controlLabel('undo')}</strong> takes back
+          your last move.
         </Trans>
       ),
       targets: () => [railAction('undoButton')],
@@ -420,7 +428,7 @@ const damage: TutorialLesson = {
         world.mode === 'touch' ? (
           <Trans>
             Tap their <strong>{name('kirlia')}</strong>, then{' '}
-            <strong>Actions</strong>.
+            <strong>{controlLabel('actions')}</strong>.
           </Trans>
         ) : (
           <Trans>
@@ -472,13 +480,14 @@ const damage: TutorialLesson = {
       text: (world) =>
         world.mode === 'touch' ? (
           <Trans>
-            Now make it <strong>Poisoned</strong>: <strong>Actions</strong>,
-            then <strong>Special condition</strong>.
+            Now make it <strong>Poisoned</strong>:{' '}
+            <strong>{controlLabel('actions')}</strong>, then{' '}
+            <strong>{controlLabel('specialCondition')}</strong>.
           </Trans>
         ) : (
           <Trans>
             Now make it <strong>Poisoned</strong>: right-click it, then{' '}
-            <strong>Special condition</strong>.
+            <strong>{controlLabel('specialCondition')}</strong>.
           </Trans>
         ),
       targets: (world) => present([activeTopTarget(world, world.them)]),
@@ -627,7 +636,8 @@ const deck: TutorialLesson = {
       id: 'shuffle',
       text: () => (
         <Trans>
-          <strong>Shuffle</strong> your deck when you are done.
+          <strong>{controlLabel('shuffle')}</strong> your deck when you are
+          done.
         </Trans>
       ),
       targets: () => [
@@ -656,7 +666,8 @@ const turns: TutorialLesson = {
       id: 'turn',
       text: () => (
         <Trans>
-          Start your turn with <strong>Turn</strong>. It draws your card.
+          Start your turn with <strong>{controlLabel('turn')}</strong>. It draws
+          your card.
         </Trans>
       ),
       targets: () => [railAction('turnButton')],
@@ -680,8 +691,8 @@ const turns: TutorialLesson = {
       id: 'attack',
       text: () => (
         <Trans>
-          End your turn with <strong>Attack</strong>, or <strong>Pass</strong>{' '}
-          without one.
+          End your turn with <strong>{controlLabel('attack')}</strong>, or{' '}
+          <strong>{controlLabel('pass')}</strong> without one.
         </Trans>
       ),
       targets: () => [railAction('attackButton'), railAction('passButton')],
@@ -704,8 +715,8 @@ const bothSides: TutorialLesson = {
       id: 'flip',
       text: () => (
         <Trans>
-          On your own you play both sides. <strong>Flip</strong> the table to
-          theirs.
+          On your own you play both sides.{' '}
+          <strong>{controlLabel('flip')}</strong> the table to theirs.
         </Trans>
       ),
       targets: () => [railAction('flipBoardButton')],
@@ -715,7 +726,8 @@ const bothSides: TutorialLesson = {
       id: 'their-turn',
       text: () => (
         <Trans>
-          Their side is yours now: start their turn with <strong>Turn</strong>.
+          Their side is yours now: start their turn with{' '}
+          <strong>{controlLabel('turn')}</strong>.
         </Trans>
       ),
       targets: () => [railAction('turnButton')],
@@ -725,7 +737,7 @@ const bothSides: TutorialLesson = {
       id: 'flip-back',
       text: () => (
         <Trans>
-          <strong>Flip</strong> back to your side.
+          <strong>{controlLabel('flip')}</strong> back to your side.
         </Trans>
       ),
       targets: () => [railAction('flipBoardButton')],
@@ -772,12 +784,13 @@ const keys: TutorialLesson = {
         const key = world.keys('table.commands');
         return key ? (
           <Trans>
-            Press <kbd>{key}</kbd> for <strong>Commands</strong>: every action,
-            by name.
+            Press <kbd>{key}</kbd> for{' '}
+            <strong>{controlLabel('commands')}</strong>: every action, by name.
           </Trans>
         ) : (
           <Trans>
-            Open <strong>Commands</strong>: every action, by name.
+            Open <strong>{controlLabel('commands')}</strong>: every action, by
+            name.
           </Trans>
         );
       },
@@ -813,7 +826,8 @@ const keys: TutorialLesson = {
           </Trans>
         ) : (
           <Trans>
-            Every key is under <strong>Keyboard shortcuts</strong>, in the menu.
+            Every key is under{' '}
+            <strong>{controlLabel('keyboardShortcuts')}</strong>, in the menu.
           </Trans>
         );
       },
@@ -833,7 +847,8 @@ const commands: TutorialLesson = {
       id: 'palette',
       text: () => (
         <Trans>
-          Tap <strong>Commands</strong>: every action, by name.
+          Tap <strong>{controlLabel('commands')}</strong>: every action, by
+          name.
         </Trans>
       ),
       targets: () => [barButton('commandsButton')],
@@ -880,7 +895,8 @@ const around: TutorialLesson = {
       id: 'online',
       text: () => (
         <Trans>
-          <strong>Play online</strong>: send a friend a link to your table.
+          <strong>{controlLabel('playOnline')}</strong>: send a friend a link to
+          your table.
         </Trans>
       ),
       targets: () => [barButton('p2Button')],
@@ -889,7 +905,7 @@ const around: TutorialLesson = {
       id: 'log',
       text: () => (
         <Trans>
-          <strong>Log</strong>: every move, and the chat.
+          <strong>{controlLabel('log')}</strong>: every move, and the chat.
         </Trans>
       ),
       targets: () => [{ selectors: ['#activityButton'] }],
@@ -898,8 +914,8 @@ const around: TutorialLesson = {
       id: 'settings',
       text: () => (
         <Trans>
-          <strong>Settings</strong>: the table's look, the theme and the
-          language.
+          <strong>{controlLabel('settings')}</strong>: the table's look, the
+          theme and the language.
         </Trans>
       ),
       targets: () => [barButton('settingsButton')],

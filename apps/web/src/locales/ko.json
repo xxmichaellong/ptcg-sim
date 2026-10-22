@@ -982,29 +982,29 @@
     ],
     "translation": "<0/> 키로 이 목록을 엽니다."
   },
+  "4TpVuz": {
+    "message": "<0>{0}</0> back to your side.",
+    "translation": "<0>{0}</0>하여 내 쪽으로 되돌립니다."
+  },
+  "oC5vx2": {
+    "message": "<0>{0}</0> your deck when you are done.",
+    "translation": "끝나면 <0>{0}</0> 덱을 섞으세요."
+  },
+  "F7xH8_": {
+    "message": "<0>{0}</0>: every move, and the chat.",
+    "translation": "<0>{0}</0>: 모든 동작과 채팅을 확인합니다."
+  },
+  "l7W_Ze": {
+    "message": "<0>{0}</0>: send a friend a link to your table.",
+    "translation": "<0>{0}</0>: 친구에게 테이블 링크를 보냅니다."
+  },
+  "NaneTg": {
+    "message": "<0>{0}</0>: the table's look, the theme and the language.",
+    "translation": "<0>{0}</0>: 테이블 모양, 테마, 언어를 설정합니다."
+  },
   "ieOTvn": {
     "message": "<0>Deck</0>: build, import or pick a deck for each side.",
     "translation": "<0>덱</0>: 각 쪽의 덱을 만들거나 가져오거나 선택하세요."
-  },
-  "Pzyxb1": {
-    "message": "<0>Flip</0> back to your side.",
-    "translation": "내 쪽으로 <0>뒤집기</0>."
-  },
-  "udHtRp": {
-    "message": "<0>Log</0>: every move, and the chat.",
-    "translation": "<0>로그</0>: 모든 행동과 채팅."
-  },
-  "9MOdR4": {
-    "message": "<0>Play online</0>: send a friend a link to your table.",
-    "translation": "<0>온라인 플레이</0>: 친구에게 내 테이블 링크를 보내세요."
-  },
-  "u4cc98": {
-    "message": "<0>Settings</0>: the table's look, the theme and the language.",
-    "translation": "<0>설정</0>: 테이블 모양, 테마, 언어."
-  },
-  "Ni8ven": {
-    "message": "<0>Shuffle</0> your deck when you are done.",
-    "translation": "끝났으면 덱을 <0>섞으세요</0>."
   },
   "C0rMdv": {
     "message": "− Damage",
@@ -1651,9 +1651,9 @@
     "message": "Change type...",
     "translation": "종류 변경..."
   },
-  "9dR8ka": {
-    "message": "Changed your mind? <0>Undo</0> takes back your last move.",
-    "translation": "마음이 바뀌셨나요? <0>되돌리기</0>로 마지막 행동을 취소할 수 있습니다."
+  "_2MVxl": {
+    "message": "Changed your mind? <0>{0}</0> takes back your last move.",
+    "translation": "마음이 바뀌었나요? <0>{0}</0>으로 마지막 동작을 되돌립니다."
   },
   "iY-KUI": {
     "message": "Charcoal",
@@ -2292,9 +2292,9 @@
     "context": "replay: go to the end",
     "translation": "끝으로"
   },
-  "ACdn17": {
-    "message": "End your turn with <0>Attack</0>, or <1>Pass</1> without one.",
-    "translation": "<0>기술</0>로 턴을 끝내거나, 기술 없이 <1>패스</1>하세요."
+  "ILpkuq": {
+    "message": "End your turn with <0>{0}</0>, or <1>{1}</1> without one.",
+    "translation": "<0>{0}</0>으로 턴을 끝내거나, 없이 끝내려면 <1>{1}</1>하세요."
   },
   "0UuYtf": {
     "message": "Energy",
@@ -2340,9 +2340,9 @@
     "context": "keyboard key",
     "translation": "Esc"
   },
-  "ddnCsd": {
-    "message": "Every key is under <0>Keyboard shortcuts</0>, in the menu.",
-    "translation": "모든 키는 메뉴의 <0>키보드 단축키</0>에서 확인할 수 있습니다."
+  "y3HN5z": {
+    "message": "Every key is under <0>{0}</0>, in the menu.",
+    "translation": "모든 키는 메뉴의 <0>{0}</0>에서 확인할 수 있습니다."
   },
   "yJW_id": {
     "message": "Evolution and previous stage",
@@ -3480,9 +3480,9 @@
     "message": "No actions match",
     "translation": "일치하는 동작이 없습니다"
   },
-  "uVyWzz": {
-    "message": "No Basic Pokémon in your hand: that is a mulligan. Choose <0>Set up again</0> under More.",
-    "translation": "패에 기본 포켓몬이 없습니다. 이 경우 마리건입니다. 더보기에서 <0>다시 준비</0>를 선택하세요."
+  "iKrJ1Q": {
+    "message": "No Basic Pokémon in your hand: that is a mulligan. Choose <0>{0}</0> under {1}.",
+    "translation": "패에 기본 포켓몬이 없습니다. 멀리건입니다. {1}에서 <0>{0}</0>을(를) 선택하세요."
   },
   "6n5psS": {
     "message": "No card lines found. Try lines like \"4 Iono PAL 185\".",
@@ -3618,13 +3618,13 @@
     "message": "Nothing to import",
     "translation": "가져올 항목이 없습니다"
   },
-  "toaK54": {
-    "message": "Now make it <0>Poisoned</0>: <1>Actions</1>, then <2>Special condition</2>.",
-    "translation": "이제 <0>독</0> 상태로 만드세요: <1>동작</1>, <2>특수 상태</2> 순으로 선택합니다."
+  "acVFiv": {
+    "message": "Now make it <0>Poisoned</0>: <1>{0}</1>, then <2>{1}</2>.",
+    "translation": "이제 <0>독</0> 상태로 만드세요: <1>{0}</1>, 그다음 <2>{1}</2>."
   },
-  "-yh5EP": {
-    "message": "Now make it <0>Poisoned</0>: right-click it, then <1>Special condition</1>.",
-    "translation": "이제 <0>독</0> 상태로 만드세요: 우클릭한 다음 <1>특수 상태</1>를 선택합니다."
+  "UJSKBC": {
+    "message": "Now make it <0>Poisoned</0>: right-click it, then <1>{0}</1>.",
+    "translation": "이제 <0>독</0> 상태로 만드세요: 오른쪽 클릭한 다음 <1>{0}</1>."
   },
   "LFzr4S": {
     "message": "Number of cards",
@@ -3665,9 +3665,9 @@
     ],
     "translation": "{seat}에 있음"
   },
-  "tgpY2G": {
-    "message": "On your own you play both sides. <0>Flip</0> the table to theirs.",
-    "translation": "혼자 할 때는 양쪽을 모두 플레이합니다. 테이블을 <0>뒤집어</0> 상대편으로 전환하세요."
+  "R_b7a2": {
+    "message": "On your own you play both sides. <0>{0}</0> the table to theirs.",
+    "translation": "혼자일 때는 양쪽을 모두 플레이합니다. 테이블을 상대 쪽으로 <0>{0}</0>하세요."
   },
   "eVFY7w": {
     "message": "One half fills the table",
@@ -3696,9 +3696,9 @@
     "message": "Only you see this. Cards without that printing keep the deck's scan.",
     "translation": "나만 볼 수 있습니다. 해당 프린트가 없는 카드는 덱의 스캔 이미지를 유지합니다."
   },
-  "DQuk1x": {
-    "message": "Open <0>Commands</0>: every action, by name.",
-    "translation": "<0>명령</0> 열기: 모든 동작을 이름으로 실행합니다."
+  "woUJjU": {
+    "message": "Open <0>{0}</0>: every action, by name.",
+    "translation": "<0>{0}</0>을(를) 여세요: 모든 동작을 이름으로 찾을 수 있습니다."
   },
   "tG9S9l": {
     "message": "Open a deck file",
@@ -3961,21 +3961,21 @@
     ],
     "translation": "{keys} 키를 누르면 <0>단축키</0>를 볼 수 있습니다."
   },
+  "cF4opC": {
+    "message": "Press <0>{0}</0>: it shuffles your deck and deals your hand.",
+    "translation": "<0>{0}</0>을(를) 누르세요: 덱을 섞고 패를 나눠 줍니다."
+  },
   "svdjsQ": {
     "message": "Press <0>{key}</0> any time for every key.",
     "translation": "모든 키를 보려면 언제든 <0>{key}</0> 키를 누르세요."
   },
-  "4x60dA": {
-    "message": "Press <0>{key}</0> for <1>Commands</1>: every action, by name.",
-    "translation": "<0>{key}</0> 키를 눌러 <1>명령</1>을 여세요: 모든 동작을 이름으로 실행합니다."
+  "GvtW7U": {
+    "message": "Press <0>{key}</0> for <1>{0}</1>: every action, by name.",
+    "translation": "<1>{0}</1>: <0>{key}</0>을(를) 누르세요. 모든 동작을 이름으로 찾을 수 있습니다."
   },
   "HUzhOi": {
     "message": "Press <0>Esc</0> or click away to close it.",
     "translation": "<0>Esc</0>를 누르거나 바깥을 클릭하면 닫힙니다."
-  },
-  "nhkDN0": {
-    "message": "Press <0>Set up</0>: it shuffles your deck and deals your hand.",
-    "translation": "<0>준비</0>를 누르세요: 덱을 섞고 패를 나눠 줍니다."
   },
   "1-TFM2": {
     "message": "Press again to confirm",
@@ -4975,9 +4975,9 @@
     "message": "Start turn",
     "translation": "턴 시작"
   },
-  "RC3jt2": {
-    "message": "Start your turn with <0>Turn</0>. It draws your card.",
-    "translation": "<0>턴</0>으로 턴을 시작하세요. 카드를 한 장 뽑습니다."
+  "yA0PE0": {
+    "message": "Start your turn with <0>{0}</0>. It draws your card.",
+    "translation": "<0>{0}</0>(으)로 턴을 시작하세요. 카드를 한 장 뽑습니다."
   },
   "p7o5f_": {
     "message": "Status",
@@ -5089,17 +5089,17 @@
     "message": "Take off damage…",
     "translation": "데미지 제거…"
   },
-  "Tw8wp3": {
-    "message": "Tap <0>{0}</0> in your hand, then <1>Read</1>.",
-    "translation": "패에서 <0>{0}</0>을(를) 탭한 다음 <1>읽기</1>를 탭하세요."
+  "O3tcf1": {
+    "message": "Tap <0>{0}</0> in your hand, then <1>{1}</1>.",
+    "translation": "패에서 <0>{0}</0>을(를) 탭한 다음 <1>{1}</1>을(를) 탭하세요."
   },
-  "gAdnTm": {
-    "message": "Tap <0>{0}</0>, then <1>Actions</1>: everything a card can do.",
-    "translation": "<0>{0}</0>을(를) 탭한 다음 <1>동작</1>을 탭하세요: 카드로 할 수 있는 모든 동작이 나옵니다."
+  "fU8msy": {
+    "message": "Tap <0>{0}</0>, then <1>{1}</1>: everything a card can do.",
+    "translation": "<0>{0}</0>을(를) 탭한 다음 <1>{1}</1>을(를) 탭하세요: 카드로 할 수 있는 모든 동작입니다."
   },
-  "WPv11L": {
-    "message": "Tap <0>Commands</0>: every action, by name.",
-    "translation": "<0>명령</0>을 탭하세요: 모든 동작을 이름으로 찾을 수 있습니다."
+  "eaLvvH": {
+    "message": "Tap <0>{0}</0>: every action, by name.",
+    "translation": "<0>{0}</0>을(를) 탭하세요: 모든 동작을 이름으로 찾을 수 있습니다."
   },
   "EyHJlN": {
     "message": "Tap a card for actions; tap again to read it.",
@@ -5113,9 +5113,9 @@
     "message": "Tap outside the menu to close it.",
     "translation": "메뉴 바깥을 탭하면 닫힙니다."
   },
-  "lnQomU": {
-    "message": "Tap their <0>{0}</0>, then <1>Actions</1>.",
-    "translation": "상대의 <0>{0}</0>을(를) 탭한 다음 <1>동작</1>을 탭하세요."
+  "oeltU5": {
+    "message": "Tap their <0>{0}</0>, then <1>{1}</1>.",
+    "translation": "상대의 <0>{0}</0>을(를) 탭한 다음 <1>{1}</1>을(를) 탭하세요."
   },
   "n_ll58": {
     "message": "Tap your deck to look through it.",
@@ -5283,9 +5283,9 @@
     "message": "Their Prizes",
     "translation": "상대 프라이즈 카드"
   },
-  "IA90Ve": {
-    "message": "Their side is yours now: start their turn with <0>Turn</0>.",
-    "translation": "이제 상대편은 내 차지입니다. <0>턴</0>으로 상대 턴을 시작하세요."
+  "Cedl1T": {
+    "message": "Their side is yours now: start their turn with <0>{0}</0>.",
+    "translation": "이제 상대 쪽이 내 차례입니다. <0>{0}</0>(으)로 상대의 턴을 시작하세요."
   },
   "sMMsD3": {
     "message": "Theirs",

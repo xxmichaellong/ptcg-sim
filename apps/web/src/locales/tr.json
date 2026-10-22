@@ -982,29 +982,29 @@
     ],
     "translation": "<0/> bu listeyi açar."
   },
+  "4TpVuz": {
+    "message": "<0>{0}</0> back to your side.",
+    "translation": "<0>{0}</0> ile kendi tarafına geri dön."
+  },
+  "oC5vx2": {
+    "message": "<0>{0}</0> your deck when you are done.",
+    "translation": "İşin bitince destenı <0>{0}</0>."
+  },
+  "F7xH8_": {
+    "message": "<0>{0}</0>: every move, and the chat.",
+    "translation": "<0>{0}</0>: tüm hamleler ve sohbet."
+  },
+  "l7W_Ze": {
+    "message": "<0>{0}</0>: send a friend a link to your table.",
+    "translation": "<0>{0}</0>: masanın bağlantısını bir arkadaşına gönder."
+  },
+  "NaneTg": {
+    "message": "<0>{0}</0>: the table's look, the theme and the language.",
+    "translation": "<0>{0}</0>: masanın görünümü, tema ve dil."
+  },
   "ieOTvn": {
     "message": "<0>Deck</0>: build, import or pick a deck for each side.",
     "translation": "<0>Deste</0>: her taraf için bir deste oluştur, içe aktar veya seç."
-  },
-  "Pzyxb1": {
-    "message": "<0>Flip</0> back to your side.",
-    "translation": "Kendi tarafına <0>geri çevir</0>."
-  },
-  "udHtRp": {
-    "message": "<0>Log</0>: every move, and the chat.",
-    "translation": "<0>Kayıt</0>: tüm hamleler ve sohbet."
-  },
-  "9MOdR4": {
-    "message": "<0>Play online</0>: send a friend a link to your table.",
-    "translation": "<0>Online oyna</0>: bir arkadaşına masanın bağlantısını gönder."
-  },
-  "u4cc98": {
-    "message": "<0>Settings</0>: the table's look, the theme and the language.",
-    "translation": "<0>Ayarlar</0>: masanın görünümü, tema ve dil."
-  },
-  "Ni8ven": {
-    "message": "<0>Shuffle</0> your deck when you are done.",
-    "translation": "İşin bitince desteni <0>karıştır</0>."
   },
   "C0rMdv": {
     "message": "− Damage",
@@ -1651,9 +1651,9 @@
     "message": "Change type...",
     "translation": "Türü değiştir..."
   },
-  "9dR8ka": {
-    "message": "Changed your mind? <0>Undo</0> takes back your last move.",
-    "translation": "Fikrini mi değiştirdin? <0>Geri al</0> son hamleni geri alır."
+  "_2MVxl": {
+    "message": "Changed your mind? <0>{0}</0> takes back your last move.",
+    "translation": "Fikrini mi değiştirdin? <0>{0}</0> son hamleni geri alır."
   },
   "iY-KUI": {
     "message": "Charcoal",
@@ -2292,9 +2292,9 @@
     "context": "replay: go to the end",
     "translation": "Son"
   },
-  "ACdn17": {
-    "message": "End your turn with <0>Attack</0>, or <1>Pass</1> without one.",
-    "translation": "Turunu <0>Saldırı</0> ile bitir veya saldırmadan <1>Pas</1> geç."
+  "ILpkuq": {
+    "message": "End your turn with <0>{0}</0>, or <1>{1}</1> without one.",
+    "translation": "Turunu <0>{0}</0> ile bitir ya da <1>{1}</1> ile onsuz devam et."
   },
   "0UuYtf": {
     "message": "Energy",
@@ -2340,9 +2340,9 @@
     "context": "keyboard key",
     "translation": "Esc"
   },
-  "ddnCsd": {
-    "message": "Every key is under <0>Keyboard shortcuts</0>, in the menu.",
-    "translation": "Tüm tuşlar menüdeki <0>Klavye kısayolları</0> bölümünde."
+  "y3HN5z": {
+    "message": "Every key is under <0>{0}</0>, in the menu.",
+    "translation": "Tüm tuşlar menüdeki <0>{0}</0> altında."
   },
   "yJW_id": {
     "message": "Evolution and previous stage",
@@ -3480,9 +3480,9 @@
     "message": "No actions match",
     "translation": "Eşleşen eylem yok"
   },
-  "uVyWzz": {
-    "message": "No Basic Pokémon in your hand: that is a mulligan. Choose <0>Set up again</0> under More.",
-    "translation": "Elinde Basic Pokémon yok: bu bir mulligan. More altından <0>Set up again</0> seçeneğini seç."
+  "iKrJ1Q": {
+    "message": "No Basic Pokémon in your hand: that is a mulligan. Choose <0>{0}</0> under {1}.",
+    "translation": "Elinde Basic Pokémon yok: bu bir mulligan. {1} altında <0>{0}</0> seç."
   },
   "6n5psS": {
     "message": "No card lines found. Try lines like \"4 Iono PAL 185\".",
@@ -3618,13 +3618,13 @@
     "message": "Nothing to import",
     "translation": "İçe aktarılacak bir şey yok"
   },
-  "toaK54": {
-    "message": "Now make it <0>Poisoned</0>: <1>Actions</1>, then <2>Special condition</2>.",
-    "translation": "Şimdi onu <0>Zehirli</0> yap: <1>Eylemler</1>, sonra <2>Özel durum</2>."
+  "acVFiv": {
+    "message": "Now make it <0>Poisoned</0>: <1>{0}</1>, then <2>{1}</2>.",
+    "translation": "Şimdi onu <0>Zehirli</0> yap: <1>{0}</1>, ardından <2>{1}</2>."
   },
-  "-yh5EP": {
-    "message": "Now make it <0>Poisoned</0>: right-click it, then <1>Special condition</1>.",
-    "translation": "Şimdi onu <0>Zehirli</0> yap: sağ tıkla, sonra <1>Özel durum</1>."
+  "UJSKBC": {
+    "message": "Now make it <0>Poisoned</0>: right-click it, then <1>{0}</1>.",
+    "translation": "Şimdi onu <0>Zehirli</0> yap: sağ tıkla, ardından <1>{0}</1> seç."
   },
   "LFzr4S": {
     "message": "Number of cards",
@@ -3665,9 +3665,9 @@
     ],
     "translation": "{seat} üzerinde"
   },
-  "tgpY2G": {
-    "message": "On your own you play both sides. <0>Flip</0> the table to theirs.",
-    "translation": "Tek başına oynarken iki tarafı da sen oynarsın. Masayı rakibin tarafına <0>çevir</0>."
+  "R_b7a2": {
+    "message": "On your own you play both sides. <0>{0}</0> the table to theirs.",
+    "translation": "Tek başınayken iki tarafı da sen oynarsın. Masayı rakibin tarafına çevirmek için <0>{0}</0>."
   },
   "eVFY7w": {
     "message": "One half fills the table",
@@ -3696,9 +3696,9 @@
     "message": "Only you see this. Cards without that printing keep the deck's scan.",
     "translation": "Bunu yalnızca sen görürsün. O basıma sahip olmayan kartlar destenin taramasını korur."
   },
-  "DQuk1x": {
-    "message": "Open <0>Commands</0>: every action, by name.",
-    "translation": "<0>Komutlar</0>'ı aç: tüm eylemler, adlarıyla."
+  "woUJjU": {
+    "message": "Open <0>{0}</0>: every action, by name.",
+    "translation": "<0>{0}</0> aç: tüm eylemler, adlarıyla."
   },
   "tG9S9l": {
     "message": "Open a deck file",
@@ -3961,21 +3961,21 @@
     ],
     "translation": "<0>Kısayollar</0> için {keys} tuşuna bas."
   },
+  "cF4opC": {
+    "message": "Press <0>{0}</0>: it shuffles your deck and deals your hand.",
+    "translation": "<0>{0}</0> tuşuna bas: destenı karıştırır ve elini dağıtır."
+  },
   "svdjsQ": {
     "message": "Press <0>{key}</0> any time for every key.",
     "translation": "Tüm tuşlar için istediğin zaman <0>{key}</0> tuşuna bas."
   },
-  "4x60dA": {
-    "message": "Press <0>{key}</0> for <1>Commands</1>: every action, by name.",
-    "translation": "<1>Komutlar</1> için <0>{key}</0> tuşuna bas: tüm eylemler, adlarıyla."
+  "GvtW7U": {
+    "message": "Press <0>{key}</0> for <1>{0}</1>: every action, by name.",
+    "translation": "<1>{0}</1> için <0>{key}</0> tuşuna bas: tüm eylemler, adlarıyla."
   },
   "HUzhOi": {
     "message": "Press <0>Esc</0> or click away to close it.",
     "translation": "Kapatmak için <0>Esc</0> tuşuna bas ya da dışarı tıkla."
-  },
-  "nhkDN0": {
-    "message": "Press <0>Set up</0>: it shuffles your deck and deals your hand.",
-    "translation": "<0>Kur</0> düğmesine bas: destenı karıştırır ve elini dağıtır."
   },
   "1-TFM2": {
     "message": "Press again to confirm",
@@ -4975,9 +4975,9 @@
     "message": "Start turn",
     "translation": "Turu başlat"
   },
-  "RC3jt2": {
-    "message": "Start your turn with <0>Turn</0>. It draws your card.",
-    "translation": "Turuna <0>Tur</0> ile başla. Kartını çeker."
+  "yA0PE0": {
+    "message": "Start your turn with <0>{0}</0>. It draws your card.",
+    "translation": "Turuna <0>{0}</0> ile başla. Kartını çeker."
   },
   "p7o5f_": {
     "message": "Status",
@@ -5089,17 +5089,17 @@
     "message": "Take off damage…",
     "translation": "Hasarı kaldır…"
   },
-  "Tw8wp3": {
-    "message": "Tap <0>{0}</0> in your hand, then <1>Read</1>.",
-    "translation": "Elindeki <0>{0}</0> kartına dokun, sonra <1>Oku</1>."
+  "O3tcf1": {
+    "message": "Tap <0>{0}</0> in your hand, then <1>{1}</1>.",
+    "translation": "Elindeki <0>{0}</0> kartına dokun, ardından <1>{1}</1> seç."
   },
-  "gAdnTm": {
-    "message": "Tap <0>{0}</0>, then <1>Actions</1>: everything a card can do.",
-    "translation": "<0>{0}</0> kartına dokun, sonra <1>Eylemler</1>: bir kartın yapabildiği her şey."
+  "fU8msy": {
+    "message": "Tap <0>{0}</0>, then <1>{1}</1>: everything a card can do.",
+    "translation": "<0>{0}</0> öğesine dokun, ardından <1>{1}</1> seç: bir kartın yapabildiği her şey."
   },
-  "WPv11L": {
-    "message": "Tap <0>Commands</0>: every action, by name.",
-    "translation": "<0>Komutlar</0> düğmesine dokun: tüm eylemler, adıyla."
+  "eaLvvH": {
+    "message": "Tap <0>{0}</0>: every action, by name.",
+    "translation": "<0>{0}</0> öğesine dokun: tüm eylemler, adlarıyla."
   },
   "EyHJlN": {
     "message": "Tap a card for actions; tap again to read it.",
@@ -5113,9 +5113,9 @@
     "message": "Tap outside the menu to close it.",
     "translation": "Kapatmak için menünün dışına dokun."
   },
-  "lnQomU": {
-    "message": "Tap their <0>{0}</0>, then <1>Actions</1>.",
-    "translation": "Rakibin <0>{0}</0> kartına dokun, sonra <1>Eylemler</1>."
+  "oeltU5": {
+    "message": "Tap their <0>{0}</0>, then <1>{1}</1>.",
+    "translation": "Rakibin <0>{0}</0> öğesine dokun, ardından <1>{1}</1> seç."
   },
   "n_ll58": {
     "message": "Tap your deck to look through it.",
@@ -5283,9 +5283,9 @@
     "message": "Their Prizes",
     "translation": "Rakibin Ödül kartları"
   },
-  "IA90Ve": {
-    "message": "Their side is yours now: start their turn with <0>Turn</0>.",
-    "translation": "Artık onların tarafı senin: sırayı <0>Tur</0> ile başlat."
+  "Cedl1T": {
+    "message": "Their side is yours now: start their turn with <0>{0}</0>.",
+    "translation": "Artık onun tarafı senin: onun turunu <0>{0}</0> ile başlat."
   },
   "sMMsD3": {
     "message": "Theirs",

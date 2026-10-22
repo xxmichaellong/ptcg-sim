@@ -701,10 +701,19 @@ const Coach = ({
   const avoidRef = useRef(avoid);
   avoidRef.current = avoid;
   const avoidKey = JSON.stringify(avoid);
+  // Through a step's done moment the coach stays put against what the step
+  // pointed at, which may just have gone; it still takes its first place,
+  // and moves off a palette that opens or a window that changes size.
+  const placed = useRef(false);
+  const paletteWas = useRef(paletteOpen);
   useLayoutEffect(() => {
     const element = ref.current;
-    if (!element || settled) return;
+    if (!element) return;
+    const paletteMoved = paletteWas.current !== paletteOpen;
+    paletteWas.current = paletteOpen;
+    const hold = settled && placed.current && !paletteMoved;
     const measure = (): void => {
+      placed.current = true;
       const next = placeCoach(
         { width: element.offsetWidth, height: element.offsetHeight },
         avoidRef.current,
@@ -718,13 +727,13 @@ const Coach = ({
           : next
       );
     };
-    measure();
     // The palette lays itself out a frame after it opens.
-    const frame = requestAnimationFrame(measure);
+    const frame = hold ? 0 : requestAnimationFrame(measure);
+    if (!hold) measure();
     window.addEventListener('resize', measure);
     window.visualViewport?.addEventListener('resize', measure);
     return () => {
-      cancelAnimationFrame(frame);
+      if (frame !== 0) cancelAnimationFrame(frame);
       window.removeEventListener('resize', measure);
       window.visualViewport?.removeEventListener('resize', measure);
     };
