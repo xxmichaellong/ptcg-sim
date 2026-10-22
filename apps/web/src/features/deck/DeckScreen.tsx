@@ -5,6 +5,7 @@ import { plural } from '@lingui/core/macro';
 import { Trans, useLingui } from '@lingui/react/macro';
 import {
   checkDeck,
+  DECK_FORMATS,
   coverCardOf,
   deckTotals,
   withCatalogFacts,
@@ -928,9 +929,16 @@ export const DeckScreen = ({
               (total > 0 ? t`Unsaved deck` : t`No deck yet`);
             const name = wordName(stored);
             const [title, finish] = splitFinish(stored);
+            const slotFormat = slot.label?.format ?? 'standard';
             const playable =
-              total > 0 &&
-              checkDeck(slot.deck, slot.label?.format ?? 'standard').valid;
+              total > 0 && checkDeck(slot.deck, slotFormat).valid;
+            // The saved deck's chosen cover, as its box on the shelf shows.
+            const chosen = slot.label?.deckId
+              ? library.get(slot.label.deckId)?.coverId
+              : undefined;
+            const cover =
+              slot.deck.find((entry) => entry.card.id === chosen)?.card ??
+              coverCardOf(slot.deck, title);
             const sleeve = cardBackSource(cardBacks?.[slotTarget]);
             return (
               <div
@@ -969,7 +977,7 @@ export const DeckScreen = ({
                     {total > 0 ? (
                       <DeckBox
                         size="tray"
-                        cover={coverCardOf(slot.deck, title)}
+                        cover={cover}
                         name={title}
                         tone={deckBoxToneOf(slot.deck)}
                         invalid={!playable}
@@ -992,7 +1000,9 @@ export const DeckScreen = ({
                     </span>
                     <span
                       className="deck-screen__seat-count ds-number"
-                      data-complete={total === 60 || undefined}
+                      data-complete={
+                        total === DECK_FORMATS[slotFormat].deckSize || undefined
+                      }
                     >
                       {total}
                     </span>

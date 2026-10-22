@@ -32,7 +32,6 @@ import {
   useRef,
   useState,
   useSyncExternalStore,
-  type KeyboardEvent,
 } from 'react';
 
 import { ActionMenu } from '../../ui/ActionMenu.js';
@@ -272,7 +271,18 @@ export const DeckEditor = ({
     flashSaved();
   };
 
-  const onKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
+  const onKeyDown = (
+    event: Pick<
+      KeyboardEvent,
+      | 'metaKey'
+      | 'ctrlKey'
+      | 'altKey'
+      | 'shiftKey'
+      | 'key'
+      | 'target'
+      | 'preventDefault'
+    >
+  ): void => {
     const mod = event.metaKey || event.ctrlKey;
     if (
       mod &&
@@ -297,6 +307,31 @@ export const DeckEditor = ({
       searchRef.current?.select();
     }
   };
+
+  // The keys work with the focus left around the editor too: on the deck
+  // screen (a click on the binder's empty space, or a browser that doesn't
+  // focus a clicked button) or on the page (a pressed button went away).
+  const keys = useRef(onKeyDown);
+  keys.current = onKeyDown;
+  useEffect(() => {
+    const around = (event: KeyboardEvent): void => {
+      const root = editor.current;
+      const target = event.target;
+      if (
+        event.defaultPrevented ||
+        !root ||
+        !(target instanceof Node) ||
+        target === root ||
+        !target.contains(root) ||
+        root.closest('[inert]') !== null
+      ) {
+        return;
+      }
+      keys.current(event);
+    };
+    document.addEventListener('keydown', around);
+    return () => document.removeEventListener('keydown', around);
+  }, []);
 
   const deleteDeck = async (): Promise<void> => {
     const deckName = deck.name;

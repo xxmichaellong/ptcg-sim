@@ -248,6 +248,32 @@ describe('ActivityLauncher', () => {
     expect(tickerLines()).toEqual([]);
   });
 
+  it('names itself on focus, but not while its newest lines show below it', async () => {
+    const source = feedSource();
+    await renderLauncher(source);
+    const button = host.querySelector<HTMLButtonElement>('#activityButton')!;
+    const tip = () =>
+      document.querySelector(
+        '[data-ptcgsim-overlay="tooltip"]:not([data-ending-style])'
+      );
+    const focus = async () => {
+      await act(async () => {
+        button.blur();
+        button.focus();
+        button.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+      });
+      await settle();
+    };
+    await focus();
+    expect(tip()?.textContent).toBe('Log');
+    await act(async () => button.blur());
+    await settle();
+    await act(async () => source.push(move(OTHER, 'Red played Boss')));
+    expect(tickerLines()).toEqual(['Red played Boss']);
+    await focus();
+    expect(tip()).toBeNull();
+  });
+
   it('takes the lines over the table away when the log is cleared', async () => {
     const source = feedSource();
     await renderLauncher(source, { solo: true });

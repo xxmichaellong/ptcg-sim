@@ -1449,7 +1449,7 @@
   "LzMPRM": {
     "message": "Board",
     "context": "shortcut key caption",
-    "translation": "الطاولة"
+    "translation": "الميدان"
   },
   "mqbJ65": {
     "message": "Board",
@@ -5358,11 +5358,11 @@
   "1CZiQZ": {
     "message": "to Board",
     "context": "move a card",
-    "translation": "إلى الملعب"
+    "translation": "إلى الميدان"
   },
   "nUvd-D": {
     "message": "To board",
-    "translation": "إلى الملعب"
+    "translation": "إلى الميدان"
   },
   "FNYlfF": {
     "message": "To bottom of deck",

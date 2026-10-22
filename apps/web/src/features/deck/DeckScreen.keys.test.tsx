@@ -6,6 +6,8 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { DeckCard } from '@ptcgsim/deck-core';
+
 import { DeckLayer } from '../../session/shell/DeckLayer.js';
 import { toast } from '../../ui/toast.js';
 import type { CardCatalogSource } from './card-catalog-contract.js';
@@ -340,6 +342,80 @@ describe('the deck screen from the keyboard', () => {
     expect(document.activeElement).toBe(opener);
   });
 
+  it('leaves Tab from the page to the browser, and takes the focus back for other keys', async () => {
+    await render();
+    (document.activeElement as HTMLElement | null)?.blur();
+    expect(document.activeElement).toBe(document.body);
+    await press('Tab');
+    expect(document.activeElement).toBe(document.body);
+    await press('a');
+    expect(document.activeElement).toBe(
+      host.querySelector('.ptcgsim-deck-layer')
+    );
+  });
+
+  it('undoes in the editor with the focus fallen to the page or left on the screen', async () => {
+    const library = new DeckLibrary({ backend: null });
+    const card = (id: string, name: string): DeckCard => ({
+      id,
+      name,
+      category: 'Pokémon',
+      image: `https://example.test/${id}.png`,
+    });
+    const deck = library.create({
+      name: 'Charizard ex',
+      format: 'standard',
+      cards: [
+        { card: card('obf-125', 'Charizard ex'), count: 3 },
+        { card: card('mew-16', 'Pidgey'), count: 1 },
+      ],
+    });
+    await render(vi.fn(), library);
+    await act(async () =>
+      host
+        .querySelector<HTMLButtonElement>(
+          'button[aria-label="Edit Charizard ex"]'
+        )!
+        .click()
+    );
+    const pidgeys = () =>
+      library.get(deck.id)!.cards.find((entry) => entry.card.id === 'mew-16')
+        ?.count ?? 0;
+    const undo = (target: EventTarget) =>
+      act(async () => {
+        target.dispatchEvent(
+          new KeyboardEvent('keydown', {
+            key: 'z',
+            ctrlKey: true,
+            bubbles: true,
+            cancelable: true,
+          })
+        );
+      });
+    // The last copy's minus goes with its row, and the focus with it.
+    const minus = host.querySelector<HTMLButtonElement>(
+      'button[aria-label="Remove one Pidgey"]'
+    )!;
+    minus.focus();
+    await act(async () => minus.click());
+    expect(pidgeys()).toBe(0);
+    await undo(document.body);
+    expect(pidgeys()).toBe(1);
+    // A click on the screen's empty space leaves the focus on it.
+    await act(async () =>
+      host
+        .querySelector<HTMLButtonElement>(
+          'button[aria-label="Add one Pidgey"]'
+        )!
+        .click()
+    );
+    expect(pidgeys()).toBe(2);
+    const layer = host.querySelector<HTMLElement>('.ptcgsim-deck-layer')!;
+    layer.focus();
+    await undo(layer);
+    expect(pidgeys()).toBe(1);
+  });
+
   it('takes a name pasted onto the deck editor as lines for the deck, staying in it', async () => {
     const library = new DeckLibrary({ backend: null });
     await render(vi.fn(), library);
@@ -586,5 +662,61 @@ describe('the deck screen from the keyboard', () => {
     } finally {
       i18n.activate(locale);
     }
+  });
+});
+
+describe('the seat trays', () => {
+  const card = (id: string, name: string): DeckCard => ({
+    id,
+    name,
+    category: 'Pokémon',
+    image: `https://example.test/${id}.png`,
+  });
+  const putOn = async (name: string) => {
+    const tile = [
+      ...host.querySelectorAll<HTMLButtonElement>('button.deck-tile__choose'),
+    ].find((button) =>
+      (button.getAttribute('aria-label') ?? '').startsWith(`${name}:`)
+    )!;
+    await act(async () => tile.click());
+  };
+
+  it("show a saved deck's chosen cover, as its box on the shelf does", async () => {
+    const library = new DeckLibrary({ backend: null });
+    library.create({
+      name: 'Charizard ex',
+      format: 'standard',
+      cards: [
+        { card: card('obf-125', 'Charizard ex'), count: 3 },
+        { card: card('mew-16', 'Pidgey'), count: 4 },
+      ],
+      coverId: 'mew-16',
+    });
+    await render(vi.fn(), library);
+    await putOn('Charizard ex');
+    expect(
+      host
+        .querySelector('#nativeDeckBuilderTargetMain .deck-box img')
+        ?.getAttribute('src')
+    ).toContain('mew-16');
+  });
+
+  it('count a deck complete at its own format’s size', async () => {
+    const library = new DeckLibrary({ backend: null });
+    library.create({
+      name: 'Pocket deck',
+      format: 'pocket',
+      cards: Array.from({ length: 10 }, (_, n) => ({
+        card: card(`a1-${String(n)}`, `Mon ${String(n)}`),
+        count: 2,
+      })),
+    });
+    await render(vi.fn(), library);
+    await putOn('Pocket deck');
+    expect(
+      host
+        .querySelector('#nativeDeckBuilderTargetMain .deck-screen__seat-count')
+        ?.getAttribute('data-complete')
+    ).toBe('true');
   });
 });

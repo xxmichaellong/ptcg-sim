@@ -324,7 +324,7 @@ export const LANGUAGE_GUIDES: Readonly<Record<string, LanguageGuide>> = {
     name: 'Dutch',
     style: `Address the player as je. ${COMMUNITY}`,
     terms: {
-      'Active Spot': 'Actief',
+      'Active Spot': 'Actieve plek (as a short label: Actief)',
       Bench: 'Bank',
       'Prize cards': 'Prizes',
       'Discard Pile': 'Aflegstapel',
@@ -342,13 +342,13 @@ export const LANGUAGE_GUIDES: Readonly<Record<string, LanguageGuide>> = {
     name: 'Swedish',
     style: `Address the player as du. ${COMMUNITY}`,
     terms: {
-      'Active Spot': 'aktiv',
+      'Active Spot': 'aktiva plats (as a short label: Aktiv)',
       Bench: 'bänk',
       'Prize cards': 'priskort',
       'Discard Pile': 'kasthög',
       Deck: 'lek',
       'Lost Zone': 'Lost Zone',
-      Stadium: 'Stadion',
+      Stadium: 'stadion',
     },
   },
   tr: {
@@ -370,7 +370,7 @@ export const LANGUAGE_GUIDES: Readonly<Record<string, LanguageGuide>> = {
     name: 'Arabic',
     style: `Modern Standard Arabic, concise. Keep placeholders and Latin names as they are; the layout stays left to right. ${COMMUNITY}`,
     terms: {
-      'Active Spot': 'الخانة النشطة',
+      'Active Spot': 'الخانة النشطة (as a short label: نشط)',
       Bench: 'الاحتياط',
       'Prize cards': 'الجوائز',
       'Discard Pile': 'كومة التخلص',
@@ -384,7 +384,7 @@ export const LANGUAGE_GUIDES: Readonly<Record<string, LanguageGuide>> = {
     name: 'Vietnamese',
     style: `Address the player as bạn. ${COMMUNITY}`,
     terms: {
-      'Active Spot': 'vị trí Active',
+      'Active Spot': 'vị trí Active (as a short label: Active)',
       Bench: 'băng ghế',
       'Prize cards': 'thẻ Phần thưởng',
       'Discard Pile': 'chồng bài bỏ',

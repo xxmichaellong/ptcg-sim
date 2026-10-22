@@ -2724,9 +2724,15 @@ button.deck-check__issue {
 
   .deck-editor__back-label,
   .deck-editor__export-label,
-  .deck-editor__saved,
+  .deck-editor__saved:not([data-unsaved='true']),
   .deck-editor__on-seat {
     display: none;
+  }
+
+  /* That saving fails is kept, on its own row: nothing else says so here. */
+  .deck-editor__saved[data-unsaved='true'] {
+    grid-row: 3;
+    grid-column: 1 / -1;
   }
 
   .deck-editor__name {

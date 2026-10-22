@@ -357,9 +357,14 @@ export const ActivityLauncher = ({
           ))}
         </ol>
       ) : null}
-      {/* Below, as the bar's other buttons have theirs: beside, it would
-          cover the next button along. */}
-      <Tooltip content={open ? t`Hide log` : t`Log`} side="bottom">
+      {/* Below, as the bar's other buttons have theirs (beside, it would
+          cover the next button along), and not while the newest lines show
+          there: they say what the button is, and it would cover them. */}
+      <Tooltip
+        content={open ? t`Hide log` : t`Log`}
+        side="bottom"
+        disabled={ticker.length > 0}
+      >
         <RailButton
           id="activityButton"
           icon={ChatCircleTextIcon}

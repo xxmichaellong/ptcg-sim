@@ -47,7 +47,8 @@ export const DeckLayer = ({
     if (!open) return;
     const fromPage = (event: globalThis.KeyboardEvent): void => {
       if (event.target !== document.body || event.defaultPrevented) return;
-      if (document.activeElement === document.body) {
+      // Tab goes on from where the focus was, as the browser has it.
+      if (document.activeElement === document.body && event.key !== 'Tab') {
         layer.current?.focus({ preventScroll: true });
       }
       if (event.key === 'Escape') {

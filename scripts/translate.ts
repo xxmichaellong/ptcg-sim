@@ -84,7 +84,7 @@ export const systemPrompt = (locale: string, guide: LanguageGuide): string => {
     '- A context says which sense of a short word is meant; a comment says where the text shows or what a placeholder holds.',
     `- ${guide.style}`,
     terms
-      ? `\nUse these terms, the official ones for the game in ${guide.name}:\n${terms}`
+      ? `\nUse these terms, the ones the game and this app use in ${guide.name}; where a term gives a short label, use that on short controls and names:\n${terms}`
       : '',
     '',
     'Reply with only a JSON object {"translations": {"<key>": "<translation>", ...}} with one entry for every key you were given.',
