@@ -332,6 +332,56 @@ test('All lists for a deck with no recent finishes lists its older ones', async 
   expect(asked.at(-1)).toBe('3650');
 });
 
+test('All lists for a deck shows its recent lists, and its older ones at All time', async ({
+  page,
+}) => {
+  test.setTimeout(60_000);
+  await stubIndex(page);
+  const finish = (player: string, date: string, n: number) => ({
+    tournament: {
+      ...TOURNAMENT,
+      id: `${TOURNAMENT.id.slice(0, -1)}${String(n)}`,
+      date,
+    },
+    player: { id: player, name: player.toUpperCase() },
+    placing: 1,
+    record: { wins: 9, losses: 0, ties: 0 },
+  });
+  await page.route(`**/v2/decks/archetype/${ARCHETYPE.id}**`, (route) => {
+    const since = new URL(route.request().url()).searchParams.get('since');
+    const recent = [finish('newwin', '2026-10-10T19:00:00.000Z', 1)];
+    return route.fulfill({
+      json: {
+        archetype: ARCHETYPE,
+        finishes:
+          since === null
+            ? recent
+            : [
+                ...recent,
+                finish('oldwin', '2025-09-01T19:00:00.000Z', 2),
+                finish('oldtop', '2025-06-01T19:00:00.000Z', 3),
+              ],
+        nextCursor: null,
+      },
+    });
+  });
+  await openDeckScreen(page);
+  await page.locator('#deckPasteInput').fill('dragapult');
+  await page
+    .getByRole('region', { name: 'Tournament decks' })
+    .getByRole('button', { name: /All lists/u })
+    .first()
+    .click();
+  const lists = page.getByRole('list', {
+    name: `Lists for ${ARCHETYPE.name}`,
+  });
+  await expect(lists.getByRole('listitem')).toHaveCount(1);
+  await page.locator('#deckAllTimeButton').click();
+  await expect(lists.getByRole('listitem')).toHaveCount(3);
+  await expect(lists).toContainText('OLDWIN');
+  await expect(page.locator('#deckAllTimeButton')).toHaveCount(0);
+});
+
 test('a tournament opens and closes from the keyboard, and Esc steps back before it leaves', async ({
   page,
 }) => {

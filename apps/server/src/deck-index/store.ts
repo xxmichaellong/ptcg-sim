@@ -566,21 +566,30 @@ export class DeckIndexStore {
   /** A read failed: due again later, or given up on after a few tries. */
   recordFailure(tournamentId: string, now: number): void {
     const row = this.first(
-      'SELECT attempts, state, date FROM tournaments WHERE id = ?',
+      'SELECT attempts, state, date, retry_after FROM tournaments WHERE id = ?',
       tournamentId
     );
     if (!row) return;
-    // A live re-read of an event still running: what was read stays, and
-    // the tries kept for its read once it is over are not spent.
+    // The tries are for reading it once it is over, when the crawl is due
+    // to: a read a player asked for while it may still be running, or
+    // before the crawl's next try, spends none of them. What was read
+    // stays, and is not asked for again for a few minutes.
+    const retryAfter = nullableNumber(row.retry_after);
     if (
-      row.state === 'provisional' &&
-      now - number(row.date) < STORE_POLICY.finishedAfterMs
+      now - number(row.date) < STORE_POLICY.finishedAfterMs ||
+      (retryAfter !== null && retryAfter > now)
     ) {
-      this.sql.exec(
-        'UPDATE tournaments SET fetched_at = ? WHERE id = ?',
-        now,
-        tournamentId
-      );
+      if (
+        row.state === 'provisional' ||
+        row.state === 'indexed' ||
+        row.state === 'unconfirmed'
+      ) {
+        this.sql.exec(
+          'UPDATE tournaments SET fetched_at = ? WHERE id = ?',
+          now,
+          tournamentId
+        );
+      }
       return;
     }
     const attempts = number(row.attempts) + 1;

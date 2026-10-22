@@ -1198,6 +1198,11 @@
     "message": "All lists",
     "translation": "Lahat ng list"
   },
+  "n467_9": {
+    "message": "All time",
+    "context": "a deck's lists from every date",
+    "translation": "Lahat ng panahon"
+  },
   "X8Y2MP": {
     "message": "All to deck",
     "context": "shortcut key caption",

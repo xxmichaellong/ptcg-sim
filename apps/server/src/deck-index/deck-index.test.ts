@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { BUDGET } from './budget.js';
+import { BUDGET, nextAllowedAt } from './budget.js';
 import { CRAWL_POLICY, DeckIndex } from './deck-index.js';
 import { memoryIndexStorage } from './node-sql.test-support.js';
 
@@ -337,9 +337,7 @@ describe('the request budget', () => {
     for (let step = 0; step < 30; step += 1) {
       next = (await index.step())!;
     }
-    expect(limitless.calls).toHaveLength(
-      BUDGET.total - BUDGET.reservedForDemand
-    );
+    expect(limitless.calls).toHaveLength(BUDGET.crawl);
     expect(next).toBe(START + BUDGET.windowMs);
   });
 
@@ -761,15 +759,17 @@ describe('a tournament a player opens', () => {
     const answers = [];
     for (let n = 1; n <= 35; n += 1)
       answers.push(await index.tournament(id(n)));
-    // The list page and 29 reads fill the five minutes' 30.
-    expect(answers.filter((answer) => answer.kind === 'ok')).toHaveLength(29);
+    // Players have 15 of the five minutes' 30: the crawl keeps the rest.
+    expect(answers.filter((answer) => answer.kind === 'ok')).toHaveLength(
+      BUDGET.demand
+    );
     const refused = answers.filter((answer) => answer.kind === 'busy');
-    expect(refused).toHaveLength(6);
-    expect(refused[0]).toEqual({
-      kind: 'busy',
-      retryAfterMs: START + BUDGET.windowMs - now,
-    });
-    expect(limitless.standingsCalls()).toHaveLength(29);
+    expect(refused).toHaveLength(35 - BUDGET.demand);
+    // Until the first of them leaves the window.
+    expect(refused[0]).toEqual({ kind: 'busy', retryAfterMs: BUDGET.windowMs });
+    expect(limitless.standingsCalls()).toHaveLength(BUDGET.demand);
+    // The crawl still has its own.
+    expect(nextAllowedAt(index.budgetState(), 'crawl', now)).toBe(now);
   });
 
   it('is read again after a few minutes while under a day old', async () => {
@@ -830,6 +830,69 @@ describe('a tournament a player opens', () => {
     now = START + 13 * HOUR;
     await crawlUntilIdle(index);
     expect(limitless.standingsCalls()).toHaveLength(5);
+  });
+
+  it('spends no tries on players’ failed reads of an event still running, or before the next try is due', async () => {
+    limitless.tournaments = [
+      tournament(1, { name: 'Big Cup', players: 300, date: START - HOUR }),
+      tournament(2, {
+        name: 'Late Cup',
+        players: 300,
+        date: START - 12 * HOUR - 5 * MINUTE,
+      }),
+    ];
+    limitless.standings.set(id(1), [standing('a', 1, dragapult)]);
+    limitless.standings.set(id(2), [standing('b', 1, gardevoir)]);
+    const index = createIndex();
+    await crawl(index, 1);
+    // Limitless fails while players open both, a minute or two apart.
+    limitless.failStandings = 6;
+    for (let n = 0; n < 3; n += 1) {
+      expect((await index.tournament(id(1))).kind).toBe('busy');
+      expect((await index.tournament(id(2))).kind).toBe('busy');
+      now += 2 * MINUTE;
+    }
+    // Back again: the crawl reads both once they are over.
+    now = START + 13 * HOUR;
+    await crawlUntil(index, START + 2 * DAY);
+    for (const [deck, player] of [
+      ['dragapult', 'a'],
+      ['gardevoir', 'b'],
+    ] as const) {
+      const found = index.search(deck, 'STANDARD', 8);
+      expect(
+        found.available && found.results[0]?.best[0]?.player.id,
+        deck
+      ).toBe(player);
+    }
+  });
+
+  it('reads an event read while running once it is over, though players’ reads fail meanwhile', async () => {
+    limitless.tournaments = [
+      tournament(1, { name: 'Live Cup', players: 200, date: START - 2 * HOUR }),
+    ];
+    limitless.standings.set(id(1), [standing('b', 1, dragapult)]);
+    const index = createIndex();
+    await crawl(index, 1);
+    await index.tournament(id(1));
+    // A ten-minute outage as it ends: the crawl's read fails, then two
+    // players'.
+    limitless.failStandings = 3;
+    await crawlUntil(index, START + 10 * HOUR + MINUTE);
+    expect(limitless.standingsCalls()).toHaveLength(2);
+    now += 5 * MINUTE;
+    await index.tournament(id(1));
+    now += 5 * MINUTE;
+    await index.tournament(id(1));
+    expect(limitless.standingsCalls()).toHaveLength(4);
+    // Limitless is back: the crawl's next try, an hour on, reads it.
+    limitless.failStandings = 0;
+    await crawlUntil(index, START + 12 * HOUR);
+    expect(limitless.standingsCalls()).toHaveLength(5);
+    const answer = await index.tournament(id(1));
+    expect(answer.kind === 'ok' && answer.settled).toBe(false);
+    const found = index.search('dragapult', 'STANDARD', 8);
+    expect(found.available && found.results[0]?.best[0]?.player.id).toBe('b');
   });
 
   it('never counts an event read while running as final when every read after it fails', async () => {

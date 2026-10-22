@@ -54,17 +54,18 @@ from RK9.
    start the crawl, and the alarms keep it going.
 
 2. **A budget well under the limit.**
-   - At most 30 requests in any five minutes. The crawl may use 20; the other
-     10 are kept for a player opening a tournament not read yet, which is
-     read at once (two players asking share one read).
+   - At most 30 requests in any five minutes. The crawl may use 20 and
+     players opening a tournament not read yet 15 (read at once; two players
+     asking share one read), so players always have 10 and the crawl 15.
    - With those spent, the route answers 503 `busy` with `Retry-After`.
    - A 429, or Limitless saying none are left, stops every request until its
      window resets.
    - A failure of Limitless holds the crawl back, longer each time; a 200
      whose body isn't a list counts as one.
    - A tournament whose read fails is retried an hour later, then two, and
-     then left to players opening it. Failed re-reads of an event still
-     running, asked for by players, spend none of those tries.
+     then left to players opening it. A player's read that fails while the
+     event may still be running, or before the crawl's next try is due,
+     spends none of those tries.
    - Limitless answering an id as unknown removes it.
 3. **Everything from Limitless is untrusted, as in ADR-029.**
    - Responses are capped at 8 MB with a 15-second deadline.

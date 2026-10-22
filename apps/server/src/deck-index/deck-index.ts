@@ -26,6 +26,7 @@ import {
   readBudget,
   spend,
   type BudgetState,
+  type RequestKind,
 } from './budget.js';
 import { nameWords, searchTerms } from './normalize.js';
 import {
@@ -278,7 +279,7 @@ export class DeckIndex {
         break;
       case 'read':
       case 'resync':
-        await this.read(task.tournament, task.kind === 'resync');
+        await this.read(task.tournament, task.kind === 'resync', 'crawl');
         break;
     }
     const after = this.deps.now();
@@ -301,9 +302,10 @@ export class DeckIndex {
    */
   private async request(
     path: string,
+    kind: RequestKind,
     etag?: string
   ): Promise<LimitlessResponse> {
-    this.budget = spend(this.budget, this.deps.now());
+    this.budget = spend(this.budget, this.deps.now(), kind);
     try {
       const response = await limitlessGet(
         {
@@ -371,7 +373,8 @@ export class DeckIndex {
     let response: LimitlessResponse;
     try {
       response = await this.request(
-        `/api/tournaments?game=PTCG&limit=${String(size)}&page=${String(task.page)}`
+        `/api/tournaments?game=PTCG&limit=${String(size)}&page=${String(task.page)}`,
+        'crawl'
       );
     } catch {
       // Tried again at the next step; the page is not lost.
@@ -438,10 +441,14 @@ export class DeckIndex {
    * Reads one tournament's standings and records them. Two reads of the
    * same tournament at once share the first.
    */
-  private read(tournament: TournamentRow, conditional: boolean): Promise<void> {
+  private read(
+    tournament: TournamentRow,
+    conditional: boolean,
+    kind: RequestKind
+  ): Promise<void> {
     const pending = this.reading.get(tournament.id);
     if (pending) return pending;
-    const reading = this.readOnce(tournament, conditional).finally(() =>
+    const reading = this.readOnce(tournament, conditional, kind).finally(() =>
       this.reading.delete(tournament.id)
     );
     this.reading.set(tournament.id, reading);
@@ -450,12 +457,14 @@ export class DeckIndex {
 
   private async readOnce(
     tournament: TournamentRow,
-    conditional: boolean
+    conditional: boolean,
+    kind: RequestKind
   ): Promise<void> {
     let response: LimitlessResponse;
     try {
       response = await this.request(
         `/api/tournaments/${tournament.id}/standings`,
+        kind,
         conditional && tournament.etag ? tournament.etag : undefined
       );
     } catch (error) {
@@ -527,7 +536,7 @@ export class DeckIndex {
     if (stale && this.deps.enabled) {
       const allowedAt = nextAllowedAt(this.budget, 'demand', now);
       if (allowedAt <= now || this.reading.has(id)) {
-        await this.read(tournament, false);
+        await this.read(tournament, false, 'demand');
       } else if (!read) {
         return { kind: 'busy', retryAfterMs: allowedAt - now };
       }

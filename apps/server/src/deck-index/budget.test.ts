@@ -8,10 +8,14 @@ import {
   readBudget,
   spend,
   type BudgetState,
+  type RequestKind,
 } from './budget.js';
 
-const spendTimes = (state: BudgetState, times: readonly number[]) =>
-  times.reduce((next, at) => spend(next, at), state);
+const spendTimes = (
+  state: BudgetState,
+  times: readonly number[],
+  kind: RequestKind = 'crawl'
+) => times.reduce((next, at) => spend(next, at, kind), state);
 
 describe('the deck index request budget', () => {
   it('lets the crawl spend 20 in five minutes and keeps 10 for players', () => {
@@ -27,11 +31,40 @@ describe('the deck index request budget', () => {
     expect(nextAllowedAt(crawled, 'demand', now)).toBe(now);
     const full = spendTimes(
       crawled,
-      Array.from({ length: 10 }, (_, index) => now + index)
+      Array.from({ length: 10 }, (_, index) => now + index),
+      'demand'
     );
     expect(nextAllowedAt(full, 'demand', now + 10)).toBe(
       start + BUDGET.windowMs
     );
+  });
+
+  it('lets players spend 15, and never leaves the crawl fewer than 15', () => {
+    const start = 1_000_000;
+    // Players open 15 unread tournaments at once: theirs is spent...
+    const opened = spendTimes(
+      EMPTY_BUDGET,
+      Array.from({ length: 15 }, (_, index) => start + index),
+      'demand'
+    );
+    const now = start + 20;
+    expect(nextAllowedAt(opened, 'demand', now)).toBe(start + BUDGET.windowMs);
+    // ...and the crawl still goes, 15 times, before the window is full.
+    expect(nextAllowedAt(opened, 'crawl', now)).toBe(now);
+    const full = spendTimes(
+      opened,
+      Array.from({ length: 15 }, (_, index) => now + index)
+    );
+    expect(nextAllowedAt(full, 'crawl', now + 15)).toBe(
+      start + BUDGET.windowMs
+    );
+  });
+
+  it('reads a budget stored before players were told apart as all crawl', () => {
+    const stored = readBudget(
+      JSON.stringify({ spent: [1, 2], blockedUntil: 0 })
+    );
+    expect(stored).toEqual({ spent: [1, 2], demand: [], blockedUntil: 0 });
   });
 
   it('forgets requests that have left the window', () => {
@@ -41,7 +74,7 @@ describe('the deck index request budget', () => {
     );
     const later = BUDGET.windowMs + 100;
     expect(nextAllowedAt(state, 'crawl', later)).toBe(later);
-    expect(spend(state, later).spent).toEqual([later]);
+    expect(spend(state, later, 'crawl').spent).toEqual([later]);
   });
 
   it('stops every request after a 429 until Limitless says, or five minutes', () => {
@@ -84,6 +117,6 @@ describe('the deck index request budget', () => {
     );
     expect(
       readBudget(JSON.stringify({ spent: [1, 2], blockedUntil: 3 }))
-    ).toEqual({ spent: [1, 2], blockedUntil: 3 });
+    ).toEqual({ spent: [1, 2], demand: [], blockedUntil: 3 });
   });
 });

@@ -2,18 +2,21 @@
  * How often the deck index may call Limitless. Its public API allows 50
  * requests per five minutes per caller, and without a key the Worker shares
  * that with whoever else calls from Cloudflare's addresses, so the index
- * keeps well under it: at most 30 in any five minutes, of which the crawl
- * may use 20 and the rest stay for a player opening a tournament not read
- * yet. A 429, or Limitless saying none are left, stops every request until
- * its window resets.
+ * keeps well under it: at most 30 in any five minutes. The crawl may use 20
+ * of them and players opening a tournament not read yet 15, so neither can
+ * leave the other none: players always have 10, the crawl 15. A 429, or
+ * Limitless saying none are left, stops every request until its window
+ * resets.
  */
 import type { LimitlessRateLimit } from '../limitless.js';
 
 export const BUDGET = Object.freeze({
   windowMs: 5 * 60 * 1000,
   total: 30,
-  /** Kept back from the crawl for players' own requests. */
-  reservedForDemand: 10,
+  /** The most the crawl may spend. */
+  crawl: 20,
+  /** The most players' own requests may spend. */
+  demand: 15,
   /** How long a 429 holds requests back when Limitless doesn't say. */
   defaultBlockMs: 5 * 60 * 1000,
   /** Never held back longer than this, whatever a header says. */
@@ -25,17 +28,38 @@ export type RequestKind = 'crawl' | 'demand';
 export interface BudgetState {
   /** When each request in the current window was made. */
   readonly spent: readonly number[];
+  /** Which of them players asked for (the rest were the crawl's). */
+  readonly demand: readonly number[];
   /** No request before this. */
   readonly blockedUntil: number;
 }
 
-export const EMPTY_BUDGET: BudgetState = { spent: [], blockedUntil: 0 };
+export const EMPTY_BUDGET: BudgetState = {
+  spent: [],
+  demand: [],
+  blockedUntil: 0,
+};
 
-const live = (state: BudgetState, now: number): readonly number[] =>
-  state.spent.filter((at) => at > now - BUDGET.windowMs && at <= now);
+const inWindow = (times: readonly number[], now: number): number[] =>
+  times.filter((at) => at > now - BUDGET.windowMs && at <= now);
 
-const allowance = (kind: RequestKind): number =>
-  kind === 'crawl' ? BUDGET.total - BUDGET.reservedForDemand : BUDGET.total;
+/** The crawl's requests: all of them less the players'. */
+const crawlTimes = (state: BudgetState, now: number): number[] => {
+  const crawl = inWindow(state.spent, now);
+  for (const at of inWindow(state.demand, now)) {
+    const index = crawl.indexOf(at);
+    if (index >= 0) crawl.splice(index, 1);
+  }
+  return crawl;
+};
+
+/** When a window holding these requests has room for one more of `cap`. */
+const roomAt = (times: readonly number[], cap: number): number => {
+  const sorted = [...times].sort((left, right) => left - right);
+  const over = sorted.length - cap + 1;
+  // The oldest requests have to leave the window first.
+  return over > 0 ? sorted[over - 1]! + BUDGET.windowMs : 0;
+};
 
 /**
  * When a request of this kind may next be made: `now` if it may be made
@@ -46,18 +70,26 @@ export const nextAllowedAt = (
   kind: RequestKind,
   now: number
 ): number => {
-  const spent = [...live(state, now)].sort((left, right) => left - right);
-  let at = Math.max(now, state.blockedUntil);
-  const over = spent.length - allowance(kind) + 1;
-  if (over > 0) {
-    // The oldest requests have to leave the window first.
-    at = Math.max(at, spent[over - 1]! + BUDGET.windowMs);
-  }
-  return at;
+  return Math.max(
+    now,
+    state.blockedUntil,
+    roomAt(inWindow(state.spent, now), BUDGET.total),
+    kind === 'crawl'
+      ? roomAt(crawlTimes(state, now), BUDGET.crawl)
+      : roomAt(inWindow(state.demand, now), BUDGET.demand)
+  );
 };
 
-export const spend = (state: BudgetState, now: number): BudgetState => ({
-  spent: [...live(state, now), now],
+export const spend = (
+  state: BudgetState,
+  now: number,
+  kind: RequestKind
+): BudgetState => ({
+  spent: [...inWindow(state.spent, now), now],
+  demand:
+    kind === 'demand'
+      ? [...inWindow(state.demand, now), now]
+      : inWindow(state.demand, now),
   blockedUntil: state.blockedUntil,
 });
 
@@ -81,7 +113,8 @@ export const observe = (
       BUDGET.defaultBlockMs
   );
   return {
-    spent: live(state, now),
+    spent: inWindow(state.spent, now),
+    demand: inWindow(state.demand, now),
     blockedUntil: Math.max(state.blockedUntil, now + Math.max(1_000, wait)),
   };
 };
@@ -98,8 +131,15 @@ export const readBudget = (value: unknown): BudgetState => {
       (parsed as BudgetState).spent.every((at) => Number.isFinite(at)) &&
       Number.isFinite((parsed as BudgetState).blockedUntil)
     ) {
+      // A budget stored before players' requests were told apart has
+      // none: all of it counts as the crawl's.
+      const demand = (parsed as Partial<BudgetState>).demand;
       return {
         spent: (parsed as BudgetState).spent.slice(-BUDGET.total * 2),
+        demand:
+          Array.isArray(demand) && demand.every((at) => Number.isFinite(at))
+            ? demand.slice(-BUDGET.total * 2)
+            : [],
         blockedUntil: (parsed as BudgetState).blockedUntil,
       };
     }

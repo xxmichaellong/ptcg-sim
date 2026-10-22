@@ -249,7 +249,15 @@ describe('tournament deck search', () => {
       );
       const pending = fetchDeckSearch('dragapult', { fetch });
       const settled = pending.catch((error: unknown) => error);
-      await vi.advanceTimersByTimeAsync(10_001);
+      // Not before the server's own 15 s wait for Limitless is up.
+      await vi.advanceTimersByTimeAsync(15_001);
+      let given = false;
+      void settled.then(() => {
+        given = true;
+      });
+      await Promise.resolve();
+      expect(given).toBe(false);
+      await vi.advanceTimersByTimeAsync(5_000);
       expect(await settled).toBeInstanceOf(DOMException);
     } finally {
       vi.useRealTimers();

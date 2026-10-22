@@ -770,26 +770,35 @@ export const ArchetypeView = ({
 }) => {
   const { t } = useLingui();
   // Recent finishes first; a deck with none recent (which search shows from
-  // all time) lists all its finishes, as its search result did.
+  // all time) lists all its finishes, as its search result did. Its older
+  // ones (the search result counts every list) are a press away.
   const allTimeFor = useRef<string | null>(null);
-  const paged = usePaged(archetype.id, async (cursor, options) => {
-    const read = (allTime: boolean) =>
-      fetchArchetypeFinishes(archetype.id, {
-        ...options,
-        ...(cursor ? { cursor } : {}),
-        ...(allTime ? { since: ALL_TIME_DAYS } : {}),
-      });
-    let page = await read(allTimeFor.current === archetype.id);
-    if (
-      !cursor &&
-      page.finishes.length === 0 &&
-      allTimeFor.current !== archetype.id
-    ) {
-      allTimeFor.current = archetype.id;
-      page = await read(true);
+  const [fellBack, setFellBack] = useState(false);
+  const [older, setOlder] = useState(false);
+  const allTime = older || fellBack;
+  const paged = usePaged(
+    older ? `${archetype.id}:all` : archetype.id,
+    async (cursor, options) => {
+      const read = (wide: boolean) =>
+        fetchArchetypeFinishes(archetype.id, {
+          ...options,
+          ...(cursor ? { cursor } : {}),
+          ...(wide ? { since: ALL_TIME_DAYS } : {}),
+        });
+      let page = await read(older || allTimeFor.current === archetype.id);
+      if (
+        !cursor &&
+        !older &&
+        page.finishes.length === 0 &&
+        allTimeFor.current !== archetype.id
+      ) {
+        allTimeFor.current = archetype.id;
+        setFellBack(true);
+        page = await read(true);
+      }
+      return { items: page.finishes, nextCursor: page.nextCursor };
     }
-    return { items: page.finishes, nextCursor: page.nextCursor };
-  });
+  );
   const finishes = useMemo(
     () => (paged.state.status === 'ready' ? paged.state.value : []),
     [paged.state]
@@ -822,6 +831,15 @@ export const ArchetypeView = ({
                 onClick={paged.more}
               >
                 <Trans context="show more lists">More</Trans>
+              </button>
+            ) : !allTime && finishes.length > 0 ? (
+              <button
+                type="button"
+                id="deckAllTimeButton"
+                className="ds-button ds-button--ghost deck-show-more"
+                onClick={() => setOlder(true)}
+              >
+                <Trans context="a deck's lists from every date">All time</Trans>
               </button>
             ) : null}
             <TournamentCredit />

@@ -122,7 +122,9 @@ export class TournamentDataBusyError extends Error {
 }
 
 const MAXIMUM_RESPONSE_CODE_UNITS = 4_000_000;
-const REQUEST_TIMEOUT_MS = 10_000;
+// Longer than the server's own wait for Limitless (15 s) on a first read,
+// so a slow answer that arrives isn't given up on here first.
+const REQUEST_TIMEOUT_MS = 20_000;
 const MAX_NAME = 200;
 const MAX_LIST_TEXT = 20_000;
 const MAX_RESULTS = 50;
