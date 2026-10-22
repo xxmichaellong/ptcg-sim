@@ -5325,7 +5325,7 @@
     "comments": [
       "\"To active\" is the name of another shortcut in this list."
     ],
-    "translation": "然后按“放到战斗场”以背面朝上打出"
+    "translation": "然后按“移至战斗场”以背面朝上打出"
   },
   "DNMX9-": {
     "message": "They bring up the next: drag a <0>{0}</0> from their Bench to their Active Spot.",

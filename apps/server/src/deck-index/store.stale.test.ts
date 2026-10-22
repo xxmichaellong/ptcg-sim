@@ -149,3 +149,38 @@ describe('rows stored before the reads were bounded', () => {
     ).toEqual([hex(1), hex(3)]);
   });
 });
+
+describe('a read that ends after its event left the index', () => {
+  it('keeps nothing, whether the event was forgotten or skipped meanwhile', () => {
+    const storage = memoryIndexStorage();
+    const index = new DeckIndex({
+      storage,
+      fetch: offline,
+      now: () => START,
+      enabled: false,
+    });
+    index.migrate();
+    const store = new DeckIndexStore(storage);
+    const listed = (n: number, otherFormat = false) => ({
+      id: hex(n),
+      name: `Cup ${String(n)}`,
+      date: START - 3 * DAY,
+      format: otherFormat ? null : ('STANDARD' as const),
+      otherFormat,
+      players: 64,
+      organizerId: 1,
+      indexable: !otherFormat,
+    });
+    store.recordListed([listed(1), listed(2)], START);
+    // One is forgotten, the other listed again as GLC, while both are read.
+    store.forget(hex(1));
+    store.recordListed([listed(2, true)], START);
+    const read = { now: START, etag: null, provisional: false };
+    const hashes = new Map([[LIST, 'h1']]);
+    store.recordStandings(hex(1), [entry('p1', 1)], hashes, read);
+    store.recordStandings(hex(2), [entry('p2', 1)], hashes, read);
+    expect(store.tournament(hex(1))).toBeNull();
+    expect(store.tournament(hex(2))?.state).toBe('skipped');
+    expect(store.hasLists()).toBe(false);
+  });
+});

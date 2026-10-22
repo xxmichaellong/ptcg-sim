@@ -590,7 +590,7 @@
     "comments": [
       "Log line: a player set up for a game (seven cards in hand, Prize cards laid out). {name} is a player's name."
     ],
-    "translation": "{name} drog starthand och la ut belöningskort"
+    "translation": "{name} drog starthand och la ut priskort"
   },
   "01JuD1": {
     "message": "{name} flipped {result, select, heads {heads} other {tails}}",
@@ -4780,7 +4780,7 @@
   },
   "DIHxqq": {
     "message": "Shuffle prizes",
-    "translation": "Blanda vinstkorten"
+    "translation": "Blanda priskorten"
   },
   "pYUbhf": {
     "message": "Shuffle Prizes",

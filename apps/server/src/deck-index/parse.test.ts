@@ -97,6 +97,14 @@ describe('the tournament list', () => {
       [id(4), false],
       [id(5), false],
     ]);
+    // GLC is a format, not none yet: an event listed so leaves the index.
+    expect(rows.map((row) => row.otherFormat === true)).toEqual([
+      false,
+      true,
+      false,
+      false,
+      false,
+    ]);
     expect(rows[0]).toEqual({
       id: id(1),
       name: 'Weekly',

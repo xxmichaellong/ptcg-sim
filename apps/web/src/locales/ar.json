@@ -520,7 +520,7 @@
     "comments": [
       "A zone's name for screen readers; name is its player. The Active Spot."
     ],
-    "translation": "المقاتل النشط لدى {name}"
+    "translation": "الخانة النشطة لدى {name}"
   },
   "2jVmMm": {
     "message": "{name} attacked",
@@ -534,7 +534,7 @@
     "comments": [
       "A zone's name for screen readers; name is its player. The Bench."
     ],
-    "translation": "مقاعد {name} الاحتياطية"
+    "translation": "احتياط {name}"
   },
   "Mk1A2U": {
     "message": "{name} board",
@@ -5325,7 +5325,7 @@
     "comments": [
       "\"To active\" is the name of another shortcut in this list."
     ],
-    "translation": "ثم اضغط «إلى النشط» للعبها مقلوبة"
+    "translation": "ثم اضغط «إلى الخانة النشطة» للعبها مقلوبة"
   },
   "DNMX9-": {
     "message": "They bring up the next: drag a <0>{0}</0> from their Bench to their Active Spot.",
@@ -5349,7 +5349,7 @@
   },
   "dPBKWL": {
     "message": "To active",
-    "translation": "إلى الفعّال"
+    "translation": "إلى الخانة النشطة"
   },
   "9P13ox": {
     "message": "To bench",

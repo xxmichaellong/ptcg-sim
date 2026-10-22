@@ -50,7 +50,9 @@ from RK9.
    Only Standard and Expanded events of at least 8 players and real dates
    are read; their lists are 60 cards. One listed before it had them (players
    still registering, no format yet) is taken up once a later page shows it
-   worth reading. The daily cron and the first request
+   worth reading. One listed again in a format whose lists aren't kept
+   leaves the search with its lists, and a read ending after that keeps
+   nothing. The daily cron and the first request
    start the crawl, and the alarms keep it going.
 
 2. **A budget well under the limit.**

@@ -355,6 +355,26 @@ export class DeckIndexStore {
         );
         if (existing) {
           known.add(row.id);
+          if (row.otherFormat === true && existing.state !== 'skipped') {
+            // Its format changed to one whose lists aren't kept: it leaves
+            // the search and the crawl, its lists with it, as a skipped one.
+            this.sql.exec(
+              'DELETE FROM tournament_fts WHERE rowid = ?',
+              number(existing.rid)
+            );
+            this.sql.exec(
+              'DELETE FROM entries WHERE tournament_id = ?',
+              row.id
+            );
+            this.sql.exec(
+              `UPDATE tournaments SET name = ?, players = ?, date = ?, format = NULL, state = 'skipped', has_lists = NULL, attempts = 0, retry_after = NULL, etag = NULL, fetched_at = NULL WHERE id = ?`,
+              row.name,
+              row.players,
+              row.date,
+              row.id
+            );
+            continue;
+          }
           this.sql.exec(
             'UPDATE tournaments SET name = ?, players = ?, date = ?, format = COALESCE(?, format) WHERE id = ?',
             row.name,
@@ -495,6 +515,13 @@ export class DeckIndexStore {
     }
   ): void {
     this.storage.transaction(() => {
+      // A read that ends after its event was forgotten or skipped keeps
+      // nothing: its lists would be searched with no event to show.
+      const current = this.first(
+        'SELECT state FROM tournaments WHERE id = ?',
+        tournamentId
+      );
+      if (!current || current.state === 'skipped') return;
       this.sql.exec(
         'DELETE FROM entries WHERE tournament_id = ?',
         tournamentId

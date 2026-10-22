@@ -38,6 +38,8 @@ export interface ListedTournament {
   readonly date: number;
   /** Null for a format whose lists aren't kept (or a row with none). */
   readonly format: IndexedFormat | null;
+  /** Listed in a format whose lists aren't kept, not merely none yet. */
+  readonly otherFormat?: boolean;
   readonly players: number;
   readonly organizerId: number | null;
   /** Worth indexing: a kept format, a real date, enough players. */
@@ -73,6 +75,10 @@ export const readTournamentList = (value: unknown): ListedTournament[] => {
         ? (players as number)
         : 0;
     const format = isIndexedFormat(entry.format) ? entry.format : null;
+    const otherFormat =
+      format === null &&
+      typeof entry.format === 'string' &&
+      entry.format.trim() !== '';
     rows.push({
       id,
       name,
@@ -87,6 +93,7 @@ export const readTournamentList = (value: unknown): ListedTournament[] => {
         format !== null &&
         time >= PARSE_LIMITS.earliestDate &&
         count >= PARSE_LIMITS.minimumPlayers,
+      ...(otherFormat ? { otherFormat: true } : {}),
     });
   }
   return rows;

@@ -215,8 +215,9 @@ test('a deck chosen while an import still reads keeps the seat', async ({
   test.setTimeout(90_000);
   // The catalog still building: a list import waits for it a moment.
   await routeCardCatalog(page, { building: true });
-  // Limitless answers only once the deck is chosen, so the import is
-  // still reading when the choice is made however slow the run.
+  // A list the parser can't place alone asks Limitless, which answers only
+  // once the deck is chosen: the import is still reading when the choice
+  // is made, however slow the run.
   let answer = (): void => undefined;
   const chosen = new Promise<void>((resolve) => {
     answer = resolve;
@@ -241,12 +242,11 @@ test('a deck chosen while an import still reads keeps the seat', async ({
   await expect(dreepy.locator('.deck-tile__count')).toContainText('4/60');
 
   // A list starts importing, then the player picks the saved deck.
-  await pasteOnScreen(page, LIST);
+  await pasteOnScreen(page, 'Pokémon: 4\n4 Dreepy\n\nTrainer: 4\n4 Iono');
   await dreepy.getByRole('button', { name: /put on P1/u }).click();
-  // Past the import's wait, and Limitless answered: the choice stands.
-  await page.waitForTimeout(3_500);
   answer();
-  await page.waitForTimeout(1_000);
+  // Past the import's wait for the catalog and Limitless: the choice stands.
+  await page.waitForTimeout(3_500);
   await expect(seatCount(page)).toHaveAttribute('data-card-count', '4');
   await expect(
     page.getByRole('list', { name: 'Your decks' }).getByRole('listitem')

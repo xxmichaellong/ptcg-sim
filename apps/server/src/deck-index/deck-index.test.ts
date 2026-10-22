@@ -308,6 +308,39 @@ describe('discovering tournaments', () => {
     expect(await index.tournament(id(1))).toMatchObject({ kind: 'ok' });
   });
 
+  it('drops a tournament listed again in a format whose lists aren’t kept, and takes it up if it changes back', async () => {
+    limitless.tournaments = [
+      tournament(1, { name: 'Weekly', date: START - 3 * DAY }),
+    ];
+    limitless.standings.set(id(1), [standing('a', 1, dragapult)]);
+    const index = createIndex();
+    await crawlUntilIdle(index);
+    const finishes = () => {
+      const found = index.search('dragapult', 'STANDARD', 8);
+      return found.available
+        ? found.results.flatMap((result) =>
+            result.best.map((finish) => finish.player.id)
+          )
+        : [];
+    };
+    expect(finishes()).toEqual(['a']);
+    // Its organizer changes the format to one whose lists aren't kept.
+    limitless.tournaments = [
+      tournament(1, { name: 'Weekly', date: START - 3 * DAY, format: 'GLC' }),
+    ];
+    now += CRAWL_POLICY.discoveryEveryMs;
+    await crawlUntilIdle(index);
+    expect(finishes()).toEqual([]);
+    expect(await index.tournament(id(1))).toEqual({ kind: 'not_found' });
+    // And back: it is read again.
+    limitless.tournaments = [
+      tournament(1, { name: 'Weekly', date: START - 3 * DAY }),
+    ];
+    now += CRAWL_POLICY.discoveryEveryMs;
+    await crawlUntilIdle(index);
+    expect(finishes()).toEqual(['a']);
+  });
+
   it('holds back longer each time Limitless answers a list with nonsense', async () => {
     limitless.tournaments = [tournament(1, { players: 4 })];
     for (let n = 0; n < 1_000; n += 1) {
@@ -410,34 +443,31 @@ describe('the request budget', () => {
     expect(pages.length).toBeLessThan(10);
   });
 
-  it('forgets no more than a couple of events in a run Limitless calls unknown, across discoveries and restarts', async () => {
+  it('forgets no more than a couple of events in a run Limitless calls unknown, though its list keeps answering', async () => {
     const events = [1, 2, 3, 4, 5, 6];
     limitless.tournaments = events.map((n) =>
       tournament(n, { date: START - 2 * DAY - n * HOUR })
     );
+    // Newer events too small to read fill the list's first page, so the
+    // six are never listed afresh.
+    for (let n = 1; n <= CRAWL_POLICY.incrementalPageSize; n += 1) {
+      limitless.tournaments.push(
+        tournament(1000 + n, {
+          date: START - 2 * DAY + n * MINUTE,
+          players: 4,
+        })
+      );
+    }
     for (const n of events) {
       limitless.standings.set(id(n), [standing('p', 1, dragapult)]);
     }
-    const storage = memoryIndexStorage();
-    const start = () => {
-      const index = new DeckIndex({
-        storage,
-        fetch: limitless.fetch,
-        now: clock,
-        enabled: true,
-      });
-      index.migrate();
-      return index;
-    };
-    let index = start();
+    const index = createIndex();
     await crawlUntilIdle(index);
     // Limitless answers every standings id as unknown (a storm, not six
     // events gone), while its list keeps answering: the weekly re-reads
-    // forget two, then hold back -- through discoveries and a restart.
+    // forget two, then hold back through every discovery.
     limitless.standings.clear();
     now = START + 8 * DAY;
-    await crawlUntil(index, START + 8 * DAY + 2 * HOUR);
-    index = start();
     await crawlUntil(index, START + 8 * DAY + 4 * HOUR);
     const kept = [];
     for (const n of events) {

@@ -261,7 +261,7 @@
     "comments": [
       "Log line. {actor} is a player's name."
     ],
-    "translation": "{actor} heeft de prijskaarten onder in het deck geschud"
+    "translation": "{actor} heeft de Prizes onder in het deck geschud"
   },
   "xw6Fj3": {
     "message": "{actor} switched {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} with top of deck",
@@ -590,7 +590,7 @@
     "comments": [
       "Log line: a player set up for a game (seven cards in hand, Prize cards laid out). {name} is a player's name."
     ],
-    "translation": "{name} trok de beginhand en legde de prijskaarten neer"
+    "translation": "{name} trok de beginhand en legde de Prizes neer"
   },
   "01JuD1": {
     "message": "{name} flipped {result, select, heads {heads} other {tails}}",
@@ -696,7 +696,7 @@
     "comments": [
       "A zone's name for screen readers; name is its player. The Prize cards."
     ],
-    "translation": "Prijskaarten van {name}"
+    "translation": "Prizes van {name}"
   },
   "g7DH0W": {
     "message": "{name} reconnected",
@@ -4780,7 +4780,7 @@
   },
   "DIHxqq": {
     "message": "Shuffle prizes",
-    "translation": "Prijskaarten schudden"
+    "translation": "Prizes schudden"
   },
   "pYUbhf": {
     "message": "Shuffle Prizes",
@@ -4800,7 +4800,7 @@
   },
   "7cboVh": {
     "message": "Shuffle, draw 7, set 6 prizes",
-    "translation": "Schudden, 7 trekken, 6 prijskaarten leggen"
+    "translation": "Schudden, 7 trekken, 6 Prizes leggen"
   },
   "lzdYF4": {
     "message": "Sideways scan",
@@ -5298,7 +5298,7 @@
   },
   "EO0v0p": {
     "message": "Their Prizes",
-    "translation": "Zijn Prijskaarten"
+    "translation": "Zijn Prizes"
   },
   "Cedl1T": {
     "message": "Their side is yours now: start their turn with <0>{0}</0>.",
@@ -5325,7 +5325,7 @@
     "comments": [
       "\"To active\" is the name of another shortcut in this list."
     ],
-    "translation": "Druk daarna op Naar actief om hem open en bloot te spelen"
+    "translation": "Druk daarna op Naar actief om hem met de achterkant naar boven te spelen"
   },
   "DNMX9-": {
     "message": "They bring up the next: drag a <0>{0}</0> from their Bench to their Active Spot.",
@@ -5419,7 +5419,7 @@
   },
   "boV1kL": {
     "message": "To prizes",
-    "translation": "Naar prijskaarten"
+    "translation": "Naar Prizes"
   },
   "cayrWn": {
     "message": "To stadium",
@@ -5832,7 +5832,7 @@
   },
   "XzwcHS": {
     "message": "Your Prizes",
-    "translation": "Je Prijskaarten"
+    "translation": "Je Prizes"
   },
   "yuM-lV": {
     "message": "Your turn",

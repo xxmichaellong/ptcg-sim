@@ -1,3 +1,4 @@
+import { i18n } from '@lingui/core';
 import type { BasicEnergyType, DeckCard, DeckList } from '@ptcgsim/deck-core';
 import { basicEnergyTypeOf, hasRuleBox } from '@ptcgsim/deck-core';
 import type { CSSProperties } from 'react';
@@ -72,17 +73,22 @@ export const deckBoxToneOf = (
  * Only a picture -- the button around it carries the name and the action.
  */
 /**
- * The first character a reader sees: a whole flag, family or accented
- * letter (a grapheme), never a part of one.
+ * The first character a reader sees, as a capital in the page's language:
+ * a whole flag, family or accented letter (a grapheme), never a part of
+ * one, and never an invisible mark or space before it.
  */
-const firstCharacter = (text: string): string => {
-  if (typeof Intl.Segmenter === 'function') {
-    const [first] = new Intl.Segmenter(undefined, {
-      granularity: 'grapheme',
-    }).segment(text);
-    return first?.segment ?? '';
-  }
-  return Array.from(text)[0] ?? '';
+const initialOf = (text: string): string => {
+  const locale = i18n.locale || undefined;
+  const seen = text.replace(/^[\s\p{Cf}]+/u, '');
+  const first =
+    typeof Intl.Segmenter === 'function'
+      ? ([
+          ...new Intl.Segmenter(locale, { granularity: 'grapheme' }).segment(
+            seen
+          ),
+        ][0]?.segment ?? '')
+      : (Array.from(seen)[0] ?? '');
+  return first.toLocaleUpperCase(locale);
 };
 
 export const DeckBox = ({
@@ -132,9 +138,7 @@ export const DeckBox = ({
               draggable={false}
             />
           ) : (
-            <span className="deck-box__initial">
-              {firstCharacter(name).toUpperCase()}
-            </span>
+            <span className="deck-box__initial">{initialOf(name)}</span>
           )}
         </span>
         <span className="deck-box__gloss" />

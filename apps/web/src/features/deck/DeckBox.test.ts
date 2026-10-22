@@ -1,3 +1,4 @@
+import { i18n } from '@lingui/core';
 import type { DeckCard, DeckList } from '@ptcgsim/deck-core';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -26,6 +27,25 @@ describe('a deck box', () => {
     expect(initial('🇯🇵 Japan Nats')).toBe('🇯🇵');
     expect(initial('👨‍👩‍👧 Family')).toBe('👨‍👩‍👧');
     expect(initial('e\u0301clair')).toBe('E\u0301');
+    // Never a blank box for an invisible mark or space before the name.
+    expect(initial('\u200Fdragons')).toBe('D');
+    expect(initial('\u200B dragons')).toBe('D');
+    expect(initial('\uFEFFdragons')).toBe('D');
+  });
+
+  it('capitalises its initial as the page’s language does', () => {
+    const locale = i18n.locale;
+    i18n.load('tr', {});
+    i18n.activate('tr');
+    try {
+      expect(
+        renderToStaticMarkup(
+          createElement(DeckBox, { cover: undefined, name: 'ilk deste' })
+        )
+      ).toContain('class="deck-box__initial">İ<');
+    } finally {
+      i18n.activate(locale);
+    }
   });
 
   it('wears the colour of the basic Energy its deck plays most of', () => {
