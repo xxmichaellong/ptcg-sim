@@ -81,6 +81,18 @@ import {
   type CurrentDeckFeed,
 } from './current-decks.js';
 import {
+  DeckIndex,
+  type PlayerListAnswer,
+  type SearchAnswer,
+  type TournamentAnswer,
+} from './deck-index/deck-index.js';
+import {
+  deckIndexRoute,
+  handleDeckIndexRequest,
+  type DeckIndexRoute,
+} from './deck-index/http.js';
+import type { IndexedFormat } from './deck-index/parse.js';
+import {
   DurableRoomSnapshotStore,
   RoomAlreadyInitializedError,
 } from './durable-storage.js';
@@ -127,6 +139,7 @@ interface Env {
   readonly PTCG_ROOM: DurableObjectNamespace<PtcgRoom>;
   readonly PTCG_DECK_FEED: DurableObjectNamespace<PtcgDeckFeed>;
   readonly PTCG_CARD_CATALOG: DurableObjectNamespace<PtcgCardCatalog>;
+  readonly PTCG_DECK_INDEX: DurableObjectNamespace<PtcgDeckIndex>;
   /** Optional secret: a Limitless API key raises its rate limit. */
   readonly LIMITLESS_API_KEY?: string;
   /**
@@ -134,6 +147,12 @@ interface Env {
    * which serve their own fixture); anything else, or nothing, builds it.
    */
   readonly CARD_CATALOG_SOURCE?: string;
+  /**
+   * `off` keeps the tournament deck index from calling Limitless at all
+   * (browser specs, which serve their own answers); anything else, or
+   * nothing, crawls it.
+   */
+  readonly DECK_INDEX_SOURCE?: string;
   readonly CONTINUATION_CREATION_RATE_LIMITER: RateLimit;
   readonly CONTINUATION_RESTORE_RATE_LIMITER: RateLimit;
   readonly CONTINUATION_REVOCATION_RATE_LIMITER: RateLimit;
@@ -1248,10 +1267,141 @@ export class PtcgCardCatalog extends DurableObject<Env> {
   }
 }
 
+/** One index for everyone, built from Limitless's online tournaments. */
+const DECK_INDEX_NAME = 'index';
+/** Finishes and tournaments per page. */
+const DECK_INDEX_PAGE_SIZE = 50;
+/** After a crawl step throws, the next one waits this long. */
+const DECK_INDEX_FAILURE_DELAY_MS = 10 * 60 * 1000;
+
+/**
+ * The tournament deck index (deck-index/, ADR-037): Limitless's online
+ * tournaments, their standings and lists, crawled one request per alarm
+ * step within a budget, and searchable by deck name. The daily cron and the
+ * first request start the crawl; its alarms keep it going.
+ */
+export class PtcgDeckIndex extends DurableObject<Env> {
+  private readonly telemetry = createTelemetry('deck_index', this.env.BUILD_ID);
+  private readonly index: DeckIndex;
+
+  constructor(ctx: DurableObjectState, env: Env) {
+    super(ctx, env);
+    this.index = new DeckIndex({
+      storage: {
+        sql: ctx.storage.sql,
+        transaction: (body) => ctx.storage.transactionSync(body),
+      },
+      fetch: (input, init) => fetch(input, init),
+      now: Date.now,
+      enabled: env.DECK_INDEX_SOURCE !== 'off',
+      ...(env.LIMITLESS_API_KEY ? { apiKey: env.LIMITLESS_API_KEY } : {}),
+    });
+    void ctx.blockConcurrencyWhile(async () => {
+      this.index.migrate();
+    });
+  }
+
+  /** Starts the crawl if no step is scheduled. */
+  private async crawl(): Promise<void> {
+    if (!this.index.enabled) return;
+    if ((await this.ctx.storage.getAlarm()) === null) {
+      await this.ctx.storage.setAlarm(Date.now() + 1_000);
+    }
+  }
+
+  /** The cron's entry point: discover new tournaments now. */
+  async refresh(): Promise<void> {
+    if (!this.index.enabled) return;
+    this.index.discoverSoon();
+    await this.ctx.storage.setAlarm(Date.now() + 1_000);
+  }
+
+  async search(
+    query: string,
+    format: IndexedFormat,
+    limit: number
+  ): Promise<SearchAnswer> {
+    await this.crawl();
+    return this.index.search(query, format, limit);
+  }
+
+  async archetype(
+    id: string,
+    format: IndexedFormat,
+    sinceDays: number,
+    offset: number
+  ): Promise<ReturnType<DeckIndex['archetype']>> {
+    await this.crawl();
+    return this.index.archetype(
+      id,
+      format,
+      sinceDays,
+      offset,
+      DECK_INDEX_PAGE_SIZE
+    );
+  }
+
+  async tournaments(query: {
+    readonly q: string;
+    readonly format: IndexedFormat | null;
+    readonly minimumPlayers: number;
+    readonly before: { readonly date: number; readonly id: string } | null;
+  }): Promise<ReturnType<DeckIndex['tournaments']>> {
+    await this.crawl();
+    return this.index.tournaments({
+      ...query,
+      pageSize: DECK_INDEX_PAGE_SIZE,
+    });
+  }
+
+  async tournament(id: string): Promise<TournamentAnswer> {
+    await this.crawl();
+    return this.index.tournament(id);
+  }
+
+  async playerList(id: string, playerId: string): Promise<PlayerListAnswer> {
+    await this.crawl();
+    return this.index.playerList(id, playerId);
+  }
+
+  override async alarm(): Promise<void> {
+    let next: number | null;
+    try {
+      next = await this.index.step();
+    } catch {
+      this.telemetry.failure({
+        subsystem: 'deck_index_crawl',
+        retryable: true,
+      });
+      next = Date.now() + DECK_INDEX_FAILURE_DELAY_MS;
+    }
+    if (next !== null) await this.ctx.storage.setAlarm(next);
+  }
+}
+
+const deckIndexTelemetryRoute = (
+  route: DeckIndexRoute | 'invalid'
+): ServerHttpRoute => {
+  if (route === 'invalid') return 'deck_index_invalid';
+  switch (route.kind) {
+    case 'search':
+      return 'deck_search';
+    case 'archetype':
+      return 'deck_archetype';
+    case 'tournaments':
+      return 'tournaments';
+    case 'tournament':
+      return 'tournament';
+    case 'player_list':
+      return 'tournament_player_list';
+  }
+};
+
 const worker: ExportedHandler<Env> = {
   async scheduled(_controller, env, ctx) {
     ctx.waitUntil(env.PTCG_DECK_FEED.getByName(DECK_FEED_NAME).refresh());
     ctx.waitUntil(env.PTCG_CARD_CATALOG.getByName(CARD_CATALOG_NAME).refresh());
+    ctx.waitUntil(env.PTCG_DECK_INDEX.getByName(DECK_INDEX_NAME).refresh());
   },
 
   async fetch(request, env, ctx) {
@@ -1292,6 +1442,16 @@ const worker: ExportedHandler<Env> = {
       return observeHttp(telemetry, 'current_decks', () =>
         handleCurrentDecksRequest(request, () =>
           env.PTCG_DECK_FEED.getByName(DECK_FEED_NAME).current()
+        )
+      );
+    }
+    const deckIndex = deckIndexRoute(url.pathname);
+    if (deckIndex !== undefined) {
+      return observeHttp(telemetry, deckIndexTelemetryRoute(deckIndex), () =>
+        handleDeckIndexRequest(
+          request,
+          deckIndex,
+          env.PTCG_DECK_INDEX.getByName(DECK_INDEX_NAME)
         )
       );
     }

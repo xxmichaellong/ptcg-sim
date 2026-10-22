@@ -42,6 +42,10 @@
         "name": "PTCG_CARD_CATALOG",
         "class_name": "PtcgCardCatalog",
       },
+      {
+        "name": "PTCG_DECK_INDEX",
+        "class_name": "PtcgDeckIndex",
+      },
     ],
   },
   "ratelimits": [
@@ -103,13 +107,18 @@
       "type": "durable-object",
       "storage": "sqlite",
     },
+    "PtcgDeckIndex": {
+      "type": "durable-object",
+      "storage": "sqlite",
+    },
     "PtcgRoom": {
       "type": "durable-object",
       "storage": "sqlite",
     },
   },
   // Once a day: refreshes the deck picker's current lists from Limitless,
-  // and the deck builder's card catalog from TCGdex.
+  // the deck builder's card catalog from TCGdex, and starts the tournament
+  // deck index's discovery (its own alarms keep it crawling).
   "triggers": {
     "crons": ["17 6 * * *"],
   },
@@ -149,6 +158,10 @@
           {
             "name": "PTCG_CARD_CATALOG",
             "class_name": "PtcgCardCatalog",
+          },
+          {
+            "name": "PTCG_DECK_INDEX",
+            "class_name": "PtcgDeckIndex",
           },
         ],
       },
@@ -208,6 +221,10 @@
           "storage": "sqlite",
         },
         "PtcgCardCatalog": {
+          "type": "durable-object",
+          "storage": "sqlite",
+        },
+        "PtcgDeckIndex": {
           "type": "durable-object",
           "storage": "sqlite",
         },

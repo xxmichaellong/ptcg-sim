@@ -11,10 +11,21 @@ export const SERVER_TELEMETRY_SCHEMA = 'ptcgsim-server-telemetry-v2';
 
 export type ServerTelemetryLevel = 'info' | 'warn' | 'error';
 export type ServerTelemetrySource =
-  'edge' | 'room' | 'continuation' | 'deck_feed' | 'card_catalog';
+  | 'edge'
+  | 'room'
+  | 'continuation'
+  | 'deck_feed'
+  | 'deck_index'
+  | 'card_catalog';
 export type ServerHttpRoute =
   | 'health'
   | 'current_decks'
+  | 'deck_search'
+  | 'deck_archetype'
+  | 'tournaments'
+  | 'tournament'
+  | 'tournament_player_list'
+  | 'deck_index_invalid'
   | 'card_catalog'
   | 'card_catalog_body'
   | 'room_creation'
@@ -74,6 +85,7 @@ export type ServerFailureSubsystem =
   | 'socket_send'
   | 'socket_upgrade'
   | 'deck_feed_refresh'
+  | 'deck_index_crawl'
   | 'card_catalog_refresh';
 
 export type TelemetryReason =

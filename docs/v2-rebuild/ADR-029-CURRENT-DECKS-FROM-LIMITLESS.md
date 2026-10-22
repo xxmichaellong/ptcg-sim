@@ -65,3 +65,5 @@ limitlesstcg.com, with no documented API.
   environments. Preview and production each keep their own feed.
 - Official major-event lists stay out until Limitless offers an API for them
   or permission to use them.
+- Searching every online tournament's lists by deck, and opening any
+  tournament's standings, is ADR-037's tournament deck index.

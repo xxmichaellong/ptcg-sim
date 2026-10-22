@@ -36,6 +36,28 @@ workerd on NixOS needs `SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt` to
 reach Limitless over TLS. Without it the refresh fails and the endpoint
 answers 503, which the picker treats as "built-in lists only".
 
+## Tournament deck index (ADR-037)
+
+`GET /v2/decks/search`, `/v2/decks/archetype/<id>`, `/v2/tournaments`,
+`/v2/tournaments/<id>` and `/v2/tournaments/<id>/players/<player>/list`
+answer from the one `PtcgDeckIndex` Durable Object (`index`), a SQLite index
+of Limitless TCG's online tournaments. Its alarm steps make one request each:
+the whole tournament list once (about 17 pages of 1,000), then the newest
+pages every half hour, and one tournament's standings per step, 15 seconds
+apart. All of it stays under 30 requests in any five minutes, 20 for the
+crawl and 10 kept for players opening a tournament not read yet (503
+`{ "error": "busy" }` with `Retry-After` when those are spent). A 429 stops
+every request until Limitless's window resets; a failed request holds the
+crawl back 30 seconds, doubling to half an hour. The daily cron and the
+first request start the crawl. Reading every standings page back to 2021
+takes a few days. Each step that throws emits `server_failure` with
+subsystem `deck_index_crawl` (source `deck_index`).
+
+Nothing needs provisioning; the optional `LIMITLESS_API_KEY` gives the index
+its own rate bucket at Limitless. `DECK_INDEX_SOURCE=off` (the browser
+specs) keeps it from ever calling Limitless. Locally, workerd on NixOS needs
+`SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt` to reach Limitless.
+
 ## Card catalog (ADR-032)
 
 `GET /v2/cards/catalog` names the deck builder's current card catalog and

@@ -7,7 +7,7 @@
     "tsBuildInfoFile": "./lib/.tsbuildinfo"
   },
   "include": ["src/**/*.ts", "src/**/*.json", "worker-configuration.d.ts"],
-  "exclude": ["src/**/*.test.ts", "lib"],
+  "exclude": ["src/**/*.test.ts", "src/**/*.test-support.ts", "lib"],
   "references": [
     { "path": "../../packages/game-core" },
     { "path": "../../packages/protocol" },

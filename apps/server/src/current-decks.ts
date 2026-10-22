@@ -10,8 +10,16 @@
  * and a list is kept only when every card line is well formed and the deck
  * has exactly 60 cards.
  */
+import {
+  LIMITLESS_TOURNAMENT_ID,
+  LimitlessRequestError,
+  decklistText,
+  hasControl,
+  isRecord,
+  limitlessGet,
+} from './limitless.js';
 
-export const LIMITLESS_API_ORIGIN = 'https://play.limitlesstcg.com';
+export { decklistText } from './limitless.js';
 
 export const CURRENT_DECK_FEED_VERSION = 1;
 
@@ -50,8 +58,6 @@ const LIMITS = Object.freeze({
   playersPerTournament: 2_048,
   topCut: 8,
   decksPerGroup: 40,
-  linesPerSection: 60,
-  cardNameCodeUnits: 80,
   archetypeCodeUnits: 64,
   requestTimeoutMs: 15_000,
 });
@@ -77,69 +83,33 @@ export interface CurrentDeckFeedOptions {
   readonly apiKey?: string;
 }
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
-
-const readBoundedJson = async (response: Response): Promise<unknown> => {
-  const reader = response.body?.getReader();
-  if (!reader) return JSON.parse(await response.text()) as unknown;
-  const chunks: Uint8Array[] = [];
-  let bytes = 0;
-  for (;;) {
-    const next = await reader.read();
-    if (next.done) break;
-    bytes += next.value.byteLength;
-    if (bytes > LIMITS.responseBytes) {
-      await reader.cancel().catch(() => undefined);
-      throw new CurrentDeckFeedError('invalid_response');
-    }
-    chunks.push(next.value);
-  }
-  const joined = new Uint8Array(bytes);
-  let offset = 0;
-  for (const chunk of chunks) {
-    joined.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  return JSON.parse(new TextDecoder().decode(joined)) as unknown;
-};
-
 const getJson = async (
   options: CurrentDeckFeedOptions,
   path: string
 ): Promise<unknown> => {
-  // The deadline covers the body too, and is cleared once the response is
-  // read, so no timer outlives the request.
-  const deadline = new AbortController();
-  const timer = setTimeout(() => deadline.abort(), LIMITS.requestTimeoutMs);
   try {
-    let response: Response;
-    try {
-      response = await options.fetch(`${LIMITLESS_API_ORIGIN}${path}`, {
-        headers: {
-          accept: 'application/json',
-          ...(options.apiKey ? { 'X-Access-Key': options.apiKey } : {}),
-        },
-        signal: deadline.signal,
-      });
-    } catch (error) {
-      throw new CurrentDeckFeedError('request_failed', { cause: error });
+    const response = await limitlessGet(
+      {
+        fetch: options.fetch,
+        maximumBytes: LIMITS.responseBytes,
+        timeoutMs: LIMITS.requestTimeoutMs,
+        ...(options.apiKey ? { apiKey: options.apiKey } : {}),
+      },
+      path
+    );
+    if (response.status !== 200) {
+      throw new CurrentDeckFeedError('invalid_response');
     }
-    if (!response.ok) {
-      await response.body?.cancel().catch(() => undefined);
-      throw new CurrentDeckFeedError('request_failed');
-    }
-    try {
-      return await readBoundedJson(response);
-    } catch (error) {
-      if (error instanceof CurrentDeckFeedError) throw error;
-      throw new CurrentDeckFeedError(
-        deadline.signal.aborted ? 'request_failed' : 'invalid_response',
-        { cause: error }
-      );
-    }
-  } finally {
-    clearTimeout(timer);
+    return response.body;
+  } catch (error) {
+    if (error instanceof CurrentDeckFeedError) throw error;
+    throw new CurrentDeckFeedError(
+      error instanceof LimitlessRequestError &&
+        error.code === 'invalid_response'
+        ? 'invalid_response'
+        : 'request_failed',
+      { cause: error }
+    );
   }
 };
 
@@ -148,8 +118,6 @@ interface Tournament {
   readonly players: number;
   readonly date: number;
 }
-
-const TOURNAMENT_ID = /^[a-f0-9]{24}$/u;
 
 const readTournaments = (value: unknown): Tournament[] => {
   if (!Array.isArray(value)) throw new CurrentDeckFeedError('invalid_response');
@@ -161,7 +129,7 @@ const readTournaments = (value: unknown): Tournament[] => {
     if (
       game !== 'PTCG' ||
       typeof id !== 'string' ||
-      !TOURNAMENT_ID.test(id) ||
+      !LIMITLESS_TOURNAMENT_ID.test(id) ||
       !Number.isSafeInteger(players) ||
       !Number.isFinite(time)
     ) {
@@ -170,75 +138,6 @@ const readTournaments = (value: unknown): Tournament[] => {
     tournaments.push({ id, players: players as number, date: time });
   }
   return tournaments;
-};
-
-/** A card line Limitless returns: count, name, and the printing. */
-const CARD_CODE = /^[A-Za-z0-9-]{1,12}$/u;
-/** A line break or other control character, which no card name holds. */
-const hasControl = (value: string): boolean => {
-  for (let index = 0; index < value.length; index += 1) {
-    const code = value.charCodeAt(index);
-    if (code < 0x20 || code === 0x7f) return true;
-  }
-  return false;
-};
-
-const cardLine = (value: unknown): { count: number; line: string } | null => {
-  if (!isRecord(value)) return null;
-  const { count, name, set, number } = value;
-  if (
-    !Number.isSafeInteger(count) ||
-    (count as number) < 1 ||
-    (count as number) > 60 ||
-    typeof name !== 'string' ||
-    name.trim().length === 0 ||
-    name.length > LIMITS.cardNameCodeUnits ||
-    hasControl(name)
-  ) {
-    return null;
-  }
-  const printing =
-    typeof set === 'string' &&
-    typeof number === 'string' &&
-    CARD_CODE.test(set) &&
-    CARD_CODE.test(number)
-      ? ` ${set} ${number}`
-      : '';
-  return {
-    count: count as number,
-    line: `${String(count)} ${name.trim()}${printing}`,
-  };
-};
-
-const SECTIONS = [
-  ['pokemon', 'Pokémon'],
-  ['trainer', 'Trainer'],
-  ['energy', 'Energy'],
-] as const;
-
-/** The list as text the picker can paste, or null if it is not a whole deck. */
-export const decklistText = (value: unknown): string | null => {
-  if (!isRecord(value)) return null;
-  let total = 0;
-  const blocks: string[] = [];
-  for (const [key, title] of SECTIONS) {
-    const entries = value[key] ?? [];
-    if (!Array.isArray(entries) || entries.length > LIMITS.linesPerSection) {
-      return null;
-    }
-    const lines: string[] = [];
-    let count = 0;
-    for (const entry of entries) {
-      const card = cardLine(entry);
-      if (!card) return null;
-      count += card.count;
-      lines.push(card.line);
-    }
-    total += count;
-    if (lines.length > 0)
-      blocks.push([`${title} (${count})`, ...lines].join('\n'));
-  }
-  return total === 60 ? blocks.join('\n\n') : null;
 };
 
 const ordinal = (placing: number): string => {
