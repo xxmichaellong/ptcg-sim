@@ -246,11 +246,23 @@ jobs:
               sudo mv "$chrome_source" "$chrome_source.disabled"
             fi
           done
+      # The browser's system packages (fonts and toolkits, over 100 MB),
+      # kept between runs: the apt mirror is at times too slow to fetch them
+      # in the job's time.
+      - name: Restore the browser's system packages
+        id: apt-archives
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/apt-archives
+          key: apt-archives-${{ runner.os }}-${{ matrix.browser }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: apt-archives-${{ runner.os }}-${{ matrix.browser }}-
       - name: Install Playwright ${{ matrix.name }}
         run: |
           # Apt waits for a lock another install holds, and is never cut off;
           # the browser's download, which can hang, gets five minutes a try.
           echo 'DPkg::Lock::Timeout "600";' | sudo tee /etc/apt/apt.conf.d/90-lock-timeout > /dev/null
+          mkdir -p "$HOME/apt-archives/partial"
+          printf 'Dir::Cache::Archives "%s";\nAPT::Keep-Downloaded-Packages "true";\n' "$HOME/apt-archives" | sudo tee /etc/apt/apt.conf.d/91-kept-archives > /dev/null
           for browser_install_attempt in 1 2 3; do
             if corepack pnpm exec playwright install-deps ${{ matrix.browser }} &&
               timeout 300 corepack pnpm exec playwright install ${{ matrix.browser }}; then
@@ -262,6 +274,16 @@ jobs:
             echo "::warning::Playwright ${{ matrix.name }} installation failed; retrying in 30 seconds"
             sleep 30
           done
+      # Kept as soon as they are in, whatever the tests do after.
+      - name: Keep the browser's system packages
+        if: steps.apt-archives.outputs.cache-hit != 'true'
+        run: sudo chown -R "$(id -u):$(id -g)" "$HOME/apt-archives"
+      - name: Save the browser's system packages
+        if: steps.apt-archives.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/apt-archives
+          key: ${{ steps.apt-archives.outputs.cache-primary-key }}
       - name: Run cross-browser functional regressions
         run: corepack pnpm run check:cross-browser --project=${{ matrix.browser }}
       - name: Report flaky tests
