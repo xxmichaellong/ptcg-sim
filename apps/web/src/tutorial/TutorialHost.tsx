@@ -322,21 +322,25 @@ export const TutorialHost = ({
     };
   }, [playing, state.view, mode, feed, flipped, screen, keys]);
 
-  const markComplete = useCallback((lesson: TutorialLesson): void => {
+  // A lesson finished is kept as done on this device. Written once the
+  // phase has changed, never from inside its update: the write tells every
+  // reader of the progress at once, and React must not hear it mid-render.
+  const finishedLesson = phase.kind === 'finished' ? phase.lesson : null;
+  useEffect(() => {
+    if (!finishedLesson) return;
     preferences().patch(TUTORIAL_PREFERENCES, {
       completed: {
         ...preferences().get(TUTORIAL_PREFERENCES).completed,
-        [lesson.id]: lesson.version,
+        [finishedLesson.id]: finishedLesson.version,
       },
     });
-  }, []);
+  }, [finishedLesson]);
 
   const advance = useCallback((): void => {
     setPhase((current) => {
       if (current.kind !== 'playing') return current;
       const next = current.step + 1;
       if (next >= current.lesson.steps.length) {
-        markComplete(current.lesson);
         return { kind: 'finished', lesson: current.lesson };
       }
       const view = session.getSnapshot().view ?? current.start;
@@ -351,7 +355,7 @@ export const TutorialHost = ({
       };
     });
     setDemo(0);
-  }, [markComplete, room.presentation, session]);
+  }, [room.presentation, session]);
 
   const back = (): void => {
     setPhase((current) =>

@@ -3,7 +3,10 @@ import { act, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { preferences } from '../preferences/preference-store.js';
 import { fakePracticeRoom } from './practice-room.test-support.js';
+import { lessonById } from './tutorial-lessons.js';
+import { TUTORIAL_PREFERENCES } from './tutorial-state.js';
 import { TutorialHost } from './TutorialHost.js';
 
 (
@@ -212,6 +215,26 @@ describe('the tutorial’s cards', () => {
     // And it can be left from there.
     await act(async () => button(done, 'Leave tutorial')!.click());
     expect(exits).toBe(1);
+  });
+
+  it('keep a finished lesson as done, written outside any render', async () => {
+    phone(false);
+    const errors = vi.spyOn(console, 'error');
+    await render('around');
+    await wait(1200);
+    for (let step = 0; step < 5; step += 1) {
+      const next = button(coach(), 'Next') ?? button(coach(), 'Done');
+      await act(async () => next!.click());
+    }
+    expect(document.querySelector('[data-tutorial-done]')).not.toBeNull();
+    expect(preferences().get(TUTORIAL_PREFERENCES).completed.around).toBe(
+      lessonById('around')!.version
+    );
+    expect(
+      errors.mock.calls.filter((call) =>
+        String(call[0]).includes('Cannot update a component')
+      )
+    ).toEqual([]);
   });
 
   it('offer a way out while a lesson is dealt', async () => {

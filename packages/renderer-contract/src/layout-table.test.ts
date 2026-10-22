@@ -148,6 +148,7 @@ describe('table layout: the app bar corner (ADR-036)', () => {
     const PHONE_BAR = { width: 146, height: 50 };
     for (const [width, height] of [
       [360, 640],
+      [390, 667],
       [390, 844],
       [430, 932],
       [844, 390],
@@ -161,7 +162,13 @@ describe('table layout: the app bar corner (ADR-036)', () => {
       [1920, 1080],
     ] as const) {
       const bar = width < 600 || height < 500 ? PHONE_BAR : BAR;
-      for (const markers of [1, 2]) {
+      for (const [markers, lowerShare] of [
+        [1, undefined],
+        [2, undefined],
+        // The table split toward the near half, or the far.
+        [2, 0.4],
+        [2, 0.6],
+      ] as const) {
         for (const hiddenPhysicalSide of [undefined, 'lower'] as const) {
           for (const lostZone of [true, false]) {
             const snapshot = createTableLayoutSnapshot(
@@ -169,6 +176,9 @@ describe('table layout: the app bar corner (ADR-036)', () => {
                 shellMode: 'fullscreen',
                 appBarPx: bar,
                 oncePerGameMarkers: markers,
+                ...(lowerShare === undefined
+                  ? {}
+                  : { vertical: tableVerticalLayout(lowerShare) }),
                 hideEmptyLostZone: !lostZone,
                 ...(hiddenPhysicalSide ? { hiddenPhysicalSide } : {}),
               })
@@ -190,7 +200,7 @@ describe('table layout: the app bar corner (ADR-036)', () => {
                 width: TABLE_CONTROL_CORNER_PX,
                 height: Math.min(hand.height, TABLE_CONTROL_CORNER_HEIGHT_PX),
               };
-            const at = `${width}x${height} ${String(markers)} ${String(hiddenPhysicalSide)} lostZone=${String(lostZone)}`;
+            const at = `${width}x${height} ${String(markers)} split=${String(lowerShare)} ${String(hiddenPhysicalSide)} lostZone=${String(lostZone)}`;
             const barRect = {
               x: snapshot.playAreaBounds.width - APP_BAR_INSET_PX - bar.width,
               y: APP_BAR_INSET_PX,
@@ -203,10 +213,25 @@ describe('table layout: the app bar corner (ADR-036)', () => {
                 `${at} ${other.kind}`
               ).toBe(false);
             }
-            // However the markers sit, the far hand keeps room to hold
-            // its cards apart.
+            // However the markers sit, the far hand keeps room to hold its
+            // cards apart: 128px, or all the bar leaves it on its own.
+            const bare = createTableLayoutSnapshot(
+              stateAt(width, height, {
+                shellMode: 'fullscreen',
+                appBarPx: bar,
+                hideEmptyLostZone: !lostZone,
+                ...(lowerShare === undefined
+                  ? {}
+                  : { vertical: tableVerticalLayout(lowerShare) }),
+                ...(hiddenPhysicalSide ? { hiddenPhysicalSide } : {}),
+              })
+            )
+              .players.find((player) => player.physicalSide === 'upper')!
+              .regions.find(
+                (candidate) => candidate.kind === 'hand'
+              )!.physicalDeclaredBounds;
             expect(hand.width, at).toBeGreaterThanOrEqual(
-              Math.min(128, width / 3)
+              Math.min(128, bare.width) - 0.01
             );
             const corner = far.extras?.corner;
             if (corner && Math.abs(corner.y - hand.y) < 1e-6) {

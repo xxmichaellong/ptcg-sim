@@ -251,6 +251,12 @@ interface HalfOptions {
    * the cards its height would give keeps them smaller this way.
    */
   readonly fitHeight?: number;
+  /**
+   * The far markers sit in a row of their own below the app bar, the hand
+   * strip deepened for it: a corner past the bar would leave the hand less
+   * than `MIN_FAR_HAND_PX`.
+   */
+  readonly markersBelowBar?: boolean;
 }
 
 /**
@@ -309,12 +315,14 @@ const layoutHalf = (
   const side = sideMarginFor(width);
   const gap = Math.max(6, height * proportions.rowGap);
   // Across the table on a short screen the strip is at least as deep as
-  // the app bar's corner, so nothing else lies under the bar.
+  // the app bar's corner, so nothing else lies under the bar (and the
+  // markers' row below it, where they have one).
+  const markerRow = options.markersBelowBar ? MARKER_ROW_PX : 0;
   const handStrip = Math.min(
     height,
     Math.max(
       height * proportions.handStrip * (options.handScale ?? 1),
-      options.minHandStripPx ?? 0
+      (options.minHandStripPx ?? 0) + markerRow
     )
   );
   const rows = Math.max(0, height - handStrip - margin - 2 * gap);
@@ -458,21 +466,39 @@ const layoutHalf = (
     );
   const handRight = width - handLeft;
   const pastBar = options.handStartReservePx ?? 0;
-  const corner = cornerPastBar(
-    pastBar,
-    markers ? 0 : markerCount,
-    handTop,
-    handStrip
-  );
+  const cornerMarkers = markers ? 0 : markerCount;
+  if (options.markersBelowBar !== true) {
+    const past = cornerPastBar(pastBar, cornerMarkers, handTop, handStrip);
+    // Past the bar, the markers would leave the hand too little: they take
+    // a row below the bar instead.
+    if (
+      past &&
+      handRight - Math.max(handLeft, past.x + past.width) < MIN_FAR_HAND_PX
+    ) {
+      return layoutHalf(width, height, { ...options, markersBelowBar: true });
+    }
+  }
+  const corner: Rect | undefined =
+    options.markersBelowBar && cornerMarkers > 0
+      ? {
+          x: side,
+          y: handTop,
+          width: Math.min(
+            width - 2 * side,
+            16 + cornerMarkers * COMPACT_CORNER_MARKER_PX
+          ),
+          height: markerRow,
+        }
+      : cornerPastBar(pastBar, cornerMarkers, handTop, handStrip);
   const handStart = Math.max(
     handLeft,
-    corner ? corner.x + corner.width : pastBar
+    corner && !options.markersBelowBar ? corner.x + corner.width : pastBar
   );
   const handRect: Rect = {
     x: handStart,
-    y: handTop,
+    y: handTop + markerRow,
     width: Math.max(0, handRight - handStart),
-    height: handStrip,
+    height: handStrip - markerRow,
   };
   return {
     regions: [
@@ -702,18 +728,30 @@ const benchCardHeightOf = (geometry: HalfGeometry): number =>
       (BENCH_FIT_CARDS * CARD_ASPECT_RATIO)
   );
 
+const handCrampedIn = (geometry: HalfGeometry): boolean =>
+  (geometry.regions.find((region) => region.kind === 'hand')?.rect.width ?? 0) <
+  MIN_FAR_HAND_PX;
+
 /**
  * Whichever of the mat (columns down the sides) and the portrait mat (rows
  * down the middle) shows this half's cards larger. Wide halves -- desktops,
  * a tablet or phone held sideways -- get the mat; tall ones, the portrait.
+ * Either way the hand keeps room to hold its cards apart: across the table,
+ * past the app bar, one that leaves it cramped gives way to one that
+ * doesn't.
  */
 const bestOf = (
   landscape: HalfGeometry,
   portrait: HalfGeometry
-): HalfGeometry =>
-  benchCardHeightOf(portrait) > benchCardHeightOf(landscape)
+): HalfGeometry => {
+  const cramped = handCrampedIn(landscape);
+  if (cramped !== handCrampedIn(portrait)) {
+    return cramped ? portrait : landscape;
+  }
+  return benchCardHeightOf(portrait) > benchCardHeightOf(landscape)
     ? portrait
     : landscape;
+};
 
 /**
  * A half laid out short of its frame, moved to the player's edge: the

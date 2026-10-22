@@ -266,13 +266,21 @@ const farMarkers = (page: Page) =>
   );
 
 /** Both markers on the table, showing `show`, from the next page load. */
-const showMarkers = (page: Page, show: 'both' | 'theirs') =>
-  page.evaluate((choice) => {
-    localStorage.setItem(
-      'ptcgsim.board-view.v1',
-      JSON.stringify({ show: choice, vstarMarker: true, gxMarker: true })
-    );
-  }, show);
+const showMarkers = (page: Page, show: 'both' | 'theirs', split?: number) =>
+  page.evaluate(
+    ([choice, lowerShare]) => {
+      localStorage.setItem(
+        'ptcgsim.board-view.v1',
+        JSON.stringify({
+          show: choice,
+          vstarMarker: true,
+          gxMarker: true,
+          ...(lowerShare === undefined ? {} : { split: lowerShare }),
+        })
+      );
+    },
+    [show, split] as const
+  );
 
 /** Neither of the far markers under the bar, nor on the far hand. */
 const expectFarMarkersClear = async (page: Page, at: string) => {
@@ -319,6 +327,25 @@ test('the far player’s markers lie clear of the bar, past it by the hand where
   await expectFarMarkersClear(page, 'beside the docked log');
 });
 
+/** The far hand keeps room to hold its cards apart; markers on none of it. */
+const expectFarHandRoomy = async (page: Page) => {
+  const hand = await box(
+    page.locator(
+      '.ptcgsim-zone[data-zone-kind="hand"][data-zone-side="opponent"]'
+    )
+  );
+  expect(hand.width).toBeGreaterThanOrEqual(128);
+  const zones = await page
+    .locator('.ptcgsim-zone[data-zone-side="opponent"]')
+    .all();
+  for (const marker of await farMarkers(page).all()) {
+    const rect = await box(marker);
+    for (const zone of zones) {
+      expect(overlaps(rect, await box(zone))).toBe(false);
+    }
+  }
+};
+
 test.describe('the far markers on a phone', () => {
   test.use({ hasTouch: true, isMobile: true });
 
@@ -329,26 +356,22 @@ test.describe('the far markers on a phone', () => {
     await showMarkers(page, 'both');
     await openTable(page);
     await expectFarMarkersClear(page, '390x844');
-    // The far hand keeps room to hold its cards apart, and the markers sit
-    // on no other zone of theirs either.
-    const hand = await box(
-      page.locator(
-        '.ptcgsim-zone[data-zone-kind="hand"][data-zone-side="opponent"]'
-      )
-    );
-    expect(hand.width).toBeGreaterThanOrEqual(128);
-    const zones = await page
-      .locator('.ptcgsim-zone[data-zone-side="opponent"]')
-      .all();
-    for (const marker of await farMarkers(page).all()) {
-      const rect = await box(marker);
-      for (const zone of zones) {
-        expect(overlaps(rect, await box(zone))).toBe(false);
-      }
-    }
+    await expectFarHandRoomy(page);
     await page.screenshot({
       path: test.info().outputPath('far-markers-390x844.png'),
     });
+  });
+
+  test('leave the far hand its room on a short phone, the table split toward the near half', async ({
+    page,
+  }) => {
+    test.setTimeout(120_000);
+    await page.setViewportSize({ width: 390, height: 667 });
+    await page.goto('/');
+    await showMarkers(page, 'both', 0.6);
+    await openTable(page);
+    await expectFarMarkersClear(page, '390x667 split 0.6');
+    await expectFarHandRoomy(page);
   });
 });
 
