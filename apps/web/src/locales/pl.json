@@ -534,7 +534,7 @@
     "comments": [
       "A zone's name for screen readers; name is its player. The Bench."
     ],
-    "translation": "Ława – {name}"
+    "translation": "Ławka – {name}"
   },
   "Mk1A2U": {
     "message": "{name} board",

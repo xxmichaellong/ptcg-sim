@@ -91,7 +91,7 @@ export { wordFinish, wordName };
 
 /** The place alone, for a deck box's sticker ("1st"). */
 const wordPlace = (finish: string): string | undefined => {
-  const placed = /^(\d+)(?:st|nd|rd|th) of \d+$/u.exec(finish);
+  const placed = /^(\d+)(?:st|nd|rd|th) of \d+/u.exec(finish);
   if (!placed) return undefined;
   const place = Number(placed[1]);
   return translate({
@@ -635,9 +635,12 @@ export const DeckHome = ({
   }, [filtering]);
   const shownDecks = useMemo(() => {
     const query = filtering ? filter.trim().toLowerCase() : '';
+    // As stored, or as shown (its finish in the page's language).
     return query
-      ? libraryState.decks.filter((deck) =>
-          deck.name.toLowerCase().includes(query)
+      ? libraryState.decks.filter(
+          (deck) =>
+            deck.name.toLowerCase().includes(query) ||
+            wordName(deck.name).toLowerCase().includes(query)
         )
       : libraryState.decks;
   }, [filter, filtering, libraryState.decks]);

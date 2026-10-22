@@ -522,14 +522,38 @@ describe('the deck screen from the keyboard', () => {
         cards: [],
         source: { kind: 'new' },
       });
+      for (let n = 0; n < 8; n += 1) {
+        library.create({
+          name: `Deck ${String(n)}`,
+          format: 'standard',
+          cards: [],
+          source: { kind: 'new' },
+        });
+      }
       await render(vi.fn(), library);
-      expect(host.querySelector('.deck-tile__name')?.textContent).toBe(
-        'Dragapult — 1. von 67'
-      );
+      const shown = () =>
+        [...host.querySelectorAll('.deck-tile__name')].map(
+          (tile) => tile.textContent
+        );
+      expect(shown()).toContain('Dragapult — 1. von 67');
+      // Found by what the tile shows, too.
+      const filter = host.querySelector<HTMLInputElement>(
+        'input[type="search"][placeholder="Find a deck"]'
+      )!;
+      await act(async () => {
+        Object.getOwnPropertyDescriptor(
+          HTMLInputElement.prototype,
+          'value'
+        )!.set!.call(filter, '1. von');
+        filter.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+      expect(shown()).toEqual(['Dragapult — 1. von 67']);
       // Kept as it came.
-      expect(library.getSnapshot().decks[0]!.name).toBe(
-        'Dragapult — 1st of 67'
-      );
+      expect(
+        library
+          .getSnapshot()
+          .decks.some((deck) => deck.name === 'Dragapult — 1st of 67')
+      ).toBe(true);
     } finally {
       i18n.activate(locale);
     }

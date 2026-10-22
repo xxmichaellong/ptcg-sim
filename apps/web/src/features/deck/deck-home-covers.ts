@@ -34,11 +34,13 @@ export const splitFinish = (
 
 /** A deck's finish line in the page's language ("1st of 285"). */
 export const wordFinish = (finish: string): string => {
-  const placed = /^(\d+)(?:st|nd|rd|th) of (\d+)$/u.exec(finish);
+  // Anything after it (a copy's " (copy)") is kept as it is.
+  const placed = /^(\d+)(?:st|nd|rd|th) of (\d+)(.*)$/u.exec(finish);
   if (!placed) return finish;
   const place = Number(placed[1]);
   const players = Number(placed[2]);
-  return translate({
+  const after = placed[3] ?? '';
+  return `${translate({
     comment:
       "A deck's best finish in a tournament: its place among the players, as 1st of 285",
     message: `${selectOrdinal(place, {
@@ -47,7 +49,7 @@ export const wordFinish = (finish: string): string => {
       few: '#rd',
       other: '#th',
     })} of ${players}`,
-  });
+  })}${after}`;
 };
 
 /** A deck's name with its finish in the page's language ("… — 1st of 285"). */

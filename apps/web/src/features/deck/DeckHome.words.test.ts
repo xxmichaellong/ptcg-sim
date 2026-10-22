@@ -24,5 +24,9 @@ describe('a deck name with a finish', () => {
     expect(wordName('Gardevoir ex — 1st of 67')).toBe(
       'Gardevoir ex — 1. von 67'
     );
+    // A copy's name goes on after the finish, kept as it is.
+    expect(wordName('Gardevoir ex — 1st of 67 (copy)')).toBe(
+      'Gardevoir ex — 1. von 67 (copy)'
+    );
   });
 });
