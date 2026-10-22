@@ -60,10 +60,15 @@ here):
 
 - the far hand strip ends a gap short of the bar and is at least as deep
   as the bar's corner, so on a short screen nothing else lies under it;
+- the far player's VSTAR/GX markers, where they have no room beside the
+  Prize cards, get a corner of their own past the bar (`extras.corner`),
+  and the far hand starts after it;
+- a tilted far hand draws its cards in as they grow, so its outer card
+  ends where the strip does;
 - a half that fills the table keeps its top clear of the bar.
 
 The near half is unchanged, and nothing on the table is ever under the bar
-at any size (layout-table tests).
+at any size (layout-table and board-depth tests, app-bar.spec).
 
 ### 3. The turn's actions stay on the table, at the seam's right end
 

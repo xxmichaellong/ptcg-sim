@@ -3,7 +3,7 @@
   "seconds": {
     "activity-slide.spec.ts": 16,
     "anonymous-invitation-handoff.spec.ts": 24,
-    "app-bar.spec.ts": 60,
+    "app-bar.spec.ts": 80,
     "board-stack-handling.spec.ts": 109,
     "board-view.spec.ts": 81,
     "current-decks.spec.ts": 18,

@@ -48,7 +48,9 @@ from RK9.
      `If-None-Match`, because Limitless re-categorises decks.
 
    Only Standard and Expanded events of at least 8 players and real dates
-   are read; their lists are 60 cards. The daily cron and the first request
+   are read; their lists are 60 cards. One listed before it had them (players
+   still registering, no format yet) is taken up once a later page shows it
+   worth reading. The daily cron and the first request
    start the crawl, and the alarms keep it going.
 
 2. **A budget well under the limit.**
@@ -58,9 +60,11 @@ from RK9.
    - With those spent, the route answers 503 `busy` with `Retry-After`.
    - A 429, or Limitless saying none are left, stops every request until its
      window resets.
-   - A failure of Limitless holds the crawl back, longer each time.
+   - A failure of Limitless holds the crawl back, longer each time; a 200
+     whose body isn't a list counts as one.
    - A tournament whose read fails is retried an hour later, then two, and
-     then left to players opening it.
+     then left to players opening it. Failed re-reads of an event still
+     running, asked for by players, spend none of those tries.
    - Limitless answering an id as unknown removes it.
 3. **Everything from Limitless is untrusted, as in ADR-029.**
    - Responses are capped at 8 MB with a 15-second deadline.
@@ -99,6 +103,9 @@ from RK9.
      without one last, with a link to the source. Cached a day once the event
      is over a day old and read after it ended, otherwise five minutes (an
      event under a day old is read again when asked after five minutes).
+     Standings read while an event may still be running show only here: no
+     deck's finishes, top 8s or ranking count them until it is read again
+     once over.
    - `GET /v2/tournaments/<id>/players/<player>/list`: the list as the text
      the deck import reads (`decklistText`), with its source link. Cached a
      week once settled.

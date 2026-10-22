@@ -35,7 +35,7 @@ What the research found (the reviews are in the session that made this):
 Tutorial mode is a set of short lessons (`apps/web/src/tutorial/`), each
 of two to five steps, played on a practice table: a Solo room of its own.
 The player's own table, with whatever game is on it, stays live behind it
-and comes back as it was when they leave (the lobby holds both,
+and comes back as it was when they leave, turned around if it was (the lobby holds both,
 `RemoteRoomLobby` `tutorial`). The web bundle may not contain the game
 core, so the practice table is a real room, and every move in it is one
 the room makes in play.
@@ -91,22 +91,23 @@ over:
   palette, the deck screen, a sheet), read from the page.
 
 So a drag, the card's menu, a key and the palette all count, and a step
-already done goes on by itself. A step to read has Next. A step whose card
-has gone says so, with "Start the lesson over".
+already done goes on by itself, except one Back went to: that one waits
+until the table has shown it undone. A step to read has Next. A step whose
+card has gone says so, with "Start the lesson over".
 
 ### 4. The coach
 
 - **The coach card:**
-  - It sits in the corner that covers nothing the step points at, or across the top on a phone.
+  - It sits in the corner that covers nothing the step points at, nor the app bar or the open palette (across the top or the bottom on a phone, above the on-screen keyboard); failing every corner, the one that covers least. It stays put through a step's done moment.
   - It shows the lesson and step ("2 of 4") with a progress line, and offers Back, Show me (for a drag), Skip or Next, the list of lessons and leave (✕).
   - A step done shows a tick for a moment.
 - **Rings, not a dim:** a ring lights what to touch, and for a drag a second, dashed one lights where it goes. Nothing blocks the table.
 - **The drag hand:** a hand carries the card to where it goes three times, then rests. Under reduced motion it is a dotted arrow instead.
 - **Accessibility:**
-  - The coach is a non-modal dialog named by its lesson.
-  - Each step is announced politely.
+  - The coach is a non-modal dialog named by its lesson; a lesson started from the list gives it the focus.
+  - Each step, the first too, is announced politely from one live region that is always on the page.
   - The keyboard is never trapped.
-- **Layering:** it lies over the table and the command palette (a lesson is read while the palette is open), and hides under the deck screen and sheets.
+- **Layering:** the coach lies over the table and the command palette (a lesson is read while the palette is open); the lesson list, the deal and the done card step aside for the palette. All of it hides under the deck screen and sheets. The deal and the done card can each be left.
 - **Wording follows the hand:** it starts from the pointer the screen reports, then follows whichever was last used. "Double-click" becomes "Tap, then Read", and "Right-click" becomes "Tap, then Actions". The keys lesson is offered only with a keyboard; touch screens get Commands instead.
 
 ### 5. Ways in
@@ -116,9 +117,11 @@ has gone says so, with "Start the lesson over".
 - The app menu's Tutorial (Leave tutorial on the practice table).
 - The palette: Tutorial, and each lesson by name ("tutorial damage").
 - An address: `?tutorial` opens the list, `?tutorial=<lesson>` a lesson.
+  The address forgets it once taken, so a reload is the player's own table.
 
 It never starts by itself. It is offered at a Solo table and from Play
-online, not in a room, where the other player would be left waiting.
+online, not in a room, where the other player would be left waiting, nor
+while a room the page made waits for its guest.
 
 ### 6. Progress
 
