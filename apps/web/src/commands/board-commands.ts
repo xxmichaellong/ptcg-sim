@@ -710,7 +710,13 @@ export const boardCommands = (
         section: 'piles',
         icon: icon as Icon,
         hint: hint(id),
-        keywords: ['board', 'all'],
+        // The board's own name too, which "on playboard" may not start
+        // with in every language.
+        keywords: [
+          'board',
+          'all',
+          t({ message: 'Board', context: 'zone on the table' }),
+        ],
         run: shortcut(request),
       });
     }

@@ -2,6 +2,8 @@ import {
   createBoardSceneForViewport,
   createRendererSpikeView,
 } from '@ptcgsim/renderer-contract';
+import { i18n } from '@lingui/core';
+import { msg } from '@lingui/core/macro';
 import { describe, expect, it, vi } from 'vitest';
 
 import {
@@ -62,6 +64,29 @@ const find = (commands: readonly PaletteCommand[], id: string) => {
 };
 
 describe('boardCommands', () => {
+  it('finds the loose board’s commands by the board’s own name', () => {
+    // A language whose "on playboard" doesn't start with the board's name.
+    const board = msg({ message: 'Board', context: 'zone on the table' });
+    i18n.load('xx', { [board.id!]: '盤面' });
+    i18n.activate('xx');
+    let commands: readonly PaletteCommand[];
+    try {
+      commands = boardCommands({
+        runtime: runtimeFor(stateWith()),
+        hint: () => undefined,
+      });
+    } finally {
+      i18n.activate('en');
+    }
+    const loose = commands.filter((command) =>
+      ['board.discardAll', 'board.moveAllToHand', 'board.shuffleAllIntoDeck']
+        .map((id) => `piles.${id}`)
+        .includes(command.id)
+    );
+    expect(loose).toHaveLength(3);
+    for (const command of loose) expect(command.keywords).toContain('盤面');
+  });
+
   it("lists the acting seat's deck and hand, and runs them as the palette", () => {
     const state = stateWith();
     const runtime = runtimeFor(state);

@@ -96,15 +96,18 @@ export interface DeckEditorProps {
 const OWN_KEYS = '[role="dialog"], [role="menu"], [role="listbox"]';
 
 /**
- * A letter's key: the letter typed, or its place where the layout types
- * no Latin letter there (Ctrl+Z on a Cyrillic board arrives as Ctrl+я).
+ * A letter's key: the letter typed, or its place where the layout types a
+ * letter of another script there (Ctrl+Z on a Cyrillic board arrives as
+ * Ctrl+я). Punctuation in that place (Dvorak's ;) is not the letter.
  */
 const isLetter = (
   event: Pick<KeyboardEvent, 'key' | 'code'>,
   letter: string
 ): boolean =>
   event.key.toLowerCase() === letter ||
-  (!/^[a-z]$/iu.test(event.key) && event.code === `Key${letter.toUpperCase()}`);
+  (/^\p{L}$/u.test(event.key) &&
+    !/^\p{Script=Latin}$/u.test(event.key) &&
+    event.code === `Key${letter.toUpperCase()}`);
 
 /**
  * One saved deck being built: card search beside the deck, every change
@@ -299,10 +302,13 @@ export const DeckEditor = ({
       | 'preventDefault'
     >
   ): void => {
-    // A window open over the editor (a custom card's) keeps its keys.
+    // A window of the editor's own open over it (a custom card's) keeps
+    // its keys. One drawn elsewhere (a card's details, whose + and prints
+    // change the deck) keeps only `/`: undo and redo still reach the deck.
+    const owner =
+      event.target instanceof Element ? event.target.closest(OWN_KEYS) : null;
     if (
-      (event.target instanceof Element &&
-        event.target.closest(OWN_KEYS) !== null) ||
+      (owner !== null && editor.current?.contains(owner) === true) ||
       editor.current?.querySelector('[role="dialog"]:not([hidden])')
     ) {
       return;
@@ -317,10 +323,20 @@ export const DeckEditor = ({
       event.preventDefault();
       if (event.shiftKey) redo();
       else undo();
-    } else if (mod && isLetter(event, 'y') && !isTextEntry(event.target)) {
+    } else if (
+      mod &&
+      !event.altKey &&
+      isLetter(event, 'y') &&
+      !isTextEntry(event.target)
+    ) {
       event.preventDefault();
       redo();
-    } else if (event.key === '/' && !mod && !isTextEntry(event.target)) {
+    } else if (
+      event.key === '/' &&
+      !mod &&
+      owner === null &&
+      !isTextEntry(event.target)
+    ) {
       event.preventDefault();
       // Drawn first: a hidden pane's search can't take the focus.
       flushSync(() => setTab('search'));

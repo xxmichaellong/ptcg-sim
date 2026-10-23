@@ -418,11 +418,11 @@
   },
   "-r4674": {
     "message": "{count, plural, one {Shuffle hand in and draw # card} other {Shuffle hand in and draw # cards}}",
-    "translation": "{count, plural, one {اخلط اليد في الرزمة واسحب بطاقة واحدة} two {اخلط اليد في الرزمة واسحب بطاقتين} few {اخلط اليد في الرزمة واسحب # بطاقات} many {اخلط اليد في الرزمة واسحب # بطاقة} other {اخلط اليد في الرزمة واسحب # بطاقة}}"
+    "translation": "{count, plural, one {اخلط اليد في المجموعة واسحب بطاقة واحدة} two {اخلط اليد في المجموعة واسحب بطاقتين} few {اخلط اليد في المجموعة واسحب # بطاقات} many {اخلط اليد في المجموعة واسحب # بطاقة} other {اخلط اليد في المجموعة واسحب # بطاقة}}"
   },
   "aN0Z_E": {
     "message": "{count, plural, one {Shuffle hand to bottom and draw # card} other {Shuffle hand to bottom and draw # cards}}",
-    "translation": "{count, plural, one {اخلط اليد أسفل الرزمة واسحب بطاقة واحدة} two {اخلط اليد أسفل الرزمة واسحب بطاقتين} few {اخلط اليد أسفل الرزمة واسحب # بطاقات} many {اخلط اليد أسفل الرزمة واسحب # بطاقة} other {اخلط اليد أسفل الرزمة واسحب # بطاقة}}"
+    "translation": "{count, plural, one {اخلط اليد أسفل المجموعة واسحب بطاقة واحدة} two {اخلط اليد أسفل المجموعة واسحب بطاقتين} few {اخلط اليد أسفل المجموعة واسحب # بطاقات} many {اخلط اليد أسفل المجموعة واسحب # بطاقة} other {اخلط اليد أسفل المجموعة واسحب # بطاقة}}"
   },
   "hMKADB": {
     "message": "{count} × {cardName} ({print}). Details",
@@ -541,7 +541,7 @@
     "comments": [
       "A zone's name for screen readers; name is its player. The open play area."
     ],
-    "translation": "لوحة {name}"
+    "translation": "ميدان {name}"
   },
   "IensRv": {
     "message": "{name} changed {card} into {category, select, energy {an energy} pokemon {a Pokémon} trainer {a tool} other {an unknown type}}",
@@ -625,7 +625,7 @@
     "comments": [
       "Log line: a player is searching their own deck. {name} is the player's name (both times)."
     ],
-    "translation": "{name} يتصفح رزمة {name}"
+    "translation": "{name} يتصفح مجموعة {name}"
   },
   "Uzm69g": {
     "message": "{name} is on {seat}",
@@ -657,14 +657,14 @@
     "comments": [
       "Log line. {name} is a player's name, {count} how many cards from the bottom of their deck they looked at."
     ],
-    "translation": "اطلع {name} على {count, plural, one {بطاقة واحدة} two {بطاقتين} few {# بطاقات} many {# بطاقة} other {# بطاقة}} من أسفل الرزمة"
+    "translation": "اطلع {name} على {count, plural, one {بطاقة واحدة} two {بطاقتين} few {# بطاقات} many {# بطاقة} other {# بطاقة}} من أسفل المجموعة"
   },
   "ok9Ijw": {
     "message": "{name} looked at top {count, plural, one {# card(s)} other {# card(s)}} of deck",
     "comments": [
       "Log line. {name} is a player's name, {count} how many cards from the top of their deck they looked at."
     ],
-    "translation": "اطلع {name} على {count, plural, one {بطاقة واحدة} two {بطاقتين} few {# بطاقات} many {# بطاقة} other {# بطاقة}} من أعلى الرزمة"
+    "translation": "اطلع {name} على {count, plural, one {بطاقة واحدة} two {بطاقتين} few {# بطاقات} many {# بطاقة} other {# بطاقة}} من أعلى المجموعة"
   },
   "A7bcR4": {
     "message": "{name} Lost Zone",
@@ -724,7 +724,7 @@
     "comments": [
       "Log line. {name} is a player's name; {source} is the zone they shuffled, almost always their deck."
     ],
-    "translation": "خلط {name} {source, select, hand {اليد} prizes {الجوائز} discard {كومة التخلص} board {الميدان} stadium {الملعب} active {النشط} bench {الاحتياط} lostZone {Lost Zone} attachmentResolution {البطاقات الملحقة} other {الرزمة}}"
+    "translation": "خلط {name} {source, select, hand {اليد} prizes {الجوائز} discard {كومة التخلص} board {الميدان} stadium {الملعب} active {النشط} bench {الاحتياط} lostZone {Lost Zone} attachmentResolution {البطاقات الملحقة} other {المجموعة}}"
   },
   "x8Eb2i": {
     "message": "{name} started turn {turn}",
@@ -1201,7 +1201,7 @@
   "X8Y2MP": {
     "message": "All to deck",
     "context": "shortcut key caption",
-    "translation": "الكل إلى الرزمة"
+    "translation": "الكل إلى المجموعة"
   },
   "e1BFxQ": {
     "message": "All to hand",
@@ -4742,7 +4742,7 @@
   },
   "Ad3M_2": {
     "message": "Shuffle all on playboard into deck",
-    "translation": "اخلط كل ما في ساحة اللعب في المجموعة"
+    "translation": "اخلط كل ما في الميدان في المجموعة"
   },
   "Es4EnS": {
     "message": "Shuffle all to deck",
@@ -4758,7 +4758,7 @@
   },
   "KpMslS": {
     "message": "Shuffle hand into deck and draw…",
-    "translation": "اخلط اليد في الرزمة واسحب…"
+    "translation": "اخلط اليد في المجموعة واسحب…"
   },
   "VD_Lux": {
     "message": "Shuffle hand to bottom",
@@ -4795,7 +4795,7 @@
   },
   "nU9Ip_": {
     "message": "Shuffle Prizes to bottom of deck",
-    "translation": "اخلط بطاقات الجوائز أسفل الرزمة"
+    "translation": "اخلط بطاقات الجوائز أسفل المجموعة"
   },
   "SRsSL6": {
     "message": "Shuffle to bottom",

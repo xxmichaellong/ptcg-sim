@@ -541,7 +541,7 @@
     "comments": [
       "A zone's name for screen readers; name is its player. The open play area."
     ],
-    "translation": "{name}의 필드"
+    "translation": "{name}의 보드"
   },
   "IensRv": {
     "message": "{name} changed {card} into {category, select, energy {an energy} pokemon {a Pokémon} trainer {a tool} other {an unknown type}}",
@@ -3585,7 +3585,7 @@
     "comments": [
       "Heard after a deck's name: it can't be played yet (too few cards, or a card its format doesn't allow)"
     ],
-    "translation": "플레이할 수 없음"
+    "translation": "아직 플레이할 수 없음"
   },
   "qzsXzo": {
     "message": "Not saved",

@@ -2106,7 +2106,7 @@
   },
   "FQxE2Y": {
     "message": "Discard all on playboard",
-    "translation": "Сбросить всё с игрового поля"
+    "translation": "Сбросить всё с поля"
   },
   "mKMb1d": {
     "message": "Discard hand",
@@ -3337,11 +3337,11 @@
   },
   "MnxTQZ": {
     "message": "Move all on playboard to hand",
-    "translation": "Вернуть всё с игрового поля в руку"
+    "translation": "Вернуть всё с поля в руку"
   },
   "DUfTll": {
     "message": "Move all on playboard to Lost Zone",
-    "translation": "Переместить всё с игрового поля в Lost Zone"
+    "translation": "Переместить всё с поля в Lost Zone"
   },
   "pcSzkk": {
     "message": "Move all to hand",
@@ -4742,7 +4742,7 @@
   },
   "Ad3M_2": {
     "message": "Shuffle all on playboard into deck",
-    "translation": "Замешать всё с игрового поля в колоду"
+    "translation": "Замешать всё с поля в колоду"
   },
   "Es4EnS": {
     "message": "Shuffle all to deck",
@@ -5301,7 +5301,7 @@
   },
   "M9c-bJ": {
     "message": "Their playboard",
-    "translation": "Игровое поле соперника"
+    "translation": "Поле соперника"
   },
   "EO0v0p": {
     "message": "Their Prizes",
@@ -5835,7 +5835,7 @@
   },
   "Oi-Qz3": {
     "message": "Your playboard",
-    "translation": "Твоё игровое поле"
+    "translation": "Твоё поле"
   },
   "XzwcHS": {
     "message": "Your Prizes",

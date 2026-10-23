@@ -703,6 +703,7 @@ const matchesQuery = (
       i18n._(entry.short),
       entry.detail ? i18n._(entry.detail) : '',
       group ? i18n._(group.title) : '',
+      group?.place ? i18n._(group.place) : '',
     ].join(' ')
   );
   return terms.every((term) => haystack.some((word) => word.startsWith(term)));

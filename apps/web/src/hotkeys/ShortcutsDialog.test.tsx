@@ -1,10 +1,12 @@
 // @vitest-environment happy-dom
 
+import { i18n } from '@lingui/core';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PreferenceStore } from '../preferences/preference-store.js';
+import { HOTKEY_GROUPS } from './hotkey-catalogue.js';
 import { HOTKEY_PREFERENCES } from './hotkey-preferences.js';
 import { ShortcutsDialog } from './ShortcutsDialog.js';
 
@@ -180,6 +182,41 @@ describe('ShortcutsDialog', () => {
     expect(row('hand.discardAndDraw').textContent).toContain(
       'Nothing selected'
     );
+  });
+
+  it('finds the board’s keys by the board’s name inside their group’s', async () => {
+    // Japanese writes "your board" as one word: 自分の盤面.
+    const board = HOTKEY_GROUPS.find((group) => group.id === 'board')!;
+    i18n.load('xx', {
+      [board.title.id!]: '自分の盤面',
+      [board.place!.id!]: '盤面',
+    });
+    i18n.activate('xx');
+    try {
+      await render();
+      const search = document.querySelector<HTMLInputElement>(
+        'input[type="search"]'
+      )!;
+      await act(async () => {
+        Object.getOwnPropertyDescriptor(
+          HTMLInputElement.prototype,
+          'value'
+        )!.set!.call(search, '盤面');
+        search.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+      const shown = [
+        ...document.querySelectorAll<HTMLElement>('[data-action]'),
+      ].map((element) => element.dataset.action);
+      expect(shown).toEqual(
+        expect.arrayContaining([
+          'board.discardAll',
+          'board.moveAllToHand',
+          'board.shuffleAllIntoDeck',
+        ])
+      );
+    } finally {
+      i18n.activate('en');
+    }
   });
 
   it('puts every shortcut back after a second confirming click', async () => {

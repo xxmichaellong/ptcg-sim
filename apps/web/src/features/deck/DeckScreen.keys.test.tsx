@@ -468,6 +468,12 @@ describe('the deck screen from the keyboard', () => {
     await key(add, { key: 'я', code: 'KeyZ', ctrlKey: true });
     expect(pidgeys()).toBe(1);
     await act(async () => add.click());
+    // Not the letter: Dvorak's Ctrl+; where QWERTY has Z, or AltGr+Y
+    // typing ü (Windows reports AltGr as Ctrl+Alt).
+    await key(add, { key: ';', code: 'KeyZ', ctrlKey: true });
+    expect(pidgeys()).toBe(2);
+    await key(add, { key: 'ü', code: 'KeyY', ctrlKey: true, altKey: true });
+    expect(pidgeys()).toBe(2);
     // Over the editor, a custom card's window keeps / and Ctrl+Z.
     await act(async () =>
       host
@@ -482,6 +488,83 @@ describe('the deck screen from the keyboard', () => {
     expect(document.activeElement).toBe(cancel);
     await key(cancel, { key: 'z', code: 'KeyZ', ctrlKey: true });
     expect(pidgeys()).toBe(2);
+  });
+
+  it('undoes a change made in a card’s details, a window drawn over the editor, and keeps / there', async () => {
+    const library = new DeckLibrary({ backend: null });
+    const deck = library.create({
+      name: 'Pidgey',
+      format: 'standard',
+      cards: [
+        {
+          card: {
+            id: 'mew-16',
+            name: 'Pidgey',
+            category: 'Pokémon',
+            image: 'https://example.test/mew-16.png',
+          },
+          count: 1,
+        },
+      ],
+    });
+    await render(vi.fn(), library);
+    await act(async () =>
+      host
+        .querySelector<HTMLButtonElement>('button[aria-label="Edit Pidgey"]')!
+        .click()
+    );
+    const pidgeys = () => library.get(deck.id)!.cards[0]?.count ?? 0;
+    await act(async () =>
+      host.querySelector<HTMLButtonElement>('button.deck-row__card')!.click()
+    );
+    const details = document.querySelector(
+      '#nativeDeckBuilderCardPreviewScrim'
+    );
+    expect(host.contains(details)).toBe(false);
+    const add = [
+      ...document.querySelectorAll<HTMLButtonElement>(
+        'button[aria-label="Add one Pidgey"]'
+      ),
+    ].find((button) => details?.contains(button))!;
+    await act(async () => add.click());
+    expect(pidgeys()).toBe(2);
+    add.focus();
+    const key = (init: KeyboardEventInit) =>
+      act(async () => {
+        add.dispatchEvent(
+          new KeyboardEvent('keydown', {
+            bubbles: true,
+            cancelable: true,
+            ...init,
+          })
+        );
+      });
+    await key({ key: 'z', code: 'KeyZ', ctrlKey: true });
+    expect(pidgeys()).toBe(1);
+    await key({ key: '/', code: 'Slash' });
+    expect(document.activeElement).toBe(add);
+  });
+
+  it('closes a custom card’s window on Esc after a click on its blank parts, the deck screen staying', async () => {
+    const onClose = await render();
+    await act(async () =>
+      host.querySelector<HTMLButtonElement>('#deckNewButton')!.click()
+    );
+    await act(async () =>
+      host
+        .querySelector<HTMLButtonElement>('#nativeDeckBuilderAddCustomCard')!
+        .click()
+    );
+    const window = host.querySelector<HTMLElement>(
+      '#nativeDeckBuilderCustomCardModal'
+    )!;
+    expect(window.hidden).toBe(false);
+    // A click on its title or padding focuses the nearest focusable: it.
+    expect(window.getAttribute('tabindex')).toBe('-1');
+    window.focus();
+    await press('Escape');
+    expect(window.hidden).toBe(true);
+    expect(onClose).not.toHaveBeenCalled();
   });
 
   it('takes / from the Deck tab to the search, drawn before it takes the focus', async () => {

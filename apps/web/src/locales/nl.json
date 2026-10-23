@@ -541,7 +541,7 @@
     "comments": [
       "A zone's name for screen readers; name is its player. The open play area."
     ],
-    "translation": "Speelveld van {name}"
+    "translation": "Bord van {name}"
   },
   "IensRv": {
     "message": "{name} changed {card} into {category, select, energy {an energy} pokemon {a Pokémon} trainer {a tool} other {an unknown type}}",

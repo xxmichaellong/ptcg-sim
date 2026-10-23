@@ -181,6 +181,9 @@ export const CustomCardDialog = ({
       role="dialog"
       aria-modal="true"
       aria-labelledby="nativeCustomCardTitle"
+      // A click on its blank parts keeps the focus in it, where its own
+      // Esc closes it (not the deck screen behind).
+      tabIndex={-1}
       hidden={!open}
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();

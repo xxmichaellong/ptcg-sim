@@ -22,6 +22,11 @@ export interface HotkeyGroup {
   readonly id: HotkeyGroupId;
   /** Shown where the list is drawn, in the player's language. */
   readonly title: MessageDescriptor;
+  /**
+   * The table's own name for what its keys act on, which a search finds
+   * them by where the title doesn't start with it ("自分の盤面").
+   */
+  readonly place?: MessageDescriptor;
 }
 
 /** Reading order, as v1's reference grouped them. */
@@ -42,6 +47,7 @@ export const HOTKEY_GROUPS: readonly HotkeyGroup[] = [
   {
     id: 'board',
     title: msg({ message: 'Your board', context: 'shortcut group' }),
+    place: msg({ message: 'Board', context: 'zone on the table' }),
   },
   { id: 'table', title: msg({ message: 'Table', context: 'shortcut group' }) },
 ];

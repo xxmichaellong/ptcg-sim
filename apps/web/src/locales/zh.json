@@ -3585,7 +3585,7 @@
     "comments": [
       "Heard after a deck's name: it can't be played yet (too few cards, or a card its format doesn't allow)"
     ],
-    "translation": "暂不可使用"
+    "translation": "尚未准备好对战"
   },
   "qzsXzo": {
     "message": "Not saved",
