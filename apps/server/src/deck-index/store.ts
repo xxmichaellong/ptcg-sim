@@ -473,6 +473,44 @@ export class DeckIndexStore {
     return row ? tournamentRow(row) : null;
   }
 
+  /**
+   * After a run of "unknown" answers, the read that tells events removed
+   * from Limitless from Limitless refusing: the newest event read before
+   * (asked again conditionally, a 304 costs nothing), else the one waiting
+   * that `nextToRead` would take last -- the run is of the ones it takes
+   * first.
+   */
+  probe(now: number): TournamentRow | null {
+    const read = this.first(
+      `SELECT * FROM tournaments
+       WHERE state = 'indexed' AND etag IS NOT NULL
+       ORDER BY date DESC
+       LIMIT 1`
+    );
+    if (read) return tournamentRow(read);
+    const waiting = this.first(
+      `SELECT * FROM tournaments
+       WHERE state IN ('listed', 'provisional', 'retry')
+         AND date <= ?
+         AND (retry_after IS NULL OR retry_after <= ?)
+       ORDER BY
+         CASE
+           WHEN format = 'STANDARD' AND date >= ? AND players >= ? THEN 0
+           WHEN format = 'STANDARD' AND date >= ? THEN 1
+           ELSE 2
+         END DESC,
+         date ASC,
+         players ASC
+       LIMIT 1`,
+      now - STORE_POLICY.finishedAfterMs,
+      now,
+      now - STORE_POLICY.currentWindowMs,
+      STORE_POLICY.bigEventPlayers,
+      now - STORE_POLICY.currentWindowMs
+    );
+    return waiting ? tournamentRow(waiting) : null;
+  }
+
   /** A recent indexed tournament due to be read again, newest first. */
   nextToResync(now: number): TournamentRow | null {
     const row = this.first(
@@ -969,7 +1007,9 @@ export class DeckIndexStore {
   /**
    * Tournaments worth listing, newest first, after `before` (a date and an
    * id, for paging), matching an optional name search. One that hasn't
-   * started by `now` (players still registering) has nothing to show yet.
+   * started by `now` (players still registering) has nothing to show yet;
+   * with `readOnly` (the crawl off, nothing read on demand), neither has
+   * one never read.
    */
   listTournaments(query: {
     readonly terms: readonly string[];
@@ -978,12 +1018,14 @@ export class DeckIndexStore {
     readonly before: { readonly date: number; readonly id: string } | null;
     readonly limit: number;
     readonly now: number;
+    readonly readOnly?: boolean;
   }): TournamentRow[] {
     const conditions = [
       `t.state != 'skipped'`,
       't.players >= ?',
       't.date <= ?',
     ];
+    if (query.readOnly) conditions.push('t.fetched_at IS NOT NULL');
     const bindings: SqlValue[] = [query.minimumPlayers, query.now];
     if (query.format) {
       conditions.push('t.format = ?');

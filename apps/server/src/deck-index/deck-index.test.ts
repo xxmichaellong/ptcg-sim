@@ -84,6 +84,10 @@ class FakeLimitless {
   readonly failures: Response[] = [];
   /** How many standings requests answer 503 before they work again. */
   failStandings = 0;
+  /** The most events a page of the list holds, whatever was asked. */
+  pageCap = Number.POSITIVE_INFINITY;
+  /** Every page of the list answered as the first. */
+  ignorePage = false;
 
   readonly fetch = vi.fn(
     async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
@@ -92,8 +96,11 @@ class FakeLimitless {
       const failure = this.failures.shift();
       if (failure) return failure;
       if (url.pathname === '/api/tournaments') {
-        const limit = Number(url.searchParams.get('limit'));
-        const page = Number(url.searchParams.get('page'));
+        const limit = Math.min(
+          this.pageCap,
+          Number(url.searchParams.get('limit'))
+        );
+        const page = this.ignorePage ? 1 : Number(url.searchParams.get('page'));
         const sorted = [...this.tournaments].sort(
           (left, right) => right.date - left.date
         );
@@ -137,9 +144,9 @@ class FakeLimitless {
 
 let limitless: FakeLimitless;
 
-const createIndex = (enabled = true) => {
+const createIndex = (enabled = true, storage = memoryIndexStorage()) => {
   const index = new DeckIndex({
-    storage: memoryIndexStorage(),
+    storage,
     fetch: limitless.fetch,
     now: clock,
     enabled,
@@ -181,6 +188,14 @@ const crawlUntilIdle = async (index: DeckIndex) => {
   }
   throw new Error('the crawl never settled');
 };
+
+/** Every tournament the index knows of, listed or skipped (too small). */
+const knownCount = (storage: ReturnType<typeof memoryIndexStorage>): number =>
+  Number(
+    storage.database.prepare('SELECT count(*) AS n FROM tournaments').get()?.[
+      'n'
+    ]
+  );
 
 beforeEach(() => {
   now = START;
@@ -226,8 +241,10 @@ describe('discovering tournaments', () => {
     );
     const index = createIndex();
     await crawlUntilIdle(index);
+    // The list's end is the page with nothing on it.
     expect(limitless.calls).toEqual([
       '/api/tournaments?game=PTCG&limit=1000&page=1',
+      '/api/tournaments?game=PTCG&limit=1000&page=2',
     ]);
     // New tournaments at the top of the list.
     limitless.tournaments.push(
@@ -237,7 +254,7 @@ describe('discovering tournaments', () => {
     );
     now += CRAWL_POLICY.discoveryEveryMs;
     await crawlUntilIdle(index);
-    expect(limitless.calls.slice(1)).toEqual([
+    expect(limitless.calls.slice(2)).toEqual([
       // 100 new.
       '/api/tournaments?game=PTCG&limit=100&page=1',
       // 20 new, 80 known.
@@ -245,6 +262,53 @@ describe('discovering tournaments', () => {
       // All known and over two days old: the run stops.
       '/api/tournaments?game=PTCG&limit=100&page=3',
     ]);
+  });
+
+  it('reads the whole list when Limitless sends fewer to a page than asked for, and ends when it ignores the page asked for', async () => {
+    limitless.tournaments = Array.from({ length: 1_200 }, (_, n) =>
+      tournament(1_000 + n, { players: 4, date: START - 400 * DAY - n })
+    );
+    limitless.pageCap = 500;
+    const cappedStorage = memoryIndexStorage();
+    await crawlUntilIdle(createIndex(true, cappedStorage));
+    expect(knownCount(cappedStorage)).toBe(1_200);
+
+    limitless = new FakeLimitless();
+    limitless.tournaments = [
+      tournament(1, { players: 100, date: START - 2 * DAY }),
+      ...Array.from({ length: 999 }, (_, n) =>
+        tournament(1_000 + n, { players: 4, date: START - 400 * DAY })
+      ),
+    ];
+    limitless.standings.set(id(1), [standing('p', 1, dragapult)]);
+    limitless.ignorePage = true;
+    const ignoring = createIndex();
+    await crawlUntilIdle(ignoring);
+    // The second page, the first again, is the end; the standings are read.
+    expect(
+      limitless.calls.filter((call) => call.startsWith('/api/tournaments?'))
+    ).toHaveLength(2);
+    expect(limitless.standingsCalls()).toEqual([id(1)]);
+  });
+
+  it('lists every event that came while the crawl was off, however many pages a run can read', async () => {
+    limitless.tournaments = Array.from({ length: 250 }, (_, n) =>
+      tournament(10_000 + n, { players: 4, date: START - 400 * DAY - n })
+    );
+    const storage = memoryIndexStorage();
+    const index = createIndex(true, storage);
+    await crawlUntilIdle(index);
+    // Months off: 2,500 new events, 25 pages, more than a run's 20.
+    limitless.tournaments.push(
+      ...Array.from({ length: 2_500 }, (_, n) =>
+        tournament(20_000 + n, { players: 4, date: START - n * 2 * HOUR })
+      )
+    );
+    for (let run = 0; run < 3; run += 1) {
+      now += CRAWL_POLICY.discoveryEveryMs;
+      await crawlUntilIdle(index);
+    }
+    expect(knownCount(storage)).toBe(2_750);
   });
 
   it('takes a page that is not a list for a failure, not the end of the list', async () => {
@@ -357,7 +421,7 @@ describe('discovering tournaments', () => {
     limitless.tournaments = [tournament(1, { players: 4 })];
     const index = createIndex();
     await crawlUntilIdle(index);
-    expect(limitless.calls).toHaveLength(1);
+    expect(limitless.calls).toHaveLength(2);
     index.discoverSoon();
     await crawl(index, 1);
     expect(limitless.calls.at(-1)).toBe(
@@ -388,7 +452,7 @@ describe('the request budget', () => {
     limitless.tournaments = [tournament(1, { date: START - DAY })];
     limitless.standings.set(id(1), [standing('p', 1, dragapult)]);
     const index = createIndex();
-    await crawl(index, 1);
+    await crawl(index, 2);
     limitless.failures.push(
       new Response('slow down', {
         status: 429,
@@ -398,7 +462,7 @@ describe('the request budget', () => {
     const blockedAt = now;
     const next = await index.step();
     expect(next).toBeGreaterThanOrEqual(blockedAt + 120_000);
-    expect(limitless.calls).toHaveLength(2);
+    expect(limitless.calls).toHaveLength(3);
     // The tournament wasn't at fault: it is read once the block is over.
     now = next!;
     await crawl(index, 1);
@@ -411,7 +475,7 @@ describe('the request budget', () => {
     limitless.standings.set(id(1), [standing('p', 1, dragapult)]);
     limitless.failStandings = 3;
     const index = createIndex();
-    await crawl(index, 1);
+    await crawl(index, 2);
     const before = now;
     const next = (await index.step())!;
     expect(limitless.standingsCalls()).toHaveLength(1);
@@ -729,6 +793,35 @@ describe('the request budget', () => {
       if ((await index.tournament(id(n))).kind === 'ok') kept.push(n);
     }
     expect(kept.length).toBeGreaterThanOrEqual(events.length - 2);
+  });
+
+  it('reads the events waiting behind a batch Limitless removed, and forgets the batch, rather than holding back for hours', async () => {
+    // Forty recent big events, read first, that Limitless removes (list and
+    // all) once listed; thirty older, smaller ones waiting behind them.
+    const removed = Array.from({ length: 40 }, (_, n) =>
+      tournament(500 + n, { players: 200, date: START - 2 * DAY - n * MINUTE })
+    );
+    const live = Array.from({ length: 30 }, (_, n) =>
+      tournament(5_000 + n, { players: 20, date: START - 3 * DAY - n * HOUR })
+    );
+    for (const row of live) {
+      limitless.standings.set(row.id, [standing('p', 1, dragapult)]);
+    }
+    limitless.tournaments = [...removed, ...live];
+    const storage = memoryIndexStorage();
+    const index = createIndex(true, storage);
+    await crawl(index, 2);
+    limitless.tournaments = live;
+    await crawlUntil(index, START + 3 * HOUR);
+    // A read elsewhere after each run of unknowns: it answers, so the next
+    // of the batch are forgotten, not each held back for and tried again.
+    expect(new Set(limitless.standingsCalls())).toEqual(
+      new Set([...removed, ...live].map((row) => row.id))
+    );
+    // Of the few that ended a run (a try spent each time), most are
+    // forgotten when tried again; not most of the batch left given up on.
+    await crawlUntil(index, START + 6 * HOUR);
+    expect(knownCount(storage)).toBeLessThanOrEqual(30 + 2);
   });
 
   it('loses no history to a long storm of unknowns while the list answers, restarts and all', async () => {
@@ -1170,6 +1263,41 @@ describe('browsing tournaments', () => {
       organizer: null,
       hasLists: null,
     });
+  });
+
+  it('lists, with the crawl off, only the events it has read: one never read would open as not found', async () => {
+    limitless.tournaments = [
+      tournament(1, { name: 'Read Cup', players: 200, date: START - 3 * DAY }),
+      tournament(2, { name: 'Unread Cup', players: 40, date: START - 3 * DAY }),
+    ];
+    limitless.standings.set(id(1), [standing('a', 1, dragapult)]);
+    limitless.standings.set(id(2), [standing('b', 1, dragapult)]);
+    const storage = memoryIndexStorage();
+    const indexOn = (enabled: boolean) => {
+      const index = new DeckIndex({
+        storage,
+        fetch: limitless.fetch,
+        now: clock,
+        enabled,
+      });
+      index.migrate();
+      return index;
+    };
+    // The list, then the bigger event's standings; the crawl turned off
+    // before the other's.
+    await crawl(indexOn(true), 3);
+    expect(limitless.standingsCalls()).toEqual([id(1)]);
+    const off = indexOn(false);
+    const listed = off.tournaments({
+      q: '',
+      format: null,
+      minimumPlayers: 0,
+      before: null,
+      pageSize: 10,
+    });
+    expect(listed.tournaments.map((row) => row.id)).toEqual([id(1)]);
+    expect(await off.tournament(id(1))).toMatchObject({ kind: 'ok' });
+    expect(await off.tournament(id(2))).toEqual({ kind: 'not_found' });
   });
 });
 

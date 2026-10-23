@@ -105,11 +105,14 @@ describe('the tournament deck index', () => {
     expect(calls).toEqual([]);
     expect(await alarmAt()).not.toBeNull();
 
-    // The alarm's steps: the list, then the standings.
+    // The alarm's steps: the list, the page past it with nothing new (its
+    // end), then the standings.
+    expect(await runDurableObjectAlarm(indexStub())).toBe(true);
     expect(await runDurableObjectAlarm(indexStub())).toBe(true);
     expect(await runDurableObjectAlarm(indexStub())).toBe(true);
     expect(calls).toEqual([
       '/api/tournaments?game=PTCG&limit=1000&page=1',
+      '/api/tournaments?game=PTCG&limit=1000&page=2',
       `/api/tournaments/${TOURNAMENT}/standings`,
     ]);
     expect(await alarmAt()).not.toBeNull();
@@ -155,7 +158,7 @@ describe('the tournament deck index', () => {
       `https://play.limitlesstcg.com/tournament/${TOURNAMENT}/player/redthegoat/decklist`
     );
     // Everything came from what was stored: no more requests.
-    expect(calls).toHaveLength(2);
+    expect(calls).toHaveLength(3);
   });
 
   it('reads a tournament a player opens before the crawl gets to it', async () => {

@@ -38,9 +38,13 @@ from RK9.
    - FTS5 tables over archetype and tournament names.
 
    An alarm step makes at most one request:
-   - It reads the whole tournament list once, in pages of 1,000.
+   - It reads the whole tournament list once, in pages of 1,000, to a page
+     with nothing on it (Limitless may send fewer than asked for), or one
+     past the first with nothing new (a page number it ignores).
    - Every half hour, it reads the newest pages until a page holds only
-     tournaments it knows that are over two days old.
+     tournaments it knows that are over two days old, 20 pages at most a
+     run; a run that ends at 20 among new events (the crawl off for
+     months) goes on from there the next time.
    - It reads one finished tournament's standings per step. Recent Standard
      events of 32 or more players go first, then by newest and biggest. The
      rest of history follows over the next days.
@@ -79,7 +83,11 @@ from RK9.
      the rest are taken for Limitless refusing (nothing more removed, the
      crawl held back and moving on) until a standings read answers again.
      The run is kept with the index, so neither a list page nor a restart
-     ends it.
+     ends it. The crawl's next read is then one elsewhere: the newest event
+     read before, asked again with its ETag, else the one waiting that
+     would be read last. It answering tells a batch Limitless removed from
+     Limitless refusing: the run ends and the next of the batch are
+     removed, rather than each held back for and tried again for hours.
 3. **Everything from Limitless is untrusted, as in ADR-029.**
    - Responses are capped at 8 MB with a 15-second deadline.
    - Names are bounded single lines.
@@ -140,6 +148,11 @@ from RK9.
    - An event Limitless drops leaves the index when it is next read.
 7. **Off switch.** `DECK_INDEX_SOURCE=off` keeps the index from ever calling
    Limitless. The browser specs set it and serve their own answers.
+   `wrangler.jsonc` sets it for production and the preview until the
+   account is on Workers Paid, so a deploy that forgets `--var` doesn't
+   crawl; a deploy's `--var DECK_INDEX_SOURCE:on` (or the config) turns it
+   on. Off, the tournaments listed are only those read, since any other
+   answers "not found" when opened.
 8. **Majors are out, for now.** They need either Limitless's permission
    (their Labs JSON, or an endpoint for majors) or the owner's decision. Until
    then the deck screen links to limitlesstcg.com's tournaments, and a list

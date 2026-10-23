@@ -231,19 +231,34 @@ const hashList = async (text: string): Promise<string> => {
 };
 
 interface Discovery {
+  /** The page a run in progress asks for next. */
   readonly page: number | null;
   readonly dueAt: number;
+  /** The page the run in progress started at. */
+  readonly from?: number;
+  /**
+   * Where the next run starts: a run that ended at its page cap among new
+   * events (the crawl off for months) goes on from there, not from page 1,
+   * or the events past its last page would never be listed.
+   */
+  readonly resume?: number;
 }
+
+const pageOf = (value: unknown): number | null =>
+  Number.isSafeInteger(value) && (value as number) >= 1
+    ? (value as number)
+    : null;
 
 const readDiscovery = (value: string | null): Discovery => {
   try {
     const parsed = JSON.parse(value ?? '') as Partial<Discovery>;
+    const from = pageOf(parsed.from);
+    const resume = pageOf(parsed.resume);
     return {
-      page:
-        Number.isSafeInteger(parsed.page) && (parsed.page as number) >= 1
-          ? (parsed.page as number)
-          : null,
+      page: pageOf(parsed.page),
       dueAt: Number.isFinite(parsed.dueAt) ? (parsed.dueAt as number) : 0,
+      ...(from !== null ? { from } : {}),
+      ...(resume !== null ? { resume } : {}),
     };
   } catch {
     return { page: null, dueAt: 0 };
@@ -252,7 +267,12 @@ const readDiscovery = (value: string | null): Discovery => {
 
 type CrawlTask =
   | { readonly kind: 'backfill'; readonly page: number }
-  | { readonly kind: 'discover'; readonly page: number }
+  | {
+      readonly kind: 'discover';
+      readonly page: number;
+      /** The page this run started at. */
+      readonly from: number;
+    }
   | { readonly kind: 'read'; readonly tournament: TournamentRow }
   | { readonly kind: 'resync'; readonly tournament: TournamentRow };
 
@@ -283,7 +303,7 @@ export class DeckIndex {
     const discovery = readDiscovery(this.store.getMeta(META.discovery));
     this.store.setMeta(
       META.discovery,
-      JSON.stringify({ page: discovery.page, dueAt: 0 })
+      JSON.stringify({ ...discovery, dueAt: 0 })
     );
   }
 
@@ -309,8 +329,31 @@ export class DeckIndex {
       };
     }
     const discovery = readDiscovery(this.store.getMeta(META.discovery));
-    if (discovery.page !== null || discovery.dueAt <= now) {
-      return { kind: 'discover', page: discovery.page ?? 1 };
+    if (discovery.page !== null) {
+      return {
+        kind: 'discover',
+        page: discovery.page,
+        from: discovery.from ?? 1,
+      };
+    }
+    if (discovery.dueAt <= now) {
+      const page = discovery.resume ?? 1;
+      return { kind: 'discover', page, from: page };
+    }
+    // A run of "unknown" answers: one read elsewhere tells removed events
+    // (it answers, the run ends and the next of them are forgotten) from
+    // Limitless refusing (it fails too, and the crawl holds back).
+    if (
+      Number(this.store.getMeta(META.unknownRun) ?? '0') >
+      CRAWL_POLICY.unknownBeforeHold
+    ) {
+      const probe = this.store.probe(now);
+      if (probe) {
+        return {
+          kind: probe.state === 'indexed' ? 'resync' : 'read',
+          tournament: probe,
+        };
+      }
     }
     const next = this.store.nextToRead(now);
     if (next) return { kind: 'read', tournament: next };
@@ -430,7 +473,13 @@ export class DeckIndex {
   }
 
   private async discover(
-    task: { readonly kind: 'backfill' | 'discover'; readonly page: number },
+    task:
+      | { readonly kind: 'backfill'; readonly page: number }
+      | {
+          readonly kind: 'discover';
+          readonly page: number;
+          readonly from: number;
+        },
     now: number
   ): Promise<void> {
     const size =
@@ -456,7 +505,7 @@ export class DeckIndex {
       if (task.kind === 'discover') {
         this.store.setMeta(
           META.discovery,
-          JSON.stringify({ page: task.page, dueAt: 0 })
+          JSON.stringify({ page: task.page, dueAt: 0, from: task.from })
         );
       }
       return;
@@ -469,7 +518,7 @@ export class DeckIndex {
       if (task.kind === 'discover') {
         this.store.setMeta(
           META.discovery,
-          JSON.stringify({ page: task.page, dueAt: 0 })
+          JSON.stringify({ page: task.page, dueAt: 0, from: task.from })
         );
       }
       return;
@@ -479,11 +528,16 @@ export class DeckIndex {
     const rows = readTournamentList(body);
     const known = this.store.recordListed(rows, this.deps.now());
     if (task.kind === 'backfill') {
-      this.store.setMeta(
-        META.backfill,
-        raw < size ? 'done' : String(task.page + 1)
-      );
-      if (raw < size) this.finishDiscovery(now);
+      // The end of the list is a page with nothing on it, not a short one
+      // (Limitless may send fewer than asked for), or one past the first
+      // with nothing new (a page number Limitless ignores).
+      const end =
+        raw === 0 ||
+        (task.page > 1 &&
+          rows.length > 0 &&
+          rows.every((row) => known.has(row.id)));
+      this.store.setMeta(META.backfill, end ? 'done' : String(task.page + 1));
+      if (end) this.finishDiscovery(now);
       return;
     }
     const settled =
@@ -492,22 +546,28 @@ export class DeckIndex {
         (row) =>
           known.has(row.id) && row.date <= now - CRAWL_POLICY.knownAfterMs
       );
-    if (raw < size || settled || task.page >= CRAWL_POLICY.incrementalPages) {
+    if (raw < size || settled) {
       this.finishDiscovery(now);
+      return;
+    }
+    if (task.page - task.from + 1 >= CRAWL_POLICY.incrementalPages) {
+      this.finishDiscovery(now, task.page + 1);
       return;
     }
     this.store.setMeta(
       META.discovery,
-      JSON.stringify({ page: task.page + 1, dueAt: 0 })
+      JSON.stringify({ page: task.page + 1, dueAt: 0, from: task.from })
     );
   }
 
-  private finishDiscovery(now: number): void {
+  /** Ends a run; the next one starts at `resume` if given, else page 1. */
+  private finishDiscovery(now: number, resume?: number): void {
     this.store.setMeta(
       META.discovery,
       JSON.stringify({
         page: null,
         dueAt: now + CRAWL_POLICY.discoveryEveryMs,
+        ...(resume !== undefined ? { resume } : {}),
       })
     );
   }
@@ -812,6 +872,8 @@ export class DeckIndex {
       before: query.before,
       limit: query.pageSize + 1,
       now: this.deps.now(),
+      // Off, an event never read answers "not found" when opened.
+      readOnly: !this.deps.enabled,
     });
     const page = rows.slice(0, query.pageSize);
     const last = page.at(-1);
