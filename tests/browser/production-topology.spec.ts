@@ -212,11 +212,13 @@ test('built SPA and room authority share one production-like Worker origin', asy
   expect(await missingStaticAsset.text()).toBe('Not Found');
 
   for (let cycle = 0; cycle < 3; cycle += 1) {
-    // Any path falls back to the SPA; held on the lobby so the fallback
-    // itself is what is measured, not the Solo landing's room creation.
+    // Any page address comes back to the app, redirected to / with its
+    // query (a missing file is a 404); held on the lobby so the app itself
+    // is what is measured, not the Solo landing's room creation.
     const spaResponse = await page.goto(
       `/production-preview/${cycle}?renderer=dom&dev-room=1&room-lobby=1`
     );
+    expect(new URL(page.url()).pathname).toBe('/');
     expect(spaResponse?.status()).toBe(200);
     expect(spaResponse?.headers()['content-type']).toContain('text/html');
     await expect(page.locator('.ptcgsim-board-surface')).toHaveCount(1, {

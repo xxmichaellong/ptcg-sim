@@ -81,6 +81,35 @@ describe('Cloudflare Worker runtime', () => {
     });
   });
 
+  it('answers a file the assets lack with a 404 the browser asks about again, and a stray page address with the app', async () => {
+    // A new build's script asked of an edge that hasn't it yet.
+    const script = await exports.default.fetch(
+      new Request('https://play.example/assets/index-0123abcd.js', {
+        headers: { 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'script' },
+      })
+    );
+    expect(script.status).toBe(404);
+    expect(script.headers.get('Cache-Control')).toBe('no-store');
+    expect(script.headers.get('Content-Type')).not.toContain('text/html');
+    const page = await exports.default.fetch(
+      new Request('https://play.example/some/old/page?tutorial', {
+        headers: { 'Sec-Fetch-Mode': 'navigate' },
+        redirect: 'manual',
+      })
+    );
+    expect(page.status).toBe(302);
+    expect(page.headers.get('Location')).toBe('https://play.example/?tutorial');
+    // The app's own page missing (assets not there at all): a 404, never a
+    // redirect to itself.
+    const root = await exports.default.fetch(
+      new Request('https://play.example/?tutorial', {
+        headers: { 'Sec-Fetch-Mode': 'navigate' },
+        redirect: 'manual',
+      })
+    );
+    expect(root.status).toBe(404);
+  });
+
   it('creates a room through edge bindings and initializes its Durable Object', async () => {
     const created = await createRoom();
     const room = roomStub(created);

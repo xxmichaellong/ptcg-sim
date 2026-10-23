@@ -1584,10 +1584,28 @@ const worker: ExportedHandler<Env> = {
     if (invitationCode) {
       return forwardToRoom(invitationCode, 'invitation', 'room_invitation');
     }
+    // Reached by any file the assets don't have (wrangler.jsonc). An
+    // address typed or kept for a page is the app's one page; anything
+    // else, a script of a build this edge hasn't yet included, is a 404
+    // the browser asks about again rather than keeps.
+    if (
+      request.method === 'GET' &&
+      url.pathname !== '/' &&
+      !url.pathname.startsWith('/v2/') &&
+      request.headers.get('Sec-Fetch-Mode') === 'navigate'
+    ) {
+      return observeHttp(telemetry, 'not_found', () =>
+        Response.redirect(new URL(`/${url.search}`, url).toString(), 302)
+      );
+    }
     return observeHttp(
       telemetry,
       'not_found',
-      () => new Response('Not Found', { status: 404 })
+      () =>
+        new Response('Not Found', {
+          status: 404,
+          headers: { 'Cache-Control': 'no-store' },
+        })
     );
   },
 };

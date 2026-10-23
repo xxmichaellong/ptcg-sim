@@ -14,7 +14,11 @@
   },
   "assets": {
     "directory": "../web/dist",
-    "not_found_handling": "single-page-application",
+    // A missing file is a 404 the Worker answers, never the app's page: a
+    // new build's script asked of an edge that hasn't it yet would come back
+    // as HTML, kept a year under its hashed name (_headers) and never run.
+    // The app is one page (/, everything else in the query string).
+    "not_found_handling": "none",
     "run_worker_first": [
       "/v2/*",
       "!/v2/assets/cardback.png",

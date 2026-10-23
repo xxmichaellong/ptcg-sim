@@ -19,6 +19,18 @@ create a room and never returns configuration, bindings, room identifiers, or
 credentials. A successful response proves only that the deployed Worker can
 execute; synthetic room creation/admission/command probes remain necessary.
 
+## Static files
+
+The web build is served as Workers static assets (`apps/web/dist`). Built
+files are named by their content and `_headers` keeps every `/assets/*`
+response a year, `immutable`. The app is one page, `/`, with everything else
+in the query string, so `not_found_handling` is `none`: a file the assets
+lack reaches the Worker, which answers `404` with `no-store`. A request
+asking for a page (`Sec-Fetch-Mode: navigate`) is redirected to `/` with its
+query. As the app page instead, a new build's script asked of an edge that
+hadn't it yet was kept a year under its hashed name and never ran, leaving
+that tab broken until a hard reload.
+
 ## Current decks feed (ADR-029)
 
 `GET /v2/decks/current` serves the deck picker's current Standard lists, taken
