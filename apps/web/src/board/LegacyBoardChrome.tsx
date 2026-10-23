@@ -597,14 +597,23 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
   const screenX = (x: number): number =>
     depth ? depth.point({ x, y: seamY }).x : x;
   const logicalStadium = layout.shared.stadium.physicalDeclaredBounds;
+  // Its height too, as the rail's own row is placed on screen: one half
+  // shown, the Stadium lies in the Active's row, which the projection moves.
   const stadium = depth
     ? (() => {
         const left = screenX(logicalStadium.x);
         const right = screenX(logicalStadium.x + logicalStadium.width);
+        const middle = logicalStadium.x + logicalStadium.width / 2;
+        const top = depth.point({ x: middle, y: logicalStadium.y }).y;
+        const bottom = depth.point({
+          x: middle,
+          y: logicalStadium.y + logicalStadium.height,
+        }).y;
         return {
-          ...logicalStadium,
           x: Math.min(left, right),
+          y: Math.min(top, bottom),
           width: Math.abs(right - left),
+          height: Math.abs(bottom - top),
         };
       })()
     : logicalStadium;
