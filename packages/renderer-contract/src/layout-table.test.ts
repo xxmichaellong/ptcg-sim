@@ -176,6 +176,30 @@ describe('table layout: the app bar corner (ADR-036)', () => {
     }
   });
 
+  it('keeps the far markers by the prizes where moving them to the corner by the bar would cost the hand more than it gives the mat', () => {
+    // The Lost Zone off, as by default; both markers on.
+    for (const [width, height] of [
+      [1180, 1070],
+      [1280, 1200],
+    ] as const) {
+      const snapshot = createTableLayoutSnapshot(
+        stateAt(width, height, {
+          shellMode: 'fullscreen',
+          appBarPx: BAR,
+          seamBandPx: 42,
+          oncePerGameMarkers: 2,
+          hideEmptyLostZone: true,
+        })
+      );
+      const far = snapshot.players.find(
+        (player) => player.physicalSide === 'upper'
+      )!;
+      const at = `${String(width)}x${String(height)}`;
+      expect(far.extras?.markers, at).toBeDefined();
+      expect(far.extras?.corner, at).toBeUndefined();
+    }
+  });
+
   it('keeps the far board rows on the shortest tables, and builds their scene', () => {
     const view: MatchViewState = createRendererSpikeView();
     for (const width of [320, 568, 740, 800, 844, 1280]) {

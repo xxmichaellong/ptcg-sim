@@ -1530,14 +1530,33 @@ export const createTableLayoutSnapshot = (
       // better, while it keeps most of the far Active.
       const keepsActive = (candidate: typeof split): boolean =>
         activeOf(candidate) >= activeOf(unfitted) * MOVED_MARKERS_ACTIVE_SHARE;
-      const handOf = (candidate: typeof split): number =>
-        candidate.far.player.regions.find((region) => region.kind === 'hand')
-          ?.physicalDeclaredBounds.width ?? 0;
       // Whether moving the markers cramped the hand by a fifth, judged once
       // from the fit before they moved (judged per candidate, it became a
       // target the search shrank the far half to reach).
+      // The hand past a corner by the bar at its roomiest, as whether to
+      // take that corner at all is judged (cornerPastBar's `roomy`): the
+      // corner drawn holds its markers side by side, narrower, and judged
+      // by it, moving them would seem to cost the hand less than it did.
+      const roomyHandOf = (candidate: typeof split): number => {
+        const extras = candidate.far.player.extras;
+        const hand = candidate.far.player.regions.find(
+          (region) => region.kind === 'hand'
+        )?.physicalDeclaredBounds;
+        if (!hand || !extras?.corner || extras.markersRow) {
+          return hand?.width ?? 0;
+        }
+        const roomy =
+          hand.height < TABLE_CONTROL_CORNER_HEIGHT_PX
+            ? Math.max(
+                TABLE_CONTROL_CORNER_PX,
+                16 + (oncePerGameMarkers ?? 0) * COMPACT_CORNER_MARKER_PX
+              )
+            : TABLE_CONTROL_CORNER_PX;
+        return hand.width - Math.max(0, roomy - extras.corner.width);
+      };
       const handCost =
-        unfitted.markersMoved && unfitted.besideHand > handOf(unfitted) * 1.25;
+        unfitted.markersMoved &&
+        unfitted.besideHand > roomyHandOf(unfitted) * 1.25;
       // By the prizes in fact (a fit whose markers never fit there moved
       // none, but keeps none there either), and only where moving them
       // cost the far half: a smaller Active, or that hand.
