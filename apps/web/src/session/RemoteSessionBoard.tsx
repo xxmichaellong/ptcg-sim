@@ -227,6 +227,13 @@ export const switchSideExpected = (
   (view?.viewer.kind === 'player' &&
     view.players[view.viewer.playerId]?.coachingConsent === true);
 
+/** `value` while live; in a replay, the live table's last one. */
+export const useLiveValue = <T,>(value: T, live: boolean): T => {
+  const kept = useRef(value);
+  if (live) kept.current = value;
+  return live ? value : kept.current;
+};
+
 /**
  * True when the card is in the viewer's own hand, which is the only case v1
  * follows a reveal with its "press OK to stop revealing" modal.
@@ -1082,7 +1089,12 @@ export const RemoteSessionBoard = ({
     boardState.view?.viewer.kind === 'player';
   const flipAllowed = boardFlipAllowed(roomMode, boardState?.view);
   flipAllowedRef.current = flipAllowed;
-  const switchSideSized = switchSideExpected(roomMode, boardState?.view);
+  // A replay keeps the live table's sizing: its first frames can come before
+  // this player's own consent, and the controls would move on Next.
+  const switchSideSized = useLiveValue(
+    switchSideExpected(roomMode, boardState?.view),
+    replayState.mode === 'live'
+  );
   const hint = useHotkeyHints();
   // The coin lies on the table (PX-051); the rail keeps a Coin only for a
   // table with no room for it, or with the acting seat's half hidden.

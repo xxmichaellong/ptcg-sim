@@ -26,6 +26,7 @@ import {
 import {
   RemoteSessionBoard,
   switchSideExpected,
+  useLiveValue,
   type BoardCommands,
   type BoardOwnRailActions,
   type BoardRailModel,
@@ -250,6 +251,23 @@ describe('the rail sized for Switch side', () => {
         them: { coachingConsent: theirs },
       },
     }) as unknown as MatchViewState;
+
+  it('keeps the live sizing through a replay, whatever its frames say', async () => {
+    const seen: boolean[] = [];
+    const Probe = ({ value, live }: { value: boolean; live: boolean }) => {
+      seen.push(useLiveValue(value, live));
+      return null;
+    };
+    const host = document.createElement('div');
+    const root = createRoot(host);
+    await act(async () => root.render(<Probe value live />));
+    // A replay's first frame, before this player's consent, then the next.
+    await act(async () => root.render(<Probe value={false} live={false} />));
+    await act(async () => root.render(<Probe value live={false} />));
+    await act(async () => root.render(<Probe value={false} live />));
+    expect(seen).toEqual([true, true, true, false]);
+    await act(async () => root.unmount());
+  });
 
   it('is sized for it once this player asks for coaching, before the other agrees', () => {
     expect(switchSideExpected('solo', undefined)).toBe(true);
