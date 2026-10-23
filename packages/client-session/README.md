@@ -1,0 +1,31 @@
+# Client session
+
+Transport-neutral ownership of the v2 browser session. This package bridges the
+validated WebSocket protocol into an immutable external store that React, the
+DOM renderer, and the Pixi renderer can consume without owning networking.
+
+## Guarantees
+
+- exactly one active socket generation; late events from replaced sockets are ignored
+- one in-flight command and a bounded FIFO, with gap-free client sequences
+- retries reuse the byte-for-byte command envelope and never allocate a new identity
+- accepted commands complete only after both their result and covering publication
+- stale command publications are ignored and divergent equal-revision views fail closed; the separate authority-reconciliation refresh is accepted only when it is identical or changes player display names alone
+- initial admission retains and retries the exact server-minted ticket/resume pair until Welcome; reconnects then use only the in-memory resume capability and reconcile against the Welcome sequence
+- the default eight-attempt jittered exponential retry schedule has a 27.3-second worst-case delay total, inside the authority-owned 30-second disconnected-session lease
+- transport loss clears replay transfer state in the same non-ready publication, so reentrant observers cannot submit against a socket that is already gone
+- Welcome publishes the ready phase, role, view, sequence, and reconciled queue together; advancing state publications likewise publish their view and presentation events together, while a validated metadata refresh replaces one equal-revision view atomically
+- command allocation publishes its next sequence and queued summary together, so observers never see one without the other
+- every send, handshake, reconnect-timer, or socket-open continuation after a public notification revalidates its phase and socket generation
+- locally initiated closes invalidate the socket generation before calling transport, so synchronous and asynchronous close delivery are both stale and cannot spend a second reconnect attempt
+- inconsistent replay termination publishes only the failed state with replay loading cleared
+- retryable notices bind to the phase, socket generation, and command head present at receipt; a reentrant observer cannot retarget an old notice onto a newly created command
+- a transport write is successful only if the same socket generation remains installed when `send()` returns; synchronous close delivery cannot report chat/ping/replay success, restore replay loading, or schedule duplicate recovery
+- outbound chat is trimmed and rejected locally when empty or over the wire bound; authenticated deliveries are retained in a separate bounded immutable history
+- admission and resume capabilities never enter the public store, command history, or notices; Welcome must echo the already-bound resume bearer
+- failed, cleanly closed, and superseded sessions clear replay loading; superseded sessions become terminal read-only sessions and never reconnect
+- perspective replay files are deterministic, SHA-256 integrity checked, format/protocol/code-unit/encoded-byte bounded, marked non-canonical and non-resumable, and semantically revalidated before inert playback; raw imports are copied before asynchronous work, decoded as fatal UTF-8, and installed atomically only while the initiating live identity remains current; live export waits for a fresh authority projection without entering replay mode
+
+Capabilities are deliberately memory-only in this slice. Durable credential storage must
+be introduced later behind an explicit secret-storage policy; ordinary application state
+and browser logs are not acceptable storage locations.

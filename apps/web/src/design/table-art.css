@@ -1,0 +1,328 @@
+/*
+ * The table's artwork (session/table-art.ts): the desk and the playmat on
+ * it, as design tokens. The page root carries the chosen look in
+ * `data-table-art`; a Settings swatch previews one by carrying
+ * `data-table-art-swatch`. Cream is the default, close to v1's white board.
+ *
+ * Each look is the same by Night and by Day. The theme only lights it (its
+ * lamp tokens), except Green felt, which keeps the redesign's walnut night
+ * desk and oak day desk.
+ *
+ *   desk          the wood around the mat, its grain and its darkened edges
+ *   desk-ink      text straight on the desk (the loading screen)
+ *   felt          the mat: its cloth, its edge stitching and rubber rim
+ *   felt-line     zone outlines and the centre line printed on it
+ *   felt-label    a zone's name, shown while the pointer rests on it
+ *   felt-mark     the faint ring printed under each Active
+ *   felt-zone/hover  a zone's fill, and an empty one under the pointer
+ *   felt-drop     a zone that will take the held card
+ */
+
+:root {
+  /* The official Special Condition chips, painted by the board's markers
+     (renderer-dom marker-css.ts): the Pokémon TCG Pocket icons, the art of
+     the current physical markers. */
+  --ptcgsim-condition-poisoned: url('/v2/assets/table/condition-poisoned.png');
+  --ptcgsim-condition-burned: url('/v2/assets/table/condition-burned.png');
+  --ptcgsim-condition-asleep: url('/v2/assets/table/condition-asleep.png');
+  --ptcgsim-condition-paralyzed: url('/v2/assets/table/condition-paralyzed.png');
+  --ptcgsim-condition-confused: url('/v2/assets/table/condition-confused.png');
+  /* The desk's grain: dark streaks for a dark wood, faint for a light one. */
+  --desk-grain-dark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='360'%3E%3Cfilter id='g' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0032 0.11' numOctaves='4' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.08 0 0 0 0 0.04 0 0 0 0 0.02 -1.210 0 0 0 0.688'/%3E%3C/filter%3E%3Cfilter id='p' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.02 0.7' numOctaves='2' seed='5' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.05 0 0 0 0 0.03 0 0 0 0 0.01 -0.880 0 0 0 0.468'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url%28%23g%29'/%3E%3Crect width='100%25' height='100%25' filter='url%28%23p%29' opacity='0.6'/%3E%3C/svg%3E");
+  --desk-grain-light: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='360'%3E%3Cfilter id='g' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0032 0.11' numOctaves='4' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.08 0 0 0 0 0.04 0 0 0 0 0.02 -0.660 0 0 0 0.375'/%3E%3C/filter%3E%3Cfilter id='p' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.02 0.7' numOctaves='2' seed='5' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.05 0 0 0 0 0.03 0 0 0 0 0.01 -0.480 0 0 0 0.255'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url%28%23g%29'/%3E%3Crect width='100%25' height='100%25' filter='url%28%23p%29' opacity='0.6'/%3E%3C/svg%3E");
+}
+
+/* ---- Light mats ------------------------------------------------------ */
+
+/* Cream: a soft pastel-white cloth mat on pale ash, close to v1's white
+   board without its glare. */
+:root,
+:root[data-table-art='cream'],
+[data-table-art-swatch='cream'] {
+  --color-desk: #d3c8b5;
+  --color-desk-hi: #e0d7c7;
+  --desk-grain: var(--desk-grain-light);
+  --color-desk-vignette: rgb(66 52 36 / 0.24);
+  --color-desk-ink: #4c4339;
+  --color-felt: #ebe8e1;
+  --color-felt-deep: #dfdbd1;
+  --color-felt-thread: #d4cec1;
+  --color-felt-thread-hi: #f4f2ed;
+  --color-felt-rim: #aaa090;
+  --color-felt-vignette: rgb(80 66 48 / 0.09);
+  --color-felt-line: rgb(88 76 60 / 0.25);
+  --color-felt-line-strong: rgb(88 76 60 / 0.34);
+  --color-felt-label: rgb(70 60 46 / 0.74);
+  --color-felt-mark: rgb(88 76 60 / 0.085);
+  --color-felt-zone: rgb(88 76 60 / 0.022);
+  --color-felt-hover: rgb(88 76 60 / 0.055);
+  --color-felt-hover-line: rgb(88 76 60 / 0.32);
+  --color-felt-drop: #2c64b0;
+  --color-felt-drop-soft: rgb(44 100 176 / 0.14);
+}
+
+/* Frost: a pale blue-grey mat on light birch. */
+:root[data-table-art='frost'],
+[data-table-art-swatch='frost'] {
+  --color-desk: #c9c6bf;
+  --color-desk-hi: #d9d6d0;
+  --desk-grain: var(--desk-grain-light);
+  --color-desk-vignette: rgb(36 42 52 / 0.24);
+  --color-desk-ink: #3f4651;
+  --color-felt: #ebf0f4;
+  --color-felt-deep: #dce3ea;
+  --color-felt-thread: #ccd6df;
+  --color-felt-thread-hi: #f7f9fb;
+  --color-felt-rim: #93a2b2;
+  --color-felt-vignette: rgb(40 56 76 / 0.1);
+  --color-felt-line: rgb(52 70 92 / 0.26);
+  --color-felt-line-strong: rgb(52 70 92 / 0.36);
+  --color-felt-label: rgb(40 56 76 / 0.74);
+  --color-felt-mark: rgb(52 70 92 / 0.09);
+  --color-felt-zone: rgb(52 70 92 / 0.022);
+  --color-felt-hover: rgb(52 70 92 / 0.055);
+  --color-felt-hover-line: rgb(52 70 92 / 0.34);
+  --color-felt-drop: #2c64b0;
+  --color-felt-drop-soft: rgb(44 100 176 / 0.14);
+}
+
+/* Sakura: a blossom-pink mat on white oak. */
+:root[data-table-art='sakura'],
+[data-table-art-swatch='sakura'] {
+  --color-desk: #d6c2a3;
+  --color-desk-hi: #e3d3b8;
+  --desk-grain: var(--desk-grain-light);
+  --color-desk-vignette: rgb(70 44 36 / 0.24);
+  --color-desk-ink: #54423a;
+  --color-felt: #f4e2e4;
+  --color-felt-deep: #e9d0d4;
+  --color-felt-thread: #dfc0c6;
+  --color-felt-thread-hi: #fbf0f1;
+  --color-felt-rim: #b48a92;
+  --color-felt-vignette: rgb(96 48 60 / 0.1);
+  --color-felt-line: rgb(120 62 76 / 0.26);
+  --color-felt-line-strong: rgb(120 62 76 / 0.36);
+  --color-felt-label: rgb(96 46 58 / 0.8);
+  --color-felt-mark: rgb(120 62 76 / 0.09);
+  --color-felt-zone: rgb(120 62 76 / 0.022);
+  --color-felt-hover: rgb(120 62 76 / 0.055);
+  --color-felt-hover-line: rgb(120 62 76 / 0.34);
+  --color-felt-drop: #2c64b0;
+  --color-felt-drop-soft: rgb(44 100 176 / 0.14);
+}
+
+/* Parchment: a warm sand mat on honey oak. */
+:root[data-table-art='parchment'],
+[data-table-art-swatch='parchment'] {
+  --color-desk: #b58955;
+  --color-desk-hi: #c69c69;
+  --desk-grain: var(--desk-grain-light);
+  --color-desk-vignette: rgb(60 36 14 / 0.32);
+  --color-desk-ink: #3b2a19;
+  --color-felt: #ece0c3;
+  --color-felt-deep: #ddcda9;
+  --color-felt-thread: #d2bf98;
+  --color-felt-thread-hi: #f6eedb;
+  --color-felt-rim: #9d8457;
+  --color-felt-vignette: rgb(90 60 24 / 0.12);
+  --color-felt-line: rgb(100 74 36 / 0.28);
+  --color-felt-line-strong: rgb(100 74 36 / 0.38);
+  --color-felt-label: rgb(80 58 26 / 0.82);
+  --color-felt-mark: rgb(100 74 36 / 0.1);
+  --color-felt-zone: rgb(100 74 36 / 0.024);
+  --color-felt-hover: rgb(100 74 36 / 0.06);
+  --color-felt-hover-line: rgb(100 74 36 / 0.36);
+  --color-felt-drop: #2c64b0;
+  --color-felt-drop-soft: rgb(44 100 176 / 0.14);
+}
+
+/* A light mat under the lamp's full warmth glares: it catches less of it. */
+:root:is(
+  :not([data-table-art]),
+  [data-table-art='cream'],
+  [data-table-art='frost'],
+  [data-table-art='sakura'],
+  [data-table-art='parchment']
+) {
+  --color-felt-glow: rgb(255 244 228 / 0.07);
+}
+
+/* On a light mat the gold and mint rings would wash out: deeper ones. */
+:root:is(
+    :not([data-table-art]),
+    [data-table-art='cream'],
+    [data-table-art='frost'],
+    [data-table-art='sakura'],
+    [data-table-art='parchment']
+  )
+  .ptcgsim-board-surface {
+  --ptcgsim-ring-selected: #a86b00;
+  --ptcgsim-ring-target: oklch(0.56 0.14 var(--hue-mint, 160));
+}
+
+/* ---- Dark mats ------------------------------------------------------- */
+
+/* Green felt: the redesign's mat, on walnut by night and oak by day. */
+:root[data-table-art='classic'],
+[data-table-art-swatch='classic'] {
+  --color-desk: #2f2017;
+  --color-desk-hi: #3d2a1e;
+  --desk-grain: var(--desk-grain-dark);
+  --color-desk-vignette: rgb(10 6 2 / 0.42);
+  --color-desk-ink: #c9bba6;
+  --color-felt: #1e4636;
+  --color-felt-deep: #143024;
+  --color-felt-thread: #14261d;
+  --color-felt-thread-hi: #2b4a3b;
+  --color-felt-rim: #0d1410;
+  --color-felt-vignette: rgb(10 6 2 / 0.28);
+  --color-felt-line: rgb(232 220 192 / 0.3);
+  --color-felt-line-strong: rgb(232 220 192 / 0.46);
+  --color-felt-label: rgb(232 220 192 / 0.66);
+  --color-felt-mark: rgb(232 220 192 / 0.1);
+  --color-felt-zone: oklch(1 0 0 / 0.018);
+  --color-felt-hover: oklch(1 0 0 / 0.045);
+  --color-felt-hover-line: oklch(1 0 0 / 0.2);
+  --color-felt-drop: #6ea4e6;
+  --color-felt-drop-soft: rgb(110 164 230 / 0.22);
+}
+:root[data-theme='day'][data-table-art='classic'],
+:root[data-theme='day'] [data-table-art-swatch='classic'] {
+  --color-desk: #c4a074;
+  --color-desk-hi: #d6b88f;
+  --desk-grain: var(--desk-grain-light);
+  --color-desk-ink: #5f554a;
+  --color-felt: #2f6b50;
+  --color-felt-deep: #24553f;
+  --color-felt-thread: #244d3a;
+  --color-felt-thread-hi: #3f7a5f;
+  --color-felt-rim: #1b2a22;
+  --color-felt-line: rgb(244 236 216 / 0.34);
+  --color-felt-line-strong: rgb(244 236 216 / 0.5);
+  --color-felt-label: rgb(244 236 216 / 0.74);
+}
+
+/* Ocean: a deep teal mat on weathered driftwood. */
+:root[data-table-art='ocean'],
+[data-table-art-swatch='ocean'] {
+  --color-desk: #4b4239;
+  --color-desk-hi: #5a4f44;
+  --desk-grain: var(--desk-grain-dark);
+  --color-desk-vignette: rgb(8 8 6 / 0.4);
+  --color-desk-ink: #d4cabd;
+  --color-felt: #1f5661;
+  --color-felt-deep: #153f48;
+  --color-felt-thread: #133840;
+  --color-felt-thread-hi: #2d6a76;
+  --color-felt-rim: #0a1d22;
+  --color-felt-vignette: rgb(4 12 16 / 0.28);
+  --color-felt-line: rgb(214 236 232 / 0.3);
+  --color-felt-line-strong: rgb(214 236 232 / 0.46);
+  --color-felt-label: rgb(214 236 232 / 0.7);
+  --color-felt-mark: rgb(214 236 232 / 0.1);
+  --color-felt-zone: oklch(1 0 0 / 0.018);
+  --color-felt-hover: oklch(1 0 0 / 0.05);
+  --color-felt-hover-line: oklch(1 0 0 / 0.22);
+  --color-felt-drop: #86b4ec;
+  --color-felt-drop-soft: rgb(134 180 236 / 0.22);
+}
+
+/* Slate: a blue-grey mat on ebony. */
+:root[data-table-art='slate'],
+[data-table-art-swatch='slate'] {
+  --color-desk: #272422;
+  --color-desk-hi: #34302c;
+  --desk-grain: var(--desk-grain-dark);
+  --color-desk-vignette: rgb(4 4 4 / 0.42);
+  --color-desk-ink: #cfc8c0;
+  --color-felt: #3e4752;
+  --color-felt-deep: #2d343d;
+  --color-felt-thread: #283039;
+  --color-felt-thread-hi: #4d5864;
+  --color-felt-rim: #13171c;
+  --color-felt-vignette: rgb(6 8 10 / 0.28);
+  --color-felt-line: rgb(226 232 240 / 0.28);
+  --color-felt-line-strong: rgb(226 232 240 / 0.44);
+  --color-felt-label: rgb(226 232 240 / 0.7);
+  --color-felt-mark: rgb(226 232 240 / 0.1);
+  --color-felt-zone: oklch(1 0 0 / 0.018);
+  --color-felt-hover: oklch(1 0 0 / 0.05);
+  --color-felt-hover-line: oklch(1 0 0 / 0.22);
+  --color-felt-drop: #86b4ec;
+  --color-felt-drop-soft: rgb(134 180 236 / 0.22);
+}
+
+/* Midnight: a navy mat on dark walnut. */
+:root[data-table-art='midnight'],
+[data-table-art-swatch='midnight'] {
+  --color-desk: #261b15;
+  --color-desk-hi: #32241b;
+  --desk-grain: var(--desk-grain-dark);
+  --color-desk-vignette: rgb(8 6 4 / 0.44);
+  --color-desk-ink: #c9bba6;
+  --color-felt: #1d2947;
+  --color-felt-deep: #141d34;
+  --color-felt-thread: #121a2f;
+  --color-felt-thread-hi: #2b3b60;
+  --color-felt-rim: #080c17;
+  --color-felt-vignette: rgb(4 6 14 / 0.3);
+  --color-felt-line: rgb(214 224 250 / 0.28);
+  --color-felt-line-strong: rgb(214 224 250 / 0.44);
+  --color-felt-label: rgb(214 224 250 / 0.7);
+  --color-felt-mark: rgb(214 224 250 / 0.1);
+  --color-felt-zone: oklch(1 0 0 / 0.018);
+  --color-felt-hover: oklch(1 0 0 / 0.05);
+  --color-felt-hover-line: oklch(1 0 0 / 0.22);
+  --color-felt-drop: #86b4ec;
+  --color-felt-drop-soft: rgb(134 180 236 / 0.24);
+}
+
+/* Burgundy: a wine-red mat on mahogany. */
+:root[data-table-art='burgundy'],
+[data-table-art-swatch='burgundy'] {
+  --color-desk: #3a2018;
+  --color-desk-hi: #4a2b20;
+  --desk-grain: var(--desk-grain-dark);
+  --color-desk-vignette: rgb(12 4 2 / 0.44);
+  --color-desk-ink: #d6c4b4;
+  --color-felt: #5a2131;
+  --color-felt-deep: #421723;
+  --color-felt-thread: #3d1520;
+  --color-felt-thread-hi: #6f2d40;
+  --color-felt-rim: #1c070c;
+  --color-felt-vignette: rgb(14 4 6 / 0.3);
+  --color-felt-line: rgb(246 226 214 / 0.3);
+  --color-felt-line-strong: rgb(246 226 214 / 0.46);
+  --color-felt-label: rgb(246 226 214 / 0.72);
+  --color-felt-mark: rgb(246 226 214 / 0.1);
+  --color-felt-zone: oklch(1 0 0 / 0.018);
+  --color-felt-hover: oklch(1 0 0 / 0.05);
+  --color-felt-hover-line: oklch(1 0 0 / 0.22);
+  --color-felt-drop: #86b4ec;
+  --color-felt-drop-soft: rgb(134 180 236 / 0.24);
+}
+
+/* Charcoal: a graphite mat on black ash. */
+:root[data-table-art='charcoal'],
+[data-table-art-swatch='charcoal'] {
+  --color-desk: #1d1c1b;
+  --color-desk-hi: #282624;
+  --desk-grain: var(--desk-grain-dark);
+  --color-desk-vignette: rgb(0 0 0 / 0.44);
+  --color-desk-ink: #cdc6be;
+  --color-felt: #2d2d30;
+  --color-felt-deep: #212124;
+  --color-felt-thread: #1d1d20;
+  --color-felt-thread-hi: #3b3b40;
+  --color-felt-rim: #0b0b0c;
+  --color-felt-vignette: rgb(0 0 0 / 0.3);
+  --color-felt-line: rgb(236 236 236 / 0.26);
+  --color-felt-line-strong: rgb(236 236 236 / 0.42);
+  --color-felt-label: rgb(236 236 236 / 0.68);
+  --color-felt-mark: rgb(236 236 236 / 0.09);
+  --color-felt-zone: oklch(1 0 0 / 0.018);
+  --color-felt-hover: oklch(1 0 0 / 0.05);
+  --color-felt-hover-line: oklch(1 0 0 / 0.22);
+  --color-felt-drop: #86b4ec;
+  --color-felt-drop-soft: rgb(134 180 236 / 0.22);
+}

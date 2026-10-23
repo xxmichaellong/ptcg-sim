@@ -1,0 +1,281 @@
+.depth-lab {
+  min-height: 100dvh;
+  background: radial-gradient(ellipse at 45% 10%, #20313c, #0b131d 72%);
+  color: #eaf3f2;
+  padding: 24px 28px 16px;
+  font-family: var(--font-ui, system-ui, sans-serif);
+}
+.depth-lab__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 22px;
+}
+.depth-lab__eyebrow {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #9db6bf;
+  font-weight: 650;
+}
+.depth-lab h1 {
+  margin: 6px 0 4px;
+  font-size: clamp(23px, 2.5vw, 34px);
+  font-weight: 600;
+  letter-spacing: -1px;
+}
+.depth-lab__header p {
+  margin: 0;
+  color: #a9bec6;
+  font-size: 13px;
+}
+.depth-lab__header a {
+  color: #bbe1df;
+  font-size: 13px;
+  text-underline-offset: 5px;
+}
+.depth-lab__workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 262px;
+  gap: 24px;
+  align-items: start;
+}
+.depth-lab__table {
+  min-width: 0;
+}
+.depth-lab__board {
+  position: relative;
+  width: 100%;
+  height: max(590px, calc(100dvh - 169px));
+  overflow: hidden;
+  border-radius: 18px;
+  background: radial-gradient(ellipse at 40% 40%, #1b303a, #0b151f);
+  box-shadow:
+    inset 0 1px 0 #97c6cc1c,
+    0 18px 50px #0004;
+}
+.depth-lab__geometry {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+.depth-lab__object {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.depth-lab__card {
+  position: absolute;
+  left: 0;
+  top: 0;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 3px;
+  background: #19364a;
+  transform-origin: 0 0;
+  cursor: grab;
+  touch-action: none;
+  pointer-events: auto;
+  user-select: none;
+  box-shadow: 0 0 0 0.6px #d1e4eb80;
+}
+.depth-lab__card[data-dragging='true'] {
+  cursor: grabbing;
+}
+.depth-lab__card:focus-visible {
+  outline: 3px solid #a6e9ff;
+  outline-offset: 3px;
+}
+.depth-lab__card img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.depth-lab__count {
+  position: absolute;
+  transform: translate(-40%, -45%);
+  min-width: 25px;
+  padding: 3px 7px;
+  border: 1px solid #adc5d36b;
+  border-radius: 20px;
+  color: #e5edf1;
+  background: #172331;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  box-shadow: 0 2px 6px #0006;
+}
+.depth-lab__hand-label {
+  position: absolute;
+  left: 15px;
+  bottom: 54px;
+  width: 84px;
+  font-size: 9px;
+  letter-spacing: 1.4px;
+  color: #9ab1bd;
+  line-height: 1.8;
+  pointer-events: none;
+}
+.depth-lab__help {
+  font-size: 11px;
+  color: #9db3bf;
+  line-height: 1.5;
+  margin: 12px 4px 0;
+}
+.depth-lab__controls {
+  background: #15212ded;
+  border: 1px solid #829eaf2b;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 10px 40px #0002;
+}
+.depth-lab h2 {
+  font-size: 17px;
+  font-weight: 550;
+  margin: 8px 0 24px;
+  letter-spacing: -0.4px;
+}
+.depth-lab fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0 0 20px;
+  min-width: 0;
+}
+.depth-lab legend {
+  font-size: 12px;
+  margin-bottom: 10px;
+}
+.depth-lab__modes {
+  display: flex;
+  padding: 3px;
+  gap: 2px;
+  background: #081521;
+  border-radius: 9px;
+}
+.depth-lab__modes button {
+  flex: 1;
+  min-height: 34px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #a9bec9;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+.depth-lab__modes button[aria-pressed='true'] {
+  background: #375766;
+  color: #efffff;
+  box-shadow: 0 1px 4px #0004;
+}
+.depth-lab__range {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  font-size: 12px;
+  gap: 11px;
+  margin: 18px 0;
+}
+.depth-lab__range output {
+  color: #a4cfd1;
+  font-variant-numeric: tabular-nums;
+}
+.depth-lab__range input {
+  grid-column: 1 / -1;
+  width: 100%;
+  margin: 0;
+  accent-color: #88c4c7;
+}
+.depth-lab__range:has(input:disabled) {
+  opacity: 0.4;
+}
+.depth-lab__check {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 11px;
+  color: #c3d1d9;
+  margin: 12px 0;
+  line-height: 1.5;
+}
+.depth-lab__check input {
+  accent-color: #88c4c7;
+  margin: 2px 0 0;
+}
+.depth-lab__controls hr {
+  border: 0;
+  border-top: 1px solid #aacbd122;
+  margin: 24px 0;
+}
+.depth-lab__actions {
+  display: flex;
+  gap: 7px;
+  margin-bottom: 22px;
+}
+.depth-lab__actions button {
+  flex: 1;
+  font-size: 11px;
+  padding-inline: 7px;
+}
+.depth-lab__note {
+  font-size: 11px;
+  line-height: 1.6;
+  color: #91a8b6;
+  margin: 22px 0 0;
+}
+.depth-lab__preview {
+  width: min(600px, 94vw);
+}
+.depth-lab__preview-art {
+  height: min(63dvh, 620px);
+  aspect-ratio: 63 / 88;
+  max-width: 100%;
+  position: relative;
+  margin: 0 auto;
+}
+.depth-lab__preview-art[data-landscape='true'] {
+  height: auto;
+  width: min(520px, 75vw);
+  aspect-ratio: 88 / 63;
+}
+.depth-lab__preview-art img {
+  position: absolute;
+  inset: 0;
+  object-fit: contain;
+}
+@media (max-width: 1000px) {
+  .depth-lab {
+    padding: 18px 16px;
+  }
+  .depth-lab__workspace {
+    grid-template-columns: minmax(0, 1fr) 228px;
+    gap: 16px;
+  }
+  .depth-lab__controls {
+    padding: 15px;
+  }
+  .depth-lab__hand-label {
+    display: none;
+  }
+}
+@media (max-width: 700px) {
+  .depth-lab__workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .depth-lab__header a {
+    max-width: 85px;
+  }
+  .depth-lab__header p {
+    max-width: 250px;
+  }
+  .depth-lab__controls {
+    max-width: 440px;
+    width: 100%;
+    justify-self: center;
+  }
+}

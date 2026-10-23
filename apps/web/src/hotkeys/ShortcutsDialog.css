@@ -1,0 +1,835 @@
+/*
+ * The keyboard shortcuts dialog: a map of the keyboard over a list of every
+ * shortcut. Each group has a tone, shared by its keys on the map and its
+ * rows in the list, so a key and its row read as one thing.
+ */
+
+.ptcgsim-shortcuts {
+  --tone: var(--color-text-muted);
+}
+
+.ptcgsim-shortcuts [data-group='move'] {
+  --tone: var(--color-gold);
+}
+.ptcgsim-shortcuts [data-group='card'] {
+  --tone: var(--color-you);
+}
+.ptcgsim-shortcuts [data-group='deck'] {
+  --tone: var(--color-mint);
+}
+.ptcgsim-shortcuts [data-group='hand'] {
+  --tone: var(--color-opponent);
+}
+.ptcgsim-shortcuts [data-group='board'] {
+  --tone: var(--color-sky);
+}
+.ptcgsim-shortcuts [data-group='table'] {
+  --tone: color-mix(in oklab, var(--color-text-muted), var(--color-text) 30%);
+}
+
+/* ---- Frame ------------------------------------------------------------- */
+
+.ptcgsim-ui-dialog.ptcgsim-shortcuts {
+  display: grid;
+  grid-template-areas:
+    'title tools'
+    'desc tools'
+    'body body'
+    'footer footer';
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  gap: var(--space-1) var(--space-4);
+  width: min(1180px, 100%);
+  height: min(900px, calc(100dvh - 2 * var(--space-5)));
+  margin-top: 0;
+  padding: var(--space-5) 0 0;
+  overflow: hidden;
+}
+
+.ptcgsim-shortcuts > .ptcgsim-ui-dialog__title {
+  grid-area: title;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding-inline-start: var(--space-6);
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  letter-spacing: 0.01em;
+}
+
+.ptcgsim-shortcuts__title-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+  font-size: 22px;
+}
+
+.ptcgsim-shortcuts > .ptcgsim-ui-dialog__description {
+  grid-area: desc;
+  padding-inline-start: calc(var(--space-6) + 36px + var(--space-3));
+  font-size: var(--text-sm);
+}
+
+.ptcgsim-shortcuts__tools {
+  grid-area: tools;
+  display: flex;
+  align-items: center;
+  align-self: start;
+  gap: var(--space-2);
+  padding-inline-end: var(--space-5);
+}
+
+.ptcgsim-shortcuts__search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  color: var(--color-text-faint);
+}
+
+.ptcgsim-shortcuts__search > svg {
+  position: absolute;
+  inset-inline-start: 11px;
+  font-size: 16px;
+  pointer-events: none;
+}
+
+.ptcgsim-shortcuts__search .ds-input {
+  width: min(300px, 32vw);
+  padding-inline-start: 34px;
+}
+
+.ptcgsim-shortcuts__close {
+  font-size: 18px;
+}
+
+/* In the red a close button usually is, filled when pointed at. */
+.ds-icon-button.ptcgsim-shortcuts__close {
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+}
+
+@media (hover: hover) {
+  .ds-icon-button.ptcgsim-shortcuts__close:hover {
+    background: var(--color-danger-fill);
+    color: var(--color-text-on-accent);
+  }
+}
+
+.ptcgsim-shortcuts__body {
+  grid-area: body;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-height: 0;
+  margin-top: var(--space-4);
+  container-type: inline-size;
+}
+
+.ptcgsim-shortcuts__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 0 var(--space-6);
+}
+
+/* ---- Switches ------------------------------------------------------ */
+
+.ptcgsim-segmented,
+.ptcgsim-layer-switch {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-sunken);
+}
+
+.ptcgsim-segmented[data-disabled] {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.ptcgsim-segmented__option,
+.ptcgsim-layer-switch__option {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  height: 30px;
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
+}
+
+.ptcgsim-segmented__option svg {
+  font-size: 16px;
+}
+
+.ptcgsim-shortcuts__map-tools {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ptcgsim-map-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  height: 32px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+}
+
+.ptcgsim-map-toggle svg {
+  font-size: 15px;
+}
+
+.ptcgsim-map-toggle:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+@media (hover: hover) {
+  .ptcgsim-map-toggle:hover {
+    border-color: var(--color-border-strong);
+    color: var(--color-text);
+  }
+}
+
+.ptcgsim-layer-switch__option {
+  height: 26px;
+  padding: 0 var(--space-2-5, 10px);
+  font-size: var(--text-xs);
+}
+
+.ptcgsim-segmented__option[aria-checked='true'],
+.ptcgsim-layer-switch__option[aria-checked='true'] {
+  background: var(--color-surface-3);
+  box-shadow: var(--shadow-1), var(--highlight-top);
+  color: var(--color-text);
+}
+
+.ptcgsim-segmented__option:focus-visible,
+.ptcgsim-layer-switch__option:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+@media (hover: hover) {
+  .ptcgsim-segmented__option:hover:not([aria-checked='true']),
+  .ptcgsim-layer-switch__option:hover:not([aria-checked='true']) {
+    background: var(--color-surface-hover);
+    color: var(--color-text);
+  }
+}
+
+/* ---- Keycaps --------------------------------------------------------- */
+
+.ptcgsim-keycaps {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 3px;
+  vertical-align: middle;
+  /* Keys read left to right in every language (Alt + N, 1-9). */
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+.ptcgsim-keycaps__plus {
+  color: var(--color-text-faint);
+  font-size: var(--text-2xs);
+}
+
+.ptcgsim-keycap {
+  display: inline-flex;
+  box-sizing: border-box;
+  min-width: 26px;
+  height: 26px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 7px;
+  border: 1px solid var(--color-border-strong);
+  border-bottom-width: 3px;
+  border-radius: 7px;
+  background: linear-gradient(
+    180deg,
+    var(--color-surface-3),
+    color-mix(in oklab, var(--color-surface-3), var(--color-room) 18%)
+  );
+  box-shadow: var(--highlight-top);
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--weight-semibold);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.ptcgsim-ui-dialog__description .ptcgsim-keycap {
+  min-width: 22px;
+  height: 22px;
+}
+
+/* ---- The keyboard map ------------------------------------------------ */
+
+.ptcgsim-keyboard-map {
+  /* The widest row is 14.75 keys and 13 gaps; fill the dialog with it. */
+  --gap: 5px;
+  --unit: clamp(
+    32px,
+    calc(
+      (100cqi - 2 * var(--space-6) - 2 * var(--space-4) - 13 * var(--gap)) /
+        14.75
+    ),
+    64px
+  );
+
+  display: grid;
+  justify-content: center;
+  gap: var(--gap);
+  margin: 0 var(--space-6);
+  padding: var(--space-4) var(--space-4) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(
+      120% 140% at 50% 0%,
+      color-mix(in oklab, var(--color-accent) 7%, transparent),
+      transparent 60%
+    ),
+    var(--color-surface-sunken);
+  user-select: none;
+}
+
+.ptcgsim-keyboard-map__row {
+  display: flex;
+  gap: var(--gap);
+}
+
+.ptcgsim-map-key {
+  position: relative;
+  box-sizing: border-box;
+  display: block;
+  flex: none;
+  width: calc(
+    var(--unit) * var(--key-width, 1) + var(--gap) * (var(--key-width, 1) - 1)
+  );
+  height: max(38px, calc(var(--unit) * 0.74));
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-bottom-width: 3px;
+  border-radius: 9px;
+  background: color-mix(
+    in oklab,
+    var(--color-surface-2),
+    var(--color-room) 25%
+  );
+  color: var(--color-text-faint);
+  font-family: var(--font-ui);
+  text-align: left;
+  transition:
+    translate var(--duration-fast) var(--ease-out),
+    background-color var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
+}
+
+.ptcgsim-map-key[data-group] {
+  border-color: color-mix(in oklab, var(--tone) 55%, transparent);
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--tone) 26%, var(--color-surface-2)),
+    color-mix(in oklab, var(--tone) 14%, var(--color-surface-2))
+  );
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.ptcgsim-map-key[data-highlighted] {
+  translate: 0 -2px;
+  border-color: var(--tone);
+  box-shadow:
+    0 0 0 3px color-mix(in oklab, var(--tone) 35%, transparent),
+    var(--shadow-2);
+}
+
+.ptcgsim-map-key.is-blank {
+  opacity: 0.5;
+}
+
+.ptcgsim-map-key.is-modifier {
+  border-style: solid;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.ptcgsim-map-key.is-modifier[data-active] {
+  border-color: var(--color-accent);
+  background: var(--color-accent-soft);
+  color: var(--color-text);
+}
+
+.ptcgsim-map-key__cap {
+  position: absolute;
+  top: 5px;
+  left: 7px;
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.ptcgsim-map-key[data-group] .ptcgsim-map-key__cap {
+  color: color-mix(in oklab, var(--tone), var(--color-text) 45%);
+}
+
+.ptcgsim-map-key__action {
+  position: absolute;
+  right: 5px;
+  bottom: 5px;
+  left: 6px;
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 10.5px;
+  font-weight: var(--weight-semibold);
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+/* What a key does reads the page's way, inside a keyboard that does not. */
+:root[dir='rtl'] .ptcgsim-map-key__action {
+  direction: rtl;
+  text-align: right;
+}
+
+@media (hover: hover) {
+  .ptcgsim-map-key[data-group]:hover {
+    translate: 0 -1px;
+    border-color: var(--tone);
+  }
+  .ptcgsim-map-key.is-modifier:hover {
+    border-color: var(--color-border-strong);
+    color: var(--color-text);
+  }
+}
+
+/* ---- The list -------------------------------------------------------- */
+
+.ptcgsim-shortcuts__list {
+  flex: 1;
+  min-height: 0;
+  padding: var(--space-2) var(--space-6) var(--space-5);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  outline: none;
+  scrollbar-color: var(--color-border-strong) transparent;
+  scrollbar-width: thin;
+}
+
+/* Columns inside the scroller: a height limit would push extra columns
+   off to the side instead of down. */
+.ptcgsim-shortcuts__columns {
+  columns: 3 300px;
+  column-gap: var(--space-5);
+}
+
+.ptcgsim-shortcuts__empty {
+  margin: var(--space-6) 0;
+  color: var(--color-text-muted);
+  text-align: center;
+  column-span: all;
+}
+
+.ptcgsim-shortcut-group {
+  margin: 0 0 var(--space-4);
+  break-inside: avoid;
+}
+
+.ptcgsim-shortcut-group h3 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-1-5);
+  padding: var(--space-2) var(--space-2) var(--space-1-5);
+  border-bottom: 1px solid
+    color-mix(in oklab, var(--tone) 40%, var(--color-border));
+  color: var(--color-text);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+}
+
+.ptcgsim-shortcut-group h3 svg {
+  color: var(--tone);
+  font-size: 18px;
+}
+
+.ptcgsim-shortcut-group ul {
+  display: grid;
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ptcgsim-shortcut-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+  min-height: 38px;
+  padding-block: var(--space-1);
+  padding-inline: var(--space-3) var(--space-2);
+  border-radius: var(--radius-sm);
+  transition: background-color var(--duration-fast) var(--ease-out);
+}
+
+/* The group's tone, as a short bar at the row's edge. */
+.ptcgsim-shortcut-row::before {
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  inset-inline-start: 2px;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--tone);
+  content: '';
+  opacity: 0.55;
+}
+
+.ptcgsim-shortcut-row[data-highlighted] {
+  background: color-mix(in oklab, var(--tone) 12%, transparent);
+}
+
+.ptcgsim-shortcut-row[data-highlighted]::before {
+  opacity: 1;
+}
+
+.ptcgsim-shortcut-row[data-flash] {
+  animation: ptcgsim-shortcut-flash calc(1100ms * var(--motion-scale, 1))
+    var(--ease-out);
+}
+
+@keyframes ptcgsim-shortcut-flash {
+  0%,
+  40% {
+    background: color-mix(in oklab, var(--tone) 28%, transparent);
+  }
+  100% {
+    background: transparent;
+  }
+}
+
+.ptcgsim-shortcut-row__text {
+  display: grid;
+  min-width: 0;
+}
+
+.ptcgsim-shortcut-row__label {
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+
+.ptcgsim-shortcut-row__detail {
+  color: var(--color-text-faint);
+  font-size: var(--text-2xs);
+  line-height: 1.35;
+}
+
+.ptcgsim-shortcut-row__scope {
+  margin-inline-end: var(--space-1-5);
+  padding: 0 var(--space-1-5);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-3);
+  color: var(--color-text-muted);
+  font-weight: var(--weight-semibold);
+}
+
+.ptcgsim-shortcut-row__keys {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.ptcgsim-shortcut-key {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  min-height: 32px;
+  margin: 0;
+  padding: 2px 4px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out);
+}
+
+.ptcgsim-shortcut-key.is-fixed {
+  cursor: default;
+}
+
+.ptcgsim-lock {
+  color: var(--color-text-faint);
+  font-size: 13px;
+}
+
+.ptcgsim-shortcut-key:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+@media (hover: hover) {
+  button.ptcgsim-shortcut-key:hover:not([data-recording]) {
+    border-color: var(--color-border-strong);
+    background: var(--color-surface-hover);
+  }
+}
+
+.ptcgsim-shortcut-row[data-custom] .ptcgsim-keycap {
+  border-color: color-mix(in oklab, var(--color-accent) 70%, transparent);
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--color-accent) 28%, var(--color-surface-3)),
+    color-mix(in oklab, var(--color-accent) 18%, var(--color-surface-3))
+  );
+}
+
+.ptcgsim-shortcut-key[data-recording] {
+  min-width: 132px;
+  justify-content: center;
+  border-color: var(--color-accent);
+  background: var(--color-accent-soft);
+  animation: ptcgsim-recording calc(1400ms * var(--motion-scale, 1)) ease-in-out
+    infinite;
+}
+
+@keyframes ptcgsim-recording {
+  50% {
+    box-shadow: 0 0 0 4px
+      color-mix(in oklab, var(--color-accent) 22%, transparent);
+  }
+}
+
+.ptcgsim-shortcut-key__prompt {
+  color: var(--color-text);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  white-space: nowrap;
+}
+
+.ptcgsim-shortcut-key__unset {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 var(--space-2);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: 7px;
+  color: var(--color-text-faint);
+  font-size: var(--text-xs);
+  font-style: italic;
+}
+
+.ptcgsim-shortcut-row__clear {
+  padding: 0 var(--space-2);
+  height: 26px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: var(--text-xs);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.ptcgsim-shortcut-row__reset.ds-icon-button {
+  width: 28px;
+  height: 28px;
+  color: var(--color-accent);
+  font-size: 16px;
+}
+
+.ptcgsim-shortcut-row__message,
+.ptcgsim-shortcut-conflict {
+  grid-column: 1 / -1;
+}
+
+.ptcgsim-shortcut-row__message {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-1-5);
+  margin: 0;
+  color: color-mix(in oklab, var(--color-warning), var(--color-text) 30%);
+  font-size: var(--text-xs);
+}
+
+.ptcgsim-shortcut-row__message svg,
+.ptcgsim-shortcut-conflict p svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--color-warning);
+}
+
+.ptcgsim-shortcut-conflict {
+  display: grid;
+  gap: var(--space-2);
+  margin: var(--space-1) 0 var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid color-mix(in oklab, var(--color-warning) 45%, transparent);
+  border-radius: var(--radius-md);
+  background: color-mix(
+    in oklab,
+    var(--color-warning) 10%,
+    var(--color-surface-2)
+  );
+}
+
+.ptcgsim-shortcut-conflict p {
+  display: flex;
+  gap: var(--space-1-5);
+  margin: 0;
+  font-size: var(--text-xs);
+  line-height: 1.7;
+}
+
+.ptcgsim-shortcut-conflict__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1-5);
+}
+
+.ptcgsim-shortcut-conflict__actions .ds-button {
+  height: 28px;
+  padding: 0 var(--space-3);
+  font-size: var(--text-xs);
+}
+
+/* ---- Footer ---------------------------------------------------------- */
+
+.ptcgsim-shortcuts__footer {
+  grid-area: footer;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-6);
+  border-top: 1px solid var(--color-border);
+  background: color-mix(
+    in oklab,
+    var(--color-surface-2),
+    var(--color-room) 20%
+  );
+}
+
+.ptcgsim-shortcuts__footer p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+
+.ptcgsim-shortcuts__footer .ds-button {
+  gap: var(--space-1-5);
+}
+
+.ptcgsim-shortcuts__confirm {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+}
+
+/* ---- Small screens --------------------------------------------------- */
+
+@media (max-width: 760px) {
+  .ptcgsim-ui-dialog.ptcgsim-shortcuts {
+    grid-template-areas:
+      'title tools'
+      'desc desc'
+      'body body'
+      'footer footer';
+    height: calc(100dvh - 2 * var(--space-3));
+  }
+
+  .ptcgsim-shortcuts > .ptcgsim-ui-dialog__title {
+    padding-inline-start: var(--space-4);
+  }
+
+  .ptcgsim-shortcuts > .ptcgsim-ui-dialog__description {
+    padding: 0 var(--space-4);
+  }
+
+  .ptcgsim-shortcuts__tools {
+    padding-inline-end: var(--space-3);
+  }
+
+  .ptcgsim-shortcuts__search .ds-input {
+    width: 150px;
+  }
+
+  .ptcgsim-shortcuts__bar,
+  .ptcgsim-shortcuts__list,
+  .ptcgsim-shortcuts__footer {
+    padding-right: var(--space-4);
+    padding-left: var(--space-4);
+  }
+
+  /* A phone has no keyboard to map; the list says it all. */
+  .ptcgsim-keyboard-map,
+  .ptcgsim-shortcuts__map-tools {
+    display: none;
+  }
+}
+
+@media (max-height: 760px) and (min-width: 761px) {
+  /* Short screens: shorter keys, one line of label under the key's own. */
+  .ptcgsim-map-key {
+    height: 40px;
+  }
+  .ptcgsim-map-key__cap {
+    top: 4px;
+    font-size: 10px;
+  }
+  .ptcgsim-map-key__action {
+    bottom: 4px;
+    font-size: 10px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+  }
+}
