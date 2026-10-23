@@ -583,6 +583,40 @@ describe('the request budget', () => {
     expect((await index.tournament(id(1))).kind).toBe('ok');
   });
 
+  it('tells the operator each time Limitless fails the crawl: down, refusing, rate-limited', async () => {
+    limitless.tournaments = [
+      tournament(1, { date: START - DAY }),
+      tournament(2, { date: START - 2 * DAY }),
+    ];
+    limitless.standings.set(id(1), [standing('p', 1, dragapult)]);
+    limitless.standings.set(id(2), [standing('p', 1, dragapult)]);
+    const failures = vi.fn();
+    const index = new DeckIndex({
+      storage: memoryIndexStorage(),
+      fetch: limitless.fetch,
+      now: clock,
+      enabled: true,
+      onFailure: failures,
+    });
+    index.migrate();
+    await crawl(index, 2);
+    expect(failures).not.toHaveBeenCalled();
+    // Standings down: the crawl holds back, and says so.
+    limitless.failStandings = 1;
+    await crawl(index, 1);
+    expect(failures).toHaveBeenCalledTimes(1);
+    // A 429.
+    limitless.failures.push(
+      new Response('slow down', {
+        status: 429,
+        headers: { 'retry-after': '60' },
+      })
+    );
+    now += HOUR;
+    await crawl(index, 1);
+    expect(failures).toHaveBeenCalledTimes(2);
+  });
+
   it('holds the crawl back after Limitless fails, retries a tournament an hour later and then two, then gives up on it', async () => {
     limitless.tournaments = [tournament(1, { date: START - DAY })];
     limitless.standings.set(id(1), [standing('p', 1, dragapult)]);

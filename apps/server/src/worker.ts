@@ -1297,6 +1297,11 @@ export class PtcgDeckIndex extends DurableObject<Env> {
       now: Date.now,
       enabled: env.DECK_INDEX_SOURCE !== 'off',
       ...(env.LIMITLESS_API_KEY ? { apiKey: env.LIMITLESS_API_KEY } : {}),
+      onFailure: () =>
+        this.telemetry.failure({
+          subsystem: 'deck_index_limitless',
+          retryable: true,
+        }),
     });
     void ctx.blockConcurrencyWhile(async () => {
       this.index.migrate();
