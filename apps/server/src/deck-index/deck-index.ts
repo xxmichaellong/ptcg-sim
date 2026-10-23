@@ -58,8 +58,9 @@ export const CRAWL_POLICY = Object.freeze({
   /** Never more pages than this in one discovery run. */
   incrementalPages: 20,
   /**
-   * Backfill pages in a row with nothing new, short of the oldest event
-   * reached, before it takes the list for one ignoring its page number.
+   * Backfill pages in a row that repeat the one before, short of the
+   * oldest event reached, before it takes the list for one ignoring its
+   * page number.
    */
   backfillStalePages: 3,
   /** The gap between crawl requests while there is work. */
@@ -283,8 +284,10 @@ interface Backfill {
   readonly page: number;
   /** The date of the oldest event it has reached. */
   readonly until?: number;
-  /** Pages in a row it found nothing new on, short of its reach. */
+  /** Pages in a row that repeated the one before, short of its reach. */
   readonly stale?: number;
+  /** The date of the oldest event on the page before. */
+  readonly last?: number;
 }
 
 /**
@@ -307,6 +310,7 @@ const readBackfill = (value: string | null): Backfill | null => {
         ...(pageOf(state.stale) !== null
           ? { stale: state.stale as number }
           : {}),
+        ...(Number.isFinite(state.last) ? { last: state.last as number } : {}),
       };
     }
   } catch {
@@ -373,7 +377,19 @@ export class DeckIndex {
 
   private task(now: number): CrawlTask | { readonly idleUntil: number } {
     const backfill = readBackfill(this.store.getMeta(META.backfill));
-    if (backfill) return { kind: 'backfill', ...backfill };
+    if (backfill) {
+      // An older build kept the page alone: the oldest event listed is
+      // where it had reached (nothing else lists events before it ends).
+      const oldest =
+        backfill.until === undefined && backfill.page > 1
+          ? this.store.oldestListed()
+          : null;
+      return {
+        kind: 'backfill',
+        ...backfill,
+        ...(oldest !== null ? { until: oldest } : {}),
+      };
+    }
     const discovery = readDiscovery(this.store.getMeta(META.discovery));
     if (discovery.page !== null) {
       return {
@@ -605,13 +621,15 @@ export class DeckIndex {
       // The end of the list is a page with nothing on it, not a short one
       // (Limitless may send fewer than asked for). A page past the first
       // with nothing new is the end past the oldest event reached; short of
-      // it, the list moved on meanwhile, unless three come in a row (a page
-      // number Limitless ignores).
+      // it, the list moved on meanwhile, unless the page is the one before
+      // again, three times in a row (a page number Limitless ignores).
       const nothingNew =
         task.page > 1 &&
         rows.length > 0 &&
         rows.every((row) => known.has(row.id));
-      const stale = nothingNew && !pastReach ? (task.stale ?? 0) + 1 : 0;
+      const repeated =
+        nothingNew && task.last !== undefined && oldest === task.last;
+      const stale = repeated && !pastReach ? (task.stale ?? 0) + 1 : 0;
       const end =
         raw === 0 ||
         (nothingNew && pastReach) ||
@@ -623,6 +641,7 @@ export class DeckIndex {
           : JSON.stringify({
               page: task.page + 1,
               ...(Number.isFinite(reach) ? { until: reach } : {}),
+              ...(Number.isFinite(oldest) ? { last: oldest } : {}),
               ...(stale > 0 ? { stale } : {}),
             })
       );

@@ -41,8 +41,10 @@ from RK9.
    - It reads the whole tournament list once, in pages of 1,000, to a page
      with nothing on it (Limitless may send fewer than asked for), or one
      past the first with nothing new and past the oldest event it reached;
-     short of that, the list moved on while the crawl was off, unless three
-     come in a row (a page number Limitless ignores).
+     short of that, the list moved on while the crawl was off, unless the
+     page repeats the one before three times in a row (a page number
+     Limitless ignores). A backfill left by an older build, its page alone,
+     takes the oldest event listed for where it reached.
    - Every half hour, it reads the newest pages until a page holds only
      tournaments it knows that are over two days old, 20 pages at most a
      run; a run that ends at 20 among new events (the crawl off for

@@ -840,6 +840,13 @@ export class DeckIndexStore {
     );
   }
 
+  /** The date of the oldest event listed (by the date index: one row). */
+  oldestListed(): number | null {
+    const row = this.first('SELECT MIN(date) AS oldest FROM tournaments');
+    const value = row?.['oldest'];
+    return typeof value === 'number' ? value : null;
+  }
+
   updatedAt(): number | null {
     const value = this.getMeta('updatedAt');
     return value === null ? null : Number(value);

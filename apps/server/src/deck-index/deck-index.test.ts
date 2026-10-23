@@ -384,6 +384,46 @@ describe('discovering tournaments', () => {
     expect(knownCount(storage)).toBe(7_700);
   });
 
+  it('lists every event when the backfill stopped part-way and three pages more came before it went on', async () => {
+    // Stopped after six of 17 pages; three pages' worth listed meanwhile:
+    // pages of events it knows, each moved on, not one page again.
+    limitless.tournaments = smallEvents(
+      40_000,
+      17_000,
+      (n) => START - 400 * DAY - n
+    );
+    const storage = memoryIndexStorage();
+    const index = createIndex(true, storage);
+    await crawl(index, 6);
+    limitless.tournaments.push(
+      ...smallEvents(60_000, 3_000, (n) => START + n * MINUTE)
+    );
+    now = START + 10 * DAY;
+    await crawlFor(index, 3 * HOUR);
+    expect(knownCount(storage)).toBe(20_000);
+  });
+
+  it('lists every event when an older build left the backfill part-way, keeping its page alone', async () => {
+    // Where it reached is the oldest event listed.
+    limitless.tournaments = smallEvents(
+      70_000,
+      6_500,
+      (n) => START - 400 * DAY - n
+    );
+    const older = memoryIndexStorage();
+    const resumed = createIndex(true, older);
+    await crawl(resumed, 4);
+    older.database
+      .prepare("UPDATE meta SET value = '5' WHERE key = 'backfill'")
+      .run();
+    limitless.tournaments.push(
+      ...smallEvents(80_000, 1_500, (n) => START + n * MINUTE)
+    );
+    now = START + 10 * DAY;
+    await crawlFor(resumed, 3 * HOUR);
+    expect(knownCount(older)).toBe(8_000);
+  });
+
   it('takes a page that is not a list for a failure, not the end of the list', async () => {
     limitless.tournaments = Array.from({ length: 1_200 }, (_, n) =>
       tournament(1_000 + n, { players: 4, date: START - 400 * DAY })
