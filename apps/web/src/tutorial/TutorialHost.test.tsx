@@ -413,3 +413,58 @@ describe('the tutorial’s cards', () => {
     expect(exits).toBe(1);
   });
 });
+
+describe('the tutorial read out', () => {
+  it('reads each step once, from inside the palette while it is open, never the one opening it finished', async () => {
+    phone(true);
+    await render('commands');
+    await wait(1200);
+    expect(stepOf()).toBe('commands:palette');
+    const finished = coach()!.querySelector('p')!.textContent!;
+    // Every text a live region comes to read, and which region.
+    const said: string[] = [];
+    const last = new Map<Element, string>();
+    const observer = new MutationObserver((records) => {
+      for (const record of records) {
+        const target =
+          record.target instanceof Element
+            ? record.target
+            : record.target.parentElement;
+        const region = target?.closest('[aria-live="polite"]');
+        if (!region) continue;
+        const text = region.textContent ?? '';
+        if (text === (last.get(region) ?? '')) continue;
+        last.set(region, text);
+        const where = region.hasAttribute('data-palette-announcer')
+          ? 'palette'
+          : 'table';
+        if (text) said.push(`${where}: ${text}`);
+      }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    // The palette, as CommandPalette draws it: a modal window, its own
+    // region in it from the first frame.
+    const palette = document.createElement('div');
+    palette.setAttribute('role', 'dialog');
+    palette.setAttribute('aria-modal', 'true');
+    palette.setAttribute('data-command-palette', '');
+    const region = document.createElement('div');
+    region.setAttribute('role', 'status');
+    region.setAttribute('aria-live', 'polite');
+    region.setAttribute('data-palette-announcer', '');
+    palette.append(region);
+    await act(async () => document.body.append(palette));
+    await wait(1000);
+    const next = stepOf();
+    expect(next).not.toBe('commands:palette');
+    const current = coach()!.querySelector('p')!.textContent!;
+    // Closed again: the step is still the one it read, not read twice.
+    await act(async () => palette.remove());
+    await wait(200);
+    observer.disconnect();
+    expect(said).not.toContain(`palette: ${finished}`);
+    expect(said).toContain('palette: Done');
+    expect(said).toContain(`palette: ${current}`);
+    expect(said.filter((line) => line.endsWith(current))).toHaveLength(1);
+  });
+});
