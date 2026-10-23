@@ -194,8 +194,11 @@ describe('two tabs a catalog rebuild apart', () => {
     expect(standard(newerWay.id)).toBe(true);
   });
 
-  /** Two tabs over one store, the first of A's writes failing. */
-  const failingOnce = (name: string) => {
+  /** Two tabs over one store, A's first writes failing. */
+  const failingOnce = (
+    name: string,
+    { failures = 1, writeDelayMs = 100, writeMs = 30 } = {}
+  ) => {
     const card = deckCardFromCatalog(yesterday.cards[0]!, {
       catalog: yesterday,
     });
@@ -213,14 +216,14 @@ describe('two tabs a catalog rebuild apart', () => {
       ],
     ]);
     // A's next write fails (storage full, a transaction aborted).
-    let failA = 1;
+    let failA = failures;
     const backend = (tab: string): DeckLibraryBackend => ({
       readAll: async () =>
         [...stored.values()].map((deck) => structuredClone(deck)),
       read: async (id) => structuredClone(stored.get(id)),
       write: async (decks) => {
         const copies = decks.map((deck) => structuredClone(deck));
-        await wait(30);
+        await wait(tab === 'A' ? writeMs : 30);
         if (tab === 'A' && failA > 0) {
           failA -= 1;
           throw new Error('aborted');
@@ -240,7 +243,7 @@ describe('two tabs a catalog rebuild apart', () => {
       libraries.push(library);
       return library;
     };
-    return { card, stored, a: tab('A', 100), b: tab('B', 10) };
+    return { card, stored, a: tab('A', writeDelayMs), b: tab('B', 10) };
   };
 
   it("keep the player's edit in another tab when facts this tab failed to write are written again", async () => {
@@ -277,5 +280,45 @@ describe('two tabs a catalog rebuild apart', () => {
       expect(a.get('d1')?.name).toBe('Mine');
       expect((stored.get('d1') as { name: string }).name).toBe('Mine');
     }
+  });
+
+  it('keep a rename whose write failed when facts brought up to date over it fail to be written too', async () => {
+    const { stored, a, b } = failingOnce('facts-failed-twice', {
+      failures: 2,
+      writeDelayMs: 10,
+    });
+    await wait(20);
+    a.update('d1', { name: 'Mine' });
+    await wait(15);
+    // Written, and failing, while the rename's write does.
+    bringDeckFactsUpToDate(a, a.getSnapshot().decks, today);
+    await wait(60);
+    b.update('d1', { notes: 'from B' });
+    await wait(300);
+    expect(a.get('d1')?.name).toBe('Mine');
+    // Written with this tab's next write.
+    a.create({ name: 'Other', format: 'standard', cards: deckListOf([]) });
+    await wait(200);
+    expect((stored.get('d1') as { name: string }).name).toBe('Mine');
+  });
+
+  it('say decks are kept again once this tab shows what another tab wrote over a write of its own that failed', async () => {
+    const { a, b } = failingOnce('facts-failed-then-theirs', {
+      failures: 2,
+      writeDelayMs: 10,
+      writeMs: 80,
+    });
+    await wait(20);
+    a.update('d1', { name: 'Mine' });
+    await wait(150);
+    expect(a.getSnapshot().status).toBe('memory');
+    // Tried again, and failing again, while B writes the deck and this tab
+    // reads it back.
+    void a.flush();
+    await wait(5);
+    b.update('d1', { name: 'Theirs' });
+    await wait(300);
+    expect(a.get('d1')?.name).toBe('Theirs');
+    expect(a.getSnapshot().status).toBe('ready');
   });
 });

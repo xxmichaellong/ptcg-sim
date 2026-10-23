@@ -323,6 +323,8 @@ export class DeckLibrary {
   readonly #removals = new Set<string>();
   /** Decks whose last write or removal failed. */
   readonly #unsaved = new Set<string>();
+  /** Decks holding a player's change whose write failed. */
+  readonly #held = new Set<string>();
   /** How many times each deck changed here, so a read-back can tell. */
   readonly #edits = new Map<string, number>();
   #loaded: 'loading' | 'ready' | 'failed';
@@ -437,6 +439,7 @@ export class DeckLibrary {
     });
     const automatic =
       options.touch === false &&
+      !this.#held.has(id) &&
       (!this.#pending.has(id) || this.#automatic.has(id));
     this.#put(next);
     if (automatic) this.#automatic.add(id);
@@ -495,6 +498,11 @@ export class DeckLibrary {
     // can't bring the deck back.
     const removals = [...this.#removals];
     const automatic = new Set(this.#automatic);
+    // How often each was changed here as written: changed since, by this
+    // tab or only by another's write read back.
+    const editsAt = new Map(
+      decks.map((deck) => [deck.id, this.#edits.get(deck.id)])
+    );
     this.#pending.clear();
     this.#automatic.clear();
     const backend = this.#backend;
@@ -504,6 +512,7 @@ export class DeckLibrary {
         await backend.write(decks);
         for (const deck of decks) {
           this.#unsaved.delete(deck.id);
+          this.#held.delete(deck.id);
           this.#announce(deck.id);
         }
       } catch {
@@ -511,15 +520,28 @@ export class DeckLibrary {
         // are tried again with the next write.
         for (const deck of decks) {
           const current = this.#decks.get(deck.id);
-          if (!current) continue;
+          // Gone, or since read back as another tab wrote it: this tab
+          // shows what storage has, nothing of its own left to keep.
+          if (
+            !current ||
+            (current !== deck &&
+              this.#edits.get(deck.id) === editsAt.get(deck.id))
+          ) {
+            continue;
+          }
           // A player's change that didn't reach storage rides with any
           // change made on top of it since: none of it gives way.
-          if (!automatic.has(deck.id)) this.#automatic.delete(deck.id);
-          // Changed since: that change is written, or waits to be, itself.
+          if (!automatic.has(deck.id)) {
+            this.#automatic.delete(deck.id);
+            this.#held.add(deck.id);
+          }
+          // Changed here since: that change is written, or waits to be.
           if (current !== deck) continue;
           this.#unsaved.add(deck.id);
           this.#pending.add(deck.id);
-          if (automatic.has(deck.id)) this.#automatic.add(deck.id);
+          if (automatic.has(deck.id) && !this.#held.has(deck.id)) {
+            this.#automatic.add(deck.id);
+          }
         }
       }
     }
@@ -530,6 +552,7 @@ export class DeckLibrary {
         await backend.remove(id);
         this.#removals.delete(id);
         this.#unsaved.delete(id);
+        this.#held.delete(id);
         this.#announce(id);
       } catch {
         this.#unsaved.add(id);
@@ -616,6 +639,9 @@ export class DeckLibrary {
     const deck = decodeSavedDeck(record);
     if (deck) this.#decks.set(id, deck);
     else this.#decks.delete(id);
+    // What this tab shows is what storage has.
+    this.#unsaved.delete(id);
+    this.#held.delete(id);
     this.#publish();
   }
 
