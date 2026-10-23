@@ -51,14 +51,14 @@
     "comments": [
       "Log line. {actor} is a player's name, {card} the card attached; {source} is the zone it came from and {target} where it went."
     ],
-    "translation": "{actor} прикрепил(а) {card} из зоны «{source, select, hand {рука} prizes {призы} discard {сброс} board {стол} stadium {стадион} active {активный} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} other {колода}}» к зоне «{target, select, hand {рука} prizes {призы} discard {сброс} board {стол} stadium {стадион} active {активный} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} other {колода}}»"
+    "translation": "{actor} прикрепил(а) {card} из зоны «{source, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} other {колода}}» к зоне «{target, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} other {колода}}»"
   },
   "7Azhu7": {
     "message": "{actor} attached {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {targetCard}",
     "comments": [
       "Log line. {actor} is a player's name; {card} is the card attached (Energy, a Tool) and {targetCard} the Pokémon it went on; {source} is the zone it came from."
     ],
-    "translation": "{actor} прикрепил(а) {card} из зоны «{source, select, hand {рука} prizes {призы} discard {сброс} board {стол} stadium {стадион} active {активный} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} other {колода}}» к {targetCard}"
+    "translation": "{actor} прикрепил(а) {card} из зоны «{source, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} other {колода}}» к {targetCard}"
   },
   "nb_tRJ": {
     "message": "{actor} discarded {count, plural, one {# attached card(s)} other {# attached card(s)}}",
@@ -93,7 +93,7 @@
     "comments": [
       "Log line. {actor} is a player's name, {card} the card it evolved into; {target} names the zone of the Pokémon that evolved, when its name is hidden."
     ],
-    "translation": "{actor} эволюционировал(а) покемона из зоны «{target, select, hand {рука} prizes {призы} discard {сброс} board {стол} stadium {стадион} active {активный} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} other {колода}}» в {card}"
+    "translation": "{actor} эволюционировал(а) покемона из зоны «{target, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} other {колода}}» в {card}"
   },
   "gUuWfL": {
     "message": "{actor} evolved {targetCard} into {card}",
@@ -107,14 +107,14 @@
     "comments": [
       "Log line: a player hid a zone they had shown to everyone. {actor} is who hid it, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "{actor} скрыл(а) зону «{source, select, hand {рука} prizes {призы} discard {сброс} board {стол} stadium {стадион} active {активный} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} inspection {просмотр} other {колода}}» игрока {owner}"
+    "translation": "{actor} скрыл(а) зону «{source, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} inspection {просмотр} other {колода}}» игрока {owner}"
   },
   "89ICfA": {
     "message": "{actor} hid card in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line: a player hid a card they had shown to everyone. {actor} is who hid it, {owner} whose card it is; {source} is the zone it is in."
     ],
-    "translation": "{actor} скрыл(а) карту в зоне «{source, select, hand {рука} prizes {призы} discard {сброс} board {стол} stadium {стадион} active {активный} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} inspection {просмотр} other {колода}}» игрока {owner}"
+    "translation": "{actor} скрыл(а) карту в зоне «{source, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} inspection {просмотр} other {колода}}» игрока {owner}"
   },
   "PZVwKy": {
     "message": "{actor} left {count, plural, one {# attached card(s)} other {# attached card(s)}} in play",
@@ -128,70 +128,70 @@
     "comments": [
       "Log line for a Pokémon moved onto another player's side of the table. {actor} is the card owner's name, {card} a card's name, {boardOwner} the name of the player whose Active or Bench it went to; {source} is the spot it left and {target} the spot it went to."
     ],
-    "translation": "{actor} перемещает {card} {source, select, hand {из руки} prizes {из призов} discard {из сброса} board {со стола} stadium {из стадиона} active {из актива} bench {со скамейки} lostZone {из Lost Zone} attachmentResolution {из прикреплённых карт} other {из колоды}} {target, select, hand {в руку} prizes {в призы} discard {в сброс} board {на стол} stadium {на стадион} active {в актив} bench {на скамейку} lostZone {в Lost Zone} attachmentResolution {в прикреплённые карты} other {в колоду}} игрока {boardOwner}"
+    "translation": "{actor} перемещает {card} {source, select, hand {из руки} prizes {из призов} discard {из сброса} board {с поля} stadium {из стадиона} active {из актива} bench {со скамейки} lostZone {из Lost Zone} attachmentResolution {из прикреплённых карт} other {из колоды}} {target, select, hand {в руку} prizes {в призы} discard {в сброс} board {на поле} stadium {на стадион} active {в актив} bench {на скамейку} lostZone {в Lost Zone} attachmentResolution {в прикреплённые карты} other {в колоду}} игрока {boardOwner}"
   },
   "VzhIq8": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {target, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}}",
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left and {target} the zone it went to."
     ],
-    "translation": "{actor} переместил(а) {card} из зоны «{source, select, hand {рука} prizes {призы} discard {сброс} board {стол} stadium {стадион} active {активный} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} other {колода}}» в зону «{target, select, hand {рука} prizes {призы} discard {сброс} board {стол} stadium {стадион} active {активный} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} other {колода}}»"
+    "translation": "{actor} переместил(а) {card} из зоны «{source, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} other {колода}}» в зону «{target, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} other {колода}}»"
   },
   "elLtOc": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {targetCard}",
     "comments": [
       "Log line. {actor} is a player's name, {card} and {targetCard} card names; {source} is the zone the card left."
     ],
-    "translation": "{actor} переместил(а) {card} из зоны «{source, select, hand {рука} prizes {призы} discard {сброс} board {стол} stadium {стадион} active {активный} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} other {колода}}» к {targetCard}"
+    "translation": "{actor} переместил(а) {card} из зоны «{source, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} other {колода}}» к {targetCard}"
   },
   "RyQ60M": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to bottom of deck",
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left."
     ],
-    "translation": "{actor} переместил(а) {card} из зоны «{source, select, hand {рука} prizes {призы} discard {сброс} board {стол} stadium {стадион} active {активный} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} other {колода}}» под низ колоды"
+    "translation": "{actor} переместил(а) {card} из зоны «{source, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} other {колода}}» под низ колоды"
   },
   "CsrT9R": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to top of deck",
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left."
     ],
-    "translation": "{actor} переместил(а) {card} из зоны «{source, select, hand {рука} prizes {призы} discard {сброс} board {стол} stadium {стадион} active {активный} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} other {колода}}» на верх колоды"
+    "translation": "{actor} переместил(а) {card} из зоны «{source, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} other {колода}}» на верх колоды"
   },
   "WBnnCz": {
     "message": "{actor} moved {count, plural, one {# card(s)} other {# card(s)}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} other {deck}}",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards; {source} is the zone they left and {destination} where they went (play: onto the table)."
     ],
-    "translation": "{actor} переместил(а) {count, plural, one {# карту} few {# карты} many {# карт} other {# карты}} из зоны «{source, select, hand {рука} prizes {призы} discard {сброс} board {стол} stadium {стадион} active {активный} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} other {колода}}» в зону «{destination, select, hand {рука} discard {сброс} lostZone {Lost Zone} deckBottom {низ колоды} play {игра} other {колода}}»"
+    "translation": "{actor} переместил(а) {count, plural, one {# карту} few {# карты} many {# карт} other {# карты}} из зоны «{source, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} other {колода}}» в зону «{destination, select, hand {рука} discard {сброс} lostZone {Lost Zone} deckBottom {низ колоды} play {игра} other {колода}}»"
   },
   "P4_K0D": {
     "message": "{actor} moved a random card from {target}'s hand to board",
     "comments": [
       "Log line. {actor} is the player who moved the card, {target} the player whose hand it came from."
     ],
-    "translation": "{actor} переместил(а) случайную карту из руки игрока {target} на стол"
+    "translation": "{actor} переместил(а) случайную карту из руки игрока {target} на поле"
   },
   "_qgrvz": {
     "message": "{actor} revealed {card} in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line: a player showed one card to everyone. {actor} is who showed it, {owner} whose card it is, {card} the card's name; {source} is the zone it is in."
     ],
-    "translation": "{actor} показал(а) {card} в зоне «{source, select, hand {рука} prizes {призы} discard {сброс} board {стол} stadium {стадион} active {активный} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} inspection {просмотр} other {колода}}» игрока {owner}"
+    "translation": "{actor} показал(а) {card} в зоне «{source, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} inspection {просмотр} other {колода}}» игрока {owner}"
   },
   "TMqzLF": {
     "message": "{actor} revealed {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line: a player showed a whole zone to everyone. {actor} is who showed it, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "{actor} показал(а) зону «{source, select, hand {рука} prizes {призы} discard {сброс} board {стол} stadium {стадион} active {активный} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} inspection {просмотр} other {колода}}» игрока {owner}"
+    "translation": "{actor} показал(а) зону «{source, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} inspection {просмотр} other {колода}}» игрока {owner}"
   },
   "P2m23t": {
     "message": "{actor} shuffled {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} into deck",
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left."
     ],
-    "translation": "{actor} замешал(а) {card} из зоны «{source, select, hand {рука} prizes {призы} discard {сброс} board {стол} stadium {стадион} active {активный} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} other {колода}}» в колоду"
+    "translation": "{actor} замешал(а) {card} из зоны «{source, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} other {колода}}» в колоду"
   },
   "xEKtXt": {
     "message": "{actor} shuffled {count, plural, one {# attached card(s)} other {# attached card(s)}} into deck",
@@ -205,7 +205,7 @@
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards."
     ],
-    "translation": "{actor} замешал(а) со стола в колоду {count, plural, one {# карту} few {# карты} many {# карт} other {# карты}}"
+    "translation": "{actor} замешал(а) с поля в колоду {count, plural, one {# карту} few {# карты} many {# карт} other {# карты}}"
   },
   "PoaZgj": {
     "message": "{actor} shuffled {count, plural, one {# card(s)} other {# card(s)}} into deck",
@@ -268,7 +268,7 @@
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left, and the top card of the deck took its place."
     ],
-    "translation": "{actor} поменял(а) {card} из зоны «{source, select, hand {рука} prizes {призы} discard {сброс} board {стол} stadium {стадион} active {активный} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} other {колода}}» с верхней картой колоды"
+    "translation": "{actor} поменял(а) {card} из зоны «{source, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} other {колода}}» с верхней картой колоды"
   },
   "QOz626": {
     "message": "{actor} took back {target}'s last move",
@@ -724,7 +724,7 @@
     "comments": [
       "Log line. {name} is a player's name; {source} is the zone they shuffled, almost always their deck."
     ],
-    "translation": "{name} перемешал {source, select, hand {руку} prizes {призовые карты} discard {сброс} board {стол} stadium {стадион} active {активного покемона} bench {скамейку} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} other {колоду}}"
+    "translation": "{name} перемешал {source, select, hand {руку} prizes {призовые карты} discard {сброс} board {поле} stadium {стадион} active {активного покемона} bench {скамейку} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} other {колоду}}"
   },
   "x8Eb2i": {
     "message": "{name} started turn {turn}",
@@ -928,28 +928,28 @@
     "comments": [
       "Log line: a player began looking at a zone only they can see. {viewer} is who is looking, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "{viewer} смотрит: {source, select, hand {рука} prizes {призовые карты} discard {сброс} board {стол} stadium {стадион} active {активный покемон} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} inspection {осмотр} other {колода}} — игрок {owner}"
+    "translation": "{viewer} смотрит: {source, select, hand {рука} prizes {призовые карты} discard {сброс} board {поле} stadium {стадион} active {активный покемон} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} inspection {осмотр} other {колода}} — игрок {owner}"
   },
   "kF6-Cq": {
     "message": "{viewer} looked at card in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line: a player began looking at a card only they can see. {viewer} is who is looking, {owner} whose card it is; {source} is the zone it is in."
     ],
-    "translation": "{viewer} смотрит карту: {source, select, hand {рука} prizes {призовые карты} discard {сброс} board {стол} stadium {стадион} active {активный покемон} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} inspection {осмотр} other {колода}} — игрок {owner}"
+    "translation": "{viewer} смотрит карту: {source, select, hand {рука} prizes {призовые карты} discard {сброс} board {поле} stadium {стадион} active {активный покемон} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} inspection {осмотр} other {колода}} — игрок {owner}"
   },
   "jTec7e": {
     "message": "{viewer} stopped looking at {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line. {viewer} is who stopped looking, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "{viewer} закончил смотреть: {source, select, hand {рука} prizes {призовые карты} discard {сброс} board {стол} stadium {стадион} active {активный покемон} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} inspection {осмотр} other {колода}} — игрок {owner}"
+    "translation": "{viewer} закончил смотреть: {source, select, hand {рука} prizes {призовые карты} discard {сброс} board {поле} stadium {стадион} active {активный покемон} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} inspection {осмотр} other {колода}} — игрок {owner}"
   },
   "FAueN1": {
     "message": "{viewer} stopped looking at card in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line. {viewer} is who stopped looking, {owner} whose card it is; {source} is the zone it is in."
     ],
-    "translation": "{viewer} закончил смотреть карту: {source, select, hand {рука} prizes {призовые карты} discard {сброс} board {стол} stadium {стадион} active {активный покемон} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} inspection {осмотр} other {колода}} — игрок {owner}"
+    "translation": "{viewer} закончил смотреть карту: {source, select, hand {рука} prizes {призовые карты} discard {сброс} board {поле} stadium {стадион} active {активный покемон} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} inspection {осмотр} other {колода}} — игрок {owner}"
   },
   "JirPbT": {
     "message": "{zoneName}, {count, plural, one {# card} other {# cards}}",
@@ -1449,24 +1449,24 @@
   "LzMPRM": {
     "message": "Board",
     "context": "shortcut key caption",
-    "translation": "Стол"
+    "translation": "Поле"
   },
   "mqbJ65": {
     "message": "Board",
     "context": "zone",
-    "translation": "Стол"
+    "translation": "Поле"
   },
   "KRqaWh": {
     "message": "Board",
     "context": "zone on the table",
-    "translation": "Стол"
+    "translation": "Поле"
   },
   "jnxV9z": {
     "message": "board cards",
     "comments": [
       "In \"Back to board cards\": the cards on the board."
     ],
-    "translation": "картам на столе"
+    "translation": "карты на поле"
   },
   "LAq-1T": {
     "message": "Both",
@@ -3580,6 +3580,13 @@
     "message": "Not legal in this format: {cards}.",
     "translation": "Не разрешено в этом формате: {cards}."
   },
+  "EQyjoB": {
+    "message": "Not ready to play",
+    "comments": [
+      "Heard after a deck's name: it can't be played yet (too few cards, or a card its format doesn't allow)"
+    ],
+    "translation": "Не готова к игре"
+  },
   "qzsXzo": {
     "message": "Not saved",
     "translation": "Не сохранено"
@@ -5358,11 +5365,11 @@
   "1CZiQZ": {
     "message": "to Board",
     "context": "move a card",
-    "translation": "на стол"
+    "translation": "на поле"
   },
   "nUvd-D": {
     "message": "To board",
-    "translation": "На стол"
+    "translation": "На поле"
   },
   "FNYlfF": {
     "message": "To bottom of deck",

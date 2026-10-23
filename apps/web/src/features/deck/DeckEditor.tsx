@@ -92,6 +92,20 @@ export interface DeckEditorProps {
   readonly onUseOnSeat: () => void;
 }
 
+/** Where a key belongs to something open inside the editor. */
+const OWN_KEYS = '[role="dialog"], [role="menu"], [role="listbox"]';
+
+/**
+ * A letter's key: the letter typed, or its place where the layout types
+ * no Latin letter there (Ctrl+Z on a Cyrillic board arrives as Ctrl+я).
+ */
+const isLetter = (
+  event: Pick<KeyboardEvent, 'key' | 'code'>,
+  letter: string
+): boolean =>
+  event.key.toLowerCase() === letter ||
+  (!/^[a-z]$/iu.test(event.key) && event.code === `Key${letter.toUpperCase()}`);
+
 /**
  * One saved deck being built: card search beside the deck, every change
  * saved as it is made and undoable, the format's rules checked live.
@@ -280,25 +294,30 @@ export const DeckEditor = ({
       | 'altKey'
       | 'shiftKey'
       | 'key'
+      | 'code'
       | 'target'
       | 'preventDefault'
     >
   ): void => {
+    // A window open over the editor (a custom card's) keeps its keys.
+    if (
+      (event.target instanceof Element &&
+        event.target.closest(OWN_KEYS) !== null) ||
+      editor.current?.querySelector('[role="dialog"]:not([hidden])')
+    ) {
+      return;
+    }
     const mod = event.metaKey || event.ctrlKey;
     if (
       mod &&
       !event.altKey &&
-      event.key.toLowerCase() === 'z' &&
+      isLetter(event, 'z') &&
       !isTextEntry(event.target)
     ) {
       event.preventDefault();
       if (event.shiftKey) redo();
       else undo();
-    } else if (
-      mod &&
-      event.key.toLowerCase() === 'y' &&
-      !isTextEntry(event.target)
-    ) {
+    } else if (mod && isLetter(event, 'y') && !isTextEntry(event.target)) {
       event.preventDefault();
       redo();
     } else if (event.key === '/' && !mod && !isTextEntry(event.target)) {

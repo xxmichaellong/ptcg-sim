@@ -3580,6 +3580,13 @@
     "message": "Not legal in this format: {cards}.",
     "translation": "Tidak legal di format ini: {cards}."
   },
+  "EQyjoB": {
+    "message": "Not ready to play",
+    "comments": [
+      "Heard after a deck's name: it can't be played yet (too few cards, or a card its format doesn't allow)"
+    ],
+    "translation": "Belum siap dimainkan"
+  },
   "qzsXzo": {
     "message": "Not saved",
     "translation": "Belum disimpan"

@@ -424,6 +424,66 @@ describe('the deck screen from the keyboard', () => {
     expect(pidgeys()).toBe(1);
   });
 
+  it('undoes by the key’s place on a layout without Latin letters, and leaves an open window its keys', async () => {
+    const library = new DeckLibrary({ backend: null });
+    const deck = library.create({
+      name: 'Pidgey',
+      format: 'standard',
+      cards: [
+        {
+          card: {
+            id: 'mew-16',
+            name: 'Pidgey',
+            category: 'Pokémon',
+            image: 'https://example.test/mew-16.png',
+          },
+          count: 1,
+        },
+      ],
+    });
+    await render(vi.fn(), library);
+    await act(async () =>
+      host
+        .querySelector<HTMLButtonElement>('button[aria-label="Edit Pidgey"]')!
+        .click()
+    );
+    const pidgeys = () => library.get(deck.id)!.cards[0]?.count ?? 0;
+    const add = host.querySelector<HTMLButtonElement>(
+      'button[aria-label="Add one Pidgey"]'
+    )!;
+    await act(async () => add.click());
+    expect(pidgeys()).toBe(2);
+    const key = (target: Element, init: KeyboardEventInit) =>
+      act(async () => {
+        target.dispatchEvent(
+          new KeyboardEvent('keydown', {
+            bubbles: true,
+            cancelable: true,
+            ...init,
+          })
+        );
+      });
+    // Ctrl+Z on a Cyrillic board.
+    add.focus();
+    await key(add, { key: 'я', code: 'KeyZ', ctrlKey: true });
+    expect(pidgeys()).toBe(1);
+    await act(async () => add.click());
+    // Over the editor, a custom card's window keeps / and Ctrl+Z.
+    await act(async () =>
+      host
+        .querySelector<HTMLButtonElement>('#nativeDeckBuilderAddCustomCard')!
+        .click()
+    );
+    const cancel = host.querySelector<HTMLButtonElement>(
+      '#nativeCustomCardCancel'
+    )!;
+    cancel.focus();
+    await key(cancel, { key: '/', code: 'Slash' });
+    expect(document.activeElement).toBe(cancel);
+    await key(cancel, { key: 'z', code: 'KeyZ', ctrlKey: true });
+    expect(pidgeys()).toBe(2);
+  });
+
   it('takes / from the Deck tab to the search, drawn before it takes the focus', async () => {
     const library = new DeckLibrary({ backend: null });
     library.create({
@@ -797,6 +857,46 @@ describe('the seat trays', () => {
     expect(library.getSnapshot().decks).toHaveLength(0);
     expect(complete()).toBe('true');
     expect(playable()).toBe(true);
+  });
+
+  it('let go of a new deck put away untouched', async () => {
+    await render();
+    await act(async () =>
+      host.querySelector<HTMLButtonElement>('#deckNewButton')!.click()
+    );
+    await act(async () =>
+      host.querySelector<HTMLButtonElement>('#deckUseOnSeatButton')!.click()
+    );
+    await act(async () =>
+      host.querySelector<HTMLButtonElement>('#deckEditorBackButton')!.click()
+    );
+    expect(
+      host
+        .querySelector('#nativeDeckBuilderTargetMain')
+        ?.getAttribute('aria-label')
+    ).toBe('P1: No deck yet, 0 cards');
+  });
+
+  it('say a deck isn’t ready to play, as its shelf box does with its format and count', async () => {
+    const library = new DeckLibrary({ backend: null });
+    library.create({
+      name: 'Half deck',
+      format: 'standard',
+      cards: [{ card: card('mew-16', 'Pidgey'), count: 30 }],
+    });
+    await render(vi.fn(), library);
+    const described = (element: Element | null) =>
+      element
+        ?.getAttribute('aria-describedby')
+        ?.split(' ')
+        .map((id) => document.getElementById(id)?.textContent ?? '')
+        .join(' ');
+    const tile = host.querySelector('button.deck-tile__choose');
+    expect(described(tile)).toMatch(/Standard.*30\/60.*Not ready to play/u);
+    await putOn('Half deck');
+    expect(described(host.querySelector('#nativeDeckBuilderTargetMain'))).toBe(
+      'Not ready to play'
+    );
   });
 
   it('count a deck complete at its own format’s size', async () => {

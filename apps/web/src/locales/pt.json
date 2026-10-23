@@ -2106,7 +2106,7 @@
   },
   "FQxE2Y": {
     "message": "Discard all on playboard",
-    "translation": "Descartar tudo da mesa"
+    "translation": "Descartar tudo do tabuleiro"
   },
   "mKMb1d": {
     "message": "Discard hand",
@@ -3337,11 +3337,11 @@
   },
   "MnxTQZ": {
     "message": "Move all on playboard to hand",
-    "translation": "Mover tudo da mesa para a mão"
+    "translation": "Mover tudo do tabuleiro para a mão"
   },
   "DUfTll": {
     "message": "Move all on playboard to Lost Zone",
-    "translation": "Mover tudo da mesa para a Zona Perdida"
+    "translation": "Mover tudo do tabuleiro para a Zona Perdida"
   },
   "pcSzkk": {
     "message": "Move all to hand",
@@ -3579,6 +3579,13 @@
   "yc1k4Q": {
     "message": "Not legal in this format: {cards}.",
     "translation": "Não é legal neste formato: {cards}."
+  },
+  "EQyjoB": {
+    "message": "Not ready to play",
+    "comments": [
+      "Heard after a deck's name: it can't be played yet (too few cards, or a card its format doesn't allow)"
+    ],
+    "translation": "Não está pronto para jogar"
   },
   "qzsXzo": {
     "message": "Not saved",
@@ -4735,7 +4742,7 @@
   },
   "Ad3M_2": {
     "message": "Shuffle all on playboard into deck",
-    "translation": "Embaralhar tudo da mesa no baralho"
+    "translation": "Embaralhar tudo do tabuleiro no baralho"
   },
   "Es4EnS": {
     "message": "Shuffle all to deck",
@@ -5294,7 +5301,7 @@
   },
   "M9c-bJ": {
     "message": "Their playboard",
-    "translation": "Área de jogo dele"
+    "translation": "Tabuleiro dele"
   },
   "EO0v0p": {
     "message": "Their Prizes",
@@ -5828,7 +5835,7 @@
   },
   "Oi-Qz3": {
     "message": "Your playboard",
-    "translation": "Sua área de jogo"
+    "translation": "Seu tabuleiro"
   },
   "XzwcHS": {
     "message": "Your Prizes",

@@ -5,6 +5,7 @@ import {
   catalogProblems,
   looksGarbled,
   parseCatalog,
+  readCatalog,
   serializeCatalog,
   translationProblem,
 } from './i18n-catalog.js';
@@ -236,6 +237,32 @@ describe('the translate script', () => {
       m0: 'Hallo',
     });
     assert.throws(() => parseReply('nothing'), /no JSON object/u);
+  });
+
+  it('names the board in each language as the table labels it', async () => {
+    const source = await readCatalog('en');
+    // The zone's label on the table, on its window and on its key.
+    const labels = Object.entries(source)
+      .filter(
+        ([, entry]) =>
+          entry.message === 'Board' &&
+          ['zone on the table', 'zone', 'shortcut key caption'].includes(
+            entry.context ?? ''
+          )
+      )
+      .map(([id]) => id);
+    assert.equal(labels.length, 3);
+    for (const [locale, guide] of Object.entries(LANGUAGE_GUIDES)) {
+      const board = guide.terms['Board (the zone on the table)'];
+      assert.ok(board, locale);
+      const catalog = await readCatalog(locale);
+      for (const id of labels)
+        assert.equal(
+          catalog[id]?.translation.toLocaleLowerCase(locale),
+          board.toLocaleLowerCase(locale),
+          `${locale} ${id}`
+        );
+    }
   });
 
   it('keeps out a note its glossary gives with a term', () => {

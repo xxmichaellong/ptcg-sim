@@ -26,6 +26,7 @@ import {
 } from '@ptcgsim/deck-core';
 import {
   useEffect,
+  useId,
   useMemo,
   useRef,
   useState,
@@ -161,6 +162,8 @@ const SavedDeckTile = ({
   const seat = SEAT_NAMES[seats.target];
   const cover = useMemo(() => savedDeckCover(deck), [deck]);
   const tone = useMemo(() => deckBoxToneOf(deck.cards), [deck]);
+  // Its format, count and whether it plays, heard after its name.
+  const about = useId();
   const rename = async (): Promise<void> => {
     const name = await promptValue({
       title: t`Rename deck`,
@@ -199,6 +202,7 @@ const SavedDeckTile = ({
         className="deck-tile__choose"
         aria-pressed={current}
         aria-label={t`${deckName}: put on ${seat}`}
+        aria-describedby={about}
         onClick={onChoose}
         onDoubleClick={onEdit}
       >
@@ -210,7 +214,7 @@ const SavedDeckTile = ({
         />
         <span className="deck-tile__text">
           <span className="deck-tile__name">{deckName}</span>
-          <span className="deck-tile__meta">
+          <span id={about} className="deck-tile__meta">
             <span className="deck-tile__format">{formatName(deck.format)}</span>
             <span
               className="deck-tile__count ds-number"
@@ -222,6 +226,16 @@ const SavedDeckTile = ({
                 <WarningCircleIcon {...decorative} weight="fill" />
               )}
               {check.total}/{check.format.deckSize}
+              {check.valid ? null : (
+                <span className="ds-visually-hidden">
+                  {' '}
+                  {t({
+                    message: 'Not ready to play',
+                    comment:
+                      "Heard after a deck's name: it can't be played yet (too few cards, or a card its format doesn't allow)",
+                  })}
+                </span>
+              )}
             </span>
           </span>
           {lastUsed ? (

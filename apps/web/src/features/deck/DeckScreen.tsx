@@ -219,10 +219,17 @@ export const DeckScreen = ({
             format: saved.format,
           });
         } else {
-          store.replaceDeck(slotTarget, slot.deck, {
-            name: slot.label.name,
-            ...(slot.label.format ? { format: slot.label.format } : {}),
-          });
+          // An empty one (a new deck put away untouched) leaves the seat.
+          store.replaceDeck(
+            slotTarget,
+            slot.deck,
+            slot.deck.length === 0
+              ? null
+              : {
+                  name: slot.label.name,
+                  ...(slot.label.format ? { format: slot.label.format } : {}),
+                }
+          );
         }
       }
     },
@@ -982,8 +989,19 @@ export const DeckScreen = ({
                         "A seat's tray on the deck screen: the seat, its deck, its size",
                     })}
                     aria-pressed={selected}
+                    {...(total > 0 && !playable
+                      ? { 'aria-describedby': `${slotTarget}DeckNotReady` }
+                      : {})}
                     onClick={() => store.selectTarget(slotTarget)}
                   >
+                    {total > 0 && !playable ? (
+                      <span
+                        id={`${slotTarget}DeckNotReady`}
+                        className="ds-visually-hidden"
+                      >
+                        {t`Not ready to play`}
+                      </span>
+                    ) : null}
                     {total > 0 ? (
                       <DeckBox
                         size="tray"

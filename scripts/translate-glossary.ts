@@ -231,7 +231,7 @@ export const LANGUAGE_GUIDES: Readonly<Record<string, LanguageGuide>> = {
       'VSTAR Power': 'VSTARパワー',
       Shuffle: '切る',
       Draw: '引く',
-      'Board (the zone on the table)': '場',
+      'Board (the zone on the table)': '盤面',
     },
   },
   zh: {
@@ -320,7 +320,7 @@ export const LANGUAGE_GUIDES: Readonly<Record<string, LanguageGuide>> = {
       Hand: 'มือ',
       'Lost Zone': 'ลอสต์โซน',
       Stadium: 'สเตเดียม',
-      'Board (the zone on the table)': 'สนาม',
+      'Board (the zone on the table)': 'บอร์ด',
     },
   },
   id: {
@@ -363,21 +363,21 @@ export const LANGUAGE_GUIDES: Readonly<Record<string, LanguageGuide>> = {
       Deck: 'lek',
       'Lost Zone': 'Lost Zone',
       Stadium: 'stadion',
-      'Board (the zone on the table)': 'bord',
+      'Board (the zone on the table)': 'spelplan',
     },
   },
   tr: {
     name: 'Turkish',
     style: `Address the player informally (sen). ${COMMUNITY}`,
     terms: {
-      'Board (the zone on the table)': 'masa',
+      'Board (the zone on the table)': 'oyun alanı',
     },
   },
   ru: {
     name: 'Russian',
     style: `Address the player as ты. ${COMMUNITY}`,
     terms: {
-      'Board (the zone on the table)': 'стол',
+      'Board (the zone on the table)': 'поле',
     },
   },
   sr: {
@@ -414,7 +414,7 @@ export const LANGUAGE_GUIDES: Readonly<Record<string, LanguageGuide>> = {
       Hand: 'bài trên tay',
       'Lost Zone': 'Lost Zone',
       Stadium: 'Stadium',
-      'Board (the zone on the table)': 'bàn chơi',
+      'Board (the zone on the table)': 'thảm chơi',
     },
   },
   fil: {

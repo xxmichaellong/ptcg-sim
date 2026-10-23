@@ -2106,7 +2106,7 @@
   },
   "FQxE2Y": {
     "message": "Discard all on playboard",
-    "translation": "배틀 영역의 모든 카드 트래시로 보내기"
+    "translation": "보드의 모든 카드 트래시로 보내기"
   },
   "mKMb1d": {
     "message": "Discard hand",
@@ -3337,11 +3337,11 @@
   },
   "MnxTQZ": {
     "message": "Move all on playboard to hand",
-    "translation": "플레이보드의 모든 카드 패로 이동"
+    "translation": "보드의 모든 카드 패로 이동"
   },
   "DUfTll": {
     "message": "Move all on playboard to Lost Zone",
-    "translation": "플레이보드의 모든 카드 로스트존으로 이동"
+    "translation": "보드의 모든 카드 로스트존으로 이동"
   },
   "pcSzkk": {
     "message": "Move all to hand",
@@ -3579,6 +3579,13 @@
   "yc1k4Q": {
     "message": "Not legal in this format: {cards}.",
     "translation": "이 포맷에서 사용할 수 없음: {cards}."
+  },
+  "EQyjoB": {
+    "message": "Not ready to play",
+    "comments": [
+      "Heard after a deck's name: it can't be played yet (too few cards, or a card its format doesn't allow)"
+    ],
+    "translation": "플레이할 수 없음"
   },
   "qzsXzo": {
     "message": "Not saved",
@@ -4735,7 +4742,7 @@
   },
   "Ad3M_2": {
     "message": "Shuffle all on playboard into deck",
-    "translation": "플레이보드의 모든 카드 덱에 섞기"
+    "translation": "보드의 모든 카드 덱에 섞기"
   },
   "Es4EnS": {
     "message": "Shuffle all to deck",
@@ -5294,7 +5301,7 @@
   },
   "M9c-bJ": {
     "message": "Their playboard",
-    "translation": "상대 플레이보드"
+    "translation": "상대 보드"
   },
   "EO0v0p": {
     "message": "Their Prizes",
@@ -5796,7 +5803,7 @@
   "IZO0Y6": {
     "message": "Your board",
     "context": "shortcut group",
-    "translation": "내 필드"
+    "translation": "내 보드"
   },
   "dYE-zL": {
     "message": "Your deck",
@@ -5828,7 +5835,7 @@
   },
   "Oi-Qz3": {
     "message": "Your playboard",
-    "translation": "내 플레이보드"
+    "translation": "내 보드"
   },
   "XzwcHS": {
     "message": "Your Prizes",
