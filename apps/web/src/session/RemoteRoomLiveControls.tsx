@@ -43,6 +43,7 @@ import { useGameSession } from './useGameSession.js';
 import { confirmAction } from '../ui/dialog-requests.js';
 import { toast } from '../ui/toast.js';
 import { Tooltip, withKeyHint } from '../ui/Tooltip.js';
+import { isInputMethodKey } from '../ui/input-method.js';
 
 export type RemoteRoomLiveSession = Pick<
   RemoteGameSession,
@@ -467,7 +468,7 @@ export const useLiveRoomControls = ({
   const handleMessageKeyDown = (
     event: KeyboardEvent<HTMLInputElement>
   ): void => {
-    if (event.key !== 'Enter' || event.nativeEvent.isComposing) return;
+    if (event.key !== 'Enter' || isInputMethodKey(event.nativeEvent)) return;
     event.preventDefault();
     sendMessage();
   };

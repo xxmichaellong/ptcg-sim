@@ -174,6 +174,12 @@
   }
 }
 
+/* The glass is dark in either theme: the keyboard's ring is in the bar's
+   own ink, not the theme's accent (navy by day, lost on the glass). */
+.ptcgsim-app-bar .ptcgsim-rail-button:focus-visible {
+  outline-color: oklch(0.95 0.01 80);
+}
+
 .ptcgsim-app-bar .ptcgsim-rail-button[aria-expanded='true'] {
   border-color: transparent;
   background-color: oklch(1 0 0 / 0.16);

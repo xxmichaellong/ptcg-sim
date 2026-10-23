@@ -10,6 +10,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import { trapFocus } from '../../ui/focus.js';
 import { categoryName } from './deck-labels.js';
+import { isInputMethodKey } from '../../ui/input-method.js';
 
 const CUSTOM_CARD_QUANTITY_MAX = 99;
 const CUSTOM_CARD_NAME_MAX = 256;
@@ -190,7 +191,8 @@ export const CustomCardDialog = ({
       }}
       onKeyDown={(event) => {
         trapFocus(event, event.currentTarget);
-        if (event.key === 'Escape') {
+        // An input method's Esc drops its candidate, not the window.
+        if (event.key === 'Escape' && !isInputMethodKey(event.nativeEvent)) {
           event.preventDefault();
           onClose();
         }

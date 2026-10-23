@@ -211,6 +211,43 @@ test('a toolbar button a click left focused hands the arrow keys on to the table
   expect(await focused()).toBe('settingsButton');
 });
 
+test('the bar shows which button the keyboard is on by day as by night', async ({
+  page,
+}) => {
+  test.setTimeout(60_000);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.addInitScript(() =>
+    localStorage.setItem(
+      'ptcgsim.table.v1',
+      JSON.stringify({ darkMode: false })
+    )
+  );
+  await openTable(page);
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'day');
+  await page.locator('#activityButton').focus();
+  await page.keyboard.press('Shift+Tab');
+  await page.keyboard.press('Tab');
+  // The bar's glass is dark in either theme: its ring is in the bar's own
+  // light ink, not the day's navy accent.
+  const ring = await page.locator('#activityButton').evaluate((button) => {
+    const style = getComputedStyle(button);
+    // The colour as painted, whatever space the style writes it in.
+    const canvas = document.createElement('canvas');
+    canvas.width = 1;
+    canvas.height = 1;
+    const context = canvas.getContext('2d')!;
+    context.fillStyle = style.outlineColor;
+    context.fillRect(0, 0, 1, 1);
+    const [r = 0, g = 0, b = 0] = context.getImageData(0, 0, 1, 1).data;
+    return {
+      width: style.outlineWidth,
+      light: (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255,
+    };
+  });
+  expect(ring.width).toBe('2px');
+  expect(ring.light).toBeGreaterThan(0.8);
+});
+
 test('the log, opened over the table on a tablet, leaves the bar in reach', async ({
   page,
 }) => {

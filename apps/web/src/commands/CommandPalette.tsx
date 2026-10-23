@@ -54,6 +54,7 @@ import { motionSettings } from '../motion/motion-settings.js';
 import { TABLE_PREFERENCES } from '../session/table-preferences.js';
 import type { CommandSection, PaletteCommand, PaletteScreen } from './types.js';
 import './command-palette.css';
+import { isInputMethodKey } from '../ui/input-method.js';
 
 /** A dangerous command asks for a second Enter within this long. */
 const ARMED_MS = 5_000;
@@ -334,7 +335,7 @@ export const CommandPalette = ({
   const backRef = useRef<() => void>(() => undefined);
   useEffect(() => {
     const escape = (event: KeyboardEvent): void => {
-      if (event.key !== 'Escape' || event.isComposing) return;
+      if (event.key !== 'Escape' || isInputMethodKey(event)) return;
       if (
         !(event.target instanceof Node) ||
         !layer.current?.contains(event.target)
@@ -502,7 +503,7 @@ export const CommandPalette = ({
   const onKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>): void => {
     // Typing in the palette is never a table shortcut.
     event.stopPropagation();
-    if (event.nativeEvent.isComposing) return;
+    if (isInputMethodKey(event.nativeEvent)) return;
     switch (event.key) {
       case 'Escape':
         event.preventDefault();

@@ -7,6 +7,7 @@ import {
   OVERLAY_SURFACE_ATTRIBUTE,
 } from '../../ui/overlay-surface.js';
 import './deck-layer.css';
+import { isInputMethodKey } from '../../ui/input-method.js';
 
 /** Where a press of Esc belongs to something inside the deck screen. */
 const OWNS_ESCAPE =
@@ -145,7 +146,7 @@ export const DeckLayer = ({
       event.key !== 'Escape' ||
       event.defaultPrevented ||
       // An input method's Esc drops its candidate.
-      event.nativeEvent.isComposing ||
+      isInputMethodKey(event.nativeEvent) ||
       (event.target instanceof Element &&
         event.target.closest(OWNS_ESCAPE) !== null)
     ) {

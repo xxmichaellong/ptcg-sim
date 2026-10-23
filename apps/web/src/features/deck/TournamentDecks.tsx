@@ -33,6 +33,7 @@ import {
 } from './tournament-decks-client.js';
 import { wordName } from './deck-home-covers.js';
 import { usePaged, useRemote, type Remote } from './tournament-decks-hooks.js';
+import { isInputMethodKey } from '../../ui/input-method.js';
 
 const decorative = { 'aria-hidden': true, focusable: 'false' } as const;
 
@@ -491,7 +492,7 @@ export const TournamentsShelf = ({
               // Esc clears what was typed first, as the finder does; only
               // an empty field gives it to the screen.
               onKeyDown={(event) => {
-                if (event.nativeEvent.isComposing) return;
+                if (isInputMethodKey(event.nativeEvent)) return;
                 if (event.key === 'Escape' && filter !== '') {
                   event.preventDefault();
                   setFilter('');

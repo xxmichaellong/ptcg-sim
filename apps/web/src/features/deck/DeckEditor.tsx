@@ -69,6 +69,7 @@ import {
 } from './deck-screen-shared.js';
 import { useCardCatalog } from './useCardCatalog.js';
 import { useHoverZoom } from './useHoverZoom.js';
+import { isInputMethodKey } from '../../ui/input-method.js';
 
 const decorative = { 'aria-hidden': true, focusable: 'false' } as const;
 const HISTORY_LIMIT = 100;
@@ -467,7 +468,7 @@ export const DeckEditor = ({
             }}
             onChange={(event) => setNameDraft(event.target.value)}
             onKeyDown={(event) => {
-              if (event.nativeEvent.isComposing) return;
+              if (isInputMethodKey(event.nativeEvent)) return;
               if (event.key === 'Enter') event.currentTarget.blur();
               if (event.key === 'Escape') {
                 nameCancelled.current = true;

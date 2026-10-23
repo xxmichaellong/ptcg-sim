@@ -673,6 +673,90 @@ describe('a lesson step on the practice table', () => {
     }
   });
 
+  it('takes a Pokémon whose card the room renamed for the one it was, and a Basic put on a card in the Active for the Active', async () => {
+    const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+    // The room gives a card a new id when it turns face down, or an Undo
+    // brings it back from a hidden zone: the Pokémon is still the one on
+    // the Bench as the step began, not one benched.
+    {
+      const room = fakePracticeRoom();
+      await dealScenario(
+        room.session,
+        lessonById('attach')!.scenario,
+        new AbortController().signal
+      );
+      const start = room.session.getSnapshot().view!;
+      const pidgey = start.boards[you]!.benchStackIds.map(
+        (id) => start.stacks[id]!
+      ).find((stack) => topOf(start, stack) === 'pidgey')!;
+      const renamed = structuredClone(start) as typeof start & {
+        stacks: Record<string, { evolutionCards: { id: string }[] }>;
+      };
+      renamed.stacks[pidgey.id]!.evolutionCards[0]!.id = 'renamed-pidgey';
+      for (const [lesson, step] of [
+        ['attach', 'bench'],
+        ['keys', 'bench-key'],
+      ] as const) {
+        expect(
+          lessonById(lesson)!.steps.find((entry) => entry.id === step)!.done!(
+            world({ view: renamed, start, you, them })
+          ),
+          lesson
+        ).toBe(false);
+      }
+    }
+    // An Energy dropped in the Active Spot first, then Charmander on it:
+    // the table shows Charmander there.
+    {
+      const room = fakePracticeRoom();
+      await dealScenario(
+        room.session,
+        lessonById('start')!.scenario,
+        new AbortController().signal
+      );
+      const now = () => room.session.getSnapshot().view!;
+      const send = async (command: unknown) => {
+        room.session.submit(command as never);
+        await flush();
+      };
+      for (const key of ['charmander', 'fireEnergy'] as const) {
+        const card = findCard(now(), zoneCards(now(), you, 'deck'), key)!;
+        await send({
+          type: 'MoveCard',
+          cardId: card.id,
+          expectedSourceZoneId: zoneId(you, 'deck'),
+          destinationZoneId: zoneId(you, 'hand'),
+        });
+      }
+      const start = now();
+      const toActive = async (key: 'charmander' | 'fireEnergy') =>
+        send({
+          type: 'MoveCardToPlay',
+          cardId: findCard(now(), zoneCards(now(), you, 'hand'), key)!.id,
+          expectedSourceZoneId: zoneId(you, 'hand'),
+          boardPlayerId: you,
+          slot: 'active',
+          ...(activeStack(now(), you)
+            ? { targetStackId: activeStack(now(), you)!.id }
+            : {}),
+        });
+      const active = lessonById('start')!.steps.find(
+        (entry) => entry.id === 'active'
+      )!;
+      await toActive('fireEnergy');
+      expect(active.done!(world({ view: now(), start, you, them }))).toBe(
+        false
+      );
+      await toActive('charmander');
+      expect(
+        activeStack(now(), you)!.evolutionCards.map((card) =>
+          tutorialCardKeyOf(now(), card)
+        )
+      ).toContain('charmander');
+      expect(active.done!(world({ view: now(), start, you, them }))).toBe(true);
+    }
+  });
+
   it('is done when the player did it before it was asked', async () => {
     const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
     const dealt = async (id: string) => {

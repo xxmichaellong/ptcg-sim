@@ -84,6 +84,7 @@ import {
   type LoadTournamentList,
 } from './TournamentDecks.js';
 import { useCardCatalog } from './useCardCatalog.js';
+import { isInputMethodKey } from '../../ui/input-method.js';
 
 const decorative = { 'aria-hidden': true, focusable: 'false' } as const;
 
@@ -702,7 +703,7 @@ export const DeckHome = ({
   };
   const onPasteKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>): void => {
     // An input method's own keys (Esc drops a candidate, Enter takes it).
-    if (event.nativeEvent.isComposing) return;
+    if (isInputMethodKey(event.nativeEvent)) return;
     if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
       event.preventDefault();
       if (mode === 'list') void submitPaste();
@@ -862,7 +863,7 @@ export const DeckHome = ({
                   onKeyDown={(event) => {
                     // Esc clears what was typed before it leaves the screen
                     // (not an input method's Esc, which drops a candidate).
-                    if (event.nativeEvent.isComposing) return;
+                    if (isInputMethodKey(event.nativeEvent)) return;
                     if (event.key === 'Escape' && filter !== '') {
                       event.preventDefault();
                       setFilter('');

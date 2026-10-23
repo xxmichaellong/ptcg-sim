@@ -916,6 +916,18 @@ describe('the deck screen from the keyboard', () => {
       );
     });
     expect(filter.value).toBe('Deck 3');
+    // Safari's: compositionend first, then the Esc that ended it.
+    await act(async () => {
+      const event = new KeyboardEvent('keydown', {
+        key: 'Escape',
+        bubbles: true,
+        cancelable: true,
+      });
+      Object.defineProperty(event, 'keyCode', { value: 229 });
+      filter.dispatchEvent(event);
+    });
+    expect(filter.value).toBe('Deck 3');
+    expect(onClose).not.toHaveBeenCalled();
     await press('Escape');
     expect(filter.value).toBe('');
     expect(onClose).not.toHaveBeenCalled();

@@ -133,12 +133,19 @@ const isBasic = (world: TutorialWorld, card: ViewCard | undefined): boolean => {
 };
 
 /**
- * A Pokémon benched since the step began: one on the Bench whose bottom
- * card wasn't in play then (the Active pushed there by another put in its
- * place was, and so was one put back from the attached cards' window).
- * Of `key` if given, else any Basic.
+ * A Pokémon benched since the step began: a Pokémon new to the table
+ * (the Active pushed to the Bench by another put in its place isn't, nor
+ * one the room renamed, turned face down or brought back by an Undo) whose
+ * bottom card wasn't in play then (one put back from the attached cards'
+ * window, as a new Pokémon, was). Of `key` if given, else any Basic.
  */
 const newlyBenched = (world: TutorialWorld, key?: TutorialCardKey): boolean => {
+  const stacksThen = new Set(
+    [
+      activeStack(world.start, world.you),
+      ...benchStacks(world.start, world.you),
+    ].flatMap((stack) => (stack ? [stack.id] : []))
+  );
   const inPlay = new Set(
     [
       activeStack(world.start, world.you),
@@ -153,6 +160,7 @@ const newlyBenched = (world: TutorialWorld, key?: TutorialCardKey): boolean => {
     const bottom = stack.evolutionCards[0];
     return (
       bottom !== undefined &&
+      !stacksThen.has(stack.id) &&
       !inPlay.has(bottom.id) &&
       (key === undefined
         ? isBasic(world, bottom)
@@ -262,9 +270,12 @@ const start: TutorialLesson = {
           ? { from: { card: card.id }, to: slot(world.you, 'active') }
           : null;
       },
-      // A Basic Pokémon: not an Energy or a Stage put there.
+      // A Basic Pokémon among its cards: not an Energy or a Stage put there
+      // alone (one with a Basic put on it after shows the Basic).
       done: (world) =>
-        isBasic(world, activeStack(world.view, world.you)?.evolutionCards[0]),
+        (activeStack(world.view, world.you)?.evolutionCards ?? []).some(
+          (card) => isBasic(world, card)
+        ),
       stuck: (world) =>
         basicInHand(world.view, world.you) === undefined &&
         activeStack(world.view, world.you) === undefined &&

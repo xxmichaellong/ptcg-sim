@@ -62,6 +62,7 @@ import {
 } from './TournamentDecks.js';
 import { catalogWhenReady, useCardCatalog } from './useCardCatalog.js';
 import './deck-screen.css';
+import { isInputMethodKey } from '../../ui/input-method.js';
 
 const decorative = { 'aria-hidden': true, focusable: 'false' } as const;
 
@@ -781,7 +782,7 @@ export const DeckScreen = ({
         event.key !== 'Escape' ||
         event.defaultPrevented ||
         // An input method's Esc drops its candidate.
-        event.isComposing ||
+        isInputMethodKey(event) ||
         // A confirmation or prompt open over the screen closes on it.
         dialogRequestsSnapshot().length > 0 ||
         !(target instanceof Element) ||

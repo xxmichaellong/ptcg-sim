@@ -53,6 +53,7 @@ import { DECK_SCREEN_PREFERENCES } from './deck-screen-preferences.js';
 import { useCardCatalog } from './useCardCatalog.js';
 import type { ZoomCard } from './useHoverZoom.js';
 import type { WarmCardImage } from './warm-card-images.js';
+import { isInputMethodKey } from '../../ui/input-method.js';
 
 const decorative = { 'aria-hidden': true, focusable: 'false' } as const;
 
@@ -501,7 +502,7 @@ export const CardSearchPanel = ({
   };
 
   const onSearchKeyDown = (event: KeyboardEvent<HTMLInputElement>): void => {
-    if (event.nativeEvent.isComposing) return;
+    if (isInputMethodKey(event.nativeEvent)) return;
     if (event.key === 'Enter') {
       const first = result?.cards[0];
       if (first) {
