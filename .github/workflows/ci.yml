@@ -287,10 +287,12 @@ jobs:
       - name: Run cross-browser functional regressions
         run: |
           # The runner has gone away mid-run (Firefox, "received a shutdown
-          # signal"): its memory every 30 seconds shows whether it ran out.
+          # signal"): it ran out of memory (15.7 of 16 GB the sample before).
+          # Every 30 seconds, its memory and the three biggest processes.
           (
             while true; do
-              free -m | awk 'NR==2 { printf "[memory] %s MiB used of %s, %s available\n", $3, $2, $7 }'
+              free -m | awk 'NR==2 { printf "[memory] %s MiB used of %s, %s available;", $3, $2, $7 }'
+              ps -eo rss=,comm= --sort=-rss | head -3 | awk '{ printf " %s %d MiB", $2, $1 / 1024 } END { print "" }'
               sleep 30
             done
           ) &
