@@ -265,7 +265,22 @@ export const tablePoseEdges = (
     points
       .map((point) => `${point.x.toFixed(3)},${point.y.toFixed(3)}`)
       .join('L');
-  const path = (points: readonly TablePoint[]) => `M${coordinates(points)}Z`;
+  // Painted through the face's matrix, an outline seen from a card nearly
+  // on its edge (mid-turn) maps to points behind the eye or far off the
+  // card, whose paths run off toward infinity: the browser then paints,
+  // and blurs, a layer of millions of pixels (gigabytes, ~1 GB a second in
+  // Firefox). Such a path is left out for the frame.
+  const sane = (points: readonly TablePoint[]): boolean =>
+    points.every((point) => {
+      const w = face[3]! * point.x + face[7]! * point.y + face[15]!;
+      return (
+        w > 1e-3 &&
+        Math.abs(point.x) <= 4 * pose.bounds.width + 1 &&
+        Math.abs(point.y) <= 4 * pose.bounds.height + 1
+      );
+    });
+  const path = (points: readonly TablePoint[]) =>
+    sane(points) ? `M${coordinates(points)}Z` : '';
   const side = (index: number): readonly TablePoint[] => [
     top[index]!,
     bottom[index]!,
@@ -308,7 +323,9 @@ export const tablePoseEdges = (
       y: top[index]!.y + (bottom[index]!.y - top[index]!.y) * ratio,
     });
     return runs
-      .map((run) => `M${coordinates(run.map((index) => at(index % count)))}`)
+      .map((run) => run.map((index) => at(index % count)))
+      .filter(sane)
+      .map((points) => `M${coordinates(points)}`)
       .join('');
   }).join('');
   // Two shadows, as a card under a lamp has: a dark contact shadow right

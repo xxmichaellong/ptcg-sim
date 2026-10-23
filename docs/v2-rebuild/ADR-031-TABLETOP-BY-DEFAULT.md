@@ -58,7 +58,11 @@ a raised mat at about 40°, and the CABT viewer a gentle 8° CSS tilt.
    turns flat. It is never seen from behind.
 8. **Shadows** are two: a dark contact shadow under a resting card that is
    gone once it lifts, and a cast shadow that slides away, spreads and
-   fades as it rises. Only lifted cards' shadows are blurred.
+   fades as it rises. Only lifted cards' shadows are blurred. They are
+   painted in the card's own plane, so for the frames a card turning over
+   stands nearly on its edge, an outline that would map behind the eye or
+   far off the card is left out: painted, it runs off toward infinity and
+   the browser's layer, blurred, takes gigabytes.
 9. **Natural placement**: resting table cards lie a touch askew (under
    0.6°, Prizes under 1.2°, and a hair off true), the same way every time.
    Piles, the hand and joined panels stay square. Settings → Table →

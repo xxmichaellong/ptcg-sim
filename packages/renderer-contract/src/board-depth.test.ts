@@ -5,6 +5,7 @@ import {
   parseBoardDepth,
   tablePoseEdges,
   tablePoseLocalPoint,
+  tablePoseMatrix,
   tablePoseQuad,
 } from './board-depth.js';
 import { TablePoseMotion } from './table-pose-motion.js';
@@ -656,6 +657,75 @@ describe('a flat card turned over', () => {
     expect(Math.abs(c!.y - b!.y - (d!.y - a!.y))).toBeGreaterThan(
       bounds.height * 0.05
     );
+  });
+});
+
+describe('a card turning over on the tilted table', () => {
+  it('paints its edges and shadows in front of the eye, about its own size, and keeps its shadow nearly all the way', () => {
+    const scene = fixture();
+    const projection = new BoardDepthProjection(scene, preferences);
+    const { camera } = projection;
+    let frames = 0;
+    let shadowed = 0;
+    // The nearest any painted point comes to the eye's plane, and the
+    // farthest it lies from its card, in card sizes.
+    let nearest = Infinity;
+    let farthest = 0;
+    for (const card of scene.cards) {
+      if (!card.renderKey) continue;
+      const base = projection.pose(card);
+      // Turned over as the depth director turns it, frame by frame: eased
+      // in and out, about its middle, risen by half its width on its edge
+      // so it stays above the cloth, and a little more, as if tossed.
+      for (let frame = 0; frame <= 120; frame += 1) {
+        const progress = frame / 120;
+        const turn =
+          progress < 0.5 ? 4 * progress ** 3 : 1 - (-2 * progress + 2) ** 3 / 2;
+        const flip =
+          progress >= 1
+            ? 0
+            : turn < 0.5
+              ? turn * Math.PI
+              : (turn - 1) * Math.PI;
+        const pose = {
+          ...base,
+          flip,
+          elevation:
+            base.elevation +
+            base.plane *
+              base.bounds.width *
+              (0.5 * Math.abs(Math.sin(flip)) +
+                0.06 * Math.sin(Math.PI * progress)),
+        };
+        const face = tablePoseMatrix(camera, pose);
+        const edges = tablePoseEdges(camera, pose, 3);
+        frames += 1;
+        if (edges.shadow !== '') shadowed += 1;
+        const painted = [
+          edges.sides,
+          edges.lines,
+          edges.shadow,
+          edges.contact,
+        ].join('');
+        for (const [, x, y] of painted.matchAll(/(-?[\d.]+),(-?[\d.]+)/gu)) {
+          const [px, py] = [Number(x), Number(y)];
+          nearest = Math.min(
+            nearest,
+            face[3]! * px + face[7]! * py + face[15]!
+          );
+          farthest = Math.max(
+            farthest,
+            Math.abs(px) / base.bounds.width,
+            Math.abs(py) / base.bounds.height
+          );
+        }
+      }
+    }
+    // Behind the eye, or a layer of millions of pixels, a path runs off
+    // toward infinity and the browser's memory with it.
+    expect(nearest).toBeGreaterThan(0);
+    expect(farthest).toBeLessThan(5);
+    expect(shadowed / frames).toBeGreaterThan(0.9);
   });
 });
 
