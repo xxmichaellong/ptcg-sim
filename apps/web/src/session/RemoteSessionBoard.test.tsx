@@ -970,6 +970,55 @@ describe('RemoteSessionBoard replay binding', () => {
     replay.dispose();
   });
 
+  it('covers the hand across the table, not the one turned to the bottom, as soon as Solo turns', async () => {
+    for (const how of ['initial', 'flip'] as const) {
+      const disclosed = { ...withDisclosedOpponentHand(), revision: 10 };
+      const session = new FakeRemoteBoardSession({
+        ...initialState(),
+        view: disclosed,
+      });
+      const replay = new ReplaySessionCoordinator(session);
+      const host = document.createElement('div');
+      document.body.append(host);
+      const root = createRoot(host);
+      const commands = createRef<BoardCommands>();
+      await act(async () =>
+        root.render(
+          <RemoteSessionBoard
+            session={session}
+            replay={replay}
+            rendererKind="dom"
+            roomMode="solo"
+            hideOpponentHand
+            commandsRef={commands}
+            onIntent={vi.fn()}
+            {...(how === 'initial' ? { initialFlipped: true } : {})}
+          />
+        )
+      );
+      await waitForRevision(host, 10);
+      if (how === 'flip') await act(async () => commands.current?.flipBoard());
+      const scene = selectedScene();
+      const concealed = (side: string) => {
+        const hand = scene.zones.find(
+          (zone) => zone.kind === 'hand' && zone.side === side
+        )!;
+        return scene.cards
+          .filter((card) => card.parentId === hand.id)
+          .map((card) => card.concealed);
+      };
+      // The seat at the bottom reads its hand; the one across is covered.
+      expect(concealed('local').length, how).toBeGreaterThan(0);
+      expect(
+        concealed('local').every((value) => !value),
+        how
+      ).toBe(true);
+      expect(concealed('opponent').every(Boolean), how).toBe(true);
+      await act(async () => root.unmount());
+      replay.dispose();
+    }
+  });
+
   it('keeps an empty Lost Zone off the table until the player adds it', async () => {
     const view = withEmptyOwnLostZone();
     const session = new FakeRemoteBoardSession({ ...initialState(), view });

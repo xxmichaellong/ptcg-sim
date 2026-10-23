@@ -114,12 +114,13 @@ const browserClipboard = async (): Promise<string> =>
 const DEFAULT_SLEEVE = DEFAULT_CARD_BACK_URL;
 
 /**
- * A card back the tray can show: an address on the web or on this site,
- * else the standard back (a back the room was given some other way still
- * reaches the table; only its swatch here falls back).
+ * A card back the tray can show: an address on the web (whatever its
+ * scheme's case: a phone's keyboard writes "Https://"), on this site or
+ * protocol-relative, else the standard back (a back the room was given some
+ * other way still reaches the table; only its swatch here falls back).
  */
-const cardBackSource = (url: string | undefined): string =>
-  url && /^(?:https?:\/\/|\/(?!\/)|blob:|data:image\/)/u.test(url)
+export const cardBackSource = (url: string | undefined): string =>
+  url && /^(?:https?:|\/|blob:|data:image\/)/iu.test(url)
     ? url
     : DEFAULT_SLEEVE;
 

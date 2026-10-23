@@ -93,10 +93,25 @@ export const roomStatus = async (page: Page) => {
   return page.locator('#activitySheet .ptcgsim-sheet__description');
 };
 
+/**
+ * The room's code once the header names it: a room just joined can still
+ * read "Connecting…" for a moment (the other player's join reconnects it)
+ * on a slow runner.
+ */
 export const roomCode = async (page: Page): Promise<string> => {
-  const status = await (await roomStatus(page)).innerText();
-  const match = /^Room ([A-HJ-NP-Z2-9]{12})$/u.exec(status.trim());
-  if (!match?.[1]) throw new Error(`Unexpected room status: ${status}`);
+  const status = await roomStatus(page);
+  let text = '';
+  await expect
+    .poll(
+      async () => {
+        text = (await status.innerText()).trim();
+        return /^Room [A-HJ-NP-Z2-9]{12}$/u.test(text);
+      },
+      { timeout: 15_000, message: 'the room names its code' }
+    )
+    .toBe(true);
+  const match = /^Room ([A-HJ-NP-Z2-9]{12})$/u.exec(text);
+  if (!match?.[1]) throw new Error(`Unexpected room status: ${text}`);
   return match[1];
 };
 

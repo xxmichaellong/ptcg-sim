@@ -219,6 +219,12 @@ const stackCardIds = (stack: ReturnType<typeof activeStack>): string[] =>
     ? [...stack.evolutionCards, ...stack.attachmentCards].map((card) => card.id)
     : [];
 
+/** A Basic Pokémon in your Active Spot (an Energy put there is none). */
+const basicInActive = (world: TutorialWorld): boolean =>
+  (activeStack(world.view, world.you)?.evolutionCards ?? []).some((card) =>
+    isBasic(world, card)
+  );
+
 /**
  * Your seat dealt: its Prize cards out, or a hand. A Reset or an Undo of
  * Set up takes both back.
@@ -299,10 +305,7 @@ const start: TutorialLesson = {
       },
       // A Basic Pokémon among its cards: not an Energy or a Stage put there
       // alone (one with a Basic put on it after shows the Basic).
-      done: (world) =>
-        (activeStack(world.view, world.you)?.evolutionCards ?? []).some(
-          (card) => isBasic(world, card)
-        ),
+      done: basicInActive,
       // Not set up (an Undo or a Reset since): Set up deals the hand again.
       // Set up, but no Basic anywhere -- in the hand, the Active or the
       // Bench (an Energy put there is none): a mulligan.
@@ -330,18 +333,32 @@ const start: TutorialLesson = {
           Put another on your <strong>Bench</strong>. Up to five fit there.
         </Trans>
       ),
+      // The Active first if it has gone meanwhile (an Undo, a deal again).
       drag: (world) => {
         const card = basicInHand(world.view, world.you);
         return card
-          ? { from: { card: card.id }, to: slot(world.you, 'bench') }
+          ? {
+              from: { card: card.id },
+              to: slot(world.you, basicInActive(world) ? 'bench' : 'active'),
+            }
           : null;
       },
       // Or no Basic left in a hand dealt: not a hand taken back by a Reset
-      // or an Undo of Set up, which says to set up again.
+      // or an Undo of Set up, which says to set up again. Either way with a
+      // Basic in the Active Spot.
       done: (world) =>
-        newlyBenched(world) ||
-        (dealt(world) && basicInHand(world.view, world.you) === undefined),
-      stuck: (world) => (dealt(world) ? null : pressSetUp()),
+        basicInActive(world) &&
+        (newlyBenched(world) ||
+          (dealt(world) && basicInHand(world.view, world.you) === undefined)),
+      stuck: (world) =>
+        !dealt(world) ? (
+          pressSetUp()
+        ) : !basicInActive(world) ? (
+          <Trans>
+            Drag a Basic Pokémon from your hand onto your{' '}
+            <strong>Active Spot</strong>.
+          </Trans>
+        ) : null,
       optional: true,
     },
   ],

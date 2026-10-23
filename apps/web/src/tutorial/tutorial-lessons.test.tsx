@@ -300,10 +300,46 @@ describe('the tutorial’s lessons', () => {
   it('keep reading steps to read, and passes nothing to do over', () => {
     const around = lessonById('around')!;
     for (const step of around.steps) expect(step.done).toBeUndefined();
-    // The first lesson's Bench: with no other Pokémon dealt, it goes on.
+    // The first lesson's Bench: with no other Pokémon dealt, it goes on,
+    // a Basic in the Active Spot.
     const bench = lessonById('start')!.steps[3]!;
     expect(bench.optional).toBe(true);
-    expect(bench.done!(world({ view: handOf(['fireEnergy']) }))).toBe(true);
+    const energyOnly = handOf(['fireEnergy']);
+    const withActive = {
+      ...energyOnly,
+      definitions: {
+        ...energyOnly.definitions,
+        'def-charmander': {
+          ...TUTORIAL_CARDS.charmander,
+          id: 'def-charmander',
+        },
+      },
+      boards: { you: { activeStackId: 'active-stack', benchStackIds: [] } },
+      stacks: {
+        'active-stack': {
+          id: 'active-stack',
+          evolutionCards: [
+            {
+              kind: 'known',
+              id: 'active-card',
+              definitionId: 'def-charmander',
+            },
+          ],
+          attachmentCards: [],
+        },
+      },
+    } as unknown as MatchViewState;
+    expect(bench.done!(world({ view: withActive }))).toBe(true);
+    // The Active gone meanwhile (an Undo, a deal again): not done, and it
+    // says to put one there first, the drag to the Active Spot.
+    const noActive = world({ view: handOf(['charmander']) });
+    expect(bench.done!(noActive)).toBe(false);
+    expect(text({ text: () => bench.stuck!(noActive) })).toContain(
+      'Active Spot'
+    );
+    expect(bench.drag!(noActive)?.to).toEqual(
+      expect.objectContaining({ zone: expect.stringContaining('active') })
+    );
     // Not on a hand taken back (a Reset, an Undo of Set up): it says to set
     // up again.
     expect(bench.done!(world())).toBe(false);

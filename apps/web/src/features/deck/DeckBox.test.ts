@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 
 import { DeckBox, deckBoxToneOf } from './DeckBox.js';
 import { finderMode } from './DeckHome.js';
+import { cardBackSource } from './DeckScreen.js';
 import { splitFinish } from './deck-home-covers.js';
 import { importDeckText } from './deck-import.js';
 import { finishName } from './TournamentDecks.js';
@@ -115,6 +116,26 @@ describe('the finder', () => {
     expect(finderMode('Pokemon (12)')).toBe('list');
     expect(finderMode('QTY,Name,Type,URL')).toBe('list');
     expect(finderMode('Charizard\nPidgeot')).toBe('list');
+  });
+});
+
+describe("a seat's card back on its tray", () => {
+  it('shows any address the table loads, as a phone writes it too', () => {
+    for (const url of [
+      'https://i.imgur.com/back.png',
+      'Https://i.imgur.com/back.png',
+      'HTTPS://i.imgur.com/back.png',
+      '//cdn.example/back.png',
+      '/v2/assets/cardback.png',
+      'blob:https://ptcgsim.online/1234',
+      'data:image/png;base64,AAAA',
+    ]) {
+      expect(cardBackSource(url), url).toBe(url);
+    }
+    expect(cardBackSource(undefined)).toBe('/v2/assets/cardback.png');
+    expect(cardBackSource('javascript:alert(1)')).toBe(
+      '/v2/assets/cardback.png'
+    );
   });
 });
 

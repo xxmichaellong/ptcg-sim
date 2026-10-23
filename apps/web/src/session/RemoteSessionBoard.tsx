@@ -593,10 +593,15 @@ export const RemoteSessionBoard = ({
       const bottom = runtime.getLayoutState().bottomPlayerId;
       const flipped = own !== undefined && bottom !== own;
       const actingPlayerId = view.viewer.kind === 'player' ? bottom : undefined;
+      const actedFor = displayPolicyRef.current.actingPlayerId;
       displayPolicyRef.current = {
         ...displayPolicyRef.current,
         actingPlayerId,
       };
+      // Solo's hidden hand is the one across from the seat at the bottom:
+      // the table turned, the view is read again for the new seat, or the
+      // hand now at the bottom stays covered until the next move.
+      if (actedFor !== actingPlayerId) runtime.synchronizeSources();
       // The layout changes on every frame of a sliding log; the perspective
       // only when the table turns. Telling the route each time re-rendered
       // all of it -- the hidden deck screen too -- frame after frame.
