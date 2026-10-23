@@ -9,7 +9,14 @@ import {
 } from './tutorial-lessons.js';
 import { TUTORIAL_CARDS } from './tutorial-cards.js';
 import { CONTROL_LABELS } from './tutorial-labels.js';
-import { activeStack, findCard, zoneCards, zoneId } from './tutorial-world.js';
+import {
+  activeStack,
+  findCard,
+  topCard,
+  zoneCards,
+  zoneId,
+} from './tutorial-world.js';
+import { tutorialCardKeyOf } from './tutorial-cards.js';
 import type { TutorialScreen, TutorialWorld } from './tutorial-world.js';
 import type { MatchViewState } from '@ptcgsim/game-core';
 import { fakePracticeRoom, them, you } from './practice-room.test-support.js';
@@ -50,6 +57,15 @@ const world = (overrides: Partial<TutorialWorld> = {}): TutorialWorld => ({
     ],
   ...overrides,
 });
+
+/** What kind of card tops a Pokémon, if any. */
+const topOf = (
+  view: MatchViewState,
+  stack: Parameters<typeof topCard>[0]
+): string | undefined => {
+  const card = topCard(stack);
+  return card ? tutorialCardKeyOf(view, card) : undefined;
+};
 
 const text = (step: { text: (world: TutorialWorld) => unknown }, w = world()) =>
   renderToStaticMarkup(<>{step.text(w)}</>);
@@ -347,6 +363,131 @@ describe('a lesson step on the practice table', () => {
       } as never);
       await flush();
       expect(discard!.done!(atNow())).toBe(true);
+    }
+  });
+
+  it('is not done by the card put somewhere other than the step asks', async () => {
+    const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+    const dealt = async (id: string) => {
+      const room = fakePracticeRoom();
+      await dealScenario(
+        room.session,
+        lessonById(id)!.scenario,
+        new AbortController().signal
+      );
+      const now = () => room.session.getSnapshot().view!;
+      const send = async (command: unknown) => {
+        room.session.submit(command as never);
+        await flush();
+      };
+      return { now, send, start: now() };
+    };
+    const stepOf = (lesson: string, step: string) =>
+      lessonById(lesson)!.steps.find((entry) => entry.id === step)!;
+    const inHand = (now: () => MatchViewState, key: 'pidgey' | 'charmeleon') =>
+      findCard(now(), zoneCards(now(), you, 'hand'), key)!;
+    // Pidgey into the Active Spot, Charmander pushed to the Bench: not
+    // benched, in either lesson.
+    for (const [lesson, step] of [
+      ['attach', 'bench'],
+      ['keys', 'bench-key'],
+    ] as const) {
+      const { now, send, start } = await dealt(lesson);
+      await send({
+        type: 'MoveCardToPlay',
+        cardId: inHand(now, 'pidgey').id,
+        expectedSourceZoneId: zoneId(you, 'hand'),
+        boardPlayerId: you,
+        slot: 'active',
+      });
+      expect(topOf(now(), activeStack(now(), you))).toBe('pidgey');
+      expect(
+        stepOf(lesson, step).done!(world({ view: now(), start, you, them })),
+        lesson
+      ).toBe(false);
+    }
+    // The dealt Pidgey discarded, then the hand's benched: benched.
+    {
+      const { now, send, start } = await dealt('attach');
+      const dealtPidgey = now()
+        .boards[you]!.benchStackIds.map((id) => now().stacks[id]!)
+        .find((stack) => topOf(now(), stack) === 'pidgey')!;
+      await send({
+        type: 'MovePlayStackToZone',
+        stackId: dealtPidgey.id,
+        expectedEvolutionCardIds: dealtPidgey.evolutionCards.map(
+          (card) => card.id
+        ),
+        expectedAttachmentCardIds: dealtPidgey.attachmentCards.map(
+          (card) => card.id
+        ),
+        destinationZoneId: zoneId(you, 'discard'),
+      });
+      await send({
+        type: 'MoveCardToPlay',
+        cardId: inHand(now, 'pidgey').id,
+        expectedSourceZoneId: zoneId(you, 'hand'),
+        boardPlayerId: you,
+        slot: 'bench',
+      });
+      expect(
+        stepOf('attach', 'bench').done!(
+          world({ view: now(), start, you, them })
+        )
+      ).toBe(true);
+    }
+    // Charmeleon put on the Bench by itself, or on Pidgey: Charmander isn't
+    // evolved. Onto Charmander, it is.
+    for (const onto of ['new', 'pidgey', 'charmander'] as const) {
+      const { now, send, start } = await dealt('attach');
+      const pidgey = now()
+        .boards[you]!.benchStackIds.map((id) => now().stacks[id]!)
+        .find((stack) => topOf(now(), stack) === 'pidgey')!;
+      await send({
+        type: 'MoveCardToPlay',
+        cardId: inHand(now, 'charmeleon').id,
+        expectedSourceZoneId: zoneId(you, 'hand'),
+        boardPlayerId: you,
+        slot: onto === 'charmander' ? 'active' : 'bench',
+        ...(onto === 'pidgey' ? { targetStackId: pidgey.id } : {}),
+        ...(onto === 'charmander'
+          ? { targetStackId: activeStack(now(), you)!.id }
+          : {}),
+      });
+      expect(
+        stepOf('attach', 'evolve').done!(
+          world({ view: now(), start, you, them })
+        ),
+        onto
+      ).toBe(onto === 'charmander');
+    }
+    // A Prize put in the discard: not taken into the hand.
+    {
+      const { now, send, start } = await dealt('knock-out');
+      const prize = zoneCards(now(), you, 'prizes')[0]!;
+      await send({
+        type: 'MoveCard',
+        cardId: prize.id,
+        expectedSourceZoneId: zoneId(you, 'prizes'),
+        destinationZoneId: zoneId(you, 'discard'),
+      });
+      expect(
+        stepOf('knock-out', 'prize').done!(
+          world({ view: now(), start, you, them })
+        )
+      ).toBe(false);
+      const next = zoneCards(now(), you, 'prizes')[0]!;
+      await send({
+        type: 'MoveCard',
+        cardId: next.id,
+        expectedSourceZoneId: zoneId(you, 'prizes'),
+        destinationZoneId: zoneId(you, 'hand'),
+      });
+      expect(
+        stepOf('knock-out', 'prize').done!(
+          world({ view: now(), start, you, them })
+        )
+      ).toBe(true);
     }
   });
 

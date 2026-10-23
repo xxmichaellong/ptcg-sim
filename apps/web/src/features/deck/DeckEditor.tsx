@@ -274,7 +274,8 @@ export const DeckEditor = ({
     if (clean && clean !== deck.name) {
       library.update(deck.id, { name: clean });
       flashSaved();
-    } else if (!clean) {
+    } else {
+      // Empty, or saved already: the field shows the name as saved.
       setNameDraft(deck.name);
     }
   };

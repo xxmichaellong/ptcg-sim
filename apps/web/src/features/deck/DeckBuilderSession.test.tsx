@@ -648,6 +648,28 @@ describe('DeckBuilderSession', () => {
     ]);
   });
 
+  it('shows the name as saved once the field is left', async () => {
+    await renderSession({ store: new DeckBuilderStore(), open: true });
+    await click('#deckNewButton');
+    const input = host.querySelector<HTMLInputElement>('#deckNameInput')!;
+    await act(async () => {
+      input.focus();
+      Object.getOwnPropertyDescriptor(
+        HTMLInputElement.prototype,
+        'value'
+      )!.set!.call(input, 'Foo  Ba  ');
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 700));
+    });
+    await act(async () => input.blur());
+    expect(library.getSnapshot().decks.map((entry) => entry.name)).toEqual([
+      'Foo Ba',
+    ]);
+    expect(input.value).toBe('Foo Ba');
+  });
+
   it('drains dirty decks only when the Deck surface closes and cleans them only after authority publication', async () => {
     const session = new FakeSession();
     const store = new DeckBuilderStore();

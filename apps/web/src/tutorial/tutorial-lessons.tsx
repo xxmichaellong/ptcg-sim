@@ -5,7 +5,11 @@ import type { ReactNode } from 'react';
 
 import { chordHint, commandsChordHint, parseChord } from '../hotkeys/chords.js';
 import { hotkeyAction } from '../hotkeys/hotkey-catalogue.js';
-import { TUTORIAL_CARDS, type TutorialCardKey } from './tutorial-cards.js';
+import {
+  TUTORIAL_CARDS,
+  tutorialCardKeyOf,
+  type TutorialCardKey,
+} from './tutorial-cards.js';
 import { controlLabel } from './tutorial-labels.js';
 import {
   isLoadedSeat,
@@ -116,6 +120,21 @@ const pidgeyBenched = (world: TutorialWorld): boolean => {
     benchStacks(world.view, world.you).filter(
       (stack) => countCards(world.view, stack.evolutionCards, 'pidgey') > 0
     ).length > dealt
+  );
+};
+
+/**
+ * A Pidgey on the Bench that wasn't there as the step began: benched, not
+ * the Active pushed there by a Pidgey put in its place.
+ */
+const pidgeyNewlyBenched = (world: TutorialWorld): boolean => {
+  const before = new Set(
+    benchStacks(world.start, world.you).map((stack) => stack.id)
+  );
+  return benchStacks(world.view, world.you).some(
+    (stack) =>
+      !before.has(stack.id) &&
+      countCards(world.view, stack.evolutionCards, 'pidgey') > 0
   );
 };
 
@@ -368,15 +387,22 @@ const attach: TutorialLesson = {
         const to = activeTopTarget(world, world.you);
         return from && to ? { from, to } : null;
       },
+      // Charmeleon over Charmander, wherever it is: not Charmeleon put in
+      // play by itself, or on another Pokémon.
       done: (world) =>
         [
           activeStack(world.view, world.you),
           ...benchStacks(world.view, world.you),
-        ].some(
-          (stack) =>
-            countCards(world.view, stack?.evolutionCards ?? [], 'charmeleon') >
-            0
-        ),
+        ].some((stack) => {
+          const keys = (stack?.evolutionCards ?? []).map((card) =>
+            tutorialCardKeyOf(world.view, card)
+          );
+          const charmander = keys.indexOf('charmander');
+          return (
+            charmander >= 0 &&
+            keys.indexOf('charmeleon', charmander) > charmander
+          );
+        }),
       stuck: (world) =>
         !findCard(
           world.view,
@@ -422,9 +448,7 @@ const attach: TutorialLesson = {
         return from ? { from, to: slot(world.you, 'bench') } : null;
       },
       // Or benched already, before the step asked.
-      done: (world) =>
-        benchStacks(world.view, world.you).length >
-          benchStacks(world.start, world.you).length || pidgeyBenched(world),
+      done: (world) => pidgeyNewlyBenched(world) || pidgeyBenched(world),
     },
     {
       id: 'undo',
@@ -582,9 +606,11 @@ const knockOut: TutorialLesson = {
           ? { from: { card: prize.id }, to: zone(world.you, 'hand') }
           : null;
       },
+      // Into the hand, not anywhere else.
       done: (world) =>
         zoneCards(world.view, world.you, 'prizes').length <
-        zoneCards(world.start, world.you, 'prizes').length,
+          zoneCards(world.start, world.you, 'prizes').length &&
+        handSize(world) > handSize(world, world.start),
     },
     {
       id: 'promote',
@@ -823,9 +849,7 @@ const keys: TutorialLesson = {
       },
       targets: (world) => present([cardIn(world, world.you, 'hand', 'pidgey')]),
       // Or benched already: Back to this step, after it.
-      done: (world) =>
-        benchStacks(world.view, world.you).length >
-          benchStacks(world.start, world.you).length || pidgeyBenched(world),
+      done: (world) => pidgeyNewlyBenched(world) || pidgeyBenched(world),
     },
     {
       id: 'palette',
