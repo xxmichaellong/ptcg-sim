@@ -151,6 +151,37 @@ test('Solo flips the far coin for the other seat', async ({ page }) => {
   ).toHaveCount(1);
 });
 
+test('the far coin shows its result above it, clear of the rail at the seam', async ({
+  page,
+}) => {
+  // The rail's actions lie along the seam's left, by the far Active.
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await openSolo(page);
+  const far = coin(page, 'opponent');
+  await far.getByRole('button', { name: /^Flip a coin for / }).click();
+  const chip = page.locator(
+    `[data-coin-result-chip][data-coin-player-id="${await far.getAttribute('data-coin-player-id')}"]`
+  );
+  await expect(chip).toBeVisible({ timeout: 10_000 });
+  const box = (await chip.boundingBox())!;
+  const coinBox = (await far.boundingBox())!;
+  expect(box.y + box.height).toBeLessThanOrEqual(
+    coinBox.y + coinBox.height / 2
+  );
+  for (const button of await page
+    .locator('#boardButtonContainer button')
+    .all()) {
+    const rail = await button.boundingBox();
+    if (!rail) continue;
+    const overlaps =
+      box.x < rail.x + rail.width &&
+      rail.x < box.x + box.width &&
+      box.y < rail.y + rail.height &&
+      rail.y < box.y + box.height;
+    expect(overlaps, String(await button.getAttribute('id'))).toBe(false);
+  }
+});
+
 test('with reduced motion the coin turns straight to its face', async ({
   page,
 }) => {

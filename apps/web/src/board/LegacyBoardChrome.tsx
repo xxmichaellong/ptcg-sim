@@ -573,6 +573,22 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
       Math.min(logicalAnchor.height, gapBottom - gapTop - 4)
     );
     anchor = { ...logicalAnchor, height, y: (gapTop + gapBottom - height) / 2 };
+  } else if (depth && activeZones?.length === 1) {
+    // One half alone: the rail keeps the layout's gap from that Active's
+    // edge toward the seam, as the projection draws it.
+    const active = activeZones[0]!.bounds;
+    const atTop = logicalAnchor.y < active.y;
+    const edge = depth.point({
+      x: active.x + active.width / 2,
+      y: atTop ? active.y : active.y + active.height,
+    }).y;
+    const gap = atTop
+      ? active.y - (logicalAnchor.y + logicalAnchor.height)
+      : logicalAnchor.y - (active.y + active.height);
+    anchor = {
+      ...logicalAnchor,
+      y: atTop ? edge - gap - logicalAnchor.height : edge + gap,
+    };
   }
   // Where the seam's things lie on screen: tilted, the table narrows, so
   // the Stadium and the piles at the seam's right end are found through

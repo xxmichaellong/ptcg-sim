@@ -215,6 +215,11 @@ button.table-coin__button:focus-visible {
     var(--ease-bouncy, ease-out) both;
 }
 
+/* Above the far coin: below it, toward the seam, the rail would hide it. */
+.table-coin__result[data-chip-above='true'] {
+  translate: -50% calc(-100% - var(--space-2, 8px));
+}
+
 .table-coin__result[data-coin-phase='fading'] {
   opacity: 0;
 }

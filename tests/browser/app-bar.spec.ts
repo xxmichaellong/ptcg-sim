@@ -436,6 +436,44 @@ test('the far player’s markers lie clear of the bar, past it by the hand where
   await expectFarMarkersClear(page, 'beside the docked log');
 });
 
+test('the rail keeps clear of the cards when one half shows on the tilted table', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  await page.evaluate(() => {
+    localStorage.setItem(
+      'ptcgsim.board-view.v1',
+      JSON.stringify({ show: 'mine' })
+    );
+    localStorage.setItem(
+      'ptcgsim.table-depth.v1',
+      JSON.stringify({ mode: 'table' })
+    );
+  });
+  await openTable(page);
+  await idle(page);
+  const zones = await page
+    .locator(
+      '.ptcgsim-zone[data-zone-side="local"]:is([data-zone-kind="active"], [data-zone-kind="prizes"])'
+    )
+    .all();
+  expect(zones.length).toBeGreaterThan(0);
+  for (const button of await page
+    .locator('#boardButtonContainer button')
+    .all()) {
+    if (!(await button.isVisible())) continue;
+    const rail = await box(button);
+    for (const zone of zones) {
+      const kind = await zone.getAttribute('data-zone-kind');
+      expect(
+        overlaps(rail, await box(zone)),
+        `${String(await button.getAttribute('id'))} on the ${String(kind)}`
+      ).toBe(false);
+    }
+  }
+});
+
 /** The far hand keeps room to hold its cards apart; markers on none of it. */
 const expectFarHandRoomy = async (page: Page) => {
   const hand = await box(

@@ -118,13 +118,20 @@ const placement = (
   };
 };
 
-/** The coin's lowest point on screen, where its result is read. */
+/**
+ * Where the coin's result is read: below the near coin; above the far one,
+ * whose lower edge lies toward the seam, under the rail's buttons.
+ */
 const chipAnchor = (
   rect: Rect,
-  depth: BoardDepthProjection | undefined
+  depth: BoardDepthProjection | undefined,
+  above: boolean
 ): { readonly x: number; readonly y: number } => {
-  const bottom = { x: rect.x + rect.width / 2, y: rect.y + rect.height };
-  return depth?.enabled ? depth.point(bottom) : bottom;
+  const edge = {
+    x: rect.x + rect.width / 2,
+    y: above ? rect.y : rect.y + rect.height,
+  };
+  return depth?.enabled ? depth.point(edge) : edge;
 };
 
 interface TableCoinProps {
@@ -308,7 +315,7 @@ const TableCoin = ({
     motion.kind === 'flip' && motion.flip.phase !== 'spinning'
       ? motion.flip.result
       : undefined;
-  const chip = chipAnchor(rect, depth);
+  const chip = chipAnchor(rect, depth, !own);
   const coin = (
     <span className="table-coin__toss" ref={tossRef}>
       <span className="table-coin__coin" ref={coinRef}>
@@ -375,6 +382,7 @@ const TableCoin = ({
           data-coin-result-chip={result}
           data-coin-player-id={playerId}
           data-coin-phase={phase}
+          data-chip-above={own ? undefined : 'true'}
           aria-hidden="true"
           style={{ left: chip.x, top: chip.y }}
         >
