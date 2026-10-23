@@ -440,19 +440,24 @@ export const TutorialHost = ({
     ? document.querySelector<HTMLElement>('[data-palette-announcer]')
     : null;
   // The region it is read from changes as the palette opens or closes: the
-  // other starts silent, so the step it already read (or the one the
-  // palette opening has just finished) isn't read again, and speaks from
-  // the next change on.
+  // other starts silent on what the first was reading, so the step it
+  // already read (or the one the palette opening has just finished) isn't
+  // read again, and speaks from the next change on -- a step coming back
+  // later (Back, the lesson again) is read as any.
   const spokenKey = playing
     ? `${playing.lesson.id}:${String(playing.step)}:${playing.done ? 'done' : ''}:${hidden ? 'hidden' : ''}`
     : '';
   const region = paletteAnnouncer ? 'palette' : 'table';
   const regionWas = useRef(region);
   const silentFor = useRef<string | null>(null);
+  const heard = useRef<string | null>(null);
   if (regionWas.current !== region) {
     regionWas.current = region;
-    silentFor.current = spokenKey;
+    silentFor.current = heard.current === spokenKey ? spokenKey : null;
+  } else if (silentFor.current !== spokenKey) {
+    silentFor.current = null;
   }
+  heard.current = announcement !== null ? spokenKey : null;
   const spoken = silentFor.current === spokenKey ? null : announcement;
   // Measured through a step's done moment too, so the coach stays put.
   const measuring = Boolean(playing && !hidden);
