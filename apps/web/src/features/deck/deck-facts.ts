@@ -1,6 +1,27 @@
-import { withCatalogFacts, type LoadedCatalog } from '@ptcgsim/deck-core';
+import {
+  DECK_FACTS_VERSION,
+  withCatalogFacts,
+  type LoadedCatalog,
+} from '@ptcgsim/deck-core';
 
 import type { DeckLibrary, SavedDeck } from './deck-library.js';
+
+/**
+ * What a deck's facts were brought up to: how this build works them out,
+ * then the catalog's build ("2/2026-10-23T06:17:00.000Z"). A stamp from
+ * before the version was kept is the catalog's build alone, version 0.
+ */
+interface FactsStamp {
+  readonly version: number;
+  readonly builtAt: string;
+}
+
+const readStamp = (stamp: string): FactsStamp => {
+  const match = /^(\d+)\/(.+)$/u.exec(stamp);
+  return match
+    ? { version: Number(match[1]), builtAt: match[2]! }
+    : { version: 0, builtAt: stamp };
+};
 
 /** Built after the other, by when the server built each catalog. */
 const builtAfter = (ours: string, theirs: string): boolean => {
@@ -10,10 +31,16 @@ const builtAfter = (ours: string, theirs: string): boolean => {
     : ours > theirs;
 };
 
+const newer = (ours: FactsStamp, theirs: FactsStamp): boolean =>
+  ours.version !== theirs.version
+    ? ours.version > theirs.version
+    : builtAfter(ours.builtAt, theirs.builtAt);
+
 /**
- * Saved decks with their cards' facts as this page's catalog has them
- * (ADR-033 §13), except where another tab brought them up to a newer one:
- * two tabs a daily rebuild apart would otherwise rewrite a deck in turn for
+ * Saved decks with their cards' facts as this page works them out from its
+ * catalog (ADR-033 §13), except where another tab brought them up to a
+ * newer catalog or a newer way of working them out: two tabs a daily
+ * rebuild (or a release) apart would otherwise rewrite a deck in turn for
  * as long as both stayed open, each write undoing the other tab's edits.
  */
 export const bringDeckFactsUpToDate = (
@@ -21,10 +48,14 @@ export const bringDeckFactsUpToDate = (
   decks: readonly SavedDeck[],
   catalog: LoadedCatalog
 ): void => {
+  const ours: FactsStamp = {
+    version: DECK_FACTS_VERSION,
+    builtAt: catalog.builtAt,
+  };
   for (const deck of decks) {
     if (
       deck.factsFrom !== undefined &&
-      !builtAfter(catalog.builtAt, deck.factsFrom)
+      !newer(ours, readStamp(deck.factsFrom))
     ) {
       continue;
     }
@@ -32,7 +63,10 @@ export const bringDeckFactsUpToDate = (
     if (upgraded !== deck.cards) {
       library.update(
         deck.id,
-        { cards: upgraded, factsFrom: catalog.builtAt },
+        {
+          cards: upgraded,
+          factsFrom: `${String(ours.version)}/${ours.builtAt}`,
+        },
         { touch: false }
       );
     }

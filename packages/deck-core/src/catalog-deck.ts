@@ -107,6 +107,13 @@ const TRANSLATED_SERIES = new Set([
   'Mega Evolution',
 ]);
 
+/**
+ * How a card's facts are worked out from the catalog here (this function,
+ * `decodeCatalog`, the reprint rules). Raised with any change to that, so a
+ * deck saved with facts worked out before is brought up to date once.
+ */
+export const DECK_FACTS_VERSION = 1;
+
 /** A deck card for a catalogued printing, with the facts the rules check. */
 export const deckCardFromCatalog = (
   card: CatalogCard,

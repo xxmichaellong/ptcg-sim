@@ -73,6 +73,7 @@ export type {
 } from './card-query.js';
 export {
   catalogIndex,
+  DECK_FACTS_VERSION,
   deckCardFromCatalog,
   evolutionLineOf,
   findCatalogPrint,

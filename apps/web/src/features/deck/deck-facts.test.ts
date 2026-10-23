@@ -1,4 +1,5 @@
 import {
+  DECK_FACTS_VERSION,
   deckCardFromCatalog,
   deckListOf,
   type CatalogCard,
@@ -59,8 +60,14 @@ afterEach(() => {
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-/** Two tabs over one store, each bringing decks up to its own catalog. */
-const twoTabs = (name: string) => {
+/**
+ * Two tabs over one store, each bringing decks up to its own catalog. A
+ * hidden tab's timers run a second or more late: its write delay.
+ */
+const twoTabs = (
+  name: string,
+  delays: { readonly older?: number; readonly newer?: number } = {}
+) => {
   const stored = new Map<string, unknown>();
   let writes = 0;
   const backend: DeckLibraryBackend = {
@@ -95,10 +102,11 @@ const twoTabs = (name: string) => {
     createdAt: 1,
     updatedAt: 1,
   });
-  const tab = (catalog: LoadedCatalog) => {
+  const tab = (catalog: LoadedCatalog, writeDelayMs?: number) => {
     const library = new DeckLibrary({
       backend,
       channel: new BroadcastChannel(name),
+      ...(writeDelayMs !== undefined ? { writeDelayMs } : {}),
     });
     libraries.push(library);
     library.subscribe(() => {
@@ -108,7 +116,12 @@ const twoTabs = (name: string) => {
     });
     return library;
   };
-  return { older: tab(yesterday), newer: tab(today), writes: () => writes };
+  return {
+    older: tab(yesterday, delays.older),
+    newer: tab(today, delays.newer),
+    writes: () => writes,
+    stored: () => stored.get('d1') as { cards: { count: number }[] },
+  };
 };
 
 describe('two tabs a catalog rebuild apart', () => {
@@ -129,5 +142,55 @@ describe('two tabs a catalog rebuild apart', () => {
     await wait(500);
     expect(older.get('d1')).toBeUndefined();
     expect(newer.get('d1')).toBeUndefined();
+  });
+
+  it('keep every edit made in the tab in use, whichever catalog it has, while the other tab is hidden', async () => {
+    for (const hidden of ['newer', 'older'] as const) {
+      const tabs = twoTabs(`facts-hidden-${hidden}`, { [hidden]: 1_000 });
+      const used = hidden === 'newer' ? tabs.older : tabs.newer;
+      await wait(2_500);
+      const before = used.get('d1')!.cards[0]!.count;
+      const addOne = () => {
+        const { card, count } = used.get('d1')!.cards[0]!;
+        used.update('d1', { cards: deckListOf([{ card, count: count + 1 }]) });
+      };
+      addOne();
+      await wait(300);
+      addOne();
+      await wait(3_000);
+      expect(used.get('d1')?.cards[0]?.count, hidden).toBe(before + 2);
+      expect(tabs.stored().cards[0]?.count, hidden).toBe(before + 2);
+      for (const library of libraries.splice(0)) library.dispose();
+    }
+  }, 20_000);
+
+  it('works out again the facts of a deck stamped by an older way of working them out, and leaves one stamped by a newer', () => {
+    const library = new DeckLibrary({ backend: null });
+    libraries.push(library);
+    // Facts as an older build worked them out from today's catalog.
+    const stale = deckListOf([
+      {
+        card: deckCardFromCatalog(yesterday.cards[0]!, { catalog: yesterday }),
+        count: 1,
+      },
+    ]);
+    const make = (factsFrom: string) => {
+      const deck = library.create({
+        name: factsFrom,
+        format: 'standard',
+        cards: stale,
+      });
+      return library.update(deck.id, { factsFrom }, { touch: false })!;
+    };
+    const olderWay = make(today.builtAt);
+    const newerWay = make(`${String(DECK_FACTS_VERSION + 1)}/${today.builtAt}`);
+    bringDeckFactsUpToDate(library, library.getSnapshot().decks, today);
+    const standard = (id: string) =>
+      library.get(id)?.cards[0]?.card.facts?.legal?.standard;
+    expect(standard(olderWay.id)).toBe(false);
+    expect(library.get(olderWay.id)?.factsFrom).toBe(
+      `${String(DECK_FACTS_VERSION)}/${today.builtAt}`
+    );
+    expect(standard(newerWay.id)).toBe(true);
   });
 });

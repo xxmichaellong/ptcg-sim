@@ -83,8 +83,12 @@ specifically without blocking, and go from deck to table in one click.
    in: a deck read back that looked changed was saved again on every load,
    and between two tabs for good, losing edits. A deck keeps the catalog
    build it was brought up to (`factsFrom`, gone when its cards change any
-   other way), and only a newer catalog changes it again: two tabs a daily
-   rebuild apart would otherwise each undo the other. A card typed otherwise than the catalog's print (in the card
+   other way, and with how this build works facts out, `DECK_FACTS_VERSION`),
+   and only a newer catalog or way changes it again: two tabs a daily
+   rebuild apart would otherwise each undo the other. Such a change waits
+   to be written as any does, and gives way when another tab writes the
+   deck meanwhile (a hidden tab's write comes a second or more late):
+   made from older cards, it would undo the player's edit. A card typed otherwise than the catalog's print (in the card
    dialog or a CSV) is played as typed and gets none. A CSV's two scans of
    one printing (English and German) stay two entries.
 5. **Search** is Limitless's syntax over the catalog in memory

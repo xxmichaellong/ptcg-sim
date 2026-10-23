@@ -313,6 +313,12 @@ export class DeckLibrary {
   readonly #listeners = new Set<Listener>();
   readonly #decks = new Map<string, SavedDeck>();
   readonly #pending = new Set<string>();
+  /**
+   * Pending decks whose only change here is one the player didn't make
+   * (`touch: false`, facts brought up to the catalog): another tab's write
+   * is newer, and it gives way.
+   */
+  readonly #automatic = new Set<string>();
   /** Decks removed here and not yet from storage. */
   readonly #removals = new Set<string>();
   /** Decks whose last write or removal failed. */
@@ -389,7 +395,7 @@ export class DeckLibrary {
   /**
    * Changes a deck; returns it as changed, or undefined if it is gone. A
    * change the player didn't make (`touch: false`) keeps its place in the
-   * list.
+   * list, and gives way to another tab's write before it is written.
    */
   update(
     id: string,
@@ -429,7 +435,11 @@ export class DeckLibrary {
       ...(factsFrom ? { factsFrom } : {}),
       updatedAt: options.touch === false ? current.updatedAt : this.#now(),
     });
+    const automatic =
+      options.touch === false &&
+      (!this.#pending.has(id) || this.#automatic.has(id));
     this.#put(next);
+    if (automatic) this.#automatic.add(id);
     return next;
   }
 
@@ -456,6 +466,7 @@ export class DeckLibrary {
     if (!current) return undefined;
     this.#decks.delete(id);
     this.#pending.delete(id);
+    this.#automatic.delete(id);
     this.#edited(id);
     this.#publish();
     if (this.#backend) {
@@ -484,6 +495,7 @@ export class DeckLibrary {
     // can't bring the deck back.
     const removals = [...this.#removals];
     this.#pending.clear();
+    this.#automatic.clear();
     const backend = this.#backend;
     if (!backend) return;
     if (decks.length > 0) {
@@ -531,6 +543,7 @@ export class DeckLibrary {
   #put(deck: SavedDeck, now = false): void {
     this.#decks.set(deck.id, deck);
     this.#removals.delete(deck.id);
+    this.#automatic.delete(deck.id);
     this.#edited(deck.id);
     this.#publish();
     if (!this.#backend) return;
@@ -565,6 +578,13 @@ export class DeckLibrary {
   }
 
   async #reload(id: string): Promise<void> {
+    // Another tab wrote it: a change here the player didn't make, made
+    // from what this tab had (a hidden tab's write waits a second or more),
+    // would undo theirs. It is made again from what they wrote.
+    if (this.#automatic.has(id)) {
+      this.#automatic.delete(id);
+      this.#pending.delete(id);
+    }
     if (!this.#backend || this.#pending.has(id) || this.#removals.has(id)) {
       return;
     }
