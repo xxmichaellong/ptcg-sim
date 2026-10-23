@@ -68,7 +68,10 @@ from RK9.
    - A tournament whose read fails is retried an hour later, then two, and
      then left to players opening it. A player's read that fails while the
      event may still be running, or before the crawl's next try is due,
-     spends none of those tries.
+     spends none of those tries. Standings failing for two events or more
+     (Limitless's standings down, its list still answering) are an outage:
+     once a standings read answers again, the events given up on during it
+     are tried afresh.
    - Limitless answering an id as unknown removes it; after two in a row,
      the rest are taken for Limitless refusing (nothing more removed, the
      crawl held back and moving on) until a standings read answers again.
@@ -159,7 +162,9 @@ from RK9.
   own) for standings read again unchanged: a player's re-read asks with the
   ETag, and only changed players are written. Keyed tables are
   `WITHOUT ROWID`, with no separate index for their key; a database made
-  before keeps its tables, at about 5 rows a player for a first read. History
+  before keeps its tables, at about 5 rows a player for a first read. A
+  deck's finishes are read from its own entries (a few hundred rows read),
+  never by walking every event's. History
   is a couple of million rows, up to about a million a day while the crawl
   catches up: well within Workers Paid, far over the Free plan's 100,000 a
   day, which the whole account shares. On a Free account the index stays

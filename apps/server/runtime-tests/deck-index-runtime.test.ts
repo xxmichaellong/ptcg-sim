@@ -284,4 +284,81 @@ describe('the rows the deck index writes', () => {
       expect(again).toBeLessThan(10);
     });
   });
+  it('reads a deck’s own finishes for it, not every event’s', async () => {
+    const stub = env.PTCG_DECK_INDEX.getByName('rows read');
+    await runInDurableObject(stub, async (_instance, state) => {
+      let read = 0;
+      const store = new DeckIndexStore({
+        sql: {
+          exec<T extends Record<string, SqlValue>>(
+            query: string,
+            ...bindings: SqlValue[]
+          ) {
+            const cursor = state.storage.sql.exec<T>(query, ...bindings);
+            const rows = cursor.toArray();
+            read += cursor.rowsRead;
+            return { toArray: () => rows };
+          },
+        },
+        transaction: <T>(body: () => T): T =>
+          state.storage.transactionSync(body),
+      });
+      store.migrate();
+      const now = Date.now();
+      // 60 events of 64 players, eight decks among them.
+      const events = Array.from({ length: 60 }, (_, n): ListedTournament => ({
+        id: `d${n.toString(16).padStart(23, '0')}`,
+        name: `Weekly Cup ${String(n)}`,
+        date: now - 2 * DAY - n * 60 * 60_000,
+        format: 'STANDARD',
+        players: 64,
+        organizerId: null,
+        indexable: true,
+      }));
+      store.recordListed(events, now);
+      for (const event of events) {
+        const entries = Array.from({ length: 64 }, (_, n) => ({
+          playerId: `player-${String(n)}`,
+          name: `Player ${String(n)}`,
+          country: 'US',
+          placing: n + 1,
+          wins: 5,
+          losses: 2,
+          ties: 0,
+          dropped: false,
+          archetype: {
+            id: `deck-${String(n % 8)}`,
+            name: `Deck ${String(n % 8)}`,
+            icons: ['dragapult'],
+          },
+          list: `4 Dreepy TWM 128\n56 Psychic Energy MEE 13\n# ${event.id} ${String(n)}`,
+        }));
+        store.recordStandings(
+          event.id,
+          entries,
+          new Map(
+            entries.map((entry, n) => [
+              entry.list,
+              `${event.id}${n.toString(16).padStart(40, '0')}`,
+            ])
+          ),
+          { now, etag: null, provisional: false }
+        );
+      }
+      read = 0;
+      const finishes = store.archetypeFinishes(
+        'deck-3',
+        'STANDARD',
+        now - 90 * DAY,
+        null,
+        20
+      );
+      console.log(
+        `rows read: one deck's finishes over 3,840 entries ${String(read)}`
+      );
+      expect(finishes).toHaveLength(20);
+      // Its own 480 entries and their events, not all 3,840.
+      expect(read).toBeLessThan(1_500);
+    });
+  });
 });

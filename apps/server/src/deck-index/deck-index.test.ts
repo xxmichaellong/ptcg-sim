@@ -429,6 +429,39 @@ describe('the request budget', () => {
     expect(limitless.standingsCalls()).toHaveLength(4);
   });
 
+  it('tries again the events given up on while Limitless’s standings were down, its list answering', async () => {
+    limitless.tournaments = [1, 2, 3].map((n) =>
+      tournament(n, { date: START - 2 * DAY - n * HOUR })
+    );
+    for (const n of [1, 2, 3, 4]) {
+      limitless.standings.set(id(n), [standing('p', 1, dragapult)]);
+    }
+    limitless.failStandings = 1_000;
+    const index = createIndex();
+    await crawlUntil(index, START + 8 * HOUR);
+    const read = () =>
+      index
+        .tournaments({
+          q: '',
+          format: null,
+          minimumPlayers: 0,
+          before: null,
+          pageSize: 10,
+        })
+        .tournaments.filter((row) => row.hasLists === true)
+        .map((row) => row.id)
+        .sort();
+    expect(read()).toEqual([]);
+    // Back, and a new event read: the three are read too.
+    limitless.failStandings = 0;
+    limitless.tournaments = [
+      ...limitless.tournaments,
+      tournament(4, { date: START - DAY }),
+    ];
+    await crawlUntil(index, START + 12 * HOUR);
+    expect(read()).toEqual([id(1), id(2), id(3), id(4)]);
+  });
+
   it('holds back when a page of the list is refused, not asking every step', async () => {
     limitless.tournaments = [tournament(1, { date: START - 400 * DAY })];
     for (let n = 0; n < 1_000; n += 1) {

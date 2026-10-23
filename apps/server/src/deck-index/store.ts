@@ -729,6 +729,19 @@ export class DeckIndexStore {
     );
   }
 
+  /**
+   * Limitless's standings answer again after an outage: the events given
+   * up on during it (their last try at `since` or later) are tried afresh,
+   * as if never tried.
+   */
+  reviveFailed(since: number): void {
+    this.sql.exec(
+      `UPDATE tournaments SET state = 'retry', attempts = 0, retry_after = NULL
+       WHERE state = 'failed' AND retry_after >= ?`,
+      since
+    );
+  }
+
   /** Limitless no longer knows the tournament: it leaves the index. */
   forget(tournamentId: string): void {
     this.storage.transaction(() => {
@@ -907,9 +920,12 @@ export class DeckIndexStore {
           after.playerId,
         ]
       : [];
+    // From the deck's own entries (its index), never every event's: left
+    // to choose, SQLite walks the events in the window and all their
+    // entries, millions of rows read for a search (rows read are billed).
     return this.rows(
       `SELECT ${FINISH_COLUMNS} FROM entries e
-       JOIN tournaments t ON t.id = e.tournament_id
+       CROSS JOIN tournaments t ON t.id = e.tournament_id
        WHERE e.archetype_id = ? AND t.format = ? AND e.list_hash IS NOT NULL
          AND e.placing IS NOT NULL AND t.date >= ? AND t.state = 'indexed'
          ${past}

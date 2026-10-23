@@ -73,6 +73,34 @@ export const CRAWL_POLICY = Object.freeze({
   unknownBeforeHold: 2,
 });
 
+const readStandingsDown = (
+  value: string | null
+): {
+  readonly since: number;
+  readonly first: string;
+  readonly many: boolean;
+} | null => {
+  if (value === null) return null;
+  try {
+    const parsed: unknown = JSON.parse(value);
+    if (
+      typeof parsed === 'object' &&
+      parsed !== null &&
+      'since' in parsed &&
+      typeof parsed.since === 'number' &&
+      'first' in parsed &&
+      typeof parsed.first === 'string' &&
+      'many' in parsed &&
+      typeof parsed.many === 'boolean'
+    ) {
+      return { since: parsed.since, first: parsed.first, many: parsed.many };
+    }
+  } catch {
+    // Unreadable: as if none were noted.
+  }
+  return null;
+};
+
 const META = Object.freeze({
   budget: 'budget',
   /** The next page of the first, whole-list discovery, or `done`. */
@@ -88,6 +116,13 @@ const META = Object.freeze({
    * lets a storm of them forget more.
    */
   unknownRun: 'unknown-run',
+  /**
+   * `{ since, first, many }`: standings reads failing since `since`, none
+   * answered since, `many` once two events have failed (Limitless's
+   * standings down, not one event's). The list can keep answering through
+   * it, and the events given up on meanwhile are tried afresh after.
+   */
+  standingsDown: 'standings-down',
 });
 
 export interface DeckIndexDependencies {
@@ -513,7 +548,7 @@ export class DeckIndex {
         // Not the tournament's fault: it waits for the budget, not a retry.
         if (error.code === 'rate_limited') return;
       }
-      this.store.recordFailure(tournament.id, this.deps.now());
+      this.standingsFailed(tournament.id, this.deps.now());
       return;
     }
     const now = this.deps.now();
@@ -521,6 +556,7 @@ export class DeckIndex {
     if (response.status === 304) {
       this.recovered();
       this.store.deleteMeta(META.unknownRun);
+      this.standingsAnswered();
       this.store.recordUnchanged(tournament.id, now, provisional);
       return;
     }
@@ -528,7 +564,7 @@ export class DeckIndex {
       // Limitless answering nonsense: the crawl holds back, as for an
       // outage, and the tournament waits for a retry.
       this.holdBack();
-      this.store.recordFailure(tournament.id, now);
+      this.standingsFailed(tournament.id, now);
       return;
     }
     const entries = readStandings(response.body);
@@ -536,11 +572,12 @@ export class DeckIndex {
       // Rows, none of them readable (Limitless changed their shape): what
       // is stored keeps answering, the crawl holds back as for nonsense.
       this.holdBack();
-      this.store.recordFailure(tournament.id, now);
+      this.standingsFailed(tournament.id, now);
       return;
     }
     this.recovered();
     this.store.deleteMeta(META.unknownRun);
+    this.standingsAnswered();
     const hashes = new Map<string, string>();
     for (const entry of entries) {
       if (entry.list && !hashes.has(entry.list)) {
@@ -552,6 +589,35 @@ export class DeckIndex {
       etag: response.etag ?? null,
       provisional,
     });
+  }
+
+  /** A standings read failed: one of the event's tries, and noted. */
+  private standingsFailed(tournamentId: string, now: number): void {
+    this.store.recordFailure(tournamentId, now);
+    const down = readStandingsDown(this.store.getMeta(META.standingsDown));
+    if (!down) {
+      this.store.setMeta(
+        META.standingsDown,
+        JSON.stringify({ since: now, first: tournamentId, many: false })
+      );
+    } else if (!down.many && down.first !== tournamentId) {
+      this.store.setMeta(
+        META.standingsDown,
+        JSON.stringify({ ...down, many: true })
+      );
+    }
+  }
+
+  /**
+   * A standings read answered: after an outage (two events or more failed),
+   * the events given up on during it are tried again. One event failing
+   * alone is that event's, and stays given up on.
+   */
+  private standingsAnswered(): void {
+    const down = readStandingsDown(this.store.getMeta(META.standingsDown));
+    if (!down) return;
+    if (down.many) this.store.reviveFailed(down.since);
+    this.store.deleteMeta(META.standingsDown);
   }
 
   /**
