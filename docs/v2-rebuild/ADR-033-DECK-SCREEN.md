@@ -81,7 +81,10 @@ specifically without blocking, and go from deck to table in one click.
    rotation, a ban, a legal reprint), without changing anything the table
    shows. Facts compare by value, whatever order storage wrote their keys
    in: a deck read back that looked changed was saved again on every load,
-   and between two tabs for good, losing edits. A card typed otherwise than the catalog's print (in the card
+   and between two tabs for good, losing edits. A deck keeps the catalog
+   build it was brought up to (`factsFrom`, gone when its cards change any
+   other way), and only a newer catalog changes it again: two tabs a daily
+   rebuild apart would otherwise each undo the other. A card typed otherwise than the catalog's print (in the card
    dialog or a CSV) is played as typed and gets none. A CSV's two scans of
    one printing (English and German) stay two entries.
 5. **Search** is Limitless's syntax over the catalog in memory

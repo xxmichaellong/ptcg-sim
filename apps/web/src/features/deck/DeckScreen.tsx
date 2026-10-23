@@ -8,7 +8,6 @@ import {
   DECK_FORMATS,
   coverCardOf,
   deckTotals,
-  withCatalogFacts,
   type DeckFormatId,
   type DeckList,
 } from '@ptcgsim/deck-core';
@@ -31,6 +30,7 @@ import type { CardCatalogSource } from './card-catalog-contract.js';
 import { readDeckFile } from './deck-browser-io.js';
 import { DeckBox, deckBoxToneOf } from './DeckBox.js';
 import { flyDeckBox } from './deck-box-flight.js';
+import { bringDeckFactsUpToDate } from './deck-facts.js';
 import { splitFinish, wordFinish, wordName } from './deck-home-covers.js';
 import type {
   DeckBuilderStore,
@@ -199,12 +199,7 @@ export const DeckScreen = ({
   useEffect(() => {
     if (catalogState.status !== 'ready' || libraryState.status === 'loading')
       return;
-    for (const deck of libraryState.decks) {
-      const upgraded = withCatalogFacts(deck.cards, catalogState.catalog);
-      if (upgraded !== deck.cards) {
-        library.update(deck.id, { cards: upgraded }, { touch: false });
-      }
-    }
+    bringDeckFactsUpToDate(library, libraryState.decks, catalogState.catalog);
   }, [catalogState, library, libraryState]);
 
   /**

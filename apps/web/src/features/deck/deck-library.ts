@@ -61,6 +61,12 @@ export interface SavedDeck {
   readonly coverId?: string;
   readonly notes?: string;
   readonly source?: DeckSource;
+  /**
+   * The catalog (when the server built it) the cards' facts were last
+   * brought up to: a tab with an older one leaves them be. Gone once the
+   * cards change any other way.
+   */
+  readonly factsFrom?: string;
   readonly createdAt: number;
   readonly updatedAt: number;
 }
@@ -83,7 +89,10 @@ export interface DeckDraft {
 }
 
 export type DeckPatch = Partial<
-  Pick<SavedDeck, 'name' | 'format' | 'cards' | 'coverId' | 'notes'>
+  Pick<
+    SavedDeck,
+    'name' | 'format' | 'cards' | 'coverId' | 'notes' | 'factsFrom'
+  >
 >;
 
 /** The part of IndexedDB the library uses, so tests can supply their own. */
@@ -239,6 +248,9 @@ export const decodeSavedDeck = (value: unknown): SavedDeck | undefined => {
       ? { notes: value.notes as string }
       : {}),
     ...(source ? { source } : {}),
+    ...(boundedString(value.factsFrom, 64)
+      ? { factsFrom: value.factsFrom as string }
+      : {}),
     createdAt: value.createdAt,
     updatedAt: value.updatedAt,
   });
@@ -390,9 +402,20 @@ export class DeckLibrary {
       patch.name === undefined
         ? current.name
         : cleanDeckName(patch.name) || current.name;
-    const { coverId: _cover, notes: _notes, ...rest } = current;
+    const {
+      coverId: _cover,
+      notes: _notes,
+      factsFrom: _factsFrom,
+      ...rest
+    } = current;
     const coverId = 'coverId' in patch ? patch.coverId : current.coverId;
     const notes = 'notes' in patch ? patch.notes : current.notes;
+    const factsFrom =
+      'factsFrom' in patch
+        ? patch.factsFrom
+        : patch.cards
+          ? undefined
+          : current.factsFrom;
     const next: SavedDeck = Object.freeze({
       ...rest,
       name,
@@ -403,6 +426,7 @@ export class DeckLibrary {
       cards: patch.cards ?? current.cards,
       ...(coverId ? { coverId } : {}),
       ...(notes ? { notes: notes.slice(0, MAX_DECK_NOTES_LENGTH) } : {}),
+      ...(factsFrom ? { factsFrom } : {}),
       updatedAt: options.touch === false ? current.updatedAt : this.#now(),
     });
     this.#put(next);
