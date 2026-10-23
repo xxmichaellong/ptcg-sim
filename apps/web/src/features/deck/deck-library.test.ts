@@ -597,4 +597,121 @@ describe('the deck library', () => {
       );
     }
   });
+
+  describe('with storage that runs one change after another, as IndexedDB does', () => {
+    const wait = (ms: number) =>
+      new Promise((resolve) => setTimeout(resolve, ms));
+    const inOrder = () => {
+      const stored = new Map<string, unknown>();
+      let chain: Promise<unknown> = Promise.resolve();
+      const queue = <T>(change: () => T): Promise<T> => {
+        const done = chain.then(async () => {
+          await wait(10);
+          return change();
+        });
+        chain = done.catch(() => undefined);
+        return done;
+      };
+      return { stored, queue };
+    };
+    const record = (id: string, name = id) => ({
+      id,
+      name,
+      format: 'standard',
+      cards: [],
+      createdAt: 1,
+      updatedAt: 1,
+    });
+
+    it('says decks are kept again when a removal tried twice goes through once', async () => {
+      const { stored, queue } = inOrder();
+      for (const id of ['d1', 'd2']) stored.set(id, record(id));
+      let removals = 0;
+      const library = new DeckLibrary({
+        backend: {
+          readAll: () => queue(() => [...stored.values()]),
+          read: (id) => queue(() => stored.get(id)),
+          write: (decks) =>
+            queue(() => {
+              for (const deck of decks)
+                stored.set(deck.id, structuredClone(deck));
+            }),
+          // Its second try at the first deck fails, the first went through.
+          remove: (id) =>
+            queue(() => {
+              removals += 1;
+              if (id === 'd1' && removals === 2) throw new Error('aborted');
+              stored.delete(id);
+            }),
+        },
+        writeDelayMs: 20,
+      });
+      await wait(30);
+      library.remove('d1');
+      await wait(2);
+      // Its write tries the first removal again: marked until storage has it.
+      library.remove('d2');
+      await wait(200);
+      library.create({
+        name: 'New',
+        format: 'standard',
+        cards: deckListOf([]),
+      });
+      await wait(200);
+      library.dispose();
+      expect(stored.has('d1')).toBe(false);
+      expect(library.getSnapshot().status).toBe('ready');
+    });
+
+    it("keeps this tab's write that failed and goes again over another tab's read back meanwhile", async () => {
+      const { stored, queue } = inOrder();
+      stored.set('d1', record('d1', 'Deck'));
+      let failA = 1;
+      let afterFailure: () => void = () => undefined;
+      const backend = (tab: string): DeckLibraryBackend => ({
+        readAll: () => queue(() => [...stored.values()]),
+        read: (id) => queue(() => structuredClone(stored.get(id))),
+        write: (decks) => {
+          const copies = decks.map((deck) => structuredClone(deck));
+          return queue(() => {
+            if (tab === 'A' && failA > 0) {
+              failA -= 1;
+              setTimeout(() => afterFailure(), 0);
+              throw new Error('aborted');
+            }
+            for (const deck of copies) stored.set(deck.id, deck);
+          });
+        },
+        remove: (id) =>
+          queue(() => {
+            stored.delete(id);
+          }),
+      });
+      const a = new DeckLibrary({
+        backend: backend('A'),
+        channel: new BroadcastChannel('library-in-order'),
+        writeDelayMs: 50,
+      });
+      const b = new DeckLibrary({
+        backend: backend('B'),
+        channel: new BroadcastChannel('library-in-order'),
+        writeDelayMs: 1,
+      });
+      await wait(40);
+      a.update('d1', { name: 'Mine' });
+      await wait(45);
+      // Written before A's (which fails); A reads it back after.
+      b.update('d1', { name: 'Theirs' });
+      // A writes again at once (another deck made), its failed change with it.
+      afterFailure = () => {
+        a.create({ name: 'Other', format: 'standard', cards: deckListOf([]) });
+      };
+      await wait(300);
+      a.dispose();
+      b.dispose();
+      expect(a.get('d1')?.name).toBe(
+        (stored.get('d1') as { name: string }).name
+      );
+    });
+  });
 });

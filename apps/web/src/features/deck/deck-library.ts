@@ -539,6 +539,9 @@ export class DeckLibrary {
           if (current !== deck) continue;
           this.#unsaved.add(deck.id);
           this.#pending.add(deck.id);
+          // Pending again: a read-back begun while it was being written
+          // must not replace it.
+          this.#edited(deck.id);
           if (automatic.has(deck.id) && !this.#held.has(deck.id)) {
             this.#automatic.add(deck.id);
           }
@@ -555,7 +558,8 @@ export class DeckLibrary {
         this.#held.delete(id);
         this.#announce(id);
       } catch {
-        this.#unsaved.add(id);
+        // Unless an earlier try at it went through meanwhile.
+        if (this.#removals.has(id)) this.#unsaved.add(id);
       }
     }
     if (this.#status() !== this.#snapshot.status) this.#publish();
