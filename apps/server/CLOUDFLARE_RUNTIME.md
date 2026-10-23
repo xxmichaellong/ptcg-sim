@@ -97,7 +97,9 @@ required before ADR-005 becomes accepted.
   socket telemetry reports no phantom active connection.
 - The canonical Wrangler configuration also owns Vite's built static assets,
   sends `/v2/*` to Worker code first except for the exact reviewed card-back
-  asset, and uses SPA navigation fallback. A separate Chromium lane serves that
+  asset, and has no navigation fallback: the Worker redirects a page address
+  the assets don't have to `/` with its query, and answers any other miss with a
+  `no-store` 404. A separate Chromium lane serves that
   production-like topology from one local `workerd` origin. It proves built
   module/card-back delivery, unknown-route isolation, repeated SPA/health
   document replacement, production exclusion of the developer room seam, and

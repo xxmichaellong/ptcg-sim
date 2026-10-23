@@ -93,6 +93,7 @@ export const fakePracticeRoom = (
           },
         ])
       ),
+      workAreas: {},
     } as unknown as MatchViewState;
   };
   const toGame = (command: WireGameCommand): GameCommand => {

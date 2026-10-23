@@ -1262,7 +1262,7 @@ describe('a lesson step on the practice table', () => {
     }
   });
 
-  it('counts Energy on Charmander by its Pokémon: not a card the room renamed on an Undo, and Energy on it back from the discard', async () => {
+  it('counts Energy on Charmander by its Pokémon: not a card the room renamed on an Undo, nor its own Energy back on it from the discard', async () => {
     const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
     const room = fakePracticeRoom();
     await dealScenario(
@@ -1290,7 +1290,7 @@ describe('a lesson step on the practice table', () => {
       false
     );
     // Charmander to the discard with its Energy, back on the Bench from
-    // there, and that Energy on it again: a new Pokémon, Energy on it.
+    // there, and that Energy on it again: as it was, card for card.
     await send({
       type: 'MovePlayStackToZone',
       stackId: charmander.id,
@@ -1322,7 +1322,98 @@ describe('a lesson step on the practice table', () => {
       slot: back.slot,
       targetStackId: back.id,
     });
+    expect(energy.done!(world({ view: now(), start, you, them }))).toBe(false);
+    // One from the hand, as the step asks.
+    await send({
+      type: 'MoveCardToPlay',
+      cardId: findCard(now(), zoneCards(now(), you, 'hand'), 'fireEnergy')!.id,
+      expectedSourceZoneId: zoneId(you, 'hand'),
+      boardPlayerId: you,
+      slot: back.slot,
+      targetStackId: back.id,
+    });
     expect(energy.done!(world({ view: now(), start, you, them }))).toBe(true);
+  });
+
+  it('counts an Energy from the hand on Charmander once the dealt one has moved off', async () => {
+    const room = fakePracticeRoom();
+    await dealScenario(
+      room.session,
+      lessonById('attach')!.scenario,
+      new AbortController().signal
+    );
+    const energy = lessonById('attach')!.steps.find(
+      (entry) => entry.id === 'energy'
+    )!;
+    const start = room.session.getSnapshot().view!;
+    type Editable = typeof start & {
+      zones: Record<
+        string,
+        { cards: (typeof start.zones)[string]['cards'][number][] }
+      >;
+      stacks: Record<
+        string,
+        (typeof start.stacks)[string] & {
+          id: string;
+          attachmentCards: (typeof start.stacks)[string]['attachmentCards'][number][];
+        }
+      >;
+      boards: Record<string, { activeStackId: string | null }>;
+    };
+    const charmander = activeStack(start, you)!;
+    // The dealt Energy taken off to the discard, and one from the hand put
+    // on, as the step's arrow shows.
+    const moved = structuredClone(start) as Editable;
+    const dealt = moved.stacks[charmander.id]!.attachmentCards.shift()!;
+    moved.zones[zoneId(you, 'discard')]!.cards.push(dealt);
+    const hand = moved.zones[zoneId(you, 'hand')]!.cards;
+    const fromHand = findCard(
+      start,
+      zoneCards(start, you, 'hand'),
+      'fireEnergy'
+    )!;
+    hand.splice(
+      hand.findIndex((card) => card.id === fromHand.id),
+      1
+    );
+    moved.stacks[charmander.id]!.attachmentCards.push(fromHand);
+    expect(energy.done!(world({ view: moved, start, you, them }))).toBe(true);
+  });
+
+  it('does not count Charmander left in play with its own Energy', async () => {
+    const room = fakePracticeRoom();
+    await dealScenario(
+      room.session,
+      lessonById('attach')!.scenario,
+      new AbortController().signal
+    );
+    const energy = lessonById('attach')!.steps.find(
+      (entry) => entry.id === 'energy'
+    )!;
+    const start = room.session.getSnapshot().view!;
+    type Editable = typeof start & {
+      zones: Record<
+        string,
+        { cards: (typeof start.zones)[string]['cards'][number][] }
+      >;
+      stacks: Record<
+        string,
+        (typeof start.stacks)[string] & {
+          id: string;
+          attachmentCards: (typeof start.stacks)[string]['attachmentCards'][number][];
+        }
+      >;
+      boards: Record<string, { activeStackId: string | null }>;
+    };
+    const charmander = activeStack(start, you)!;
+    // Leave in play, from the attached cards' window: a new Pokémon, its
+    // cards as they were.
+    const left = structuredClone(start) as Editable;
+    const stack = left.stacks[charmander.id]!;
+    delete left.stacks[charmander.id];
+    left.stacks['stack-left-in-play'] = { ...stack, id: 'stack-left-in-play' };
+    left.boards[you]!.activeStackId = 'stack-left-in-play';
+    expect(energy.done!(world({ view: left, start, you, them }))).toBe(false);
   });
 
   it('is done when the player did it before it was asked', async () => {

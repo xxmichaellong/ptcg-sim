@@ -96,6 +96,24 @@ export const countCards = (
 ): number =>
   cards.filter((card) => tutorialCardKeyOf(view, card) === key).length;
 
+/** Every card id the table shows now, wherever it is. */
+export const cardIdsOnTable = (view: MatchViewState): ReadonlySet<string> =>
+  new Set(
+    [
+      ...Object.values(view.zones).flatMap((zone) => zone.cards),
+      ...Object.values(view.stacks).flatMap((stack) => [
+        ...stack.evolutionCards,
+        ...stack.attachmentCards,
+      ]),
+      ...Object.values(view.workAreas).flatMap((area) => [
+        ...(area.inspection?.cards ?? []),
+        ...(area.attachmentResolution?.cards ?? []),
+        ...(area.attachmentResolution?.evolutionCards ?? []),
+        ...(area.attachmentResolution?.attachmentCards ?? []),
+      ]),
+    ].map((card) => card.id)
+  );
+
 /** The first Basic Pokémon in a seat's hand, if any: one that can be put
  * into play by itself. */
 export const basicInHand = (

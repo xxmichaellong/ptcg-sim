@@ -142,8 +142,9 @@ network, or soak rows in
 ## Production-topology preview
 
 The canonical Wrangler configuration publishes `apps/web/dist` as the Worker's
-static asset collection. Static files are served before Worker code, unknown
-browser navigation receives the Vite SPA shell, and `/v2/*` runs the authority
+static asset collection. Static files are served before Worker code, an unknown
+page navigation is redirected to `/` with its query (any other miss is a
+`no-store` 404), and `/v2/*` runs the authority
 first except for the explicit `/v2/assets/cardback.png` static route. New public
 assets under the versioned namespace require a reviewed exception instead of
 silently inheriting an open subtree. `build:v2` builds web assets before the
@@ -177,7 +178,7 @@ review.
 
 `playwright.preview.config.ts` owns an isolated server on port 4174 and executes
 only `tests/browser/production-topology.spec.ts`. It verifies the built app and
-hashed modules load from Wrangler, nested navigation falls back to the SPA, the
+hashed modules load from Wrangler, nested navigation is redirected to the app, the
 developer-only room route and handle stay absent even when their query flag is
 requested, and repeated SPA → health → SPA document replacement leaves exactly
 one fresh DOM board or no board as appropriate. It also proves:

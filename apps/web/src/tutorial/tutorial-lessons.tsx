@@ -22,6 +22,7 @@ import {
 import {
   activeStack,
   benchStacks,
+  cardIdsOnTable,
   countCards,
   findCard,
   happened,
@@ -513,18 +514,29 @@ const attach: TutorialLesson = {
         const to = charmanderTarget(world);
         return from && to ? { from, to } : null;
       },
-      // More Fire Energy on Charmander than as the step began -- by its
-      // Pokémon, whose id holds through a swap, evolving and an Undo (a
-      // card's doesn't, back from the hand); Charmander put back in play
-      // since is a new Pokémon, and any Energy on it counts.
+      // A Fire Energy put on Charmander since the step began: one on it
+      // whose card wasn't on it then -- less those of then's the room has
+      // since renamed (an Undo, a trip through the hand) -- or more than
+      // then. By its Pokémon, whose id holds through a swap, evolving and an
+      // Undo; Charmander put back in play since is a new Pokémon.
       done: (world) => {
         const then = charmanderIn(world, world.start);
         const now = charmanderIn(world, world.view);
         if (!now) return false;
-        const fire = countCards(world.view, now.attachmentCards, 'fireEnergy');
-        return now.id !== then?.id
-          ? fire > 0
-          : fire > countCards(world.start, then.attachmentCards, 'fireEnergy');
+        const fireOn = (
+          view: MatchViewState,
+          cards: readonly ViewCard[]
+        ): string[] =>
+          cards
+            .filter((card) => tutorialCardKeyOf(view, card) === 'fireEnergy')
+            .map((card) => card.id);
+        const before = then ? fireOn(world.start, then.attachmentCards) : [];
+        const after = fireOn(world.view, now.attachmentCards);
+        const fresh = after.filter((id) => !before.includes(id)).length;
+        if (now.id !== then?.id) return fresh > 0;
+        const present = cardIdsOnTable(world.view);
+        const renamed = before.filter((id) => !present.has(id)).length;
+        return after.length > before.length || fresh > renamed;
       },
       stuck: (world) =>
         charmanderGone(world) ??
