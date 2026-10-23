@@ -253,6 +253,12 @@ type CrawlTask =
 export class DeckIndex {
   private readonly store: DeckIndexStore;
   private readonly reading = new Map<string, Promise<void>>();
+  /**
+   * When a player's read of an event with nothing read yet last failed:
+   * players don't ask Limitless for it again for a few minutes. Kept in
+   * memory (an eviction forgets it, which costs one read), no rows written.
+   */
+  private readonly playerFailedAt = new Map<string, number>();
 
   constructor(private readonly deps: DeckIndexDependencies) {
     this.store = new DeckIndexStore(deps.storage);
@@ -660,12 +666,37 @@ export class DeckIndex {
     const stale =
       !read ||
       (young && (tournament.fetchedAt ?? 0) <= now - CRAWL_POLICY.liveRereadMs);
+    const failedAt = read ? undefined : this.playerFailedAt.get(id);
+    if (
+      failedAt !== undefined &&
+      now - failedAt < CRAWL_POLICY.liveRereadMs &&
+      !this.reading.has(id)
+    ) {
+      // Failed for a player a moment ago: not asked again yet. One the
+      // crawl gave up on can't be loaded; one it will try again is busy.
+      return tournament.state === 'failed'
+        ? { kind: 'not_found' }
+        : {
+            kind: 'busy',
+            retryAfterMs: failedAt + CRAWL_POLICY.liveRereadMs - now,
+          };
+    }
     if (stale && this.deps.enabled) {
       const allowedAt = nextAllowedAt(this.budget, 'demand', now);
       if (allowedAt <= now || this.reading.has(id)) {
         // Asked as the crawl asks: unchanged since the last read, it costs
         // Limitless no body and the index no writes.
         await this.read(tournament, true, 'demand');
+        if (this.store.tournament(id)?.fetchedAt === null) {
+          for (const [key, at] of this.playerFailedAt) {
+            if (now - at >= CRAWL_POLICY.liveRereadMs) {
+              this.playerFailedAt.delete(key);
+            }
+          }
+          this.playerFailedAt.set(id, now);
+        } else {
+          this.playerFailedAt.delete(id);
+        }
       } else if (!read) {
         return { kind: 'busy', retryAfterMs: allowedAt - now };
       }

@@ -577,6 +577,30 @@ describe('the request budget', () => {
     for (const k of [0, 1, 2, 3, 4, 5]) expect(read).toContain(id(10 + k));
   });
 
+  it('asks again for an event that failed a player only after a few minutes, leaving the budget to others', async () => {
+    now = START - 6 * HOUR;
+    limitless.tournaments = [
+      tournament(1, { date: START - 2 * DAY }),
+      // Running now, never read.
+      tournament(2, { date: START - HOUR }),
+    ];
+    limitless.standings.set(id(1), { broken: true });
+    limitless.standings.set(id(2), [standing('p', 1, dragapult)]);
+    const index = createIndex();
+    // Given up on by the crawl.
+    await crawlUntil(index, START);
+    const before = limitless.standingsCalls().filter((call) => call === id(1));
+    // Its viewer presses Try again every five seconds for four minutes.
+    for (let second = 0; second < 240; second += 5) {
+      now = START + second * 1_000;
+      expect((await index.tournament(id(1))).kind).not.toBe('ok');
+    }
+    const after = limitless.standingsCalls().filter((call) => call === id(1));
+    expect(after.length - before.length).toBe(1);
+    // Others still get their reads.
+    expect((await index.tournament(id(2))).kind).toBe('ok');
+  });
+
   it('reads an event read while it ran, given up on since, once in a few minutes for its viewers', async () => {
     limitless.tournaments = [tournament(1, { date: START - 2 * HOUR })];
     limitless.standings.set(id(1), [standing('p', 1, dragapult)]);
