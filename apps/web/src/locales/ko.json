@@ -497,13 +497,6 @@
     ],
     "translation": "{label}: {spoken}. 변경"
   },
-  "yfgU92": {
-    "message": "{label}: {title}",
-    "comments": [
-      "A table button's name: its short label, then what it does"
-    ],
-    "translation": "{label}: {title}"
-  },
   "TW6vJM": {
     "message": "{markerName} marker",
     "comments": [
@@ -3833,7 +3826,7 @@
   },
   "kJtjKm": {
     "message": "Pass the turn",
-    "translation": "턴 넘기기"
+    "translation": "패스: 턴 넘기기"
   },
   "sihBmP": {
     "message": "Paste",

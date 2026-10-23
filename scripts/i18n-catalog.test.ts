@@ -265,22 +265,36 @@ describe('the translate script', () => {
     }
   });
 
-  it('names Set up first in its title, as the welcome and the lessons say it', async () => {
+  it('names each button a lesson names by its label, in its tooltip too', async () => {
     const source = await readCatalog('en');
     const idOf = (message: string, context?: string) =>
       Object.entries(source).find(
         ([, entry]) => entry.message === message && entry.context === context
       )?.[0];
-    const label = idOf('Set up', 'set up the game');
-    const title = idOf('Set up: shuffle, draw 7, set 6 prizes');
-    assert.ok(label && title);
-    for (const locale of Object.keys(LANGUAGE_GUIDES)) {
-      const catalog = await readCatalog(locale);
-      const name = catalog[label]?.translation ?? '';
-      assert.ok(
-        catalog[title]?.translation.startsWith(name),
-        `${locale}: ${catalog[title]?.translation} / ${name}`
-      );
+    // The rail's buttons the welcome and the lessons press by name: its
+    // label, then the title its tooltip and spoken name say.
+    const buttons = [
+      ['Set up', 'set up the game', 'Set up: shuffle, draw 7, set 6 prizes'],
+      ['Turn', 'start the turn', 'Start turn'],
+      ['Pass', 'end the turn', 'Pass the turn'],
+      ['Flip', 'turn the table around', 'Flip the table'],
+      ['More', 'more actions', 'More game actions'],
+    ] as const;
+    for (const [label, context, title] of buttons) {
+      const labelId = idOf(label, context);
+      const titleId = idOf(title);
+      assert.ok(labelId && titleId, label);
+      for (const locale of ['en', ...Object.keys(LANGUAGE_GUIDES)]) {
+        const catalog = await readCatalog(locale);
+        const name = catalog[labelId]?.translation ?? '';
+        const tooltip = catalog[titleId]?.translation ?? '';
+        assert.ok(
+          tooltip
+            .toLocaleLowerCase(locale)
+            .includes(name.toLocaleLowerCase(locale)),
+          `${locale}: "${tooltip}" doesn't say "${name}"`
+        );
+      }
     }
   });
 

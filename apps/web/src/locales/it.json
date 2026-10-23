@@ -497,13 +497,6 @@
     ],
     "translation": "{label}: {spoken}. Cambia"
   },
-  "yfgU92": {
-    "message": "{label}: {title}",
-    "comments": [
-      "A table button's name: its short label, then what it does"
-    ],
-    "translation": "{label}: {title}"
-  },
   "TW6vJM": {
     "message": "{markerName} marker",
     "comments": [
@@ -3324,7 +3317,7 @@
   },
   "LlDm7t": {
     "message": "More game actions",
-    "translation": "Altre azioni di gioco"
+    "translation": "Altro: altre azioni di gioco"
   },
   "itfxKl": {
     "message": "Motion",

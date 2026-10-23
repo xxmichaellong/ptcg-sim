@@ -4,6 +4,9 @@ import { motionSettings } from '../../motion/motion-settings.js';
 const FLIGHT_MS = 520;
 const BOX_VARIABLES = ['--box-w', '--box-h', '--box-d', '--box-radius'];
 
+/** The flight each tray waits for: the last one sent to it. */
+const landing = new WeakMap<HTMLElement, Animation>();
+
 /**
  * A deck box picked off a shelf settles into its seat's tray (ADR-033 §13):
  * a copy of the box rises, crosses to the tray and lands at the tray box's
@@ -61,11 +64,15 @@ export const flyDeckBox = (box: HTMLElement, tray: HTMLElement): void => {
       easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)',
     }
   );
+  landing.set(tray, animation);
   let settled = false;
   const settle = (): void => {
     if (settled) return;
     settled = true;
     ghost.remove();
+    // A second box sent to this tray meanwhile: it waits hidden for that.
+    if (landing.get(tray) !== animation) return;
+    landing.delete(tray);
     tray.style.visibility = '';
   };
   animation.addEventListener('finish', settle);
