@@ -3624,7 +3624,7 @@
   },
   "wUL6aJ": {
     "message": "Now make it <0>Poisoned</0>: tap it, <1>{0}</1>, then <2>{1}</2>.",
-    "translation": "Giờ hãy làm cho nó bị <0>Poisoned</0>: chạm vào nó, <1>{0}</1>, rồi <2>{1}</2>."
+    "translation": "Giờ hãy làm cho nó bị <0>Nhiễm độc</0>: chạm vào nó, <1>{0}</1>, rồi <2>{1}</2>."
   },
   "LFzr4S": {
     "message": "Number of cards",

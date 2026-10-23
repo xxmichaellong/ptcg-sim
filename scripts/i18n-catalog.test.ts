@@ -298,6 +298,28 @@ describe('the translate script', () => {
     }
   });
 
+  it("translates a special condition in a step's touch wording where its mouse wording does", async () => {
+    const source = await readCatalog('en');
+    const idOf = (start: string) =>
+      Object.entries(source).find(([, entry]) =>
+        entry.message?.startsWith(start)
+      )?.[0];
+    const touch = idOf('Now make it <0>Poisoned</0>: tap it');
+    const mouse = idOf('Now make it <0>Poisoned</0>: right-click it');
+    assert.ok(touch && mouse);
+    const named = (text: string) => /<0>(.*?)<\/0>/u.exec(text)?.[1];
+    // Inflected as each sentence needs; never the English word alone.
+    for (const locale of Object.keys(LANGUAGE_GUIDES)) {
+      const catalog = await readCatalog(locale);
+      const touched = named(catalog[touch]?.translation ?? '');
+      const clicked = named(catalog[mouse]?.translation ?? '');
+      assert.ok(
+        touched !== 'Poisoned' || clicked === 'Poisoned',
+        `${locale}: "${String(touched)}" beside "${String(clicked)}"`
+      );
+    }
+  });
+
   it("calls the damage controls' + a button, never a keyboard key", async () => {
     const source = await readCatalog('en');
     const [id] =

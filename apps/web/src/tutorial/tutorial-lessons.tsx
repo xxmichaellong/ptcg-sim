@@ -536,12 +536,14 @@ const knockOut: TutorialLesson = {
           (key) => countCards(world.view, discard, key) > 0
         );
       },
+      // Kirlia there but the step not done: the rest is left out, by the
+      // table, in its window or back in play.
       stuck: (world) =>
         countCards(
           world.view,
           zoneCards(world.view, world.them, 'discard'),
           'kirlia'
-        ) > 0 && activeStack(world.view, world.them) === undefined ? (
+        ) > 0 ? (
           <Trans>
             Put the rest of it, <strong>{name('ralts')}</strong> and its Energy,
             in their discard pile too.

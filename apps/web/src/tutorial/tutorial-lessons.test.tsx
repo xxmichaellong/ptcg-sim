@@ -309,6 +309,30 @@ describe('a lesson step on the practice table', () => {
       expect(activeStack(atNow().view, them)).toBeUndefined();
       expect(discard!.done!(atNow())).toBe(false);
       expect(text({ text: discard!.stuck! }, atNow())).toContain('Ralts');
+      // Put back in play from its window: still said, still not done.
+      const view = atNow().view;
+      const area = (
+        room as unknown as {
+          match: () => {
+            workAreas: Record<
+              string,
+              { attachmentResolution?: { id: string } }
+            >;
+          };
+        }
+      ).match().workAreas[them]!.attachmentResolution!;
+      room.session.submit({
+        type: 'RestoreStagedStack',
+        playerId: them,
+        expectedWorkAreaId: area.id,
+        expectedActiveStackId: null,
+        expectedBenchStackIds: view.boards[them]!.benchStackIds,
+        destinationSlot: 'active',
+      } as never);
+      await flush();
+      expect(activeStack(atNow().view, them)).toBeDefined();
+      expect(discard!.done!(atNow())).toBe(false);
+      expect(text({ text: discard!.stuck! }, atNow())).toContain('Ralts');
     }
     // The whole of it, as a drag takes it.
     {
