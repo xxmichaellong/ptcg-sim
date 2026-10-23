@@ -381,6 +381,40 @@ describe('finding the printing a decklist line means', () => {
       })
     ).toBeUndefined();
   });
+
+  it('looks up the printings TCGdex scans name without reading the whole catalog for each', () => {
+    // A catalog the real one's size, and a long saved list of cards whose
+    // scans name no print in it: looked up again on every load.
+    const sets = Array.from({ length: 200 }, (_, index) =>
+      set(`s${String(index)}`, `S${String(index)}`, '2020-01-01', 100)
+    );
+    const cards = sets.flatMap((cardSet) =>
+      Array.from({ length: 100 }, (_, index) =>
+        card(cardSet, String(index + 1), `Mon ${cardSet.id}`)
+      )
+    );
+    const big: LoadedCatalog = {
+      ...catalog,
+      cards,
+      sets,
+      byId: new Map(cards.map((entry) => [entry.id, entry])),
+    };
+    catalogIndex(big);
+    const started = performance.now();
+    for (let index = 0; index < 10_000; index += 1) {
+      findCatalogPrint(big, {
+        name: `Card ${String(index)}`,
+        image: `https://assets.tcgdex.net/en/sv/zz${String(index)}/${String(index)}/high.webp`,
+      });
+    }
+    expect(performance.now() - started).toBeLessThan(250);
+    expect(
+      findCatalogPrint(big, {
+        name: 'Mon s150',
+        image: 'https://assets.tcgdex.net/en/sv/s150/007/high.webp',
+      })?.id
+    ).toBe('S150 7');
+  });
 });
 
 describe('card images in other languages', () => {

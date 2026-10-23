@@ -366,6 +366,10 @@ const parseLine = (sourceLine: string, line: number): ParsedRow | undefined => {
   // v1 read past; its header lines (`****** ... ******`, `##Pokémon - 13`)
   // still read as no card.
   let value = sourceLine.replace(/^\s*\*\s+/u, '').replace(/[[\]()]/gu, '');
+  // Words apart by runs of spaces or tabs read as spaced singly: v1 kept
+  // the runs in the name, and each one multiplied the ways the special-set
+  // pattern below could split a line, past what the word cap bounds.
+  value = value.replace(/\s+/gu, ' ');
   value = value.replace(/(?!PR-|P-A)(\w{2,3})-(\w{2,3}) (\d+)/gu, '$1 $2$3');
   value = value.replace(/xy5-5 /gu, 'DCR ');
   value = value.replace(/ DPP /gu, ' PR-DPP ');

@@ -26,16 +26,25 @@
 /* ---- An empty deck: load one ------------------------------------------ */
 
 /* The + takes the middle of its pile, so the pile's hover name (centred in
-   every other spot) sits under it instead. The board marks the decks that
-   show one (RemoteSessionBoard, `loadDeckSides`). */
+   every other spot) sits under it instead, clear of the count badge in the
+   pile's corner. The board marks the decks that show one
+   (RemoteSessionBoard, `loadDeckSides`). */
 .board-spike-host[data-load-deck-sides~='local']
   .ptcgsim-board-surface[data-geometry='2']
   .ptcgsim-zone-deck[data-zone-side='local'][data-zone-outline='true'][data-zone-label]::after,
 .board-spike-host[data-load-deck-sides~='opponent']
   .ptcgsim-board-surface[data-geometry='2']
   .ptcgsim-zone-deck[data-zone-side='opponent'][data-zone-outline='true'][data-zone-label]::after {
-  inset: auto 2px 6px;
+  inset: auto 16px 6px;
   display: block;
+}
+
+/* The empty Lost Zone's hide chip takes its top corner: its hover name
+   starts below the chip's row. */
+.board-spike-host:has(#hideLostZoneButton)
+  .ptcgsim-board-surface[data-geometry='2']
+  .ptcgsim-zone-lostZone[data-zone-side='local'][data-zone-outline='true'][data-zone-label]::after {
+  inset: 30px 4px 0;
 }
 
 .table-zone-affordance--deck {

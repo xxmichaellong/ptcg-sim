@@ -3,9 +3,13 @@ import { act, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import {
+  CARD_IMAGE_PREFERENCES,
+  localizedCardImage,
+} from '../i18n/card-image-language.js';
 import { preferences } from '../preferences/preference-store.js';
 import { fakePracticeRoom, you } from './practice-room.test-support.js';
-import { tutorialCardKeyOf } from './tutorial-cards.js';
+import { TUTORIAL_IMAGE_URLS, tutorialCardKeyOf } from './tutorial-cards.js';
 import { zoneCards, zoneId } from './tutorial-world.js';
 import { lessonById, lessonsFor } from './tutorial-lessons.js';
 import { TUTORIAL_PREFERENCES } from './tutorial-state.js';
@@ -499,5 +503,32 @@ describe('the tutorial read out', () => {
     await wait(50);
     stop();
     expect(said).toContain(`table: ${visited}`);
+  });
+});
+
+describe('the practice cards’ scans', () => {
+  it('are warmed in the language the table shows them in', async () => {
+    phone(false);
+    const asked: string[] = [];
+    vi.stubGlobal(
+      'Image',
+      class {
+        decoding = '';
+        set src(url: string) {
+          asked.push(url);
+        }
+      }
+    );
+    preferences().patch(CARD_IMAGE_PREFERENCES, { cardImages: 'fr' });
+    try {
+      await render('around');
+      const french = TUTORIAL_IMAGE_URLS.map(
+        (url) => localizedCardImage(url, 'fr').url
+      );
+      expect(french).not.toEqual(TUTORIAL_IMAGE_URLS);
+      expect(asked).toEqual(french);
+    } finally {
+      preferences().patch(CARD_IMAGE_PREFERENCES, { cardImages: 'app' });
+    }
   });
 });

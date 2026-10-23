@@ -4072,7 +4072,7 @@
   },
   "QEP1VC": {
     "message": "Put the rest of it, <0>{0}</0> and its Energy, in their discard pile too.",
-    "translation": "Geri kalanını, yani <0>{0}</0> ve Enerjilerini de iskarta destesine koy."
+    "translation": "Geri kalanını, yani <0>{0}</0> ve Enerjilerini de Discard yığınına koy."
   },
   "VbWX2u": {
     "message": "Quantity",

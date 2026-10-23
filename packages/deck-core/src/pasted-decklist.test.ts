@@ -54,6 +54,33 @@ describe('parsePastedDecklist', () => {
     expect(parsed.rows).toHaveLength(1);
   }, 2_000);
 
+  it('reads a short line with runs of spaces or tabs between its words at once, and as one spaced singly', () => {
+    // Sixteen words, but each gap one more way to split it: v1's pattern
+    // took seconds on four spaces a gap.
+    for (const gap of ['    ', '\t\t\t\t', ' '.repeat(8)]) {
+      const line = `1 x ${`ab1${gap}`.repeat(13)}1!`;
+      const started = performance.now();
+      const parsed = rows(line);
+      expect(performance.now() - started, JSON.stringify(gap)).toBeLessThan(
+        250
+      );
+      expect(parsed.rows).toHaveLength(1);
+    }
+    expect(
+      rows('4  Iono   PAL  185\n2\tBoss’s Orders\tPAL\t172').rows.map(
+        ({ quantity, name, setCode, number }) => ({
+          quantity,
+          name,
+          setCode,
+          number,
+        })
+      )
+    ).toEqual([
+      { quantity: 4, name: 'Iono', setCode: 'PAL', number: '185' },
+      { quantity: 2, name: 'Boss’s Orders', setCode: 'PAL', number: '172' },
+    ]);
+  }, 30_000);
+
   it('ignores source section headings and resolves current, old-code, and catalog-ID rows', () => {
     const parsed = rows(
       `Pokémon (3)\r\n1 Arceus V BRS 122\r\n1 Base Pikachu BS 58\r\n1 Pikachu base1-58`

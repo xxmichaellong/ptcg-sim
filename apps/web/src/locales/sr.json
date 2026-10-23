@@ -4072,7 +4072,7 @@
   },
   "QEP1VC": {
     "message": "Put the rest of it, <0>{0}</0> and its Energy, in their discard pile too.",
-    "translation": "Остатак, <0>{0}</0> и његову Енергију, такође стави у одбачене карте."
+    "translation": "Остатак, <0>{0}</0> и његову Енергију, такође стави на њихов отпад."
   },
   "VbWX2u": {
     "message": "Quantity",

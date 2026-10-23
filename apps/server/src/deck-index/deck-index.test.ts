@@ -424,6 +424,46 @@ describe('discovering tournaments', () => {
     expect(knownCount(older)).toBe(8_000);
   });
 
+  it('takes a page of events none of which can be read for a failure, said, not a page read', async () => {
+    limitless.tournaments = Array.from({ length: 1_200 }, (_, n) =>
+      tournament(1_000 + n, { players: 4, date: START - 400 * DAY })
+    );
+    // Limitless sends its dates another way (seconds), then goes back.
+    limitless.failures.push(
+      Response.json(
+        limitless.tournaments.slice(0, 1_000).map((row) => ({
+          game: 'PTCG',
+          id: row.id,
+          name: row.name,
+          date: Math.round(row.date / 1000),
+          format: row.format,
+          players: row.players,
+        }))
+      )
+    );
+    const failures = vi.fn();
+    const storage = memoryIndexStorage();
+    const index = new DeckIndex({
+      storage,
+      fetch: limitless.fetch,
+      now: clock,
+      enabled: true,
+      onFailure: failures,
+    });
+    index.migrate();
+    await crawlUntilIdle(index);
+    expect(failures.mock.calls[0]).toEqual(['failed']);
+    const pages = limitless.calls.filter((call) =>
+      call.startsWith('/api/tournaments?')
+    );
+    // The same page again, and the whole list after it.
+    expect(pages.slice(0, 2)).toEqual([
+      '/api/tournaments?game=PTCG&limit=1000&page=1',
+      '/api/tournaments?game=PTCG&limit=1000&page=1',
+    ]);
+    expect(knownCount(storage)).toBe(1_200);
+  });
+
   it('takes a page that is not a list for a failure, not the end of the list', async () => {
     limitless.tournaments = Array.from({ length: 1_200 }, (_, n) =>
       tournament(1_000 + n, { players: 4, date: START - 400 * DAY })

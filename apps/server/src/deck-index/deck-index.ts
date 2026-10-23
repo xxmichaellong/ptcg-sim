@@ -596,9 +596,12 @@ export class DeckIndex {
       return;
     }
     const body = response.status === 200 ? response.body : undefined;
-    if (!Array.isArray(body)) {
-      // Not a page of events (Limitless answering nonsense): never the end
-      // of the list. The crawl holds back and asks for the same page again.
+    const rows = Array.isArray(body) ? readTournamentList(body) : [];
+    if (!Array.isArray(body) || (body.length > 0 && rows.length === 0)) {
+      // Not a page of events (Limitless answering nonsense), or events none
+      // of which can be read (Limitless changed their shape): never the end
+      // of the list, nor a page known. The crawl holds back, says so, and
+      // asks for the same page again.
       this.holdBack();
       if (task.kind === 'discover') {
         this.store.setMeta(
@@ -615,7 +618,6 @@ export class DeckIndex {
     }
     this.recovered();
     const raw = body.length;
-    const rows = readTournamentList(body);
     const known = this.store.recordListed(rows, this.deps.now());
     const oldest = rows.reduce(
       (date, row) => Math.min(date, row.date),

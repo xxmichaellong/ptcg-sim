@@ -371,14 +371,12 @@ export const findCatalogPrint = (
   }
   if (fromImage?.setId) {
     // TCGdex's own number for it ("SWSH022"), as the catalog writes it (22).
-    const number = canonicalNumber(
-      catalogNumberOf(fromImage.setId, fromImage.number)
-    );
     return named(
-      catalog.cards.find(
-        (candidate) =>
-          candidate.set.id === fromImage.setId &&
-          canonicalNumber(candidate.number) === number
+      index.bySetId.get(
+        setIdKey(
+          fromImage.setId,
+          catalogNumberOf(fromImage.setId, fromImage.number)
+        )
       )
     );
   }

@@ -20,6 +20,7 @@ import {
 import { createPortal } from 'react-dom';
 
 import { useHotkeyHints } from '../hotkeys/hotkey-preferences.js';
+import { localizedCardImage } from '../i18n/card-image-language.js';
 import { motionSettings } from '../motion/motion-settings.js';
 import { preferences } from '../preferences/preference-store.js';
 import { usePreference } from '../preferences/usePreference.js';
@@ -135,12 +136,15 @@ const useScreen = (): TutorialScreen => {
   return screen;
 };
 
-/** Warms the practice cards' scans so the first lesson shows them at once. */
+/**
+ * Warms the practice cards' scans, in the language the table shows them
+ * in, so the first lesson shows them at once.
+ */
 const warmTutorialImages = (): void => {
   for (const url of TUTORIAL_IMAGE_URLS) {
     const image = new Image();
     image.decoding = 'async';
-    image.src = url;
+    image.src = localizedCardImage(url).url;
   }
 };
 
