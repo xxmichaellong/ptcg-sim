@@ -1,4 +1,6 @@
 // @vitest-environment happy-dom
+import { i18n } from '@lingui/core';
+import { msg } from '@lingui/core/macro';
 import { act, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -482,6 +484,51 @@ describe('the tutorial read out', () => {
     expect(said).toContain('palette: Done');
     expect(said).toContain(`palette: ${current}`);
     expect(said.filter((line) => line.endsWith(current))).toHaveLength(1);
+  });
+
+  it('says a step or a lesson is done in the word for finished, not the Done button’s', async () => {
+    // Portuguese: the button finishes ("Concluir"), a step or a lesson is
+    // finished ("Concluído").
+    const doneButton = msg({ message: 'Done' });
+    const finished = msg({ message: 'Done', context: 'finished' });
+    await act(async () => {
+      i18n.loadAndActivate({
+        locale: 'xx',
+        messages: { [doneButton.id]: 'Finish', [finished.id]: 'Finished' },
+      });
+    });
+    try {
+      phone(true);
+      await render('commands');
+      await wait(1200);
+      expect(stepOf()).toBe('commands:palette');
+      const { said, stop } = listen();
+      const open = palette();
+      await act(async () => document.body.append(open));
+      await wait(1000);
+      stop();
+      expect(said).toContain('palette: Finished');
+      expect(said).not.toContain('palette: Finish');
+      await act(async () => {
+        open.remove();
+        root?.unmount();
+      });
+      preferences().patch(TUTORIAL_PREFERENCES, {
+        completed: { around: lessonById('around')!.version },
+      });
+      phone(false);
+      await render();
+      const lesson = document.querySelector('[data-lesson="around"]');
+      expect(lesson?.getAttribute('data-done')).toBe('true');
+      expect(lesson?.querySelector('.ds-visually-hidden')?.textContent).toBe(
+        'Finished'
+      );
+    } finally {
+      preferences().patch(TUTORIAL_PREFERENCES, { completed: {} });
+      await act(async () => {
+        i18n.loadAndActivate({ locale: 'en', messages: {} });
+      });
+    }
   });
 
   it('reads a step again that comes back after the palette opened and closed on it', async () => {

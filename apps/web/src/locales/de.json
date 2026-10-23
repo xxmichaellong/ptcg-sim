@@ -2142,6 +2142,11 @@
     "message": "Done",
     "translation": "Fertig"
   },
+  "8Gsx4j": {
+    "message": "Done",
+    "context": "finished",
+    "translation": "Fertig"
+  },
   "BDC29J": {
     "message": "Double-click <0>{0}</0> in your hand to read it.",
     "translation": "Doppelklicke in deiner Hand auf <0>{0}</0>, um die Karte zu lesen."

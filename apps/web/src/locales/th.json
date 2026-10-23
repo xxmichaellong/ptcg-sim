@@ -2142,6 +2142,11 @@
     "message": "Done",
     "translation": "เสร็จสิ้น"
   },
+  "8Gsx4j": {
+    "message": "Done",
+    "context": "finished",
+    "translation": "เสร็จแล้ว"
+  },
   "BDC29J": {
     "message": "Double-click <0>{0}</0> in your hand to read it.",
     "translation": "ดับเบิลคลิก <0>{0}</0> ในมือของคุณเพื่ออ่าน"
@@ -2930,7 +2935,7 @@
   },
   "69MOGQ": {
     "message": "Knock Out their <0>{0}</0>: drag it onto their discard pile. Its Energy goes with it.",
-    "translation": "Knock Out <0>{0}</0> ของคู่ต่อสู้: ลากไปวางที่กองการ์ดทิ้งของเขา พลังงานจะไปด้วย"
+    "translation": "Knock Out <0>{0}</0> ของคู่ต่อสู้: ลากไปวางที่กองทิ้งของเขา พลังงานจะไปด้วย"
   },
   "vXIe7J": {
     "message": "Language",

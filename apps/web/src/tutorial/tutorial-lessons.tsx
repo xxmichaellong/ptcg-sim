@@ -403,9 +403,15 @@ const attach: TutorialLesson = {
         const from = cardIn(world, world.you, 'hand', 'pidgey');
         return from ? { from, to: slot(world.you, 'bench') } : null;
       },
+      // Or benched already, before the step asked.
       done: (world) =>
         benchStacks(world.view, world.you).length >
-        benchStacks(world.start, world.you).length,
+          benchStacks(world.start, world.you).length ||
+        (cardIn(world, world.you, 'hand', 'pidgey') === null &&
+          benchStacks(world.view, world.you).some(
+            (stack) =>
+              countCards(world.view, stack.evolutionCards, 'pidgey') > 0
+          )),
     },
     {
       id: 'undo',
@@ -644,17 +650,20 @@ const deck: TutorialLesson = {
           ],
         },
       ],
+      // Or taken already (at the draw, the deck open), none left in it.
       done: (world) =>
         countCards(
           world.view,
           zoneCards(world.view, world.you, 'hand'),
           'rareCandy'
         ) >
-        countCards(
-          world.start,
-          zoneCards(world.start, world.you, 'hand'),
-          'rareCandy'
-        ),
+          countCards(
+            world.start,
+            zoneCards(world.start, world.you, 'hand'),
+            'rareCandy'
+          ) ||
+        (cardIn(world, world.you, 'hand', 'rareCandy') !== null &&
+          cardIn(world, world.you, 'deck', 'rareCandy') === null),
     },
     {
       id: 'shuffle',

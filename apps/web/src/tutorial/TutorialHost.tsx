@@ -436,7 +436,7 @@ export const TutorialHost = ({
   // table reconnects or has failed: its own banner (Reconnect) shows then.
   const overlaysHidden = covered || screen.palette || state.phase !== 'ready';
   const announcement = playing?.done
-    ? t`Done`
+    ? t({ message: 'Done', context: 'finished' })
     : playing && step && world && !hidden
       ? step.text(world)
       : null;
@@ -980,7 +980,7 @@ const LessonList = ({
                   </span>
                   {done ? (
                     <span className="ds-visually-hidden">
-                      <Trans>Done</Trans>
+                      <Trans context="finished">Done</Trans>
                     </span>
                   ) : null}
                 </button>

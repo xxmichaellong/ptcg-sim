@@ -2142,6 +2142,11 @@
     "message": "Done",
     "translation": "Gotowe"
   },
+  "8Gsx4j": {
+    "message": "Done",
+    "context": "finished",
+    "translation": "Gotowe"
+  },
   "BDC29J": {
     "message": "Double-click <0>{0}</0> in your hand to read it.",
     "translation": "Kliknij dwukrotnie <0>{0}</0> na ręce, aby ją przeczytać."

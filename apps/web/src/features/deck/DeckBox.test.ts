@@ -108,6 +108,8 @@ describe('the finder', () => {
     expect(finderMode('Charizard')).toBe('search');
     expect(finderMode("N's Zoroark")).toBe('search');
     expect(finderMode('4 Dreepy TWM 128')).toBe('list');
+    // PTCGO's export bullets each card line.
+    expect(finderMode('* 4 Arceus V BRS 122')).toBe('list');
     expect(finderMode('Pokémon: 12')).toBe('list');
     expect(finderMode('Pokemon (12)')).toBe('list');
     expect(finderMode('QTY,Name,Type,URL')).toBe('list');

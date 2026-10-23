@@ -123,6 +123,12 @@ const META = Object.freeze({
   failures: 'failures',
   heldUntil: 'held-until',
   /**
+   * Pages of the list refused or unreadable in a row, and the list alone
+   * held back until when: standings are read meanwhile.
+   */
+  listFailures: 'list-failures',
+  listHeldUntil: 'list-held-until',
+  /**
    * Events answered as unknown in a row since a standings read last
    * answered: kept with the index, so neither a list page nor a restart
    * lets a storm of them forget more.
@@ -383,8 +389,11 @@ export class DeckIndex {
   }
 
   private task(now: number): CrawlTask | { readonly idleUntil: number } {
+    // A list that can't be read waits on its own: the reads go on.
+    const listHeldUntil = this.listHeldUntil();
+    const listOpen = listHeldUntil <= now;
     const backfill = readBackfill(this.store.getMeta(META.backfill));
-    if (backfill) {
+    if (backfill && listOpen) {
       // An older build kept the page alone: the oldest event listed is
       // where it had reached (nothing else lists events before it ends).
       const oldest =
@@ -398,7 +407,7 @@ export class DeckIndex {
       };
     }
     const discovery = readDiscovery(this.store.getMeta(META.discovery));
-    if (discovery.page !== null) {
+    if (discovery.page !== null && listOpen) {
       return {
         kind: 'discover',
         page: discovery.page,
@@ -406,7 +415,7 @@ export class DeckIndex {
         ...(discovery.until !== undefined ? { until: discovery.until } : {}),
       };
     }
-    if (discovery.dueAt <= now) {
+    if (discovery.dueAt <= now && listOpen) {
       const page = discovery.resume ?? 1;
       return {
         kind: 'discover',
@@ -437,8 +446,12 @@ export class DeckIndex {
     const resync = this.store.nextToResync(now);
     if (resync) return { kind: 'resync', tournament: resync };
     const due = this.store.nextDueAt(now);
+    const listDueAt =
+      backfill || discovery.page !== null
+        ? listHeldUntil
+        : Math.max(discovery.dueAt, listHeldUntil);
     return {
-      idleUntil: Math.min(discovery.dueAt, due ?? Number.POSITIVE_INFINITY),
+      idleUntil: Math.min(listDueAt, due ?? Number.POSITIVE_INFINITY),
     };
   }
 
@@ -476,6 +489,11 @@ export class DeckIndex {
 
   private heldUntil(): number {
     const heldUntil = Number(this.store.getMeta(META.heldUntil) ?? '0');
+    return Number.isFinite(heldUntil) ? heldUntil : 0;
+  }
+
+  private listHeldUntil(): number {
+    const heldUntil = Number(this.store.getMeta(META.listHeldUntil) ?? '0');
     return Number.isFinite(heldUntil) ? heldUntil : 0;
   }
 
@@ -536,11 +554,20 @@ export class DeckIndex {
   }
 
   private holdBack(): void {
+    this.hold(META.failures, META.heldUntil);
+  }
+
+  /** A page of the list refused or unreadable: the list alone waits. */
+  private holdListBack(): void {
+    this.hold(META.listFailures, META.listHeldUntil);
+  }
+
+  private hold(failuresKey: string, untilKey: string): void {
     this.deps.onFailure?.('failed');
-    const failures = Number(this.store.getMeta(META.failures) ?? '0') + 1;
-    this.store.setMeta(META.failures, String(failures));
+    const failures = Number(this.store.getMeta(failuresKey) ?? '0') + 1;
+    this.store.setMeta(failuresKey, String(failures));
     this.store.setMeta(
-      META.heldUntil,
+      untilKey,
       String(
         this.deps.now() +
           Math.min(
@@ -573,13 +600,13 @@ export class DeckIndex {
         'crawl'
       );
     } catch (error) {
-      // A page of the list refused (400, 404) is no event gone: the crawl
-      // holds back as for an outage, rather than asking every step.
+      // A page of the list refused (400, 404) is no event gone: the list
+      // holds back, rather than asking every step.
       if (
         error instanceof LimitlessRequestError &&
         error.code === 'not_found'
       ) {
-        this.holdBack();
+        this.holdListBack();
       }
       // Tried again at the next step; the page is not lost.
       if (task.kind === 'discover') {
@@ -600,9 +627,9 @@ export class DeckIndex {
     if (!Array.isArray(body) || (body.length > 0 && rows.length === 0)) {
       // Not a page of events (Limitless answering nonsense), or events none
       // of which can be read (Limitless changed their shape): never the end
-      // of the list, nor a page known. The crawl holds back, says so, and
-      // asks for the same page again.
-      this.holdBack();
+      // of the list, nor a page known. The list holds back, says so, and
+      // asks for the same page again; standings are read meanwhile.
+      this.holdListBack();
       if (task.kind === 'discover') {
         this.store.setMeta(
           META.discovery,
@@ -617,6 +644,8 @@ export class DeckIndex {
       return;
     }
     this.recovered();
+    this.store.deleteMeta(META.listFailures);
+    this.store.deleteMeta(META.listHeldUntil);
     const raw = body.length;
     const known = this.store.recordListed(rows, this.deps.now());
     const oldest = rows.reduce(

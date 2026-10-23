@@ -374,9 +374,9 @@ const parseLine = (sourceLine: string, line: number): ParsedRow | undefined => {
   value = value.replace(/xy5-5 /gu, 'DCR ');
   value = value.replace(/ DPP /gu, ' PR-DPP ');
 
-  const oldSet = /^\s*(\d+) (.+?)(?= \w*-\w*\d*\s*$) (\w*-\w*\d*)\s*$/u.exec(
-    value
-  );
+  // v1's `\w*-\w*\d*`, whose `\d*` (matched by `\w*` already) tried every
+  // split of a long run of digits.
+  const oldSet = /^\s*(\d+) (.+?)(?= \w*-\w*\s*$) (\w*-\w*)\s*$/u.exec(value);
   if (oldSet) {
     return {
       line,

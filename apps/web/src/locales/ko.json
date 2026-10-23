@@ -2142,6 +2142,11 @@
     "message": "Done",
     "translation": "완료"
   },
+  "8Gsx4j": {
+    "message": "Done",
+    "context": "finished",
+    "translation": "완료"
+  },
   "BDC29J": {
     "message": "Double-click <0>{0}</0> in your hand to read it.",
     "translation": "패에 있는 <0>{0}</0>을(를) 더블클릭해서 읽어 보세요."

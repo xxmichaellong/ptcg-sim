@@ -9,7 +9,7 @@ import {
 } from './tutorial-lessons.js';
 import { TUTORIAL_CARDS } from './tutorial-cards.js';
 import { CONTROL_LABELS } from './tutorial-labels.js';
-import { activeStack, zoneId } from './tutorial-world.js';
+import { activeStack, findCard, zoneCards, zoneId } from './tutorial-world.js';
 import type { TutorialScreen, TutorialWorld } from './tutorial-world.js';
 import type { MatchViewState } from '@ptcgsim/game-core';
 import { fakePracticeRoom, them, you } from './practice-room.test-support.js';
@@ -347,6 +347,62 @@ describe('a lesson step on the practice table', () => {
       } as never);
       await flush();
       expect(discard!.done!(atNow())).toBe(true);
+    }
+  });
+
+  it('is done when the player did it before it was asked', async () => {
+    const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+    const dealt = async (id: string) => {
+      const room = fakePracticeRoom();
+      await dealScenario(
+        room.session,
+        lessonById(id)!.scenario,
+        new AbortController().signal
+      );
+      const now = () => room.session.getSnapshot().view!;
+      return { room, now };
+    };
+    // Pidgey benched during an earlier step of its lesson.
+    {
+      const { room, now } = await dealt('attach');
+      const bench = lessonById('attach')!.steps.find(
+        (step) => step.id === 'bench'
+      )!;
+      const pidgey = findCard(now(), zoneCards(now(), you, 'hand'), 'pidgey')!;
+      room.session.submit({
+        type: 'MoveCardToPlay',
+        cardId: pidgey.id,
+        expectedSourceZoneId: zoneId(you, 'hand'),
+        boardPlayerId: you,
+        slot: 'bench',
+      } as never);
+      await flush();
+      const start = now();
+      expect(bench.done!(world({ view: now(), start, you, them }))).toBe(true);
+    }
+    // Rare Candy taken from the open deck at the draw step.
+    {
+      const { room, now } = await dealt('deck');
+      const take = lessonById('deck')!.steps.find(
+        (step) => step.id === 'take'
+      )!;
+      const candy = findCard(
+        now(),
+        zoneCards(now(), you, 'deck'),
+        'rareCandy'
+      )!;
+      room.session.submit({
+        type: 'MoveCard',
+        cardId: candy.id,
+        expectedSourceZoneId: zoneId(you, 'deck'),
+        destinationZoneId: zoneId(you, 'hand'),
+      } as never);
+      await flush();
+      const start = now();
+      const screen = { ...SCREEN, pile: 'deck' };
+      expect(take.done!(world({ view: now(), start, you, them, screen }))).toBe(
+        true
+      );
     }
   });
 });

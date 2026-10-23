@@ -88,6 +88,8 @@ class FakeLimitless {
   pageCap = Number.POSITIVE_INFINITY;
   /** Every page of the list answered as the first. */
   ignorePage = false;
+  /** The list's dates sent as seconds: no event on it can be read. */
+  listDatesInSeconds = false;
 
   readonly fetch = vi.fn(
     async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
@@ -109,7 +111,9 @@ class FakeLimitless {
             game: 'PTCG',
             id: row.id,
             name: row.name,
-            date: new Date(row.date).toISOString(),
+            date: this.listDatesInSeconds
+              ? Math.round(row.date / 1000)
+              : new Date(row.date).toISOString(),
             format: row.format,
             players: row.players,
           }))
@@ -462,6 +466,36 @@ describe('discovering tournaments', () => {
       '/api/tournaments?game=PTCG&limit=1000&page=1',
     ]);
     expect(knownCount(storage)).toBe(1_200);
+  });
+
+  it('keeps reading standings while the list cannot be read, asking for it again on its own wait', async () => {
+    limitless.tournaments = Array.from({ length: 300 }, (_, n) =>
+      tournament(1_000 + n, { date: START - 30 * DAY - n * HOUR })
+    );
+    for (const row of limitless.tournaments) {
+      limitless.standings.set(row.id, [standing('p', 1, dragapult)]);
+    }
+    const storage = memoryIndexStorage();
+    const index = createIndex(true, storage);
+    while (limitless.standingsCalls().length === 0) await crawl(index, 1);
+    // Limitless changes the list's dates while the history is read.
+    limitless.listDatesInSeconds = true;
+    const listed = limitless.calls.length;
+    await crawlFor(index, 4 * HOUR);
+    expect(new Set(limitless.standingsCalls()).size).toBe(300);
+    const asked = limitless.calls
+      .slice(listed)
+      .filter((call) => call.startsWith('/api/tournaments?')).length;
+    expect(asked).toBeGreaterThan(1);
+    expect(asked).toBeLessThan(20);
+    // Read again: the list goes on as before.
+    limitless.listDatesInSeconds = false;
+    limitless.tournaments = [
+      tournament(5_000, { date: START + 4 * HOUR }),
+      ...limitless.tournaments,
+    ];
+    await crawlFor(index, 2 * HOUR);
+    expect(knownCount(storage)).toBe(301);
   });
 
   it('takes a page that is not a list for a failure, not the end of the list', async () => {

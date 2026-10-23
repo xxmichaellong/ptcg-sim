@@ -594,6 +594,26 @@ describe('DeckBuilderSession', () => {
     );
   });
 
+  it('takes a rename from another tab while the name field has the focus, nothing typed in it', async () => {
+    await renderSession({ store: new DeckBuilderStore(), open: true });
+    await click('#deckNewButton');
+    const input = host.querySelector<HTMLInputElement>('#deckNameInput')!;
+    await act(async () => input.focus());
+    const [deck] = library.getSnapshot().decks;
+    // As another tab's write comes in.
+    await act(async () => {
+      library.update(deck!.id, { name: 'Renamed elsewhere' });
+    });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 700));
+    });
+    await act(async () => input.blur());
+    expect(library.getSnapshot().decks.map((entry) => entry.name)).toEqual([
+      'Renamed elsewhere',
+    ]);
+    expect(input.value).toBe('Renamed elsewhere');
+  });
+
   it('drains dirty decks only when the Deck surface closes and cleans them only after authority publication', async () => {
     const session = new FakeSession();
     const store = new DeckBuilderStore();

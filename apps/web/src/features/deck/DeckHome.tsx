@@ -482,15 +482,15 @@ const ListDeckTile = ({
 
 /**
  * What the finder holds: nothing yet, a deck's name to look up, or a list
- * to import (several lines, a line starting with a count, a simulator file,
- * or a list's section heading).
+ * to import (several lines, a line starting with a count, PTCGO's bullet
+ * before one too, a simulator file, or a list's section heading).
  */
 export const finderMode = (text: string): 'empty' | 'search' | 'list' => {
   const trimmed = text.trim();
   if (!trimmed) return 'empty';
   if (
     trimmed.includes('\n') ||
-    /^\d+\s+\S/u.test(trimmed) ||
+    /^(?:\*\s+)?\d+\s+\S/u.test(trimmed) ||
     /^QTY,/u.test(trimmed) ||
     /^(?:Pok[ée]mon|Trainer|Energy)\s*[:(]/iu.test(trimmed)
   ) {

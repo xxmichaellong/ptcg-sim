@@ -62,7 +62,9 @@ apart. All of it stays under 30 requests in any five minutes, 20 for the
 crawl and 10 kept for players opening a tournament not read yet (503
 `{ "error": "busy" }` with `Retry-After` when those are spent). A 429 stops
 every request until Limitless's window resets; a failed request holds the
-crawl back 30 seconds, doubling to half an hour. The daily cron and the
+crawl back 30 seconds, doubling to half an hour (a page of the tournament
+list refused or unreadable holds back only the list, and standings are read
+meanwhile). The daily cron and the
 first request start the crawl. Reading every standings page back to 2021
 takes a few days. Each step that throws emits `server_failure` with
 subsystem `deck_index_crawl` (source `deck_index`). Each time Limitless fails

@@ -364,6 +364,23 @@ test('a zone’s hover name is centred, but an empty deck’s sits under its +',
     right: '16px',
     display: 'block',
   });
+  // The far deck's badge is at its top: its name keeps the pile's width.
+  await expect(page.locator('.board-spike-host')).toHaveAttribute(
+    'data-load-deck-sides',
+    /\bopponent\b/u
+  );
+  expect(
+    await label(
+      page.locator(
+        '.ptcgsim-zone[data-zone-kind="deck"][data-zone-side="opponent"]'
+      )
+    )
+  ).toMatchObject({
+    bottom: '6px',
+    left: '2px',
+    right: '2px',
+    display: 'block',
+  });
   // The empty Lost Zone, shown: its hide chip takes its top corner, and
   // its name starts below it.
   await page.evaluate(() =>

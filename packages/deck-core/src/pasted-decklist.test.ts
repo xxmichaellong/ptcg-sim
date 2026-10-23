@@ -54,6 +54,20 @@ describe('parsePastedDecklist', () => {
     expect(parsed.rows).toHaveLength(1);
   }, 2_000);
 
+  it('reads a pasted file of lines ending in long runs of digits after a hyphen at once', () => {
+    // v1's old-id pattern tried every split of the digits: a megabyte of
+    // such lines froze the page for seconds.
+    const line = `1 a -${'1'.repeat(8_180)}!`;
+    const source = Array.from({ length: 120 }, () => line).join('\n');
+    const started = performance.now();
+    parsePastedDecklist(source);
+    expect(performance.now() - started).toBeLessThan(500);
+    expect(rows('4 Yanma hgss4-84').rows[0]).toMatchObject({
+      name: 'Yanma',
+      catalogId: 'hgss4-84',
+    });
+  }, 30_000);
+
   it('reads a short line with runs of spaces or tabs between its words at once, and as one spaced singly', () => {
     // Sixteen words, but each gap one more way to split it: v1's pattern
     // took seconds on four spaces a gap.

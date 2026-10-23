@@ -73,9 +73,11 @@ from RK9.
    - With those spent, the route answers 503 `busy` with `Retry-After`.
    - A 429, or Limitless saying none are left, stops every request until its
      window resets.
-   - A failure of Limitless holds the crawl back, longer each time; a 200
-     whose body isn't a list counts as one, as do standings whose rows none
-     read (what is stored keeps answering), and a page of the list refused.
+   - A failure of Limitless holds the crawl back, longer each time;
+     standings whose rows none read count as one (what is stored keeps
+     answering). A page of the list refused, a 200 whose body isn't a list,
+     or a page none of whose events read holds the list alone back the same
+     way, said as a failure each time: standings are read meanwhile.
    - A tournament whose read fails is retried an hour later, then two, and
      then left to players opening it. A player's read that fails while the
      event may still be running, before the crawl's next try is due, or once

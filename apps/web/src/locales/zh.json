@@ -2142,6 +2142,11 @@
     "message": "Done",
     "translation": "完成"
   },
+  "8Gsx4j": {
+    "message": "Done",
+    "context": "finished",
+    "translation": "完成"
+  },
   "BDC29J": {
     "message": "Double-click <0>{0}</0> in your hand to read it.",
     "translation": "在手牌中双击<0>{0}</0>查看。"
