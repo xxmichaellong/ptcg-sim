@@ -145,6 +145,38 @@ describe('table layout: the app bar corner (ADR-036)', () => {
     }
   });
 
+  it('starts the near hand past its markers where they lie side by side, on an upright phone', () => {
+    // VSTAR's and GX's buttons side by side: 6px in, 87 and 68 wide, 4 apart.
+    const markersEnd = 6 + 87 + 4 + 68;
+    for (const [width, height] of [
+      [360, 780],
+      [375, 667],
+      [390, 844],
+      [412, 915],
+      [430, 932],
+    ] as const) {
+      const snapshot = createTableLayoutSnapshot(
+        stateAt(width, height, {
+          shellMode: 'fullscreen',
+          appBarPx: BAR,
+          seamBandPx: 42,
+          oncePerGameMarkers: 2,
+        })
+      );
+      const near = snapshot.players.find(
+        (player) => player.physicalSide === 'lower'
+      )!;
+      const hand = region(snapshot, 'local', 'hand').physicalDeclaredBounds;
+      const at = `${String(width)}x${String(height)}`;
+      // Too short to stack them: the chrome lays them side by side.
+      expect(hand.height, at).toBeLessThan(104);
+      expect(hand.x - near.frameBounds.x, at).toBeGreaterThanOrEqual(
+        markersEnd
+      );
+      expect(hand.width, at).toBeGreaterThan(100);
+    }
+  });
+
   it('keeps the far board rows on the shortest tables, and builds their scene', () => {
     const view: MatchViewState = createRendererSpikeView();
     for (const width of [320, 568, 740, 800, 844, 1280]) {

@@ -772,8 +772,17 @@ const layoutHalfPortrait = (
         height: MARKER_ROW_PX,
       }
     : cornerPastBar(pastBar, markerCount, handTop, handStrip, width - edge);
+  // On the near side the corner is the hand strip's own: too short to
+  // stack its markers (a phone), they lie side by side, wider than it.
+  const nearCorner =
+    pastBar === 0 &&
+    markerCount > 0 &&
+    handStrip < TABLE_CONTROL_CORNER_HEIGHT_PX
+      ? 16 + markerCount * COMPACT_CORNER_MARKER_PX
+      : 0;
   const handStart = Math.max(
     TABLE_CONTROL_CORNER_PX,
+    nearCorner,
     corner && !markersBelowBar ? corner.x + corner.width : pastBar
   );
   // Below the bar, the markers' row lies between the hand and the piles.
