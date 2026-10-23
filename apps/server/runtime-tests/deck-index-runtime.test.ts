@@ -6,6 +6,9 @@ import {
 } from 'cloudflare:test';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { ListedTournament } from '../src/deck-index/parse.js';
+import { DeckIndexStore, type SqlValue } from '../src/deck-index/store.js';
+
 const DAY = 24 * 60 * 60 * 1000;
 const TOURNAMENT = 'bbbbbbbbbbbbbbbbbbbbbbbb';
 const indexStub = () => env.PTCG_DECK_INDEX.getByName('index');
@@ -194,5 +197,89 @@ describe('the tournament deck index', () => {
     expect(post.status).toBe(405);
     expect(calls).toEqual([]);
     expect(await alarmAt()).toBeNull();
+  });
+});
+
+describe('the rows the deck index writes', () => {
+  it('writes nothing for a page of the list that comes round unchanged, and a few rows a player for standings', async () => {
+    const stub = env.PTCG_DECK_INDEX.getByName('rows written');
+    await runInDurableObject(stub, async (_instance, state) => {
+      // The Durable Object's own SQL, counting rows written as billed
+      // (an index entry is a row too).
+      let written = 0;
+      const storage = {
+        sql: {
+          exec<T extends Record<string, SqlValue>>(
+            query: string,
+            ...bindings: SqlValue[]
+          ) {
+            const cursor = state.storage.sql.exec<T>(query, ...bindings);
+            const rows = cursor.toArray();
+            written += cursor.rowsWritten;
+            return { toArray: () => rows };
+          },
+        },
+        transaction: <T>(body: () => T): T =>
+          state.storage.transactionSync(body),
+      };
+      const store = new DeckIndexStore(storage);
+      store.migrate();
+      const now = Date.now();
+      const page = Array.from({ length: 1000 }, (_, n): ListedTournament => ({
+        id: `c${n.toString(16).padStart(23, '0')}`,
+        name: `Weekly Cup ${String(n)}`,
+        date: now - DAY - n * 60_000,
+        format: 'STANDARD',
+        players: 32,
+        organizerId: null,
+        indexable: true,
+      }));
+      const writes = (body: () => void): number => {
+        const before = written;
+        body();
+        return written - before;
+      };
+      const listed = writes(() => store.recordListed(page, now));
+      expect(listed).toBeGreaterThan(1000);
+      expect(writes(() => store.recordListed(page, now))).toBe(0);
+      const renamed = [{ ...page[0]!, name: 'Weekly Cup, renamed' }];
+      expect(writes(() => store.recordListed(renamed, now))).toBeLessThan(20);
+
+      // A 64-player event, every list its own, eight decks.
+      const entries = Array.from({ length: 64 }, (_, n) => ({
+        playerId: `player-${String(n)}`,
+        name: `Player ${String(n)}`,
+        country: 'US',
+        placing: n + 1,
+        wins: 5,
+        losses: 2,
+        ties: 0,
+        dropped: false,
+        archetype: {
+          id: `deck-${String(n % 8)}`,
+          name: `Deck ${String(n % 8)}`,
+          icons: ['dragapult'],
+        },
+        list: `4 Dreepy TWM 128\n56 Psychic Energy MEE 13\n# ${String(n)}`,
+      }));
+      const hashes = new Map(
+        entries.map((entry, n) => [
+          entry.list,
+          n.toString(16).padStart(64, '0'),
+        ])
+      );
+      const read = { now, etag: null, provisional: false };
+      const standings = writes(() =>
+        store.recordStandings(page[1]!.id, entries, hashes, read)
+      );
+      const again = writes(() =>
+        store.recordStandings(page[1]!.id, entries, hashes, read)
+      );
+      console.log(
+        `rows written: a new page of 1,000 events ${String(listed)}; 64 standings ${String(standings)} first, ${String(again)} read again`
+      );
+      expect(standings).toBeLessThan(64 * 8);
+      expect(again).toBeLessThan(64 * 8);
+    });
   });
 });

@@ -918,6 +918,37 @@ describe('browsing tournaments', () => {
   });
 });
 
+describe('a tournament not started yet', () => {
+  it('stays off the list and unread until it starts, then shows as any other', async () => {
+    limitless.tournaments = [
+      tournament(1, { name: 'Finished Cup', date: START - 2 * DAY }),
+      tournament(2, { name: 'Next Week Open', date: START + 5 * DAY }),
+    ];
+    limitless.standings.set(id(1), [standing('first', 1, dragapult)]);
+    limitless.standings.set(id(2), [standing('registered', null, null)]);
+    const index = createIndex();
+    await crawl(index, 1);
+    const listed = () =>
+      index
+        .tournaments({
+          q: '',
+          format: null,
+          minimumPlayers: 16,
+          before: null,
+          pageSize: 10,
+        })
+        .tournaments.map((row) => row.name);
+    expect(listed()).toEqual(['Finished Cup']);
+    // Opened by its link, it asks Limitless nothing.
+    expect(await index.tournament(id(2))).toEqual({ kind: 'not_found' });
+    expect(limitless.standingsCalls()).not.toContain(id(2));
+    now = START + 5 * DAY + HOUR;
+    expect(listed()).toEqual(['Next Week Open', 'Finished Cup']);
+    expect((await index.tournament(id(2))).kind).toBe('ok');
+    expect(limitless.standingsCalls()).toContain(id(2));
+  });
+});
+
 describe('a tournament a player opens', () => {
   it('is not found, and stays out of the index, when its format changes while a read of it fails', async () => {
     let format = 'STANDARD';

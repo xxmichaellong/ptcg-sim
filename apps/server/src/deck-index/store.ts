@@ -375,8 +375,11 @@ export class DeckIndexStore {
             );
             continue;
           }
+          // Only a change is written: the newest page comes round every
+          // half hour, nearly all of it as it was (rows written are billed).
           this.sql.exec(
-            'UPDATE tournaments SET name = ?, players = ?, date = ?, format = COALESCE(?, format) WHERE id = ?',
+            `UPDATE tournaments SET name = ?1, players = ?2, date = ?3, format = COALESCE(?4, format)
+             WHERE id = ?5 AND (name IS NOT ?1 OR players IS NOT ?2 OR date IS NOT ?3 OR (?4 IS NOT NULL AND format IS NOT ?4))`,
             row.name,
             row.players,
             row.date,
@@ -896,7 +899,8 @@ export class DeckIndexStore {
 
   /**
    * Tournaments worth listing, newest first, after `before` (a date and an
-   * id, for paging), matching an optional name search.
+   * id, for paging), matching an optional name search. One that hasn't
+   * started by `now` (players still registering) has nothing to show yet.
    */
   listTournaments(query: {
     readonly terms: readonly string[];
@@ -904,9 +908,14 @@ export class DeckIndexStore {
     readonly minimumPlayers: number;
     readonly before: { readonly date: number; readonly id: string } | null;
     readonly limit: number;
+    readonly now: number;
   }): TournamentRow[] {
-    const conditions = [`t.state != 'skipped'`, 't.players >= ?'];
-    const bindings: SqlValue[] = [query.minimumPlayers];
+    const conditions = [
+      `t.state != 'skipped'`,
+      't.players >= ?',
+      't.date <= ?',
+    ];
+    const bindings: SqlValue[] = [query.minimumPlayers, query.now];
     if (query.format) {
       conditions.push('t.format = ?');
       bindings.push(query.format);

@@ -563,10 +563,16 @@ export class DeckIndex {
     | { readonly kind: 'busy'; readonly retryAfterMs: number }
   > {
     const tournament = this.store.tournament(id);
-    if (!tournament || tournament.state === 'skipped') {
+    const now = this.deps.now();
+    // Skipped (its format's lists aren't kept), or not started yet: no
+    // standings to read, and none worth a request.
+    if (
+      !tournament ||
+      tournament.state === 'skipped' ||
+      tournament.date > now
+    ) {
       return { kind: 'not_found' };
     }
-    const now = this.deps.now();
     const young = now - tournament.date < 24 * HOUR_MS;
     const read =
       tournament.state === 'indexed' ||
@@ -676,6 +682,7 @@ export class DeckIndex {
       minimumPlayers: query.minimumPlayers,
       before: query.before,
       limit: query.pageSize + 1,
+      now: this.deps.now(),
     });
     const page = rows.slice(0, query.pageSize);
     const last = page.at(-1);

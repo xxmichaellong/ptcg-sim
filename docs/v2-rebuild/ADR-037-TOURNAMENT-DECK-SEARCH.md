@@ -108,10 +108,12 @@ from RK9.
      repeat nor drop out between pages. A cursor the server refuses (one
      from before an update) starts the list over from its first page.
    - `GET /v2/tournaments?q=&format=&minPlayers=&cursor=`: newest first, 50
-     a page, by name. `hasLists` is null until the standings are read, and
-     `organizer` is null (naming it would cost a request per event).
+     a page, by name, from events that have started (one still registering
+     has nothing to show). `hasLists` is null until the standings are read,
+     and `organizer` is null (naming it would cost a request per event).
    - `GET /v2/tournaments/<id>`: standings by placing, those who dropped
-     without one last, with a link to the source. Cached a day once the event
+     without one last, with a link to the source. Not found before the event
+     starts, and not read for it. Cached a day once the event
      is over a day old and read after it ended, otherwise five minutes (an
      event under a day old is read again when asked after five minutes).
      Standings read while an event may still be running show only here: no
@@ -150,5 +152,12 @@ from RK9.
   - A `LIMITLESS_API_KEY` secret, when set, gives the index its own bucket.
 - Storage grows to some hundreds of megabytes over the whole history: lists
   are kept once each, about 600 bytes apiece.
+- Rows written, as Durable Objects bill them (index entries count), measured
+  in workerd (`deck-index-runtime.test.ts`): 5 per event listed, about 5 per
+  player for an event's first standings and 4 for a re-read, none for a page
+  of the list that comes round unchanged. History is a few million rows, up
+  to about 1.4 million a day while the crawl catches up: well within Workers
+  Paid, far over the Free plan's 100,000 a day, which the whole account
+  shares. On a Free account the index stays off (`DECK_INDEX_SOURCE`).
 - `current-decks.ts` and the index share `limitless.ts` (bounded fetch,
   rate-limit header, decklist text). ADR-029's feed is unchanged.
