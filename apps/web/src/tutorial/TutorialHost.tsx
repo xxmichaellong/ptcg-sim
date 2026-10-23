@@ -17,6 +17,7 @@ import {
   useState,
   useSyncExternalStore,
 } from 'react';
+import { createPortal } from 'react-dom';
 
 import { useHotkeyHints } from '../hotkeys/hotkey-preferences.js';
 import { motionSettings } from '../motion/motion-settings.js';
@@ -430,6 +431,14 @@ export const TutorialHost = ({
   // The lesson list and the deal's card also step aside while the practice
   // table reconnects or has failed: its own banner (Reconnect) shows then.
   const overlaysHidden = covered || screen.palette || state.phase !== 'ready';
+  const announcement = playing?.done
+    ? t`Done`
+    : playing && step && world && !hidden
+      ? step.text(world)
+      : null;
+  const paletteAnnouncer = screen.palette
+    ? document.querySelector<HTMLElement>('[data-palette-announcer]')
+    : null;
   // Measured through a step's done moment too, so the coach stays put.
   const measuring = Boolean(playing && !hidden);
   const rects = useTargetRects(targets, measuring);
@@ -563,14 +572,14 @@ export const TutorialHost = ({
         />
       ) : null}
       {/* Read out each step as it comes, and each done: one region that
-          is always there, so the first step is read too. */}
+          is always there, so the first step is read too. The palette is a
+          modal window, past which a screen reader hears nothing: while it
+          is open, its own region (there, empty, from its first frame) reads
+          them out. */}
       <div className="ds-visually-hidden" role="status" aria-live="polite">
-        {playing?.done
-          ? t`Done`
-          : playing && step && world && !hidden
-            ? step.text(world)
-            : null}
+        {paletteAnnouncer ? null : announcement}
       </div>
+      {paletteAnnouncer ? createPortal(announcement, paletteAnnouncer) : null}
     </>
   );
 };

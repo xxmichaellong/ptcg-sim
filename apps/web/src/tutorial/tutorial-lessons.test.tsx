@@ -156,8 +156,21 @@ describe('the tutorial’s lessons', () => {
     ).toContain('<kbd>Ctrl+Shift+B</kbd>');
     const off = world({ keys: () => undefined });
     expect(text(bench, off)).not.toContain('<kbd>');
-    expect(text(keys.steps[1]!, off)).not.toContain('<kbd>');
     expect(text(keys.steps.at(-1)!, off)).toContain('Keyboard shortcuts');
+    // Commands: its default key, `, is a dead key or missing on many
+    // keyboards, so Ctrl+K, which opens it on all, unless the player set
+    // their own.
+    const palette = keys.steps[1]!;
+    expect(text(palette)).toContain('<kbd>Ctrl+K</kbd>');
+    expect(text(palette, off)).toContain('<kbd>Ctrl+K</kbd>');
+    expect(
+      text(
+        palette,
+        world({
+          keys: (action) => (action === 'table.commands' ? 'P' : undefined),
+        })
+      )
+    ).toContain('<kbd>P</kbd>');
   });
 
   it('point a game’s start at a Basic Pokémon, never a Stage', () => {

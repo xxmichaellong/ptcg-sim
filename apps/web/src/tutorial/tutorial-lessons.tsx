@@ -3,6 +3,8 @@ import { msg } from '@lingui/core/macro';
 import { Trans } from '@lingui/react/macro';
 import type { ReactNode } from 'react';
 
+import { chordHint, commandsChordHint, parseChord } from '../hotkeys/chords.js';
+import { hotkeyAction } from '../hotkeys/hotkey-catalogue.js';
 import { TUTORIAL_CARDS, type TutorialCardKey } from './tutorial-cards.js';
 import { controlLabel } from './tutorial-labels.js';
 import {
@@ -23,6 +25,12 @@ import {
   type InputMode,
   type TutorialWorld,
 } from './tutorial-world.js';
+
+/** The palette's own key as the shortcuts sheet shows it, by default. */
+const DEFAULT_COMMANDS_KEY = chordHint(
+  parseChord(hotkeyAction('table.commands').defaultChord)!,
+  'other'
+);
 
 /**
  * The tutorial's lessons (ADR-038): each a few steps on its own starting
@@ -466,7 +474,7 @@ const damage: TutorialLesson = {
     {
       id: 'sixty',
       text: () => (
-        <Trans comment="60 is the damage on the Pokémon, not a number of cards">
+        <Trans comment="60 is the damage on the Pokémon, not a number of cards; + is the button on screen, not a keyboard key">
           Set the damage to <strong>60</strong>: type it, or press{' '}
           <strong>+</strong>.
         </Trans>
@@ -784,7 +792,13 @@ const keys: TutorialLesson = {
     {
       id: 'palette',
       text: (world) => {
-        const key = world.keys('table.commands');
+        // Its default key, `, is a dead key on German, French or Spanish
+        // keyboards and missing on Italian ones: Ctrl+K opens it on all.
+        const own = world.keys('table.commands');
+        const key =
+          own !== undefined && own !== DEFAULT_COMMANDS_KEY
+            ? own
+            : commandsChordHint();
         return key ? (
           <Trans>
             Press <kbd>{key}</kbd> for{' '}

@@ -113,7 +113,7 @@ card has gone says so, with "Start the lesson over".
   - The coach is a non-modal dialog named by its lesson; a lesson started from the list gives it the focus.
   - Each step, the first too, is announced politely from one live region that is always on the page.
   - The keyboard is never trapped.
-- **Layering:** the coach lies over the table and the command palette (a lesson is read while the palette is open); the lesson list, the deal and the done card step aside for the palette. All of it hides under the deck screen and sheets. The deal and the done card can each be left.
+- **Layering:** the coach lies over the table and the command palette (a lesson is read while the palette is open, its steps read out from inside the palette, a modal window a screen reader hears nothing past); the lesson list, the deal and the done card step aside for the palette. All of it hides under the deck screen and sheets. The deal and the done card can each be left.
 - **Wording follows the hand:** it starts from the pointer the screen reports, then follows whichever was last used. "Double-click" becomes "Tap, then Read", and "Right-click" becomes "Tap, then Actions". The keys lesson is offered only with a keyboard; touch screens get Commands instead.
 
 ### 5. Ways in

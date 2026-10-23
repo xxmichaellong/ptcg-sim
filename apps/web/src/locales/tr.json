@@ -4585,9 +4585,9 @@
   "OM2HHP": {
     "message": "Set the damage to <0>60</0>: type it, or press <1>+</1>.",
     "comments": [
-      "60 is the damage on the Pokémon, not a number of cards"
+      "60 is the damage on the Pokémon, not a number of cards; + is the button on screen, not a keyboard key"
     ],
-    "translation": "Hasarı <0>60</0> olarak ayarla: yaz ya da <1>+</1> tuşuna bas."
+    "translation": "Hasarı <0>60</0> olarak ayarla: yaz ya da <1>+</1> düğmesine bas."
   },
   "DBL0AT": {
     "message": "Set up",

@@ -298,6 +298,32 @@ describe('the translate script', () => {
     }
   });
 
+  it("calls the damage controls' + a button, never a keyboard key", async () => {
+    const source = await readCatalog('en');
+    const [id] =
+      Object.entries(source).find(([, entry]) =>
+        entry.message?.startsWith('Set the damage to <0>60</0>')
+      ) ?? [];
+    assert.ok(id);
+    // The word each language uses for a key on the keyboard.
+    const keyWords: Readonly<Record<string, RegExp>> = {
+      ko: /키/u,
+      tr: /tuş/iu,
+      de: /taste/iu,
+      fr: /touche/iu,
+      es: /tecla/iu,
+      it: /tasto/iu,
+      pt: /tecla/iu,
+      ja: /キー/u,
+      zh: /键/u,
+      ru: /клавиш/iu,
+    };
+    for (const [locale, word] of Object.entries(keyWords)) {
+      const translation = (await readCatalog(locale))[id]?.translation ?? '';
+      assert.ok(!word.test(translation), `${locale}: "${translation}"`);
+    }
+  });
+
   it('keeps out a note its glossary gives with a term', () => {
     let notes = 0;
     for (const [locale, guide] of Object.entries(LANGUAGE_GUIDES))

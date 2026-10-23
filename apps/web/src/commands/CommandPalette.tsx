@@ -723,6 +723,15 @@ export const CommandPalette = ({
         aria-label={t`Commands`}
         data-command-palette=""
       >
+        {/* For what goes on outside, read out past this modal window (a
+            tutorial's steps, ADR-038): there from the first frame, so what
+            is put in it is read. */}
+        <div
+          className="ds-visually-hidden"
+          role="status"
+          aria-live="polite"
+          data-palette-announcer=""
+        />
         <div className="ptcgsim-command-palette__search">
           <MagnifyingGlassIcon
             weight="bold"

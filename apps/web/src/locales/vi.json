@@ -4585,7 +4585,7 @@
   "OM2HHP": {
     "message": "Set the damage to <0>60</0>: type it, or press <1>+</1>.",
     "comments": [
-      "60 is the damage on the Pokémon, not a number of cards"
+      "60 is the damage on the Pokémon, not a number of cards; + is the button on screen, not a keyboard key"
     ],
     "translation": "Đặt sát thương thành <0>60</0>: nhập số hoặc nhấn <1>+</1>."
   },

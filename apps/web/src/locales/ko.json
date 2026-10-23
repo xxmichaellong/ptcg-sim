@@ -4585,9 +4585,9 @@
   "OM2HHP": {
     "message": "Set the damage to <0>60</0>: type it, or press <1>+</1>.",
     "comments": [
-      "60 is the damage on the Pokémon, not a number of cards"
+      "60 is the damage on the Pokémon, not a number of cards; + is the button on screen, not a keyboard key"
     ],
-    "translation": "데미지를 <0>60</0>으로 설정하세요. 직접 입력하거나 <1>+</1> 키를 누르세요."
+    "translation": "데미지를 <0>60</0>으로 설정하세요. 직접 입력하거나 <1>+</1> 버튼을 누르세요."
   },
   "DBL0AT": {
     "message": "Set up",

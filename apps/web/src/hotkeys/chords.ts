@@ -345,5 +345,23 @@ export const chordHint = (
       ].join('+');
 };
 
+/**
+ * Ctrl+K, ⌘K on a Mac: opens the command palette on every keyboard, by
+ * its letter or its place, besides the palette's own key (keymap.ts).
+ */
+export const commandsChordHint = (
+  platform: KeyboardPlatform = detectKeyboardPlatform()
+): string =>
+  chordHint(
+    {
+      key: 'k',
+      ctrl: platform !== 'mac',
+      alt: false,
+      shift: false,
+      meta: platform === 'mac',
+    },
+    platform
+  );
+
 export const MODIFIERS = MODIFIER_ORDER;
 export type Modifier = (typeof MODIFIER_ORDER)[number];
