@@ -245,6 +245,19 @@ describe('placing the rail', () => {
     host.remove();
   });
 
+  it('leads a button’s name with its label where its title doesn’t say it', () => {
+    const markup = render({
+      width: 1400,
+      actions: [
+        action('passButton', 1, { label: 'Passen', title: 'Zug beenden' }),
+        action('coinButton', 2, { label: 'Coin', title: 'Flip a coin' }),
+      ],
+      more: [],
+    });
+    expect(markup).toContain('aria-label="Passen: Zug beenden"');
+    expect(markup).toContain('aria-label="Flip a coin"');
+  });
+
   it('stays before a Stadium at the right edge', () => {
     const markup = render({
       width: 400,

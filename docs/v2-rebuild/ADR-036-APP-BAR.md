@@ -50,7 +50,11 @@ and closed along the rail, and its preference, are gone.
 
 The log's newest lines, shown for a few seconds while it is closed, drop
 below the bar at its right edge. It is a toolbar: the arrow keys move
-between its buttons. What else opens at the top keeps below it
+between its buttons once the player is moving by keyboard (a button a click
+left focused hands them on to a selected card), as on the rail. A rail
+button's tooltip and spoken name lead with its label wherever its title
+doesn't say it ("Passen: Zug beenden"), so a lesson naming the label finds
+it. What else opens at the top keeps below it
 (`--app-bar-clearance`): the log opened over the table on a tablet, and the
 table's banners (Connection lost, a failed start), which on a phone are as
 wide as the bar's row.

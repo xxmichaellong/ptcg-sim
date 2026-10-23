@@ -107,10 +107,20 @@ export const RailButton = forwardRef<
 
 /**
  * A toolbar of rail buttons (the rail, the app bar): the arrow keys move
- * between its buttons, and the table never sees them.
+ * between its buttons, and the table never sees them -- once the player is
+ * moving by keyboard. A button a click left focused hands them on, to a
+ * selected card's moves.
  */
 export const moveAlongToolbar = (event: ReactKeyboardEvent<HTMLElement>) => {
   if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+  if (!(event.target instanceof HTMLElement)) return;
+  let byKeyboard = true;
+  try {
+    byKeyboard = event.target.matches(':focus-visible');
+  } catch {
+    // A browser without :focus-visible moves along.
+  }
+  if (!byKeyboard) return;
   const buttons = Array.from(
     event.currentTarget.querySelectorAll<HTMLButtonElement>(
       'button.ptcgsim-rail-button'
@@ -362,6 +372,20 @@ export const TableRail = memo(function TableRail({
   seat = 'you',
 }: TableRailProps) {
   const { t } = useLingui();
+  // What a button is called: its title, led by its label where the title
+  // doesn't say it ("Passen: Zug beenden"), so a lesson or the welcome
+  // naming the label finds the button by its tooltip and its spoken name.
+  const nameOf = (label: string, title: string | undefined): string =>
+    !title || title.toLocaleLowerCase().includes(label.toLocaleLowerCase())
+      ? (title ?? label)
+      : t({
+          message: `${label}: ${title}`,
+          comment: "A table button's name: its short label, then what it does",
+        });
+  const moreName = nameOf(
+    t({ message: 'More', context: 'more actions' }),
+    t`More game actions`
+  );
   // The side last drawn, and whether a slide under way has moved it: the
   // table's shape blips mid-slide, and the actions would cross the Stadium
   // and back.
@@ -435,14 +459,19 @@ export const TableRail = memo(function TableRail({
         {fitted.shown.map((action) => (
           <Tooltip
             key={action.id}
-            content={withKeyHint(action.title ?? action.label, action.hint)}
+            content={withKeyHint(
+              nameOf(action.label, action.title),
+              action.hint
+            )}
             side="top"
           >
             <RailButton
               id={action.id}
               icon={action.icon}
               label={action.label}
-              {...(action.title ? { 'aria-label': action.title } : {})}
+              {...(action.title
+                ? { 'aria-label': nameOf(action.label, action.title) }
+                : {})}
               primary={action.primary === true}
               pending={action.pending === true}
               onClick={action.onSelect}
@@ -451,11 +480,11 @@ export const TableRail = memo(function TableRail({
         ))}
         {fitted.more.length > 0 ? (
           <ActionMenu
-            label={t`More game actions`}
+            label={moreName}
             entries={fitted.more}
             side="top"
             align="start"
-            tooltip={t`More game actions`}
+            tooltip={moreName}
             trigger={
               <RailButton
                 id="moreActionsButton"

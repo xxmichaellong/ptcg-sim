@@ -175,6 +175,13 @@ describe('AppBar', () => {
     await arrow('ArrowLeft');
     // Round from the first to the last.
     expect(document.activeElement?.id).toBe('appMenuButton');
+    // Left focused by a click, a button hands the arrows on (to the table).
+    const menu = document.activeElement as HTMLElement;
+    const matches = menu.matches.bind(menu);
+    menu.matches = (selector: string) =>
+      selector === ':focus-visible' ? false : matches(selector);
+    expect((await arrow('ArrowRight')).defaultPrevented).toBe(false);
+    expect(document.activeElement).toBe(menu);
   });
 
   it('turns the way out round in a right-to-left language, and nothing else', async () => {
