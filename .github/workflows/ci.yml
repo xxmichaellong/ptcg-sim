@@ -285,7 +285,16 @@ jobs:
           path: ~/apt-archives
           key: ${{ steps.apt-archives.outputs.cache-primary-key }}
       - name: Run cross-browser functional regressions
-        run: corepack pnpm run check:cross-browser --project=${{ matrix.browser }}
+        run: |
+          # The runner has gone away mid-run (Firefox, "received a shutdown
+          # signal"): its memory every 30 seconds shows whether it ran out.
+          (
+            while true; do
+              free -m | awk 'NR==2 { printf "[memory] %s MiB used of %s, %s available\n", $3, $2, $7 }'
+              sleep 30
+            done
+          ) &
+          corepack pnpm run check:cross-browser --project=${{ matrix.browser }}
       - name: Report flaky tests
         if: ${{ !cancelled() }}
         run: node scripts/report-flaky.mjs test-results/cross-browser/results.json
