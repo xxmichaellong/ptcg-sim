@@ -384,10 +384,13 @@ export class DeckIndex {
               ? {}
               : { retryAfterMs: error.retryAfterMs }),
           });
-        } else if (error.code !== 'not_found') {
+        } else if (error.code !== 'not_found' && kind === 'crawl') {
           this.holdBack();
         }
-      } else {
+      } else if (kind === 'crawl') {
+        // Only the crawl's own failures hold it back: players opening an
+        // event broken for good would otherwise keep it held for as long
+        // as they keep at it.
         this.holdBack();
       }
       throw error;
@@ -538,7 +541,7 @@ export class DeckIndex {
           const run = Number(this.store.getMeta(META.unknownRun) ?? '0') + 1;
           this.store.setMeta(META.unknownRun, String(run));
           if (run > CRAWL_POLICY.unknownBeforeHold) {
-            this.holdBack();
+            if (kind === 'crawl') this.holdBack();
             // Revived with the rest once standings answer: one really gone
             // answers unknown again and is forgotten then.
             this.standingsFailed(tournament.id, this.deps.now(), kind);
@@ -565,7 +568,7 @@ export class DeckIndex {
     if (!Array.isArray(response.body)) {
       // Limitless answering nonsense: the crawl holds back, as for an
       // outage, and the tournament waits for a retry.
-      this.holdBack();
+      if (kind === 'crawl') this.holdBack();
       this.standingsFailed(tournament.id, now, kind);
       return;
     }
@@ -573,7 +576,7 @@ export class DeckIndex {
     if (response.body.length > 0 && entries.length === 0) {
       // Rows, none of them readable (Limitless changed their shape): what
       // is stored keeps answering, the crawl holds back as for nonsense.
-      this.holdBack();
+      if (kind === 'crawl') this.holdBack();
       this.standingsFailed(tournament.id, now, kind);
       return;
     }

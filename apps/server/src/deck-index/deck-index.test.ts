@@ -551,6 +551,50 @@ describe('the request budget', () => {
     );
   });
 
+  it('keeps crawling while players keep opening an event broken for good', async () => {
+    now = START - 6 * HOUR;
+    limitless.tournaments = [
+      tournament(1, { date: START - 2 * DAY }),
+      // Due one by one over the next hour and a half.
+      ...[0, 1, 2, 3, 4, 5].map((k) =>
+        tournament(10 + k, { date: START - 12 * HOUR + k * 15 * MINUTE })
+      ),
+    ];
+    limitless.standings.set(id(1), { broken: true });
+    for (const k of [0, 1, 2, 3, 4, 5]) {
+      limitless.standings.set(id(10 + k), [standing('p', 1, dragapult)]);
+    }
+    const index = createIndex();
+    // Given up on by the crawl.
+    await crawlUntil(index, START);
+    // Its viewers open it every two minutes, each read failing.
+    for (let minute = 0; minute < 2 * 60; minute += 2) {
+      await crawlUntil(index, START + minute * MINUTE);
+      await index.tournament(id(1));
+    }
+    await crawlUntil(index, START + 2 * HOUR);
+    const read = limitless.standingsCalls();
+    for (const k of [0, 1, 2, 3, 4, 5]) expect(read).toContain(id(10 + k));
+  });
+
+  it('reads an event read while it ran, given up on since, once in a few minutes for its viewers', async () => {
+    limitless.tournaments = [tournament(1, { date: START - 2 * HOUR })];
+    limitless.standings.set(id(1), [standing('p', 1, dragapult)]);
+    const index = createIndex();
+    await crawl(index, 1);
+    await index.tournament(id(1));
+    limitless.failStandings = 1_000;
+    // The crawl's tries after it ends fail: it is left as read.
+    await crawlUntil(index, START + 14 * HOUR);
+    const before = limitless.standingsCalls().length;
+    // Forty opens in two minutes while it is under a day old.
+    for (let open = 0; open < 40; open += 1) {
+      now = START + 14 * HOUR + open * 3_000;
+      await index.tournament(id(1));
+    }
+    expect(limitless.standingsCalls().length - before).toBeLessThanOrEqual(1);
+  });
+
   it('tries again, after a run of unknowns, the events given up on during it', async () => {
     limitless.tournaments = [1, 2, 3, 4, 5].map((n) =>
       tournament(n, { date: START - 2 * DAY - n * HOUR })

@@ -675,8 +675,16 @@ export class DeckIndexStore {
     // Skipped while it was read: it stays out of the crawl.
     if (!row || row.state === 'skipped') return;
     // Given up on by the crawl, an event a player opens spends none of its
-    // tries, which an outage's revival counts on, and keeps its resync.
+    // tries, which an outage's revival counts on. One read while running
+    // still waits a few minutes before players read it again.
     if (byPlayer && (row.state === 'failed' || row.state === 'unconfirmed')) {
+      if (row.state === 'unconfirmed') {
+        this.sql.exec(
+          'UPDATE tournaments SET fetched_at = ? WHERE id = ?',
+          now,
+          tournamentId
+        );
+      }
       return;
     }
     // The tries are for reading it once it is over, when the crawl is due
