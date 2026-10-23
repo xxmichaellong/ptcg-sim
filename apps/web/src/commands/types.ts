@@ -60,6 +60,16 @@ export interface PaletteCommand {
    * and English words, so they work in every language.
    */
   readonly keywords?: readonly string[];
+  /**
+   * Its other names, matched as its title is: a table button's own label
+   * ("Passen" for Pass the turn), which the lessons call it by.
+   */
+  readonly aliases?: readonly string[];
+  /**
+   * Ranked a little below its peers: a lesson, which may share its name
+   * with the action it teaches ("Turns").
+   */
+  readonly demoted?: boolean;
   readonly icon?: Icon;
   /** A picture in the icon's place: a card's own face. */
   readonly image?: { readonly src: string; readonly fallback?: string };

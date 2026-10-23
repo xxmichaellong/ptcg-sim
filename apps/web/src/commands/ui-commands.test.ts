@@ -84,6 +84,49 @@ describe('railCommands', () => {
   });
 });
 
+describe('a button and a lesson by one name', () => {
+  it('runs the button first: its label counts as its title, and a lesson ranks below', () => {
+    const icon = (() => null) as never;
+    const rail = railCommands(
+      {
+        actions: [
+          // Chinese: the Turn button's label is the Turns lesson's title.
+          {
+            id: 'turnButton',
+            label: '回合',
+            title: '开始回合',
+            icon,
+            onSelect: noop,
+          },
+          {
+            id: 'flipBoardButton',
+            label: 'Flip',
+            title: 'Flip the table',
+            icon,
+            onSelect: noop,
+          },
+        ],
+      },
+      { replaying: false }
+    );
+    const lessons = tutorialLessonCommands(
+      [{ id: 'turns', title: '回合' }],
+      noop
+    );
+    const coin = {
+      id: 'coin.flip',
+      title: 'Flip a coin',
+      section: 'table' as const,
+      run: noop,
+    };
+    const first = (query: string) =>
+      rankCommands(flattenCommands([...lessons, coin, ...rail]), query, [])[0]
+        ?.entries[0]?.entry.command.id;
+    expect(first('回合')).toBe('rail.turn');
+    expect(first('Flip')).toBe('rail.flipBoard');
+  });
+});
+
 describe('tutorial lessons in the palette', () => {
   const found = (query: string): string[] => {
     const lessons = tutorialLessonCommands(

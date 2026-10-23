@@ -564,6 +564,9 @@ export const DeckScreen = ({
   // deck, after its import for a list) sends it on its way.
   const mainRevision = seats.slots.main.revision;
   const alternateRevision = seats.slots.alternate.revision;
+  // A list landing after the screen has closed goes on its seat unflown.
+  const openNow = useRef(open);
+  openNow.current = open;
   const lastRevisions = useRef({
     main: mainRevision,
     alternate: alternateRevision,
@@ -587,7 +590,9 @@ export const DeckScreen = ({
       const tray = document.querySelector<HTMLElement>(
         `#${pick.seat === 'main' ? 'nativeDeckBuilderTargetMain' : 'nativeDeckBuilderTargetAlt'} .deck-box`
       );
-      if (tray && pick.box.isConnected) flyDeckBox(pick.box, tray);
+      if (tray && pick.box.isConnected && openNow.current) {
+        flyDeckBox(pick.box, tray);
+      }
     });
   }, [alternateRevision, mainRevision]);
 

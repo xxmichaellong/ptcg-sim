@@ -66,18 +66,16 @@ const command = (
   },
   run: () => void
 ): PaletteCommand => {
-  const keywords = [
-    ...(meaning.keywords ?? []),
-    ...(extra.label && extra.label !== title ? [extra.label] : []),
-  ];
+  const named = meaning.title ?? title;
   return {
     id,
-    title: meaning.title ?? title,
+    title: named,
     section: meaning.section,
     icon: extra.icon ?? LightningIcon,
     ...(extra.hint ? { hint: extra.hint } : {}),
     ...(extra.detail ? { detail: extra.detail } : {}),
-    ...(keywords.length > 0 ? { keywords } : {}),
+    ...(meaning.keywords ? { keywords: meaning.keywords } : {}),
+    ...(extra.label && extra.label !== named ? { aliases: [extra.label] } : {}),
     ...(meaning.dangerous ? { dangerous: true } : {}),
     run: () => run(),
   };
@@ -296,6 +294,7 @@ export const tutorialLessonCommands = (
       section: 'help',
       icon: GraduationCapIcon,
       detail: tutorial,
+      demoted: true,
       // A search matches one text at a time: "tutorial damage" needs the
       // two together, in English and in the page's language.
       keywords: [

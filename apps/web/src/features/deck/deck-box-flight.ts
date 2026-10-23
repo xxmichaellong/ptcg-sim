@@ -41,7 +41,9 @@ export const flyDeckBox = (box: HTMLElement, tray: HTMLElement): void => {
   });
   ghost.dataset.lifted = 'true';
   ghost.setAttribute('aria-hidden', 'true');
-  document.body.append(ghost);
+  // Inside the screen's layer (no transform there, so still fixed to the
+  // window): it fades and hides with the screen, never over the table.
+  (tray.closest('.ptcgsim-deck-layer') ?? document.body).append(ghost);
   tray.style.visibility = 'hidden';
 
   const scale = to.width / from.width;

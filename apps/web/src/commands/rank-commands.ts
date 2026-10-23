@@ -16,6 +16,7 @@ const MAX_RESULTS = 18;
 const MAX_PER_SECTION = 8;
 const KEYWORD_WEIGHT = 0.9;
 const NESTED_WEIGHT = 0.9;
+const DEMOTED_WEIGHT = 0.9;
 const RECENCY_BOOST_MAX = 8;
 const PROMOTED_BOOST = 20;
 
@@ -85,10 +86,13 @@ const matchScore = (entry: CommandEntry, scorers: Scorers): number => {
     // every language under it.
     best = Math.max(best, score(`${entry.ancestorText} ${command.title}`));
   }
+  for (const alias of command.aliases ?? [])
+    best = Math.max(best, score(alias));
   for (const keyword of command.keywords ?? []) {
     best = Math.max(best, scorers.keyword(keyword) * KEYWORD_WEIGHT);
   }
-  return entry.ancestors.length === 0 ? best : best * NESTED_WEIGHT;
+  const weighed = command.demoted ? best * DEMOTED_WEIGHT : best;
+  return entry.ancestors.length === 0 ? weighed : weighed * NESTED_WEIGHT;
 };
 
 interface Scored {

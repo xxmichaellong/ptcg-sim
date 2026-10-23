@@ -44,4 +44,23 @@ describe('a deck box flying to its tray', () => {
     expect(tray.style.visibility).toBe('');
     expect(document.querySelectorAll('[data-lifted]')).toHaveLength(0);
   });
+
+  it('flies inside the deck screen, so it goes when the screen does', () => {
+    vi.spyOn(motion, 'motionSettings').mockReturnValue({
+      getSnapshot: () => ({ reduced: false, durationScale: 1 }),
+    } as unknown as ReturnType<typeof motion.motionSettings>);
+    HTMLElement.prototype.animate = () => new EventTarget() as Animation;
+    const layer = document.createElement('div');
+    layer.className = 'ptcgsim-deck-layer';
+    document.body.append(layer);
+    const box = (parent: HTMLElement) => {
+      const element = document.createElement('span');
+      element.getBoundingClientRect = () =>
+        ({ left: 10, top: 10, width: 50, height: 70 }) as DOMRect;
+      parent.append(element);
+      return element;
+    };
+    flyDeckBox(box(layer), box(layer));
+    expect(layer.querySelectorAll('[data-lifted]')).toHaveLength(1);
+  });
 });
