@@ -79,11 +79,16 @@ describe('boardCommands', () => {
       i18n.activate('en');
     }
     const loose = commands.filter((command) =>
-      ['board.discardAll', 'board.moveAllToHand', 'board.shuffleAllIntoDeck']
+      [
+        'board.discardAll',
+        'board.moveAllToHand',
+        'board.shuffleAllIntoDeck',
+        'own.moveBoardToLostZone',
+      ]
         .map((id) => `piles.${id}`)
         .includes(command.id)
     );
-    expect(loose).toHaveLength(3);
+    expect(loose).toHaveLength(4);
     for (const command of loose) expect(command.keywords).toContain('盤面');
   });
 

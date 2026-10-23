@@ -463,16 +463,38 @@ describe('the deck screen from the keyboard', () => {
           })
         );
       });
-    // Ctrl+Z on a Cyrillic board.
+    // Ctrl+Z on a Cyrillic board, the layout's Z key (its virtual key).
     add.focus();
-    await key(add, { key: 'я', code: 'KeyZ', ctrlKey: true });
+    await key(add, { key: 'я', code: 'KeyZ', keyCode: 90, ctrlKey: true });
+    expect(pidgeys()).toBe(1);
+    // Redo on a Thai board: Ctrl+Shift+Z types (, Ctrl+Y a vowel mark.
+    await key(add, {
+      key: '(',
+      code: 'KeyZ',
+      keyCode: 90,
+      ctrlKey: true,
+      shiftKey: true,
+    });
+    expect(pidgeys()).toBe(2);
+    await key(add, { key: 'я', code: 'KeyZ', keyCode: 90, ctrlKey: true });
+    expect(pidgeys()).toBe(1);
+    await key(add, { key: 'ั', code: 'KeyY', keyCode: 89, ctrlKey: true });
+    expect(pidgeys()).toBe(2);
+    // Serbian's З (where QWERTY has Y) undoes, as its key says.
+    await key(add, { key: 'з', code: 'KeyY', keyCode: 90, ctrlKey: true });
     expect(pidgeys()).toBe(1);
     await act(async () => add.click());
     // Not the letter: Dvorak's Ctrl+; where QWERTY has Z, or AltGr+Y
     // typing ü (Windows reports AltGr as Ctrl+Alt).
-    await key(add, { key: ';', code: 'KeyZ', ctrlKey: true });
+    await key(add, { key: ';', code: 'KeyZ', keyCode: 186, ctrlKey: true });
     expect(pidgeys()).toBe(2);
-    await key(add, { key: 'ü', code: 'KeyY', ctrlKey: true, altKey: true });
+    await key(add, {
+      key: 'ü',
+      code: 'KeyY',
+      keyCode: 89,
+      ctrlKey: true,
+      altKey: true,
+    });
     expect(pidgeys()).toBe(2);
     // Over the editor, a custom card's window keeps / and Ctrl+Z.
     await act(async () =>

@@ -418,11 +418,11 @@
   },
   "-r4674": {
     "message": "{count, plural, one {Shuffle hand in and draw # card} other {Shuffle hand in and draw # cards}}",
-    "translation": "{count, plural, other {สับการ์ดในมือเข้าสำรับและจั่ว # ใบ}}"
+    "translation": "{count, plural, other {สับการ์ดในมือเข้าเด็คและจั่ว # ใบ}}"
   },
   "aN0Z_E": {
     "message": "{count, plural, one {Shuffle hand to bottom and draw # card} other {Shuffle hand to bottom and draw # cards}}",
-    "translation": "{count, plural, other {สับการ์ดในมือไว้ล่างสำรับและจั่ว # ใบ}}"
+    "translation": "{count, plural, other {สับการ์ดในมือไว้ล่างเด็คและจั่ว # ใบ}}"
   },
   "hMKADB": {
     "message": "{count} × {cardName} ({print}). Details",
@@ -3980,7 +3980,7 @@
   },
   "cF4opC": {
     "message": "Press <0>{0}</0>: it shuffles your deck and deals your hand.",
-    "translation": "กด <0>{0}</0>: สับสำรับและแจกมือของคุณ"
+    "translation": "กด <0>{0}</0>: สับเด็คและแจกมือของคุณ"
   },
   "svdjsQ": {
     "message": "Press <0>{key}</0> any time for every key.",
@@ -4742,7 +4742,7 @@
   },
   "Ad3M_2": {
     "message": "Shuffle all on playboard into deck",
-    "translation": "สับทั้งหมดบนบอร์ดเข้าสำรับ"
+    "translation": "สับทั้งหมดบนบอร์ดเข้าเด็ค"
   },
   "Es4EnS": {
     "message": "Shuffle all to deck",
@@ -4758,7 +4758,7 @@
   },
   "KpMslS": {
     "message": "Shuffle hand into deck and draw…",
-    "translation": "สับการ์ดในมือเข้าสำรับและจั่ว…"
+    "translation": "สับการ์ดในมือเข้าเด็คและจั่ว…"
   },
   "VD_Lux": {
     "message": "Shuffle hand to bottom",
@@ -4795,7 +4795,7 @@
   },
   "nU9Ip_": {
     "message": "Shuffle Prizes to bottom of deck",
-    "translation": "สับการ์ดรางวัลไว้ล่างสำรับ"
+    "translation": "สับการ์ดรางวัลไว้ล่างเด็ค"
   },
   "SRsSL6": {
     "message": "Shuffle to bottom",

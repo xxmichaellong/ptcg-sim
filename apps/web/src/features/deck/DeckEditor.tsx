@@ -96,18 +96,19 @@ export interface DeckEditorProps {
 const OWN_KEYS = '[role="dialog"], [role="menu"], [role="listbox"]';
 
 /**
- * A letter's key: the letter typed, or its place where the layout types a
- * letter of another script there (Ctrl+Z on a Cyrillic board arrives as
- * Ctrl+я). Punctuation in that place (Dvorak's ;) is not the letter.
+ * A letter's key: the letter typed, or, where the layout types something
+ * else there, the letter its layout gives that key (Ctrl+Z on a Cyrillic
+ * board arrives as Ctrl+я, on a Thai one Shift+Z as `(`). That is the key's
+ * virtual key, not its place: Serbian's З sits where QWERTY has Y, and
+ * Dvorak's ; where it has Z.
  */
 const isLetter = (
-  event: Pick<KeyboardEvent, 'key' | 'code'>,
+  event: Pick<KeyboardEvent, 'key' | 'keyCode'>,
   letter: string
 ): boolean =>
   event.key.toLowerCase() === letter ||
-  (/^\p{L}$/u.test(event.key) &&
-    !/^\p{Script=Latin}$/u.test(event.key) &&
-    event.code === `Key${letter.toUpperCase()}`);
+  (!/^\p{Script=Latin}$/u.test(event.key) &&
+    event.keyCode === letter.toUpperCase().charCodeAt(0));
 
 /**
  * One saved deck being built: card search beside the deck, every change
@@ -297,7 +298,7 @@ export const DeckEditor = ({
       | 'altKey'
       | 'shiftKey'
       | 'key'
-      | 'code'
+      | 'keyCode'
       | 'target'
       | 'preventDefault'
     >

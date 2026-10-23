@@ -618,7 +618,7 @@
     "comments": [
       "Log line: a player pressed Set up without a deck. {name} is a player's name."
     ],
-    "translation": "{name} لم يحمّل رزمة"
+    "translation": "{name} لم يحمّل مجموعة"
   },
   "hVtSco": {
     "message": "{name} is looking through {name}'s deck",
@@ -650,7 +650,7 @@
     "comments": [
       "Log line. {name} is a player's name."
     ],
-    "translation": "حمّل {name} رزمة"
+    "translation": "حمّل {name} مجموعة"
   },
   "lcx9nx": {
     "message": "{name} looked at bottom {count, plural, one {# card(s)} other {# card(s)}} of deck",
@@ -825,7 +825,7 @@
   },
   "KQUX02": {
     "message": "{printCount, plural, one {# print · the deck has another one} other {# prints · the deck has another one}}",
-    "translation": "{printCount, plural, one {طبعة واحدة · في الرزمة طبعة أخرى} two {طبعتان · في الرزمة طبعة أخرى} few {# طبعات · في الرزمة طبعة أخرى} many {# طبعة · في الرزمة طبعة أخرى} other {# طبعة · في الرزمة طبعة أخرى}}"
+    "translation": "{printCount, plural, one {طبعة واحدة · في المجموعة طبعة أخرى} two {طبعتان · في المجموعة طبعة أخرى} few {# طبعات · في المجموعة طبعة أخرى} many {# طبعة · في المجموعة طبعة أخرى} other {# طبعة · في المجموعة طبعة أخرى}}"
   },
   "P_bQEX": {
     "message": "{printCount, plural, one {# print} other {# prints}}",
@@ -833,7 +833,7 @@
   },
   "_HI08P": {
     "message": "{printName}, {inDeck} in deck",
-    "translation": "{printName}، {inDeck} في الرزمة"
+    "translation": "{printName}، {inDeck} في المجموعة"
   },
   "huIm_e": {
     "message": "{prints, plural, one {# print} other {# prints}}",
@@ -1043,7 +1043,7 @@
   },
   "9bANS5": {
     "message": "A .txt or .csv deck file",
-    "translation": "ملف دك بصيغة ‎.txt‎ أو ‎.csv"
+    "translation": "ملف مجموعة بصيغة ‎.txt‎ أو ‎.csv"
   },
   "gY2kkN": {
     "message": "A card in it has no picture.",
@@ -1059,7 +1059,7 @@
   },
   "sDYhDt": {
     "message": "A deck needs a name.",
-    "translation": "يحتاج الديك إلى اسم."
+    "translation": "تحتاج المجموعة إلى اسم."
   },
   "qLI-h5": {
     "message": "A whole number from {0} to {1}",
@@ -1171,7 +1171,7 @@
   },
   "ZVI875": {
     "message": "Add to deck",
-    "translation": "أضف إلى الدك"
+    "translation": "أضف إلى المجموعة"
   },
   "V-b1Vx": {
     "message": "Add to the table",
@@ -1612,7 +1612,7 @@
   },
   "IuDYMd": {
     "message": "Cards in deck",
-    "translation": "البطاقات في الدك"
+    "translation": "البطاقات في المجموعة"
   },
   "sIpTuZ": {
     "message": "Change background",
@@ -1689,19 +1689,19 @@
   },
   "PetgPp": {
     "message": "Choose a deck first",
-    "translation": "اختر دك أولًا"
+    "translation": "اختر مجموعة أولًا"
   },
   "Trhamk": {
     "message": "Choose a deck to play",
-    "translation": "اختر دك للعب"
+    "translation": "اختر مجموعة للعب"
   },
   "TvEJEL": {
     "message": "Choose the deck for {slotSeat}",
-    "translation": "اختر الدك لـ {slotSeat}"
+    "translation": "اختر المجموعة لـ {slotSeat}"
   },
   "-sQCd4": {
     "message": "Choose the deck for {slotSeat} (you)",
-    "translation": "اختر الدك لـ {slotSeat} (أنت)"
+    "translation": "اختر المجموعة لـ {slotSeat} (أنت)"
   },
   "5rfWim": {
     "message": "Classics",
@@ -2243,7 +2243,7 @@
   },
   "L0dfTV": {
     "message": "Duplicate deck",
-    "translation": "تكرار الدك"
+    "translation": "تكرار المجموعة"
   },
   "iu7vH9": {
     "message": "e.g. CC or LL",
@@ -2278,7 +2278,7 @@
   },
   "Bd1_Eb": {
     "message": "Edit deck",
-    "translation": "تعديل الدك"
+    "translation": "تعديل المجموعة"
   },
   "1PBKgv": {
     "message": "End",
@@ -3506,11 +3506,11 @@
   },
   "-Qx8U8": {
     "message": "No deck",
-    "translation": "بلا دك"
+    "translation": "بلا مجموعة"
   },
   "LDI00D": {
     "message": "No deck yet",
-    "translation": "لا يوجد دك بعد"
+    "translation": "لا توجد مجموعة بعد"
   },
   "ATYqaZ": {
     "message": "No decks match “{query}”",
@@ -3705,7 +3705,7 @@
   },
   "tG9S9l": {
     "message": "Open a deck file",
-    "translation": "فتح ملف دك"
+    "translation": "فتح ملف مجموعة"
   },
   "9npOH9": {
     "message": "Open file",
@@ -3741,7 +3741,7 @@
   },
   "aiCxFx": {
     "message": "Open your deck",
-    "translation": "افتح الدك الخاص بك"
+    "translation": "افتح مجموعتك"
   },
   "mr-o_0": {
     "message": "Open your discard pile",
@@ -3761,7 +3761,7 @@
   },
   "oLQoOZ": {
     "message": "Opening your decks…",
-    "translation": "جارٍ فتح الدكات…"
+    "translation": "جارٍ فتح مجموعاتك…"
   },
   "-jst3h": {
     "message": "Opens this list",
@@ -4696,15 +4696,15 @@
   },
   "NQ5xRS": {
     "message": "Show the deck as",
-    "translation": "عرض الرزمة على شكل"
+    "translation": "عرض المجموعة على شكل"
   },
   "8s0egM": {
     "message": "Show the deck as images",
-    "translation": "عرض الرزمة كصور"
+    "translation": "عرض المجموعة كصور"
   },
   "KaxFxU": {
     "message": "Show the deck as list",
-    "translation": "عرض الرزمة كقائمة"
+    "translation": "عرض المجموعة كقائمة"
   },
   "mQ7C1m": {
     "message": "Show the keys for",
@@ -5201,7 +5201,7 @@
   },
   "Hq1N2b": {
     "message": "The deck didn't go on the table",
-    "translation": "لم يوضع الديك على الطاولة"
+    "translation": "لم توضع المجموعة على الطاولة"
   },
   "BUcC-2": {
     "message": "The deck file has more than {max} rows.",
@@ -5221,7 +5221,7 @@
   },
   "vnQ-9_": {
     "message": "The deck lists didn't load.",
-    "translation": "لم يتم تحميل قوائم الديكات."
+    "translation": "لم يتم تحميل قوائم المجموعات."
   },
   "kuSCwh": {
     "message": "The deck screen didn't load. Your game carries on.",
@@ -5648,7 +5648,7 @@
   },
   "EydT-n": {
     "message": "Unknown deck",
-    "translation": "ورقة غير معروفة"
+    "translation": "مجموعة غير معروفة"
   },
   "PjF2oq": {
     "message": "Unlimited",
@@ -5657,7 +5657,7 @@
   },
   "tSfJNm": {
     "message": "Unsaved deck",
-    "translation": "بنية غير محفوظة"
+    "translation": "مجموعة غير محفوظة"
   },
   "5Gx011": {
     "message": "Unstack copies",
@@ -5665,7 +5665,7 @@
   },
   "-qi9QY": {
     "message": "Untitled deck",
-    "translation": "بنية بلا عنوان"
+    "translation": "مجموعة بلا عنوان"
   },
   "aS5ttr": {
     "message": "Use background",
@@ -5694,7 +5694,7 @@
   },
   "8ZgYGP": {
     "message": "Use this print for the {deckCopies} in the deck",
-    "translation": "استخدم هذه الطبعة لـ {deckCopies} في البنية"
+    "translation": "استخدم هذه الطبعة لـ {deckCopies} في المجموعة"
   },
   "9c8BhN": {
     "message": "Use VSTAR Power",

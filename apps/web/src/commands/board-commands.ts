@@ -879,7 +879,12 @@ export const boardCommands = (
                 action: 'moveBoardToLostZone',
                 title: t`Move all on playboard to Lost Zone`,
                 icon: SparkleIcon,
-                keywords: ['lost zone', 'board', 'all'],
+                keywords: [
+                  'lost zone',
+                  'board',
+                  'all',
+                  t({ message: 'Board', context: 'zone on the table' }),
+                ],
               },
             ]
           : [],
