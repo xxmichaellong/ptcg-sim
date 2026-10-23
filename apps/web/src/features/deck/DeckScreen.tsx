@@ -627,8 +627,6 @@ export const DeckScreen = ({
       const text = event.clipboardData?.getData('text/plain') ?? '';
       if (!text.trim()) return;
       event.preventDefault();
-      // No box was picked for this: none flies with what it puts on a seat.
-      picked.current = undefined;
       // In the editor a paste is always a list, imported as any is (a new
       // deck on the seat, ADR-033 §9), never a name for the decks' finder.
       if (viewKind !== 'edit' && finderMode(text) === 'search') {
@@ -655,6 +653,9 @@ export const DeckScreen = ({
         requestAnimationFrame(showFinder);
         return;
       }
+      // No box was picked for this list: none flies with it. (A name only
+      // looks a deck up, and leaves a Try still loading its box.)
+      picked.current = undefined;
       void runImport(text, { kind: 'paste' });
     };
     document.addEventListener('paste', onPaste);

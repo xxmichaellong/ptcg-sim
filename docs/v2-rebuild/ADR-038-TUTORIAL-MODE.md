@@ -121,7 +121,7 @@ card has gone says so, with "Start the lesson over".
 - The empty table's welcome card has **Tutorial** beside Load a deck and
   Play online.
 - The app menu's Tutorial (Leave tutorial on the practice table).
-- The palette: Tutorial, and each lesson by name ("tutorial damage").
+- The palette: Tutorial, and each lesson by name ("tutorial damage"). On the practice table "lesson", "learn" or "help" find the lessons, not Leave tutorial, which asks for a second Enter: it drops the table and the lesson.
 - An address: `?tutorial` opens the list, `?tutorial=<lesson>` a lesson.
   The address forgets it once taken, so a reload is the player's own table.
 

@@ -230,7 +230,7 @@ export const restEntries = (
   if (entries.length > 0) entries.push({ kind: 'separator' });
   if (model.onExitTutorial) {
     entries.push({
-      id: 'tutorialButton',
+      id: 'leaveTutorialButton',
       label: t`Leave tutorial`,
       icon: GraduationCapIcon,
       onSelect: model.onExitTutorial,

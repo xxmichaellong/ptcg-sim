@@ -147,4 +147,82 @@ describe('a deck box flying to its seat', () => {
     expect(store.getSnapshot().slots.main.label?.name).not.toBe('Dreepy');
     expect(ghosts()).toBe(0);
   });
+
+  it("flies a list's box when it lands, with a deck's name pasted while it loaded", async () => {
+    // The catalog still loading: a list tried waits for it.
+    let status: { readonly status: string } = { status: 'loading' };
+    const listeners = new Set<() => void>();
+    const loading = {
+      getSnapshot: () => status,
+      subscribe: (listener: () => void) => {
+        listeners.add(listener);
+        return () => listeners.delete(listener);
+      },
+      load: vi.fn(),
+      retry: vi.fn(),
+    } as unknown as CardCatalogSource;
+    const classics = {
+      load: vi.fn(async () => ({
+        groups: [
+          {
+            name: 'Classics',
+            decks: [
+              {
+                name: 'Dreepy deck',
+                decklist: '4 Dreepy TWM 128\n4 Drakloak TWM 129',
+              },
+            ],
+          },
+        ],
+        deckCount: 1,
+        totalDecklistCodeUnits: 34,
+      })),
+      selectRandom: vi.fn(),
+    } as unknown as PopularDecklistSource;
+    const store = new DeckBuilderStore();
+    await act(async () =>
+      root.render(
+        <DeckLayer open onClose={vi.fn()}>
+          <DeckBuilderSession
+            open
+            alternateEnabled
+            installOnSessionAttach={false}
+            onRequestClose={vi.fn()}
+            catalog={loading}
+            library={new DeckLibrary({ backend: null })}
+            samples={classics}
+            digest={digest}
+            store={store}
+          />
+        </DeckLayer>
+      )
+    );
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    });
+    const ghosts = () => document.querySelectorAll('[data-lifted]').length;
+    await act(async () =>
+      host
+        .querySelector<HTMLButtonElement>(
+          'button.deck-tile__choose[aria-label^="Dreepy deck"]'
+        )!
+        .click()
+    );
+    const paste = new Event('paste', { bubbles: true, cancelable: true });
+    Object.defineProperty(paste, 'clipboardData', {
+      value: { getData: () => 'Dragapult' },
+    });
+    await act(async () => {
+      document.body.dispatchEvent(paste);
+    });
+    // The catalog gives up: the list lands as it is, its box with it.
+    status = { status: 'failed' };
+    await act(async () => {
+      for (const listener of listeners) listener();
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    });
+    await frames();
+    expect(store.getSnapshot().slots.main.deck.length).toBeGreaterThan(0);
+    expect(ghosts()).toBe(1);
+  });
 });

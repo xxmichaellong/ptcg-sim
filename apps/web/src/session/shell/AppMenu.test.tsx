@@ -252,9 +252,9 @@ describe('AppBar', () => {
     await render(model({ onExitTutorial }));
     await openMenu('#appMenuButton');
     expect(
-      document.querySelector('[role="menu"] #tutorialButton')?.textContent
+      document.querySelector('[role="menu"] #leaveTutorialButton')?.textContent
     ).toBe('Leave tutorial');
-    await choose('tutorialButton');
+    await choose('leaveTutorialButton');
     expect(onExitTutorial).toHaveBeenCalledOnce();
 
     // A room's menu: no tutorial, the other player would be left waiting.

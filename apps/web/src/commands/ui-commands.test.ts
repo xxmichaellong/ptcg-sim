@@ -63,8 +63,10 @@ describe('railCommands', () => {
         section.entries.map((entry) => entry.entry.command.id)
       );
     expect(found('Passen')[0]).toBe('rail.pass');
-    // Its palette title is "Turn the table around"; the label still finds it.
+    // Its palette title is "Turn the table around"; the label and the
+    // tooltip still find it.
     expect(found('Flip')[0]).toBe('rail.flipBoard');
+    expect(found('Flip the table')[0]).toBe('rail.flipBoard');
   });
 
   it("gives either seat's button one id", () => {
@@ -186,5 +188,36 @@ describe('tutorial lessons in the palette', () => {
     } finally {
       i18n.activate('en');
     }
+  });
+
+  it('goes to a lesson by "lesson" or "help" on the practice table, not out of it', () => {
+    const commands = [
+      ...roomCommands({
+        menu: { onExitTutorial: noop, onSettings: noop },
+        log: { open: false, setOpen: noop },
+        deckOpen: false,
+        closeDeck: noop,
+      }),
+      ...tutorialLessonCommands(
+        [
+          { id: 'damage', title: 'Damage and conditions' },
+          { id: 'deck', title: 'Your deck' },
+        ],
+        noop
+      ),
+    ];
+    const first = (query: string) =>
+      rankCommands(flattenCommands(commands), query, [])[0]?.entries[0]?.entry
+        .command.id;
+    for (const query of ['lesson', 'lessons', 'learn'])
+      expect(String(first(query)), query).toMatch(/^tutorial\./u);
+    expect(first('help')).not.toBe('menu.leaveTutorial');
+    // Leaving still has its own name and words, and asks for a second
+    // Enter: it drops the table and the lesson.
+    expect(first('Leave tutorial')).toBe('menu.leaveTutorial');
+    expect(first('exit')).toBe('menu.leaveTutorial');
+    expect(
+      commands.find((command) => command.id === 'menu.leaveTutorial')?.dangerous
+    ).toBe(true);
   });
 });

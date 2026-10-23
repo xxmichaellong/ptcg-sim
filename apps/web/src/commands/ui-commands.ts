@@ -67,6 +67,11 @@ const command = (
   run: () => void
 ): PaletteCommand => {
   const named = meaning.title ?? title;
+  // Found by the names the button shows too (its label, its tooltip) when
+  // the palette names it otherwise ("Flip the table").
+  const aliases = [...new Set([extra.label, title])].filter(
+    (alias): alias is string => alias !== undefined && alias !== named
+  );
   return {
     id,
     title: named,
@@ -75,7 +80,7 @@ const command = (
     ...(extra.hint ? { hint: extra.hint } : {}),
     ...(extra.detail ? { detail: extra.detail } : {}),
     ...(meaning.keywords ? { keywords: meaning.keywords } : {}),
-    ...(extra.label && extra.label !== named ? { aliases: [extra.label] } : {}),
+    ...(aliases.length > 0 ? { aliases } : {}),
     ...(meaning.dangerous ? { dangerous: true } : {}),
     run: () => run(),
   };
@@ -209,6 +214,14 @@ const MENU_MEANINGS: Readonly<Record<string, () => Meaning>> = {
     section: 'help',
     keywords: ['help', 'tutorial', 'learn', 'lessons'],
   }),
+  // On the practice table: the lessons are what "lesson" or "help" look
+  // for there, not the way out of them, which drops the table and the
+  // lesson (a second Enter, as found by "tutorial").
+  leaveTutorial: () => ({
+    section: 'room',
+    dangerous: true,
+    keywords: ['leave', 'exit', 'quit'],
+  }),
   changelog: () => ({
     section: 'help',
     title: t`What's new`,
@@ -300,7 +313,7 @@ export const tutorialLessonCommands = (
       // two together, in English and in the page's language.
       keywords: [
         'tutorial',
-        'lesson',
+        'lessons',
         'learn',
         tutorial,
         `tutorial ${lesson.title}`,
