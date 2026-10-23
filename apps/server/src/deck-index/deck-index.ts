@@ -245,7 +245,11 @@ export class DeckIndex {
   }
 
   private set budget(state: BudgetState) {
-    this.store.setMeta(META.budget, JSON.stringify(state));
+    const value = JSON.stringify(state);
+    // Unchanged (most rate-limit headers change nothing): no row written.
+    if (value !== this.store.getMeta(META.budget)) {
+      this.store.setMeta(META.budget, value);
+    }
   }
 
   private task(now: number): CrawlTask | { readonly idleUntil: number } {
@@ -584,7 +588,9 @@ export class DeckIndex {
     if (stale && this.deps.enabled) {
       const allowedAt = nextAllowedAt(this.budget, 'demand', now);
       if (allowedAt <= now || this.reading.has(id)) {
-        await this.read(tournament, false, 'demand');
+        // Asked as the crawl asks: unchanged since the last read, it costs
+        // Limitless no body and the index no writes.
+        await this.read(tournament, true, 'demand');
       } else if (!read) {
         return { kind: 'busy', retryAfterMs: allowedAt - now };
       }

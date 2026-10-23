@@ -1085,6 +1085,11 @@ describe('a tournament a player opens', () => {
     now += CRAWL_POLICY.liveRereadMs + 1;
     await index.tournament(id(1));
     expect(limitless.standingsCalls()).toHaveLength(2);
+    // Asked as unchanged since the last read: Limitless answers 304.
+    const reread = limitless.fetch.mock.calls.at(-1)!;
+    expect(new Headers(reread[1]?.headers).get('If-None-Match')).toMatch(
+      /^W\//u
+    );
     // Read while it may have been running: read again once it is over.
     now = START + 13 * HOUR;
     await crawlUntilIdle(index);

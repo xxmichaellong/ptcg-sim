@@ -153,11 +153,14 @@ from RK9.
 - Storage grows to some hundreds of megabytes over the whole history: lists
   are kept once each, about 600 bytes apiece.
 - Rows written, as Durable Objects bill them (index entries count), measured
-  in workerd (`deck-index-runtime.test.ts`): 5 per event listed, about 5 per
-  player for an event's first standings and 4 for a re-read, none for a page
-  of the list that comes round unchanged. History is a few million rows, up
-  to about 1.4 million a day while the crawl catches up: well within Workers
-  Paid, far over the Free plan's 100,000 a day, which the whole account
-  shares. On a Free account the index stays off (`DECK_INDEX_SOURCE`).
+  in workerd (`deck-index-runtime.test.ts`): 5 per event listed, about 3.5
+  per player for an event's first standings (its list included), and none
+  for what comes round unchanged: a page of the list, or standings read
+  again (a player's re-read asks with the ETag, and only changed players
+  are written). Keyed tables are `WITHOUT ROWID`, one row a change. History
+  is a couple of million rows, up to about a million a day while the crawl
+  catches up: well within Workers Paid, far over the Free plan's 100,000 a
+  day, which the whole account shares. On a Free account the index stays
+  off (`DECK_INDEX_SOURCE`).
 - `current-decks.ts` and the index share `limitless.ts` (bounded fetch,
   rate-limit header, decklist text). ADR-029's feed is unchanged.

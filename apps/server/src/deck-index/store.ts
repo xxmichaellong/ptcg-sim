@@ -80,7 +80,10 @@ const REPAIRS: Readonly<Record<string, readonly string[]>> = {
 };
 
 const SCHEMA = [
-  `CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)`,
+  // Keyed tables without a rowid write one row a change, not two (the
+  // key's own index): rows written are billed. A database made before
+  // keeps its tables as they were, which reads the same.
+  `CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL) WITHOUT ROWID`,
   `CREATE TABLE IF NOT EXISTS tournaments (
      rid INTEGER PRIMARY KEY,
      id TEXT NOT NULL UNIQUE,
@@ -112,9 +115,9 @@ const SCHEMA = [
      archetype_id TEXT,
      list_hash TEXT,
      PRIMARY KEY (tournament_id, player_id)
-   )`,
+   ) WITHOUT ROWID`,
   `CREATE INDEX IF NOT EXISTS entries_by_archetype ON entries (archetype_id, placing)`,
-  `CREATE TABLE IF NOT EXISTS lists (hash TEXT PRIMARY KEY, text TEXT NOT NULL)`,
+  `CREATE TABLE IF NOT EXISTS lists (hash TEXT PRIMARY KEY, text TEXT NOT NULL) WITHOUT ROWID`,
   `CREATE TABLE IF NOT EXISTS archetypes (
      rid INTEGER PRIMARY KEY,
      id TEXT NOT NULL UNIQUE,
@@ -525,10 +528,24 @@ export class DeckIndexStore {
         tournamentId
       );
       if (!current || current.state === 'skipped') return;
-      this.sql.exec(
-        'DELETE FROM entries WHERE tournament_id = ?',
+      // Rows written are billed, and a read again (every few minutes while
+      // an event runs) mostly finds what it found before: a player is
+      // written only when something about them changed, and only those no
+      // longer listed are deleted.
+      const listed = new Set(entries.map((entry) => entry.playerId));
+      for (const row of this.rows(
+        'SELECT player_id FROM entries WHERE tournament_id = ?',
         tournamentId
-      );
+      )) {
+        const playerId = text(row.player_id);
+        if (!listed.has(playerId)) {
+          this.sql.exec(
+            'DELETE FROM entries WHERE tournament_id = ? AND player_id = ?',
+            tournamentId,
+            playerId
+          );
+        }
+      }
       const archetypes = new Map<string, ArchetypeRef>();
       let lists = 0;
       for (const entry of entries) {
@@ -544,9 +561,18 @@ export class DeckIndexStore {
         if (entry.archetype)
           archetypes.set(entry.archetype.id, entry.archetype);
         this.sql.exec(
-          `INSERT OR REPLACE INTO entries
+          `INSERT INTO entries
              (tournament_id, player_id, name, country, placing, wins, losses, ties, dropped, archetype_id, list_hash)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT (tournament_id, player_id) DO UPDATE SET
+             name = excluded.name, country = excluded.country, placing = excluded.placing,
+             wins = excluded.wins, losses = excluded.losses, ties = excluded.ties,
+             dropped = excluded.dropped, archetype_id = excluded.archetype_id, list_hash = excluded.list_hash
+           WHERE name IS NOT excluded.name OR country IS NOT excluded.country
+             OR placing IS NOT excluded.placing OR wins IS NOT excluded.wins
+             OR losses IS NOT excluded.losses OR ties IS NOT excluded.ties
+             OR dropped IS NOT excluded.dropped OR archetype_id IS NOT excluded.archetype_id
+             OR list_hash IS NOT excluded.list_hash`,
           tournamentId,
           entry.playerId,
           entry.name,

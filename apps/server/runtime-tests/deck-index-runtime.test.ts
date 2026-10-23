@@ -201,7 +201,7 @@ describe('the tournament deck index', () => {
 });
 
 describe('the rows the deck index writes', () => {
-  it('writes nothing for a page of the list that comes round unchanged, and a few rows a player for standings', async () => {
+  it('writes nothing for a page of the list or standings that come round unchanged, and a few rows a player otherwise', async () => {
     const stub = env.PTCG_DECK_INDEX.getByName('rows written');
     await runInDurableObject(stub, async (_instance, state) => {
       // The Durable Object's own SQL, counting rows written as billed
@@ -278,8 +278,10 @@ describe('the rows the deck index writes', () => {
       console.log(
         `rows written: a new page of 1,000 events ${String(listed)}; 64 standings ${String(standings)} first, ${String(again)} read again`
       );
-      expect(standings).toBeLessThan(64 * 8);
-      expect(again).toBeLessThan(64 * 8);
+      // A player is their row and one index entry, a list its row.
+      expect(standings).toBeLessThan(64 * 4);
+      // Read again unchanged: the event's row, its index, the update time.
+      expect(again).toBeLessThan(10);
     });
   });
 });
