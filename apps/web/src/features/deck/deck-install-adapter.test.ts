@@ -597,6 +597,55 @@ describe('DeckInstallCoordinator', () => {
     expect(session.listenerCount()).toBe(0);
     expect(coordinator.flush()).toBe(false);
   });
+
+  it('lets a LoadDeck sent before its screen went (to the tutorial) land, not sending it again', async () => {
+    const store = new DeckBuilderStore();
+    store.addCard(card('Pikachu'));
+    const first = store.getSnapshot().slots.main.revision;
+    const session = new FakeInstallSession();
+    const failures: DeckInstallCoordinatorFailure[] = [];
+    const options = {
+      store,
+      session,
+      digest: deterministicDigest,
+      onFailure: (failure: DeckInstallCoordinatorFailure) =>
+        failures.push(failure),
+    };
+    const gone = new DeckInstallCoordinator(options);
+    gone.flush();
+    await vi.waitFor(() => expect(session.commands).toHaveLength(1));
+    gone.dispose();
+    // The screen comes back while the room still has it.
+    const back = new DeckInstallCoordinator(options);
+    back.flush();
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(session.commands).toHaveLength(1);
+    // An edit made meanwhile goes on once the first has landed.
+    store.addCard(card('Raichu'));
+    back.flush();
+    session.completeLatest(true);
+    await vi.waitFor(() => expect(session.commands).toHaveLength(2));
+    // The second is the edit, not the first sent again.
+    expect(JSON.stringify(session.commands[1])).toContain('Raichu');
+    expect(store.getSnapshot().slots.main.installedRevision).toBe(first);
+    session.completeLatest(true);
+    expect(store.getSnapshot().slots.main.dirty).toBe(false);
+    back.dispose();
+    expect(session.listenerCount()).toBe(0);
+    expect(failures).toEqual([]);
+
+    // One whose room ends first is put back to go on again, quietly.
+    store.addCard(card('Pichu'));
+    const leaving = new DeckInstallCoordinator(options);
+    leaving.flush();
+    await vi.waitFor(() => expect(session.commands).toHaveLength(3));
+    leaving.dispose();
+    session.end();
+    expect(store.getSnapshot().slots.main).toMatchObject({ dirty: true });
+    expect(store.hasPendingInstall()).toBe(false);
+    expect(session.listenerCount()).toBe(0);
+    expect(failures).toEqual([]);
+  });
 });
 
 describe('physical layout installation', () => {

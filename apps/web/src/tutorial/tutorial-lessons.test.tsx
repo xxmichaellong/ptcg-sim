@@ -1262,6 +1262,69 @@ describe('a lesson step on the practice table', () => {
     }
   });
 
+  it('counts Energy on Charmander by its Pokémon: not a card the room renamed on an Undo, and Energy on it back from the discard', async () => {
+    const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+    const room = fakePracticeRoom();
+    await dealScenario(
+      room.session,
+      lessonById('attach')!.scenario,
+      new AbortController().signal
+    );
+    const now = () => room.session.getSnapshot().view!;
+    const send = async (command: unknown) => {
+      room.session.submit(command as never);
+      await flush();
+    };
+    const energy = lessonById('attach')!.steps.find(
+      (entry) => entry.id === 'energy'
+    )!;
+    const start = now();
+    // An Undo gives the Energy already on Charmander a new id: still the
+    // one it had.
+    const charmander = activeStack(start, you)!;
+    const renamed = structuredClone(start) as typeof start & {
+      stacks: Record<string, { attachmentCards: { id: string }[] }>;
+    };
+    renamed.stacks[charmander.id]!.attachmentCards[0]!.id = 'renamed-energy';
+    expect(energy.done!(world({ view: renamed, start, you, them }))).toBe(
+      false
+    );
+    // Charmander to the discard with its Energy, back on the Bench from
+    // there, and that Energy on it again: a new Pokémon, Energy on it.
+    await send({
+      type: 'MovePlayStackToZone',
+      stackId: charmander.id,
+      expectedEvolutionCardIds: charmander.evolutionCards.map(
+        (card) => card.id
+      ),
+      expectedAttachmentCardIds: charmander.attachmentCards.map(
+        (card) => card.id
+      ),
+      destinationZoneId: zoneId(you, 'discard'),
+    });
+    const fromDiscard = (key: 'charmander' | 'fireEnergy') =>
+      findCard(now(), zoneCards(now(), you, 'discard'), key)!.id;
+    await send({
+      type: 'MoveCardToPlay',
+      cardId: fromDiscard('charmander'),
+      expectedSourceZoneId: zoneId(you, 'discard'),
+      boardPlayerId: you,
+      slot: 'bench',
+    });
+    const back = [activeStack(now(), you), ...benchStacks(now(), you)].find(
+      (stack) => topOf(now(), stack) === 'charmander'
+    )!;
+    await send({
+      type: 'MoveCardToPlay',
+      cardId: fromDiscard('fireEnergy'),
+      expectedSourceZoneId: zoneId(you, 'discard'),
+      boardPlayerId: you,
+      slot: back.slot,
+      targetStackId: back.id,
+    });
+    expect(energy.done!(world({ view: now(), start, you, them }))).toBe(true);
+  });
+
   it('is done when the player did it before it was asked', async () => {
     const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
     const dealt = async (id: string) => {

@@ -834,6 +834,46 @@ describe('DeckBuilderSession', () => {
     expect(own.commands.slice(sent)).toEqual([]);
   });
 
+  it('does not send a deck again that was on its way when the screen went (to the tutorial)', async () => {
+    const store = new DeckBuilderStore();
+    const cardBackStore = new CardBackCustodyStore();
+    const own = new FakeSession();
+    const props = {
+      session: own,
+      store,
+      cardBackStore,
+      installOnSessionAttach: true,
+    };
+    const settle = () =>
+      act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      });
+    await renderSession({ ...props, open: true });
+    act(() => {
+      store.replaceDeck(
+        'main',
+        deckListOf([{ card: card('Pikachu'), count: 4 }]),
+        { deckId: 'a', name: 'A' },
+        { chosen: true }
+      );
+    });
+    await renderSession({ ...props, open: false });
+    await settle();
+    expect(own.commands.map((command) => command.type)).toEqual(['LoadDeck']);
+    // The tutorial opens before the room answers, and it lands meanwhile.
+    await act(async () => root?.unmount());
+    root = undefined;
+    act(() => own.completeLatest(true));
+    await renderSession({
+      ...props,
+      open: false,
+      prepareForNewSessionOnAttach: false,
+    });
+    await settle();
+    expect(own.commands.map((command) => command.type)).toEqual(['LoadDeck']);
+    expect(store.getSnapshot().slots.main.dirty).toBe(false);
+  });
+
   it('drains dirty decks only when the Deck surface closes and cleans them only after authority publication', async () => {
     const session = new FakeSession();
     const store = new DeckBuilderStore();

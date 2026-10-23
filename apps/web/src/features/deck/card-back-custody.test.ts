@@ -318,4 +318,46 @@ describe('CardBackInstallCoordinator', () => {
     expect(session.listenerCount()).toBe(0);
     expect(coordinator.flush()).toBe(false);
   });
+
+  it('lets a card back sent before its screen went (to the tutorial) land, not sending it again', () => {
+    const store = new CardBackCustodyStore();
+    store.replace('main', '/first.png');
+    const session = new FakeSession();
+    const failures: CardBackInstallFailure[] = [];
+    const options = {
+      store,
+      session,
+      onFailure: (failure: CardBackInstallFailure) => failures.push(failure),
+    };
+    const gone = new CardBackInstallCoordinator(options);
+    gone.flush();
+    expect(session.commands).toHaveLength(1);
+    gone.dispose();
+    // The screen comes back while the room still has it; another is
+    // chosen meanwhile, and goes on once the first has landed.
+    const back = new CardBackInstallCoordinator(options);
+    back.flush();
+    store.replace('main', '/second.png');
+    back.flush();
+    session.completeLatest(true);
+    expect(session.commands).toEqual([
+      { type: 'SetCardBack', cardBackUrl: '/first.png' },
+      { type: 'SetCardBack', cardBackUrl: '/second.png' },
+    ]);
+    session.completeLatest(true);
+    expect(store.getSnapshot().hasDirtyCardBacks).toBe(false);
+    back.dispose();
+    expect(session.listenerCount()).toBe(0);
+
+    // One whose room ends first is put back to go on again, quietly.
+    store.replace('main', '/third.png');
+    const leaving = new CardBackInstallCoordinator(options);
+    leaving.flush();
+    leaving.dispose();
+    session.setPhase('closed');
+    expect(store.getSnapshot().slots.main.dirty).toBe(true);
+    expect(store.hasPendingInstall()).toBe(false);
+    expect(session.listenerCount()).toBe(0);
+    expect(failures).toEqual([]);
+  });
 });

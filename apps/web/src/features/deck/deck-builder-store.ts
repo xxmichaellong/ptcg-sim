@@ -365,6 +365,11 @@ export class DeckBuilderStore {
     );
   }
 
+  /** Whether a deck is out for the room and not yet settled. */
+  hasPendingInstall(): boolean {
+    return this.#pending !== undefined;
+  }
+
   /**
    * Starts one install at a time, ordered main before alternate. Serializing
    * receipts prevents a second LoadDeck command from carrying the authority

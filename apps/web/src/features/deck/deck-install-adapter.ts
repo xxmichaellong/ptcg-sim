@@ -328,17 +328,17 @@ export class DeckInstallCoordinator {
     this.#disposed = true;
     this.#draining = false;
     this.#generation += 1;
-    this.#unsubscribe();
-    const receipt =
-      this.#active?.receipt ?? this.#prepared?.receipt ?? this.#converting;
+    const receipt = this.#prepared?.receipt ?? this.#converting;
     if (receipt) this.#store.settleInstall(receipt, 'failed');
-    this.#active = undefined;
     this.#prepared = undefined;
     this.#converting = undefined;
+    // A LoadDeck already sent lands all the same: its result still settles
+    // it, so a deck screen mounted again doesn't send it twice.
+    if (!this.#active) this.#unsubscribe();
   }
 
   readonly #handleSession = (): void => {
-    if (this.#disposed) return;
+    if (this.#disposed && !this.#active) return;
     const state = this.#session.getSnapshot();
     if (this.#active) {
       const completion = state.completedCommands.find(
@@ -351,6 +351,10 @@ export class DeckInstallCoordinator {
           active.receipt,
           completion.accepted ? 'installed' : 'failed'
         );
+        if (this.#disposed) {
+          this.#unsubscribe();
+          return;
+        }
         if (!completion.accepted) {
           this.#draining = false;
           this.#report({
@@ -371,6 +375,7 @@ export class DeckInstallCoordinator {
       return;
     }
     if (this.#prepared) this.#submitPrepared(state);
+    else if (this.#draining) void this.#pump();
   };
 
   async #pump(): Promise<void> {
@@ -385,7 +390,9 @@ export class DeckInstallCoordinator {
     }
     const receipt = this.#store.beginNextDirtyInstall();
     if (!receipt) {
-      this.#draining = false;
+      // An install left waiting by a deck screen now gone goes first; this
+      // one goes on once it settles.
+      this.#draining = this.#store.hasPendingInstall();
       return;
     }
     this.#converting = receipt;
@@ -493,6 +500,10 @@ export class DeckInstallCoordinator {
     this.#converting = undefined;
     this.#draining = false;
     if (receipt) this.#store.settleInstall(receipt, 'failed');
+    if (this.#disposed) {
+      this.#unsubscribe();
+      return;
+    }
     this.#report(failure);
   }
 

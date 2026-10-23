@@ -190,6 +190,11 @@ export class CardBackCustodyStore {
     return true;
   }
 
+  /** Whether a card back is out for the room and not yet settled. */
+  hasPendingInstall(): boolean {
+    return this.#pending !== undefined;
+  }
+
   beginNextDirtyInstall(): CardBackInstallReceipt | undefined {
     if (this.#pending) return undefined;
     for (const target of ['main', 'alternate'] as const) {
@@ -341,15 +346,15 @@ export class CardBackInstallCoordinator {
     if (this.#disposed) return;
     this.#disposed = true;
     this.#draining = false;
-    this.#unsubscribe();
-    const receipt = this.#active?.receipt ?? this.#waiting;
-    if (receipt) this.#store.settleInstall(receipt, 'failed');
-    this.#active = undefined;
+    if (this.#waiting) this.#store.settleInstall(this.#waiting, 'failed');
     this.#waiting = undefined;
+    // A card back already sent lands all the same: its result still settles
+    // it, so a deck screen mounted again doesn't send it twice.
+    if (!this.#active) this.#unsubscribe();
   }
 
   readonly #handleSession = (): void => {
-    if (this.#disposed) return;
+    if (this.#disposed && !this.#active) return;
     const state = this.#session.getSnapshot();
     if (this.#active) {
       const completion = state.completedCommands.find(
@@ -362,6 +367,10 @@ export class CardBackInstallCoordinator {
           active.receipt,
           completion.accepted ? 'installed' : 'failed'
         );
+        if (this.#disposed) {
+          this.#unsubscribe();
+          return;
+        }
         if (!completion.accepted) {
           this.#draining = false;
           this.#report({
@@ -379,6 +388,7 @@ export class CardBackInstallCoordinator {
       return;
     }
     if (this.#waiting) this.#submitWaiting(state);
+    else this.#pump();
   };
 
   #pump(): void {
@@ -387,7 +397,9 @@ export class CardBackInstallCoordinator {
     }
     const receipt = this.#store.beginNextDirtyInstall();
     if (!receipt) {
-      this.#draining = false;
+      // An install left waiting by a deck screen now gone goes first; this
+      // one goes on once it settles.
+      this.#draining = this.#store.hasPendingInstall();
       return;
     }
     this.#waiting = receipt;
@@ -455,6 +467,10 @@ export class CardBackInstallCoordinator {
     this.#waiting = undefined;
     this.#draining = false;
     if (receipt) this.#store.settleInstall(receipt, 'failed');
+    if (this.#disposed) {
+      this.#unsubscribe();
+      return;
+    }
     this.#report(failure);
   }
 

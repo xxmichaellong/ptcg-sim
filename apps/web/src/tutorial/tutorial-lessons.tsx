@@ -513,19 +513,18 @@ const attach: TutorialLesson = {
         const to = charmanderTarget(world);
         return from && to ? { from, to } : null;
       },
-      // A Fire Energy on Charmander now that wasn't on it as the step began
-      // (Charmander put back in play since is a new Pokémon, Energy and all).
+      // More Fire Energy on Charmander than as the step began -- by its
+      // Pokémon, whose id holds through a swap, evolving and an Undo (a
+      // card's doesn't, back from the hand); Charmander put back in play
+      // since is a new Pokémon, and any Energy on it counts.
       done: (world) => {
-        const before = new Set(
-          (charmanderIn(world, world.start)?.attachmentCards ?? []).map(
-            (card) => card.id
-          )
-        );
-        return (charmanderIn(world, world.view)?.attachmentCards ?? []).some(
-          (card) =>
-            !before.has(card.id) &&
-            tutorialCardKeyOf(world.view, card) === 'fireEnergy'
-        );
+        const then = charmanderIn(world, world.start);
+        const now = charmanderIn(world, world.view);
+        if (!now) return false;
+        const fire = countCards(world.view, now.attachmentCards, 'fireEnergy');
+        return now.id !== then?.id
+          ? fire > 0
+          : fire > countCards(world.start, then.attachmentCards, 'fireEnergy');
       },
       stuck: (world) =>
         charmanderGone(world) ??
