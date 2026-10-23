@@ -244,6 +244,7 @@ const renderSession = async (options: {
   readonly onInstallFailure?: (failure: DeckInstallCoordinatorFailure) => void;
   readonly onCardBackInstallFailure?: (failure: CardBackInstallFailure) => void;
   readonly onCustodyChange?: (custody: DeckBuilderCustody) => void;
+  readonly shownSession?: FakeSession;
 }) => {
   root ??= createRoot(host);
   await act(async () =>
@@ -288,6 +289,9 @@ const renderSession = async (options: {
           : {})}
         {...(options.onCustodyChange
           ? { onCustodyChange: options.onCustodyChange }
+          : {})}
+        {...(options.shownSession
+          ? { shownSession: options.shownSession }
           : {})}
       />
     )
@@ -745,6 +749,28 @@ describe('DeckBuilderSession', () => {
       await renderSession({ session, cardBackStore, open: true });
       expect(sleeve()).toBe('https://example.test/restored.png');
     }
+  });
+
+  it('shows on the tray the card back of the table behind it when it installs into none', async () => {
+    const sleeve = () =>
+      host
+        .querySelector('.deck-tray[data-seat="self"] .deck-tray__sleeve img')
+        ?.getAttribute('src');
+    const ownPlayerId =
+      view.viewer.kind === 'player' ? view.viewer.playerId : '';
+    // Play online over the parked Solo table: its Undo put the old back
+    // again; the choice kept from it is another.
+    const cardBackStore = new CardBackCustodyStore();
+    cardBackStore.replace('main', 'https://example.test/new.png');
+    const receipt = cardBackStore.beginNextDirtyInstall()!;
+    cardBackStore.settleInstall(receipt, 'installed');
+    const parked = new FakeSession();
+    parked.showCardBack(ownPlayerId, 'https://example.test/old.png');
+    await renderSession({ cardBackStore, shownSession: parked, open: true });
+    expect(sleeve()).toBe('https://example.test/old.png');
+    // Its back changing behind the screen shows too.
+    act(() => parked.showCardBack(ownPlayerId, 'https://example.test/b.png'));
+    expect(sleeve()).toBe('https://example.test/b.png');
   });
 
   it('drains dirty decks only when the Deck surface closes and cleans them only after authority publication', async () => {

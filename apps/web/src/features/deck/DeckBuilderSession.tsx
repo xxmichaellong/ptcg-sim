@@ -63,6 +63,12 @@ export { warmDeckScreen } from './deck-screen-warmup.js';
 
 export interface DeckBuilderSessionProps {
   readonly session?: DeckInstallSession;
+  /**
+   * The table shown behind the screen when it installs into none (Play
+   * online over the parked Solo table): its seats' card backs are the ones
+   * the trays show and a choice is weighed against. Read only.
+   */
+  readonly shownSession?: Pick<DeckInstallSession, 'getSnapshot' | 'subscribe'>;
   readonly open: boolean;
   readonly alternateEnabled: boolean;
   readonly installOnSessionAttach?: boolean;
@@ -106,6 +112,7 @@ export const DeckBuilderSession = ({
   open,
   alternateEnabled,
   installOnSessionAttach = false,
+  shownSession,
   prepareForNewSessionOnAttach = installOnSessionAttach,
   onSessionAttach,
   onRequestClose,
@@ -289,7 +296,7 @@ export const DeckBuilderSession = ({
       const seat = target ?? 'main';
       // The room may show another back than the one last installed (an
       // undo, a restored game): then the same choice is still a change.
-      const shown = roomCardBackOf(session, seat);
+      const shown = roomCardBackOf(session ?? shownSession, seat);
       if (
         cardBackStore.replace(seat, cardBackUrl, {
           reinstall: shown !== undefined && shown !== cardBackUrl,
@@ -298,7 +305,7 @@ export const DeckBuilderSession = ({
         cardBackCoordinator.current?.flush();
       }
     },
-    [cardBackStore, session]
+    [cardBackStore, session, shownSession]
   );
   const { chooseCardBack } = useCardBackSelection<DeckBuilderTarget>({
     applySelection: applyCardBackSelection,
@@ -380,13 +387,13 @@ export const DeckBuilderSession = ({
   const subscribeCardBacks = useCallback(
     (listener: () => void) => {
       const stopStore = cardBackStore.subscribe(listener);
-      const stopSession = session?.subscribe(listener);
+      const stopSession = (session ?? shownSession)?.subscribe(listener);
       return () => {
         stopStore();
         stopSession?.();
       };
     },
-    [cardBackStore, session]
+    [cardBackStore, session, shownSession]
   );
   const readCardBacks = useCallback(() => {
     const { slots } = cardBackStore.getSnapshot();
@@ -395,13 +402,13 @@ export const DeckBuilderSession = ({
       const pending = slot.dirty || slot.installingRevision !== undefined;
       return (
         (pending ? slot.url : undefined) ??
-        roomCardBackOf(session, seat) ??
+        roomCardBackOf(session ?? shownSession, seat) ??
         slot.url ??
         ''
       );
     };
     return `${shown('main')}\n${shown('alternate')}`;
-  }, [cardBackStore, session]);
+  }, [cardBackStore, session, shownSession]);
   const cardBackKey = useSyncExternalStore(
     subscribeCardBacks,
     readCardBacks,

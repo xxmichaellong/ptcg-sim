@@ -1529,6 +1529,17 @@ export const RemoteRoomLobby = ({
             replay={parkedSolo.runtime.replay}
             rendererKind={parkedSolo.rendererKind}
             onIntent={() => undefined}
+            // Turned as the player left it, and kept as they leave it here.
+            initialFlipped={
+              ownTableFlip?.roomCode === parkedSolo.runtime.roomCode &&
+              ownTableFlip.flipped
+            }
+            onPerspectiveChange={({ flipped }) =>
+              setOwnTableFlip({
+                roomCode: parkedSolo.runtime.roomCode,
+                flipped,
+              })
+            }
             roomMode="solo"
             hideOpponentHand={boardView.hideOpponentHand}
             // Test doubles may stand in for the runtime without a presentation.
@@ -1610,6 +1621,9 @@ export const RemoteRoomLobby = ({
             open={overlay === 'deck'}
             alternateEnabled={parkedSolo?.mode === 'solo'}
             installOnSessionAttach
+            {...(parkedSolo
+              ? { shownSession: parkedSolo.runtime.session }
+              : {})}
             onRequestClose={() => {
               setOverlay(undefined);
               void handleSolo();

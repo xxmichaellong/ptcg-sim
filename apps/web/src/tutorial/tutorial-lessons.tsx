@@ -1,6 +1,6 @@
 import type { MessageDescriptor } from '@lingui/core';
 import { msg } from '@lingui/core/macro';
-import type { ViewCard } from '@ptcgsim/game-core';
+import type { MatchViewState, ViewCard } from '@ptcgsim/game-core';
 import { Trans } from '@lingui/react/macro';
 import type { ReactNode } from 'react';
 
@@ -198,6 +198,23 @@ const barButton = (id: string): TutorialTarget => ({
   selectors: [`.ptcgsim-app-bar #${id}`, '#appMenuButton'],
 });
 
+/**
+ * Your Charmander, wherever it is (moved to the Bench by a swap, evolved):
+ * the Pokémon whose bottom card is Charmander.
+ */
+const charmanderIn = (world: TutorialWorld, view: MatchViewState) =>
+  [activeStack(view, world.you), ...benchStacks(view, world.you)].find(
+    (stack) =>
+      stack?.evolutionCards[0] !== undefined &&
+      tutorialCardKeyOf(view, stack.evolutionCards[0]) === 'charmander'
+  );
+
+/** Charmander's top card, for a drag onto it. */
+const charmanderTarget = (world: TutorialWorld): TutorialTarget | null => {
+  const top = topCard(charmanderIn(world, world.view));
+  return top ? { card: top.id } : null;
+};
+
 const activeTopTarget = (
   world: TutorialWorld,
   playerId: string
@@ -355,9 +372,18 @@ const start: TutorialLesson = {
       // Or no Basic left in a hand dealt: not a hand taken back by a Reset
       // or an Undo of Set up, which says to set up again. Either way with a
       // Basic in the Active Spot.
+      // Or one benched already, before the step asked (Start deals an empty
+      // Bench: only the player put it there).
       done: (world) =>
         basicInActive(world) &&
         (newlyBenched(world) ||
+          benchStacks(world.start, world.you).some((stack) => {
+            const bottom = stack.evolutionCards[0];
+            const key = bottom
+              ? tutorialCardKeyOf(world.start, bottom)
+              : undefined;
+            return key !== undefined && TUTORIAL_BASIC_POKEMON.has(key);
+          }) ||
           (dealt(world) && basicInHand(world.view, world.you) === undefined)),
       stuck: (world) =>
         basicInActive(world)
@@ -462,20 +488,22 @@ const attach: TutorialLesson = {
           to attach it.
         </Trans>
       ),
+      // On Charmander wherever it is: the Active swapped meanwhile, the line
+      // still names it.
       drag: (world) => {
         const from = cardIn(world, world.you, 'hand', 'fireEnergy');
-        const to = activeTopTarget(world, world.you);
+        const to = charmanderTarget(world);
         return from && to ? { from, to } : null;
       },
       done: (world) =>
         countCards(
           world.view,
-          activeStack(world.view, world.you)?.attachmentCards ?? [],
+          charmanderIn(world, world.view)?.attachmentCards ?? [],
           'fireEnergy'
         ) >
         countCards(
           world.start,
-          activeStack(world.start, world.you)?.attachmentCards ?? [],
+          charmanderIn(world, world.start)?.attachmentCards ?? [],
           'fireEnergy'
         ),
       stuck: (world) =>
@@ -497,7 +525,7 @@ const attach: TutorialLesson = {
       ),
       drag: (world) => {
         const from = cardIn(world, world.you, 'hand', 'charmeleon');
-        const to = activeTopTarget(world, world.you);
+        const to = charmanderTarget(world);
         return from && to ? { from, to } : null;
       },
       // Charmeleon over Charmander, wherever it is: not Charmeleon put in

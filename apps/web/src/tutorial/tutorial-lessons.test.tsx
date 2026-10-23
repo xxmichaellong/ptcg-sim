@@ -975,6 +975,94 @@ describe('a lesson step on the practice table', () => {
     expect(bench.drag!(none)).toBeNull();
   });
 
+  it('follows Charmander to the Bench for its Energy, and counts a Basic benched before Start asked', async () => {
+    const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+    const dealt = async (id: string) => {
+      const room = fakePracticeRoom();
+      await dealScenario(
+        room.session,
+        lessonById(id)!.scenario,
+        new AbortController().signal
+      );
+      const now = () => room.session.getSnapshot().view!;
+      const send = async (command: unknown) => {
+        room.session.submit(command as never);
+        await flush();
+      };
+      return { now, send };
+    };
+    // Attach: Pidgey swapped into the Active first, Charmander to the Bench.
+    {
+      const { now, send } = await dealt('attach');
+      const board = now().boards[you]!;
+      const pidgey = board.benchStackIds
+        .map((id) => now().stacks[id]!)
+        .find((stack) => topOf(now(), stack) === 'pidgey')!;
+      await send({
+        type: 'MovePlayStack',
+        stackId: pidgey.id,
+        expectedSourceBoardPlayerId: you,
+        expectedSourceSlot: 'bench',
+        expectedActiveStackId: board.activeStackId,
+        expectedBenchStackIds: [...board.benchStackIds],
+        destinationSlot: 'active',
+        targetStackId: board.activeStackId,
+      });
+      expect(topOf(now(), activeStack(now(), you))).toBe('pidgey');
+      const start = now();
+      const energy = lessonById('attach')!.steps.find(
+        (entry) => entry.id === 'energy'
+      )!;
+      const charmander = now()
+        .boards[you]!.benchStackIds.map((id) => now().stacks[id]!)
+        .find((stack) => topOf(now(), stack) === 'charmander')!;
+      // The drag goes onto Charmander, on the Bench now.
+      expect(
+        energy.drag!(world({ view: now(), start, you, them }))?.to
+      ).toEqual({ card: topCard(charmander)!.id });
+      await send({
+        type: 'MoveCardToPlay',
+        cardId: findCard(now(), zoneCards(now(), you, 'hand'), 'fireEnergy')!
+          .id,
+        expectedSourceZoneId: zoneId(you, 'hand'),
+        boardPlayerId: you,
+        slot: 'bench',
+        targetStackId: charmander.id,
+      });
+      expect(energy.done!(world({ view: now(), start, you, them }))).toBe(true);
+    }
+    // Start: a Basic benched first, then another put in the Active.
+    {
+      const { now, send } = await dealt('start');
+      for (const key of ['charmander', 'charmander', 'pidgey'] as const) {
+        const card = findCard(now(), zoneCards(now(), you, 'deck'), key)!;
+        await send({
+          type: 'MoveCard',
+          cardId: card.id,
+          expectedSourceZoneId: zoneId(you, 'deck'),
+          destinationZoneId: zoneId(you, 'hand'),
+        });
+      }
+      const toPlay = (key: 'charmander', slot: 'active' | 'bench') =>
+        send({
+          type: 'MoveCardToPlay',
+          cardId: findCard(now(), zoneCards(now(), you, 'hand'), key)!.id,
+          expectedSourceZoneId: zoneId(you, 'hand'),
+          boardPlayerId: you,
+          slot,
+        });
+      await toPlay('charmander', 'bench');
+      await toPlay('charmander', 'active');
+      const bench = lessonById('start')!.steps.find(
+        (entry) => entry.id === 'bench'
+      )!;
+      // The step begins over Active and Bench, a Pidgey still in the hand.
+      expect(bench.done!(world({ view: now(), start: now(), you, them }))).toBe(
+        true
+      );
+    }
+  });
+
   it('is done when the player did it before it was asked', async () => {
     const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
     const dealt = async (id: string) => {

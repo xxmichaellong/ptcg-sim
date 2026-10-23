@@ -284,7 +284,7 @@ interface SubmittedInstall {
 
 /** The card back the room shows for a seat, if it shows one. */
 export const roomCardBackOf = (
-  session: DeckInstallSession | undefined,
+  session: Pick<DeckInstallSession, 'getSnapshot'> | undefined,
   target: DeckBuilderTarget
 ): string | undefined => {
   const view = session?.getSnapshot().view;

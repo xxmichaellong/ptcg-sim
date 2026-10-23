@@ -42,6 +42,9 @@ const lobbyBoardHarness = vi.hoisted(() => ({
   parkedRoomMode: undefined as string | undefined,
   parkedRail: undefined as BoardRailModel | undefined,
   parkedKeysSuspended: undefined as boolean | undefined,
+  parkedInitialFlipped: undefined as boolean | undefined,
+  parkedPerspective: undefined as
+    ((perspective: { readonly flipped: boolean }) => void) | undefined,
   onEmptySettledChange: undefined as ((settled: boolean) => void) | undefined,
   onParkedSettledChange: undefined as ((settled: boolean) => void) | undefined,
 }));
@@ -128,8 +131,14 @@ vi.mock('./RemoteSessionBoard.js', () => ({
     readonly rail?: BoardRailModel;
     readonly keysSuspended?: boolean;
     readonly onSettledChange?: (settled: boolean) => void;
+    readonly initialFlipped?: boolean;
+    readonly onPerspectiveChange?: (perspective: {
+      readonly flipped: boolean;
+    }) => void;
   }) => {
     lobbyBoardHarness.onParkedSettledChange = props.onSettledChange;
+    lobbyBoardHarness.parkedInitialFlipped = props.initialFlipped;
+    lobbyBoardHarness.parkedPerspective = props.onPerspectiveChange;
     lobbyBoardHarness.parkedSession = props.session;
     lobbyBoardHarness.parkedRoomMode = props.roomMode;
     lobbyBoardHarness.parkedRail = props.rail;
@@ -933,6 +942,31 @@ describe('remote room lobby wiring', () => {
     await reportSettled(roomRouteHarness.onTableSettledChange, true);
     expect(curtain.value.reveal).toHaveBeenCalled();
 
+    await act(async () => root.unmount());
+  });
+
+  it('keeps a turned Solo table turned while it is parked, and as it was left there', async () => {
+    const created = creationResult(runtime({ label: 'solo' }), 'solo');
+    const createRoom = vi.fn(async () => created.value);
+    const { root } = await mount(lobbyDependencies(custody(), createRoom));
+    await settle();
+    await chooseMenuItem('p1Button');
+    await act(async () => {
+      roomRouteHarness.onFlippedChange?.(true);
+      await flush();
+    });
+    // Play online: the parked table stays turned.
+    await click('#testOpenMultiplayer');
+    expect(present('[data-testid="parked-solo-board"]')).toBe(true);
+    expect(lobbyBoardHarness.parkedInitialFlipped).toBe(true);
+    // Turned back while parked: Solo comes back as it was left.
+    await act(async () => {
+      lobbyBoardHarness.parkedPerspective?.({ flipped: false });
+      await flush();
+    });
+    await closeSheet('playOnlineSheet');
+    expect(present('[data-app-route="test-remote-room"]')).toBe(true);
+    expect(roomRouteHarness.initialFlipped).toBe(false);
     await act(async () => root.unmount());
   });
 
