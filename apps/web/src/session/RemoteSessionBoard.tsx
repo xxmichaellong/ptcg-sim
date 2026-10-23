@@ -215,6 +215,19 @@ const boardFlipAllowed = (
 };
 
 /**
+ * Whether the rail is sized for Switch side: wherever the table turns, and
+ * in a room once this player asked for coaching, so the other player's
+ * consent landing moves nothing.
+ */
+export const switchSideExpected = (
+  roomMode: 'solo' | 'multiplayer',
+  view: ReturnType<ReplaySessionCoordinator['getSnapshot']>['view']
+): boolean =>
+  boardFlipAllowed(roomMode, view) ||
+  (view?.viewer.kind === 'player' &&
+    view.players[view.viewer.playerId]?.coachingConsent === true);
+
+/**
  * True when the card is in the viewer's own hand, which is the only case v1
  * follows a reveal with its "press OK to stop revealing" modal.
  */
@@ -1069,6 +1082,7 @@ export const RemoteSessionBoard = ({
     boardState.view?.viewer.kind === 'player';
   const flipAllowed = boardFlipAllowed(roomMode, boardState?.view);
   flipAllowedRef.current = flipAllowed;
+  const switchSideSized = switchSideExpected(roomMode, boardState?.view);
   const hint = useHotkeyHints();
   // The coin lies on the table (PX-051); the rail keeps a Coin only for a
   // table with no room for it, or with the acting seat's half hidden.
@@ -1157,7 +1171,7 @@ export const RemoteSessionBoard = ({
       ...(rail.bar ? { bar: rail.bar } : {}),
       ...(rail.seat ? { seat: rail.seat } : {}),
       ...(tableCoinShown ? { coinOnTable: true } : {}),
-      ...(flipAllowed ? {} : { canSwitchSide: false }),
+      ...(switchSideSized ? {} : { canSwitchSide: false }),
       ...(sidePanelSliding ? { holdSide: true } : {}),
       actions: composed.actions,
       ...(composed.more ? { more: composed.more } : {}),
@@ -1170,6 +1184,7 @@ export const RemoteSessionBoard = ({
     hint,
     tableActions,
     tableCoinShown,
+    switchSideSized,
     sidePanelSliding,
     t,
   ]);

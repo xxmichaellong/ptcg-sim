@@ -25,6 +25,7 @@ import {
 } from '../replay/ReplaySessionCoordinator.js';
 import {
   RemoteSessionBoard,
+  switchSideExpected,
   type BoardCommands,
   type BoardOwnRailActions,
   type BoardRailModel,
@@ -238,6 +239,25 @@ class FakeRemoteBoardSession
     });
   }
 }
+
+describe('the rail sized for Switch side', () => {
+  const room = (mine: boolean, theirs: boolean) =>
+    ({
+      viewer: { kind: 'player', playerId: asPlayerId('me') },
+      playerOrder: [asPlayerId('me'), asPlayerId('them')],
+      players: {
+        me: { coachingConsent: mine },
+        them: { coachingConsent: theirs },
+      },
+    }) as unknown as MatchViewState;
+
+  it('is sized for it once this player asks for coaching, before the other agrees', () => {
+    expect(switchSideExpected('solo', undefined)).toBe(true);
+    expect(switchSideExpected('multiplayer', room(false, false))).toBe(false);
+    expect(switchSideExpected('multiplayer', room(true, false))).toBe(true);
+    expect(switchSideExpected('multiplayer', room(true, true))).toBe(true);
+  });
+});
 
 describe('RemoteSessionBoard replay binding', () => {
   beforeEach(() => {

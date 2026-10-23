@@ -197,7 +197,7 @@ describe('placing the rail', () => {
     expect(shown(room)).toBe(5);
   });
 
-  it('keeps its side while the table slides to another shape, choosing again once there', async () => {
+  it('crosses the Stadium at most once while the table slides, where more of it shows, and chooses again once there', async () => {
     (
       globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
     ).IS_REACT_ACT_ENVIRONMENT = true;
@@ -217,18 +217,30 @@ describe('placing the rail', () => {
           })
         )
       );
-    const align = () =>
-      host.querySelector('#boardButtonContainer')?.getAttribute('data-align');
+    const rail = () => host.querySelector('#boardButtonContainer')!;
+    const align = () => rail().getAttribute('data-align');
+    const setUp = {
+      actions: [action('setup')],
+      more: [{ id: 'reset', label: 'reset', onSelect: vi.fn() }],
+    };
+    // Set-up's buttons all show past the Stadium mid-slide: they stay.
+    await draw(setUp);
+    expect(align()).toBe('end');
+    await draw({ ...setUp, end: 920, holdSide: true });
+    expect(align()).toBe('end');
     await draw({});
     expect(align()).toBe('end');
-    // Mid-slide the room past the Stadium shrinks for a frame or two.
+    // A turn's would go behind More there: it moves, once.
     await draw({ end: 920, holdSide: true });
-    expect(align()).toBe('end');
-    await draw({ holdSide: true });
-    expect(align()).toBe('end');
-    // Settled where that room is short, it moves once.
-    await draw({ end: 920 });
     expect(align()).toBe('start');
+    expect(shown(rail().outerHTML)).toBe(7);
+    await draw({ holdSide: true });
+    expect(align()).toBe('start');
+    await draw({ end: 920, holdSide: true });
+    expect(align()).toBe('start');
+    // Settled, it chooses again.
+    await draw({});
+    expect(align()).toBe('end');
     await act(async () => root.unmount());
     host.remove();
   });

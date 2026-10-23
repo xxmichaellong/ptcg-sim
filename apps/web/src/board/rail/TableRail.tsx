@@ -134,7 +134,8 @@ export interface TableRailProps {
   readonly canSwitchSide?: boolean;
   /**
    * The table is on its way to another shape (the log sliding in or out):
-   * the actions keep the side they had, and choose again once it is there.
+   * the actions move across the Stadium at most once, to where more of
+   * them show, and choose again once it is there.
    */
   readonly holdSide?: boolean;
   readonly actions: readonly RailAction[];
@@ -342,15 +343,13 @@ export const TableRail = memo(function TableRail({
   seat = 'you',
 }: TableRailProps) {
   const { t } = useLingui();
-  // The side the actions were last drawn on, kept through a slide.
-  const drawnAtRight = useRef<boolean | undefined>(undefined);
-  const kept = holdSide ? drawnAtRight.current : undefined;
-  const {
-    atRight,
-    start: actionsStart,
-    width: actionsWidth,
-    fitted,
-  } = placeRailActions({
+  // The side last drawn, and whether a slide under way has moved it: the
+  // table's shape blips mid-slide, and the actions would cross the Stadium
+  // and back.
+  const drawn = useRef<{ atRight: boolean; moved: boolean } | undefined>(
+    undefined
+  );
+  const choice = {
     anchor,
     width,
     avoid,
@@ -358,13 +357,33 @@ export const TableRail = memo(function TableRail({
     start,
     coinOnTable,
     canSwitchSide,
-    ...(kept === undefined ? {} : { side: kept }),
     actions,
     more,
-  });
+  };
+  const chosen = placeRailActions(choice);
+  const before = holdSide ? drawn.current : undefined;
+  const placed = (() => {
+    if (before === undefined || before.atRight === chosen.atRight) {
+      return chosen;
+    }
+    const kept = placeRailActions({ ...choice, side: before.atRight });
+    // Moved once already, or nothing more shows across: it stays.
+    return !before.moved &&
+      chosen.fitted.shown.length > kept.fitted.shown.length
+      ? chosen
+      : kept;
+  })();
+  const { atRight, start: actionsStart, width: actionsWidth, fitted } = placed;
   useEffect(() => {
-    drawnAtRight.current = atRight;
-  }, [atRight]);
+    const previous = drawn.current;
+    drawn.current = {
+      atRight,
+      moved:
+        holdSide &&
+        previous !== undefined &&
+        (previous.moved || previous.atRight !== atRight),
+    };
+  }, [atRight, holdSide]);
   return (
     <div
       className="ptcgsim-table-rail"
