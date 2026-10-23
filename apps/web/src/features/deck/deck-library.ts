@@ -494,6 +494,7 @@ export class DeckLibrary {
     // A removal stays marked until storage has it, so a read-back meanwhile
     // can't bring the deck back.
     const removals = [...this.#removals];
+    const automatic = new Set(this.#automatic);
     this.#pending.clear();
     this.#automatic.clear();
     const backend = this.#backend;
@@ -509,8 +510,16 @@ export class DeckLibrary {
         // Full or blocked: the decks stay in memory for this visit, and
         // are tried again with the next write.
         for (const deck of decks) {
+          const current = this.#decks.get(deck.id);
+          if (!current) continue;
+          // A player's change that didn't reach storage rides with any
+          // change made on top of it since: none of it gives way.
+          if (!automatic.has(deck.id)) this.#automatic.delete(deck.id);
+          // Changed since: that change is written, or waits to be, itself.
+          if (current !== deck) continue;
           this.#unsaved.add(deck.id);
-          if (this.#decks.has(deck.id)) this.#pending.add(deck.id);
+          this.#pending.add(deck.id);
+          if (automatic.has(deck.id)) this.#automatic.add(deck.id);
         }
       }
     }
@@ -584,6 +593,7 @@ export class DeckLibrary {
     if (this.#automatic.has(id)) {
       this.#automatic.delete(id);
       this.#pending.delete(id);
+      this.#unsaved.delete(id);
     }
     if (!this.#backend || this.#pending.has(id) || this.#removals.has(id)) {
       return;
