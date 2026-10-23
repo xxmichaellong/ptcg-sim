@@ -101,6 +101,12 @@ const readStandingsDown = (
   return null;
 };
 
+/**
+ * How a standings read ended: read (or unchanged), failed (a try), waiting
+ * on Limitless's rate limit (no fault of the event's), or the event gone.
+ */
+type ReadOutcome = 'read' | 'failed' | 'waiting' | 'gone';
+
 const META = Object.freeze({
   budget: 'budget',
   /** The next page of the first, whole-list discovery, or `done`. */
@@ -252,7 +258,7 @@ type CrawlTask =
 
 export class DeckIndex {
   private readonly store: DeckIndexStore;
-  private readonly reading = new Map<string, Promise<void>>();
+  private readonly reading = new Map<string, Promise<ReadOutcome>>();
   /**
    * When a player's read of an event with nothing read yet last failed:
    * players don't ask Limitless for it again for a few minutes. Kept in
@@ -514,7 +520,7 @@ export class DeckIndex {
     tournament: TournamentRow,
     conditional: boolean,
     kind: RequestKind
-  ): Promise<void> {
+  ): Promise<ReadOutcome> {
     const pending = this.reading.get(tournament.id);
     if (pending) return pending;
     const reading = this.readOnce(tournament, conditional, kind).finally(() =>
@@ -528,7 +534,7 @@ export class DeckIndex {
     tournament: TournamentRow,
     conditional: boolean,
     kind: RequestKind
-  ): Promise<void> {
+  ): Promise<ReadOutcome> {
     let response: LimitlessResponse;
     try {
       response = await this.request(
@@ -551,16 +557,16 @@ export class DeckIndex {
             // Revived with the rest once standings answer: one really gone
             // answers unknown again and is forgotten then.
             this.standingsFailed(tournament.id, this.deps.now(), kind);
-            return;
+            return 'failed';
           }
           this.store.forget(tournament.id);
-          return;
+          return 'gone';
         }
         // Not the tournament's fault: it waits for the budget, not a retry.
-        if (error.code === 'rate_limited') return;
+        if (error.code === 'rate_limited') return 'waiting';
       }
       this.standingsFailed(tournament.id, this.deps.now(), kind);
-      return;
+      return 'failed';
     }
     const now = this.deps.now();
     const provisional = now - tournament.date < STORE_POLICY.finishedAfterMs;
@@ -569,14 +575,14 @@ export class DeckIndex {
       this.store.deleteMeta(META.unknownRun);
       this.standingsAnswered();
       this.store.recordUnchanged(tournament.id, now, provisional);
-      return;
+      return 'read';
     }
     if (!Array.isArray(response.body)) {
       // Limitless answering nonsense: the crawl holds back, as for an
       // outage, and the tournament waits for a retry.
       if (kind === 'crawl') this.holdBack();
       this.standingsFailed(tournament.id, now, kind);
-      return;
+      return 'failed';
     }
     const entries = readStandings(response.body);
     if (response.body.length > 0 && entries.length === 0) {
@@ -584,7 +590,7 @@ export class DeckIndex {
       // is stored keeps answering, the crawl holds back as for nonsense.
       if (kind === 'crawl') this.holdBack();
       this.standingsFailed(tournament.id, now, kind);
-      return;
+      return 'failed';
     }
     this.recovered();
     this.store.deleteMeta(META.unknownRun);
@@ -600,6 +606,7 @@ export class DeckIndex {
       etag: response.etag ?? null,
       provisional,
     });
+    return 'read';
   }
 
   /** A standings read failed: one of the event's tries, and noted. */
@@ -666,35 +673,40 @@ export class DeckIndex {
     const stale =
       !read ||
       (young && (tournament.fetchedAt ?? 0) <= now - CRAWL_POLICY.liveRereadMs);
+    // Failed for a player a moment ago: busy until players ask again, the
+    // first answer and every one after it alike.
+    const failedAnswer = (
+      at: number
+    ): { readonly kind: 'busy'; readonly retryAfterMs: number } => ({
+      kind: 'busy',
+      retryAfterMs: Math.max(
+        at + CRAWL_POLICY.liveRereadMs - this.deps.now(),
+        nextAllowedAt(this.budget, 'demand', this.deps.now()) - this.deps.now(),
+        MINUTE_MS
+      ),
+    });
     const failedAt = read ? undefined : this.playerFailedAt.get(id);
     if (
       failedAt !== undefined &&
       now - failedAt < CRAWL_POLICY.liveRereadMs &&
       !this.reading.has(id)
     ) {
-      // Failed for a player a moment ago: not asked again yet. One the
-      // crawl gave up on can't be loaded; one it will try again is busy.
-      return tournament.state === 'failed'
-        ? { kind: 'not_found' }
-        : {
-            kind: 'busy',
-            retryAfterMs: failedAt + CRAWL_POLICY.liveRereadMs - now,
-          };
+      return failedAnswer(failedAt);
     }
     if (stale && this.deps.enabled) {
       const allowedAt = nextAllowedAt(this.budget, 'demand', now);
       if (allowedAt <= now || this.reading.has(id)) {
         // Asked as the crawl asks: unchanged since the last read, it costs
         // Limitless no body and the index no writes.
-        await this.read(tournament, true, 'demand');
-        if (this.store.tournament(id)?.fetchedAt === null) {
+        const outcome = await this.read(tournament, true, 'demand');
+        if (outcome === 'failed') {
           for (const [key, at] of this.playerFailedAt) {
             if (now - at >= CRAWL_POLICY.liveRereadMs) {
               this.playerFailedAt.delete(key);
             }
           }
           this.playerFailedAt.set(id, now);
-        } else {
+        } else if (outcome === 'read') {
           this.playerFailedAt.delete(id);
         }
       } else if (!read) {
@@ -705,7 +717,12 @@ export class DeckIndex {
     // Gone, or skipped while it was read: its format's lists aren't kept.
     if (!current || current.state === 'skipped') return { kind: 'not_found' };
     if (current.fetchedAt === null) {
-      // The read failed: nothing to show yet.
+      // The read failed: nothing to show yet, said as it will be said until
+      // players ask again.
+      const failed = this.playerFailedAt.get(id);
+      if (failed !== undefined && this.deps.enabled) {
+        return failedAnswer(failed);
+      }
       return this.deps.enabled
         ? {
             kind: 'busy',

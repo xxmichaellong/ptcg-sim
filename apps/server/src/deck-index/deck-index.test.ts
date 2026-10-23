@@ -601,6 +601,42 @@ describe('the request budget', () => {
     expect((await index.tournament(id(2))).kind).toBe('ok');
   });
 
+  it('tells a player busy, the same each time, while it waits to ask again for an event that failed them', async () => {
+    now = START - 6 * HOUR;
+    limitless.tournaments = [tournament(1, { date: START - 2 * DAY })];
+    limitless.standings.set(id(1), { broken: true });
+    const index = createIndex();
+    await crawlUntil(index, START);
+    const first = await index.tournament(id(1));
+    expect(first).toMatchObject({ kind: 'busy' });
+    expect(first.kind === 'busy' && first.retryAfterMs).toBeGreaterThan(
+      4 * MINUTE
+    );
+    now = START + 2 * MINUTE;
+    const later = await index.tournament(id(1));
+    expect(later).toMatchObject({ kind: 'busy' });
+    expect(later.kind === 'busy' && later.retryAfterMs).toBeLessThanOrEqual(
+      3 * MINUTE
+    );
+  });
+
+  it('waits only for Limitless’s rate limit when a player’s read is refused for it', async () => {
+    limitless.tournaments = [tournament(1, { date: START - HOUR })];
+    limitless.standings.set(id(1), [standing('p', 1, dragapult)]);
+    const index = createIndex();
+    await crawl(index, 1);
+    limitless.failures.push(
+      new Response('slow down', {
+        status: 429,
+        headers: { 'retry-after': '20' },
+      })
+    );
+    expect((await index.tournament(id(1))).kind).toBe('busy');
+    // No fault of the event's: read once the limit has passed.
+    now += 30_000;
+    expect((await index.tournament(id(1))).kind).toBe('ok');
+  });
+
   it('reads an event read while it ran, given up on since, once in a few minutes for its viewers', async () => {
     limitless.tournaments = [tournament(1, { date: START - 2 * HOUR })];
     limitless.standings.set(id(1), [standing('p', 1, dragapult)]);
