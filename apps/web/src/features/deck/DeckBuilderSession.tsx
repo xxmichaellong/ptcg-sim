@@ -372,8 +372,10 @@ export const DeckBuilderSession = ({
     onRequestClose();
   }, [flush, onRequestClose]);
 
-  // Each seat's card back for its tray: the one chosen here, else the one
-  // the room shows. Read as one string so a change elsewhere in the room
+  // Each seat's card back for its tray: the one chosen here while it is on
+  // its way to the table, else the one the room shows (an Undo, a game
+  // restored or the tutorial's table may show another than the choice kept),
+  // else the choice. Read as one string so a change elsewhere in the room
   // doesn't redraw the screen.
   const subscribeCardBacks = useCallback(
     (listener: () => void) => {
@@ -388,10 +390,17 @@ export const DeckBuilderSession = ({
   );
   const readCardBacks = useCallback(() => {
     const { slots } = cardBackStore.getSnapshot();
-    const main = slots.main.url ?? roomCardBackOf(session, 'main') ?? '';
-    const alternate =
-      slots.alternate.url ?? roomCardBackOf(session, 'alternate') ?? '';
-    return `${main}\n${alternate}`;
+    const shown = (seat: DeckBuilderTarget): string => {
+      const slot = slots[seat];
+      const pending = slot.dirty || slot.installingRevision !== undefined;
+      return (
+        (pending ? slot.url : undefined) ??
+        roomCardBackOf(session, seat) ??
+        slot.url ??
+        ''
+      );
+    };
+    return `${shown('main')}\n${shown('alternate')}`;
   }, [cardBackStore, session]);
   const cardBackKey = useSyncExternalStore(
     subscribeCardBacks,

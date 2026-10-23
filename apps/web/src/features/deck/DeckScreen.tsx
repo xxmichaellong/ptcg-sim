@@ -115,12 +115,13 @@ const DEFAULT_SLEEVE = DEFAULT_CARD_BACK_URL;
 
 /**
  * A card back the tray can show: an address on the web (whatever its
- * scheme's case: a phone's keyboard writes "Https://"), on this site or
- * protocol-relative, else the standard back (a back the room was given some
- * other way still reaches the table; only its swatch here falls back).
+ * scheme's case: a phone's keyboard writes "Https://"; spaces before it, as
+ * v1 kept a pasted one, which the table's image reads past), on this site
+ * or protocol-relative, else the standard back (a back the room was given
+ * some other way still reaches the table; only its swatch here falls back).
  */
 export const cardBackSource = (url: string | undefined): string =>
-  url && /^(?:https?:|\/|blob:|data:image\/)/iu.test(url)
+  url && /^(?:https?:|\/|blob:|data:image\/)/iu.test(url.trim())
     ? url
     : DEFAULT_SLEEVE;
 

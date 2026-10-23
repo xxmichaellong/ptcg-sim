@@ -895,6 +895,86 @@ describe('a lesson step on the practice table', () => {
     expect(said).not.toContain('mulligan');
   });
 
+  it('puts a Basic back in the Active before the Bench, as the step before does, and counts the Active sent to the hand then benched', async () => {
+    const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+    const room = fakePracticeRoom();
+    await dealScenario(
+      room.session,
+      lessonById('start')!.scenario,
+      new AbortController().signal
+    );
+    const now = () => room.session.getSnapshot().view!;
+    const send = async (command: unknown) => {
+      room.session.submit(command as never);
+      await flush();
+    };
+    // A third Charmander kept in the hand: the step isn't done by the hand
+    // running out of Basics.
+    for (const key of [
+      'charmander',
+      'charmander',
+      'charmander',
+      'fireEnergy',
+    ] as const) {
+      const card = findCard(now(), zoneCards(now(), you, 'deck'), key)!;
+      await send({
+        type: 'MoveCard',
+        cardId: card.id,
+        expectedSourceZoneId: zoneId(you, 'deck'),
+        destinationZoneId: zoneId(you, 'hand'),
+      });
+    }
+    const toPlay = (cardId: string, slot: 'active' | 'bench') =>
+      send({
+        type: 'MoveCardToPlay',
+        cardId,
+        expectedSourceZoneId: zoneId(you, 'hand'),
+        boardPlayerId: you,
+        slot,
+      });
+    const charmanders = () =>
+      zoneCards(now(), you, 'hand').filter(
+        (card) => tutorialCardKeyOf(now(), card) === 'charmander'
+      );
+    const first = charmanders()[0]!;
+    await toPlay(first.id, 'active');
+    const bench = lessonById('start')!.steps.find(
+      (entry) => entry.id === 'bench'
+    )!;
+    // The step begins; an Undo sends the Active back to the hand.
+    const start = now();
+    const active = activeStack(now(), you)!;
+    await send({
+      type: 'MovePlayStackToZone',
+      stackId: active.id,
+      expectedEvolutionCardIds: active.evolutionCards.map((card) => card.id),
+      expectedAttachmentCardIds: active.attachmentCards.map((card) => card.id),
+      destinationZoneId: zoneId(you, 'hand'),
+    });
+    const at = () => world({ view: now(), start, you, them });
+    expect(bench.done!(at())).toBe(false);
+    expect(bench.drag!(at())?.to).toEqual(
+      expect.objectContaining({ zone: expect.stringContaining('active') })
+    );
+    // The other Charmander in the Active, the first benched from the hand:
+    // benched.
+    const second = charmanders().find((card) => card.id !== first.id)!;
+    await toPlay(second.id, 'active');
+    await toPlay(first.id, 'bench');
+    expect(bench.done!(at())).toBe(true);
+  });
+
+  it('says what the step before says when the Active has gone and no Basic is in the hand', () => {
+    const bench = lessonById('start')!.steps.find(
+      (entry) => entry.id === 'bench'
+    )!;
+    // Dealt, no Basic anywhere: a mulligan, not "from your hand".
+    const none = world({ view: handOf(['fireEnergy', 'charmeleon']) });
+    expect(bench.done!(none)).toBe(false);
+    expect(text({ text: () => bench.stuck!(none) })).toContain('mulligan');
+    expect(bench.drag!(none)).toBeNull();
+  });
+
   it('is done when the player did it before it was asked', async () => {
     const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
     const dealt = async (id: string) => {

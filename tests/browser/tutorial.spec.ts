@@ -74,6 +74,29 @@ const dealABasic = async (page: Page): Promise<void> => {
   }
 };
 
+/**
+ * Start's optional Bench step, or the lesson already done: dealt no second
+ * Basic, that step is done the moment it begins, and a slow runner can
+ * miss it on the way.
+ */
+const benchOrDone = async (page: Page): Promise<string> => {
+  let seen = '';
+  await expect
+    .poll(
+      async () => {
+        seen = (await page.locator('[data-tutorial-done]').isVisible())
+          ? 'done'
+          : await stepOf(page);
+        return seen;
+      },
+      { timeout: 20_000 }
+    )
+    .toMatch(/^(?:start:bench|done)$/u);
+  return seen === 'start:bench' && (await pokemonInHand(page).count()) > 0
+    ? seen
+    : 'done';
+};
+
 const centre = async (locator: Locator): Promise<Point> => {
   const box = (await locator.boundingBox())!;
   return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
@@ -173,9 +196,8 @@ test('walks every lesson with a mouse, each step done by the table', async ({
     await grip(pokemonInHand(page)),
     await centre(zone(page, 'active'))
   );
-  await atStep(page, 'start:bench');
   // Dealt no second Pokémon, the step has nothing to do and goes on.
-  if ((await pokemonInHand(page).count()) > 0) {
+  if ((await benchOrDone(page)) === 'start:bench') {
     await mouseDrag(
       page,
       await grip(pokemonInHand(page)),
@@ -392,8 +414,7 @@ test.describe('on a phone', () => {
       await grip(pokemonInHand(page)),
       await centre(zone(page, 'active'))
     );
-    await atStep(page, 'start:bench');
-    if ((await pokemonInHand(page).count()) > 0) {
+    if ((await benchOrDone(page)) === 'start:bench') {
       await touchDrag(await grip(pokemonInHand(page)), await benchRoom(page));
     }
 

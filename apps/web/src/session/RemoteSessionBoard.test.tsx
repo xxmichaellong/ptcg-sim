@@ -971,7 +971,12 @@ describe('RemoteSessionBoard replay binding', () => {
   });
 
   it('covers the hand across the table, not the one turned to the bottom, as soon as Solo turns', async () => {
+    const reread = vi.spyOn(
+      BoardSessionRuntime.prototype,
+      'synchronizeSources'
+    );
     for (const how of ['initial', 'flip'] as const) {
+      reread.mockClear();
       const disclosed = { ...withDisclosedOpponentHand(), revision: 10 };
       const session = new FakeRemoteBoardSession({
         ...initialState(),
@@ -997,6 +1002,9 @@ describe('RemoteSessionBoard replay binding', () => {
         )
       );
       await waitForRevision(host, 10);
+      // Turned from the first scene: the hands are right at once, with no
+      // second reading to turn them over.
+      if (how === 'initial') expect(reread).not.toHaveBeenCalled();
       if (how === 'flip') await act(async () => commands.current?.flipBoard());
       const scene = selectedScene();
       const concealed = (side: string) => {
@@ -1017,6 +1025,7 @@ describe('RemoteSessionBoard replay binding', () => {
       await act(async () => root.unmount());
       replay.dispose();
     }
+    reread.mockRestore();
   });
 
   it('keeps an empty Lost Zone off the table until the player adds it', async () => {

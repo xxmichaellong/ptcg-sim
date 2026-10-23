@@ -660,10 +660,21 @@ export const RemoteSessionBoard = ({
         // as the loading screen lifts.
         const turned = initialFlipRef.current && view.viewer.kind === 'player';
         initialFlipRef.current = false;
+        const firstLayout = turned ? flipBoardLayoutState(layout) : layout;
+        // The seat it acts for, before the first scene is read: Solo's
+        // hidden hand is the one across from it from the start, not covered
+        // and then turned over.
+        displayPolicyRef.current = {
+          ...displayPolicyRef.current,
+          actingPlayerId:
+            view.viewer.kind === 'player'
+              ? firstLayout.bottomPlayerId
+              : undefined,
+        };
         runtime = new BoardSessionRuntime({
           live: session,
           replay,
-          layout: turned ? flipBoardLayoutState(layout) : layout,
+          layout: firstLayout,
           createRenderer,
           preferences: preferencesRef.current,
           transformView: (sourceView, source) => {

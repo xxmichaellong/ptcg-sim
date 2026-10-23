@@ -705,6 +705,48 @@ describe('DeckBuilderSession', () => {
     ]);
   });
 
+  it('shows on the tray the card back the table shows, once a choice made here has reached it', async () => {
+    const sleeve = () =>
+      host
+        .querySelector('.deck-tray[data-seat="self"] .deck-tray__sleeve img')
+        ?.getAttribute('src');
+    const ownPlayerId =
+      view.viewer.kind === 'player' ? view.viewer.playerId : '';
+    {
+      const session = new FakeSession();
+      session.showCardBack(ownPlayerId, 'https://example.test/old.png');
+      const requests: ((url: string | undefined) => void)[] = [];
+      const requestCardBack: BrowserCardBackRequest = () =>
+        new Promise((resolve) => requests.push(resolve));
+      await renderSession({ session, open: true, requestCardBack });
+      expect(sleeve()).toBe('https://example.test/old.png');
+      await click('#changeCardBackButton');
+      await act(async () => requests.at(-1)?.('https://example.test/new.png'));
+      act(() => session.completeLatest(true));
+      act(() =>
+        session.showCardBack(ownPlayerId, 'https://example.test/new.png')
+      );
+      expect(sleeve()).toBe('https://example.test/new.png');
+      // An Undo on the table puts the old back again.
+      act(() =>
+        session.showCardBack(ownPlayerId, 'https://example.test/old.png')
+      );
+      expect(sleeve()).toBe('https://example.test/old.png');
+    }
+    // A back chosen in another room, kept for this one but not put on its
+    // table (a game restored, the tutorial's practice table).
+    {
+      const cardBackStore = new CardBackCustodyStore();
+      cardBackStore.replace('main', 'https://example.test/earlier-room.png');
+      const receipt = cardBackStore.beginNextDirtyInstall()!;
+      cardBackStore.settleInstall(receipt, 'installed');
+      const session = new FakeSession();
+      session.showCardBack(ownPlayerId, 'https://example.test/restored.png');
+      await renderSession({ session, cardBackStore, open: true });
+      expect(sleeve()).toBe('https://example.test/restored.png');
+    }
+  });
+
   it('drains dirty decks only when the Deck surface closes and cleans them only after authority publication', async () => {
     const session = new FakeSession();
     const store = new DeckBuilderStore();

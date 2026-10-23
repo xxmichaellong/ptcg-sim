@@ -101,15 +101,16 @@ export const roomStatus = async (page: Page) => {
 export const roomCode = async (page: Page): Promise<string> => {
   const status = await roomStatus(page);
   let text = '';
+  // Polled for its text, so a timeout says what the header read instead.
   await expect
     .poll(
       async () => {
         text = (await status.innerText()).trim();
-        return /^Room [A-HJ-NP-Z2-9]{12}$/u.test(text);
+        return text;
       },
       { timeout: 15_000, message: 'the room names its code' }
     )
-    .toBe(true);
+    .toMatch(/^Room [A-HJ-NP-Z2-9]{12}$/u);
   const match = /^Room ([A-HJ-NP-Z2-9]{12})$/u.exec(text);
   if (!match?.[1]) throw new Error(`Unexpected room status: ${text}`);
   return match[1];

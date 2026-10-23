@@ -129,6 +129,10 @@ describe("a seat's card back on its tray", () => {
       '/v2/assets/cardback.png',
       'blob:https://ptcgsim.online/1234',
       'data:image/png;base64,AAAA',
+      // v1 kept what was pasted, a space before it and all: the table's
+      // image reads it as the address.
+      ' https://i.imgur.com/back.png',
+      '\thttps://i.imgur.com/back.png',
     ]) {
       expect(cardBackSource(url), url).toBe(url);
     }
