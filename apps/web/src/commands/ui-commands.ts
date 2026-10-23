@@ -60,19 +60,28 @@ const command = (
   id: string,
   title: string,
   meaning: Meaning,
-  extra: Pick<PaletteCommand, 'icon' | 'hint' | 'detail'>,
+  extra: Pick<PaletteCommand, 'icon' | 'hint' | 'detail'> & {
+    /** The button's own label, which the lessons name it by ("Passen"). */
+    readonly label?: string;
+  },
   run: () => void
-): PaletteCommand => ({
-  id,
-  title: meaning.title ?? title,
-  section: meaning.section,
-  icon: extra.icon ?? LightningIcon,
-  ...(extra.hint ? { hint: extra.hint } : {}),
-  ...(extra.detail ? { detail: extra.detail } : {}),
-  ...(meaning.keywords ? { keywords: meaning.keywords } : {}),
-  ...(meaning.dangerous ? { dangerous: true } : {}),
-  run: () => run(),
-});
+): PaletteCommand => {
+  const keywords = [
+    ...(meaning.keywords ?? []),
+    ...(extra.label && extra.label !== title ? [extra.label] : []),
+  ];
+  return {
+    id,
+    title: meaning.title ?? title,
+    section: meaning.section,
+    icon: extra.icon ?? LightningIcon,
+    ...(extra.hint ? { hint: extra.hint } : {}),
+    ...(extra.detail ? { detail: extra.detail } : {}),
+    ...(keywords.length > 0 ? { keywords } : {}),
+    ...(meaning.dangerous ? { dangerous: true } : {}),
+    run: () => run(),
+  };
+};
 
 /**
  * The table rail's actions and its More, for the seat it acts for.
@@ -94,7 +103,9 @@ export const railCommands = (
   const add = (
     id: string,
     title: string,
-    extra: Pick<PaletteCommand, 'icon' | 'hint'>,
+    extra: Pick<PaletteCommand, 'icon' | 'hint'> & {
+      readonly label?: string;
+    },
     run: () => void
   ) => {
     const bare = commandId(id);
@@ -129,7 +140,11 @@ export const railCommands = (
     add(
       action.id,
       action.title ?? action.label,
-      { icon: action.icon, ...(action.hint ? { hint: action.hint } : {}) },
+      {
+        icon: action.icon,
+        label: action.label,
+        ...(action.hint ? { hint: action.hint } : {}),
+      },
       action.onSelect
     );
   }

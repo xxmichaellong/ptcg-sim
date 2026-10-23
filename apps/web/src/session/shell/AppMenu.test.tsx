@@ -175,13 +175,17 @@ describe('AppBar', () => {
     await arrow('ArrowLeft');
     // Round from the first to the last.
     expect(document.activeElement?.id).toBe('appMenuButton');
-    // Left focused by a click, a button hands the arrows on (to the table).
-    const menu = document.activeElement as HTMLElement;
-    const matches = menu.matches.bind(menu);
-    menu.matches = (selector: string) =>
+    // Left focused by a click, a button hands the arrows on (to the table):
+    // not keyboard focus as it arrives, whatever the browser says at the
+    // keypress.
+    const settings = document.querySelector<HTMLElement>('#settingsButton')!;
+    const matches = settings.matches.bind(settings);
+    settings.matches = (selector: string) =>
       selector === ':focus-visible' ? false : matches(selector);
+    await act(async () => settings.focus());
+    settings.matches = matches;
     expect((await arrow('ArrowRight')).defaultPrevented).toBe(false);
-    expect(document.activeElement).toBe(menu);
+    expect(document.activeElement).toBe(settings);
   });
 
   it('turns the way out round in a right-to-left language, and nothing else', async () => {

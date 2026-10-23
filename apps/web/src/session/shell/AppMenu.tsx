@@ -22,7 +22,11 @@ import { UsersThreeIcon } from '@phosphor-icons/react/dist/csr/UsersThree';
 import { XCircleIcon } from '@phosphor-icons/react/dist/csr/XCircle';
 import { useMemo, type CSSProperties, type ReactNode } from 'react';
 
-import { moveAlongToolbar, RailButton } from '../../board/rail/TableRail.js';
+import {
+  moveAlongToolbar,
+  noteFocusArrival,
+  RailButton,
+} from '../../board/rail/TableRail.js';
 import { useHotkeyHints } from '../../hotkeys/hotkey-preferences.js';
 import { openCommandPalette } from '../../commands/palette-state.js';
 import { openShortcutsDialog } from '../../hotkeys/shortcuts-dialog-state.js';
@@ -403,6 +407,7 @@ export const AppBar = ({
       className="ptcgsim-app-bar"
       role="toolbar"
       aria-label={t({ message: 'App', context: 'the app toolbar' })}
+      onFocus={noteFocusArrival}
       onKeyDown={moveAlongToolbar}
       data-compact={compact ? 'true' : undefined}
       style={

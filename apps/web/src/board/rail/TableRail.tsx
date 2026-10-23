@@ -9,6 +9,7 @@ import {
   useRef,
   type ComponentPropsWithoutRef,
   type CSSProperties,
+  type FocusEvent as ReactFocusEvent,
   type KeyboardEvent as ReactKeyboardEvent,
 } from 'react';
 
@@ -106,6 +107,22 @@ export const RailButton = forwardRef<
 });
 
 /**
+ * Notes on a toolbar's button whether the focus came by keyboard, as it
+ * arrives: by the keypress after, every browser but Firefox says it did.
+ */
+export const noteFocusArrival = (event: ReactFocusEvent<HTMLElement>) => {
+  const target = event.target;
+  if (!(target instanceof HTMLElement)) return;
+  let visible = true;
+  try {
+    visible = target.matches(':focus-visible');
+  } catch {
+    // A browser without :focus-visible: keyboard.
+  }
+  target.dataset.focusVisible = visible ? 'true' : 'false';
+};
+
+/**
  * A toolbar of rail buttons (the rail, the app bar): the arrow keys move
  * between its buttons, and the table never sees them -- once the player is
  * moving by keyboard. A button a click left focused hands them on, to a
@@ -114,13 +131,9 @@ export const RailButton = forwardRef<
 export const moveAlongToolbar = (event: ReactKeyboardEvent<HTMLElement>) => {
   if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
   if (!(event.target instanceof HTMLElement)) return;
-  let byKeyboard = true;
-  try {
-    byKeyboard = event.target.matches(':focus-visible');
-  } catch {
-    // A browser without :focus-visible moves along.
-  }
-  if (!byKeyboard) return;
+  // How the focus arrived (`noteFocusArrival`): Chrome and WebKit count any
+  // focused button as keyboard-focused once a key is pressed.
+  if (event.target.dataset.focusVisible === 'false') return;
   const buttons = Array.from(
     event.currentTarget.querySelectorAll<HTMLButtonElement>(
       'button.ptcgsim-rail-button'
@@ -372,20 +385,6 @@ export const TableRail = memo(function TableRail({
   seat = 'you',
 }: TableRailProps) {
   const { t } = useLingui();
-  // What a button is called: its title, led by its label where the title
-  // doesn't say it ("Passen: Zug beenden"), so a lesson or the welcome
-  // naming the label finds the button by its tooltip and its spoken name.
-  const nameOf = (label: string, title: string | undefined): string =>
-    !title || title.toLocaleLowerCase().includes(label.toLocaleLowerCase())
-      ? (title ?? label)
-      : t({
-          message: `${label}: ${title}`,
-          comment: "A table button's name: its short label, then what it does",
-        });
-  const moreName = nameOf(
-    t({ message: 'More', context: 'more actions' }),
-    t`More game actions`
-  );
   // The side last drawn, and whether a slide under way has moved it: the
   // table's shape blips mid-slide, and the actions would cross the Stadium
   // and back.
@@ -453,25 +452,21 @@ export const TableRail = memo(function TableRail({
         data-seat={seat}
         // Past the Stadium the actions line up against the right end.
         data-align={atRight ? 'end' : 'start'}
+        onFocus={noteFocusArrival}
         onKeyDown={moveAlongToolbar}
         style={{ left: actionsStart, width: actionsWidth }}
       >
         {fitted.shown.map((action) => (
           <Tooltip
             key={action.id}
-            content={withKeyHint(
-              nameOf(action.label, action.title),
-              action.hint
-            )}
+            content={withKeyHint(action.title ?? action.label, action.hint)}
             side="top"
           >
             <RailButton
               id={action.id}
               icon={action.icon}
               label={action.label}
-              {...(action.title
-                ? { 'aria-label': nameOf(action.label, action.title) }
-                : {})}
+              {...(action.title ? { 'aria-label': action.title } : {})}
               primary={action.primary === true}
               pending={action.pending === true}
               onClick={action.onSelect}
@@ -480,11 +475,11 @@ export const TableRail = memo(function TableRail({
         ))}
         {fitted.more.length > 0 ? (
           <ActionMenu
-            label={moreName}
+            label={t`More game actions`}
             entries={fitted.more}
             side="top"
             align="start"
-            tooltip={moreName}
+            tooltip={t`More game actions`}
             trigger={
               <RailButton
                 id="moreActionsButton"

@@ -191,6 +191,26 @@ test('the turn stays past the Stadium beside the docked log, the coin lying on t
   expect(turn.x).toBeGreaterThan(stadium.x + stadium.width);
 });
 
+test('a toolbar button a click left focused hands the arrow keys on to the table', async ({
+  page,
+}) => {
+  test.setTimeout(120_000);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await openTable(page);
+  const focused = () => page.evaluate(() => document.activeElement?.id ?? '');
+  // Clicked, the Log button keeps the focus (Chrome), but not the arrows.
+  await page.locator('#activityButton').click();
+  expect(await focused()).toBe('activityButton');
+  await page.keyboard.press('ArrowRight');
+  expect(await focused()).toBe('activityButton');
+  // Reached by the keyboard, the arrows move along the bar.
+  await page.keyboard.press('Shift+Tab');
+  await page.keyboard.press('Tab');
+  expect(await focused()).toBe('activityButton');
+  await page.keyboard.press('ArrowRight');
+  expect(await focused()).toBe('settingsButton');
+});
+
 test('the log, opened over the table on a tablet, leaves the bar in reach', async ({
   page,
 }) => {

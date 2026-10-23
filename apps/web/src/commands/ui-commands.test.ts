@@ -33,6 +33,38 @@ describe('menuCommands', () => {
 });
 
 describe('railCommands', () => {
+  it('is found by the button’s own label, which the lessons name it by', () => {
+    // German Pass: its label "Passen", its tooltip "Zug beenden".
+    const commands = railCommands(
+      {
+        actions: [
+          {
+            id: 'passButton',
+            label: 'Passen',
+            title: 'Zug beenden',
+            icon: (() => null) as never,
+            onSelect: noop,
+          },
+          {
+            id: 'flipBoardButton',
+            label: 'Flip',
+            title: 'Flip the table',
+            icon: (() => null) as never,
+            onSelect: noop,
+          },
+        ],
+      },
+      { replaying: false }
+    );
+    const found = (query: string) =>
+      rankCommands(flattenCommands(commands), query, []).flatMap((section) =>
+        section.entries.map((entry) => entry.entry.command.id)
+      );
+    expect(found('Passen')[0]).toBe('rail.pass');
+    // Its palette title is "Turn the table around"; the label still finds it.
+    expect(found('Flip')[0]).toBe('rail.flipBoard');
+  });
+
   it("gives either seat's button one id", () => {
     const [attack] = railCommands(
       {
