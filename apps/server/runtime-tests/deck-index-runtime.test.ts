@@ -67,6 +67,10 @@ const serveLimitless = (routes: Record<string, unknown>) =>
         throw new Error(`unexpected request to ${url.origin}`);
       }
       calls.push(url.pathname + url.search);
+      // The list's pages past the first are empty, as past its end.
+      if (Number(url.searchParams.get('page') ?? '1') > 1) {
+        return Response.json([]);
+      }
       const body = routes[url.pathname];
       if (body === undefined) return new Response('unknown', { status: 400 });
       return Response.json(body);
@@ -105,8 +109,8 @@ describe('the tournament deck index', () => {
     expect(calls).toEqual([]);
     expect(await alarmAt()).not.toBeNull();
 
-    // The alarm's steps: the list, the page past it with nothing new (its
-    // end), then the standings.
+    // The alarm's steps: the list, the empty page past it (its end), then
+    // the standings.
     expect(await runDurableObjectAlarm(indexStub())).toBe(true);
     expect(await runDurableObjectAlarm(indexStub())).toBe(true);
     expect(await runDurableObjectAlarm(indexStub())).toBe(true);

@@ -189,6 +189,27 @@ const crawlUntilIdle = async (index: DeckIndex) => {
   throw new Error('the crawl never settled');
 };
 
+/** `count` events too small to read, numbered from `from`. */
+const smallEvents = (
+  from: number,
+  count: number,
+  date: (n: number) => number
+) =>
+  Array.from({ length: count }, (_, n) =>
+    tournament(from + n, { players: 4, date: date(n) })
+  );
+
+/** The crawl's steps for `ms`, the clock moving to each. */
+const crawlFor = async (index: DeckIndex, ms: number) => {
+  const end = now + ms;
+  for (let step = 0; step < 10_000; step += 1) {
+    const next = await index.step();
+    if (next === null || next > end) break;
+    now = Math.max(now, next);
+  }
+  now = end;
+};
+
 /** Every tournament the index knows of, listed or skipped (too small). */
 const knownCount = (storage: ReturnType<typeof memoryIndexStorage>): number =>
   Number(
@@ -284,10 +305,10 @@ describe('discovering tournaments', () => {
     limitless.ignorePage = true;
     const ignoring = createIndex();
     await crawlUntilIdle(ignoring);
-    // The second page, the first again, is the end; the standings are read.
+    // The first page again three times is the end; the standings are read.
     expect(
       limitless.calls.filter((call) => call.startsWith('/api/tournaments?'))
-    ).toHaveLength(2);
+    ).toHaveLength(1 + CRAWL_POLICY.backfillStalePages);
     expect(limitless.standingsCalls()).toEqual([id(1)]);
   });
 
@@ -319,6 +340,48 @@ describe('discovering tournaments', () => {
       await crawlUntilIdle(index);
     }
     expect(knownCount(storage)).toBe(2_950);
+  });
+
+  it('lists every event when the crawl stops part-way through a run and the list moves on before it comes back', async () => {
+    // Stopped after four of a 15-page run, 500 events listed meanwhile.
+    limitless.tournaments = smallEvents(
+      10_000,
+      300,
+      (n) => START - 400 * DAY - n
+    );
+    const storage = memoryIndexStorage();
+    const index = createIndex(true, storage);
+    await crawlUntilIdle(index);
+    limitless.tournaments.push(
+      ...smallEvents(20_000, 1_500, (n) => START - 30 * DAY + n * 10 * MINUTE)
+    );
+    index.discoverSoon();
+    await crawl(index, 4);
+    now = START + 30 * DAY;
+    limitless.tournaments.push(
+      ...smallEvents(30_000, 500, (n) => START + n * 10 * MINUTE)
+    );
+    index.discoverSoon();
+    await crawlFor(index, 3 * HOUR);
+    expect(knownCount(storage)).toBe(2_300);
+  });
+
+  it('lists every event when the crawl stops part-way through the backfill and the list moves on before it comes back', async () => {
+    // Stopped after four pages, 1,200 events listed meanwhile.
+    limitless.tournaments = smallEvents(
+      40_000,
+      6_500,
+      (n) => START - 400 * DAY - n
+    );
+    const storage = memoryIndexStorage();
+    const index = createIndex(true, storage);
+    await crawl(index, 4);
+    limitless.tournaments.push(
+      ...smallEvents(50_000, 1_200, (n) => START + n * 10 * MINUTE)
+    );
+    now = START + 10 * DAY;
+    await crawlFor(index, 3 * HOUR);
+    expect(knownCount(storage)).toBe(7_700);
   });
 
   it('takes a page that is not a list for a failure, not the end of the list', async () => {

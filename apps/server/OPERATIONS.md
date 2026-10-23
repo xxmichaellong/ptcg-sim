@@ -29,7 +29,9 @@ lack reaches the Worker, which answers `404` with `no-store`. A request
 asking for a page (`Sec-Fetch-Mode: navigate`) is redirected to `/` with its
 query. As the app page instead, a new build's script asked of an edge that
 hadn't it yet was kept a year under its hashed name and never ran, leaving
-that tab broken until a hard reload.
+that tab broken until a hard reload. Each miss (a bot's probe, `robots.txt`,
+a stray address) is therefore one Worker request, logged under route
+`not_found`; the app's own files and `/` stay free static hits.
 
 ## Current decks feed (ADR-029)
 
