@@ -417,9 +417,16 @@ const readSourceWranglerConfig = async (
     throw new Error('Checked-in Wrangler production Worker name changed');
   }
   const variables = objectRecord(config.vars, 'Checked-in Wrangler vars');
-  if (!exactKeys(variables, ['BUILD_ID'])) {
+  if (!exactKeys(variables, ['BUILD_ID', 'DECK_INDEX_SOURCE'])) {
     throw new Error(
       'Checked-in Wrangler vars changed; preview review is required'
+    );
+  }
+  // The deck index's crawl stays off in every preview until the account is
+  // on Workers Paid (ADR-037): its rows would take the account down.
+  if (variables.DECK_INDEX_SOURCE !== 'off') {
+    throw new Error(
+      'Checked-in Wrangler vars turn the deck index on; preview review is required'
     );
   }
   return config;
@@ -537,7 +544,7 @@ const buildPreviewWranglerConfig = (
       compatibility_date: cloneJson(source.compatibility_date),
       compatibility_flags: cloneJson(source.compatibility_flags),
       workers_dev: true,
-      vars: { BUILD_ID: arguments_.buildId },
+      vars: { BUILD_ID: arguments_.buildId, DECK_INDEX_SOURCE: 'off' },
       assets: {
         ...cloneJson(assets),
         directory: resolve(sourceDirectory, assets.directory),

@@ -12,6 +12,8 @@ export default defineConfig({
         bindings: {
           CONTINUATION_KEYRING: continuationTestKeyring,
           CONTINUATION_QUOTA_CONFIGURATION: continuationTestQuotaConfiguration,
+          // Off in wrangler.jsonc until Workers Paid; these crawl a stand-in.
+          DECK_INDEX_SOURCE: 'on',
         },
       },
     }),

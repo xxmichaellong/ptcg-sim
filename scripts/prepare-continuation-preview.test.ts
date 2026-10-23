@@ -219,7 +219,10 @@ describe('continuation managed-preview provisioner', () => {
     assert.equal(config.workers_dev, true);
     assert.equal('routes' in config, false);
     assert.equal('CONTINUATION_HTTP_ACTIVATION' in config, false);
-    assert.deepEqual(config.vars, { BUILD_ID: 'preview-abcdef0' });
+    assert.deepEqual(config.vars, {
+      BUILD_ID: 'preview-abcdef0',
+      DECK_INDEX_SOURCE: 'off',
+    });
     assert.equal(
       (config.main as string).endsWith('/apps/server/src/worker.ts'),
       true

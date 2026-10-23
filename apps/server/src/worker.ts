@@ -151,7 +151,8 @@ interface Env {
   /**
    * `off` keeps the tournament deck index from calling Limitless at all
    * (browser specs, which serve their own answers); anything else, or
-   * nothing, crawls it.
+   * nothing, crawls it. wrangler.jsonc sets it off for both Workers until
+   * the account is on Workers Paid (ADR-037).
    */
   readonly DECK_INDEX_SOURCE?: string;
   readonly CONTINUATION_CREATION_RATE_LIMITER: RateLimit;

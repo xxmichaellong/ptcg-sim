@@ -6,6 +6,11 @@
   "compatibility_flags": ["nodejs_compat"],
   "vars": {
     "BUILD_ID": "local-development",
+    // The tournament deck index stays off until the account is on Workers
+    // Paid: its crawl writes more rows than the Free plan's 100k a day,
+    // which every Durable Object in the account shares (ADR-037). "on"
+    // turns it on; a deploy's own --var still wins.
+    "DECK_INDEX_SOURCE": "off",
   },
   "assets": {
     "directory": "../web/dist",
@@ -136,6 +141,8 @@
       "name": "ptcgsim-v2-preview",
       "vars": {
         "BUILD_ID": "local-development",
+        // Off until Workers Paid, as in production (ADR-037).
+        "DECK_INDEX_SOURCE": "off",
       },
       "durable_objects": {
         "bindings": [
