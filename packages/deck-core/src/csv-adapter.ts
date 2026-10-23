@@ -260,7 +260,8 @@ export const parseSimCsvResult = (csvData: string = ''): ParseSimCsvResult => {
       }
     }
     const quantityText = (row[0] ?? '').trim();
-    const name = (row[1] ?? '').trim();
+    // A quoted cell may hold line breaks; a card's name is one line.
+    const name = (row[1] ?? '').trim().replace(/\s+/gu, ' ');
     const supertype = (row[2] ?? '').trim();
     const image = (row[3] ?? '').trim();
     const quantity = Number(quantityText);

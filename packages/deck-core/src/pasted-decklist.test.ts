@@ -44,6 +44,16 @@ describe('legacy card-type table copies', () => {
 });
 
 describe('parsePastedDecklist', () => {
+  it('reads a long line that almost names a set at once, never stalling the page', () => {
+    // Thirty-six words: v1's pattern took seconds here, and doubled about
+    // every word and a half after.
+    const line = `1 x ${'ab1 '.repeat(34)}1!`;
+    const started = performance.now();
+    const parsed = rows(line);
+    expect(performance.now() - started).toBeLessThan(250);
+    expect(parsed.rows).toHaveLength(1);
+  }, 2_000);
+
   it('ignores source section headings and resolves current, old-code, and catalog-ID rows', () => {
     const parsed = rows(
       `Pokémon (3)\r\n1 Arceus V BRS 122\r\n1 Base Pikachu BS 58\r\n1 Pikachu base1-58`

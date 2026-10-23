@@ -8,6 +8,7 @@ import {
   parseSimCsvResult,
 } from './csv-adapter.js';
 import { deckListOf, type DeckCard } from './deck-list.js';
+import { formatDecklistText } from './decklist-text.js';
 
 const card = (
   overrides: Partial<DeckCard> & Pick<DeckCard, 'name'>
@@ -65,6 +66,20 @@ describe('simulator CSV files', () => {
         image: 'https://example.com/"quoted",image\nline.png',
       });
     }
+  });
+
+  it('reads a name a quoted cell breaks over lines as one line, so the text list keeps it', () => {
+    const result = parseSimCsvResult(
+      'QTY,Name,Type,URL\n2,"two\nlines",Pokémon,url\n'
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.cards[0]!.card.name).toBe('two lines');
+    // A name kept from before, line break and all, is still one line.
+    const kept = deckListOf([
+      { card: card({ id: 'kept', name: 'two\nlines' }), count: 2 },
+    ]);
+    expect(formatDecklistText(kept)).toContain('2 two lines');
   });
 
   it('accepts a BOM and CRLF line ends', () => {

@@ -30,7 +30,8 @@ export const formatDecklistText = (list: DeckList): string => {
     const lines = sorted
       .filter((entry) => entry.card.category === category)
       .map(({ card, count: copies }) =>
-        [copies, card.name, card.set, card.number]
+        // One line a card, whatever a name kept from a file holds.
+        [copies, card.name.replace(/\s+/gu, ' '), card.set, card.number]
           .filter((part) => part !== undefined && part !== '')
           .join(' ')
       );

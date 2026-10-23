@@ -358,6 +358,9 @@ const detectFormat = (rows: readonly ParsedRow[]): PastedDecklistFormat => {
   return 'unknown';
 };
 
+/** The most words a line read by the special-set pattern may have. */
+const SPECIAL_LINE_MAX_WORDS = 16;
+
 const parseLine = (sourceLine: string, line: number): ParsedRow | undefined => {
   // PTCGO's export bullets each card line (`* 4 Arceus V BRS 122`), which
   // v1 read past; its header lines (`****** ... ******`, `##Pokémon - 13`)
@@ -448,10 +451,15 @@ const parseLine = (sourceLine: string, line: number): ParsedRow | undefined => {
     };
   }
 
+  // v1's pattern, whose nested repeats take time doubling about every
+  // word and a half on a line that almost matches: a short pasted line of
+  // thirty-odd words froze the page. No real list line is half as long.
   const special =
-    /^\s*(\d+) (.+?) ((?:\w{2,3}[a-zA-Z]\d*|\w{2,3}(?:\s+[a-zA-Z\d]+)*)(?:\s+(\w{2,3}\s*[a-zA-Z\d]+)\s*)*)$/u.exec(
-      value
-    );
+    value.trim().split(/\s+/u).length <= SPECIAL_LINE_MAX_WORDS
+      ? /^\s*(\d+) (.+?) ((?:\w{2,3}[a-zA-Z]\d*|\w{2,3}(?:\s+[a-zA-Z\d]+)*)(?:\s+(\w{2,3}\s*[a-zA-Z\d]+)\s*)*)$/u.exec(
+          value
+        )
+      : null;
   if (special) {
     const [setCode, number] = (special[3] ?? '').trim().split(/(?<=\S)\s/u);
     return {

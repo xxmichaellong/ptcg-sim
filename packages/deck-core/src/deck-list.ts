@@ -198,16 +198,31 @@ export const replacePrinting = (
   return Object.freeze(next);
 };
 
-/** Builds a list from entries, merging repeats of one printing. */
+/**
+ * Builds a list from entries, merging repeats of one printing (the first
+ * one's card kept, its place too). In one pass: a list rebuilt per card
+ * took seconds over a 10,000-card file, on every load of that deck.
+ */
 export const deckListOf = (
   entries: Iterable<{ readonly card: DeckCard; readonly count: number }>
 ): DeckList => {
-  let list: DeckList = EMPTY_DECK_LIST;
+  const byId = new Map<string, { readonly card: DeckCard; count: number }>();
   for (const entry of entries) {
     if (!Number.isFinite(entry.count) || entry.count <= 0) continue;
-    list = addCard(list, entry.card, entry.count);
+    const seen = byId.get(entry.card.id);
+    if (seen) {
+      seen.count = clamp(seen.count + entry.count);
+      continue;
+    }
+    const count = clamp(entry.count);
+    if (count > 0) byId.set(entry.card.id, { card: entry.card, count });
   }
-  return list;
+  if (byId.size === 0) return EMPTY_DECK_LIST;
+  return Object.freeze(
+    [...byId.values()].map(({ card, count }) =>
+      freezeEntry(Object.freeze({ ...card }), count)
+    )
+  );
 };
 
 export const deckTotals = (list: DeckList): DeckTotals => {
