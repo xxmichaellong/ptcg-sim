@@ -10,6 +10,7 @@ import type { MatchViewState, PlayerId, ViewCardId } from '@ptcgsim/game-core';
 import {
   BoardDepthProjection,
   TABLE_LAYOUT_GEOMETRY_VERSION,
+  flipBoardLayoutState,
   ownSeatOf,
   tableVerticalLayout,
   type BoardIntent,
@@ -642,16 +643,22 @@ export const RemoteSessionBoard = ({
         const { createRenderer } = loaded;
         actualRendererKind = loaded.kind;
         if (disposed) return;
+        const layout = layoutFor(
+          view,
+          boardViewRef.current,
+          sidePanelRef.current(),
+          seamBandRef.current,
+          appBarRef.current
+        );
+        // Back from the tutorial with the table turned: drawn turned from
+        // its first scene. Turned after mount, the table would spin round
+        // as the loading screen lifts.
+        const turned = initialFlipRef.current && view.viewer.kind === 'player';
+        initialFlipRef.current = false;
         runtime = new BoardSessionRuntime({
           live: session,
           replay,
-          layout: layoutFor(
-            view,
-            boardViewRef.current,
-            sidePanelRef.current(),
-            seamBandRef.current,
-            appBarRef.current
-          ),
+          layout: turned ? flipBoardLayoutState(layout) : layout,
           createRenderer,
           preferences: preferencesRef.current,
           transformView: (sourceView, source) => {
@@ -710,10 +717,6 @@ export const RemoteSessionBoard = ({
         if (disposed) {
           runtime.dispose();
           return;
-        }
-        if (initialFlipRef.current) {
-          initialFlipRef.current = false;
-          if (view.viewer.kind === 'player') runtime.flipBoard();
         }
         unsubscribeBoard = runtime.subscribeBoard(publish);
         unsubscribeLayout = runtime.subscribeLayout(publishLayout);

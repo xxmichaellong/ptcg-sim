@@ -219,6 +219,22 @@ const stackCardIds = (stack: ReturnType<typeof activeStack>): string[] =>
     ? [...stack.evolutionCards, ...stack.attachmentCards].map((card) => card.id)
     : [];
 
+/**
+ * Your seat dealt: its Prize cards out, or a hand. A Reset or an Undo of
+ * Set up takes both back.
+ */
+const dealt = (world: TutorialWorld): boolean =>
+  zoneCards(world.view, world.you, 'prizes').length > 0 ||
+  zoneCards(world.view, world.you, 'hand').length > 0;
+
+/** The setup step's own line, for a seat with nothing dealt. */
+const pressSetUp = (): ReactNode => (
+  <Trans>
+    Press <strong>{controlLabel('setUp')}</strong>: it shuffles your deck and
+    deals your hand.
+  </Trans>
+);
+
 /** A seat set up: its six Prize cards out and a hand dealt. */
 const setUp = (world: TutorialWorld, view: TutorialWorld['view']): boolean =>
   zoneCards(view, world.you, 'prizes').length === 6 &&
@@ -291,12 +307,8 @@ const start: TutorialLesson = {
       // Set up, but no Basic anywhere -- in the hand, the Active or the
       // Bench (an Energy put there is none): a mulligan.
       stuck: (world) =>
-        !setUp(world, world.view) &&
-        zoneCards(world.view, world.you, 'hand').length === 0 ? (
-          <Trans>
-            Press <strong>{controlLabel('setUp')}</strong>: it shuffles your
-            deck and deals your hand.
-          </Trans>
+        !dealt(world) ? (
+          pressSetUp()
         ) : basicInHand(world.view, world.you) === undefined &&
           ![
             activeStack(world.view, world.you),
@@ -324,8 +336,12 @@ const start: TutorialLesson = {
           ? { from: { card: card.id }, to: slot(world.you, 'bench') }
           : null;
       },
+      // Or no Basic left in a hand dealt: not a hand taken back by a Reset
+      // or an Undo of Set up, which says to set up again.
       done: (world) =>
-        newlyBenched(world) || basicInHand(world.view, world.you) === undefined,
+        newlyBenched(world) ||
+        (dealt(world) && basicInHand(world.view, world.you) === undefined),
+      stuck: (world) => (dealt(world) ? null : pressSetUp()),
       optional: true,
     },
   ],

@@ -303,7 +303,11 @@ describe('the tutorial’s lessons', () => {
     // The first lesson's Bench: with no other Pokémon dealt, it goes on.
     const bench = lessonById('start')!.steps[3]!;
     expect(bench.optional).toBe(true);
-    expect(bench.done!(world())).toBe(true);
+    expect(bench.done!(world({ view: handOf(['fireEnergy']) }))).toBe(true);
+    // Not on a hand taken back (a Reset, an Undo of Set up): it says to set
+    // up again.
+    expect(bench.done!(world())).toBe(false);
+    expect(text({ text: () => bench.stuck!(world()) })).toContain('Press');
   });
 });
 

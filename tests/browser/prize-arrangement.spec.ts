@@ -80,6 +80,27 @@ const paintedAll = async (page: Page, ids: readonly string[]) => {
 const near = (point: Point, cell: Point, tolerance = 6) =>
   Math.hypot(point.x - cell.x, point.y - cell.y) <= tolerance;
 
+/**
+ * Where these cards are painted once the table has stopped moving: the
+ * table sliding back as the docked log closes can outlast any fixed wait
+ * on a slow runner, and cells read mid-slide are all off.
+ */
+const paintedSteady = async (page: Page, ids: readonly string[]) => {
+  let last = await paintedAll(page, ids);
+  await expect
+    .poll(
+      async () => {
+        const now = await paintedAll(page, ids);
+        const same = now.every((point, index) => near(point, last[index]!, 1));
+        last = now;
+        return same;
+      },
+      { intervals: [200], timeout: 15_000 }
+    )
+    .toBe(true);
+  return last;
+};
+
 const deckCsv = (prefix: string) =>
   Buffer.from(
     [
@@ -219,7 +240,7 @@ const rearrange = async (
 ) => {
   const prizes = await zoneId(page, 'prizes', side);
   const before = await cardsIn(page, prizes);
-  const cells = await paintedAll(page, before);
+  const cells = await paintedSteady(page, before);
   const moving = before[from]!;
   const staying = before.filter((id) => id !== moving);
   const expected = [...staying];

@@ -16,6 +16,7 @@ import { act, createRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { BoardSessionRuntime } from '../board/BoardSessionRuntime.js';
 import { COIN_PENDING_GRACE_MS } from '../board/TableCoin.js';
 import type { RailAction } from '../board/rail/TableRail.js';
 import { boardViewSettings } from '../board/view/board-view-settings.js';
@@ -931,6 +932,40 @@ describe('RemoteSessionBoard replay binding', () => {
       expect.objectContaining({ flipped: true })
     );
 
+    await act(async () => root.unmount());
+    replay.dispose();
+  });
+
+  it('comes back from the tutorial turned from its first scene, not turned round on screen', async () => {
+    const turn = vi.spyOn(BoardSessionRuntime.prototype, 'flipBoard');
+    const session = new FakeRemoteBoardSession(initialState());
+    const replay = new ReplaySessionCoordinator(session);
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+    const onPerspectiveChange = vi.fn();
+    await act(async () =>
+      root.render(
+        <RemoteSessionBoard
+          session={session}
+          replay={replay}
+          rendererKind="dom"
+          onIntent={vi.fn()}
+          onPerspectiveChange={onPerspectiveChange}
+          initialFlipped
+        />
+      )
+    );
+    await waitForRevision(host, 10);
+    // Turned, and never turned on screen (a flip's scene spins the table).
+    expect(turn).not.toHaveBeenCalled();
+    expect(onPerspectiveChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({ flipped: true })
+    );
+    expect(selectedScene().bottomPlayerId).not.toBe(
+      baseView.viewer.kind === 'player' ? baseView.viewer.playerId : ''
+    );
+    turn.mockRestore();
     await act(async () => root.unmount());
     replay.dispose();
   });
