@@ -144,6 +144,8 @@ export const DeckLayer = ({
     if (
       event.key !== 'Escape' ||
       event.defaultPrevented ||
+      // An input method's Esc drops its candidate.
+      event.nativeEvent.isComposing ||
       (event.target instanceof Element &&
         event.target.closest(OWNS_ESCAPE) !== null)
     ) {

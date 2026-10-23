@@ -11,6 +11,7 @@ import { TUTORIAL_CARDS } from './tutorial-cards.js';
 import { CONTROL_LABELS } from './tutorial-labels.js';
 import {
   activeStack,
+  benchStacks,
   findCard,
   topCard,
   zoneCards,
@@ -27,6 +28,7 @@ const SCREEN: TutorialScreen = {
   preview: false,
   cardMenu: null,
   markerControls: null,
+  markerControlsCard: null,
   pile: null,
   palette: false,
   deckScreen: false,
@@ -488,6 +490,186 @@ describe('a lesson step on the practice table', () => {
           world({ view: now(), start, you, them })
         )
       ).toBe(true);
+    }
+  });
+
+  it('is done by the card it asks for, wherever else the player puts things', async () => {
+    const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+    const dealt = async (id: string) => {
+      const room = fakePracticeRoom();
+      await dealScenario(
+        room.session,
+        lessonById(id)!.scenario,
+        new AbortController().signal
+      );
+      const now = () => room.session.getSnapshot().view!;
+      const send = async (command: unknown) => {
+        room.session.submit(command as never);
+        await flush();
+      };
+      const toPlay = (
+        cardId: string,
+        slot: 'active' | 'bench',
+        targetStackId?: string
+      ) =>
+        send({
+          type: 'MoveCardToPlay',
+          cardId,
+          expectedSourceZoneId: zoneId(you, 'hand'),
+          boardPlayerId: you,
+          slot,
+          ...(targetStackId ? { targetStackId } : {}),
+        });
+      const inHand = (key: Parameters<typeof findCard>[2]) =>
+        findCard(now(), zoneCards(now(), you, 'hand'), key)!;
+      return { room, now, send, toPlay, inHand, start: now() };
+    };
+    const stepOf = (lesson: string, step: string) =>
+      lessonById(lesson)!.steps.find((entry) => entry.id === step)!;
+    // Pidgey dropped on the dealt one, taken back to the hand, the dealt one
+    // left in play from the attached cards' window: nothing benched.
+    for (const [lesson, step] of [
+      ['attach', 'bench'],
+      ['keys', 'bench-key'],
+    ] as const) {
+      const { room, now, send, toPlay, inHand, start } = await dealt(lesson);
+      const pidgey = now()
+        .boards[you]!.benchStackIds.map((id) => now().stacks[id]!)
+        .find((stack) => topOf(now(), stack) === 'pidgey')!;
+      await toPlay(inHand('pidgey').id, 'bench', pidgey.id);
+      const top = now().stacks[pidgey.id]!.evolutionCards.at(-1)!;
+      await send({
+        type: 'MoveCardFromStack',
+        cardId: top.id,
+        expectedStackId: pidgey.id,
+        destinationZoneId: zoneId(you, 'hand'),
+      });
+      const area = (
+        room as unknown as {
+          match: () => {
+            workAreas: Record<
+              string,
+              {
+                attachmentResolution?: {
+                  id: string;
+                  suggestedSlot: 'active' | 'bench';
+                };
+              }
+            >;
+          };
+        }
+      ).match().workAreas[you]!.attachmentResolution!;
+      const board = now().boards[you]!;
+      await send({
+        type: 'RestoreStagedStack',
+        playerId: you,
+        expectedWorkAreaId: area.id,
+        expectedActiveStackId: board.activeStackId,
+        expectedBenchStackIds: [...board.benchStackIds],
+        destinationSlot: area.suggestedSlot,
+      });
+      const at = world({ view: now(), start, you, them });
+      expect(inHand('pidgey'), lesson).toBeDefined();
+      expect(stepOf(lesson, step).done!(at), lesson).toBe(false);
+      // Pidgey into the Active Spot instead: not benched, and said.
+      await toPlay(inHand('pidgey').id, 'active');
+      const after = world({ view: now(), start, you, them });
+      expect(stepOf(lesson, step).done!(after), lesson).toBe(false);
+      expect(text({ text: stepOf(lesson, step).stuck! }, after)).toContain(
+        'has left your hand'
+      );
+    }
+    // A game's start: only a Basic in the Active Spot, and a Basic newly on
+    // the Bench, not the Active pushed there.
+    {
+      const { now, send, toPlay, inHand, start } = await dealt('start');
+      for (const key of ['charmander', 'charizardEx', 'fireEnergy'] as const) {
+        const card = findCard(now(), zoneCards(now(), you, 'deck'), key)!;
+        await send({
+          type: 'MoveCard',
+          cardId: card.id,
+          expectedSourceZoneId: zoneId(you, 'deck'),
+          destinationZoneId: zoneId(you, 'hand'),
+        });
+      }
+      const active = stepOf('start', 'active');
+      await toPlay(inHand('charizardEx').id, 'active');
+      expect(
+        active.done!(world({ view: now(), start, you, them })),
+        'Charizard ex'
+      ).toBe(false);
+    }
+    {
+      const { now, send, toPlay, inHand } = await dealt('start');
+      // Two Charmander and a Pidgey: a Basic is left to bench.
+      for (const key of ['charmander', 'charmander', 'pidgey'] as const) {
+        const card = findCard(now(), zoneCards(now(), you, 'deck'), key)!;
+        await send({
+          type: 'MoveCard',
+          cardId: card.id,
+          expectedSourceZoneId: zoneId(you, 'deck'),
+          destinationZoneId: zoneId(you, 'hand'),
+        });
+      }
+      await toPlay(inHand('charmander').id, 'active');
+      expect(
+        stepOf('start', 'active').done!(
+          world({ view: now(), start: now(), you, them })
+        )
+      ).toBe(true);
+      const start = now();
+      // The second Charmander onto the Active Spot: the first is pushed to
+      // the Bench, nothing benched.
+      await toPlay(inHand('charmander').id, 'active');
+      expect(benchStacks(now(), you)).toHaveLength(1);
+      expect(
+        stepOf('start', 'bench').done!(world({ view: now(), start, you, them }))
+      ).toBe(false);
+    }
+    // A Prize taken after a card left the hand: taken.
+    {
+      const { now, send, toPlay, inHand, start } = await dealt('knock-out');
+      await toPlay(
+        inHand('fireEnergy').id,
+        'active',
+        now().boards[you]!.activeStackId!
+      );
+      const prize = zoneCards(now(), you, 'prizes')[0]!;
+      await send({
+        type: 'MoveCard',
+        cardId: prize.id,
+        expectedSourceZoneId: zoneId(you, 'prizes'),
+        destinationZoneId: zoneId(you, 'hand'),
+      });
+      expect(
+        stepOf('knock-out', 'prize').done!(
+          world({ view: now(), start, you, them })
+        )
+      ).toBe(true);
+    }
+    // Damage controls opened on their Kirlia, not on your own Pokémon.
+    {
+      const { now, start } = await dealt('damage');
+      const theirs = topCard(activeStack(now(), them))!.id;
+      const mine = topCard(activeStack(now(), you))!.id;
+      for (const [card, expected] of [
+        [mine, false],
+        [theirs, true],
+      ] as const) {
+        const screen = {
+          ...SCREEN,
+          markerControls: 'damage' as const,
+          markerControlsCard: card,
+        };
+        for (const step of ['menu', 'counter']) {
+          expect(
+            stepOf('damage', step).done!(
+              world({ view: now(), start, you, them, screen })
+            ),
+            `${step} ${String(expected)}`
+          ).toBe(expected);
+        }
+      }
     }
   });
 

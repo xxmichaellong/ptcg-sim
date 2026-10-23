@@ -336,8 +336,10 @@ export const placeRailActions = ({
     avoid.y + avoid.height > anchor.y &&
     avoid.x > anchor.x;
   const rightEnd = Math.min(end ?? width - EDGE_PX, width - EDGE_PX);
-  const rightStart = straddles ? avoid.x + avoid.width + EDGE_PX : anchor.x;
   const leftStart = Math.max(anchor.x, start ?? anchor.x);
+  // With no Stadium in its row, the right end starts where the left does:
+  // past what sits at the seam's left (the near half's +).
+  const rightStart = straddles ? avoid.x + avoid.width + EDGE_PX : leftStart;
   const leftEnd = straddles ? avoid.x - EDGE_PX : rightEnd;
   const rightWidth = Math.max(0, rightEnd - rightStart);
   const leftWidth = Math.max(0, leftEnd - leftStart);

@@ -780,6 +780,8 @@ export const DeckScreen = ({
       if (
         event.key !== 'Escape' ||
         event.defaultPrevented ||
+        // An input method's Esc drops its candidate.
+        event.isComposing ||
         // A confirmation or prompt open over the screen closes on it.
         dialogRequestsSnapshot().length > 0 ||
         !(target instanceof Element) ||

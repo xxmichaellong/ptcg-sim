@@ -456,13 +456,18 @@ export const DeckEditor = ({
             onFocus={() => {
               nameFocused.current = true;
             }}
-            onBlur={() => {
+            onBlur={(event) => {
+              // Only the window went (another app or tab): the field keeps
+              // the focus, and what is typed stays as typed (the autosave
+              // still saves it).
+              if (document.activeElement === event.currentTarget) return;
               nameFocused.current = false;
               if (nameCancelled.current) nameCancelled.current = false;
               else commitName();
             }}
             onChange={(event) => setNameDraft(event.target.value)}
             onKeyDown={(event) => {
+              if (event.nativeEvent.isComposing) return;
               if (event.key === 'Enter') event.currentTarget.blur();
               if (event.key === 'Escape') {
                 nameCancelled.current = true;

@@ -1,11 +1,13 @@
 import type { MessageDescriptor } from '@lingui/core';
 import { msg } from '@lingui/core/macro';
+import type { ViewCard } from '@ptcgsim/game-core';
 import { Trans } from '@lingui/react/macro';
 import type { ReactNode } from 'react';
 
 import { chordHint, commandsChordHint, parseChord } from '../hotkeys/chords.js';
 import { hotkeyAction } from '../hotkeys/hotkey-catalogue.js';
 import {
+  TUTORIAL_BASIC_POKEMON,
   TUTORIAL_CARDS,
   tutorialCardKeyOf,
   type TutorialCardKey,
@@ -118,25 +120,52 @@ const pidgeyBenched = (world: TutorialWorld): boolean => {
     : (seat.bench ?? []).filter((spot) => spot.card === 'pidgey').length;
   return (
     benchStacks(world.view, world.you).filter(
-      (stack) => countCards(world.view, stack.evolutionCards, 'pidgey') > 0
+      (stack) =>
+        countCards(world.view, stack.evolutionCards.slice(0, 1), 'pidgey') > 0
     ).length > dealt
   );
 };
 
-/**
- * A Pidgey on the Bench that wasn't there as the step began: benched, not
- * the Active pushed there by a Pidgey put in its place.
- */
-const pidgeyNewlyBenched = (world: TutorialWorld): boolean => {
-  const before = new Set(
-    benchStacks(world.start, world.you).map((stack) => stack.id)
-  );
-  return benchStacks(world.view, world.you).some(
-    (stack) =>
-      !before.has(stack.id) &&
-      countCards(world.view, stack.evolutionCards, 'pidgey') > 0
-  );
+/** Whether a card is a Basic Pokémon, one put into play by itself. */
+const isBasic = (world: TutorialWorld, card: ViewCard | undefined): boolean => {
+  const key = card ? tutorialCardKeyOf(world.view, card) : undefined;
+  return key !== undefined && TUTORIAL_BASIC_POKEMON.has(key);
 };
+
+/**
+ * A Pokémon benched since the step began: one on the Bench whose bottom
+ * card wasn't in play then (the Active pushed there by another put in its
+ * place was, and so was one put back from the attached cards' window).
+ * Of `key` if given, else any Basic.
+ */
+const newlyBenched = (world: TutorialWorld, key?: TutorialCardKey): boolean => {
+  const inPlay = new Set(
+    [
+      activeStack(world.start, world.you),
+      ...benchStacks(world.start, world.you),
+    ].flatMap((stack) =>
+      [...(stack?.evolutionCards ?? []), ...(stack?.attachmentCards ?? [])].map(
+        (card) => card.id
+      )
+    )
+  );
+  return benchStacks(world.view, world.you).some((stack) => {
+    const bottom = stack.evolutionCards[0];
+    return (
+      bottom !== undefined &&
+      !inPlay.has(bottom.id) &&
+      (key === undefined
+        ? isBasic(world, bottom)
+        : tutorialCardKeyOf(world.view, bottom) === key)
+    );
+  });
+};
+
+/** Pidgey gone from the hand without the step done: said, as Charmeleon is. */
+const pidgeyLeftHand = (world: TutorialWorld): ReactNode =>
+  !findCard(world.view, zoneCards(world.view, world.you, 'hand'), 'pidgey') ? (
+    <Trans>{name('pidgey')} has left your hand.</Trans>
+  ) : null;
 
 const present = <T,>(values: readonly (T | null | undefined)[]): T[] =>
   values.filter((value): value is T => value !== null && value !== undefined);
@@ -170,6 +199,13 @@ const activeTopTarget = (
 };
 
 /** Every card of a Pokémon in play, by its id on the table. */
+/** The damage or condition controls open on their Active, not another. */
+const markersOnTheirActive = (world: TutorialWorld): boolean =>
+  world.screen.markerControlsCard !== null &&
+  stackCardIds(activeStack(world.view, world.them)).includes(
+    world.screen.markerControlsCard
+  );
+
 const stackCardIds = (stack: ReturnType<typeof activeStack>): string[] =>
   stack
     ? [...stack.evolutionCards, ...stack.attachmentCards].map((card) => card.id)
@@ -226,7 +262,9 @@ const start: TutorialLesson = {
           ? { from: { card: card.id }, to: slot(world.you, 'active') }
           : null;
       },
-      done: (world) => activeStack(world.view, world.you) !== undefined,
+      // A Basic Pokémon: not an Energy or a Stage put there.
+      done: (world) =>
+        isBasic(world, activeStack(world.view, world.you)?.evolutionCards[0]),
       stuck: (world) =>
         basicInHand(world.view, world.you) === undefined &&
         activeStack(world.view, world.you) === undefined &&
@@ -252,9 +290,7 @@ const start: TutorialLesson = {
           : null;
       },
       done: (world) =>
-        benchStacks(world.view, world.you).length >
-          benchStacks(world.start, world.you).length ||
-        basicInHand(world.view, world.you) === undefined,
+        newlyBenched(world) || basicInHand(world.view, world.you) === undefined,
       optional: true,
     },
   ],
@@ -448,7 +484,8 @@ const attach: TutorialLesson = {
         return from ? { from, to: slot(world.you, 'bench') } : null;
       },
       // Or benched already, before the step asked.
-      done: (world) => pidgeyNewlyBenched(world) || pidgeyBenched(world),
+      done: (world) => newlyBenched(world, 'pidgey') || pidgeyBenched(world),
+      stuck: pidgeyLeftHand,
     },
     {
       id: 'undo',
@@ -493,7 +530,7 @@ const damage: TutorialLesson = {
           stackCardIds(activeStack(world.view, world.them)).includes(
             world.screen.cardMenu
           )) ||
-        world.screen.markerControls !== null ||
+        (world.screen.markerControls !== null && markersOnTheirActive(world)) ||
         (activeStack(world.view, world.them)?.damage ?? 0) > 0,
     },
     {
@@ -511,7 +548,8 @@ const damage: TutorialLesson = {
         },
       ],
       done: (world) =>
-        world.screen.markerControls === 'damage' ||
+        (world.screen.markerControls === 'damage' &&
+          markersOnTheirActive(world)) ||
         (activeStack(world.view, world.them)?.damage ?? 0) > 0,
     },
     {
@@ -606,11 +644,20 @@ const knockOut: TutorialLesson = {
           ? { from: { card: prize.id }, to: zone(world.you, 'hand') }
           : null;
       },
-      // Into the hand, not anywhere else.
-      done: (world) =>
-        zoneCards(world.view, world.you, 'prizes').length <
-          zoneCards(world.start, world.you, 'prizes').length &&
-        handSize(world) > handSize(world, world.start),
+      // Into the hand, not anywhere else: a card the hand didn't hold as
+      // the step began (whatever else left it meanwhile).
+      done: (world) => {
+        const held = new Set(
+          zoneCards(world.start, world.you, 'hand').map((card) => card.id)
+        );
+        return (
+          zoneCards(world.view, world.you, 'prizes').length <
+            zoneCards(world.start, world.you, 'prizes').length &&
+          zoneCards(world.view, world.you, 'hand').some(
+            (card) => !held.has(card.id)
+          )
+        );
+      },
     },
     {
       id: 'promote',
@@ -849,7 +896,8 @@ const keys: TutorialLesson = {
       },
       targets: (world) => present([cardIn(world, world.you, 'hand', 'pidgey')]),
       // Or benched already: Back to this step, after it.
-      done: (world) => pidgeyNewlyBenched(world) || pidgeyBenched(world),
+      done: (world) => newlyBenched(world, 'pidgey') || pidgeyBenched(world),
+      stuck: pidgeyLeftHand,
     },
     {
       id: 'palette',

@@ -701,6 +701,8 @@ export const DeckHome = ({
     if (await onImportText(paste)) setPaste('');
   };
   const onPasteKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>): void => {
+    // An input method's own keys (Esc drops a candidate, Enter takes it).
+    if (event.nativeEvent.isComposing) return;
     if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
       event.preventDefault();
       if (mode === 'list') void submitPaste();
@@ -858,7 +860,9 @@ export const DeckHome = ({
                   value={filter}
                   onChange={(event) => setFilter(event.target.value)}
                   onKeyDown={(event) => {
-                    // Esc clears what was typed before it leaves the screen.
+                    // Esc clears what was typed before it leaves the screen
+                    // (not an input method's Esc, which drops a candidate).
+                    if (event.nativeEvent.isComposing) return;
                     if (event.key === 'Escape' && filter !== '') {
                       event.preventDefault();
                       setFilter('');

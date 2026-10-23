@@ -491,6 +491,7 @@ export const TournamentsShelf = ({
               // Esc clears what was typed first, as the finder does; only
               // an empty field gives it to the screen.
               onKeyDown={(event) => {
+                if (event.nativeEvent.isComposing) return;
                 if (event.key === 'Escape' && filter !== '') {
                   event.preventDefault();
                   setFilter('');

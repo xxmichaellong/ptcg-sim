@@ -24,6 +24,8 @@ export interface TutorialScreen {
   readonly cardMenu: string | null;
   /** The damage or condition controls, if open. */
   readonly markerControls: 'damage' | 'specialCondition' | null;
+  /** The card (its table id) those controls are for. */
+  readonly markerControlsCard: string | null;
   /** The pile open in its viewer (deck, discard...), if any. */
   readonly pile: string | null;
   readonly palette: boolean;
@@ -122,11 +124,10 @@ export const readScreen = (document: Document): TutorialScreen => {
   const menu = document.querySelector<HTMLElement>(
     '[data-legacy-card-context-menu="true"]'
   );
-  const controls = document
-    .querySelector<HTMLElement>(
-      '.ptcgsim-marker-controls[data-marker-controls]'
-    )
-    ?.getAttribute('data-marker-controls');
+  const controlsPanel = document.querySelector<HTMLElement>(
+    '.ptcgsim-marker-controls[data-marker-controls]'
+  );
+  const controls = controlsPanel?.getAttribute('data-marker-controls');
   const pile = document.querySelector<HTMLElement>(
     '[data-legacy-zone-browser="true"][data-zone-browser-kind]'
   );
@@ -138,6 +139,8 @@ export const readScreen = (document: Document): TutorialScreen => {
       controls === 'damage' || controls === 'specialCondition'
         ? controls
         : null,
+    markerControlsCard:
+      controlsPanel?.getAttribute('data-marker-controls-card') ?? null,
     pile: pile?.dataset.zoneBrowserKind ?? null,
     palette: document.querySelector('[data-command-palette]') !== null,
     deckScreen:
@@ -156,6 +159,7 @@ export const sameScreen = (
   left.preview === right.preview &&
   left.cardMenu === right.cardMenu &&
   left.markerControls === right.markerControls &&
+  left.markerControlsCard === right.markerControlsCard &&
   left.pile === right.pile &&
   left.palette === right.palette &&
   left.deckScreen === right.deckScreen &&

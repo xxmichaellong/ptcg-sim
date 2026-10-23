@@ -65,10 +65,22 @@ const centre = async (locator: Locator): Promise<Point> => {
   const box = (await locator.boundingBox())!;
   return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
 };
-/** A hand card runs off the window: hold it by what shows. */
+/**
+ * A hand card runs off the window, and the next card in the hand covers
+ * part of it: hold it by what shows of it, as a finger would.
+ */
 const grip = async (locator: Locator): Promise<Point> => {
   const box = (await locator.boundingBox())!;
-  return { x: box.x + box.width / 2, y: box.y + Math.min(30, box.height / 2) };
+  const y = box.y + Math.min(30, box.height / 2);
+  const x = await locator.evaluate((card, top) => {
+    const rect = card.getBoundingClientRect();
+    for (let x = rect.left + 6; x < rect.right - 2; x += 4) {
+      const hit = document.elementFromPoint(x, top);
+      if (hit && card.contains(hit)) return x;
+    }
+    return rect.left + rect.width / 2;
+  }, y);
+  return { x, y };
 };
 /** The Bench's empty right end, where a card lands on its own. */
 const benchRoom = async (page: Page, side = 'local'): Promise<Point> => {

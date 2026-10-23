@@ -187,6 +187,17 @@ describe('placing the rail', () => {
     expect(markup).toMatch(/left:\s*120px/u);
   });
 
+  it('starts past what sits at the seam’s left with no Stadium in its row', () => {
+    // One half shown: the Stadium lies in the Active's row, not the seam's,
+    // and the near half's + sits at the seam's left end.
+    const markup = render({
+      width: 400,
+      avoid: { x: 150, y: 120, width: 100, height: 60 },
+      start: 120,
+    });
+    expect(markup).toMatch(/left:\s*120px/u);
+  });
+
   it('goes past the Stadium in a room whose table can’t be turned, where its turn fits there', () => {
     // Room past the Stadium for five buttons: Turn, Attack, Pass, Undo and
     // More, the coin on the table; Solo's Switch side would be a sixth.

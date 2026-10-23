@@ -537,6 +537,7 @@ export const MarkerControls = ({
       className="ptcgsim-marker-controls"
       data-marker-controls={marker.kind}
       data-marker-controls-for={marker.id}
+      data-marker-controls-card={marker.parentCardId}
       role="group"
       aria-label={markerHint(marker)}
       data-side={side}

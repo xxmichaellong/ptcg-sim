@@ -28,8 +28,12 @@ export const META_DECKS_SHOWN = 12;
 export const splitFinish = (
   name: string
 ): readonly [string, string | undefined] => {
+  // Only a finish ("1st of 285"): a name of the player's own may hold a
+  // dash too ("Gardevoir — Locals").
   const at = name.lastIndexOf(' — ');
-  return at > 0 ? [name.slice(0, at), name.slice(at + 3)] : [name, undefined];
+  return at > 0 && /^\d+(?:st|nd|rd|th) of \d+/u.test(name.slice(at + 3))
+    ? [name.slice(0, at), name.slice(at + 3)]
+    : [name, undefined];
 };
 
 /** A deck's finish line in the page's language ("1st of 285"). */

@@ -904,6 +904,18 @@ describe('the deck screen from the keyboard', () => {
       setValue.call(filter, 'Deck 3');
       filter.dispatchEvent(new Event('input', { bubbles: true }));
     });
+    // An input method's Esc drops its candidate, not what was typed.
+    await act(async () => {
+      filter.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'Escape',
+          isComposing: true,
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    });
+    expect(filter.value).toBe('Deck 3');
     await press('Escape');
     expect(filter.value).toBe('');
     expect(onClose).not.toHaveBeenCalled();

@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 
 import { DeckBox, deckBoxToneOf } from './DeckBox.js';
 import { finderMode } from './DeckHome.js';
+import { splitFinish } from './deck-home-covers.js';
 import { importDeckText } from './deck-import.js';
 import { finishName } from './TournamentDecks.js';
 
@@ -114,6 +115,24 @@ describe('the finder', () => {
     expect(finderMode('Pokemon (12)')).toBe('list');
     expect(finderMode('QTY,Name,Type,URL')).toBe('list');
     expect(finderMode('Charizard\nPidgeot')).toBe('list');
+  });
+});
+
+describe("a deck name's finish", () => {
+  it('is split off only when it is a finish', () => {
+    expect(splitFinish('Dragapult — 1st of 285')).toEqual([
+      'Dragapult',
+      '1st of 285',
+    ]);
+    expect(splitFinish('Dragapult — 2nd of 64 (copy)')).toEqual([
+      'Dragapult',
+      '2nd of 64 (copy)',
+    ]);
+    expect(splitFinish('Gardevoir — Locals')).toEqual([
+      'Gardevoir — Locals',
+      undefined,
+    ]);
+    expect(splitFinish('Gardevoir')).toEqual(['Gardevoir', undefined]);
   });
 });
 

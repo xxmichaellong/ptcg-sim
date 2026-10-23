@@ -670,6 +670,41 @@ describe('DeckBuilderSession', () => {
     expect(input.value).toBe('Foo Ba');
   });
 
+  it('keeps a name being typed as typed while the window is away', async () => {
+    await renderSession({ store: new DeckBuilderStore(), open: true });
+    await click('#deckNewButton');
+    const input = host.querySelector<HTMLInputElement>('#deckNameInput')!;
+    const type = (value: string) =>
+      act(async () => {
+        Object.getOwnPropertyDescriptor(
+          HTMLInputElement.prototype,
+          'value'
+        )!.set!.call(input, value);
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+    await act(async () => input.focus());
+    await type('Lost Box ');
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 700));
+    });
+    // Another app or tab: the field is blurred but keeps the focus.
+    await act(async () => {
+      input.dispatchEvent(new FocusEvent('blur', { bubbles: false }));
+      input.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+    });
+    expect(document.activeElement).toBe(input);
+    expect(input.value).toBe('Lost Box ');
+    await act(async () => {
+      input.dispatchEvent(new FocusEvent('focus', { bubbles: false }));
+      input.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+    });
+    await type(`${input.value}Kyogre`);
+    await act(async () => input.blur());
+    expect(library.getSnapshot().decks.map((entry) => entry.name)).toEqual([
+      'Lost Box Kyogre',
+    ]);
+  });
+
   it('drains dirty decks only when the Deck surface closes and cleans them only after authority publication', async () => {
     const session = new FakeSession();
     const store = new DeckBuilderStore();
