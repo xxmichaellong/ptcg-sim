@@ -93,7 +93,8 @@ export interface DeckEditorProps {
 }
 
 /** Where a key belongs to something open inside the editor. */
-const OWN_KEYS = '[role="dialog"], [role="menu"], [role="listbox"]';
+const OWN_KEYS =
+  '[role="dialog"], [role="alertdialog"], [role="menu"], [role="listbox"]';
 
 /**
  * A letter's key: the letter typed, or, where the layout types something

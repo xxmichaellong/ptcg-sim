@@ -4615,6 +4615,10 @@
     "message": "Set up, then put your Pokémon in play",
     "translation": "Kur, sonra Pokémon'unu oyuna koy"
   },
+  "1W8ZwT": {
+    "message": "Set up: shuffle, draw 7, set 6 prizes",
+    "translation": "Kur: desteyi karıştır, 7 kart çek, 6 ödül kartı koy"
+  },
   "prXKvv": {
     "message": "Setting up the table…",
     "translation": "Masa kuruluyor…"
@@ -4804,10 +4808,6 @@
   "-bhiO9": {
     "message": "Shuffle to deck (bottom)",
     "translation": "Desteye karıştır (alta)"
-  },
-  "7cboVh": {
-    "message": "Shuffle, draw 7, set 6 prizes",
-    "translation": "Karıştır, 7 kart çek, 6 ödül kartı koy"
   },
   "lzdYF4": {
     "message": "Sideways scan",

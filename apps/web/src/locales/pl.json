@@ -4615,6 +4615,10 @@
     "message": "Set up, then put your Pokémon in play",
     "translation": "Ustaw, potem wyłóż swoje Pokémon do gry"
   },
+  "1W8ZwT": {
+    "message": "Set up: shuffle, draw 7, set 6 prizes",
+    "translation": "Przygotuj: przetasuj, dobierz 7, ustaw 6 kart Nagród"
+  },
   "prXKvv": {
     "message": "Setting up the table…",
     "translation": "Przygotowywanie stołu…"
@@ -4804,10 +4808,6 @@
   "-bhiO9": {
     "message": "Shuffle to deck (bottom)",
     "translation": "Tasuj do talii (na spód)"
-  },
-  "7cboVh": {
-    "message": "Shuffle, draw 7, set 6 prizes",
-    "translation": "Przetasuj, dobierz 7, ułóż 6 kart nagród"
   },
   "lzdYF4": {
     "message": "Sideways scan",

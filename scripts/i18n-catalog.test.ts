@@ -265,6 +265,25 @@ describe('the translate script', () => {
     }
   });
 
+  it('names Set up first in its title, as the welcome and the lessons say it', async () => {
+    const source = await readCatalog('en');
+    const idOf = (message: string, context?: string) =>
+      Object.entries(source).find(
+        ([, entry]) => entry.message === message && entry.context === context
+      )?.[0];
+    const label = idOf('Set up', 'set up the game');
+    const title = idOf('Set up: shuffle, draw 7, set 6 prizes');
+    assert.ok(label && title);
+    for (const locale of Object.keys(LANGUAGE_GUIDES)) {
+      const catalog = await readCatalog(locale);
+      const name = catalog[label]?.translation ?? '';
+      assert.ok(
+        catalog[title]?.translation.startsWith(name),
+        `${locale}: ${catalog[title]?.translation} / ${name}`
+      );
+    }
+  });
+
   it('keeps out a note its glossary gives with a term', () => {
     let notes = 0;
     for (const [locale, guide] of Object.entries(LANGUAGE_GUIDES))

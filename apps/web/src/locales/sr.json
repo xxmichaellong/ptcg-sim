@@ -4615,6 +4615,10 @@
     "message": "Set up, then put your Pokémon in play",
     "translation": "Постави, па стави свој Pokémon у игру"
   },
+  "1W8ZwT": {
+    "message": "Set up: shuffle, draw 7, set 6 prizes",
+    "translation": "Припреми: промешај, повуци 7, постави 6 награда"
+  },
   "prXKvv": {
     "message": "Setting up the table…",
     "translation": "Припремам сто…"
@@ -4804,10 +4808,6 @@
   "-bhiO9": {
     "message": "Shuffle to deck (bottom)",
     "translation": "Стави у шпил (на дно)"
-  },
-  "7cboVh": {
-    "message": "Shuffle, draw 7, set 6 prizes",
-    "translation": "Промешај, повуци 7, постави 6 награда"
   },
   "lzdYF4": {
     "message": "Sideways scan",

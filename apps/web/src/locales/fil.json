@@ -4615,6 +4615,10 @@
     "message": "Set up, then put your Pokémon in play",
     "translation": "Mag-set up, tapos ilagay ang mga Pokémon mo sa play"
   },
+  "1W8ZwT": {
+    "message": "Set up: shuffle, draw 7, set 6 prizes",
+    "translation": "I-set up: i-shuffle, mag-draw ng 7, maglagay ng 6 prize"
+  },
   "prXKvv": {
     "message": "Setting up the table…",
     "translation": "Inihahanda ang table…"
@@ -4804,10 +4808,6 @@
   "-bhiO9": {
     "message": "Shuffle to deck (bottom)",
     "translation": "I-shuffle sa deck (ilalim)"
-  },
-  "7cboVh": {
-    "message": "Shuffle, draw 7, set 6 prizes",
-    "translation": "Mag-shuffle, mag-draw ng 7, mag-set ng 6 prize"
   },
   "lzdYF4": {
     "message": "Sideways scan",

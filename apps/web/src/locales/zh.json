@@ -4615,6 +4615,10 @@
     "message": "Set up, then put your Pokémon in play",
     "translation": "准备,然后将宝可梦放到场上"
   },
+  "1W8ZwT": {
+    "message": "Set up: shuffle, draw 7, set 6 prizes",
+    "translation": "准备:洗牌、抽7张、放置6张奖赏卡"
+  },
   "prXKvv": {
     "message": "Setting up the table…",
     "translation": "正在布置牌桌…"
@@ -4804,10 +4808,6 @@
   "-bhiO9": {
     "message": "Shuffle to deck (bottom)",
     "translation": "洗入牌库(底部)"
-  },
-  "7cboVh": {
-    "message": "Shuffle, draw 7, set 6 prizes",
-    "translation": "洗牌，抽 7 张，设置 6 张奖赏卡"
   },
   "lzdYF4": {
     "message": "Sideways scan",
@@ -5694,7 +5694,7 @@
   },
   "8ZgYGP": {
     "message": "Use this print for the {deckCopies} in the deck",
-    "translation": "将此版本用于牌组中的{deckCopies}"
+    "translation": "将此版本用于牌组中的{deckCopies}张"
   },
   "9c8BhN": {
     "message": "Use VSTAR Power",

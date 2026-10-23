@@ -4615,6 +4615,10 @@
     "message": "Set up, then put your Pokémon in play",
     "translation": "Atur, lalu taruh Pokémon-mu di arena"
   },
+  "1W8ZwT": {
+    "message": "Set up: shuffle, draw 7, set 6 prizes",
+    "translation": "Siapkan: kocok, ambil 7 kartu, tempatkan 6 hadiah"
+  },
   "prXKvv": {
     "message": "Setting up the table…",
     "translation": "Menyiapkan meja…"
@@ -4804,10 +4808,6 @@
   "-bhiO9": {
     "message": "Shuffle to deck (bottom)",
     "translation": "Kocok ke deck (bawah)"
-  },
-  "7cboVh": {
-    "message": "Shuffle, draw 7, set 6 prizes",
-    "translation": "Kocok, ambil 7, atur 6 Prize"
   },
   "lzdYF4": {
     "message": "Sideways scan",

@@ -8,7 +8,8 @@ import {
 import './deck-layer.css';
 
 /** Where a press of Esc belongs to something inside the deck screen. */
-const OWNS_ESCAPE = '[role="dialog"], [role="menu"], [role="listbox"]';
+const OWNS_ESCAPE =
+  '[role="dialog"], [role="alertdialog"], [role="menu"], [role="listbox"]';
 
 /** Keys that only change another key's meaning. */
 const MODIFIER_KEYS = new Set([

@@ -4615,6 +4615,10 @@
     "message": "Set up, then put your Pokémon in play",
     "translation": "Förbered och lägg sedan ut dina Pokémon"
   },
+  "1W8ZwT": {
+    "message": "Set up: shuffle, draw 7, set 6 prizes",
+    "translation": "Förbered: blanda, dra 7, lägg 6 priskort"
+  },
   "prXKvv": {
     "message": "Setting up the table…",
     "translation": "Förbereder bordet…"
@@ -4804,10 +4808,6 @@
   "-bhiO9": {
     "message": "Shuffle to deck (bottom)",
     "translation": "Blanda in i leken (längst ner)"
-  },
-  "7cboVh": {
-    "message": "Shuffle, draw 7, set 6 prizes",
-    "translation": "Blanda, dra 7, lägg 6 priskort"
   },
   "lzdYF4": {
     "message": "Sideways scan",

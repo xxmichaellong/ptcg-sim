@@ -4615,6 +4615,10 @@
     "message": "Set up, then put your Pokémon in play",
     "translation": "준비한 다음 포켓몬을 내놓기"
   },
+  "1W8ZwT": {
+    "message": "Set up: shuffle, draw 7, set 6 prizes",
+    "translation": "세팅: 덱 셔플, 7장 드로, 프라이즈 카드 6장 놓기"
+  },
   "prXKvv": {
     "message": "Setting up the table…",
     "translation": "테이블을 준비하는 중…"
@@ -4804,10 +4808,6 @@
   "-bhiO9": {
     "message": "Shuffle to deck (bottom)",
     "translation": "덱에 넣기(맨 아래)"
-  },
-  "7cboVh": {
-    "message": "Shuffle, draw 7, set 6 prizes",
-    "translation": "섞기, 7장 드로우, 프라이즈 카드 6장 놓기"
   },
   "lzdYF4": {
     "message": "Sideways scan",

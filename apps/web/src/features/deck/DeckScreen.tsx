@@ -65,7 +65,8 @@ import './deck-screen.css';
 const decorative = { 'aria-hidden': true, focusable: 'false' } as const;
 
 /** Where keys and a paste belong to a window open over the screen. */
-const OWN_WINDOWS = '[role="dialog"], [role="menu"], [role="listbox"]';
+const OWN_WINDOWS =
+  '[role="dialog"], [role="alertdialog"], [role="menu"], [role="listbox"]';
 
 export type DeckScreenView =
   | { readonly kind: 'home' }

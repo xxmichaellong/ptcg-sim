@@ -4615,6 +4615,10 @@
     "message": "Set up, then put your Pokémon in play",
     "translation": "Chuẩn bị, rồi đặt Pokémon của bạn vào trận"
   },
+  "1W8ZwT": {
+    "message": "Set up: shuffle, draw 7, set 6 prizes",
+    "translation": "Thiết lập: xáo bộ bài, rút 7 lá, đặt 6 thẻ Phần thưởng"
+  },
   "prXKvv": {
     "message": "Setting up the table…",
     "translation": "Đang chuẩn bị bàn chơi…"
@@ -4804,10 +4808,6 @@
   "-bhiO9": {
     "message": "Shuffle to deck (bottom)",
     "translation": "Xáo vào bộ bài (đáy)"
-  },
-  "7cboVh": {
-    "message": "Shuffle, draw 7, set 6 prizes",
-    "translation": "Xáo bài, rút 7 thẻ, đặt 6 thẻ phần thưởng"
   },
   "lzdYF4": {
     "message": "Sideways scan",

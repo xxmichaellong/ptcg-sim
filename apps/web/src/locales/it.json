@@ -4615,6 +4615,10 @@
     "message": "Set up, then put your Pokémon in play",
     "translation": "Prepara la partita, poi metti in gioco i tuoi Pokémon"
   },
+  "1W8ZwT": {
+    "message": "Set up: shuffle, draw 7, set 6 prizes",
+    "translation": "Prepara: mescola, pesca 7, imposta 6 carte Premio"
+  },
   "prXKvv": {
     "message": "Setting up the table…",
     "translation": "Preparazione del tavolo…"
@@ -4804,10 +4808,6 @@
   "-bhiO9": {
     "message": "Shuffle to deck (bottom)",
     "translation": "Rimescola nel mazzo (in fondo)"
-  },
-  "7cboVh": {
-    "message": "Shuffle, draw 7, set 6 prizes",
-    "translation": "Mescola, pesca 7, metti 6 carte Premio"
   },
   "lzdYF4": {
     "message": "Sideways scan",

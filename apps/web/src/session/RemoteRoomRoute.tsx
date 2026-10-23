@@ -531,7 +531,8 @@ export const RemoteRoomRoute = ({
           const setup: RailAction = {
             id: ids.setup,
             label: t({ message: 'Set up', context: 'set up the game' }),
-            title: t`Shuffle, draw 7, set 6 prizes`,
+            // Its name first: the welcome and the lessons say "press Set up".
+            title: t`Set up: shuffle, draw 7, set 6 prizes`,
             icon: StackIcon,
             hint: hint('table.setup'),
             priority: RAIL_PRIORITY.lead,

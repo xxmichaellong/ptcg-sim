@@ -4615,6 +4615,10 @@
     "message": "Set up, then put your Pokémon in play",
     "translation": "จัดเตรียม แล้ววางโปเกมอนลงสนาม"
   },
+  "1W8ZwT": {
+    "message": "Set up: shuffle, draw 7, set 6 prizes",
+    "translation": "จัดเตรียม: สับเด็ค จั่ว 7 ใบ วางการ์ดรางวัล 6 ใบ"
+  },
   "prXKvv": {
     "message": "Setting up the table…",
     "translation": "กำลังจัดเตรียมโต๊ะ…"
@@ -4804,10 +4808,6 @@
   "-bhiO9": {
     "message": "Shuffle to deck (bottom)",
     "translation": "สับเข้าเด็ค (ไว้ใต้เด็ค)"
-  },
-  "7cboVh": {
-    "message": "Shuffle, draw 7, set 6 prizes",
-    "translation": "สับเด็ค จั่ว 7 ใบ วางการ์ดรางวัล 6 ใบ"
   },
   "lzdYF4": {
     "message": "Sideways scan",

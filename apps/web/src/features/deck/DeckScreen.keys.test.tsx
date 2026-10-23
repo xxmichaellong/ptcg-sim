@@ -634,6 +634,29 @@ describe('the deck screen from the keyboard', () => {
     expect(window.hidden).toBe(false);
   });
 
+  it('leaves a paste on a confirmation over the screen to it', async () => {
+    const library = new DeckLibrary({ backend: null });
+    library.create({ name: 'Pidgey', format: 'standard', cards: [] });
+    await render(vi.fn(), library);
+    // "Delete deck?": an alert dialog, drawn outside the screen.
+    const confirm = document.createElement('div');
+    confirm.setAttribute('role', 'alertdialog');
+    const button = document.createElement('button');
+    confirm.append(button);
+    document.body.append(confirm);
+    button.focus();
+    const event = new Event('paste', { bubbles: true, cancelable: true });
+    Object.defineProperty(event, 'clipboardData', {
+      value: { getData: () => '4 Pidgey MEW 16\n4 Rattata MEW 19' },
+    });
+    await act(async () => {
+      button.dispatchEvent(event);
+    });
+    expect(event.defaultPrevented).toBe(false);
+    expect(library.getSnapshot().decks).toHaveLength(1);
+    confirm.remove();
+  });
+
   it('takes / from the Deck tab to the search, drawn before it takes the focus', async () => {
     const library = new DeckLibrary({ backend: null });
     library.create({

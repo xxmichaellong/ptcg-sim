@@ -273,12 +273,24 @@ export const tutorialLessonCommands = (
   lessons: readonly { readonly id: string; readonly title: string }[],
   start: (lesson: string) => void
 ): PaletteCommand[] =>
-  lessons.map((lesson) => ({
-    id: `tutorial.${lesson.id}`,
-    title: lesson.title,
-    section: 'help',
-    icon: GraduationCapIcon,
-    detail: t`Tutorial`,
-    keywords: ['tutorial', 'lesson', 'learn'],
-    run: () => start(lesson.id),
-  }));
+  lessons.map((lesson) => {
+    const tutorial = t`Tutorial`;
+    return {
+      id: `tutorial.${lesson.id}`,
+      title: lesson.title,
+      section: 'help',
+      icon: GraduationCapIcon,
+      detail: tutorial,
+      // A search matches one text at a time: "tutorial damage" needs the
+      // two together, in English and in the page's language.
+      keywords: [
+        'tutorial',
+        'lesson',
+        'learn',
+        tutorial,
+        `tutorial ${lesson.title}`,
+        `${tutorial} ${lesson.title}`,
+      ],
+      run: () => start(lesson.id),
+    };
+  });
