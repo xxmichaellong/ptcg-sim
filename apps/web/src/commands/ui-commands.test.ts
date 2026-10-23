@@ -4,6 +4,8 @@ import { describe, expect, it } from 'vitest';
 
 import { flattenCommands } from './command-tree.js';
 import { rankCommands } from './rank-commands.js';
+import { roomCommands } from './room-commands.js';
+import type { PaletteCommand } from './types.js';
 import {
   menuCommands,
   railCommands,
@@ -81,6 +83,35 @@ describe('railCommands', () => {
     );
     expect(attack?.id).toBe('rail.attack');
     expect(attack?.section).toBe('turn');
+  });
+});
+
+describe('the app bar by its buttons’ labels', () => {
+  it('finds Settings and the Log by the words on their buttons', () => {
+    // Filipino Settings; Dutch Log, whose command says "Log openen".
+    const menu = menuCommands([
+      { id: 'settingsButton', label: 'Mga setting', onSelect: noop },
+    ]);
+    const label = msg`Log`;
+    const open = msg`Open log`;
+    i18n.load('xx', { [label.id!]: 'Logboek', [open.id!]: 'Log openen' });
+    i18n.activate('xx');
+    let log: readonly PaletteCommand[];
+    try {
+      log = roomCommands({
+        menu: { onSettings: noop },
+        log: { open: false, setOpen: noop },
+        deckOpen: false,
+        closeDeck: noop,
+      }).filter((command) => command.id === 'log.toggle');
+    } finally {
+      i18n.activate('en');
+    }
+    const first = (query: string) =>
+      rankCommands(flattenCommands([...menu, ...log]), query, [])[0]?.entries[0]
+        ?.entry.command.id;
+    expect(first('Mga setting')).toBe('menu.settings');
+    expect(first('Logboek')).toBe('log.toggle');
   });
 });
 

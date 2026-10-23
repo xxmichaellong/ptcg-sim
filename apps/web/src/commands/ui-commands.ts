@@ -266,6 +266,7 @@ export const menuCommands = (
         entry.label,
         meaning,
         {
+          label: entry.label,
           ...(entry.icon ? { icon: entry.icon } : {}),
           ...(entry.hint ? { hint: entry.hint } : {}),
           ...(bare === 'changelog' ? { detail: entry.label } : {}),

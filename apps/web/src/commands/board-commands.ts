@@ -906,6 +906,10 @@ export const boardCommands = (
         icon: CoinIcon,
         ...(seatName(playerId) ? { detail: seatName(playerId)! } : {}),
         ...(own ? { hint: hint('table.flipCoin') } : {}),
+        // The rail's Coin, which this stands for, by its own label.
+        ...(own
+          ? { aliases: [t({ message: 'Coin', context: 'flip a coin' })] }
+          : {}),
         keywords: ['coin', 'flip', 'heads', 'tails'],
         run: shortcut(request),
       });

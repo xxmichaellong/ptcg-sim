@@ -295,13 +295,19 @@ export const DeckScreen = ({
   const chooseSaved = useCallback(
     (deck: SavedDeck) => {
       endImportFor(target);
+      const before = store.getSnapshot().slots[target].revision;
       placeOnSeat(deck.cards, {
         deckId: deck.id,
         name: deck.name,
         format: deck.format,
       });
+      // The seat already held these cards: nothing lands, nothing flies,
+      // and a later paste's deck isn't flown in with this box.
+      if (store.getSnapshot().slots[target].revision === before) {
+        picked.current = undefined;
+      }
     },
-    [endImportFor, placeOnSeat, target]
+    [endImportFor, placeOnSeat, store, target]
   );
 
   /**
@@ -621,6 +627,8 @@ export const DeckScreen = ({
       const text = event.clipboardData?.getData('text/plain') ?? '';
       if (!text.trim()) return;
       event.preventDefault();
+      // No box was picked for this: none flies with what it puts on a seat.
+      picked.current = undefined;
       // In the editor a paste is always a list, imported as any is (a new
       // deck on the seat, ADR-033 §9), never a name for the decks' finder.
       if (viewKind !== 'edit' && finderMode(text) === 'search') {
@@ -896,6 +904,7 @@ export const DeckScreen = ({
     const file = event.dataTransfer.files[0];
     if (!file) return;
     event.preventDefault();
+    picked.current = undefined;
     void importFile(file);
   };
 

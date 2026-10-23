@@ -11,6 +11,8 @@ import {
   type BoardSessionControllerState,
 } from '../board/BoardSessionController.js';
 import { boardCommands, type BoardCommandRuntime } from './board-commands.js';
+import { flattenCommands } from './command-tree.js';
+import { rankCommands } from './rank-commands.js';
 import type { PaletteCommand } from './types.js';
 
 const view = createRendererSpikeView();
@@ -90,6 +92,32 @@ describe('boardCommands', () => {
     );
     expect(loose).toHaveLength(4);
     for (const command of loose) expect(command.keywords).toContain('盤面');
+  });
+
+  it('finds your own coin by the Coin button’s label', () => {
+    // Korean: the button says 코인, the command 동전 던지기.
+    const label = msg({ message: 'Coin', context: 'flip a coin' });
+    const own = msg`Flip a coin`;
+    const theirs = msg`Flip their coin`;
+    i18n.load('xx', {
+      [label.id!]: '코인',
+      [own.id!]: '동전 던지기',
+      [theirs.id!]: '상대 코인 던지기',
+    });
+    i18n.activate('xx');
+    let commands: readonly PaletteCommand[];
+    try {
+      commands = boardCommands({
+        runtime: runtimeFor(stateWith()),
+        hint: () => undefined,
+      });
+    } finally {
+      i18n.activate('en');
+    }
+    expect(
+      rankCommands(flattenCommands(commands), '코인', [])[0]?.entries[0]?.entry
+        .command.id
+    ).toBe('turn.coin');
   });
 
   it("lists the acting seat's deck and hand, and runs them as the palette", () => {

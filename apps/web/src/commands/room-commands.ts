@@ -56,6 +56,8 @@ export const roomCommands = (context: RoomCommandContext): PaletteCommand[] => {
   commands.push({
     id: 'log.toggle',
     title: log.open ? t`Close log` : t`Open log`,
+    // The app bar's Log button, by its own label.
+    aliases: [t`Log`],
     section: 'table',
     icon: ScrollIcon,
     keywords: ['log', 'chat', 'history', 'activity'],
