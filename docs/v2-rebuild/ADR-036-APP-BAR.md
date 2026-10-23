@@ -103,12 +103,14 @@ They sit at the seam's right end, past the Stadium and short of the near
 piles there (their stacks rise toward the seam), where a right hand and the
 player's own piles are and where the genre puts its turn button. Where
 fewer than four buttons fit there (an upright phone, whose Stadium sits at
-the right edge), or a full turn's actions (Turn, Attack, Pass, Undo, Switch
-side and More, and Coin where the coin has no spot on the table) would lose
-one to More there that shows before the Stadium, they sit before the
-Stadium instead, past the near half's `+` where that reaches into the seam.
-The side is the window's, never the stage's: the actions stay put from
-set-up through play and a reconnect. Tilted, the Stadium and piles are found
+the right edge), or a full turn's actions (Turn, Attack, Pass, Undo and
+More, with Coin where the coin has no spot on the table and Switch side
+where the table can be turned) would lose one to More there that shows
+before the Stadium, they sit before the Stadium instead, past the near
+half's `+` where that reaches into the seam. The side is the window's, never
+the stage's: the actions stay put from set-up through play and a reconnect,
+and keep their side while the log slides in or out, choosing again once it
+is there. Tilted, the Stadium and piles are found
 on screen through the table's projection.
 
 ### 4. Every zone's hover name is centred

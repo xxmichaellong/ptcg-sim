@@ -5,6 +5,8 @@ import type { Rect } from '@ptcgsim/renderer-contract';
 import {
   forwardRef,
   memo,
+  useEffect,
+  useRef,
   type ComponentPropsWithoutRef,
   type CSSProperties,
 } from 'react';
@@ -125,6 +127,16 @@ export interface TableRailProps {
   readonly start?: number;
   /** The coin lies on the table: a turn's rail holds no Coin. */
   readonly coinOnTable?: boolean;
+  /**
+   * The table can be turned around, so a turn's rail holds Switch side
+   * (Solo, a coaching room). Absent, it can.
+   */
+  readonly canSwitchSide?: boolean;
+  /**
+   * The table is on its way to another shape (the log sliding in or out):
+   * the actions keep the side they had, and choose again once it is there.
+   */
+  readonly holdSide?: boolean;
   readonly actions: readonly RailAction[];
   /** The rarer actions, behind More. */
   readonly more?: readonly ActionMenuEntry[];
@@ -151,9 +163,10 @@ const GAP_PX = 6;
 const RIGHT_END_MIN_BUTTONS = 4;
 /**
  * The most buttons a turn's rail holds: Turn, Attack, Pass, Coin, Undo,
- * Switch side and More, one fewer where the coin lies on the table. The
- * side is chosen for them, not for what the stage shows now, so the
- * actions stay put as the game moves on (set-up, play, a reconnect).
+ * Switch side and More, without Coin where the coin lies on the table and
+ * without Switch side where the table can't be turned. The side is chosen
+ * for them, not for what the stage shows now, so the actions stay put as
+ * the game moves on (set-up, play, a reconnect).
  */
 const FULL_RAIL_BUTTONS = 7;
 
@@ -250,6 +263,8 @@ export const placeRailActions = ({
   end,
   start,
   coinOnTable = false,
+  canSwitchSide = true,
+  side,
   actions,
   more,
 }: Pick<
@@ -260,9 +275,13 @@ export const placeRailActions = ({
   | 'end'
   | 'start'
   | 'coinOnTable'
+  | 'canSwitchSide'
   | 'actions'
   | 'more'
->): {
+> & {
+  /** The side to keep (`true` past the Stadium) instead of choosing one. */
+  readonly side?: boolean;
+}): {
   readonly atRight: boolean;
   readonly start: number;
   readonly width: number;
@@ -280,10 +299,12 @@ export const placeRailActions = ({
   const rightWidth = Math.max(0, rightEnd - rightStart);
   const leftWidth = Math.max(0, leftEnd - leftStart);
   const rightSlots = slotsIn(rightWidth, anchor.height);
-  const fullRail = FULL_RAIL_BUTTONS - (coinOnTable ? 1 : 0);
+  const fullRail =
+    FULL_RAIL_BUTTONS - (coinOnTable ? 1 : 0) - (canSwitchSide ? 0 : 1);
   const atRight =
-    rightSlots >= RIGHT_END_MIN_BUTTONS &&
-    rightSlots >= Math.min(slotsIn(leftWidth, anchor.height), fullRail);
+    side ??
+    (rightSlots >= RIGHT_END_MIN_BUTTONS &&
+      rightSlots >= Math.min(slotsIn(leftWidth, anchor.height), fullRail));
   return atRight
     ? {
         atRight,
@@ -313,12 +334,17 @@ export const TableRail = memo(function TableRail({
   end,
   start,
   coinOnTable,
+  canSwitchSide,
+  holdSide = false,
   actions,
   more,
   covered = false,
   seat = 'you',
 }: TableRailProps) {
   const { t } = useLingui();
+  // The side the actions were last drawn on, kept through a slide.
+  const drawnAtRight = useRef<boolean | undefined>(undefined);
+  const kept = holdSide ? drawnAtRight.current : undefined;
   const {
     atRight,
     start: actionsStart,
@@ -331,9 +357,14 @@ export const TableRail = memo(function TableRail({
     end,
     start,
     coinOnTable,
+    canSwitchSide,
+    ...(kept === undefined ? {} : { side: kept }),
     actions,
     more,
   });
+  useEffect(() => {
+    drawnAtRight.current = atRight;
+  }, [atRight]);
   return (
     <div
       className="ptcgsim-table-rail"

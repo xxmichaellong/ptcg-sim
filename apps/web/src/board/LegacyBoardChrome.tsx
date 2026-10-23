@@ -94,6 +94,13 @@ export interface LegacyBoardChromeRail {
   readonly seat?: 'you' | 'opponent';
   /** The coin lies on the table: a turn's actions hold no Coin. */
   readonly coinOnTable?: boolean;
+  /**
+   * The table can be turned, so a turn's actions hold Switch side. Absent,
+   * it can.
+   */
+  readonly canSwitchSide?: boolean;
+  /** The log is sliding in or out: the actions keep their side. */
+  readonly holdSide?: boolean;
 }
 
 /** The resize pill's box; its seat colour comes from `data-player-side`. */
@@ -690,6 +697,8 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
           end={railEnd}
           {...(railStart === undefined ? {} : { start: railStart })}
           {...(rail.coinOnTable ? { coinOnTable: true } : {})}
+          {...(rail.canSwitchSide === false ? { canSwitchSide: false } : {})}
+          {...(rail.holdSide ? { holdSide: true } : {})}
           actions={rail.actions}
           {...(rail.more ? { more: rail.more } : {})}
           covered={coveredByPopup}

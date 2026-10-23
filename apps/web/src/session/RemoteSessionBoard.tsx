@@ -368,6 +368,8 @@ export const RemoteSessionBoard = ({
     sidePanelSlide ? sidePanelSlide.value() : sidePanel ? 1 : 0;
   const sidePanelRef = useRef(sidePanelReveal);
   sidePanelRef.current = sidePanelReveal;
+  // The log on its way in or out: the turn's actions keep their side.
+  const [sidePanelSliding, setSidePanelSliding] = useState(false);
   // The seam opens to fit the rail's buttons: 40px, 44px under a finger.
   const coarsePointer = useMediaQuery(COARSE_POINTER_QUERY);
   const seamBandPx = coarsePointer ? TOUCH_SEAM_BAND_PX : POINTER_SEAM_BAND_PX;
@@ -752,6 +754,7 @@ export const RemoteSessionBoard = ({
   useEffect(() => {
     const apply = (immediate: boolean): void => {
       const reveal = sidePanelRef.current();
+      setSidePanelSliding(reveal > 0 && reveal < 1);
       runtimeRef.current?.setShellMode(
         reveal > 0 ? 'sidebar' : 'fullscreen',
         reveal,
@@ -1154,6 +1157,8 @@ export const RemoteSessionBoard = ({
       ...(rail.bar ? { bar: rail.bar } : {}),
       ...(rail.seat ? { seat: rail.seat } : {}),
       ...(tableCoinShown ? { coinOnTable: true } : {}),
+      ...(flipAllowed ? {} : { canSwitchSide: false }),
+      ...(sidePanelSliding ? { holdSide: true } : {}),
       actions: composed.actions,
       ...(composed.more ? { more: composed.more } : {}),
     };
@@ -1165,6 +1170,7 @@ export const RemoteSessionBoard = ({
     hint,
     tableActions,
     tableCoinShown,
+    sidePanelSliding,
     t,
   ]);
 

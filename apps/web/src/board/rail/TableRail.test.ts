@@ -1,5 +1,8 @@
+// @vitest-environment happy-dom
+
 import { CoinIcon } from '@phosphor-icons/react/dist/csr/Coin';
-import { createElement } from 'react';
+import { act, createElement } from 'react';
+import { createRoot } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -182,6 +185,52 @@ describe('placing the rail', () => {
     const markup = render({ end: 920, start: 120 });
     expect(markup).toContain('data-align="start"');
     expect(markup).toMatch(/left:\s*120px/u);
+  });
+
+  it('goes past the Stadium in a room whose table can’t be turned, where its turn fits there', () => {
+    // Room past the Stadium for five buttons: Turn, Attack, Pass, Undo and
+    // More, the coin on the table; Solo's Switch side would be a sixth.
+    const turn = { end: 920, coinOnTable: true, actions: playing.slice(0, 4) };
+    expect(render(turn)).toContain('data-align="start"');
+    const room = render({ ...turn, canSwitchSide: false });
+    expect(room).toContain('data-align="end"');
+    expect(shown(room)).toBe(5);
+  });
+
+  it('keeps its side while the table slides to another shape, choosing again once there', async () => {
+    (
+      globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
+    ).IS_REACT_ACT_ENVIRONMENT = true;
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+    const draw = (props: Partial<TableRailProps>) =>
+      act(async () =>
+        root.render(
+          createElement(TableRail, {
+            anchor: { x: 8, y: 40, height: 36 },
+            width: 1400,
+            avoid: { x: 500, y: 0, width: 200, height: 100 },
+            actions: playing,
+            more: rarer,
+            ...props,
+          })
+        )
+      );
+    const align = () =>
+      host.querySelector('#boardButtonContainer')?.getAttribute('data-align');
+    await draw({});
+    expect(align()).toBe('end');
+    // Mid-slide the room past the Stadium shrinks for a frame or two.
+    await draw({ end: 920, holdSide: true });
+    expect(align()).toBe('end');
+    await draw({ holdSide: true });
+    expect(align()).toBe('end');
+    // Settled where that room is short, it moves once.
+    await draw({ end: 920 });
+    expect(align()).toBe('start');
+    await act(async () => root.unmount());
+    host.remove();
   });
 
   it('stays before a Stadium at the right edge', () => {
