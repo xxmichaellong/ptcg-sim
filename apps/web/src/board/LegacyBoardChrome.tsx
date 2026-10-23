@@ -361,11 +361,14 @@ const HAND_PILL_EDGE = 4;
  */
 const TableHandPill = memo(function TableHandPill({
   count,
+  playAreaRight,
   playerSide,
   sorted,
   onToggleHandSort,
 }: {
   readonly count: TableHandCount;
+  /** Where the table ends, short of a docked log. */
+  readonly playAreaRight: number;
   /** The seat's colour, which follows the player (SeatTone). */
   readonly playerSide: 'local' | 'opponent';
   readonly sorted: boolean;
@@ -383,8 +386,8 @@ const TableHandPill = memo(function TableHandPill({
       ? { top: node.anchor.y }
       : { bottom: `calc(100% - ${String(node.anchor.y)}px)` };
   // The pill is wider than a badge: on a narrow screen a badge's anchor sits
-  // so near the edge that the pill would hang off the table. Measured after
-  // layout, it is nudged back inside.
+  // so near the edge that the pill would hang off the table, or under the
+  // docked log. Measured after layout, it is nudged back inside.
   const pill = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
     const element = pill.current;
@@ -396,8 +399,11 @@ const TableHandPill = memo(function TableHandPill({
       const left = Math.max(host?.left ?? 0, 0) + HAND_PILL_EDGE;
       const top = Math.max(host?.top ?? 0, 0) + HAND_PILL_EDGE;
       const right =
-        Math.min(host?.right ?? globalThis.innerWidth, globalThis.innerWidth) -
-        HAND_PILL_EDGE;
+        Math.min(
+          host?.right ?? globalThis.innerWidth,
+          (host?.left ?? 0) + playAreaRight,
+          globalThis.innerWidth
+        ) - HAND_PILL_EDGE;
       const bottom =
         Math.min(
           host?.bottom ?? globalThis.innerHeight,
@@ -428,6 +434,7 @@ const TableHandPill = memo(function TableHandPill({
     node.horizontalAlign,
     node.verticalAlign,
     node.count,
+    playAreaRight,
   ]);
   const sortId =
     playerSide === 'local' ? 'sortHandCheckbox' : 'oppSortHandCheckbox';
@@ -701,6 +708,9 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
           <TableHandPill
             key={count.playerId}
             count={count}
+            playAreaRight={
+              layout.playAreaBounds.x + layout.playAreaBounds.width
+            }
             playerSide={count.playerId === localPlayerId ? 'local' : 'opponent'}
             sorted={sortedHandPlayerIds?.has(count.playerId) ?? false}
             onToggleHandSort={actions.toggleHandSort}

@@ -380,6 +380,71 @@ describe('a lesson step on the practice table', () => {
       const start = now();
       expect(bench.done!(world({ view: now(), start, you, them }))).toBe(true);
     }
+    // Pidgey dropped anywhere but the Bench (the deal benches one already):
+    // not benched.
+    for (const destination of ['board', 'discard', 'deck']) {
+      const { room, now } = await dealt('attach');
+      const bench = lessonById('attach')!.steps.find(
+        (step) => step.id === 'bench'
+      )!;
+      const start = now();
+      const pidgey = findCard(now(), zoneCards(now(), you, 'hand'), 'pidgey')!;
+      room.session.submit({
+        type: 'MoveCard',
+        cardId: pidgey.id,
+        expectedSourceZoneId: zoneId(you, 'hand'),
+        destinationZoneId: zoneId(you, destination),
+      } as never);
+      await flush();
+      expect(
+        zoneCards(now(), you, 'hand').some((card) => card.id === pidgey.id),
+        destination
+      ).toBe(false);
+      expect(
+        bench.done!(world({ view: now(), start, you, them })),
+        destination
+      ).toBe(false);
+    }
+    // Back to the keys lesson's first step, Pidgey benched: done once more
+    // after it goes back to the hand and is benched again.
+    {
+      const { room, now } = await dealt('keys');
+      const benchKey = lessonById('keys')!.steps.find(
+        (step) => step.id === 'bench-key'
+      )!;
+      const pidgey = findCard(now(), zoneCards(now(), you, 'hand'), 'pidgey')!;
+      const toBench = () =>
+        room.session.submit({
+          type: 'MoveCardToPlay',
+          cardId: pidgey.id,
+          expectedSourceZoneId: zoneId(you, 'hand'),
+          boardPlayerId: you,
+          slot: 'bench',
+        } as never);
+      toBench();
+      await flush();
+      // Back: the step starts from now.
+      const start = now();
+      const at = () => world({ view: now(), start, you, them });
+      expect(benchKey.done!(at())).toBe(true);
+      const stack = now()
+        .boards[you]!.benchStackIds.map((id) => now().stacks[id]!)
+        .find((entry) =>
+          entry.evolutionCards.some((card) => card.id === pidgey.id)
+        )!;
+      room.session.submit({
+        type: 'MovePlayStackToZone',
+        stackId: stack.id,
+        expectedEvolutionCardIds: stack.evolutionCards.map((card) => card.id),
+        expectedAttachmentCardIds: stack.attachmentCards.map((card) => card.id),
+        destinationZoneId: zoneId(you, 'hand'),
+      } as never);
+      await flush();
+      expect(benchKey.done!(at())).toBe(false);
+      toBench();
+      await flush();
+      expect(benchKey.done!(at())).toBe(true);
+    }
     // Rare Candy taken from the open deck at the draw step.
     {
       const { room, now } = await dealt('deck');

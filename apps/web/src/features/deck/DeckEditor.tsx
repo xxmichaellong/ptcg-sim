@@ -169,14 +169,15 @@ export const DeckEditor = ({
   );
 
   // The name the draft was last brought up to: a draft nothing was typed
-  // in follows a rename from another tab even in the focused field, which
-  // would otherwise write the old name back.
+  // in since (or only spacing the save cleaned) follows a rename from
+  // another tab even in the focused field, which would otherwise write the
+  // old name back.
   const nameWas = useRef(deck.name);
   useEffect(() => {
     const was = nameWas.current;
     nameWas.current = deck.name;
     setNameDraft((draft) =>
-      !nameFocused.current || draft === was ? deck.name : draft
+      !nameFocused.current || cleanDeckName(draft) === was ? deck.name : draft
     );
   }, [deck.name]);
 

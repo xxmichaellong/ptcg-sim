@@ -8,6 +8,7 @@ import { hotkeyAction } from '../hotkeys/hotkey-catalogue.js';
 import { TUTORIAL_CARDS, type TutorialCardKey } from './tutorial-cards.js';
 import { controlLabel } from './tutorial-labels.js';
 import {
+  isLoadedSeat,
   MIDGAME_SCENARIO,
   START_SCENARIO,
   type TutorialScenario,
@@ -99,6 +100,23 @@ const cardIn = (
 ): TutorialTarget | null => {
   const card = findCard(world.view, zoneCards(world.view, playerId, kind), key);
   return card ? { card: card.id } : null;
+};
+
+/**
+ * The midgame's Pidgey benched from the hand: more Pidgey on the Bench
+ * than the lesson deals there (one), however long ago. Pidgey dropped
+ * anywhere else is not.
+ */
+const pidgeyBenched = (world: TutorialWorld): boolean => {
+  const seat = MIDGAME_SCENARIO.you;
+  const dealt = isLoadedSeat(seat)
+    ? 0
+    : (seat.bench ?? []).filter((spot) => spot.card === 'pidgey').length;
+  return (
+    benchStacks(world.view, world.you).filter(
+      (stack) => countCards(world.view, stack.evolutionCards, 'pidgey') > 0
+    ).length > dealt
+  );
 };
 
 const present = <T,>(values: readonly (T | null | undefined)[]): T[] =>
@@ -406,12 +424,7 @@ const attach: TutorialLesson = {
       // Or benched already, before the step asked.
       done: (world) =>
         benchStacks(world.view, world.you).length >
-          benchStacks(world.start, world.you).length ||
-        (cardIn(world, world.you, 'hand', 'pidgey') === null &&
-          benchStacks(world.view, world.you).some(
-            (stack) =>
-              countCards(world.view, stack.evolutionCards, 'pidgey') > 0
-          )),
+          benchStacks(world.start, world.you).length || pidgeyBenched(world),
     },
     {
       id: 'undo',
@@ -809,9 +822,10 @@ const keys: TutorialLesson = {
         );
       },
       targets: (world) => present([cardIn(world, world.you, 'hand', 'pidgey')]),
+      // Or benched already: Back to this step, after it.
       done: (world) =>
         benchStacks(world.view, world.you).length >
-        benchStacks(world.start, world.you).length,
+          benchStacks(world.start, world.you).length || pidgeyBenched(world),
     },
     {
       id: 'palette',

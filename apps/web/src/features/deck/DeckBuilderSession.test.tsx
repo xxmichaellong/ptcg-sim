@@ -614,6 +614,40 @@ describe('DeckBuilderSession', () => {
     expect(input.value).toBe('Renamed elsewhere');
   });
 
+  it('takes a rename from another tab over a focused name already saved, whatever its spacing', async () => {
+    await renderSession({ store: new DeckBuilderStore(), open: true });
+    await click('#deckNewButton');
+    const input = host.querySelector<HTMLInputElement>('#deckNameInput')!;
+    const type = (value: string) =>
+      act(async () => {
+        Object.getOwnPropertyDescriptor(
+          HTMLInputElement.prototype,
+          'value'
+        )!.set!.call(input, value);
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+    const pause = () =>
+      act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 700));
+      });
+    await act(async () => input.focus());
+    // A space typed before the next word: saved as "Foo".
+    await type('Foo ');
+    await pause();
+    expect(library.getSnapshot().decks.map((entry) => entry.name)).toEqual([
+      'Foo',
+    ]);
+    const [deck] = library.getSnapshot().decks;
+    await act(async () => {
+      library.update(deck!.id, { name: 'Renamed elsewhere' });
+    });
+    await pause();
+    await act(async () => input.blur());
+    expect(library.getSnapshot().decks.map((entry) => entry.name)).toEqual([
+      'Renamed elsewhere',
+    ]);
+  });
+
   it('drains dirty decks only when the Deck surface closes and cleans them only after authority publication', async () => {
     const session = new FakeSession();
     const store = new DeckBuilderStore();

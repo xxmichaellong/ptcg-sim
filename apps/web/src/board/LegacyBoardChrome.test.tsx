@@ -920,6 +920,81 @@ describe('LegacyBoardChrome', () => {
     await act(async () => root.unmount());
   });
 
+  it('keeps the hand pill on the table, clear of the docked log', async () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+    const layout = createTableLayoutSnapshot({
+      ...layoutState(),
+      geometryVersion: TABLE_LAYOUT_GEOMETRY_VERSION,
+      vertical: DEFAULT_TABLE_VERTICAL_LAYOUT,
+    });
+    const edge = layout.playAreaBounds.x + layout.playAreaBounds.width;
+    expect(edge).toBeLessThan(layout.viewport.width - 100);
+    // The near hand ends at the log; its pill, wider than a badge, hangs
+    // 12px past it.
+    vi.stubGlobal('innerWidth', layout.viewport.width);
+    vi.stubGlobal('innerHeight', layout.viewport.height);
+    const rect = Element.prototype.getBoundingClientRect;
+    Element.prototype.getBoundingClientRect = function (this: Element) {
+      const [x, y, width, height] = this.classList.contains(
+        'table-hand-pill--local'
+      )
+        ? [edge - 50, 600, 62, 28]
+        : [0, 0, layout.viewport.width, layout.viewport.height];
+      return {
+        x,
+        y,
+        width,
+        height,
+        left: x,
+        top: y,
+        right: x + width,
+        bottom: y + height,
+        toJSON: () => ({}),
+      } as DOMRect;
+    };
+    try {
+      await act(async () =>
+        root.render(
+          <LegacyBoardChrome
+            layout={layout}
+            localPlayerId={asPlayerId('spike-blue')}
+            players={players}
+            darkMode
+            actions={{ toggleOncePerGame: vi.fn(), toggleHandSort: vi.fn() }}
+            handCounts={[
+              {
+                playerId: asPlayerId('spike-blue'),
+                node: {
+                  id: 'spike-blue-hand-count',
+                  zoneId: 'spike-blue-hand',
+                  playerId: asPlayerId('spike-blue'),
+                  side: 'local',
+                  kind: 'hand',
+                  count: 7,
+                  anchor: { x: edge - 50, y: 628 },
+                  horizontalAlign: 'left',
+                  verticalAlign: 'bottom',
+                  fontSizePx: 13,
+                  color: 'rgb(90 110 188)',
+                  zIndex: 1,
+                  label: '7 cards in hand',
+                },
+              },
+            ]}
+          />
+        )
+      );
+      const pill = host.querySelector<HTMLElement>('.table-hand-pill--local')!;
+      expect(pill.style.translate).toBe('-16px 0px');
+    } finally {
+      Element.prototype.getBoundingClientRect = rect;
+      vi.unstubAllGlobals();
+      await act(async () => root.unmount());
+    }
+  });
+
   it('words the Sort and marker tooltips by what a press does', () => {
     expect(handSortTooltip(false)).toBe('Sort hand in decklist order');
     expect(handSortTooltip(true)).toBe('Stop sorting hand');
