@@ -28,6 +28,10 @@
     ],
     "translation": "{0}点伤害"
   },
+  "T4x65B": {
+    "message": "{0} has left play.",
+    "translation": "{0}已离场。"
+  },
   "glYGpK": {
     "message": "{0} has left your hand.",
     "translation": "{0} 已离开你的手牌。"

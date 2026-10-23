@@ -28,6 +28,10 @@
     ],
     "translation": "{0} hasar"
   },
+  "T4x65B": {
+    "message": "{0} has left play.",
+    "translation": "{0} artık oyunda değil."
+  },
   "glYGpK": {
     "message": "{0} has left your hand.",
     "translation": "{0} elinden ayrıldı."

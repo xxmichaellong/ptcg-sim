@@ -28,6 +28,10 @@
     ],
     "translation": "{0}ダメージ"
   },
+  "T4x65B": {
+    "message": "{0} has left play.",
+    "translation": "{0}は場を離れました。"
+  },
   "glYGpK": {
     "message": "{0} has left your hand.",
     "translation": "{0}が手札から離れました。"

@@ -28,6 +28,10 @@
     ],
     "translation": "{0} sát thương"
   },
+  "T4x65B": {
+    "message": "{0} has left play.",
+    "translation": "{0} không còn trên sân nữa."
+  },
   "glYGpK": {
     "message": "{0} has left your hand.",
     "translation": "{0} đã rời khỏi tay bài của bạn."

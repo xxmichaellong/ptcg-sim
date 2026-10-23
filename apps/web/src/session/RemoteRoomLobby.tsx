@@ -1383,15 +1383,11 @@ export const RemoteRoomLobby = ({
           serial: tutorial.serial,
           onExit: () => void leaveTutorial(),
         }}
-        {...(deckCustody
-          ? {
-              deckStore: deckCustody.store,
-              cardBackStore: deckCustody.cardBackStore,
-            }
-          : {})}
+        // The practice table's seats are its own: a deck put on it isn't
+        // the player's own table's (ADR-038, the table comes back as it was).
+        // Their saved decks are the same library either way.
         deckSurfaceActivated={deckSurfaceActivated}
         onDeckSurfaceActivate={() => setDeckSurfaceActivated(true)}
-        onDeckCustodyChange={setDeckCustody}
         installDeckOnSessionAttach={false}
         deckSessionPrepared
         onTableSettledChange={handleGameTableSettled}

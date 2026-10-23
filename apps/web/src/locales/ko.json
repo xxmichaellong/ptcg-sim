@@ -28,6 +28,10 @@
     ],
     "translation": "데미지 {0}"
   },
+  "T4x65B": {
+    "message": "{0} has left play.",
+    "translation": "{0}이(가) 필드에서 벗어났습니다."
+  },
   "glYGpK": {
     "message": "{0} has left your hand.",
     "translation": "{0}이(가) 패에서 사라졌습니다."

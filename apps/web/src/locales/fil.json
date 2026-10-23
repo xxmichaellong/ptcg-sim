@@ -28,6 +28,10 @@
     ],
     "translation": "{0} damage"
   },
+  "T4x65B": {
+    "message": "{0} has left play.",
+    "translation": "Wala na sa laro si {0}."
+  },
   "glYGpK": {
     "message": "{0} has left your hand.",
     "translation": "Umalis na ang {0} sa iyong hand."

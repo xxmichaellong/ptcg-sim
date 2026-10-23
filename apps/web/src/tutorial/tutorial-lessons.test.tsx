@@ -1063,6 +1063,124 @@ describe('a lesson step on the practice table', () => {
     }
   });
 
+  it('says Charmander has left play, lights it for its menu, and takes a Basic benched early only while it stays', async () => {
+    const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+    const dealt = async (id: string) => {
+      const room = fakePracticeRoom();
+      await dealScenario(
+        room.session,
+        lessonById(id)!.scenario,
+        new AbortController().signal
+      );
+      const now = () => room.session.getSnapshot().view!;
+      const send = async (command: unknown) => {
+        room.session.submit(command as never);
+        await flush();
+      };
+      return { now, send };
+    };
+    // Attach: Charmander dragged to the discard pile.
+    {
+      const { now, send } = await dealt('attach');
+      const start = now();
+      const charmander = activeStack(now(), you)!;
+      await send({
+        type: 'MovePlayStackToZone',
+        stackId: charmander.id,
+        expectedEvolutionCardIds: charmander.evolutionCards.map(
+          (card) => card.id
+        ),
+        expectedAttachmentCardIds: charmander.attachmentCards.map(
+          (card) => card.id
+        ),
+        destinationZoneId: zoneId(you, 'discard'),
+      });
+      for (const step of ['energy', 'evolve']) {
+        const lesson = lessonById('attach')!.steps.find(
+          (entry) => entry.id === step
+        )!;
+        const at = world({ view: now(), start, you, them });
+        expect(lesson.done!(at), step).toBe(false);
+        expect(text({ text: lesson.stuck! }, at), step).toContain(
+          'has left play'
+        );
+      }
+    }
+    // Look at cards: Pidgey swapped into the Active, Charmander still lit.
+    {
+      const { now, send } = await dealt('cards');
+      const board = now().boards[you]!;
+      const pidgey = board.benchStackIds
+        .map((id) => now().stacks[id]!)
+        .find((stack) => topOf(now(), stack) === 'pidgey')!;
+      await send({
+        type: 'MovePlayStack',
+        stackId: pidgey.id,
+        expectedSourceBoardPlayerId: you,
+        expectedSourceSlot: 'bench',
+        expectedActiveStackId: board.activeStackId,
+        expectedBenchStackIds: [...board.benchStackIds],
+        destinationSlot: 'active',
+        targetStackId: board.activeStackId,
+      });
+      const menu = lessonById('cards')!.steps.find(
+        (entry) => entry.id === 'menu'
+      )!;
+      const charmander = now()
+        .boards[you]!.benchStackIds.map((id) => now().stacks[id]!)
+        .find((stack) => topOf(now(), stack) === 'charmander')!;
+      expect(
+        menu.targets!(world({ view: now(), start: now(), you, them }))
+      ).toEqual([{ card: topCard(charmander)!.id }]);
+    }
+    // Start: a Basic benched early, then taken off the Bench before the
+    // Active is filled: not benched.
+    {
+      const { now, send } = await dealt('start');
+      for (const key of ['charmander', 'charmander', 'pidgey'] as const) {
+        const card = findCard(now(), zoneCards(now(), you, 'deck'), key)!;
+        await send({
+          type: 'MoveCard',
+          cardId: card.id,
+          expectedSourceZoneId: zoneId(you, 'deck'),
+          destinationZoneId: zoneId(you, 'hand'),
+        });
+      }
+      await send({
+        type: 'MoveCardToPlay',
+        cardId: findCard(now(), zoneCards(now(), you, 'hand'), 'charmander')!
+          .id,
+        expectedSourceZoneId: zoneId(you, 'hand'),
+        boardPlayerId: you,
+        slot: 'bench',
+      });
+      const start = now();
+      const benched = benchStacks(now(), you)[0]!;
+      await send({
+        type: 'MovePlayStackToZone',
+        stackId: benched.id,
+        expectedEvolutionCardIds: benched.evolutionCards.map((card) => card.id),
+        expectedAttachmentCardIds: benched.attachmentCards.map(
+          (card) => card.id
+        ),
+        destinationZoneId: zoneId(you, 'hand'),
+      });
+      await send({
+        type: 'MoveCardToPlay',
+        cardId: findCard(now(), zoneCards(now(), you, 'hand'), 'charmander')!
+          .id,
+        expectedSourceZoneId: zoneId(you, 'hand'),
+        boardPlayerId: you,
+        slot: 'active',
+      });
+      const bench = lessonById('start')!.steps.find(
+        (entry) => entry.id === 'bench'
+      )!;
+      expect(benchStacks(now(), you)).toHaveLength(0);
+      expect(bench.done!(world({ view: now(), start, you, them }))).toBe(false);
+    }
+  });
+
   it('is done when the player did it before it was asked', async () => {
     const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
     const dealt = async (id: string) => {

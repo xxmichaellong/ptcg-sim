@@ -28,6 +28,10 @@
     ],
     "translation": "ความเสียหาย {0}"
   },
+  "T4x65B": {
+    "message": "{0} has left play.",
+    "translation": "{0} ไม่อยู่ในสนามแล้ว"
+  },
   "glYGpK": {
     "message": "{0} has left your hand.",
     "translation": "{0} ออกจากมือของคุณแล้ว"

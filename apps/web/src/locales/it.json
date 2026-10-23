@@ -28,6 +28,10 @@
     ],
     "translation": "{0} danni"
   },
+  "T4x65B": {
+    "message": "{0} has left play.",
+    "translation": "{0} non è più in gioco."
+  },
   "glYGpK": {
     "message": "{0} has left your hand.",
     "translation": "{0} ha lasciato la tua mano."

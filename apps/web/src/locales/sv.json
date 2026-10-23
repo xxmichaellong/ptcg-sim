@@ -28,6 +28,10 @@
     ],
     "translation": "{0} skada"
   },
+  "T4x65B": {
+    "message": "{0} has left play.",
+    "translation": "{0} är inte längre i spel."
+  },
   "glYGpK": {
     "message": "{0} has left your hand.",
     "translation": "{0} har lämnat din hand."

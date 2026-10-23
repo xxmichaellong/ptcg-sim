@@ -28,6 +28,10 @@
     ],
     "translation": "{0} штете"
   },
+  "T4x65B": {
+    "message": "{0} has left play.",
+    "translation": "{0} више није у игри."
+  },
   "glYGpK": {
     "message": "{0} has left your hand.",
     "translation": "{0} је напустила твоју руку."

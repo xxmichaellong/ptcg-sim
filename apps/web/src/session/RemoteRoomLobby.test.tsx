@@ -12,9 +12,9 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { CardBackCustodyStore } from '../features/deck/card-back-custody.js';
+import { CardBackCustodyStore } from '../features/deck/card-back-custody.js';
 import { PreferenceStore } from '../preferences/preference-store.js';
-import type { DeckBuilderStore } from '../features/deck/deck-builder-store.js';
+import { DeckBuilderStore } from '../features/deck/deck-builder-store.js';
 import {
   RemoteRoomInvitationError,
   type RemoteRoomCreationResult,
@@ -49,6 +49,12 @@ const lobbyBoardHarness = vi.hoisted(() => ({
   onParkedSettledChange: undefined as ((settled: boolean) => void) | undefined,
 }));
 const roomRouteHarness = vi.hoisted(() => ({
+  onDeckCustodyChange: undefined as
+    | ((custody: {
+        readonly store: DeckBuilderStore;
+        readonly cardBackStore: CardBackCustodyStore;
+      }) => void)
+    | undefined,
   preferences: undefined as BoardPreferences | undefined,
   onPreferencesChange: undefined as
     ((preferences: BoardPreferences) => void) | undefined,
@@ -169,6 +175,7 @@ vi.mock('./RemoteRoomRoute.js', () => ({
     tutorial,
     initialFlipped,
     onFlippedChange,
+    onDeckCustodyChange,
   }: {
     readonly runtime: { readonly label?: string };
     readonly onLeave?: () => void;
@@ -196,8 +203,13 @@ vi.mock('./RemoteRoomRoute.js', () => ({
     readonly tutorial?: { readonly onExit: () => void };
     readonly initialFlipped?: boolean;
     readonly onFlippedChange?: (flipped: boolean) => void;
+    readonly onDeckCustodyChange?: (custody: {
+      readonly store: DeckBuilderStore;
+      readonly cardBackStore: CardBackCustodyStore;
+    }) => void;
   }) => {
     roomRouteHarness.onTableSettledChange = onTableSettledChange;
+    roomRouteHarness.onDeckCustodyChange = onDeckCustodyChange;
     roomRouteHarness.tutorial = tutorial;
     roomRouteHarness.initialFlipped = initialFlipped;
     roomRouteHarness.onFlippedChange = onFlippedChange;
@@ -2003,6 +2015,47 @@ describe('remote room lobby wiring', () => {
       expect(present('[data-tutorial="true"]')).toBe(false);
       expect(practice.dispose).toHaveBeenCalledOnce();
       expect(roomRouteHarness.initialFlipped).toBe(true);
+      await act(async () => root.unmount());
+    });
+
+    it('keeps the practice table’s seats apart from the player’s own table', async () => {
+      const own = creationResult(runtime({ label: 'own' }), 'solo');
+      const practice = creationResult(runtime({ label: 'practice' }), 'solo');
+      const createRoom = vi
+        .fn()
+        .mockResolvedValueOnce(own.value)
+        .mockResolvedValueOnce(practice.value);
+      const { root } = await mount(
+        lobbyDependencies(custody(), createRoom),
+        false,
+        'solo'
+      );
+      await settle();
+      // The own table's deck screen keeps its seats with the lobby.
+      const store = new DeckBuilderStore();
+      const cardBackStore = new CardBackCustodyStore();
+      await act(async () => {
+        roomRouteHarness.onDeckCustodyChange?.({ store, cardBackStore });
+        await flush();
+      });
+      expect(roomRouteHarness.deckStore).toBe(store);
+      await act(async () => {
+        startTutorial();
+        await flush();
+      });
+      await settle();
+      expect(present('[data-tutorial="true"]')).toBe(true);
+      // A deck put on the practice table isn't recorded as on the player's
+      // own: the practice table has seats of its own.
+      expect(roomRouteHarness.deckStore).toBeUndefined();
+      expect(roomRouteHarness.cardBackStore).toBeUndefined();
+      expect(roomRouteHarness.onDeckCustodyChange).toBeUndefined();
+      await act(async () => {
+        roomRouteHarness.tutorial?.onExit();
+        await flush();
+      });
+      await settle();
+      expect(roomRouteHarness.deckStore).toBe(store);
       await act(async () => root.unmount());
     });
   });

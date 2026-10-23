@@ -209,6 +209,12 @@ const charmanderIn = (world: TutorialWorld, view: MatchViewState) =>
       tutorialCardKeyOf(view, stack.evolutionCards[0]) === 'charmander'
   );
 
+/** Charmander gone from play (discarded, back in the hand): said. */
+const charmanderGone = (world: TutorialWorld): ReactNode =>
+  charmanderIn(world, world.view) ? null : (
+    <Trans>{name('charmander')} has left play.</Trans>
+  );
+
 /** Charmander's top card, for a drag onto it. */
 const charmanderTarget = (world: TutorialWorld): TutorialTarget | null => {
   const top = topCard(charmanderIn(world, world.view));
@@ -235,6 +241,23 @@ const stackCardIds = (stack: ReturnType<typeof activeStack>): string[] =>
   stack
     ? [...stack.evolutionCards, ...stack.attachmentCards].map((card) => card.id)
     : [];
+
+/**
+ * A Basic benched before Start's Bench step asked, still on the Bench (its
+ * Pokémon keeps its id through a swap; one taken off since doesn't count).
+ */
+const benchedBefore = (world: TutorialWorld): boolean => {
+  const then = new Set(
+    benchStacks(world.start, world.you)
+      .filter((stack) => {
+        const bottom = stack.evolutionCards[0];
+        const key = bottom ? tutorialCardKeyOf(world.start, bottom) : undefined;
+        return key !== undefined && TUTORIAL_BASIC_POKEMON.has(key);
+      })
+      .map((stack) => stack.id)
+  );
+  return benchStacks(world.view, world.you).some((stack) => then.has(stack.id));
+};
 
 /** A Basic Pokémon in your Active Spot (an Energy put there is none). */
 const basicInActive = (world: TutorialWorld): boolean =>
@@ -377,13 +400,7 @@ const start: TutorialLesson = {
       done: (world) =>
         basicInActive(world) &&
         (newlyBenched(world) ||
-          benchStacks(world.start, world.you).some((stack) => {
-            const bottom = stack.evolutionCards[0];
-            const key = bottom
-              ? tutorialCardKeyOf(world.start, bottom)
-              : undefined;
-            return key !== undefined && TUTORIAL_BASIC_POKEMON.has(key);
-          }) ||
+          benchedBefore(world) ||
           (dealt(world) && basicInHand(world.view, world.you) === undefined)),
       stuck: (world) =>
         basicInActive(world)
@@ -453,7 +470,7 @@ const cards: TutorialLesson = {
             can do.
           </Trans>
         ),
-      targets: (world) => present([activeTopTarget(world, world.you)]),
+      targets: (world) => present([charmanderTarget(world)]),
       done: (world) => world.screen.cardMenu !== null,
     },
     {
@@ -507,13 +524,14 @@ const attach: TutorialLesson = {
           'fireEnergy'
         ),
       stuck: (world) =>
-        !findCard(
+        charmanderGone(world) ??
+        (!findCard(
           world.view,
           zoneCards(world.view, world.you, 'hand'),
           'fireEnergy'
         ) ? (
           <Trans>That Energy has left your hand.</Trans>
-        ) : null,
+        ) : null),
     },
     {
       id: 'evolve',
@@ -545,13 +563,14 @@ const attach: TutorialLesson = {
           );
         }),
       stuck: (world) =>
-        !findCard(
+        charmanderGone(world) ??
+        (!findCard(
           world.view,
           zoneCards(world.view, world.you, 'hand'),
           'charmeleon'
         ) ? (
           <Trans>{name('charmeleon')} has left your hand.</Trans>
-        ) : null,
+        ) : null),
     },
     {
       id: 'trainer',
