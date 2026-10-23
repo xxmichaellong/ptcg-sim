@@ -66,10 +66,12 @@ crawl back 30 seconds, doubling to half an hour. The daily cron and the
 first request start the crawl. Reading every standings page back to 2021
 takes a few days. Each step that throws emits `server_failure` with
 subsystem `deck_index_crawl` (source `deck_index`). Each time Limitless fails
-the crawl -- down, refusing, rate-limited, or answering in a shape it can't
-read -- it emits `server_failure` with subsystem `deck_index_limitless`: a
-steady run of them means search has stopped growing (a run of 429s, that
-`LIMITLESS_API_KEY` would give it a bucket of its own).
+the crawl -- down, refusing, or answering in a shape it can't read -- it emits
+`server_failure` with subsystem `deck_index_limitless`: a steady run means
+search has stopped growing while Limitless is down or has changed. Each
+request it refuses for its rate limit (429), the crawl's or a player's, emits
+`deck_index_limitless_rate_limited`: a steady run of those is what
+`LIMITLESS_API_KEY` fixes, a bucket of its own.
 
 Nothing needs provisioning; the optional `LIMITLESS_API_KEY` gives the index
 its own rate bucket at Limitless. `DECK_INDEX_SOURCE=off` keeps it from ever

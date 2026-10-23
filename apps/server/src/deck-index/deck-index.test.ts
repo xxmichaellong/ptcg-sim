@@ -583,7 +583,7 @@ describe('the request budget', () => {
     expect((await index.tournament(id(1))).kind).toBe('ok');
   });
 
-  it('tells the operator each time Limitless fails the crawl: down, refusing, rate-limited', async () => {
+  it('tells the operator each time Limitless fails the crawl, down or refusing, and each time it rate-limits it, apart', async () => {
     limitless.tournaments = [
       tournament(1, { date: START - DAY }),
       tournament(2, { date: START - 2 * DAY }),
@@ -604,7 +604,7 @@ describe('the request budget', () => {
     // Standings down: the crawl holds back, and says so.
     limitless.failStandings = 1;
     await crawl(index, 1);
-    expect(failures).toHaveBeenCalledTimes(1);
+    expect(failures.mock.calls).toEqual([['failed']]);
     // A 429.
     limitless.failures.push(
       new Response('slow down', {
@@ -614,7 +614,8 @@ describe('the request budget', () => {
     );
     now += HOUR;
     await crawl(index, 1);
-    expect(failures).toHaveBeenCalledTimes(2);
+    // Told apart: what an API key of its own would fix.
+    expect(failures.mock.calls).toEqual([['failed'], ['rate_limited']]);
   });
 
   it('holds the crawl back after Limitless fails, retries a tournament an hour later and then two, then gives up on it', async () => {

@@ -145,11 +145,12 @@ export interface DeckIndexDependencies {
   /** False keeps the index from ever calling Limitless (browser specs). */
   readonly enabled: boolean;
   /**
-   * Limitless failed the crawl -- down, refusing, rate-limited, or answering
-   * what can't be read: told each time, for the operator (it is caught
-   * here, and the crawl holds back and goes on).
+   * Limitless failed the crawl -- down, refusing, or answering what can't
+   * be read (`failed`) -- or refused a request, a player's too, for its
+   * rate limit (`rate_limited`): told each time, for the operator (it is
+   * caught here, and the crawl holds back and goes on).
    */
-  readonly onFailure?: () => void;
+  readonly onFailure?: (reason: 'failed' | 'rate_limited') => void;
 }
 
 export interface TournamentSummary {
@@ -515,7 +516,7 @@ export class DeckIndex {
               ? {}
               : { retryAfterMs: error.retryAfterMs }),
           });
-          this.deps.onFailure?.();
+          this.deps.onFailure?.('rate_limited');
         } else if (error.code !== 'not_found' && kind === 'crawl') {
           this.holdBack();
         }
@@ -535,7 +536,7 @@ export class DeckIndex {
   }
 
   private holdBack(): void {
-    this.deps.onFailure?.();
+    this.deps.onFailure?.('failed');
     const failures = Number(this.store.getMeta(META.failures) ?? '0') + 1;
     this.store.setMeta(META.failures, String(failures));
     this.store.setMeta(

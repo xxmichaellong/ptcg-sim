@@ -1297,9 +1297,12 @@ export class PtcgDeckIndex extends DurableObject<Env> {
       now: Date.now,
       enabled: env.DECK_INDEX_SOURCE !== 'off',
       ...(env.LIMITLESS_API_KEY ? { apiKey: env.LIMITLESS_API_KEY } : {}),
-      onFailure: () =>
+      onFailure: (reason) =>
         this.telemetry.failure({
-          subsystem: 'deck_index_limitless',
+          subsystem:
+            reason === 'rate_limited'
+              ? 'deck_index_limitless_rate_limited'
+              : 'deck_index_limitless',
           retryable: true,
         }),
     });

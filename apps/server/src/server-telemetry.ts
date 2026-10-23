@@ -87,6 +87,7 @@ export type ServerFailureSubsystem =
   | 'deck_feed_refresh'
   | 'deck_index_crawl'
   | 'deck_index_limitless'
+  | 'deck_index_limitless_rate_limited'
   | 'card_catalog_refresh';
 
 export type TelemetryReason =
