@@ -44,7 +44,9 @@ from RK9.
    - Every half hour, it reads the newest pages until a page holds only
      tournaments it knows that are over two days old, 20 pages at most a
      run; a run that ends at 20 among new events (the crawl off for
-     months) goes on from there the next time.
+     months) goes on from there the next time, and isn't over until it
+     goes past the oldest event that run reached, however far the list
+     moved on meanwhile.
    - It reads one finished tournament's standings per step. Recent Standard
      events of 32 or more players go first, then by newest and biggest. The
      rest of history follows over the next days.
@@ -84,8 +86,8 @@ from RK9.
      crawl held back and moving on) until a standings read answers again.
      The run is kept with the index, so neither a list page nor a restart
      ends it. The crawl's next read is then one elsewhere: the newest event
-     read before, asked again with its ETag, else the one waiting that
-     would be read last. It answering tells a batch Limitless removed from
+     read before and not asked for in the last hour, asked again with its
+     ETag, else the one waiting that would be read last. It answering tells a batch Limitless removed from
      Limitless refusing: the run ends and the next of the batch are
      removed, rather than each held back for and tried again for hours.
 3. **Everything from Limitless is untrusted, as in ADR-029.**

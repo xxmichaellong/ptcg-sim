@@ -291,7 +291,7 @@ describe('discovering tournaments', () => {
     expect(limitless.standingsCalls()).toEqual([id(1)]);
   });
 
-  it('lists every event that came while the crawl was off, however many pages a run can read', async () => {
+  it('lists every event that came while the crawl was off, however many pages a run can read, and the list moved on meanwhile', async () => {
     limitless.tournaments = Array.from({ length: 250 }, (_, n) =>
       tournament(10_000 + n, { players: 4, date: START - 400 * DAY - n })
     );
@@ -304,11 +304,21 @@ describe('discovering tournaments', () => {
         tournament(20_000 + n, { players: 4, date: START - n * 2 * HOUR })
       )
     );
+    now += CRAWL_POLICY.discoveryEveryMs;
+    await crawlUntilIdle(index);
+    // Off again after that one run, for three weeks: two pages more came,
+    // so the page it stopped at now holds events it knows.
+    limitless.tournaments.push(
+      ...Array.from({ length: 200 }, (_, n) =>
+        tournament(30_000 + n, { players: 4, date: START + n * 2.4 * HOUR })
+      )
+    );
+    now = START + 21 * DAY;
     for (let run = 0; run < 3; run += 1) {
       now += CRAWL_POLICY.discoveryEveryMs;
       await crawlUntilIdle(index);
     }
-    expect(knownCount(storage)).toBe(2_750);
+    expect(knownCount(storage)).toBe(2_950);
   });
 
   it('takes a page that is not a list for a failure, not the end of the list', async () => {
@@ -822,6 +832,39 @@ describe('the request budget', () => {
     // forgotten when tried again; not most of the batch left given up on.
     await crawlUntil(index, START + 6 * HOUR);
     expect(knownCount(storage)).toBeLessThanOrEqual(30 + 2);
+  });
+
+  it('reads on past a removed batch whose newest events it had already read, never stuck asking one of them', async () => {
+    const batch = Array.from({ length: 10 }, (_, n) =>
+      tournament(500 + n, { players: 200, date: START - 2 * DAY - n * MINUTE })
+    );
+    const live = Array.from({ length: 30 }, (_, n) =>
+      tournament(5_000 + n, { players: 20, date: START - 3 * DAY - n * HOUR })
+    );
+    limitless.tournaments = [...batch, ...live];
+    for (const row of limitless.tournaments) {
+      limitless.standings.set(row.id, [standing('p', 1, dragapult)]);
+    }
+    const index = createIndex();
+    while (limitless.standingsCalls().length < 3) await crawl(index, 1);
+    // Limitless removes the batch, list and all, three of it read already.
+    for (const row of batch) limitless.standings.delete(row.id);
+    limitless.tournaments = live;
+    const before = limitless.standingsCalls().length;
+    const end = now + DAY;
+    for (let step = 0; step < 10_000; step += 1) {
+      const next = await index.step();
+      if (next === null || next > end) break;
+      now = Math.max(now, next);
+    }
+    const asked = limitless.standingsCalls().slice(before);
+    for (const row of live) expect(asked).toContain(row.id);
+    const most = Math.max(
+      ...[...new Set(asked)].map(
+        (one) => asked.filter((call) => call === one).length
+      )
+    );
+    expect(most).toBeLessThanOrEqual(3);
   });
 
   it('loses no history to a long storm of unknowns while the list answers, restarts and all', async () => {

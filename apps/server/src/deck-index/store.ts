@@ -142,6 +142,8 @@ export const STORE_POLICY = Object.freeze({
   resyncEveryMs: 7 * DAY_MS,
   /** Failed reads are retried this many times, an hour apart and growing. */
   attempts: 3,
+  /** An event read before is a probe again only after this long. */
+  probeAgainAfterMs: 60 * 60 * 1000,
   retryBaseMs: 60 * 60 * 1000,
   /** Archetypes ranked by top 8s from this far back at most. */
   rankingWindowMs: 730 * DAY_MS,
@@ -476,16 +478,18 @@ export class DeckIndexStore {
   /**
    * After a run of "unknown" answers, the read that tells events removed
    * from Limitless from Limitless refusing: the newest event read before
-   * (asked again conditionally, a 304 costs nothing), else the one waiting
-   * that `nextToRead` would take last -- the run is of the ones it takes
-   * first.
+   * and not asked for in the last hour (asked again conditionally, a 304
+   * costs nothing; one that failed as a probe isn't asked again at once),
+   * else the one waiting that `nextToRead` would take last -- the run is of
+   * the ones it takes first.
    */
   probe(now: number): TournamentRow | null {
     const read = this.first(
       `SELECT * FROM tournaments
-       WHERE state = 'indexed' AND etag IS NOT NULL
+       WHERE state = 'indexed' AND etag IS NOT NULL AND fetched_at <= ?
        ORDER BY date DESC
-       LIMIT 1`
+       LIMIT 1`,
+      now - STORE_POLICY.probeAgainAfterMs
     );
     if (read) return tournamentRow(read);
     const waiting = this.first(

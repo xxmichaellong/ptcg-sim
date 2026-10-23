@@ -242,6 +242,12 @@ interface Discovery {
    * or the events past its last page would never be listed.
    */
   readonly resume?: number;
+  /**
+   * The date of the oldest event that capped run reached. The list may have
+   * moved on since (the crawl off again for days): until a page goes past
+   * it, one of known events isn't the end.
+   */
+  readonly until?: number;
 }
 
 const pageOf = (value: unknown): number | null =>
@@ -259,6 +265,9 @@ const readDiscovery = (value: string | null): Discovery => {
       dueAt: Number.isFinite(parsed.dueAt) ? (parsed.dueAt as number) : 0,
       ...(from !== null ? { from } : {}),
       ...(resume !== null ? { resume } : {}),
+      ...(Number.isFinite(parsed.until)
+        ? { until: parsed.until as number }
+        : {}),
     };
   } catch {
     return { page: null, dueAt: 0 };
@@ -272,6 +281,8 @@ type CrawlTask =
       readonly page: number;
       /** The page this run started at. */
       readonly from: number;
+      /** Resumed: the date it must reach before a page can end it. */
+      readonly until?: number;
     }
   | { readonly kind: 'read'; readonly tournament: TournamentRow }
   | { readonly kind: 'resync'; readonly tournament: TournamentRow };
@@ -334,11 +345,19 @@ export class DeckIndex {
         kind: 'discover',
         page: discovery.page,
         from: discovery.from ?? 1,
+        ...(discovery.until !== undefined ? { until: discovery.until } : {}),
       };
     }
     if (discovery.dueAt <= now) {
       const page = discovery.resume ?? 1;
-      return { kind: 'discover', page, from: page };
+      return {
+        kind: 'discover',
+        page,
+        from: page,
+        ...(discovery.resume !== undefined && discovery.until !== undefined
+          ? { until: discovery.until }
+          : {}),
+      };
     }
     // A run of "unknown" answers: one read elsewhere tells removed events
     // (it answers, the run ends and the next of them are forgotten) from
@@ -479,6 +498,7 @@ export class DeckIndex {
           readonly kind: 'discover';
           readonly page: number;
           readonly from: number;
+          readonly until?: number;
         },
     now: number
   ): Promise<void> {
@@ -505,7 +525,12 @@ export class DeckIndex {
       if (task.kind === 'discover') {
         this.store.setMeta(
           META.discovery,
-          JSON.stringify({ page: task.page, dueAt: 0, from: task.from })
+          JSON.stringify({
+            page: task.page,
+            dueAt: 0,
+            from: task.from,
+            until: task.until,
+          })
         );
       }
       return;
@@ -518,7 +543,12 @@ export class DeckIndex {
       if (task.kind === 'discover') {
         this.store.setMeta(
           META.discovery,
-          JSON.stringify({ page: task.page, dueAt: 0, from: task.from })
+          JSON.stringify({
+            page: task.page,
+            dueAt: 0,
+            from: task.from,
+            until: task.until,
+          })
         );
       }
       return;
@@ -540,8 +570,13 @@ export class DeckIndex {
       if (end) this.finishDiscovery(now);
       return;
     }
+    const oldest = rows.reduce(
+      (date, row) => Math.min(date, row.date),
+      Number.POSITIVE_INFINITY
+    );
     const settled =
       rows.length > 0 &&
+      (task.until === undefined || oldest < task.until) &&
       rows.every(
         (row) =>
           known.has(row.id) && row.date <= now - CRAWL_POLICY.knownAfterMs
@@ -551,23 +586,36 @@ export class DeckIndex {
       return;
     }
     if (task.page - task.from + 1 >= CRAWL_POLICY.incrementalPages) {
-      this.finishDiscovery(now, task.page + 1);
+      this.finishDiscovery(now, {
+        page: task.page + 1,
+        until: Number.isFinite(oldest) ? oldest : task.until,
+      });
       return;
     }
     this.store.setMeta(
       META.discovery,
-      JSON.stringify({ page: task.page + 1, dueAt: 0, from: task.from })
+      JSON.stringify({
+        page: task.page + 1,
+        dueAt: 0,
+        from: task.from,
+        until: task.until,
+      })
     );
   }
 
   /** Ends a run; the next one starts at `resume` if given, else page 1. */
-  private finishDiscovery(now: number, resume?: number): void {
+  private finishDiscovery(
+    now: number,
+    resume?: { readonly page: number; readonly until: number | undefined }
+  ): void {
     this.store.setMeta(
       META.discovery,
       JSON.stringify({
         page: null,
         dueAt: now + CRAWL_POLICY.discoveryEveryMs,
-        ...(resume !== undefined ? { resume } : {}),
+        ...(resume !== undefined
+          ? { resume: resume.page, until: resume.until }
+          : {}),
       })
     );
   }

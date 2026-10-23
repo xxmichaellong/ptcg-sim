@@ -54,9 +54,16 @@ takes a few days. Each step that throws emits `server_failure` with
 subsystem `deck_index_crawl` (source `deck_index`).
 
 Nothing needs provisioning; the optional `LIMITLESS_API_KEY` gives the index
-its own rate bucket at Limitless. `DECK_INDEX_SOURCE=off` (the browser
-specs) keeps it from ever calling Limitless. Locally, workerd on NixOS needs
-`SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt` to reach Limitless.
+its own rate bucket at Limitless. `DECK_INDEX_SOURCE=off` keeps it from ever
+calling Limitless, and `wrangler.jsonc` ships it off for production and the
+preview until the account is on Workers Paid: its crawl writes more rows
+than the Free plan's 100,000 a day, which every Durable Object in the
+account shares. To turn it on, deploy with `--var DECK_INDEX_SOURCE:on` (a
+later deploy without it turns it off again), or change both `vars` blocks
+(the continuation preview provisioner then refuses to run until reviewed).
+Off, `/v2/tournaments` lists only the events already read. Locally, workerd
+on NixOS needs `SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt` to reach
+Limitless.
 
 ## Card catalog (ADR-032)
 
