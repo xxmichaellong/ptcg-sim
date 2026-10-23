@@ -7,6 +7,7 @@ import {
   DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
   DEFAULT_TABLE_VERTICAL_LAYOUT,
   flipBoardLayoutState,
+  TABLE_CONTROL_CORNER_PX,
   TABLE_LAYOUT_GEOMETRY_VERSION,
   tableVerticalLayout,
   type BoardLayoutState,
@@ -128,6 +129,60 @@ describe('LegacyBoardChrome', () => {
     await act(async () => opponent.click());
     expect(toggleHandSort).toHaveBeenCalledWith(asPlayerId('spike-red'), false);
     await act(async () => root.unmount());
+  });
+
+  it('fits GX and VSTAR side by side in the corner beside the hand on an upright phone, clear of its first cards', async () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+    for (const [width, height] of [
+      [360, 780],
+      [390, 844],
+      [430, 932],
+    ] as const) {
+      const layout = createTableLayoutSnapshot({
+        ...layoutState(),
+        viewport: { width, height, devicePixelRatio: 1 },
+        geometryVersion: TABLE_LAYOUT_GEOMETRY_VERSION,
+        shellMode: 'fullscreen',
+        vertical: DEFAULT_TABLE_VERTICAL_LAYOUT,
+        oncePerGameMarkers: 2,
+      });
+      await act(async () =>
+        root.render(
+          <LegacyBoardChrome
+            layout={layout}
+            localPlayerId={asPlayerId('spike-blue')}
+            players={players}
+            darkMode={false}
+            actions={{ toggleOncePerGame: vi.fn() }}
+          />
+        )
+      );
+      const at = `${String(width)}x${String(height)}`;
+      const near = host.querySelector<HTMLElement>(
+        '.legacy-player-frame-chrome[data-player-side="local"]'
+      )!;
+      expect(near.dataset['corner'], at).toBe('compact');
+      const size = (kind: string) =>
+        near.querySelector<HTMLElement>(
+          `[data-once-per-game-marker="${kind}"]`
+        )!.style;
+      // shell.css lays them 6px in, 4px apart, 24px tall.
+      expect(px(size('vstar').height), at).toBe(24);
+      expect(px(size('gx').height), at).toBe(24);
+      expect(
+        6 + px(size('vstar').width) + 4 + px(size('gx').width),
+        at
+      ).toBeLessThanOrEqual(TABLE_CONTROL_CORNER_PX);
+      // The hand starts past that corner, at its usual place.
+      const hand = layout.players
+        .find((player) => player.playerId === asPlayerId('spike-blue'))!
+        .regions.find((region) => region.kind === 'hand')!;
+      expect(hand.physicalDeclaredBounds.x, at).toBe(TABLE_CONTROL_CORNER_PX);
+    }
+    await act(async () => root.unmount());
+    host.remove();
   });
 
   it('paints GX and VSTAR as tiles that turn face down when used', async () => {

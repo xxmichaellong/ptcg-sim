@@ -40,6 +40,30 @@ export const handSortTooltip = (sorted: boolean): string =>
 /** The GX and VSTAR targets stay well over 32px tall at every board size. */
 const ONCE_PER_GAME_MIN_TARGET_PX = 36;
 const ONCE_PER_GAME_TILE_PADDING = 4;
+/** Side by side in a short corner (shell.css `data-corner='compact'`). */
+const ONCE_PER_GAME_COMPACT_PX = 24;
+
+/**
+ * A GX or VSTAR button's size: the tile, its padding round it. Side by
+ * side in a corner too short to stack them (an upright phone), sized to
+ * that row's height, so both fit the corner beside the hand
+ * (`TABLE_CONTROL_CORNER_PX`) rather than reaching over its first cards.
+ */
+export const oncePerGameButtonSize = (
+  marker: OncePerGameMarker,
+  frameHeight: number,
+  compact: boolean
+): { readonly width: number; readonly height: number } => {
+  const tile = compact
+    ? ONCE_PER_GAME_COMPACT_PX - ONCE_PER_GAME_TILE_PADDING * 2
+    : Math.max(ONCE_PER_GAME_MIN_TARGET_PX, Math.min(48, frameHeight * 0.11)) -
+      ONCE_PER_GAME_TILE_PADDING * 2;
+  return {
+    width:
+      tile * ONCE_PER_GAME_TILE_ASPECT[marker] + ONCE_PER_GAME_TILE_PADDING * 2,
+    height: tile + ONCE_PER_GAME_TILE_PADDING * 2,
+  };
+};
 
 export interface LegacyBoardChromeActions {
   readonly toggleOncePerGame: (
@@ -181,14 +205,13 @@ const LegacyOncePerGameControls = memo(function LegacyOncePerGameControls({
   );
   const sortCheckboxId =
     playerSide === 'local' ? 'sortHandCheckbox' : 'oppSortHandCheckbox';
-  // The real markers are small tiles; the button around one stays a
-  // comfortable target (at least 32px tall) whatever the frame's size.
-  const tileHeight =
-    Math.max(
-      ONCE_PER_GAME_MIN_TARGET_PX,
-      Math.min(48, frame.frameBounds.height * 0.11)
-    ) -
-    ONCE_PER_GAME_TILE_PADDING * 2;
+  // A hand strip too short to stack the markers (a phone) lays them side
+  // by side in the corner beside the hand: on the table (shell.css, its
+  // geometry only), as buttons the height of that row.
+  const compactCorner =
+    (frame.regions.find((region) => region.kind === 'hand')
+      ?.physicalDeclaredBounds.height ?? frame.frameBounds.height) <
+    TABLE_CONTROL_CORNER_HEIGHT_PX;
   const button = (marker: 'gx' | 'vstar') => {
     const used =
       marker === 'gx'
@@ -214,12 +237,11 @@ const LegacyOncePerGameControls = memo(function LegacyOncePerGameControls({
             comment: "A player's once-per-game marker, e.g. 'Red VSTAR'.",
           })}
           aria-pressed={used}
-          style={{
-            height: tileHeight + ONCE_PER_GAME_TILE_PADDING * 2,
-            width:
-              tileHeight * ONCE_PER_GAME_TILE_ASPECT[marker] +
-              ONCE_PER_GAME_TILE_PADDING * 2,
-          }}
+          style={oncePerGameButtonSize(
+            marker,
+            frame.frameBounds.height,
+            table && compactCorner
+          )}
           onClick={() => onToggle(frame.playerId, marker)}
         >
           <OncePerGameTile marker={marker} />
@@ -231,15 +253,7 @@ const LegacyOncePerGameControls = memo(function LegacyOncePerGameControls({
     <div
       className="legacy-player-frame-chrome"
       data-player-frame-chrome={frame.playerId}
-      // A hand strip too short to stack the markers (a phone) lays them side
-      // by side in the corner beside the hand.
-      data-corner={
-        (frame.regions.find((region) => region.kind === 'hand')
-          ?.physicalDeclaredBounds.height ?? frame.frameBounds.height) <
-        TABLE_CONTROL_CORNER_HEIGHT_PX
-          ? 'compact'
-          : undefined
-      }
+      data-corner={compactCorner ? 'compact' : undefined}
       data-player-side={playerSide}
       data-player-layout-side={frame.side}
       data-player-physical-side={frame.physicalSide}

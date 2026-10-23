@@ -140,9 +140,11 @@ export const TABLE_CONTROL_CORNER_HEIGHT_PX = 104;
 export const TABLE_COMPACT_CORNER_HEIGHT_PX = 56;
 
 /**
- * A marker's room in a corner too short to stack them, side by side (the
- * web app's chrome): VSTAR's and GX's buttons at their largest, 87 and 68
- * pixels, with the gaps around them.
+ * A marker's room in a corner past the app bar too short to stack them,
+ * side by side (the web app's chrome). Their buttons there are 40 and 32
+ * wide (a 24px row), so near the player both fit TABLE_CONTROL_CORNER_PX;
+ * across the table this roomier figure decides when the markers take a row
+ * below the bar instead, which keeps a far hand wider.
  */
 const COMPACT_CORNER_MARKER_PX = 80;
 
@@ -772,17 +774,8 @@ const layoutHalfPortrait = (
         height: MARKER_ROW_PX,
       }
     : cornerPastBar(pastBar, markerCount, handTop, handStrip, width - edge);
-  // On the near side the corner is the hand strip's own: too short to
-  // stack its markers (a phone), they lie side by side, wider than it.
-  const nearCorner =
-    pastBar === 0 &&
-    markerCount > 0 &&
-    handStrip < TABLE_CONTROL_CORNER_HEIGHT_PX
-      ? 16 + markerCount * COMPACT_CORNER_MARKER_PX
-      : 0;
   const handStart = Math.max(
     TABLE_CONTROL_CORNER_PX,
-    nearCorner,
     corner && !markersBelowBar ? corner.x + corner.width : pastBar
   );
   // Below the bar, the markers' row lies between the hand and the piles.
