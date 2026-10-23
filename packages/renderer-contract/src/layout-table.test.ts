@@ -145,6 +145,37 @@ describe('table layout: the app bar corner (ADR-036)', () => {
     }
   });
 
+  it("draws the far markers' corner past the bar as wide as the near one, the far hand starting after it", () => {
+    for (const [width, height] of [
+      [1024, 768],
+      [1180, 820],
+      [900, 700],
+    ] as const) {
+      const snapshot = createTableLayoutSnapshot(
+        stateAt(width, height, {
+          shellMode: 'fullscreen',
+          appBarPx: BAR,
+          seamBandPx: 42,
+          oncePerGameMarkers: 2,
+        })
+      );
+      const far = snapshot.players.find(
+        (player) => player.physicalSide === 'upper'
+      )!;
+      const corner = far.extras?.corner;
+      const at = `${String(width)}x${String(height)}`;
+      expect(corner, at).toBeDefined();
+      // Side by side its markers take 82px (LegacyBoardChrome), as beside
+      // the near hand.
+      expect(corner!.width, at).toBe(TABLE_CONTROL_CORNER_PX);
+      const hand = far.regions.find(
+        (r) => r.kind === 'hand'
+      )!.physicalDeclaredBounds;
+      // Across the table the hand runs up to the corner past the bar.
+      expect(hand.x + hand.width, at).toBeCloseTo(corner!.x, 6);
+    }
+  });
+
   it('keeps the far board rows on the shortest tables, and builds their scene', () => {
     const view: MatchViewState = createRendererSpikeView();
     for (const width of [320, 568, 740, 800, 844, 1280]) {

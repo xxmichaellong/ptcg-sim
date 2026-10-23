@@ -172,7 +172,13 @@ const cornerPastBar = (
   markerCount: number,
   stripTop: number,
   stripHeight: number,
-  end: number
+  end: number,
+  /**
+   * The room to judge by whether a corner leaves the hand enough: as the
+   * markers' buttons were at their widest. A corner drawn is as wide as
+   * the corner beside the hand, which holds them side by side too.
+   */
+  roomy = false
 ): Rect | undefined =>
   start > 0 && markerCount > 0
     ? {
@@ -183,7 +189,7 @@ const cornerPastBar = (
           0,
           Math.min(
             end - start,
-            stripHeight < TABLE_CONTROL_CORNER_HEIGHT_PX
+            roomy && stripHeight < TABLE_CONTROL_CORNER_HEIGHT_PX
               ? Math.max(
                   TABLE_CONTROL_CORNER_PX,
                   16 + markerCount * COMPACT_CORNER_MARKER_PX
@@ -531,7 +537,8 @@ const layoutHalf = (
       cornerMarkers,
       handTop,
       handStrip,
-      width - side
+      width - side,
+      true
     );
     // Past the bar, the markers would leave the hand too little: they take
     // a row below the bar instead, where it fits wholly below it.
