@@ -3618,13 +3618,13 @@
     "message": "Nothing to import",
     "translation": "لا شيء للاستيراد"
   },
-  "acVFiv": {
-    "message": "Now make it <0>Poisoned</0>: <1>{0}</1>, then <2>{1}</2>.",
-    "translation": "الآن اجعله <0>مسموماً</0>: <1>{0}</1>، ثم <2>{1}</2>."
-  },
   "UJSKBC": {
     "message": "Now make it <0>Poisoned</0>: right-click it, then <1>{0}</1>.",
     "translation": "الآن اجعله <0>مسموماً</0>: انقر عليه بزر الفأرة الأيمن، ثم <1>{0}</1>."
+  },
+  "wUL6aJ": {
+    "message": "Now make it <0>Poisoned</0>: tap it, <1>{0}</1>, then <2>{1}</2>.",
+    "translation": "الآن اجعله <0>مسمومًا</0>: اضغط عليه، <1>{0}</1>، ثم <2>{1}</2>."
   },
   "LFzr4S": {
     "message": "Number of cards",
@@ -4069,6 +4069,10 @@
   "rkcP1p": {
     "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
     "translation": "ضع قطع Pokémon في كومة واحدة، وقطع الملعب (Stadium) في موضع الملعب."
+  },
+  "QEP1VC": {
+    "message": "Put the rest of it, <0>{0}</0> and its Energy, in their discard pile too.",
+    "translation": "ضع بقيته، <0>{0}</0> وطاقته، في كومة التخلص الخاصة بهم أيضًا."
   },
   "VbWX2u": {
     "message": "Quantity",

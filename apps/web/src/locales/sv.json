@@ -3618,13 +3618,13 @@
     "message": "Nothing to import",
     "translation": "Inget att importera"
   },
-  "acVFiv": {
-    "message": "Now make it <0>Poisoned</0>: <1>{0}</1>, then <2>{1}</2>.",
-    "translation": "Gör den nu <0>förgiftad</0>: <1>{0}</1>, sedan <2>{1}</2>."
-  },
   "UJSKBC": {
     "message": "Now make it <0>Poisoned</0>: right-click it, then <1>{0}</1>.",
     "translation": "Gör den nu <0>förgiftad</0>: högerklicka på den och välj <1>{0}</1>."
+  },
+  "wUL6aJ": {
+    "message": "Now make it <0>Poisoned</0>: tap it, <1>{0}</1>, then <2>{1}</2>.",
+    "translation": "Gör den nu <0>förgiftad</0>: tryck på den, <1>{0}</1> och sedan <2>{1}</2>."
   },
   "LFzr4S": {
     "message": "Number of cards",
@@ -4069,6 +4069,10 @@
   "rkcP1p": {
     "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
     "translation": "Lägg Pokémon-bitar i en hög och stadionbitar på stadion."
+  },
+  "QEP1VC": {
+    "message": "Put the rest of it, <0>{0}</0> and its Energy, in their discard pile too.",
+    "translation": "Lägg resten av den, <0>{0}</0> och dess Energy, i kasthögen också."
   },
   "VbWX2u": {
     "message": "Quantity",

@@ -3618,13 +3618,13 @@
     "message": "Nothing to import",
     "translation": "Niets om te importeren"
   },
-  "acVFiv": {
-    "message": "Now make it <0>Poisoned</0>: <1>{0}</1>, then <2>{1}</2>.",
-    "translation": "Maak de Pokémon nu <0>Vergiftigd</0>: <1>{0}</1>, dan <2>{1}</2>."
-  },
   "UJSKBC": {
     "message": "Now make it <0>Poisoned</0>: right-click it, then <1>{0}</1>.",
     "translation": "Maak de Pokémon nu <0>Vergiftigd</0>: klik er met rechts op en kies <1>{0}</1>."
+  },
+  "wUL6aJ": {
+    "message": "Now make it <0>Poisoned</0>: tap it, <1>{0}</1>, then <2>{1}</2>.",
+    "translation": "Maak het nu <0>Vergiftigd</0>: tik erop, <1>{0}</1>, en dan <2>{1}</2>."
   },
   "LFzr4S": {
     "message": "Number of cards",
@@ -4069,6 +4069,10 @@
   "rkcP1p": {
     "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
     "translation": "Leg Pokémon-stukken op één stapel en Stadion-stukken in het Stadion."
+  },
+  "QEP1VC": {
+    "message": "Put the rest of it, <0>{0}</0> and its Energy, in their discard pile too.",
+    "translation": "Leg de rest ervan, <0>{0}</0> en de bijbehorende Energy, ook op de aflegstapel."
   },
   "VbWX2u": {
     "message": "Quantity",

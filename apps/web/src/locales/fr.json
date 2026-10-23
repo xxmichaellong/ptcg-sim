@@ -3618,13 +3618,13 @@
     "message": "Nothing to import",
     "translation": "Rien à importer"
   },
-  "acVFiv": {
-    "message": "Now make it <0>Poisoned</0>: <1>{0}</1>, then <2>{1}</2>.",
-    "translation": "Rendez-le maintenant <0>Empoisonné</0> : <1>{0}</1>, puis <2>{1}</2>."
-  },
   "UJSKBC": {
     "message": "Now make it <0>Poisoned</0>: right-click it, then <1>{0}</1>.",
     "translation": "Rendez-le maintenant <0>Empoisonné</0> : faites un clic droit dessus, puis <1>{0}</1>."
+  },
+  "wUL6aJ": {
+    "message": "Now make it <0>Poisoned</0>: tap it, <1>{0}</1>, then <2>{1}</2>.",
+    "translation": "Rendez-le maintenant <0>Empoisonné</0> : touchez-le, <1>{0}</1>, puis <2>{1}</2>."
   },
   "LFzr4S": {
     "message": "Number of cards",
@@ -4069,6 +4069,10 @@
   "rkcP1p": {
     "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
     "translation": "Mettez les pièces Pokémon dans une même pile, et les pièces Stade dans le Stade."
+  },
+  "QEP1VC": {
+    "message": "Put the rest of it, <0>{0}</0> and its Energy, in their discard pile too.",
+    "translation": "Mettez aussi le reste, <0>{0}</0> et ses Énergies, dans leur pile de défausse."
   },
   "VbWX2u": {
     "message": "Quantity",

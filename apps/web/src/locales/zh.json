@@ -3618,13 +3618,13 @@
     "message": "Nothing to import",
     "translation": "没有可导入的内容"
   },
-  "acVFiv": {
-    "message": "Now make it <0>Poisoned</0>: <1>{0}</1>, then <2>{1}</2>.",
-    "translation": "现在让它陷入<0>中毒</0>:<1>{0}</1>,然后<2>{1}</2>。"
-  },
   "UJSKBC": {
     "message": "Now make it <0>Poisoned</0>: right-click it, then <1>{0}</1>.",
     "translation": "现在让它陷入<0>中毒</0>:右键点击它,然后选择<1>{0}</1>。"
+  },
+  "wUL6aJ": {
+    "message": "Now make it <0>Poisoned</0>: tap it, <1>{0}</1>, then <2>{1}</2>.",
+    "translation": "现在使其陷入<0>中毒</0>:点按它,<1>{0}</1>,然后<2>{1}</2>。"
   },
   "LFzr4S": {
     "message": "Number of cards",
@@ -4069,6 +4069,10 @@
   "rkcP1p": {
     "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
     "translation": "将宝可梦放在同一叠中,竞技场卡放入竞技场。"
+  },
+  "QEP1VC": {
+    "message": "Put the rest of it, <0>{0}</0> and its Energy, in their discard pile too.",
+    "translation": "将其余部分,即<0>{0}</0>及其能量,也放入弃牌区。"
   },
   "VbWX2u": {
     "message": "Quantity",

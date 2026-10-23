@@ -3618,13 +3618,13 @@
     "message": "Nothing to import",
     "translation": "Không có gì để nhập"
   },
-  "acVFiv": {
-    "message": "Now make it <0>Poisoned</0>: <1>{0}</1>, then <2>{1}</2>.",
-    "translation": "Giờ hãy làm nó bị <0>Nhiễm độc</0>: <1>{0}</1>, rồi <2>{1}</2>."
-  },
   "UJSKBC": {
     "message": "Now make it <0>Poisoned</0>: right-click it, then <1>{0}</1>.",
     "translation": "Giờ hãy làm nó bị <0>Nhiễm độc</0>: nhấp chuột phải vào nó, rồi chọn <1>{0}</1>."
+  },
+  "wUL6aJ": {
+    "message": "Now make it <0>Poisoned</0>: tap it, <1>{0}</1>, then <2>{1}</2>.",
+    "translation": "Giờ hãy làm cho nó bị <0>Poisoned</0>: chạm vào nó, <1>{0}</1>, rồi <2>{1}</2>."
   },
   "LFzr4S": {
     "message": "Number of cards",
@@ -4069,6 +4069,10 @@
   "rkcP1p": {
     "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
     "translation": "Đặt các mảnh Pokémon vào một chồng, các mảnh Stadium vào vị trí Stadium."
+  },
+  "QEP1VC": {
+    "message": "Put the rest of it, <0>{0}</0> and its Energy, in their discard pile too.",
+    "translation": "Bỏ phần còn lại của nó, <0>{0}</0> và Energy của nó, vào chồng bài bỏ."
   },
   "VbWX2u": {
     "message": "Quantity",

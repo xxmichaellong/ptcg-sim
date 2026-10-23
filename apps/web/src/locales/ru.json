@@ -3618,13 +3618,13 @@
     "message": "Nothing to import",
     "translation": "Нечего импортировать"
   },
-  "acVFiv": {
-    "message": "Now make it <0>Poisoned</0>: <1>{0}</1>, then <2>{1}</2>.",
-    "translation": "Теперь сделай его <0>отравленным</0>: <1>{0}</1>, затем <2>{1}</2>."
-  },
   "UJSKBC": {
     "message": "Now make it <0>Poisoned</0>: right-click it, then <1>{0}</1>.",
     "translation": "Теперь сделай его <0>отравленным</0>: щёлкни по нему правой кнопкой, затем выбери <1>{0}</1>."
+  },
+  "wUL6aJ": {
+    "message": "Now make it <0>Poisoned</0>: tap it, <1>{0}</1>, then <2>{1}</2>.",
+    "translation": "Теперь сделай его <0>отравленным</0>: нажми на него, <1>{0}</1>, затем <2>{1}</2>."
   },
   "LFzr4S": {
     "message": "Number of cards",
@@ -4069,6 +4069,10 @@
   "rkcP1p": {
     "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
     "translation": "Фишки Покемонов клади в одну стопку, фишки Стадиона — на место Стадиона."
+  },
+  "QEP1VC": {
+    "message": "Put the rest of it, <0>{0}</0> and its Energy, in their discard pile too.",
+    "translation": "Остальное — <0>{0}</0> и его Энергию — тоже положи в сброс."
   },
   "VbWX2u": {
     "message": "Quantity",

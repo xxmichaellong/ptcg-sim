@@ -9,8 +9,12 @@ import {
 } from './tutorial-lessons.js';
 import { TUTORIAL_CARDS } from './tutorial-cards.js';
 import { CONTROL_LABELS } from './tutorial-labels.js';
+import { activeStack, zoneId } from './tutorial-world.js';
 import type { TutorialScreen, TutorialWorld } from './tutorial-world.js';
 import type { MatchViewState } from '@ptcgsim/game-core';
+import { fakePracticeRoom, them, you } from './practice-room.test-support.js';
+import { dealScenario } from './scenario-runner.js';
+import { resolveCardZoneMoveAction } from '../board/resolveCardZoneMoveAction.js';
 
 const SCREEN: TutorialScreen = {
   preview: false,
@@ -270,5 +274,55 @@ describe('the tutorial’s lessons', () => {
     const bench = lessonById('start')!.steps[3]!;
     expect(bench.optional).toBe(true);
     expect(bench.done!(world())).toBe(true);
+  });
+});
+
+describe('a lesson step on the practice table', () => {
+  it('knocks out the whole Pokémon, not Kirlia moved alone off it', async () => {
+    const lesson = lessonById('knock-out')!;
+    const [discard] = lesson.steps;
+    const dealt = async () => {
+      const room = fakePracticeRoom();
+      await dealScenario(
+        room.session,
+        lesson.scenario,
+        new AbortController().signal
+      );
+      const start = room.session.getSnapshot().view!;
+      const atNow = (): TutorialWorld =>
+        world({ view: room.session.getSnapshot().view!, start, you, them });
+      return { room, start, atNow };
+    };
+    const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+    // Kirlia alone (a key, the menu, a long press): Ralts and its Energy
+    // are left by the table, and the step says so.
+    {
+      const { room, start, atNow } = await dealt();
+      const kirlia = activeStack(start, them)!.evolutionCards.at(-1)!;
+      // As the D key resolves it.
+      const move = resolveCardZoneMoveAction(start, kirlia.id, 'discard', you);
+      if (!move.ok) throw new Error('the move was refused');
+      expect(move.command.type).toBe('MoveCardFromStack');
+      room.session.submit(move.command);
+      await flush();
+      expect(activeStack(atNow().view, them)).toBeUndefined();
+      expect(discard!.done!(atNow())).toBe(false);
+      expect(text({ text: discard!.stuck! }, atNow())).toContain('Ralts');
+    }
+    // The whole of it, as a drag takes it.
+    {
+      const { room, start, atNow } = await dealt();
+      const stack = activeStack(start, them)!;
+      room.session.submit({
+        type: 'MovePlayStackToZone',
+        stackId: stack.id,
+        expectedEvolutionCardIds: stack.evolutionCards.map((card) => card.id),
+        expectedAttachmentCardIds: stack.attachmentCards.map((card) => card.id),
+        destinationZoneId: zoneId(them, 'discard'),
+      } as never);
+      await flush();
+      expect(discard!.done!(atNow())).toBe(true);
+    }
   });
 });

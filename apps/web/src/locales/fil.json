@@ -3618,13 +3618,13 @@
     "message": "Nothing to import",
     "translation": "Walang ii-import"
   },
-  "acVFiv": {
-    "message": "Now make it <0>Poisoned</0>: <1>{0}</1>, then <2>{1}</2>.",
-    "translation": "Gawin naman itong <0>Poisoned</0>: <1>{0}</1>, tapos <2>{1}</2>."
-  },
   "UJSKBC": {
     "message": "Now make it <0>Poisoned</0>: right-click it, then <1>{0}</1>.",
     "translation": "Gawin naman itong <0>Poisoned</0>: i-right-click ito, tapos <1>{0}</1>."
+  },
+  "wUL6aJ": {
+    "message": "Now make it <0>Poisoned</0>: tap it, <1>{0}</1>, then <2>{1}</2>.",
+    "translation": "Gawin na itong <0>Poisoned</0>: i-tap ito, <1>{0}</1>, tapos <2>{1}</2>."
   },
   "LFzr4S": {
     "message": "Number of cards",
@@ -4069,6 +4069,10 @@
   "rkcP1p": {
     "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
     "translation": "Ilagay ang mga piece ng Pokémon sa iisang stack, at ang mga piece ng Stadium sa Stadium."
+  },
+  "QEP1VC": {
+    "message": "Put the rest of it, <0>{0}</0> and its Energy, in their discard pile too.",
+    "translation": "Ilagay rin sa discard pile ang natitira, ang <0>{0}</0> at ang mga Energy nito."
   },
   "VbWX2u": {
     "message": "Quantity",

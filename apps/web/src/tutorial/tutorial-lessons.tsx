@@ -489,7 +489,7 @@ const damage: TutorialLesson = {
       text: (world) =>
         world.mode === 'touch' ? (
           <Trans>
-            Now make it <strong>Poisoned</strong>:{' '}
+            Now make it <strong>Poisoned</strong>: tap it,{' '}
             <strong>{controlLabel('actions')}</strong>, then{' '}
             <strong>{controlLabel('specialCondition')}</strong>.
           </Trans>
@@ -528,12 +528,25 @@ const knockOut: TutorialLesson = {
         const from = activeTopTarget(world, world.them);
         return from ? { from, to: zone(world.them, 'discard') } : null;
       },
-      done: (world) =>
+      // The whole Pokémon: a card moved alone off it (a key, the menu, a
+      // long press) leaves the rest by the table, not Knocked Out.
+      done: (world) => {
+        const discard = zoneCards(world.view, world.them, 'discard');
+        return (['kirlia', 'ralts', 'psychicEnergy'] as const).every(
+          (key) => countCards(world.view, discard, key) > 0
+        );
+      },
+      stuck: (world) =>
         countCards(
           world.view,
           zoneCards(world.view, world.them, 'discard'),
           'kirlia'
-        ) > 0,
+        ) > 0 && activeStack(world.view, world.them) === undefined ? (
+          <Trans>
+            Put the rest of it, <strong>{name('ralts')}</strong> and its Energy,
+            in their discard pile too.
+          </Trans>
+        ) : null,
     },
     {
       id: 'prize',

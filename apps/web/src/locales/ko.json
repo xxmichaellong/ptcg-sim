@@ -3618,13 +3618,13 @@
     "message": "Nothing to import",
     "translation": "가져올 항목이 없습니다"
   },
-  "acVFiv": {
-    "message": "Now make it <0>Poisoned</0>: <1>{0}</1>, then <2>{1}</2>.",
-    "translation": "이제 <0>독</0> 상태로 만드세요: <1>{0}</1>, 그다음 <2>{1}</2>."
-  },
   "UJSKBC": {
     "message": "Now make it <0>Poisoned</0>: right-click it, then <1>{0}</1>.",
     "translation": "이제 <0>독</0> 상태로 만드세요: 오른쪽 클릭한 다음 <1>{0}</1>."
+  },
+  "wUL6aJ": {
+    "message": "Now make it <0>Poisoned</0>: tap it, <1>{0}</1>, then <2>{1}</2>.",
+    "translation": "이제 <0>독</0> 상태로 만드세요: 탭한 다음 <1>{0}</1>, 그다음 <2>{1}</2>을(를) 하세요."
   },
   "LFzr4S": {
     "message": "Number of cards",
@@ -4069,6 +4069,10 @@
   "rkcP1p": {
     "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
     "translation": "포켓몬 말은 한 더미에, 스타디움 말은 스타디움에 놓으세요."
+  },
+  "QEP1VC": {
+    "message": "Put the rest of it, <0>{0}</0> and its Energy, in their discard pile too.",
+    "translation": "나머지인 <0>{0}</0>와(과) 그 에너지도 트래시에 놓으세요."
   },
   "VbWX2u": {
     "message": "Quantity",

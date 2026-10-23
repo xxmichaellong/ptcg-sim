@@ -3618,13 +3618,13 @@
     "message": "Nothing to import",
     "translation": "Нема шта да се увезе"
   },
-  "acVFiv": {
-    "message": "Now make it <0>Poisoned</0>: <1>{0}</1>, then <2>{1}</2>.",
-    "translation": "Сада га учини <0>отрованим</0>: <1>{0}</1>, па <2>{1}</2>."
-  },
   "UJSKBC": {
     "message": "Now make it <0>Poisoned</0>: right-click it, then <1>{0}</1>.",
     "translation": "Сада га учини <0>отрованим</0>: кликни десним тастером на њега, па <1>{0}</1>."
+  },
+  "wUL6aJ": {
+    "message": "Now make it <0>Poisoned</0>: tap it, <1>{0}</1>, then <2>{1}</2>.",
+    "translation": "Сада нека буде <0>отрован</0>: додирни га, <1>{0}</1>, затим <2>{1}</2>."
   },
   "LFzr4S": {
     "message": "Number of cards",
@@ -4069,6 +4069,10 @@
   "rkcP1p": {
     "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
     "translation": "Стави делове Pokémon-а у једну гомилу, а делове Stadium-а на Stadium."
+  },
+  "QEP1VC": {
+    "message": "Put the rest of it, <0>{0}</0> and its Energy, in their discard pile too.",
+    "translation": "Остатак, <0>{0}</0> и његову Енергију, такође стави у одбачене карте."
   },
   "VbWX2u": {
     "message": "Quantity",

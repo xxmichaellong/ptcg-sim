@@ -3618,13 +3618,13 @@
     "message": "Nothing to import",
     "translation": "İçe aktarılacak bir şey yok"
   },
-  "acVFiv": {
-    "message": "Now make it <0>Poisoned</0>: <1>{0}</1>, then <2>{1}</2>.",
-    "translation": "Şimdi onu <0>Zehirli</0> yap: <1>{0}</1>, ardından <2>{1}</2>."
-  },
   "UJSKBC": {
     "message": "Now make it <0>Poisoned</0>: right-click it, then <1>{0}</1>.",
     "translation": "Şimdi onu <0>Zehirli</0> yap: sağ tıkla, ardından <1>{0}</1> seç."
+  },
+  "wUL6aJ": {
+    "message": "Now make it <0>Poisoned</0>: tap it, <1>{0}</1>, then <2>{1}</2>.",
+    "translation": "Şimdi onu <0>Zehirli</0> yap: üzerine dokun, <1>{0}</1>, sonra <2>{1}</2>."
   },
   "LFzr4S": {
     "message": "Number of cards",
@@ -4069,6 +4069,10 @@
   "rkcP1p": {
     "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
     "translation": "Pokémon parçalarını tek bir yığına, Stadyum parçalarını Stadyum alanına koy."
+  },
+  "QEP1VC": {
+    "message": "Put the rest of it, <0>{0}</0> and its Energy, in their discard pile too.",
+    "translation": "Geri kalanını, yani <0>{0}</0> ve Enerjilerini de iskarta destesine koy."
   },
   "VbWX2u": {
     "message": "Quantity",
