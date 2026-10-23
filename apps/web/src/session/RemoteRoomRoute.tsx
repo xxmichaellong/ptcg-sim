@@ -771,7 +771,18 @@ export const RemoteRoomRoute = ({
                           <Trans>Reconnect</Trans>
                         </button>
                       ) : null}
-                      {solo && onNewSoloTable ? (
+                      {!sessionFailure ? (
+                        // A replay that couldn't open or load leaves the
+                        // game as it was: the notice goes, the table stays.
+                        <button
+                          id="replayFailureDismissButton"
+                          type="button"
+                          className="ds-button ds-button--secondary"
+                          onClick={() => runtime.replay.dismissFailure()}
+                        >
+                          <Trans>Dismiss</Trans>
+                        </button>
+                      ) : solo && onNewSoloTable ? (
                         <button
                           id="roomNewTableButton"
                           type="button"

@@ -9,6 +9,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DeckCard } from '@ptcgsim/deck-core';
 
 import { DeckLayer } from '../../session/shell/DeckLayer.js';
+import {
+  cancelAllDialogRequests,
+  promptValue,
+} from '../../ui/dialog-requests.js';
 import { toast } from '../../ui/toast.js';
 import type { CardCatalogSource } from './card-catalog-contract.js';
 import { DeckBuilderSession } from './DeckBuilderSession.js';
@@ -655,6 +659,64 @@ describe('the deck screen from the keyboard', () => {
     expect(event.defaultPrevented).toBe(false);
     expect(library.getSnapshot().decks).toHaveLength(1);
     confirm.remove();
+  });
+
+  it('leaves keys and a paste on the page to a prompt still open over the screen', async () => {
+    const library = new DeckLibrary({ backend: null });
+    const deck = library.create({
+      name: 'Pidgey',
+      format: 'standard',
+      cards: [
+        {
+          card: {
+            id: 'mew-16',
+            name: 'Pidgey',
+            category: 'Pokémon',
+            image: 'https://example.test/mew-16.png',
+          },
+          count: 3,
+        },
+      ],
+    });
+    const onClose = await render(vi.fn(), library);
+    await act(async () =>
+      host
+        .querySelector<HTMLButtonElement>('button[aria-label="Edit Pidgey"]')!
+        .click()
+    );
+    await act(async () =>
+      host
+        .querySelector<HTMLButtonElement>(
+          'button[aria-label="Add one Pidgey"]'
+        )!
+        .click()
+    );
+    const pidgeys = () => library.get(deck.id)!.cards[0]?.count ?? 0;
+    expect(pidgeys()).toBe(4);
+    // A prompt (the card back's URL) is up; a press on its scrim left the
+    // focus on the page.
+    void promptValue({ title: 'Card back', label: 'Image URL' });
+    (document.activeElement as HTMLElement | null)?.blur();
+    try {
+      const key = (init: KeyboardEventInit) =>
+        act(async () => {
+          document.body.dispatchEvent(
+            new KeyboardEvent('keydown', {
+              bubbles: true,
+              cancelable: true,
+              ...init,
+            })
+          );
+        });
+      await key({ key: 'z', keyCode: 90, ctrlKey: true });
+      expect(pidgeys()).toBe(4);
+      await key({ key: 'Escape' });
+      expect(onClose).not.toHaveBeenCalled();
+      await paste('4 Rattata MEW 19\n4 Raticate MEW 20');
+      expect(library.getSnapshot().decks).toHaveLength(1);
+    } finally {
+      cancelAllDialogRequests();
+    }
   });
 
   it('takes / from the Deck tab to the search, drawn before it takes the focus', async () => {

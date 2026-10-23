@@ -36,7 +36,10 @@ import {
 import { flushSync } from 'react-dom';
 
 import { ActionMenu } from '../../ui/ActionMenu.js';
-import { confirmAction } from '../../ui/dialog-requests.js';
+import {
+  confirmAction,
+  dialogRequestsSnapshot,
+} from '../../ui/dialog-requests.js';
 import { Tooltip } from '../../ui/Tooltip.js';
 import type { CardCatalogSource } from './card-catalog-contract.js';
 import {
@@ -358,6 +361,8 @@ export const DeckEditor = ({
       const target = event.target;
       if (
         event.defaultPrevented ||
+        // A confirmation or prompt open over the editor has the keys.
+        dialogRequestsSnapshot().length > 0 ||
         !root ||
         !(target instanceof Node) ||
         target === root ||

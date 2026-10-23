@@ -1736,6 +1736,35 @@ describe('RemoteRoomRoute', () => {
     runtime.dispose();
   });
 
+  it('lets a replay that couldn’t open go with a press, the table playing on', async () => {
+    const socketFactory = new FakeSocketFactory();
+    const runtime = createRuntime(socketFactory);
+    const onNewSoloTable = vi.fn();
+    const { root } = await mountRoute(
+      <RemoteRoomRoute
+        runtime={runtime}
+        rendererKind="dom"
+        roomMode="solo"
+        onLeave={vi.fn()}
+        onNewSoloTable={onNewSoloTable}
+      />
+    );
+    await connect(socketFactory);
+    await act(async () => {
+      await runtime.replay.importReplayFileBytes(new Uint8Array([1, 2, 3]));
+    });
+    expect(runtime.replay.getSnapshot().failure).toBeDefined();
+    // Not the table's failure: nothing offers to throw it away.
+    expect(find('#roomNewTableButton')).toBeNull();
+    await click('#replayFailureDismissButton');
+    expect(find('#roomHeaderText')).toBeNull();
+    expect(runtime.session.getSnapshot().phase).toBe('ready');
+    expect(onNewSoloTable).not.toHaveBeenCalled();
+
+    await act(async () => root.unmount());
+    runtime.dispose();
+  });
+
   it('offers a lost Solo table a new one instead of leaving', async () => {
     const socketFactory = new FakeSocketFactory();
     const { runtime, runTimers } = createLosingRuntime(socketFactory);

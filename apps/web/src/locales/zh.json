@@ -497,6 +497,13 @@
     ],
     "translation": "{label}:{spoken}。更改"
   },
+  "yfgU92": {
+    "message": "{label}: {title}",
+    "comments": [
+      "A table button's name: its short label, then what it does"
+    ],
+    "translation": "{label}:{title}"
+  },
   "TW6vJM": {
     "message": "{markerName} marker",
     "comments": [
@@ -2529,11 +2536,11 @@
   },
   "mnc6b3": {
     "message": "Flip the table",
-    "translation": "掀桌"
+    "translation": "翻转牌桌"
   },
   "CK2j9j": {
     "message": "Flip their coin",
-    "translation": "替对方投币"
+    "translation": "为对方掷硬币"
   },
   "zoSOoE": {
     "message": "Foil coverage",

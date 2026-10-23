@@ -497,6 +497,13 @@
     ],
     "translation": "{label}: {spoken}. تغيير"
   },
+  "yfgU92": {
+    "message": "{label}: {title}",
+    "comments": [
+      "A table button's name: its short label, then what it does"
+    ],
+    "translation": "{label}: {title}"
+  },
   "TW6vJM": {
     "message": "{markerName} marker",
     "comments": [

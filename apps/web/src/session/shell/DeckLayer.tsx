@@ -1,6 +1,7 @@
 import { useLingui } from '@lingui/react/macro';
 import { useEffect, useRef, type KeyboardEvent, type ReactNode } from 'react';
 
+import { dialogRequestsSnapshot } from '../../ui/dialog-requests.js';
 import {
   isOverlaySurfaceTarget,
   OVERLAY_SURFACE_ATTRIBUTE,
@@ -58,6 +59,9 @@ export const DeckLayer = ({
     if (!open) return;
     const fromPage = (event: globalThis.KeyboardEvent): void => {
       if (event.target !== document.body || event.defaultPrevented) return;
+      // A confirmation or prompt still open (focus fell to the page from a
+      // press on its scrim) has the keys: its Esc closes it, not the screen.
+      if (dialogRequestsSnapshot().length > 0) return;
       // Tab goes on from where the focus was, as the browser has it, and a
       // modifier pressed on its own (Shift before Shift+Tab) waits for its
       // key.

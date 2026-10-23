@@ -497,6 +497,13 @@
     ],
     "translation": "{label}: {spoken}. 변경"
   },
+  "yfgU92": {
+    "message": "{label}: {title}",
+    "comments": [
+      "A table button's name: its short label, then what it does"
+    ],
+    "translation": "{label}: {title}"
+  },
   "TW6vJM": {
     "message": "{markerName} marker",
     "comments": [
@@ -5694,7 +5701,7 @@
   },
   "8ZgYGP": {
     "message": "Use this print for the {deckCopies} in the deck",
-    "translation": "덱에 있는 {deckCopies}에 이 인쇄본 사용"
+    "translation": "덱에 있는 {deckCopies}장에 이 인쇄본 사용"
   },
   "9c8BhN": {
     "message": "Use VSTAR Power",

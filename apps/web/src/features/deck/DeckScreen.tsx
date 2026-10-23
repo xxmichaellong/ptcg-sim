@@ -24,6 +24,7 @@ import {
 
 import { preferences } from '../../preferences/preference-store.js';
 import { DEFAULT_CARD_BACK_URL } from '../../session/browser-card-back.js';
+import { dialogRequestsSnapshot } from '../../ui/dialog-requests.js';
 import { toast } from '../../ui/toast.js';
 import { Tooltip } from '../../ui/Tooltip.js';
 import type { CardCatalogSource } from './card-catalog-contract.js';
@@ -600,6 +601,9 @@ export const DeckScreen = ({
     // into a text field is a paste onto it.
     const onPaste = (event: ClipboardEvent): void => {
       if (isTextEntry(event.target) || event.defaultPrevented) return;
+      // A confirmation or prompt open over the screen, the focus fallen to
+      // the page from a press on its scrim: the paste isn't the screen's.
+      if (dialogRequestsSnapshot().length > 0) return;
       // A window open over the screen (a custom card's, a card's details, a
       // menu) is what the paste is for: it would import behind it.
       if (
@@ -757,6 +761,8 @@ export const DeckScreen = ({
       if (
         event.key !== 'Escape' ||
         event.defaultPrevented ||
+        // A confirmation or prompt open over the screen closes on it.
+        dialogRequestsSnapshot().length > 0 ||
         !(target instanceof Element) ||
         // Focus lost to the page (the button pressed went away) counts as
         // on the screen, which covers the page.
