@@ -539,7 +539,9 @@ export class DeckIndex {
           this.store.setMeta(META.unknownRun, String(run));
           if (run > CRAWL_POLICY.unknownBeforeHold) {
             this.holdBack();
-            this.store.recordFailure(tournament.id, this.deps.now());
+            // Revived with the rest once standings answer: one really gone
+            // answers unknown again and is forgotten then.
+            this.standingsFailed(tournament.id, this.deps.now());
             return;
           }
           this.store.forget(tournament.id);

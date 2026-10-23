@@ -731,14 +731,25 @@ export class DeckIndexStore {
 
   /**
    * Limitless's standings answer again after an outage: the events given
-   * up on during it (their last try at `since` or later) are tried afresh,
-   * as if never tried.
+   * up on during it (their last try at `since` or later) are due again,
+   * one more try each -- those read while running too, for their final
+   * placings. Their tries aren't reset: one that fails again is given up on
+   * again, and none is revived more than a few times (an event broken for
+   * good fails alongside another as an outage would).
    */
   reviveFailed(since: number): void {
+    const cap = 2 * STORE_POLICY.attempts;
     this.sql.exec(
-      `UPDATE tournaments SET state = 'retry', attempts = 0, retry_after = NULL
-       WHERE state = 'failed' AND retry_after >= ?`,
-      since
+      `UPDATE tournaments SET state = 'retry', retry_after = NULL
+       WHERE state = 'failed' AND retry_after >= ? AND attempts < ?`,
+      since,
+      cap
+    );
+    this.sql.exec(
+      `UPDATE tournaments SET state = 'provisional', retry_after = NULL
+       WHERE state = 'unconfirmed' AND fetched_at >= ? AND attempts < ?`,
+      since,
+      cap
     );
   }
 

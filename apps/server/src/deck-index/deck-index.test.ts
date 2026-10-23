@@ -462,6 +462,92 @@ describe('the request budget', () => {
     expect(read()).toEqual([id(1), id(2), id(3), id(4)]);
   });
 
+  it('gives up for good on events broken for good, though they fail alongside each other', async () => {
+    // Two events whose standings never read, a few minutes apart.
+    limitless.tournaments = [1, 2].map((n) =>
+      tournament(n, { date: START - 2 * DAY - n * 10 * MINUTE })
+    );
+    limitless.standings.set(id(1), { broken: true });
+    limitless.standings.set(id(2), { broken: true });
+    const index = createIndex();
+    // Six days of new events read meanwhile.
+    for (let hour = 0; hour < 6 * 24; hour += 6) {
+      const n = 100 + hour;
+      limitless.tournaments = [
+        ...limitless.tournaments,
+        tournament(n, { date: START + hour * HOUR - DAY }),
+      ];
+      limitless.standings.set(id(n), [standing('p', 1, dragapult)]);
+      await crawlUntil(index, START + (hour + 6) * HOUR);
+    }
+    const tries = (n: number) =>
+      limitless.standingsCalls().filter((call) => call === id(n)).length;
+    // Their three tries, and a few more after what looked like outages.
+    expect(tries(1)).toBeLessThanOrEqual(6);
+    expect(tries(2)).toBeLessThanOrEqual(6);
+  });
+
+  it('reads again, after an outage, an event read while it ran whose final read failed', async () => {
+    limitless.tournaments = [tournament(1, { date: START - 2 * HOUR })];
+    limitless.standings.set(id(1), [standing('p', 1, dragapult)]);
+    const index = createIndex();
+    await crawl(index, 1);
+    await index.tournament(id(1));
+    // Down from before it ends until well after, for another event too.
+    limitless.tournaments = [
+      ...limitless.tournaments,
+      tournament(3, { date: START - 2 * DAY }),
+    ];
+    limitless.standings.set(id(3), [standing('p', 1, jellicent)]);
+    const before = limitless.standingsCalls().length;
+    limitless.failStandings = 1_000;
+    await crawlUntil(index, START + 20 * HOUR);
+    limitless.failStandings = 0;
+    limitless.tournaments = [
+      ...limitless.tournaments,
+      tournament(2, { date: START - DAY }),
+    ];
+    limitless.standings.set(id(2), [standing('p', 1, gardevoir)]);
+    await crawlUntil(index, START + 24 * HOUR);
+    // Once standings answer again (event 2), both are read: event 1 for
+    // its final placings.
+    const after = limitless.standingsCalls().slice(before);
+    const answered = after.lastIndexOf(id(2));
+    expect(answered).toBeGreaterThan(-1);
+    expect(after.slice(answered + 1)).toEqual(
+      expect.arrayContaining([id(1), id(3)])
+    );
+  });
+
+  it('tries again, after a run of unknowns, the events given up on during it', async () => {
+    limitless.tournaments = [1, 2, 3, 4, 5].map((n) =>
+      tournament(n, { date: START - 2 * DAY - n * HOUR })
+    );
+    // Limitless calls every event unknown for eight hours, its list
+    // answering: two are forgotten, the rest given up on as it goes on.
+    const index = createIndex();
+    await crawlUntil(index, START + 8 * HOUR);
+    for (const n of [1, 2, 3, 4, 5, 6]) {
+      limitless.standings.set(id(n), [standing('p', 1, dragapult)]);
+    }
+    limitless.tournaments = [
+      ...limitless.tournaments,
+      tournament(6, { date: START - DAY }),
+    ];
+    await crawlUntil(index, START + 12 * HOUR);
+    const read = index
+      .tournaments({
+        q: '',
+        format: null,
+        minimumPlayers: 0,
+        before: null,
+        pageSize: 10,
+      })
+      .tournaments.filter((row) => row.hasLists === true);
+    // All but the two forgotten (read again when the list next shows them).
+    expect(read.length).toBeGreaterThanOrEqual(4);
+  });
+
   it('holds back when a page of the list is refused, not asking every step', async () => {
     limitless.tournaments = [tournament(1, { date: START - 400 * DAY })];
     for (let n = 0; n < 1_000; n += 1) {
