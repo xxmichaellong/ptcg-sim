@@ -1181,6 +1181,87 @@ describe('a lesson step on the practice table', () => {
     }
   });
 
+  it('counts the Energy put on Charmander back in play, and says so at the menu step when it has left', async () => {
+    const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+    const dealt = async (id: string) => {
+      const room = fakePracticeRoom();
+      await dealScenario(
+        room.session,
+        lessonById(id)!.scenario,
+        new AbortController().signal
+      );
+      const now = () => room.session.getSnapshot().view!;
+      const send = async (command: unknown) => {
+        room.session.submit(command as never);
+        await flush();
+      };
+      const toHand = async () => {
+        const charmander = [
+          activeStack(now(), you),
+          ...benchStacks(now(), you),
+        ].find((stack) => topOf(now(), stack) === 'charmander')!;
+        await send({
+          type: 'MovePlayStackToZone',
+          stackId: charmander.id,
+          expectedEvolutionCardIds: charmander.evolutionCards.map(
+            (card) => card.id
+          ),
+          expectedAttachmentCardIds: charmander.attachmentCards.map(
+            (card) => card.id
+          ),
+          destinationZoneId: zoneId(you, 'hand'),
+        });
+      };
+      return { now, send, toHand };
+    };
+    // Attach: Charmander (with its Energy) to the hand and back to the
+    // Bench, a new Pokémon: one Energy put on it is the step done.
+    {
+      const { now, send, toHand } = await dealt('attach');
+      const start = now();
+      await toHand();
+      await send({
+        type: 'MoveCardToPlay',
+        cardId: findCard(now(), zoneCards(now(), you, 'hand'), 'charmander')!
+          .id,
+        expectedSourceZoneId: zoneId(you, 'hand'),
+        boardPlayerId: you,
+        slot: 'bench',
+      });
+      const charmander = [
+        activeStack(now(), you),
+        ...benchStacks(now(), you),
+      ].find((stack) => topOf(now(), stack) === 'charmander')!;
+      await send({
+        type: 'MoveCardToPlay',
+        cardId: findCard(now(), zoneCards(now(), you, 'hand'), 'fireEnergy')!
+          .id,
+        expectedSourceZoneId: zoneId(you, 'hand'),
+        boardPlayerId: you,
+        slot: charmander.slot,
+        targetStackId: charmander.id,
+      });
+      const energy = lessonById('attach')!.steps.find(
+        (entry) => entry.id === 'energy'
+      )!;
+      expect(energy.done!(world({ view: now(), start, you, them }))).toBe(true);
+    }
+    // Look at cards: Charmander gone, the menu step says so.
+    {
+      const { now, toHand } = await dealt('cards');
+      await toHand();
+      const menu = lessonById('cards')!.steps.find(
+        (entry) => entry.id === 'menu'
+      )!;
+      expect(
+        text(
+          { text: menu.stuck! },
+          world({ view: now(), start: now(), you, them })
+        )
+      ).toContain('has left play');
+    }
+  });
+
   it('is done when the player did it before it was asked', async () => {
     const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
     const dealt = async (id: string) => {

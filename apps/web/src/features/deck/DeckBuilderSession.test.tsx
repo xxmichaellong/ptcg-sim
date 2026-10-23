@@ -773,6 +773,67 @@ describe('DeckBuilderSession', () => {
     expect(sleeve()).toBe('https://example.test/b.png');
   });
 
+  it('keeps what is on a table it already handled when its screen mounts again (back from the tutorial)', async () => {
+    const store = new DeckBuilderStore();
+    const cardBackStore = new CardBackCustodyStore();
+    const own = new FakeSession();
+    const props = {
+      session: own,
+      store,
+      cardBackStore,
+      installOnSessionAttach: true,
+    };
+    const settle = () =>
+      act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      });
+    const deckA = () => deckListOf([{ card: card('Pikachu'), count: 4 }]);
+    // Deck A put on the own table, and a game under way on it.
+    await renderSession({ ...props, open: true });
+    act(() => {
+      store.replaceDeck(
+        'main',
+        deckA(),
+        { deckId: 'a', name: 'A' },
+        { chosen: true }
+      );
+    });
+    await renderSession({ ...props, open: false });
+    await settle();
+    act(() => own.completeLatest(true));
+    act(() =>
+      own.showTable({ ...spike, revision: own.getSnapshot().view!.revision })
+    );
+    const sent = own.commands.length;
+    // The tutorial puts the own table's screen away; it comes back.
+    await act(async () => root?.unmount());
+    root = undefined;
+    await renderSession({
+      ...props,
+      open: true,
+      prepareForNewSessionOnAttach: false,
+    });
+    // A picked again, as it is: nothing changes, P1 isn't reloaded.
+    let changed = true;
+    act(() => {
+      changed = store.replaceDeck(
+        'main',
+        deckA(),
+        { deckId: 'a', name: 'A' },
+        { chosen: true }
+      );
+    });
+    expect(changed).toBe(false);
+    expect(store.getSnapshot().slots.main.dirty).toBe(false);
+    await renderSession({
+      ...props,
+      open: false,
+      prepareForNewSessionOnAttach: false,
+    });
+    await settle();
+    expect(own.commands.slice(sent)).toEqual([]);
+  });
+
   it('drains dirty decks only when the Deck surface closes and cleans them only after authority publication', async () => {
     const session = new FakeSession();
     const store = new DeckBuilderStore();

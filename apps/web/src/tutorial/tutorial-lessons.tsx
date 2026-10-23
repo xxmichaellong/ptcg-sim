@@ -471,6 +471,7 @@ const cards: TutorialLesson = {
           </Trans>
         ),
       targets: (world) => present([charmanderTarget(world)]),
+      stuck: charmanderGone,
       done: (world) => world.screen.cardMenu !== null,
     },
     {
@@ -512,17 +513,20 @@ const attach: TutorialLesson = {
         const to = charmanderTarget(world);
         return from && to ? { from, to } : null;
       },
-      done: (world) =>
-        countCards(
-          world.view,
-          charmanderIn(world, world.view)?.attachmentCards ?? [],
-          'fireEnergy'
-        ) >
-        countCards(
-          world.start,
-          charmanderIn(world, world.start)?.attachmentCards ?? [],
-          'fireEnergy'
-        ),
+      // A Fire Energy on Charmander now that wasn't on it as the step began
+      // (Charmander put back in play since is a new Pokémon, Energy and all).
+      done: (world) => {
+        const before = new Set(
+          (charmanderIn(world, world.start)?.attachmentCards ?? []).map(
+            (card) => card.id
+          )
+        );
+        return (charmanderIn(world, world.view)?.attachmentCards ?? []).some(
+          (card) =>
+            !before.has(card.id) &&
+            tutorialCardKeyOf(world.view, card) === 'fireEnergy'
+        );
+      },
       stuck: (world) =>
         charmanderGone(world) ??
         (!findCard(

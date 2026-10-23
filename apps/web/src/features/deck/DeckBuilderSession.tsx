@@ -61,6 +61,31 @@ import {
 
 export { warmDeckScreen } from './deck-screen-warmup.js';
 
+/**
+ * The tables each set of seats has been brought to, and how: kept (a game
+ * already on it) or installed. Kept with the seats, not the screen, so a
+ * screen mounted again for the same table (back from the tutorial, which
+ * puts the own table's route away) neither forgets what is on it -- a deck
+ * on P1 taken for one still to install, and P1 reset -- nor decides afresh.
+ */
+const handledTables = new WeakMap<
+  DeckBuilderStore,
+  WeakMap<DeckInstallSession, 'kept' | 'installed'>
+>();
+
+const markHandled = (
+  store: DeckBuilderStore,
+  session: DeckInstallSession,
+  how: 'kept' | 'installed'
+): void => {
+  let tables = handledTables.get(store);
+  if (!tables) {
+    tables = new WeakMap();
+    handledTables.set(store, tables);
+  }
+  tables.set(session, how);
+};
+
 export interface DeckBuilderSessionProps {
   readonly session?: DeckInstallSession;
   /**
@@ -200,6 +225,30 @@ export const DeckBuilderSession = ({
     });
     cardBackCoordinator.current = currentCardBack;
     coordinator.current = currentDeck;
+    const handled = handledTables.get(store)?.get(session);
+    if (handled) {
+      // This table, these seats: as they were left. What was changed
+      // meanwhile (offline) still goes on it.
+      const isNewBinding =
+        preparedBinding.current?.session !== session ||
+        preparedBinding.current.store !== store ||
+        preparedBinding.current.cardBackStore !== cardBackStore;
+      preparedBinding.current = { session, store, cardBackStore };
+      if (handled === 'installed') {
+        currentCardBack.flush();
+        currentDeck.flush();
+        if (isNewBinding) sessionAttachHandler.current?.(session);
+      }
+      return () => {
+        if (coordinator.current === currentDeck)
+          coordinator.current = undefined;
+        if (cardBackCoordinator.current === currentCardBack) {
+          cardBackCoordinator.current = undefined;
+        }
+        currentDeck.dispose();
+        currentCardBack.dispose();
+      };
+    }
     const keepTable = (): void => {
       preparedBinding.current = undefined;
       // A game the room keeps (a restored one) keeps its own table: nothing
@@ -209,6 +258,7 @@ export const DeckBuilderSession = ({
         forgottenFor.current = session;
         store.forgetInstalls();
       }
+      markHandled(store, session, 'kept');
     };
     const install = (): void => {
       const isNewBinding =
@@ -223,6 +273,7 @@ export const DeckBuilderSession = ({
       currentCardBack.flush();
       currentDeck.flush();
       if (isNewBinding) sessionAttachHandler.current?.(session);
+      markHandled(store, session, 'installed');
     };
     let unsubscribe: (() => void) | undefined;
     if (installOnSessionAttach) {

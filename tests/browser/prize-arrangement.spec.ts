@@ -86,10 +86,20 @@ const near = (point: Point, cell: Point, tolerance = 6) =>
  * on a slow runner, and cells read mid-slide are all off.
  */
 const paintedSteady = async (page: Page, ids: readonly string[]) => {
+  // Two frames apart, not two reads in one: a slow frame shows the same
+  // places to both however the table is moving.
+  const frames = () =>
+    page.evaluate(
+      () =>
+        new Promise<void>((resolve) => {
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+        })
+    );
   let last = await paintedAll(page, ids);
   await expect
     .poll(
       async () => {
+        await frames();
         const now = await paintedAll(page, ids);
         const same = now.every((point, index) => near(point, last[index]!, 1));
         last = now;
@@ -298,8 +308,14 @@ test('a Prize card goes to the cell it is put on, and the grid reflows row by ro
   await openActivity(page);
   const logged = await page.locator('#chatbox [data-event-type]').count();
   await closeActivity(page);
-  // The table takes the room back.
-  await page.waitForTimeout(600);
+  // The table takes the room back: the surface leaves the docked log's
+  // layout only once its slide has finished (a slow runner's frames make
+  // that a second or more).
+  await expect(page.locator('.ptcgsim-board-surface')).toHaveAttribute(
+    'data-shell-mode',
+    'fullscreen',
+    { timeout: 15_000 }
+  );
   await idle(page);
 
   // The first Prize carried to the fourth cell, across a row.
