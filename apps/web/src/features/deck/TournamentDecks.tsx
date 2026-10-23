@@ -914,6 +914,24 @@ export const ArchetypeView = ({
     [paged.state]
   );
   const view = useRef<HTMLDivElement>(null);
+  // More gone with the last page: the focus goes on to the first list it
+  // brought, where the player was reading, not up to the heading out of
+  // sight. The row itself, not its Load: a second Enter there would put a
+  // list on the seat.
+  const moreFrom = useRef<number | undefined>(undefined);
+  useEffect(() => {
+    const from = moreFrom.current;
+    if (from === undefined || paged.loadingMore) return;
+    moreFrom.current = undefined;
+    const active = document.activeElement;
+    if (active !== null && active !== document.body) return;
+    const row = view.current?.querySelectorAll<HTMLElement>(
+      '.deck-result__finishes > li'
+    )[from];
+    if (!row) return;
+    row.tabIndex = -1;
+    row.focus();
+  }, [finishes.length, paged.loadingMore]);
   useFocusKept(view, [paged.state.status, paged.hasMore, allTime]);
   return (
     <div ref={view} className="deck-subview" data-subview="archetype">
@@ -945,7 +963,10 @@ export const ArchetypeView = ({
                 className="ds-button ds-button--ghost deck-show-more"
                 // Not disabled: a disabled button drops the focus to the page.
                 aria-disabled={paged.loadingMore || undefined}
-                onClick={paged.more}
+                onClick={() => {
+                  if (!paged.loadingMore) moreFrom.current = finishes.length;
+                  paged.more();
+                }}
               >
                 <Trans context="show more lists">More</Trans>
               </button>

@@ -249,7 +249,7 @@ const start: TutorialLesson = {
       // after Back) since then.
       done: (world) =>
         (!setUp(world, world.start) && setUp(world, world.view)) ||
-        happened(world, 'PlayerSetup'),
+        happened(world, 'PlayerSetup', world.you),
     },
     {
       id: 'hand',
@@ -287,16 +287,23 @@ const start: TutorialLesson = {
         (activeStack(world.view, world.you)?.evolutionCards ?? []).some(
           (card) => isBasic(world, card)
         ),
-      // No Basic anywhere: in the hand, the Active or the Bench (an Energy
-      // put there is none).
+      // Not set up (an Undo or a Reset since): Set up deals the hand again.
+      // Set up, but no Basic anywhere -- in the hand, the Active or the
+      // Bench (an Energy put there is none): a mulligan.
       stuck: (world) =>
-        basicInHand(world.view, world.you) === undefined &&
-        ![
-          activeStack(world.view, world.you),
-          ...benchStacks(world.view, world.you),
-        ].some((stack) =>
-          (stack?.evolutionCards ?? []).some((card) => isBasic(world, card))
-        ) ? (
+        !setUp(world, world.view) &&
+        zoneCards(world.view, world.you, 'hand').length === 0 ? (
+          <Trans>
+            Press <strong>{controlLabel('setUp')}</strong>: it shuffles your
+            deck and deals your hand.
+          </Trans>
+        ) : basicInHand(world.view, world.you) === undefined &&
+          ![
+            activeStack(world.view, world.you),
+            ...benchStacks(world.view, world.you),
+          ].some((stack) =>
+            (stack?.evolutionCards ?? []).some((card) => isBasic(world, card))
+          ) ? (
           <Trans>
             No Basic Pokémon in your hand: that is a mulligan. Choose{' '}
             <strong>{controlLabel('setUpAgain')}</strong> under{' '}

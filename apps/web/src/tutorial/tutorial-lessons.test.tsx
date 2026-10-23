@@ -69,6 +69,30 @@ const topOf = (
   return card ? tutorialCardKeyOf(view, card) : undefined;
 };
 
+/** A table whose only cards are a hand of these. */
+const handOf = (keys: readonly (keyof typeof TUTORIAL_CARDS)[]) =>
+  ({
+    ...EMPTY_VIEW,
+    definitions: Object.fromEntries(
+      keys.map((key) => [
+        `def-${key}`,
+        { ...TUTORIAL_CARDS[key], id: `def-${key}` },
+      ])
+    ),
+    zones: {
+      'zone:you:hand': {
+        id: 'zone:you:hand',
+        kind: 'hand',
+        ownerId: 'you',
+        cards: keys.map((key, index) => ({
+          kind: 'known',
+          id: `card-${String(index)}`,
+          definitionId: `def-${key}`,
+        })),
+      },
+    },
+  }) as unknown as MatchViewState;
+
 const text = (step: { text: (world: TutorialWorld) => unknown }, w = world()) =>
   renderToStaticMarkup(<>{step.text(w)}</>);
 
@@ -196,28 +220,6 @@ describe('the tutorial’s lessons', () => {
   });
 
   it('point a game’s start at a Basic Pokémon, never a Stage', () => {
-    const handOf = (keys: readonly (keyof typeof TUTORIAL_CARDS)[]) =>
-      ({
-        ...EMPTY_VIEW,
-        definitions: Object.fromEntries(
-          keys.map((key) => [
-            `def-${key}`,
-            { ...TUTORIAL_CARDS[key], id: `def-${key}` },
-          ])
-        ),
-        zones: {
-          'zone:you:hand': {
-            id: 'zone:you:hand',
-            kind: 'hand',
-            ownerId: 'you',
-            cards: keys.map((key, index) => ({
-              kind: 'known',
-              id: `card-${String(index)}`,
-              definitionId: `def-${key}`,
-            })),
-          },
-        },
-      }) as unknown as MatchViewState;
     const active = lessonById('start')!.steps.find(
       (step) => step.id === 'active'
     )!;
@@ -260,6 +262,7 @@ describe('the tutorial’s lessons', () => {
     const locale = i18n.locale;
     i18n.load('xx', {
       [CONTROL_LABELS.commands.id!]: 'Befehle',
+      [CONTROL_LABELS.setUp.id!]: 'Aufbauen',
       [CONTROL_LABELS.setUpAgain.id!]: 'Neu aufbauen',
       [CONTROL_LABELS.damageCounter.id!]: 'Schadensmarke',
       [CONTROL_LABELS.deck.id!]: 'Decks',
@@ -271,8 +274,17 @@ describe('the tutorial’s lessons', () => {
       const active = lessonById('start')!.steps.find(
         (step) => step.id === 'active'
       )!;
+      // A hand of no Basic: Set up again; none dealt: Set up.
+      expect(
+        text({
+          text: () =>
+            active.stuck!(
+              world({ view: handOf(['charmeleon', 'charizardEx']) })
+            ),
+        })
+      ).toContain('Neu aufbauen');
       expect(text({ text: () => active.stuck!(world()) })).toContain(
-        'Neu aufbauen'
+        'Aufbauen'
       );
       const step = (id: string) =>
         TUTORIAL_LESSONS.flatMap((lesson) => lesson.steps).find(
@@ -798,6 +810,7 @@ describe('a lesson step on the practice table', () => {
     // the mulligan line stays.
     await draw('fireEnergy');
     await draw('fireEnergy');
+    await draw('fireEnergy');
     await toPlay('fireEnergy', 'active');
     expect(active.done!(at())).toBe(false);
     expect(text({ text: active.stuck! }, at())).toContain('mulligan');
@@ -820,9 +833,26 @@ describe('a lesson step on the practice table', () => {
     )!;
     // Back: the step starts from a table set up already.
     expect(setup.done!(world({ events: [] }))).toBe(false);
-    expect(setup.done!(world({ events: [{ type: 'PlayerSetup' }] }))).toBe(
-      true
-    );
+    expect(
+      setup.done!(world({ events: [{ type: 'PlayerSetup', playerId: 'you' }] }))
+    ).toBe(true);
+    // The other side set up (flipped, or Set up again from More there):
+    // not yours.
+    expect(
+      setup.done!(
+        world({ events: [{ type: 'PlayerSetup', playerId: 'them' }] })
+      )
+    ).toBe(false);
+  });
+
+  it('says to press Set up, not to mulligan, once the hand is taken back', () => {
+    const active = lessonById('start')!.steps.find(
+      (entry) => entry.id === 'active'
+    )!;
+    // Nothing dealt: no hand, no Prize cards (an Undo of Set up, a Reset).
+    const said = text({ text: active.stuck! }, world());
+    expect(said).toContain('Press');
+    expect(said).not.toContain('mulligan');
   });
 
   it('is done when the player did it before it was asked', async () => {

@@ -135,9 +135,12 @@ describe('a deck’s lists from the keyboard', () => {
     });
     expect(host.textContent).toContain('second');
     // The last page in, More goes: the focus isn't left on All time in its
-    // place, where the next Enter would throw the pages away.
+    // place, where the next Enter would throw the pages away, but goes on
+    // to the first list the page brought.
     expect(document.activeElement?.id).not.toBe('deckAllTimeButton');
     expect(host.querySelector('#deckAllTimeButton')).not.toBe(more);
+    expect(document.activeElement?.tagName).toBe('LI');
+    expect(document.activeElement?.textContent).toContain('second');
   });
 
   it('keep the focus on a standing’s Load while its list loads', async () => {

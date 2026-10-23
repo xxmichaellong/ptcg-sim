@@ -632,6 +632,14 @@
   gap: var(--space-1);
 }
 
+/* The first list a deck's last More brought holds the focus (the row, not
+   its Load): ringed as the Load would be. */
+.deck-finish:focus-visible {
+  border-radius: var(--radius-md);
+  outline: var(--ptcgsim-focus-ring);
+  outline-offset: -2px;
+}
+
 .deck-finish__load {
   display: grid;
   flex: 1;
