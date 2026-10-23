@@ -663,14 +663,22 @@ export class DeckIndexStore {
     );
   }
 
-  /** A read failed: due again later, or given up on after a few tries. */
-  recordFailure(tournamentId: string, now: number): void {
+  /**
+   * A read failed: due again later, or given up on after a few tries.
+   * `byPlayer`: a read a player asked for.
+   */
+  recordFailure(tournamentId: string, now: number, byPlayer = false): void {
     const row = this.first(
       'SELECT attempts, state, date, retry_after FROM tournaments WHERE id = ?',
       tournamentId
     );
     // Skipped while it was read: it stays out of the crawl.
     if (!row || row.state === 'skipped') return;
+    // Given up on by the crawl, an event a player opens spends none of its
+    // tries, which an outage's revival counts on, and keeps its resync.
+    if (byPlayer && (row.state === 'failed' || row.state === 'unconfirmed')) {
+      return;
+    }
     // The tries are for reading it once it is over, when the crawl is due
     // to: a read a player asked for while it may still be running, or
     // before the crawl's next try, spends none of them. What was read

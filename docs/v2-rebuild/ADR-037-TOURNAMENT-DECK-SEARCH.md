@@ -67,8 +67,8 @@ from RK9.
      read (what is stored keeps answering), and a page of the list refused.
    - A tournament whose read fails is retried an hour later, then two, and
      then left to players opening it. A player's read that fails while the
-     event may still be running, or before the crawl's next try is due,
-     spends none of those tries. Standings failing (or answering unknown)
+     event may still be running, before the crawl's next try is due, or once
+     the crawl has given up on it, spends none of those tries. Standings failing (or answering unknown)
      for two events or more, its list still answering, are an outage: once
      a standings read answers again, the events given up on during it, and
      those read while running whose final read failed, are due once more,

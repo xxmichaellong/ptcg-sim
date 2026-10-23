@@ -519,6 +519,38 @@ describe('the request budget', () => {
     );
   });
 
+  it('reads again, after an outage, an event players kept opening during it', async () => {
+    limitless.tournaments = [tournament(1, { date: START - 2 * HOUR })];
+    limitless.standings.set(id(1), [standing('p', 1, dragapult)]);
+    const index = createIndex();
+    await crawl(index, 1);
+    await index.tournament(id(1));
+    limitless.tournaments = [
+      ...limitless.tournaments,
+      tournament(3, { date: START - 2 * DAY }),
+    ];
+    limitless.standings.set(id(3), [standing('p', 1, jellicent)]);
+    limitless.failStandings = 1_000;
+    await crawlUntil(index, START + 16 * HOUR);
+    // Opened three times while standings are down, each read failing.
+    for (const hour of [16, 17, 18]) {
+      now = START + hour * HOUR;
+      await index.tournament(id(1));
+    }
+    await crawlUntil(index, START + 20 * HOUR);
+    limitless.failStandings = 0;
+    limitless.tournaments = [
+      ...limitless.tournaments,
+      tournament(2, { date: START - DAY }),
+    ];
+    limitless.standings.set(id(2), [standing('p', 1, gardevoir)]);
+    const before = limitless.standingsCalls().length;
+    await crawlUntil(index, START + 24 * HOUR);
+    expect(limitless.standingsCalls().slice(before)).toEqual(
+      expect.arrayContaining([id(1), id(2), id(3)])
+    );
+  });
+
   it('tries again, after a run of unknowns, the events given up on during it', async () => {
     limitless.tournaments = [1, 2, 3, 4, 5].map((n) =>
       tournament(n, { date: START - 2 * DAY - n * HOUR })

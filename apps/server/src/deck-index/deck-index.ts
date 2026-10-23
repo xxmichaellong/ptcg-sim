@@ -541,7 +541,7 @@ export class DeckIndex {
             this.holdBack();
             // Revived with the rest once standings answer: one really gone
             // answers unknown again and is forgotten then.
-            this.standingsFailed(tournament.id, this.deps.now());
+            this.standingsFailed(tournament.id, this.deps.now(), kind);
             return;
           }
           this.store.forget(tournament.id);
@@ -550,7 +550,7 @@ export class DeckIndex {
         // Not the tournament's fault: it waits for the budget, not a retry.
         if (error.code === 'rate_limited') return;
       }
-      this.standingsFailed(tournament.id, this.deps.now());
+      this.standingsFailed(tournament.id, this.deps.now(), kind);
       return;
     }
     const now = this.deps.now();
@@ -566,7 +566,7 @@ export class DeckIndex {
       // Limitless answering nonsense: the crawl holds back, as for an
       // outage, and the tournament waits for a retry.
       this.holdBack();
-      this.standingsFailed(tournament.id, now);
+      this.standingsFailed(tournament.id, now, kind);
       return;
     }
     const entries = readStandings(response.body);
@@ -574,7 +574,7 @@ export class DeckIndex {
       // Rows, none of them readable (Limitless changed their shape): what
       // is stored keeps answering, the crawl holds back as for nonsense.
       this.holdBack();
-      this.standingsFailed(tournament.id, now);
+      this.standingsFailed(tournament.id, now, kind);
       return;
     }
     this.recovered();
@@ -594,8 +594,12 @@ export class DeckIndex {
   }
 
   /** A standings read failed: one of the event's tries, and noted. */
-  private standingsFailed(tournamentId: string, now: number): void {
-    this.store.recordFailure(tournamentId, now);
+  private standingsFailed(
+    tournamentId: string,
+    now: number,
+    kind: RequestKind
+  ): void {
+    this.store.recordFailure(tournamentId, now, kind === 'demand');
     const down = readStandingsDown(this.store.getMeta(META.standingsDown));
     if (!down) {
       this.store.setMeta(
