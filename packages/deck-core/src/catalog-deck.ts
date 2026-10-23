@@ -381,8 +381,30 @@ export const findCatalogPrint = (
 /** Lists already brought up to a catalog, so a second look costs nothing. */
 const reconciled = new WeakMap<object, LoadedCatalog>();
 
-const sameFacts = (left: unknown, right: unknown): boolean =>
-  JSON.stringify(left) === JSON.stringify(right);
+/**
+ * The same facts, whatever order their keys were written in: a deck read
+ * back from storage writes them in its own, and seen as changed it would be
+ * upgraded and saved again on every load, and between two tabs for good.
+ */
+const sameFacts = (left: unknown, right: unknown): boolean => {
+  if (Object.is(left, right)) return true;
+  if (
+    typeof left !== 'object' ||
+    typeof right !== 'object' ||
+    left === null ||
+    right === null ||
+    Array.isArray(left) !== Array.isArray(right)
+  )
+    return false;
+  const record = (value: object) => value as Record<string, unknown>;
+  const keys = (value: object) =>
+    Object.keys(value).filter((key) => record(value)[key] !== undefined);
+  const [ours, theirs] = [keys(left), keys(right)];
+  return (
+    ours.length === theirs.length &&
+    ours.every((key) => sameFacts(record(left)[key], record(right)[key]))
+  );
+};
 
 /**
  * A deck with its cards' facts as the catalog has them now: added where a

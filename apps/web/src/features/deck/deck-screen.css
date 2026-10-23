@@ -2860,9 +2860,24 @@ button.deck-check__issue {
   }
 }
 
+/* The seat's line in the notice's tooltip: the bar says it, but a phone's. */
+.deck-screen__reload-tip {
+  display: none;
+}
+
 @media (max-width: 520px) {
+  /* Out of sight, still read out; a tap on the icon shows it. */
   .deck-screen__reload-text {
-    display: none;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .deck-screen__reload-tip {
+    display: block;
   }
 
   /* A phone's tray: the box, the seat over the deck's name, the sleeve. */

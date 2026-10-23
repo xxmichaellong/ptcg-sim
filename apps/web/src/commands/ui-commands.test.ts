@@ -198,20 +198,27 @@ describe('tutorial lessons in the palette', () => {
         deckOpen: false,
         closeDeck: noop,
       }),
+      // A table action whose title spells out "help" (sHuffle … pLaybo…).
+      {
+        id: 'board.shuffleAll',
+        title: 'Shuffle all on playboard into deck',
+        section: 'table' as const,
+        run: noop,
+      },
       ...tutorialLessonCommands(
         [
           { id: 'damage', title: 'Damage and conditions' },
           { id: 'deck', title: 'Your deck' },
         ],
-        noop
+        noop,
+        { practice: true }
       ),
     ];
     const first = (query: string) =>
       rankCommands(flattenCommands(commands), query, [])[0]?.entries[0]?.entry
         .command.id;
-    for (const query of ['lesson', 'lessons', 'learn'])
+    for (const query of ['lesson', 'lessons', 'learn', 'help'])
       expect(String(first(query)), query).toMatch(/^tutorial\./u);
-    expect(first('help')).not.toBe('menu.leaveTutorial');
     // Leaving still has its own name and words, and asks for a second
     // Enter: it drops the table and the lesson.
     expect(first('Leave tutorial')).toBe('menu.leaveTutorial');

@@ -148,8 +148,12 @@ describe('a deck box flying to its seat', () => {
     expect(ghosts()).toBe(0);
   });
 
-  it("flies a list's box when it lands, with a deck's name pasted while it loaded", async () => {
-    // The catalog still loading: a list tried waits for it.
+  /**
+   * The screen on a catalog still loading (a list tried waits for it), with
+   * one Classics list to try; `land` has the catalog give up, so the list
+   * lands as it is.
+   */
+  const mountLoading = async () => {
     let status: { readonly status: string } = { status: 'loading' };
     const listeners = new Set<() => void>();
     const loading = {
@@ -200,29 +204,76 @@ describe('a deck box flying to its seat', () => {
     await act(async () => {
       await new Promise((resolve) => setTimeout(resolve, 20));
     });
-    const ghosts = () => document.querySelectorAll('[data-lifted]').length;
-    await act(async () =>
-      host
-        .querySelector<HTMLButtonElement>(
-          'button.deck-tile__choose[aria-label^="Dreepy deck"]'
-        )!
-        .click()
-    );
+    return {
+      store,
+      tryList: () =>
+        act(async () =>
+          host
+            .querySelector<HTMLButtonElement>(
+              'button.deck-tile__choose[aria-label^="Dreepy deck"]'
+            )!
+            .click()
+        ),
+      land: async () => {
+        status = { status: 'failed' };
+        await act(async () => {
+          for (const listener of listeners) listener();
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        });
+        await frames();
+      },
+    };
+  };
+  const pasteName = () => {
     const paste = new Event('paste', { bubbles: true, cancelable: true });
     Object.defineProperty(paste, 'clipboardData', {
       value: { getData: () => 'Dragapult' },
     });
-    await act(async () => {
+    return act(async () => {
       document.body.dispatchEvent(paste);
     });
-    // The catalog gives up: the list lands as it is, its box with it.
-    status = { status: 'failed' };
-    await act(async () => {
-      for (const listener of listeners) listener();
-      await new Promise((resolve) => setTimeout(resolve, 100));
-    });
-    await frames();
+  };
+  const ghosts = () => document.querySelectorAll('[data-lifted]');
+
+  it("flies a list's box when it lands, with a deck's name pasted while it loaded", async () => {
+    const { store, tryList, land } = await mountLoading();
+    await tryList();
+    await pasteName();
+    await land();
     expect(store.getSnapshot().slots.main.deck.length).toBeGreaterThan(0);
-    expect(ghosts()).toBe(1);
+    expect(ghosts()).toHaveLength(1);
+  });
+
+  it('flies no box with a list sent from the finder after a Try that was still loading', async () => {
+    const { store, tryList, land } = await mountLoading();
+    await tryList();
+    // A name pasted goes to the finder; a list put there instead is sent
+    // with Ctrl+Enter, and takes over from the Try.
+    await pasteName();
+    const finder =
+      document.querySelector<HTMLTextAreaElement>('#deckPasteInput')!;
+    expect(document.activeElement).toBe(finder);
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(
+        HTMLTextAreaElement.prototype,
+        'value'
+      )!.set!.call(finder, '4 Pikachu SVI 1\n4 Raichu SVI 2');
+      finder.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await act(async () => {
+      finder.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'Enter',
+          ctrlKey: true,
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    });
+    await land();
+    const seat = store.getSnapshot().slots.main;
+    expect(seat.deck.length).toBeGreaterThan(0);
+    expect(seat.label?.name).not.toBe('Dreepy deck');
+    expect(ghosts()).toHaveLength(0);
   });
 });

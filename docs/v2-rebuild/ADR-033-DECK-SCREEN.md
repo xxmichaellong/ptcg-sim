@@ -79,7 +79,9 @@ specifically without blocking, and go from deck to table in one click.
    never swapped for another card of its name. `withCatalogFacts` gives decks made without the catalog their
    facts later, and keeps saved decks' facts as the catalog has them now (a
    rotation, a ban, a legal reprint), without changing anything the table
-   shows; a card typed otherwise than the catalog's print (in the card
+   shows. Facts compare by value, whatever order storage wrote their keys
+   in: a deck read back that looked changed was saved again on every load,
+   and between two tabs for good, losing edits. A card typed otherwise than the catalog's print (in the card
    dialog or a CSV) is played as typed and gets none. A CSV's two scans of
    one printing (English and German) stay two entries.
 5. **Search** is Limitless's syntax over the catalog in memory
@@ -186,7 +188,10 @@ specifically without blocking, and go from deck to table in one click.
       seat's card back, which opens the card-back chooser. The active tray
       wears its seat's colour. A box put on a seat from a shelf flies into
       the tray (measured, then transform only; never under reduced motion
-      or at instant speed).
+      or at instant speed), with the deck its press put there: a list's Try
+      flies when its import lands, never with a later import that took
+      over. On a phone the bar's "P1 will reload" is an icon, which a tap
+      reads out.
     - **The finder.** One field takes a deck's name or a whole list. A
       line of words searches tournament decks (ADR-037): each deck that
       matches, its top 8s and lists, and its best finishes, any of which

@@ -419,8 +419,25 @@ describe('DeckBuilderSession', () => {
     await act(async () => {
       store.addCard(card('Pikachu'));
     });
-    expect(host.querySelector('#deckReloadNotice')?.textContent).toContain(
-      'P1 will reload'
+    const notice = host.querySelector<HTMLElement>('#deckReloadNotice')!;
+    expect(notice.textContent).toContain('P1 will reload');
+    // A phone shows the icon alone: a finger's tap says which side reloads
+    // and what that means.
+    await act(async () => {
+      for (const type of ['pointerdown', 'pointerup', 'click'])
+        notice.dispatchEvent(
+          new PointerEvent(type, { bubbles: true, pointerType: 'touch' })
+        );
+    });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    });
+    const tip = document.querySelector(
+      '[data-ptcgsim-overlay="tooltip"]:not([data-ending-style])'
+    );
+    expect(tip?.textContent).toContain('P1 will reload');
+    expect(tip?.textContent).toContain(
+      'That side starts over with the new deck'
     );
   });
 

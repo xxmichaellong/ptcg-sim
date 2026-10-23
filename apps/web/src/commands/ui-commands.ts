@@ -298,7 +298,8 @@ export const menuCommands = (
  */
 export const tutorialLessonCommands = (
   lessons: readonly { readonly id: string; readonly title: string }[],
-  start: (lesson: string) => void
+  start: (lesson: string) => void,
+  options: { readonly practice?: boolean } = {}
 ): PaletteCommand[] =>
   lessons.map((lesson) => {
     const tutorial = t`Tutorial`;
@@ -309,6 +310,9 @@ export const tutorialLessonCommands = (
       icon: GraduationCapIcon,
       detail: tutorial,
       demoted: true,
+      // On the practice table "help" or "lessons" asks for a lesson, before
+      // any table action those letters happen to spell out.
+      ...(options.practice ? { aliases: ['lessons', 'learn', 'help'] } : {}),
       // A search matches one text at a time: "tutorial damage" needs the
       // two together, in English and in the page's language.
       keywords: [

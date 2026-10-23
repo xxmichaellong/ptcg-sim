@@ -159,6 +159,8 @@ export const DeckScreen = ({
         readonly box: HTMLElement;
         readonly seat: DeckBuilderTarget;
         readonly at: number;
+        /** The import its press started (a list's Try), if any. */
+        readonly import?: AbortController;
       }
     | undefined
   >(undefined);
@@ -331,6 +333,14 @@ export const DeckScreen = ({
     const controller = new AbortController();
     importAbort.current = controller;
     importSeat.current = targetNow.current;
+    // A box just picked flies with the import its press starts; one that
+    // went with an earlier import (still loading, or a Try that changed
+    // nothing) never flies with a later one (a list sent from the finder).
+    const pick = picked.current;
+    if (pick) {
+      picked.current =
+        pick.import === undefined ? { ...pick, import: controller } : undefined;
+    }
     return controller;
   }, []);
 
@@ -928,6 +938,12 @@ export const DeckScreen = ({
   const targetSeat = SEAT_NAMES[target];
   const reloadingSeats = reloading.map((slotTarget) => SEAT_NAMES[slotTarget]);
   const [firstReloading, secondReloading] = reloadingSeats;
+  const reloadNotice =
+    firstReloading === undefined
+      ? undefined
+      : secondReloading
+        ? t`${firstReloading} and ${secondReloading} will reload`
+        : t`${firstReloading} will reload`;
   const seatTargets = useMemo(
     () =>
       seats.alternateEnabled
@@ -1109,10 +1125,20 @@ export const DeckScreen = ({
           })}
         </span>
         <div className="deck-screen__bar-actions">
-          {reloading.length > 0 ? (
+          {reloadNotice ? (
+            // On a phone the bar shows the icon alone: a tap says which side
+            // reloads, and what that means.
             <Tooltip
-              content={t`That side starts over with the new deck`}
+              content={
+                <>
+                  <span className="deck-screen__reload-tip">
+                    {reloadNotice}
+                  </span>
+                  {t`That side starts over with the new deck`}
+                </>
+              }
               side="bottom"
+              tapToShow
             >
               <span
                 id="deckReloadNotice"
@@ -1120,11 +1146,7 @@ export const DeckScreen = ({
                 tabIndex={0}
               >
                 <WarningCircleIcon {...decorative} weight="bold" />
-                <span className="deck-screen__reload-text">
-                  {secondReloading
-                    ? t`${firstReloading} and ${secondReloading} will reload`
-                    : t`${firstReloading} will reload`}
-                </span>
+                <span className="deck-screen__reload-text">{reloadNotice}</span>
               </span>
             </Tooltip>
           ) : null}

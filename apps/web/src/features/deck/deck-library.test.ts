@@ -1,7 +1,15 @@
 // @vitest-environment happy-dom
 
 import 'fake-indexeddb/auto';
-import { checkDeck, deckListOf, type DeckCard } from '@ptcgsim/deck-core';
+import {
+  checkDeck,
+  deckCardFromCatalog,
+  deckListOf,
+  withCatalogFacts,
+  type CatalogCard,
+  type DeckCard,
+  type LoadedCatalog,
+} from '@ptcgsim/deck-core';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -507,5 +515,86 @@ describe('the deck library', () => {
     });
     expect(deck?.cards[0]?.card.facts).toEqual({ stage: 'Basic' });
     expect(() => checkDeck(deck!.cards, deck!.format)).not.toThrow();
+  });
+
+  it('reads back a deck as up to date with the catalog it was made from, so it is never saved again for it', () => {
+    const set = {
+      id: 'sv',
+      code: 'SVX',
+      name: 'X',
+      series: 'Scarlet & Violet',
+      released: '2024-01-01',
+    };
+    const print = {
+      set,
+      image: 'https://assets/high.webp',
+      imageSmall: 'https://assets/low.webp',
+      types: [],
+      abilities: [],
+      attacks: [],
+      dex: [],
+      legal: { standard: true, expanded: true },
+    };
+    // An ACE SPEC, a Radiant Pokémon, a marked Special Energy: facts whose
+    // keys storage writes back in another order.
+    const prints: CatalogCard[] = [
+      {
+        ...print,
+        id: 'SVX 1',
+        number: '1',
+        name: 'Prime Catcher',
+        printGroup: 'Prime Catcher',
+        category: 'Trainer',
+        trainerType: 'Item',
+        tags: ['ACE SPEC'],
+        regulationMark: 'H',
+      },
+      {
+        ...print,
+        id: 'SVX 2',
+        number: '2',
+        name: 'Radiant Greninja',
+        printGroup: 'Radiant Greninja',
+        category: 'Pokémon',
+        stage: 'Basic',
+        tags: ['Radiant'],
+        regulationMark: 'F',
+      },
+      {
+        ...print,
+        id: 'SVX 3',
+        number: '3',
+        name: 'Jet Energy',
+        printGroup: 'Jet Energy',
+        category: 'Energy',
+        energyType: 'Special',
+        tags: [],
+        regulationMark: 'G',
+      },
+    ];
+    const catalog: LoadedCatalog = {
+      builtAt: '2026-10-01T00:00:00Z',
+      cards: prints,
+      sets: [set],
+      byId: new Map(prints.map((print) => [print.id, print])),
+      byName: new Map(),
+    };
+    for (const print of prints) {
+      const read = decodeSavedDeck(
+        structuredClone({
+          id: print.id,
+          name: print.name,
+          format: 'standard',
+          cards: deckListOf([
+            { card: deckCardFromCatalog(print, { catalog }), count: 1 },
+          ]),
+          createdAt: 1,
+          updatedAt: 1,
+        })
+      )!;
+      expect(withCatalogFacts(read.cards, catalog), print.name).toBe(
+        read.cards
+      );
+    }
   });
 });

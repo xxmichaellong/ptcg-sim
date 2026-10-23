@@ -869,7 +869,8 @@ export const RemoteRoomRoute = ({
                         id: lesson.id,
                         title: i18n._(lesson.title),
                       })),
-                      (lesson) => startTutorial(lesson)
+                      (lesson) => startTutorial(lesson),
+                      { practice: Boolean(tutorial) }
                     )
                   : []),
               ]}
