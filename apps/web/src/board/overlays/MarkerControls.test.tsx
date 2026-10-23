@@ -208,6 +208,18 @@ describe('MarkerControls', () => {
     press('2');
     expect(heard).toEqual([]);
     expect(actions.dismiss).not.toHaveBeenCalled();
+    // An input method's Esc (the palette typed in over them) leaves them.
+    act(() => {
+      document.body.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'Escape',
+          isComposing: true,
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    });
+    expect(actions.dismiss).not.toHaveBeenCalled();
     press('Escape');
     document.removeEventListener('keydown', listen);
     expect(actions.dismiss).toHaveBeenCalledWith('marker');

@@ -219,6 +219,11 @@ const stackCardIds = (stack: ReturnType<typeof activeStack>): string[] =>
     ? [...stack.evolutionCards, ...stack.attachmentCards].map((card) => card.id)
     : [];
 
+/** A seat set up: its six Prize cards out and a hand dealt. */
+const setUp = (world: TutorialWorld, view: TutorialWorld['view']): boolean =>
+  zoneCards(view, world.you, 'prizes').length === 6 &&
+  zoneCards(view, world.you, 'hand').length >= 7;
+
 const handSize = (world: TutorialWorld, view = world.view): number =>
   zoneCards(view, world.you, 'hand').length;
 
@@ -240,9 +245,11 @@ const start: TutorialLesson = {
         </Trans>
       ),
       targets: () => [railAction('setupButton')],
+      // The table set up since the step began, or Set up pressed (again,
+      // after Back) since then.
       done: (world) =>
-        zoneCards(world.view, world.you, 'prizes').length === 6 &&
-        handSize(world) >= 7,
+        (!setUp(world, world.start) && setUp(world, world.view)) ||
+        happened(world, 'PlayerSetup'),
     },
     {
       id: 'hand',
@@ -265,7 +272,11 @@ const start: TutorialLesson = {
         // From the hand, or (its only Basic put there first) the Bench.
         const card =
           basicInHand(world.view, world.you) ??
-          topCard(benchStacks(world.view, world.you)[0]);
+          topCard(
+            benchStacks(world.view, world.you).find((stack) =>
+              stack.evolutionCards.some((entry) => isBasic(world, entry))
+            )
+          );
         return card
           ? { from: { card: card.id }, to: slot(world.you, 'active') }
           : null;
@@ -276,10 +287,16 @@ const start: TutorialLesson = {
         (activeStack(world.view, world.you)?.evolutionCards ?? []).some(
           (card) => isBasic(world, card)
         ),
+      // No Basic anywhere: in the hand, the Active or the Bench (an Energy
+      // put there is none).
       stuck: (world) =>
         basicInHand(world.view, world.you) === undefined &&
-        activeStack(world.view, world.you) === undefined &&
-        benchStacks(world.view, world.you).length === 0 ? (
+        ![
+          activeStack(world.view, world.you),
+          ...benchStacks(world.view, world.you),
+        ].some((stack) =>
+          (stack?.evolutionCards ?? []).some((card) => isBasic(world, card))
+        ) ? (
           <Trans>
             No Basic Pokémon in your hand: that is a mulligan. Choose{' '}
             <strong>{controlLabel('setUpAgain')}</strong> under{' '}

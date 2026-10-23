@@ -255,8 +255,8 @@ deactivation step, not the initial rollout pause.
 `server-telemetry.ts` emits the closed
 `ptcgsim-server-telemetry-v2` discriminated union through Cloudflare's
 structured console sink. Every event has timestamp, random event correlation,
-ephemeral random source-instance correlation, source (`edge`, `room`, or
-`continuation`), and
+ephemeral random source-instance correlation, source (`edge`, `room`,
+`continuation`, `deck_feed`, `deck_index` or `card_catalog`), and
 sanitized build/protocol/authority/match-schema versions.
 
 | Event kind               | Intended signal                                                             |

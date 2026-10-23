@@ -757,6 +757,74 @@ describe('a lesson step on the practice table', () => {
     }
   });
 
+  it('starts a game with a Basic: says so with none, and points at one, whatever else is in play', async () => {
+    const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+    const room = fakePracticeRoom();
+    await dealScenario(
+      room.session,
+      lessonById('start')!.scenario,
+      new AbortController().signal
+    );
+    const now = () => room.session.getSnapshot().view!;
+    const send = async (command: unknown) => {
+      room.session.submit(command as never);
+      await flush();
+    };
+    const draw = async (key: Parameters<typeof findCard>[2]) => {
+      const card = findCard(now(), zoneCards(now(), you, 'deck'), key)!;
+      await send({
+        type: 'MoveCard',
+        cardId: card.id,
+        expectedSourceZoneId: zoneId(you, 'deck'),
+        destinationZoneId: zoneId(you, 'hand'),
+      });
+    };
+    const toPlay = (
+      key: 'fireEnergy' | 'charmander',
+      slot: 'active' | 'bench'
+    ) =>
+      send({
+        type: 'MoveCardToPlay',
+        cardId: findCard(now(), zoneCards(now(), you, 'hand'), key)!.id,
+        expectedSourceZoneId: zoneId(you, 'hand'),
+        boardPlayerId: you,
+        slot,
+      });
+    const active = lessonById('start')!.steps.find(
+      (entry) => entry.id === 'active'
+    )!;
+    const at = () => world({ view: now(), start: now(), you, them });
+    // A hand of Energy only: an Energy in the Active Spot is no Basic, and
+    // the mulligan line stays.
+    await draw('fireEnergy');
+    await draw('fireEnergy');
+    await toPlay('fireEnergy', 'active');
+    expect(active.done!(at())).toBe(false);
+    expect(text({ text: active.stuck! }, at())).toContain('mulligan');
+    // An Energy benched, then Charmander: the drag is Charmander's.
+    await toPlay('fireEnergy', 'bench');
+    await draw('charmander');
+    await toPlay('charmander', 'bench');
+    const charmander = benchStacks(now(), you).find(
+      (stack) => topOf(now(), stack) === 'charmander'
+    )!;
+    expect(active.drag!(at())?.from).toEqual({
+      card: topCard(charmander)!.id,
+    });
+    expect(active.stuck!(at())).toBeNull();
+  });
+
+  it('counts Set up pressed again, after Back, as set up', () => {
+    const setup = lessonById('start')!.steps.find(
+      (entry) => entry.id === 'setup'
+    )!;
+    // Back: the step starts from a table set up already.
+    expect(setup.done!(world({ events: [] }))).toBe(false);
+    expect(setup.done!(world({ events: [{ type: 'PlayerSetup' }] }))).toBe(
+      true
+    );
+  });
+
   it('is done when the player did it before it was asked', async () => {
     const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
     const dealt = async (id: string) => {

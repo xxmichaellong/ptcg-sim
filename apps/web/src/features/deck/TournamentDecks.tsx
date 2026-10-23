@@ -935,8 +935,12 @@ export const ArchetypeView = ({
                 />
               ))}
             </ul>
+            {/* Keyed apart: More gone with the last page, the focus goes to
+                the heading (useFocusKept), never left on All time in its
+                place for the next Enter to throw the pages away. */}
             {paged.hasMore ? (
               <button
+                key="more"
                 type="button"
                 className="ds-button ds-button--ghost deck-show-more"
                 // Not disabled: a disabled button drops the focus to the page.
@@ -947,6 +951,7 @@ export const ArchetypeView = ({
               </button>
             ) : !allTime && finishes.length > 0 ? (
               <button
+                key="all-time"
                 type="button"
                 id="deckAllTimeButton"
                 className="ds-button ds-button--ghost deck-show-more"

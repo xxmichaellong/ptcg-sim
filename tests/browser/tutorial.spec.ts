@@ -2,6 +2,7 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import { ownRoomBudget } from './support/room-budget.js';
 import {
+  chooseMoreAction,
   closeDeck,
   closeSheet,
   openAppMenu,
@@ -60,6 +61,18 @@ const pokemonInHand = (page: Page) =>
       '.ptcgsim-card[data-in-hand][data-card-side="local"]:is([aria-label^="Charmander"], [aria-label^="Pidgey"])'
     )
     .first();
+
+/**
+ * A hand of no Basic Pokémon (1 deal in 70 or so, the deck shuffled for
+ * real): set up again, as a player would, until there is one.
+ */
+const dealABasic = async (page: Page): Promise<void> => {
+  for (let deal = 0; deal < 5; deal += 1) {
+    await idle(page);
+    if ((await pokemonInHand(page).count()) > 0) return;
+    await chooseMoreAction(page, 'setupButton');
+  }
+};
 
 const centre = async (locator: Locator): Promise<Point> => {
   const box = (await locator.boundingBox())!;
@@ -149,6 +162,7 @@ test('walks every lesson with a mouse, each step done by the table', async ({
   await idle(page);
   await page.locator('#boardButtonContainer #setupButton').click();
   await atStep(page, 'start:hand');
+  await dealABasic(page);
   await coach(page).getByRole('button', { name: 'Next' }).click();
   await atStep(page, 'start:active');
   // The step shows the drag: a ring on a Pokémon in the hand, one where it goes.
@@ -370,6 +384,7 @@ test.describe('on a phone', () => {
     expect(box.y).toBeGreaterThanOrEqual(bar.y + bar.height);
     await page.locator('#boardButtonContainer #setupButton').tap();
     await atStep(page, 'start:hand');
+    await dealABasic(page);
     await coach(page).getByRole('button', { name: 'Next' }).tap();
     await atStep(page, 'start:active');
     await idle(page);

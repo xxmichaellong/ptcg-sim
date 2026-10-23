@@ -22,6 +22,7 @@ import type { ViewCardId } from '@ptcgsim/game-core';
 
 import { Tooltip } from '../../ui/Tooltip.js';
 import type { BoardSessionControllerState } from '../BoardSessionController.js';
+import { isInputMethodKey } from '../../ui/input-method.js';
 import { parseLegacyDamageInput } from '../resolveLegacyBoardOverlayAction.js';
 import { visualCardBounds } from './card-bounds.js';
 import './MarkerControls.css';
@@ -412,7 +413,9 @@ export const MarkerControls = ({
   useEffect(() => {
     if (!markerId) return;
     const key = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape') return;
+      // An input method's Esc (typing in the palette over them) drops its
+      // candidate, and leaves them open.
+      if (event.key !== 'Escape' || isInputMethodKey(event)) return;
       event.stopPropagation();
       actions.dismiss('marker');
     };
