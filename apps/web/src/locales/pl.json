@@ -2019,7 +2019,7 @@
   },
   "pZNzvd": {
     "message": "Deck search is offline",
-    "translation": "Wyszukiwanie decków jest offline"
+    "translation": "Wyszukiwanie talii jest offline"
   },
   "iKEGvL": {
     "message": "Deck top",
@@ -2037,11 +2037,11 @@
   },
   "xLeOjM": {
     "message": "Decks you import or build are kept here",
-    "translation": "Tutaj są zapisane zaimportowane i zbudowane przez ciebie decki"
+    "translation": "Tutaj są zapisane zaimportowane i zbudowane przez ciebie talie"
   },
   "Ocbppt": {
     "message": "Decks, playing online, the log and Settings",
-    "translation": "Decki, gra online, dziennik i ustawienia"
+    "translation": "Talie, gra online, dziennik i ustawienia"
   },
   "gblLhJ": {
     "message": "Delete",
@@ -3506,18 +3506,18 @@
   },
   "-Qx8U8": {
     "message": "No deck",
-    "translation": "Brak decku"
+    "translation": "Brak talii"
   },
   "LDI00D": {
     "message": "No deck yet",
-    "translation": "Brak decku"
+    "translation": "Brak talii"
   },
   "ATYqaZ": {
     "message": "No decks match “{query}”",
     "comments": [
       "A deck search with no results; query is what was typed"
     ],
-    "translation": "Brak decków pasujących do „{query}”"
+    "translation": "Brak talii pasujących do „{query}”"
   },
   "JOqCxp": {
     "message": "No events match “{query}”",

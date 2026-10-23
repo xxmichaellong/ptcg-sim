@@ -2243,7 +2243,7 @@
   },
   "L0dfTV": {
     "message": "Duplicate deck",
-    "translation": "复制卡组"
+    "translation": "复制牌库"
   },
   "iu7vH9": {
     "message": "e.g. CC or LL",
@@ -2278,7 +2278,7 @@
   },
   "Bd1_Eb": {
     "message": "Edit deck",
-    "translation": "编辑卡组"
+    "translation": "编辑牌库"
   },
   "1PBKgv": {
     "message": "End",
@@ -4508,7 +4508,7 @@
   },
   "cJ3-3Z": {
     "message": "Search decks or paste a list",
-    "translation": "搜索卡组或粘贴列表"
+    "translation": "搜索牌库或粘贴列表"
   },
   "fU5HHP": {
     "message": "Search every format",

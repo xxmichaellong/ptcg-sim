@@ -1385,7 +1385,7 @@
   },
   "JT4RmD": {
     "message": "Back to the decks",
-    "translation": "العودة إلى الرزم"
+    "translation": "العودة إلى المجموعات"
   },
   "dOqLYu": {
     "message": "Back to the table",
@@ -1393,7 +1393,7 @@
   },
   "1JYYQn": {
     "message": "Back to your decks",
-    "translation": "العودة إلى أوراقك"
+    "translation": "العودة إلى مجموعاتك"
   },
   "Why0fp": {
     "message": "Backspace",
@@ -2019,7 +2019,7 @@
   },
   "pZNzvd": {
     "message": "Deck search is offline",
-    "translation": "البحث عن الدِّكات غير متاح"
+    "translation": "البحث عن المجموعات غير متاح"
   },
   "iKEGvL": {
     "message": "Deck top",
@@ -2037,7 +2037,7 @@
   },
   "xLeOjM": {
     "message": "Decks you import or build are kept here",
-    "translation": "الدِّكات التي تستوردها أو تبنيها تُحفظ هنا"
+    "translation": "المجموعات التي تستوردها أو تبنيها تُحفظ هنا"
   },
   "Ocbppt": {
     "message": "Decks, playing online, the log and Settings",
@@ -2876,7 +2876,7 @@
   },
   "Rw42Cd": {
     "message": "Its cards couldn't be read.",
-    "translation": "تعذّرت قراءة أوراقه."
+    "translation": "تعذّرت قراءة بطاقاتها."
   },
   "Fz2DU1": {
     "message": "Join a room",
@@ -3517,7 +3517,7 @@
     "comments": [
       "A deck search with no results; query is what was typed"
     ],
-    "translation": "لا توجد دِكات مطابقة لـ “{query}”"
+    "translation": "لا توجد مجموعات مطابقة لـ “{query}”"
   },
   "JOqCxp": {
     "message": "No events match “{query}”",
@@ -5514,11 +5514,11 @@
   },
   "HLA2HB": {
     "message": "Tournament decks",
-    "translation": "أوراق البطولات"
+    "translation": "مجموعات البطولات"
   },
   "4Zz_OT": {
     "message": "Tournament decks aren't ready yet",
-    "translation": "أوراق البطولات ليست جاهزة بعد"
+    "translation": "مجموعات البطولات ليست جاهزة بعد"
   },
   "iPoLT-": {
     "message": "Tournaments",

@@ -589,6 +589,51 @@ describe('the deck screen from the keyboard', () => {
     expect(onClose).not.toHaveBeenCalled();
   });
 
+  it('leaves a paste in a custom card’s window to it, importing nothing behind it', async () => {
+    // The catalog can't be reached: a pasted list imports as it is.
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        throw new Error('offline');
+      })
+    );
+    const unreachable = { status: 'failed' } as const;
+    const failed = {
+      getSnapshot: () => unreachable,
+      subscribe: () => () => undefined,
+      load: vi.fn(),
+      retry: vi.fn(),
+    } as unknown as CardCatalogSource;
+    const library = new DeckLibrary({ backend: null });
+    library.create({ name: 'Pidgey', format: 'standard', cards: [] });
+    await screen(vi.fn(), library, failed).draw(true);
+    await act(async () =>
+      host
+        .querySelector<HTMLButtonElement>('button[aria-label="Edit Pidgey"]')!
+        .click()
+    );
+    await act(async () =>
+      host
+        .querySelector<HTMLButtonElement>('#nativeDeckBuilderAddCustomCard')!
+        .click()
+    );
+    const window = host.querySelector<HTMLElement>(
+      '#nativeDeckBuilderCustomCardModal'
+    )!;
+    // A click on its blank part: the window itself has the focus.
+    window.focus();
+    const event = new Event('paste', { bubbles: true, cancelable: true });
+    Object.defineProperty(event, 'clipboardData', {
+      value: { getData: () => '4 Zzzzz XYZ 1\n4 Yyyyy ABC 2' },
+    });
+    await act(async () => {
+      window.dispatchEvent(event);
+      await new Promise((resolve) => setTimeout(resolve, 200));
+    });
+    expect(library.getSnapshot().decks).toHaveLength(1);
+    expect(window.hidden).toBe(false);
+  });
+
   it('takes / from the Deck tab to the search, drawn before it takes the focus', async () => {
     const library = new DeckLibrary({ backend: null });
     library.create({

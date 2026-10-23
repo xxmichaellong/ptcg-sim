@@ -350,6 +350,7 @@ export const LANGUAGE_GUIDES: Readonly<Record<string, LanguageGuide>> = {
     style: `Address the player informally. ${COMMUNITY}`,
     terms: {
       'Board (the zone on the table)': 'plansza',
+      Deck: 'talia',
     },
   },
   sv: {

@@ -2019,7 +2019,7 @@
   },
   "pZNzvd": {
     "message": "Deck search is offline",
-    "translation": "Decksökningen är offline"
+    "translation": "Sökningen efter lekar är offline"
   },
   "iKEGvL": {
     "message": "Deck top",
@@ -2037,11 +2037,11 @@
   },
   "xLeOjM": {
     "message": "Decks you import or build are kept here",
-    "translation": "Decks som du importerar eller bygger sparas här"
+    "translation": "Lekar som du importerar eller bygger sparas här"
   },
   "Ocbppt": {
     "message": "Decks, playing online, the log and Settings",
-    "translation": "Decks, onlinespel, loggen och inställningar"
+    "translation": "Lekar, onlinespel, loggen och inställningar"
   },
   "gblLhJ": {
     "message": "Delete",
@@ -2243,7 +2243,7 @@
   },
   "L0dfTV": {
     "message": "Duplicate deck",
-    "translation": "Duplicera deck"
+    "translation": "Duplicera lek"
   },
   "iu7vH9": {
     "message": "e.g. CC or LL",
@@ -2278,7 +2278,7 @@
   },
   "Bd1_Eb": {
     "message": "Edit deck",
-    "translation": "Redigera deck"
+    "translation": "Redigera lek"
   },
   "1PBKgv": {
     "message": "End",
@@ -3506,18 +3506,18 @@
   },
   "-Qx8U8": {
     "message": "No deck",
-    "translation": "Ingen deck"
+    "translation": "Ingen lek"
   },
   "LDI00D": {
     "message": "No deck yet",
-    "translation": "Ingen deck än"
+    "translation": "Ingen lek än"
   },
   "ATYqaZ": {
     "message": "No decks match “{query}”",
     "comments": [
       "A deck search with no results; query is what was typed"
     ],
-    "translation": "Inga decks matchar ”{query}”"
+    "translation": "Inga lekar matchar ”{query}”"
   },
   "JOqCxp": {
     "message": "No events match “{query}”",
@@ -3705,7 +3705,7 @@
   },
   "tG9S9l": {
     "message": "Open a deck file",
-    "translation": "Öppna en deckfil"
+    "translation": "Öppna en lekfil"
   },
   "9npOH9": {
     "message": "Open file",
@@ -3761,7 +3761,7 @@
   },
   "oLQoOZ": {
     "message": "Opening your decks…",
-    "translation": "Öppnar dina decks …"
+    "translation": "Öppnar dina lekar …"
   },
   "-jst3h": {
     "message": "Opens this list",
@@ -5514,11 +5514,11 @@
   },
   "HLA2HB": {
     "message": "Tournament decks",
-    "translation": "Turneringsdeckar"
+    "translation": "Turneringslekar"
   },
   "4Zz_OT": {
     "message": "Tournament decks aren't ready yet",
-    "translation": "Turneringsdeckar är inte redo än"
+    "translation": "Turneringslekar är inte redo än"
   },
   "iPoLT-": {
     "message": "Tournaments",

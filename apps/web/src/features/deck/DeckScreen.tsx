@@ -64,6 +64,9 @@ import './deck-screen.css';
 
 const decorative = { 'aria-hidden': true, focusable: 'false' } as const;
 
+/** Where keys and a paste belong to a window open over the screen. */
+const OWN_WINDOWS = '[role="dialog"], [role="menu"], [role="listbox"]';
+
 export type DeckScreenView =
   | { readonly kind: 'home' }
   | {
@@ -596,6 +599,15 @@ export const DeckScreen = ({
     // into a text field is a paste onto it.
     const onPaste = (event: ClipboardEvent): void => {
       if (isTextEntry(event.target) || event.defaultPrevented) return;
+      // A window open over the screen (a custom card's, a card's details, a
+      // menu) is what the paste is for: it would import behind it.
+      if (
+        (event.target instanceof Element &&
+          event.target.closest(OWN_WINDOWS) !== null) ||
+        screen.current?.querySelector('[role="dialog"]:not([hidden])')
+      ) {
+        return;
+      }
       const text = event.clipboardData?.getData('text/plain') ?? '';
       if (!text.trim()) return;
       event.preventDefault();
@@ -749,8 +761,7 @@ export const DeckScreen = ({
         // on the screen, which covers the page.
         (target !== document.body &&
           target.closest('.ptcgsim-deck-layer') === null) ||
-        target.closest('[role="dialog"], [role="menu"], [role="listbox"]') !==
-          null ||
+        target.closest(OWN_WINDOWS) !== null ||
         // A field with something typed clears it first.
         (isTextEntry(target) &&
           (target as HTMLInputElement | HTMLTextAreaElement).value !== '')
