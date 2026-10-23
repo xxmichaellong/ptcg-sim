@@ -153,6 +153,30 @@ describe('AppBar', () => {
     expect(document.querySelector('#changelog')).not.toBeNull();
   });
 
+  it('moves between its buttons on the arrow keys, which the table never sees', async () => {
+    await render(model());
+    const deck =
+      document.querySelector<HTMLButtonElement>('#deckImportButton')!;
+    deck.focus();
+    const arrow = async (key: string) => {
+      const event = new KeyboardEvent('keydown', {
+        key,
+        bubbles: true,
+        cancelable: true,
+      });
+      await act(async () => {
+        document.activeElement!.dispatchEvent(event);
+      });
+      return event;
+    };
+    expect((await arrow('ArrowRight')).defaultPrevented).toBe(true);
+    expect(document.activeElement?.id).toBe('p2Button');
+    await arrow('ArrowLeft');
+    await arrow('ArrowLeft');
+    // Round from the first to the last.
+    expect(document.activeElement?.id).toBe('appMenuButton');
+  });
+
   it('turns the way out round in a right-to-left language, and nothing else', async () => {
     await render(model({ onLeave: vi.fn(), onCopyInvitation: vi.fn() }));
     await openMenu('#appMenuButton');

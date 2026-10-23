@@ -9,6 +9,7 @@ import {
   useRef,
   type ComponentPropsWithoutRef,
   type CSSProperties,
+  type KeyboardEvent as ReactKeyboardEvent,
 } from 'react';
 
 import { ActionMenu, type ActionMenuEntry } from '../../ui/ActionMenu.js';
@@ -103,6 +104,24 @@ export const RailButton = forwardRef<
     </button>
   );
 });
+
+/**
+ * A toolbar of rail buttons (the rail, the app bar): the arrow keys move
+ * between its buttons, and the table never sees them.
+ */
+export const moveAlongToolbar = (event: ReactKeyboardEvent<HTMLElement>) => {
+  if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+  const buttons = Array.from(
+    event.currentTarget.querySelectorAll<HTMLButtonElement>(
+      'button.ptcgsim-rail-button'
+    )
+  );
+  const index = buttons.indexOf(event.target as HTMLButtonElement);
+  if (index < 0) return;
+  event.preventDefault();
+  const step = event.key === 'ArrowRight' ? 1 : -1;
+  buttons[(index + step + buttons.length) % buttons.length]?.focus();
+};
 
 export interface TableRailProps {
   /** Where the seam is: the rail's top, its height, and where actions start. */
@@ -410,21 +429,7 @@ export const TableRail = memo(function TableRail({
         data-seat={seat}
         // Past the Stadium the actions line up against the right end.
         data-align={atRight ? 'end' : 'start'}
-        // A toolbar: the arrow keys move between its buttons, and the table
-        // never sees them.
-        onKeyDown={(event) => {
-          if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
-          const buttons = Array.from(
-            event.currentTarget.querySelectorAll<HTMLButtonElement>(
-              'button.ptcgsim-rail-button'
-            )
-          );
-          const index = buttons.indexOf(event.target as HTMLButtonElement);
-          if (index < 0) return;
-          event.preventDefault();
-          const step = event.key === 'ArrowRight' ? 1 : -1;
-          buttons[(index + step + buttons.length) % buttons.length]?.focus();
-        }}
+        onKeyDown={moveAlongToolbar}
         style={{ left: actionsStart, width: actionsWidth }}
       >
         {fitted.shown.map((action) => (

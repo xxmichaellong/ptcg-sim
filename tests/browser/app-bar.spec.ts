@@ -191,6 +191,30 @@ test('the turn stays past the Stadium beside the docked log, the coin lying on t
   expect(turn.x).toBeGreaterThan(stadium.x + stadium.width);
 });
 
+test('the log, opened over the table on a tablet, leaves the bar in reach', async ({
+  page,
+}) => {
+  test.setTimeout(120_000);
+  await page.setViewportSize({ width: 1000, height: 768 });
+  await openTable(page);
+  await openActivity(page);
+  const drawer = page.locator('.ptcgsim-sheet[data-variant="side"]');
+  await expect(drawer).toBeVisible();
+  // Settled where it slides to.
+  await expect
+    .poll(async () => {
+      const first = (await box(drawer)).x;
+      await page.waitForTimeout(150);
+      return first === (await box(drawer)).x;
+    })
+    .toBe(true);
+  const bar = await box(page.locator('.ptcgsim-app-bar'));
+  expect(overlaps(bar, await box(drawer))).toBe(false);
+  // The Log button that opened it closes it again.
+  await page.locator('#activityButton').click();
+  await expect(drawer).toHaveCount(0);
+});
+
 test.describe('on a phone', () => {
   test.use({ hasTouch: true, isMobile: true });
 

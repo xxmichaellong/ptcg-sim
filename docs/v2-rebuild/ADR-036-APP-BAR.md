@@ -49,7 +49,11 @@ leads with the deck, where to play and Settings. The toolbar that opened
 and closed along the rail, and its preference, are gone.
 
 The log's newest lines, shown for a few seconds while it is closed, drop
-below the bar at its right edge.
+below the bar at its right edge. It is a toolbar: the arrow keys move
+between its buttons. What else opens at the top keeps below it
+(`--app-bar-clearance`): the log opened over the table on a tablet, and the
+table's banners (Connection lost, a failed start), which on a phone are as
+wide as the bar's row.
 
 ### 2. The table keeps the corner clear
 

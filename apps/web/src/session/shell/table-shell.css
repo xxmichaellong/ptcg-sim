@@ -5,11 +5,25 @@
  * Banners and the welcome sit over the table.
  */
 
+/* What a window or banner at the top keeps clear for the app bar in the
+   top-right corner: its inset, its height (APP_BAR_PAD_PX round a 36px
+   button, 44px under a finger) and a gap. */
+:root {
+  --app-bar-clearance: calc(2 * var(--space-2) + 42px);
+}
+
+@media (pointer: coarse) {
+  :root {
+    --app-bar-clearance: calc(2 * var(--space-2) + 50px);
+  }
+}
+
 /* ---- A banner the table keeps until it is resolved -------------------- */
 
+/* Below the app bar: on a phone a banner is as wide as the bar's row. */
 .ptcgsim-table-banner {
   position: fixed;
-  top: max(var(--space-3), env(safe-area-inset-top));
+  top: max(var(--app-bar-clearance), env(safe-area-inset-top));
   left: 50%;
   z-index: var(--layer-chrome);
   display: flex;

@@ -49,6 +49,12 @@
   padding: var(--space-3);
 }
 
+/* Open beside the table without taking it over (the log on a tablet), it
+   starts below the app bar in the corner, which stays in reach. */
+.ptcgsim-sheet-viewport[data-variant='side'][data-modal='false'] {
+  padding-top: var(--app-bar-clearance, var(--space-3));
+}
+
 .ptcgsim-sheet-viewport[data-variant='bottom'] {
   align-items: flex-end;
   justify-content: center;
