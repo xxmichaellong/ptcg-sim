@@ -2350,6 +2350,14 @@
               "kind": "value"
             },
             {
+              "name": "TABLE_COIN_MAX_PX",
+              "kind": "value"
+            },
+            {
+              "name": "TABLE_COIN_MIN_PX",
+              "kind": "value"
+            },
+            {
               "name": "TABLE_COMPACT_CORNER_HEIGHT_PX",
               "kind": "value"
             },

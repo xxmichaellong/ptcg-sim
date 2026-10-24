@@ -459,16 +459,9 @@ export class BoardDepthProjection {
     const handFits = new Map<string, (rect: Rect) => Rect>();
     const handReach = new Map<string, Rect>();
     if (this.enabled && this.settings.mode === 'table') {
-      const heldFlat = new Set(
-        scene.layout.players
-          .filter((player) => player.handHeldFlat)
-          .map((player) => player.playerId)
-      );
       for (const zone of handStrips) {
         const strip = zone.bounds;
         if (strip.height <= 0) continue;
-        // Its markers' row lies between it and the mat: it stays put.
-        if (zone.playerId !== null && heldFlat.has(zone.playerId)) continue;
         const near = strip.y + strip.height / 2 >= centre;
         const inner = near ? strip.y : strip.y + strip.height;
         const middle = strip.x + strip.width / 2;

@@ -7,7 +7,7 @@ import type { BoardLayoutState } from './layout.js';
 import {
   APP_BAR_INSET_PX,
   DEFAULT_TABLE_VERTICAL_LAYOUT,
-  TABLE_CONTROL_CORNER_HEIGHT_PX,
+  TABLE_COIN_MIN_PX,
   TABLE_CONTROL_CORNER_PX,
   TABLE_FAR_HAND_SCALE,
   TABLE_LAYOUT_GEOMETRY_VERSION,
@@ -145,11 +145,12 @@ describe('table layout: the app bar corner (ADR-036)', () => {
     }
   });
 
-  it("draws the far markers' corner past the bar as wide as the near one, the far hand starting after it", () => {
+  it('keeps the far markers on the mat beside its prizes with the bar, the far hand running up to the bar', () => {
     for (const [width, height] of [
       [1024, 768],
       [1180, 820],
       [900, 700],
+      [390, 844],
     ] as const) {
       const snapshot = createTableLayoutSnapshot(
         stateAt(width, height, {
@@ -162,41 +163,26 @@ describe('table layout: the app bar corner (ADR-036)', () => {
       const far = snapshot.players.find(
         (player) => player.physicalSide === 'upper'
       )!;
-      const corner = far.extras?.corner;
       const at = `${String(width)}x${String(height)}`;
-      expect(corner, at).toBeDefined();
-      // Side by side its markers take 82px (LegacyBoardChrome), as beside
-      // the near hand.
-      expect(corner!.width, at).toBe(TABLE_CONTROL_CORNER_PX);
+      const markers = far.extras?.markers;
+      expect(markers, at).toBeDefined();
+      const active = far.regions.find(
+        (r) => r.kind === 'active'
+      )!.physicalDeclaredBounds;
+      // In its Active's row, on the far player's left: the viewer's right.
+      expect(markers!.x, at).toBeGreaterThan(active.x + active.width);
+      expect(markers!.y, at).toBeGreaterThanOrEqual(active.y - 0.01);
+      expect(markers!.y + markers!.height, at).toBeLessThanOrEqual(
+        active.y + active.height + 0.01
+      );
+      expect(overlaps(markers!, barBox(snapshot)), at).toBe(false);
       const hand = far.regions.find(
         (r) => r.kind === 'hand'
       )!.physicalDeclaredBounds;
-      // Across the table the hand runs up to the corner past the bar.
-      expect(hand.x + hand.width, at).toBeCloseTo(corner!.x, 6);
-    }
-  });
-
-  it('keeps the far markers by the prizes where moving them to the corner by the bar would cost the hand more than it gives the mat', () => {
-    // The Lost Zone off, as by default; both markers on.
-    for (const [width, height] of [
-      [1180, 1070],
-      [1280, 1200],
-    ] as const) {
-      const snapshot = createTableLayoutSnapshot(
-        stateAt(width, height, {
-          shellMode: 'fullscreen',
-          appBarPx: BAR,
-          seamBandPx: 42,
-          oncePerGameMarkers: 2,
-          hideEmptyLostZone: true,
-        })
+      // Across the table the hand runs up to the bar.
+      expect(hand.x + hand.width, at).toBeLessThanOrEqual(
+        barBox(snapshot).x - APP_BAR_INSET_PX + 0.01
       );
-      const far = snapshot.players.find(
-        (player) => player.physicalSide === 'upper'
-      )!;
-      const at = `${String(width)}x${String(height)}`;
-      expect(far.extras?.markers, at).toBeDefined();
-      expect(far.extras?.corner, at).toBeUndefined();
     }
   });
 
@@ -226,13 +212,6 @@ describe('table layout: the app bar corner (ADR-036)', () => {
                 at
               ).toBeGreaterThan(0);
               expect(() => createBoardScene(view, snapshot), at).not.toThrow();
-              // A corner past the bar stays on the table.
-              const corner = far.extras?.corner;
-              if (corner) {
-                expect(corner.x, at).toBeGreaterThanOrEqual(
-                  far.frameBounds.x - 0.01
-                );
-              }
             }
           }
         }
@@ -268,7 +247,7 @@ describe('table layout: the app bar corner (ADR-036)', () => {
     }
   });
 
-  it('keeps the far markers out of the bar: beside the prizes, or in a corner past it', () => {
+  it("keeps each player's markers and coin beside their prizes, clear of the bar, every zone and the Stadium", () => {
     // On a phone the bar keeps three buttons, a finger's size.
     const PHONE_BAR = { width: 146, height: 50 };
     for (const [width, height] of [
@@ -296,7 +275,11 @@ describe('table layout: the app bar corner (ADR-036)', () => {
         [2, 0.4],
         [2, 0.6],
       ] as const) {
-        for (const hiddenPhysicalSide of [undefined, 'lower'] as const) {
+        for (const hiddenPhysicalSide of [
+          undefined,
+          'lower',
+          'upper',
+        ] as const) {
           for (const lostZone of [true, false]) {
             const snapshot = createTableLayoutSnapshot(
               stateAt(width, height, {
@@ -310,38 +293,63 @@ describe('table layout: the app bar corner (ADR-036)', () => {
                 ...(hiddenPhysicalSide ? { hiddenPhysicalSide } : {}),
               })
             );
-            const far = snapshot.players.find(
-              (player) => player.physicalSide === 'upper'
-            )!;
-            const hand = far.regions.find(
-              (candidate) => candidate.kind === 'hand'
-            )!.physicalDeclaredBounds;
-            const frame = far.frameBounds;
-            // Beside the prizes, in a corner the layout moved, or else in
-            // the half's own corner beside the hand (shell.css): turned
-            // with the half, the window's top right.
-            const box = far.extras?.markers ??
-              far.extras?.corner ?? {
-                x: frame.x + frame.width - TABLE_CONTROL_CORNER_PX,
-                y: frame.y,
-                width: TABLE_CONTROL_CORNER_PX,
-                height: Math.min(hand.height, TABLE_CONTROL_CORNER_HEIGHT_PX),
-              };
             const at = `${width}x${height} ${String(markers)} split=${String(lowerShare)} ${String(hiddenPhysicalSide)} lostZone=${String(lostZone)}`;
             const barRect = {
               x: snapshot.playAreaBounds.width - APP_BAR_INSET_PX - bar.width,
               y: APP_BAR_INSET_PX,
               ...bar,
             };
-            expect(overlaps(box, barRect), at).toBe(false);
-            for (const other of far.regions) {
+            const stadium = snapshot.shared.stadium.physicalDeclaredBounds;
+            const shown = snapshot.players.filter((player) => !player.hidden);
+            for (const player of shown) {
+              const extras = player.extras!;
+              const pieces = [
+                extras.markers!,
+                ...(extras.coin.width >= TABLE_COIN_MIN_PX
+                  ? [extras.coin]
+                  : []),
+              ];
+              const active = player.regions.find(
+                (candidate) => candidate.kind === 'active'
+              )!.physicalDeclaredBounds;
+              for (const piece of pieces) {
+                const of = `${at} ${player.physicalSide}`;
+                expect(overlaps(piece, barRect), of).toBe(false);
+                expect(overlaps(piece, stadium), of).toBe(false);
+                for (const other of shown.flatMap(
+                  (candidate) => candidate.regions
+                )) {
+                  expect(
+                    overlaps(piece, other.physicalDeclaredBounds),
+                    `${of} ${other.kind}`
+                  ).toBe(false);
+                }
+                // In the Active's row, on the player's own left.
+                expect(piece.y, of).toBeGreaterThanOrEqual(active.y - 0.01);
+                expect(piece.y + piece.height, of).toBeLessThanOrEqual(
+                  active.y + active.height + 0.01
+                );
+                if (player.rotationQuarterTurns === 2) {
+                  expect(piece.x, of).toBeGreaterThan(active.x + active.width);
+                } else {
+                  expect(piece.x + piece.width, of).toBeLessThan(active.x);
+                }
+              }
               expect(
-                overlaps(box, other.physicalDeclaredBounds),
-                `${at} ${other.kind}`
+                overlaps(extras.markers!, extras.coin),
+                `${at} markers/coin`
               ).toBe(false);
             }
-            // However the markers sit, the far hand keeps room to hold its
-            // cards apart: 128px, or all the bar leaves it on its own.
+            if (hiddenPhysicalSide === 'lower') continue;
+            // The far hand keeps room to hold its cards apart: 128px, or
+            // all the bar leaves it on its own.
+            const far = snapshot.players.find(
+              (player) => player.physicalSide === 'upper'
+            )!;
+            if (far.hidden) continue;
+            const hand = far.regions.find(
+              (candidate) => candidate.kind === 'hand'
+            )!.physicalDeclaredBounds;
             const bare = createTableLayoutSnapshot(
               stateAt(width, height, {
                 shellMode: 'fullscreen',
@@ -350,7 +358,6 @@ describe('table layout: the app bar corner (ADR-036)', () => {
                 ...(lowerShare === undefined
                   ? {}
                   : { vertical: tableVerticalLayout(lowerShare) }),
-                ...(hiddenPhysicalSide ? { hiddenPhysicalSide } : {}),
               })
             )
               .players.find((player) => player.physicalSide === 'upper')!
@@ -360,38 +367,13 @@ describe('table layout: the app bar corner (ADR-036)', () => {
             expect(hand.width, at).toBeGreaterThanOrEqual(
               Math.min(128, bare.width) - 0.01
             );
-            // On a phone, at least what the upright mat leaves past the
-            // bar (the hand from the bar to its count badge).
-            if (bar === PHONE_BAR && height > width) {
-              const edge = Math.max(8, Math.min(16, width * 0.02));
-              const pastBar = bar.width + 2 * APP_BAR_INSET_PX;
-              expect(hand.width, at).toBeGreaterThanOrEqual(
-                Math.min(128, width - edge - 44 - pastBar) - 0.01
-              );
-            }
-            const corner = far.extras?.corner;
-            if (corner && Math.abs(corner.y - hand.y) < 1e-6) {
-              // The corner runs the hand strip's depth, past the bar, and
-              // the hand starts after it.
-              expect(corner.height).toBeCloseTo(hand.height, 6);
-              expect(hand.x + hand.width).toBeLessThanOrEqual(corner.x + 0.01);
-            } else if (corner) {
-              // Or, on a narrow upright screen, a row of its own below the
-              // bar, the hand at the edge beside the bar.
-              expect(corner.y, at).toBeGreaterThanOrEqual(
-                barRect.y + barRect.height
-              );
-              expect(corner.y, at).toBeGreaterThanOrEqual(
-                hand.y + hand.height - 0.01
-              );
-            }
           }
         }
       }
     }
   });
 
-  it('never leaves the far board without rows, the markers in a row of their own only where it has room', () => {
+  it('never leaves the far board without rows', () => {
     const PHONE_BAR = { width: 146, height: 50 };
     for (let width = 320; width <= 420; width += 20) {
       for (let height = 300; height <= 420; height += 20) {
@@ -414,14 +396,6 @@ describe('table layout: the app bar corner (ADR-036)', () => {
                 (region) => region.kind === kind
               )!.physicalDeclaredBounds;
               expect(rect.height, `${at} ${kind}`).toBeGreaterThan(0);
-            }
-            // A markers' row holds the markers: never beside the prizes too.
-            const corner = far.extras?.corner;
-            const hand = far.regions.find(
-              (region) => region.kind === 'hand'
-            )!.physicalDeclaredBounds;
-            if (corner && Math.abs(corner.y - hand.y) > 1e-6) {
-              expect(far.extras?.markers, at).toBeUndefined();
             }
           }
         }
@@ -471,35 +445,7 @@ describe('table layout: the app bar corner (ADR-036)', () => {
     }
   });
 
-  it('moves no corner where nothing lies under the bar', () => {
-    const near = (snapshot: ReturnType<typeof createTableLayoutSnapshot>) =>
-      snapshot.players.find((player) => player.physicalSide === 'lower')!;
-    for (const [width, height] of [
-      [1440, 900],
-      [390, 844],
-    ] as const) {
-      // No markers shown, or no bar: the far corner stays the half's own.
-      for (const state of [
-        stateAt(width, height, { appBarPx: BAR }),
-        stateAt(width, height, { oncePerGameMarkers: 2 }),
-      ]) {
-        const snapshot = createTableLayoutSnapshot(state);
-        for (const player of snapshot.players) {
-          expect(player.extras?.corner).toBeUndefined();
-        }
-      }
-      // The near half's corner is never under the bar.
-      expect(
-        near(
-          createTableLayoutSnapshot(
-            stateAt(width, height, { appBarPx: BAR, oncePerGameMarkers: 2 })
-          )
-        ).extras?.corner
-      ).toBeUndefined();
-    }
-  });
-
-  it('refits the far half no shorter than it must, keeping its staging area, markers and markers\u2019 row clear', () => {
+  it('refits the far half no shorter than it must, its staging area holding the Stadium', () => {
     const far = (snapshot: ReturnType<typeof createTableLayoutSnapshot>) =>
       snapshot.players.find((player) => player.physicalSide === 'upper')!;
     const box = (
@@ -508,23 +454,12 @@ describe('table layout: the app bar corner (ADR-036)', () => {
     ) =>
       far(snapshot).regions.find((candidate) => candidate.kind === kind)!
         .physicalDeclaredBounds;
-    // The tallest clear fit, not wherever a bisection landed (it took the
-    // far Active from 111px to 90px here).
-    const tall = createTableLayoutSnapshot(
-      stateAt(656, 600, {
-        shellMode: 'fullscreen',
-        appBarPx: BAR,
-        vertical: tableVerticalLayout(0.5),
-        seamBandPx: 42,
-        oncePerGameMarkers: 1,
-      })
-    );
-    expect(box(tall, 'active').height).toBeGreaterThan(108);
     // Never the shortest fit when none clears: the staging area still holds
-    // the Stadium.
+    // the Stadium beside it.
     for (const [width, height, bar, seamBandPx] of [
       [640, 640, BAR, 42],
       [720, 720, { width: 290, height: 50 }, 46],
+      [656, 600, BAR, 42],
     ] as const) {
       const snapshot = createTableLayoutSnapshot(
         stateAt(width, height, {
@@ -535,78 +470,31 @@ describe('table layout: the app bar corner (ADR-036)', () => {
           oncePerGameMarkers: 2,
         })
       );
-      expect(box(snapshot, 'board').width).toBeGreaterThanOrEqual(
-        snapshot.shared.stadium.physicalDeclaredBounds.width
-      );
+      const at = `${String(width)}x${String(height)}`;
+      const stadium = snapshot.shared.stadium.physicalDeclaredBounds;
+      const staging = box(snapshot, 'board');
+      expect(staging.width, at).toBeGreaterThanOrEqual(stadium.width);
+      expect(overlaps(staging, stadium), at).toBe(false);
     }
-    // The far markers count: none under the Stadium.
-    const marked = createTableLayoutSnapshot(
-      stateAt(1040, 768, {
-        shellMode: 'sidebar',
-        appBarPx: BAR,
-        vertical: tableVerticalLayout(0.54),
-        seamBandPx: 42,
-        oncePerGameMarkers: 1,
-        hideEmptyLostZone: true,
-      })
-    );
-    const markers = far(marked).extras?.markers;
-    if (markers) {
-      expect(
-        overlaps(markers, marked.shared.stadium.physicalDeclaredBounds)
-      ).toBe(false);
-    }
-    // The markers keep their row (the hand its width) over a sliver of
-    // Stadium.
-    const rowed = createTableLayoutSnapshot(
-      stateAt(688, 568, {
-        shellMode: 'fullscreen',
-        appBarPx: BAR,
-        vertical: tableVerticalLayout(0.54),
-        seamBandPx: 42,
-        oncePerGameMarkers: 2,
-      })
-    );
-    expect(far(rowed).extras?.markersRow).toBe(true);
-    expect(box(rowed, 'hand').width).toBeGreaterThan(300);
   });
 
-  it('never puts the far markers or Lost Zone under the Stadium with the bar', () => {
-    const under = (
-      snapshot: ReturnType<typeof createTableLayoutSnapshot>,
-      piece: 'markers' | 'lostZone'
-    ): number => {
-      const far = snapshot.players.find(
-        (player) => player.physicalSide === 'upper'
-      )!;
-      const rect =
-        piece === 'markers'
-          ? far.extras?.markers
-          : far.regions.find((region) => region.kind === 'lostZone')!
-              .physicalDeclaredBounds;
-      const stadium = snapshot.shared.stadium.physicalDeclaredBounds;
-      if (!rect) return 0;
-      return (
-        Math.max(
-          0,
-          Math.min(rect.x + rect.width, stadium.x + stadium.width) -
-            Math.max(rect.x, stadium.x)
-        ) *
-        Math.max(
-          0,
-          Math.min(rect.y + rect.height, stadium.y + stadium.height) -
-            Math.max(rect.y, stadium.y)
-        )
-      );
-    };
-    // Where the bar shrank the far cards, the staging area came out from
-    // under the Stadium and the pieces beside the prizes went in (an iPad
-    // upright: the VSTAR marker, a live toggle, wholly under it).
+  it('never puts a marker, coin or Lost Zone under the Stadium with the bar', () => {
+    const pieces = (
+      snapshot: ReturnType<typeof createTableLayoutSnapshot>
+    ): Rect[] =>
+      snapshot.players.flatMap((player) => [
+        ...(player.extras?.markers ? [player.extras.markers] : []),
+        ...(player.extras && player.extras.coin.width >= TABLE_COIN_MIN_PX
+          ? [player.extras.coin]
+          : []),
+        player.regions.find((region) => region.kind === 'lostZone')!
+          .physicalDeclaredBounds,
+      ]);
     for (let width = 560; width <= 1120; width += 40) {
       for (const height of [632, 712, 760, 1024]) {
         for (const lowerShare of [0.54, 0.66]) {
           for (const touch of [false, true]) {
-            for (const markers of [0, 1]) {
+            for (const markers of [0, 1, 2]) {
               for (const lost of [false, true]) {
                 const state = stateAt(width, height, {
                   shellMode: 'fullscreen',
@@ -625,9 +513,10 @@ describe('table layout: the app bar corner (ADR-036)', () => {
                   },
                 });
                 const at = `${String(width)}x${String(height)} split ${String(lowerShare)} ${touch ? 'touch' : 'mouse'} markers ${String(markers)} lost ${String(lost)}`;
-                // A sliver (24px²) at most, as the far half's refit allows.
-                expect(under(barred, 'markers'), at).toBeLessThan(24.5);
-                expect(under(barred, 'lostZone'), at).toBeLessThan(24.5);
+                const stadium = barred.shared.stadium.physicalDeclaredBounds;
+                for (const piece of pieces(barred)) {
+                  expect(overlaps(piece, stadium), at).toBe(false);
+                }
               }
             }
           }
@@ -636,31 +525,7 @@ describe('table layout: the app bar corner (ADR-036)', () => {
     }
   });
 
-  it('moves only what is under the Stadium, for more than a sliver, and keeps the staging area a clear card', () => {
-    const far = (snapshot: ReturnType<typeof createTableLayoutSnapshot>) =>
-      snapshot.players.find((player) => player.physicalSide === 'upper')!;
-    const box = (
-      snapshot: ReturnType<typeof createTableLayoutSnapshot>,
-      kind: string
-    ) =>
-      far(snapshot).regions.find((region) => region.kind === kind)!
-        .physicalDeclaredBounds;
-    // The staging area's widest stretch clear of the Stadium.
-    const clearOfStadium = (
-      snapshot: ReturnType<typeof createTableLayoutSnapshot>
-    ) => {
-      const staging = box(snapshot, 'board');
-      const stadium = snapshot.shared.stadium.physicalDeclaredBounds;
-      return Math.max(
-        Math.max(0, Math.min(staging.x + staging.width, stadium.x) - staging.x),
-        Math.max(
-          0,
-          staging.x +
-            staging.width -
-            Math.max(staging.x, stadium.x + stadium.width)
-        )
-      );
-    };
+  it("keeps the far staging area a clear card's width beside the Stadium", () => {
     const at = (
       width: number,
       height: number,
@@ -669,39 +534,6 @@ describe('table layout: the app bar corner (ADR-036)', () => {
       createTableLayoutSnapshot(
         stateAt(width, height, { shellMode: 'fullscreen', ...overrides })
       );
-    // Only the Lost Zone was under: the markers, clear, stay by the prizes
-    // and the hand keeps its room.
-    const lostZoneOnly = at(560, 568, {
-      appBarPx: { width: 122, height: 42 },
-      vertical: tableVerticalLayout(0.6),
-      seamBandPx: 42,
-      oncePerGameMarkers: 2,
-    });
-    expect(far(lostZoneOnly).extras?.markers).toBeDefined();
-    expect(box(lostZoneOnly, 'hand').width).toBeGreaterThan(250);
-    // A shorter fit counts as keeping the markers only with them by the
-    // prizes in fact: one where they never fit there put them in the
-    // corner, the far hand at its floor.
-    const kept = at(704, 700, {
-      appBarPx: BAR,
-      vertical: tableVerticalLayout(0.54),
-      seamBandPx: 42,
-      oncePerGameMarkers: 2,
-    });
-    expect(box(kept, 'hand').width).toBeGreaterThan(250);
-    // A sliver under the Stadium takes no markers' row (the far Active a
-    // third smaller for it).
-    const sliver = at(416, 568, {
-      appBarPx: { width: 122, height: 42 },
-      vertical: tableVerticalLayout(0.66),
-      seamBandPx: 46,
-      oncePerGameMarkers: 1,
-      hideEmptyLostZone: true,
-    });
-    expect(far(sliver).extras?.markersRow).toBeUndefined();
-    expect(box(sliver, 'active').height).toBeGreaterThan(50);
-    // The room the pieces leave the staging area lies under the Stadium:
-    // the split never takes it for a card's clear width.
     for (const snapshot of [
       at(640, 600, {
         vertical: tableVerticalLayout(0.6),
@@ -713,10 +545,16 @@ describe('table layout: the app bar corner (ADR-036)', () => {
         vertical: tableVerticalLayout(0.54),
         seamBandPx: 42,
       }),
+      at(1440, 900, { appBarPx: BAR, oncePerGameMarkers: 2 }),
     ]) {
-      expect(clearOfStadium(snapshot)).toBeGreaterThanOrEqual(
-        snapshot.shared.stadium.physicalDeclaredBounds.width
-      );
+      const staging = region(
+        snapshot,
+        'opponent',
+        'board'
+      ).physicalDeclaredBounds;
+      const stadium = snapshot.shared.stadium.physicalDeclaredBounds;
+      expect(overlaps(staging, stadium)).toBe(false);
+      expect(staging.width).toBeGreaterThanOrEqual(stadium.width);
     }
   });
 
@@ -986,7 +824,7 @@ describe('table layout (geometry v2)', () => {
     ).toBeGreaterThan(0);
   });
 
-  it('keeps the markers and then the Lost Zone beside the prizes, toward the centre line', () => {
+  it('keeps the markers with the coin under them, then the Lost Zone, beside the prizes, and the staging area right of the Active', () => {
     for (const [width, height] of [
       [1280, 720],
       [1440, 900],
@@ -1003,12 +841,23 @@ describe('table layout (geometry v2)', () => {
           const label = `${width}x${height} ${player.side} ${markers}`;
           const rect = (kind: string) =>
             region(snapshot, player.side, kind).physicalDeclaredBounds;
-          const prizes = rect('prizes');
-          const lost = rect('lostZone');
-          const active = rect('active');
-          const board = rect('board');
-          // Level with the Active row, between the prizes and the staging
-          // area; nothing overlaps.
+          // In the player's own frame: the far half is turned around.
+          const own = (box: Rect): Rect =>
+            player.rotationQuarterTurns === 2
+              ? {
+                  ...box,
+                  x: snapshot.playAreaBounds.width - box.x - box.width,
+                }
+              : box;
+          const prizes = own(rect('prizes'));
+          const lost = own(rect('lostZone'));
+          const active = own(rect('active'));
+          const board = own(rect('board'));
+          const extras = player.extras!;
+          const coin = own(extras.coin);
+          const control = own(extras.control);
+          // Level with the Active row, between the prizes and the Active,
+          // in this order from the prizes; nothing overlaps.
           if (player.side === 'local') {
             expect(lost.y, label).toBeCloseTo(active.y, 5);
           } else {
@@ -1017,30 +866,41 @@ describe('table layout (geometry v2)', () => {
               5
             );
           }
-          const between = (value: number, a: number, b: number) =>
-            value >= Math.min(a, b) - 0.01 && value <= Math.max(a, b) + 0.01;
-          expect(
-            between(
-              lost.x + lost.width / 2,
-              prizes.x + prizes.width / 2,
-              board.x + board.width / 2
-            ),
-            label
-          ).toBe(true);
-          const markerRect = player.extras?.markers;
+          // The markers and coin share a column, the markers above.
+          const column = [
+            coin,
+            ...(extras.markers ? [own(extras.markers)] : []),
+          ];
+          if (extras.markers) {
+            const markersBox = own(extras.markers);
+            if (player.side === 'local') {
+              expect(markersBox.y + markersBox.height, label).toBeLessThan(
+                coin.y
+              );
+            } else {
+              expect(coin.y + coin.height, label).toBeLessThan(markersBox.y);
+            }
+          }
+          const order = [
+            prizes.x + prizes.width,
+            Math.min(...column.map((box) => box.x)),
+            Math.max(...column.map((box) => box.x + box.width)),
+            lost.x,
+            lost.x + lost.width,
+            control.x,
+            control.x + control.width,
+            active.x,
+          ];
+          for (let index = 1; index < order.length; index += 1) {
+            expect(order[index], `${label} ${String(index)}`).toBeGreaterThan(
+              order[index - 1]! - 0.01
+            );
+          }
+          const markerRect = extras.markers;
           if (markers === 0) expect(markerRect, label).toBeUndefined();
           else {
             expect(markerRect, label).toBeDefined();
-            expect(overlaps(markerRect!, lost), label).toBe(false);
-            // The markers come first from the prizes, the Lost Zone after.
-            expect(
-              between(
-                markerRect!.x + markerRect!.width / 2,
-                prizes.x + prizes.width / 2,
-                lost.x + lost.width / 2
-              ),
-              label
-            ).toBe(true);
+            expect(overlaps(markerRect!, extras.coin), label).toBe(false);
             for (const candidate of player.regions) {
               expect(
                 overlaps(markerRect!, candidate.physicalDeclaredBounds),
@@ -1048,18 +908,36 @@ describe('table layout (geometry v2)', () => {
               ).toBe(false);
             }
           }
-          // The control that adds them sits inside the staging area.
-          expect(inside(player.extras!.control, board), label).toBe(true);
-          // The staging area keeps room for a card or two.
+          for (const candidate of player.regions) {
+            for (const piece of [extras.coin, extras.control]) {
+              expect(
+                overlaps(piece, candidate.physicalDeclaredBounds),
+                `${label} ${candidate.kind}`
+              ).toBe(false);
+            }
+          }
+          // The staging area lies right of the Active, wide enough for a
+          // card or two.
+          expect(board.x, label).toBeGreaterThan(active.x + active.width);
           expect(board.width, label).toBeGreaterThan(lost.width);
         }
       }
     }
-    // Too narrow for them, they keep their old places.
+    // Too narrow for the Lost Zone there, it keeps its place in the piles'
+    // column on both halves; the markers stay by the prizes.
     const narrow = createTableLayoutSnapshot(
-      stateAt(1024, 768, { oncePerGameMarkers: 2 })
+      stateAt(900, 700, { oncePerGameMarkers: 2 })
     );
-    expect(narrow.players[0].extras?.markers).toBeUndefined();
+    for (const player of narrow.players) {
+      expect(player.extras?.markers).toBeDefined();
+      const deck = region(narrow, player.side, 'deck').physicalDeclaredBounds;
+      const lost = region(
+        narrow,
+        player.side,
+        'lostZone'
+      ).physicalDeclaredBounds;
+      expect(lost.x).toBeCloseTo(deck.x, 5);
+    }
   });
 
   it('runs the zones out to the mat: the columns to its sides, the bench to the piles, the piles down both rows', () => {

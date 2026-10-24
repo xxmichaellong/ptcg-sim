@@ -139,28 +139,6 @@ const handleStyle = (
   height: handle.bounds.height,
 });
 
-/**
- * Where the corner's controls start in the half's own frame, when the
- * layout moves the corner (`extras.corner`): across the table, past the app
- * bar that lies over the half's own corner (ADR-036).
- */
-const cornerOffset = (frame: BoardPlayerLayout): CSSProperties | undefined => {
-  const corner = frame.extras?.corner;
-  if (!corner) return undefined;
-  const bounds = frame.frameBounds;
-  const turned = frame.rotationQuarterTurns === 2;
-  const x = turned
-    ? bounds.x + bounds.width - (corner.x + corner.width)
-    : corner.x - bounds.x;
-  const bottom = turned
-    ? corner.y - bounds.y
-    : bounds.y + bounds.height - (corner.y + corner.height);
-  return {
-    '--table-corner-x': `${x}px`,
-    '--table-corner-bottom': `${bottom}px`,
-  } as CSSProperties;
-};
-
 const LegacyOncePerGameControls = memo(function LegacyOncePerGameControls({
   frame,
   player,
@@ -268,7 +246,6 @@ const LegacyOncePerGameControls = memo(function LegacyOncePerGameControls({
     >
       <div
         className={`legacy-once-per-game-controls legacy-once-per-game-controls--${frame.side}`}
-        style={table ? cornerOffset(frame) : undefined}
       >
         {onToggleHandSort && table && !sortInPill ? (
           <Tooltip
@@ -529,9 +506,8 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
   readonly coveredByPopup?: boolean;
   /**
    * Which once-per-game markers the table shows (both, as v1 did, unless
-   * the viewer chose). On the play mat they lie beside the prizes where the
-   * layout has room (TableZoneAffordances); only where it has not do they
-   * keep the corner by the hand.
+   * the viewer chose), in the corner by the hand. On the play mat they lie
+   * beside the prizes instead (TableZoneAffordances).
    */
   readonly oncePerGameMarkers?: readonly OncePerGameMarker[];
   /**
@@ -687,11 +663,7 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
             playerSide={frame.playerId === localPlayerId ? 'local' : 'opponent'}
             darkMode={darkMode}
             onToggle={actions.toggleOncePerGame}
-            markers={
-              layout.geometryVersion === 2 && frame.extras?.markers
-                ? []
-                : oncePerGameMarkers
-            }
+            markers={layout.geometryVersion === 2 ? [] : oncePerGameMarkers}
             handSorted={sortedHandPlayerIds?.has(frame.playerId) ?? false}
             table={layout.geometryVersion === 2}
             onToggleHandSort={actions.toggleHandSort}

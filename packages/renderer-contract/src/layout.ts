@@ -272,30 +272,24 @@ export interface BoardPlayerLayout {
   /** The viewer has hidden this half; it lies off the table and is not painted. */
   readonly hidden?: true;
   /**
-   * Geometry v2 only: the optional pieces beside this half's prizes, in
-   * physical pixels -- where its VSTAR/GX markers sit when the viewer shows
-   * them, and the small control that adds or removes the optional pieces
-   * (the Lost Zone and the markers).
+   * Geometry v2 only: the pieces beside this half's prizes, in physical
+   * pixels -- where its VSTAR/GX markers sit when the viewer shows them, its
+   * coin under them, and the small control that adds or removes the
+   * optional pieces (the Lost Zone and the markers).
    */
   readonly extras?: BoardPlayerExtrasLayout;
 }
 
 export interface BoardPlayerExtrasLayout {
+  /** The VSTAR/GX markers the viewer keeps on the table, beside the prizes. */
   readonly markers?: Rect;
+  /**
+   * The player's coin, under their markers: its square on the flat table.
+   * One smaller than `TABLE_COIN_MIN_PX` stays off it.
+   */
+  readonly coin: Rect;
+  /** The control that adds or removes the optional pieces. */
   readonly control: Rect;
-  /**
-   * The corner beside the hand that holds markers with no place beside the
-   * prizes, where that is not the half's own corner: across the table the
-   * app bar lies over it (ADR-036), so the corner starts past the bar and
-   * the hand after it. In physical pixels.
-   */
-  readonly corner?: Rect;
-  /**
-   * The corner is a row of its own between the hand and the mat (an upright
-   * phone): a tilted table keeps that hand to its strip rather than growing
-   * it over the row.
-   */
-  readonly markersRow?: true;
 }
 
 export interface BoardResizeHandleLayout {

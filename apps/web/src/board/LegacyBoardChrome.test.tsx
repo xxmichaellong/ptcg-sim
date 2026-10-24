@@ -7,7 +7,6 @@ import {
   DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
   DEFAULT_TABLE_VERTICAL_LAYOUT,
   flipBoardLayoutState,
-  TABLE_CONTROL_CORNER_PX,
   TABLE_LAYOUT_GEOMETRY_VERSION,
   tableVerticalLayout,
   type BoardLayoutState,
@@ -131,7 +130,7 @@ describe('LegacyBoardChrome', () => {
     await act(async () => root.unmount());
   });
 
-  it('fits GX and VSTAR side by side in the corner beside the hand on an upright phone, clear of its first cards', async () => {
+  it('leaves GX and VSTAR to the mat on the play-mat table, none in the corner beside the hand', async () => {
     const host = document.createElement('div');
     document.body.append(host);
     const root = createRoot(host);
@@ -139,6 +138,7 @@ describe('LegacyBoardChrome', () => {
       [360, 780],
       [390, 844],
       [430, 932],
+      [1440, 900],
     ] as const) {
       const layout = createTableLayoutSnapshot({
         ...layoutState(),
@@ -156,30 +156,19 @@ describe('LegacyBoardChrome', () => {
             players={players}
             darkMode={false}
             actions={{ toggleOncePerGame: vi.fn() }}
+            oncePerGameMarkers={['vstar', 'gx']}
           />
         )
       );
       const at = `${String(width)}x${String(height)}`;
-      const near = host.querySelector<HTMLElement>(
-        '.legacy-player-frame-chrome[data-player-side="local"]'
-      )!;
-      expect(near.dataset['corner'], at).toBe('compact');
-      const size = (kind: string) =>
-        near.querySelector<HTMLElement>(
-          `[data-once-per-game-marker="${kind}"]`
-        )!.style;
-      // shell.css lays them 6px in, 4px apart, 24px tall.
-      expect(px(size('vstar').height), at).toBe(24);
-      expect(px(size('gx').height), at).toBe(24);
       expect(
-        6 + px(size('vstar').width) + 4 + px(size('gx').width),
+        host.querySelectorAll('[data-once-per-game-marker]').length,
         at
-      ).toBeLessThanOrEqual(TABLE_CONTROL_CORNER_PX);
-      // The hand starts past that corner, at its usual place.
-      const hand = layout.players
-        .find((player) => player.playerId === asPlayerId('spike-blue'))!
-        .regions.find((region) => region.kind === 'hand')!;
-      expect(hand.physicalDeclaredBounds.x, at).toBe(TABLE_CONTROL_CORNER_PX);
+      ).toBe(0);
+      // Both halves keep theirs on the mat, beside their prizes.
+      for (const frame of layout.players) {
+        expect(frame.extras?.markers, at).toBeDefined();
+      }
     }
     await act(async () => root.unmount());
     host.remove();
@@ -578,7 +567,7 @@ describe('LegacyBoardChrome', () => {
     host.remove();
   });
 
-  it('puts a turn past the Stadium where it fits there, the coin lying on the table', async () => {
+  it("puts a turn at the seam's right end, past the Stadium on its left, losing nothing", async () => {
     const host = document.createElement('div');
     document.body.append(host);
     const root = createRoot(host);
@@ -629,9 +618,14 @@ describe('LegacyBoardChrome', () => {
         shown: actions.querySelectorAll('.ptcgsim-rail-button').length,
       };
     };
-    // Six buttons fit past the Stadium: a rail that could hold a Coin as
-    // well stays before it, one that can't goes past it, losing nothing.
-    expect(await align(false)).toMatchObject({ align: 'start' });
+    // The Stadium lies left of the Actives: the seam past it holds the
+    // whole rail, coin on the table or not.
+    const stadium = layout.shared.stadium.physicalDeclaredBounds;
+    const active = layout.players[0]!.regions.find(
+      (region) => region.kind === 'active'
+    )!.physicalDeclaredBounds;
+    expect(stadium.x + stadium.width).toBeLessThan(active.x);
+    expect(await align(false)).toEqual({ align: 'end', shown: 6 });
     expect(await align(true)).toEqual({ align: 'end', shown: 6 });
 
     await act(async () => root.unmount());

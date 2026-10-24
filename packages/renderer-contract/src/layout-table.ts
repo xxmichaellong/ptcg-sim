@@ -124,82 +124,32 @@ const HALF_PROPORTIONS: HalfProportions = {
 export const TABLE_HAND_VISIBLE_SHARE = 0.8;
 
 /**
- * The corner of each hand strip, beside the hand, that holds that player's
- * VSTAR/GX markers and hand-sort control. Mirrored by the web app's chrome
- * stylesheet.
+ * The corner of each hand strip beside the hand, kept clear: the hand
+ * starts past it. Mirrored by the web app's chrome stylesheet, which lays
+ * v1's markers there.
  */
 export const TABLE_CONTROL_CORNER_PX = 96;
 
 /**
- * How far up from the player's edge the corner's controls reach: the
+ * How far up from the player's edge v1's corner controls reach: its
  * VSTAR/GX markers stacked under the hand-sort control. A hand strip
  * shorter than this lays them side by side instead (the web app's chrome),
- * which needs only TABLE_COMPACT_CORNER_HEIGHT_PX.
+ * which needs only TABLE_COMPACT_CORNER_HEIGHT_PX; a portrait strip is at
+ * least that deep.
  */
 export const TABLE_CONTROL_CORNER_HEIGHT_PX = 104;
 export const TABLE_COMPACT_CORNER_HEIGHT_PX = 56;
-
-/**
- * A marker's room in a corner past the app bar too short to stack them,
- * side by side (the web app's chrome). Their buttons there are 40 and 32
- * wide (a 24px row), so near the player both fit TABLE_CONTROL_CORNER_PX;
- * across the table this roomier figure decides when the markers take a row
- * below the bar instead, which keeps a far hand wider.
- */
-const COMPACT_CORNER_MARKER_PX = 80;
 
 /** Room at the far end of each hand strip for its card-count badge. */
 const HAND_COUNT_SLOT_PX = 44;
 
 /**
- * The least a far hand keeps past the app bar on an upright screen; where
- * the markers' corner would leave it less, they take a row of their own
- * below the bar instead (`MARKER_ROW_PX` deep: 24px controls, 6px about).
+ * The least a far hand keeps past the app bar: a layout that leaves it less
+ * gives way to one that doesn't (`bestOf`).
  */
 const MIN_FAR_HAND_PX = 128;
-const MARKER_ROW_PX = 36;
-/** The least an Active card keeps: a markers' row never costs the board more. */
+/** The least an Active card keeps: the app bar's corner never costs the board more. */
 const MIN_BOARD_ROW_PX = 12;
-
-/**
- * Across the table the corner beside the hand lies under the app bar
- * (ADR-036). Markers that found no place beside the prizes keep a corner
- * of their own past the bar, as deep as the hand strip, and the hand
- * starts after it. `start` is where the bar's reserve ends.
- */
-const cornerPastBar = (
-  start: number,
-  markerCount: number,
-  stripTop: number,
-  stripHeight: number,
-  end: number,
-  /**
-   * The room to judge by whether a corner leaves the hand enough: as the
-   * markers' buttons were at their widest. A corner drawn is as wide as
-   * the corner beside the hand, which holds them side by side too.
-   */
-  roomy = false
-): Rect | undefined =>
-  start > 0 && markerCount > 0
-    ? {
-        x: start,
-        y: stripTop,
-        // Never past the half's far edge, on the narrowest tables.
-        width: Math.max(
-          0,
-          Math.min(
-            end - start,
-            roomy && stripHeight < TABLE_CONTROL_CORNER_HEIGHT_PX
-              ? Math.max(
-                  TABLE_CONTROL_CORNER_PX,
-                  16 + markerCount * COMPACT_CORNER_MARKER_PX
-                )
-              : TABLE_CONTROL_CORNER_PX
-          )
-        ),
-        height: stripHeight,
-      }
-    : undefined;
 /** The least clear space between a pile and the screen edge. */
 const PILE_EDGE_MARGIN_PX = 12;
 
@@ -215,16 +165,22 @@ interface LocalRegion {
 interface HalfGeometry {
   readonly regions: readonly LocalRegion[];
   /**
-   * The optional pieces beside the prizes, and the corner past the app bar
-   * for markers that have no place there, in the half's own frame.
+   * The pieces beside the prizes, in the half's own frame: the VSTAR/GX
+   * markers (where the viewer keeps them), the coin under them, and the
+   * control that adds or removes the optional pieces.
    */
-  readonly extras?: {
+  readonly extras: {
     readonly markers?: Rect;
+    readonly coin: Rect;
     readonly control: Rect;
-    readonly corner?: Rect;
-    /** The corner is a row of its own, between the hand and the mat. */
-    readonly markersRow?: true;
   };
+  /** The Lost Zone lies beside the pieces, not in the piles' column. */
+  readonly lostZoneBeside: boolean;
+  /**
+   * The least the staging area keeps when it makes room for the Stadium
+   * (`boardStartReservePx`): a pile's width. Short of that it stays whole.
+   */
+  readonly boardMinWidth: number;
   readonly cardHeights: { readonly active: number; readonly bench: number };
   readonly middle: { readonly left: number; readonly right: number };
   /** The clear band between this half's cards and the centre line. */
@@ -240,17 +196,11 @@ interface HalfOptions {
    * is where the Stadium straddles the centre line, and the two must not
    * overlap.
    */
-  readonly boardEndReservePx?: number;
-  /**
-   * `false`: the markers and Lost Zone keep their old places rather than
-   * sit beside the prizes, where the Stadium would lie over them (its
-   * reserve not kept: the staging area would be under a card wide).
-   */
-  readonly piecesBesidePrizes?: boolean;
+  readonly boardStartReservePx?: number;
   /**
    * The Lost Zone is on the table (not optional-and-hidden): it sits beside
-   * the prizes toward the centre line rather than at the end of the outer
-   * column.
+   * the pieces by the prizes, toward the centre line, where the row has
+   * room, rather than at the end of the piles' column.
    */
   readonly lostZoneBeside?: boolean;
   /** How many once-per-game markers sit beside the prizes, 0 to 2. */
@@ -283,12 +233,11 @@ interface HalfOptions {
    */
   readonly fitPortrait?: boolean;
   /**
-   * The far markers sit in a row of their own below the app bar, the hand
-   * strip deepened for it: a corner past the bar would leave the hand less
-   * than `MIN_FAR_HAND_PX`. `false`: never, the row would leave the board
-   * too little; unset, the layout decides.
+   * The portrait mat keeps the Stadium's room beside its pieces, as the
+   * mat always does: a half alone, whose Stadium lies in its Active's row
+   * rather than in the band at the seam.
    */
-  readonly markersBelowBar?: boolean;
+  readonly stadiumBeside?: boolean;
 }
 
 /**
@@ -321,10 +270,40 @@ export const APP_BAR_INSET_PX = 8;
  * width; each marker is half as tall as the column is wide.
  */
 const MARKER_COLUMN_SHARE = 0.62;
+/**
+ * The least a marker keeps, as tall as a finger can press and its art can
+ * be read (v1's corner markers were 24px): on a small table the column
+ * keeps it, and a row too short to stack two lays them side by side.
+ */
+const MIN_MARKER_HEIGHT_PX = 22;
+/** A VSTAR marker's width for its height (the GX one is narrower). */
+const VSTAR_MARKER_ASPECT = 2;
+const GX_MARKER_ASPECT = 1.5;
+/**
+ * Each player's coin lies under their markers, in their column: about a
+ * third of an Active card tall, within these bounds. A coin with less room
+ * than the least is left off the table (the rail offers Coin instead).
+ */
+const COIN_SHARE_OF_ACTIVE = 0.34;
+export const TABLE_COIN_MIN_PX = 34;
+export const TABLE_COIN_MAX_PX = 64;
 /** The add-or-remove control for the optional pieces: a small round button. */
 const EXTRAS_CONTROL_PX = 26;
-/** The clear space between the Stadium and the far staging area. */
+/** Its inset from the corner of the row it sits in. */
+const EXTRAS_CONTROL_INSET_PX = 6;
+/** The clear space kept between the Stadium and anything beside it. */
 const STADIUM_CLEARANCE_PX = 8;
+/**
+ * The Stadium straddles the centre line beside the Actives, on the near
+ * player's left, this share of its width clear of them.
+ */
+const STADIUM_ACTIVE_GAP_SHARE = 0.35;
+/**
+ * Where a Stadium the size of a bench card has no clear place (a small
+ * table), it is tried down to these shares of that size before it lies
+ * over anything.
+ */
+const STADIUM_FIT_SHARES = [0.9, 0.8, 0.7] as const;
 /**
  * How far below an even split's fit the far half alone may be fitted to
  * keep the Stadium off it with the app bar (a share of that fit).
@@ -339,14 +318,10 @@ const FAR_REFIT_FINE_STEPS = 10;
  * px², that is not worth refitting it for (a sliver).
  */
 const STADIUM_OVERLAP_SLACK_PX2 = 24;
-/**
- * A shorter far fit that keeps the markers beside the prizes (rather than
- * moved from under the Stadium, which costs the hand far more) keeps at
- * least this share of the far Active.
- */
-const MOVED_MARKERS_ACTIVE_SHARE = 0.85;
 /** The bench row must hold this many bench cards side by side. */
 const BENCH_FIT_CARDS = 5.5;
+/** The Active's slot holds a stack with attachments peeking out: this many cards wide. */
+const ACTIVE_SLOT_CARDS = 2.2;
 
 /**
  * The clear space between the outer columns (prizes, piles) and the side
@@ -354,6 +329,63 @@ const BENCH_FIT_CARDS = 5.5;
  */
 const sideMarginFor = (width: number): number =>
   Math.max(8, Math.min(14, width * 0.008));
+
+/**
+ * The column beside the prizes, toward the centre line, that holds a
+ * player's VSTAR/GX markers (stacked, VSTAR above GX, or side by side where
+ * the row is too short to stack them) and their coin under them, at the
+ * top of the Active's row: as wide as the wider of the two.
+ */
+const piecesColumn = (
+  x: number,
+  top: number,
+  pileWidth: number,
+  activeHeight: number,
+  gap: number,
+  markerCount: number
+): {
+  readonly width: number;
+  readonly markers?: Rect;
+  readonly coin: Rect;
+} => {
+  const markerHeight = Math.min(
+    activeHeight,
+    Math.max(
+      (pileWidth * MARKER_COLUMN_SHARE) / VSTAR_MARKER_ASPECT,
+      MIN_MARKER_HEIGHT_PX
+    )
+  );
+  const between = gap / 2;
+  const stacked = markerCount * markerHeight + (markerCount - 1) * between;
+  const sideBySide = markerCount > 1 && stacked > activeHeight;
+  const markersWidth = sideBySide
+    ? markerHeight * (VSTAR_MARKER_ASPECT + GX_MARKER_ASPECT) + between
+    : markerHeight * VSTAR_MARKER_ASPECT;
+  const coinSize = Math.min(
+    TABLE_COIN_MAX_PX,
+    activeHeight * COIN_SHARE_OF_ACTIVE
+  );
+  const width = Math.max(markersWidth, coinSize);
+  const markers: Rect | undefined =
+    markerCount > 0
+      ? {
+          x: x + (width - markersWidth) / 2,
+          y: top,
+          width: markersWidth,
+          height: sideBySide ? markerHeight : stacked,
+        }
+      : undefined;
+  return {
+    width,
+    ...(markers ? { markers } : {}),
+    coin: {
+      x: x + (width - coinSize) / 2,
+      y: markers ? markers.y + markers.height + gap : top,
+      width: coinSize,
+      height: coinSize,
+    },
+  };
+};
 
 /** Lay out one half in its own frame, centre line at the top. */
 const layoutHalf = (
@@ -367,9 +399,7 @@ const layoutHalf = (
   const side = sideMarginFor(width);
   const gap = Math.max(6, height * proportions.rowGap);
   // Across the table on a short screen the strip is at least as deep as
-  // the app bar's corner, so nothing else lies under the bar (and the
-  // markers' row below it, where they have one).
-  const markerRow = options.markersBelowBar ? MARKER_ROW_PX : 0;
+  // the app bar's corner, so nothing else lies under the bar.
   const natural = height * proportions.handStrip * (options.handScale ?? 1);
   // Never so deep that the board keeps no rows to speak of: on the
   // smallest tables the bar's corner gives way first.
@@ -379,10 +409,7 @@ const layoutHalf = (
   );
   const handStrip = Math.min(
     height,
-    Math.max(
-      natural,
-      Math.min((options.minHandStripPx ?? 0) + markerRow, roomForStrip)
-    )
+    Math.max(natural, Math.min(options.minHandStripPx ?? 0, roomForStrip))
   );
   const rows = Math.max(0, height - handStrip - margin - 2 * gap);
   const active = rows * proportions.activeShare;
@@ -414,13 +441,6 @@ const layoutHalf = (
     )
   );
   const pileWidth = pileHeight * CARD_ASPECT_RATIO;
-  const pileLeft = width - side - pileWidth;
-  const pileAt = (index: number): Rect => ({
-    x: pileLeft,
-    y: activeTop + index * (pileHeight + gap),
-    width: pileWidth,
-    height: pileHeight,
-  });
 
   // Reserve equal space for the outer columns so both Actives and benches
   // share the table's centre, even though prizes are wider than a pile.
@@ -428,82 +448,75 @@ const layoutHalf = (
   const middleRight = width - middleLeft;
   const middleWidth = Math.max(0, middleRight - middleLeft);
   const centre = width / 2;
-  // The Active slot is wide enough for a stack with attachments peeking out.
-  const activeWidth = Math.min(middleWidth, active * CARD_ASPECT_RATIO * 2.2);
+  // Beside the prizes, toward the centre line, the pieces the viewer keeps
+  // on the table: the VSTAR/GX markers, which players keep by their prizes,
+  // with the coin under them, then the Lost Zone pile where the row has
+  // room. Between them and the Active the felt stays clear for the
+  // Stadium, which straddles the centre line there on the near player's
+  // left (across the table that is the far player's right, where their
+  // staging area meets it). The far half keeps the same room, so both
+  // halves are the one mat.
+  const markerCount = Math.max(0, Math.min(2, options.markerCount ?? 0));
+  const column = piecesColumn(
+    middleLeft,
+    activeTop,
+    pileWidth,
+    active,
+    gap,
+    markerCount
+  );
+  const stadiumRoom =
+    bench * CARD_ASPECT_RATIO * (1 + STADIUM_ACTIVE_GAP_SHARE) +
+    STADIUM_CLEARANCE_PX;
+  const beforeActive = column.width + gap + stadiumRoom + gap;
+  // The Active slot is wide enough for a stack with attachments peeking
+  // out, and leaves that room on its left (the staging area as much on its
+  // right); never narrower than its card.
+  const activeWidth = Math.min(
+    middleWidth,
+    Math.max(
+      active * CARD_ASPECT_RATIO,
+      Math.min(
+        active * CARD_ASPECT_RATIO * ACTIVE_SLOT_CARDS,
+        middleWidth - 2 * beforeActive
+      )
+    )
+  );
   const activeRect: Rect = {
     x: centre - activeWidth / 2,
     y: activeTop,
     width: activeWidth,
     height: active,
   };
-  // Beside the prizes, toward the centre line, the optional pieces the
-  // viewer keeps on the table: the VSTAR/GX markers, which players keep by
-  // their prizes, then the Lost Zone pile. The staging area (v1's loose
-  // board) takes the rest of the row up to the Active. Where that would
-  // leave it less than a card wide, the pieces keep their old places
-  // instead: the Lost Zone at the end of the outer column, the markers by
-  // the hand.
-  // Kept clear of the Stadium where that leaves the staging area at least a
-  // card wide; a narrow table keeps it whole, under the Stadium's edge.
-  const reserve = options.boardEndReservePx ?? 0;
-  const boardEnd =
-    activeRect.x - gap - reserve - middleLeft >= pileWidth
-      ? activeRect.x - gap - reserve
-      : activeRect.x - gap;
-  const markerCount = Math.max(0, Math.min(2, options.markerCount ?? 0));
-  const markerWidth = pileWidth * MARKER_COLUMN_SHARE;
-  // Markers given a row below the bar sit in it, not beside the prizes.
-  const markersBeside = markerCount > 0 && options.markersBelowBar !== true;
-  const piecesWidth =
-    (options.lostZoneBeside ? pileWidth + gap : 0) +
-    (markersBeside ? markerWidth + gap : 0);
-  // Nor where the Stadium would lie over them (`piecesBesidePrizes`).
-  const besidePrizes =
-    options.piecesBesidePrizes !== false &&
-    piecesWidth > 0 &&
-    boardEnd - middleLeft - piecesWidth >= pileWidth;
-  let boardLeft = middleLeft;
-  let lostZone = pileAt(2);
-  let markers: Rect | undefined;
-  if (besidePrizes && markersBeside) {
-    markers = {
-      x: boardLeft,
-      y: activeTop,
-      width: markerWidth,
-      height: markerCount * (markerWidth / 2) + (markerCount - 1) * (gap / 2),
-    };
-    boardLeft += markerWidth + gap;
-  }
-  if (besidePrizes && options.lostZoneBeside) {
+  const lostZoneBeside =
+    options.lostZoneBeside === true &&
+    activeRect.x - middleLeft >= beforeActive + pileWidth + gap;
+  let piecesRight = middleLeft + column.width;
+  let lostZone: Rect | undefined;
+  if (lostZoneBeside) {
     lostZone = {
-      x: boardLeft,
+      x: piecesRight + gap,
       y: activeTop,
       width: pileWidth,
       height: Math.min(pileHeight, active),
     };
-    boardLeft += pileWidth + gap;
+    piecesRight = lostZone.x + lostZone.width;
   }
-  const boardRect: Rect = {
-    x: boardLeft,
-    y: activeTop,
-    width: Math.max(0, boardEnd - boardLeft),
-    height: active,
-  };
-  // The control that adds or removes them sits in the staging area's
-  // corner by the prizes, toward the player's edge, clear of its label.
+  // The control that adds or removes them sits just past them, at the
+  // row's edge toward the player, below where the Stadium reaches, and
+  // short of the Active.
   const control: Rect = {
-    x: boardRect.x + 6,
-    y: activeTop + active - 6 - EXTRAS_CONTROL_PX,
+    x: Math.min(piecesRight + gap, activeRect.x - gap - EXTRAS_CONTROL_PX),
+    y: activeTop + active - EXTRAS_CONTROL_INSET_PX - EXTRAS_CONTROL_PX,
     width: EXTRAS_CONTROL_PX,
     height: EXTRAS_CONTROL_PX,
   };
   // With the Lost Zone beside the prizes, the deck and discard have the
   // outer column to themselves: they grow to fill both card rows, never
   // past the Active's size. Otherwise the column keeps a slot for it.
-  const columnPile =
-    besidePrizes && options.lostZoneBeside
-      ? Math.max(pileHeight, Math.min(active, (active + bench) / 2))
-      : pileHeight;
+  const columnPile = lostZoneBeside
+    ? Math.max(pileHeight, Math.min(active, (active + bench) / 2))
+    : pileHeight;
   const columnWidth = columnPile * CARD_ASPECT_RATIO;
   const columnAt = (index: number): Rect => ({
     x: width - side - columnWidth,
@@ -513,7 +526,6 @@ const layoutHalf = (
   });
   const deck = columnAt(0);
   const discard = columnAt(1);
-  if (!(besidePrizes && options.lostZoneBeside)) lostZone = columnAt(2);
   // The bench runs from the prizes to the piles.
   const benchRight = deck.x - gap * 1.5;
   const benchRect: Rect = {
@@ -522,6 +534,22 @@ const layoutHalf = (
     width: Math.max(0, benchRight - middleLeft),
     height: bench,
   };
+  // The staging area (v1's loose board) beside the Active on its right, out
+  // to the piles. Across the table the Stadium lies at its Active end: it
+  // starts past it where that leaves it at least a card wide (a narrow
+  // table keeps it whole, under the Stadium's edge).
+  const boardStart = activeRect.x + activeRect.width + gap;
+  const reserve = options.boardStartReservePx ?? 0;
+  const boardLeft =
+    benchRight - (boardStart + reserve) >= pileWidth
+      ? boardStart + reserve
+      : boardStart;
+  const boardRect: Rect = {
+    x: boardLeft,
+    y: activeTop,
+    width: Math.max(0, benchRight - boardLeft),
+    height: active,
+  };
   const handLeft =
     margin +
     Math.max(
@@ -529,54 +557,12 @@ const layoutHalf = (
       pileWidth + gap * 1.5 + HAND_COUNT_SLOT_PX
     );
   const handRight = width - handLeft;
-  const pastBar = options.handStartReservePx ?? 0;
-  const cornerMarkers = markers ? 0 : markerCount;
-  if (options.markersBelowBar !== true) {
-    const past = cornerPastBar(
-      pastBar,
-      cornerMarkers,
-      handTop,
-      handStrip,
-      width - side,
-      true
-    );
-    // Past the bar, the markers would leave the hand too little: they take
-    // a row below the bar instead, where it fits wholly below it.
-    if (
-      past &&
-      handRight - Math.max(handLeft, past.x + past.width) < MIN_FAR_HAND_PX &&
-      (options.minHandStripPx ?? 0) + MARKER_ROW_PX <= roomForStrip
-    ) {
-      const below = layoutHalf(width, height, {
-        ...options,
-        markersBelowBar: true,
-      });
-      // Unless the row leaves the board next to nothing: the hand is then
-      // cramped, and the board kept.
-      if (below.cardHeights.active >= MIN_BOARD_ROW_PX) return below;
-    }
-  }
-  const corner: Rect | undefined =
-    options.markersBelowBar && cornerMarkers > 0
-      ? {
-          x: side,
-          y: handTop,
-          width: Math.min(
-            width - 2 * side,
-            16 + cornerMarkers * COMPACT_CORNER_MARKER_PX
-          ),
-          height: markerRow,
-        }
-      : cornerPastBar(pastBar, cornerMarkers, handTop, handStrip, width - side);
-  const handStart = Math.max(
-    handLeft,
-    corner && !options.markersBelowBar ? corner.x + corner.width : pastBar
-  );
+  const handStart = Math.max(handLeft, options.handStartReservePx ?? 0);
   const handRect: Rect = {
     x: handStart,
-    y: handTop + markerRow,
+    y: handTop,
     width: Math.max(0, handRight - handStart),
-    height: handStrip - markerRow,
+    height: handStrip,
   };
   return {
     regions: [
@@ -587,19 +573,22 @@ const layoutHalf = (
       { kind: 'prizes', rect: prizes },
       { kind: 'deck', rect: deck, countAnchor: 'pile' },
       { kind: 'discard', rect: discard, countAnchor: 'pile' },
-      { kind: 'lostZone', rect: lostZone, countAnchor: 'pile' },
+      {
+        kind: 'lostZone',
+        rect: lostZone ?? columnAt(2),
+        countAnchor: 'pile',
+      },
     ],
     cardHeights: { active, bench },
     middle: { left: middleLeft, right: Math.max(middleRight, benchRight) },
     seamMargin: margin,
     extras: {
-      ...(markers ? { markers } : {}),
+      ...(column.markers ? { markers: column.markers } : {}),
+      coin: column.coin,
       control,
-      ...(corner ? { corner } : {}),
-      ...(corner && options.markersBelowBar
-        ? { markersRow: true as const }
-        : {}),
     },
+    lostZoneBeside,
+    boardMinWidth: pileWidth,
   };
 };
 
@@ -620,12 +609,13 @@ const PORTRAIT_PILE_GAP_PX = 12;
 /**
  * One half of a table that is tall for its width -- a phone held upright, a
  * tablet in portrait -- in its own frame, centre line at the top. The mat's
- * columns become rows: the Active (with the staging area beside it), the
- * bench across the full width, then a row of prizes (three by two) and the
- * deck, discard and Lost Zone side by side, and the hand at the edge. Every
- * card is sized from the bench card, the largest that lets five and a half
- * fit across and every row fit down. The rows sit at the player's edge; any
- * height left over widens the clear band at the centre line.
+ * columns become rows: the Active (the markers and coin on its left, the
+ * staging area on its right), the bench across the full width, then a row
+ * of prizes (three by two) and the deck, discard and Lost Zone side by
+ * side, and the hand at the edge. Every card is sized from the bench card,
+ * the largest that lets five and a half fit across and every row fit down.
+ * The rows sit at the player's edge; any height left over widens the clear
+ * band at the centre line.
  */
 const layoutHalfPortrait = (
   width: number,
@@ -639,30 +629,11 @@ const layoutHalfPortrait = (
   const gap = Math.max(6, Math.min(12, height * 0.02));
   const rowsShare = proportions.active + 1 + proportions.pile;
   const free = Math.max(0, height - margin - 3 * gap);
-  // Across the table the hand starts past the app bar. Its markers, in a
-  // corner past the bar, would leave it too little on a narrow screen:
-  // they sit below the bar instead, in a row the strip makes room for.
-  const pastBar = options.handStartReservePx ?? 0;
-  const markerCount = Math.max(0, Math.min(2, options.markerCount ?? 0));
-  const markersBelowBar =
-    options.markersBelowBar !== false &&
-    pastBar > 0 &&
-    markerCount > 0 &&
-    width -
-      edge -
-      HAND_COUNT_SLOT_PX -
-      pastBar -
-      Math.max(
-        TABLE_CONTROL_CORNER_PX,
-        16 + markerCount * COMPACT_CORNER_MARKER_PX
-      ) <
-      MIN_FAR_HAND_PX;
-  // A portrait hand strip is at least tall enough for the corner's
-  // controls side by side, so the pile row above stays clear of them.
-  // At least as deep as the app bar's corner, across the table.
+  // A portrait hand strip is at least as deep as v1's corner controls side
+  // by side, and across the table as the app bar's corner.
   const wantedStrip = Math.max(
     TABLE_COMPACT_CORNER_HEIGHT_PX,
-    (options.minHandStripPx ?? 0) + (markersBelowBar ? MARKER_ROW_PX : 0)
+    options.minHandStripPx ?? 0
   );
   // Never so deep that the board keeps no rows to speak of: on the
   // smallest tables the bar's corner gives way first.
@@ -682,17 +653,6 @@ const layoutHalfPortrait = (
     (width - 2 * edge) / (BENCH_FIT_CARDS * CARD_ASPECT_RATIO)
   );
   const active = bench * proportions.active;
-  // A markers' row that leaves the board next to nothing gives way: the
-  // markers take the corner past the bar, the hand cramped.
-  if (
-    markersBelowBar &&
-    (active < MIN_BOARD_ROW_PX || minStrip < wantedStrip)
-  ) {
-    return layoutHalfPortrait(width, height, {
-      ...options,
-      markersBelowBar: false,
-    });
-  }
   const handStrip = Math.min(
     height,
     Math.max(bench * proportions.handStrip, minStrip)
@@ -734,10 +694,41 @@ const layoutHalfPortrait = (
   const benchTop = pileTop - gap - bench;
   const activeTop = Math.max(0, benchTop - gap - active);
 
+  // The markers and coin at the row's outer left, as beside the prizes on
+  // the mat, with the control for the optional pieces just past them; the
+  // Active keeps clear of both, and the staging area takes the room on its
+  // right. The Stadium straddles the centre line on the near player's left,
+  // in the clear band or past the pieces (createTableLayoutSnapshot).
+  const markerCount = Math.max(0, Math.min(2, options.markerCount ?? 0));
+  const column = piecesColumn(
+    edge,
+    activeTop,
+    pileWidth,
+    active,
+    gap,
+    markerCount
+  );
+  const beforeActive =
+    column.width +
+    gap +
+    (options.stadiumBeside
+      ? Math.max(
+          EXTRAS_CONTROL_PX,
+          bench * CARD_ASPECT_RATIO * (1 + STADIUM_ACTIVE_GAP_SHARE) +
+            STADIUM_CLEARANCE_PX
+        )
+      : EXTRAS_CONTROL_PX) +
+    gap;
   const centre = width / 2;
   const activeWidth = Math.min(
     width - 2 * edge,
-    active * CARD_ASPECT_RATIO * 2.2
+    Math.max(
+      active * CARD_ASPECT_RATIO,
+      Math.min(
+        active * CARD_ASPECT_RATIO * ACTIVE_SLOT_CARDS,
+        width - 2 * (edge + beforeActive)
+      )
+    )
   );
   const activeRect: Rect = {
     x: centre - activeWidth / 2,
@@ -745,11 +736,26 @@ const layoutHalfPortrait = (
     width: activeWidth,
     height: active,
   };
-  // The staging area (v1's loose board) beside the Active, toward the prizes.
+  const control: Rect = {
+    x: edge + column.width + gap,
+    y: activeTop + active - EXTRAS_CONTROL_INSET_PX - EXTRAS_CONTROL_PX,
+    width: EXTRAS_CONTROL_PX,
+    height: EXTRAS_CONTROL_PX,
+  };
+  // The staging area (v1's loose board) beside the Active on its right;
+  // across the table it starts past the Stadium where that leaves it a
+  // card wide.
+  const boardStart = activeRect.x + activeRect.width + gap;
+  const boardEnd = width - edge;
+  const reserve = options.boardStartReservePx ?? 0;
+  const boardLeft =
+    boardEnd - (boardStart + reserve) >= pileWidth
+      ? boardStart + reserve
+      : boardStart;
   const boardRect: Rect = {
-    x: edge,
+    x: boardLeft,
     y: activeTop,
-    width: Math.max(0, activeRect.x - gap - edge),
+    width: Math.max(0, boardEnd - boardLeft),
     height: active,
   };
   const benchRect: Rect = {
@@ -770,28 +776,16 @@ const layoutHalfPortrait = (
     width: pileWidth,
     height: pile,
   });
-  const corner: Rect | undefined = markersBelowBar
-    ? {
-        x: edge,
-        y: handTop,
-        width: Math.min(
-          width - 2 * edge,
-          16 + markerCount * COMPACT_CORNER_MARKER_PX
-        ),
-        height: MARKER_ROW_PX,
-      }
-    : cornerPastBar(pastBar, markerCount, handTop, handStrip, width - edge);
+  // Across the table the hand starts past the app bar.
   const handStart = Math.max(
     TABLE_CONTROL_CORNER_PX,
-    corner && !markersBelowBar ? corner.x + corner.width : pastBar
+    options.handStartReservePx ?? 0
   );
-  // Below the bar, the markers' row lies between the hand and the piles.
-  const handInset = markersBelowBar ? MARKER_ROW_PX : 0;
   const handRect: Rect = {
     x: handStart,
-    y: handTop + handInset,
+    y: handTop,
     width: Math.max(0, width - edge - HAND_COUNT_SLOT_PX - handStart),
-    height: handStrip - handInset,
+    height: handStrip,
   };
   return {
     regions: [
@@ -807,19 +801,14 @@ const layoutHalfPortrait = (
     cardHeights: { active, bench },
     middle: { left: edge, right: width - edge },
     seamMargin: activeTop,
-    // On an upright phone the optional pieces keep their places (the Lost
-    // Zone in the pile row, the markers by the hand); the control that adds
-    // them sits in the staging area's corner.
+    // On an upright phone the Lost Zone keeps its place in the pile row.
     extras: {
-      control: {
-        x: boardRect.x + 6,
-        y: activeTop + active - 6 - EXTRAS_CONTROL_PX,
-        width: EXTRAS_CONTROL_PX,
-        height: EXTRAS_CONTROL_PX,
-      },
-      ...(corner ? { corner } : {}),
-      ...(corner && markersBelowBar ? { markersRow: true as const } : {}),
+      ...(column.markers ? { markers: column.markers } : {}),
+      coin: column.coin,
+      control,
     },
+    lostZoneBeside: false,
+    boardMinWidth: pileWidth,
   };
 };
 
@@ -830,25 +819,6 @@ const benchCardHeightOf = (geometry: HalfGeometry): number =>
     (geometry.middle.right - geometry.middle.left) /
       (BENCH_FIT_CARDS * CARD_ASPECT_RATIO)
   );
-
-/**
- * Whether the portrait mat is the one, chosen as the half would be without
- * its markers: where they go (past the bar or below it) costs a layout up
- * to a row, and must not swap mat and portrait back and forth as the
- * window grows a pixel at a time.
- */
-const portraitChosen = (
-  options: HalfOptions,
-  candidates: (options: HalfOptions) => {
-    readonly landscape: HalfGeometry;
-    readonly portrait: HalfGeometry;
-  }
-): boolean => {
-  const { landscape, portrait } = candidates(
-    options.markerCount ? { ...options, markerCount: 0 } : options
-  );
-  return bestOf(landscape, portrait) === portrait;
-};
 
 const handWidthOf = (geometry: HalfGeometry): number =>
   geometry.regions.find((region) => region.kind === 'hand')?.rect.width ?? 0;
@@ -896,22 +866,15 @@ const atPlayerEdge = (geometry: HalfGeometry, band: number): HalfGeometry => {
     cardHeights: geometry.cardHeights,
     middle: geometry.middle,
     seamMargin: geometry.seamMargin + band,
-    ...(geometry.extras
-      ? {
-          extras: {
-            ...(geometry.extras.markers
-              ? { markers: lowered(geometry.extras.markers) }
-              : {}),
-            control: lowered(geometry.extras.control),
-            ...(geometry.extras.corner
-              ? { corner: lowered(geometry.extras.corner) }
-              : {}),
-            ...(geometry.extras.markersRow
-              ? { markersRow: true as const }
-              : {}),
-          },
-        }
-      : {}),
+    extras: {
+      ...(geometry.extras.markers
+        ? { markers: lowered(geometry.extras.markers) }
+        : {}),
+      coin: lowered(geometry.extras.coin),
+      control: lowered(geometry.extras.control),
+    },
+    lostZoneBeside: geometry.lostZoneBeside,
+    boardMinWidth: geometry.boardMinWidth,
   };
 };
 
@@ -922,16 +885,9 @@ const layoutTableHalf = (
 ): HalfGeometry => {
   // Mat or portrait mat is chosen at the frame's full height, so fitting
   // the mat shorter never turns it into the other.
-  const candidates = (
-    chosen: HalfOptions
-  ): { readonly landscape: HalfGeometry; readonly portrait: HalfGeometry } => ({
-    landscape: layoutHalf(width, height, chosen),
-    portrait: layoutHalfPortrait(width, height, chosen),
-  });
-  const { landscape, portrait } = candidates(options);
-  const portraitWins = options.markerCount
-    ? portraitChosen(options, candidates)
-    : bestOf(landscape, portrait) === portrait;
+  const landscape = layoutHalf(width, height, options);
+  const portrait = layoutHalfPortrait(width, height, options);
+  const portraitWins = bestOf(landscape, portrait) === portrait;
   const fitted = options.fitHeight;
   if (fitted === undefined || fitted >= height) {
     return portraitWins ? portrait : landscape;
@@ -966,54 +922,47 @@ const layoutSoloHalf = (
       SOLO_SEAM_BAND_PX,
       (options.seamBandPx ?? 0) + 2 * SOLO_CONTROLS_GAP_PX
     ) + (options.topReservePx ?? 0);
-  const candidates = (
-    chosen: HalfOptions
-  ): { readonly landscape: HalfGeometry; readonly portrait: HalfGeometry } => {
-    // Tall, the portrait mat takes the whole height: its rows sit at the
-    // player's edge and the rest of the height is the band already.
-    const portrait = layoutHalfPortrait(width, height, {
-      seamBandPx: 2 * soloBand,
-      ...(chosen.markerCount ? { markerCount: chosen.markerCount } : {}),
-      ...(chosen.handStartReservePx
-        ? { handStartReservePx: chosen.handStartReservePx }
-        : {}),
-      ...(chosen.minHandStripPx
-        ? { minHandStripPx: chosen.minHandStripPx }
-        : {}),
-    });
-    const fits = (candidate: number): boolean => {
-      const geometry = layoutHalf(width, candidate, chosen);
-      return (
-        BENCH_FIT_CARDS * geometry.cardHeights.bench * CARD_ASPECT_RATIO <=
-        geometry.middle.right - geometry.middle.left
-      );
-    };
-    const available = Math.max(0, height - soloBand);
-    let fitted = available;
-    if (!fits(available)) {
-      // Taller only ever means bigger cards and a narrower middle.
-      let low = 0;
-      let high = available;
-      for (let step = 0; step < 24; step += 1) {
-        const middle = (low + high) / 2;
-        if (fits(middle)) low = middle;
-        else high = middle;
-      }
-      fitted = Math.max(low, height * EVEN_SPLIT_SHARE);
-    }
-    return {
-      landscape: atPlayerEdge(
-        layoutHalf(width, fitted, chosen),
-        height - fitted
-      ),
-      portrait,
-    };
+  // Tall, the portrait mat takes the whole height: its rows sit at the
+  // player's edge and the rest of the height is the band already.
+  const portrait = layoutHalfPortrait(width, height, {
+    seamBandPx: 2 * soloBand,
+    stadiumBeside: true,
+    ...(options.markerCount ? { markerCount: options.markerCount } : {}),
+    ...(options.boardStartReservePx
+      ? { boardStartReservePx: options.boardStartReservePx }
+      : {}),
+    ...(options.handStartReservePx
+      ? { handStartReservePx: options.handStartReservePx }
+      : {}),
+    ...(options.minHandStripPx
+      ? { minHandStripPx: options.minHandStripPx }
+      : {}),
+  });
+  const fits = (candidate: number): boolean => {
+    const geometry = layoutHalf(width, candidate, options);
+    return (
+      BENCH_FIT_CARDS * geometry.cardHeights.bench * CARD_ASPECT_RATIO <=
+      geometry.middle.right - geometry.middle.left
+    );
   };
-  const { landscape, portrait } = candidates(options);
-  const portraitWins = options.markerCount
-    ? portraitChosen(options, candidates)
-    : bestOf(landscape, portrait) === portrait;
-  return portraitWins ? portrait : landscape;
+  const available = Math.max(0, height - soloBand);
+  let fitted = available;
+  if (!fits(available)) {
+    // Taller only ever means bigger cards and a narrower middle.
+    let low = 0;
+    let high = available;
+    for (let step = 0; step < 24; step += 1) {
+      const middle = (low + high) / 2;
+      if (fits(middle)) low = middle;
+      else high = middle;
+    }
+    fitted = Math.max(low, height * EVEN_SPLIT_SHARE);
+  }
+  const landscape = atPlayerEdge(
+    layoutHalf(width, fitted, options),
+    height - fitted
+  );
+  return bestOf(landscape, portrait) === portrait ? portrait : landscape;
 };
 
 /** A rect in a half's own frame placed in the window. */
@@ -1113,6 +1062,195 @@ const framesFor = (
     return { lower: { ...lower, y: viewport.height }, upper: whole };
   }
   return { lower, upper };
+};
+
+/** The area two rects share. */
+const overlapArea = (left: Rect, right: Rect): number =>
+  Math.max(
+    0,
+    Math.min(left.x + left.width, right.x + right.width) -
+      Math.max(left.x, right.x)
+  ) *
+  Math.max(
+    0,
+    Math.min(left.y + left.height, right.y + right.height) -
+      Math.max(left.y, right.y)
+  );
+
+/** A rect grown by `by` on every side. */
+const grown = (rect: Rect, by: number): Rect => ({
+  x: rect.x - by,
+  y: rect.y - by,
+  width: rect.width + 2 * by,
+  height: rect.height + 2 * by,
+});
+
+/**
+ * The Stadium, beside the Actives on the screen's left (`toLeft`) or right,
+ * aimed at `top` and STADIUM_ACTIVE_GAP_SHARE of its width clear of them,
+ * never past their edge. Where that would lie on or by anything on the
+ * table (`obstacles`: the zones, the pieces, the app bar), or on a staging
+ * area (`soft`: one that may run under its edge), it takes the nearest
+ * place that covers the least of them -- obstacles first -- along the row
+ * before off it.
+ */
+const placeStadiumAt = (
+  size: { readonly width: number; readonly height: number },
+  top: number,
+  actives: readonly Rect[],
+  obstacles: readonly Rect[],
+  soft: StagingRoom | undefined,
+  toLeft: boolean,
+  playArea: Rect
+): { readonly rect: Rect; readonly cover: number; readonly under: number } => {
+  const { width, height } = size;
+  const inner = toLeft
+    ? Math.min(...actives.map((active) => active.x))
+    : Math.max(...actives.map((active) => active.x + active.width));
+  const aside = width * STADIUM_ACTIVE_GAP_SHARE;
+  // Within the play area, and on its own side of the Actives.
+  const least = Math.max(
+    playArea.x + STADIUM_CLEARANCE_PX,
+    toLeft ? -Infinity : inner + 1
+  );
+  const most = Math.min(
+    playArea.x + playArea.width - STADIUM_CLEARANCE_PX - width,
+    toLeft ? inner - 1 - width : Infinity
+  );
+  const clampX = (x: number): number => Math.min(most, Math.max(least, x));
+  const clampY = (y: number): number =>
+    Math.min(playArea.y + playArea.height - height, Math.max(playArea.y, y));
+  const aimX = clampX(toLeft ? inner - aside - width : inner + aside);
+  const aimY = clampY(top);
+  const coverAt = (rect: Rect, among: readonly Rect[], by: number): number =>
+    among.reduce(
+      (sum, obstacle) => sum + overlapArea(grown(obstacle, by), rect),
+      0
+    );
+  const aimed: Rect = { x: aimX, y: aimY, width, height };
+  const all = [...obstacles, ...(soft ? [soft.board] : [])].filter(
+    (rect) => rect.width > 0 && rect.height > 0
+  );
+  const underAt = (rect: Rect): number => (soft ? stagingUnder(soft, rect) : 0);
+  // What lies within a Stadium's size of where it aims.
+  const near = all.filter(
+    (rect) => overlapArea(grown(rect, Math.max(width, height)), aimed) > 0
+  );
+  if (
+    coverAt(
+      aimed,
+      near.filter((rect) => rect !== soft?.board),
+      STADIUM_CLEARANCE_PX
+    ) === 0 &&
+    underAt(aimed) === 0
+  ) {
+    return { rect: aimed, cover: 0, under: 0 };
+  }
+  const xs = [
+    aimX,
+    ...near.flatMap((rect) => [
+      rect.x + rect.width + STADIUM_CLEARANCE_PX,
+      rect.x - STADIUM_CLEARANCE_PX - width,
+    ]),
+  ].map(clampX);
+  const ys = [
+    aimY,
+    ...near.flatMap((rect) => [
+      rect.y + rect.height + STADIUM_CLEARANCE_PX,
+      rect.y - STADIUM_CLEARANCE_PX - height,
+    ]),
+  ].map(clampY);
+  let best:
+    | {
+        readonly rect: Rect;
+        readonly cover: number;
+        readonly under: number;
+        readonly cost: number;
+      }
+    | undefined;
+  for (const x of xs) {
+    for (const y of ys) {
+      const rect: Rect = { x, y, width, height };
+      const cover = coverAt(rect, obstacles, STADIUM_CLEARANCE_PX);
+      const under = underAt(rect);
+      // Off the row costs more than along it.
+      const cost = Math.abs(x - aimX) + 2 * Math.abs(y - aimY);
+      if (
+        !best ||
+        cover < best.cover - 0.01 ||
+        (cover <= best.cover + 0.01 &&
+          (under < best.under - 0.5 ||
+            (under <= best.under + 0.5 && cost < best.cost)))
+      ) {
+        best = { rect, cover, under, cost };
+      }
+    }
+  }
+  return best ?? { rect: aimed, cover: 0, under: 0 };
+};
+
+/**
+ * The Stadium as large as a bench card (`size`) where it has a clear place
+ * (placeStadiumAt), or else the largest of STADIUM_FIT_SHARES of it that
+ * has one: on a small table a smaller Stadium is better than one over a
+ * zone. With none clear, the full size's best place.
+ */
+const placeStadium = (
+  size: { readonly width: number; readonly height: number },
+  top: number,
+  actives: readonly Rect[],
+  obstacles: readonly Rect[],
+  soft: StagingRoom | undefined,
+  toLeft: boolean,
+  playArea: Rect
+): ReturnType<typeof placeStadiumAt> => {
+  const full = placeStadiumAt(
+    size,
+    top,
+    actives,
+    obstacles,
+    soft,
+    toLeft,
+    playArea
+  );
+  if (full.cover === 0 && full.under === 0) return full;
+  for (const share of STADIUM_FIT_SHARES) {
+    const smaller = placeStadiumAt(
+      { width: size.width * share, height: size.height * share },
+      // Still level with where the full size was aimed.
+      top + (size.height * (1 - share)) / 2,
+      actives,
+      obstacles,
+      soft,
+      toLeft,
+      playArea
+    );
+    if (smaller.cover === 0 && smaller.under === 0) return smaller;
+  }
+  return full;
+};
+
+/**
+ * A staging area beside the Stadium's place: it makes room for it from its
+ * Active end (`fromRight`: that end on the screen's right) while it keeps
+ * `minWidth`.
+ */
+interface StagingRoom {
+  readonly board: Rect;
+  readonly fromRight: boolean;
+  readonly minWidth: number;
+}
+
+/** How much of a staging area a Stadium there lies over, once it makes room. */
+const stagingUnder = (room: StagingRoom, stadium: Rect): number => {
+  const { board, fromRight, minWidth } = room;
+  if (overlapArea(board, stadium) === 0) return 0;
+  const kept = fromRight
+    ? stadium.x - STADIUM_CLEARANCE_PX - board.x
+    : board.x +
+      board.width -
+      (stadium.x + stadium.width + STADIUM_CLEARANCE_PX);
+  return kept >= minWidth ? 0 : overlapArea(board, stadium);
 };
 
 /**
@@ -1270,38 +1408,23 @@ export const createTableLayoutSnapshot = (
         frameBounds,
         regions,
         ...(hidden === template.physicalSide ? { hidden: true as const } : {}),
-        ...(geometry.extras
-          ? {
-              extras: {
-                ...(geometry.extras.markers
-                  ? {
-                      markers: toPhysical(
-                        geometry.extras.markers,
-                        frameBounds,
-                        template.side
-                      ),
-                    }
-                  : {}),
-                control: toPhysical(
-                  geometry.extras.control,
+        extras: {
+          ...(geometry.extras.markers
+            ? {
+                markers: toPhysical(
+                  geometry.extras.markers,
                   frameBounds,
                   template.side
                 ),
-                ...(geometry.extras.corner
-                  ? {
-                      corner: toPhysical(
-                        geometry.extras.corner,
-                        frameBounds,
-                        template.side
-                      ),
-                    }
-                  : {}),
-                ...(geometry.extras.markersRow
-                  ? { markersRow: true as const }
-                  : {}),
-              },
-            }
-          : {}),
+              }
+            : {}),
+          coin: toPhysical(geometry.extras.coin, frameBounds, template.side),
+          control: toPhysical(
+            geometry.extras.control,
+            frameBounds,
+            template.side
+          ),
+        },
       },
       geometry,
     };
@@ -1329,19 +1452,93 @@ export const createTableLayoutSnapshot = (
       : {}),
   };
   let upper = buildPlayer(semantics.players[1], frames.upper, farOptions);
+  const regionOf = (
+    player: BoardPlayerLayout,
+    kind: BoardLayoutRegionKind
+  ): Rect | undefined =>
+    player.regions.find((region) => region.kind === kind)
+      ?.physicalDeclaredBounds;
   const activeOf = (player: BoardPlayerLayout): Rect =>
-    player.regions.find((region) => region.kind === 'active')!
-      .physicalDeclaredBounds;
+    regionOf(player, 'active')!;
+  /**
+   * What the Stadium keeps clear of on a half: its zones and pieces, all
+   * but its staging area where that makes room for it (`board`: false).
+   */
+  const obstaclesOf = (player: BoardPlayerLayout, board: boolean): Rect[] => {
+    const extras = player.extras;
+    return [
+      ...player.regions
+        .filter(
+          (region) =>
+            region.kind !== 'hand' && (board || region.kind !== 'board')
+        )
+        .map((region) => region.physicalDeclaredBounds),
+      ...(extras?.markers ? [extras.markers] : []),
+      ...(extras ? [extras.coin, extras.control] : []),
+    ];
+  };
+  /** A half's staging area, making room from its end on that side of the screen. */
+  const stagingOf = (
+    built: {
+      readonly player: BoardPlayerLayout;
+      readonly geometry: HalfGeometry;
+    },
+    fromRight: boolean
+  ): StagingRoom | undefined => {
+    const board = regionOf(built.player, 'board');
+    return board
+      ? { board, fromRight, minWidth: built.geometry.boardMinWidth }
+      : undefined;
+  };
+  // The app bar in the window's top-right corner (ADR-036).
+  const barBox: Rect[] = appBarPx
+    ? [
+        {
+          x: playAreaWidth - APP_BAR_INSET_PX - appBarPx.width,
+          y: APP_BAR_INSET_PX,
+          width: appBarPx.width,
+          height: appBarPx.height,
+        },
+      ]
+    : [];
+  /**
+   * How much of the shown halves, and their pieces, the Stadium lies over;
+   * `boards: false`, but for their staging areas.
+   */
+  const coveredBy = (
+    stadium: Rect,
+    built: readonly { readonly player: BoardPlayerLayout }[],
+    boards = true
+  ): number => {
+    let area = 0;
+    for (const { player } of built) {
+      if (player.hidden) continue;
+      const extras = player.extras;
+      for (const box of [
+        ...player.regions
+          .filter(
+            (region) =>
+              region.kind !== 'hand' && (boards || region.kind !== 'board')
+          )
+          .map((region) => region.physicalDeclaredBounds),
+        ...(extras?.markers ? [extras.markers] : []),
+        ...(extras ? [extras.coin, extras.control] : []),
+      ]) {
+        area += overlapArea(box, stadium);
+      }
+    }
+    return area;
+  };
 
   let stadium: Rect;
   let controls: { readonly y: number; readonly height: number };
   let controlsLeft: number;
   if (hidden === undefined) {
-    // The seam between the halves: the stadium straddles it to the right of
+    // The seam between the halves: the Stadium straddles it to the left of
     // the Actives, the board controls sit at its left.
     const seamY = lower.player.frameBounds.y;
     // Both halves laid out `scale` of their frames tall, at the players'
-    // edges, with the Stadium straddling the seam to the right of the
+    // edges, with the Stadium straddling the seam to the left of the
     // Actives.
     //
     // The search lays the far half out as it would be without the app bar,
@@ -1355,138 +1552,73 @@ export const createTableLayoutSnapshot = (
     const splitAt = (scale: number, withBar = false, farScale?: number) => {
       const fit = (frame: Rect, share: number): HalfOptions =>
         share < 1 ? { fitHeight: frame.height * share } : {};
-      const near = buildPlayer(semantics.players[0], frames.lower, {
+      let nearFit: HalfOptions = {
         ...halfOptions,
         ...fit(frames.lower, scale),
-      });
-      const farFit = {
+      };
+      let farFit: HalfOptions = {
         ...(withBar ? farOptions : farWithoutBar),
         ...(farScale === undefined
           ? fit(frames.upper, scale)
           : { ...fit(frames.upper, farScale), fitPortrait: true }),
       };
+      let near = buildPlayer(semantics.players[0], frames.lower, nearFit);
       let far = buildPlayer(semantics.players[1], frames.upper, farFit);
-      let stagingFar = far;
-      let markersMoved = false;
+      // One mat on both sides: the Lost Zone lies beside the prizes on both
+      // halves or on neither.
+      if (near.geometry.lostZoneBeside !== far.geometry.lostZoneBeside) {
+        nearFit = { ...nearFit, lostZoneBeside: false };
+        farFit = { ...farFit, lostZoneBeside: false };
+        near = buildPlayer(semantics.players[0], frames.lower, nearFit);
+        far = buildPlayer(semantics.players[1], frames.upper, farFit);
+      }
       const stadiumHeight = Math.min(
         near.geometry.cardHeights.bench,
         far.geometry.cardHeights.bench
       );
-      const stadiumWidth = stadiumHeight * CARD_ASPECT_RATIO;
-      const nearActive = activeOf(near.player);
-      const placed: Rect = {
-        x: Math.min(
-          playAreaWidth - stadiumWidth - 8,
-          nearActive.x + nearActive.width + stadiumWidth * 0.35
-        ),
-        y: seamY - stadiumHeight / 2,
-        width: stadiumWidth,
-        height: stadiumHeight,
-      };
-      // How much of the far half's board, and its markers, the Stadium
-      // lies over.
-      const coveredBy = (built: typeof far): number => {
-        let area = 0;
-        const markers = built.player.extras?.markers;
-        for (const box of [
-          ...built.player.regions
-            .filter((region) => region.kind !== 'hand')
-            .map((region) => region.physicalDeclaredBounds),
-          ...(markers ? [markers] : []),
-        ]) {
-          area +=
-            Math.max(
-              0,
-              Math.min(box.x + box.width, placed.x + placed.width) -
-                Math.max(box.x, placed.x)
-            ) *
-            Math.max(
-              0,
-              Math.min(box.y + box.height, placed.y + placed.height) -
-                Math.max(box.y, placed.y)
-            );
-        }
-        return area;
-      };
-      // The far half's staging area lies beside its Active on the Stadium's
-      // side of the table; it stops short of the Stadium instead of running
-      // under it (layoutHalf keeps it whole where that would leave it less
-      // than a pile wide).
-      const farBoard = far.player.regions.find(
-        (region) => region.kind === 'board'
-      )?.physicalDeclaredBounds;
+      const placed = placeStadium(
+        {
+          width: stadiumHeight * CARD_ASPECT_RATIO,
+          height: stadiumHeight,
+        },
+        seamY - stadiumHeight / 2,
+        [activeOf(near.player), activeOf(far.player)],
+        [
+          ...obstaclesOf(near.player, true),
+          ...obstaclesOf(far.player, false),
+          ...barBox,
+        ],
+        stagingOf(far, true),
+        true,
+        playAreaBounds
+      ).rect;
+      // The far half's staging area lies beside its Active on the
+      // Stadium's side of the table; it starts past the Stadium instead of
+      // running under it (layoutHalf keeps it whole where that would leave
+      // it less than a pile wide).
+      const farBoard = regionOf(far.player, 'board');
       const reserve = farBoard
-        ? placed.x + placed.width + STADIUM_CLEARANCE_PX - farBoard.x
+        ? farBoard.x + farBoard.width - (placed.x - STADIUM_CLEARANCE_PX)
         : 0;
-      if (
-        farBoard &&
-        reserve > 0 &&
-        farBoard.y < placed.y + placed.height &&
-        farBoard.y + farBoard.height > placed.y &&
-        farBoard.x < placed.x + placed.width
-      ) {
+      if (farBoard && reserve > 0 && overlapArea(farBoard, placed) > 0) {
         far = buildPlayer(semantics.players[1], frames.upper, {
           ...farFit,
-          boardEndReservePx: reserve,
+          boardStartReservePx: reserve,
         });
-        // The staging area's room is read before the pieces below move:
-        // what they leave it lies under the Stadium.
-        stagingFar = far;
-        // The markers and Lost Zone beside the prizes are never under it
-        // beyond a sliver (a press there would turn a marker over): what is
-        // under goes back to its old place -- the Lost Zone to its column,
-        // the markers by the hand -- and the staging area, which may run
-        // under its edge, takes the room.
-        const under = (box: Rect | undefined): boolean => {
-          if (!box) return false;
-          const across =
-            Math.min(box.x + box.width, placed.x + placed.width) -
-            Math.max(box.x, placed.x);
-          const down =
-            Math.min(box.y + box.height, placed.y + placed.height) -
-            Math.max(box.y, placed.y);
-          return (
-            across > 0 && down > 0 && across * down > STADIUM_OVERLAP_SLACK_PX2
-          );
-        };
-        const lostZoneUnder = under(
-          far.player.regions.find((region) => region.kind === 'lostZone')
-            ?.physicalDeclaredBounds
-        );
-        if (!under(far.player.extras?.markers) && lostZoneUnder) {
-          far = buildPlayer(semantics.players[1], frames.upper, {
-            ...farFit,
-            boardEndReservePx: reserve,
-            lostZoneBeside: false,
-          });
-        }
-        if (under(far.player.extras?.markers)) {
-          far = buildPlayer(semantics.players[1], frames.upper, {
-            ...farFit,
-            boardEndReservePx: reserve,
-            piecesBesidePrizes: false,
-          });
-          markersMoved = true;
-        }
       }
-      const staging =
-        stagingFar.player.regions.find((region) => region.kind === 'board')
-          ?.physicalDeclaredBounds.width ?? Infinity;
-      const covered = coveredBy(far);
+      const staged = regionOf(far.player, 'board');
       return {
         near,
         far,
         stadium: placed,
-        // The far staging area still holds a card beside the Stadium (with
-        // a hair to spare, so the search never settles a rounding short).
-        fits: staging >= stadiumWidth + 0.5,
-        covered,
-        // The markers were moved off the prizes, from under the Stadium.
-        markersMoved,
-        // The far hand as it was with them still beside the prizes.
-        besideHand:
-          stagingFar.player.regions.find((region) => region.kind === 'hand')
-            ?.physicalDeclaredBounds.width ?? 0,
+        // The far staging area still holds a card beside the Stadium, clear
+        // of it (with a hair to spare, so the search never settles a
+        // rounding short).
+        fits:
+          staged !== undefined &&
+          staged.width >= placed.width + 0.5 &&
+          overlapArea(staged, placed) <= STADIUM_OVERLAP_SLACK_PX2,
+        covered: coveredBy(placed, [near, far]),
       };
     };
     let scale = 1;
@@ -1510,70 +1642,18 @@ export const createTableLayoutSnapshot = (
     let split = splitAt(scale, true);
     if (appBarPx) {
       // The bar can change the far half -- a cramped hand there takes the
-      // mat, its cards bigger; a markers' row below the bar pushes its rows
-      // toward the seam -- so that the Stadium lies over more of it than it
-      // would without the bar. The far half alone then takes the tallest
-      // fit that clears it as well, keeping its markers' row; the near half
-      // is kept as it was.
+      // mat, its cards bigger -- so that the Stadium lies over more of it
+      // than it would without the bar. The far half alone then takes the
+      // tallest fit that clears it as well; the near half is kept as it
+      // was.
       const plain = splitAt(scale);
-      const unfitted = split;
-      const rowed = (candidate: typeof split): boolean =>
-        candidate.far.player.extras?.markersRow === true;
-      // A row the markers took only because they were moved off the prizes
-      // is no row to keep.
-      const keepsRow = (candidate: typeof split): boolean =>
-        !rowed(unfitted) || unfitted.markersMoved || rowed(candidate);
-      const activeOf = (candidate: typeof split): number =>
-        candidate.far.geometry.cardHeights.active;
-      // Markers moved off the prizes cost the far half its hand's room or
-      // a row: a slightly shorter fit that keeps them there, clear, is
-      // better, while it keeps most of the far Active.
-      const keepsActive = (candidate: typeof split): boolean =>
-        activeOf(candidate) >= activeOf(unfitted) * MOVED_MARKERS_ACTIVE_SHARE;
-      // Whether moving the markers cramped the hand by a fifth, judged once
-      // from the fit before they moved (judged per candidate, it became a
-      // target the search shrank the far half to reach).
-      // The hand past a corner by the bar at its roomiest, as whether to
-      // take that corner at all is judged (cornerPastBar's `roomy`): the
-      // corner drawn holds its markers side by side, narrower, and judged
-      // by it, moving them would seem to cost the hand less than it did.
-      const roomyHandOf = (candidate: typeof split): number => {
-        const extras = candidate.far.player.extras;
-        const hand = candidate.far.player.regions.find(
-          (region) => region.kind === 'hand'
-        )?.physicalDeclaredBounds;
-        if (!hand || !extras?.corner || extras.markersRow) {
-          return hand?.width ?? 0;
-        }
-        const roomy =
-          hand.height < TABLE_CONTROL_CORNER_HEIGHT_PX
-            ? Math.max(
-                TABLE_CONTROL_CORNER_PX,
-                16 + (oncePerGameMarkers ?? 0) * COMPACT_CORNER_MARKER_PX
-              )
-            : TABLE_CONTROL_CORNER_PX;
-        return hand.width - Math.max(0, roomy - extras.corner.width);
-      };
-      const handCost =
-        unfitted.markersMoved &&
-        unfitted.besideHand > roomyHandOf(unfitted) * 1.25;
-      // By the prizes in fact (a fit whose markers never fit there moved
-      // none, but keeps none there either), and only where moving them
-      // cost the far half: a smaller Active, or that hand.
-      const keepsMarkers = (candidate: typeof split): boolean =>
-        !unfitted.markersMoved ||
-        (candidate.far.player.extras?.markers !== undefined &&
-          keepsActive(candidate) &&
-          (activeOf(candidate) > activeOf(unfitted) + 0.5 || handCost));
       const clear = (candidate: typeof split): boolean =>
         (candidate.fits || !plain.fits) &&
-        candidate.covered <= plain.covered + STADIUM_OVERLAP_SLACK_PX2 &&
-        keepsRow(candidate) &&
-        keepsMarkers(candidate);
+        candidate.covered <= plain.covered + STADIUM_OVERLAP_SLACK_PX2;
       if (!clear(split)) {
-        // Shorter is not steadily clearer (piles shrink, the Lost Zone and
-        // the markers move, the staging area's reserve comes and goes), so
-        // the fits are tried downward and the first clear one refined.
+        // Shorter is not steadily clearer (piles shrink, the Lost Zone
+        // moves, the staging area's reserve comes and goes), so the fits
+        // are tried downward and the first clear one refined.
         const lowest =
           Math.min(scale, EVEN_SPLIT_SHARE / DEFAULT_LOWER_SHARE) *
           FAR_REFIT_FLOOR;
@@ -1593,49 +1673,15 @@ export const createTableLayoutSnapshot = (
         ) {
           tries.push(farScale);
         }
-        const clearButMarkers =
-          (unfitted.fits || !plain.fits) &&
-          unfitted.covered <= plain.covered + STADIUM_OVERLAP_SLACK_PX2 &&
-          keepsRow(unfitted);
-        let aboveMoved = unfitted.markersMoved;
         for (const farScale of tries) {
           const candidate = splitAt(scale, true, farScale);
-          // Between a fit whose markers were moved from under the Stadium
-          // and one with no room for them beside the prizes lies, where
-          // there is one, a window where they sit there clear -- often
-          // narrower than a step: its edge is found and tried.
-          if (
-            unfitted.markersMoved &&
-            aboveMoved &&
-            !candidate.markersMoved &&
-            candidate.far.player.extras?.markers === undefined
-          ) {
-            let high = above;
-            let low = farScale;
-            for (let step = 0; step < 16; step += 1) {
-              const middle = (low + high) / 2;
-              if (splitAt(scale, true, middle).markersMoved) high = middle;
-              else low = middle;
-            }
-            if (clear(splitAt(scale, true, low))) {
-              found = low;
-              above = high;
-              break;
-            }
-          }
-          aboveMoved = candidate.markersMoved;
           if (clear(candidate)) {
             found = farScale;
             break;
           }
-          // None clear: the one covered least, as good otherwise -- unless
-          // the fit found was clear but for its markers, moved: it stays,
-          // never traded for less cover than the table has without the bar.
+          // None clear: the one covered least, as good otherwise.
           if (
-            !clearButMarkers &&
-            (candidate.fits || !unfitted.fits) &&
-            keepsRow(candidate) &&
-            (!unfitted.markersMoved || keepsActive(candidate)) &&
+            (candidate.fits || !split.fits) &&
             candidate.covered < fallback.covered - STADIUM_OVERLAP_SLACK_PX2
           ) {
             fallback = candidate;
@@ -1670,27 +1716,22 @@ export const createTableLayoutSnapshot = (
     controls = { y: seamY - controlsHeight / 2, height: controlsHeight };
     controlsLeft = lower.geometry.middle.left;
   } else {
-    // One half fills the table. The stadium sits beside its Active on the
-    // player's own right (the staging area is on their left), level with
-    // the centre-line edge of the row, and the controls just past that edge
-    // of the row, as they sit at the seam; the rest of the clear band is
-    // where the hidden half would be.
-    const shown = hidden === 'upper' ? lower : upper;
-    const active = activeOf(shown.player);
-    const stadiumHeight = shown.geometry.cardHeights.bench;
-    const stadiumWidth = stadiumHeight * CARD_ASPECT_RATIO;
+    // One half fills the table. The Stadium lies beside its Active on the
+    // player's own left, beside their pieces, as on the near half with
+    // both shown (the staging area is on their right): in the row, level
+    // with its centre-line edge; the controls just past that edge of the
+    // row, as they sit at the seam; the rest of the clear band is where the
+    // hidden half would be.
     const atTop = hidden === 'upper';
-    stadium = {
-      x: atTop
-        ? Math.min(
-            playAreaWidth - stadiumWidth - 8,
-            active.x + active.width + stadiumWidth * 0.35
-          )
-        : Math.max(8, active.x - stadiumWidth * 1.35),
-      y: atTop ? active.y : active.y + active.height - stadiumHeight,
-      width: stadiumWidth,
-      height: stadiumHeight,
-    };
+    const template = semantics.players[atTop ? 0 : 1]!;
+    const frame = atTop ? frames.lower : frames.upper;
+    const options = atTop
+      ? appBarPx
+        ? { ...halfOptions, topReservePx: barReserve.topReservePx }
+        : halfOptions
+      : farOptions;
+    let shown = atTop ? lower : upper;
+    const active = activeOf(shown.player);
     const band = shown.geometry.seamMargin;
     const controlsHeight = Math.max(
       20,
@@ -1706,6 +1747,75 @@ export const createTableLayoutSnapshot = (
       height: controlsHeight,
     };
     controlsLeft = shown.geometry.middle.left;
+    // The controls' band stays clear: the Stadium may lie beyond it, in
+    // the band, but never on it -- its edge by the row as clear as the row
+    // is of it, and the far edge as far again as the controls are tall:
+    // tilted, the band is drawn shorter while the controls keep their
+    // size.
+    const reach = STADIUM_CLEARANCE_PX - SOLO_CONTROLS_GAP_PX;
+    const controlsBand: Rect = {
+      x: playAreaBounds.x,
+      y: atTop ? controls.y - controls.height : controls.y + reach,
+      width: playAreaBounds.width,
+      height: Math.max(0, 2 * controls.height - reach),
+    };
+    const stadiumHeight = shown.geometry.cardHeights.bench;
+    const size = {
+      width: stadiumHeight * CARD_ASPECT_RATIO,
+      height: stadiumHeight,
+    };
+    const top = atTop ? active.y : active.y + active.height - stadiumHeight;
+    /** The Stadium on the screen's left of the Active, or its right. */
+    const placedOn = (toLeft: boolean) => {
+      // The staging area lies on the player's own right: across the table
+      // that is the screen's left.
+      const boardSide = atTop !== toLeft;
+      const board = regionOf(shown.player, 'board');
+      const found = placeStadium(
+        size,
+        top,
+        [active],
+        [...obstaclesOf(shown.player, !boardSide), ...barBox, controlsBand],
+        boardSide ? stagingOf(shown, toLeft) : undefined,
+        toLeft,
+        playAreaBounds
+      );
+      const placed = found.rect;
+      const reserve =
+        !boardSide || !board
+          ? 0
+          : toLeft
+            ? board.x + board.width - (placed.x - STADIUM_CLEARANCE_PX)
+            : placed.x + placed.width + STADIUM_CLEARANCE_PX - board.x;
+      return {
+        found,
+        placed,
+        built:
+          board && reserve > 0 && overlapArea(board, placed) > 0
+            ? buildPlayer(template, frame, {
+                ...options,
+                boardStartReservePx: reserve,
+              })
+            : shown,
+      };
+    };
+    // The player's own left: across the table, the screen's right.
+    let chosen = placedOn(atTop);
+    if (chosen.found.cover > 0) {
+      // No clear place there (a small table): the other side, if clearer.
+      const other = placedOn(!atTop);
+      if (
+        other.found.cover < chosen.found.cover - 0.5 ||
+        (other.found.cover <= chosen.found.cover + 0.5 &&
+          other.found.under < chosen.found.under - 0.5)
+      ) {
+        chosen = other;
+      }
+    }
+    stadium = chosen.placed;
+    shown = chosen.built;
+    if (atTop) lower = shown;
+    else upper = shown;
   }
 
   const handle = (

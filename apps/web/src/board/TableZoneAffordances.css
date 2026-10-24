@@ -183,6 +183,22 @@
   flex-direction: column-reverse;
 }
 
+/* Side by side, VSTAR first in the player's own order: across the table,
+   from the viewer's right. */
+.table-markers[data-flow='row'] {
+  flex-direction: row;
+  justify-content: center;
+}
+
+.table-markers[data-flow='row'][data-order='up'] {
+  flex-direction: row-reverse;
+}
+
+.table-markers[data-flow='row'] .table-marker {
+  flex: 0 0 auto;
+  height: 100%;
+}
+
 .table-markers[data-covered='true'] {
   opacity: 0.35;
 }

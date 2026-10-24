@@ -329,6 +329,8 @@ export const TableZoneAffordances = memo(function TableZoneAffordances({
             data-covered={covered ? 'true' : undefined}
             // The far player's markers stack from the centre line too.
             data-order={own ? 'down' : 'up'}
+            // A row too short to stack them lays them side by side.
+            data-flow={rect.width > rect.height * 2.5 ? 'row' : undefined}
             style={boxStyle(box)}
           >
             {shown.map((marker) => {

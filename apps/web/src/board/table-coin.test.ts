@@ -1,6 +1,8 @@
 import { asPlayerId } from '@ptcgsim/game-core';
 import {
   DEFAULT_TABLE_VERTICAL_LAYOUT,
+  TABLE_COIN_MAX_PX,
+  TABLE_COIN_MIN_PX,
   TABLE_LAYOUT_GEOMETRY_VERSION,
   createTableLayoutSnapshot,
   type BoardLayoutSnapshot,
@@ -9,11 +11,7 @@ import {
 } from '@ptcgsim/renderer-contract';
 import { describe, expect, it } from 'vitest';
 
-import {
-  TABLE_COIN_MAX_PX,
-  TABLE_COIN_MIN_PX,
-  tableCoinSpots,
-} from './table-coin.js';
+import { tableCoinSpots } from './table-coin.js';
 
 const blue = asPlayerId('spike-blue');
 const red = asPlayerId('spike-red');
@@ -57,11 +55,12 @@ const SIZES: readonly (readonly [number, number])[] = [
 ];
 
 describe('tableCoinSpots', () => {
-  it('lays each coin on clear felt beside its own Active, never on anything', () => {
+  it('lays each coin under its markers beside its prizes, never on anything', () => {
     for (const [width, height] of SIZES) {
       for (const overrides of [
         {},
         { oncePerGameMarkers: 2 },
+        { oncePerGameMarkers: 1 },
         { hideEmptyLostZone: true },
         { farCardsUpright: true },
       ] as const) {
@@ -89,24 +88,47 @@ describe('tableCoinSpots', () => {
           expect(spot.rect.x + spot.rect.width, label).toBeLessThanOrEqual(
             play.x + play.width
           );
-          // Level with the Active's row, on the player's own right: the far
-          // half is turned around, so theirs is to the viewer's left.
+          // In the Active's row, on the player's own left: the far half is
+          // turned around, so theirs is to the viewer's right.
           const own = active(layout, spot.playerId);
-          const at = centre(spot.rect);
-          expect(at.y, label).toBeGreaterThanOrEqual(own.y);
-          expect(at.y, label).toBeLessThanOrEqual(own.y + own.height);
-          if (spot.own) expect(at.x, label).toBeGreaterThan(own.x + own.width);
-          else expect(at.x, label).toBeLessThan(own.x);
+          expect(spot.rect.y, label).toBeGreaterThanOrEqual(own.y - 0.01);
+          expect(spot.rect.y + spot.rect.height, label).toBeLessThanOrEqual(
+            own.y + own.height + 0.01
+          );
+          if (spot.own) {
+            expect(spot.rect.x + spot.rect.width, label).toBeLessThan(own.x);
+          } else {
+            expect(spot.rect.x, label).toBeGreaterThan(own.x + own.width);
+          }
+          // Under the markers, in their column.
+          const markers = layout.players.find(
+            (frame) => frame.playerId === spot.playerId
+          )!.extras?.markers;
+          if (markers) {
+            expect(centre(spot.rect).x, label).toBeCloseTo(
+              centre(markers).x,
+              6
+            );
+            if (spot.own) {
+              expect(spot.rect.y, label).toBeGreaterThan(
+                markers.y + markers.height
+              );
+            } else {
+              expect(spot.rect.y + spot.rect.height, label).toBeLessThan(
+                markers.y
+              );
+            }
+          }
         }
       }
     }
   });
 
-  it('gives both players a coin on a desktop table and a phone', () => {
+  it('gives both players a coin on a desktop table, and the near one on a phone', () => {
     for (const [width, height] of [
       [1440, 900],
       [1280, 720],
-      [390, 844],
+      [1920, 1080],
     ] as const) {
       const spots = tableCoinSpots(layoutAt(width, height));
       expect(
@@ -117,43 +139,40 @@ describe('tableCoinSpots', () => {
         [red, false],
       ]);
     }
+    expect(
+      tableCoinSpots(layoutAt(390, 844)).find((spot) => spot.own)?.playerId
+    ).toBe(blue);
   });
 
-  it('lays the coin toward the middle of the table and out to the player’s right where the row is clear', () => {
+  it('lies where the markers would start with none, and in the same place on both halves', () => {
     const layout = layoutAt(1440, 900);
     const [own, theirs] = tableCoinSpots(layout);
     const mine = active(layout, blue);
-    expect(centre(own!.rect).y).toBeCloseTo(mine.y + mine.height * 0.25, 6);
-    // Past the Stadium, nearer the piles than the Active.
-    const stadium = layout.shared.stadium.physicalDeclaredBounds;
-    expect(own!.rect.x).toBeGreaterThan(stadium.x + stadium.width);
-    const piles = layout.players
-      .find((frame) => frame.playerId === blue)!
-      .regions.filter(
-        (region) =>
-          region.physicalDeclaredBounds.x > mine.x + mine.width &&
-          region.physicalDeclaredBounds.y < mine.y + mine.height &&
-          region.physicalDeclaredBounds.y +
-            region.physicalDeclaredBounds.height >
-            mine.y
-      )
-      .map((region) => region.physicalDeclaredBounds.x);
-    const rowEnd = Math.min(...piles);
-    expect(centre(own!.rect).x - (mine.x + mine.width)).toBeGreaterThan(
-      rowEnd - centre(own!.rect).x
-    );
-    // The far half is turned around: toward the middle is down, and their
-    // right is the viewer's left.
     const far = active(layout, red);
-    expect(centre(theirs!.rect).y).toBeCloseTo(far.y + far.height * 0.75, 6);
-    expect(theirs!.rect.width).toBeCloseTo(own!.rect.width, 0);
-  });
-
-  it('drops below the Stadium where it reaches into a phone’s row', () => {
-    const layout = layoutAt(390, 844);
-    const own = tableCoinSpots(layout).find((spot) => spot.own)!;
-    const stadium = layout.shared.stadium.physicalDeclaredBounds;
-    expect(own.rect.y).toBeGreaterThanOrEqual(stadium.y + stadium.height);
+    // At the top of the row toward the middle of the table: the far half's
+    // is turned around.
+    expect(own!.rect.y).toBeCloseTo(mine.y, 6);
+    expect(theirs!.rect.y + theirs!.rect.height).toBeCloseTo(
+      far.y + far.height,
+      6
+    );
+    // Beside each player's own prizes, within a coin of them.
+    const prizesOf = (playerId: string): Rect =>
+      layout.players
+        .find((frame) => frame.playerId === playerId)!
+        .regions.find((region) => region.kind === 'prizes')!
+        .physicalDeclaredBounds;
+    const ownPrizes = prizesOf(blue);
+    const farPrizes = prizesOf(red);
+    const fromOwn = own!.rect.x - (ownPrizes.x + ownPrizes.width);
+    const fromFar = farPrizes.x - (theirs!.rect.x + theirs!.rect.width);
+    for (const [gap, coin] of [
+      [fromOwn, own!.rect.width],
+      [fromFar, theirs!.rect.width],
+    ] as const) {
+      expect(gap).toBeGreaterThan(0);
+      expect(gap).toBeLessThan(coin);
+    }
   });
 
   it('has no coin for a hidden half', () => {

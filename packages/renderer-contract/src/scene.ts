@@ -238,7 +238,6 @@ const projectPlayerFrame = (
   rotationQuarterTurns: player.rotationQuarterTurns,
   bounds: copyRect(player.frameBounds),
   ...(player.hidden ? { hidden: true as const } : {}),
-  ...(player.extras?.markersRow ? { handHeldFlat: true as const } : {}),
 });
 
 const projectResizeHandle = (

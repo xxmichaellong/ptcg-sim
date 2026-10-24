@@ -68,41 +68,28 @@ here):
 
 - the far hand strip ends a gap short of the bar and is at least as deep
   as the bar's corner, so on a short screen nothing else lies under it;
-- the far player's VSTAR/GX markers, where they have no room beside the
-  Prize cards, get a corner of their own past the bar (`extras.corner`),
-  and the far hand starts after it; where that would leave the hand less
-  than 128px (an upright phone), they take a row below the bar instead,
-  unless the row would leave the far board under 12px of card. Mat or
-  portrait is chosen as if the half had no markers, so where they go never
-  swaps the two as the window grows;
+- the far player's VSTAR/GX markers stay on the mat beside their prizes
+  (ADR-039, which replaced their corner past the bar and their row below
+  it);
 - a tilted far hand draws its cards in as they grow, so its outer card
   ends where the strip does;
 - a half that fills the table keeps its top clear of the bar;
 - the far hand strip never grows so deep that the far board keeps no rows
   (under 12px of Active card): on the smallest tables the bar's corner
-  gives way first, and a markers' row only goes where it fits wholly below
-  the bar; a tilted table keeps a hand with a markers' row on its strip.
+  gives way first.
 
 The table's split is found as without the bar, and the far half laid out
 with it at that scale, so the near half is unchanged by it; nothing on the
 table is under the bar at any size it fits in (layout-table and
 board-depth tests, app-bar.spec). Where the bar changes the far half so
 that the Stadium lies over more of it than it would without the bar (a
-cramped hand taking the mat, its cards bigger; a markers' row pushing its
-rows toward the seam), the far half alone takes the tallest shorter fit
-that clears it (its markers counted, its markers' row kept, its staging
-area still holding the Stadium), its portrait mat too, the near half kept
-as it was. Shorter is not steadily clearer, so the fits are tried downward
-and the first clear one refined; where none is, the far half takes the
-one covered least that is otherwise as good. The markers and Lost Zone
-beside the far prizes are never under the Stadium beyond a sliver (a press
-there would turn a marker over): the one that would be keeps its old place
--- the Lost Zone its column, the markers by the hand -- and the staging
-area, which may run under its edge, takes the room (the split is still
-judged by the staging area as it was before). Where moving the markers
-costs the far half its hand's room or a row, the refit prefers a slightly
-shorter fit that keeps them beside the prizes, clear, keeping most of the
-far Active.
+cramped hand taking the mat, its cards bigger), the far half alone takes
+the tallest shorter fit that clears it (its staging area still holding the
+Stadium), its portrait mat too, the near half kept as it was. Shorter is
+not steadily clearer, so the fits are tried downward and the first clear
+one refined; where none is, the far half takes the one covered least that
+is otherwise as good. Where the Stadium goes, and what it keeps clear of,
+is ADR-039.
 
 ### 3. The turn's actions stay on the table, at the seam's right end
 

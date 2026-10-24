@@ -223,56 +223,6 @@ describe('live board depth', () => {
     expect(checked).toBeGreaterThan(0);
   });
 
-  it('keeps a far hand on its strip, off the markers’ row below the bar, when the table tilts', () => {
-    const view = createRendererSpikeView();
-    let checked = 0;
-    for (const [width, height] of [
-      [360, 640],
-      [390, 844],
-      [430, 932],
-    ] as const) {
-      const layout = createTableLayoutSnapshot({
-        viewport: { width, height, devicePixelRatio: 1 },
-        playerIds: [view.playerOrder[0]!, view.playerOrder[1]!],
-        bottomPlayerId: view.playerOrder[0]!,
-        shellMode: 'fullscreen',
-        geometryVersion: 2,
-        vertical: DEFAULT_TABLE_VERTICAL_LAYOUT,
-        appBarPx: { width: 146, height: 50 },
-        oncePerGameMarkers: 2,
-      });
-      const far = layout.players.find(
-        (player) => player.physicalSide === 'upper'
-      )!;
-      const row = far.extras?.corner;
-      expect(far.extras?.markersRow, `${String(width)}x${String(height)}`).toBe(
-        true
-      );
-      const scene = createBoardScene(view, layout);
-      for (const tilt of [22, 35]) {
-        const table = new BoardDepthProjection(scene, {
-          ...preferences,
-          depth: { ...preferences.depth!, tilt },
-        });
-        const hand = scene.zones.find(
-          (zone) => zone.kind === 'hand' && zone.playerId === far.playerId
-        )!;
-        for (const card of scene.cards.filter(
-          (candidate) =>
-            candidate.parentId === hand.id && candidate.renderKey !== null
-        )) {
-          const bounds = table.bounds(card);
-          expect(
-            bounds.y + bounds.height,
-            `${String(width)}x${String(height)} tilt ${String(tilt)}`
-          ).toBeLessThanOrEqual(row!.y + 0.5);
-          checked += 1;
-        }
-      }
-    }
-    expect(checked).toBeGreaterThan(0);
-  });
-
   it('keeps a tilted hand fanned on a narrow strip, never closed up into one card', () => {
     const view = createRendererSpikeView();
     let checked = 0;
