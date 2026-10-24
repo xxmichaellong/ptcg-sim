@@ -147,6 +147,36 @@
   --color-felt-glow: rgb(255 244 228 / 0.07);
 }
 
+/* The focus ring of the table's own controls -- on the felt (the rail, the
+   coin, the markers, the `+`s) and over the desk (the hand pills) -- 3:1 at
+   least against what lies under it, whichever theme the app is in: dark on
+   the light mats and desks, light on the dark ones. */
+:root:is(
+  :not([data-table-art]),
+  [data-table-art='cream'],
+  [data-table-art='frost'],
+  [data-table-art='sakura'],
+  [data-table-art='parchment']
+) {
+  --color-felt-focus: #1a3d66;
+  --color-desk-focus: #1a3d66;
+}
+:root:is(
+  [data-table-art='classic'],
+  [data-table-art='ocean'],
+  [data-table-art='slate'],
+  [data-table-art='midnight'],
+  [data-table-art='burgundy'],
+  [data-table-art='charcoal']
+) {
+  --color-felt-focus: #9cc4f2;
+  --color-desk-focus: #9cc4f2;
+}
+/* Green felt by day lies on light oak. */
+:root[data-theme='day'][data-table-art='classic'] {
+  --color-desk-focus: #1a3d66;
+}
+
 /* On a light mat the gold and mint rings would wash out: deeper ones. */
 :root:is(
     :not([data-table-art]),

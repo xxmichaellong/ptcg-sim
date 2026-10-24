@@ -69,7 +69,7 @@ button.table-coin__button::before {
 }
 
 button.table-coin__button:focus-visible {
-  outline: 2px solid var(--color-accent);
+  outline: 2px solid var(--color-felt-focus, var(--color-accent));
   outline-offset: 3px;
 }
 

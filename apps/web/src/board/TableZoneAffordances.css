@@ -103,7 +103,7 @@
 
 .table-zone-add:focus-visible,
 .table-zone-chip:focus-visible {
-  outline: 2px solid var(--color-accent);
+  outline: 2px solid var(--color-felt-focus, var(--color-accent));
   outline-offset: 2px;
 }
 
@@ -165,7 +165,7 @@
 }
 
 .table-zone-extras:focus-visible {
-  outline: 2px solid var(--color-accent);
+  outline: 2px solid var(--color-felt-focus, var(--color-accent));
   outline-offset: 2px;
 }
 
@@ -227,7 +227,7 @@
 }
 
 .table-marker:focus-visible {
-  outline: 2px solid var(--color-accent);
+  outline: 2px solid var(--color-felt-focus, var(--color-accent));
   outline-offset: 1px;
 }
 

@@ -10,11 +10,13 @@ import type {
   BoardLayoutSnapshot,
   BoardDepthProjection,
   BoardPlayerLayout,
+  Rect,
   ZoneCountSceneNode,
 } from '@ptcgsim/renderer-contract';
 import {
   memo,
   useLayoutEffect,
+  useMemo,
   useRef,
   type CSSProperties,
   type ReactNode,
@@ -339,6 +341,7 @@ const HAND_PILL_EDGE = 4;
 const TableHandPill = memo(function TableHandPill({
   count,
   playAreaRight,
+  avoid,
   playerSide,
   sorted,
   onToggleHandSort,
@@ -346,6 +349,11 @@ const TableHandPill = memo(function TableHandPill({
   readonly count: TableHandCount;
   /** Where the table ends, short of a docked log. */
   readonly playAreaRight: number;
+  /**
+   * The zones beside the hand's end as the tilted table draws them: the mat
+   * widens toward the viewer, so its piles can reach where the pill sits.
+   */
+  readonly avoid?: readonly Rect[];
   /** The seat's colour, which follows the player (SeatTone). */
   readonly playerSide: 'local' | 'opponent';
   readonly sorted: boolean;
@@ -392,12 +400,33 @@ const TableHandPill = memo(function TableHandPill({
           : box.right > right
             ? right - box.right
             : 0;
-      const dy =
+      let dy =
         box.top < top
           ? top - box.top
           : box.bottom > bottom
             ? bottom - box.bottom
             : 0;
+      // Off those zones: past them, away from the mat (below them by the
+      // near hand, above them across the table), as far as the screen
+      // allows.
+      const near = node.verticalAlign === 'top';
+      for (const rect of avoid ?? []) {
+        const zoneLeft = (host?.left ?? 0) + rect.x;
+        const zoneTop = (host?.top ?? 0) + rect.y;
+        if (
+          box.left + dx < zoneLeft + rect.width &&
+          box.right + dx > zoneLeft &&
+          box.top + dy < zoneTop + rect.height &&
+          box.bottom + dy > zoneTop
+        ) {
+          dy = near
+            ? Math.min(
+                zoneTop + rect.height + HAND_PILL_EDGE - box.top,
+                bottom - box.bottom
+              )
+            : Math.max(zoneTop - HAND_PILL_EDGE - box.bottom, top - box.top);
+        }
+      }
       if (dx !== 0 || dy !== 0) {
         element.style.translate = `${String(dx)}px ${String(dy)}px`;
       }
@@ -412,6 +441,7 @@ const TableHandPill = memo(function TableHandPill({
     node.verticalAlign,
     node.count,
     playAreaRight,
+    avoid,
   ]);
   const sortId =
     playerSide === 'local' ? 'sortHandCheckbox' : 'oppSortHandCheckbox';
@@ -518,6 +548,43 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
 }) {
   const pills =
     layout.geometryVersion === 2 && handCounts ? handCounts : undefined;
+  // Tilted, each half's zones as the projection draws them, for the hand
+  // pill to keep off.
+  const pillAvoid = useMemo(
+    () =>
+      depth && pills
+        ? new Map(
+            layout.players.map((frame) => [
+              frame.playerId,
+              frame.regions
+                .filter(
+                  (region) => region.kind !== 'hand' && region.kind !== 'board'
+                )
+                .map((region) => {
+                  const box = region.physicalDeclaredBounds;
+                  const corners = [
+                    depth.point({ x: box.x, y: box.y }),
+                    depth.point({ x: box.x + box.width, y: box.y }),
+                    depth.point({ x: box.x, y: box.y + box.height }),
+                    depth.point({
+                      x: box.x + box.width,
+                      y: box.y + box.height,
+                    }),
+                  ];
+                  const left = Math.min(...corners.map((point) => point.x));
+                  const top = Math.min(...corners.map((point) => point.y));
+                  return {
+                    x: left,
+                    y: top,
+                    width: Math.max(...corners.map((point) => point.x)) - left,
+                    height: Math.max(...corners.map((point) => point.y)) - top,
+                  };
+                }),
+            ])
+          )
+        : undefined,
+    [depth, layout, pills]
+  );
   const playerAt = (physicalSide: 'lower' | 'upper') => {
     const player = layout.players.find(
       (candidate) => candidate.physicalSide === physicalSide
@@ -683,6 +750,9 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
             playAreaRight={
               layout.playAreaBounds.x + layout.playAreaBounds.width
             }
+            {...(pillAvoid?.get(count.playerId)
+              ? { avoid: pillAvoid.get(count.playerId) }
+              : {})}
             playerSide={count.playerId === localPlayerId ? 'local' : 'opponent'}
             sorted={sortedHandPlayerIds?.has(count.playerId) ?? false}
             onToggleHandSort={actions.toggleHandSort}

@@ -94,7 +94,8 @@
 }
 
 .ptcgsim-legacy-board-chrome .legacy-once-per-game-button:focus-visible {
-  outline: 2px solid var(--color-accent, rgb(90 110 188));
+  outline: 2px solid
+    var(--color-desk-focus, var(--color-accent, rgb(90 110 188)));
   outline-offset: 1px;
 }
 

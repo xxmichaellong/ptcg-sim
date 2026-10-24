@@ -940,6 +940,69 @@ describe('table layout (geometry v2)', () => {
     }
   });
 
+  it('keeps a full Bench, its Pokémon carrying Energy, inside its zone on any table', () => {
+    const base = createRendererSpikeView();
+    const me = base.playerOrder[0]!;
+    const host = Object.values(base.stacks).find(
+      (stack) => stack.boardPlayerId === me
+    )!;
+    const card = host.evolutionCards[0]!;
+    for (const benched of [5, 6, 8]) {
+      for (const attached of [0, 2, 4]) {
+        const stacks: Record<string, (typeof base.stacks)[string]> = {};
+        for (const [id, stack] of Object.entries(base.stacks)) {
+          if (stack.boardPlayerId !== me || stack.slot !== 'bench') {
+            stacks[id] = stack;
+          }
+        }
+        const benchStackIds: string[] = [];
+        for (let index = 0; index < benched; index += 1) {
+          const id = `full-bench-${String(index)}`;
+          benchStackIds.push(id);
+          stacks[id] = {
+            ...host,
+            id,
+            slot: 'bench',
+            evolutionCards: [
+              { ...card, id: `full-bench-card-${String(index)}` },
+            ],
+            attachmentCards: Array.from({ length: attached }, (_, energy) => ({
+              ...card,
+              id: `full-bench-energy-${String(index)}-${String(energy)}`,
+            })),
+          };
+        }
+        const view: MatchViewState = {
+          ...base,
+          stacks,
+          boards: {
+            ...base.boards,
+            [me]: { ...base.boards[me]!, benchStackIds },
+          },
+        };
+        for (const [width, height] of [
+          [390, 844],
+          [360, 780],
+          [768, 1024],
+          [1440, 900],
+        ] as const) {
+          const layout = createTableLayoutSnapshot(
+            stateAt(width, height, { shellMode: 'fullscreen' })
+          );
+          const bench = region(layout, 'local', 'bench').physicalDeclaredBounds;
+          const at = `${String(width)}x${String(height)} ${String(benched)} benched, ${String(attached)} attached`;
+          for (const node of createBoardScene(view, layout).cards) {
+            if (!node.id.startsWith('full-bench-')) continue;
+            expect(node.bounds.x, at).toBeGreaterThanOrEqual(bench.x - 0.5);
+            expect(node.bounds.x + node.bounds.width, at).toBeLessThanOrEqual(
+              bench.x + bench.width + 0.5
+            );
+          }
+        }
+      }
+    }
+  });
+
   it('runs the zones out to the mat: the columns to its sides, the bench to the piles, the piles down both rows', () => {
     for (const [width, height] of [
       [1280, 720],

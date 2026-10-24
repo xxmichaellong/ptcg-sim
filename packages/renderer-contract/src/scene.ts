@@ -31,10 +31,12 @@ import {
   layoutLegacyWorkAreaCards,
   layoutLegacyWorkAreaPanel,
   legacyPileTopIndex,
+  type BoardLayoutRegion,
   type BoardLayoutSnapshot,
   type BoardLayoutState,
   type LegacyContainedCardBlockAlignment,
   type LegacyPileKind,
+  type LegacyPlayRowStackInput,
 } from './layout.js';
 import {
   TABLE_LAYOUT_GEOMETRY_VERSION,
@@ -567,6 +569,79 @@ const layoutLegacyLooseBoardRows = (
     }),
     scroll: { axis: 'y', contentLength, offsetPx },
   };
+};
+
+/** A play row's region as tall as `height`, centred where it was. */
+const playRowAt = (
+  region: BoardLayoutRegion,
+  height: number
+): BoardLayoutRegion => {
+  const shrink = (rect: Rect): Rect => ({
+    ...rect,
+    y: rect.y + (rect.height - height) / 2,
+    height,
+  });
+  return {
+    ...region,
+    physicalDeclaredBounds: shrink(region.physicalDeclaredBounds),
+    physicalBorderBoxBounds: shrink(region.physicalBorderBoxBounds),
+    physicalContentBoxBounds: shrink(region.physicalContentBoxBounds),
+  };
+};
+
+/** How far a play row's cards reach across, at a card `height`. */
+const playRowReach = (
+  region: BoardLayoutRegion,
+  stacks: readonly LegacyPlayRowStackInput[],
+  height: number
+): { readonly left: number; readonly right: number } => {
+  let left = Infinity;
+  let right = -Infinity;
+  for (const stack of layoutLegacyPlayRow(
+    playRowAt(region, height),
+    CARD_ASPECT_RATIO,
+    stacks
+  )) {
+    for (const box of [
+      stack.flexItemBounds,
+      ...stack.evolutionCards.map((card) => card.bounds),
+      ...stack.attachmentCards.map((card) => card.bounds),
+    ]) {
+      left = Math.min(left, box.x);
+      right = Math.max(right, box.x + box.width);
+    }
+  }
+  return { left, right };
+};
+
+/**
+ * A play row whose cards would run past its zone (v1's containers shrink
+ * no narrower than their card) stands them shorter, centred in the row, so
+ * the whole row fits across: the tallest that does.
+ */
+const fitPlayRow = (
+  region: BoardLayoutRegion,
+  stacks: readonly LegacyPlayRowStackInput[]
+): BoardLayoutRegion => {
+  const bounds = region.physicalDeclaredBounds;
+  const fits = (height: number): boolean => {
+    const reach = playRowReach(region, stacks, height);
+    return (
+      reach.left >= bounds.x - 0.5 &&
+      reach.right <= bounds.x + bounds.width + 0.5
+    );
+  };
+  if (stacks.length === 0 || bounds.height <= 0 || fits(bounds.height)) {
+    return region;
+  }
+  let low = 0;
+  let high = bounds.height;
+  for (let step = 0; step < 14; step += 1) {
+    const middle = (low + high) / 2;
+    if (fits(middle)) low = middle;
+    else high = middle;
+  }
+  return playRowAt(region, low);
 };
 
 /** Every zone whose cards are not laid out as a scrolling row. */
@@ -1180,12 +1255,19 @@ export const createBoardScene = (
           rotationQuarterTurns: stack.rotationQuarterTurns,
         };
       });
+      // On the play-mat table a crowded row keeps every card in its zone (a
+      // Bench of six to eight, Pokémon carrying Energy, an upright phone's
+      // narrow row): its cards stand no taller than lets it fit across.
+      const rowRegion =
+        layout.geometryVersion === TABLE_LAYOUT_GEOMETRY_VERSION
+          ? fitPlayRow(slotRegions[slot], stackInputs)
+          : slotRegions[slot];
       const rowLayout = layoutLegacyPlayRow(
-        slotRegions[slot],
+        rowRegion,
         CARD_ASPECT_RATIO,
         stackInputs
       );
-      const composedRow = layoutComposedPlayRow(slotRegions[slot], stackInputs);
+      const composedRow = layoutComposedPlayRow(rowRegion, stackInputs);
       rowStackIds.forEach((stackId, rowIndex) => {
         const stack = view.stacks[stackId]!;
         const stackLayout = rowLayout[rowIndex]!;
