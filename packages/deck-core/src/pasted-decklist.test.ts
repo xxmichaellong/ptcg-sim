@@ -130,6 +130,38 @@ describe('parsePastedDecklist', () => {
     ]);
   });
 
+  it('reads a name ending in a hyphenated word as the name, and an old id only when it is one', () => {
+    const parsed = rows(
+      [
+        '4 Tapu Lele-GX',
+        '2 Pikachu & Zekrom-GX',
+        '1 Dawn Wings Necrozma-GX',
+        '3 Shaymin-EX',
+        '4 Pikachu base1-58',
+        '1 Yanma hgss4-84',
+        '1 Pikachu dpp-DP20',
+        '1 Charizard ex sv3pt5-6',
+        '1 Lugia V cel25c-15_A1',
+        '1 Unown ex10-A',
+      ].join('\n')
+    );
+    expect(parsed.rows.map(({ name, catalogId }) => [name, catalogId])).toEqual(
+      [
+        ['Tapu Lele-GX', undefined],
+        ['Pikachu & Zekrom-GX', undefined],
+        ['Dawn Wings Necrozma-GX', undefined],
+        ['Shaymin-EX', undefined],
+        ['Pikachu', 'base1-58'],
+        ['Yanma', 'hgss4-84'],
+        ['Pikachu', 'dpp-DP20'],
+        ['Charizard ex', 'sv3pt5-6'],
+        ['Lugia V', 'cel25c-15_A1'],
+        ['Unown', 'ex10-A'],
+      ]
+    );
+    expect(parsed.rows[0]).not.toHaveProperty('imageUrl');
+  });
+
   it("reads a PTCGO export's bulleted card lines, and none of its headers", () => {
     const parsed = parsePastedDecklist(
       [

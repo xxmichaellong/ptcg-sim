@@ -374,9 +374,16 @@ const parseLine = (sourceLine: string, line: number): ParsedRow | undefined => {
   value = value.replace(/xy5-5 /gu, 'DCR ');
   value = value.replace(/ DPP /gu, ' PR-DPP ');
 
-  // v1's `\w*-\w*\d*`, whose `\d*` (matched by `\w*` already) tried every
+  // An old (pokemontcg.io) id ends the line: a lowercase set id, a hyphen
+  // and a card number (`base1-58`, `dpp-DP20`, `sm3-112a`, `cel25c-15_A1`),
+  // or Unown's and the Lithographs' letters (`ex10-A`, `hgss1-ONE`). v1's
+  // `\w*-\w*\d*` also took a name's own last word, reading `4 Tapu
+  // Lele-GX` as Tapu, and its `\d*` (matched by `\w*` already) tried every
   // split of a long run of digits.
-  const oldSet = /^\s*(\d+) (.+?)(?= \w*-\w*\s*$) (\w*-\w*)\s*$/u.exec(value);
+  const oldSet =
+    /^\s*(\d+) (.+?) ([a-z][a-z\d]*-[A-Za-z]*\d+[a-z]?(?:_[A-Z]\d?)?|[a-z]+\d+-[A-Z]+)\s*$/u.exec(
+      value
+    );
   if (oldSet) {
     return {
       line,
