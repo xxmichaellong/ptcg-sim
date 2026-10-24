@@ -55,49 +55,49 @@
     "comments": [
       "Log line. {actor} is a player's name, {card} the card attached; {source} is the zone it came from and {target} where it went."
     ],
-    "translation": "{actor}님이 {card} 붙임: {source, select, hand {패} prizes {프라이즈 카드} discard {트래시} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙은 카드} other {덱}} → {target, select, hand {패} prizes {프라이즈 카드} discard {트래시} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙은 카드} other {덱}}"
+    "translation": "{actor}님이 {card} 붙임: {source, select, hand {패} prizes {프라이즈} discard {트래쉬} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙은 카드} other {덱}} → {target, select, hand {패} prizes {프라이즈} discard {트래쉬} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙은 카드} other {덱}}"
   },
   "7Azhu7": {
     "message": "{actor} attached {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {targetCard}",
     "comments": [
       "Log line. {actor} is a player's name; {card} is the card attached (Energy, a Tool) and {targetCard} the Pokémon it went on; {source} is the zone it came from."
     ],
-    "translation": "{actor}님이 {card} 붙임: {source, select, hand {패} prizes {프라이즈 카드} discard {트래시} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙은 카드} other {덱}} → {targetCard}"
+    "translation": "{actor}님이 {card} 붙임: {source, select, hand {패} prizes {프라이즈} discard {트래쉬} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙은 카드} other {덱}} → {targetCard}"
   },
   "nb_tRJ": {
     "message": "{actor} discarded {count, plural, one {# attached card(s)} other {# attached card(s)}}",
     "comments": [
       "Log line: a player discarded the cards attached to a Pokémon. {actor} is a player's name, {count} how many cards."
     ],
-    "translation": "{actor}님이 붙은 카드 {count, plural, other {#장}}을 트래시에 버렸습니다"
+    "translation": "{actor}님이 붙은 카드 {count, plural, other {#장}}을 트래쉬했습니다"
   },
   "KeKqt_": {
     "message": "{actor} discarded {count, plural, one {# card(s)} other {# card(s)}}",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards."
     ],
-    "translation": "{actor}님이 카드 {count, plural, other {#장}}을 버렸습니다"
+    "translation": "{actor}님이 카드 {count, plural, other {#장}}을 트래쉬했습니다"
   },
   "fFHUli": {
     "message": "{actor} discarded hand",
     "comments": [
       "Log line. {actor} is a player's name."
     ],
-    "translation": "{actor}님이 패를 버렸습니다"
+    "translation": "{actor}님이 패를 트래쉬했습니다"
   },
   "qIBRqY": {
     "message": "{actor} discarded hand and drew {count, plural, one {# card(s)} other {# card(s)}}",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards they drew."
     ],
-    "translation": "{actor}님이 패를 버리고 카드 {count, plural, other {#장}}을 뽑았습니다"
+    "translation": "{actor}님이 패를 트래쉬하고 카드 {count, plural, other {#장}}을 뽑았습니다"
   },
   "68TI_t": {
     "message": "{actor} evolved {target, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} into {card}",
     "comments": [
       "Log line. {actor} is a player's name, {card} the card it evolved into; {target} names the zone of the Pokémon that evolved, when its name is hidden."
     ],
-    "translation": "{actor}님이 진화시켰습니다: {target, select, hand {패} prizes {프라이즈 카드} discard {트래시} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙은 카드} other {덱}} → {card}"
+    "translation": "{actor}님이 진화시켰습니다: {target, select, hand {패} prizes {프라이즈} discard {트래쉬} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙은 카드} other {덱}} → {card}"
   },
   "gUuWfL": {
     "message": "{actor} evolved {targetCard} into {card}",
@@ -111,14 +111,14 @@
     "comments": [
       "Log line: a player hid a zone they had shown to everyone. {actor} is who hid it, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "{actor}님이 {owner}의 {source, select, hand {패} prizes {프라이즈 카드} discard {트래시} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙은 카드} inspection {살펴보기} other {덱}} 공개를 해제했습니다"
+    "translation": "{actor}님이 {owner}님의 {source, select, hand {패} prizes {프라이즈} discard {트래쉬} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙은 카드} inspection {확인 구역} other {덱}} 공개를 해제했습니다"
   },
   "89ICfA": {
     "message": "{actor} hid card in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line: a player hid a card they had shown to everyone. {actor} is who hid it, {owner} whose card it is; {source} is the zone it is in."
     ],
-    "translation": "{actor}님이 {owner}의 {source, select, hand {패} prizes {프라이즈 카드} discard {트래시} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙은 카드} inspection {살펴보기} other {덱}}에 있는 카드의 공개를 해제했습니다"
+    "translation": "{actor}님이 {owner}님의 {source, select, hand {패} prizes {프라이즈} discard {트래쉬} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙은 카드} inspection {확인 구역} other {덱}}에 있는 카드의 공개를 해제했습니다"
   },
   "PZVwKy": {
     "message": "{actor} left {count, plural, one {# attached card(s)} other {# attached card(s)}} in play",
@@ -132,70 +132,70 @@
     "comments": [
       "Log line for a Pokémon moved onto another player's side of the table. {actor} is the card owner's name, {card} a card's name, {boardOwner} the name of the player whose Active or Bench it went to; {source} is the spot it left and {target} the spot it went to."
     ],
-    "translation": "{actor} 님이 {card}을(를) {source, select, hand {패} prizes {프라이즈 카드} discard {트래시} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙어 있는 카드} other {덱}}에서 {boardOwner} 님의 {target, select, hand {패} prizes {프라이즈 카드} discard {트래시} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙어 있는 카드} other {덱}}(으)로 이동했습니다"
+    "translation": "{actor}님이 {card}을(를) {source, select, hand {패} prizes {프라이즈} discard {트래쉬} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙은 카드} other {덱}}에서 {boardOwner}님의 {target, select, hand {패} prizes {프라이즈} discard {트래쉬} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙은 카드} other {덱}}(으)로 이동했습니다"
   },
   "VzhIq8": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {target, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}}",
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left and {target} the zone it went to."
     ],
-    "translation": "{actor}님이 {card} 이동: {source, select, hand {패} prizes {프라이즈 카드} discard {트래시} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙은 카드} other {덱}} → {target, select, hand {패} prizes {프라이즈 카드} discard {트래시} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙은 카드} other {덱}}"
+    "translation": "{actor}님이 {card} 이동: {source, select, hand {패} prizes {프라이즈} discard {트래쉬} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙은 카드} other {덱}} → {target, select, hand {패} prizes {프라이즈} discard {트래쉬} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙은 카드} other {덱}}"
   },
   "elLtOc": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {targetCard}",
     "comments": [
       "Log line. {actor} is a player's name, {card} and {targetCard} card names; {source} is the zone the card left."
     ],
-    "translation": "{actor}님이 {card} 이동: {source, select, hand {패} prizes {프라이즈 카드} discard {트래시} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙은 카드} other {덱}} → {targetCard}"
+    "translation": "{actor}님이 {card} 이동: {source, select, hand {패} prizes {프라이즈} discard {트래쉬} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙은 카드} other {덱}} → {targetCard}"
   },
   "RyQ60M": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to bottom of deck",
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left."
     ],
-    "translation": "{actor}님이 {card} 이동: {source, select, hand {패} prizes {프라이즈 카드} discard {트래시} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙은 카드} other {덱}} → 덱 맨 아래"
+    "translation": "{actor}님이 {card} 이동: {source, select, hand {패} prizes {프라이즈} discard {트래쉬} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙은 카드} other {덱}} → 덱 맨 아래"
   },
   "CsrT9R": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to top of deck",
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left."
     ],
-    "translation": "{actor}님이 {card} 이동: {source, select, hand {패} prizes {프라이즈 카드} discard {트래시} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙은 카드} other {덱}} → 덱 맨 위"
+    "translation": "{actor}님이 {card} 이동: {source, select, hand {패} prizes {프라이즈} discard {트래쉬} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙은 카드} other {덱}} → 덱 맨 위"
   },
   "WBnnCz": {
     "message": "{actor} moved {count, plural, one {# card(s)} other {# card(s)}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} other {deck}}",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards; {source} is the zone they left and {destination} where they went (play: onto the table)."
     ],
-    "translation": "{actor}님이 카드 {count, plural, other {#장}} 이동: {source, select, hand {패} prizes {프라이즈 카드} discard {트래시} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙은 카드} other {덱}} → {destination, select, hand {패} discard {트래시} lostZone {로스트존} deckBottom {덱 맨 아래} play {필드} other {덱}}"
+    "translation": "{actor}님이 카드 {count, plural, other {#장}} 이동: {source, select, hand {패} prizes {프라이즈} discard {트래쉬} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙은 카드} other {덱}} → {destination, select, hand {패} discard {트래쉬} lostZone {로스트존} deckBottom {덱 맨 아래} play {필드} other {덱}}"
   },
   "P4_K0D": {
     "message": "{actor} moved a random card from {target}'s hand to board",
     "comments": [
       "Log line. {actor} is the player who moved the card, {target} the player whose hand it came from."
     ],
-    "translation": "{actor}님이 {target}의 패에서 무작위 카드 1장을 보드로 옮겼습니다"
+    "translation": "{actor}님이 {target}님의 패에서 무작위 카드 1장을 보드로 옮겼습니다"
   },
   "_qgrvz": {
     "message": "{actor} revealed {card} in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line: a player showed one card to everyone. {actor} is who showed it, {owner} whose card it is, {card} the card's name; {source} is the zone it is in."
     ],
-    "translation": "{actor}님이 공개했습니다: {owner}의 {source, select, hand {패} prizes {프라이즈 카드} discard {트래시} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙은 카드} inspection {살펴보기} other {덱}}, {card}"
+    "translation": "{actor}님이 공개했습니다: {owner}님의 {source, select, hand {패} prizes {프라이즈} discard {트래쉬} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙은 카드} inspection {확인 구역} other {덱}}, {card}"
   },
   "TMqzLF": {
     "message": "{actor} revealed {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line: a player showed a whole zone to everyone. {actor} is who showed it, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "{actor}님이 공개했습니다: {owner}의 {source, select, hand {패} prizes {프라이즈 카드} discard {트래시} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙은 카드} inspection {살펴보기} other {덱}}"
+    "translation": "{actor}님이 공개했습니다: {owner}님의 {source, select, hand {패} prizes {프라이즈} discard {트래쉬} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙은 카드} inspection {확인 구역} other {덱}}"
   },
   "P2m23t": {
     "message": "{actor} shuffled {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} into deck",
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left."
     ],
-    "translation": "{actor}님이 덱에 섞었습니다: {card} ({source, select, hand {패} prizes {프라이즈 카드} discard {트래시} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙은 카드} other {덱}})"
+    "translation": "{actor}님이 덱에 섞었습니다: {card} ({source, select, hand {패} prizes {프라이즈} discard {트래쉬} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙은 카드} other {덱}})"
   },
   "xEKtXt": {
     "message": "{actor} shuffled {count, plural, one {# attached card(s)} other {# attached card(s)}} into deck",
@@ -230,7 +230,7 @@
     "comments": [
       "Log line: a player shuffled their discard pile into their deck. {actor} is a player's name."
     ],
-    "translation": "{actor}님이 트래시를 덱에 섞었습니다"
+    "translation": "{actor}님이 트래쉬를 덱에 섞었습니다"
   },
   "hJ32fr": {
     "message": "{actor} shuffled hand into deck",
@@ -265,21 +265,21 @@
     "comments": [
       "Log line. {actor} is a player's name."
     ],
-    "translation": "{actor}님이 프라이즈 카드를 덱 맨 아래에 넣었습니다"
+    "translation": "{actor}님이 프라이즈를 덱 맨 아래에 넣었습니다"
   },
   "xw6Fj3": {
     "message": "{actor} switched {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} with top of deck",
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left, and the top card of the deck took its place."
     ],
-    "translation": "{actor}님이 덱 맨 위 카드와 교체했습니다: {card} ({source, select, hand {패} prizes {프라이즈 카드} discard {트래시} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙은 카드} other {덱}})"
+    "translation": "{actor}님이 덱 맨 위 카드와 교체했습니다: {card} ({source, select, hand {패} prizes {프라이즈} discard {트래쉬} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙은 카드} other {덱}})"
   },
   "QOz626": {
     "message": "{actor} took back {target}'s last move",
     "comments": [
       "Log line: one player undid the other's last move. {actor} is who undid it, {target} whose move it was."
     ],
-    "translation": "{actor}님이 {target}의 마지막 동작을 되돌렸습니다"
+    "translation": "{actor}님이 {target}님의 마지막 동작을 되돌렸습니다"
   },
   "iwKsQi": {
     "message": "{cardLabel}: actions",
@@ -342,7 +342,7 @@
   },
   "myosK5": {
     "message": "{count, plural, one {# card in {name}'s discard pile} other {# cards in {name}'s discard pile}}",
-    "translation": "{count, plural, other {{name}의 트래시 카드 #장}}"
+    "translation": "{count, plural, other {{name}의 트래쉬 카드 #장}}"
   },
   "vxYrmH": {
     "message": "{count, plural, one {# card in {name}'s hand} other {# cards in {name}'s hand}}",
@@ -358,7 +358,7 @@
   },
   "fv6r42": {
     "message": "{count, plural, one {# card in your discard pile} other {# cards in your discard pile}}",
-    "translation": "{count, plural, other {내 트래시 카드 #장}}"
+    "translation": "{count, plural, other {내 트래쉬 카드 #장}}"
   },
   "MEWSr2": {
     "message": "{count, plural, one {# card in your hand} other {# cards in your hand}}",
@@ -386,19 +386,19 @@
   },
   "U1rTLU": {
     "message": "{count, plural, one {# print · legal in {legalIn}} other {# prints · legal in {legalIn}}}",
-    "translation": "{count, plural, other {프린트 # 종 · {legalIn}에서 사용 가능}}"
+    "translation": "{count, plural, other {프린트 #종 · {legalIn}에서 사용 가능}}"
   },
   "lDKWfO": {
     "message": "{count, plural, one {# print} other {# prints}}",
-    "translation": "{count, plural, other {프린트 # 종}}"
+    "translation": "{count, plural, other {프린트 #종}}"
   },
   "AC9Ruq": {
     "message": "{count, plural, one {# Radiant card (max 1).} other {# Radiant cards (max 1).}}",
-    "translation": "{count, plural, other {빛나는 카드 #장 (최대 1장).}}"
+    "translation": "{count, plural, other {찬란한 포켓몬 #장 (최대 1장).}}"
   },
   "-gAzkm": {
     "message": "{count, plural, one {Discard hand and draw # card} other {Discard hand and draw # cards}}",
-    "translation": "{count, plural, other {패를 버리고 카드 #장 뽑기}}"
+    "translation": "{count, plural, other {패를 트래쉬하고 카드 #장 뽑기}}"
   },
   "0ZvQu6": {
     "message": "{count, plural, one {Draw # card} other {Draw # cards}}",
@@ -531,7 +531,7 @@
     "comments": [
       "Log line. {name} is a player's name."
     ],
-    "translation": "{name}이(가) 기술을 사용했습니다"
+    "translation": "{name}님이 기술을 사용했습니다"
   },
   "4rAxe5": {
     "message": "{name} bench",
@@ -552,7 +552,7 @@
     "comments": [
       "Log line: a player made a card count as another kind of card. {name} is a player's name, {card} a card's name; {category} is the kind it now counts as."
     ],
-    "translation": "{name}이(가) {card}을(를) {category, select, energy {에너지} pokemon {포켓몬} trainer {도구} other {알 수 없는 종류}}(으)로 변경했습니다"
+    "translation": "{name}님이 {card}을(를) {category, select, energy {에너지} pokemon {포켓몬} trainer {도구} other {알 수 없는 종류}}(으)로 변경했습니다"
   },
   "xjFQ8_": {
     "message": "{name} deck",
@@ -566,42 +566,42 @@
     "comments": [
       "A zone's name for screen readers; name is its player. The discard pile."
     ],
-    "translation": "{name}의 트래시"
+    "translation": "{name}의 트래쉬"
   },
   "cee6Ru": {
     "message": "{name} disconnected",
     "comments": [
       "Log line: someone's connection to the room dropped. {name} is their name."
     ],
-    "translation": "{name}의 연결이 끊어졌습니다"
+    "translation": "{name}님의 연결이 끊어졌습니다"
   },
   "zxESr5": {
     "message": "{name} drew {count, plural, one {a card} other {# cards}}",
     "comments": [
       "Log line. {name} is a player's name, {count} how many cards they drew."
     ],
-    "translation": "{name}이(가) 카드 {count, plural, other {#장}}을 뽑았습니다"
+    "translation": "{name}님이 카드 {count, plural, other {#장}}을 뽑았습니다"
   },
   "5MiMTH": {
     "message": "{name} drew for turn",
     "comments": [
       "Log line: the player whose turn begins drew their card for the turn. {name} is a player's name."
     ],
-    "translation": "{name}이(가) 턴 시작 카드를 뽑았습니다"
+    "translation": "{name}님이 차례를 시작하며 카드를 뽑았습니다"
   },
   "y-dTT1": {
     "message": "{name} drew starting hand and set prizes",
     "comments": [
       "Log line: a player set up for a game (seven cards in hand, Prize cards laid out). {name} is a player's name."
     ],
-    "translation": "{name}이(가) 첫 패를 뽑고 프라이즈 카드를 놓았습니다"
+    "translation": "{name}님이 첫 패를 뽑고 프라이즈를 놓았습니다"
   },
   "01JuD1": {
     "message": "{name} flipped {result, select, heads {heads} other {tails}}",
     "comments": [
       "Log line: a coin flip's result. {name} is a player's name; {result} is heads or tails."
     ],
-    "translation": "{name}이(가) 동전을 던져 {result, select, heads {앞면} other {뒷면}}이 나왔습니다"
+    "translation": "{name}님이 동전을 던져 {result, select, heads {앞면} other {뒷면}}이 나왔습니다"
   },
   "Bqr3lz": {
     "message": "{name} hand",
@@ -615,21 +615,21 @@
     "comments": [
       "Log line: a turn began and the player's deck was empty. {name} is a player's name."
     ],
-    "translation": "{name}의 덱에 뽑을 카드가 없습니다"
+    "translation": "{name}님의 덱에 뽑을 카드가 없습니다"
   },
   "BY6auV": {
     "message": "{name} has no deck loaded",
     "comments": [
       "Log line: a player pressed Set up without a deck. {name} is a player's name."
     ],
-    "translation": "{name}의 덱이 불러와지지 않았습니다"
+    "translation": "{name}님이 덱을 불러오지 않았습니다"
   },
   "hVtSco": {
     "message": "{name} is looking through {name}'s deck",
     "comments": [
       "Log line: a player is searching their own deck. {name} is the player's name (both times)."
     ],
-    "translation": "{name}이(가) {name}의 덱을 확인하는 중입니다"
+    "translation": "{name}님이 자신의 덱을 확인하는 중입니다"
   },
   "Uzm69g": {
     "message": "{name} is on {seat}",
@@ -654,21 +654,21 @@
     "comments": [
       "Log line. {name} is a player's name."
     ],
-    "translation": "{name}이(가) 덱을 불러왔습니다"
+    "translation": "{name}님이 덱을 불러왔습니다"
   },
   "lcx9nx": {
     "message": "{name} looked at bottom {count, plural, one {# card(s)} other {# card(s)}} of deck",
     "comments": [
       "Log line. {name} is a player's name, {count} how many cards from the bottom of their deck they looked at."
     ],
-    "translation": "{name}이(가) 덱 아래 {count, plural, one {#장} other {#장}}을 확인했습니다"
+    "translation": "{name}님이 덱 아래 {count, plural, one {#장} other {#장}}을 확인했습니다"
   },
   "ok9Ijw": {
     "message": "{name} looked at top {count, plural, one {# card(s)} other {# card(s)}} of deck",
     "comments": [
       "Log line. {name} is a player's name, {count} how many cards from the top of their deck they looked at."
     ],
-    "translation": "{name}이(가) 덱 위 {count, plural, one {#장} other {#장}}을 확인했습니다"
+    "translation": "{name}님이 덱 위 {count, plural, one {#장} other {#장}}을 확인했습니다"
   },
   "A7bcR4": {
     "message": "{name} Lost Zone",
@@ -682,7 +682,7 @@
     "comments": [
       "Log line: a player had no Basic Pokémon in their opening hand and redraws. {name} is a player's name."
     ],
-    "translation": "{name}이(가) 멀리건을 합니다"
+    "translation": "{name}님이 멀리건을 합니다"
   },
   "VfRcma": {
     "message": "{name} on {seat}",
@@ -693,14 +693,14 @@
     "comments": [
       "Log line: a player ended their turn without attacking. {name} is a player's name."
     ],
-    "translation": "{name}이(가) 턴을 넘겼습니다"
+    "translation": "{name}님이 차례를 넘겼습니다"
   },
   "rzpxoR": {
     "message": "{name} prizes",
     "comments": [
       "A zone's name for screen readers; name is its player. The Prize cards."
     ],
-    "translation": "{name}의 프라이즈 카드"
+    "translation": "{name}의 프라이즈"
   },
   "g7DH0W": {
     "message": "{name} reconnected",
@@ -714,49 +714,49 @@
     "comments": [
       "Log line: a player cleared their side of the table. {name} is a player's name."
     ],
-    "translation": "{name}이(가) 필드를 초기화했습니다"
+    "translation": "{name}님이 필드를 초기화했습니다"
   },
   "yq8DHI": {
     "message": "{name} reset their {marker}",
     "comments": [
       "Log line: a player turned their once-per-game marker back to unused. {name} is a player's name; {marker} is GX or VSTAR (keep as is)."
     ],
-    "translation": "{name}이(가) {marker}을(를) 초기화했습니다"
+    "translation": "{name}님이 {marker}을(를) 초기화했습니다"
   },
   "ywLLuj": {
     "message": "{name} shuffled {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}}",
     "comments": [
       "Log line. {name} is a player's name; {source} is the zone they shuffled, almost always their deck."
     ],
-    "translation": "{name}이(가) {source, select, hand {패} prizes {프라이즈 카드} discard {트래시} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙은 카드} other {덱}}을(를) 섞었습니다"
+    "translation": "{name}님이 {source, select, hand {패} prizes {프라이즈} discard {트래쉬} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙은 카드} other {덱}}을(를) 섞었습니다"
   },
   "x8Eb2i": {
     "message": "{name} started turn {turn}",
     "comments": [
       "Read aloud by screen readers. {name} is a player's name, {turn} the turn number."
     ],
-    "translation": "{name}이(가) {turn}번째 턴을 시작했습니다"
+    "translation": "{name}님이 {turn}번째 차례를 시작했습니다"
   },
   "I_6aBo": {
     "message": "{name} used {card}",
     "comments": [
       "Log line: a player used a Stadium card's effect. {name} is a player's name, {card} the Stadium's name."
     ],
-    "translation": "{name}이(가) {card}을(를) 사용했습니다"
+    "translation": "{name}님이 {card}을(를) 사용했습니다"
   },
   "1X7zxc": {
     "message": "{name} used {card}'s ability",
     "comments": [
       "Log line: a player used a Pokémon's Ability. {name} is a player's name, {card} the Pokémon's name."
     ],
-    "translation": "{name}이(가) {card}의 특성을 사용했습니다"
+    "translation": "{name}님이 {card}의 특성을 사용했습니다"
   },
   "RZV8CB": {
     "message": "{name} used their {marker}",
     "comments": [
       "Log line: a player used their once-per-game power. {name} is a player's name; {marker} is GX or VSTAR (keep as is)."
     ],
-    "translation": "{name}이(가) {marker}을(를) 사용했습니다"
+    "translation": "{name}님이 {marker}을(를) 사용했습니다"
   },
   "5BonJe": {
     "message": "{name} used: press to undo",
@@ -774,7 +774,7 @@
     "comments": [
       "Shown across the table when a player starts their turn."
     ],
-    "translation": "{name}의 턴"
+    "translation": "{name}님의 차례"
   },
   "cgJmF-": {
     "message": "{over, plural, one {# card too many ({count}/{required}).} other {# cards too many ({count}/{required}).}}",
@@ -829,11 +829,11 @@
   },
   "KQUX02": {
     "message": "{printCount, plural, one {# print · the deck has another one} other {# prints · the deck has another one}}",
-    "translation": "{printCount, plural, one {프린트 #개 · 덱에 같은 카드가 더 있음} other {프린트 #개 · 덱에 같은 카드가 더 있음}}"
+    "translation": "{printCount, plural, other {프린트 #종 · 덱에 같은 카드가 더 있음}}"
   },
   "P_bQEX": {
     "message": "{printCount, plural, one {# print} other {# prints}}",
-    "translation": "{printCount, plural, one {프린트 #개} other {프린트 #개}}"
+    "translation": "{printCount, plural, other {프린트 #종}}"
   },
   "_HI08P": {
     "message": "{printName}, {inDeck} in deck",
@@ -841,7 +841,7 @@
   },
   "huIm_e": {
     "message": "{prints, plural, one {# print} other {# prints}}",
-    "translation": "{prints, plural, one {프린트 #개} other {프린트 #개}}"
+    "translation": "{prints, plural, other {프린트 #종}}"
   },
   "A8TiPy": {
     "message": "{short, plural, one {# more card needed ({count}/{required}).} other {# more cards needed ({count}/{required}).}}",
@@ -887,7 +887,7 @@
     "comments": [
       "Log line: a player undid their own last move. {target} is the player's name."
     ],
-    "translation": "{target}이(가) 마지막 행동을 되돌렸습니다"
+    "translation": "{target}님이 마지막 동작을 되돌렸습니다"
   },
   "mFeDcR": {
     "message": "{targetSeat}: {seatLabel}, {seatTotal, plural, one {# card} other {# cards}}",
@@ -932,28 +932,28 @@
     "comments": [
       "Log line: a player began looking at a zone only they can see. {viewer} is who is looking, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "{viewer}님이 {owner}님의 {source, select, hand {패} prizes {프라이즈 카드} discard {트래시} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙은 카드} inspection {확인 구역} other {덱}}을(를) 확인했습니다"
+    "translation": "{viewer}님이 {owner}님의 {source, select, hand {패} prizes {프라이즈} discard {트래쉬} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙은 카드} inspection {확인 구역} other {덱}}을(를) 확인했습니다"
   },
   "kF6-Cq": {
     "message": "{viewer} looked at card in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line: a player began looking at a card only they can see. {viewer} is who is looking, {owner} whose card it is; {source} is the zone it is in."
     ],
-    "translation": "{viewer}님이 {owner}님의 {source, select, hand {패} prizes {프라이즈 카드} discard {트래시} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙은 카드} inspection {확인 구역} other {덱}}에 있는 카드를 확인했습니다"
+    "translation": "{viewer}님이 {owner}님의 {source, select, hand {패} prizes {프라이즈} discard {트래쉬} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙은 카드} inspection {확인 구역} other {덱}}에 있는 카드를 확인했습니다"
   },
   "jTec7e": {
     "message": "{viewer} stopped looking at {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line. {viewer} is who stopped looking, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "{viewer}님이 {owner}님의 {source, select, hand {패} prizes {프라이즈 카드} discard {트래시} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙은 카드} inspection {확인 구역} other {덱}} 확인을 마쳤습니다"
+    "translation": "{viewer}님이 {owner}님의 {source, select, hand {패} prizes {프라이즈} discard {트래쉬} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙은 카드} inspection {확인 구역} other {덱}} 확인을 마쳤습니다"
   },
   "FAueN1": {
     "message": "{viewer} stopped looking at card in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line. {viewer} is who stopped looking, {owner} whose card it is; {source} is the zone it is in."
     ],
-    "translation": "{viewer}님이 {owner}님의 {source, select, hand {패} prizes {프라이즈 카드} discard {트래시} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙은 카드} inspection {확인 구역} other {덱}}에 있는 카드 확인을 마쳤습니다"
+    "translation": "{viewer}님이 {owner}님의 {source, select, hand {패} prizes {프라이즈} discard {트래쉬} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙은 카드} inspection {확인 구역} other {덱}}에 있는 카드 확인을 마쳤습니다"
   },
   "JirPbT": {
     "message": "{zoneName}, {count, plural, one {# card} other {# cards}}",
@@ -1043,7 +1043,7 @@
   },
   "eYUTBA": {
     "message": "3 pieces in a row",
-    "translation": "3개 연속"
+    "translation": "3조각 연속"
   },
   "9bANS5": {
     "message": "A .txt or .csv deck file",
@@ -1340,7 +1340,7 @@
   },
   "jY18IQ": {
     "message": "Attack payable with",
-    "translation": "사용 가능한 기술 조건"
+    "translation": "기술 사용 가능 에너지"
   },
   "cBTHD8": {
     "message": "Auto",
@@ -1385,7 +1385,7 @@
   },
   "IbTeP5": {
     "message": "Back to pile order",
-    "translation": "트래시 순서로 되돌리기"
+    "translation": "원래 순서로 되돌리기"
   },
   "JT4RmD": {
     "message": "Back to the decks",
@@ -1439,11 +1439,11 @@
   },
   "tffbb1": {
     "message": "Bench <0>{0}</0> from your hand.",
-    "translation": "패에서 <0>{0}</0>을(를) 벤치에 내놓으세요."
+    "translation": "패에서 <0>{0}</0>을(를) 벤치로 내보내세요."
   },
   "T1zt_m": {
     "message": "Bench <0>{0}</0> too.",
-    "translation": "<0>{0}</0>도 벤치에 내세요."
+    "translation": "<0>{0}</0>도 벤치로 내보내세요."
   },
   "O2HdKg": {
     "message": "Board",
@@ -1739,7 +1739,7 @@
   },
   "F4fFCC": {
     "message": "Click <0>{0}</0> in your hand, then press <1>{key}</1> to bench it.",
-    "translation": "패에서 <0>{0}</0>을(를) 클릭한 다음 <1>{key}</1> 키를 눌러 벤치에 내놓으세요."
+    "translation": "패에서 <0>{0}</0>을(를) 클릭한 다음 <1>{key}</1> 키를 눌러 벤치로 내보내세요."
   },
   "MO489z": {
     "message": "Click a shortcut to change it.",
@@ -1788,12 +1788,12 @@
   "c6pkO-": {
     "message": "Coin",
     "context": "flip a coin",
-    "translation": "코인"
+    "translation": "동전"
   },
   "9Lgp3c": {
     "message": "Coin",
     "context": "shortcut key caption",
-    "translation": "코인"
+    "translation": "동전"
   },
   "OXqULL": {
     "message": "Colorless",
@@ -1898,7 +1898,7 @@
   },
   "heYM3E": {
     "message": "Couldn't resume the game",
-    "translation": "게임을 다시 시작할 수 없음"
+    "translation": "게임을 재개할 수 없음"
   },
   "ETE6Wl": {
     "message": "Couldn't save the game",
@@ -1919,7 +1919,7 @@
   "U9OFiD": {
     "message": "cover",
     "context": "the deck's cover card",
-    "translation": "표지"
+    "translation": "커버"
   },
   "LwyL9G": {
     "message": "Cream",
@@ -1947,7 +1947,7 @@
   },
   "UxNmvS": {
     "message": "Damage and conditions",
-    "translation": "데미지와 특수상태"
+    "translation": "데미지와 특수 상태"
   },
   "omkQWV": {
     "message": "Damage at least",
@@ -1968,11 +1968,11 @@
   },
   "hpSYpx": {
     "message": "Deal a sample hand",
-    "translation": "샘플 패 나누기"
+    "translation": "샘플 패 뽑기"
   },
   "tqOvtJ": {
     "message": "Deal again",
-    "translation": "다시 나누기"
+    "translation": "다시 뽑기"
   },
   "9uxaX9": {
     "message": "Deck",
@@ -2015,7 +2015,7 @@
   },
   "kemNRk": {
     "message": "Deck for each seat",
-    "translation": "좌석별 덱"
+    "translation": "자리별 덱"
   },
   "pX2_XZ": {
     "message": "Deck name",
@@ -2085,7 +2085,7 @@
   "E8rJSo": {
     "message": "Discard",
     "context": "shortcut key caption",
-    "translation": "트래시"
+    "translation": "트래쉬"
   },
   "uuQD5w": {
     "message": "Discard",
@@ -2093,42 +2093,42 @@
     "comments": [
       "The discard pile."
     ],
-    "translation": "트래시"
+    "translation": "트래쉬"
   },
   "c58XOp": {
     "message": "Discard a Pokémon, take a Prize, bring up the next",
-    "translation": "포켓몬을 트래시하고, 프라이즈 카드를 가져온 뒤 다음 포켓몬을 내세웁니다"
+    "translation": "포켓몬을 트래쉬하고 프라이즈를 가져온 뒤 다음 포켓몬을 내보냅니다"
   },
   "u8xW5H": {
     "message": "Discard all",
-    "translation": "모두 트래시"
+    "translation": "모두 트래쉬"
   },
   "ui1b33": {
     "message": "Discard all",
     "context": "shortcut key caption",
-    "translation": "모두 트래시"
+    "translation": "모두 트래쉬"
   },
   "FQxE2Y": {
     "message": "Discard all on playboard",
-    "translation": "보드의 모든 카드 트래시로 보내기"
+    "translation": "보드의 카드 모두 트래쉬"
   },
   "mKMb1d": {
     "message": "Discard hand",
-    "translation": "패 트래시"
+    "translation": "패 트래쉬"
   },
   "vtuFDE": {
     "message": "Discard hand",
     "context": "shortcut key caption",
-    "translation": "패 트래시"
+    "translation": "패 트래쉬"
   },
   "Nx52uj": {
     "message": "Discard hand and draw…",
-    "translation": "패를 버리고 뽑기…"
+    "translation": "패를 트래쉬하고 뽑기…"
   },
   "eEqZQd": {
     "message": "Discard pile",
     "context": "zone",
-    "translation": "트래시"
+    "translation": "트래쉬"
   },
   "OdPOhy": {
     "message": "Discord",
@@ -2186,17 +2186,17 @@
   "sEjSlz": {
     "message": "Dragon",
     "context": "Pokémon type",
-    "translation": "용"
+    "translation": "드래곤"
   },
   "LU-TxR": {
     "message": "Draw",
     "context": "draw cards",
-    "translation": "드로우"
+    "translation": "뽑기"
   },
   "mBdQmZ": {
     "message": "Draw",
     "context": "shortcut key caption",
-    "translation": "드로우"
+    "translation": "뽑기"
   },
   "yUNMoP": {
     "message": "Draw a card",
@@ -2263,7 +2263,7 @@
   },
   "mjNeGh": {
     "message": "e.g. Charizard",
-    "translation": "예: 리자몽"
+    "translation": "예: Charizard"
   },
   "tg9VdO": {
     "message": "e.g. HIJ",
@@ -2530,7 +2530,7 @@
   },
   "euYJXw": {
     "message": "Flip a coin: press your coin.",
-    "translation": "코인 던지기: 코인을 누르세요."
+    "translation": "동전 던지기: 동전을 누르세요."
   },
   "9Bomz3": {
     "message": "Flip coin",
@@ -2542,7 +2542,7 @@
   },
   "CK2j9j": {
     "message": "Flip their coin",
-    "translation": "상대 코인 던지기"
+    "translation": "상대 동전 던지기"
   },
   "zoSOoE": {
     "message": "Foil coverage",
@@ -2558,7 +2558,7 @@
   "pniSGu": {
     "message": "Format",
     "context": "deck format",
-    "translation": "형식"
+    "translation": "포맷"
   },
   "qIodFG": {
     "message": "Frost",
@@ -2582,7 +2582,7 @@
   "ULwemj": {
     "message": "Fusion Strike",
     "context": "Pokémon card mechanic",
-    "translation": "퓨전 암즈"
+    "translation": "퓨전"
   },
   "IUNEkE": {
     "message": "Future",
@@ -2746,7 +2746,7 @@
   },
   "_vIqw9": {
     "message": "How many cards?",
-    "translation": "카드를 몇 장 뽑을까요?"
+    "translation": "몇 장인가요?"
   },
   "dB9f8y": {
     "message": "How much damage?",
@@ -2876,12 +2876,12 @@
   "5kNRW8": {
     "message": "Item",
     "context": "Trainer card kind",
-    "translation": "굿즈"
+    "translation": "아이템"
   },
   "APTYWF": {
     "message": "Items",
     "context": "Trainer cards by kind",
-    "translation": "굿즈"
+    "translation": "아이템"
   },
   "Rw42Cd": {
     "message": "Its cards couldn't be read.",
@@ -2939,7 +2939,7 @@
   },
   "69MOGQ": {
     "message": "Knock Out their <0>{0}</0>: drag it onto their discard pile. Its Energy goes with it.",
-    "translation": "상대의 <0>{0}</0>을(를) 기절시키세요: 상대 트래시로 끌어다 놓으세요. 붙어 있던 에너지도 함께 이동합니다."
+    "translation": "상대의 <0>{0}</0>을(를) 기절시키세요: 상대 트래쉬로 끌어다 놓으세요. 붙어 있던 에너지도 함께 이동합니다."
   },
   "vXIe7J": {
     "message": "Language",
@@ -2968,7 +2968,7 @@
   },
   "1ng4Ht": {
     "message": "Leave in play",
-    "translation": "플레이 상태로 두기"
+    "translation": "필드에 남기기"
   },
   "M-FK_f": {
     "message": "Leave room",
@@ -3001,7 +3001,7 @@
   },
   "xXagjO": {
     "message": "LEGEND · 2 halves",
-    "translation": "레전드 · 2분할"
+    "translation": "LEGEND · 2분할"
   },
   "YVrOwc": {
     "message": "Level-Up",
@@ -3142,7 +3142,7 @@
   },
   "bQF9w4": {
     "message": "Look at or cover your Prizes",
-    "translation": "프라이즈 카드 보기 또는 가리기"
+    "translation": "프라이즈 보기 또는 가리기"
   },
   "I7Daes": {
     "message": "Look at the bottom cards",
@@ -3174,7 +3174,7 @@
   },
   "cGgbAH": {
     "message": "Lost the room during the replay.",
-    "translation": "리플레이 중에 방을 잃었습니다."
+    "translation": "리플레이 중 방과의 연결이 끊어졌습니다."
   },
   "JgsnP-": {
     "message": "Lost Zone",
@@ -3216,7 +3216,7 @@
   },
   "cnyUyK": {
     "message": "Make cover",
-    "translation": "덮기"
+    "translation": "커버로 지정"
   },
   "brtcFm": {
     "message": "Mark {mark}",
@@ -3241,7 +3241,7 @@
   },
   "IHU0N1": {
     "message": "Mark GX attack unused",
-    "translation": "GX 기술 미사용으로 표시"
+    "translation": "GX기술 미사용으로 표시"
   },
   "IQ2DXR": {
     "message": "Mark VSTAR Power unused",
@@ -3249,7 +3249,7 @@
   },
   "42K-4o": {
     "message": "Match finish",
-    "translation": "경기 마무리"
+    "translation": "마감에 맞춤"
   },
   "5EeU5m": {
     "message": "Matte",
@@ -3258,12 +3258,12 @@
   "xeC--l": {
     "message": "Mega",
     "context": "Pokémon card mechanic",
-    "translation": "메가"
+    "translation": "메가진화"
   },
   "rEDzOC": {
     "message": "Mega",
     "context": "Pokémon stage",
-    "translation": "메가"
+    "translation": "M진화"
   },
   "co2yxV": {
     "message": "Menu",
@@ -3388,7 +3388,7 @@
   "mP7YPE": {
     "message": "Mulligan",
     "context": "shortcut key caption",
-    "translation": "재조정"
+    "translation": "멀리건"
   },
   "8GMjXa": {
     "message": "Mulligan (no Basic in 7)",
@@ -3612,7 +3612,7 @@
   },
   "6rbhdt": {
     "message": "Not your move",
-    "translation": "내 차례가 아닙니다"
+    "translation": "옮길 수 없는 카드입니다"
   },
   "W8zlv3": {
     "message": "Not yours to do",
@@ -3633,7 +3633,7 @@
   },
   "wUL6aJ": {
     "message": "Now make it <0>Poisoned</0>: tap it, <1>{0}</1>, then <2>{1}</2>.",
-    "translation": "이제 <0>독</0> 상태로 만드세요: 탭한 다음 <1>{0}</1>, 그다음 <2>{1}</2>을(를) 하세요."
+    "translation": "이제 <0>독</0> 상태로 만드세요: 탭한 다음 <1>{0}</1>, <2>{1}</2> 순으로 선택하세요."
   },
   "LFzr4S": {
     "message": "Number of cards",
@@ -3738,7 +3738,7 @@
   },
   "tfdDUV": {
     "message": "Open their discard pile",
-    "translation": "상대 트래시 열기"
+    "translation": "상대 트래쉬 열기"
   },
   "QUoj0T": {
     "message": "Open their Lost Zone",
@@ -3746,7 +3746,7 @@
   },
   "52seef": {
     "message": "Open their Prizes",
-    "translation": "상대 프라이즈 카드 열기"
+    "translation": "상대 프라이즈 열기"
   },
   "aiCxFx": {
     "message": "Open your deck",
@@ -3754,7 +3754,7 @@
   },
   "mr-o_0": {
     "message": "Open your discard pile",
-    "translation": "내 트래시 열기"
+    "translation": "내 트래쉬 열기"
   },
   "eZJMWk": {
     "message": "Open your Lost Zone",
@@ -3762,7 +3762,7 @@
   },
   "o1JZRd": {
     "message": "Open your Prizes",
-    "translation": "내 프라이즈 카드 열기"
+    "translation": "내 프라이즈 열기"
   },
   "4UrZFn": {
     "message": "Opening hand · {basics} Basic Pokémon · {mulligan} mulligan",
@@ -3800,7 +3800,7 @@
   },
   "zsicOH": {
     "message": "Out of sync with the room.",
-    "translation": "룸과 동기화되지 않았습니다."
+    "translation": "방과 동기화되지 않았습니다."
   },
   "SFwfHx": {
     "message": "Page Down",
@@ -3835,7 +3835,7 @@
   },
   "kJtjKm": {
     "message": "Pass the turn",
-    "translation": "패스: 턴 넘기기"
+    "translation": "패스: 차례 넘기기"
   },
   "sihBmP": {
     "message": "Paste",
@@ -3852,7 +3852,7 @@
   },
   "Ig8A-t": {
     "message": "Paste a valid invitation into Room ID.",
-    "translation": "올바른 초대를 룸 ID에 붙여넣으세요."
+    "translation": "올바른 초대를 방 ID에 붙여넣으세요."
   },
   "pJRgD4": {
     "message": "Paste an invitation",
@@ -3860,11 +3860,11 @@
   },
   "4LC7ch": {
     "message": "Paste an invitation, or join your own room.",
-    "translation": "초대를 붙여넣거나 내 룸에 참가하세요."
+    "translation": "초대를 붙여넣거나 내 방에 참가하세요."
   },
   "3J14ru": {
     "message": "Paste the invitation into Room ID.",
-    "translation": "초대를 룸 ID에 붙여넣으세요."
+    "translation": "초대를 방 ID에 붙여넣으세요."
   },
   "MfH2NF": {
     "message": "Paste with Ctrl+V (⌘V) instead",
@@ -3880,11 +3880,11 @@
   },
   "QRjV7C": {
     "message": "Pick random card",
-    "translation": "무작위 카드 뽑기"
+    "translation": "무작위 카드 고르기"
   },
   "xYvd7u": {
     "message": "Piece position",
-    "translation": "말 위치"
+    "translation": "조각 위치"
   },
   "SW-cIq": {
     "message": "Play",
@@ -3893,7 +3893,7 @@
   },
   "Sky344": {
     "message": "Play <0>{0}</0>: drag it onto the open mat. Ending your turn clears it away.",
-    "translation": "<0>{0}</0>을(를) 사용하세요: 열린 매트로 드래그합니다. 턴을 끝내면 치워집니다."
+    "translation": "<0>{0}</0>을(를) 사용하세요: 열린 매트로 드래그하세요. 차례를 마치면 치워집니다."
   },
   "7LIRc6": {
     "message": "Play a random deck",
@@ -3978,7 +3978,7 @@
     "comments": [
       "{0} is the Attack button's label, {1} the Pass button's"
     ],
-    "translation": "<0>{0}</0>을(를) 눌러 기술을 쓰고 턴을 끝내거나, <1>{1}</1>을(를) 눌러 기술 없이 턴을 끝내세요."
+    "translation": "<0>{0}</0>을(를) 눌러 기술을 사용하고 차례를 마치거나, <1>{1}</1>을(를) 눌러 기술 없이 차례를 마치세요."
   },
   "LchprM": {
     "message": "Press <0>{0}</0> to turn back to your side.",
@@ -3989,7 +3989,7 @@
   },
   "cF4opC": {
     "message": "Press <0>{0}</0>: it shuffles your deck and deals your hand.",
-    "translation": "<0>{0}</0>을(를) 누르세요: 덱을 섞고 패를 나눠 줍니다."
+    "translation": "<0>{0}</0>을(를) 누르세요: 덱을 섞고 패를 뽑습니다."
   },
   "svdjsQ": {
     "message": "Press <0>{key}</0> any time for every key.",
@@ -4047,7 +4047,7 @@
   "Pe9ns3": {
     "message": "Prizes",
     "context": "Prize cards",
-    "translation": "프라이즈 카드"
+    "translation": "프라이즈"
   },
   "i63IJE": {
     "message": "Prizes",
@@ -4069,7 +4069,7 @@
   },
   "jG4a_T": {
     "message": "Put another on your <0>Bench</0>. Up to five fit there.",
-    "translation": "<0>벤치</0>에 한 장 더 놓으세요. 최대 다섯 장까지 놓을 수 있습니다."
+    "translation": "<0>벤치</0>에 1마리 더 내보내세요. 최대 5마리까지 내보낼 수 있습니다."
   },
   "5XURu8": {
     "message": "Put damage and Poisoned on their Pokémon",
@@ -4077,11 +4077,11 @@
   },
   "rkcP1p": {
     "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
-    "translation": "포켓몬 말은 한 더미에, 스타디움 말은 스타디움에 놓으세요."
+    "translation": "포켓몬 조각은 한 더미에, 스타디움 조각은 스타디움에 놓으세요."
   },
   "QEP1VC": {
     "message": "Put the rest of it, <0>{0}</0> and its Energy, in their discard pile too.",
-    "translation": "나머지인 <0>{0}</0>와(과) 그 에너지도 트래시에 놓으세요."
+    "translation": "나머지인 <0>{0}</0>와(과) 그 에너지도 상대 트래쉬에 놓으세요."
   },
   "VbWX2u": {
     "message": "Quantity",
@@ -4094,7 +4094,7 @@
   "KgxgFc": {
     "message": "Radiant",
     "context": "Pokémon card mechanic",
-    "translation": "빛나는"
+    "translation": "찬란한"
   },
   "AUzUf9": {
     "message": "Rainbow foil",
@@ -4169,7 +4169,7 @@
   "SOnu64": {
     "message": "Relaxed",
     "context": "animation speed",
-    "translation": "느긋하게"
+    "translation": "느긋함"
   },
   "hKnn4w": {
     "message": "Remove {name} from {seat}",
@@ -4308,7 +4308,7 @@
   "UQt_GI": {
     "message": "Restored",
     "context": "Pokémon stage",
-    "translation": "복원됨"
+    "translation": "복원"
   },
   "Dwpy1Z": {
     "message": "Resume a saved game…",
@@ -4329,15 +4329,15 @@
   },
   "B2iCC3": {
     "message": "Reveal (both players)",
-    "translation": "공개 (양 플레이어)"
+    "translation": "공개 (양쪽 플레이어)"
   },
   "MFV2V6": {
     "message": "Reveal or hide their Prizes",
-    "translation": "상대 프라이즈 카드 공개 또는 숨기기"
+    "translation": "상대 프라이즈 공개 또는 숨기기"
   },
   "FnwG7O": {
     "message": "Reveal or hide your Prizes",
-    "translation": "내 프라이즈 카드 공개 또는 숨기기"
+    "translation": "내 프라이즈 공개 또는 숨기기"
   },
   "p7M2KL": {
     "message": "Reveal/hide card",
@@ -4450,7 +4450,7 @@
   },
   "duDNyy": {
     "message": "Rule Box",
-    "translation": "룰 박스"
+    "translation": "룰을 가진 포켓몬"
   },
   "3JjdaA": {
     "message": "Run",
@@ -4464,11 +4464,11 @@
     "comments": [
       "A table look: cherry blossom pink"
     ],
-    "translation": "사쿠라"
+    "translation": "벚꽃"
   },
   "qoNq2S": {
     "message": "Same group for each piece",
-    "translation": "각 말에 같은 그룹 적용"
+    "translation": "각 조각에 같은 그룹 적용"
   },
   "brkgwR": {
     "message": "Sample hand",
@@ -4626,11 +4626,11 @@
   },
   "1KTKvb": {
     "message": "Set up, then put your Pokémon in play",
-    "translation": "준비한 다음 포켓몬을 내놓기"
+    "translation": "세팅한 다음 포켓몬을 필드에 내보내기"
   },
   "1W8ZwT": {
     "message": "Set up: shuffle, draw 7, set 6 prizes",
-    "translation": "세팅: 덱 셔플, 7장 드로, 프라이즈 카드 6장 놓기"
+    "translation": "세팅: 덱 섞기, 7장 뽑기, 프라이즈 6장 놓기"
   },
   "prXKvv": {
     "message": "Setting up the table…",
@@ -4693,7 +4693,7 @@
   },
   "wo4rGx": {
     "message": "Show every print",
-    "translation": "모든 인쇄본 표시"
+    "translation": "모든 프린트 표시"
   },
   "UXsj50": {
     "message": "Show halves…",
@@ -4738,20 +4738,20 @@
   "sf2cQK": {
     "message": "Shuffle",
     "context": "shortcut key caption",
-    "translation": "셔플"
+    "translation": "섞기"
   },
   "BtU68Y": {
     "message": "Shuffle",
     "context": "shuffle the deck",
-    "translation": "셔플"
+    "translation": "섞기"
   },
   "ML96zX": {
     "message": "Shuffle all",
-    "translation": "모두 셔플"
+    "translation": "모두 섞기"
   },
   "XNhlHk": {
     "message": "Shuffle all into deck",
-    "translation": "모두 덱에 넣고 셔플"
+    "translation": "모두 덱에 넣고 섞기"
   },
   "Fnz7SK": {
     "message": "Shuffle all into the deck?",
@@ -4763,15 +4763,15 @@
   },
   "Es4EnS": {
     "message": "Shuffle all to deck",
-    "translation": "모두 덱에 넣고 셔플"
+    "translation": "모두 덱에 넣고 섞기"
   },
   "eFbm-5": {
     "message": "Shuffle deck",
-    "translation": "덱 셔플"
+    "translation": "덱 섞기"
   },
   "K3yK37": {
     "message": "Shuffle hand into deck",
-    "translation": "패를 덱에 넣고 셔플"
+    "translation": "패를 덱에 넣고 섞기"
   },
   "KpMslS": {
     "message": "Shuffle hand into deck and draw…",
@@ -4787,32 +4787,32 @@
   },
   "8uWf-T": {
     "message": "Shuffle hand to bottom of deck and draw…",
-    "translation": "패를 덱 아래로 섞고 드로우…"
+    "translation": "패를 덱 맨 아래에 넣고 뽑기…"
   },
   "RdPVNx": {
     "message": "Shuffle hand to deck",
-    "translation": "패를 덱에 넣고 셔플"
+    "translation": "패를 덱에 넣고 섞기"
   },
   "Tbmmyh": {
     "message": "Shuffle in",
     "context": "shortcut key caption",
-    "translation": "넣고 셔플"
+    "translation": "넣고 섞기"
   },
   "wZ_X8q": {
     "message": "Shuffle into deck",
-    "translation": "덱에 넣고 셔플"
+    "translation": "덱에 넣고 섞기"
   },
   "DIHxqq": {
     "message": "Shuffle prizes",
-    "translation": "프라이즈 셔플"
+    "translation": "프라이즈 섞기"
   },
   "pYUbhf": {
     "message": "Shuffle Prizes",
-    "translation": "프라이즈 카드 섞기"
+    "translation": "프라이즈 섞기"
   },
   "nU9Ip_": {
     "message": "Shuffle Prizes to bottom of deck",
-    "translation": "프라이즈 카드를 덱 아래로 섞기"
+    "translation": "프라이즈를 덱 맨 아래에 넣기"
   },
   "SRsSL6": {
     "message": "Shuffle to bottom",
@@ -4852,7 +4852,7 @@
   },
   "6N0DKq": {
     "message": "Solo table",
-    "translation": "혼자 하는 테이블"
+    "translation": "솔로 테이블"
   },
   "5n8ONW": {
     "message": "Sort",
@@ -4895,7 +4895,7 @@
   "rAziAv": {
     "message": "Space",
     "context": "keyboard key",
-    "translation": "스페이스"
+    "translation": "Space"
   },
   "gj3RpD": {
     "message": "Special",
@@ -4966,7 +4966,7 @@
   },
   "1TzAdj": {
     "message": "Stadium · 2 pieces",
-    "translation": "스타디움 · 2장"
+    "translation": "스타디움 · 2조각"
   },
   "ikMMp4": {
     "message": "Stadiums",
@@ -5002,7 +5002,7 @@
   },
   "YI2gvW": {
     "message": "Start a turn, flip a coin, attack",
-    "translation": "턴 시작, 동전 던지기, 기술 사용"
+    "translation": "차례 시작, 동전 던지기, 기술 사용"
   },
   "-cUaK9": {
     "message": "Start the lesson over",
@@ -5010,11 +5010,11 @@
   },
   "7GpLGd": {
     "message": "Start turn",
-    "translation": "턴 시작"
+    "translation": "차례 시작"
   },
   "yA0PE0": {
     "message": "Start your turn with <0>{0}</0>. It draws your card.",
-    "translation": "<0>{0}</0>(으)로 턴을 시작하세요. 카드를 한 장 뽑습니다."
+    "translation": "<0>{0}</0>(으)로 차례를 시작하세요. 카드를 한 장 뽑습니다."
   },
   "p7o5f_": {
     "message": "Status",
@@ -5112,7 +5112,7 @@
   },
   "yJtTpT": {
     "message": "Take a <0>Prize card</0>: drag one into your hand.",
-    "translation": "<0>프라이즈 카드</0>를 가져오세요: 한 장을 패로 드래그합니다."
+    "translation": "<0>프라이즈</0>를 가져오세요: 1장을 패로 드래그하세요."
   },
   "2g01hc": {
     "message": "Take off {count} damage",
@@ -5182,7 +5182,7 @@
   },
   "4qLtJr": {
     "message": "That Energy has left your hand.",
-    "translation": "그 에너지는 패를 떠났습니다."
+    "translation": "그 에너지가 패에서 사라졌습니다."
   },
   "ZMr878": {
     "message": "That image didn't load.",
@@ -5302,7 +5302,7 @@
   },
   "NdIyvu": {
     "message": "Their discard pile",
-    "translation": "상대 트래시"
+    "translation": "상대 트래쉬"
   },
   "H2nezS": {
     "message": "Their hand",
@@ -5318,11 +5318,11 @@
   },
   "EO0v0p": {
     "message": "Their Prizes",
-    "translation": "상대 프라이즈 카드"
+    "translation": "상대 프라이즈"
   },
   "Cedl1T": {
     "message": "Their side is yours now: start their turn with <0>{0}</0>.",
-    "translation": "이제 상대편을 직접 플레이합니다. <0>{0}</0>(으)로 상대의 턴을 시작하세요."
+    "translation": "이제 상대편을 직접 플레이합니다. <0>{0}</0>(으)로 상대의 차례를 시작하세요."
   },
   "sMMsD3": {
     "message": "Theirs",
@@ -5345,7 +5345,7 @@
     "comments": [
       "\"To active\" is the name of another shortcut in this list."
     ],
-    "translation": "그다음 배틀필드로를 눌러 뒷면으로 내려놓으세요"
+    "translation": "그다음 '배틀필드로'를 눌러 뒷면으로 내보내세요"
   },
   "DNMX9-": {
     "message": "They bring up the next: drag a <0>{0}</0> from their Bench to their Active Spot.",
@@ -5413,7 +5413,7 @@
   },
   "a0AIf-": {
     "message": "To discard",
-    "translation": "트래시로"
+    "translation": "트래쉬로"
   },
   "NmdkBO": {
     "message": "to Energy",
@@ -5573,24 +5573,24 @@
   "VXAHsl": {
     "message": "Turn",
     "context": "shortcut key caption",
-    "translation": "턴"
+    "translation": "차례"
   },
   "GQFSV-": {
     "message": "Turn",
     "context": "start the turn",
-    "translation": "턴"
+    "translation": "차례"
   },
   "BFHK9M": {
     "message": "Turn {number}",
     "context": "the turn's number",
-    "translation": "{number}번째 턴"
+    "translation": "{number}번째 차례"
   },
   "vQTPFg": {
     "message": "Turn {turn}",
     "comments": [
       "The Log's divider at the start of a turn. {turn} is the turn number, as in \"Turn 3\"."
     ],
-    "translation": "{turn}번째 턴"
+    "translation": "{turn}번째 차례"
   },
   "fijiP5": {
     "message": "Turn face down (both players)",
@@ -5602,7 +5602,7 @@
   },
   "R3c2_s": {
     "message": "Turns",
-    "translation": "턴"
+    "translation": "차례"
   },
   "DHMk63": {
     "message": "Turns only the selected card",
@@ -5674,7 +5674,7 @@
   },
   "5Gx011": {
     "message": "Unstack copies",
-    "translation": "카드 펼치기"
+    "translation": "복사본 펼치기"
   },
   "-qi9QY": {
     "message": "Untitled deck",
@@ -5690,7 +5690,7 @@
   },
   "pEHkP7": {
     "message": "Use GX attack",
-    "translation": "GX 기술 사용"
+    "translation": "GX기술 사용"
   },
   "Z4udqe": {
     "message": "Use here",
@@ -5707,7 +5707,7 @@
   },
   "8ZgYGP": {
     "message": "Use this print for the {deckCopies} in the deck",
-    "translation": "덱에 있는 {deckCopies}장에 이 인쇄본 사용"
+    "translation": "덱에 있는 {deckCopies}장에 이 프린트 사용"
   },
   "9c8BhN": {
     "message": "Use VSTAR Power",
@@ -5715,7 +5715,7 @@
   },
   "ZpWtmQ": {
     "message": "Uses Limitless TCG's search syntax.",
-    "translation": "Limitless TCG의 검색 문법을 사용합니다."
+    "translation": "Limitless TCG의 검색 구문을 사용합니다."
   },
   "uCehvK": {
     "message": "V-UNION · 4 pieces",
@@ -5794,7 +5794,7 @@
   },
   "NWGsaA": {
     "message": "Winning now",
-    "translation": "현재 승리 중"
+    "translation": "요즘 이기는 덱"
   },
   "n1kezF": {
     "message": "Yes",
@@ -5828,7 +5828,7 @@
   },
   "S7YY4L": {
     "message": "Your discard pile",
-    "translation": "내 트래시"
+    "translation": "내 트래쉬"
   },
   "gUPT1q": {
     "message": "Your hand",
@@ -5836,7 +5836,7 @@
   },
   "H5pi4B": {
     "message": "Your hand, and your 6 <0>Prize cards</0>, face down.",
-    "translation": "내 패와 뒷면으로 놓인 6장의 <0>프라이즈 카드</0>입니다."
+    "translation": "내 패와 뒷면으로 놓인 <0>프라이즈</0> 6장입니다."
   },
   "BHcJOF": {
     "message": "Your Lost Zone",
@@ -5852,7 +5852,7 @@
   },
   "XzwcHS": {
     "message": "Your Prizes",
-    "translation": "내 프라이즈 카드"
+    "translation": "내 프라이즈"
   },
   "yuM-lV": {
     "message": "Your turn",

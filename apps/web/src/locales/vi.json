@@ -55,21 +55,21 @@
     "comments": [
       "Log line. {actor} is a player's name, {card} the card attached; {source} is the zone it came from and {target} where it went."
     ],
-    "translation": "{actor} đã gắn {card} từ {source, select, hand {bài trên tay} prizes {thẻ Phần thưởng} discard {bài bỏ} board {thảm chơi} stadium {Stadium} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {thẻ gắn kèm} other {bộ bài}} vào {target, select, hand {bài trên tay} prizes {thẻ Phần thưởng} discard {bài bỏ} board {thảm chơi} stadium {Stadium} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {thẻ gắn kèm} other {bộ bài}}"
+    "translation": "{actor} đã gắn {card} từ {source, select, hand {bài trên tay} prizes {Prize} discard {chồng bài bỏ} board {thảm chơi} stadium {Stadium} active {vị trí Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {bài gắn kèm} other {bộ bài}} vào {target, select, hand {bài trên tay} prizes {Prize} discard {chồng bài bỏ} board {thảm chơi} stadium {Stadium} active {vị trí Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {bài gắn kèm} other {bộ bài}}"
   },
   "7Azhu7": {
     "message": "{actor} attached {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {targetCard}",
     "comments": [
       "Log line. {actor} is a player's name; {card} is the card attached (Energy, a Tool) and {targetCard} the Pokémon it went on; {source} is the zone it came from."
     ],
-    "translation": "{actor} đã gắn {card} từ {source, select, hand {bài trên tay} prizes {thẻ Phần thưởng} discard {bài bỏ} board {thảm chơi} stadium {Stadium} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {thẻ gắn kèm} other {bộ bài}} vào {targetCard}"
+    "translation": "{actor} đã gắn {card} từ {source, select, hand {bài trên tay} prizes {Prize} discard {chồng bài bỏ} board {thảm chơi} stadium {Stadium} active {vị trí Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {bài gắn kèm} other {bộ bài}} vào {targetCard}"
   },
   "nb_tRJ": {
     "message": "{actor} discarded {count, plural, one {# attached card(s)} other {# attached card(s)}}",
     "comments": [
       "Log line: a player discarded the cards attached to a Pokémon. {actor} is a player's name, {count} how many cards."
     ],
-    "translation": "{actor} đã bỏ {count, plural, other {# thẻ gắn kèm}}"
+    "translation": "{actor} đã bỏ {count, plural, other {# lá bài gắn kèm}}"
   },
   "KeKqt_": {
     "message": "{actor} discarded {count, plural, one {# card(s)} other {# card(s)}}",
@@ -97,7 +97,7 @@
     "comments": [
       "Log line. {actor} is a player's name, {card} the card it evolved into; {target} names the zone of the Pokémon that evolved, when its name is hidden."
     ],
-    "translation": "{actor} đã tiến hóa {target, select, hand {bài trên tay} prizes {thẻ Phần thưởng} discard {bài bỏ} board {thảm chơi} stadium {Stadium} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {thẻ gắn kèm} other {bộ bài}} thành {card}"
+    "translation": "{actor} đã tiến hóa {target, select, hand {bài trên tay} prizes {Prize} discard {chồng bài bỏ} board {thảm chơi} stadium {Stadium} active {Pokémon Active} bench {Pokémon trên Bench} lostZone {Lost Zone} attachmentResolution {bài gắn kèm} other {bộ bài}} thành {card}"
   },
   "gUuWfL": {
     "message": "{actor} evolved {targetCard} into {card}",
@@ -111,63 +111,63 @@
     "comments": [
       "Log line: a player hid a zone they had shown to everyone. {actor} is who hid it, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "{actor} đã ẩn {source, select, hand {bài trên tay} prizes {thẻ Phần thưởng} discard {bài bỏ} board {thảm chơi} stadium {Stadium} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {thẻ gắn kèm} inspection {khu xem bài} other {bộ bài}} của {owner}"
+    "translation": "{actor} đã ẩn {source, select, hand {bài trên tay} prizes {Prize} discard {chồng bài bỏ} board {thảm chơi} stadium {Stadium} active {vị trí Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {bài gắn kèm} inspection {khu xem bài} other {bộ bài}} của {owner}"
   },
   "89ICfA": {
     "message": "{actor} hid card in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line: a player hid a card they had shown to everyone. {actor} is who hid it, {owner} whose card it is; {source} is the zone it is in."
     ],
-    "translation": "{actor} đã ẩn một lá bài trong {source, select, hand {bài trên tay} prizes {thẻ Phần thưởng} discard {bài bỏ} board {thảm chơi} stadium {Stadium} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {thẻ gắn kèm} inspection {khu xem bài} other {bộ bài}} của {owner}"
+    "translation": "{actor} đã ẩn một lá bài trong {source, select, hand {bài trên tay} prizes {Prize} discard {chồng bài bỏ} board {thảm chơi} stadium {Stadium} active {vị trí Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {bài gắn kèm} inspection {khu xem bài} other {bộ bài}} của {owner}"
   },
   "PZVwKy": {
     "message": "{actor} left {count, plural, one {# attached card(s)} other {# attached card(s)}} in play",
     "comments": [
       "Log line: a player kept the cards attached to a Pokémon on the table. {actor} is a player's name, {count} how many cards."
     ],
-    "translation": "{actor} đã để lại {count, plural, other {# thẻ gắn kèm}} trên bàn"
+    "translation": "{actor} đã để lại {count, plural, other {# lá bài gắn kèm}} trên sân"
   },
   "c5qeZl": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {boardOwner}'s {target, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}}",
     "comments": [
       "Log line for a Pokémon moved onto another player's side of the table. {actor} is the card owner's name, {card} a card's name, {boardOwner} the name of the player whose Active or Bench it went to; {source} is the spot it left and {target} the spot it went to."
     ],
-    "translation": "{actor} đã chuyển {card} từ {source, select, hand {tay} prizes {thẻ Phần thưởng} discard {bài bỏ} board {thảm chơi} stadium {Stadium} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {bài gắn kèm} other {bộ bài}} sang {target, select, hand {tay} prizes {thẻ Phần thưởng} discard {bài bỏ} board {thảm chơi} stadium {Stadium} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {bài gắn kèm} other {bộ bài}} của {boardOwner}"
+    "translation": "{actor} đã chuyển {card} từ {source, select, hand {bài trên tay} prizes {Prize} discard {chồng bài bỏ} board {thảm chơi} stadium {Stadium} active {vị trí Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {bài gắn kèm} other {bộ bài}} sang {target, select, hand {bài trên tay} prizes {Prize} discard {chồng bài bỏ} board {thảm chơi} stadium {Stadium} active {vị trí Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {bài gắn kèm} other {bộ bài}} của {boardOwner}"
   },
   "VzhIq8": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {target, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}}",
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left and {target} the zone it went to."
     ],
-    "translation": "{actor} đã chuyển {card} từ {source, select, hand {bài trên tay} prizes {thẻ Phần thưởng} discard {bài bỏ} board {thảm chơi} stadium {Stadium} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {thẻ gắn kèm} other {bộ bài}} sang {target, select, hand {bài trên tay} prizes {thẻ Phần thưởng} discard {bài bỏ} board {thảm chơi} stadium {Stadium} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {thẻ gắn kèm} other {bộ bài}}"
+    "translation": "{actor} đã chuyển {card} từ {source, select, hand {bài trên tay} prizes {Prize} discard {chồng bài bỏ} board {thảm chơi} stadium {Stadium} active {vị trí Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {bài gắn kèm} other {bộ bài}} sang {target, select, hand {bài trên tay} prizes {Prize} discard {chồng bài bỏ} board {thảm chơi} stadium {Stadium} active {vị trí Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {bài gắn kèm} other {bộ bài}}"
   },
   "elLtOc": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {targetCard}",
     "comments": [
       "Log line. {actor} is a player's name, {card} and {targetCard} card names; {source} is the zone the card left."
     ],
-    "translation": "{actor} đã chuyển {card} từ {source, select, hand {bài trên tay} prizes {thẻ Phần thưởng} discard {bài bỏ} board {thảm chơi} stadium {Stadium} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {thẻ gắn kèm} other {bộ bài}} sang {targetCard}"
+    "translation": "{actor} đã chuyển {card} từ {source, select, hand {bài trên tay} prizes {Prize} discard {chồng bài bỏ} board {thảm chơi} stadium {Stadium} active {vị trí Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {bài gắn kèm} other {bộ bài}} sang {targetCard}"
   },
   "RyQ60M": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to bottom of deck",
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left."
     ],
-    "translation": "{actor} đã chuyển {card} từ {source, select, hand {bài trên tay} prizes {thẻ Phần thưởng} discard {bài bỏ} board {thảm chơi} stadium {Stadium} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {thẻ gắn kèm} other {bộ bài}} xuống đáy bộ bài"
+    "translation": "{actor} đã chuyển {card} từ {source, select, hand {bài trên tay} prizes {Prize} discard {chồng bài bỏ} board {thảm chơi} stadium {Stadium} active {vị trí Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {bài gắn kèm} other {bộ bài}} xuống đáy bộ bài"
   },
   "CsrT9R": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to top of deck",
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left."
     ],
-    "translation": "{actor} đã chuyển {card} từ {source, select, hand {bài trên tay} prizes {thẻ Phần thưởng} discard {bài bỏ} board {thảm chơi} stadium {Stadium} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {thẻ gắn kèm} other {bộ bài}} lên đỉnh bộ bài"
+    "translation": "{actor} đã chuyển {card} từ {source, select, hand {bài trên tay} prizes {Prize} discard {chồng bài bỏ} board {thảm chơi} stadium {Stadium} active {vị trí Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {bài gắn kèm} other {bộ bài}} lên đỉnh bộ bài"
   },
   "WBnnCz": {
     "message": "{actor} moved {count, plural, one {# card(s)} other {# card(s)}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} other {deck}}",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards; {source} is the zone they left and {destination} where they went (play: onto the table)."
     ],
-    "translation": "{actor} đã chuyển {count, plural, other {# lá bài}} từ {source, select, hand {bài trên tay} prizes {thẻ Phần thưởng} discard {bài bỏ} board {thảm chơi} stadium {Stadium} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {thẻ gắn kèm} other {bộ bài}} sang {destination, select, hand {bài trên tay} discard {bài bỏ} lostZone {Lost Zone} deckBottom {đáy bộ bài} play {bàn chơi} other {bộ bài}}"
+    "translation": "{actor} đã chuyển {count, plural, other {# lá bài}} từ {source, select, hand {bài trên tay} prizes {Prize} discard {chồng bài bỏ} board {thảm chơi} stadium {Stadium} active {vị trí Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {bài gắn kèm} other {bộ bài}} sang {destination, select, hand {bài trên tay} discard {chồng bài bỏ} lostZone {Lost Zone} deckBottom {đáy bộ bài} play {sân} other {bộ bài}}"
   },
   "P4_K0D": {
     "message": "{actor} moved a random card from {target}'s hand to board",
@@ -181,28 +181,28 @@
     "comments": [
       "Log line: a player showed one card to everyone. {actor} is who showed it, {owner} whose card it is, {card} the card's name; {source} is the zone it is in."
     ],
-    "translation": "{actor} đã lật {card} trong {source, select, hand {bài trên tay} prizes {thẻ Phần thưởng} discard {bài bỏ} board {thảm chơi} stadium {Stadium} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {thẻ gắn kèm} inspection {khu xem bài} other {bộ bài}} của {owner}"
+    "translation": "{actor} đã lật mở {card} trong {source, select, hand {bài trên tay} prizes {Prize} discard {chồng bài bỏ} board {thảm chơi} stadium {Stadium} active {vị trí Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {bài gắn kèm} inspection {khu xem bài} other {bộ bài}} của {owner}"
   },
   "TMqzLF": {
     "message": "{actor} revealed {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line: a player showed a whole zone to everyone. {actor} is who showed it, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "{actor} đã lật {source, select, hand {bài trên tay} prizes {thẻ Phần thưởng} discard {bài bỏ} board {thảm chơi} stadium {Stadium} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {thẻ gắn kèm} inspection {khu xem bài} other {bộ bài}} của {owner}"
+    "translation": "{actor} đã lật mở {source, select, hand {bài trên tay} prizes {Prize} discard {chồng bài bỏ} board {thảm chơi} stadium {Stadium} active {vị trí Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {bài gắn kèm} inspection {khu xem bài} other {bộ bài}} của {owner}"
   },
   "P2m23t": {
     "message": "{actor} shuffled {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} into deck",
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left."
     ],
-    "translation": "{actor} đã xáo {card} từ {source, select, hand {bài trên tay} prizes {thẻ Phần thưởng} discard {bài bỏ} board {thảm chơi} stadium {Stadium} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {thẻ gắn kèm} other {bộ bài}} vào bộ bài"
+    "translation": "{actor} đã xáo {card} từ {source, select, hand {bài trên tay} prizes {Prize} discard {chồng bài bỏ} board {thảm chơi} stadium {Stadium} active {vị trí Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {bài gắn kèm} other {bộ bài}} vào bộ bài"
   },
   "xEKtXt": {
     "message": "{actor} shuffled {count, plural, one {# attached card(s)} other {# attached card(s)}} into deck",
     "comments": [
       "Log line: a player shuffled the cards attached to a Pokémon into their deck. {actor} is a player's name, {count} how many cards."
     ],
-    "translation": "{actor} đã xáo {count, plural, other {# thẻ gắn kèm}} vào bộ bài"
+    "translation": "{actor} đã xáo {count, plural, other {# lá bài gắn kèm}} vào bộ bài"
   },
   "Ggdxd3": {
     "message": "{actor} shuffled {count, plural, one {# card(s)} other {# card(s)}} from board to deck",
@@ -230,7 +230,7 @@
     "comments": [
       "Log line: a player shuffled their discard pile into their deck. {actor} is a player's name."
     ],
-    "translation": "{actor} đã xáo bài bỏ vào bộ bài"
+    "translation": "{actor} đã xáo chồng bài bỏ vào bộ bài"
   },
   "hJ32fr": {
     "message": "{actor} shuffled hand into deck",
@@ -265,14 +265,14 @@
     "comments": [
       "Log line. {actor} is a player's name."
     ],
-    "translation": "{actor} đã xáo thẻ Phần thưởng xuống đáy bộ bài"
+    "translation": "{actor} đã xáo Prize xuống đáy bộ bài"
   },
   "xw6Fj3": {
     "message": "{actor} switched {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} with top of deck",
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left, and the top card of the deck took its place."
     ],
-    "translation": "{actor} đã đổi {card} từ {source, select, hand {bài trên tay} prizes {thẻ Phần thưởng} discard {bài bỏ} board {thảm chơi} stadium {Stadium} active {vị trí Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {thẻ gắn kèm} other {bộ bài}} với lá trên đỉnh bộ bài"
+    "translation": "{actor} đã đổi {card} từ {source, select, hand {bài trên tay} prizes {Prize} discard {chồng bài bỏ} board {thảm chơi} stadium {Stadium} active {vị trí Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {bài gắn kèm} other {bộ bài}} với lá trên đỉnh bộ bài"
   },
   "QOz626": {
     "message": "{actor} took back {target}'s last move",
@@ -426,7 +426,7 @@
   },
   "aN0Z_E": {
     "message": "{count, plural, one {Shuffle hand to bottom and draw # card} other {Shuffle hand to bottom and draw # cards}}",
-    "translation": "{count, plural, other {Xếp bài trên tay xuống đáy bộ bài và rút # lá}}"
+    "translation": "{count, plural, other {Xáo bài trên tay xuống đáy bộ bài và rút # lá}}"
   },
   "hMKADB": {
     "message": "{count} × {cardName} ({print}). Details",
@@ -506,7 +506,7 @@
     "comments": [
       "markerName is VSTAR or GX."
     ],
-    "translation": "Điểm đánh dấu {markerName}"
+    "translation": "Dấu {markerName}"
   },
   "b3xCW_": {
     "message": "{missingLines, plural, one {# line not found} other {# lines not found}}",
@@ -524,7 +524,7 @@
     "comments": [
       "A zone's name for screen readers; name is its player. The Active Spot."
     ],
-    "translation": "Pokémon Active của {name}"
+    "translation": "Vị trí Active của {name}"
   },
   "2jVmMm": {
     "message": "{name} attacked",
@@ -538,7 +538,7 @@
     "comments": [
       "A zone's name for screen readers; name is its player. The Bench."
     ],
-    "translation": "Băng ghế của {name}"
+    "translation": "Bench của {name}"
   },
   "Mk1A2U": {
     "message": "{name} board",
@@ -552,7 +552,7 @@
     "comments": [
       "Log line: a player made a card count as another kind of card. {name} is a player's name, {card} a card's name; {category} is the kind it now counts as."
     ],
-    "translation": "{name} đã biến {card} thành {category, select, energy {một Energy} pokemon {một Pokémon} trainer {một Tool} other {một loại không xác định}}"
+    "translation": "{name} đã biến {card} thành {category, select, energy {một lá Năng lượng} pokemon {một Pokémon} trainer {một Tool} other {một loại không xác định}}"
   },
   "xjFQ8_": {
     "message": "{name} deck",
@@ -566,7 +566,7 @@
     "comments": [
       "A zone's name for screen readers; name is its player. The discard pile."
     ],
-    "translation": "Bài bỏ của {name}"
+    "translation": "Chồng bài bỏ của {name}"
   },
   "cee6Ru": {
     "message": "{name} disconnected",
@@ -594,7 +594,7 @@
     "comments": [
       "Log line: a player set up for a game (seven cards in hand, Prize cards laid out). {name} is a player's name."
     ],
-    "translation": "{name} đã rút bài khởi đầu và đặt thẻ Phần thưởng"
+    "translation": "{name} đã rút bài khởi đầu và đặt Prize"
   },
   "01JuD1": {
     "message": "{name} flipped {result, select, heads {heads} other {tails}}",
@@ -682,7 +682,7 @@
     "comments": [
       "Log line: a player had no Basic Pokémon in their opening hand and redraws. {name} is a player's name."
     ],
-    "translation": "{name} mulligan"
+    "translation": "{name} đã mulligan"
   },
   "VfRcma": {
     "message": "{name} on {seat}",
@@ -693,14 +693,14 @@
     "comments": [
       "Log line: a player ended their turn without attacking. {name} is a player's name."
     ],
-    "translation": "{name} đã bỏ lượt"
+    "translation": "{name} đã qua lượt"
   },
   "rzpxoR": {
     "message": "{name} prizes",
     "comments": [
       "A zone's name for screen readers; name is its player. The Prize cards."
     ],
-    "translation": "Thẻ Phần thưởng của {name}"
+    "translation": "Prize của {name}"
   },
   "g7DH0W": {
     "message": "{name} reconnected",
@@ -728,7 +728,7 @@
     "comments": [
       "Log line. {name} is a player's name; {source} is the zone they shuffled, almost always their deck."
     ],
-    "translation": "{name} đã xáo {source, select, hand {bài trên tay} prizes {thẻ Phần thưởng} discard {bài bỏ} board {thảm chơi} stadium {Stadium} active {Pokémon Active} bench {Pokémon trên băng ghế} lostZone {Lost Zone} attachmentResolution {các lá bài đã gắn} other {bộ bài}}"
+    "translation": "{name} đã xáo {source, select, hand {bài trên tay} prizes {Prize} discard {chồng bài bỏ} board {thảm chơi} stadium {Stadium} active {vị trí Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {bài gắn kèm} other {bộ bài}}"
   },
   "x8Eb2i": {
     "message": "{name} started turn {turn}",
@@ -932,28 +932,28 @@
     "comments": [
       "Log line: a player began looking at a zone only they can see. {viewer} is who is looking, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "{viewer} đã xem {source, select, hand {bài trên tay} prizes {thẻ phần thưởng} discard {bài bỏ} board {thảm chơi} stadium {Stadium} active {Pokémon Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {các lá bài gắn kèm} inspection {khu kiểm tra} other {bộ bài}} của {owner}"
+    "translation": "{viewer} đã xem {source, select, hand {bài trên tay} prizes {Prize} discard {chồng bài bỏ} board {thảm chơi} stadium {Stadium} active {vị trí Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {bài gắn kèm} inspection {khu xem bài} other {bộ bài}} của {owner}"
   },
   "kF6-Cq": {
     "message": "{viewer} looked at card in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line: a player began looking at a card only they can see. {viewer} is who is looking, {owner} whose card it is; {source} is the zone it is in."
     ],
-    "translation": "{viewer} đã xem một lá bài trong {source, select, hand {bài trên tay} prizes {thẻ phần thưởng} discard {bài bỏ} board {thảm chơi} stadium {Stadium} active {Pokémon Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {các lá bài gắn kèm} inspection {khu kiểm tra} other {bộ bài}} của {owner}"
+    "translation": "{viewer} đã xem một lá bài trong {source, select, hand {bài trên tay} prizes {Prize} discard {chồng bài bỏ} board {thảm chơi} stadium {Stadium} active {vị trí Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {bài gắn kèm} inspection {khu xem bài} other {bộ bài}} của {owner}"
   },
   "jTec7e": {
     "message": "{viewer} stopped looking at {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line. {viewer} is who stopped looking, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "{viewer} đã ngừng xem {source, select, hand {bài trên tay} prizes {thẻ phần thưởng} discard {bài bỏ} board {thảm chơi} stadium {Stadium} active {Pokémon Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {các lá bài gắn kèm} inspection {khu kiểm tra} other {bộ bài}} của {owner}"
+    "translation": "{viewer} đã ngừng xem {source, select, hand {bài trên tay} prizes {Prize} discard {chồng bài bỏ} board {thảm chơi} stadium {Stadium} active {vị trí Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {bài gắn kèm} inspection {khu xem bài} other {bộ bài}} của {owner}"
   },
   "FAueN1": {
     "message": "{viewer} stopped looking at card in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line. {viewer} is who stopped looking, {owner} whose card it is; {source} is the zone it is in."
     ],
-    "translation": "{viewer} đã ngừng xem một lá bài trong {source, select, hand {bài trên tay} prizes {thẻ phần thưởng} discard {bài bỏ} board {thảm chơi} stadium {Stadium} active {Pokémon Active} bench {băng ghế} lostZone {Lost Zone} attachmentResolution {các lá bài gắn kèm} inspection {khu kiểm tra} other {bộ bài}} của {owner}"
+    "translation": "{viewer} đã ngừng xem một lá bài trong {source, select, hand {bài trên tay} prizes {Prize} discard {chồng bài bỏ} board {thảm chơi} stadium {Stadium} active {vị trí Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {bài gắn kèm} inspection {khu xem bài} other {bộ bài}} của {owner}"
   },
   "JirPbT": {
     "message": "{zoneName}, {count, plural, one {# card} other {# cards}}",
@@ -1231,7 +1231,7 @@
   },
   "5ZW9xa": {
     "message": "An attack payable with two Energy",
-    "translation": "Một chiêu tấn công trả được bằng hai Năng lượng"
+    "translation": "Chiêu thức trả được bằng hai Năng lượng"
   },
   "bK6Mfx": {
     "message": "An image URL, 'blank' or 'theme'.",
@@ -1310,7 +1310,7 @@
   },
   "hXSSHx": {
     "message": "Assemble / attach to a card…",
-    "translation": "Ghép / gắn vào một thẻ…"
+    "translation": "Ghép / gắn vào một lá bài…"
   },
   "igVDFt": {
     "message": "Attach",
@@ -1327,7 +1327,7 @@
   },
   "E9l6HC": {
     "message": "Attached cards being moved",
-    "translation": "Các thẻ gắn kèm đang được di chuyển"
+    "translation": "Các lá bài gắn kèm đang được di chuyển"
   },
   "QUMrFI": {
     "message": "Attached to {0}",
@@ -1416,34 +1416,34 @@
   },
   "o4xCmI": {
     "message": "Basic / Special Energy",
-    "translation": "Energy Cơ bản / Đặc biệt"
+    "translation": "Năng lượng Cơ bản / Đặc biệt"
   },
   "mQwVD5": {
     "message": "Basic Energy",
-    "translation": "Energy Cơ bản"
+    "translation": "Năng lượng Cơ bản"
   },
   "dkk7vA": {
     "message": "Bench",
     "context": "shortcut key caption",
-    "translation": "Băng ghế"
+    "translation": "Bench"
   },
   "-Pxcql": {
     "message": "Bench",
     "context": "zone",
-    "translation": "Băng ghế"
+    "translation": "Bench"
   },
   "SpTFye": {
     "message": "Bench",
     "context": "zone on the table",
-    "translation": "Băng ghế"
+    "translation": "Bench"
   },
   "tffbb1": {
     "message": "Bench <0>{0}</0> from your hand.",
-    "translation": "Đặt <0>{0}</0> từ tay bạn xuống băng ghế dự bị."
+    "translation": "Đặt <0>{0}</0> từ tay bạn xuống Bench."
   },
   "T1zt_m": {
     "message": "Bench <0>{0}</0> too.",
-    "translation": "Hãy đưa cả <0>{0}</0> xuống băng ghế."
+    "translation": "Hãy đưa cả <0>{0}</0> xuống Bench."
   },
   "O2HdKg": {
     "message": "Board",
@@ -1489,7 +1489,7 @@
   "zhWhnP": {
     "message": "Bottom",
     "context": "shortcut key caption",
-    "translation": "Dưới"
+    "translation": "Dưới cùng"
   },
   "ZeDBlG": {
     "message": "Bottom left",
@@ -1571,32 +1571,32 @@
   },
   "8xaYE9": {
     "message": "Card images",
-    "translation": "Hình ảnh thẻ bài"
+    "translation": "Hình ảnh lá bài"
   },
   "ymPKi7": {
     "message": "Card preview",
-    "translation": "Xem trước thẻ"
+    "translation": "Xem trước lá bài"
   },
   "zxNq-N": {
     "message": "Card selected",
     "context": "when a shortcut works",
-    "translation": "Đã chọn thẻ"
+    "translation": "Đã chọn lá bài"
   },
   "jBvtuq": {
     "message": "Card size",
-    "translation": "Cỡ thẻ"
+    "translation": "Cỡ lá bài"
   },
   "z0RA9w": {
     "message": "Card size {percent}%, back to 100%",
-    "translation": "Cỡ thẻ {percent}%, đặt lại về 100%"
+    "translation": "Cỡ lá bài {percent}%, đặt lại về 100%"
   },
   "kLlRKH": {
     "message": "Card stack preview",
-    "translation": "Xem trước chồng thẻ"
+    "translation": "Xem trước chồng bài"
   },
   "TH1VPk": {
     "message": "Card thickness",
-    "translation": "Độ dày thẻ"
+    "translation": "Độ dày lá bài"
   },
   "Ccpbzh": {
     "message": "Cards",
@@ -1604,7 +1604,7 @@
   },
   "CZ3VjP": {
     "message": "Cards being inspected",
-    "translation": "Các thẻ đang xem"
+    "translation": "Các lá bài đang xem"
   },
   "DvicXZ": {
     "message": "Cards didn't load.",
@@ -1612,11 +1612,11 @@
   },
   "7oASui": {
     "message": "Cards found",
-    "translation": "Thẻ tìm được"
+    "translation": "Lá bài tìm được"
   },
   "IuDYMd": {
     "message": "Cards in deck",
-    "translation": "Thẻ trong bộ bài"
+    "translation": "Lá bài trong bộ bài"
   },
   "sIpTuZ": {
     "message": "Change background",
@@ -1624,7 +1624,7 @@
   },
   "PCF3WN": {
     "message": "Change card back",
-    "translation": "Đổi mặt sau thẻ"
+    "translation": "Đổi mặt sau bài"
   },
   "lKPW0c": {
     "message": "Change card back for {slotSeat}",
@@ -1632,11 +1632,11 @@
   },
   "SGf9Cc": {
     "message": "Change card type",
-    "translation": "Đổi loại thẻ"
+    "translation": "Đổi loại lá bài"
   },
   "nVhPBD": {
     "message": "Change type to Energy",
-    "translation": "Đổi loại thành Energy"
+    "translation": "Đổi loại thành Năng lượng"
   },
   "jWdGHA": {
     "message": "Change type to Pokémon",
@@ -1739,7 +1739,7 @@
   },
   "F4fFCC": {
     "message": "Click <0>{0}</0> in your hand, then press <1>{key}</1> to bench it.",
-    "translation": "Nhấp vào <0>{0}</0> trong tay bạn, rồi nhấn <1>{key}</1> để đặt xuống băng ghế dự bị."
+    "translation": "Nhấp vào <0>{0}</0> trên tay bạn, rồi nhấn <1>{key}</1> để đặt xuống Bench."
   },
   "MO489z": {
     "message": "Click a shortcut to change it.",
@@ -1767,7 +1767,7 @@
   },
   "aVo9NM": {
     "message": "Close card preview",
-    "translation": "Đóng xem trước thẻ"
+    "translation": "Đóng xem trước lá bài"
   },
   "aYX0za": {
     "message": "Close keyboard shortcuts",
@@ -1939,7 +1939,7 @@
   },
   "qT5p-1": {
     "message": "Custom card",
-    "translation": "Thẻ tùy chỉnh"
+    "translation": "Lá bài tùy chỉnh"
   },
   "rlm3op": {
     "message": "Custom flair on Discord & open reign on self-nicknames.",
@@ -1955,7 +1955,7 @@
   },
   "68zbbm": {
     "message": "Damage counter",
-    "translation": "Counter sát thương"
+    "translation": "Dấu sát thương"
   },
   "yB1YpA": {
     "message": "Dark mode",
@@ -2085,7 +2085,7 @@
   "E8rJSo": {
     "message": "Discard",
     "context": "shortcut key caption",
-    "translation": "Bỏ bài"
+    "translation": "Bài bỏ"
   },
   "uuQD5w": {
     "message": "Discard",
@@ -2097,7 +2097,7 @@
   },
   "c58XOp": {
     "message": "Discard a Pokémon, take a Prize, bring up the next",
-    "translation": "Bỏ một Pokémon, lấy một thẻ Phần thưởng, đưa Pokémon tiếp theo lên"
+    "translation": "Bỏ một Pokémon, lấy một lá Prize, đưa Pokémon tiếp theo lên"
   },
   "u8xW5H": {
     "message": "Discard all",
@@ -2181,7 +2181,7 @@
   },
   "n3U3s1": {
     "message": "Drag a Basic Pokémon from your hand onto your <0>Active Spot</0>.",
-    "translation": "Kéo một Pokémon Cơ Bản từ tay bạn vào <0>Vị trí Active</0> của bạn."
+    "translation": "Kéo một Pokémon Cơ bản từ tay bạn vào <0>vị trí Active</0> của bạn."
   },
   "sEjSlz": {
     "message": "Dragon",
@@ -2315,7 +2315,7 @@
   },
   "i07JvD": {
     "message": "Energy, evolutions, Trainers and the Bench",
-    "translation": "Năng lượng, tiến hóa, Trainer và Băng ghế"
+    "translation": "Năng lượng, tiến hóa, Trainer và Bench"
   },
   "CtX2Zh": {
     "message": "Enter",
@@ -2385,7 +2385,7 @@
   },
   "HenzVD": {
     "message": "Exactly one Basic",
-    "translation": "Đúng một Basic"
+    "translation": "Đúng một Pokémon Cơ bản"
   },
   "bMQxzZ": {
     "message": "Exit",
@@ -2434,7 +2434,7 @@
   "WtsWWf": {
     "message": "Fighting",
     "context": "Pokémon type",
-    "translation": "Đấu"
+    "translation": "Giác đấu"
   },
   "cSev-j": {
     "message": "Filters",
@@ -2474,7 +2474,7 @@
   },
   "STV_9c": {
     "message": "Find cards",
-    "translation": "Tìm thẻ bài"
+    "translation": "Tìm lá bài"
   },
   "t-Le_S": {
     "message": "Find it",
@@ -2491,7 +2491,7 @@
   },
   "mDOjMG": {
     "message": "Finish (optional)",
-    "translation": "Hoàn thiện (tùy chọn)"
+    "translation": "Hiệu ứng bề mặt (tùy chọn)"
   },
   "SN6Ocg": {
     "message": "Fire",
@@ -2569,7 +2569,7 @@
   },
   "TZN8p-": {
     "message": "Full card",
-    "translation": "Toàn bộ thẻ bài"
+    "translation": "Cả lá bài"
   },
   "OwIqiD": {
     "message": "Full screen",
@@ -2587,7 +2587,7 @@
   "IUNEkE": {
     "message": "Future",
     "context": "Pokémon card mechanic",
-    "translation": "Tương lai"
+    "translation": "Future"
   },
   "iDs75z": {
     "message": "Game actions",
@@ -2608,7 +2608,7 @@
   },
   "mb6Tyv": {
     "message": "Generate a room and send the invitation. With <0>Join as spectator</0> on, it invites a spectator.",
-    "translation": "Tạo phòng và gửi lời mời. Khi bật <0>Tham gia với tư cách khán giả</0>, lời mời sẽ dành cho khán giả."
+    "translation": "Tạo phòng và gửi lời mời. Khi bật <0>Vào với tư cách khán giả</0>, lời mời sẽ dành cho khán giả."
   },
   "5NEkeP": {
     "message": "Generate a room first.",
@@ -2678,16 +2678,16 @@
   "MMu3F-": {
     "message": "Hand to bottom",
     "context": "shortcut key caption",
-    "translation": "Bài trên tay xuống đáy bộ bài"
+    "translation": "Tay xuống đáy"
   },
   "n04_a0": {
     "message": "Hand to deck",
     "context": "shortcut key caption",
-    "translation": "Bài trên tay vào bộ bài"
+    "translation": "Tay vào bộ bài"
   },
   "M35hjm": {
     "message": "Has an Ability, no Weakness",
-    "translation": "Có Đặc Tính, không có Điểm Yếu"
+    "translation": "Có Ability, không có Điểm yếu"
   },
   "BvzegF": {
     "message": "Heads",
@@ -2759,7 +2759,7 @@
   },
   "36NKhF": {
     "message": "HP and retreat",
-    "translation": "HP và lùi"
+    "translation": "HP và rút lui"
   },
   "ZTtNAf": {
     "message": "HP at least",
@@ -2905,7 +2905,7 @@
   },
   "N2lSEn": {
     "message": "Joins matching pieces",
-    "translation": "Gộp các quân giống nhau"
+    "translation": "Ghép các mảnh khớp nhau"
   },
   "80Qsxy": {
     "message": "Keep",
@@ -2935,11 +2935,11 @@
   },
   "_rugva": {
     "message": "Knock Out",
-    "translation": "Knock Out"
+    "translation": "Hạ gục"
   },
   "69MOGQ": {
     "message": "Knock Out their <0>{0}</0>: drag it onto their discard pile. Its Energy goes with it.",
-    "translation": "Knock Out <0>{0}</0> của đối thủ: kéo nó vào chồng bài bỏ của họ. Năng lượng đi kèm cũng bị bỏ theo."
+    "translation": "Hạ gục <0>{0}</0> của đối thủ: kéo nó vào chồng bài bỏ của họ. Năng lượng đi kèm cũng bị bỏ theo."
   },
   "vXIe7J": {
     "message": "Language",
@@ -3015,7 +3015,7 @@
   "Lnx2DC": {
     "message": "Lightning",
     "context": "Pokémon type",
-    "translation": "Lightning"
+    "translation": "Điện"
   },
   "JL_ceN": {
     "message": "Limitless",
@@ -3030,7 +3030,7 @@
   },
   "P7ovJ4": {
     "message": "Line {line}: card name too long.",
-    "translation": "Dòng {line}: tên thẻ quá dài."
+    "translation": "Dòng {line}: tên lá bài quá dài."
   },
   "jZ7Cmx": {
     "message": "Line {line}: image URL too long.",
@@ -3042,7 +3042,7 @@
   },
   "jleG-m": {
     "message": "Line {line}: set code too long.",
-    "translation": "Dòng {line}: mã bộ thẻ quá dài."
+    "translation": "Dòng {line}: mã set quá dài."
   },
   "Q8pDHq": {
     "message": "List",
@@ -3075,7 +3075,7 @@
   },
   "g7taAS": {
     "message": "Loading cards…",
-    "translation": "Đang tải thẻ…"
+    "translation": "Đang tải lá bài…"
   },
   "f55wdH": {
     "message": "Loading decks…",
@@ -3126,7 +3126,7 @@
   },
   "Q1s-WM": {
     "message": "Look at how many cards?",
-    "translation": "Xem bao nhiêu thẻ?"
+    "translation": "Xem bao nhiêu lá?"
   },
   "I3be0u": {
     "message": "Look at or cover (only you)",
@@ -3138,11 +3138,11 @@
   },
   "qJ_tx1": {
     "message": "Look at or cover their Prizes",
-    "translation": "Xem hoặc úp các lá Phần thưởng của đối thủ"
+    "translation": "Xem hoặc úp Prize của đối thủ"
   },
   "bQF9w4": {
     "message": "Look at or cover your Prizes",
-    "translation": "Xem hoặc úp Phần thưởng của bạn"
+    "translation": "Xem hoặc úp Prize của bạn"
   },
   "I7Daes": {
     "message": "Look at the bottom cards",
@@ -3166,7 +3166,7 @@
   },
   "TYI_fo": {
     "message": "Look/cover prizes",
-    "translation": "Xem/úp bài Giải thưởng"
+    "translation": "Xem/úp Prize"
   },
   "pKU2VG": {
     "message": "Looking at cards",
@@ -3201,7 +3201,7 @@
   },
   "eyE6CV": {
     "message": "Lost Zone and markers",
-    "translation": "Lost Zone và marker"
+    "translation": "Lost Zone và các dấu"
   },
   "LoMQBK": {
     "message": "Majors on Limitless",
@@ -3216,7 +3216,7 @@
   },
   "cnyUyK": {
     "message": "Make cover",
-    "translation": "Tạo mặt úp"
+    "translation": "Đặt làm bìa"
   },
   "brtcFm": {
     "message": "Mark {mark}",
@@ -3249,7 +3249,7 @@
   },
   "42K-4o": {
     "message": "Match finish",
-    "translation": "Lớp hoàn thiện"
+    "translation": "Theo hiệu ứng bề mặt"
   },
   "5EeU5m": {
     "message": "Matte",
@@ -3278,7 +3278,7 @@
   "8ykb1q": {
     "message": "Metal",
     "context": "Pokémon type",
-    "translation": "Kim loại"
+    "translation": "Thép"
   },
   "-KKkWV": {
     "message": "Middle",
@@ -3326,7 +3326,7 @@
   },
   "LlDm7t": {
     "message": "More game actions",
-    "translation": "Thêm thao tác trong game"
+    "translation": "Thêm thao tác trong ván"
   },
   "itfxKl": {
     "message": "Motion",
@@ -3358,15 +3358,15 @@
   },
   "eC8uPs": {
     "message": "Move attached cards",
-    "translation": "Di chuyển các thẻ đính kèm"
+    "translation": "Di chuyển các lá bài gắn kèm"
   },
   "TnU3pN": {
     "message": "Move card",
-    "translation": "Di chuyển thẻ"
+    "translation": "Di chuyển lá bài"
   },
   "wm4ygR": {
     "message": "Move card...",
-    "translation": "Di chuyển thẻ..."
+    "translation": "Di chuyển lá bài..."
   },
   "TvEhJE": {
     "message": "Move didn't go through",
@@ -3375,7 +3375,7 @@
   "dIOEcQ": {
     "message": "Move the selected card",
     "context": "shortcut group",
-    "translation": "Di chuyển thẻ đang chọn"
+    "translation": "Di chuyển lá bài đang chọn"
   },
   "mcfB2A": {
     "message": "Move to",
@@ -3392,7 +3392,7 @@
   },
   "8GMjXa": {
     "message": "Mulligan (no Basic in 7)",
-    "translation": "Mulligan (không có Basic trong 7 lá)"
+    "translation": "Mulligan (không có Pokémon Cơ bản trong 7 lá)"
   },
   "jiY-22": {
     "message": "My deck",
@@ -3433,11 +3433,11 @@
   },
   "OzETXo": {
     "message": "Natural card placement",
-    "translation": "Đặt thẻ tự nhiên"
+    "translation": "Đặt lá bài tự nhiên"
   },
   "rf9azy": {
     "message": "Needs at least one Basic Pokémon.",
-    "translation": "Cần ít nhất một Pokémon Cơ Bản."
+    "translation": "Cần ít nhất một Pokémon Cơ bản."
   },
   "W_gspM": {
     "message": "New deck",
@@ -3484,14 +3484,14 @@
   },
   "iKrJ1Q": {
     "message": "No Basic Pokémon in your hand: that is a mulligan. Choose <0>{0}</0> under {1}.",
-    "translation": "Không có Pokémon Cơ Bản trong tay: đó là mulligan. Chọn <0>{0}</0> dưới {1}."
+    "translation": "Không có Pokémon Cơ bản trên tay bạn: phải mulligan. Chọn <0>{0}</0> trong mục {1}."
   },
   "6n5psS": {
     "message": "No card lines found. Try lines like \"4 Iono PAL 185\".",
     "comments": [
       "Keep the example line \"4 Iono PAL 185\" as it is."
     ],
-    "translation": "Không tìm thấy dòng thẻ nào. Hãy thử các dòng như \"4 Iono PAL 185\"."
+    "translation": "Không tìm thấy dòng lá bài nào. Hãy thử các dòng như \"4 Iono PAL 185\"."
   },
   "7Kn8aC": {
     "message": "No cards here",
@@ -3499,7 +3499,7 @@
   },
   "7rmH0G": {
     "message": "No cards in that list.",
-    "translation": "Danh sách này không có thẻ nào."
+    "translation": "Danh sách này không có lá bài nào."
   },
   "r1U_Vc": {
     "message": "No cards match “{text}”.",
@@ -3511,7 +3511,7 @@
   },
   "bYysi5": {
     "message": "No cards yet. Paste a list anywhere here.",
-    "translation": "Chưa có thẻ nào. Dán danh sách vào bất cứ đâu ở đây."
+    "translation": "Chưa có lá bài nào. Dán danh sách vào bất cứ đâu ở đây."
   },
   "-Qx8U8": {
     "message": "No deck",
@@ -3541,7 +3541,7 @@
   },
   "SkSmET": {
     "message": "No foil",
-    "translation": "Không foil"
+    "translation": "Không ánh kim"
   },
   "2fhoKU": {
     "message": "No image",
@@ -3561,7 +3561,7 @@
   },
   "Psi2LF": {
     "message": "No Special Condition",
-    "translation": "Không có Trạng thái đặc biệt"
+    "translation": "Không có trạng thái đặc biệt"
   },
   "lChsa8": {
     "message": "No tournament decks right now.",
@@ -3612,7 +3612,7 @@
   },
   "6rbhdt": {
     "message": "Not your move",
-    "translation": "Chưa đến lượt bạn"
+    "translation": "Bạn không thể di chuyển lá bài này"
   },
   "W8zlv3": {
     "message": "Not yours to do",
@@ -3629,11 +3629,11 @@
   },
   "UJSKBC": {
     "message": "Now make it <0>Poisoned</0>: right-click it, then <1>{0}</1>.",
-    "translation": "Giờ hãy làm nó bị <0>Nhiễm độc</0>: nhấp chuột phải vào nó, rồi chọn <1>{0}</1>."
+    "translation": "Giờ hãy làm nó bị <0>Trúng độc</0>: nhấp chuột phải vào nó, rồi chọn <1>{0}</1>."
   },
   "wUL6aJ": {
     "message": "Now make it <0>Poisoned</0>: tap it, <1>{0}</1>, then <2>{1}</2>.",
-    "translation": "Giờ hãy làm cho nó bị <0>Nhiễm độc</0>: chạm vào nó, <1>{0}</1>, rồi <2>{1}</2>."
+    "translation": "Giờ hãy làm nó bị <0>Trúng độc</0>: chạm vào nó, <1>{0}</1>, rồi <2>{1}</2>."
   },
   "LFzr4S": {
     "message": "Number of cards",
@@ -3694,7 +3694,7 @@
     "comments": [
       "formatLabel is a deck format: Standard, Expanded…"
     ],
-    "translation": "Chỉ hợp lệ {formatLabel}"
+    "translation": "Chỉ hợp lệ ở {formatLabel}"
   },
   "XXBK3z": {
     "message": "Only players can change the table.",
@@ -3706,7 +3706,7 @@
   },
   "gbBPE1": {
     "message": "Only you see this. Cards without that printing keep the deck's scan.",
-    "translation": "Chỉ bạn thấy điều này. Thẻ không có bản in đó sẽ giữ ảnh của bộ bài."
+    "translation": "Chỉ bạn thấy điều này. Lá bài không có bản in đó sẽ giữ ảnh quét của bộ bài."
   },
   "woUJjU": {
     "message": "Open <0>{0}</0>: every action, by name.",
@@ -3746,7 +3746,7 @@
   },
   "52seef": {
     "message": "Open their Prizes",
-    "translation": "Mở Phần thưởng của đối thủ"
+    "translation": "Mở Prize của đối thủ"
   },
   "aiCxFx": {
     "message": "Open your deck",
@@ -3762,11 +3762,11 @@
   },
   "o1JZRd": {
     "message": "Open your Prizes",
-    "translation": "Mở Phần thưởng của bạn"
+    "translation": "Mở Prize của bạn"
   },
   "4UrZFn": {
     "message": "Opening hand · {basics} Basic Pokémon · {mulligan} mulligan",
-    "translation": "Bài mở đầu · {basics} Pokémon Cơ Bản · {mulligan} lần bốc lại"
+    "translation": "Bài khởi đầu · {basics} Pokémon Cơ bản · {mulligan} lần mulligan"
   },
   "oLQoOZ": {
     "message": "Opening your decks…",
@@ -3884,7 +3884,7 @@
   },
   "xYvd7u": {
     "message": "Piece position",
-    "translation": "Vị trí quân cờ"
+    "translation": "Vị trí mảnh"
   },
   "SW-cIq": {
     "message": "Play",
@@ -3893,7 +3893,7 @@
   },
   "Sky344": {
     "message": "Play <0>{0}</0>: drag it onto the open mat. Ending your turn clears it away.",
-    "translation": "Chơi <0>{0}</0>: kéo nó vào tấm thảm đang mở. Kết thúc lượt sẽ dọn nó đi."
+    "translation": "Chơi <0>{0}</0>: kéo nó lên thảm chơi. Khi bạn kết thúc lượt, nó sẽ được dọn đi."
   },
   "7LIRc6": {
     "message": "Play a random deck",
@@ -3937,7 +3937,7 @@
   },
   "KO7h6x": {
     "message": "Pocket decks have no Energy cards.",
-    "translation": "Bộ bài Pocket không có thẻ Năng lượng."
+    "translation": "Bộ bài Pocket không có lá Năng lượng."
   },
   "S-nXVo": {
     "message": "Pointer parallax",
@@ -3946,7 +3946,7 @@
   "95vGpJ": {
     "message": "Poisoned",
     "context": "special condition",
-    "translation": "Nhiễm độc"
+    "translation": "Trúng độc"
   },
   "icgZ-R": {
     "message": "Pokémon",
@@ -3964,7 +3964,7 @@
   },
   "RNaprm": {
     "message": "Pokémon cards",
-    "translation": "Thẻ Pokémon"
+    "translation": "Bài Pokémon"
   },
   "_0G332": {
     "message": "Press {keys} for <0>shortcuts</0>.",
@@ -4021,7 +4021,7 @@
   },
   "1LEpjy": {
     "message": "Press twice for a card in play",
-    "translation": "Nhấn hai lần để chọn thẻ đang trong trận"
+    "translation": "Nhấn hai lần để xem lá bài trên sân"
   },
   "4ZehuB": {
     "message": "Preview {cardName}",
@@ -4042,17 +4042,17 @@
   "nT_UTA": {
     "message": "Prize",
     "context": "shortcut key caption",
-    "translation": "Thẻ Phần thưởng"
+    "translation": "Prize"
   },
   "Pe9ns3": {
     "message": "Prizes",
     "context": "Prize cards",
-    "translation": "Thẻ Phần thưởng"
+    "translation": "Prize"
   },
   "i63IJE": {
     "message": "Prizes",
     "context": "zone",
-    "translation": "Thẻ Phần thưởng"
+    "translation": "Prize"
   },
   "kghpX2": {
     "message": "Prizes",
@@ -4060,20 +4060,20 @@
     "comments": [
       "The Prize cards."
     ],
-    "translation": "Thẻ Phần thưởng"
+    "translation": "Prize"
   },
   "NlwZhZ": {
     "message": "Psychic",
     "context": "Pokémon type",
-    "translation": "Siêu năng lực"
+    "translation": "Siêu linh"
   },
   "jG4a_T": {
     "message": "Put another on your <0>Bench</0>. Up to five fit there.",
-    "translation": "Đặt thêm một con lên <0>Băng ghế</0>. Tối đa năm con."
+    "translation": "Đặt thêm một con lên <0>Bench</0>. Tối đa năm con."
   },
   "5XURu8": {
     "message": "Put damage and Poisoned on their Pokémon",
-    "translation": "Đặt sát thương và Nhiễm độc lên Pokémon của đối thủ"
+    "translation": "Đặt sát thương và Trúng độc lên Pokémon của đối thủ"
   },
   "rkcP1p": {
     "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
@@ -4121,7 +4121,7 @@
   },
   "xs2rFL": {
     "message": "Read a card, and open its actions",
-    "translation": "Đọc thẻ bài và mở các hành động của nó"
+    "translation": "Đọc lá bài và mở thao tác của nó"
   },
   "LAbKv2": {
     "message": "Ready for {format}",
@@ -4308,7 +4308,7 @@
   "UQt_GI": {
     "message": "Restored",
     "context": "Pokémon stage",
-    "translation": "Đã phục hồi"
+    "translation": "Restored"
   },
   "Dwpy1Z": {
     "message": "Resume a saved game…",
@@ -4325,7 +4325,7 @@
   "MTyHfv": {
     "message": "Reveal",
     "context": "shortcut key caption",
-    "translation": "Lật xem"
+    "translation": "Lật mở"
   },
   "B2iCC3": {
     "message": "Reveal (both players)",
@@ -4333,19 +4333,19 @@
   },
   "MFV2V6": {
     "message": "Reveal or hide their Prizes",
-    "translation": "Hiện hoặc ẩn Phần thưởng của đối thủ"
+    "translation": "Hiện hoặc ẩn Prize của đối thủ"
   },
   "FnwG7O": {
     "message": "Reveal or hide your Prizes",
-    "translation": "Hiện hoặc ẩn Phần thưởng của bạn"
+    "translation": "Hiện hoặc ẩn Prize của bạn"
   },
   "p7M2KL": {
     "message": "Reveal/hide card",
-    "translation": "Lật mở/úp thẻ"
+    "translation": "Lật mở/úp lá bài"
   },
   "lHuUt0": {
     "message": "Reveal/hide prizes",
-    "translation": "Lật mở/úp thẻ Giải"
+    "translation": "Lật mở/úp Prize"
   },
   "fa6wL6": {
     "message": "Revealed to your opponent",
@@ -4362,7 +4362,7 @@
   },
   "gTK8h8": {
     "message": "Right-click a card for actions.",
-    "translation": "Nhấp chuột phải vào thẻ để xem thao tác."
+    "translation": "Nhấp chuột phải vào lá bài để xem thao tác."
   },
   "TKRCsY": {
     "message": "Right-click their <0>{0}</0>.",
@@ -4390,7 +4390,7 @@
   },
   "86ffek": {
     "message": "Rotate card(s)",
-    "translation": "Xoay thẻ"
+    "translation": "Xoay lá bài"
   },
   "JRfxmI": {
     "message": "Row {row}: text after a closing quote.",
@@ -4406,15 +4406,15 @@
   },
   "FxnMec": {
     "message": "Row {rowNumber}: card name too long.",
-    "translation": "Hàng {rowNumber}: tên thẻ quá dài."
+    "translation": "Hàng {rowNumber}: tên lá bài quá dài."
   },
   "QfafSg": {
     "message": "Row {rowNumber}: card type must be Pokémon, Trainer or Energy.",
-    "translation": "Hàng {rowNumber}: loại thẻ phải là Pokémon, Trainer hoặc Energy."
+    "translation": "Hàng {rowNumber}: loại lá bài phải là Pokémon, Trainer hoặc Energy."
   },
   "jtuoO2": {
     "message": "Row {rowNumber}: card type too long.",
-    "translation": "Hàng {rowNumber}: loại thẻ quá dài."
+    "translation": "Hàng {rowNumber}: loại lá bài quá dài."
   },
   "gojF1j": {
     "message": "Row {rowNumber}: image URL too long.",
@@ -4426,27 +4426,27 @@
   },
   "tqYUyB": {
     "message": "Row {rowNumber}: needs exactly five columns.",
-    "translation": "Dòng {rowNumber}: cần đúng năm cột."
+    "translation": "Hàng {rowNumber}: cần đúng năm cột."
   },
   "GTr4h_": {
     "message": "Row {rowNumber}: needs exactly four columns.",
-    "translation": "Dòng {rowNumber}: cần đúng bốn cột."
+    "translation": "Hàng {rowNumber}: cần đúng bốn cột."
   },
   "uC4XeA": {
     "message": "Row {rowNumber}: no card name.",
-    "translation": "Dòng {rowNumber}: thiếu tên thẻ."
+    "translation": "Hàng {rowNumber}: thiếu tên lá bài."
   },
   "2DgRWI": {
     "message": "Row {rowNumber}: no card type.",
-    "translation": "Dòng {rowNumber}: thiếu loại thẻ."
+    "translation": "Hàng {rowNumber}: thiếu loại lá bài."
   },
   "X-Ve84": {
     "message": "Row {rowNumber}: no image URL.",
-    "translation": "Dòng {rowNumber}: thiếu URL ảnh."
+    "translation": "Hàng {rowNumber}: thiếu URL ảnh."
   },
   "JjTFWo": {
     "message": "Row {rowNumber}: quantity must be 1 to {max}.",
-    "translation": "Dòng {rowNumber}: số lượng phải từ 1 đến {max}."
+    "translation": "Hàng {rowNumber}: số lượng phải từ 1 đến {max}."
   },
   "duDNyy": {
     "message": "Rule Box",
@@ -4468,15 +4468,15 @@
   },
   "qoNq2S": {
     "message": "Same group for each piece",
-    "translation": "Cùng một nhóm cho mỗi quân"
+    "translation": "Cùng nhóm cho mọi mảnh"
   },
   "brkgwR": {
     "message": "Sample hand",
-    "translation": "Bài mẫu trên tay"
+    "translation": "Tay bài mẫu"
   },
   "Revze0": {
     "message": "Sample Prizes",
-    "translation": "Giải thưởng mẫu"
+    "translation": "Prize mẫu"
   },
   "tfDRzk": {
     "message": "Save",
@@ -4513,7 +4513,7 @@
   },
   "JTYvAw": {
     "message": "Search cards",
-    "translation": "Tìm thẻ"
+    "translation": "Tìm lá bài"
   },
   "2FZsuF": {
     "message": "Search cards…",
@@ -4576,16 +4576,16 @@
   "V7pCG0": {
     "message": "Set",
     "context": "card set",
-    "translation": "Bộ bài"
+    "translation": "Set"
   },
   "Ngk98B": {
     "message": "Set & number",
     "context": "sort cards by",
-    "translation": "Bộ & số thứ tự"
+    "translation": "Set & số"
   },
   "SdUOXJ": {
     "message": "Set code, illustrator",
-    "translation": "Mã bộ, họa sĩ minh họa"
+    "translation": "Mã set, họa sĩ minh họa"
   },
   "L7_73L": {
     "message": "Set damage to {count}",
@@ -4626,11 +4626,11 @@
   },
   "1KTKvb": {
     "message": "Set up, then put your Pokémon in play",
-    "translation": "Chuẩn bị, rồi đặt Pokémon của bạn vào trận"
+    "translation": "Thiết lập, rồi đặt Pokémon của bạn lên sân"
   },
   "1W8ZwT": {
     "message": "Set up: shuffle, draw 7, set 6 prizes",
-    "translation": "Thiết lập: xáo bộ bài, rút 7 lá, đặt 6 thẻ Phần thưởng"
+    "translation": "Thiết lập: xáo bộ bài, rút 7 lá, đặt 6 lá Prize"
   },
   "prXKvv": {
     "message": "Setting up the table…",
@@ -4647,7 +4647,7 @@
   },
   "2ORd-n": {
     "message": "Shift+click removes one · Right-click for details · Enter adds the top result",
-    "translation": "Shift+nhấp để bỏ một thẻ · Nhấp chuột phải để xem chi tiết · Enter để thêm kết quả đầu tiên"
+    "translation": "Shift+nhấp để bỏ một lá · Nhấp chuột phải để xem chi tiết · Enter để thêm kết quả đầu tiên"
   },
   "CTqTgr": {
     "message": "Shortcuts",
@@ -4697,7 +4697,7 @@
   },
   "UXsj50": {
     "message": "Show halves…",
-    "translation": "Hiện một nửa…"
+    "translation": "Hiện nửa bàn…"
   },
   "nyTrvq": {
     "message": "Show keyboard",
@@ -4709,7 +4709,7 @@
   },
   "FBwNsr": {
     "message": "Show one per card",
-    "translation": "Chỉ hiện một bản mỗi thẻ"
+    "translation": "Chỉ hiện một bản mỗi lá bài"
   },
   "NQ5xRS": {
     "message": "Show the deck as",
@@ -4733,7 +4733,7 @@
   },
   "UwltxX": {
     "message": "Show this card on the deck",
-    "translation": "Hiện thẻ này trong bộ bài"
+    "translation": "Hiện lá bài này làm bìa bộ bài"
   },
   "sf2cQK": {
     "message": "Shuffle",
@@ -4804,15 +4804,15 @@
   },
   "DIHxqq": {
     "message": "Shuffle prizes",
-    "translation": "Xáo bài Phần thưởng"
+    "translation": "Xáo Prize"
   },
   "pYUbhf": {
     "message": "Shuffle Prizes",
-    "translation": "Xáo bài Phần thưởng"
+    "translation": "Xáo Prize"
   },
   "nU9Ip_": {
     "message": "Shuffle Prizes to bottom of deck",
-    "translation": "Xếp bài Phần thưởng xuống đáy bộ bài"
+    "translation": "Xáo Prize xuống đáy bộ bài"
   },
   "SRsSL6": {
     "message": "Shuffle to bottom",
@@ -4844,7 +4844,7 @@
   },
   "Se3Re8": {
     "message": "Sleeve sheen",
-    "translation": "Độ bóng của bao bài"
+    "translation": "Độ bóng bọc bài"
   },
   "P12gHj": {
     "message": "Smaller cards",
@@ -4852,7 +4852,7 @@
   },
   "6N0DKq": {
     "message": "Solo table",
-    "translation": "Bàn chơi một mình"
+    "translation": "Bàn Solo"
   },
   "5n8ONW": {
     "message": "Sort",
@@ -4921,7 +4921,7 @@
   "h5EwqW": {
     "message": "Split",
     "context": "the table between the halves",
-    "translation": "Chia đôi"
+    "translation": "Tỉ lệ chia"
   },
   "Y6mTBn": {
     "message": "SPONSOR TIERS",
@@ -4976,12 +4976,12 @@
   "0dnJ9h": {
     "message": "Stage 1",
     "context": "Pokémon stage",
-    "translation": "Giai đoạn 1"
+    "translation": "Stage 1"
   },
   "c6AS_i": {
     "message": "Stage 2",
     "context": "Pokémon stage",
-    "translation": "Giai đoạn 2"
+    "translation": "Stage 2"
   },
   "GlGLvC": {
     "message": "Standard",
@@ -4990,7 +4990,7 @@
   },
   "Tg13WJ": {
     "message": "Standard card",
-    "translation": "Thẻ tiêu chuẩn"
+    "translation": "Lá bài tiêu chuẩn"
   },
   "kGkZLk": {
     "message": "Standings",
@@ -5037,7 +5037,7 @@
   },
   "OVjfHO": {
     "message": "Surprise me",
-    "translation": "Bất ngờ cho tôi"
+    "translation": "Chọn ngẫu nhiên"
   },
   "61Tmyj": {
     "message": "Swap keys",
@@ -5108,11 +5108,11 @@
   "yNNoO1": {
     "message": "Tails",
     "context": "coin flip",
-    "translation": "Sấp"
+    "translation": "Mặt sấp"
   },
   "yJtTpT": {
     "message": "Take a <0>Prize card</0>: drag one into your hand.",
-    "translation": "Lấy một <0>lá Phần thưởng</0>: kéo một lá lên tay bạn."
+    "translation": "Lấy một <0>lá Prize</0>: kéo một lá lên tay bạn."
   },
   "2g01hc": {
     "message": "Take off {count} damage",
@@ -5140,11 +5140,11 @@
   },
   "EyHJlN": {
     "message": "Tap a card for actions; tap again to read it.",
-    "translation": "Chạm vào thẻ để xem thao tác; chạm lần nữa để đọc thẻ."
+    "translation": "Chạm vào lá bài để xem thao tác; chạm lần nữa để đọc."
   },
   "muigTz": {
     "message": "Tap outside the card to put it back.",
-    "translation": "Chạm ra ngoài thẻ bài để đặt nó lại."
+    "translation": "Chạm ra ngoài lá bài để đặt nó lại."
   },
   "AARI3J": {
     "message": "Tap outside the menu to close it.",
@@ -5160,7 +5160,7 @@
   },
   "pYu8i-": {
     "message": "TCG and Pocket cards don't mix: {cards}.",
-    "translation": "Thẻ TCG và Pocket không thể dùng chung: {cards}."
+    "translation": "Lá bài TCG và Pocket không dùng chung được: {cards}."
   },
   "MzC0ih": {
     "message": "TCG Pocket",
@@ -5194,7 +5194,7 @@
   },
   "B4ZAXF": {
     "message": "That one was skipped.",
-    "translation": "Thẻ đó đã bị bỏ qua."
+    "translation": "Thao tác vừa rồi đã bị bỏ qua."
   },
   "nWbyfh": {
     "message": "That replay file couldn't be opened.",
@@ -5206,7 +5206,7 @@
   },
   "hPwR-j": {
     "message": "The card went back.",
-    "translation": "Thẻ đã được trả về."
+    "translation": "Lá bài đã được trả về."
   },
   "FQpTJZ": {
     "message": "The clipboard isn't available here",
@@ -5230,7 +5230,7 @@
   },
   "fYn5Mi": {
     "message": "The deck has more than {max} cards.",
-    "translation": "Bộ bài có hơn {max} thẻ."
+    "translation": "Bộ bài có hơn {max} lá."
   },
   "vnQ-9_": {
     "message": "The deck lists didn't load.",
@@ -5242,7 +5242,7 @@
   },
   "qDcPIt": {
     "message": "The decklist has more than {max} cards.",
-    "translation": "Danh sách bài có hơn {max} thẻ."
+    "translation": "Danh sách bài có hơn {max} lá."
   },
   "9vVu1I": {
     "message": "The decklist has more than {max} lines.",
@@ -5274,7 +5274,7 @@
   },
   "m6ooXP": {
     "message": "The table changed, so the card went back.",
-    "translation": "Bàn chơi đã thay đổi nên thẻ đã được trả về."
+    "translation": "Bàn chơi đã thay đổi nên lá bài đã được trả về."
   },
   "u1UbSB": {
     "message": "The table changed. Try again.",
@@ -5282,11 +5282,11 @@
   },
   "8vgo35": {
     "message": "The table takes at most {max} cards.",
-    "translation": "Bàn chỉ nhận tối đa {max} thẻ."
+    "translation": "Bàn chỉ nhận tối đa {max} lá bài."
   },
   "tJSNpM": {
     "message": "The table takes at most {max} different cards.",
-    "translation": "Bàn chỉ nhận tối đa {max} thẻ khác nhau."
+    "translation": "Bàn chỉ nhận tối đa {max} lá bài khác nhau."
   },
   "4IfVI6": {
     "message": "Their Active Spot",
@@ -5294,7 +5294,7 @@
   },
   "x36RVi": {
     "message": "Their Bench",
-    "translation": "Băng ghế của đối thủ"
+    "translation": "Bench của đối thủ"
   },
   "BBfq5L": {
     "message": "Their deck",
@@ -5318,7 +5318,7 @@
   },
   "EO0v0p": {
     "message": "Their Prizes",
-    "translation": "Phần thưởng của đối thủ"
+    "translation": "Prize của đối thủ"
   },
   "Cedl1T": {
     "message": "Their side is yours now: start their turn with <0>{0}</0>.",
@@ -5345,11 +5345,11 @@
     "comments": [
       "\"To active\" is the name of another shortcut in this list."
     ],
-    "translation": "Sau đó nhấn Vào vị trí Active để úp thẻ xuống chơi"
+    "translation": "Sau đó nhấn Vào vị trí Active để chơi lá bài úp mặt"
   },
   "DNMX9-": {
     "message": "They bring up the next: drag a <0>{0}</0> from their Bench to their Active Spot.",
-    "translation": "Họ đưa con tiếp theo lên: kéo một <0>{0}</0> từ Băng ghế của họ vào Vị trí Active của họ."
+    "translation": "Họ đưa con tiếp theo lên: kéo một <0>{0}</0> từ Bench của họ vào vị trí Active."
   },
   "WsAkgd": {
     "message": "This browser won't keep your decks after you close the page.",
@@ -5373,7 +5373,7 @@
   },
   "9P13ox": {
     "message": "To bench",
-    "translation": "Xuống băng ghế"
+    "translation": "Xuống Bench"
   },
   "1CZiQZ": {
     "message": "to Board",
@@ -5413,12 +5413,12 @@
   },
   "a0AIf-": {
     "message": "To discard",
-    "translation": "Vào bài bỏ"
+    "translation": "Vào chồng bài bỏ"
   },
   "NmdkBO": {
     "message": "to Energy",
     "context": "change a card into",
-    "translation": "thành Energy"
+    "translation": "thành Năng lượng"
   },
   "5B8Ha4": {
     "message": "To hand",
@@ -5439,7 +5439,7 @@
   },
   "boV1kL": {
     "message": "To prizes",
-    "translation": "Vào phần thưởng"
+    "translation": "Vào Prize"
   },
   "cayrWn": {
     "message": "To stadium",
@@ -5456,11 +5456,11 @@
   },
   "eQIeJ9": {
     "message": "Toggle ability used",
-    "translation": "Bật/tắt đã dùng đặc tính"
+    "translation": "Bật/tắt đã dùng Ability"
   },
   "OLgB6p": {
     "message": "Toggle ability/effect",
-    "translation": "Bật/tắt đặc tính/hiệu ứng"
+    "translation": "Bật/tắt Ability/hiệu ứng"
   },
   "6QCyrU": {
     "message": "Too large for a deck",
@@ -5472,7 +5472,7 @@
   },
   "4PUG0e": {
     "message": "Too many cards at once",
-    "translation": "Quá nhiều thẻ cùng lúc"
+    "translation": "Quá nhiều lá bài cùng lúc"
   },
   "B3I8F_": {
     "message": "Too many moves",
@@ -5568,7 +5568,7 @@
   },
   "x-E_50": {
     "message": "Try fewer cards.",
-    "translation": "Hãy thử với ít thẻ hơn."
+    "translation": "Hãy thử với ít lá bài hơn."
   },
   "VXAHsl": {
     "message": "Turn",
@@ -5606,7 +5606,7 @@
   },
   "DHMk63": {
     "message": "Turns only the selected card",
-    "translation": "Chỉ lật lá bài đã chọn"
+    "translation": "Chỉ xoay lá bài đã chọn"
   },
   "T7w4KT": {
     "message": "Tutorial",
@@ -5741,7 +5741,7 @@
   },
   "w3eDyf": {
     "message": "View each card",
-    "translation": "Xem từng thẻ"
+    "translation": "Xem từng lá bài"
   },
   "VKXHWy": {
     "message": "View top card(s)",
@@ -5749,7 +5749,7 @@
   },
   "s3cHPo": {
     "message": "View whole card",
-    "translation": "Xem toàn bộ thẻ"
+    "translation": "Xem toàn bộ lá bài"
   },
   "RVlHmr": {
     "message": "VSTAR marker",
@@ -5794,7 +5794,7 @@
   },
   "NWGsaA": {
     "message": "Winning now",
-    "translation": "Đang thắng"
+    "translation": "Đang dẫn đầu"
   },
   "n1kezF": {
     "message": "Yes",
@@ -5811,7 +5811,7 @@
   },
   "rrV20L": {
     "message": "Your Bench",
-    "translation": "Băng ghế của bạn"
+    "translation": "Bench của bạn"
   },
   "IZO0Y6": {
     "message": "Your board",
@@ -5836,7 +5836,7 @@
   },
   "H5pi4B": {
     "message": "Your hand, and your 6 <0>Prize cards</0>, face down.",
-    "translation": "Bài trên tay và 6 <0>lá Phần thưởng</0> của bạn, úp xuống."
+    "translation": "Bài trên tay và 6 <0>lá Prize</0> của bạn, úp xuống."
   },
   "BHcJOF": {
     "message": "Your Lost Zone",
@@ -5852,7 +5852,7 @@
   },
   "XzwcHS": {
     "message": "Your Prizes",
-    "translation": "Phần thưởng của bạn"
+    "translation": "Prize của bạn"
   },
   "yuM-lV": {
     "message": "Your turn",

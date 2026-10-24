@@ -26,15 +26,15 @@
     "comments": [
       "Tooltip of a damage counter on a Pokémon, e.g. \"60 damage\"."
     ],
-    "translation": "{0} damage"
+    "translation": "{0} kerusakan"
   },
   "T4x65B": {
     "message": "{0} has left play.",
-    "translation": "{0} tidak lagi dalam permainan."
+    "translation": "{0} sudah meninggalkan Arena."
   },
   "glYGpK": {
     "message": "{0} has left your hand.",
-    "translation": "{0} telah keluar dari tanganmu."
+    "translation": "{0} sudah keluar dari Kartu Peganganmu."
   },
   "FGOUAP": {
     "message": "{0} of {1}",
@@ -55,14 +55,14 @@
     "comments": [
       "Log line. {actor} is a player's name, {card} the card attached; {source} is the zone it came from and {target} where it went."
     ],
-    "translation": "{actor} memasang {card} dari {source, select, hand {tangan} prizes {Prize} discard {buangan} board {papan} stadium {Stadium} active {Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {kartu terpasang} other {deck}} ke {target, select, hand {tangan} prizes {Prize} discard {buangan} board {papan} stadium {Stadium} active {Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {kartu terpasang} other {deck}}"
+    "translation": "{actor} mengenakan {card} dari {source, select, hand {Kartu Pegangan} prizes {Kartu Point} discard {Trash} board {papan} stadium {Stadium} active {Arena Bertarung} bench {Cadangan} lostZone {Lost Zone} attachmentResolution {kartu terpasang} other {deck}} ke {target, select, hand {Kartu Pegangan} prizes {Kartu Point} discard {Trash} board {papan} stadium {Stadium} active {Arena Bertarung} bench {Cadangan} lostZone {Lost Zone} attachmentResolution {kartu terpasang} other {deck}}"
   },
   "7Azhu7": {
     "message": "{actor} attached {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {targetCard}",
     "comments": [
       "Log line. {actor} is a player's name; {card} is the card attached (Energy, a Tool) and {targetCard} the Pokémon it went on; {source} is the zone it came from."
     ],
-    "translation": "{actor} memasang {card} dari {source, select, hand {tangan} prizes {Prize} discard {buangan} board {papan} stadium {Stadium} active {Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {kartu terpasang} other {deck}} ke {targetCard}"
+    "translation": "{actor} mengenakan {card} dari {source, select, hand {Kartu Pegangan} prizes {Kartu Point} discard {Trash} board {papan} stadium {Stadium} active {Arena Bertarung} bench {Cadangan} lostZone {Lost Zone} attachmentResolution {kartu terpasang} other {deck}} pada {targetCard}"
   },
   "nb_tRJ": {
     "message": "{actor} discarded {count, plural, one {# attached card(s)} other {# attached card(s)}}",
@@ -83,21 +83,21 @@
     "comments": [
       "Log line. {actor} is a player's name."
     ],
-    "translation": "{actor} membuang tangan"
+    "translation": "{actor} membuang Kartu Pegangan"
   },
   "qIBRqY": {
     "message": "{actor} discarded hand and drew {count, plural, one {# card(s)} other {# card(s)}}",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards they drew."
     ],
-    "translation": "{actor} membuang tangan dan menarik {count, plural, other {# kartu}}"
+    "translation": "{actor} membuang Kartu Pegangan dan mengambil {count, plural, other {# kartu}}"
   },
   "68TI_t": {
     "message": "{actor} evolved {target, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} into {card}",
     "comments": [
       "Log line. {actor} is a player's name, {card} the card it evolved into; {target} names the zone of the Pokémon that evolved, when its name is hidden."
     ],
-    "translation": "{actor} mengevolusikan {target, select, hand {tangan} prizes {Prize} discard {buangan} board {papan} stadium {Stadium} active {Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {kartu terpasang} other {deck}} menjadi {card}"
+    "translation": "{actor} mengevolusikan {target, select, hand {Kartu Pegangan} prizes {Kartu Point} discard {Trash} board {papan} stadium {Stadium} active {Arena Bertarung} bench {Cadangan} lostZone {Lost Zone} attachmentResolution {kartu terpasang} other {deck}} menjadi {card}"
   },
   "gUuWfL": {
     "message": "{actor} evolved {targetCard} into {card}",
@@ -111,91 +111,91 @@
     "comments": [
       "Log line: a player hid a zone they had shown to everyone. {actor} is who hid it, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "{actor} menyembunyikan {source, select, hand {tangan} prizes {Prize} discard {buangan} board {papan} stadium {Stadium} active {Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {kartu terpasang} inspection {pemeriksaan} other {deck}} milik {owner}"
+    "translation": "{actor} menyembunyikan {source, select, hand {Kartu Pegangan} prizes {Kartu Point} discard {Trash} board {papan} stadium {Stadium} active {Arena Bertarung} bench {Cadangan} lostZone {Lost Zone} attachmentResolution {kartu terpasang} inspection {pemeriksaan} other {deck}} milik {owner}"
   },
   "89ICfA": {
     "message": "{actor} hid card in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line: a player hid a card they had shown to everyone. {actor} is who hid it, {owner} whose card it is; {source} is the zone it is in."
     ],
-    "translation": "{actor} menyembunyikan kartu di {source, select, hand {tangan} prizes {Prize} discard {buangan} board {papan} stadium {Stadium} active {Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {kartu terpasang} inspection {pemeriksaan} other {deck}} milik {owner}"
+    "translation": "{actor} menyembunyikan kartu di {source, select, hand {Kartu Pegangan} prizes {Kartu Point} discard {Trash} board {papan} stadium {Stadium} active {Arena Bertarung} bench {Cadangan} lostZone {Lost Zone} attachmentResolution {kartu terpasang} inspection {pemeriksaan} other {deck}} milik {owner}"
   },
   "PZVwKy": {
     "message": "{actor} left {count, plural, one {# attached card(s)} other {# attached card(s)}} in play",
     "comments": [
       "Log line: a player kept the cards attached to a Pokémon on the table. {actor} is a player's name, {count} how many cards."
     ],
-    "translation": "{actor} membiarkan {count, plural, other {# kartu terpasang}} tetap di arena"
+    "translation": "{actor} membiarkan {count, plural, other {# kartu terpasang}} tetap di Arena"
   },
   "c5qeZl": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {boardOwner}'s {target, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}}",
     "comments": [
       "Log line for a Pokémon moved onto another player's side of the table. {actor} is the card owner's name, {card} a card's name, {boardOwner} the name of the player whose Active or Bench it went to; {source} is the spot it left and {target} the spot it went to."
     ],
-    "translation": "{actor} memindahkan {card} dari {source, select, hand {tangan} prizes {Prize} discard {tumpukan buangan} board {papan} stadium {Stadium} active {Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {kartu terpasang} other {deck}} ke {target, select, hand {tangan} prizes {Prize} discard {tumpukan buangan} board {papan} stadium {Stadium} active {Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {kartu terpasang} other {deck}} milik {boardOwner}"
+    "translation": "{actor} memindahkan {card} dari {source, select, hand {Kartu Pegangan} prizes {Kartu Point} discard {Trash} board {papan} stadium {Stadium} active {Arena Bertarung} bench {Cadangan} lostZone {Lost Zone} attachmentResolution {kartu terpasang} other {deck}} ke {target, select, hand {Kartu Pegangan} prizes {Kartu Point} discard {Trash} board {papan} stadium {Stadium} active {Arena Bertarung} bench {Cadangan} lostZone {Lost Zone} attachmentResolution {kartu terpasang} other {deck}} milik {boardOwner}"
   },
   "VzhIq8": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {target, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}}",
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left and {target} the zone it went to."
     ],
-    "translation": "{actor} memindahkan {card} dari {source, select, hand {tangan} prizes {Prize} discard {buangan} board {papan} stadium {Stadium} active {Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {kartu terpasang} other {deck}} ke {target, select, hand {tangan} prizes {Prize} discard {buangan} board {papan} stadium {Stadium} active {Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {kartu terpasang} other {deck}}"
+    "translation": "{actor} memindahkan {card} dari {source, select, hand {Kartu Pegangan} prizes {Kartu Point} discard {Trash} board {papan} stadium {Stadium} active {Arena Bertarung} bench {Cadangan} lostZone {Lost Zone} attachmentResolution {kartu terpasang} other {deck}} ke {target, select, hand {Kartu Pegangan} prizes {Kartu Point} discard {Trash} board {papan} stadium {Stadium} active {Arena Bertarung} bench {Cadangan} lostZone {Lost Zone} attachmentResolution {kartu terpasang} other {deck}}"
   },
   "elLtOc": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {targetCard}",
     "comments": [
       "Log line. {actor} is a player's name, {card} and {targetCard} card names; {source} is the zone the card left."
     ],
-    "translation": "{actor} memindahkan {card} dari {source, select, hand {tangan} prizes {Prize} discard {buangan} board {papan} stadium {Stadium} active {Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {kartu terpasang} other {deck}} ke {targetCard}"
+    "translation": "{actor} memindahkan {card} dari {source, select, hand {Kartu Pegangan} prizes {Kartu Point} discard {Trash} board {papan} stadium {Stadium} active {Arena Bertarung} bench {Cadangan} lostZone {Lost Zone} attachmentResolution {kartu terpasang} other {deck}} ke {targetCard}"
   },
   "RyQ60M": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to bottom of deck",
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left."
     ],
-    "translation": "{actor} memindahkan {card} dari {source, select, hand {tangan} prizes {Prize} discard {buangan} board {papan} stadium {Stadium} active {Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {kartu terpasang} other {deck}} ke bawah deck"
+    "translation": "{actor} memindahkan {card} dari {source, select, hand {Kartu Pegangan} prizes {Kartu Point} discard {Trash} board {papan} stadium {Stadium} active {Arena Bertarung} bench {Cadangan} lostZone {Lost Zone} attachmentResolution {kartu terpasang} other {deck}} ke bawah deck"
   },
   "CsrT9R": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to top of deck",
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left."
     ],
-    "translation": "{actor} memindahkan {card} dari {source, select, hand {tangan} prizes {Prize} discard {buangan} board {papan} stadium {Stadium} active {Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {kartu terpasang} other {deck}} ke atas deck"
+    "translation": "{actor} memindahkan {card} dari {source, select, hand {Kartu Pegangan} prizes {Kartu Point} discard {Trash} board {papan} stadium {Stadium} active {Arena Bertarung} bench {Cadangan} lostZone {Lost Zone} attachmentResolution {kartu terpasang} other {deck}} ke atas deck"
   },
   "WBnnCz": {
     "message": "{actor} moved {count, plural, one {# card(s)} other {# card(s)}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} other {deck}}",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards; {source} is the zone they left and {destination} where they went (play: onto the table)."
     ],
-    "translation": "{actor} memindahkan {count, plural, other {# kartu}} dari {source, select, hand {tangan} prizes {Prize} discard {buangan} board {papan} stadium {Stadium} active {Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {kartu terpasang} other {deck}} ke {destination, select, hand {tangan} discard {buangan} lostZone {Lost Zone} deckBottom {bawah deck} play {arena} other {deck}}"
+    "translation": "{actor} memindahkan {count, plural, other {# kartu}} dari {source, select, hand {Kartu Pegangan} prizes {Kartu Point} discard {Trash} board {papan} stadium {Stadium} active {Arena Bertarung} bench {Cadangan} lostZone {Lost Zone} attachmentResolution {kartu terpasang} other {deck}} ke {destination, select, hand {Kartu Pegangan} discard {Trash} lostZone {Lost Zone} deckBottom {bawah deck} play {Arena} other {deck}}"
   },
   "P4_K0D": {
     "message": "{actor} moved a random card from {target}'s hand to board",
     "comments": [
       "Log line. {actor} is the player who moved the card, {target} the player whose hand it came from."
     ],
-    "translation": "{actor} memindahkan satu kartu acak dari tangan {target} ke papan"
+    "translation": "{actor} memindahkan satu kartu acak dari Kartu Pegangan {target} ke papan"
   },
   "_qgrvz": {
     "message": "{actor} revealed {card} in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line: a player showed one card to everyone. {actor} is who showed it, {owner} whose card it is, {card} the card's name; {source} is the zone it is in."
     ],
-    "translation": "{actor} mengungkap {card} di {source, select, hand {tangan} prizes {Prize} discard {buangan} board {papan} stadium {Stadium} active {Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {kartu terpasang} inspection {pemeriksaan} other {deck}} milik {owner}"
+    "translation": "{actor} mengungkap {card} di {source, select, hand {Kartu Pegangan} prizes {Kartu Point} discard {Trash} board {papan} stadium {Stadium} active {Arena Bertarung} bench {Cadangan} lostZone {Lost Zone} attachmentResolution {kartu terpasang} inspection {pemeriksaan} other {deck}} milik {owner}"
   },
   "TMqzLF": {
     "message": "{actor} revealed {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line: a player showed a whole zone to everyone. {actor} is who showed it, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "{actor} mengungkap {source, select, hand {tangan} prizes {Prize} discard {buangan} board {papan} stadium {Stadium} active {Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {kartu terpasang} inspection {pemeriksaan} other {deck}} milik {owner}"
+    "translation": "{actor} mengungkap {source, select, hand {Kartu Pegangan} prizes {Kartu Point} discard {Trash} board {papan} stadium {Stadium} active {Arena Bertarung} bench {Cadangan} lostZone {Lost Zone} attachmentResolution {kartu terpasang} inspection {pemeriksaan} other {deck}} milik {owner}"
   },
   "P2m23t": {
     "message": "{actor} shuffled {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} into deck",
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left."
     ],
-    "translation": "{actor} mengocok {card} dari {source, select, hand {tangan} prizes {Prize} discard {buangan} board {papan} stadium {Stadium} active {Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {kartu terpasang} other {deck}} ke dalam deck"
+    "translation": "{actor} mengocok {card} dari {source, select, hand {Kartu Pegangan} prizes {Kartu Point} discard {Trash} board {papan} stadium {Stadium} active {Arena Bertarung} bench {Cadangan} lostZone {Lost Zone} attachmentResolution {kartu terpasang} other {deck}} ke dalam deck"
   },
   "xEKtXt": {
     "message": "{actor} shuffled {count, plural, one {# attached card(s)} other {# attached card(s)}} into deck",
@@ -230,49 +230,49 @@
     "comments": [
       "Log line: a player shuffled their discard pile into their deck. {actor} is a player's name."
     ],
-    "translation": "{actor} mengocok buangan ke dalam deck"
+    "translation": "{actor} mengocok Trash ke dalam deck"
   },
   "hJ32fr": {
     "message": "{actor} shuffled hand into deck",
     "comments": [
       "Log line. {actor} is a player's name."
     ],
-    "translation": "{actor} mengocok tangan ke dalam deck"
+    "translation": "{actor} mengocok Kartu Pegangan ke dalam deck"
   },
   "h6k_d9": {
     "message": "{actor} shuffled hand into deck and drew {count, plural, one {# card(s)} other {# card(s)}}",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards they drew."
     ],
-    "translation": "{actor} mengocok tangan ke dalam deck dan menarik {count, plural, other {# kartu}}"
+    "translation": "{actor} mengocok Kartu Pegangan ke dalam deck dan mengambil {count, plural, other {# kartu}}"
   },
   "DLPemk": {
     "message": "{actor} shuffled hand to bottom of deck",
     "comments": [
       "Log line. {actor} is a player's name."
     ],
-    "translation": "{actor} mengocok tangan ke bawah deck"
+    "translation": "{actor} mengocok Kartu Pegangan ke bawah deck"
   },
   "xT_uho": {
     "message": "{actor} shuffled hand to bottom of deck and drew {count, plural, one {# card(s)} other {# card(s)}}",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards they drew."
     ],
-    "translation": "{actor} mengocok tangan ke bawah deck dan menarik {count, plural, other {# kartu}}"
+    "translation": "{actor} mengocok Kartu Pegangan ke bawah deck dan mengambil {count, plural, other {# kartu}}"
   },
   "QGyAAz": {
     "message": "{actor} shuffled prizes to bottom of deck",
     "comments": [
       "Log line. {actor} is a player's name."
     ],
-    "translation": "{actor} mengocok Prize ke bawah deck"
+    "translation": "{actor} mengocok Kartu Point ke bawah deck"
   },
   "xw6Fj3": {
     "message": "{actor} switched {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} with top of deck",
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left, and the top card of the deck took its place."
     ],
-    "translation": "{actor} menukar {card} dari {source, select, hand {tangan} prizes {Prize} discard {buangan} board {papan} stadium {Stadium} active {Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {kartu terpasang} other {deck}} dengan kartu teratas deck"
+    "translation": "{actor} menukar {card} dari {source, select, hand {Kartu Pegangan} prizes {Kartu Point} discard {Trash} board {papan} stadium {Stadium} active {Arena Bertarung} bench {Cadangan} lostZone {Lost Zone} attachmentResolution {kartu terpasang} other {deck}} dengan kartu teratas deck"
   },
   "QOz626": {
     "message": "{actor} took back {target}'s last move",
@@ -342,11 +342,11 @@
   },
   "myosK5": {
     "message": "{count, plural, one {# card in {name}'s discard pile} other {# cards in {name}'s discard pile}}",
-    "translation": "{count, plural, other {# kartu di tumpukan buangan {name}}}"
+    "translation": "{count, plural, other {# kartu di Trash {name}}}"
   },
   "vxYrmH": {
     "message": "{count, plural, one {# card in {name}'s hand} other {# cards in {name}'s hand}}",
-    "translation": "{count, plural, other {# kartu di tangan {name}}}"
+    "translation": "{count, plural, other {# kartu di Kartu Pegangan {name}}}"
   },
   "Qk1aGi": {
     "message": "{count, plural, one {# card in {name}'s Lost Zone} other {# cards in {name}'s Lost Zone}}",
@@ -358,11 +358,11 @@
   },
   "fv6r42": {
     "message": "{count, plural, one {# card in your discard pile} other {# cards in your discard pile}}",
-    "translation": "{count, plural, other {# kartu di tumpukan buangan kamu}}"
+    "translation": "{count, plural, other {# kartu di Trash kamu}}"
   },
   "MEWSr2": {
     "message": "{count, plural, one {# card in your hand} other {# cards in your hand}}",
-    "translation": "{count, plural, other {# kartu di tangan kamu}}"
+    "translation": "{count, plural, other {# kartu di Kartu Pegangan kamu}}"
   },
   "N3SvzU": {
     "message": "{count, plural, one {# card in your Lost Zone} other {# cards in your Lost Zone}}",
@@ -394,11 +394,11 @@
   },
   "AC9Ruq": {
     "message": "{count, plural, one {# Radiant card (max 1).} other {# Radiant cards (max 1).}}",
-    "translation": "{count, plural, other {# kartu Radiant (maks. 1).}}"
+    "translation": "{count, plural, other {# kartu Pokémon Bercahaya (maks. 1).}}"
   },
   "-gAzkm": {
     "message": "{count, plural, one {Discard hand and draw # card} other {Discard hand and draw # cards}}",
-    "translation": "{count, plural, other {Buang tangan dan ambil # kartu}}"
+    "translation": "{count, plural, other {Buang Kartu Pegangan dan ambil # kartu}}"
   },
   "0ZvQu6": {
     "message": "{count, plural, one {Draw # card} other {Draw # cards}}",
@@ -410,11 +410,11 @@
   },
   "Obr1Rm": {
     "message": "{count, plural, one {Look at their bottom card} other {Look at their bottom # cards}}",
-    "translation": "{count, plural, other {Lihat # kartu terbawah mereka}}"
+    "translation": "{count, plural, other {Lihat # kartu terbawah lawan}}"
   },
   "_GnfAn": {
     "message": "{count, plural, one {Look at their top card} other {Look at their top # cards}}",
-    "translation": "{count, plural, other {Lihat # kartu teratas mereka}}"
+    "translation": "{count, plural, other {Lihat # kartu teratas lawan}}"
   },
   "CtVIm7": {
     "message": "{count, plural, one {Look at top card} other {Look at top # cards}}",
@@ -422,11 +422,11 @@
   },
   "-r4674": {
     "message": "{count, plural, one {Shuffle hand in and draw # card} other {Shuffle hand in and draw # cards}}",
-    "translation": "{count, plural, other {Kocok tangan ke deck dan ambil # kartu}}"
+    "translation": "{count, plural, other {Kocok Kartu Pegangan ke deck dan ambil # kartu}}"
   },
   "aN0Z_E": {
     "message": "{count, plural, one {Shuffle hand to bottom and draw # card} other {Shuffle hand to bottom and draw # cards}}",
-    "translation": "{count, plural, other {Taruh tangan di bawah deck dan ambil # kartu}}"
+    "translation": "{count, plural, other {Kocok Kartu Pegangan ke bawah deck dan ambil # kartu}}"
   },
   "hMKADB": {
     "message": "{count} × {cardName} ({print}). Details",
@@ -524,7 +524,7 @@
     "comments": [
       "A zone's name for screen readers; name is its player. The Active Spot."
     ],
-    "translation": "Active {name}"
+    "translation": "Arena Bertarung {name}"
   },
   "2jVmMm": {
     "message": "{name} attacked",
@@ -538,7 +538,7 @@
     "comments": [
       "A zone's name for screen readers; name is its player. The Bench."
     ],
-    "translation": "Bench {name}"
+    "translation": "Cadangan {name}"
   },
   "Mk1A2U": {
     "message": "{name} board",
@@ -552,7 +552,7 @@
     "comments": [
       "Log line: a player made a card count as another kind of card. {name} is a player's name, {card} a card's name; {category} is the kind it now counts as."
     ],
-    "translation": "{name} mengubah {card} menjadi {category, select, energy {energi} pokemon {Pokémon} trainer {tool} other {tipe tak dikenal}}"
+    "translation": "{name} mengubah {card} menjadi {category, select, energy {Energi} pokemon {Pokémon} trainer {Tool} other {tipe tak dikenal}}"
   },
   "xjFQ8_": {
     "message": "{name} deck",
@@ -566,7 +566,7 @@
     "comments": [
       "A zone's name for screen readers; name is its player. The discard pile."
     ],
-    "translation": "Discard {name}"
+    "translation": "Trash {name}"
   },
   "cee6Ru": {
     "message": "{name} disconnected",
@@ -580,35 +580,35 @@
     "comments": [
       "Log line. {name} is a player's name, {count} how many cards they drew."
     ],
-    "translation": "{name} menarik {count, plural, other {# kartu}}"
+    "translation": "{name} mengambil {count, plural, other {# kartu}}"
   },
   "5MiMTH": {
     "message": "{name} drew for turn",
     "comments": [
       "Log line: the player whose turn begins drew their card for the turn. {name} is a player's name."
     ],
-    "translation": "{name} menarik kartu giliran"
+    "translation": "{name} mengambil kartu untuk gilirannya"
   },
   "y-dTT1": {
     "message": "{name} drew starting hand and set prizes",
     "comments": [
       "Log line: a player set up for a game (seven cards in hand, Prize cards laid out). {name} is a player's name."
     ],
-    "translation": "{name} menarik kartu awal dan menyiapkan Prize"
+    "translation": "{name} mengambil Kartu Pegangan awal dan meletakkan Kartu Point"
   },
   "01JuD1": {
     "message": "{name} flipped {result, select, heads {heads} other {tails}}",
     "comments": [
       "Log line: a coin flip's result. {name} is a player's name; {result} is heads or tails."
     ],
-    "translation": "{name} melempar koin: {result, select, heads {heads} other {tails}}"
+    "translation": "{name} melempar koin: {result, select, heads {sisi depan} other {sisi belakang}}"
   },
   "Bqr3lz": {
     "message": "{name} hand",
     "comments": [
       "A zone's name for screen readers; name is its player."
     ],
-    "translation": "Tangan {name}"
+    "translation": "Kartu Pegangan {name}"
   },
   "WbFKTs": {
     "message": "{name} has no cards left to draw",
@@ -700,7 +700,7 @@
     "comments": [
       "A zone's name for screen readers; name is its player. The Prize cards."
     ],
-    "translation": "Prize {name}"
+    "translation": "Kartu Point {name}"
   },
   "g7DH0W": {
     "message": "{name} reconnected",
@@ -714,7 +714,7 @@
     "comments": [
       "Log line: a player cleared their side of the table. {name} is a player's name."
     ],
-    "translation": "{name} direset"
+    "translation": "{name} mereset sisinya"
   },
   "yq8DHI": {
     "message": "{name} reset their {marker}",
@@ -728,7 +728,7 @@
     "comments": [
       "Log line. {name} is a player's name; {source} is the zone they shuffled, almost always their deck."
     ],
-    "translation": "{name} mengocok {source, select, hand {tangan} prizes {Prize} discard {discard} board {papan} stadium {Stadium} active {Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {kartu yang terpasang} other {deck}}"
+    "translation": "{name} mengocok {source, select, hand {Kartu Pegangan} prizes {Kartu Point} discard {Trash} board {papan} stadium {Stadium} active {Arena Bertarung} bench {Cadangan} lostZone {Lost Zone} attachmentResolution {kartu terpasang} other {deck}}"
   },
   "x8Eb2i": {
     "message": "{name} started turn {turn}",
@@ -932,28 +932,28 @@
     "comments": [
       "Log line: a player began looking at a zone only they can see. {viewer} is who is looking, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "{viewer} melihat {source, select, hand {tangan} prizes {Prize} discard {discard} board {papan} stadium {Stadium} active {Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {kartu terpasang} inspection {inspeksi} other {deck}} milik {owner}"
+    "translation": "{viewer} melihat {source, select, hand {Kartu Pegangan} prizes {Kartu Point} discard {Trash} board {papan} stadium {Stadium} active {Arena Bertarung} bench {Cadangan} lostZone {Lost Zone} attachmentResolution {kartu terpasang} inspection {pemeriksaan} other {deck}} milik {owner}"
   },
   "kF6-Cq": {
     "message": "{viewer} looked at card in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line: a player began looking at a card only they can see. {viewer} is who is looking, {owner} whose card it is; {source} is the zone it is in."
     ],
-    "translation": "{viewer} melihat kartu di {source, select, hand {tangan} prizes {Prize} discard {discard} board {papan} stadium {Stadium} active {Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {kartu terpasang} inspection {inspeksi} other {deck}} milik {owner}"
+    "translation": "{viewer} melihat kartu di {source, select, hand {Kartu Pegangan} prizes {Kartu Point} discard {Trash} board {papan} stadium {Stadium} active {Arena Bertarung} bench {Cadangan} lostZone {Lost Zone} attachmentResolution {kartu terpasang} inspection {pemeriksaan} other {deck}} milik {owner}"
   },
   "jTec7e": {
     "message": "{viewer} stopped looking at {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line. {viewer} is who stopped looking, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "{viewer} berhenti melihat {source, select, hand {tangan} prizes {Prize} discard {discard} board {papan} stadium {Stadium} active {Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {kartu terpasang} inspection {inspeksi} other {deck}} milik {owner}"
+    "translation": "{viewer} berhenti melihat {source, select, hand {Kartu Pegangan} prizes {Kartu Point} discard {Trash} board {papan} stadium {Stadium} active {Arena Bertarung} bench {Cadangan} lostZone {Lost Zone} attachmentResolution {kartu terpasang} inspection {pemeriksaan} other {deck}} milik {owner}"
   },
   "FAueN1": {
     "message": "{viewer} stopped looking at card in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line. {viewer} is who stopped looking, {owner} whose card it is; {source} is the zone it is in."
     ],
-    "translation": "{viewer} berhenti melihat kartu di {source, select, hand {tangan} prizes {Prize} discard {discard} board {papan} stadium {Stadium} active {Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {kartu terpasang} inspection {inspeksi} other {deck}} milik {owner}"
+    "translation": "{viewer} berhenti melihat kartu di {source, select, hand {Kartu Pegangan} prizes {Kartu Point} discard {Trash} board {papan} stadium {Stadium} active {Arena Bertarung} bench {Cadangan} lostZone {Lost Zone} attachmentResolution {kartu terpasang} inspection {pemeriksaan} other {deck}} milik {owner}"
   },
   "JirPbT": {
     "message": "{zoneName}, {count, plural, one {# card} other {# cards}}",
@@ -965,7 +965,7 @@
   "RMrUDz": {
     "message": "+ Damage",
     "context": "shortcut key caption",
-    "translation": "+ Damage"
+    "translation": "+ Kerusakan"
   },
   "k26cQ0": {
     "message": "+ Stadium",
@@ -1008,7 +1008,7 @@
   "C0rMdv": {
     "message": "− Damage",
     "context": "shortcut key caption",
-    "translation": "− Damage"
+    "translation": "− Kerusakan"
   },
   "5V6-DZ": {
     "message": "− Status",
@@ -1028,11 +1028,11 @@
   },
   "ngBvCd": {
     "message": "10 less damage",
-    "translation": "Damage kurang 10"
+    "translation": "Kurangi 10 kerusakan"
   },
   "AHfGsB": {
     "message": "10 more damage",
-    "translation": "Damage lebih 10"
+    "translation": "Tambah 10 kerusakan"
   },
   "c224Tl": {
     "message": "3 draws three",
@@ -1122,12 +1122,12 @@
   "xT5yGw": {
     "message": "Active",
     "context": "shortcut key caption",
-    "translation": "Active"
+    "translation": "Arena Bertarung"
   },
   "2MuTS2": {
     "message": "Active",
     "context": "zone",
-    "translation": "Active"
+    "translation": "Arena Bertarung"
   },
   "0NGNig": {
     "message": "Active",
@@ -1135,11 +1135,11 @@
     "comments": [
       "The Active Spot."
     ],
-    "translation": "Active"
+    "translation": "Arena Bertarung"
   },
   "ZQALG9": {
     "message": "Add {count} damage",
-    "translation": "Tambah {count} damage"
+    "translation": "Tambah {count} kerusakan"
   },
   "T-qRMv": {
     "message": "Add a card that isn't listed",
@@ -1151,11 +1151,11 @@
   },
   "vz22MV": {
     "message": "Add damage",
-    "translation": "Tambah damage"
+    "translation": "Tambah kerusakan"
   },
   "mOz7te": {
     "message": "Add damage…",
-    "translation": "Tambah damage…"
+    "translation": "Tambah kerusakan…"
   },
   "Pn1N14": {
     "message": "Add one",
@@ -1171,7 +1171,7 @@
   },
   "Qz1fKP": {
     "message": "Add or switch special condition",
-    "translation": "Tambah atau ganti kondisi spesial"
+    "translation": "Tambah atau ganti Kondisi Khusus"
   },
   "ZVI875": {
     "message": "Add to deck",
@@ -1210,7 +1210,7 @@
   "e1BFxQ": {
     "message": "All to hand",
     "context": "shortcut key caption",
-    "translation": "Semua ke tangan"
+    "translation": "Semua ke Kartu Pegangan"
   },
   "Sb4b2A": {
     "message": "Allow board flip <0>(both players)</0>",
@@ -1227,11 +1227,11 @@
   },
   "Uu-7-8": {
     "message": "An <0>open-source</0> Pokémon TCG table.",
-    "translation": "Meja Pokémon TCG <0>sumber terbuka</0>."
+    "translation": "Meja Kartu Pokémon <0>sumber terbuka</0>."
   },
   "5ZW9xa": {
     "message": "An attack payable with two Energy",
-    "translation": "Serangan yang bisa dibayar dengan dua Energy"
+    "translation": "Serangan yang bisa dibayar dengan dua Energi"
   },
   "bK6Mfx": {
     "message": "An image URL, 'blank' or 'theme'.",
@@ -1250,7 +1250,7 @@
   "ctNH7H": {
     "message": "Ancient",
     "context": "Pokémon card mechanic",
-    "translation": "Ancient"
+    "translation": "Purba"
   },
   "Jvmvx4": {
     "message": "Animate stack height",
@@ -1306,24 +1306,24 @@
   "eiQJaM": {
     "message": "Asleep",
     "context": "special condition",
-    "translation": "Tertidur"
+    "translation": "Tidur"
   },
   "hXSSHx": {
     "message": "Assemble / attach to a card…",
-    "translation": "Rakit / pasang ke kartu…"
+    "translation": "Rakit / kenakan pada kartu…"
   },
   "igVDFt": {
     "message": "Attach",
-    "translation": "Pasang"
+    "translation": "Kenakan"
   },
   "j-d3Lr": {
     "message": "Attach",
     "context": "shortcut key caption",
-    "translation": "Pasang"
+    "translation": "Kenakan"
   },
   "jrzyuC": {
     "message": "Attach and evolve",
-    "translation": "Pasang dan evolusi"
+    "translation": "Kenakan dan evolusi"
   },
   "E9l6HC": {
     "message": "Attached cards being moved",
@@ -1407,7 +1407,7 @@
   "hrit5V": {
     "message": "Basic",
     "context": "Energy card kind",
-    "translation": "Basic"
+    "translation": "Dasar"
   },
   "1DCTbX": {
     "message": "Basic",
@@ -1416,34 +1416,34 @@
   },
   "o4xCmI": {
     "message": "Basic / Special Energy",
-    "translation": "Energy Basic / Spesial"
+    "translation": "Energi Dasar / Spesial"
   },
   "mQwVD5": {
     "message": "Basic Energy",
-    "translation": "Energy Basic"
+    "translation": "Energi Dasar"
   },
   "dkk7vA": {
     "message": "Bench",
     "context": "shortcut key caption",
-    "translation": "Bench"
+    "translation": "Cadangan"
   },
   "-Pxcql": {
     "message": "Bench",
     "context": "zone",
-    "translation": "Bench"
+    "translation": "Cadangan"
   },
   "SpTFye": {
     "message": "Bench",
     "context": "zone on the table",
-    "translation": "Bench"
+    "translation": "Cadangan"
   },
   "tffbb1": {
     "message": "Bench <0>{0}</0> from your hand.",
-    "translation": "Taruh <0>{0}</0> dari tanganmu ke Bench."
+    "translation": "Masukkan <0>{0}</0> dari Kartu Peganganmu ke Cadangan."
   },
   "T1zt_m": {
     "message": "Bench <0>{0}</0> too.",
-    "translation": "Taruh <0>{0}</0> di Bench juga."
+    "translation": "Masukkan <0>{0}</0> ke Cadangan juga."
   },
   "O2HdKg": {
     "message": "Board",
@@ -1522,7 +1522,7 @@
   "fC9HUg": {
     "message": "Burned",
     "context": "special condition",
-    "translation": "Terbakar"
+    "translation": "Luka Bakar"
   },
   "EhsQ9V": {
     "message": "Busy for a moment — try again shortly",
@@ -1563,7 +1563,7 @@
   },
   "M3FSd1": {
     "message": "Card back for {slotSeat}",
-    "translation": "Sampul kartu untuk {slotSeat}"
+    "translation": "Sisi belakang kartu untuk {slotSeat}"
   },
   "tii3sv": {
     "message": "Card image language…",
@@ -1616,7 +1616,7 @@
   },
   "IuDYMd": {
     "message": "Cards in deck",
-    "translation": "Kartu di dek"
+    "translation": "Kartu di deck"
   },
   "sIpTuZ": {
     "message": "Change background",
@@ -1624,11 +1624,11 @@
   },
   "PCF3WN": {
     "message": "Change card back",
-    "translation": "Ubah punggung kartu"
+    "translation": "Ubah sisi belakang kartu"
   },
   "lKPW0c": {
     "message": "Change card back for {slotSeat}",
-    "translation": "Ganti sampul kartu untuk {slotSeat}"
+    "translation": "Ubah sisi belakang kartu untuk {slotSeat}"
   },
   "SGf9Cc": {
     "message": "Change card type",
@@ -1693,19 +1693,19 @@
   },
   "PetgPp": {
     "message": "Choose a deck first",
-    "translation": "Pilih dek dulu"
+    "translation": "Pilih deck dulu"
   },
   "Trhamk": {
     "message": "Choose a deck to play",
-    "translation": "Pilih dek untuk dimainkan"
+    "translation": "Pilih deck untuk dimainkan"
   },
   "TvEJEL": {
     "message": "Choose the deck for {slotSeat}",
-    "translation": "Pilih dek untuk {slotSeat}"
+    "translation": "Pilih deck untuk {slotSeat}"
   },
   "-sQCd4": {
     "message": "Choose the deck for {slotSeat} (you)",
-    "translation": "Pilih dek untuk {slotSeat} (kamu)"
+    "translation": "Pilih deck untuk {slotSeat} (kamu)"
   },
   "5rfWim": {
     "message": "Classics",
@@ -1727,7 +1727,7 @@
   },
   "tXkSiA": {
     "message": "Clear damage",
-    "translation": "Hapus damage"
+    "translation": "Hapus kerusakan"
   },
   "u8JHrO": {
     "message": "Clear filters",
@@ -1739,7 +1739,7 @@
   },
   "F4fFCC": {
     "message": "Click <0>{0}</0> in your hand, then press <1>{key}</1> to bench it.",
-    "translation": "Klik <0>{0}</0> di tanganmu, lalu tekan <1>{key}</1> untuk menaruhnya ke Bench."
+    "translation": "Klik <0>{0}</0> di Kartu Peganganmu, lalu tekan <1>{key}</1> untuk memasukkannya ke Cadangan."
   },
   "MO489z": {
     "message": "Click a shortcut to change it.",
@@ -1751,7 +1751,7 @@
   },
   "e78sgl": {
     "message": "Click your deck to look through it.",
-    "translation": "Klik deckmu untuk melihat isinya."
+    "translation": "Klik deck-mu untuk melihat isinya."
   },
   "yz7wBu": {
     "message": "Close",
@@ -1798,7 +1798,7 @@
   "OXqULL": {
     "message": "Colorless",
     "context": "Pokémon type",
-    "translation": "Colorless"
+    "translation": "Bening"
   },
   "45MZFs": {
     "message": "Commands",
@@ -1821,7 +1821,7 @@
   "DcpzXY": {
     "message": "Confused",
     "context": "special condition",
-    "translation": "Bingung"
+    "translation": "Pusing"
   },
   "JrFTcr": {
     "message": "Connecting…",
@@ -1947,15 +1947,15 @@
   },
   "UxNmvS": {
     "message": "Damage and conditions",
-    "translation": "Damage dan kondisi"
+    "translation": "Kerusakan dan kondisi"
   },
   "omkQWV": {
     "message": "Damage at least",
-    "translation": "Damage minimal"
+    "translation": "Kerusakan minimal"
   },
   "68zbbm": {
     "message": "Damage counter",
-    "translation": "Damage counter"
+    "translation": "Token Kerusakan"
   },
   "yB1YpA": {
     "message": "Dark mode",
@@ -1964,11 +1964,11 @@
   "ttUe0Z": {
     "message": "Darkness",
     "context": "Pokémon type",
-    "translation": "Darkness"
+    "translation": "Kegelapan"
   },
   "hpSYpx": {
     "message": "Deal a sample hand",
-    "translation": "Bagikan tangan contoh"
+    "translation": "Bagikan contoh Kartu Pegangan"
   },
   "tqOvtJ": {
     "message": "Deal again",
@@ -2007,7 +2007,7 @@
   "peXKOB": {
     "message": "Deck bottom",
     "context": "shortcut key caption",
-    "translation": "Dasar deck"
+    "translation": "Bawah deck"
   },
   "sUVFl2": {
     "message": "Deck cover",
@@ -2093,11 +2093,11 @@
     "comments": [
       "The discard pile."
     ],
-    "translation": "Discard"
+    "translation": "Trash"
   },
   "c58XOp": {
     "message": "Discard a Pokémon, take a Prize, bring up the next",
-    "translation": "Buang Pokémon, ambil Prize, lalu munculkan yang berikutnya"
+    "translation": "Buang Pokémon, ambil Kartu Point, lalu majukan yang berikutnya"
   },
   "u8xW5H": {
     "message": "Discard all",
@@ -2114,21 +2114,21 @@
   },
   "mKMb1d": {
     "message": "Discard hand",
-    "translation": "Buang tangan"
+    "translation": "Buang Kartu Pegangan"
   },
   "vtuFDE": {
     "message": "Discard hand",
     "context": "shortcut key caption",
-    "translation": "Buang tangan"
+    "translation": "Buang Kartu Pegangan"
   },
   "Nx52uj": {
     "message": "Discard hand and draw…",
-    "translation": "Buang tangan dan ambil…"
+    "translation": "Buang Kartu Pegangan dan ambil…"
   },
   "eEqZQd": {
     "message": "Discard pile",
     "context": "zone",
-    "translation": "Tumpukan buangan"
+    "translation": "Trash"
   },
   "OdPOhy": {
     "message": "Discord",
@@ -2153,7 +2153,7 @@
   },
   "BDC29J": {
     "message": "Double-click <0>{0}</0> in your hand to read it.",
-    "translation": "Klik dua kali <0>{0}</0> di tanganmu untuk membacanya."
+    "translation": "Klik dua kali <0>{0}</0> di Kartu Peganganmu untuk membacanya."
   },
   "O8KL2B": {
     "message": "Download list (.txt)",
@@ -2177,11 +2177,11 @@
   },
   "IGqHX9": {
     "message": "Drag a <0>{0}</0> onto {1} to attach it.",
-    "translation": "Seret <0>{0}</0> ke {1} untuk memasangkannya."
+    "translation": "Seret <0>{0}</0> ke {1} untuk mengenakannya."
   },
   "n3U3s1": {
     "message": "Drag a Basic Pokémon from your hand onto your <0>Active Spot</0>.",
-    "translation": "Seret Pokémon Basic dari tanganmu ke <0>Active Spot</0>-mu."
+    "translation": "Seret Pokémon Basic dari Kartu Peganganmu ke <0>Arena Bertarung</0> kamu."
   },
   "sEjSlz": {
     "message": "Dragon",
@@ -2204,11 +2204,11 @@
   },
   "68egXB": {
     "message": "Draw a card: drag the top of your deck into your hand, or press <0>1</0>.",
-    "translation": "Ambil kartu: seret kartu teratas deck ke tanganmu, atau tekan <0>1</0>."
+    "translation": "Ambil kartu: seret kartu teratas deck ke Kartu Peganganmu, atau tekan <0>1</0>."
   },
   "2o1D75": {
     "message": "Draw a card: drag the top of your deck into your hand.",
-    "translation": "Ambil kartu: seret kartu teratas deck ke tanganmu."
+    "translation": "Ambil kartu: seret kartu teratas deck ke Kartu Peganganmu."
   },
   "to34yF": {
     "message": "Draw card(s)",
@@ -2315,7 +2315,7 @@
   },
   "i07JvD": {
     "message": "Energy, evolutions, Trainers and the Bench",
-    "translation": "Energy, evolusi, Trainer, dan Bench"
+    "translation": "Energi, evolusi, Trainer, dan Cadangan"
   },
   "CtX2Zh": {
     "message": "Enter",
@@ -2369,11 +2369,11 @@
   },
   "GjFqb-": {
     "message": "Evolves from",
-    "translation": "Berevolusi dari"
+    "translation": "Evolusi dari"
   },
   "mVEqde": {
     "message": "Evolves from {evolvesFrom}",
-    "translation": "Berevolusi dari {evolvesFrom}"
+    "translation": "Evolusi dari {evolvesFrom}"
   },
   "TYsdkP": {
     "message": "ex or V (comma = or)",
@@ -2407,7 +2407,7 @@
   "2lS3BM": {
     "message": "Expanded",
     "context": "deck format",
-    "translation": "Expanded"
+    "translation": "Luas"
   },
   "GS-Mus": {
     "message": "Export",
@@ -2420,7 +2420,7 @@
   "wZe3Kp": {
     "message": "Fairy",
     "context": "Pokémon type",
-    "translation": "Fairy"
+    "translation": "Peri"
   },
   "G31vv6": {
     "message": "Fast",
@@ -2434,7 +2434,7 @@
   "WtsWWf": {
     "message": "Fighting",
     "context": "Pokémon type",
-    "translation": "Fighting"
+    "translation": "Petarung"
   },
   "cSev-j": {
     "message": "Filters",
@@ -2442,7 +2442,7 @@
   },
   "QEb-dG": {
     "message": "Find <0>{0}</0> and drag it into your hand.",
-    "translation": "Cari <0>{0}</0> dan seret ke tanganmu."
+    "translation": "Cari <0>{0}</0> dan seret ke Kartu Peganganmu."
   },
   "Vv3U3O": {
     "message": "Find a card…",
@@ -2487,20 +2487,20 @@
   "XGVxYp": {
     "message": "Finish",
     "context": "card surface",
-    "translation": "Finish"
+    "translation": "Finishing"
   },
   "mDOjMG": {
     "message": "Finish (optional)",
-    "translation": "Finis (opsional)"
+    "translation": "Finishing (opsional)"
   },
   "SN6Ocg": {
     "message": "Fire",
     "context": "Pokémon type",
-    "translation": "Fire"
+    "translation": "Api"
   },
   "RCEX87": {
     "message": "Fire type, Basic",
-    "translation": "Tipe Fire, Basic"
+    "translation": "Tipe Api, Basic"
   },
   "gQp6L7": {
     "message": "Flat",
@@ -2542,7 +2542,7 @@
   },
   "CK2j9j": {
     "message": "Flip their coin",
-    "translation": "Lempar koin mereka"
+    "translation": "Lempar koin lawan"
   },
   "zoSOoE": {
     "message": "Foil coverage",
@@ -2565,7 +2565,7 @@
     "comments": [
       "A table look"
     ],
-    "translation": "Frost"
+    "translation": "Embun beku"
   },
   "TZN8p-": {
     "message": "Full card",
@@ -2582,12 +2582,12 @@
   "ULwemj": {
     "message": "Fusion Strike",
     "context": "Pokémon card mechanic",
-    "translation": "Fusion Strike"
+    "translation": "Bentuk Fusion"
   },
   "IUNEkE": {
     "message": "Future",
     "context": "Pokémon card mechanic",
-    "translation": "Future"
+    "translation": "Futur"
   },
   "iDs75z": {
     "message": "Game actions",
@@ -2638,7 +2638,7 @@
   "iN8jqp": {
     "message": "Grass",
     "context": "Pokémon type",
-    "translation": "Rumput"
+    "translation": "Daun"
   },
   "lySEU9": {
     "message": "Green felt",
@@ -2654,52 +2654,52 @@
   "FpHzzD": {
     "message": "Hand",
     "context": "a sample opening hand",
-    "translation": "Tangan"
+    "translation": "Kartu Pegangan"
   },
   "pAcquH": {
     "message": "Hand",
     "context": "shortcut group",
-    "translation": "Tangan"
+    "translation": "Kartu Pegangan"
   },
   "M0UAmF": {
     "message": "Hand",
     "context": "shortcut key caption",
-    "translation": "Tangan"
+    "translation": "Kartu Pegangan"
   },
   "NRFkS9": {
     "message": "Hand",
     "context": "zone",
-    "translation": "Tangan"
+    "translation": "Kartu Pegangan"
   },
   "wkJJTf": {
     "message": "Hand · mulligan",
-    "translation": "Tangan · mulligan"
+    "translation": "Kartu Pegangan · mulligan"
   },
   "MMu3F-": {
     "message": "Hand to bottom",
     "context": "shortcut key caption",
-    "translation": "Tangan ke dasar"
+    "translation": "Kartu Pegangan ke bawah"
   },
   "n04_a0": {
     "message": "Hand to deck",
     "context": "shortcut key caption",
-    "translation": "Tangan ke deck"
+    "translation": "Kartu Pegangan ke deck"
   },
   "M35hjm": {
     "message": "Has an Ability, no Weakness",
-    "translation": "Punya Ability, tanpa Weakness"
+    "translation": "Punya Ability, tanpa Kelemahan"
   },
   "BvzegF": {
     "message": "Heads",
     "context": "coin flip",
-    "translation": "Kepala"
+    "translation": "Sisi depan"
   },
   "h94f_B": {
     "message": "Hi everyone! I'm Michael/Xiao Xiao Long. I'm a 21-year-old from Guelph, Canada, who started programming in the fall of 2023. I've been playing the Pokémon TCG for over 8 years, and I spent the last 3 months building PTCG-sim, a free tool for the community to use to test and play our favorite card game.",
     "comments": [
       "The developer's personal note on the Sponsors & Donations page"
     ],
-    "translation": "Halo semuanya! Saya Michael/Xiao Xiao Long. Saya berusia 21 tahun, dari Guelph, Kanada, dan mulai belajar pemrograman pada musim gugur 2023. Saya sudah bermain Pokémon TCG lebih dari 8 tahun, dan 3 bulan terakhir saya habiskan untuk membangun PTCG-sim, alat gratis bagi komunitas untuk mencoba dan memainkan permainan kartu favorit kita."
+    "translation": "Halo semuanya! Saya Michael/Xiao Xiao Long. Saya berusia 21 tahun, dari Guelph, Kanada, dan mulai belajar pemrograman pada musim gugur 2023. Saya sudah bermain Kartu Pokémon lebih dari 8 tahun, dan 3 bulan terakhir saya habiskan untuk membangun PTCG-sim, alat gratis bagi komunitas untuk mencoba dan memainkan permainan kartu favorit kita."
   },
   "DA8dCZ": {
     "message": "Hide",
@@ -2725,7 +2725,7 @@
   },
   "v8upxe": {
     "message": "Hide opponent's hand",
-    "translation": "Sembunyikan tangan lawan"
+    "translation": "Sembunyikan Kartu Pegangan lawan"
   },
   "ZQLqYr": {
     "message": "Hide welcome",
@@ -2742,7 +2742,7 @@
   },
   "geXprQ": {
     "message": "Host a room",
-    "translation": "Buat ruang"
+    "translation": "Buat ruangan"
   },
   "_vIqw9": {
     "message": "How many cards?",
@@ -2750,7 +2750,7 @@
   },
   "dB9f8y": {
     "message": "How much damage?",
-    "translation": "Berapa damage?"
+    "translation": "Berapa kerusakan?"
   },
   "oT-Cnl": {
     "message": "HP",
@@ -2759,7 +2759,7 @@
   },
   "36NKhF": {
     "message": "HP and retreat",
-    "translation": "HP dan retreat"
+    "translation": "HP dan Mundur"
   },
   "ZTtNAf": {
     "message": "HP at least",
@@ -2935,11 +2935,11 @@
   },
   "_rugva": {
     "message": "Knock Out",
-    "translation": "Knock Out"
+    "translation": "KO"
   },
   "69MOGQ": {
     "message": "Knock Out their <0>{0}</0>: drag it onto their discard pile. Its Energy goes with it.",
-    "translation": "Knock Out <0>{0}</0> lawan: seret ke tumpukan buangannya. Energy-nya ikut terbuang."
+    "translation": "Buat <0>{0}</0> lawan KO: seret ke Trash lawan. Energinya ikut terbuang."
   },
   "vXIe7J": {
     "message": "Language",
@@ -2968,7 +2968,7 @@
   },
   "1ng4Ht": {
     "message": "Leave in play",
-    "translation": "Biarkan di arena"
+    "translation": "Biarkan di Arena"
   },
   "M-FK_f": {
     "message": "Leave room",
@@ -3015,7 +3015,7 @@
   "Lnx2DC": {
     "message": "Lightning",
     "context": "Pokémon type",
-    "translation": "Lightning"
+    "translation": "Listrik"
   },
   "JL_ceN": {
     "message": "Limitless",
@@ -3114,11 +3114,11 @@
   },
   "f55U3C": {
     "message": "Look at bottom of deck…",
-    "translation": "Lihat dasar deck…"
+    "translation": "Lihat bawah deck…"
   },
   "RY4IrC": {
     "message": "Look at bottom of their deck…",
-    "translation": "Lihat dasar deck lawan…"
+    "translation": "Lihat bawah deck lawan…"
   },
   "C5D5j0": {
     "message": "Look at cards",
@@ -3134,15 +3134,15 @@
   },
   "nZyxDJ": {
     "message": "Look at or cover their hand",
-    "translation": "Lihat atau tutup tangan mereka"
+    "translation": "Lihat atau tutup Kartu Pegangan lawan"
   },
   "qJ_tx1": {
     "message": "Look at or cover their Prizes",
-    "translation": "Lihat atau tutup Prize mereka"
+    "translation": "Lihat atau tutup Kartu Point lawan"
   },
   "bQF9w4": {
     "message": "Look at or cover your Prizes",
-    "translation": "Lihat atau tutup Prize kamu"
+    "translation": "Lihat atau tutup Kartu Point kamu"
   },
   "I7Daes": {
     "message": "Look at the bottom cards",
@@ -3162,11 +3162,11 @@
   },
   "ktAl1J": {
     "message": "Look/cover hand",
-    "translation": "Lihat/tutup tangan"
+    "translation": "Lihat/tutup Kartu Pegangan"
   },
   "TYI_fo": {
     "message": "Look/cover prizes",
-    "translation": "Lihat/tutup Prize"
+    "translation": "Lihat/tutup Kartu Point"
   },
   "pKU2VG": {
     "message": "Looking at cards",
@@ -3216,7 +3216,7 @@
   },
   "cnyUyK": {
     "message": "Make cover",
-    "translation": "Buat sampul"
+    "translation": "Jadikan sampul"
   },
   "brtcFm": {
     "message": "Mark {mark}",
@@ -3249,7 +3249,7 @@
   },
   "42K-4o": {
     "message": "Match finish",
-    "translation": "Finis pertandingan"
+    "translation": "Ikuti finishing"
   },
   "5EeU5m": {
     "message": "Matte",
@@ -3278,7 +3278,7 @@
   "8ykb1q": {
     "message": "Metal",
     "context": "Pokémon type",
-    "translation": "Metal"
+    "translation": "Logam"
   },
   "-KKkWV": {
     "message": "Middle",
@@ -3346,7 +3346,7 @@
   },
   "MnxTQZ": {
     "message": "Move all on playboard to hand",
-    "translation": "Pindahkan semua kartu di papan main ke tangan"
+    "translation": "Pindahkan semua kartu di papan main ke Kartu Pegangan"
   },
   "DUfTll": {
     "message": "Move all on playboard to Lost Zone",
@@ -3354,7 +3354,7 @@
   },
   "pcSzkk": {
     "message": "Move all to hand",
-    "translation": "Pindahkan semua ke tangan"
+    "translation": "Pindahkan semua ke Kartu Pegangan"
   },
   "eC8uPs": {
     "message": "Move attached cards",
@@ -3383,7 +3383,7 @@
   },
   "rzLbnt": {
     "message": "Move to hand",
-    "translation": "Pindah ke tangan"
+    "translation": "Pindahkan ke Kartu Pegangan"
   },
   "mP7YPE": {
     "message": "Mulligan",
@@ -3484,7 +3484,7 @@
   },
   "iKrJ1Q": {
     "message": "No Basic Pokémon in your hand: that is a mulligan. Choose <0>{0}</0> under {1}.",
-    "translation": "Tidak ada Pokémon Basic di tanganmu: itu mulligan. Pilih <0>{0}</0> di bawah {1}."
+    "translation": "Tidak ada Pokémon Basic di Kartu Peganganmu: itu mulligan. Pilih <0>{0}</0> di bawah {1}."
   },
   "6n5psS": {
     "message": "No card lines found. Try lines like \"4 Iono PAL 185\".",
@@ -3561,7 +3561,7 @@
   },
   "Psi2LF": {
     "message": "No Special Condition",
-    "translation": "Tanpa Special Condition"
+    "translation": "Tanpa Kondisi Khusus"
   },
   "lChsa8": {
     "message": "No tournament decks right now.",
@@ -3612,7 +3612,7 @@
   },
   "6rbhdt": {
     "message": "Not your move",
-    "translation": "Bukan giliranmu"
+    "translation": "Langkah tidak diizinkan"
   },
   "W8zlv3": {
     "message": "Not yours to do",
@@ -3629,11 +3629,11 @@
   },
   "UJSKBC": {
     "message": "Now make it <0>Poisoned</0>: right-click it, then <1>{0}</1>.",
-    "translation": "Sekarang buat jadi <0>Keracunan</0>: klik kanan, lalu <1>{0}</1>."
+    "translation": "Sekarang ubah kondisinya menjadi <0>Racun</0>: klik kanan, lalu <1>{0}</1>."
   },
   "wUL6aJ": {
     "message": "Now make it <0>Poisoned</0>: tap it, <1>{0}</1>, then <2>{1}</2>.",
-    "translation": "Sekarang buat jadi <0>Keracunan</0>: ketuk, <1>{0}</1>, lalu <2>{1}</2>."
+    "translation": "Sekarang ubah kondisinya menjadi <0>Racun</0>: ketuk, <1>{0}</1>, lalu <2>{1}</2>."
   },
   "LFzr4S": {
     "message": "Number of cards",
@@ -3738,7 +3738,7 @@
   },
   "tfdDUV": {
     "message": "Open their discard pile",
-    "translation": "Buka discard pile lawan"
+    "translation": "Buka Trash lawan"
   },
   "QUoj0T": {
     "message": "Open their Lost Zone",
@@ -3746,15 +3746,15 @@
   },
   "52seef": {
     "message": "Open their Prizes",
-    "translation": "Buka Prize lawan"
+    "translation": "Buka Kartu Point lawan"
   },
   "aiCxFx": {
     "message": "Open your deck",
-    "translation": "Buka decknya"
+    "translation": "Buka deck kamu"
   },
   "mr-o_0": {
     "message": "Open your discard pile",
-    "translation": "Buka discard pile kamu"
+    "translation": "Buka Trash kamu"
   },
   "eZJMWk": {
     "message": "Open your Lost Zone",
@@ -3762,7 +3762,7 @@
   },
   "o1JZRd": {
     "message": "Open your Prizes",
-    "translation": "Buka Prize kamu"
+    "translation": "Buka Kartu Point kamu"
   },
   "4UrZFn": {
     "message": "Opening hand · {basics} Basic Pokémon · {mulligan} mulligan",
@@ -3786,7 +3786,7 @@
   },
   "ZXd3zV": {
     "message": "Opponent's cards face me",
-    "translation": "Kartu lawan menghadap ke saya"
+    "translation": "Kartu lawan menghadap ke arahku"
   },
   "eH_2Pb": {
     "message": "Other",
@@ -3848,7 +3848,7 @@
   },
   "aGL2ob": {
     "message": "Paste a list from the clipboard",
-    "translation": "Tempel daftar dari papan klip"
+    "translation": "Tempel daftar dari clipboard"
   },
   "Ig8A-t": {
     "message": "Paste a valid invitation into Room ID.",
@@ -3868,7 +3868,7 @@
   },
   "MfH2NF": {
     "message": "Paste with Ctrl+V (⌘V) instead",
-    "translation": "Tempel dengan Ctrl+V (⌘V)"
+    "translation": "Tempel dengan Ctrl+V (⌘V) saja"
   },
   "cfCrKd": {
     "message": "Paypal Donation Link",
@@ -3876,7 +3876,7 @@
   },
   "2EfntA": {
     "message": "Pick a random card from their hand",
-    "translation": "Pilih kartu acak dari tangan lawan"
+    "translation": "Pilih kartu acak dari Kartu Pegangan lawan"
   },
   "QRjV7C": {
     "message": "Pick random card",
@@ -3893,7 +3893,7 @@
   },
   "Sky344": {
     "message": "Play <0>{0}</0>: drag it onto the open mat. Ending your turn clears it away.",
-    "translation": "Mainkan <0>{0}</0>: seret ke matras yang terbuka. Mengakhiri gilirannya akan membersihkannya."
+    "translation": "Mainkan <0>{0}</0>: seret ke alas yang terbuka. Mengakhiri giliranmu akan menyingkirkannya."
   },
   "7LIRc6": {
     "message": "Play a random deck",
@@ -3946,7 +3946,7 @@
   "95vGpJ": {
     "message": "Poisoned",
     "context": "special condition",
-    "translation": "Keracunan"
+    "translation": "Racun"
   },
   "icgZ-R": {
     "message": "Pokémon",
@@ -3989,7 +3989,7 @@
   },
   "cF4opC": {
     "message": "Press <0>{0}</0>: it shuffles your deck and deals your hand.",
-    "translation": "Tekan <0>{0}</0>: ini mengocok deck-mu dan membagikan tanganmu."
+    "translation": "Tekan <0>{0}</0>: ini mengocok deck-mu dan membagikan Kartu Peganganmu."
   },
   "svdjsQ": {
     "message": "Press <0>{key}</0> any time for every key.",
@@ -4021,7 +4021,7 @@
   },
   "1LEpjy": {
     "message": "Press twice for a card in play",
-    "translation": "Tekan dua kali untuk kartu yang sedang dimainkan"
+    "translation": "Tekan dua kali untuk kartu di Arena"
   },
   "4ZehuB": {
     "message": "Preview {cardName}",
@@ -4042,17 +4042,17 @@
   "nT_UTA": {
     "message": "Prize",
     "context": "shortcut key caption",
-    "translation": "Prize"
+    "translation": "Kartu Point"
   },
   "Pe9ns3": {
     "message": "Prizes",
     "context": "Prize cards",
-    "translation": "Prize"
+    "translation": "Kartu Point"
   },
   "i63IJE": {
     "message": "Prizes",
     "context": "zone",
-    "translation": "Prize"
+    "translation": "Kartu Point"
   },
   "kghpX2": {
     "message": "Prizes",
@@ -4060,7 +4060,7 @@
     "comments": [
       "The Prize cards."
     ],
-    "translation": "Prize"
+    "translation": "Kartu Point"
   },
   "NlwZhZ": {
     "message": "Psychic",
@@ -4069,11 +4069,11 @@
   },
   "jG4a_T": {
     "message": "Put another on your <0>Bench</0>. Up to five fit there.",
-    "translation": "Taruh satu lagi di <0>Bench</0>-mu. Muat sampai lima."
+    "translation": "Masukkan satu lagi ke <0>Cadangan</0> kamu. Muat sampai lima."
   },
   "5XURu8": {
     "message": "Put damage and Poisoned on their Pokémon",
-    "translation": "Beri damage dan Keracunan pada Pokémon lawan"
+    "translation": "Beri kerusakan dan Racun pada Pokémon lawan"
   },
   "rkcP1p": {
     "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
@@ -4081,7 +4081,7 @@
   },
   "QEP1VC": {
     "message": "Put the rest of it, <0>{0}</0> and its Energy, in their discard pile too.",
-    "translation": "Taruh sisanya, <0>{0}</0> dan Energy-nya, ke tumpukan buangannya juga."
+    "translation": "Buang juga sisanya, <0>{0}</0> dan Energinya, ke Trash lawan."
   },
   "VbWX2u": {
     "message": "Quantity",
@@ -4094,7 +4094,7 @@
   "KgxgFc": {
     "message": "Radiant",
     "context": "Pokémon card mechanic",
-    "translation": "Radiant"
+    "translation": "Bercahaya"
   },
   "AUzUf9": {
     "message": "Rainbow foil",
@@ -4108,7 +4108,7 @@
   "_W_UDH": {
     "message": "Rapid Strike",
     "context": "Pokémon card mechanic",
-    "translation": "Rapid Strike"
+    "translation": "Serangan Beruntun"
   },
   "U86mdr": {
     "message": "Rarity",
@@ -4160,11 +4160,11 @@
   },
   "BMYNMJ": {
     "message": "Regulation mark, format",
-    "translation": "Tanda regulasi, format"
+    "translation": "Tanda Regulasi, format"
   },
   "rt4iTp": {
     "message": "Regulation marks",
-    "translation": "Tanda regulasi"
+    "translation": "Tanda Regulasi"
   },
   "SOnu64": {
     "message": "Relaxed",
@@ -4177,7 +4177,7 @@
   },
   "-cND-P": {
     "message": "Remove all damage",
-    "translation": "Hapus semua damage"
+    "translation": "Hapus semua kerusakan"
   },
   "sR6lTH": {
     "message": "Remove condition",
@@ -4201,7 +4201,7 @@
   },
   "5qTkf-": {
     "message": "Remove special condition",
-    "translation": "Hapus kondisi spesial"
+    "translation": "Hapus Kondisi Khusus"
   },
   "XsrZAv": {
     "message": "Rename",
@@ -4290,11 +4290,11 @@
   },
   "qf9cjt": {
     "message": "Resistance",
-    "translation": "Resistance"
+    "translation": "Resistansi"
   },
   "q53LG2": {
     "message": "Resistance {resistance}",
-    "translation": "Resistance {resistance}"
+    "translation": "Resistansi {resistance}"
   },
   "253h9G": {
     "message": "Restart",
@@ -4308,7 +4308,7 @@
   "UQt_GI": {
     "message": "Restored",
     "context": "Pokémon stage",
-    "translation": "Dipulihkan"
+    "translation": "Restored"
   },
   "Dwpy1Z": {
     "message": "Resume a saved game…",
@@ -4316,11 +4316,11 @@
   },
   "X1Npk-": {
     "message": "Retreat {retreat}",
-    "translation": "Retreat {retreat}"
+    "translation": "Mundur {retreat}"
   },
   "YgI_8f": {
     "message": "Retreat at most",
-    "translation": "Retreat maksimal"
+    "translation": "Mundur maksimal"
   },
   "MTyHfv": {
     "message": "Reveal",
@@ -4333,11 +4333,11 @@
   },
   "MFV2V6": {
     "message": "Reveal or hide their Prizes",
-    "translation": "Tampilkan atau sembunyikan Prize lawan"
+    "translation": "Tampilkan atau sembunyikan Kartu Point lawan"
   },
   "FnwG7O": {
     "message": "Reveal or hide your Prizes",
-    "translation": "Tampilkan atau sembunyikan Prize kamu"
+    "translation": "Tampilkan atau sembunyikan Kartu Point kamu"
   },
   "p7M2KL": {
     "message": "Reveal/hide card",
@@ -4345,7 +4345,7 @@
   },
   "lHuUt0": {
     "message": "Reveal/hide prizes",
-    "translation": "Tampilkan/sembunyikan Prize"
+    "translation": "Tampilkan/sembunyikan Kartu Point"
   },
   "fa6wL6": {
     "message": "Revealed to your opponent",
@@ -4450,7 +4450,7 @@
   },
   "duDNyy": {
     "message": "Rule Box",
-    "translation": "Rule Box"
+    "translation": "Peraturan"
   },
   "3JjdaA": {
     "message": "Run",
@@ -4472,11 +4472,11 @@
   },
   "brkgwR": {
     "message": "Sample hand",
-    "translation": "Contoh tangan"
+    "translation": "Contoh Kartu Pegangan"
   },
   "Revze0": {
     "message": "Sample Prizes",
-    "translation": "Contoh Prize"
+    "translation": "Contoh Kartu Point"
   },
   "tfDRzk": {
     "message": "Save",
@@ -4571,7 +4571,7 @@
   },
   "Of0ksK": {
     "message": "Seriously do not think anyone will subscribe to this, but I would be immensely grateful.",
-    "translation": "Jujur saja, kurasa tidak akan ada yang berlangganan, tapi aku akan sangat berterima kasih."
+    "translation": "Jujur, saya rasa tidak akan ada yang berlangganan, tapi saya akan sangat berterima kasih."
   },
   "V7pCG0": {
     "message": "Set",
@@ -4589,18 +4589,18 @@
   },
   "L7_73L": {
     "message": "Set damage to {count}",
-    "translation": "Atur damage ke {count}"
+    "translation": "Atur kerusakan ke {count}"
   },
   "hsdxJE": {
     "message": "Set damage…",
-    "translation": "Atur damage…"
+    "translation": "Atur kerusakan…"
   },
   "OM2HHP": {
     "message": "Set the damage to <0>60</0>: type it, or press <1>+</1>.",
     "comments": [
       "60 is the damage on the Pokémon, not a number of cards; + is the button on screen, not a keyboard key"
     ],
-    "translation": "Atur damage menjadi <0>60</0>: ketik angkanya, atau tekan <1>+</1>."
+    "translation": "Atur kerusakan menjadi <0>60</0>: ketik angkanya, atau tekan <1>+</1>."
   },
   "DBL0AT": {
     "message": "Set up",
@@ -4626,11 +4626,11 @@
   },
   "1KTKvb": {
     "message": "Set up, then put your Pokémon in play",
-    "translation": "Atur, lalu taruh Pokémon-mu di arena"
+    "translation": "Siapkan, lalu masukkan Pokémon-mu ke Arena"
   },
   "1W8ZwT": {
     "message": "Set up: shuffle, draw 7, set 6 prizes",
-    "translation": "Siapkan: kocok, ambil 7 kartu, tempatkan 6 hadiah"
+    "translation": "Siapkan: kocok, ambil 7 kartu, letakkan 6 Kartu Point"
   },
   "prXKvv": {
     "message": "Setting up the table…",
@@ -4663,7 +4663,7 @@
     "comments": [
       "The developer's personal note on the Sponsors & Donations page"
     ],
-    "translation": "Kalau kamu senang memakai sim ini dan ingin mendukung pengembangannya, kamu bisa mendukung aku/proyek ini lewat salah satu tautan di bawah. Tapi perlu diketahui, dukungan ini sepenuhnya opsional. Kesenanganmu memakai sim ini sudah menjadi kontribusi yang cukup, dan aku senang sekali kamu menjadi bagian dari komunitas kita :)"
+    "translation": "Kalau kamu senang memakai sim ini dan ingin mendukung pengembangannya, kamu bisa mendukung saya/proyek ini lewat salah satu tautan di bawah. Tapi perlu diketahui, dukungan ini sepenuhnya opsional. Kesenanganmu memakai sim ini sudah menjadi kontribusi yang cukup, dan saya senang sekali kamu menjadi bagian dari komunitas kita :)"
   },
   "SRxkB0": {
     "message": "Shoutout in every changelog during the time you are subscribed for.",
@@ -4771,27 +4771,27 @@
   },
   "K3yK37": {
     "message": "Shuffle hand into deck",
-    "translation": "Kocok tangan ke dalam deck"
+    "translation": "Kocok Kartu Pegangan ke dalam deck"
   },
   "KpMslS": {
     "message": "Shuffle hand into deck and draw…",
-    "translation": "Kocok tangan ke dalam deck dan ambil…"
+    "translation": "Kocok Kartu Pegangan ke dalam deck dan ambil…"
   },
   "VD_Lux": {
     "message": "Shuffle hand to bottom",
-    "translation": "Taruh tangan di bawah deck"
+    "translation": "Kocok Kartu Pegangan ke bawah"
   },
   "weBDkm": {
     "message": "Shuffle hand to bottom of deck",
-    "translation": "Kocok tangan lalu taruh di bawah deck"
+    "translation": "Kocok Kartu Pegangan ke bawah deck"
   },
   "8uWf-T": {
     "message": "Shuffle hand to bottom of deck and draw…",
-    "translation": "Kocok tangan ke dasar deck lalu ambil kartu…"
+    "translation": "Kocok Kartu Pegangan ke bawah deck dan ambil…"
   },
   "RdPVNx": {
     "message": "Shuffle hand to deck",
-    "translation": "Kocok tangan ke deck"
+    "translation": "Kocok Kartu Pegangan ke deck"
   },
   "Tbmmyh": {
     "message": "Shuffle in",
@@ -4804,19 +4804,19 @@
   },
   "DIHxqq": {
     "message": "Shuffle prizes",
-    "translation": "Kocok Prize"
+    "translation": "Kocok Kartu Point"
   },
   "pYUbhf": {
     "message": "Shuffle Prizes",
-    "translation": "Kocok Prize"
+    "translation": "Kocok Kartu Point"
   },
   "nU9Ip_": {
     "message": "Shuffle Prizes to bottom of deck",
-    "translation": "Taruh Prize di bawah deck"
+    "translation": "Kocok Kartu Point ke bawah deck"
   },
   "SRsSL6": {
     "message": "Shuffle to bottom",
-    "translation": "Taruh di bawah deck"
+    "translation": "Kocok ke bawah deck"
   },
   "-bhiO9": {
     "message": "Shuffle to deck (bottom)",
@@ -4829,7 +4829,7 @@
   "utezqW": {
     "message": "Single Strike",
     "context": "Pokémon card mechanic",
-    "translation": "Single Strike"
+    "translation": "Serangan Tunggal"
   },
   "6Uau97": {
     "message": "Skip",
@@ -4874,7 +4874,7 @@
   },
   "i_vGIr": {
     "message": "Sort hand in decklist order",
-    "translation": "Urutkan tangan sesuai urutan decklist"
+    "translation": "Urutkan Kartu Pegangan sesuai urutan decklist"
   },
   "jieUDo": {
     "message": "Sort in decklist order",
@@ -4886,11 +4886,11 @@
   },
   "vjM07C": {
     "message": "Sort their hand",
-    "translation": "Urutkan tangan lawan"
+    "translation": "Urutkan Kartu Pegangan lawan"
   },
   "b2twVe": {
     "message": "Sort your hand",
-    "translation": "Urutkan tanganmu"
+    "translation": "Urutkan Kartu Peganganmu"
   },
   "rAziAv": {
     "message": "Space",
@@ -4904,15 +4904,15 @@
   },
   "tNhbGC": {
     "message": "Special condition",
-    "translation": "Kondisi Spesial"
+    "translation": "Kondisi Khusus"
   },
   "1MpxsD": {
     "message": "Special Condition",
-    "translation": "Kondisi Spesial"
+    "translation": "Kondisi Khusus"
   },
   "3cLm8v": {
     "message": "Special Condition…",
-    "translation": "Kondisi Spesial…"
+    "translation": "Kondisi Khusus…"
   },
   "0kjUmj": {
     "message": "Special Energy",
@@ -4921,7 +4921,7 @@
   "h5EwqW": {
     "message": "Split",
     "context": "the table between the halves",
-    "translation": "Bagi"
+    "translation": "Pembagian"
   },
   "Y6mTBn": {
     "message": "SPONSOR TIERS",
@@ -5014,7 +5014,7 @@
   },
   "yA0PE0": {
     "message": "Start your turn with <0>{0}</0>. It draws your card.",
-    "translation": "Mulai giliranmu dengan <0>{0}</0>. Ini menarik kartumu."
+    "translation": "Mulai giliranmu dengan <0>{0}</0>. Tombol ini mengambil kartu untukmu."
   },
   "p7o5f_": {
     "message": "Status",
@@ -5023,7 +5023,7 @@
   },
   "B2cOHf": {
     "message": "Stop sorting hand",
-    "translation": "Berhenti mengurutkan tangan"
+    "translation": "Berhenti mengurutkan Kartu Pegangan"
   },
   "yqeLY3": {
     "message": "Supporter",
@@ -5108,27 +5108,27 @@
   "yNNoO1": {
     "message": "Tails",
     "context": "coin flip",
-    "translation": "Ekor"
+    "translation": "Sisi belakang"
   },
   "yJtTpT": {
     "message": "Take a <0>Prize card</0>: drag one into your hand.",
-    "translation": "Ambil <0>kartu Prize</0>: seret satu ke tanganmu."
+    "translation": "Ambil <0>Kartu Point</0>: seret satu ke Kartu Peganganmu."
   },
   "2g01hc": {
     "message": "Take off {count} damage",
-    "translation": "Kurangi {count} damage"
+    "translation": "Kurangi {count} kerusakan"
   },
   "siil7J": {
     "message": "Take off damage",
-    "translation": "Hapus damage"
+    "translation": "Kurangi kerusakan"
   },
   "rQdoKU": {
     "message": "Take off damage…",
-    "translation": "Kurangi damage…"
+    "translation": "Kurangi kerusakan…"
   },
   "O3tcf1": {
     "message": "Tap <0>{0}</0> in your hand, then <1>{1}</1>.",
-    "translation": "Ketuk <0>{0}</0> di tanganmu, lalu <1>{1}</1>."
+    "translation": "Ketuk <0>{0}</0> di Kartu Peganganmu, lalu <1>{1}</1>."
   },
   "fU8msy": {
     "message": "Tap <0>{0}</0>, then <1>{1}</1>: everything a card can do.",
@@ -5156,7 +5156,7 @@
   },
   "n_ll58": {
     "message": "Tap your deck to look through it.",
-    "translation": "Ketuk deckmu untuk melihat isinya."
+    "translation": "Ketuk deck-mu untuk melihat isinya."
   },
   "pYu8i-": {
     "message": "TCG and Pocket cards don't mix: {cards}.",
@@ -5173,16 +5173,16 @@
   "z5r9Ja": {
     "message": "Technical Machine",
     "context": "Trainer card kind",
-    "translation": "Technical Machine"
+    "translation": "MJ"
   },
   "9o2lM8": {
     "message": "Technical Machines",
     "context": "Trainer cards by kind",
-    "translation": "Technical Machine"
+    "translation": "MJ"
   },
   "4qLtJr": {
     "message": "That Energy has left your hand.",
-    "translation": "Energi itu sudah keluar dari tanganmu."
+    "translation": "Energi itu sudah keluar dari Kartu Peganganmu."
   },
   "ZMr878": {
     "message": "That image didn't load.",
@@ -5290,23 +5290,23 @@
   },
   "4IfVI6": {
     "message": "Their Active Spot",
-    "translation": "Active Spot lawan"
+    "translation": "Arena Bertarung lawan"
   },
   "x36RVi": {
     "message": "Their Bench",
-    "translation": "Bench lawan"
+    "translation": "Cadangan lawan"
   },
   "BBfq5L": {
     "message": "Their deck",
-    "translation": "Dek lawan"
+    "translation": "Deck lawan"
   },
   "NdIyvu": {
     "message": "Their discard pile",
-    "translation": "Tumpukan buangan lawan"
+    "translation": "Trash lawan"
   },
   "H2nezS": {
     "message": "Their hand",
-    "translation": "Tangan lawan"
+    "translation": "Kartu Pegangan lawan"
   },
   "OF7OJ7": {
     "message": "Their Lost Zone",
@@ -5318,7 +5318,7 @@
   },
   "EO0v0p": {
     "message": "Their Prizes",
-    "translation": "Prize lawan"
+    "translation": "Kartu Point lawan"
   },
   "Cedl1T": {
     "message": "Their side is yours now: start their turn with <0>{0}</0>.",
@@ -5345,15 +5345,15 @@
     "comments": [
       "\"To active\" is the name of another shortcut in this list."
     ],
-    "translation": "Lalu tekan Ke Active untuk memainkannya tertutup"
+    "translation": "Lalu tekan Ke Arena Bertarung untuk memainkannya tertutup"
   },
   "DNMX9-": {
     "message": "They bring up the next: drag a <0>{0}</0> from their Bench to their Active Spot.",
-    "translation": "Mereka memajukan yang berikutnya: seret <0>{0}</0> dari Bench mereka ke Active Spot mereka."
+    "translation": "Lawan memajukan Pokémon berikutnya: seret <0>{0}</0> dari Cadangannya ke Arena Bertarungnya."
   },
   "WsAkgd": {
     "message": "This browser won't keep your decks after you close the page.",
-    "translation": "Browser ini tidak akan menyimpan deckmu setelah halaman ditutup."
+    "translation": "Browser ini tidak akan menyimpan deck-mu setelah halaman ditutup."
   },
   "5PdIYU": {
     "message": "This game will be lost.",
@@ -5369,11 +5369,11 @@
   },
   "dPBKWL": {
     "message": "To active",
-    "translation": "Ke Active"
+    "translation": "Ke Arena Bertarung"
   },
   "9P13ox": {
     "message": "To bench",
-    "translation": "Ke Bench"
+    "translation": "Ke Cadangan"
   },
   "1CZiQZ": {
     "message": "to Board",
@@ -5413,20 +5413,20 @@
   },
   "a0AIf-": {
     "message": "To discard",
-    "translation": "Ke discard"
+    "translation": "Ke Trash"
   },
   "NmdkBO": {
     "message": "to Energy",
     "context": "change a card into",
-    "translation": "ke Energy"
+    "translation": "ke Energi"
   },
   "5B8Ha4": {
     "message": "To hand",
-    "translation": "Ke tangan"
+    "translation": "Ke Kartu Pegangan"
   },
   "UnRKap": {
     "message": "To Hand",
-    "translation": "Ke Tangan"
+    "translation": "Ke Kartu Pegangan"
   },
   "jO0531": {
     "message": "To Lost Zone",
@@ -5439,7 +5439,7 @@
   },
   "boV1kL": {
     "message": "To prizes",
-    "translation": "Ke Prize"
+    "translation": "Ke Kartu Point"
   },
   "cayrWn": {
     "message": "To stadium",
@@ -5456,11 +5456,11 @@
   },
   "eQIeJ9": {
     "message": "Toggle ability used",
-    "translation": "Aktifkan/nonaktifkan ability terpakai"
+    "translation": "Aktifkan/nonaktifkan Ability terpakai"
   },
   "OLgB6p": {
     "message": "Toggle ability/effect",
-    "translation": "Aktifkan/nonaktifkan ability/efek"
+    "translation": "Aktifkan/nonaktifkan Ability/efek"
   },
   "6QCyrU": {
     "message": "Too large for a deck",
@@ -5807,11 +5807,11 @@
   },
   "wkv3p1": {
     "message": "Your Active Spot",
-    "translation": "Active Spot kamu"
+    "translation": "Arena Bertarung kamu"
   },
   "rrV20L": {
     "message": "Your Bench",
-    "translation": "Bench kamu"
+    "translation": "Cadangan kamu"
   },
   "IZO0Y6": {
     "message": "Your board",
@@ -5820,23 +5820,23 @@
   },
   "dYE-zL": {
     "message": "Your deck",
-    "translation": "Dek kamu"
+    "translation": "Deck kamu"
   },
   "APqbzr": {
     "message": "Your decks",
-    "translation": "Dek kamu"
+    "translation": "Deck kamu"
   },
   "S7YY4L": {
     "message": "Your discard pile",
-    "translation": "Tumpukan buangan kamu"
+    "translation": "Trash kamu"
   },
   "gUPT1q": {
     "message": "Your hand",
-    "translation": "Tangan kamu"
+    "translation": "Kartu Pegangan kamu"
   },
   "H5pi4B": {
     "message": "Your hand, and your 6 <0>Prize cards</0>, face down.",
-    "translation": "Tanganmu, dan 6 <0>kartu Prize</0> milikmu, menghadap bawah."
+    "translation": "Kartu Peganganmu, dan 6 <0>Kartu Point</0> milikmu, menghadap ke bawah."
   },
   "BHcJOF": {
     "message": "Your Lost Zone",
@@ -5852,7 +5852,7 @@
   },
   "XzwcHS": {
     "message": "Your Prizes",
-    "translation": "Prize kamu"
+    "translation": "Kartu Point kamu"
   },
   "yuM-lV": {
     "message": "Your turn",

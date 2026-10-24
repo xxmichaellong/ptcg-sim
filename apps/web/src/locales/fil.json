@@ -30,11 +30,11 @@
   },
   "T4x65B": {
     "message": "{0} has left play.",
-    "translation": "Wala na sa laro si {0}."
+    "translation": "Wala na sa play ang {0}."
   },
   "glYGpK": {
     "message": "{0} has left your hand.",
-    "translation": "Umalis na ang {0} sa iyong hand."
+    "translation": "Wala na sa hand mo ang {0}."
   },
   "FGOUAP": {
     "message": "{0} of {1}",
@@ -55,21 +55,21 @@
     "comments": [
       "Log line. {actor} is a player's name, {card} the card attached; {source} is the zone it came from and {target} where it went."
     ],
-    "translation": "Ikinabit ni {actor} ang {card} mula sa {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {Lost Zone} attachmentResolution {mga nakakabit na card} other {deck}} papunta sa {target, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {Lost Zone} attachmentResolution {mga nakakabit na card} other {deck}}"
+    "translation": "In-attach ni {actor} ang {card} mula sa {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {Lost Zone} attachmentResolution {mga naka-attach na card} other {deck}} papunta sa {target, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {Lost Zone} attachmentResolution {mga naka-attach na card} other {deck}}"
   },
   "7Azhu7": {
     "message": "{actor} attached {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {targetCard}",
     "comments": [
       "Log line. {actor} is a player's name; {card} is the card attached (Energy, a Tool) and {targetCard} the Pokémon it went on; {source} is the zone it came from."
     ],
-    "translation": "Ikinabit ni {actor} ang {card} mula sa {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {Lost Zone} attachmentResolution {mga nakakabit na card} other {deck}} sa {targetCard}"
+    "translation": "In-attach ni {actor} ang {card} mula sa {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {Lost Zone} attachmentResolution {mga naka-attach na card} other {deck}} sa {targetCard}"
   },
   "nb_tRJ": {
     "message": "{actor} discarded {count, plural, one {# attached card(s)} other {# attached card(s)}}",
     "comments": [
       "Log line: a player discarded the cards attached to a Pokémon. {actor} is a player's name, {count} how many cards."
     ],
-    "translation": "Nag-discard si {actor} ng {count, plural, one {# nakakabit na card} other {# nakakabit na card}}"
+    "translation": "Nag-discard si {actor} ng {count, plural, one {# naka-attach na card} other {# naka-attach na card}}"
   },
   "KeKqt_": {
     "message": "{actor} discarded {count, plural, one {# card(s)} other {# card(s)}}",
@@ -83,21 +83,21 @@
     "comments": [
       "Log line. {actor} is a player's name."
     ],
-    "translation": "Dinis-card ni {actor} ang hand niya"
+    "translation": "Ni-discard ni {actor} ang hand niya"
   },
   "qIBRqY": {
     "message": "{actor} discarded hand and drew {count, plural, one {# card(s)} other {# card(s)}}",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards they drew."
     ],
-    "translation": "Dinis-card ni {actor} ang hand niya at nag-draw ng {count, plural, one {# card} other {# card}}"
+    "translation": "Ni-discard ni {actor} ang hand niya at nag-draw ng {count, plural, one {# card} other {# card}}"
   },
   "68TI_t": {
     "message": "{actor} evolved {target, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} into {card}",
     "comments": [
       "Log line. {actor} is a player's name, {card} the card it evolved into; {target} names the zone of the Pokémon that evolved, when its name is hidden."
     ],
-    "translation": "Nag-evolve si {actor} ng {target, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {Lost Zone} attachmentResolution {mga nakakabit na card} other {deck}} papuntang {card}"
+    "translation": "Nag-evolve si {actor} ng {target, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {Lost Zone} attachmentResolution {mga naka-attach na card} other {deck}} papuntang {card}"
   },
   "gUuWfL": {
     "message": "{actor} evolved {targetCard} into {card}",
@@ -111,21 +111,21 @@
     "comments": [
       "Log line: a player hid a zone they had shown to everyone. {actor} is who hid it, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "Itinago ni {actor} ang {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {Lost Zone} attachmentResolution {mga nakakabit na card} inspection {inspeksyon} other {deck}} ni {owner}"
+    "translation": "Itinago ni {actor} ang {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {Lost Zone} attachmentResolution {mga naka-attach na card} inspection {inspeksyon} other {deck}} ni {owner}"
   },
   "89ICfA": {
     "message": "{actor} hid card in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line: a player hid a card they had shown to everyone. {actor} is who hid it, {owner} whose card it is; {source} is the zone it is in."
     ],
-    "translation": "Itinago ni {actor} ang card sa {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {Lost Zone} attachmentResolution {mga nakakabit na card} inspection {inspeksyon} other {deck}} ni {owner}"
+    "translation": "Itinago ni {actor} ang card sa {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {Lost Zone} attachmentResolution {mga naka-attach na card} inspection {inspeksyon} other {deck}} ni {owner}"
   },
   "PZVwKy": {
     "message": "{actor} left {count, plural, one {# attached card(s)} other {# attached card(s)}} in play",
     "comments": [
       "Log line: a player kept the cards attached to a Pokémon on the table. {actor} is a player's name, {count} how many cards."
     ],
-    "translation": "Iniwan ni {actor} ang {count, plural, one {# nakakabit na card} other {# nakakabit na card}} sa laro"
+    "translation": "Iniwan ni {actor} ang {count, plural, one {# naka-attach na card} other {# naka-attach na card}} sa play"
   },
   "c5qeZl": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {boardOwner}'s {target, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}}",
@@ -139,35 +139,35 @@
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left and {target} the zone it went to."
     ],
-    "translation": "Inilipat ni {actor} ang {card} mula sa {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {Lost Zone} attachmentResolution {mga nakakabit na card} other {deck}} papunta sa {target, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {Lost Zone} attachmentResolution {mga nakakabit na card} other {deck}}"
+    "translation": "Inilipat ni {actor} ang {card} mula sa {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {Lost Zone} attachmentResolution {mga naka-attach na card} other {deck}} papunta sa {target, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {Lost Zone} attachmentResolution {mga naka-attach na card} other {deck}}"
   },
   "elLtOc": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {targetCard}",
     "comments": [
       "Log line. {actor} is a player's name, {card} and {targetCard} card names; {source} is the zone the card left."
     ],
-    "translation": "Inilipat ni {actor} ang {card} mula sa {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {Lost Zone} attachmentResolution {mga nakakabit na card} other {deck}} papunta sa {targetCard}"
+    "translation": "Inilipat ni {actor} ang {card} mula sa {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {Lost Zone} attachmentResolution {mga naka-attach na card} other {deck}} papunta sa {targetCard}"
   },
   "RyQ60M": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to bottom of deck",
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left."
     ],
-    "translation": "Inilipat ni {actor} ang {card} mula sa {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {Lost Zone} attachmentResolution {mga nakakabit na card} other {deck}} papunta sa ilalim ng deck"
+    "translation": "Inilipat ni {actor} ang {card} mula sa {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {Lost Zone} attachmentResolution {mga naka-attach na card} other {deck}} papunta sa ilalim ng deck"
   },
   "CsrT9R": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to top of deck",
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left."
     ],
-    "translation": "Inilipat ni {actor} ang {card} mula sa {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {Lost Zone} attachmentResolution {mga nakakabit na card} other {deck}} papunta sa ibabaw ng deck"
+    "translation": "Inilipat ni {actor} ang {card} mula sa {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {Lost Zone} attachmentResolution {mga naka-attach na card} other {deck}} papunta sa ibabaw ng deck"
   },
   "WBnnCz": {
     "message": "{actor} moved {count, plural, one {# card(s)} other {# card(s)}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} other {deck}}",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards; {source} is the zone they left and {destination} where they went (play: onto the table)."
     ],
-    "translation": "Inilipat ni {actor} ang {count, plural, one {# card} other {# card}} mula sa {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {Lost Zone} attachmentResolution {mga nakakabit na card} other {deck}} papunta sa {destination, select, hand {hand} discard {discard} lostZone {Lost Zone} deckBottom {ilalim ng deck} play {laro} other {deck}}"
+    "translation": "Inilipat ni {actor} ang {count, plural, one {# card} other {# card}} mula sa {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {Lost Zone} attachmentResolution {mga naka-attach na card} other {deck}} papunta sa {destination, select, hand {hand} discard {discard} lostZone {Lost Zone} deckBottom {ilalim ng deck} play {play} other {deck}}"
   },
   "P4_K0D": {
     "message": "{actor} moved a random card from {target}'s hand to board",
@@ -181,28 +181,28 @@
     "comments": [
       "Log line: a player showed one card to everyone. {actor} is who showed it, {owner} whose card it is, {card} the card's name; {source} is the zone it is in."
     ],
-    "translation": "Ipinakita ni {actor} ang {card} sa {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {Lost Zone} attachmentResolution {mga nakakabit na card} inspection {inspeksyon} other {deck}} ni {owner}"
+    "translation": "Ipinakita ni {actor} ang {card} sa {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {Lost Zone} attachmentResolution {mga naka-attach na card} inspection {inspeksyon} other {deck}} ni {owner}"
   },
   "TMqzLF": {
     "message": "{actor} revealed {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line: a player showed a whole zone to everyone. {actor} is who showed it, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "Ipinakita ni {actor} ang {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {Lost Zone} attachmentResolution {mga nakakabit na card} inspection {inspeksyon} other {deck}} ni {owner}"
+    "translation": "Ipinakita ni {actor} ang {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {Lost Zone} attachmentResolution {mga naka-attach na card} inspection {inspeksyon} other {deck}} ni {owner}"
   },
   "P2m23t": {
     "message": "{actor} shuffled {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} into deck",
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left."
     ],
-    "translation": "Isinama ni {actor} sa shuffle ng deck ang {card} mula sa {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {Lost Zone} attachmentResolution {mga nakakabit na card} other {deck}}"
+    "translation": "Ni-shuffle ni {actor} sa deck ang {card} mula sa {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {Lost Zone} attachmentResolution {mga naka-attach na card} other {deck}}"
   },
   "xEKtXt": {
     "message": "{actor} shuffled {count, plural, one {# attached card(s)} other {# attached card(s)}} into deck",
     "comments": [
       "Log line: a player shuffled the cards attached to a Pokémon into their deck. {actor} is a player's name, {count} how many cards."
     ],
-    "translation": "Ni-shuffle ni {actor} sa deck ang {count, plural, one {# nakakabit na card} other {# nakakabit na card}}"
+    "translation": "Ni-shuffle ni {actor} sa deck ang {count, plural, one {# naka-attach na card} other {# naka-attach na card}}"
   },
   "Ggdxd3": {
     "message": "{actor} shuffled {count, plural, one {# card(s)} other {# card(s)}} from board to deck",
@@ -223,7 +223,7 @@
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards."
     ],
-    "translation": "Inilagay ni {actor} sa ilalim ng deck ang {count, plural, one {# card} other {# card}} (shuffle)"
+    "translation": "Ni-shuffle ni {actor} sa ilalim ng deck ang {count, plural, one {# card} other {# card}}"
   },
   "s-CcLE": {
     "message": "{actor} shuffled discard into deck",
@@ -251,28 +251,28 @@
     "comments": [
       "Log line. {actor} is a player's name."
     ],
-    "translation": "Inilagay ni {actor} ang hand sa ilalim ng deck (shuffle)"
+    "translation": "Ni-shuffle ni {actor} ang hand sa ilalim ng deck"
   },
   "xT_uho": {
     "message": "{actor} shuffled hand to bottom of deck and drew {count, plural, one {# card(s)} other {# card(s)}}",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards they drew."
     ],
-    "translation": "Inilagay ni {actor} ang hand sa ilalim ng deck (shuffle) at nag-draw ng {count, plural, one {# card} other {# card}}"
+    "translation": "Ni-shuffle ni {actor} ang hand sa ilalim ng deck at nag-draw ng {count, plural, one {# card} other {# card}}"
   },
   "QGyAAz": {
     "message": "{actor} shuffled prizes to bottom of deck",
     "comments": [
       "Log line. {actor} is a player's name."
     ],
-    "translation": "Inilagay ni {actor} ang prizes sa ilalim ng deck (shuffle)"
+    "translation": "Ni-shuffle ni {actor} ang prizes sa ilalim ng deck"
   },
   "xw6Fj3": {
     "message": "{actor} switched {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} with top of deck",
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left, and the top card of the deck took its place."
     ],
-    "translation": "Pinalitan ni {actor} ang {card} mula sa {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {Lost Zone} attachmentResolution {mga nakakabit na card} other {deck}} ng card sa ibabaw ng deck"
+    "translation": "Pinalitan ni {actor} ang {card} mula sa {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {Lost Zone} attachmentResolution {mga naka-attach na card} other {deck}} ng card sa ibabaw ng deck"
   },
   "QOz626": {
     "message": "{actor} took back {target}'s last move",
@@ -326,7 +326,7 @@
     "comments": [
       "label is the zone's name, e.g. \"Red discard\"."
     ],
-    "translation": "{count, plural, one {{label}, # card} other {{label}, # cards}}"
+    "translation": "{count, plural, one {{label}, # card} other {{label}, # card}}"
   },
   "DXRXaL": {
     "message": "{count, plural, one {# ACE SPEC card (max 1).} other {# ACE SPEC cards (max 1).}}",
@@ -334,7 +334,7 @@
   },
   "ILjliG": {
     "message": "{count, plural, one {# card · legal in {legalIn}} other {# cards · legal in {legalIn}}}",
-    "translation": "{count, plural, one {# card · legal sa {legalIn}} other {# cards · legal sa {legalIn}}}"
+    "translation": "{count, plural, one {# card · legal sa {legalIn}} other {# card · legal sa {legalIn}}}"
   },
   "U9iP6d": {
     "message": "{count, plural, one {# card in {name}'s deck} other {# cards in {name}'s deck}}",
@@ -370,7 +370,7 @@
   },
   "bM4Wv5": {
     "message": "{count, plural, one {# card} other {# cards}}",
-    "translation": "{count, plural, one {# card} other {# cards}}"
+    "translation": "{count, plural, one {# card} other {# card}}"
   },
   "0Sz1PW": {
     "message": "{count, plural, one {# copy of {name} (max {limit}).} other {# copies of {name} (max {limit}).}}",
@@ -386,11 +386,11 @@
   },
   "U1rTLU": {
     "message": "{count, plural, one {# print · legal in {legalIn}} other {# prints · legal in {legalIn}}}",
-    "translation": "{count, plural, one {# print · legal sa {legalIn}} other {# prints · legal sa {legalIn}}}"
+    "translation": "{count, plural, one {# print · legal sa {legalIn}} other {# print · legal sa {legalIn}}}"
   },
   "lDKWfO": {
     "message": "{count, plural, one {# print} other {# prints}}",
-    "translation": "{count, plural, one {# print} other {# prints}}"
+    "translation": "{count, plural, one {# print} other {# print}}"
   },
   "AC9Ruq": {
     "message": "{count, plural, one {# Radiant card (max 1).} other {# Radiant cards (max 1).}}",
@@ -426,7 +426,7 @@
   },
   "aN0Z_E": {
     "message": "{count, plural, one {Shuffle hand to bottom and draw # card} other {Shuffle hand to bottom and draw # cards}}",
-    "translation": "{count, plural, one {Ilagay ang hand sa ilalim ng deck at mag-draw ng # card} other {Ilagay ang hand sa ilalim ng deck at mag-draw ng # card}}"
+    "translation": "{count, plural, one {I-shuffle ang hand sa ilalim ng deck at mag-draw ng # card} other {I-shuffle ang hand sa ilalim ng deck at mag-draw ng # card}}"
   },
   "hMKADB": {
     "message": "{count} × {cardName} ({print}). Details",
@@ -552,7 +552,7 @@
     "comments": [
       "Log line: a player made a card count as another kind of card. {name} is a player's name, {card} a card's name; {category} is the kind it now counts as."
     ],
-    "translation": "Ginawa ni {name} na {category, select, energy {energy} pokemon {Pokémon} trainer {tool} other {hindi kilalang uri}} ang {card}"
+    "translation": "Ginawa ni {name} na {category, select, energy {Energy} pokemon {Pokémon} trainer {Tool} other {hindi kilalang uri}} ang {card}"
   },
   "xjFQ8_": {
     "message": "{name} deck",
@@ -580,7 +580,7 @@
     "comments": [
       "Log line. {name} is a player's name, {count} how many cards they drew."
     ],
-    "translation": "Nag-draw si {name} ng {count, plural, one {isang card} other {# cards}}"
+    "translation": "Nag-draw si {name} ng {count, plural, one {isang card} other {# card}}"
   },
   "5MiMTH": {
     "message": "{name} drew for turn",
@@ -608,7 +608,7 @@
     "comments": [
       "A zone's name for screen readers; name is its player."
     ],
-    "translation": "Kamay ni {name}"
+    "translation": "Hand ni {name}"
   },
   "WbFKTs": {
     "message": "{name} has no cards left to draw",
@@ -714,7 +714,7 @@
     "comments": [
       "Log line: a player cleared their side of the table. {name} is a player's name."
     ],
-    "translation": "Ni-reset ni {name}"
+    "translation": "Nag-reset si {name}"
   },
   "yq8DHI": {
     "message": "{name} reset their {marker}",
@@ -728,7 +728,7 @@
     "comments": [
       "Log line. {name} is a player's name; {source} is the zone they shuffled, almost always their deck."
     ],
-    "translation": "Ni-shuffle ni {name} ang {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {mga naka-attach na card} other {deck}}"
+    "translation": "Ni-shuffle ni {name} ang {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {Lost Zone} attachmentResolution {mga naka-attach na card} other {deck}}"
   },
   "x8Eb2i": {
     "message": "{name} started turn {turn}",
@@ -785,7 +785,7 @@
     "comments": [
       "A tournament placing on a deck box sticker, as 1st"
     ],
-    "translation": "{place, selectordinal, one {#} other {#}}"
+    "translation": "{place, selectordinal, other {Ika-#}}"
   },
   "2dJX8c": {
     "message": "{place, selectordinal, one {#st} two {#nd} few {#rd} other {#th}} of {players}",
@@ -799,7 +799,7 @@
     "comments": [
       "A tournament placing, as 1st"
     ],
-    "translation": "{placing, selectordinal, one {#} other {#}}"
+    "translation": "{placing, selectordinal, other {Ika-#}}"
   },
   "nT4VV7": {
     "message": "{playerName} {markerName}",
@@ -887,7 +887,7 @@
     "comments": [
       "Log line: a player undid their own last move. {target} is the player's name."
     ],
-    "translation": "Binawi ni {target} ang huli niyang move"
+    "translation": "Binawi ni {target} ang huli niyang galaw"
   },
   "mFeDcR": {
     "message": "{targetSeat}: {seatLabel}, {seatTotal, plural, one {# card} other {# cards}}",
@@ -932,28 +932,28 @@
     "comments": [
       "Log line: a player began looking at a zone only they can see. {viewer} is who is looking, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "Tiningnan ni {viewer} ang {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {mga naka-attach na card} inspection {inspection} other {deck}} ni {owner}"
+    "translation": "Tiningnan ni {viewer} ang {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {Lost Zone} attachmentResolution {mga naka-attach na card} inspection {inspeksyon} other {deck}} ni {owner}"
   },
   "kF6-Cq": {
     "message": "{viewer} looked at card in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line: a player began looking at a card only they can see. {viewer} is who is looking, {owner} whose card it is; {source} is the zone it is in."
     ],
-    "translation": "Tiningnan ni {viewer} ang card sa {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {mga naka-attach na card} inspection {inspection} other {deck}} ni {owner}"
+    "translation": "Tiningnan ni {viewer} ang card sa {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {Lost Zone} attachmentResolution {mga naka-attach na card} inspection {inspeksyon} other {deck}} ni {owner}"
   },
   "jTec7e": {
     "message": "{viewer} stopped looking at {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line. {viewer} is who stopped looking, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "Tumigil si {viewer} sa pagtingin sa {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {mga naka-attach na card} inspection {inspection} other {deck}} ni {owner}"
+    "translation": "Tumigil si {viewer} sa pagtingin sa {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {Lost Zone} attachmentResolution {mga naka-attach na card} inspection {inspeksyon} other {deck}} ni {owner}"
   },
   "FAueN1": {
     "message": "{viewer} stopped looking at card in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line. {viewer} is who stopped looking, {owner} whose card it is; {source} is the zone it is in."
     ],
-    "translation": "Tumigil si {viewer} sa pagtingin sa card sa {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {mga naka-attach na card} inspection {inspection} other {deck}} ni {owner}"
+    "translation": "Tumigil si {viewer} sa pagtingin sa card sa {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {Lost Zone} attachmentResolution {mga naka-attach na card} inspection {inspeksyon} other {deck}} ni {owner}"
   },
   "JirPbT": {
     "message": "{zoneName}, {count, plural, one {# card} other {# cards}}",
@@ -1039,7 +1039,7 @@
     "comments": [
       "Pressing the number key 3 draws three cards."
     ],
-    "translation": "Ang 3 ay mag-d-draw ng tatlo"
+    "translation": "Magdo-draw ng tatlo ang 3"
   },
   "eYUTBA": {
     "message": "3 pieces in a row",
@@ -1439,7 +1439,7 @@
   },
   "tffbb1": {
     "message": "Bench <0>{0}</0> from your hand.",
-    "translation": "I-bench ang <0>{0}</0> mula sa iyong kamay."
+    "translation": "I-bench ang <0>{0}</0> mula sa hand mo."
   },
   "T1zt_m": {
     "message": "Bench <0>{0}</0> too.",
@@ -1659,7 +1659,7 @@
     "comments": [
       "A table look: the colour"
     ],
-    "translation": "Uling"
+    "translation": "Charcoal"
   },
   "TEzuJ6": {
     "message": "Chat message",
@@ -1701,11 +1701,11 @@
   },
   "TvEJEL": {
     "message": "Choose the deck for {slotSeat}",
-    "translation": "Piliin ang deck para kay {slotSeat}"
+    "translation": "Piliin ang deck para sa {slotSeat}"
   },
   "-sQCd4": {
     "message": "Choose the deck for {slotSeat} (you)",
-    "translation": "Piliin ang deck para kay {slotSeat} (ikaw)"
+    "translation": "Piliin ang deck para sa {slotSeat} (ikaw)"
   },
   "5rfWim": {
     "message": "Classics",
@@ -1739,7 +1739,7 @@
   },
   "F4fFCC": {
     "message": "Click <0>{0}</0> in your hand, then press <1>{key}</1> to bench it.",
-    "translation": "I-click ang <0>{0}</0> sa iyong kamay, tapos pindutin ang <1>{key}</1> para i-bench ito."
+    "translation": "I-click ang <0>{0}</0> sa hand mo, tapos pindutin ang <1>{key}</1> para i-bench ito."
   },
   "MO489z": {
     "message": "Click a shortcut to change it.",
@@ -1890,7 +1890,7 @@
   },
   "p0WUR8": {
     "message": "Couldn't pick a deck",
-    "translation": "Hindi nakapili ng deck"
+    "translation": "Hindi makapili ng deck"
   },
   "iaCnbQ": {
     "message": "Couldn't read that list",
@@ -2110,7 +2110,7 @@
   },
   "FQxE2Y": {
     "message": "Discard all on playboard",
-    "translation": "I-discard lahat sa playboard"
+    "translation": "I-discard ang lahat ng nasa playboard"
   },
   "mKMb1d": {
     "message": "Discard hand",
@@ -2153,7 +2153,7 @@
   },
   "BDC29J": {
     "message": "Double-click <0>{0}</0> in your hand to read it.",
-    "translation": "I-double-click ang <0>{0}</0> sa kamay mo para basahin ito."
+    "translation": "I-double-click ang <0>{0}</0> sa hand mo para basahin ito."
   },
   "O8KL2B": {
     "message": "Download list (.txt)",
@@ -2204,11 +2204,11 @@
   },
   "68egXB": {
     "message": "Draw a card: drag the top of your deck into your hand, or press <0>1</0>.",
-    "translation": "Mag-draw ng card: i-drag ang itaas ng deck mo papunta sa kamay mo, o pindutin ang <0>1</0>."
+    "translation": "Mag-draw ng card: i-drag ang itaas ng deck mo papunta sa hand mo, o pindutin ang <0>1</0>."
   },
   "2o1D75": {
     "message": "Draw a card: drag the top of your deck into your hand.",
-    "translation": "Mag-draw ng card: i-drag ang itaas ng deck mo papunta sa kamay mo."
+    "translation": "Mag-draw ng card: i-drag ang itaas ng deck mo papunta sa hand mo."
   },
   "to34yF": {
     "message": "Draw card(s)",
@@ -2216,7 +2216,7 @@
   },
   "ZQB_oJ": {
     "message": "Draw cards",
-    "translation": "Mag-draw ng cards"
+    "translation": "Mag-draw ng mga card"
   },
   "PlxFxl": {
     "message": "Draw cards…",
@@ -2224,7 +2224,7 @@
   },
   "SAb30P": {
     "message": "Draw how many cards?",
-    "translation": "Ilang card ang idadraw?"
+    "translation": "Ilang card ang idi-draw?"
   },
   "SP_Sjy": {
     "message": "Draw how many?",
@@ -2442,7 +2442,7 @@
   },
   "QEb-dG": {
     "message": "Find <0>{0}</0> and drag it into your hand.",
-    "translation": "Hanapin ang <0>{0}</0> at i-drag ito sa kamay mo."
+    "translation": "Hanapin ang <0>{0}</0> at i-drag ito sa hand mo."
   },
   "Vv3U3O": {
     "message": "Find a card…",
@@ -2470,7 +2470,7 @@
   },
   "8ju4RO": {
     "message": "Find any action by name",
-    "translation": "Hanapin ang kahit anong action ayon sa pangalan"
+    "translation": "Hanapin ang kahit anong aksyon ayon sa pangalan"
   },
   "STV_9c": {
     "message": "Find cards",
@@ -2487,7 +2487,7 @@
   "XGVxYp": {
     "message": "Finish",
     "context": "card surface",
-    "translation": "Tapusin"
+    "translation": "Finish"
   },
   "mDOjMG": {
     "message": "Finish (optional)",
@@ -2608,7 +2608,7 @@
   },
   "mb6Tyv": {
     "message": "Generate a room and send the invitation. With <0>Join as spectator</0> on, it invites a spectator.",
-    "translation": "Gumawa ng room at ipadala ang imbitasyon. Kapag naka-on ang <0>Sumali bilang spectator</0>, spectator ang iimbitahan."
+    "translation": "Gumawa ng room at ipadala ang imbitasyon. Kapag naka-on ang <0>Sumali bilang manonood</0>, manonood ang iimbitahan."
   },
   "5NEkeP": {
     "message": "Generate a room first.",
@@ -3001,7 +3001,7 @@
   },
   "xXagjO": {
     "message": "LEGEND · 2 halves",
-    "translation": "LEGEND · 2 halves"
+    "translation": "LEGEND · 2 kalahati"
   },
   "YVrOwc": {
     "message": "Level-Up",
@@ -3051,7 +3051,7 @@
   },
   "k0WwcP": {
     "message": "Lists for {0}",
-    "translation": "Mga list para kay {0}"
+    "translation": "Mga list para sa {0}"
   },
   "Ysygva": {
     "message": "Load",
@@ -3249,7 +3249,7 @@
   },
   "42K-4o": {
     "message": "Match finish",
-    "translation": "Finish ng match"
+    "translation": "Ayon sa finish"
   },
   "5EeU5m": {
     "message": "Matte",
@@ -3290,7 +3290,7 @@
     "comments": [
       "A table look: midnight blue"
     ],
-    "translation": "Hatinggabi"
+    "translation": "Midnight"
   },
   "_NnUxu": {
     "message": "Mine",
@@ -3346,11 +3346,11 @@
   },
   "MnxTQZ": {
     "message": "Move all on playboard to hand",
-    "translation": "Ilipat lahat sa playboard papunta sa hand"
+    "translation": "Ilipat sa hand ang lahat ng nasa playboard"
   },
   "DUfTll": {
     "message": "Move all on playboard to Lost Zone",
-    "translation": "Ilipat lahat sa playboard papunta sa Lost Zone"
+    "translation": "Ilipat sa Lost Zone ang lahat ng nasa playboard"
   },
   "pcSzkk": {
     "message": "Move all to hand",
@@ -3467,7 +3467,7 @@
   },
   "ww0kXg": {
     "message": "Next replay action",
-    "translation": "Susunod na replay action"
+    "translation": "Susunod na aksyon sa replay"
   },
   "AmUNJC": {
     "message": "No",
@@ -3476,7 +3476,7 @@
   },
   "we3XEV": {
     "message": "No actions available",
-    "translation": "Walang magagamit na action"
+    "translation": "Walang magagamit na aksyon"
   },
   "hwpgik": {
     "message": "No actions match",
@@ -3484,7 +3484,7 @@
   },
   "iKrJ1Q": {
     "message": "No Basic Pokémon in your hand: that is a mulligan. Choose <0>{0}</0> under {1}.",
-    "translation": "Walang Basic Pokémon sa kamay mo: mulligan iyon. Piliin ang <0>{0}</0> sa ilalim ng {1}."
+    "translation": "Walang Basic Pokémon sa hand mo: mulligan iyon. Piliin ang <0>{0}</0> sa ilalim ng {1}."
   },
   "6n5psS": {
     "message": "No card lines found. Try lines like \"4 Iono PAL 185\".",
@@ -3612,11 +3612,11 @@
   },
   "6rbhdt": {
     "message": "Not your move",
-    "translation": "Hindi mo turn"
+    "translation": "Hindi mo galaw ito"
   },
   "W8zlv3": {
     "message": "Not yours to do",
-    "translation": "Hindi ito sa iyo"
+    "translation": "Hindi mo ito puwedeng gawin"
   },
   "aq4Vb1": {
     "message": "Nothing selected",
@@ -3710,7 +3710,7 @@
   },
   "woUJjU": {
     "message": "Open <0>{0}</0>: every action, by name.",
-    "translation": "Buksan ang <0>{0}</0>: lahat ng action, ayon sa pangalan."
+    "translation": "Buksan ang <0>{0}</0>: lahat ng aksyon, ayon sa pangalan."
   },
   "tG9S9l": {
     "message": "Open a deck file",
@@ -3766,7 +3766,7 @@
   },
   "4UrZFn": {
     "message": "Opening hand · {basics} Basic Pokémon · {mulligan} mulligan",
-    "translation": "Panimulang kamay · {basics} Basic Pokémon · {mulligan} mulligan"
+    "translation": "Panimulang hand · {basics} Basic Pokémon · {mulligan} mulligan"
   },
   "oLQoOZ": {
     "message": "Opening your decks…",
@@ -3876,7 +3876,7 @@
   },
   "2EfntA": {
     "message": "Pick a random card from their hand",
-    "translation": "Pumili ng random na card mula sa kamay nila"
+    "translation": "Pumili ng random na card mula sa hand nila"
   },
   "QRjV7C": {
     "message": "Pick random card",
@@ -3889,7 +3889,7 @@
   "SW-cIq": {
     "message": "Play",
     "context": "take the decks to the table",
-    "translation": "Laro"
+    "translation": "Maglaro"
   },
   "Sky344": {
     "message": "Play <0>{0}</0>: drag it onto the open mat. Ending your turn clears it away.",
@@ -3989,7 +3989,7 @@
   },
   "cF4opC": {
     "message": "Press <0>{0}</0>: it shuffles your deck and deals your hand.",
-    "translation": "Pindutin ang <0>{0}</0>: sinu-shuffle nito ang deck mo at ide-deal ang kamay mo."
+    "translation": "Pindutin ang <0>{0}</0>: sinu-shuffle nito ang deck mo at dine-deal ang hand mo."
   },
   "svdjsQ": {
     "message": "Press <0>{key}</0> any time for every key.",
@@ -3997,7 +3997,7 @@
   },
   "GvtW7U": {
     "message": "Press <0>{key}</0> for <1>{0}</1>: every action, by name.",
-    "translation": "Pindutin ang <0>{key}</0> para sa <1>{0}</1>: lahat ng action, ayon sa pangalan."
+    "translation": "Pindutin ang <0>{key}</0> para sa <1>{0}</1>: lahat ng aksyon, ayon sa pangalan."
   },
   "HUzhOi": {
     "message": "Press <0>Esc</0> or click away to close it.",
@@ -4121,7 +4121,7 @@
   },
   "xs2rFL": {
     "message": "Read a card, and open its actions",
-    "translation": "Basahin ang card at buksan ang mga action nito"
+    "translation": "Basahin ang card at buksan ang mga aksyon nito"
   },
   "LAbKv2": {
     "message": "Ready for {format}",
@@ -4144,7 +4144,7 @@
   },
   "H3oH0g": {
     "message": "Redo",
-    "translation": "Redo"
+    "translation": "I-redo"
   },
   "KB_9s_": {
     "message": "Redo (Ctrl+Shift+Z)",
@@ -4206,7 +4206,7 @@
   "XsrZAv": {
     "message": "Rename",
     "context": "button",
-    "translation": "palitan ang pangalan"
+    "translation": "Palitan ang pangalan"
   },
   "jionWu": {
     "message": "Rename",
@@ -4759,7 +4759,7 @@
   },
   "Ad3M_2": {
     "message": "Shuffle all on playboard into deck",
-    "translation": "I-shuffle lahat sa playboard sa deck"
+    "translation": "I-shuffle sa deck ang lahat ng nasa playboard"
   },
   "Es4EnS": {
     "message": "Shuffle all to deck",
@@ -4812,7 +4812,7 @@
   },
   "nU9Ip_": {
     "message": "Shuffle Prizes to bottom of deck",
-    "translation": "Ilagay ang Prizes sa ilalim ng deck"
+    "translation": "I-shuffle ang Prizes sa ilalim ng deck"
   },
   "SRsSL6": {
     "message": "Shuffle to bottom",
@@ -4921,7 +4921,7 @@
   "h5EwqW": {
     "message": "Split",
     "context": "the table between the halves",
-    "translation": "Hatiin"
+    "translation": "Paghahati"
   },
   "Y6mTBn": {
     "message": "SPONSOR TIERS",
@@ -5090,15 +5090,15 @@
   },
   "Z3nJeW": {
     "message": "Table style…",
-    "translation": "Istilo ng mesa…"
+    "translation": "Estilo ng table…"
   },
   "f9jgd2": {
     "message": "Table view",
-    "translation": "Tanaw ng mesa"
+    "translation": "View ng table"
   },
   "cHwqmY": {
     "message": "Table view…",
-    "translation": "Tanaw ng mesa…"
+    "translation": "View ng table…"
   },
   "Qd2uqp": {
     "message": "Tabletop",
@@ -5112,7 +5112,7 @@
   },
   "yJtTpT": {
     "message": "Take a <0>Prize card</0>: drag one into your hand.",
-    "translation": "Kumuha ng <0>Prize card</0>: i-drag ang isa papunta sa kamay mo."
+    "translation": "Kumuha ng <0>Prize card</0>: i-drag ang isa papunta sa hand mo."
   },
   "2g01hc": {
     "message": "Take off {count} damage",
@@ -5128,7 +5128,7 @@
   },
   "O3tcf1": {
     "message": "Tap <0>{0}</0> in your hand, then <1>{1}</1>.",
-    "translation": "I-tap ang <0>{0}</0> sa kamay mo, tapos <1>{1}</1>."
+    "translation": "I-tap ang <0>{0}</0> sa hand mo, tapos <1>{1}</1>."
   },
   "fU8msy": {
     "message": "Tap <0>{0}</0>, then <1>{1}</1>: everything a card can do.",
@@ -5136,7 +5136,7 @@
   },
   "eaLvvH": {
     "message": "Tap <0>{0}</0>: every action, by name.",
-    "translation": "I-tap ang <0>{0}</0>: lahat ng action, ayon sa pangalan."
+    "translation": "I-tap ang <0>{0}</0>: lahat ng aksyon, ayon sa pangalan."
   },
   "EyHJlN": {
     "message": "Tap a card for actions; tap again to read it.",
@@ -5160,7 +5160,7 @@
   },
   "pYu8i-": {
     "message": "TCG and Pocket cards don't mix: {cards}.",
-    "translation": "Hindi puwedeng pagsamahin ang TCG at Pocket cards: {cards}."
+    "translation": "Hindi puwedeng pagsamahin ang mga card ng TCG at Pocket: {cards}."
   },
   "MzC0ih": {
     "message": "TCG Pocket",
@@ -5182,7 +5182,7 @@
   },
   "4qLtJr": {
     "message": "That Energy has left your hand.",
-    "translation": "Wala na sa kamay mo ang Energy na iyon."
+    "translation": "Wala na sa hand mo ang Energy na iyon."
   },
   "ZMr878": {
     "message": "That image didn't load.",
@@ -5202,7 +5202,7 @@
   },
   "6Z1wXH": {
     "message": "That side starts over with the new deck",
-    "translation": "Magsisimula ulit ang side na iyon kasama ang bagong deck"
+    "translation": "Magsisimula ulit ang side na iyon gamit ang bagong deck"
   },
   "hPwR-j": {
     "message": "The card went back.",
@@ -5422,11 +5422,11 @@
   },
   "5B8Ha4": {
     "message": "To hand",
-    "translation": "Sa kamay"
+    "translation": "Sa hand"
   },
   "UnRKap": {
     "message": "To Hand",
-    "translation": "Sa Kamay"
+    "translation": "Sa Hand"
   },
   "jO0531": {
     "message": "To Lost Zone",
@@ -5476,7 +5476,7 @@
   },
   "B3I8F_": {
     "message": "Too many moves",
-    "translation": "Sobrang dami ng moves"
+    "translation": "Masyadong maraming galaw"
   },
   "Xx-Q6M": {
     "message": "Tool",
@@ -5594,11 +5594,11 @@
   },
   "fijiP5": {
     "message": "Turn face down (both players)",
-    "translation": "Ihara nang nakataob (parehong manlalaro)"
+    "translation": "Itaob (parehong manlalaro)"
   },
   "ccavW6": {
     "message": "Turn the table around",
-    "translation": "I-ikot ang mesa"
+    "translation": "Ikutin ang table"
   },
   "R3c2_s": {
     "message": "Turns",
@@ -5606,7 +5606,7 @@
   },
   "DHMk63": {
     "message": "Turns only the selected card",
-    "translation": "Ang napiling card lang ang iha-hara nang nakataob"
+    "translation": "Ang napiling card lang ang itinataob"
   },
   "T7w4KT": {
     "message": "Tutorial",
@@ -5733,7 +5733,7 @@
   },
   "BqYI8B": {
     "message": "View bottom card(s)",
-    "translation": "Tingnan ang card(s) sa ilalim"
+    "translation": "Tingnan ang (mga) card sa ilalim"
   },
   "9AKt60": {
     "message": "View card",
@@ -5745,7 +5745,7 @@
   },
   "VKXHWy": {
     "message": "View top card(s)",
-    "translation": "Tingnan ang card(s) sa itaas"
+    "translation": "Tingnan ang (mga) card sa itaas"
   },
   "s3cHPo": {
     "message": "View whole card",

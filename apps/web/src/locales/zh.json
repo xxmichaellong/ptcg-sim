@@ -4,14 +4,14 @@
     "comments": [
       "Read after a table piece's name by screen readers: \"Lost Zone, off\"."
     ],
-    "translation": ",关"
+    "translation": "，关"
   },
   "JyEYI-": {
     "message": ", on",
     "comments": [
       "Read after a table piece's name by screen readers: \"Lost Zone, on\"."
     ],
-    "translation": ",开"
+    "translation": "，开"
   },
   "W8KEEX": {
     "message": "{0, plural, one {# player} other {# players}}",
@@ -286,28 +286,28 @@
     "comments": [
       "The touch toolbar for a card, e.g. \"Pikachu: actions\"."
     ],
-    "translation": "{cardLabel}:操作"
+    "translation": "{cardLabel}：操作"
   },
   "cAQ-gI": {
     "message": "{cardName}, {copies, plural, one {# copy} other {# copies}}",
     "comments": [
       "{cardName} is a card shown once for all its copies."
     ],
-    "translation": "{cardName},{copies, plural, other {# 张}}"
+    "translation": "{cardName}，{copies, plural, other {# 张}}"
   },
   "xhcpdI": {
     "message": "{cardName}, {print}, {inDeck} in deck. Add one.",
     "comments": [
       "A search result: card name, set and number"
     ],
-    "translation": "{cardName},{print},牌库中有 {inDeck} 张。添加一张。"
+    "translation": "{cardName}，{print}，卡组中有 {inDeck} 张。添加一张。"
   },
   "rByt8c": {
     "message": "{cardName}, {print}. Add one.",
     "comments": [
       "A search result: card name, set and number"
     ],
-    "translation": "{cardName},{print}。添加一张。"
+    "translation": "{cardName}，{print}。添加一张。"
   },
   "60xfEp": {
     "message": "{changed, plural, one {# shortcut changed} other {# shortcuts changed}}",
@@ -315,7 +315,7 @@
   },
   "6pXqwU": {
     "message": "{classicName} decks",
-    "translation": "{classicName}牌组"
+    "translation": "{classicName}卡组"
   },
   "shahtf": {
     "message": "{compositionName} assembled preview",
@@ -326,11 +326,11 @@
     "comments": [
       "label is the zone's name, e.g. \"Red discard\"."
     ],
-    "translation": "{count, plural, other {{label},#张卡牌}}"
+    "translation": "{count, plural, other {{label}，#张卡牌}}"
   },
   "DXRXaL": {
     "message": "{count, plural, one {# ACE SPEC card (max 1).} other {# ACE SPEC cards (max 1).}}",
-    "translation": "{count, plural, other {# 张ACE SPEC卡(最多1张)。}}"
+    "translation": "{count, plural, other {# 张ACE SPEC卡（最多1张）。}}"
   },
   "ILjliG": {
     "message": "{count, plural, one {# card · legal in {legalIn}} other {# cards · legal in {legalIn}}}",
@@ -374,15 +374,15 @@
   },
   "0Sz1PW": {
     "message": "{count, plural, one {# copy of {name} (max {limit}).} other {# copies of {name} (max {limit}).}}",
-    "translation": "{count, plural, other {# 张{name}(最多{limit}张)。}}"
+    "translation": "{count, plural, other {# 张{name}（最多{limit}张）。}}"
   },
   "gSD0Y4": {
     "message": "{count, plural, one {# copy of {name} (Prism Star: max 1).} other {# copies of {name} (Prism Star: max 1).}}",
-    "translation": "{count, plural, other {# 张{name}(棱镜之星:最多1张)。}}"
+    "translation": "{count, plural, other {# 张{name}（棱镜之星：最多1张）。}}"
   },
   "eFRg1z": {
     "message": "{count, plural, one {# Pokémon ☆ card (max 1).} other {# Pokémon ☆ cards (max 1).}}",
-    "translation": "{count, plural, other {# 张宝可梦☆卡(最多1张)。}}"
+    "translation": "{count, plural, other {# 张宝可梦☆卡（最多1张）。}}"
   },
   "U1rTLU": {
     "message": "{count, plural, one {# print · legal in {legalIn}} other {# prints · legal in {legalIn}}}",
@@ -394,7 +394,7 @@
   },
   "AC9Ruq": {
     "message": "{count, plural, one {# Radiant card (max 1).} other {# Radiant cards (max 1).}}",
-    "translation": "{count, plural, other {# 张光辉卡(最多1张)。}}"
+    "translation": "{count, plural, other {# 张光辉卡（最多1张）。}}"
   },
   "-gAzkm": {
     "message": "{count, plural, one {Discard hand and draw # card} other {Discard hand and draw # cards}}",
@@ -433,18 +433,18 @@
     "comments": [
       "A deck row: copies × card name (set and number)"
     ],
-    "translation": "{count} × {cardName}({print})。详情"
+    "translation": "{count} × {cardName}（{print}）。详情"
   },
   "QugGSf": {
     "message": "{count} in deck",
-    "translation": "牌库中有{count}张"
+    "translation": "卡组中有{count}张"
   },
   "7prUK_": {
     "message": "{deck}, {place}, {playerName}: try it",
     "comments": [
       "A player's list in a tournament's standings: the deck, the placing, the player"
     ],
-    "translation": "{deck},{place},{playerName}:试玩"
+    "translation": "{deck}，{place}，{playerName}：试玩"
   },
   "Z_tSV_": {
     "message": "{deckName} actions",
@@ -455,11 +455,11 @@
     "comments": [
       "A tournament list to load: the deck, its placing, the event size, the player"
     ],
-    "translation": "{deckName},{players} 人中第 {place} 名,{playerName}:试玩"
+    "translation": "{deckName}，{players} 人中第 {place} 名，{playerName}：试玩"
   },
   "lZWlfm": {
     "message": "{deckName}: put on {seat}",
-    "translation": "{deckName}:放到{seat}"
+    "translation": "{deckName}：放到{seat}"
   },
   "j1pN5w": {
     "message": "{errorCount, plural, one {# thing to fix for {format}} other {# things to fix for {format}}}",
@@ -492,14 +492,14 @@
     "comments": [
       "A button with a count of unread lines, e.g. \"Log, 3 new\"."
     ],
-    "translation": "{label},{badge}条新消息"
+    "translation": "{label}，{badge}条新消息"
   },
   "VOuY7n": {
     "message": "{label}: {spoken}. Change",
     "comments": [
       "A button naming a shortcut and its keys; pressing it changes the keys."
     ],
-    "translation": "{label}:{spoken}。更改"
+    "translation": "{label}：{spoken}。更改"
   },
   "TW6vJM": {
     "message": "{markerName} marker",
@@ -517,7 +517,7 @@
     "comments": [
       "The name of a duplicated deck"
     ],
-    "translation": "{name}(副本)"
+    "translation": "{name}（副本）"
   },
   "ihQ5_R": {
     "message": "{name} active",
@@ -552,7 +552,7 @@
     "comments": [
       "Log line: a player made a card count as another kind of card. {name} is a player's name, {card} a card's name; {category} is the kind it now counts as."
     ],
-    "translation": "{name}将{card}变为{category, select, energy {能量} pokemon {宝可梦} trainer {道具} other {未知类型}}"
+    "translation": "{name}将{card}变为{category, select, energy {能量} pokemon {宝可梦} trainer {宝可梦道具} other {未知类型}}"
   },
   "xjFQ8_": {
     "message": "{name} deck",
@@ -594,14 +594,14 @@
     "comments": [
       "Log line: a player set up for a game (seven cards in hand, Prize cards laid out). {name} is a player's name."
     ],
-    "translation": "{name}抽取了起始手牌并设置了奖赏卡"
+    "translation": "{name}抽取了起始手牌并放置了奖赏卡"
   },
   "01JuD1": {
     "message": "{name} flipped {result, select, heads {heads} other {tails}}",
     "comments": [
       "Log line: a coin flip's result. {name} is a player's name; {result} is heads or tails."
     ],
-    "translation": "{name}投出了{result, select, heads {正面} other {反面}}"
+    "translation": "{name}抛硬币结果为{result, select, heads {正面} other {反面}}"
   },
   "Bqr3lz": {
     "message": "{name} hand",
@@ -622,7 +622,7 @@
     "comments": [
       "Log line: a player pressed Set up without a deck. {name} is a player's name."
     ],
-    "translation": "{name}尚未载入牌组"
+    "translation": "{name}尚未载入卡组"
   },
   "hVtSco": {
     "message": "{name} is looking through {name}'s deck",
@@ -654,7 +654,7 @@
     "comments": [
       "Log line. {name} is a player's name."
     ],
-    "translation": "{name}载入了牌组"
+    "translation": "{name}载入了卡组"
   },
   "lcx9nx": {
     "message": "{name} looked at bottom {count, plural, one {# card(s)} other {# card(s)}} of deck",
@@ -693,7 +693,7 @@
     "comments": [
       "Log line: a player ended their turn without attacking. {name} is a player's name."
     ],
-    "translation": "{name}跳过了"
+    "translation": "{name}结束了回合"
   },
   "rzpxoR": {
     "message": "{name} prizes",
@@ -714,7 +714,7 @@
     "comments": [
       "Log line: a player cleared their side of the table. {name} is a player's name."
     ],
-    "translation": "{name}重置了场地"
+    "translation": "{name}重置了自己的一侧"
   },
   "yq8DHI": {
     "message": "{name} reset their {marker}",
@@ -728,7 +728,7 @@
     "comments": [
       "Log line. {name} is a player's name; {source} is the zone they shuffled, almost always their deck."
     ],
-    "translation": "{name}洗切了{source, select, hand {手牌} prizes {奖赏卡} discard {弃牌区} board {场地} stadium {竞技场} active {战斗场} bench {备战区} lostZone {放逐区} attachmentResolution {附着的卡牌} other {牌库}}"
+    "translation": "{name}重洗了{source, select, hand {手牌} prizes {奖赏卡} discard {弃牌区} board {场地} stadium {竞技场} active {战斗场} bench {备战区} lostZone {放逐区} attachmentResolution {附着的卡牌} other {牌库}}"
   },
   "x8Eb2i": {
     "message": "{name} started turn {turn}",
@@ -763,11 +763,11 @@
     "comments": [
       "name is GX or VSTAR, the once-per-game marker."
     ],
-    "translation": "{name}已使用:点击撤销"
+    "translation": "{name}已使用：点击撤销"
   },
   "2mmBQD": {
     "message": "{name}: try it",
-    "translation": "{name}:试一试"
+    "translation": "{name}：试玩"
   },
   "cgmx3-": {
     "message": "{name}'s turn",
@@ -778,7 +778,7 @@
   },
   "cgJmF-": {
     "message": "{over, plural, one {# card too many ({count}/{required}).} other {# cards too many ({count}/{required}).}}",
-    "translation": "{over, plural, one {多了 # 张牌({count}/{required})。} other {多了 # 张牌({count}/{required})。}}"
+    "translation": "{over, plural, one {多了 # 张牌（{count}/{required}）。} other {多了 # 张牌（{count}/{required}）。}}"
   },
   "foaSz6": {
     "message": "{place, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}",
@@ -829,7 +829,7 @@
   },
   "KQUX02": {
     "message": "{printCount, plural, one {# print · the deck has another one} other {# prints · the deck has another one}}",
-    "translation": "{printCount, plural, one {# 个版本 · 牌组中还有一张} other {# 个版本 · 牌组中还有一张}}"
+    "translation": "{printCount, plural, one {# 个版本 · 卡组中还有一张} other {# 个版本 · 卡组中还有一张}}"
   },
   "P_bQEX": {
     "message": "{printCount, plural, one {# print} other {# prints}}",
@@ -837,7 +837,7 @@
   },
   "_HI08P": {
     "message": "{printName}, {inDeck} in deck",
-    "translation": "{printName},牌组中有{inDeck}张"
+    "translation": "{printName}，卡组中有{inDeck}张"
   },
   "huIm_e": {
     "message": "{prints, plural, one {# print} other {# prints}}",
@@ -845,14 +845,14 @@
   },
   "A8TiPy": {
     "message": "{short, plural, one {# more card needed ({count}/{required}).} other {# more cards needed ({count}/{required}).}}",
-    "translation": "{short, plural, one {还差 # 张牌({count}/{required})。} other {还差 # 张牌({count}/{required})。}}"
+    "translation": "{short, plural, one {还差 # 张牌（{count}/{required}）。} other {还差 # 张牌（{count}/{required}）。}}"
   },
   "GesfyX": {
     "message": "{shown} and {more} more",
     "comments": [
       "shown is a list of card names; more counts the rest"
     ],
-    "translation": "{shown}等另外{more}张"
+    "translation": "{shown}及另外{more}张"
   },
   "nzGgxO": {
     "message": "{shownPieces} of {totalPieces, plural, one {# piece} other {# pieces}}",
@@ -866,7 +866,7 @@
     "comments": [
       "A seat's tray on the deck screen: the seat, its deck, its size"
     ],
-    "translation": "{slotSeat}:{name},{total, plural, other {# 张卡}}"
+    "translation": "{slotSeat}：{name}，{total, plural, other {# 张卡}}"
   },
   "w6530e": {
     "message": "{speaker}: {text}",
@@ -880,25 +880,25 @@
     "comments": [
       "{spoken} is the shortcut's keys, such as \"Alt+1\"."
     ],
-    "translation": "{spoken},已固定"
+    "translation": "{spoken}，已固定"
   },
   "LsSEPB": {
     "message": "{target} took back their last move",
     "comments": [
       "Log line: a player undid their own last move. {target} is the player's name."
     ],
-    "translation": "{target}撤回了上一步操作"
+    "translation": "{target}撤销了上一步操作"
   },
   "mFeDcR": {
     "message": "{targetSeat}: {seatLabel}, {seatTotal, plural, one {# card} other {# cards}}",
     "comments": [
       "Read out on a seat change: the seat, its deck, its size"
     ],
-    "translation": "{targetSeat}:{seatLabel},{seatTotal, plural, other {#张卡牌}}"
+    "translation": "{targetSeat}：{seatLabel}，{seatTotal, plural, other {#张卡牌}}"
   },
   "PX7pvD": {
     "message": "{title}: done",
-    "translation": "{title}:已完成"
+    "translation": "{title}：已完成"
   },
   "jBGEib": {
     "message": "{top8s, plural, one {# top 8} other {# top 8s}} · {lists, plural, one {# list} other {# lists}}",
@@ -909,7 +909,7 @@
   },
   "bTZ1TS": {
     "message": "{topName} deck",
-    "translation": "{topName}牌库"
+    "translation": "{topName}卡组"
   },
   "kJJvy7": {
     "message": "{total, plural, one {# card · saved} other {# cards · saved}}",
@@ -991,19 +991,19 @@
     "comments": [
       "{0} is the Deck button's label, which opens the deck screen"
     ],
-    "translation": "<0>{0}</0>:为双方构筑、导入或选择牌组。"
+    "translation": "<0>{0}</0>：为双方构筑、导入或选择卡组。"
   },
   "F7xH8_": {
     "message": "<0>{0}</0>: every move, and the chat.",
-    "translation": "<0>{0}</0>:所有操作和聊天记录。"
+    "translation": "<0>{0}</0>：所有操作和聊天记录。"
   },
   "l7W_Ze": {
     "message": "<0>{0}</0>: send a friend a link to your table.",
-    "translation": "<0>{0}</0>:把牌桌链接发给朋友。"
+    "translation": "<0>{0}</0>：把牌桌链接发给朋友。"
   },
   "NaneTg": {
     "message": "<0>{0}</0>: the table's look, the theme and the language.",
-    "translation": "<0>{0}</0>:牌桌外观、主题和语言。"
+    "translation": "<0>{0}</0>：牌桌外观、主题和语言。"
   },
   "C0rMdv": {
     "message": "− Damage",
@@ -1043,11 +1043,11 @@
   },
   "eYUTBA": {
     "message": "3 pieces in a row",
-    "translation": "连续3个部件"
+    "translation": "3 张横排"
   },
   "9bANS5": {
     "message": "A .txt or .csv deck file",
-    "translation": ".txt 或 .csv 牌组文件"
+    "translation": ".txt 或 .csv 卡组文件"
   },
   "gY2kkN": {
     "message": "A card in it has no picture.",
@@ -1063,7 +1063,7 @@
   },
   "sDYhDt": {
     "message": "A deck needs a name.",
-    "translation": "牌库需要名称。"
+    "translation": "卡组需要名称。"
   },
   "qLI-h5": {
     "message": "A whole number from {0} to {1}",
@@ -1147,11 +1147,11 @@
   },
   "6ZbKYu": {
     "message": "Add another stadium piece",
-    "translation": "再添加一块竞技场"
+    "translation": "再添加一个竞技场部件"
   },
   "vz22MV": {
     "message": "Add damage",
-    "translation": "添加伤害"
+    "translation": "增加伤害"
   },
   "mOz7te": {
     "message": "Add damage…",
@@ -1175,7 +1175,7 @@
   },
   "ZVI875": {
     "message": "Add to deck",
-    "translation": "加入牌组"
+    "translation": "加入卡组"
   },
   "V-b1Vx": {
     "message": "Add to the table",
@@ -1214,7 +1214,7 @@
   },
   "Sb4b2A": {
     "message": "Allow board flip <0>(both players)</0>",
-    "translation": "允许翻转牌桌<0>(双方玩家)</0>"
+    "translation": "允许翻转牌桌<0>（双方玩家）</0>"
   },
   "Fcj7e-": {
     "message": "Alt",
@@ -1227,7 +1227,7 @@
   },
   "Uu-7-8": {
     "message": "An <0>open-source</0> Pokémon TCG table.",
-    "translation": "一个<0>开源</0>的宝可梦卡牌桌面。"
+    "translation": "一个<0>开源</0>的宝可梦卡牌对战桌。"
   },
   "5ZW9xa": {
     "message": "An attack payable with two Energy",
@@ -1238,14 +1238,14 @@
     "comments": [
       "Keep 'blank' and 'theme' in English: they are what the player types"
     ],
-    "translation": "图片网址,或 'blank' 或 'theme'。"
+    "translation": "图片网址，或 'blank' 或 'theme'。"
   },
   "hQE7TV": {
     "message": "An image URL, or 'default'.",
     "comments": [
       "Keep 'default' in English: it is what the player types"
     ],
-    "translation": "图片网址,或 'default'。"
+    "translation": "图片网址，或 'default'。"
   },
   "ctNH7H": {
     "message": "Ancient",
@@ -1289,7 +1289,7 @@
   },
   "Lx0XC_": {
     "message": "Are you sure you want to leave? Any unsaved game data will be lost.",
-    "translation": "确定要离开吗?所有未保存的对战数据都将丢失。"
+    "translation": "确定要离开吗？所有未保存的对战数据都将丢失。"
   },
   "y_Uvam": {
     "message": "Around the table",
@@ -1354,7 +1354,7 @@
   "USi6Js": {
     "message": "Baby",
     "context": "Pokémon stage",
-    "translation": "幼儿"
+    "translation": "宝宝宝可梦"
   },
   "iH8pgl": {
     "message": "Back",
@@ -1389,7 +1389,7 @@
   },
   "JT4RmD": {
     "message": "Back to the decks",
-    "translation": "返回牌库列表"
+    "translation": "返回卡组列表"
   },
   "dOqLYu": {
     "message": "Back to the table",
@@ -1397,12 +1397,12 @@
   },
   "1JYYQn": {
     "message": "Back to your decks",
-    "translation": "返回我的牌组"
+    "translation": "返回我的卡组"
   },
   "Why0fp": {
     "message": "Backspace",
     "context": "keyboard key",
-    "translation": "退格键"
+    "translation": "Backspace"
   },
   "hrit5V": {
     "message": "Basic",
@@ -1510,7 +1510,7 @@
   },
   "FE2YBZ": {
     "message": "Browser language ({browser})",
-    "translation": "浏览器语言({browser})"
+    "translation": "浏览器语言（{browser}）"
   },
   "ChdG5B": {
     "message": "Burgundy",
@@ -1526,7 +1526,7 @@
   },
   "EhsQ9V": {
     "message": "Busy for a moment — try again shortly",
-    "translation": "系统繁忙,请稍后再试"
+    "translation": "系统繁忙，请稍后再试"
   },
   "2lorx9": {
     "message": "Can't be changed",
@@ -1543,7 +1543,7 @@
   "4GkLKV": {
     "message": "Caps",
     "context": "keyboard key (Caps Lock)",
-    "translation": "大写锁定"
+    "translation": "Caps"
   },
   "mT4wvO": {
     "message": "card",
@@ -1559,7 +1559,7 @@
   },
   "BLW1aU": {
     "message": "Card assembled preview",
-    "translation": "卡牌合成预览"
+    "translation": "卡牌组合预览"
   },
   "M3FSd1": {
     "message": "Card back for {slotSeat}",
@@ -1588,7 +1588,7 @@
   },
   "z0RA9w": {
     "message": "Card size {percent}%, back to 100%",
-    "translation": "卡牌大小 {percent}%,恢复为 100%"
+    "translation": "卡牌大小 {percent}%，恢复为 100%"
   },
   "kLlRKH": {
     "message": "Card stack preview",
@@ -1616,7 +1616,7 @@
   },
   "IuDYMd": {
     "message": "Cards in deck",
-    "translation": "牌库中的卡牌"
+    "translation": "卡组中的卡牌"
   },
   "sIpTuZ": {
     "message": "Change background",
@@ -1644,7 +1644,7 @@
   },
   "OtiTk4": {
     "message": "Change type to Tool",
-    "translation": "将类型改为道具"
+    "translation": "将类型改为宝可梦道具"
   },
   "mWj-hV": {
     "message": "Change type...",
@@ -1652,7 +1652,7 @@
   },
   "_2MVxl": {
     "message": "Changed your mind? <0>{0}</0> takes back your last move.",
-    "translation": "改主意了?<0>{0}</0>可撤回你的上一步操作。"
+    "translation": "改主意了？<0>{0}</0>可撤销你的上一步操作。"
   },
   "iY-KUI": {
     "message": "Charcoal",
@@ -1693,19 +1693,19 @@
   },
   "PetgPp": {
     "message": "Choose a deck first",
-    "translation": "请先选择牌组"
+    "translation": "请先选择卡组"
   },
   "Trhamk": {
     "message": "Choose a deck to play",
-    "translation": "选择要使用的牌组"
+    "translation": "选择要使用的卡组"
   },
   "TvEJEL": {
     "message": "Choose the deck for {slotSeat}",
-    "translation": "选择 {slotSeat} 的牌组"
+    "translation": "选择 {slotSeat} 的卡组"
   },
   "-sQCd4": {
     "message": "Choose the deck for {slotSeat} (you)",
-    "translation": "选择 {slotSeat}(你)的牌组"
+    "translation": "选择 {slotSeat}（你）的卡组"
   },
   "5rfWim": {
     "message": "Classics",
@@ -1739,7 +1739,7 @@
   },
   "F4fFCC": {
     "message": "Click <0>{0}</0> in your hand, then press <1>{key}</1> to bench it.",
-    "translation": "点击手牌中的<0>{0}</0>,然后按<1>{key}</1>放到备战区。"
+    "translation": "点击手牌中的<0>{0}</0>，然后按<1>{key}</1>放到备战区。"
   },
   "MO489z": {
     "message": "Click a shortcut to change it.",
@@ -1850,11 +1850,11 @@
   },
   "zxrRZX": {
     "message": "Copy list (Pokémon TCG Live)",
-    "translation": "复制列表(Pokémon TCG Live)"
+    "translation": "复制列表（Pokémon TCG Live）"
   },
   "7WsLH4": {
     "message": "Couldn't check that. Try again.",
-    "translation": "无法检查,请重试。"
+    "translation": "无法检查，请重试。"
   },
   "gklFA4": {
     "message": "Couldn't copy the invitation",
@@ -1862,15 +1862,15 @@
   },
   "sA7lnV": {
     "message": "Couldn't copy the invitation. Try again.",
-    "translation": "无法复制邀请,请重试。"
+    "translation": "无法复制邀请，请重试。"
   },
   "O3p0SF": {
     "message": "Couldn't generate a room. Try again.",
-    "translation": "无法生成房间,请重试。"
+    "translation": "无法生成房间，请重试。"
   },
   "Glz9_Y": {
     "message": "Couldn't join the room. Try again.",
-    "translation": "无法加入房间,请重试。"
+    "translation": "无法加入房间，请重试。"
   },
   "0htzp9": {
     "message": "Couldn't load that list",
@@ -1890,7 +1890,7 @@
   },
   "p0WUR8": {
     "message": "Couldn't pick a deck",
-    "translation": "无法选择牌组"
+    "translation": "无法选择卡组"
   },
   "iaCnbQ": {
     "message": "Couldn't read that list",
@@ -1910,7 +1910,7 @@
   },
   "eP7qeF": {
     "message": "Couldn't start the tutorial. Try again.",
-    "translation": "无法开始教程,请重试。"
+    "translation": "无法开始教程，请重试。"
   },
   "nzVItu": {
     "message": "Couldn't use the clipboard. Allow access and try again.",
@@ -1943,7 +1943,7 @@
   },
   "rlm3op": {
     "message": "Custom flair on Discord & open reign on self-nicknames.",
-    "translation": "在 Discord 上获得专属标识,并可自由设置自己的昵称。"
+    "translation": "在 Discord 上获得专属标识，并可自由设置自己的昵称。"
   },
   "UxNmvS": {
     "message": "Damage and conditions",
@@ -1987,12 +1987,12 @@
   "ugPI4N": {
     "message": "Deck",
     "context": "the deck being built",
-    "translation": "牌组"
+    "translation": "卡组"
   },
   "WFH9Gl": {
     "message": "Deck",
     "context": "the deck screen",
-    "translation": "牌组"
+    "translation": "卡组"
   },
   "AC09cP": {
     "message": "Deck",
@@ -2011,19 +2011,19 @@
   },
   "sUVFl2": {
     "message": "Deck cover",
-    "translation": "牌库封面"
+    "translation": "卡组封面"
   },
   "kemNRk": {
     "message": "Deck for each seat",
-    "translation": "每个座位的牌库"
+    "translation": "每个座位的卡组"
   },
   "pX2_XZ": {
     "message": "Deck name",
-    "translation": "牌库名称"
+    "translation": "卡组名称"
   },
   "pZNzvd": {
     "message": "Deck search is offline",
-    "translation": "牌组搜索已离线"
+    "translation": "卡组搜索已离线"
   },
   "iKEGvL": {
     "message": "Deck top",
@@ -2032,20 +2032,20 @@
   },
   "9NwCxt": {
     "message": "Decklist copied",
-    "translation": "已复制牌表"
+    "translation": "已复制卡表"
   },
   "Odf26e": {
     "message": "Decks",
     "context": "go back to the saved decks",
-    "translation": "牌库"
+    "translation": "卡组"
   },
   "xLeOjM": {
     "message": "Decks you import or build are kept here",
-    "translation": "你导入或构建的牌组会保存在这里"
+    "translation": "你导入或构筑的卡组会保存在这里"
   },
   "Ocbppt": {
     "message": "Decks, playing online, the log and Settings",
-    "translation": "牌组、在线对战、日志和设置"
+    "translation": "卡组、在线对战、日志和设置"
   },
   "gblLhJ": {
     "message": "Delete",
@@ -2063,7 +2063,7 @@
   },
   "j8-EnI": {
     "message": "Delete deck",
-    "translation": "删除牌库"
+    "translation": "删除卡组"
   },
   "MlCgQy": {
     "message": "Depth",
@@ -2097,7 +2097,7 @@
   },
   "c58XOp": {
     "message": "Discard a Pokémon, take a Prize, bring up the next",
-    "translation": "弃掉宝可梦,拿取奖赏卡,换上下一只"
+    "translation": "弃掉宝可梦，拿取奖赏卡，换上下一只"
   },
   "u8xW5H": {
     "message": "Discard all",
@@ -2157,7 +2157,7 @@
   },
   "O8KL2B": {
     "message": "Download list (.txt)",
-    "translation": "下载牌表（.txt）"
+    "translation": "下载卡表（.txt）"
   },
   "hHmRRI": {
     "message": "Download log",
@@ -2173,7 +2173,7 @@
   },
   "1LVNmm": {
     "message": "Download the list instead.",
-    "translation": "改为下载牌表。"
+    "translation": "改为下载卡表。"
   },
   "IGqHX9": {
     "message": "Drag a <0>{0}</0> onto {1} to attach it.",
@@ -2204,11 +2204,11 @@
   },
   "68egXB": {
     "message": "Draw a card: drag the top of your deck into your hand, or press <0>1</0>.",
-    "translation": "抽一张牌:将牌库顶拖入手牌,或按<0>1</0>。"
+    "translation": "抽一张牌：将牌库顶拖入手牌，或按<0>1</0>。"
   },
   "2o1D75": {
     "message": "Draw a card: drag the top of your deck into your hand.",
-    "translation": "抽一张牌:将牌库顶拖入手牌。"
+    "translation": "抽一张牌：将牌库顶拖入手牌。"
   },
   "to34yF": {
     "message": "Draw card(s)",
@@ -2224,11 +2224,11 @@
   },
   "SAb30P": {
     "message": "Draw how many cards?",
-    "translation": "抽几张牌?"
+    "translation": "抽几张牌？"
   },
   "SP_Sjy": {
     "message": "Draw how many?",
-    "translation": "抽几张?"
+    "translation": "抽几张？"
   },
   "b0MOy2": {
     "message": "Draw, search and shuffle",
@@ -2252,7 +2252,7 @@
   },
   "L0dfTV": {
     "message": "Duplicate deck",
-    "translation": "复制牌库"
+    "translation": "复制卡组"
   },
   "iu7vH9": {
     "message": "e.g. CC or LL",
@@ -2287,7 +2287,7 @@
   },
   "Bd1_Eb": {
     "message": "Edit deck",
-    "translation": "编辑牌库"
+    "translation": "编辑卡组"
   },
   "1PBKgv": {
     "message": "End",
@@ -2365,7 +2365,7 @@
   },
   "vb1XQU": {
     "message": "Evolve it: drag <0>{0}</0> onto {1}.",
-    "translation": "进化:将<0>{0}</0>拖到{1}上。"
+    "translation": "进化：将<0>{0}</0>拖到{1}上。"
   },
   "GjFqb-": {
     "message": "Evolves from",
@@ -2377,7 +2377,7 @@
   },
   "TYsdkP": {
     "message": "ex or V (comma = or)",
-    "translation": "ex 或 V(逗号表示或)"
+    "translation": "ex 或 V（逗号表示或）"
   },
   "B38jBR": {
     "message": "Exact phrase in the rules text",
@@ -2407,7 +2407,7 @@
   "2lS3BM": {
     "message": "Expanded",
     "context": "deck format",
-    "translation": "开放"
+    "translation": "扩展"
   },
   "GS-Mus": {
     "message": "Export",
@@ -2415,7 +2415,7 @@
   },
   "TI8dZK": {
     "message": "Face-down card",
-    "translation": "背面朝上的卡牌"
+    "translation": "反面朝上的卡牌"
   },
   "wZe3Kp": {
     "message": "Fairy",
@@ -2434,7 +2434,7 @@
   "WtsWWf": {
     "message": "Fighting",
     "context": "Pokémon type",
-    "translation": "格斗"
+    "translation": "斗"
   },
   "cSev-j": {
     "message": "Filters",
@@ -2450,7 +2450,7 @@
   },
   "4-P8eH": {
     "message": "Find a deck",
-    "translation": "查找牌组"
+    "translation": "查找卡组"
   },
   "CHNPgf": {
     "message": "Find a shortcut",
@@ -2482,7 +2482,7 @@
   },
   "VFJLIA": {
     "message": "Find one of your decks",
-    "translation": "查找你的牌组"
+    "translation": "查找你的卡组"
   },
   "XGVxYp": {
     "message": "Finish",
@@ -2491,7 +2491,7 @@
   },
   "mDOjMG": {
     "message": "Finish (optional)",
-    "translation": "闪卡类型（可选）"
+    "translation": "表面处理（可选）"
   },
   "SN6Ocg": {
     "message": "Fire",
@@ -2500,7 +2500,7 @@
   },
   "RCEX87": {
     "message": "Fire type, Basic",
-    "translation": "火属性,基础"
+    "translation": "火属性，基础"
   },
   "gQp6L7": {
     "message": "Flat",
@@ -2519,22 +2519,22 @@
   },
   "sFwtdu": {
     "message": "Flip a coin",
-    "translation": "掷硬币"
+    "translation": "抛硬币"
   },
   "BXbpBW": {
     "message": "Flip a coin for {name}",
     "comments": [
       "name is the player the coin is flipped for."
     ],
-    "translation": "为 {name} 掷硬币"
+    "translation": "为 {name} 抛硬币"
   },
   "euYJXw": {
     "message": "Flip a coin: press your coin.",
-    "translation": "掷硬币:按你的硬币。"
+    "translation": "抛硬币：点击你的硬币。"
   },
   "9Bomz3": {
     "message": "Flip coin",
-    "translation": "掷硬币"
+    "translation": "抛硬币"
   },
   "mnc6b3": {
     "message": "Flip the table",
@@ -2542,7 +2542,7 @@
   },
   "CK2j9j": {
     "message": "Flip their coin",
-    "translation": "为对方掷硬币"
+    "translation": "为对方抛硬币"
   },
   "zoSOoE": {
     "message": "Foil coverage",
@@ -2553,7 +2553,7 @@
     "comments": [
       "TWITTER_HANDLE is the developer's X (Twitter) handle, @xxmichaellong"
     ],
-    "translation": "想了解动态和后续更新,请在 X 上关注我:<0>{TWITTER_HANDLE}</0>"
+    "translation": "想了解动态和后续更新，请在 X 上关注我：<0>{TWITTER_HANDLE}</0>"
   },
   "pniSGu": {
     "message": "Format",
@@ -2582,7 +2582,7 @@
   "ULwemj": {
     "message": "Fusion Strike",
     "context": "Pokémon card mechanic",
-    "translation": "融合战斗"
+    "translation": "融合"
   },
   "IUNEkE": {
     "message": "Future",
@@ -2595,7 +2595,7 @@
   },
   "U5CDNq": {
     "message": "Game board",
-    "translation": "游戏面板"
+    "translation": "对战牌桌"
   },
   "h8FbrQ": {
     "message": "Game resumed",
@@ -2625,7 +2625,7 @@
   },
   "4RM73X": {
     "message": "Get a sponsor tag on your GitHub profile (if sponsoring via GitHub, not applicable for sponsors through PayPal. Currently in the process of getting my GH sponsor page approved 😛).",
-    "translation": "在你的 GitHub 个人资料上获得赞助者标签(仅适用于通过 GitHub 赞助,通过 PayPal 赞助不适用。目前正在申请我的 GitHub 赞助页面审核 😛)。"
+    "translation": "在你的 GitHub 个人资料上获得赞助者标签（仅适用于通过 GitHub 赞助，通过 PayPal 赞助不适用。目前正在申请我的 GitHub 赞助页面审核 😛）。"
   },
   "kbTnWg": {
     "message": "Github Sponsors Link",
@@ -2678,7 +2678,7 @@
   "MMu3F-": {
     "message": "Hand to bottom",
     "context": "shortcut key caption",
-    "translation": "手牌放到底部"
+    "translation": "手牌放牌库底"
   },
   "n04_a0": {
     "message": "Hand to deck",
@@ -2687,7 +2687,7 @@
   },
   "M35hjm": {
     "message": "Has an Ability, no Weakness",
-    "translation": "有特性,无弱点"
+    "translation": "有特性，无弱点"
   },
   "BvzegF": {
     "message": "Heads",
@@ -2699,7 +2699,7 @@
     "comments": [
       "The developer's personal note on the Sponsors & Donations page"
     ],
-    "translation": "大家好!我是 Michael/Xiao Xiao Long,来自加拿大圭尔夫,今年 21 岁,2023 年秋天开始学习编程。我玩宝可梦集换式卡牌游戏已经超过 8 年,并花了最近 3 个月开发 PTCG-sim,这是一个免费的工具,供大家测试和游玩我们喜爱的卡牌游戏。"
+    "translation": "大家好！我是 Michael/Xiao Xiao Long，来自加拿大圭尔夫，今年 21 岁，2023 年秋天开始学习编程。我玩宝可梦集换式卡牌游戏已经超过 8 年，并花了最近 3 个月开发 PTCG-sim，这是一个免费的工具，供大家测试和游玩我们喜爱的卡牌游戏。"
   },
   "DA8dCZ": {
     "message": "Hide",
@@ -2788,18 +2788,18 @@
     "comments": [
       "The developer's personal note on the Sponsors & Donations page"
     ],
-    "translation": "我在圣诞节公开发布了这个模拟器,它已经发展出了一个出色的玩家和开发者社区。还有很多事情要做,我需要尽可能多的帮助!"
+    "translation": "我在圣诞节公开发布了这个模拟器，它已经发展出了一个出色的玩家和开发者社区。还有很多事情要做，我需要尽可能多的帮助！"
   },
   "hezTba": {
     "message": "I'll sign, kiss, and mail you a signed bulk card of your choice (if I have it lol).",
-    "translation": "我会亲笔签名、亲吻并邮寄给你一张你选择的签名散卡(如果我有的话哈哈)。"
+    "translation": "我会亲笔签名、亲吻并邮寄给你一张你选择的签名散卡（如果我有的话哈哈）。"
   },
   "PWXHWI": {
     "message": "Illus. {illustrator}",
     "comments": [
       "The card's illustrator, abbreviated"
     ],
-    "translation": "画师:{illustrator}"
+    "translation": "画师：{illustrator}"
   },
   "FWKUnc": {
     "message": "Illustrator",
@@ -2833,14 +2833,14 @@
   },
   "aWU0gR": {
     "message": "Imported deck",
-    "translation": "已导入的牌组"
+    "translation": "已导入的卡组"
   },
   "wUH8Wz": {
     "message": "in deck",
     "comments": [
       "After the number of copies in the deck"
     ],
-    "translation": "在牌库中"
+    "translation": "在卡组中"
   },
   "EqLwOt": {
     "message": "In use",
@@ -2867,7 +2867,7 @@
   },
   "0pN9y3": {
     "message": "It stays open for another draw. Press <0>Esc</0> twice to close it.",
-    "translation": "它会保持打开,以便再抽一次。按两次 <0>Esc</0> 关闭。"
+    "translation": "它会保持打开，以便再抽一次。按两次 <0>Esc</0> 关闭。"
   },
   "gC8g3J": {
     "message": "It stays open for another draw. Tap outside to close it.",
@@ -2893,7 +2893,7 @@
   },
   "G7O46F": {
     "message": "Join as spectator",
-    "translation": "以观众身份加入"
+    "translation": "以观战者身份加入"
   },
   "t5uRiA": {
     "message": "Join room",
@@ -2905,7 +2905,7 @@
   },
   "N2lSEn": {
     "message": "Joins matching pieces",
-    "translation": "合并相同的物件"
+    "translation": "合并相同的部件"
   },
   "80Qsxy": {
     "message": "Keep",
@@ -2931,15 +2931,15 @@
   },
   "afjG8F": {
     "message": "Keys and commands",
-    "translation": "按键和命令"
+    "translation": "按键和指令"
   },
   "_rugva": {
     "message": "Knock Out",
-    "translation": "击倒"
+    "translation": "昏厥"
   },
   "69MOGQ": {
     "message": "Knock Out their <0>{0}</0>: drag it onto their discard pile. Its Energy goes with it.",
-    "translation": "击倒对手的<0>{0}</0>:将其拖到对手的弃牌区。其能量会一并弃掉。"
+    "translation": "使对手的<0>{0}</0>昏厥：将其拖到对手的弃牌区。其能量也会一并放入弃牌区。"
   },
   "vXIe7J": {
     "message": "Language",
@@ -2980,7 +2980,7 @@
   },
   "clcR-H": {
     "message": "Leave the room?",
-    "translation": "离开房间?"
+    "translation": "离开房间？"
   },
   "t4L8cu": {
     "message": "Leave tutorial",
@@ -2997,11 +2997,11 @@
   },
   "8NF6XU": {
     "message": "Legality not checked for cards added by hand: {cards}.",
-    "translation": "手动添加的卡牌未检查合法性:{cards}。"
+    "translation": "手动添加的卡牌未检查合法性：{cards}。"
   },
   "xXagjO": {
     "message": "LEGEND · 2 halves",
-    "translation": "LEGEND · 2 块"
+    "translation": "LEGEND · 2 张"
   },
   "YVrOwc": {
     "message": "Level-Up",
@@ -3051,7 +3051,7 @@
   },
   "k0WwcP": {
     "message": "Lists for {0}",
-    "translation": "{0}的牌组列表"
+    "translation": "{0}的卡组列表"
   },
   "Ysygva": {
     "message": "Load",
@@ -3063,15 +3063,15 @@
     "comments": [
       "{setUp} is the Set up button's label"
     ],
-    "translation": "载入<0>牌组</0>,然后按<1>{setUp}</1>。"
+    "translation": "载入<0>卡组</0>，然后按<1>{setUp}</1>。"
   },
   "Ie3cc1": {
     "message": "Load a deck",
-    "translation": "载入牌组"
+    "translation": "载入卡组"
   },
   "GLOf7w": {
     "message": "Load the other side's deck",
-    "translation": "载入对方的牌组"
+    "translation": "载入对方的卡组"
   },
   "g7taAS": {
     "message": "Loading cards…",
@@ -3079,7 +3079,7 @@
   },
   "f55wdH": {
     "message": "Loading decks…",
-    "translation": "正在载入牌组…"
+    "translation": "正在载入卡组…"
   },
   "l2O65x": {
     "message": "Loading events…",
@@ -3094,18 +3094,18 @@
     "comments": [
       "The Log: the list of everything that happens at the table, and the chat."
     ],
-    "translation": "记录"
+    "translation": "日志"
   },
   "jVnAkZ": {
     "message": "Log options",
-    "translation": "记录选项"
+    "translation": "日志选项"
   },
   "yq1_OU": {
     "message": "Log, {unread, plural, one {# new} other {# new}}",
     "comments": [
       "The Log button's name while it has lines not yet read. {unread} is how many."
     ],
-    "translation": "记录,{unread, plural, other {# 条新消息}}"
+    "translation": "日志，{unread, plural, other {# 条新消息}}"
   },
   "f7XZ4W": {
     "message": "Look",
@@ -3130,7 +3130,7 @@
   },
   "I3be0u": {
     "message": "Look at or cover (only you)",
-    "translation": "查看或盖住(仅自己可见)"
+    "translation": "查看或遮住（仅自己可见）"
   },
   "nZyxDJ": {
     "message": "Look at or cover their hand",
@@ -3142,7 +3142,7 @@
   },
   "bQF9w4": {
     "message": "Look at or cover your Prizes",
-    "translation": "查看或遮盖你的奖赏卡"
+    "translation": "查看或遮住你的奖赏卡"
   },
   "I7Daes": {
     "message": "Look at the bottom cards",
@@ -3162,11 +3162,11 @@
   },
   "ktAl1J": {
     "message": "Look/cover hand",
-    "translation": "查看/盖住手牌"
+    "translation": "查看/遮住手牌"
   },
   "TYI_fo": {
     "message": "Look/cover prizes",
-    "translation": "查看/盖住奖赏卡"
+    "translation": "查看/遮住奖赏卡"
   },
   "pKU2VG": {
     "message": "Looking at cards",
@@ -3174,7 +3174,7 @@
   },
   "cGgbAH": {
     "message": "Lost the room during the replay.",
-    "translation": "回放期间丢失了房间。"
+    "translation": "回放期间与房间断开了连接。"
   },
   "JgsnP-": {
     "message": "Lost Zone",
@@ -3216,14 +3216,14 @@
   },
   "cnyUyK": {
     "message": "Make cover",
-    "translation": "制作卡背"
+    "translation": "设为封面"
   },
   "brtcFm": {
     "message": "Mark {mark}",
     "comments": [
       "A card's regulation mark"
     ],
-    "translation": "标记 {mark}"
+    "translation": "赛制标记 {mark}"
   },
   "BCwdvf": {
     "message": "Mark {name} used",
@@ -3249,7 +3249,7 @@
   },
   "42K-4o": {
     "message": "Match finish",
-    "translation": "对战结束"
+    "translation": "与表面处理一致"
   },
   "5EeU5m": {
     "message": "Matte",
@@ -3258,12 +3258,12 @@
   "xeC--l": {
     "message": "Mega",
     "context": "Pokémon card mechanic",
-    "translation": "Mega"
+    "translation": "超级进化"
   },
   "rEDzOC": {
     "message": "Mega",
     "context": "Pokémon stage",
-    "translation": "Mega"
+    "translation": "超级进化"
   },
   "co2yxV": {
     "message": "Menu",
@@ -3396,11 +3396,11 @@
   },
   "jiY-22": {
     "message": "My deck",
-    "translation": "我的牌库"
+    "translation": "我的卡组"
   },
   "MMXWT4": {
     "message": "My eternal thanks!!!!!",
-    "translation": "万分感谢!!!!!"
+    "translation": "万分感谢！！！！！"
   },
   "KJeM1I": {
     "message": "My half {percent}% of the table",
@@ -3441,7 +3441,7 @@
   },
   "W_gspM": {
     "message": "New deck",
-    "translation": "新建牌库"
+    "translation": "新建卡组"
   },
   "mujEVU": {
     "message": "New table",
@@ -3467,7 +3467,7 @@
   },
   "ww0kXg": {
     "message": "Next replay action",
-    "translation": "下一个回放动作"
+    "translation": "下一步回放操作"
   },
   "AmUNJC": {
     "message": "No",
@@ -3476,7 +3476,7 @@
   },
   "we3XEV": {
     "message": "No actions available",
-    "translation": "没有可用的动作"
+    "translation": "没有可用的操作"
   },
   "hwpgik": {
     "message": "No actions match",
@@ -3484,7 +3484,7 @@
   },
   "iKrJ1Q": {
     "message": "No Basic Pokémon in your hand: that is a mulligan. Choose <0>{0}</0> under {1}.",
-    "translation": "手牌中没有基础宝可梦:需要重抽。请在{1}下选择<0>{0}</0>。"
+    "translation": "手牌中没有基础宝可梦：需要重抽。请在{1}下选择<0>{0}</0>。"
   },
   "6n5psS": {
     "message": "No card lines found. Try lines like \"4 Iono PAL 185\".",
@@ -3515,18 +3515,18 @@
   },
   "-Qx8U8": {
     "message": "No deck",
-    "translation": "无牌组"
+    "translation": "无卡组"
   },
   "LDI00D": {
     "message": "No deck yet",
-    "translation": "还没有牌组"
+    "translation": "还没有卡组"
   },
   "ATYqaZ": {
     "message": "No decks match “{query}”",
     "comments": [
       "A deck search with no results; query is what was typed"
     ],
-    "translation": "没有符合“{query}”的牌组"
+    "translation": "没有符合“{query}”的卡组"
   },
   "JOqCxp": {
     "message": "No events match “{query}”",
@@ -3541,7 +3541,7 @@
   },
   "SkSmET": {
     "message": "No foil",
-    "translation": "无闪卡"
+    "translation": "无闪箔"
   },
   "2fhoKU": {
     "message": "No image",
@@ -3549,11 +3549,11 @@
   },
   "nivaRq": {
     "message": "No list",
-    "translation": "无牌组列表"
+    "translation": "无卡组列表"
   },
   "hXMFoN": {
     "message": "No lists",
-    "translation": "无牌组列表"
+    "translation": "无卡组列表"
   },
   "ebeFtm": {
     "message": "No shortcut matches “{search}”.",
@@ -3583,11 +3583,11 @@
   },
   "aGy2Td": {
     "message": "not ex (minus = not)",
-    "translation": "非ex(减号表示排除)"
+    "translation": "非ex（减号表示排除）"
   },
   "yc1k4Q": {
     "message": "Not legal in this format: {cards}.",
-    "translation": "此规则下不合法:{cards}。"
+    "translation": "此赛制下不合法：{cards}。"
   },
   "EQyjoB": {
     "message": "Not ready to play",
@@ -3612,7 +3612,7 @@
   },
   "6rbhdt": {
     "message": "Not your move",
-    "translation": "还没轮到你"
+    "translation": "你不能移动这张卡"
   },
   "W8zlv3": {
     "message": "Not yours to do",
@@ -3629,11 +3629,11 @@
   },
   "UJSKBC": {
     "message": "Now make it <0>Poisoned</0>: right-click it, then <1>{0}</1>.",
-    "translation": "现在让它陷入<0>中毒</0>:右键点击它,然后选择<1>{0}</1>。"
+    "translation": "现在让它陷入<0>中毒</0>：右键点击它，然后选择<1>{0}</1>。"
   },
   "wUL6aJ": {
     "message": "Now make it <0>Poisoned</0>: tap it, <1>{0}</1>, then <2>{1}</2>.",
-    "translation": "现在使其陷入<0>中毒</0>:点按它,<1>{0}</1>,然后<2>{1}</2>。"
+    "translation": "现在使其陷入<0>中毒</0>：点按它，<1>{0}</1>，然后<2>{1}</2>。"
   },
   "LFzr4S": {
     "message": "Number of cards",
@@ -3679,7 +3679,7 @@
     "comments": [
       "{0} is the Flip button's label, which turns the table around"
     ],
-    "translation": "独自游玩时,你将操控双方。按<0>{0}</0>将牌桌转到对方视角。"
+    "translation": "独自游玩时，你将操控双方。按<0>{0}</0>将牌桌转到对方视角。"
   },
   "eVFY7w": {
     "message": "One half fills the table",
@@ -3710,11 +3710,11 @@
   },
   "woUJjU": {
     "message": "Open <0>{0}</0>: every action, by name.",
-    "translation": "打开<0>{0}</0>:按名称查找所有操作。"
+    "translation": "打开<0>{0}</0>：按名称查找所有操作。"
   },
   "tG9S9l": {
     "message": "Open a deck file",
-    "translation": "打开牌组文件"
+    "translation": "打开卡组文件"
   },
   "9npOH9": {
     "message": "Open file",
@@ -3722,7 +3722,7 @@
   },
   "E9wRDu": {
     "message": "Open log",
-    "translation": "打开记录"
+    "translation": "打开日志"
   },
   "F37c1s": {
     "message": "Open Settings",
@@ -3730,7 +3730,7 @@
   },
   "0FO0f7": {
     "message": "Open the deck screen",
-    "translation": "打开牌组界面"
+    "translation": "打开卡组界面"
   },
   "cCMcAY": {
     "message": "Open their deck",
@@ -3770,7 +3770,7 @@
   },
   "oLQoOZ": {
     "message": "Opening your decks…",
-    "translation": "正在打开你们的牌组…"
+    "translation": "正在打开你们的卡组…"
   },
   "-jst3h": {
     "message": "Opens this list",
@@ -3809,7 +3809,7 @@
   },
   "EfIP2O": {
     "message": "Page language ({following})",
-    "translation": "页面语言({following})"
+    "translation": "页面语言（{following}）"
   },
   "161eyw": {
     "message": "Page Up",
@@ -3831,11 +3831,11 @@
   "d0_d9p": {
     "message": "Pass",
     "context": "end the turn",
-    "translation": "跳过"
+    "translation": "结束"
   },
   "kJtjKm": {
     "message": "Pass the turn",
-    "translation": "跳过回合"
+    "translation": "结束回合"
   },
   "sihBmP": {
     "message": "Paste",
@@ -3860,7 +3860,7 @@
   },
   "4LC7ch": {
     "message": "Paste an invitation, or join your own room.",
-    "translation": "粘贴邀请,或加入你自己的房间。"
+    "translation": "粘贴邀请，或加入你自己的房间。"
   },
   "3J14ru": {
     "message": "Paste the invitation into Room ID.",
@@ -3868,7 +3868,7 @@
   },
   "MfH2NF": {
     "message": "Paste with Ctrl+V (⌘V) instead",
-    "translation": "请改用 Ctrl+V(⌘V)粘贴"
+    "translation": "请改用 Ctrl+V（⌘V）粘贴"
   },
   "cfCrKd": {
     "message": "Paypal Donation Link",
@@ -3884,7 +3884,7 @@
   },
   "xYvd7u": {
     "message": "Piece position",
-    "translation": "棋子位置"
+    "translation": "部件位置"
   },
   "SW-cIq": {
     "message": "Play",
@@ -3893,7 +3893,7 @@
   },
   "Sky344": {
     "message": "Play <0>{0}</0>: drag it onto the open mat. Ending your turn clears it away.",
-    "translation": "打出<0>{0}</0>:将它拖到空白牌垫上。结束回合后会被清除。"
+    "translation": "打出<0>{0}</0>：将它拖到空白牌垫上。结束回合后会被清除。"
   },
   "7LIRc6": {
     "message": "Play a random deck",
@@ -3937,7 +3937,7 @@
   },
   "KO7h6x": {
     "message": "Pocket decks have no Energy cards.",
-    "translation": "Pocket 牌组没有能量卡。"
+    "translation": "Pocket 卡组没有能量卡。"
   },
   "S-nXVo": {
     "message": "Pointer parallax",
@@ -3978,7 +3978,7 @@
     "comments": [
       "{0} is the Attack button's label, {1} the Pass button's"
     ],
-    "translation": "按<0>{0}</0>使用招式并结束回合,或按<1>{1}</1>不使用招式直接结束回合。"
+    "translation": "按<0>{0}</0>使用招式并结束回合，或按<1>{1}</1>不使用招式直接结束回合。"
   },
   "LchprM": {
     "message": "Press <0>{0}</0> to turn back to your side.",
@@ -3989,7 +3989,7 @@
   },
   "cF4opC": {
     "message": "Press <0>{0}</0>: it shuffles your deck and deals your hand.",
-    "translation": "按<0>{0}</0>:洗切牌库并抽出手牌。"
+    "translation": "按<0>{0}</0>：重洗牌库并抽取手牌。"
   },
   "svdjsQ": {
     "message": "Press <0>{key}</0> any time for every key.",
@@ -3997,7 +3997,7 @@
   },
   "GvtW7U": {
     "message": "Press <0>{key}</0> for <1>{0}</1>: every action, by name.",
-    "translation": "按<0>{key}</0>打开<1>{0}</1>:按名称查找所有操作。"
+    "translation": "按<0>{key}</0>打开<1>{0}</1>：按名称查找所有操作。"
   },
   "HUzhOi": {
     "message": "Press <0>Esc</0> or click away to close it.",
@@ -4037,7 +4037,7 @@
   "groO0o": {
     "message": "Prism Star",
     "context": "Pokémon card mechanic",
-    "translation": "棱镜星"
+    "translation": "棱镜之星"
   },
   "nT_UTA": {
     "message": "Prize",
@@ -4077,11 +4077,11 @@
   },
   "rkcP1p": {
     "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
-    "translation": "将宝可梦放在同一叠中,竞技场卡放入竞技场。"
+    "translation": "将宝可梦部件叠放在一起，竞技场部件放入竞技场。"
   },
   "QEP1VC": {
     "message": "Put the rest of it, <0>{0}</0> and its Energy, in their discard pile too.",
-    "translation": "将其余部分,即<0>{0}</0>及其能量,也放入弃牌区。"
+    "translation": "将其余部分，即<0>{0}</0>及其能量，也放入弃牌区。"
   },
   "VbWX2u": {
     "message": "Quantity",
@@ -4089,7 +4089,7 @@
   },
   "8cBiju": {
     "message": "Quantity: 1 to {max}.",
-    "translation": "数量:1 到 {max}。"
+    "translation": "数量：1 到 {max}。"
   },
   "KgxgFc": {
     "message": "Radiant",
@@ -4121,7 +4121,7 @@
   },
   "xs2rFL": {
     "message": "Read a card, and open its actions",
-    "translation": "查看卡牌,并打开其操作"
+    "translation": "查看卡牌，并打开其操作"
   },
   "LAbKv2": {
     "message": "Ready for {format}",
@@ -4148,7 +4148,7 @@
   },
   "KB_9s_": {
     "message": "Redo (Ctrl+Shift+Z)",
-    "translation": "重做(Ctrl+Shift+Z)"
+    "translation": "重做（Ctrl+Shift+Z）"
   },
   "NKamZr": {
     "message": "Reduce motion",
@@ -4160,11 +4160,11 @@
   },
   "BMYNMJ": {
     "message": "Regulation mark, format",
-    "translation": "规则标记、赛制"
+    "translation": "赛制标记、赛制"
   },
   "rt4iTp": {
     "message": "Regulation marks",
-    "translation": "规则标记"
+    "translation": "赛制标记"
   },
   "SOnu64": {
     "message": "Relaxed",
@@ -4189,7 +4189,7 @@
   },
   "MS9-fZ": {
     "message": "Remove one",
-    "translation": "移除一个"
+    "translation": "移除一张"
   },
   "9ojRX3": {
     "message": "Remove one {cardName}",
@@ -4197,7 +4197,7 @@
   },
   "4xkMqd": {
     "message": "Remove one {name}",
-    "translation": "移除一个{name}"
+    "translation": "移除一张{name}"
   },
   "5qTkf-": {
     "message": "Remove special condition",
@@ -4215,7 +4215,7 @@
   },
   "Tvyjys": {
     "message": "Rename deck",
-    "translation": "重命名牌库"
+    "translation": "重命名卡组"
   },
   "cDnZvG": {
     "message": "Replay",
@@ -4263,7 +4263,7 @@
   },
   "dNFlsv": {
     "message": "Reset all shortcuts?",
-    "translation": "重置所有快捷键?"
+    "translation": "重置所有快捷键？"
   },
   "JLLA3V": {
     "message": "Reset both sides",
@@ -4290,11 +4290,11 @@
   },
   "qf9cjt": {
     "message": "Resistance",
-    "translation": "抵抗力"
+    "translation": "抗性"
   },
   "q53LG2": {
     "message": "Resistance {resistance}",
-    "translation": "抵抗力 {resistance}"
+    "translation": "抗性 {resistance}"
   },
   "253h9G": {
     "message": "Restart",
@@ -4308,7 +4308,7 @@
   "UQt_GI": {
     "message": "Restored",
     "context": "Pokémon stage",
-    "translation": "已复原"
+    "translation": "复原宝可梦"
   },
   "Dwpy1Z": {
     "message": "Resume a saved game…",
@@ -4320,24 +4320,24 @@
   },
   "YgI_8f": {
     "message": "Retreat at most",
-    "translation": "最多撤退"
+    "translation": "撤退所需能量至多"
   },
   "MTyHfv": {
     "message": "Reveal",
     "context": "shortcut key caption",
-    "translation": "揭示"
+    "translation": "展示"
   },
   "B2iCC3": {
     "message": "Reveal (both players)",
-    "translation": "展示(双方)"
+    "translation": "展示（双方）"
   },
   "MFV2V6": {
     "message": "Reveal or hide their Prizes",
-    "translation": "显示或隐藏对方奖赏卡"
+    "translation": "展示或隐藏对方奖赏卡"
   },
   "FnwG7O": {
     "message": "Reveal or hide your Prizes",
-    "translation": "显示或隐藏你的奖赏卡"
+    "translation": "展示或隐藏你的奖赏卡"
   },
   "p7M2KL": {
     "message": "Reveal/hide card",
@@ -4358,7 +4358,7 @@
   },
   "M4MBmF": {
     "message": "Right-click <0>{0}</0>: everything a card can do.",
-    "translation": "右键点击<0>{0}</0>:查看卡牌的所有操作。"
+    "translation": "右键点击<0>{0}</0>：查看卡牌的所有操作。"
   },
   "gTK8h8": {
     "message": "Right-click a card for actions.",
@@ -4394,35 +4394,35 @@
   },
   "JRfxmI": {
     "message": "Row {row}: text after a closing quote.",
-    "translation": "第 {row} 行:右引号后有多余文本。"
+    "translation": "第 {row} 行：右引号后有多余文本。"
   },
   "nmg9gB": {
     "message": "Row {row}: unexpected quote.",
-    "translation": "第 {row} 行:引号位置不正确。"
+    "translation": "第 {row} 行：引号位置不正确。"
   },
   "GF2_ew": {
     "message": "Row {row}: unterminated quote.",
-    "translation": "第 {row} 行:引号未闭合。"
+    "translation": "第 {row} 行：引号未闭合。"
   },
   "FxnMec": {
     "message": "Row {rowNumber}: card name too long.",
-    "translation": "第 {rowNumber} 行:卡牌名称过长。"
+    "translation": "第 {rowNumber} 行：卡牌名称过长。"
   },
   "QfafSg": {
     "message": "Row {rowNumber}: card type must be Pokémon, Trainer or Energy.",
-    "translation": "第 {rowNumber} 行:卡牌类型必须是宝可梦、训练家或能量。"
+    "translation": "第 {rowNumber} 行：卡牌类型必须是宝可梦、训练家或能量。"
   },
   "jtuoO2": {
     "message": "Row {rowNumber}: card type too long.",
-    "translation": "第 {rowNumber} 行:卡牌类型过长。"
+    "translation": "第 {rowNumber} 行：卡牌类型过长。"
   },
   "gojF1j": {
     "message": "Row {rowNumber}: image URL too long.",
-    "translation": "第 {rowNumber} 行:图片 URL 过长。"
+    "translation": "第 {rowNumber} 行：图片 URL 过长。"
   },
   "DCuDdI": {
     "message": "Row {rowNumber}: invalid presentation JSON.",
-    "translation": "第 {rowNumber} 行:展示用 JSON 无效。"
+    "translation": "第 {rowNumber} 行：展示用 JSON 无效。"
   },
   "tqYUyB": {
     "message": "Row {rowNumber}: needs exactly five columns.",
@@ -4468,7 +4468,7 @@
   },
   "qoNq2S": {
     "message": "Same group for each piece",
-    "translation": "每个棋子使用同一组"
+    "translation": "每个部件使用同一组"
   },
   "brkgwR": {
     "message": "Sample hand",
@@ -4521,7 +4521,7 @@
   },
   "cJ3-3Z": {
     "message": "Search decks or paste a list",
-    "translation": "搜索牌库或粘贴列表"
+    "translation": "搜索卡组或粘贴列表"
   },
   "fU5HHP": {
     "message": "Search every format",
@@ -4537,7 +4537,7 @@
   },
   "RxiDMT": {
     "message": "Search for any action and run it (also Ctrl+K)",
-    "translation": "搜索并执行任意操作(也可按 Ctrl+K)"
+    "translation": "搜索并执行任意操作（也可按 Ctrl+K）"
   },
   "Rjp4L6": {
     "message": "Search syntax",
@@ -4571,7 +4571,7 @@
   },
   "Of0ksK": {
     "message": "Seriously do not think anyone will subscribe to this, but I would be immensely grateful.",
-    "translation": "说真的,我不指望有人会订阅,但如果有,我会非常感激。"
+    "translation": "说真的，我不指望有人会订阅，但如果有，我会非常感激。"
   },
   "V7pCG0": {
     "message": "Set",
@@ -4600,7 +4600,7 @@
     "comments": [
       "60 is the damage on the Pokémon, not a number of cards; + is the button on screen, not a keyboard key"
     ],
-    "translation": "将伤害设为<0>60</0>:输入数值,或按<1>+</1>。"
+    "translation": "将伤害设为<0>60</0>：输入数值，或点按<1>+</1>。"
   },
   "DBL0AT": {
     "message": "Set up",
@@ -4626,11 +4626,11 @@
   },
   "1KTKvb": {
     "message": "Set up, then put your Pokémon in play",
-    "translation": "准备,然后将宝可梦放到场上"
+    "translation": "准备，然后将宝可梦放到场上"
   },
   "1W8ZwT": {
     "message": "Set up: shuffle, draw 7, set 6 prizes",
-    "translation": "准备:洗牌、抽7张、放置6张奖赏卡"
+    "translation": "准备：洗牌、抽7张、放置6张奖赏卡"
   },
   "prXKvv": {
     "message": "Setting up the table…",
@@ -4663,11 +4663,11 @@
     "comments": [
       "The developer's personal note on the Sponsors & Donations page"
     ],
-    "translation": "如果你喜欢使用本模拟器,并希望支持它的持续开发,可以通过下方的链接赞助我/本项目。不过请放心,赞助完全是自愿的。你喜欢这个模拟器,就已经是很大的贡献了,很高兴你成为我们社区的一员 :)"
+    "translation": "如果你喜欢使用本模拟器，并希望支持它的持续开发，可以通过下方的链接赞助我/本项目。不过请放心，赞助完全是自愿的。你喜欢这个模拟器，就已经是很大的贡献了，很高兴你成为我们社区的一员 :)"
   },
   "SRxkB0": {
     "message": "Shoutout in every changelog during the time you are subscribed for.",
-    "translation": "订阅期间,每次更新日志中都会特别感谢你。"
+    "translation": "订阅期间，每次更新日志中都会特别感谢你。"
   },
   "2AY97e": {
     "message": "Shoutout in the next changelog.",
@@ -4713,19 +4713,19 @@
   },
   "NQ5xRS": {
     "message": "Show the deck as",
-    "translation": "牌库显示为"
+    "translation": "卡组显示为"
   },
   "8s0egM": {
     "message": "Show the deck as images",
-    "translation": "以图片显示牌库"
+    "translation": "以图片显示卡组"
   },
   "KaxFxU": {
     "message": "Show the deck as list",
-    "translation": "以列表显示牌库"
+    "translation": "以列表显示卡组"
   },
   "mQ7C1m": {
     "message": "Show the keys for",
-    "translation": "显示快捷键:"
+    "translation": "显示快捷键："
   },
   "YtzfVy": {
     "message": "Show the table",
@@ -4733,7 +4733,7 @@
   },
   "UwltxX": {
     "message": "Show this card on the deck",
-    "translation": "在牌库中显示这张卡"
+    "translation": "在卡组中显示这张卡"
   },
   "sf2cQK": {
     "message": "Shuffle",
@@ -4767,7 +4767,7 @@
   },
   "eFbm-5": {
     "message": "Shuffle deck",
-    "translation": "洗切牌库"
+    "translation": "重洗牌库"
   },
   "K3yK37": {
     "message": "Shuffle hand into deck",
@@ -4804,15 +4804,15 @@
   },
   "DIHxqq": {
     "message": "Shuffle prizes",
-    "translation": "洗切奖赏卡"
+    "translation": "重洗奖赏卡"
   },
   "pYUbhf": {
     "message": "Shuffle Prizes",
-    "translation": "洗切奖赏卡"
+    "translation": "重洗奖赏卡"
   },
   "nU9Ip_": {
     "message": "Shuffle Prizes to bottom of deck",
-    "translation": "将奖赏卡洗切后放到牌库底"
+    "translation": "将奖赏卡重洗后放到牌库底"
   },
   "SRsSL6": {
     "message": "Shuffle to bottom",
@@ -4820,7 +4820,7 @@
   },
   "-bhiO9": {
     "message": "Shuffle to deck (bottom)",
-    "translation": "洗入牌库(底部)"
+    "translation": "洗入牌库（底部）"
   },
   "lzdYF4": {
     "message": "Sideways scan",
@@ -4870,15 +4870,15 @@
   },
   "dEkrb1": {
     "message": "Sort by HP, show every print",
-    "translation": "按HP排序,显示所有版本"
+    "translation": "按HP排序，显示所有版本"
   },
   "i_vGIr": {
     "message": "Sort hand in decklist order",
-    "translation": "按牌组列表顺序排列手牌"
+    "translation": "按卡组列表顺序排列手牌"
   },
   "jieUDo": {
     "message": "Sort in decklist order",
-    "translation": "按牌组列表顺序排序"
+    "translation": "按卡组列表顺序排序"
   },
   "I9CLl_": {
     "message": "Sort results",
@@ -4921,7 +4921,7 @@
   "h5EwqW": {
     "message": "Split",
     "context": "the table between the halves",
-    "translation": "分开"
+    "translation": "分配"
   },
   "Y6mTBn": {
     "message": "SPONSOR TIERS",
@@ -5002,7 +5002,7 @@
   },
   "YI2gvW": {
     "message": "Start a turn, flip a coin, attack",
-    "translation": "开始回合、掷硬币、使用招式"
+    "translation": "开始回合、抛硬币、使用招式"
   },
   "-cUaK9": {
     "message": "Start the lesson over",
@@ -5014,7 +5014,7 @@
   },
   "yA0PE0": {
     "message": "Start your turn with <0>{0}</0>. It draws your card.",
-    "translation": "用<0>{0}</0>开始你的回合,并抽一张牌。"
+    "translation": "用<0>{0}</0>开始你的回合，并抽一张牌。"
   },
   "p7o5f_": {
     "message": "Status",
@@ -5046,7 +5046,7 @@
   "AKGGtj": {
     "message": "Switch",
     "context": "shortcut key caption",
-    "translation": "切换"
+    "translation": "交换"
   },
   "Q1BDRW": {
     "message": "Switch with top of deck",
@@ -5112,11 +5112,11 @@
   },
   "yJtTpT": {
     "message": "Take a <0>Prize card</0>: drag one into your hand.",
-    "translation": "拿取一张<0>奖赏卡</0>:拖一张到手牌中。"
+    "translation": "拿取一张<0>奖赏卡</0>：拖一张到手牌中。"
   },
   "2g01hc": {
     "message": "Take off {count} damage",
-    "translation": "移除 {count} 个伤害"
+    "translation": "移除 {count} 点伤害"
   },
   "siil7J": {
     "message": "Take off damage",
@@ -5128,15 +5128,15 @@
   },
   "O3tcf1": {
     "message": "Tap <0>{0}</0> in your hand, then <1>{1}</1>.",
-    "translation": "点按手牌中的<0>{0}</0>,然后<1>{1}</1>。"
+    "translation": "点按手牌中的<0>{0}</0>，然后<1>{1}</1>。"
   },
   "fU8msy": {
     "message": "Tap <0>{0}</0>, then <1>{1}</1>: everything a card can do.",
-    "translation": "点按<0>{0}</0>,然后<1>{1}</1>:卡牌的所有操作。"
+    "translation": "点按<0>{0}</0>，然后<1>{1}</1>：卡牌的所有操作。"
   },
   "eaLvvH": {
     "message": "Tap <0>{0}</0>: every action, by name.",
-    "translation": "点按<0>{0}</0>:按名称查找所有操作。"
+    "translation": "点按<0>{0}</0>：按名称查找所有操作。"
   },
   "EyHJlN": {
     "message": "Tap a card for actions; tap again to read it.",
@@ -5152,7 +5152,7 @@
   },
   "oeltU5": {
     "message": "Tap their <0>{0}</0>, then <1>{1}</1>.",
-    "translation": "点按对方的<0>{0}</0>,然后<1>{1}</1>。"
+    "translation": "点按对方的<0>{0}</0>，然后<1>{1}</1>。"
   },
   "n_ll58": {
     "message": "Tap your deck to look through it.",
@@ -5173,12 +5173,12 @@
   "z5r9Ja": {
     "message": "Technical Machine",
     "context": "Trainer card kind",
-    "translation": "招式机"
+    "translation": "招式学习器"
   },
   "9o2lM8": {
     "message": "Technical Machines",
     "context": "Trainer cards by kind",
-    "translation": "招式机"
+    "translation": "招式学习器"
   },
   "4qLtJr": {
     "message": "That Energy has left your hand.",
@@ -5202,7 +5202,7 @@
   },
   "6Z1wXH": {
     "message": "That side starts over with the new deck",
-    "translation": "该方将随新牌库重新开始"
+    "translation": "该方将使用新卡组重新开始"
   },
   "hPwR-j": {
     "message": "The card went back.",
@@ -5214,43 +5214,43 @@
   },
   "Hq1N2b": {
     "message": "The deck didn't go on the table",
-    "translation": "牌库未能放上牌桌"
+    "translation": "卡组未能放上牌桌"
   },
   "BUcC-2": {
     "message": "The deck file has more than {max} rows.",
-    "translation": "牌库文件超过 {max} 行。"
+    "translation": "卡组文件超过 {max} 行。"
   },
   "sPLZ6Z": {
     "message": "The deck file is too long.",
-    "translation": "牌库文件过长。"
+    "translation": "卡组文件过长。"
   },
   "1zmjOY": {
     "message": "The deck file must start with {header}.",
-    "translation": "牌库文件必须以 {header} 开头。"
+    "translation": "卡组文件必须以 {header} 开头。"
   },
   "fYn5Mi": {
     "message": "The deck has more than {max} cards.",
-    "translation": "牌库超过 {max} 张卡牌。"
+    "translation": "卡组超过 {max} 张卡牌。"
   },
   "vnQ-9_": {
     "message": "The deck lists didn't load.",
-    "translation": "牌库列表加载失败。"
+    "translation": "卡组列表加载失败。"
   },
   "kuSCwh": {
     "message": "The deck screen didn't load. Your game carries on.",
-    "translation": "牌库界面未能加载。你的对局会继续。"
+    "translation": "卡组界面未能加载。你的对局会继续。"
   },
   "qDcPIt": {
     "message": "The decklist has more than {max} cards.",
-    "translation": "牌表超过 {max} 张卡牌。"
+    "translation": "卡表超过 {max} 张卡牌。"
   },
   "9vVu1I": {
     "message": "The decklist has more than {max} lines.",
-    "translation": "牌表超过 {max} 行。"
+    "translation": "卡表超过 {max} 行。"
   },
   "SHzPH9": {
     "message": "The decklist is too long.",
-    "translation": "牌表过长。"
+    "translation": "卡表过长。"
   },
   "K85iXe": {
     "message": "The file couldn't be saved",
@@ -5266,7 +5266,7 @@
   },
   "N3usta": {
     "message": "The room didn't take it. Try again.",
-    "translation": "房间未接受该操作,请重试。"
+    "translation": "房间未接受该操作，请重试。"
   },
   "TOoMq1": {
     "message": "The room no longer has this seat.",
@@ -5322,7 +5322,7 @@
   },
   "Cedl1T": {
     "message": "Their side is yours now: start their turn with <0>{0}</0>.",
-    "translation": "现在对方一侧由你操作:用<0>{0}</0>开始对方的回合。"
+    "translation": "现在对方一侧由你操作：用<0>{0}</0>开始对方的回合。"
   },
   "sMMsD3": {
     "message": "Theirs",
@@ -5345,15 +5345,15 @@
     "comments": [
       "\"To active\" is the name of another shortcut in this list."
     ],
-    "translation": "然后按“移至战斗场”以背面朝上打出"
+    "translation": "然后按“移至战斗场”以反面朝上打出"
   },
   "DNMX9-": {
     "message": "They bring up the next: drag a <0>{0}</0> from their Bench to their Active Spot.",
-    "translation": "对手换上下一只:将一张<0>{0}</0>从其备战区拖到其战斗场。"
+    "translation": "对手换上下一只：将一张<0>{0}</0>从其备战区拖到其战斗场。"
   },
   "WsAkgd": {
     "message": "This browser won't keep your decks after you close the page.",
-    "translation": "关闭页面后，此浏览器不会保留你的牌库。"
+    "translation": "关闭页面后，此浏览器不会保留你的卡组。"
   },
   "5PdIYU": {
     "message": "This game will be lost.",
@@ -5361,7 +5361,7 @@
   },
   "L7LU5x": {
     "message": "This tutorial waits in the <0>menu</0> whenever you want it.",
-    "translation": "需要时,可随时在<0>菜单</0>中重新打开本教程。"
+    "translation": "需要时，可随时在<0>菜单</0>中重新打开本教程。"
   },
   "YcMvP7": {
     "message": "Tilted on wide screens, flat on phones.",
@@ -5448,7 +5448,7 @@
   "A7-3BM": {
     "message": "to Tool",
     "context": "change a card into",
-    "translation": "变为道具"
+    "translation": "变为宝可梦道具"
   },
   "bKUQHI": {
     "message": "To top of deck",
@@ -5464,7 +5464,7 @@
   },
   "6QCyrU": {
     "message": "Too large for a deck",
-    "translation": "对牌库来说太大"
+    "translation": "超出卡组上限"
   },
   "ssfbci": {
     "message": "Too many actions",
@@ -5523,15 +5523,15 @@
     "comments": [
       "A credit line under tournament decks; source is a site's name (Limitless TCG)"
     ],
-    "translation": "赛事数据:<0>{0}</0>"
+    "translation": "赛事数据：<0>{0}</0>"
   },
   "HLA2HB": {
     "message": "Tournament decks",
-    "translation": "赛事牌组"
+    "translation": "赛事卡组"
   },
   "4Zz_OT": {
     "message": "Tournament decks aren't ready yet",
-    "translation": "赛事牌组尚未就绪"
+    "translation": "赛事卡组尚未就绪"
   },
   "iPoLT-": {
     "message": "Tournaments",
@@ -5594,7 +5594,7 @@
   },
   "fijiP5": {
     "message": "Turn face down (both players)",
-    "translation": "盖放（双方）"
+    "translation": "反面朝上（双方）"
   },
   "ccavW6": {
     "message": "Turn the table around",
@@ -5606,7 +5606,7 @@
   },
   "DHMk63": {
     "message": "Turns only the selected card",
-    "translation": "仅翻转所选卡牌"
+    "translation": "仅旋转所选卡牌"
   },
   "T7w4KT": {
     "message": "Tutorial",
@@ -5614,7 +5614,7 @@
   },
   "XQ_0kk": {
     "message": "Tutorial complete. You're ready to play.",
-    "translation": "教程完成,你已准备好对战。"
+    "translation": "教程完成，你已准备好对战。"
   },
   "-zy2Nq": {
     "message": "Type",
@@ -5632,11 +5632,11 @@
   },
   "K3Z9Js": {
     "message": "Type <0>draw</0> and press <1>Enter</1>.",
-    "translation": "输入<0>draw</0>,然后按<1>Enter</1>。"
+    "translation": "输入<0>draw</0>，然后按<1>Enter</1>。"
   },
   "YA3nrH": {
     "message": "Type <0>draw</0>, then tap the first row.",
-    "translation": "输入<0>draw</0>,然后点击第一行。"
+    "translation": "输入<0>draw</0>，然后点击第一行。"
   },
   "Bq_7Gn": {
     "message": "Type something first",
@@ -5653,7 +5653,7 @@
   },
   "P-nDDS": {
     "message": "Undo (Ctrl+Z)",
-    "translation": "撤销 (Ctrl+Z)"
+    "translation": "撤销（Ctrl+Z）"
   },
   "UMxfxQ": {
     "message": "Unknown card",
@@ -5661,7 +5661,7 @@
   },
   "EydT-n": {
     "message": "Unknown deck",
-    "translation": "未知牌组"
+    "translation": "未知卡组"
   },
   "PjF2oq": {
     "message": "Unlimited",
@@ -5670,7 +5670,7 @@
   },
   "tSfJNm": {
     "message": "Unsaved deck",
-    "translation": "未保存的牌组"
+    "translation": "未保存的卡组"
   },
   "5Gx011": {
     "message": "Unstack copies",
@@ -5678,7 +5678,7 @@
   },
   "-qi9QY": {
     "message": "Untitled deck",
-    "translation": "未命名牌组"
+    "translation": "未命名卡组"
   },
   "aS5ttr": {
     "message": "Use background",
@@ -5707,7 +5707,7 @@
   },
   "8ZgYGP": {
     "message": "Use this print for the {deckCopies} in the deck",
-    "translation": "将此版本用于牌组中的{deckCopies}张"
+    "translation": "将此版本用于卡组中的{deckCopies}张"
   },
   "9c8BhN": {
     "message": "Use VSTAR Power",
@@ -5785,7 +5785,7 @@
     "comments": [
       "{0} is the Shuffle button's label"
     ],
-    "translation": "完成后,按<0>{0}</0>洗切你的牌库。"
+    "translation": "完成后，按<0>{0}</0>重洗你的牌库。"
   },
   "evSBlD": {
     "message": "Win",
@@ -5824,7 +5824,7 @@
   },
   "APqbzr": {
     "message": "Your decks",
-    "translation": "你的牌组"
+    "translation": "你的卡组"
   },
   "S7YY4L": {
     "message": "Your discard pile",
@@ -5836,7 +5836,7 @@
   },
   "H5pi4B": {
     "message": "Your hand, and your 6 <0>Prize cards</0>, face down.",
-    "translation": "你的手牌和 6 张<0>奖赏卡</0>,均背面朝上。"
+    "translation": "你的手牌和 6 张<0>奖赏卡</0>，均反面朝上。"
   },
   "BHcJOF": {
     "message": "Your Lost Zone",

@@ -167,7 +167,7 @@
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards; {source} is the zone they left and {destination} where they went (play: onto the table)."
     ],
-    "translation": "{actor} movió {count, plural, one {# carta} other {# cartas}} desde {source, select, hand {la mano} prizes {las cartas de Premio} discard {la pila de descartes} board {el tablero} stadium {el Estadio} active {el Puesto Activo} bench {la Banca} lostZone {la Zona Perdida} attachmentResolution {las cartas unidas} other {la baraja}} a {destination, select, hand {la mano} discard {la pila de descartes} lostZone {la Zona Perdida} deckBottom {el fondo de la baraja} play {juego} other {la baraja}}"
+    "translation": "{actor} movió {count, plural, one {# carta} other {# cartas}} desde {source, select, hand {la mano} prizes {las cartas de Premio} discard {la pila de descartes} board {el tablero} stadium {el Estadio} active {el Puesto Activo} bench {la Banca} lostZone {la Zona Perdida} attachmentResolution {las cartas unidas} other {la baraja}} a {destination, select, hand {la mano} discard {la pila de descartes} lostZone {la Zona Perdida} deckBottom {el fondo de la baraja} play {la zona de juego} other {la baraja}}"
   },
   "P4_K0D": {
     "message": "{actor} moved a random card from {target}'s hand to board",
@@ -223,7 +223,7 @@
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards."
     ],
-    "translation": "{actor} puso {count, plural, one {# carta} other {# cartas}} al fondo de la baraja"
+    "translation": "{actor} barajó {count, plural, one {# carta} other {# cartas}} al fondo de la baraja"
   },
   "s-CcLE": {
     "message": "{actor} shuffled discard into deck",
@@ -251,28 +251,28 @@
     "comments": [
       "Log line. {actor} is a player's name."
     ],
-    "translation": "{actor} puso la mano al fondo de la baraja"
+    "translation": "{actor} barajó la mano al fondo de la baraja"
   },
   "xT_uho": {
     "message": "{actor} shuffled hand to bottom of deck and drew {count, plural, one {# card(s)} other {# card(s)}}",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards they drew."
     ],
-    "translation": "{actor} puso la mano al fondo de la baraja y robó {count, plural, one {# carta} other {# cartas}}"
+    "translation": "{actor} barajó la mano al fondo de la baraja y robó {count, plural, one {# carta} other {# cartas}}"
   },
   "QGyAAz": {
     "message": "{actor} shuffled prizes to bottom of deck",
     "comments": [
       "Log line. {actor} is a player's name."
     ],
-    "translation": "{actor} puso las cartas de Premio al fondo de la baraja"
+    "translation": "{actor} barajó las cartas de Premio al fondo de la baraja"
   },
   "xw6Fj3": {
     "message": "{actor} switched {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} with top of deck",
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left, and the top card of the deck took its place."
     ],
-    "translation": "{actor} cambió {card} desde {source, select, hand {la mano} prizes {las cartas de Premio} discard {la pila de descartes} board {el tablero} stadium {el Estadio} active {el Puesto Activo} bench {la Banca} lostZone {la Zona Perdida} attachmentResolution {las cartas unidas} other {la baraja}} por la carta superior de la baraja"
+    "translation": "{actor} cambió {card} desde {source, select, hand {la mano} prizes {las cartas de Premio} discard {la pila de descartes} board {el tablero} stadium {el Estadio} active {el Puesto Activo} bench {la Banca} lostZone {la Zona Perdida} attachmentResolution {las cartas unidas} other {la baraja}} por la primera carta de la baraja"
   },
   "QOz626": {
     "message": "{actor} took back {target}'s last move",
@@ -330,7 +330,7 @@
   },
   "DXRXaL": {
     "message": "{count, plural, one {# ACE SPEC card (max 1).} other {# ACE SPEC cards (max 1).}}",
-    "translation": "{count, plural, one {# carta ACE SPEC (máx. 1).} other {# cartas ACE SPEC (máx. 1).}}"
+    "translation": "{count, plural, one {# carta de AS TÁCTICO (máx. 1).} other {# cartas de AS TÁCTICO (máx. 1).}}"
   },
   "ILjliG": {
     "message": "{count, plural, one {# card · legal in {legalIn}} other {# cards · legal in {legalIn}}}",
@@ -378,7 +378,7 @@
   },
   "gSD0Y4": {
     "message": "{count, plural, one {# copy of {name} (Prism Star: max 1).} other {# copies of {name} (Prism Star: max 1).}}",
-    "translation": "{count, plural, one {# copia de {name} (Prisma Estrella: máx. 1).} other {# copias de {name} (Prisma Estrella: máx. 1).}}"
+    "translation": "{count, plural, one {# copia de {name} (Estrella Prisma: máx. 1).} other {# copias de {name} (Estrella Prisma: máx. 1).}}"
   },
   "eFRg1z": {
     "message": "{count, plural, one {# Pokémon ☆ card (max 1).} other {# Pokémon ☆ cards (max 1).}}",
@@ -426,7 +426,7 @@
   },
   "aN0Z_E": {
     "message": "{count, plural, one {Shuffle hand to bottom and draw # card} other {Shuffle hand to bottom and draw # cards}}",
-    "translation": "{count, plural, one {Poner la mano abajo de la baraja y robar # carta} other {Poner la mano abajo de la baraja y robar # cartas}}"
+    "translation": "{count, plural, one {Barajar la mano al fondo de la baraja y robar # carta} other {Barajar la mano al fondo de la baraja y robar # cartas}}"
   },
   "hMKADB": {
     "message": "{count} × {cardName} ({print}). Details",
@@ -506,7 +506,7 @@
     "comments": [
       "markerName is VSTAR or GX."
     ],
-    "translation": "Marcador de {markerName}"
+    "translation": "Marcador {markerName}"
   },
   "b3xCW_": {
     "message": "{missingLines, plural, one {# line not found} other {# lines not found}}",
@@ -587,7 +587,7 @@
     "comments": [
       "Log line: the player whose turn begins drew their card for the turn. {name} is a player's name."
     ],
-    "translation": "{name} robó carta del turno"
+    "translation": "{name} robó su carta del turno"
   },
   "y-dTT1": {
     "message": "{name} drew starting hand and set prizes",
@@ -640,35 +640,35 @@
     "comments": [
       "Log line: someone came into the room. {name} is their name."
     ],
-    "translation": "{name} se ha unido"
+    "translation": "{name} se unió"
   },
   "kfnFBD": {
     "message": "{name} left the room",
     "comments": [
       "Log line. {name} is their name."
     ],
-    "translation": "{name} ha salido de la sala"
+    "translation": "{name} salió de la sala"
   },
   "-wrYVm": {
     "message": "{name} loaded deck",
     "comments": [
       "Log line. {name} is a player's name."
     ],
-    "translation": "{name} ha cargado su baraja"
+    "translation": "{name} cargó su baraja"
   },
   "lcx9nx": {
     "message": "{name} looked at bottom {count, plural, one {# card(s)} other {# card(s)}} of deck",
     "comments": [
       "Log line. {name} is a player's name, {count} how many cards from the bottom of their deck they looked at."
     ],
-    "translation": "{name} ha mirado {count, plural, one {# carta} other {# cartas}} del fondo de la baraja"
+    "translation": "{name} miró {count, plural, one {la última carta} other {las # últimas cartas}} de la baraja"
   },
   "ok9Ijw": {
     "message": "{name} looked at top {count, plural, one {# card(s)} other {# card(s)}} of deck",
     "comments": [
       "Log line. {name} is a player's name, {count} how many cards from the top of their deck they looked at."
     ],
-    "translation": "{name} ha mirado {count, plural, one {# carta} other {# cartas}} de la parte superior de la baraja"
+    "translation": "{name} miró {count, plural, one {la primera carta} other {las # primeras cartas}} de la baraja"
   },
   "A7bcR4": {
     "message": "{name} Lost Zone",
@@ -682,7 +682,7 @@
     "comments": [
       "Log line: a player had no Basic Pokémon in their opening hand and redraws. {name} is a player's name."
     ],
-    "translation": "{name} hace mulligan"
+    "translation": "{name} declara un mulligan"
   },
   "VfRcma": {
     "message": "{name} on {seat}",
@@ -693,7 +693,7 @@
     "comments": [
       "Log line: a player ended their turn without attacking. {name} is a player's name."
     ],
-    "translation": "{name} ha pasado"
+    "translation": "{name} pasó"
   },
   "rzpxoR": {
     "message": "{name} prizes",
@@ -707,56 +707,56 @@
     "comments": [
       "Log line: someone came back after their connection dropped. {name} is their name."
     ],
-    "translation": "{name} se ha vuelto a conectar"
+    "translation": "{name} se volvió a conectar"
   },
   "VcNbQ-": {
     "message": "{name} reset",
     "comments": [
       "Log line: a player cleared their side of the table. {name} is a player's name."
     ],
-    "translation": "{name} ha reiniciado su zona"
+    "translation": "{name} reinició su lado de la mesa"
   },
   "yq8DHI": {
     "message": "{name} reset their {marker}",
     "comments": [
       "Log line: a player turned their once-per-game marker back to unused. {name} is a player's name; {marker} is GX or VSTAR (keep as is)."
     ],
-    "translation": "{name} ha restablecido su {marker}"
+    "translation": "{name} restableció su {marker}"
   },
   "ywLLuj": {
     "message": "{name} shuffled {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}}",
     "comments": [
       "Log line. {name} is a player's name; {source} is the zone they shuffled, almost always their deck."
     ],
-    "translation": "{name} ha barajado {source, select, hand {su mano} prizes {sus cartas de Premio} discard {su pila de descartes} board {el tablero} stadium {el Estadio} active {su Puesto Activo} bench {su Banca} lostZone {su Zona Perdida} attachmentResolution {las cartas unidas} other {su baraja}}"
+    "translation": "{name} barajó {source, select, hand {su mano} prizes {sus cartas de Premio} discard {su pila de descartes} board {el tablero} stadium {el Estadio} active {su Puesto Activo} bench {su Banca} lostZone {su Zona Perdida} attachmentResolution {las cartas unidas} other {su baraja}}"
   },
   "x8Eb2i": {
     "message": "{name} started turn {turn}",
     "comments": [
       "Read aloud by screen readers. {name} is a player's name, {turn} the turn number."
     ],
-    "translation": "{name} ha empezado el turno {turn}"
+    "translation": "{name} empezó el turno {turn}"
   },
   "I_6aBo": {
     "message": "{name} used {card}",
     "comments": [
       "Log line: a player used a Stadium card's effect. {name} is a player's name, {card} the Stadium's name."
     ],
-    "translation": "{name} ha usado {card}"
+    "translation": "{name} usó {card}"
   },
   "1X7zxc": {
     "message": "{name} used {card}'s ability",
     "comments": [
       "Log line: a player used a Pokémon's Ability. {name} is a player's name, {card} the Pokémon's name."
     ],
-    "translation": "{name} ha usado la habilidad de {card}"
+    "translation": "{name} usó la habilidad de {card}"
   },
   "RZV8CB": {
     "message": "{name} used their {marker}",
     "comments": [
       "Log line: a player used their once-per-game power. {name} is a player's name; {marker} is GX or VSTAR (keep as is)."
     ],
-    "translation": "{name} ha usado su {marker}"
+    "translation": "{name} usó su {marker}"
   },
   "5BonJe": {
     "message": "{name} used: press to undo",
@@ -767,7 +767,7 @@
   },
   "2mmBQD": {
     "message": "{name}: try it",
-    "translation": "{name}: pruébalo"
+    "translation": "{name}: pruébala"
   },
   "cgmx3-": {
     "message": "{name}'s turn",
@@ -880,14 +880,14 @@
     "comments": [
       "{spoken} is the shortcut's keys, such as \"Alt+1\"."
     ],
-    "translation": "{spoken}, fijado"
+    "translation": "{spoken}, fijo"
   },
   "LsSEPB": {
     "message": "{target} took back their last move",
     "comments": [
       "Log line: a player undid their own last move. {target} is the player's name."
     ],
-    "translation": "{target} ha deshecho su última jugada"
+    "translation": "{target} deshizo su última jugada"
   },
   "mFeDcR": {
     "message": "{targetSeat}: {seatLabel}, {seatTotal, plural, one {# card} other {# cards}}",
@@ -932,28 +932,28 @@
     "comments": [
       "Log line: a player began looking at a zone only they can see. {viewer} is who is looking, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "{viewer} miró {source, select, hand {la mano} prizes {las cartas de Premio} discard {la pila de descartes} board {el tablero} stadium {el Estadio} active {el Pokémon Activo} bench {la Banca} lostZone {la Zona Perdida} attachmentResolution {las cartas unidas} inspection {la inspección} other {la baraja}} de {owner}"
+    "translation": "{viewer} miró {source, select, hand {la mano} prizes {las cartas de Premio} discard {la pila de descartes} board {el tablero} stadium {el Estadio} active {el Puesto Activo} bench {la Banca} lostZone {la Zona Perdida} attachmentResolution {las cartas unidas} inspection {la inspección} other {la baraja}} de {owner}"
   },
   "kF6-Cq": {
     "message": "{viewer} looked at card in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line: a player began looking at a card only they can see. {viewer} is who is looking, {owner} whose card it is; {source} is the zone it is in."
     ],
-    "translation": "{viewer} miró una carta de {source, select, hand {la mano} prizes {las cartas de Premio} discard {la pila de descartes} board {el tablero} stadium {el Estadio} active {el Pokémon Activo} bench {la Banca} lostZone {la Zona Perdida} attachmentResolution {las cartas unidas} inspection {la inspección} other {la baraja}} de {owner}"
+    "translation": "{viewer} miró una carta de {source, select, hand {la mano} prizes {las cartas de Premio} discard {la pila de descartes} board {el tablero} stadium {el Estadio} active {el Puesto Activo} bench {la Banca} lostZone {la Zona Perdida} attachmentResolution {las cartas unidas} inspection {la inspección} other {la baraja}} de {owner}"
   },
   "jTec7e": {
     "message": "{viewer} stopped looking at {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line. {viewer} is who stopped looking, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "{viewer} dejó de mirar {source, select, hand {la mano} prizes {las cartas de Premio} discard {la pila de descartes} board {el tablero} stadium {el Estadio} active {el Pokémon Activo} bench {la Banca} lostZone {la Zona Perdida} attachmentResolution {las cartas unidas} inspection {la inspección} other {la baraja}} de {owner}"
+    "translation": "{viewer} dejó de mirar {source, select, hand {la mano} prizes {las cartas de Premio} discard {la pila de descartes} board {el tablero} stadium {el Estadio} active {el Puesto Activo} bench {la Banca} lostZone {la Zona Perdida} attachmentResolution {las cartas unidas} inspection {la inspección} other {la baraja}} de {owner}"
   },
   "FAueN1": {
     "message": "{viewer} stopped looking at card in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line. {viewer} is who stopped looking, {owner} whose card it is; {source} is the zone it is in."
     ],
-    "translation": "{viewer} dejó de mirar una carta de {source, select, hand {la mano} prizes {las cartas de Premio} discard {la pila de descartes} board {el tablero} stadium {el Estadio} active {el Pokémon Activo} bench {la Banca} lostZone {la Zona Perdida} attachmentResolution {las cartas unidas} inspection {la inspección} other {la baraja}} de {owner}"
+    "translation": "{viewer} dejó de mirar una carta de {source, select, hand {la mano} prizes {las cartas de Premio} discard {la pila de descartes} board {el tablero} stadium {el Estadio} active {el Puesto Activo} bench {la Banca} lostZone {la Zona Perdida} attachmentResolution {las cartas unidas} inspection {la inspección} other {la baraja}} de {owner}"
   },
   "JirPbT": {
     "message": "{zoneName}, {count, plural, one {# card} other {# cards}}",
@@ -1163,15 +1163,15 @@
   },
   "rBxVCS": {
     "message": "Add one {cardName}",
-    "translation": "Añadir una {cardName}"
+    "translation": "Añadir 1 {cardName}"
   },
   "YuQyXH": {
     "message": "Add one {name}",
-    "translation": "Añadir una {name}"
+    "translation": "Añadir 1 {name}"
   },
   "Qz1fKP": {
     "message": "Add or switch special condition",
-    "translation": "Añadir o cambiar estado especial"
+    "translation": "Añadir o cambiar Condición Especial"
   },
   "ZVI875": {
     "message": "Add to deck",
@@ -1200,7 +1200,7 @@
   "n467_9": {
     "message": "All time",
     "context": "a deck's lists from every date",
-    "translation": "Todo el tiempo"
+    "translation": "Todas las fechas"
   },
   "X8Y2MP": {
     "message": "All to deck",
@@ -1227,7 +1227,7 @@
   },
   "Uu-7-8": {
     "message": "An <0>open-source</0> Pokémon TCG table.",
-    "translation": "Una mesa de Pokémon TCG de <0>código abierto</0>."
+    "translation": "Una mesa de <0>código abierto</0> para el JCC Pokémon."
   },
   "5ZW9xa": {
     "message": "An attack payable with two Energy",
@@ -1250,7 +1250,7 @@
   "ctNH7H": {
     "message": "Ancient",
     "context": "Pokémon card mechanic",
-    "translation": "Ancestral"
+    "translation": "Pasado"
   },
   "Jvmvx4": {
     "message": "Animate stack height",
@@ -1266,7 +1266,7 @@
   },
   "PR1zNf": {
     "message": "Announce mulligan",
-    "translation": "Anunciar mulligan"
+    "translation": "Declarar mulligan"
   },
   "Y_nxYt": {
     "message": "Any",
@@ -1416,11 +1416,11 @@
   },
   "o4xCmI": {
     "message": "Basic / Special Energy",
-    "translation": "Energía básica / especial"
+    "translation": "Energía Básica / Especial"
   },
   "mQwVD5": {
     "message": "Basic Energy",
-    "translation": "Energía básica"
+    "translation": "Energía Básica"
   },
   "dkk7vA": {
     "message": "Bench",
@@ -1501,12 +1501,12 @@
   },
   "HLZuSl": {
     "message": "BREAK",
-    "translation": "BREAK"
+    "translation": "TURBO"
   },
   "zcJuqD": {
     "message": "BREAK",
     "context": "shortcut key caption",
-    "translation": "BREAK"
+    "translation": "TURBO"
   },
   "FE2YBZ": {
     "message": "Browser language ({browser})",
@@ -1543,7 +1543,7 @@
   "4GkLKV": {
     "message": "Caps",
     "context": "keyboard key (Caps Lock)",
-    "translation": "Mayús"
+    "translation": "Bloq Mayús"
   },
   "mT4wvO": {
     "message": "card",
@@ -1906,7 +1906,7 @@
   },
   "hCQkU8": {
     "message": "Couldn't start Solo mode. Try again.",
-    "translation": "No se pudo iniciar el modo Solo. Inténtalo de nuevo."
+    "translation": "No se pudo iniciar el modo en solitario. Inténtalo de nuevo."
   },
   "eP7qeF": {
     "message": "Couldn't start the tutorial. Try again.",
@@ -1943,11 +1943,11 @@
   },
   "rlm3op": {
     "message": "Custom flair on Discord & open reign on self-nicknames.",
-    "translation": "Distintivo personalizado en Discord y reinado libre sobre los apodos propios."
+    "translation": "Distintivo personalizado en Discord y libertad total para elegir tu apodo."
   },
   "UxNmvS": {
     "message": "Damage and conditions",
-    "translation": "Daño y estados"
+    "translation": "Daño y condiciones"
   },
   "omkQWV": {
     "message": "Damage at least",
@@ -2007,7 +2007,7 @@
   "peXKOB": {
     "message": "Deck bottom",
     "context": "shortcut key caption",
-    "translation": "Fondo de la baraja"
+    "translation": "Baraja (fondo)"
   },
   "sUVFl2": {
     "message": "Deck cover",
@@ -2028,7 +2028,7 @@
   "iKEGvL": {
     "message": "Deck top",
     "context": "shortcut key caption",
-    "translation": "Parte superior de la baraja"
+    "translation": "Baraja (arriba)"
   },
   "9NwCxt": {
     "message": "Decklist copied",
@@ -2080,7 +2080,7 @@
   },
   "95U7jt": {
     "message": "Direct access to me (I will give you my phone number).",
-    "translation": "Acceso directo conmigo (te daré mi número de teléfono)."
+    "translation": "Contacto directo conmigo (te daré mi número de teléfono)."
   },
   "E8rJSo": {
     "message": "Discard",
@@ -2136,11 +2136,11 @@
   },
   "1QfxQT": {
     "message": "Dismiss",
-    "translation": "Descartar"
+    "translation": "Cerrar"
   },
   "dj2xTE": {
     "message": "Dismiss notification",
-    "translation": "Descartar notificación"
+    "translation": "Cerrar notificación"
   },
   "DPfwMq": {
     "message": "Done",
@@ -2177,7 +2177,7 @@
   },
   "IGqHX9": {
     "message": "Drag a <0>{0}</0> onto {1} to attach it.",
-    "translation": "Arrastra un <0>{0}</0> sobre {1} para unirlo."
+    "translation": "Arrastra una <0>{0}</0> sobre {1} para unirla."
   },
   "n3U3s1": {
     "message": "Drag a Basic Pokémon from your hand onto your <0>Active Spot</0>.",
@@ -2515,7 +2515,7 @@
   "gUdjoL": {
     "message": "Flip",
     "context": "turn the table around",
-    "translation": "Voltear"
+    "translation": "Girar"
   },
   "sFwtdu": {
     "message": "Flip a coin",
@@ -2538,7 +2538,7 @@
   },
   "mnc6b3": {
     "message": "Flip the table",
-    "translation": "Voltear la mesa"
+    "translation": "Girar la mesa"
   },
   "CK2j9j": {
     "message": "Flip their coin",
@@ -2546,7 +2546,7 @@
   },
   "zoSOoE": {
     "message": "Foil coverage",
-    "translation": "Cobertura de holográfico"
+    "translation": "Cobertura holográfica"
   },
   "mWSnLk": {
     "message": "For news and what's coming, follow me on X: <0>{TWITTER_HANDLE}</0>",
@@ -2582,7 +2582,7 @@
   "ULwemj": {
     "message": "Fusion Strike",
     "context": "Pokémon card mechanic",
-    "translation": "Ataque Fusión"
+    "translation": "Golpe Fusión"
   },
   "IUNEkE": {
     "message": "Future",
@@ -2649,7 +2649,7 @@
   },
   "TALrFf": {
     "message": "GX marker",
-    "translation": "Marcador de GX"
+    "translation": "Marcador GX"
   },
   "FpHzzD": {
     "message": "Hand",
@@ -2699,7 +2699,7 @@
     "comments": [
       "The developer's personal note on the Sponsors & Donations page"
     ],
-    "translation": "¡Hola a todos! Soy Michael/Xiao Xiao Long. Tengo 21 años, soy de Guelph, Canadá, y empecé a programar en el otoño de 2023. Llevo más de 8 años jugando al TCG de Pokémon y pasé los últimos 3 meses creando PTCG-sim, una herramienta gratuita para que la comunidad pruebe y juegue nuestro juego de cartas favorito."
+    "translation": "¡Hola a todos! Soy Michael/Xiao Xiao Long. Tengo 21 años, soy de Guelph, Canadá, y empecé a programar en el otoño de 2023. Llevo más de 8 años jugando al JCC Pokémon y pasé los últimos 3 meses creando PTCG-sim, una herramienta gratuita para que la comunidad pruebe y juegue nuestro juego de cartas favorito."
   },
   "DA8dCZ": {
     "message": "Hide",
@@ -2725,7 +2725,7 @@
   },
   "v8upxe": {
     "message": "Hide opponent's hand",
-    "translation": "Ocultar la mano del oponente"
+    "translation": "Ocultar la mano del rival"
   },
   "ZQLqYr": {
     "message": "Hide welcome",
@@ -2867,11 +2867,11 @@
   },
   "0pN9y3": {
     "message": "It stays open for another draw. Press <0>Esc</0> twice to close it.",
-    "translation": "Se mantiene abierto para otro robo. Pulsa <0>Esc</0> dos veces para cerrarlo."
+    "translation": "Sigue abierta para robar otra vez. Pulsa <0>Esc</0> dos veces para cerrarla."
   },
   "gC8g3J": {
     "message": "It stays open for another draw. Tap outside to close it.",
-    "translation": "Se queda abierta para robar otra vez. Toca fuera para cerrarla."
+    "translation": "Sigue abierta para robar otra vez. Toca fuera para cerrarla."
   },
   "5kNRW8": {
     "message": "Item",
@@ -2964,7 +2964,7 @@
   },
   "iZqrTt": {
     "message": "Layout (optional)",
-    "translation": "Distribución (opcional)"
+    "translation": "Diseño (opcional)"
   },
   "1ng4Ht": {
     "message": "Leave in play",
@@ -3001,12 +3001,12 @@
   },
   "xXagjO": {
     "message": "LEGEND · 2 halves",
-    "translation": "LEGEND · 2 mitades"
+    "translation": "LEYENDA · 2 mitades"
   },
   "YVrOwc": {
     "message": "Level-Up",
     "context": "Pokémon stage",
-    "translation": "Nivel Up"
+    "translation": "Niv. X"
   },
   "Fu5KED": {
     "message": "Lift cards while dragging",
@@ -3042,7 +3042,7 @@
   },
   "jleG-m": {
     "message": "Line {line}: set code too long.",
-    "translation": "Línea {line}: código de set demasiado largo."
+    "translation": "Línea {line}: código de expansión demasiado largo."
   },
   "Q8pDHq": {
     "message": "List",
@@ -3105,7 +3105,7 @@
     "comments": [
       "The Log button's name while it has lines not yet read. {unread} is how many."
     ],
-    "translation": "Registro, {unread, plural, one {# nuevo} other {# nuevos}}"
+    "translation": "Registro, {unread, plural, one {# nueva} other {# nuevas}}"
   },
   "f7XZ4W": {
     "message": "Look",
@@ -3130,7 +3130,7 @@
   },
   "I3be0u": {
     "message": "Look at or cover (only you)",
-    "translation": "Mirar u ocultar (solo tú)"
+    "translation": "Mirar o tapar (solo tú)"
   },
   "nZyxDJ": {
     "message": "Look at or cover their hand",
@@ -3162,11 +3162,11 @@
   },
   "ktAl1J": {
     "message": "Look/cover hand",
-    "translation": "Mirar/ocultar mano"
+    "translation": "Mirar/tapar mano"
   },
   "TYI_fo": {
     "message": "Look/cover prizes",
-    "translation": "Mirar/ocultar premios"
+    "translation": "Mirar/tapar Premios"
   },
   "pKU2VG": {
     "message": "Looking at cards",
@@ -3216,7 +3216,7 @@
   },
   "cnyUyK": {
     "message": "Make cover",
-    "translation": "Crear reverso"
+    "translation": "Usar como portada"
   },
   "brtcFm": {
     "message": "Mark {mark}",
@@ -3249,7 +3249,7 @@
   },
   "42K-4o": {
     "message": "Match finish",
-    "translation": "Acabado de la partida"
+    "translation": "Según el acabado"
   },
   "5EeU5m": {
     "message": "Matte",
@@ -3278,7 +3278,7 @@
   "8ykb1q": {
     "message": "Metal",
     "context": "Pokémon type",
-    "translation": "Metal"
+    "translation": "Metálico"
   },
   "-KKkWV": {
     "message": "Middle",
@@ -3322,7 +3322,7 @@
   },
   "vzM2-S": {
     "message": "More for {deckName}",
-    "translation": "Más para {deckName}"
+    "translation": "Más opciones de {deckName}"
   },
   "LlDm7t": {
     "message": "More game actions",
@@ -3404,7 +3404,7 @@
   },
   "KJeM1I": {
     "message": "My half {percent}% of the table",
-    "translation": "Mi mitad {percent}% de la mesa"
+    "translation": "Mi mitad: {percent} % de la mesa"
   },
   "6YtxFj": {
     "message": "Name",
@@ -3503,7 +3503,7 @@
   },
   "r1U_Vc": {
     "message": "No cards match “{text}”.",
-    "translation": "Ninguna carta coincide con “{text}”."
+    "translation": "Ninguna carta coincide con «{text}»."
   },
   "Ji7Myu": {
     "message": "No cards match.",
@@ -3557,11 +3557,11 @@
   },
   "ebeFtm": {
     "message": "No shortcut matches “{search}”.",
-    "translation": "Ningún atajo coincide con “{search}”."
+    "translation": "Ningún atajo coincide con «{search}»."
   },
   "Psi2LF": {
     "message": "No Special Condition",
-    "translation": "Sin condición especial"
+    "translation": "Sin Condición Especial"
   },
   "lChsa8": {
     "message": "No tournament decks right now.",
@@ -3612,7 +3612,7 @@
   },
   "6rbhdt": {
     "message": "Not your move",
-    "translation": "No es tu turno"
+    "translation": "No es tu movimiento"
   },
   "W8zlv3": {
     "message": "Not yours to do",
@@ -3629,11 +3629,11 @@
   },
   "UJSKBC": {
     "message": "Now make it <0>Poisoned</0>: right-click it, then <1>{0}</1>.",
-    "translation": "Ahora ponlo en estado <0>Envenenado</0>: haz clic derecho sobre él y luego <1>{0}</1>."
+    "translation": "Ahora déjalo <0>Envenenado</0>: haz clic derecho sobre él y luego en <1>{0}</1>."
   },
   "wUL6aJ": {
     "message": "Now make it <0>Poisoned</0>: tap it, <1>{0}</1>, then <2>{1}</2>.",
-    "translation": "Ahora ponlo <0>Envenenado</0>: tócalo, <1>{0}</1> y luego <2>{1}</2>."
+    "translation": "Ahora déjalo <0>Envenenado</0>: tócalo, <1>{0}</1> y luego <2>{1}</2>."
   },
   "LFzr4S": {
     "message": "Number of cards",
@@ -3750,7 +3750,7 @@
   },
   "aiCxFx": {
     "message": "Open your deck",
-    "translation": "Abre tu baraja"
+    "translation": "Abrir tu baraja"
   },
   "mr-o_0": {
     "message": "Open your discard pile",
@@ -3778,15 +3778,15 @@
   },
   "WOApxE": {
     "message": "Opponent is looking",
-    "translation": "Tu oponente está mirando"
+    "translation": "Tu rival está mirando"
   },
   "g88DaC": {
     "message": "Opponent moving cards",
-    "translation": "El oponente está moviendo cartas"
+    "translation": "Tu rival está moviendo cartas"
   },
   "ZXd3zV": {
     "message": "Opponent's cards face me",
-    "translation": "Las cartas del oponente me miran"
+    "translation": "Cartas del rival orientadas hacia mí"
   },
   "eH_2Pb": {
     "message": "Other",
@@ -3805,7 +3805,7 @@
   "SFwfHx": {
     "message": "Page Down",
     "context": "keyboard key",
-    "translation": "Re Pág"
+    "translation": "Av Pág"
   },
   "EfIP2O": {
     "message": "Page language ({following})",
@@ -3814,7 +3814,7 @@
   "161eyw": {
     "message": "Page Up",
     "context": "keyboard key",
-    "translation": "Av Pág"
+    "translation": "Re Pág"
   },
   "xun4kD": {
     "message": "Paralyzed",
@@ -3989,7 +3989,7 @@
   },
   "cF4opC": {
     "message": "Press <0>{0}</0>: it shuffles your deck and deals your hand.",
-    "translation": "Pulsa <0>{0}</0>: baraja tu baraja y reparte tu mano."
+    "translation": "Pulsa <0>{0}</0>: baraja las cartas de tu baraja y reparte tu mano."
   },
   "svdjsQ": {
     "message": "Press <0>{key}</0> any time for every key.",
@@ -4037,7 +4037,7 @@
   "groO0o": {
     "message": "Prism Star",
     "context": "Pokémon card mechanic",
-    "translation": "Prisma Estrella"
+    "translation": "Estrella Prisma"
   },
   "nT_UTA": {
     "message": "Prize",
@@ -4073,7 +4073,7 @@
   },
   "5XURu8": {
     "message": "Put damage and Poisoned on their Pokémon",
-    "translation": "Pon daño y Envenenado en su Pokémon"
+    "translation": "Pon daño a su Pokémon y déjalo Envenenado"
   },
   "rkcP1p": {
     "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
@@ -4108,7 +4108,7 @@
   "_W_UDH": {
     "message": "Rapid Strike",
     "context": "Pokémon card mechanic",
-    "translation": "Estilo Fluido"
+    "translation": "Golpe Fluido"
   },
   "U86mdr": {
     "message": "Rarity",
@@ -4148,7 +4148,7 @@
   },
   "KB_9s_": {
     "message": "Redo (Ctrl+Shift+Z)",
-    "translation": "Rehacer (Ctrl+Shift+Z)"
+    "translation": "Rehacer (Ctrl+Mayús+Z)"
   },
   "NKamZr": {
     "message": "Reduce motion",
@@ -4193,15 +4193,15 @@
   },
   "9ojRX3": {
     "message": "Remove one {cardName}",
-    "translation": "Quitar una {cardName}"
+    "translation": "Quitar 1 {cardName}"
   },
   "4xkMqd": {
     "message": "Remove one {name}",
-    "translation": "Quitar una {name}"
+    "translation": "Quitar 1 {name}"
   },
   "5qTkf-": {
     "message": "Remove special condition",
-    "translation": "Quitar condición especial"
+    "translation": "Quitar Condición Especial"
   },
   "XsrZAv": {
     "message": "Rename",
@@ -4308,7 +4308,7 @@
   "UQt_GI": {
     "message": "Restored",
     "context": "Pokémon stage",
-    "translation": "Restaurado"
+    "translation": "Recreado"
   },
   "Dwpy1Z": {
     "message": "Resume a saved game…",
@@ -4320,7 +4320,7 @@
   },
   "YgI_8f": {
     "message": "Retreat at most",
-    "translation": "Retirarse como máximo"
+    "translation": "Retirada como máximo"
   },
   "MTyHfv": {
     "message": "Reveal",
@@ -4349,7 +4349,7 @@
   },
   "fa6wL6": {
     "message": "Revealed to your opponent",
-    "translation": "Revelado a tu oponente"
+    "translation": "Revelado a tu rival"
   },
   "XGMYSt": {
     "message": "Right",
@@ -4382,15 +4382,15 @@
   "pbJSIc": {
     "message": "Rotate",
     "context": "shortcut key caption",
-    "translation": "Girar"
+    "translation": "Rotar"
   },
   "M2Hp6y": {
     "message": "Rotate BREAK",
-    "translation": "Girar BREAK"
+    "translation": "Rotar TURBO"
   },
   "86ffek": {
     "message": "Rotate card(s)",
-    "translation": "Girar carta(s)"
+    "translation": "Rotar carta(s)"
   },
   "JRfxmI": {
     "message": "Row {row}: text after a closing quote.",
@@ -4450,7 +4450,7 @@
   },
   "duDNyy": {
     "message": "Rule Box",
-    "translation": "Caja de reglas"
+    "translation": "Recuadro de regla"
   },
   "3JjdaA": {
     "message": "Run",
@@ -4509,7 +4509,7 @@
   },
   "pHxB6X": {
     "message": "Say…",
-    "translation": "Decir…"
+    "translation": "Escribe…"
   },
   "JTYvAw": {
     "message": "Search cards",
@@ -4576,16 +4576,16 @@
   "V7pCG0": {
     "message": "Set",
     "context": "card set",
-    "translation": "Set"
+    "translation": "Expansión"
   },
   "Ngk98B": {
     "message": "Set & number",
     "context": "sort cards by",
-    "translation": "Set y número"
+    "translation": "Expansión y número"
   },
   "SdUOXJ": {
     "message": "Set code, illustrator",
-    "translation": "Código del set, ilustrador"
+    "translation": "Código de expansión, ilustrador"
   },
   "L7_73L": {
     "message": "Set damage to {count}",
@@ -4693,7 +4693,7 @@
   },
   "wo4rGx": {
     "message": "Show every print",
-    "translation": "Mostrar todas las versiones"
+    "translation": "Mostrar todas las impresiones"
   },
   "UXsj50": {
     "message": "Show halves…",
@@ -4767,7 +4767,7 @@
   },
   "eFbm-5": {
     "message": "Shuffle deck",
-    "translation": "Barajar baraja"
+    "translation": "Barajar la baraja"
   },
   "K3yK37": {
     "message": "Shuffle hand into deck",
@@ -4796,7 +4796,7 @@
   "Tbmmyh": {
     "message": "Shuffle in",
     "context": "shortcut key caption",
-    "translation": "Barajar en"
+    "translation": "Meter y barajar"
   },
   "wZ_X8q": {
     "message": "Shuffle into deck",
@@ -4812,7 +4812,7 @@
   },
   "nU9Ip_": {
     "message": "Shuffle Prizes to bottom of deck",
-    "translation": "Poner las cartas de Premio abajo de la baraja"
+    "translation": "Barajar las cartas de Premio al fondo de la baraja"
   },
   "SRsSL6": {
     "message": "Shuffle to bottom",
@@ -4829,7 +4829,7 @@
   "utezqW": {
     "message": "Single Strike",
     "context": "Pokémon card mechanic",
-    "translation": "Estilo Brusco"
+    "translation": "Golpe Brusco"
   },
   "6Uau97": {
     "message": "Skip",
@@ -4852,7 +4852,7 @@
   },
   "6N0DKq": {
     "message": "Solo table",
-    "translation": "Mesa individual"
+    "translation": "Mesa en solitario"
   },
   "5n8ONW": {
     "message": "Sort",
@@ -4870,7 +4870,7 @@
   },
   "dEkrb1": {
     "message": "Sort by HP, show every print",
-    "translation": "Ordenar por PS, mostrar todas las versiones"
+    "translation": "Ordenar por PS, mostrar todas las impresiones"
   },
   "i_vGIr": {
     "message": "Sort hand in decklist order",
@@ -4904,15 +4904,15 @@
   },
   "tNhbGC": {
     "message": "Special condition",
-    "translation": "Condición especial"
+    "translation": "Condición Especial"
   },
   "1MpxsD": {
     "message": "Special Condition",
-    "translation": "Condición especial"
+    "translation": "Condición Especial"
   },
   "3cLm8v": {
     "message": "Special Condition…",
-    "translation": "Condición especial…"
+    "translation": "Condición Especial…"
   },
   "0kjUmj": {
     "message": "Special Energy",
@@ -4921,7 +4921,7 @@
   "h5EwqW": {
     "message": "Split",
     "context": "the table between the halves",
-    "translation": "Dividir"
+    "translation": "División"
   },
   "Y6mTBn": {
     "message": "SPONSOR TIERS",
@@ -5014,7 +5014,7 @@
   },
   "yA0PE0": {
     "message": "Start your turn with <0>{0}</0>. It draws your card.",
-    "translation": "Empieza tu turno con <0>{0}</0>. Roba tu carta."
+    "translation": "Empieza tu turno con <0>{0}</0>. Así robarás tu carta."
   },
   "p7o5f_": {
     "message": "Status",
@@ -5050,7 +5050,7 @@
   },
   "Q1BDRW": {
     "message": "Switch with top of deck",
-    "translation": "Intercambiar con la parte superior de la baraja"
+    "translation": "Intercambiar con la primera carta de la baraja"
   },
   "VeOzUg": {
     "message": "System",
@@ -5103,7 +5103,7 @@
   "Qd2uqp": {
     "message": "Tabletop",
     "context": "table depth setting",
-    "translation": "Sobremesa"
+    "translation": "Mesa"
   },
   "yNNoO1": {
     "message": "Tails",
@@ -5156,7 +5156,7 @@
   },
   "n_ll58": {
     "message": "Tap your deck to look through it.",
-    "translation": "Toca tu baraja para mirarla."
+    "translation": "Toca tu baraja para revisarla."
   },
   "pYu8i-": {
     "message": "TCG and Pocket cards don't mix: {cards}.",
@@ -5334,7 +5334,7 @@
     "comments": [
       "How the table's height is shared between the halves."
     ],
-    "translation": "Rival {theirs}% · Tuyo {percent}%"
+    "translation": "Del rival {theirs} % · Mía {percent} %"
   },
   "WVrKZx": {
     "message": "Then draw",
@@ -5349,7 +5349,7 @@
   },
   "DNMX9-": {
     "message": "They bring up the next: drag a <0>{0}</0> from their Bench to their Active Spot.",
-    "translation": "Ellos sacan al siguiente: arrastra un <0>{0}</0> de su Banca a su Puesto Activo."
+    "translation": "Tu rival saca el siguiente: arrastra un <0>{0}</0> de su Banca a su Puesto Activo."
   },
   "WsAkgd": {
     "message": "This browser won't keep your decks after you close the page.",
@@ -5452,7 +5452,7 @@
   },
   "bKUQHI": {
     "message": "To top of deck",
-    "translation": "Arriba de la baraja"
+    "translation": "Encima de la baraja"
   },
   "eQIeJ9": {
     "message": "Toggle ability used",
@@ -5606,7 +5606,7 @@
   },
   "DHMk63": {
     "message": "Turns only the selected card",
-    "translation": "Solo gira la carta seleccionada"
+    "translation": "Solo rota la carta seleccionada"
   },
   "T7w4KT": {
     "message": "Tutorial",
@@ -5632,7 +5632,7 @@
   },
   "K3Z9Js": {
     "message": "Type <0>draw</0> and press <1>Enter</1>.",
-    "translation": "Escribe <0>draw</0> y pulsa <1>Enter</1>."
+    "translation": "Escribe <0>draw</0> y pulsa <1>Intro</1>."
   },
   "YA3nrH": {
     "message": "Type <0>draw</0>, then tap the first row.",
@@ -5785,7 +5785,7 @@
     "comments": [
       "{0} is the Shuffle button's label"
     ],
-    "translation": "Cuando termines, pulsa <0>{0}</0> para barajar tu baraja."
+    "translation": "Cuando termines, pulsa <0>{0}</0> para barajar las cartas de tu baraja."
   },
   "evSBlD": {
     "message": "Win",

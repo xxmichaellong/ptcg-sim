@@ -34,7 +34,7 @@
   },
   "glYGpK": {
     "message": "{0} has left your hand.",
-    "translation": "{0} elinden ayrıldı."
+    "translation": "{0} elinden çıktı."
   },
   "FGOUAP": {
     "message": "{0} of {1}",
@@ -55,49 +55,49 @@
     "comments": [
       "Log line. {actor} is a player's name, {card} the card attached; {source} is the zone it came from and {target} where it went."
     ],
-    "translation": "{actor}, {card} kartını {source, select, hand {elinden} prizes {ödül kartlarından} discard {atık destesinden} board {oyun alanından} stadium {stadyumdan} active {aktif alandan} bench {yedekten} lostZone {Lost Zone'dan} attachmentResolution {bağlı kartlardan} other {desteden}} {target, select, hand {ele} prizes {ödül kartlarına} discard {atık destesine} board {oyun alanına} stadium {stadyuma} active {aktif alana} bench {yedeğe} lostZone {Lost Zone'a} attachmentResolution {bağlı kartlara} other {desteye}} bağladı"
+    "translation": "{actor}, {card} kartını {source, select, hand {elinden} prizes {ödül kartlarından} discard {atık yığınından} board {oyun alanından} stadium {stadyumdan} active {aktif alandan} bench {yedekten} lostZone {Lost Zone'dan} attachmentResolution {bağlı kartlardan} other {desteden}} {target, select, hand {ele} prizes {ödül kartlarına} discard {atık yığınına} board {oyun alanına} stadium {stadyuma} active {aktif alana} bench {yedeğe} lostZone {Lost Zone'a} attachmentResolution {bağlı kartlara} other {desteye}} bağladı"
   },
   "7Azhu7": {
     "message": "{actor} attached {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {targetCard}",
     "comments": [
       "Log line. {actor} is a player's name; {card} is the card attached (Energy, a Tool) and {targetCard} the Pokémon it went on; {source} is the zone it came from."
     ],
-    "translation": "{actor}, {card} kartını {source, select, hand {elinden} prizes {ödül kartlarından} discard {atık destesinden} board {oyun alanından} stadium {stadyumdan} active {aktif alandan} bench {yedekten} lostZone {Lost Zone'dan} attachmentResolution {bağlı kartlardan} other {desteden}} {targetCard} üzerine bağladı"
+    "translation": "{actor}, {card} kartını {source, select, hand {elinden} prizes {ödül kartlarından} discard {atık yığınından} board {oyun alanından} stadium {stadyumdan} active {aktif alandan} bench {yedekten} lostZone {Lost Zone'dan} attachmentResolution {bağlı kartlardan} other {desteden}} {targetCard} üzerine bağladı"
   },
   "nb_tRJ": {
     "message": "{actor} discarded {count, plural, one {# attached card(s)} other {# attached card(s)}}",
     "comments": [
       "Log line: a player discarded the cards attached to a Pokémon. {actor} is a player's name, {count} how many cards."
     ],
-    "translation": "{actor} {count, plural, one {# bağlı kartı} other {# bağlı kartı}} atık destesine attı"
+    "translation": "{actor} {count, plural, one {# bağlı kartı} other {# bağlı kartı}} atık yığınına attı"
   },
   "KeKqt_": {
     "message": "{actor} discarded {count, plural, one {# card(s)} other {# card(s)}}",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards."
     ],
-    "translation": "{actor} {count, plural, one {# kartı} other {# kartı}} atık destesine attı"
+    "translation": "{actor} {count, plural, one {# kartı} other {# kartı}} atık yığınına attı"
   },
   "fFHUli": {
     "message": "{actor} discarded hand",
     "comments": [
       "Log line. {actor} is a player's name."
     ],
-    "translation": "{actor} elini atık destesine attı"
+    "translation": "{actor} elini atık yığınına attı"
   },
   "qIBRqY": {
     "message": "{actor} discarded hand and drew {count, plural, one {# card(s)} other {# card(s)}}",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards they drew."
     ],
-    "translation": "{actor} elini atık destesine attı ve {count, plural, one {# kart} other {# kart}} çekti"
+    "translation": "{actor} elini atık yığınına attı ve {count, plural, one {# kart} other {# kart}} çekti"
   },
   "68TI_t": {
     "message": "{actor} evolved {target, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} into {card}",
     "comments": [
       "Log line. {actor} is a player's name, {card} the card it evolved into; {target} names the zone of the Pokémon that evolved, when its name is hidden."
     ],
-    "translation": "{actor}, {target, select, hand {elindeki} prizes {ödül kartlarındaki} discard {atık destesindeki} board {oyun alanındaki} stadium {stadyumdaki} active {aktif alandaki} bench {yedekteki} lostZone {Lost Zone'daki} attachmentResolution {bağlı kartlardaki} other {destedeki}} Pokémon'u {card} kartına evrimleştirdi"
+    "translation": "{actor}, {target, select, hand {elindeki} prizes {ödül kartlarındaki} discard {atık yığınındaki} board {oyun alanındaki} stadium {stadyumdaki} active {aktif alandaki} bench {yedekteki} lostZone {Lost Zone'daki} attachmentResolution {bağlı kartlardaki} other {destedeki}} Pokémon'u {card} kartına evrimleştirdi"
   },
   "gUuWfL": {
     "message": "{actor} evolved {targetCard} into {card}",
@@ -111,14 +111,14 @@
     "comments": [
       "Log line: a player hid a zone they had shown to everyone. {actor} is who hid it, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "{actor}, {owner} oyuncusunun {source, select, hand {elini} prizes {ödül kartlarını} discard {atık destesini} board {oyun alanını} stadium {stadyumunu} active {aktif alanını} bench {yedeğini} lostZone {Lost Zone'unu} attachmentResolution {bağlı kartlarını} inspection {incelemesini} other {destesini}} gizledi"
+    "translation": "{actor}, {owner} oyuncusunun {source, select, hand {elini} prizes {ödül kartlarını} discard {atık yığınını} board {oyun alanını} stadium {stadyumunu} active {aktif alanını} bench {yedeğini} lostZone {Lost Zone'unu} attachmentResolution {bağlı kartlarını} inspection {incelemesini} other {destesini}} gizledi"
   },
   "89ICfA": {
     "message": "{actor} hid card in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line: a player hid a card they had shown to everyone. {actor} is who hid it, {owner} whose card it is; {source} is the zone it is in."
     ],
-    "translation": "{actor}, {owner} oyuncusunun {source, select, hand {elindeki} prizes {ödül kartlarındaki} discard {atık destesindeki} board {oyun alanındaki} stadium {stadyumundaki} active {aktif alanındaki} bench {yedeğindeki} lostZone {Lost Zone'undaki} attachmentResolution {bağlı kartlarındaki} inspection {incelemesindeki} other {destesindeki}} bir kartı gizledi"
+    "translation": "{actor}, {owner} oyuncusunun {source, select, hand {elindeki} prizes {ödül kartlarındaki} discard {atık yığınındaki} board {oyun alanındaki} stadium {stadyumundaki} active {aktif alanındaki} bench {yedeğindeki} lostZone {Lost Zone'undaki} attachmentResolution {bağlı kartlarındaki} inspection {incelemesindeki} other {destesindeki}} bir kartı gizledi"
   },
   "PZVwKy": {
     "message": "{actor} left {count, plural, one {# attached card(s)} other {# attached card(s)}} in play",
@@ -132,42 +132,42 @@
     "comments": [
       "Log line for a Pokémon moved onto another player's side of the table. {actor} is the card owner's name, {card} a card's name, {boardOwner} the name of the player whose Active or Bench it went to; {source} is the spot it left and {target} the spot it went to."
     ],
-    "translation": "{actor}, {card} kartını {source, select, hand {elinden} prizes {ödül kartlarından} discard {atık yığınından} board {oyun alanından} stadium {stadyumdan} active {aktif Pokémon'dan} bench {yedekten} lostZone {Lost Zone'dan} attachmentResolution {ekli kartlardan} other {desteden}} {boardOwner} oyuncusunun {target, select, hand {eline} prizes {ödül kartlarına} discard {atık yığınına} board {oyun alanına} stadium {stadyumuna} active {aktif Pokémon'una} bench {yedeğine} lostZone {Lost Zone'una} attachmentResolution {ekli kartlarına} other {destesine}} taşıdı"
+    "translation": "{actor}, {card} kartını {source, select, hand {elinden} prizes {ödül kartlarından} discard {atık yığınından} board {oyun alanından} stadium {stadyumdan} active {aktif alandan} bench {yedekten} lostZone {Lost Zone'dan} attachmentResolution {bağlı kartlardan} other {desteden}} {boardOwner} oyuncusunun {target, select, hand {eline} prizes {ödül kartlarına} discard {atık yığınına} board {oyun alanına} stadium {stadyumuna} active {aktif alanına} bench {yedeğine} lostZone {Lost Zone'una} attachmentResolution {bağlı kartlarına} other {destesine}} taşıdı"
   },
   "VzhIq8": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {target, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}}",
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left and {target} the zone it went to."
     ],
-    "translation": "{actor}, {card} kartını {source, select, hand {elinden} prizes {ödül kartlarından} discard {atık destesinden} board {oyun alanından} stadium {stadyumdan} active {aktif alandan} bench {yedekten} lostZone {Lost Zone'dan} attachmentResolution {bağlı kartlardan} other {desteden}} {target, select, hand {ele} prizes {ödül kartlarına} discard {atık destesine} board {oyun alanına} stadium {stadyuma} active {aktif alana} bench {yedeğe} lostZone {Lost Zone'a} attachmentResolution {bağlı kartlara} other {desteye}} taşıdı"
+    "translation": "{actor}, {card} kartını {source, select, hand {elinden} prizes {ödül kartlarından} discard {atık yığınından} board {oyun alanından} stadium {stadyumdan} active {aktif alandan} bench {yedekten} lostZone {Lost Zone'dan} attachmentResolution {bağlı kartlardan} other {desteden}} {target, select, hand {ele} prizes {ödül kartlarına} discard {atık yığınına} board {oyun alanına} stadium {stadyuma} active {aktif alana} bench {yedeğe} lostZone {Lost Zone'a} attachmentResolution {bağlı kartlara} other {desteye}} taşıdı"
   },
   "elLtOc": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {targetCard}",
     "comments": [
       "Log line. {actor} is a player's name, {card} and {targetCard} card names; {source} is the zone the card left."
     ],
-    "translation": "{actor}, {card} kartını {source, select, hand {elinden} prizes {ödül kartlarından} discard {atık destesinden} board {oyun alanından} stadium {stadyumdan} active {aktif alandan} bench {yedekten} lostZone {Lost Zone'dan} attachmentResolution {bağlı kartlardan} other {desteden}} {targetCard} üzerine taşıdı"
+    "translation": "{actor}, {card} kartını {source, select, hand {elinden} prizes {ödül kartlarından} discard {atık yığınından} board {oyun alanından} stadium {stadyumdan} active {aktif alandan} bench {yedekten} lostZone {Lost Zone'dan} attachmentResolution {bağlı kartlardan} other {desteden}} {targetCard} üzerine taşıdı"
   },
   "RyQ60M": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to bottom of deck",
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left."
     ],
-    "translation": "{actor}, {card} kartını {source, select, hand {elinden} prizes {ödül kartlarından} discard {atık destesinden} board {oyun alanından} stadium {stadyumdan} active {aktif alandan} bench {yedekten} lostZone {Lost Zone'dan} attachmentResolution {bağlı kartlardan} other {desteden}} destenin altına taşıdı"
+    "translation": "{actor}, {card} kartını {source, select, hand {elinden} prizes {ödül kartlarından} discard {atık yığınından} board {oyun alanından} stadium {stadyumdan} active {aktif alandan} bench {yedekten} lostZone {Lost Zone'dan} attachmentResolution {bağlı kartlardan} other {desteden}} destenin altına taşıdı"
   },
   "CsrT9R": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to top of deck",
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left."
     ],
-    "translation": "{actor}, {card} kartını {source, select, hand {elinden} prizes {ödül kartlarından} discard {atık destesinden} board {oyun alanından} stadium {stadyumdan} active {aktif alandan} bench {yedekten} lostZone {Lost Zone'dan} attachmentResolution {bağlı kartlardan} other {desteden}} destenin üstüne taşıdı"
+    "translation": "{actor}, {card} kartını {source, select, hand {elinden} prizes {ödül kartlarından} discard {atık yığınından} board {oyun alanından} stadium {stadyumdan} active {aktif alandan} bench {yedekten} lostZone {Lost Zone'dan} attachmentResolution {bağlı kartlardan} other {desteden}} destenin üstüne taşıdı"
   },
   "WBnnCz": {
     "message": "{actor} moved {count, plural, one {# card(s)} other {# card(s)}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} other {deck}}",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards; {source} is the zone they left and {destination} where they went (play: onto the table)."
     ],
-    "translation": "{actor}, {count, plural, one {# kartı} other {# kartı}} {source, select, hand {elinden} prizes {ödül kartlarından} discard {atık destesinden} board {oyun alanından} stadium {stadyumdan} active {aktif alandan} bench {yedekten} lostZone {Lost Zone'dan} attachmentResolution {bağlı kartlardan} other {desteden}} {destination, select, hand {ele} discard {atık destesine} lostZone {Lost Zone'a} deckBottom {destenin altına} play {oyuna} other {desteye}} taşıdı"
+    "translation": "{actor}, {count, plural, one {# kartı} other {# kartı}} {source, select, hand {elinden} prizes {ödül kartlarından} discard {atık yığınından} board {oyun alanından} stadium {stadyumdan} active {aktif alandan} bench {yedekten} lostZone {Lost Zone'dan} attachmentResolution {bağlı kartlardan} other {desteden}} {destination, select, hand {ele} discard {atık yığınına} lostZone {Lost Zone'a} deckBottom {destenin altına} play {oyuna} other {desteye}} taşıdı"
   },
   "P4_K0D": {
     "message": "{actor} moved a random card from {target}'s hand to board",
@@ -181,21 +181,21 @@
     "comments": [
       "Log line: a player showed one card to everyone. {actor} is who showed it, {owner} whose card it is, {card} the card's name; {source} is the zone it is in."
     ],
-    "translation": "{actor}, {owner} oyuncusunun {source, select, hand {elindeki} prizes {ödül kartlarındaki} discard {atık destesindeki} board {oyun alanındaki} stadium {stadyumundaki} active {aktif alanındaki} bench {yedeğindeki} lostZone {Lost Zone'undaki} attachmentResolution {bağlı kartlarındaki} inspection {incelemesindeki} other {destesindeki}} {card} kartını gösterdi"
+    "translation": "{actor}, {owner} oyuncusunun {source, select, hand {elindeki} prizes {ödül kartlarındaki} discard {atık yığınındaki} board {oyun alanındaki} stadium {stadyumundaki} active {aktif alanındaki} bench {yedeğindeki} lostZone {Lost Zone'undaki} attachmentResolution {bağlı kartlarındaki} inspection {incelemesindeki} other {destesindeki}} {card} kartını gösterdi"
   },
   "TMqzLF": {
     "message": "{actor} revealed {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line: a player showed a whole zone to everyone. {actor} is who showed it, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "{actor}, {owner} oyuncusunun {source, select, hand {elini} prizes {ödül kartlarını} discard {atık destesini} board {oyun alanını} stadium {stadyumunu} active {aktif alanını} bench {yedeğini} lostZone {Lost Zone'unu} attachmentResolution {bağlı kartlarını} inspection {incelemesini} other {destesini}} gösterdi"
+    "translation": "{actor}, {owner} oyuncusunun {source, select, hand {elini} prizes {ödül kartlarını} discard {atık yığınını} board {oyun alanını} stadium {stadyumunu} active {aktif alanını} bench {yedeğini} lostZone {Lost Zone'unu} attachmentResolution {bağlı kartlarını} inspection {incelemesini} other {destesini}} gösterdi"
   },
   "P2m23t": {
     "message": "{actor} shuffled {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} into deck",
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left."
     ],
-    "translation": "{actor}, {card} kartını {source, select, hand {elinden} prizes {ödül kartlarından} discard {atık destesinden} board {oyun alanından} stadium {stadyumdan} active {aktif alandan} bench {yedekten} lostZone {Lost Zone'dan} attachmentResolution {bağlı kartlardan} other {desteden}} desteye karıştırdı"
+    "translation": "{actor}, {card} kartını {source, select, hand {elinden} prizes {ödül kartlarından} discard {atık yığınından} board {oyun alanından} stadium {stadyumdan} active {aktif alandan} bench {yedekten} lostZone {Lost Zone'dan} attachmentResolution {bağlı kartlardan} other {desteden}} desteye karıştırdı"
   },
   "xEKtXt": {
     "message": "{actor} shuffled {count, plural, one {# attached card(s)} other {# attached card(s)}} into deck",
@@ -230,7 +230,7 @@
     "comments": [
       "Log line: a player shuffled their discard pile into their deck. {actor} is a player's name."
     ],
-    "translation": "{actor} atık destesini desteye karıştırdı"
+    "translation": "{actor} atık yığınını desteye karıştırdı"
   },
   "hJ32fr": {
     "message": "{actor} shuffled hand into deck",
@@ -272,7 +272,7 @@
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left, and the top card of the deck took its place."
     ],
-    "translation": "{actor}, {card} kartını {source, select, hand {elinden} prizes {ödül kartlarından} discard {atık destesinden} board {oyun alanından} stadium {stadyumdan} active {aktif alandan} bench {yedekten} lostZone {Lost Zone'dan} attachmentResolution {bağlı kartlardan} other {desteden}} destenin üstündeki kartla değiştirdi"
+    "translation": "{actor}, {card} kartını {source, select, hand {elinden} prizes {ödül kartlarından} discard {atık yığınından} board {oyun alanından} stadium {stadyumdan} active {aktif alandan} bench {yedekten} lostZone {Lost Zone'dan} attachmentResolution {bağlı kartlardan} other {desteden}} destenin üstündeki kartla değiştirdi"
   },
   "QOz626": {
     "message": "{actor} took back {target}'s last move",
@@ -552,7 +552,7 @@
     "comments": [
       "Log line: a player made a card count as another kind of card. {name} is a player's name, {card} a card's name; {category} is the kind it now counts as."
     ],
-    "translation": "{name}, {card} kartını {category, select, energy {enerji} pokemon {Pokémon} trainer {eşya} other {bilinmeyen bir tür}} yaptı"
+    "translation": "{name}, {card} kartını {category, select, energy {enerji} pokemon {Pokémon} trainer {alet} other {bilinmeyen bir tür}} yaptı"
   },
   "xjFQ8_": {
     "message": "{name} deck",
@@ -601,7 +601,7 @@
     "comments": [
       "Log line: a coin flip's result. {name} is a player's name; {result} is heads or tails."
     ],
-    "translation": "{name} {result, select, heads {yazı} other {tura}} attı"
+    "translation": "{name} yazı tura attı: {result, select, heads {tura} other {yazı}}"
   },
   "Bqr3lz": {
     "message": "{name} hand",
@@ -633,7 +633,7 @@
   },
   "Uzm69g": {
     "message": "{name} is on {seat}",
-    "translation": "{name}, {seat} konumunda"
+    "translation": "{name}, {seat} koltuğunda"
   },
   "gQ4n1o": {
     "message": "{name} joined",
@@ -686,7 +686,7 @@
   },
   "VfRcma": {
     "message": "{name} on {seat}",
-    "translation": "{name}, {seat} konumunda"
+    "translation": "{name}, {seat} koltuğunda"
   },
   "2GSIaR": {
     "message": "{name} passed",
@@ -721,14 +721,14 @@
     "comments": [
       "Log line: a player turned their once-per-game marker back to unused. {name} is a player's name; {marker} is GX or VSTAR (keep as is)."
     ],
-    "translation": "{name}, {marker} işaretini sıfırladı"
+    "translation": "{name}, {marker} işaretçisini sıfırladı"
   },
   "ywLLuj": {
     "message": "{name} shuffled {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}}",
     "comments": [
       "Log line. {name} is a player's name; {source} is the zone they shuffled, almost always their deck."
     ],
-    "translation": "{name} {source, select, hand {elini} prizes {ödül kartlarını} discard {atık destesini} board {oyun alanını} stadium {stadyumu} active {aktif Pokémon'u} bench {yedeği} lostZone {Lost Zone'u} attachmentResolution {bağlı kartları} other {destesini}} karıştırdı"
+    "translation": "{name} {source, select, hand {elini} prizes {ödül kartlarını} discard {atık yığınını} board {oyun alanını} stadium {stadyumu} active {aktif alanını} bench {yedeğini} lostZone {Lost Zone'unu} attachmentResolution {bağlı kartları} other {destesini}} karıştırdı"
   },
   "x8Eb2i": {
     "message": "{name} started turn {turn}",
@@ -880,7 +880,7 @@
     "comments": [
       "{spoken} is the shortcut's keys, such as \"Alt+1\"."
     ],
-    "translation": "{spoken}, sabitlendi"
+    "translation": "{spoken}, sabit"
   },
   "LsSEPB": {
     "message": "{target} took back their last move",
@@ -932,28 +932,28 @@
     "comments": [
       "Log line: a player began looking at a zone only they can see. {viewer} is who is looking, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "{viewer}, {owner} oyuncusunun {source, select, hand {eline} prizes {ödül kartlarına} discard {atık destesine} board {oyun alanına} stadium {stadyumuna} active {aktif Pokémon'una} bench {yedeğine} lostZone {Lost Zone'una} attachmentResolution {bağlı kartlarına} inspection {incelemesine} other {destesine}} baktı"
+    "translation": "{viewer}, {owner} oyuncusunun {source, select, hand {eline} prizes {ödül kartlarına} discard {atık yığınına} board {oyun alanına} stadium {stadyumuna} active {aktif alanına} bench {yedeğine} lostZone {Lost Zone'una} attachmentResolution {bağlı kartlarına} inspection {incelemesine} other {destesine}} baktı"
   },
   "kF6-Cq": {
     "message": "{viewer} looked at card in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line: a player began looking at a card only they can see. {viewer} is who is looking, {owner} whose card it is; {source} is the zone it is in."
     ],
-    "translation": "{viewer}, {owner} oyuncusunun {source, select, hand {elindeki} prizes {ödül kartlarındaki} discard {atık destesindeki} board {oyun alanındaki} stadium {stadyumundaki} active {aktif Pokémon'undaki} bench {yedeğindeki} lostZone {Lost Zone'undaki} attachmentResolution {bağlı kartlarındaki} inspection {incelemesindeki} other {destesindeki}} bir karta baktı"
+    "translation": "{viewer}, {owner} oyuncusunun {source, select, hand {elindeki} prizes {ödül kartlarındaki} discard {atık yığınındaki} board {oyun alanındaki} stadium {stadyumundaki} active {aktif alanındaki} bench {yedeğindeki} lostZone {Lost Zone'undaki} attachmentResolution {bağlı kartlarındaki} inspection {incelemesindeki} other {destesindeki}} bir karta baktı"
   },
   "jTec7e": {
     "message": "{viewer} stopped looking at {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line. {viewer} is who stopped looking, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "{viewer}, {owner} oyuncusunun {source, select, hand {eline} prizes {ödül kartlarına} discard {atık destesine} board {oyun alanına} stadium {stadyumuna} active {aktif Pokémon'una} bench {yedeğine} lostZone {Lost Zone'una} attachmentResolution {bağlı kartlarına} inspection {incelemesine} other {destesine}} bakmayı bıraktı"
+    "translation": "{viewer}, {owner} oyuncusunun {source, select, hand {eline} prizes {ödül kartlarına} discard {atık yığınına} board {oyun alanına} stadium {stadyumuna} active {aktif alanına} bench {yedeğine} lostZone {Lost Zone'una} attachmentResolution {bağlı kartlarına} inspection {incelemesine} other {destesine}} bakmayı bıraktı"
   },
   "FAueN1": {
     "message": "{viewer} stopped looking at card in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line. {viewer} is who stopped looking, {owner} whose card it is; {source} is the zone it is in."
     ],
-    "translation": "{viewer}, {owner} oyuncusunun {source, select, hand {elindeki} prizes {ödül kartlarındaki} discard {atık destesindeki} board {oyun alanındaki} stadium {stadyumundaki} active {aktif Pokémon'undaki} bench {yedeğindeki} lostZone {Lost Zone'undaki} attachmentResolution {bağlı kartlarındaki} inspection {incelemesindeki} other {destesindeki}} karta bakmayı bıraktı"
+    "translation": "{viewer}, {owner} oyuncusunun {source, select, hand {elindeki} prizes {ödül kartlarındaki} discard {atık yığınındaki} board {oyun alanındaki} stadium {stadyumundaki} active {aktif alanındaki} bench {yedeğindeki} lostZone {Lost Zone'undaki} attachmentResolution {bağlı kartlarındaki} inspection {incelemesindeki} other {destesindeki}} karta bakmayı bıraktı"
   },
   "JirPbT": {
     "message": "{zoneName}, {count, plural, one {# card} other {# cards}}",
@@ -1187,7 +1187,7 @@
   },
   "sVftpX": {
     "message": "Added by hand · legality not checked",
-    "translation": "Elle eklendi · uygunluk denetlenmedi"
+    "translation": "Elle eklendi · geçerlilik denetlenmedi"
   },
   "wZthGJ": {
     "message": "All lessons",
@@ -1214,7 +1214,7 @@
   },
   "Sb4b2A": {
     "message": "Allow board flip <0>(both players)</0>",
-    "translation": "Tahta çevirmeye izin ver <0>(iki oyuncu için)</0>"
+    "translation": "Masayı çevirmeye izin ver <0>(iki oyuncu için)</0>"
   },
   "Fcj7e-": {
     "message": "Alt",
@@ -1310,16 +1310,16 @@
   },
   "hXSSHx": {
     "message": "Assemble / attach to a card…",
-    "translation": "Bir karta birleştir / ekle…"
+    "translation": "Bir karta birleştir / bağla…"
   },
   "igVDFt": {
     "message": "Attach",
-    "translation": "Ekle"
+    "translation": "Bağla"
   },
   "j-d3Lr": {
     "message": "Attach",
     "context": "shortcut key caption",
-    "translation": "Ekle"
+    "translation": "Bağla"
   },
   "jrzyuC": {
     "message": "Attach and evolve",
@@ -1327,7 +1327,7 @@
   },
   "E9l6HC": {
     "message": "Attached cards being moved",
-    "translation": "Taşınan ekli kartlar"
+    "translation": "Taşınan bağlı kartlar"
   },
   "QUMrFI": {
     "message": "Attached to {0}",
@@ -1354,7 +1354,7 @@
   "USi6Js": {
     "message": "Baby",
     "context": "Pokémon stage",
-    "translation": "Baby"
+    "translation": "Bebek"
   },
   "iH8pgl": {
     "message": "Back",
@@ -1385,7 +1385,7 @@
   },
   "IbTeP5": {
     "message": "Back to pile order",
-    "translation": "Deste sırasına dön"
+    "translation": "Yığın sırasına dön"
   },
   "JT4RmD": {
     "message": "Back to the decks",
@@ -1412,7 +1412,7 @@
   "1DCTbX": {
     "message": "Basic",
     "context": "Pokémon stage",
-    "translation": "Basic"
+    "translation": "Temel"
   },
   "o4xCmI": {
     "message": "Basic / Special Energy",
@@ -1555,7 +1555,7 @@
   },
   "Vb5FmB": {
     "message": "Card actions",
-    "translation": "Kart işlemleri"
+    "translation": "Kart eylemleri"
   },
   "BLW1aU": {
     "message": "Card assembled preview",
@@ -1580,7 +1580,7 @@
   "zxNq-N": {
     "message": "Card selected",
     "context": "when a shortcut works",
-    "translation": "Kart seçildi"
+    "translation": "Kart seçili"
   },
   "jBvtuq": {
     "message": "Card size",
@@ -1588,11 +1588,11 @@
   },
   "z0RA9w": {
     "message": "Card size {percent}%, back to 100%",
-    "translation": "Kart boyutu %{percent}, %100'e dönmek için tıkla"
+    "translation": "Kart boyutu %{percent}, %100'e dön"
   },
   "kLlRKH": {
     "message": "Card stack preview",
-    "translation": "Kart destesi önizlemesi"
+    "translation": "Kart yığını önizlemesi"
   },
   "TH1VPk": {
     "message": "Card thickness",
@@ -1644,7 +1644,7 @@
   },
   "OtiTk4": {
     "message": "Change type to Tool",
-    "translation": "Türü Eşya olarak değiştir"
+    "translation": "Türü Alet olarak değiştir"
   },
   "mWj-hV": {
     "message": "Change type...",
@@ -1659,7 +1659,7 @@
     "comments": [
       "A table look: the colour"
     ],
-    "translation": "Kömür"
+    "translation": "Antrasit"
   },
   "TEzuJ6": {
     "message": "Chat message",
@@ -1775,7 +1775,7 @@
   },
   "kpRsrQ": {
     "message": "Close log",
-    "translation": "Günlüğü kapat"
+    "translation": "Kaydı kapat"
   },
   "PyipSw": {
     "message": "Close popups",
@@ -1898,7 +1898,7 @@
   },
   "heYM3E": {
     "message": "Couldn't resume the game",
-    "translation": "Oyun devam ettirilemedi"
+    "translation": "Oyuna devam edilemedi"
   },
   "ETE6Wl": {
     "message": "Couldn't save the game",
@@ -1935,7 +1935,7 @@
   },
   "Hp1l6f": {
     "message": "Current",
-    "translation": "Güncel"
+    "translation": "Etkin"
   },
   "qT5p-1": {
     "message": "Custom card",
@@ -2085,7 +2085,7 @@
   "E8rJSo": {
     "message": "Discard",
     "context": "shortcut key caption",
-    "translation": "Discard"
+    "translation": "Atık"
   },
   "uuQD5w": {
     "message": "Discard",
@@ -2093,11 +2093,11 @@
     "comments": [
       "The discard pile."
     ],
-    "translation": "Discard"
+    "translation": "Atık"
   },
   "c58XOp": {
     "message": "Discard a Pokémon, take a Prize, bring up the next",
-    "translation": "Bir Pokémon'u ıskartaya at, bir Ödül kartı al, sıradakini getir"
+    "translation": "Bir Pokémon'u atık yığınına at, bir Ödül kartı al, sıradakini getir"
   },
   "u8xW5H": {
     "message": "Discard all",
@@ -2128,7 +2128,7 @@
   "eEqZQd": {
     "message": "Discard pile",
     "context": "zone",
-    "translation": "Discard pile"
+    "translation": "Atık yığını"
   },
   "OdPOhy": {
     "message": "Discord",
@@ -2181,7 +2181,7 @@
   },
   "n3U3s1": {
     "message": "Drag a Basic Pokémon from your hand onto your <0>Active Spot</0>.",
-    "translation": "Elindeki bir Basic Pokémon'u sürükleyip <0>Aktif Alanına</0> bırak."
+    "translation": "Elindeki bir Temel Pokémon'u sürükleyip <0>Aktif Alanına</0> bırak."
   },
   "sEjSlz": {
     "message": "Dragon",
@@ -2279,7 +2279,7 @@
   },
   "ja-MfM": {
     "message": "Edit {name}",
-    "translation": "{name} öğesini düzenle"
+    "translation": "{name} destesini düzenle"
   },
   "rFL-yb": {
     "message": "Edit a copy",
@@ -2315,7 +2315,7 @@
   },
   "i07JvD": {
     "message": "Energy, evolutions, Trainers and the Bench",
-    "translation": "Enerji, evrim, Trainer ve Yedek"
+    "translation": "Enerji, evrim, Eğitmen kartları ve Yedek Alanı"
   },
   "CtX2Zh": {
     "message": "Enter",
@@ -2352,7 +2352,7 @@
     "comments": [
       "A BREAK card laid over the Pokémon it evolved from."
     ],
-    "translation": "Evrim ve önceki evre"
+    "translation": "Evrim ve önceki aşama"
   },
   "-J6iIV": {
     "message": "Evolve",
@@ -2385,7 +2385,7 @@
   },
   "HenzVD": {
     "message": "Exactly one Basic",
-    "translation": "Tam olarak bir Basic"
+    "translation": "Tam olarak bir Temel"
   },
   "bMQxzZ": {
     "message": "Exit",
@@ -2407,7 +2407,7 @@
   "2lS3BM": {
     "message": "Expanded",
     "context": "deck format",
-    "translation": "Expanded"
+    "translation": "Genişletilmiş"
   },
   "GS-Mus": {
     "message": "Export",
@@ -2434,7 +2434,7 @@
   "WtsWWf": {
     "message": "Fighting",
     "context": "Pokémon type",
-    "translation": "Dövüş"
+    "translation": "Dövüşçü"
   },
   "cSev-j": {
     "message": "Filters",
@@ -2487,11 +2487,11 @@
   "XGVxYp": {
     "message": "Finish",
     "context": "card surface",
-    "translation": "Bitir"
+    "translation": "Kaplama"
   },
   "mDOjMG": {
     "message": "Finish (optional)",
-    "translation": "Finish (isteğe bağlı)"
+    "translation": "Kaplama (isteğe bağlı)"
   },
   "SN6Ocg": {
     "message": "Fire",
@@ -2500,7 +2500,7 @@
   },
   "RCEX87": {
     "message": "Fire type, Basic",
-    "translation": "Ateş türü, Basic"
+    "translation": "Ateş türü, Temel"
   },
   "gQp6L7": {
     "message": "Flat",
@@ -2638,7 +2638,7 @@
   "iN8jqp": {
     "message": "Grass",
     "context": "Pokémon type",
-    "translation": "Çim"
+    "translation": "Bitki"
   },
   "lySEU9": {
     "message": "Green felt",
@@ -2649,7 +2649,7 @@
   },
   "TALrFf": {
     "message": "GX marker",
-    "translation": "GX işareti"
+    "translation": "GX işaretçisi"
   },
   "FpHzzD": {
     "message": "Hand",
@@ -2678,12 +2678,12 @@
   "MMu3F-": {
     "message": "Hand to bottom",
     "context": "shortcut key caption",
-    "translation": "Eli destenin altına koy"
+    "translation": "Eli alta"
   },
   "n04_a0": {
     "message": "Hand to deck",
     "context": "shortcut key caption",
-    "translation": "Eli desteye koy"
+    "translation": "Eli desteye"
   },
   "M35hjm": {
     "message": "Has an Ability, no Weakness",
@@ -2692,7 +2692,7 @@
   "BvzegF": {
     "message": "Heads",
     "context": "coin flip",
-    "translation": "Yazı"
+    "translation": "Tura"
   },
   "h94f_B": {
     "message": "Hi everyone! I'm Michael/Xiao Xiao Long. I'm a 21-year-old from Guelph, Canada, who started programming in the fall of 2023. I've been playing the Pokémon TCG for over 8 years, and I spent the last 3 months building PTCG-sim, a free tool for the community to use to test and play our favorite card game.",
@@ -2717,7 +2717,7 @@
   },
   "o1ytqy": {
     "message": "Hide log",
-    "translation": "Günlüğü gizle"
+    "translation": "Kaydı gizle"
   },
   "_hwQqt": {
     "message": "Hide Lost Zone",
@@ -2871,7 +2871,7 @@
   },
   "gC8g3J": {
     "message": "It stays open for another draw. Tap outside to close it.",
-    "translation": "Bir çekiliş daha için açık kalır. Kapatmak için dışına dokun."
+    "translation": "Başka bir çekiş için açık kalır. Kapatmak için dışına dokun."
   },
   "5kNRW8": {
     "message": "Item",
@@ -2910,7 +2910,7 @@
   "80Qsxy": {
     "message": "Keep",
     "context": "keep the changed shortcuts",
-    "translation": "Tut"
+    "translation": "Koru"
   },
   "MIi4yC": {
     "message": "Keep it to {max} characters.",
@@ -2939,7 +2939,7 @@
   },
   "69MOGQ": {
     "message": "Knock Out their <0>{0}</0>: drag it onto their discard pile. Its Energy goes with it.",
-    "translation": "Rakibin <0>{0}</0> kartını nakavt et: Discard yığınına sürükle. Enerjileri de onunla gider."
+    "translation": "Rakibin <0>{0}</0> kartını nakavt et: onu rakibin atık yığınına sürükle. Enerjileri de onunla gider."
   },
   "vXIe7J": {
     "message": "Language",
@@ -2964,7 +2964,7 @@
   },
   "iZqrTt": {
     "message": "Layout (optional)",
-    "translation": "Düzen (isteğe bağlı)"
+    "translation": "Yerleşim (isteğe bağlı)"
   },
   "1ng4Ht": {
     "message": "Leave in play",
@@ -3001,7 +3001,7 @@
   },
   "xXagjO": {
     "message": "LEGEND · 2 halves",
-    "translation": "LEGEND · 2 yarım"
+    "translation": "LEGEND · 2 yarı"
   },
   "YVrOwc": {
     "message": "Level-Up",
@@ -3170,7 +3170,7 @@
   },
   "pKU2VG": {
     "message": "Looking at cards",
-    "translation": "Kartlara bakıyor"
+    "translation": "Kartlara bakış"
   },
   "cGgbAH": {
     "message": "Lost the room during the replay.",
@@ -3216,7 +3216,7 @@
   },
   "cnyUyK": {
     "message": "Make cover",
-    "translation": "Arka yüzü yap"
+    "translation": "Kapak yap"
   },
   "brtcFm": {
     "message": "Mark {mark}",
@@ -3241,7 +3241,7 @@
   },
   "IHU0N1": {
     "message": "Mark GX attack unused",
-    "translation": "GX atağını kullanılmadı olarak işaretle"
+    "translation": "GX saldırısını kullanılmadı olarak işaretle"
   },
   "IQ2DXR": {
     "message": "Mark VSTAR Power unused",
@@ -3249,7 +3249,7 @@
   },
   "42K-4o": {
     "message": "Match finish",
-    "translation": "Maç sonu"
+    "translation": "Kaplamaya göre"
   },
   "5EeU5m": {
     "message": "Matte",
@@ -3290,7 +3290,7 @@
     "comments": [
       "A table look: midnight blue"
     ],
-    "translation": "Gece yarısı"
+    "translation": "Gece mavisi"
   },
   "_NnUxu": {
     "message": "Mine",
@@ -3392,7 +3392,7 @@
   },
   "8GMjXa": {
     "message": "Mulligan (no Basic in 7)",
-    "translation": "Mulligan (ilk 7'de Basic yok)"
+    "translation": "Mulligan (ilk 7'de Temel yok)"
   },
   "jiY-22": {
     "message": "My deck",
@@ -3404,7 +3404,7 @@
   },
   "KJeM1I": {
     "message": "My half {percent}% of the table",
-    "translation": "Masanın %{percent}'i benim yarım"
+    "translation": "Benim yarım: masanın %{percent} kadarı"
   },
   "6YtxFj": {
     "message": "Name",
@@ -3437,7 +3437,7 @@
   },
   "rf9azy": {
     "message": "Needs at least one Basic Pokémon.",
-    "translation": "En az bir Basic Pokémon gerekli."
+    "translation": "En az bir Temel Pokémon gerekli."
   },
   "W_gspM": {
     "message": "New deck",
@@ -3484,7 +3484,7 @@
   },
   "iKrJ1Q": {
     "message": "No Basic Pokémon in your hand: that is a mulligan. Choose <0>{0}</0> under {1}.",
-    "translation": "Elinde Basic Pokémon yok: bu bir mulligan. {1} altında <0>{0}</0> seç."
+    "translation": "Elinde Temel Pokémon yok: bu bir mulligan. {1} menüsünde <0>{0}</0> seçeneğini seç."
   },
   "6n5psS": {
     "message": "No card lines found. Try lines like \"4 Iono PAL 185\".",
@@ -3511,7 +3511,7 @@
   },
   "bYysi5": {
     "message": "No cards yet. Paste a list anywhere here.",
-    "translation": "Henüz kart yok. Buraya herhangi bir yere bir liste yapıştır."
+    "translation": "Henüz kart yok. Buranın herhangi bir yerine bir liste yapıştır."
   },
   "-Qx8U8": {
     "message": "No deck",
@@ -3541,7 +3541,7 @@
   },
   "SkSmET": {
     "message": "No foil",
-    "translation": "Foil yok"
+    "translation": "Folyo yok"
   },
   "2fhoKU": {
     "message": "No image",
@@ -3612,11 +3612,11 @@
   },
   "6rbhdt": {
     "message": "Not your move",
-    "translation": "Hamle sende değil"
+    "translation": "Bu kartı taşıyamazsın"
   },
   "W8zlv3": {
     "message": "Not yours to do",
-    "translation": "Bunu yapma sırası sende değil"
+    "translation": "Bunu sen yapamazsın"
   },
   "aq4Vb1": {
     "message": "Nothing selected",
@@ -3672,7 +3672,7 @@
       "A badge on a deck: the seat it is on (P1, P2)",
       "The deck is on this seat (P1, P2)"
     ],
-    "translation": "{seat} üzerinde"
+    "translation": "{seat} koltuğunda"
   },
   "jidRIl": {
     "message": "On your own you play both sides. Press <0>{0}</0> to turn the table to theirs.",
@@ -3706,11 +3706,11 @@
   },
   "gbBPE1": {
     "message": "Only you see this. Cards without that printing keep the deck's scan.",
-    "translation": "Bunu yalnızca sen görürsün. O basıma sahip olmayan kartlar destenin taramasını korur."
+    "translation": "Bunu yalnızca sen görürsün. O baskıya sahip olmayan kartlar destenin taramasını korur."
   },
   "woUJjU": {
     "message": "Open <0>{0}</0>: every action, by name.",
-    "translation": "<0>{0}</0> aç: tüm eylemler, adlarıyla."
+    "translation": "<0>{0}</0> penceresini aç: tüm eylemler, adlarıyla."
   },
   "tG9S9l": {
     "message": "Open a deck file",
@@ -3738,7 +3738,7 @@
   },
   "tfdDUV": {
     "message": "Open their discard pile",
-    "translation": "Rakibin discard yığınını aç"
+    "translation": "Rakibin atık yığınını aç"
   },
   "QUoj0T": {
     "message": "Open their Lost Zone",
@@ -3754,7 +3754,7 @@
   },
   "mr-o_0": {
     "message": "Open your discard pile",
-    "translation": "Discard yığınını aç"
+    "translation": "Atık yığınını aç"
   },
   "eZJMWk": {
     "message": "Open your Lost Zone",
@@ -3766,7 +3766,7 @@
   },
   "4UrZFn": {
     "message": "Opening hand · {basics} Basic Pokémon · {mulligan} mulligan",
-    "translation": "Başlangıç eli · {basics} Basic Pokémon · {mulligan} mulligan"
+    "translation": "Başlangıç eli · {basics} Temel Pokémon · {mulligan} mulligan"
   },
   "oLQoOZ": {
     "message": "Opening your decks…",
@@ -3796,7 +3796,7 @@
   "bXnhJI": {
     "message": "Other Trainers",
     "context": "Trainer cards by kind",
-    "translation": "Diğer Trainer'lar"
+    "translation": "Diğer Eğitmen kartları"
   },
   "zsicOH": {
     "message": "Out of sync with the room.",
@@ -3893,7 +3893,7 @@
   },
   "Sky344": {
     "message": "Play <0>{0}</0>: drag it onto the open mat. Ending your turn clears it away.",
-    "translation": "<0>{0}</0> oyna: açık alana sürükle. Turunu bitirmek onu kaldırır."
+    "translation": "<0>{0}</0> kartını oyna: açık alana sürükle. Turunu bitirdiğinde kaldırılır."
   },
   "7LIRc6": {
     "message": "Play a random deck",
@@ -4032,7 +4032,7 @@
   },
   "Lxdrcy": {
     "message": "Previous replay action",
-    "translation": "Önceki tekrar hamlesi"
+    "translation": "Önceki tekrar eylemi"
   },
   "groO0o": {
     "message": "Prism Star",
@@ -4069,11 +4069,11 @@
   },
   "jG4a_T": {
     "message": "Put another on your <0>Bench</0>. Up to five fit there.",
-    "translation": "<0>Yedek</0> alanına bir tane daha koy. En fazla beş tane sığar."
+    "translation": "<0>Yedek Alanına</0> bir tane daha koy. En fazla beş tane sığar."
   },
   "5XURu8": {
     "message": "Put damage and Poisoned on their Pokémon",
-    "translation": "Rakibin Pokémon'una hasar ve Zehirli koy"
+    "translation": "Rakibin Pokémon'una hasar ve Zehirli durumu koy"
   },
   "rkcP1p": {
     "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
@@ -4081,7 +4081,7 @@
   },
   "QEP1VC": {
     "message": "Put the rest of it, <0>{0}</0> and its Energy, in their discard pile too.",
-    "translation": "Geri kalanını, yani <0>{0}</0> ve Enerjilerini de Discard yığınına koy."
+    "translation": "Geri kalanını, yani <0>{0}</0> ve Enerjilerini de rakibin atık yığınına koy."
   },
   "VbWX2u": {
     "message": "Quantity",
@@ -4173,7 +4173,7 @@
   },
   "hKnn4w": {
     "message": "Remove {name} from {seat}",
-    "translation": "{name} kartını {seat} konumundan kaldır"
+    "translation": "{name} destesini {seat} koltuğundan kaldır"
   },
   "-cND-P": {
     "message": "Remove all damage",
@@ -4308,7 +4308,7 @@
   "UQt_GI": {
     "message": "Restored",
     "context": "Pokémon stage",
-    "translation": "Geri getirildi"
+    "translation": "Restored"
   },
   "Dwpy1Z": {
     "message": "Resume a saved game…",
@@ -4316,11 +4316,11 @@
   },
   "X1Npk-": {
     "message": "Retreat {retreat}",
-    "translation": "Çekilme {retreat}"
+    "translation": "Geri çekilme {retreat}"
   },
   "YgI_8f": {
     "message": "Retreat at most",
-    "translation": "En fazla çekilme"
+    "translation": "En fazla geri çekilme"
   },
   "MTyHfv": {
     "message": "Reveal",
@@ -4362,7 +4362,7 @@
   },
   "gTK8h8": {
     "message": "Right-click a card for actions.",
-    "translation": "İşlemler için karta sağ tıkla."
+    "translation": "Eylemler için karta sağ tıkla."
   },
   "TKRCsY": {
     "message": "Right-click their <0>{0}</0>.",
@@ -4484,19 +4484,19 @@
   },
   "A7uAwg": {
     "message": "Save {name}",
-    "translation": "{name} kaydet"
+    "translation": "{name} destesini kaydet"
   },
   "3zdJQY": {
     "message": "Save and edit {0}",
-    "translation": "{0} kaydet ve düzenle"
+    "translation": "{0} destesini kaydet ve düzenle"
   },
   "Z-7fcR": {
     "message": "Save and edit {title}",
-    "translation": "{title} kaydet ve düzenle"
+    "translation": "{title} destesini kaydet ve düzenle"
   },
   "4ibQSn": {
     "message": "Save online game",
-    "translation": "Çevrim içi oyunu kaydet"
+    "translation": "Çevrimiçi oyunu kaydet"
   },
   "OnrVKw": {
     "message": "Saved",
@@ -4693,7 +4693,7 @@
   },
   "wo4rGx": {
     "message": "Show every print",
-    "translation": "Tüm basımları göster"
+    "translation": "Tüm baskıları göster"
   },
   "UXsj50": {
     "message": "Show halves…",
@@ -4852,7 +4852,7 @@
   },
   "6N0DKq": {
     "message": "Solo table",
-    "translation": "Tek kişilik masa"
+    "translation": "Solo masa"
   },
   "5n8ONW": {
     "message": "Sort",
@@ -4921,7 +4921,7 @@
   "h5EwqW": {
     "message": "Split",
     "context": "the table between the halves",
-    "translation": "Böl"
+    "translation": "Bölme"
   },
   "Y6mTBn": {
     "message": "SPONSOR TIERS",
@@ -4976,12 +4976,12 @@
   "0dnJ9h": {
     "message": "Stage 1",
     "context": "Pokémon stage",
-    "translation": "Stage 1"
+    "translation": "1. Aşama"
   },
   "c6AS_i": {
     "message": "Stage 2",
     "context": "Pokémon stage",
-    "translation": "Stage 2"
+    "translation": "2. Aşama"
   },
   "GlGLvC": {
     "message": "Standard",
@@ -5028,12 +5028,12 @@
   "yqeLY3": {
     "message": "Supporter",
     "context": "Trainer card kind",
-    "translation": "Supporter"
+    "translation": "Destek"
   },
   "Uzt8Ji": {
     "message": "Supporters",
     "context": "Trainer cards by kind",
-    "translation": "Supporter'lar"
+    "translation": "Destekler"
   },
   "OVjfHO": {
     "message": "Surprise me",
@@ -5132,7 +5132,7 @@
   },
   "fU8msy": {
     "message": "Tap <0>{0}</0>, then <1>{1}</1>: everything a card can do.",
-    "translation": "<0>{0}</0> öğesine dokun, ardından <1>{1}</1> seç: bir kartın yapabildiği her şey."
+    "translation": "<0>{0}</0> kartına dokun, ardından <1>{1}</1> seç: bir kartın yapabildiği her şey."
   },
   "eaLvvH": {
     "message": "Tap <0>{0}</0>: every action, by name.",
@@ -5140,7 +5140,7 @@
   },
   "EyHJlN": {
     "message": "Tap a card for actions; tap again to read it.",
-    "translation": "İşlemler için bir karta dokun; okumak için tekrar dokun."
+    "translation": "Eylemler için bir karta dokun; okumak için tekrar dokun."
   },
   "muigTz": {
     "message": "Tap outside the card to put it back.",
@@ -5152,7 +5152,7 @@
   },
   "oeltU5": {
     "message": "Tap their <0>{0}</0>, then <1>{1}</1>.",
-    "translation": "Rakibin <0>{0}</0> öğesine dokun, ardından <1>{1}</1> seç."
+    "translation": "Rakibin <0>{0}</0> kartına dokun, ardından <1>{1}</1> seç."
   },
   "n_ll58": {
     "message": "Tap your deck to look through it.",
@@ -5173,12 +5173,12 @@
   "z5r9Ja": {
     "message": "Technical Machine",
     "context": "Trainer card kind",
-    "translation": "Technical Machine"
+    "translation": "Teknik Makine"
   },
   "9o2lM8": {
     "message": "Technical Machines",
     "context": "Trainer cards by kind",
-    "translation": "Technical Machine'ler"
+    "translation": "Teknik Makineler"
   },
   "4qLtJr": {
     "message": "That Energy has left your hand.",
@@ -5290,11 +5290,11 @@
   },
   "4IfVI6": {
     "message": "Their Active Spot",
-    "translation": "Rakibin Aktif Pokémon alanı"
+    "translation": "Rakibin Aktif Alanı"
   },
   "x36RVi": {
     "message": "Their Bench",
-    "translation": "Rakibin Yedek alanı"
+    "translation": "Rakibin Yedek Alanı"
   },
   "BBfq5L": {
     "message": "Their deck",
@@ -5302,7 +5302,7 @@
   },
   "NdIyvu": {
     "message": "Their discard pile",
-    "translation": "Rakibin düşen kart yığını"
+    "translation": "Rakibin atık yığını"
   },
   "H2nezS": {
     "message": "Their hand",
@@ -5334,7 +5334,7 @@
     "comments": [
       "How the table's height is shared between the halves."
     ],
-    "translation": "Rakip %{theirs} · Ben %{percent}"
+    "translation": "Rakip %{theirs} · Benim %{percent}"
   },
   "WVrKZx": {
     "message": "Then draw",
@@ -5349,7 +5349,7 @@
   },
   "DNMX9-": {
     "message": "They bring up the next: drag a <0>{0}</0> from their Bench to their Active Spot.",
-    "translation": "Sıradakini onlar getirir: Yedeklerinden bir <0>{0}</0> kartını Aktif Alanlarına sürükle."
+    "translation": "Sıradakini rakip getirir: rakibin Yedek Alanından bir <0>{0}</0> kartını Aktif Alanına sürükle."
   },
   "WsAkgd": {
     "message": "This browser won't keep your decks after you close the page.",
@@ -5456,7 +5456,7 @@
   },
   "eQIeJ9": {
     "message": "Toggle ability used",
-    "translation": "Kullanılan yeteneği aç/kapat"
+    "translation": "Yetenek kullanıldı: aç/kapat"
   },
   "OLgB6p": {
     "message": "Toggle ability/effect",
@@ -5544,11 +5544,11 @@
   "Ecn3Fr": {
     "message": "Trainer",
     "context": "card kind",
-    "translation": "Trainer"
+    "translation": "Eğitmen"
   },
   "kYC3TA": {
     "message": "Trainer cards",
-    "translation": "Trainer kartları"
+    "translation": "Eğitmen kartları"
   },
   "JmQewY": {
     "message": "Try a .txt or .csv file",
@@ -5690,7 +5690,7 @@
   },
   "pEHkP7": {
     "message": "Use GX attack",
-    "translation": "GX atağı kullan"
+    "translation": "GX saldırısını kullan"
   },
   "Z4udqe": {
     "message": "Use here",
@@ -5807,11 +5807,11 @@
   },
   "wkv3p1": {
     "message": "Your Active Spot",
-    "translation": "Aktif Pokémon alanın"
+    "translation": "Aktif Alanın"
   },
   "rrV20L": {
     "message": "Your Bench",
-    "translation": "Yedek alanın"
+    "translation": "Yedek Alanın"
   },
   "IZO0Y6": {
     "message": "Your board",
@@ -5824,11 +5824,11 @@
   },
   "APqbzr": {
     "message": "Your decks",
-    "translation": "Senin desteleri"
+    "translation": "Destelerin"
   },
   "S7YY4L": {
     "message": "Your discard pile",
-    "translation": "Düşen kart yığının"
+    "translation": "Atık yığının"
   },
   "gUPT1q": {
     "message": "Your hand",

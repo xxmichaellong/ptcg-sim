@@ -55,7 +55,7 @@
     "comments": [
       "Log line. {actor} is a player's name, {card} the card attached; {source} is the zone it came from and {target} where it went."
     ],
-    "translation": "{actor} a attaché {card} depuis {source, select, hand {la main} prizes {les cartes Récompense} discard {la pile de défausse} board {le plateau} stadium {le Stade} active {le Poste Actif} bench {le Banc} lostZone {la Zone Perdue} attachmentResolution {les cartes attachées} other {le deck}} à {target, select, hand {la main} prizes {les cartes Récompense} discard {la pile de défausse} board {le plateau} stadium {le Stade} active {le Poste Actif} bench {le Banc} lostZone {la Zone Perdue} attachmentResolution {les cartes attachées} other {le deck}}"
+    "translation": "{actor} a attaché {card} depuis {source, select, hand {la main} prizes {les cartes Récompense} discard {la pile de défausse} board {le plateau} stadium {le Stade} active {le Poste Actif} bench {le Banc} lostZone {la Zone Perdue} attachmentResolution {les cartes attachées} other {le deck}} {target, select, hand {à la main} prizes {aux cartes Récompense} discard {à la pile de défausse} board {au plateau} stadium {au Stade} active {au Poste Actif} bench {au Banc} lostZone {à la Zone Perdue} attachmentResolution {aux cartes attachées} other {au deck}}"
   },
   "7Azhu7": {
     "message": "{actor} attached {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {targetCard}",
@@ -97,7 +97,7 @@
     "comments": [
       "Log line. {actor} is a player's name, {card} the card it evolved into; {target} names the zone of the Pokémon that evolved, when its name is hidden."
     ],
-    "translation": "{actor} a fait évoluer {target, select, hand {la main} prizes {les cartes Récompense} discard {la pile de défausse} board {le plateau} stadium {le Stade} active {le Poste Actif} bench {le Banc} lostZone {la Zone Perdue} attachmentResolution {les cartes attachées} other {le deck}} en {card}"
+    "translation": "{actor} a fait évoluer {target, select, hand {un Pokémon de la main} prizes {un Pokémon des cartes Récompense} discard {un Pokémon de la pile de défausse} board {un Pokémon du plateau} stadium {un Pokémon du Stade} active {le Pokémon Actif} bench {un Pokémon de Banc} lostZone {un Pokémon de la Zone Perdue} attachmentResolution {un Pokémon des cartes attachées} other {un Pokémon du deck}} en {card}"
   },
   "gUuWfL": {
     "message": "{actor} evolved {targetCard} into {card}",
@@ -118,7 +118,7 @@
     "comments": [
       "Log line: a player hid a card they had shown to everyone. {actor} is who hid it, {owner} whose card it is; {source} is the zone it is in."
     ],
-    "translation": "{actor} a caché une carte de {source, select, hand {la main} prizes {les cartes Récompense} discard {la pile de défausse} board {le plateau} stadium {le Stade} active {le Poste Actif} bench {le Banc} lostZone {la Zone Perdue} attachmentResolution {les cartes attachées} inspection {l'inspection} other {le deck}} de {owner}"
+    "translation": "{actor} a caché une carte {source, select, hand {de la main} prizes {des cartes Récompense} discard {de la pile de défausse} board {du plateau} stadium {du Stade} active {du Poste Actif} bench {du Banc} lostZone {de la Zone Perdue} attachmentResolution {des cartes attachées} inspection {de l'inspection} other {du deck}} de {owner}"
   },
   "PZVwKy": {
     "message": "{actor} left {count, plural, one {# attached card(s)} other {# attached card(s)}} in play",
@@ -132,7 +132,7 @@
     "comments": [
       "Log line for a Pokémon moved onto another player's side of the table. {actor} is the card owner's name, {card} a card's name, {boardOwner} the name of the player whose Active or Bench it went to; {source} is the spot it left and {target} the spot it went to."
     ],
-    "translation": "{actor} a déplacé {card} de {source, select, hand {sa main} prizes {ses cartes Récompense} discard {sa pile de défausse} board {le plateau} stadium {le Stade} active {le Poste Actif} bench {le Banc} lostZone {la Zone Perdue} attachmentResolution {les cartes attachées} other {son deck}} vers {target, select, hand {la main} prizes {les cartes Récompense} discard {la pile de défausse} board {le plateau} stadium {le Stade} active {le Poste Actif} bench {le Banc} lostZone {la Zone Perdue} attachmentResolution {les cartes attachées} other {le deck}} de {boardOwner}"
+    "translation": "{actor} a déplacé {card} depuis {source, select, hand {sa main} prizes {ses cartes Récompense} discard {sa pile de défausse} board {le plateau} stadium {le Stade} active {le Poste Actif} bench {le Banc} lostZone {la Zone Perdue} attachmentResolution {les cartes attachées} other {son deck}} vers {target, select, hand {la main} prizes {les cartes Récompense} discard {la pile de défausse} board {le plateau} stadium {le Stade} active {le Poste Actif} bench {le Banc} lostZone {la Zone Perdue} attachmentResolution {les cartes attachées} other {le deck}} de {boardOwner}"
   },
   "VzhIq8": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {target, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}}",
@@ -167,7 +167,7 @@
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards; {source} is the zone they left and {destination} where they went (play: onto the table)."
     ],
-    "translation": "{actor} a déplacé {count, plural, one {# carte} other {# cartes}} depuis {source, select, hand {la main} prizes {les cartes Récompense} discard {la pile de défausse} board {le plateau} stadium {le Stade} active {le Poste Actif} bench {le Banc} lostZone {la Zone Perdue} attachmentResolution {les cartes attachées} other {le deck}} vers {destination, select, hand {la main} discard {la pile de défausse} lostZone {la Zone Perdue} deckBottom {le dessous du deck} play {le jeu} other {le deck}}"
+    "translation": "{actor} a déplacé {count, plural, one {# carte} other {# cartes}} depuis {source, select, hand {la main} prizes {les cartes Récompense} discard {la pile de défausse} board {le plateau} stadium {le Stade} active {le Poste Actif} bench {le Banc} lostZone {la Zone Perdue} attachmentResolution {les cartes attachées} other {le deck}} {destination, select, hand {vers la main} discard {vers la pile de défausse} lostZone {vers la Zone Perdue} deckBottom {sous le deck} play {en jeu} other {vers le deck}}"
   },
   "P4_K0D": {
     "message": "{actor} moved a random card from {target}'s hand to board",
@@ -251,28 +251,28 @@
     "comments": [
       "Log line. {actor} is a player's name."
     ],
-    "translation": "{actor} a placé sa main sous le deck"
+    "translation": "{actor} a mélangé sa main sous le deck"
   },
   "xT_uho": {
     "message": "{actor} shuffled hand to bottom of deck and drew {count, plural, one {# card(s)} other {# card(s)}}",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards they drew."
     ],
-    "translation": "{actor} a placé sa main sous le deck et pioché {count, plural, one {# carte} other {# cartes}}"
+    "translation": "{actor} a mélangé sa main sous le deck et pioché {count, plural, one {# carte} other {# cartes}}"
   },
   "QGyAAz": {
     "message": "{actor} shuffled prizes to bottom of deck",
     "comments": [
       "Log line. {actor} is a player's name."
     ],
-    "translation": "{actor} a placé les cartes Récompense sous le deck"
+    "translation": "{actor} a mélangé les cartes Récompense sous le deck"
   },
   "xw6Fj3": {
     "message": "{actor} switched {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} with top of deck",
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left, and the top card of the deck took its place."
     ],
-    "translation": "{actor} a échangé {card} depuis {source, select, hand {la main} prizes {les cartes Récompense} discard {la pile de défausse} board {le plateau} stadium {le Stade} active {le Poste Actif} bench {le Banc} lostZone {la Zone Perdue} attachmentResolution {les cartes attachées} other {le deck}} avec le dessus du deck"
+    "translation": "{actor} a échangé {card} {source, select, hand {de la main} prizes {des cartes Récompense} discard {de la pile de défausse} board {du plateau} stadium {du Stade} active {du Poste Actif} bench {du Banc} lostZone {de la Zone Perdue} attachmentResolution {des cartes attachées} other {du deck}} avec la carte du dessus du deck"
   },
   "QOz626": {
     "message": "{actor} took back {target}'s last move",
@@ -300,14 +300,14 @@
     "comments": [
       "A search result: card name, set and number"
     ],
-    "translation": "{cardName}, {print}, {inDeck} dans le deck. En ajouter un."
+    "translation": "{cardName}, {print}, {inDeck} dans le deck. En ajouter une."
   },
   "rByt8c": {
     "message": "{cardName}, {print}. Add one.",
     "comments": [
       "A search result: card name, set and number"
     ],
-    "translation": "{cardName}, {print}. En ajouter un."
+    "translation": "{cardName}, {print}. En ajouter une."
   },
   "60xfEp": {
     "message": "{changed, plural, one {# shortcut changed} other {# shortcuts changed}}",
@@ -330,7 +330,7 @@
   },
   "DXRXaL": {
     "message": "{count, plural, one {# ACE SPEC card (max 1).} other {# ACE SPEC cards (max 1).}}",
-    "translation": "{count, plural, one {# carte ACE SPEC (max. 1).} many {# cartes ACE SPEC (max. 1).} other {# cartes ACE SPEC (max. 1).}}"
+    "translation": "{count, plural, one {# carte HIGH-TECH (max. 1).} many {# cartes HIGH-TECH (max. 1).} other {# cartes HIGH-TECH (max. 1).}}"
   },
   "ILjliG": {
     "message": "{count, plural, one {# card · legal in {legalIn}} other {# cards · legal in {legalIn}}}",
@@ -378,7 +378,7 @@
   },
   "gSD0Y4": {
     "message": "{count, plural, one {# copy of {name} (Prism Star: max 1).} other {# copies of {name} (Prism Star: max 1).}}",
-    "translation": "{count, plural, one {# exemplaire de {name} (Prism Star : max. 1).} many {# exemplaires de {name} (Prism Star : max. 1).} other {# exemplaires de {name} (Prism Star : max. 1).}}"
+    "translation": "{count, plural, one {# exemplaire de {name} (Prisme Étoile : max. 1).} many {# exemplaires de {name} (Prisme Étoile : max. 1).} other {# exemplaires de {name} (Prisme Étoile : max. 1).}}"
   },
   "eFRg1z": {
     "message": "{count, plural, one {# Pokémon ☆ card (max 1).} other {# Pokémon ☆ cards (max 1).}}",
@@ -426,7 +426,7 @@
   },
   "aN0Z_E": {
     "message": "{count, plural, one {Shuffle hand to bottom and draw # card} other {Shuffle hand to bottom and draw # cards}}",
-    "translation": "{count, plural, one {Mettre la main sous le deck et piocher # carte} many {Mettre la main sous le deck et piocher # de cartes} other {Mettre la main sous le deck et piocher # cartes}}"
+    "translation": "{count, plural, one {Mélanger la main sous le deck et piocher # carte} many {Mélanger la main sous le deck et piocher # de cartes} other {Mélanger la main sous le deck et piocher # cartes}}"
   },
   "hMKADB": {
     "message": "{count} × {cardName} ({print}). Details",
@@ -485,7 +485,7 @@
     "comments": [
       "{key} is a key (\"5\"); {action} is the name of the shortcut that owns it, such as \"Add damage\"."
     ],
-    "translation": "{key} est réservée à l’action {action}."
+    "translation": "La touche {key} est réservée à l’action {action}."
   },
   "AIjjJ1": {
     "message": "{label}, {badge} new",
@@ -707,7 +707,7 @@
     "comments": [
       "Log line: someone came back after their connection dropped. {name} is their name."
     ],
-    "translation": "{name} s'est reconnecté"
+    "translation": "{name} s’est reconnecté(e)"
   },
   "VcNbQ-": {
     "message": "{name} reset",
@@ -767,7 +767,7 @@
   },
   "2mmBQD": {
     "message": "{name}: try it",
-    "translation": "{name} : essayez"
+    "translation": "{name} : essayer"
   },
   "cgmx3-": {
     "message": "{name}'s turn",
@@ -852,7 +852,7 @@
     "comments": [
       "shown is a list of card names; more counts the rest"
     ],
-    "translation": "{shown} et {more} de plus"
+    "translation": "{shown} et {more} autres"
   },
   "nzGgxO": {
     "message": "{shownPieces} of {totalPieces, plural, one {# piece} other {# pieces}}",
@@ -880,7 +880,7 @@
     "comments": [
       "{spoken} is the shortcut's keys, such as \"Alt+1\"."
     ],
-    "translation": "{spoken}, fixé"
+    "translation": "{spoken}, fixe"
   },
   "LsSEPB": {
     "message": "{target} took back their last move",
@@ -932,28 +932,28 @@
     "comments": [
       "Log line: a player began looking at a zone only they can see. {viewer} is who is looking, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "{viewer} a regardé {source, select, hand {la main} prizes {les cartes Récompense} discard {la pile de défausse} board {le plateau} stadium {le Stade} active {le Pokémon Actif} bench {le Banc} lostZone {la Zone Perdue} attachmentResolution {les cartes attachées} inspection {l'inspection} other {le deck}} de {owner}"
+    "translation": "{viewer} a regardé {source, select, hand {la main} prizes {les cartes Récompense} discard {la pile de défausse} board {le plateau} stadium {le Stade} active {le Poste Actif} bench {le Banc} lostZone {la Zone Perdue} attachmentResolution {les cartes attachées} inspection {l'inspection} other {le deck}} de {owner}"
   },
   "kF6-Cq": {
     "message": "{viewer} looked at card in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line: a player began looking at a card only they can see. {viewer} is who is looking, {owner} whose card it is; {source} is the zone it is in."
     ],
-    "translation": "{viewer} a regardé une carte de {source, select, hand {la main} prizes {les cartes Récompense} discard {la pile de défausse} board {le plateau} stadium {le Stade} active {le Pokémon Actif} bench {le Banc} lostZone {la Zone Perdue} attachmentResolution {les cartes attachées} inspection {l'inspection} other {le deck}} de {owner}"
+    "translation": "{viewer} a regardé une carte {source, select, hand {de la main} prizes {des cartes Récompense} discard {de la pile de défausse} board {du plateau} stadium {du Stade} active {du Poste Actif} bench {du Banc} lostZone {de la Zone Perdue} attachmentResolution {des cartes attachées} inspection {de l'inspection} other {du deck}} de {owner}"
   },
   "jTec7e": {
     "message": "{viewer} stopped looking at {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line. {viewer} is who stopped looking, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "{viewer} a arrêté de regarder {source, select, hand {la main} prizes {les cartes Récompense} discard {la pile de défausse} board {le plateau} stadium {le Stade} active {le Pokémon Actif} bench {le Banc} lostZone {la Zone Perdue} attachmentResolution {les cartes attachées} inspection {l'inspection} other {le deck}} de {owner}"
+    "translation": "{viewer} a arrêté de regarder {source, select, hand {la main} prizes {les cartes Récompense} discard {la pile de défausse} board {le plateau} stadium {le Stade} active {le Poste Actif} bench {le Banc} lostZone {la Zone Perdue} attachmentResolution {les cartes attachées} inspection {l'inspection} other {le deck}} de {owner}"
   },
   "FAueN1": {
     "message": "{viewer} stopped looking at card in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line. {viewer} is who stopped looking, {owner} whose card it is; {source} is the zone it is in."
     ],
-    "translation": "{viewer} a arrêté de regarder une carte de {source, select, hand {la main} prizes {les cartes Récompense} discard {la pile de défausse} board {le plateau} stadium {le Stade} active {le Pokémon Actif} bench {le Banc} lostZone {la Zone Perdue} attachmentResolution {les cartes attachées} inspection {l'inspection} other {le deck}} de {owner}"
+    "translation": "{viewer} a arrêté de regarder une carte {source, select, hand {de la main} prizes {des cartes Récompense} discard {de la pile de défausse} board {du plateau} stadium {du Stade} active {du Poste Actif} bench {du Banc} lostZone {de la Zone Perdue} attachmentResolution {des cartes attachées} inspection {de l'inspection} other {du deck}} de {owner}"
   },
   "JirPbT": {
     "message": "{zoneName}, {count, plural, one {# card} other {# cards}}",
@@ -1171,7 +1171,7 @@
   },
   "Qz1fKP": {
     "message": "Add or switch special condition",
-    "translation": "Ajouter ou changer un état spécial"
+    "translation": "Ajouter ou changer un État Spécial"
   },
   "ZVI875": {
     "message": "Add to deck",
@@ -1183,11 +1183,11 @@
   },
   "6pRI-D": {
     "message": "Added by hand",
-    "translation": "Ajoutée à la main"
+    "translation": "Ajoutée manuellement"
   },
   "sVftpX": {
     "message": "Added by hand · legality not checked",
-    "translation": "Ajoutée à la main · légalité non vérifiée"
+    "translation": "Ajoutée manuellement · légalité non vérifiée"
   },
   "wZthGJ": {
     "message": "All lessons",
@@ -1227,7 +1227,7 @@
   },
   "Uu-7-8": {
     "message": "An <0>open-source</0> Pokémon TCG table.",
-    "translation": "Une table Pokémon TCG <0>open source</0>."
+    "translation": "Une table <0>open source</0> pour le JCC Pokémon."
   },
   "5ZW9xa": {
     "message": "An attack payable with two Energy",
@@ -1250,7 +1250,7 @@
   "ctNH7H": {
     "message": "Ancient",
     "context": "Pokémon card mechanic",
-    "translation": "Ancien"
+    "translation": "Temps passé"
   },
   "Jvmvx4": {
     "message": "Animate stack height",
@@ -1501,12 +1501,12 @@
   },
   "HLZuSl": {
     "message": "BREAK",
-    "translation": "Restaurer"
+    "translation": "TURBO"
   },
   "zcJuqD": {
     "message": "BREAK",
     "context": "shortcut key caption",
-    "translation": "Pokémon BREAK"
+    "translation": "TURBO"
   },
   "FE2YBZ": {
     "message": "Browser language ({browser})",
@@ -1543,7 +1543,7 @@
   "4GkLKV": {
     "message": "Caps",
     "context": "keyboard key (Caps Lock)",
-    "translation": "Verr. maj."
+    "translation": "Verr. Maj"
   },
   "mT4wvO": {
     "message": "card",
@@ -1659,7 +1659,7 @@
     "comments": [
       "A table look: the colour"
     ],
-    "translation": "Charbon"
+    "translation": "Anthracite"
   },
   "TEzuJ6": {
     "message": "Chat message",
@@ -1943,7 +1943,7 @@
   },
   "rlm3op": {
     "message": "Custom flair on Discord & open reign on self-nicknames.",
-    "translation": "Badge personnalisé sur Discord et règne libre sur les pseudos."
+    "translation": "Badge personnalisé sur Discord et liberté totale pour votre pseudo."
   },
   "UxNmvS": {
     "message": "Damage and conditions",
@@ -2097,7 +2097,7 @@
   },
   "c58XOp": {
     "message": "Discard a Pokémon, take a Prize, bring up the next",
-    "translation": "Défaussez un Pokémon, prenez une carte Récompense, faites monter le suivant"
+    "translation": "Défaussez un Pokémon, récupérez une carte Récompense, envoyez le suivant"
   },
   "u8xW5H": {
     "message": "Discard all",
@@ -2177,7 +2177,7 @@
   },
   "IGqHX9": {
     "message": "Drag a <0>{0}</0> onto {1} to attach it.",
-    "translation": "Faites glisser un <0>{0}</0> sur {1} pour l’attacher."
+    "translation": "Faites glisser une <0>{0}</0> sur {1} pour l’attacher."
   },
   "n3U3s1": {
     "message": "Drag a Basic Pokémon from your hand onto your <0>Active Spot</0>.",
@@ -2263,7 +2263,7 @@
   },
   "mjNeGh": {
     "message": "e.g. Charizard",
-    "translation": "p. ex. Dracaufeu"
+    "translation": "p. ex. Charizard"
   },
   "tg9VdO": {
     "message": "e.g. HIJ",
@@ -2582,12 +2582,12 @@
   "ULwemj": {
     "message": "Fusion Strike",
     "context": "Pokémon card mechanic",
-    "translation": "Fusion Strike"
+    "translation": "Poing de Fusion"
   },
   "IUNEkE": {
     "message": "Future",
     "context": "Pokémon card mechanic",
-    "translation": "Futur"
+    "translation": "Temps futur"
   },
   "iDs75z": {
     "message": "Game actions",
@@ -2645,7 +2645,7 @@
     "comments": [
       "A table look: a green cloth mat"
     ],
-    "translation": "Feutrine verte"
+    "translation": "Tapis vert"
   },
   "TALrFf": {
     "message": "GX marker",
@@ -2867,11 +2867,11 @@
   },
   "0pN9y3": {
     "message": "It stays open for another draw. Press <0>Esc</0> twice to close it.",
-    "translation": "Elle reste ouverte pour un autre tirage. Appuyez deux fois sur <0>Échap</0> pour la fermer."
+    "translation": "Elle reste ouverte pour piocher encore. Appuyez deux fois sur <0>Échap</0> pour la fermer."
   },
   "gC8g3J": {
     "message": "It stays open for another draw. Tap outside to close it.",
-    "translation": "Il reste ouvert pour une autre pioche. Touchez à l’extérieur pour le fermer."
+    "translation": "Elle reste ouverte pour piocher encore. Touchez à l’extérieur pour la fermer."
   },
   "5kNRW8": {
     "message": "Item",
@@ -2905,7 +2905,7 @@
   },
   "N2lSEn": {
     "message": "Joins matching pieces",
-    "translation": "Assemble les éléments correspondants"
+    "translation": "Assemble les pièces correspondantes"
   },
   "80Qsxy": {
     "message": "Keep",
@@ -2935,7 +2935,7 @@
   },
   "_rugva": {
     "message": "Knock Out",
-    "translation": "K.O."
+    "translation": "Mettre K.O."
   },
   "69MOGQ": {
     "message": "Knock Out their <0>{0}</0>: drag it onto their discard pile. Its Energy goes with it.",
@@ -2997,7 +2997,7 @@
   },
   "8NF6XU": {
     "message": "Legality not checked for cards added by hand: {cards}.",
-    "translation": "Légalité non vérifiée pour les cartes ajoutées à la main : {cards}."
+    "translation": "Légalité non vérifiée pour les cartes ajoutées manuellement : {cards}."
   },
   "xXagjO": {
     "message": "LEGEND · 2 halves",
@@ -3006,7 +3006,7 @@
   "YVrOwc": {
     "message": "Level-Up",
     "context": "Pokémon stage",
-    "translation": "Niveau +"
+    "translation": "Niveau Sup"
   },
   "Fu5KED": {
     "message": "Lift cards while dragging",
@@ -3142,7 +3142,7 @@
   },
   "bQF9w4": {
     "message": "Look at or cover your Prizes",
-    "translation": "Regarder ou couvrir vos cartes Récompense"
+    "translation": "Regarder ou cacher vos cartes Récompense"
   },
   "I7Daes": {
     "message": "Look at the bottom cards",
@@ -3216,7 +3216,7 @@
   },
   "cnyUyK": {
     "message": "Make cover",
-    "translation": "Créer un dos"
+    "translation": "Mettre en couverture"
   },
   "brtcFm": {
     "message": "Mark {mark}",
@@ -3245,11 +3245,11 @@
   },
   "IQ2DXR": {
     "message": "Mark VSTAR Power unused",
-    "translation": "Marquer la Capacité VSTAR comme non utilisée"
+    "translation": "Marquer la Puissance VSTAR comme non utilisée"
   },
   "42K-4o": {
     "message": "Match finish",
-    "translation": "Finition du match"
+    "translation": "Selon la finition"
   },
   "5EeU5m": {
     "message": "Matte",
@@ -3561,7 +3561,7 @@
   },
   "Psi2LF": {
     "message": "No Special Condition",
-    "translation": "Aucun état spécial"
+    "translation": "Aucun État Spécial"
   },
   "lChsa8": {
     "message": "No tournament decks right now.",
@@ -3612,7 +3612,7 @@
   },
   "6rbhdt": {
     "message": "Not your move",
-    "translation": "Ce n'est pas votre tour"
+    "translation": "Déplacement non autorisé"
   },
   "W8zlv3": {
     "message": "Not yours to do",
@@ -3805,7 +3805,7 @@
   "SFwfHx": {
     "message": "Page Down",
     "context": "keyboard key",
-    "translation": "Page suivante"
+    "translation": "Pg suiv"
   },
   "EfIP2O": {
     "message": "Page language ({following})",
@@ -3814,7 +3814,7 @@
   "161eyw": {
     "message": "Page Up",
     "context": "keyboard key",
-    "translation": "Page précédente"
+    "translation": "Pg préc"
   },
   "xun4kD": {
     "message": "Paralyzed",
@@ -3893,7 +3893,7 @@
   },
   "Sky344": {
     "message": "Play <0>{0}</0>: drag it onto the open mat. Ending your turn clears it away.",
-    "translation": "Jouez <0>{0}</0> : faites-le glisser sur le tapis ouvert. Terminer votre tour le fait disparaître."
+    "translation": "Jouez <0>{0}</0> : faites-le glisser sur le plateau. Il disparaît à la fin de votre tour."
   },
   "7LIRc6": {
     "message": "Play a random deck",
@@ -3960,7 +3960,7 @@
   },
   "CA11_N": {
     "message": "Pokémon added by hand",
-    "translation": "Pokémon ajouté à la main"
+    "translation": "Pokémon ajouté manuellement"
   },
   "RNaprm": {
     "message": "Pokémon cards",
@@ -4037,7 +4037,7 @@
   "groO0o": {
     "message": "Prism Star",
     "context": "Pokémon card mechanic",
-    "translation": "Prism Star"
+    "translation": "Prisme Étoile"
   },
   "nT_UTA": {
     "message": "Prize",
@@ -4065,7 +4065,7 @@
   "NlwZhZ": {
     "message": "Psychic",
     "context": "Pokémon type",
-    "translation": "Psychique"
+    "translation": "Psy"
   },
   "jG4a_T": {
     "message": "Put another on your <0>Bench</0>. Up to five fit there.",
@@ -4073,7 +4073,7 @@
   },
   "5XURu8": {
     "message": "Put damage and Poisoned on their Pokémon",
-    "translation": "Mettre des dégâts et l'état Empoisonné sur leur Pokémon"
+    "translation": "Mettre des dégâts et l'état Empoisonné sur son Pokémon"
   },
   "rkcP1p": {
     "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
@@ -4081,7 +4081,7 @@
   },
   "QEP1VC": {
     "message": "Put the rest of it, <0>{0}</0> and its Energy, in their discard pile too.",
-    "translation": "Mettez aussi le reste, <0>{0}</0> et ses Énergies, dans leur pile de défausse."
+    "translation": "Mettez aussi le reste, <0>{0}</0> et ses Énergies, dans sa pile de défausse."
   },
   "VbWX2u": {
     "message": "Quantity",
@@ -4098,7 +4098,7 @@
   },
   "AUzUf9": {
     "message": "Rainbow foil",
-    "translation": "Foil arc-en-ciel"
+    "translation": "Holo arc-en-ciel"
   },
   "PImlBx": {
     "message": "Raised",
@@ -4201,7 +4201,7 @@
   },
   "5qTkf-": {
     "message": "Remove special condition",
-    "translation": "Retirer l'état spécial"
+    "translation": "Retirer l'État Spécial"
   },
   "XsrZAv": {
     "message": "Rename",
@@ -4308,7 +4308,7 @@
   "UQt_GI": {
     "message": "Restored",
     "context": "Pokémon stage",
-    "translation": "Restauré"
+    "translation": "Recréé"
   },
   "Dwpy1Z": {
     "message": "Resume a saved game…",
@@ -4366,7 +4366,7 @@
   },
   "TKRCsY": {
     "message": "Right-click their <0>{0}</0>.",
-    "translation": "Faites un clic droit sur leur <0>{0}</0>."
+    "translation": "Faites un clic droit sur son <0>{0}</0>."
   },
   "euMx3W": {
     "message": "Room {roomCode}",
@@ -4386,7 +4386,7 @@
   },
   "M2Hp6y": {
     "message": "Rotate BREAK",
-    "translation": "Pivoter la carte BREAK"
+    "translation": "Pivoter la carte TURBO"
   },
   "86ffek": {
     "message": "Rotate card(s)",
@@ -4450,7 +4450,7 @@
   },
   "duDNyy": {
     "message": "Rule Box",
-    "translation": "Encadré de règle"
+    "translation": "Encadré Règle"
   },
   "3JjdaA": {
     "message": "Run",
@@ -4472,11 +4472,11 @@
   },
   "brkgwR": {
     "message": "Sample hand",
-    "translation": "Main d'exemple"
+    "translation": "Main d'essai"
   },
   "Revze0": {
     "message": "Sample Prizes",
-    "translation": "Cartes Récompense d'exemple"
+    "translation": "Cartes Récompense d'essai"
   },
   "tfDRzk": {
     "message": "Save",
@@ -4604,37 +4604,37 @@
   },
   "DBL0AT": {
     "message": "Set up",
-    "translation": "Mettre en place"
+    "translation": "Préparer"
   },
   "sGIJ55": {
     "message": "Set up",
     "context": "set up the game",
-    "translation": "Mettre en place"
+    "translation": "Préparer"
   },
   "Vbxill": {
     "message": "Set up",
     "context": "shortcut key caption",
-    "translation": "Mise en place"
+    "translation": "Préparer"
   },
   "x6sueY": {
     "message": "Set up again",
-    "translation": "Mettre en place à nouveau"
+    "translation": "Préparer à nouveau"
   },
   "oFfMlb": {
     "message": "Set up both sides",
-    "translation": "Mettre en place les deux côtés"
+    "translation": "Préparer les deux côtés"
   },
   "1KTKvb": {
     "message": "Set up, then put your Pokémon in play",
-    "translation": "Mettez en place, puis placez vos Pokémon en jeu"
+    "translation": "Préparez la partie, puis mettez vos Pokémon en jeu"
   },
   "1W8ZwT": {
     "message": "Set up: shuffle, draw 7, set 6 prizes",
-    "translation": "Mettre en place : mélanger, piocher 7 cartes, placer 6 cartes Récompense"
+    "translation": "Préparer : mélanger, piocher 7 cartes, placer 6 cartes Récompense"
   },
   "prXKvv": {
     "message": "Setting up the table…",
-    "translation": "Mise en place de la table…"
+    "translation": "Préparation de la table…"
   },
   "Tz0i8g": {
     "message": "Settings",
@@ -4705,7 +4705,7 @@
   },
   "1K069f": {
     "message": "Show me",
-    "translation": "Montre-moi"
+    "translation": "Montrez-moi"
   },
   "FBwNsr": {
     "message": "Show one per card",
@@ -4787,7 +4787,7 @@
   },
   "8uWf-T": {
     "message": "Shuffle hand to bottom of deck and draw…",
-    "translation": "Remettre la main sous le deck et piocher…"
+    "translation": "Mélanger la main sous le deck et piocher…"
   },
   "RdPVNx": {
     "message": "Shuffle hand to deck",
@@ -4796,7 +4796,7 @@
   "Tbmmyh": {
     "message": "Shuffle in",
     "context": "shortcut key caption",
-    "translation": "Mélanger dans"
+    "translation": "Mélanger au deck"
   },
   "wZ_X8q": {
     "message": "Shuffle into deck",
@@ -4812,7 +4812,7 @@
   },
   "nU9Ip_": {
     "message": "Shuffle Prizes to bottom of deck",
-    "translation": "Mettre les cartes Récompense sous le deck"
+    "translation": "Mélanger les cartes Récompense sous le deck"
   },
   "SRsSL6": {
     "message": "Shuffle to bottom",
@@ -4829,7 +4829,7 @@
   "utezqW": {
     "message": "Single Strike",
     "context": "Pokémon card mechanic",
-    "translation": "Frappe Unique"
+    "translation": "Poing Final"
   },
   "6Uau97": {
     "message": "Skip",
@@ -4904,15 +4904,15 @@
   },
   "tNhbGC": {
     "message": "Special condition",
-    "translation": "État spécial"
+    "translation": "État Spécial"
   },
   "1MpxsD": {
     "message": "Special Condition",
-    "translation": "État spécial"
+    "translation": "État Spécial"
   },
   "3cLm8v": {
     "message": "Special Condition…",
-    "translation": "État spécial…"
+    "translation": "État Spécial…"
   },
   "0kjUmj": {
     "message": "Special Energy",
@@ -4921,7 +4921,7 @@
   "h5EwqW": {
     "message": "Split",
     "context": "the table between the halves",
-    "translation": "Séparer"
+    "translation": "Répartition"
   },
   "Y6mTBn": {
     "message": "SPONSOR TIERS",
@@ -4942,7 +4942,7 @@
   },
   "CLJnx2": {
     "message": "Stack copies",
-    "translation": "Empiler les copies"
+    "translation": "Empiler les exemplaires"
   },
   "GtR_fA": {
     "message": "Stadium",
@@ -5014,12 +5014,12 @@
   },
   "yA0PE0": {
     "message": "Start your turn with <0>{0}</0>. It draws your card.",
-    "translation": "Commencez votre tour avec <0>{0}</0>. Cela pioche votre carte."
+    "translation": "Commencez votre tour avec <0>{0}</0>. Vous piochez ainsi votre carte."
   },
   "p7o5f_": {
     "message": "Status",
     "context": "shortcut key caption",
-    "translation": "Statut"
+    "translation": "État"
   },
   "B2cOHf": {
     "message": "Stop sorting hand",
@@ -5103,7 +5103,7 @@
   "Qd2uqp": {
     "message": "Tabletop",
     "context": "table depth setting",
-    "translation": "Plateau"
+    "translation": "Table"
   },
   "yNNoO1": {
     "message": "Tails",
@@ -5112,11 +5112,11 @@
   },
   "yJtTpT": {
     "message": "Take a <0>Prize card</0>: drag one into your hand.",
-    "translation": "Prenez une <0>carte Récompense</0> : faites-en glisser une dans votre main."
+    "translation": "Récupérez une <0>carte Récompense</0> : faites-en glisser une dans votre main."
   },
   "2g01hc": {
     "message": "Take off {count} damage",
-    "translation": "Retirer {count} marqueurs de dégâts"
+    "translation": "Retirer {count} dégâts"
   },
   "siil7J": {
     "message": "Take off damage",
@@ -5124,7 +5124,7 @@
   },
   "rQdoKU": {
     "message": "Take off damage…",
-    "translation": "Retirer des marqueurs de dégâts…"
+    "translation": "Retirer des dégâts…"
   },
   "O3tcf1": {
     "message": "Tap <0>{0}</0> in your hand, then <1>{1}</1>.",
@@ -5160,7 +5160,7 @@
   },
   "pYu8i-": {
     "message": "TCG and Pocket cards don't mix: {cards}.",
-    "translation": "Les cartes TCG et Pocket ne peuvent pas être mélangées : {cards}."
+    "translation": "Les cartes JCC et Pocket ne peuvent pas être mélangées : {cards}."
   },
   "MzC0ih": {
     "message": "TCG Pocket",
@@ -5168,17 +5168,17 @@
     "comments": [
       "The Pokémon TCG Pocket app; keep its official name."
     ],
-    "translation": "TCG Pocket"
+    "translation": "JCC Pocket"
   },
   "z5r9Ja": {
     "message": "Technical Machine",
     "context": "Trainer card kind",
-    "translation": "Machine Technique"
+    "translation": "Capsule Technique"
   },
   "9o2lM8": {
     "message": "Technical Machines",
     "context": "Trainer cards by kind",
-    "translation": "Machines Techniques"
+    "translation": "Capsules Techniques"
   },
   "4qLtJr": {
     "message": "That Energy has left your hand.",
@@ -5206,7 +5206,7 @@
   },
   "hPwR-j": {
     "message": "The card went back.",
-    "translation": "La carte est revenue en arrière."
+    "translation": "La carte est revenue à sa place."
   },
   "FQpTJZ": {
     "message": "The clipboard isn't available here",
@@ -5270,7 +5270,7 @@
   },
   "TOoMq1": {
     "message": "The room no longer has this seat.",
-    "translation": "La salle n'a plus cette place."
+    "translation": "La salle n'a plus ce siège."
   },
   "m6ooXP": {
     "message": "The table changed, so the card went back.",
@@ -5349,7 +5349,7 @@
   },
   "DNMX9-": {
     "message": "They bring up the next: drag a <0>{0}</0> from their Bench to their Active Spot.",
-    "translation": "Ils font monter le suivant : faites glisser un <0>{0}</0> de leur Banc vers leur Poste Actif."
+    "translation": "Votre adversaire envoie le suivant : faites glisser un <0>{0}</0> de son Banc vers son Poste Actif."
   },
   "WsAkgd": {
     "message": "This browser won't keep your decks after you close the page.",
@@ -5711,7 +5711,7 @@
   },
   "9c8BhN": {
     "message": "Use VSTAR Power",
-    "translation": "Utiliser la Capacité VSTAR"
+    "translation": "Utiliser la Puissance VSTAR"
   },
   "ZpWtmQ": {
     "message": "Uses Limitless TCG's search syntax.",
@@ -5794,7 +5794,7 @@
   },
   "NWGsaA": {
     "message": "Winning now",
-    "translation": "Gagne en ce moment"
+    "translation": "Gagnants du moment"
   },
   "n1kezF": {
     "message": "Yes",

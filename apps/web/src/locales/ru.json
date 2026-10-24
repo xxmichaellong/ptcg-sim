@@ -55,21 +55,21 @@
     "comments": [
       "Log line. {actor} is a player's name, {card} the card attached; {source} is the zone it came from and {target} where it went."
     ],
-    "translation": "{actor} прикрепил(а) {card} из зоны «{source, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} other {колода}}» к зоне «{target, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} other {колода}}»"
+    "translation": "{actor} присоединил(а) {card} из зоны «{source, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {запас} lostZone {зона потерь} attachmentResolution {присоединённые карты} other {колода}}» к зоне «{target, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {запас} lostZone {зона потерь} attachmentResolution {присоединённые карты} other {колода}}»"
   },
   "7Azhu7": {
     "message": "{actor} attached {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {targetCard}",
     "comments": [
       "Log line. {actor} is a player's name; {card} is the card attached (Energy, a Tool) and {targetCard} the Pokémon it went on; {source} is the zone it came from."
     ],
-    "translation": "{actor} прикрепил(а) {card} из зоны «{source, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} other {колода}}» к {targetCard}"
+    "translation": "{actor} присоединил(а) {card} из зоны «{source, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {запас} lostZone {зона потерь} attachmentResolution {присоединённые карты} other {колода}}» к {targetCard}"
   },
   "nb_tRJ": {
     "message": "{actor} discarded {count, plural, one {# attached card(s)} other {# attached card(s)}}",
     "comments": [
       "Log line: a player discarded the cards attached to a Pokémon. {actor} is a player's name, {count} how many cards."
     ],
-    "translation": "{actor} сбросил(а) прикреплённые карты: {count, plural, one {# карта} few {# карты} many {# карт} other {# карты}}"
+    "translation": "{actor} сбросил(а) присоединённые карты: {count, plural, one {# карта} few {# карты} many {# карт} other {# карты}}"
   },
   "KeKqt_": {
     "message": "{actor} discarded {count, plural, one {# card(s)} other {# card(s)}}",
@@ -97,7 +97,7 @@
     "comments": [
       "Log line. {actor} is a player's name, {card} the card it evolved into; {target} names the zone of the Pokémon that evolved, when its name is hidden."
     ],
-    "translation": "{actor} эволюционировал(а) покемона из зоны «{target, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} other {колода}}» в {card}"
+    "translation": "{actor} эволюционировал(а) покемона из зоны «{target, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {запас} lostZone {зона потерь} attachmentResolution {присоединённые карты} other {колода}}» в {card}"
   },
   "gUuWfL": {
     "message": "{actor} evolved {targetCard} into {card}",
@@ -111,63 +111,63 @@
     "comments": [
       "Log line: a player hid a zone they had shown to everyone. {actor} is who hid it, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "{actor} скрыл(а) зону «{source, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} inspection {просмотр} other {колода}}» игрока {owner}"
+    "translation": "{actor} скрыл(а) зону «{source, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {запас} lostZone {зона потерь} attachmentResolution {присоединённые карты} inspection {просмотр} other {колода}}» игрока {owner}"
   },
   "89ICfA": {
     "message": "{actor} hid card in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line: a player hid a card they had shown to everyone. {actor} is who hid it, {owner} whose card it is; {source} is the zone it is in."
     ],
-    "translation": "{actor} скрыл(а) карту в зоне «{source, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} inspection {просмотр} other {колода}}» игрока {owner}"
+    "translation": "{actor} скрыл(а) карту в зоне «{source, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {запас} lostZone {зона потерь} attachmentResolution {присоединённые карты} inspection {просмотр} other {колода}}» игрока {owner}"
   },
   "PZVwKy": {
     "message": "{actor} left {count, plural, one {# attached card(s)} other {# attached card(s)}} in play",
     "comments": [
       "Log line: a player kept the cards attached to a Pokémon on the table. {actor} is a player's name, {count} how many cards."
     ],
-    "translation": "{actor} оставил(а) в игре прикреплённые карты: {count, plural, one {# карта} few {# карты} many {# карт} other {# карты}}"
+    "translation": "{actor} оставил(а) в игре присоединённые карты: {count, plural, one {# карта} few {# карты} many {# карт} other {# карты}}"
   },
   "c5qeZl": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {boardOwner}'s {target, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}}",
     "comments": [
       "Log line for a Pokémon moved onto another player's side of the table. {actor} is the card owner's name, {card} a card's name, {boardOwner} the name of the player whose Active or Bench it went to; {source} is the spot it left and {target} the spot it went to."
     ],
-    "translation": "{actor} перемещает {card} {source, select, hand {из руки} prizes {из призов} discard {из сброса} board {с поля} stadium {из стадиона} active {из актива} bench {со скамейки} lostZone {из Lost Zone} attachmentResolution {из прикреплённых карт} other {из колоды}} {target, select, hand {в руку} prizes {в призы} discard {в сброс} board {на поле} stadium {на стадион} active {в актив} bench {на скамейку} lostZone {в Lost Zone} attachmentResolution {в прикреплённые карты} other {в колоду}} игрока {boardOwner}"
+    "translation": "{actor} перемещает {card} {source, select, hand {из руки} prizes {из призов} discard {из сброса} board {с поля} stadium {со стадиона} active {с активной позиции} bench {из запаса} lostZone {из зоны потерь} attachmentResolution {из присоединённых карт} other {из колоды}} {target, select, hand {в руку} prizes {в призы} discard {в сброс} board {на поле} stadium {на стадион} active {на активную позицию} bench {в запас} lostZone {в зону потерь} attachmentResolution {в присоединённые карты} other {в колоду}} игрока {boardOwner}"
   },
   "VzhIq8": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {target, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}}",
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left and {target} the zone it went to."
     ],
-    "translation": "{actor} переместил(а) {card} из зоны «{source, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} other {колода}}» в зону «{target, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} other {колода}}»"
+    "translation": "{actor} переместил(а) {card} из зоны «{source, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {запас} lostZone {зона потерь} attachmentResolution {присоединённые карты} other {колода}}» в зону «{target, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {запас} lostZone {зона потерь} attachmentResolution {присоединённые карты} other {колода}}»"
   },
   "elLtOc": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {targetCard}",
     "comments": [
       "Log line. {actor} is a player's name, {card} and {targetCard} card names; {source} is the zone the card left."
     ],
-    "translation": "{actor} переместил(а) {card} из зоны «{source, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} other {колода}}» к {targetCard}"
+    "translation": "{actor} переместил(а) {card} из зоны «{source, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {запас} lostZone {зона потерь} attachmentResolution {присоединённые карты} other {колода}}» к {targetCard}"
   },
   "RyQ60M": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to bottom of deck",
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left."
     ],
-    "translation": "{actor} переместил(а) {card} из зоны «{source, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} other {колода}}» под низ колоды"
+    "translation": "{actor} переместил(а) {card} из зоны «{source, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {запас} lostZone {зона потерь} attachmentResolution {присоединённые карты} other {колода}}» под низ колоды"
   },
   "CsrT9R": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to top of deck",
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left."
     ],
-    "translation": "{actor} переместил(а) {card} из зоны «{source, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} other {колода}}» на верх колоды"
+    "translation": "{actor} переместил(а) {card} из зоны «{source, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {запас} lostZone {зона потерь} attachmentResolution {присоединённые карты} other {колода}}» на верх колоды"
   },
   "WBnnCz": {
     "message": "{actor} moved {count, plural, one {# card(s)} other {# card(s)}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} other {deck}}",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards; {source} is the zone they left and {destination} where they went (play: onto the table)."
     ],
-    "translation": "{actor} переместил(а) {count, plural, one {# карту} few {# карты} many {# карт} other {# карты}} из зоны «{source, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} other {колода}}» в зону «{destination, select, hand {рука} discard {сброс} lostZone {Lost Zone} deckBottom {низ колоды} play {игра} other {колода}}»"
+    "translation": "{actor} переместил(а) {count, plural, one {# карту} few {# карты} many {# карт} other {# карты}} из зоны «{source, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {запас} lostZone {зона потерь} attachmentResolution {присоединённые карты} other {колода}}» {destination, select, hand {в руку} discard {в сброс} lostZone {в зону потерь} deckBottom {под низ колоды} play {в игру} other {в колоду}}"
   },
   "P4_K0D": {
     "message": "{actor} moved a random card from {target}'s hand to board",
@@ -181,28 +181,28 @@
     "comments": [
       "Log line: a player showed one card to everyone. {actor} is who showed it, {owner} whose card it is, {card} the card's name; {source} is the zone it is in."
     ],
-    "translation": "{actor} показал(а) {card} в зоне «{source, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} inspection {просмотр} other {колода}}» игрока {owner}"
+    "translation": "{actor} показал(а) {card} в зоне «{source, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {запас} lostZone {зона потерь} attachmentResolution {присоединённые карты} inspection {просмотр} other {колода}}» игрока {owner}"
   },
   "TMqzLF": {
     "message": "{actor} revealed {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line: a player showed a whole zone to everyone. {actor} is who showed it, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "{actor} показал(а) зону «{source, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} inspection {просмотр} other {колода}}» игрока {owner}"
+    "translation": "{actor} показал(а) зону «{source, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {запас} lostZone {зона потерь} attachmentResolution {присоединённые карты} inspection {просмотр} other {колода}}» игрока {owner}"
   },
   "P2m23t": {
     "message": "{actor} shuffled {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} into deck",
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left."
     ],
-    "translation": "{actor} замешал(а) {card} из зоны «{source, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} other {колода}}» в колоду"
+    "translation": "{actor} замешал(а) {card} из зоны «{source, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {запас} lostZone {зона потерь} attachmentResolution {присоединённые карты} other {колода}}» в колоду"
   },
   "xEKtXt": {
     "message": "{actor} shuffled {count, plural, one {# attached card(s)} other {# attached card(s)}} into deck",
     "comments": [
       "Log line: a player shuffled the cards attached to a Pokémon into their deck. {actor} is a player's name, {count} how many cards."
     ],
-    "translation": "{actor} замешал(а) в колоду прикреплённые карты: {count, plural, one {# карта} few {# карты} many {# карт} other {# карты}}"
+    "translation": "{actor} замешал(а) в колоду присоединённые карты: {count, plural, one {# карта} few {# карты} many {# карт} other {# карты}}"
   },
   "Ggdxd3": {
     "message": "{actor} shuffled {count, plural, one {# card(s)} other {# card(s)}} from board to deck",
@@ -223,7 +223,7 @@
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards."
     ],
-    "translation": "{actor} замешал(а) под низ колоды {count, plural, one {# карту} few {# карты} many {# карт} other {# карты}}"
+    "translation": "{actor} перемешал(а) и положил(а) под колоду {count, plural, one {# карту} few {# карты} many {# карт} other {# карты}}"
   },
   "s-CcLE": {
     "message": "{actor} shuffled discard into deck",
@@ -251,35 +251,35 @@
     "comments": [
       "Log line. {actor} is a player's name."
     ],
-    "translation": "{actor} убрал(а) руку под низ колоды"
+    "translation": "{actor} перемешал(а) руку и положил(а) её под колоду"
   },
   "xT_uho": {
     "message": "{actor} shuffled hand to bottom of deck and drew {count, plural, one {# card(s)} other {# card(s)}}",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards they drew."
     ],
-    "translation": "{actor} убрал(а) руку под низ колоды и взял(а) {count, plural, one {# карту} few {# карты} many {# карт} other {# карты}}"
+    "translation": "{actor} перемешал(а) руку, положил(а) её под колоду и взял(а) {count, plural, one {# карту} few {# карты} many {# карт} other {# карты}}"
   },
   "QGyAAz": {
     "message": "{actor} shuffled prizes to bottom of deck",
     "comments": [
       "Log line. {actor} is a player's name."
     ],
-    "translation": "{actor} убрал(а) призы под низ колоды"
+    "translation": "{actor} перемешал(а) призовые карты и положил(а) их под колоду"
   },
   "xw6Fj3": {
     "message": "{actor} switched {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} with top of deck",
     "comments": [
       "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left, and the top card of the deck took its place."
     ],
-    "translation": "{actor} поменял(а) {card} из зоны «{source, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} other {колода}}» с верхней картой колоды"
+    "translation": "{actor} поменял(а) {card} из зоны «{source, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {запас} lostZone {зона потерь} attachmentResolution {присоединённые карты} other {колода}}» с верхней картой колоды"
   },
   "QOz626": {
     "message": "{actor} took back {target}'s last move",
     "comments": [
       "Log line: one player undid the other's last move. {actor} is who undid it, {target} whose move it was."
     ],
-    "translation": "{actor} отменил(а) последний ход игрока {target}"
+    "translation": "{actor} отменяет последнее действие игрока {target}"
   },
   "iwKsQi": {
     "message": "{cardLabel}: actions",
@@ -334,7 +334,7 @@
   },
   "ILjliG": {
     "message": "{count, plural, one {# card · legal in {legalIn}} other {# cards · legal in {legalIn}}}",
-    "translation": "{count, plural, one {# карта · разрешена в {legalIn}} few {# карты · разрешены в {legalIn}} many {# карт · разрешены в {legalIn}} other {# карты · разрешены в {legalIn}}}"
+    "translation": "{count, plural, one {# карта · разрешена в формате {legalIn}} few {# карты · разрешены в формате {legalIn}} many {# карт · разрешены в формате {legalIn}} other {# карты · разрешены в формате {legalIn}}}"
   },
   "U9iP6d": {
     "message": "{count, plural, one {# card in {name}'s deck} other {# cards in {name}'s deck}}",
@@ -350,7 +350,7 @@
   },
   "Qk1aGi": {
     "message": "{count, plural, one {# card in {name}'s Lost Zone} other {# cards in {name}'s Lost Zone}}",
-    "translation": "{count, plural, one {# карта в Lost Zone игрока {name}} few {# карты в Lost Zone игрока {name}} many {# карт в Lost Zone игрока {name}} other {# карты в Lost Zone игрока {name}}}"
+    "translation": "{count, plural, one {# карта в зоне потерь игрока {name}} few {# карты в зоне потерь игрока {name}} many {# карт в зоне потерь игрока {name}} other {# карты в зоне потерь игрока {name}}}"
   },
   "iwx6si": {
     "message": "{count, plural, one {# card in your deck} other {# cards in your deck}}",
@@ -366,7 +366,7 @@
   },
   "N3SvzU": {
     "message": "{count, plural, one {# card in your Lost Zone} other {# cards in your Lost Zone}}",
-    "translation": "{count, plural, one {# карта в твоей Lost Zone} few {# карты в твоей Lost Zone} many {# карт в твоей Lost Zone} other {# карты в твоей Lost Zone}}"
+    "translation": "{count, plural, one {# карта в твоей зоне потерь} few {# карты в твоей зоне потерь} many {# карт в твоей зоне потерь} other {# карты в твоей зоне потерь}}"
   },
   "bM4Wv5": {
     "message": "{count, plural, one {# card} other {# cards}}",
@@ -386,15 +386,15 @@
   },
   "U1rTLU": {
     "message": "{count, plural, one {# print · legal in {legalIn}} other {# prints · legal in {legalIn}}}",
-    "translation": "{count, plural, one {# печать · разрешена в {legalIn}} few {# печати · разрешены в {legalIn}} many {# печатей · разрешены в {legalIn}} other {# печати · разрешены в {legalIn}}}"
+    "translation": "{count, plural, one {# вариант печати · разрешён в формате {legalIn}} few {# варианта печати · разрешены в формате {legalIn}} many {# вариантов печати · разрешены в формате {legalIn}} other {# варианта печати · разрешены в формате {legalIn}}}"
   },
   "lDKWfO": {
     "message": "{count, plural, one {# print} other {# prints}}",
-    "translation": "{count, plural, one {# печать} few {# печати} many {# печатей} other {# печати}}"
+    "translation": "{count, plural, one {# вариант печати} few {# варианта печати} many {# вариантов печати} other {# варианта печати}}"
   },
   "AC9Ruq": {
     "message": "{count, plural, one {# Radiant card (max 1).} other {# Radiant cards (max 1).}}",
-    "translation": "{count, plural, one {# сияющая карта (максимум 1).} few {# сияющие карты (максимум 1).} many {# сияющих карт (максимум 1).} other {# сияющей карты (максимум 1).}}"
+    "translation": "{count, plural, one {# карта Radiant (максимум 1).} few {# карты Radiant (максимум 1).} many {# карт Radiant (максимум 1).} other {# карты Radiant (максимум 1).}}"
   },
   "-gAzkm": {
     "message": "{count, plural, one {Discard hand and draw # card} other {Discard hand and draw # cards}}",
@@ -406,19 +406,19 @@
   },
   "UJXyU7": {
     "message": "{count, plural, one {Look at bottom card} other {Look at bottom # cards}}",
-    "translation": "{count, plural, one {Посмотреть нижнюю карту} few {Посмотреть нижние # карты} many {Посмотреть нижние # карт} other {Посмотреть нижние # карты}}"
+    "translation": "{count, plural, =1 {Посмотреть нижнюю карту} one {Посмотреть # нижнюю карту} few {Посмотреть # нижние карты} many {Посмотреть # нижних карт} other {Посмотреть # нижней карты}}"
   },
   "Obr1Rm": {
     "message": "{count, plural, one {Look at their bottom card} other {Look at their bottom # cards}}",
-    "translation": "{count, plural, one {Посмотреть нижнюю карту соперника} few {Посмотреть нижние # карты соперника} many {Посмотреть нижние # карт соперника} other {Посмотреть нижние # карты соперника}}"
+    "translation": "{count, plural, =1 {Посмотреть нижнюю карту противника} one {Посмотреть # нижнюю карту противника} few {Посмотреть # нижние карты противника} many {Посмотреть # нижних карт противника} other {Посмотреть # нижней карты противника}}"
   },
   "_GnfAn": {
     "message": "{count, plural, one {Look at their top card} other {Look at their top # cards}}",
-    "translation": "{count, plural, one {Посмотреть верхнюю карту соперника} few {Посмотреть верхние # карты соперника} many {Посмотреть верхние # карт соперника} other {Посмотреть верхние # карты соперника}}"
+    "translation": "{count, plural, =1 {Посмотреть верхнюю карту противника} one {Посмотреть # верхнюю карту противника} few {Посмотреть # верхние карты противника} many {Посмотреть # верхних карт противника} other {Посмотреть # верхней карты противника}}"
   },
   "CtVIm7": {
     "message": "{count, plural, one {Look at top card} other {Look at top # cards}}",
-    "translation": "{count, plural, one {Посмотреть верхнюю карту} few {Посмотреть верхние # карты} many {Посмотреть верхние # карт} other {Посмотреть верхние # карты}}"
+    "translation": "{count, plural, =1 {Посмотреть верхнюю карту} one {Посмотреть # верхнюю карту} few {Посмотреть # верхние карты} many {Посмотреть # верхних карт} other {Посмотреть # верхней карты}}"
   },
   "-r4674": {
     "message": "{count, plural, one {Shuffle hand in and draw # card} other {Shuffle hand in and draw # cards}}",
@@ -426,7 +426,7 @@
   },
   "aN0Z_E": {
     "message": "{count, plural, one {Shuffle hand to bottom and draw # card} other {Shuffle hand to bottom and draw # cards}}",
-    "translation": "{count, plural, one {Перемешать руку вниз колоды и взять # карту} few {Перемешать руку вниз колоды и взять # карты} many {Перемешать руку вниз колоды и взять # карт} other {Перемешать руку вниз колоды и взять # карты}}"
+    "translation": "{count, plural, one {Перемешать руку, положить под колоду и взять # карту} few {Перемешать руку, положить под колоду и взять # карты} many {Перемешать руку, положить под колоду и взять # карт} other {Перемешать руку, положить под колоду и взять # карты}}"
   },
   "hMKADB": {
     "message": "{count} × {cardName} ({print}). Details",
@@ -459,7 +459,7 @@
   },
   "lZWlfm": {
     "message": "{deckName}: put on {seat}",
-    "translation": "{deckName}: отдать место «{seat}»"
+    "translation": "{deckName}: поставить на {seat}"
   },
   "j1pN5w": {
     "message": "{errorCount, plural, one {# thing to fix for {format}} other {# things to fix for {format}}}",
@@ -478,7 +478,7 @@
   },
   "k0g2Da": {
     "message": "{hp} HP",
-    "translation": "{hp} HP"
+    "translation": "{hp} ОЖ"
   },
   "BwX3jA": {
     "message": "{key} is reserved for {action}.",
@@ -524,7 +524,7 @@
     "comments": [
       "A zone's name for screen readers; name is its player. The Active Spot."
     ],
-    "translation": "Активный Покемон игрока {name}"
+    "translation": "Активная позиция игрока {name}"
   },
   "2jVmMm": {
     "message": "{name} attacked",
@@ -538,35 +538,35 @@
     "comments": [
       "A zone's name for screen readers; name is its player. The Bench."
     ],
-    "translation": "Скамейка: {name}"
+    "translation": "Запас игрока {name}"
   },
   "Mk1A2U": {
     "message": "{name} board",
     "comments": [
       "A zone's name for screen readers; name is its player. The open play area."
     ],
-    "translation": "Поле: {name}"
+    "translation": "Поле игрока {name}"
   },
   "IensRv": {
     "message": "{name} changed {card} into {category, select, energy {an energy} pokemon {a Pokémon} trainer {a tool} other {an unknown type}}",
     "comments": [
       "Log line: a player made a card count as another kind of card. {name} is a player's name, {card} a card's name; {category} is the kind it now counts as."
     ],
-    "translation": "{name} превращает {card} в {category, select, energy {энергию} pokemon {Pokémon} trainer {инструмент} other {карту неизвестного типа}}"
+    "translation": "{name} превращает {card} в {category, select, energy {Энергию} pokemon {покемона} trainer {инструмент} other {карту неизвестного типа}}"
   },
   "xjFQ8_": {
     "message": "{name} deck",
     "comments": [
       "A zone's name for screen readers; name is its player."
     ],
-    "translation": "Колода: {name}"
+    "translation": "Колода игрока {name}"
   },
   "yqrl-U": {
     "message": "{name} discard",
     "comments": [
       "A zone's name for screen readers; name is its player. The discard pile."
     ],
-    "translation": "Сброс: {name}"
+    "translation": "Сброс игрока {name}"
   },
   "cee6Ru": {
     "message": "{name} disconnected",
@@ -580,14 +580,14 @@
     "comments": [
       "Log line. {name} is a player's name, {count} how many cards they drew."
     ],
-    "translation": "{name} берёт {count, plural, one {карту} few {# карты} many {# карт} other {# карты}}"
+    "translation": "{name} берёт {count, plural, =1 {карту} one {# карту} few {# карты} many {# карт} other {# карты}}"
   },
   "5MiMTH": {
     "message": "{name} drew for turn",
     "comments": [
       "Log line: the player whose turn begins drew their card for the turn. {name} is a player's name."
     ],
-    "translation": "{name} берёт карту на ход"
+    "translation": "{name} берёт карту в начале хода"
   },
   "y-dTT1": {
     "message": "{name} drew starting hand and set prizes",
@@ -615,7 +615,7 @@
     "comments": [
       "Log line: a turn began and the player's deck was empty. {name} is a player's name."
     ],
-    "translation": "У игрока {name} не осталось карт в колоде, чтобы взять"
+    "translation": "У игрока {name} кончились карты в колоде"
   },
   "BY6auV": {
     "message": "{name} has no deck loaded",
@@ -640,42 +640,42 @@
     "comments": [
       "Log line: someone came into the room. {name} is their name."
     ],
-    "translation": "{name} присоединился"
+    "translation": "{name} входит в комнату"
   },
   "kfnFBD": {
     "message": "{name} left the room",
     "comments": [
       "Log line. {name} is their name."
     ],
-    "translation": "{name} покинул комнату"
+    "translation": "{name} покидает комнату"
   },
   "-wrYVm": {
     "message": "{name} loaded deck",
     "comments": [
       "Log line. {name} is a player's name."
     ],
-    "translation": "{name} загрузил колоду"
+    "translation": "{name} загружает колоду"
   },
   "lcx9nx": {
     "message": "{name} looked at bottom {count, plural, one {# card(s)} other {# card(s)}} of deck",
     "comments": [
       "Log line. {name} is a player's name, {count} how many cards from the bottom of their deck they looked at."
     ],
-    "translation": "{name} посмотрел {count, plural, one {# нижнюю карту} few {# нижние карты} many {# нижних карт} other {# нижней карты}} колоды"
+    "translation": "{name} смотрит {count, plural, one {# нижнюю карту} few {# нижние карты} many {# нижних карт} other {# нижней карты}} колоды"
   },
   "ok9Ijw": {
     "message": "{name} looked at top {count, plural, one {# card(s)} other {# card(s)}} of deck",
     "comments": [
       "Log line. {name} is a player's name, {count} how many cards from the top of their deck they looked at."
     ],
-    "translation": "{name} посмотрел {count, plural, one {# верхнюю карту} few {# верхние карты} many {# верхних карт} other {# верхней карты}} колоды"
+    "translation": "{name} смотрит {count, plural, one {# верхнюю карту} few {# верхние карты} many {# верхних карт} other {# верхней карты}} колоды"
   },
   "A7bcR4": {
     "message": "{name} Lost Zone",
     "comments": [
       "A zone's name for screen readers; name is its player."
     ],
-    "translation": "Lost Zone игрока {name}"
+    "translation": "Зона потерь игрока {name}"
   },
   "219rTA": {
     "message": "{name} mulligans",
@@ -693,7 +693,7 @@
     "comments": [
       "Log line: a player ended their turn without attacking. {name} is a player's name."
     ],
-    "translation": "{name} пропустил ход"
+    "translation": "{name} пасует"
   },
   "rzpxoR": {
     "message": "{name} prizes",
@@ -714,49 +714,49 @@
     "comments": [
       "Log line: a player cleared their side of the table. {name} is a player's name."
     ],
-    "translation": "{name} сбросил свою сторону стола"
+    "translation": "{name} очищает свою сторону стола"
   },
   "yq8DHI": {
     "message": "{name} reset their {marker}",
     "comments": [
       "Log line: a player turned their once-per-game marker back to unused. {name} is a player's name; {marker} is GX or VSTAR (keep as is)."
     ],
-    "translation": "{name} сбросил свой {marker}"
+    "translation": "{name} восстанавливает свой {marker}"
   },
   "ywLLuj": {
     "message": "{name} shuffled {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}}",
     "comments": [
       "Log line. {name} is a player's name; {source} is the zone they shuffled, almost always their deck."
     ],
-    "translation": "{name} перемешал {source, select, hand {руку} prizes {призовые карты} discard {сброс} board {поле} stadium {стадион} active {активного покемона} bench {скамейку} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} other {колоду}}"
+    "translation": "{name} перемешивает {source, select, hand {руку} prizes {призовые карты} discard {сброс} board {поле} stadium {стадион} active {активного покемона} bench {запас} lostZone {зону потерь} attachmentResolution {присоединённые карты} other {колоду}}"
   },
   "x8Eb2i": {
     "message": "{name} started turn {turn}",
     "comments": [
       "Read aloud by screen readers. {name} is a player's name, {turn} the turn number."
     ],
-    "translation": "{name} начал ход {turn}"
+    "translation": "{name} начинает ход {turn}"
   },
   "I_6aBo": {
     "message": "{name} used {card}",
     "comments": [
       "Log line: a player used a Stadium card's effect. {name} is a player's name, {card} the Stadium's name."
     ],
-    "translation": "{name} использовал {card}"
+    "translation": "{name} использует {card}"
   },
   "1X7zxc": {
     "message": "{name} used {card}'s ability",
     "comments": [
       "Log line: a player used a Pokémon's Ability. {name} is a player's name, {card} the Pokémon's name."
     ],
-    "translation": "{name} использовал способность {card}"
+    "translation": "{name} использует талант {card}"
   },
   "RZV8CB": {
     "message": "{name} used their {marker}",
     "comments": [
       "Log line: a player used their once-per-game power. {name} is a player's name; {marker} is GX or VSTAR (keep as is)."
     ],
-    "translation": "{name} использовал свой {marker}"
+    "translation": "{name} использует свой {marker}"
   },
   "5BonJe": {
     "message": "{name} used: press to undo",
@@ -767,7 +767,7 @@
   },
   "2mmBQD": {
     "message": "{name}: try it",
-    "translation": "{name}: попробуй"
+    "translation": "{name}: попробовать"
   },
   "cgmx3-": {
     "message": "{name}'s turn",
@@ -887,7 +887,7 @@
     "comments": [
       "Log line: a player undid their own last move. {target} is the player's name."
     ],
-    "translation": "{target} отменил свой последний ход"
+    "translation": "{target} отменяет своё последнее действие"
   },
   "mFeDcR": {
     "message": "{targetSeat}: {seatLabel}, {seatTotal, plural, one {# card} other {# cards}}",
@@ -932,28 +932,28 @@
     "comments": [
       "Log line: a player began looking at a zone only they can see. {viewer} is who is looking, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "{viewer} смотрит: {source, select, hand {рука} prizes {призовые карты} discard {сброс} board {поле} stadium {стадион} active {активный покемон} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} inspection {осмотр} other {колода}} — игрок {owner}"
+    "translation": "{viewer} смотрит зону «{source, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {запас} lostZone {зона потерь} attachmentResolution {присоединённые карты} inspection {просмотр} other {колода}}» игрока {owner}"
   },
   "kF6-Cq": {
     "message": "{viewer} looked at card in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line: a player began looking at a card only they can see. {viewer} is who is looking, {owner} whose card it is; {source} is the zone it is in."
     ],
-    "translation": "{viewer} смотрит карту: {source, select, hand {рука} prizes {призовые карты} discard {сброс} board {поле} stadium {стадион} active {активный покемон} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} inspection {осмотр} other {колода}} — игрок {owner}"
+    "translation": "{viewer} смотрит карту в зоне «{source, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {запас} lostZone {зона потерь} attachmentResolution {присоединённые карты} inspection {просмотр} other {колода}}» игрока {owner}"
   },
   "jTec7e": {
     "message": "{viewer} stopped looking at {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line. {viewer} is who stopped looking, {owner} whose zone it is; {source} is the zone."
     ],
-    "translation": "{viewer} закончил смотреть: {source, select, hand {рука} prizes {призовые карты} discard {сброс} board {поле} stadium {стадион} active {активный покемон} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} inspection {осмотр} other {колода}} — игрок {owner}"
+    "translation": "{viewer} больше не смотрит зону «{source, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {запас} lostZone {зона потерь} attachmentResolution {присоединённые карты} inspection {просмотр} other {колода}}» игрока {owner}"
   },
   "FAueN1": {
     "message": "{viewer} stopped looking at card in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
       "Log line. {viewer} is who stopped looking, {owner} whose card it is; {source} is the zone it is in."
     ],
-    "translation": "{viewer} закончил смотреть карту: {source, select, hand {рука} prizes {призовые карты} discard {сброс} board {поле} stadium {стадион} active {активный покемон} bench {скамейка} lostZone {Lost Zone} attachmentResolution {прикреплённые карты} inspection {осмотр} other {колода}} — игрок {owner}"
+    "translation": "{viewer} больше не смотрит карту в зоне «{source, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {запас} lostZone {зона потерь} attachmentResolution {присоединённые карты} inspection {просмотр} other {колода}}» игрока {owner}"
   },
   "JirPbT": {
     "message": "{zoneName}, {count, plural, one {# card} other {# cards}}",
@@ -995,7 +995,7 @@
   },
   "F7xH8_": {
     "message": "<0>{0}</0>: every move, and the chat.",
-    "translation": "<0>{0}</0>: все ходы и чат."
+    "translation": "<0>{0}</0>: все действия и чат."
   },
   "l7W_Ze": {
     "message": "<0>{0}</0>: send a friend a link to your table.",
@@ -1074,24 +1074,24 @@
     "comments": [
       "Printed on the marker of a Pokémon whose Ability was used."
     ],
-    "translation": "Способность"
+    "translation": "Талант"
   },
   "40lCC5": {
     "message": "Ability",
     "context": "card filter",
-    "translation": "Способность"
+    "translation": "Талант"
   },
   "_n9590": {
     "message": "Ability",
     "context": "shortcut key caption",
-    "translation": "Способность"
+    "translation": "Талант"
   },
   "uFV0XA": {
     "message": "Ability used",
     "comments": [
       "Tooltip of the marker on a Pokémon whose Ability was used."
     ],
-    "translation": "Способность использована"
+    "translation": "Талант использован"
   },
   "BZkiHi": {
     "message": "Access to an exclusive Discord channel for priority suggestions/feature proposals/troubleshooting support.",
@@ -1227,7 +1227,7 @@
   },
   "Uu-7-8": {
     "message": "An <0>open-source</0> Pokémon TCG table.",
-    "translation": "<0>Открытый</0> стол для Pokémon TCG."
+    "translation": "Стол для Pokémon TCG <0>с открытым исходным кодом</0>."
   },
   "5ZW9xa": {
     "message": "An attack payable with two Energy",
@@ -1306,20 +1306,20 @@
   "eiQJaM": {
     "message": "Asleep",
     "context": "special condition",
-    "translation": "Сон"
+    "translation": "Спит"
   },
   "hXSSHx": {
     "message": "Assemble / attach to a card…",
-    "translation": "Собрать / прикрепить к карте…"
+    "translation": "Собрать / присоединить к карте…"
   },
   "igVDFt": {
     "message": "Attach",
-    "translation": "Прикрепить"
+    "translation": "Присоединить"
   },
   "j-d3Lr": {
     "message": "Attach",
     "context": "shortcut key caption",
-    "translation": "Прикрепить"
+    "translation": "Присоединить"
   },
   "jrzyuC": {
     "message": "Attach and evolve",
@@ -1327,11 +1327,11 @@
   },
   "E9l6HC": {
     "message": "Attached cards being moved",
-    "translation": "Перемещаются прикреплённые карты"
+    "translation": "Перемещаются присоединённые карты"
   },
   "QUMrFI": {
     "message": "Attached to {0}",
-    "translation": "Прикреплено к: {0}"
+    "translation": "Присоединено к: {0}"
   },
   "Hdi9Gs": {
     "message": "Attack",
@@ -1416,34 +1416,34 @@
   },
   "o4xCmI": {
     "message": "Basic / Special Energy",
-    "translation": "Базовая / особая энергия"
+    "translation": "Базовая / особая Энергия"
   },
   "mQwVD5": {
     "message": "Basic Energy",
-    "translation": "Базовая энергия"
+    "translation": "Базовая Энергия"
   },
   "dkk7vA": {
     "message": "Bench",
     "context": "shortcut key caption",
-    "translation": "Скамейка"
+    "translation": "Запас"
   },
   "-Pxcql": {
     "message": "Bench",
     "context": "zone",
-    "translation": "Скамейка"
+    "translation": "Запас"
   },
   "SpTFye": {
     "message": "Bench",
     "context": "zone on the table",
-    "translation": "Скамейка"
+    "translation": "Запас"
   },
   "tffbb1": {
     "message": "Bench <0>{0}</0> from your hand.",
-    "translation": "Выложи <0>{0}</0> из руки на скамейку."
+    "translation": "Положи <0>{0}</0> из руки в запас."
   },
   "T1zt_m": {
     "message": "Bench <0>{0}</0> too.",
-    "translation": "Посади на скамейку и <0>{0}</0>."
+    "translation": "Положи в запас и <0>{0}</0>."
   },
   "O2HdKg": {
     "message": "Board",
@@ -1522,7 +1522,7 @@
   "fC9HUg": {
     "message": "Burned",
     "context": "special condition",
-    "translation": "Ожог"
+    "translation": "Обожжён"
   },
   "EhsQ9V": {
     "message": "Busy for a moment — try again shortly",
@@ -1640,7 +1640,7 @@
   },
   "jWdGHA": {
     "message": "Change type to Pokémon",
-    "translation": "Сменить тип на Pokémon"
+    "translation": "Сменить тип на покемона"
   },
   "OtiTk4": {
     "message": "Change type to Tool",
@@ -1652,7 +1652,7 @@
   },
   "_2MVxl": {
     "message": "Changed your mind? <0>{0}</0> takes back your last move.",
-    "translation": "Передумал? <0>{0}</0> отменяет твой последний ход."
+    "translation": "Передумал? <0>{0}</0> отменяет твоё последнее действие."
   },
   "iY-KUI": {
     "message": "Charcoal",
@@ -1723,7 +1723,7 @@
   "9OeKNW": {
     "message": "Clear",
     "context": "shortcut key caption",
-    "translation": "Сброс"
+    "translation": "Убрать урон"
   },
   "tXkSiA": {
     "message": "Clear damage",
@@ -1739,7 +1739,7 @@
   },
   "F4fFCC": {
     "message": "Click <0>{0}</0> in your hand, then press <1>{key}</1> to bench it.",
-    "translation": "Нажми на <0>{0}</0> в руке, затем нажми <1>{key}</1>, чтобы выложить на скамейку."
+    "translation": "Нажми на <0>{0}</0> в руке, затем нажми <1>{key}</1>, чтобы положить его в запас."
   },
   "MO489z": {
     "message": "Click a shortcut to change it.",
@@ -1821,7 +1821,7 @@
   "DcpzXY": {
     "message": "Confused",
     "context": "special condition",
-    "translation": "Смятение"
+    "translation": "Сбит с толку"
   },
   "JrFTcr": {
     "message": "Connecting…",
@@ -1955,7 +1955,7 @@
   },
   "68zbbm": {
     "message": "Damage counter",
-    "translation": "Жетон урона"
+    "translation": "Фишка урона"
   },
   "yB1YpA": {
     "message": "Dark mode",
@@ -2177,11 +2177,11 @@
   },
   "IGqHX9": {
     "message": "Drag a <0>{0}</0> onto {1} to attach it.",
-    "translation": "Перетащи <0>{0}</0> на {1}, чтобы прикрепить."
+    "translation": "Перетащи <0>{0}</0> на {1}, чтобы присоединить."
   },
   "n3U3s1": {
     "message": "Drag a Basic Pokémon from your hand onto your <0>Active Spot</0>.",
-    "translation": "Перетащи Базового Покемона из руки на свою <0>активную позицию</0>."
+    "translation": "Перетащи базового покемона из руки на свою <0>активную позицию</0>."
   },
   "sEjSlz": {
     "message": "Dragon",
@@ -2311,11 +2311,11 @@
   },
   "04Gro-": {
     "message": "Energy cards",
-    "translation": "Карты энергии"
+    "translation": "Карты Энергии"
   },
   "i07JvD": {
     "message": "Energy, evolutions, Trainers and the Bench",
-    "translation": "Энергия, эволюции, Тренеры и скамейка"
+    "translation": "Энергия, эволюции, Тренеры и запас"
   },
   "CtX2Zh": {
     "message": "Enter",
@@ -2434,7 +2434,7 @@
   "WtsWWf": {
     "message": "Fighting",
     "context": "Pokémon type",
-    "translation": "Борьба"
+    "translation": "Сражение"
   },
   "cSev-j": {
     "message": "Filters",
@@ -2542,7 +2542,7 @@
   },
   "CK2j9j": {
     "message": "Flip their coin",
-    "translation": "Подбросить монетку соперника"
+    "translation": "Подбросить монетку противника"
   },
   "zoSOoE": {
     "message": "Foil coverage",
@@ -2638,7 +2638,7 @@
   "iN8jqp": {
     "message": "Grass",
     "context": "Pokémon type",
-    "translation": "Растение"
+    "translation": "Трава"
   },
   "lySEU9": {
     "message": "Green felt",
@@ -2687,7 +2687,7 @@
   },
   "M35hjm": {
     "message": "Has an Ability, no Weakness",
-    "translation": "Есть способность, нет слабости"
+    "translation": "Есть талант, нет слабости"
   },
   "BvzegF": {
     "message": "Heads",
@@ -2721,11 +2721,11 @@
   },
   "_hwQqt": {
     "message": "Hide Lost Zone",
-    "translation": "Скрыть Lost Zone"
+    "translation": "Скрыть зону потерь"
   },
   "v8upxe": {
     "message": "Hide opponent's hand",
-    "translation": "Скрыть руку соперника"
+    "translation": "Скрыть руку противника"
   },
   "ZQLqYr": {
     "message": "Hide welcome",
@@ -2755,19 +2755,19 @@
   "oT-Cnl": {
     "message": "HP",
     "context": "sort cards by",
-    "translation": "HP"
+    "translation": "ОЖ"
   },
   "36NKhF": {
     "message": "HP and retreat",
-    "translation": "HP и отступление"
+    "translation": "ОЖ и отступление"
   },
   "ZTtNAf": {
     "message": "HP at least",
-    "translation": "HP не меньше"
+    "translation": "ОЖ не меньше"
   },
   "LgcKSI": {
     "message": "HP at most",
-    "translation": "HP не больше"
+    "translation": "ОЖ не больше"
   },
   "fVGc9-": {
     "message": "https://… or default",
@@ -2905,7 +2905,7 @@
   },
   "N2lSEn": {
     "message": "Joins matching pieces",
-    "translation": "Объединяет похожие элементы"
+    "translation": "Объединяет подходящие части"
   },
   "80Qsxy": {
     "message": "Keep",
@@ -2935,11 +2935,11 @@
   },
   "_rugva": {
     "message": "Knock Out",
-    "translation": "Нокаут"
+    "translation": "Выбей из игры"
   },
   "69MOGQ": {
     "message": "Knock Out their <0>{0}</0>: drag it onto their discard pile. Its Energy goes with it.",
-    "translation": "Нокаутируй их <0>{0}</0>: перетащи его в их сброс. Энергия уйдёт вместе с ним."
+    "translation": "Выбей из игры <0>{0}</0> противника: перетащи его в сброс противника. Его Энергия уйдёт вместе с ним."
   },
   "vXIe7J": {
     "message": "Language",
@@ -3001,12 +3001,12 @@
   },
   "xXagjO": {
     "message": "LEGEND · 2 halves",
-    "translation": "ЛЕГЕНДА · 2 половины"
+    "translation": "LEGEND · 2 половины"
   },
   "YVrOwc": {
     "message": "Level-Up",
     "context": "Pokémon stage",
-    "translation": "Уровень"
+    "translation": "Повышение уровня"
   },
   "Fu5KED": {
     "message": "Lift cards while dragging",
@@ -3015,7 +3015,7 @@
   "Lnx2DC": {
     "message": "Lightning",
     "context": "Pokémon type",
-    "translation": "Электрический"
+    "translation": "Молния"
   },
   "JL_ceN": {
     "message": "Limitless",
@@ -3071,7 +3071,7 @@
   },
   "GLOf7w": {
     "message": "Load the other side's deck",
-    "translation": "Загрузить колоду соперника"
+    "translation": "Загрузить колоду другой стороны"
   },
   "g7taAS": {
     "message": "Loading cards…",
@@ -3118,7 +3118,7 @@
   },
   "RY4IrC": {
     "message": "Look at bottom of their deck…",
-    "translation": "Посмотреть низ колоды соперника…"
+    "translation": "Посмотреть низ колоды противника…"
   },
   "C5D5j0": {
     "message": "Look at cards",
@@ -3134,11 +3134,11 @@
   },
   "nZyxDJ": {
     "message": "Look at or cover their hand",
-    "translation": "Посмотреть или закрыть их руку"
+    "translation": "Посмотреть или закрыть руку противника"
   },
   "qJ_tx1": {
     "message": "Look at or cover their Prizes",
-    "translation": "Посмотреть или закрыть их призовые карты"
+    "translation": "Посмотреть или закрыть призовые карты противника"
   },
   "bQF9w4": {
     "message": "Look at or cover your Prizes",
@@ -3158,7 +3158,7 @@
   },
   "dWUxHE": {
     "message": "Look at top of their deck…",
-    "translation": "Посмотреть верх колоды соперника…"
+    "translation": "Посмотреть верх колоды противника…"
   },
   "ktAl1J": {
     "message": "Look/cover hand",
@@ -3178,30 +3178,30 @@
   },
   "JgsnP-": {
     "message": "Lost Zone",
-    "translation": "Lost Zone"
+    "translation": "Зона потерь"
   },
   "kdNjJ0": {
     "message": "Lost Zone",
     "context": "shortcut key caption",
-    "translation": "Lost Zone"
+    "translation": "Зона потерь"
   },
   "sdbriY": {
     "message": "Lost Zone",
     "context": "zone",
-    "translation": "Lost Zone"
+    "translation": "Зона потерь"
   },
   "O1WoVX": {
     "message": "Lost Zone",
     "context": "zone on the table",
-    "translation": "Lost Zone"
+    "translation": "Зона потерь"
   },
   "ikc_ks": {
     "message": "Lost Zone all",
-    "translation": "Всё в Lost Zone"
+    "translation": "Всё в зону потерь"
   },
   "eyE6CV": {
     "message": "Lost Zone and markers",
-    "translation": "Lost Zone и маркеры"
+    "translation": "Зона потерь и маркеры"
   },
   "LoMQBK": {
     "message": "Majors on Limitless",
@@ -3216,7 +3216,7 @@
   },
   "cnyUyK": {
     "message": "Make cover",
-    "translation": "Сделать рубашкой вверх"
+    "translation": "Сделать обложкой"
   },
   "brtcFm": {
     "message": "Mark {mark}",
@@ -3237,7 +3237,7 @@
     "comments": [
       "Takes the \"Ability used\" marker off a Pokémon."
     ],
-    "translation": "Отметить как неиспользованную"
+    "translation": "Отметить как неиспользованный"
   },
   "IHU0N1": {
     "message": "Mark GX attack unused",
@@ -3245,11 +3245,11 @@
   },
   "IQ2DXR": {
     "message": "Mark VSTAR Power unused",
-    "translation": "Отметить VSTAR Power неиспользованной"
+    "translation": "Отметить силу VSTAR неиспользованной"
   },
   "42K-4o": {
     "message": "Match finish",
-    "translation": "Покрытие"
+    "translation": "По покрытию"
   },
   "5EeU5m": {
     "message": "Matte",
@@ -3350,7 +3350,7 @@
   },
   "DUfTll": {
     "message": "Move all on playboard to Lost Zone",
-    "translation": "Переместить всё с поля в Lost Zone"
+    "translation": "Переместить всё с поля в зону потерь"
   },
   "pcSzkk": {
     "message": "Move all to hand",
@@ -3358,7 +3358,7 @@
   },
   "eC8uPs": {
     "message": "Move attached cards",
-    "translation": "Переместить прикреплённые карты"
+    "translation": "Переместить присоединённые карты"
   },
   "TnU3pN": {
     "message": "Move card",
@@ -3370,7 +3370,7 @@
   },
   "TvEhJE": {
     "message": "Move didn't go through",
-    "translation": "Не удалось выполнить ход"
+    "translation": "Не удалось переместить"
   },
   "dIOEcQ": {
     "message": "Move the selected card",
@@ -3392,7 +3392,7 @@
   },
   "8GMjXa": {
     "message": "Mulligan (no Basic in 7)",
-    "translation": "Муллиган (нет Базовых среди 7)"
+    "translation": "Муллиган (нет базовых среди 7)"
   },
   "jiY-22": {
     "message": "My deck",
@@ -3437,7 +3437,7 @@
   },
   "rf9azy": {
     "message": "Needs at least one Basic Pokémon.",
-    "translation": "Нужен хотя бы один Базовый Pokémon."
+    "translation": "Нужен хотя бы один базовый покемон."
   },
   "W_gspM": {
     "message": "New deck",
@@ -3484,7 +3484,7 @@
   },
   "iKrJ1Q": {
     "message": "No Basic Pokémon in your hand: that is a mulligan. Choose <0>{0}</0> under {1}.",
-    "translation": "В руке нет Базового покемона: это мулиган. Выбери <0>{0}</0> под {1}."
+    "translation": "В руке нет базового покемона: это муллиган. Выбери <0>{0}</0> под {1}."
   },
   "6n5psS": {
     "message": "No card lines found. Try lines like \"4 Iono PAL 185\".",
@@ -3612,7 +3612,7 @@
   },
   "6rbhdt": {
     "message": "Not your move",
-    "translation": "Сейчас не твой ход"
+    "translation": "Тебе нельзя это перемещать"
   },
   "W8zlv3": {
     "message": "Not yours to do",
@@ -3694,7 +3694,7 @@
     "comments": [
       "formatLabel is a deck format: Standard, Expanded…"
     ],
-    "translation": "Только легальные в {formatLabel}"
+    "translation": "Только разрешённые в формате {formatLabel}"
   },
   "XXBK3z": {
     "message": "Only players can change the table.",
@@ -3734,19 +3734,19 @@
   },
   "cCMcAY": {
     "message": "Open their deck",
-    "translation": "Открыть его колоду"
+    "translation": "Открыть колоду противника"
   },
   "tfdDUV": {
     "message": "Open their discard pile",
-    "translation": "Открыть его сброс"
+    "translation": "Открыть сброс противника"
   },
   "QUoj0T": {
     "message": "Open their Lost Zone",
-    "translation": "Открыть его Lost Zone"
+    "translation": "Открыть зону потерь противника"
   },
   "52seef": {
     "message": "Open their Prizes",
-    "translation": "Открыть его призовые карты"
+    "translation": "Открыть призовые карты противника"
   },
   "aiCxFx": {
     "message": "Open your deck",
@@ -3758,7 +3758,7 @@
   },
   "eZJMWk": {
     "message": "Open your Lost Zone",
-    "translation": "Открыть твою Lost Zone"
+    "translation": "Открыть твою зону потерь"
   },
   "o1JZRd": {
     "message": "Open your Prizes",
@@ -3766,7 +3766,7 @@
   },
   "4UrZFn": {
     "message": "Opening hand · {basics} Basic Pokémon · {mulligan} mulligan",
-    "translation": "Начальная рука · Базовых Покемонов: {basics} · маллиганов: {mulligan}"
+    "translation": "Стартовая рука · базовых покемонов: {basics} · муллиганов: {mulligan}"
   },
   "oLQoOZ": {
     "message": "Opening your decks…",
@@ -3778,15 +3778,15 @@
   },
   "WOApxE": {
     "message": "Opponent is looking",
-    "translation": "Соперник смотрит"
+    "translation": "Противник смотрит"
   },
   "g88DaC": {
     "message": "Opponent moving cards",
-    "translation": "Соперник двигает карты"
+    "translation": "Противник перемещает карты"
   },
   "ZXd3zV": {
     "message": "Opponent's cards face me",
-    "translation": "Карты соперника лицом ко мне"
+    "translation": "Карты противника лицом ко мне"
   },
   "eH_2Pb": {
     "message": "Other",
@@ -3819,7 +3819,7 @@
   "xun4kD": {
     "message": "Paralyzed",
     "context": "special condition",
-    "translation": "Паралич"
+    "translation": "Парализован"
   },
   "l3RHbc": {
     "message": "Parchment",
@@ -3835,7 +3835,7 @@
   },
   "kJtjKm": {
     "message": "Pass the turn",
-    "translation": "Пас: пропустить ход"
+    "translation": "Пас: передать ход"
   },
   "sihBmP": {
     "message": "Paste",
@@ -3876,7 +3876,7 @@
   },
   "2EfntA": {
     "message": "Pick a random card from their hand",
-    "translation": "Выбрать случайную карту из его руки"
+    "translation": "Выбрать случайную карту из руки противника"
   },
   "QRjV7C": {
     "message": "Pick random card",
@@ -3884,7 +3884,7 @@
   },
   "xYvd7u": {
     "message": "Piece position",
-    "translation": "Положение фишки"
+    "translation": "Положение части"
   },
   "SW-cIq": {
     "message": "Play",
@@ -3893,7 +3893,7 @@
   },
   "Sky344": {
     "message": "Play <0>{0}</0>: drag it onto the open mat. Ending your turn clears it away.",
-    "translation": "Сыграй <0>{0}</0>: перетащи на свободный коврик. Конец хода уберёт карту."
+    "translation": "Сыграй <0>{0}</0>: перетащи карту на поле. Конец хода уберёт её."
   },
   "7LIRc6": {
     "message": "Play a random deck",
@@ -3909,7 +3909,7 @@
   },
   "62Tg4V": {
     "message": "Play the other side yourself",
-    "translation": "Сыграй за соперника сам"
+    "translation": "Сыграй сам за противника"
   },
   "hrmat7": {
     "message": "Play these decks",
@@ -3920,7 +3920,7 @@
     "comments": [
       "The deck this seat played last"
     ],
-    "translation": "Играл последним"
+    "translation": "Сыграна последней"
   },
   "ald_WV": {
     "message": "Player",
@@ -3946,17 +3946,17 @@
   "95vGpJ": {
     "message": "Poisoned",
     "context": "special condition",
-    "translation": "Отравление"
+    "translation": "Отравлен"
   },
   "icgZ-R": {
     "message": "Pokémon",
     "context": "card kind",
-    "translation": "Pokémon"
+    "translation": "Покемон"
   },
   "Ru4Gx2": {
     "message": "Pokémon",
     "context": "shortcut key caption",
-    "translation": "Pokémon"
+    "translation": "Покемон"
   },
   "CA11_N": {
     "message": "Pokémon added by hand",
@@ -3964,7 +3964,7 @@
   },
   "RNaprm": {
     "message": "Pokémon cards",
-    "translation": "Карты Pokémon"
+    "translation": "Карты покемонов"
   },
   "_0G332": {
     "message": "Press {keys} for <0>shortcuts</0>.",
@@ -4065,23 +4065,23 @@
   "NlwZhZ": {
     "message": "Psychic",
     "context": "Pokémon type",
-    "translation": "Психическая"
+    "translation": "Психо"
   },
   "jG4a_T": {
     "message": "Put another on your <0>Bench</0>. Up to five fit there.",
-    "translation": "Положи ещё одного на <0>скамейку</0>. Там помещается до пяти."
+    "translation": "Положи ещё одного в <0>запас</0>. Туда помещается до пяти."
   },
   "5XURu8": {
     "message": "Put damage and Poisoned on their Pokémon",
-    "translation": "Добавь урон и Отравление их Покемону"
+    "translation": "Нанеси урон покемону противника и отрави его"
   },
   "rkcP1p": {
     "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
-    "translation": "Фишки Покемонов клади в одну стопку, фишки Стадиона — на место Стадиона."
+    "translation": "Части покемонов клади в одну стопку, части стадиона — на место стадиона."
   },
   "QEP1VC": {
     "message": "Put the rest of it, <0>{0}</0> and its Energy, in their discard pile too.",
-    "translation": "Остальное — <0>{0}</0> и его Энергию — тоже положи в сброс."
+    "translation": "Остальное — <0>{0}</0> и его Энергию — тоже положи в сброс противника."
   },
   "VbWX2u": {
     "message": "Quantity",
@@ -4173,7 +4173,7 @@
   },
   "hKnn4w": {
     "message": "Remove {name} from {seat}",
-    "translation": "Убрать {name} из {seat}"
+    "translation": "Убрать {name} с места {seat}"
   },
   "-cND-P": {
     "message": "Remove all damage",
@@ -4232,7 +4232,7 @@
   },
   "OfhWJH": {
     "message": "Reset",
-    "translation": "Сбросить"
+    "translation": "Очистить"
   },
   "bifs2h": {
     "message": "Reset",
@@ -4242,12 +4242,12 @@
   "CMX0yG": {
     "message": "Reset",
     "context": "reset the table",
-    "translation": "Сбросить"
+    "translation": "Очистить"
   },
   "v6U14-": {
     "message": "Reset",
     "context": "shortcut key caption",
-    "translation": "Сброс"
+    "translation": "Очистить"
   },
   "Ac-4ew": {
     "message": "Reset {label} to {defaultHint}",
@@ -4267,7 +4267,7 @@
   },
   "JLLA3V": {
     "message": "Reset both sides",
-    "translation": "Сбросить обе стороны"
+    "translation": "Очистить обе стороны"
   },
   "xNq549": {
     "message": "Reset table view",
@@ -4290,11 +4290,11 @@
   },
   "qf9cjt": {
     "message": "Resistance",
-    "translation": "Сопротивление"
+    "translation": "Устойчивость"
   },
   "q53LG2": {
     "message": "Resistance {resistance}",
-    "translation": "Сопротивление {resistance}"
+    "translation": "Устойчивость {resistance}"
   },
   "253h9G": {
     "message": "Restart",
@@ -4308,7 +4308,7 @@
   "UQt_GI": {
     "message": "Restored",
     "context": "Pokémon stage",
-    "translation": "Восстановлен"
+    "translation": "Возрождённый"
   },
   "Dwpy1Z": {
     "message": "Resume a saved game…",
@@ -4333,7 +4333,7 @@
   },
   "MFV2V6": {
     "message": "Reveal or hide their Prizes",
-    "translation": "Показать или скрыть его призовые карты"
+    "translation": "Показать или скрыть призовые карты противника"
   },
   "FnwG7O": {
     "message": "Reveal or hide your Prizes",
@@ -4349,7 +4349,7 @@
   },
   "fa6wL6": {
     "message": "Revealed to your opponent",
-    "translation": "Показано сопернику"
+    "translation": "Показано противнику"
   },
   "XGMYSt": {
     "message": "Right",
@@ -4366,7 +4366,7 @@
   },
   "TKRCsY": {
     "message": "Right-click their <0>{0}</0>.",
-    "translation": "Нажми правой кнопкой на их <0>{0}</0>."
+    "translation": "Нажми правой кнопкой на <0>{0}</0> противника."
   },
   "euMx3W": {
     "message": "Room {roomCode}",
@@ -4468,7 +4468,7 @@
   },
   "qoNq2S": {
     "message": "Same group for each piece",
-    "translation": "Одна группа для каждой фигуры"
+    "translation": "Одна группа для всех частей"
   },
   "brkgwR": {
     "message": "Sample hand",
@@ -4589,11 +4589,11 @@
   },
   "L7_73L": {
     "message": "Set damage to {count}",
-    "translation": "Установить повреждения: {count}"
+    "translation": "Задать урон: {count}"
   },
   "hsdxJE": {
     "message": "Set damage…",
-    "translation": "Установить повреждения…"
+    "translation": "Задать урон…"
   },
   "OM2HHP": {
     "message": "Set the damage to <0>60</0>: type it, or press <1>+</1>.",
@@ -4626,7 +4626,7 @@
   },
   "1KTKvb": {
     "message": "Set up, then put your Pokémon in play",
-    "translation": "Расставь карты, затем выведи Покемонов в игру"
+    "translation": "Расставь карты, затем выведи покемонов в игру"
   },
   "1W8ZwT": {
     "message": "Set up: shuffle, draw 7, set 6 prizes",
@@ -4693,7 +4693,7 @@
   },
   "wo4rGx": {
     "message": "Show every print",
-    "translation": "Показывать все издания"
+    "translation": "Показывать все варианты печати"
   },
   "UXsj50": {
     "message": "Show halves…",
@@ -4751,11 +4751,11 @@
   },
   "XNhlHk": {
     "message": "Shuffle all into deck",
-    "translation": "Перемешать все в колоду"
+    "translation": "Замешать всё в колоду"
   },
   "Fnz7SK": {
     "message": "Shuffle all into the deck?",
-    "translation": "Перемешать всё в колоду?"
+    "translation": "Замешать всё в колоду?"
   },
   "Ad3M_2": {
     "message": "Shuffle all on playboard into deck",
@@ -4763,7 +4763,7 @@
   },
   "Es4EnS": {
     "message": "Shuffle all to deck",
-    "translation": "Перемешать все в колоду"
+    "translation": "Замешать всё в колоду"
   },
   "eFbm-5": {
     "message": "Shuffle deck",
@@ -4771,7 +4771,7 @@
   },
   "K3yK37": {
     "message": "Shuffle hand into deck",
-    "translation": "Перемешать руку в колоду"
+    "translation": "Замешать руку в колоду"
   },
   "KpMslS": {
     "message": "Shuffle hand into deck and draw…",
@@ -4779,19 +4779,19 @@
   },
   "VD_Lux": {
     "message": "Shuffle hand to bottom",
-    "translation": "Перемешать руку вниз колоды"
+    "translation": "Перемешать руку и положить под колоду"
   },
   "weBDkm": {
     "message": "Shuffle hand to bottom of deck",
-    "translation": "Перемешать руку вниз колоды"
+    "translation": "Перемешать руку и положить под колоду"
   },
   "8uWf-T": {
     "message": "Shuffle hand to bottom of deck and draw…",
-    "translation": "Замешать руку вниз колоды и взять карты…"
+    "translation": "Перемешать руку, положить под колоду и взять…"
   },
   "RdPVNx": {
     "message": "Shuffle hand to deck",
-    "translation": "Перемешать руку в колоду"
+    "translation": "Замешать руку в колоду"
   },
   "Tbmmyh": {
     "message": "Shuffle in",
@@ -4800,7 +4800,7 @@
   },
   "wZ_X8q": {
     "message": "Shuffle into deck",
-    "translation": "Перемешать в колоду"
+    "translation": "Замешать в колоду"
   },
   "DIHxqq": {
     "message": "Shuffle prizes",
@@ -4812,7 +4812,7 @@
   },
   "nU9Ip_": {
     "message": "Shuffle Prizes to bottom of deck",
-    "translation": "Перемешать призовые карты вниз колоды"
+    "translation": "Перемешать призовые карты и положить под колоду"
   },
   "SRsSL6": {
     "message": "Shuffle to bottom",
@@ -4870,7 +4870,7 @@
   },
   "dEkrb1": {
     "message": "Sort by HP, show every print",
-    "translation": "Сортировать по HP, показать все варианты печати"
+    "translation": "Сортировать по ОЖ, показать все варианты печати"
   },
   "i_vGIr": {
     "message": "Sort hand in decklist order",
@@ -4886,7 +4886,7 @@
   },
   "vjM07C": {
     "message": "Sort their hand",
-    "translation": "Отсортировать его руку"
+    "translation": "Отсортировать руку противника"
   },
   "b2twVe": {
     "message": "Sort your hand",
@@ -4916,12 +4916,12 @@
   },
   "0kjUmj": {
     "message": "Special Energy",
-    "translation": "Особая энергия"
+    "translation": "Особая Энергия"
   },
   "h5EwqW": {
     "message": "Split",
     "context": "the table between the halves",
-    "translation": "Разделить"
+    "translation": "Разделение"
   },
   "Y6mTBn": {
     "message": "SPONSOR TIERS",
@@ -4976,17 +4976,17 @@
   "0dnJ9h": {
     "message": "Stage 1",
     "context": "Pokémon stage",
-    "translation": "1-я стадия"
+    "translation": "Стадия 1"
   },
   "c6AS_i": {
     "message": "Stage 2",
     "context": "Pokémon stage",
-    "translation": "2-я стадия"
+    "translation": "Стадия 2"
   },
   "GlGLvC": {
     "message": "Standard",
     "context": "deck format",
-    "translation": "Standard"
+    "translation": "Стандартный"
   },
   "Tg13WJ": {
     "message": "Standard card",
@@ -5014,7 +5014,7 @@
   },
   "yA0PE0": {
     "message": "Start your turn with <0>{0}</0>. It draws your card.",
-    "translation": "Начни свой ход с <0>{0}</0>. Ты возьмёшь карту."
+    "translation": "Начни свой ход: нажми <0>{0}</0>. Ты возьмёшь карту."
   },
   "p7o5f_": {
     "message": "Status",
@@ -5028,12 +5028,12 @@
   "yqeLY3": {
     "message": "Supporter",
     "context": "Trainer card kind",
-    "translation": "Болельщик"
+    "translation": "Помощник"
   },
   "Uzt8Ji": {
     "message": "Supporters",
     "context": "Trainer cards by kind",
-    "translation": "Болельщики"
+    "translation": "Помощники"
   },
   "OVjfHO": {
     "message": "Surprise me",
@@ -5112,7 +5112,7 @@
   },
   "yJtTpT": {
     "message": "Take a <0>Prize card</0>: drag one into your hand.",
-    "translation": "Возьми <0>Призовую карту</0>: перетащи её в руку."
+    "translation": "Возьми <0>призовую карту</0>: перетащи её в руку."
   },
   "2g01hc": {
     "message": "Take off {count} damage",
@@ -5152,7 +5152,7 @@
   },
   "oeltU5": {
     "message": "Tap their <0>{0}</0>, then <1>{1}</1>.",
-    "translation": "Нажми <0>{0}</0> соперника, затем <1>{1}</1>."
+    "translation": "Нажми <0>{0}</0> противника, затем <1>{1}</1>."
   },
   "n_ll58": {
     "message": "Tap your deck to look through it.",
@@ -5173,12 +5173,12 @@
   "z5r9Ja": {
     "message": "Technical Machine",
     "context": "Trainer card kind",
-    "translation": "Технический аппарат"
+    "translation": "Техномашина"
   },
   "9o2lM8": {
     "message": "Technical Machines",
     "context": "Trainer cards by kind",
-    "translation": "Технические аппараты"
+    "translation": "Техномашины"
   },
   "4qLtJr": {
     "message": "That Energy has left your hand.",
@@ -5194,7 +5194,7 @@
   },
   "B4ZAXF": {
     "message": "That one was skipped.",
-    "translation": "Эта карта пропущена."
+    "translation": "Это действие пропущено."
   },
   "nWbyfh": {
     "message": "That replay file couldn't be opened.",
@@ -5258,7 +5258,7 @@
   },
   "lom6tE": {
     "message": "The last move is still sending.",
-    "translation": "Последний ход ещё отправляется."
+    "translation": "Последнее действие ещё отправляется."
   },
   "pGaCJK": {
     "message": "The practice table didn't answer.",
@@ -5290,51 +5290,51 @@
   },
   "4IfVI6": {
     "message": "Their Active Spot",
-    "translation": "Активная позиция соперника"
+    "translation": "Активная позиция противника"
   },
   "x36RVi": {
     "message": "Their Bench",
-    "translation": "Скамейка соперника"
+    "translation": "Запас противника"
   },
   "BBfq5L": {
     "message": "Their deck",
-    "translation": "Колода соперника"
+    "translation": "Колода противника"
   },
   "NdIyvu": {
     "message": "Their discard pile",
-    "translation": "Сброс соперника"
+    "translation": "Сброс противника"
   },
   "H2nezS": {
     "message": "Their hand",
-    "translation": "Рука соперника"
+    "translation": "Рука противника"
   },
   "OF7OJ7": {
     "message": "Their Lost Zone",
-    "translation": "Lost Zone соперника"
+    "translation": "Зона потерь противника"
   },
   "M9c-bJ": {
     "message": "Their playboard",
-    "translation": "Поле соперника"
+    "translation": "Поле противника"
   },
   "EO0v0p": {
     "message": "Their Prizes",
-    "translation": "Призовые карты соперника"
+    "translation": "Призовые карты противника"
   },
   "Cedl1T": {
     "message": "Their side is yours now: start their turn with <0>{0}</0>.",
-    "translation": "Теперь его сторона твоя: начни его ход с <0>{0}</0>."
+    "translation": "Теперь сторона противника твоя: начни его ход, нажав <0>{0}</0>."
   },
   "sMMsD3": {
     "message": "Theirs",
     "context": "the opponent's half of the table",
-    "translation": "Соперник"
+    "translation": "Противник"
   },
   "UvwaTR": {
     "message": "Theirs {theirs}% · Mine {percent}%",
     "comments": [
       "How the table's height is shared between the halves."
     ],
-    "translation": "Соперник {theirs}% · Я {percent}%"
+    "translation": "Противник {theirs}% · Я {percent}%"
   },
   "WVrKZx": {
     "message": "Then draw",
@@ -5349,7 +5349,7 @@
   },
   "DNMX9-": {
     "message": "They bring up the next: drag a <0>{0}</0> from their Bench to their Active Spot.",
-    "translation": "Они выставляют следующего: перетащи <0>{0}</0> с их скамейки на активную позицию."
+    "translation": "Противник выводит следующего: перетащи <0>{0}</0> из его запаса на активную позицию."
   },
   "WsAkgd": {
     "message": "This browser won't keep your decks after you close the page.",
@@ -5373,7 +5373,7 @@
   },
   "9P13ox": {
     "message": "To bench",
-    "translation": "На скамейку"
+    "translation": "В запас"
   },
   "1CZiQZ": {
     "message": "to Board",
@@ -5430,12 +5430,12 @@
   },
   "jO0531": {
     "message": "To Lost Zone",
-    "translation": "В Lost Zone"
+    "translation": "В зону потерь"
   },
   "WGN6ZC": {
     "message": "to Pokémon",
     "context": "change a card into",
-    "translation": "в Pokémon"
+    "translation": "в покемона"
   },
   "boV1kL": {
     "message": "To prizes",
@@ -5443,7 +5443,7 @@
   },
   "cayrWn": {
     "message": "To stadium",
-    "translation": "В стадион"
+    "translation": "На стадион"
   },
   "A7-3BM": {
     "message": "to Tool",
@@ -5456,11 +5456,11 @@
   },
   "eQIeJ9": {
     "message": "Toggle ability used",
-    "translation": "Отметить использование способности"
+    "translation": "Отметить использование таланта"
   },
   "OLgB6p": {
     "message": "Toggle ability/effect",
-    "translation": "Переключить способность/эффект"
+    "translation": "Переключить талант/эффект"
   },
   "6QCyrU": {
     "message": "Too large for a deck",
@@ -5476,7 +5476,7 @@
   },
   "B3I8F_": {
     "message": "Too many moves",
-    "translation": "Слишком много ходов"
+    "translation": "Слишком много перемещений"
   },
   "Xx-Q6M": {
     "message": "Tool",
@@ -5711,7 +5711,7 @@
   },
   "9c8BhN": {
     "message": "Use VSTAR Power",
-    "translation": "Использовать VSTAR Power"
+    "translation": "Использовать силу VSTAR"
   },
   "ZpWtmQ": {
     "message": "Uses Limitless TCG's search syntax.",
@@ -5762,7 +5762,7 @@
   "2kl5Uf": {
     "message": "Water",
     "context": "Pokémon type",
-    "translation": "Водный"
+    "translation": "Вода"
   },
   "AHlkVG": {
     "message": "Weakness",
@@ -5794,7 +5794,7 @@
   },
   "NWGsaA": {
     "message": "Winning now",
-    "translation": "Сейчас побеждает"
+    "translation": "Сейчас побеждают"
   },
   "n1kezF": {
     "message": "Yes",
@@ -5811,7 +5811,7 @@
   },
   "rrV20L": {
     "message": "Your Bench",
-    "translation": "Твоя скамейка"
+    "translation": "Твой запас"
   },
   "IZO0Y6": {
     "message": "Your board",
@@ -5840,7 +5840,7 @@
   },
   "BHcJOF": {
     "message": "Your Lost Zone",
-    "translation": "Твоя Lost Zone"
+    "translation": "Твоя зона потерь"
   },
   "23cwkx": {
     "message": "Your name changed. Generate a new room.",
