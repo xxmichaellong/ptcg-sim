@@ -342,6 +342,43 @@ export const DeckScreen = ({
     return controller;
   }, []);
 
+  /**
+   * Where the focus goes back to on the decks, and how they were scrolled:
+   * what opened a tournament or a deck's lists, the tile of a deck left in
+   * the editor (else the shelf's New deck, the deck gone).
+   */
+  const returnTo = useRef<
+    | {
+        readonly opener: string;
+        readonly fallback?: string;
+        /** The deck whose tile `opener` is, once gone (deleted, put away). */
+        readonly deckId?: string;
+        readonly scrollTop: number;
+      }
+    | undefined
+  >(undefined);
+  const editDeck = useCallback(
+    (deckId: string, missing: readonly DeckImportLine[] = []): void => {
+      const home = screen.current?.querySelector<HTMLElement>('.deck-home');
+      returnTo.current = {
+        opener: `[data-edit-deck="${CSS.escape(deckId)}"]`,
+        fallback: '#deckNewButton',
+        deckId,
+        // Under a tournament the decks are hidden, scrolled as they were.
+        scrollTop:
+          home && !home.hidden
+            ? home.scrollTop
+            : (returnTo.current?.scrollTop ?? 0),
+      };
+      setView({
+        kind: 'edit',
+        deckId,
+        ...(missing.length > 0 ? { missing } : {}),
+      });
+    },
+    []
+  );
+
   const runImport = useCallback(
     async (
       text: string,
@@ -414,11 +451,7 @@ export const DeckScreen = ({
             format: saved.format,
           });
           if (result.missing.length > 0 || options.edit) {
-            setView({
-              kind: 'edit',
-              deckId: saved.id,
-              ...(result.missing.length > 0 ? { missing: result.missing } : {}),
-            });
+            editDeck(saved.id, result.missing);
           }
         } else {
           placeOnSeat(result.cards, { name: stored, format: result.format });
@@ -441,7 +474,7 @@ export const DeckScreen = ({
         endImport(controller);
       }
     },
-    [beginImport, catalog, endImport, library, placeOnSeat, t, target]
+    [beginImport, catalog, editDeck, endImport, library, placeOnSeat, t, target]
   );
 
   const importFile = useCallback(
@@ -614,6 +647,7 @@ export const DeckScreen = ({
   // on the decks, a deck's name goes into the finder and is looked up, as
   // it would pasted there.
   const viewKind = view.kind;
+  const editedDeck = view.kind === 'edit' ? view.deckId : undefined;
   useEffect(() => {
     if (!open) return;
     // While the screen is open it covers the window, so a paste that isn't
@@ -673,11 +707,9 @@ export const DeckScreen = ({
   // A tournament or a deck's lists open with focus on their heading, over
   // the decks, which stay as they were underneath (DeckHome `hidden`), and
   // close back to them: scrolled as they were, focus on what opened them
-  // (the finder until it shows). Focus never falls out of the screen, where
-  // Esc and the keys would go nowhere.
-  const returnTo = useRef<
-    { readonly opener: string; readonly scrollTop: number } | undefined
-  >(undefined);
+  // (the finder until it shows). The editor opens with focus on its Back
+  // and closes back to the decks as they were too. Focus never falls out
+  // of the screen, where Esc and the keys would go nowhere.
   const leaveDecks = useCallback((opener: string): void => {
     returnTo.current = {
       opener,
@@ -702,52 +734,6 @@ export const DeckScreen = ({
   );
   const backToDecks = useCallback(() => setView({ kind: 'home' }), []);
   const subview = view.kind === 'tournament' || view.kind === 'archetype';
-  useEffect(() => {
-    const root = screen.current;
-    if (!root) return;
-    if (subview) {
-      root
-        .querySelector<HTMLElement>('.deck-subhead__title h2')
-        ?.focus({ preventScroll: true });
-      return;
-    }
-    const back = returnTo.current;
-    returnTo.current = undefined;
-    if (viewKind !== 'home' || back === undefined) return;
-    const home = root.querySelector<HTMLElement>('.deck-home');
-    if (home) home.scrollTop = back.scrollTop;
-    // Fallen to the page, or to the layer that holds the screen.
-    const lost = (): boolean =>
-      document.activeElement === null ||
-      document.activeElement === document.body ||
-      document.activeElement === root.closest('.ptcgsim-deck-layer');
-    const finder = root.querySelector<HTMLTextAreaElement>('#deckPasteInput');
-    if (lost()) finder?.focus({ preventScroll: true });
-    const held = finder?.value;
-    // The opener is normally there at once; a shelf or results that redrew
-    // meanwhile get a few seconds, while the player hasn't moved on from the
-    // finder.
-    const until = performance.now() + 3_000;
-    let frame = 0;
-    const find = (): void => {
-      frame = 0;
-      const target = root.querySelector<HTMLElement>(back.opener);
-      if (target) {
-        if (
-          lost() ||
-          (document.activeElement === finder && finder?.value === held)
-        ) {
-          target.focus();
-        }
-        return;
-      }
-      if (performance.now() < until) frame = requestAnimationFrame(find);
-    };
-    find();
-    return () => {
-      if (frame !== 0) cancelAnimationFrame(frame);
-    };
-  }, [subview, viewKind]);
   // Opened again on a tournament or a deck's lists (left there for the
   // table), the screen reads its heading first, once the layer has taken
   // the focus it takes on opening.
@@ -819,9 +805,9 @@ export const DeckScreen = ({
         source: { kind: 'new' },
       });
       madeNames.current.set(deck.id, deck.name);
-      setView({ kind: 'edit', deckId: deck.id });
+      editDeck(deck.id);
     },
-    [library, t]
+    [editDeck, library, t]
   );
 
   /** Saves the seat's unsaved deck (a list picked to try) and edits it. */
@@ -844,17 +830,16 @@ export const DeckScreen = ({
         slotTarget,
         false
       );
-      if (edit) setView({ kind: 'edit', deckId: saved.id });
+      if (edit) editDeck(saved.id);
       return saved;
     },
-    [library, placeOnSeat, store, t]
+    [editDeck, library, placeOnSeat, store, t]
   );
 
   const leaveEditor = useCallback(() => setView({ kind: 'home' }), []);
   // A new deck left as it started is not kept, however the editor is left:
   // by Back, by an import that opens its own deck in its place, or by the
   // screen going away with it open (a new table or room).
-  const editedDeck = view.kind === 'edit' ? view.deckId : undefined;
   const lastEdited = useRef<string | undefined>(undefined);
   const putAwayUntouched = useCallback(
     (deckId: string): void => {
@@ -877,6 +862,71 @@ export const DeckScreen = ({
     lastEdited.current = editedDeck;
     if (left !== undefined && left !== editedDeck) putAwayUntouched(left);
   }, [editedDeck, putAwayUntouched]);
+  // Where the focus goes as the view changes: after a new deck left
+  // untouched is put away (above), so the focus goes back to New deck, not
+  // to a tile on its way out.
+  useEffect(() => {
+    const root = screen.current;
+    if (!root) return;
+    // Fallen to the page, or to the layer that holds the screen.
+    const lost = (): boolean =>
+      document.activeElement === null ||
+      document.activeElement === document.body ||
+      document.activeElement === root.closest('.ptcgsim-deck-layer');
+    if (subview) {
+      root
+        .querySelector<HTMLElement>('.deck-subhead__title h2')
+        ?.focus({ preventScroll: true });
+      return;
+    }
+    if (viewKind === 'edit') {
+      // On Back, not in the name field: there a key would type (and on a
+      // phone a keyboard would come up), not reach the editor's keys.
+      if (lost()) {
+        root
+          .querySelector<HTMLElement>('#deckEditorBackButton')
+          ?.focus({ preventScroll: true });
+      }
+      return;
+    }
+    const back = returnTo.current;
+    returnTo.current = undefined;
+    if (back === undefined) return;
+    const home = root.querySelector<HTMLElement>('.deck-home');
+    if (home) home.scrollTop = back.scrollTop;
+    const finder = root.querySelector<HTMLTextAreaElement>('#deckPasteInput');
+    const held = finder?.value;
+    // The opener is normally there at once; a shelf or results that redrew
+    // meanwhile get a few seconds, while the player hasn't moved on from the
+    // finder.
+    const until = performance.now() + 3_000;
+    let frame = 0;
+    const find = (): boolean => {
+      frame = 0;
+      const opener =
+        back.deckId !== undefined && !library.get(back.deckId)
+          ? null
+          : root.querySelector<HTMLElement>(back.opener);
+      const target =
+        opener ??
+        (back.fallback ? root.querySelector<HTMLElement>(back.fallback) : null);
+      if (target) {
+        if (
+          lost() ||
+          (document.activeElement === finder && finder?.value === held)
+        ) {
+          target.focus();
+        }
+        return true;
+      }
+      if (performance.now() < until) frame = requestAnimationFrame(find);
+      return false;
+    };
+    if (!find() && lost()) finder?.focus({ preventScroll: true });
+    return () => {
+      if (frame !== 0) cancelAnimationFrame(frame);
+    };
+  }, [editedDeck, library, subview, viewKind]);
   const mounted = useRef(false);
   useEffect(() => {
     mounted.current = true;
@@ -1209,7 +1259,18 @@ export const DeckScreen = ({
               setView({ kind: 'edit', deckId: editingDeck.id })
             }
             onBack={leaveEditor}
-            onUseOnSeat={() => chooseSaved(editingDeck)}
+            onUseOnSeat={() => {
+              chooseSaved(editingDeck);
+              // The button gives way to "On P1": the focus goes to the
+              // seat's tray, which now holds the deck.
+              screen.current
+                ?.querySelector<HTMLElement>(
+                  target === 'main'
+                    ? '#nativeDeckBuilderTargetMain'
+                    : '#nativeDeckBuilderTargetAlt'
+                )
+                ?.focus({ preventScroll: true });
+            }}
           />
         ) : (
           <>
@@ -1239,7 +1300,7 @@ export const DeckScreen = ({
               importing={importing}
               open={open}
               onChoose={chooseSaved}
-              onEdit={(deck) => setView({ kind: 'edit', deckId: deck.id })}
+              onEdit={(deck) => editDeck(deck.id)}
               onNewDeck={() => newDeck()}
               onImportText={(text) => runImport(text, { kind: 'paste' })}
               onImportClipboard={importClipboard}
@@ -1260,7 +1321,7 @@ export const DeckScreen = ({
                 const deckId =
                   store.getSnapshot().slots[slotTarget].label?.deckId;
                 const saved = deckId ? library.get(deckId) : undefined;
-                if (saved) setView({ kind: 'edit', deckId: saved.id });
+                if (saved) editDeck(saved.id);
                 else saveSeatDeck(slotTarget, true);
               }}
               onClearSeat={(slotTarget) => {

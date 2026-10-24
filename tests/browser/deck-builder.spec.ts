@@ -191,6 +191,50 @@ test('the builder searches, filters, checks the rules, undoes and renames', asyn
   ).toHaveText('Phantom Dive');
 });
 
+test('the focus stays on the screen as the editor opens and closes, and as decks are deleted', async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await routeCardCatalog(page);
+  await openSoloDeckScreen(page);
+  const shelf = page.getByRole('list', { name: 'Your decks' });
+  const onPage = () =>
+    page.evaluate(() => document.activeElement === document.body);
+
+  // Two decks made from the keyboard: the editor opens on its Back, and
+  // Back goes back to the deck's Edit.
+  for (const name of ['Alpha', 'Beta']) {
+    await page.locator('#deckNewButton').focus();
+    await page.keyboard.press('Enter');
+    const back = page.locator('#deckEditorBackButton');
+    await expect(back).toBeFocused();
+    await page.locator('#deckNameInput').fill(name);
+    await back.focus();
+    await page.keyboard.press('Enter');
+    await expect(
+      shelf.getByRole('button', { name: `Edit ${name}` })
+    ).toBeFocused();
+  }
+
+  // A deck deleted from its menu: the focus goes on to the next deck, and
+  // with the last one gone, to New deck.
+  const remove = async (name: string): Promise<void> => {
+    await shelf.getByRole('button', { name: `More for ${name}` }).focus();
+    await page.keyboard.press('Enter');
+    await page.getByRole('menuitem', { name: 'Delete' }).click();
+    await page.getByRole('button', { name: 'Delete deck' }).click();
+    await expect(shelf.getByText(name, { exact: true })).toHaveCount(0);
+  };
+  await remove('Beta');
+  await expect(
+    shelf.getByRole('listitem').filter({ hasText: 'Alpha' })
+  ).toBeFocused();
+  expect(await onPage()).toBe(false);
+  await remove('Alpha');
+  await expect(page.locator('#deckNewButton')).toBeFocused();
+  expect(await onPage()).toBe(false);
+});
+
 test('lines the catalog cannot place are listed, and the rest imports', async ({
   page,
 }) => {

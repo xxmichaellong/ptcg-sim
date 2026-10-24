@@ -32,6 +32,7 @@ import {
   useState,
   type KeyboardEvent,
 } from 'react';
+import { flushSync } from 'react-dom';
 
 import { usePreference } from '../../preferences/usePreference.js';
 import { ActionMenu } from '../../ui/ActionMenu.js';
@@ -180,16 +181,39 @@ const SavedDeckTile = ({
     });
     if (name?.trim()) library.update(deck.id, { name });
   };
+  const tile = useRef<HTMLLIElement>(null);
   const remove = async (): Promise<void> => {
     const confirmed = await confirmAction({
       title: t`Delete ${deckName}?`,
       confirmLabel: t`Delete deck`,
       tone: 'danger',
     });
-    if (confirmed) library.remove(deck.id);
+    if (!confirmed) return;
+    // The focus goes on to the deck after it, else the one before, else
+    // the shelf's New deck, not out to the page with the tile. The tile
+    // itself, not its button, where a second Enter would put that deck on
+    // the seat.
+    const here = tile.current;
+    const active = document.activeElement;
+    // Still on the tile, or its menu (drawn outside the decks), or the page.
+    const held =
+      active === null ||
+      here?.contains(active) ||
+      here?.closest('.deck-home')?.contains(active) !== true;
+    const next = here?.nextElementSibling ?? here?.previousElementSibling;
+    const shelf = here?.closest('.deck-shelf');
+    library.remove(deck.id);
+    if (!held) return;
+    if (next instanceof HTMLElement) {
+      next.tabIndex = -1;
+      next.focus();
+    } else {
+      shelf?.querySelector<HTMLElement>('#deckNewButton')?.focus();
+    }
   };
   return (
     <li
+      ref={tile}
       className="deck-tile"
       data-current={current ? 'true' : undefined}
       data-last-used={lastUsed ? 'true' : undefined}
@@ -255,6 +279,7 @@ const SavedDeckTile = ({
             type="button"
             className="deck-icon-button"
             aria-label={t`Edit ${deckName}`}
+            data-edit-deck={deck.id}
             onClick={onEdit}
           >
             <PencilSimpleIcon {...decorative} weight="bold" />
@@ -593,6 +618,7 @@ export const DeckHome = ({
   const [showAllMeta, setShowAllMeta] = useState(false);
   const [surprising, setSurprising] = useState(false);
   const pasteRef = useRef<HTMLTextAreaElement>(null);
+  const metaList = useRef<HTMLUListElement>(null);
   const mode = finderMode(paste);
   // Kept while the screen is put away, so it opens again as it was left
   // -- asked again if it had failed, or the index wasn't ready.
@@ -987,7 +1013,11 @@ export const DeckHome = ({
           </p>
         ) : meta ? (
           <>
-            <ul className="deck-grid deck-grid--lists" aria-label={meta.name}>
+            <ul
+              ref={metaList}
+              className="deck-grid deck-grid--lists"
+              aria-label={meta.name}
+            >
               {metaShown?.map((deck) => (
                 <ListDeckTile
                   key={deck.name}
@@ -1006,7 +1036,18 @@ export const DeckHome = ({
               <button
                 type="button"
                 className="ds-button ds-button--ghost deck-show-more"
-                onClick={() => setShowAllMeta(true)}
+                onClick={() => {
+                  const from = metaShown?.length ?? 0;
+                  flushSync(() => setShowAllMeta(true));
+                  // Gone with the rest shown: the focus goes on to the
+                  // first list it brought -- the tile, not its Try, where
+                  // a second Enter would put the list on the seat.
+                  const first = metaList.current?.children[from];
+                  if (first instanceof HTMLElement) {
+                    first.tabIndex = -1;
+                    first.focus();
+                  }
+                }}
               >
                 <Trans>Show all {metaCount}</Trans>
               </button>
