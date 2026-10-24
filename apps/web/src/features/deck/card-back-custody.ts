@@ -89,6 +89,12 @@ export class CardBackCustodyStore {
   #alternateEnabled: boolean;
   readonly #listeners = new Set<Listener>();
   #pending?: CardBackInstallReceipt;
+  /** The table the pending card back went to. */
+  #pendingSession?: DeckInstallSession;
+  /** The revision of each seat's back each table was given. */
+  readonly #installedOn: Readonly<
+    Record<DeckBuilderTarget, WeakMap<DeckInstallSession, number>>
+  > = { main: new WeakMap(), alternate: new WeakMap() };
   #state: CardBackCustodySnapshot;
 
   constructor(options: CardBackCustodyOptions = {}) {
@@ -144,6 +150,7 @@ export class CardBackCustodyStore {
     let alternate = this.#state.slots.alternate;
     if (!enabled && this.#pending?.target === 'alternate') {
       this.#pending = undefined;
+      this.#pendingSession = undefined;
       alternate = createSlot(
         alternate.url,
         alternate.revision,
@@ -155,17 +162,32 @@ export class CardBackCustodyStore {
     return true;
   }
 
-  /** Queues retained choices for a fresh authority without duplicating dirt. */
-  prepareForNewSession(): boolean {
+  /**
+   * Queues retained choices for a fresh authority without duplicating dirt.
+   * A back it was given already, or has on its way (Play online's deck
+   * screen puts one on the parked Solo table before that table's own screen
+   * attaches), isn't queued for it again.
+   */
+  prepareForNewSession(session?: DeckInstallSession): boolean {
+    const keepPending =
+      session !== undefined && this.#pendingSession === session;
     const prepare = (
-      slot: CardBackSlotSnapshot,
+      target: DeckBuilderTarget,
       enabled: boolean
     ): CardBackSlotSnapshot => {
+      const slot = this.#state.slots[target];
+      if (keepPending && this.#pending?.target === target) return slot;
       const settled =
         slot.installingRevision === undefined
           ? slot
           : createSlot(slot.url, slot.revision, slot.installedRevision);
-      if (!enabled || settled.dirty || settled.url === undefined) {
+      if (
+        !enabled ||
+        settled.dirty ||
+        settled.url === undefined ||
+        (session !== undefined &&
+          this.#installedOn[target].get(session) === settled.revision)
+      ) {
         return settled;
       }
       return createSlot(
@@ -174,18 +196,18 @@ export class CardBackCustodyStore {
         settled.installedRevision
       );
     };
-    const main = prepare(this.#state.slots.main, true);
-    const alternate = prepare(
-      this.#state.slots.alternate,
-      this.#alternateEnabled
-    );
+    const main = prepare('main', true);
+    const alternate = prepare('alternate', this.#alternateEnabled);
     if (
       main === this.#state.slots.main &&
       alternate === this.#state.slots.alternate
     ) {
       return false;
     }
-    this.#pending = undefined;
+    if (!keepPending) {
+      this.#pending = undefined;
+      this.#pendingSession = undefined;
+    }
     this.#publish(createSnapshot(this.#alternateEnabled, main, alternate));
     return true;
   }
@@ -195,7 +217,10 @@ export class CardBackCustodyStore {
     return this.#pending !== undefined;
   }
 
-  beginNextDirtyInstall(): CardBackInstallReceipt | undefined {
+  /** Starts the next card back to go, to `session` when named. */
+  beginNextDirtyInstall(
+    session?: DeckInstallSession
+  ): CardBackInstallReceipt | undefined {
     if (this.#pending) return undefined;
     for (const target of ['main', 'alternate'] as const) {
       if (target === 'alternate' && !this.#alternateEnabled) continue;
@@ -207,6 +232,7 @@ export class CardBackCustodyStore {
         url: slot.url,
       });
       this.#pending = receipt;
+      this.#pendingSession = session;
       this.#replaceSlot(
         target,
         createSlot(
@@ -226,7 +252,14 @@ export class CardBackCustodyStore {
     outcome: 'installed' | 'failed'
   ): boolean {
     if (this.#pending !== receipt) return false;
+    if (outcome === 'installed' && this.#pendingSession) {
+      this.#installedOn[receipt.target].set(
+        this.#pendingSession,
+        receipt.revision
+      );
+    }
     this.#pending = undefined;
+    this.#pendingSession = undefined;
     const slot = this.#state.slots[receipt.target];
     this.#replaceSlot(
       receipt.target,
@@ -395,7 +428,7 @@ export class CardBackInstallCoordinator {
     if (this.#disposed || !this.#draining || this.#active || this.#waiting) {
       return;
     }
-    const receipt = this.#store.beginNextDirtyInstall();
+    const receipt = this.#store.beginNextDirtyInstall(this.#session);
     if (!receipt) {
       // An install left waiting by a deck screen now gone goes first; this
       // one goes on once it settles.

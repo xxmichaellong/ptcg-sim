@@ -91,9 +91,10 @@ export interface DeckBuilderSessionProps {
   /**
    * The table shown behind the screen when it installs into none (Play
    * online over the parked Solo table): its seats' card backs are the ones
-   * the trays show and a choice is weighed against. Read only.
+   * the trays show and a choice is weighed against, and a card back chosen
+   * goes on it at once. Its decks wait for the table played on.
    */
-  readonly shownSession?: Pick<DeckInstallSession, 'getSnapshot' | 'subscribe'>;
+  readonly shownSession?: DeckInstallSession;
   readonly open: boolean;
   readonly alternateEnabled: boolean;
   readonly installOnSessionAttach?: boolean;
@@ -210,8 +211,31 @@ export const DeckBuilderSession = ({
       preparedBinding.current = undefined;
       coordinator.current = undefined;
       cardBackCoordinator.current = undefined;
-      return;
+      if (!shownSession) return;
+      const shownCardBack = new CardBackInstallCoordinator({
+        store: cardBackStore,
+        session: shownSession,
+        onFailure: (failure) => cardBackFailureHandler.current?.(failure),
+      });
+      cardBackCoordinator.current = shownCardBack;
+      return () => {
+        if (cardBackCoordinator.current === shownCardBack) {
+          cardBackCoordinator.current = undefined;
+        }
+        shownCardBack.dispose();
+      };
     }
+    const handled = handledTables.get(store)?.get(session);
+    // Heard before the install coordinators, so the update that first shows
+    // the table is decided on before they act on it: installing puts each
+    // seat's choice in line afresh for this room, which would drop a deck or
+    // card back they had just sent on that update -- its answer then settled
+    // nothing, and it was sent again.
+    let decideOnUpdate: (() => void) | undefined;
+    let unsubscribe =
+      installOnSessionAttach && !handled
+        ? session.subscribe(() => decideOnUpdate?.())
+        : undefined;
     const currentCardBack = new CardBackInstallCoordinator({
       store: cardBackStore,
       session,
@@ -225,7 +249,6 @@ export const DeckBuilderSession = ({
     });
     cardBackCoordinator.current = currentCardBack;
     coordinator.current = currentDeck;
-    const handled = handledTables.get(store)?.get(session);
     if (handled) {
       // This table, these seats: as they were left. What was changed
       // meanwhile (offline) still goes on it.
@@ -267,7 +290,7 @@ export const DeckBuilderSession = ({
         preparedBinding.current.cardBackStore !== cardBackStore;
       preparedBinding.current = { session, store, cardBackStore };
       if (isNewBinding && prepareForNewSessionOnAttach) {
-        cardBackStore.prepareForNewSession();
+        cardBackStore.prepareForNewSession(session);
         store.prepareForNewSession();
       }
       currentCardBack.flush();
@@ -275,7 +298,6 @@ export const DeckBuilderSession = ({
       if (isNewBinding) sessionAttachHandler.current?.(session);
       markHandled(store, session, 'installed');
     };
-    let unsubscribe: (() => void) | undefined;
     if (installOnSessionAttach) {
       // Decided once the room has shown its table: a seat that already
       // holds a game (a restored one, joined by invitation) keeps it.
@@ -298,14 +320,12 @@ export const DeckBuilderSession = ({
         }
         return true;
       };
-      if (!decide()) {
-        unsubscribe = session.subscribe(() => {
-          if (decide()) {
-            unsubscribe?.();
-            unsubscribe = undefined;
-          }
-        });
-      }
+      decideOnUpdate = () => {
+        if (!decide()) return;
+        unsubscribe?.();
+        unsubscribe = undefined;
+      };
+      decideOnUpdate();
     } else {
       keepTable();
     }
@@ -324,6 +344,7 @@ export const DeckBuilderSession = ({
     installOnSessionAttach,
     prepareForNewSessionOnAttach,
     session,
+    shownSession,
     store,
   ]);
 

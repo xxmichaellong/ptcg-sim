@@ -773,6 +773,88 @@ describe('DeckBuilderSession', () => {
     expect(sleeve()).toBe('https://example.test/b.png');
   });
 
+  it('puts a card back chosen over the table behind it on that table at once, its decks only once played, and neither twice', async () => {
+    const settle = () =>
+      act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      });
+    const types = (session: FakeSession) =>
+      session.commands.map((command) => command.type);
+    const requestCardBack = vi.fn<BrowserCardBackRequest>(
+      async () => 'https://example.test/chosen.png'
+    );
+    // The room's answer lands before its own screen attaches, or after.
+    for (const answered of [true, false]) {
+      const store = new DeckBuilderStore();
+      const cardBackStore = new CardBackCustodyStore();
+      // Play online over the parked Solo table, nothing on it yet.
+      const parked = new FakeSession();
+      await renderSession({
+        store,
+        cardBackStore,
+        shownSession: parked,
+        open: true,
+        installOnSessionAttach: true,
+        requestCardBack,
+      });
+      act(() => {
+        store.replaceDeck(
+          'main',
+          deckListOf([{ card: card('Pikachu'), count: 4 }]),
+          { deckId: 'a', name: 'A' },
+          { chosen: true }
+        );
+      });
+      await click('#changeCardBackButton');
+      expect(parked.commands).toEqual([
+        { type: 'SetCardBack', cardBackUrl: 'https://example.test/chosen.png' },
+      ]);
+      await renderSession({
+        store,
+        cardBackStore,
+        shownSession: parked,
+        open: false,
+        installOnSessionAttach: true,
+        requestCardBack,
+      });
+      await settle();
+      expect(types(parked)).toEqual(['SetCardBack']);
+      const answerCardBack = () =>
+        act(() => {
+          parked.showCardBack(ownPlayerId, 'https://example.test/chosen.png');
+          parked.completeLatest(true);
+        });
+      if (answered) answerCardBack();
+
+      // Play: the table's own screen attaches it.
+      await act(async () => root?.unmount());
+      root = undefined;
+      await renderSession({
+        session: parked,
+        store,
+        cardBackStore,
+        open: false,
+        installOnSessionAttach: true,
+      });
+      await settle();
+      if (!answered) {
+        answerCardBack();
+        await settle();
+      }
+      act(() => parked.completeLatest(true));
+      await settle();
+      expect(types(parked), String(answered)).toEqual([
+        'SetCardBack',
+        'LoadDeck',
+      ]);
+      expect(parked.getSnapshot().pendingCommands).toHaveLength(0);
+      expect(cardBackStore.getSnapshot().hasDirtyCardBacks).toBe(false);
+      expect(store.getSnapshot().hasDirtyDecks).toBe(false);
+      await act(async () => root?.unmount());
+      root = undefined;
+    }
+  });
+
   it('keeps what is on a table it already handled when its screen mounts again (back from the tutorial)', async () => {
     const store = new DeckBuilderStore();
     const cardBackStore = new CardBackCustodyStore();
@@ -872,6 +954,55 @@ describe('DeckBuilderSession', () => {
     await settle();
     expect(own.commands.map((command) => command.type)).toEqual(['LoadDeck']);
     expect(store.getSnapshot().slots.main.dirty).toBe(false);
+  });
+
+  it('sends a deck, and a card back, put on before the room first shows its table once each', async () => {
+    const settle = () =>
+      act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      });
+    for (const withCardBack of [false, true]) {
+      const store = new DeckBuilderStore();
+      const cardBackStore = new CardBackCustodyStore();
+      const own = new FakeSession();
+      own.setPhase('connecting');
+      const props = {
+        session: own,
+        store,
+        cardBackStore,
+        installOnSessionAttach: true,
+      };
+      await renderSession({ ...props, open: true });
+      act(() => {
+        store.replaceDeck(
+          'main',
+          deckListOf([{ card: card('Pikachu'), count: 4 }]),
+          { deckId: 'a', name: 'A' },
+          { chosen: true }
+        );
+        if (withCardBack) cardBackStore.replace('main', '/early-back.png');
+      });
+      await renderSession({ ...props, open: false });
+      await settle();
+      expect(own.commands).toHaveLength(0);
+
+      act(() => own.setPhase('ready'));
+      await settle();
+      // The room answers each as it comes.
+      for (let answers = 0; answers < 4; answers += 1) {
+        if (own.getSnapshot().pendingCommands.length === 0) break;
+        act(() => own.completeLatest(true));
+        await settle();
+      }
+      expect(own.commands.map((command) => command.type)).toEqual(
+        withCardBack ? ['SetCardBack', 'LoadDeck'] : ['LoadDeck']
+      );
+      expect(own.getSnapshot().pendingCommands).toHaveLength(0);
+      expect(store.getSnapshot().hasDirtyDecks).toBe(false);
+      expect(cardBackStore.getSnapshot().hasDirtyCardBacks).toBe(false);
+      await act(async () => root?.unmount());
+      root = undefined;
+    }
   });
 
   it('drains dirty decks only when the Deck surface closes and cleans them only after authority publication', async () => {

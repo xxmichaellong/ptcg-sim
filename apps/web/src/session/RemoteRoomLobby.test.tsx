@@ -348,6 +348,8 @@ const runtime = (
       getSnapshot: () => ({
         phase: options.phase ?? ('ready' as const),
         view: projected,
+        pendingCommands: [],
+        completedCommands: [],
       }),
       subscribe: (listener: () => void) => {
         listeners.add(listener);
@@ -954,6 +956,29 @@ describe('remote room lobby wiring', () => {
     await reportSettled(roomRouteHarness.onTableSettledChange, true);
     expect(curtain.value.reveal).toHaveBeenCalled();
 
+    await act(async () => root.unmount());
+  });
+
+  it("puts a card back chosen on Play online's deck screen on the parked Solo table at once", async () => {
+    const created = creationResult(runtime({ label: 'solo' }), 'solo');
+    const createRoom = vi.fn(async () => created.value);
+    const requestCardBack = vi.fn(async () => 'https://example.test/back.png');
+    const { root } = await mount(
+      lobbyDependencies(custody(), createRoom, undefined, requestCardBack)
+    );
+    await settle();
+    await chooseMenuItem('p1Button');
+    await click('#testOpenMultiplayer');
+    expect(present('[data-testid="parked-solo-board"]')).toBe(true);
+
+    await openDeck();
+    await click('#changeCardBackButton');
+    expect(created.roomRuntime.submit).toHaveBeenCalledExactlyOnceWith({
+      type: 'SetCardBack',
+      cardBackUrl: 'https://example.test/back.png',
+    });
+    await closeDeck();
+    expect(created.roomRuntime.submit).toHaveBeenCalledOnce();
     await act(async () => root.unmount());
   });
 

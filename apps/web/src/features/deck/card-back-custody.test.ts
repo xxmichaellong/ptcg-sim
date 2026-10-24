@@ -189,6 +189,29 @@ describe('CardBackCustodyStore', () => {
     expect(multiplayer.prepareForNewSession()).toBe(true);
     expect(multiplayer.getSnapshot().slots.alternate.dirty).toBe(true);
   });
+
+  it('queues for a table only what it was not given, nor has on its way', () => {
+    const store = new CardBackCustodyStore();
+    const parked = new FakeSession();
+    const other = new FakeSession();
+    store.replace('main', '/main.png');
+    store.replace('alternate', '/alternate.png');
+    // Main went on the parked table; alternate is on its way there.
+    store.settleInstall(store.beginNextDirtyInstall(parked)!, 'installed');
+    const alternate = store.beginNextDirtyInstall(parked)!;
+
+    expect(store.prepareForNewSession(parked)).toBe(false);
+    expect(store.hasPendingInstall()).toBe(true);
+    expect(store.settleInstall(alternate, 'installed')).toBe(true);
+    expect(store.getSnapshot().hasDirtyCardBacks).toBe(false);
+
+    // Another table is given both.
+    expect(store.prepareForNewSession(other)).toBe(true);
+    expect(store.getSnapshot().slots).toMatchObject({
+      main: { dirty: true },
+      alternate: { dirty: true },
+    });
+  });
 });
 
 describe('CardBackInstallCoordinator', () => {
