@@ -549,6 +549,68 @@ test('a lesson in the address starts at once, on both halves of the table', asyn
   expect(apart).toBe(true);
 });
 
+test('Undo takes back the player’s moves, never the lesson’s deal', async ({
+  page,
+}) => {
+  test.setTimeout(120_000);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await openTutorial(page, '/?tutorial=attach');
+  await atStep(page, 'attach:energy');
+  await idle(page);
+  const surface = page.locator('.ptcgsim-board-surface');
+  const table = () =>
+    page
+      .locator('.ptcgsim-card')
+      .evaluateAll((nodes) =>
+        nodes.map((node) => node.getAttribute('aria-label') ?? '').sort()
+      );
+  const dealt = await table();
+  const dealtRevision = await surface.getAttribute('data-revision');
+  const undo = page.locator('#boardButtonContainer #undoButton');
+  const paletteUndo = async (): Promise<number> => {
+    await page.keyboard.press('Control+k');
+    const palette = page.locator('[data-command-palette]');
+    await expect(palette).toBeVisible();
+    await page.keyboard.type('undo');
+    await page.waitForTimeout(200);
+    const found = await palette
+      .locator('[role="option"]', { hasText: /^Undo/u })
+      .count();
+    while ((await palette.count()) > 0) await page.keyboard.press('Escape');
+    return found;
+  };
+
+  // Dealt: Undo keeps its place, dimmed, and takes nothing back -- not by
+  // its button, its key or the palette.
+  await expect(undo).toHaveAttribute('aria-disabled', 'true');
+  await undo.click({ force: true });
+  await page.keyboard.press('u');
+  expect(await paletteUndo()).toBe(0);
+  await page.waitForTimeout(800);
+  await expect(surface).toHaveAttribute('data-revision', dealtRevision!);
+  expect(await table()).toEqual(dealt);
+
+  // A move of the player's: Undo takes back that, and only that.
+  await mouseDrag(
+    page,
+    await grip(inHand(page, 'Fire Energy')),
+    await centre(inPlay(page, 'Charmander'))
+  );
+  await atStep(page, 'attach:evolve');
+  await expect(undo).not.toHaveAttribute('aria-disabled', 'true');
+  expect(await paletteUndo()).toBe(1);
+  await page.keyboard.press('u');
+  await expect.poll(table, { timeout: 20_000 }).toEqual(dealt);
+  await expect(undo).toHaveAttribute('aria-disabled', 'true');
+  await idle(page);
+  const undoneRevision = await surface.getAttribute('data-revision');
+  await page.keyboard.press('u');
+  await undo.click({ force: true });
+  await page.waitForTimeout(800);
+  await expect(surface).toHaveAttribute('data-revision', undoneRevision!);
+  expect(await table()).toEqual(dealt);
+});
+
 test('steps aside for the deck screen and sheets, and comes back after', async ({
   page,
 }) => {

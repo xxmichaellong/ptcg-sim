@@ -36,7 +36,8 @@ import {
   tutorialSeats,
   type ScenarioSession,
 } from './scenario-runner.js';
-import { setTutorialActive, TUTORIAL_PREFERENCES } from './tutorial-state.js';
+import { TUTORIAL_PREFERENCES } from './tutorial-state.js';
+import { useUndoBlocked } from './undo-floor.js';
 import {
   readScreen,
   sameScreen,
@@ -204,6 +205,7 @@ export const TutorialHost = ({
   flipped,
   flipBoard,
   onExit,
+  onUndoBlockedChange,
 }: {
   readonly room: TutorialRoom;
   /** A lesson asked for; absent, the list. */
@@ -213,6 +215,11 @@ export const TutorialHost = ({
   readonly flipped: boolean;
   readonly flipBoard: () => void;
   readonly onExit: () => void;
+  /**
+   * Whether Undo is blocked, as it changes: it takes back the player's
+   * moves, never a lesson's deal (undo-floor.ts).
+   */
+  readonly onUndoBlockedChange?: (blocked: boolean) => void;
 }) => {
   const { t, i18n } = useLingui();
   const mode = useInputMode();
@@ -236,12 +243,17 @@ export const TutorialHost = ({
   flipBoardRef.current = flipBoard;
 
   useEffect(() => {
-    setTutorialActive(true);
     warmTutorialImages();
-    return () => {
-      setTutorialActive(false);
-    };
   }, []);
+
+  // Undo stops at the lesson's deal: the table it starts from is the
+  // lesson's, not a move to take back.
+  const undoBlocked = useUndoBlocked(state, phase.kind === 'dealing');
+  const reportUndoBlocked = useRef(onUndoBlockedChange);
+  reportUndoBlocked.current = onUndoBlockedChange;
+  useEffect(() => {
+    reportUndoBlocked.current?.(undoBlocked);
+  }, [undoBlocked]);
 
   const isDone = useCallback(
     (lesson: TutorialLesson): boolean =>

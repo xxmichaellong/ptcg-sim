@@ -20,6 +20,7 @@ import { BoardSessionRuntime } from '../board/BoardSessionRuntime.js';
 import { COIN_PENDING_GRACE_MS } from '../board/TableCoin.js';
 import type { RailAction } from '../board/rail/TableRail.js';
 import { boardViewSettings } from '../board/view/board-view-settings.js';
+import { collectCommands } from '../commands/registry.js';
 import {
   ReplaySessionCoordinator,
   type ReplaySessionSource,
@@ -733,6 +734,81 @@ describe('RemoteSessionBoard replay binding', () => {
         ?.click();
     });
     expect(session.submit).toHaveBeenCalledTimes(4);
+
+    await act(async () => root.unmount());
+    replay.dispose();
+  });
+
+  it('takes no Undo while it is blocked: not its key, its rail button nor the palette', async () => {
+    const session = new FakeRemoteBoardSession();
+    const replay = new ReplaySessionCoordinator(session);
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+    const undo = vi.fn();
+    const render = async (undoBlocked: boolean) =>
+      act(async () =>
+        root.render(
+          <RemoteSessionBoard
+            session={session}
+            replay={replay}
+            rendererKind="dom"
+            roomMode="solo"
+            undoBlocked={undoBlocked}
+            rail={{
+              compose: () => ({
+                actions: [
+                  {
+                    id: 'undoButton',
+                    label: 'Undo',
+                    icon: (() => null) as unknown as RailAction['icon'],
+                    ...(undoBlocked ? { disabled: true } : {}),
+                    onSelect: undo,
+                  },
+                ],
+              }),
+            }}
+            onIntent={vi.fn()}
+          />
+        )
+      );
+    const pressU = () =>
+      act(async () =>
+        document.dispatchEvent(
+          new KeyboardEvent('keydown', {
+            key: 'u',
+            code: 'KeyU',
+            bubbles: true,
+            cancelable: true,
+          })
+        )
+      );
+    const undoSent = () =>
+      session.submit.mock.calls.filter(
+        ([command]) => command.type === 'ApplySoloUndo'
+      ).length;
+
+    await render(true);
+    await waitForRevision(host, 10);
+    const button = () => host.querySelector<HTMLButtonElement>('#undoButton')!;
+    expect(button().getAttribute('aria-disabled')).toBe('true');
+    await act(async () => button().click());
+    await pressU();
+    expect(undo).not.toHaveBeenCalled();
+    expect(undoSent()).toBe(0);
+    expect(
+      collectCommands().some((command) => command.id === 'rail.undo')
+    ).toBe(false);
+
+    await render(false);
+    expect(button().getAttribute('aria-disabled')).toBeNull();
+    await act(async () => button().click());
+    expect(undo).toHaveBeenCalledOnce();
+    await pressU();
+    expect(undoSent()).toBe(1);
+    expect(
+      collectCommands().some((command) => command.id === 'rail.undo')
+    ).toBe(true);
 
     await act(async () => root.unmount());
     replay.dispose();

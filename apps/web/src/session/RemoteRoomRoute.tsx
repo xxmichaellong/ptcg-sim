@@ -287,6 +287,10 @@ export const RemoteRoomRoute = ({
   });
   const [sheet, setSheet] = useState<RouteSheet | undefined>(initialSheet);
   const closeSheet = (): void => setSheet(undefined);
+  // On the practice table Undo takes back the player's moves, never the
+  // lesson's deal: the coach says when it has nothing of theirs to take.
+  const [lessonUndoBlocked, setLessonUndoBlocked] = useState(true);
+  const undoBlocked = tutorial !== undefined && lessonUndoBlocked;
   const activity = useActivityDocking();
   const [perspective, setPerspective] = useState<{
     readonly flipped: boolean;
@@ -580,6 +584,7 @@ export const RemoteRoomRoute = ({
               icon: ArrowCounterClockwiseIcon,
               priority: RAIL_PRIORITY.undo,
               hint: hint('table.undo'),
+              ...(undoBlocked ? { disabled: true } : {}),
               onSelect: live.submitUndo,
             });
           }
@@ -628,7 +633,10 @@ export const RemoteRoomRoute = ({
             : solo && !replaying
               ? { onTutorial: () => startTutorial() }
               : {}),
-          ...(openPlayOnline ? { onPlayOnline: openPlayOnline } : {}),
+          // Its sheet is drawn over the live table, not a replay.
+          ...(openPlayOnline && !replaying
+            ? { onPlayOnline: openPlayOnline }
+            : {}),
           // The toolbar's Deck is the acting seat's: P2's at a Solo table
           // turned around.
           ...(chrome.visibility.deckImport
@@ -747,6 +755,7 @@ export const RemoteRoomRoute = ({
                 sidePanel={activity.docked && activity.open}
                 sidePanelSlide={activity.slide}
                 keysSuspended={deckOpen}
+                undoBlocked={undoBlocked}
                 {...(loadDeck ? { loadDeck } : {})}
                 showBothHalves={Boolean(tutorial)}
                 {...(initialFlipped ? { initialFlipped } : {})}
@@ -825,6 +834,7 @@ export const RemoteRoomRoute = ({
                 flipped={perspective.flipped}
                 flipBoard={() => boardCommands.current?.flipBoard()}
                 onExit={tutorial.onExit}
+                onUndoBlockedChange={setLessonUndoBlocked}
               />
             ) : null}
             {welcome ? (

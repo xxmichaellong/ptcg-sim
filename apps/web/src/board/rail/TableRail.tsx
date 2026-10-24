@@ -31,6 +31,11 @@ export interface RailAction {
   readonly primary?: boolean;
   /** Asked of the room and not answered yet (the coin). */
   readonly pending?: boolean;
+  /**
+   * Nothing to do now (Undo on a lesson's deal): it keeps its place and
+   * tooltip, dimmed, and takes no press.
+   */
+  readonly disabled?: boolean;
   /** The key that does the same, for the tooltip. */
   readonly hint?: string | undefined;
   /**
@@ -284,6 +289,7 @@ export const fitRailActions = (
       label: action.title ?? action.label,
       icon: action.icon,
       hint: action.hint,
+      ...(action.disabled ? { disabled: true } : {}),
       onSelect: action.onSelect,
     }));
   return {
@@ -471,7 +477,9 @@ export const TableRail = memo(function TableRail({
               {...(action.title ? { 'aria-label': action.title } : {})}
               primary={action.primary === true}
               pending={action.pending === true}
-              onClick={action.onSelect}
+              {...(action.disabled
+                ? { 'aria-disabled': true }
+                : { onClick: action.onSelect })}
             />
           </Tooltip>
         ))}

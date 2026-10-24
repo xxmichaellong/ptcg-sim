@@ -159,6 +159,9 @@ importers:
       '@lingui/vite-plugin':
         specifier: 6.10.0
         version: 6.10.0(@babel/core@7.29.7(supports-color@10.2.2))(@lingui/babel-plugin-lingui-macro@6.10.0(@babel/core@7.29.7(supports-color@10.2.2)))(esbuild@0.28.2)(rolldown@1.2.6)(supports-color@10.2.2)(vite@8.2.4(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13))
+      '@ptcgsim/room-authority':
+        specifier: workspace:*
+        version: link:../../packages/room-authority
       '@types/react':
         specifier: 19.2.18
         version: 19.2.18

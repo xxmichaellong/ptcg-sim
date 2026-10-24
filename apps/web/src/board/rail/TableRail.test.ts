@@ -79,6 +79,21 @@ describe('fitting the rail', () => {
     ).toBe('Flip the table');
   });
 
+  it('keeps an action with nothing to do now dimmed, in More too', () => {
+    const actions = [
+      action('turn', 1),
+      action('undo', 3, { disabled: true }),
+      action('pass', 5),
+    ];
+    // Room for two buttons: Turn and More.
+    const fitted = fitRailActions(actions, undefined, 2 * 46 + 6, 46);
+    expect(fitted.shown.map((shown) => shown.id)).toEqual(['turn']);
+    expect(fitted.more).toEqual([
+      expect.objectContaining({ id: 'undo', disabled: true }),
+      expect.not.objectContaining({ disabled: true }),
+    ]);
+  });
+
   it('falls back to positions when no priorities are given', () => {
     const actions = [action('a'), action('b'), action('c')];
     const fitted = fitRailActions(actions, undefined, 2 * 46 + 6, 46);

@@ -284,6 +284,7 @@ export const RemoteSessionBoard = ({
   sidePanel = false,
   sidePanelSlide,
   keysSuspended = false,
+  undoBlocked = false,
   loadDeck,
   showBothHalves = false,
   initialFlipped = false,
@@ -323,6 +324,11 @@ export const RemoteSessionBoard = ({
   readonly sidePanelSlide?: DockSlide;
   /** Something over the whole table (the deck screen) owns the keyboard. */
   readonly keysSuspended?: boolean;
+  /**
+   * Undo has nothing to take back here (a lesson's deal on the tutorial's
+   * practice table): its key does nothing. The route's rail says so itself.
+   */
+  readonly undoBlocked?: boolean;
   /** The seats whose empty deck shows a `+`, and what it opens. */
   readonly loadDeck?: TableZoneAffordancesProps['loadDeck'];
   /** Show both halves whatever the board view says (the tutorial). */
@@ -1462,11 +1468,13 @@ export const RemoteSessionBoard = ({
           ) : null}
           <LegacyBoardKeyboardShortcuts
             state={boardState}
-            {...(roomMode === 'solo'
-              ? { undoSeat: 'acting' as const }
-              : roomMode === 'multiplayer'
-                ? { undoSeat: 'own' as const }
-                : {})}
+            {...(undoBlocked
+              ? {}
+              : roomMode === 'solo'
+                ? { undoSeat: 'acting' as const }
+                : roomMode === 'multiplayer'
+                  ? { undoSeat: 'own' as const }
+                  : {})}
             boardFlipEnabled={flipAllowed}
             suspended={keysSuspended}
             {...keyboardActions}

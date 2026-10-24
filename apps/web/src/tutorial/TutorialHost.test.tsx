@@ -10,9 +10,13 @@ import {
   localizedCardImage,
 } from '../i18n/card-image-language.js';
 import { preferences } from '../preferences/preference-store.js';
-import { fakePracticeRoom, you } from './practice-room.test-support.js';
+import {
+  fakePracticeRoom,
+  realPracticeRoom,
+  you,
+} from './practice-room.test-support.js';
 import { TUTORIAL_IMAGE_URLS, tutorialCardKeyOf } from './tutorial-cards.js';
-import { zoneCards, zoneId } from './tutorial-world.js';
+import { activeStack, findCard, zoneCards, zoneId } from './tutorial-world.js';
 import { lessonById, lessonsFor } from './tutorial-lessons.js';
 import { TUTORIAL_PREFERENCES } from './tutorial-state.js';
 import { TutorialHost } from './TutorialHost.js';
@@ -550,6 +554,85 @@ describe('the tutorial read out', () => {
     await wait(50);
     stop();
     expect(said).toContain(`table: ${visited}`);
+  });
+});
+
+describe('Undo on the practice table', () => {
+  it('takes back the player’s moves and never the lesson’s deal, nor one dealt again', async () => {
+    phone(false);
+    const real = await realPracticeRoom();
+    const blocked: boolean[] = [];
+    try {
+      const host = document.createElement('div');
+      document.body.append(host);
+      root = createRoot(host);
+      await act(async () =>
+        root!.render(
+          <TutorialHost
+            room={real}
+            lesson="attach"
+            serial={1}
+            flipped={false}
+            flipBoard={() => undefined}
+            onExit={() => undefined}
+            onUndoBlockedChange={(value) => blocked.push(value)}
+          />
+        )
+      );
+      await wait(1200);
+      expect(stepOf()).toBe('attach:energy');
+      // Dealt: nothing of the player's to take back.
+      expect(blocked.at(-1)).toBe(true);
+      const view = () => real.session.getSnapshot().view!;
+      const send = (command: Parameters<typeof real.session.submit>[0]) =>
+        act(async () => {
+          real.session.submit(command);
+          await real.settle();
+        });
+      const research = findCard(
+        view(),
+        zoneCards(view(), you, 'hand'),
+        'research'
+      )!;
+      await send({
+        type: 'MoveCard',
+        cardId: research.id,
+        expectedSourceZoneId: zoneId(you, 'hand'),
+        destinationZoneId: zoneId(you, 'board'),
+      });
+      expect(blocked.at(-1)).toBe(false);
+      // That move taken back: the deal stands, and Undo stops there.
+      await send({ type: 'ApplySoloUndo', targetPlayerId: you });
+      expect(
+        findCard(view(), zoneCards(view(), you, 'hand'), 'research')
+      ).toBeDefined();
+      expect(blocked.at(-1)).toBe(true);
+      // Charmander gone, the lesson is started over: dealt again, Undo
+      // stops at the new deal.
+      const charmander = activeStack(view(), you)!;
+      await send({
+        type: 'MovePlayStackToZone',
+        stackId: charmander.id,
+        expectedEvolutionCardIds: charmander.evolutionCards.map(
+          (card) => card.id
+        ),
+        expectedAttachmentCardIds: charmander.attachmentCards.map(
+          (card) => card.id
+        ),
+        destinationZoneId: zoneId(you, 'discard'),
+      });
+      expect(blocked.at(-1)).toBe(false);
+      await act(async () => button(coach(), 'Start the lesson over')!.click());
+      expect(blocked.at(-1)).toBe(true);
+      await wait(1200);
+      expect(stepOf()).toBe('attach:energy');
+      expect(activeStack(view(), you)).toBeDefined();
+      expect(blocked.at(-1)).toBe(true);
+    } finally {
+      await act(async () => root?.unmount());
+      root = undefined;
+      real.dispose();
+    }
   });
 });
 

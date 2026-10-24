@@ -4,9 +4,9 @@ import { definePreference } from '../preferences/preference-store.js';
 
 /**
  * The tutorial's state (ADR-038): which lessons the player has finished,
- * kept on this device, and the requests to start or leave tutorial mode
- * that the menu, the welcome card and the palette send to the page that
- * owns the practice table (the lobby).
+ * kept on this device, and the requests for tutorial mode that the menu,
+ * the welcome card and the palette send to the page that owns the practice
+ * table (the lobby).
  */
 
 /**
@@ -51,7 +51,6 @@ export interface TutorialRequest {
 }
 
 let request: TutorialRequest | null = null;
-let active = false;
 let serial = 0;
 const listeners = new Set<() => void>();
 const publish = (): void => {
@@ -84,30 +83,6 @@ export const takeTutorialRequest = (taken: TutorialRequest): void => {
 
 export const useTutorialRequest = (): TutorialRequest | null =>
   useSyncExternalStore(subscribe, pendingTutorialRequest, () => null);
-
-/** Whether the practice table is on screen (set by its host). */
-export const setTutorialActive = (value: boolean): void => {
-  if (active === value) return;
-  active = value;
-  publish();
-};
-
-export const isTutorialActive = (): boolean => active;
-
-export const useTutorialActive = (): boolean =>
-  useSyncExternalStore(subscribe, isTutorialActive, () => false);
-
-let exitHandler: (() => void) | null = null;
-
-/** The page that owns the practice table says how to leave it. */
-export const setTutorialExit = (handler: (() => void) | null): void => {
-  exitHandler = handler;
-};
-
-/** Leaves tutorial mode for the player's own table. */
-export const exitTutorial = (): void => {
-  exitHandler?.();
-};
 
 /**
  * A lesson named in the page's address (`?tutorial=damage`), so a lesson

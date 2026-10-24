@@ -74,6 +74,12 @@ it is a mulligan, and its steps only ever point at a Basic.
 The deal's own log lines are cleared, and the log's lines over the table go
 with them. Each lesson can be started over from the coach.
 
+Undo takes back the player's moves, never the deal (`undo-floor.ts`): from
+the deal's end until the player has a move of their own, the rail's Undo is
+dimmed, and its key and the palette's Undo do nothing. The room keeps what
+Undo can take back to itself, so the page counts it: each move is a
+revision of the table, and each Undo says so.
+
 The cards are real ones scanned by Limitless (`tutorial-cards.ts`), so each
 player sees them in their own language (ADR-034, PX-061). The room shows
 definitions under aliases, so a lesson knows a card by its name, which the
@@ -143,4 +149,10 @@ reads as new in the list; nothing is pushed at the player.
   already has. `tutorial.spec.ts` walks every lesson with a mouse, and the
   first ones by touch on a phone, so a change that breaks a lesson fails
   there.
+- A step's check is tried on the real room (`realPracticeRoom` in
+  `practice-room.test-support.ts`), which renames a card that crosses a
+  hidden zone or comes back by an Undo, as play does. The web app has the
+  room authority as a dev dependency for it: only test files and test
+  support may import it (`check-v2-boundaries.mjs`), so the game core stays
+  out of the web bundle.
 - The YouTube tutorial page is gone.

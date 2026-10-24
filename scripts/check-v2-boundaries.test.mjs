@@ -142,6 +142,51 @@ test('allows dev-only dependency declarations for isolated importer tests', asyn
   await assert.doesNotReject(checkSourceBoundaries(root));
 });
 
+test('lets tests’ shared harness alone import a dev dependency, and keeps the harness out of app source', async () => {
+  const root = await temporaryRepo();
+  const web = await addWorkspace(
+    root,
+    'apps',
+    'web',
+    {
+      name: '@ptcgsim/web',
+      devDependencies: { '@ptcgsim/room-authority': 'workspace:*' },
+    },
+    'export const table = true;'
+  );
+  await addWorkspace(
+    root,
+    'packages',
+    'room-authority',
+    { name: '@ptcgsim/room-authority' },
+    'export const processAuthorityCommand = () => undefined;'
+  );
+  const harness = join(web, 'src/practice-room.test-support.ts');
+  await writeFile(
+    harness,
+    "import { processAuthorityCommand } from '@ptcgsim/room-authority';\nexport const room = processAuthorityCommand;"
+  );
+  await assert.doesNotReject(checkSourceBoundaries(root));
+
+  // The app's own source: neither the dev dependency nor the harness.
+  await writeFile(
+    join(web, 'src/index.ts'),
+    "export { processAuthorityCommand } from '@ptcgsim/room-authority';"
+  );
+  await assert.rejects(
+    checkSourceBoundaries(root),
+    /src\/index\.ts imports undeclared workspace dependency @ptcgsim\/room-authority/u
+  );
+  await writeFile(
+    join(web, 'src/index.ts'),
+    "export { room } from './practice-room.test-support.js';"
+  );
+  await assert.rejects(
+    checkSourceBoundaries(root),
+    /src\/index\.ts imports test support \.\/practice-room\.test-support\.js/u
+  );
+});
+
 test('rejects cycles in the imported workspace graph', async () => {
   const root = await temporaryRepo();
   await addWorkspace(

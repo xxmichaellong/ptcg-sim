@@ -86,6 +86,30 @@ describe('railCommands', () => {
     expect(attack?.id).toBe('rail.attack');
     expect(attack?.section).toBe('turn');
   });
+
+  it('leaves out a button with nothing to do now, as the rail dims it', () => {
+    const commands = railCommands(
+      {
+        actions: [
+          {
+            id: 'undoButton',
+            label: 'Undo',
+            icon: (() => null) as never,
+            disabled: true,
+            onSelect: noop,
+          },
+          {
+            id: 'passButton',
+            label: 'Pass',
+            icon: (() => null) as never,
+            onSelect: noop,
+          },
+        ],
+      },
+      { replaying: false }
+    );
+    expect(commands.map((command) => command.id)).toEqual(['rail.pass']);
+  });
 });
 
 describe('the app bar by its buttons’ labels', () => {

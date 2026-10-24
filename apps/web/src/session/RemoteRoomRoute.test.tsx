@@ -32,6 +32,7 @@ import { preferences } from '../preferences/preference-store.js';
 import { cancelAllDialogRequests } from '../ui/dialog-requests.js';
 import { OverlayHost } from '../ui/OverlayHost.js';
 import { dismissToast, toast } from '../ui/toast.js';
+import { collectCommands } from '../commands/registry.js';
 import { RemoteRoomRoute } from './RemoteRoomRoute.js';
 import type { RemoteSessionBoard as RealRemoteSessionBoard } from './RemoteSessionBoard.js';
 import { DEFAULT_TABLE_DEPTH } from '../motion/depth-settings.js';
@@ -50,6 +51,20 @@ const boardHarness = vi.hoisted(() => ({
   /** Whether the board would offer Flip (Solo, spectators, coaching). */
   switchSide: false,
   pressed: [] as string[],
+}));
+
+/** The tutorial's coach, as the route draws it (tutorial-*.test.tsx try it). */
+const tutorialHarness = vi.hoisted(() => ({
+  props: undefined as
+    { readonly onUndoBlockedChange?: (blocked: boolean) => void } | undefined,
+}));
+
+vi.mock('../tutorial/TutorialHost.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../tutorial/TutorialHost.js')>()),
+  TutorialHost: (props: typeof tutorialHarness.props) => {
+    tutorialHarness.props = props;
+    return null;
+  },
 }));
 
 vi.mock('../ui/toast.js', async (importOriginal) => {
@@ -140,7 +155,8 @@ vi.mock('./RemoteSessionBoard.js', async (importOriginal) => {
                   type="button"
                   data-primary={action.primary ? 'true' : undefined}
                   aria-label={action.title ?? action.label}
-                  onClick={action.onSelect}
+                  aria-disabled={action.disabled ? 'true' : undefined}
+                  onClick={action.disabled ? undefined : action.onSelect}
                 >
                   {action.label}
                 </button>
@@ -1364,6 +1380,125 @@ describe('RemoteRoomRoute', () => {
     expect(get('#room-board').textContent).toBe('1');
     await pressEscape(get('#playOnlineSheet'));
     expect(find('#playOnlineSheet')).toBeNull();
+
+    await act(async () => root.unmount());
+    runtime.dispose();
+  });
+
+  it('blocks Undo on the practice table while the coach says it has nothing of the player’s to take back', async () => {
+    const socketFactory = new FakeSocketFactory();
+    const runtime = createRuntime(socketFactory);
+    const { root } = await mountRoute(
+      <RemoteRoomRoute
+        runtime={runtime}
+        rendererKind="dom"
+        roomMode="solo"
+        tutorial={{ serial: 1, onExit: () => undefined }}
+      />
+    );
+    const socket = await connect(socketFactory);
+    const undos = () =>
+      socket.commands().filter((command) => command.type === 'ApplySoloUndo')
+        .length;
+    // Until the coach has spoken: a lesson is being dealt.
+    expect(get('#undoButton').getAttribute('aria-disabled')).toBe('true');
+    expect(boardHarness.props?.undoBlocked).toBe(true);
+    await click('#undoButton');
+    expect(undos()).toBe(0);
+    // A move of the player's: Undo takes it back, from the rail and its key.
+    await act(async () => tutorialHarness.props?.onUndoBlockedChange?.(false));
+    expect(get('#undoButton').getAttribute('aria-disabled')).toBeNull();
+    expect(boardHarness.props?.undoBlocked).toBe(false);
+    await click('#undoButton');
+    expect(undos()).toBe(1);
+    // Back at the lesson's deal.
+    await act(async () => tutorialHarness.props?.onUndoBlockedChange?.(true));
+    expect(get('#undoButton').getAttribute('aria-disabled')).toBe('true');
+    expect(boardHarness.props?.undoBlocked).toBe(true);
+
+    await act(async () => root.unmount());
+    runtime.dispose();
+
+    // The player's own Solo table blocks nothing.
+    const ownFactory = new FakeSocketFactory();
+    const own = createRuntime(ownFactory);
+    const table = await mountRoute(
+      <RemoteRoomRoute runtime={own} rendererKind="dom" roomMode="solo" />
+    );
+    await connect(ownFactory);
+    expect(get('#undoButton').getAttribute('aria-disabled')).toBeNull();
+    expect(boardHarness.props?.undoBlocked).toBe(false);
+    await act(async () => table.root.unmount());
+    own.dispose();
+  });
+
+  it('offers Play online at a Solo table, not over a replay its sheet is not drawn over', async () => {
+    const socketFactory = new FakeSocketFactory();
+    const runtime = createRuntime(socketFactory);
+    const onMultiplayerPanelOpen = vi.fn();
+    const { root } = await mountRoute(
+      <RemoteRoomRoute
+        runtime={runtime}
+        rendererKind="dom"
+        roomMode="solo"
+        multiplayerPanel={(hidden: boolean) => (
+          <section id="p2Box" hidden={hidden}>
+            Online Multiplayer Mode
+          </section>
+        )}
+        onMultiplayerPanelOpen={onMultiplayerPanelOpen}
+      />
+    );
+    await connect(socketFactory);
+    const playOnlineOffered = async (): Promise<boolean> => {
+      const inPalette = collectCommands().some(
+        (command) => command.id === 'menu.p2'
+      );
+      if (find('.ptcgsim-app-bar #p2Button')) return true;
+      await openMenu();
+      const inMenu = menuIds().includes('p2Button');
+      await closeMenu();
+      expect(inPalette).toBe(inMenu);
+      return inMenu;
+    };
+    expect(await playOnlineOffered()).toBe(true);
+
+    const replayContents = await serializeProjectedReplayFile({
+      replayId: 'route-online-replay',
+      viewer: view.viewer,
+      startRevision: view.revision,
+      endRevision: view.revision,
+      truncated: view.revision > 0,
+      frames: [{ snapshot: view, presentationEvents: [] }],
+    });
+    const replayBytes = new TextEncoder().encode(replayContents);
+    const replayFile = new File([replayBytes], 'route-replay.json', {
+      type: 'application/json',
+    });
+    Object.defineProperty(replayFile, 'arrayBuffer', {
+      value: async () => replayBytes.buffer.slice(0),
+    });
+    const replayInput = get<HTMLInputElement>('#jsonReplay');
+    Object.defineProperty(replayInput, 'files', {
+      configurable: true,
+      value: [replayFile],
+    });
+    await act(async () => {
+      replayInput.dispatchEvent(new Event('change', { bubbles: true }));
+      await vi.waitFor(() =>
+        expect(runtime.replay.getSnapshot().mode).toBe('replay')
+      );
+    });
+    // Its sheet is drawn over the live table only: offered here, it would
+    // do nothing, then open by itself once the replay ended.
+    expect(await playOnlineOffered()).toBe(false);
+    expect(onMultiplayerPanelOpen).not.toHaveBeenCalled();
+
+    await click('#exitReplay');
+    await settle();
+    expect(runtime.replay.getSnapshot().mode).toBe('live');
+    expect(find('#playOnlineSheet')).toBeNull();
+    expect(await playOnlineOffered()).toBe(true);
 
     await act(async () => root.unmount());
     runtime.dispose();

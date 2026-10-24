@@ -145,6 +145,22 @@
   background: var(--color-opponent);
 }
 
+/* Nothing to do now (Undo on a lesson's deal): dimmed in its place, its
+   tooltip still there. */
+.ptcgsim-rail-button[aria-disabled='true'] {
+  box-shadow: none;
+  cursor: default;
+  opacity: 0.5;
+  scale: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ptcgsim-rail-button[aria-disabled='true']:hover {
+    background-color: var(--color-surface-2);
+    box-shadow: none;
+  }
+}
+
 /* The coin: only the room rolls it, so the button waits rather than guess,
    showing it in its icon rather than the pointer. */
 .ptcgsim-rail-button[data-control-pending='true'] {

@@ -140,6 +140,7 @@ export const railCommands = (
     );
   };
   for (const action of composed.actions) {
+    if (action.disabled) continue;
     add(
       action.id,
       action.title ?? action.label,

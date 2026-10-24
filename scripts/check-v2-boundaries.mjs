@@ -74,6 +74,10 @@ const RUNTIME_DEPENDENCY_SECTIONS = [
   'peerDependencies',
 ];
 
+// Tests' shared harness, kept beside them (`practice-room.test-support.ts`).
+const TEST_SUPPORT_SOURCE = /\.test-support\.tsx?$/u;
+const TEST_SUPPORT_SPECIFIER = /\.test-support(?:\.[cm]?[jt]sx?)?$/u;
+
 const normalizePath = (value) => value.split(sep).join('/');
 const repoRelative = (repoRoot, value) =>
   normalizePath(relative(repoRoot, value));
@@ -116,6 +120,7 @@ const workspacePackages = async (repoRoot) => {
         name: manifest.name,
         root,
         dependencies: new Set(Object.keys(manifest.dependencies ?? {})),
+        devDependencies: new Set(Object.keys(manifest.devDependencies ?? {})),
         runtimeDependencies: RUNTIME_DEPENDENCY_SECTIONS.flatMap((section) =>
           Object.keys(manifest[section] ?? {}).map((name) => ({
             name,
@@ -217,6 +222,10 @@ export const checkSourceBoundaries = async (repoRoot) => {
     );
     for (const file of files) {
       const importer = repoRelative(repoRoot, file);
+      // Tests' shared harness may use a dev dependency (the room authority
+      // the tutorial's tests play on); the app's own source may not, nor
+      // import the harness, so neither reaches a production bundle.
+      const testSupport = TEST_SUPPORT_SOURCE.test(file);
       const parsedImports = importedSpecifiers(
         file,
         await readFile(file, 'utf8')
@@ -240,6 +249,9 @@ export const checkSourceBoundaries = async (repoRoot) => {
               `${importer} bypasses ${targetWorkspace.name}'s public export with ${specifier}`
             );
           }
+          if (!testSupport && TEST_SUPPORT_SPECIFIER.test(specifier)) {
+            failures.push(`${importer} imports test support ${specifier}`);
+          }
           continue;
         }
         if (/^(?:client|server)(?:\/|$)/u.test(specifier)) {
@@ -256,7 +268,10 @@ export const checkSourceBoundaries = async (repoRoot) => {
           );
         }
         if (dependencyName === workspace.name) continue;
-        if (!workspace.dependencies.has(dependencyName)) {
+        if (
+          !workspace.dependencies.has(dependencyName) &&
+          !(testSupport && workspace.devDependencies.has(dependencyName))
+        ) {
           failures.push(
             `${importer} imports undeclared workspace dependency ${dependencyName}`
           );
