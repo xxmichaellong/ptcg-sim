@@ -26,6 +26,7 @@ import { DEFAULT_CARD_BACK_URL } from '../../session/browser-card-back.js';
 import { dialogRequestsSnapshot } from '../../ui/dialog-requests.js';
 import { toast } from '../../ui/toast.js';
 import { Tooltip } from '../../ui/Tooltip.js';
+import { skipDialogReturnTooltip } from '../../ui/tooltip-focus.js';
 import type { CardCatalogSource } from './card-catalog-contract.js';
 import { readDeckFile } from './deck-browser-io.js';
 import { DeckBox, deckBoxToneOf } from './DeckBox.js';
@@ -1147,6 +1148,7 @@ export const DeckScreen = ({
                     type="button"
                     className="deck-tray__sleeve"
                     aria-label={t`Change card back for ${slotSeat}`}
+                    onFocus={skipDialogReturnTooltip}
                     onClick={() => {
                       store.selectTarget(slotTarget);
                       onChangeCardBack(slotTarget);

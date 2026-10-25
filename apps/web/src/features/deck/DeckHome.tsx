@@ -39,6 +39,7 @@ import { ActionMenu } from '../../ui/ActionMenu.js';
 import { confirmAction, promptValue } from '../../ui/dialog-requests.js';
 import { toast } from '../../ui/toast.js';
 import { Tooltip } from '../../ui/Tooltip.js';
+import { skipDialogReturnTooltip } from '../../ui/tooltip-focus.js';
 import type { CardCatalogSource } from './card-catalog-contract.js';
 import { DeckBox, deckBoxToneOf } from './DeckBox.js';
 import {
@@ -166,12 +167,14 @@ const SavedDeckTile = ({
   const tone = useMemo(() => deckBoxToneOf(deck.cards), [deck]);
   // Its format, count and whether it plays, heard after its name.
   const about = useId();
+  const menuButton = useRef<HTMLButtonElement>(null);
   const rename = async (): Promise<void> => {
     const name = await promptValue({
       title: t`Rename deck`,
       label: t`Deck name`,
       defaultValue: deck.name,
       submitLabel: t({ message: 'Rename', context: 'button' }),
+      finalFocus: () => menuButton.current,
       validate: (value) =>
         !value.trim()
           ? t`A deck needs a name.`
@@ -187,6 +190,7 @@ const SavedDeckTile = ({
       title: t`Delete ${deckName}?`,
       confirmLabel: t`Delete deck`,
       tone: 'danger',
+      finalFocus: () => menuButton.current,
     });
     if (!confirmed) return;
     // The focus goes on to the deck after it, else the one before, else
@@ -292,9 +296,11 @@ const SavedDeckTile = ({
           align="end"
           trigger={
             <button
+              ref={menuButton}
               type="button"
               className="deck-icon-button"
               aria-label={t`More for ${deckName}`}
+              onFocus={skipDialogReturnTooltip}
             >
               <DotsThreeIcon {...decorative} weight="bold" />
             </button>

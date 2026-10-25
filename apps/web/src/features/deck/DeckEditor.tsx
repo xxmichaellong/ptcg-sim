@@ -41,6 +41,7 @@ import {
   dialogRequestsSnapshot,
 } from '../../ui/dialog-requests.js';
 import { Tooltip } from '../../ui/Tooltip.js';
+import { skipDialogReturnTooltip } from '../../ui/tooltip-focus.js';
 import type { CardCatalogSource } from './card-catalog-contract.js';
 import {
   CardDetails,
@@ -156,6 +157,7 @@ export const DeckEditor = ({
   /** Escape leaves the field without saving what was typed. */
   const nameCancelled = useRef(false);
   const customOpener = useRef<HTMLElement | null>(null);
+  const exportButton = useRef<HTMLButtonElement>(null);
   const savedTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const zoom = useHoverZoom(editor);
   const cards = deck.cards;
@@ -394,6 +396,7 @@ export const DeckEditor = ({
       title: t`Delete ${deckName}?`,
       confirmLabel: t`Delete deck`,
       tone: 'danger',
+      finalFocus: () => exportButton.current,
     });
     if (confirmed) {
       library.remove(deck.id);
@@ -562,10 +565,12 @@ export const DeckEditor = ({
             align="end"
             trigger={
               <button
+                ref={exportButton}
                 id="nativeDeckBuilderExportCsv"
                 type="button"
                 className="ds-button ds-button--secondary"
                 aria-label={t`Export`}
+                onFocus={skipDialogReturnTooltip}
               >
                 <ExportIcon {...decorative} weight="bold" />
                 <span className="deck-editor__export-label">

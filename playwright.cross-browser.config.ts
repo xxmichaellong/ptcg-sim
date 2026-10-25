@@ -11,6 +11,7 @@ const sharedSpecs = [
   'public-pile-ordering.spec.ts',
   'show-board-keyboard.spec.ts',
   'deck-hover-zoom.spec.ts',
+  'deck-dialog-focus.spec.ts',
 ];
 
 export default defineConfig({
