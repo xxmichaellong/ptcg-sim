@@ -10,6 +10,7 @@ const sharedSpecs = [
   'depth-recovery.spec.ts',
   'public-pile-ordering.spec.ts',
   'arrangement-visibility.spec.ts',
+  'visibility-queue.spec.ts',
   'show-board-keyboard.spec.ts',
   'deck-hover-zoom.spec.ts',
   'deck-dialog-focus.spec.ts',

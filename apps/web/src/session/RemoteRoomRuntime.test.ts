@@ -113,6 +113,134 @@ const flushConsumers = async (): Promise<void> => {
 };
 
 describe('RemoteRoomRuntime', () => {
+  it('sends a queued native hide then hand move under the accepted visibility alias', () => {
+    const socketFactory = new FakeSocketFactory();
+    const scheduler = new FakeSessionScheduler();
+    let commandId = 0;
+    const runtime = new RemoteRoomRuntime({
+      connection,
+      session: {
+        socketFactory,
+        scheduler,
+        createCommandId: () => `visibility-${++commandId}`,
+        policy: { idleHeartbeatMs: 0 },
+      },
+    });
+    try {
+      const playerId = view.playerOrder[0]!;
+      const discard = view.zones[`zone:${playerId}:discard`]!;
+      const hand = view.zones[`zone:${playerId}:hand`]!;
+      const original = discard.cards.find((card) => card.kind === 'known')!;
+      if (original.kind !== 'known') throw new Error('Known card required');
+      const socket = socketFactory.sockets[0]!;
+      socket.serverOpen();
+      socket.serverMessage(welcome());
+      const hide = runtime.session.submit({
+        type: 'SetPublicReveal',
+        cardId: original.id,
+        expectedSourceId: discard.id,
+        revealed: false,
+      });
+      const queued = runtime.session.submit({
+        type: 'MoveCard',
+        cardId: original.id,
+        expectedSourceZoneId: discard.id,
+        destinationZoneId: hand.id,
+      });
+      if (!hide.queued || !queued.queued)
+        throw new Error('Expected queued visibility actions');
+      expect(socket.sent).toHaveLength(2);
+      const hidden = {
+        ...original,
+        id: 'owned-hidden-alias' as never,
+        face: 'down' as const,
+        publiclyRevealed: false,
+      };
+      const after: MatchViewState = {
+        ...view,
+        revision: view.revision + 1,
+        zones: {
+          ...view.zones,
+          [discard.id]: {
+            ...discard,
+            cards: discard.cards.map((card) =>
+              card.id === original.id ? hidden : card
+            ),
+          },
+        },
+      };
+      socket.serverMessage({
+        type: 'StatePublication',
+        protocolVersion: PROTOCOL_VERSION,
+        coveringCommandId: hide.commandId,
+        executedClientSequence: 1,
+        snapshot: serializeMatchViewState(after),
+      });
+      socket.serverMessage({
+        type: 'CommandResult',
+        protocolVersion: PROTOCOL_VERSION,
+        commandId: hide.commandId,
+        clientSequence: 1,
+        accepted: true,
+        revision: after.revision,
+      });
+      expect(JSON.parse(socket.sent[2]!)).toMatchObject({
+        commandId: queued.commandId,
+        clientSequence: 2,
+        lastSeenRevision: after.revision,
+        command: {
+          type: 'MoveCard',
+          cardId: hidden.id,
+          expectedSourceZoneId: discard.id,
+          destinationZoneId: hand.id,
+        },
+      });
+      const placed = {
+        ...hidden,
+        id: 'alias-after-hand-arrival' as never,
+        face: 'up' as const,
+      };
+      const completed: MatchViewState = {
+        ...after,
+        revision: after.revision + 1,
+        zones: {
+          ...after.zones,
+          [discard.id]: {
+            ...discard,
+            cards: discard.cards.filter((card) => card.id !== original.id),
+          },
+          [hand.id]: { ...hand, cards: [...hand.cards, placed] },
+        },
+      };
+      socket.serverMessage({
+        type: 'StatePublication',
+        protocolVersion: PROTOCOL_VERSION,
+        coveringCommandId: queued.commandId,
+        executedClientSequence: 2,
+        snapshot: serializeMatchViewState(completed),
+      });
+      socket.serverMessage({
+        type: 'CommandResult',
+        protocolVersion: PROTOCOL_VERSION,
+        commandId: queued.commandId,
+        clientSequence: 2,
+        accepted: true,
+        revision: completed.revision,
+      });
+      expect(runtime.session.getSnapshot()).toMatchObject({
+        phase: 'ready',
+        nextClientSequence: 3,
+        pendingCommands: [],
+        completedCommands: [
+          { commandId: hide.commandId, accepted: true },
+          { commandId: queued.commandId, accepted: true },
+        ],
+      });
+    } finally {
+      runtime.dispose();
+    }
+  });
+
   it.each(['none', 'after', 'before', 'idle'] as const)(
     'settles a missed native draw before its queued action after reconnect (peer arrival: %s)',
     (timing) => {
