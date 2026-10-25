@@ -10,6 +10,7 @@ const sharedSpecs = [
   'depth-recovery.spec.ts',
   'public-pile-ordering.spec.ts',
   'show-board-keyboard.spec.ts',
+  'deck-hover-zoom.spec.ts',
 ];
 
 export default defineConfig({
@@ -73,6 +74,7 @@ export default defineConfig({
         'public-pile-ordering-mobile.spec.ts',
         'custom-card-dialog.spec.ts',
         'deck-landscape.spec.ts',
+        'tutorial-coach-layout.spec.ts',
       ],
       use: {
         browserName: 'webkit',
