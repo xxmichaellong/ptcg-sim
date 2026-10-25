@@ -700,6 +700,33 @@ describe('a lesson step on the practice table', () => {
     }
   });
 
+  it('finishes the Poisoned step only when their Active is Poisoned', async () => {
+    const { now, send, start } = await dealtOnRoom('damage');
+    const step = lessonById('damage')!.steps.find(
+      (candidate) => candidate.id === 'poison'
+    )!;
+    const stackId = activeStack(start, them)!.id;
+    for (const condition of [
+      null,
+      'A',
+      'B',
+      'C',
+      'PA',
+      'Asleep',
+      'Burned',
+      'Confused',
+      'Paralyzed',
+      'P',
+      'Poisoned',
+    ]) {
+      await send({ type: 'SetSpecialCondition', stackId, condition });
+      expect(
+        step.done!(world({ view: now(), start, you, them })),
+        String(condition)
+      ).toBe(condition === 'P' || condition === 'Poisoned');
+    }
+  });
+
   it('takes a Pokémon whose card the room renamed for the one it was, and a Basic put on a card in the Active for the Active', async () => {
     // An Undo brings the dealt Pidgey back from the deck or the hand under
     // a new id: the Pokémon is still the one on the Bench as the step

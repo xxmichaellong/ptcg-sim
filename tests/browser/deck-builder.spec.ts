@@ -182,13 +182,29 @@ test('the builder searches, filters, checks the rules, undoes and renames', asyn
   // Renaming saves; the deck is on the decks list under its new name.
   await page.locator('#deckNameInput').fill('Phantom Dive');
   await page.locator('#deckNameInput').press('Enter');
-  await page.locator('#deckEditorBackButton').click();
+  // Using this deck removes the button under the keyboard focus. The
+  // editor takes it, and a single Esc still leaves the deck screen.
+  await page.locator('#deckUseOnSeatButton').focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('.deck-editor')).toBeFocused();
+  await page.waitForTimeout(300);
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#deckScreen')).toBeHidden();
+  await openDeck(page);
+  await page.locator('#deckEditorBackButton').focus();
+  await page.keyboard.press('Enter');
   await expect(
     page
       .getByRole('list', { name: 'Your decks' })
       .locator('.deck-tile__name')
       .first()
   ).toHaveText('Phantom Dive');
+  await expect(
+    page.getByRole('list', { name: 'Your decks' }).getByRole('listitem').first()
+  ).toBeFocused();
+  await page.waitForTimeout(300);
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#deckScreen')).toBeHidden();
 });
 
 test('the focus stays on the screen as the editor opens and closes, and as decks are deleted', async ({
@@ -201,18 +217,17 @@ test('the focus stays on the screen as the editor opens and closes, and as decks
   const onPage = () =>
     page.evaluate(() => document.activeElement === document.body);
 
-  // Two decks made from the keyboard: the editor opens on its Back, and
-  // Back goes back to the deck's Edit.
+  // Two decks made from the keyboard: the editor opens on itself, and Back
+  // goes back to the deck's tile.
   for (const name of ['Alpha', 'Beta']) {
     await page.locator('#deckNewButton').focus();
     await page.keyboard.press('Enter');
-    const back = page.locator('#deckEditorBackButton');
-    await expect(back).toBeFocused();
+    await expect(page.locator('.deck-editor')).toBeFocused();
     await page.locator('#deckNameInput').fill(name);
-    await back.focus();
+    await page.locator('#deckEditorBackButton').focus();
     await page.keyboard.press('Enter');
     await expect(
-      shelf.getByRole('button', { name: `Edit ${name}` })
+      shelf.getByRole('listitem').filter({ hasText: name })
     ).toBeFocused();
   }
 
@@ -233,6 +248,14 @@ test('the focus stays on the screen as the editor opens and closes, and as decks
   await remove('Alpha');
   await expect(page.locator('#deckNewButton')).toBeFocused();
   expect(await onPage()).toBe(false);
+
+  // Where the editor puts the focus as it opens, no tooltip comes up for
+  // the first Esc to close: one Esc leaves the screen.
+  await page.keyboard.press('Enter');
+  await expect(page.locator('.deck-editor')).toBeFocused();
+  await page.waitForTimeout(300);
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#deckScreen')).toBeHidden();
 });
 
 test('lines the catalog cannot place are listed, and the rest imports', async ({

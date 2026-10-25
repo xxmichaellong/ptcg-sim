@@ -1157,6 +1157,12 @@ div.deck-tile__choose {
   min-height: 0;
 }
 
+/* The focus lands on the editor as it opens; the region is no control to
+   ring. */
+.deck-editor:focus {
+  outline: none;
+}
+
 .deck-editor__head {
   display: flex;
   flex-wrap: wrap;

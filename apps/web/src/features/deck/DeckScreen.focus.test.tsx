@@ -89,15 +89,18 @@ const libraryOf = (...names: string[]): DeckLibrary => {
   return library;
 };
 
+/** The deck screen asked to close, by its layer or itself. */
+const closed = vi.fn();
+
 const render = (library: DeckLibrary) =>
   act(async () =>
     root.render(
-      <DeckLayer open onClose={vi.fn()}>
+      <DeckLayer open onClose={closed}>
         <DeckBuilderSession
           open
           alternateEnabled
           installOnSessionAttach={false}
-          onRequestClose={vi.fn()}
+          onRequestClose={closed}
           catalog={catalog}
           library={library}
           samples={samples}
@@ -113,28 +116,56 @@ const button = (selector: string): HTMLButtonElement =>
 
 /** Pressed from the keyboard: the button has the focus as it is pressed. */
 const press = async (target: HTMLElement): Promise<void> => {
-  target.focus();
-  await act(async () => target.click());
+  await act(async () => {
+    target.focus();
+    target.click();
+  });
 };
 
 const tileOf = (name: string): HTMLElement =>
   button(`button[aria-label="Edit ${name}"]`).closest('li')!;
 
+/**
+ * One Esc where the focus landed leaves the screen: no tooltip opened on
+ * the focus, for the Esc to close first.
+ */
+const escapeLeaves = async (): Promise<void> => {
+  closed.mockClear();
+  // Past a tooltip's delay: one the focus opened would be up.
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 300));
+  });
+  await act(async () => {
+    document.activeElement!.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: 'Escape',
+        bubbles: true,
+        cancelable: true,
+      })
+    );
+  });
+  expect(closed).toHaveBeenCalledTimes(1);
+};
+
 describe('the deck screen keeps the focus on the screen', () => {
-  it('opens the editor on its Back, and closes it back to the deck’s Edit', async () => {
+  it('opens the editor on itself, and closes it back to the deck’s tile, one Esc away from leaving', async () => {
     const library = libraryOf('Abra', 'Bulbasaur');
     await render(library);
     await press(button('button[aria-label="Edit Bulbasaur"]'));
-    expect(document.activeElement).toBe(button('#deckEditorBackButton'));
+    const editor = host.querySelector<HTMLElement>('.deck-editor')!;
+    expect(document.activeElement).toBe(editor);
+    expect(editor.getAttribute('aria-label')).toBe('Bulbasaur');
+    await escapeLeaves();
 
     await press(button('#deckEditorBackButton'));
-    expect(document.activeElement).toBe(
-      button('button[aria-label="Edit Bulbasaur"]')
-    );
+    expect(document.activeElement).toBe(tileOf('Bulbasaur'));
+    await escapeLeaves();
 
     // A new deck put away untouched: back to New deck, which made it.
     await press(button('#deckNewButton'));
-    expect(document.activeElement).toBe(button('#deckEditorBackButton'));
+    expect(document.activeElement).toBe(
+      host.querySelector<HTMLElement>('.deck-editor')
+    );
     await press(button('#deckEditorBackButton'));
     expect(library.getSnapshot().decks).toHaveLength(2);
     expect(document.activeElement).toBe(button('#deckNewButton'));
@@ -194,13 +225,16 @@ describe('the deck screen keeps the focus on the screen', () => {
     expect(document.activeElement?.textContent).toContain('List 13');
   });
 
-  it('hands the focus from Use on P1 to P1’s tray, the deck on it', async () => {
+  it('keeps the focus in the editor from Use on P1, the deck on P1’s tray', async () => {
     await render(libraryOf('Abra'));
     await press(button('button[aria-label="Edit Abra"]'));
     await press(button('#deckUseOnSeatButton'));
     expect(host.querySelector('#deckUseOnSeatButton')).toBeNull();
     const tray = button('#nativeDeckBuilderTargetMain');
     expect(tray.getAttribute('aria-label')).toBe('P1: Abra, 0 cards');
-    expect(document.activeElement).toBe(tray);
+    expect(document.activeElement).toBe(
+      host.querySelector<HTMLElement>('.deck-editor')
+    );
+    await escapeLeaves();
   });
 });

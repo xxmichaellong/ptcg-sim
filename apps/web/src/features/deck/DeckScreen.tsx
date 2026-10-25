@@ -880,11 +880,12 @@ export const DeckScreen = ({
       return;
     }
     if (viewKind === 'edit') {
-      // On Back, not in the name field: there a key would type (and on a
-      // phone a keyboard would come up), not reach the editor's keys.
+      // On the editor itself: not the name field, where a key would type
+      // (and on a phone a keyboard would come up), nor a control whose
+      // tooltip the first Esc would only close.
       if (lost()) {
         root
-          .querySelector<HTMLElement>('#deckEditorBackButton')
+          .querySelector<HTMLElement>('.deck-editor')
           ?.focus({ preventScroll: true });
       }
       return;
@@ -907,7 +908,12 @@ export const DeckScreen = ({
         back.deckId !== undefined && !library.get(back.deckId)
           ? null
           : root.querySelector<HTMLElement>(back.opener);
+      // A deck's own tile rather than its Edit button, whose tooltip the
+      // first Esc would only close (as a deck deleted hands the focus on).
+      const tile = opener?.closest<HTMLElement>('.deck-tile') ?? null;
+      if (tile) tile.tabIndex = -1;
       const target =
+        tile ??
         opener ??
         (back.fallback ? root.querySelector<HTMLElement>(back.fallback) : null);
       if (target) {
@@ -1261,14 +1267,11 @@ export const DeckScreen = ({
             onBack={leaveEditor}
             onUseOnSeat={() => {
               chooseSaved(editingDeck);
-              // The button gives way to "On P1": the focus goes to the
-              // seat's tray, which now holds the deck.
+              // The button gives way to "On P1": the focus stays in the
+              // editor (the seat's tray, which now holds the deck, has a
+              // tooltip the first Esc would only close).
               screen.current
-                ?.querySelector<HTMLElement>(
-                  target === 'main'
-                    ? '#nativeDeckBuilderTargetMain'
-                    : '#nativeDeckBuilderTargetAlt'
-                )
+                ?.querySelector<HTMLElement>('.deck-editor')
                 ?.focus({ preventScroll: true });
             }}
           />

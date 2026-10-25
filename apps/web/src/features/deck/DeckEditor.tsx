@@ -424,6 +424,11 @@ export const DeckEditor = ({
       ref={editor}
       className="deck-editor"
       data-tab={tab}
+      // Where the deck screen puts the focus as the editor opens: a control
+      // there would show its tooltip, and the first Esc would only close it.
+      role="region"
+      aria-label={deck.name}
+      tabIndex={-1}
       onKeyDown={onKeyDown}
     >
       <div className="deck-editor__head">

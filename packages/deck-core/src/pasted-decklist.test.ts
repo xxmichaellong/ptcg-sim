@@ -143,6 +143,8 @@ describe('parsePastedDecklist', () => {
         '1 Charizard ex sv3pt5-6',
         '1 Lugia V cel25c-15_A1',
         '1 Unown ex10-A',
+        '1 Unown ex10-!',
+        '1 Unown ex10-?',
       ].join('\n')
     );
     expect(parsed.rows.map(({ name, catalogId }) => [name, catalogId])).toEqual(
@@ -157,9 +159,16 @@ describe('parsePastedDecklist', () => {
         ['Charizard ex', 'sv3pt5-6'],
         ['Lugia V', 'cel25c-15_A1'],
         ['Unown', 'ex10-A'],
+        ['Unown', 'ex10-!'],
+        ['Unown', 'ex10-?'],
       ]
     );
     expect(parsed.rows[0]).not.toHaveProperty('imageUrl');
+    const unown = parsed.rows.at(-1)!;
+    expect(unown.imageUrl).toBe(
+      'https://images.pokemontcg.io/ex10/%3F_hires.png'
+    );
+    expect(new URL(unown.imageUrl!).search).toBe('');
   });
 
   it("reads a PTCGO export's bulleted card lines, and none of its headers", () => {
