@@ -1841,3 +1841,85 @@ describe('serialized room session hub', () => {
     ).not.toContain(secret);
   });
 });
+
+describe('inherited reference rejection', () => {
+  for (const mode of ['multiplayer', 'solo'] as const) {
+    it.each(['__proto__', 'constructor', 'toString', 'hasOwnProperty'])(
+      `${mode} terminates an inherited %s reference and keeps the next command usable`,
+      async (inspectionId) => {
+        const test = await fixture(mode);
+        const client = connection('own-entry-client');
+        await test.hub.handleFrame(
+          client.value,
+          helloFrame({
+            admissionTicket: test.admissionTicket,
+            resumeToken: test.resumeToken,
+          })
+        );
+        const admitted = client.messages.find(
+          (message) => message.type === 'Welcome'
+        );
+        if (!admitted || admitted.type !== 'Welcome')
+          throw new Error('Missing Welcome');
+        const before = test.store.durable;
+        const frame = JSON.stringify({
+          type: 'Command',
+          protocolVersion: PROTOCOL_VERSION,
+          sessionId: admitted.sessionId,
+          clientSequence: 1,
+          commandId: 'inherited-reference',
+          lastSeenRevision: before.state.revision,
+          command: { type: 'EndPrivateInspection', inspectionId },
+        });
+        client.messages.length = 0;
+        await test.hub.handleFrame(client.value, frame);
+        expect(client.messages).toContainEqual({
+          type: 'CommandResult',
+          protocolVersion: PROTOCOL_VERSION,
+          commandId: 'inherited-reference',
+          clientSequence: 1,
+          accepted: false,
+          revision: before.state.revision,
+          code: 'stale_reference',
+        });
+        expect(
+          client.messages.some(
+            (message) => message.type === 'ServerNotice' && message.retryable
+          )
+        ).toBe(false);
+        expect(test.store.durable.state).toEqual(before.state);
+        expect(test.store.durable.replayHistory).toEqual(before.replayHistory);
+        expect(
+          test.store.durable.sessions[admitted.sessionId]!.nextClientSequence
+        ).toBe(2);
+        expect(test.store.commandCommits).toHaveLength(1);
+
+        // An exact resend returns the terminal result without another commit.
+        await test.hub.handleFrame(client.value, frame);
+        expect(test.store.commandCommits).toHaveLength(1);
+        await test.hub.handleFrame(
+          client.value,
+          JSON.stringify({
+            type: 'Command',
+            protocolVersion: PROTOCOL_VERSION,
+            sessionId: admitted.sessionId,
+            clientSequence: 2,
+            commandId: 'following-valid-command',
+            lastSeenRevision: before.state.revision,
+            command: { type: 'FlipCoin' },
+          })
+        );
+        expect(client.messages).toContainEqual({
+          type: 'CommandResult',
+          protocolVersion: PROTOCOL_VERSION,
+          commandId: 'following-valid-command',
+          clientSequence: 2,
+          accepted: true,
+          revision: before.state.revision + 1,
+        });
+        expect(test.store.commandCommits).toHaveLength(2);
+        expect(client.close).not.toHaveBeenCalled();
+      }
+    );
+  }
+});

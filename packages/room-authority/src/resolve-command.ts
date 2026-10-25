@@ -26,6 +26,7 @@ import type {
   AuthoritySession,
   UndoCheckpoint,
 } from './model.js';
+import { ownEntry } from './own-entry.js';
 
 export type CommandResolution =
   | { readonly accepted: true; readonly command: GameCommand }
@@ -42,7 +43,7 @@ const ownsStack = (
   state: MatchState,
   actorId: PlayerId,
   stackId: string
-): boolean => state.stacks[stackId]?.boardPlayerId === actorId;
+): boolean => ownEntry(state.stacks, stackId)?.boardPlayerId === actorId;
 
 const canControlCard = (
   state: MatchState,
@@ -55,10 +56,10 @@ const canControlCard = (
   ownerId === actorId ||
   // Solo's one player controls both seats' cards, face-down ones too: a
   // flipped board takes the other seat's prizes.
-  (mode === 'solo' && Boolean(state.players[ownerId])) ||
+  (mode === 'solo' && Boolean(ownEntry(state.players, ownerId))) ||
   (policy.allowOpponentPublicInteraction &&
     known &&
-    Boolean(state.players[ownerId]));
+    Boolean(ownEntry(state.players, ownerId)));
 
 const canInspectPrivateCards = (
   state: MatchState,
@@ -70,8 +71,8 @@ const canInspectPrivateCards = (
     if (!ownerId) return false;
     return (
       ownerId === actorId ||
-      (state.players[actorId]?.coachingConsent === true &&
-        state.players[ownerId]?.coachingConsent === true)
+      (ownEntry(state.players, actorId)?.coachingConsent === true &&
+        ownEntry(state.players, ownerId)?.coachingConsent === true)
     );
   });
 
@@ -138,7 +139,8 @@ export const resolveWireCommand = (
       const targetPlayerId = wire.targetPlayerId
         ? asPlayerId(wire.targetPlayerId)
         : actorId;
-      if (!state.players[targetPlayerId]) return rejected('stale_reference');
+      if (!ownEntry(state.players, targetPlayerId))
+        return rejected('stale_reference');
       if (
         targetPlayerId !== actorId &&
         !policy.allowOpponentPublicInteraction
@@ -164,7 +166,8 @@ export const resolveWireCommand = (
       const targetPlayerId = wire.targetPlayerId
         ? asPlayerId(wire.targetPlayerId)
         : actorId;
-      if (!state.players[targetPlayerId]) return rejected('stale_reference');
+      if (!ownEntry(state.players, targetPlayerId))
+        return rejected('stale_reference');
       if (targetPlayerId !== actorId && undoContext.mode !== 'solo') {
         return rejected('unauthorized');
       }
@@ -182,7 +185,8 @@ export const resolveWireCommand = (
       const targetPlayerId = wire.targetPlayerId
         ? asPlayerId(wire.targetPlayerId)
         : actorId;
-      if (!state.players[targetPlayerId]) return rejected('stale_reference');
+      if (!ownEntry(state.players, targetPlayerId))
+        return rejected('stale_reference');
       if (
         targetPlayerId !== actorId &&
         !policy.allowOpponentPublicInteraction
@@ -213,8 +217,8 @@ export const resolveWireCommand = (
         return rejected('unauthorized');
       }
       if (
-        !state.zones[wire.expectedSourceZoneId] ||
-        !state.zones[wire.destinationZoneId]
+        !ownEntry(state.zones, wire.expectedSourceZoneId) ||
+        !ownEntry(state.zones, wire.destinationZoneId)
       ) {
         return rejected('stale_reference');
       }
@@ -231,8 +235,8 @@ export const resolveWireCommand = (
           // Public-pile controls rearrange a card in place. Internal legacy
           // callers omit this mode and keep their historical move semantics.
           ...(wire.expectedSourceZoneId === wire.destinationZoneId &&
-          (state.zones[wire.destinationZoneId]?.kind === 'discard' ||
-            state.zones[wire.destinationZoneId]?.kind === 'lostZone')
+          (ownEntry(state.zones, wire.destinationZoneId)?.kind === 'discard' ||
+            ownEntry(state.zones, wire.destinationZoneId)?.kind === 'lostZone')
             ? { publicPileOrderVersion: 1 as const }
             : {}),
         },
@@ -255,12 +259,12 @@ export const resolveWireCommand = (
         return rejected('unauthorized');
       }
       if (
-        !state.players[wire.boardPlayerId] ||
-        !state.zones[wire.expectedSourceZoneId]
+        !ownEntry(state.players, wire.boardPlayerId) ||
+        !ownEntry(state.zones, wire.expectedSourceZoneId)
       ) {
         return rejected('stale_reference');
       }
-      if (wire.targetStackId && !state.stacks[wire.targetStackId]) {
+      if (wire.targetStackId && !ownEntry(state.stacks, wire.targetStackId)) {
         return rejected('stale_reference');
       }
       return {
@@ -298,7 +302,7 @@ export const resolveWireCommand = (
         | ReturnType<typeof asWorkAreaId>;
       switch (location.kind) {
         case 'zone': {
-          const zone = state.zones[location.zoneId];
+          const zone = ownEntry(state.zones, location.zoneId);
           if (!zone) return rejected('stale_reference');
           sourceId = zone.id;
           sourcePlayerId = zone.ownerId ?? canonicalCard.ownerId;
@@ -307,7 +311,7 @@ export const resolveWireCommand = (
         }
         case 'stackEvolution':
         case 'stackAttachment': {
-          const stack = state.stacks[location.stackId];
+          const stack = ownEntry(state.stacks, location.stackId);
           if (!stack) return rejected('stale_reference');
           sourceId = stack.id;
           sourcePlayerId = stack.boardPlayerId;
@@ -315,7 +319,10 @@ export const resolveWireCommand = (
           break;
         }
         case 'inspectionWorkArea': {
-          const inspection = state.workAreas[location.playerId]?.inspection;
+          const inspection = ownEntry(
+            state.workAreas,
+            location.playerId
+          )?.inspection;
           if (!inspection || !controlsSeat(location.playerId)) {
             return rejected('unauthorized');
           }
@@ -325,8 +332,10 @@ export const resolveWireCommand = (
           break;
         }
         case 'attachmentResolutionWorkArea': {
-          const resolution =
-            state.workAreas[location.playerId]?.attachmentResolution;
+          const resolution = ownEntry(
+            state.workAreas,
+            location.playerId
+          )?.attachmentResolution;
           if (!resolution || !controlsSeat(location.playerId)) {
             return rejected('unauthorized');
           }
@@ -359,7 +368,7 @@ export const resolveWireCommand = (
         return rejected('unauthorized');
       }
 
-      const target = state.stacks[wire.targetStackId];
+      const target = ownEntry(state.stacks, wire.targetStackId);
       if (
         !target ||
         target.evolutionCardIds.at(-1) !== expectedTargetTop.cardId
@@ -368,7 +377,7 @@ export const resolveWireCommand = (
       }
       let derivedMode: typeof wire.mode;
       if (location.kind === 'stackEvolution') {
-        const sourceStack = state.stacks[location.stackId];
+        const sourceStack = ownEntry(state.stacks, location.stackId);
         if (
           !sourceStack ||
           location.index >= sourceStack.evolutionCardIds.length - 1
@@ -432,7 +441,7 @@ export const resolveWireCommand = (
         (location.kind !== 'stackEvolution' &&
           location.kind !== 'stackAttachment') ||
         location.stackId !== wire.expectedStackId ||
-        !state.zones[wire.destinationZoneId]
+        !ownEntry(state.zones, wire.destinationZoneId)
       ) {
         return rejected('stale_reference');
       }
@@ -450,8 +459,8 @@ export const resolveWireCommand = (
       };
     }
     case 'MovePlayStackToZone': {
-      const stack = state.stacks[wire.stackId];
-      if (!stack || !state.zones[wire.destinationZoneId]) {
+      const stack = ownEntry(state.stacks, wire.stackId);
+      if (!stack || !ownEntry(state.zones, wire.destinationZoneId)) {
         return rejected('stale_reference');
       }
       if (
@@ -501,7 +510,7 @@ export const resolveWireCommand = (
       };
     }
     case 'MovePlayStack': {
-      const stack = state.stacks[wire.stackId];
+      const stack = ownEntry(state.stacks, wire.stackId);
       if (!stack) return rejected('stale_reference');
       // Moved to the other board since it was seen: a stale move.
       if (
@@ -527,7 +536,7 @@ export const resolveWireCommand = (
         ? asPlayerId(across.boardPlayerId)
         : stack.boardPlayerId;
       if (across) {
-        if (!state.boards[destinationPlayerId]) {
+        if (!ownEntry(state.boards, destinationPlayerId)) {
           return rejected('stale_reference');
         }
         if (
@@ -538,7 +547,7 @@ export const resolveWireCommand = (
         }
       }
       const target = wire.targetStackId
-        ? state.stacks[wire.targetStackId]
+        ? ownEntry(state.stacks, wire.targetStackId)
         : undefined;
       if (
         (wire.targetStackId && !target) ||
@@ -608,11 +617,14 @@ export const resolveWireCommand = (
       ) {
         return rejected('unauthorized');
       }
-      const inspection = state.workAreas[location.playerId]?.inspection;
+      const inspection = ownEntry(
+        state.workAreas,
+        location.playerId
+      )?.inspection;
       if (
         !inspection ||
         inspection.id !== wire.expectedWorkAreaId ||
-        !state.zones[wire.destinationZoneId]
+        !ownEntry(state.zones, wire.destinationZoneId)
       ) {
         return rejected('stale_reference');
       }
@@ -652,11 +664,14 @@ export const resolveWireCommand = (
       ) {
         return rejected('unauthorized');
       }
-      const inspection = state.workAreas[location.playerId]?.inspection;
+      const inspection = ownEntry(
+        state.workAreas,
+        location.playerId
+      )?.inspection;
       if (
         !inspection ||
         inspection.id !== wire.expectedWorkAreaId ||
-        !state.players[wire.boardPlayerId]
+        !ownEntry(state.players, wire.boardPlayerId)
       ) {
         return rejected('stale_reference');
       }
@@ -721,12 +736,14 @@ export const resolveWireCommand = (
       ) {
         return rejected('unauthorized');
       }
-      const resolution =
-        state.workAreas[location.playerId]?.attachmentResolution;
+      const resolution = ownEntry(
+        state.workAreas,
+        location.playerId
+      )?.attachmentResolution;
       if (
         !resolution ||
         resolution.id !== wire.expectedWorkAreaId ||
-        !state.zones[wire.destinationZoneId]
+        !ownEntry(state.zones, wire.destinationZoneId)
       ) {
         return rejected('stale_reference');
       }
@@ -749,11 +766,14 @@ export const resolveWireCommand = (
         : actorId;
       if (targetPlayerId !== actorId && undoContext.mode !== 'solo')
         return rejected('unauthorized');
-      const resolution = state.workAreas[targetPlayerId]?.attachmentResolution;
+      const resolution = ownEntry(
+        state.workAreas,
+        targetPlayerId
+      )?.attachmentResolution;
       const destinationPlayerId = wire.destinationBoardPlayerId
         ? asPlayerId(wire.destinationBoardPlayerId)
         : targetPlayerId;
-      const board = state.boards[destinationPlayerId];
+      const board = ownEntry(state.boards, destinationPlayerId);
       if (!resolution || resolution.id !== wire.expectedWorkAreaId || !board) {
         return rejected('stale_reference');
       }
@@ -789,7 +809,10 @@ export const resolveWireCommand = (
         : actorId;
       if (targetPlayerId !== actorId && undoContext.mode !== 'solo')
         return rejected('unauthorized');
-      const resolution = state.workAreas[targetPlayerId]?.attachmentResolution;
+      const resolution = ownEntry(
+        state.workAreas,
+        targetPlayerId
+      )?.attachmentResolution;
       if (!resolution || resolution.id !== wire.expectedWorkAreaId) {
         return rejected('stale_reference');
       }
@@ -809,7 +832,7 @@ export const resolveWireCommand = (
         : actorId;
       if (targetPlayerId !== actorId && undoContext.mode !== 'solo')
         return rejected('unauthorized');
-      const inspection = state.workAreas[targetPlayerId]?.inspection;
+      const inspection = ownEntry(state.workAreas, targetPlayerId)?.inspection;
       if (!inspection || inspection.id !== wire.expectedWorkAreaId) {
         return rejected('stale_reference');
       }
@@ -843,7 +866,7 @@ export const resolveWireCommand = (
         | ReturnType<typeof asWorkAreaId>;
       switch (location.kind) {
         case 'zone': {
-          const zone = state.zones[location.zoneId];
+          const zone = ownEntry(state.zones, location.zoneId);
           if (!zone) return rejected('stale_reference');
           sourceId = zone.id;
           sourcePlayerId = zone.ownerId ?? canonicalCard.ownerId;
@@ -852,7 +875,7 @@ export const resolveWireCommand = (
         }
         case 'stackEvolution':
         case 'stackAttachment': {
-          const stack = state.stacks[location.stackId];
+          const stack = ownEntry(state.stacks, location.stackId);
           if (!stack) return rejected('stale_reference');
           sourceId = stack.id;
           sourcePlayerId = stack.boardPlayerId;
@@ -860,7 +883,10 @@ export const resolveWireCommand = (
           break;
         }
         case 'inspectionWorkArea': {
-          const inspection = state.workAreas[location.playerId]?.inspection;
+          const inspection = ownEntry(
+            state.workAreas,
+            location.playerId
+          )?.inspection;
           if (!inspection || !controlsSeat(location.playerId)) {
             return rejected('unauthorized');
           }
@@ -870,8 +896,10 @@ export const resolveWireCommand = (
           break;
         }
         case 'attachmentResolutionWorkArea': {
-          const resolution =
-            state.workAreas[location.playerId]?.attachmentResolution;
+          const resolution = ownEntry(
+            state.workAreas,
+            location.playerId
+          )?.attachmentResolution;
           if (!resolution || !controlsSeat(location.playerId)) {
             return rejected('unauthorized');
           }
@@ -916,7 +944,7 @@ export const resolveWireCommand = (
         };
       }
       if (wire.type === 'MoveCardToStadium') {
-        const stadium = state.zones[stadiumZoneId()];
+        const stadium = ownEntry(state.zones, stadiumZoneId());
         if (!stadium || stadium.kind !== 'stadium') {
           return rejected('stale_reference');
         }
@@ -971,7 +999,8 @@ export const resolveWireCommand = (
       const targetPlayerId = wire.targetPlayerId
         ? asPlayerId(wire.targetPlayerId)
         : actorId;
-      if (!state.players[targetPlayerId]) return rejected('stale_reference');
+      if (!ownEntry(state.players, targetPlayerId))
+        return rejected('stale_reference');
       if (
         targetPlayerId !== actorId &&
         !policy.allowOpponentPublicInteraction
@@ -984,7 +1013,7 @@ export const resolveWireCommand = (
       };
     }
     case 'ShuffleZone': {
-      const zone = state.zones[wire.zoneId];
+      const zone = ownEntry(state.zones, wire.zoneId);
       if (!zone) return rejected('stale_reference');
       // Solo's player shuffles either seat's deck from a flipped board.
       if (zone.ownerId !== actorId && undoContext.mode !== 'solo')
@@ -1000,7 +1029,8 @@ export const resolveWireCommand = (
       const targetPlayerId = wire.targetPlayerId
         ? asPlayerId(wire.targetPlayerId)
         : actorId;
-      if (!state.players[targetPlayerId]) return rejected('stale_reference');
+      if (!ownEntry(state.players, targetPlayerId))
+        return rejected('stale_reference');
       if (
         targetPlayerId !== actorId &&
         !policy.allowOpponentPublicInteraction
@@ -1018,7 +1048,8 @@ export const resolveWireCommand = (
     }
     case 'PlayRandomCardFaceDown': {
       const targetPlayerId = asPlayerId(wire.targetPlayerId);
-      if (!state.players[targetPlayerId]) return rejected('stale_reference');
+      if (!ownEntry(state.players, targetPlayerId))
+        return rejected('stale_reference');
       if (
         targetPlayerId !== actorId &&
         !policy.allowOpponentPublicInteraction
@@ -1038,7 +1069,8 @@ export const resolveWireCommand = (
     case 'DeclareAttack':
     case 'PassTurn': {
       const targetPlayerId = asPlayerId(wire.targetPlayerId);
-      if (!state.players[targetPlayerId]) return rejected('stale_reference');
+      if (!ownEntry(state.players, targetPlayerId))
+        return rejected('stale_reference');
       if (
         targetPlayerId !== actorId &&
         !policy.allowOpponentPublicInteraction
@@ -1056,8 +1088,8 @@ export const resolveWireCommand = (
       };
     }
     case 'MoveZoneContents': {
-      const source = state.zones[wire.sourceZoneId];
-      const destination = state.zones[wire.destinationZoneId];
+      const source = ownEntry(state.zones, wire.sourceZoneId);
+      const destination = ownEntry(state.zones, wire.destinationZoneId);
       if (!source || !destination) return rejected('stale_reference');
       if (
         !source.ownerId ||
@@ -1080,14 +1112,18 @@ export const resolveWireCommand = (
     }
     case 'ResolveLooseBoardCards': {
       const targetPlayerId = asPlayerId(wire.targetPlayerId);
-      if (!state.players[targetPlayerId]) return rejected('stale_reference');
+      if (!ownEntry(state.players, targetPlayerId))
+        return rejected('stale_reference');
       if (
         targetPlayerId !== actorId &&
         !policy.allowOpponentPublicInteraction
       ) {
         return rejected('unauthorized');
       }
-      const board = state.zones[playerZoneId(targetPlayerId, 'board')];
+      const board = ownEntry(
+        state.zones,
+        playerZoneId(targetPlayerId, 'board')
+      );
       if (!board || board.ownerId !== targetPlayerId) {
         return rejected('stale_reference');
       }
@@ -1116,7 +1152,7 @@ export const resolveWireCommand = (
     }
     case 'ShuffleZoneIntoDeck':
     case 'ShuffleZoneToDeckBottom': {
-      const source = state.zones[wire.sourceZoneId];
+      const source = ownEntry(state.zones, wire.sourceZoneId);
       if (!source) return rejected('stale_reference');
       // Into the deck of the pile's owner (either seat, in Solo).
       if (!source.ownerId || !controlsSeat(source.ownerId))
@@ -1137,7 +1173,8 @@ export const resolveWireCommand = (
       const targetPlayerId = wire.targetPlayerId
         ? asPlayerId(wire.targetPlayerId)
         : actorId;
-      if (!state.players[targetPlayerId]) return rejected('stale_reference');
+      if (!ownEntry(state.players, targetPlayerId))
+        return rejected('stale_reference');
       if (
         targetPlayerId !== actorId &&
         !policy.allowOpponentPublicInteraction
@@ -1157,7 +1194,7 @@ export const resolveWireCommand = (
     case 'SetSpecialCondition':
     case 'SetAbilityUsed':
     case 'RotateStack': {
-      const stack = state.stacks[wire.stackId];
+      const stack = ownEntry(state.stacks, wire.stackId);
       if (!stack) return rejected('stale_reference');
       if (
         !ownsStack(state, actorId, wire.stackId) &&
@@ -1291,14 +1328,15 @@ export const resolveWireCommand = (
     }
     case 'SetZonePublicReveal': {
       const targetPlayerId = asPlayerId(wire.targetPlayerId);
-      if (!state.players[targetPlayerId]) return rejected('stale_reference');
+      if (!ownEntry(state.players, targetPlayerId))
+        return rejected('stale_reference');
       if (
         targetPlayerId !== actorId &&
         !policy.allowOpponentPublicInteraction
       ) {
         return rejected('unauthorized');
       }
-      const zone = state.zones[wire.zoneId];
+      const zone = ownEntry(state.zones, wire.zoneId);
       if (
         !zone ||
         zone.id !== playerZoneId(targetPlayerId, 'prizes') ||
@@ -1332,8 +1370,9 @@ export const resolveWireCommand = (
     }
     case 'BeginZoneInspection': {
       const sourcePlayerId = asPlayerId(wire.targetPlayerId);
-      if (!state.players[sourcePlayerId]) return rejected('stale_reference');
-      const zone = state.zones[wire.zoneId];
+      if (!ownEntry(state.players, sourcePlayerId))
+        return rejected('stale_reference');
+      const zone = ownEntry(state.zones, wire.zoneId);
       if (
         !zone ||
         zone.ownerId !== sourcePlayerId ||
@@ -1393,7 +1432,7 @@ export const resolveWireCommand = (
     }
     case 'EndPrivateInspection': {
       const inspectionId = asInspectionId(wire.inspectionId);
-      const grant = state.visibility.inspectionGrants[inspectionId];
+      const grant = ownEntry(state.visibility.inspectionGrants, inspectionId);
       if (!grant || !grant.viewerIds.includes(actorId)) {
         return rejected('stale_reference');
       }
@@ -1408,7 +1447,7 @@ export const resolveWireCommand = (
     }
     case 'ExtractDeckCardsForInspection': {
       const ownerId = asPlayerId(wire.ownerPlayerId);
-      if (!state.players[ownerId]) return rejected('stale_reference');
+      if (!ownEntry(state.players, ownerId)) return rejected('stale_reference');
       // A private look at the other seat's deck is Solo's alone: its one
       // player controls both seats, and only that player is shown the cards.
       if (
@@ -1421,7 +1460,7 @@ export const resolveWireCommand = (
       // v1's deck viewer accumulates: viewing more cards while a view is
       // open adds them to it. Extend the owner's open deck inspection rather
       // than letting game-core refuse a second one.
-      const openInspection = state.workAreas[ownerId]?.inspection;
+      const openInspection = ownEntry(state.workAreas, ownerId)?.inspection;
       const extend =
         openInspection &&
         openInspection.sourceZoneId === playerZoneId(ownerId, 'deck')
@@ -1456,7 +1495,8 @@ export const resolveWireCommand = (
       const owner = state.playerOrder.find(
         (playerId) =>
           controlsSeat(playerId) &&
-          state.workAreas[playerId]?.inspection?.id === wire.expectedWorkAreaId
+          ownEntry(state.workAreas, playerId)?.inspection?.id ===
+            wire.expectedWorkAreaId
       );
       if (!owner) return rejected('stale_reference');
       return {
@@ -1484,7 +1524,8 @@ export const resolveWireCommand = (
       };
     case 'SetOncePerGameMarker': {
       const targetPlayerId = asPlayerId(wire.targetPlayerId);
-      if (!state.players[targetPlayerId]) return rejected('stale_reference');
+      if (!ownEntry(state.players, targetPlayerId))
+        return rejected('stale_reference');
       if (
         targetPlayerId !== actorId &&
         !policy.allowOpponentPublicInteraction
@@ -1503,7 +1544,8 @@ export const resolveWireCommand = (
     }
     case 'ApplySoloUndo': {
       const targetPlayerId = asPlayerId(wire.targetPlayerId);
-      if (!state.players[targetPlayerId]) return rejected('stale_reference');
+      if (!ownEntry(state.players, targetPlayerId))
+        return rejected('stale_reference');
       // Solo's controller announces the undo for whichever seat is at the
       // bottom; a multiplayer player only ever takes back their own move.
       if (undoContext.mode !== 'solo' && targetPlayerId !== actorId) {
@@ -1526,7 +1568,8 @@ export const resolveWireCommand = (
       const targetPlayerId = wire.targetPlayerId
         ? asPlayerId(wire.targetPlayerId)
         : actorId;
-      if (!state.players[targetPlayerId]) return rejected('stale_reference');
+      if (!ownEntry(state.players, targetPlayerId))
+        return rejected('stale_reference');
       if (
         targetPlayerId !== actorId &&
         !policy.allowOpponentPublicInteraction
