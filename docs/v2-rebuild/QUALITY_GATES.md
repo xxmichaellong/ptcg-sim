@@ -23,26 +23,29 @@ narrow legacy-server startup smoke test are explicit security exceptions.
 | `pnpm run check:legacy-corpus`                | Operator-only: convert an explicit private corpus into redacted deterministic evidence, optionally comparing a baseline.      |
 | `pnpm run prepare:continuation-preview`       | Operator-only: generate a private, default-off, isolated managed-preview config/credential bundle without network access.     |
 | `pnpm run build:v2`                           | Build Worker and web artifacts, then verify provenance, credential exclusion, fixture exclusion, and emitted card-back bytes. |
-| `pnpm run check:v2`                           | Run every non-legacy, non-browser check above plus v2 unit and Worker-runtime tests.                                          |
-| `pnpm run check:ci`                           | Run the frozen 79-test v1 suite followed by `check:v2`; this is the required non-browser CI job.                              |
+| `pnpm run check:v2`                           | Run the v2 static, tooling, unit, Worker-runtime, and build checks.                                                           |
+| `pnpm run check:ci`                           | Run the frozen v1 suite followed by `check:v2`; this is the required non-browser CI job.                                      |
 | `pnpm run test:preview:browser`               | Build the web app, serve it and the room Worker from one Wrangler origin, and run the production-topology Chromium gate.      |
 | `pnpm run test:continuation:browser`          | Run the real save/restore UI journey against a locally test-activated or explicitly provisioned managed preview.              |
 | `pnpm run test:continuation:drain:browser`    | Prove create/restore are hidden and revoke remains reachable in the exact local or managed rollout drain state.               |
 | `pnpm run test:continuation:rotation:browser` | Operator-only: capture or consume a private save across explicit managed key/deployment transitions.                          |
-| `pnpm run check:browser`                      | Run the Vite/Wrangler suite plus default-off, enabled, and revoke-only continuation lanes in Chromium without retry.          |
-| `pnpm run check:cross-browser`                | Run the focused real Solo-room journey in Firefox and WebKit at 1280×720/DPR 1 without retry.                                 |
-| `pnpm run check:full`                         | Fail-closed dependency audit, `check:ci`, Chromium lanes, and the focused Firefox/WebKit lane locally.                        |
+| `pnpm run check:browser`                      | Run the Vite/Wrangler suite plus default-off, enabled, and revoke-only continuation lanes in Chromium.                        |
+| `pnpm run check:cross-browser`                | Run the focused Firefox/WebKit functional suites, including WebKit touch/mobile cases.                                        |
+| `pnpm run check:full`                         | Fail-closed dependency audit, `check:ci`, Chromium lanes, and the focused Firefox/WebKit suites locally.                      |
 | `pnpm run measure:v2:renderer`                | Operator-only: build production assets and capture repeated current-stable-Chrome renderer evidence on ADR-015 hardware.      |
 | `pnpm run measure:v2:server`                  | Operator-only: capture the named local-`workerd` phase/payload observation; this is not managed-network release evidence.     |
 | `pnpm run audit:dependencies`                 | Query the registry advisory service and reject known runtime or development dependency vulnerabilities at any severity.       |
 
 Hosted CI disables the runner's unrelated Google Chrome apt source before
-installing Playwright Chromium, then may retry that browser/dependency install
+installing Playwright browsers, then may retry the browser/dependency install
 up to three times because required package mirrors can still be temporarily
-inconsistent. The browser regression command itself remains single-attempt and
-fail-fast, so this infrastructure recovery cannot conceal a test failure.
+inconsistent. Local browser runs use no test retries. In CI, the main Chromium
+and Firefox/WebKit functional suites retry a failed case once and report cases
+that pass on retry as flaky through `scripts/report-flaky.mjs`. The evidence,
+production-topology, and continuation lanes run without test retries.
 
-Use `corepack pnpm` when invoking these commands directly from a new checkout.
+Use Node.js 24 and `corepack pnpm` when invoking these commands directly from a
+new checkout; the exact CI Node version is pinned in the workflow below.
 The repository pins pnpm 11.24.0 in `packageManager`.
 
 `check:legacy-corpus` is deliberately not a CI corpus run because no raw private
@@ -218,7 +221,7 @@ opponent remains on the unchanged source fork, the completed save is revoked,
 and no bearer enters request URLs, DOM, location, local storage, or session
 storage.
 
-`PTCGSIM_CONTINUATION_PREVIEW_URL=https://... pnpm run
+`PTCGSIM_CONTINUATION_PREVIEW_URL=https://... corepack pnpm run
 test:continuation:browser` suppresses local server startup and runs the same
 journey against an explicitly provisioned managed preview. The ordinary CI lane
 uses local `workerd`; it does not satisfy the remaining managed-network,
@@ -245,8 +248,8 @@ drift before browser work and disables retries and all bearer-bearing browser
 artifacts. A complete persisted local old/rotated/retained-key rehearsal passes;
 managed execution remains release evidence.
 
-`PTCGSIM_PREVIEW_URL=https://... pnpm run test:preview:browser` likewise runs
-the production-topology/default-off journey against an already deployed origin
+`PTCGSIM_PREVIEW_URL=https://... corepack pnpm run test:preview:browser` likewise
+runs the production-topology/default-off journey against an already deployed origin
 without starting local Wrangler. Run it before activation and again after
 final deactivation. The private fail-closed provisioner, explicit
 default-off/activation/drain/deactivation order, evidence boundary, staged
@@ -261,6 +264,13 @@ journeys do exercise scoped room/continuation state on their selected origin.
 dispatch. It grants read-only repository contents permission, cancels superseded
 runs, pins action revisions, and pins Ubuntu 24.04 plus Node 24.19.0.
 
+The `quality` job runs independently of the `changes` job ("What changed").
+Browser jobs depend on `changes`, so selected browser jobs run alongside
+`quality`. `scripts/ci-changes.mjs` skips browser jobs for documentation-only
+changes only when it can compare against an earlier head that passed CI; without
+that trusted comparison, all browser jobs run. Board, renderer, session, and
+relevant CI changes also select the long evidence specs according to that script.
+
 The `quality` job installs the frozen lockfile, runs `audit:dependencies`, runs
 `check:ci`, and verifies that its generators do not modify tracked files. The
 audit fails on any reported severity and also fails closed when the advisory
@@ -270,30 +280,39 @@ to the build that are at least 16 bytes, and recognizable private-key/access-tok
 formats without printing the matched credential. The updated legacy dependency
 graph is additionally exercised through a child-process smoke test covering its
 rendered root, SQLite-backed import lookup, and a real Socket.IO player admission.
-Only after the quality job succeeds does the `chromium` job install
-Playwright's own Chromium with its Linux dependencies and run `check:browser`.
-The first Playwright lane starts Wrangler on port 8787 and Vite on port 4173.
-After it tears both down, the production-topology lane builds Vite and starts
-one default-off Wrangler origin on port 4174. The continuation lanes then start
-separately test-enabled and revoke-only built Wrangler origins on ports 4176
-and 4177. Browser reports, failure screenshots, and traces from artifact-enabled
-lanes are retained as a 14-day artifact. Browser binaries are not cached.
 
-In parallel after `quality`, the `cross-browser` job installs Playwright Firefox
-and WebKit and runs only `remote-room-solo-full-stack.spec.ts` once per engine.
-That existing real-room journey covers room creation, WebSocket authority,
-renderer/input behavior, arbitrary card URLs, perspective replay round-trip,
-and runtime-error detection. Its diagnostics use separate report/result paths
-and the same 14-day retention. These engines are continuous compatibility
-proxies; ADR-023 still requires a release-candidate smoke in actual current
-stable Chrome, Edge, Firefox, and Safari.
+The `chromium` job installs Playwright's own Chromium with its Linux dependencies
+and splits the non-evidence Vite/Wrangler suite across duration-balanced shards
+using `scripts/browser-shards.mjs`. Each starts Wrangler on port 8787 and Vite
+on port 4173. One shard then runs `check:browser:configs`: the production-topology
+lane builds Vite and starts one default-off Wrangler origin on port 4174, followed
+by separately test-enabled and revoke-only built Wrangler origins on ports 4176
+and 4177. The `evidence` job runs the Solo churn soak and renderer comparison on
+separate runners with retries disabled. Browser reports, failure screenshots,
+and traces from artifact-enabled lanes are retained for 14 days. Browser binaries
+are not cached; Firefox/WebKit system-package downloads are cached.
+
+The `cross-browser` job installs Playwright Firefox and WebKit on separate matrix
+runners and executes the functional specs selected in
+[`playwright.cross-browser.config.ts`](../../playwright.cross-browser.config.ts).
+These cover the real Solo-room journey, renderer/input behavior, special card
+compositions, table depth, optimistic feedback and recovery, public-pile ordering,
+hand/board arrangement privacy, keyboard controls, deck hover zoom, and deck
+dialog focus return. WebKit also runs touch/mobile cases for public piles,
+custom-card dialogs, landscape deck editing, tutorial layout, and filtered
+palette actions.
+The default viewport is 1280×720/DPR 1; individual cases override it for narrow,
+landscape, and magnified layouts. Diagnostics use separate report/result paths
+and the same 14-day retention. These engines are continuous compatibility proxies;
+ADR-023 still requires a release-candidate smoke in actual current stable Chrome,
+Edge, Firefox, and Safari.
 
 ## Explicit residual gaps
 
-- Current CI proves default renderer cases at 1280×720/DPR 1, source-oracle
-  cases with explicit 1600×900/DPR 1 overrides, and one real Solo-room journey
-  in Firefox/WebKit at 1280×720/DPR 1. The opt-in runner now covers the ADR-015
-  1366×768 and 1920×1080/DPR 2 observation shapes, but actual qualifying
+- Current CI covers default renderer cases at 1280×720/DPR 1, source-oracle
+  cases with explicit 1600×900/DPR 1 overrides, and the focused Firefox/WebKit
+  functional suites with their explicit viewport overrides. The opt-in runner
+  covers the ADR-015 1366×768 and 1920×1080/DPR 2 observation shapes, but actual qualifying
   hardware/GPU results, paired protected workflows, pinned fonts, and the
   ADR-023 stable browser products remain outstanding.
 - Source-map provenance enforces package containment; it does not replace the
