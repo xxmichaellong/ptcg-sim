@@ -263,3 +263,26 @@
     margin-top: 0;
   }
 }
+
+/* Translated choices keep their full labels on a phone, wrapping into
+   another row instead of pushing the last choice beyond the sheet. */
+@media (max-width: 520px) {
+  .ptcgsim-segmented-control {
+    display: flex;
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+
+  .ptcgsim-segmented-control__option {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .ptcgsim-segmented-control__option label {
+    height: 40px;
+    min-height: 40px;
+    overflow-wrap: anywhere;
+    white-space: normal;
+    text-align: center;
+  }
+}

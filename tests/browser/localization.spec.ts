@@ -2,7 +2,9 @@ import { readFileSync } from 'node:fs';
 
 import { expect, test, type Page } from '@playwright/test';
 
-import { closeSheet, openSettings } from './support/table-shell.js';
+import { closeSheet, openDeck, openSettings } from './support/table-shell.js';
+import { ownRoomBudget } from './support/room-budget.js';
+import { routeCardCatalog } from './support/card-catalog-fixture.js';
 
 /**
  * The page's language (ADR-034): the browser's until one is chosen in
@@ -93,3 +95,84 @@ test.describe('a browser set to Japanese', () => {
     await expect(page.locator('#languageSelect')).toHaveValue('auto');
   });
 });
+
+for (const locale of ['ar', 'ru']) {
+  test.describe(`a narrow phone in ${locale}`, () => {
+    test.use({
+      locale,
+      viewport: { width: 320, height: 740 },
+      isMobile: true,
+      hasTouch: true,
+    });
+
+    test('keeps the deck name readable and every editor control reachable', async ({
+      page,
+      context,
+    }) => {
+      await ownRoomBudget(context);
+      await routeCardCatalog(page);
+      await page.goto('/?renderer=dom');
+      await expect(
+        page.locator(
+          '[data-app-route="remote-room"][data-session-phase="ready"]'
+        )
+      ).toBeVisible({ timeout: 30_000 });
+      await expect(page.locator('html')).toHaveAttribute('lang', locale);
+      await openSettings(page);
+      for (const group of ['tableView', 'animationSpeed']) {
+        const edges = await page
+          .locator(`#settings input[name="${group}"]`)
+          .evaluateAll((inputs) =>
+            inputs.map((input) => {
+              const box = input.getBoundingClientRect();
+              return { left: box.left, right: box.right };
+            })
+          );
+        expect(edges.length).toBeGreaterThan(0);
+        for (const edge of edges) {
+          expect(edge.left, group).toBeGreaterThanOrEqual(0);
+          expect(edge.right, group).toBeLessThanOrEqual(320);
+        }
+      }
+      await closeSheet(page);
+      await openDeck(page);
+      await page.locator('#deckNewButton').click();
+      const name = page.locator('#deckNameInput');
+      await name.fill('Pidgey');
+      await name.press('Enter');
+      await page.evaluate(() => document.fonts.ready);
+      const text = await name.evaluate((input) => {
+        const style = getComputedStyle(input);
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d')!;
+        context.font = style.font;
+        return {
+          needed: context.measureText((input as HTMLInputElement).value).width,
+          available:
+            input.clientWidth -
+            parseFloat(style.paddingLeft) -
+            parseFloat(style.paddingRight),
+        };
+      });
+      expect(text.available).toBeGreaterThanOrEqual(text.needed);
+      await expect(
+        page.locator('.card-search__grid > li').first()
+      ).toBeInViewport({
+        ratio: 0.5,
+      });
+      for (const id of [
+        'deckFormat-standard',
+        'deckFormat-expanded',
+        'deckFormat-unlimited',
+        'deckFormat-pocket',
+        'deckUseOnSeatButton',
+      ]) {
+        await expect(page.locator(`#${id}`)).toBeInViewport({ ratio: 1 });
+      }
+      await page.locator('#deckEditorBackButton').click();
+      await expect(page.locator('.deck-tile__name').first()).toHaveText(
+        'Pidgey'
+      );
+    });
+  });
+}

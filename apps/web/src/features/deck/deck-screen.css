@@ -2880,6 +2880,37 @@ button.deck-check__issue {
 }
 
 @media (max-width: 520px) {
+  /* Give the name a readable line; translated tools and formats can wrap
+     below it instead of taking the field's last few pixels. */
+  .deck-editor__head {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .deck-editor__tools {
+    grid-row: 3;
+    grid-column: 1 / -1;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    min-width: 0;
+  }
+
+  .deck-editor__tools > .ds-button {
+    max-width: 100%;
+    white-space: normal;
+  }
+
+  .deck-editor__saved[data-unsaved='true'] {
+    grid-row: 4;
+  }
+
+  /* A translated header and filters can fill a small phone: leave the
+     cards room, with the filters themselves scrollable when needed. */
+  .card-search__controls {
+    max-height: 55%;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
   /* Out of sight, still read out; a tap on the icon shows it. */
   .deck-screen__reload-text {
     position: absolute;
