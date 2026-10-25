@@ -63,7 +63,7 @@ const view = (
 const welcome = (
   nextClientSequence = 1,
   snapshot = view(0)
-): ServerMessage => ({
+): Extract<ServerMessage, { type: 'Welcome' }> => ({
   type: 'Welcome',
   protocolVersion: PROTOCOL_VERSION,
   buildId: 'server-build',
@@ -598,6 +598,71 @@ describe('RemoteGameSession', () => {
     // Once, as each command is first sent: a retry resends it unchanged.
     expect(seen).toEqual([0, 1]);
   });
+
+  it.each(['result-first', 'publication-first'])(
+    'reports accepted completion once after both frames, before the next send (%s)',
+    (order) => {
+      const calls: string[] = [];
+      const rebind = Object.assign(
+        (
+          command: Parameters<NonNullable<Parameters<typeof setup>[1]>>[0],
+          current: { revision: number }
+        ) => {
+          calls.push(`rebind:${command.type}:${current.revision}`);
+          return command;
+        },
+        {
+          accepted: (
+            command: Parameters<NonNullable<Parameters<typeof setup>[1]>>[0],
+            revision: number,
+            current: { readonly revision: number }
+          ) =>
+            calls.push(
+              `accepted:${command.type}:${revision}:${current.revision}`
+            ),
+          refused: () => calls.push('refused'),
+        }
+      );
+      const test = setup({}, rebind);
+      const socket = test.admit();
+      test.session.submit({ type: 'FlipCoin' });
+      test.session.submit({ type: 'FlipCoin' });
+      const result: ServerMessage = {
+        type: 'CommandResult',
+        protocolVersion: PROTOCOL_VERSION,
+        commandId: 'command-1',
+        clientSequence: 1,
+        accepted: true,
+        revision: 1,
+      };
+      const publication: ServerMessage = {
+        type: 'StatePublication',
+        protocolVersion: PROTOCOL_VERSION,
+        coveringCommandId: 'command-1',
+        executedClientSequence: 1,
+        snapshot: view(1),
+      };
+      socket.serverMessage(order === 'result-first' ? result : publication);
+      expect(calls).toEqual(['rebind:FlipCoin:0']);
+      socket.serverMessage(order === 'result-first' ? publication : result);
+      expect(calls).toEqual([
+        'rebind:FlipCoin:0',
+        'accepted:FlipCoin:1:1',
+        'rebind:FlipCoin:1',
+      ]);
+      expect(clientFrame(socket, 2)).toMatchObject({
+        commandId: 'command-2',
+        clientSequence: 2,
+        lastSeenRevision: 1,
+      });
+      expect(test.session.getSnapshot()).toMatchObject({
+        phase: 'ready',
+        nextClientSequence: 3,
+        completedCommands: [{ commandId: 'command-1', accepted: true }],
+      });
+      test.session.disconnect();
+    }
+  );
 
   it('tells the rebinder of a refused command before the next is sent', () => {
     const calls: string[] = [];

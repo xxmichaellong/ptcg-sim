@@ -6,7 +6,188 @@ import { describe, expect, it } from 'vitest';
 import { createProvisionalRebinder } from './rebindProvisionalReferences.js';
 import { predictWireCommand } from './predictWireCommand.js';
 
+const completedPlay = () => {
+  const view = createRendererSpikeView();
+  const active = view.stacks['stack:blue:active']!;
+  const playerId = active.boardPlayerId;
+  const hand = view.zones[`zone:${playerId}:hand`]!;
+  const played = hand.cards[0]!;
+  if (played.kind !== 'known') throw new Error('Known card required');
+  const { [active.id]: _gone, ...withoutActive } = view.stacks;
+  const before: MatchViewState = {
+    ...view,
+    stacks: withoutActive,
+    boards: {
+      ...view.boards,
+      [playerId]: { ...view.boards[playerId]!, activeStackId: null },
+    },
+  };
+  const play: WireGameCommand = {
+    type: 'MoveCardToPlay',
+    cardId: played.id,
+    expectedSourceZoneId: hand.id,
+    boardPlayerId: playerId,
+    slot: 'active',
+  };
+  const publicCard = { ...played, id: 'accepted-play-card' as never };
+  const original = {
+    ...active,
+    id: 'accepted-play-stack',
+    evolutionCards: [publicCard],
+    attachmentCards: [],
+  };
+  const landed: MatchViewState = {
+    ...before,
+    revision: before.revision + 1,
+    zones: {
+      ...before.zones,
+      [hand.id]: { ...hand, cards: hand.cards.slice(1) },
+    },
+    stacks: { ...withoutActive, [original.id]: original },
+    boards: {
+      ...before.boards,
+      [playerId]: { ...before.boards[playerId]!, activeStackId: original.id },
+    },
+  };
+  const replacement = {
+    ...original,
+    id: 'replacement-play-stack',
+    evolutionCards: [{ ...played, id: 'different-play-copy' as never }],
+  };
+  const replaced: MatchViewState = {
+    ...landed,
+    revision: landed.revision + 2,
+    stacks: { ...withoutActive, [replacement.id]: replacement },
+    boards: {
+      ...landed.boards,
+      [playerId]: {
+        ...landed.boards[playerId]!,
+        activeStackId: replacement.id,
+      },
+    },
+    workAreas: {
+      ...landed.workAreas,
+      [playerId]: {
+        ...landed.workAreas[playerId]!,
+        attachmentResolution: {
+          id: 'accepted-play-window',
+          sourceStackId: original.id,
+          cards: [publicCard],
+          evolutionCards: [publicCard],
+          attachmentCards: [],
+          suggestedSlot: 'active',
+        },
+      },
+    },
+  };
+  return {
+    before,
+    landed,
+    replaced,
+    play,
+    played,
+    original,
+    publicCard,
+    hand,
+    active,
+  };
+};
+
 describe('rebinding predicted references', () => {
+  it.each(['exact', 'newer'] as const)(
+    'pins an accepted placement to its completed view rather than an identical replacement (%s frontier)',
+    (frontier) => {
+      const rebind = createProvisionalRebinder();
+      const prepared = completedPlay();
+      const sent = rebind(prepared.play, prepared.before);
+      rebind.accepted(
+        sent,
+        prepared.landed.revision,
+        frontier === 'exact' ? prepared.landed : prepared.replaced
+      );
+      const predicted = `predicted-stack:${prepared.played.id}`;
+      const damage: WireGameCommand = {
+        type: 'SetDamage',
+        stackId: predicted,
+        damage: 30,
+      };
+      expect(rebind(damage, prepared.replaced)).toMatchObject({
+        stackId: frontier === 'exact' ? prepared.original.id : predicted,
+      });
+      const attach = {
+        type: 'PlaceCardOnPlayStack',
+        cardId: 'energy',
+        expectedSourceId: prepared.hand.id,
+        targetStackId: predicted,
+        expectedTargetTopCardId: prepared.played.id,
+      } as WireGameCommand;
+      expect(rebind(attach, prepared.replaced)).toMatchObject({
+        targetStackId: frontier === 'exact' ? prepared.original.id : predicted,
+        expectedTargetTopCardId:
+          frontier === 'exact' ? prepared.publicCard.id : prepared.played.id,
+      });
+      const resolve: WireGameCommand = {
+        type: 'ResolveStagedCards',
+        expectedWorkAreaId: `predicted-work-area:${predicted}`,
+        destination: 'discard',
+      };
+      expect(rebind(resolve, prepared.replaced)).toMatchObject({
+        expectedWorkAreaId:
+          frontier === 'exact'
+            ? 'accepted-play-window'
+            : resolve.expectedWorkAreaId,
+      });
+    }
+  );
+
+  it('retires only the completed play’s placement hint, leaving another command’s placement available', () => {
+    const rebind = createProvisionalRebinder();
+    const prepared = completedPlay();
+    const first = rebind(prepared.play, prepared.before);
+    const other = prepared.hand.cards[1]!;
+    const second: WireGameCommand = {
+      type: 'MoveCardToPlay',
+      cardId: other.id,
+      expectedSourceZoneId: prepared.hand.id,
+      boardPlayerId: prepared.active.boardPlayerId,
+      slot: 'bench',
+    };
+    rebind(second, prepared.before);
+    const stack = {
+      ...prepared.active,
+      id: 'other-command-stack',
+      slot: 'bench' as const,
+      evolutionCards: [{ ...other, id: 'other-command-card' as never }],
+      attachmentCards: [],
+    };
+    const latest: MatchViewState = {
+      ...prepared.before,
+      revision: prepared.before.revision + 3,
+      stacks: { ...prepared.before.stacks, [stack.id]: stack },
+      boards: {
+        ...prepared.before.boards,
+        [stack.boardPlayerId]: {
+          ...prepared.before.boards[stack.boardPlayerId]!,
+          benchStackIds: [
+            ...prepared.before.boards[stack.boardPlayerId]!.benchStackIds,
+            stack.id,
+          ],
+        },
+      },
+    };
+    rebind.accepted(first, prepared.before.revision + 1, latest);
+    expect(
+      rebind(
+        {
+          type: 'SetDamage',
+          stackId: `predicted-stack:${other.id}`,
+          damage: 10,
+        },
+        latest
+      )
+    ).toMatchObject({ stackId: stack.id });
+  });
+
   it('names the stack and window the room made for what was predicted', () => {
     const rebindProvisionalReferences = createProvisionalRebinder();
     const view = createRendererSpikeView();
@@ -764,26 +945,33 @@ describe('rebinding predicted references', () => {
         expectedSourceZoneId: hand.id,
         destinationZoneId: hand.id,
       }) as const;
-    const withHand = (cards: MatchViewState['zones'][string]['cards']) =>
+    const withHand = (
+      cards: MatchViewState['zones'][string]['cards'],
+      revision: number
+    ) =>
       ({
         ...view,
+        revision,
         zones: { ...view.zones, [hand.id]: { ...hand, cards } },
       }) as MatchViewState;
     // Sent at once: the first move.
-    rebind(move(first!.id), view);
+    const firstMove = rebind(move(first!.id), view);
     // The second was queued on the old name; sent once the first landed.
-    const once = withHand([
-      ...rest,
-      { ...first!, id: 'renamed-once' as never },
-    ]);
-    expect(rebind(move(first!.id), once)).toMatchObject({
+    const once = withHand(
+      [...rest, { ...first!, id: 'renamed-once' as never }],
+      view.revision + 1
+    );
+    rebind.accepted(firstMove, once.revision, once);
+    const secondMove = rebind(move(first!.id), once);
+    expect(secondMove).toMatchObject({
       cardId: 'renamed-once',
     });
     // The discard was queued on the old name too; sent after both.
-    const twice = withHand([
-      ...rest,
-      { ...first!, id: 'renamed-twice' as never },
-    ]);
+    const twice = withHand(
+      [...rest, { ...first!, id: 'renamed-twice' as never }],
+      view.revision + 2
+    );
+    rebind.accepted(secondMove, twice.revision, twice);
     expect(
       rebind(
         {
@@ -795,6 +983,214 @@ describe('rebinding predicted references', () => {
         twice
       )
     ).toMatchObject({ cardId: 'renamed-twice' });
+  });
+
+  it('preserves the established arrival order for an identical two-card draw at its exact frontier', () => {
+    const rebind = createProvisionalRebinder();
+    const view = createRendererSpikeView();
+    const playerId = view.playerOrder[0]!;
+    const hand = view.zones[`zone:${playerId}:hand`]!;
+    const deck = view.zones[`zone:${playerId}:deck`]!;
+    const template = hand.cards[0]!;
+    const first = { ...template, id: 'first-drawn-copy' as never };
+    const second = { ...template, id: 'second-drawn-copy' as never };
+    const before: MatchViewState = {
+      ...view,
+      zones: { ...view.zones, [deck.id]: { ...deck, cards: [first, second] } },
+    };
+    const draw: WireGameCommand = { type: 'DrawCards', count: 2 };
+    rebind(draw, before);
+    const landed: MatchViewState = {
+      ...before,
+      revision: before.revision + 1,
+      zones: {
+        ...before.zones,
+        [deck.id]: { ...deck, cards: [] },
+        [hand.id]: {
+          ...hand,
+          cards: [
+            ...hand.cards,
+            { ...first, id: 'first-hand-copy' as never },
+            { ...second, id: 'second-hand-copy' as never },
+          ],
+        },
+      },
+    };
+    rebind.accepted(draw, landed.revision, landed);
+    const discard = (cardId: string): WireGameCommand => ({
+      type: 'MoveCard',
+      cardId,
+      expectedSourceZoneId: hand.id,
+      destinationZoneId: `zone:${playerId}:discard`,
+    });
+    expect(rebind(discard(first.id), landed)).toMatchObject({
+      cardId: 'first-hand-copy',
+    });
+    expect(rebind(discard(second.id), landed)).toMatchObject({
+      cardId: 'second-hand-copy',
+    });
+  });
+
+  it('leaves extra identical arrivals ambiguous while retaining a unique definition match at the exact frontier', () => {
+    const rebind = createProvisionalRebinder();
+    const view = createRendererSpikeView();
+    const playerId = view.playerOrder[0]!;
+    const hand = view.zones[`zone:${playerId}:hand`]!;
+    const deck = view.zones[`zone:${playerId}:deck`]!;
+    const firstTemplate = hand.cards[0]!;
+    if (firstTemplate.kind !== 'known') throw new Error('Known card required');
+    const secondTemplate = hand.cards.find(
+      (card) =>
+        card.kind === 'known' &&
+        card.definitionId !== firstTemplate.definitionId
+    )!;
+    if (!secondTemplate) throw new Error('Different definition required');
+    const first = { ...firstTemplate, id: 'ambiguous-draw-source' as never };
+    const second = { ...secondTemplate, id: 'unique-draw-source' as never };
+    const before: MatchViewState = {
+      ...view,
+      zones: { ...view.zones, [deck.id]: { ...deck, cards: [first, second] } },
+    };
+    const draw: WireGameCommand = { type: 'DrawCards', count: 2 };
+    rebind(draw, before);
+    const landed: MatchViewState = {
+      ...before,
+      revision: before.revision + 2,
+      zones: {
+        ...before.zones,
+        [deck.id]: { ...deck, cards: [] },
+        [hand.id]: {
+          ...hand,
+          cards: [
+            ...hand.cards,
+            { ...first, id: 'earlier-peer-copy' as never },
+            { ...first, id: 'actual-drawn-copy' as never },
+            { ...second, id: 'unique-hand-copy' as never },
+          ],
+        },
+      },
+    };
+    rebind.accepted(draw, landed.revision, landed);
+    const discard = (cardId: string): WireGameCommand => ({
+      type: 'MoveCard',
+      cardId,
+      expectedSourceZoneId: hand.id,
+      destinationZoneId: `zone:${playerId}:discard`,
+    });
+    expect(rebind(discard(second.id), landed)).toMatchObject({
+      cardId: 'unique-hand-copy',
+    });
+    const ambiguous = discard(first.id);
+    expect(rebind(ambiguous, landed)).toBe(ambiguous);
+  });
+
+  it.each(['exact', 'newer'] as const)(
+    'settles only the completed command’s arrivals, preserving learned aliases and a later draw (%s frontier)',
+    (frontier) => {
+      const rebind = createProvisionalRebinder();
+      const view = createRendererSpikeView();
+      const playerId = view.playerOrder[0]!;
+      const hand = view.zones[`zone:${playerId}:hand`]!;
+      const deck = view.zones[`zone:${playerId}:deck`]!;
+      const first = { ...hand.cards[0]!, id: 'first-in-deck' as never };
+      const second = { ...hand.cards[1]!, id: 'second-in-deck' as never };
+      const before: MatchViewState = {
+        ...view,
+        zones: {
+          ...view.zones,
+          [deck.id]: { ...deck, cards: [first, second] },
+        },
+      };
+      const firstDraw: WireGameCommand = { type: 'DrawCards', count: 1 };
+      const secondDraw: WireGameCommand = { type: 'DrawCards', count: 1 };
+      rebind(firstDraw, before);
+      const once: MatchViewState = {
+        ...before,
+        revision: before.revision + 1,
+        zones: {
+          ...before.zones,
+          [deck.id]: { ...deck, cards: [second] },
+          [hand.id]: {
+            ...hand,
+            cards: [...hand.cards, { ...first, id: 'first-in-hand' as never }],
+          },
+        },
+      };
+      rebind(secondDraw, once);
+      // Late completion for the earlier draw must leave the second draw's
+      // hint and the first draw's already-proven mapping alone.
+      const twice: MatchViewState = {
+        ...once,
+        revision: once.revision + 1,
+        zones: {
+          ...once.zones,
+          [deck.id]: { ...deck, cards: [] },
+          [hand.id]: {
+            ...hand,
+            cards: [
+              ...once.zones[hand.id]!.cards,
+              { ...second, id: 'second-in-hand' as never },
+            ],
+          },
+        },
+      };
+      rebind.accepted(
+        firstDraw,
+        once.revision,
+        frontier === 'exact' ? once : twice
+      );
+      rebind.accepted(secondDraw, twice.revision, twice);
+      const discard = (cardId: string): WireGameCommand => ({
+        type: 'MoveCard',
+        cardId,
+        expectedSourceZoneId: hand.id,
+        destinationZoneId: `zone:${playerId}:discard`,
+      });
+      expect(rebind(discard(second.id), twice)).toMatchObject({
+        cardId: 'second-in-hand',
+      });
+      expect(rebind(discard(first.id), twice)).toMatchObject({
+        cardId: 'first-in-hand',
+      });
+    }
+  );
+
+  it('retires a completed deck-edge arrival at a newer frontier without guessing its replacement', () => {
+    const rebind = createProvisionalRebinder();
+    const view = createRendererSpikeView();
+    const playerId = view.playerOrder[0]!;
+    const hand = view.zones[`zone:${playerId}:hand`]!;
+    const deck = view.zones[`zone:${playerId}:deck`]!;
+    const first = hand.cards[0]!;
+    const move: WireGameCommand = {
+      type: 'MoveCardToDeckTop',
+      cardId: first.id,
+      expectedSourceId: hand.id,
+    };
+    rebind(move, view);
+    const latest: MatchViewState = {
+      ...view,
+      revision: view.revision + 2,
+      zones: {
+        ...view.zones,
+        [hand.id]: { ...hand, cards: hand.cards.slice(1) },
+        [deck.id]: {
+          ...deck,
+          cards: [
+            { ...first, id: 'different-copy-on-top' as never },
+            ...deck.cards,
+          ],
+        },
+      },
+    };
+    const take: WireGameCommand = {
+      type: 'MoveCard',
+      cardId: first.id,
+      expectedSourceZoneId: deck.id,
+      destinationZoneId: hand.id,
+    };
+    rebind.accepted(move, view.revision + 1, latest);
+    expect(rebind(take, latest)).toBe(take);
   });
 
   it('keeps the stable alias across two indexed hand arrangements and the action queued on them', () => {

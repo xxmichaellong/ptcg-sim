@@ -113,6 +113,246 @@ const flushConsumers = async (): Promise<void> => {
 };
 
 describe('RemoteRoomRuntime', () => {
+  it.each(['none', 'after', 'before', 'idle'] as const)(
+    'settles a missed native draw before its queued action after reconnect (peer arrival: %s)',
+    (timing) => {
+      const interfered = timing !== 'none';
+      const peerBeforeCompletion = timing === 'after' || timing === 'before';
+      const socketFactory = new FakeSocketFactory();
+      const scheduler = new FakeSessionScheduler();
+      let commandId = 0;
+      const runtime = new RemoteRoomRuntime({
+        connection,
+        session: {
+          socketFactory,
+          scheduler,
+          createCommandId: () => `draw-${++commandId}`,
+          policy: { idleHeartbeatMs: 0 },
+        },
+      });
+      try {
+        const playerId = view.playerOrder[0]!;
+        const opponentId = view.playerOrder[1]!;
+        const hand = view.zones[`zone:${playerId}:hand`]!;
+        const deck = view.zones[`zone:${playerId}:deck`]!;
+        const discard = view.zones[`zone:${playerId}:discard`]!;
+        const opponentDeck = view.zones[`zone:${opponentId}:deck`]!;
+        const template = hand.cards[0]!;
+        if (template.kind !== 'known') throw new Error('Known card required');
+        const toDraw = {
+          ...template,
+          id: 'alias-before-draw' as never,
+          publiclyRevealed: false,
+        };
+        const other = {
+          ...template,
+          id: 'different-copy-in-discard' as never,
+          publiclyRevealed: false,
+        };
+        const before: MatchViewState = {
+          ...view,
+          players: {
+            ...view.players,
+            [playerId]: { ...view.players[playerId]!, coachingConsent: true },
+            [opponentId]: {
+              ...view.players[opponentId]!,
+              coachingConsent: true,
+            },
+          },
+          zones: {
+            ...view.zones,
+            [deck.id]: { ...deck, cards: [toDraw, ...deck.cards] },
+            [discard.id]: { ...discard, cards: [...discard.cards, other] },
+          },
+        };
+        const first = socketFactory.sockets[0]!;
+        first.serverOpen();
+        first.serverMessage({
+          ...welcome(),
+          snapshot: serializeMatchViewState(before),
+        });
+        const draw = runtime.session.submit({ type: 'DrawCards', count: 1 });
+        const held = {
+          type: 'MoveCard' as const,
+          cardId: toDraw.id,
+          expectedSourceZoneId: hand.id,
+          destinationZoneId: discard.id,
+        };
+        let queued =
+          timing === 'idle' ? undefined : runtime.session.submit(held);
+        if (!draw.queued || (queued && !queued.queued))
+          throw new Error('Expected queued draw and follow-up');
+        first.serverClose();
+        scheduler.runNext();
+        const resumed = socketFactory.sockets[1]!;
+        resumed.serverOpen();
+        const drawn = { ...toDraw, id: 'drawn-alias-in-hand' as never };
+        const replacement = { ...other, id: 'different-copy-in-hand' as never };
+        // After the missed draw, a mutually consented peer may inspect its
+        // original, hide it in their deck, then return another discard copy.
+        let latest: MatchViewState = {
+          ...before,
+          revision:
+            before.revision +
+            (timing === 'after' ? 4 : timing === 'before' ? 2 : 1),
+          zones: {
+            ...before.zones,
+            [deck.id]: deck,
+            [hand.id]: {
+              ...hand,
+              cards: [
+                ...hand.cards,
+                ...(timing === 'before'
+                  ? [replacement, drawn]
+                  : [timing === 'after' ? replacement : drawn]),
+              ],
+            },
+            [discard.id]: peerBeforeCompletion
+              ? discard
+              : before.zones[discard.id]!,
+            [opponentDeck.id]:
+              timing === 'after'
+                ? {
+                    ...opponentDeck,
+                    cards: [
+                      ...opponentDeck.cards,
+                      {
+                        kind: 'concealed',
+                        id: 'drawn-original-now-hidden' as never,
+                        ownerId: template.ownerId,
+                        cardBackUrl: view.players[playerId]!.cardBackUrl,
+                        publiclyRevealed: false,
+                      },
+                    ],
+                  }
+                : opponentDeck,
+          },
+        };
+        resumed.serverMessage({
+          ...welcome(),
+          nextClientSequence: 2,
+          snapshot: serializeMatchViewState(latest),
+        });
+        expect(JSON.parse(resumed.sent[1]!)).toMatchObject({
+          commandId: draw.commandId,
+          clientSequence: 1,
+        });
+        resumed.serverMessage({
+          type: 'CommandResult',
+          protocolVersion: PROTOCOL_VERSION,
+          commandId: draw.commandId,
+          clientSequence: 1,
+          accepted: true,
+          revision: before.revision + (timing === 'before' ? 2 : 1),
+        });
+        if (timing === 'idle') {
+          expect(runtime.session.getSnapshot()).toMatchObject({
+            pendingCommands: [],
+            nextClientSequence: 2,
+          });
+          // The accepted draw had no queued follow-up. Its exact-frontier
+          // identity must stay learned when a later idle view replaces it.
+          latest = {
+            ...latest,
+            revision: latest.revision + 3,
+            zones: {
+              ...latest.zones,
+              [hand.id]: { ...hand, cards: [...hand.cards, replacement] },
+              [discard.id]: discard,
+              [opponentDeck.id]: {
+                ...opponentDeck,
+                cards: [
+                  ...opponentDeck.cards,
+                  {
+                    kind: 'concealed',
+                    id: 'idle-drawn-original-now-hidden' as never,
+                    ownerId: template.ownerId,
+                    cardBackUrl: view.players[playerId]!.cardBackUrl,
+                    publiclyRevealed: false,
+                  },
+                ],
+              },
+            },
+          };
+          resumed.serverMessage({
+            type: 'StatePublication',
+            protocolVersion: PROTOCOL_VERSION,
+            executedClientSequence: 3,
+            snapshot: serializeMatchViewState(latest),
+          });
+          queued = runtime.session.submit(held);
+        }
+        if (!queued?.queued) throw new Error('Expected queued follow-up');
+        expect(JSON.parse(resumed.sent[2]!)).toMatchObject({
+          commandId: queued.commandId,
+          clientSequence: 2,
+          lastSeenRevision: peerBeforeCompletion
+            ? before.revision
+            : latest.revision,
+          command: {
+            type: 'MoveCard',
+            cardId: peerBeforeCompletion ? toDraw.id : drawn.id,
+            expectedSourceZoneId: hand.id,
+            destinationZoneId: discard.id,
+          },
+        });
+        if (interfered) {
+          resumed.serverMessage({
+            type: 'CommandResult',
+            protocolVersion: PROTOCOL_VERSION,
+            commandId: queued.commandId,
+            clientSequence: 2,
+            accepted: false,
+            revision: latest.revision,
+            code: 'stale_reference',
+          });
+        } else {
+          const completed: MatchViewState = {
+            ...latest,
+            revision: latest.revision + 1,
+            zones: {
+              ...latest.zones,
+              [hand.id]: hand,
+              [discard.id]: {
+                ...latest.zones[discard.id]!,
+                cards: [...latest.zones[discard.id]!.cards, drawn],
+              },
+            },
+          };
+          resumed.serverMessage({
+            type: 'StatePublication',
+            protocolVersion: PROTOCOL_VERSION,
+            coveringCommandId: queued.commandId,
+            executedClientSequence: 2,
+            snapshot: serializeMatchViewState(completed),
+          });
+          resumed.serverMessage({
+            type: 'CommandResult',
+            protocolVersion: PROTOCOL_VERSION,
+            commandId: queued.commandId,
+            clientSequence: 2,
+            accepted: true,
+            revision: completed.revision,
+          });
+        }
+        expect(runtime.session.getSnapshot()).toMatchObject({
+          phase: 'ready',
+          nextClientSequence: 3,
+          pendingCommands: [],
+          completedCommands: [
+            { commandId: draw.commandId, accepted: true },
+            { commandId: queued.commandId, accepted: !interfered },
+          ],
+        });
+        expect(runtime.session.getSnapshot().view!.revision).toBe(
+          latest.revision + (interfered ? 0 : 1)
+        );
+      } finally {
+        runtime.dispose();
+      }
+    }
+  );
+
   it('keeps a queued hand action stale after an accepted arrangement and peer replacement during reconnect', () => {
     const socketFactory = new FakeSocketFactory();
     const scheduler = new FakeSessionScheduler();

@@ -89,6 +89,15 @@ export interface ClientSessionDependencies {
     view: MatchViewState
   ) => WireGameCommand) & {
     /**
+     * Told when an accepted command and its projection are complete, before
+     * the next send. A newer current view may no longer identify its arrivals.
+     */
+    readonly accepted?: (
+      command: WireGameCommand,
+      revision: number,
+      view: MatchViewState
+    ) => void;
+    /**
      * Told of a command the room refused, before the next is sent: what
      * it was predicted to make never was, and nothing queued after it may
      * be bound to something else in its place.
@@ -1132,8 +1141,15 @@ export class RemoteGameSession {
       return;
     }
     this.pending.shift();
-    if (!head.result.accepted)
-      this.rebindCommand?.refused?.(head.envelope.command);
+    if (head.result.accepted) {
+      const view = this.state.view;
+      if (view)
+        this.rebindCommand?.accepted?.(
+          head.envelope.command,
+          head.result.revision,
+          view
+        );
+    } else this.rebindCommand?.refused?.(head.envelope.command);
     const completed: CompletedCommandSummary = {
       commandId: head.result.commandId,
       clientSequence: head.result.clientSequence,

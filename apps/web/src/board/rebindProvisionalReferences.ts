@@ -21,6 +21,12 @@ export type ProvisionalRebinder = ((
   command: WireGameCommand,
   view: MatchViewState
 ) => WireGameCommand) & {
+  /** An accepted command completed against this revision of the room view. */
+  readonly accepted: (
+    command: WireGameCommand,
+    revision: number,
+    view: MatchViewState
+  ) => void;
   /** A command the room refused: the stack its play would have made isn't. */
   readonly refused: (command: WireGameCommand) => void;
 };
@@ -182,8 +188,11 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
       }
     }
   };
-  const settleArrivals = (view: MatchViewState) => {
+  const settleArrivals = (view: MatchViewState, command?: WireGameCommand) => {
+    const settles = (candidate: WireGameCommand) =>
+      command === undefined || candidate === command;
     for (const entry of deckEdges) {
+      if (!settles(entry.command)) continue;
       if (cardInView(entry.alias, view)) continue;
       const deck = view.zones[entry.zoneId]?.cards ?? [];
       const landed = entry.edge === 'top' ? deck[0] : deck.at(-1);
@@ -191,24 +200,35 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
         remember(cards, entry.alias, landed.id);
       }
     }
-    deckEdges = [];
+    deckEdges = deckEdges.filter((entry) => !settles(entry.command));
     for (const arrival of arrivals) {
+      if (!settles(arrival.command)) continue;
       const hand = view.zones[arrival.zoneId]?.cards ?? [];
       const present = new Set<string>(hand.map((card) => card.id));
       const fresh = hand.filter((card) => !arrival.before.has(card.id));
       const faceDown: string[] = [];
+      const unresolved = new Map<string, string[]>();
       for (const { alias, definitionId } of arrival.cards) {
         if (present.has(alias)) continue;
         if (definitionId === undefined) {
           faceDown.push(alias);
           continue;
         }
-        const index = fresh.findIndex(
+        const group = unresolved.get(definitionId) ?? [];
+        group.push(alias);
+        unresolved.set(definitionId, group);
+      }
+      for (const [definitionId, aliases] of unresolved) {
+        const matching = fresh.filter(
           (card) => card.kind === 'known' && card.definitionId === definitionId
         );
-        if (index < 0) continue;
-        remember(cards, alias, fresh[index]!.id);
-        fresh.splice(index, 1);
+        // Even at the accepted revision, an identical copy may have arrived
+        // before this command ran. Match only an exact group, in arrival order.
+        if (matching.length !== aliases.length) continue;
+        matching.forEach((card, index) => {
+          remember(cards, aliases[index]!, card.id);
+          fresh.splice(fresh.indexOf(card), 1);
+        });
       }
       // Face down, a card can only be told by where it came in: taken only
       // when the new cards left are exactly as many, never guessed at.
@@ -218,7 +238,7 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
         });
       }
     }
-    arrivals = [];
+    arrivals = arrivals.filter((arrival) => !settles(arrival.command));
   };
 
   const placedStack = (id: string, view: MatchViewState) => {
@@ -328,6 +348,10 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
 
   /** The placement a sent play recorded, by the command as it was sent. */
   const placementOf = new WeakMap<WireGameCommand, string>();
+  const retireArrivals = (command: WireGameCommand): void => {
+    arrivals = arrivals.filter((arrival) => arrival.command !== command);
+    deckEdges = deckEdges.filter((entry) => entry.command !== command);
+  };
 
   const rebinder = (command: WireGameCommand, view: MatchViewState) => {
     settleArrivals(view);
@@ -374,14 +398,35 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
     return rebound;
   };
   return Object.assign(rebinder, {
+    accepted: (
+      command: WireGameCommand,
+      revision: number,
+      view: MatchViewState
+    ) => {
+      const placed = placementOf.get(command);
+      // At a later revision, a matching new face or stack may be someone
+      // else's. Keep proven mappings, retiring only this command's hints.
+      if (view.revision > revision) {
+        retireArrivals(command);
+        if (placed) placements.delete(placed);
+      }
+      // Learn at the exact frontier now, even with no follow-up queued: a
+      // later idle view must never identify these arrivals by a new copy.
+      else if (view.revision === revision) {
+        settleArrivals(view, command);
+        if (placed) {
+          stackIdFor(placed, view);
+          placements.delete(placed);
+        }
+      }
+    },
     // Refused, the play made no stack: a move queued on its predicted one
     // goes as it is, for the room to refuse as stale, never rebound by
     // position to whatever stands there now.
     refused: (command: WireGameCommand) => {
       // Nor did it bring anything into a hand: a new card there with the
       // same face is someone else's.
-      arrivals = arrivals.filter((arrival) => arrival.command !== command);
-      deckEdges = deckEdges.filter((entry) => entry.command !== command);
+      retireArrivals(command);
       const placed = placementOf.get(command);
       if (placed === undefined) return;
       placements.delete(placed);
