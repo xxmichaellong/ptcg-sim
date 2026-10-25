@@ -2,6 +2,7 @@ import { resolveCardPresentation } from '@ptcgsim/game-core';
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type RefObject,
@@ -22,6 +23,21 @@ export interface ZoomCard {
   readonly imageSmall?: string;
   readonly presentation?: unknown;
 }
+
+/** A rendered card owns its zoom until its artwork changes or it leaves. */
+export const useZoomSource = (
+  card: ZoomCard,
+  invalidate: (element: HTMLElement) => void
+) => {
+  const source = useRef<HTMLButtonElement>(null);
+  useLayoutEffect(() => {
+    const element = source.current;
+    return () => {
+      if (element) invalidate(element);
+    };
+  }, [card.name, card.image, card.imageSmall, card.presentation, invalidate]);
+  return source;
+};
 
 interface ZoomPlacement {
   readonly small: string;
@@ -70,6 +86,7 @@ export const useHoverZoom = (bounds: RefObject<HTMLElement | null>) => {
   const showTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const hideTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const shown = useRef(false);
+  const source = useRef<{ readonly element: HTMLElement }>(undefined);
 
   const clear = (): void => {
     if (showTimer.current !== undefined) clearTimeout(showTimer.current);
@@ -78,13 +95,28 @@ export const useHoverZoom = (bounds: RefObject<HTMLElement | null>) => {
     hideTimer.current = undefined;
   };
 
-  useEffect(() => clear, []);
+  useEffect(
+    () => () => {
+      clear();
+      source.current = undefined;
+    },
+    []
+  );
 
   const hide = useCallback(() => {
     clear();
+    source.current = undefined;
     shown.current = false;
     setZoom(undefined);
   }, []);
+
+  const invalidate = useCallback(
+    (element: HTMLElement) => {
+      // Another card leaving the same result list must not hide this one.
+      if (source.current?.element === element) hide();
+    },
+    [hide]
+  );
 
   const release = useCallback(() => {
     if (showTimer.current !== undefined) clearTimeout(showTimer.current);
@@ -92,6 +124,7 @@ export const useHoverZoom = (bounds: RefObject<HTMLElement | null>) => {
     if (hideTimer.current !== undefined) return;
     hideTimer.current = setTimeout(() => {
       hideTimer.current = undefined;
+      source.current = undefined;
       shown.current = false;
       setZoom(undefined);
     }, ZOOM_DELAY_MS);
@@ -109,8 +142,14 @@ export const useHoverZoom = (bounds: RefObject<HTMLElement | null>) => {
           presentation: card.presentation as never,
         })?.readingQuarterTurns ?? 0;
       const aspect = turns % 2 ? 88 / 63 : 63 / 88;
+      const request = { element };
       const place = (): void => {
+        if (source.current !== request) return;
         showTimer.current = undefined;
+        if (!element.isConnected) {
+          hide();
+          return;
+        }
         const rect = element.getBoundingClientRect();
         const box = bounds.current?.getBoundingClientRect();
         const right = box?.right ?? globalThis.innerWidth;
@@ -135,10 +174,11 @@ export const useHoverZoom = (bounds: RefObject<HTMLElement | null>) => {
         setZoom({ small, large, turns, left, top, width, height });
       };
       clear();
+      source.current = request;
       if (shown.current) place();
       else showTimer.current = setTimeout(place, ZOOM_DELAY_MS);
     },
-    [bounds]
+    [bounds, hide]
   );
 
   const element = zoom ? (
@@ -168,5 +208,5 @@ export const useHoverZoom = (bounds: RefObject<HTMLElement | null>) => {
     </div>
   ) : null;
 
-  return { show, release, hide, element };
+  return { show, release, hide, invalidate, element };
 };

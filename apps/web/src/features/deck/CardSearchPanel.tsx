@@ -51,7 +51,7 @@ import {
 } from './deck-labels.js';
 import { DECK_SCREEN_PREFERENCES } from './deck-screen-preferences.js';
 import { useCardCatalog } from './useCardCatalog.js';
-import type { ZoomCard } from './useHoverZoom.js';
+import { useZoomSource, type ZoomCard } from './useHoverZoom.js';
 import type { WarmCardImage } from './warm-card-images.js';
 import { isInputMethodKey } from '../../ui/input-method.js';
 
@@ -376,6 +376,7 @@ export interface CardSearchPanelProps {
   readonly onCustomCard: () => void;
   readonly onZoom: (card: ZoomCard, element: HTMLElement) => void;
   readonly onZoomEnd: () => void;
+  readonly onZoomSourceGone: (element: HTMLElement) => void;
   readonly onScroll: () => void;
 }
 
@@ -390,6 +391,7 @@ export const CardSearchPanel = ({
   onCustomCard,
   onZoom,
   onZoomEnd,
+  onZoomSourceGone,
   onScroll,
 }: CardSearchPanelProps) => {
   const { t } = useLingui();
@@ -930,6 +932,7 @@ export const CardSearchPanel = ({
                     onInspect={onInspect}
                     onZoom={onZoom}
                     onZoomEnd={onZoomEnd}
+                    onZoomSourceGone={onZoomSourceGone}
                   />
                 ))}
               </ul>
@@ -998,6 +1001,7 @@ const CardResult = ({
   onInspect,
   onZoom,
   onZoomEnd,
+  onZoomSourceGone,
 }: {
   readonly card: CatalogCard;
   readonly inDeck: number;
@@ -1008,8 +1012,10 @@ const CardResult = ({
   readonly onInspect: (card: CatalogCard) => void;
   readonly onZoom: (card: ZoomCard, element: HTMLElement) => void;
   readonly onZoomEnd: () => void;
+  readonly onZoomSourceGone: (element: HTMLElement) => void;
 }) => {
   const { t } = useLingui();
+  const source = useZoomSource(card, onZoomSourceGone);
   const onClick = (event: MouseEvent<HTMLButtonElement>): void => {
     if (event.shiftKey) onRemove(card);
     else onAdd(card);
@@ -1019,6 +1025,7 @@ const CardResult = ({
   return (
     <li className="card-result-cell">
       <button
+        ref={source}
         type="button"
         className="card-result"
         data-in-deck={inDeck > 0 ? 'true' : undefined}

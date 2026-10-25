@@ -667,6 +667,7 @@ export const DeckEditor = ({
             }}
             onZoom={zoom.show}
             onZoomEnd={zoom.release}
+            onZoomSourceGone={zoom.invalidate}
             onScroll={zoom.hide}
           />
         </div>
@@ -683,6 +684,7 @@ export const DeckEditor = ({
             onInspect={(card) => setInspected({ kind: 'deck', card })}
             onZoom={zoom.show}
             onZoomEnd={zoom.release}
+            onZoomSourceGone={zoom.invalidate}
           />
         </div>
       </div>

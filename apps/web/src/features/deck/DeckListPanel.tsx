@@ -38,7 +38,7 @@ import {
   trainerTypePlural,
 } from './deck-labels.js';
 import { DECK_SCREEN_PREFERENCES } from './deck-screen-preferences.js';
-import type { ZoomCard } from './useHoverZoom.js';
+import { useZoomSource, type ZoomCard } from './useHoverZoom.js';
 
 const decorative = { 'aria-hidden': true, focusable: 'false' } as const;
 
@@ -70,6 +70,7 @@ export interface DeckListPanelProps {
   readonly onInspect: (card: DeckCard) => void;
   readonly onZoom: (card: ZoomCard, element: HTMLElement) => void;
   readonly onZoomEnd: () => void;
+  readonly onZoomSourceGone: (element: HTMLElement) => void;
 }
 
 export const DeckListPanel = ({
@@ -84,6 +85,7 @@ export const DeckListPanel = ({
   onInspect,
   onZoom,
   onZoomEnd,
+  onZoomSourceGone,
 }: DeckListPanelProps) => {
   const { t } = useLingui();
   const { deckView } = usePreference(DECK_SCREEN_PREFERENCES);
@@ -129,6 +131,7 @@ export const DeckListPanel = ({
       onInspect={onInspect}
       onZoom={onZoom}
       onZoomEnd={onZoomEnd}
+      onZoomSourceGone={onZoomSourceGone}
     />
   );
 
@@ -510,6 +513,7 @@ const DeckRow = ({
   onInspect,
   onZoom,
   onZoomEnd,
+  onZoomSourceGone,
 }: {
   readonly entry: DeckEntry;
   readonly view: 'list' | 'images';
@@ -521,9 +525,11 @@ const DeckRow = ({
   readonly onInspect: (card: DeckCard) => void;
   readonly onZoom: (card: ZoomCard, element: HTMLElement) => void;
   readonly onZoomEnd: () => void;
+  readonly onZoomSourceGone: (element: HTMLElement) => void;
 }) => {
   const { t } = useLingui();
   const { card, count } = entry;
+  const source = useZoomSource(card, onZoomSourceGone);
   const cardName = card.name;
   const stop = (event: MouseEvent, run: () => void): void => {
     event.stopPropagation();
@@ -568,6 +574,7 @@ const DeckRow = ({
       data-highlighted={highlighted ? 'true' : undefined}
     >
       <button
+        ref={source}
         type="button"
         className="deck-row__card"
         aria-label={t({
