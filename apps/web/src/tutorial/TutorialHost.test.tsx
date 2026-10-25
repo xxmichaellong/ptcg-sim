@@ -710,3 +710,81 @@ describe('coach placement on a short landscape table', () => {
     }
   });
 });
+
+describe('the coach beside a changing palette', () => {
+  it('holds a done step until the palette actually changes size, then clears its filtered rows', async () => {
+    phone(true);
+    const saved = new Map(
+      ['innerWidth', 'innerHeight', 'visualViewport'].map(
+        (key) => [key, Object.getOwnPropertyDescriptor(window, key)] as const
+      )
+    );
+    Object.defineProperties(window, {
+      innerWidth: { configurable: true, value: 320 },
+      innerHeight: { configurable: true, value: 740 },
+      visualViewport: { configurable: true, value: undefined },
+    });
+    let notifyResize: () => void = () => undefined;
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        constructor(callback: ResizeObserverCallback) {
+          notifyResize = () => callback([], this as never);
+        }
+        observe() {}
+        disconnect() {}
+      }
+    );
+    const bar = document.createElement('div');
+    bar.className = 'ptcgsim-app-bar';
+    const palette = document.createElement('div');
+    palette.setAttribute('data-command-palette', '');
+    document.body.append(bar, palette);
+    placed.set(bar, { x: 166, y: 8, width: 146, height: 50 });
+    placed.set(palette, { x: 8, y: 8, width: 304, height: 724 });
+    Object.defineProperties(palette, {
+      clientWidth: { configurable: true, value: 302 },
+      clientHeight: { configurable: true, value: 722 },
+    });
+    try {
+      await render('commands');
+      await wait(1200);
+      await wait(900);
+      expect(stepOf()).toBe('commands:palette-draw');
+      Object.defineProperties(coach()!, {
+        offsetWidth: { configurable: true, value: 296 },
+        offsetHeight: { configurable: true, value: 148 },
+      });
+      await act(async () => {
+        window.dispatchEvent(new Event('resize'));
+      });
+      expect(Number.parseFloat(coach()!.style.top)).toBe(70);
+      await act(async () => {
+        room.session.submit({
+          type: 'DrawCards',
+          targetPlayerId: you,
+          count: 1,
+        } as never);
+      });
+      await wait(50);
+      expect(coach()?.getAttribute('data-done')).toBe('true');
+      // An initial unchanged-size notification must not move a held step.
+      placed.set(bar, { x: 166, y: 8, width: 146, height: 80 });
+      await act(async () => notifyResize());
+      expect(Number.parseFloat(coach()!.style.top)).toBe(70);
+      placed.set(palette, { x: 8, y: 8, width: 304, height: 342 });
+      Object.defineProperty(palette, 'clientHeight', {
+        configurable: true,
+        value: 340,
+      });
+      await act(async () => notifyResize());
+      expect(Number.parseFloat(coach()!.style.top)).toBeGreaterThanOrEqual(350);
+      expect(coach()?.getAttribute('data-done')).toBe('true');
+    } finally {
+      for (const [key, descriptor] of saved) {
+        if (descriptor) Object.defineProperty(window, key, descriptor);
+        else Reflect.deleteProperty(window, key);
+      }
+    }
+  });
+});

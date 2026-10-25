@@ -790,10 +790,27 @@ const Coach = ({
     // The palette lays itself out a frame after it opens.
     const frame = hold ? 0 : requestAnimationFrame(measure);
     if (!hold) measure();
+    // Filtering can resize the open palette without changing the step.
+    // Its first unchanged notification must leave a held done step put.
+    const palette = document.querySelector('[data-command-palette]');
+    let paletteResize: ResizeObserver | undefined;
+    if (palette) {
+      let width = palette.clientWidth;
+      let height = palette.clientHeight;
+      paletteResize = new ResizeObserver(() => {
+        if (width === palette.clientWidth && height === palette.clientHeight)
+          return;
+        width = palette.clientWidth;
+        height = palette.clientHeight;
+        measure();
+      });
+      paletteResize.observe(palette);
+    }
     window.addEventListener('resize', measure);
     window.visualViewport?.addEventListener('resize', measure);
     return () => {
       if (frame !== 0) cancelAnimationFrame(frame);
+      paletteResize?.disconnect();
       window.removeEventListener('resize', measure);
       window.visualViewport?.removeEventListener('resize', measure);
     };
