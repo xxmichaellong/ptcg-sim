@@ -14,6 +14,8 @@ import { useEffect, useState } from 'react';
 export interface UndoFloor {
   /** The table's revision, counted up to. */
   readonly revision: number;
+  /** The latest Undo counted, or the deal's revision before the first. */
+  readonly undoRevision: number;
   /** The player's moves on the floor that an Undo can still take back. */
   readonly standing: number;
 }
@@ -21,6 +23,7 @@ export interface UndoFloor {
 /** A floor under the table as it is: nothing before it is taken back. */
 export const undoFloorAt = (revision: number): UndoFloor => ({
   revision,
+  undoRevision: revision,
   standing: 0,
 });
 
@@ -30,21 +33,26 @@ export const followUndoFloor = (
   state: Pick<ClientSessionState, 'view' | 'presentationEvents'>
 ): UndoFloor => {
   const revision = state.view?.revision;
-  if (revision === undefined || revision <= floor.revision) return floor;
+  if (revision === undefined || revision < floor.revision) return floor;
+  // A resumed Welcome can show an Undo before its retried publication
+  // delivers UndoApplied at that same revision. Count events separately
+  // from the snapshot; the session only accepts them in revision order.
   const undos = new Set(
     state.presentationEvents
       .filter(
         (event) =>
           event.type === 'UndoApplied' &&
-          event.revision > floor.revision &&
+          event.revision > floor.undoRevision &&
           event.revision <= revision
       )
       .map((event) => event.revision)
-  ).size;
-  const moves = revision - floor.revision - undos;
+  );
+  if (revision === floor.revision && undos.size === 0) return floor;
+  const moves = revision - floor.revision - undos.size;
   return {
     revision,
-    standing: Math.max(0, floor.standing + moves - undos),
+    undoRevision: Math.max(floor.undoRevision, ...undos),
+    standing: Math.max(0, floor.standing + moves - undos.size),
   };
 };
 

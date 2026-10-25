@@ -44,14 +44,16 @@ describe('Undo’s floor', () => {
     expect(followUndoFloor(floor, at(26))).toBe(floor);
     // Two moves, then an Undo of the second.
     const moved = followUndoFloor(floor, at(28));
-    expect(moved).toEqual({ revision: 28, standing: 2 });
+    expect(moved).toEqual({ revision: 28, undoRevision: 26, standing: 2 });
     expect(followUndoFloor(moved, at(29, [29]))).toEqual({
       revision: 29,
+      undoRevision: 29,
       standing: 1,
     });
     // Counted at once, an Undo seen twice counts once.
     expect(followUndoFloor(floor, at(31, [29, 30, 30]))).toEqual({
       revision: 31,
+      undoRevision: 30,
       standing: 1,
     });
     // Never below the floor, whatever the room took back.
@@ -103,5 +105,17 @@ describe('Undo’s floor', () => {
     } finally {
       room.dispose();
     }
+  });
+
+  it('counts an Undo delivered after its resumed snapshot, once even when it is seen again', () => {
+    const moved = followUndoFloor(undoFloorAt(26), at(27));
+    const resumed = followUndoFloor(moved, at(28));
+    const undone = followUndoFloor(resumed, at(28, [28]));
+    expect(undone.standing).toBe(0);
+    expect(followUndoFloor(undone, at(28, [28]))).toBe(undone);
+    // Retained events do not take the next move back a second time.
+    const nextMove = followUndoFloor(undone, at(29, [28]));
+    expect(nextMove.standing).toBe(1);
+    expect(followUndoFloor(nextMove, at(30, [28, 30])).standing).toBe(0);
   });
 });
