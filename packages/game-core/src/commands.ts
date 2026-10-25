@@ -53,6 +53,8 @@ export type GameCommand =
       readonly expectedSourceZoneId: ZoneId;
       readonly destinationZoneId: ZoneId;
       readonly destinationIndex?: number;
+      /** Native public-pile ordering; absent for legacy movement semantics. */
+      readonly publicPileOrderVersion?: 1;
     }
   | {
       readonly type: 'MoveCardToStadium';

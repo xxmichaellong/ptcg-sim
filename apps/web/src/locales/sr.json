@@ -4075,6 +4075,20 @@
     "message": "Put damage and Poisoned on their Pokémon",
     "translation": "Стави штету и тровање на противничког Pokémon-а"
   },
+  "vGO8Cg": {
+    "message": "Put on bottom",
+    "comments": [
+      "Move the selected card to the bottom of this discard or Lost Zone pile."
+    ],
+    "translation": "Стави на дно"
+  },
+  "x2B0K5": {
+    "message": "Put on top",
+    "comments": [
+      "Move the selected card to the top of this discard or Lost Zone pile."
+    ],
+    "translation": "Стави на врх"
+  },
   "rkcP1p": {
     "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
     "translation": "Стави делове Pokémon-а у једну гомилу, а делове стадиона на стадион."

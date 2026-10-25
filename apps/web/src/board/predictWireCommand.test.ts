@@ -33,6 +33,104 @@ const cardIn = (next: MatchViewState, cardId: string): string | undefined => {
 };
 
 describe('predictWireCommand', () => {
+  it('reorders public piles without changing any card identity or visible state', () => {
+    for (const kind of ['discard', 'lostZone']) {
+      const zone = view.zones[`zone:${blue}:${kind}`]!;
+      const original = zone.cards[0]!;
+      if (original.kind !== 'known') throw new Error('Known card required');
+      const changed = {
+        ...original,
+        face: 'down' as const,
+        orientationQuarterTurns: 3 as const,
+        abilityUsed: true,
+        publiclyRevealed: true,
+        category:
+          original.category === 'Trainer'
+            ? ('Energy' as const)
+            : ('Trainer' as const),
+      };
+      const current = {
+        ...view,
+        zones: {
+          ...view.zones,
+          [zone.id]: { ...zone, cards: [changed, ...zone.cards.slice(1)] },
+        },
+      };
+      const command = {
+        type: 'MoveCard' as const,
+        cardId: changed.id,
+        expectedSourceZoneId: zone.id,
+        destinationZoneId: zone.id,
+      };
+      const top = predictWireCommand(current, command)!;
+      expect(top.zones[zone.id]!.cards.at(-1)).toBe(changed);
+      expect(top.definitions).toBe(current.definitions);
+      expect(current.zones[zone.id]!.cards[0]).toBe(changed);
+      expect(predictWireCommand(top, command)).toBeNull();
+      expect(
+        predictWireCommand(
+          { ...current, viewer: { kind: 'spectator' } },
+          command
+        )
+      ).toBeNull();
+      const bottom = predictWireCommand(top, {
+        ...command,
+        destinationIndex: 0,
+      })!;
+      expect(bottom.zones[zone.id]!.cards).toEqual(
+        current.zones[zone.id]!.cards
+      );
+      expect(bottom.zones[zone.id]!.cards[0]).toBe(changed);
+    }
+  });
+
+  it('rebases queued public-pile ordering over appends and departed cards', () => {
+    const [first, second, third] = discard.cards;
+    const top = {
+      type: 'MoveCard' as const,
+      cardId: first!.id,
+      expectedSourceZoneId: discard.id,
+      destinationZoneId: discard.id,
+    };
+    const bottom = { ...top, cardId: third!.id, destinationIndex: 0 };
+    const appended = hand.cards[0]!;
+    const peer = {
+      ...view,
+      revision: view.revision + 1,
+      zones: {
+        ...view.zones,
+        [discard.id]: { ...discard, cards: [...discard.cards, appended] },
+        [hand.id]: { ...hand, cards: hand.cards.slice(1) },
+      },
+    };
+    const queued = predictQueue(peer, [{ command: top }, { command: bottom }]);
+    expect(queued.zones[discard.id]!.cards).toEqual([
+      third,
+      second,
+      appended,
+      first,
+    ]);
+    // The room's publication carries the same aliases, so a published move
+    // is skipped. A card taken out by the peer is never brought back.
+    const departed = {
+      ...peer,
+      zones: {
+        ...peer.zones,
+        [discard.id]: { ...discard, cards: [second!, appended] },
+      },
+    };
+    expect(predictWireCommand(departed, top)).toBeNull();
+    expect(
+      predictQueue(departed, [{ command: top }, { command: bottom }])
+    ).toBe(departed);
+    expect(
+      predictQueue(queued, [
+        { command: top, published: true },
+        { command: bottom, published: true },
+      ])
+    ).toBe(queued);
+  });
+
   it('rearranges a hand and benches a Pokémon at the place asked for, as the room will', () => {
     const [first, second, third] = hand.cards;
     const rearranged = predictWireCommand(view, {

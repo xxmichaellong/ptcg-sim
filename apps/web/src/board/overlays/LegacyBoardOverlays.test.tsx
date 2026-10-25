@@ -1655,6 +1655,174 @@ describe('legacy board overlays', () => {
     ).toHaveLength(0);
   });
 
+  describe('public pile ordering', () => {
+    const renderPile = async (
+      kind: 'discard' | 'lostZone' | 'hand' | 'deck',
+      selectedIndex: number | null,
+      patch: Partial<BoardSessionControllerState> = {}
+    ) => {
+      const zone = scene.zones.find(
+        (candidate) => candidate.id === `zone:${firstPlayer}:${kind}`
+      )!;
+      const cards = scene.cards.filter((card) => card.parentId === zone.id);
+      const callbacks = actions();
+      await act(async () => {
+        root.render(
+          createElement(LegacyBoardOverlays, {
+            state: state({
+              presentation: {
+                selectedCardId:
+                  selectedIndex === null ? null : cards[selectedIndex]!.id,
+                hoveredCardId: null,
+                targetableCardIds: [],
+                drag: null,
+                openedZoneId: zone.id,
+              },
+              ...patch,
+            }),
+            darkMode: false,
+            actions: callbacks,
+          })
+        );
+      });
+      return { zone, cards, callbacks };
+    };
+
+    it.each(['discard', 'lostZone'] as const)(
+      'puts one selected %s card at the live top of the same pile',
+      async (kind) => {
+        const { zone, cards, callbacks } = await renderPile(kind, 0);
+        const top = host.querySelector<HTMLButtonElement>(
+          '[data-card-action="pile-top"]'
+        );
+        const bottom = host.querySelector<HTMLButtonElement>(
+          '[data-card-action="pile-bottom"]'
+        );
+        expect(top?.getAttribute('aria-label')).toBe('Put on top');
+        expect(top?.disabled).toBe(false);
+        expect(bottom?.disabled).toBe(true);
+        await act(async () => top!.click());
+        expect(
+          callbacks.emitOpenedZoneCardIntent
+        ).toHaveBeenCalledExactlyOnceWith({
+          kind: 'CardDropRequested',
+          cardId: cards[0]!.id,
+          targetId: zone.id,
+          pilePosition: 'top',
+          x: zone.bounds.x + zone.bounds.width / 2,
+          y: zone.bounds.y + zone.bounds.height / 2,
+        });
+      }
+    );
+
+    it('uses the canonical endpoints while sorted and returns to pile order on a move', async () => {
+      const { zone, cards, callbacks } = await renderPile('discard', 2);
+      const sort = host.querySelector<HTMLInputElement>(
+        '[data-zone-action="sortZone"]'
+      )!;
+      await act(async () => sort.click());
+      expect(sort.checked).toBe(true);
+      expect(
+        host.querySelector<HTMLButtonElement>('[data-card-action="pile-top"]')
+          ?.disabled
+      ).toBe(true);
+      const bottom = host.querySelector<HTMLButtonElement>(
+        '[data-card-action="pile-bottom"]'
+      );
+      expect(bottom?.getAttribute('aria-label')).toBe('Put on bottom');
+      expect(bottom?.disabled).toBe(false);
+      await act(async () => bottom!.click());
+      expect(sort.checked).toBe(false);
+      expect(
+        callbacks.emitOpenedZoneCardIntent
+      ).toHaveBeenCalledExactlyOnceWith({
+        kind: 'CardDropRequested',
+        cardId: cards[2]!.id,
+        targetId: zone.id,
+        pilePosition: 'bottom',
+        x: zone.bounds.x + zone.bounds.width / 2,
+        y: zone.bounds.y + zone.bounds.height / 2,
+      });
+    });
+
+    it('keeps the controls mounted but disabled without a selection or permission', async () => {
+      for (const [selected, canSubmitCommands] of [
+        [null, true],
+        [0, false],
+      ] as const) {
+        const { callbacks } = await renderPile('discard', selected, {
+          canSubmitCommands,
+        });
+        const buttons = host.querySelectorAll<HTMLButtonElement>(
+          '[data-card-action^="pile-"]'
+        );
+        expect(buttons).toHaveLength(2);
+        for (const button of buttons) {
+          expect(button.disabled).toBe(true);
+          await act(async () => button.click());
+        }
+        expect(callbacks.emitOpenedZoneCardIntent).not.toHaveBeenCalled();
+      }
+    });
+
+    it('moves only the selected representative copy and preserves the stacking preference', async () => {
+      const discard = scene.zones.find(
+        (zone) => zone.id === `zone:${firstPlayer}:discard`
+      )!;
+      const cards = scene.cards.filter((card) => card.parentId === discard.id);
+      const first = cards[0]!;
+      const second = cards[1]!;
+      const previous = preferences().get(ZONE_BROWSER_PREFERENCES);
+      preferences().set(ZONE_BROWSER_PREFERENCES, {
+        ...previous,
+        stackPiles: true,
+      });
+      try {
+        const { callbacks } = await renderPile('discard', 0, {
+          scene: {
+            ...scene,
+            cards: scene.cards.map((card) =>
+              card.id === second.id
+                ? { ...card, label: first.label, imageUrl: first.imageUrl }
+                : card
+            ),
+          },
+        });
+        expect(host.querySelectorAll('[data-overlay-card-id]')).toHaveLength(2);
+        expect(
+          host.querySelector('.ptcgsim-zone-copy-badge')?.textContent
+        ).toBe('×2');
+        await act(async () =>
+          host
+            .querySelector<HTMLButtonElement>('[data-card-action="pile-top"]')!
+            .click()
+        );
+        expect(
+          callbacks.emitOpenedZoneCardIntent
+        ).toHaveBeenCalledExactlyOnceWith(
+          expect.objectContaining({ cardId: first.id, pilePosition: 'top' })
+        );
+        expect(preferences().get(ZONE_BROWSER_PREFERENCES).stackPiles).toBe(
+          true
+        );
+      } finally {
+        await act(async () => {
+          preferences().set(ZONE_BROWSER_PREFERENCES, previous);
+        });
+      }
+    });
+
+    it.each(['hand', 'deck'] as const)(
+      'does not offer public-pile ordering for a %s',
+      async (kind) => {
+        await renderPile(kind, 0);
+        expect(
+          host.querySelectorAll('[data-card-action^="pile-"]')
+        ).toHaveLength(0);
+      }
+    );
+  });
+
   it('routes writable opened-zone drags through the shared scene hit test', async () => {
     const callbacks = actions();
     const discard = scene.zones.find(

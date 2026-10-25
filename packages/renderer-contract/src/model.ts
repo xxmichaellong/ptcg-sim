@@ -336,6 +336,11 @@ export type BoardIntent =
       readonly y: number;
       /** Its place among the target zone's items, where it keeps an order. */
       readonly index?: number;
+      /**
+       * An explicit action within the same discard or Lost Zone pile.
+       * Ordinary drops onto their source pile leave its order alone.
+       */
+      readonly pilePosition?: 'top' | 'bottom';
       /** The grabbed card alone, lifted off its Pokémon by a long press. */
       readonly detached?: boolean;
     }

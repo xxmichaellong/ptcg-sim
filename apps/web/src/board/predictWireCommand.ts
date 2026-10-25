@@ -714,6 +714,33 @@ const predict = (
 ): MatchViewState | null => {
   switch (command.type) {
     case 'MoveCard': {
+      const source = view.zones[command.expectedSourceZoneId];
+      if (
+        source &&
+        source.id === command.destinationZoneId &&
+        (source.kind === 'discard' || source.kind === 'lostZone')
+      ) {
+        const from = source.cards.findIndex(
+          (card) => card.id === command.cardId
+        );
+        if (
+          from < 0 ||
+          (command.destinationIndex !== undefined &&
+            (!Number.isSafeInteger(command.destinationIndex) ||
+              command.destinationIndex < 0))
+        )
+          return null;
+        const cards = source.cards.filter((_, index) => index !== from);
+        const at = Math.min(
+          command.destinationIndex ?? cards.length,
+          cards.length
+        );
+        if (at === from) return null;
+        // Reordering never leaves the pile: its disclosed identity, face,
+        // annotations and category stay exactly as the room showed them.
+        cards.splice(at, 0, source.cards[from]!);
+        return withZone(view, { ...source, cards });
+      }
       const taken = takeFromZone(
         view,
         command.expectedSourceZoneId,

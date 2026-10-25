@@ -4075,6 +4075,20 @@
     "message": "Put damage and Poisoned on their Pokémon",
     "translation": "Schadensmarken auf ein gegnerisches Pokémon legen und es vergiften"
   },
+  "vGO8Cg": {
+    "message": "Put on bottom",
+    "comments": [
+      "Move the selected card to the bottom of this discard or Lost Zone pile."
+    ],
+    "translation": "Nach unten legen"
+  },
+  "x2B0K5": {
+    "message": "Put on top",
+    "comments": [
+      "Move the selected card to the top of this discard or Lost Zone pile."
+    ],
+    "translation": "Nach oben legen"
+  },
   "rkcP1p": {
     "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
     "translation": "Lege Pokémon-Teile auf einen Stapel und Stadion-Teile ins Stadion."

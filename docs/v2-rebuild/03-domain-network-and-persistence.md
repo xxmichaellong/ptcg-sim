@@ -121,6 +121,18 @@ card owned by one player attached or moved to the other player's public board.
 Moving a stack out of play has an explicit atomic policy for evolution layers and
 attachments, including creation of the detached-card work area.
 
+Native reordering within a discard or Lost Zone uses the existing `MoveCard`
+wire command. An omitted destination index means the live top of that pile;
+index zero means its bottom. The authority opts into internal
+`publicPileOrderVersion: 1` semantics only for a same-zone public-pile move.
+The resulting `CardMoved` event carries that literal version and changes only
+the ordered card list, preserving each card's state, identity, reveal and
+inspection grants. Replay rejects other versions, concealment, and a versioned
+move between different zones. Unflagged historical events and commands from the
+legacy converter retain their existing normalization and disclosure behavior.
+No persisted snapshot format changes; a rollback reader must understand the new
+event mode before reading a history that contains it (ADR-016).
+
 Direct single-card stack departures distinguish three cases without changing
 the wire command. An attachment and a lower evolution each leave independently
 through `CardMovedFromStack`, while the top evolution continues to use

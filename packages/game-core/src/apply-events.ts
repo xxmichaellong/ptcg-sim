@@ -970,6 +970,17 @@ const applyEventInternal = (
       }
       const destination = requireZone(state, event.destinationZoneId);
       if (
+        event.publicPileOrderVersion !== undefined &&
+        (event.publicPileOrderVersion !== 1 ||
+          source.id !== destination.id ||
+          (destination.kind !== 'discard' && destination.kind !== 'lostZone') ||
+          event.concealIdentity !== false)
+      ) {
+        throw new Error(
+          'Card move event has invalid public-pile order semantics'
+        );
+      }
+      if (
         !Number.isSafeInteger(event.destinationIndex) ||
         event.destinationIndex < 0 ||
         event.destinationIndex > destination.cardIds.length ||
@@ -1000,12 +1011,15 @@ const applyEventInternal = (
       destinationCards.splice(destinationIndex, 0, event.cardId);
       const card = state.cards[event.cardId];
       if (!card) throw new Error(`Missing moved card ${event.cardId}`);
-      // A Prize reordered within its grid (logs before this concealed it):
-      // the card and who can see it stay as they were.
+      // Native public-pile ordering changes only the order. Older unflagged
+      // public-pile events retain normalization and visibility retirement.
+      // A Prize reordered within its grid also stays as seen (older logs
+      // concealed it).
       if (
-        source.id === destination.id &&
-        destination.kind === 'prizes' &&
-        !event.concealIdentity
+        event.publicPileOrderVersion === 1 ||
+        (source.id === destination.id &&
+          destination.kind === 'prizes' &&
+          !event.concealIdentity)
       ) {
         return {
           ...state,

@@ -2384,7 +2384,16 @@ const ZoneBrowser = ({
           )}
           scene={state.scene!}
           enabled={state.canSubmitCommands && !obscured}
-          emit={actions.emitOpenedZoneCardIntent}
+          pile={{ zone, cards }}
+          emit={(intent) => {
+            if (
+              intent.kind === 'CardDropRequested' &&
+              intent.pilePosition !== undefined
+            ) {
+              setSortEnabled(false);
+            }
+            actions.emitOpenedZoneCardIntent(intent);
+          }}
         />
       </section>
     </>

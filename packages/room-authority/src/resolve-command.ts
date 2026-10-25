@@ -228,6 +228,13 @@ export const resolveWireCommand = (
           ...(wire.destinationIndex === undefined
             ? {}
             : { destinationIndex: wire.destinationIndex }),
+          // Public-pile controls rearrange a card in place. Internal legacy
+          // callers omit this mode and keep their historical move semantics.
+          ...(wire.expectedSourceZoneId === wire.destinationZoneId &&
+          (state.zones[wire.destinationZoneId]?.kind === 'discard' ||
+            state.zones[wire.destinationZoneId]?.kind === 'lostZone')
+            ? { publicPileOrderVersion: 1 as const }
+            : {}),
         },
       };
     }

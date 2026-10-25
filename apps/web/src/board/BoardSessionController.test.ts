@@ -841,6 +841,59 @@ describe('headless board session controller', () => {
     ]);
   });
 
+  it('orders an opened public pile in place, without holding its card on the board', () => {
+    let state = install();
+    const source = state.view!.zones['zone:spike-blue:discard']!;
+    const cardId = source.cards[0]!.id;
+    state = apply(state, {
+      kind: 'RendererIntent',
+      intent: { kind: 'ZoneOpened', zoneId: source.id },
+    }).state;
+    state = apply(state, {
+      kind: 'OpenedZoneCardIntent',
+      intent: { kind: 'CardSelected', cardId },
+    }).state;
+    expect(state.presentation.selectedCardId).toBe(cardId);
+    const intent: BoardIntent = {
+      kind: 'CardDropRequested',
+      cardId,
+      targetId: source.id,
+      pilePosition: 'top',
+      x: 0,
+      y: 0,
+    };
+    const result = apply(state, { kind: 'OpenedZoneCardIntent', intent });
+    expect(result.outcome).toBe('accepted');
+    expect(result.state.presentation).toMatchObject({
+      openedZoneId: source.id,
+      selectedCardId: null,
+      drag: null,
+      settling: [],
+    });
+    expect(result.effects).toContainEqual({
+      kind: 'SubmitCommand',
+      command: {
+        type: 'MoveCard',
+        cardId,
+        expectedSourceZoneId: source.id,
+        destinationZoneId: source.id,
+      },
+    });
+    // No path to a buried card exists without its currently open browser.
+    expect(apply(state, { kind: 'RendererIntent', intent }).effects).toEqual([
+      { kind: 'IntentRejected', intent, reason: 'stale_card' },
+    ]);
+    expect(
+      apply(
+        { ...state, canSubmitCommands: false },
+        {
+          kind: 'OpenedZoneCardIntent',
+          intent,
+        }
+      ).effects
+    ).toEqual([{ kind: 'IntentRejected', intent, reason: 'read_only' }]);
+  });
+
   it('resolves one route-owned overlay action and dismisses its menu atomically', () => {
     let state = install();
     const activeStack = state.view!.stacks['stack:blue:active']!;

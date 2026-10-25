@@ -31,6 +31,113 @@ const localHandCard = (input: ReturnType<typeof fixture>) =>
   )!;
 
 describe('board drop command resolution', () => {
+  it('orders a card within either public pile only when explicitly asked', () => {
+    const input = fixture();
+    for (const owner of input.view.playerOrder) {
+      for (const kind of ['discard', 'lostZone']) {
+        const zone = input.view.zones[`zone:${owner}:${kind}`]!;
+        const cardId = zone.cards[0]!.id;
+        const intent = {
+          kind: 'CardDropRequested' as const,
+          cardId,
+          targetId: zone.id,
+          x: 0,
+          y: 0,
+        };
+        const command = {
+          type: 'MoveCard',
+          cardId,
+          expectedSourceZoneId: zone.id,
+          destinationZoneId: zone.id,
+        };
+        expect(resolveBoardDrop(input.view, input.scene, intent)).toEqual({
+          ok: false,
+          reason: 'no_op',
+        });
+        // A stale numeric place cannot replace the explicit pile action.
+        expect(
+          resolveBoardDrop(input.view, input.scene, { ...intent, index: 1 })
+        ).toEqual({ ok: false, reason: 'no_op' });
+        expect(
+          resolveBoardDrop(input.view, input.scene, {
+            ...intent,
+            pilePosition: 'top',
+            index: 0,
+          })
+        ).toEqual({ ok: true, command });
+        expect(
+          resolveBoardDrop(input.view, input.scene, {
+            ...intent,
+            pilePosition: 'bottom',
+          })
+        ).toEqual({ ok: true, command: { ...command, destinationIndex: 0 } });
+      }
+    }
+  });
+
+  it('rejects pile-position intents outside a visible same public pile', () => {
+    const input = fixture();
+    const discard = input.view.zones['zone:spike-blue:discard']!;
+    const cardId = discard.cards[0]!.id;
+    const intent = {
+      kind: 'CardDropRequested' as const,
+      cardId,
+      targetId: discard.id,
+      x: 0,
+      y: 0,
+      pilePosition: 'top' as const,
+    };
+    for (const targetId of [
+      'zone:spike-blue:hand',
+      'zone:spike-blue:deck',
+      'zone:spike-blue:lostZone',
+      'stack:blue:active',
+    ]) {
+      expect(
+        resolveBoardDrop(input.view, input.scene, { ...intent, targetId }).ok
+      ).toBe(false);
+    }
+    const hand = input.view.zones['zone:spike-blue:hand']!;
+    expect(
+      resolveBoardDrop(input.view, input.scene, {
+        ...intent,
+        cardId: hand.cards[0]!.id,
+      }).ok
+    ).toBe(false);
+    expect(
+      resolveBoardDrop(input.view, input.scene, {
+        ...intent,
+        cardId: hand.cards[0]!.id,
+        targetId: hand.id,
+      }).ok
+    ).toBe(false);
+    expect(
+      resolveBoardDrop(input.view, input.scene, {
+        ...intent,
+        pilePosition: 'sideways' as 'top',
+      }).ok
+    ).toBe(false);
+    expect(
+      resolveBoardDrop(
+        { ...input.view, viewer: { kind: 'spectator' } },
+        input.scene,
+        intent
+      )
+    ).toEqual({ ok: false, reason: 'not_player' });
+    expect(
+      resolveBoardDrop(
+        input.view,
+        {
+          ...input.scene,
+          zones: input.scene.zones.map((zone) =>
+            zone.id === discard.id ? { ...zone, interactive: false } : zone
+          ),
+        },
+        intent
+      ).ok
+    ).toBe(false);
+  });
+
   it('moves a zone card with an explicit source precondition', () => {
     const input = fixture();
     const card = localHandCard(input);

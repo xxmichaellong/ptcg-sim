@@ -1,12 +1,16 @@
 import { CaretUpIcon } from '@phosphor-icons/react/dist/csr/CaretUp';
+import { ArrowLineUpIcon } from '@phosphor-icons/react/dist/csr/ArrowLineUp';
+import { ArrowLineDownIcon } from '@phosphor-icons/react/dist/csr/ArrowLineDown';
 import { Trans, useLingui } from '@lingui/react/macro';
 import type {
   BoardScene,
   BoardZoneKind,
   CardSceneNode,
+  ZoneSceneNode,
 } from '@ptcgsim/renderer-contract';
 import type { OpenedZoneCardIntent } from '../BoardSessionController.js';
 import { ActionMenu } from '../../ui/ActionMenu.js';
+import { Tooltip } from '../../ui/Tooltip.js';
 import { ZONE_NAMES } from './zone-names.js';
 
 /**
@@ -40,11 +44,17 @@ export const OverlayCardActions = ({
   scene,
   enabled,
   emit,
+  pile,
 }: {
   readonly card: CardSceneNode | undefined;
   readonly scene: BoardScene;
   readonly enabled: boolean;
   readonly emit: (intent: OpenedZoneCardIntent) => void;
+  /** Canonical bottom-to-top order, before local sorting or copy grouping. */
+  readonly pile?: {
+    readonly zone: ZoneSceneNode;
+    readonly cards: readonly CardSceneNode[];
+  };
 }) => {
   const { t, i18n } = useLingui();
   const targets = scene.zones
@@ -62,9 +72,70 @@ export const OverlayCardActions = ({
     );
   const movable = Boolean(card) && enabled && targets.length > 0;
   const cardName = card?.label;
+  const orderedPile =
+    pile &&
+    (pile.zone.kind === 'discard' || pile.zone.kind === 'lostZone') &&
+    pile.cards.length > 1
+      ? pile
+      : undefined;
+  const selectedIndex =
+    orderedPile?.cards.findIndex((entry) => entry.id === card?.id) ?? -1;
   return (
     <div className="ptcgsim-card-actions" aria-label={t`Selected card actions`}>
       <span className="ptcgsim-card-actions-label">{card?.label}</span>
+      {orderedPile
+        ? [
+            {
+              position: 'top' as const,
+              label: t({
+                message: 'Put on top',
+                comment:
+                  'Move the selected card to the top of this discard or Lost Zone pile.',
+              }),
+              icon: ArrowLineUpIcon,
+              endpoint: orderedPile.cards.length - 1,
+            },
+            {
+              position: 'bottom' as const,
+              label: t({
+                message: 'Put on bottom',
+                comment:
+                  'Move the selected card to the bottom of this discard or Lost Zone pile.',
+              }),
+              icon: ArrowLineDownIcon,
+              endpoint: 0,
+            },
+          ].map(({ position, label, icon: Icon, endpoint }) => (
+            <Tooltip key={position} content={label}>
+              <button
+                type="button"
+                className="ptcgsim-overlay-button ptcgsim-card-order"
+                data-card-action={`pile-${position}`}
+                aria-label={label}
+                disabled={
+                  !enabled ||
+                  !orderedPile.zone.interactive ||
+                  selectedIndex < 0 ||
+                  selectedIndex === endpoint
+                }
+                onClick={() => {
+                  if (!card) return;
+                  const { zone } = orderedPile;
+                  emit({
+                    kind: 'CardDropRequested',
+                    cardId: card.id,
+                    targetId: zone.id,
+                    pilePosition: position,
+                    x: zone.bounds.x + zone.bounds.width / 2,
+                    y: zone.bounds.y + zone.bounds.height / 2,
+                  });
+                }}
+              >
+                <Icon aria-hidden="true" weight="bold" />
+              </button>
+            </Tooltip>
+          ))
+        : null}
       <button
         type="button"
         className="ptcgsim-overlay-button"

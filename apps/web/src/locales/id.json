@@ -4075,6 +4075,20 @@
     "message": "Put damage and Poisoned on their Pokémon",
     "translation": "Beri kerusakan dan Racun pada Pokémon lawan"
   },
+  "vGO8Cg": {
+    "message": "Put on bottom",
+    "comments": [
+      "Move the selected card to the bottom of this discard or Lost Zone pile."
+    ],
+    "translation": "Letakkan paling bawah"
+  },
+  "x2B0K5": {
+    "message": "Put on top",
+    "comments": [
+      "Move the selected card to the top of this discard or Lost Zone pile."
+    ],
+    "translation": "Letakkan paling atas"
+  },
   "rkcP1p": {
     "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
     "translation": "Taruh bidak Pokémon dalam satu tumpukan, bidak Stadium di Stadium."

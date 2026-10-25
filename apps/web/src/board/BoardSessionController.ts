@@ -1463,11 +1463,15 @@ const handleIntent = (
       // Hold the card where it was dropped until the session resolves the
       // command. One dragged out of an opened zone is painted there too while
       // it settles (the renderer's held cards), so it flies on from the drop.
-      const settledCard = installedScene.cards.find(
-        (card) =>
-          card.id === intent.cardId &&
-          (card.renderKey !== null || allowOpenedZoneCard)
-      );
+      // Top/Bottom changes only the pile's order, without lifting a card
+      // onto the board while the command is pending.
+      const settledCard =
+        intent.pilePosition === undefined &&
+        installedScene.cards.find(
+          (card) =>
+            card.id === intent.cardId &&
+            (card.renderKey !== null || allowOpenedZoneCard)
+        );
       const settling: readonly SettlingEntry[] = settledCard
         ? [
             ...settlingEntries(state.presentation).filter(
@@ -1492,7 +1496,11 @@ const handleIntent = (
                   }),
             },
           ]
-        : settlingEntries(state.presentation);
+        : intent.pilePosition === undefined
+          ? settlingEntries(state.presentation)
+          : settlingEntries(state.presentation).filter(
+              (entry) => entry.cardId !== intent.cardId
+            );
       const presentation = allowOpenedZoneCard
         ? {
             ...state.presentation,

@@ -87,6 +87,8 @@ export type DomainEvent =
       readonly destinationZoneId: ZoneId;
       readonly destinationIndex: number;
       readonly concealIdentity: boolean;
+      /** Public-pile order alone changes; absent retains legacy move semantics. */
+      readonly publicPileOrderVersion?: 1;
     }
   | {
       readonly type: 'CardsDrawn';

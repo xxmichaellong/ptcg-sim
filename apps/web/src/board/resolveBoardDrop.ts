@@ -191,6 +191,35 @@ export const resolveBoardDrop = (
   const sourceZone = Object.values(view.zones).find((zone) =>
     containsCard(zone.cards, intent.cardId)
   );
+  if (intent.pilePosition !== undefined) {
+    if (intent.pilePosition !== 'top' && intent.pilePosition !== 'bottom') {
+      return rejected('unsupported_target');
+    }
+    if (
+      !sourceZone ||
+      (sourceZone.kind !== 'discard' && sourceZone.kind !== 'lostZone')
+    ) {
+      return rejected('unsupported_source');
+    }
+    if (intent.targetId !== sourceZone.id)
+      return rejected('unsupported_target');
+    if (
+      !scene.zones.some((zone) => zone.id === sourceZone.id && zone.interactive)
+    ) {
+      return rejected('stale_target');
+    }
+    return {
+      ok: true,
+      command: {
+        type: 'MoveCard',
+        cardId: intent.cardId,
+        expectedSourceZoneId: sourceZone.id,
+        destinationZoneId: sourceZone.id,
+        // Top follows the pile's live end, including a peer's later discard.
+        ...(intent.pilePosition === 'bottom' ? { destinationIndex: 0 } : {}),
+      },
+    };
+  }
   const sourceStack = Object.values(view.stacks).find(
     (stack) =>
       containsCard(stack.evolutionCards, intent.cardId) ||

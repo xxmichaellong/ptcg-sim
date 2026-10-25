@@ -1237,6 +1237,17 @@ export const decideCommand = (
       if (!source || !destination) {
         return reject('not_found', 'Source or destination zone does not exist');
       }
+      if (
+        command.publicPileOrderVersion !== undefined &&
+        (command.publicPileOrderVersion !== 1 ||
+          source.id !== destination.id ||
+          (destination.kind !== 'discard' && destination.kind !== 'lostZone'))
+      ) {
+        return reject(
+          'invalid_command',
+          'Public-pile ordering mode is invalid'
+        );
+      }
       // A card arriving in an occupied Stadium first sends the old one to
       // the discard, so it lands in an empty zone.
       const displacesStadium =
@@ -1285,6 +1296,9 @@ export const decideCommand = (
         concealIdentity:
           !(source.id === destination.id && destination.kind === 'prizes') &&
           isConcealedZone(destination),
+        ...(command.publicPileOrderVersion === 1
+          ? { publicPileOrderVersion: 1 as const }
+          : {}),
       });
       return { accepted: true, events };
     }
