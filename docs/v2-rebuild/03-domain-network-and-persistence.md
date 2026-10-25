@@ -133,6 +133,16 @@ legacy converter retain their existing normalization and disclosure behavior.
 No persisted snapshot format changes; a rollback reader must understand the new
 event mode before reading a history that contains it (ADR-016).
 
+Native hand and loose-board moves with equal source/destination IDs and an
+explicit nonnegative safe-integer destination index similarly opt into internal
+`arrangementOrderVersion: 1`. The versioned `CardMoved` changes only order,
+preserving faces, categories, annotations, reveal/inspection grants, and recipient
+aliases. Replay rejects unsupported versions, zones, concealment, or simultaneous
+public-pile and arrangement modes. Moves without an index, cross-zone moves,
+unflagged historical events, legacy conversion, and the existing Prize-grid
+semantics retain their prior behavior. Snapshot and wire versions are unchanged;
+the same ADR-016 rollback-reader requirement applies to this event mode.
+
 Direct single-card stack departures distinguish three cases without changing
 the wire command. An attachment and a lower evolution each leave independently
 through `CardMovedFromStack`, while the top evolution continues to use

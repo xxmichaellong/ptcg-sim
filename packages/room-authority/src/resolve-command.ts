@@ -239,6 +239,16 @@ export const resolveWireCommand = (
             ownEntry(state.zones, wire.destinationZoneId)?.kind === 'lostZone')
             ? { publicPileOrderVersion: 1 as const }
             : {}),
+          // A native indexed arrangement stays in its hand or loose board.
+          // Unflagged internal/legacy moves retain their original behavior.
+          ...(wire.expectedSourceZoneId === wire.destinationZoneId &&
+          typeof wire.destinationIndex === 'number' &&
+          Number.isSafeInteger(wire.destinationIndex) &&
+          wire.destinationIndex >= 0 &&
+          (ownEntry(state.zones, wire.destinationZoneId)?.kind === 'hand' ||
+            ownEntry(state.zones, wire.destinationZoneId)?.kind === 'board')
+            ? { arrangementOrderVersion: 1 as const }
+            : {}),
         },
       };
     }

@@ -972,12 +972,25 @@ const applyEventInternal = (
       if (
         event.publicPileOrderVersion !== undefined &&
         (event.publicPileOrderVersion !== 1 ||
+          event.arrangementOrderVersion !== undefined ||
           source.id !== destination.id ||
           (destination.kind !== 'discard' && destination.kind !== 'lostZone') ||
           event.concealIdentity !== false)
       ) {
         throw new Error(
           'Card move event has invalid public-pile order semantics'
+        );
+      }
+      if (
+        event.arrangementOrderVersion !== undefined &&
+        (event.arrangementOrderVersion !== 1 ||
+          event.publicPileOrderVersion !== undefined ||
+          source.id !== destination.id ||
+          (destination.kind !== 'hand' && destination.kind !== 'board') ||
+          event.concealIdentity !== false)
+      ) {
+        throw new Error(
+          'Card move event has invalid arrangement order semantics'
         );
       }
       if (
@@ -991,7 +1004,8 @@ const applyEventInternal = (
         ) &&
           !(
             source.id === destination.id &&
-            destination.kind === 'prizes' &&
+            (destination.kind === 'prizes' ||
+              event.arrangementOrderVersion === 1) &&
             !event.concealIdentity
           )) ||
         (destination.kind === 'stadium' &&
@@ -1013,10 +1027,12 @@ const applyEventInternal = (
       if (!card) throw new Error(`Missing moved card ${event.cardId}`);
       // Native public-pile ordering changes only the order. Older unflagged
       // public-pile events retain normalization and visibility retirement.
+      // Native hand/loose-board arrangement likewise preserves the whole card.
       // A Prize reordered within its grid also stays as seen (older logs
       // concealed it).
       if (
         event.publicPileOrderVersion === 1 ||
+        event.arrangementOrderVersion === 1 ||
         (source.id === destination.id &&
           destination.kind === 'prizes' &&
           !event.concealIdentity)

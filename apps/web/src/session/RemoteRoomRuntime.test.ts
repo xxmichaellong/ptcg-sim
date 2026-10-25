@@ -4,8 +4,10 @@ import {
   type SessionSocketFactory,
   type SessionSocketHandlers,
 } from '@ptcgsim/client-session';
+import type { MatchViewState } from '@ptcgsim/game-core';
 import {
   PROTOCOL_VERSION,
+  serializeMatchViewState,
   type ClientMessage,
   type ServerMessage,
 } from '@ptcgsim/protocol';
@@ -41,6 +43,14 @@ class FakeSocket implements SessionSocket {
   serverMessage(message: ServerMessage): void {
     this.handlers.message(JSON.stringify(message));
   }
+
+  serverClose(): void {
+    this.handlers.close({
+      code: 1006,
+      reason: 'network lost',
+      wasClean: false,
+    });
+  }
 }
 
 class FakeSocketFactory implements SessionSocketFactory {
@@ -56,8 +66,23 @@ class FakeSocketFactory implements SessionSocketFactory {
 }
 
 class FakeSessionScheduler implements ClientSessionScheduler {
-  readonly schedule = vi.fn(() => 1);
-  readonly cancel = vi.fn();
+  private nextId = 1;
+  private readonly tasks = new Map<number, () => void>();
+  readonly schedule = vi.fn((callback: () => void) => {
+    const id = this.nextId++;
+    this.tasks.set(id, callback);
+    return id;
+  });
+  readonly cancel = vi.fn((handle: unknown) =>
+    this.tasks.delete(handle as number)
+  );
+
+  runNext(): void {
+    const next = this.tasks.entries().next().value;
+    if (!next) throw new Error('No scheduled session task');
+    this.tasks.delete(next[0]);
+    next[1]();
+  }
 }
 
 const connection = {
@@ -70,7 +95,7 @@ const connection = {
   resumeToken,
 };
 
-const welcome = (): ServerMessage => ({
+const welcome = (): Extract<ServerMessage, { type: 'Welcome' }> => ({
   type: 'Welcome',
   protocolVersion: PROTOCOL_VERSION,
   buildId: 'route-server-build',
@@ -79,7 +104,7 @@ const welcome = (): ServerMessage => ({
   sessionId: 'route-session-one',
   resumeToken,
   nextClientSequence: 1,
-  snapshot: view,
+  snapshot: serializeMatchViewState(view),
 });
 
 const flushConsumers = async (): Promise<void> => {
@@ -88,6 +113,144 @@ const flushConsumers = async (): Promise<void> => {
 };
 
 describe('RemoteRoomRuntime', () => {
+  it('keeps a queued hand action stale after an accepted arrangement and peer replacement during reconnect', () => {
+    const socketFactory = new FakeSocketFactory();
+    const scheduler = new FakeSessionScheduler();
+    let commandId = 0;
+    const runtime = new RemoteRoomRuntime({
+      connection,
+      session: {
+        socketFactory,
+        scheduler,
+        createCommandId: () => `arrangement-${++commandId}`,
+        policy: { idleHeartbeatMs: 0 },
+      },
+    });
+    try {
+      const playerId = view.playerOrder[0]!;
+      const opponentId = view.playerOrder[1]!;
+      const hand = view.zones[`zone:${playerId}:hand`]!;
+      const discard = view.zones[`zone:${playerId}:discard`]!;
+      const opponentDeck = view.zones[`zone:${opponentId}:deck`]!;
+      const original = hand.cards[0]!;
+      if (original.kind !== 'known')
+        throw new Error('Known hand card required');
+      // Both cards can be moved by the peer under public-interaction policy:
+      // the arranged hand card is revealed, the other copy is in the discard.
+      const selected = { ...original, publiclyRevealed: true };
+      const other = { ...original, id: 'other-copy-in-discard' as never };
+      const before: MatchViewState = {
+        ...view,
+        zones: {
+          ...view.zones,
+          [hand.id]: { ...hand, cards: [selected, ...hand.cards.slice(1)] },
+          [discard.id]: { ...discard, cards: [...discard.cards, other] },
+        },
+      };
+      const firstSocket = socketFactory.sockets[0]!;
+      firstSocket.serverOpen();
+      firstSocket.serverMessage({
+        ...welcome(),
+        snapshot: serializeMatchViewState(before),
+      });
+      const arrange = runtime.session.submit({
+        type: 'MoveCard',
+        cardId: selected.id,
+        expectedSourceZoneId: hand.id,
+        destinationZoneId: hand.id,
+        destinationIndex: hand.cards.length - 1,
+      });
+      const queued = runtime.session.submit({
+        type: 'MoveCard',
+        cardId: selected.id,
+        expectedSourceZoneId: hand.id,
+        destinationZoneId: discard.id,
+      });
+      if (!arrange.queued || !queued.queued)
+        throw new Error('Expected two queued commands');
+      expect(firstSocket.sent).toHaveLength(2);
+      // The arrangement commits, but its response is missed. The peer moves
+      // that card into its own deck and the other copy from discard to hand.
+      firstSocket.serverClose();
+      scheduler.runNext();
+      const resumed = socketFactory.sockets[1]!;
+      resumed.serverOpen();
+      const latest: MatchViewState = {
+        ...before,
+        revision: before.revision + 3,
+        zones: {
+          ...before.zones,
+          [hand.id]: {
+            ...hand,
+            cards: [
+              ...hand.cards.slice(1),
+              {
+                ...other,
+                id: 'different-copy-in-hand' as never,
+                publiclyRevealed: false,
+              },
+            ],
+          },
+          [discard.id]: discard,
+          [opponentDeck.id]: {
+            ...opponentDeck,
+            cards: [
+              ...opponentDeck.cards,
+              {
+                kind: 'concealed' as const,
+                id: 'arranged-card-now-concealed' as never,
+                ownerId: selected.ownerId,
+                cardBackUrl: view.players[playerId]!.cardBackUrl,
+                publiclyRevealed: false,
+              },
+            ],
+          },
+        },
+      };
+      resumed.serverMessage({
+        ...welcome(),
+        nextClientSequence: 2,
+        snapshot: serializeMatchViewState(latest),
+      });
+      expect(JSON.parse(resumed.sent[1]!)).toMatchObject({
+        commandId: arrange.commandId,
+      });
+      resumed.serverMessage({
+        type: 'CommandResult',
+        protocolVersion: PROTOCOL_VERSION,
+        commandId: arrange.commandId,
+        clientSequence: 1,
+        accepted: true,
+        revision: before.revision + 1,
+      });
+      expect(JSON.parse(resumed.sent[2]!)).toMatchObject({
+        commandId: queued.commandId,
+        lastSeenRevision: before.revision,
+        command: {
+          type: 'MoveCard',
+          cardId: selected.id,
+          expectedSourceZoneId: hand.id,
+          destinationZoneId: discard.id,
+        },
+      });
+      // The old alias is left for authority to reject, never redirected to
+      // the identical card the peer just put in the hand.
+      resumed.serverMessage({
+        type: 'CommandResult',
+        protocolVersion: PROTOCOL_VERSION,
+        commandId: queued.commandId,
+        clientSequence: 2,
+        accepted: false,
+        revision: latest.revision,
+        code: 'stale_reference',
+      });
+      expect(runtime.session.getSnapshot().pendingCommands).toHaveLength(0);
+      expect(runtime.session.getSnapshot().phase).toBe('ready');
+    } finally {
+      runtime.dispose();
+    }
+  });
+
   it('connects only after all route controllers exist and disposes outside-in', async () => {
     const socketFactory = new FakeSocketFactory();
     const scheduler = new FakeSessionScheduler();

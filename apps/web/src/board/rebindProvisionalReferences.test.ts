@@ -4,6 +4,7 @@ import { createRendererSpikeView } from '@ptcgsim/renderer-contract';
 import { describe, expect, it } from 'vitest';
 
 import { createProvisionalRebinder } from './rebindProvisionalReferences.js';
+import { predictWireCommand } from './predictWireCommand.js';
 
 describe('rebinding predicted references', () => {
   it('names the stack and window the room made for what was predicted', () => {
@@ -670,20 +671,19 @@ describe('rebinding predicted references', () => {
     ).toMatchObject({ cardId: card.id });
   });
 
-  it('names a card moved within the hand as the hand has it after the move', () => {
+  it('names a card renamed by an unindexed move within the hand', () => {
     const rebind = createProvisionalRebinder();
     const view = createRendererSpikeView();
     const playerId = view.playerOrder[0]!;
     const hand = view.zones[`zone:${playerId}:hand`]!;
     const [first, ...rest] = hand.cards;
-    // Moved to the end of the hand: the room renames it as it goes.
+    // An unindexed hand move keeps its original renaming semantics.
     rebind(
       {
         type: 'MoveCard',
         cardId: first!.id,
         expectedSourceZoneId: hand.id,
         destinationZoneId: hand.id,
-        destinationIndex: hand.cards.length - 1,
       },
       view
     );
@@ -722,7 +722,6 @@ describe('rebinding predicted references', () => {
         cardId: first!.id,
         expectedSourceZoneId: hand.id,
         destinationZoneId: hand.id,
-        destinationIndex: hand.cards.length - 1,
       },
       view
     );
@@ -752,19 +751,18 @@ describe('rebinding predicted references', () => {
     ).toMatchObject({ cardId: first!.id });
   });
 
-  it('follows a card renamed twice by two moves within the hand', () => {
+  it('follows a card renamed twice by unindexed moves within the hand', () => {
     const rebind = createProvisionalRebinder();
     const view = createRendererSpikeView();
     const playerId = view.playerOrder[0]!;
     const hand = view.zones[`zone:${playerId}:hand`]!;
     const [first, ...rest] = hand.cards;
-    const reorder = (cardId: string) =>
+    const move = (cardId: string) =>
       ({
         type: 'MoveCard',
         cardId,
         expectedSourceZoneId: hand.id,
         destinationZoneId: hand.id,
-        destinationIndex: 0,
       }) as const;
     const withHand = (cards: MatchViewState['zones'][string]['cards']) =>
       ({
@@ -772,19 +770,19 @@ describe('rebinding predicted references', () => {
         zones: { ...view.zones, [hand.id]: { ...hand, cards } },
       }) as MatchViewState;
     // Sent at once: the first move.
-    rebind(reorder(first!.id), view);
+    rebind(move(first!.id), view);
     // The second was queued on the old name; sent once the first landed.
     const once = withHand([
       ...rest,
       { ...first!, id: 'renamed-once' as never },
     ]);
-    expect(rebind(reorder(first!.id), once)).toMatchObject({
+    expect(rebind(move(first!.id), once)).toMatchObject({
       cardId: 'renamed-once',
     });
     // The discard was queued on the old name too; sent after both.
     const twice = withHand([
-      { ...first!, id: 'renamed-twice' as never },
       ...rest,
+      { ...first!, id: 'renamed-twice' as never },
     ]);
     expect(
       rebind(
@@ -797,5 +795,74 @@ describe('rebinding predicted references', () => {
         twice
       )
     ).toMatchObject({ cardId: 'renamed-twice' });
+  });
+
+  it('keeps the stable alias across two indexed hand arrangements and the action queued on them', () => {
+    const rebind = createProvisionalRebinder();
+    const view = createRendererSpikeView();
+    const playerId = view.playerOrder[0]!;
+    const hand = view.zones[`zone:${playerId}:hand`]!;
+    const first = hand.cards[0]!;
+    const arrange = (destinationIndex: number) => ({
+      type: 'MoveCard' as const,
+      cardId: first.id,
+      expectedSourceZoneId: hand.id,
+      destinationZoneId: hand.id,
+      destinationIndex,
+    });
+    const end = arrange(hand.cards.length - 1);
+    expect(rebind(end, view)).toBe(end);
+    const once = predictWireCommand(view, end)!;
+    expect(once.zones[hand.id]!.cards.at(-1)).toBe(first);
+    const start = arrange(0);
+    expect(rebind(start, once)).toBe(start);
+    const twice = predictWireCommand(once, start)!;
+    expect(twice.zones[hand.id]!.cards[0]).toBe(first);
+    const discard = {
+      type: 'MoveCard' as const,
+      cardId: first.id,
+      expectedSourceZoneId: hand.id,
+      destinationZoneId: `zone:${playerId}:discard`,
+    };
+    expect(rebind(discard, twice)).toBe(discard);
+  });
+
+  it('never takes a different identical copy for an accepted hand arrangement whose card left before the next send', () => {
+    const rebind = createProvisionalRebinder();
+    const view = createRendererSpikeView();
+    const playerId = view.playerOrder[0]!;
+    const hand = view.zones[`zone:${playerId}:hand`]!;
+    const [first, ...rest] = hand.cards;
+    if (first?.kind !== 'known') throw new Error('Known hand card required');
+    const arrange = {
+      type: 'MoveCard' as const,
+      cardId: first.id,
+      expectedSourceZoneId: hand.id,
+      destinationZoneId: hand.id,
+      destinationIndex: hand.cards.length - 1,
+    };
+    expect(rebind(arrange, view)).toBe(arrange);
+    const arranged = predictWireCommand(view, arrange)!;
+    expect(arranged.zones[hand.id]!.cards.at(-1)).toBe(first);
+    // The arrangement succeeded; while its result was missed, the original
+    // left under another alias and a different copy entered the hand.
+    const latest: MatchViewState = {
+      ...arranged,
+      revision: view.revision + 3,
+      zones: {
+        ...arranged.zones,
+        [hand.id]: {
+          ...hand,
+          cards: [...rest, { ...first, id: 'different-copy' as never }],
+        },
+      },
+    };
+    const discard = {
+      type: 'MoveCard' as const,
+      cardId: first.id,
+      expectedSourceZoneId: hand.id,
+      destinationZoneId: `zone:${playerId}:discard`,
+    };
+    expect(rebind(discard, latest)).toBe(discard);
   });
 });

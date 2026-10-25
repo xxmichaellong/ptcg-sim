@@ -33,6 +33,100 @@ const cardIn = (next: MatchViewState, cardId: string): string | undefined => {
 };
 
 describe('predictWireCommand', () => {
+  it('rearranges hand and loose-board cards without changing their exact visible state or inspection metadata', () => {
+    for (const kind of ['hand', 'board']) {
+      const zone = view.zones[`zone:${blue}:${kind}`]!;
+      const original = hand.cards[0]!;
+      if (original.kind !== 'known') throw new Error('Known card required');
+      const changed = {
+        ...original,
+        face: 'down' as const,
+        publiclyRevealed: true,
+        category: 'Energy' as const,
+      };
+      const current = {
+        ...view,
+        zones: {
+          ...view.zones,
+          [zone.id]: { ...zone, cards: [changed, ...hand.cards.slice(1)] },
+        },
+      };
+      const command = {
+        type: 'MoveCard' as const,
+        cardId: changed.id,
+        expectedSourceZoneId: zone.id,
+        destinationZoneId: zone.id,
+        destinationIndex: 2,
+      };
+      const next = predictWireCommand(current, command)!;
+      expect(next.zones[zone.id]!.cards[2]).toBe(changed);
+      expect(next.definitions).toBe(current.definitions);
+      expect(next.privateInspections).toBe(current.privateInspections);
+      expect(predictWireCommand(next, command)).toBeNull();
+      for (const destinationIndex of [
+        -1,
+        NaN,
+        Infinity,
+        0.5,
+        Number.MAX_SAFE_INTEGER + 1,
+      ])
+        expect(
+          predictWireCommand(current, { ...command, destinationIndex })
+        ).toBeNull();
+      expect(
+        predictWireCommand(current, {
+          ...command,
+          destinationIndex: 999,
+        })!.zones[zone.id]!.cards.at(-1)
+      ).toBe(changed);
+    }
+  });
+
+  it('rebases indexed hand/board arrangement over peer appends without normalizing or resurrecting departed cards', () => {
+    for (const kind of ['hand', 'board']) {
+      const zone = view.zones[`zone:${blue}:${kind}`]!;
+      const original = hand.cards[0]!;
+      if (original.kind !== 'known') throw new Error('Known card required');
+      const selected = {
+        ...original,
+        face: 'down' as const,
+        publiclyRevealed: true,
+      };
+      const peer = {
+        ...view,
+        revision: view.revision + 1,
+        zones: {
+          ...view.zones,
+          [zone.id]: {
+            ...zone,
+            cards: [selected, ...hand.cards.slice(1), discard.cards[0]!],
+          },
+        },
+      };
+      const command = {
+        type: 'MoveCard' as const,
+        cardId: selected.id,
+        expectedSourceZoneId: zone.id,
+        destinationZoneId: zone.id,
+        destinationIndex: 2,
+      };
+      expect(predictQueue(peer, [{ command }]).zones[zone.id]!.cards[2]).toBe(
+        selected
+      );
+      const departed = {
+        ...peer,
+        zones: {
+          ...peer.zones,
+          [zone.id]: {
+            ...peer.zones[zone.id]!,
+            cards: peer.zones[zone.id]!.cards.slice(1),
+          },
+        },
+      };
+      expect(predictQueue(departed, [{ command }])).toBe(departed);
+    }
+  });
+
   it('reorders public piles without changing any card identity or visible state', () => {
     for (const kind of ['discard', 'lostZone']) {
       const zone = view.zones[`zone:${blue}:${kind}`]!;

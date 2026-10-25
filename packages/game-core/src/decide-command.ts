@@ -1240,12 +1240,28 @@ export const decideCommand = (
       if (
         command.publicPileOrderVersion !== undefined &&
         (command.publicPileOrderVersion !== 1 ||
+          command.arrangementOrderVersion !== undefined ||
           source.id !== destination.id ||
           (destination.kind !== 'discard' && destination.kind !== 'lostZone'))
       ) {
         return reject(
           'invalid_command',
           'Public-pile ordering mode is invalid'
+        );
+      }
+      if (
+        command.arrangementOrderVersion !== undefined &&
+        (command.arrangementOrderVersion !== 1 ||
+          command.publicPileOrderVersion !== undefined ||
+          source.id !== destination.id ||
+          (destination.kind !== 'hand' && destination.kind !== 'board') ||
+          typeof command.destinationIndex !== 'number' ||
+          !Number.isSafeInteger(command.destinationIndex) ||
+          command.destinationIndex < 0)
+      ) {
+        return reject(
+          'invalid_command',
+          'Arrangement ordering mode is invalid'
         );
       }
       // A card arriving in an occupied Stadium first sends the old one to
@@ -1294,10 +1310,14 @@ export const decideCommand = (
         // A Prize put in another cell of its grid is only reordered: who can
         // see it is unchanged. (Within a deck, the order is the secret.)
         concealIdentity:
+          command.arrangementOrderVersion !== 1 &&
           !(source.id === destination.id && destination.kind === 'prizes') &&
           isConcealedZone(destination),
         ...(command.publicPileOrderVersion === 1
           ? { publicPileOrderVersion: 1 as const }
+          : {}),
+        ...(command.arrangementOrderVersion === 1
+          ? { arrangementOrderVersion: 1 as const }
           : {}),
       });
       return { accepted: true, events };

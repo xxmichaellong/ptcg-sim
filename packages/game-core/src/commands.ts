@@ -55,6 +55,8 @@ export type GameCommand =
       readonly destinationIndex?: number;
       /** Native public-pile ordering; absent for legacy movement semantics. */
       readonly publicPileOrderVersion?: 1;
+      /** Native hand/loose-board arrangement at an explicit index. */
+      readonly arrangementOrderVersion?: 1;
     }
   | {
       readonly type: 'MoveCardToStadium';

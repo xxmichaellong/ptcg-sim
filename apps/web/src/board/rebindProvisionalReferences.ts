@@ -84,8 +84,8 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
 
   /**
    * Cards a sent command brings into a hand (a draw, a card taken back from
-   * the discard, a Pokémon picked up, or one moved within the hand, which
-   * the room renames too so the other player can't follow it): the hand
+   * the discard, a Pokémon picked up, or an unindexed move within the hand,
+   * which the room renames so the other player can't follow it): the hand
    * gets them under new aliases, so a move made on one before then names
    * the old. Each is matched by its definition among the hand's new cards
    * at the next send, once the command has landed; one that came face
@@ -119,6 +119,15 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
   const recordArrivals = (command: WireGameCommand, view: MatchViewState) => {
     const predicted = predictWireCommand(view, command);
     if (!predicted) return;
+    // An indexed hand arrangement preserves its alias. Treating it as an
+    // arrival could later mistake a different copy for a card that left.
+    if (
+      command.type === 'MoveCard' &&
+      command.expectedSourceZoneId === command.destinationZoneId &&
+      command.destinationIndex !== undefined &&
+      view.zones[command.destinationZoneId]?.kind === 'hand'
+    )
+      return;
     // Any command that puts its card on a deck's edge: the shortcuts, or
     // the card dragged onto the pile. Never one the room shuffles in: where
     // it lands is chance, and a card found there by its place would be
@@ -292,7 +301,7 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
       return view.workAreas[ownerId]?.inspection?.id ?? id;
     }
     if (!cards.has(id) || cardInView(id, view)) return id;
-    // Renamed more than once (moved within the hand twice): follow each
+    // Renamed more than once (unindexed hand moves, say): follow each
     // rename to the name the room has it under now.
     let card = cards.get(id)!;
     for (

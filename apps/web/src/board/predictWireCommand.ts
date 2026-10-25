@@ -718,7 +718,10 @@ const predict = (
       if (
         source &&
         source.id === command.destinationZoneId &&
-        (source.kind === 'discard' || source.kind === 'lostZone')
+        (source.kind === 'discard' ||
+          source.kind === 'lostZone' ||
+          ((source.kind === 'hand' || source.kind === 'board') &&
+            command.destinationIndex !== undefined))
       ) {
         const from = source.cards.findIndex(
           (card) => card.id === command.cardId
@@ -736,7 +739,7 @@ const predict = (
           cards.length
         );
         if (at === from) return null;
-        // Reordering never leaves the pile: its disclosed identity, face,
+        // Reordering never leaves its zone: the disclosed identity, face,
         // annotations and category stay exactly as the room showed them.
         cards.splice(at, 0, source.cards[from]!);
         return withZone(view, { ...source, cards });

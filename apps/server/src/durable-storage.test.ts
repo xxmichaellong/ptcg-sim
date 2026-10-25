@@ -12,6 +12,8 @@ import {
   MATCH_STATE_SCHEMA_VERSION,
   playerZoneId,
   stableHash,
+  type CommandContext,
+  type GameCommand,
 } from '@ptcgsim/game-core';
 import {
   AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
@@ -437,6 +439,210 @@ const testFrontier = (
 });
 
 describe('Durable Object authority snapshot store', () => {
+  it.each(['hand', 'board'] as const)(
+    'persists native %s arrangement, retries after reload without a write, and undoes the exact checkpoint',
+    async (kind) => {
+      let next = 0;
+      const context: CommandContext = {
+        nextCardId: () => asCardInstanceId(`arrangement-card-${++next}`),
+        nextStackId: () => asStackId(`arrangement-stack-${++next}`),
+        nextInspectionId: () =>
+          asInspectionId(`arrangement-inspection-${++next}`),
+        nextWorkAreaId: () => asWorkAreaId(`arrangement-work-${++next}`),
+        shuffle: (values) => [...values],
+        randomInt: () => 0,
+      };
+      const initial = initialSnapshot(`durable-arrangement-${kind}`);
+      let state = initial.state;
+      const setup = (command: GameCommand) => {
+        const result = executeCommand(state, command, context);
+        if (!result.accepted) throw new Error(result.message);
+        state = result.state;
+      };
+      setup({
+        type: 'LoadDeck',
+        playerId: p1,
+        entries: [
+          {
+            definition: {
+              id: asCardDefinitionId('arrangement-definition'),
+              name: 'Arrangement card',
+              category: 'Pokémon',
+              imageUrl: '/arrangement.png',
+            },
+            count: 3,
+          },
+        ],
+      });
+      const zone = playerZoneId(p1, kind);
+      const deck = playerZoneId(p1, 'deck');
+      const selected = state.zones[deck]!.cardIds[0]!;
+      for (const cardId of [...state.zones[deck]!.cardIds])
+        setup({
+          type: 'MoveCard',
+          cardId,
+          expectedSourceZoneId: deck,
+          destinationZoneId: zone,
+        });
+      if (kind === 'board')
+        setup({
+          type: 'ChangeCardCategory',
+          playerId: p1,
+          cardId: selected,
+          expectedSourceId: zone,
+          category: 'Energy',
+        });
+      if (kind === 'board')
+        setup({
+          type: 'SetPublicReveal',
+          actorPlayerId: p1,
+          playerId: p1,
+          cardId: selected,
+          expectedSourceId: zone,
+          revealed: false,
+        });
+      for (const playerId of [p1, p2])
+        setup({ type: 'SetCoachingConsent', playerId, consent: true });
+      setup({
+        type: 'BeginCardInspection',
+        playerId: p1,
+        viewerPlayerId: p2,
+        cardId: selected,
+        expectedSourceId: zone,
+      });
+      if (kind === 'hand')
+        setup({
+          type: 'SetPublicReveal',
+          actorPlayerId: p1,
+          playerId: p1,
+          cardId: selected,
+          expectedSourceId: zone,
+          revealed: true,
+        });
+      const before = state;
+      const opaqueIds = {
+        nextOpaqueId: (type: 'card' | 'definition') =>
+          `arrangement-${type}-${String(++next).padStart(12, '0')}`,
+      };
+      let identities = emptyProjectionIdentityState();
+      for (const viewer of [
+        { kind: 'player' as const, playerId: p1 },
+        { kind: 'player' as const, playerId: p2 },
+        { kind: 'spectator' as const },
+      ])
+        identities = projectRecipient(
+          state,
+          viewer,
+          identities,
+          opaqueIds,
+          'multiplayer'
+        ).identities;
+      const alias = identities.cardAliases.find(
+        (entry) =>
+          entry.cardId === selected && entry.viewerKey === `player:${p1}`
+      )!.alias;
+      let current: RoomAuthoritySnapshot = {
+        ...initial,
+        state,
+        identities,
+        replayHistory: createReplayHistory(state),
+      };
+      const storage = new MemoryDurableStorage();
+      let store = new DurableRoomSnapshotStore(storage);
+      await store.initialize(current);
+      const dependencies = () => ({
+        commandContext: context,
+        opaqueIds,
+        policy: DEFAULT_AUTHORITY_POLICY,
+        persistence: store,
+      });
+      const envelope = {
+        type: 'Command' as const,
+        protocolVersion: PROTOCOL_VERSION,
+        sessionId: 'session',
+        clientSequence: 1,
+        commandId: `arrange-${kind}`,
+        lastSeenRevision: before.revision,
+        command: {
+          type: 'MoveCard' as const,
+          cardId: alias,
+          expectedSourceZoneId: zone,
+          destinationZoneId: zone,
+          destinationIndex: kind === 'board' ? 0 : 2,
+        },
+      };
+      const ordered = await processAuthorityCommand(
+        current,
+        envelope,
+        dependencies()
+      );
+      expect(ordered.deliveries).toContainEqual(
+        expect.objectContaining({
+          message: expect.objectContaining({
+            type: 'CommandResult',
+            accepted: true,
+          }),
+        })
+      );
+      current = ordered.snapshot;
+      expect(
+        current.replayHistory.entries.at(-1)!.batch.events[0]
+      ).toMatchObject({
+        type: 'CardMoved',
+        arrangementOrderVersion: 1,
+        concealIdentity: false,
+      });
+      expect(current.state.cards).toEqual(before.cards);
+      expect(current.state.visibility).toEqual(before.visibility);
+      expect(current.identities).toEqual(identities);
+      expect(current.state.zones[zone]!.cardIds).not.toEqual(
+        before.zones[zone]!.cardIds
+      );
+      for (const [key, value] of storage.values)
+        storage.values.set(key, JSON.parse(JSON.stringify(value)) as unknown);
+      store = new DurableRoomSnapshotStore(storage);
+      const restored = await store.load();
+      expect(restored).toEqual(current);
+      if (!restored) throw new Error('Missing restored arrangement');
+      current = restored;
+      const durableBeforeRetry = stableHash([...storage.values]);
+      const retry = await processAuthorityCommand(
+        current,
+        envelope,
+        dependencies()
+      );
+      expect(retry.committed).toBe(false);
+      expect(retry.snapshot).toBe(current);
+      expect(stableHash([...storage.values])).toBe(durableBeforeRetry);
+      const undone = await processAuthorityCommand(
+        current,
+        {
+          ...envelope,
+          clientSequence: 2,
+          commandId: `undo-${kind}`,
+          lastSeenRevision: current.state.revision,
+          command: { type: 'ApplySoloUndo', targetPlayerId: p1 },
+        },
+        dependencies()
+      );
+      expect(undone.deliveries).toContainEqual(
+        expect.objectContaining({
+          message: expect.objectContaining({
+            type: 'CommandResult',
+            accepted: true,
+          }),
+        })
+      );
+      expect(undone.snapshot.state).toEqual({
+        ...before,
+        revision: current.state.revision + 1,
+      });
+      const reloadedUndo = await new DurableRoomSnapshotStore(storage).load();
+      expect(reloadedUndo).toEqual(undone.snapshot);
+      expect(() => validateAuthoritySnapshot(reloadedUndo!)).not.toThrow();
+    }
+  );
+
   it('initializes once and restores a validated snapshot', async () => {
     const storage = new MemoryDurableStorage();
     const store = new DurableRoomSnapshotStore(storage);
