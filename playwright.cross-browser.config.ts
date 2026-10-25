@@ -9,6 +9,7 @@ const sharedSpecs = [
   'optimistic-feedback.spec.ts',
   'depth-recovery.spec.ts',
   'public-pile-ordering.spec.ts',
+  'arrangement-visibility.spec.ts',
   'show-board-keyboard.spec.ts',
   'deck-hover-zoom.spec.ts',
   'deck-dialog-focus.spec.ts',
@@ -76,6 +77,7 @@ export default defineConfig({
         'custom-card-dialog.spec.ts',
         'deck-landscape.spec.ts',
         'tutorial-coach-layout.spec.ts',
+        'tutorial-palette-resize.spec.ts',
       ],
       use: {
         browserName: 'webkit',
