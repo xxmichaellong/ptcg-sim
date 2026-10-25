@@ -99,7 +99,15 @@ export type DeckPatch = Partial<
 export interface DeckLibraryBackend {
   readAll(): Promise<readonly unknown[]>;
   read(id: string): Promise<unknown>;
-  write(decks: readonly SavedDeck[]): Promise<void>;
+  /**
+   * Automatic updates name the records they were made from. Compare those
+   * records and write in one transaction; return the ids skipped because
+   * storage has changed. Ordinary player edits have no such condition.
+   */
+  write(
+    decks: readonly SavedDeck[],
+    originals?: ReadonlyMap<string, SavedDeck>
+  ): Promise<void | ReadonlySet<string>>;
   remove(id: string): Promise<void>;
 }
 
@@ -256,6 +264,45 @@ export const decodeSavedDeck = (value: unknown): SavedDeck | undefined => {
   });
 };
 
+/** Stored objects may return their fields in another order. */
+const sameStoredValue = (
+  left: unknown,
+  right: unknown,
+  seen = new WeakMap<object, WeakSet<object>>()
+): boolean => {
+  if (Object.is(left, right)) return true;
+  if (
+    typeof left !== 'object' ||
+    typeof right !== 'object' ||
+    left === null ||
+    right === null ||
+    Array.isArray(left) !== Array.isArray(right)
+  ) {
+    return false;
+  }
+  if (
+    Array.isArray(left) &&
+    Array.isArray(right) &&
+    left.length !== right.length
+  )
+    return false;
+  if (seen.get(left)?.has(right)) return true;
+  const pairs = seen.get(left) ?? new WeakSet<object>();
+  pairs.add(right);
+  seen.set(left, pairs);
+  const a = left as Record<string, unknown>;
+  const b = right as Record<string, unknown>;
+  const keys = (value: Record<string, unknown>) =>
+    Object.keys(value).filter((key) => value[key] !== undefined);
+  const ours = keys(a);
+  return (
+    ours.length === keys(b).length &&
+    ours.every(
+      (key) => Object.hasOwn(b, key) && sameStoredValue(a[key], b[key], seen)
+    )
+  );
+};
+
 const newestFirst = (decks: Iterable<SavedDeck>): readonly SavedDeck[] =>
   Object.freeze(
     [...decks].sort(
@@ -313,12 +360,16 @@ export class DeckLibrary {
   readonly #listeners = new Set<Listener>();
   readonly #decks = new Map<string, SavedDeck>();
   readonly #pending = new Set<string>();
+  /** Snapshots still waiting for their storage transaction's outcome. */
+  readonly #writing = new Set<readonly SavedDeck[]>();
   /**
    * Pending decks whose only change here is one the player didn't make
    * (`touch: false`, facts brought up to the catalog): another tab's write
-   * is newer, and it gives way.
+   * is newer, and it gives way. Keep the original record until written,
+   * even through several automatic changes or a failed write: a channel
+   * notification may arrive after the write's timer.
    */
-  readonly #automatic = new Set<string>();
+  readonly #automatic = new Map<string, SavedDeck>();
   /** Decks removed here and not yet from storage. */
   readonly #removals = new Set<string>();
   /** Decks whose last write or removal failed. */
@@ -441,8 +492,9 @@ export class DeckLibrary {
       options.touch === false &&
       !this.#held.has(id) &&
       (!this.#pending.has(id) || this.#automatic.has(id));
+    const original = this.#automatic.get(id) ?? current;
     this.#put(next);
-    if (automatic) this.#automatic.add(id);
+    if (automatic) this.#automatic.set(id, original);
     return next;
   }
 
@@ -497,7 +549,7 @@ export class DeckLibrary {
     // A removal stays marked until storage has it, so a read-back meanwhile
     // can't bring the deck back.
     const removals = [...this.#removals];
-    const automatic = new Set(this.#automatic);
+    const automatic = new Map(this.#automatic);
     // How often each was changed here as written: changed since, by this
     // tab or only by another's write read back.
     const editsAt = new Map(
@@ -508,9 +560,39 @@ export class DeckLibrary {
     const backend = this.#backend;
     if (!backend) return;
     if (decks.length > 0) {
+      this.#writing.add(decks);
       try {
-        await backend.write(decks);
+        const skipped =
+          automatic.size > 0
+            ? await backend.write(decks, automatic)
+            : await backend.write(decks);
         for (const deck of decks) {
+          if (skipped?.has(deck.id)) {
+            // Storage changed before this automatic write's transaction,
+            // even if its channel message has not reached this tab. Read
+            // that deck back so its facts can be refreshed from it instead.
+            if (
+              this.#decks.get(deck.id) === deck &&
+              this.#edits.get(deck.id) === editsAt.get(deck.id)
+            ) {
+              if (this.#held.has(deck.id)) {
+                // An earlier player's write failed while this update was
+                // in flight. Its edit still needs an ordinary retry.
+                this.#unsaved.add(deck.id);
+                this.#pending.add(deck.id);
+                this.#edited(deck.id);
+              } else {
+                await this.#reload(deck.id);
+              }
+            }
+            continue;
+          }
+          // A previous write's failure may have queued this same snapshot
+          // again while it was in flight. Its success settles that retry.
+          if (this.#decks.get(deck.id) === deck) {
+            this.#pending.delete(deck.id);
+            this.#automatic.delete(deck.id);
+          }
           this.#unsaved.delete(deck.id);
           this.#held.delete(deck.id);
           this.#announce(deck.id);
@@ -535,17 +617,22 @@ export class DeckLibrary {
             this.#automatic.delete(deck.id);
             this.#held.add(deck.id);
           }
-          // Changed here since: that change is written, or waits to be.
-          if (current !== deck) continue;
+          // An automatic-only failure gives way to a newer local change.
+          // A failed player's edit stays pending even if an automatic
+          // successor replaced its object and a channel read dropped that
+          // successor's pending mark. Invalidate that read before it lands.
+          if (current !== deck && automatic.has(deck.id)) continue;
           this.#unsaved.add(deck.id);
           this.#pending.add(deck.id);
           // Pending again: a read-back begun while it was being written
           // must not replace it.
           this.#edited(deck.id);
           if (automatic.has(deck.id) && !this.#held.has(deck.id)) {
-            this.#automatic.add(deck.id);
+            this.#automatic.set(deck.id, automatic.get(deck.id)!);
           }
         }
+      } finally {
+        this.#writing.delete(decks);
       }
     }
     for (const id of removals) {
@@ -617,7 +704,14 @@ export class DeckLibrary {
     // Another tab wrote it: a change here the player didn't make, made
     // from what this tab had (a hidden tab's write waits a second or more),
     // would undo theirs. It is made again from what they wrote.
-    if (this.#automatic.has(id)) {
+    const original = this.#automatic.get(id);
+    if (original) {
+      // These facts sit on a player's write still awaiting its outcome.
+      // Dropping them and reading now could replace that player's edit
+      // before its failed transaction has reached the failure handler.
+      for (const batch of this.#writing) {
+        if (batch.includes(original)) return;
+      }
       this.#automatic.delete(id);
       this.#pending.delete(id);
       this.#unsaved.delete(id);
@@ -724,10 +818,41 @@ export const openIndexedDbDeckBackend = async (
     async read(id) {
       return await request(store('readonly').objects.get(id));
     },
-    async write(decks) {
+    async write(decks, originals) {
       const { transaction, objects } = store('readwrite');
-      for (const deck of decks) objects.put(deck);
-      await transactionDone(transaction);
+      const done = transactionDone(transaction);
+      const skipped = new Set<string>();
+      try {
+        for (const deck of decks) {
+          const original = originals?.get(deck.id);
+          if (!original) {
+            objects.put(deck);
+            continue;
+          }
+          const reading = objects.get(deck.id);
+          // The compare and put stay in this transaction's request task,
+          // so another tab cannot write between them.
+          reading.addEventListener('success', () => {
+            try {
+              const expected = decodeSavedDeck(original);
+              if (
+                expected &&
+                sameStoredValue(decodeSavedDeck(reading.result), expected)
+              ) {
+                objects.put(deck);
+              } else {
+                skipped.add(deck.id);
+              }
+            } catch {
+              transaction.abort();
+            }
+          });
+        }
+      } catch {
+        transaction.abort();
+      }
+      await done;
+      return skipped;
     },
     async remove(id) {
       const { transaction, objects } = store('readwrite');
@@ -749,7 +874,8 @@ const lazyIndexedDbBackend = (): DeckLibraryBackend => {
   return {
     readAll: async () => await (await backend()).readAll(),
     read: async (id) => await (await backend()).read(id),
-    write: async (decks) => await (await backend()).write(decks),
+    write: async (decks, originals) =>
+      await (await backend()).write(decks, originals),
     remove: async (id) => await (await backend()).remove(id),
   };
 };

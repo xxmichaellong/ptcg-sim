@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 
 import 'fake-indexeddb/auto';
+import { IDBDatabase as FakeIDBDatabase, IDBFactory } from 'fake-indexeddb';
 import {
   checkDeck,
   deckCardFromCatalog,
@@ -17,6 +18,7 @@ import {
   decodeSavedDeck,
   openIndexedDbDeckBackend,
   type DeckLibraryBackend,
+  type DeckPatch,
   type SavedDeck,
 } from './deck-library.js';
 
@@ -58,6 +60,396 @@ afterEach(() => {
 });
 
 describe('the deck library', () => {
+  describe('automatic facts writes with delayed cross-tab messages', () => {
+    const sharedDeck: SavedDeck = {
+      id: 'shared',
+      name: 'Original',
+      format: 'standard',
+      cards,
+      createdAt: 1,
+      updatedAt: 1,
+    };
+    const stamp = '1/2026-10-25T00:00:00Z';
+    const upToDate = (deck: SavedDeck) => ({
+      cards: deckListOf(
+        deck.cards.map((entry) => ({
+          ...entry,
+          card: {
+            ...entry.card,
+            facts: {
+              ...entry.card.facts,
+              legal: { standard: false, expanded: true },
+            },
+          },
+        }))
+      ),
+      factsFrom: stamp,
+    });
+    const tabs = async () => {
+      const backend = (await openIndexedDbDeckBackend(new IDBFactory()))!;
+      await backend.write([sharedDeck]);
+      let receive: ((event: Event) => void) | undefined;
+      const messages: unknown[] = [];
+      const channel = {
+        postMessage: vi.fn(),
+        addEventListener: (_type: string, listener: (event: Event) => void) => {
+          receive = listener;
+        },
+        removeEventListener: vi.fn(),
+        close: vi.fn(),
+      };
+      const background = new DeckLibrary({
+        backend,
+        channel,
+        writeDelayMs: 60_000,
+      });
+      const foreground = new DeckLibrary({
+        backend,
+        // Two edits can have the same timestamp. The automatic write must
+        // compare the contents it started from, not just updatedAt.
+        now: () => sharedDeck.updatedAt,
+        channel: {
+          ...channel,
+          postMessage: (message: unknown) => messages.push(message),
+          addEventListener: vi.fn(),
+        },
+        writeDelayMs: 60_000,
+      });
+      await vi.waitFor(() => {
+        expect(background.getSnapshot().status).toBe('ready');
+        expect(foreground.getSnapshot().status).toBe('ready');
+      });
+      return {
+        backend,
+        background,
+        foreground,
+        deliver: () => {
+          for (const data of messages.splice(0)) {
+            receive?.(new MessageEvent('message', { data }));
+          }
+        },
+      };
+    };
+
+    const changes: readonly { field: string; patch: DeckPatch }[] = [
+      { field: 'name', patch: { name: 'Newer name' } },
+      { field: 'cards', patch: { cards: deckListOf([{ card, count: 2 }]) } },
+      { field: 'format', patch: { format: 'expanded' } },
+    ];
+    it.each(changes)(
+      'keeps a newer $field before its notification arrives, then refreshes facts from that deck',
+      async ({ patch }) => {
+        const { backend, background, foreground, deliver } = await tabs();
+        try {
+          background.update('shared', upToDate(background.get('shared')!), {
+            touch: false,
+          });
+          const newer = foreground.update('shared', patch)!;
+          await foreground.flush();
+          // The background tab's timer runs before its queued channel event.
+          await background.flush();
+          expect(await backend.read('shared')).toEqual(newer);
+          expect(background.get('shared')).toEqual(newer);
+          deliver();
+          await settle();
+          background.update('shared', upToDate(background.get('shared')!), {
+            touch: false,
+          });
+          await background.flush();
+          expect(await backend.read('shared')).toEqual({
+            ...newer,
+            ...upToDate(newer),
+          });
+          expect(background.getSnapshot().status).toBe('ready');
+        } finally {
+          background.dispose();
+          foreground.dispose();
+        }
+      }
+    );
+
+    it('never brings back a deck deleted before its notification arrives', async () => {
+      const { backend, background, foreground, deliver } = await tabs();
+      try {
+        background.update('shared', upToDate(background.get('shared')!), {
+          touch: false,
+        });
+        foreground.remove('shared');
+        await foreground.flush();
+        expect(await backend.read('shared')).toBeUndefined();
+        await background.flush();
+        expect(await backend.read('shared')).toBeUndefined();
+        expect(background.get('shared')).toBeUndefined();
+        deliver();
+        await settle();
+        expect(background.get('shared')).toBeUndefined();
+      } finally {
+        background.dispose();
+        foreground.dispose();
+      }
+    });
+
+    it('writes automatic facts when the stored deck is unchanged', async () => {
+      const { backend, background, foreground } = await tabs();
+      try {
+        background.update('shared', upToDate(background.get('shared')!), {
+          touch: false,
+        });
+        // A second automatic change still comes from the original stored
+        // deck, not the first automatic update that has not been written.
+        background.update('shared', { factsFrom: stamp }, { touch: false });
+        await background.flush();
+        expect(await backend.read('shared')).toMatchObject({
+          name: 'Original',
+          factsFrom: stamp,
+          cards: [
+            { count: 3, card: { facts: { legal: { standard: false } } } },
+          ],
+        });
+      } finally {
+        background.dispose();
+        foreground.dispose();
+      }
+    });
+
+    it('keeps deliberate edits on the ordinary write path', async () => {
+      const { backend, background, foreground } = await tabs();
+      try {
+        foreground.update('shared', { name: 'From the other tab' });
+        await foreground.flush();
+        background.update('shared', { name: 'Chosen here' });
+        await background.flush();
+        expect(await backend.read('shared')).toMatchObject({
+          name: 'Chosen here',
+        });
+      } finally {
+        background.dispose();
+        foreground.dispose();
+      }
+    });
+
+    it('keeps the original condition through a failed automatic write', async () => {
+      const { backend, background, foreground } = await tabs();
+      const write = backend.write;
+      try {
+        background.update('shared', upToDate(background.get('shared')!), {
+          touch: false,
+        });
+        backend.write = async () => {
+          throw new Error('QuotaExceededError');
+        };
+        await background.flush();
+        expect(background.getSnapshot().status).toBe('memory');
+        backend.write = write;
+        const newer = foreground.update('shared', { name: 'Newer name' })!;
+        await foreground.flush();
+        await background.flush();
+        expect(await backend.read('shared')).toEqual(newer);
+        expect(background.get('shared')).toEqual(newer);
+        expect(background.getSnapshot().status).toBe('ready');
+      } finally {
+        backend.write = write;
+        background.dispose();
+        foreground.dispose();
+      }
+    });
+
+    it('retains a player edit whose earlier write fails while an automatic write over it is in flight', async () => {
+      const { backend, background, foreground } = await tabs();
+      const write = backend.write;
+      let release!: () => void;
+      const waiting = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      let writes = 0;
+      backend.write = async (...args) => {
+        writes += 1;
+        if (writes === 1) {
+          await waiting;
+          throw new Error('QuotaExceededError');
+        }
+        if (writes === 2) await waiting;
+        return await write(...args);
+      };
+      try {
+        background.update('shared', { name: 'Chosen here' });
+        const playerWrite = background.flush();
+        background.update('shared', upToDate(background.get('shared')!), {
+          touch: false,
+        });
+        const automaticWrite = background.flush();
+        release();
+        await Promise.all([playerWrite, automaticWrite]);
+        expect(background.get('shared')?.name).toBe('Chosen here');
+        expect(background.getSnapshot().status).toBe('memory');
+        await background.flush();
+        expect(await backend.read('shared')).toMatchObject({
+          name: 'Chosen here',
+          factsFrom: stamp,
+        });
+        expect(background.getSnapshot().status).toBe('ready');
+      } finally {
+        backend.write = write;
+        background.dispose();
+        foreground.dispose();
+      }
+    });
+
+    it('keeps a failed player write when a foreign notification discarded its pending automatic successor', async () => {
+      const { backend, background, foreground, deliver } = await tabs();
+      foreground.update('shared', { notes: 'From the other tab' });
+      await foreground.flush();
+      const transaction = FakeIDBDatabase.prototype.transaction;
+      let abortNext = true;
+      const abort = vi
+        .spyOn(FakeIDBDatabase.prototype, 'transaction')
+        .mockImplementation(function (this: IDBDatabase, ...args) {
+          const active = transaction.apply(this, args);
+          if (abortNext && args[1] === 'readwrite') {
+            abortNext = false;
+            active
+              .objectStore('decks')
+              .get('shared')
+              .addEventListener('success', () => active.abort());
+          }
+          return active;
+        });
+      const read = backend.read;
+      let readBack: Promise<unknown> | undefined;
+      backend.read = (id) => {
+        readBack = read(id);
+        return readBack;
+      };
+      try {
+        background.update('shared', { name: 'Chosen here' });
+        const playerWrite = background.flush();
+        background.update('shared', upToDate(background.get('shared')!), {
+          touch: false,
+        });
+        // A foreign notification arrives before the player's abort has
+        // settled. A storage read could otherwise replace its automatic
+        // successor before that failure reaches the library.
+        deliver();
+        await playerWrite;
+        await readBack;
+        expect(background.get('shared')?.name).toBe('Chosen here');
+        expect(background.getSnapshot().status).toBe('memory');
+        await background.flush();
+        expect(await backend.read('shared')).toMatchObject({
+          name: 'Chosen here',
+          factsFrom: stamp,
+        });
+        expect(background.getSnapshot().status).toBe('ready');
+      } finally {
+        abort.mockRestore();
+        backend.read = read;
+        background.dispose();
+        foreground.dispose();
+      }
+    });
+
+    it('settles a newer successful player write without retrying it after an earlier one fails', async () => {
+      const { backend, background, foreground } = await tabs();
+      const write = backend.write;
+      let release!: () => void;
+      const waiting = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      let writes = 0;
+      backend.write = async (...args) => {
+        writes += 1;
+        if (writes === 1) {
+          await waiting;
+          throw new Error('QuotaExceededError');
+        }
+        await waiting;
+        return await write(...args);
+      };
+      try {
+        background.update('shared', { name: 'First choice' });
+        const earlier = background.flush();
+        background.update('shared', { name: 'Chosen here' });
+        const newer = background.flush();
+        release();
+        await Promise.all([earlier, newer]);
+        await background.flush();
+        expect(writes).toBe(2);
+        expect(await backend.read('shared')).toMatchObject({
+          name: 'Chosen here',
+        });
+        expect(background.getSnapshot().status).toBe('ready');
+      } finally {
+        backend.write = write;
+        background.dispose();
+        foreground.dispose();
+      }
+    });
+
+    it.each([false, true])(
+      'shows a foreign edit after an earlier write succeeds, with a pending automatic successor: %s',
+      async (automatic) => {
+        const { backend, background, foreground, deliver } = await tabs();
+        const write = backend.write;
+        let release!: () => void;
+        const waiting = new Promise<void>((resolve) => {
+          release = resolve;
+        });
+        let committed!: () => void;
+        const atCommit = new Promise<void>((resolve) => {
+          committed = resolve;
+        });
+        let first = true;
+        backend.write = async (...args) => {
+          const hold = first;
+          first = false;
+          const result = await write(...args);
+          if (hold) {
+            // The transaction has committed, but its caller has not settled
+            // the result yet. Another tab can already commit its own edit.
+            committed();
+            await waiting;
+          }
+          return result;
+        };
+        try {
+          background.update('shared', { name: 'Chosen here' });
+          const earlier = background.flush();
+          await atCommit;
+          if (automatic) {
+            background.update('shared', upToDate(background.get('shared')!), {
+              touch: false,
+            });
+          }
+          const foreign = foreground.update('shared', {
+            name: 'From the other tab',
+          })!;
+          await foreground.flush();
+          deliver();
+          if (!automatic) {
+            // Without queued automatic work the ordinary read-back policy
+            // still shows the other tab's later commit at once.
+            await vi.waitFor(() =>
+              expect(background.get('shared')).toEqual(foreign)
+            );
+          }
+          release();
+          await earlier;
+          // A retained automatic successor still has its original condition;
+          // the earlier success must not make this overwrite the foreign edit.
+          await background.flush();
+          expect(await backend.read('shared')).toEqual(foreign);
+          expect(background.get('shared')).toEqual(foreign);
+          expect(background.getSnapshot().status).toBe('ready');
+        } finally {
+          release();
+          backend.write = write;
+          background.dispose();
+          foreground.dispose();
+        }
+      }
+    );
+  });
+
   it('creates, renames, edits and lists decks newest first', async () => {
     let now = 1_000;
     let ids = 0;
