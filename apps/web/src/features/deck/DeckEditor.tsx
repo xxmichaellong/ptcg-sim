@@ -430,6 +430,7 @@ export const DeckEditor = ({
       aria-label={deck.name}
       tabIndex={-1}
       onKeyDown={onKeyDown}
+      onScroll={zoom.hide}
     >
       <div className="deck-editor__head">
         <Tooltip content={t`Back to your decks`}>

@@ -863,17 +863,16 @@ export const CardSearchPanel = ({
               <Trans>Clear filters</Trans>
             </button>
           ) : null}
-          <Tooltip content={t`Add a card that isn't listed`}>
-            <button
-              id="nativeDeckBuilderAddCustomCard"
-              type="button"
-              className="ds-button ds-button--ghost card-search__clear"
-              onClick={onCustomCard}
-            >
-              <PlusIcon {...decorative} weight="bold" />
-              <Trans>Custom card</Trans>
-            </button>
-          </Tooltip>
+          <button
+            id="nativeDeckBuilderAddCustomCard"
+            type="button"
+            className="ds-button ds-button--ghost card-search__clear"
+            aria-description={t`Add a card that isn't listed`}
+            onClick={onCustomCard}
+          >
+            <PlusIcon {...decorative} weight="bold" />
+            <Trans>Custom card</Trans>
+          </button>
         </div>
       </div>
       <div

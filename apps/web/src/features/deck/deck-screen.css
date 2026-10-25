@@ -2620,6 +2620,7 @@ button.deck-check__issue {
 
 .native-deck-builder-modal-actions {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   gap: var(--space-2);
 }
@@ -2879,7 +2880,39 @@ button.deck-check__issue {
   display: none;
 }
 
+/* Short landscape windows need room to scroll past the editor's header;
+   keeping a useful card pane prevents its contents collapsing behind it. */
+@media (max-height: 499px) {
+  .deck-editor {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scroll-padding-block: var(--space-3);
+  }
+
+  .deck-editor__head,
+  .deck-editor__tabs {
+    flex-shrink: 0;
+  }
+
+  .deck-editor__panes {
+    flex: 1 0 320px;
+    min-height: 320px;
+  }
+
+  .card-search__controls {
+    max-height: 55%;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
+
 @media (max-width: 520px) {
+  .native-deck-builder-modal-actions > .ds-button {
+    min-height: 40px;
+    max-width: 100%;
+    white-space: normal;
+  }
+
   /* Give the name a readable line; translated tools and formats can wrap
      below it instead of taking the field's last few pixels. */
   .deck-editor__head {

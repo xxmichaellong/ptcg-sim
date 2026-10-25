@@ -237,4 +237,60 @@ describe('the deck screen keeps the focus on the screen', () => {
     );
     await escapeLeaves();
   });
+
+  it.each(['Escape', 'submit'] as const)(
+    'returns from the custom-card dialog by %s, then one Esc leaves the screen',
+    async (closeWith) => {
+      const library = libraryOf('Abra');
+      await render(library);
+      await press(button('button[aria-label="Edit Abra"]'));
+      const custom = button('#nativeDeckBuilderAddCustomCard');
+      await press(custom);
+      expect(document.activeElement).toBe(button('#nativeCustomCardName'));
+      closed.mockClear();
+      if (closeWith === 'submit') {
+        const fill = async (selector: string, value: string): Promise<void> => {
+          await act(async () => {
+            const input = host.querySelector<HTMLInputElement>(selector)!;
+            Object.getOwnPropertyDescriptor(
+              HTMLInputElement.prototype,
+              'value'
+            )!.set!.call(input, value);
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+          });
+        };
+        await fill('#nativeCustomCardName', 'Proxy');
+        await fill(
+          '#nativeCustomCardImageUrl',
+          'https://example.test/proxy.png'
+        );
+        await act(async () => {
+          host
+            .querySelector('#nativeCustomCardPreviewImage')!
+            .dispatchEvent(new Event('load'));
+        });
+        await press(button('#nativeCustomCardSubmit'));
+        expect(library.getSnapshot().decks[0]!.cards[0]!.card.name).toBe(
+          'Proxy'
+        );
+      } else {
+        await act(async () => {
+          document.activeElement!.dispatchEvent(
+            new KeyboardEvent('keydown', {
+              key: 'Escape',
+              bubbles: true,
+              cancelable: true,
+            })
+          );
+        });
+      }
+      expect(
+        host.querySelector<HTMLElement>('#nativeDeckBuilderCustomCardModal')!
+          .hidden
+      ).toBe(true);
+      expect(document.activeElement).toBe(custom);
+      expect(closed).not.toHaveBeenCalled();
+      await escapeLeaves();
+    }
+  );
 });
