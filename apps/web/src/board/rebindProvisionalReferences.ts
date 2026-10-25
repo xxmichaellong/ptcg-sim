@@ -156,6 +156,76 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
       readonly attachmentCards: readonly ViewCard[];
     }
   >();
+  const publicArrivals = new WeakMap<
+    WireGameCommand,
+    {
+      readonly aliases: readonly string[];
+      readonly sentAlias: string;
+      readonly zoneId: string;
+      readonly ownerId: string;
+      readonly definitionId: string;
+      readonly before: ReadonlySet<string>;
+    }
+  >();
+  const recordPublicArrival = (
+    original: WireGameCommand,
+    command: WireGameCommand,
+    view: MatchViewState,
+    predicted: MatchViewState | null
+  ): void => {
+    if (
+      original.type !== 'MoveCard' ||
+      command.type !== 'MoveCard' ||
+      command.expectedSourceZoneId === command.destinationZoneId
+    )
+      return;
+    const zone = predicted?.zones[command.destinationZoneId];
+    if (
+      !zone ||
+      (zone.kind !== 'board' &&
+        zone.kind !== 'discard' &&
+        zone.kind !== 'lostZone')
+    )
+      return;
+    const card = zone.cards.find(
+      (candidate) => candidate.id === command.cardId
+    );
+    if (card?.kind !== 'known') return;
+    publicArrivals.set(command, {
+      aliases: [...new Set([original.cardId, command.cardId])],
+      sentAlias: command.cardId,
+      zoneId: zone.id,
+      ownerId: card.ownerId,
+      definitionId: card.definitionId,
+      before: new Set(
+        visibilityContainers(view).flatMap((container) =>
+          container.cards.map((candidate) => candidate.id)
+        )
+      ),
+    });
+  };
+  const settlePublicArrival = (
+    command: WireGameCommand,
+    view: MatchViewState
+  ): void => {
+    const hint = publicArrivals.get(command);
+    const zone = hint && view.zones[hint.zoneId];
+    // Own-seat cards usually retain their alias. A different fresh copy in
+    // the destination must never replace an unchanged, still-present target.
+    if (!hint || !zone || zone.cards.some((card) => card.id === hint.sentAlias))
+      return;
+    const candidates = zone.cards.filter(
+      (card) =>
+        card.kind === 'known' &&
+        card.ownerId === hint.ownerId &&
+        card.definitionId === hint.definitionId &&
+        !hint.before.has(card.id)
+    );
+    if (candidates.length !== 1) return;
+    for (const alias of hint.aliases) {
+      if (alias !== candidates[0]!.id) rememberCard(alias, candidates[0]!.id);
+    }
+  };
   // Visibility changes keep the card in its source but may rotate its alias.
   // Never match by an old definition alone or infer a reordered source index.
   const visibility = new WeakMap<
@@ -732,6 +802,7 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
       }
     }
     recordArrivals(rebound, view, predicted);
+    recordPublicArrival(command, rebound, view, predicted);
     recordVisibility(rebound, view);
     if (placedKeys.length > 0) placementOf.set(rebound, placedKeys);
     return rebound;
@@ -744,11 +815,13 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
     ) => {
       const placedKeys = placementOf.get(command) ?? [];
       if (view.revision === revision) {
+        settlePublicArrival(command, view);
         settleVisibility(command, view);
         settleStaging(command, view);
       }
       visibility.delete(command);
       staging.delete(command);
+      publicArrivals.delete(command);
       // At a later revision, a matching new face or stack may be someone
       // else's. Keep proven mappings, retiring only this command's hints.
       if (view.revision > revision) {
@@ -773,6 +846,7 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
     // goes as it is, for the room to refuse as stale, never rebound by
     // position to whatever stands there now.
     refused: (command: WireGameCommand) => {
+      publicArrivals.delete(command);
       visibility.delete(command);
       staging.delete(command);
       // Nor did it bring anything into a hand: a new card there with the
