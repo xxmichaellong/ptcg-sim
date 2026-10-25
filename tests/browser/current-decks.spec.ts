@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 
+import { ownRoomBudget } from './support/room-budget.js';
 import { openDeck } from './support/table-shell.js';
 
 /**
@@ -9,6 +10,10 @@ import { openDeck } from './support/table-shell.js';
  * its finish, a credit to Limitless, and the built-in seasons when the feed
  * is unavailable.
  */
+
+test.beforeEach(async ({ context }) => {
+  await ownRoomBudget(context);
+});
 
 const FEED = {
   source: 'Limitless TCG',

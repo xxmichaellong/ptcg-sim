@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
 import { routeCardCatalog } from './support/card-catalog-fixture.js';
+import { ownRoomBudget } from './support/room-budget.js';
 import { openDeck } from './support/table-shell.js';
 
 /**
@@ -9,6 +10,10 @@ import { openDeck } from './support/table-shell.js';
  * the builder searches, filters, adds, checks the rules, undoes and
  * renames; and the deck goes to the table.
  */
+
+test.beforeEach(async ({ context }) => {
+  await ownRoomBudget(context);
+});
 
 const LIST = `Pokémon: 11
 4 Dreepy TWM 128

@@ -1,5 +1,6 @@
 import { devices, expect, test, type Page } from '@playwright/test';
 
+import { ownRoomBudget } from './support/room-budget.js';
 import {
   appMenu,
   appMenuOpener,
@@ -13,6 +14,10 @@ import {
  * everything else opens from the bottom. A tablet keeps the landscape table
  * and the deck screen's two columns.
  */
+
+test.beforeEach(async ({ context }) => {
+  await ownRoomBudget(context);
+});
 
 const CARD_ASPECT_RATIO = 0.716;
 
