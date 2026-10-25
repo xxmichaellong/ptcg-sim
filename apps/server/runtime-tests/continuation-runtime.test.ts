@@ -14,11 +14,15 @@ import {
   type RoomAuthoritySnapshot,
 } from '@ptcgsim/room-authority';
 import {
+  PROTOCOL_VERSION,
+  parseRoomAdmissionTicketResponse,
+} from '@ptcgsim/protocol';
+import {
   evictDurableObject,
   runDurableObjectAlarm,
   runInDurableObject,
 } from 'cloudflare:test';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { WebCryptoAuthoritySource } from '../src/authority-crypto.js';
 import { readContinuationQuotaConfiguration } from '../src/continuation-quota-configuration.js';
@@ -39,8 +43,16 @@ import { createContinuationCryptographyFromConfiguration } from '../src/continua
 import { ROOM_CONTINUATION_CREATION_RATE_LIMIT_STORAGE_KEY } from '../src/continuation-request-rate.js';
 import { ROOM_CONTINUATION_CREATIONS_STORAGE_KEY } from '../src/continuation-source.js';
 import { DurableRoomSnapshotStore } from '../src/durable-storage.js';
+import { prepareContinuationFork } from '../src/continuation-fork.js';
+import type { ContinuationRestorePlan } from '../src/continuation-restore-format.js';
 import { continuationTestKeyring } from './continuation-test-keyring.js';
 import { continuationTestQuotaConfiguration } from './continuation-test-quota-configuration.js';
+import {
+  RUNTIME_ORIGIN,
+  commandFrame,
+  nextServerMessage,
+  nextServerMessages,
+} from './runtime-harness.js';
 
 const p1 = asPlayerId('continuation-runtime-player-one');
 const p2 = asPlayerId('continuation-runtime-player-two');
@@ -112,7 +124,189 @@ const tombstone = (createdAt: number, expiresAt: number) => ({
   revokedAt: createdAt,
 });
 
+const targetPlan = async (
+  targetRoomCode: string
+): Promise<ContinuationRestorePlan> => {
+  const snapshot = snapshotFixture();
+  const reservedAt = Date.now();
+  const canonicalStateHash = stableHash(snapshot.state);
+  const fork = await prepareContinuationFork(
+    { snapshot, canonicalStateHash, requesterPlayerId: p1 },
+    new WebCryptoAuthoritySource(),
+    reservedAt
+  );
+  return {
+    format: 'ptcgsim-continuation-restore-plan-v1',
+    saveId: 'T'.repeat(22),
+    operationId: 'T'.repeat(43),
+    reservedAt,
+    targetRoomCode,
+    targetUnclaimedExpiresAt: fork.opponentInvitation.expiresAt,
+    requesterPlayerId: p1,
+    canonicalStateHash,
+    ...fork,
+  };
+};
+
+const openTargetSocket = async (targetRoomCode: string): Promise<WebSocket> => {
+  const response = await exports.default.fetch(
+    new Request(`${RUNTIME_ORIGIN}/v2/rooms/${targetRoomCode}/connect`, {
+      headers: { Origin: RUNTIME_ORIGIN, Upgrade: 'websocket' },
+    })
+  );
+  expect(response.status).toBe(101);
+  if (!response.webSocket) throw new Error('Missing target WebSocket');
+  response.webSocket.accept();
+  return response.webSocket;
+};
+
+const closeTargetSocket = async (socket: WebSocket): Promise<void> => {
+  if (socket.readyState === WebSocket.CLOSED) return;
+  const closed = new Promise<void>((resolve) =>
+    socket.addEventListener('close', () => resolve(), { once: true })
+  );
+  socket.close(1000, 'Test complete');
+  await closed;
+};
+
+const admitTarget = async (
+  plan: ContinuationRestorePlan,
+  socket: WebSocket
+) => {
+  const response = await exports.default.fetch(
+    new Request(
+      `${RUNTIME_ORIGIN}/v2/rooms/${plan.targetRoomCode}/admission-tickets`,
+      {
+        method: 'POST',
+        headers: {
+          Origin: RUNTIME_ORIGIN,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          capability: plan.requesterSeatCapability,
+          displayName: 'Restored player',
+          requestedRole: 'player',
+        }),
+      }
+    )
+  );
+  expect(response.status).toBe(201);
+  const ticket = parseRoomAdmissionTicketResponse(await response.json());
+  if (!ticket.ok) throw new Error('Invalid target admission ticket');
+  const received = nextServerMessage(socket);
+  socket.send(
+    JSON.stringify({
+      type: 'Hello',
+      protocolVersion: PROTOCOL_VERSION,
+      buildId: 'local-development',
+      roomCode: plan.targetRoomCode,
+      displayName: 'Restored player',
+      requestedRole: 'player',
+      admissionTicket: ticket.value.admissionTicket,
+      resumeToken: ticket.value.resumeToken,
+    })
+  );
+  const welcome = await received;
+  if (welcome.type !== 'Welcome') throw new Error('Expected target Welcome');
+  return welcome;
+};
+
 describe('continuation Durable Object runtime', () => {
+  beforeEach(() => {
+    vi.spyOn(console, 'info').mockImplementation(() => undefined);
+  });
+
+  it('rejects a delayed target initialization after admission without replacing its live hub, including after eviction', async () => {
+    const plan = await targetPlan('FGHJKMNP3456');
+    const room = env.PTCG_ROOM.getByName(plan.targetRoomCode);
+    await expect(room.initializeContinuation(plan)).resolves.toEqual({
+      created: true,
+      targetRoomCode: plan.targetRoomCode,
+    });
+    const socket = await openTargetSocket(plan.targetRoomCode);
+    try {
+      const welcome = await admitTarget(plan, socket);
+      for (const [index, evict] of [false, true].entries()) {
+        if (evict) await evictDurableObject(room);
+        const rejected = await runInDurableObject(room, async (instance) => {
+          try {
+            await instance.initializeContinuation(plan);
+            return null;
+          } catch (error) {
+            return error instanceof Error ? error.message : 'Unknown failure';
+          }
+        });
+        expect(rejected).toBe('Stored continuation target is incomplete');
+        const ping = nextServerMessage(socket);
+        socket.send(
+          JSON.stringify({
+            type: 'Ping',
+            protocolVersion: PROTOCOL_VERSION,
+            id: index,
+          })
+        );
+        await expect(ping).resolves.toMatchObject({ type: 'Pong', id: index });
+        const messages = nextServerMessages(socket, 2);
+        socket.send(
+          commandFrame(welcome, index + 1, index, `target-move-${index}`, {
+            type: 'FlipCoin',
+          })
+        );
+        const result = await messages;
+        expect(result.map((message) => message.type)).toEqual([
+          'StatePublication',
+          'CommandResult',
+        ]);
+        expect(result[1]).toMatchObject({
+          accepted: true,
+          revision: index + 1,
+        });
+      }
+    } finally {
+      await closeTargetSocket(socket);
+    }
+  });
+
+  it.each([
+    ['GHJKMNPQ4567', false],
+    ['HJKMNPQR5678', true],
+  ] as const)(
+    'admits a pre-Hello socket after a pristine target initialization retry (%s, eviction %s)',
+    async (targetRoomCode, evict) => {
+      const plan = await targetPlan(targetRoomCode);
+      const room = env.PTCG_ROOM.getByName(targetRoomCode);
+      const initialized = await Promise.all([
+        room.initializeContinuation(plan),
+        room.initializeContinuation(plan),
+      ]);
+      expect(initialized.map((result) => result?.created).sort()).toEqual([
+        false,
+        true,
+      ]);
+      const socket = await openTargetSocket(targetRoomCode);
+      try {
+        if (evict) await evictDurableObject(room);
+        await expect(room.initializeContinuation(plan)).resolves.toEqual({
+          created: false,
+          targetRoomCode,
+        });
+        const welcome = await admitTarget(plan, socket);
+        expect(welcome.role).toBe('player');
+        const ping = nextServerMessage(socket);
+        socket.send(
+          JSON.stringify({
+            type: 'Ping',
+            protocolVersion: PROTOCOL_VERSION,
+            id: 9,
+          })
+        );
+        await expect(ping).resolves.toMatchObject({ type: 'Pong', id: 9 });
+      } finally {
+        await closeTargetSocket(socket);
+      }
+    }
+  );
+
   it('is provisioned while exact production-default edge routes remain absent', async () => {
     const creation = await exports.default.fetch(
       new Request('https://play.example/v2/rooms/ABCDEFGH2345/continuations', {
