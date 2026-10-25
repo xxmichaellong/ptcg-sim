@@ -41,7 +41,11 @@ import {
 } from '../src/continuation-custody.js';
 import { createContinuationCryptographyFromConfiguration } from '../src/continuation-configuration.js';
 import { ROOM_CONTINUATION_CREATION_RATE_LIMIT_STORAGE_KEY } from '../src/continuation-request-rate.js';
-import { ROOM_CONTINUATION_CREATIONS_STORAGE_KEY } from '../src/continuation-source.js';
+import {
+  DurableRoomContinuationSource,
+  ROOM_CONTINUATION_CREATIONS_STORAGE_KEY,
+} from '../src/continuation-source.js';
+import { largeContinuationSnapshot } from '../src/testing/large-continuation-snapshot.js';
 import { DurableRoomSnapshotStore } from '../src/durable-storage.js';
 import { prepareContinuationFork } from '../src/continuation-fork.js';
 import type { ContinuationRestorePlan } from '../src/continuation-restore-format.js';
@@ -214,6 +218,85 @@ const admitTarget = async (
 describe('continuation Durable Object runtime', () => {
   beforeEach(() => {
     vi.spyOn(console, 'info').mockImplementation(() => undefined);
+  });
+
+  it('bounds a shared pending ledger while retaining native retry, completion and expiry', async () => {
+    const room = env.PTCG_ROOM.getByName('HJKMNPQR2345');
+    await runInDurableObject(room, async (_instance, ctx) => {
+      const snapshot = largeContinuationSnapshot(snapshotFixture());
+      await new DurableRoomSnapshotStore(ctx.storage).initialize(snapshot);
+      const crypto = new WebCryptoAuthoritySource();
+      let save = 0;
+      const source = new DurableRoomContinuationSource(
+        ctx.storage,
+        {
+          digestCapability: (value) => crypto.digestCapability(value),
+          nextSaveId: () => String(++save).padStart(22, 'A'),
+        },
+        {
+          maximumPerPlayer: 4,
+          maximumPerRoom: 8,
+          retentionMs: MINIMUM_CONTINUATION_TTL_MS,
+        }
+      );
+      const at = Date.now();
+      const input = {
+        snapshot,
+        requesterSessionId: 'continuation-runtime-session-one',
+        operationId: 'A'.repeat(43),
+        sourceBuild: 'runtime-ledger-capacity',
+        createdAt: at,
+      };
+      const first = await source.reserveCreation(input);
+      expect(first?.state).toBe('pending');
+      if (first?.state !== 'pending') throw new Error('Expected pending plan');
+      const stored = await ctx.storage.get(
+        ROOM_CONTINUATION_CREATIONS_STORAGE_KEY
+      );
+      const second = { ...input, operationId: 'B'.repeat(43) };
+      const refused = await source.reserveCreation(second);
+      expect(refused?.state).toBe('quota_exceeded');
+      if (refused?.state === 'quota_exceeded')
+        expect(refused.scope).toBe('room');
+      expect(
+        await ctx.storage.get(ROOM_CONTINUATION_CREATIONS_STORAGE_KEY)
+      ).toEqual(stored);
+      const retried = await source.reserveCreation(input);
+      expect(retried?.state).toBe('pending');
+      if (retried?.state === 'pending') {
+        expect(retried.created).toBe(false);
+        expect(retried.plan.saveId).toBe(first.plan.saveId);
+      }
+      const reference = {
+        saveId: first.plan.saveId,
+        expiresAt: first.plan.expiresAt,
+      };
+      await expect(
+        source.completeCreation({
+          snapshot,
+          requesterSessionId: input.requesterSessionId,
+          operationId: input.operationId,
+          completedAt: at + 1,
+          reference,
+        })
+      ).resolves.toEqual(reference);
+      await expect(source.reserveCreation(input)).resolves.toEqual({
+        state: 'completed',
+        reference,
+      });
+      expect(
+        (await source.reserveCreation({ ...second, createdAt: at + 2 }))?.state
+      ).toBe('pending');
+      expect(
+        (
+          await source.reserveCreation({
+            ...second,
+            operationId: 'C'.repeat(43),
+            createdAt: at + MINIMUM_CONTINUATION_TTL_MS + 2,
+          })
+        )?.state
+      ).toBe('pending');
+    });
   });
 
   it('rejects a delayed target initialization after admission without replacing its live hub, including after eviction', async () => {

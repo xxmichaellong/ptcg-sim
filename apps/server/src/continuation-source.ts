@@ -30,6 +30,10 @@ const SAVE_ID_PATTERN = /^[A-Za-z0-9_-]{22}$/u;
 const DIGEST_PATTERN = /^[A-Za-z0-9_-]{43}$/u;
 const CREATE_OPERATION_PATTERN = /^[A-Za-z0-9_-]{43}$/u;
 const MAX_STORED_CREATION_ENTRIES = 16;
+// SQLite DO storage permits 2 MB for key+value. Charge conservatively for
+// JSON's UTF-8 or UTF-16 size, leaving native serializer/key overhead room.
+const MAX_CREATION_LEDGER_STORAGE_BYTES = 1_500_000;
+const encoder = new TextEncoder();
 const OPERATION_DIGEST_DOMAIN = 'ptcgsim-continuation-create-operation-v1';
 const AUTHORITY_GENERATION_PATTERN = /^[0-9a-f]{32}$/u;
 
@@ -131,6 +135,15 @@ interface StoredCreationLedger {
   readonly format: typeof LEDGER_FORMAT;
   readonly entries: readonly StoredCreation[];
 }
+
+const fitsCreationLedgerStorage = (ledger: StoredCreationLedger): boolean => {
+  const serialized = JSON.stringify(ledger);
+  return (
+    Math.max(encoder.encode(serialized).byteLength, serialized.length * 2) +
+      encoder.encode(ROOM_CONTINUATION_CREATIONS_STORAGE_KEY).byteLength <=
+    MAX_CREATION_LEDGER_STORAGE_BYTES
+  );
+};
 
 const exactKeys = (value: object, expected: readonly string[]): boolean => {
   const keys = Reflect.ownKeys(value);
@@ -467,11 +480,16 @@ export class DurableRoomContinuationSource {
         await persistPrunedLedger(transaction, ledger, entries);
         return { state: 'quota_exceeded' as const, scope: 'room' as const };
       }
+      const nextLedger: StoredCreationLedger = {
+        format: LEDGER_FORMAT,
+        entries: [...entries, candidate],
+      };
+      if (!fitsCreationLedgerStorage(nextLedger)) {
+        await persistPrunedLedger(transaction, ledger, entries);
+        return { state: 'quota_exceeded' as const, scope: 'room' as const };
+      }
       await transaction.put({
-        [ROOM_CONTINUATION_CREATIONS_STORAGE_KEY]: {
-          format: LEDGER_FORMAT,
-          entries: [...entries, candidate],
-        } satisfies StoredCreationLedger,
+        [ROOM_CONTINUATION_CREATIONS_STORAGE_KEY]: nextLedger,
       });
       return {
         state: 'pending' as const,

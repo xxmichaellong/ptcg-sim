@@ -230,6 +230,15 @@ new operations that reach player/room/global count refusal do charge, preventing
 quota-full request floods. The bounded rate record contains only player IDs,
 window starts, and counts—never operation IDs, capabilities, or request bodies.
 
+New source reservations also have a conservative aggregate ledger budget of
+1,500,000 charged bytes: the larger of UTF-8 JSON bytes and twice its UTF-16
+length, plus the storage key. This leaves room below Cloudflare's documented
+[2 MB combined key/value limit](https://developers.cloudflare.com/durable-objects/platform/limits/).
+Capacity can therefore be exhausted before the player/room count quotas; the
+existing `continuation_capacity` response applies. Exact pending/completed
+operation retries still recover their original result. Completion and expiry
+free snapshot capacity, and valid older ledgers remain readable and settleable.
+
 Wrangler declares distinct anonymous ingress rate-limit bindings for create,
 restore, and revoke, each at the provisional 30 requests per 60 seconds. Keep
 each binding on a unique account `namespace_id`; a shared ID intentionally
@@ -466,11 +475,13 @@ migration, retry reload, external install, and other trust boundaries always
 perform full validation and recursive freezing.
 
 The storage optimization adds a strict v1 `authority:frontier` record while
-keeping the snapshot envelope rollback-compatible at v6 with an optional
-128-bit generation. The record binds that generation to the envelope/domain
+keeping the logical snapshot envelope at v6 with an optional 128-bit
+generation. Larger heads use the bounded physical format documented in
+[Authority snapshot storage](SNAPSHOT_STORAGE.md); rollback binaries must retain
+that chunk reader. The record binds that generation to the envelope/domain
 schemas, match, mode, authority version, and state revision. An exact
-cache/proof/frontier hit lets a multiplayer command read only lifecycle and the
-small frontier, not the snapshot; its rotated snapshot/frontier pair, journal,
+cache/proof/frontier hit lets a multiplayer command read lifecycle, the small
+frontier, and the tiny chunk index, not the complete snapshot; its rotated snapshot/frontier pair, journal,
 retention index, and pruning are one transaction. Missing or malformed frontier
 data and an old writer's generation-free v6 envelope take a full-validation
 repair path. A well-formed divergent pair fails closed. Admissions retain a full

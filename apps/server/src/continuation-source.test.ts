@@ -27,6 +27,7 @@ import {
 } from './durable-storage.js';
 import { MINIMUM_CONTINUATION_TTL_MS } from './continuation-custody.js';
 import { MemoryDurableStorage } from './testing/memory-durable-storage.js';
+import { largeContinuationSnapshot } from './testing/large-continuation-snapshot.js';
 
 const p1 = asPlayerId('continuation-source-player-one');
 const p2 = asPlayerId('continuation-source-player-two');
@@ -149,6 +150,136 @@ const setup = async (
 };
 
 describe('source-room continuation creation reservations', () => {
+  it('refuses aggregate snapshot capacity below count quotas, preserving retry, completion and expiry', async () => {
+    const snapshot = largeContinuationSnapshot(snapshotFixture());
+    expect(
+      new TextEncoder().encode(JSON.stringify(snapshot)).byteLength
+    ).toBeLessThan(1024 * 1024 - 1024);
+    const storage = new MemoryDurableStorage();
+    await new DurableRoomSnapshotStore(storage).initialize(snapshot);
+    const source = new DurableRoomContinuationSource(
+      storage,
+      identityFixture().identity,
+      {
+        ...DEFAULT_CONTINUATION_SOURCE_CREATION_POLICY,
+        retentionMs: MINIMUM_CONTINUATION_TTL_MS,
+      }
+    );
+    const first = await source.reserveCreation(input(snapshot));
+    if (first?.state !== 'pending') throw new Error('Expected pending plan');
+    const before = structuredClone(
+      storage.values.get(ROOM_CONTINUATION_CREATIONS_STORAGE_KEY)
+    );
+    const refused = await source.reserveCreation(input(snapshot, operationTwo));
+    expect(refused?.state).toBe('quota_exceeded');
+    if (refused?.state === 'quota_exceeded') expect(refused.scope).toBe('room');
+    expect(storage.values.get(ROOM_CONTINUATION_CREATIONS_STORAGE_KEY)).toEqual(
+      before
+    );
+    await expect(source.reserveCreation(input(snapshot))).resolves.toEqual({
+      state: 'pending',
+      created: false,
+      plan: first.plan,
+    });
+    const reference = {
+      saveId: first.plan.saveId,
+      expiresAt: first.plan.expiresAt,
+    };
+    await expect(
+      source.completeCreation({
+        snapshot,
+        requesterSessionId: 'source-session-one',
+        operationId: operationOne,
+        completedAt: createdAt + 1,
+        reference,
+      })
+    ).resolves.toEqual(reference);
+    await expect(
+      source.reserveCreation(input(snapshot, operationOne))
+    ).resolves.toEqual({ state: 'completed', reference });
+    await expect(
+      source.reserveCreation(
+        input(snapshot, operationTwo, 'source-session-one', createdAt + 2)
+      )
+    ).resolves.toMatchObject({ state: 'pending', created: true });
+    await expect(
+      source.reserveCreation(
+        input(
+          snapshot,
+          operationThree,
+          'source-session-two',
+          createdAt + MINIMUM_CONTINUATION_TTL_MS + 2
+        )
+      )
+    ).resolves.toMatchObject({ state: 'pending', created: true });
+    expect(
+      JSON.stringify(
+        storage.values.get(ROOM_CONTINUATION_CREATIONS_STORAGE_KEY)
+      )
+    ).not.toContain(
+      digest(`ptcgsim-continuation-create-operation-v1\u0000${operationTwo}`)
+    );
+  });
+
+  it('reads and settles a legacy ledger above the new budget without discarding pending retries', async () => {
+    const snapshot = largeContinuationSnapshot(snapshotFixture());
+    const storage = new MemoryDurableStorage();
+    await new DurableRoomSnapshotStore(storage).initialize(snapshot);
+    const source = new DurableRoomContinuationSource(
+      storage,
+      identityFixture().identity
+    );
+    const first = await source.reserveCreation(input(snapshot));
+    if (first?.state !== 'pending') throw new Error('Expected pending plan');
+    const ledger = structuredClone(
+      storage.values.get(ROOM_CONTINUATION_CREATIONS_STORAGE_KEY)
+    ) as { format: string; entries: Record<string, unknown>[] };
+    const second = {
+      ...ledger.entries[0]!,
+      operationDigest: digest(
+        `ptcgsim-continuation-create-operation-v1\u0000${operationTwo}`
+      ),
+      saveId: 'Z'.repeat(22),
+    };
+    const legacy = { ...ledger, entries: [...ledger.entries, second] };
+    storage.values.set(ROOM_CONTINUATION_CREATIONS_STORAGE_KEY, legacy);
+    await expect(
+      source.reserveCreation(input(snapshot, operationOne))
+    ).resolves.toEqual({ state: 'pending', created: false, plan: first.plan });
+    const refused = await source.reserveCreation(
+      input(snapshot, operationThree)
+    );
+    expect(refused?.state).toBe('quota_exceeded');
+    if (refused?.state === 'quota_exceeded') expect(refused.scope).toBe('room');
+    expect(storage.values.get(ROOM_CONTINUATION_CREATIONS_STORAGE_KEY)).toEqual(
+      legacy
+    );
+    await expect(
+      source.completeCreation({
+        snapshot,
+        requesterSessionId: 'source-session-one',
+        operationId: operationOne,
+        completedAt: createdAt + 1,
+        reference: {
+          saveId: first.plan.saveId,
+          expiresAt: first.plan.expiresAt,
+        },
+      })
+    ).resolves.toBeDefined();
+    expect(
+      JSON.stringify(
+        storage.values.get(ROOM_CONTINUATION_CREATIONS_STORAGE_KEY)
+      ).length
+    ).toBeLessThan(JSON.stringify(legacy).length);
+    await expect(
+      source.reserveCreation(input(snapshot, operationTwo))
+    ).resolves.toMatchObject({
+      state: 'pending',
+      created: false,
+      plan: { saveId: second.saveId, snapshot },
+    });
+  });
+
   it('captures one exact source snapshot under a digest-only operation and recovers its retry', async () => {
     const harness = await setup();
     const reserved = await harness.source.reserveCreation(

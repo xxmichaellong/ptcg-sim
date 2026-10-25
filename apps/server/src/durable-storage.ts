@@ -26,9 +26,15 @@ import {
   initialJournalRetentionIndex,
   journalStorageKey,
   prepareJournalRetention,
-  type JournalRetentionTransaction,
 } from './journal-retention.js';
+import type { DurableStorageLike } from './durable-storage-types.js';
+export type {
+  DurableStorageLike,
+  DurableStorageTransactionLike,
+} from './durable-storage-types.js';
+
 import { ROOM_ALREADY_INITIALIZED_MESSAGE } from './room-initialization.js';
+import { chunkedSnapshotStorage } from './snapshot-storage.js';
 
 export const AUTHORITY_SNAPSHOT_STORAGE_KEY = 'authority:snapshot';
 export const AUTHORITY_FRONTIER_STORAGE_KEY = 'authority:frontier';
@@ -43,21 +49,6 @@ const STORAGE_FORMAT = 'ptcgsim-room-authority-v6';
 const AUTHORITY_FRONTIER_FORMAT = 'ptcgsim-authority-frontier-v1';
 const GENERATION_PATTERN = /^[0-9a-f]{32}$/u;
 const CONTINUATION_RESTORE_DIGEST_PATTERN = /^[A-Za-z0-9_-]{43}$/u;
-
-export interface DurableStorageTransactionLike extends JournalRetentionTransaction {
-  readonly put: (entries: Record<string, unknown>) => Promise<void>;
-  readonly getAlarm: () => Promise<number | null>;
-  readonly setAlarm: (scheduledTime: number | Date) => Promise<void>;
-  readonly deleteAlarm: () => Promise<void>;
-}
-
-export interface DurableStorageLike {
-  readonly get: <Value>(key: string) => Promise<Value | undefined>;
-  readonly deleteAll: () => Promise<void>;
-  readonly transaction: <Value>(
-    closure: (transaction: DurableStorageTransactionLike) => Promise<Value>
-  ) => Promise<Value>;
-}
 
 export interface RoomInitializationLifecycle {
   readonly createdAt: number;
@@ -631,12 +622,18 @@ export class DurableRoomSnapshotStore
   implements AuthoritySnapshotStore, AdmissionPersistence
 {
   private validatedHead: ValidatedAuthorityHead | undefined;
+  private readonly storage: DurableStorageLike;
 
   constructor(
-    private readonly storage: DurableStorageLike,
+    storage: DurableStorageLike,
     private readonly monotonicNow: () => number = () => performance.now(),
     private readonly nextAuthorityGeneration: () => string = defaultAuthorityGeneration
-  ) {}
+  ) {
+    this.storage = chunkedSnapshotStorage(
+      storage,
+      AUTHORITY_SNAPSHOT_STORAGE_KEY
+    );
+  }
 
   async load(): Promise<RoomAuthoritySnapshot | undefined> {
     const capturedHead = this.validatedHead;
