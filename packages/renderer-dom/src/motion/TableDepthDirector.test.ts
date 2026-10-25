@@ -13,6 +13,7 @@ import {
   sameTablePose,
   TABLE_CARD_THICKNESS,
   tablePoseMatrix,
+  withHeldCards,
   type CardSceneNode,
 } from '@ptcgsim/renderer-contract';
 import {
@@ -1147,6 +1148,223 @@ it('flies a card taken out of a viewer from where the viewer showed it, above th
   );
   expect(elements.get(key)!.dataset.overWindows).toBeUndefined();
   expect(lifted).toEqual([true, false]);
+  director.destroy();
+  table.remove();
+});
+
+it.each([false, true])(
+  'flies a quick viewer drop through a re-alias and retarget (settling frame: %s)',
+  (settlesFirst) => {
+    const { advance } = stubClock();
+    const { view, cardsIn, withZones, project, elementsFor } = tableOf();
+    const discard = cardsIn(view, 'discard');
+    const taken = discard[0]!;
+    const moved = withZones(view, {
+      discard: discard.slice(1),
+      hand: [...cardsIn(view, 'hand'), taken],
+    });
+    const answered = withZones(moved, {
+      // The room also moves its place in the row when assigning a new alias.
+      hand: [
+        { ...taken, id: asViewCardId('answered-viewer-drop') } as ViewCard,
+        ...cardsIn(view, 'hand'),
+      ],
+    });
+    const first = project(view);
+    const landing = project(moved);
+    const answer = project(answered);
+    const key = `card:${String(taken.id)}`;
+    const point = { x: 700, y: 740 };
+    const holding = {
+      ...DEFAULT_BOARD_PRESENTATION,
+      drag: { cardId: taken.id, ...point, targetId: null },
+    };
+    const settling = {
+      ...DEFAULT_BOARD_PRESENTATION,
+      settling: [{ cardId: taken.id, ...point }],
+    };
+    const preferences = {
+      ...DEFAULT_BOARD_PREFERENCES,
+      depth: { ...DEFAULT_BOARD_DEPTH, mode: 'table' as const, scatter: false },
+    };
+    const held = new BoardDepthProjection(
+      withHeldCards(first.scene, holding),
+      preferences
+    );
+    const dropped = new BoardDepthProjection(
+      withHeldCards(first.scene, settling),
+      preferences
+    );
+    const elements = elementsFor(first, held, dropped, landing, answer);
+    const table = document.createElement('div');
+    document.body.append(table);
+    placeAt(table, 0, 0);
+    const director = new TableDepthDirector(elements);
+    director.attach(table, document.createElement('div'));
+    director.commit(
+      null,
+      first,
+      DEFAULT_BOARD_PRESENTATION,
+      undefined,
+      false,
+      1
+    );
+    const shown = document.createElement('button');
+    shown.dataset.motionOrigin = String(taken.id);
+    placeAt(shown, 300, 120, 168, 234);
+    document.body.append(shown);
+    window.dispatchEvent(
+      new PointerEvent('pointerdown', { pointerType: 'touch' })
+    );
+    elements.get(key)!.dataset.held = 'drag';
+    director.grab({ key, x: 0.5, y: 0.5, point });
+    director.commit(first.scene, held, holding, undefined, false, 1);
+    advance(120);
+    // The card is still held at its actual drop point while awaiting the move.
+    if (settlesFirst) {
+      elements.get(key)!.dataset.held = 'settle';
+      director.commit(held.scene, dropped, settling, undefined, false, 1);
+    }
+    const release = director.current(key)!;
+    shown.remove();
+    delete elements.get(key)!.dataset.held;
+    director.commit(
+      settlesFirst ? dropped.scene : held.scene,
+      landing,
+      DEFAULT_BOARD_PRESENTATION,
+      { cause: 'predict' },
+      false,
+      1
+    );
+    // Its recent viewer origin is still fresh, but the pointer already carried
+    // it away. Preserve both the painted source and the above-window flight.
+    expect(director.current(key)!.bounds).toEqual(release.bounds);
+    expect(elements.get(key)!.dataset.overWindows).toBe('');
+    advance(160);
+    const beforeAnswer = director.current(key)!;
+    director.commit(
+      landing.scene,
+      answer,
+      DEFAULT_BOARD_PRESENTATION,
+      { cause: 'advance' },
+      false,
+      1
+    );
+    expect(director.current('card:answered-viewer-drop')!.bounds).toEqual(
+      beforeAnswer.bounds
+    );
+    for (let at = 176; at <= 1200; at += 16) advance(at);
+    expect(director.current('card:answered-viewer-drop')).toEqual(
+      answer.pose(
+        answer.scene.cards.find(
+          (card) => card.renderKey === 'card:answered-viewer-drop'
+        )!
+      )
+    );
+    expect(
+      elements.get('card:answered-viewer-drop')!.dataset.overWindows
+    ).toBeUndefined();
+    expect(director.active).toBe(false);
+    director.destroy();
+    table.remove();
+  }
+);
+
+it('uses a new viewer press after a card was set down in place', () => {
+  const { advance } = stubClock();
+  const { view, project, elementsFor } = tableOf();
+  const first = project(view);
+  const card = first.scene.cards.find(
+    (node) =>
+      node.side === 'local' &&
+      node.role === 'stackEvolution' &&
+      node.renderKey !== null
+  )!;
+  const hand = first.scene.cards.find(
+    (node) =>
+      node.side === 'local' &&
+      node.parentId.endsWith(':hand') &&
+      node.renderKey !== null
+  )!;
+  const preferences = {
+    ...DEFAULT_BOARD_PREFERENCES,
+    depth: { ...DEFAULT_BOARD_DEPTH, mode: 'table' as const, scatter: false },
+  };
+  const landing = new BoardDepthProjection(
+    {
+      ...first.scene,
+      revision: first.scene.revision + 1,
+      cards: first.scene.cards.map((node) =>
+        node === card
+          ? {
+              ...hand,
+              id: card.id,
+              renderKey: card.renderKey,
+              imageUrl: card.imageUrl,
+            }
+          : node
+      ),
+    },
+    preferences
+  );
+  const elements = elementsFor(first, landing);
+  const table = document.createElement('div');
+  document.body.append(table);
+  placeAt(table, 0, 0);
+  const director = new TableDepthDirector(elements);
+  director.attach(table, document.createElement('div'));
+  director.commit(null, first, DEFAULT_BOARD_PRESENTATION, undefined, false, 1);
+  const rest = first.pose(card);
+  elements.get(card.renderKey!)!.dataset.held = 'drag';
+  director.commit(
+    first.scene,
+    first,
+    {
+      ...DEFAULT_BOARD_PRESENTATION,
+      drag: {
+        cardId: card.id,
+        x: rest.bounds.x + rest.bounds.width / 2,
+        y: rest.bounds.y + rest.bounds.height / 2,
+        targetId: null,
+      },
+    },
+    undefined,
+    false,
+    1
+  );
+  advance(120);
+  delete elements.get(card.renderKey!)!.dataset.held;
+  director.commit(
+    first.scene,
+    first,
+    DEFAULT_BOARD_PRESENTATION,
+    undefined,
+    false,
+    1
+  );
+  advance(320);
+  const shown = document.createElement('button');
+  shown.dataset.motionOrigin = String(card.id);
+  placeAt(shown, 300, 120, 168, 234);
+  document.body.append(shown);
+  window.dispatchEvent(
+    new PointerEvent('pointerdown', { pointerType: 'mouse' })
+  );
+  shown.remove();
+  director.commit(
+    first.scene,
+    landing,
+    DEFAULT_BOARD_PRESENTATION,
+    { cause: 'predict' },
+    false,
+    1
+  );
+  expect(director.current(card.renderKey!)!.bounds).toEqual({
+    x: 300,
+    y: 120,
+    width: 168,
+    height: 234,
+  });
   director.destroy();
   table.remove();
 });

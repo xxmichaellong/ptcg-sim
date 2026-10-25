@@ -533,25 +533,38 @@ export class TableDepthDirector {
           ? inViewer
           : undefined;
       if (shownAt) this.origins?.rects.delete(String(card.id));
-      const source = shownAt
-        ? {
-            bounds: shownAt,
-            turns: 0,
-            elevation: 0,
-            thickness:
-              shownAt.width *
-              TABLE_CARD_THICKNESS *
-              projection.settings.strength,
-            plane: 0,
-          }
-        : flight
-          ? this.sourcePose(
-              flight.from,
-              flight.fromRotationQuarterTurns,
-              oldProjection,
-              target
-            )
-          : undefined;
+      // The viewer still identifies its face and above-window flight, but a
+      // pointer that already carried it owns its painted departure pose.
+      const newerViewerPress =
+        shownAt !== undefined &&
+        releasedAt !== undefined &&
+        this.origins !== null &&
+        this.origins.at > releasedAt;
+      const carriedByHand =
+        held ||
+        (landing && !newerViewerPress) ||
+        (flight?.fromRenderKey !== undefined &&
+          this.held.has(flight.fromRenderKey));
+      const source =
+        shownAt && !carriedByHand
+          ? {
+              bounds: shownAt,
+              turns: 0,
+              elevation: 0,
+              thickness:
+                shownAt.width *
+                TABLE_CARD_THICKNESS *
+                projection.settings.strength,
+              plane: 0,
+            }
+          : flight
+            ? this.sourcePose(
+                flight.from,
+                flight.fromRotationQuarterTurns,
+                oldProjection,
+                target
+              )
+            : undefined;
       // The node now shows a card that was somewhere else: a pile's cover
       // taking the card put on it. It sets off from where that card was,
       // not from the pile it already covers.
