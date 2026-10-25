@@ -451,9 +451,16 @@ test('a card carried over an open window shows above it, and joins it when dropp
       // itself stays where it is, unseen, holding the pointer.
       const copy = page.locator('.ptcgsim-board-lift [data-lift-copy]');
       await expect(copy).toHaveCount(1);
-      const shown = (await copy.boundingBox())!;
-      expect(shown.x).toBeLessThan(over.x);
-      expect(shown.x + shown.width).toBeGreaterThan(over.x);
+      // The lift copy follows the held card on its next animation frame.
+      // Existence alone can still leave it at the preceding pointer step.
+      await expect
+        .poll(async () => {
+          const shown = await copy.boundingBox();
+          return (
+            shown !== null && shown.x < over.x && shown.x + shown.width > over.x
+          );
+        })
+        .toBe(true);
       await expect(
         page.locator(`.ptcgsim-card[data-card-id="${first}"]`)
       ).toHaveAttribute('data-lifted', '');
