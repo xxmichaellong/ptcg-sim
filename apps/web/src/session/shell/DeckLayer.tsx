@@ -27,10 +27,32 @@ const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 /** What Tab reaches inside `root`, in order. */
-const tabStops = (root: HTMLElement): HTMLElement[] =>
-  [...root.querySelectorAll<HTMLElement>(FOCUSABLE)].filter(
+const tabStops = (root: HTMLElement): HTMLElement[] => {
+  const stops = [...root.querySelectorAll<HTMLElement>(FOCUSABLE)].filter(
     (element) => element.getClientRects().length > 0
   );
+  return stops.filter((element) => {
+    if (!(element instanceof HTMLInputElement) || element.type !== 'radio')
+      return true;
+    if (element.tabIndex < 0 || element.matches(':disabled')) return false;
+    if (!element.name) return true;
+    // Native Tab reaches one member of a named radio group. Counting an
+    // unchecked sibling as the endpoint can prevent the wrap ever firing.
+    const group = stops.filter(
+      (candidate): candidate is HTMLInputElement =>
+        candidate instanceof HTMLInputElement &&
+        candidate.type === 'radio' &&
+        candidate.name === element.name &&
+        candidate.form === element.form &&
+        candidate.getRootNode() === element.getRootNode() &&
+        candidate.tabIndex >= 0 &&
+        !candidate.matches(':disabled')
+    );
+    return (
+      element === (group.find((candidate) => candidate.checked) ?? group[0])
+    );
+  });
+};
 
 /**
  * The deck screen (ADR-030, ADR-032) over the whole window. The deck

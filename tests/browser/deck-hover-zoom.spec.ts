@@ -33,6 +33,9 @@ for (const shown of [false, true]) {
     await page.waitForTimeout(200);
     await expect(page.locator('.deck-zoom')).toHaveCount(0);
     await page.locator('#nativeDeckBuilderSearchInput').fill('judge');
+    // The replacement can reuse the pointer's coordinates. Cross a real
+    // boundary before asking for a fresh hover in every browser.
+    await page.locator('#nativeDeckBuilderSearchInput').hover();
     await page.locator('.card-result').first().hover();
     await expect(page.locator('.deck-zoom')).toBeVisible();
   });

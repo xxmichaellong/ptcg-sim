@@ -61,9 +61,94 @@ beforeEach(() => {
 afterEach(async () => {
   await act(async () => root.unmount());
   document.body.replaceChildren();
+  vi.restoreAllMocks();
 });
 
 describe('DeckLayer', () => {
+  it.each(['list', 'images'])(
+    'uses the checked %s radio as the final Tab stop',
+    async (selected) => {
+      vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([
+        new DOMRect(0, 0, 10, 10),
+      ] as unknown as DOMRectList);
+      await act(async () =>
+        root.render(
+          <DeckLayer open onClose={vi.fn()}>
+            <button id="first">First</button>
+            <input
+              type="radio"
+              name="view"
+              id="list"
+              defaultChecked={selected === 'list'}
+            />
+            <input
+              type="radio"
+              name="view"
+              id="images"
+              defaultChecked={selected === 'images'}
+            />
+          </DeckLayer>
+        )
+      );
+      const radio = host.querySelector<HTMLInputElement>(`#${selected}`)!;
+      const first = host.querySelector<HTMLButtonElement>('#first')!;
+      await act(async () => radio.focus());
+      const forward = new KeyboardEvent('keydown', {
+        key: 'Tab',
+        bubbles: true,
+        cancelable: true,
+      });
+      await act(async () => {
+        radio.dispatchEvent(forward);
+      });
+      expect(forward.defaultPrevented).toBe(true);
+      expect(document.activeElement).toBe(first);
+      const backward = new KeyboardEvent('keydown', {
+        key: 'Tab',
+        shiftKey: true,
+        bubbles: true,
+        cancelable: true,
+      });
+      await act(async () => {
+        first.dispatchEvent(backward);
+      });
+      expect(document.activeElement).toBe(radio);
+    }
+  );
+
+  it('keeps same-named radio groups in different forms separate', async () => {
+    vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([
+      new DOMRect(0, 0, 10, 10),
+    ] as unknown as DOMRectList);
+    await act(async () =>
+      root.render(
+        <DeckLayer open onClose={vi.fn()}>
+          <button id="first">First</button>
+          <form>
+            <input type="radio" name="same" defaultChecked />
+            <input type="radio" name="same" />
+          </form>
+          <form>
+            <input id="last" type="radio" name="same" defaultChecked />
+            <input type="radio" name="same" />
+          </form>
+        </DeckLayer>
+      )
+    );
+    const last = host.querySelector<HTMLInputElement>('#last')!;
+    await act(async () => last.focus());
+    const tab = new KeyboardEvent('keydown', {
+      key: 'Tab',
+      bubbles: true,
+      cancelable: true,
+    });
+    await act(async () => {
+      last.dispatchEvent(tab);
+    });
+    expect(tab.defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(host.querySelector('#first'));
+  });
+
   it('keeps the builder mounted but out of reach while closed', async () => {
     await render(false);
     expect(layer().dataset.open).toBe('false');

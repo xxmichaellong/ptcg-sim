@@ -138,3 +138,29 @@ for (const intent of ['hover', 'keyboard']) {
     ).toBeVisible();
   });
 }
+
+test('an empty editor wraps both Tab directions around its checked view radio and keeps native arrows', async ({
+  page,
+}) => {
+  await makeDeck(page);
+  const list = page.locator('#deckView-list');
+  const images = page.locator('#deckView-images');
+  const first = page.locator('#deckBackButton');
+  await expect(list).toBeChecked();
+  await list.focus();
+  await page.keyboard.press('Tab');
+  await expect(first).toBeFocused();
+  await page.keyboard.press('Shift+Tab');
+  await expect(list).toBeFocused();
+  await page.keyboard.press('ArrowRight');
+  await expect(images).toBeChecked();
+  await expect(images).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(first).toBeFocused();
+  await page.keyboard.press('Shift+Tab');
+  await expect(images).toBeFocused();
+  await page.keyboard.press('ArrowLeft');
+  await expect(list).toBeChecked();
+  await page.keyboard.press('Tab');
+  await expect(first).toBeFocused();
+});
