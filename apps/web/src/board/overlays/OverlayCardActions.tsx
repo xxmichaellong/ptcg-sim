@@ -43,12 +43,15 @@ export const OverlayCardActions = ({
   card,
   scene,
   enabled,
+  inert = false,
   emit,
   pile,
 }: {
   readonly card: CardSceneNode | undefined;
   readonly scene: BoardScene;
   readonly enabled: boolean;
+  /** Keep its layout while the containing panel is showing the board. */
+  readonly inert?: boolean;
   readonly emit: (intent: OpenedZoneCardIntent) => void;
   /** Canonical bottom-to-top order, before local sorting or copy grouping. */
   readonly pile?: {
@@ -81,7 +84,12 @@ export const OverlayCardActions = ({
   const selectedIndex =
     orderedPile?.cards.findIndex((entry) => entry.id === card?.id) ?? -1;
   return (
-    <div className="ptcgsim-card-actions" aria-label={t`Selected card actions`}>
+    <div
+      className="ptcgsim-card-actions"
+      aria-label={t`Selected card actions`}
+      inert={inert || undefined}
+      aria-hidden={inert || undefined}
+    >
       <span className="ptcgsim-card-actions-label">{card?.label}</span>
       {orderedPile
         ? [

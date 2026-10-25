@@ -1997,6 +1997,11 @@ const ZoneBrowser = ({
   const firstClickCard = useRef<ViewCardId | null>(null);
   const [sortEnabled, setSortEnabled] = useState(false);
   const [showingBoard, setShowingBoard] = useState(false);
+  // The panel keeps its place while peeking; only Back remains interactive.
+  const hiddenContentProps = {
+    inert: showingBoard || undefined,
+    'aria-hidden': showingBoard || undefined,
+  };
   const dismiss = useCallback(() => actions.dismiss('zone'), [actions]);
   const opener = useFocusBoundary(container, '[data-zone-close]', zone.id);
   // The "Shuffle all to Deck" confirmation still being asked, if any. It
@@ -2156,7 +2161,7 @@ const ZoneBrowser = ({
           className="ptcgsim-overlay-header ptcgsim-legacy-zone-toolbar"
           dir={direction}
         >
-          <div className="ptcgsim-overlay-heading">
+          <div className="ptcgsim-overlay-heading" {...hiddenContentProps}>
             <h2 className="ptcgsim-overlay-title">{title}</h2>
             <span className="ptcgsim-overlay-count">
               {t`${plural(count, { one: '# card', other: '# cards' })}`}
@@ -2172,6 +2177,7 @@ const ZoneBrowser = ({
                 type="button"
                 className="ptcgsim-overlay-button ptcgsim-legacy-zone-button"
                 data-zone-action={primary.id}
+                {...hiddenContentProps}
                 onClick={() => invokePrimaryAction(primary.id)}
               >
                 <ShuffleIcon aria-hidden="true" />
@@ -2184,7 +2190,7 @@ const ZoneBrowser = ({
               }
               side="bottom"
             >
-              <label className="ptcgsim-overlay-toggle">
+              <label className="ptcgsim-overlay-toggle" {...hiddenContentProps}>
                 <input
                   type="checkbox"
                   data-zone-action="sortZone"
@@ -2206,6 +2212,7 @@ const ZoneBrowser = ({
                   type="button"
                   className="ptcgsim-overlay-toggle"
                   data-zone-action="stackCopies"
+                  {...hiddenContentProps}
                   aria-pressed={stackCopies}
                   aria-label={t`Stack copies`}
                   onClick={() =>
@@ -2237,11 +2244,12 @@ const ZoneBrowser = ({
             <OverlayCloseButton
               className="ptcgsim-legacy-zone-button"
               data-zone-close="true"
+              {...hiddenContentProps}
               onClick={dismiss}
             />
           </div>
         </header>
-        <div className="ptcgsim-browser-tools">
+        <div className="ptcgsim-browser-tools" {...hiddenContentProps}>
           <div
             className="ptcgsim-browser-zoom"
             role="group"
@@ -2298,7 +2306,7 @@ const ZoneBrowser = ({
             </Tooltip>
           </div>
         </div>
-        <div className="ptcgsim-legacy-zone-cards">
+        <div className="ptcgsim-legacy-zone-cards" {...hiddenContentProps}>
           {renderedCards.length === 0 ? (
             <p className="ptcgsim-overlay-empty">
               <Trans>No cards here</Trans>
@@ -2384,6 +2392,7 @@ const ZoneBrowser = ({
           )}
           scene={state.scene!}
           enabled={state.canSubmitCommands && !obscured}
+          inert={showingBoard}
           pile={{ zone, cards }}
           emit={(intent) => {
             if (
@@ -2464,6 +2473,10 @@ const WorkAreaPanel = ({
   const container = useRef<HTMLElement>(null);
   const firstClickCard = useRef<ViewCardId | null>(null);
   const [showingBoard, setShowingBoard] = useState(false);
+  const hiddenContentProps = {
+    inert: showingBoard || undefined,
+    'aria-hidden': showingBoard || undefined,
+  };
   useOverlayExit(container, 'panel');
   const source: LegacyBoardWorkAreaSource =
     zone.kind === 'inspection' ? 'inspection' : 'staged';
@@ -2521,7 +2534,7 @@ const WorkAreaPanel = ({
       style={panelStyle(layout, '--ptcgsim-work-card-height')}
     >
       <header className="ptcgsim-overlay-header" dir={direction}>
-        <div className="ptcgsim-overlay-heading">
+        <div className="ptcgsim-overlay-heading" {...hiddenContentProps}>
           <h2 className="ptcgsim-overlay-title ptcgsim-legacy-work-area-header">
             {heading}
           </h2>
@@ -2538,7 +2551,7 @@ const WorkAreaPanel = ({
           />
         </div>
       </header>
-      <div className="ptcgsim-legacy-work-area-cards">
+      <div className="ptcgsim-legacy-work-area-cards" {...hiddenContentProps}>
         {cards.map((card) => (
           <button
             type="button"
@@ -2595,11 +2608,15 @@ const WorkAreaPanel = ({
           )}
           scene={state.scene!}
           enabled={interactive}
+          inert={showingBoard}
           emit={emit}
         />
       ) : null}
       {withActions ? (
-        <div className="ptcgsim-legacy-work-area-buttons">
+        <div
+          className="ptcgsim-legacy-work-area-buttons"
+          {...hiddenContentProps}
+        >
           {LEGACY_BOARD_WORK_AREA_ACTIONS[source].map((button) => {
             const ActionIcon = WORK_AREA_ACTION_ICONS[button.id];
             const label = i18n._(WORK_AREA_ACTION_LABELS[button.id]);

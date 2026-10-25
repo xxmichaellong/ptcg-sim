@@ -1264,6 +1264,18 @@ describe('legacy board overlays', () => {
     expect(showBoard.getAttribute('aria-pressed')).toBe('true');
     // The same button, where it was, is the way back.
     expect(showBoard.textContent).toBe('Back to Discard pile');
+    await act(async () => showBoard.focus());
+    for (const shiftKey of [false, true]) {
+      const tab = new KeyboardEvent('keydown', {
+        key: 'Tab',
+        shiftKey,
+        bubbles: true,
+        cancelable: true,
+      });
+      await act(async () => showBoard.dispatchEvent(tab));
+      expect(tab.defaultPrevented).toBe(true);
+      expect(document.activeElement).toBe(showBoard);
+    }
     await act(async () => showBoard.click());
     expect(browser.classList).not.toContain('is-showing-board');
     expect(scrim.classList).not.toContain('is-hidden');
