@@ -311,6 +311,99 @@ describe('useLiveRoomControls', () => {
     expect(onLeave).not.toHaveBeenCalled();
   });
 
+  it('withdraws the old leave question when the session is replaced, without disturbing a new one', async () => {
+    const oldLeave = vi.fn();
+    const nextLeave = vi.fn();
+    const oldAnswer = Promise.withResolvers<boolean>();
+    const nextAnswer = Promise.withResolvers<boolean>();
+    const confirmLeave = vi
+      .fn<LiveRoomLeaveConfirmation>()
+      .mockImplementationOnce(() => oldAnswer.promise)
+      .mockImplementationOnce(() => nextAnswer.promise);
+    const { root } = await mount(new FakeLiveSession(), {
+      onLeave: oldLeave,
+      confirmLeave,
+    });
+    try {
+      await press((live) => live.leaveRoom?.());
+      const oldSignal = confirmLeave.mock.calls[0]![0].signal;
+      expect(oldSignal.aborted).toBe(false);
+
+      await act(async () =>
+        root.render(
+          <Harness
+            session={new FakeLiveSession()}
+            presentation={livePresentation().value}
+            onLeave={nextLeave}
+            confirmLeave={confirmLeave}
+          />
+        )
+      );
+      expect(oldSignal.aborted).toBe(true);
+
+      await press((live) => {
+        live.leaveRoom?.();
+        live.leaveRoom?.();
+      });
+      expect(confirmLeave).toHaveBeenCalledTimes(2);
+      const nextSignal = confirmLeave.mock.calls[1]![0].signal;
+      expect(nextSignal.aborted).toBe(false);
+
+      await act(async () => {
+        oldAnswer.resolve(true);
+        await oldAnswer.promise;
+      });
+      expect(oldLeave).not.toHaveBeenCalled();
+      expect(nextLeave).not.toHaveBeenCalled();
+      expect(nextSignal.aborted).toBe(false);
+      await press((live) => live.leaveRoom?.());
+      expect(confirmLeave).toHaveBeenCalledTimes(2);
+
+      await act(async () => {
+        nextAnswer.resolve(true);
+        await nextAnswer.promise;
+      });
+      expect(oldLeave).not.toHaveBeenCalled();
+      expect(nextLeave).toHaveBeenCalledOnce();
+    } finally {
+      await act(async () => root.unmount());
+    }
+  });
+
+  it('keeps a leave question through callback rerenders of the same session', async () => {
+    const session = new FakeLiveSession();
+    const oldLeave = vi.fn();
+    const nextLeave = vi.fn();
+    const answer = Promise.withResolvers<boolean>();
+    const confirmLeave = vi.fn<LiveRoomLeaveConfirmation>(() => answer.promise);
+    const { root } = await mount(session, { onLeave: oldLeave, confirmLeave });
+    try {
+      await press((live) => live.leaveRoom?.());
+      const signal = confirmLeave.mock.calls[0]![0].signal;
+      await act(async () =>
+        root.render(
+          <Harness
+            session={session}
+            presentation={livePresentation().value}
+            onLeave={nextLeave}
+            confirmLeave={confirmLeave}
+          />
+        )
+      );
+      expect(signal.aborted).toBe(false);
+      await press((live) => live.leaveRoom?.());
+      expect(confirmLeave).toHaveBeenCalledOnce();
+      await act(async () => {
+        answer.resolve(true);
+        await answer.promise;
+      });
+      expect(oldLeave).not.toHaveBeenCalled();
+      expect(nextLeave).toHaveBeenCalledOnce();
+    } finally {
+      await act(async () => root.unmount());
+    }
+  });
+
   it('reports a replay that cannot be read in a danger toast', async () => {
     const unmountOverlays = await mountOverlayHost();
     const alert = vi.fn();

@@ -191,7 +191,7 @@ export const useLiveRoomControls = ({
   const replayImportAbortRef = useRef<AbortController | undefined>(undefined);
   const continuationAbortRef = useRef<AbortController | undefined>(undefined);
   // The "leave the room?" question while it is being asked: one at a time,
-  // withdrawn if these controls unmount.
+  // withdrawn when its room is replaced or these controls unmount.
   const leaveQuestion = useRef<AbortController | undefined>(undefined);
   const latestOnLeave = useRef(onLeave);
   useEffect(() => {
@@ -274,6 +274,11 @@ export const useLiveRoomControls = ({
     () => () => {
       leaveQuestion.current?.abort();
       leaveQuestion.current = undefined;
+    },
+    [session]
+  );
+  useEffect(
+    () => () => {
       replayImportAbortRef.current?.abort();
       const continuation = continuationAbortRef.current;
       continuationAbortRef.current = undefined;
