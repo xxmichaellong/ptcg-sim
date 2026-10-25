@@ -478,6 +478,12 @@ export const TutorialHost = ({
   // Measured through a step's done moment too, so the coach stays put.
   const measuring = Boolean(playing && !hidden);
   const rects = useTargetRects(targets, measuring);
+  // Selecting a card with a finger opens its Read/Actions toolbar. Keep
+  // the coach clear of that next control as well as the card it names.
+  const touchActionRects = useTargetRects(
+    [{ selectors: ['[data-touch-card-bar]'] }],
+    measuring
+  );
   const dragRects = useTargetRects(
     drag ? [drag.from, drag.to] : [],
     measuring && drag !== null
@@ -586,6 +592,7 @@ export const TutorialHost = ({
             paletteOpen={screen.palette}
             avoid={[
               ...rects,
+              ...touchActionRects,
               ...(dragShown ? [dragShown.from, dragShown.to] : []),
             ]}
             onBack={playing.step > 0 ? back : undefined}
@@ -645,9 +652,9 @@ const screenRectOf = (selector: string): ScreenRect | undefined => {
 
 /**
  * Where the coach sits: the first corner that covers nothing the step
- * points at (nor the app bar, nor the open command palette); failing that,
- * the corner that covers least. On a phone it spans the width at the top
- * or the bottom, the bottom above the on-screen keyboard.
+ * points at (nor the app bar, nor the open command palette), then room below
+ * the app bar; failing that, the position that covers least. On a phone it
+ * spans the width at the top or the bottom, above the on-screen keyboard.
  */
 export const placeCoach = (
   size: { readonly width: number; readonly height: number },
@@ -678,10 +685,18 @@ export const placeCoach = (
   const corners: readonly Corner[] = compact
     ? ['top-left', 'bottom-left']
     : ['top-left', 'bottom-left', 'top-right', 'bottom-right'];
-  let best = at(corners[0]!);
+  const places = corners.map(at);
+  // A short landscape table may have clear room below the app bar even
+  // when every corner is occupied. Keep the existing corners first.
+  if (!compact && bar) {
+    const top = Math.max(COACH_GAP_PX, bar.y + bar.height + COACH_GAP_PX);
+    if (top + size.height <= height - COACH_GAP_PX) {
+      places.push({ ...at('top-left'), top }, { ...at('top-right'), top });
+    }
+  }
+  let best = places[0]!;
   let leastCovered = Number.POSITIVE_INFINITY;
-  for (const corner of corners) {
-    const place = at(corner);
+  for (const place of places) {
     const box = { x: place.left, y: place.top, ...size };
     if (!blockers.some((rect) => overlaps(rect, box))) return place;
     const covered = blockers.reduce(

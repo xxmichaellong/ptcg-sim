@@ -19,7 +19,7 @@ import { TUTORIAL_IMAGE_URLS, tutorialCardKeyOf } from './tutorial-cards.js';
 import { activeStack, findCard, zoneCards, zoneId } from './tutorial-world.js';
 import { lessonById, lessonsFor } from './tutorial-lessons.js';
 import { TUTORIAL_PREFERENCES } from './tutorial-state.js';
-import { TutorialHost } from './TutorialHost.js';
+import { placeCoach, TutorialHost } from './TutorialHost.js';
 
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -659,6 +659,54 @@ describe('the practice cards’ scans', () => {
       expect(asked).toEqual(french);
     } finally {
       preferences().patch(CARD_IMAGE_PREFERENCES, { cardImages: 'app' });
+    }
+  });
+});
+
+describe('coach placement on a short landscape table', () => {
+  it('keeps a highlighted Prize reachable below the app bar when the corners are occupied', () => {
+    const saved = new Map(
+      ['innerWidth', 'innerHeight', 'visualViewport'].map(
+        (key) => [key, Object.getOwnPropertyDescriptor(window, key)] as const
+      )
+    );
+    Object.defineProperties(window, {
+      innerWidth: { configurable: true, value: 812 },
+      innerHeight: { configurable: true, value: 375 },
+      visualViewport: { configurable: true, value: undefined },
+    });
+    const bar = document.createElement('div');
+    bar.className = 'ptcgsim-app-bar';
+    document.body.append(bar);
+    const appBar = { x: 658, y: 8, width: 146, height: 50 };
+    placed.set(bar, appBar);
+    const prize = { x: 8, y: 195, width: 27, height: 38 };
+    const hand = { x: 116, y: 321, width: 580, height: 54 };
+    const size = { width: 340, height: 215 };
+    const overlaps = (a: Box, b: Box) =>
+      a.x < b.x + b.width &&
+      b.x < a.x + a.width &&
+      a.y < b.y + b.height &&
+      b.y < a.y + a.height;
+    try {
+      // A previously free corner retains its existing priority.
+      expect(placeCoach(size, [], false)).toEqual({
+        left: 12,
+        top: 12,
+        corner: 'top-left',
+      });
+      const position = placeCoach(size, [prize, hand], false);
+      const box = { x: position.left, y: position.top, ...size };
+      expect(
+        [appBar, prize, hand].some((blocker) => overlaps(box, blocker))
+      ).toBe(false);
+      expect(position.top).toBeGreaterThanOrEqual(appBar.y + appBar.height);
+      expect(position.top + size.height).toBeLessThanOrEqual(375 - 12);
+    } finally {
+      for (const [key, descriptor] of saved) {
+        if (descriptor) Object.defineProperty(window, key, descriptor);
+        else Reflect.deleteProperty(window, key);
+      }
     }
   });
 });
