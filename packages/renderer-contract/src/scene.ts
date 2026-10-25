@@ -13,6 +13,7 @@ import {
 import {
   composeCardArtwork,
   fitCardComposition,
+  paintedCardBounds,
   turnCardComposition,
 } from './card-composition.js';
 import {
@@ -36,7 +37,6 @@ import {
   type BoardLayoutState,
   type LegacyContainedCardBlockAlignment,
   type LegacyPileKind,
-  type LegacyPlayRowStackInput,
 } from './layout.js';
 import {
   TABLE_LAYOUT_GEOMETRY_VERSION,
@@ -60,7 +60,10 @@ import type {
 import { topmostFirst } from './paint-order.js';
 import { ownSeatOf } from './seat-tone.js';
 import { finishForCard } from './card-material.js';
-import { layoutComposedPlayRow } from './composed-play-row.js';
+import {
+  layoutComposedPlayRow,
+  type ComposedPlayRowInput,
+} from './composed-play-row.js';
 
 const isCountedZoneKind = (
   kind: MatchViewState['zones'][string]['kind']
@@ -592,20 +595,32 @@ const playRowAt = (
 /** How far a play row's cards reach across, at a card `height`. */
 const playRowReach = (
   region: BoardLayoutRegion,
-  stacks: readonly LegacyPlayRowStackInput[],
+  stacks: readonly ComposedPlayRowInput[],
   height: number
 ): { readonly left: number; readonly right: number } => {
   let left = Infinity;
   let right = -Infinity;
-  for (const stack of layoutLegacyPlayRow(
+  const row = layoutLegacyPlayRow(
     playRowAt(region, height),
     CARD_ASPECT_RATIO,
     stacks
-  )) {
+  );
+  for (const [index, stack] of row.entries()) {
+    const input = stacks[index]!;
     for (const box of [
       stack.flexItemBounds,
-      ...stack.evolutionCards.map((card) => card.bounds),
-      ...stack.attachmentCards.map((card) => card.bounds),
+      ...stack.evolutionCards.map((card, index) =>
+        paintedCardBounds(
+          card.bounds,
+          input.rotationQuarterTurns + input.evolution[index]!.rotation
+        )
+      ),
+      ...stack.attachmentCards.map((card, index) =>
+        paintedCardBounds(
+          card.bounds,
+          card.rotationQuarterTurns + input.attachmentRotations[index]!
+        )
+      ),
     ]) {
       left = Math.min(left, box.x);
       right = Math.max(right, box.x + box.width);
@@ -621,7 +636,7 @@ const playRowReach = (
  */
 const fitPlayRow = (
   region: BoardLayoutRegion,
-  stacks: readonly LegacyPlayRowStackInput[]
+  stacks: readonly ComposedPlayRowInput[]
 ): BoardLayoutRegion => {
   const bounds = region.physicalDeclaredBounds;
   const fits = (height: number): boolean => {
@@ -744,7 +759,10 @@ const addMarkers = (
 ): void => {
   // v1 places every counter from the host image's painted rectangle, which is
   // the rotated bounding box when the stack is quarter-turned.
-  const painted = paintedCardBounds(topCard);
+  const painted = paintedCardBounds(
+    topCard.bounds,
+    topCard.rotationQuarterTurns
+  );
   const layout = layoutLegacyActiveQ0Markers(
     painted,
     topCard.side === 'opponent' ? 'opponent' : 'local'
@@ -771,18 +789,6 @@ const addMarkers = (
   if (stack.specialCondition !== null)
     marker('specialCondition', stack.specialCondition);
   if (stack.abilityUsed) marker('abilityUsed', 'used');
-};
-
-const paintedCardBounds = (card: CardSceneNode): Rect => {
-  if (card.rotationQuarterTurns % 2 === 0) return copyRect(card.bounds);
-  const centerX = card.bounds.x + card.bounds.width / 2;
-  const centerY = card.bounds.y + card.bounds.height / 2;
-  return {
-    x: centerX - card.bounds.height / 2,
-    y: centerY - card.bounds.width / 2,
-    width: card.bounds.height,
-    height: card.bounds.width,
-  };
 };
 
 const addCardAbilityMarker = (
@@ -1255,11 +1261,14 @@ export const createBoardScene = (
           rotationQuarterTurns: stack.rotationQuarterTurns,
         };
       });
+      // Composed rows already fit their painted silhouettes to the whole
+      // region: don't shrink them first by their portrait pieces' widths.
+      const composedRow = layoutComposedPlayRow(slotRegions[slot], stackInputs);
       // On the play-mat table a crowded row keeps every card in its zone (a
       // Bench of six to eight, Pokémon carrying Energy, an upright phone's
       // narrow row): its cards stand no taller than lets it fit across.
       const rowRegion =
-        layout.geometryVersion === TABLE_LAYOUT_GEOMETRY_VERSION
+        layout.geometryVersion === TABLE_LAYOUT_GEOMETRY_VERSION && !composedRow
           ? fitPlayRow(slotRegions[slot], stackInputs)
           : slotRegions[slot];
       const rowLayout = layoutLegacyPlayRow(
@@ -1267,7 +1276,6 @@ export const createBoardScene = (
         CARD_ASPECT_RATIO,
         stackInputs
       );
-      const composedRow = layoutComposedPlayRow(rowRegion, stackInputs);
       rowStackIds.forEach((stackId, rowIndex) => {
         const stack = view.stacks[stackId]!;
         const stackLayout = rowLayout[rowIndex]!;

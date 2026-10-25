@@ -1,4 +1,8 @@
-import { asPlayerId, type MatchViewState } from '@ptcgsim/game-core';
+import {
+  asPlayerId,
+  type MatchViewState,
+  type QuarterTurns,
+} from '@ptcgsim/game-core';
 import { describe, expect, it } from 'vitest';
 
 import { resolveBoardDropTarget } from './drag.js';
@@ -23,6 +27,7 @@ import {
 import type { Rect } from './model.js';
 import { createBoardScene } from './scene.js';
 import { createRendererSpikeView } from './spike-fixture.js';
+import { paintedCardBounds } from './card-composition.js';
 
 const blue = asPlayerId('spike-blue');
 const red = asPlayerId('spike-red');
@@ -998,6 +1003,90 @@ describe('table layout (geometry v2)', () => {
               bench.x + bench.width + 0.5
             );
           }
+        }
+      }
+    }
+  });
+
+  it('keeps the painted edges of turned Pokémon and their Tools inside either Bench', () => {
+    const cases: readonly {
+      readonly size: readonly [number, number];
+      readonly count: number;
+      readonly turn: QuarterTurns;
+      readonly cardTurn: QuarterTurns;
+      readonly tool: boolean;
+    }[] = [
+      { size: [390, 844], count: 5, turn: 1, cardTurn: 0, tool: false },
+      { size: [390, 844], count: 8, turn: 3, cardTurn: 0, tool: false },
+      { size: [1440, 900], count: 8, turn: 2, cardTurn: 1, tool: false },
+      { size: [390, 844], count: 5, turn: 0, cardTurn: 1, tool: false },
+      { size: [390, 844], count: 5, turn: 0, cardTurn: 0, tool: true },
+      { size: [1440, 900], count: 8, turn: 0, cardTurn: 0, tool: true },
+      { size: [390, 844], count: 8, turn: 1, cardTurn: 3, tool: true },
+    ];
+    const base = createRendererSpikeView();
+    for (const playerId of base.playerOrder) {
+      const host = Object.values(base.stacks).find(
+        (stack) => stack.boardPlayerId === playerId
+      )!;
+      const card = host.evolutionCards[0]!;
+      if (card.kind !== 'known') throw new Error('Known fixture card required');
+      for (const { size, count, turn, cardTurn, tool } of cases) {
+        const benchStackIds = Array.from(
+          { length: count },
+          (_, index) => `turned-bench-${String(index)}`
+        );
+        const view: MatchViewState = {
+          ...base,
+          boards: {
+            ...base.boards,
+            [playerId]: { ...base.boards[playerId]!, benchStackIds },
+          },
+          stacks: {
+            ...base.stacks,
+            ...Object.fromEntries(
+              benchStackIds.map((id) => [
+                id,
+                {
+                  ...host,
+                  id,
+                  slot: 'bench',
+                  rotationQuarterTurns: turn,
+                  evolutionCards: [
+                    { ...card, id: `${id}-bottom`, orientationQuarterTurns: 0 },
+                    {
+                      ...card,
+                      id: `${id}-top`,
+                      orientationQuarterTurns: cardTurn,
+                    },
+                  ],
+                  attachmentCards: tool
+                    ? [
+                        { ...card, id: `${id}-energy`, category: 'Energy' },
+                        { ...card, id: `${id}-tool`, category: 'Trainer' },
+                      ]
+                    : [],
+                },
+              ])
+            ),
+          },
+        };
+        const layout = createTableLayoutSnapshot(
+          stateAt(...size, { shellMode: 'fullscreen' })
+        );
+        const side = playerId === layout.bottomPlayerId ? 'local' : 'opponent';
+        const bench = region(layout, side, 'bench').physicalDeclaredBounds;
+        const at = `${size.join('x')} ${side}, ${String(count)} Pokémon, turn ${String(turn)} + ${String(cardTurn)}, Tool ${String(tool)}`;
+        for (const node of createBoardScene(view, layout).cards) {
+          if (!node.id.startsWith('turned-bench-')) continue;
+          const painted = paintedCardBounds(
+            node.bounds,
+            node.rotationQuarterTurns
+          );
+          expect(painted.x, at).toBeGreaterThanOrEqual(bench.x - 0.5);
+          expect(painted.x + painted.width, at).toBeLessThanOrEqual(
+            bench.x + bench.width + 0.5
+          );
         }
       }
     }

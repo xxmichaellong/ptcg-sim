@@ -66,6 +66,76 @@ const fixture = () => {
 };
 
 describe('composed board scenes', () => {
+  it('fits a crowded LEGEND Bench by the joined cards, with no extra shrink from their portrait pieces', () => {
+    const { view: base, cards, stack, playerId } = fixture();
+    const pieces = cards.slice(0, 2);
+    const benchStackIds = Array.from(
+      { length: 8 },
+      (_, index) => `legend-bench-${String(index)}`
+    );
+    const view: MatchViewState = {
+      ...base,
+      definitions: {
+        ...base.definitions,
+        ...Object.fromEntries(
+          pieces.map((card, part) => [
+            card.definitionId,
+            {
+              ...base.definitions[card.definitionId]!,
+              name: 'Lugia LEGEND',
+              presentation: {
+                readingQuarterTurns: 1,
+                join: { key: 'lugia', columns: 1, rows: 2, part },
+              },
+            },
+          ])
+        ),
+      },
+      boards: {
+        ...base.boards,
+        [playerId]: { ...base.boards[playerId]!, benchStackIds },
+      },
+      stacks: {
+        ...base.stacks,
+        ...Object.fromEntries(
+          benchStackIds.map((id) => [
+            id,
+            {
+              ...stack,
+              id,
+              slot: 'bench',
+              attachmentCards: [],
+              evolutionCards: pieces.map((card, index) => ({
+                ...card,
+                id: asViewCardId(`${id}-${String(index)}`),
+              })),
+            },
+          ])
+        ),
+      },
+    };
+    const layout = createTableLayoutSnapshot({
+      viewport: { width: 390, height: 844, devicePixelRatio: 1 },
+      bottomPlayerId: playerId,
+      playerIds: base.playerOrder as [PlayerId, PlayerId],
+      shellMode: 'fullscreen',
+      vertical: DEFAULT_TABLE_VERTICAL_LAYOUT,
+      geometryVersion: 2,
+    });
+    const bench = layout.players[0].regions.find(
+      (region) => region.kind === 'bench'
+    )!.physicalDeclaredBounds;
+    const silhouettes = createBoardScene(view, layout)
+      .cards.filter((card) => card.parentId.startsWith('legend-bench-'))
+      .map((card) => card.composition!.bounds);
+    // Eight complete cards need the row's width: its own silhouette fitter
+    // uses it all, rather than shrinking their portrait scan boxes first.
+    expect(Math.min(...silhouettes.map((box) => box.x))).toBeCloseTo(bench.x);
+    expect(
+      Math.max(...silhouettes.map((box) => box.x + box.width))
+    ).toBeCloseTo(bench.x + bench.width);
+  });
+
   it("shows a BREAK sideways once, whether or not v1's Alt+R also turned it", () => {
     const base = createRendererSpikeView();
     const playerId = base.playerOrder[0]!;
