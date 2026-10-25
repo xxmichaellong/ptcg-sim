@@ -1,4 +1,9 @@
-import type { MatchViewState, ViewCard } from '@ptcgsim/game-core';
+import {
+  MAX_DECK_CARDS,
+  type MatchViewState,
+  type ViewCard,
+} from '@ptcgsim/game-core';
+import { DEFAULT_CLIENT_SESSION_POLICY } from '@ptcgsim/client-session';
 import type { WireGameCommand } from '@ptcgsim/protocol';
 
 import {
@@ -16,6 +21,9 @@ const PREDICTED_WORK_AREA = 'predicted-work-area:';
 const PREDICTED_INSPECTION = 'predicted-inspection:';
 /** Entries remembered, newest last: far more than a queue of moves needs. */
 const REMEMBERED_STACKS = 64;
+/** Full-room card generations across the standard bounded command queue. */
+const REMEMBERED_CARDS =
+  MAX_DECK_CARDS * 2 * DEFAULT_CLIENT_SESSION_POLICY.maximumPendingCommands;
 
 interface VisibilityContainer {
   readonly key: string;
@@ -100,11 +108,12 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
   const remember = <Value>(
     memory: Map<string, Value>,
     key: string,
-    value: Value
+    value: Value,
+    limit = REMEMBERED_STACKS
   ): void => {
     memory.delete(key);
     memory.set(key, value);
-    if (memory.size > REMEMBERED_STACKS) {
+    if (memory.size > limit) {
       memory.delete(memory.keys().next().value!);
     }
   };
@@ -120,6 +129,12 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
       readonly before: ReadonlySet<string>;
       /** What the played card is, when the sender could read it. */
       readonly definitionId?: string;
+      /** Restore can rotate every staged alias, including evolutions and Tools. */
+      readonly restored?: {
+        readonly revision: number;
+        readonly evolutionCards: readonly ViewCard[];
+        readonly attachmentCards: readonly ViewCard[];
+      };
     }
   >();
   /**
@@ -128,6 +143,19 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
    * predicted stack was named for, then the stack's card in the room.
    */
   const cards = new Map<string, string>();
+  const rememberCard = (before: string, after: string): void =>
+    remember(cards, before, after, REMEMBERED_CARDS);
+  /** A top-card departure can rename the residual cards before restoration. */
+  const staging = new WeakMap<
+    WireGameCommand,
+    {
+      readonly revision: number;
+      readonly playerId: string;
+      readonly sourceStackId: string;
+      readonly evolutionCards: readonly ViewCard[];
+      readonly attachmentCards: readonly ViewCard[];
+    }
+  >();
   // Visibility changes keep the card in its source but may rotate its alias.
   // Never match by an old definition alone or infer a reordered source index.
   const visibility = new WeakMap<
@@ -249,7 +277,7 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
     }
     // For a whole-zone command, expectedCardIds guards the complete native
     // order; a competing reorder makes that command fail before completion.
-    for (const match of matched) remember(cards, match.before, match.after);
+    for (const match of matched) rememberCard(match.before, match.after);
   };
 
   /**
@@ -286,8 +314,11 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
     readonly before: ReadonlySet<string>;
     readonly command: WireGameCommand;
   }[] = [];
-  const recordArrivals = (command: WireGameCommand, view: MatchViewState) => {
-    const predicted = predictWireCommand(view, command);
+  const recordArrivals = (
+    command: WireGameCommand,
+    view: MatchViewState,
+    predicted: MatchViewState | null
+  ) => {
     if (!predicted) return;
     // An indexed hand arrangement preserves its alias. Treating it as an
     // arrival could later mistake a different copy for a card that left.
@@ -361,7 +392,7 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
       const deck = view.zones[entry.zoneId]?.cards ?? [];
       const landed = entry.edge === 'top' ? deck[0] : deck.at(-1);
       if (landed && !entry.before.has(landed.id)) {
-        remember(cards, entry.alias, landed.id);
+        rememberCard(entry.alias, landed.id);
       }
     }
     deckEdges = deckEdges.filter((entry) => !settles(entry.command));
@@ -390,7 +421,7 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
         // before this command ran. Match only an exact group, in arrival order.
         if (matching.length !== aliases.length) continue;
         matching.forEach((card, index) => {
-          remember(cards, aliases[index]!, card.id);
+          rememberCard(aliases[index]!, card.id);
           fresh.splice(fresh.indexOf(card), 1);
         });
       }
@@ -398,7 +429,7 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
       // when the new cards left are exactly as many, never guessed at.
       if (faceDown.length > 0 && faceDown.length === fresh.length) {
         faceDown.forEach((alias, index) => {
-          remember(cards, alias, fresh[index]!.id);
+          rememberCard(alias, fresh[index]!.id);
         });
       }
     }
@@ -431,9 +462,28 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
     return stack;
   };
 
-  const stackIdFor = (id: string, view: MatchViewState): string => {
+  const stackIdFor = (
+    id: string,
+    view: MatchViewState,
+    refresh = false
+  ): string => {
     if (!id.startsWith(PREDICTED_STACK)) return id;
     const cardId = id.slice(PREDICTED_STACK.length);
+    // A restoration sent after staging was acknowledged uses the staged
+    // base's alias; an already queued action still names its earlier alias.
+    // Follow only learned card links to a learned stack, never a later place
+    // where that card happens to appear. Prefer the newest proven link.
+    let alias = cardId;
+    let remembered = stacks.get(id);
+    for (let step = 0; step < REMEMBERED_CARDS; step += 1) {
+      remembered = stacks.get(`${PREDICTED_STACK}${alias}`) ?? remembered;
+      if (!cards.has(alias) || cardInView(alias, view)) break;
+      alias = cards.get(alias)!;
+    }
+    if (remembered && !refresh) {
+      remember(stacks, id, remembered);
+      return remembered;
+    }
     const found = Object.values(view.stacks).find((stack) =>
       stack.evolutionCards.some((card) => card.id === cardId)
     )?.id;
@@ -441,14 +491,16 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
       remember(stacks, id, found);
       return found;
     }
-    const remembered = stacks.get(id);
-    if (remembered) return remembered;
     // Not under its old alias: the stack where it was played, if that is
     // still the one-card stack it made.
     const placed = placedStack(id, view);
-    if (placed && placed.evolutionCards.length === 1) {
+    if (
+      placed &&
+      !placements.get(id)?.restored &&
+      placed.evolutionCards.length === 1
+    ) {
       remember(stacks, id, placed.id);
-      remember(cards, cardId, placed.evolutionCards[0]!.id);
+      rememberCard(cardId, placed.evolutionCards[0]!.id);
       return placed.id;
     }
     return id;
@@ -490,7 +542,7 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
     let card = cards.get(id)!;
     for (
       let step = 0;
-      step < REMEMBERED_STACKS && cards.has(card) && !cardInView(card, view);
+      step < REMEMBERED_CARDS && cards.has(card) && !cardInView(card, view);
       step += 1
     ) {
       card = cards.get(card)!;
@@ -511,10 +563,68 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
   };
 
   /** The placement a sent play recorded, by the command as it was sent. */
-  const placementOf = new WeakMap<WireGameCommand, string>();
+  const placementOf = new WeakMap<WireGameCommand, readonly string[]>();
   const retireArrivals = (command: WireGameCommand): void => {
     arrivals = arrivals.filter((arrival) => arrival.command !== command);
     deckEdges = deckEdges.filter((entry) => entry.command !== command);
+  };
+
+  const settleRestoredStack = (id: string, view: MatchViewState): void => {
+    const restored = placements.get(id)?.restored;
+    // Restore guards the window ID, not its card arrays. With an intervening
+    // revision a same-definition staged replacement cannot be distinguished.
+    if (!restored || view.revision !== restored.revision + 1) return;
+    const stack = placedStack(id, view);
+    if (!stack) return;
+    const matches: { readonly before: ViewCard; readonly after: ViewCard }[] =
+      [];
+    for (const role of ['evolutionCards', 'attachmentCards'] as const) {
+      if (restored[role].length !== stack[role].length) return;
+      for (const [index, before] of restored[role].entries()) {
+        const after = stack[role][index]!;
+        if (
+          after.kind !== 'known' ||
+          before.ownerId !== after.ownerId ||
+          (before.kind === 'known' &&
+            before.definitionId !== after.definitionId)
+        )
+          return;
+        matches.push({ before, after });
+      }
+    }
+    remember(stacks, id, stack.id);
+    for (const { before, after } of matches) {
+      if (before.id !== after.id) rememberCard(before.id, after.id);
+    }
+  };
+
+  const settleStaging = (
+    command: WireGameCommand,
+    view: MatchViewState
+  ): void => {
+    const hint = staging.get(command);
+    if (!hint || view.revision !== hint.revision + 1) return;
+    const area = view.workAreas[hint.playerId]?.attachmentResolution;
+    if (!area || area.sourceStackId !== hint.sourceStackId) return;
+    const matched: { readonly before: ViewCard; readonly after: ViewCard }[] =
+      [];
+    for (const role of ['evolutionCards', 'attachmentCards'] as const) {
+      if (hint[role].length !== area[role].length) return;
+      for (const [index, before] of hint[role].entries()) {
+        const after = area[role][index]!;
+        if (
+          after.kind !== 'known' ||
+          before.ownerId !== after.ownerId ||
+          (before.kind === 'known' &&
+            before.definitionId !== after.definitionId)
+        )
+          return;
+        matched.push({ before, after });
+      }
+    }
+    for (const { before, after } of matched) {
+      if (before.id !== after.id) rememberCard(before.id, after.id);
+    }
   };
 
   const rebinder = (command: WireGameCommand, view: MatchViewState) => {
@@ -557,9 +667,73 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
     };
     const walked = rebind(command) as WireGameCommand;
     const rebound = changed ? walked : command;
-    recordArrivals(rebound, view);
+    const placedKeys = placed ? [placed] : [];
+    if (
+      placed &&
+      ((rebound.type === 'MoveCardToPlay' && !rebound.targetStackId) ||
+        rebound.type === 'MoveInspectedCardToPlay')
+    ) {
+      // Prediction rebases on the actual sent command. Actions made before
+      // and after this send can therefore name different provisional keys.
+      const sentKey = `${PREDICTED_STACK}${rebound.cardId}`;
+      if (sentKey !== placed) {
+        remember(placements, sentKey, {
+          ...placements.get(placed)!,
+          ...definitionOf(view, rebound.cardId),
+        });
+        placedKeys.push(sentKey);
+      }
+    }
+    const predicted = predictWireCommand(view, rebound);
+    if (predicted) {
+      for (const [playerId, areas] of Object.entries(predicted.workAreas)) {
+        const area = areas.attachmentResolution;
+        if (
+          area?.id.startsWith(PREDICTED_WORK_AREA) &&
+          view.stacks[area.sourceStackId]
+        ) {
+          staging.set(rebound, {
+            revision: view.revision,
+            playerId,
+            sourceStackId: area.sourceStackId,
+            evolutionCards: area.evolutionCards,
+            attachmentCards: area.attachmentCards,
+          });
+        }
+      }
+    }
+    if (rebound.type === 'RestoreStagedStack') {
+      // Use the predictor's actual base key and normalized role order. This
+      // also handles a restore onto the other board or a clamped Bench index.
+      const stack =
+        predicted &&
+        Object.values(predicted.stacks).find(
+          (candidate) =>
+            candidate.id.startsWith(PREDICTED_STACK) &&
+            !view.stacks[candidate.id]
+        );
+      if (stack) {
+        placed = stack.id;
+        placedKeys.push(placed);
+        const board = predicted!.boards[stack.boardPlayerId]!;
+        remember(placements, placed, {
+          boardPlayerId: stack.boardPlayerId,
+          slot: stack.slot,
+          ...(stack.slot === 'bench'
+            ? { benchIndex: board.benchStackIds.indexOf(stack.id) }
+            : {}),
+          before: new Set(Object.keys(view.stacks)),
+          restored: {
+            revision: view.revision,
+            evolutionCards: stack.evolutionCards,
+            attachmentCards: stack.attachmentCards,
+          },
+        });
+      }
+    }
+    recordArrivals(rebound, view, predicted);
     recordVisibility(rebound, view);
-    if (placed) placementOf.set(rebound, placed);
+    if (placedKeys.length > 0) placementOf.set(rebound, placedKeys);
     return rebound;
   };
   return Object.assign(rebinder, {
@@ -568,21 +742,29 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
       revision: number,
       view: MatchViewState
     ) => {
-      const placed = placementOf.get(command);
-      if (view.revision === revision) settleVisibility(command, view);
+      const placedKeys = placementOf.get(command) ?? [];
+      if (view.revision === revision) {
+        settleVisibility(command, view);
+        settleStaging(command, view);
+      }
       visibility.delete(command);
+      staging.delete(command);
       // At a later revision, a matching new face or stack may be someone
       // else's. Keep proven mappings, retiring only this command's hints.
       if (view.revision > revision) {
         retireArrivals(command);
-        if (placed) placements.delete(placed);
+        for (const placed of placedKeys) placements.delete(placed);
       }
       // Learn at the exact frontier now, even with no follow-up queued: a
       // later idle view must never identify these arrivals by a new copy.
       else if (view.revision === revision) {
         settleArrivals(view, command);
-        if (placed) {
-          stackIdFor(placed, view);
+        for (const placed of placedKeys) {
+          if (placements.get(placed)?.restored)
+            settleRestoredStack(placed, view);
+          // A deliberate later play can reuse a public card alias/key. Its
+          // exact completion proves a new placement, replacing the old one.
+          else stackIdFor(placed, view, true);
           placements.delete(placed);
         }
       }
@@ -592,13 +774,14 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
     // position to whatever stands there now.
     refused: (command: WireGameCommand) => {
       visibility.delete(command);
+      staging.delete(command);
       // Nor did it bring anything into a hand: a new card there with the
       // same face is someone else's.
       retireArrivals(command);
-      const placed = placementOf.get(command);
-      if (placed === undefined) return;
-      placements.delete(placed);
-      stacks.delete(placed);
+      for (const placed of placementOf.get(command) ?? []) {
+        placements.delete(placed);
+        stacks.delete(placed);
+      }
     },
   });
 };

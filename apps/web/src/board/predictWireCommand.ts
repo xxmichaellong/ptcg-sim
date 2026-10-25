@@ -347,28 +347,35 @@ const takeFromSource = (
   takeFromStack(view, sourceId, cardId) ??
   takeFromWorkArea(view, sourceId, cardId);
 
+/** Mirrors game-core's normalizeAttachmentCardIdsV1; unknown order stays put. */
+const normalizeAttachments = (
+  cards: readonly ViewCard[]
+): readonly ViewCard[] =>
+  cards.every(
+    (card) =>
+      card.kind === 'known' &&
+      (card.category === 'Energy' || card.category === 'Trainer')
+  )
+    ? [
+        ...cards.filter(
+          (card) => card.kind === 'known' && card.category === 'Energy'
+        ),
+        ...cards.filter(
+          (card) => card.kind === 'known' && card.category === 'Trainer'
+        ),
+      ]
+    : cards;
+
 /** v1 orders attachments energies first, then trainers (attachment-order.ts). */
 const attachTo = (stack: Stack, card: ViewCard): Stack => {
   const cards = [...stack.attachmentCards, card];
-  const categories = cards.map((candidate) =>
-    candidate.kind === 'known' ? candidate.category : 'Unknown'
-  );
-  if (
-    card.kind === 'known' &&
-    card.category === 'Energy' &&
-    categories.every(
-      (category) => category === 'Energy' || category === 'Trainer'
-    )
-  ) {
-    return {
-      ...stack,
-      attachmentCards: [
-        ...cards.filter((_, index) => categories[index] === 'Energy'),
-        ...cards.filter((_, index) => categories[index] === 'Trainer'),
-      ],
-    };
-  }
-  return { ...stack, attachmentCards: cards };
+  return {
+    ...stack,
+    attachmentCards:
+      card.kind === 'known' && card.category === 'Energy'
+        ? normalizeAttachments(cards)
+        : cards,
+  };
 };
 
 const evolveWith = (stack: Stack, card: ViewCard): Stack => ({
@@ -1089,7 +1096,7 @@ const predict = (
           destinationPlayerId,
           command.destinationSlot,
           staged.evolutionCards,
-          staged.attachmentCards
+          normalizeAttachments(staged.attachmentCards)
         ),
         command.destinationSlot,
         command.benchIndex
