@@ -52,6 +52,7 @@ for (const phone of [
         page.locator('.deck-panel .deck-check__count strong')
       ).toHaveText('1');
       await expect(page.locator('.deck-editor__pane--deck')).toBeInViewport();
+      await name.tap();
       await name.fill('Landscape deck');
       await name.press('Enter');
       await expect(name).toHaveValue('Landscape deck');
