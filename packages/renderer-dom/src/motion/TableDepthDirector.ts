@@ -558,12 +558,15 @@ export class TableDepthDirector {
               plane: 0,
             }
           : flight
-            ? this.sourcePose(
+            ? ((carriedByHand
+                ? this.sourcePainted.get(flight.fromRenderKey ?? key)
+                : undefined) ??
+              this.sourcePose(
                 flight.from,
                 flight.fromRotationQuarterTurns,
                 oldProjection,
                 target
-              )
+              ))
             : undefined;
       // The node now shows a card that was somewhere else: a pile's cover
       // taking the card put on it. It sets off from where that card was,

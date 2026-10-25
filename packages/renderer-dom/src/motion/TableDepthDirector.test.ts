@@ -1152,15 +1152,20 @@ it('flies a card taken out of a viewer from where the viewer showed it, above th
   table.remove();
 });
 
-it.each([false, true])(
-  'flies a quick viewer drop through a re-alias and retarget (settling frame: %s)',
-  (settlesFirst) => {
+it.each([
+  ['buried', false],
+  ['buried', true],
+  ['top', false],
+  ['top', true],
+] as const)(
+  'flies a quick %s viewer drop through a re-alias and retarget (settling frame: %s)',
+  (source, settlesFirst) => {
     const { advance } = stubClock();
-    const { view, cardsIn, withZones, project, elementsFor } = tableOf();
+    const { view, zone, cardsIn, withZones, project, elementsFor } = tableOf();
     const discard = cardsIn(view, 'discard');
-    const taken = discard[0]!;
+    const taken = source === 'top' ? discard.at(-1)! : discard[0]!;
     const moved = withZones(view, {
-      discard: discard.slice(1),
+      discard: discard.filter((card) => card.id !== taken.id),
       hand: [...cardsIn(view, 'hand'), taken],
     });
     const answered = withZones(moved, {
@@ -1177,10 +1182,12 @@ it.each([false, true])(
     const point = { x: 700, y: 740 };
     const holding = {
       ...DEFAULT_BOARD_PRESENTATION,
+      openedZoneId: zone('discard'),
       drag: { cardId: taken.id, ...point, targetId: null },
     };
     const settling = {
       ...DEFAULT_BOARD_PRESENTATION,
+      openedZoneId: zone('discard'),
       settling: [{ cardId: taken.id, ...point }],
     };
     const preferences = {
@@ -1191,6 +1198,15 @@ it.each([false, true])(
       withHeldCards(first.scene, holding),
       preferences
     );
+    if (source === 'top') {
+      const cover = held.scene.cards.find(
+        (card) => card.parentId === zone('discard') && card.primaryAction
+      )!;
+      expect(cover.renderKey).not.toBe(key);
+      expect(cover.bounds).toEqual(
+        held.scene.cards.find((card) => card.renderKey === key)!.bounds
+      );
+    }
     const dropped = new BoardDepthProjection(
       withHeldCards(first.scene, settling),
       preferences
