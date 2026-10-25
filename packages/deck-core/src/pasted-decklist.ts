@@ -532,9 +532,12 @@ export const resolvePastedDecklistImageUrl = (
   if (catalogId) {
     const separator = catalogId.indexOf('-');
     if (separator <= 0 || separator === catalogId.length - 1) return undefined;
-    // Unown's question mark is a card number, not the start of a query.
+    // The provider spells Unown ?'s filename "question", unlike its id.
+    // Card numbers belong in the path, never in a query or fragment.
     const set = encodeURIComponent(catalogId.slice(0, separator));
-    const number = encodeURIComponent(catalogId.slice(separator + 1));
+    const number = encodeURIComponent(
+      catalogId === 'ex10-?' ? 'question' : catalogId.slice(separator + 1)
+    );
     return `https://images.pokemontcg.io/${set}/${number}_hires.png`;
   }
   if (!setCode || !reference.number) return undefined;

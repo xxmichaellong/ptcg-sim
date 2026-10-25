@@ -166,7 +166,7 @@ describe('parsePastedDecklist', () => {
     expect(parsed.rows[0]).not.toHaveProperty('imageUrl');
     const unown = parsed.rows.at(-1)!;
     expect(unown.imageUrl).toBe(
-      'https://images.pokemontcg.io/ex10/%3F_hires.png'
+      'https://images.pokemontcg.io/ex10/question_hires.png'
     );
     expect(new URL(unown.imageUrl!).search).toBe('');
   });
