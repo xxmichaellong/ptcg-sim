@@ -1,14 +1,31 @@
-# PTCG Sim v2 rebuild blueprint
+# PTCG Sim v2 architecture and rebuild history
 
-- Status: **approved implementation in progress on the isolated v2 feature branch**
-- Last updated: 2026-09-15
-- Primary objective: replace the internals while preserving the current UI and UX.
+- Status: **implementation and review on the isolated v2 feature branch**
+- Current application guide: [apps/web/README.md](../../apps/web/README.md)
+- Current development and checks: [repository README](../../README.md)
 
 This directory is the implementation contract for the PTCG Sim v2 rebuild.
 Isolated implementation and characterization are authorized on the draft feature
 branch. The architecture decision register is closed. Production routing,
 user-facing migration, and rollout remain blocked on retained release evidence,
 named operational/sign-off ownership, and the applicable phase exit criteria.
+
+The application now opens on a Solo table, with online play, deck editing,
+settings, and the tutorial available from the app bar. Later accepted decisions
+supersede the original interface and rollout descriptions below:
+[experience redesign](./ADR-027-EXPERIENCE-REDESIGN.md),
+[table shell](./ADR-030-TABLE-FIRST-SHELL-AND-MOBILE.md),
+[tabletop](./ADR-031-TABLETOP-BY-DEFAULT.md),
+[deck screen](./ADR-033-DECK-SCREEN.md),
+[app bar](./ADR-036-APP-BAR.md), and
+[tutorial](./ADR-038-TUTORIAL-MODE.md). React DOM remains the default renderer;
+Pixi is available through `?renderer=pixi`. The synthetic comparison scene
+requires `?renderer-spike=1`.
+
+The following blueprint and implementation notes retain the September 15,
+2026 checkpoint. They explain the rebuild's foundations; use the guides and
+later ADRs above for current entry points and interface behavior. Production
+activation remains separate from local implementation and preview deployment.
 
 ## Recommended target
 
