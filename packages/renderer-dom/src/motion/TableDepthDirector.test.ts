@@ -1286,6 +1286,109 @@ it.each([
   }
 );
 
+it.each([
+  ['discard', 'deck', 'predict'],
+  ['deck', 'discard', 'advance'],
+] as const)(
+  'keeps a released %s cover from replacing an incoming %s source (%s)',
+  (releasedPile, incomingPile, cause) => {
+    const { advance } = stubClock();
+    const { view, zone, cardsIn, withZones, project, elementsFor } = tableOf();
+    const original = cardsIn(view, releasedPile);
+    const taken = releasedPile === 'deck' ? original[0]! : original.at(-1)!;
+    const moved = withZones(view, {
+      [releasedPile]: original.filter((card) => card.id !== taken.id),
+      hand: [...cardsIn(view, 'hand'), taken],
+    });
+    const sourceCards = cardsIn(moved, incomingPile);
+    // The reverse-direction update is a peer moving a buried public card;
+    // neither source pile's cover disappears to provide a fromRenderKey.
+    const incoming = sourceCards[0]!;
+    const remaining = cardsIn(moved, releasedPile);
+    const arrived = withZones(moved, {
+      [incomingPile]: sourceCards.slice(1),
+      [releasedPile]:
+        releasedPile === 'deck'
+          ? [incoming, ...remaining]
+          : [...remaining, incoming],
+    });
+    const first = project(view);
+    const landing = project(moved);
+    const next = project(arrived);
+    const destinationKey = `cover:${zone(releasedPile)}`;
+    const sourceKey = `cover:${zone(incomingPile)}`;
+    expect(next.scene.cards.some((card) => card.renderKey === sourceKey)).toBe(
+      true
+    );
+    expect(
+      landing.scene.cards.find((card) => card.renderKey === destinationKey)!.id
+    ).not.toBe(incoming.id);
+    expect(
+      next.scene.cards.find((card) => card.renderKey === destinationKey)!.id
+    ).toBe(incoming.id);
+    if (incomingPile === 'discard') {
+      expect(
+        landing.scene.cards.find((card) => card.id === incoming.id)!.renderKey
+      ).toBeNull();
+    }
+    const elements = elementsFor(first, landing, next);
+    const director = new TableDepthDirector(elements);
+    director.attach(
+      document.createElement('div'),
+      document.createElement('div')
+    );
+    director.commit(
+      null,
+      first,
+      DEFAULT_BOARD_PRESENTATION,
+      undefined,
+      false,
+      1
+    );
+    elements.get(destinationKey)!.dataset.held = 'drag';
+    director.commit(
+      first.scene,
+      first,
+      {
+        ...DEFAULT_BOARD_PRESENTATION,
+        drag: { cardId: taken.id, x: 700, y: 740, targetId: zone('hand') },
+      },
+      undefined,
+      false,
+      1
+    );
+    advance(120);
+    delete elements.get(destinationKey)!.dataset.held;
+    director.commit(
+      first.scene,
+      landing,
+      DEFAULT_BOARD_PRESENTATION,
+      { cause: 'predict' },
+      false,
+      1
+    );
+    advance(300);
+    const source = director.current(sourceKey)!;
+    director.commit(
+      landing.scene,
+      next,
+      DEFAULT_BOARD_PRESENTATION,
+      { cause },
+      false,
+      1
+    );
+    expect(director.current(destinationKey)!.bounds).toEqual(source.bounds);
+    for (let at = 316; at <= 1400; at += 16) advance(at);
+    expect(director.current(destinationKey)).toEqual(
+      next.pose(
+        next.scene.cards.find((card) => card.renderKey === destinationKey)!
+      )
+    );
+    expect(director.active).toBe(false);
+    director.destroy();
+  }
+);
+
 it('uses a new viewer press after a card was set down in place', () => {
   const { advance } = stubClock();
   const { view, project, elementsFor } = tableOf();

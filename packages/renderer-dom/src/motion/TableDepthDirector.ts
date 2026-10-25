@@ -545,6 +545,9 @@ export class TableDepthDirector {
         (landing && !newerViewerPress) ||
         (flight?.fromRenderKey !== undefined &&
           this.held.has(flight.fromRenderKey));
+      // A cover key can show a different card after its old top departed.
+      const carriedSourceKey =
+        flight?.fromRenderKey ?? (oldCard?.id === card.id ? key : undefined);
       const source =
         shownAt && !carriedByHand
           ? {
@@ -558,8 +561,8 @@ export class TableDepthDirector {
               plane: 0,
             }
           : flight
-            ? ((carriedByHand
-                ? this.sourcePainted.get(flight.fromRenderKey ?? key)
+            ? ((carriedByHand && carriedSourceKey !== undefined
+                ? this.sourcePainted.get(carriedSourceKey)
                 : undefined) ??
               this.sourcePose(
                 flight.from,
