@@ -1,19 +1,23 @@
 import { defineConfig } from '@playwright/test';
 
+const sharedSpecs = [
+  'remote-room-solo-full-stack.spec.ts',
+  'experience-refinement.spec.ts',
+  'special-card-formats.spec.ts',
+  'table-depth-live.spec.ts',
+  'table-depth-lab.spec.ts',
+  'optimistic-feedback.spec.ts',
+  'depth-recovery.spec.ts',
+  'public-pile-ordering.spec.ts',
+  'show-board-keyboard.spec.ts',
+];
+
 export default defineConfig({
   // Maps Lingui's macros to English stand-ins for the app code specs load
   // in Node (tests/browser/support/lingui-macro.ts, ADR-034).
   tsconfig: './tsconfig.playwright.json',
   testDir: './tests/browser',
-  testMatch: [
-    'remote-room-solo-full-stack.spec.ts',
-    'experience-refinement.spec.ts',
-    'special-card-formats.spec.ts',
-    'table-depth-live.spec.ts',
-    'table-depth-lab.spec.ts',
-    'optimistic-feedback.spec.ts',
-    'depth-recovery.spec.ts',
-  ],
+  testMatch: sharedSpecs,
   fullyParallel: false,
   forbidOnly: Boolean(process.env['CI']),
   // As in playwright.config.ts: one retry on CI, reported when used.
@@ -63,6 +67,13 @@ export default defineConfig({
     },
     {
       name: 'webkit',
+      // WebKit supports the phone contexts' touch and mobile emulation.
+      testMatch: [
+        ...sharedSpecs,
+        'public-pile-ordering-mobile.spec.ts',
+        'custom-card-dialog.spec.ts',
+        'deck-landscape.spec.ts',
+      ],
       use: {
         browserName: 'webkit',
         launchOptions: {
