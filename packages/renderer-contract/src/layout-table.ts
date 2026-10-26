@@ -238,7 +238,15 @@ interface HalfOptions {
    * rather than in the band at the seam.
    */
   readonly stadiumBeside?: boolean;
+  /**
+   * The mat this half takes, decided for both halves together when both
+   * are shown (`jointMat`), so the two sides of the table match.
+   */
+  readonly mat?: Mat;
 }
+
+/** The mat (columns down the sides) or the portrait mat (rows down the middle). */
+type Mat = 'landscape' | 'portrait';
 
 /**
  * The clear band between a half's cards and the centre line. It doubles as
@@ -291,6 +299,12 @@ export const TABLE_COIN_MAX_PX = 64;
 const EXTRAS_CONTROL_PX = 26;
 /** Its inset from the corner of the row it sits in. */
 const EXTRAS_CONTROL_INSET_PX = 6;
+/**
+ * How far a pile's count badge stands out past its corner (the DOM
+ * renderer's badge margin), and a little more: the `+` past the Lost Zone
+ * keeps clear of its count.
+ */
+const PILE_BADGE_REACH_PX = 13;
 /** The clear space kept between the Stadium and anything beside it. */
 const STADIUM_CLEARANCE_PX = 8;
 /**
@@ -298,6 +312,12 @@ const STADIUM_CLEARANCE_PX = 8;
  * player's left, this share of its width clear of them.
  */
 const STADIUM_ACTIVE_GAP_SHARE = 0.35;
+/**
+ * Less overlap than this, in px², is none: a place found at an obstacle's
+ * edge plus the clearance can cover a floating-point sliver of it, and a
+ * Stadium that took that for cover would jump as the window resized.
+ */
+const CLEAR_PX2 = 0.5;
 /**
  * Where a Stadium the size of a bench card has no clear place (a small
  * table), it is tried down to these shares of that size before it lies
@@ -506,7 +526,10 @@ const layoutHalf = (
   // row's edge toward the player, below where the Stadium reaches, and
   // short of the Active.
   const control: Rect = {
-    x: Math.min(piecesRight + gap, activeRect.x - gap - EXTRAS_CONTROL_PX),
+    x: Math.min(
+      piecesRight + (lostZone ? Math.max(gap, PILE_BADGE_REACH_PX) : gap),
+      activeRect.x - gap - EXTRAS_CONTROL_PX
+    ),
     y: activeTop + active - EXTRAS_CONTROL_INSET_PX - EXTRAS_CONTROL_PX,
     width: EXTRAS_CONTROL_PX,
     height: EXTRAS_CONTROL_PX,
@@ -878,6 +901,92 @@ const atPlayerEdge = (geometry: HalfGeometry, band: number): HalfGeometry => {
   };
 };
 
+/** A half's own choice of mat, at the frame's full height. */
+const matOf = (width: number, height: number, options: HalfOptions): Mat => {
+  const portrait = layoutHalfPortrait(width, height, options);
+  return bestOf(layoutHalf(width, height, options), portrait) === portrait
+    ? 'portrait'
+    : 'landscape';
+};
+
+/** A half's frame and the options it is laid out with. */
+interface HalfFrame {
+  readonly width: number;
+  readonly height: number;
+  readonly options: HalfOptions;
+}
+
+/**
+ * A half's pieces -- its markers, its coin and, on the viewer's own half,
+ * the `+` -- clear of its zones and of each other.
+ */
+const piecesClear = (geometry: HalfGeometry, own: boolean): boolean => {
+  const { markers, coin, control } = geometry.extras;
+  const pieces = [
+    ...(markers ? [markers] : []),
+    ...(coin.width >= TABLE_COIN_MIN_PX ? [coin] : []),
+    ...(own ? [control] : []),
+  ];
+  const zones = geometry.regions
+    .filter((region) => region.kind !== 'hand')
+    .map((region) => region.rect);
+  return pieces.every((piece, index) =>
+    [...zones, ...pieces.slice(index + 1)].every(
+      (other) => overlapArea(piece, other) <= CLEAR_PX2
+    )
+  );
+};
+
+/**
+ * The one mat both shown halves take: the one each would choose where they
+ * agree. Where they don't (a portrait tablet, whose far half is shorter
+ * and holds a smaller hand), the mat that leaves neither hand cramped, then
+ * the one whose smaller half shows the larger cards -- if both halves lay
+ * it out with their pieces clear, else the other mat if they do. Where
+ * neither does, each half keeps its own.
+ */
+const jointMat = (near: HalfFrame, far: HalfFrame): Mat | undefined => {
+  const laidOut = [near, far].map(({ width, height, options }) => ({
+    landscape: layoutHalf(width, height, options),
+    portrait: layoutHalfPortrait(width, height, options),
+  }));
+  const [nearOwn, farOwn] = laidOut.map(({ landscape, portrait }) =>
+    bestOf(landscape, portrait) === portrait ? 'portrait' : 'landscape'
+  );
+  if (nearOwn === farOwn) return nearOwn;
+  const landscape = laidOut.map((half) => half.landscape);
+  const portrait = laidOut.map((half) => half.portrait);
+  const cramped = (geometries: readonly HalfGeometry[]): boolean =>
+    geometries.some(handCrampedIn);
+  const least = (
+    geometries: readonly HalfGeometry[],
+    measure: (geometry: HalfGeometry) => number
+  ): number => Math.min(...geometries.map(measure));
+  const preferred = ((): Mat => {
+    if (cramped(landscape) !== cramped(portrait)) {
+      return cramped(landscape) ? 'portrait' : 'landscape';
+    }
+    if (cramped(landscape)) {
+      const difference =
+        least(portrait, handWidthOf) - least(landscape, handWidthOf);
+      if (Math.abs(difference) >= 1) {
+        return difference > 0 ? 'portrait' : 'landscape';
+      }
+    }
+    return least(portrait, benchCardHeightOf) >
+      least(landscape, benchCardHeightOf)
+      ? 'portrait'
+      : 'landscape';
+  })();
+  const clear = (mat: Mat): boolean =>
+    (mat === 'portrait' ? portrait : landscape).every((geometry, index) =>
+      piecesClear(geometry, index === 0)
+    );
+  if (clear(preferred)) return preferred;
+  const other = preferred === 'portrait' ? 'landscape' : 'portrait';
+  return clear(other) ? other : undefined;
+};
+
 const layoutTableHalf = (
   width: number,
   height: number,
@@ -885,12 +994,13 @@ const layoutTableHalf = (
 ): HalfGeometry => {
   // Mat or portrait mat is chosen at the frame's full height, so fitting
   // the mat shorter never turns it into the other.
-  const landscape = layoutHalf(width, height, options);
-  const portrait = layoutHalfPortrait(width, height, options);
-  const portraitWins = bestOf(landscape, portrait) === portrait;
+  const portraitWins =
+    (options.mat ?? matOf(width, height, options)) === 'portrait';
   const fitted = options.fitHeight;
   if (fitted === undefined || fitted >= height) {
-    return portraitWins ? portrait : landscape;
+    return portraitWins
+      ? layoutHalfPortrait(width, height, options)
+      : layoutHalf(width, height, options);
   }
   if (portraitWins) {
     return options.fitPortrait
@@ -898,7 +1008,7 @@ const layoutTableHalf = (
           layoutHalfPortrait(width, fitted, options),
           height - fitted
         )
-      : portrait;
+      : layoutHalfPortrait(width, height, options);
   }
   return atPlayerEdge(layoutHalf(width, fitted, options), height - fitted);
 };
@@ -1141,8 +1251,8 @@ const placeStadiumAt = (
       aimed,
       near.filter((rect) => rect !== soft?.board),
       STADIUM_CLEARANCE_PX
-    ) === 0 &&
-    underAt(aimed) === 0
+    ) <= CLEAR_PX2 &&
+    underAt(aimed) <= CLEAR_PX2
   ) {
     return { rect: aimed, cover: 0, under: 0 };
   }
@@ -1213,7 +1323,7 @@ const placeStadium = (
     toLeft,
     playArea
   );
-  if (full.cover === 0 && full.under === 0) return full;
+  if (full.cover <= CLEAR_PX2 && full.under <= CLEAR_PX2) return full;
   for (const share of STADIUM_FIT_SHARES) {
     const smaller = placeStadiumAt(
       { width: size.width * share, height: size.height * share },
@@ -1225,7 +1335,9 @@ const placeStadium = (
       toLeft,
       playArea
     );
-    if (smaller.cover === 0 && smaller.under === 0) return smaller;
+    if (smaller.cover <= CLEAR_PX2 && smaller.under <= CLEAR_PX2) {
+      return smaller;
+    }
   }
   return full;
 };
@@ -1315,7 +1427,7 @@ export const createTableLayoutSnapshot = (
         topReservePx: appBarPx.height + APP_BAR_INSET_PX,
       }
     : {};
-  const halfOptions: HalfOptions = {
+  const sharedOptions: HalfOptions = {
     ...(seamBandPx === undefined ? {} : { seamBandPx }),
     ...(hideEmptyLostZone ? {} : { lostZoneBeside: true }),
     ...(oncePerGameMarkers ? { markerCount: oncePerGameMarkers } : {}),
@@ -1347,6 +1459,33 @@ export const createTableLayoutSnapshot = (
   };
 
   const frames = framesFor(state, playAreaWidth);
+  // Across the table, the hand is the smaller one, and ends short of the
+  // app bar in the window's top-right corner.
+  const farReserve: HalfOptions = {
+    ...(hidden === undefined ? { handScale: TABLE_FAR_HAND_SCALE } : {}),
+    ...(appBarPx
+      ? {
+          handStartReservePx: barReserve.handStartReservePx,
+          minHandStripPx: barReserve.minHandStripPx,
+        }
+      : {}),
+  };
+  // Both halves shown take one mat, so the two sides of the table match
+  // (ADR-039). It is chosen as without the app bar, as the split is, so the
+  // bar never changes the near half (ADR-036).
+  const mat =
+    hidden === undefined
+      ? jointMat(
+          { ...frames.lower, options: sharedOptions },
+          {
+            ...frames.upper,
+            options: { ...sharedOptions, handScale: TABLE_FAR_HAND_SCALE },
+          }
+        )
+      : undefined;
+  const halfOptions: HalfOptions = mat
+    ? { ...sharedOptions, mat }
+    : sharedOptions;
   const buildPlayer = (
     template: BoardPlayerLayout,
     frameBounds: Rect,
@@ -1439,18 +1578,7 @@ export const createTableLayoutSnapshot = (
       ? { ...halfOptions, topReservePx: barReserve.topReservePx }
       : halfOptions
   );
-  // Across the table, the hand is the smaller one, and ends short of the
-  // app bar in the window's top-right corner.
-  const farOptions: HalfOptions = {
-    ...halfOptions,
-    ...(hidden === undefined ? { handScale: TABLE_FAR_HAND_SCALE } : {}),
-    ...(appBarPx
-      ? {
-          handStartReservePx: barReserve.handStartReservePx,
-          minHandStripPx: barReserve.minHandStripPx,
-        }
-      : {}),
-  };
+  const farOptions: HalfOptions = { ...halfOptions, ...farReserve };
   let upper = buildPlayer(semantics.players[1], frames.upper, farOptions);
   const regionOf = (
     player: BoardPlayerLayout,
@@ -1461,17 +1589,15 @@ export const createTableLayoutSnapshot = (
   const activeOf = (player: BoardPlayerLayout): Rect =>
     regionOf(player, 'active')!;
   /**
-   * What the Stadium keeps clear of on a half: its zones and pieces, all
-   * but its staging area where that makes room for it (`board`: false).
+   * What the Stadium keeps clear of on a half: its zones (its hand too) and
+   * pieces, all but its staging area where that makes room for it
+   * (`board`: false).
    */
   const obstaclesOf = (player: BoardPlayerLayout, board: boolean): Rect[] => {
     const extras = player.extras;
     return [
       ...player.regions
-        .filter(
-          (region) =>
-            region.kind !== 'hand' && (board || region.kind !== 'board')
-        )
+        .filter((region) => board || region.kind !== 'board')
         .map((region) => region.physicalDeclaredBounds),
       ...(extras?.markers ? [extras.markers] : []),
       ...(extras ? [extras.coin, extras.control] : []),
@@ -1641,11 +1767,10 @@ export const createTableLayoutSnapshot = (
     }
     let split = splitAt(scale, true);
     if (appBarPx) {
-      // The bar can change the far half -- a cramped hand there takes the
-      // mat, its cards bigger -- so that the Stadium lies over more of it
-      // than it would without the bar. The far half alone then takes the
-      // tallest fit that clears it as well; the near half is kept as it
-      // was.
+      // The bar can change the far half -- its hand strip deeper, its rows
+      // shorter -- so that the Stadium lies over more of it than it would
+      // without the bar. The far half alone then takes the tallest fit
+      // that clears it as well; the near half is kept as it was.
       const plain = splitAt(scale);
       const clear = (candidate: typeof split): boolean =>
         (candidate.fits || !plain.fits) &&
@@ -1801,7 +1926,7 @@ export const createTableLayoutSnapshot = (
     };
     // The player's own left: across the table, the screen's right.
     let chosen = placedOn(atTop);
-    if (chosen.found.cover > 0) {
+    if (chosen.found.cover > CLEAR_PX2) {
       // No clear place there (a small table): the other side, if clearer.
       const other = placedOn(!atTop);
       if (

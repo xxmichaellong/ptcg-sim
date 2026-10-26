@@ -78,12 +78,15 @@ here):
   (under 12px of Active card): on the smallest tables the bar's corner
   gives way first.
 
-The table's split is found as without the bar, and the far half laid out
-with it at that scale, so the near half is unchanged by it; nothing on the
+The table's split, and the mat both halves take (ADR-039), are found as
+without the bar, and the far half laid out with it at that scale, so the
+near half is unchanged by it -- but for its Lost Zone, which both halves
+put beside the prizes or neither: on a short screen held sideways and split
+40/60, the far row has no room for it there past the bar. Nothing on the
 table is under the bar at any size it fits in (layout-table and
-board-depth tests, app-bar.spec). Where the bar changes the far half so
-that the Stadium lies over more of it than it would without the bar (a
-cramped hand taking the mat, its cards bigger), the far half alone takes
+board-depth tests, app-bar.spec). Where the bar changes the far half (its
+hand strip deeper, its rows shorter) so that the Stadium lies over more of
+it than it would without the bar, the far half alone takes
 the tallest shorter fit that clears it (its staging area still holding the
 Stadium), its portrait mat too, the near half kept as it was. Shorter is
 not steadily clearer, so the fits are tried downward and the first clear

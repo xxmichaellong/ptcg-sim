@@ -296,6 +296,15 @@ textarea {
   outline: 2px solid var(--color-desk-focus, var(--color-accent));
   outline-offset: 2px;
 }
+/* The pill's Sort end rings inside itself, on the pill's own surface: out
+   past its edge the ring would run over the count beside it as well as the
+   desk, and no one colour stands out from both. */
+.board-spike-host[data-geometry='2']
+  .table-hand-pill
+  .legacy-hand-sort--toggle.table-hand-pill__sort:has(input:focus-visible) {
+  outline-color: var(--color-accent);
+  outline-offset: -2px;
+}
 @media (hover: hover) and (pointer: fine) {
   .board-spike-host[data-geometry='2'] .legacy-hand-sort--toggle:hover {
     background-color: color-mix(

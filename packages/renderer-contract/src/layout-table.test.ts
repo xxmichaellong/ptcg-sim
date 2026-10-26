@@ -945,6 +945,95 @@ describe('table layout (geometry v2)', () => {
     }
   });
 
+  it("keeps the `+` clear of the Lost Zone's count beside it", () => {
+    // renderer-dom's pile badge: at least 26 by 22, 9px past the pile's
+    // corner (the viewer's bottom right of their own pile).
+    for (const [width, height, touch] of [
+      [844, 390, true],
+      [932, 430, true],
+      [1280, 600, false],
+      [1280, 720, false],
+      [1440, 900, false],
+    ] as const) {
+      const snapshot = createTableLayoutSnapshot(
+        stateAt(width, height, {
+          shellMode: 'fullscreen',
+          oncePerGameMarkers: 2,
+          ...(touch ? { seamBandPx: 46 } : {}),
+        })
+      );
+      const lost = region(snapshot, 'local', 'lostZone').physicalDeclaredBounds;
+      const control = snapshot.players.find(
+        (player) => player.side === 'local'
+      )!.extras!.control;
+      // Beside the pieces, its badge toward the `+`.
+      expect(lost.x + lost.width, `${width}x${height}`).toBeLessThan(control.x);
+      const badge = {
+        x: lost.x + lost.width + 9 - 26,
+        y: lost.y + lost.height + 9 - 22,
+        width: 26,
+        height: 22,
+      };
+      expect(overlaps(badge, control), `${width}x${height}`).toBe(false);
+    }
+  });
+
+  it('lays both halves out on one mat, the mat or the portrait mat', () => {
+    const matOf = (
+      snapshot: ReturnType<typeof createTableLayoutSnapshot>,
+      side: 'local' | 'opponent'
+    ) => {
+      const box = (kind: string) =>
+        region(snapshot, side, kind).physicalDeclaredBounds;
+      // Side by side in the portrait mat's pile row; one above the other
+      // down the mat's outer column.
+      return Math.abs(box('deck').y - box('discard').y) < 1
+        ? 'portrait'
+        : 'mat';
+    };
+    // Portrait tablets, whose shorter far half with its smaller hand would
+    // take the mat on its own while the near half takes the portrait mat.
+    for (const [width, height] of [
+      [768, 1024],
+      [810, 1080],
+      [834, 1112],
+      [1024, 1366],
+    ] as const) {
+      const snapshot = createTableLayoutSnapshot(
+        stateAt(width, height, {
+          shellMode: 'fullscreen',
+          appBarPx: { width: 302, height: 50 },
+          seamBandPx: 46,
+          oncePerGameMarkers: 2,
+        })
+      );
+      expect(matOf(snapshot, 'local'), `${width}x${height}`).toBe('portrait');
+      expect(matOf(snapshot, 'opponent'), `${width}x${height}`).toBe(
+        'portrait'
+      );
+    }
+    for (let width = 360; width <= 1440; width += 36) {
+      for (const height of [480, 700, 900, 1180]) {
+        for (const lowerShare of [0.4, 0.54, 0.6]) {
+          for (const markers of [0, 2]) {
+            const snapshot = createTableLayoutSnapshot(
+              stateAt(width, height, {
+                shellMode: 'fullscreen',
+                appBarPx: { width: 242, height: 42 },
+                vertical: tableVerticalLayout(lowerShare),
+                ...(markers ? { oncePerGameMarkers: markers } : {}),
+              })
+            );
+            expect(
+              matOf(snapshot, 'opponent'),
+              `${width}x${height} split=${lowerShare} markers=${markers}`
+            ).toBe(matOf(snapshot, 'local'));
+          }
+        }
+      }
+    }
+  });
+
   it('keeps a full Bench, its Pokémon carrying Energy, inside its zone on any table', () => {
     const base = createRendererSpikeView();
     const me = base.playerOrder[0]!;

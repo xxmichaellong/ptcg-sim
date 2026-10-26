@@ -205,8 +205,8 @@ const GAP_PX = 6;
  * The actions sit past the Stadium, at the seam's right end, where a
  * right hand and the player's piles are (ADR-036), when at least this many
  * buttons fit there and none of a full turn's goes behind More that would
- * show before it; otherwise (an upright phone, whose Stadium sits at the
- * right edge) before it.
+ * show before it; otherwise (a narrow table, whose right end the Stadium
+ * leaves short) before it.
  */
 const RIGHT_END_MIN_BUTTONS = 4;
 /**

@@ -148,9 +148,10 @@
 }
 
 /* The focus ring of the table's own controls -- on the felt (the rail, the
-   coin, the markers, the `+`s) and over the desk (the hand pills) -- 3:1 at
-   least against what lies under it, whichever theme the app is in: dark on
-   the light mats and desks, light on the dark ones. */
+   coin, the markers, the `+`s) and over the desk -- 3:1 at least against
+   the painted felt or desk under it, whichever theme the app is in: dark on
+   the light mats and desks, light on the dark ones (the hand pill's Sort
+   rings inside itself instead, in the theme's accent). */
 :root:is(
   :not([data-table-art]),
   [data-table-art='cream'],
@@ -169,8 +170,8 @@
   [data-table-art='burgundy'],
   [data-table-art='charcoal']
 ) {
-  --color-felt-focus: #9cc4f2;
-  --color-desk-focus: #9cc4f2;
+  --color-felt-focus: #e8f1fc;
+  --color-desk-focus: #e8f1fc;
 }
 /* Green felt by day lies on light oak. */
 :root[data-theme='day'][data-table-art='classic'] {

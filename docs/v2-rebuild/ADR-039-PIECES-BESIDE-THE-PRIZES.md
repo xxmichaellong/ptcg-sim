@@ -32,15 +32,18 @@ In each player's own frame, the Active's row reads, from the prizes:
 
 1. **The pieces column**, beside the prizes: the VSTAR and GX markers the
    viewer keeps on the table, stacked (VSTAR first), and the player's coin
-   under them. A marker is never shorter than 22px (v1's corner markers
-   were 24px); a row too short to stack two lays them side by side. The
-   column is as wide as the wider of the markers and the coin.
+   under them. A marker is at least 22px tall (v1's corner markers were
+   24px) where the Active's row is that tall, and as tall as the row on the
+   smallest tables, whose row is shorter; a row too short to stack two lays
+   them side by side. The column is as wide as the wider of the markers and
+   the coin.
 2. **The Lost Zone**, when it is on the table and the row has room for it
    as well as the Stadium's; otherwise it takes its place at the end of the
    piles' column. Both halves decide together, so it is in the same place
    on both.
 3. **The `+`** for the optional pieces, just past them at the row's edge
-   toward the player.
+   toward the player, and past the Lost Zone's count, which stands out
+   beyond the pile's corner.
 4. **Clear felt** for the Stadium (below).
 5. **The Active**, in the middle of the table. Its slot is up to 2.2 cards
    wide and gives way to the pieces and the Stadium's room first.
@@ -52,6 +55,18 @@ row.
 
 The markers never move to the hand's corner, past the app bar or to a row of
 their own. The far hand keeps only the bar's corner (ADR-036).
+
+Both halves take the same mat, the mat or the portrait mat. Where each
+would choose differently on its own (a portrait tablet, whose far half is
+shorter and holds a smaller hand), they take the one that leaves neither
+hand cramped, then the one whose smaller half shows the larger cards, as
+long as both halves lay it out with their pieces clear of their zones;
+otherwise the other mat, where that is clear. Where neither is, each half
+keeps its own; the probe below found no such table. The mat is chosen as
+without the app bar, as the split is (ADR-036), so the bar never changes the
+near half's; on the smallest tables the far hand past the bar can then be a
+little narrower (down to about 93px) than the 128px a half on its own
+would keep.
 
 ### 2. The Stadium on the near player's left
 
@@ -74,18 +89,26 @@ least, a staging area before anything else.
 Each player's coin lies in their pieces column, under the markers (at the
 top of the column with none), its size as before: a third of an Active
 card, 34 to 64px. A half too small for one has no coin, and the rail offers
-Coin instead.
+Coin instead. Its Heads or Tails chip is centred on it but kept inside the
+table, where a coin by the prizes lies nearer the edge than half the chip
+(an upright phone).
 
 ## Consequences
 
-- The probe's 37,000 layouts: the markers are on the mat in every one; the
-  Stadium touches a staging area in 56 (phones 390px wide or less, and one
-  half alone on a 568 × 1180 window) and nothing else, against about 14,000
-  before; on tables of about 360 × 360 the `+` can touch the markers.
+- The probe's 37,000 layouts: the markers are on the mat in every one, and
+  both halves on one mat in every one with both shown (the halves' own
+  choices differed in about 3,600). The Stadium touches a staging area in
+  48, all on upright phones 390px wide or less with both halves shown, and
+  never a hand, another zone or a piece, against about 14,000 before. The
+  `+` grazes the markers on a 375 × 360 table (3px² of their boxes); at
+  673 × 900 with the near half 60% of the table, the coin's and the `+`'s boxes meet at a
+  corner while the discs drawn in them stay about 10px apart.
 - The far half's refit around the app bar (ADR-036) keeps its staging area a
   clear card beside the Stadium; it no longer weighs where the markers go.
 - `BoardPlayerExtrasLayout` gains `coin` and loses `corner` and
   `markersRow`; the scene loses `handHeldFlat`.
-- Tests: `layout-table.test.ts`, `table-coin.test.ts`,
+- Tilted, the hand pill keeps off the zones it would cover, their count
+  badges too (`LegacyBoardChrome`).
+- Tests: `layout-table.test.ts`, `table-coin.test.ts`, `TableCoin.test.tsx`,
   `TableZoneAffordances.test.tsx`, `LegacyBoardChrome.test.tsx`,
   `LegacyBoardChrome.onehalf.test.tsx`.

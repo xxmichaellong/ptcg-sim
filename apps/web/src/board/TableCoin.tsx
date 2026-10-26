@@ -134,10 +134,62 @@ const chipAnchor = (
   return depth?.enabled ? depth.point(edge) : edge;
 };
 
+/** The least felt kept between the result chip and the table's edge. */
+const CHIP_EDGE_PX = 4;
+
+/**
+ * The coin's result, centred on it but kept inside the table: a coin by the
+ * prizes on an upright phone lies nearer the edge than half the chip.
+ */
+const CoinResultChip = ({
+  anchor,
+  bounds,
+  result,
+  phase,
+  playerId,
+  above,
+  children,
+}: {
+  readonly anchor: { readonly x: number; readonly y: number };
+  readonly bounds: Rect;
+  readonly result: Face;
+  readonly phase: string;
+  readonly playerId: string;
+  readonly above: boolean;
+  readonly children: string;
+}) => {
+  const ref = useRef<HTMLSpanElement>(null);
+  const [width, setWidth] = useState(0);
+  useLayoutEffect(() => {
+    // Its laid-out width, unscaled by the entrance animation.
+    setWidth(ref.current?.offsetWidth ?? 0);
+  }, [children]);
+  const half = width / 2;
+  const least = bounds.x + CHIP_EDGE_PX + half;
+  const most = bounds.x + bounds.width - CHIP_EDGE_PX - half;
+  const x = least > most ? anchor.x : Math.min(most, Math.max(least, anchor.x));
+  return (
+    <span
+      ref={ref}
+      className="table-coin__result"
+      data-coin-result-chip={result}
+      data-coin-player-id={playerId}
+      data-coin-phase={phase}
+      data-chip-above={above ? 'true' : undefined}
+      aria-hidden="true"
+      style={{ left: x, top: anchor.y }}
+    >
+      {children}
+    </span>
+  );
+};
+
 interface TableCoinProps {
   readonly playerId: string;
   readonly own: boolean;
   readonly rect: Rect;
+  /** The table's play area: the result chip stays inside it. */
+  readonly bounds: Rect;
   readonly depth: BoardDepthProjection | undefined;
   readonly motion: CoinMotion;
   readonly face: Face;
@@ -155,6 +207,7 @@ const TableCoin = ({
   playerId,
   own,
   rect,
+  bounds,
   depth,
   motion,
   face,
@@ -377,19 +430,18 @@ const TableCoin = ({
         )}
       </div>
       {result ? (
-        <span
-          className="table-coin__result"
-          data-coin-result-chip={result}
-          data-coin-player-id={playerId}
-          data-coin-phase={phase}
-          data-chip-above={own ? undefined : 'true'}
-          aria-hidden="true"
-          style={{ left: chip.x, top: chip.y }}
+        <CoinResultChip
+          anchor={chip}
+          bounds={bounds}
+          result={result}
+          phase={phase}
+          playerId={playerId}
+          above={!own}
         >
           {result === 'heads'
             ? t({ message: 'Heads', context: 'coin flip' })
             : t({ message: 'Tails', context: 'coin flip' })}
-        </span>
+        </CoinResultChip>
       ) : null}
     </>
   );
@@ -525,6 +577,7 @@ export const TableCoins = ({
             playerId={spot.playerId}
             own={spot.own}
             rect={spot.rect}
+            bounds={layout.playAreaBounds}
             depth={depth}
             motion={motion}
             face={faces[spot.playerId] ?? 'heads'}

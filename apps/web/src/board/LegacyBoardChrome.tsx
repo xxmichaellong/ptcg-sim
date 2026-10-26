@@ -332,6 +332,11 @@ export interface TableHandCount {
 
 /** The least room between a hand's pill and the table's edge. */
 const HAND_PILL_EDGE = 4;
+/**
+ * How far a pile's count badge stands out past its corner (renderer-dom's
+ * badge margin), and a hair more: the pill keeps off the badges too.
+ */
+const PILE_BADGE_REACH_PX = 10;
 
 /**
  * The hand's count and its Sort as one pill where the table counts the
@@ -548,8 +553,8 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
 }) {
   const pills =
     layout.geometryVersion === 2 && handCounts ? handCounts : undefined;
-  // Tilted, each half's zones as the projection draws them, for the hand
-  // pill to keep off.
+  // Tilted, each half's zones as the projection draws them, their count
+  // badges with them, for the hand pill to keep off.
   const pillAvoid = useMemo(
     () =>
       depth && pills
@@ -571,13 +576,23 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
                       y: box.y + box.height,
                     }),
                   ];
-                  const left = Math.min(...corners.map((point) => point.x));
-                  const top = Math.min(...corners.map((point) => point.y));
+                  const left =
+                    Math.min(...corners.map((point) => point.x)) -
+                    PILE_BADGE_REACH_PX;
+                  const top =
+                    Math.min(...corners.map((point) => point.y)) -
+                    PILE_BADGE_REACH_PX;
                   return {
                     x: left,
                     y: top,
-                    width: Math.max(...corners.map((point) => point.x)) - left,
-                    height: Math.max(...corners.map((point) => point.y)) - top,
+                    width:
+                      Math.max(...corners.map((point) => point.x)) +
+                      PILE_BADGE_REACH_PX -
+                      left,
+                    height:
+                      Math.max(...corners.map((point) => point.y)) +
+                      PILE_BADGE_REACH_PX -
+                      top,
                   };
                 }),
             ])

@@ -332,6 +332,51 @@ describe('TableCoins', () => {
     expect(coin('local')!.dataset.coinFace).toBe('heads');
   });
 
+  it('keeps the result inside the table where the coin lies near its edge', async () => {
+    // An upright phone: the coin by the prizes lies nearer the edge than
+    // half the chip.
+    const phone = createTableLayoutSnapshot(
+      layoutState({
+        viewport: { width: 390, height: 844, devicePixelRatio: 1 },
+      })
+    );
+    const spot = tableCoinSpots(phone).find((candidate) => candidate.own)!;
+    expect(spot.rect.x + spot.rect.width / 2).toBeLessThan(4 + 75 / 2);
+    const offsetWidth = Object.getOwnPropertyDescriptor(
+      HTMLElement.prototype,
+      'offsetWidth'
+    );
+    Object.defineProperty(HTMLElement.prototype, 'offsetWidth', {
+      configurable: true,
+      get(this: HTMLElement) {
+        return this.classList.contains('table-coin__result') ? 75 : 0;
+      },
+    });
+    try {
+      await render({ layout: phone });
+      await act(async () => source.set(flip({ phase: 'landed' })));
+      const chip = host.querySelector<HTMLElement>('[data-coin-result-chip]')!;
+      expect(Number.parseFloat(chip.style.left)).toBeCloseTo(4 + 75 / 2, 6);
+      // Clear of the edge, it stays centred on the coin.
+      await render({ layout });
+      const wide = tableCoinSpots(layout).find((candidate) => candidate.own)!;
+      expect(Number.parseFloat(chip.style.left)).toBeCloseTo(
+        wide.rect.x + wide.rect.width / 2,
+        6
+      );
+    } finally {
+      if (offsetWidth) {
+        Object.defineProperty(
+          HTMLElement.prototype,
+          'offsetWidth',
+          offsetWidth
+        );
+      } else {
+        Reflect.deleteProperty(HTMLElement.prototype, 'offsetWidth');
+      }
+    }
+  });
+
   it('stays out of reach under an open pile viewer', async () => {
     await render({ covered: true });
     const button = host.querySelector<HTMLButtonElement>('#flipCoinButton')!;

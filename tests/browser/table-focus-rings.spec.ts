@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import { ownRoomBudget } from './support/room-budget.js';
 import { dismissWelcome } from './support/table-shell.js';
@@ -6,7 +6,8 @@ import { dismissWelcome } from './support/table-shell.js';
 /**
  * The table's own controls show where the keyboard is on every look, by
  * day as by night: their ring is the look's, not the app theme's, at 3:1
- * at least against the felt it lies on (and over the desk, the hand pill's).
+ * at least against the painted felt or desk it lies on. The hand pill's
+ * Sort rings inside itself, on the pill, in the theme's accent.
  */
 const LOOKS = [
   'cream',
@@ -21,19 +22,123 @@ const LOOKS = [
   'charcoal',
 ] as const;
 
+/** Each control the keyboard reaches, and the element its ring is drawn on. */
+const CONTROLS = [
+  // The rail at the seam (the app bar's buttons keep their glass's ink).
+  { name: 'rail', focus: '#boardButtonContainer .ptcgsim-rail-button' },
+  { name: 'add to the table', focus: '.table-zone-extras' },
+  { name: 'coin', focus: '#flipCoinButton' },
+  { name: 'hand sort', focus: '.table-hand-pill__sort input', ring: '..' },
+] as const;
+
+/** The ring painted in a colour nothing else on the table is, to find it. */
+const MARKED =
+  '*:focus-visible, *:has(> input:focus-visible) { outline-color: #ff00ff !important; }';
+
+const focusByKeyboard = async (page: Page, control: Locator) => {
+  await control.focus();
+  await page.keyboard.press('Shift+Tab');
+  await page.keyboard.press('Tab');
+  await expect(control).toBeFocused();
+  // Past the controls' transitions.
+  await page.waitForTimeout(300);
+};
+
+/**
+ * The contrast between the ring's colour and what lies under each pixel it
+ * covers, unfocused: the ring found in a shot with it marked, the felt in
+ * one with the control blurred.
+ */
+const ringContrasts = async (
+  page: Page,
+  control: Locator,
+  ring: Locator
+): Promise<number[]> => {
+  await focusByKeyboard(page, control);
+  const color = await ring.evaluate(
+    (element) => getComputedStyle(element).outlineColor
+  );
+  const box = (await ring.boundingBox())!;
+  const clip = {
+    x: Math.max(0, Math.floor(box.x - 10)),
+    y: Math.max(0, Math.floor(box.y - 10)),
+    width: Math.ceil(box.width + 20),
+    height: Math.ceil(box.height + 20),
+  };
+  const style = await page.addStyleTag({ content: MARKED });
+  await page.waitForTimeout(100);
+  const marked = (await page.screenshot({ clip })).toString('base64');
+  await style.evaluate((element) => element.parentNode?.removeChild(element));
+  await page.evaluate(() =>
+    (document.activeElement as HTMLElement | null)?.blur()
+  );
+  await page.waitForTimeout(400);
+  const unfocused = (await page.screenshot({ clip })).toString('base64');
+  return page.evaluate(
+    async ({ marked, unfocused, color }) => {
+      const pixels = async (png: string) => {
+        const image = new Image();
+        image.src = `data:image/png;base64,${png}`;
+        await image.decode();
+        const canvas = document.createElement('canvas');
+        canvas.width = image.width;
+        canvas.height = image.height;
+        const context = canvas.getContext('2d')!;
+        context.drawImage(image, 0, 0);
+        return context.getImageData(0, 0, image.width, image.height).data;
+      };
+      const linear = (value: number) => {
+        const channel = value / 255;
+        return channel <= 0.03928
+          ? channel / 12.92
+          : ((channel + 0.055) / 1.055) ** 2.4;
+      };
+      const luminance = (data: Uint8ClampedArray, at: number) =>
+        0.2126 * linear(data[at]!) +
+        0.7152 * linear(data[at + 1]!) +
+        0.0722 * linear(data[at + 2]!);
+      // The ring's colour as painted, whatever space the style writes it in.
+      const swatch = document.createElement('canvas').getContext('2d')!;
+      swatch.fillStyle = color;
+      swatch.fillRect(0, 0, 1, 1);
+      const ring = luminance(swatch.getImageData(0, 0, 1, 1).data, 0);
+      const mark = await pixels(marked);
+      const under = await pixels(unfocused);
+      const ratios: number[] = [];
+      for (let at = 0; at < mark.length; at += 4) {
+        if (!(mark[at]! > 235 && mark[at + 1]! < 20 && mark[at + 2]! > 235)) {
+          continue;
+        }
+        const felt = luminance(under, at);
+        ratios.push(
+          (Math.max(ring, felt) + 0.05) / (Math.min(ring, felt) + 0.05)
+        );
+      }
+      return ratios.sort((left, right) => left - right);
+    },
+    { marked, unfocused, color }
+  );
+};
+
 test('rings the keyboard’s place on the table at 3:1 on every look, by day and by night', async ({
   page,
 }) => {
-  test.setTimeout(240_000);
+  test.setTimeout(420_000);
   await page.setViewportSize({ width: 1280, height: 800 });
   for (const darkMode of [true, false]) {
     for (const art of LOOKS) {
       await page.addInitScript(
-        ([darkMode, art]) =>
+        ([darkMode, art]) => {
           localStorage.setItem(
             'ptcgsim.table.v1',
             JSON.stringify({ darkMode, art })
-          ),
+          );
+          // Flat, the controls lie square to the screen shots.
+          localStorage.setItem(
+            'ptcgsim.table-depth.v1',
+            JSON.stringify({ mode: 'flat' })
+          );
+        },
         [darkMode, art] as const
       );
       // A Solo room a look: each from a client of its own.
@@ -46,56 +151,16 @@ test('rings the keyboard’s place on the table at 3:1 on every look, by day and
       ).toBeVisible({ timeout: 30_000 });
       await dismissWelcome(page);
       await expect(page.locator('html')).toHaveAttribute('data-table-art', art);
-      // The rail at the seam (the app bar's buttons keep their glass's ink).
-      const button = page
-        .locator('#boardButtonContainer .ptcgsim-rail-button')
-        .first();
-      await button.focus();
-      await page.keyboard.press('Shift+Tab');
-      await page.keyboard.press('Tab');
-      await expect(button).toBeFocused();
-      const contrast = await button.evaluate((element) => {
-        const canvas = document.createElement('canvas');
-        canvas.width = 1;
-        canvas.height = 1;
-        const context = canvas.getContext('2d')!;
-        // The colour as painted, whatever space the style writes it in.
-        const luminance = (color: string): number => {
-          context.clearRect(0, 0, 1, 1);
-          context.fillStyle = color;
-          context.fillRect(0, 0, 1, 1);
-          const [r = 0, g = 0, b = 0] = context.getImageData(0, 0, 1, 1).data;
-          const linear = (value: number) => {
-            const channel = value / 255;
-            return channel <= 0.03928
-              ? channel / 12.92
-              : ((channel + 0.055) / 1.055) ** 2.4;
-          };
-          return 0.2126 * linear(r) + 0.7152 * linear(g) + 0.0722 * linear(b);
-        };
-        const ratio = (left: string, right: string): number => {
-          const [high, low] = [luminance(left), luminance(right)].sort(
-            (a, b) => b - a
-          ) as [number, number];
-          return (high + 0.05) / (low + 0.05);
-        };
-        const root = getComputedStyle(document.documentElement);
-        const token = (name: string) => root.getPropertyValue(name).trim();
-        const ring = getComputedStyle(element).outlineColor;
-        return {
-          felt: Math.min(
-            ratio(ring, token('--color-felt')),
-            ratio(ring, token('--color-felt-deep'))
-          ),
-          desk: Math.min(
-            ratio(token('--color-desk-focus'), token('--color-desk')),
-            ratio(token('--color-desk-focus'), token('--color-desk-hi'))
-          ),
-        };
-      });
-      const at = `${art} ${darkMode ? 'night' : 'day'}`;
-      expect(contrast.felt, at).toBeGreaterThanOrEqual(3);
-      expect(contrast.desk, at).toBeGreaterThanOrEqual(3);
+      for (const { name, focus, ...rest } of CONTROLS) {
+        const control = page.locator(focus).first();
+        const ring = 'ring' in rest ? control.locator(rest.ring) : control;
+        const ratios = await ringContrasts(page, control, ring);
+        const at = `${name} on ${art} by ${darkMode ? 'night' : 'day'}`;
+        // A whole ring's worth of pixels, nearly all of them at 3:1 (a few
+        // cross the seam's line or a neighbour's edge).
+        expect(ratios.length, at).toBeGreaterThan(60);
+        expect(ratios[Math.floor(ratios.length * 0.05)], at).toBeGreaterThan(3);
+      }
     }
   }
 });

@@ -105,6 +105,8 @@
 .table-zone-chip:focus-visible {
   outline: 2px solid var(--color-felt-focus, var(--color-accent));
   outline-offset: 2px;
+  /* Its ring drawn at full strength, as the button is under a pointer. */
+  opacity: 1;
 }
 
 /* ---- The optional pieces: the Lost Zone and the markers ---------------- */
@@ -167,6 +169,7 @@
 .table-zone-extras:focus-visible {
   outline: 2px solid var(--color-felt-focus, var(--color-accent));
   outline-offset: 2px;
+  opacity: 1;
 }
 
 /* The markers lie on the mat beside the prizes, VSTAR nearest the centre
