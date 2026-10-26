@@ -124,11 +124,13 @@ describe('tableCoinSpots', () => {
     }
   });
 
-  it('gives both players a coin on a desktop table, and the near one on a phone', () => {
+  it('gives both players a coin, on a desktop table as on a phone', () => {
     for (const [width, height] of [
       [1440, 900],
       [1280, 720],
       [1920, 1080],
+      [390, 844],
+      [360, 740],
     ] as const) {
       const spots = tableCoinSpots(layoutAt(width, height));
       expect(
@@ -139,9 +141,25 @@ describe('tableCoinSpots', () => {
         [red, false],
       ]);
     }
-    expect(
-      tableCoinSpots(layoutAt(390, 844)).find((spot) => spot.own)?.playerId
-    ).toBe(blue);
+  });
+
+  it('lays a coin on both halves or on neither, never one side alone', () => {
+    for (let width = 320; width <= 1920; width += 40) {
+      for (const height of [320, 400, 480, 568, 640, 720, 800, 900]) {
+        for (const markers of [0, 2]) {
+          const spots = tableCoinSpots(
+            layoutAt(width, height, {
+              appBarPx: { width: 242, height: 42 },
+              ...(markers ? { oncePerGameMarkers: markers } : {}),
+            })
+          );
+          expect(
+            spots.length,
+            `${width}x${height} markers=${markers}`
+          ).not.toBe(1);
+        }
+      }
+    }
   });
 
   it('lies where the markers would start with none, and in the same place on both halves', () => {

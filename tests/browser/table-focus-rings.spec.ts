@@ -120,13 +120,16 @@ const ringContrasts = async (
   );
 };
 
-test('rings the keyboard’s place on the table at 3:1 on every look, by day and by night', async ({
-  page,
-}) => {
-  test.setTimeout(420_000);
-  await page.setViewportSize({ width: 1280, height: 800 });
-  for (const darkMode of [true, false]) {
-    for (const art of LOOKS) {
+// A test a look, each in a room of its own: a pass over all twenty in one
+// test outlasts any sensible timeout on a slow runner.
+for (const darkMode of [true, false]) {
+  for (const art of LOOKS) {
+    const when = darkMode ? 'night' : 'day';
+    test(`rings the keyboard’s place on the ${art} table by ${when} at 3:1`, async ({
+      page,
+    }) => {
+      test.setTimeout(120_000);
+      await page.setViewportSize({ width: 1280, height: 800 });
       await page.addInitScript(
         ([darkMode, art]) => {
           localStorage.setItem(
@@ -141,7 +144,6 @@ test('rings the keyboard’s place on the table at 3:1 on every look, by day and
         },
         [darkMode, art] as const
       );
-      // A Solo room a look: each from a client of its own.
       await ownRoomBudget(page.context());
       await page.goto('/?renderer=dom');
       await expect(
@@ -155,12 +157,13 @@ test('rings the keyboard’s place on the table at 3:1 on every look, by day and
         const control = page.locator(focus).first();
         const ring = 'ring' in rest ? control.locator(rest.ring) : control;
         const ratios = await ringContrasts(page, control, ring);
-        const at = `${name} on ${art} by ${darkMode ? 'night' : 'day'}`;
         // A whole ring's worth of pixels, nearly all of them at 3:1 (a few
         // cross the seam's line or a neighbour's edge).
-        expect(ratios.length, at).toBeGreaterThan(60);
-        expect(ratios[Math.floor(ratios.length * 0.05)], at).toBeGreaterThan(3);
+        expect(ratios.length, name).toBeGreaterThan(60);
+        expect(ratios[Math.floor(ratios.length * 0.05)], name).toBeGreaterThan(
+          3
+        );
       }
-    }
+    });
   }
-});
+}

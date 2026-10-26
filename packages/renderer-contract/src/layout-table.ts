@@ -289,11 +289,19 @@ const VSTAR_MARKER_ASPECT = 2;
 const GX_MARKER_ASPECT = 1.5;
 /**
  * Each player's coin lies under their markers, in their column: about a
- * third of an Active card tall, within these bounds. A coin with less room
- * than the least is left off the table (the rail offers Coin instead).
+ * third of an Active card tall, and at least `COIN_ROOMY_PX` where the row
+ * has room for that, within the bounds below; never larger than the row's
+ * room under the markers.
  */
 const COIN_SHARE_OF_ACTIVE = 0.34;
-export const TABLE_COIN_MIN_PX = 34;
+/** The size a smaller third grows to where the row has room. */
+const COIN_ROOMY_PX = 34;
+/**
+ * The least a coin is drawn at: a touch target's least (WCAG 2.5.8). A
+ * smaller one is left off the table, and so is the other half's then (the
+ * rail offers Coin instead).
+ */
+export const TABLE_COIN_MIN_PX = 24;
 export const TABLE_COIN_MAX_PX = 64;
 /** The add-or-remove control for the optional pieces: a small round button. */
 const EXTRAS_CONTROL_PX = 26;
@@ -378,12 +386,20 @@ const piecesColumn = (
   const between = gap / 2;
   const stacked = markerCount * markerHeight + (markerCount - 1) * between;
   const sideBySide = markerCount > 1 && stacked > activeHeight;
+  const markersHeight = sideBySide ? markerHeight : stacked;
   const markersWidth = sideBySide
     ? markerHeight * (VSTAR_MARKER_ASPECT + GX_MARKER_ASPECT) + between
     : markerHeight * VSTAR_MARKER_ASPECT;
-  const coinSize = Math.min(
-    TABLE_COIN_MAX_PX,
-    activeHeight * COIN_SHARE_OF_ACTIVE
+  // As big as a third of the Active, or the roomy size, as the row's room
+  // under the markers allows.
+  const room = activeHeight - (markerCount > 0 ? markersHeight + gap : 0);
+  const coinSize = Math.max(
+    0,
+    Math.min(
+      TABLE_COIN_MAX_PX,
+      room,
+      Math.max(activeHeight * COIN_SHARE_OF_ACTIVE, COIN_ROOMY_PX)
+    )
   );
   const width = Math.max(markersWidth, coinSize);
   const markers: Rect | undefined =
@@ -392,7 +408,7 @@ const piecesColumn = (
           x: x + (width - markersWidth) / 2,
           y: top,
           width: markersWidth,
-          height: sideBySide ? markerHeight : stacked,
+          height: markersHeight,
         }
       : undefined;
   return {

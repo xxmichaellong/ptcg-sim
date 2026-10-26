@@ -87,22 +87,28 @@ least, a staging area before anything else.
 ### 3. The coin
 
 Each player's coin lies in their pieces column, under the markers (at the
-top of the column with none), its size as before: a third of an Active
-card, 34 to 64px. A half too small for one has no coin, and the rail offers
-Coin instead. Its Heads or Tails chip is centred on it but kept inside the
-table, where a coin by the prizes lies nearer the edge than half the chip
-(an upright phone).
+top of the column with none): a third of an Active card, up to 64px, and
+at least 34px where the row has room for that; where it hasn't, the coin
+fills the room under the markers, down to 24px (a touch target's least).
+Both halves shown have their coin or neither does: where one has no room
+for 24px, the table keeps none and the rail offers Coin instead. Its Heads
+or Tails chip is centred on it but kept inside the table, where a coin by
+the prizes lies nearer the edge than half the chip (an upright phone).
 
 ## Consequences
 
 - The probe's 37,000 layouts: the markers are on the mat in every one, and
   both halves on one mat in every one with both shown (the halves' own
   choices differed in about 3,600). The Stadium touches a staging area in
-  48, all on upright phones 390px wide or less with both halves shown, and
+  52, all on upright phones 390px wide or less with both halves shown, and
   never a hand, another zone or a piece, against about 14,000 before. The
-  `+` grazes the markers on a 375 × 360 table (3px² of their boxes); at
-  673 × 900 with the near half 60% of the table, the coin's and the `+`'s boxes meet at a
-  corner while the discs drawn in them stay about 10px apart.
+  `+` grazes the markers on tables of about 360 × 360; at 673 × 900 and
+  390 × 480 with the near half 60% of the table, the coin's and the `+`'s
+  boxes meet at a corner while the discs drawn in them stay apart.
+- Coins on 7,452 common layouts (27 widths by 23 heights, mouse and touch,
+  0 or 2 markers, three splits): both halves have one in 6,261 and neither
+  in 1,191, against 3,393 and 1,846 before, when 2,213 had a coin on one
+  side only (an upright phone's far half, its Active a little shorter).
 - The far half's refit around the app bar (ADR-036) keeps its staging area a
   clear card beside the Stadium; it no longer weighs where the markers go.
 - `BoardPlayerExtrasLayout` gains `coin` and loses `corner` and

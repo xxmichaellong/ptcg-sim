@@ -285,7 +285,8 @@ export interface BoardPlayerExtrasLayout {
   readonly markers?: Rect;
   /**
    * The player's coin, under their markers: its square on the flat table.
-   * One smaller than `TABLE_COIN_MIN_PX` stays off it.
+   * One smaller than `TABLE_COIN_MIN_PX` stays off it, and so does the
+   * other half's then.
    */
   readonly coin: Rect;
   /** The control that adds or removes the optional pieces. */

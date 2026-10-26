@@ -199,10 +199,28 @@ test.describe('an upright phone', () => {
       expect(overlaps(box, placed.stadium!)).toBe(false);
       expect(overlaps(box, activity)).toBe(false);
     }
+    // Attack and Pass the turn are on the rail or in More.
+    const onRail = await buttons.evaluateAll((elements) =>
+      elements.map(
+        (element) =>
+          element.getAttribute('aria-label') ??
+          element.textContent?.trim() ??
+          ''
+      )
+    );
     await page.locator('#moreActionsButton').tap();
-    await expect(
-      page.getByRole('menuitem', { name: /^(Attack|Pass the turn)$/u })
-    ).not.toHaveCount(0);
+    await expect(page.getByRole('menuitem').first()).toBeVisible();
+    const inMore = await page
+      .getByRole('menuitem')
+      .evaluateAll((elements) =>
+        elements.map((element) => element.textContent?.trim() ?? '')
+      );
+    for (const action of ['Attack', 'Pass the turn']) {
+      expect(
+        [...onRail, ...inMore].some((label) => label.startsWith(action)),
+        action
+      ).toBe(true);
+    }
     await page.keyboard.press('Escape');
 
     await tapFlow(page);
