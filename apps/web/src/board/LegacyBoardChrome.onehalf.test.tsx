@@ -84,6 +84,10 @@ const railWith = async (
   );
   const bar = host.querySelector<HTMLElement>('#boardButtonContainer')!;
   const rail = {
+    overDesk:
+      host
+        .querySelector('[data-table-rail]')
+        ?.getAttribute('data-over-desk') === 'true',
     align: bar.dataset['align'],
     shown: [...bar.querySelectorAll('button.ptcgsim-rail-button')].map(
       (button) => button.id
@@ -107,5 +111,16 @@ describe('the rail with one half shown on the tilted table', () => {
       expect(tilted.shown, at).toEqual(flat.shown);
       expect(tilted.align, at).toBe(flat.align);
     }
+  });
+});
+
+describe('the rail past the mat', () => {
+  it('rings in the desk’s tones where one half leaves its row past the mat’s edge', async () => {
+    // A desktop: the row above the near Active lies past the mat's top.
+    for (const tilted of [false, true]) {
+      expect((await railWith(1280, 720, 'upper', tilted)).overDesk).toBe(true);
+    }
+    // An upright phone: the row lies on the mat beside the Active.
+    expect((await railWith(390, 844, 'upper', false)).overDesk).toBe(false);
   });
 });

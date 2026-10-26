@@ -196,6 +196,11 @@ export interface TableRailProps {
    * sidebar buttons did.
    */
   readonly seat?: 'you' | 'opponent';
+  /**
+   * The rail's row lies past the mat's edge, over the desk (one half shown
+   * on a wide table): its buttons ring in the desk's tones.
+   */
+  readonly overDesk?: boolean;
 }
 
 const EDGE_PX = 8;
@@ -391,6 +396,7 @@ export const TableRail = memo(function TableRail({
   more,
   covered = false,
   seat = 'you',
+  overDesk = false,
 }: TableRailProps) {
   const { t } = useLingui();
   // The side last drawn, and whether a slide under way has moved it: the
@@ -438,6 +444,7 @@ export const TableRail = memo(function TableRail({
     <div
       className="ptcgsim-table-rail"
       data-table-rail="true"
+      data-over-desk={overDesk ? 'true' : undefined}
       style={
         {
           top: anchor.y,

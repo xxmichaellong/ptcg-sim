@@ -105,8 +105,16 @@
 .table-zone-chip:focus-visible {
   outline: 2px solid var(--color-felt-focus, var(--color-accent));
   outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--color-felt-focus-halo, transparent);
   /* Its ring drawn at full strength, as the button is under a pointer. */
   opacity: 1;
+}
+
+.table-zone-add:focus-visible {
+  box-shadow:
+    0 0 0 2px var(--color-felt-focus-halo, transparent),
+    var(--shadow-2),
+    var(--highlight-top);
 }
 
 /* ---- The optional pieces: the Lost Zone and the markers ---------------- */
@@ -169,6 +177,7 @@
 .table-zone-extras:focus-visible {
   outline: 2px solid var(--color-felt-focus, var(--color-accent));
   outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--color-felt-focus-halo, transparent);
   opacity: 1;
 }
 
@@ -231,7 +240,8 @@
 
 .table-marker:focus-visible {
   outline: 2px solid var(--color-felt-focus, var(--color-accent));
-  outline-offset: 1px;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--color-felt-focus-halo, transparent);
 }
 
 .table-marker .once-per-game-tile {

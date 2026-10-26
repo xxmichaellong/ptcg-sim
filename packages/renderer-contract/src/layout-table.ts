@@ -305,6 +305,8 @@ export const TABLE_COIN_MIN_PX = 24;
 export const TABLE_COIN_MAX_PX = 64;
 /** The add-or-remove control for the optional pieces: a small round button. */
 const EXTRAS_CONTROL_PX = 26;
+/** How far its touch area reaches past it (TableZoneAffordances.css). */
+const EXTRAS_CONTROL_REACH_PX = 9;
 /** Its inset from the corner of the row it sits in. */
 const EXTRAS_CONTROL_INSET_PX = 6;
 /**
@@ -420,6 +422,28 @@ const piecesColumn = (
       width: coinSize,
       height: coinSize,
     },
+  };
+};
+
+/**
+ * The coin, ending clear of the `+` and its touch area where a row too
+ * narrow for the `+` beside the pieces brings it under the column's edge: a
+ * smaller coin, still centred in the column, rather than one a press meant
+ * for the `+` can land on.
+ */
+const coinAbove = (coin: Rect, control: Rect, gap: number): Rect => {
+  const reach = Math.max(gap / 2, EXTRAS_CONTROL_REACH_PX);
+  const beside =
+    control.x - reach >= coin.x + coin.width ||
+    control.x + control.width + reach <= coin.x;
+  const room = control.y - reach - coin.y;
+  if (beside || room >= coin.height) return coin;
+  const size = Math.max(0, room);
+  return {
+    x: coin.x + (coin.width - size) / 2,
+    y: coin.y,
+    width: size,
+    height: size,
   };
 };
 
@@ -623,7 +647,7 @@ const layoutHalf = (
     seamMargin: margin,
     extras: {
       ...(column.markers ? { markers: column.markers } : {}),
-      coin: column.coin,
+      coin: coinAbove(column.coin, control, gap),
       control,
     },
     lostZoneBeside,

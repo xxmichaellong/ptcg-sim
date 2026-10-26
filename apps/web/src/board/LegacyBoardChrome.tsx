@@ -337,6 +337,8 @@ const HAND_PILL_EDGE = 4;
  * badge margin), and a hair more: the pill keeps off the badges too.
  */
 const PILE_BADGE_REACH_PX = 10;
+/** The mat's margin past what is laid on it (renderer-dom's mat-bounds.ts). */
+const MAT_MARGIN_PX = 16;
 
 /**
  * The hand's count and its Sort as one pill where the table counts the
@@ -655,6 +657,35 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
       y: atTop ? edge - gap - logicalAnchor.height : edge + gap,
     };
   }
+  // The mat as the table draws it (renderer-dom's tableMatBounds): around
+  // all that is laid on it, the hands aside. With one half shown the rail's
+  // row can lie past its edge, over the desk.
+  const railOverDesk = (() => {
+    const spots = [
+      ...layout.players
+        .filter((frame) => !frame.hidden)
+        .flatMap((frame) =>
+          frame.regions
+            .filter((region) => region.kind !== 'hand')
+            .map((region) => region.physicalDeclaredBounds)
+        ),
+      layout.shared.stadium.physicalDeclaredBounds,
+    ].filter((rect) => rect.width > 0 && rect.height > 0);
+    if (spots.length === 0) return false;
+    const onScreen = (y: number): number =>
+      depth ? depth.point({ x: layout.playAreaBounds.width / 2, y }).y : y;
+    const top = onScreen(
+      Math.max(0, Math.min(...spots.map((rect) => rect.y)) - MAT_MARGIN_PX)
+    );
+    const bottom = onScreen(
+      Math.min(
+        layout.viewport.height,
+        Math.max(...spots.map((rect) => rect.y + rect.height)) + MAT_MARGIN_PX
+      )
+    );
+    const middle = anchor.y + anchor.height / 2;
+    return middle < top || middle > bottom;
+  })();
   // Where the seam's things lie on screen: tilted, the table narrows, so
   // the Stadium and the piles at the seam's right end are found through
   // the same projection the cards take.
@@ -809,6 +840,7 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
           {...(rail.more ? { more: rail.more } : {})}
           covered={coveredByPopup}
           {...(rail.seat ? { seat: rail.seat } : {})}
+          {...(railOverDesk ? { overDesk: true } : {})}
         />
       ) : null}
     </div>

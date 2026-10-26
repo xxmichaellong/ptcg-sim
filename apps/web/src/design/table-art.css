@@ -148,10 +148,13 @@
 }
 
 /* The focus ring of the table's own controls -- on the felt (the rail, the
-   coin, the markers, the `+`s) and over the desk -- 3:1 at least against
-   the painted felt or desk under it, whichever theme the app is in: dark on
-   the light mats and desks, light on the dark ones (the hand pill's Sort
-   rings inside itself instead, in the theme's accent). */
+   coin, the markers, the `+`s) and over the desk -- is two-toned: the ring,
+   dark on the light mats and desks and light on the dark ones, and inside
+   it, between it and the control, a halo of the other tone. Whatever lies
+   under it (the painted felt, the desk where a control sits past the mat's
+   edge, a zone's outline), one of the two stands out from it at 3:1. Past
+   the mat's edge the rail takes the desk's pair. The hand pill's Sort rings
+   inside itself instead, in the pill's ink (shell.css). */
 :root:is(
   :not([data-table-art]),
   [data-table-art='cream'],
@@ -160,7 +163,9 @@
   [data-table-art='parchment']
 ) {
   --color-felt-focus: #1a3d66;
+  --color-felt-focus-halo: #ffffff;
   --color-desk-focus: #1a3d66;
+  --color-desk-focus-halo: #ffffff;
 }
 :root:is(
   [data-table-art='classic'],
@@ -171,11 +176,14 @@
   [data-table-art='charcoal']
 ) {
   --color-felt-focus: #e8f1fc;
+  --color-felt-focus-halo: #0b1a2b;
   --color-desk-focus: #e8f1fc;
+  --color-desk-focus-halo: #0b1a2b;
 }
 /* Green felt by day lies on light oak. */
 :root[data-theme='day'][data-table-art='classic'] {
   --color-desk-focus: #1a3d66;
+  --color-desk-focus-halo: #ffffff;
 }
 
 /* On a light mat the gold and mint rings would wash out: deeper ones. */

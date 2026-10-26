@@ -295,15 +295,19 @@ textarea {
   .legacy-hand-sort--toggle:has(input:focus-visible) {
   outline: 2px solid var(--color-desk-focus, var(--color-accent));
   outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--color-desk-focus-halo, transparent);
 }
-/* The pill's Sort end rings inside itself, on the pill's own surface: out
-   past its edge the ring would run over the count beside it as well as the
-   desk, and no one colour stands out from both. */
+/* The pill's Sort end rings inside itself, in the pill's ink: out past its
+   edge the ring would run over the count beside it as well as the desk, and
+   no one colour stands out from both. The ink stands out from the pill and
+   from the seat-tinted socket a sorted Sort sinks into. */
 .board-spike-host[data-geometry='2']
   .table-hand-pill
   .legacy-hand-sort--toggle.table-hand-pill__sort:has(input:focus-visible) {
-  outline-color: var(--color-accent);
+  outline-color: var(--color-text);
   outline-offset: -2px;
+  /* Sorted, its socket's inner shadow would darken the ring's edge. */
+  box-shadow: none;
 }
 @media (hover: hover) and (pointer: fine) {
   .board-spike-host[data-geometry='2'] .legacy-hand-sort--toggle:hover {
