@@ -159,7 +159,9 @@ export const TableBanner = ({
     role="status"
     aria-live="polite"
   >
-    <span id="roomHeaderText">{children}</span>
+    <span id="roomHeaderText" className="ptcgsim-table-banner__text">
+      {children}
+    </span>
     {action}
   </div>
 );

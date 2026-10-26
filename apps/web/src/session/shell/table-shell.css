@@ -24,23 +24,35 @@
 .ptcgsim-table-banner {
   position: fixed;
   top: max(var(--app-bar-clearance), env(safe-area-inset-top));
-  left: 50%;
+  /* Centred by its margins, as wide as its words up to the window's width
+     less a gutter (a left half-way across would hold it to half of it). */
+  inset-inline: var(--space-4);
   z-index: var(--layer-chrome);
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-end;
   gap: var(--space-2);
   box-sizing: border-box;
-  max-width: calc(100vw - 2 * var(--space-4));
+  width: fit-content;
+  margin-inline: auto;
   padding: var(--space-2) var(--space-4);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-pill);
+  /* A pill on one line (its button 28px tall, 8px either side); wrapped
+     onto more, a rounded box its words keep clear of. */
+  border-radius: 22px;
   background: var(--color-surface-2);
   box-shadow: var(--shadow-4), var(--highlight-top);
   color: var(--color-text);
   font-family: var(--font-ui);
   font-size: var(--text-sm);
   font-weight: var(--weight-medium);
-  translate: -50% 0;
+}
+
+/* Its words keep a readable measure: where the button beside them would
+   squeeze them narrower, it goes under them. */
+.ptcgsim-table-banner__text {
+  flex: 1 1 12em;
 }
 
 .ptcgsim-table-banner[data-tone='danger'] {
