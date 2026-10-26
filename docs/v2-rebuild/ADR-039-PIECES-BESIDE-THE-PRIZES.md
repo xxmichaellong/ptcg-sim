@@ -64,9 +64,12 @@ long as both halves lay it out with their pieces clear of their zones;
 otherwise the other mat, where that is clear. Where neither is, each half
 keeps its own; the probe below found no such table. The mat is chosen as
 without the app bar, as the split is (ADR-036), so the bar never changes the
-near half's; on the smallest tables the far hand past the bar can then be a
-little narrower (down to about 93px) than the 128px a half on its own
-would keep.
+near half's; on the smallest tables (about 420 × 580 and smaller) the far
+hand past the bar can then be narrower, down to about 85px, than the 128px
+a half on its own would keep. On a portrait tablet the far half gives up
+the most: its cards about a third smaller than on the mat it would take on
+its own (768 × 1024: a bench card 160px tall on the mat, 108px on the
+portrait mat), for the near half's portrait mat and one mat on both sides.
 
 ### 2. The Stadium on the near player's left
 
@@ -102,12 +105,12 @@ the prizes lies nearer the edge than half the chip (an upright phone).
   choices differed in about 3,600). The Stadium touches a staging area in
   52, all on upright phones 390px wide or less with both halves shown, and
   never a hand, another zone or a piece, against about 14,000 before. The
-  `+` grazes the markers on tables of about 360 × 360; at 673 × 900 and
-  390 × 480 with the near half 60% of the table, the coin's and the `+`'s
-  boxes meet at a corner while the discs drawn in them stay apart.
+  `+` grazes the markers on tables of about 370 × 360 and smaller. Where a
+  narrow row pulls the `+` against the Active, under the pieces' edge, the
+  coin ends above it and its touch area, a little smaller.
 - Coins on 7,452 common layouts (27 widths by 23 heights, mouse and touch,
-  0 or 2 markers, three splits): both halves have one in 6,261 and neither
-  in 1,191, against 3,393 and 1,846 before, when 2,213 had a coin on one
+  0 or 2 markers, three splits): both halves have one in 6,276 and neither
+  in 1,176, against 3,393 and 1,846 before, when 2,213 had a coin on one
   side only (an upright phone's far half, its Active a little shorter).
 - The far half's refit around the app bar (ADR-036) keeps its staging area a
   clear card beside the Stadium; it no longer weighs where the markers go.

@@ -81,8 +81,9 @@ here):
 The table's split, and the mat both halves take (ADR-039), are found as
 without the bar, and the far half laid out with it at that scale, so the
 near half is unchanged by it -- but for its Lost Zone, which both halves
-put beside the prizes or neither: on a short screen held sideways and split
-40/60, the far row has no room for it there past the bar. Nothing on the
+put beside the prizes or neither: on short tables (a phone held sideways,
+a window under about 750px tall) the far row past the bar can have no room
+for it there, and then neither half puts it there. Nothing on the
 table is under the bar at any size it fits in (layout-table and
 board-depth tests, app-bar.spec). Where the bar changes the far half (its
 hand strip deeper, its rows shorter) so that the Stadium lies over more of
