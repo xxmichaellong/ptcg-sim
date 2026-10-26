@@ -139,6 +139,18 @@ describe('CardBackCustodyStore', () => {
     ).toBe(false);
   });
 
+  it("keeps each seat's own back apart from the one on it", () => {
+    const store = new CardBackCustodyStore({ mainUrl: '/main.png' });
+    expect(store.seatCardBack('main')).toBe('/main.png');
+    expect(store.seatCardBack('alternate')).toBeUndefined();
+    expect(store.chooseSeatCardBack('alternate', '/own.png')).toBe(true);
+    expect(store.chooseSeatCardBack('alternate', '/own.png')).toBe(false);
+    expect(store.chooseSeatCardBack('alternate', '')).toBe(false);
+    expect(store.seatCardBack('alternate')).toBe('/own.png');
+    // Choosing it puts nothing on the seat: a deck's back may be there.
+    expect(store.getSnapshot().slots.alternate.url).toBeUndefined();
+  });
+
   it('revokes alternate installs without deleting their retained selection', () => {
     const store = new CardBackCustodyStore();
     store.replace('alternate', '/alternate.png');

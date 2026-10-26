@@ -9,6 +9,7 @@ import {
   type DeckFormatId,
   type DeckList,
 } from '@ptcgsim/deck-core';
+import { MAX_IMAGE_URL_CODE_UNITS } from '@ptcgsim/protocol';
 
 /**
  * The player's saved decks, kept on this device.
@@ -59,6 +60,11 @@ export interface SavedDeck {
   readonly cards: DeckList;
   /** The card that pictures the deck; its most-played Pokémon when unset. */
   readonly coverId?: string;
+  /**
+   * The card back it is played in, chosen on a seat it was on; unset, a
+   * seat plays it in that seat's own.
+   */
+  readonly cardBack?: string;
   readonly notes?: string;
   readonly source?: DeckSource;
   /**
@@ -84,6 +90,7 @@ export interface DeckDraft {
   readonly format: DeckFormatId;
   readonly cards: DeckList;
   readonly coverId?: string;
+  readonly cardBack?: string;
   readonly notes?: string;
   readonly source?: DeckSource;
 }
@@ -91,7 +98,7 @@ export interface DeckDraft {
 export type DeckPatch = Partial<
   Pick<
     SavedDeck,
-    'name' | 'format' | 'cards' | 'coverId' | 'notes' | 'factsFrom'
+    'name' | 'format' | 'cards' | 'coverId' | 'cardBack' | 'notes' | 'factsFrom'
   >
 >;
 
@@ -251,6 +258,10 @@ export const decodeSavedDeck = (value: unknown): SavedDeck | undefined => {
     cards: deckListOf(entries),
     ...(boundedString(value.coverId, MAX_TEXT_LENGTH)
       ? { coverId: value.coverId as string }
+      : {}),
+    // As long as the table takes, so a deck's back always reaches it.
+    ...(boundedString(value.cardBack, MAX_IMAGE_URL_CODE_UNITS)
+      ? { cardBack: value.cardBack as string }
       : {}),
     ...(boundedString(value.notes, MAX_DECK_NOTES_LENGTH)
       ? { notes: value.notes as string }
@@ -436,6 +447,7 @@ export class DeckLibrary {
       format: isDeckFormatId(draft.format) ? draft.format : 'standard',
       cards: draft.cards,
       ...(draft.coverId ? { coverId: draft.coverId } : {}),
+      ...(draft.cardBack ? { cardBack: draft.cardBack } : {}),
       ...(draft.notes ? { notes: draft.notes } : {}),
       ...(draft.source ? { source: draft.source } : {}),
       createdAt: now,
@@ -463,11 +475,13 @@ export class DeckLibrary {
         : cleanDeckName(patch.name) || current.name;
     const {
       coverId: _cover,
+      cardBack: _cardBack,
       notes: _notes,
       factsFrom: _factsFrom,
       ...rest
     } = current;
     const coverId = 'coverId' in patch ? patch.coverId : current.coverId;
+    const cardBack = 'cardBack' in patch ? patch.cardBack : current.cardBack;
     const notes = 'notes' in patch ? patch.notes : current.notes;
     const factsFrom =
       'factsFrom' in patch
@@ -484,6 +498,7 @@ export class DeckLibrary {
           : current.format,
       cards: patch.cards ?? current.cards,
       ...(coverId ? { coverId } : {}),
+      ...(cardBack ? { cardBack } : {}),
       ...(notes ? { notes: notes.slice(0, MAX_DECK_NOTES_LENGTH) } : {}),
       ...(factsFrom ? { factsFrom } : {}),
       updatedAt: options.touch === false ? current.updatedAt : this.#now(),
@@ -510,6 +525,7 @@ export class DeckLibrary {
       format: current.format,
       cards: current.cards,
       ...(current.coverId ? { coverId: current.coverId } : {}),
+      ...(current.cardBack ? { cardBack: current.cardBack } : {}),
       ...(current.notes ? { notes: current.notes } : {}),
       source: { kind: 'copy', label: current.name },
     });

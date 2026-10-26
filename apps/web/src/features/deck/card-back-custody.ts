@@ -95,6 +95,11 @@ export class CardBackCustodyStore {
   readonly #installedOn: Readonly<
     Record<DeckBuilderTarget, WeakMap<DeckInstallSession, number>>
   > = { main: new WeakMap(), alternate: new WeakMap() };
+  /**
+   * Each seat's own back, which it plays a deck in that has none of its
+   * own: the one chosen on it while it held no saved deck.
+   */
+  readonly #seatBacks: Partial<Record<DeckBuilderTarget, string>> = {};
   #state: CardBackCustodySnapshot;
 
   constructor(options: CardBackCustodyOptions = {}) {
@@ -104,6 +109,22 @@ export class CardBackCustodyStore {
       createInitialSlot(options.mainUrl),
       createInitialSlot(options.alternateUrl)
     );
+    if (options.mainUrl !== undefined) this.#seatBacks.main = options.mainUrl;
+    if (options.alternateUrl !== undefined) {
+      this.#seatBacks.alternate = options.alternateUrl;
+    }
+  }
+
+  /** The back a seat plays a deck in that has none of its own. */
+  seatCardBack(target: DeckBuilderTarget): string | undefined {
+    return this.#seatBacks[target];
+  }
+
+  /** Makes `url` the seat's own back (not yet on it: `replace` does that). */
+  chooseSeatCardBack(target: DeckBuilderTarget, url: string): boolean {
+    if (!validUrl(url) || this.#seatBacks[target] === url) return false;
+    this.#seatBacks[target] = url;
+    return true;
   }
 
   getSnapshot = (): CardBackCustodySnapshot => this.#state;

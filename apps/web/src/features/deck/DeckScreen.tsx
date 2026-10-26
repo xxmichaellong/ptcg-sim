@@ -94,6 +94,8 @@ export interface DeckScreenProps {
   readonly onPlay: () => void;
   readonly onClose: () => void;
   readonly onChangeCardBack: (target: DeckBuilderTarget) => void;
+  /** The player put a deck on a seat (its card back goes on with it). */
+  readonly onSeatDeck?: (target: DeckBuilderTarget) => void;
   /** Each seat's card back, as its tray's sleeve shows it. */
   readonly cardBacks?: Readonly<Partial<Record<DeckBuilderTarget, string>>>;
   /** Deck text from the clipboard; the browser's by default. */
@@ -141,6 +143,7 @@ export const DeckScreen = ({
   onPlay,
   onClose,
   onChangeCardBack,
+  onSeatDeck,
   cardBacks,
   readClipboard = browserClipboard,
 }: DeckScreenProps) => {
@@ -280,8 +283,10 @@ export const DeckScreen = ({
     ) => {
       store.replaceDeck(slotTarget, cards, label, { chosen });
       rememberSeatDeck(slotTarget, label.deckId);
+      // Saving the seat's own deck changes nothing on the table.
+      if (chosen) onSeatDeck?.(slotTarget);
     },
-    [rememberSeatDeck, store, target]
+    [onSeatDeck, rememberSeatDeck, store, target]
   );
 
   /**

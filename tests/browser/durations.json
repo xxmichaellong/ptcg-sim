@@ -7,6 +7,7 @@
     "board-stack-handling.spec.ts": 109,
     "board-view.spec.ts": 81,
     "current-decks.spec.ts": 18,
+    "deck-card-backs.spec.ts": 15,
     "depth-recovery.spec.ts": 23,
     "dev-room-full-stack.spec.ts": 60,
     "experience-refinement.spec.ts": 72,

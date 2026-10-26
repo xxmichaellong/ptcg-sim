@@ -487,6 +487,17 @@ describe('the deck library', () => {
     expect(
       library.update('deck-1', { coverId: undefined })?.coverId
     ).toBeUndefined();
+    // Its card back stays through other edits, until it is changed.
+    expect(
+      library.update('deck-1', { cardBack: 'https://example.test/red.png' })
+        ?.cardBack
+    ).toBe('https://example.test/red.png');
+    expect(library.update('deck-1', { notes: 'Fast' })?.cardBack).toBe(
+      'https://example.test/red.png'
+    );
+    expect(
+      library.update('deck-1', { cardBack: undefined })?.cardBack
+    ).toBeUndefined();
     expect(library.update('missing', { name: 'x' })).toBeUndefined();
     // A blank name keeps the old one.
     expect(library.update('deck-1', { name: '   ' })?.name).toBe('Ghosts');
@@ -498,10 +509,17 @@ describe('the deck library', () => {
       backend: null,
       createId: () => `deck-${++ids}`,
     });
-    library.create({ name: 'Original', format: 'standard', cards });
+    library.create({
+      name: 'Original',
+      format: 'standard',
+      cards,
+      cardBack: 'https://example.test/red.png',
+    });
     const copy = library.duplicate('deck-1');
+    // A copy keeps its sleeves.
     expect(copy).toMatchObject({
       name: 'Original (copy)',
+      cardBack: 'https://example.test/red.png',
       source: { kind: 'copy', label: 'Original' },
     });
     const removed = library.remove('deck-1');
@@ -852,7 +870,12 @@ describe('the deck library', () => {
       createId: () => `idb-${++ids}`,
     });
     await settle();
-    library.create({ name: 'Stored', format: 'expanded', cards });
+    library.create({
+      name: 'Stored',
+      format: 'expanded',
+      cards,
+      cardBack: 'https://example.test/red.png',
+    });
     await library.flush();
     const reopened = new DeckLibrary({ backend });
     await settle();
@@ -861,6 +884,7 @@ describe('the deck library', () => {
       name: 'Stored',
       format: 'expanded',
       cards,
+      cardBack: 'https://example.test/red.png',
     });
   });
 
@@ -886,6 +910,24 @@ describe('the deck library', () => {
         updatedAt: 1,
       })
     ).toBeUndefined();
+    // A card back the table wouldn't take is dropped; the deck still reads.
+    const deck = {
+      id: 'a',
+      name: 'Fine',
+      format: 'standard',
+      cards: [],
+      createdAt: 1,
+      updatedAt: 1,
+    };
+    expect(
+      decodeSavedDeck({ ...deck, cardBack: 'x'.repeat(4_097) })
+    ).not.toHaveProperty('cardBack');
+    expect(decodeSavedDeck({ ...deck, cardBack: 7 })).not.toHaveProperty(
+      'cardBack'
+    );
+    expect(
+      decodeSavedDeck({ ...deck, cardBack: '/v2/assets/cardback.png' })
+    ).toMatchObject({ cardBack: '/v2/assets/cardback.png' });
   });
 
   it("drops a stored card's malformed rule facts, so the deck still checks", () => {

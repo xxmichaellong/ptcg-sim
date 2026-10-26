@@ -100,7 +100,8 @@ specifically without blocking, and go from deck to table in one click.
 ### Saved decks (`deck-library.ts`)
 
 6. **Every deck is saved, automatically**, in IndexedDB, one record per deck
-   (name, format, cards, cover, source, created and changed times). Edits
+   (name, format, cards, cover, card back, source, created and changed
+   times). Edits
    apply in memory at once and reach storage batched per deck, and whatever
    is pending is written when the page is hidden. Another tab's change
    arrives on a BroadcastChannel and is read back, unless this tab changed
@@ -117,6 +118,15 @@ specifically without blocking, and go from deck to table in one click.
    see a difference, so a rename, a deleted saved deck, or facts arriving
    never reload a deck mid-game. Installing to the table (the LoadDeck
    receipts and drain) is unchanged.
+8. **A card back is its deck's** (2026-10-26, the owner's ruling, like
+   sleeves kept on a deck). One chosen on a seat holding a saved deck is
+   saved with that deck and worn by every seat it is on; a saved deck put
+   on a seat brings its back with it. A seat holding no saved deck takes
+   the choice as its own, and plays any deck without a back of its own in
+   it (the standard back until one is chosen; seats' own backs last the
+   visit). The back goes to the table with the deck, or at once when it
+   was chosen there or the screen has closed. A deck deleted while on a
+   seat stays there in its back, as its cards do.
 
 ### The screen
 

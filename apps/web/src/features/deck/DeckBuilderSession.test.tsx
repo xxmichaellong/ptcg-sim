@@ -13,7 +13,10 @@ import { act, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { BrowserCardBackRequest } from '../../session/browser-card-back.js';
+import {
+  DEFAULT_CARD_BACK_URL,
+  type BrowserCardBackRequest,
+} from '../../session/browser-card-back.js';
 import {
   DeckBuilderSession,
   type DeckBuilderCustody,
@@ -1254,6 +1257,183 @@ describe('DeckBuilderSession', () => {
     expect(session.commands[1]).toEqual({
       type: 'SetCardBack',
       cardBackUrl: 'custom+unsafe://player-back/a',
+    });
+  });
+
+  describe('a card back kept with its saved deck', () => {
+    const RED = 'https://example.test/red.png';
+    const GREEN = 'https://example.test/green.png';
+    const chooser = () => {
+      const requests: Array<(url: string | undefined) => void> = [];
+      const requestCardBack: BrowserCardBackRequest = () =>
+        new Promise((resolve) => requests.push(resolve));
+      const choose = async (url: string) => {
+        await click('#changeCardBackButton');
+        await act(async () => requests.at(-1)?.(url));
+      };
+      return { requestCardBack, choose };
+    };
+    const save = (name: string) =>
+      library.create({
+        name,
+        format: 'standard',
+        cards: deckListOf([{ card: card(name), count: 2 }]),
+      });
+    const sleeve = (seat: 'self' | 'opponent' = 'self') =>
+      host
+        .querySelector(`.deck-tray[data-seat="${seat}"] .deck-tray__sleeve img`)
+        ?.getAttribute('src');
+
+    it('keeps a back chosen on a saved deck with it, and puts it on with that deck', async () => {
+      const session = new FakeSession();
+      const store = new DeckBuilderStore();
+      const cardBackStore = new CardBackCustodyStore();
+      const charizard = save('Charizard');
+      save('Lugia');
+      const { requestCardBack, choose } = chooser();
+      await renderSession({
+        session,
+        store,
+        cardBackStore,
+        open: true,
+        requestCardBack,
+      });
+
+      await click('button[aria-label="Charizard: put on P1"]');
+      await choose(RED);
+      expect(library.get(charizard.id)?.cardBack).toBe(RED);
+      // Chosen, it goes to the table at once.
+      expect(session.commands).toEqual([
+        { type: 'SetCardBack', cardBackUrl: RED },
+      ]);
+      act(() => session.completeLatest(true));
+      act(() => session.showCardBack(ownPlayerId, RED));
+
+      // A deck without a back of its own: the seat's, the standard one.
+      await click('button[aria-label="Lugia: put on P1"]');
+      expect(cardBackStore.getSnapshot().slots.main).toMatchObject({
+        url: DEFAULT_CARD_BACK_URL,
+        dirty: true,
+      });
+      expect(sleeve()).toBe(DEFAULT_CARD_BACK_URL);
+      // Its deck goes on when the screen closes, and its back with it.
+      expect(session.commands).toHaveLength(1);
+
+      await click('button[aria-label="Charizard: put on P1"]');
+      expect(sleeve()).toBe(RED);
+      expect(library.get(charizard.id)?.cardBack).toBe(RED);
+    });
+
+    it('gives a seat holding no saved deck the back as its own, worn by any deck without one', async () => {
+      const session = new FakeSession();
+      const store = new DeckBuilderStore();
+      const cardBackStore = new CardBackCustodyStore();
+      const charizard = save('Charizard');
+      const lugia = save('Lugia');
+      library.update(charizard.id, { cardBack: RED });
+      const { requestCardBack, choose } = chooser();
+      await renderSession({
+        session,
+        store,
+        cardBackStore,
+        open: true,
+        requestCardBack,
+      });
+
+      await choose(GREEN);
+      expect(cardBackStore.seatCardBack('main')).toBe(GREEN);
+      expect(session.commands).toEqual([
+        { type: 'SetCardBack', cardBackUrl: GREEN },
+      ]);
+      act(() => session.completeLatest(true));
+      act(() => session.showCardBack(ownPlayerId, GREEN));
+
+      // Already on the seat: nothing new for the table.
+      await click('button[aria-label="Lugia: put on P1"]');
+      expect(library.get(lugia.id)?.cardBack).toBeUndefined();
+      expect(cardBackStore.getSnapshot().slots.main).toMatchObject({
+        url: GREEN,
+        dirty: false,
+      });
+      await click('button[aria-label="Charizard: put on P1"]');
+      expect(sleeve()).toBe(RED);
+      await click('button[aria-label="Lugia: put on P1"]');
+      expect(sleeve()).toBe(GREEN);
+      // Lugia's own back now: the seat's stays as it was.
+      await choose(RED);
+      expect(library.get(lugia.id)?.cardBack).toBe(RED);
+      expect(cardBackStore.seatCardBack('main')).toBe(GREEN);
+    });
+
+    it('puts a deck’s back on every seat it is on', async () => {
+      const session = new FakeSession();
+      const store = new DeckBuilderStore();
+      const charizard = save('Charizard');
+      const { requestCardBack, choose } = chooser();
+      await renderSession({ session, store, open: true, requestCardBack });
+
+      await click('button[aria-label="Charizard: put on P1"]');
+      await click('#nativeDeckBuilderTargetAlt');
+      await click('button[aria-label="Charizard: put on P2"]');
+      await choose(RED);
+      expect(library.get(charizard.id)?.cardBack).toBe(RED);
+      expect(sleeve('self')).toBe(RED);
+      expect(sleeve('opponent')).toBe(RED);
+      expect(session.commands).toEqual([
+        { type: 'SetCardBack', cardBackUrl: RED },
+      ]);
+      act(() => session.completeLatest(true));
+      expect(session.commands.at(-1)).toEqual({
+        type: 'SetCardBack',
+        targetPlayerId: alternatePlayerId,
+        cardBackUrl: RED,
+      });
+    });
+
+    it('sends the back of a deck that lands after the screen closed with it', async () => {
+      const session = new FakeSession();
+      const store = new DeckBuilderStore();
+      const cardBackStore = new CardBackCustodyStore();
+      const charizard = save('Charizard');
+      library.update(charizard.id, { cardBack: RED });
+      const { requestCardBack, choose } = chooser();
+      await renderSession({
+        session,
+        store,
+        cardBackStore,
+        open: true,
+        requestCardBack,
+      });
+      await choose(GREEN);
+      act(() => session.completeLatest(true));
+      await click('button[aria-label="Charizard: put on P1"]');
+      await renderSession({ session, store, cardBackStore, open: false });
+      await vi.waitFor(() =>
+        expect(session.commands.map((command) => command.type)).toEqual([
+          'SetCardBack',
+          'SetCardBack',
+        ])
+      );
+      act(() => session.completeLatest(true));
+      await vi.waitFor(() => expect(session.commands).toHaveLength(3));
+      act(() => session.completeLatest(true));
+      expect(session.commands[1]).toEqual({
+        type: 'SetCardBack',
+        cardBackUrl: RED,
+      });
+
+      // An unsaved deck landing while it is closed (an import that finished
+      // after it) wears the seat's own back, sent along with it.
+      act(() => {
+        store.replaceDeck(
+          'main',
+          deckListOf([{ card: card('Late'), count: 1 }]),
+          { name: 'Late import' },
+          { chosen: true }
+        );
+      });
+      await vi.waitFor(() => expect(session.commands).toHaveLength(4));
+      expect(session.commands[3]).toMatchObject({ type: 'LoadDeck' });
     });
   });
 

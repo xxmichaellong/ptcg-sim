@@ -8,6 +8,7 @@ import {
   useSyncExternalStore,
 } from 'react';
 
+import { DEFAULT_CARD_BACK_URL } from '../../session/browser-card-back.js';
 import {
   useCardBackSelection,
   type CardBackSelectionOptions,
@@ -190,6 +191,8 @@ export const DeckBuilderSession = ({
   const forgottenFor = useRef<DeckInstallSession | undefined>(undefined);
   const alternateEnabledRef = useRef(alternateEnabled);
   alternateEnabledRef.current = alternateEnabled;
+  const openNow = useRef(open);
+  openNow.current = open;
   const wasOpen = useRef(open);
   // Without a handler of its own, a deck that doesn't reach the table says
   // why, rather than nothing happening.
@@ -363,21 +366,76 @@ export const DeckBuilderSession = ({
     [beforeUnloadTarget, cardBackStore, store]
   );
 
-  const applyCardBackSelection = useCallback(
-    (cardBackUrl: string, target: DeckBuilderTarget | undefined): void => {
-      const seat = target ?? 'main';
+  /** Puts a card back on a seat; true if that is news for the table. */
+  const putCardBack = useCallback(
+    (seat: DeckBuilderTarget, cardBackUrl: string): boolean => {
       // The room may show another back than the one last installed (an
       // undo, a restored game): then the same choice is still a change.
       const shown = roomCardBackOf(session ?? shownSession, seat);
+      return cardBackStore.replace(seat, cardBackUrl, {
+        reinstall: shown !== undefined && shown !== cardBackUrl,
+      });
+    },
+    [cardBackStore, session, shownSession]
+  );
+
+  /**
+   * A card back chosen on a seat is its saved deck's (ADR-033): kept with
+   * the deck, and worn by every seat it is on. A seat holding no saved deck
+   * takes it as its own, for any deck without one. It goes to the table at
+   * once.
+   */
+  const applyCardBackSelection = useCallback(
+    (cardBackUrl: string, target: DeckBuilderTarget | undefined): void => {
+      const seat = target ?? 'main';
+      const { slots } = store.getSnapshot();
+      const deckId = slots[seat].label?.deckId;
+      const saved = deckId ? library.get(deckId) : undefined;
+      let changed = false;
+      if (saved) {
+        if (saved.cardBack !== cardBackUrl) {
+          library.update(saved.id, { cardBack: cardBackUrl });
+        }
+        for (const each of ['main', 'alternate'] as const) {
+          if (slots[each].label?.deckId === saved.id) {
+            changed = putCardBack(each, cardBackUrl) || changed;
+          }
+        }
+      } else {
+        cardBackStore.chooseSeatCardBack(seat, cardBackUrl);
+        changed = putCardBack(seat, cardBackUrl);
+      }
+      if (changed) cardBackCoordinator.current?.flush();
+    },
+    [cardBackStore, library, putCardBack, store]
+  );
+
+  /**
+   * A deck the player puts on a seat brings its card back, else the seat's
+   * own (the standard one, if the seat has none): it goes to the table with
+   * the deck, or at once if the screen has closed (an import that landed
+   * after it).
+   */
+  const dressSeat = useCallback(
+    (seat: DeckBuilderTarget): void => {
+      const deckId = store.getSnapshot().slots[seat].label?.deckId;
+      const own = deckId ? library.get(deckId)?.cardBack : undefined;
+      const back = own ?? cardBackStore.seatCardBack(seat);
+      // A seat that never had a back chosen still shows the standard one.
       if (
-        cardBackStore.replace(seat, cardBackUrl, {
-          reinstall: shown !== undefined && shown !== cardBackUrl,
-        })
+        back === undefined &&
+        cardBackStore.getSnapshot().slots[seat].url === undefined
+      ) {
+        return;
+      }
+      if (
+        putCardBack(seat, back ?? DEFAULT_CARD_BACK_URL) &&
+        !openNow.current
       ) {
         cardBackCoordinator.current?.flush();
       }
     },
-    [cardBackStore, session, shownSession]
+    [cardBackStore, library, putCardBack, store]
   );
   const { chooseCardBack } = useCardBackSelection<DeckBuilderTarget>({
     applySelection: applyCardBackSelection,
@@ -511,6 +569,7 @@ export const DeckBuilderSession = ({
       onPlay={closeAndFlush}
       onClose={onBack ?? closeAndFlush}
       onChangeCardBack={changeCardBack}
+      onSeatDeck={dressSeat}
       cardBacks={cardBacks}
       {...(readClipboard ? { readClipboard } : {})}
     />
