@@ -825,7 +825,7 @@ const knockOut: TutorialLesson = {
 const deck: TutorialLesson = {
   id: 'deck',
   version: 1,
-  title: msg`Your deck`,
+  title: msg({ message: 'Your deck', context: 'your draw pile on the table' }),
   summary: msg`Draw, search and shuffle`,
   scenario: MIDGAME_SCENARIO,
   steps: [

@@ -223,7 +223,7 @@
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards."
     ],
-    "translation": "{actor} 将 {count, plural, other {# 张卡牌}}放到了牌库底"
+    "translation": "{actor} 将 {count, plural, other {# 张卡牌}}洗入了牌库底"
   },
   "s-CcLE": {
     "message": "{actor} shuffled discard into deck",
@@ -251,21 +251,21 @@
     "comments": [
       "Log line. {actor} is a player's name."
     ],
-    "translation": "{actor} 将手牌放到了牌库底"
+    "translation": "{actor} 将手牌洗入了牌库底"
   },
   "xT_uho": {
     "message": "{actor} shuffled hand to bottom of deck and drew {count, plural, one {# card(s)} other {# card(s)}}",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards they drew."
     ],
-    "translation": "{actor} 将手牌放到牌库底并抽了 {count, plural, other {# 张卡牌}}"
+    "translation": "{actor} 将手牌洗入牌库底并抽了 {count, plural, other {# 张卡牌}}"
   },
   "QGyAAz": {
     "message": "{actor} shuffled prizes to bottom of deck",
     "comments": [
       "Log line. {actor} is a player's name."
     ],
-    "translation": "{actor} 将奖赏卡放到了牌库底"
+    "translation": "{actor} 将奖赏卡洗入了牌库底"
   },
   "xw6Fj3": {
     "message": "{actor} switched {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} with top of deck",
@@ -426,7 +426,7 @@
   },
   "aN0Z_E": {
     "message": "{count, plural, one {Shuffle hand to bottom and draw # card} other {Shuffle hand to bottom and draw # cards}}",
-    "translation": "{count, plural, other {手牌放到牌库底并抽 # 张牌}}"
+    "translation": "{count, plural, other {手牌洗入牌库底并抽 # 张牌}}"
   },
   "hMKADB": {
     "message": "{count} × {cardName} ({print}). Details",
@@ -4424,7 +4424,10 @@
   },
   "QfafSg": {
     "message": "Row {rowNumber}: card type must be Pokémon, Trainer or Energy.",
-    "translation": "第 {rowNumber} 行：卡牌类型必须是宝可梦、训练家或能量。"
+    "comments": [
+      "Keep Pokémon, Trainer and Energy in English: the CSV import reads only those words."
+    ],
+    "translation": "第 {rowNumber} 行：卡牌类型必须是 Pokémon、Trainer 或 Energy。"
   },
   "jtuoO2": {
     "message": "Row {rowNumber}: card type too long.",
@@ -5834,6 +5837,11 @@
   },
   "dYE-zL": {
     "message": "Your deck",
+    "translation": "你的牌库"
+  },
+  "_4QTUh": {
+    "message": "Your deck",
+    "context": "your draw pile on the table",
     "translation": "你的牌库"
   },
   "APqbzr": {

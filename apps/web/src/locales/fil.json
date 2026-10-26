@@ -3612,7 +3612,7 @@
   },
   "6rbhdt": {
     "message": "Not your move",
-    "translation": "Hindi mo galaw ito"
+    "translation": "Hindi mo maaaring galawin ang card na iyan"
   },
   "W8zlv3": {
     "message": "Not yours to do",
@@ -4424,6 +4424,9 @@
   },
   "QfafSg": {
     "message": "Row {rowNumber}: card type must be Pokémon, Trainer or Energy.",
+    "comments": [
+      "Keep Pokémon, Trainer and Energy in English: the CSV import reads only those words."
+    ],
     "translation": "Row {rowNumber}: dapat Pokémon, Trainer, o Energy ang uri ng card."
   },
   "jtuoO2": {
@@ -5834,6 +5837,11 @@
   },
   "dYE-zL": {
     "message": "Your deck",
+    "translation": "Ang deck mo"
+  },
+  "_4QTUh": {
+    "message": "Your deck",
+    "context": "your draw pile on the table",
     "translation": "Ang deck mo"
   },
   "APqbzr": {

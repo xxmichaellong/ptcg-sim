@@ -148,7 +148,9 @@ export const boardCommands = (
       case 'prizes':
         return own ? t`Your Prizes` : t`Their Prizes`;
       case 'deck':
-        return own ? t`Your deck` : t`Their deck`;
+        return own
+          ? t({ message: 'Your deck', context: 'your draw pile on the table' })
+          : t`Their deck`;
       default:
         return '';
     }

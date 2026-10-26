@@ -4424,6 +4424,9 @@
   },
   "QfafSg": {
     "message": "Row {rowNumber}: card type must be Pokémon, Trainer or Energy.",
+    "comments": [
+      "Keep Pokémon, Trainer and Energy in English: the CSV import reads only those words."
+    ],
     "translation": "Row {rowNumber}: card type must be Pokémon, Trainer or Energy."
   },
   "jtuoO2": {
@@ -5834,6 +5837,11 @@
   },
   "dYE-zL": {
     "message": "Your deck",
+    "translation": "Your deck"
+  },
+  "_4QTUh": {
+    "message": "Your deck",
+    "context": "your draw pile on the table",
     "translation": "Your deck"
   },
   "APqbzr": {

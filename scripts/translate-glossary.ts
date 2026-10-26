@@ -727,7 +727,7 @@ export const LANGUAGE_GUIDES: Readonly<Record<string, LanguageGuide>> = {
       'Benched Pokémon':
         'Pokémon Cadangan; bench a Pokémon: masukkan ke Cadangan',
       Deck: 'deck; the cards print Deck',
-      Hand: 'Kartu Pegangan; your hand: Kartu Peganganmu',
+      Hand: 'Kartu Pegangan (as a short label: Pegangan); your hand: Kartu Peganganmu',
       'Discard Pile': 'Trash; discard a card: buang ke Trash',
       'Prize cards':
         'Kartu Point; also for the short "Prizes"; take a Prize card: ambil Kartu Point',

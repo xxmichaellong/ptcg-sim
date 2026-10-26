@@ -426,7 +426,7 @@
   },
   "aN0Z_E": {
     "message": "{count, plural, one {Shuffle hand to bottom and draw # card} other {Shuffle hand to bottom and draw # cards}}",
-    "translation": "{count, plural, one {Lägg handen underst och dra # kort} other {Lägg handen underst och dra # kort}}"
+    "translation": "{count, plural, one {Blanda in handen underst och dra # kort} other {Blanda in handen underst och dra # kort}}"
   },
   "hMKADB": {
     "message": "{count} × {cardName} ({print}). Details",
@@ -4424,6 +4424,9 @@
   },
   "QfafSg": {
     "message": "Row {rowNumber}: card type must be Pokémon, Trainer or Energy.",
+    "comments": [
+      "Keep Pokémon, Trainer and Energy in English: the CSV import reads only those words."
+    ],
     "translation": "Rad {rowNumber}: korttypen måste vara Pokémon, Trainer eller Energy."
   },
   "jtuoO2": {
@@ -4826,7 +4829,7 @@
   },
   "nU9Ip_": {
     "message": "Shuffle Prizes to bottom of deck",
-    "translation": "Lägg priskorten underst i leken"
+    "translation": "Blanda in priskorten längst ned i leken"
   },
   "SRsSL6": {
     "message": "Shuffle to bottom",
@@ -5834,6 +5837,11 @@
   },
   "dYE-zL": {
     "message": "Your deck",
+    "translation": "Din lek"
+  },
+  "_4QTUh": {
+    "message": "Your deck",
+    "context": "your draw pile on the table",
     "translation": "Din lek"
   },
   "APqbzr": {

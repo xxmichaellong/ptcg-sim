@@ -313,7 +313,11 @@ export const parseSimCsvResult = (csvData: string = ''): ParseSimCsvResult => {
       issues.push({
         code: 'invalid_type',
         row: rowNumber,
-        message: t`Row ${rowNumber}: card type must be Pokémon, Trainer or Energy.`,
+        message: t({
+          message: `Row ${rowNumber}: card type must be Pokémon, Trainer or Energy.`,
+          comment:
+            'Keep Pokémon, Trainer and Energy in English: the CSV import reads only those words.',
+        }),
       });
       rowValid = false;
     }

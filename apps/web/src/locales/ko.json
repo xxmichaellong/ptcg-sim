@@ -223,7 +223,7 @@
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards."
     ],
-    "translation": "{actor}님이 카드 {count, plural, other {#장}}을 덱 맨 아래에 넣었습니다"
+    "translation": "{actor}님이 카드 {count, plural, other {#장}}을 섞어 덱 맨 아래에 넣었습니다"
   },
   "s-CcLE": {
     "message": "{actor} shuffled discard into deck",
@@ -251,21 +251,21 @@
     "comments": [
       "Log line. {actor} is a player's name."
     ],
-    "translation": "{actor}님이 패를 덱 맨 아래에 넣었습니다"
+    "translation": "{actor}님이 패를 섞어 덱 맨 아래에 넣었습니다"
   },
   "xT_uho": {
     "message": "{actor} shuffled hand to bottom of deck and drew {count, plural, one {# card(s)} other {# card(s)}}",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards they drew."
     ],
-    "translation": "{actor}님이 패를 덱 맨 아래에 넣고 카드 {count, plural, other {#장}}을 뽑았습니다"
+    "translation": "{actor}님이 패를 섞어 덱 맨 아래에 넣고 카드 {count, plural, other {#장}}을 뽑았습니다"
   },
   "QGyAAz": {
     "message": "{actor} shuffled prizes to bottom of deck",
     "comments": [
       "Log line. {actor} is a player's name."
     ],
-    "translation": "{actor}님이 프라이즈를 덱 맨 아래에 넣었습니다"
+    "translation": "{actor}님이 프라이즈를 섞어 덱 맨 아래에 넣었습니다"
   },
   "xw6Fj3": {
     "message": "{actor} switched {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} with top of deck",
@@ -426,7 +426,7 @@
   },
   "aN0Z_E": {
     "message": "{count, plural, one {Shuffle hand to bottom and draw # card} other {Shuffle hand to bottom and draw # cards}}",
-    "translation": "{count, plural, other {패를 덱 아래에 넣고 카드 #장 뽑기}}"
+    "translation": "{count, plural, other {패를 섞어 덱 아래에 넣고 카드 #장 뽑기}}"
   },
   "hMKADB": {
     "message": "{count} × {cardName} ({print}). Details",
@@ -4424,7 +4424,10 @@
   },
   "QfafSg": {
     "message": "Row {rowNumber}: card type must be Pokémon, Trainer or Energy.",
-    "translation": "{rowNumber}행: 카드 종류는 포켓몬, 트레이너스 또는 에너지여야 합니다."
+    "comments": [
+      "Keep Pokémon, Trainer and Energy in English: the CSV import reads only those words."
+    ],
+    "translation": "{rowNumber}행: 카드 종류는 Pokémon, Trainer 또는 Energy여야 합니다."
   },
   "jtuoO2": {
     "message": "Row {rowNumber}: card type too long.",
@@ -4801,7 +4804,7 @@
   },
   "8uWf-T": {
     "message": "Shuffle hand to bottom of deck and draw…",
-    "translation": "패를 덱 맨 아래에 넣고 뽑기…"
+    "translation": "패를 섞어 덱 맨 아래에 넣고 뽑기…"
   },
   "RdPVNx": {
     "message": "Shuffle hand to deck",
@@ -4826,7 +4829,7 @@
   },
   "nU9Ip_": {
     "message": "Shuffle Prizes to bottom of deck",
-    "translation": "프라이즈를 덱 맨 아래에 넣기"
+    "translation": "프라이즈를 섞어 덱 맨 아래에 넣기"
   },
   "SRsSL6": {
     "message": "Shuffle to bottom",
@@ -5834,6 +5837,11 @@
   },
   "dYE-zL": {
     "message": "Your deck",
+    "translation": "내 덱"
+  },
+  "_4QTUh": {
+    "message": "Your deck",
+    "context": "your draw pile on the table",
     "translation": "내 덱"
   },
   "APqbzr": {

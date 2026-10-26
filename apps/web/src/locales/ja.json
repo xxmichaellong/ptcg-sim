@@ -2510,7 +2510,7 @@
   "L6qACV": {
     "message": "Flip",
     "context": "shortcut key caption",
-    "translation": "裏返す"
+    "translation": "反転"
   },
   "gUdjoL": {
     "message": "Flip",
@@ -4424,7 +4424,10 @@
   },
   "QfafSg": {
     "message": "Row {rowNumber}: card type must be Pokémon, Trainer or Energy.",
-    "translation": "{rowNumber}行目:カードの種類はポケモン、トレーナーズ、エネルギーのいずれかにしてください。"
+    "comments": [
+      "Keep Pokémon, Trainer and Energy in English: the CSV import reads only those words."
+    ],
+    "translation": "{rowNumber}行目:カードの種類はPokémon、Trainer、Energyのいずれかにしてください。"
   },
   "jtuoO2": {
     "message": "Row {rowNumber}: card type too long.",
@@ -5834,6 +5837,11 @@
   },
   "dYE-zL": {
     "message": "Your deck",
+    "translation": "自分のデッキ"
+  },
+  "_4QTUh": {
+    "message": "Your deck",
+    "context": "your draw pile on the table",
     "translation": "自分の山札"
   },
   "APqbzr": {

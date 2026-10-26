@@ -2510,7 +2510,7 @@
   "L6qACV": {
     "message": "Flip",
     "context": "shortcut key caption",
-    "translation": "Werfen"
+    "translation": "Drehen"
   },
   "gUdjoL": {
     "message": "Flip",
@@ -4424,7 +4424,10 @@
   },
   "QfafSg": {
     "message": "Row {rowNumber}: card type must be Pokémon, Trainer or Energy.",
-    "translation": "Zeile {rowNumber}: Kartentyp muss Pokémon, Trainer oder Energie sein."
+    "comments": [
+      "Keep Pokémon, Trainer and Energy in English: the CSV import reads only those words."
+    ],
+    "translation": "Zeile {rowNumber}: Kartentyp muss Pokémon, Trainer oder Energy sein."
   },
   "jtuoO2": {
     "message": "Row {rowNumber}: card type too long.",
@@ -5834,6 +5837,11 @@
   },
   "dYE-zL": {
     "message": "Your deck",
+    "translation": "Dein Deck"
+  },
+  "_4QTUh": {
+    "message": "Your deck",
+    "context": "your draw pile on the table",
     "translation": "Dein Deck"
   },
   "APqbzr": {

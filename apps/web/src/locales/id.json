@@ -2119,7 +2119,7 @@
   "vtuFDE": {
     "message": "Discard hand",
     "context": "shortcut key caption",
-    "translation": "Buang Kartu Pegangan"
+    "translation": "Buang pegangan"
   },
   "Nx52uj": {
     "message": "Discard hand and draw…",
@@ -2678,12 +2678,12 @@
   "MMu3F-": {
     "message": "Hand to bottom",
     "context": "shortcut key caption",
-    "translation": "Kartu Pegangan ke bawah"
+    "translation": "Pegangan ke bawah"
   },
   "n04_a0": {
     "message": "Hand to deck",
     "context": "shortcut key caption",
-    "translation": "Kartu Pegangan ke deck"
+    "translation": "Pegangan ke deck"
   },
   "M35hjm": {
     "message": "Has an Ability, no Weakness",
@@ -4424,6 +4424,9 @@
   },
   "QfafSg": {
     "message": "Row {rowNumber}: card type must be Pokémon, Trainer or Energy.",
+    "comments": [
+      "Keep Pokémon, Trainer and Energy in English: the CSV import reads only those words."
+    ],
     "translation": "Baris {rowNumber}: jenis kartu harus Pokémon, Trainer, atau Energy."
   },
   "jtuoO2": {
@@ -5834,6 +5837,11 @@
   },
   "dYE-zL": {
     "message": "Your deck",
+    "translation": "Deck kamu"
+  },
+  "_4QTUh": {
+    "message": "Your deck",
+    "context": "your draw pile on the table",
     "translation": "Deck kamu"
   },
   "APqbzr": {

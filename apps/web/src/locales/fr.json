@@ -4424,7 +4424,10 @@
   },
   "QfafSg": {
     "message": "Row {rowNumber}: card type must be Pokémon, Trainer or Energy.",
-    "translation": "Ligne {rowNumber} : le type de carte doit être Pokémon, Dresseur ou Énergie."
+    "comments": [
+      "Keep Pokémon, Trainer and Energy in English: the CSV import reads only those words."
+    ],
+    "translation": "Ligne {rowNumber} : le type de carte doit être Pokémon, Trainer ou Energy."
   },
   "jtuoO2": {
     "message": "Row {rowNumber}: card type too long.",
@@ -5834,6 +5837,11 @@
   },
   "dYE-zL": {
     "message": "Your deck",
+    "translation": "Votre deck"
+  },
+  "_4QTUh": {
+    "message": "Your deck",
+    "context": "your draw pile on the table",
     "translation": "Votre deck"
   },
   "APqbzr": {
