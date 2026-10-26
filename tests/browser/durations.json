@@ -79,6 +79,7 @@
     "special-card-formats.spec.ts": 190,
     "table-depth-lab.spec.ts": 22,
     "table-depth-live.spec.ts": 231,
+    "table-focus-rings.spec.ts": 600,
     "tournament-decks.spec.ts": 40,
     "tutorial.spec.ts": 420,
     "viewer-drag.spec.ts": 134,

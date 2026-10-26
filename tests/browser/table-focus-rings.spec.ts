@@ -1,5 +1,6 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
+import { pngPixels, type PngPixels } from './support/png-pixels.js';
 import { ownRoomBudget } from './support/room-budget.js';
 import { dismissWelcome } from './support/table-shell.js';
 
@@ -43,9 +44,11 @@ const CONTROLS: readonly Control[] = [
  * Each tone of the ring painted in a colour nothing else on the table is,
  * to find its pixels: the ring itself, and the halo inside it.
  */
+// Painted at once: a control easing its shadow would still be on its way.
+const STILL = '*, *::before, *::after { transition: none !important; }';
 const MARKS = {
-  ring: '*:focus-visible, *:has(> input:focus-visible) { outline-color: #ff00ff !important; }',
-  halo: ':root { --color-felt-focus-halo: #ff00ff !important; --color-desk-focus-halo: #ff00ff !important; }',
+  ring: `${STILL} *:focus-visible, *:has(> input:focus-visible) { outline-color: #ff00ff !important; }`,
+  halo: `${STILL} :root { --color-felt-focus-halo: #ff00ff !important; --color-desk-focus-halo: #ff00ff !important; }`,
 } as const;
 type Tone = keyof typeof MARKS;
 
@@ -58,26 +61,45 @@ const focusByKeyboard = async (page: Page, control: Locator) => {
   await page.waitForTimeout(300);
 };
 
+/** A colour's relative luminance, from `rgb(…)`/`rgba(…)` or 8-bit channels. */
+const luminance = (red: number, green: number, blue: number): number => {
+  const linear = (value: number) => {
+    const channel = value / 255;
+    return channel <= 0.03928
+      ? channel / 12.92
+      : ((channel + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * linear(red) + 0.7152 * linear(green) + 0.0722 * linear(blue);
+};
+const luminanceOf = (color: string): number | undefined => {
+  const [red, green, blue] = (/rgba?\(([^)]*)\)/u.exec(color)?.[1] ?? '')
+    .split(/[\s,/]+/u)
+    .map(Number);
+  return red === undefined || green === undefined || blue === undefined
+    ? undefined
+    : luminance(red, green, blue);
+};
+
 /**
- * The contrast between a tone's colour and what lies under each pixel it
- * covers, unfocused: the tone found in a shot with it marked, what lies
- * under it in one with the control blurred. Sorted, lowest first.
+ * The contrast between each tone's colour and what lies under each pixel it
+ * covers, unfocused: each tone found in a shot with it marked, what lies
+ * under it in one with the control blurred. Each sorted, lowest first; a
+ * tone the control doesn't draw has none.
  */
 const toneContrasts = async (
   page: Page,
   control: Locator,
-  ring: Locator,
-  tone: Tone
-): Promise<number[]> => {
+  ring: Locator
+): Promise<Record<Tone, number[]>> => {
   await focusByKeyboard(page, control);
-  const color = await ring.evaluate((element, tone) => {
+  const colors = await ring.evaluate((element) => {
     const style = getComputedStyle(element);
     // The halo is the first of the box shadows: `rgb(…) 0px 0px 0px 2px`.
-    return tone === 'ring'
-      ? style.outlineColor
-      : (/^rgba?\([^)]*\)/u.exec(style.boxShadow)?.[0] ?? '');
-  }, tone);
-  if (!color) return [];
+    return {
+      ring: style.outlineColor,
+      halo: /^rgba?\([^)]*\)/u.exec(style.boxShadow)?.[0] ?? '',
+    };
+  });
   const box = (await ring.boundingBox())!;
   const clip = {
     x: Math.max(0, Math.floor(box.x - 10)),
@@ -85,59 +107,46 @@ const toneContrasts = async (
     width: Math.ceil(box.width + 20),
     height: Math.ceil(box.height + 20),
   };
-  const style = await page.addStyleTag({ content: MARKS[tone] });
-  await page.waitForTimeout(100);
-  const marked = (await page.screenshot({ clip })).toString('base64');
-  await style.evaluate((element) => element.parentNode?.removeChild(element));
+  const marked: Partial<Record<Tone, PngPixels>> = {};
+  for (const tone of ['ring', 'halo'] as const) {
+    if (!colors[tone]) continue;
+    const style = await page.addStyleTag({ content: MARKS[tone] });
+    await page.waitForTimeout(100);
+    marked[tone] = pngPixels(await page.screenshot({ clip }));
+    await style.evaluate((element) => element.parentNode?.removeChild(element));
+  }
   await page.evaluate(() =>
     (document.activeElement as HTMLElement | null)?.blur()
   );
   await page.waitForTimeout(400);
-  const unfocused = (await page.screenshot({ clip })).toString('base64');
-  return page.evaluate(
-    async ({ marked, unfocused, color }) => {
-      const pixels = async (png: string) => {
-        const image = new Image();
-        image.src = `data:image/png;base64,${png}`;
-        await image.decode();
-        const canvas = document.createElement('canvas');
-        canvas.width = image.width;
-        canvas.height = image.height;
-        const context = canvas.getContext('2d')!;
-        context.drawImage(image, 0, 0);
-        return context.getImageData(0, 0, image.width, image.height).data;
-      };
-      const linear = (value: number) => {
-        const channel = value / 255;
-        return channel <= 0.03928
-          ? channel / 12.92
-          : ((channel + 0.055) / 1.055) ** 2.4;
-      };
-      const luminance = (data: Uint8ClampedArray, at: number) =>
-        0.2126 * linear(data[at]!) +
-        0.7152 * linear(data[at + 1]!) +
-        0.0722 * linear(data[at + 2]!);
-      // The tone's colour as painted, whatever space the style writes it in.
-      const swatch = document.createElement('canvas').getContext('2d')!;
-      swatch.fillStyle = color;
-      swatch.fillRect(0, 0, 1, 1);
-      const painted = luminance(swatch.getImageData(0, 0, 1, 1).data, 0);
-      const mark = await pixels(marked);
-      const under = await pixels(unfocused);
-      const ratios: number[] = [];
-      for (let at = 0; at < mark.length; at += 4) {
-        if (!(mark[at]! > 235 && mark[at + 1]! < 20 && mark[at + 2]! > 235)) {
-          continue;
-        }
-        const felt = luminance(under, at);
-        ratios.push(
-          (Math.max(painted, felt) + 0.05) / (Math.min(painted, felt) + 0.05)
-        );
+  const under = pngPixels(await page.screenshot({ clip }));
+  const contrasts = { ring: [] as number[], halo: [] as number[] };
+  for (const tone of ['ring', 'halo'] as const) {
+    const mark = marked[tone];
+    const painted = luminanceOf(colors[tone]);
+    if (!mark || painted === undefined) continue;
+    for (let pixel = 0; pixel < mark.width * mark.height; pixel += 1) {
+      const at = pixel * mark.channels;
+      if (!(
+        mark.data[at]! > 235 &&
+        mark.data[at + 1]! < 20 &&
+        mark.data[at + 2]! > 235
+      )) {
+        continue;
       }
-      return ratios.sort((left, right) => left - right);
-    },
-    { marked, unfocused, color }
-  );
+      const from = pixel * under.channels;
+      const felt = luminance(
+        under.data[from]!,
+        under.data[from + 1]!,
+        under.data[from + 2]!
+      );
+      contrasts[tone].push(
+        (Math.max(painted, felt) + 0.05) / (Math.min(painted, felt) + 0.05)
+      );
+    }
+    contrasts[tone].sort((left, right) => left - right);
+  }
+  return contrasts;
 };
 
 /**
@@ -153,10 +162,9 @@ const expectRingShows = async (
 ): Promise<void> => {
   const control = page.locator(focus).first();
   const ring = ringOf ? control.locator(ringOf) : control;
-  const tones = [
-    await toneContrasts(page, control, ring, 'ring'),
-    await toneContrasts(page, control, ring, 'halo'),
-  ].filter((ratios) => ratios.length > 0);
+  const tones = Object.values(await toneContrasts(page, control, ring)).filter(
+    (ratios) => ratios.length > 0
+  );
   const band = Math.min(...tones.map((ratios) => ratios.length));
   const standing = tones.flat().filter((ratio) => ratio >= 3).length;
   expect(band, `${name}: pixels in a band`).toBeGreaterThan(40);
