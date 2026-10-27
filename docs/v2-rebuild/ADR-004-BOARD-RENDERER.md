@@ -471,6 +471,39 @@ returns to the card back before the stale response settles. The fixture is
 deterministic same-origin SVG evidence, not external-host, real-raster memory,
 manual assistive-technology, or cross-browser approval.
 
+## Re-evaluation against Pixi (2026-10-27)
+
+The owner asked whether the whole table should move to Pixi. Both renderers'
+production builds were measured on one busy Solo table (120 cards, both sides
+built up), at 1440×900 and on a 390×844 phone at 3×, flat and tilted, at 1×,
+4× and 6× CPU throttling, on a machine without a GPU (SwiftShader: frame drops
+and GPU work are a rough guide only). Pixi spent 1.5–4× less main-thread time,
+but was ready 0.4–0.9 s later, shipped 139 KiB more gzipped script, held
+90–185 MiB more memory in card textures, and dropped more frames at phone
+density. The DOM table was slow only on the tilted table under 6× throttling,
+and the profiles named three causes, fixed instead:
+
+- The surface's settle flag was named `data-motion`, as the page root's motion
+  setting is. Rules keyed on that name for every card face had the browser
+  restyle the whole table whenever it started or stopped moving (each hover
+  raise, each drag). The flag is `data-board-motion`.
+- Finding the tooltip under a resting mouse measured every badge and marker
+  each frame, forcing a style and layout pass mid-frame. The hints are now
+  measured once and kept until something on the table may have moved
+  (`BoardHintIndex`).
+- A held card carried on over the same target (`onlyHeldCardMoved`) is painted
+  where it is by the surface itself, the tilted table posing only the held
+  cards, instead of the table and the page around it rendering on every
+  pointer move. Whether it is over the coin is measured after the frame is
+  painted.
+
+On the tilted table at 6× (desktop / phone), long tasks while dragging went
+from 16 to 2 / 15 to 2 and while hovering from 20 to 0 / 2 to 0, and style
+recalculation roughly halved. Desktop's 95th-percentile frame went from 150 to
+67 ms dragging and from 142 to 33 ms hovering. Pixi stays the explicit
+comparison; visuals CSS cannot draw would come as a Pixi effects layer over the
+DOM table, not a second table. The ADR-015 physical-device check still stands.
+
 ## Revisit triggers
 
 Reopen this ADR only when a protected, representative workflow misses its

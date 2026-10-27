@@ -79,7 +79,7 @@ test('Hide then Hand keeps the same physical card while both actions await autho
   await page.keyboard.press(' ');
   await expect.poll(async () => (await zone('board')).cards.length).toBe(1);
   await expect(page.locator('.ptcgsim-board-surface')).toHaveAttribute(
-    'data-motion',
+    'data-board-motion',
     'idle'
   );
   const board = await zone('board');

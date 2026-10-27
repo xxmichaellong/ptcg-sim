@@ -318,6 +318,29 @@ export class BoardMotionDirector {
     }
   }
 
+  /**
+   * The held cards carried on, nothing else on the table changing
+   * (`onlyHeldCardMoved`): painted where they are now held, `painted` saying
+   * where on a flat table. A tilted one poses them itself.
+   */
+  carry(
+    painted: ReadonlyMap<string, PaintedCard>,
+    presentation: BoardPresentation
+  ): void {
+    if (this.depthEnabled) {
+      this.depth.carry(presentation);
+      return;
+    }
+    for (const [key, card] of painted) {
+      this.painted.set(key, card);
+      const element = this.elements.get(key);
+      if (!element) continue;
+      // As the card's node draws a held card (BoardSurface).
+      element.style.left = `${String(card.rect.x)}px`;
+      element.style.top = `${String(card.rect.y)}px`;
+    }
+  }
+
   cancelAll(): void {
     this.depth.cancel();
     for (const key of [...this.flights.keys()]) this.stopFlight(key);

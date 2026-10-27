@@ -2869,7 +2869,7 @@ test('Alt-F flips only the local board perspective across selection and replay',
   // The table turns over for a moment (ADR-027): pick the point to click
   // once it has come to rest, or it lands on whatever has turned under it.
   await expect(
-    host.locator('.ptcgsim-board-surface[data-motion="idle"]')
+    host.locator('.ptcgsim-board-surface[data-board-motion="idle"]')
   ).toHaveCount(1);
 
   const selectedCard = host.locator(

@@ -6,7 +6,11 @@ import {
   DEFAULT_BOARD_PRESENTATION,
 } from './defaults.js';
 import { BoardDragController } from './drag.js';
-import { boardDragInput, withHeldCards } from './held-cards.js';
+import {
+  boardDragInput,
+  onlyHeldCardMoved,
+  withHeldCards,
+} from './held-cards.js';
 import {
   createTableLayoutSnapshot,
   DEFAULT_TABLE_VERTICAL_LAYOUT,
@@ -194,5 +198,57 @@ describe('held cards', () => {
     expect(input.dropPoint!.x).toBeCloseTo(input.x, 6);
     expect(input.dropPoint!.y).toBeCloseTo(input.y, 6);
     expect(input.arrangementIndex).not.toBeUndefined();
+  });
+});
+
+describe('onlyHeldCardMoved', () => {
+  const held = (
+    drag: Partial<NonNullable<BoardPresentation['drag']>> = {}
+  ): BoardPresentation => ({
+    ...DEFAULT_BOARD_PRESENTATION,
+    drag: {
+      cardId: 'card-1' as never,
+      x: 10,
+      y: 20,
+      targetId: 'zone:bench',
+      index: 2,
+      ...drag,
+    },
+  });
+
+  it('is a held card carried on over the same target and gap', () => {
+    const before = held();
+    expect(
+      onlyHeldCardMoved(before, { ...before, drag: { ...before.drag!, x: 40 } })
+    ).toBe(true);
+  });
+
+  it('is not a new target, gap, drop or card, nor a pick-up or a drop', () => {
+    const before = held();
+    for (const after of [
+      held({ x: 40, targetId: 'zone:hand' }),
+      held({ x: 40, index: 3 }),
+      held({ x: 40, detached: true }),
+      held({ x: 40, action: { kind: 'swap', stackId: 'stack-2' } }),
+      held({ x: 40, cardId: 'card-2' as never }),
+      { ...DEFAULT_BOARD_PRESENTATION },
+    ])
+      expect(onlyHeldCardMoved(before, after)).toBe(false);
+    expect(onlyHeldCardMoved(DEFAULT_BOARD_PRESENTATION, before)).toBe(false);
+  });
+
+  it('is not one where anything else about the table changed too', () => {
+    const before = held();
+    const moved = { ...before.drag!, x: 40 };
+    expect(
+      onlyHeldCardMoved(before, {
+        ...before,
+        drag: moved,
+        openedZoneId: 'zone:discard',
+      })
+    ).toBe(false);
+    expect(
+      onlyHeldCardMoved(before, { ...before, drag: moved, settling: [] })
+    ).toBe(false);
   });
 });

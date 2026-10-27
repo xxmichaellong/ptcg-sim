@@ -214,7 +214,7 @@ test('two raised tables reconcile delayed and rejected play, resume after discon
     );
     await expect.poll(handCount).toBe(7);
     await expect(owner!.locator('.ptcgsim-board-surface')).toHaveAttribute(
-      'data-motion',
+      'data-board-motion',
       'idle'
     );
     expect(
@@ -269,7 +269,7 @@ test('two raised tables reconcile delayed and rejected play, resume after discon
       .poll(async () => (await state(owner!)).revision)
       .toBe((await state(guest!)).revision);
     await expect(owner!.locator('.ptcgsim-board-surface')).toHaveAttribute(
-      'data-motion',
+      'data-board-motion',
       'idle'
     );
     await expect(owner!.locator('[data-held="drag"]')).toHaveCount(0);

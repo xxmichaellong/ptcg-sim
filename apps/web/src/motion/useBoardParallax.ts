@@ -37,7 +37,7 @@ export const useBoardParallax = (
     const busy = () =>
       held ||
       document.hidden ||
-      surface.querySelector('[data-motion="active"]') !== null ||
+      surface.querySelector('[data-board-motion="active"]') !== null ||
       surface.parentElement?.querySelector('[role="dialog"], [role="menu"]') !==
         null;
     const tick = (at: number) => {

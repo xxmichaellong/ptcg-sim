@@ -293,7 +293,7 @@ const readResourceEvidence = async (
   // Cards in flight and their short-lived ghosts are transient nodes; the
   // resource signature is compared once the table has stopped moving.
   await expect(
-    page.locator('.ptcgsim-board-surface[data-motion="idle"]')
+    page.locator('.ptcgsim-board-surface[data-board-motion="idle"]')
   ).toHaveCount(1);
   return readSettledResourceEvidence(page, renderer);
 };

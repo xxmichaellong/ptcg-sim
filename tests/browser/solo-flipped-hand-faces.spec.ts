@@ -20,7 +20,7 @@ const deckCsv = (prefix: string): Buffer =>
 
 const idle = (page: Page) =>
   expect(
-    page.locator('.ptcgsim-board-surface[data-motion="idle"]')
+    page.locator('.ptcgsim-board-surface[data-board-motion="idle"]')
   ).toHaveCount(1);
 
 /** Every frame from now on: how many of the bottom hand's cards show a back. */

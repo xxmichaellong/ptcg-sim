@@ -40,36 +40,83 @@ const contains = (rect: DOMRect, x: number, y: number): boolean =>
   y >= rect.top &&
   y <= rect.bottom;
 
+interface MeasuredHint {
+  readonly element: HTMLElement;
+  readonly rect: DOMRect;
+}
+
 /**
- * The hint under a point. Counters and chips come before count badges, and
- * later (painted over) before earlier. One hidden behind a card held up in
- * the hand does not count.
+ * Every hint and where it is drawn, in the order a point tries them:
+ * counters and chips before count badges, and later (painted over) before
+ * earlier.
  */
-export const boardHintAt = (
-  root: ParentNode,
-  x: number,
-  y: number
-): BoardHintTarget | null => {
+const measureHints = (root: ParentNode): readonly MeasuredHint[] => {
   const targets = Array.from(
     root.querySelectorAll<HTMLElement>('[data-board-hint]')
   );
-  const ordered = [
+  return [
     ...targets.filter((element) => element.dataset.markerHintId).reverse(),
     ...targets.filter((element) => !element.dataset.markerHintId).reverse(),
-  ];
-  const element = ordered.find((candidate) =>
-    contains(candidate.getBoundingClientRect(), x, y)
-  );
+  ].map((element) => ({ element, rect: element.getBoundingClientRect() }));
+};
+
+/** One hidden behind a card held up in the hand (`top`) does not count. */
+const hintIn = (
+  hints: readonly MeasuredHint[],
+  x: number,
+  y: number,
+  top: () => Element | null
+): BoardHintTarget | null => {
+  const element = hints.find((hint) => contains(hint.rect, x, y))?.element;
   if (!element) return null;
-  const top =
-    typeof document.elementFromPoint === 'function'
-      ? document.elementFromPoint(x, y)
-      : null;
-  if (top?.closest('.ptcgsim-card[data-in-hand], .ptcgsim-card[data-held]')) {
+  if (top()?.closest('.ptcgsim-card[data-in-hand], .ptcgsim-card[data-held]')) {
     return null;
   }
   return { element, markerId: element.dataset.markerHintId ?? null };
 };
+
+/** The hint under a point, measured now. */
+export const boardHintAt = (
+  root: ParentNode,
+  x: number,
+  y: number
+): BoardHintTarget | null =>
+  hintIn(measureHints(root), x, y, () =>
+    typeof document.elementFromPoint === 'function'
+      ? document.elementFromPoint(x, y)
+      : null
+  );
+
+/**
+ * The hints as last measured, for a resting mouse. It looks one up every
+ * frame it moves, and measuring them then makes the browser restyle and lay
+ * out the table mid-frame, on top of the frame's own pass. The table
+ * forgets the measure whenever something on it may have moved: a commit,
+ * its motion starting or stopping, a card that carries markers painted.
+ */
+export class BoardHintIndex {
+  private hints: readonly MeasuredHint[] | null = null;
+
+  readonly invalidate = (): void => {
+    this.hints = null;
+  };
+
+  /** `top` is what the pointer is over: its event's target. */
+  at(
+    root: ParentNode,
+    x: number,
+    y: number,
+    top: Element | null
+  ): BoardHintTarget | null {
+    this.hints ??= measureHints(root);
+    return hintIn(
+      this.hints.filter((hint) => hint.element.isConnected),
+      x,
+      y,
+      () => top
+    );
+  }
+}
 
 /** The tooltip showing, and what it is anchored to. */
 export interface BoardHintShowing {

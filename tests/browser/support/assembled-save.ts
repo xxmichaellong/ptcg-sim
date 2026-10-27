@@ -73,7 +73,7 @@ export const expectSavedPrint = async (page: Page) => {
     )
   ).toHaveCount(4);
   await expect(page.locator('.ptcgsim-board-surface')).toHaveAttribute(
-    'data-motion',
+    'data-board-motion',
     'idle'
   );
 };

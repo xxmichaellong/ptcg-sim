@@ -59,6 +59,7 @@ import {
 import { BoardSessionRuntime } from '../board/BoardSessionRuntime.js';
 import { TableMotionStore } from '../board/table-motion.js';
 import { FacePreloader } from '../board/face-preload.js';
+import { onlyHeldCardMovedOn } from '../board/held-card-moves.js';
 import { LegacyBoardKeyboardShortcuts } from '../board/LegacyBoardKeyboardShortcuts.js';
 import type { LegacyBoardShortcutActionRequest } from '../board/resolveLegacyBoardShortcutAction.js';
 import { refusalNotice, unsentNotice } from '../board/refusal-notice.js';
@@ -560,9 +561,21 @@ export const RemoteSessionBoard = ({
           readonly actingPlayerId: string | undefined;
         }
       | undefined;
+    // The board as the page around the table last saw it. A held card
+    // carried on is no news to it: it reads whether a card is held, never
+    // where, and re-rendering it on every move of the pointer made a drag
+    // slow on a slow phone.
+    let publishedSnapshot: BoardSessionControllerState | undefined;
     const publish = (): void => {
       if (disposed || !runtime) return;
       const snapshot = runtime.getBoardSnapshot();
+      if (
+        snapshot &&
+        publishedSnapshot &&
+        onlyHeldCardMovedOn(publishedSnapshot, snapshot)
+      )
+        return;
+      publishedSnapshot = snapshot;
       // The room answers a coin with a new revision. Hover, selection and
       // predicted commands publish too, but none of them advance it.
       const revision = snapshot?.view?.revision;

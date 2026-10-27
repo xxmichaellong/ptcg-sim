@@ -97,7 +97,7 @@ for (const { locale, width, height } of cases) {
       )
       .first();
     await expect(page.locator('.ptcgsim-board-surface')).toHaveAttribute(
-      'data-motion',
+      'data-board-motion',
       'idle'
     );
     await expect
@@ -134,7 +134,7 @@ for (const locale of ['en', 'ar', 'fil']) {
       timeout: 20_000,
     });
     await expect(page.locator('.ptcgsim-board-surface')).toHaveAttribute(
-      'data-motion',
+      'data-board-motion',
       'idle'
     );
     await page
@@ -187,7 +187,7 @@ for (const locale of ['de', 'fr']) {
       );
       await expectFooterInside(coach);
       await expect(page.locator('.ptcgsim-board-surface')).toHaveAttribute(
-        'data-motion',
+        'data-board-motion',
         'idle'
       );
       const source = page
@@ -273,7 +273,7 @@ test('German landscape: the taller coach leaves its highlighted Prize drag usabl
     'knock-out:discard',
     { timeout: 20_000 }
   );
-  await expect(surface).toHaveAttribute('data-motion', 'idle');
+  await expect(surface).toHaveAttribute('data-board-motion', 'idle');
   await drag(
     await centre(
       page
@@ -289,7 +289,7 @@ test('German landscape: the taller coach leaves its highlighted Prize drag usabl
     )
   );
   await expect(coach).toHaveAttribute('data-tutorial-step', 'knock-out:prize');
-  await expect(surface).toHaveAttribute('data-motion', 'idle');
+  await expect(surface).toHaveAttribute('data-board-motion', 'idle');
   await expectFooterInside(coach);
   // Use the exact card the ring and demonstration ask the player to pick up.
   await drag(

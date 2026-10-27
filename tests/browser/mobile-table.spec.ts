@@ -92,7 +92,7 @@ const setUp = async (page: Page): Promise<void> => {
     )
     .toBe(7);
   await expect(
-    page.locator('.ptcgsim-board-surface[data-motion="idle"]')
+    page.locator('.ptcgsim-board-surface[data-board-motion="idle"]')
   ).toHaveCount(1);
 };
 

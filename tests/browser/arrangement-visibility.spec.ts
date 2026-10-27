@@ -72,7 +72,7 @@ const point = async (page: Page, id: string) => {
 };
 const idle = (page: Page) =>
   expect(page.locator('.ptcgsim-board-surface')).toHaveAttribute(
-    'data-motion',
+    'data-board-motion',
     'idle',
     { timeout: 15_000 }
   );

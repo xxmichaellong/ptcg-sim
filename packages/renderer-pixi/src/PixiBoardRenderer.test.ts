@@ -2066,19 +2066,19 @@ it.each(['flat', 'table'] as const)(
       markers: [marker({ parentCardId: source.id })],
     };
     renderer.installScene(changed, [], 'advance', { cause: 'advance' });
-    expect(app.canvas.dataset.motion).toBe('active');
+    expect(app.canvas.dataset.boardMotion).toBe('active');
     expect(renderer.getDiagnostics().localTextureBindings).toBe(baseline + 1);
     // The turn waits, old face up, until both faces have loaded.
     const waiting = performance.now() + 50;
     for (const fn of [...frames.values()]) fn(waiting);
-    expect(app.canvas.dataset.motion).toBe('active');
+    expect(app.canvas.dataset.boardMotion).toBe('active');
     await new Promise((resolve) => setTimeout(resolve, 0));
     for (const at of [performance.now() + 100, performance.now() + 1000]) {
       const pending = [...frames.values()];
       frames.clear();
       pending.forEach((fn) => fn(at));
     }
-    expect(app.canvas.dataset.motion).toBe('idle');
+    expect(app.canvas.dataset.boardMotion).toBe('idle');
     expect(renderer.getDiagnostics().localTextureBindings).toBe(baseline);
     expect(frames.size).toBe(0);
     renderer.setPreferences({
@@ -2091,7 +2091,7 @@ it.each(['flat', 'table'] as const)(
       'advance',
       { cause: 'advance' }
     );
-    expect(app.canvas.dataset.motion).toBe('idle');
+    expect(app.canvas.dataset.boardMotion).toBe('idle');
     expect(frames.size).toBe(0);
     renderer.destroy();
     expect(renderer.getDiagnostics().localTextureBindings).toBe(0);

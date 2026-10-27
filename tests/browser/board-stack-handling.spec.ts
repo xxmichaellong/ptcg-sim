@@ -59,7 +59,7 @@ const openSoloTable = async (page: Page): Promise<void> => {
     String(before + 2)
   );
   await expect(
-    page.locator('.ptcgsim-board-surface[data-motion="idle"]')
+    page.locator('.ptcgsim-board-surface[data-board-motion="idle"]')
   ).toHaveCount(1);
 };
 
@@ -89,7 +89,7 @@ const handWithTwoPokemonAndEnergy = async (
     await page.mouse.click(700, 330);
     await page.keyboard.press('2');
     await expect(
-      page.locator('.ptcgsim-board-surface[data-motion="idle"]')
+      page.locator('.ptcgsim-board-surface[data-board-motion="idle"]')
     ).toHaveCount(1);
   }
   throw new Error('Could not draw two Pokémon and an Energy');
@@ -144,7 +144,7 @@ const drag = async (
   }
   await page.mouse.up();
   await expect(
-    page.locator('.ptcgsim-board-surface[data-motion="idle"]')
+    page.locator('.ptcgsim-board-surface[data-board-motion="idle"]')
   ).toHaveCount(1);
 };
 

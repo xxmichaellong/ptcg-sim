@@ -179,7 +179,7 @@ test('Arabic mirrors the chrome around the table, and English puts it back', asy
     .first();
   await expect(handCard).toBeVisible();
   await expect(
-    page.locator('.ptcgsim-board-surface[data-motion="idle"]')
+    page.locator('.ptcgsim-board-surface[data-board-motion="idle"]')
   ).toHaveCount(1);
   await handCard.click({ button: 'right' });
   const menu = page.locator('[data-legacy-card-context-menu]');
@@ -215,7 +215,7 @@ test('Arabic mirrors the chrome around the table, and English puts it back', asy
   await page.mouse.up();
   await expect.poll(handCount).toBe(inHand - 1);
   await expect(
-    page.locator('.ptcgsim-board-surface[data-motion="idle"]')
+    page.locator('.ptcgsim-board-surface[data-board-motion="idle"]')
   ).toHaveCount(1);
   const benched = await page.evaluate(() => {
     const scene = window.__PTCG_RENDERER_SPIKE__!.scene;

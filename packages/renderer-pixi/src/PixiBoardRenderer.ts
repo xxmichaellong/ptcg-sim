@@ -1248,7 +1248,7 @@ export class PixiBoardRenderer implements BoardRenderer {
 
   private renderOnce(): void {
     if (this.destroyed || !this.app) return;
-    this.app.canvas.dataset.motion =
+    this.app.canvas.dataset.boardMotion =
       this.depthMotion.active ||
       this.depthShuffles.size > 0 ||
       this.faceTurns.size > 0 ||

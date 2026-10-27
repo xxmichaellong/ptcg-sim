@@ -2218,6 +2218,10 @@
               "kind": "type"
             },
             {
+              "name": "onlyHeldCardMoved",
+              "kind": "value"
+            },
+            {
               "name": "ownSeatOf",
               "kind": "value"
             },

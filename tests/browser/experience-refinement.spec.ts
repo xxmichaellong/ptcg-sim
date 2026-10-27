@@ -266,7 +266,7 @@ test('prize shuffle and a card grip remain interruptible, including instant moti
   ).toHaveCount(0);
   await expect
     .poll(() =>
-      page.locator('.ptcgsim-board-surface').getAttribute('data-motion')
+      page.locator('.ptcgsim-board-surface').getAttribute('data-board-motion')
     )
     .toBe('idle');
 });

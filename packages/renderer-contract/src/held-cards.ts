@@ -177,3 +177,34 @@ export const boardDragInput = (
     ),
   };
 };
+
+/**
+ * Whether `next` only carries the held card on from `previous`: the same
+ * card held over the same target, opening the same gap, for the same drop,
+ * and nothing else about the presentation changed. A drag sends one with
+ * every move of the pointer; nothing but the held card, and what it carries,
+ * is painted anywhere new for it.
+ */
+export const onlyHeldCardMoved = (
+  previous: BoardPresentation,
+  next: BoardPresentation
+): boolean => {
+  const before = previous.drag;
+  const after = next.drag;
+  return (
+    before !== null &&
+    after !== null &&
+    before !== after &&
+    before.cardId === after.cardId &&
+    before.targetId === after.targetId &&
+    before.index === after.index &&
+    before.detached === after.detached &&
+    before.action?.kind === after.action?.kind &&
+    before.action?.stackId === after.action?.stackId &&
+    previous.selectedCardId === next.selectedCardId &&
+    previous.hoveredCardId === next.hoveredCardId &&
+    previous.targetableCardIds === next.targetableCardIds &&
+    previous.openedZoneId === next.openedZoneId &&
+    previous.settling === next.settling
+  );
+};

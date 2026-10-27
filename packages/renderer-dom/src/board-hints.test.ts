@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   BOARD_HINT_DELAY_MS,
+  BoardHintIndex,
   BoardHintTimer,
   boardHintAt,
   placeBoardHint,
@@ -151,5 +152,36 @@ describe('boardHintAt', () => {
       markerId: null,
     });
     expect(boardHintAt(root, 60, 60)).toBeNull();
+  });
+  it('measures the hints once for a resting mouse, until told they moved', () => {
+    const root = document.createElement('div');
+    const badge = at(document.createElement('div'), {
+      left: 0,
+      top: 0,
+      width: 40,
+      height: 40,
+    });
+    badge.dataset.boardHint = '47 cards in your deck';
+    root.append(badge);
+    document.body.append(root);
+    const measure = vi.spyOn(badge, 'getBoundingClientRect');
+    const index = new BoardHintIndex();
+    expect(index.at(root, 15, 15, null)?.element).toBe(badge);
+    expect(index.at(root, 25, 25, null)?.element).toBe(badge);
+    expect(measure).toHaveBeenCalledTimes(1);
+    // Moved, it is found where it now is.
+    at(badge, { left: 100, top: 0, width: 40, height: 40 });
+    expect(index.at(root, 115, 15, null)).toBeNull();
+    index.invalidate();
+    expect(index.at(root, 115, 15, null)?.element).toBe(badge);
+    // Under a card held up in the hand, it is not the one pointed at.
+    const card = document.createElement('button');
+    card.className = 'ptcgsim-card';
+    card.dataset.inHand = 'true';
+    expect(index.at(root, 115, 15, card)).toBeNull();
+    // Gone from the table, it is never found.
+    badge.remove();
+    expect(index.at(root, 115, 15, null)).toBeNull();
+    root.remove();
   });
 });

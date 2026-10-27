@@ -19,7 +19,7 @@ const deckCsv = Buffer.from(
 
 const idle = (page: Page) =>
   expect(
-    page.locator('.ptcgsim-board-surface[data-motion="idle"]')
+    page.locator('.ptcgsim-board-surface[data-board-motion="idle"]')
   ).toHaveCount(1);
 
 /** A Solo table with one Pokémon in the Active Spot carrying 60 damage. */

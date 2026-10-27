@@ -59,7 +59,7 @@ const serveScans = async (page: Page): Promise<string[]> => {
 
 const idle = (page: Page) =>
   expect(
-    page.locator('.ptcgsim-board-surface[data-motion="idle"]')
+    page.locator('.ptcgsim-board-surface[data-board-motion="idle"]')
   ).toHaveCount(1);
 
 /** Each of the viewer's hand cards: its name, the scan shown, its state. */

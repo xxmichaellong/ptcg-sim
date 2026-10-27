@@ -197,6 +197,8 @@ export class TableDepthDirector {
    * would otherwise hide the whole flight).
    */
   onOverWindows: ((flying: boolean) => void) | null = null;
+  /** Told when a card's markers were painted somewhere new. */
+  onMarkersMoved: (() => void) | null = null;
   /** Cards flying out of a viewer, marked `data-over-windows`. */
   private readonly overWindows = new Set<string>();
   /**
@@ -831,6 +833,36 @@ export class TableDepthDirector {
     this.onActivity?.();
   }
 
+  /**
+   * The held cards carried on to where `presentation` holds them, nothing
+   * else on the table changing (`onlyHeldCardMoved`): each is painted there
+   * at once, as a commit would paint it, without going over every card.
+   */
+  carry(presentation: BoardPresentation) {
+    const projection = this.projection;
+    if (!projection) return;
+    const at = timestamp();
+    // The card the pointer holds goes first: the cards carried with it are
+    // placed from where it is painted.
+    const gripped = this.grip?.key;
+    const held = [...this.held].sort(
+      (a, b) => Number(b === gripped) - Number(a === gripped)
+    );
+    for (const key of held) {
+      const card = this.cards.get(key);
+      if (!card) continue;
+      const target = projection.pose(card, presentation);
+      const before = this.motion.target(key);
+      this.motion.set(key, target, at);
+      if (!before || !sameTablePose(before, target))
+        this.paint(
+          key,
+          this.turning(key, this.motion.poses.get(key) ?? target, at),
+          at
+        );
+    }
+  }
+
   private sourcePose(
     bounds: Rect,
     turns: number,
@@ -1319,11 +1351,13 @@ export class TableDepthDirector {
         contact.style.opacity = look.contactOpacity.toFixed(3);
       }
     }
+    let markersMoved = false;
     if (card)
       for (const marker of projection.scene.markers) {
         if (marker.parentCardId !== card.id) continue;
         const node = this.markers.get(marker.id);
         if (!node) continue;
+        markersMoved = true;
         const projected = projection.markerMatrix(marker, pose);
         if (projected) {
           node.style.left = '0px';
@@ -1337,6 +1371,7 @@ export class TableDepthDirector {
           node.style.removeProperty('transform');
         }
       }
+    if (markersMoved) this.onMarkersMoved?.();
   }
 
   private schedule() {

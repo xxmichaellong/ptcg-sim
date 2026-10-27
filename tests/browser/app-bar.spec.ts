@@ -39,7 +39,7 @@ const openTable = async (page: Page): Promise<void> => {
 
 const idle = (page: Page) =>
   expect(
-    page.locator('.ptcgsim-board-surface[data-motion="idle"]')
+    page.locator('.ptcgsim-board-surface[data-board-motion="idle"]')
   ).toHaveCount(1, { timeout: 20_000 });
 
 const setUpBoth = async (page: Page): Promise<void> => {

@@ -36,7 +36,7 @@ const atStep = (page: Page, id: string) =>
   expect.poll(() => stepOf(page), { timeout: 20_000 }).toBe(id);
 const idle = (page: Page) =>
   expect(
-    page.locator('.ptcgsim-board-surface[data-motion="idle"]')
+    page.locator('.ptcgsim-board-surface[data-board-motion="idle"]')
   ).toHaveCount(1, { timeout: 20_000 });
 
 const zone = (page: Page, kind: string, side = 'local') =>

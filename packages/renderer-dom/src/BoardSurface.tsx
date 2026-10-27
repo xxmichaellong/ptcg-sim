@@ -50,6 +50,7 @@ import {
 import { createPortal } from 'react-dom';
 
 import {
+  BoardHintIndex,
   BoardHintTimer,
   BoardHintTooltip,
   boardHintAt,
@@ -1020,6 +1021,7 @@ export const BoardSurface = ({
   motion,
   onCommit,
   setInteractionCancellation,
+  setHeldCarrier,
 }: {
   readonly scene: BoardScene;
   readonly presentation: BoardPresentation;
@@ -1029,6 +1031,10 @@ export const BoardSurface = ({
   readonly motion?: BoardSceneMotion;
   readonly onCommit?: () => void;
   readonly setInteractionCancellation?: (cancel: (() => void) | null) => void;
+  /** Takes how this table carries a held card on without rendering again. */
+  readonly setHeldCarrier?: (
+    carry: ((presentation: BoardPresentation) => void) | null
+  ) => void;
 }) => {
   const surfaceRef = useRef<HTMLDivElement>(null);
   const locale = useSyncExternalStore(subscribeLocale, readLocale, readLocale);
@@ -1135,16 +1141,36 @@ export const BoardSurface = ({
     if (marker) surfaceRef.current?.setAttribute('data-hint-hover', '');
     else surfaceRef.current?.removeAttribute('data-hint-hover');
   };
-  // Where a resting mouse is, read once a frame: finding a hint measures
-  // the markers and badges, which a move per event would do many times over.
-  const hintPointerRef = useRef<{ x: number; y: number } | null>(null);
+  // Where a resting mouse is, looked up once a frame, against the hints as
+  // last measured (BoardHintIndex): each commit, the table's motion starting
+  // or stopping, a card carrying markers painted, or the window changing
+  // has them measured again.
+  const hintIndex = useMemo(() => new BoardHintIndex(), []);
+  useLayoutEffect(() => {
+    hintIndex.invalidate();
+  });
+  useEffect(() => {
+    window.addEventListener('resize', hintIndex.invalidate);
+    window.addEventListener('scroll', hintIndex.invalidate, true);
+    return () => {
+      window.removeEventListener('resize', hintIndex.invalidate);
+      window.removeEventListener('scroll', hintIndex.invalidate, true);
+    };
+  }, [hintIndex]);
+  const hintPointerRef = useRef<{
+    readonly x: number;
+    readonly y: number;
+    readonly top: Element | null;
+  } | null>(null);
   const hintFrameRef = useRef<number | null>(null);
-  const scheduleHintHover = (x: number, y: number) => {
-    hintPointerRef.current = { x, y };
+  const scheduleHintHover = (x: number, y: number, top: Element | null) => {
+    hintPointerRef.current = { x, y, top };
     if (hintFrameRef.current !== null) return;
     if (typeof requestAnimationFrame !== 'function') {
       const surface = surfaceRef.current;
-      hoverHint(surface ? (boardHintAt(surface, x, y)?.element ?? null) : null);
+      hoverHint(
+        surface ? (hintIndex.at(surface, x, y, top)?.element ?? null) : null
+      );
       return;
     }
     hintFrameRef.current = requestAnimationFrame(() => {
@@ -1152,7 +1178,9 @@ export const BoardSurface = ({
       const point = hintPointerRef.current;
       const surface = surfaceRef.current;
       if (!point || !surface) return;
-      hoverHint(boardHintAt(surface, point.x, point.y)?.element ?? null);
+      hoverHint(
+        hintIndex.at(surface, point.x, point.y, point.top)?.element ?? null
+      );
     });
   };
   useEffect(
@@ -1220,12 +1248,16 @@ export const BoardSurface = ({
   );
   useLayoutEffect(() => {
     director.attach(tableRef.current, ghostLayerRef.current);
-    // `data-motion` says whether the table is still moving on its own, for
-    // anything that must wait for it to settle (tests, screenshots).
+    // `data-board-motion` says whether the table is still moving on its own,
+    // for anything that must wait for it to settle (tests, screenshots). Not
+    // `data-motion`: the page's own motion setting (on the root) keys rules
+    // for every card face on that name, and the browser restyles every card
+    // whenever an attribute of that name changes anywhere above them.
     director.onActivity = (active) => {
       if (surfaceRef.current) {
-        surfaceRef.current.dataset.motion = active ? 'active' : 'idle';
+        surfaceRef.current.dataset.boardMotion = active ? 'active' : 'idle';
       }
+      hintIndex.invalidate();
       adapters.reportMotion?.(active);
     };
   });
@@ -1262,41 +1294,76 @@ export const BoardSurface = ({
   const [overWindows, setOverWindows] = useState(false);
   useLayoutEffect(() => {
     director.depth.onOverWindows = setOverWindows;
+    director.depth.onMarkersMoved = hintIndex.invalidate;
     return () => {
       director.depth.onOverWindows = null;
+      director.depth.onMarkersMoved = null;
     };
-  }, [director]);
+  }, [director, hintIndex]);
   // A card carried over a piece the page draws above the board (a coin,
   // marked `data-over-board`) is lifted over it the same way, or it would
   // pass under the piece.
   const [overPiece, setOverPiece] = useState(false);
   const dragging = presentation.drag !== null;
-  useLayoutEffect(() => {
-    const surface = surfaceRef.current;
-    const pieces = dragging
-      ? Array.from(
-          surface?.ownerDocument.querySelectorAll('[data-over-board]') ?? []
-        )
-      : [];
-    const held =
-      pieces.length > 0
+  // Measured once the frame that shows the held card where it now is has
+  // been laid out and painted, when measuring costs nothing. Measured as
+  // the move was committed, it had the browser lay the table out again
+  // there and then, on every move of the pointer. A frame late, the card
+  // is lifted over the piece as it reaches it.
+  const pieceCheckRef = useRef<{
+    frame: number | null;
+    timer: ReturnType<typeof setTimeout> | null;
+  }>({ frame: null, timer: null });
+  const checkOverPiece = useCallback(() => {
+    const pending = pieceCheckRef.current;
+    if (pending.frame !== null || pending.timer !== null) return;
+    const measure = () => {
+      pending.timer = null;
+      const surface = surfaceRef.current;
+      const held = dragRef.current
         ? surface?.querySelector('.ptcgsim-card[data-held="drag"]')
         : null;
-    const box = held?.getBoundingClientRect();
-    setOverPiece(
-      box !== undefined &&
-        pieces.some((piece) => {
-          const at = piece.getBoundingClientRect();
-          return (
-            at.width > 0 &&
-            box.left < at.right &&
-            at.left < box.right &&
-            box.top < at.bottom &&
-            at.top < box.bottom
-          );
-        })
-    );
-  }, [dragging, presentation.drag]);
+      const pieces = held
+        ? Array.from(held.ownerDocument.querySelectorAll('[data-over-board]'))
+        : [];
+      const box = pieces.length > 0 ? held?.getBoundingClientRect() : undefined;
+      setOverPiece(
+        box !== undefined &&
+          pieces.some((piece) => {
+            const at = piece.getBoundingClientRect();
+            return (
+              at.width > 0 &&
+              box.left < at.right &&
+              at.left < box.right &&
+              box.top < at.bottom &&
+              at.top < box.bottom
+            );
+          })
+      );
+    };
+    if (typeof requestAnimationFrame !== 'function') {
+      measure();
+      return;
+    }
+    pending.frame = requestAnimationFrame(() => {
+      pending.frame = null;
+      pending.timer = setTimeout(measure, 0);
+    });
+  }, []);
+  useLayoutEffect(() => {
+    if (dragging) checkOverPiece();
+    else setOverPiece(false);
+  }, [dragging, presentation.drag, checkOverPiece]);
+  useEffect(
+    () => () => {
+      const pending = pieceCheckRef.current;
+      if (pending.frame !== null) cancelAnimationFrame(pending.frame);
+      if (pending.timer !== null) clearTimeout(pending.timer);
+      pending.frame = null;
+      pending.timer = null;
+    },
+    []
+  );
   const lifting =
     (presentation.drag !== null || overWindows) &&
     (overPiece ||
@@ -1341,6 +1408,49 @@ export const BoardSurface = ({
     projection,
     asides,
   ]);
+  // A held card carried on (onlyHeldCardMoved) is painted where it now is at
+  // once, the table not rendered again: nothing else on it changes, and a
+  // render of the whole table on every move of the pointer made a drag slow
+  // on a slow phone. Set anew with each commit, to work from the table as
+  // last drawn.
+  useLayoutEffect(() => {
+    if (!setHeldCarrier) return;
+    setHeldCarrier((next) => {
+      dragRef.current = next.drag;
+      // A tilted table poses the held cards, and their markers, itself.
+      const painted = new Map<string, PaintedCard>();
+      const carried = new Set<CardSceneNode['id']>();
+      if (!depth)
+        for (const card of scene.cards) {
+          if (card.renderKey === null) continue;
+          const hold = compositionHold(scene, card, next.drag);
+          if (!hold) continue;
+          carried.add(card.id);
+          painted.set(card.renderKey, {
+            rect: {
+              ...card.bounds,
+              x: hold.x - card.bounds.width / 2,
+              y: hold.y - card.bounds.height / 2,
+            },
+            rotationQuarterTurns: card.rotationQuarterTurns,
+          });
+        }
+      director.carry(painted, next);
+      // A flat table's markers ride on their cards, as their nodes draw them.
+      for (const marker of scene.markers) {
+        if (!carried.has(marker.parentCardId)) continue;
+        const node = surfaceRef.current?.querySelector<HTMLElement>(
+          `[data-marker-id="${CSS.escape(marker.id)}"]`
+        );
+        if (!node) continue;
+        const { bounds } = presentHeldMarker(scene, marker, next);
+        node.style.left = `${String(bounds.x)}px`;
+        node.style.top = `${String(bounds.y)}px`;
+      }
+      checkOverPiece();
+    });
+    return () => setHeldCarrier(null);
+  });
   const capturedPointerRef = useRef<{
     readonly element: HTMLElement;
     readonly pointerId: number;
@@ -1750,7 +1860,7 @@ export const BoardSurface = ({
       data-far-upright={scene.layout.farCardsUpright ? 'true' : undefined}
       data-geometry={scene.layout.geometryVersion}
       data-table-view={projection.settings.mode}
-      data-motion="idle"
+      data-board-motion="idle"
       onWheel={(event) => {
         // The cards paint above the scroll container, so a wheel over them
         // scrolls the region the way it would over v1's `#hand` or `#board`.
@@ -1885,7 +1995,12 @@ export const BoardSurface = ({
         } else {
           if (event.pointerType !== 'touch') {
             if (presentation.drag) hoverHint(null);
-            else scheduleHintHover(event.clientX, event.clientY);
+            else
+              scheduleHintHover(
+                event.clientX,
+                event.clientY,
+                event.target instanceof Element ? event.target : null
+              );
           }
           const rest = hoverRestRef.current;
           if (

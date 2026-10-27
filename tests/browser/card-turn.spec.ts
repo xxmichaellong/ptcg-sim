@@ -78,7 +78,7 @@ const start = async (
     .toBe(7);
   await page.mouse.move(10, 10);
   await expect(page.locator('.ptcgsim-board-surface')).toHaveAttribute(
-    'data-motion',
+    'data-board-motion',
     'idle'
   );
   return { ...DEFAULT_BOARD_PREFERENCES, depth };
@@ -217,7 +217,7 @@ const dealToDiscard = async (page: Page, preferences: BoardPreferences) => {
 const settle = async (page: Page) => {
   await page.waitForTimeout(1200);
   await expect(page.locator('.ptcgsim-board-surface')).toHaveAttribute(
-    'data-motion',
+    'data-board-motion',
     'idle'
   );
 };

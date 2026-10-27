@@ -60,7 +60,7 @@ const openSoloTable = async (page: Page): Promise<void> => {
     String(before + 2)
   );
   await expect(
-    page.locator('.ptcgsim-board-surface[data-motion="idle"]')
+    page.locator('.ptcgsim-board-surface[data-board-motion="idle"]')
   ).toHaveCount(1);
 };
 
@@ -90,7 +90,7 @@ const handWithTwoPokemonAndEnergy = async (
     await page.mouse.click(700, 330);
     await page.keyboard.press('2');
     await expect(
-      page.locator('.ptcgsim-board-surface[data-motion="idle"]')
+      page.locator('.ptcgsim-board-surface[data-board-motion="idle"]')
     ).toHaveCount(1);
   }
   throw new Error('Could not draw two Pokémon and an Energy');
@@ -145,7 +145,7 @@ const drag = async (
   }
   await page.mouse.up();
   await expect(
-    page.locator('.ptcgsim-board-surface[data-motion="idle"]')
+    page.locator('.ptcgsim-board-surface[data-board-motion="idle"]')
   ).toHaveCount(1);
 };
 
@@ -253,7 +253,7 @@ test('a grabbed Pokémon carries its Energy, and a swap is marked and made', asy
   ).toBe(active.id);
   await page.mouse.up();
   await expect(
-    page.locator('.ptcgsim-board-surface[data-motion="idle"]')
+    page.locator('.ptcgsim-board-surface[data-board-motion="idle"]')
   ).toHaveCount(1);
   await expect(page.locator('[data-drop-action]')).toHaveCount(0);
   // Swapped, each with its own cards.
@@ -338,7 +338,7 @@ test('a long press lifts only the top card off its Pokémon', async ({
   ).toBeLessThan(8);
   await page.mouse.up();
   await expect(
-    page.locator('.ptcgsim-board-surface[data-motion="idle"]')
+    page.locator('.ptcgsim-board-surface[data-board-motion="idle"]')
   ).toHaveCount(1);
   // The Pokémon went alone; its Energy waits in the attached-cards window.
   await expect

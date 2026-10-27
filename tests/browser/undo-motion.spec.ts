@@ -52,8 +52,8 @@ const idle = async (page: Page, renderer: string): Promise<void> => {
   await expect(
     page.locator(
       renderer === 'dom'
-        ? '.ptcgsim-board-surface[data-motion="idle"]'
-        : 'canvas[data-motion="idle"]'
+        ? '.ptcgsim-board-surface[data-board-motion="idle"]'
+        : 'canvas[data-board-motion="idle"]'
     )
   ).toBeAttached();
 };

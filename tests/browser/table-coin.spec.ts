@@ -239,7 +239,7 @@ test('a card carried over a coin is drawn over it, and settles back under nothin
   await chooseMoreAction(page, 'setupBothButton');
   await expect.poll(revision).toBeGreaterThan(loaded);
   await expect(
-    page.locator('.ptcgsim-board-surface[data-motion="idle"]')
+    page.locator('.ptcgsim-board-surface[data-board-motion="idle"]')
   ).toHaveCount(1);
   const card = page
     .locator('[data-in-hand][data-card-side="local"]')

@@ -107,7 +107,7 @@ const fromDeck = async (page: Page, piece: string, key: string) => {
   if (!(await page.locator('[data-legacy-zone-browser]').isVisible())) {
     // A pile in flight (after Flip) takes no double-click.
     await expect(
-      page.locator('.ptcgsim-board-surface[data-motion="idle"]')
+      page.locator('.ptcgsim-board-surface[data-board-motion="idle"]')
     ).toHaveCount(1);
     await page.locator(`[data-card-id="${cover}"]`).dblclick();
   }
@@ -153,7 +153,7 @@ const join = async (page: Page, piece: string, anchor: string) => {
   // The card lands before anything else is done with it: one still in
   // flight from the deck leaves the deck under a double-click aimed at it.
   await expect(
-    page.locator('.ptcgsim-board-surface[data-motion="idle"]')
+    page.locator('.ptcgsim-board-surface[data-board-motion="idle"]')
   ).toHaveCount(1);
   return (await sceneCard(page, piece)).id;
 };
@@ -170,7 +170,7 @@ const dragFromDeck = async (
   const card = await sceneCard(page, piece);
   if (!(await page.locator('[data-legacy-zone-browser]').isVisible())) {
     await expect(
-      page.locator('.ptcgsim-board-surface[data-motion="idle"]')
+      page.locator('.ptcgsim-board-surface[data-board-motion="idle"]')
     ).toHaveCount(1);
     const cover = await page.evaluate(
       () =>
@@ -233,7 +233,7 @@ for (const mode of ['flat', 'table'] as const)
       // quarter will go, with no card under the pointer, the next piece
       // joins it.
       await expect(
-        page.locator('.ptcgsim-board-surface[data-motion="idle"]')
+        page.locator('.ptcgsim-board-surface[data-board-motion="idle"]')
       ).toHaveCount(1);
       const whole = (await sceneCard(page, 'union-3')).composition!.bounds;
       await dragFromDeck(page, 'union-0', {
@@ -514,7 +514,7 @@ for (const mode of ['flat', 'table'] as const)
       // the room's answer replaces: once the table settles, it is clicked by
       // its name.
       await expect(
-        page.locator('.ptcgsim-board-surface[data-motion="idle"]')
+        page.locator('.ptcgsim-board-surface[data-board-motion="idle"]')
       ).toHaveCount(1);
       await page
         .locator('.ptcgsim-card[data-in-hand][aria-label="Opponent EX"]')

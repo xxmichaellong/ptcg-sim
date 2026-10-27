@@ -1749,6 +1749,60 @@ describe('React DOM board renderer', () => {
     host.remove();
   });
 
+  it('carries a held card on without drawing the table again', async () => {
+    const renderer = new ReactDomBoardRenderer({
+      emitIntent: vi.fn(),
+      emitPresentationUpdate: vi.fn(),
+      reportError: vi.fn(),
+    });
+    const host = document.createElement('div');
+    document.body.append(host);
+    await mountInAct(renderer, host, createScene());
+    const held = { cardId, x: 100, y: 300, targetId: 'zone:p1:hand' };
+    act(() =>
+      renderer.installPresentation({
+        ...DEFAULT_BOARD_PRESENTATION,
+        drag: held,
+      })
+    );
+    const card = host.querySelector<HTMLElement>('[data-card-id]')!;
+    expect(card.dataset.held).toBe('drag');
+    expect(card.style.left).toBe('55px');
+    const commits = renderer.getDiagnostics().renderCommits;
+
+    // Carried on over the same zone: it follows, nothing is drawn again.
+    act(() =>
+      renderer.installPresentation({
+        ...DEFAULT_BOARD_PRESENTATION,
+        drag: { ...held, x: 200, y: 250 },
+      })
+    );
+    expect(renderer.getDiagnostics().renderCommits).toBe(commits);
+    expect(card.style.left).toBe('155px');
+    expect(card.style.top).toBe('187px');
+
+    // Over nothing it could go to, the table is drawn again.
+    act(() =>
+      renderer.installPresentation({
+        ...DEFAULT_BOARD_PRESENTATION,
+        drag: { ...held, x: 210, y: 250, targetId: null },
+      })
+    );
+    expect(renderer.getDiagnostics().renderCommits).toBe(commits + 1);
+    expect(card.style.left).toBe('165px');
+    expect(host.querySelector('[data-drop-target]')).toBeNull();
+
+    // Let go of, it is where the table has it.
+    act(() => renderer.installPresentation(DEFAULT_BOARD_PRESENTATION));
+    expect(card.dataset.held).toBeUndefined();
+    expect(card.style.left).toBe('10px');
+
+    await act(async () => {
+      renderer.destroy();
+    });
+    host.remove();
+  });
+
   it('clips a card that has scrolled out of its zone', async () => {
     const renderer = new ReactDomBoardRenderer({
       emitIntent: vi.fn(),

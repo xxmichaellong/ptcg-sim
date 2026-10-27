@@ -2,6 +2,7 @@ import {
   DEFAULT_BOARD_PREFERENCES,
   DEFAULT_BOARD_PRESENTATION,
   assertViewport,
+  onlyHeldCardMoved,
   type BoardPreferences,
   type BoardPresentation,
   type BoardPresentationEvent,
@@ -76,6 +77,11 @@ export class ReactDomBoardRenderer implements BoardRenderer {
   private finishPendingMount: (() => void) | null = null;
   private failPendingMount: ((error: unknown) => void) | null = null;
   private cancelMountedInteraction: (() => void) | null = null;
+  /** How the mounted table carries a held card on without a render. */
+  private carryHeld: ((presentation: BoardPresentation) => void) | null = null;
+  /** The newest render asked for, and whether it has been committed. */
+  private renderTicket = 0;
+  private renderPending = false;
   /** Motion of the installs since the last commit; cleared on commit. */
   private pendingMotion: BoardSceneMotion | undefined;
 
@@ -157,8 +163,22 @@ export class ReactDomBoardRenderer implements BoardRenderer {
 
   installPresentation(presentation: BoardPresentation): void {
     const root = this.requireRoot();
+    const previous = this.presentation;
     this.presentation = presentation;
-    if (this.scene) this.renderNow(root);
+    if (!this.scene) return;
+    // A held card carried on, and the table drawn as it was last asked to
+    // be: the table paints the card where it now is itself. A render of the
+    // whole table on every move of the pointer made a drag slow.
+    if (
+      !this.renderPending &&
+      this.carryHeld &&
+      previous &&
+      onlyHeldCardMoved(previous, presentation)
+    ) {
+      this.carryHeld(presentation);
+      return;
+    }
+    this.renderNow(root);
   }
 
   cancelInteraction(): void {
@@ -170,6 +190,7 @@ export class ReactDomBoardRenderer implements BoardRenderer {
     this.cancelInteraction();
     this.scene = null;
     this.presentation = DEFAULT_BOARD_PRESENTATION;
+    this.carryHeld = null;
     this.finishPendingMount?.();
     this.finishPendingMount = null;
     this.failPendingMount = null;
@@ -296,11 +317,14 @@ export class ReactDomBoardRenderer implements BoardRenderer {
     if (!scene || !presentation) return;
     let committed = false;
     const motion = this.pendingMotion;
+    const ticket = ++this.renderTicket;
+    this.renderPending = true;
     const recordCommit = () => {
       // Strict Mode replays layout effects in development. Count the renderer
       // commit once while retaining the replay that catches unsafe effects.
       if (committed) return;
       committed = true;
+      if (ticket === this.renderTicket) this.renderPending = false;
       this.renderCommits += 1;
       if (this.pendingMotion === motion) this.pendingMotion = undefined;
       onCommit?.();
@@ -316,6 +340,7 @@ export class ReactDomBoardRenderer implements BoardRenderer {
             {...(motion ? { motion } : {})}
             onCommit={recordCommit}
             setInteractionCancellation={this.setInteractionCancellation}
+            setHeldCarrier={this.setHeldCarrier}
           />
         </BoardRendererErrorBoundary>
       </StrictMode>
@@ -327,6 +352,12 @@ export class ReactDomBoardRenderer implements BoardRenderer {
     cancel: (() => void) | null
   ): void => {
     this.cancelMountedInteraction = cancel;
+  };
+
+  private readonly setHeldCarrier = (
+    carry: ((presentation: BoardPresentation) => void) | null
+  ): void => {
+    this.carryHeld = carry;
   };
 
   private readonly handleUncaughtRenderError = (error: unknown): void => {

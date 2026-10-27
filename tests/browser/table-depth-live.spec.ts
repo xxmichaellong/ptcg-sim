@@ -125,11 +125,14 @@ const centre = async (page: Page, id: string) => {
 const idle = async (page: Page, renderer = 'dom') => {
   if (renderer === 'dom')
     await expect(page.locator('.ptcgsim-board-surface')).toHaveAttribute(
-      'data-motion',
+      'data-board-motion',
       'idle'
     );
   else
-    await expect(page.locator('canvas')).toHaveAttribute('data-motion', 'idle');
+    await expect(page.locator('canvas')).toHaveAttribute(
+      'data-board-motion',
+      'idle'
+    );
 };
 
 test('the Pixi table keeps zone labels and count badges readable across themes, depth and hidden containers', async ({
@@ -384,7 +387,7 @@ test('reduced motion keeps physical piles and lifts a held card at once, without
     1
   );
   await expect(page.locator('.ptcgsim-board-surface')).toHaveAttribute(
-    'data-motion',
+    'data-board-motion',
     'idle'
   );
   await page.keyboard.press('Escape');
