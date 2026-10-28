@@ -780,6 +780,62 @@ describe('the majors lane', () => {
     expect(limitless.labsCalls).toEqual([]);
   });
 
+  it('lists a major only once its standings are read', async () => {
+    limitless.add(77);
+    const index = createIndex();
+    const browse = (majors: boolean) =>
+      index
+        .tournaments({
+          q: '',
+          format: null,
+          minimumPlayers: 0,
+          before: null,
+          pageSize: 10,
+          ...(majors ? { majors: true } : {}),
+        })
+        .tournaments.map((row) => row.id);
+    // Labs' list read: known, not read, and so not shown (opening it would
+    // find nothing, as a major is never read on demand).
+    await index.step();
+    expect(limitless.labsPaths()).toEqual(['/tournaments']);
+    expect(browse(true)).toEqual([]);
+    expect(browse(false)).toEqual([]);
+    await crawlUntilIdle(index);
+    expect(browse(true)).toEqual(['labs-0077']);
+  });
+
+  it('offers a list not read yet only while it can be read when asked for', async () => {
+    limitless.add(77);
+    const storage = memoryIndexStorage();
+    const index = createIndex(storage);
+    // Labs' list, the major, its standings: its lists still to read.
+    for (let step = 0; step < 3; step += 1) {
+      now = Math.max(now, (await index.step()) ?? now);
+    }
+    expect(limitless.labsPaths().at(-1)).toBe(
+      '/standings?tournamentId=0077&division=MA'
+    );
+    const offered = async (index: DeckIndex) => {
+      const answer = await index.tournament('labs-0077');
+      return answer.kind === 'ok'
+        ? answer.standings.map((row) => row.hasList)
+        : answer;
+    };
+    expect(await offered(index)).toEqual([true, true, true, false, false]);
+    // The index turned off (DECK_INDEX_SOURCE), or majors off: a list not
+    // read can't be read when asked for, so isn't offered.
+    for (const deps of [{ enabled: false }, { enabled: true, majors: false }]) {
+      const off = new DeckIndex({
+        storage,
+        fetch: limitless.fetch,
+        now: clock,
+        ...deps,
+      });
+      off.migrate();
+      expect(await offered(off)).toEqual([false, false, false, false, false]);
+    }
+  });
+
   it('leaves majors to their own lane: the online crawl reads none of them', async () => {
     limitless.add(77);
     const index = createIndex();

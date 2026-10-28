@@ -1100,6 +1100,9 @@ export class DeckIndexStore {
       't.date <= ?',
     ];
     if (query.readOnly) conditions.push('t.fetched_at IS NOT NULL');
+    // A major is never read on demand: one whose standings aren't read
+    // would answer "not found" when opened.
+    else conditions.push('(t.kind IS NULL OR t.fetched_at IS NOT NULL)');
     if (query.majors) conditions.push('t.kind IS NOT NULL');
     const bindings: SqlValue[] = [query.minimumPlayers, query.now];
     if (query.format) {
@@ -1127,8 +1130,15 @@ export class DeckIndexStore {
     ).map(tournamentRow);
   }
 
-  /** A tournament's standings: by placing, those without one last. */
-  standings(tournamentId: string): StandingRow[] {
+  /**
+   * A tournament's standings: by placing, those without one last. A major's
+   * list not read yet counts as one only with `pendingLists` (it is read
+   * when asked for, the index on and reading majors).
+   */
+  standings(
+    tournamentId: string,
+    options: { readonly pendingLists?: boolean } = {}
+  ): StandingRow[] {
     return this.rows(
       `SELECT e.*, a.name AS a_name, a.icons AS a_icons FROM entries e
        LEFT JOIN archetypes a ON a.id = e.archetype_id
@@ -1156,8 +1166,9 @@ export class DeckIndexStore {
               icons: readIcons(row.a_icons),
             }
           : null,
-      // A major's list not read yet is read when asked for.
-      hasList: typeof row.list_hash === 'string' || row.list_state === 'wanted',
+      hasList:
+        typeof row.list_hash === 'string' ||
+        (options.pendingLists === true && row.list_state === 'wanted'),
     }));
   }
 

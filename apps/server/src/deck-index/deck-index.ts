@@ -1501,7 +1501,10 @@ export class DeckIndex {
     return {
       kind: 'ok',
       tournament: tournamentSummary(ensured.tournament),
-      standings: this.store.standings(id),
+      standings: this.store.standings(id, {
+        // A major's list not read yet is read when asked for, if it can be.
+        pendingLists: this.deps.enabled && this.deps.majors === true,
+      }),
       settled: this.settled(ensured.tournament),
     };
   }
