@@ -94,4 +94,20 @@ describe('useActivityDocking', () => {
     await resize(true);
     expect(docking).toMatchObject({ docked: true, open: true });
   });
+
+  it('keeps the log as it was across the dock’s width, never opening it on its own', async () => {
+    // Opened over a small table, it stays open as the window grows: docked.
+    await resize(false);
+    await act(async () => docking.setOpen(true));
+    await resize(true);
+    expect(docking).toMatchObject({ docked: true, open: true });
+    expect(preferences().get(SHELL_PREFERENCES).activityDocked).toBe(true);
+
+    // Closed while wide, it doesn't pop open over the table on narrowing.
+    await act(async () => docking.setOpen(false));
+    await resize(false);
+    expect(docking).toMatchObject({ docked: false, open: false });
+    await resize(true);
+    expect(docking).toMatchObject({ docked: true, open: false });
+  });
 });

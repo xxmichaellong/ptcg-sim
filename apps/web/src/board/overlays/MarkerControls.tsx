@@ -20,6 +20,7 @@ import {
 
 import type { ViewCardId } from '@ptcgsim/game-core';
 
+import { TOUCH_ONLY_QUERY, useMediaQuery } from '../../ui/breakpoints.js';
 import { Tooltip } from '../../ui/Tooltip.js';
 import type { BoardSessionControllerState } from '../BoardSessionController.js';
 import { isInputMethodKey } from '../../ui/input-method.js';
@@ -218,6 +219,9 @@ const DamageControls = ({
   readonly commitRef: { current: (() => void) | null };
 }) => {
   const { t } = useLingui();
+  // On a phone the field taking the focus would bring up the keyboard for
+  // a player who only wants + or −: a button takes it there.
+  const touchOnly = useMediaQuery(TOUCH_ONLY_QUERY);
   const cardId = marker.parentCardId;
   const damage = Number.parseInt(marker.value, 10) || 0;
   const shown = damage > 0 ? String(damage) : '';
@@ -287,7 +291,7 @@ const DamageControls = ({
         placeholder="0"
         aria-label={t`Damage counter`}
         aria-invalid={invalid}
-        {...(takesFocus ? { 'data-takes-focus': '' } : {})}
+        {...(takesFocus && !touchOnly ? { 'data-takes-focus': '' } : {})}
         value={draft ?? shown}
         onFocus={(event) => event.currentTarget.select()}
         onChange={(event) => {

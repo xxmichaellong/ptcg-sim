@@ -596,25 +596,6 @@ const reconcilePresentation = (
   BoardSessionControllerState,
   'presentation' | 'playTargeting' | 'overlays'
 > => {
-  const selectedCardId =
-    state.presentation.selectedCardId &&
-    hasCard(scene, state.presentation.selectedCardId)
-      ? state.presentation.selectedCardId
-      : null;
-  const hoveredCardId =
-    state.presentation.hoveredCardId &&
-    hasCard(scene, state.presentation.hoveredCardId)
-      ? state.presentation.hoveredCardId
-      : null;
-  const drag = state.presentation.drag;
-  // A new view mid-drag keeps the card in hand; only a target it no longer
-  // has stops being lit.
-  const reconciledDrag =
-    drag && hasCard(scene, drag.cardId)
-      ? drag.targetId === null || hasDropTarget(view, scene, drag.targetId)
-        ? drag
-        : { ...drag, targetId: null }
-      : null;
   const openedZoneId =
     state.presentation.openedZoneId &&
     scene.zones.some(
@@ -624,11 +605,30 @@ const reconcilePresentation = (
     )
       ? state.presentation.openedZoneId
       : null;
-  const contextMenuCardId =
-    state.overlays.contextMenuCardId &&
-    hasCard(scene, state.overlays.contextMenuCardId)
-      ? state.overlays.contextMenuCardId
+  // A card on the table, or one in the pile still open (a pile's cards
+  // aren't the table's): a resize or the other player's move keeps a card
+  // picked in the viewer picked.
+  const stillShown = (cardId: ViewCardId | null): ViewCardId | null =>
+    cardId &&
+    (hasCard(scene, cardId) ||
+      (openedZoneId !== null &&
+        scene.cards.some(
+          (card) => card.id === cardId && card.parentId === openedZoneId
+        )))
+      ? cardId
       : null;
+  const selectedCardId = stillShown(state.presentation.selectedCardId);
+  const hoveredCardId = stillShown(state.presentation.hoveredCardId);
+  const drag = state.presentation.drag;
+  // A new view mid-drag keeps the card in hand; only a target it no longer
+  // has stops being lit.
+  const reconciledDrag =
+    drag && hasCard(scene, drag.cardId)
+      ? drag.targetId === null || hasDropTarget(view, scene, drag.targetId)
+        ? drag
+        : { ...drag, targetId: null }
+      : null;
+  const contextMenuCardId = stillShown(state.overlays.contextMenuCardId);
   const preview = state.overlays.preview;
   const reconciledPreview =
     preview?.kind === 'card'

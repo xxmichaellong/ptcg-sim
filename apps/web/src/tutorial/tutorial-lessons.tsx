@@ -862,11 +862,19 @@ const deck: TutorialLesson = {
     },
     {
       id: 'take',
-      text: () => (
-        <Trans>
-          Find <strong>{name('rareCandy')}</strong> and drag it into your hand.
-        </Trans>
-      ),
+      text: (world) =>
+        // A finger swiping a pile scrolls it: a card is held a moment first.
+        world.mode === 'touch' ? (
+          <Trans>
+            Find <strong>{name('rareCandy')}</strong>, hold it a moment, then
+            drag it into your hand.
+          </Trans>
+        ) : (
+          <Trans>
+            Find <strong>{name('rareCandy')}</strong> and drag it into your
+            hand.
+          </Trans>
+        ),
       // The card itself in the open deck, or the deck while it is shut.
       targets: (world) => [
         {

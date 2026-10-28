@@ -109,6 +109,8 @@ export const BOARD_SURFACE_CSS = `
 :is(.ptcgsim-board-surface, .ptcgsim-board-lift) .ptcgsim-card {
   background: transparent;
   -webkit-tap-highlight-color: transparent;
+  /* iOS: a long press on a card is the game's, not Save Image's. */
+  -webkit-touch-callout: none;
 }
 /* The focus ring is drawn on the body, so it stays on the card as it lifts
    in the hand or swings while held. */

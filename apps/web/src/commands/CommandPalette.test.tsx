@@ -79,6 +79,8 @@ describe('CommandPalette', () => {
       id: 'deck.draw',
       title: 'Draw cards…',
       section: 'deck',
+      // The number keys draw that many.
+      hint: '1',
       count: {
         label: 'How many?',
         min: 1,
@@ -274,6 +276,8 @@ describe('CommandPalette', () => {
     await open();
     await type('draw 4');
     expect(selected()?.textContent).toContain('Draw 4 cards');
+    // Its key is the one that draws four, not the 1 that draws one.
+    expect(selected()?.querySelector('kbd')?.textContent).toBe('4');
     await press({ key: 'Enter' });
     expect(counted).toHaveBeenCalledWith(4);
     await open();

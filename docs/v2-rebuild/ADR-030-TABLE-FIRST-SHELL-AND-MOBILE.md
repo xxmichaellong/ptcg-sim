@@ -110,7 +110,10 @@ The rail's right end opens the battle log and chat
 500px tall it docks at the right, `--rail-width` wide, and the table lays out
 beside it (the layout's `sidebar` shell), so play goes on with it open; it
 stays as the player left it (`ptcgsim.shell.v1`). Narrower, it opens over the
-table, and from the bottom on a phone. Docked, it slides in and out and the
+table, and from the bottom on a phone. A window resized past that width keeps
+the log as it was, never opening it on its own: open over the table, it docks
+open as the window grows; narrower, it starts closed over the table, as on
+each visit. Docked, it slides in and out and the
 table makes room as it moves, both driven by one spring
 (`session/shell/dock-slide.ts`). Its header holds the room's name, Copy
 an invitation, and the log's own actions (Download, Clear). While it is

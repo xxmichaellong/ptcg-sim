@@ -1001,6 +1001,40 @@ describe('headless board session controller', () => {
     ]);
   });
 
+  it('keeps a card picked in an opened pile through the table laid out again', () => {
+    const initial = install();
+    const discard = initial.scene!.zones.find((zone) =>
+      zone.id.endsWith(':discard')
+    )!;
+    const pileCard = initial.scene!.cards.find(
+      (card) => card.parentId === discard.id && !card.interactive
+    )!;
+    let state = apply(initial, {
+      kind: 'RendererIntent',
+      intent: { kind: 'ZoneOpened', zoneId: discard.id },
+    }).state;
+    state = apply(state, {
+      kind: 'OpenedZoneCardIntent',
+      intent: { kind: 'CardSelected', cardId: pileCard.id },
+    }).state;
+    expect(state.presentation.selectedCardId).toBe(pileCard.id);
+
+    // The window resized: the table is laid out again.
+    state = apply(state, { kind: 'RefreshScene', cause: 'layout' }).state;
+    expect(state.presentation).toMatchObject({
+      openedZoneId: discard.id,
+      selectedCardId: pileCard.id,
+    });
+
+    // The pile closed: its card is no longer picked.
+    state = apply(state, {
+      kind: 'DismissLocalPresentation',
+      scope: 'zone',
+    }).state;
+    state = apply(state, { kind: 'RefreshScene', cause: 'layout' }).state;
+    expect(state.presentation.selectedCardId).toBeNull();
+  });
+
   it('admits selected-card shortcuts only from the exact currently opened zone', () => {
     const initial = install();
     const discard = initial.scene!.zones.find((zone) =>

@@ -29,16 +29,30 @@ export const useActivityDocking = (): {
   const docked = useMediaQuery(ACTIVITY_DOCK_QUERY);
   const shell = usePreference(SHELL_PREFERENCES);
   const [overlayOpen, setOverlayOpen] = useState(false);
-  const open = docked ? shell.activityDocked : overlayOpen;
+  const wasDocked = useRef(docked);
+  // Past the dock's width the log keeps as it was, and never opens on its
+  // own: open over the table, it docks open as the window grows; narrower,
+  // the log over the table starts closed, as on each visit (the dock's own
+  // choice kept for when it is wide again).
+  const crossing = wasDocked.current !== docked;
+  const open = docked
+    ? shell.activityDocked || (crossing && overlayOpen)
+    : !crossing && overlayOpen;
   const beside = docked && open;
   const [slide] = useState(() => createDockSlide(beside ? 1 : 0));
   // A window that grows or shrinks past the dock's width puts the log
   // straight in its new place; opening and closing slide.
-  const wasDocked = useRef(docked);
   useLayoutEffect(() => {
-    slide.to(beside ? 1 : 0, { jump: wasDocked.current !== docked });
+    const crossed = wasDocked.current !== docked;
+    if (crossed && overlayOpen) {
+      if (docked && !shell.activityDocked) {
+        preferences().patch(SHELL_PREFERENCES, { activityDocked: true });
+      }
+      setOverlayOpen(false);
+    }
+    slide.to(beside ? 1 : 0, { jump: crossed });
     wasDocked.current = docked;
-  }, [beside, docked, slide]);
+  }, [beside, docked, overlayOpen, shell.activityDocked, slide]);
   useEffect(() => () => slide.stop(), [slide]);
   return {
     docked,

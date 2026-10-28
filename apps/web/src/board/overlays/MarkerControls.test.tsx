@@ -173,6 +173,53 @@ describe('MarkerControls', () => {
     ]);
   });
 
+  it('gives the focus to the number, or on a phone to a button, not bringing up its keyboard', async () => {
+    const opened = (touch: boolean) => {
+      vi.stubGlobal('matchMedia', (query: string) => ({
+        matches: touch && query.includes('pointer: coarse'),
+        media: query,
+        addEventListener: () => undefined,
+        removeEventListener: () => undefined,
+      }));
+      const state = stateWith(marker('damage', '60'));
+      return {
+        ...state,
+        overlays: {
+          ...state.overlays,
+          marker: { ...state.overlays.marker!, takesFocus: true },
+        },
+      } as BoardSessionControllerState;
+    };
+    const settle = () =>
+      act(async () => {
+        await new Promise((resolve) => requestAnimationFrame(resolve));
+      });
+    act(() =>
+      root.render(
+        <MarkerControls
+          state={opened(false)}
+          actions={actions as unknown as MarkerControlsActions}
+        />
+      )
+    );
+    await settle();
+    expect(document.activeElement).toBe(field());
+
+    act(() => root.unmount());
+    root = createRoot(host);
+    act(() =>
+      root.render(
+        <MarkerControls
+          state={opened(true)}
+          actions={actions as unknown as MarkerControlsActions}
+        />
+      )
+    );
+    await settle();
+    expect(document.activeElement?.tagName).toBe('BUTTON');
+    vi.unstubAllGlobals();
+  });
+
   it('sets what was typed when the focus leaves them, past their buttons', () => {
     const outside = document.createElement('button');
     document.body.append(outside);

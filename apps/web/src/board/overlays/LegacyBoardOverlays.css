@@ -1034,6 +1034,8 @@ button.ptcgsim-overlay-toggle:focus-visible {
 /* A modal panel over most of the board; overlayLayout.ts places it and sizes
    its cards (--ptcgsim-zone-card-height) from the board area. */
 .ptcgsim-legacy-zone-browser {
+  /* iOS: holding a card drags it, rather than offering Save Image. */
+  -webkit-touch-callout: none;
   --ptcgsim-zone-card-width: calc(
     var(--ptcgsim-zone-card-height, 200px) * 63 / 88
   );

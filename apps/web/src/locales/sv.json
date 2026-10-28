@@ -1600,6 +1600,9 @@
   },
   "Ccpbzh": {
     "message": "Cards",
+    "comments": [
+      "Command palette section: find a card on the table."
+    ],
     "translation": "Kort"
   },
   "CZ3VjP": {
@@ -2003,6 +2006,13 @@
     "message": "Deck",
     "context": "zone on the table",
     "translation": "Lek"
+  },
+  "UJSJZe": {
+    "message": "Deck and hand",
+    "comments": [
+      "Command palette section."
+    ],
+    "translation": "Lek och hand"
   },
   "peXKOB": {
     "message": "Deck bottom",
@@ -2444,6 +2454,10 @@
     "message": "Find <0>{0}</0> and drag it into your hand.",
     "translation": "Hitta <0>{0}</0> och dra det till din hand."
   },
+  "JIewhG": {
+    "message": "Find <0>{0}</0>, hold it a moment, then drag it into your hand.",
+    "translation": "Hitta <0>{0}</0>, håll kvar det en stund och dra det sedan till din hand."
+  },
   "Vv3U3O": {
     "message": "Find a card…",
     "translation": "Hitta ett kort…"
@@ -2693,6 +2707,13 @@
     "message": "Heads",
     "context": "coin flip",
     "translation": "Krona"
+  },
+  "c3XJ18": {
+    "message": "Help",
+    "comments": [
+      "Command palette section."
+    ],
+    "translation": "Hjälp"
   },
   "h94f_B": {
     "message": "Hi everyone! I'm Michael/Xiao Xiao Long. I'm a 21-year-old from Guelph, Canada, who started programming in the fall of 2023. I've been playing the Pokémon TCG for over 8 years, and I spent the last 3 months building PTCG-sim, a free tool for the community to use to test and play our favorite card game.",
@@ -3893,6 +3914,13 @@
     "message": "Piece position",
     "translation": "Delens position"
   },
+  "CC99uS": {
+    "message": "Piles",
+    "comments": [
+      "Command palette section: deck, discard, prizes…"
+    ],
+    "translation": "Högar"
+  },
   "SW-cIq": {
     "message": "Play",
     "context": "take the decks to the table",
@@ -4155,6 +4183,13 @@
     "message": "Receive all of the benefits of the previous tiers.",
     "translation": "Få alla fördelar från de föregående nivåerna."
   },
+  "CCTop_": {
+    "message": "Recent",
+    "comments": [
+      "Command palette section: commands run last."
+    ],
+    "translation": "Senaste"
+  },
   "gcoiFh": {
     "message": "Reconnect",
     "translation": "Anslut igen"
@@ -4396,6 +4431,13 @@
     "message": "Right-click their <0>{0}</0>.",
     "translation": "Högerklicka på deras <0>{0}</0>."
   },
+  "5aP2OI": {
+    "message": "Room",
+    "comments": [
+      "Command palette section: decks, online play, replays."
+    ],
+    "translation": "Rum"
+  },
   "euMx3W": {
     "message": "Room {roomCode}",
     "comments": [
@@ -4582,6 +4624,13 @@
     "message": "Season",
     "translation": "Säsong"
   },
+  "tGu7Tl": {
+    "message": "Selected card",
+    "comments": [
+      "Command palette section."
+    ],
+    "translation": "Valt kort"
+  },
   "gspMtn": {
     "message": "Selected card",
     "context": "shortcut group",
@@ -4669,6 +4718,9 @@
   },
   "Tz0i8g": {
     "message": "Settings",
+    "comments": [
+      "Command palette section."
+    ],
     "translation": "Inställningar"
   },
   "2D-NYE": {
@@ -5106,6 +5158,9 @@
   },
   "4hJhzz": {
     "message": "Table",
+    "comments": [
+      "Command palette section: view and table pieces."
+    ],
     "translation": "Bord"
   },
   "gpkQgy": {
@@ -5607,6 +5662,13 @@
   "x-E_50": {
     "message": "Try fewer cards.",
     "translation": "Försök med färre kort."
+  },
+  "n0iUzM": {
+    "message": "Turn",
+    "comments": [
+      "Command palette section: Set up, Attack, Pass…"
+    ],
+    "translation": "Tur"
   },
   "VXAHsl": {
     "message": "Turn",

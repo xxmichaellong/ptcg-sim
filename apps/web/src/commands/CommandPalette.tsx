@@ -2,6 +2,8 @@ import { CaretRightIcon } from '@phosphor-icons/react/dist/csr/CaretRight';
 import { CheckIcon } from '@phosphor-icons/react/dist/csr/Check';
 import { LightningIcon } from '@phosphor-icons/react/dist/csr/Lightning';
 import { MagnifyingGlassIcon } from '@phosphor-icons/react/dist/csr/MagnifyingGlass';
+import type { I18n, MessageDescriptor } from '@lingui/core';
+import { msg } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react/macro';
 import {
   useEffect,
@@ -176,41 +178,52 @@ interface Row {
   readonly key: string;
 }
 
-const sectionLabels = (
-  t: ReturnType<typeof useLingui>['t']
-): Record<RankedSectionLabel, string> => ({
-  recent: t({
-    message: 'Recent',
-    comment: 'Command palette section: commands run last.',
-  }),
-  selected: t({
-    message: 'Selected card',
-    comment: 'Command palette section.',
-  }),
-  turn: t({
-    message: 'Turn',
-    comment: 'Command palette section: Set up, Attack, Pass…',
-  }),
-  deck: t({ message: 'Deck and hand', comment: 'Command palette section.' }),
-  cards: t({
-    message: 'Cards',
-    comment: 'Command palette section: find a card on the table.',
-  }),
-  piles: t({
-    message: 'Piles',
-    comment: 'Command palette section: deck, discard, prizes…',
-  }),
-  table: t({
-    message: 'Table',
-    comment: 'Command palette section: view and table pieces.',
-  }),
-  room: t({
-    message: 'Room',
-    comment: 'Command palette section: decks, online play, replays.',
-  }),
-  settings: t({ message: 'Settings', comment: 'Command palette section.' }),
-  help: t({ message: 'Help', comment: 'Command palette section.' }),
-});
+/** The palette's section headings, translated where they are shown. */
+const SECTION_LABELS: Readonly<Record<RankedSectionLabel, MessageDescriptor>> =
+  {
+    recent: msg({
+      message: 'Recent',
+      comment: 'Command palette section: commands run last.',
+    }),
+    selected: msg({
+      message: 'Selected card',
+      comment: 'Command palette section.',
+    }),
+    turn: msg({
+      message: 'Turn',
+      comment: 'Command palette section: Set up, Attack, Pass…',
+    }),
+    deck: msg({
+      message: 'Deck and hand',
+      comment: 'Command palette section.',
+    }),
+    cards: msg({
+      message: 'Cards',
+      comment: 'Command palette section: find a card on the table.',
+    }),
+    piles: msg({
+      message: 'Piles',
+      comment: 'Command palette section: deck, discard, prizes…',
+    }),
+    table: msg({
+      message: 'Table',
+      comment: 'Command palette section: view and table pieces.',
+    }),
+    room: msg({
+      message: 'Room',
+      comment: 'Command palette section: decks, online play, replays.',
+    }),
+    settings: msg({ message: 'Settings', comment: 'Command palette section.' }),
+    help: msg({ message: 'Help', comment: 'Command palette section.' }),
+  };
+
+const sectionLabels = (i18n: I18n): Record<RankedSectionLabel, string> =>
+  Object.fromEntries(
+    Object.entries(SECTION_LABELS).map(([section, label]) => [
+      section,
+      i18n._(label),
+    ])
+  ) as Record<RankedSectionLabel, string>;
 
 /**
  * The command palette (ADR-035): search every action the table, the room
@@ -222,7 +235,7 @@ export const CommandPalette = ({
 }: {
   readonly onClose: () => void;
 }) => {
-  const { t } = useLingui();
+  const { t, i18n } = useLingui();
   const touchOnly = useMediaQuery(TOUCH_ONLY_QUERY);
   const version = useSyncExternalStore(
     subscribeCommandSources,
@@ -394,6 +407,18 @@ export const CommandPalette = ({
       ? ranked.entry.command.count.title(ranked.count)
       : ranked.entry.command.title;
 
+  /**
+   * A row's key, if pressing it does what the row does: with a number typed
+   * ("draw 3") a number key does that many, and no other key does.
+   */
+  const hintOf = (ranked: RankedEntry): string | undefined => {
+    const { hint, count } = ranked.entry.command;
+    if (!hint || ranked.count === undefined || !count) return hint;
+    return /^\d$/u.test(hint) && ranked.count >= 1 && ranked.count <= 9
+      ? String(ranked.count)
+      : undefined;
+  };
+
   /** The command a recent entry is remembered by: the screen it ran from. */
   const remembered = (entry: CommandEntry): string =>
     path[0] ?? entry.command.id;
@@ -548,7 +573,7 @@ export const CommandPalette = ({
     }
   };
 
-  const labels = sectionLabels(t);
+  const labels = sectionLabels(i18n);
   const crumbs = [
     ...screens.map((opened) => opened.screen.breadcrumb),
     ...(asking ? [asking.command.title.replace(/…$/u, '')] : []),
@@ -643,8 +668,8 @@ export const CommandPalette = ({
               className="ptcgsim-command__check"
               aria-label={t`Current`}
             />
-          ) : command.hint && !touchOnly ? (
-            <kbd className="ptcgsim-command__key">{command.hint}</kbd>
+          ) : hintOf(row.ranked) && !touchOnly ? (
+            <kbd className="ptcgsim-command__key">{hintOf(row.ranked)}</kbd>
           ) : command.submenu ? (
             <CaretRightIcon
               weight="bold"
