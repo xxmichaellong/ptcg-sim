@@ -96,7 +96,7 @@ describe('rows stored before the reads were bounded', () => {
     // Stored by schema 1; the next start migrates.
     store.setMeta('schema', '1');
     index.migrate();
-    expect(store.getMeta('schema')).toBe('2');
+    expect(store.getMeta('schema')).toBe('3');
     const search = index.search('gardevoir', 'STANDARD', 5);
     expect(
       search.available

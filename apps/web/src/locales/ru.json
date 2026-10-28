@@ -2857,6 +2857,13 @@
     "context": "animation speed",
     "translation": "Мгновенно"
   },
+  "egEFcM": {
+    "message": "International",
+    "comments": [
+      "An official International Championship tournament"
+    ],
+    "translation": "Международный"
+  },
   "6vI3XA": {
     "message": "Invitation copied",
     "translation": "Приглашение скопировано"
@@ -3203,12 +3210,12 @@
     "message": "Lost Zone and markers",
     "translation": "Зона потерь и маркеры"
   },
-  "LoMQBK": {
-    "message": "Majors on Limitless",
+  "xX-rmn": {
+    "message": "Majors",
     "comments": [
-      "A link to official major tournaments (Regionals, Worlds) on Limitless's site"
+      "Shows only official major tournaments (Regionals, Internationals, Worlds)"
     ],
-    "translation": "Мейджоры на Limitless"
+    "translation": "Мажоры"
   },
   "Q0rQkA": {
     "message": "Make a custom card",
@@ -4172,6 +4179,13 @@
     "message": "Reduce motion…",
     "translation": "Уменьшить анимацию…"
   },
+  "O_2w5F": {
+    "message": "Regional",
+    "comments": [
+      "An official Regional Championship tournament"
+    ],
+    "translation": "Региональный"
+  },
   "BMYNMJ": {
     "message": "Regulation mark, format",
     "translation": "Отметка регуляции, формат"
@@ -4934,6 +4948,13 @@
   "0kjUmj": {
     "message": "Special Energy",
     "translation": "Особая Энергия"
+  },
+  "_OuDNJ": {
+    "message": "Special Event",
+    "comments": [
+      "An official Special Event tournament"
+    ],
+    "translation": "Специальное событие"
   },
   "h5EwqW": {
     "message": "Split",
@@ -5812,6 +5833,13 @@
   "NWGsaA": {
     "message": "Winning now",
     "translation": "Сейчас побеждают"
+  },
+  "QjlnU1": {
+    "message": "Worlds",
+    "comments": [
+      "The Pokémon World Championships"
+    ],
+    "translation": "Чемпионат мира"
   },
   "n1kezF": {
     "message": "Yes",

@@ -2857,6 +2857,13 @@
     "context": "animation speed",
     "translation": "즉시"
   },
+  "egEFcM": {
+    "message": "International",
+    "comments": [
+      "An official International Championship tournament"
+    ],
+    "translation": "인터내셔널"
+  },
   "6vI3XA": {
     "message": "Invitation copied",
     "translation": "초대 링크를 복사했습니다"
@@ -3203,12 +3210,12 @@
     "message": "Lost Zone and markers",
     "translation": "로스트존과 마커"
   },
-  "LoMQBK": {
-    "message": "Majors on Limitless",
+  "xX-rmn": {
+    "message": "Majors",
     "comments": [
-      "A link to official major tournaments (Regionals, Worlds) on Limitless's site"
+      "Shows only official major tournaments (Regionals, Internationals, Worlds)"
     ],
-    "translation": "Limitless의 메이저 대회"
+    "translation": "메이저 대회"
   },
   "Q0rQkA": {
     "message": "Make a custom card",
@@ -4172,6 +4179,13 @@
     "message": "Reduce motion…",
     "translation": "움직임 줄이기…"
   },
+  "O_2w5F": {
+    "message": "Regional",
+    "comments": [
+      "An official Regional Championship tournament"
+    ],
+    "translation": "리저널"
+  },
   "BMYNMJ": {
     "message": "Regulation mark, format",
     "translation": "레귤레이션 마크, 포맷"
@@ -4934,6 +4948,13 @@
   "0kjUmj": {
     "message": "Special Energy",
     "translation": "특수 에너지"
+  },
+  "_OuDNJ": {
+    "message": "Special Event",
+    "comments": [
+      "An official Special Event tournament"
+    ],
+    "translation": "스페셜 이벤트"
   },
   "h5EwqW": {
     "message": "Split",
@@ -5812,6 +5833,13 @@
   "NWGsaA": {
     "message": "Winning now",
     "translation": "요즘 이기는 덱"
+  },
+  "QjlnU1": {
+    "message": "Worlds",
+    "comments": [
+      "The Pokémon World Championships"
+    ],
+    "translation": "월드 챔피언십"
   },
   "n1kezF": {
     "message": "Yes",

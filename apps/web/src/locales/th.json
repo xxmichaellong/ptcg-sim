@@ -2857,6 +2857,13 @@
     "context": "animation speed",
     "translation": "ทันที"
   },
+  "egEFcM": {
+    "message": "International",
+    "comments": [
+      "An official International Championship tournament"
+    ],
+    "translation": "อินเตอร์เนชันแนล"
+  },
   "6vI3XA": {
     "message": "Invitation copied",
     "translation": "คัดลอกคำเชิญแล้ว"
@@ -3203,12 +3210,12 @@
     "message": "Lost Zone and markers",
     "translation": "ลอสต์โซนและมาร์กเกอร์"
   },
-  "LoMQBK": {
-    "message": "Majors on Limitless",
+  "xX-rmn": {
+    "message": "Majors",
     "comments": [
-      "A link to official major tournaments (Regionals, Worlds) on Limitless's site"
+      "Shows only official major tournaments (Regionals, Internationals, Worlds)"
     ],
-    "translation": "รายการแข่งใหญ่บน Limitless"
+    "translation": "รายการใหญ่"
   },
   "Q0rQkA": {
     "message": "Make a custom card",
@@ -4172,6 +4179,13 @@
     "message": "Reduce motion…",
     "translation": "ลดการเคลื่อนไหว…"
   },
+  "O_2w5F": {
+    "message": "Regional",
+    "comments": [
+      "An official Regional Championship tournament"
+    ],
+    "translation": "รีเจียนแนล"
+  },
   "BMYNMJ": {
     "message": "Regulation mark, format",
     "translation": "สัญลักษณ์เรกกูเลชัน, ฟอร์แมต"
@@ -4934,6 +4948,13 @@
   "0kjUmj": {
     "message": "Special Energy",
     "translation": "พลังงานพิเศษ"
+  },
+  "_OuDNJ": {
+    "message": "Special Event",
+    "comments": [
+      "An official Special Event tournament"
+    ],
+    "translation": "งานพิเศษ"
   },
   "h5EwqW": {
     "message": "Split",
@@ -5812,6 +5833,13 @@
   "NWGsaA": {
     "message": "Winning now",
     "translation": "กำลังชนะ"
+  },
+  "QjlnU1": {
+    "message": "Worlds",
+    "comments": [
+      "The Pokémon World Championships"
+    ],
+    "translation": "เวิลด์ส"
   },
   "n1kezF": {
     "message": "Yes",

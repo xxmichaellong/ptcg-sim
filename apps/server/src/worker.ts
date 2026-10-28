@@ -1278,9 +1278,10 @@ const DECK_INDEX_FAILURE_DELAY_MS = 10 * 60 * 1000;
 
 /**
  * The tournament deck index (deck-index/, ADR-037): Limitless's online
- * tournaments, their standings and lists, crawled one request per alarm
- * step within a budget, and searchable by deck name. The daily cron and the
- * first request start the crawl; its alarms keep it going.
+ * tournaments and Labs' majors, their standings and lists, crawled a
+ * request per lane per alarm step within each one's budget, and searchable
+ * by deck name. The daily cron and the first request start the crawl; its
+ * alarms keep it going.
  */
 export class PtcgDeckIndex extends DurableObject<Env> {
   private readonly telemetry = createTelemetry('deck_index', this.env.BUILD_ID);
@@ -1296,6 +1297,7 @@ export class PtcgDeckIndex extends DurableObject<Env> {
       fetch: (input, init) => fetch(input, init),
       now: Date.now,
       enabled: env.DECK_INDEX_SOURCE !== 'off',
+      majors: true,
       ...(env.LIMITLESS_API_KEY ? { apiKey: env.LIMITLESS_API_KEY } : {}),
       onFailure: (reason) =>
         this.telemetry.failure({
@@ -1356,6 +1358,7 @@ export class PtcgDeckIndex extends DurableObject<Env> {
     readonly format: IndexedFormat | null;
     readonly minimumPlayers: number;
     readonly before: { readonly date: number; readonly id: string } | null;
+    readonly majors?: boolean;
   }): Promise<ReturnType<DeckIndex['tournaments']>> {
     await this.crawl();
     return this.index.tournaments({

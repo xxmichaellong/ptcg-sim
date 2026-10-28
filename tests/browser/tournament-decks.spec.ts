@@ -199,6 +199,87 @@ test("a tournament opens to its standings, and any player's list goes on the sea
   await expect(page.locator('#deckPasteInput')).toBeVisible();
 });
 
+test("Majors lists official majors alone, and a major's list goes on the seat", async ({
+  page,
+}) => {
+  test.setTimeout(60_000);
+  await stubIndex(page);
+  const NICE = {
+    id: 'labs-0077',
+    name: 'Regional Nice',
+    date: '2026-10-17T06:30:00.000Z',
+    players: 2336,
+    format: 'STANDARD',
+    kind: 'regional',
+  };
+  const asked: string[] = [];
+  // Routes added later are matched first.
+  await page.route('**/v2/tournaments?**', (route) => {
+    const search = new URL(route.request().url()).searchParams;
+    asked.push(search.toString());
+    return route.fulfill({
+      json: {
+        tournaments:
+          search.get('kind') === 'major'
+            ? [{ ...NICE, organizer: null, hasLists: true }]
+            : [
+                { ...TOURNAMENT, organizer: 'League', hasLists: true },
+                { ...NICE, organizer: null, hasLists: true },
+              ],
+        nextCursor: null,
+      },
+    });
+  });
+  await page.route(`**/v2/tournaments/${NICE.id}`, (route) =>
+    route.fulfill({
+      json: {
+        tournament: {
+          ...NICE,
+          organizer: null,
+          hasLists: true,
+          url: 'https://labs.limitlesstcg.com/0077/standings',
+        },
+        standings: [
+          {
+            player: { id: '2115', name: 'Luc Gantner', country: 'CH' },
+            placing: 1,
+            record: { wins: 15, losses: 1, ties: 2 },
+            dropped: false,
+            archetype: ARCHETYPE,
+            hasList: true,
+          },
+        ],
+      },
+    })
+  );
+  await openDeckScreen(page);
+  await page.locator('#deckTournamentsTitle').scrollIntoViewIfNeeded();
+  const events = page.getByRole('list', { name: 'Tournaments' });
+  await expect(events.getByRole('listitem')).toHaveCount(2);
+  await expect(events.getByRole('listitem').nth(1)).toContainText(
+    'Regional · Standard · 2,336 players'
+  );
+  const majors = page.locator('#deckMajorsToggle');
+  await majors.click();
+  await expect(majors).toHaveAttribute('aria-pressed', 'true');
+  await expect(events.getByRole('listitem')).toHaveCount(1);
+  expect(asked.at(-1)).toContain('kind=major');
+  await events.getByRole('button', { name: /Regional Nice/u }).click();
+  await expect(
+    page.getByRole('link', { name: /Limitless/u }).first()
+  ).toHaveAttribute('href', 'https://labs.limitlesstcg.com/0077/standings');
+  await page
+    .getByRole('list', { name: 'Standings' })
+    .getByRole('button', {
+      name: 'Dragapult Dusknoir, 1st, Luc Gantner: try it',
+    })
+    .click();
+  await expect(page.locator('#nativeDeckBuilderSummaryPanel')).toHaveAttribute(
+    'data-card-count',
+    '60'
+  );
+});
+
 test('deck search says quietly when it is offline', async ({ page }) => {
   test.setTimeout(60_000);
   await page.route('**/v2/decks/search**', (route) =>

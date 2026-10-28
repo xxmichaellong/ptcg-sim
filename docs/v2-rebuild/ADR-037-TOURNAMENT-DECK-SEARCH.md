@@ -1,4 +1,4 @@
-# ADR-037: tournament deck search, from Limitless's online events
+# ADR-037: tournament deck search, from Limitless's online events and majors
 
 - Status: **ACCEPTED**
 - Decision date: 2026-10-22
@@ -22,10 +22,13 @@ key, a Worker shares that limit with whatever else reaches Limitless from
 Cloudflare's addresses. A key, which Limitless gives to public projects,
 gives it a bucket of its own.
 
-Official majors (Regionals, Internationals, Worlds) are a different matter.
-limitlesstcg.com has no API for them. Its Labs site reads an undocumented
-JSON API. RK9's terms forbid scraping, and pokedata.ovh's data is scraped
-from RK9.
+Official majors (Regionals, Special Events, Internationals, Worlds) are a
+different matter. limitlesstcg.com has no API for them, and its pages show
+only Day 2 lists. Its Labs site (labs.limitlesstcg.com) reads a JSON API at
+mew.limitlesstcg.com with every Masters player's standing, archetype and
+list, for every major since September 2024 (Baltimore). RK9's terms forbid
+scraping, and pokedata.ovh's data is scraped from RK9. On 2026-10-28 the
+owner confirmed Limitless's permission to read Labs.
 
 ## Decision
 
@@ -162,10 +165,43 @@ from RK9.
    crawl; a deploy's `--var DECK_INDEX_SOURCE:on` (or the config) turns it
    on. Off, the tournaments listed are only those read, since any other
    answers "not found" when opened.
-8. **Majors are out, for now.** They need either Limitless's permission
-   (their Labs JSON, or an endpoint for majors) or the owner's decision. Until
-   then the deck screen links to limitlesstcg.com's tournaments, and a list
-   copied from there imports as any pasted list does.
+8. **Majors, from Limitless Labs** (2026-10-28, with Limitless's
+   permission; `deck-index/labs.ts`). The same index holds them, in a lane
+   of their own:
+   - **Masters only.** No other division is ever asked for: the others are
+     minors.
+   - **Discovery.** Labs' list of majors (`tournaments`) every six hours, and
+     at once on the daily cron. A major joins once it is over (`completed`).
+     It is `labs-0077` in the index (Labs' number, four digits), named as
+     limitlesstcg.com names it ("Regional Nice", "Special Event Lima", "LAIC
+     2025–26, São Paulo", "World Championships 2026"), Standard (every
+     major on Labs is), and found by its kind's words too ("regionals",
+     "worlds", "major").
+   - **Reading one.** Its state (`tournament`), then its standings
+     (`standings`), then each player's list (`decklist`), one request each,
+     best placed first, the newest major's first. Labs sends no ETag:
+     `updated_at` is the major's version. A major is checked daily for 17
+     days from its start, and its standings read again only when the version
+     changed. A list read is kept; one Labs newly has is wanted; one Labs
+     answers without is never asked for again.
+   - **Its own pace.** One request every 2 s at most (`MAJORS_POLICY`),
+     separate from the online API's budget, which it never touches. A 429
+     holds the lane for as long as Labs says (five minutes if it doesn't,
+     30 at most); Labs down or answering what can't be read holds it 30 s,
+     doubling to 30 minutes. The online crawl goes on meanwhile, and its
+     own pace is unchanged.
+   - **Players.** A major's standings show every list Labs has, read or not.
+     Loading one not read yet reads it at once (ten a minute at most, besides
+     the lane). A major is never read on demand: it shows once the lane has
+     read it.
+   - **Shown.** `kind` on every tournament (`online`, `regional`, `special`,
+     `international`, `worlds`); `GET /v2/tournaments?kind=major` lists
+     majors alone; source links go to Labs' standings and decklist pages.
+     Majors' finishes count in deck search as online ones do (a top 8 at a
+     2,000-player Regional weighs log₂ 2,000).
+   - **Not covered.** Majors before September 2024 (only Day 2 lists on
+     limitlesstcg.com), League Cups, and Japanese and Korean events, which
+     Labs doesn't list.
 
 ## Consequences
 
@@ -196,3 +232,21 @@ from RK9.
   off (`DECK_INDEX_SOURCE`).
 - `current-decks.ts` and the index share `limitless.ts` (bounded fetch,
   rate-limit header, decklist text). ADR-029's feed is unchanged.
+- Majors, measured in workerd: 6 rows to list one, about 2.1 a player for its
+  standings and 2 for each list (the list's row, the player's again): about
+  4 a player, some 8,000 for a 2,000-player Regional. A daily check finding
+  the version unchanged writes 1; standings read again unchanged, 3. A season
+  (about 37 majors, 64,000 Masters players) is about 260,000 rows; the
+  backfill since September 2024 (78 majors) about 550,000, spread over the
+  days it takes.
+- Requests to Labs: about 2,300 for a 2,300-player Regional (two for its
+  state and standings, one a list), some 80 minutes at the lane's pace; a
+  season about 65,000; the backfill about 140,000, some 75 hours. Labs
+  offers no endpoint for many lists at once: one from Limitless would make
+  a major one request.
+- Labs' API is undocumented: its paths, the `{ ok, message }` wrapper, its
+  fields and the four-digit player numbers can change without notice. A
+  change reads as nothing readable, which holds the lane back and leaves
+  what is stored answering.
+- Seniors and Juniors are minors, and never read. Masters' names and
+  countries are kept as Labs shows them, as online players' are.

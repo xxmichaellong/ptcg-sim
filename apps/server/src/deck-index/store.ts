@@ -1,9 +1,10 @@
 /**
  * The deck index's tables (one SQLite Durable Object, ADR-037): the
- * tournaments Limitless lists, each indexed tournament's standings, the
- * lists themselves (each kept once, by a hash of its text), and the
- * archetypes the standings name, with full-text tables for searching
- * archetypes and tournaments by name.
+ * tournaments Limitless lists (its online events, and the majors Labs
+ * lists, `kind` set), each indexed tournament's standings, the lists
+ * themselves (each kept once, by a hash of its text), and the archetypes
+ * the standings name, with full-text tables for searching archetypes and
+ * tournaments by name.
  *
  * Every method is synchronous: a Durable Object's SQL calls are, and a
  * write made inside `transaction` commits whole.
@@ -14,6 +15,13 @@ import {
   ftsQuery,
   normalizeName,
 } from './normalize.js';
+import {
+  isMajorKind,
+  majorSearchWords,
+  type ListedMajor,
+  type MajorKind,
+  type MajorStanding,
+} from './labs.js';
 import {
   MAX_TOURNAMENT_PLAYERS,
   type ArchetypeRef,
@@ -61,7 +69,19 @@ export type TournamentState =
   | 'skipped'
   | 'unconfirmed';
 
-const SCHEMA_VERSION = '2';
+const SCHEMA_VERSION = '3';
+
+/**
+ * Majors (schema 3): a tournament's `kind` (null for an online event), and
+ * whether lists are still to be read for it; a player's `list_state` at a
+ * major, `wanted` while Labs has a list not read yet, `missing` once Labs
+ * had none to give (null otherwise, and at every online event).
+ */
+const MAJOR_COLUMNS = [
+  ['tournaments', 'kind TEXT'],
+  ['tournaments', 'lists_pending INTEGER'],
+  ['entries', 'list_state TEXT'],
+] as const;
 
 /**
  * Rows a build before the reads were bounded may have stored, put right
@@ -98,7 +118,9 @@ const SCHEMA = [
      retry_after INTEGER,
      etag TEXT,
      fetched_at INTEGER,
-     listed_at INTEGER NOT NULL
+     listed_at INTEGER NOT NULL,
+     kind TEXT,
+     lists_pending INTEGER
    )`,
   `CREATE INDEX IF NOT EXISTS tournaments_by_date ON tournaments (date DESC, id DESC)`,
   `CREATE INDEX IF NOT EXISTS tournaments_by_state ON tournaments (state, date)`,
@@ -114,6 +136,7 @@ const SCHEMA = [
      dropped INTEGER NOT NULL,
      archetype_id TEXT,
      list_hash TEXT,
+     list_state TEXT,
      PRIMARY KEY (tournament_id, player_id)
    ) WITHOUT ROWID`,
   `CREATE INDEX IF NOT EXISTS entries_by_archetype ON entries (archetype_id, placing)`,
@@ -127,6 +150,11 @@ const SCHEMA = [
    )`,
   `CREATE VIRTUAL TABLE IF NOT EXISTS archetype_fts USING fts5 (text, tokenize = 'unicode61 remove_diacritics 2', prefix = '2 3')`,
   `CREATE VIRTUAL TABLE IF NOT EXISTS tournament_fts USING fts5 (text, tokenize = 'unicode61 remove_diacritics 2', prefix = '2 3')`,
+] as const;
+
+/** Made after the repairs: an older database has its column only then. */
+const AFTER_REPAIRS = [
+  `CREATE INDEX IF NOT EXISTS tournaments_by_kind ON tournaments (kind, date) WHERE kind IS NOT NULL`,
 ] as const;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -154,6 +182,12 @@ export const STORE_POLICY = Object.freeze({
   bestPerArchetype: 5,
   /** Archetypes a search considers before ranking. */
   searchCandidates: 200,
+  /**
+   * A major is checked again daily this long after it starts (it runs two
+   * or three days): Limitless re-categorises decks and adds late lists.
+   */
+  majorRecheckWindowMs: 17 * DAY_MS,
+  majorRecheckEveryMs: DAY_MS,
 });
 
 export interface TournamentRow {
@@ -164,8 +198,11 @@ export interface TournamentRow {
   readonly players: number;
   readonly state: TournamentState;
   readonly hasLists: boolean | null;
+  /** An online event's ETag, or a major's version (Labs' `updated_at`). */
   readonly etag: string | null;
   readonly fetchedAt: number | null;
+  /** A major's kind; null for an online event. */
+  readonly kind: MajorKind | null;
 }
 
 /**
@@ -269,7 +306,14 @@ const tournamentRow = (row: Row): TournamentRow => ({
   hasLists: row.has_lists === null ? null : row.has_lists === 1,
   etag: nullableText(row.etag),
   fetchedAt: nullableNumber(row.fetched_at),
+  kind: isMajorKind(row.kind) ? row.kind : null,
 });
+
+/** What a tournament is found by: its name, and for a major, its kind. */
+const tournamentSearchText = (name: string, kind: MajorKind | null): string =>
+  kind === null
+    ? normalizeName(name)
+    : `${normalizeName(name)} ${majorSearchWords(kind)}`;
 
 const FINISH_COLUMNS = `t.id AS t_id, t.name AS t_name, t.date AS t_date,
   t.players AS t_players, t.format AS t_format, e.player_id, e.name AS p_name,
@@ -318,8 +362,23 @@ export class DeckIndexStore {
       for (const statement of (stored ? REPAIRS[stored] : undefined) ?? []) {
         this.sql.exec(statement);
       }
+      if (stored !== null && stored !== SCHEMA_VERSION) {
+        for (const [table, column] of MAJOR_COLUMNS) {
+          this.addColumn(table, column);
+        }
+      }
+      for (const statement of AFTER_REPAIRS) this.sql.exec(statement);
       this.setMeta('schema', SCHEMA_VERSION);
     });
+  }
+
+  /** Adds a column a database made before has not; one that has it keeps it. */
+  private addColumn(table: string, column: string): void {
+    try {
+      this.sql.exec(`ALTER TABLE ${table} ADD COLUMN ${column}`);
+    } catch (error) {
+      if (!/duplicate column/iu.test(String(error))) throw error;
+    }
   }
 
   getMeta(key: string): string | null {
@@ -454,7 +513,7 @@ export class DeckIndexStore {
   nextToRead(now: number): TournamentRow | null {
     const row = this.first(
       `SELECT * FROM tournaments
-       WHERE state IN ('listed', 'provisional', 'retry')
+       WHERE state IN ('listed', 'provisional', 'retry') AND kind IS NULL
          AND date <= ?
          AND (retry_after IS NULL OR retry_after <= ?)
        ORDER BY
@@ -486,7 +545,7 @@ export class DeckIndexStore {
   probe(now: number): TournamentRow | null {
     const read = this.first(
       `SELECT * FROM tournaments
-       WHERE state = 'indexed' AND etag IS NOT NULL AND fetched_at <= ?
+       WHERE state = 'indexed' AND kind IS NULL AND etag IS NOT NULL AND fetched_at <= ?
        ORDER BY date DESC
        LIMIT 1`,
       now - STORE_POLICY.probeAgainAfterMs
@@ -494,7 +553,7 @@ export class DeckIndexStore {
     if (read) return tournamentRow(read);
     const waiting = this.first(
       `SELECT * FROM tournaments
-       WHERE state IN ('listed', 'provisional', 'retry')
+       WHERE state IN ('listed', 'provisional', 'retry') AND kind IS NULL
          AND date <= ?
          AND (retry_after IS NULL OR retry_after <= ?)
        ORDER BY
@@ -519,7 +578,7 @@ export class DeckIndexStore {
   nextToResync(now: number): TournamentRow | null {
     const row = this.first(
       `SELECT * FROM tournaments
-       WHERE state IN ('indexed', 'unconfirmed') AND date >= ? AND fetched_at <= ?
+       WHERE state IN ('indexed', 'unconfirmed') AND kind IS NULL AND date >= ? AND fetched_at <= ?
        ORDER BY date DESC
        LIMIT 1`,
       now - STORE_POLICY.resyncWindowMs,
@@ -532,7 +591,7 @@ export class DeckIndexStore {
   waitingCount(): number {
     return number(
       this.first(
-        `SELECT COUNT(*) AS n FROM tournaments WHERE state IN ('listed', 'provisional', 'retry')`
+        `SELECT COUNT(*) AS n FROM tournaments WHERE state IN ('listed', 'provisional', 'retry') AND kind IS NULL`
       )?.n
     );
   }
@@ -541,7 +600,7 @@ export class DeckIndexStore {
   nextDueAt(now: number): number | null {
     const row = this.first(
       `SELECT MIN(MAX(date + ?, COALESCE(retry_after, 0))) AS due FROM tournaments
-       WHERE state IN ('listed', 'provisional', 'retry')`,
+       WHERE state IN ('listed', 'provisional', 'retry') AND kind IS NULL`,
       STORE_POLICY.finishedAfterMs
     );
     const due = nullableNumber(row?.due);
@@ -799,13 +858,13 @@ export class DeckIndexStore {
     const cap = 2 * STORE_POLICY.attempts;
     this.sql.exec(
       `UPDATE tournaments SET state = 'retry', retry_after = NULL
-       WHERE state = 'failed' AND retry_after >= ? AND attempts < ?`,
+       WHERE state = 'failed' AND kind IS NULL AND retry_after >= ? AND attempts < ?`,
       since,
       cap
     );
     this.sql.exec(
       `UPDATE tournaments SET state = 'provisional', retry_after = NULL
-       WHERE state = 'unconfirmed' AND fetched_at >= ? AND attempts < ?`,
+       WHERE state = 'unconfirmed' AND kind IS NULL AND fetched_at >= ? AND attempts < ?`,
       since,
       cap
     );
@@ -840,9 +899,11 @@ export class DeckIndexStore {
     );
   }
 
-  /** The date of the oldest event listed (by the date index: one row). */
+  /** The date of the oldest online event listed. */
   oldestListed(): number | null {
-    const row = this.first('SELECT MIN(date) AS oldest FROM tournaments');
+    const row = this.first(
+      'SELECT MIN(date) AS oldest FROM tournaments WHERE kind IS NULL'
+    );
     const value = row?.['oldest'];
     return typeof value === 'number' ? value : null;
   }
@@ -1030,6 +1091,8 @@ export class DeckIndexStore {
     readonly limit: number;
     readonly now: number;
     readonly readOnly?: boolean;
+    /** Majors only. */
+    readonly majors?: boolean;
   }): TournamentRow[] {
     const conditions = [
       `t.state != 'skipped'`,
@@ -1037,6 +1100,7 @@ export class DeckIndexStore {
       't.date <= ?',
     ];
     if (query.readOnly) conditions.push('t.fetched_at IS NOT NULL');
+    if (query.majors) conditions.push('t.kind IS NOT NULL');
     const bindings: SqlValue[] = [query.minimumPlayers, query.now];
     if (query.format) {
       conditions.push('t.format = ?');
@@ -1092,7 +1156,8 @@ export class DeckIndexStore {
               icons: readIcons(row.a_icons),
             }
           : null,
-      hasList: typeof row.list_hash === 'string',
+      // A major's list not read yet is read when asked for.
+      hasList: typeof row.list_hash === 'string' || row.list_state === 'wanted',
     }));
   }
 
@@ -1132,5 +1197,337 @@ export class DeckIndexStore {
             }
           : null,
     };
+  }
+
+  // Majors (labs.ts): listed from Labs, their standings read once over and
+  // again daily for a while, each list read on its own.
+
+  /**
+   * Records Labs' list of majors: one over and not known yet joins the
+   * queue, a known one takes the list's latest name and date. Only a change
+   * is written.
+   */
+  recordMajorsListed(rows: readonly ListedMajor[], now: number): void {
+    this.storage.transaction(() => {
+      for (const row of rows) {
+        const existing = this.first(
+          'SELECT rid, name FROM tournaments WHERE id = ?',
+          row.id
+        );
+        if (existing) {
+          this.sql.exec(
+            `UPDATE tournaments SET name = ?1, date = ?2, kind = ?3
+             WHERE id = ?4 AND (name IS NOT ?1 OR date IS NOT ?2 OR kind IS NOT ?3)`,
+            row.name,
+            row.date,
+            row.kind,
+            row.id
+          );
+          if (existing.name !== row.name) {
+            this.sql.exec(
+              'UPDATE tournament_fts SET text = ? WHERE rowid = ?',
+              tournamentSearchText(row.name, row.kind),
+              number(existing.rid)
+            );
+          }
+          continue;
+        }
+        // Read once it is over: what a running one shows would change.
+        if (!row.completed || !row.indexable) continue;
+        this.sql.exec(
+          `INSERT INTO tournaments (id, name, date, format, players, organizer_id, state, listed_at, kind)
+           VALUES (?, ?, ?, ?, 0, NULL, 'listed', ?, ?)`,
+          row.id,
+          row.name,
+          row.date,
+          row.format,
+          now,
+          row.kind
+        );
+        const inserted = this.first(
+          'SELECT rid FROM tournaments WHERE id = ?',
+          row.id
+        );
+        this.sql.exec(
+          'INSERT INTO tournament_fts (rowid, text) VALUES (?, ?)',
+          number(inserted?.rid),
+          tournamentSearchText(row.name, row.kind)
+        );
+      }
+    });
+  }
+
+  /** A major not read yet (or due a retry), the newest first. */
+  nextMajorToRead(now: number): TournamentRow | null {
+    const row = this.first(
+      `SELECT * FROM tournaments
+       WHERE kind IS NOT NULL AND state IN ('listed', 'retry')
+         AND (retry_after IS NULL OR retry_after <= ?)
+       ORDER BY date DESC
+       LIMIT 1`,
+      now
+    );
+    return row ? tournamentRow(row) : null;
+  }
+
+  /** A recent major due its daily check, the newest first. */
+  nextMajorToRecheck(now: number): TournamentRow | null {
+    const row = this.first(
+      `SELECT * FROM tournaments
+       WHERE kind IS NOT NULL AND state = 'indexed' AND date >= ? AND fetched_at <= ?
+       ORDER BY date DESC
+       LIMIT 1`,
+      now - STORE_POLICY.majorRecheckWindowMs,
+      now - STORE_POLICY.majorRecheckEveryMs
+    );
+    return row ? tournamentRow(row) : null;
+  }
+
+  /** When a major next has work due (a read, a retry or a check), if ever. */
+  nextMajorDueAt(now: number): number | null {
+    const row = this.first(
+      `SELECT MIN(CASE
+         WHEN state IN ('listed', 'retry') THEN COALESCE(retry_after, 0)
+         ELSE fetched_at + ?
+       END) AS due FROM tournaments
+       WHERE kind IS NOT NULL AND (state IN ('listed', 'retry')
+         OR (state = 'indexed' AND date >= ?))`,
+      STORE_POLICY.majorRecheckEveryMs,
+      now - STORE_POLICY.majorRecheckWindowMs
+    );
+    const due = nullableNumber(row?.due);
+    return due === null ? null : Math.max(now, due);
+  }
+
+  /**
+   * Records a major's standings at a version. A player's list read before
+   * is kept; one Labs has that isn't read yet is wanted (unless Labs had
+   * none to give before). Only what changed is written.
+   */
+  recordMajorStandings(
+    tournamentId: string,
+    entries: readonly MajorStanding[],
+    read: {
+      readonly now: number;
+      readonly version: string;
+      readonly players: number;
+    }
+  ): void {
+    this.storage.transaction(() => {
+      const current = this.first(
+        'SELECT kind FROM tournaments WHERE id = ?',
+        tournamentId
+      );
+      if (!current || current.kind === null) return;
+      const before = new Map<
+        string,
+        { readonly listHash: string | null; readonly listState: string | null }
+      >();
+      for (const row of this.rows(
+        'SELECT player_id, list_hash, list_state FROM entries WHERE tournament_id = ?',
+        tournamentId
+      )) {
+        before.set(text(row.player_id), {
+          listHash: nullableText(row.list_hash),
+          listState: nullableText(row.list_state),
+        });
+      }
+      const listed = new Set(entries.map((entry) => entry.playerId));
+      for (const playerId of before.keys()) {
+        if (!listed.has(playerId)) {
+          this.sql.exec(
+            'DELETE FROM entries WHERE tournament_id = ? AND player_id = ?',
+            tournamentId,
+            playerId
+          );
+        }
+      }
+      const archetypes = new Map<string, ArchetypeRef>();
+      let wanted = 0;
+      let kept = 0;
+      for (const entry of entries) {
+        const was = before.get(entry.playerId);
+        const listRead = was?.listHash !== undefined && was.listHash !== null;
+        const listState = listRead
+          ? null
+          : was?.listState === 'missing'
+            ? 'missing'
+            : entry.listPublished
+              ? 'wanted'
+              : null;
+        if (listState === 'wanted') wanted += 1;
+        if (listRead) kept += 1;
+        if (entry.archetype) {
+          archetypes.set(entry.archetype.id, entry.archetype);
+        }
+        this.sql.exec(
+          `INSERT INTO entries
+             (tournament_id, player_id, name, country, placing, wins, losses, ties, dropped, archetype_id, list_hash, list_state)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?)
+           ON CONFLICT (tournament_id, player_id) DO UPDATE SET
+             name = excluded.name, country = excluded.country, placing = excluded.placing,
+             wins = excluded.wins, losses = excluded.losses, ties = excluded.ties,
+             dropped = excluded.dropped, archetype_id = excluded.archetype_id,
+             list_state = excluded.list_state
+           WHERE name IS NOT excluded.name OR country IS NOT excluded.country
+             OR placing IS NOT excluded.placing OR wins IS NOT excluded.wins
+             OR losses IS NOT excluded.losses OR ties IS NOT excluded.ties
+             OR dropped IS NOT excluded.dropped OR archetype_id IS NOT excluded.archetype_id
+             OR list_state IS NOT excluded.list_state`,
+          tournamentId,
+          entry.playerId,
+          entry.name,
+          entry.country,
+          entry.placing,
+          entry.wins,
+          entry.losses,
+          entry.ties,
+          entry.dropped ? 1 : 0,
+          entry.archetype?.id ?? null,
+          listState
+        );
+      }
+      for (const archetype of archetypes.values()) {
+        this.recordArchetype(archetype, read.now);
+      }
+      this.sql.exec(
+        `UPDATE tournaments
+         SET state = 'indexed', players = ?, has_lists = ?, lists_pending = ?, etag = ?,
+             fetched_at = ?, attempts = 0, retry_after = NULL
+         WHERE id = ?`,
+        read.players,
+        wanted + kept > 0 ? 1 : 0,
+        wanted > 0 ? 1 : 0,
+        read.version,
+        read.now,
+        tournamentId
+      );
+      this.setMeta('updatedAt', String(read.now));
+    });
+  }
+
+  /** A major checked, its version as read before: nothing else changed. */
+  recordMajorChecked(tournamentId: string, now: number): void {
+    this.sql.exec(
+      'UPDATE tournaments SET fetched_at = ?, attempts = 0, retry_after = NULL WHERE id = ?',
+      now,
+      tournamentId
+    );
+  }
+
+  /** A major listed as over that Labs says is still running: later. */
+  recordMajorNotOver(tournamentId: string, retryAfter: number): void {
+    this.sql.exec(
+      'UPDATE tournaments SET retry_after = ? WHERE id = ?',
+      retryAfter,
+      tournamentId
+    );
+  }
+
+  /**
+   * A major's read failed for the major (unknown, or unreadable): read
+   * again later, given up on after a few tries. One already read keeps its
+   * standings and is checked again the next day.
+   */
+  recordMajorFailure(tournamentId: string, now: number): void {
+    const row = this.first(
+      'SELECT attempts, state FROM tournaments WHERE id = ?',
+      tournamentId
+    );
+    if (!row) return;
+    const attempts = number(row.attempts) + 1;
+    if (row.state === 'indexed') {
+      this.sql.exec(
+        'UPDATE tournaments SET fetched_at = ?, attempts = ? WHERE id = ?',
+        now,
+        attempts,
+        tournamentId
+      );
+      return;
+    }
+    this.sql.exec(
+      'UPDATE tournaments SET state = ?, attempts = ?, retry_after = ? WHERE id = ?',
+      attempts >= STORE_POLICY.attempts ? 'failed' : 'retry',
+      attempts,
+      now + STORE_POLICY.retryBaseMs * attempts,
+      tournamentId
+    );
+  }
+
+  /** The newest major with lists still to read, if any. */
+  nextMajorWithListsWanted(): string | null {
+    const row = this.first(
+      `SELECT id FROM tournaments
+       WHERE kind IS NOT NULL AND lists_pending = 1
+       ORDER BY date DESC
+       LIMIT 1`
+    );
+    return row ? text(row.id) : null;
+  }
+
+  /** Players at a major whose lists are still to read, best placed first. */
+  wantedLists(tournamentId: string, limit: number): string[] {
+    return this.rows(
+      `SELECT player_id FROM entries
+       WHERE tournament_id = ? AND list_state = 'wanted'
+       ORDER BY placing IS NULL, placing, player_id
+       LIMIT ?`,
+      tournamentId,
+      limit
+    ).map((row) => text(row.player_id));
+  }
+
+  /** Every list at a major has been read (or found missing). */
+  recordListsDone(tournamentId: string): void {
+    this.sql.exec(
+      'UPDATE tournaments SET lists_pending = 0 WHERE id = ? AND lists_pending IS NOT 0',
+      tournamentId
+    );
+  }
+
+  /** Whether a player's list at a major is still to read. */
+  isListWanted(tournamentId: string, playerId: string): boolean {
+    return (
+      this.first(
+        `SELECT 1 AS wanted FROM entries
+         WHERE tournament_id = ? AND player_id = ? AND list_state = 'wanted'`,
+        tournamentId,
+        playerId
+      ) !== undefined
+    );
+  }
+
+  /** A player's list at a major, read: kept once, and theirs. */
+  recordMajorList(
+    tournamentId: string,
+    playerId: string,
+    hash: string,
+    list: string
+  ): void {
+    this.storage.transaction(() => {
+      if (!this.isListWanted(tournamentId, playerId)) return;
+      this.sql.exec(
+        'INSERT OR IGNORE INTO lists (hash, text) VALUES (?, ?)',
+        hash,
+        list
+      );
+      this.sql.exec(
+        `UPDATE entries SET list_hash = ?, list_state = NULL
+         WHERE tournament_id = ? AND player_id = ?`,
+        hash,
+        tournamentId,
+        playerId
+      );
+    });
+  }
+
+  /** Labs had no list for the player after all (or not a whole deck). */
+  recordMajorListMissing(tournamentId: string, playerId: string): void {
+    this.sql.exec(
+      `UPDATE entries SET list_state = 'missing'
+       WHERE tournament_id = ? AND player_id = ? AND list_state = 'wanted'`,
+      tournamentId,
+      playerId
+    );
   }
 }

@@ -168,9 +168,66 @@ describe('tournament deck search', () => {
     expect((error as TournamentDataBusyError).retryAfterSeconds).toBe(42);
   });
 
+  it('lists majors alone when asked, each with its kind, linked to Limitless Labs', async () => {
+    const major = {
+      id: 'labs-0077',
+      name: 'Regional Nice',
+      date: '2026-10-17T06:30:00.000Z',
+      format: 'STANDARD',
+      players: 2336,
+      kind: 'regional',
+      organizer: null,
+      hasLists: true,
+    };
+    const fetch = respond({ tournaments: [major], nextCursor: null });
+    const page = await fetchTournaments({
+      fetch,
+      majors: true,
+      minPlayers: 16,
+    });
+    expect(fetch.mock.calls[0]![0]).toBe(
+      '/v2/tournaments?minPlayers=16&kind=major'
+    );
+    expect(page.tournaments[0]).toMatchObject({
+      id: 'labs-0077',
+      kind: 'regional',
+      organizer: '',
+    });
+    // A server from before majors names no kind; a kind this page doesn't
+    // know is shown as no kind.
+    const { kind: _omitted, ...unnamed } = major;
+    expect(
+      decodeTournaments({
+        tournaments: [unnamed, { ...major, kind: 'cup' }],
+        nextCursor: null,
+      }).tournaments.map((row) => row.kind)
+    ).toEqual(['online', 'online']);
+    expect(() =>
+      decodeTournaments({
+        tournaments: [{ ...major, kind: 'Regional <b>' }],
+        nextCursor: null,
+      })
+    ).toThrow();
+    const detail = respond({
+      tournament: {
+        ...major,
+        url: 'https://labs.limitlesstcg.com/0077/standings',
+      },
+      standings: [],
+    });
+    await expect(
+      fetchTournament('labs-0077', { fetch: detail })
+    ).resolves.toMatchObject({
+      tournament: { url: 'https://labs.limitlesstcg.com/0077/standings' },
+    });
+    expect(detail.mock.calls[0]![0]).toBe('/v2/tournaments/labs-0077');
+  });
+
   it('pages through tournaments and an archetype by an opaque cursor', async () => {
     const page = {
-      tournaments: [{ ...tournament, organizer: 'League', hasLists: true }],
+      tournaments: [
+        { ...tournament, kind: 'online', organizer: 'League', hasLists: true },
+      ],
       nextCursor: 'abc_123',
     };
     const fetch = respond(page);

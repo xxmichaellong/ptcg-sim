@@ -23,7 +23,6 @@ import {
   fetchTournament,
   fetchTournaments,
   searchText,
-  MAJOR_TOURNAMENTS_URL,
   TOURNAMENT_DATA_SOURCE,
   type DeckSearchResult,
   type TournamentArchetype,
@@ -103,6 +102,34 @@ const shortDate = (iso: string): string => {
     day: 'numeric',
     ...(thisYear ? {} : { year: 'numeric' }),
   });
+};
+
+/** A major's kind, as a label: none for an online event. */
+const kindLabel = (kind: TournamentSummary['kind']): string | undefined => {
+  switch (kind) {
+    case 'regional':
+      return translate({
+        message: 'Regional',
+        comment: 'An official Regional Championship tournament',
+      });
+    case 'special':
+      return translate({
+        message: 'Special Event',
+        comment: 'An official Special Event tournament',
+      });
+    case 'international':
+      return translate({
+        message: 'International',
+        comment: 'An official International Championship tournament',
+      });
+    case 'worlds':
+      return translate({
+        message: 'Worlds',
+        comment: 'The Pokémon World Championships',
+      });
+    case 'online':
+      return undefined;
+  }
 };
 
 const formatLabel = (format: string): string =>
@@ -378,7 +405,10 @@ export const DeckSearchResults = ({
   );
 };
 
-/** The recent online tournaments, newest first, a name filter above. */
+/**
+ * The recent tournaments, online and official majors, newest first, a name
+ * filter and a Majors-only toggle above.
+ */
 export const TournamentsShelf = ({
   open,
   onOpen,
@@ -389,6 +419,7 @@ export const TournamentsShelf = ({
   const { t } = useLingui();
   const [filter, setFilter] = useState('');
   const [query, setQuery] = useState('');
+  const [majors, setMajors] = useState(false);
   useEffect(() => {
     const timer = setTimeout(() => setQuery(searchText(filter)), 250);
     return () => clearTimeout(timer);
@@ -416,12 +447,13 @@ export const TournamentsShelf = ({
   // Once asked for, kept while the screen is put away: it opens again as
   // it was left, the pages More brought included.
   const paged = usePaged(
-    near ? `events:${query}` : undefined,
+    near ? `events:${majors ? 'majors' : 'all'}:${query}` : undefined,
     (cursor, options) =>
       fetchTournaments({
         ...options,
         ...(query ? { q: query } : {}),
         minPlayers: 16,
+        ...(majors ? { majors: true } : {}),
         ...(cursor ? { cursor } : {}),
       }).then((page) => ({
         items: page.tournaments,
@@ -500,17 +532,17 @@ export const TournamentsShelf = ({
               }}
             />
           </label>
-          <a
+          <button
+            id="deckMajorsToggle"
+            type="button"
             className="ds-button ds-button--ghost deck-majors"
-            href={MAJOR_TOURNAMENTS_URL}
-            target="_blank"
-            rel="noopener noreferrer"
+            aria-pressed={majors}
+            onClick={() => setMajors((shown) => !shown)}
           >
-            <Trans comment="A link to official major tournaments (Regionals, Worlds) on Limitless's site">
-              Majors on Limitless
+            <Trans comment="Shows only official major tournaments (Regionals, Internationals, Worlds)">
+              Majors
             </Trans>
-            <ArrowSquareOutIcon {...decorative} weight="bold" />
-          </a>
+          </button>
         </div>
       </div>
       <div className="deck-paper deck-events">
@@ -532,9 +564,13 @@ export const TournamentsShelf = ({
                   </span>
                   <span className="deck-event__name">{event.name}</span>
                   <span className="deck-event__meta">
-                    {formatLabel(event.format)}
-                    {' · '}
-                    {t`${plural(event.players, { one: '# player', other: '# players' })}`}
+                    {[
+                      kindLabel(event.kind),
+                      formatLabel(event.format),
+                      t`${plural(event.players, { one: '# player', other: '# players' })}`,
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')}
                   </span>
                   {event.hasLists !== false ? null : (
                     <span className="deck-event__nolists">
@@ -709,6 +745,7 @@ export const TournamentView = ({
   const meta = detail
     ? [
         shortDate(detail.tournament.date),
+        kindLabel(detail.tournament.kind),
         formatLabel(detail.tournament.format),
         t`${plural(players, { one: '# player', other: '# players' })}`,
         detail.tournament.organizer,

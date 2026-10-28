@@ -6,6 +6,10 @@ import {
 } from 'cloudflare:test';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import {
+  readLabsStandings,
+  readLabsTournaments,
+} from '../src/deck-index/labs.js';
 import type { ListedTournament } from '../src/deck-index/parse.js';
 import { DeckIndexStore, type SqlValue } from '../src/deck-index/store.js';
 
@@ -58,11 +62,21 @@ const limitlessRoutes = (): Record<string, unknown> => ({
 });
 
 let calls: string[] = [];
-const serveLimitless = (routes: Record<string, unknown>) =>
+let labsCalls: string[] = [];
+const serveLimitless = (
+  routes: Record<string, unknown>,
+  // Labs' answers by path and query; no majors unless given.
+  labs: Record<string, unknown> = { '/labs/data/tcg/tournaments': [] }
+) =>
   vi
     .spyOn(globalThis, 'fetch')
     .mockImplementation(async (input: RequestInfo | URL) => {
       const url = new URL(input instanceof Request ? input.url : String(input));
+      if (url.origin === 'https://mew.limitlesstcg.com') {
+        labsCalls.push(url.pathname + url.search);
+        const message = labs[url.pathname + url.search];
+        return Response.json({ ok: true, message: message ?? null });
+      }
       if (url.origin !== 'https://play.limitlesstcg.com') {
         throw new Error(`unexpected request to ${url.origin}`);
       }
@@ -86,6 +100,7 @@ const alarmAt = () =>
 
 beforeEach(async () => {
   calls = [];
+  labsCalls = [];
   vi.spyOn(console, 'error').mockImplementation(() => undefined);
   vi.spyOn(console, 'info').mockImplementation(() => undefined);
   vi.spyOn(console, 'warn').mockImplementation(() => undefined);
@@ -186,7 +201,102 @@ describe('the tournament deck index', () => {
     await indexStub().refresh();
     expect(await runDurableObjectAlarm(indexStub())).toBe(true);
     expect(calls).toEqual(['/api/tournaments?game=PTCG&limit=1000&page=1']);
+    // Majors too, from Labs, in the same step.
+    expect(labsCalls).toEqual(['/labs/data/tcg/tournaments']);
   });
+
+  it('reads a major from Labs, Masters only, and links its standings there', async () => {
+    serveLimitless(
+      { '/api/tournaments': [] },
+      {
+        '/labs/data/tcg/tournaments': [
+          {
+            id: 77,
+            season: 2027,
+            type: 'regional',
+            city: 'Nice',
+            country: 'FR',
+            utc_start: '2026-10-17 06:30:00',
+            started: 1,
+            completed: 1,
+          },
+        ],
+        '/labs/data/tcg/tournament?id=0077&division=MA': {
+          players: 1,
+          updated_at: '2026-10-19 02:00:00',
+          decklists: 1,
+          completed: 1,
+        },
+        '/labs/data/tcg/standings?tournamentId=0077&division=MA': [
+          {
+            tp_id: 2115,
+            name: 'Luc',
+            country: 'CH',
+            placement: 1,
+            wins: 15,
+            losses: 1,
+            ties: 2,
+            drop_round: null,
+            dqed: 0,
+            decklist: 1,
+            deck_id: 'basic-box-m',
+            deck_name: 'Basic Box',
+            icons: 'ogerpon clefairy',
+          },
+        ],
+        '/labs/data/tcg/decklist?tournamentId=0077&playerId=2115':
+          list('Mega Kangaskhan ex'),
+      }
+    );
+    await indexStub().refresh();
+    // A step each lane, Labs' at its own pace (a request every 2 s).
+    for (let step = 0; step < 3; step += 1) {
+      await runDurableObjectAlarm(indexStub());
+      await new Promise((resolve) => setTimeout(resolve, 2_050));
+    }
+    // (Its own alarms may go on to the list meanwhile.)
+    expect(labsCalls.slice(0, 3)).toEqual([
+      '/labs/data/tcg/tournaments',
+      '/labs/data/tcg/tournament?id=0077&division=MA',
+      '/labs/data/tcg/standings?tournamentId=0077&division=MA',
+    ]);
+    const response = await get('/v2/tournaments/labs-0077');
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as {
+      tournament: { name: string; kind: string; url: string };
+      standings: { player: { id: string }; hasList: boolean }[];
+    };
+    expect(body.tournament).toMatchObject({
+      name: 'Regional Nice',
+      kind: 'regional',
+      url: 'https://labs.limitlesstcg.com/0077/standings',
+    });
+    expect(body.standings).toEqual([
+      expect.objectContaining({
+        player: expect.objectContaining({ id: '2115' }),
+        hasList: true,
+      }),
+    ]);
+    // Its list: read when loaded, if the lane hasn't yet, and only once.
+    const loaded = await get('/v2/tournaments/labs-0077/players/2115/list');
+    expect(loaded.status).toBe(200);
+    expect(((await loaded.json()) as { url: string }).url).toBe(
+      'https://labs.limitlesstcg.com/0077/player/2115/decklist'
+    );
+    expect(
+      labsCalls.filter(
+        (call) =>
+          call === '/labs/data/tcg/decklist?tournamentId=0077&playerId=2115'
+      )
+    ).toHaveLength(1);
+    // Masters only.
+    expect(
+      labsCalls.filter(
+        (call) => call.includes('division=') && !call.endsWith('division=MA')
+      )
+    ).toEqual([]);
+    expect(calls.every((call) => !call.includes('labs'))).toBe(true);
+  }, 20_000);
 
   it('refuses malformed requests before asking the index', async () => {
     serveLimitless(limitlessRoutes());
@@ -289,6 +399,98 @@ describe('the rows the deck index writes', () => {
       expect(standings).toBeLessThan(64 * 4);
       // Read again unchanged: the event's row, its index, the update time.
       expect(again).toBeLessThan(10);
+    });
+  });
+  it('writes a few rows a player at a major, and none for a check that finds it as it was', async () => {
+    const stub = env.PTCG_DECK_INDEX.getByName('major rows written');
+    await runInDurableObject(stub, async (_instance, state) => {
+      let written = 0;
+      const store = new DeckIndexStore({
+        sql: {
+          exec<T extends Record<string, SqlValue>>(
+            query: string,
+            ...bindings: SqlValue[]
+          ) {
+            const cursor = state.storage.sql.exec<T>(query, ...bindings);
+            const rows = cursor.toArray();
+            written += cursor.rowsWritten;
+            return { toArray: () => rows };
+          },
+        },
+        transaction: <T>(body: () => T): T =>
+          state.storage.transactionSync(body),
+      });
+      store.migrate();
+      const writes = (body: () => void): number => {
+        const before = written;
+        body();
+        return written - before;
+      };
+      const now = Date.now();
+      // A 2,000-player Regional, 1,990 lists, 40 decks among them.
+      const listed = writes(() =>
+        store.recordMajorsListed(
+          readLabsTournaments([
+            {
+              id: 77,
+              season: 2027,
+              type: 'regional',
+              city: 'Nice',
+              country: 'FR',
+              utc_start: '2026-10-17 06:30:00',
+              started: 1,
+              completed: 1,
+            },
+          ]),
+          now
+        )
+      );
+      const players = 2_000;
+      const entries = readLabsStandings(
+        Array.from({ length: players }, (_, n) => ({
+          tp_id: n + 1,
+          name: `Player ${String(n)}`,
+          country: 'FR',
+          placement: n + 1,
+          wins: 9,
+          losses: 4,
+          ties: 1,
+          drop_round: null,
+          dqed: 0,
+          decklist: n < players - 10 ? 1 : 0,
+          deck_id: `deck-${String(n % 40)}`,
+          deck_name: `Deck ${String(n % 40)}`,
+          icons: 'dragapult',
+        }))
+      );
+      const read = { now, version: '2026-10-19 02:00:00', players };
+      const standings = writes(() =>
+        store.recordMajorStandings('labs-0077', entries, read)
+      );
+      let lists = 0;
+      for (const playerId of store.wantedLists('labs-0077', players)) {
+        lists += writes(() =>
+          store.recordMajorList(
+            'labs-0077',
+            playerId,
+            playerId.padStart(32, '0'),
+            `4 Dreepy TWM 128\n56 Psychic Energy MEE 13\n# ${playerId}`
+          )
+        );
+      }
+      const again = writes(() =>
+        store.recordMajorStandings('labs-0077', entries, read)
+      );
+      const checked = writes(() => store.recordMajorChecked('labs-0077', now));
+      const perPlayer = (standings + lists) / players;
+      console.log(
+        `rows written: a major listed ${String(listed)}; 2,000 standings ${String(standings)}, 1,990 lists ${String(lists)} (${perPlayer.toFixed(2)} a player); read again unchanged ${String(again)}; a daily check ${String(checked)}`
+      );
+      // A player is their row and an index entry; a list its row and the
+      // player's row again.
+      expect(perPlayer).toBeLessThan(4.2);
+      expect(again).toBeLessThan(10);
+      expect(checked).toBeLessThan(3);
     });
   });
   it('reads a deck’s own finishes for it, not every event’s', async () => {

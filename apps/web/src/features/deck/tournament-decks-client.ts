@@ -1,6 +1,7 @@
 /**
- * Tournament decks (ADR-037): the server's index of Limitless online
- * tournaments, searchable by deck. Every answer is untrusted until decoded
+ * Tournament decks (ADR-037): the server's index of Limitless's online
+ * tournaments and official majors (from Limitless Labs), searchable by
+ * deck. Every answer is untrusted until decoded
  * here -- bounded strings, bounded lists, known shapes -- and a request
  * never follows a redirect off this origin or sends cookies.
  */
@@ -15,10 +16,19 @@ export const TOURNAMENT_DATA_SOURCE = Object.freeze({
   url: 'https://play.limitlesstcg.com/tournaments/completed?game=PTCG',
 });
 
-/** Official majors have no API yet (phase 2): their own site. */
-export const MAJOR_TOURNAMENTS_URL = 'https://limitlesstcg.com/tournaments';
-
 export type TournamentFormat = 'STANDARD' | 'EXPANDED';
+
+/** An online event, or which kind of official major. */
+export type TournamentKind =
+  'online' | 'regional' | 'special' | 'international' | 'worlds';
+
+const KINDS: ReadonlySet<string> = new Set<TournamentKind>([
+  'online',
+  'regional',
+  'special',
+  'international',
+  'worlds',
+]);
 
 export interface TournamentArchetype {
   readonly id: string;
@@ -81,6 +91,7 @@ export interface TournamentSummary {
   readonly date: string;
   readonly format: string;
   readonly players: number;
+  readonly kind: TournamentKind;
   readonly organizer: string;
   /** Whether players' lists were published; null until its standings are read. */
   readonly hasLists: boolean | null;
@@ -322,10 +333,21 @@ export const decodeArchetypeFinishes = (
   };
 };
 
+/**
+ * A server from before majors names no kind (its events are all online);
+ * one this page doesn't know yet shows as an event with no label.
+ */
+const decodeKind = (value: unknown): TournamentKind => {
+  if (value === undefined) return 'online';
+  const kind = matching(value, /^[a-z]{1,20}$/u, 'kind');
+  return KINDS.has(kind) ? (kind as TournamentKind) : 'online';
+};
+
 const decodeTournamentSummary = (value: unknown): TournamentSummary => {
   if (!isRecord(value)) throw new DecodeError('tournament');
   return {
     ...decodeTournamentRef(value),
+    kind: decodeKind(value.kind),
     organizer: optionalText(value.organizer, MAX_NAME, 'organizer') ?? '',
     hasLists:
       value.hasLists === true ? true : value.hasLists === false ? false : null,
@@ -535,6 +557,8 @@ export const fetchTournaments = async (
     readonly q?: string;
     readonly format?: TournamentFormat;
     readonly minPlayers?: number;
+    /** Official majors only. */
+    readonly majors?: boolean;
     readonly cursor?: string;
   } = {}
 ): Promise<TournamentsPage> =>
@@ -544,6 +568,7 @@ export const fetchTournaments = async (
         q: options.q === undefined ? undefined : searchText(options.q),
         format: options.format,
         minPlayers: options.minPlayers,
+        kind: options.majors ? 'major' : undefined,
         cursor: options.cursor,
       })}`,
       options

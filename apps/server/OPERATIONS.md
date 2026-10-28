@@ -75,6 +75,18 @@ request it refuses for its rate limit (429), the crawl's or a player's, emits
 `deck_index_limitless_rate_limited`: a steady run of those is what
 `LIMITLESS_API_KEY` fixes, a bucket of its own.
 
+Official majors come from Limitless Labs' JSON API (`mew.limitlesstcg.com`,
+read with Limitless's permission, ADR-037 §8), in a lane of its own in the
+same alarm: Labs' list of majors every six hours, then each major's state,
+standings and every Masters player's list, one request every 2 seconds at
+most (about 80 minutes for a 2,300-player Regional; the backfill since
+September 2024 about three days). Its failures emit the same
+`deck_index_limitless` and `deck_index_limitless_rate_limited` events. A 429
+from Labs holds only its lane, for as long as Labs says; Labs down holds it
+30 seconds, doubling to half an hour. The online crawl is never held by
+Labs. The API key is never sent to Labs. Majors are `labs-NNNN` in every
+route; `GET /v2/tournaments?kind=major` lists them alone.
+
 Nothing needs provisioning; the optional `LIMITLESS_API_KEY` gives the index
 its own rate bucket at Limitless. `DECK_INDEX_SOURCE=off` keeps it from ever
 calling Limitless, and `wrangler.jsonc` ships it off for production and the

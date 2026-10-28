@@ -216,11 +216,12 @@ specifically without blocking, and go from deck to table in one click.
       lines, a line starting with a count, a simulator file or a list's
       heading are a list, imported as before; Ctrl+V anywhere still
       imports.
-    - **Tournaments.** The recent online events, a name filter and More;
-      an event opens to its standings, with every player's deck and a
-      Load for each published list. Official majors have no API: a link
-      opens them on Limitless (phase 2 of ADR-037). Tournament data is
-      credited to Limitless TCG wherever it shows.
+    - **Tournaments.** The recent online events and official majors
+      (labelled by kind), a name filter, a Majors toggle and More; an
+      event opens to its standings, with every player's deck and a Load
+      for each published list. Majors come from Limitless Labs (ADR-037
+      §8; until 2026-10-28 a link opened them on Limitless). Tournament
+      data is credited to Limitless TCG wherever it shows.
     - **The editor** is the open box: the card search a stitched binder,
       the deck a sheet beside it, both lying on the desk.
     - **Fewer words.** Section headings name what is there ("Winning now",

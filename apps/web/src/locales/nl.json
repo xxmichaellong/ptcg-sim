@@ -2857,6 +2857,13 @@
     "context": "animation speed",
     "translation": "Direct"
   },
+  "egEFcM": {
+    "message": "International",
+    "comments": [
+      "An official International Championship tournament"
+    ],
+    "translation": "International"
+  },
   "6vI3XA": {
     "message": "Invitation copied",
     "translation": "Uitnodiging gekopieerd"
@@ -3203,12 +3210,12 @@
     "message": "Lost Zone and markers",
     "translation": "Lost Zone en markers"
   },
-  "LoMQBK": {
-    "message": "Majors on Limitless",
+  "xX-rmn": {
+    "message": "Majors",
     "comments": [
-      "A link to official major tournaments (Regionals, Worlds) on Limitless's site"
+      "Shows only official major tournaments (Regionals, Internationals, Worlds)"
     ],
-    "translation": "Majors op Limitless"
+    "translation": "Majors"
   },
   "Q0rQkA": {
     "message": "Make a custom card",
@@ -4172,6 +4179,13 @@
     "message": "Reduce motion…",
     "translation": "Minder beweging…"
   },
+  "O_2w5F": {
+    "message": "Regional",
+    "comments": [
+      "An official Regional Championship tournament"
+    ],
+    "translation": "Regional"
+  },
   "BMYNMJ": {
     "message": "Regulation mark, format",
     "translation": "Regulatiemarkering, format"
@@ -4934,6 +4948,13 @@
   "0kjUmj": {
     "message": "Special Energy",
     "translation": "Speciale Energie"
+  },
+  "_OuDNJ": {
+    "message": "Special Event",
+    "comments": [
+      "An official Special Event tournament"
+    ],
+    "translation": "Special Event"
   },
   "h5EwqW": {
     "message": "Split",
@@ -5812,6 +5833,13 @@
   "NWGsaA": {
     "message": "Winning now",
     "translation": "Wat nu wint"
+  },
+  "QjlnU1": {
+    "message": "Worlds",
+    "comments": [
+      "The Pokémon World Championships"
+    ],
+    "translation": "Worlds"
   },
   "n1kezF": {
     "message": "Yes",

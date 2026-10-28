@@ -6,14 +6,15 @@
  *                                                 with their best recent lists
  *   GET /v2/decks/archetype/<id>?format=&since=&cursor=
  *                                                 an archetype's finishes
- *   GET /v2/tournaments?q=&format=&minPlayers=&cursor=
+ *   GET /v2/tournaments?q=&format=&minPlayers=&kind=major&cursor=
  *                                                 tournaments, newest first
+ *                                                 (`kind=major`: majors only)
  *   GET /v2/tournaments/<id>                      one tournament's standings
  *   GET /v2/tournaments/<id>/players/<player>/list
  *                                                 one player's list, as text
  */
 import { browserJsonResponse as json } from '../browser-json-http.js';
-import { hasControl, LIMITLESS_TOURNAMENT_ID } from '../limitless.js';
+import { hasControl } from '../limitless.js';
 import type {
   PlayerListAnswer,
   SearchAnswer,
@@ -22,8 +23,15 @@ import type {
   FinishSummary,
 } from './deck-index.js';
 import {
+  isMajorId,
+  isMajorPlayerId,
+  majorListUrl,
+  majorStandingsUrl,
+} from './labs.js';
+import {
   ARCHETYPE_ID,
   PLAYER_ID,
+  isIndexTournamentId,
   isIndexedFormat,
   type IndexedFormat,
 } from './parse.js';
@@ -41,9 +49,10 @@ export type DeckIndexRoute =
     };
 
 const ARCHETYPE_PATH = /^\/v2\/decks\/archetype\/([^/]{1,80})$/u;
-const TOURNAMENT_PATH = /^\/v2\/tournaments\/([a-f0-9]{24})$/u;
+/** An online event's id, or a major's (`labs-0077`). */
+const TOURNAMENT_PATH = /^\/v2\/tournaments\/([a-f0-9]{24}|labs-\d{4,6})$/u;
 const PLAYER_LIST_PATH =
-  /^\/v2\/tournaments\/([a-f0-9]{24})\/players\/([^/]{1,200})\/list$/u;
+  /^\/v2\/tournaments\/([a-f0-9]{24}|labs-\d{4,6})\/players\/([^/]{1,200})\/list$/u;
 
 const decode = (segment: string): string | null => {
   try {
@@ -74,9 +83,12 @@ export const deckIndexRoute = (
   if (tournament) return { kind: 'tournament', id: tournament[1]! };
   const list = PLAYER_LIST_PATH.exec(pathname);
   if (list) {
+    const id = list[1]!;
     const playerId = decode(list[2]!);
-    return playerId !== null && PLAYER_ID.test(playerId)
-      ? { kind: 'player_list', id: list[1]!, playerId }
+    // A player at a major is their number in it.
+    return playerId !== null &&
+      (isMajorId(id) ? isMajorPlayerId(playerId) : PLAYER_ID.test(playerId))
+      ? { kind: 'player_list', id, playerId }
       : 'invalid';
   }
   if (pathname.startsWith('/v2/tournaments/')) return 'invalid';
@@ -113,6 +125,7 @@ export interface DeckIndexReader {
     readonly format: IndexedFormat | null;
     readonly minimumPlayers: number;
     readonly before: { readonly date: number; readonly id: string } | null;
+    readonly majors?: boolean;
   }): Promise<{
     readonly tournaments: readonly TournamentSummary[];
     readonly next: { readonly date: number; readonly id: string } | null;
@@ -240,7 +253,7 @@ const readFinishCursor = (
     isCount(players) &&
     Number.isSafeInteger(date) &&
     typeof tournamentId === 'string' &&
-    LIMITLESS_TOURNAMENT_ID.test(tournamentId) &&
+    isIndexTournamentId(tournamentId) &&
     typeof playerId === 'string' &&
     PLAYER_ID.test(playerId)
     ? {
@@ -272,18 +285,22 @@ const readDateCursor = (
   const id = decoded?.i;
   return Number.isSafeInteger(date) &&
     typeof id === 'string' &&
-    LIMITLESS_TOURNAMENT_ID.test(id)
+    isIndexTournamentId(id)
     ? { date: date as number, id }
     : 'invalid';
 };
 
 const tournamentUrl = (id: string): string =>
-  `https://play.limitlesstcg.com/tournament/${id}/standings`;
+  isMajorId(id)
+    ? majorStandingsUrl(id)
+    : `https://play.limitlesstcg.com/tournament/${id}/standings`;
 
 const playerListUrl = (id: string, playerId: string): string =>
-  `https://play.limitlesstcg.com/tournament/${id}/player/${encodeURIComponent(
-    playerId
-  )}/decklist`;
+  isMajorId(id)
+    ? majorListUrl(id, playerId)
+    : `https://play.limitlesstcg.com/tournament/${id}/player/${encodeURIComponent(
+        playerId
+      )}/decklist`;
 
 export const handleDeckIndexRequest = async (
   request: Request,
@@ -350,9 +367,12 @@ export const handleDeckIndexRequest = async (
         'q',
         'format',
         'minPlayers',
+        'kind',
         'cursor',
       ]);
       if (!parameters) return invalid();
+      const kind = parameters.get('kind');
+      if (kind !== undefined && kind !== 'major') return invalid();
       const query = readQuery(parameters.get('q'), false);
       const format = readFormat(parameters.get('format'), null);
       const minimumPlayers = readInteger(
@@ -375,6 +395,7 @@ export const handleDeckIndexRequest = async (
         format,
         minimumPlayers,
         before,
+        ...(kind === 'major' ? { majors: true } : {}),
       });
       return cached(
         {

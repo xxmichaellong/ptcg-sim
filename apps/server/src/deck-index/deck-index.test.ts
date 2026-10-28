@@ -1515,6 +1515,7 @@ describe('browsing tournaments', () => {
       date: new Date(START - DAY).toISOString(),
       format: 'STANDARD',
       players: 40,
+      kind: 'online',
       organizer: null,
       hasLists: null,
     });
@@ -1905,6 +1906,7 @@ describe('a tournament a player opens', () => {
         date: new Date(START - 3 * DAY).toISOString(),
         format: 'STANDARD',
         players: 64,
+        kind: 'online',
         organizer: null,
         hasLists: true,
       },

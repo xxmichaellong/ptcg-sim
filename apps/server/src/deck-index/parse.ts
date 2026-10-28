@@ -127,6 +127,11 @@ export interface StandingEntry {
 export const PLAYER_ID = /^(?=[^A-Za-z0-9]*[A-Za-z0-9])[A-Za-z0-9_.-]{1,64}$/u;
 /** The most players an event can list (the app's own bound). */
 export const MAX_TOURNAMENT_PLAYERS = 1_000_000;
+/** A major from Limitless Labs (labs.ts): `labs-0077`. */
+export const MAJOR_TOURNAMENT_ID = /^labs-\d{4,6}$/u;
+/** Any tournament the index holds: an online event's id or a major's. */
+export const isIndexTournamentId = (id: string): boolean =>
+  LIMITLESS_TOURNAMENT_ID.test(id) || MAJOR_TOURNAMENT_ID.test(id);
 /** An archetype id: a slug like `dragapult-dusknoir` or `basic-box-m`. */
 export const ARCHETYPE_ID = /^[a-z0-9]+(?:-[a-z0-9]+){0,9}$/u;
 const ICON = /^[a-z0-9]+(?:-[a-z0-9]+){0,5}$/u;

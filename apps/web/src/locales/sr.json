@@ -2857,6 +2857,13 @@
     "context": "animation speed",
     "translation": "Одмах"
   },
+  "egEFcM": {
+    "message": "International",
+    "comments": [
+      "An official International Championship tournament"
+    ],
+    "translation": "Међународни"
+  },
   "6vI3XA": {
     "message": "Invitation copied",
     "translation": "Позивница је копирана"
@@ -3203,12 +3210,12 @@
     "message": "Lost Zone and markers",
     "translation": "Lost Zone и маркери"
   },
-  "LoMQBK": {
-    "message": "Majors on Limitless",
+  "xX-rmn": {
+    "message": "Majors",
     "comments": [
-      "A link to official major tournaments (Regionals, Worlds) on Limitless's site"
+      "Shows only official major tournaments (Regionals, Internationals, Worlds)"
     ],
-    "translation": "Мејџори на Limitless-у"
+    "translation": "Мејџори"
   },
   "Q0rQkA": {
     "message": "Make a custom card",
@@ -4172,6 +4179,13 @@
     "message": "Reduce motion…",
     "translation": "Смањи кретање…"
   },
+  "O_2w5F": {
+    "message": "Regional",
+    "comments": [
+      "An official Regional Championship tournament"
+    ],
+    "translation": "Регионални"
+  },
   "BMYNMJ": {
     "message": "Regulation mark, format",
     "translation": "Регулациона ознака, формат"
@@ -4934,6 +4948,13 @@
   "0kjUmj": {
     "message": "Special Energy",
     "translation": "Посебна енергија"
+  },
+  "_OuDNJ": {
+    "message": "Special Event",
+    "comments": [
+      "An official Special Event tournament"
+    ],
+    "translation": "Посебан догађај"
   },
   "h5EwqW": {
     "message": "Split",
@@ -5812,6 +5833,13 @@
   "NWGsaA": {
     "message": "Winning now",
     "translation": "Тренутно побеђују"
+  },
+  "QjlnU1": {
+    "message": "Worlds",
+    "comments": [
+      "The Pokémon World Championships"
+    ],
+    "translation": "Светско првенство"
   },
   "n1kezF": {
     "message": "Yes",

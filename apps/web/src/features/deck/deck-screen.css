@@ -805,8 +805,9 @@
   color: var(--color-text-faint);
 }
 
-.deck-majors {
-  gap: var(--space-1);
+.deck-majors[aria-pressed='true'] {
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
 }
 
 /* A tournament's standings, or a deck's lists: their own page. */

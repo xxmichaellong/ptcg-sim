@@ -11,14 +11,29 @@
  * - A player opening a tournament not read yet has it read at once, from a
  *   share of the budget the crawl never uses (budget.ts); two asking at the
  *   same time share one read.
+ * - Majors (labs.ts, with `majors` on) are a lane of their own at its own
+ *   pace: Labs' list every six hours, each major's standings once it is
+ *   over and again when its version changes (checked daily for a while),
+ *   then every Masters player's list, one request each, best placed first.
+ *   A player loading a list not read yet has it read at once.
  *
- * Work is one step at a time: each step makes at most one request.
+ * Work is one step at a time: each lane's step makes at most one request.
  */
 import {
   LimitlessRequestError,
   limitlessGet,
   type LimitlessResponse,
 } from '../limitless.js';
+import {
+  isMajorId,
+  labsGet,
+  labsNumber,
+  readLabsDecklist,
+  readLabsStandings,
+  readLabsTournament,
+  readLabsTournaments,
+  type MajorKind,
+} from './labs.js';
 import {
   EMPTY_BUDGET,
   nextAllowedAt,
@@ -77,6 +92,26 @@ export const CRAWL_POLICY = Object.freeze({
    * Limitless refusing (nothing more forgotten, the crawl held back).
    */
   unknownBeforeHold: 2,
+  /** A lane whose step threw waits this long. */
+  failureDelayMs: 10 * MINUTE_MS,
+});
+
+/** The majors lane (labs.ts): its own pace, separate from the API's budget. */
+export const MAJORS_POLICY = Object.freeze({
+  /** Labs is asked at most once every this long, the crawl's whole pace. */
+  requestGapMs: 2_000,
+  discoveryEveryMs: 6 * HOUR_MS,
+  /** A major listed as over that Labs says is running is asked after this. */
+  notOverRetryMs: 6 * HOUR_MS,
+  responseBytes: 8_000_000,
+  requestTimeoutMs: 15_000,
+  /** A 429 without a Retry-After holds the lane this long. */
+  defaultBlockMs: 5 * MINUTE_MS,
+  maximumBlockMs: 30 * MINUTE_MS,
+  /** Lists taken from one major at a time, the best placed first. */
+  listBatch: 50,
+  /** Lists players may have read at once in any minute, besides the crawl. */
+  demandPerMinute: 10,
 });
 
 const readStandingsDown = (
@@ -141,6 +176,11 @@ const META = Object.freeze({
    * it, and the events given up on meanwhile are tried afresh after.
    */
   standingsDown: 'standings-down',
+  /** When Labs' list of majors is next read. */
+  majorsDiscovery: 'majors-discovery',
+  /** Labs' failures in a row, and the majors lane held back until when. */
+  majorsFailures: 'majors-failures',
+  majorsHeldUntil: 'majors-held-until',
 });
 
 export interface DeckIndexDependencies {
@@ -150,6 +190,8 @@ export interface DeckIndexDependencies {
   readonly apiKey?: string;
   /** False keeps the index from ever calling Limitless (browser specs). */
   readonly enabled: boolean;
+  /** Reads majors from Limitless Labs too (labs.ts), when enabled. */
+  readonly majors?: boolean;
   /**
    * Limitless failed the crawl -- down, refusing, or answering what can't
    * be read (`failed`) -- or refused a request, a player's too, for its
@@ -165,6 +207,8 @@ export interface TournamentSummary {
   readonly date: string;
   readonly format: IndexedFormat | null;
   readonly players: number;
+  /** An online event, or the kind of major. */
+  readonly kind: 'online' | MajorKind;
   /** Not read from Limitless yet (it would cost a request per event). */
   readonly organizer: null;
   /** Null until the standings have been read. */
@@ -228,6 +272,7 @@ export const tournamentSummary = (row: TournamentRow): TournamentSummary => ({
   date: iso(row.date),
   format: row.format,
   players: row.players,
+  kind: row.kind ?? 'online',
   organizer: null,
   hasLists: row.hasLists,
 });
@@ -332,6 +377,9 @@ const readBackfill = (value: string | null): Backfill | null => {
   return { page: 1 };
 };
 
+/** How reading one player's list at a major ended. */
+type ListOutcome = 'read' | 'missing' | 'failed';
+
 type CrawlTask =
   | ({ readonly kind: 'backfill' } & Backfill)
   | {
@@ -354,6 +402,28 @@ export class DeckIndex {
    * memory (an eviction forgets it, which costs one read), no rows written.
    */
   private readonly playerFailedAt = new Map<string, number>();
+  /**
+   * The lanes' own times, kept in memory (an eviction forgets them, which
+   * costs one early step): when each is next due with majors on, and when
+   * Labs may next be asked.
+   */
+  private onlineDueAt = 0;
+  private majorsDueAt = 0;
+  private labsNextAt = 0;
+  /** A major whose version changed: its standings are read next. */
+  private standingsDue:
+    | {
+        readonly tournament: TournamentRow;
+        readonly version: string;
+        readonly players: number | null;
+      }
+    | undefined;
+  /** The next lists to read, from one major, the best placed first. */
+  private wanted:
+    { readonly tournamentId: string; readonly players: string[] } | undefined;
+  private readonly listReads = new Map<string, Promise<ListOutcome>>();
+  /** When players' own list reads were made, the last minute's. */
+  private labsDemand: number[] = [];
 
   constructor(private readonly deps: DeckIndexDependencies) {
     this.store = new DeckIndexStore(deps.storage);
@@ -374,6 +444,9 @@ export class DeckIndex {
       META.discovery,
       JSON.stringify({ ...discovery, dueAt: 0 })
     );
+    if (this.deps.majors) this.store.setMeta(META.majorsDiscovery, '0');
+    this.onlineDueAt = 0;
+    this.majorsDueAt = 0;
   }
 
   private get budget(): BudgetState {
@@ -456,11 +529,39 @@ export class DeckIndex {
   }
 
   /**
-   * One crawl step: at most one request. Returns when the next step is due,
-   * or null when the index is off.
+   * One step of each lane that is due: at most one request each. Returns
+   * when the next step is due, or null when the index is off.
    */
   async step(): Promise<number | null> {
     if (!this.deps.enabled) return null;
+    if (!this.deps.majors) return this.onlineStep();
+    let failure: { readonly error: unknown } | undefined;
+    const now = this.deps.now();
+    // A step neither lane asked for yet (the cron's, or after a restart) is
+    // the online crawl's, as every step was before majors.
+    if (this.onlineDueAt <= now || this.majorsDueAt > now) {
+      try {
+        this.onlineDueAt = await this.onlineStep();
+      } catch (error) {
+        this.onlineDueAt = now + CRAWL_POLICY.failureDelayMs;
+        failure = { error };
+      }
+    }
+    const later = this.deps.now();
+    if (this.majorsDueAt <= later) {
+      try {
+        this.majorsDueAt = await this.majorsStep();
+      } catch (error) {
+        this.majorsDueAt = later + CRAWL_POLICY.failureDelayMs;
+        failure ??= { error };
+      }
+    }
+    if (failure) throw failure.error;
+    return Math.min(this.onlineDueAt, this.majorsDueAt);
+  }
+
+  /** The online crawl's step: at most one request. */
+  private async onlineStep(): Promise<number> {
     const now = this.deps.now();
     const task = this.task(now);
     if ('idleUntil' in task) return Math.max(now + 1_000, task.idleUntil);
@@ -728,6 +829,335 @@ export class DeckIndex {
   }
 
   /**
+   * The majors lane's step: at most one request to Labs. Its list when due,
+   * then a major whose version changed, a major not read yet, one due its
+   * daily check, and then the lists still to read.
+   */
+  private async majorsStep(): Promise<number> {
+    const now = this.deps.now();
+    const wait = Math.max(this.majorsHeldUntil(), this.labsNextAt);
+    if (wait > now) return wait;
+    const discoveryDue = Number(
+      this.store.getMeta(META.majorsDiscovery) ?? '0'
+    );
+    if (!Number.isFinite(discoveryDue) || discoveryDue <= now) {
+      await this.discoverMajors(now);
+      return this.majorsNextAt();
+    }
+    if (this.standingsDue) {
+      await this.readMajorStandings(this.standingsDue);
+      return this.majorsNextAt();
+    }
+    const major =
+      this.store.nextMajorToRead(now) ?? this.store.nextMajorToRecheck(now);
+    if (major) {
+      await this.checkMajor(major, now);
+      return this.majorsNextAt();
+    }
+    const list = this.nextWantedList();
+    if (list) {
+      const outcome = await this.readMajorList(
+        list.tournamentId,
+        list.playerId,
+        'crawl'
+      );
+      // Not read for Labs' sake (held back, or its limit): asked first again.
+      if (
+        outcome === 'failed' &&
+        this.wanted?.tournamentId === list.tournamentId
+      ) {
+        this.wanted.players.unshift(list.playerId);
+      }
+      return this.majorsNextAt();
+    }
+    const due = this.store.nextMajorDueAt(now);
+    return Math.max(now + 1_000, Math.min(discoveryDue, due ?? Infinity));
+  }
+
+  private majorsNextAt(): number {
+    return Math.max(
+      this.labsNextAt,
+      this.majorsHeldUntil(),
+      this.deps.now() + 1
+    );
+  }
+
+  private majorsHeldUntil(): number {
+    const heldUntil = Number(this.store.getMeta(META.majorsHeldUntil) ?? '0');
+    return Number.isFinite(heldUntil) ? heldUntil : 0;
+  }
+
+  /**
+   * One request to Labs. Every one, a player's too, waits the lane's gap
+   * before the next; a 429 holds the lane until Labs says (or five
+   * minutes), and the crawl's own failures hold it back, longer each time.
+   */
+  private async labsRequest(path: string, kind: RequestKind): Promise<unknown> {
+    this.labsNextAt = this.deps.now() + MAJORS_POLICY.requestGapMs;
+    try {
+      const message = await labsGet(
+        {
+          fetch: this.deps.fetch,
+          maximumBytes: MAJORS_POLICY.responseBytes,
+          timeoutMs: MAJORS_POLICY.requestTimeoutMs,
+        },
+        path
+      );
+      if (this.store.getMeta(META.majorsFailures) !== null) {
+        this.store.deleteMeta(META.majorsFailures);
+      }
+      return message;
+    } catch (error) {
+      if (
+        error instanceof LimitlessRequestError &&
+        error.code === 'rate_limited'
+      ) {
+        this.deps.onFailure?.('rate_limited');
+        const wait = Math.min(
+          MAJORS_POLICY.maximumBlockMs,
+          error.retryAfterMs ?? MAJORS_POLICY.defaultBlockMs
+        );
+        this.store.setMeta(
+          META.majorsHeldUntil,
+          String(
+            Math.max(
+              this.majorsHeldUntil(),
+              this.deps.now() + Math.max(1_000, wait)
+            )
+          )
+        );
+      } else if (
+        kind === 'crawl' &&
+        !(error instanceof LimitlessRequestError && error.code === 'not_found')
+      ) {
+        this.holdMajorsBack();
+      }
+      throw error;
+    }
+  }
+
+  private holdMajorsBack(): void {
+    this.hold(META.majorsFailures, META.majorsHeldUntil);
+  }
+
+  /** Reads Labs' list of majors: those over join the queue. */
+  private async discoverMajors(now: number): Promise<void> {
+    let message: unknown;
+    try {
+      message = await this.labsRequest('/tournaments', 'crawl');
+    } catch (error) {
+      // A list refused is no outage, but no reason to ask every step.
+      if (
+        error instanceof LimitlessRequestError &&
+        error.code === 'not_found'
+      ) {
+        this.holdMajorsBack();
+      }
+      return;
+    }
+    const rows = readLabsTournaments(message);
+    if (!Array.isArray(message) || (message.length > 0 && rows.length === 0)) {
+      // Not a list of majors, or none of them readable (Labs changed its
+      // shape): held back as for an outage, the list asked again after.
+      this.holdMajorsBack();
+      return;
+    }
+    this.store.recordMajorsListed(rows, this.deps.now());
+    this.store.setMeta(
+      META.majorsDiscovery,
+      String(now + MAJORS_POLICY.discoveryEveryMs)
+    );
+  }
+
+  /**
+   * Asks Labs for a major's state: one over whose version isn't the one
+   * read has its standings read next; one as read is checked.
+   */
+  private async checkMajor(major: TournamentRow, now: number): Promise<void> {
+    const number = labsNumber(major.id);
+    if (number === null) return;
+    let message: unknown;
+    try {
+      message = await this.labsRequest(
+        `/tournament?id=${number}&division=MA`,
+        'crawl'
+      );
+    } catch (error) {
+      if (
+        error instanceof LimitlessRequestError &&
+        error.code === 'not_found'
+      ) {
+        this.store.recordMajorFailure(major.id, now);
+      }
+      return;
+    }
+    const tournament = readLabsTournament(message);
+    if (!tournament) {
+      // Labs knows no such major (null), or answers what can't be read.
+      if (message !== null) this.holdMajorsBack();
+      this.store.recordMajorFailure(major.id, now);
+      return;
+    }
+    if (major.state === 'indexed' && major.etag === tournament.version) {
+      this.store.recordMajorChecked(major.id, now);
+      return;
+    }
+    if (!tournament.completed) {
+      if (major.state === 'indexed') {
+        this.store.recordMajorChecked(major.id, now);
+      } else {
+        this.store.recordMajorNotOver(
+          major.id,
+          now + MAJORS_POLICY.notOverRetryMs
+        );
+      }
+      return;
+    }
+    this.standingsDue = {
+      tournament: major,
+      version: tournament.version,
+      players: tournament.players,
+    };
+  }
+
+  private async readMajorStandings(due: {
+    readonly tournament: TournamentRow;
+    readonly version: string;
+    readonly players: number | null;
+  }): Promise<void> {
+    const { tournament } = due;
+    const number = labsNumber(tournament.id);
+    let message: unknown;
+    try {
+      message = await this.labsRequest(
+        `/standings?tournamentId=${number ?? ''}&division=MA`,
+        'crawl'
+      );
+    } catch (error) {
+      if (
+        error instanceof LimitlessRequestError &&
+        error.code === 'not_found'
+      ) {
+        this.standingsDue = undefined;
+        this.store.recordMajorFailure(tournament.id, this.deps.now());
+      }
+      // Otherwise held back: read after the hold.
+      return;
+    }
+    this.standingsDue = undefined;
+    const entries = readLabsStandings(message);
+    if (
+      !Array.isArray(message) ||
+      (message.length > 0 && entries.length === 0)
+    ) {
+      this.holdMajorsBack();
+      this.store.recordMajorFailure(tournament.id, this.deps.now());
+      return;
+    }
+    this.store.recordMajorStandings(tournament.id, entries, {
+      now: this.deps.now(),
+      version: due.version,
+      players: due.players ?? entries.length,
+    });
+    // Lists wanted may have changed: taken afresh.
+    this.wanted = undefined;
+  }
+
+  /** The next list to read: the newest major's, its best placed first. */
+  private nextWantedList(): {
+    readonly tournamentId: string;
+    readonly playerId: string;
+  } | null {
+    for (;;) {
+      if (this.wanted && this.wanted.players.length > 0) {
+        return {
+          tournamentId: this.wanted.tournamentId,
+          playerId: this.wanted.players.shift()!,
+        };
+      }
+      const tournamentId = this.store.nextMajorWithListsWanted();
+      if (tournamentId === null) {
+        this.wanted = undefined;
+        return null;
+      }
+      const players = this.store.wantedLists(
+        tournamentId,
+        MAJORS_POLICY.listBatch
+      );
+      if (players.length === 0) this.store.recordListsDone(tournamentId);
+      this.wanted = { tournamentId, players };
+    }
+  }
+
+  /** Reads one player's list at a major; two asking at once share it. */
+  private readMajorList(
+    tournamentId: string,
+    playerId: string,
+    kind: RequestKind
+  ): Promise<ListOutcome> {
+    const key = `${tournamentId}/${playerId}`;
+    const pending = this.listReads.get(key);
+    if (pending) return pending;
+    const reading = this.readMajorListOnce(
+      tournamentId,
+      playerId,
+      kind
+    ).finally(() => this.listReads.delete(key));
+    this.listReads.set(key, reading);
+    return reading;
+  }
+
+  private async readMajorListOnce(
+    tournamentId: string,
+    playerId: string,
+    kind: RequestKind
+  ): Promise<ListOutcome> {
+    // Read meanwhile (a player asked for it): nothing to ask.
+    if (!this.store.isListWanted(tournamentId, playerId)) return 'read';
+    const number = labsNumber(tournamentId);
+    let message: unknown;
+    try {
+      message = await this.labsRequest(
+        `/decklist?tournamentId=${number ?? ''}&playerId=${playerId}`,
+        kind
+      );
+    } catch (error) {
+      if (
+        error instanceof LimitlessRequestError &&
+        error.code === 'not_found'
+      ) {
+        this.store.recordMajorListMissing(tournamentId, playerId);
+        return 'missing';
+      }
+      return 'failed';
+    }
+    const list = readLabsDecklist(message);
+    if (list === null) {
+      // None after all, or not a whole 60-card deck: not asked again.
+      this.store.recordMajorListMissing(tournamentId, playerId);
+      return 'missing';
+    }
+    this.store.recordMajorList(
+      tournamentId,
+      playerId,
+      await hashList(list),
+      list
+    );
+    return 'read';
+  }
+
+  /** How long a player's list read waits: none while the lane allows one. */
+  private labsDemandWait(now: number): number {
+    this.labsDemand = this.labsDemand.filter((at) => at > now - MINUTE_MS);
+    const held = this.majorsHeldUntil() - now;
+    const full =
+      this.labsDemand.length >= MAJORS_POLICY.demandPerMinute
+        ? this.labsDemand[0]! + MINUTE_MS - now
+        : 0;
+    return Math.max(0, held, full);
+  }
+
+  /**
    * Reads one tournament's standings and records them. Two reads of the
    * same tournament at once share the first.
    */
@@ -871,6 +1301,15 @@ export class DeckIndex {
   > {
     const tournament = this.store.tournament(id);
     const now = this.deps.now();
+    // A major is read by its lane alone: shown once it has been.
+    if (isMajorId(id)) {
+      return tournament &&
+        tournament.kind !== null &&
+        tournament.state !== 'skipped' &&
+        tournament.fetchedAt !== null
+        ? { kind: 'ok', tournament }
+        : { kind: 'not_found' };
+    }
     // Skipped (its format's lists aren't kept), or not started yet: no
     // standings to read, and none worth a request.
     if (
@@ -1010,6 +1449,8 @@ export class DeckIndex {
     readonly minimumPlayers: number;
     readonly before: { readonly date: number; readonly id: string } | null;
     readonly pageSize: number;
+    /** Majors only. */
+    readonly majors?: boolean;
   }): {
     readonly tournaments: readonly TournamentSummary[];
     readonly next: { readonly date: number; readonly id: string } | null;
@@ -1029,6 +1470,7 @@ export class DeckIndex {
       now: this.deps.now(),
       // Off, an event never read answers "not found" when opened.
       readOnly: !this.deps.enabled,
+      ...(query.majors ? { majors: true } : {}),
     });
     const page = rows.slice(0, query.pageSize);
     const last = page.at(-1);
@@ -1058,7 +1500,39 @@ export class DeckIndex {
   ): Promise<PlayerListAnswer> {
     const ensured = await this.ensureRead(tournamentId);
     if (ensured.kind !== 'ok') return ensured;
-    const list = this.store.playerList(tournamentId, playerId);
+    let list = this.store.playerList(tournamentId, playerId);
+    if (
+      !list &&
+      ensured.tournament.kind !== null &&
+      this.deps.enabled &&
+      this.deps.majors &&
+      this.store.isListWanted(tournamentId, playerId)
+    ) {
+      // A major's list the lane hasn't read yet: read now, as players have
+      // a share of Labs' pace of their own.
+      const now = this.deps.now();
+      const key = `${tournamentId}/${playerId}`;
+      const wait = this.labsDemandWait(now);
+      if (wait > 0 && !this.listReads.has(key)) {
+        return { kind: 'busy', retryAfterMs: wait };
+      }
+      if (!this.listReads.has(key)) this.labsDemand.push(now);
+      const outcome = await this.readMajorList(
+        tournamentId,
+        playerId,
+        'demand'
+      );
+      if (outcome === 'failed') {
+        return {
+          kind: 'busy',
+          retryAfterMs: Math.max(
+            MINUTE_MS,
+            this.majorsHeldUntil() - this.deps.now()
+          ),
+        };
+      }
+      list = this.store.playerList(tournamentId, playerId);
+    }
     if (!list) return { kind: 'not_found' };
     return {
       kind: 'ok',
