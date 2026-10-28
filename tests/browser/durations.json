@@ -6,6 +6,7 @@
     "app-bar.spec.ts": 80,
     "board-stack-handling.spec.ts": 109,
     "board-view.spec.ts": 81,
+    "card-menu-fits.spec.ts": 30,
     "current-decks.spec.ts": 18,
     "deck-card-backs.spec.ts": 15,
     "depth-recovery.spec.ts": 23,

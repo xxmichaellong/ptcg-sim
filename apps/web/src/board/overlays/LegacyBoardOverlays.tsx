@@ -915,6 +915,78 @@ interface ContextPointer {
 const CONTEXT_POINTER_MAX_AGE_MS = 1000;
 /** The menu's narrowest width; the stylesheet draws the same. */
 const CONTEXT_MENU_MIN_WIDTH = 232;
+/** How far a card menu keeps from the board's edges, where it fits. */
+export const CONTEXT_MENU_EDGE_PX = 8;
+/** A window this narrow has no room beside a menu for its submenus. */
+const NARROW_CONTEXT_MENU_QUERY = '(max-width: 599px)';
+
+const narrowContextMenu = (
+  view: Window | null = typeof window === 'undefined' ? null : window
+): boolean =>
+  typeof view?.matchMedia === 'function' &&
+  view.matchMedia(NARROW_CONTEXT_MENU_QUERY).matches;
+
+interface ContextMenuPosition {
+  readonly left: number;
+  readonly top: number;
+  readonly transformOrigin: string;
+  /** Its submenus open in place under their rows, and it scrolls. */
+  readonly compact: boolean;
+  readonly maxHeight: number | undefined;
+}
+
+/**
+ * Where a card menu of `size` sits on a board of `viewport`: at its v1
+ * `origin`, moved in to keep `CONTEXT_MENU_EDGE_PX` from each edge, or
+ * centred on an axis the board has no such room on.
+ */
+export const contextMenuBox = (
+  origin: { readonly left: number; readonly top: number },
+  size: { readonly width: number; readonly height: number },
+  viewport: { readonly width: number; readonly height: number }
+): { readonly left: number; readonly top: number } => {
+  const fit = (start: number, extent: number, room: number): number => {
+    const low = CONTEXT_MENU_EDGE_PX;
+    const high = room - CONTEXT_MENU_EDGE_PX - extent;
+    return high < low
+      ? Math.max(0, (room - extent) / 2)
+      : Math.min(Math.max(start, low), high);
+  };
+  return {
+    left: fit(origin.left, size.width, viewport.width),
+    top: fit(origin.top, size.height, viewport.height),
+  };
+};
+
+/**
+ * The height of a card menu's own rows, borders included: without a
+ * submenu opened in place under one (`compact`), whose rows scroll.
+ */
+const contextMenuRowsHeight = (
+  element: HTMLElement,
+  compact: boolean
+): number => {
+  if (!compact) return element.offsetHeight;
+  let opened = 0;
+  const submenu = element.querySelector<HTMLElement>(
+    'li.has-submenu[data-submenu-open="true"] > .ptcgsim-legacy-card-sub-menu'
+  );
+  const view = element.ownerDocument.defaultView;
+  if (submenu && view) {
+    const style = view.getComputedStyle(submenu);
+    if (style.position === 'static') {
+      opened =
+        submenu.offsetHeight +
+        (parseFloat(style.marginTop) || 0) +
+        (parseFloat(style.marginBottom) || 0);
+    }
+  }
+  return (
+    element.scrollHeight +
+    (element.offsetHeight - element.clientHeight) -
+    opened
+  );
+};
 
 /** Whether a card sits in the acting seat's own zones (v1's selfView). */
 const isOwnLocation = (
@@ -977,29 +1049,46 @@ const ContextMenu = ({
   const upperHalf =
     card.side !== 'shared' &&
     bounds.y + bounds.height / 2 < scene.layout.playAreaBounds.height / 2;
-  const placement = (size: {
-    readonly width: number;
-    readonly height: number;
-  }) => {
-    const raw = legacyContextMenuOrigin(bounds, zoneKind, upperHalf, size);
+  const [position, setPosition] = useState<ContextMenuPosition>(() => {
+    const size = { width: CONTEXT_MENU_MIN_WIDTH, height: 0 };
     return {
-      left: Math.max(0, Math.min(raw.left, scene.viewport.width - size.width)),
-      top: Math.max(0, Math.min(raw.top, scene.viewport.height - size.height)),
+      ...contextMenuBox(
+        legacyContextMenuOrigin(bounds, zoneKind, upperHalf, size),
+        size,
+        scene.viewport
+      ),
+      transformOrigin: '0px 0px',
+      compact: narrowContextMenu(),
+      maxHeight: undefined,
     };
-  };
-  const [position, setPosition] = useState<{
-    readonly left: number;
-    readonly top: number;
-    readonly transformOrigin: string;
-  }>(() => ({
-    ...placement({ width: CONTEXT_MENU_MIN_WIDTH, height: 0 }),
-    transformOrigin: '0px 0px',
-  }));
-  useLayoutEffect(() => {
+  });
+  // Placed from its laid-out size, not its drawn one: it scales in, and a
+  // menu measured mid-way was placed short of the edge it was kept from.
+  // Placed again whenever its size changes (a submenu opening in place under
+  // its row, the words of another language) as well as when the board does.
+  const place = (): void => {
     const element = container.current;
     if (!element) return;
-    const measured = element.getBoundingClientRect();
-    const next = placement({ width: measured.width, height: measured.height });
+    const room = Math.max(0, scene.viewport.height - 2 * CONTEXT_MENU_EDGE_PX);
+    const compactNow = element.dataset['menuCompact'] === 'true';
+    // A menu whose rows don't fit the board's height scrolls, its submenus
+    // opening in place under their rows: one beside it would be cut off by
+    // the scrolling.
+    const compact =
+      narrowContextMenu(element.ownerDocument.defaultView) ||
+      contextMenuRowsHeight(element, compactNow) > room;
+    const content = compactNow
+      ? element.scrollHeight + (element.offsetHeight - element.clientHeight)
+      : element.offsetHeight;
+    const size = {
+      width: element.offsetWidth,
+      height: compact ? Math.min(content, room) : content,
+    };
+    const next = contextMenuBox(
+      legacyContextMenuOrigin(bounds, zoneKind, upperHalf, size),
+      size,
+      scene.viewport
+    );
     // The menu grows out of the point that asked for it: the pointer when it
     // was a recent right-click, else the card's centre.
     const root = element.closest<HTMLElement>('[data-legacy-board-overlays]');
@@ -1019,24 +1108,26 @@ const ContextMenu = ({
         : null;
     const anchorX = point?.x ?? bounds.x + bounds.width / 2;
     const anchorY = point?.y ?? bounds.y + bounds.height / 2;
-    const originX = Math.min(
-      Math.max(anchorX - next.left, 0),
-      element.offsetWidth
-    );
-    const originY = Math.min(
-      Math.max(anchorY - next.top, 0),
-      element.offsetHeight
-    );
+    const originX = Math.min(Math.max(anchorX - next.left, 0), size.width);
+    const originY = Math.min(Math.max(anchorY - next.top, 0), size.height);
     const transformOrigin = `${originX.toFixed(1)}px ${originY.toFixed(1)}px`;
+    const maxHeight = compact ? room : undefined;
     setPosition((current) =>
       current.left === next.left &&
       current.top === next.top &&
-      current.transformOrigin === transformOrigin
+      current.transformOrigin === transformOrigin &&
+      current.compact === compact &&
+      current.maxHeight === maxHeight
         ? current
-        : { ...next, transformOrigin }
+        : { ...next, transformOrigin, compact, maxHeight }
     );
-    // `placement` reads only the values listed here; the pointer is read
-    // once, when the menu is placed.
+  };
+  const placeRef = useRef(place);
+  placeRef.current = place;
+  useLayoutEffect(() => {
+    placeRef.current();
+    // `place` reads only the values listed here; the pointer is read when
+    // the menu is placed.
   }, [
     bounds.x,
     bounds.y,
@@ -1047,7 +1138,33 @@ const ContextMenu = ({
     zoneKind,
     upperHalf,
     scene,
+    openSubmenu,
   ]);
+  useEffect(() => {
+    const element = container.current;
+    if (!element || typeof ResizeObserver !== 'function') return;
+    const observer = new ResizeObserver(() => placeRef.current());
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+  // A submenu opened in a menu that scrolls is brought into view under its
+  // row, the row kept in view above it.
+  useLayoutEffect(() => {
+    const element = container.current;
+    if (!element || !openSubmenu || !position.compact) return;
+    const row = element.querySelector<HTMLElement>(
+      `[data-context-submenu="${openSubmenu}"]`
+    )?.parentElement;
+    if (!row) return;
+    const top = row.offsetTop;
+    const bottom = top + row.offsetHeight;
+    let scrollTop = element.scrollTop;
+    if (bottom > scrollTop + element.clientHeight) {
+      scrollTop = bottom - element.clientHeight;
+    }
+    if (top < scrollTop) scrollTop = top;
+    if (scrollTop !== element.scrollTop) element.scrollTop = scrollTop;
+  }, [openSubmenu, position.compact, position.maxHeight]);
 
   return (
     <div
@@ -1059,7 +1176,15 @@ const ContextMenu = ({
       role="menu"
       aria-label={t`Actions for ${cardName}`}
       tabIndex={-1}
-      style={position}
+      data-menu-compact={position.compact ? 'true' : undefined}
+      style={{
+        left: position.left,
+        top: position.top,
+        transformOrigin: position.transformOrigin,
+        ...(position.maxHeight === undefined
+          ? {}
+          : { maxHeight: position.maxHeight }),
+      }}
       onContextMenu={(event) => event.preventDefault()}
       onKeyDown={(event) => {
         if (event.key === 'Escape') {

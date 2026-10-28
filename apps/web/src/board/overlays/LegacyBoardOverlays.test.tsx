@@ -22,6 +22,8 @@ import {
   type BoardSessionControllerState,
 } from '../BoardSessionController.js';
 import {
+  CONTEXT_MENU_EDGE_PX,
+  contextMenuBox,
   LegacyBoardOverlays,
   resolveOpenedZoneDropTarget,
   selectLegacyContextEntries,
@@ -511,6 +513,189 @@ describe('legacy board overlays', () => {
     );
     expect(callbacks.invokeContextAction).not.toHaveBeenCalled();
     expect(callbacks.dismiss).not.toHaveBeenCalled();
+  });
+
+  describe('a card menu kept inside the board', () => {
+    const EDGE = CONTEXT_MENU_EDGE_PX;
+    const isMenu = (element: HTMLElement) =>
+      element.classList.contains('ptcgsim-legacy-card-context-menu');
+    /**
+     * Lays the menu out at `width` by `rows` (plus `opened` with a submenu
+     * open), as happy-dom lays nothing out; drawn at `drawnScale`, as while
+     * it scales in.
+     */
+    const layOut = ({
+      width,
+      rows,
+      opened = 0,
+      drawnScale = 1,
+    }: {
+      readonly width: number;
+      readonly rows: number;
+      readonly opened?: number;
+      readonly drawnScale?: number;
+    }) => {
+      const content = (element: HTMLElement) =>
+        rows +
+        (element.querySelector('[data-submenu-open="true"]') ? opened : 0);
+      const shown = (element: HTMLElement) => {
+        const max = parseFloat(element.style.maxHeight);
+        return Number.isFinite(max)
+          ? Math.min(content(element), max)
+          : content(element);
+      };
+      vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockImplementation(
+        function (this: HTMLElement) {
+          return isMenu(this) ? width : 0;
+        }
+      );
+      vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockImplementation(
+        function (this: HTMLElement) {
+          return isMenu(this) ? shown(this) : 0;
+        }
+      );
+      vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockImplementation(
+        function (this: HTMLElement) {
+          return isMenu(this) ? shown(this) : 0;
+        }
+      );
+      vi.spyOn(Element.prototype, 'scrollHeight', 'get').mockImplementation(
+        function (this: Element) {
+          return this instanceof HTMLElement && isMenu(this)
+            ? content(this)
+            : 0;
+        }
+      );
+      const rect = Element.prototype.getBoundingClientRect;
+      vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(
+        function (this: Element) {
+          if (!(this instanceof HTMLElement) || !isMenu(this))
+            return rect.call(this);
+          const left = parseFloat(this.style.left) || 0;
+          const top = parseFloat(this.style.top) || 0;
+          return new DOMRect(
+            left,
+            top,
+            width * drawnScale,
+            shown(this) * drawnScale
+          );
+        }
+      );
+    };
+    const narrowWindow = (narrow: boolean) =>
+      vi.spyOn(window, 'matchMedia').mockImplementation(
+        (query: string) =>
+          ({
+            matches: narrow && query.includes('max-width'),
+            media: query,
+            addEventListener: () => {},
+            removeEventListener: () => {},
+          }) as unknown as MediaQueryList
+      );
+    const openMenu = async (card: CardSceneNode) => {
+      await act(async () => {
+        root.render(
+          createElement(LegacyBoardOverlays, {
+            state: state({
+              overlays: {
+                contextMenuCardId: card.id,
+                preview: null,
+                input: null,
+              },
+            }),
+            darkMode: false,
+            actions: actions(),
+          })
+        );
+      });
+      return host.querySelector<HTMLElement>(
+        '[data-legacy-card-context-menu]'
+      )!;
+    };
+    const box = (menu: HTMLElement) => ({
+      left: parseFloat(menu.style.left),
+      top: parseFloat(menu.style.top),
+      width: menu.offsetWidth,
+      height: menu.offsetHeight,
+    });
+    const expectInside = (menu: HTMLElement) => {
+      const { left, top, width, height } = box(menu);
+      expect(left).toBeGreaterThanOrEqual(EDGE);
+      expect(top).toBeGreaterThanOrEqual(EDGE);
+      expect(left + width).toBeLessThanOrEqual(scene.viewport.width - EDGE);
+      expect(top + height).toBeLessThanOrEqual(scene.viewport.height - EDGE);
+    };
+
+    it('keeps its edge inset, or centres a menu with no room for it', () => {
+      const viewport = { width: 390, height: 844 };
+      const size = { width: 232, height: 300 };
+      expect(contextMenuBox({ left: 300, top: 700 }, size, viewport)).toEqual({
+        left: 390 - EDGE - 232,
+        top: 844 - EDGE - 300,
+      });
+      expect(contextMenuBox({ left: -40, top: 2 }, size, viewport)).toEqual({
+        left: EDGE,
+        top: EDGE,
+      });
+      expect(contextMenuBox({ left: 50, top: 100 }, size, viewport)).toEqual({
+        left: 50,
+        top: 100,
+      });
+      expect(
+        contextMenuBox(
+          { left: 0, top: 0 },
+          { width: 380, height: 300 },
+          viewport
+        )
+      ).toEqual({ left: 5, top: EDGE });
+    });
+
+    it('is placed by its laid-out size, not as drawn while it scales in', async () => {
+      narrowWindow(false);
+      // The hand's last card: its menu opens at its left edge, and is wide
+      // enough to be pulled in from the board's right edge.
+      const hand = scene.cards.filter((candidate) =>
+        candidate.parentId.endsWith(`:${firstPlayer}:hand`)
+      );
+      const last = hand.reduce((right, candidate) =>
+        candidate.bounds.x > right.bounds.x ? candidate : right
+      );
+      const width = Math.ceil(scene.viewport.width - last.bounds.x + 60);
+      // Drawn at 96% as it scales in: placed by that, it ran 4% past the
+      // edge it was kept from.
+      layOut({ width, rows: 300, drawnScale: 0.96 });
+      const menu = await openMenu(last);
+      expectInside(menu);
+      expect(parseFloat(menu.style.left)).toBe(
+        scene.viewport.width - EDGE - width
+      );
+    });
+
+    it('scrolls, its submenus in place, when its rows are taller than the board', async () => {
+      narrowWindow(false);
+      layOut({ width: 260, rows: 900 });
+      const menu = await openMenu(cardIn(`:${firstPlayer}:hand`));
+      expect(menu.dataset['menuCompact']).toBe('true');
+      expect(parseFloat(menu.style.maxHeight)).toBe(
+        scene.viewport.height - 2 * EDGE
+      );
+      expectInside(menu);
+    });
+
+    it('moves up when a submenu opening in place makes it taller', async () => {
+      narrowWindow(true);
+      layOut({ width: 232, rows: 260, opened: 230 });
+      const menu = await openMenu(cardIn(`:${firstPlayer}:hand`));
+      expect(menu.dataset['menuCompact']).toBe('true');
+      expectInside(menu);
+      const move = menu.querySelector<HTMLButtonElement>(
+        '[data-context-action="moveCard"]'
+      )!;
+      await act(async () => move.click());
+      expect(move.getAttribute('aria-expanded')).toBe('true');
+      expect(menu.offsetHeight).toBe(490);
+      expectInside(menu);
+    });
   });
 
   it('recreates the ordered move submenu and delegates one typed choice', async () => {
