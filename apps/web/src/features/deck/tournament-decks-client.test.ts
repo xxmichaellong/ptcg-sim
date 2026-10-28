@@ -221,6 +221,27 @@ describe('tournament deck search', () => {
       tournament: { url: 'https://labs.limitlesstcg.com/0077/standings' },
     });
     expect(detail.mock.calls[0]![0]).toBe('/v2/tournaments/labs-0077');
+
+    // A major's standings run past any online event's: Worlds' Masters
+    // could pass 5,000. The server keeps up to 8,192.
+    const crowded = decodeTournament({
+      tournament: {
+        ...major,
+        url: 'https://labs.limitlesstcg.com/0077/standings',
+      },
+      standings: Array.from({ length: 8_192 }, (_, index) => ({
+        player: {
+          id: String(index + 1).padStart(4, '0'),
+          name: `Player ${String(index + 1)}`,
+        },
+        placing: index + 1,
+        record: { wins: 0, losses: 0, ties: 0 },
+        dropped: false,
+        archetype: null,
+        hasList: false,
+      })),
+    });
+    expect(crowded.standings).toHaveLength(8_192);
   });
 
   it('pages through tournaments and an archetype by an opaque cursor', async () => {

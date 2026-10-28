@@ -157,7 +157,11 @@ const MAX_LIST_TEXT = 20_000;
 const MAX_RESULTS = 50;
 const MAX_FINISHES = 200;
 const MAX_TOURNAMENTS = 200;
-const MAX_STANDINGS = 5_000;
+/**
+ * As many standings as the server keeps for any event: a major's Masters
+ * (LABS_LIMITS.standings, 8,192) run past an online event's (4,096).
+ */
+const MAX_STANDINGS = 8_192;
 const MAX_ICONS = 4;
 
 /** Archetype ids and icon names: Limitless slugs. */
