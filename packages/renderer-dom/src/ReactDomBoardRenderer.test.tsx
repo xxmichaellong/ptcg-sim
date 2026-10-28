@@ -1887,6 +1887,26 @@ describe('React DOM board renderer', () => {
     host.remove();
   });
 
+  it('clips the flat table rather than letting focus scroll it', async () => {
+    const renderer = new ReactDomBoardRenderer({
+      emitIntent: vi.fn(),
+      emitPresentationUpdate: vi.fn(),
+      reportError: vi.fn(),
+    });
+    const host = document.createElement('div');
+    document.body.append(host);
+    await mountInAct(renderer, host, createScene());
+    // `hidden` is scrollable: focusing a hand card past the edge scrolled
+    // the table up, away from the pieces drawn over it.
+    expect(
+      host.querySelector<HTMLElement>('.ptcgsim-board-surface')!.style.overflow
+    ).toBe('clip');
+    await act(async () => {
+      renderer.destroy();
+    });
+    host.remove();
+  });
+
   it('clips a card that has scrolled out of its zone', async () => {
     const renderer = new ReactDomBoardRenderer({
       emitIntent: vi.fn(),

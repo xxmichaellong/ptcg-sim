@@ -2147,8 +2147,10 @@ export const BoardSurface = ({
         position: 'relative',
         width: scene.viewport.width,
         height: scene.viewport.height,
-        // A projected child must never make focus scroll the camera surface.
-        overflow: depth ? 'clip' : 'hidden',
+        // A child must never make focus scroll the surface: a projected one
+        // on the tilted table, or a hand card bleeding past the flat table's
+        // edge, which scrolled the whole table up under the rail and pieces.
+        overflow: 'clip',
         background: 'transparent',
         touchAction: 'none',
         userSelect: 'none',
