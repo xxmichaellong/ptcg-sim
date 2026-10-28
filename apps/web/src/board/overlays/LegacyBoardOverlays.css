@@ -1186,6 +1186,22 @@ button.ptcgsim-overlay-toggle:focus-visible {
   background: var(--color-surface-2);
 }
 
+/* On a phone the pile's buttons leave its name little room: the count (the
+   pile on the table shows it too) gives way, so "Deck" isn't cut to "D". */
+.ptcgsim-legacy-zone-toolbar {
+  container-type: inline-size;
+}
+
+@container (max-width: 400px) {
+  .ptcgsim-legacy-zone-toolbar .ptcgsim-overlay-count {
+    display: none;
+  }
+
+  .ptcgsim-legacy-zone-toolbar .ptcgsim-overlay-actions {
+    gap: var(--space-1);
+  }
+}
+
 /* "Show board": the panel steps aside; only its way back stays. */
 .ptcgsim-legacy-zone-browser.is-showing-board {
   border-color: transparent;
@@ -1302,6 +1318,8 @@ button.ptcgsim-overlay-toggle:focus-visible {
 
 .ptcgsim-browser-zoom-slider {
   width: 104px;
+  /* The track is thin; the place a finger can take it is not. */
+  height: 32px;
   margin: 0;
   accent-color: var(--color-accent);
   cursor: pointer;
