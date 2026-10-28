@@ -1380,6 +1380,49 @@ export const BoardSurface = ({
     if (!lifting || !surface || !layer) return;
     return liftHeldCards(surface, layer);
   }, [lifting, liftHost]);
+  // Cards and markers the carrier moved by hand go where this commit draws
+  // them (see BoardMotionDirector.uncarry): React leaves alone a place it
+  // drew last time, though the carrier has moved the node since.
+  const carriedMarkersRef = useRef(new Set<string>());
+  useLayoutEffect(() => {
+    let cards: Map<string, CardSceneNode> | undefined;
+    director.uncarry((renderKey) => {
+      cards ??= new Map(
+        scene.cards.flatMap((card) =>
+          card.renderKey === null ? [] : [[card.renderKey, card] as const]
+        )
+      );
+      const card = cards.get(renderKey);
+      if (!card) return null;
+      const held =
+        compositionHold(scene, card, presentation.drag) ??
+        presentation.settling
+          .map((entry) => compositionHold(scene, card, entry))
+          .find(Boolean);
+      // As CardNode places it.
+      return held
+        ? {
+            x: held.x - card.bounds.width / 2,
+            y: held.y - card.bounds.height / 2,
+          }
+        : card.bounds;
+    });
+    const markers = carriedMarkersRef.current;
+    if (markers.size === 0) return;
+    if (!depth)
+      for (const marker of scene.markers) {
+        if (!markers.has(marker.id)) continue;
+        const node = surfaceRef.current?.querySelector<HTMLElement>(
+          `[data-marker-id="${CSS.escape(marker.id)}"]`
+        );
+        if (!node) continue;
+        // As MarkerNode places it.
+        const { bounds } = presentHeldMarker(scene, marker, presentation);
+        node.style.left = `${String(bounds.x)}px`;
+        node.style.top = `${String(bounds.y)}px`;
+      }
+    markers.clear();
+  });
   // The installed scene the last motion was planned for: a held card coming
   // into or out of the painted scene is no new scene, and replays nothing.
   const plannedSceneRef = useRef<BoardScene | null>(null);
@@ -1446,6 +1489,7 @@ export const BoardSurface = ({
         const { bounds } = presentHeldMarker(scene, marker, next);
         node.style.left = `${String(bounds.x)}px`;
         node.style.top = `${String(bounds.y)}px`;
+        carriedMarkersRef.current.add(marker.id);
       }
       checkOverPiece();
     });

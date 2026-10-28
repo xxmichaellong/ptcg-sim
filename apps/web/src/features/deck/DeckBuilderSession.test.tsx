@@ -1471,6 +1471,52 @@ describe('DeckBuilderSession', () => {
       expect(sleeve('opponent')).toBe(RED);
     });
 
+    it('dresses P2 when a new screen over the same stores gives the seat back', async () => {
+      // The lobby's screen in Multiplayer, then the Solo room's over the
+      // stores it hands on.
+      const session = new FakeSession();
+      const store = new DeckBuilderStore();
+      const cardBackStore = new CardBackCustodyStore();
+      const charizard = save('Charizard');
+      const { requestCardBack, choose } = chooser();
+      await renderSession({
+        session,
+        store,
+        cardBackStore,
+        open: true,
+        requestCardBack,
+      });
+      await click('button[aria-label="Charizard: put on P1"]');
+      await click('#nativeDeckBuilderTargetAlt');
+      await click('button[aria-label="Charizard: put on P2"]');
+      await click('#nativeDeckBuilderTargetMain');
+      await renderSession({
+        session,
+        store,
+        cardBackStore,
+        open: true,
+        alternateEnabled: false,
+        requestCardBack,
+      });
+      await choose(RED);
+      expect(library.get(charizard.id)?.cardBack).toBe(RED);
+
+      await act(async () => root?.unmount());
+      root = undefined;
+      await renderSession({
+        session,
+        store,
+        cardBackStore,
+        open: true,
+        alternateEnabled: true,
+        requestCardBack,
+      });
+      expect(cardBackStore.getSnapshot().slots.alternate).toMatchObject({
+        url: RED,
+        dirty: true,
+      });
+    });
+
     it('sends the back of a deck that lands after the screen closed with it', async () => {
       const session = new FakeSession();
       const store = new DeckBuilderStore();

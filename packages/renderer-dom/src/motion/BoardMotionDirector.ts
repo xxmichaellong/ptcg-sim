@@ -144,6 +144,8 @@ export class BoardMotionDirector {
   /** Landed cards kept lifted until the rest of their group lands. */
   private readonly landedAwaitingGroup = new Map<string, Set<HTMLElement>>();
   private readonly painted = new Map<string, PaintedCard>();
+  /** Cards `carry` has moved by hand since React last drew the table. */
+  private readonly carried = new Set<string>();
   private readonly releases = new Map<
     string,
     { readonly vx: number; readonly vy: number; readonly at: number }
@@ -338,7 +340,28 @@ export class BoardMotionDirector {
       // As the card's node draws a held card (BoardSurface).
       element.style.left = `${String(card.rect.x)}px`;
       element.style.top = `${String(card.rect.y)}px`;
+      this.carried.add(key);
     }
+  }
+
+  /**
+   * React drew the table again: each card `carry` moved goes where React
+   * draws it (`at`). React compares what it draws with what it drew last,
+   * not with the page, so a card asked back to the place it was last drawn
+   * (a drag put down or cancelled where it began) would stay where it was
+   * carried.
+   */
+  uncarry(
+    at: (renderKey: string) => { readonly x: number; readonly y: number } | null
+  ): void {
+    for (const key of this.carried) {
+      const element = this.elements.get(key);
+      const origin = at(key);
+      if (!element || !origin) continue;
+      element.style.left = `${String(origin.x)}px`;
+      element.style.top = `${String(origin.y)}px`;
+    }
+    this.carried.clear();
   }
 
   cancelAll(): void {

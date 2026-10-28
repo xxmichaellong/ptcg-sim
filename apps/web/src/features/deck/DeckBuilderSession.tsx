@@ -442,8 +442,11 @@ export const DeckBuilderSession = ({
 
   // P2 given back (Multiplayer to Solo) wears its deck's back as it is now:
   // one chosen for that deck through P1 meanwhile couldn't reach a seat
-  // that was off.
-  const alternateWasEnabled = useRef(alternateEnabled);
+  // that was off. Its stores may outlive this screen (the lobby hands them
+  // to the room's), so whether it was off is theirs to say on mounting.
+  const alternateWasEnabled = useRef(
+    cardBackStore.getSnapshot().alternateEnabled
+  );
   useLayoutEffect(() => {
     const was = alternateWasEnabled.current;
     alternateWasEnabled.current = alternateEnabled;

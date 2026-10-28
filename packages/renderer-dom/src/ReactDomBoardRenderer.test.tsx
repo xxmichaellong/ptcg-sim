@@ -1790,6 +1790,54 @@ describe('React DOM board renderer', () => {
     host.remove();
   });
 
+  it('puts a carried card back where the table has it, though React drew it there last', async () => {
+    const renderer = new ReactDomBoardRenderer({
+      emitIntent: vi.fn(),
+      emitPresentationUpdate: vi.fn(),
+      reportError: vi.fn(),
+    });
+    const host = document.createElement('div');
+    document.body.append(host);
+    await mountInAct(renderer, host, createScene());
+    const card = host.querySelector<HTMLElement>('[data-card-id]')!;
+    const restLeft = parseFloat(card.style.left);
+    const restTop = parseFloat(card.style.top);
+    const width = parseFloat(card.style.width);
+    const height = parseFloat(card.style.height);
+    // Picked up exactly where it lies: React draws it at its own place.
+    const held = {
+      cardId,
+      x: restLeft + width / 2,
+      y: restTop + height / 2,
+      targetId: 'zone:p1:hand',
+    };
+    act(() =>
+      renderer.installPresentation({
+        ...DEFAULT_BOARD_PRESENTATION,
+        drag: held,
+      })
+    );
+    expect(card.style.top).toBe(`${String(restTop)}px`);
+    // Carried up and down over the same zone: only the page is written.
+    act(() =>
+      renderer.installPresentation({
+        ...DEFAULT_BOARD_PRESENTATION,
+        drag: { ...held, y: held.y - 80 },
+      })
+    );
+    expect(card.style.top).toBe(`${String(restTop - 80)}px`);
+
+    // Let go of (or the drag cancelled): back where it lies.
+    act(() => renderer.installPresentation(DEFAULT_BOARD_PRESENTATION));
+    expect(card.style.left).toBe(`${String(restLeft)}px`);
+    expect(card.style.top).toBe(`${String(restTop)}px`);
+
+    await act(async () => {
+      renderer.destroy();
+    });
+    host.remove();
+  });
+
   it('clips a card that has scrolled out of its zone', async () => {
     const renderer = new ReactDomBoardRenderer({
       emitIntent: vi.fn(),
