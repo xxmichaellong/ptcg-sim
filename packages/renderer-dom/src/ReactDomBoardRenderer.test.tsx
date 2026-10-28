@@ -1838,6 +1838,55 @@ describe('React DOM board renderer', () => {
     host.remove();
   });
 
+  it('keeps a carried card where it is carried when the table draws itself again', async () => {
+    const renderer = new ReactDomBoardRenderer({
+      emitIntent: vi.fn(),
+      emitPresentationUpdate: vi.fn(),
+      reportError: vi.fn(),
+    });
+    const host = document.createElement('div');
+    document.body.append(host);
+    // A piece drawn over the board (the coin), under wherever the card goes.
+    const piece = document.createElement('div');
+    piece.dataset.overBoard = '';
+    document.body.append(piece);
+    const rects = vi
+      .spyOn(Element.prototype, 'getBoundingClientRect')
+      .mockReturnValue(new DOMRect(0, 0, 2000, 2000));
+    await mountInAct(renderer, host, createScene());
+    const held = { cardId, x: 100, y: 300, targetId: 'zone:p1:hand' };
+    act(() =>
+      renderer.installPresentation({
+        ...DEFAULT_BOARD_PRESENTATION,
+        drag: held,
+      })
+    );
+    const card = host.querySelector<HTMLElement>('[data-card-id]')!;
+    act(() =>
+      renderer.installPresentation({
+        ...DEFAULT_BOARD_PRESENTATION,
+        drag: { ...held, x: 200, y: 250 },
+      })
+    );
+    expect(card.style.left).toBe('155px');
+    // Found over the piece a frame later: lifted over it, drawn again, and
+    // left where it was carried.
+    await act(async () => {
+      await new Promise((resolve) =>
+        requestAnimationFrame(() => setTimeout(resolve, 5))
+      );
+    });
+    expect(card.style.left).toBe('155px');
+    expect(card.style.top).toBe('187px');
+
+    rects.mockRestore();
+    piece.remove();
+    await act(async () => {
+      renderer.destroy();
+    });
+    host.remove();
+  });
+
   it('clips a card that has scrolled out of its zone', async () => {
     const renderer = new ReactDomBoardRenderer({
       emitIntent: vi.fn(),

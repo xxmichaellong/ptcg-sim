@@ -1380,9 +1380,11 @@ export const BoardSurface = ({
     if (!lifting || !surface || !layer) return;
     return liftHeldCards(surface, layer);
   }, [lifting, liftHost]);
-  // Cards and markers the carrier moved by hand go where this commit draws
-  // them (see BoardMotionDirector.uncarry): React leaves alone a place it
-  // drew last time, though the carrier has moved the node since.
+  // Cards and markers the carrier moved by hand go where a new scene or
+  // presentation draws them (see BoardMotionDirector.uncarry): React leaves
+  // alone a place it drew last time, though the carrier has moved the node
+  // since. Only then: the surface drawing itself again (lifting a card over
+  // the coin) brings no new place, and the carried one is the latest.
   const carriedMarkersRef = useRef(new Set<string>());
   useLayoutEffect(() => {
     let cards: Map<string, CardSceneNode> | undefined;
@@ -1422,7 +1424,7 @@ export const BoardSurface = ({
         node.style.top = `${String(bounds.y)}px`;
       }
     markers.clear();
-  });
+  }, [depth, director, presentation, scene]);
   // The installed scene the last motion was planned for: a held card coming
   // into or out of the painted scene is no new scene, and replays nothing.
   const plannedSceneRef = useRef<BoardScene | null>(null);
