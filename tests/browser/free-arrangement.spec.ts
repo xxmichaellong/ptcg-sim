@@ -208,19 +208,21 @@ test('a benched Pokémon goes to the far left, and a hand card to its new place'
   page.on('pageerror', (error) => errors.push(error.message));
   await openSoloTable(page);
 
-  // Three Pokémon on the bench.
+  // Three Pokémon on the bench, each put past the right end of the row (put
+  // where the last one lies, a card joins it instead).
   const bench = await page
     .locator('[data-zone-kind="bench"][data-zone-side="local"]')
     .boundingBox();
   for (let index = 0; index < 3; index += 1) {
     const [card] = await handCards(page);
     await drag(page, card!.id, {
-      x: bench!.x + bench!.width * (0.25 + index * 0.25),
+      x: bench!.x + bench!.width * 0.94,
       y: bench!.y + bench!.height / 2,
     });
   }
   const before = await benchTops(page);
   expect(before).toHaveLength(3);
+  expect(new Set(before.map((card) => card.parentId)).size).toBe(3);
   const last = before.at(-1)!;
   const first = await paintedPoint(page, before[0]!.id);
 
