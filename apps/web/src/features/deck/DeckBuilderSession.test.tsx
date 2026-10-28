@@ -1390,6 +1390,87 @@ describe('DeckBuilderSession', () => {
       });
     });
 
+    it('puts the standard back on with a deck without one when the room shows another', async () => {
+      // A restored game, or a room joined: its back was never chosen here.
+      const session = new FakeSession();
+      session.showCardBack(ownPlayerId, RED);
+      const store = new DeckBuilderStore();
+      const cardBackStore = new CardBackCustodyStore();
+      save('Lugia');
+      await renderSession({ session, store, cardBackStore, open: true });
+
+      await click('button[aria-label="Lugia: put on P1"]');
+      expect(cardBackStore.getSnapshot().slots.main).toMatchObject({
+        url: DEFAULT_CARD_BACK_URL,
+        dirty: true,
+      });
+      await renderSession({ session, store, cardBackStore, open: false });
+      await vi.waitFor(() =>
+        expect(session.commands).toContainEqual({
+          type: 'SetCardBack',
+          cardBackUrl: DEFAULT_CARD_BACK_URL,
+        })
+      );
+    });
+
+    it('leaves a seat showing the standard back as it is for a deck without one', async () => {
+      const session = new FakeSession();
+      session.showCardBack(ownPlayerId, DEFAULT_CARD_BACK_URL);
+      const store = new DeckBuilderStore();
+      const cardBackStore = new CardBackCustodyStore();
+      save('Lugia');
+      await renderSession({ session, store, cardBackStore, open: true });
+
+      await click('button[aria-label="Lugia: put on P1"]');
+      expect(cardBackStore.getSnapshot().slots.main.url).toBeUndefined();
+    });
+
+    it('dresses P2 in its deck’s back when Solo gives the seat back', async () => {
+      const session = new FakeSession();
+      const store = new DeckBuilderStore();
+      const cardBackStore = new CardBackCustodyStore();
+      const charizard = save('Charizard');
+      const { requestCardBack, choose } = chooser();
+      await renderSession({
+        session,
+        store,
+        cardBackStore,
+        open: true,
+        requestCardBack,
+      });
+      await click('button[aria-label="Charizard: put on P1"]');
+      await click('#nativeDeckBuilderTargetAlt');
+      await click('button[aria-label="Charizard: put on P2"]');
+      await click('#nativeDeckBuilderTargetMain');
+
+      // Multiplayer: P2 is off while P1 changes the deck's back.
+      await renderSession({
+        session,
+        store,
+        cardBackStore,
+        open: true,
+        alternateEnabled: false,
+        requestCardBack,
+      });
+      await choose(RED);
+      expect(library.get(charizard.id)?.cardBack).toBe(RED);
+      expect(cardBackStore.getSnapshot().slots.alternate.url).not.toBe(RED);
+
+      await renderSession({
+        session,
+        store,
+        cardBackStore,
+        open: true,
+        alternateEnabled: true,
+        requestCardBack,
+      });
+      expect(cardBackStore.getSnapshot().slots.alternate).toMatchObject({
+        url: RED,
+        dirty: true,
+      });
+      expect(sleeve('opponent')).toBe(RED);
+    });
+
     it('sends the back of a deck that lands after the screen closed with it', async () => {
       const session = new FakeSession();
       const store = new DeckBuilderStore();

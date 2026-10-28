@@ -903,9 +903,6 @@ export class DeckIndex {
         },
         path
       );
-      if (this.store.getMeta(META.majorsFailures) !== null) {
-        this.store.deleteMeta(META.majorsFailures);
-      }
       return message;
     } catch (error) {
       if (
@@ -940,6 +937,17 @@ export class DeckIndex {
     this.hold(META.majorsFailures, META.majorsHeldUntil);
   }
 
+  /**
+   * Labs answered what could be read: its failures in a row end. Only then,
+   * not on any 200, so an answer of the wrong shape backs off as an outage
+   * does, longer each time.
+   */
+  private labsAnswered(): void {
+    if (this.store.getMeta(META.majorsFailures) !== null) {
+      this.store.deleteMeta(META.majorsFailures);
+    }
+  }
+
   /** Reads Labs' list of majors: those over join the queue. */
   private async discoverMajors(now: number): Promise<void> {
     let message: unknown;
@@ -962,6 +970,7 @@ export class DeckIndex {
       this.holdMajorsBack();
       return;
     }
+    this.labsAnswered();
     this.store.recordMajorsListed(rows, this.deps.now());
     this.store.setMeta(
       META.majorsDiscovery,
@@ -998,6 +1007,7 @@ export class DeckIndex {
       this.store.recordMajorFailure(major.id, now);
       return;
     }
+    this.labsAnswered();
     if (major.state === 'indexed' && major.etag === tournament.version) {
       this.store.recordMajorChecked(major.id, now);
       return;
@@ -1054,6 +1064,7 @@ export class DeckIndex {
       this.store.recordMajorFailure(tournament.id, this.deps.now());
       return;
     }
+    this.labsAnswered();
     this.store.recordMajorStandings(tournament.id, entries, {
       now: this.deps.now(),
       version: due.version,
@@ -1137,6 +1148,7 @@ export class DeckIndex {
       this.store.recordMajorListMissing(tournamentId, playerId);
       return 'missing';
     }
+    this.labsAnswered();
     this.store.recordMajorList(
       tournamentId,
       playerId,

@@ -421,12 +421,14 @@ export const DeckBuilderSession = ({
       const deckId = store.getSnapshot().slots[seat].label?.deckId;
       const own = deckId ? library.get(deckId)?.cardBack : undefined;
       const back = own ?? cardBackStore.seatCardBack(seat);
-      // A seat that never had a back chosen still shows the standard one.
+      // A seat that never had a back chosen still shows the standard one,
+      // unless the room shows another (a restored game, a room joined).
       if (
         back === undefined &&
         cardBackStore.getSnapshot().slots[seat].url === undefined
       ) {
-        return;
+        const shown = roomCardBackOf(session ?? shownSession, seat);
+        if (shown === undefined || shown === DEFAULT_CARD_BACK_URL) return;
       }
       if (
         putCardBack(seat, back ?? DEFAULT_CARD_BACK_URL) &&
@@ -435,8 +437,19 @@ export const DeckBuilderSession = ({
         cardBackCoordinator.current?.flush();
       }
     },
-    [cardBackStore, library, putCardBack, store]
+    [cardBackStore, library, putCardBack, session, shownSession, store]
   );
+
+  // P2 given back (Multiplayer to Solo) wears its deck's back as it is now:
+  // one chosen for that deck through P1 meanwhile couldn't reach a seat
+  // that was off.
+  const alternateWasEnabled = useRef(alternateEnabled);
+  useLayoutEffect(() => {
+    const was = alternateWasEnabled.current;
+    alternateWasEnabled.current = alternateEnabled;
+    if (alternateEnabled && !was) dressSeat('alternate');
+  }, [alternateEnabled, dressSeat]);
+
   const { chooseCardBack } = useCardBackSelection<DeckBuilderTarget>({
     applySelection: applyCardBackSelection,
     ...(requestCardBack ? { requestCardBack } : {}),

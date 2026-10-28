@@ -725,6 +725,31 @@ describe('the majors lane', () => {
     );
   });
 
+  it('backs off longer each time Labs answers what can’t be read, as for an outage', async () => {
+    limitless.add(77);
+    limitless.onlineEvents = [];
+    const unreadable = () =>
+      new Response(JSON.stringify({ ok: true, message: { not: 'a list' } }), {
+        headers: { 'content-type': 'application/json' },
+      });
+    limitless.labsFailures.push(unreadable(), unreadable(), unreadable());
+    const index = createIndex();
+    const started = now;
+    await crawlFor(index, 4 * MINUTE);
+    const times = limitless.labsCalls
+      .slice(0, 4)
+      .map((call) => call.at - started);
+    expect(times[1]! - times[0]!).toBeGreaterThanOrEqual(
+      CRAWL_POLICY.firstHoldMs
+    );
+    expect(times[2]! - times[1]!).toBeGreaterThanOrEqual(
+      2 * CRAWL_POLICY.firstHoldMs
+    );
+    expect(times[3]! - times[2]!).toBeGreaterThanOrEqual(
+      4 * CRAWL_POLICY.firstHoldMs
+    );
+  });
+
   it('busies a player loading a list while Labs holds the lane back', async () => {
     limitless.add(77);
     const index = createIndex();
