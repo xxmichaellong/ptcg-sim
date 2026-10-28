@@ -155,7 +155,7 @@ const collectRuntimeErrors = (page: Page): string[] => {
 };
 
 const mountHarness = async (page: Page): Promise<ProtectedInputFixture> => {
-  await page.goto('/?renderer-spike=1&renderer=dom');
+  await page.goto('/?renderer-spike=1');
   await expect(page.locator('[data-renderer-status]')).toHaveAttribute(
     'data-renderer-status',
     'ready'

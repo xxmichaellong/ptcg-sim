@@ -49,9 +49,9 @@ losing the live session's view-then-event split publication and avoids a second
 event cursor.
 
 `apps/web/src/board/BoardSessionRuntime.ts` is the executable, renderer-neutral,
-uninstantiated composition root. Thin React DOM and Pixi wrappers select a
-factory; ADR-004 selects the React DOM wrapper for eventual production use and
-keeps the Pixi wrapper experimental. The runtime borrows already-owned live and
+uninstantiated composition root. A thin React DOM wrapper selects its factory
+(ADR-004; the experimental Pixi wrapper was retired on 2026-10-28). The runtime
+borrows already-owned live and
 replay sources, constructs only one `BoardSessionAdapter` and one renderer, and
 disposes only those objects. It neither accepts nor constructs a presentation
 owner. The route's existing presentation runtime and
@@ -473,15 +473,7 @@ and suppressed-click state without changing the scene. `ResetRenderer` maps to
 the additive `BoardRenderer.clearScene()`: synchronously cancel, clear retained
 scene/private presentation, and empty board children while keeping a healthy
 renderer mounted for a later replacement install. DOM destroy still cancels
-synchronously before deferred React unmount. Pixi clear releases card views and
-private texture bindings; its texture registry reuses a zero-reference pending
-load only when it is reacquired before completion and verifies the exact entry
-is still unused before unloading. Renderer-originated WebGL context loss during
-an active drag emits one drag-null update, clears retained drag presentation,
-releases capture, and then rebuilds. If context is lost while reset has
-intentionally left no scene, Pixi tears down once and defers recovery without
-consuming retries; the next replacement triggers one generation-guarded rebuild
-from the latest scene.
+synchronously before deferred React unmount.
 
 If `clearScene()` itself throws, the opt-in runtime is deliberately fatal and
 fail-closed: it disposes its adapter, destroys the bad renderer, synchronously
@@ -550,9 +542,7 @@ corepack pnpm exec vitest run \
   apps/web/src/board/ReactDomBoardSessionRuntime.test.ts \
   apps/web/src/RendererSpikeBoard.test.tsx \
   packages/renderer-contract/src/drag.test.ts \
-  packages/renderer-dom/src/ReactDomBoardRenderer.test.tsx \
-  packages/renderer-pixi/src/PixiBoardRenderer.test.ts \
-  packages/renderer-pixi/src/CardTextureRegistry.test.ts
+  packages/renderer-dom/src/ReactDomBoardRenderer.test.tsx
 corepack pnpm --filter @ptcgsim/web run typecheck
 corepack pnpm run check:v2
 ```
@@ -570,5 +560,5 @@ through a real DOM renderer while an externally owned
 `GamePresentationCoordinator` runs in parallel. Mutable-source cases pin exact
 pointer, reset, privacy-failure retry, unsupported-layout, replay suppression,
 factory/mount race, and fatal clear-failure behavior without altering any route.
-The same suite verifies that the thin Pixi wrapper selects its candidate factory
-while preserving the generic runtime's borrowed-source and teardown ownership.
+The same suite verifies that the generic runtime over another renderer factory
+preserves its borrowed-source and teardown ownership.

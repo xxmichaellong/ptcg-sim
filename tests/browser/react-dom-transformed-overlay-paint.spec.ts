@@ -224,7 +224,7 @@ const mountCandidate = async (
       JSON.stringify({ stackPiles: false })
     )
   );
-  await page.goto('/?renderer-spike=1&renderer=dom');
+  await page.goto('/?renderer-spike=1');
   await expect(page.locator('[data-renderer-status]')).toHaveAttribute(
     'data-renderer-status',
     'ready'

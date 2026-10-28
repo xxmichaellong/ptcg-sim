@@ -31,7 +31,6 @@ import {
 } from 'react';
 
 import { ROOM_DEFAULT_PREFERENCES } from './room-preferences.js';
-import type { RendererKind } from '../RendererSpikeBoard.js';
 import type { RailAction } from '../board/rail/TableRail.js';
 import { useBoardLook } from './useBoardLook.js';
 import { boardViewSettings } from '../board/view/board-view-settings.js';
@@ -103,7 +102,6 @@ const ignoreIntent = (_intent: BoardIntent): void => undefined;
 
 export interface RemoteRoomRouteProps {
   readonly runtime: RemoteRoomRuntime;
-  readonly rendererKind: RendererKind;
   readonly roomMode?: 'solo' | 'multiplayer';
   /**
    * This Solo room is the tutorial's practice table (ADR-038): the coach
@@ -242,7 +240,6 @@ const SettledByFailure = ({
  */
 export const RemoteRoomRoute = ({
   runtime,
-  rendererKind,
   roomMode = 'multiplayer',
   tutorial,
   initialSheet,
@@ -742,7 +739,6 @@ export const RemoteRoomRoute = ({
               <RemoteSessionBoard
                 session={runtime.session}
                 replay={runtime.replay}
-                rendererKind={rendererKind}
                 onIntent={onIntent}
                 {...(onSubmission ? { onSubmission } : {})}
                 preferences={effectivePreferences}

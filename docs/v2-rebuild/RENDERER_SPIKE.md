@@ -6,6 +6,10 @@
 - Decision: ADR-004 selects normalized stable-keyed React DOM for first production
   use; the explicit room-lobby route now defaults to it while raw Pixi remains
   available only as an explicitly requested experimental comparison
+- **2026-10-28:** the Pixi candidate was retired and deleted (ADR-004's note).
+  This page is the record of the spike; its Pixi sections describe code that
+  no longer exists. `tests/browser/renderer-spike.spec.ts` now measures the
+  DOM renderer alone.
 
 ## Research result
 

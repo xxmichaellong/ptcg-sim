@@ -23,7 +23,7 @@ const openSoloTable = async (page: Page): Promise<string[]> => {
     if (message.type() === 'error') errors.push(message.text());
   });
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto('/?renderer=dom');
+  await page.goto('/');
   await expect(
     page.locator('[data-app-route="remote-room"][data-session-phase="ready"]')
   ).toBeVisible({ timeout: 30_000 });

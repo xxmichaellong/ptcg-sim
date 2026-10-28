@@ -387,7 +387,6 @@ const creationResult = (
     route: {
       kind: 'remote-room',
       runtime: roomRuntime.value,
-      rendererKind: 'dom',
     },
     mode,
     invitations: {
@@ -433,7 +432,6 @@ const mount = async (
   const lobby = (
     <RemoteRoomLobby
       buildId="test-build"
-      rendererKind="dom"
       landing={landing}
       dependencies={{
         // Each lobby remembers into its own store, never the next test's.
@@ -1021,7 +1019,6 @@ describe('remote room lobby wiring', () => {
       buildId: 'test-build',
       displayName: 'Blue',
       mode: 'solo',
-      rendererKind: 'dom',
     });
     expect(createRoom.mock.calls[0]?.[0].signal).toBeInstanceOf(AbortSignal);
     expect(present('[data-app-route="test-remote-room"]')).toBe(true);
@@ -1325,7 +1322,6 @@ describe('remote room lobby wiring', () => {
       buildId: 'test-build',
       displayName: 'Blue',
       mode: 'multiplayer',
-      rendererKind: 'dom',
     });
     expect(createRoom.mock.calls[0]?.[0].signal).toBeInstanceOf(AbortSignal);
     expect(element<HTMLInputElement>('#nameInput').value).toBe('Blue');
@@ -1491,7 +1487,6 @@ describe('remote room lobby wiring', () => {
       route: {
         kind: 'remote-room',
         runtime: guest.value,
-        rendererKind: 'dom',
       },
     });
     const { root } = await mount(lobbyDependencies(invitation, vi.fn()));
@@ -1536,7 +1531,6 @@ describe('remote room lobby wiring', () => {
     expect(invitation.bootstrap.mock.calls[0]?.[0]).toMatchObject({
       buildId: 'test-build',
       displayName: 'Froakie',
-      rendererKind: 'dom',
       // A spectator invitation locks the choice on; it is passed along.
       asSpectator: true,
     });
@@ -1889,7 +1883,6 @@ describe('remote room lobby wiring', () => {
       route: {
         kind: 'remote-room',
         runtime: guest.value,
-        rendererKind: 'dom',
       },
     });
     const dependencies: RemoteRoomLobbyDependencies = {
@@ -1950,12 +1943,12 @@ describe('remote room lobby wiring', () => {
     });
 
     it('takes a lesson from the address once, and leaves the address clean', async () => {
-      history.replaceState(null, '', '/?tutorial=damage&renderer=dom');
+      history.replaceState(null, '', '/?tutorial=damage&ref=discord');
       const practice = creationResult(runtime({ label: 'practice' }), 'solo');
       const createRoom = vi.fn(async () => practice.value);
       const { root } = await mount(lobbyDependencies(custody(), createRoom));
       await settle();
-      expect(location.search).toBe('?renderer=dom');
+      expect(location.search).toBe('?ref=discord');
       expect(present('[data-tutorial="true"]')).toBe(true);
       await act(async () => root.unmount());
       history.replaceState(null, '', '/');

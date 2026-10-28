@@ -4,11 +4,7 @@ import {
   createRendererSpikeView,
   type BoardIntent,
 } from '@ptcgsim/renderer-contract';
-import {
-  readRendererKind,
-  RendererSpikeBoard,
-  type RendererKind,
-} from './RendererSpikeBoard.js';
+import { RendererSpikeBoard } from './RendererSpikeBoard.js';
 import type { RemoteRoomRuntime } from './session/RemoteRoomRuntime.js';
 
 const RemoteRoomRoute = lazy(async () => ({
@@ -19,12 +15,8 @@ const RemoteRoomLobby = lazy(async () => ({
   default: (await import('./session/RemoteRoomLobby.js')).RemoteRoomLobby,
 }));
 
-const initialRenderer = (): RendererKind =>
-  readRendererKind(new URLSearchParams(window.location.search).get('renderer'));
-
 const RendererSpikeApp = () => {
   const view = useMemo(createRendererSpikeView, []);
-  const [renderer, setRenderer] = useState<RendererKind>(initialRenderer);
   const [lastIntent, setLastIntent] = useState<BoardIntent | null>(null);
   const [lastCommand, setLastCommand] = useState<WireGameCommand | null>(null);
   const description = useMemo(
@@ -36,11 +28,9 @@ const RendererSpikeApp = () => {
   );
   return (
     <main className="app-shell">
-      <section className="board-column" aria-label="Renderer comparison board">
+      <section className="board-column" aria-label="Renderer fixture board">
         <RendererSpikeBoard
-          key={renderer}
           view={view}
-          rendererKind={renderer}
           onIntent={setLastIntent}
           submitCommand={setLastCommand}
         />
@@ -55,21 +45,9 @@ const RendererSpikeApp = () => {
           <button type="button">Settings</button>
         </nav>
         <div className="spike-controls">
-          <h1>Renderer parity spike</h1>
-          <label>
-            Board renderer
-            <select
-              value={renderer}
-              onChange={(event) =>
-                setRenderer(event.target.value as RendererKind)
-              }
-            >
-              <option value="pixi">Raw PixiJS</option>
-              <option value="dom">React DOM</option>
-            </select>
-          </label>
+          <h1>Renderer fixture</h1>
           <p>
-            Both choices consume the same 61-card immutable scene and semantic
+            The board renderer over the 61-card immutable scene and semantic
             interaction contract.
           </p>
           <output aria-live="polite">{description}</output>
@@ -84,13 +62,11 @@ export type AppRoute =
   | {
       readonly kind: 'remote-room-lobby';
       readonly buildId: string;
-      readonly rendererKind: RendererKind;
       readonly landing?: 'solo' | 'lobby';
     }
   | {
       readonly kind: 'remote-room';
       readonly runtime: RemoteRoomRuntime;
-      readonly rendererKind: RendererKind;
       readonly roomMode?: 'solo' | 'multiplayer';
     };
 
@@ -108,7 +84,6 @@ export const App = ({
       >
         <RemoteRoomRoute
           runtime={route.runtime}
-          rendererKind={route.rendererKind}
           {...(route.roomMode ? { roomMode: route.roomMode } : {})}
         />
       </Suspense>
@@ -126,7 +101,6 @@ export const App = ({
       >
         <RemoteRoomLobby
           buildId={route.buildId}
-          rendererKind={route.rendererKind}
           {...(route.landing ? { landing: route.landing } : {})}
         />
       </Suspense>

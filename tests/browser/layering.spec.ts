@@ -43,7 +43,7 @@ const setUpTable = async (page: Page, touch: boolean): Promise<void> => {
     touch
       ? page.locator(selector).first().tap()
       : page.locator(selector).first().click();
-  await page.goto('/?renderer=dom');
+  await page.goto('/');
   await expect(
     page.locator('[data-app-route="remote-room"][data-session-phase="ready"]')
   ).toBeVisible({ timeout: 30_000 });
@@ -103,7 +103,7 @@ const paintedOnTop = (page: Page, selector: string) =>
   }, selector);
 
 test('the layers keep their documented order', async ({ page }) => {
-  await page.goto('/?renderer=dom');
+  await page.goto('/');
   const values = await page.evaluate(
     (names) =>
       names.map((group) =>

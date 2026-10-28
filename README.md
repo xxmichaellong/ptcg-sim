@@ -34,8 +34,7 @@ corepack pnpm run dev:v2 --host 127.0.0.1 --port 5173 --strictPort
 
 Open <http://127.0.0.1:5173/> for a Solo table. The app bar opens Play online,
 Deck, Settings, and the command palette. `?room-lobby=1` opens Play online
-instead of creating the initial Solo room. The default renderer is React DOM;
-`?renderer=pixi` selects Pixi on either entry.
+instead of creating the initial Solo room.
 
 Vite proxies the authority's HTTP and WebSocket routes to the local Worker.
 Set `PTCGSIM_V2_SERVER_ORIGIN` on the web development command if the Worker uses

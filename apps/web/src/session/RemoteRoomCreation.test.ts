@@ -22,7 +22,6 @@ const input = {
   buildId: 'client-build',
   displayName: '  Blue  ',
   mode: 'multiplayer' as const,
-  rendererKind: 'pixi' as const,
 };
 
 const capturingClipboard = () => {
@@ -180,7 +179,6 @@ describe('remote room creation bootstrap', () => {
     expect(result.route).toEqual({
       kind: 'remote-room',
       runtime,
-      rendererKind: 'pixi',
     });
     expect(result.mode).toBe('multiplayer');
     expect(JSON.stringify(result)).not.toContain('capability-kept-in-memory');
@@ -246,7 +244,6 @@ describe('remote room creation bootstrap', () => {
       { ...input, displayName: '   ' },
       { ...input, displayName: 'x'.repeat(65) },
       { ...input, mode: 'coaching' as 'multiplayer' },
-      { ...input, rendererKind: 'unknown' as 'pixi' },
     ]) {
       await expect(
         createRemoteRoom(invalid, {
@@ -373,7 +370,6 @@ describe('remote room creation bootstrap', () => {
       route: {
         kind: 'remote-room' as const,
         runtime,
-        rendererKind: 'pixi' as const,
       },
     }));
 
@@ -720,7 +716,6 @@ describe('invited remote room bootstrap', () => {
       {
         buildId: 'client-build',
         displayName: 'Red',
-        rendererKind: 'pixi',
         invitation: {
           roomCode: 'ABCDEFGH2345',
           requestedRole: 'player',
@@ -756,7 +751,6 @@ describe('invited remote room bootstrap', () => {
         {
           buildId: 'client-build',
           displayName: 'Red',
-          rendererKind: 'pixi',
           invitation: { roomCode: 'bad', invitation: playerInvitation },
         },
         { fetch: fetchImplementation, origin: 'https://play.example' }
@@ -782,7 +776,6 @@ describe('invited remote room bootstrap', () => {
           {
             buildId: 'client-build',
             displayName: 'Red',
-            rendererKind: 'pixi',
             invitation,
           },
           {

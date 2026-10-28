@@ -147,7 +147,7 @@ describe('development room route churn', () => {
       const dispose = vi.fn(() => runtime.dispose());
       const result = {
         runtime,
-        route: { kind: 'remote-room', runtime, rendererKind: 'dom' },
+        route: { kind: 'remote-room', runtime },
         dispose,
       } as unknown as RemoteRoomCreationResult;
       created.push({ result, runtime, socket: socketFactory.socket, dispose });
@@ -164,11 +164,7 @@ describe('development room route churn', () => {
       await act(async () => {
         root.render(
           <StrictMode>
-            <DevRoomHost
-              displayName={`Route ${cycle}`}
-              mode="multiplayer"
-              rendererKind="dom"
-            />
+            <DevRoomHost displayName={`Route ${cycle}`} mode="multiplayer" />
           </StrictMode>
         );
         await flushRoute();

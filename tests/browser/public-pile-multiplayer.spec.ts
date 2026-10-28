@@ -212,9 +212,7 @@ test('public-pile controls converge on both peers, preserve disclosed state, and
       if (request.url().includes(PRIVATE_ART))
         privateRequests.push(request.url());
     });
-    await host!.goto(
-      '/?dev-room=1&room-mode=multiplayer&renderer=dom&name=Pile%20host'
-    );
+    await host!.goto('/?dev-room=1&room-mode=multiplayer&name=Pile%20host');
     await expect(host!.locator('[data-session-phase="ready"]')).toBeVisible();
     const invitation = await host!.evaluate(async () => {
       let copied = '';
@@ -227,7 +225,7 @@ test('public-pile controls converge on both peers, preserve disclosed state, and
       });
       return copied;
     });
-    await guest!.goto('/?room-lobby=1&renderer=dom');
+    await guest!.goto('/?room-lobby=1');
     await guest!.locator('#nameInput').fill('Pile guest');
     await guest!.locator('#roomIdInput').evaluate((input, text) => {
       const paste = new Event('paste', { bubbles: true, cancelable: true });

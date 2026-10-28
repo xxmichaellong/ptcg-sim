@@ -44,7 +44,7 @@ const noReturnTooltip = async (page: Page, label: string): Promise<void> => {
 test.beforeEach(async ({ page, context }) => {
   await ownRoomBudget(context);
   await routeCardCatalog(page);
-  await page.goto('/?renderer=dom');
+  await page.goto('/');
   await expect(page.locator('[data-session-phase="ready"]')).toBeVisible();
   await openDeck(page);
 });

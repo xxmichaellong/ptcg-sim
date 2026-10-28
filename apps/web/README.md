@@ -2,8 +2,8 @@
 
 The web app opens a live Solo table by default. The table fills the window;
 Play online, Deck, Settings, and help open from the app bar. The activity log
-can open over the table or dock beside it. React DOM is the default renderer,
-and `?renderer=pixi` selects the retained Pixi adapter.
+can open over the table or dock beside it. The table is drawn in React DOM
+(the Pixi renderer was retired on 2026-10-28, ADR-004).
 
 This application and the Worker in `apps/server` are separate from the legacy
 `client/` and `server/` application. Local development and browser checks do not
@@ -40,18 +40,17 @@ target with `PTCGSIM_V2_SERVER_ORIGIN` on the Vite command if needed.
 
 The entry points are selected by `src/main.tsx` and the tutorial host:
 
-| Address                                    | Behavior                                                                                         |
-| ------------------------------------------ | ------------------------------------------------------------------------------------------------ |
-| `/`                                        | Creates and opens the initial Solo room.                                                         |
-| `/?room-lobby=1`                           | Opens Play online over an empty table; no room is created until requested.                       |
-| `/?tutorial` or `/?tutorial=damage`        | Opens the tutorial lesson list or a named lesson on a separate practice table.                   |
-| `/?renderer=pixi`                          | Selects Pixi instead of React DOM; combine with the other entries.                               |
-| `/?renderer-spike=1&renderer=dom`          | Opens the synthetic renderer comparison scene without creating a room.                           |
-| `/?dev-room=1&renderer=dom&name=Developer` | Development-only direct room bootstrap; defaults to multiplayer. Add `&room-mode=solo` for Solo. |
-| `/?depth-lab=1`                            | Development-only table-depth diagnostic page.                                                    |
+| Address                             | Behavior                                                                                         |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `/`                                 | Creates and opens the initial Solo room.                                                         |
+| `/?room-lobby=1`                    | Opens Play online over an empty table; no room is created until requested.                       |
+| `/?tutorial` or `/?tutorial=damage` | Opens the tutorial lesson list or a named lesson on a separate practice table.                   |
+| `/?renderer-spike=1`                | Opens the synthetic renderer fixture scene without creating a room.                              |
+| `/?dev-room=1&name=Developer`       | Development-only direct room bootstrap; defaults to multiplayer. Add `&room-mode=solo` for Solo. |
+| `/?depth-lab=1`                     | Development-only table-depth diagnostic page.                                                    |
 
 The `dev-room` and `depth-lab` modules are excluded from production bundles.
-The renderer comparison remains available through its explicit flag; it is not
+The renderer fixture remains available through its explicit flag; it is not
 the normal landing page. Tutorial entry is removed from the address after it is
 handled, so reload returns to the normal entry.
 

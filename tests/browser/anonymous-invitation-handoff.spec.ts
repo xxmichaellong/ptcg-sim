@@ -44,7 +44,6 @@ interface InvitationJoinCustody {
   readonly bootstrap: (input: {
     readonly buildId: string;
     readonly displayName: string;
-    readonly rendererKind: 'dom';
   }) => Promise<BrowserRoomHandle>;
 }
 
@@ -57,7 +56,6 @@ interface CreationModuleShape {
     readonly buildId: string;
     readonly displayName: string;
     readonly mode: 'multiplayer';
-    readonly rendererKind: 'dom';
   }) => Promise<BrowserCreatorHandle & { readonly mode: string }>;
 }
 
@@ -139,7 +137,6 @@ const joinFromHandoff = async (
     const result = await custody.bootstrap({
       buildId: 'local-development',
       displayName: name,
-      rendererKind: 'dom',
     });
     globals.__ptcgsimInvitationTestRoom = {
       runtime: result.runtime,
@@ -210,7 +207,6 @@ test('manual handoff admits player two and distinct repeat spectators across iso
           buildId: 'local-development',
           displayName: 'Blue',
           mode: 'multiplayer',
-          rendererKind: 'dom',
         });
         (globalThis as InvitationTestGlobals).__ptcgsimInvitationTestCreator =
           result;
@@ -242,7 +238,6 @@ test('manual handoff admits player two and distinct repeat spectators across iso
           await custody.bootstrap({
             buildId: 'local-development',
             displayName: 'Rotated',
-            rendererKind: 'dom',
           });
           return 'accepted';
         } catch (error) {

@@ -31,11 +31,6 @@ import { act, createElement, useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const pixiRendererFactory = vi.hoisted(() => vi.fn());
-vi.mock('@ptcgsim/renderer-pixi', () => ({
-  createPixiBoardRenderer: pixiRendererFactory,
-}));
-
 import { GamePresentationCoordinator } from '../presentation/GamePresentationCoordinator.js';
 import type { SessionPresentationSource } from '../presentation/SessionPresentationDispatcher.js';
 import type { ReplayPresentationSource } from '../replay/ReplayPresentationDispatcher.js';
@@ -48,8 +43,8 @@ import type {
   BoardSessionRendererEffect,
   BoardSessionReplaySource,
 } from './BoardSessionAdapter.js';
+import { BoardSessionRuntime } from './BoardSessionRuntime.js';
 import { ReactDomBoardSessionRuntime } from './ReactDomBoardSessionRuntime.js';
-import { PixiBoardSessionRuntime } from './PixiBoardSessionRuntime.js';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -2092,7 +2087,7 @@ describe('opt-in React DOM board session runtime', () => {
   });
 });
 
-describe('opt-in Pixi board session runtime', () => {
+describe('board session runtime over another renderer', () => {
   afterEach(() => vi.restoreAllMocks());
 
   it('uses the shared runtime lifecycle without leaking its borrowed sources', async () => {
@@ -2116,17 +2111,18 @@ describe('opt-in Pixi board session runtime', () => {
       setPreferences: vi.fn(),
       destroy,
     };
-    pixiRendererFactory.mockReturnValueOnce(renderer);
-    const runtime = new PixiBoardSessionRuntime({
+    const createRenderer = vi.fn(() => renderer);
+    const runtime = new BoardSessionRuntime({
       live,
       replay,
       layout: layoutState(),
+      createRenderer,
     });
     const host = document.createElement('div');
     document.body.append(host);
 
     await runtime.mount(host);
-    expect(pixiRendererFactory).toHaveBeenCalledOnce();
+    expect(createRenderer).toHaveBeenCalledOnce();
     expect(host.querySelector('canvas')).toBe(canvas);
     expect(canvas.dataset.revision).toBe('1');
     // The adapter watches the live command queue for settling cards.

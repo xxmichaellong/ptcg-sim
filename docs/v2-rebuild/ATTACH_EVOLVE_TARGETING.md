@@ -1,6 +1,8 @@
 # Attach/evolve target-selection blueprint
 
-Status: V2 vertical slice implemented and locally verified.
+Status: V2 vertical slice implemented and locally verified. (2026-10-28: the
+Pixi renderer named below was retired, ADR-004; the DOM renderer is the only
+implementation.)
 
 This document freezes the selected-card `Q`/`E` interaction before the V2
 implementation changes renderer, controller, wire, domain-event, and authority

@@ -335,7 +335,6 @@ describe('React DOM board renderer', () => {
       { kind: 'ready', generation: 1 },
     ]);
     expect(renderer.getDiagnostics()).toMatchObject({
-      rendererKind: 'dom',
       mounted: true,
       destroyed: false,
       sceneRevision: 3,
@@ -343,9 +342,6 @@ describe('React DOM board renderer', () => {
       renderedCardIds: [cardId],
       renderedZoneIds: ['zone:p1:hand'],
       renderedMarkerIds: [],
-      displayObjects: 0,
-      localTextureBindings: 0,
-      contextLossListeners: 0,
     });
     expect(renderer.getDiagnostics().domNodes).toBeGreaterThanOrEqual(4);
 
@@ -833,9 +829,6 @@ describe('React DOM board renderer', () => {
     expect(markerToken(updatedDamage).diameter).toBeCloseTo(24 * 0.92, 6);
     expect(renderer.getDiagnostics()).toMatchObject({
       renderedMarkerIds: ['stack:p1:active:damage', 'visible-card:abilityUsed'],
-      localTextureBindings: 0,
-      globalTextureLeaseEntries: 0,
-      globalTextureReferences: 0,
     });
 
     await act(async () => {
@@ -1066,9 +1059,6 @@ describe('React DOM board renderer', () => {
     expect(host.querySelectorAll('[data-marker-id]')).toHaveLength(0);
     expect(renderer.getDiagnostics()).toMatchObject({
       renderedMarkerIds: [],
-      localTextureBindings: 0,
-      globalTextureLeaseEntries: 0,
-      globalTextureReferences: 0,
     });
     await act(async () => {
       renderer.destroy();
@@ -1319,9 +1309,6 @@ describe('React DOM board renderer', () => {
     expect(host.querySelectorAll('[data-marker-id]')).toHaveLength(0);
     expect(renderer.getDiagnostics()).toMatchObject({
       renderedMarkerIds: [],
-      localTextureBindings: 0,
-      globalTextureLeaseEntries: 0,
-      globalTextureReferences: 0,
     });
     await act(async () => {
       renderer.destroy();

@@ -75,7 +75,6 @@ import {
   LegacyBoardOverlays,
   type LegacyBoardOverlayActions,
 } from '../board/overlays/LegacyBoardOverlays.js';
-import type { RendererKind } from '../renderer-spike-handle.js';
 import type { CoinFlipSnapshot } from '../presentation/CoinFlipController.js';
 import type { PresentationStateSource } from '../presentation/PresentationRuntime.js';
 import type { ReplaySessionCoordinator } from '../replay/ReplaySessionCoordinator.js';
@@ -272,7 +271,6 @@ const viewIdentity = (
 export const RemoteSessionBoard = ({
   session,
   replay,
-  rendererKind,
   onIntent,
   onSubmission,
   preferences: basePreferences = ROOM_DEFAULT_PREFERENCES,
@@ -293,7 +291,6 @@ export const RemoteSessionBoard = ({
 }: {
   readonly session: RemoteBoardSession;
   readonly replay: ReplaySessionCoordinator;
-  readonly rendererKind: RendererKind;
   readonly onIntent: (intent: BoardIntent) => void;
   readonly onSubmission?: (
     command: WireGameCommand,
@@ -551,7 +548,6 @@ export const RemoteSessionBoard = ({
     setLayout(undefined);
     setRendererStatus({ kind: 'mounting' });
 
-    let actualRendererKind = rendererKind;
     let publishedRevision: number | undefined;
     // Faces about to be turned up, loaded before they turn.
     const faces = new FacePreloader();
@@ -594,7 +590,6 @@ export const RemoteSessionBoard = ({
         return;
       }
       window.__PTCG_RENDERER_SPIKE__ = {
-        rendererKind: actualRendererKind,
         renderer,
         scene: snapshot.scene,
       };
@@ -663,9 +658,7 @@ export const RemoteSessionBoard = ({
 
     const mount = async (): Promise<void> => {
       try {
-        const loaded = await loadBoardRenderer(rendererKind);
-        const { createRenderer } = loaded;
-        actualRendererKind = loaded.kind;
+        const createRenderer = await loadBoardRenderer();
         if (disposed) return;
         const layout = layoutFor(
           view,
@@ -795,7 +788,7 @@ export const RemoteSessionBoard = ({
       if (runtimeRef.current === runtime) runtimeRef.current = null;
       runtime?.dispose();
     };
-  }, [identity, rendererKind, replay, session]);
+  }, [identity, replay, session]);
 
   useLayoutEffect(() => {
     const runtime = runtimeRef.current;

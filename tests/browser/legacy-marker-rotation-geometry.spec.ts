@@ -696,7 +696,7 @@ test('pristine source active markers match the strict React DOM candidate', asyn
       runtimeErrors.push(`console.error: ${message.text()}`);
     }
   });
-  await page.goto('/?renderer-spike=1&renderer=dom');
+  await page.goto('/?renderer-spike=1');
   await expect(page.locator('[data-renderer-status]')).toHaveAttribute(
     'data-renderer-status',
     'ready'

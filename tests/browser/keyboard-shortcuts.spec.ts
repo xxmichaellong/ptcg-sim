@@ -9,7 +9,7 @@ import { chooseMenuItem, closeSheet, openDeck } from './support/table-shell.js';
  */
 
 const startTable = async (page: Page): Promise<void> => {
-  await page.goto('/?room-lobby=1&renderer=dom');
+  await page.goto('/?room-lobby=1');
   await page.locator('#nameInput').fill('Shortcut review');
   // Putting Play online away goes to the Solo table.
   await closeSheet(page);

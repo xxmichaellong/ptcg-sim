@@ -8,10 +8,10 @@ import type { MarkerSceneNode } from './model.js';
  * current Burn and Poison markers' art, and the same set's Zzz, jolt and
  * swirl for the three conditions the table shows by turning the card.
  *
- * Both board renderers read this one description. Colours are 8-bit channels
- * plus alpha, converted at the edge: CSS wants `rgb()`/`rgba()`, Pixi wants a
- * packed integer and a separate alpha. The DOM renderer paints them through
- * `var()` with these values as fallbacks, so the app's tokens can retune them.
+ * The board renderer reads this one description. Colours are 8-bit channels
+ * plus alpha, converted to `rgb()`/`rgba()` at the edge. The DOM renderer
+ * paints them through `var()` with these values as fallbacks, so the app's
+ * tokens can retune them.
  */
 export interface LegacyMarkerColor {
   readonly r: number;
@@ -31,9 +31,6 @@ export const legacyMarkerCssColor = (color: LegacyMarkerColor): string =>
   color.alpha === 1
     ? `rgb(${color.r}, ${color.g}, ${color.b})`
     : `rgba(${color.r}, ${color.g}, ${color.b}, ${color.alpha})`;
-
-export const legacyMarkerPackedColor = (color: LegacyMarkerColor): number =>
-  (color.r << 16) | (color.g << 8) | color.b;
 
 /** The three physical damage counters; a total is shown on the largest it reaches. */
 export type DamageCounterBand = 10 | 50 | 100;
@@ -288,44 +285,4 @@ export const markerLabelFontSizePx = (
           ? 0.3
           : Math.max(0.16, 1.2 / length);
   return diameter * ratio;
-};
-
-export interface LegacyMarkerAppearance {
-  readonly fill: LegacyMarkerColor;
-  readonly text: LegacyMarkerColor;
-  /** Ability markers are a rounded tab; the others are circles. */
-  readonly shape: 'circle' | 'tab';
-  /** Omitted when the marker draws no text. */
-  readonly fontSizePx?: number;
-  readonly label: string;
-}
-
-export const isLegacyMarkerPresentation = (
-  presentation: MarkerSceneNode['presentation']
-): boolean =>
-  presentation === 'legacyActiveQ0' || presentation === 'legacyBenchQ0';
-
-/**
- * A marker as one flat colour and its typed text: what a renderer without the
- * token artwork paints (the Pixi spike), and what the in-place marker editor
- * previews while a value is typed. Callers must only use this for nodes whose
- * `presentation` is a legacy one.
- */
-export const legacyMarkerAppearance = (
-  marker: Pick<MarkerSceneNode, 'kind' | 'value' | 'side' | 'bounds'>
-): LegacyMarkerAppearance => {
-  const face = markerFace(marker);
-  if (marker.kind === 'abilityUsed') {
-    return { fill: face.fill, text: face.ink, shape: 'tab', label: '' };
-  }
-  return {
-    fill: face.fill,
-    text: face.ink,
-    shape: 'circle',
-    fontSizePx: markerLabelFontSizePx(
-      marker.bounds.width * face.scale,
-      marker.value
-    ),
-    label: marker.value,
-  };
 };

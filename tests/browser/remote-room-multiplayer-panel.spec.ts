@@ -26,7 +26,7 @@ test('reading Play online leaves a live Solo table mounted', async ({
     if (message.type() === 'error') errors.push(`console: ${message.text()}`);
   });
 
-  await page.goto('/?room-lobby=1&renderer=dom');
+  await page.goto('/?room-lobby=1');
   await expect(
     page.locator('[data-app-route="remote-room-lobby"]')
   ).toBeVisible();

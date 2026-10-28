@@ -113,7 +113,7 @@ for (const mode of ['flat', 'table'] as const)
     }) => {
       test.setTimeout(90_000);
       await installServerHold(page);
-      await page.goto('/?room-lobby=1&renderer=dom');
+      await page.goto('/?room-lobby=1');
       await page.locator('#nameInput').fill('Blue');
       // Putting Play online away goes to the Solo table.
       await closeSheet(page);

@@ -63,7 +63,6 @@ const result = (label: string) => {
       route: {
         kind: 'remote-room' as const,
         runtime,
-        rendererKind: 'dom' as const,
       },
     },
     dispose,
@@ -87,7 +86,6 @@ describe('remote room restoration custody', () => {
       restoration.restore({
         buildId: 'test-build',
         displayName: 'Blue',
-        rendererKind: 'dom',
         deliverOpponentInvitation,
       })
     ).resolves.toBe(target.value);
@@ -97,7 +95,6 @@ describe('remote room restoration custody', () => {
       displayName: 'Blue',
       requestedRole: 'player',
       capability: requesterSeatCapability,
-      rendererKind: 'dom',
       signal: expect.any(AbortSignal),
     });
     expect(deliverOpponentInvitation).toHaveBeenCalledWith(
@@ -134,7 +131,6 @@ describe('remote room restoration custody', () => {
       restoration.restore({
         buildId: 'test-build',
         displayName: 'Blue',
-        rendererKind: 'dom',
         deliverOpponentInvitation,
       })
     ).rejects.toMatchObject({ code: 'installation_failed' });
@@ -145,7 +141,6 @@ describe('remote room restoration custody', () => {
       restoration.restore({
         buildId: 'test-build',
         displayName: 'Blue',
-        rendererKind: 'dom',
         deliverOpponentInvitation,
       })
     ).resolves.toBe(second.value);
@@ -178,7 +173,6 @@ describe('remote room restoration custody', () => {
       route: {
         kind: 'remote-room' as const,
         runtime,
-        rendererKind: 'dom' as const,
       },
     };
     const deliverOpponentInvitation = vi.fn(async () => undefined);
@@ -191,7 +185,6 @@ describe('remote room restoration custody', () => {
     const pending = restoration.restore({
       buildId: 'test-build',
       displayName: 'Blue',
-      rendererKind: 'dom',
       deliverOpponentInvitation,
     });
     await Promise.resolve();
@@ -236,7 +229,6 @@ describe('remote room restoration custody', () => {
         restored: restoration.restore({
           buildId: 'test-build',
           displayName: 'Blue',
-          rendererKind: 'dom',
           deliverOpponentInvitation: vi.fn(),
         }),
       };

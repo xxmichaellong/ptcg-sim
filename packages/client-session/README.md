@@ -1,8 +1,8 @@
 # Client session
 
 Transport-neutral ownership of the v2 browser session. This package bridges the
-validated WebSocket protocol into an immutable external store that React, the
-DOM renderer, and the Pixi renderer can consume without owning networking.
+validated WebSocket protocol into an immutable external store that React and
+the DOM renderer can consume without owning networking.
 
 ## Guarantees
 

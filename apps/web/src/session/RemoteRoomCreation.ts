@@ -9,7 +9,6 @@ import {
   type RoomInvitationHandoff,
 } from '@ptcgsim/protocol';
 
-import type { RendererKind } from '../RendererSpikeBoard.js';
 import {
   RemoteRoomBootstrapError,
   bootstrapRemoteRoom,
@@ -44,7 +43,6 @@ export interface RemoteRoomCreationInput {
   readonly buildId: string;
   readonly displayName: string;
   readonly mode: RoomCreationRequest['mode'];
-  readonly rendererKind: RendererKind;
   readonly signal?: AbortSignal;
 }
 
@@ -327,7 +325,6 @@ export interface RemoteRoomCreationResult extends RemoteRoomBootstrapResult {
 export interface RemoteRoomInvitationBootstrapInput {
   readonly buildId: string;
   readonly displayName: string;
-  readonly rendererKind: RendererKind;
   readonly invitation: unknown;
   /**
    * Watch instead of play. v1 let the holder of the room key choose; a
@@ -360,7 +357,6 @@ export const bootstrapRemoteRoomInvitation = async (
           ? 'spectator'
           : parsed.value.requestedRole,
         capability: parsed.value.invitation,
-        rendererKind: input.rendererKind,
         ...(input.signal ? { signal: input.signal } : {}),
       },
       dependencies
@@ -384,8 +380,7 @@ const validInput = (input: RemoteRoomCreationInput): boolean => {
     input.buildId.length <= 128 &&
     displayName.length >= 1 &&
     displayName.length <= 64 &&
-    (input.mode === 'solo' || input.mode === 'multiplayer') &&
-    (input.rendererKind === 'pixi' || input.rendererKind === 'dom')
+    (input.mode === 'solo' || input.mode === 'multiplayer')
   );
 };
 
@@ -480,7 +475,6 @@ export const createRemoteRoom = async (
         displayName: input.displayName.trim(),
         requestedRole: 'player',
         capability: credentials.playerOneSeatCapability,
-        rendererKind: input.rendererKind,
         ...(input.signal ? { signal: input.signal } : {}),
       },
       {

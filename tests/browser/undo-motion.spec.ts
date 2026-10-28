@@ -48,19 +48,15 @@ const zoneCount = (page: Page, kind: string) =>
     kind
   );
 
-const idle = async (page: Page, renderer: string): Promise<void> => {
+const idle = async (page: Page): Promise<void> => {
   await expect(
-    page.locator(
-      renderer === 'dom'
-        ? '.ptcgsim-board-surface[data-board-motion="idle"]'
-        : 'canvas[data-board-motion="idle"]'
-    )
+    page.locator('.ptcgsim-board-surface[data-board-motion="idle"]')
   ).toBeAttached();
 };
 
-const startTable = async (page: Page, renderer: string): Promise<void> => {
+const startTable = async (page: Page): Promise<void> => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto(`/?room-lobby=1&renderer=${renderer}`);
+  await page.goto('/?room-lobby=1');
   await page.locator('#nameInput').fill('Undo review');
   // Putting Play online away goes to the Solo table.
   await closeSheet(page);
@@ -88,7 +84,7 @@ const startTable = async (page: Page, renderer: string): Promise<void> => {
   await page.locator('#setupButton').click();
   await expect.poll(() => zoneCount(page, 'hand')).toBe(7);
   await page.mouse.move(2, 450);
-  await idle(page, renderer);
+  await idle(page);
 };
 
 /**
@@ -158,97 +154,91 @@ declare global {
   }
 }
 
-for (const renderer of ['dom', 'pixi'] as const) {
-  test(`${renderer}: taking back a draw moves only the drawn card and the hand around it`, async ({
-    page,
-  }) => {
-    test.setTimeout(90_000);
-    await startTable(page, renderer);
-    const beforeDraw = await sceneCards(page);
-    await page.keyboard.press('1');
-    await expect.poll(() => zoneCount(page, 'hand')).toBe(8);
-    await idle(page, renderer);
-    const drawn = await sceneCards(page);
-    if (renderer === 'dom') await watchTable(page);
+test('taking back a draw moves only the drawn card and the hand around it', async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await startTable(page);
+  const beforeDraw = await sceneCards(page);
+  await page.keyboard.press('1');
+  await expect.poll(() => zoneCount(page, 'hand')).toBe(8);
+  await idle(page);
+  const drawn = await sceneCards(page);
+  await watchTable(page);
 
-    await page.keyboard.press('u');
-    await expect.poll(() => zoneCount(page, 'hand')).toBe(7);
-    await idle(page, renderer);
-    const restored = await sceneCards(page);
+  await page.keyboard.press('u');
+  await expect.poll(() => zoneCount(page, 'hand')).toBe(7);
+  await idle(page);
+  const restored = await sceneCards(page);
 
-    // One card changed identity: the drawn card, back on the deck under an
-    // alias neither the draw nor the table before it ever showed.
-    const drawnIds = new Set(drawn.map((card) => card.id));
-    const beforeIds = new Set(beforeDraw.map((card) => card.id));
-    const rekeyed = restored.filter((card) => !drawnIds.has(card.id));
-    expect(rekeyed).toHaveLength(1);
-    expect(rekeyed[0]!.parentId).toMatch(/:deck$/u);
-    expect(beforeIds.has(rekeyed[0]!.id)).toBe(false);
-    // Everything else -- both decks, the prizes, the opponent, the hand --
-    // is the very card it was before the draw.
-    expect(restored.filter((card) => card.id !== rekeyed[0]!.id)).toEqual(
-      beforeDraw.filter((card) => drawnIds.has(card.id))
-    );
+  // One card changed identity: the drawn card, back on the deck under an
+  // alias neither the draw nor the table before it ever showed.
+  const drawnIds = new Set(drawn.map((card) => card.id));
+  const beforeIds = new Set(beforeDraw.map((card) => card.id));
+  const rekeyed = restored.filter((card) => !drawnIds.has(card.id));
+  expect(rekeyed).toHaveLength(1);
+  expect(rekeyed[0]!.parentId).toMatch(/:deck$/u);
+  expect(beforeIds.has(rekeyed[0]!.id)).toBe(false);
+  // Everything else -- both decks, the prizes, the opponent, the hand --
+  // is the very card it was before the draw.
+  expect(restored.filter((card) => card.id !== rekeyed[0]!.id)).toEqual(
+    beforeDraw.filter((card) => drawnIds.has(card.id))
+  );
 
-    if (renderer === 'dom') {
-      const watched = await finishWatch(page);
-      expect(watched.remounted).toBe(0);
-      // No pile riffles; only the hand closing up and the card going home
-      // move.
-      expect(watched.ghosts).toBe(0);
-      const moving = new Map(restored.map((card) => [card.id, card]));
-      for (const id of watched.flying) {
-        const card = moving.get(id);
-        expect(card?.side, id).toBe('local');
-        expect(card?.parentId, id).toMatch(/:(hand|deck)$/u);
-      }
-    }
-  });
+  const watched = await finishWatch(page);
+  expect(watched.remounted).toBe(0);
+  // No pile riffles; only the hand closing up and the card going home
+  // move.
+  expect(watched.ghosts).toBe(0);
+  const moving = new Map(restored.map((card) => [card.id, card]));
+  for (const id of watched.flying) {
+    const card = moving.get(id);
+    expect(card?.side, id).toBe('local');
+    expect(card?.parentId, id).toMatch(/:(hand|deck)$/u);
+  }
+});
 
-  test(`${renderer}: taking back a shuffle riffles that deck and touches nothing else`, async ({
-    page,
-  }) => {
-    test.setTimeout(90_000);
-    await startTable(page, renderer);
-    await page.keyboard.press('s');
-    await idle(page, renderer);
-    const shuffled = await sceneCards(page);
-    if (renderer === 'dom') await watchTable(page);
+test('taking back a shuffle riffles that deck and touches nothing else', async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await startTable(page);
+  await page.keyboard.press('s');
+  await idle(page);
+  const shuffled = await sceneCards(page);
+  await watchTable(page);
 
-    await page.keyboard.press('u');
-    await expect
-      .poll(async () =>
-        (await sceneCards(page)).some(
-          (card) =>
-            card.parentId.endsWith(':deck') &&
-            card.side === 'local' &&
-            !shuffled.some((before) => before.id === card.id)
-        )
+  await page.keyboard.press('u');
+  await expect
+    .poll(async () =>
+      (await sceneCards(page)).some(
+        (card) =>
+          card.parentId.endsWith(':deck') &&
+          card.side === 'local' &&
+          !shuffled.some((before) => before.id === card.id)
       )
-      .toBe(true);
-    await idle(page, renderer);
-    const restored = await sceneCards(page);
+    )
+    .toBe(true);
+  await idle(page);
+  const restored = await sceneCards(page);
 
-    const shuffledIds = new Set(shuffled.map((card) => card.id));
-    const isLocalDeck = (card: SceneCard) =>
-      card.side === 'local' && card.parentId.endsWith(':deck');
-    // The un-shuffled deck is dealt afresh: none of the shuffled aliases
-    // survive, so the shuffle cannot be traced back.
-    expect(
-      restored.filter((card) => isLocalDeck(card) && shuffledIds.has(card.id))
-    ).toEqual([]);
-    // Nothing outside that deck changed identity.
-    expect(restored.filter((card) => !isLocalDeck(card))).toEqual(
-      shuffled.filter((card) => !isLocalDeck(card))
-    );
+  const shuffledIds = new Set(shuffled.map((card) => card.id));
+  const isLocalDeck = (card: SceneCard) =>
+    card.side === 'local' && card.parentId.endsWith(':deck');
+  // The un-shuffled deck is dealt afresh: none of the shuffled aliases
+  // survive, so the shuffle cannot be traced back.
+  expect(
+    restored.filter((card) => isLocalDeck(card) && shuffledIds.has(card.id))
+  ).toEqual([]);
+  // Nothing outside that deck changed identity.
+  expect(restored.filter((card) => !isLocalDeck(card))).toEqual(
+    shuffled.filter((card) => !isLocalDeck(card))
+  );
 
-    if (renderer === 'dom') {
-      const watched = await finishWatch(page);
-      expect(watched.remounted).toBe(0);
-      const byId = new Map(restored.map((card) => [card.id, card]));
-      for (const id of watched.flying) {
-        expect(byId.get(id) && isLocalDeck(byId.get(id)!), id).toBe(true);
-      }
-    }
-  });
-}
+  const watched = await finishWatch(page);
+  expect(watched.remounted).toBe(0);
+  const byId = new Map(restored.map((card) => [card.id, card]));
+  for (const id of watched.flying) {
+    expect(byId.get(id) && isLocalDeck(byId.get(id)!), id).toBe(true);
+  }
+});

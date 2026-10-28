@@ -186,8 +186,8 @@ Turning the board around -- Solo, or a room's coaching flip -- moves the
 seats, not their colours, as v1's flip swapped `self-color` and
 `opp-color`. The scene stamps each seat's frame with its `tone`, and
 everything painted in a seat's colour reads it (the empty deck's `+`, each
-half's glow, the hand pill and its Sort, count badges on the Pixi table,
-the pile viewers, the log and the turn banner); where a thing goes on
+half's glow, the hand pill and its Sort, the pile viewers, the log and
+the turn banner); where a thing goes on
 screen still comes from its `side`. The rail is painted for the seat it
 acts for, the one at the bottom.
 

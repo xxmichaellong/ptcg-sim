@@ -124,7 +124,7 @@ test('two raised tables reconcile delayed and rejected play, resume after discon
   try {
     await faults(owner!);
     await faults(guest!);
-    await owner!.goto('/?dev-room=1&renderer=dom&name=Depth%20owner');
+    await owner!.goto('/?dev-room=1&name=Depth%20owner');
     await expect(owner!.locator('[data-session-phase="ready"]')).toBeVisible();
     const invitation = await owner!.evaluate(async () => {
       let value = '';
@@ -137,7 +137,7 @@ test('two raised tables reconcile delayed and rejected play, resume after discon
       });
       return value;
     });
-    await guest!.goto('/?room-lobby=1&renderer=dom');
+    await guest!.goto('/?room-lobby=1');
     await guest!.locator('#nameInput').fill('Depth guest');
     await guest!.locator('#roomIdInput').evaluate((input, text) => {
       const event = new Event('paste', { bubbles: true, cancelable: true });

@@ -172,7 +172,7 @@ test('the Solo table appears once behind one loading screen on a cold, slow load
   test.setTimeout(90_000);
   const context = await browser.newContext({ baseURL });
   try {
-    const { page, errors } = await openRecorded(context, '/?renderer=dom', {
+    const { page, errors } = await openRecorded(context, '/', {
       throttle: 4,
     });
     await expect(
@@ -201,10 +201,7 @@ test('Play online opens over a table that appears once', async ({
 }, testInfo) => {
   const context = await browser.newContext({ baseURL });
   try {
-    const { page, errors } = await openRecorded(
-      context,
-      '/?room-lobby=1&renderer=dom'
-    );
+    const { page, errors } = await openRecorded(context, '/?room-lobby=1');
     await expect(page.locator('#playOnlineSheet')).toBeVisible();
     await curtainGone(page);
     const samples = await samplesOf(page);
@@ -229,7 +226,7 @@ test('under reduced motion the loading screen goes at once, and the table still 
     reducedMotion: 'reduce',
   });
   try {
-    const { page } = await openRecorded(context, '/?renderer=dom');
+    const { page } = await openRecorded(context, '/');
     await expect(
       page.locator('[data-app-route="remote-room"][data-session-phase="ready"]')
     ).toBeVisible({ timeout: 30_000 });
@@ -257,7 +254,7 @@ test('joining a room trades tables under the curtain, never over a bare desk', a
   const guestContext = await browser.newContext(options);
   try {
     const host = await hostContext.newPage();
-    await host.goto('/?room-lobby=1&renderer=dom');
+    await host.goto('/?room-lobby=1');
     await curtainGone(host);
     await host.locator('#generateIdButton').click();
     await expect(host.locator('#roomIdInput')).toHaveValue(
@@ -273,7 +270,7 @@ test('joining a room trades tables under the curtain, never over a bare desk', a
 
     const { page: guest, errors } = await openRecorded(
       guestContext,
-      '/?room-lobby=1&renderer=dom'
+      '/?room-lobby=1'
     );
     await curtainGone(guest);
     await guest.locator('#nameInput').fill('Guest');

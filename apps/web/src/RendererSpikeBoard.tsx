@@ -23,20 +23,7 @@ import {
 import type { WireGameCommand } from '@ptcgsim/protocol';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { submitBoardDrop } from './board/resolveBoardDrop.js';
-import type {
-  BoardRendererFactory,
-  RendererKind,
-} from './renderer-spike-handle.js';
-
-export type { RendererKind } from './renderer-spike-handle.js';
-
-/**
- * ADR-004 selects normalized stable-keyed React DOM as the first production
- * renderer, so it is the default. The Pixi implementation stays reachable with
- * `?renderer=pixi` as unwired comparison evidence.
- */
-export const readRendererKind = (requested: string | null): RendererKind =>
-  requested === 'pixi' ? 'pixi' : 'dom';
+import type { BoardRendererFactory } from './renderer-spike-handle.js';
 
 /** The play-mat table (geometry v2) filling the window, split as given. */
 export interface SpikeTableLayout {
@@ -117,7 +104,6 @@ const sameOuterViewport = (
 
 export const RendererSpikeBoard = ({
   view,
-  rendererKind,
   onIntent,
   submitCommand,
   allowRevisionRegression = false,
@@ -128,7 +114,6 @@ export const RendererSpikeBoard = ({
   onSettledChange,
 }: {
   readonly view: MatchViewState;
-  readonly rendererKind: RendererKind;
   readonly onIntent: (intent: BoardIntent) => void;
   readonly submitCommand: (command: WireGameCommand) => unknown;
   /** Replay-only escape hatch; live callers retain monotonic stale protection. */
@@ -170,7 +155,6 @@ export const RendererSpikeBoard = ({
   allowRevisionRegressionRef.current = allowRevisionRegression;
   preferencesRef.current = preferences ?? DEFAULT_BOARD_PREFERENCES;
   hasExplicitPreferencesRef.current = preferences !== undefined;
-  const actualRendererKind = useRef(rendererKind);
   const [status, setStatus] = useState<BoardRendererStatus>({
     kind: 'mounting',
   });
@@ -252,9 +236,7 @@ export const RendererSpikeBoard = ({
           if (!disposed) setStatus(next);
         },
       };
-      const loaded = await loadBoardRenderer(rendererKind);
-      const { createRenderer } = loaded;
-      actualRendererKind.current = loaded.kind;
+      const createRenderer = await loadBoardRenderer();
       if (disposed) return;
       rendererFactoryRef.current = createRenderer;
       renderer = createRenderer(adapters);
@@ -296,7 +278,6 @@ export const RendererSpikeBoard = ({
           const published = installedRef.current;
           if (!published) return;
           window.__PTCG_RENDERER_SPIKE__ = {
-            rendererKind: actualRendererKind.current,
             renderer,
             scene: published.scene,
             ...(import.meta.env.DEV ? { createRenderer } : {}),
@@ -332,7 +313,7 @@ export const RendererSpikeBoard = ({
       rendererFactoryRef.current = null;
       installedRef.current = null;
     };
-  }, [rendererKind]);
+  }, []);
 
   useEffect(() => {
     onSettledChangeRef.current?.(settled);
@@ -361,14 +342,12 @@ export const RendererSpikeBoard = ({
     renderer.installScene(next.scene, [], mode);
     installedRef.current = { view, scene: next.scene };
     window.__PTCG_RENDERER_SPIKE__ = {
-      rendererKind: actualRendererKind.current,
       renderer,
       scene: next.scene,
       ...(import.meta.env.DEV ? { createRenderer } : {}),
     };
   }, [
     allowRevisionRegression,
-    rendererKind,
     view,
     table?.lowerShare,
     table?.seamBandPx,

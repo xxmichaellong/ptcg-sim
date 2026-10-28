@@ -46,7 +46,7 @@ const preferences = {
 };
 const scene = (page: Page) =>
   page.evaluate(() => window.__PTCG_RENDERER_SPIKE__!.scene);
-const start = async (page: Page, renderer = 'dom') => {
+const start = async (page: Page) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.addInitScript((depth) => {
     localStorage.setItem('ptcgsim.table-depth.v1', JSON.stringify(depth));
@@ -57,7 +57,7 @@ const start = async (page: Page, renderer = 'dom') => {
       JSON.stringify({ lostZone: true })
     );
   }, preferences.depth);
-  await page.goto(`/?room-lobby=1&renderer=${renderer}`);
+  await page.goto('/?room-lobby=1');
   await page.locator('#nameInput').fill('Depth review');
   // Putting Play online away goes to the Solo table.
   await closeSheet(page);
@@ -122,89 +122,32 @@ const centre = async (page: Page, id: string) => {
     )
   );
 };
-const idle = async (page: Page, renderer = 'dom') => {
-  if (renderer === 'dom')
-    await expect(page.locator('.ptcgsim-board-surface')).toHaveAttribute(
-      'data-board-motion',
-      'idle'
-    );
-  else
-    await expect(page.locator('canvas')).toHaveAttribute(
-      'data-board-motion',
-      'idle'
-    );
+const idle = async (page: Page) => {
+  await expect(page.locator('.ptcgsim-board-surface')).toHaveAttribute(
+    'data-board-motion',
+    'idle'
+  );
 };
 
-test('the Pixi table keeps zone labels and count badges readable across themes, depth and hidden containers', async ({
+test('the table keeps zone labels and count badges readable across themes, depth and hidden containers', async ({
   page,
-  browserName,
-}, testInfo) => {
-  await start(page, 'pixi');
-  const actual = await page.evaluate(
-    () => window.__PTCG_RENDERER_SPIKE__!.rendererKind
-  );
-  testInfo.annotations.push({
-    type: 'renderer',
-    description: `Requested pixi; ran ${actual}`,
-  });
-  if (browserName === 'chromium') expect(actual).toBe('pixi');
-  await idle(page, actual);
+}) => {
+  await start(page);
+  await idle(page);
   const paint = () =>
     page.evaluate(() => {
-      const { renderer, rendererKind, scene } = window.__PTCG_RENDERER_SPIKE__!;
-      if (rendererKind === 'dom') {
-        const labels = [
-          ...document.querySelectorAll<HTMLElement>(
-            '[data-zone-label][data-zone-outline="true"]'
-          ),
-        ].map((node) => node.dataset.zoneLabel!.toUpperCase());
-        const badges = [
-          ...document.querySelectorAll<HTMLElement>(
-            '.ptcgsim-zone-count--badge'
-          ),
-        ];
-        return {
-          labels,
-          counts: badges.map((node) => node.textContent),
-          color: getComputedStyle(badges[0]!).color,
-          countsAboveCards: true,
-          extraBoxes: 0,
-        };
-      }
-      // Read the retained display objects, not an extra DOM copy of the labels.
-      const table = Reflect.get(renderer, 'tablePaint');
-      const layers = Reflect.get(renderer, 'layers');
-      const counts = Reflect.get(renderer, 'countViews');
-      const zones = scene.zones.map((zone) => ({
-        descriptor: zone,
-        view: table.zones.get(zone.id),
-      }));
+      const labels = [
+        ...document.querySelectorAll<HTMLElement>(
+          '[data-zone-label][data-zone-outline="true"]'
+        ),
+      ].map((node) => node.dataset.zoneLabel!.toUpperCase());
+      const badges = [
+        ...document.querySelectorAll<HTMLElement>('.ptcgsim-zone-count--badge'),
+      ];
       return {
-        labels: zones
-          .filter(({ view }) => view.title.visible)
-          .map(({ view }) => view.title.text),
-        counts: scene.counts.map((node) => counts.get(node.id).text.text),
-        color: String(Reflect.get(renderer, 'tablePalette').text.color),
-        countsAboveCards:
-          layers.counts.zIndex > layers.cards.zIndex &&
-          scene.counts.every((node) => {
-            const view = counts.get(node.id);
-            const box = view.root.getBounds();
-            return (
-              view.text.visible &&
-              box.width >= 26 &&
-              box.height >= 22 &&
-              box.x >= 0 &&
-              box.y >= 0 &&
-              box.x + box.width <= scene.viewport.width &&
-              box.y + box.height <= scene.viewport.height
-            );
-          }),
-        extraBoxes: zones.filter(
-          ({ descriptor, view }) =>
-            descriptor.kind === 'hand' &&
-            view.graphic.context.instructions.length > 0
-        ).length,
+        labels,
+        counts: badges.map((node) => node.textContent),
+        color: getComputedStyle(badges[0]!).color,
       };
     });
   const expectedLabels = [
@@ -227,11 +170,8 @@ test('the Pixi table keeps zone labels and count badges readable across themes, 
   const initial = await paint();
   expect(initial.labels.sort()).toEqual(expectedLabels);
   expect(initial.counts).toContain('47');
-  expect(initial.countsAboveCards).toBe(true);
-  expect(initial.extraBoxes).toBe(0);
   for (const mode of ['flat', 'depth', 'table'] as const) {
     await chooseTableView(page, mode);
-    await expect.poll(async () => (await paint()).countsAboveCards).toBe(true);
     expect((await paint()).labels.sort()).toEqual(expectedLabels);
   }
   // Theme and table view are both in Settings.
@@ -395,270 +335,213 @@ test('reduced motion keeps physical piles and lifts a held card at once, without
   await expect(page.locator('.ptcgsim-card-ghost')).toHaveCount(0);
 });
 
-for (const requestedRenderer of ['dom', 'pixi']) {
-  test(`${requestedRenderer}: lifting a deck card leaves the pile and releases continuously into the hand`, async ({
-    page,
-  }) => {
-    await start(page, requestedRenderer);
-    const renderer = await page.evaluate(
-      () => window.__PTCG_RENDERER_SPIKE__!.rendererKind
-    );
-    const testInfo = test.info();
-    testInfo.annotations.push({
-      type: 'renderer',
-      description: `Requested ${requestedRenderer}; ran ${renderer}`,
-    });
-    if (testInfo.project.name === 'chromium')
-      expect(renderer).toBe(requestedRenderer);
-    await page.mouse.move(15, 15);
-    await idle(page, renderer);
-    const deck = await cardIn(page, 'deck');
-    const current = await scene(page);
-    const hand = current.zones.find(
-      (zone) => zone.kind === 'hand' && zone.side === 'local'
-    )!;
-    const from = await centre(page, deck.id);
-    const to = await screen(page, {
-      x: hand.bounds.x + hand.bounds.width / 2,
-      y: hand.bounds.y + hand.bounds.height / 2,
-    });
-    await page.mouse.move(from.x, from.y);
-    await page.mouse.down();
-    await page.mouse.move(to.x, to.y, { steps: 8 });
-    if (renderer === 'dom') {
-      await expect(page.locator('[data-pile-underlay]')).toHaveCount(1);
-      await page.evaluate(() => {
-        const ids = new Set(
-          window
-            .__PTCG_RENDERER_SPIKE__!.scene.cards.filter(
-              (card) => card.side === 'local' && card.parentId.endsWith(':hand')
-            )
-            .map((card) => card.id)
-        );
-        const observer = new MutationObserver(() => {
-          const card = window.__PTCG_RENDERER_SPIKE__!.scene.cards.find(
-            (card) =>
-              card.side === 'local' &&
-              card.parentId.endsWith(':hand') &&
-              !ids.has(card.id)
-          );
-          const element =
-            card && document.querySelector(`[data-card-id="${card.id}"]`);
-          if (!element) return;
-          const style = getComputedStyle(element);
-          const p = new DOMMatrix(style.transform).transformPoint(
-            new DOMPoint(
-              parseFloat(style.width) / 2,
-              parseFloat(style.height) / 2
-            )
-          );
-          const root = document
-            .querySelector('.ptcgsim-board-surface')!
-            .getBoundingClientRect();
-          document.body.dataset['releasePoint'] = JSON.stringify({
-            x: root.left + p.x / p.w,
-            y: root.top + p.y / p.w,
-          });
-          observer.disconnect();
-        });
-        observer.observe(document.querySelector('.ptcgsim-board-surface')!, {
-          childList: true,
-          attributes: true,
-          subtree: true,
-        });
-      });
-    }
-    await page.mouse.up();
-    await expect
-      .poll(
-        async () =>
-          (await scene(page)).zones.find((zone) => zone.id === hand.id)?.count
-      )
-      .toBe(8);
-    if (renderer === 'dom') {
-      await expect(page.locator('body')).toHaveAttribute('data-release-point');
-      const point = JSON.parse(
-        (await page.locator('body').getAttribute('data-release-point'))!
-      ) as { x: number; y: number };
-      expect(Math.hypot(point.x - to.x, point.y - to.y)).toBeLessThan(30);
-    }
-    await idle(page, renderer);
-    expect(
-      (await scene(page)).zones.find(
-        (zone) => zone.kind === 'deck' && zone.side === 'local'
-      )?.count
-    ).toBe(46);
+test('lifting a deck card leaves the pile and releases continuously into the hand', async ({
+  page,
+}) => {
+  await start(page);
+  await page.mouse.move(15, 15);
+  await idle(page);
+  const deck = await cardIn(page, 'deck');
+  const current = await scene(page);
+  const hand = current.zones.find(
+    (zone) => zone.kind === 'hand' && zone.side === 'local'
+  )!;
+  const from = await centre(page, deck.id);
+  const to = await screen(page, {
+    x: hand.bounds.x + hand.bounds.width / 2,
+    y: hand.bounds.y + hand.bounds.height / 2,
   });
-
-  test(`${requestedRenderer}: shuffling and repeated view changes release transient resources`, async ({
-    page,
-  }) => {
-    test.setTimeout(90000);
-    await start(page, requestedRenderer);
-    const renderer = await page.evaluate(
-      () => window.__PTCG_RENDERER_SPIKE__!.rendererKind
-    );
-    const testInfo = test.info();
-    testInfo.annotations.push({
-      type: 'renderer',
-      description: `Requested ${requestedRenderer}; ran ${renderer}`,
-    });
-    if (testInfo.project.name === 'chromium')
-      expect(renderer).toBe(requestedRenderer);
-    await page.mouse.move(15, 15);
-    await idle(page, renderer);
-    const resources = () =>
-      page.evaluate(() => {
-        const d = window.__PTCG_RENDERER_SPIKE__!.renderer.getDiagnostics!();
-        return {
-          faces: d.renderedCardIds.length,
-          objects: d.displayObjects,
-          bindings: d.localTextureBindings,
-          references: d.globalTextureReferences,
-          nodes: d.domNodes,
-        };
-      });
-    const before = await resources();
-    await page.keyboard.press('Escape');
-    await page.keyboard.press('s');
-    if (renderer === 'dom')
-      await expect(page.locator('.ptcgsim-card-ghost')).not.toHaveCount(0);
-    else
-      await expect
-        .poll(async () => (await resources()).bindings)
-        .toBeGreaterThan(before.bindings);
-    // Undo interrupts the riffle while its temporary faces are still alive.
-    await page.keyboard.press('u');
-    await page.waitForTimeout(1200);
-    await idle(page, renderer);
-    expect(await resources()).toEqual(before);
-    for (let cycle = 0; cycle < 8; cycle++) {
-      for (const mode of ['flat', 'depth', 'table'] as const) {
-        await chooseTableView(page, mode);
-        await expect(page.locator(`[data-table-view="${mode}"]`)).toBeVisible();
-      }
-    }
-    await closeBoardView(page);
-    await page.keyboard.press('Escape');
-    await page.mouse.move(15, 15);
-    await idle(page, renderer);
-    expect(await resources()).toEqual(before);
-  });
-
-  test(`${requestedRenderer}: real-room depth preserves draw, play, drag and local settings`, async ({
-    page,
-  }) => {
-    test.setTimeout(90000);
-    const errors: string[] = [];
-    page.on('pageerror', (error) => errors.push(error.message));
-    await start(page, requestedRenderer);
-    const renderer = await page.evaluate(
-      () => window.__PTCG_RENDERER_SPIKE__!.rendererKind
-    );
-    const testInfo = test.info();
-    testInfo.annotations.push({
-      type: 'renderer',
-      description: `Requested ${requestedRenderer}; ran ${renderer}`,
-    });
-    if (testInfo.project.name === 'chromium')
-      expect(renderer).toBe(requestedRenderer);
-    await idle(page, renderer);
-    const deck = await cardIn(page, 'deck');
-    const before =
-      renderer === 'dom'
-        ? Number(
-            await page
-              .locator(`[data-card-id="${deck.id}"]`)
-              .getAttribute('data-elevation')
-          )
-        : 0;
-    await page.keyboard.press('1');
-    await expect
-      .poll(
-        async () =>
-          (await scene(page)).zones.find(
-            (zone) => zone.side === 'local' && zone.kind === 'deck'
-          )?.count
-      )
-      .toBe(46);
-    await idle(page, renderer);
-    if (renderer === 'dom') {
-      const after = await cardIn(page, 'deck');
-      expect(
-        Number(
-          await page
-            .locator(`[data-card-id="${after.id}"]`)
-            .getAttribute('data-elevation')
+  await page.mouse.move(from.x, from.y);
+  await page.mouse.down();
+  await page.mouse.move(to.x, to.y, { steps: 8 });
+  await expect(page.locator('[data-pile-underlay]')).toHaveCount(1);
+  await page.evaluate(() => {
+    const ids = new Set(
+      window
+        .__PTCG_RENDERER_SPIKE__!.scene.cards.filter(
+          (card) => card.side === 'local' && card.parentId.endsWith(':hand')
         )
-      ).toBeLessThan(before);
-    }
-    const hand = await cardIn(page, 'hand');
-    const handPoint = await centre(page, hand.id);
-    await page.mouse.click(handPoint.x, handPoint.y);
-    await page.keyboard.press('a');
-    await expect
-      .poll(
-        async () =>
-          (await scene(page)).cards.find((card) => card.id === hand.id)?.role
-      )
-      .toBe('stackEvolution');
-    await page.mouse.move(15, 15);
-    await idle(page, renderer);
-    const from = await centre(page, hand.id);
-    const current = await scene(page);
-    const projection = new BoardDepthProjection(current, preferences);
-    const bench = current.zones.find(
-      (zone) => zone.kind === 'bench' && zone.side === 'local'
-    )!;
-    const to = await screen(
-      page,
-      projection.point({
-        x: bench.bounds.x + bench.bounds.width * 0.6,
-        y: bench.bounds.y + bench.bounds.height * 0.5,
-      })
+        .map((card) => card.id)
     );
-    await page.mouse.move(from.x, from.y);
-    await page.mouse.down();
-    await page.mouse.move(to.x, to.y, { steps: 8 });
-    if (renderer === 'dom')
-      await expect(
-        page.locator(`[data-zone-id="${bench.id}"]`)
-      ).toHaveAttribute('data-drop-target', 'true');
-    else
-      await expect(page.locator('canvas')).toHaveAttribute(
-        'data-drag-target',
-        bench.id
+    const observer = new MutationObserver(() => {
+      const card = window.__PTCG_RENDERER_SPIKE__!.scene.cards.find(
+        (card) =>
+          card.side === 'local' &&
+          card.parentId.endsWith(':hand') &&
+          !ids.has(card.id)
       );
-    await page.mouse.up();
-    await idle(page, renderer);
-    await expect
-      .poll(
-        async () =>
-          (await scene(page)).zones.find(
-            (zone) => zone.kind === 'active' && zone.side === 'local'
-          )?.count
-      )
-      .toBe(0);
-    await openBoardView(page);
-    await expect(tableViewChoice(page, 'table')).toBeChecked();
-    await chooseTableView(page, 'depth');
-    await expect(page.locator('[data-table-view="depth"]')).toBeVisible();
-    await chooseTableView(page, 'flat');
-    await expect(page.locator('[data-table-view="flat"]')).toBeVisible();
-    // Only choices that differ from the defaults are kept, and writes are
-    // batched: the stored mode goes away once it is back at flat.
-    await expect
-      .poll(() =>
-        page.evaluate(
-          () =>
-            JSON.parse(localStorage.getItem('ptcgsim.table-depth.v1') ?? '{}')
-              .mode ?? 'flat'
-        )
-      )
-      .toBe('flat');
-    expect(errors).toEqual([]);
+      const element =
+        card && document.querySelector(`[data-card-id="${card.id}"]`);
+      if (!element) return;
+      const style = getComputedStyle(element);
+      const p = new DOMMatrix(style.transform).transformPoint(
+        new DOMPoint(parseFloat(style.width) / 2, parseFloat(style.height) / 2)
+      );
+      const root = document
+        .querySelector('.ptcgsim-board-surface')!
+        .getBoundingClientRect();
+      document.body.dataset['releasePoint'] = JSON.stringify({
+        x: root.left + p.x / p.w,
+        y: root.top + p.y / p.w,
+      });
+      observer.disconnect();
+    });
+    observer.observe(document.querySelector('.ptcgsim-board-surface')!, {
+      childList: true,
+      attributes: true,
+      subtree: true,
+    });
   });
-}
+  await page.mouse.up();
+  await expect
+    .poll(
+      async () =>
+        (await scene(page)).zones.find((zone) => zone.id === hand.id)?.count
+    )
+    .toBe(8);
+  await expect(page.locator('body')).toHaveAttribute('data-release-point');
+  const point = JSON.parse(
+    (await page.locator('body').getAttribute('data-release-point'))!
+  ) as { x: number; y: number };
+  expect(Math.hypot(point.x - to.x, point.y - to.y)).toBeLessThan(30);
+  await idle(page);
+  expect(
+    (await scene(page)).zones.find(
+      (zone) => zone.kind === 'deck' && zone.side === 'local'
+    )?.count
+  ).toBe(46);
+});
+
+test('shuffling and repeated view changes release transient resources', async ({
+  page,
+}) => {
+  test.setTimeout(90000);
+  await start(page);
+  await page.mouse.move(15, 15);
+  await idle(page);
+  const resources = () =>
+    page.evaluate(() => {
+      const d = window.__PTCG_RENDERER_SPIKE__!.renderer.getDiagnostics!();
+      return {
+        faces: d.renderedCardIds.length,
+        nodes: d.domNodes,
+      };
+    });
+  const before = await resources();
+  await page.keyboard.press('Escape');
+  await page.keyboard.press('s');
+  await expect(page.locator('.ptcgsim-card-ghost')).not.toHaveCount(0);
+  // Undo interrupts the riffle while its temporary faces are still alive.
+  await page.keyboard.press('u');
+  await page.waitForTimeout(1200);
+  await idle(page);
+  expect(await resources()).toEqual(before);
+  for (let cycle = 0; cycle < 8; cycle++) {
+    for (const mode of ['flat', 'depth', 'table'] as const) {
+      await chooseTableView(page, mode);
+      await expect(page.locator(`[data-table-view="${mode}"]`)).toBeVisible();
+    }
+  }
+  await closeBoardView(page);
+  await page.keyboard.press('Escape');
+  await page.mouse.move(15, 15);
+  await idle(page);
+  expect(await resources()).toEqual(before);
+});
+
+test('real-room depth preserves draw, play, drag and local settings', async ({
+  page,
+}) => {
+  test.setTimeout(90000);
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await start(page);
+  await idle(page);
+  const deck = await cardIn(page, 'deck');
+  const before = Number(
+    await page
+      .locator(`[data-card-id="${deck.id}"]`)
+      .getAttribute('data-elevation')
+  );
+  await page.keyboard.press('1');
+  await expect
+    .poll(
+      async () =>
+        (await scene(page)).zones.find(
+          (zone) => zone.side === 'local' && zone.kind === 'deck'
+        )?.count
+    )
+    .toBe(46);
+  await idle(page);
+  const after = await cardIn(page, 'deck');
+  expect(
+    Number(
+      await page
+        .locator(`[data-card-id="${after.id}"]`)
+        .getAttribute('data-elevation')
+    )
+  ).toBeLessThan(before);
+  const hand = await cardIn(page, 'hand');
+  const handPoint = await centre(page, hand.id);
+  await page.mouse.click(handPoint.x, handPoint.y);
+  await page.keyboard.press('a');
+  await expect
+    .poll(
+      async () =>
+        (await scene(page)).cards.find((card) => card.id === hand.id)?.role
+    )
+    .toBe('stackEvolution');
+  await page.mouse.move(15, 15);
+  await idle(page);
+  const from = await centre(page, hand.id);
+  const current = await scene(page);
+  const projection = new BoardDepthProjection(current, preferences);
+  const bench = current.zones.find(
+    (zone) => zone.kind === 'bench' && zone.side === 'local'
+  )!;
+  const to = await screen(
+    page,
+    projection.point({
+      x: bench.bounds.x + bench.bounds.width * 0.6,
+      y: bench.bounds.y + bench.bounds.height * 0.5,
+    })
+  );
+  await page.mouse.move(from.x, from.y);
+  await page.mouse.down();
+  await page.mouse.move(to.x, to.y, { steps: 8 });
+  await expect(page.locator(`[data-zone-id="${bench.id}"]`)).toHaveAttribute(
+    'data-drop-target',
+    'true'
+  );
+  await page.mouse.up();
+  await idle(page);
+  await expect
+    .poll(
+      async () =>
+        (await scene(page)).zones.find(
+          (zone) => zone.kind === 'active' && zone.side === 'local'
+        )?.count
+    )
+    .toBe(0);
+  await openBoardView(page);
+  await expect(tableViewChoice(page, 'table')).toBeChecked();
+  await chooseTableView(page, 'depth');
+  await expect(page.locator('[data-table-view="depth"]')).toBeVisible();
+  await chooseTableView(page, 'flat');
+  await expect(page.locator('[data-table-view="flat"]')).toBeVisible();
+  // Only choices that differ from the defaults are kept, and writes are
+  // batched: the stored mode goes away once it is back at flat.
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          JSON.parse(localStorage.getItem('ptcgsim.table-depth.v1') ?? '{}')
+            .mode ?? 'flat'
+      )
+    )
+    .toBe('flat');
+  expect(errors).toEqual([]);
+});
 
 test('projected deck-browser drops and marker editing use the painted board', async ({
   page,

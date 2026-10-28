@@ -66,7 +66,7 @@ for (const { locale, width, height } of cases) {
     await page.addInitScript((language) => {
       localStorage.setItem('ptcgsim.language.v1', JSON.stringify({ language }));
     }, locale);
-    await page.goto('/?tutorial=attach&renderer=dom');
+    await page.goto('/?tutorial=attach');
     const coach = page.locator('.tutorial-coach[data-tutorial-step]');
     // This regression concerns the completion layout. Skip each table task
     // through its ordinary UI, keeping the real lesson transition/deal.
@@ -128,7 +128,7 @@ for (const locale of ['en', 'ar', 'fil']) {
     await page.addInitScript((language) => {
       localStorage.setItem('ptcgsim.language.v1', JSON.stringify({ language }));
     }, locale);
-    await page.goto('/?tutorial=damage&renderer=dom');
+    await page.goto('/?tutorial=damage');
     const coach = page.locator('.tutorial-coach[data-tutorial-step]');
     await expect(coach).toHaveAttribute('data-tutorial-step', 'damage:menu', {
       timeout: 20_000,
@@ -171,7 +171,7 @@ for (const locale of ['de', 'fr']) {
           ),
         locale
       );
-      await page.goto('/?tutorial=attach&renderer=dom');
+      await page.goto('/?tutorial=attach');
       const coach = page.locator('.tutorial-coach[data-tutorial-step]');
       await expect(coach).toHaveAttribute(
         'data-tutorial-step',
@@ -246,7 +246,7 @@ test('German landscape: the taller coach leaves its highlighted Prize drag usabl
       JSON.stringify({ language: 'de' })
     )
   );
-  await page.goto('/?tutorial=knock-out&renderer=dom');
+  await page.goto('/?tutorial=knock-out');
   const coach = page.locator('.tutorial-coach[data-tutorial-step]');
   const surface = page.locator('.ptcgsim-board-surface');
   const centre = async (target: Locator) => {

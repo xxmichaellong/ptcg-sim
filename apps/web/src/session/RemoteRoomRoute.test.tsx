@@ -582,7 +582,6 @@ describe('RemoteRoomRoute', () => {
     const { root } = await mountRoute(
       <RemoteRoomRoute
         runtime={runtime}
-        rendererKind="dom"
         roomMode="solo"
         onLeave={vi.fn()}
         onMultiplayerNavigate={onMultiplayerNavigate}
@@ -751,11 +750,7 @@ describe('RemoteRoomRoute', () => {
       const socketFactory = new FakeSocketFactory();
       const runtime = createRuntime(socketFactory);
       const { root } = await mountRoute(
-        <RemoteRoomRoute
-          runtime={runtime}
-          rendererKind="dom"
-          roomMode={stage.roomMode}
-        />
+        <RemoteRoomRoute runtime={runtime} roomMode={stage.roomMode} />
       );
       await connect(socketFactory, stage.snapshot);
       expect(railIds(), stage.name).toEqual(stage.rail);
@@ -773,7 +768,7 @@ describe('RemoteRoomRoute', () => {
     const socketFactory = new FakeSocketFactory();
     const runtime = createRuntime(socketFactory);
     const { root } = await mountRoute(
-      <RemoteRoomRoute runtime={runtime} rendererKind="dom" roomMode="solo" />
+      <RemoteRoomRoute runtime={runtime} roomMode="solo" />
     );
     const socket = await connect(socketFactory);
     const otherPlayer = view.playerOrder.find(
@@ -838,7 +833,6 @@ describe('RemoteRoomRoute', () => {
     const { root } = await mountRoute(
       <RemoteRoomRoute
         runtime={runtime}
-        rendererKind="dom"
         onLeave={vi.fn()}
         onCopyInvitation={vi.fn(async () => true)}
         continuationAvailable
@@ -889,7 +883,6 @@ describe('RemoteRoomRoute', () => {
     const route = (continuationAvailable: boolean) => (
       <RemoteRoomRoute
         runtime={runtime}
-        rendererKind="dom"
         onIntent={onIntent}
         onSubmission={onSubmission}
         onLeave={onLeave}
@@ -1298,7 +1291,7 @@ describe('RemoteRoomRoute', () => {
     const socketFactory = new FakeSocketFactory();
     const runtime = createRuntime(socketFactory);
     const { root } = await mountRoute(
-      <RemoteRoomRoute runtime={runtime} rendererKind="dom" roomMode="solo" />
+      <RemoteRoomRoute runtime={runtime} roomMode="solo" />
     );
     const socket = await connect(socketFactory);
     await openMenu();
@@ -1361,7 +1354,6 @@ describe('RemoteRoomRoute', () => {
     const { root } = await mountRoute(
       <RemoteRoomRoute
         runtime={runtime}
-        rendererKind="dom"
         roomMode="solo"
         multiplayerPanel={multiplayerPanel}
         onMultiplayerPanelOpen={onMultiplayerPanelOpen}
@@ -1391,7 +1383,6 @@ describe('RemoteRoomRoute', () => {
     const { root } = await mountRoute(
       <RemoteRoomRoute
         runtime={runtime}
-        rendererKind="dom"
         roomMode="solo"
         tutorial={{ serial: 1, onExit: () => undefined }}
       />
@@ -1423,7 +1414,7 @@ describe('RemoteRoomRoute', () => {
     const ownFactory = new FakeSocketFactory();
     const own = createRuntime(ownFactory);
     const table = await mountRoute(
-      <RemoteRoomRoute runtime={own} rendererKind="dom" roomMode="solo" />
+      <RemoteRoomRoute runtime={own} roomMode="solo" />
     );
     await connect(ownFactory);
     expect(get('#undoButton').getAttribute('aria-disabled')).toBeNull();
@@ -1439,7 +1430,6 @@ describe('RemoteRoomRoute', () => {
     const { root } = await mountRoute(
       <RemoteRoomRoute
         runtime={runtime}
-        rendererKind="dom"
         roomMode="solo"
         multiplayerPanel={(hidden: boolean) => (
           <section id="p2Box" hidden={hidden}>
@@ -1510,7 +1500,6 @@ describe('RemoteRoomRoute', () => {
     const { root } = await mountRoute(
       <RemoteRoomRoute
         runtime={runtime}
-        rendererKind="dom"
         roomMode="solo"
         multiplayerPanel={() => <section id="p2Box" />}
       />
@@ -1546,7 +1535,7 @@ describe('RemoteRoomRoute', () => {
     const socketFactory = new FakeSocketFactory();
     const runtime = createRuntime(socketFactory);
     const { root } = await mountRoute(
-      <RemoteRoomRoute runtime={runtime} rendererKind="dom" roomMode="solo" />
+      <RemoteRoomRoute runtime={runtime} roomMode="solo" />
     );
     await connect(socketFactory, loadedSeatView());
     expect(find('[data-table-welcome]')).toBeNull();
@@ -1559,7 +1548,7 @@ describe('RemoteRoomRoute', () => {
     const socketFactory = new FakeSocketFactory();
     const runtime = createRuntime(socketFactory);
     const { root } = await mountRoute(
-      <RemoteRoomRoute runtime={runtime} rendererKind="dom" roomMode="solo" />
+      <RemoteRoomRoute runtime={runtime} roomMode="solo" />
     );
     await connect(socketFactory, emptySeatView());
     expect(find('[data-table-welcome]')).toBeNull();
@@ -1574,7 +1563,6 @@ describe('RemoteRoomRoute', () => {
     const solo = await mountRoute(
       <RemoteRoomRoute
         runtime={runtime}
-        rendererKind="dom"
         roomMode="solo"
         deckStore={deckStore}
       />
@@ -1606,9 +1594,7 @@ describe('RemoteRoomRoute', () => {
     document.body.replaceChildren();
     const roomSockets = new FakeSocketFactory();
     const roomRuntime = createRuntime(roomSockets);
-    const room = await mountRoute(
-      <RemoteRoomRoute runtime={roomRuntime} rendererKind="dom" />
-    );
+    const room = await mountRoute(<RemoteRoomRoute runtime={roomRuntime} />);
     await connect(roomSockets, emptySeatView());
     expect(boardHarness.props?.loadDeck?.playerIds).toEqual([bluePlayer]);
     await act(async () => room.root.unmount());
@@ -1632,9 +1618,7 @@ describe('RemoteRoomRoute', () => {
     );
     const socketFactory = new FakeSocketFactory();
     const runtime = createRuntime(socketFactory);
-    const { root } = await mountRoute(
-      <RemoteRoomRoute runtime={runtime} rendererKind="dom" />
-    );
+    const { root } = await mountRoute(<RemoteRoomRoute runtime={runtime} />);
     await connect(socketFactory);
     expect(boardHarness.props?.sidePanel).toBe(false);
     await click('#activityButton');
@@ -1675,7 +1659,6 @@ describe('RemoteRoomRoute', () => {
     const { root } = await mountRoute(
       <RemoteRoomRoute
         runtime={runtime}
-        rendererKind="dom"
         deckStore={deckStore}
         cardBackStore={cardBackStore}
         requestCardBack={requestCardBack}
@@ -1801,7 +1784,7 @@ describe('RemoteRoomRoute', () => {
     const socketFactory = new FakeSocketFactory();
     const runtime = createRuntime(socketFactory);
     const { root } = await mountRoute(
-      <RemoteRoomRoute runtime={runtime} rendererKind="dom" roomMode="solo" />
+      <RemoteRoomRoute runtime={runtime} roomMode="solo" />
     );
     await openDeckFromMenu();
     // Solo: a seat tab for P2.
@@ -1843,7 +1826,6 @@ describe('RemoteRoomRoute', () => {
     const { root } = await mountRoute(
       <RemoteRoomRoute
         runtime={runtime}
-        rendererKind="dom"
         roomMode="multiplayer"
         onLeave={onLeave}
       />
@@ -1878,7 +1860,6 @@ describe('RemoteRoomRoute', () => {
     const { root } = await mountRoute(
       <RemoteRoomRoute
         runtime={runtime}
-        rendererKind="dom"
         roomMode="solo"
         onLeave={vi.fn()}
         onNewSoloTable={onNewSoloTable}
@@ -1907,7 +1888,6 @@ describe('RemoteRoomRoute', () => {
     const { root } = await mountRoute(
       <RemoteRoomRoute
         runtime={runtime}
-        rendererKind="dom"
         roomMode="solo"
         onLeave={vi.fn()}
         onNewSoloTable={onNewSoloTable}
@@ -1931,7 +1911,6 @@ describe('RemoteRoomRoute', () => {
     const { root } = await mountRoute(
       <RemoteRoomRoute
         runtime={runtime}
-        rendererKind="dom"
         roomMode="solo"
         onTableSettledChange={onTableSettledChange}
       />

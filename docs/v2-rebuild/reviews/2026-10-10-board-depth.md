@@ -2,6 +2,8 @@
 
 Date: 2026-10-10. Scope: presentation, picking, pile height, local settings, and integration into the existing sandbox.
 
+(2026-10-28: the Pixi renderer described here was retired, ADR-004; depth lives in the DOM table only.)
+
 **Production status:** depth is integrated into live rooms in both DOM and Pixi renderers. Open Settings → Table depth to select Flat, Raised cards, or Tabletop. Flat remains the default. The research study and its original rollout plan below are retained for context; the production integration section records the delivered implementation.
 
 ## Recommendation

@@ -436,7 +436,7 @@ const replayCardPaintMetrics = (
   }, kind);
 
 const mountCandidate = async (page: Page): Promise<OverlayFixture> => {
-  await page.goto('/?renderer-spike=1&renderer=dom');
+  await page.goto('/?renderer-spike=1');
   await expect(page.locator('[data-renderer-status]')).toHaveAttribute(
     'data-renderer-status',
     'ready'

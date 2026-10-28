@@ -443,12 +443,10 @@ export type BoardRendererStatus =
 
 /**
  * Recipient-safe lifecycle/resource evidence used by parity and soak gates.
- * `renderCommits` records successful renderer-specific commits; benchmark
- * timings are measured externally and must not compare this counter as time.
- * `globalTexture*` fields describe the shared asset owner, not one renderer.
+ * `renderCommits` records successful renderer commits; benchmark timings are
+ * measured externally and must not compare this counter as time.
  */
 export interface BoardRendererDiagnostics {
-  readonly rendererKind: 'dom' | 'pixi';
   readonly mounted: boolean;
   readonly destroyed: boolean;
   readonly generation: number;
@@ -458,15 +456,6 @@ export interface BoardRendererDiagnostics {
   readonly renderedZoneIds: readonly string[];
   readonly renderedMarkerIds: readonly string[];
   readonly domNodes: number;
-  readonly displayObjects: number;
-  readonly localTextureBindings: number;
-  readonly globalTextureLeaseEntries: number;
-  readonly globalPendingTextureLoads: number;
-  readonly globalUnloadingTextures: number;
-  readonly globalTextureReferences: number;
-  readonly globalTextureLoadFailures: number;
-  readonly globalTextureUnloadFailures: number;
-  readonly contextLossListeners: number;
 }
 
 export interface BoardRenderer {

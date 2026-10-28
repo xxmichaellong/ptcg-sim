@@ -58,7 +58,7 @@ test('a deck keeps its card back and brings it to the table', async ({
     '.deck-tray[data-seat="self"] .deck-tray__sleeve img'
   );
 
-  await page.goto('/?renderer=dom');
+  await page.goto('/');
   await openTable(page);
   await openDeck(page);
   await importDeck(page, 'Charizard');

@@ -309,7 +309,6 @@ describe('RemoteSessionBoard replay binding', () => {
         <RemoteSessionBoard
           session={session}
           replay={replay}
-          rendererKind="dom"
           onIntent={onIntent}
           onSubmission={onSubmission}
           preferences={preferences}
@@ -409,7 +408,6 @@ describe('RemoteSessionBoard replay binding', () => {
         <RemoteSessionBoard
           session={session}
           replay={replay}
-          rendererKind="dom"
           onIntent={vi.fn()}
           roomMode="multiplayer"
         />
@@ -504,7 +502,6 @@ describe('RemoteSessionBoard replay binding', () => {
           <RemoteSessionBoard
             session={session}
             replay={replay}
-            rendererKind="dom"
             roomMode={roomMode}
             hideOpponentHand={hideOpponentHand}
             onIntent={vi.fn()}
@@ -565,7 +562,6 @@ describe('RemoteSessionBoard replay binding', () => {
           <RemoteSessionBoard
             session={session}
             replay={replay}
-            rendererKind="dom"
             roomMode={roomMode}
             rail={railOf(owned)}
             commandsRef={commands}
@@ -752,7 +748,6 @@ describe('RemoteSessionBoard replay binding', () => {
           <RemoteSessionBoard
             session={session}
             replay={replay}
-            rendererKind="dom"
             roomMode="solo"
             undoBlocked={undoBlocked}
             rail={{
@@ -836,7 +831,6 @@ describe('RemoteSessionBoard replay binding', () => {
         <RemoteSessionBoard
           session={session}
           replay={replay}
-          rendererKind="dom"
           roomMode="multiplayer"
           rail={railOf(owned)}
           onIntent={vi.fn()}
@@ -867,7 +861,6 @@ describe('RemoteSessionBoard replay binding', () => {
         <RemoteSessionBoard
           session={session}
           replay={replay}
-          rendererKind="dom"
           roomMode="multiplayer"
           rail={railOf()}
           onIntent={vi.fn()}
@@ -919,7 +912,6 @@ describe('RemoteSessionBoard replay binding', () => {
         <RemoteSessionBoard
           session={session}
           replay={replay}
-          rendererKind="dom"
           roomMode="multiplayer"
           rail={railOf()}
           onIntent={vi.fn()}
@@ -977,7 +969,6 @@ describe('RemoteSessionBoard replay binding', () => {
         <RemoteSessionBoard
           session={session}
           replay={replay}
-          rendererKind="dom"
           onIntent={vi.fn()}
           onPerspectiveChange={onPerspectiveChange}
           commandsRef={commands}
@@ -1025,7 +1016,6 @@ describe('RemoteSessionBoard replay binding', () => {
         <RemoteSessionBoard
           session={session}
           replay={replay}
-          rendererKind="dom"
           onIntent={vi.fn()}
           onPerspectiveChange={onPerspectiveChange}
           initialFlipped
@@ -1068,7 +1058,6 @@ describe('RemoteSessionBoard replay binding', () => {
           <RemoteSessionBoard
             session={session}
             replay={replay}
-            rendererKind="dom"
             roomMode="solo"
             hideOpponentHand
             commandsRef={commands}
@@ -1116,7 +1105,6 @@ describe('RemoteSessionBoard replay binding', () => {
         <RemoteSessionBoard
           session={session}
           replay={replay}
-          rendererKind="dom"
           onIntent={vi.fn()}
         />
       )
@@ -1185,7 +1173,6 @@ describe('RemoteSessionBoard replay binding', () => {
           <RemoteSessionBoard
             session={session}
             replay={replay}
-            rendererKind="dom"
             roomMode="solo"
             onIntent={vi.fn()}
             {...(offered
@@ -1224,7 +1211,6 @@ describe('RemoteSessionBoard replay binding', () => {
         <RemoteSessionBoard
           session={session}
           replay={replay}
-          rendererKind="dom"
           roomMode="solo"
           onIntent={vi.fn()}
         />
@@ -1356,7 +1342,6 @@ describe('RemoteSessionBoard replay binding', () => {
         <RemoteSessionBoard
           session={session}
           replay={replay}
-          rendererKind="dom"
           onIntent={vi.fn()}
         />
       )
@@ -1390,7 +1375,6 @@ describe('RemoteSessionBoard replay binding', () => {
         <RemoteSessionBoard
           session={session}
           replay={replay}
-          rendererKind="dom"
           onIntent={vi.fn()}
           rail={railOf()}
           onSettledChange={onSettledChange}

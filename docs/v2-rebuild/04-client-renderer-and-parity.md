@@ -1,5 +1,9 @@
 # Client, renderer, and UI parity
 
+> 2026-10-28: the retained Pixi candidate this page describes was retired
+> (ADR-004's note). React DOM is the only board renderer; Pixi passages below
+> are the record of the comparison.
+
 ## Production boundary and retained Pixi candidate
 
 React owns the existing application chrome:

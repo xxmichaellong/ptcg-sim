@@ -48,7 +48,7 @@ const start = async (
   await page.addInitScript((stored) => {
     localStorage.setItem('ptcgsim.table-depth.v1', JSON.stringify(stored));
   }, depth);
-  await page.goto('/?room-lobby=1&renderer=dom');
+  await page.goto('/?room-lobby=1');
   await page.locator('#nameInput').fill('Card turn');
   await closeSheet(page);
   await expect(

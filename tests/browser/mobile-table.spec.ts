@@ -51,7 +51,7 @@ const localZones = (page: Page) =>
   });
 
 const openSoloTable = async (page: Page): Promise<void> => {
-  await page.goto('/?renderer=dom');
+  await page.goto('/');
   await expect(
     page.locator('[data-app-route="remote-room"][data-session-phase="ready"]')
   ).toBeVisible({ timeout: 30_000 });

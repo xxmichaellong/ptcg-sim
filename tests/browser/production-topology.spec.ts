@@ -78,7 +78,7 @@ test('built SPA and room authority share one production-like Worker origin', asy
   // the lobby (held on the Multiplayer panel so no room is created here)
   // with the static board and no dev-room handle.
   const rootResponse = await page.goto(
-    '/?dev-room=1&room-lobby=1&renderer=dom&name=Production%20Preview'
+    '/?dev-room=1&room-lobby=1&name=Production%20Preview'
   );
   expect(rootResponse?.status()).toBe(200);
   expect(rootResponse?.headers()['content-type']).toContain('text/html');
@@ -86,7 +86,7 @@ test('built SPA and room authority share one production-like Worker origin', asy
     page.locator('[data-app-route="remote-room-lobby"]')
   ).toBeVisible();
   await expect(
-    page.getByRole('heading', { name: 'Renderer parity spike' })
+    page.getByRole('heading', { name: 'Renderer fixture' })
   ).toHaveCount(0);
   await expect(page.locator('.ptcgsim-board-surface')).toHaveCount(1, {
     timeout: TABLE_TIMEOUT_MS,
@@ -97,7 +97,6 @@ test('built SPA and room authority share one production-like Worker origin', asy
   expect(
     await page.evaluate(() => ({
       hasDevRoomHandle: '__ptcgsimDevRoom' in globalThis,
-      rendererKind: window.__PTCG_RENDERER_SPIKE__?.rendererKind,
       mounted:
         window.__PTCG_RENDERER_SPIKE__?.renderer.getDiagnostics?.().mounted,
       destroyed:
@@ -105,13 +104,12 @@ test('built SPA and room authority share one production-like Worker origin', asy
     }))
   ).toEqual({
     hasDevRoomHandle: false,
-    rendererKind: 'dom',
     mounted: true,
     destroyed: false,
   });
   expect(authorityRequests).toEqual([]);
 
-  const lobbyResponse = await page.goto('/?room-lobby=1&renderer=dom');
+  const lobbyResponse = await page.goto('/?room-lobby=1');
   expect(lobbyResponse?.status()).toBe(200);
   await expect(
     page.locator('[data-app-route="remote-room-lobby"]')
@@ -216,7 +214,7 @@ test('built SPA and room authority share one production-like Worker origin', asy
     // query (a missing file is a 404); held on the lobby so the app itself
     // is what is measured, not the Solo landing's room creation.
     const spaResponse = await page.goto(
-      `/production-preview/${cycle}?renderer=dom&dev-room=1&room-lobby=1`
+      `/production-preview/${cycle}?dev-room=1&room-lobby=1`
     );
     expect(new URL(page.url()).pathname).toBe('/');
     expect(spaResponse?.status()).toBe(200);
@@ -228,7 +226,6 @@ test('built SPA and room authority share one production-like Worker origin', asy
     expect(
       await page.evaluate(() => ({
         hasDevRoomHandle: '__ptcgsimDevRoom' in globalThis,
-        rendererKind: window.__PTCG_RENDERER_SPIKE__?.rendererKind,
         mounted:
           window.__PTCG_RENDERER_SPIKE__?.renderer.getDiagnostics?.().mounted,
         destroyed:
@@ -236,7 +233,6 @@ test('built SPA and room authority share one production-like Worker origin', asy
       }))
     ).toEqual({
       hasDevRoomHandle: false,
-      rendererKind: 'dom',
       mounted: true,
       destroyed: false,
     });
@@ -251,7 +247,7 @@ test('built SPA and room authority share one production-like Worker origin', asy
     await expect(page.locator('.ptcgsim-board-surface')).toHaveCount(0);
   }
 
-  await page.goto('/?renderer-spike=1&renderer=dom');
+  await page.goto('/?renderer-spike=1');
   await expect(page.locator('.ptcgsim-board-surface')).toHaveCount(1, {
     timeout: TABLE_TIMEOUT_MS,
   });

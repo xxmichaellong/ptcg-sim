@@ -17,7 +17,6 @@ interface BrowserDevRoomHandle {
   readonly mode: string;
   readonly route: {
     readonly kind: string;
-    readonly rendererKind: string;
   };
   readonly runtime: {
     readonly roomCode: string;
@@ -216,7 +215,7 @@ test('development route reaches and resumes a real durable room through the same
     buildId: 'local-development',
   });
 
-  await page.goto('/?dev-room=1&renderer=dom&name=Transport%20Smoke');
+  await page.goto('/?dev-room=1&name=Transport%20Smoke');
   await expect(page.locator('[data-app-route="remote-room"]')).toBeVisible();
   await expect(page.locator('[data-renderer-status]')).toHaveAttribute(
     'data-renderer-status',
@@ -239,7 +238,6 @@ test('development route reaches and resumes a real durable room through the same
     const snapshot = handle.runtime.session.getSnapshot();
     return {
       routeKind: handle.route.kind,
-      rendererKind: handle.route.rendererKind,
       roomCode: handle.runtime.roomCode,
       requestedRole: handle.runtime.requestedRole,
       phase: snapshot.phase,
@@ -251,7 +249,6 @@ test('development route reaches and resumes a real durable room through the same
   });
   expect(connected).toMatchObject({
     routeKind: 'remote-room',
-    rendererKind: 'dom',
     requestedRole: 'player',
     phase: 'ready',
     role: 'player',
@@ -445,7 +442,6 @@ test('development route reaches and resumes a real durable room through the same
     return diagnostics;
   });
   expect(beforeReconnect).toMatchObject({
-    rendererKind: 'dom',
     mounted: true,
     destroyed: false,
     generation: 1,
@@ -523,7 +519,6 @@ test('development route reaches and resumes a real durable room through the same
     previousSurfaceConnected: false,
     sameRenderer: true,
     diagnostics: {
-      rendererKind: 'dom',
       mounted: true,
       destroyed: false,
       generation: 1,
@@ -628,9 +623,7 @@ test('solo creation serves one-player authority and locally disclosed replay wit
       new URL(response.url()).pathname === '/v2/rooms'
   );
 
-  await page.goto(
-    '/?dev-room=1&room-mode=solo&renderer=dom&name=Solo%20Replay'
-  );
+  await page.goto('/?dev-room=1&room-mode=solo&name=Solo%20Replay');
   const creationResponse = await creationResponsePromise;
   expect(creationResponse.status()).toBe(201);
   expect(creationResponse.request().postDataJSON()).toEqual({ mode: 'solo' });
@@ -873,9 +866,7 @@ test('document navigation churn releases each creator room before the next mount
   });
   const roomCodes: string[] = [];
   for (let cycle = 0; cycle < 3; cycle += 1) {
-    await page.goto(
-      `/?dev-room=1&renderer=dom&name=Navigation%20Cycle%20${cycle + 1}`
-    );
+    await page.goto(`/?dev-room=1&name=Navigation%20Cycle%20${cycle + 1}`);
     await expect(page.locator('[data-app-route="remote-room"]')).toBeVisible();
     await expect(page.locator('[data-renderer-status="ready"]')).toBeAttached();
     await expect(page.locator('.ptcgsim-board-surface')).toHaveCount(1);
@@ -893,16 +884,13 @@ test('document navigation churn releases each creator room before the next mount
         roomCode: handle.runtime.roomCode,
         phase: handle.runtime.session.getSnapshot().phase,
         nativeSocketStates: probe.sockets.map((socket) => socket.readyState),
-        rendererKind: window.__PTCG_RENDERER_SPIKE__?.rendererKind,
         diagnostics: renderer.getDiagnostics?.(),
       };
     });
     expect(mounted).toMatchObject({
       phase: 'ready',
       nativeSocketStates: [1],
-      rendererKind: 'dom',
       diagnostics: {
-        rendererKind: 'dom',
         mounted: true,
         destroyed: false,
         generation: 1,
@@ -938,7 +926,7 @@ test('document navigation churn releases each creator room before the next mount
       );
     }, cycle);
 
-    await page.goto(`/navigation-away-${cycle}?renderer=dom&room-lobby=1`);
+    await page.goto(`/navigation-away-${cycle}?room-lobby=1`);
     await expect(page.locator('.ptcgsim-board-surface')).toHaveCount(1);
     await expect(page.locator('canvas')).toHaveCount(0);
     expect(
@@ -948,7 +936,6 @@ test('document navigation churn releases each creator room before the next mount
           hasDevRoomHandle: '__ptcgsimDevRoom' in globalThis,
           nativeRoomSocketCount:
             globals.__ptcgsimSocketProbe?.sockets.length ?? -1,
-          rendererKind: window.__PTCG_RENDERER_SPIKE__?.rendererKind,
           rendererMounted:
             window.__PTCG_RENDERER_SPIKE__?.renderer.getDiagnostics?.().mounted,
         };
@@ -956,7 +943,6 @@ test('document navigation churn releases each creator room before the next mount
     ).toEqual({
       hasDevRoomHandle: false,
       nativeRoomSocketCount: 0,
-      rendererKind: 'dom',
       rendererMounted: true,
     });
     expect(

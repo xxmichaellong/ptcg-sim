@@ -9,8 +9,8 @@ import {
   openSettings,
 } from './support/table-shell.js';
 
-const startTable = async (page: Page, renderer = 'dom'): Promise<void> => {
-  await page.goto(`/?room-lobby=1&renderer=${renderer}`);
+const startTable = async (page: Page): Promise<void> => {
+  await page.goto('/?room-lobby=1');
   await page.locator('#nameInput').fill('Table review');
   // Putting Play online away goes to the Solo table.
   await closeSheet(page);
@@ -362,53 +362,4 @@ test('magnified desktop viewport keeps card reading and movement controls reacha
   } finally {
     await context.close();
   }
-});
-
-test('a requested Pixi table stays playable when WebGL is unavailable', async ({
-  page,
-}) => {
-  const errors: string[] = [];
-  page.on('pageerror', (error) => errors.push(error.message));
-  page.on('console', (message) => {
-    if (message.type() === 'error') errors.push(message.text());
-  });
-  await page.addInitScript(() => {
-    const original = HTMLCanvasElement.prototype.getContext;
-    HTMLCanvasElement.prototype.getContext = function (
-      this: HTMLCanvasElement,
-      ...args
-    ) {
-      if (String(args[0]).startsWith('webgl')) return null;
-      return Reflect.apply(original, this, args);
-    } as typeof original;
-    localStorage.setItem(
-      'ptcgsim.table-depth.v1',
-      JSON.stringify({ mode: 'table', tilt: 12 })
-    );
-  });
-  await startTable(page, 'pixi');
-  await expect(
-    page.getByRole('button', { name: 'Start turn', exact: true })
-  ).toBeVisible();
-  expect(
-    await page.evaluate(() => window.__PTCG_RENDERER_SPIKE__!.rendererKind)
-  ).toBe('dom');
-  await expect(page.locator('.ptcgsim-board-surface')).toHaveAttribute(
-    'data-table-view',
-    'table'
-  );
-  const hand = await cardIn(page, 'hand');
-  await page.locator(`[data-card-id="${hand.id}"]`).click();
-  await page.keyboard.press('a');
-  await expect
-    .poll(() =>
-      page.evaluate(
-        () =>
-          window.__PTCG_RENDERER_SPIKE__!.scene.cards.filter(
-            (card) => card.role === 'stackEvolution'
-          ).length
-      )
-    )
-    .toBe(1);
-  expect(errors).toEqual([]);
 });

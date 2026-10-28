@@ -8,7 +8,7 @@ import { pathToFileURL } from 'node:url';
  *   browser   anything but documentation: the browser suites run.
  *   evidence  board code (renderers, the table, motion, the session shell)
  *             or the CI setup itself: the long evidence specs run too (the
- *             Solo churn soak and the renderer comparison; see
+ *             Solo churn soak and the renderer evidence; see
  *             scripts/browser-shards.mjs).
  *
  * A pull request push is compared with the head it replaced, so a long-lived
@@ -25,7 +25,7 @@ import { pathToFileURL } from 'node:url';
 const DOCUMENTATION = [/^docs\//u, /\.md$/u, /^LICENSE/u];
 
 const EVIDENCE = [
-  /^packages\/renderer-(contract|dom|pixi)\//u,
+  /^packages\/renderer-(contract|dom)\//u,
   /^apps\/web\/src\/(board|motion|session|presentation|design)\//u,
   /^tests\/browser\/(remote-room-solo-renderer-churn|renderer-spike)\.spec\.ts$/u,
   /^tests\/browser\/support\//u,

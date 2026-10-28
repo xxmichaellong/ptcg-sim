@@ -5,7 +5,6 @@ import {
   V2_ROOM_CODE_PATTERN,
 } from '@ptcgsim/protocol';
 
-import type { RendererKind } from '../RendererSpikeBoard.js';
 import {
   RemoteRoomRuntime,
   type RemoteRoomRuntimeOptions,
@@ -36,7 +35,6 @@ export interface RemoteRoomBootstrapInput {
   readonly requestedRole: 'player' | 'spectator';
   /** Seat/spectator master or one-use invitation. Release after exchange. */
   readonly capability: string;
-  readonly rendererKind: RendererKind;
   readonly signal?: AbortSignal;
 }
 
@@ -57,7 +55,6 @@ export interface RemoteRoomBootstrapResult {
   readonly route: {
     readonly kind: 'remote-room';
     readonly runtime: RemoteRoomRuntime;
-    readonly rendererKind: RendererKind;
   };
 }
 
@@ -154,6 +151,6 @@ export const bootstrapRemoteRoom = async (
   });
   return {
     runtime,
-    route: { kind: 'remote-room', runtime, rendererKind: input.rendererKind },
+    route: { kind: 'remote-room', runtime },
   };
 };

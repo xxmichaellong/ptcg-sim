@@ -45,13 +45,10 @@ interface DomSnapshot {
   readonly revision: number;
   readonly cards: readonly DomCardSnapshot[];
   readonly diagnostics: {
-    readonly rendererKind: string;
     readonly mounted: boolean;
     readonly destroyed: boolean;
     readonly sceneRevision: number | null;
     readonly renderedCardIds: readonly string[];
-    readonly localTextureBindings: number;
-    readonly globalTextureLeaseEntries: number;
   };
 }
 
@@ -522,7 +519,7 @@ test('recipient projection never requests concealed face assets across reveal an
     )
   ).toEqual([fixture.staleBoardPath]);
 
-  await page.goto('/?renderer-spike=1&renderer=dom');
+  await page.goto('/?renderer-spike=1');
   await expect(page.locator('[data-renderer-status]')).toHaveAttribute(
     'data-renderer-status',
     'ready'
@@ -611,13 +608,10 @@ test('recipient projection never requests concealed face assets across reveal an
         revision: Number(surface.dataset.revision),
         cards,
         diagnostics: {
-          rendererKind: diagnostics.rendererKind,
           mounted: diagnostics.mounted,
           destroyed: diagnostics.destroyed,
           sceneRevision: diagnostics.sceneRevision,
           renderedCardIds: diagnostics.renderedCardIds.map(String),
-          localTextureBindings: diagnostics.localTextureBindings,
-          globalTextureLeaseEntries: diagnostics.globalTextureLeaseEntries,
         },
       };
     };
@@ -696,12 +690,9 @@ test('recipient projection never requests concealed face assets across reveal an
   try {
     expectConcealedDom(initial, fixture.scenes.hidden);
     expect(initial.diagnostics).toMatchObject({
-      rendererKind: 'dom',
       mounted: true,
       destroyed: false,
       sceneRevision: fixture.scenes.hidden.revision,
-      localTextureBindings: 0,
-      globalTextureLeaseEntries: 0,
     });
     expect(
       requests.filter((request) => request.phase === 'initial-hidden')

@@ -250,7 +250,6 @@ export class ReactDomBoardRenderer implements BoardRenderer {
       (element) => element.dataset.markerId
     ).filter((id): id is string => id !== undefined);
     return {
-      rendererKind: 'dom',
       mounted: !this.destroyed && this.root !== null,
       destroyed: this.destroyed,
       generation: this.generation,
@@ -260,15 +259,6 @@ export class ReactDomBoardRenderer implements BoardRenderer {
       renderedZoneIds,
       renderedMarkerIds,
       domNodes: host?.querySelectorAll('*').length ?? 0,
-      displayObjects: 0,
-      localTextureBindings: 0,
-      globalTextureLeaseEntries: 0,
-      globalPendingTextureLoads: 0,
-      globalUnloadingTextures: 0,
-      globalTextureReferences: 0,
-      globalTextureLoadFailures: 0,
-      globalTextureUnloadFailures: 0,
-      contextLossListeners: 0,
     };
   }
 

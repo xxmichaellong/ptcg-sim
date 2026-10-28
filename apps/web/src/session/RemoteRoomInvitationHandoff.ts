@@ -3,7 +3,6 @@ import {
   type RoomInvitationHandoff,
 } from '@ptcgsim/protocol';
 
-import type { RendererKind } from '../RendererSpikeBoard.js';
 import {
   bootstrapRemoteRoomInvitation,
   type RemoteRoomInvitationBootstrapInput,
@@ -41,7 +40,6 @@ export interface ForegroundPasteEvent {
 export interface RemoteRoomInvitationJoinInput {
   readonly buildId: string;
   readonly displayName: string;
-  readonly rendererKind: RendererKind;
   /** Watch rather than take the seat a player invitation offers. */
   readonly asSpectator?: boolean;
   readonly signal?: AbortSignal;

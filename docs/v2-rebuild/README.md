@@ -32,8 +32,8 @@ activation remains separate from local implementation and preview deployment.
 - A React + TypeScript application shell for the existing side panels, dialogs,
   menus, settings, chat, and deck tooling.
 - A renderer-neutral two-sided tabletop with normalized stable-keyed React DOM
-  selected for the first production renderer by ADR-004. The hardened raw
-  PixiJS spike remains unwired as contract and regression evidence.
+  selected for the first production renderer by ADR-004. The raw PixiJS spike
+  that it was measured against was retired on 2026-10-28.
 - A framework-independent, strict TypeScript game core containing normalized
   state, commands, reducers, invariants, visibility projections, and replay.
 - An authoritative room server deployed for the first release as a Cloudflare
@@ -233,7 +233,7 @@ activation remains separate from local implementation and preview deployment.
   or authority traffic, and survive room entry/leave only while that lobby host
   remains mounted.
   The shared preference contract also models the legacy “Hide containers”
-  checkbox as default-visible zone/stadium paint. DOM and Pixi hide only that
+  checkbox as default-visible zone/stadium paint. The DOM table hides only that
   paint while preserving stable nodes, geometry, accessibility, and input. The
   source Solo-only hide-hand checkbox and static keybind/contact block are also
   restored. The persisted one-player Solo authority now discloses the opposing
@@ -245,8 +245,8 @@ activation remains separate from local implementation and preview deployment.
   prompt plus `blank`, randomized `theme`, and arbitrary player-pasted image
   URLs under accepted ADR-013. Images preload before the
   route background changes and remain page-local across lobby/live/replay/Leave;
-  their URL never enters authority, protocol, replay, storage, renderer
-  preferences, or Pixi. A direct request still reveals ordinary network
+  their URL never enters authority, protocol, replay, storage, or renderer
+  preferences. A direct request still reveals ordinary network
   metadata to the player-selected host, an explicitly accepted parity tradeoff.
   The same ADR preserves bounded custom-card face URLs when a recipient is
   authorized to see that face and public player-selected card backs. Those
@@ -310,7 +310,7 @@ a manual tabletop simulator.
 | [REQUIREMENTS.md](./REQUIREMENTS.md)                                                               | Stable requirement IDs and blueprint-level traceability                                                      |
 | [LEGACY_ACTION_MAP.md](./LEGACY_ACTION_MAP.md)                                                     | Preliminary mapping of all 50 synchronized v1 actions into v2 responsibilities                               |
 | [MAGICCIRCLE_REUSE.md](./MAGICCIRCLE_REUSE.md)                                                     | Exact reuse/adaptation boundary for the local MagicCircle client, Pixi, and room patterns                    |
-| [RENDERER_SPIKE.md](./RENDERER_SPIKE.md)                                                           | Live DOM/Pixi implementation evidence, research, current result, and remaining decision gates                |
+| [RENDERER_SPIKE.md](./RENDERER_SPIKE.md)                                                           | DOM/Pixi spike evidence and research (the Pixi candidate was retired on 2026-10-28)                          |
 | [ADR-001-MANUAL-TABLETOP-BOUNDARY.md](./ADR-001-MANUAL-TABLETOP-BOUNDARY.md)                       | Accepted manual-tabletop product and validation boundary                                                     |
 | [ADR-002-DETERMINISTIC-GAME-CORE.md](./ADR-002-DETERMINISTIC-GAME-CORE.md)                         | Accepted strict deterministic stable-ID domain architecture                                                  |
 | [ADR-003-REACT-APPLICATION-SHELL.md](./ADR-003-REACT-APPLICATION-SHELL.md)                         | Accepted React application composition and lifecycle boundary                                                |

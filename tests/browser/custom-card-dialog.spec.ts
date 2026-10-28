@@ -7,7 +7,7 @@ import { openDeck } from './support/table-shell.js';
 test.beforeEach(async ({ page, context }) => {
   await ownRoomBudget(context);
   await routeCardCatalog(page);
-  await page.goto('/?renderer=dom');
+  await page.goto('/');
   await expect(
     page.locator('[data-app-route="remote-room"][data-session-phase="ready"]')
   ).toBeVisible({ timeout: 30_000 });

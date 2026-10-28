@@ -24,7 +24,7 @@ for (const { locale, width, height } of cases) {
     await page.addInitScript((language) => {
       localStorage.setItem('ptcgsim.language.v1', JSON.stringify({ language }));
     }, locale);
-    await page.goto('/?tutorial=commands&renderer=dom');
+    await page.goto('/?tutorial=commands');
     const coach = page.locator('.tutorial-coach[data-tutorial-step]');
     await expect(coach).toHaveAttribute(
       'data-tutorial-step',

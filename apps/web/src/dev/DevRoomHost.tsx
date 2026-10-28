@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import type { RoomCreationRequest } from '@ptcgsim/protocol';
 
 import { App, type AppRoute } from '../App.js';
-import type { RendererKind } from '../RendererSpikeBoard.js';
 import {
   createRemoteRoom,
   type RemoteRoomCreationResult,
@@ -32,11 +31,9 @@ const failureReason = (error: unknown): string =>
 export const DevRoomHost = ({
   displayName,
   mode,
-  rendererKind,
 }: {
   readonly displayName: string;
   readonly mode: RoomCreationRequest['mode'];
-  readonly rendererKind: RendererKind;
 }) => {
   const [state, setState] = useState<DevRoomState>({ kind: 'connecting' });
 
@@ -81,7 +78,6 @@ export const DevRoomHost = ({
         buildId: DEV_BUILD_ID,
         displayName,
         mode,
-        rendererKind,
         signal: abort.signal,
       })
         .then((result) => {
@@ -111,7 +107,7 @@ export const DevRoomHost = ({
       globalThis.removeEventListener('pagehide', handlePageHide);
       dispose();
     };
-  }, [displayName, mode, rendererKind]);
+  }, [displayName, mode]);
 
   if (state.kind === 'connected') return <App route={state.route} />;
   return (

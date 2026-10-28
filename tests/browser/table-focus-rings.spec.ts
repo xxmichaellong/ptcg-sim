@@ -199,7 +199,7 @@ const openTable = async (
     [darkMode, art, view, depth] as const
   );
   await ownRoomBudget(page.context());
-  await page.goto('/?renderer=dom');
+  await page.goto('/');
   await expect(
     page.locator('[data-app-route="remote-room"][data-session-phase="ready"]')
   ).toBeVisible({ timeout: 30_000 });

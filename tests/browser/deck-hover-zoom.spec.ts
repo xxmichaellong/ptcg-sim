@@ -7,7 +7,7 @@ import { openDeck } from './support/table-shell.js';
 test.beforeEach(async ({ context, page }) => {
   await ownRoomBudget(context);
   await routeCardCatalog(page);
-  await page.goto('/?renderer=dom');
+  await page.goto('/');
   await expect(page.locator('[data-session-phase="ready"]')).toBeVisible();
   await openDeck(page);
   await page.locator('#deckNewButton').click();

@@ -31,10 +31,7 @@ import { usePreference } from '../preferences/usePreference.js';
 import { PLAYER_PREFERENCES } from './player-preferences.js';
 import { ROOM_DEFAULT_PREFERENCES } from './room-preferences.js';
 import { TABLE_PREFERENCES } from './table-preferences.js';
-import {
-  RendererSpikeBoard,
-  type RendererKind,
-} from '../RendererSpikeBoard.js';
+import { RendererSpikeBoard } from '../RendererSpikeBoard.js';
 import { resolveCoachingConsentAction } from '../board/resolveCoachingConsentAction.js';
 import { AppBarSlot } from '../board/LegacyBoardChrome.js';
 import {
@@ -203,7 +200,6 @@ const defaultDependencies: RemoteRoomLobbyDependencies = {
 
 interface ConnectedRoom {
   readonly runtime: RemoteRoomRuntime;
-  readonly rendererKind: RendererKind;
   readonly mode: 'solo' | 'multiplayer';
   /** Set once admitted; left out, the room keeps its own (a restored game). */
   readonly coachingConsent?: boolean;
@@ -307,12 +303,10 @@ const decorative = { 'aria-hidden': true, focusable: 'false' } as const;
  */
 export const RemoteRoomLobby = ({
   buildId,
-  rendererKind,
   landing = 'lobby',
   dependencies = defaultDependencies,
 }: {
   readonly buildId: string;
-  readonly rendererKind: RendererKind;
   /**
    * v1 opens on the Solo table; `solo` starts a solo room as soon as the
    * lobby mounts, and `lobby` waits on the Multiplayer panel instead.
@@ -588,7 +582,6 @@ export const RemoteRoomLobby = ({
         buildId,
         displayName,
         mode: 'multiplayer',
-        rendererKind,
         signal: active.abort.signal,
       });
       if (active.owner.disposed || ownerRef.current !== active.owner) {
@@ -666,7 +659,6 @@ export const RemoteRoomLobby = ({
         buildId,
         displayName,
         mode: 'solo',
-        rendererKind,
         signal: active.abort.signal,
       });
       // A room or table this replaces stays until Solo has admitted its
@@ -705,7 +697,6 @@ export const RemoteRoomLobby = ({
         setStatus(undefined);
         setConnected({
           runtime: result.runtime,
-          rendererKind,
           mode: result.mode,
           coachingConsent: false,
         });
@@ -755,7 +746,6 @@ export const RemoteRoomLobby = ({
         buildId,
         displayName: 'Blue',
         mode: 'solo',
-        rendererKind,
         signal: active.abort.signal,
       });
       try {
@@ -777,7 +767,7 @@ export const RemoteRoomLobby = ({
         owner.tutorial?.dispose();
         owner.tutorial = result;
         setTutorial({
-          room: { runtime: result.runtime, rendererKind, mode: 'solo' },
+          room: { runtime: result.runtime, mode: 'solo' },
           serial: request.serial,
           ...(request.lesson !== undefined ? { lesson: request.lesson } : {}),
         });
@@ -928,7 +918,6 @@ export const RemoteRoomLobby = ({
         if (owner.disposed) return false;
         setConnected({
           runtime: creator.result.runtime,
-          rendererKind,
           mode: creator.result.mode,
           coachingConsent,
         });
@@ -946,7 +935,6 @@ export const RemoteRoomLobby = ({
       const result = await active.owner.invitation.bootstrap({
         buildId,
         displayName,
-        rendererKind,
         asSpectator: spectator,
         signal: active.abort.signal,
       });
@@ -982,7 +970,6 @@ export const RemoteRoomLobby = ({
         rememberName();
         setConnected({
           runtime: result.runtime,
-          rendererKind,
           mode: 'multiplayer',
           coachingConsent,
         });
@@ -1050,7 +1037,6 @@ export const RemoteRoomLobby = ({
       const result = await restoration.restore({
         buildId,
         displayName,
-        rendererKind,
         deliverOpponentInvitation,
         signal: combinedSignal,
       });
@@ -1092,7 +1078,6 @@ export const RemoteRoomLobby = ({
         // The save keeps the consent it was made with.
         setConnected({
           runtime: result.runtime,
-          rendererKind,
           mode: 'multiplayer',
         });
         previousCreator?.result.dispose();
@@ -1376,7 +1361,6 @@ export const RemoteRoomLobby = ({
       <RemoteRoomRoute
         key={practice.runtime.roomCode}
         runtime={practice.runtime}
-        rendererKind={practice.rendererKind}
         roomMode="solo"
         tutorial={{
           ...(tutorial.lesson !== undefined ? { lesson: tutorial.lesson } : {}),
@@ -1427,7 +1411,6 @@ export const RemoteRoomLobby = ({
           )}
         <RemoteRoomRoute
           runtime={connected.runtime}
-          rendererKind={connected.rendererKind}
           roomMode={connected.mode}
           {...(onlineOnReturn && connected.mode === 'solo'
             ? { initialSheet: 'online' as const }
@@ -1523,7 +1506,6 @@ export const RemoteRoomLobby = ({
           <RemoteSessionBoard
             session={parkedSolo.runtime.session}
             replay={parkedSolo.runtime.replay}
-            rendererKind={parkedSolo.rendererKind}
             onIntent={() => undefined}
             // Turned as the player left it, and kept as they leave it here.
             initialFlipped={
@@ -1555,7 +1537,6 @@ export const RemoteRoomLobby = ({
         ) : (
           <RendererSpikeBoard
             view={emptyBoardView}
-            rendererKind={rendererKind}
             onIntent={() => undefined}
             submitCommand={() => undefined}
             sessionReady={false}

@@ -18,7 +18,7 @@ const cardBack = (color: string): string => {
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 };
 
-/** A deterministic 61-card scene input shared by the DOM and Pixi spikes. */
+/** A deterministic 61-card scene input for the renderer fixture page. */
 export const createRendererSpikeView = (): MatchViewState => {
   const p1 = asPlayerId('spike-blue');
   const p2 = asPlayerId('spike-red');

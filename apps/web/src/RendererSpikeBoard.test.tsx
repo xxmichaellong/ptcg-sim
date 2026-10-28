@@ -12,7 +12,7 @@ import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { readRendererKind, RendererSpikeBoard } from './RendererSpikeBoard.js';
+import { RendererSpikeBoard } from './RendererSpikeBoard.js';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -72,7 +72,6 @@ describe('RendererSpikeBoard application boundary', () => {
       root.render(
         <RendererSpikeBoard
           view={firstView}
-          rendererKind="dom"
           onIntent={onIntent}
           submitCommand={firstSubmit}
         />
@@ -88,7 +87,6 @@ describe('RendererSpikeBoard application boundary', () => {
       root.render(
         <RendererSpikeBoard
           view={secondView}
-          rendererKind="dom"
           onIntent={onIntent}
           submitCommand={secondSubmit}
         />
@@ -106,7 +104,6 @@ describe('RendererSpikeBoard application boundary', () => {
       root.render(
         <RendererSpikeBoard
           view={replayView}
-          rendererKind="dom"
           onIntent={onIntent}
           submitCommand={secondSubmit}
           allowRevisionRegression
@@ -138,13 +135,6 @@ describe('RendererSpikeBoard application boundary', () => {
     expect(rendererHarness.destroy).toHaveBeenCalledTimes(1);
   });
 
-  it('defaults to the selected DOM renderer and keeps Pixi explicitly opt-in', () => {
-    expect(readRendererKind(null)).toBe('dom');
-    expect(readRendererKind('dom')).toBe('dom');
-    expect(readRendererKind('pixi')).toBe('pixi');
-    expect(readRendererKind('unsupported')).toBe('dom');
-  });
-
   it('installs explicit local preferences after mount and updates without remounting', async () => {
     const host = document.createElement('div');
     document.body.append(host);
@@ -159,7 +149,6 @@ describe('RendererSpikeBoard application boundary', () => {
     const light: BoardPreferences = { ...dark, darkMode: false };
     const props = {
       view,
-      rendererKind: 'dom' as const,
       onIntent: vi.fn(),
       submitCommand: vi.fn(),
     };
@@ -195,7 +184,6 @@ describe('RendererSpikeBoard application boundary', () => {
     const view = createRendererSpikeView();
     const props = {
       view,
-      rendererKind: 'dom' as const,
       onIntent: vi.fn(),
       submitCommand: vi.fn(),
     };
@@ -296,7 +284,6 @@ describe('RendererSpikeBoard application boundary', () => {
         root.render(
           <RendererSpikeBoard
             view={createRendererSpikeView()}
-            rendererKind="dom"
             onIntent={vi.fn()}
             submitCommand={vi.fn()}
           />
@@ -382,7 +369,6 @@ describe('RendererSpikeBoard application boundary', () => {
       root.render(
         <RendererSpikeBoard
           view={createRendererSpikeView()}
-          rendererKind="dom"
           onIntent={() => undefined}
           submitCommand={() => undefined}
           table={{ lowerShare: 0.5 }}

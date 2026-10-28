@@ -20,7 +20,6 @@ const handoffText = serializeRoomInvitationHandoffText(handoff);
 const joinInput = {
   buildId: 'client-build',
   displayName: '  Red  ',
-  rendererKind: 'dom' as const,
 };
 
 const acceptedResponse = () =>

@@ -146,8 +146,8 @@ jobs:
           retention-days: 14
 
   # The long evidence specs (EVIDENCE_SPECS in scripts/browser-shards.mjs):
-  # the Solo churn soak (about 12 minutes) and the renderer comparison
-  # (about 6), each on its own runner, only when board code changed. They
+  # the Solo churn soak (about 12 minutes) and the renderer evidence
+  # (about 3), each on its own runner, only when board code changed. They
   # are not retried: a retry would double a long run.
   evidence:
     name: Chromium evidence (${{ matrix.name }})
@@ -162,7 +162,7 @@ jobs:
           - spec: remote-room-solo-renderer-churn.spec.ts
             name: Solo churn soak
           - spec: renderer-spike.spec.ts
-            name: renderer comparison
+            name: renderer evidence
     steps:
       - name: Check out repository
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6

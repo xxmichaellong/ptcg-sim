@@ -62,7 +62,7 @@ test('normalized React DOM reuses 120 distinct cacheable assets across fresh ren
   page.on('response', onResponse);
 
   const collectEvidence = async () => {
-    await page.goto('/?renderer-spike=1&renderer=dom');
+    await page.goto('/?renderer-spike=1');
     await expect(page.locator('[data-renderer-status]')).toHaveAttribute(
       'data-renderer-status',
       'ready'
@@ -77,7 +77,7 @@ test('normalized React DOM reuses 120 distinct cacheable assets across fresh ren
           if (!condition) throw new Error(message);
         }
         const spike = window.__PTCG_RENDERER_SPIKE__;
-        requireCondition(spike?.rendererKind === 'dom', 'Missing DOM renderer');
+        requireCondition(spike, 'Missing DOM renderer');
         const createRenderer = spike.createRenderer;
         requireCondition(
           createRenderer,
@@ -249,8 +249,7 @@ test('normalized React DOM reuses 120 distinct cacheable assets across fresh ren
         ) => {
           requireCondition(diagnostics, 'Missing mounted DOM diagnostics');
           requireCondition(
-            diagnostics.rendererKind === 'dom' &&
-              diagnostics.mounted &&
+            diagnostics.mounted &&
               !diagnostics.destroyed &&
               diagnostics.generation === 1 &&
               diagnostics.sceneRevision === revision,
@@ -267,18 +266,6 @@ test('normalized React DOM reuses 120 distinct cacheable assets across fresh ren
               diagnostics.renderedMarkerIds.length === 0 &&
               diagnostics.domNodes > 0,
             'DOM renderer reported incomplete asset-scene structure'
-          );
-          requireCondition(
-            diagnostics.displayObjects === 0 &&
-              diagnostics.localTextureBindings === 0 &&
-              diagnostics.globalTextureLeaseEntries === 0 &&
-              diagnostics.globalPendingTextureLoads === 0 &&
-              diagnostics.globalUnloadingTextures === 0 &&
-              diagnostics.globalTextureReferences === 0 &&
-              diagnostics.globalTextureLoadFailures === 0 &&
-              diagnostics.globalTextureUnloadFailures === 0 &&
-              diagnostics.contextLossListeners === 0,
-            'DOM renderer reported non-DOM asset resources'
           );
         };
         const mount = async (label: string, scene: typeof coldScene) => {

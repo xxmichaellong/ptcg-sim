@@ -499,7 +499,7 @@ test('checked-in legacy sources and React DOM share ordinary evolution reflow se
       candidateRuntimeErrors.push(`console: ${message.text()}`);
     }
   });
-  await page.goto('/?renderer-spike=1&renderer=dom');
+  await page.goto('/?renderer-spike=1');
   await expect(page.locator('[data-renderer-status]')).toHaveAttribute(
     'data-renderer-status',
     'ready'

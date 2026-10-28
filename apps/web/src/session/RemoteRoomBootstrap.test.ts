@@ -16,7 +16,6 @@ const input = {
   displayName: '  Blue  ',
   requestedRole: 'player' as const,
   capability: seatCapability,
-  rendererKind: 'pixi' as const,
 };
 
 /**
@@ -124,7 +123,7 @@ describe('remote room admission bootstrap', () => {
     );
     expect(result).toEqual({
       runtime,
-      route: { kind: 'remote-room', runtime, rendererKind: 'pixi' },
+      route: { kind: 'remote-room', runtime },
     });
   });
 

@@ -28,7 +28,7 @@ test('a banner reads in lines as wide as the window lets it', async ({
     [1280, 800],
   ] as const) {
     await page.setViewportSize({ width, height });
-    await page.goto('/?renderer=dom');
+    await page.goto('/');
     const banner = page.locator('.ptcgsim-table-banner');
     await expect(banner).toContainText('Couldn', { timeout: 30_000 });
     const at = `${String(width)}x${String(height)}`;

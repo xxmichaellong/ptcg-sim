@@ -2,10 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   damageCounterBand,
-  isLegacyMarkerPresentation,
-  legacyMarkerAppearance,
   legacyMarkerCssColor,
-  legacyMarkerPackedColor,
   markerFace,
   markerHint,
   markerLabelFontSizePx,
@@ -13,18 +10,6 @@ import {
   type LegacyMarkerColor,
 } from './marker-presentation.js';
 import type { MarkerSceneNode } from './model.js';
-
-const bounds = { x: 0, y: 0, width: 30, height: 30 };
-
-const marker = (
-  overrides: Partial<Pick<MarkerSceneNode, 'kind' | 'value' | 'side'>> = {}
-): Pick<MarkerSceneNode, 'kind' | 'value' | 'side' | 'bounds'> => ({
-  kind: 'damage',
-  value: '130',
-  side: 'local',
-  bounds,
-  ...overrides,
-});
 
 /** WCAG 2 relative luminance and contrast ratio. */
 const luminance = ({ r, g, b }: LegacyMarkerColor): number => {
@@ -45,12 +30,6 @@ const contrast = (
 };
 
 describe('marker presentation', () => {
-  it('classifies only the legacy presentations', () => {
-    expect(isLegacyMarkerPresentation('legacyActiveQ0')).toBe(true);
-    expect(isLegacyMarkerPresentation('legacyBenchQ0')).toBe(true);
-    expect(isLegacyMarkerPresentation('generic')).toBe(false);
-  });
-
   it('puts a damage total on the biggest physical counter it reaches', () => {
     expect(
       ['10', '40', '49', '50', '90', '99', '100', '130', '9990'].map(
@@ -132,11 +111,11 @@ describe('marker presentation', () => {
     expect(note).toMatchObject({ face: 'condition-note', label: 'X' });
     // The rulebook asks for condition markers that never pass for counters.
     const counterFills = ['20', '70', '130'].map((value) =>
-      legacyMarkerPackedColor(markerFace({ kind: 'damage', value }).fill)
+      legacyMarkerCssColor(markerFace({ kind: 'damage', value }).fill)
     );
     for (const value of ['P', 'B', 'A', 'PA', 'C', 'X']) {
       const fill = markerFace({ kind: 'specialCondition', value }).fill;
-      expect(counterFills, value).not.toContain(legacyMarkerPackedColor(fill));
+      expect(counterFills, value).not.toContain(legacyMarkerCssColor(fill));
     }
   });
 
@@ -182,34 +161,6 @@ describe('marker presentation', () => {
     expect(markerLabelFontSizePx(30, '9990')).toBeCloseTo(9, 10);
     expect(markerLabelFontSizePx(30, 'Poisoned')).toBeCloseTo(4.8, 10);
     expect(markerLabelFontSizePx(30, 'a'.repeat(16))).toBeCloseTo(4.8, 10);
-  });
-
-  it('flattens a marker for renderers without artwork and for the editor', () => {
-    const damage = legacyMarkerAppearance(marker());
-    expect(legacyMarkerCssColor(damage.fill)).toBe('rgb(231, 0, 18)');
-    expect(legacyMarkerPackedColor(damage.fill)).toBe(0xe70012);
-    expect(legacyMarkerPackedColor(damage.text)).toBe(0xffffff);
-    expect(damage.shape).toBe('circle');
-    expect(damage.fontSizePx).toBe(markerLabelFontSizePx(30, '130'));
-    expect(damage.label).toBe('130');
-
-    const condition = legacyMarkerAppearance(
-      marker({ kind: 'specialCondition', value: 'Pa' })
-    );
-    expect(legacyMarkerCssColor(condition.fill)).toBe('rgb(250, 238, 66)');
-    expect(legacyMarkerCssColor(condition.text)).toBe('rgb(150, 92, 0)');
-    // The typed value stays the text: the editor previews what is typed.
-    expect(condition.label).toBe('Pa');
-
-    for (const side of ['local', 'opponent'] as const) {
-      const tab = legacyMarkerAppearance(
-        marker({ kind: 'abilityUsed', value: 'used', side })
-      );
-      expect(tab.shape).toBe('tab');
-      expect(tab.label).toBe('');
-      expect(tab.fontSizePx).toBeUndefined();
-      expect(legacyMarkerCssColor(tab.fill)).toBe('rgb(200, 23, 30)');
-    }
   });
 
   it('emits rgba only for translucent colours', () => {

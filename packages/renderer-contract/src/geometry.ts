@@ -129,9 +129,9 @@ export const containsPoint = (rect: Rect, x: number, y: number): boolean =>
   y <= rect.y + rect.height;
 
 /**
- * Tests the same center-origin quarter-turn rectangle painted by the DOM and
- * Pixi renderers. Scene bounds remain the untransformed layout box; the point
- * is inverse-rotated into that box so paint and shared input stay aligned.
+ * Tests the same center-origin quarter-turn rectangle the renderer paints.
+ * Scene bounds remain the untransformed layout box; the point is
+ * inverse-rotated into that box so paint and shared input stay aligned.
  */
 export const containsPointInRotatedRect = (
   rect: Rect,

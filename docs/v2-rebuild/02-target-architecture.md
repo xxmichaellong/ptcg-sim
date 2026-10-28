@@ -53,10 +53,9 @@ packages/
   protocol/
     src/messages/            client/server wire messages
     src/schemas/             runtime validation and version negotiation
-  renderer-pixi/
-    src/board/               layout and scene roots
-    src/systems/             render/input/animation/asset systems
-    src/testing/             deterministic renderer harness
+  renderer-contract/         renderer-neutral scene, layout, input and motion
+  renderer-dom/              the React DOM board (ADR-004; the Pixi spike was
+                             retired 2026-10-28)
   deck-core/
     src/                     migrated pure deck parsing/search/sort/validation
   legacy-import/
@@ -170,7 +169,7 @@ pointer/key/menu intent
   -> client reconciles pending overlay
   -> effective live/replay presentation coordinator consumes each fact once
   -> isolated activity, accessibility, and animation adapters
-  -> React/Pixi update only affected views
+  -> the board renderer updates only affected views
 ```
 
 Rejected commands return a typed error and current revision metadata. They never

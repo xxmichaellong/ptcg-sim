@@ -306,7 +306,6 @@ const readSettledResourceEvidence = (page: Page, renderer: JSHandle<unknown>) =>
       throw new Error('Missing selected renderer diagnostics');
     }
     return {
-      rendererKind: spike.rendererKind,
       rendererGeneration: diagnostics.generation,
       rendererMounted: diagnostics.mounted,
       rendererDestroyed: diagnostics.destroyed,
@@ -358,15 +357,6 @@ const readSettledResourceEvidence = (page: Page, renderer: JSHandle<unknown>) =>
       renderedMarkers: diagnostics.renderedMarkerIds.length,
       rendererDomNodes: diagnostics.domNodes,
       renderCommits: diagnostics.renderCommits,
-      displayObjects: diagnostics.displayObjects,
-      localTextureBindings: diagnostics.localTextureBindings,
-      globalTextureLeaseEntries: diagnostics.globalTextureLeaseEntries,
-      globalPendingTextureLoads: diagnostics.globalPendingTextureLoads,
-      globalUnloadingTextures: diagnostics.globalUnloadingTextures,
-      globalTextureReferences: diagnostics.globalTextureReferences,
-      globalTextureLoadFailures: diagnostics.globalTextureLoadFailures,
-      globalTextureUnloadFailures: diagnostics.globalTextureUnloadFailures,
-      contextLossListeners: diagnostics.contextLossListeners,
       boardSurfaces: document.querySelectorAll('.ptcgsim-board-surface').length,
       canvases: document.querySelectorAll('canvas').length,
       zoneBrowsers: document.querySelectorAll('[data-legacy-zone-browser]')
@@ -386,7 +376,6 @@ type ResourceEvidence = Awaited<ReturnType<typeof readResourceEvidence>>;
 
 const resourceSignature = (evidence: ResourceEvidence): string =>
   JSON.stringify({
-    rendererKind: evidence.rendererKind,
     rendererGeneration: evidence.rendererGeneration,
     rendererMounted: evidence.rendererMounted,
     rendererDestroyed: evidence.rendererDestroyed,
@@ -398,15 +387,6 @@ const resourceSignature = (evidence: ResourceEvidence): string =>
     renderedZones: evidence.renderedZones,
     renderedMarkers: evidence.renderedMarkers,
     rendererDomNodes: evidence.rendererDomNodes,
-    displayObjects: evidence.displayObjects,
-    localTextureBindings: evidence.localTextureBindings,
-    globalTextureLeaseEntries: evidence.globalTextureLeaseEntries,
-    globalPendingTextureLoads: evidence.globalPendingTextureLoads,
-    globalUnloadingTextures: evidence.globalUnloadingTextures,
-    globalTextureReferences: evidence.globalTextureReferences,
-    globalTextureLoadFailures: evidence.globalTextureLoadFailures,
-    globalTextureUnloadFailures: evidence.globalTextureUnloadFailures,
-    contextLossListeners: evidence.contextLossListeners,
     boardSurfaces: evidence.boardSurfaces,
     canvases: evidence.canvases,
     zoneBrowsers: evidence.zoneBrowsers,
@@ -421,7 +401,6 @@ const expectHealthyEvidence = (
   phase: 'reset' | 'setup'
 ): void => {
   expect(evidence).toMatchObject({
-    rendererKind: 'dom',
     rendererMounted: true,
     rendererDestroyed: false,
     sameRenderer: true,
@@ -429,15 +408,6 @@ const expectHealthyEvidence = (
     renderedCards: evidence.renderableSceneCardIds.length,
     renderedZones: evidence.sceneZones,
     renderedMarkers: evidence.sceneMarkers,
-    displayObjects: 0,
-    localTextureBindings: 0,
-    globalTextureLeaseEntries: 0,
-    globalPendingTextureLoads: 0,
-    globalUnloadingTextures: 0,
-    globalTextureReferences: 0,
-    globalTextureLoadFailures: 0,
-    globalTextureUnloadFailures: 0,
-    contextLossListeners: 0,
     boardSurfaces: 1,
     canvases: 0,
     zoneBrowsers: 0,
@@ -662,7 +632,7 @@ const openChurnRoom = async (page: Page): Promise<JSHandle<unknown>> => {
       JSON.stringify({ stackPiles: false })
     )
   );
-  await page.goto('/?room-lobby=1&renderer=dom');
+  await page.goto('/?room-lobby=1');
   await expect(
     page.locator('[data-app-route="remote-room-lobby"]')
   ).toBeVisible();

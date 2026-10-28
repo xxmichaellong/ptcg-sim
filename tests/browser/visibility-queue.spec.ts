@@ -58,7 +58,7 @@ test('Hide then Hand keeps the same physical card while both actions await autho
           scene?.cards.filter((card) => card.parentId === target?.id) ?? [],
       };
     }, kind);
-  await page.goto('/?renderer=dom');
+  await page.goto('/');
   await expect(page.locator('[data-session-phase="ready"]')).toBeVisible();
   await openDeck(page);
   await page.locator('#nativeDeckBuilderCsvImport').setInputFiles({

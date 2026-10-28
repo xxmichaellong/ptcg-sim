@@ -21,7 +21,6 @@
     "@ptcgsim/protocol": "workspace:*",
     "@ptcgsim/renderer-contract": "workspace:*",
     "@ptcgsim/renderer-dom": "workspace:*",
-    "@ptcgsim/renderer-pixi": "workspace:*",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },

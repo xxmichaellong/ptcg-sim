@@ -283,7 +283,7 @@ export const resolveBoardDropTarget = (
   );
 };
 
-/** Shared pointer gesture state so DOM and Pixi produce identical drag intent. */
+/** Pointer gesture state that turns presses and moves into drag intent. */
 export class BoardDragController {
   private active: ActiveGesture | null = null;
   /**

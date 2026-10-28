@@ -111,7 +111,7 @@ for (const locale of ['ar', 'ru']) {
     }) => {
       await ownRoomBudget(context);
       await routeCardCatalog(page);
-      await page.goto('/?renderer=dom');
+      await page.goto('/');
       await expect(
         page.locator(
           '[data-app-route="remote-room"][data-session-phase="ready"]'

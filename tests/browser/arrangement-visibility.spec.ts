@@ -102,7 +102,7 @@ for (const kind of ['board', 'hand'] as const) {
       guest!.on('request', (request) => {
         if (request.url().includes(PRIVATE_ART)) privateRequests += 1;
       });
-      await host!.goto('/?dev-room=1&room-mode=multiplayer&renderer=dom');
+      await host!.goto('/?dev-room=1&room-mode=multiplayer');
       await expect(host!.locator('[data-session-phase="ready"]')).toBeVisible();
       await submit(host!, {
         type: 'LoadDeck',
@@ -146,7 +146,7 @@ for (const kind of ['board', 'hand'] as const) {
         });
         return copied;
       });
-      await guest!.goto('/?room-lobby=1&renderer=dom');
+      await guest!.goto('/?room-lobby=1');
       await guest!.locator('#nameInput').fill('Arrangement guest');
       await guest!.locator('#roomIdInput').evaluate((input, text) => {
         const paste = new Event('paste', { bubbles: true, cancelable: true });

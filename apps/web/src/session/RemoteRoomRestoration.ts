@@ -3,7 +3,6 @@ import {
   serializeRoomInvitationHandoffText,
 } from '@ptcgsim/protocol';
 
-import type { RendererKind } from '../RendererSpikeBoard.js';
 import {
   createBrowserContinuationPort,
   RemoteContinuationCustody,
@@ -34,7 +33,6 @@ export class RemoteRoomRestorationError extends Error {
 export interface RemoteRoomRestorationInput {
   readonly buildId: string;
   readonly displayName: string;
-  readonly rendererKind: RendererKind;
   readonly deliverOpponentInvitation: (text: string) => Promise<void>;
   readonly signal?: AbortSignal;
 }
@@ -124,7 +122,6 @@ export class RemoteRoomRestorationCustody {
             displayName: input.displayName,
             requestedRole: 'player',
             capability: receipt.requesterSeatCapability,
-            rendererKind: input.rendererKind,
             signal,
           });
           await waitForRestoredPlayer(candidate.runtime, signal);

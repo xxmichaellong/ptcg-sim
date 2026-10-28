@@ -1938,10 +1938,6 @@
               "kind": "value"
             },
             {
-              "name": "isLegacyMarkerPresentation",
-              "kind": "value"
-            },
-            {
               "name": "isPileStandIn",
               "kind": "value"
             },
@@ -2086,23 +2082,11 @@
               "kind": "type"
             },
             {
-              "name": "legacyMarkerAppearance",
-              "kind": "value"
-            },
-            {
-              "name": "LegacyMarkerAppearance",
-              "kind": "type"
-            },
-            {
               "name": "LegacyMarkerColor",
               "kind": "type"
             },
             {
               "name": "legacyMarkerCssColor",
-              "kind": "value"
-            },
-            {
-              "name": "legacyMarkerPackedColor",
               "kind": "value"
             },
             {
@@ -2516,54 +2500,6 @@
             {
               "name": "ReactDomBoardRenderer",
               "kind": "type-value"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "package": "@ptcgsim/renderer-pixi",
-      "root": "packages/renderer-pixi",
-      "entrypoints": [
-        {
-          "subpath": ".",
-          "source": "packages/renderer-pixi/src/index.ts",
-          "symbols": [
-            {
-              "name": "CardTextureRegistry",
-              "kind": "type-value"
-            },
-            {
-              "name": "CardTextureRegistryDiagnostics",
-              "kind": "type"
-            },
-            {
-              "name": "createPixiBoardRenderer",
-              "kind": "value"
-            },
-            {
-              "name": "PixiBoardRenderer",
-              "kind": "type-value"
-            },
-            {
-              "name": "PixiBoardRendererOptions",
-              "kind": "type"
-            },
-            {
-              "name": "TextureAssetAdapter",
-              "kind": "type"
-            },
-            {
-              "name": "TextureAssetLease",
-              "kind": "type"
-            },
-            {
-              "name": "TextureAssetLeaseBroker",
-              "kind": "type-value"
-            },
-            {
-              "name": "TextureAssetLeaseDiagnostics",
-              "kind": "type"
             }
           ]
         }

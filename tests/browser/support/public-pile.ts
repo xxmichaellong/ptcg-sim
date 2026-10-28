@@ -56,9 +56,7 @@ export const pile = async (page: Page, kind: 'discard' | 'lostZone') => {
 };
 
 export const fillPile = async (page: Page, kind: 'discard' | 'lostZone') => {
-  await page.goto(
-    '/?dev-room=1&room-mode=solo&renderer=dom&name=Pile%20ordering'
-  );
+  await page.goto('/?dev-room=1&room-mode=solo&name=Pile%20ordering');
   await expect(page.locator('[data-session-phase="ready"]')).toBeVisible();
   await submit(page, {
     type: 'LoadDeck',

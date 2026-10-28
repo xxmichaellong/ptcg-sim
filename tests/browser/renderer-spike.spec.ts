@@ -22,25 +22,17 @@ const waitForReady = async (page: Page) => {
   );
 };
 
-test('the accepted React DOM renderer is the default candidate', async ({
-  page,
-}) => {
+test('the renderer fixture mounts the React DOM board', async ({ page }) => {
   const errors = collectRuntimeErrors(page);
   await page.goto('/?renderer-spike=1');
   await waitForReady(page);
   await expect(page.locator('.ptcgsim-board-surface')).toHaveCount(1);
   await expect(page.locator('[data-card-id]')).toHaveCount(49);
   await expect(page.locator('canvas')).toHaveCount(0);
-  expect(
-    await page.evaluate(() => window.__PTCG_RENDERER_SPIKE__?.rendererKind)
-  ).toBe('dom');
   expect(errors).toEqual([]);
 });
 
-const dragLocalHandCardToBench = async (
-  page: Page,
-  renderer: 'dom' | 'pixi'
-) => {
+const dragLocalHandCardToBench = async (page: Page) => {
   const gesture = await page.evaluate(() => {
     const scene = window.__PTCG_RENDERER_SPIKE__?.scene;
     if (!scene) throw new Error('Missing renderer scene');
@@ -72,10 +64,7 @@ const dragLocalHandCardToBench = async (
   await page.mouse.move(gesture.start.x, gesture.start.y);
   await page.mouse.down();
   await page.mouse.move(gesture.end.x, gesture.end.y, { steps: 8 });
-  const dragSurface =
-    renderer === 'dom'
-      ? page.locator('.ptcgsim-board-surface')
-      : page.locator('canvas');
+  const dragSurface = page.locator('.ptcgsim-board-surface');
   await expect(dragSurface).toHaveAttribute('data-dragging', 'true');
   await page.mouse.up();
   await expect(page.locator('output')).toContainText('CardDropRequested');
@@ -86,10 +75,7 @@ const dragLocalHandCardToBench = async (
   await expect(dragSurface).toHaveAttribute('data-dragging', 'false');
 };
 
-const dragLocalActiveStackToBench = async (
-  page: Page,
-  renderer: 'dom' | 'pixi'
-) => {
+const dragLocalActiveStackToBench = async (page: Page) => {
   const gesture = await page.evaluate(() => {
     const scene = window.__PTCG_RENDERER_SPIKE__?.scene;
     if (!scene) throw new Error('Missing renderer scene');
@@ -117,10 +103,7 @@ const dragLocalActiveStackToBench = async (
   await page.mouse.move(gesture.start.x, gesture.start.y);
   await page.mouse.down();
   await page.mouse.move(gesture.end.x, gesture.end.y, { steps: 8 });
-  const dragSurface =
-    renderer === 'dom'
-      ? page.locator('.ptcgsim-board-surface')
-      : page.locator('canvas');
+  const dragSurface = page.locator('.ptcgsim-board-surface');
   await expect(dragSurface).toHaveAttribute('data-dragging', 'true');
   await page.mouse.up();
   await expect(page.locator('output')).toContainText('MovePlayStack');
@@ -135,7 +118,7 @@ test('normalized React DOM mounts the shared fixture at characterized board and 
   page,
 }, testInfo) => {
   const errors = collectRuntimeErrors(page);
-  await page.goto('/?renderer-spike=1&renderer=dom');
+  await page.goto('/?renderer-spike=1');
   await waitForReady(page);
   await expect(page.locator('[data-card-id]')).toHaveCount(49);
   await expect(page.locator('canvas')).toHaveCount(0);
@@ -153,104 +136,12 @@ test('normalized React DOM mounts the shared fixture at characterized board and 
 
   await page.locator('[data-card-id]').first().click();
   await expect(page.locator('output')).toContainText('CardSelected');
-  await dragLocalHandCardToBench(page, 'dom');
-  await dragLocalActiveStackToBench(page, 'dom');
+  await dragLocalHandCardToBench(page);
+  await dragLocalActiveStackToBench(page);
   await testInfo.attach('react-dom-renderer.png', {
     body: await page.screenshot(),
     contentType: 'image/png',
   });
-  expect(errors).toEqual([]);
-});
-
-test('raw Pixi renderer creates 49 stable physical views for the 61-card scene and reconstructs after context loss', async ({
-  page,
-}, testInfo) => {
-  const errors = collectRuntimeErrors(page);
-  await page.goto('/?renderer-spike=1&renderer=pixi');
-  await waitForReady(page);
-  const canvas = page.locator('canvas');
-  await expect(canvas).toHaveCount(1);
-  await expect(canvas).toHaveAttribute('data-card-views', '49');
-  expect(
-    await page.evaluate(
-      () =>
-        window.__PTCG_RENDERER_SPIKE__?.renderer.getDiagnostics?.()
-          .localTextureBindings
-    )
-  ).toBe(49);
-  const firstGeneration = Number(
-    await page
-      .locator('[data-renderer-status]')
-      .getAttribute('data-renderer-generation')
-  );
-  expect(firstGeneration).toBeGreaterThan(0);
-
-  const firstCardCenter = await page.evaluate(() => {
-    const card = window.__PTCG_RENDERER_SPIKE__?.scene.cards.find(
-      (candidate) => candidate.side === 'local' && !candidate.concealed
-    );
-    if (!card) throw new Error('Missing local visible fixture card');
-    return {
-      x: card.bounds.x + card.bounds.width / 2,
-      y: card.bounds.y + card.bounds.height / 2,
-    };
-  });
-  await page.mouse.click(firstCardCenter.x, firstCardCenter.y);
-  await expect(page.locator('output')).toContainText('CardSelected');
-  await dragLocalHandCardToBench(page, 'pixi');
-  await dragLocalActiveStackToBench(page, 'pixi');
-
-  const requestedLoss = await page.evaluate(() => {
-    const target = document.querySelector('canvas');
-    if (!(target instanceof HTMLCanvasElement)) return false;
-    const context = target.getContext('webgl2');
-    const extension = context?.getExtension('WEBGL_lose_context');
-    if (!extension) return false;
-    extension.loseContext();
-    return true;
-  });
-  expect(requestedLoss).toBe(true);
-  await expect
-    .poll(async () => {
-      const value = await page
-        .locator('[data-renderer-status]')
-        .getAttribute('data-renderer-generation');
-      return Number(value);
-    })
-    .toBeGreaterThan(firstGeneration);
-  await expect(page.locator('canvas')).toHaveCount(1);
-  await expect(page.locator('canvas')).toHaveAttribute('data-card-views', '49');
-  expect(
-    await page.evaluate(
-      () =>
-        window.__PTCG_RENDERER_SPIKE__?.renderer.getDiagnostics?.()
-          .localTextureBindings
-    )
-  ).toBe(49);
-  await testInfo.attach('pixi-renderer-recovered.png', {
-    body: await page.screenshot(),
-    contentType: 'image/png',
-  });
-  expect(errors).toEqual([]);
-});
-
-test('switching candidates repeatedly leaves exactly one live renderer', async ({
-  page,
-}) => {
-  const errors = collectRuntimeErrors(page);
-  await page.goto('/?renderer-spike=1&renderer=pixi');
-  for (let cycle = 0; cycle < 3; cycle += 1) {
-    await waitForReady(page);
-    await expect(page.locator('canvas')).toHaveCount(1);
-    await page.locator('select').selectOption('dom');
-    await waitForReady(page);
-    await expect(page.locator('canvas')).toHaveCount(0);
-    await expect(page.locator('[data-card-id]')).toHaveCount(49);
-    await page.locator('select').selectOption('pixi');
-  }
-  await waitForReady(page);
-  await expect(page.locator('canvas')).toHaveCount(1);
-  await expect(page.locator('[data-card-id]')).toHaveCount(0);
   expect(errors).toEqual([]);
 });
 
@@ -260,7 +151,7 @@ test('normalized React DOM releases board resources through 100 lifecycle cycles
 }, testInfo) => {
   test.setTimeout(90_000);
   const errors = collectRuntimeErrors(page);
-  await page.goto('/?renderer-spike=1&renderer=dom');
+  await page.goto('/?renderer-spike=1');
   await waitForReady(page);
   // React delegates native events to its root container. Warm and retain the
   // route-owned host so the resource comparison measures repeated session
@@ -375,19 +266,6 @@ test('normalized React DOM releases board resources through 100 lifecycle cycles
               mounted.domNodes
             );
             mountedNodeCounts.add(mounted.domNodes);
-            if (
-              mounted.displayObjects !== 0 ||
-              mounted.localTextureBindings !== 0 ||
-              mounted.globalTextureLeaseEntries !== 0 ||
-              mounted.globalPendingTextureLoads !== 0 ||
-              mounted.globalUnloadingTextures !== 0 ||
-              mounted.globalTextureReferences !== 0 ||
-              mounted.contextLossListeners !== 0
-            ) {
-              throw new Error(
-                `${phase} cycle ${cycle} reported non-DOM resources`
-              );
-            }
 
             renderer.clearScene();
             const cleared = renderer.getDiagnostics?.();
@@ -535,88 +413,67 @@ test('normalized React DOM releases board resources through 100 lifecycle cycles
 });
 
 test('native pointer boundaries preserve rapid-click, primary-button, and touch semantics', async ({
+  baseURL,
   browser,
   page,
 }) => {
   const errors = collectRuntimeErrors(page);
-  for (const renderer of ['dom', 'pixi'] as const) {
-    await page.goto(`/?renderer-spike=1&renderer=${renderer}`);
-    await waitForReady(page);
-    const cover = await page.evaluate(() => {
-      const candidate = window.__PTCG_RENDERER_SPIKE__?.scene.cards.find(
-        (node) =>
-          node.side === 'local' && node.primaryAction?.kind === 'openZone'
-      );
-      if (!candidate?.primaryAction)
-        throw new Error('Missing local pile cover');
-      return {
-        zoneId: candidate.primaryAction.zoneId,
-        x: candidate.bounds.x + candidate.bounds.width / 2,
-        y: candidate.bounds.y + candidate.bounds.height / 2,
-      };
-    });
-    await page.mouse.click(cover.x, cover.y, { clickCount: 2, delay: 20 });
-    await expect(page.locator('output')).toHaveText(
-      JSON.stringify({
-        intent: { kind: 'ZoneOpened', zoneId: cover.zoneId },
-        command: null,
-      })
-    );
-
-    const card = await page.evaluate(() => {
-      const candidate = window.__PTCG_RENDERER_SPIKE__?.scene.cards.find(
-        (node) =>
-          node.side === 'local' &&
-          !node.concealed &&
-          node.primaryAction === undefined
-      );
-      if (!candidate) throw new Error('Missing visible card');
-      return {
-        x: candidate.bounds.x + candidate.bounds.width / 2,
-        y: candidate.bounds.y + candidate.bounds.height / 2,
-      };
-    });
-
-    await page.mouse.click(card.x, card.y, { clickCount: 3, delay: 20 });
-    await expect(page.locator('output')).toContainText('CardSelected');
-    await expect(page.locator('output')).not.toContainText(
-      'CardPreviewRequested'
-    );
-
-    await page.waitForTimeout(250);
-    await page.mouse.click(card.x, card.y, { clickCount: 2, delay: 20 });
-    await expect(page.locator('output')).toContainText('CardPreviewRequested');
-
-    await page.waitForTimeout(250);
-    await page.mouse.click(card.x, card.y, { clickCount: 4, delay: 20 });
-    await expect(page.locator('output')).toContainText('CardSelected');
-    await expect(page.locator('output')).not.toContainText(
-      'CardPreviewRequested'
-    );
-  }
-
-  await page.goto('/?renderer-spike=1&renderer=pixi');
+  await page.goto('/?renderer-spike=1');
   await waitForReady(page);
-  const emptyZonePoint = await page.evaluate(() => {
-    const zone = window.__PTCG_RENDERER_SPIKE__?.scene.zones.find(
-      (candidate) => candidate.interactive && candidate.count === 0
+  const cover = await page.evaluate(() => {
+    const candidate = window.__PTCG_RENDERER_SPIKE__?.scene.cards.find(
+      (node) => node.side === 'local' && node.primaryAction?.kind === 'openZone'
     );
-    if (!zone) throw new Error('Missing empty interactive zone');
+    if (!candidate?.primaryAction) throw new Error('Missing local pile cover');
     return {
-      x: zone.bounds.x + zone.bounds.width / 2,
-      y: zone.bounds.y + zone.bounds.height / 2,
+      zoneId: candidate.primaryAction.zoneId,
+      x: candidate.bounds.x + candidate.bounds.width / 2,
+      y: candidate.bounds.y + candidate.bounds.height / 2,
     };
   });
-  await page.mouse.click(emptyZonePoint.x, emptyZonePoint.y, {
-    button: 'right',
-    clickCount: 2,
-    delay: 20,
+  await page.mouse.click(cover.x, cover.y, { clickCount: 2, delay: 20 });
+  await expect(page.locator('output')).toHaveText(
+    JSON.stringify({
+      intent: { kind: 'ZoneOpened', zoneId: cover.zoneId },
+      command: null,
+    })
+  );
+
+  const card = await page.evaluate(() => {
+    const candidate = window.__PTCG_RENDERER_SPIKE__?.scene.cards.find(
+      (node) =>
+        node.side === 'local' &&
+        !node.concealed &&
+        node.primaryAction === undefined
+    );
+    if (!candidate) throw new Error('Missing visible card');
+    return {
+      x: candidate.bounds.x + candidate.bounds.width / 2,
+      y: candidate.bounds.y + candidate.bounds.height / 2,
+    };
   });
-  await expect(page.locator('output')).toHaveText('No board interaction yet');
+
+  await page.mouse.click(card.x, card.y, { clickCount: 3, delay: 20 });
+  await expect(page.locator('output')).toContainText('CardSelected');
+  await expect(page.locator('output')).not.toContainText(
+    'CardPreviewRequested'
+  );
+
+  await page.waitForTimeout(250);
+  await page.mouse.click(card.x, card.y, { clickCount: 2, delay: 20 });
+  await expect(page.locator('output')).toContainText('CardPreviewRequested');
+
+  await page.waitForTimeout(250);
+  await page.mouse.click(card.x, card.y, { clickCount: 4, delay: 20 });
+  await expect(page.locator('output')).toContainText('CardSelected');
+  await expect(page.locator('output')).not.toContainText(
+    'CardPreviewRequested'
+  );
+
   expect(errors).toEqual([]);
 
   const touchContext = await browser.newContext({
-    baseURL: 'http://127.0.0.1:4173',
+    ...(baseURL ? { baseURL } : {}),
     hasTouch: true,
     viewport: { width: 1280, height: 720 },
     deviceScaleFactor: 1,
@@ -624,7 +481,7 @@ test('native pointer boundaries preserve rapid-click, primary-button, and touch 
   try {
     const touchPage = await touchContext.newPage();
     const touchErrors = collectRuntimeErrors(touchPage);
-    await touchPage.goto('/?renderer-spike=1&renderer=pixi');
+    await touchPage.goto('/?renderer-spike=1');
     await waitForReady(touchPage);
     const touchCard = await touchPage.evaluate(() => {
       const candidate = window.__PTCG_RENDERER_SPIKE__?.scene.cards.find(
@@ -644,234 +501,217 @@ test('native pointer boundaries preserve rapid-click, primary-button, and touch 
   }
 });
 
-test('native and shared input follow center-rotated card paint in both candidates', async ({
+test('native and shared input follow center-rotated card paint', async ({
   page,
 }) => {
   const errors = collectRuntimeErrors(page);
-  for (const rendererKind of ['dom', 'pixi'] as const) {
-    await page.goto(`/?renderer-spike=1&renderer=${rendererKind}`);
-    await waitForReady(page);
-    await page.evaluate(async () => {
-      const spike = window.__PTCG_RENDERER_SPIKE__;
-      if (!spike?.createRenderer) {
-        throw new Error('Missing renderer factory for rotation fixture');
-      }
-      const [sourceTemplate, targetTemplate] = spike.scene.cards.filter(
-        (card) => card.interactive
-      );
-      const zoneTemplate = spike.scene.zones.find((zone) => zone.interactive);
-      if (!sourceTemplate || !targetTemplate || !zoneTemplate) {
-        throw new Error('Missing rotation fixture templates');
-      }
-      const host = document.createElement('div');
-      host.dataset.rotationFixtureHost = 'true';
-      host.dataset.intents = '[]';
-      host.dataset.updates = '[]';
-      Object.assign(host.style, {
-        position: 'fixed',
-        left: '0px',
-        top: '0px',
-        width: `${spike.scene.viewport.width}px`,
-        height: `${spike.scene.viewport.height}px`,
-        zIndex: '20000',
-      });
-      document.body.append(host);
-      const append = (key: 'intents' | 'updates', value: unknown) => {
-        const values = JSON.parse(host.dataset[key] ?? '[]') as unknown[];
-        values.push(value);
-        host.dataset[key] = JSON.stringify(values);
-      };
-      const renderer = spike.createRenderer({
-        emitIntent: (intent) => append('intents', intent),
-        emitPresentationUpdate: (update) => append('updates', update),
-        reportError: (error) => {
-          host.dataset.rendererError = String(error);
-        },
-      });
-      await renderer.mount(
-        host,
-        {
-          ...spike.scene,
-          revision: spike.scene.revision + 100,
-          zones: [
-            {
-              ...zoneTemplate,
-              id: 'rotation-target-zone',
-              bounds: { x: 100, y: 50, width: 220, height: 200 },
-              contentBounds: { x: 100, y: 50, width: 220, height: 200 },
-              surface: 'playSlot',
-              count: 1,
-              zIndex: 100,
-            },
-          ],
-          cards: [
-            // These are real scene cards moved to fixture coordinates, so any
-            // clip region they carried from their own zone no longer applies.
-            {
-              ...sourceTemplate,
-              id: 'rotation-source' as typeof sourceTemplate.id,
-              parentId: 'rotation-source-zone',
-              bounds: { x: 20, y: 100, width: 60, height: 100 },
-              zIndex: 200,
-              rotationQuarterTurns: 0,
-              clipBounds: undefined,
-            },
-            {
-              ...targetTemplate,
-              id: 'rotation-target' as typeof targetTemplate.id,
-              parentId: 'rotation-target-stack',
-              bounds: { x: 200, y: 100, width: 60, height: 100 },
-              zIndex: 300,
-              rotationQuarterTurns: 3,
-              clipBounds: undefined,
-            },
-          ],
-          markers: [],
-          counts: [],
-        },
-        {
-          selectedCardId: null,
-          hoveredCardId: null,
-          targetableCardIds: [],
-          drag: null,
-          openedZoneId: null,
-          settling: [],
-        }
-      );
-      (
-        window as typeof window & {
-          __PTCG_ROTATION_FIXTURE_RENDERER__?: { destroy(): void };
-        }
-      ).__PTCG_ROTATION_FIXTURE_RENDERER__ = renderer;
-      await new Promise<void>((resolve) =>
-        requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
-      );
-    });
-
-    const host = page.locator('[data-rotation-fixture-host]');
-    await expect(host).not.toHaveAttribute('data-renderer-error', /.+/u);
-    if (rendererKind === 'dom') {
-      await expect(
-        host.locator('[data-card-id="rotation-target"]')
-      ).toBeVisible();
-    } else {
-      await expect(host.locator('canvas')).toHaveAttribute(
-        'data-card-views',
-        '2'
-      );
+  await page.goto('/?renderer-spike=1');
+  await waitForReady(page);
+  await page.evaluate(async () => {
+    const spike = window.__PTCG_RENDERER_SPIKE__;
+    if (!spike?.createRenderer) {
+      throw new Error('Missing renderer factory for rotation fixture');
     }
-
-    await page.mouse.click(185, 150);
-    await expect
-      .poll(async () => JSON.parse((await host.getAttribute('data-intents'))!))
-      .toContainEqual(
-        expect.objectContaining({
-          kind: 'CardSelected',
-          cardId: 'rotation-target',
-        })
-      );
-
-    await host.evaluate((element) => {
-      if (!(element instanceof HTMLElement)) return;
-      element.dataset.intents = '[]';
-      element.dataset.updates = '[]';
+    const [sourceTemplate, targetTemplate] = spike.scene.cards.filter(
+      (card) => card.interactive
+    );
+    const zoneTemplate = spike.scene.zones.find((zone) => zone.interactive);
+    if (!sourceTemplate || !targetTemplate || !zoneTemplate) {
+      throw new Error('Missing rotation fixture templates');
+    }
+    const host = document.createElement('div');
+    host.dataset.rotationFixtureHost = 'true';
+    host.dataset.intents = '[]';
+    host.dataset.updates = '[]';
+    Object.assign(host.style, {
+      position: 'fixed',
+      left: '0px',
+      top: '0px',
+      width: `${spike.scene.viewport.width}px`,
+      height: `${spike.scene.viewport.height}px`,
+      zIndex: '20000',
     });
-    await page.mouse.click(230, 105);
-    await page.waitForTimeout(50);
-    expect(JSON.parse((await host.getAttribute('data-intents'))!)).toEqual([
-      { kind: 'BoardBackgroundPressed' },
-    ]);
-    await host.evaluate((element) => {
-      if (element instanceof HTMLElement) element.dataset.intents = '[]';
+    document.body.append(host);
+    const append = (key: 'intents' | 'updates', value: unknown) => {
+      const values = JSON.parse(host.dataset[key] ?? '[]') as unknown[];
+      values.push(value);
+      host.dataset[key] = JSON.stringify(values);
+    };
+    const renderer = spike.createRenderer({
+      emitIntent: (intent) => append('intents', intent),
+      emitPresentationUpdate: (update) => append('updates', update),
+      reportError: (error) => {
+        host.dataset.rendererError = String(error);
+      },
     });
-
-    await page.mouse.move(50, 150);
-    await page.mouse.down();
-    await page.mouse.move(185, 150, { steps: 4 });
-    await page.mouse.up();
-    expect(JSON.parse((await host.getAttribute('data-updates'))!)).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          kind: 'DragChanged',
-          drag: expect.objectContaining({
-            cardId: 'rotation-source',
-            targetId: 'rotation-target-stack',
-          }),
-        }),
-      ])
+    await renderer.mount(
+      host,
+      {
+        ...spike.scene,
+        revision: spike.scene.revision + 100,
+        zones: [
+          {
+            ...zoneTemplate,
+            id: 'rotation-target-zone',
+            bounds: { x: 100, y: 50, width: 220, height: 200 },
+            contentBounds: { x: 100, y: 50, width: 220, height: 200 },
+            surface: 'playSlot',
+            count: 1,
+            zIndex: 100,
+          },
+        ],
+        cards: [
+          // These are real scene cards moved to fixture coordinates, so any
+          // clip region they carried from their own zone no longer applies.
+          {
+            ...sourceTemplate,
+            id: 'rotation-source' as typeof sourceTemplate.id,
+            parentId: 'rotation-source-zone',
+            bounds: { x: 20, y: 100, width: 60, height: 100 },
+            zIndex: 200,
+            rotationQuarterTurns: 0,
+            clipBounds: undefined,
+          },
+          {
+            ...targetTemplate,
+            id: 'rotation-target' as typeof targetTemplate.id,
+            parentId: 'rotation-target-stack',
+            bounds: { x: 200, y: 100, width: 60, height: 100 },
+            zIndex: 300,
+            rotationQuarterTurns: 3,
+            clipBounds: undefined,
+          },
+        ],
+        markers: [],
+        counts: [],
+      },
+      {
+        selectedCardId: null,
+        hoveredCardId: null,
+        targetableCardIds: [],
+        drag: null,
+        openedZoneId: null,
+        settling: [],
+      }
     );
-    // The drop carries its physical point so the card can settle there.
-    expect(
-      JSON.parse((await host.getAttribute('data-intents'))!)
-    ).toContainEqual(
-      expect.objectContaining({
-        kind: 'CardDropRequested',
-        cardId: 'rotation-source',
-        targetId: 'rotation-target-stack',
-        x: expect.any(Number),
-        y: expect.any(Number),
-      })
-    );
-
-    await host.evaluate((element) => {
-      if (!(element instanceof HTMLElement)) return;
-      element.dataset.intents = '[]';
-      element.dataset.updates = '[]';
-    });
-    await page.mouse.move(50, 150);
-    await page.mouse.down();
-    await page.mouse.move(230, 105, { steps: 4 });
-    await page.mouse.up();
-    expect(JSON.parse((await host.getAttribute('data-updates'))!)).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          kind: 'DragChanged',
-          drag: expect.objectContaining({
-            cardId: 'rotation-source',
-            targetId: 'rotation-target-zone',
-          }),
-        }),
-      ])
-    );
-    expect(
-      JSON.parse((await host.getAttribute('data-intents'))!)
-    ).toContainEqual(
-      expect.objectContaining({
-        kind: 'CardDropRequested',
-        cardId: 'rotation-source',
-        targetId: 'rotation-target-zone',
-        x: expect.any(Number),
-        y: expect.any(Number),
-      })
-    );
-
-    const teardownError = await page.evaluate(async () => {
-      const fixtureWindow = window as typeof window & {
+    (
+      window as typeof window & {
         __PTCG_ROTATION_FIXTURE_RENDERER__?: { destroy(): void };
-      };
-      const fixtureHost = document.querySelector<HTMLElement>(
-        '[data-rotation-fixture-host]'
-      );
-      fixtureWindow.__PTCG_ROTATION_FIXTURE_RENDERER__?.destroy();
-      delete fixtureWindow.__PTCG_ROTATION_FIXTURE_RENDERER__;
-      await new Promise<void>((resolve) => setTimeout(resolve, 0));
-      const error = fixtureHost?.dataset.rendererError ?? null;
-      fixtureHost?.remove();
-      return error;
-    });
-    expect(teardownError).toBeNull();
-  }
+      }
+    ).__PTCG_ROTATION_FIXTURE_RENDERER__ = renderer;
+    await new Promise<void>((resolve) =>
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+    );
+  });
+
+  const host = page.locator('[data-rotation-fixture-host]');
+  await expect(host).not.toHaveAttribute('data-renderer-error', /.+/u);
+  await expect(host.locator('[data-card-id="rotation-target"]')).toBeVisible();
+
+  await page.mouse.click(185, 150);
+  await expect
+    .poll(async () => JSON.parse((await host.getAttribute('data-intents'))!))
+    .toContainEqual(
+      expect.objectContaining({
+        kind: 'CardSelected',
+        cardId: 'rotation-target',
+      })
+    );
+
+  await host.evaluate((element) => {
+    if (!(element instanceof HTMLElement)) return;
+    element.dataset.intents = '[]';
+    element.dataset.updates = '[]';
+  });
+  await page.mouse.click(230, 105);
+  await page.waitForTimeout(50);
+  expect(JSON.parse((await host.getAttribute('data-intents'))!)).toEqual([
+    { kind: 'BoardBackgroundPressed' },
+  ]);
+  await host.evaluate((element) => {
+    if (element instanceof HTMLElement) element.dataset.intents = '[]';
+  });
+
+  await page.mouse.move(50, 150);
+  await page.mouse.down();
+  await page.mouse.move(185, 150, { steps: 4 });
+  await page.mouse.up();
+  expect(JSON.parse((await host.getAttribute('data-updates'))!)).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        kind: 'DragChanged',
+        drag: expect.objectContaining({
+          cardId: 'rotation-source',
+          targetId: 'rotation-target-stack',
+        }),
+      }),
+    ])
+  );
+  // The drop carries its physical point so the card can settle there.
+  expect(JSON.parse((await host.getAttribute('data-intents'))!)).toContainEqual(
+    expect.objectContaining({
+      kind: 'CardDropRequested',
+      cardId: 'rotation-source',
+      targetId: 'rotation-target-stack',
+      x: expect.any(Number),
+      y: expect.any(Number),
+    })
+  );
+
+  await host.evaluate((element) => {
+    if (!(element instanceof HTMLElement)) return;
+    element.dataset.intents = '[]';
+    element.dataset.updates = '[]';
+  });
+  await page.mouse.move(50, 150);
+  await page.mouse.down();
+  await page.mouse.move(230, 105, { steps: 4 });
+  await page.mouse.up();
+  expect(JSON.parse((await host.getAttribute('data-updates'))!)).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        kind: 'DragChanged',
+        drag: expect.objectContaining({
+          cardId: 'rotation-source',
+          targetId: 'rotation-target-zone',
+        }),
+      }),
+    ])
+  );
+  expect(JSON.parse((await host.getAttribute('data-intents'))!)).toContainEqual(
+    expect.objectContaining({
+      kind: 'CardDropRequested',
+      cardId: 'rotation-source',
+      targetId: 'rotation-target-zone',
+      x: expect.any(Number),
+      y: expect.any(Number),
+    })
+  );
+
+  const teardownError = await page.evaluate(async () => {
+    const fixtureWindow = window as typeof window & {
+      __PTCG_ROTATION_FIXTURE_RENDERER__?: { destroy(): void };
+    };
+    const fixtureHost = document.querySelector<HTMLElement>(
+      '[data-rotation-fixture-host]'
+    );
+    fixtureWindow.__PTCG_ROTATION_FIXTURE_RENDERER__?.destroy();
+    delete fixtureWindow.__PTCG_ROTATION_FIXTURE_RENDERER__;
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    const error = fixtureHost?.dataset.rendererError ?? null;
+    fixtureHost?.remove();
+    return error;
+  });
+  expect(teardownError).toBeNull();
   expect(errors).toEqual([]);
 });
 
-test('records controlled 120-card reconciliation and idle evidence for both candidates', async ({
+test('records controlled 120-card reconciliation and idle evidence in each table view', async ({
   page,
 }, testInfo) => {
-  // A minute per run, as when this recorded two: it now records six (three
-  // depth modes for each renderer), each of about 220 scene installs, and a
-  // CI runner's software GPU draws Pixi's tilted table far slower than a
-  // desktop. Timing is recorded as evidence, never asserted.
-  test.setTimeout(6 * 60_000);
+  // A minute per table view, each of about 220 scene installs. Timing is
+  // recorded as evidence, never asserted.
+  test.setTimeout(3 * 60_000);
   await page.addInitScript(() => {
     class StableBenchmarkResizeObserver {
       observe(): void {}
@@ -885,258 +725,234 @@ test('records controlled 120-card reconciliation and idle evidence for both cand
   });
   const errors = collectRuntimeErrors(page);
   const evidence: Record<string, unknown> = {};
-  for (const mode of ['flat', 'depth', 'table'] as const)
-    for (const rendererKind of ['dom', 'pixi'] as const) {
-      await page.goto(`/?renderer-spike=1&renderer=${rendererKind}`);
-      await waitForReady(page);
-      expect(
-        await page.evaluate(() => window.__PTCG_RENDERER_SPIKE__!.rendererKind)
-      ).toBe(rendererKind);
-      // The default spike keeps v1's geometry for characterization. Measure
-      // the current table, including its retained labels and count badges.
-      const viewport = await page.evaluate(
-        () => window.__PTCG_RENDERER_SPIKE__!.scene.viewport
-      );
-      const view = createRendererSpikeView();
-      const tableScene = createBoardScene(
-        view,
-        createTableLayoutSnapshot({
-          geometryVersion: 2,
-          viewport,
-          playerIds: [view.playerOrder[0]!, view.playerOrder[1]!],
-          bottomPlayerId: view.playerOrder[0]!,
-          shellMode: 'fullscreen',
-          vertical: DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
-        })
-      );
-      evidence[`${rendererKind}:${mode}`] = await page.evaluate(
-        async ({ mode, tableScene }) => {
-          const spike = window.__PTCG_RENDERER_SPIKE__;
-          if (!spike) throw new Error('Missing renderer spike');
-          const renderer = spike.renderer;
-          renderer.setPreferences({
-            reducedMotion: false,
-            highContrast: false,
-            darkMode: true,
-            showZoneOutlines: true,
-            depth: { mode, tilt: 12, strength: 1, lift: true, animate: true },
+  for (const mode of ['flat', 'depth', 'table'] as const) {
+    await page.goto('/?renderer-spike=1');
+    await waitForReady(page);
+    // The default spike keeps v1's geometry for characterization. Measure
+    // the current table, including its retained labels and count badges.
+    const viewport = await page.evaluate(
+      () => window.__PTCG_RENDERER_SPIKE__!.scene.viewport
+    );
+    const view = createRendererSpikeView();
+    const tableScene = createBoardScene(
+      view,
+      createTableLayoutSnapshot({
+        geometryVersion: 2,
+        viewport,
+        playerIds: [view.playerOrder[0]!, view.playerOrder[1]!],
+        bottomPlayerId: view.playerOrder[0]!,
+        shellMode: 'fullscreen',
+        vertical: DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
+      })
+    );
+    evidence[mode] = await page.evaluate(
+      async ({ mode, tableScene }) => {
+        const spike = window.__PTCG_RENDERER_SPIKE__;
+        if (!spike) throw new Error('Missing renderer spike');
+        const renderer = spike.renderer;
+        renderer.setPreferences({
+          reducedMotion: false,
+          highContrast: false,
+          darkMode: true,
+          showZoneOutlines: true,
+          depth: { mode, tilt: 12, strength: 1, lift: true, animate: true },
+        });
+        const diagnostics = () => {
+          const current = renderer.getDiagnostics?.();
+          if (!current) throw new Error('Missing renderer diagnostics');
+          return current;
+        };
+        const installAndMeasure = async (
+          scene: typeof spike.scene,
+          replace = false
+        ) => {
+          const currentSurface = () =>
+            document.querySelector<HTMLElement>('.ptcgsim-board-surface');
+          if (!currentSurface())
+            throw new Error('Missing rendered board surface');
+          const previous = diagnostics().renderCommits;
+          let finish!: () => void;
+          const committed = new Promise<void>((resolve) => {
+            finish = resolve;
           });
-          const diagnostics = () => {
-            const current = renderer.getDiagnostics?.();
-            if (!current) throw new Error('Missing renderer diagnostics');
-            return current;
-          };
-          const installAndMeasure = async (
-            scene: typeof spike.scene,
-            replace = false
-          ) => {
-            const surfaceSelector =
-              spike.rendererKind === 'dom'
-                ? '.ptcgsim-board-surface'
-                : 'canvas';
-            const currentSurface = () =>
-              document.querySelector<HTMLElement>(surfaceSelector);
-            if (!currentSurface())
-              throw new Error('Missing rendered board surface');
-            const previous = diagnostics().renderCommits;
-            let finish!: () => void;
-            const committed = new Promise<void>((resolve) => {
-              finish = resolve;
-            });
-            const hasCommitted = () =>
-              diagnostics().renderCommits > previous &&
-              currentSurface()?.dataset.revision === String(scene.revision);
-            const observer = new MutationObserver(() => {
-              if (hasCommitted()) finish();
-            });
-            observer.observe(document.body, {
-              attributes: true,
-              childList: true,
-              subtree: true,
-              attributeFilter: ['data-revision'],
-            });
-            const timeout = window.setTimeout(() => finish(), 1_000);
-            const started = performance.now();
-            try {
-              renderer.installScene(scene, [], replace ? 'replace' : 'advance');
-            } catch (error) {
-              observer.disconnect();
-              window.clearTimeout(timeout);
-              throw error;
-            }
-            const submissionMs = performance.now() - started;
+          const hasCommitted = () =>
+            diagnostics().renderCommits > previous &&
+            currentSurface()?.dataset.revision === String(scene.revision);
+          const observer = new MutationObserver(() => {
             if (hasCommitted()) finish();
-            await committed;
+          });
+          observer.observe(document.body, {
+            attributes: true,
+            childList: true,
+            subtree: true,
+            attributeFilter: ['data-revision'],
+          });
+          const timeout = window.setTimeout(() => finish(), 1_000);
+          const started = performance.now();
+          try {
+            renderer.installScene(scene, [], replace ? 'replace' : 'advance');
+          } catch (error) {
             observer.disconnect();
             window.clearTimeout(timeout);
-            if (!hasCommitted()) {
-              throw new Error('Renderer did not commit an installed scene');
-            }
-            return {
-              submissionMs,
-              wallToCommitMs: performance.now() - started,
-            };
-          };
-          const percentile = (values: readonly number[], fraction: number) => {
-            const sorted = [...values].sort((left, right) => left - right);
-            return sorted[
-              Math.max(0, Math.ceil(sorted.length * fraction) - 1)
-            ]!;
-          };
-          const original = tableScene;
-          const cards = Array.from({ length: 120 }, (_, index) => {
-            const source = original.cards[index % original.cards.length]!;
-            return {
-              ...source,
-              id: `benchmark-card-${index}` as typeof source.id,
-              renderKey: `card:benchmark-card-${index}`,
-              interactive: false,
-              // Unique decoded art exercises GPU leases and memory as well as layout.
-              imageUrl: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="315" height="440"><rect width="315" height="440" rx="12" fill="hsl(${(index * 47) % 360} 55% 40%)"/><circle cx="157" cy="165" r="110" fill="hsl(${(index * 71) % 360} 65% 70%)"/><text x="157" y="365" text-anchor="middle" font-family="sans-serif" font-size="40" fill="white">Print ${index + 1}</text></svg>`)}`,
-              tableImageUrl: undefined,
-              bounds: {
-                ...source.bounds,
-                x: source.bounds.x + (index % 3) * 0.01,
-              },
-            };
-          });
-          let revision = Math.max(original.revision + 1, 1_000);
-          let current = { ...original, revision, cards };
-          await installAndMeasure(current, true);
-          for (let attempt = 0; attempt < 250; attempt += 1) {
-            if (diagnostics().globalPendingTextureLoads === 0) break;
-            await new Promise((resolve) => setTimeout(resolve, 20));
+            throw error;
           }
-
-          const sample = async (mode: 'single' | 'full') => {
-            revision += 1;
-            const nextCards = current.cards.map((card, index) =>
-              mode === 'full' || index === 0
-                ? {
-                    ...card,
-                    bounds: { ...card.bounds, x: card.bounds.x + 0.01 },
-                  }
-                : card
-            );
-            current = { ...current, revision, cards: nextCards };
-            return installAndMeasure(current);
-          };
-
-          const warmupSampleCount = 10;
-          const measuredSampleCount = 100;
-          for (let warmup = 0; warmup < warmupSampleCount; warmup += 1) {
-            await sample('single');
-            await sample('full');
+          const submissionMs = performance.now() - started;
+          if (hasCommitted()) finish();
+          await committed;
+          observer.disconnect();
+          window.clearTimeout(timeout);
+          if (!hasCommitted()) {
+            throw new Error('Renderer did not commit an installed scene');
           }
-          const single = [];
-          const full = [];
-          for (let index = 0; index < measuredSampleCount; index += 1) {
-            single.push(await sample('single'));
-            full.push(await sample('full'));
-          }
-          const settled = diagnostics();
-          const idleCommits = settled.renderCommits;
-          for (let frame = 0; frame < 5; frame += 1) {
-            await new Promise<void>((resolve) =>
-              requestAnimationFrame(() => resolve())
-            );
-          }
-          const afterIdle = diagnostics();
-          const summarize = (
-            values: readonly {
-              readonly submissionMs: number;
-              readonly wallToCommitMs: number;
-            }[]
-          ) => ({
-            submissionP50Ms: percentile(
-              values.map((value) => value.submissionMs),
-              0.5
-            ),
-            submissionP95Ms: percentile(
-              values.map((value) => value.submissionMs),
-              0.95
-            ),
-            wallToCommitP50Ms: percentile(
-              values.map((value) => value.wallToCommitMs),
-              0.5
-            ),
-            wallToCommitP95Ms: percentile(
-              values.map((value) => value.wallToCommitMs),
-              0.95
-            ),
-          });
-          const gpu = (() => {
-            const canvas = document.createElement('canvas');
-            const context = canvas.getContext('webgl2');
-            if (!context) return null;
-            const extension = context.getExtension('WEBGL_debug_renderer_info');
-            return {
-              vendor: extension
-                ? String(context.getParameter(extension.UNMASKED_VENDOR_WEBGL))
-                : null,
-              renderer: extension
-                ? String(
-                    context.getParameter(extension.UNMASKED_RENDERER_WEBGL)
-                  )
-                : null,
-              version: String(context.getParameter(context.VERSION)),
-            };
-          })();
-          const navigatorWithDeviceMemory = navigator as Navigator & {
-            readonly deviceMemory?: number;
-            readonly userAgentData?: { readonly platform?: string };
-          };
           return {
-            mode,
-            geometryVersion: current.layout.geometryVersion,
-            userAgent: navigator.userAgent,
-            platform:
-              navigatorWithDeviceMemory.userAgentData?.platform ??
-              navigator.platform,
-            hardwareConcurrency: navigator.hardwareConcurrency,
-            deviceMemoryGiB: navigatorWithDeviceMemory.deviceMemory ?? null,
-            viewport: {
-              width: window.innerWidth,
-              height: window.innerHeight,
-            },
-            screen: {
-              width: window.screen.width,
-              height: window.screen.height,
-              colorDepth: window.screen.colorDepth,
-            },
-            devicePixelRatio: window.devicePixelRatio,
-            gpu,
-            warmupSampleCount,
-            measuredSampleCount,
-            cardCount: settled.renderedCardIds.length,
-            distinctArtworkCount: new Set(
-              current.cards.map((card) => card.imageUrl)
-            ).size,
-            localTextureBindings: settled.localTextureBindings,
-            globalTextureReferences: settled.globalTextureReferences,
-            zoneCount: settled.renderedZoneIds.length,
-            markerCount: settled.renderedMarkerIds.length,
-            pendingTextureLoads: settled.globalPendingTextureLoads,
-            textureLoadFailures: settled.globalTextureLoadFailures,
-            textureUnloadFailures: settled.globalTextureUnloadFailures,
-            idleCommitDelta: afterIdle.renderCommits - idleCommits,
-            single: summarize(single),
-            full: summarize(full),
-            rawSamples: { single, full },
+            submissionMs,
+            wallToCommitMs: performance.now() - started,
           };
-        },
-        { mode, tableScene }
-      );
-    }
+        };
+        const percentile = (values: readonly number[], fraction: number) => {
+          const sorted = [...values].sort((left, right) => left - right);
+          return sorted[Math.max(0, Math.ceil(sorted.length * fraction) - 1)]!;
+        };
+        const original = tableScene;
+        const cards = Array.from({ length: 120 }, (_, index) => {
+          const source = original.cards[index % original.cards.length]!;
+          return {
+            ...source,
+            id: `benchmark-card-${index}` as typeof source.id,
+            renderKey: `card:benchmark-card-${index}`,
+            interactive: false,
+            // Unique decoded art exercises image memory as well as layout.
+            imageUrl: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="315" height="440"><rect width="315" height="440" rx="12" fill="hsl(${(index * 47) % 360} 55% 40%)"/><circle cx="157" cy="165" r="110" fill="hsl(${(index * 71) % 360} 65% 70%)"/><text x="157" y="365" text-anchor="middle" font-family="sans-serif" font-size="40" fill="white">Print ${index + 1}</text></svg>`)}`,
+            tableImageUrl: undefined,
+            bounds: {
+              ...source.bounds,
+              x: source.bounds.x + (index % 3) * 0.01,
+            },
+          };
+        });
+        let revision = Math.max(original.revision + 1, 1_000);
+        let current = { ...original, revision, cards };
+        await installAndMeasure(current, true);
+
+        const sample = async (mode: 'single' | 'full') => {
+          revision += 1;
+          const nextCards = current.cards.map((card, index) =>
+            mode === 'full' || index === 0
+              ? {
+                  ...card,
+                  bounds: { ...card.bounds, x: card.bounds.x + 0.01 },
+                }
+              : card
+          );
+          current = { ...current, revision, cards: nextCards };
+          return installAndMeasure(current);
+        };
+
+        const warmupSampleCount = 10;
+        const measuredSampleCount = 100;
+        for (let warmup = 0; warmup < warmupSampleCount; warmup += 1) {
+          await sample('single');
+          await sample('full');
+        }
+        const single = [];
+        const full = [];
+        for (let index = 0; index < measuredSampleCount; index += 1) {
+          single.push(await sample('single'));
+          full.push(await sample('full'));
+        }
+        const settled = diagnostics();
+        const idleCommits = settled.renderCommits;
+        for (let frame = 0; frame < 5; frame += 1) {
+          await new Promise<void>((resolve) =>
+            requestAnimationFrame(() => resolve())
+          );
+        }
+        const afterIdle = diagnostics();
+        const summarize = (
+          values: readonly {
+            readonly submissionMs: number;
+            readonly wallToCommitMs: number;
+          }[]
+        ) => ({
+          submissionP50Ms: percentile(
+            values.map((value) => value.submissionMs),
+            0.5
+          ),
+          submissionP95Ms: percentile(
+            values.map((value) => value.submissionMs),
+            0.95
+          ),
+          wallToCommitP50Ms: percentile(
+            values.map((value) => value.wallToCommitMs),
+            0.5
+          ),
+          wallToCommitP95Ms: percentile(
+            values.map((value) => value.wallToCommitMs),
+            0.95
+          ),
+        });
+        const gpu = (() => {
+          const canvas = document.createElement('canvas');
+          const context = canvas.getContext('webgl2');
+          if (!context) return null;
+          const extension = context.getExtension('WEBGL_debug_renderer_info');
+          return {
+            vendor: extension
+              ? String(context.getParameter(extension.UNMASKED_VENDOR_WEBGL))
+              : null,
+            renderer: extension
+              ? String(context.getParameter(extension.UNMASKED_RENDERER_WEBGL))
+              : null,
+            version: String(context.getParameter(context.VERSION)),
+          };
+        })();
+        const navigatorWithDeviceMemory = navigator as Navigator & {
+          readonly deviceMemory?: number;
+          readonly userAgentData?: { readonly platform?: string };
+        };
+        return {
+          mode,
+          geometryVersion: current.layout.geometryVersion,
+          userAgent: navigator.userAgent,
+          platform:
+            navigatorWithDeviceMemory.userAgentData?.platform ??
+            navigator.platform,
+          hardwareConcurrency: navigator.hardwareConcurrency,
+          deviceMemoryGiB: navigatorWithDeviceMemory.deviceMemory ?? null,
+          viewport: {
+            width: window.innerWidth,
+            height: window.innerHeight,
+          },
+          screen: {
+            width: window.screen.width,
+            height: window.screen.height,
+            colorDepth: window.screen.colorDepth,
+          },
+          devicePixelRatio: window.devicePixelRatio,
+          gpu,
+          warmupSampleCount,
+          measuredSampleCount,
+          cardCount: settled.renderedCardIds.length,
+          distinctArtworkCount: new Set(
+            current.cards.map((card) => card.imageUrl)
+          ).size,
+          zoneCount: settled.renderedZoneIds.length,
+          markerCount: settled.renderedMarkerIds.length,
+          idleCommitDelta: afterIdle.renderCommits - idleCommits,
+          single: summarize(single),
+          full: summarize(full),
+          rawSamples: { single, full },
+        };
+      },
+      { mode, tableScene }
+    );
+  }
 
   for (const result of Object.values(evidence)) {
     expect(result).toMatchObject({
       geometryVersion: 2,
       cardCount: 120,
       distinctArtworkCount: 120,
-      pendingTextureLoads: 0,
-      textureLoadFailures: 0,
-      textureUnloadFailures: 0,
       idleCommitDelta: 0,
     });
   }
@@ -1158,62 +974,4 @@ test('records controlled 120-card reconciliation and idle evidence for both cand
     ),
     contentType: 'application/json',
   });
-});
-
-test('Pixi decodes extensionless card artwork instead of silently painting a placeholder', async ({
-  page,
-}) => {
-  const errors = collectRuntimeErrors(page);
-  await page.route('**/review-art/portrait', (route) =>
-    route.fulfill({
-      path: 'apps/web/public/v2/assets/cardback.png',
-      contentType: 'image/png',
-    })
-  );
-  await page.goto('/?renderer-spike=1&renderer=pixi');
-  await waitForReady(page);
-  const key = await page.evaluate(() => {
-    const { renderer, rendererKind, scene } = window.__PTCG_RENDERER_SPIKE__!;
-    if (rendererKind !== 'pixi')
-      throw new Error('This test requires the Pixi GPU backend');
-    const source = scene.cards.find(
-      (card) =>
-        card.renderKey &&
-        !card.concealed &&
-        card.side === 'local' &&
-        card.parentId.endsWith(':hand')
-    )!;
-    renderer.installScene(
-      {
-        ...scene,
-        revision: scene.revision + 1,
-        cards: scene.cards.map((card) =>
-          card.id === source.id
-            ? { ...card, imageUrl: '/review-art/portrait' }
-            : card
-        ),
-      },
-      [],
-      'advance'
-    );
-    return source.renderKey!;
-  });
-  await expect
-    .poll(() =>
-      page.evaluate((key) => {
-        const { renderer } = window.__PTCG_RENDERER_SPIKE__!;
-        const views = Reflect.get(renderer, 'cardViews') as Map<
-          string,
-          { sprite: { texture: { width: number; height: number } } }
-        >;
-        const texture = views.get(key)!.sprite.texture;
-        return [texture.width, texture.height];
-      }, key)
-    )
-    .toEqual([736, 1024]);
-  const diagnostics = await page.evaluate(() =>
-    window.__PTCG_RENDERER_SPIKE__!.renderer.getDiagnostics!()
-  );
-  expect(diagnostics.globalTextureLoadFailures).toBe(0);
-  expect(errors).toEqual([]);
 });

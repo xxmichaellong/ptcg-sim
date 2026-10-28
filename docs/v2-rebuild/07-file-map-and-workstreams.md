@@ -89,8 +89,8 @@ in [`QUALITY_GATES.md`](./QUALITY_GATES.md).
 | `setup/sizing/resizer.js`, table resizer listeners     | `BoardViewport.tsx`, pure layout, persisted presentation split  | Pointer-safe, frame-coalesced, flip-aware parity behavior.                                      |
 | mutation observers                                     | explicit render/app selectors                                   | Entire mechanism retired.                                                                       |
 
-Implemented renderer decision files (React DOM is selected; Pixi remains
-explicit experimental evidence):
+Implemented renderer decision files (React DOM is selected; the Pixi spike was
+retired on 2026-10-28, see ADR-004):
 
 ```text
 packages/renderer-contract/src/
@@ -102,14 +102,10 @@ packages/renderer-contract/src/
 packages/renderer-dom/src/
   ReactDomBoardRenderer.tsx
   BoardSurface.tsx
-packages/renderer-pixi/src/
-  PixiBoardRenderer.ts
-  CardTextureRegistry.ts
 apps/web/src/
   RendererSpikeBoard.tsx
   board/BoardSessionRuntime.ts
   board/ReactDomBoardSessionRuntime.ts
-  board/PixiBoardSessionRuntime.ts
   board/overlays/LegacyBoardOverlays.tsx
   board/LegacyBoardKeyboardShortcuts.tsx
   session/RemoteSessionBoard.tsx
@@ -118,37 +114,22 @@ apps/web/src/
 The implemented marker boundary is intentionally narrower than the eventual
 `MarkerViewSystem`: renderer-contract owns canonical active-q0 current-state geometry,
 side/presentation descriptors, and stable marker diffs; React DOM consumes the
-source-backed circle/tab paint; Pixi reuses keyed marker views without texture
-churn. Real owner/opponent/spectator coverage protects recipient aliases and
-geometry. Rotated/history-dependent, bench, BREAK/compound, attachment/
-transfer, editing, and Pixi-native paint/hit cases remain generic or deferred.
+source-backed circle/tab paint. Real owner/opponent/spectator coverage
+protects recipient aliases and geometry. Rotated/history-dependent, bench,
+BREAK/compound, attachment/transfer and editing cases remain generic or
+deferred.
 
-If ADR-004 is reopened and Pixi later wins, split the compact spike adapter into
-the following production systems as those responsibilities gain behavior. Do
-not create empty structure before it has real ownership to contain:
+The board's application side grows into these systems as their
+responsibilities gain behavior. Do not create empty structure before it has
+real ownership to contain:
 
 ```text
-packages/renderer-pixi/src/
-  host/PixiRendererHost.ts
-  scene/BoardScene.ts
-  scene/layers.ts
-  sync/syncBoardScene.ts
-  views/CardView.ts
-  views/PlayStackView.ts
-  views/ZoneView.ts
-  views/MarkerView.ts
-  views/DragView.ts
-  assets/CardTextureManager.ts
-  assets/TextureLease.ts
-  scheduler/RenderScheduler.ts
-
 apps/web/src/board/
   BoardViewport.tsx
   BoardSessionController.ts # protected reducer/store; wired only on the explicit rollout route
   BoardSessionAdapter.ts    # live/replay boundary; wired only on the explicit rollout route
   BoardSessionRuntime.ts         # renderer-neutral route composition used by RemoteSessionBoard
   ReactDomBoardSessionRuntime.ts # selected thin parity/recovery wrapper; uninstantiated by routes
-  PixiBoardSessionRuntime.ts     # experimental thin wrapper; uninstantiated by routes
   model/createBoardRenderModel.ts
   layout/boardGeometry.ts
   input/BoardInputController.ts
@@ -463,7 +444,7 @@ Depends on public domain command/event/projection contracts, not renderer work.
 
 ### C. Renderer and performance
 
-Owns renderer-neutral contract tests, React-DOM/Pixi spike, selected renderer,
+Owns renderer-neutral contract tests, the renderer fixture, selected renderer,
 layout/geometry, input/pointer layer, texture/resource lifecycle, and performance
 harness.
 

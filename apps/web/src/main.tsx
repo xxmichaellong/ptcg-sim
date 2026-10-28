@@ -8,7 +8,6 @@ import { CommandPaletteHost } from './commands/CommandPalette.js';
 import { ShortcutsDialogHost } from './hotkeys/ShortcutsDialog.js';
 import { installLeaveGuard } from './leave-guard.js';
 import { installPageMotion } from './motion/page-motion.js';
-import { readRendererKind } from './RendererSpikeBoard.js';
 import { applySavedPageTheme, installTableArt } from './session/page-theme.js';
 import { HelpSheetHost } from './session/shell/help-pages.js';
 import { tableCurtain } from './session/shell/table-curtain.js';
@@ -40,17 +39,16 @@ const TableDepthLab = import.meta.env.DEV
   : null;
 
 const parameters = new URLSearchParams(window.location.search);
-const rendererKind = readRendererKind(parameters.get('renderer'));
 const roomMode =
   parameters.get('room-mode') === 'solo' ? 'solo' : 'multiplayer';
 const devRoomRequested =
   DevRoomHost !== null && parameters.get('dev-room') === '1';
-// The lobby is the application. The renderer parity spike -- a developer
-// comparison of the two board renderers over one synthetic placeholder scene
-// -- stays reachable at `?renderer-spike=1` for the geometry gates that use
-// it, but it is never what a visitor lands on. A visitor lands on the Solo
-// table, as in v1; `room-lobby=1` opens on the Multiplayer panel instead,
-// which is what the browser gates and existing links use.
+// The lobby is the application. The renderer fixture -- the board renderer
+// over one synthetic placeholder scene -- stays reachable at
+// `?renderer-spike=1` for the geometry gates that use it, but it is never
+// what a visitor lands on. A visitor lands on the Solo table, as in v1;
+// `room-lobby=1` opens on the Multiplayer panel instead, which is what the
+// browser gates and existing links use.
 const rendererSpikeRequested = parameters.get('renderer-spike') === '1';
 const depthLabRequested =
   TableDepthLab !== null && parameters.get('depth-lab') === '1';
@@ -59,7 +57,6 @@ const roomLobbyRoute: AppRoute | undefined = rendererSpikeRequested
   : {
       kind: 'remote-room-lobby',
       buildId: import.meta.env.VITE_PTCGSIM_BUILD_ID || 'v2-web',
-      rendererKind,
       landing: parameters.get('room-lobby') === '1' ? 'lobby' : 'solo',
     };
 
@@ -105,7 +102,6 @@ createRoot(root).render(
           <DevRoomHost
             displayName={parameters.get('name')?.trim() || 'Developer'}
             mode={roomMode}
-            rendererKind={rendererKind}
           />
         </Suspense>
       ) : (

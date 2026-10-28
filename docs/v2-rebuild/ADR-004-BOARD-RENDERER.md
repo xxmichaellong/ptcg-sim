@@ -1,9 +1,24 @@
 # ADR-004: select normalized React DOM for the board
 
-- Status: **ACCEPTED**
+- Status: **ACCEPTED**; the Pixi candidate was retired on 2026-10-28
 - Decision date: 2026-09-03
 - Scope: the first production v2 board renderer
 - Production wiring: enabled only on the explicit `?room-lobby=1` rollout route
+
+> **Superseded 2026-10-28 (Pixi retired).** React DOM is the only board
+> renderer. The raw Pixi candidate (`packages/renderer-pixi`, the
+> `?renderer=pixi` comparison and `PixiBoardSessionRuntime`) was deleted, the
+> owner's call after the 2026-10-27 re-evaluation below. It had stayed opt-in
+> and unused by players for eight weeks while every visual change since the
+> 2026-10-09 redesign (the tilted table, seat colours, card languages, the
+> coin) had to be built twice or left to drift. The contract
+> stays renderer-neutral (`BoardRenderer`, `BoardSessionRuntime` take a
+> renderer factory), so a future candidate can still be measured against the
+> DOM table under the revisit triggers below; the diagnostics that only a GPU
+> renderer filled in (texture leases, display objects, context-loss
+> listeners) left the contract with it. The renderer fixture page
+> (`?renderer-spike=1`) and its evidence spec remain, DOM only. The sections
+> below are the record of the 2026-09 decision.
 
 ## Context
 
@@ -500,9 +515,10 @@ and the profiles named three causes, fixed instead:
 On the tilted table at 6× (desktop / phone), long tasks while dragging went
 from 16 to 2 / 15 to 2 and while hovering from 20 to 0 / 2 to 0, and style
 recalculation roughly halved. Desktop's 95th-percentile frame went from 150 to
-67 ms dragging and from 142 to 33 ms hovering. Pixi stays the explicit
-comparison; visuals CSS cannot draw would come as a Pixi effects layer over the
-DOM table, not a second table. The ADR-015 physical-device check still stands.
+67 ms dragging and from 142 to 33 ms hovering. Visuals CSS cannot draw would
+come as an effects layer (Pixi, say) over the DOM table, not a second table.
+The Pixi comparison was retired the next day (the note at the top). The
+ADR-015 physical-device check still stands.
 
 ## Revisit triggers
 
@@ -517,9 +533,9 @@ hardware.
 ## Migration and rollback
 
 The choice remains additive and is now wired as one complete v2 session route
-behind its explicit rollout flag. That route defaults to the selected DOM
-renderer; `renderer=pixi` remains an explicit experimental comparison. It never
-replaces pieces of a live v1 match. Rollback removes that route selection and
+behind its explicit rollout flag. That route uses the selected DOM renderer
+(the `renderer=pixi` comparison was retired on 2026-10-28). It never replaces
+pieces of a live v1 match. Rollback removes that route selection and
 directs new sessions to v1. Because session/core/protocol state is
 renderer-neutral, this ADR can be revisited without migrating saved matches or
 changing the wire protocol.

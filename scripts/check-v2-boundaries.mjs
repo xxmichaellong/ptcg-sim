@@ -345,7 +345,6 @@ const allowedBundleSource = (kind, source) => {
       source.startsWith('packages/protocol/src/') ||
       source.startsWith('packages/renderer-contract/src/') ||
       source.startsWith('packages/renderer-dom/src/') ||
-      source.startsWith('packages/renderer-pixi/src/') ||
       WEB_ALLOWED_GAME_CORE_SOURCES.has(source)
     );
   }

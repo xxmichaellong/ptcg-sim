@@ -4,14 +4,11 @@ import type {
   BoardScene,
 } from '@ptcgsim/renderer-contract';
 
-export type RendererKind = 'dom' | 'pixi';
-
 export type BoardRendererFactory = (
   adapters: BoardRendererAdapters
 ) => BoardRenderer;
 
 export interface RendererSpikeHandle {
-  readonly rendererKind: RendererKind;
   readonly renderer: BoardRenderer;
   readonly scene: BoardScene;
   /** Development-only browser-test seam for lifecycle gates. */

@@ -19,7 +19,7 @@ const startTable = async (page: Page): Promise<void> => {
       JSON.stringify({ reduceMotion: 'full', animationSpeed: 'relaxed' })
     );
   });
-  await page.goto('/?room-lobby=1&renderer=dom');
+  await page.goto('/?room-lobby=1');
   await page.locator('#nameInput').fill('Slide review');
   await closeSheet(page);
   await expect(
