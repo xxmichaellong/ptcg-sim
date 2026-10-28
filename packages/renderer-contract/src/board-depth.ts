@@ -2,6 +2,7 @@ import type { ViewCardId } from '@ptcgsim/game-core';
 import { containsPoint } from './geometry.js';
 import { compositionHold } from './card-composition.js';
 import {
+  arrangedCardIds,
   arrangementHold,
   arrangementOffsets,
   benchRearrangementTarget,
@@ -599,6 +600,9 @@ export class BoardDepthProjection {
     }
   }
 
+  /** The cards of rows that open a gap for a held card (`drop`). */
+  private arrangedCards: ReadonlySet<ViewCardId> | undefined;
+
   /** The open gap of the zone a card is held over, kept per presentation. */
   private arranged: {
     readonly presentation: BoardPresentation;
@@ -708,6 +712,7 @@ export class BoardDepthProjection {
     centre?: TablePoint
   ): { point: TablePoint; targetId: string | null } {
     const source = this.scene.cards.find((card) => card.id === sourceId);
+    this.arrangedCards ??= arrangedCardIds(this.scene);
     for (const card of this.painted) {
       // A Pokémon's own cards travel with it under the pointer: they are
       // never where it is dropped.
@@ -717,17 +722,42 @@ export class BoardDepthProjection {
         (source?.role === 'stackEvolution' && source.parentId === card.parentId)
       )
         continue;
-      const pose = paintedPose?.(card) ?? this.pose(card);
-      const face = tablePoseLocalPoint(this.camera, pose, point);
-      if (
-        !face ||
-        !containsPoint(
-          { x: 0, y: 0, width: pose.bounds.width, height: pose.bounds.height },
-          face.x,
-          face.y
-        )
-      )
-        continue;
+      // Where it is painted, and for a card of a row that opens a gap for a
+      // held card (a bench, a hand), where it lies too, as the flat table
+      // aims: aiming there closes the gap and brings it back under the
+      // pointer. Its painted place alone, moved aside, kept it from the
+      // pointer as the row made room, and the card went in the gap.
+      const painted = paintedPose?.(card) ?? this.pose(card);
+      const poses = this.arrangedCards.has(card.id)
+        ? [painted, this.pose(card)]
+        : [painted];
+      let hit:
+        | {
+            readonly pose: TableCardPose;
+            readonly face: TablePoint;
+          }
+        | undefined;
+      for (const pose of poses) {
+        const face = tablePoseLocalPoint(this.camera, pose, point);
+        if (
+          face &&
+          containsPoint(
+            {
+              x: 0,
+              y: 0,
+              width: pose.bounds.width,
+              height: pose.bounds.height,
+            },
+            face.x,
+            face.y
+          )
+        ) {
+          hit = { pose, face };
+          break;
+        }
+      }
+      if (!hit) continue;
+      const { pose, face } = hit;
       // Return the logical target point even when its painted face is in flight.
       const x = (face.x / pose.bounds.width - 0.5) * card.bounds.width;
       const y = (face.y / pose.bounds.height - 0.5) * card.bounds.height;

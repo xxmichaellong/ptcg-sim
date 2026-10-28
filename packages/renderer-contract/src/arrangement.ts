@@ -91,6 +91,26 @@ const benchItems = (scene: BoardScene, zone: ZoneSceneNode): RowItem[] => {
 };
 
 /**
+ * The cards a zone moves aside to open a gap for a card held over it: those
+ * of each hand, loose board and Prizes, and each benched Pokémon's.
+ */
+export const arrangedCardIds = (scene: BoardScene): ReadonlySet<ViewCardId> => {
+  const ids = new Set<ViewCardId>();
+  for (const zone of scene.zones) {
+    if (!arrangedZone(scene, zone.id)) continue;
+    if (zone.kind === 'bench') {
+      for (const item of benchItems(scene, zone))
+        for (const id of item.cardIds) ids.add(id);
+      continue;
+    }
+    for (const card of scene.cards)
+      if (card.parentId === zone.id && card.renderKey !== null)
+        ids.add(card.id);
+  }
+  return ids;
+};
+
+/**
  * The zone's items in its own order, without the one being moved: the card
  * itself, or the whole Pokémon when its top card is carried.
  */

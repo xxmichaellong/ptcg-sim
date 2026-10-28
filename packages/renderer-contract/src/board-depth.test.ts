@@ -402,6 +402,82 @@ describe('live board depth', () => {
     expect(hit.point.x).toBeCloseTo(card.bounds.x + card.bounds.width / 2, 6);
     expect(hit.point.y).toBeCloseTo(card.bounds.y + card.bounds.height / 2, 6);
   });
+  it('takes a benched Pokémon moved aside for a gap where it lies, so aiming at it closes the gap under the pointer', () => {
+    const table = fixture();
+    const bench = table.zones.find(
+      (zone) => zone.kind === 'bench' && zone.side === 'local'
+    )!;
+    // Three Pokémon on the bench, centred and spaced as the table lays
+    // them out.
+    const template = table.cards.find(
+      (card) => card.renderKey !== null && card.role === 'stackEvolution'
+    )!;
+    const middle = bench.contentBounds.x + bench.contentBounds.width / 2;
+    const width = bench.contentBounds.height * 0.716;
+    const benched = [0, 1, 2].map((index) => ({
+      ...template,
+      id: `benched-${String(index)}` as CardSceneNode['id'],
+      renderKey: `card:benched-${String(index)}`,
+      parentId: `stack:benched-${String(index)}`,
+      bounds: {
+        x: middle + (index - 1) * width * 1.17 - width / 2,
+        y: bench.contentBounds.y,
+        width,
+        height: bench.contentBounds.height,
+      },
+    }));
+    const scene = { ...table, cards: [...table.cards, ...benched] };
+    const projection = new BoardDepthProjection(scene, preferences);
+    // A card held over the bare mat at the bench's left end: the bench
+    // opens a gap there, its Pokémon moved along to the right.
+    const holding = {
+      ...DEFAULT_BOARD_PRESENTATION,
+      drag: {
+        cardId: 'held' as CardSceneNode['id'],
+        x: bench.bounds.x + 4,
+        y: bench.bounds.y + bench.bounds.height / 2,
+        targetId: bench.id,
+        index: 0,
+      },
+    };
+    const first = benched[0]!;
+    const resting = projection.pose(first);
+    const aside = projection.pose(first, holding);
+    expect(aside.bounds.x).toBeGreaterThan(
+      resting.bounds.x + resting.bounds.width / 2
+    );
+    // Aimed at the middle of where it lies, no longer painted there.
+    const painted = (card: CardSceneNode) => projection.pose(card, holding);
+    const aimAt = (x: number, y: number, elevation: number) =>
+      projection.drop(
+        projection.point({ x, y }, elevation),
+        'held' as CardSceneNode['id'],
+        painted
+      ).targetId;
+    expect(
+      aimAt(
+        resting.bounds.x + resting.bounds.width / 2,
+        resting.bounds.y + resting.bounds.height / 2,
+        resting.elevation
+      )
+    ).toBe(first.parentId);
+    // Where it is painted, aside, it is what the player sees: still it.
+    expect(
+      aimAt(
+        aside.bounds.x + aside.bounds.width / 2,
+        aside.bounds.y + aside.bounds.height / 2,
+        aside.elevation
+      )
+    ).toBe(first.parentId);
+    // The gap itself, left of where it lies, is the bench's.
+    expect(
+      aimAt(
+        resting.bounds.x - 8,
+        resting.bounds.y + resting.bounds.height / 2,
+        0
+      )
+    ).toBe(bench.id);
+  });
   it('derives pile height solely from the public count, with no geometry per hidden card', () => {
     const scene = fixture();
     const zone = scene.zones.find((zone) => zone.kind === 'deck')!;

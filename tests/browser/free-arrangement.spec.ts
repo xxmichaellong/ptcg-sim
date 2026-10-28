@@ -33,6 +33,7 @@ const scene = (page: Page) =>
                 readonly id: string;
                 readonly kind: string;
                 readonly side: string;
+                readonly bounds: SceneCard['bounds'];
               }[];
             };
           };
@@ -290,5 +291,92 @@ test('a benched Pokémon goes to the far left, and a hand card to its new place'
   // Rearranging is not news: the log has no "from hand to hand".
   await openActivity(page);
   await expect(page.locator('#chatbox')).not.toContainText('to hand');
+  expect(errors).toEqual([]);
+});
+
+test('a card brought to a benched Pokémon joins it, however the bench made room on the way', async ({
+  page,
+}) => {
+  test.setTimeout(120_000);
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await openSoloTable(page);
+  const bench = (await page
+    .locator('[data-zone-kind="bench"][data-zone-side="local"]')
+    .boundingBox())!;
+  // Three Pokémon, each put past the right end of the row.
+  for (let index = 0; index < 3; index += 1) {
+    const [card] = await handCards(page);
+    await drag(page, card!.id, {
+      x: bench.x + bench.width * 0.94,
+      y: bench.y + bench.height / 2,
+    });
+  }
+  const tops = await benchTops(page);
+  const stackOf = async (parentId: string) =>
+    (await scene(page)).cards.filter((card) => card.parentId === parentId)
+      .length;
+  /** The bench's Pokémon, each counted once however many cards it holds. */
+  const benched = async () => {
+    const current = await scene(page);
+    const zone = current.zones.find(
+      (zone) => zone.kind === 'bench' && zone.side === 'local'
+    )!;
+    return new Set(
+      current.cards
+        .filter(
+          (card) =>
+            card.role === 'stackEvolution' &&
+            card.bounds.y + card.bounds.height / 2 > zone.bounds.y &&
+            card.bounds.y + card.bounds.height / 2 <
+              zone.bounds.y + zone.bounds.height
+        )
+        .map((card) => card.parentId)
+    ).size;
+  };
+
+  /** Takes a hand card along `path`, slowly, and lets go at its end. */
+  const bring = async (path: readonly { x: number; y: number }[]) => {
+    const [card] = await handCards(page);
+    const grip = await paintedPoint(page, card!.id);
+    await page.mouse.move(grip.x, grip.y);
+    await page.mouse.down();
+    let last = grip;
+    for (const to of path) {
+      await page.mouse.move(to.x, to.y, { steps: 30 });
+      last = to;
+    }
+    // Held still where it was aimed, as a player pauses before letting go.
+    await page.mouse.move(last.x + 1, last.y);
+    await page.waitForTimeout(400);
+    await page.mouse.move(last.x, last.y);
+    await page.waitForTimeout(400);
+    await page.mouse.up();
+    await page.mouse.move(5, 5);
+    await idle(page);
+  };
+
+  expect(await benched()).toBe(3);
+  expect(tops).toHaveLength(3);
+
+  // Straight up from the hand onto the far right Pokémon's face.
+  const right = tops.at(-1)!;
+  const aim = await paintedPoint(page, right.id, 0.5, 0.5);
+  await bring([aim]);
+  expect(await stackOf(right.parentId)).toBe(2);
+  expect(await benched()).toBe(3);
+
+  // Over the bare mat beside it first, then sideways onto it.
+  const middle = tops[1]!;
+  const target = await paintedPoint(page, middle.id, 0.5, 0.5);
+  const left = await paintedPoint(page, tops[0]!.id, 0.5, 0.5);
+  const gapX = (left.x + target.x) / 2;
+  await bring([
+    { x: gapX, y: bench.y + bench.height * 0.9 },
+    { x: gapX, y: target.y },
+    target,
+  ]);
+  expect(await stackOf(middle.parentId)).toBe(2);
+  expect(await benched()).toBe(3);
   expect(errors).toEqual([]);
 });
