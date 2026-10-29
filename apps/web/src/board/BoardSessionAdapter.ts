@@ -16,6 +16,7 @@ import type {
   ReplaySessionCoordinator,
   ReplaySessionCoordinatorState,
 } from '../replay/ReplaySessionCoordinator.js';
+import type { GroupAction } from './compile-group.js';
 import {
   BoardSessionController,
   type BoardActionOrigin,
@@ -223,6 +224,14 @@ export class BoardSessionAdapter {
     return this.controller.dispatch({
       kind: 'LegacyShortcutActionRequested',
       request,
+      ...(origin ? { origin } : {}),
+    });
+  }
+
+  emitGroupAction(action: GroupAction, origin?: BoardActionOrigin): boolean {
+    return this.controller.dispatch({
+      kind: 'GroupActionRequested',
+      action,
       ...(origin ? { origin } : {}),
     });
   }

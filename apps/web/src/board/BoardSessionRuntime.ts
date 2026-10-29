@@ -31,6 +31,7 @@ import {
 } from '../i18n/card-image-language.js';
 import { LANGUAGE_PREFERENCES } from '../i18n/language-preference.js';
 import { preferences } from '../preferences/preference-store.js';
+import type { GroupAction } from './compile-group.js';
 import {
   BoardSessionAdapter,
   type BoardSessionAdapterOptions,
@@ -368,6 +369,14 @@ export class BoardSessionRuntime {
     const adapter = this.adapter;
     if (!adapter) throw new Error('Board session adapter is unavailable');
     return adapter.emitLegacyOverlayAction(request, origin);
+  }
+
+  /** Moves or marks the whole selection at once (ADR-042 §3). */
+  emitGroupAction(action: GroupAction, origin?: BoardActionOrigin): boolean {
+    this.assertUsable();
+    const adapter = this.adapter;
+    if (!adapter) throw new Error('Board session adapter is unavailable');
+    return adapter.emitGroupAction(action, origin);
   }
 
   /** Resolves selected-card shortcuts through the same protected controller. */

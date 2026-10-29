@@ -19,6 +19,7 @@ import {
   type MarkerSceneNode,
   type SettlingCard,
 } from '@ptcgsim/renderer-contract';
+import type { GroupAction } from './compile-group.js';
 import {
   resolveBoardDrop,
   type BoardDropResolution,
@@ -190,6 +191,12 @@ export type BoardSessionControllerAction =
   | {
       readonly kind: 'LegacyShortcutActionRequested';
       readonly request: LegacyBoardShortcutActionRequest;
+      readonly origin?: BoardActionOrigin;
+    }
+  | {
+      /** A group's move or annotation (ADR-042 §3), from its menu or a key. */
+      readonly kind: 'GroupActionRequested';
+      readonly action: GroupAction;
       readonly origin?: BoardActionOrigin;
     }
   | {
@@ -2178,6 +2185,9 @@ export const reduceBoardSessionController = (
         dependencies,
         action.origin === 'palette'
       );
+    // Refused until the controller's work package compiles the group.
+    case 'GroupActionRequested':
+      return ignored(state);
     case 'OncePerGameActionRequested':
       return handleOncePerGameAction(
         state,

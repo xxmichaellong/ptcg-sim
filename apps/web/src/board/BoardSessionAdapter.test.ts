@@ -982,6 +982,17 @@ describe('BoardSessionAdapter with real session coordinators', () => {
     test.live.disconnect();
   });
 
+  it('takes a group action through the controller, which sends nothing until groups are built', () => {
+    const test = setup();
+    test.socket.serverOpen();
+    test.socket.serverMessage(welcome(viewAt(1)));
+    test.adapter.emitGroupAction({ kind: 'send', to: 'discard' }, 'palette');
+    expect(test.submissions).toEqual([]);
+    test.adapter.dispose();
+    test.replay.dispose();
+    test.live.disconnect();
+  });
+
   it('routes a selected-card shortcut through the real guarded submitter', () => {
     const test = setup();
     test.socket.serverOpen();
