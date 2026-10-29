@@ -106,6 +106,94 @@ const HOVER_REST_SLOP_PX = 4;
  * touch is the browser's.
  */
 const DETACH_PRESS_MS = 450;
+/**
+ * A finger on a crowded hand peeks at its cards, as a mouse's hover raises
+ * them (ADR-030 §9): the card it presses rises into view at once, sliding
+ * along the hand raises each card under it in turn, moving toward the table
+ * picks the raised card up, and letting go taps it. How far the finger
+ * moves before its press slides or picks the card up:
+ */
+const PEEK_SLOP_PX = 8;
+/** How far toward the table a sliding finger moves to pick the card up. */
+const PEEK_PICK_PX = 24;
+/**
+ * Which way a sliding finger heads is read over its last moments: a thumb
+ * sweeping the hand in an arc still heads along it, and a finger that
+ * stops on a card and then lifts toward the table heads that way at once.
+ */
+const PEEK_HEADING_MS = 100;
+/** How long the browser's own click after a slide may take to arrive. */
+const PEEK_CLICK_MS = 700;
+/** How wide a raised card is drawn at least, and how much it may grow. */
+const PEEK_READ_WIDTH_PX = 120;
+const PEEK_SCALE = { least: 1.12, most: 1.6 } as const;
+
+/** A finger's press on a crowded hand (`PEEK_SLOP_PX`). */
+interface HandPeek {
+  readonly pointerId: number;
+  readonly zoneId: string;
+  /** The card pressed: the browser's own click, if any, lands on it. */
+  readonly pressed: CardSceneNode;
+  /** Where the press began, on screen. */
+  readonly startX: number;
+  readonly startY: number;
+  /** Which way the table lies from the hand on screen: 1 down, -1 up. */
+  readonly toward: 1 | -1;
+  /**
+   * A press yet to move; a slide along the hand; the raised card picked
+   * up; or a long press's menu opened, which the release leaves alone.
+   */
+  mode: 'press' | 'slide' | 'picked' | 'menu';
+  /** The card raised now. */
+  peeked: CardSceneNode['id'];
+  /** The finger's recent points, on screen, the oldest past the window. */
+  trail: { readonly x: number; readonly y: number; readonly t: number }[];
+  /** Where the finger began heading toward the table, while it does. */
+  lift: { readonly x: number; readonly y: number } | null;
+}
+
+/** Lowers whatever card a finger has raised out of its hand. */
+const lowerPeekedCards = (surface: HTMLElement | null): void => {
+  if (!surface?.hasAttribute('data-peeking')) return;
+  surface.removeAttribute('data-peeking');
+  surface
+    .querySelectorAll('[data-peek]')
+    .forEach((card) => card.removeAttribute('data-peek'));
+};
+
+/**
+ * Cards of a hand (`zoneId`) that overlap so much that less than half of
+ * each shows, topmost first, each with where it is painted; null for a hand
+ * that shows more.
+ */
+const crowdedHandCards = (
+  scene: BoardScene,
+  zoneId: string,
+  paintedAt: (card: CardSceneNode) => Rect
+): readonly { readonly card: CardSceneNode; readonly rect: Rect }[] | null => {
+  const cards = scene.cards
+    .map((card, order) => ({ card, order }))
+    .filter(
+      ({ card }) =>
+        card.parentId === zoneId &&
+        card.role === 'zone' &&
+        card.renderKey !== null
+    );
+  if (cards.length < 2) return null;
+  const placed = cards.map(({ card, order }) => ({
+    card,
+    order,
+    rect: paintedAt(card),
+  }));
+  const lefts = placed.map(({ rect }) => rect.x);
+  const step = (Math.max(...lefts) - Math.min(...lefts)) / (placed.length - 1);
+  const width = Math.min(...placed.map(({ rect }) => rect.width));
+  if (!(step < width / 2)) return null;
+  return placed
+    .sort((a, b) => b.card.zIndex - a.card.zIndex || b.order - a.order)
+    .map(({ card, rect }) => ({ card, rect }));
+};
+
 const NO_ASIDES: ReadonlyMap<
   CardSceneNode['id'],
   { readonly x: number; readonly y: number }
@@ -1516,9 +1604,26 @@ export const BoardSurface = ({
     () => new BoardDragController(adapters),
     [adapters]
   );
+  // A finger's press on a crowded hand, peeking at its cards.
+  const peekRef = useRef<HandPeek | null>(null);
+  // The cards whose click the browser may still send after a finger slid
+  // along the hand: the release has already tapped the card it raised.
+  const peekClickRef = useRef<{
+    readonly cardIds: ReadonlySet<CardSceneNode['id']>;
+    readonly until: number;
+  } | null>(null);
   const consumeSuppressedClick = useCallback(
-    (cardId: CardSceneNode['id'], renderKey: CardSceneNode['renderKey']) =>
-      dragController.consumeSuppressedClick(cardId, renderKey),
+    (cardId: CardSceneNode['id'], renderKey: CardSceneNode['renderKey']) => {
+      const suppressed = dragController.consumeSuppressedClick(
+        cardId,
+        renderKey
+      );
+      const peeked = peekClickRef.current;
+      if (!peeked?.cardIds.has(cardId) || performance.now() > peeked.until)
+        return suppressed;
+      peekClickRef.current = null;
+      return true;
+    },
     [dragController]
   );
   const registerElement = director.register;
@@ -1660,6 +1765,8 @@ export const BoardSurface = ({
   useLayoutEffect(() => {
     const cancel = () => {
       grabbed.current = null;
+      peekRef.current = null;
+      lowerPeekedCards(surfaceRef.current);
       const pointerId = dragController.cancelInteraction();
       const captured = capturedPointerRef.current;
       capturedPointerRef.current = null;
@@ -1697,7 +1804,9 @@ export const BoardSurface = ({
 
   const pointerInput = (
     event: ReactPointerEvent<HTMLDivElement>,
-    starting?: CardSceneNode
+    starting?: CardSceneNode,
+    /** The starting card's element, when the event's target is another. */
+    startingElement?: Element | null
   ): BoardPointerInput | null => {
     const bounds = surfaceRef.current?.getBoundingClientRect();
     if (!bounds || bounds.width <= 0 || bounds.height <= 0) return null;
@@ -1723,9 +1832,10 @@ export const BoardSurface = ({
         let v = local.y / painted.bounds.height - 0.5;
         // The flat hand may already be raised by its reading hover treatment.
         const body = (
-          event.target instanceof Element
+          startingElement ??
+          (event.target instanceof Element
             ? event.target.closest('[data-card-id]')
-            : null
+            : null)
         )?.querySelector<HTMLElement>('.ptcgsim-card__body');
         if (base.plane === 0 && body) {
           const grip = localPointer(
@@ -1843,6 +1953,187 @@ export const BoardSurface = ({
     } catch {
       // Capture can already be released by the browser on cancellation.
     }
+  };
+  // Where a hand card is painted: the tilted table draws the hands larger
+  // than they lie in the scene (BoardDepthProjection's hand fit).
+  const handCardRect = (card: CardSceneNode): Rect =>
+    depth ? depth.pose(card).bounds : card.bounds;
+  const scenePoint = (clientX: number, clientY: number) => {
+    const bounds = surfaceRef.current?.getBoundingClientRect();
+    return bounds && bounds.width > 0 && bounds.height > 0
+      ? {
+          x: ((clientX - bounds.left) * scene.viewport.width) / bounds.width,
+          y: ((clientY - bounds.top) * scene.viewport.height) / bounds.height,
+        }
+      : null;
+  };
+  const cardElement = (cardId: CardSceneNode['id']) =>
+    surfaceRef.current?.querySelector<HTMLElement>(
+      `[data-card-id="${CSS.escape(String(cardId))}"]`
+    ) ?? null;
+  const raisePeek = (cardId: CardSceneNode['id']) => {
+    const surface = surfaceRef.current;
+    if (!surface) return;
+    surface
+      .querySelectorAll('[data-peek]')
+      .forEach((card) => card.removeAttribute('data-peek'));
+    const element = cardElement(cardId);
+    const card = scene.cards.find((candidate) => candidate.id === cardId);
+    if (element && card) {
+      // A small hand card grows to be read; the screen draws it larger.
+      const width =
+        (handCardRect(card).width * surface.getBoundingClientRect().width) /
+        scene.viewport.width;
+      element.style.setProperty(
+        '--ptcgsim-peek-scale',
+        String(
+          Math.min(
+            PEEK_SCALE.most,
+            Math.max(
+              PEEK_SCALE.least,
+              width > 0 ? PEEK_READ_WIDTH_PX / width : PEEK_SCALE.least
+            )
+          )
+        )
+      );
+      element.setAttribute('data-peek', '');
+    }
+    surface.setAttribute('data-peeking', '');
+  };
+  /** A touch press on a crowded hand's card begins to peek at it. */
+  const startPeek = (
+    event: ReactPointerEvent<HTMLDivElement>,
+    card: CardSceneNode
+  ) => {
+    peekRef.current = null;
+    lowerPeekedCards(surfaceRef.current);
+    if (event.pointerType !== 'touch' || !table || card.role !== 'zone') return;
+    const zone = scene.zones.find(
+      (candidate) => candidate.id === card.parentId && candidate.kind === 'hand'
+    );
+    if (!zone || !crowdedHandCards(scene, zone.id, handCardRect)) return;
+    peekRef.current = {
+      pointerId: event.pointerId,
+      zoneId: zone.id,
+      pressed: card,
+      startX: event.clientX,
+      startY: event.clientY,
+      toward:
+        zone.bounds.y + zone.bounds.height / 2 > scene.viewport.height / 2
+          ? -1
+          : 1,
+      mode: 'press',
+      peeked: card.id,
+      trail: [{ x: event.clientX, y: event.clientY, t: event.timeStamp }],
+      lift: null,
+    };
+    raisePeek(card.id);
+  };
+  /** The finger slid along the hand: the card under it rises instead. */
+  const slidePeek = (
+    peek: HandPeek,
+    event: ReactPointerEvent<HTMLDivElement>
+  ) => {
+    const point = scenePoint(event.clientX, event.clientY);
+    const cards = point
+      ? crowdedHandCards(scene, peek.zoneId, handCardRect)
+      : null;
+    if (!point || !cards) return;
+    const reachable = cards.filter(({ card }) => card.interactive);
+    // The topmost card under the finger, or past either end the nearest.
+    const under =
+      reachable.find(
+        ({ rect }) => point.x >= rect.x && point.x < rect.x + rect.width
+      ) ??
+      reachable
+        .map((entry) => ({
+          entry,
+          distance: Math.abs(entry.rect.x + entry.rect.width / 2 - point.x),
+        }))
+        .sort((a, b) => a.distance - b.distance)[0]?.entry;
+    if (!under || under.card.id === peek.peeked) return;
+    peek.peeked = under.card.id;
+    raisePeek(under.card.id);
+  };
+  /** Picks up the raised card, held where it is drawn; false if it can't be. */
+  const liftPeeked = (
+    peek: HandPeek,
+    event: ReactPointerEvent<HTMLDivElement>
+  ): boolean => {
+    const card = scene.cards.find((candidate) => candidate.id === peek.peeked);
+    const element = card ? cardElement(card.id) : null;
+    if (!card || !element) return false;
+    const input = pointerInput(event, card, element);
+    if (!input) return false;
+    const box = element
+      .querySelector<HTMLElement>('.ptcgsim-card__body')
+      ?.getBoundingClientRect();
+    let centre: { x: number; y: number } | undefined;
+    if (!depth && box && box.width > 0 && box.height > 0) {
+      centre =
+        scenePoint(box.left + box.width / 2, box.top + box.height / 2) ??
+        undefined;
+      const grip = localPointer(
+        box,
+        event.clientX,
+        event.clientY,
+        card.rotationQuarterTurns as QuarterTurn
+      );
+      gripRef.current = {
+        x: Math.min(1, Math.max(0, grip.x + 0.5)),
+        y: Math.min(1, Math.max(0, grip.y + 0.5)),
+      };
+    }
+    if (!dragController.pick(scene, card.id, input, centre)) return false;
+    grabbed.current = card;
+    clearHover();
+    velocity.add(input.x, input.y, event.timeStamp);
+    return true;
+  };
+  /**
+   * The finger moved toward the table: the raised card is picked up, held
+   * where it is painted, raised out of the hand. A card that cannot be (it
+   * left the hand meanwhile) leaves nothing held, not the card pressed.
+   */
+  const pickPeeked = (
+    peek: HandPeek,
+    event: ReactPointerEvent<HTMLDivElement>
+  ): void => {
+    peek.mode = 'picked';
+    if (!liftPeeked(peek, event)) {
+      dragController.cancel(event.pointerId);
+      lowerPeekedCards(surfaceRef.current);
+    }
+  };
+  /**
+   * The finger let go of the hand without picking a card up: after a slide
+   * that taps the card it raised. A press that never moved is the
+   * browser's tap, as anywhere else.
+   */
+  const releasePeek = (
+    peek: HandPeek,
+    event: ReactPointerEvent<HTMLDivElement>
+  ) => {
+    cancelDetachTimer();
+    dragController.cancel(event.pointerId);
+    if (peek.mode === 'slide') {
+      peekClickRef.current = {
+        cardIds: new Set([peek.pressed.id, peek.peeked]),
+        until: performance.now() + PEEK_CLICK_MS,
+      };
+      const card = scene.cards.find(
+        (candidate) => candidate.id === peek.peeked
+      );
+      if (card?.interactive)
+        adapters.emitIntent(
+          card.primaryAction?.kind === 'openZone'
+            ? { kind: 'ZoneOpened', zoneId: card.primaryAction.zoneId }
+            : { kind: 'CardSelected', cardId: card.id, toggle: true }
+        );
+    }
+    velocity.reset();
+    releaseCapture(event);
+    grabbed.current = null;
   };
   // A drag's target is the id of the stack or zone under the pointer; v1
   // rings the stack's visible top card and tints a zone container. A card
@@ -2030,9 +2321,55 @@ export const BoardSurface = ({
           } catch {
             // Pointer capture is best effort on older embedded browsers.
           }
+          startPeek(event, target.card);
         }
       }}
       onPointerMove={(event) => {
+        // A finger on a crowded hand: a slide along it raises the card under
+        // the finger; a move toward the table picks the raised card up.
+        const peek = peekRef.current;
+        if (
+          peek?.pointerId === event.pointerId &&
+          (peek.mode === 'press' || peek.mode === 'slide')
+        ) {
+          event.preventDefault();
+          if (peek.mode === 'press') {
+            const dx = event.clientX - peek.startX;
+            const dy = event.clientY - peek.startY;
+            if (Math.hypot(dx, dy) < PEEK_SLOP_PX) return;
+            const pull = dy * peek.toward;
+            if (pull > 0 && pull * 2 >= Math.abs(dx)) {
+              pickPeeked(peek, event);
+              return;
+            }
+            peek.mode = 'slide';
+          }
+          const { trail } = peek;
+          trail.push({
+            x: event.clientX,
+            y: event.clientY,
+            t: event.timeStamp,
+          });
+          while (
+            trail.length > 2 &&
+            trail[1]!.t <= event.timeStamp - PEEK_HEADING_MS
+          )
+            trail.shift();
+          const from = trail[0]!;
+          const pull = (event.clientY - from.y) * peek.toward;
+          // Heading along the hand, the card under the finger rises; heading
+          // for the table, the raised card stays, and is picked up once the
+          // finger has come far enough.
+          if (!(pull > 0 && pull >= Math.abs(event.clientX - from.x))) {
+            peek.lift = null;
+            slidePeek(peek, event);
+            return;
+          }
+          peek.lift ??= from;
+          if ((event.clientY - peek.lift.y) * peek.toward >= PEEK_PICK_PX)
+            pickPeeked(peek, event);
+          return;
+        }
         const input = pointerInput(event);
         if (input && dragController.pointerMove(scene, input)) {
           cancelDetachTimer();
@@ -2079,6 +2416,22 @@ export const BoardSurface = ({
         hoverHint(null);
       }}
       onPointerUp={(event) => {
+        const peek = peekRef.current;
+        if (peek?.pointerId === event.pointerId) {
+          peekRef.current = null;
+          lowerPeekedCards(surfaceRef.current);
+          if (peek.mode !== 'picked') {
+            releasePeek(peek, event);
+            return;
+          }
+          // The browser's own click, if it comes, lands on the card the
+          // finger first pressed, not the one it picked up.
+          if (peek.pressed.id !== peek.peeked)
+            peekClickRef.current = {
+              cardIds: new Set([peek.pressed.id]),
+              until: performance.now() + PEEK_CLICK_MS,
+            };
+        }
         cancelDetachTimer();
         const ownsGrab =
           capturedPointerRef.current?.pointerId === event.pointerId;
@@ -2136,7 +2489,25 @@ export const BoardSurface = ({
         releaseCapture(event);
         if (ownsGrab) grabbed.current = null;
       }}
+      onContextMenuCapture={(event) => {
+        // A finger held still on a crowded hand opens the menu of the card
+        // it raised, which the letting go then leaves alone.
+        const peek = peekRef.current;
+        if (peek?.mode !== 'press' && peek?.mode !== 'slide') return;
+        dragController.cancel(peek.pointerId);
+        lowerPeekedCards(surfaceRef.current);
+        const raised = peek.peeked;
+        peek.mode = 'menu';
+        if (raised === peek.pressed.id) return;
+        event.preventDefault();
+        event.stopPropagation();
+        adapters.emitIntent({ kind: 'CardContextRequested', cardId: raised });
+      }}
       onPointerCancel={(event) => {
+        if (peekRef.current?.pointerId === event.pointerId) {
+          peekRef.current = null;
+          lowerPeekedCards(surfaceRef.current);
+        }
         pressedHintRef.current = null;
         cancelDetachTimer();
         dragController.cancel(event.pointerId);
@@ -2147,6 +2518,10 @@ export const BoardSurface = ({
         releaseCapture(event);
       }}
       onLostPointerCapture={(event) => {
+        if (peekRef.current?.pointerId === event.pointerId) {
+          peekRef.current = null;
+          lowerPeekedCards(surfaceRef.current);
+        }
         dragController.cancel(event.pointerId);
         if (capturedPointerRef.current?.pointerId === event.pointerId)
           grabbed.current = null;

@@ -252,6 +252,26 @@ export const BOARD_SURFACE_CSS = `
     --ptcgsim-lift: 3.2;
   }
 }
+/* A finger on a crowded hand peeks at its cards (BoardSurface): the card
+   under it rises clear of the finger, whole and large enough to read
+   (--ptcgsim-peek-scale, set for its size), above its neighbours and the
+   piles' counts, quickly enough to follow a slide along the hand. */
+:is(.ptcgsim-board-surface, .ptcgsim-board-lift)[data-geometry='2'] .ptcgsim-card[data-in-hand][data-peek]:not([data-held]) {
+  z-index: 9300 !important;
+}
+:is(.ptcgsim-board-surface, .ptcgsim-board-lift)[data-geometry='2'] .ptcgsim-card[data-in-hand][data-peek]:not([data-held]) > .ptcgsim-card__body {
+  translate: 0 calc(-100% - (var(--ptcgsim-peek-scale, 1.12) - 1) * 45%);
+  scale: var(--ptcgsim-peek-scale, 1.12);
+  transition-duration: calc(90ms * var(--motion-scale, 1));
+}
+:is(.ptcgsim-board-surface, .ptcgsim-board-lift)[data-geometry='2'][data-far-upright] .ptcgsim-card[data-in-hand][data-card-side='opponent'][data-peek]:not([data-held]) > .ptcgsim-card__body {
+  translate: 0 calc(100% + (var(--ptcgsim-peek-scale, 1.12) - 1) * 55%);
+}
+/* Picked up, it is held where it was raised to, without sliding back;
+   only its size settles to a held card's. */
+:is(.ptcgsim-board-surface, .ptcgsim-board-lift) .ptcgsim-card[data-peek][data-held] > .ptcgsim-card__body {
+  transition-property: scale;
+}
 .ptcgsim-card[data-held] > .ptcgsim-card__body {
   scale: var(--ptcgsim-lift-scale, 1.06);
   transition-duration: calc(120ms * var(--motion-scale, 1));
@@ -299,9 +319,9 @@ export const BOARD_SURFACE_CSS = `
   scale: none !important;
   rotate: none !important;
 }
-/* A hovered hand card still rises into view (it is mostly off the screen),
-   only without the slide. */
-:is(.ptcgsim-board-surface, .ptcgsim-board-lift)[data-reduced-motion='true'] .ptcgsim-card:not([data-in-hand]:hover) > .ptcgsim-card__body {
+/* A hovered or peeked hand card still rises into view (it is mostly off
+   the screen, or under a finger), only without the slide. */
+:is(.ptcgsim-board-surface, .ptcgsim-board-lift)[data-reduced-motion='true'] .ptcgsim-card:not([data-in-hand]:hover):not([data-in-hand][data-peek]) > .ptcgsim-card__body {
   translate: none !important;
 }
 

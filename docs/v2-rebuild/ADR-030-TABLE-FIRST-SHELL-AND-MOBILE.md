@@ -226,7 +226,21 @@ and R's refresh (2026-10-21) are gone.
   card again reads it; drag works as with a mouse. Card submenus open in
   place on a phone. Under a finger the seam opens to 48px for 44px rail
   targets (`seamBandPx`), menu rows grow to 44px and key hints are hidden.
-- **No hold-to-reveal gestures anywhere.**
+- **A finger peeks along a crowded hand** (2026-10-29), as a mouse's
+  hover raises a hand card. A hand showing less than half of each card (a
+  phone's sixteen cards show about 10px each) answers a touch with the
+  card under it risen clear of the finger, whole, drawn at least 120px
+  wide and over the piles' counts. Sliding along the hand raises each card
+  under the finger in turn, without dragging or reordering; moving toward
+  the table (straight away, or 24px once the finger heads that way, read
+  over its last 100ms so a thumb's arc along the hand still slides) picks
+  up the raised card, held where it is drawn; letting go after a slide taps
+  the raised card (selected, with Read and Actions), and a long press opens
+  its menu. A touch that never moves is a tap as before, and a hand with
+  room to spare, a mouse, a pen and the keys are unchanged
+  (`BoardSurface`, `BoardDragController.pick`; `hand-peek.spec.ts`).
+- **No hold-to-reveal gestures anywhere.** The peek is not one: the card
+  rises the moment the finger lands, and letting go acts on it.
 - The "best on a desktop" notice is gone.
 
 ## Consequences

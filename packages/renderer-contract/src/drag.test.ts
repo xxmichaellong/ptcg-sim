@@ -180,6 +180,61 @@ describe('renderer-neutral drag controller', () => {
     expect(controller.detach(scene(), 7)).toBe(false);
   });
 
+  it('picks up the card a press slid onto, held where it is painted', () => {
+    const neighbourId = asViewCardId('neighbour');
+    const hand = (): BoardScene => {
+      const base = scene();
+      const source = base.cards.find((card) => card.id === sourceId)!;
+      return {
+        ...base,
+        cards: [
+          ...base.cards,
+          {
+            ...source,
+            id: neighbourId,
+            bounds: { ...source.bounds, x: source.bounds.x + 20 },
+            zIndex: 101,
+            label: 'Neighbour card',
+            renderKey: `card:${String(neighbourId)}`,
+          },
+        ],
+      };
+    };
+    const updates: BoardPresentationUpdate[] = [];
+    const intents: BoardIntent[] = [];
+    const controller = new BoardDragController({
+      emitIntent: (intent) => intents.push(intent),
+      emitPresentationUpdate: (update) => updates.push(update),
+    });
+    // Only a press of this pointer that has not started dragging.
+    expect(controller.pick(hand(), neighbourId, input(70, 470))).toBe(false);
+    controller.pointerDown(hand(), sourceId, input(40, 470));
+    expect(controller.pick(hand(), neighbourId, input(70, 470, 8))).toBe(false);
+    // Raised out of the hand, its centre painted 120px above where it lies.
+    expect(
+      controller.pick(hand(), neighbourId, input(70, 470), { x: 80, y: 366 })
+    ).toBe(true);
+    expect(updates).toEqual([
+      {
+        kind: 'DragChanged',
+        drag: { cardId: neighbourId, x: 80, y: 366, targetId: 'source-zone' },
+      },
+    ]);
+    expect(controller.pick(hand(), sourceId, input(70, 470))).toBe(false);
+    controller.pointerMove(hand(), input(510, 230));
+    expect(updates.at(-1)).toMatchObject({
+      drag: { cardId: neighbourId, x: 520, y: 126 },
+    });
+    expect(controller.pointerUp(hand(), input(510, 230))).toBe(true);
+    expect(intents).toEqual([
+      expect.objectContaining({
+        kind: 'CardDropRequested',
+        cardId: neighbourId,
+      }),
+    ]);
+    expect(controller.consumeSuppressedClick(neighbourId)).toBe(true);
+  });
+
   it('does not convert a click-sized gesture into a drag', () => {
     const updates: BoardPresentationUpdate[] = [];
     const intents: BoardIntent[] = [];

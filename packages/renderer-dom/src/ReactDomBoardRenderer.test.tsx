@@ -5,7 +5,10 @@ import {
   BOARD_LAYOUT_GEOMETRY_VERSION,
   createBoardLayoutSnapshot,
   createBoardSceneLayout,
+  createTableLayoutSnapshot,
   DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
+  DEFAULT_TABLE_VERTICAL_LAYOUT,
+  TABLE_LAYOUT_GEOMETRY_VERSION,
   DEFAULT_BOARD_DEPTH,
   DEFAULT_BOARD_PREFERENCES,
   DEFAULT_BOARD_PRESENTATION,
@@ -2184,5 +2187,352 @@ describe('React DOM board renderer', () => {
       });
       expect(host.childElementCount).toBe(0);
     }
+  });
+});
+
+describe('a finger on a crowded hand', () => {
+  const tableLayout = createBoardSceneLayout(
+    createTableLayoutSnapshot({
+      geometryVersion: TABLE_LAYOUT_GEOMETRY_VERSION,
+      viewport: { width: 390, height: 844, devicePixelRatio: 1 },
+      playerIds: [playerId, opponentId],
+      bottomPlayerId: playerId,
+      shellMode: 'fullscreen',
+      vertical: DEFAULT_TABLE_VERTICAL_LAYOUT,
+    })
+  );
+  const handCardId = (index: number) => asViewCardId(`hand-${String(index)}`);
+  /** A hand of `count` cards 90px wide, `step` apart, along the bottom. */
+  const handScene = (count: number, step: number): BoardScene => ({
+    matchId: 'match',
+    revision: 1,
+    viewport: { width: 390, height: 844, devicePixelRatio: 1 },
+    bottomPlayerId: playerId,
+    layout: tableLayout,
+    zones: [
+      {
+        id: 'zone:p1:hand',
+        playerId,
+        side: 'local',
+        kind: 'hand',
+        bounds: { x: 0, y: 730, width: 390, height: 114 },
+        contentBounds: { x: 0, y: 730, width: 390, height: 114 },
+        surface: 'zone',
+        count,
+        zIndex: 10,
+        label: 'Blue hand',
+        interactive: true,
+      },
+      {
+        id: 'zone:p1:bench',
+        playerId,
+        side: 'local',
+        kind: 'bench',
+        bounds: { x: 0, y: 420, width: 390, height: 140 },
+        contentBounds: { x: 0, y: 420, width: 390, height: 140 },
+        surface: 'playSlot',
+        count: 0,
+        zIndex: 10,
+        label: 'Blue bench',
+        interactive: true,
+      },
+    ],
+    cards: Array.from({ length: count }, (_, index) => ({
+      id: handCardId(index),
+      ownerId: playerId,
+      parentId: 'zone:p1:hand',
+      side: 'local' as const,
+      role: 'zone' as const,
+      bounds: { x: 20 + index * step, y: 730, width: 90, height: 126 },
+      zIndex: 100 + index,
+      rotationQuarterTurns: 0 as const,
+      imageUrl: `/hand-${String(index)}.png`,
+      concealed: false,
+      label: `Hand card ${String(index)}`,
+      interactive: true,
+      renderKey: `card:hand-${String(index)}`,
+    })),
+    markers: [],
+    counts: [],
+  });
+  const mountHand = async (
+    scene: BoardScene,
+    tilted = false
+  ): Promise<{
+    readonly renderer: ReactDomBoardRenderer;
+    readonly host: HTMLElement;
+    readonly intents: BoardIntent[];
+    readonly drags: (string | null)[];
+  }> => {
+    const intents: BoardIntent[] = [];
+    const drags: (string | null)[] = [];
+    const renderer = new ReactDomBoardRenderer({
+      emitIntent: (intent) => intents.push(intent),
+      emitPresentationUpdate: (update) => {
+        if (update.kind === 'DragChanged')
+          drags.push(update.drag ? String(update.drag.cardId) : null);
+      },
+      reportError: vi.fn(),
+    });
+    const host = document.createElement('div');
+    document.body.append(host);
+    await mountInAct(renderer, host, scene);
+    if (tilted)
+      act(() =>
+        renderer.setPreferences({
+          ...DEFAULT_BOARD_PREFERENCES,
+          depth: { ...DEFAULT_BOARD_DEPTH, mode: 'table' },
+        })
+      );
+    const surface = host.querySelector<HTMLElement>('.ptcgsim-board-surface')!;
+    surface.getBoundingClientRect = () =>
+      ({
+        x: 0,
+        y: 0,
+        left: 0,
+        top: 0,
+        right: 390,
+        bottom: 844,
+        width: 390,
+        height: 844,
+        toJSON: () => ({}),
+      }) as DOMRect;
+    for (const card of host.querySelectorAll<HTMLElement>('[data-card-id]')) {
+      card.setPointerCapture = vi.fn();
+      card.hasPointerCapture = vi.fn(() => true);
+      card.releasePointerCapture = vi.fn();
+    }
+    return { renderer, host, intents, drags };
+  };
+  const cardNode = (host: HTMLElement, index: number) =>
+    host.querySelector<HTMLElement>(
+      `[data-card-id="${String(handCardId(index))}"]`
+    )!;
+  const peeked = (host: HTMLElement) =>
+    [...host.querySelectorAll<HTMLElement>('[data-peek]')].map(
+      (node) => node.dataset.cardId
+    );
+  // Events come a frame apart, unless a finger rests (`rest`).
+  let clock = 1_000;
+  const rest = (ms: number) => {
+    clock += ms;
+  };
+  const pointer = (
+    host: HTMLElement,
+    type: 'pointerdown' | 'pointermove' | 'pointerup',
+    x: number,
+    y: number,
+    pointerType = 'touch',
+    target: Element = host.querySelector('.ptcgsim-board-surface')!
+  ) =>
+    act(() => {
+      const event = new PointerEvent(type, {
+        bubbles: true,
+        cancelable: true,
+        pointerId: 3,
+        button: 0,
+        clientX: x,
+        clientY: y,
+        pointerType,
+      });
+      clock += 16;
+      Object.defineProperty(event, 'timeStamp', { value: clock });
+      target.dispatchEvent(event);
+    });
+  const unmount = async (
+    renderer: ReactDomBoardRenderer,
+    host: HTMLElement
+  ) => {
+    await act(async () => {
+      renderer.destroy();
+      await Promise.resolve();
+    });
+    host.remove();
+  };
+
+  it('raises the card under the finger as it slides along, and taps that card when let go', async () => {
+    const { renderer, host, intents, drags } = await mountHand(
+      handScene(16, 12)
+    );
+    pointer(host, 'pointerdown', 25, 790, 'touch', cardNode(host, 0));
+    // Pressed, the card rises out of the hand at once.
+    expect(peeked(host)).toEqual(['hand-0']);
+    expect(
+      host.querySelector('.ptcgsim-board-surface')!.hasAttribute('data-peeking')
+    ).toBe(true);
+    // Sideways, the card under the finger rises instead; nothing is dragged
+    // and the hand is not reordered.
+    pointer(host, 'pointermove', 64, 792);
+    expect(peeked(host)).toEqual(['hand-3']);
+    pointer(host, 'pointermove', 112, 788);
+    expect(peeked(host)).toEqual(['hand-7']);
+    // Past the hand's end, its last card.
+    pointer(host, 'pointermove', 385, 790);
+    expect(peeked(host)).toEqual(['hand-15']);
+    pointer(host, 'pointermove', 112, 790);
+    expect(drags).toEqual([]);
+    pointer(host, 'pointerup', 112, 790);
+    expect(peeked(host)).toEqual([]);
+    expect(intents).toEqual([
+      { kind: 'CardSelected', cardId: handCardId(7), toggle: true },
+    ]);
+    // The browser's own click lands on the card first pressed: it is not a
+    // second tap.
+    act(() => {
+      cardNode(host, 0).dispatchEvent(
+        new MouseEvent('click', { bubbles: true, detail: 1 })
+      );
+    });
+    expect(intents).toHaveLength(1);
+    await unmount(renderer, host);
+  });
+
+  it('picks up the raised card when the finger moves on toward the table', async () => {
+    const { renderer, host, intents, drags } = await mountHand(
+      handScene(16, 12)
+    );
+    pointer(host, 'pointerdown', 25, 790, 'touch', cardNode(host, 0));
+    pointer(host, 'pointermove', 64, 792);
+    // A thumb sweeping the hand in an arc, rising as it goes, still slides.
+    pointer(host, 'pointermove', 76, 780);
+    pointer(host, 'pointermove', 100, 762);
+    expect(peeked(host)).toEqual(['hand-6']);
+    pointer(host, 'pointermove', 76, 770);
+    expect(peeked(host)).toEqual(['hand-4']);
+    expect(drags).toEqual([]);
+    // Resting on the card, then lifting toward the table: the card stays
+    // raised, a sideways wobble of the lift and all, and is picked up.
+    rest(300);
+    pointer(host, 'pointermove', 77, 762);
+    pointer(host, 'pointermove', 75, 754);
+    expect(peeked(host)).toEqual(['hand-4']);
+    expect(drags).toEqual([]);
+    pointer(host, 'pointermove', 76, 744);
+    expect(drags).toEqual(['hand-4']);
+    pointer(host, 'pointermove', 120, 480);
+    pointer(host, 'pointerup', 120, 480);
+    expect(intents).toEqual([
+      expect.objectContaining({
+        kind: 'CardDropRequested',
+        cardId: handCardId(4),
+        targetId: 'zone:p1:bench',
+      }),
+    ]);
+    expect(peeked(host)).toEqual([]);
+
+    // A finger that heads for the table at once takes the card it pressed.
+    pointer(host, 'pointerdown', 150, 790, 'touch', cardNode(host, 11));
+    pointer(host, 'pointermove', 158, 774);
+    expect(drags.at(-1)).toBe('hand-11');
+    pointer(host, 'pointerup', 158, 480);
+    expect(intents.at(-1)).toMatchObject({
+      kind: 'CardDropRequested',
+      cardId: handCardId(11),
+    });
+    await unmount(renderer, host);
+  });
+
+  it('picks up the raised card on the tilted table too', async () => {
+    const { renderer, host, intents, drags } = await mountHand(
+      handScene(16, 12),
+      true
+    );
+    const pressed = cardNode(host, 0);
+    expect(pressed.dataset.depthCard).toBe('true');
+    pointer(host, 'pointerdown', 25, 800, 'touch', pressed);
+    pointer(host, 'pointermove', 64, 800);
+    const raised = peeked(host);
+    expect(raised).toHaveLength(1);
+    expect(raised).not.toEqual(['hand-0']);
+    pointer(host, 'pointermove', 64, 760);
+    expect(drags).toEqual(raised);
+    pointer(host, 'pointerup', 64, 760);
+    expect(intents.at(-1)).toMatchObject({
+      kind: 'CardDropRequested',
+      cardId: raised[0],
+    });
+    await unmount(renderer, host);
+  });
+
+  it('opens the menu of the card raised when the finger is held still', async () => {
+    const { renderer, host, intents, drags } = await mountHand(
+      handScene(16, 12)
+    );
+    pointer(host, 'pointerdown', 25, 790, 'touch', cardNode(host, 0));
+    pointer(host, 'pointermove', 64, 790);
+    // The browser's long press goes to the card the finger first pressed.
+    act(() => {
+      cardNode(host, 0).dispatchEvent(
+        new MouseEvent('contextmenu', { bubbles: true, cancelable: true })
+      );
+    });
+    expect(intents).toEqual([
+      { kind: 'CardContextRequested', cardId: handCardId(3) },
+    ]);
+    expect(peeked(host)).toEqual([]);
+    // Letting go then neither taps a card nor drags one.
+    pointer(host, 'pointermove', 90, 790);
+    pointer(host, 'pointerup', 90, 790);
+    expect(intents).toHaveLength(1);
+    expect(drags).toEqual([]);
+    await unmount(renderer, host);
+  });
+
+  it('leaves a roomy hand, a still press and a mouse as they were', async () => {
+    // A hand that shows most of each card: a finger drags sideways to
+    // reorder it, and nothing is raised.
+    const roomy = await mountHand(handScene(3, 100));
+    pointer(
+      roomy.host,
+      'pointerdown',
+      40,
+      790,
+      'touch',
+      cardNode(roomy.host, 0)
+    );
+    expect(peeked(roomy.host)).toEqual([]);
+    pointer(roomy.host, 'pointermove', 100, 792);
+    expect(roomy.drags).toEqual(['hand-0']);
+    pointer(roomy.host, 'pointerup', 100, 792);
+    await unmount(roomy.renderer, roomy.host);
+
+    const crowded = await mountHand(handScene(16, 12));
+    // A press that does not move is the browser's own tap.
+    pointer(
+      crowded.host,
+      'pointerdown',
+      64,
+      790,
+      'touch',
+      cardNode(crowded.host, 3)
+    );
+    expect(peeked(crowded.host)).toEqual(['hand-3']);
+    pointer(crowded.host, 'pointermove', 66, 791);
+    pointer(crowded.host, 'pointerup', 66, 791);
+    expect(crowded.intents).toEqual([]);
+    expect(peeked(crowded.host)).toEqual([]);
+    act(() => {
+      cardNode(crowded.host, 3).dispatchEvent(
+        new MouseEvent('click', { bubbles: true, detail: 1 })
+      );
+    });
+    expect(crowded.intents).toEqual([
+      { kind: 'CardSelected', cardId: handCardId(3), toggle: true },
+    ]);
+    // A mouse drags the card it pressed, sideways or not.
+    pointer(
+      crowded.host,
+      'pointerdown',
+      25,
+      790,
+      'mouse',
+      cardNode(crowded.host, 0)
+    );
+    expect(peeked(crowded.host)).toEqual([]);
+    pointer(crowded.host, 'pointermove', 80, 792, 'mouse');
+    expect(crowded.drags).toEqual(['hand-0']);
+    pointer(crowded.host, 'pointerup', 80, 792, 'mouse');
+    expect(new Set(crowded.drags)).toEqual(new Set(['hand-0', null]));
+    await unmount(crowded.renderer, crowded.host);
   });
 });

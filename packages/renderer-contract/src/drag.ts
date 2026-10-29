@@ -375,6 +375,47 @@ export class BoardDragController {
     return true;
   }
 
+  /**
+   * A press not yet dragging picks up another card and drags it at once: a
+   * finger slid along a crowded hand, raising each card in turn, then moved
+   * toward the table with the one it shows. `centre` is where that card's
+   * centre is painted (raised out of the hand), so it is held where it is
+   * seen; without it the card is held as a press on it would hold it.
+   */
+  pick(
+    scene: BoardScene,
+    cardId: ViewCardId,
+    input: BoardPointerInput,
+    centre?: { readonly x: number; readonly y: number }
+  ): boolean {
+    const gesture = this.active;
+    if (
+      !gesture ||
+      gesture.pointerId !== input.pointerId ||
+      gesture.dragging ||
+      !this.validPoint(input)
+    ) {
+      return false;
+    }
+    const card = cardAt(scene, cardId);
+    if (!card?.interactive) return false;
+    this.active = {
+      pointerId: input.pointerId,
+      cardId,
+      renderKey: card.renderKey,
+      startX: input.x,
+      startY: input.y,
+      centerOffsetX:
+        (centre?.x ?? card.bounds.x + card.bounds.width / 2) - input.x,
+      centerOffsetY:
+        (centre?.y ?? card.bounds.y + card.bounds.height / 2) - input.y,
+      screenStart: input.screenPoint,
+      dragging: true,
+      detached: false,
+    };
+    return this.pointerMove(scene, input);
+  }
+
   pointerMove(scene: BoardScene, input: BoardPointerInput): boolean {
     const gesture = this.active;
     if (
