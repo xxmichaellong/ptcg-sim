@@ -752,7 +752,13 @@ test('route-owned context and card-preview keep real-v1 structure in the ADR-027
   const candidateMenu = await menu.screenshot({ animations: 'disabled' });
   const candidateMenuMetrics = await menuMetrics(menu);
 
-  expectMenuDesign(candidateMenuMetrics, source.menuMetrics, 'card menu');
+  expectMenuDesign(candidateMenuMetrics, source.menuMetrics, 'card menu', {
+    // A count follows these (the count picker), and the card is face down.
+    'Discard hand': 'Discard hand…',
+    'Shuffle hand to deck': 'Shuffle hand to deck…',
+    'Shuffle hand to bottom': 'Shuffle hand to bottom…',
+    'Reveal/hide card': 'Reveal card',
+  });
 
   await page.keyboard.press('Escape');
   const categoryCard = host.locator(

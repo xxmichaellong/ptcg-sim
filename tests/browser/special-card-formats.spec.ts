@@ -126,7 +126,7 @@ const fromDeck = async (page: Page, piece: string, key: string) => {
       .click();
     await page
       .getByRole('menuitem', {
-        name: /^(?:Join pieces|Attach to a Pokémon)…$/u,
+        name: /^(?:Join pieces|Evolve a Pokémon|Attach to a Pokémon)…$/u,
       })
       .click();
   } else await page.keyboard.press(key);

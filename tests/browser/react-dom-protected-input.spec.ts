@@ -1260,7 +1260,8 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
         kind: 'context',
         action: countCase.action,
         cardId: countCase.cardId,
-        value: countCase.value,
+        // The picker stops at what the pile holds: 999 arrives as that.
+        value: String(countCase.command.count),
       },
     ]);
     expect(countEvidence.overlayRejections).toEqual([]);
