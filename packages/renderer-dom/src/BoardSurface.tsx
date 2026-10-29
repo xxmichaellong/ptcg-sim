@@ -1941,6 +1941,9 @@ export const BoardSurface = ({
       grabbed.current = null;
       peekRef.current = null;
       lowerPeekedCards(surfaceRef.current);
+      // A rectangle being drawn goes too, its lit cards and its capture:
+      // let go of afterwards, it selects nothing.
+      clearSweep();
       const pointerId = dragController.cancelInteraction();
       const captured = capturedPointerRef.current;
       capturedPointerRef.current = null;

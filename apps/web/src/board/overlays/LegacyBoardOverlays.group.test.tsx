@@ -32,7 +32,10 @@ import {
   type LegacyBoardOverlayActions,
 } from './LegacyBoardOverlays.js';
 
-vi.mock('../group-menu-entries.js', () => ({ groupMenuOf: vi.fn(() => null) }));
+vi.mock('../group-menu-entries.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../group-menu-entries.js')>()),
+  groupMenuOf: vi.fn(() => null),
+}));
 vi.mock('./group-context.js', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./group-context.js')>()),
   pokemonInPlayOf: vi.fn(() => []),
@@ -305,6 +308,74 @@ describe('the group menu', () => {
     );
     expect(groupMenu()).toBeNull();
     expect(cardMenu()?.dataset.contextCardId).toBe(String(outside));
+  });
+
+  it('plays as one card the set the menu offered it for, not a set already whole in the selection', async () => {
+    vi.mocked(groupMenuOf).mockReturnValue(MENU);
+    const callbacks = actions();
+    // Two pieces of a V-UNION in the hand, beside the LEGEND's halves.
+    const piece = (part: number) => ({
+      ...spike.definitions[top.definitionId]!,
+      name: 'Mewtwo V-UNION',
+      presentation: {
+        readingQuarterTurns: 0 as const,
+        join: {
+          key: 'swshp:159:Mewtwo V-UNION',
+          columns: 2 as const,
+          rows: 2 as const,
+          part,
+        },
+      },
+    });
+    const handNow = view.zones[hand.id]!;
+    const [first, second] = [handNow.cards[3]!.id, handNow.cards[4]!.id];
+    const withUnion = {
+      ...view,
+      definitions: {
+        ...view.definitions,
+        'union-0': piece(0),
+        'union-1': piece(1),
+      },
+      zones: {
+        ...view.zones,
+        [hand.id]: {
+          ...handNow,
+          cards: handNow.cards.map((card) =>
+            card.kind !== 'known'
+              ? card
+              : card.id === first
+                ? { ...card, definitionId: 'union-0' }
+                : card.id === second
+                  ? { ...card, definitionId: 'union-1' }
+                  : card
+          ),
+        },
+      },
+    } as MatchViewState;
+    const unionScene = createBoardSceneForViewport(withUnion, {
+      geometryVersion: 1,
+      viewport: { width: 1280, height: 720, devicePixelRatio: 1 },
+      bottomPlayerId: firstPlayer,
+      splitRatio: 0.5,
+    });
+    // The LEGEND whole, then one V-UNION piece: Play as one is the V-UNION's.
+    await render(
+      state({
+        view: withUnion,
+        scene: unionScene,
+        presentation: presentation({
+          selection: [top.id, bottom.id, first],
+        }),
+      }),
+      callbacks,
+      { groupSurface: { kind: 'menu', anchor }, onGroupSurfaceChange: vi.fn() }
+    );
+    await act(async () => row('playAsOne').click());
+    expect(callbacks.emitSelectionIntent).toHaveBeenCalledExactlyOnceWith({
+      kind: 'CardsSelected',
+      cardIds: [first, second],
+      mode: 'replace',
+    });
   });
 
   it('opens from the group bar, and Escape or a press elsewhere puts it away', async () => {

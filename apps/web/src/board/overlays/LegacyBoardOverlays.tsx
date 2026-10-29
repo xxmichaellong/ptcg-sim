@@ -81,7 +81,7 @@ import {
 
 import { resolveAttachEvolveTargeting } from '../resolveAttachEvolveTargeting.js';
 import type { GroupAction } from '../compile-group.js';
-import { groupMenuOf } from '../group-menu-entries.js';
+import { groupMenuOf, playAsOneSelection } from '../group-menu-entries.js';
 import { visiblePieceSetOf } from '../piece-sets.js';
 import {
   contextActionOutcome,
@@ -3337,18 +3337,21 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
       : 0;
   // "Play as one card": the pieces in sight, selected in part order, and
   // the group menu on where they can go (ADR-042 §5).
-  const playAsOne = (cardId: ViewCardId, anchor: Rect): void => {
-    const set = state.view
-      ? visiblePieceSetOf(state.view, cardId, state.presentation.openedZoneId)
-      : null;
-    if (!set || !actions.emitSelectionIntent) return;
+  const selectPieces = (cardIds: readonly ViewCardId[], anchor: Rect): void => {
+    if (!actions.emitSelectionIntent) return;
     actions.emitSelectionIntent({
       kind: 'CardsSelected',
-      cardIds: set.cardIds,
+      cardIds,
       mode: 'replace',
     });
     actions.dismiss('context');
     onGroupSurfaceChange?.({ kind: 'menu', anchor });
+  };
+  const playAsOne = (cardId: ViewCardId, anchor: Rect): void => {
+    const set = state.view
+      ? visiblePieceSetOf(state.view, cardId, state.presentation.openedZoneId)
+      : null;
+    if (set) selectPieces(set.cardIds, anchor);
   };
   const chooseGroup = (choice: GroupMenuChoice, anchor: Rect): void => {
     switch (choice.kind) {
@@ -3361,16 +3364,12 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
         onGroupSurfaceChange?.({ kind: 'damage', anchor });
         return;
       case 'playAsOne': {
-        const piece = selection.find(
-          (item) =>
-            state.view &&
-            visiblePieceSetOf(
-              state.view,
-              item,
-              state.presentation.openedZoneId
-            ) !== null
-        );
-        if (piece) playAsOne(piece, anchor);
+        // The set the menu offered it for, by the menu's own rule: one
+        // whose pieces are not all selected yet.
+        const pieces = selectionContext
+          ? playAsOneSelection(selectionContext, selection)
+          : null;
+        if (pieces) selectPieces(pieces, anchor);
         return;
       }
       case 'deselect':

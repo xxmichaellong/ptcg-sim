@@ -3059,6 +3059,23 @@ describe('selecting several cards (ADR-042)', () => {
     await unmount(renderer, host);
   });
 
+  it('puts a rectangle away when the window loses focus, selecting nothing when let go of', async () => {
+    const { renderer, host, surface, intents } = await mount();
+    pointer(surface, 'pointerdown', 5, 400);
+    pointer(surface, 'pointermove', 200, 520);
+    pointer(surface, 'pointermove', 385, 650);
+    expect(host.querySelector('.ptcgsim-board-sweep')).not.toBeNull();
+    expect(host.querySelectorAll('[data-sweep]').length).toBeGreaterThan(0);
+    act(() => {
+      window.dispatchEvent(new Event('blur'));
+    });
+    expect(host.querySelector('.ptcgsim-board-sweep')).toBeNull();
+    expect(host.querySelectorAll('[data-sweep]')).toHaveLength(0);
+    pointer(surface, 'pointerup', 385, 650);
+    expect(selected(intents)).toEqual([]);
+    await unmount(renderer, host);
+  });
+
   it('keeps a rectangle to the half it began in, the far one too, and adds with Shift', async () => {
     const { renderer, host, surface, intents } = await mount();
     // Up across the seam: it stops there, Red's Bench untouched.
