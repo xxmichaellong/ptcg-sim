@@ -107,8 +107,38 @@ that deck on a seat, the browser imports it:
    at about 600×838;
 3. it uploads it and swaps in the `img:` reference.
 
-All of this is silent. The old reference stays if any step fails. Choosing a
-back by URL (until the chooser of stage 2) goes through the same import.
+All of this is silent. The old reference stays if any step fails. A link
+given in the chooser goes through the same import.
+
+### 5. The chooser (stage 2, 2026-10-29)
+
+The owner: typing `default` "is extremely tacky nowadays. there should just
+be a button to use default cardback". The prompt that asked for "an image
+URL, or 'default'" is gone; the deck screen's card back opens a chooser
+(`card-backs/CardBackChooser.tsx`, through the shared dialog's `openPanel`),
+and nothing in it is typed but a link.
+
+- **The back, large,** beside the choices (above them on a phone): the one
+  chosen so far, drawn as the table draws it.
+- **Backs:** a grid of native radios (arrow keys move through it; every
+  tile is 44px or more). The **Standard back** tile comes first
+  (`preset:standard`), then the other presets, then **Yours**: the player's
+  recent designs and pictures (the last 8, kept on this device) and the
+  backs their saved decks wear, each once.
+- **Design:** colour, pattern, accent and emblem, each a row of radios from
+  the fixed lists, previewed with the same SVG module the table uses. It
+  answers a `design:` reference.
+- **Picture:** a file (Choose a picture), a drop anywhere on the dialog, a
+  pasted image, or a link (Get), fetched through the import endpoint and
+  shown before anything is saved. The picture is shown in a card's shape,
+  centred; a drag or the arrow keys move it within the card, and the crop
+  encoded is exactly the one shown. Use this back re-encodes it (a canvas
+  in memory, never the GPU's), uploads it and answers its `img:` reference.
+  A fetch or upload that fails or takes over 30 s says so in plain words
+  and leaves the dialog open; files that aren't pictures or are over 20 MB
+  are turned away before anything is sent.
+
+Cancel, Escape or a superseded request change nothing.
 
 ## Consequences
 
@@ -117,9 +147,8 @@ back by URL (until the chooser of stage 2) goes through the same import.
 - Backs survive their source going away.
 - The store's writes count against the Free plan's daily row budget: one row
   per distinct image, uploads rate-limited.
-- Stage 2 builds the chooser on this contract: a preset grid with a
-  "Standard back" tile, the sleeve designer (it previews with the same SVG
-  module), upload with crop and re-encode, and URL import.
+- Stage 2's chooser (section 5) sits on this contract; no part of the app
+  asks for a typed word to mean a back (PX-074).
 
 ## Rejected alternatives
 

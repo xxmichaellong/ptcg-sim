@@ -1117,6 +1117,11 @@
     ],
     "translation": "已使用特性"
   },
+  "v0rlF7": {
+    "message": "Accent",
+    "context": "sleeve",
+    "translation": "点缀色"
+  },
   "BZkiHi": {
     "message": "Access to an exclusive Discord channel for priority suggestions/feature proposals/troubleshooting support.",
     "translation": "可加入专属Discord频道，获得优先建议、功能提案和问题排查支持。"
@@ -1285,6 +1290,16 @@
     "message": "Always shown while it holds cards.",
     "translation": "有卡牌时始终显示。"
   },
+  "Cpqhqr": {
+    "message": "Amber",
+    "context": "card back",
+    "translation": "琥珀色"
+  },
+  "2XejlY": {
+    "message": "Amber",
+    "context": "sleeve colour",
+    "translation": "琥珀色"
+  },
   "Uu-7-8": {
     "message": "An <0>open-source</0> Pokémon TCG table.",
     "translation": "一个<0>开源</0>的宝可梦卡牌对战桌。"
@@ -1299,13 +1314,6 @@
       "Keep 'blank' and 'theme' in English: they are what the player types"
     ],
     "translation": "图片网址，或 'blank' 或 'theme'。"
-  },
-  "hQE7TV": {
-    "message": "An image URL, or 'default'.",
-    "comments": [
-      "Keep 'default' in English: it is what the player types"
-    ],
-    "translation": "图片网址，或 'default'。"
   },
   "ctNH7H": {
     "message": "Ancient",
@@ -1411,6 +1419,11 @@
     "message": "Automatic",
     "translation": "自动"
   },
+  "pr_nRt": {
+    "message": "Azure",
+    "context": "card back",
+    "translation": "天青色"
+  },
   "USi6Js": {
     "message": "Baby",
     "context": "Pokémon stage",
@@ -1459,10 +1472,20 @@
     "message": "Back to your decks",
     "translation": "返回我的卡组"
   },
+  "GhQ0ZN": {
+    "message": "Backs",
+    "context": "card backs",
+    "translation": "卡背"
+  },
   "Why0fp": {
     "message": "Backspace",
     "context": "keyboard key",
     "translation": "Backspace"
+  },
+  "DA4ED5": {
+    "message": "Ball",
+    "context": "sleeve emblem",
+    "translation": "精灵球"
   },
   "hrit5V": {
     "message": "Basic",
@@ -1531,6 +1554,11 @@
       "In \"Back to board cards\": the cards on the board."
     ],
     "translation": "场地卡牌"
+  },
+  "f4EnAz": {
+    "message": "Bolt",
+    "context": "sleeve emblem",
+    "translation": "闪电"
   },
   "LAq-1T": {
     "message": "Both",
@@ -1633,6 +1661,10 @@
     "message": "Card assembled preview",
     "translation": "卡牌组合预览"
   },
+  "86aE2l": {
+    "message": "Card back",
+    "translation": "卡背"
+  },
   "M3FSd1": {
     "message": "Card back for {slotSeat}",
     "translation": "{slotSeat}的卡背"
@@ -1697,10 +1729,6 @@
     "message": "Change background",
     "translation": "更换背景"
   },
-  "PCF3WN": {
-    "message": "Change card back",
-    "translation": "更换卡背"
-  },
   "lKPW0c": {
     "message": "Change card back for {slotSeat}",
     "translation": "更换{slotSeat}的卡背"
@@ -1752,6 +1780,11 @@
     "message": "Checking…",
     "translation": "检查中…"
   },
+  "Oyrf8q": {
+    "message": "Checks",
+    "context": "sleeve pattern",
+    "translation": "格纹"
+  },
   "mQr73T": {
     "message": "Choose",
     "comments": [
@@ -1773,6 +1806,10 @@
   "Trhamk": {
     "message": "Choose a deck to play",
     "translation": "选择要使用的卡组"
+  },
+  "Qzm71e": {
+    "message": "Choose a picture",
+    "translation": "选择图片"
   },
   "TvEJEL": {
     "message": "Choose the deck for {slotSeat}",
@@ -1875,6 +1912,11 @@
     "context": "Pokémon type",
     "translation": "无色"
   },
+  "I3ktYd": {
+    "message": "Colour",
+    "context": "sleeve",
+    "translation": "颜色"
+  },
   "45MZFs": {
     "message": "Commands",
     "translation": "指令"
@@ -1926,6 +1968,10 @@
     "message": "Couldn't create a room. Try again.",
     "translation": "无法创建房间，请重试。"
   },
+  "d9B72Y": {
+    "message": "Couldn't get a picture from that link.",
+    "translation": "无法从该链接获取图片。"
+  },
   "Glz9_Y": {
     "message": "Couldn't join the room. Try again.",
     "translation": "无法加入房间，请重试。"
@@ -1961,6 +2007,10 @@
   "heYM3E": {
     "message": "Couldn't resume the game",
     "translation": "无法继续游戏"
+  },
+  "au8LN1": {
+    "message": "Couldn't save that picture. Try again.",
+    "translation": "无法保存该图片，请重试。"
   },
   "ETE6Wl": {
     "message": "Couldn't save the game",
@@ -2027,6 +2077,16 @@
     "message": "Creating…",
     "context": "a room",
     "translation": "创建中…"
+  },
+  "6vtp4B": {
+    "message": "Crimson",
+    "context": "card back",
+    "translation": "绯红色"
+  },
+  "w8Rl7X": {
+    "message": "Crimson",
+    "context": "sleeve colour",
+    "translation": "绯红色"
   },
   "ETt3ev": {
     "message": "Ctrl",
@@ -2181,6 +2241,21 @@
     "message": "Deselect",
     "translation": "取消选择"
   },
+  "lJjOBS": {
+    "message": "Design",
+    "context": "a card back the player designed",
+    "translation": "自定义"
+  },
+  "BBlHk-": {
+    "message": "Design",
+    "context": "design a card back",
+    "translation": "设计"
+  },
+  "zhmNG6": {
+    "message": "Diamonds",
+    "context": "sleeve pattern",
+    "translation": "菱形"
+  },
   "cCCVzA": {
     "message": "Didn't go through",
     "translation": "未能完成"
@@ -2266,6 +2341,11 @@
     "context": "finished",
     "translation": "完成"
   },
+  "6yxheJ": {
+    "message": "Dots",
+    "context": "sleeve pattern",
+    "translation": "圆点"
+  },
   "BDC29J": {
     "message": "Double-click <0>{0}</0> in your hand to read it.",
     "translation": "在手牌中双击<0>{0}</0>查看。"
@@ -2297,6 +2377,10 @@
   "n3U3s1": {
     "message": "Drag a Basic Pokémon from your hand onto your <0>Active Spot</0>.",
     "translation": "将手牌中的基础宝可梦拖到你的<0>战斗场</0>上。"
+  },
+  "eO8I4v": {
+    "message": "Drag to place it",
+    "translation": "拖动以放置"
   },
   "sEjSlz": {
     "message": "Dragon",
@@ -2342,6 +2426,11 @@
   "b0MOy2": {
     "message": "Draw, search and shuffle",
     "translation": "抽牌、检索和洗牌"
+  },
+  "oMUr3k": {
+    "message": "Drop",
+    "context": "sleeve emblem",
+    "translation": "水滴"
   },
   "IsvGW6": {
     "message": "Drop to import",
@@ -2401,6 +2490,11 @@
   "Bd1_Eb": {
     "message": "Edit deck",
     "translation": "编辑卡组"
+  },
+  "eAabzD": {
+    "message": "Emblem",
+    "context": "sleeve",
+    "translation": "图案"
   },
   "1PBKgv": {
     "message": "End",
@@ -2619,6 +2713,11 @@
     "message": "Fire type, Basic",
     "translation": "火属性，基础"
   },
+  "OE9EAy": {
+    "message": "Flame",
+    "context": "sleeve emblem",
+    "translation": "火焰"
+  },
   "gQp6L7": {
     "message": "Flat",
     "context": "table depth setting",
@@ -2677,6 +2776,10 @@
     "context": "deck format",
     "translation": "赛制"
   },
+  "ToYRS-": {
+    "message": "From a link",
+    "translation": "来自链接"
+  },
   "qIodFG": {
     "message": "Frost",
     "comments": [
@@ -2718,9 +2821,17 @@
     "message": "Game resumed",
     "translation": "对战已继续"
   },
+  "gqh64K": {
+    "message": "Get",
+    "translation": "获取"
+  },
   "4RM73X": {
     "message": "Get a sponsor tag on your GitHub profile (if sponsoring via GitHub, not applicable for sponsors through PayPal. Currently in the process of getting my GH sponsor page approved 😛).",
     "translation": "在你的 GitHub 个人资料上获得赞助者标签（仅适用于通过 GitHub 赞助，通过 PayPal 赞助不适用。目前正在申请我的 GitHub 赞助页面审核 😛）。"
+  },
+  "1wmsrg": {
+    "message": "Getting…",
+    "translation": "获取中…"
   },
   "kbTnWg": {
     "message": "Github Sponsors Link",
@@ -2729,6 +2840,11 @@
   "0qq_sj": {
     "message": "Go to the Solo table",
     "translation": "前往单人牌桌"
+  },
+  "R6itFF": {
+    "message": "Gold",
+    "context": "sleeve colour",
+    "translation": "金色"
   },
   "iN8jqp": {
     "message": "Grass",
@@ -2890,6 +3006,10 @@
     "message": "How much damage?",
     "translation": "多少点伤害？"
   },
+  "w3nYsM": {
+    "message": "How to choose",
+    "translation": "如何选择"
+  },
   "oT-Cnl": {
     "message": "HP",
     "context": "sort cards by",
@@ -2906,13 +3026,6 @@
   "LgcKSI": {
     "message": "HP at most",
     "translation": "HP 至多"
-  },
-  "fVGc9-": {
-    "message": "https://… or default",
-    "comments": [
-      "Keep 'default' in English: it is what the player types"
-    ],
-    "translation": "https://… 或 default"
   },
   "OaHYvQ": {
     "message": "https://…, blank or theme",
@@ -2980,6 +3093,11 @@
     ],
     "translation": "在卡组中"
   },
+  "QphUbA": {
+    "message": "Ink",
+    "context": "sleeve colour",
+    "translation": "墨色"
+  },
   "fZsAhg": {
     "message": "Insert",
     "context": "keyboard key",
@@ -3041,6 +3159,16 @@
   "Rw42Cd": {
     "message": "Its cards couldn't be read.",
     "translation": "无法读取其中的卡牌。"
+  },
+  "h0iD6U": {
+    "message": "Jade",
+    "context": "card back",
+    "translation": "翡翠色"
+  },
+  "i49U_n": {
+    "message": "Jade",
+    "context": "sleeve colour",
+    "translation": "翡翠色"
   },
   "Fz2DU1": {
     "message": "Join a room",
@@ -3125,6 +3253,11 @@
     "message": "Layout (optional)",
     "translation": "版式（可选）"
   },
+  "YGg_TP": {
+    "message": "Leaf",
+    "context": "sleeve emblem",
+    "translation": "叶子"
+  },
   "1ng4Ht": {
     "message": "Leave in play",
     "translation": "留在场上"
@@ -3179,6 +3312,11 @@
     "message": "Lightning",
     "context": "Pokémon type",
     "translation": "雷"
+  },
+  "7QxCqs": {
+    "message": "Lime",
+    "context": "sleeve colour",
+    "translation": "青柠色"
   },
   "JL_ceN": {
     "message": "Limitless",
@@ -3486,6 +3624,11 @@
     "context": "my half of the table",
     "translation": "我方"
   },
+  "5jDsb9": {
+    "message": "Moon",
+    "context": "sleeve emblem",
+    "translation": "月亮"
+  },
   "2FYpfJ": {
     "message": "More",
     "translation": "更多"
@@ -3624,6 +3767,11 @@
     "message": "Natural card placement",
     "translation": "自然摆放卡牌"
   },
+  "hmYrgt": {
+    "message": "Navy",
+    "context": "sleeve colour",
+    "translation": "藏青色"
+  },
   "rf9azy": {
     "message": "Needs at least one Basic Pokémon.",
     "translation": "至少需要一张基础宝可梦。"
@@ -3759,6 +3907,11 @@
   "6psMRl": {
     "message": "None",
     "context": "no Resistance",
+    "translation": "无"
+  },
+  "zA5yks": {
+    "message": "None",
+    "context": "sleeve emblem",
     "translation": "无"
   },
   "NfqnuJ": {
@@ -3995,6 +4148,10 @@
     "message": "Opponents' custom backs",
     "translation": "对手的自定义卡背"
   },
+  "l2I52S": {
+    "message": "or drop or paste one here",
+    "translation": "或将图片拖放或粘贴到此处"
+  },
   "eH_2Pb": {
     "message": "Other",
     "context": "Trainer card kind",
@@ -4058,6 +4215,10 @@
     "message": "Paste a decklist first.",
     "translation": "请先粘贴卡组列表。"
   },
+  "lrOsQc": {
+    "message": "Paste a link to a picture.",
+    "translation": "粘贴图片链接。"
+  },
   "aGL2ob": {
     "message": "Paste a list from the clipboard",
     "translation": "从剪贴板粘贴卡组列表"
@@ -4078,6 +4239,11 @@
     "message": "Paste with Ctrl+V (⌘V) instead",
     "translation": "请改用 Ctrl+V（⌘V）粘贴"
   },
+  "X1Ni8e": {
+    "message": "Pattern",
+    "context": "sleeve",
+    "translation": "花纹"
+  },
   "cfCrKd": {
     "message": "Paypal Donation Link",
     "translation": "PayPal 捐赠链接"
@@ -4090,6 +4256,11 @@
     "message": "Pick random card",
     "translation": "随机选择一张卡牌"
   },
+  "KBXd3D": {
+    "message": "Picture",
+    "context": "a card back from a picture",
+    "translation": "图片"
+  },
   "xYvd7u": {
     "message": "Piece position",
     "translation": "部件位置"
@@ -4100,6 +4271,11 @@
       "Command palette section: deck, discard, prizes…"
     ],
     "translation": "牌堆"
+  },
+  "K1IcaP": {
+    "message": "Plain",
+    "context": "sleeve pattern",
+    "translation": "纯色"
   },
   "SW-cIq": {
     "message": "Play",
@@ -4149,6 +4325,11 @@
     "message": "Player",
     "context": "unnamed seat",
     "translation": "玩家"
+  },
+  "zFLJEh": {
+    "message": "Plum",
+    "context": "sleeve colour",
+    "translation": "梅紫"
   },
   "KO7h6x": {
     "message": "Pocket decks have no Energy cards.",
@@ -4347,6 +4528,11 @@
   "U86mdr": {
     "message": "Rarity",
     "translation": "稀有度"
+  },
+  "L8r2Hh": {
+    "message": "Rays",
+    "context": "sleeve pattern",
+    "translation": "光芒"
   },
   "ykWEvf": {
     "message": "Read",
@@ -4648,6 +4834,11 @@
     "message": "Room ready",
     "translation": "房间已就绪"
   },
+  "2Rrohw": {
+    "message": "Rose",
+    "context": "sleeve colour",
+    "translation": "玫红"
+  },
   "BulyBf": {
     "message": "Rotate",
     "translation": "旋转"
@@ -4720,6 +4911,11 @@
     "message": "Row {rowNumber}: quantity must be 1 to {max}.",
     "translation": "第 {rowNumber} 行：数量必须为 1 到 {max}。"
   },
+  "0NRnTQ": {
+    "message": "Royal blue",
+    "context": "sleeve colour",
+    "translation": "宝蓝"
+  },
   "duDNyy": {
     "message": "Rule Box",
     "translation": "规则栏"
@@ -4750,6 +4946,11 @@
     "message": "Sample Prizes",
     "translation": "示例奖赏卡"
   },
+  "0jhHGF": {
+    "message": "Sand",
+    "context": "sleeve colour",
+    "translation": "沙色"
+  },
   "tfDRzk": {
     "message": "Save",
     "translation": "保存"
@@ -4779,9 +4980,18 @@
     "message": "Saved for this visit only",
     "translation": "仅本次访问保存"
   },
+  "K_F6pa": {
+    "message": "Saving…",
+    "translation": "保存中…"
+  },
   "pHxB6X": {
     "message": "Say…",
     "translation": "说…"
+  },
+  "gofk-z": {
+    "message": "Scales",
+    "context": "sleeve pattern",
+    "translation": "鳞纹"
   },
   "JTYvAw": {
     "message": "Search cards",
@@ -5133,11 +5343,21 @@
     "message": "Skip",
     "translation": "跳过"
   },
+  "8Qf85O": {
+    "message": "Sky",
+    "context": "sleeve colour",
+    "translation": "天蓝"
+  },
   "QIIV0m": {
     "message": "Slate",
     "comments": [
       "A table look: the colour"
     ],
+    "translation": "石板灰"
+  },
+  "OZCs0k": {
+    "message": "Slate",
+    "context": "sleeve colour",
     "translation": "石板灰"
   },
   "Se3Re8": {
@@ -5147,6 +5367,11 @@
   "P12gHj": {
     "message": "Smaller cards",
     "translation": "较小的卡牌"
+  },
+  "Vy1bgl": {
+    "message": "Snow",
+    "context": "sleeve colour",
+    "translation": "雪白"
   },
   "6N0DKq": {
     "message": "Solo table",
@@ -5288,10 +5513,19 @@
     "context": "Pokémon stage",
     "translation": "2阶进化"
   },
+  "RSLXu8": {
+    "message": "Standard",
+    "context": "card back",
+    "translation": "标准"
+  },
   "GlGLvC": {
     "message": "Standard",
     "context": "deck format",
     "translation": "标准"
+  },
+  "hr1qOs": {
+    "message": "Standard back",
+    "translation": "标准卡背"
   },
   "Tg13WJ": {
     "message": "Standard card",
@@ -5300,6 +5534,11 @@
   "kGkZLk": {
     "message": "Standings",
     "translation": "排名"
+  },
+  "Hgg1rW": {
+    "message": "Star",
+    "context": "sleeve emblem",
+    "translation": "星星"
   },
   "WrLzY2": {
     "message": "Start a game",
@@ -5329,6 +5568,11 @@
   "B2cOHf": {
     "message": "Stop sorting hand",
     "translation": "停止整理手牌"
+  },
+  "yy_J3n": {
+    "message": "Stripes",
+    "context": "sleeve pattern",
+    "translation": "条纹"
   },
   "yqeLY3": {
     "message": "Supporter",
@@ -5482,6 +5726,11 @@
     ],
     "translation": "TCG Pocket"
   },
+  "0D9HyG": {
+    "message": "Teal",
+    "context": "sleeve colour",
+    "translation": "青绿"
+  },
   "z5r9Ja": {
     "message": "Technical Machine",
     "context": "Trainer card kind",
@@ -5500,6 +5749,10 @@
     "message": "That file can't be opened here.",
     "translation": "无法在此打开该文件。"
   },
+  "KQLVDi": {
+    "message": "That file isn't a picture.",
+    "translation": "该文件不是图片。"
+  },
   "ZMr878": {
     "message": "That image didn't load.",
     "translation": "该图片未能加载。"
@@ -5507,6 +5760,14 @@
   "B4ZAXF": {
     "message": "That one was skipped.",
     "translation": "该项已跳过。"
+  },
+  "qqEjGU": {
+    "message": "That picture can't be read.",
+    "translation": "无法读取该图片。"
+  },
+  "HnGmBe": {
+    "message": "That picture is over 20 MB.",
+    "translation": "该图片超过 20 MB。"
   },
   "nWbyfh": {
     "message": "That replay file couldn't be opened.",
@@ -6016,13 +6277,13 @@
     "context": "give the keys to this shortcut",
     "translation": "在此使用"
   },
-  "PTd_zR": {
-    "message": "Use image",
-    "translation": "使用图片"
-  },
   "mVjzvv": {
     "message": "Use on {seat}",
     "translation": "用于{seat}"
+  },
+  "yoAGc6": {
+    "message": "Use this back",
+    "translation": "使用此卡背"
   },
   "8ZgYGP": {
     "message": "Use this print for the {deckCopies} in the deck",
@@ -6057,6 +6318,16 @@
     "message": "View whole card",
     "translation": "查看整张卡牌"
   },
+  "WUyPia": {
+    "message": "Violet",
+    "context": "card back",
+    "translation": "紫"
+  },
+  "-Uf5mz": {
+    "message": "Violet",
+    "context": "sleeve colour",
+    "translation": "紫罗兰"
+  },
   "RVlHmr": {
     "message": "VSTAR marker",
     "translation": "VSTAR标记"
@@ -6069,6 +6340,11 @@
     "message": "Water",
     "context": "Pokémon type",
     "translation": "水"
+  },
+  "4iNUJT": {
+    "message": "Waves",
+    "context": "sleeve pattern",
+    "translation": "波浪"
   },
   "AHlkVG": {
     "message": "Weakness",
@@ -6164,6 +6440,10 @@
     "message": "Your Lost Zone",
     "translation": "我方放逐区"
   },
+  "1PoiFH": {
+    "message": "Your picture",
+    "translation": "你的图片"
+  },
   "Oi-Qz3": {
     "message": "Your playboard",
     "translation": "我方场地"
@@ -6175,6 +6455,11 @@
   "yuM-lV": {
     "message": "Your turn",
     "translation": "你的回合"
+  },
+  "X0l3In": {
+    "message": "Yours",
+    "context": "card backs the player made",
+    "translation": "自制"
   },
   "XQaL9V": {
     "message": "Zone outlines",

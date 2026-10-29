@@ -17,6 +17,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   DEFAULT_CARD_BACK_URL,
   type BrowserCardBackRequest,
+  type BrowserCardBackRequestOptions,
 } from '../../session/browser-card-back.js';
 import {
   DeckBuilderSession,
@@ -1287,6 +1288,39 @@ describe('DeckBuilderSession', () => {
       host
         .querySelector(`.deck-tray[data-seat="${seat}"] .deck-tray__sleeve img`)
         ?.getAttribute('src');
+
+    it("opens the chooser on the seat's back, offering the saved decks' backs", async () => {
+      const DESIGN = 'design:1.navy.stripes.gold.star';
+      const STORED = `img:${'ef'.repeat(32)}`;
+      const session = new FakeSession();
+      const store = new DeckBuilderStore();
+      const cardBackStore = new CardBackCustodyStore();
+      const charizard = save('Charizard');
+      library.update(charizard.id, { cardBack: DESIGN });
+      library.update(save('Lugia').id, { cardBack: STORED });
+      save('Mew');
+      const requests: BrowserCardBackRequestOptions[] = [];
+      const requestCardBack: BrowserCardBackRequest = async (options) => {
+        if (options) requests.push(options);
+        return undefined;
+      };
+      await renderSession({
+        session,
+        store,
+        cardBackStore,
+        open: true,
+        requestCardBack,
+      });
+
+      await click('button[aria-label="Charizard: put on P1"]');
+      await click('#changeCardBackButton');
+      expect(requests[0]).toMatchObject({ current: DESIGN });
+      expect([...(requests[0]?.worn ?? [])].sort()).toEqual(
+        [DESIGN, STORED].sort()
+      );
+      // Cancelled, nothing changes.
+      expect(library.get(charizard.id)?.cardBack).toBe(DESIGN);
+    });
 
     it('keeps a back chosen on a saved deck with it, and puts it on with that deck', async () => {
       const session = new FakeSession();

@@ -1117,6 +1117,11 @@
     ],
     "translation": "Fähigkeit eingesetzt"
   },
+  "v0rlF7": {
+    "message": "Accent",
+    "context": "sleeve",
+    "translation": "Akzent"
+  },
   "BZkiHi": {
     "message": "Access to an exclusive Discord channel for priority suggestions/feature proposals/troubleshooting support.",
     "translation": "Zugang zu einem exklusiven Discord-Kanal für bevorzugte Vorschläge, Funktionswünsche und Support bei Problemen."
@@ -1285,6 +1290,16 @@
     "message": "Always shown while it holds cards.",
     "translation": "Wird immer angezeigt, solange es Karten enthält."
   },
+  "Cpqhqr": {
+    "message": "Amber",
+    "context": "card back",
+    "translation": "Bernstein"
+  },
+  "2XejlY": {
+    "message": "Amber",
+    "context": "sleeve colour",
+    "translation": "Bernstein"
+  },
   "Uu-7-8": {
     "message": "An <0>open-source</0> Pokémon TCG table.",
     "translation": "Ein <0>Open-Source</0>-Tisch für das Pokémon-TCG."
@@ -1299,13 +1314,6 @@
       "Keep 'blank' and 'theme' in English: they are what the player types"
     ],
     "translation": "Eine Bild-URL, 'blank' oder 'theme'."
-  },
-  "hQE7TV": {
-    "message": "An image URL, or 'default'.",
-    "comments": [
-      "Keep 'default' in English: it is what the player types"
-    ],
-    "translation": "Eine Bild-URL oder 'default'."
   },
   "ctNH7H": {
     "message": "Ancient",
@@ -1411,6 +1419,11 @@
     "message": "Automatic",
     "translation": "Automatisch"
   },
+  "pr_nRt": {
+    "message": "Azure",
+    "context": "card back",
+    "translation": "Azurblau"
+  },
   "USi6Js": {
     "message": "Baby",
     "context": "Pokémon stage",
@@ -1459,10 +1472,20 @@
     "message": "Back to your decks",
     "translation": "Zurück zu deinen Decks"
   },
+  "GhQ0ZN": {
+    "message": "Backs",
+    "context": "card backs",
+    "translation": "Rückseiten"
+  },
   "Why0fp": {
     "message": "Backspace",
     "context": "keyboard key",
     "translation": "Rücktaste"
+  },
+  "DA4ED5": {
+    "message": "Ball",
+    "context": "sleeve emblem",
+    "translation": "Ball"
   },
   "hrit5V": {
     "message": "Basic",
@@ -1531,6 +1554,11 @@
       "In \"Back to board cards\": the cards on the board."
     ],
     "translation": "Spielfeldkarten"
+  },
+  "f4EnAz": {
+    "message": "Bolt",
+    "context": "sleeve emblem",
+    "translation": "Blitz"
   },
   "LAq-1T": {
     "message": "Both",
@@ -1633,6 +1661,10 @@
     "message": "Card assembled preview",
     "translation": "Vorschau der zusammengesetzten Karte"
   },
+  "86aE2l": {
+    "message": "Card back",
+    "translation": "Kartenrückseite"
+  },
   "M3FSd1": {
     "message": "Card back for {slotSeat}",
     "translation": "Kartenrückseite für {slotSeat}"
@@ -1697,10 +1729,6 @@
     "message": "Change background",
     "translation": "Hintergrund ändern"
   },
-  "PCF3WN": {
-    "message": "Change card back",
-    "translation": "Kartenrückseite ändern"
-  },
   "lKPW0c": {
     "message": "Change card back for {slotSeat}",
     "translation": "Kartenrückseite für {slotSeat} ändern"
@@ -1752,6 +1780,11 @@
     "message": "Checking…",
     "translation": "Wird geprüft …"
   },
+  "Oyrf8q": {
+    "message": "Checks",
+    "context": "sleeve pattern",
+    "translation": "Karos"
+  },
   "mQr73T": {
     "message": "Choose",
     "comments": [
@@ -1773,6 +1806,10 @@
   "Trhamk": {
     "message": "Choose a deck to play",
     "translation": "Wähle ein Deck zum Spielen"
+  },
+  "Qzm71e": {
+    "message": "Choose a picture",
+    "translation": "Bild auswählen"
   },
   "TvEJEL": {
     "message": "Choose the deck for {slotSeat}",
@@ -1875,6 +1912,11 @@
     "context": "Pokémon type",
     "translation": "Farblos"
   },
+  "I3ktYd": {
+    "message": "Colour",
+    "context": "sleeve",
+    "translation": "Farbe"
+  },
   "45MZFs": {
     "message": "Commands",
     "translation": "Befehle"
@@ -1926,6 +1968,10 @@
     "message": "Couldn't create a room. Try again.",
     "translation": "Raum konnte nicht erstellt werden. Versuche es erneut."
   },
+  "d9B72Y": {
+    "message": "Couldn't get a picture from that link.",
+    "translation": "Von diesem Link konnte kein Bild geladen werden."
+  },
   "Glz9_Y": {
     "message": "Couldn't join the room. Try again.",
     "translation": "Raum konnte nicht betreten werden. Versuche es erneut."
@@ -1961,6 +2007,10 @@
   "heYM3E": {
     "message": "Couldn't resume the game",
     "translation": "Spiel konnte nicht fortgesetzt werden"
+  },
+  "au8LN1": {
+    "message": "Couldn't save that picture. Try again.",
+    "translation": "Das Bild konnte nicht gespeichert werden. Versuche es erneut."
   },
   "ETE6Wl": {
     "message": "Couldn't save the game",
@@ -2027,6 +2077,16 @@
     "message": "Creating…",
     "context": "a room",
     "translation": "Wird erstellt …"
+  },
+  "6vtp4B": {
+    "message": "Crimson",
+    "context": "card back",
+    "translation": "Karminrot"
+  },
+  "w8Rl7X": {
+    "message": "Crimson",
+    "context": "sleeve colour",
+    "translation": "Karminrot"
   },
   "ETt3ev": {
     "message": "Ctrl",
@@ -2181,6 +2241,21 @@
     "message": "Deselect",
     "translation": "Auswahl aufheben"
   },
+  "lJjOBS": {
+    "message": "Design",
+    "context": "a card back the player designed",
+    "translation": "Eigenes Design"
+  },
+  "BBlHk-": {
+    "message": "Design",
+    "context": "design a card back",
+    "translation": "Gestalten"
+  },
+  "zhmNG6": {
+    "message": "Diamonds",
+    "context": "sleeve pattern",
+    "translation": "Rauten"
+  },
   "cCCVzA": {
     "message": "Didn't go through",
     "translation": "Hat nicht geklappt"
@@ -2266,6 +2341,11 @@
     "context": "finished",
     "translation": "Fertig"
   },
+  "6yxheJ": {
+    "message": "Dots",
+    "context": "sleeve pattern",
+    "translation": "Punkte"
+  },
   "BDC29J": {
     "message": "Double-click <0>{0}</0> in your hand to read it.",
     "translation": "Doppelklicke in deiner Hand auf <0>{0}</0>, um die Karte zu lesen."
@@ -2297,6 +2377,10 @@
   "n3U3s1": {
     "message": "Drag a Basic Pokémon from your hand onto your <0>Active Spot</0>.",
     "translation": "Ziehe ein Basis-Pokémon von deiner Hand in deine <0>Aktive Position</0>."
+  },
+  "eO8I4v": {
+    "message": "Drag to place it",
+    "translation": "Zum Platzieren ziehen"
   },
   "sEjSlz": {
     "message": "Dragon",
@@ -2342,6 +2426,11 @@
   "b0MOy2": {
     "message": "Draw, search and shuffle",
     "translation": "Ziehen, suchen und mischen"
+  },
+  "oMUr3k": {
+    "message": "Drop",
+    "context": "sleeve emblem",
+    "translation": "Tropfen"
   },
   "IsvGW6": {
     "message": "Drop to import",
@@ -2401,6 +2490,11 @@
   "Bd1_Eb": {
     "message": "Edit deck",
     "translation": "Deck bearbeiten"
+  },
+  "eAabzD": {
+    "message": "Emblem",
+    "context": "sleeve",
+    "translation": "Emblem"
   },
   "1PBKgv": {
     "message": "End",
@@ -2619,6 +2713,11 @@
     "message": "Fire type, Basic",
     "translation": "Feuer-Typ, Basis"
   },
+  "OE9EAy": {
+    "message": "Flame",
+    "context": "sleeve emblem",
+    "translation": "Flamme"
+  },
   "gQp6L7": {
     "message": "Flat",
     "context": "table depth setting",
@@ -2677,6 +2776,10 @@
     "context": "deck format",
     "translation": "Format"
   },
+  "ToYRS-": {
+    "message": "From a link",
+    "translation": "Von einem Link"
+  },
   "qIodFG": {
     "message": "Frost",
     "comments": [
@@ -2718,9 +2821,17 @@
     "message": "Game resumed",
     "translation": "Spiel fortgesetzt"
   },
+  "gqh64K": {
+    "message": "Get",
+    "translation": "Laden"
+  },
   "4RM73X": {
     "message": "Get a sponsor tag on your GitHub profile (if sponsoring via GitHub, not applicable for sponsors through PayPal. Currently in the process of getting my GH sponsor page approved 😛).",
     "translation": "Erhalte ein Sponsor-Abzeichen in deinem GitHub-Profil (nur bei Sponsoring über GitHub, nicht bei PayPal. Meine GH-Sponsorenseite wird gerade noch freigegeben 😛)."
+  },
+  "1wmsrg": {
+    "message": "Getting…",
+    "translation": "Wird geladen…"
   },
   "kbTnWg": {
     "message": "Github Sponsors Link",
@@ -2729,6 +2840,11 @@
   "0qq_sj": {
     "message": "Go to the Solo table",
     "translation": "Zum Solo-Tisch wechseln"
+  },
+  "R6itFF": {
+    "message": "Gold",
+    "context": "sleeve colour",
+    "translation": "Gold"
   },
   "iN8jqp": {
     "message": "Grass",
@@ -2890,6 +3006,10 @@
     "message": "How much damage?",
     "translation": "Wie viel Schaden?"
   },
+  "w3nYsM": {
+    "message": "How to choose",
+    "translation": "So wählst du aus"
+  },
   "oT-Cnl": {
     "message": "HP",
     "context": "sort cards by",
@@ -2906,13 +3026,6 @@
   "LgcKSI": {
     "message": "HP at most",
     "translation": "KP höchstens"
-  },
-  "fVGc9-": {
-    "message": "https://… or default",
-    "comments": [
-      "Keep 'default' in English: it is what the player types"
-    ],
-    "translation": "https://… oder default"
   },
   "OaHYvQ": {
     "message": "https://…, blank or theme",
@@ -2980,6 +3093,11 @@
     ],
     "translation": "im Deck"
   },
+  "QphUbA": {
+    "message": "Ink",
+    "context": "sleeve colour",
+    "translation": "Tinte"
+  },
   "fZsAhg": {
     "message": "Insert",
     "context": "keyboard key",
@@ -3041,6 +3159,16 @@
   "Rw42Cd": {
     "message": "Its cards couldn't be read.",
     "translation": "Die Karten konnten nicht gelesen werden."
+  },
+  "h0iD6U": {
+    "message": "Jade",
+    "context": "card back",
+    "translation": "Jade"
+  },
+  "i49U_n": {
+    "message": "Jade",
+    "context": "sleeve colour",
+    "translation": "Jade"
   },
   "Fz2DU1": {
     "message": "Join a room",
@@ -3125,6 +3253,11 @@
     "message": "Layout (optional)",
     "translation": "Layout (optional)"
   },
+  "YGg_TP": {
+    "message": "Leaf",
+    "context": "sleeve emblem",
+    "translation": "Blatt"
+  },
   "1ng4Ht": {
     "message": "Leave in play",
     "translation": "Im Spiel lassen"
@@ -3179,6 +3312,11 @@
     "message": "Lightning",
     "context": "Pokémon type",
     "translation": "Elektro"
+  },
+  "7QxCqs": {
+    "message": "Lime",
+    "context": "sleeve colour",
+    "translation": "Limette"
   },
   "JL_ceN": {
     "message": "Limitless",
@@ -3486,6 +3624,11 @@
     "context": "my half of the table",
     "translation": "Meine"
   },
+  "5jDsb9": {
+    "message": "Moon",
+    "context": "sleeve emblem",
+    "translation": "Mond"
+  },
   "2FYpfJ": {
     "message": "More",
     "translation": "Mehr"
@@ -3624,6 +3767,11 @@
     "message": "Natural card placement",
     "translation": "Natürliche Kartenplatzierung"
   },
+  "hmYrgt": {
+    "message": "Navy",
+    "context": "sleeve colour",
+    "translation": "Marineblau"
+  },
   "rf9azy": {
     "message": "Needs at least one Basic Pokémon.",
     "translation": "Benötigt mindestens ein Basis-Pokémon."
@@ -3760,6 +3908,11 @@
     "message": "None",
     "context": "no Resistance",
     "translation": "Keine"
+  },
+  "zA5yks": {
+    "message": "None",
+    "context": "sleeve emblem",
+    "translation": "Keins"
   },
   "NfqnuJ": {
     "message": "Normal",
@@ -3995,6 +4148,10 @@
     "message": "Opponents' custom backs",
     "translation": "Eigene Rückseiten der Gegner"
   },
+  "l2I52S": {
+    "message": "or drop or paste one here",
+    "translation": "oder hierher ziehen oder einfügen"
+  },
   "eH_2Pb": {
     "message": "Other",
     "context": "Trainer card kind",
@@ -4058,6 +4215,10 @@
     "message": "Paste a decklist first.",
     "translation": "Füge zuerst eine Deckliste ein."
   },
+  "lrOsQc": {
+    "message": "Paste a link to a picture.",
+    "translation": "Füge einen Link zu einem Bild ein."
+  },
   "aGL2ob": {
     "message": "Paste a list from the clipboard",
     "translation": "Liste aus der Zwischenablage einfügen"
@@ -4078,6 +4239,11 @@
     "message": "Paste with Ctrl+V (⌘V) instead",
     "translation": "Füge stattdessen mit Strg+V (⌘V) ein"
   },
+  "X1Ni8e": {
+    "message": "Pattern",
+    "context": "sleeve",
+    "translation": "Muster"
+  },
   "cfCrKd": {
     "message": "Paypal Donation Link",
     "translation": "PayPal-Spendenlink"
@@ -4090,6 +4256,11 @@
     "message": "Pick random card",
     "translation": "Zufällige Karte wählen"
   },
+  "KBXd3D": {
+    "message": "Picture",
+    "context": "a card back from a picture",
+    "translation": "Bild"
+  },
   "xYvd7u": {
     "message": "Piece position",
     "translation": "Position des Teils"
@@ -4100,6 +4271,11 @@
       "Command palette section: deck, discard, prizes…"
     ],
     "translation": "Stapel"
+  },
+  "K1IcaP": {
+    "message": "Plain",
+    "context": "sleeve pattern",
+    "translation": "Einfarbig"
   },
   "SW-cIq": {
     "message": "Play",
@@ -4149,6 +4325,11 @@
     "message": "Player",
     "context": "unnamed seat",
     "translation": "Spieler"
+  },
+  "zFLJEh": {
+    "message": "Plum",
+    "context": "sleeve colour",
+    "translation": "Pflaume"
   },
   "KO7h6x": {
     "message": "Pocket decks have no Energy cards.",
@@ -4347,6 +4528,11 @@
   "U86mdr": {
     "message": "Rarity",
     "translation": "Seltenheit"
+  },
+  "L8r2Hh": {
+    "message": "Rays",
+    "context": "sleeve pattern",
+    "translation": "Strahlen"
   },
   "ykWEvf": {
     "message": "Read",
@@ -4648,6 +4834,11 @@
     "message": "Room ready",
     "translation": "Raum bereit"
   },
+  "2Rrohw": {
+    "message": "Rose",
+    "context": "sleeve colour",
+    "translation": "Rosé"
+  },
   "BulyBf": {
     "message": "Rotate",
     "translation": "Drehen"
@@ -4720,6 +4911,11 @@
     "message": "Row {rowNumber}: quantity must be 1 to {max}.",
     "translation": "Zeile {rowNumber}: Die Anzahl muss zwischen 1 und {max} liegen."
   },
+  "0NRnTQ": {
+    "message": "Royal blue",
+    "context": "sleeve colour",
+    "translation": "Königsblau"
+  },
   "duDNyy": {
     "message": "Rule Box",
     "translation": "Regelfeld"
@@ -4750,6 +4946,11 @@
     "message": "Sample Prizes",
     "translation": "Beispiel-Preiskarten"
   },
+  "0jhHGF": {
+    "message": "Sand",
+    "context": "sleeve colour",
+    "translation": "Sand"
+  },
   "tfDRzk": {
     "message": "Save",
     "translation": "Speichern"
@@ -4779,9 +4980,18 @@
     "message": "Saved for this visit only",
     "translation": "Nur für diesen Besuch gespeichert"
   },
+  "K_F6pa": {
+    "message": "Saving…",
+    "translation": "Wird gespeichert…"
+  },
   "pHxB6X": {
     "message": "Say…",
     "translation": "Sagen…"
+  },
+  "gofk-z": {
+    "message": "Scales",
+    "context": "sleeve pattern",
+    "translation": "Schuppen"
   },
   "JTYvAw": {
     "message": "Search cards",
@@ -5133,11 +5343,21 @@
     "message": "Skip",
     "translation": "Überspringen"
   },
+  "8Qf85O": {
+    "message": "Sky",
+    "context": "sleeve colour",
+    "translation": "Himmelblau"
+  },
   "QIIV0m": {
     "message": "Slate",
     "comments": [
       "A table look: the colour"
     ],
+    "translation": "Schiefer"
+  },
+  "OZCs0k": {
+    "message": "Slate",
+    "context": "sleeve colour",
     "translation": "Schiefer"
   },
   "Se3Re8": {
@@ -5147,6 +5367,11 @@
   "P12gHj": {
     "message": "Smaller cards",
     "translation": "Kleinere Karten"
+  },
+  "Vy1bgl": {
+    "message": "Snow",
+    "context": "sleeve colour",
+    "translation": "Schnee"
   },
   "6N0DKq": {
     "message": "Solo table",
@@ -5288,10 +5513,19 @@
     "context": "Pokémon stage",
     "translation": "Phase 2"
   },
+  "RSLXu8": {
+    "message": "Standard",
+    "context": "card back",
+    "translation": "Standard"
+  },
   "GlGLvC": {
     "message": "Standard",
     "context": "deck format",
     "translation": "Standard"
+  },
+  "hr1qOs": {
+    "message": "Standard back",
+    "translation": "Standardrückseite"
   },
   "Tg13WJ": {
     "message": "Standard card",
@@ -5300,6 +5534,11 @@
   "kGkZLk": {
     "message": "Standings",
     "translation": "Rangliste"
+  },
+  "Hgg1rW": {
+    "message": "Star",
+    "context": "sleeve emblem",
+    "translation": "Stern"
   },
   "WrLzY2": {
     "message": "Start a game",
@@ -5329,6 +5568,11 @@
   "B2cOHf": {
     "message": "Stop sorting hand",
     "translation": "Sortierung der Hand beenden"
+  },
+  "yy_J3n": {
+    "message": "Stripes",
+    "context": "sleeve pattern",
+    "translation": "Streifen"
   },
   "yqeLY3": {
     "message": "Supporter",
@@ -5482,6 +5726,11 @@
     ],
     "translation": "TCG Pocket"
   },
+  "0D9HyG": {
+    "message": "Teal",
+    "context": "sleeve colour",
+    "translation": "Petrol"
+  },
   "z5r9Ja": {
     "message": "Technical Machine",
     "context": "Trainer card kind",
@@ -5500,6 +5749,10 @@
     "message": "That file can't be opened here.",
     "translation": "Diese Datei kann hier nicht geöffnet werden."
   },
+  "KQLVDi": {
+    "message": "That file isn't a picture.",
+    "translation": "Diese Datei ist kein Bild."
+  },
   "ZMr878": {
     "message": "That image didn't load.",
     "translation": "Das Bild wurde nicht geladen."
@@ -5507,6 +5760,14 @@
   "B4ZAXF": {
     "message": "That one was skipped.",
     "translation": "Diese wurde übersprungen."
+  },
+  "qqEjGU": {
+    "message": "That picture can't be read.",
+    "translation": "Dieses Bild kann nicht gelesen werden."
+  },
+  "HnGmBe": {
+    "message": "That picture is over 20 MB.",
+    "translation": "Dieses Bild ist größer als 20 MB."
   },
   "nWbyfh": {
     "message": "That replay file couldn't be opened.",
@@ -6016,13 +6277,13 @@
     "context": "give the keys to this shortcut",
     "translation": "Hier verwenden"
   },
-  "PTd_zR": {
-    "message": "Use image",
-    "translation": "Bild verwenden"
-  },
   "mVjzvv": {
     "message": "Use on {seat}",
     "translation": "Auf {seat} verwenden"
+  },
+  "yoAGc6": {
+    "message": "Use this back",
+    "translation": "Diese Rückseite verwenden"
   },
   "8ZgYGP": {
     "message": "Use this print for the {deckCopies} in the deck",
@@ -6057,6 +6318,16 @@
     "message": "View whole card",
     "translation": "Ganze Karte ansehen"
   },
+  "WUyPia": {
+    "message": "Violet",
+    "context": "card back",
+    "translation": "Violett"
+  },
+  "-Uf5mz": {
+    "message": "Violet",
+    "context": "sleeve colour",
+    "translation": "Violett"
+  },
   "RVlHmr": {
     "message": "VSTAR marker",
     "translation": "VSTAR-Marker"
@@ -6069,6 +6340,11 @@
     "message": "Water",
     "context": "Pokémon type",
     "translation": "Wasser"
+  },
+  "4iNUJT": {
+    "message": "Waves",
+    "context": "sleeve pattern",
+    "translation": "Wellen"
   },
   "AHlkVG": {
     "message": "Weakness",
@@ -6164,6 +6440,10 @@
     "message": "Your Lost Zone",
     "translation": "Dein Nirgendwo"
   },
+  "1PoiFH": {
+    "message": "Your picture",
+    "translation": "Dein Bild"
+  },
   "Oi-Qz3": {
     "message": "Your playboard",
     "translation": "Dein Spielfeld"
@@ -6175,6 +6455,11 @@
   "yuM-lV": {
     "message": "Your turn",
     "translation": "Du bist am Zug"
+  },
+  "X0l3In": {
+    "message": "Yours",
+    "context": "card backs the player made",
+    "translation": "Eigene"
   },
   "XQaL9V": {
     "message": "Zone outlines",

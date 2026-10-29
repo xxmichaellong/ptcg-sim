@@ -126,7 +126,9 @@ specifically without blocking, and go from deck to table in one click.
    it (the standard back until one is chosen; seats' own backs last the
    visit). The back goes to the table with the deck, or at once when it
    was chosen there or the screen has closed. A deck deleted while on a
-   seat stays there in its back, as its cards do.
+   seat stays there in its back, as its cards do. The chooser (ADR-041
+   stage 2) opens on the seat's back and offers again the backs the saved
+   decks wear.
 
 ### The screen
 

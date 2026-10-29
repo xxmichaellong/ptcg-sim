@@ -1117,6 +1117,11 @@
     ],
     "translation": "Nagamit na ang Ability"
   },
+  "v0rlF7": {
+    "message": "Accent",
+    "context": "sleeve",
+    "translation": "Accent"
+  },
   "BZkiHi": {
     "message": "Access to an exclusive Discord channel for priority suggestions/feature proposals/troubleshooting support.",
     "translation": "Access sa eksklusibong Discord channel para sa priority na mungkahi/panukalang feature/suporta sa troubleshooting."
@@ -1285,6 +1290,16 @@
     "message": "Always shown while it holds cards.",
     "translation": "Laging nakikita habang may laman na card."
   },
+  "Cpqhqr": {
+    "message": "Amber",
+    "context": "card back",
+    "translation": "Amber"
+  },
+  "2XejlY": {
+    "message": "Amber",
+    "context": "sleeve colour",
+    "translation": "Amber"
+  },
   "Uu-7-8": {
     "message": "An <0>open-source</0> Pokémon TCG table.",
     "translation": "Isang <0>open-source</0> na Pokémon TCG table."
@@ -1299,13 +1314,6 @@
       "Keep 'blank' and 'theme' in English: they are what the player types"
     ],
     "translation": "Isang image URL, 'blank' o 'theme'."
-  },
-  "hQE7TV": {
-    "message": "An image URL, or 'default'.",
-    "comments": [
-      "Keep 'default' in English: it is what the player types"
-    ],
-    "translation": "Isang image URL, o 'default'."
   },
   "ctNH7H": {
     "message": "Ancient",
@@ -1411,6 +1419,11 @@
     "message": "Automatic",
     "translation": "Awtomatiko"
   },
+  "pr_nRt": {
+    "message": "Azure",
+    "context": "card back",
+    "translation": "Azure"
+  },
   "USi6Js": {
     "message": "Baby",
     "context": "Pokémon stage",
@@ -1459,10 +1472,20 @@
     "message": "Back to your decks",
     "translation": "Bumalik sa mga deck mo"
   },
+  "GhQ0ZN": {
+    "message": "Backs",
+    "context": "card backs",
+    "translation": "Mga likod"
+  },
   "Why0fp": {
     "message": "Backspace",
     "context": "keyboard key",
     "translation": "Backspace"
+  },
+  "DA4ED5": {
+    "message": "Ball",
+    "context": "sleeve emblem",
+    "translation": "Ball"
   },
   "hrit5V": {
     "message": "Basic",
@@ -1531,6 +1554,11 @@
       "In \"Back to board cards\": the cards on the board."
     ],
     "translation": "mga card sa board"
+  },
+  "f4EnAz": {
+    "message": "Bolt",
+    "context": "sleeve emblem",
+    "translation": "Kidlat"
   },
   "LAq-1T": {
     "message": "Both",
@@ -1633,6 +1661,10 @@
     "message": "Card assembled preview",
     "translation": "Preview ng buong card"
   },
+  "86aE2l": {
+    "message": "Card back",
+    "translation": "Likod ng card"
+  },
   "M3FSd1": {
     "message": "Card back for {slotSeat}",
     "translation": "Card back para sa {slotSeat}"
@@ -1697,10 +1729,6 @@
     "message": "Change background",
     "translation": "Palitan ang background"
   },
-  "PCF3WN": {
-    "message": "Change card back",
-    "translation": "Palitan ang card back"
-  },
   "lKPW0c": {
     "message": "Change card back for {slotSeat}",
     "translation": "Palitan ang card back para sa {slotSeat}"
@@ -1752,6 +1780,11 @@
     "message": "Checking…",
     "translation": "Sinusuri…"
   },
+  "Oyrf8q": {
+    "message": "Checks",
+    "context": "sleeve pattern",
+    "translation": "Checks"
+  },
   "mQr73T": {
     "message": "Choose",
     "comments": [
@@ -1773,6 +1806,10 @@
   "Trhamk": {
     "message": "Choose a deck to play",
     "translation": "Pumili ng deck na lalaruin"
+  },
+  "Qzm71e": {
+    "message": "Choose a picture",
+    "translation": "Pumili ng larawan"
   },
   "TvEJEL": {
     "message": "Choose the deck for {slotSeat}",
@@ -1875,6 +1912,11 @@
     "context": "Pokémon type",
     "translation": "Colorless"
   },
+  "I3ktYd": {
+    "message": "Colour",
+    "context": "sleeve",
+    "translation": "Kulay"
+  },
   "45MZFs": {
     "message": "Commands",
     "translation": "Mga command"
@@ -1926,6 +1968,10 @@
     "message": "Couldn't create a room. Try again.",
     "translation": "Hindi nakagawa ng room. Subukan ulit."
   },
+  "d9B72Y": {
+    "message": "Couldn't get a picture from that link.",
+    "translation": "Hindi makakuha ng larawan mula sa link na iyon."
+  },
   "Glz9_Y": {
     "message": "Couldn't join the room. Try again.",
     "translation": "Hindi makasali sa room. Subukan ulit."
@@ -1961,6 +2007,10 @@
   "heYM3E": {
     "message": "Couldn't resume the game",
     "translation": "Hindi maipagpatuloy ang laro"
+  },
+  "au8LN1": {
+    "message": "Couldn't save that picture. Try again.",
+    "translation": "Hindi na-save ang larawang iyon. Subukan ulit."
   },
   "ETE6Wl": {
     "message": "Couldn't save the game",
@@ -2027,6 +2077,16 @@
     "message": "Creating…",
     "context": "a room",
     "translation": "Ginagawa…"
+  },
+  "6vtp4B": {
+    "message": "Crimson",
+    "context": "card back",
+    "translation": "Crimson"
+  },
+  "w8Rl7X": {
+    "message": "Crimson",
+    "context": "sleeve colour",
+    "translation": "Crimson"
   },
   "ETt3ev": {
     "message": "Ctrl",
@@ -2181,6 +2241,21 @@
     "message": "Deselect",
     "translation": "Alisin sa pagkapili"
   },
+  "lJjOBS": {
+    "message": "Design",
+    "context": "a card back the player designed",
+    "translation": "Disenyo"
+  },
+  "BBlHk-": {
+    "message": "Design",
+    "context": "design a card back",
+    "translation": "Idisenyo"
+  },
+  "zhmNG6": {
+    "message": "Diamonds",
+    "context": "sleeve pattern",
+    "translation": "Diamonds"
+  },
   "cCCVzA": {
     "message": "Didn't go through",
     "translation": "Hindi natuloy"
@@ -2266,6 +2341,11 @@
     "context": "finished",
     "translation": "Tapos na"
   },
+  "6yxheJ": {
+    "message": "Dots",
+    "context": "sleeve pattern",
+    "translation": "Tuldok"
+  },
   "BDC29J": {
     "message": "Double-click <0>{0}</0> in your hand to read it.",
     "translation": "I-double-click ang <0>{0}</0> sa hand mo para basahin ito."
@@ -2297,6 +2377,10 @@
   "n3U3s1": {
     "message": "Drag a Basic Pokémon from your hand onto your <0>Active Spot</0>.",
     "translation": "I-drag ang isang Basic Pokémon mula sa iyong kamay papunta sa iyong <0>Active Spot</0>."
+  },
+  "eO8I4v": {
+    "message": "Drag to place it",
+    "translation": "I-drag para ilagay"
   },
   "sEjSlz": {
     "message": "Dragon",
@@ -2342,6 +2426,11 @@
   "b0MOy2": {
     "message": "Draw, search and shuffle",
     "translation": "Mag-draw, mag-search, at mag-shuffle"
+  },
+  "oMUr3k": {
+    "message": "Drop",
+    "context": "sleeve emblem",
+    "translation": "Patak"
   },
   "IsvGW6": {
     "message": "Drop to import",
@@ -2401,6 +2490,11 @@
   "Bd1_Eb": {
     "message": "Edit deck",
     "translation": "I-edit ang deck"
+  },
+  "eAabzD": {
+    "message": "Emblem",
+    "context": "sleeve",
+    "translation": "Emblem"
   },
   "1PBKgv": {
     "message": "End",
@@ -2619,6 +2713,11 @@
     "message": "Fire type, Basic",
     "translation": "Fire type, Basic"
   },
+  "OE9EAy": {
+    "message": "Flame",
+    "context": "sleeve emblem",
+    "translation": "Apoy"
+  },
   "gQp6L7": {
     "message": "Flat",
     "context": "table depth setting",
@@ -2677,6 +2776,10 @@
     "context": "deck format",
     "translation": "Format"
   },
+  "ToYRS-": {
+    "message": "From a link",
+    "translation": "Mula sa link"
+  },
   "qIodFG": {
     "message": "Frost",
     "comments": [
@@ -2718,9 +2821,17 @@
     "message": "Game resumed",
     "translation": "Nagpatuloy ang laro"
   },
+  "gqh64K": {
+    "message": "Get",
+    "translation": "Kunin"
+  },
   "4RM73X": {
     "message": "Get a sponsor tag on your GitHub profile (if sponsoring via GitHub, not applicable for sponsors through PayPal. Currently in the process of getting my GH sponsor page approved 😛).",
     "translation": "Makakuha ng sponsor tag sa GitHub profile mo (kung sa GitHub ka magso-sponsor; hindi ito para sa mga sponsor sa PayPal. Inaayos pa ang pag-apruba ng GH sponsor page ko 😛)."
+  },
+  "1wmsrg": {
+    "message": "Getting…",
+    "translation": "Kinukuha…"
   },
   "kbTnWg": {
     "message": "Github Sponsors Link",
@@ -2729,6 +2840,11 @@
   "0qq_sj": {
     "message": "Go to the Solo table",
     "translation": "Pumunta sa Solo table"
+  },
+  "R6itFF": {
+    "message": "Gold",
+    "context": "sleeve colour",
+    "translation": "Ginto"
   },
   "iN8jqp": {
     "message": "Grass",
@@ -2890,6 +3006,10 @@
     "message": "How much damage?",
     "translation": "Gaano karaming damage?"
   },
+  "w3nYsM": {
+    "message": "How to choose",
+    "translation": "Paano pumili"
+  },
   "oT-Cnl": {
     "message": "HP",
     "context": "sort cards by",
@@ -2906,13 +3026,6 @@
   "LgcKSI": {
     "message": "HP at most",
     "translation": "HP na hindi hihigit sa"
-  },
-  "fVGc9-": {
-    "message": "https://… or default",
-    "comments": [
-      "Keep 'default' in English: it is what the player types"
-    ],
-    "translation": "https://… o default"
   },
   "OaHYvQ": {
     "message": "https://…, blank or theme",
@@ -2980,6 +3093,11 @@
     ],
     "translation": "sa deck"
   },
+  "QphUbA": {
+    "message": "Ink",
+    "context": "sleeve colour",
+    "translation": "Ink"
+  },
   "fZsAhg": {
     "message": "Insert",
     "context": "keyboard key",
@@ -3041,6 +3159,16 @@
   "Rw42Cd": {
     "message": "Its cards couldn't be read.",
     "translation": "Hindi mabasa ang mga card nito."
+  },
+  "h0iD6U": {
+    "message": "Jade",
+    "context": "card back",
+    "translation": "Jade"
+  },
+  "i49U_n": {
+    "message": "Jade",
+    "context": "sleeve colour",
+    "translation": "Jade"
   },
   "Fz2DU1": {
     "message": "Join a room",
@@ -3125,6 +3253,11 @@
     "message": "Layout (optional)",
     "translation": "Layout (opsyonal)"
   },
+  "YGg_TP": {
+    "message": "Leaf",
+    "context": "sleeve emblem",
+    "translation": "Dahon"
+  },
   "1ng4Ht": {
     "message": "Leave in play",
     "translation": "Iwan sa play"
@@ -3179,6 +3312,11 @@
     "message": "Lightning",
     "context": "Pokémon type",
     "translation": "Lightning"
+  },
+  "7QxCqs": {
+    "message": "Lime",
+    "context": "sleeve colour",
+    "translation": "Lime"
   },
   "JL_ceN": {
     "message": "Limitless",
@@ -3486,6 +3624,11 @@
     "context": "my half of the table",
     "translation": "Akin"
   },
+  "5jDsb9": {
+    "message": "Moon",
+    "context": "sleeve emblem",
+    "translation": "Buwan"
+  },
   "2FYpfJ": {
     "message": "More",
     "translation": "Higit pa"
@@ -3624,6 +3767,11 @@
     "message": "Natural card placement",
     "translation": "Natural na pagkakalagay ng card"
   },
+  "hmYrgt": {
+    "message": "Navy",
+    "context": "sleeve colour",
+    "translation": "Navy"
+  },
   "rf9azy": {
     "message": "Needs at least one Basic Pokémon.",
     "translation": "Kailangan ng kahit isang Basic Pokémon."
@@ -3759,6 +3907,11 @@
   "6psMRl": {
     "message": "None",
     "context": "no Resistance",
+    "translation": "Wala"
+  },
+  "zA5yks": {
+    "message": "None",
+    "context": "sleeve emblem",
     "translation": "Wala"
   },
   "NfqnuJ": {
@@ -3995,6 +4148,10 @@
     "message": "Opponents' custom backs",
     "translation": "Mga custom back ng kalaban"
   },
+  "l2I52S": {
+    "message": "or drop or paste one here",
+    "translation": "o i-drop o i-paste dito"
+  },
   "eH_2Pb": {
     "message": "Other",
     "context": "Trainer card kind",
@@ -4058,6 +4215,10 @@
     "message": "Paste a decklist first.",
     "translation": "Mag-paste muna ng decklist."
   },
+  "lrOsQc": {
+    "message": "Paste a link to a picture.",
+    "translation": "Mag-paste ng link ng larawan."
+  },
   "aGL2ob": {
     "message": "Paste a list from the clipboard",
     "translation": "Mag-paste ng listahan mula sa clipboard"
@@ -4078,6 +4239,11 @@
     "message": "Paste with Ctrl+V (⌘V) instead",
     "translation": "Mag-paste gamit ang Ctrl+V (⌘V)"
   },
+  "X1Ni8e": {
+    "message": "Pattern",
+    "context": "sleeve",
+    "translation": "Pattern"
+  },
   "cfCrKd": {
     "message": "Paypal Donation Link",
     "translation": "Link ng Paypal Donation"
@@ -4090,6 +4256,11 @@
     "message": "Pick random card",
     "translation": "Pumili ng random na card"
   },
+  "KBXd3D": {
+    "message": "Picture",
+    "context": "a card back from a picture",
+    "translation": "Larawan"
+  },
   "xYvd7u": {
     "message": "Piece position",
     "translation": "Posisyon ng piece"
@@ -4100,6 +4271,11 @@
       "Command palette section: deck, discard, prizes…"
     ],
     "translation": "Mga pile"
+  },
+  "K1IcaP": {
+    "message": "Plain",
+    "context": "sleeve pattern",
+    "translation": "Plain"
   },
   "SW-cIq": {
     "message": "Play",
@@ -4149,6 +4325,11 @@
     "message": "Player",
     "context": "unnamed seat",
     "translation": "Player"
+  },
+  "zFLJEh": {
+    "message": "Plum",
+    "context": "sleeve colour",
+    "translation": "Plum"
   },
   "KO7h6x": {
     "message": "Pocket decks have no Energy cards.",
@@ -4347,6 +4528,11 @@
   "U86mdr": {
     "message": "Rarity",
     "translation": "Rarity"
+  },
+  "L8r2Hh": {
+    "message": "Rays",
+    "context": "sleeve pattern",
+    "translation": "Sinag"
   },
   "ykWEvf": {
     "message": "Read",
@@ -4648,6 +4834,11 @@
     "message": "Room ready",
     "translation": "Handa na ang room"
   },
+  "2Rrohw": {
+    "message": "Rose",
+    "context": "sleeve colour",
+    "translation": "Rosas"
+  },
   "BulyBf": {
     "message": "Rotate",
     "translation": "I-rotate"
@@ -4720,6 +4911,11 @@
     "message": "Row {rowNumber}: quantity must be 1 to {max}.",
     "translation": "Row {rowNumber}: ang dami ay dapat 1 hanggang {max}."
   },
+  "0NRnTQ": {
+    "message": "Royal blue",
+    "context": "sleeve colour",
+    "translation": "Royal blue"
+  },
   "duDNyy": {
     "message": "Rule Box",
     "translation": "Rule Box"
@@ -4750,6 +4946,11 @@
     "message": "Sample Prizes",
     "translation": "Sample na Prize"
   },
+  "0jhHGF": {
+    "message": "Sand",
+    "context": "sleeve colour",
+    "translation": "Buhangin"
+  },
   "tfDRzk": {
     "message": "Save",
     "translation": "I-save"
@@ -4779,9 +4980,18 @@
     "message": "Saved for this visit only",
     "translation": "Na-save para sa pagbisitang ito lang"
   },
+  "K_F6pa": {
+    "message": "Saving…",
+    "translation": "Sine-save…"
+  },
   "pHxB6X": {
     "message": "Say…",
     "translation": "Sabihin…"
+  },
+  "gofk-z": {
+    "message": "Scales",
+    "context": "sleeve pattern",
+    "translation": "Kaliskis"
   },
   "JTYvAw": {
     "message": "Search cards",
@@ -5133,11 +5343,21 @@
     "message": "Skip",
     "translation": "Laktawan"
   },
+  "8Qf85O": {
+    "message": "Sky",
+    "context": "sleeve colour",
+    "translation": "Langit"
+  },
   "QIIV0m": {
     "message": "Slate",
     "comments": [
       "A table look: the colour"
     ],
+    "translation": "Slate"
+  },
+  "OZCs0k": {
+    "message": "Slate",
+    "context": "sleeve colour",
     "translation": "Slate"
   },
   "Se3Re8": {
@@ -5147,6 +5367,11 @@
   "P12gHj": {
     "message": "Smaller cards",
     "translation": "Mas maliliit na card"
+  },
+  "Vy1bgl": {
+    "message": "Snow",
+    "context": "sleeve colour",
+    "translation": "Niyebe"
   },
   "6N0DKq": {
     "message": "Solo table",
@@ -5288,10 +5513,19 @@
     "context": "Pokémon stage",
     "translation": "Stage 2"
   },
+  "RSLXu8": {
+    "message": "Standard",
+    "context": "card back",
+    "translation": "Standard"
+  },
   "GlGLvC": {
     "message": "Standard",
     "context": "deck format",
     "translation": "Standard"
+  },
+  "hr1qOs": {
+    "message": "Standard back",
+    "translation": "Standard na likod"
   },
   "Tg13WJ": {
     "message": "Standard card",
@@ -5300,6 +5534,11 @@
   "kGkZLk": {
     "message": "Standings",
     "translation": "Standings"
+  },
+  "Hgg1rW": {
+    "message": "Star",
+    "context": "sleeve emblem",
+    "translation": "Bituin"
   },
   "WrLzY2": {
     "message": "Start a game",
@@ -5329,6 +5568,11 @@
   "B2cOHf": {
     "message": "Stop sorting hand",
     "translation": "Ihinto ang pag-sort ng hand"
+  },
+  "yy_J3n": {
+    "message": "Stripes",
+    "context": "sleeve pattern",
+    "translation": "Guhit"
   },
   "yqeLY3": {
     "message": "Supporter",
@@ -5482,6 +5726,11 @@
     ],
     "translation": "TCG Pocket"
   },
+  "0D9HyG": {
+    "message": "Teal",
+    "context": "sleeve colour",
+    "translation": "Teal"
+  },
   "z5r9Ja": {
     "message": "Technical Machine",
     "context": "Trainer card kind",
@@ -5500,6 +5749,10 @@
     "message": "That file can't be opened here.",
     "translation": "Hindi mabuksan dito ang file na iyon."
   },
+  "KQLVDi": {
+    "message": "That file isn't a picture.",
+    "translation": "Hindi larawan ang file na iyon."
+  },
   "ZMr878": {
     "message": "That image didn't load.",
     "translation": "Hindi nag-load ang image na iyon."
@@ -5507,6 +5760,14 @@
   "B4ZAXF": {
     "message": "That one was skipped.",
     "translation": "Nilaktawan ang isang iyon."
+  },
+  "qqEjGU": {
+    "message": "That picture can't be read.",
+    "translation": "Hindi mabasa ang larawang iyon."
+  },
+  "HnGmBe": {
+    "message": "That picture is over 20 MB.",
+    "translation": "Lampas 20 MB ang larawang iyon."
   },
   "nWbyfh": {
     "message": "That replay file couldn't be opened.",
@@ -6016,13 +6277,13 @@
     "context": "give the keys to this shortcut",
     "translation": "Gamitin dito"
   },
-  "PTd_zR": {
-    "message": "Use image",
-    "translation": "Gamitin ang larawan"
-  },
   "mVjzvv": {
     "message": "Use on {seat}",
     "translation": "Gamitin sa {seat}"
+  },
+  "yoAGc6": {
+    "message": "Use this back",
+    "translation": "Gamitin ang likod na ito"
   },
   "8ZgYGP": {
     "message": "Use this print for the {deckCopies} in the deck",
@@ -6057,6 +6318,16 @@
     "message": "View whole card",
     "translation": "Tingnan ang buong card"
   },
+  "WUyPia": {
+    "message": "Violet",
+    "context": "card back",
+    "translation": "Violet"
+  },
+  "-Uf5mz": {
+    "message": "Violet",
+    "context": "sleeve colour",
+    "translation": "Violet"
+  },
   "RVlHmr": {
     "message": "VSTAR marker",
     "translation": "VSTAR marker"
@@ -6069,6 +6340,11 @@
     "message": "Water",
     "context": "Pokémon type",
     "translation": "Water"
+  },
+  "4iNUJT": {
+    "message": "Waves",
+    "context": "sleeve pattern",
+    "translation": "Alon"
   },
   "AHlkVG": {
     "message": "Weakness",
@@ -6164,6 +6440,10 @@
     "message": "Your Lost Zone",
     "translation": "Lost Zone mo"
   },
+  "1PoiFH": {
+    "message": "Your picture",
+    "translation": "Ang larawan mo"
+  },
   "Oi-Qz3": {
     "message": "Your playboard",
     "translation": "Playboard mo"
@@ -6175,6 +6455,11 @@
   "yuM-lV": {
     "message": "Your turn",
     "translation": "Turn mo"
+  },
+  "X0l3In": {
+    "message": "Yours",
+    "context": "card backs the player made",
+    "translation": "Sa iyo"
   },
   "XQaL9V": {
     "message": "Zone outlines",

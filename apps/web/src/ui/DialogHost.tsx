@@ -1,6 +1,11 @@
 import { useState, useSyncExternalStore } from 'react';
 
-import { ConfirmDialog, CountDialog, PromptDialog } from './Dialog.js';
+import {
+  ConfirmDialog,
+  CountDialog,
+  PanelDialog,
+  PromptDialog,
+} from './Dialog.js';
 import {
   dialogRequestsSnapshot,
   settleDialogRequest,
@@ -9,8 +14,8 @@ import {
 } from './dialog-requests.js';
 
 /**
- * Renders the front of the `confirmAction` / `promptValue` / `pickCount`
- * queue. An answered request stays on screen, closing, until its exit
+ * Renders the front of the `confirmAction` / `promptValue` / `pickCount` /
+ * `openPanel` queue. An answered request stays on screen, closing, until its exit
  * animation has finished; only then does the next one open, so two dialogs
  * never overlap.
  */
@@ -32,7 +37,15 @@ export const DialogHost = () => {
   const open = current === front;
   const closed = (): void =>
     setShown((previous) => (previous === current ? null : previous));
-  return current.kind === 'confirm' ? (
+  return current.kind === 'panel' ? (
+    <PanelDialog
+      key={current.id}
+      open={open}
+      {...current.options}
+      onResolve={(value) => settleDialogRequest(current.id, value)}
+      onClosed={closed}
+    />
+  ) : current.kind === 'confirm' ? (
     <ConfirmDialog
       key={current.id}
       open={open}

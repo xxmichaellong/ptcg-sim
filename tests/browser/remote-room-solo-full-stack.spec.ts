@@ -1,10 +1,8 @@
 import { expect, test } from '@playwright/test';
 
-import {
-  answerOverlayPrompt,
-  overlayToast,
-} from './support/overlay-dialogs.js';
+import { overlayToast } from './support/overlay-dialogs.js';
 import { closeBoardView, openBoardView } from './support/board-view.js';
+import { chooseCardBackFromLink } from './support/card-back-chooser.js';
 import {
   routeCardBackImport,
   STORED_CARD_BACK,
@@ -115,12 +113,7 @@ test('the Solo table owns one authority and keeps it across the menu and sheets'
     'aria-pressed',
     'true'
   );
-  const cardBackPrompt = answerOverlayPrompt(page, SOLO_CARD_BACK_URL);
-  await page.locator('#changeCardBackButton').click();
-  expect((await cardBackPrompt).message).toBe('Change card back');
-  await expect(
-    page.getByRole('dialog', { name: 'Change card back' })
-  ).toHaveCount(0);
+  await chooseCardBackFromLink(page, SOLO_CARD_BACK_URL);
   // The back is fetched once through the app and stored as our own, then
   // shown as P2's sleeve in its tray.
   expect(imported).toEqual([SOLO_CARD_BACK_URL]);

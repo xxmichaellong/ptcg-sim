@@ -4,7 +4,7 @@ import {
   routeCardBackImport,
   STORED_CARD_BACK,
 } from './support/card-back-import.js';
-import { answerOverlayPrompt } from './support/overlay-dialogs.js';
+import { chooseCardBackFromLink } from './support/card-back-chooser.js';
 import { ownRoomBudget } from './support/room-budget.js';
 import {
   closeActivity,
@@ -64,9 +64,7 @@ test('a deck keeps its card back and brings it to the table', async ({
   await openTable(page);
   await openDeck(page);
   await importDeck(page, 'Charizard');
-  const prompt = answerOverlayPrompt(page, RED);
-  await page.locator('#changeCardBackButton').click();
-  expect((await prompt).message).toBe('Change card back');
+  await chooseCardBackFromLink(page, RED);
   await expect(sleeve).toHaveAttribute('src', STORED_CARD_BACK);
   expect(imported).toEqual([RED]);
   const stored = (await sleeve.getAttribute('src'))!;

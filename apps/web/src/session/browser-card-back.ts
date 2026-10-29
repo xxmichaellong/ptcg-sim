@@ -1,17 +1,28 @@
 import { t } from '@lingui/core/macro';
 import { LEGACY_DEFAULT_CARD_BACK_URL } from '@ptcgsim/game-core';
-import { MAX_IMAGE_URL_CODE_UNITS } from '@ptcgsim/protocol';
+import { createElement } from 'react';
 
-import { importCardBackFromUrl } from '../card-backs/card-back-import.js';
-import { promptValue, type PromptOptions } from '../ui/dialog-requests.js';
+import { CardBackChooser } from '../card-backs/CardBackChooser.js';
+import {
+  encodeCardBackImage,
+  fetchImportedPicture,
+  uploadCardBackImage,
+  type CardBackCropFocus,
+} from '../card-backs/card-back-import.js';
+import {
+  RECENT_CARD_BACK_PREFERENCES,
+  withRecentCardBack,
+} from '../card-backs/card-back-preferences.js';
+import {
+  preferences,
+  type PreferenceStore,
+} from '../preferences/preference-store.js';
+import {
+  openPanel,
+  type PanelOptions,
+  type PromptOptions,
+} from '../ui/dialog-requests.js';
 
-/** What the dialog asks. `default` is typed as it is, in any language. */
-export const cardBackPrompt = (): string =>
-  t({
-    message: "An image URL, or 'default'.",
-    comment: "Keep 'default' in English: it is what the player types",
-  });
-export const invalidCardBackMessage = (): string => t`Enter a valid image URL.`;
 /** The standard back, as rooms and saves have always spelled it. */
 export const DEFAULT_CARD_BACK_URL = LEGACY_DEFAULT_CARD_BACK_URL;
 
@@ -20,77 +31,94 @@ export type BrowserTextPrompt = (
   options: PromptOptions
 ) => Promise<string | null>;
 
-/**
- * Makes an outside picture a back of our own (ADR-041): its `img:`
- * reference, or null if it couldn't be fetched, read or stored.
- */
-export type CardBackUrlImport = (
+/** An outside picture fetched through the app, or null. */
+export type CardBackPictureFetch = (
   url: string,
+  signal: AbortSignal
+) => Promise<Blob | null>;
+
+/** A picture made a back of our own: its `img:` reference, or null. */
+export type CardBackPictureSave = (
+  picture: Blob,
+  focus: CardBackCropFocus,
   signal: AbortSignal
 ) => Promise<string | null>;
 
 export interface BrowserCardBackRequestOptions {
   readonly signal?: AbortSignal;
-  readonly prompt?: BrowserTextPrompt;
-  readonly importUrl?: CardBackUrlImport;
+  /** The back the seat wears now, shown first. */
+  readonly current?: string;
+  /** Backs the player's saved decks wear, offered again. */
+  readonly worn?: readonly string[];
+  /** Opens the chooser: the overlay panel by default. */
+  readonly open?: (options: PanelOptions) => Promise<string | null>;
+  readonly fetchPicture?: CardBackPictureFetch;
+  readonly savePicture?: CardBackPictureSave;
+  /** Where the player's recent backs are kept. */
+  readonly preferences?: PreferenceStore;
 }
 
 export type BrowserCardBackRequest = (
   options?: BrowserCardBackRequestOptions
 ) => Promise<string | undefined>;
 
+/** How long a fetch or an upload may take before it is a failure. */
+const CARD_BACK_NETWORK_MS = 30_000;
+
+/** The request's signal, or the network's patience, whichever ends first. */
+const patient = (signal: AbortSignal): AbortSignal =>
+  AbortSignal.any([signal, AbortSignal.timeout(CARD_BACK_NETWORK_MS)]);
+
+const fetchThroughApp: CardBackPictureFetch = (url, signal) =>
+  fetchImportedPicture(url, { signal: patient(signal) });
+
+const saveAsOwn: CardBackPictureSave = async (picture, focus, signal) => {
+  const encoded = await encodeCardBackImage(picture, focus);
+  if (!encoded || signal.aborted) return null;
+  return await uploadCardBackImage(encoded, { signal: patient(signal) });
+};
+
 /**
- * Asks for a card-back image and makes it ours before anything changes: the
- * picture is fetched once through the app, stored by its hash, and its
- * reference is what the table gets, so no opponent ever loads the address
- * (ADR-041; until the card-back chooser replaces this dialog). A URL that is
- * too long or can't be made a back keeps the dialog open with the source's
- * message; Cancel, an empty answer or an aborted request changes nothing.
+ * Opens the card-back chooser (ADR-041 stage 2) and answers with the back
+ * picked: a preset, a design, or a picture already stored as our own --
+ * an outside link is fetched through the app and saved before it is
+ * offered, so no opponent ever loads its host. Cancel or an aborted
+ * request changes nothing. A design or picture chosen is kept to hand.
  */
 export const requestBrowserCardBack: BrowserCardBackRequest = async (
   options = {}
 ) => {
   if (options.signal?.aborted) return undefined;
-  const ask = options.prompt ?? promptValue;
-  const importUrl: CardBackUrlImport =
-    options.importUrl ??
-    ((url, signal) => importCardBackFromUrl(url, { signal }));
-  // The back the last successful check made; the dialog accepts only then.
-  let accepted: string | undefined;
+  const open = options.open ?? openPanel;
+  const store = options.preferences ?? preferences();
+  const recent = store.get(RECENT_CARD_BACK_PREFERENCES).backs;
 
   let answer: string | null;
   try {
-    answer = await ask({
-      title: t`Change card back`,
-      body: cardBackPrompt(),
-      label: t`Image URL`,
-      placeholder: t({
-        message: 'https://… or default',
-        comment: "Keep 'default' in English: it is what the player types",
-      }),
-      submitLabel: t`Use image`,
-      validate: async (value, { signal }) => {
-        accepted = undefined;
-        const normalized = value.trim();
-        if (normalized === '') return null;
-        if (normalized.length > MAX_IMAGE_URL_CODE_UNITS) {
-          return invalidCardBackMessage();
-        }
-        if (normalized.toLowerCase() === 'default') {
-          accepted = DEFAULT_CARD_BACK_URL;
-          return null;
-        }
-        const ref = await importUrl(normalized, signal);
-        if (signal.aborted) return null;
-        if (!ref) return invalidCardBackMessage();
-        accepted = ref;
-        return null;
-      },
+    answer = await open({
+      title: t`Card back`,
+      className: 'card-back-chooser-dialog',
+      content: (settle) =>
+        createElement(CardBackChooser, {
+          ...(options.current ? { current: options.current } : {}),
+          worn: options.worn ?? [],
+          recent,
+          onChoose: settle,
+          onCancel: () => settle(null),
+          fetchPicture: options.fetchPicture ?? fetchThroughApp,
+          savePicture: options.savePicture ?? saveAsOwn,
+        }),
       ...(options.signal ? { signal: options.signal } : {}),
     });
   } catch {
     return undefined;
   }
-  if (answer === null || options.signal?.aborted) return undefined;
-  return accepted;
+  if (!answer || options.signal?.aborted) return undefined;
+  store.set(RECENT_CARD_BACK_PREFERENCES, {
+    backs: withRecentCardBack(
+      store.get(RECENT_CARD_BACK_PREFERENCES).backs,
+      answer
+    ),
+  });
+  return answer;
 };

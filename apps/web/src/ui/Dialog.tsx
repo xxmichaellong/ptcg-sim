@@ -24,6 +24,7 @@ import type {
   CountOptions,
   DialogFinalFocus,
   DialogTone,
+  PanelOptions,
   PromptOptions,
 } from './dialog-requests.js';
 import { OverlayContainerContext } from './overlay-host-registry.js';
@@ -219,6 +220,44 @@ export const DialogCloseButton = ({ children }: { children: ReactNode }) => (
   <BaseDialog.Close className="ptcgsim-ui-button" data-variant="secondary">
     {children}
   </BaseDialog.Close>
+);
+
+export interface PanelDialogProps extends Omit<PanelOptions, 'signal'> {
+  readonly open: boolean;
+  /** The panel's answer, or `null` for Escape or a closed dialog. */
+  readonly onResolve: (value: string | null) => void;
+  /** After the exit animation, once the dialog has left the screen. */
+  readonly onClosed?: () => void;
+}
+
+/** The shared frame round content its asker draws (`openPanel`). */
+export const PanelDialog = ({
+  open,
+  title,
+  body,
+  content,
+  className,
+  finalFocus,
+  onResolve,
+  onClosed,
+}: PanelDialogProps) => (
+  <DialogSurface
+    kind="dialog"
+    open={open}
+    onOpenChange={(next) => {
+      if (!next) onResolve(null);
+    }}
+    onOpenChangeComplete={(next) => {
+      if (!next) onClosed?.();
+    }}
+    dismissible={false}
+    title={title}
+    description={body}
+    {...(finalFocus ? { finalFocus } : {})}
+    {...(className ? { className } : {})}
+  >
+    {content(onResolve)}
+  </DialogSurface>
 );
 
 export interface ConfirmDialogProps extends Omit<ConfirmOptions, 'signal'> {

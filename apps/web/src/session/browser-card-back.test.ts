@@ -1,196 +1,117 @@
 // @vitest-environment happy-dom
 
-import { MAX_IMAGE_URL_CODE_UNITS } from '@ptcgsim/protocol';
+import { STANDARD_CARD_BACK } from '@ptcgsim/game-core';
+import type { ReactElement } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { PromptOptions } from '../ui/dialog-requests.js';
-import {
-  cardBackPrompt,
-  DEFAULT_CARD_BACK_URL,
-  invalidCardBackMessage,
-  requestBrowserCardBack,
-  type CardBackUrlImport,
-} from './browser-card-back.js';
+import type { CardBackChooserProps } from '../card-backs/CardBackChooser.js';
+import { RECENT_CARD_BACK_PREFERENCES } from '../card-backs/card-back-preferences.js';
+import { PreferenceStore } from '../preferences/preference-store.js';
+import type { PanelOptions } from '../ui/dialog-requests.js';
+import { requestBrowserCardBack } from './browser-card-back.js';
 
 const STORED = `img:${'ab'.repeat(32)}`;
+const DESIGN = 'design:1.navy.stripes.gold.star';
 
 /**
- * Stands in for the import: each call waits for the test to answer it with
- * a reference (made a back) or null (couldn't be).
+ * Stands in for the panel: records what it was opened with and the
+ * chooser it shows, and answers as the player does with `pick`.
  */
-const importHarness = () => {
-  const calls: {
-    readonly url: string;
-    readonly signal: AbortSignal;
-    readonly answer: (ref: string | null) => void;
-  }[] = [];
-  const importUrl = vi.fn<CardBackUrlImport>(
-    (url, signal) =>
-      new Promise((resolve) => {
-        calls.push({ url, signal, answer: resolve });
-      })
-  );
-  return { calls, importUrl };
-};
-
-/**
- * Stands in for the prompt dialog: submits each answer in turn, running the
- * dialog's validator the way the dialog does, and records the messages that
- * kept it open. Out of answers, the player cancels. Aborting the request's
- * signal closes it (and the running check) like the real dialog.
- */
-const promptAnswering = (...answers: (string | null)[]) => {
-  const errors: string[] = [];
-  const asked: PromptOptions[] = [];
-  const checks: AbortController[] = [];
-  const prompt = vi.fn(async (options: PromptOptions) => {
-    asked.push(options);
-    for (const answer of answers) {
-      if (answer === null || options.signal?.aborted) return null;
-      const check = new AbortController();
-      checks.push(check);
-      options.signal?.addEventListener('abort', () => check.abort(), {
-        once: true,
-      });
-      const message = await options.validate?.(answer, {
-        signal: check.signal,
-      });
-      if (options.signal?.aborted) return null;
-      if (!message) return answer;
-      errors.push(message);
-    }
-    return null;
+const panel = (pick: (props: CardBackChooserProps) => string | null) => {
+  const opened: PanelOptions[] = [];
+  const shown: CardBackChooserProps[] = [];
+  const open = vi.fn(async (options: PanelOptions) => {
+    opened.push(options);
+    let answer: string | null = null;
+    const element = options.content((value) => {
+      answer = value;
+    }) as ReactElement<CardBackChooserProps>;
+    shown.push(element.props);
+    const picked = pick(element.props);
+    if (picked !== null) element.props.onChoose(picked);
+    else element.props.onCancel();
+    return answer;
   });
-  return { prompt, errors, asked, checks };
+  return { open, opened, shown };
 };
 
 describe('browser card-back request', () => {
-  it('asks in the prompt dialog with the source wording', async () => {
-    const harness = importHarness();
-    const dialog = promptAnswering(null);
+  it('opens the chooser on the seat back with the decks backs and the recent ones', async () => {
+    const store = new PreferenceStore();
+    store.set(RECENT_CARD_BACK_PREFERENCES, { backs: [DESIGN] });
+    const dialog = panel(() => null);
 
     await expect(
       requestBrowserCardBack({
-        prompt: dialog.prompt,
-        importUrl: harness.importUrl,
+        open: dialog.open,
+        preferences: store,
+        current: 'preset:jade',
+        worn: [STORED],
       })
     ).resolves.toBeUndefined();
-    expect(dialog.asked[0]).toMatchObject({
-      title: 'Change card back',
-      body: cardBackPrompt(),
-      label: 'Image URL',
+    expect(dialog.opened[0]).toMatchObject({ title: 'Card back' });
+    expect(dialog.shown[0]).toMatchObject({
+      current: 'preset:jade',
+      worn: [STORED],
+      recent: [DESIGN],
     });
-    expect(harness.importUrl).not.toHaveBeenCalled();
   });
 
-  it('treats cancel and an empty answer as no-ops', async () => {
-    const harness = importHarness();
+  it('answers with the back picked; the standard back is a choice like any other', async () => {
+    const store = new PreferenceStore();
     await expect(
       requestBrowserCardBack({
-        prompt: promptAnswering('   ').prompt,
-        importUrl: harness.importUrl,
+        open: panel(() => STANDARD_CARD_BACK).open,
+        preferences: store,
       })
-    ).resolves.toBeUndefined();
-    expect(harness.importUrl).not.toHaveBeenCalled();
+    ).resolves.toBe(STANDARD_CARD_BACK);
+    // A preset is always on offer, so it isn't kept as a recent back.
+    expect(store.get(RECENT_CARD_BACK_PREFERENCES).backs).toEqual([]);
   });
 
-  it("maps the source 'default' choice to the standard back, fetching nothing", async () => {
-    const harness = importHarness();
-    await expect(
-      requestBrowserCardBack({
-        prompt: promptAnswering('  DeFaUlT  ').prompt,
-        importUrl: harness.importUrl,
-      })
-    ).resolves.toBe(DEFAULT_CARD_BACK_URL);
-    expect(harness.importUrl).not.toHaveBeenCalled();
-  });
-
-  it('makes a pasted address a back of our own and returns its reference, never the address (ADR-041)', async () => {
-    const harness = importHarness();
-    const requestedUrl = 'https://unlisted-images.example/back.png';
-    const pending = requestBrowserCardBack({
-      prompt: promptAnswering(`  ${requestedUrl}  `).prompt,
-      importUrl: harness.importUrl,
-    });
-
-    await vi.waitFor(() => expect(harness.calls).toHaveLength(1));
-    expect(harness.calls[0]?.url).toBe(requestedUrl);
-    harness.calls[0]!.answer(STORED);
-    await expect(pending).resolves.toBe(STORED);
-  });
-
-  it('keeps the dialog open on oversized input without importing anything', async () => {
-    const harness = importHarness();
-    const dialog = promptAnswering('x'.repeat(MAX_IMAGE_URL_CODE_UNITS + 1));
+  it('keeps a design or a picture picked first among the recent backs', async () => {
+    const store = new PreferenceStore();
+    store.set(RECENT_CARD_BACK_PREFERENCES, { backs: [DESIGN, STORED] });
 
     await expect(
       requestBrowserCardBack({
-        prompt: dialog.prompt,
-        importUrl: harness.importUrl,
+        open: panel(() => STORED).open,
+        preferences: store,
       })
-    ).resolves.toBeUndefined();
-    expect(harness.importUrl).not.toHaveBeenCalled();
-    expect(dialog.errors).toEqual([invalidCardBackMessage()]);
+    ).resolves.toBe(STORED);
+    expect(store.get(RECENT_CARD_BACK_PREFERENCES).backs).toEqual([
+      STORED,
+      DESIGN,
+    ]);
   });
 
-  it('keeps the dialog open when the picture cannot be made a back, then accepts a fixed URL', async () => {
-    const harness = importHarness();
-    const dialog = promptAnswering(
-      'https://unlisted-images.example/missing.png',
-      'https://unlisted-images.example/found.png'
+  it('gives the panel the request signal and changes nothing once aborted', async () => {
+    const abort = new AbortController();
+    const store = new PreferenceStore();
+    const open = vi.fn(
+      (options: PanelOptions) =>
+        new Promise<string | null>((resolve) => {
+          options.signal?.addEventListener('abort', () => resolve(DESIGN));
+        })
     );
     const pending = requestBrowserCardBack({
-      prompt: dialog.prompt,
-      importUrl: harness.importUrl,
-    });
-
-    await vi.waitFor(() => expect(harness.calls).toHaveLength(1));
-    harness.calls[0]!.answer(null);
-    await vi.waitFor(() => expect(harness.calls).toHaveLength(2));
-    expect(dialog.errors).toEqual([invalidCardBackMessage()]);
-    harness.calls[1]!.answer(STORED);
-    await expect(pending).resolves.toBe(STORED);
-  });
-
-  it('changes nothing when the player gives up after a failed import', async () => {
-    const harness = importHarness();
-    const dialog = promptAnswering('https://unlisted-images.example/x.png');
-    const pending = requestBrowserCardBack({
-      prompt: dialog.prompt,
-      importUrl: harness.importUrl,
-    });
-    await vi.waitFor(() => expect(harness.calls).toHaveLength(1));
-    harness.calls[0]!.answer(null);
-    await expect(pending).resolves.toBeUndefined();
-    expect(dialog.errors).toEqual([invalidCardBackMessage()]);
-  });
-
-  it('cancels a pending import without an error or a stale completion', async () => {
-    const harness = importHarness();
-    const abort = new AbortController();
-    const dialog = promptAnswering('https://unlisted-images.example/slow.png');
-    const pending = requestBrowserCardBack({
       signal: abort.signal,
-      prompt: dialog.prompt,
-      importUrl: harness.importUrl,
+      open,
+      preferences: store,
     });
-    await vi.waitFor(() => expect(harness.calls).toHaveLength(1));
-    expect(dialog.asked[0]?.signal).toBe(abort.signal);
-
+    expect(open.mock.calls[0]?.[0].signal).toBe(abort.signal);
     abort.abort();
-    expect(harness.calls[0]?.signal.aborted).toBe(true);
-    harness.calls[0]!.answer(STORED);
     await expect(pending).resolves.toBeUndefined();
-    expect(dialog.errors).toEqual([]);
+    expect(store.get(RECENT_CARD_BACK_PREFERENCES).backs).toEqual([]);
   });
 
-  it('never asks once the request is already aborted', async () => {
+  it('never opens once the request is already aborted', async () => {
     const abort = new AbortController();
     abort.abort();
-    const dialog = promptAnswering('default');
+    const dialog = panel(() => STANDARD_CARD_BACK);
     await expect(
-      requestBrowserCardBack({ signal: abort.signal, prompt: dialog.prompt })
+      requestBrowserCardBack({ signal: abort.signal, open: dialog.open })
     ).resolves.toBeUndefined();
-    expect(dialog.prompt).not.toHaveBeenCalled();
+    expect(dialog.open).not.toHaveBeenCalled();
   });
 });

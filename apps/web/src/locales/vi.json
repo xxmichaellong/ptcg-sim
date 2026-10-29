@@ -1117,6 +1117,11 @@
     ],
     "translation": "Đã dùng Ability"
   },
+  "v0rlF7": {
+    "message": "Accent",
+    "context": "sleeve",
+    "translation": "Màu nhấn"
+  },
   "BZkiHi": {
     "message": "Access to an exclusive Discord channel for priority suggestions/feature proposals/troubleshooting support.",
     "translation": "Truy cập kênh Discord riêng để được ưu tiên góp ý, đề xuất tính năng và hỗ trợ xử lý sự cố."
@@ -1285,6 +1290,16 @@
     "message": "Always shown while it holds cards.",
     "translation": "Luôn hiển thị khi còn chứa bài."
   },
+  "Cpqhqr": {
+    "message": "Amber",
+    "context": "card back",
+    "translation": "Hổ phách"
+  },
+  "2XejlY": {
+    "message": "Amber",
+    "context": "sleeve colour",
+    "translation": "Hổ phách"
+  },
   "Uu-7-8": {
     "message": "An <0>open-source</0> Pokémon TCG table.",
     "translation": "Bàn chơi Pokémon TCG <0>mã nguồn mở</0>."
@@ -1299,13 +1314,6 @@
       "Keep 'blank' and 'theme' in English: they are what the player types"
     ],
     "translation": "URL hình ảnh, 'blank' hoặc 'theme'."
-  },
-  "hQE7TV": {
-    "message": "An image URL, or 'default'.",
-    "comments": [
-      "Keep 'default' in English: it is what the player types"
-    ],
-    "translation": "URL hình ảnh hoặc 'default'."
   },
   "ctNH7H": {
     "message": "Ancient",
@@ -1411,6 +1419,11 @@
     "message": "Automatic",
     "translation": "Tự động"
   },
+  "pr_nRt": {
+    "message": "Azure",
+    "context": "card back",
+    "translation": "Xanh lam"
+  },
   "USi6Js": {
     "message": "Baby",
     "context": "Pokémon stage",
@@ -1459,10 +1472,20 @@
     "message": "Back to your decks",
     "translation": "Quay lại các bộ bài của bạn"
   },
+  "GhQ0ZN": {
+    "message": "Backs",
+    "context": "card backs",
+    "translation": "Mặt sau"
+  },
   "Why0fp": {
     "message": "Backspace",
     "context": "keyboard key",
     "translation": "Backspace"
+  },
+  "DA4ED5": {
+    "message": "Ball",
+    "context": "sleeve emblem",
+    "translation": "Bóng"
   },
   "hrit5V": {
     "message": "Basic",
@@ -1531,6 +1554,11 @@
       "In \"Back to board cards\": the cards on the board."
     ],
     "translation": "các lá bài trên thảm chơi"
+  },
+  "f4EnAz": {
+    "message": "Bolt",
+    "context": "sleeve emblem",
+    "translation": "Tia chớp"
   },
   "LAq-1T": {
     "message": "Both",
@@ -1633,6 +1661,10 @@
     "message": "Card assembled preview",
     "translation": "Xem trước lá bài đã ghép"
   },
+  "86aE2l": {
+    "message": "Card back",
+    "translation": "Mặt sau lá bài"
+  },
   "M3FSd1": {
     "message": "Card back for {slotSeat}",
     "translation": "Mặt sau bài của {slotSeat}"
@@ -1697,10 +1729,6 @@
     "message": "Change background",
     "translation": "Đổi hình nền"
   },
-  "PCF3WN": {
-    "message": "Change card back",
-    "translation": "Đổi mặt sau bài"
-  },
   "lKPW0c": {
     "message": "Change card back for {slotSeat}",
     "translation": "Đổi mặt sau bài của {slotSeat}"
@@ -1752,6 +1780,11 @@
     "message": "Checking…",
     "translation": "Đang kiểm tra…"
   },
+  "Oyrf8q": {
+    "message": "Checks",
+    "context": "sleeve pattern",
+    "translation": "Ca rô"
+  },
   "mQr73T": {
     "message": "Choose",
     "comments": [
@@ -1773,6 +1806,10 @@
   "Trhamk": {
     "message": "Choose a deck to play",
     "translation": "Chọn bộ bài để chơi"
+  },
+  "Qzm71e": {
+    "message": "Choose a picture",
+    "translation": "Chọn một ảnh"
   },
   "TvEJEL": {
     "message": "Choose the deck for {slotSeat}",
@@ -1875,6 +1912,11 @@
     "context": "Pokémon type",
     "translation": "Vô sắc"
   },
+  "I3ktYd": {
+    "message": "Colour",
+    "context": "sleeve",
+    "translation": "Màu"
+  },
   "45MZFs": {
     "message": "Commands",
     "translation": "Lệnh"
@@ -1926,6 +1968,10 @@
     "message": "Couldn't create a room. Try again.",
     "translation": "Không thể tạo phòng. Hãy thử lại."
   },
+  "d9B72Y": {
+    "message": "Couldn't get a picture from that link.",
+    "translation": "Không lấy được ảnh từ liên kết đó."
+  },
   "Glz9_Y": {
     "message": "Couldn't join the room. Try again.",
     "translation": "Không vào được phòng. Hãy thử lại."
@@ -1961,6 +2007,10 @@
   "heYM3E": {
     "message": "Couldn't resume the game",
     "translation": "Không tiếp tục được ván đấu"
+  },
+  "au8LN1": {
+    "message": "Couldn't save that picture. Try again.",
+    "translation": "Không lưu được ảnh đó. Hãy thử lại."
   },
   "ETE6Wl": {
     "message": "Couldn't save the game",
@@ -2027,6 +2077,16 @@
     "message": "Creating…",
     "context": "a room",
     "translation": "Đang tạo…"
+  },
+  "6vtp4B": {
+    "message": "Crimson",
+    "context": "card back",
+    "translation": "Đỏ thẫm"
+  },
+  "w8Rl7X": {
+    "message": "Crimson",
+    "context": "sleeve colour",
+    "translation": "Đỏ thẫm"
   },
   "ETt3ev": {
     "message": "Ctrl",
@@ -2181,6 +2241,21 @@
     "message": "Deselect",
     "translation": "Bỏ chọn"
   },
+  "lJjOBS": {
+    "message": "Design",
+    "context": "a card back the player designed",
+    "translation": "Tự thiết kế"
+  },
+  "BBlHk-": {
+    "message": "Design",
+    "context": "design a card back",
+    "translation": "Thiết kế"
+  },
+  "zhmNG6": {
+    "message": "Diamonds",
+    "context": "sleeve pattern",
+    "translation": "Hình thoi"
+  },
   "cCCVzA": {
     "message": "Didn't go through",
     "translation": "Không thực hiện được"
@@ -2266,6 +2341,11 @@
     "context": "finished",
     "translation": "Xong"
   },
+  "6yxheJ": {
+    "message": "Dots",
+    "context": "sleeve pattern",
+    "translation": "Chấm bi"
+  },
   "BDC29J": {
     "message": "Double-click <0>{0}</0> in your hand to read it.",
     "translation": "Nhấp đúp <0>{0}</0> trong tay bạn để đọc."
@@ -2297,6 +2377,10 @@
   "n3U3s1": {
     "message": "Drag a Basic Pokémon from your hand onto your <0>Active Spot</0>.",
     "translation": "Kéo một Pokémon Cơ bản từ tay bạn vào <0>vị trí Active</0> của bạn."
+  },
+  "eO8I4v": {
+    "message": "Drag to place it",
+    "translation": "Kéo để đặt vị trí"
   },
   "sEjSlz": {
     "message": "Dragon",
@@ -2342,6 +2426,11 @@
   "b0MOy2": {
     "message": "Draw, search and shuffle",
     "translation": "Rút, tìm và xáo bài"
+  },
+  "oMUr3k": {
+    "message": "Drop",
+    "context": "sleeve emblem",
+    "translation": "Giọt nước"
   },
   "IsvGW6": {
     "message": "Drop to import",
@@ -2401,6 +2490,11 @@
   "Bd1_Eb": {
     "message": "Edit deck",
     "translation": "Sửa bộ bài"
+  },
+  "eAabzD": {
+    "message": "Emblem",
+    "context": "sleeve",
+    "translation": "Biểu tượng"
   },
   "1PBKgv": {
     "message": "End",
@@ -2619,6 +2713,11 @@
     "message": "Fire type, Basic",
     "translation": "Hệ Lửa, Cơ bản"
   },
+  "OE9EAy": {
+    "message": "Flame",
+    "context": "sleeve emblem",
+    "translation": "Ngọn lửa"
+  },
   "gQp6L7": {
     "message": "Flat",
     "context": "table depth setting",
@@ -2677,6 +2776,10 @@
     "context": "deck format",
     "translation": "Thể thức"
   },
+  "ToYRS-": {
+    "message": "From a link",
+    "translation": "Từ liên kết"
+  },
   "qIodFG": {
     "message": "Frost",
     "comments": [
@@ -2718,9 +2821,17 @@
     "message": "Game resumed",
     "translation": "Ván đấu đã tiếp tục"
   },
+  "gqh64K": {
+    "message": "Get",
+    "translation": "Lấy"
+  },
   "4RM73X": {
     "message": "Get a sponsor tag on your GitHub profile (if sponsoring via GitHub, not applicable for sponsors through PayPal. Currently in the process of getting my GH sponsor page approved 😛).",
     "translation": "Nhận thẻ nhà tài trợ trên hồ sơ GitHub của bạn (chỉ áp dụng khi tài trợ qua GitHub, không áp dụng cho tài trợ qua PayPal. Hiện mình đang chờ duyệt trang GitHub Sponsors 😛)."
+  },
+  "1wmsrg": {
+    "message": "Getting…",
+    "translation": "Đang lấy…"
   },
   "kbTnWg": {
     "message": "Github Sponsors Link",
@@ -2729,6 +2840,11 @@
   "0qq_sj": {
     "message": "Go to the Solo table",
     "translation": "Đến bàn Solo"
+  },
+  "R6itFF": {
+    "message": "Gold",
+    "context": "sleeve colour",
+    "translation": "Vàng kim"
   },
   "iN8jqp": {
     "message": "Grass",
@@ -2890,6 +3006,10 @@
     "message": "How much damage?",
     "translation": "Bao nhiêu sát thương?"
   },
+  "w3nYsM": {
+    "message": "How to choose",
+    "translation": "Cách chọn"
+  },
   "oT-Cnl": {
     "message": "HP",
     "context": "sort cards by",
@@ -2906,13 +3026,6 @@
   "LgcKSI": {
     "message": "HP at most",
     "translation": "HP tối đa"
-  },
-  "fVGc9-": {
-    "message": "https://… or default",
-    "comments": [
-      "Keep 'default' in English: it is what the player types"
-    ],
-    "translation": "https://… hoặc default"
   },
   "OaHYvQ": {
     "message": "https://…, blank or theme",
@@ -2980,6 +3093,11 @@
     ],
     "translation": "trong bộ bài"
   },
+  "QphUbA": {
+    "message": "Ink",
+    "context": "sleeve colour",
+    "translation": "Đen mực"
+  },
   "fZsAhg": {
     "message": "Insert",
     "context": "keyboard key",
@@ -3041,6 +3159,16 @@
   "Rw42Cd": {
     "message": "Its cards couldn't be read.",
     "translation": "Không thể đọc các lá bài của nó."
+  },
+  "h0iD6U": {
+    "message": "Jade",
+    "context": "card back",
+    "translation": "Ngọc bích"
+  },
+  "i49U_n": {
+    "message": "Jade",
+    "context": "sleeve colour",
+    "translation": "Ngọc bích"
   },
   "Fz2DU1": {
     "message": "Join a room",
@@ -3125,6 +3253,11 @@
     "message": "Layout (optional)",
     "translation": "Bố cục (tùy chọn)"
   },
+  "YGg_TP": {
+    "message": "Leaf",
+    "context": "sleeve emblem",
+    "translation": "Chiếc lá"
+  },
   "1ng4Ht": {
     "message": "Leave in play",
     "translation": "Để lại trên sân"
@@ -3179,6 +3312,11 @@
     "message": "Lightning",
     "context": "Pokémon type",
     "translation": "Điện"
+  },
+  "7QxCqs": {
+    "message": "Lime",
+    "context": "sleeve colour",
+    "translation": "Xanh chanh"
   },
   "JL_ceN": {
     "message": "Limitless",
@@ -3486,6 +3624,11 @@
     "context": "my half of the table",
     "translation": "Của tôi"
   },
+  "5jDsb9": {
+    "message": "Moon",
+    "context": "sleeve emblem",
+    "translation": "Mặt trăng"
+  },
   "2FYpfJ": {
     "message": "More",
     "translation": "Thêm"
@@ -3624,6 +3767,11 @@
     "message": "Natural card placement",
     "translation": "Đặt lá bài tự nhiên"
   },
+  "hmYrgt": {
+    "message": "Navy",
+    "context": "sleeve colour",
+    "translation": "Xanh navy"
+  },
   "rf9azy": {
     "message": "Needs at least one Basic Pokémon.",
     "translation": "Cần ít nhất một Pokémon Cơ bản."
@@ -3759,6 +3907,11 @@
   "6psMRl": {
     "message": "None",
     "context": "no Resistance",
+    "translation": "Không có"
+  },
+  "zA5yks": {
+    "message": "None",
+    "context": "sleeve emblem",
     "translation": "Không có"
   },
   "NfqnuJ": {
@@ -3995,6 +4148,10 @@
     "message": "Opponents' custom backs",
     "translation": "Mặt sau tùy chỉnh của đối thủ"
   },
+  "l2I52S": {
+    "message": "or drop or paste one here",
+    "translation": "hoặc thả hay dán ảnh vào đây"
+  },
   "eH_2Pb": {
     "message": "Other",
     "context": "Trainer card kind",
@@ -4058,6 +4215,10 @@
     "message": "Paste a decklist first.",
     "translation": "Hãy dán danh sách bộ bài trước."
   },
+  "lrOsQc": {
+    "message": "Paste a link to a picture.",
+    "translation": "Dán liên kết tới một ảnh."
+  },
   "aGL2ob": {
     "message": "Paste a list from the clipboard",
     "translation": "Dán danh sách từ bộ nhớ tạm"
@@ -4078,6 +4239,11 @@
     "message": "Paste with Ctrl+V (⌘V) instead",
     "translation": "Hãy dán bằng Ctrl+V (⌘V)"
   },
+  "X1Ni8e": {
+    "message": "Pattern",
+    "context": "sleeve",
+    "translation": "Họa tiết"
+  },
   "cfCrKd": {
     "message": "Paypal Donation Link",
     "translation": "Liên kết quyên góp PayPal"
@@ -4090,6 +4256,11 @@
     "message": "Pick random card",
     "translation": "Chọn lá bài ngẫu nhiên"
   },
+  "KBXd3D": {
+    "message": "Picture",
+    "context": "a card back from a picture",
+    "translation": "Ảnh"
+  },
   "xYvd7u": {
     "message": "Piece position",
     "translation": "Vị trí mảnh"
@@ -4100,6 +4271,11 @@
       "Command palette section: deck, discard, prizes…"
     ],
     "translation": "Chồng bài"
+  },
+  "K1IcaP": {
+    "message": "Plain",
+    "context": "sleeve pattern",
+    "translation": "Trơn"
   },
   "SW-cIq": {
     "message": "Play",
@@ -4149,6 +4325,11 @@
     "message": "Player",
     "context": "unnamed seat",
     "translation": "Người chơi"
+  },
+  "zFLJEh": {
+    "message": "Plum",
+    "context": "sleeve colour",
+    "translation": "Mận"
   },
   "KO7h6x": {
     "message": "Pocket decks have no Energy cards.",
@@ -4347,6 +4528,11 @@
   "U86mdr": {
     "message": "Rarity",
     "translation": "Độ hiếm"
+  },
+  "L8r2Hh": {
+    "message": "Rays",
+    "context": "sleeve pattern",
+    "translation": "Tia sáng"
   },
   "ykWEvf": {
     "message": "Read",
@@ -4648,6 +4834,11 @@
     "message": "Room ready",
     "translation": "Phòng đã sẵn sàng"
   },
+  "2Rrohw": {
+    "message": "Rose",
+    "context": "sleeve colour",
+    "translation": "Hồng"
+  },
   "BulyBf": {
     "message": "Rotate",
     "translation": "Xoay"
@@ -4720,6 +4911,11 @@
     "message": "Row {rowNumber}: quantity must be 1 to {max}.",
     "translation": "Hàng {rowNumber}: số lượng phải từ 1 đến {max}."
   },
+  "0NRnTQ": {
+    "message": "Royal blue",
+    "context": "sleeve colour",
+    "translation": "Xanh hoàng gia"
+  },
   "duDNyy": {
     "message": "Rule Box",
     "translation": "Rule Box"
@@ -4750,6 +4946,11 @@
     "message": "Sample Prizes",
     "translation": "Prize mẫu"
   },
+  "0jhHGF": {
+    "message": "Sand",
+    "context": "sleeve colour",
+    "translation": "Cát"
+  },
   "tfDRzk": {
     "message": "Save",
     "translation": "Lưu"
@@ -4779,9 +4980,18 @@
     "message": "Saved for this visit only",
     "translation": "Chỉ lưu cho lần truy cập này"
   },
+  "K_F6pa": {
+    "message": "Saving…",
+    "translation": "Đang lưu…"
+  },
   "pHxB6X": {
     "message": "Say…",
     "translation": "Nói…"
+  },
+  "gofk-z": {
+    "message": "Scales",
+    "context": "sleeve pattern",
+    "translation": "Vảy"
   },
   "JTYvAw": {
     "message": "Search cards",
@@ -5133,11 +5343,21 @@
     "message": "Skip",
     "translation": "Bỏ qua"
   },
+  "8Qf85O": {
+    "message": "Sky",
+    "context": "sleeve colour",
+    "translation": "Xanh da trời"
+  },
   "QIIV0m": {
     "message": "Slate",
     "comments": [
       "A table look: the colour"
     ],
+    "translation": "Xám đá"
+  },
+  "OZCs0k": {
+    "message": "Slate",
+    "context": "sleeve colour",
     "translation": "Xám đá"
   },
   "Se3Re8": {
@@ -5147,6 +5367,11 @@
   "P12gHj": {
     "message": "Smaller cards",
     "translation": "Lá bài nhỏ hơn"
+  },
+  "Vy1bgl": {
+    "message": "Snow",
+    "context": "sleeve colour",
+    "translation": "Trắng tuyết"
   },
   "6N0DKq": {
     "message": "Solo table",
@@ -5288,10 +5513,19 @@
     "context": "Pokémon stage",
     "translation": "Stage 2"
   },
+  "RSLXu8": {
+    "message": "Standard",
+    "context": "card back",
+    "translation": "Tiêu chuẩn"
+  },
   "GlGLvC": {
     "message": "Standard",
     "context": "deck format",
     "translation": "Standard"
+  },
+  "hr1qOs": {
+    "message": "Standard back",
+    "translation": "Mặt sau tiêu chuẩn"
   },
   "Tg13WJ": {
     "message": "Standard card",
@@ -5300,6 +5534,11 @@
   "kGkZLk": {
     "message": "Standings",
     "translation": "Bảng xếp hạng"
+  },
+  "Hgg1rW": {
+    "message": "Star",
+    "context": "sleeve emblem",
+    "translation": "Ngôi sao"
   },
   "WrLzY2": {
     "message": "Start a game",
@@ -5329,6 +5568,11 @@
   "B2cOHf": {
     "message": "Stop sorting hand",
     "translation": "Dừng sắp xếp bài trên tay"
+  },
+  "yy_J3n": {
+    "message": "Stripes",
+    "context": "sleeve pattern",
+    "translation": "Sọc"
   },
   "yqeLY3": {
     "message": "Supporter",
@@ -5482,6 +5726,11 @@
     ],
     "translation": "TCG Pocket"
   },
+  "0D9HyG": {
+    "message": "Teal",
+    "context": "sleeve colour",
+    "translation": "Xanh mòng két"
+  },
   "z5r9Ja": {
     "message": "Technical Machine",
     "context": "Trainer card kind",
@@ -5500,6 +5749,10 @@
     "message": "That file can't be opened here.",
     "translation": "Không thể mở tệp đó ở đây."
   },
+  "KQLVDi": {
+    "message": "That file isn't a picture.",
+    "translation": "Tệp đó không phải là hình ảnh."
+  },
   "ZMr878": {
     "message": "That image didn't load.",
     "translation": "Không tải được ảnh đó."
@@ -5507,6 +5760,14 @@
   "B4ZAXF": {
     "message": "That one was skipped.",
     "translation": "Thao tác vừa rồi đã bị bỏ qua."
+  },
+  "qqEjGU": {
+    "message": "That picture can't be read.",
+    "translation": "Không thể đọc hình ảnh đó."
+  },
+  "HnGmBe": {
+    "message": "That picture is over 20 MB.",
+    "translation": "Hình ảnh đó vượt quá 20 MB."
   },
   "nWbyfh": {
     "message": "That replay file couldn't be opened.",
@@ -6016,13 +6277,13 @@
     "context": "give the keys to this shortcut",
     "translation": "Dùng ở đây"
   },
-  "PTd_zR": {
-    "message": "Use image",
-    "translation": "Dùng ảnh"
-  },
   "mVjzvv": {
     "message": "Use on {seat}",
     "translation": "Dùng cho {seat}"
+  },
+  "yoAGc6": {
+    "message": "Use this back",
+    "translation": "Dùng mặt sau này"
   },
   "8ZgYGP": {
     "message": "Use this print for the {deckCopies} in the deck",
@@ -6057,6 +6318,16 @@
     "message": "View whole card",
     "translation": "Xem toàn bộ lá bài"
   },
+  "WUyPia": {
+    "message": "Violet",
+    "context": "card back",
+    "translation": "Tím"
+  },
+  "-Uf5mz": {
+    "message": "Violet",
+    "context": "sleeve colour",
+    "translation": "Tím"
+  },
   "RVlHmr": {
     "message": "VSTAR marker",
     "translation": "Dấu VSTAR"
@@ -6069,6 +6340,11 @@
     "message": "Water",
     "context": "Pokémon type",
     "translation": "Nước"
+  },
+  "4iNUJT": {
+    "message": "Waves",
+    "context": "sleeve pattern",
+    "translation": "Sóng"
   },
   "AHlkVG": {
     "message": "Weakness",
@@ -6164,6 +6440,10 @@
     "message": "Your Lost Zone",
     "translation": "Lost Zone của bạn"
   },
+  "1PoiFH": {
+    "message": "Your picture",
+    "translation": "Hình của bạn"
+  },
   "Oi-Qz3": {
     "message": "Your playboard",
     "translation": "Thảm chơi của bạn"
@@ -6175,6 +6455,11 @@
   "yuM-lV": {
     "message": "Your turn",
     "translation": "Lượt của bạn"
+  },
+  "X0l3In": {
+    "message": "Yours",
+    "context": "card backs the player made",
+    "translation": "Của bạn"
   },
   "XQaL9V": {
     "message": "Zone outlines",

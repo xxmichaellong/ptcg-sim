@@ -1117,6 +1117,11 @@
     ],
     "translation": "Yetenek kullanıldı"
   },
+  "v0rlF7": {
+    "message": "Accent",
+    "context": "sleeve",
+    "translation": "Vurgu"
+  },
   "BZkiHi": {
     "message": "Access to an exclusive Discord channel for priority suggestions/feature proposals/troubleshooting support.",
     "translation": "Öncelikli öneriler, özellik teklifleri ve sorun giderme desteği için özel bir Discord kanalına erişim."
@@ -1285,6 +1290,16 @@
     "message": "Always shown while it holds cards.",
     "translation": "Kart içerdiği sürece hep görünür."
   },
+  "Cpqhqr": {
+    "message": "Amber",
+    "context": "card back",
+    "translation": "Kehribar"
+  },
+  "2XejlY": {
+    "message": "Amber",
+    "context": "sleeve colour",
+    "translation": "Kehribar"
+  },
   "Uu-7-8": {
     "message": "An <0>open-source</0> Pokémon TCG table.",
     "translation": "<0>Açık kaynaklı</0> bir Pokémon TCG masası."
@@ -1299,13 +1314,6 @@
       "Keep 'blank' and 'theme' in English: they are what the player types"
     ],
     "translation": "Bir görsel URL'si, 'blank' veya 'theme'."
-  },
-  "hQE7TV": {
-    "message": "An image URL, or 'default'.",
-    "comments": [
-      "Keep 'default' in English: it is what the player types"
-    ],
-    "translation": "Bir görsel URL'si veya 'default'."
   },
   "ctNH7H": {
     "message": "Ancient",
@@ -1411,6 +1419,11 @@
     "message": "Automatic",
     "translation": "Otomatik"
   },
+  "pr_nRt": {
+    "message": "Azure",
+    "context": "card back",
+    "translation": "Gök mavisi"
+  },
   "USi6Js": {
     "message": "Baby",
     "context": "Pokémon stage",
@@ -1459,10 +1472,20 @@
     "message": "Back to your decks",
     "translation": "Destelerine dön"
   },
+  "GhQ0ZN": {
+    "message": "Backs",
+    "context": "card backs",
+    "translation": "Arka yüzler"
+  },
   "Why0fp": {
     "message": "Backspace",
     "context": "keyboard key",
     "translation": "Backspace"
+  },
+  "DA4ED5": {
+    "message": "Ball",
+    "context": "sleeve emblem",
+    "translation": "Top"
   },
   "hrit5V": {
     "message": "Basic",
@@ -1531,6 +1554,11 @@
       "In \"Back to board cards\": the cards on the board."
     ],
     "translation": "oyun alanı kartları"
+  },
+  "f4EnAz": {
+    "message": "Bolt",
+    "context": "sleeve emblem",
+    "translation": "Şimşek"
   },
   "LAq-1T": {
     "message": "Both",
@@ -1633,6 +1661,10 @@
     "message": "Card assembled preview",
     "translation": "Kart birleştirilmiş önizleme"
   },
+  "86aE2l": {
+    "message": "Card back",
+    "translation": "Kart arkası"
+  },
   "M3FSd1": {
     "message": "Card back for {slotSeat}",
     "translation": "{slotSeat} için kart arkası"
@@ -1697,10 +1729,6 @@
     "message": "Change background",
     "translation": "Arka planı değiştir"
   },
-  "PCF3WN": {
-    "message": "Change card back",
-    "translation": "Kart arkasını değiştir"
-  },
   "lKPW0c": {
     "message": "Change card back for {slotSeat}",
     "translation": "{slotSeat} için kart arkasını değiştir"
@@ -1752,6 +1780,11 @@
     "message": "Checking…",
     "translation": "Kontrol ediliyor…"
   },
+  "Oyrf8q": {
+    "message": "Checks",
+    "context": "sleeve pattern",
+    "translation": "Kareli"
+  },
   "mQr73T": {
     "message": "Choose",
     "comments": [
@@ -1773,6 +1806,10 @@
   "Trhamk": {
     "message": "Choose a deck to play",
     "translation": "Oynamak için bir deste seç"
+  },
+  "Qzm71e": {
+    "message": "Choose a picture",
+    "translation": "Resim seç"
   },
   "TvEJEL": {
     "message": "Choose the deck for {slotSeat}",
@@ -1875,6 +1912,11 @@
     "context": "Pokémon type",
     "translation": "Renksiz"
   },
+  "I3ktYd": {
+    "message": "Colour",
+    "context": "sleeve",
+    "translation": "Renk"
+  },
   "45MZFs": {
     "message": "Commands",
     "translation": "Komutlar"
@@ -1926,6 +1968,10 @@
     "message": "Couldn't create a room. Try again.",
     "translation": "Oda oluşturulamadı. Tekrar dene."
   },
+  "d9B72Y": {
+    "message": "Couldn't get a picture from that link.",
+    "translation": "Bu bağlantıdan resim alınamadı."
+  },
   "Glz9_Y": {
     "message": "Couldn't join the room. Try again.",
     "translation": "Odaya katılınamadı. Yeniden dene."
@@ -1961,6 +2007,10 @@
   "heYM3E": {
     "message": "Couldn't resume the game",
     "translation": "Oyuna devam edilemedi"
+  },
+  "au8LN1": {
+    "message": "Couldn't save that picture. Try again.",
+    "translation": "Resim kaydedilemedi. Tekrar dene."
   },
   "ETE6Wl": {
     "message": "Couldn't save the game",
@@ -2027,6 +2077,16 @@
     "message": "Creating…",
     "context": "a room",
     "translation": "Oluşturuluyor…"
+  },
+  "6vtp4B": {
+    "message": "Crimson",
+    "context": "card back",
+    "translation": "Koyu kırmızı"
+  },
+  "w8Rl7X": {
+    "message": "Crimson",
+    "context": "sleeve colour",
+    "translation": "Koyu kırmızı"
   },
   "ETt3ev": {
     "message": "Ctrl",
@@ -2181,6 +2241,21 @@
     "message": "Deselect",
     "translation": "Seçimi kaldır"
   },
+  "lJjOBS": {
+    "message": "Design",
+    "context": "a card back the player designed",
+    "translation": "Tasarım"
+  },
+  "BBlHk-": {
+    "message": "Design",
+    "context": "design a card back",
+    "translation": "Tasarla"
+  },
+  "zhmNG6": {
+    "message": "Diamonds",
+    "context": "sleeve pattern",
+    "translation": "Elmas"
+  },
   "cCCVzA": {
     "message": "Didn't go through",
     "translation": "İşlem gerçekleşmedi"
@@ -2266,6 +2341,11 @@
     "context": "finished",
     "translation": "Bitti"
   },
+  "6yxheJ": {
+    "message": "Dots",
+    "context": "sleeve pattern",
+    "translation": "Noktalı"
+  },
   "BDC29J": {
     "message": "Double-click <0>{0}</0> in your hand to read it.",
     "translation": "Okumak için elindeki <0>{0}</0> kartına çift tıkla."
@@ -2297,6 +2377,10 @@
   "n3U3s1": {
     "message": "Drag a Basic Pokémon from your hand onto your <0>Active Spot</0>.",
     "translation": "Elindeki bir Temel Pokémon'u sürükleyip <0>Aktif Alanına</0> bırak."
+  },
+  "eO8I4v": {
+    "message": "Drag to place it",
+    "translation": "Yerleştirmek için sürükle"
   },
   "sEjSlz": {
     "message": "Dragon",
@@ -2342,6 +2426,11 @@
   "b0MOy2": {
     "message": "Draw, search and shuffle",
     "translation": "Çek, ara ve karıştır"
+  },
+  "oMUr3k": {
+    "message": "Drop",
+    "context": "sleeve emblem",
+    "translation": "Damla"
   },
   "IsvGW6": {
     "message": "Drop to import",
@@ -2401,6 +2490,11 @@
   "Bd1_Eb": {
     "message": "Edit deck",
     "translation": "Desteyi düzenle"
+  },
+  "eAabzD": {
+    "message": "Emblem",
+    "context": "sleeve",
+    "translation": "Amblem"
   },
   "1PBKgv": {
     "message": "End",
@@ -2619,6 +2713,11 @@
     "message": "Fire type, Basic",
     "translation": "Ateş türü, Temel"
   },
+  "OE9EAy": {
+    "message": "Flame",
+    "context": "sleeve emblem",
+    "translation": "Alev"
+  },
   "gQp6L7": {
     "message": "Flat",
     "context": "table depth setting",
@@ -2677,6 +2776,10 @@
     "context": "deck format",
     "translation": "Format"
   },
+  "ToYRS-": {
+    "message": "From a link",
+    "translation": "Bağlantıdan"
+  },
   "qIodFG": {
     "message": "Frost",
     "comments": [
@@ -2718,9 +2821,17 @@
     "message": "Game resumed",
     "translation": "Oyun devam ediyor"
   },
+  "gqh64K": {
+    "message": "Get",
+    "translation": "Al"
+  },
   "4RM73X": {
     "message": "Get a sponsor tag on your GitHub profile (if sponsoring via GitHub, not applicable for sponsors through PayPal. Currently in the process of getting my GH sponsor page approved 😛).",
     "translation": "GitHub profilinde sponsor etiketi kazan (yalnızca GitHub üzerinden sponsor olanlar için geçerlidir, PayPal ile sponsor olanlar için geçerli değildir. GH sponsor sayfamın onaylanması şu an süreçte 😛)."
+  },
+  "1wmsrg": {
+    "message": "Getting…",
+    "translation": "Alınıyor…"
   },
   "kbTnWg": {
     "message": "Github Sponsors Link",
@@ -2729,6 +2840,11 @@
   "0qq_sj": {
     "message": "Go to the Solo table",
     "translation": "Solo masaya git"
+  },
+  "R6itFF": {
+    "message": "Gold",
+    "context": "sleeve colour",
+    "translation": "Altın"
   },
   "iN8jqp": {
     "message": "Grass",
@@ -2890,6 +3006,10 @@
     "message": "How much damage?",
     "translation": "Kaç hasar?"
   },
+  "w3nYsM": {
+    "message": "How to choose",
+    "translation": "Nasıl seçilir"
+  },
   "oT-Cnl": {
     "message": "HP",
     "context": "sort cards by",
@@ -2906,13 +3026,6 @@
   "LgcKSI": {
     "message": "HP at most",
     "translation": "En fazla HP"
-  },
-  "fVGc9-": {
-    "message": "https://… or default",
-    "comments": [
-      "Keep 'default' in English: it is what the player types"
-    ],
-    "translation": "https://… veya default"
   },
   "OaHYvQ": {
     "message": "https://…, blank or theme",
@@ -2980,6 +3093,11 @@
     ],
     "translation": "destede"
   },
+  "QphUbA": {
+    "message": "Ink",
+    "context": "sleeve colour",
+    "translation": "Mürekkep"
+  },
   "fZsAhg": {
     "message": "Insert",
     "context": "keyboard key",
@@ -3041,6 +3159,16 @@
   "Rw42Cd": {
     "message": "Its cards couldn't be read.",
     "translation": "Kartları okunamadı."
+  },
+  "h0iD6U": {
+    "message": "Jade",
+    "context": "card back",
+    "translation": "Yeşim"
+  },
+  "i49U_n": {
+    "message": "Jade",
+    "context": "sleeve colour",
+    "translation": "Yeşim"
   },
   "Fz2DU1": {
     "message": "Join a room",
@@ -3125,6 +3253,11 @@
     "message": "Layout (optional)",
     "translation": "Yerleşim (isteğe bağlı)"
   },
+  "YGg_TP": {
+    "message": "Leaf",
+    "context": "sleeve emblem",
+    "translation": "Yaprak"
+  },
   "1ng4Ht": {
     "message": "Leave in play",
     "translation": "Oyunda bırak"
@@ -3179,6 +3312,11 @@
     "message": "Lightning",
     "context": "Pokémon type",
     "translation": "Elektrik"
+  },
+  "7QxCqs": {
+    "message": "Lime",
+    "context": "sleeve colour",
+    "translation": "Misket limonu"
   },
   "JL_ceN": {
     "message": "Limitless",
@@ -3486,6 +3624,11 @@
     "context": "my half of the table",
     "translation": "Benim"
   },
+  "5jDsb9": {
+    "message": "Moon",
+    "context": "sleeve emblem",
+    "translation": "Ay"
+  },
   "2FYpfJ": {
     "message": "More",
     "translation": "Daha fazla"
@@ -3624,6 +3767,11 @@
     "message": "Natural card placement",
     "translation": "Doğal kart yerleşimi"
   },
+  "hmYrgt": {
+    "message": "Navy",
+    "context": "sleeve colour",
+    "translation": "Lacivert"
+  },
   "rf9azy": {
     "message": "Needs at least one Basic Pokémon.",
     "translation": "En az bir Temel Pokémon gerekli."
@@ -3759,6 +3907,11 @@
   "6psMRl": {
     "message": "None",
     "context": "no Resistance",
+    "translation": "Yok"
+  },
+  "zA5yks": {
+    "message": "None",
+    "context": "sleeve emblem",
     "translation": "Yok"
   },
   "NfqnuJ": {
@@ -3995,6 +4148,10 @@
     "message": "Opponents' custom backs",
     "translation": "Rakiplerin özel arka yüzleri"
   },
+  "l2I52S": {
+    "message": "or drop or paste one here",
+    "translation": "veya buraya bırak ya da yapıştır"
+  },
   "eH_2Pb": {
     "message": "Other",
     "context": "Trainer card kind",
@@ -4058,6 +4215,10 @@
     "message": "Paste a decklist first.",
     "translation": "Önce bir deste listesi yapıştır."
   },
+  "lrOsQc": {
+    "message": "Paste a link to a picture.",
+    "translation": "Bir resmin bağlantısını yapıştır."
+  },
   "aGL2ob": {
     "message": "Paste a list from the clipboard",
     "translation": "Panodan bir liste yapıştır"
@@ -4078,6 +4239,11 @@
     "message": "Paste with Ctrl+V (⌘V) instead",
     "translation": "Bunun yerine Ctrl+V (⌘V) ile yapıştır"
   },
+  "X1Ni8e": {
+    "message": "Pattern",
+    "context": "sleeve",
+    "translation": "Desen"
+  },
   "cfCrKd": {
     "message": "Paypal Donation Link",
     "translation": "PayPal bağış bağlantısı"
@@ -4090,6 +4256,11 @@
     "message": "Pick random card",
     "translation": "Rastgele kart seç"
   },
+  "KBXd3D": {
+    "message": "Picture",
+    "context": "a card back from a picture",
+    "translation": "Resim"
+  },
   "xYvd7u": {
     "message": "Piece position",
     "translation": "Parça konumu"
@@ -4100,6 +4271,11 @@
       "Command palette section: deck, discard, prizes…"
     ],
     "translation": "Yığınlar"
+  },
+  "K1IcaP": {
+    "message": "Plain",
+    "context": "sleeve pattern",
+    "translation": "Düz"
   },
   "SW-cIq": {
     "message": "Play",
@@ -4149,6 +4325,11 @@
     "message": "Player",
     "context": "unnamed seat",
     "translation": "Oyuncu"
+  },
+  "zFLJEh": {
+    "message": "Plum",
+    "context": "sleeve colour",
+    "translation": "Erik"
   },
   "KO7h6x": {
     "message": "Pocket decks have no Energy cards.",
@@ -4347,6 +4528,11 @@
   "U86mdr": {
     "message": "Rarity",
     "translation": "Nadirlik"
+  },
+  "L8r2Hh": {
+    "message": "Rays",
+    "context": "sleeve pattern",
+    "translation": "Işınlar"
   },
   "ykWEvf": {
     "message": "Read",
@@ -4648,6 +4834,11 @@
     "message": "Room ready",
     "translation": "Oda hazır"
   },
+  "2Rrohw": {
+    "message": "Rose",
+    "context": "sleeve colour",
+    "translation": "Gül"
+  },
   "BulyBf": {
     "message": "Rotate",
     "translation": "Döndür"
@@ -4720,6 +4911,11 @@
     "message": "Row {rowNumber}: quantity must be 1 to {max}.",
     "translation": "Satır {rowNumber}: adet 1 ile {max} arasında olmalı."
   },
+  "0NRnTQ": {
+    "message": "Royal blue",
+    "context": "sleeve colour",
+    "translation": "Kraliyet mavisi"
+  },
   "duDNyy": {
     "message": "Rule Box",
     "translation": "Kural Kutusu"
@@ -4750,6 +4946,11 @@
     "message": "Sample Prizes",
     "translation": "Örnek ödül kartları"
   },
+  "0jhHGF": {
+    "message": "Sand",
+    "context": "sleeve colour",
+    "translation": "Kum"
+  },
   "tfDRzk": {
     "message": "Save",
     "translation": "Kaydet"
@@ -4779,9 +4980,18 @@
     "message": "Saved for this visit only",
     "translation": "Yalnızca bu ziyaret için kaydedildi"
   },
+  "K_F6pa": {
+    "message": "Saving…",
+    "translation": "Kaydediliyor…"
+  },
   "pHxB6X": {
     "message": "Say…",
     "translation": "Söyle…"
+  },
+  "gofk-z": {
+    "message": "Scales",
+    "context": "sleeve pattern",
+    "translation": "Pullar"
   },
   "JTYvAw": {
     "message": "Search cards",
@@ -5133,11 +5343,21 @@
     "message": "Skip",
     "translation": "Atla"
   },
+  "8Qf85O": {
+    "message": "Sky",
+    "context": "sleeve colour",
+    "translation": "Gök"
+  },
   "QIIV0m": {
     "message": "Slate",
     "comments": [
       "A table look: the colour"
     ],
+    "translation": "Arduvaz"
+  },
+  "OZCs0k": {
+    "message": "Slate",
+    "context": "sleeve colour",
     "translation": "Arduvaz"
   },
   "Se3Re8": {
@@ -5147,6 +5367,11 @@
   "P12gHj": {
     "message": "Smaller cards",
     "translation": "Daha küçük kartlar"
+  },
+  "Vy1bgl": {
+    "message": "Snow",
+    "context": "sleeve colour",
+    "translation": "Kar"
   },
   "6N0DKq": {
     "message": "Solo table",
@@ -5288,10 +5513,19 @@
     "context": "Pokémon stage",
     "translation": "2. Aşama"
   },
+  "RSLXu8": {
+    "message": "Standard",
+    "context": "card back",
+    "translation": "Standart"
+  },
   "GlGLvC": {
     "message": "Standard",
     "context": "deck format",
     "translation": "Standart"
+  },
+  "hr1qOs": {
+    "message": "Standard back",
+    "translation": "Standart arka yüz"
   },
   "Tg13WJ": {
     "message": "Standard card",
@@ -5300,6 +5534,11 @@
   "kGkZLk": {
     "message": "Standings",
     "translation": "Sıralama"
+  },
+  "Hgg1rW": {
+    "message": "Star",
+    "context": "sleeve emblem",
+    "translation": "Yıldız"
   },
   "WrLzY2": {
     "message": "Start a game",
@@ -5329,6 +5568,11 @@
   "B2cOHf": {
     "message": "Stop sorting hand",
     "translation": "Eli sıralamayı bırak"
+  },
+  "yy_J3n": {
+    "message": "Stripes",
+    "context": "sleeve pattern",
+    "translation": "Çizgiler"
   },
   "yqeLY3": {
     "message": "Supporter",
@@ -5482,6 +5726,11 @@
     ],
     "translation": "TCG Pocket"
   },
+  "0D9HyG": {
+    "message": "Teal",
+    "context": "sleeve colour",
+    "translation": "Deniz mavisi"
+  },
   "z5r9Ja": {
     "message": "Technical Machine",
     "context": "Trainer card kind",
@@ -5500,6 +5749,10 @@
     "message": "That file can't be opened here.",
     "translation": "Bu dosya burada açılamıyor."
   },
+  "KQLVDi": {
+    "message": "That file isn't a picture.",
+    "translation": "Bu dosya bir resim değil."
+  },
   "ZMr878": {
     "message": "That image didn't load.",
     "translation": "Bu görsel yüklenmedi."
@@ -5507,6 +5760,14 @@
   "B4ZAXF": {
     "message": "That one was skipped.",
     "translation": "Bu atlandı."
+  },
+  "qqEjGU": {
+    "message": "That picture can't be read.",
+    "translation": "Bu resim okunamıyor."
+  },
+  "HnGmBe": {
+    "message": "That picture is over 20 MB.",
+    "translation": "Bu resim 20 MB'tan büyük."
   },
   "nWbyfh": {
     "message": "That replay file couldn't be opened.",
@@ -6016,13 +6277,13 @@
     "context": "give the keys to this shortcut",
     "translation": "Burada kullan"
   },
-  "PTd_zR": {
-    "message": "Use image",
-    "translation": "Görseli kullan"
-  },
   "mVjzvv": {
     "message": "Use on {seat}",
     "translation": "{seat} için kullan"
+  },
+  "yoAGc6": {
+    "message": "Use this back",
+    "translation": "Bu arka yüzü kullan"
   },
   "8ZgYGP": {
     "message": "Use this print for the {deckCopies} in the deck",
@@ -6057,6 +6318,16 @@
     "message": "View whole card",
     "translation": "Kartın tamamını göster"
   },
+  "WUyPia": {
+    "message": "Violet",
+    "context": "card back",
+    "translation": "Mor"
+  },
+  "-Uf5mz": {
+    "message": "Violet",
+    "context": "sleeve colour",
+    "translation": "Mor"
+  },
   "RVlHmr": {
     "message": "VSTAR marker",
     "translation": "VSTAR işaretçisi"
@@ -6069,6 +6340,11 @@
     "message": "Water",
     "context": "Pokémon type",
     "translation": "Su"
+  },
+  "4iNUJT": {
+    "message": "Waves",
+    "context": "sleeve pattern",
+    "translation": "Dalgalar"
   },
   "AHlkVG": {
     "message": "Weakness",
@@ -6164,6 +6440,10 @@
     "message": "Your Lost Zone",
     "translation": "Lost Zone'un"
   },
+  "1PoiFH": {
+    "message": "Your picture",
+    "translation": "Senin resmin"
+  },
   "Oi-Qz3": {
     "message": "Your playboard",
     "translation": "Oyun alanın"
@@ -6175,6 +6455,11 @@
   "yuM-lV": {
     "message": "Your turn",
     "translation": "Senin sıran"
+  },
+  "X0l3In": {
+    "message": "Yours",
+    "context": "card backs the player made",
+    "translation": "Seninkiler"
   },
   "XQaL9V": {
     "message": "Zone outlines",

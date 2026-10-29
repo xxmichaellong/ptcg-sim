@@ -660,9 +660,14 @@ export const DeckBuilderSession = ({
 
   const changeCardBack = useCallback(
     (target: DeckBuilderTarget): void => {
-      chooseCardBack(target);
+      // The chooser opens on the seat's back and offers the saved decks'.
+      const worn = library
+        .getSnapshot()
+        .decks.flatMap((deck) => (deck.cardBack ? [deck.cardBack] : []));
+      const current = cardBacks[target];
+      chooseCardBack(target, { ...(current ? { current } : {}), worn });
     },
-    [chooseCardBack]
+    [cardBacks, chooseCardBack, library]
   );
 
   return (

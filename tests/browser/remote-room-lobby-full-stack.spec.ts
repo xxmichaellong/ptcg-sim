@@ -4,6 +4,7 @@ import {
   answerOverlayConfirm,
   answerOverlayPrompt,
 } from './support/overlay-dialogs.js';
+import { chooseCardBackFromLink } from './support/card-back-chooser.js';
 import {
   routeCardBackImport,
   STORED_CARD_BACK,
@@ -253,15 +254,7 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     await expect(
       playerTwo.page.locator('#nativeDeckBuilderSummaryPanel')
     ).toHaveAttribute('data-card-count', '1');
-    const cardBackPrompt = answerOverlayPrompt(
-      playerTwo.page,
-      CUSTOM_CARD_BACK_URL
-    );
-    await playerTwo.page.locator('#changeCardBackButton').click();
-    expect((await cardBackPrompt).message).toBe('Change card back');
-    await expect(
-      playerTwo.page.getByRole('dialog', { name: 'Change card back' })
-    ).toHaveCount(0);
+    await chooseCardBackFromLink(playerTwo.page, CUSTOM_CARD_BACK_URL);
     // Made a back of our own (ADR-041): fetched once through the app, never
     // by the page.
     expect(importedCardBacks).toEqual([CUSTOM_CARD_BACK_URL]);

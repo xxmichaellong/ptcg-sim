@@ -94,7 +94,29 @@ export interface CountOptions {
   readonly finalFocus?: DialogFinalFocus;
 }
 
+/**
+ * A dialog whose content its asker draws (the card-back chooser): the
+ * shared frame, title and transitions round it, and `answer` to close it
+ * with a value or with nothing.
+ */
+export interface PanelOptions {
+  readonly title: string;
+  readonly body?: ReactNode;
+  readonly content: (answer: (value: string | null) => void) => ReactNode;
+  /** The panel's own class, beside the dialog's. */
+  readonly className?: string;
+  /** Aborting closes the dialog and resolves `null`. */
+  readonly signal?: AbortSignal;
+  /** See `DialogFinalFocus`. */
+  readonly finalFocus?: DialogFinalFocus;
+}
+
 export type DialogRequest =
+  | {
+      readonly kind: 'panel';
+      readonly id: number;
+      readonly options: PanelOptions;
+    }
   | {
       readonly kind: 'confirm';
       readonly id: number;
@@ -200,6 +222,17 @@ export const promptValue = (options: PromptOptions): Promise<string | null> =>
 export const pickCount = (options: CountOptions): Promise<number | null> =>
   enqueue<number | null>(
     { kind: 'count', id: nextRequestId++, options },
+    options.signal,
+    null
+  );
+
+/**
+ * Opens a panel the asker draws; resolves what it answers, or `null` when
+ * the player closes it.
+ */
+export const openPanel = (options: PanelOptions): Promise<string | null> =>
+  enqueue<string | null>(
+    { kind: 'panel', id: nextRequestId++, options },
     options.signal,
     null
   );

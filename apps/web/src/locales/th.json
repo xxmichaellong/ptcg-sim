@@ -1117,6 +1117,11 @@
     ],
     "translation": "ใช้ความสามารถแล้ว"
   },
+  "v0rlF7": {
+    "message": "Accent",
+    "context": "sleeve",
+    "translation": "สีเสริม"
+  },
   "BZkiHi": {
     "message": "Access to an exclusive Discord channel for priority suggestions/feature proposals/troubleshooting support.",
     "translation": "เข้าถึงช่อง Discord พิเศษเพื่อเสนอข้อเสนอแนะ/ฟีเจอร์ใหม่ก่อนใคร และรับความช่วยเหลือด้านการแก้ปัญหา"
@@ -1285,6 +1290,16 @@
     "message": "Always shown while it holds cards.",
     "translation": "แสดงตลอดเมื่อมีการ์ดอยู่"
   },
+  "Cpqhqr": {
+    "message": "Amber",
+    "context": "card back",
+    "translation": "อำพัน"
+  },
+  "2XejlY": {
+    "message": "Amber",
+    "context": "sleeve colour",
+    "translation": "อำพัน"
+  },
   "Uu-7-8": {
     "message": "An <0>open-source</0> Pokémon TCG table.",
     "translation": "โต๊ะเล่น Pokémon TCG <0>โอเพนซอร์ส</0>"
@@ -1299,13 +1314,6 @@
       "Keep 'blank' and 'theme' in English: they are what the player types"
     ],
     "translation": "URL ของรูปภาพ, 'blank' หรือ 'theme'"
-  },
-  "hQE7TV": {
-    "message": "An image URL, or 'default'.",
-    "comments": [
-      "Keep 'default' in English: it is what the player types"
-    ],
-    "translation": "URL ของรูปภาพ หรือ 'default'"
   },
   "ctNH7H": {
     "message": "Ancient",
@@ -1411,6 +1419,11 @@
     "message": "Automatic",
     "translation": "อัตโนมัติ"
   },
+  "pr_nRt": {
+    "message": "Azure",
+    "context": "card back",
+    "translation": "ฟ้าครามเข้ม"
+  },
   "USi6Js": {
     "message": "Baby",
     "context": "Pokémon stage",
@@ -1459,10 +1472,20 @@
     "message": "Back to your decks",
     "translation": "กลับไปที่เด็คของคุณ"
   },
+  "GhQ0ZN": {
+    "message": "Backs",
+    "context": "card backs",
+    "translation": "ด้านหลัง"
+  },
   "Why0fp": {
     "message": "Backspace",
     "context": "keyboard key",
     "translation": "Backspace"
+  },
+  "DA4ED5": {
+    "message": "Ball",
+    "context": "sleeve emblem",
+    "translation": "ลูกบอล"
   },
   "hrit5V": {
     "message": "Basic",
@@ -1531,6 +1554,11 @@
       "In \"Back to board cards\": the cards on the board."
     ],
     "translation": "การ์ดบนบอร์ด"
+  },
+  "f4EnAz": {
+    "message": "Bolt",
+    "context": "sleeve emblem",
+    "translation": "สายฟ้า"
   },
   "LAq-1T": {
     "message": "Both",
@@ -1633,6 +1661,10 @@
     "message": "Card assembled preview",
     "translation": "ตัวอย่างการ์ดที่ประกอบแล้ว"
   },
+  "86aE2l": {
+    "message": "Card back",
+    "translation": "ด้านหลังการ์ด"
+  },
   "M3FSd1": {
     "message": "Card back for {slotSeat}",
     "translation": "หลังการ์ดของ {slotSeat}"
@@ -1697,10 +1729,6 @@
     "message": "Change background",
     "translation": "เปลี่ยนพื้นหลัง"
   },
-  "PCF3WN": {
-    "message": "Change card back",
-    "translation": "เปลี่ยนหลังการ์ด"
-  },
   "lKPW0c": {
     "message": "Change card back for {slotSeat}",
     "translation": "เปลี่ยนหลังการ์ดของ {slotSeat}"
@@ -1752,6 +1780,11 @@
     "message": "Checking…",
     "translation": "กำลังตรวจสอบ…"
   },
+  "Oyrf8q": {
+    "message": "Checks",
+    "context": "sleeve pattern",
+    "translation": "ลายตาราง"
+  },
   "mQr73T": {
     "message": "Choose",
     "comments": [
@@ -1773,6 +1806,10 @@
   "Trhamk": {
     "message": "Choose a deck to play",
     "translation": "เลือกเด็คเพื่อเล่น"
+  },
+  "Qzm71e": {
+    "message": "Choose a picture",
+    "translation": "เลือกรูปภาพ"
   },
   "TvEJEL": {
     "message": "Choose the deck for {slotSeat}",
@@ -1875,6 +1912,11 @@
     "context": "Pokémon type",
     "translation": "ไร้สี"
   },
+  "I3ktYd": {
+    "message": "Colour",
+    "context": "sleeve",
+    "translation": "สี"
+  },
   "45MZFs": {
     "message": "Commands",
     "translation": "คำสั่ง"
@@ -1926,6 +1968,10 @@
     "message": "Couldn't create a room. Try again.",
     "translation": "สร้างห้องไม่สำเร็จ ลองอีกครั้ง"
   },
+  "d9B72Y": {
+    "message": "Couldn't get a picture from that link.",
+    "translation": "ดึงรูปภาพจากลิงก์นั้นไม่ได้"
+  },
   "Glz9_Y": {
     "message": "Couldn't join the room. Try again.",
     "translation": "เข้าร่วมห้องไม่สำเร็จ ลองอีกครั้ง"
@@ -1961,6 +2007,10 @@
   "heYM3E": {
     "message": "Couldn't resume the game",
     "translation": "เล่นเกมต่อไม่สำเร็จ"
+  },
+  "au8LN1": {
+    "message": "Couldn't save that picture. Try again.",
+    "translation": "บันทึกรูปภาพนั้นไม่ได้ ลองอีกครั้ง"
   },
   "ETE6Wl": {
     "message": "Couldn't save the game",
@@ -2027,6 +2077,16 @@
     "message": "Creating…",
     "context": "a room",
     "translation": "กำลังสร้าง…"
+  },
+  "6vtp4B": {
+    "message": "Crimson",
+    "context": "card back",
+    "translation": "แดงเข้ม"
+  },
+  "w8Rl7X": {
+    "message": "Crimson",
+    "context": "sleeve colour",
+    "translation": "แดงเข้ม"
   },
   "ETt3ev": {
     "message": "Ctrl",
@@ -2181,6 +2241,21 @@
     "message": "Deselect",
     "translation": "ยกเลิกการเลือก"
   },
+  "lJjOBS": {
+    "message": "Design",
+    "context": "a card back the player designed",
+    "translation": "ออกแบบเอง"
+  },
+  "BBlHk-": {
+    "message": "Design",
+    "context": "design a card back",
+    "translation": "ออกแบบ"
+  },
+  "zhmNG6": {
+    "message": "Diamonds",
+    "context": "sleeve pattern",
+    "translation": "ลายข้าวหลามตัด"
+  },
   "cCCVzA": {
     "message": "Didn't go through",
     "translation": "ดำเนินการไม่สำเร็จ"
@@ -2266,6 +2341,11 @@
     "context": "finished",
     "translation": "เสร็จแล้ว"
   },
+  "6yxheJ": {
+    "message": "Dots",
+    "context": "sleeve pattern",
+    "translation": "ลายจุด"
+  },
   "BDC29J": {
     "message": "Double-click <0>{0}</0> in your hand to read it.",
     "translation": "ดับเบิลคลิก <0>{0}</0> บนมือของคุณเพื่ออ่าน"
@@ -2297,6 +2377,10 @@
   "n3U3s1": {
     "message": "Drag a Basic Pokémon from your hand onto your <0>Active Spot</0>.",
     "translation": "ลากโปเกมอนพื้นฐานจากมือของคุณไปวางที่<0>ตำแหน่งต่อสู้</0>"
+  },
+  "eO8I4v": {
+    "message": "Drag to place it",
+    "translation": "ลากเพื่อวางตำแหน่ง"
   },
   "sEjSlz": {
     "message": "Dragon",
@@ -2342,6 +2426,11 @@
   "b0MOy2": {
     "message": "Draw, search and shuffle",
     "translation": "จั่ว ค้นหา และสับสำรับการ์ด"
+  },
+  "oMUr3k": {
+    "message": "Drop",
+    "context": "sleeve emblem",
+    "translation": "หยดน้ำ"
   },
   "IsvGW6": {
     "message": "Drop to import",
@@ -2401,6 +2490,11 @@
   "Bd1_Eb": {
     "message": "Edit deck",
     "translation": "แก้ไขเด็ค"
+  },
+  "eAabzD": {
+    "message": "Emblem",
+    "context": "sleeve",
+    "translation": "ตราสัญลักษณ์"
   },
   "1PBKgv": {
     "message": "End",
@@ -2619,6 +2713,11 @@
     "message": "Fire type, Basic",
     "translation": "ประเภทไฟ, พื้นฐาน"
   },
+  "OE9EAy": {
+    "message": "Flame",
+    "context": "sleeve emblem",
+    "translation": "เปลวไฟ"
+  },
   "gQp6L7": {
     "message": "Flat",
     "context": "table depth setting",
@@ -2677,6 +2776,10 @@
     "context": "deck format",
     "translation": "ฟอร์แมต"
   },
+  "ToYRS-": {
+    "message": "From a link",
+    "translation": "จากลิงก์"
+  },
   "qIodFG": {
     "message": "Frost",
     "comments": [
@@ -2718,9 +2821,17 @@
     "message": "Game resumed",
     "translation": "เล่นเกมต่อแล้ว"
   },
+  "gqh64K": {
+    "message": "Get",
+    "translation": "ดึงรูป"
+  },
   "4RM73X": {
     "message": "Get a sponsor tag on your GitHub profile (if sponsoring via GitHub, not applicable for sponsors through PayPal. Currently in the process of getting my GH sponsor page approved 😛).",
     "translation": "รับป้ายผู้สนับสนุนบนโปรไฟล์ GitHub ของคุณ (เฉพาะการสนับสนุนผ่าน GitHub ไม่รวมผู้สนับสนุนผ่าน PayPal ขณะนี้กำลังขออนุมัติหน้า GH sponsor อยู่ 😛)"
+  },
+  "1wmsrg": {
+    "message": "Getting…",
+    "translation": "กำลังดึงรูป…"
   },
   "kbTnWg": {
     "message": "Github Sponsors Link",
@@ -2729,6 +2840,11 @@
   "0qq_sj": {
     "message": "Go to the Solo table",
     "translation": "ไปที่โต๊ะ Solo"
+  },
+  "R6itFF": {
+    "message": "Gold",
+    "context": "sleeve colour",
+    "translation": "ทอง"
   },
   "iN8jqp": {
     "message": "Grass",
@@ -2890,6 +3006,10 @@
     "message": "How much damage?",
     "translation": "แดเมจเท่าไร"
   },
+  "w3nYsM": {
+    "message": "How to choose",
+    "translation": "วิธีเลือก"
+  },
   "oT-Cnl": {
     "message": "HP",
     "context": "sort cards by",
@@ -2906,13 +3026,6 @@
   "LgcKSI": {
     "message": "HP at most",
     "translation": "HP ไม่เกิน"
-  },
-  "fVGc9-": {
-    "message": "https://… or default",
-    "comments": [
-      "Keep 'default' in English: it is what the player types"
-    ],
-    "translation": "https://… หรือ default"
   },
   "OaHYvQ": {
     "message": "https://…, blank or theme",
@@ -2980,6 +3093,11 @@
     ],
     "translation": "ในเด็ค"
   },
+  "QphUbA": {
+    "message": "Ink",
+    "context": "sleeve colour",
+    "translation": "หมึก"
+  },
   "fZsAhg": {
     "message": "Insert",
     "context": "keyboard key",
@@ -3041,6 +3159,16 @@
   "Rw42Cd": {
     "message": "Its cards couldn't be read.",
     "translation": "ไม่สามารถอ่านการ์ดในเด็คนี้ได้"
+  },
+  "h0iD6U": {
+    "message": "Jade",
+    "context": "card back",
+    "translation": "เขียวหยก"
+  },
+  "i49U_n": {
+    "message": "Jade",
+    "context": "sleeve colour",
+    "translation": "เขียวหยก"
   },
   "Fz2DU1": {
     "message": "Join a room",
@@ -3125,6 +3253,11 @@
     "message": "Layout (optional)",
     "translation": "เลย์เอาต์ (ไม่บังคับ)"
   },
+  "YGg_TP": {
+    "message": "Leaf",
+    "context": "sleeve emblem",
+    "translation": "ใบไม้"
+  },
   "1ng4Ht": {
     "message": "Leave in play",
     "translation": "คงไว้บนกระดาน"
@@ -3179,6 +3312,11 @@
     "message": "Lightning",
     "context": "Pokémon type",
     "translation": "สายฟ้า"
+  },
+  "7QxCqs": {
+    "message": "Lime",
+    "context": "sleeve colour",
+    "translation": "เขียวมะนาว"
   },
   "JL_ceN": {
     "message": "Limitless",
@@ -3486,6 +3624,11 @@
     "context": "my half of the table",
     "translation": "ของฉัน"
   },
+  "5jDsb9": {
+    "message": "Moon",
+    "context": "sleeve emblem",
+    "translation": "พระจันทร์"
+  },
   "2FYpfJ": {
     "message": "More",
     "translation": "เพิ่มเติม"
@@ -3624,6 +3767,11 @@
     "message": "Natural card placement",
     "translation": "วางการ์ดแบบเป็นธรรมชาติ"
   },
+  "hmYrgt": {
+    "message": "Navy",
+    "context": "sleeve colour",
+    "translation": "น้ำเงินเข้ม"
+  },
   "rf9azy": {
     "message": "Needs at least one Basic Pokémon.",
     "translation": "ต้องมีโปเกมอนพื้นฐานอย่างน้อยหนึ่งใบ"
@@ -3759,6 +3907,11 @@
   "6psMRl": {
     "message": "None",
     "context": "no Resistance",
+    "translation": "ไม่มี"
+  },
+  "zA5yks": {
+    "message": "None",
+    "context": "sleeve emblem",
     "translation": "ไม่มี"
   },
   "NfqnuJ": {
@@ -3995,6 +4148,10 @@
     "message": "Opponents' custom backs",
     "translation": "ด้านหลังการ์ดแบบกำหนดเองของฝ่ายตรงข้าม"
   },
+  "l2I52S": {
+    "message": "or drop or paste one here",
+    "translation": "หรือลากมาวางหรือวางรูปที่นี่"
+  },
   "eH_2Pb": {
     "message": "Other",
     "context": "Trainer card kind",
@@ -4058,6 +4215,10 @@
     "message": "Paste a decklist first.",
     "translation": "วางเด็คลิสต์ก่อน"
   },
+  "lrOsQc": {
+    "message": "Paste a link to a picture.",
+    "translation": "วางลิงก์รูปภาพ"
+  },
   "aGL2ob": {
     "message": "Paste a list from the clipboard",
     "translation": "วางรายการจากคลิปบอร์ด"
@@ -4078,6 +4239,11 @@
     "message": "Paste with Ctrl+V (⌘V) instead",
     "translation": "ให้วางด้วย Ctrl+V (⌘V) แทน"
   },
+  "X1Ni8e": {
+    "message": "Pattern",
+    "context": "sleeve",
+    "translation": "ลวดลาย"
+  },
   "cfCrKd": {
     "message": "Paypal Donation Link",
     "translation": "ลิงก์บริจาค PayPal"
@@ -4090,6 +4256,11 @@
     "message": "Pick random card",
     "translation": "สุ่มการ์ด"
   },
+  "KBXd3D": {
+    "message": "Picture",
+    "context": "a card back from a picture",
+    "translation": "รูปภาพ"
+  },
   "xYvd7u": {
     "message": "Piece position",
     "translation": "ตำแหน่งชิ้นส่วน"
@@ -4100,6 +4271,11 @@
       "Command palette section: deck, discard, prizes…"
     ],
     "translation": "กองการ์ด"
+  },
+  "K1IcaP": {
+    "message": "Plain",
+    "context": "sleeve pattern",
+    "translation": "ธรรมดา"
   },
   "SW-cIq": {
     "message": "Play",
@@ -4149,6 +4325,11 @@
     "message": "Player",
     "context": "unnamed seat",
     "translation": "ผู้เล่น"
+  },
+  "zFLJEh": {
+    "message": "Plum",
+    "context": "sleeve colour",
+    "translation": "ม่วงเข้ม"
   },
   "KO7h6x": {
     "message": "Pocket decks have no Energy cards.",
@@ -4347,6 +4528,11 @@
   "U86mdr": {
     "message": "Rarity",
     "translation": "ความหายาก"
+  },
+  "L8r2Hh": {
+    "message": "Rays",
+    "context": "sleeve pattern",
+    "translation": "แสงรัศมี"
   },
   "ykWEvf": {
     "message": "Read",
@@ -4648,6 +4834,11 @@
     "message": "Room ready",
     "translation": "ห้องพร้อมแล้ว"
   },
+  "2Rrohw": {
+    "message": "Rose",
+    "context": "sleeve colour",
+    "translation": "ชมพูกุหลาบ"
+  },
   "BulyBf": {
     "message": "Rotate",
     "translation": "หมุน"
@@ -4720,6 +4911,11 @@
     "message": "Row {rowNumber}: quantity must be 1 to {max}.",
     "translation": "แถว {rowNumber}: จำนวนต้องอยู่ระหว่าง 1 ถึง {max}"
   },
+  "0NRnTQ": {
+    "message": "Royal blue",
+    "context": "sleeve colour",
+    "translation": "น้ำเงินเข้ม"
+  },
   "duDNyy": {
     "message": "Rule Box",
     "translation": "โปเกมอนที่มีกฎ"
@@ -4750,6 +4946,11 @@
     "message": "Sample Prizes",
     "translation": "การ์ดรางวัลตัวอย่าง"
   },
+  "0jhHGF": {
+    "message": "Sand",
+    "context": "sleeve colour",
+    "translation": "สีทราย"
+  },
   "tfDRzk": {
     "message": "Save",
     "translation": "บันทึก"
@@ -4779,9 +4980,18 @@
     "message": "Saved for this visit only",
     "translation": "บันทึกไว้สำหรับการเข้าชมครั้งนี้เท่านั้น"
   },
+  "K_F6pa": {
+    "message": "Saving…",
+    "translation": "กำลังบันทึก…"
+  },
   "pHxB6X": {
     "message": "Say…",
     "translation": "พูด…"
+  },
+  "gofk-z": {
+    "message": "Scales",
+    "context": "sleeve pattern",
+    "translation": "เกล็ด"
   },
   "JTYvAw": {
     "message": "Search cards",
@@ -5133,12 +5343,22 @@
     "message": "Skip",
     "translation": "ข้าม"
   },
+  "8Qf85O": {
+    "message": "Sky",
+    "context": "sleeve colour",
+    "translation": "ฟ้า"
+  },
   "QIIV0m": {
     "message": "Slate",
     "comments": [
       "A table look: the colour"
     ],
     "translation": "สีหินชนวน"
+  },
+  "OZCs0k": {
+    "message": "Slate",
+    "context": "sleeve colour",
+    "translation": "เทาหินชนวน"
   },
   "Se3Re8": {
     "message": "Sleeve sheen",
@@ -5147,6 +5367,11 @@
   "P12gHj": {
     "message": "Smaller cards",
     "translation": "การ์ดเล็กลง"
+  },
+  "Vy1bgl": {
+    "message": "Snow",
+    "context": "sleeve colour",
+    "translation": "ขาวหิมะ"
   },
   "6N0DKq": {
     "message": "Solo table",
@@ -5288,10 +5513,19 @@
     "context": "Pokémon stage",
     "translation": "ร่าง 2"
   },
+  "RSLXu8": {
+    "message": "Standard",
+    "context": "card back",
+    "translation": "มาตรฐาน"
+  },
   "GlGLvC": {
     "message": "Standard",
     "context": "deck format",
     "translation": "สแตนดาร์ด"
+  },
+  "hr1qOs": {
+    "message": "Standard back",
+    "translation": "ลายหลังการ์ดมาตรฐาน"
   },
   "Tg13WJ": {
     "message": "Standard card",
@@ -5300,6 +5534,11 @@
   "kGkZLk": {
     "message": "Standings",
     "translation": "อันดับ"
+  },
+  "Hgg1rW": {
+    "message": "Star",
+    "context": "sleeve emblem",
+    "translation": "ดาว"
   },
   "WrLzY2": {
     "message": "Start a game",
@@ -5329,6 +5568,11 @@
   "B2cOHf": {
     "message": "Stop sorting hand",
     "translation": "หยุดเรียงการ์ดบนมือ"
+  },
+  "yy_J3n": {
+    "message": "Stripes",
+    "context": "sleeve pattern",
+    "translation": "ลายทาง"
   },
   "yqeLY3": {
     "message": "Supporter",
@@ -5482,6 +5726,11 @@
     ],
     "translation": "TCG Pocket"
   },
+  "0D9HyG": {
+    "message": "Teal",
+    "context": "sleeve colour",
+    "translation": "เขียวน้ำทะเล"
+  },
   "z5r9Ja": {
     "message": "Technical Machine",
     "context": "Trainer card kind",
@@ -5500,6 +5749,10 @@
     "message": "That file can't be opened here.",
     "translation": "เปิดไฟล์นี้ที่นี่ไม่ได้"
   },
+  "KQLVDi": {
+    "message": "That file isn't a picture.",
+    "translation": "ไฟล์นี้ไม่ใช่รูปภาพ"
+  },
   "ZMr878": {
     "message": "That image didn't load.",
     "translation": "โหลดรูปภาพนั้นไม่สำเร็จ"
@@ -5507,6 +5760,14 @@
   "B4ZAXF": {
     "message": "That one was skipped.",
     "translation": "ข้ามรายการนั้นแล้ว"
+  },
+  "qqEjGU": {
+    "message": "That picture can't be read.",
+    "translation": "ไม่สามารถอ่านรูปภาพนี้ได้"
+  },
+  "HnGmBe": {
+    "message": "That picture is over 20 MB.",
+    "translation": "รูปภาพมีขนาดเกิน 20 MB"
   },
   "nWbyfh": {
     "message": "That replay file couldn't be opened.",
@@ -6016,13 +6277,13 @@
     "context": "give the keys to this shortcut",
     "translation": "ใช้ที่นี่"
   },
-  "PTd_zR": {
-    "message": "Use image",
-    "translation": "ใช้รูปภาพ"
-  },
   "mVjzvv": {
     "message": "Use on {seat}",
     "translation": "ใช้กับ {seat}"
+  },
+  "yoAGc6": {
+    "message": "Use this back",
+    "translation": "ใช้ลายหลังการ์ดนี้"
   },
   "8ZgYGP": {
     "message": "Use this print for the {deckCopies} in the deck",
@@ -6057,6 +6318,16 @@
     "message": "View whole card",
     "translation": "ดูการ์ดทั้งใบ"
   },
+  "WUyPia": {
+    "message": "Violet",
+    "context": "card back",
+    "translation": "ม่วง"
+  },
+  "-Uf5mz": {
+    "message": "Violet",
+    "context": "sleeve colour",
+    "translation": "ม่วง"
+  },
   "RVlHmr": {
     "message": "VSTAR marker",
     "translation": "มาร์กเกอร์ VSTAR"
@@ -6069,6 +6340,11 @@
     "message": "Water",
     "context": "Pokémon type",
     "translation": "น้ำ"
+  },
+  "4iNUJT": {
+    "message": "Waves",
+    "context": "sleeve pattern",
+    "translation": "คลื่น"
   },
   "AHlkVG": {
     "message": "Weakness",
@@ -6164,6 +6440,10 @@
     "message": "Your Lost Zone",
     "translation": "ลอสต์โซนของคุณ"
   },
+  "1PoiFH": {
+    "message": "Your picture",
+    "translation": "รูปภาพของคุณ"
+  },
   "Oi-Qz3": {
     "message": "Your playboard",
     "translation": "บอร์ดของคุณ"
@@ -6175,6 +6455,11 @@
   "yuM-lV": {
     "message": "Your turn",
     "translation": "เทิร์นของคุณ"
+  },
+  "X0l3In": {
+    "message": "Yours",
+    "context": "card backs the player made",
+    "translation": "ของคุณ"
   },
   "XQaL9V": {
     "message": "Zone outlines",

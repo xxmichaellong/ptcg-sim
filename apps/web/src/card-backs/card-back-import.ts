@@ -14,7 +14,24 @@ export const CARD_BACK_IMAGE_HEIGHT = 838;
 export const CARD_BACK_UPLOAD_BYTES = 200 * 1024;
 const QUALITIES = [0.86, 0.76, 0.66, 0.56] as const;
 
-export type CardBackEncoder = (picture: Blob) => Promise<Blob | null>;
+/**
+ * Where a crop of a card's shape sits in a picture of another shape: 0 at
+ * one edge, 1 at the other, 0.5 about its middle (CSS's object-position).
+ */
+export interface CardBackCropFocus {
+  readonly x: number;
+  readonly y: number;
+}
+
+export const CENTRED_CROP: CardBackCropFocus = Object.freeze({
+  x: 0.5,
+  y: 0.5,
+});
+
+export type CardBackEncoder = (
+  picture: Blob,
+  focus?: CardBackCropFocus
+) => Promise<Blob | null>;
 
 export interface CardBackImportOptions {
   readonly signal?: AbortSignal;
@@ -45,12 +62,19 @@ const decodePicture = async (
   }
 };
 
+/** A number held within 0 and 1 (a stray NaN is the middle). */
+const unit = (value: number): number =>
+  Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : 0.5;
+
 /**
- * The picture cropped to a card's shape about its middle and drawn at card
- * size, as WebP where the browser can encode it (Safari can't) and JPEG
- * otherwise, within the store's limit.
+ * The picture cropped to a card's shape where `focus` puts the crop (about
+ * its middle by default) and drawn at card size, as WebP where the browser
+ * can encode it (Safari can't) and JPEG otherwise, within the store's limit.
  */
-export const encodeCardBackImage: CardBackEncoder = async (picture) => {
+export const encodeCardBackImage: CardBackEncoder = async (
+  picture,
+  focus = CENTRED_CROP
+) => {
   let source: CanvasImageSource & { width: number; height: number };
   try {
     source = await decodePicture(picture);
@@ -71,8 +95,8 @@ export const encodeCardBackImage: CardBackEncoder = async (picture) => {
   context.imageSmoothingQuality = 'high';
   context.drawImage(
     source,
-    (source.width - width) / 2,
-    (source.height - height) / 2,
+    (source.width - width) * unit(focus.x),
+    (source.height - height) * unit(focus.y),
     width,
     height,
     0,
@@ -120,15 +144,15 @@ export const uploadCardBackImage = async (
 };
 
 /**
- * An outside picture's URL made into an `img:` reference of our own, or
- * null if any step fails (the caller keeps what it had).
+ * An outside picture fetched once through the Worker (ADR-041: the page
+ * never asks its host), as it is, for a preview before it is made a back;
+ * null if the Worker couldn't fetch it or it isn't a picture.
  */
-export const importCardBackFromUrl = async (
+export const fetchImportedPicture = async (
   url: string,
-  options: CardBackImportOptions = {}
-): Promise<string | null> => {
+  options: Pick<CardBackImportOptions, 'signal' | 'fetch'> = {}
+): Promise<Blob | null> => {
   const send = options.fetch ?? fetch;
-  let picture: Blob;
   try {
     const response = await send('/v2/images/import', {
       method: 'POST',
@@ -138,11 +162,23 @@ export const importCardBackFromUrl = async (
       ...(options.signal ? { signal: options.signal } : {}),
     });
     if (!response.ok) return null;
-    picture = await response.blob();
+    const picture = await response.blob();
+    return picture.type.startsWith('image/') ? picture : null;
   } catch {
     return null;
   }
-  if (options.signal?.aborted) return null;
+};
+
+/**
+ * An outside picture's URL made into an `img:` reference of our own, or
+ * null if any step fails (the caller keeps what it had).
+ */
+export const importCardBackFromUrl = async (
+  url: string,
+  options: CardBackImportOptions = {}
+): Promise<string | null> => {
+  const picture = await fetchImportedPicture(url, options);
+  if (!picture || options.signal?.aborted) return null;
   const encoded = await (options.encode ?? encodeCardBackImage)(picture);
   if (!encoded || options.signal?.aborted) return null;
   return await uploadCardBackImage(encoded, options);

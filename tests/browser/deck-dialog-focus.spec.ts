@@ -1,5 +1,6 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
+import { cardBackChooser } from './support/card-back-chooser.js';
 import { routeCardCatalog } from './support/card-catalog-fixture.js';
 import { ownRoomBudget } from './support/room-budget.js';
 import { openDeck } from './support/table-shell.js';
@@ -26,8 +27,8 @@ const sleevePrompt = async (page: Page, seat: string): Promise<Locator> => {
   });
   await tabTo(page, sleeve);
   await page.keyboard.press('Enter');
-  const dialog = page.getByRole('dialog', { name: 'Change card back' });
-  await expect(dialog.locator('input')).toBeFocused();
+  const dialog = cardBackChooser(page);
+  await expect(dialog.locator('#cardBackMode-backs')).toBeFocused();
   await page.keyboard.press('Escape');
   await expect(dialog).toBeHidden();
   await expect(sleeve).toBeFocused();
