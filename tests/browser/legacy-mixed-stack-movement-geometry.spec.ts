@@ -797,7 +797,8 @@ test('the checked-in v1 runtime characterizes canonical, transferred, and catego
             host: HTMLElement,
             candidateScene: typeof scene,
             presentation: {
-              selectedCardId: null;
+              selection: readonly [];
+              selectionMode: false;
               hoveredCardId: null;
               targetableCardIds: readonly [];
               drag: null;
@@ -844,7 +845,8 @@ test('the checked-in v1 runtime characterizes canonical, transferred, and catego
       },
     });
     await renderer.mount(host, scene, {
-      selectedCardId: null,
+      selection: [],
+      selectionMode: false,
       hoveredCardId: null,
       targetableCardIds: [],
       drag: null,

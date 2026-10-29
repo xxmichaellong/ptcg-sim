@@ -186,7 +186,8 @@ test('normalized React DOM releases board resources through 100 lifecycle cycles
       },
     });
     await renderer.mount(host, spike.scene, {
-      selectedCardId: null,
+      selection: [],
+      selectionMode: false,
       hoveredCardId: null,
       targetableCardIds: [],
       drag: null,
@@ -236,7 +237,8 @@ test('normalized React DOM releases board resources through 100 lifecycle cycles
           });
           try {
             await renderer.mount(host, spike.scene, {
-              selectedCardId: null,
+              selection: [],
+              selectionMode: false,
               hoveredCardId: null,
               targetableCardIds: [],
               drag: null,
@@ -586,7 +588,8 @@ test('native and shared input follow center-rotated card paint', async ({
         counts: [],
       },
       {
-        selectedCardId: null,
+        selection: [],
+        selectionMode: false,
         hoveredCardId: null,
         targetableCardIds: [],
         drag: null,

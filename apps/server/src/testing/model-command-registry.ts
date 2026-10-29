@@ -179,6 +179,12 @@ export const MODEL_COMMAND_REGISTRY = {
     rationale: 'multiplayer rejects undo; a dedicated solo authority proves it',
   },
   FlipCoin: { coverage: 'generated', family: 'table-announcement' },
+  ApplyCardSteps: {
+    coverage: 'scenario',
+    family: 'bulk',
+    rationale:
+      'one move of several selected cards, made of the single-card commands above; covered by game-core and room tests',
+  },
 } as const satisfies Record<WireGameCommandType, ModelCommandCoverage>;
 
 export type GeneratedModelCommandType = {

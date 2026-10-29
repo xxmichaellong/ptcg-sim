@@ -7,6 +7,7 @@ import {
   composeCardArtwork,
   fitCardComposition,
   resolveBoardDropTarget,
+  selectedCardIdOf,
   type BoardDepthProjection,
   type BoardPresentation,
   type BoardScene,
@@ -2607,7 +2608,7 @@ const ZoneBrowser = ({
               aria-label={
                 count > 1 ? copiesLabel(card.label, count) : card.label
               }
-              aria-pressed={state.presentation.selectedCardId === card.id}
+              aria-pressed={selectedCardIdOf(state.presentation) === card.id}
               draggable={false}
               onDragStart={drag.onDragStart}
               onPointerDown={(event) => drag.onPointerDown(event, card)}
@@ -2671,7 +2672,7 @@ const ZoneBrowser = ({
         </div>
         <OverlayCardActions
           card={cards.find(
-            (card) => card.id === state.presentation.selectedCardId
+            (card) => card.id === selectedCardIdOf(state.presentation)
           )}
           scene={state.scene!}
           enabled={state.canSubmitCommands && !obscured}
@@ -2856,7 +2857,7 @@ const WorkAreaPanel = ({
             data-work-area-card-id={card.id}
             data-motion-origin={card.id}
             aria-label={card.label}
-            aria-pressed={state.presentation.selectedCardId === card.id}
+            aria-pressed={selectedCardIdOf(state.presentation) === card.id}
             data-armed={drag.armedCardId === card.id ? 'true' : undefined}
             disabled={!interactive}
             draggable={false}
@@ -2900,7 +2901,7 @@ const WorkAreaPanel = ({
       {controls && emit ? (
         <OverlayCardActions
           card={cards.find(
-            (card) => card.id === state.presentation.selectedCardId
+            (card) => card.id === selectedCardIdOf(state.presentation)
           )}
           scene={state.scene!}
           enabled={interactive}

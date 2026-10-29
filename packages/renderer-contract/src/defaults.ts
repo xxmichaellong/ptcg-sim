@@ -3,6 +3,7 @@ import type {
   BoardPresentation,
   BoardViewport,
 } from './model.js';
+import { NO_SELECTION } from './presentation-selection.js';
 
 export const DEFAULT_BOARD_VIEWPORT: BoardViewport = {
   width: 1208,
@@ -11,7 +12,8 @@ export const DEFAULT_BOARD_VIEWPORT: BoardViewport = {
 };
 
 export const DEFAULT_BOARD_PRESENTATION: BoardPresentation = {
-  selectedCardId: null,
+  selection: NO_SELECTION,
+  selectionMode: false,
   hoveredCardId: null,
   targetableCardIds: [],
   drag: null,

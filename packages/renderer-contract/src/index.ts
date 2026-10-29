@@ -11,6 +11,7 @@ export * from './layout-table.js';
 export * from './marker-presentation.js';
 export * from './model.js';
 export * from './motion-plan.js';
+export * from './presentation-selection.js';
 export * from './scene.js';
 export * from './seat-tone.js';
 export * from './spike-fixture.js';

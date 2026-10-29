@@ -9,9 +9,11 @@ export const REFUSAL_TOAST_ID = 'board-command-refused';
 /**
  * Commands whose prediction moved a card on the table, so a refusal puts it
  * back. Everything else (Set up, Reset, Attack, Pass, Undo, a counter or
- * marker) only says it did not happen.
+ * marker) only says it did not happen. A group's move (ApplyCardSteps)
+ * counts as moving cards until its notice reads what its steps did.
  */
-const MOVES_CARDS = /^(?:Move|Play|Place|Shuffle|Swap|Restore|Resolve|Draw)/u;
+const MOVES_CARDS =
+  /^(?:Move|Play|Place|Shuffle|Swap|Restore|Resolve|Draw|ApplyCardSteps$)/u;
 
 /**
  * What to tell the player when the room refuses one of their moves. The

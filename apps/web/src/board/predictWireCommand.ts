@@ -9,7 +9,11 @@ import type {
   PlayerId,
   ViewCard,
 } from '@ptcgsim/game-core';
-import type { WireGameCommand } from '@ptcgsim/protocol';
+import {
+  cardStepMakesPokemon,
+  type WireCardStep,
+  type WireGameCommand,
+} from '@ptcgsim/protocol';
 
 import { locateViewCardActionSource } from './locateViewCardActionSource.js';
 
@@ -1498,6 +1502,10 @@ const predict = (
       }
       return null;
     }
+    case 'ApplyCardSteps':
+      // Not predicted yet: a group's steps are to be folded one by one,
+      // each on the view the steps before it left.
+      return null;
     default:
       return null;
   }
@@ -1574,6 +1582,9 @@ export const isRandomizingCommand = (command: WireGameCommand): boolean => {
         command.destination === 'shuffleIntoDeck' ||
         command.destination === 'shuffleToDeckBottom'
       );
+    case 'ApplyCardSteps':
+      // A group shuffled into the deck ends with the shuffle.
+      return command.steps.some((step) => step.type === 'ShuffleZone');
     default:
       return false;
   }
@@ -1602,4 +1613,79 @@ export const predictQueue = (
     if (isRandomizingCommand(pending.command)) break;
   }
   return current;
+};
+
+/** The id a predicted play gives the Pokémon it makes, until the room's. */
+export const predictedStackIdOf = (cardId: string): string =>
+  `predicted-stack:${cardId}`;
+
+/**
+ * One step of a group's move (ApplyCardSteps) predicted on the view the
+ * steps before it left, as the room decides each step on the table the
+ * ones before it left. A step that names a Pokémon an earlier step made
+ * (`targetStackRef`) names it by the id that step's prediction gave it:
+ * `made[k]` is the Pokémon step k made, if any. A lone Benched Pokémon is
+ * not brought up between steps: the room does that once, after the last
+ * (predictCardSteps). Null when the step can't be shown.
+ */
+export const predictCardStep = (
+  view: MatchViewState,
+  step: WireCardStep,
+  made: readonly (string | undefined)[],
+  options: PredictionOptions = {}
+): { readonly view: MatchViewState; readonly made?: string } | null => {
+  if (view.viewer.kind !== 'player') return null;
+  let command: WireGameCommand;
+  if (step.type === 'MoveCardToPlay' || step.type === 'PlaceCardOnPlayStack') {
+    const { targetStackRef, targetStackId, ...rest } = step;
+    const target =
+      targetStackRef === undefined ? targetStackId : made[targetStackRef];
+    if (step.type === 'PlaceCardOnPlayStack') {
+      if (target === undefined) return null;
+      command = {
+        ...(rest as Omit<typeof step, 'targetStackId' | 'targetStackRef'>),
+        targetStackId: target,
+      };
+    } else {
+      command = {
+        ...(rest as Omit<typeof step, 'targetStackId' | 'targetStackRef'>),
+        ...(target === undefined ? {} : { targetStackId: target }),
+      };
+    }
+  } else {
+    command = step;
+  }
+  try {
+    const next = predict(view, command, {
+      id: view.viewer.playerId,
+      readsEveryHand: options.readsEveryHand === true,
+    });
+    if (!next) return null;
+    return cardStepMakesPokemon(step)
+      ? { view: next, made: predictedStackIdOf(step.cardId) }
+      : { view: next };
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * A group's whole move predicted, step by step, then any lone Benched
+ * Pokémon brought up once into an Active Spot the steps left empty, as
+ * the room does. Null when any step can't be shown.
+ */
+export const predictCardSteps = (
+  view: MatchViewState,
+  steps: readonly WireCardStep[],
+  options: PredictionOptions = {}
+): MatchViewState | null => {
+  let current = view;
+  const made: (string | undefined)[] = [];
+  for (const step of steps) {
+    const next = predictCardStep(current, step, made, options);
+    if (!next) return null;
+    current = next.view;
+    made.push(next.made);
+  }
+  return withLoneBenchedPromoted(view, current);
 };

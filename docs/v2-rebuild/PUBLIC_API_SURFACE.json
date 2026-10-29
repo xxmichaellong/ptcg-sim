@@ -650,6 +650,10 @@
               "kind": "value"
             },
             {
+              "name": "ApplyCardStepsCommand",
+              "kind": "type"
+            },
+            {
               "name": "applyEvent",
               "kind": "value"
             },
@@ -718,6 +722,10 @@
               "kind": "type"
             },
             {
+              "name": "BaseGameCommand",
+              "kind": "type"
+            },
+            {
               "name": "Brand",
               "kind": "type"
             },
@@ -739,6 +747,10 @@
             },
             {
               "name": "CARD_BACK_VALUE_MAX",
+              "kind": "value"
+            },
+            {
+              "name": "CARD_STEP_TYPES",
               "kind": "value"
             },
             {
@@ -803,6 +815,14 @@
             },
             {
               "name": "CardSourceSnapshot",
+              "kind": "type"
+            },
+            {
+              "name": "CardStep",
+              "kind": "type"
+            },
+            {
+              "name": "CardStepType",
               "kind": "type"
             },
             {
@@ -1262,6 +1282,10 @@
           "source": "packages/protocol/src/index.ts",
           "symbols": [
             {
+              "name": "cardStepMakesPokemon",
+              "kind": "value"
+            },
+            {
               "name": "ClientMessage",
               "kind": "type"
             },
@@ -1335,6 +1359,10 @@
             },
             {
               "name": "MatchViewStateSchema",
+              "kind": "value"
+            },
+            {
+              "name": "MAX_CARD_STEPS",
               "kind": "value"
             },
             {
@@ -1587,6 +1615,14 @@
             },
             {
               "name": "ViewerRoleSchema",
+              "kind": "value"
+            },
+            {
+              "name": "WireCardStep",
+              "kind": "type"
+            },
+            {
+              "name": "WireCardStepSchema",
               "kind": "value"
             },
             {
@@ -1892,6 +1928,14 @@
             {
               "name": "CardSceneRole",
               "kind": "type"
+            },
+            {
+              "name": "CardSelectionMode",
+              "kind": "type"
+            },
+            {
+              "name": "cardSelectionModeOf",
+              "kind": "value"
             },
             {
               "name": "composeCardArtwork",
@@ -2306,6 +2350,10 @@
               "kind": "type"
             },
             {
+              "name": "NO_SELECTION",
+              "kind": "value"
+            },
+            {
               "name": "onlyHeldCardMoved",
               "kind": "value"
             },
@@ -2374,6 +2422,10 @@
               "kind": "value"
             },
             {
+              "name": "sameSelection",
+              "kind": "value"
+            },
+            {
               "name": "sameTablePose",
               "kind": "value"
             },
@@ -2383,6 +2435,10 @@
             },
             {
               "name": "seatToneOf",
+              "kind": "value"
+            },
+            {
+              "name": "selectedCardIdOf",
               "kind": "value"
             },
             {

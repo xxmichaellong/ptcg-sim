@@ -558,7 +558,8 @@ test('recipient projection never requests concealed face assets across reveal an
     };
     host = createHost();
     const presentation = {
-      selectedCardId: null,
+      selection: [],
+      selectionMode: false,
       hoveredCardId: null,
       targetableCardIds: [],
       drag: null,

@@ -18,6 +18,7 @@ import type { Icon } from '@phosphor-icons/react';
 import type { ViewCardId } from '@ptcgsim/game-core';
 import {
   markerHint,
+  selectedCardIdOf,
   type BoardIntent,
   type CardSceneNode,
   type ZoneSceneNode,
@@ -437,7 +438,7 @@ export const boardCommands = (
   const commands: PaletteCommand[] = [];
 
   // ---- Selected card ----------------------------------------------------
-  const selectedId = state.presentation.selectedCardId;
+  const selectedId = selectedCardIdOf(state.presentation);
   const selected = selectedId
     ? scene.cards.find((card) => card.id === selectedId)
     : undefined;

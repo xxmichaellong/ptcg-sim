@@ -1511,7 +1511,7 @@ describe('React DOM board renderer', () => {
     act(() =>
       renderer.installPresentation({
         ...DEFAULT_BOARD_PRESENTATION,
-        selectedCardId: cardId,
+        selection: [cardId],
         openedZoneId: 'zone:p1:hand',
       })
     );
@@ -1583,7 +1583,7 @@ describe('React DOM board renderer', () => {
     act(() =>
       renderer.installPresentation({
         ...DEFAULT_BOARD_PRESENTATION,
-        selectedCardId: cardId,
+        selection: [cardId],
       })
     );
     expect(card.getAttribute('aria-pressed')).toBe('true');

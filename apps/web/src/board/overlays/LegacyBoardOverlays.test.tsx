@@ -1140,7 +1140,7 @@ describe('legacy board overlays', () => {
           createElement(LegacyBoardOverlays, {
             state: state({
               presentation: {
-                selectedCardId: null,
+                selection: [],
                 hoveredCardId: null,
                 drag: null,
                 openedZoneId,
@@ -1536,7 +1536,7 @@ describe('legacy board overlays', () => {
         createElement(LegacyBoardOverlays, {
           state: state({
             presentation: {
-              selectedCardId: null,
+              selection: [],
               hoveredCardId: null,
               drag: null,
               openedZoneId: discard.id,
@@ -1598,7 +1598,7 @@ describe('legacy board overlays', () => {
           state: state({
             scene: { ...scene, cards: twinned },
             presentation: {
-              selectedCardId: null,
+              selection: [],
               hoveredCardId: null,
               targetableCardIds: [],
               drag: null,
@@ -1717,7 +1717,7 @@ describe('legacy board overlays', () => {
         createElement(LegacyBoardOverlays, {
           state: state({
             presentation: {
-              selectedCardId: null,
+              selection: [],
               hoveredCardId: null,
               targetableCardIds: [],
               drag: null,
@@ -1858,7 +1858,7 @@ describe('legacy board overlays', () => {
     const overlayState = state({
       scene: { ...scene, cards: relabeledCards },
       presentation: {
-        selectedCardId: null,
+        selection: [],
         hoveredCardId: null,
         drag: null,
         openedZoneId: discard.id,
@@ -1974,7 +1974,7 @@ describe('legacy board overlays', () => {
       state({
         view: nextView,
         presentation: {
-          selectedCardId: null,
+          selection: [],
           hoveredCardId: null,
           targetableCardIds: [],
           drag: null,
@@ -2054,7 +2054,7 @@ describe('legacy board overlays', () => {
           state: state({
             view: invalidDeckView,
             presentation: {
-              selectedCardId: null,
+              selection: [],
               hoveredCardId: null,
               targetableCardIds: [],
               drag: null,
@@ -2087,8 +2087,9 @@ describe('legacy board overlays', () => {
           createElement(LegacyBoardOverlays, {
             state: state({
               presentation: {
-                selectedCardId:
+                selection: [
                   selectedIndex === null ? null : cards[selectedIndex]!.id,
+                ],
                 hoveredCardId: null,
                 targetableCardIds: [],
                 drag: null,
@@ -2252,7 +2253,7 @@ describe('legacy board overlays', () => {
     )!;
     const overlayState = state({
       presentation: {
-        selectedCardId: discardCards[0]!.id,
+        selection: [discardCards[0]!.id],
         hoveredCardId: null,
         targetableCardIds: [],
         drag: null,
@@ -2854,7 +2855,7 @@ describe('legacy board overlays', () => {
           createElement(LegacyBoardOverlays, {
             state: state({
               presentation: {
-                selectedCardId: null,
+                selection: [],
                 hoveredCardId: null,
                 targetableCardIds: [],
                 drag: null,
@@ -3052,7 +3053,7 @@ describe('legacy board overlays', () => {
       createElement(LegacyBoardOverlays, {
         state: state({
           presentation: {
-            selectedCardId: null,
+            selection: [],
             hoveredCardId: null,
             targetableCardIds: [],
             drag: null,
@@ -3103,7 +3104,7 @@ describe('legacy board overlays', () => {
             createElement(LegacyBoardOverlays, {
               state: state({
                 presentation: {
-                  selectedCardId: null,
+                  selection: [],
                   hoveredCardId: null,
                   drag: null,
                   openedZoneId,

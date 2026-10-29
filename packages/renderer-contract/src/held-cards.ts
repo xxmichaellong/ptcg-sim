@@ -201,7 +201,9 @@ export const onlyHeldCardMoved = (
     before.detached === after.detached &&
     before.action?.kind === after.action?.kind &&
     before.action?.stackId === after.action?.stackId &&
-    previous.selectedCardId === next.selectedCardId &&
+    before.groupCardIds === after.groupCardIds &&
+    previous.selection === next.selection &&
+    previous.selectionMode === next.selectionMode &&
     previous.hoveredCardId === next.hoveredCardId &&
     previous.targetableCardIds === next.targetableCardIds &&
     previous.openedZoneId === next.openedZoneId &&

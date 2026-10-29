@@ -15,6 +15,7 @@ import {
 import {
   createBoardSceneForViewport,
   createRendererSpikeView,
+  selectedCardIdOf,
   type BoardScene,
 } from '@ptcgsim/renderer-contract';
 import { describe, expect, it, vi } from 'vitest';
@@ -358,7 +359,7 @@ describe('BoardSessionAdapter with real session coordinators', () => {
     expect(
       test.adapter.getSnapshot().view?.players['spike-red']?.displayName
     ).toBe('Joined opponent');
-    expect(test.adapter.getSnapshot().presentation.selectedCardId).toBe(
+    expect(selectedCardIdOf(test.adapter.getSnapshot().presentation)).toBe(
       selectedCardId
     );
     expect(test.rendererEffects.slice(effectCount)).toEqual([
@@ -573,7 +574,7 @@ describe('BoardSessionAdapter with real session coordinators', () => {
     expect(test.adapter.getSnapshot()).toMatchObject({
       source: { kind: 'replay', replayId: 'board-replay', frameIndex: 0 },
       sceneInstallMode: 'replace',
-      presentation: { selectedCardId: null },
+      presentation: { selection: [] },
     });
     expect(test.rendererEffects.slice(0, 2)).toMatchObject([
       { kind: 'ResetRenderer', reason: 'identity_changed' },
@@ -1604,7 +1605,7 @@ describe('BoardSessionAdapter with real session coordinators', () => {
       { kind: 'InstallScene', mode: 'replace' },
     ]);
     expect(test.adapter.getSnapshot().presentation).toMatchObject({
-      selectedCardId: null,
+      selection: [],
       hoveredCardId: null,
       drag: null,
       openedZoneId: null,

@@ -30,7 +30,7 @@ interface OverlayHarnessWindow extends Window {
       readonly overlayRejections: readonly unknown[];
       readonly overlayActions: readonly unknown[];
       readonly presentation: {
-        readonly selectedCardId: string | null;
+        readonly selection: readonly string[];
         readonly openedZoneId: string | null;
       };
       readonly overlays: {
@@ -1122,7 +1122,7 @@ test('opened-pile selected-card shortcuts retain real-v1 protected lifecycle', a
     .poll(() => candidateEvidence(page))
     .toMatchObject({
       presentation: {
-        selectedCardId: candidateCardId,
+        selection: [candidateCardId],
         openedZoneId: fixture.destinationZoneId,
       },
     });
@@ -1141,7 +1141,7 @@ test('opened-pile selected-card shortcuts retain real-v1 protected lifecycle', a
       overlayRejections: [],
       overlayActions: [],
       presentation: {
-        selectedCardId: null,
+        selection: [],
         openedZoneId: fixture.destinationZoneId,
       },
       reportedErrors: [],
@@ -1458,7 +1458,7 @@ test('opened-pile bulk actions retain real-v1 confirmation and teardown after fu
         zoneId: `zone:${fixture.ownPlayerId}:discard`,
       },
     ],
-    presentation: { selectedCardId: null, openedZoneId: null },
+    presentation: { selection: [], openedZoneId: null },
     reportedErrors: [],
   });
 
@@ -1511,7 +1511,7 @@ test('opened-pile bulk actions retain real-v1 confirmation and teardown after fu
         zoneId: `zone:${fixture.ownPlayerId}:deck`,
       },
     ],
-    presentation: { selectedCardId: null, openedZoneId: null },
+    presentation: { selection: [], openedZoneId: null },
     reportedErrors: [],
   });
 
@@ -1756,7 +1756,7 @@ test('opened-pile card actions retain real-v1 all-popup teardown', async ({
       submissionResults: [{ queued: true, clientSequence: 1 }],
       overlayRejections: [],
       overlayActions: [{ kind: 'context', action: 'revealCard', cardId }],
-      presentation: { selectedCardId: null, openedZoneId: null },
+      presentation: { selection: [], openedZoneId: null },
       overlays: { contextMenuCardId: null },
       reportedErrors: [],
     });
@@ -1875,7 +1875,7 @@ test('opened-pile cards retain real-v1 native drag movement', async ({
       overlayRejections: [],
       overlayActions: [],
       presentation: {
-        selectedCardId: null,
+        selection: [],
         openedZoneId: fixture.destinationZoneId,
       },
       overlays: { contextMenuCardId: null },

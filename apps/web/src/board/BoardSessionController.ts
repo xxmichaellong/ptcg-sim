@@ -5,7 +5,11 @@ import type {
   ReadyReplayPlaybackState,
 } from '@ptcgsim/client-session';
 import {
+  cardSelectionModeOf,
   DEFAULT_BOARD_PRESENTATION,
+  NO_SELECTION,
+  sameSelection,
+  selectedCardIdOf,
   type BoardIntent,
   type BoardPresentation,
   type BoardPresentationUpdate,
@@ -481,7 +485,8 @@ const emptyOverlays = (): BoardOverlayState => ({ ...EMPTY_OVERLAYS });
 
 const presentationIsEmpty = (presentation: BoardPresentation): boolean =>
   presentation.settling.length === 0 &&
-  presentation.selectedCardId === null &&
+  presentation.selection.length === 0 &&
+  !presentation.selectionMode &&
   presentation.hoveredCardId === null &&
   presentation.targetableCardIds.length === 0 &&
   presentation.drag === null &&
@@ -617,7 +622,15 @@ const reconcilePresentation = (
         )))
       ? cardId
       : null;
-  const selectedCardId = stillShown(state.presentation.selectedCardId);
+  const shownSelection = state.presentation.selection.filter(
+    (cardId) => stillShown(cardId) !== null
+  );
+  const selection =
+    shownSelection.length === state.presentation.selection.length
+      ? state.presentation.selection
+      : shownSelection.length === 0
+        ? NO_SELECTION
+        : shownSelection;
   const hoveredCardId = stillShown(state.presentation.hoveredCardId);
   const drag = state.presentation.drag;
   // A new view mid-drag keeps the card in hand; only a target it no longer
@@ -680,7 +693,8 @@ const reconcilePresentation = (
         : null;
   return {
     presentation: {
-      selectedCardId,
+      selection,
+      selectionMode: state.presentation.selectionMode,
       hoveredCardId,
       targetableCardIds: [],
       drag: reconciledDrag,
@@ -759,7 +773,8 @@ const samePresentation = (
   left: BoardPresentation,
   right: BoardPresentation
 ): boolean =>
-  left.selectedCardId === right.selectedCardId &&
+  sameSelection(left.selection, right.selection) &&
+  left.selectionMode === right.selectionMode &&
   left.hoveredCardId === right.hoveredCardId &&
   left.targetableCardIds.length === right.targetableCardIds.length &&
   left.targetableCardIds.every(
@@ -1295,7 +1310,7 @@ const handleIntent = (
         if (target) {
           const presentation: BoardPresentation = {
             ...state.presentation,
-            selectedCardId: null,
+            selection: NO_SELECTION,
             targetableCardIds: [],
             drag: null,
           };
@@ -1325,15 +1340,17 @@ const handleIntent = (
           return accepted(cleared, effects);
         }
       }
+      // A press with Shift or ⌘/Ctrl (`add`) is a plain press until a
+      // selection may hold several (ADR-0XX).
       if (
-        intent.toggle &&
-        state.presentation.selectedCardId === intent.cardId
+        cardSelectionModeOf(intent) !== 'replace' &&
+        selectedCardIdOf(state.presentation) === intent.cardId
       ) {
         return installPresentation(
           state,
           {
             ...state.presentation,
-            selectedCardId: null,
+            selection: NO_SELECTION,
             targetableCardIds: [],
             drag: null,
           },
@@ -1349,7 +1366,7 @@ const handleIntent = (
         state,
         {
           ...state.presentation,
-          selectedCardId: intent.cardId,
+          selection: [intent.cardId],
           targetableCardIds: [],
           drag: null,
           openedZoneId: retainOpenedZone,
@@ -1376,7 +1393,7 @@ const handleIntent = (
         presentation: {
           ...state.presentation,
           // Keep the panel selection so its action row is usable on return.
-          selectedCardId: allowOpenedZoneCard ? intent.cardId : null,
+          selection: allowOpenedZoneCard ? [intent.cardId] : NO_SELECTION,
           drag: null,
         },
         overlays: {
@@ -1420,7 +1437,7 @@ const handleIntent = (
         presentation: {
           ...state.presentation,
           // Keep the panel selection so its action row is usable on return.
-          selectedCardId: allowOpenedZoneCard ? intent.cardId : null,
+          selection: allowOpenedZoneCard ? [intent.cardId] : NO_SELECTION,
           drag: null,
         },
         overlays: { contextMenuCardId: null, preview, input: null },
@@ -1504,7 +1521,7 @@ const handleIntent = (
       const presentation = allowOpenedZoneCard
         ? {
             ...state.presentation,
-            selectedCardId: null,
+            selection: NO_SELECTION,
             targetableCardIds: [],
             drag: null,
             settling,
@@ -1557,6 +1574,8 @@ const handleIntent = (
         }
       );
     }
+    case 'CardsSelected':
+    case 'SelectionModeChanged':
     case 'BoardResizeRequested':
       return rejectIntent(state, intent, 'unsupported_intent');
   }
@@ -1645,7 +1664,10 @@ const swapAction = (
   return undefined;
 };
 
-/** The drop moved a whole Pokémon: its stack settles with the grabbed card. */
+/**
+ * The drop moved a whole Pokémon: its stack settles with the grabbed card.
+ * A group's drop (ApplyCardSteps) settles card by card for now.
+ */
 const movesWholeStack = (command: WireGameCommand): boolean =>
   command.type === 'MovePlayStack' || command.type === 'MovePlayStackToZone';
 
@@ -1678,7 +1700,7 @@ const handlePresentationUpdate = (
     return installPresentation(state, {
       ...state.presentation,
       drag: shown,
-      ...(drag ? { selectedCardId: null } : {}),
+      ...(drag ? { selection: NO_SELECTION } : {}),
     });
   }
   return ignored(state);
@@ -1919,7 +1941,7 @@ const handleShortcutAction = (
       : hasCard(scene, request.cardId) ||
         hasOpenedZoneCard(state, scene, request.cardId);
     if (
-      (!direct && state.presentation.selectedCardId !== request.cardId) ||
+      (!direct && selectedCardIdOf(state.presentation) !== request.cardId) ||
       !reachable
     ) {
       return rejectShortcutAction(state, request, 'stale_card');
@@ -1956,7 +1978,7 @@ const handleShortcutAction = (
   if ('targeting' in resolution) {
     const presentation: BoardPresentation = {
       ...state.presentation,
-      selectedCardId: null,
+      selection: NO_SELECTION,
       targetableCardIds: resolution.targeting.targets.flatMap((target) => {
         const pieces = scene.cards.filter(
           (card) =>
@@ -1991,7 +2013,7 @@ const handleShortcutAction = (
   }
   const presentation: BoardPresentation = {
     ...stateAfterInput.presentation,
-    selectedCardId: null,
+    selection: NO_SELECTION,
   };
   const next = nextState(stateAfterInput, { presentation });
   return accepted(next, [
@@ -2103,7 +2125,7 @@ const dismissPresentation = (
   const presentation: BoardPresentation = {
     ...state.presentation,
     ...(scope === 'all' || scope === 'selection'
-      ? { selectedCardId: null, targetableCardIds: [] }
+      ? { selection: NO_SELECTION, selectionMode: false, targetableCardIds: [] }
       : {}),
     ...(scope === 'all' || scope === 'zone' ? { openedZoneId: null } : {}),
     ...(scope === 'all' ? { hoveredCardId: null, drag: null } : {}),

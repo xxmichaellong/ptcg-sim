@@ -7,6 +7,7 @@ import {
   createBoardSceneForViewport,
   createRendererSpikeView,
   DEFAULT_BOARD_PRESENTATION,
+  selectedCardIdOf,
   type BoardIntent,
   type BoardScene,
 } from '@ptcgsim/renderer-contract';
@@ -204,7 +205,7 @@ describe('headless board session controller', () => {
       kind: 'FrameReceived',
       frame: liveFrame(2, replacement, { boundary: 'resync' }),
     });
-    expect(resync.state.presentation.selectedCardId).toBeNull();
+    expect(selectedCardIdOf(resync.state.presentation)).toBeNull();
     expect(resync.effects.slice(0, 2)).toEqual([
       { kind: 'ResetRenderer', reason: 'identity_changed' },
       {
@@ -238,7 +239,7 @@ describe('headless board session controller', () => {
 
     expect(refreshed.outcome).toBe('accepted');
     expect(refreshed.state.view).toBe(renamed);
-    expect(refreshed.state.presentation.selectedCardId).toBe(selectedCardId);
+    expect(selectedCardIdOf(refreshed.state.presentation)).toBe(selectedCardId);
     expect(refreshed.effects).toEqual([
       {
         kind: 'InstallScene',
@@ -853,7 +854,7 @@ describe('headless board session controller', () => {
       kind: 'OpenedZoneCardIntent',
       intent: { kind: 'CardSelected', cardId },
     }).state;
-    expect(state.presentation.selectedCardId).toBe(cardId);
+    expect(selectedCardIdOf(state.presentation)).toBe(cardId);
     const intent: BoardIntent = {
       kind: 'CardDropRequested',
       cardId,
@@ -866,7 +867,7 @@ describe('headless board session controller', () => {
     expect(result.outcome).toBe('accepted');
     expect(result.state.presentation).toMatchObject({
       openedZoneId: source.id,
-      selectedCardId: null,
+      selection: [],
       drag: null,
       settling: [],
     });
@@ -973,7 +974,7 @@ describe('headless board session controller', () => {
       kind: 'LegacyShortcutActionRequested',
       request: { action: 'toggleAbility', cardId },
     });
-    expect(dismissed.state.presentation.selectedCardId).toBeNull();
+    expect(selectedCardIdOf(dismissed.state.presentation)).toBeNull();
     expect(dismissed.effects).toEqual([
       {
         kind: 'InstallPresentation',
@@ -1017,13 +1018,13 @@ describe('headless board session controller', () => {
       kind: 'OpenedZoneCardIntent',
       intent: { kind: 'CardSelected', cardId: pileCard.id },
     }).state;
-    expect(state.presentation.selectedCardId).toBe(pileCard.id);
+    expect(selectedCardIdOf(state.presentation)).toBe(pileCard.id);
 
     // The window resized: the table is laid out again.
     state = apply(state, { kind: 'RefreshScene', cause: 'layout' }).state;
     expect(state.presentation).toMatchObject({
       openedZoneId: discard.id,
-      selectedCardId: pileCard.id,
+      selection: [pileCard.id],
     });
 
     // The pile closed: its card is no longer picked.
@@ -1032,7 +1033,7 @@ describe('headless board session controller', () => {
       scope: 'zone',
     }).state;
     state = apply(state, { kind: 'RefreshScene', cause: 'layout' }).state;
-    expect(state.presentation.selectedCardId).toBeNull();
+    expect(selectedCardIdOf(state.presentation)).toBeNull();
   });
 
   it('admits selected-card shortcuts only from the exact currently opened zone', () => {
@@ -1051,7 +1052,7 @@ describe('headless board session controller', () => {
       ...initial,
       presentation: {
         ...initial.presentation,
-        selectedCardId: hiddenCard.id,
+        selection: [hiddenCard.id],
       },
     };
     expect(
@@ -1132,7 +1133,7 @@ describe('headless board session controller', () => {
         presentation: opened.state.presentation,
       },
     ]);
-    expect(opened.state.presentation.selectedCardId).toBeNull();
+    expect(selectedCardIdOf(opened.state.presentation)).toBeNull();
     expect(opened.state.presentation.targetableCardIds).toEqual(
       opened.state.playTargeting?.targets.map((target) => target.topCardId)
     );
@@ -1170,7 +1171,7 @@ describe('headless board session controller', () => {
     });
     expect(selectedInstead.state.playTargeting).toBeNull();
     expect(selectedInstead.state.presentation).toMatchObject({
-      selectedCardId: nonTarget.id,
+      selection: [nonTarget.id],
       targetableCardIds: [],
     });
 
@@ -1351,7 +1352,7 @@ describe('headless board session controller', () => {
       request: { ...request, destination: 'hand' },
     });
     expect(selected.state).toBe(state);
-    expect(selected.state.presentation.selectedCardId).toBe(selectedCardId);
+    expect(selectedCardIdOf(selected.state.presentation)).toBe(selectedCardId);
     expect(selected.effects).toEqual([
       {
         kind: 'SubmitCommand',
@@ -1409,15 +1410,15 @@ describe('headless board session controller', () => {
         intent: { kind: 'CardSelected', cardId, toggle: true },
       }).state;
     const selected = press(state, hand);
-    expect(selected.presentation.selectedCardId).toBe(hand);
-    expect(press(selected, hand).presentation.selectedCardId).toBeNull();
+    expect(selectedCardIdOf(selected.presentation)).toBe(hand);
+    expect(selectedCardIdOf(press(selected, hand).presentation)).toBeNull();
     // Selecting it from code (before an action on it) keeps it selected.
-    expect(select(selected, hand).presentation.selectedCardId).toBe(hand);
+    expect(selectedCardIdOf(select(selected, hand).presentation)).toBe(hand);
     // Pressing another card moves the selection to it.
     const other = state.scene!.cards.find(
       (card) => card.parentId.endsWith(':hand') && card.id !== hand
     )!.id;
-    expect(press(selected, other).presentation.selectedCardId).toBe(other);
+    expect(selectedCardIdOf(press(selected, other).presentation)).toBe(other);
   });
 
   it('submits a parameterless authority-owned coin flip without clearing selection', () => {
@@ -1432,7 +1433,7 @@ describe('headless board session controller', () => {
       request: { action: 'flipCoin' },
     });
     expect(result.state).toBe(state);
-    expect(result.state.presentation.selectedCardId).toBe(selectedCardId);
+    expect(selectedCardIdOf(result.state.presentation)).toBe(selectedCardId);
     expect(result.effects).toEqual([
       { kind: 'SubmitCommand', command: { type: 'FlipCoin' } },
     ]);
@@ -2632,7 +2633,7 @@ describe('headless board session controller', () => {
       intent: { kind: 'CardSelected', cardId: discardCard },
     }).state;
     expect(state.presentation).toMatchObject({
-      selectedCardId: discardCard,
+      selection: [discardCard],
       openedZoneId: discard.id,
     });
 
@@ -3056,7 +3057,7 @@ describe('headless board session controller', () => {
         },
       }
     );
-    expect(result.state.presentation.selectedCardId).toBeNull();
+    expect(selectedCardIdOf(result.state.presentation)).toBeNull();
     expect(result.state.presentation.drag).toBeNull();
     expect(result.state.view?.zones['zone:spike-blue:discard']).toBeDefined();
   });
@@ -3174,7 +3175,7 @@ describe('headless board session controller', () => {
     state = install(liveFrame(1, spectator, { boundary: 'resync' }));
     const cardId = state.scene!.cards[0]!.id;
     state = select(state, cardId);
-    expect(state.presentation.selectedCardId).toBe(cardId);
+    expect(selectedCardIdOf(state.presentation)).toBe(cardId);
     const intent: BoardIntent = { kind: 'CardContextRequested', cardId };
     expect(apply(state, { kind: 'RendererIntent', intent }).effects).toEqual([
       { kind: 'IntentRejected', intent, reason: 'read_only' },
@@ -3235,7 +3236,7 @@ describe('headless board session controller', () => {
       kind: 'FrameReceived',
       frame: liveFrame(2, spectator, { boundary: 'resync' }),
     });
-    expect(changed.state.presentation.selectedCardId).toBeNull();
+    expect(selectedCardIdOf(changed.state.presentation)).toBeNull();
     const closed = apply(changed.state, {
       kind: 'FrameReceived',
       frame: liveFrame(3, undefined, { sessionPhase: 'closed' }),
@@ -3500,7 +3501,7 @@ describe('headless board session controller', () => {
     });
     controller.subscribe(() => {
       order.push(
-        `snapshot:${controller.getSnapshot().presentation.selectedCardId ?? 'none'}`
+        `snapshot:${selectedCardIdOf(controller.getSnapshot().presentation) ?? 'none'}`
       );
     });
     controller.dispatch({ kind: 'FrameReceived', frame: initialFrame() });

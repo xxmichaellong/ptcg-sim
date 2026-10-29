@@ -1,6 +1,7 @@
 import { isCardBackValue } from '@ptcgsim/game-core';
 import * as v from 'valibot';
 import {
+  MAX_CARD_STEPS,
   MAX_CHAT_CODE_UNITS,
   MAX_DECK_CARDS,
   MAX_DECK_ENTRIES,
@@ -219,6 +220,256 @@ const WireDeckEntrySchema = v.object({
   count: v.pipe(PositiveIntegerSchema, v.maxValue(200)),
 });
 
+const MoveCardCommandSchema = v.object({
+  type: v.literal('MoveCard'),
+  cardId: IdentifierSchema,
+  expectedSourceZoneId: IdentifierSchema,
+  destinationZoneId: IdentifierSchema,
+  destinationIndex: v.optional(NonNegativeIntegerSchema),
+});
+
+const MoveCardFromStackCommandSchema = v.object({
+  type: v.literal('MoveCardFromStack'),
+  cardId: IdentifierSchema,
+  expectedStackId: IdentifierSchema,
+  destinationZoneId: IdentifierSchema,
+  destinationIndex: v.optional(NonNegativeIntegerSchema),
+});
+
+const MovePlayStackToZoneCommandSchema = v.object({
+  type: v.literal('MovePlayStackToZone'),
+  stackId: IdentifierSchema,
+  // As many as a stack can show (StackViewSchema): a command for any
+  // Pokémon on the table must pass, or the room never answers it.
+  expectedEvolutionCardIds: v.pipe(
+    v.array(IdentifierSchema),
+    v.minLength(1),
+    v.maxLength(200)
+  ),
+  expectedAttachmentCardIds: v.pipe(
+    v.array(IdentifierSchema),
+    v.maxLength(200)
+  ),
+  destinationZoneId: IdentifierSchema,
+  destinationIndex: v.optional(NonNegativeIntegerSchema),
+});
+
+const MoveInspectedCardCommandSchema = v.object({
+  type: v.literal('MoveInspectedCard'),
+  cardId: IdentifierSchema,
+  expectedWorkAreaId: IdentifierSchema,
+  destinationZoneId: IdentifierSchema,
+  destinationIndex: v.optional(NonNegativeIntegerSchema),
+});
+
+const MoveStagedCardCommandSchema = v.object({
+  type: v.literal('MoveStagedCard'),
+  cardId: IdentifierSchema,
+  expectedWorkAreaId: IdentifierSchema,
+  destinationZoneId: IdentifierSchema,
+  destinationIndex: v.optional(NonNegativeIntegerSchema),
+});
+
+const MoveCardToPlayCommandSchema = v.object({
+  type: v.literal('MoveCardToPlay'),
+  cardId: IdentifierSchema,
+  expectedSourceZoneId: IdentifierSchema,
+  boardPlayerId: IdentifierSchema,
+  slot: v.picklist(['active', 'bench'] as const),
+  targetStackId: v.optional(IdentifierSchema),
+  benchIndex: v.optional(NonNegativeIntegerSchema),
+});
+
+const MoveInspectedCardToPlayCommandSchema = v.strictObject({
+  // A card being looked at, played straight to Active or the Bench.
+  type: v.literal('MoveInspectedCardToPlay'),
+  cardId: IdentifierSchema,
+  expectedWorkAreaId: IdentifierSchema,
+  boardPlayerId: IdentifierSchema,
+  slot: v.picklist(['active', 'bench'] as const),
+  benchIndex: v.optional(NonNegativeIntegerSchema),
+});
+
+const PlaceCardOnPlayStackCommandSchema = v.strictObject({
+  type: v.literal('PlaceCardOnPlayStack'),
+  cardId: IdentifierSchema,
+  expectedSourceId: IdentifierSchema,
+  targetStackId: IdentifierSchema,
+  expectedTargetTopCardId: IdentifierSchema,
+  mode: v.picklist(['attachment', 'evolution'] as const),
+});
+
+const MoveCardToStadiumCommandSchema = v.object({
+  type: v.literal('MoveCardToStadium'),
+  cardId: IdentifierSchema,
+  expectedSourceId: IdentifierSchema,
+  expectedStadiumCardId: v.nullable(IdentifierSchema),
+  expectedStadiumCardIds: v.optional(
+    v.pipe(v.array(IdentifierSchema), v.maxLength(4))
+  ),
+  placement: v.optional(v.literal('add')),
+});
+
+const MoveCardToDeckTopCommandSchema = v.object({
+  type: v.literal('MoveCardToDeckTop'),
+  cardId: IdentifierSchema,
+  expectedSourceId: IdentifierSchema,
+});
+
+const MoveCardToDeckBottomCommandSchema = v.object({
+  type: v.literal('MoveCardToDeckBottom'),
+  cardId: IdentifierSchema,
+  expectedSourceId: IdentifierSchema,
+});
+
+const SetDamageCommandSchema = v.object({
+  type: v.literal('SetDamage'),
+  stackId: IdentifierSchema,
+  damage: v.nullable(v.pipe(NonNegativeIntegerSchema, v.maxValue(9_990))),
+});
+
+const SetSpecialConditionCommandSchema = v.object({
+  type: v.literal('SetSpecialCondition'),
+  stackId: IdentifierSchema,
+  condition: v.nullable(boundedString(16, 0)),
+});
+
+const SetAbilityUsedCommandSchema = v.object({
+  type: v.literal('SetAbilityUsed'),
+  stackId: IdentifierSchema,
+  used: v.boolean(),
+});
+
+const SetCardAbilityUsedCommandSchema = v.object({
+  type: v.literal('SetCardAbilityUsed'),
+  cardId: IdentifierSchema,
+  used: v.boolean(),
+});
+
+const SetPublicRevealCommandSchema = v.object({
+  type: v.literal('SetPublicReveal'),
+  cardId: IdentifierSchema,
+  expectedSourceId: IdentifierSchema,
+  revealed: v.boolean(),
+});
+
+const RotateStackCommandSchema = v.object({
+  type: v.literal('RotateStack'),
+  stackId: IdentifierSchema,
+  rotationQuarterTurns: QuarterTurnsSchema,
+});
+
+const SetCardOrientationCommandSchema = v.object({
+  type: v.literal('SetCardOrientation'),
+  cardId: IdentifierSchema,
+  orientationQuarterTurns: QuarterTurnsSchema,
+});
+
+const ShuffleZoneCommandSchema = v.object({
+  type: v.literal('ShuffleZone'),
+  zoneId: IdentifierSchema,
+});
+
+/**
+ * The Pokémon an earlier step of the same command made, by that step's
+ * place among the steps: a V-UNION's or LEGEND's later pieces go onto the
+ * Pokémon its first piece has just become, which has no id until the room
+ * makes it.
+ */
+const CardStepRefSchema = v.pipe(
+  NonNegativeIntegerSchema,
+  v.maxValue(MAX_CARD_STEPS - 1)
+);
+
+const MoveCardToPlayStepSchema = v.object({
+  ...MoveCardToPlayCommandSchema.entries,
+  targetStackRef: v.optional(CardStepRefSchema),
+});
+
+const PlaceCardOnPlayStackStepSchema = v.strictObject({
+  ...PlaceCardOnPlayStackCommandSchema.entries,
+  targetStackId: v.optional(IdentifierSchema),
+  targetStackRef: v.optional(CardStepRefSchema),
+});
+
+/**
+ * One step of a group's move (ApplyCardSteps): a single-card command, as it
+ * would be sent alone, from a short list. The two that put a card on a
+ * Pokémon may name one an earlier step made (`targetStackRef`) instead.
+ */
+export const WireCardStepSchema = v.variant('type', [
+  MoveCardCommandSchema,
+  MoveCardFromStackCommandSchema,
+  MovePlayStackToZoneCommandSchema,
+  MoveInspectedCardCommandSchema,
+  MoveStagedCardCommandSchema,
+  MoveCardToPlayStepSchema,
+  MoveInspectedCardToPlayCommandSchema,
+  PlaceCardOnPlayStackStepSchema,
+  MoveCardToStadiumCommandSchema,
+  MoveCardToDeckTopCommandSchema,
+  MoveCardToDeckBottomCommandSchema,
+  SetDamageCommandSchema,
+  SetSpecialConditionCommandSchema,
+  SetAbilityUsedCommandSchema,
+  SetCardAbilityUsedCommandSchema,
+  SetPublicRevealCommandSchema,
+  RotateStackCommandSchema,
+  SetCardOrientationCommandSchema,
+  ShuffleZoneCommandSchema,
+]);
+
+type CardStepShape = v.InferOutput<typeof WireCardStepSchema>;
+
+/** Whether a step makes a new Pokémon a later step may put cards on. */
+export const cardStepMakesPokemon = (
+  step: CardStepShape
+): step is Extract<
+  CardStepShape,
+  { readonly type: 'MoveCardToPlay' | 'MoveInspectedCardToPlay' }
+> =>
+  (step.type === 'MoveCardToPlay' &&
+    step.targetStackId === undefined &&
+    step.targetStackRef === undefined) ||
+  step.type === 'MoveInspectedCardToPlay';
+
+/**
+ * The steps' shape, before the room reads them: a step names only a
+ * Pokémon an earlier step made, a card put on a Pokémon names it one way
+ * only, and shuffles come last (a deck shuffled once its cards are in).
+ * What the steps do is checked by the room, step by step, as if each came
+ * alone.
+ */
+const wellFormedCardSteps = (steps: CardStepShape[]): boolean => {
+  let shuffled = false;
+  return steps.every((step, index) => {
+    if (step.type === 'ShuffleZone') {
+      shuffled = true;
+      return true;
+    }
+    if (shuffled) return false;
+    if (step.type !== 'MoveCardToPlay' && step.type !== 'PlaceCardOnPlayStack')
+      return true;
+    const ref = step.targetStackRef;
+    if (ref !== undefined && step.targetStackId !== undefined) return false;
+    if (step.type === 'PlaceCardOnPlayStack' && ref === undefined)
+      return step.targetStackId !== undefined;
+    return (
+      ref === undefined || (ref < index && cardStepMakesPokemon(steps[ref]!))
+    );
+  });
+};
+
+const ApplyCardStepsCommandSchema = v.object({
+  type: v.literal('ApplyCardSteps'),
+  steps: v.pipe(
+    v.array(WireCardStepSchema),
+    v.minLength(2),
+    v.maxLength(MAX_CARD_STEPS),
+    v.check(wellFormedCardSteps, 'Malformed card steps')
+  ),
+});
+
 export const WireGameCommandSchema = v.variant('type', [
   v.object({
     type: v.literal('LoadDeck'),
@@ -250,64 +501,12 @@ export const WireGameCommandSchema = v.variant('type', [
     type: v.literal('SetupPlayer'),
     targetPlayerId: v.optional(IdentifierSchema),
   }),
-  v.object({
-    type: v.literal('MoveCard'),
-    cardId: IdentifierSchema,
-    expectedSourceZoneId: IdentifierSchema,
-    destinationZoneId: IdentifierSchema,
-    destinationIndex: v.optional(NonNegativeIntegerSchema),
-  }),
-  v.object({
-    type: v.literal('MoveCardToStadium'),
-    cardId: IdentifierSchema,
-    expectedSourceId: IdentifierSchema,
-    expectedStadiumCardId: v.nullable(IdentifierSchema),
-    expectedStadiumCardIds: v.optional(
-      v.pipe(v.array(IdentifierSchema), v.maxLength(4))
-    ),
-    placement: v.optional(v.literal('add')),
-  }),
-  v.object({
-    type: v.literal('MoveCardToPlay'),
-    cardId: IdentifierSchema,
-    expectedSourceZoneId: IdentifierSchema,
-    boardPlayerId: IdentifierSchema,
-    slot: v.picklist(['active', 'bench'] as const),
-    targetStackId: v.optional(IdentifierSchema),
-    benchIndex: v.optional(NonNegativeIntegerSchema),
-  }),
-  v.strictObject({
-    type: v.literal('PlaceCardOnPlayStack'),
-    cardId: IdentifierSchema,
-    expectedSourceId: IdentifierSchema,
-    targetStackId: IdentifierSchema,
-    expectedTargetTopCardId: IdentifierSchema,
-    mode: v.picklist(['attachment', 'evolution'] as const),
-  }),
-  v.object({
-    type: v.literal('MoveCardFromStack'),
-    cardId: IdentifierSchema,
-    expectedStackId: IdentifierSchema,
-    destinationZoneId: IdentifierSchema,
-    destinationIndex: v.optional(NonNegativeIntegerSchema),
-  }),
-  v.object({
-    type: v.literal('MovePlayStackToZone'),
-    stackId: IdentifierSchema,
-    // As many as a stack can show (StackViewSchema): a command for any
-    // Pokémon on the table must pass, or the room never answers it.
-    expectedEvolutionCardIds: v.pipe(
-      v.array(IdentifierSchema),
-      v.minLength(1),
-      v.maxLength(200)
-    ),
-    expectedAttachmentCardIds: v.pipe(
-      v.array(IdentifierSchema),
-      v.maxLength(200)
-    ),
-    destinationZoneId: IdentifierSchema,
-    destinationIndex: v.optional(NonNegativeIntegerSchema),
-  }),
+  MoveCardCommandSchema,
+  MoveCardToStadiumCommandSchema,
+  MoveCardToPlayCommandSchema,
+  PlaceCardOnPlayStackCommandSchema,
+  MoveCardFromStackCommandSchema,
+  MovePlayStackToZoneCommandSchema,
   v.object({
     type: v.literal('MovePlayStack'),
     stackId: IdentifierSchema,
@@ -331,22 +530,8 @@ export const WireGameCommandSchema = v.variant('type', [
       })
     ),
   }),
-  v.object({
-    type: v.literal('MoveInspectedCard'),
-    cardId: IdentifierSchema,
-    expectedWorkAreaId: IdentifierSchema,
-    destinationZoneId: IdentifierSchema,
-    destinationIndex: v.optional(NonNegativeIntegerSchema),
-  }),
-  v.strictObject({
-    // A card being looked at, played straight to Active or the Bench.
-    type: v.literal('MoveInspectedCardToPlay'),
-    cardId: IdentifierSchema,
-    expectedWorkAreaId: IdentifierSchema,
-    boardPlayerId: IdentifierSchema,
-    slot: v.picklist(['active', 'bench'] as const),
-    benchIndex: v.optional(NonNegativeIntegerSchema),
-  }),
+  MoveInspectedCardCommandSchema,
+  MoveInspectedCardToPlayCommandSchema,
   v.object({
     // A card dragged into an open work-area popup, as v1's `viewCards` and
     // `attachedCards` containers accept drops from anywhere on the board.
@@ -354,13 +539,7 @@ export const WireGameCommandSchema = v.variant('type', [
     cardId: IdentifierSchema,
     expectedWorkAreaId: IdentifierSchema,
   }),
-  v.object({
-    type: v.literal('MoveStagedCard'),
-    cardId: IdentifierSchema,
-    expectedWorkAreaId: IdentifierSchema,
-    destinationZoneId: IdentifierSchema,
-    destinationIndex: v.optional(NonNegativeIntegerSchema),
-  }),
+  MoveStagedCardCommandSchema,
   v.object({
     type: v.literal('RestoreStagedStack'),
     targetPlayerId: v.optional(IdentifierSchema),
@@ -396,16 +575,8 @@ export const WireGameCommandSchema = v.variant('type', [
       'shuffleToDeckBottom',
     ] as const),
   }),
-  v.object({
-    type: v.literal('MoveCardToDeckTop'),
-    cardId: IdentifierSchema,
-    expectedSourceId: IdentifierSchema,
-  }),
-  v.object({
-    type: v.literal('MoveCardToDeckBottom'),
-    cardId: IdentifierSchema,
-    expectedSourceId: IdentifierSchema,
-  }),
+  MoveCardToDeckTopCommandSchema,
+  MoveCardToDeckBottomCommandSchema,
   v.object({
     type: v.literal('ShuffleCardIntoDeck'),
     cardId: IdentifierSchema,
@@ -420,7 +591,7 @@ export const WireGameCommandSchema = v.variant('type', [
     type: v.literal('MovePrizesToDeckBottom'),
     targetPlayerId: v.optional(IdentifierSchema),
   }),
-  v.object({ type: v.literal('ShuffleZone'), zoneId: IdentifierSchema }),
+  ShuffleZoneCommandSchema,
   v.object({
     type: v.literal('DrawCards'),
     count: v.pipe(PositiveIntegerSchema, v.maxValue(200)),
@@ -486,36 +657,12 @@ export const WireGameCommandSchema = v.variant('type', [
     count: v.pipe(NonNegativeIntegerSchema, v.maxValue(200)),
     targetPlayerId: v.optional(IdentifierSchema),
   }),
-  v.object({
-    type: v.literal('SetDamage'),
-    stackId: IdentifierSchema,
-    damage: v.nullable(v.pipe(NonNegativeIntegerSchema, v.maxValue(9_990))),
-  }),
-  v.object({
-    type: v.literal('SetSpecialCondition'),
-    stackId: IdentifierSchema,
-    condition: v.nullable(boundedString(16, 0)),
-  }),
-  v.object({
-    type: v.literal('SetAbilityUsed'),
-    stackId: IdentifierSchema,
-    used: v.boolean(),
-  }),
-  v.object({
-    type: v.literal('RotateStack'),
-    stackId: IdentifierSchema,
-    rotationQuarterTurns: QuarterTurnsSchema,
-  }),
-  v.object({
-    type: v.literal('SetCardOrientation'),
-    cardId: IdentifierSchema,
-    orientationQuarterTurns: QuarterTurnsSchema,
-  }),
-  v.object({
-    type: v.literal('SetCardAbilityUsed'),
-    cardId: IdentifierSchema,
-    used: v.boolean(),
-  }),
+  SetDamageCommandSchema,
+  SetSpecialConditionCommandSchema,
+  SetAbilityUsedCommandSchema,
+  RotateStackCommandSchema,
+  SetCardOrientationCommandSchema,
+  SetCardAbilityUsedCommandSchema,
   v.object({
     type: v.literal('ChangeCardCategory'),
     cardId: IdentifierSchema,
@@ -527,12 +674,7 @@ export const WireGameCommandSchema = v.variant('type', [
     cardId: IdentifierSchema,
     face: v.picklist(['up', 'down'] as const),
   }),
-  v.object({
-    type: v.literal('SetPublicReveal'),
-    cardId: IdentifierSchema,
-    expectedSourceId: IdentifierSchema,
-    revealed: v.boolean(),
-  }),
+  SetPublicRevealCommandSchema,
   v.object({
     type: v.literal('SetZonePublicReveal'),
     targetPlayerId: IdentifierSchema,
@@ -593,6 +735,7 @@ export const WireGameCommandSchema = v.variant('type', [
     type: v.literal('FlipCoin'),
     targetPlayerId: v.optional(IdentifierSchema),
   }),
+  ApplyCardStepsCommandSchema,
 ]);
 
 const HelloSchema = v.object({
@@ -916,7 +1059,21 @@ const CardsResolvedPresentationEventSchema = v.object({
     'deck',
     'deckBottom',
     'play',
+    'prizes',
+    'board',
   ] as const),
+  /**
+   * A group's cards by name, in the order they moved: "…: Fire Energy,
+   * Switch". Null for a card not publicly known (a face-down prize), so the
+   * line can say how many went unnamed. Absent on lines that fold no group.
+   */
+  cardNames: v.optional(
+    v.pipe(
+      v.array(v.nullable(boundedString(256))),
+      v.minLength(1),
+      v.maxLength(60)
+    )
+  ),
 });
 
 const HandReplacedPresentationEventSchema = v.object({
@@ -1238,6 +1395,8 @@ export const ServerMessageSchema = v.variant('type', [
 ]);
 
 export type WireGameCommand = v.InferOutput<typeof WireGameCommandSchema>;
+/** One step of a group's move (ApplyCardSteps). */
+export type WireCardStep = v.InferOutput<typeof WireCardStepSchema>;
 export type RoomCreationRequest = v.InferOutput<
   typeof RoomCreationRequestSchema
 >;

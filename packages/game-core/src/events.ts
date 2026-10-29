@@ -546,6 +546,12 @@ export interface EventBatch {
   readonly revision: number;
   readonly events: readonly DomainEvent[];
   /**
+   * How many single-card steps one move of several selected cards was made
+   * of (ApplyCardSteps), so the log folds its lines into one per place.
+   * Absent on every other batch, and on batches written before groups.
+   */
+  readonly steps?: number;
+  /**
    * The seat whose command produced this batch, when it was a player's
    * command. Recorded so the battle log can name who acted -- v1 names the
    * initiator even when it was the opponent moving your cards -- and absent

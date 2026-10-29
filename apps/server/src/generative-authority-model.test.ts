@@ -862,6 +862,8 @@ const commandVariant = (command: WireGameCommand): string => {
       return `${command.type}:${command.consent}`;
     case 'SetOncePerGameMarker':
       return `${command.type}:${command.marker}:${command.used}`;
+    case 'ApplyCardSteps':
+      return `${command.type}:steps=${command.steps.length}`;
     default: {
       const exhaustive: never = command;
       return exhaustive;
@@ -1572,7 +1574,7 @@ describe('named model scenarios', () => {
     expect(() => parseIntegerEnvironment('MODEL_TEST', '1.5', 7, 10)).toThrow(
       'MODEL_TEST must be an integer from 1 through 10'
     );
-    expect(Object.keys(MODEL_COMMAND_REGISTRY)).toHaveLength(55);
+    expect(Object.keys(MODEL_COMMAND_REGISTRY)).toHaveLength(56);
     expect(new Set(Object.keys(MODEL_COMMAND_GENERATORS))).toEqual(
       new Set(Object.keys(MODEL_COMMAND_REGISTRY))
     );
@@ -1586,6 +1588,7 @@ describe('named model scenarios', () => {
       'ResolveStagedCards',
       'ResolveInspectionCards',
       'ApplySoloUndo',
+      'ApplyCardSteps',
     ]);
     const actual = new Set(
       Object.entries(MODEL_COMMAND_REGISTRY).flatMap(([type, metadata]) =>

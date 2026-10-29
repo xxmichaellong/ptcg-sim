@@ -19,6 +19,11 @@ export const MAX_DECK_CARDS = 200;
  * to the reducer package. protocol.test.ts enforces equality.
  */
 export const MAX_IMAGE_URL_CODE_UNITS = 4_096;
+/**
+ * The most steps one group move (ApplyCardSteps) carries: 60 cards moved,
+ * with what they need besides (the pieces joined, a shuffle at the end).
+ */
+export const MAX_CARD_STEPS = 120;
 /** One base projection plus at most 128 accepted revision projections. */
 export const MAX_REPLAY_FRAMES = 129;
 /**

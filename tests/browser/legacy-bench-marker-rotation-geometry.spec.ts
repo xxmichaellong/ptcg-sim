@@ -806,7 +806,8 @@ test('pristine source bench markers match the strict React DOM candidate', async
               host: HTMLElement,
               candidateScene: typeof scene,
               presentation: {
-                selectedCardId: null;
+                selection: readonly [];
+                selectionMode: false;
                 hoveredCardId: null;
                 targetableCardIds: readonly [];
                 drag: null;
@@ -840,7 +841,8 @@ test('pristine source bench markers match the strict React DOM candidate', async
       },
     });
     await renderer.mount(host, scene, {
-      selectedCardId: null,
+      selection: [],
+      selectionMode: false,
       hoveredCardId: null,
       targetableCardIds: [],
       drag: null,

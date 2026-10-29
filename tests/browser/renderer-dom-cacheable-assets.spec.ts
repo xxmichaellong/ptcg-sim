@@ -153,7 +153,8 @@ test('normalized React DOM reuses 120 distinct cacheable assets across fresh ren
         performance.setResourceTimingBufferSize(512);
         performance.clearResourceTimings();
         const presentation = {
-          selectedCardId: null,
+          selection: [],
+          selectionMode: false,
           hoveredCardId: null,
           targetableCardIds: [],
           drag: null,

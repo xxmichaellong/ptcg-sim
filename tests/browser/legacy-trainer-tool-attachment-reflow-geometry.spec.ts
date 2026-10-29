@@ -602,7 +602,8 @@ test('checked-in legacy sources and React DOM share stable Trainer-as-Tool attac
               host: HTMLElement,
               candidateScene: typeof scene,
               presentation: {
-                selectedCardId: null;
+                selection: readonly [];
+                selectionMode: false;
                 hoveredCardId: null;
                 targetableCardIds: readonly [];
                 drag: null;
@@ -636,7 +637,8 @@ test('checked-in legacy sources and React DOM share stable Trainer-as-Tool attac
       },
     });
     await renderer.mount(host, scene, {
-      selectedCardId: null,
+      selection: [],
+      selectionMode: false,
       hoveredCardId: null,
       targetableCardIds: [],
       drag: null,

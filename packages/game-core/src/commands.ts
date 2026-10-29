@@ -34,7 +34,8 @@ export type LooseBoardCardsDestination = Exclude<
 
 type PlayStackPlacementMode = 'attachment' | 'evolution';
 
-export type GameCommand =
+/** Every command but a group's (ApplyCardSteps), which is made of these. */
+export type BaseGameCommand =
   | {
       readonly type: 'LoadDeck';
       readonly playerId: PlayerId;
@@ -399,6 +400,63 @@ export type GameCommand =
       readonly checkpoint: MatchState;
     }
   | { readonly type: 'FlipCoin'; readonly playerId: PlayerId };
+
+/**
+ * The single-card commands one move of several selected cards is made of
+ * (ApplyCardSteps). Shuffles only come last, once the cards are in.
+ */
+export const CARD_STEP_TYPES = [
+  'MoveCard',
+  'MoveCardFromStack',
+  'MovePlayStackToZone',
+  'MoveInspectedCard',
+  'MoveStagedCard',
+  'MoveCardToPlay',
+  'MoveInspectedCardToPlay',
+  'PlaceCardOnPlayStack',
+  'MoveCardToStadium',
+  'MoveCardToDeckTop',
+  'MoveCardToDeckBottom',
+  'SetDamage',
+  'SetSpecialCondition',
+  'SetAbilityUsed',
+  'SetCardAbilityUsed',
+  'SetPublicReveal',
+  'RotateStack',
+  'SetCardOrientation',
+  'ShuffleZone',
+] as const satisfies readonly BaseGameCommand['type'][];
+
+export type CardStepType = (typeof CARD_STEP_TYPES)[number];
+
+/**
+ * A card put on the Pokémon an earlier step of the same command made, by
+ * that step's place among the steps: its id is only made as the step runs.
+ */
+type OnPokemonMadeBefore<Command> = Omit<Command, 'targetStackId'> & {
+  readonly targetStackRef: number;
+};
+
+export type CardStep =
+  | Extract<BaseGameCommand, { readonly type: CardStepType }>
+  | OnPokemonMadeBefore<
+      Extract<BaseGameCommand, { readonly type: 'MoveCardToPlay' }>
+    >
+  | OnPokemonMadeBefore<
+      Extract<BaseGameCommand, { readonly type: 'PlaceCardOnPlayStack' }>
+    >;
+
+/**
+ * Several selected cards acted on as one move (ADR-0XX): each step is
+ * decided as if it came alone, on the table the steps before it left, and
+ * the whole is one batch, one undo step. Any step refused refuses all.
+ */
+export interface ApplyCardStepsCommand {
+  readonly type: 'ApplyCardSteps';
+  readonly steps: readonly CardStep[];
+}
+
+export type GameCommand = BaseGameCommand | ApplyCardStepsCommand;
 
 export type CommandRejectionCode =
   | 'invalid_command'

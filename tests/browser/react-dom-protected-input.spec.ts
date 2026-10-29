@@ -63,7 +63,7 @@ interface ProtectedInputEvidence {
   readonly boardFlips: number;
   readonly presentationDismissals: number;
   readonly presentation: {
-    readonly selectedCardId: string | null;
+    readonly selection: readonly string[];
     readonly targetableCardIds: readonly string[];
     readonly drag: {
       readonly cardId: string;
@@ -175,6 +175,12 @@ const mountHarness = async (page: Page): Promise<ProtectedInputFixture> => {
     return harness.getFixture();
   });
 };
+
+/** The one selected card, as the board's single-card surfaces read it. */
+const selectedCardIdOf = (presentation: {
+  readonly selection: readonly string[];
+}): string | null =>
+  presentation.selection.length === 1 ? presentation.selection[0]! : null;
 
 const evidence = (page: Page): Promise<ProtectedInputEvidence> =>
   page.evaluate(() => {
@@ -334,7 +340,7 @@ test('Q/E attach targeting stays local until one exact target click and fails cl
         { action: 'beginAttachOrEvolve', cardId: fixture.sourceCardId },
       ],
       presentation: {
-        selectedCardId: null,
+        selection: [],
         targetableCardIds: [
           fixture.activeTopCardId,
           fixture.conditionlessActiveTopCardId,
@@ -366,7 +372,7 @@ test('Q/E attach targeting stays local until one exact target click and fails cl
       shortcutActions: [
         { action: 'beginAttachOrEvolve', cardId: fixture.sourceCardId },
       ],
-      presentation: { selectedCardId: null, targetableCardIds: [] },
+      presentation: { selection: [], targetableCardIds: [] },
     });
 
   for (const scenario of [
@@ -432,7 +438,7 @@ test('Q/E attach targeting stays local until one exact target click and fails cl
           clientSequence: 4,
         },
       ],
-      presentation: { selectedCardId: null, targetableCardIds: [] },
+      presentation: { selection: [], targetableCardIds: [] },
     });
 
   await clearEvidence(page);
@@ -449,7 +455,7 @@ test('Q/E attach targeting stays local until one exact target click and fails cl
   // painted again before clicking, or the click lands on the empty host.
   await expect(source).toBeVisible();
   await expect
-    .poll(async () => (await evidence(page)).presentation.selectedCardId)
+    .poll(async () => selectedCardIdOf((await evidence(page)).presentation))
     .toBeNull();
   const replaySourcePoint = await exposedCardPoint(source);
   await page.mouse.click(replaySourcePoint.x, replaySourcePoint.y);
@@ -472,7 +478,7 @@ test('Q/E attach targeting stays local until one exact target click and fails cl
         },
       ],
       presentation: {
-        selectedCardId: fixture.sourceCardId,
+        selection: [fixture.sourceCardId],
         targetableCardIds: [],
       },
     });
@@ -516,7 +522,7 @@ test('native DOM input reaches protected controller state, lower-stack departure
   expect(noOpEvidence.submissions).toEqual([]);
   expect(noOpEvidence.submissionResults).toEqual([]);
   expect(noOpEvidence.presentation).toMatchObject({
-    selectedCardId: null,
+    selection: [],
     drag: null,
   });
   expect(noOpEvidence.reportedErrors).toEqual([]);
@@ -553,7 +559,7 @@ test('native DOM input reaches protected controller state, lower-stack departure
   ]);
   expect(lowerDepartureEvidence.rejections).toEqual([]);
   expect(lowerDepartureEvidence.presentation).toMatchObject({
-    selectedCardId: null,
+    selection: [],
     drag: null,
   });
   expect(lowerDepartureEvidence.reportedErrors).toEqual([]);
@@ -588,7 +594,7 @@ test('native DOM input reaches protected controller state, lower-stack departure
   ]);
   expect(submittedEvidence.rejections).toEqual([]);
   expect(submittedEvidence.presentation).toMatchObject({
-    selectedCardId: null,
+    selection: [],
     drag: null,
   });
   expect(submittedEvidence.reportedErrors).toEqual([]);
@@ -597,7 +603,7 @@ test('native DOM input reaches protected controller state, lower-stack departure
   const sourcePoint = await exposedCardPoint(sourceCard);
   await page.mouse.click(sourcePoint.x, sourcePoint.y);
   await expect
-    .poll(async () => (await evidence(page)).presentation.selectedCardId)
+    .poll(async () => selectedCardIdOf((await evidence(page)).presentation))
     .toBe(fixture.sourceCardId);
   await expect(sourceCard).toHaveAttribute('aria-pressed', 'true');
 
@@ -607,7 +613,7 @@ test('native DOM input reaches protected controller state, lower-stack departure
     .toMatchObject({
       submissions: [],
       rejections: [],
-      presentation: { selectedCardId: null, drag: null },
+      presentation: { selection: [], drag: null },
       overlays: {
         contextMenuCardId: null,
         preview: { kind: 'card', cardId: fixture.sourceCardId },
@@ -630,7 +636,7 @@ test('native DOM input reaches protected controller state, lower-stack departure
       submissions: [],
       rejections: [],
       presentation: {
-        selectedCardId: null,
+        selection: [],
         drag: null,
         openedZoneId: null,
         settling: [],
@@ -1478,12 +1484,12 @@ test('selected-card marker, category, visibility, deck, zone, and play shortcuts
   const sourceCard = host.locator(`[data-card-id="${fixture.sourceCardId}"]`);
   const selectCard = async (card: Locator, cardId: string): Promise<void> => {
     // Pressing the selected card lets it go: press it only to select it.
-    if ((await evidence(page)).presentation.selectedCardId !== cardId) {
+    if (selectedCardIdOf((await evidence(page)).presentation) !== cardId) {
       const point = await exposedCardPoint(card);
       await page.mouse.click(point.x, point.y);
     }
     await expect
-      .poll(async () => (await evidence(page)).presentation.selectedCardId)
+      .poll(async () => selectedCardIdOf((await evidence(page)).presentation))
       .toBe(cardId);
   };
   const cases = [
@@ -1904,7 +1910,7 @@ test('selected-card marker, category, visibility, deck, zone, and play shortcuts
     expect(shortcutEvidence.shortcutRejections).toEqual([]);
     expect(shortcutEvidence.overlayActions).toEqual([]);
     expect(shortcutEvidence.reportedErrors).toEqual([]);
-    expect(shortcutEvidence.presentation.selectedCardId).toBe(
+    expect(selectedCardIdOf(shortcutEvidence.presentation)).toBe(
       shortcut.retained ? shortcut.cardId : null
     );
   }
@@ -1928,7 +1934,9 @@ test('selected-card marker, category, visibility, deck, zone, and play shortcuts
   expect(suppressed.submissions).toEqual([]);
   expect(suppressed.shortcutActions).toEqual([]);
   expect(suppressed.shortcutRejections).toEqual([]);
-  expect(suppressed.presentation.selectedCardId).toBe(fixture.activeTopCardId);
+  expect(selectedCardIdOf(suppressed.presentation)).toBe(
+    fixture.activeTopCardId
+  );
   await page
     .locator('[data-shortcut-editable-probe]')
     .evaluate((element) => element.remove());
@@ -1982,7 +1990,7 @@ test('global loose-board shortcuts stay viewer-owned and suppress editable targe
       },
     ]);
     expect(current.shortcutRejections).toEqual([]);
-    expect(current.presentation.selectedCardId).toBeNull();
+    expect(selectedCardIdOf(current.presentation)).toBeNull();
     expect(current.reportedErrors).toEqual([]);
   }
 
@@ -2067,7 +2075,7 @@ test('unselected deck shortcuts stay viewer-owned and reject the ambiguous dual-
     ]);
     expect(current.shortcutActions).toEqual([scenario.action]);
     expect(current.shortcutRejections).toEqual([]);
-    expect(current.presentation.selectedCardId).toBeNull();
+    expect(selectedCardIdOf(current.presentation)).toBeNull();
     expect(current.reportedErrors).toEqual([]);
   }
 
@@ -2115,7 +2123,7 @@ test('global coin shortcut stays authority-owned across selection and read-only 
   const point = await exposedCardPoint(selectedCard);
   await page.mouse.click(point.x, point.y);
   await expect
-    .poll(async () => (await evidence(page)).presentation.selectedCardId)
+    .poll(async () => selectedCardIdOf((await evidence(page)).presentation))
     .toBe(fixture.activeTopCardId);
 
   await clearEvidence(page);
@@ -2133,7 +2141,7 @@ test('global coin shortcut stays authority-owned across selection and read-only 
   ]);
   expect(current.shortcutActions).toEqual([{ action: 'flipCoin' }]);
   expect(current.shortcutRejections).toEqual([]);
-  expect(current.presentation.selectedCardId).toBe(fixture.activeTopCardId);
+  expect(selectedCardIdOf(current.presentation)).toBe(fixture.activeTopCardId);
 
   await clearEvidence(page);
   await page.keyboard.press('Alt+KeyF');
@@ -2141,7 +2149,7 @@ test('global coin shortcut stays authority-owned across selection and read-only 
   expect(current.submissions).toEqual([]);
   expect(current.shortcutActions).toEqual([]);
   expect(current.shortcutRejections).toEqual([]);
-  expect(current.presentation.selectedCardId).toBe(fixture.activeTopCardId);
+  expect(selectedCardIdOf(current.presentation)).toBe(fixture.activeTopCardId);
 
   await page.evaluate(() => {
     const input = document.createElement('input');
@@ -2179,7 +2187,7 @@ test('global coin shortcut stays authority-owned across selection and read-only 
   current = await evidence(page);
   expect(current.submissions).toEqual([]);
   expect(current.shortcutActions).toEqual([{ action: 'flipCoin' }]);
-  expect(current.presentation.selectedCardId).toBeNull();
+  expect(selectedCardIdOf(current.presentation)).toBeNull();
   expect(current.reportedErrors).toEqual([]);
 
   await page.evaluate(() => {
@@ -2241,7 +2249,7 @@ test('unselected lifecycle shortcuts derive the viewer and reject replay atomica
     ]);
     expect(current.shortcutActions).toEqual([scenario.action]);
     expect(current.shortcutRejections).toEqual([]);
-    expect(current.presentation.selectedCardId).toBeNull();
+    expect(selectedCardIdOf(current.presentation)).toBeNull();
     expect(current.reportedErrors).toEqual([]);
   }
 
@@ -2251,7 +2259,7 @@ test('unselected lifecycle shortcuts derive the viewer and reject replay atomica
   const point = await exposedCardPoint(selectedCard);
   await page.mouse.click(point.x, point.y);
   await expect
-    .poll(async () => (await evidence(page)).presentation.selectedCardId)
+    .poll(async () => selectedCardIdOf((await evidence(page)).presentation))
     .toBe(fixture.activeTopCardId);
   await clearEvidence(page);
   await page.keyboard.press('Alt+KeyN');
@@ -2259,7 +2267,7 @@ test('unselected lifecycle shortcuts derive the viewer and reject replay atomica
   expect(current.submissions).toEqual([]);
   expect(current.shortcutActions).toEqual([]);
   expect(current.shortcutRejections).toEqual([]);
-  expect(current.presentation.selectedCardId).toBe(fixture.activeTopCardId);
+  expect(selectedCardIdOf(current.presentation)).toBe(fixture.activeTopCardId);
 
   await page.evaluate(() => {
     const input = document.createElement('input');
@@ -2304,7 +2312,7 @@ test('unselected lifecycle shortcuts derive the viewer and reject replay atomica
     current = await evidence(page);
     expect(current.submissions).toEqual([]);
     expect(current.shortcutActions).toEqual([scenario.action]);
-    expect(current.presentation.selectedCardId).toBeNull();
+    expect(selectedCardIdOf(current.presentation)).toBeNull();
     expect(current.reportedErrors).toEqual([]);
   }
 
@@ -2371,7 +2379,7 @@ test('unselected hand shortcuts stage prompted counts before atomic authority co
     ]);
     expect(current.shortcutRejections).toEqual([]);
     expect(current.overlays.input).toBeNull();
-    expect(current.presentation.selectedCardId).toBeNull();
+    expect(selectedCardIdOf(current.presentation)).toBeNull();
     expect(current.reportedErrors).toEqual([]);
   }
 
@@ -2434,7 +2442,7 @@ test('unselected hand shortcuts stage prompted counts before atomic authority co
   const point = await exposedCardPoint(selectedCard);
   await page.mouse.click(point.x, point.y);
   await expect
-    .poll(async () => (await evidence(page)).presentation.selectedCardId)
+    .poll(async () => selectedCardIdOf((await evidence(page)).presentation))
     .toBe(fixture.activeTopCardId);
   await clearEvidence(page);
   for (const scenario of cases) await page.keyboard.press(scenario.key);
@@ -2442,7 +2450,7 @@ test('unselected hand shortcuts stage prompted counts before atomic authority co
   expect(current.submissions).toEqual([]);
   expect(current.shortcutActions).toEqual([]);
   expect(current.shortcutRejections).toEqual([]);
-  expect(current.presentation.selectedCardId).toBe(fixture.activeTopCardId);
+  expect(selectedCardIdOf(current.presentation)).toBe(fixture.activeTopCardId);
 
   await page.evaluate(() => {
     const input = document.createElement('input');
@@ -2549,7 +2557,7 @@ test('solo U submits one viewer-derived undo while repeat, selection, and replay
     { action: 'undoOwnLastMove' },
   ]);
   expect(current.shortcutRejections).toEqual([]);
-  expect(current.presentation.selectedCardId).toBeNull();
+  expect(selectedCardIdOf(current.presentation)).toBeNull();
   expect(current.reportedErrors).toEqual([]);
 
   const selectedCard = host.locator(
@@ -2558,7 +2566,7 @@ test('solo U submits one viewer-derived undo while repeat, selection, and replay
   const point = await exposedCardPoint(selectedCard);
   await page.mouse.click(point.x, point.y);
   await expect
-    .poll(async () => (await evidence(page)).presentation.selectedCardId)
+    .poll(async () => selectedCardIdOf((await evidence(page)).presentation))
     .toBe(fixture.activeTopCardId);
   await clearEvidence(page);
   await page.keyboard.press('KeyU');
@@ -2566,7 +2574,7 @@ test('solo U submits one viewer-derived undo while repeat, selection, and replay
   expect(current.submissions).toEqual([]);
   expect(current.submissionResults).toEqual([]);
   expect(current.shortcutActions).toEqual([]);
-  expect(current.presentation.selectedCardId).toBe(fixture.activeTopCardId);
+  expect(selectedCardIdOf(current.presentation)).toBe(fixture.activeTopCardId);
 
   await page.evaluate(() => {
     const input = document.createElement('input');
@@ -2661,7 +2669,7 @@ test('M emits only ephemeral live-player mulligan declarations and preserves pro
   await page.keyboard.press('KeyM');
   current = await evidence(page);
   expect(current.mulliganDeclarations).toBe(0);
-  expect(current.presentation.selectedCardId).toBe(fixture.activeTopCardId);
+  expect(selectedCardIdOf(current.presentation)).toBe(fixture.activeTopCardId);
 
   await page.evaluate(() => {
     const input = document.createElement('input');
@@ -2738,7 +2746,7 @@ test('R turns a selected Pokémon or a single card, and does nothing with none s
   const point = await exposedCardPoint(selectedCard);
   await page.mouse.click(point.x, point.y);
   await expect
-    .poll(async () => (await evidence(page)).presentation.selectedCardId)
+    .poll(async () => selectedCardIdOf((await evidence(page)).presentation))
     .toBe(fixture.activeTopCardId);
   await clearEvidence(page);
   await page.keyboard.press('KeyR');
@@ -2769,7 +2777,7 @@ test('R turns a selected Pokémon or a single card, and does nothing with none s
     },
   ]);
   expect(current.shortcutRejections).toEqual([]);
-  expect(current.presentation.selectedCardId).toBe(fixture.activeTopCardId);
+  expect(selectedCardIdOf(current.presentation)).toBe(fixture.activeTopCardId);
 
   await page.mouse.dblclick(point.x, point.y);
   await expect
@@ -2880,14 +2888,14 @@ test('Alt-F flips only the local board perspective across selection and replay',
   const point = await exposedCardPoint(selectedCard);
   await page.mouse.click(point.x, point.y);
   await expect
-    .poll(async () => (await evidence(page)).presentation.selectedCardId)
+    .poll(async () => selectedCardIdOf((await evidence(page)).presentation))
     .toBe(fixture.activeTopCardId);
   await clearEvidence(page);
   await page.keyboard.press('Shift+Alt+KeyF');
   await expect.poll(async () => (await evidence(page)).boardFlips).toBe(1);
   await expect(ownFrame).toHaveAttribute('data-player-physical-side', 'upper');
   current = await evidence(page);
-  expect(current.presentation.selectedCardId).toBe(fixture.activeTopCardId);
+  expect(selectedCardIdOf(current.presentation)).toBe(fixture.activeTopCardId);
   expect(current.submissions).toEqual([]);
   expect(current.shortcutActions).toEqual([]);
 
@@ -2981,7 +2989,7 @@ test('Escape globally dismisses local board presentation without command traffic
       overlayActions: [],
       shortcutRejections: [],
       shortcutActions: [],
-      presentation: { selectedCardId: null, openedZoneId: null },
+      presentation: { selection: [], openedZoneId: null },
       overlays: { contextMenuCardId: null, input: null, preview: null },
       reportedErrors: [],
     });
@@ -2989,7 +2997,7 @@ test('Escape globally dismisses local board presentation without command traffic
 
   await page.mouse.click(selectedPoint.x, selectedPoint.y);
   await expect
-    .poll(async () => (await evidence(page)).presentation.selectedCardId)
+    .poll(async () => selectedCardIdOf((await evidence(page)).presentation))
     .toBe(fixture.activeTopCardId);
   await clearEvidence(page);
   expect(await dispatchBodyEscape()).toBe(true);
@@ -3068,7 +3076,7 @@ test('Escape globally dismisses local board presentation without command traffic
     .toBe('replay');
   await page.mouse.click(selectedPoint.x, selectedPoint.y);
   await expect
-    .poll(async () => (await evidence(page)).presentation.selectedCardId)
+    .poll(async () => selectedCardIdOf((await evidence(page)).presentation))
     .toBe(fixture.activeTopCardId);
   await clearEvidence(page);
   expect(await dispatchBodyEscape({ ctrlKey: true, shiftKey: true })).toBe(
@@ -3146,14 +3154,14 @@ test('? opens the keyboard shortcuts list without game traffic', async ({
   const selectedPoint = await exposedCardPoint(selectedCard);
   await page.mouse.click(selectedPoint.x, selectedPoint.y);
   await expect
-    .poll(async () => (await evidence(page)).presentation.selectedCardId)
+    .poll(async () => selectedCardIdOf((await evidence(page)).presentation))
     .toBe(fixture.activeTopCardId);
   await page.keyboard.press('Shift+Slash');
   await expect(cardSelected).toHaveAttribute('aria-checked', 'true');
   await expect(shortcuts.locator('[data-action="card.toHand"]')).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(shortcuts).toHaveCount(0);
-  expect((await evidence(page)).presentation.selectedCardId).toBe(
+  expect(selectedCardIdOf((await evidence(page)).presentation)).toBe(
     fixture.activeTopCardId
   );
   expect((await evidence(page)).presentationDismissals).toBe(0);
@@ -3229,7 +3237,7 @@ test('V opens the local deck or selected-card preview without replay mutation', 
       submissions: [],
       shortcutActions: [],
       presentation: {
-        selectedCardId: null,
+        selection: [],
         openedZoneId: fixture.ownDeckZoneId,
       },
     });
@@ -3255,7 +3263,7 @@ test('V opens the local deck or selected-card preview without replay mutation', 
       deckViewDeclarations: 0,
       submissions: [],
       shortcutActions: [],
-      presentation: { selectedCardId: null, openedZoneId: null },
+      presentation: { selection: [], openedZoneId: null },
       overlays: {
         preview: {
           kind: 'stack',

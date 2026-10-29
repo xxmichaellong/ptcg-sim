@@ -147,7 +147,7 @@ describe('boardCommands', () => {
     const state = stateWith({
       presentation: {
         ...createInitialBoardSessionControllerState().presentation,
-        selectedCardId: cardId,
+        selection: [cardId],
       },
     });
     const runtime = runtimeFor(state);
@@ -194,7 +194,7 @@ describe('boardCommands', () => {
     const cardId = active.evolutionCards.at(-1)!.id;
     const presentation = {
       ...createInitialBoardSessionControllerState().presentation,
-      selectedCardId: cardId,
+      selection: [cardId],
     };
     const damaged = stateWith({
       view: {
@@ -266,7 +266,7 @@ describe('boardCommands', () => {
     const cardId = active.evolutionCards.at(-1)!.id;
     const presentation = {
       ...createInitialBoardSessionControllerState().presentation,
-      selectedCardId: cardId,
+      selection: [cardId],
     };
     const withCondition = (specialCondition: string | null) =>
       stateWith({
@@ -313,7 +313,7 @@ describe('boardCommands', () => {
         stateWith({
           presentation: {
             ...createInitialBoardSessionControllerState().presentation,
-            selectedCardId: prize.id,
+            selection: [prize.id],
           },
         })
       ),
@@ -512,7 +512,7 @@ describe('two-way commands', () => {
         stateWith({
           presentation: {
             ...createInitialBoardSessionControllerState().presentation,
-            selectedCardId: active.id,
+            selection: [active.id],
           },
         })
       ),

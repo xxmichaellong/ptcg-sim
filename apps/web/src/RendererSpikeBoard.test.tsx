@@ -214,7 +214,7 @@ describe('RendererSpikeBoard application boundary', () => {
     });
     expect(rendererHarness.installPresentation.mock.calls.at(-1)?.[0]).toEqual(
       expect.objectContaining({
-        selectedCardId: card.id,
+        selection: [card.id],
         drag: expect.objectContaining({ cardId: card.id }),
       })
     );

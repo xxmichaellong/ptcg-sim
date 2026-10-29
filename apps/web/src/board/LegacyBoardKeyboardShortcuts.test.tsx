@@ -47,7 +47,7 @@ describe('legacy board keyboard shortcut bridge', () => {
             ...state,
             presentation: {
               ...state.presentation,
-              selectedCardId: 'selected-card',
+              selection: ['selected-card'],
             },
           },
           onRequest,
@@ -80,7 +80,7 @@ describe('legacy board keyboard shortcut bridge', () => {
             ...state,
             presentation: {
               ...state.presentation,
-              selectedCardId: 'selected-card',
+              selection: ['selected-card'],
               openedZoneId: 'selected-zone',
             },
           },
@@ -241,7 +241,7 @@ describe('legacy board keyboard shortcut bridge', () => {
             ...state,
             presentation: {
               ...state.presentation,
-              selectedCardId: 'selected-card',
+              selection: ['selected-card'],
             },
           },
           onRequest,
@@ -298,7 +298,7 @@ describe('legacy board keyboard shortcut bridge', () => {
             ...state,
             presentation: {
               ...state.presentation,
-              selectedCardId: 'selected-card',
+              selection: ['selected-card'],
             },
           },
           onRequest,
@@ -445,7 +445,7 @@ describe('legacy board keyboard shortcut bridge', () => {
             ...state,
             presentation: {
               ...state.presentation,
-              selectedCardId: 'selected-card',
+              selection: ['selected-card'],
             },
           },
           onRequest,
@@ -598,7 +598,7 @@ describe('legacy board keyboard shortcut bridge', () => {
             ...state,
             presentation: {
               ...state.presentation,
-              selectedCardId: 'selected-card',
+              selection: ['selected-card'],
             },
           },
           onRequest,
@@ -716,7 +716,7 @@ describe('legacy board keyboard shortcut bridge', () => {
             ...state,
             presentation: {
               ...state.presentation,
-              selectedCardId: 'selected-card',
+              selection: ['selected-card'],
             },
           },
           onRequest,
@@ -774,7 +774,7 @@ describe('legacy board keyboard shortcut bridge', () => {
             ...state,
             presentation: {
               ...state.presentation,
-              selectedCardId: 'selected-card',
+              selection: ['selected-card'],
             },
           },
           onRequest,
@@ -826,7 +826,7 @@ describe('legacy board keyboard shortcut bridge', () => {
             },
             presentation: {
               ...state.presentation,
-              selectedCardId: 'selected-card',
+              selection: ['selected-card'],
             },
           },
           onRequest,
@@ -890,7 +890,7 @@ describe('legacy board keyboard shortcut bridge', () => {
             ...state,
             presentation: {
               ...state.presentation,
-              selectedCardId: 'selected-card',
+              selection: ['selected-card'],
             },
           },
           onRequest,
@@ -1003,7 +1003,7 @@ describe('legacy board keyboard shortcut bridge', () => {
             ...state,
             presentation: {
               ...state.presentation,
-              selectedCardId: selectedCard.id,
+              selection: [selectedCard.id],
             },
           },
           onRequest,
@@ -1050,7 +1050,7 @@ describe('legacy board keyboard shortcut bridge', () => {
             view: spectatorView,
             presentation: {
               ...state.presentation,
-              selectedCardId: selectedCard.id,
+              selection: [selectedCard.id],
             },
           },
           onRequest,
@@ -1159,7 +1159,10 @@ describe('legacy board keyboard shortcut bridge', () => {
           createElement(LegacyBoardKeyboardShortcuts, {
             state: {
               ...state,
-              presentation: { ...state.presentation, selectedCardId },
+              presentation: {
+                ...state.presentation,
+                selection: selectedCardId === null ? [] : [selectedCardId],
+              },
             },
             onRequest,
             onToggleShortcuts,
@@ -1222,7 +1225,10 @@ describe('legacy board keyboard shortcut bridge', () => {
           createElement(LegacyBoardKeyboardShortcuts, {
             state: {
               ...state,
-              presentation: { ...state.presentation, selectedCardId },
+              presentation: {
+                ...state.presentation,
+                selection: selectedCardId === null ? [] : [selectedCardId],
+              },
             },
             onRequest,
             onToggleShortcuts,
@@ -1290,7 +1296,7 @@ describe('legacy board keyboard shortcut bridge', () => {
             ...state,
             presentation: {
               ...state.presentation,
-              selectedCardId: 'selected-card',
+              selection: ['selected-card'],
             },
           },
           onRequest,
@@ -1386,7 +1392,7 @@ describe('legacy board keyboard shortcut bridge', () => {
             ...state,
             presentation: {
               ...state.presentation,
-              selectedCardId: 'selected-card',
+              selection: ['selected-card'],
             },
           },
           onRequest,

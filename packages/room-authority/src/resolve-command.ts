@@ -1591,6 +1591,10 @@ export const resolveWireCommand = (
         command: { type: 'FlipCoin', playerId: targetPlayerId },
       };
     }
+    case 'ApplyCardSteps':
+      // Not built yet: every step is resolved as it would be alone, on the
+      // table the steps before it left (ADR-0XX §4).
+      return rejected('precondition_failed');
   }
   const exhaustive: never = wire;
   void exhaustive;

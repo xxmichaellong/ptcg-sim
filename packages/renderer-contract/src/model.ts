@@ -44,7 +44,18 @@ export interface BoardPreferences {
 }
 
 export interface BoardPresentation {
-  readonly selectedCardId: ViewCardId | null;
+  /**
+   * The selected items, in the order they were picked: a card, or a whole
+   * Pokémon by its top card. Local to this viewer; it never reaches the
+   * room. A surface for one card reads `selectedCardIdOf`, which is null
+   * while several are selected.
+   */
+  readonly selection: readonly ViewCardId[];
+  /**
+   * Touch's selection mode: a tap picks a card up into the selection or
+   * puts it back, rather than selecting it alone.
+   */
+  readonly selectionMode: boolean;
   readonly hoveredCardId: ViewCardId | null;
   /** Ordered controller-derived targets; renderers only paint these IDs. */
   readonly targetableCardIds: readonly ViewCardId[];
@@ -70,6 +81,11 @@ export interface BoardPresentation {
       /** The Pokémon it would trade places with. */
       readonly stackId: string;
     };
+    /**
+     * The selected items the held card carries with it, in selection order
+     * (the held card among them): a drag of a selected card moves them all.
+     */
+    readonly groupCardIds?: readonly ViewCardId[];
   } | null;
   readonly openedZoneId: string | null;
   /**
@@ -98,6 +114,11 @@ export interface SettlingCard {
   };
   /** A whole Pokémon was dropped: its stack settles with the grabbed card. */
   readonly wholeStack?: boolean;
+  /**
+   * The drop it came in: a group's cards settle together, and are held or
+   * let go together when the room takes or refuses their one move.
+   */
+  readonly dropId?: string;
 }
 
 export interface Rect {
@@ -325,13 +346,37 @@ export interface BoardScene {
   readonly counts: readonly ZoneCountSceneNode[];
 }
 
+/**
+ * How a press on a card changes the selection:
+ * - `replace`: this item alone;
+ * - `toggle`: a plain press, as v1's click: this item alone, or none when
+ *   it was the one item selected;
+ * - `add`: a press with Shift or ⌘/Ctrl held: this item joins the
+ *   selection, or leaves it if it was in it, and the rest stay.
+ */
+export type CardSelectionMode = 'replace' | 'toggle' | 'add';
+
 export type BoardIntent =
   | {
       readonly kind: 'CardSelected';
       readonly cardId: ViewCardId;
-      /** A press on the card: pressing the selected card again lets it go. */
+      /** How it changes the selection (CardSelectionMode); `replace` if absent. */
+      readonly mode?: CardSelectionMode;
+      /** @deprecated The same as `mode: 'toggle'`, kept for one release. */
       readonly toggle?: boolean;
     }
+  /**
+   * Several items at once, in reading order: a rectangle drawn on the felt,
+   * or Select all.
+   */
+  | {
+      readonly kind: 'CardsSelected';
+      readonly cardIds: readonly ViewCardId[];
+      /** `add` keeps the selection and adds to it (Shift or ⌘/Ctrl held). */
+      readonly mode: 'replace' | 'add';
+    }
+  /** Touch's selection mode turned on or off. */
+  | { readonly kind: 'SelectionModeChanged'; readonly on: boolean }
   | { readonly kind: 'BoardBackgroundPressed' }
   | {
       readonly kind: 'CardDropRequested';
@@ -349,6 +394,11 @@ export type BoardIntent =
       readonly pilePosition?: 'top' | 'bottom';
       /** The grabbed card alone, lifted off its Pokémon by a long press. */
       readonly detached?: boolean;
+      /**
+       * The selected items dropped with it, in selection order (the held
+       * card among them): they move together as one move.
+       */
+      readonly groupCardIds?: readonly ViewCardId[];
     }
   | { readonly kind: 'CardContextRequested'; readonly cardId: ViewCardId }
   | {

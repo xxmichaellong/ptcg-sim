@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import type { BoardIntent } from '@ptcgsim/renderer-contract';
+import { selectedCardIdOf, type BoardIntent } from '@ptcgsim/renderer-contract';
 
 import { useKeymap } from '../hotkeys/hotkey-preferences.js';
 import type { HotkeyMode, Keymap } from '../hotkeys/keymap.js';
@@ -150,7 +150,7 @@ export const LegacyBoardKeyboardShortcuts = ({
 }: LegacyBoardKeyboardShortcutsProps) => {
   const pageKeymap = useKeymap();
   const keymap = suppliedKeymap ?? pageKeymap;
-  const selectedCardId = state.presentation.selectedCardId;
+  const selectedCardId = selectedCardIdOf(state.presentation);
   const isSpectator = state.view?.viewer.kind === 'spectator';
   // V opens the deck of the seat at the bottom of the board (v1's
   // initiator), which a flipped Solo board makes the other seat.

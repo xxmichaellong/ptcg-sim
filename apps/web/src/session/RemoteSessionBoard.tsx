@@ -12,6 +12,7 @@ import {
   TABLE_LAYOUT_GEOMETRY_VERSION,
   flipBoardLayoutState,
   ownSeatOf,
+  selectedCardIdOf,
   tableVerticalLayout,
   type BoardIntent,
   type BoardLayoutSnapshot,
@@ -545,9 +546,13 @@ export const RemoteSessionBoard = ({
       tap = {
         pointerId: event.pointerId,
         cardId,
-        wasSelected:
-          runtimeRef.current?.getBoardSnapshot()?.presentation
-            .selectedCardId === cardId,
+        wasSelected: (() => {
+          const presentation =
+            runtimeRef.current?.getBoardSnapshot()?.presentation;
+          return presentation
+            ? selectedCardIdOf(presentation) === cardId
+            : false;
+        })(),
         x: event.clientX,
         y: event.clientY,
       };
@@ -1596,7 +1601,7 @@ export const RemoteSessionBoard = ({
           ) : null}
           {layout &&
           touchInput &&
-          boardState.presentation.selectedCardId !== null &&
+          selectedCardIdOf(boardState.presentation) !== null &&
           boardState.presentation.drag === null &&
           boardState.presentation.openedZoneId === null &&
           boardState.overlays.contextMenuCardId === null &&
@@ -1604,13 +1609,13 @@ export const RemoteSessionBoard = ({
           boardState.overlays.input === null ? (
             <TouchCardBar
               scene={boardState.scene}
-              cardId={boardState.presentation.selectedCardId}
+              cardId={selectedCardIdOf(boardState.presentation)!}
               {...(depthProjection ? { depth: depthProjection } : {})}
               viewport={layout.viewport}
               onRead={() => {
-                const cardId =
-                  runtimeRef.current?.getBoardSnapshot()?.presentation
-                    .selectedCardId;
+                const presentation =
+                  runtimeRef.current?.getBoardSnapshot()?.presentation;
+                const cardId = presentation && selectedCardIdOf(presentation);
                 if (cardId) {
                   runtimeRef.current?.emitIntent({
                     kind: 'CardPreviewRequested',
@@ -1619,9 +1624,9 @@ export const RemoteSessionBoard = ({
                 }
               }}
               onActions={() => {
-                const cardId =
-                  runtimeRef.current?.getBoardSnapshot()?.presentation
-                    .selectedCardId;
+                const presentation =
+                  runtimeRef.current?.getBoardSnapshot()?.presentation;
+                const cardId = presentation && selectedCardIdOf(presentation);
                 if (cardId) {
                   runtimeRef.current?.emitIntent({
                     kind: 'CardContextRequested',

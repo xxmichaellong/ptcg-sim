@@ -474,7 +474,8 @@ test('real v1 runtime contained cards match the DOM candidate at legacy pile top
       },
     });
     await renderer.mount(host, scene, {
-      selectedCardId: null,
+      selection: [],
+      selectionMode: false,
       hoveredCardId: null,
       targetableCardIds: [],
       drag: null,

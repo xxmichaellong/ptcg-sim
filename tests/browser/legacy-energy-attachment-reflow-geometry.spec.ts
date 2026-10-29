@@ -527,7 +527,8 @@ test('checked-in legacy sources and React DOM share stable one-Energy attachment
       },
     });
     await renderer.mount(host, scene, {
-      selectedCardId: null,
+      selection: [],
+      selectionMode: false,
       hoveredCardId: null,
       targetableCardIds: [],
       drag: null,

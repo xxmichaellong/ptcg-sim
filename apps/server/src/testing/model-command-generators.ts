@@ -810,6 +810,7 @@ export const MODEL_COMMAND_GENERATORS = {
   },
   ApplySoloUndo: () => undefined,
   FlipCoin: () => ({ type: 'FlipCoin' }),
+  ApplyCardSteps: () => undefined,
 } satisfies {
   readonly [Type in WireGameCommandType]: ModelCommandGenerator<Type>;
 };

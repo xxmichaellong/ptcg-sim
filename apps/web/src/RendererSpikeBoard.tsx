@@ -218,7 +218,7 @@ export const RendererSpikeBoard = ({
           if (intent.kind === 'CardSelected') {
             setPresentation((current) => ({
               ...current,
-              selectedCardId: intent.cardId,
+              selection: [intent.cardId],
             }));
           }
         },
@@ -365,7 +365,7 @@ export const RendererSpikeBoard = ({
     if (sessionReady) return;
     rendererRef.current?.cancelInteraction();
     setPresentation((current) =>
-      current.selectedCardId === null &&
+      current.selection.length === 0 &&
       current.hoveredCardId === null &&
       current.drag === null &&
       current.openedZoneId === null

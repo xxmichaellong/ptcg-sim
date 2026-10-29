@@ -23,6 +23,7 @@ import {
   createRendererSpikeView,
   DEFAULT_BOARD_PREFERENCES,
   DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
+  selectedCardIdOf,
   TABLE_LAYOUT_GEOMETRY_VERSION,
   tableVerticalLayout,
   type BoardLayoutState,
@@ -526,7 +527,7 @@ describe('opt-in React DOM board session runtime', () => {
     await act(async () => {
       handElement.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
-    expect(runtime.getBoardSnapshot()?.presentation.selectedCardId).toBe(
+    expect(selectedCardIdOf(runtime.getBoardSnapshot()!.presentation)).toBe(
       handCard.id
     );
     expect(handElement.getAttribute('aria-pressed')).toBe('true');

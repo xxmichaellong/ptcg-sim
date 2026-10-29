@@ -528,7 +528,8 @@ test('checked-in legacy sources and React DOM share ordinary evolution reflow se
       },
     });
     await renderer.mount(host, scene, {
-      selectedCardId: null,
+      selection: [],
+      selectionMode: false,
       hoveredCardId: null,
       targetableCardIds: [],
       drag: null,

@@ -17,6 +17,7 @@ import {
   tablePileHeight,
   tableShadowStyle,
   sameTablePose,
+  selectedCardIdOf,
   withHeldCards,
   type TableCardPose,
   type TableCamera,
@@ -2639,7 +2640,7 @@ export const BoardSurface = ({
               key={card.renderKey}
               locale={locale}
               card={card}
-              selected={presentation.selectedCardId === card.id}
+              selected={selectedCardIdOf(presentation) === card.id}
               targetable={presentation.targetableCardIds.includes(card.id)}
               dropTarget={dropTargetCardIds.has(card.id)}
               {...(swapCardId === card.id
