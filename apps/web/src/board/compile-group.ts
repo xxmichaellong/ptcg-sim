@@ -432,7 +432,10 @@ const compileSend = (
   to: GroupPlace
 ): Refusal | null => {
   const shuffled: string[] = [];
-  for (const item of items) {
+  // Each card put on the deck's bottom goes under the one before it, so
+  // the last goes first: item 1 ends deepest, as it lands first.
+  const order = to === 'deckBottom' ? [...items].reverse() : items;
+  for (const item of order) {
     const view = steps.view();
     const stack = wholePokemon(view, item);
     const deckOwner =

@@ -385,6 +385,23 @@ describe('a group moved by a key', () => {
     ]);
   });
 
+  it('puts cards on the bottom of the deck, item 1 deepest', () => {
+    const table = groupTable();
+    const deck = table.zoneId(BLUE, 'deck');
+    const [over] = table.put(BLUE, 'deck', { concealed: true });
+    const [h1, h2, h3] = table.put(BLUE, 'hand', {}, {}, {}) as ViewCardId[];
+    const command = compiled(table.context(), [h1!, h2!, h3!], {
+      kind: 'send',
+      to: 'deckBottom',
+    });
+    expect(ids(after(table.view, command).zones[deck]!.cards)).toEqual([
+      over,
+      h3,
+      h2,
+      h1,
+    ]);
+  });
+
   it('puts each on the deck, then shuffles each deck once', () => {
     const table = groupTable();
     table.put(BLUE, 'deck', { concealed: true });
