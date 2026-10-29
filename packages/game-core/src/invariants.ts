@@ -1,4 +1,5 @@
 import type { CardInstanceId, StackId } from './ids.js';
+import { isCardBackValue } from './card-back.js';
 import { isCardPresentation } from './card-presentation.js';
 import { playersHaveMutualCoachingConsent } from './coaching-consent.js';
 import { findCardLocations } from './location.js';
@@ -102,11 +103,8 @@ export const collectInvariantProblems = (
     const player = state.players[playerId];
     if (!player) problems.push(`missing player ${playerId}`);
     else {
-      if (
-        !player.cardBackUrl ||
-        player.cardBackUrl.length > MAX_IMAGE_URL_CODE_UNITS
-      ) {
-        problems.push(`player ${playerId} has invalid card-back URL`);
+      if (!isCardBackValue(player.cardBackUrl)) {
+        problems.push(`player ${playerId} has invalid card back`);
       }
       if (typeof player.coachingConsent !== 'boolean') {
         problems.push(`player ${playerId} has invalid coaching consent`);

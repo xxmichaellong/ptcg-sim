@@ -1,6 +1,8 @@
 # ADR-013: preserve direct player-selected image URLs
 
-- Status: **ACCEPTED**
+- Status: **ACCEPTED**; for card backs **SUPERSEDED** by ADR-041 (card backs
+  by reference, 2026-10-29). Backgrounds and custom card faces keep this
+  decision until their own choosers move.
 - Decision date: 2026-09-10
 - Scope: player-selected room backgrounds, custom card faces, custom card
   backs, native DOM image loading, and renderer selection

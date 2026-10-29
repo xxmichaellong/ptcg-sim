@@ -1,3 +1,4 @@
+import { isCardBackValue } from '@ptcgsim/game-core';
 import * as v from 'valibot';
 import {
   MAX_CHAT_CODE_UNITS,
@@ -15,6 +16,15 @@ const boundedString = (maximum: number, minimum = 1) =>
   v.pipe(v.string(), v.minLength(minimum), v.maxLength(maximum));
 const IdentifierSchema = boundedString(128);
 const UrlSchema = boundedString(MAX_IMAGE_URL_CODE_UNITS);
+/**
+ * A card back a player sets: a reference (ADR-041), or a legacy URL as
+ * older clients still send. Views keep the plain bound, so replays recorded
+ * before references keep reading.
+ */
+const CardBackSchema = v.pipe(
+  UrlSchema,
+  v.check((value: string) => isCardBackValue(value), 'Invalid card back')
+);
 const SafeIntegerSchema = v.pipe(v.number(), v.safeInteger());
 const NonNegativeIntegerSchema = v.pipe(SafeIntegerSchema, v.minValue(0));
 const PositiveIntegerSchema = v.pipe(SafeIntegerSchema, v.minValue(1));
@@ -230,7 +240,7 @@ export const WireGameCommandSchema = v.variant('type', [
   v.object({
     type: v.literal('SetCardBack'),
     targetPlayerId: v.optional(IdentifierSchema),
-    cardBackUrl: UrlSchema,
+    cardBackUrl: CardBackSchema,
   }),
   v.object({
     type: v.literal('ResetPlayer'),

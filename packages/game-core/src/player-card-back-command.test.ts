@@ -88,6 +88,46 @@ describe('player card-back command', () => {
     expect(state.revision).toBe(0);
   });
 
+  it('stores a card-back reference as it came, and refuses a malformed one (ADR-041)', () => {
+    for (const cardBackUrl of [
+      'preset:crimson',
+      'design:1.navy.stripes.gold.ball',
+      `img:${'0123456789abcdef'.repeat(4)}`,
+    ]) {
+      const result = executeCommand(
+        createState(),
+        { type: 'SetCardBack', playerId: p1, cardBackUrl },
+        context
+      );
+      expect(result.accepted, cardBackUrl).toBe(true);
+      if (!result.accepted) continue;
+      expect(result.state.players[p1]?.cardBackUrl).toBe(cardBackUrl);
+    }
+    for (const cardBackUrl of [
+      'preset:Not Valid',
+      'design:1.navy.tartan.gold.ball',
+      'img:not-a-hash',
+      'url:http://plain.example/back.png',
+    ]) {
+      const state = createState();
+      expect(
+        executeCommand(
+          state,
+          { type: 'SetCardBack', playerId: p1, cardBackUrl },
+          context
+        ),
+        cardBackUrl
+      ).toMatchObject({ accepted: false, code: 'invalid_command' });
+      expect(() =>
+        applyEvent(state, {
+          type: 'PlayerCardBackSet',
+          playerId: p1,
+          cardBackUrl,
+        })
+      ).toThrow('Player card-back event is malformed');
+    }
+  });
+
   it('rejects a missing player without emitting an event', () => {
     expect(
       decideCommand(

@@ -722,6 +722,50 @@
               "kind": "type"
             },
             {
+              "name": "CARD_BACK_COLOURS",
+              "kind": "value"
+            },
+            {
+              "name": "CARD_BACK_EMBLEMS",
+              "kind": "value"
+            },
+            {
+              "name": "CARD_BACK_PATTERNS",
+              "kind": "value"
+            },
+            {
+              "name": "CARD_BACK_REFERENCE_MAX",
+              "kind": "value"
+            },
+            {
+              "name": "CARD_BACK_VALUE_MAX",
+              "kind": "value"
+            },
+            {
+              "name": "CardBack",
+              "kind": "type"
+            },
+            {
+              "name": "CardBackColour",
+              "kind": "type"
+            },
+            {
+              "name": "CardBackDesign",
+              "kind": "type"
+            },
+            {
+              "name": "CardBackEmblem",
+              "kind": "type"
+            },
+            {
+              "name": "CardBackPattern",
+              "kind": "type"
+            },
+            {
+              "name": "cardBackReference",
+              "kind": "value"
+            },
+            {
               "name": "CardCategory",
               "kind": "type"
             },
@@ -866,6 +910,10 @@
               "kind": "type"
             },
             {
+              "name": "isCardBackValue",
+              "kind": "value"
+            },
+            {
               "name": "isCardKnownToViewer",
               "kind": "value"
             },
@@ -874,11 +922,19 @@
               "kind": "value"
             },
             {
+              "name": "isStandardCardBack",
+              "kind": "value"
+            },
+            {
               "name": "KnownViewCard",
               "kind": "type"
             },
             {
               "name": "layOutPlayStackAcrossBoards",
+              "kind": "value"
+            },
+            {
+              "name": "LEGACY_DEFAULT_CARD_BACK_URL",
               "kind": "value"
             },
             {
@@ -936,6 +992,10 @@
             {
               "name": "OncePerGameMarkers",
               "kind": "type"
+            },
+            {
+              "name": "parseCardBack",
+              "kind": "value"
             },
             {
               "name": "PlayerBoard",
@@ -1032,6 +1092,14 @@
             {
               "name": "StagedCardsDestination",
               "kind": "type"
+            },
+            {
+              "name": "STANDARD_CARD_BACK",
+              "kind": "value"
+            },
+            {
+              "name": "STANDARD_CARD_BACK_ID",
+              "kind": "value"
             },
             {
               "name": "TurnState",

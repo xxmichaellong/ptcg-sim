@@ -26,6 +26,10 @@ const WEB_ALLOWED_GAME_CORE_SOURCES = new Set([
   // them, shared by the room and the client's prediction. It reads no
   // canonical state and imports nothing at runtime.
   'packages/game-core/src/play-stack-boards.ts',
+  // The grammar of card-back references (ADR-041): pure string parsing,
+  // shared by the room's validation and each viewer's drawing of a back. It
+  // imports nothing at runtime.
+  'packages/game-core/src/card-back.ts',
 ]);
 
 const SOURCE_FREE_WEB_RUNTIME_DIGESTS = new Set([

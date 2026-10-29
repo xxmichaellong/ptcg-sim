@@ -1,0 +1,126 @@
+# ADR-041: card backs by reference
+
+- Status: **ACCEPTED**
+- Decision date: 2026-10-29
+- Supersedes, for card backs only: ADR-013's direct loading of pasted
+  card-back URLs, and with it the card-back parts of SEC-004 and PARITY-007.
+  Room backgrounds and custom card faces keep ADR-013 until their own
+  choosers move (a later stage).
+- Scope: what a card back is on the wire, in state, in saves and replays; the
+  image store; the import of an outside image; how each viewer draws a back
+
+## Context
+
+Under ADR-013 a card back was a pasted image URL. It was public player
+presentation, so every opponent and spectator's browser loaded it from the
+chooser's host. That host saw their address and browser, and could log each game
+(a unique URL works as a tracking pixel). Links rot: Discord attachment
+links now expire within a day, and Imgur has deleted anonymous uploads.
+A host may also serve something else after the one-time check. No commercial
+client hotlinks backs; tabletop tools that take custom images keep their own
+copy.
+
+The owner asked whether a URL is the best way (2026-10-29) and chose:
+
+- uploads are stored in a Durable Object for now (no R2 until Workers Paid);
+- backs already saved as URLs are imported (fetched once and kept as our own
+  copy): an opponent never loads an outside host;
+- opponents' custom backs show by default, with a setting to show the
+  standard back instead.
+
+## Decision
+
+### 1. A back is a short reference
+
+The field keeps its name, `cardBackUrl`, in commands, events, state,
+projections, saves and replays (stored rooms and files keep loading), but
+it now holds a **card-back reference** (`@ptcgsim/game-core` `card-back.ts`):
+
+| Reference                                     | Meaning                                                                                 |
+| --------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `preset:<id>`                                 | A back shipped with the app (`[a-z0-9-]{1,32}`): `standard` and its recoloured presets. |
+| `design:1.<base>.<pattern>.<accent>.<emblem>` | A sleeve drawn by each viewer from four values, each from a fixed list (no free text).  |
+| `img:<sha256>`                                | An image in our store, named by the SHA-256 of its bytes.                               |
+| `url:<https URL>`                             | A legacy URL; also any older value without a prefix.                                    |
+
+Every reference but `url:` fits in 128 characters. The old default path
+`/v2/assets/cardback.png` reads as `preset:standard`. A value with one of the
+prefixes must be well formed (the room refuses it otherwise); a value without
+one is legacy and keeps ADR-013's bound (4,096 code units), so older clients,
+rooms, saves and replays keep working. The frame budget for long backs in the
+room authority stays, for legacy values only.
+
+### 2. The image store
+
+`PtcgImageStore` is one SQLite Durable Object.
+
+- **Uploads:** `POST /v2/images` takes the body's bytes.
+  - They must be WebP or JPEG (judged by their header, never by
+    `Content-Type`), at most 200 KB and 1000×1400 px.
+  - The store hashes them and keeps them once, then answers
+    `{ "ref": "img:<sha256>" }`.
+  - Uploads are rate-limited per address. A blocklist of hashes refuses
+    banned images on upload and on serving.
+- **Serving:** `GET /v2/images/<sha256>` serves the bytes from our own
+  origin, `immutable` for a year, with `nosniff`. An unknown or blocked hash
+  is a 404.
+- **Importing:** `POST /v2/images/import` takes `{ "url" }`.
+  - It fetches an outside `https` image once for the asking browser, which
+    re-encodes it at card size and uploads it.
+  - Limits: a timeout, 5 MB, three redirects each checked again, image types
+    only, and no private, loopback, link-local or metadata hosts.
+  - It is rate-limited per address.
+
+### 3. Drawing a back
+
+Each viewer resolves a reference itself, at the one place the table builds its
+scene, and on the deck screen:
+
+- `preset:` resolves to a WebP under `/v2/assets/backs/`, named by its
+  content and cached `immutable`.
+- `design:` resolves to an SVG drawn locally from its four values.
+- `img:` resolves to `/v2/images/<sha256>`.
+- `url:` resolves to the **standard back** for everyone, except on its owner's
+  own deck screen, which imports it.
+
+Back images send no referrer. A back that fails to load falls back to the
+standard back; it used to go blank and retry every minute.
+
+**Opponents' custom backs** (Settings, on by default): when it is off, an
+opponent's `design:` or `img:` back draws as the standard back. Presets
+always show, and so do the viewer's own backs (both seats in Solo).
+
+### 4. Old URL backs are imported
+
+A deck saved with a URL back keeps it as `url:`. The next time its owner puts
+that deck on a seat, the browser imports it:
+
+1. it fetches the image through the import endpoint;
+2. it re-encodes it to WebP, or to JPEG where the browser can't encode WebP,
+   at about 600×838;
+3. it uploads it and swaps in the `img:` reference.
+
+All of this is silent. The old reference stays if any step fails. Choosing a
+back by URL (until the chooser of stage 2) goes through the same import.
+
+## Consequences
+
+- No browser but the chooser's own ever contacts an outside host for a card
+  back.
+- Backs survive their source going away.
+- The store's writes count against the Free plan's daily row budget: one row
+  per distinct image, uploads rate-limited.
+- Stage 2 builds the chooser on this contract: a preset grid with a
+  "Standard back" tile, the sleeve designer (it previews with the same SVG
+  module), upload with crop and re-encode, and URL import.
+
+## Rejected alternatives
+
+- **Keep hotlinking behind an opt-in for viewers:** opponents' privacy would
+  rest on each viewer finding a setting; the owner chose import.
+- **R2 now:** it needs a payment method on the account; the Durable Object
+  store moves to R2 behind the same endpoints when the account goes to Workers
+  Paid.
+- **A server-side proxy that serves outside images live (as GitHub's Camo
+  does):** this still depends on the source staying up, and every view
+  becomes a server fetch. Importing once is cheaper and keeps the back alive.

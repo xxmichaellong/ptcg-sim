@@ -1198,6 +1198,21 @@ describe('client protocol ingress', () => {
         cardBackUrl: 'x'.repeat(MAX_IMAGE_URL_CODE_UNITS + 1),
       }).ok
     ).toBe(false);
+    // References (ADR-041) pass; a malformed one does not reach the room.
+    for (const cardBackUrl of [
+      'preset:standard',
+      'design:1.navy.stripes.gold.ball',
+      `img:${'f'.repeat(64)}`,
+    ]) {
+      expect(parseCommand({ type: 'SetCardBack', cardBackUrl }).ok).toBe(true);
+    }
+    for (const cardBackUrl of [
+      'preset:Bad Id',
+      'design:1.navy.stripes.gold',
+      'img:xyz',
+    ]) {
+      expect(parseCommand({ type: 'SetCardBack', cardBackUrl }).ok).toBe(false);
+    }
     expect(
       parseCommand({
         type: 'LoadDeck',

@@ -1,3 +1,4 @@
+import { isCardBackValue } from './card-back.js';
 import { playerZoneId } from './create-match.js';
 import { cloneMatchState } from './clone.js';
 import {
@@ -25,7 +26,6 @@ import {
   resetReturnCapacityIsValid,
 } from './lifecycle-reset.js';
 import { findCardLocation } from './location.js';
-import { MAX_IMAGE_URL_CODE_UNITS } from './model.js';
 import type {
   AttachmentResolutionWorkArea,
   CardInstance,
@@ -785,12 +785,7 @@ const applyEventInternal = (
   switch (event.type) {
     case 'PlayerCardBackSet': {
       const player = state.players[event.playerId];
-      if (
-        !player ||
-        typeof event.cardBackUrl !== 'string' ||
-        event.cardBackUrl.length < 1 ||
-        event.cardBackUrl.length > MAX_IMAGE_URL_CODE_UNITS
-      ) {
+      if (!player || !isCardBackValue(event.cardBackUrl)) {
         throw new Error('Player card-back event is malformed');
       }
       return {

@@ -15,6 +15,7 @@ import {
 } from './attachment-order.js';
 import { playerZoneId, stadiumZoneId } from './create-match.js';
 import { applyEvent } from './apply-events.js';
+import { isCardBackValue } from './card-back.js';
 import { sameCardPresentation } from './card-presentation.js';
 import type { DomainEvent, WorkAreaArrivalSource } from './events.js';
 import {
@@ -1154,14 +1155,11 @@ export const decideCommand = (
     case 'SetCardBack': {
       const playerError = requirePlayer(state, command.playerId);
       if (playerError) return playerError;
-      if (
-        typeof command.cardBackUrl !== 'string' ||
-        command.cardBackUrl.length < 1 ||
-        command.cardBackUrl.length > MAX_IMAGE_URL_CODE_UNITS
-      ) {
+      // A reference (ADR-041), or a legacy URL of 1 to the bound's code units.
+      if (!isCardBackValue(command.cardBackUrl)) {
         return reject(
           'invalid_command',
-          `Card-back URL must contain 1 to ${MAX_IMAGE_URL_CODE_UNITS} code units`
+          `Card back must be a reference or a URL of 1 to ${MAX_IMAGE_URL_CODE_UNITS} code units`
         );
       }
       return accept({
