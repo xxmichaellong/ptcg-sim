@@ -1906,6 +1906,10 @@
     "message": "Connection lost.",
     "translation": "Nawala ang koneksyon."
   },
+  "he3ygx": {
+    "message": "Copy",
+    "translation": "Kopyahin"
+  },
   "PSlXm_": {
     "message": "Copy list",
     "translation": "Kopyahin ang listahan"
@@ -3003,6 +3007,10 @@
   "au3LEA": {
     "message": "Invitation link copied",
     "translation": "Nakopya ang link ng imbitasyon"
+  },
+  "LSVtnE": {
+    "message": "Invitation link ready",
+    "translation": "Handa na ang link ng imbitasyon"
   },
   "Za0iMR": {
     "message": "Invite opponent",
@@ -4921,6 +4929,10 @@
       "Command palette section."
     ],
     "translation": "Mga setting"
+  },
+  "Z8lGw6": {
+    "message": "Share",
+    "translation": "I-share"
   },
   "2D-NYE": {
     "message": "Shift",

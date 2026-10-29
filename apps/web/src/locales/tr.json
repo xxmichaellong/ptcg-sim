@@ -1906,6 +1906,10 @@
     "message": "Connection lost.",
     "translation": "Bağlantı koptu."
   },
+  "he3ygx": {
+    "message": "Copy",
+    "translation": "Kopyala"
+  },
   "PSlXm_": {
     "message": "Copy list",
     "translation": "Listeyi kopyala"
@@ -3003,6 +3007,10 @@
   "au3LEA": {
     "message": "Invitation link copied",
     "translation": "Davet bağlantısı kopyalandı"
+  },
+  "LSVtnE": {
+    "message": "Invitation link ready",
+    "translation": "Davet bağlantısı hazır"
   },
   "Za0iMR": {
     "message": "Invite opponent",
@@ -4921,6 +4929,10 @@
       "Command palette section."
     ],
     "translation": "Ayarlar"
+  },
+  "Z8lGw6": {
+    "message": "Share",
+    "translation": "Paylaş"
   },
   "2D-NYE": {
     "message": "Shift",

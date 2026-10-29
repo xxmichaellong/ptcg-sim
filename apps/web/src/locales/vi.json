@@ -1906,6 +1906,10 @@
     "message": "Connection lost.",
     "translation": "Mất kết nối."
   },
+  "he3ygx": {
+    "message": "Copy",
+    "translation": "Sao chép"
+  },
   "PSlXm_": {
     "message": "Copy list",
     "translation": "Sao chép danh sách"
@@ -3003,6 +3007,10 @@
   "au3LEA": {
     "message": "Invitation link copied",
     "translation": "Đã sao chép liên kết mời"
+  },
+  "LSVtnE": {
+    "message": "Invitation link ready",
+    "translation": "Liên kết mời đã sẵn sàng"
   },
   "Za0iMR": {
     "message": "Invite opponent",
@@ -4921,6 +4929,10 @@
       "Command palette section."
     ],
     "translation": "Cài đặt"
+  },
+  "Z8lGw6": {
+    "message": "Share",
+    "translation": "Chia sẻ"
   },
   "2D-NYE": {
     "message": "Shift",

@@ -1906,6 +1906,10 @@
     "message": "Connection lost.",
     "translation": "Веза је прекинута."
   },
+  "he3ygx": {
+    "message": "Copy",
+    "translation": "Копирај"
+  },
   "PSlXm_": {
     "message": "Copy list",
     "translation": "Копирај списак"
@@ -3003,6 +3007,10 @@
   "au3LEA": {
     "message": "Invitation link copied",
     "translation": "Веза позивнице копирана"
+  },
+  "LSVtnE": {
+    "message": "Invitation link ready",
+    "translation": "Линк позивнице је спреман"
   },
   "Za0iMR": {
     "message": "Invite opponent",
@@ -4921,6 +4929,10 @@
       "Command palette section."
     ],
     "translation": "Подешавања"
+  },
+  "Z8lGw6": {
+    "message": "Share",
+    "translation": "Подели"
   },
   "2D-NYE": {
     "message": "Shift",

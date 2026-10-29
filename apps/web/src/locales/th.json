@@ -1906,6 +1906,10 @@
     "message": "Connection lost.",
     "translation": "การเชื่อมต่อขาดหาย"
   },
+  "he3ygx": {
+    "message": "Copy",
+    "translation": "คัดลอก"
+  },
   "PSlXm_": {
     "message": "Copy list",
     "translation": "คัดลอกรายการ"
@@ -3003,6 +3007,10 @@
   "au3LEA": {
     "message": "Invitation link copied",
     "translation": "คัดลอกลิงก์คำเชิญแล้ว"
+  },
+  "LSVtnE": {
+    "message": "Invitation link ready",
+    "translation": "ลิงก์เชิญพร้อมแล้ว"
   },
   "Za0iMR": {
     "message": "Invite opponent",
@@ -4921,6 +4929,10 @@
       "Command palette section."
     ],
     "translation": "การตั้งค่า"
+  },
+  "Z8lGw6": {
+    "message": "Share",
+    "translation": "แชร์"
   },
   "2D-NYE": {
     "message": "Shift",

@@ -1906,6 +1906,10 @@
     "message": "Connection lost.",
     "translation": "Connexion perdue."
   },
+  "he3ygx": {
+    "message": "Copy",
+    "translation": "Copier"
+  },
   "PSlXm_": {
     "message": "Copy list",
     "translation": "Copier la liste"
@@ -3003,6 +3007,10 @@
   "au3LEA": {
     "message": "Invitation link copied",
     "translation": "Lien d’invitation copié"
+  },
+  "LSVtnE": {
+    "message": "Invitation link ready",
+    "translation": "Lien d'invitation prêt"
   },
   "Za0iMR": {
     "message": "Invite opponent",
@@ -4921,6 +4929,10 @@
       "Command palette section."
     ],
     "translation": "Paramètres"
+  },
+  "Z8lGw6": {
+    "message": "Share",
+    "translation": "Partager"
   },
   "2D-NYE": {
     "message": "Shift",

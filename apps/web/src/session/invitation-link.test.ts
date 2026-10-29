@@ -97,14 +97,68 @@ describe('invitation delivery', () => {
     expect(copy.texts).toEqual([]);
   });
 
-  it('copies where the browser refuses the sheet, and with a mouse', async () => {
+  const lapsed = () =>
+    Object.assign(new Error('no gesture'), { name: 'NotAllowedError' });
+
+  it('asks for another press where minting outlasted the first, and shares or copies from it', async () => {
+    const copy = clipboard();
+    const share = vi.fn(async () => {
+      throw lapsed();
+    });
+    // The notice's button, pressed by the test when it says so.
+    let press: (() => Promise<string>) | undefined;
+    const anotherPress = vi.fn(
+      (pass: () => Promise<'shared' | 'copied' | 'cancelled'>) =>
+        new Promise<'shared' | 'copied' | 'cancelled'>((resolve) => {
+          press = () => pass().then((outcome) => (resolve(outcome), outcome));
+        })
+    );
+    const touch = browserInvitationDelivery({
+      preferShare: true,
+      share,
+      clipboard: copy.writer,
+      anotherPress,
+    })!;
+    const pending = touch(Promise.resolve('https://x/#invite=c'));
+    await vi.waitFor(() => expect(anotherPress).toHaveBeenCalledOnce());
+    expect(anotherPress.mock.calls[0]?.[1]).toBe('share');
+    // No copy tried outside a press: it would be refused as well.
+    expect(copy.writer.writeText).not.toHaveBeenCalled();
+    // The new press shares: here the sheet works this time.
+    share.mockImplementationOnce(async () => undefined);
+    await press!();
+    await expect(pending).resolves.toBe('shared');
+    expect(share).toHaveBeenLastCalledWith({ url: 'https://x/#invite=c' });
+
+    // A sheet that still won't open copies from that press instead.
+    const again = touch(Promise.resolve('https://x/#invite=e'));
+    await vi.waitFor(() => expect(anotherPress).toHaveBeenCalledTimes(2));
+    await press!();
+    await expect(again).resolves.toBe('copied');
+    expect(copy.texts).toEqual(['https://x/#invite=e']);
+
+    // A mouse's copy refused the same way asks the same.
+    const mouseCopy = clipboard();
+    mouseCopy.writer.writeText.mockRejectedValueOnce(lapsed());
+    const mouse = browserInvitationDelivery({
+      preferShare: false,
+      clipboard: mouseCopy.writer,
+      anotherPress,
+    })!;
+    const copied = mouse(Promise.resolve('https://x/#invite=f'));
+    await vi.waitFor(() => expect(anotherPress).toHaveBeenCalledTimes(3));
+    expect(anotherPress.mock.calls[2]?.[1]).toBe('copy');
+    await press!();
+    await expect(copied).resolves.toBe('copied');
+    expect(mouseCopy.texts).toEqual(['https://x/#invite=f']);
+  });
+
+  it('copies where the browser refuses the sheet outright, and with a mouse', async () => {
     const copy = clipboard();
     const refused = browserInvitationDelivery({
       preferShare: true,
       share: vi.fn(async () => {
-        throw Object.assign(new Error('no gesture'), {
-          name: 'NotAllowedError',
-        });
+        throw Object.assign(new Error('blocked'), { name: 'TypeError' });
       }),
       clipboard: copy.writer,
     })!;

@@ -1906,6 +1906,10 @@
     "message": "Connection lost.",
     "translation": "Koneksi terputus."
   },
+  "he3ygx": {
+    "message": "Copy",
+    "translation": "Salin"
+  },
   "PSlXm_": {
     "message": "Copy list",
     "translation": "Salin daftar"
@@ -3003,6 +3007,10 @@
   "au3LEA": {
     "message": "Invitation link copied",
     "translation": "Tautan undangan disalin"
+  },
+  "LSVtnE": {
+    "message": "Invitation link ready",
+    "translation": "Tautan undangan siap"
   },
   "Za0iMR": {
     "message": "Invite opponent",
@@ -4921,6 +4929,10 @@
       "Command palette section."
     ],
     "translation": "Pengaturan"
+  },
+  "Z8lGw6": {
+    "message": "Share",
+    "translation": "Bagikan"
   },
   "2D-NYE": {
     "message": "Shift",

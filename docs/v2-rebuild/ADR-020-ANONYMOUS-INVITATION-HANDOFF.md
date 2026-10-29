@@ -166,7 +166,11 @@ envelope>` (`serializeRoomInvitationLinkFragment`; parsed strictly, one
   - A used, expired or revoked claim comes back as the room's 403
     `admission_rejected`, now carried through as `invitation_refused`. Play
     online then says "This invitation was used or has expired. Ask for a new
-    one." and offers Create room and the Invitation field.
+    one." and offers Create room and the Invitation field. Over a live Solo
+    table, whose Play online is that table's own sheet, the sheet opens to
+    say so (`onlineRequest`), and a join that failed does the same.
+  - A link followed from the tutorial puts the practice table away once the
+    room admits the player, as Back does (ADR-038).
   - A taken seat (409 `seat_unavailable`) says so, and points to a
     spectator invitation.
 - **Inviting.** Create room takes the host straight into their room. It
@@ -179,9 +183,19 @@ envelope>` (`serializeRoomInvitationLinkFragment`; parsed strictly, one
     to the system share sheet on a touch screen (`navigator.share`), and to
     the clipboard elsewhere or when the sheet is refused. The copy starts
     inside the press, with the link still being minted.
+  - The sheet needs the link itself, so it opens only once minting is done.
+    Where that outlasted the press (a slow network; iOS counts a press only
+    briefly) the browser refuses the sheet and any copy alike
+    (`NotAllowedError`): a notice, "Invitation link ready", asks for another
+    press, whose Share (or Copy) passes the link on from inside it. The link
+    stays in memory, never on the page. A link minted in advance is no
+    answer: the room revokes a role's earlier invitation as it issues the
+    next.
   - Invite opponent is off, with the reason shown, once the opponent has
     been seen in their seat (Presence) or the room answers
-    `seat_unavailable`.
+    `seat_unavailable`. Only a known seat tells the opponent apart: while
+    the room reconnects, the presence kept from before still holds this
+    seat's own arrival.
   - v1's single copy key, which silently switched to a spectator invitation
     when the seats were full (`copyPlayerOrSpectatorInvitation`), is gone.
 - **Joining.** The field is labelled **Invitation** and accepts the envelope,

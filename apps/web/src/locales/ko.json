@@ -1906,6 +1906,10 @@
     "message": "Connection lost.",
     "translation": "연결이 끊어졌습니다."
   },
+  "he3ygx": {
+    "message": "Copy",
+    "translation": "복사"
+  },
   "PSlXm_": {
     "message": "Copy list",
     "translation": "목록 복사"
@@ -3003,6 +3007,10 @@
   "au3LEA": {
     "message": "Invitation link copied",
     "translation": "초대 링크를 복사했습니다"
+  },
+  "LSVtnE": {
+    "message": "Invitation link ready",
+    "translation": "초대 링크가 준비되었습니다"
   },
   "Za0iMR": {
     "message": "Invite opponent",
@@ -4921,6 +4929,10 @@
       "Command palette section."
     ],
     "translation": "설정"
+  },
+  "Z8lGw6": {
+    "message": "Share",
+    "translation": "공유"
   },
   "2D-NYE": {
     "message": "Shift",
