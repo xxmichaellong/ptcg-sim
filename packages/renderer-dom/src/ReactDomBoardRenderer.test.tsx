@@ -1907,6 +1907,48 @@ describe('React DOM board renderer', () => {
     host.remove();
   });
 
+  it('puts a carried card at the tilted table’s origin when the view tilts as it is let go of', async () => {
+    const renderer = new ReactDomBoardRenderer({
+      emitIntent: vi.fn(),
+      emitPresentationUpdate: vi.fn(),
+      reportError: vi.fn(),
+    });
+    const host = document.createElement('div');
+    document.body.append(host);
+    await mountInAct(renderer, host, createScene());
+    const held = { cardId, x: 100, y: 300, targetId: 'zone:p1:hand' };
+    act(() =>
+      renderer.installPresentation({
+        ...DEFAULT_BOARD_PRESENTATION,
+        drag: held,
+      })
+    );
+    act(() =>
+      renderer.installPresentation({
+        ...DEFAULT_BOARD_PRESENTATION,
+        drag: { ...held, x: 200, y: 250 },
+      })
+    );
+    const card = host.querySelector<HTMLElement>('[data-card-id]')!;
+    expect(card.style.left).toBe('155px');
+    // Tilted and let go of in one commit: a projected card is placed by its
+    // transform from the surface's origin, never at a flat place.
+    act(() => {
+      renderer.setPreferences({
+        ...DEFAULT_BOARD_PREFERENCES,
+        depth: { ...DEFAULT_BOARD_DEPTH, mode: 'table' },
+      });
+      renderer.installPresentation(DEFAULT_BOARD_PRESENTATION);
+    });
+    expect(card.dataset.depthCard).toBe('true');
+    expect(card.style.left).toBe('0px');
+    expect(card.style.top).toBe('0px');
+    await act(async () => {
+      renderer.destroy();
+    });
+    host.remove();
+  });
+
   it('clips a card that has scrolled out of its zone', async () => {
     const renderer = new ReactDomBoardRenderer({
       emitIntent: vi.fn(),

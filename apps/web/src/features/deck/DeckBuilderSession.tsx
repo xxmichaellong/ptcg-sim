@@ -450,8 +450,12 @@ export const DeckBuilderSession = ({
   useLayoutEffect(() => {
     const was = alternateWasEnabled.current;
     alternateWasEnabled.current = alternateEnabled;
-    if (alternateEnabled && !was) dressSeat('alternate');
-  }, [alternateEnabled, dressSeat]);
+    if (!alternateEnabled || was) return;
+    // Only a saved deck still kept: one deleted while on the seat keeps its
+    // cards and sleeves there, as deleting leaves them.
+    const deckId = store.getSnapshot().slots.alternate.label?.deckId;
+    if (deckId && library.get(deckId)) dressSeat('alternate');
+  }, [alternateEnabled, dressSeat, library, store]);
 
   const { chooseCardBack } = useCardBackSelection<DeckBuilderTarget>({
     applySelection: applyCardBackSelection,

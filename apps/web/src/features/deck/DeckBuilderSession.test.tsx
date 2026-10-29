@@ -1517,6 +1517,35 @@ describe('DeckBuilderSession', () => {
       });
     });
 
+    it('keeps P2’s sleeves when the seat comes back holding a deleted deck', async () => {
+      const session = new FakeSession();
+      const store = new DeckBuilderStore();
+      const cardBackStore = new CardBackCustodyStore();
+      const charizard = save('Charizard');
+      library.update(charizard.id, { cardBack: RED });
+      await renderSession({ session, store, cardBackStore, open: true });
+      await click('#nativeDeckBuilderTargetAlt');
+      await click('button[aria-label="Charizard: put on P2"]');
+      expect(cardBackStore.getSnapshot().slots.alternate.url).toBe(RED);
+      // Deleted while on the seat: its cards and sleeves stay there.
+      library.remove(charizard.id);
+      await renderSession({
+        session,
+        store,
+        cardBackStore,
+        open: true,
+        alternateEnabled: false,
+      });
+      await renderSession({
+        session,
+        store,
+        cardBackStore,
+        open: true,
+        alternateEnabled: true,
+      });
+      expect(cardBackStore.getSnapshot().slots.alternate.url).toBe(RED);
+    });
+
     it('sends the back of a deck that lands after the screen closed with it', async () => {
       const session = new FakeSession();
       const store = new DeckBuilderStore();

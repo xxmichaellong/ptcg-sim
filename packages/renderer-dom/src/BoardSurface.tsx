@@ -1396,6 +1396,8 @@ export const BoardSurface = ({
       );
       const card = cards.get(renderKey);
       if (!card) return null;
+      // A tilted table places a card by its transform, from the origin.
+      if (depth) return { x: 0, y: 0 };
       const held =
         compositionHold(scene, card, presentation.drag) ??
         presentation.settling
@@ -1411,18 +1413,27 @@ export const BoardSurface = ({
     });
     const markers = carriedMarkersRef.current;
     if (markers.size === 0) return;
-    if (!depth)
-      for (const marker of scene.markers) {
-        if (!markers.has(marker.id)) continue;
-        const node = surfaceRef.current?.querySelector<HTMLElement>(
-          `[data-marker-id="${CSS.escape(marker.id)}"]`
-        );
-        if (!node) continue;
-        // As MarkerNode places it.
-        const { bounds } = presentHeldMarker(scene, marker, presentation);
-        node.style.left = `${String(bounds.x)}px`;
-        node.style.top = `${String(bounds.y)}px`;
-      }
+    for (const marker of scene.markers) {
+      if (!markers.has(marker.id)) continue;
+      const node = surfaceRef.current?.querySelector<HTMLElement>(
+        `[data-marker-id="${CSS.escape(marker.id)}"]`
+      );
+      if (!node) continue;
+      // As MarkerNode places it: by its matrix from the origin when tilted.
+      const parent = depth
+        ? scene.cards.find((card) => card.id === marker.parentCardId)
+        : undefined;
+      const { bounds } = !depth
+        ? presentHeldMarker(scene, marker, presentation)
+        : depth.markerMatrix(
+              marker,
+              parent ? depth.pose(parent, presentation) : undefined
+            )
+          ? { bounds: { x: 0, y: 0 } }
+          : marker;
+      node.style.left = `${String(bounds.x)}px`;
+      node.style.top = `${String(bounds.y)}px`;
+    }
     markers.clear();
   }, [depth, director, presentation, scene]);
   // The installed scene the last motion was planned for: a held card coming
