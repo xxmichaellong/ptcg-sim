@@ -199,6 +199,8 @@ export interface BoardSessionControllerState {
 export interface SelectionRestore {
   readonly cardIds: readonly ViewCardId[];
   readonly selectionMode: boolean;
+  /** The pile it was picked in, open then (a pile's cards are items there). */
+  readonly openedZoneId?: string;
 }
 
 /** A group's move in flight, and the selection it took. */
@@ -207,6 +209,12 @@ export interface GroupSubmission {
   readonly cardIds: readonly ViewCardId[];
   /** Touch's selection mode was on when it went: a refusal turns it back on. */
   readonly selectionMode?: boolean;
+  /**
+   * The pile viewer open when it went: a group that emptied the pile closes
+   * it, and a refusal opens it again for its cards, unless the player put
+   * it away (DismissLocalPresentation) meanwhile.
+   */
+  readonly openedZoneId?: string;
   /** Its outcome is shown on the table, so a refusal withdraws it first. */
   readonly predicted?: boolean;
 }
@@ -716,6 +724,23 @@ const openedZoneRemainsPresentable = (zone: BoardScene['zones'][number]) =>
   zone.interactive &&
   (!['deck', 'discard', 'lostZone'].includes(zone.kind) || zone.count > 0);
 
+/**
+ * The pile to show a refused group's cards in: the one open now, or else the
+ * one the group was picked in, when its move emptied and so closed it.
+ */
+const restoreViewer = (
+  scene: BoardScene,
+  open: string | null,
+  pickedIn: string | undefined
+): string | null =>
+  open ??
+  (pickedIn !== undefined &&
+  scene.zones.some(
+    (zone) => zone.id === pickedIn && openedZoneRemainsPresentable(zone)
+  )
+    ? pickedIn
+    : null);
+
 const hasDropTarget = (view: MatchViewState, scene: BoardScene, id: string) =>
   Boolean(
     scene.zones.some((zone) => zone.id === id && zone.interactive) ||
@@ -823,12 +848,18 @@ const reconcilePresentation = (
   // again, unless the player has picked others meanwhile.
   const restoring = state.selectionRestore;
   let restoredMode = false;
+  let reopened: string | null = null;
   if (restoring && restoring.cardIds.length > 0 && selection.length === 0) {
-    selection = reduceSelection(context, NO_SELECTION, {
-      kind: 'restore',
-      cardIds: restoring.cardIds,
-    }).selection;
+    const viewer = restoreViewer(scene, openedZoneId, restoring.openedZoneId);
+    selection = reduceSelection(
+      viewer === openedZoneId
+        ? context
+        : selectionContextOf(view, scene, dependencies, viewer),
+      NO_SELECTION,
+      { kind: 'restore', cardIds: restoring.cardIds }
+    ).selection;
     restoredMode = restoring.selectionMode;
+    if (selection.length > 0 && viewer !== openedZoneId) reopened = viewer;
   }
   const hoveredCardId = stillShown(state.presentation.hoveredCardId);
   const drag = state.presentation.drag;
@@ -901,7 +932,8 @@ const reconcilePresentation = (
       hoveredCardId,
       targetableCardIds: [],
       drag: reconciledDrag,
-      openedZoneId,
+      // A refused group's pile, open again for its cards.
+      openedZoneId: reopened ?? openedZoneId,
       settling: pruneSettling(
         settlingEntries(state.presentation),
         scene,
@@ -1647,10 +1679,14 @@ const handleIntent = (
     }
     // A press on bare felt puts the selection down and ends any picking
     // of a Pokémon (ADR-042 §1).
-    case 'BoardBackgroundPressed':
+    case 'BoardBackgroundPressed': {
+      // The felt pressed: a refused group waiting to come back stays down.
+      const settled = state.selectionRestore
+        ? nextState(state, { selectionRestore: null })
+        : state;
       return state.playTargeting || state.presentation.selection.length > 0
         ? installPresentation(
-            state,
+            settled,
             {
               ...state.presentation,
               selection: NO_SELECTION,
@@ -1661,7 +1697,10 @@ const handleIntent = (
             state.playTargeting ? emptyOverlays() : state.overlays,
             null
           )
-        : ignored(state);
+        : settled === state
+          ? ignored(state)
+          : accepted(settled);
+    }
     case 'CardsSelected': {
       if (state.playTargeting) return ignored(state);
       const context = selectionContextOf(
@@ -2128,6 +2167,9 @@ const submitGroup = (
               cardIds,
               ...(state.presentation.selectionMode
                 ? { selectionMode: true }
+                : {}),
+              ...(state.presentation.openedZoneId
+                ? { openedZoneId: state.presentation.openedZoneId }
                 : {}),
             },
           ],
@@ -2977,8 +3019,32 @@ export const reduceBoardSessionController = (
         hoveredCardId: action.cardId,
       });
     }
-    case 'DismissLocalPresentation':
-      return dismissPresentation(state, action.scope ?? 'all');
+    case 'DismissLocalPresentation': {
+      const scope = action.scope ?? 'all';
+      const reduction = dismissPresentation(state, scope);
+      // Put away by the player, a pile stays shut and a selection stays
+      // down when a refused group comes back.
+      const zone = scope === 'all' || scope === 'zone';
+      const selection = scope === 'all' || scope === 'selection';
+      if (!zone && !selection) return reduction;
+      const forget = <Entry extends { readonly openedZoneId?: string }>(
+        entry: Entry
+      ): Entry => {
+        if (!zone || entry.openedZoneId === undefined) return entry;
+        const { openedZoneId: _shut, ...rest } = entry;
+        return rest as Entry;
+      };
+      const restore = reduction.state.selectionRestore;
+      return {
+        ...reduction,
+        state: nextState(reduction.state, {
+          groupSubmissions: (
+            reduction.state.groupSubmissions ?? NO_GROUP_SUBMISSIONS
+          ).map(forget),
+          selectionRestore: selection || !restore ? null : forget(restore),
+        }),
+      };
+    }
     case 'SubmissionRejected': {
       const entries = settlingEntries(state.presentation);
       const inDrop = newestDrop(entries);
@@ -3085,35 +3151,44 @@ export const reduceBoardSessionController = (
       );
       if (!refused) return ignored(state);
       const groupSubmissions = submissions.filter((entry) => entry !== refused);
+      const later: SelectionRestore = {
+        cardIds: refused.cardIds,
+        selectionMode: refused.selectionMode === true,
+        ...(refused.openedZoneId ? { openedZoneId: refused.openedZoneId } : {}),
+      };
       // Its cards are shown where it put them: the selection comes back
       // with the frame that takes them back (reconcilePresentation).
       if (refused.predicted || !state.view || !state.scene)
         return accepted(
-          nextState(state, {
-            groupSubmissions,
-            selectionRestore: {
-              cardIds: refused.cardIds,
-              selectionMode: refused.selectionMode === true,
-            },
-          })
+          nextState(state, { groupSubmissions, selectionRestore: later })
         );
       // Nothing was shown moving: it comes back now.
       if (state.presentation.selection.length > 0)
         return accepted(nextState(state, { groupSubmissions }));
+      const viewer = restoreViewer(
+        state.scene,
+        state.presentation.openedZoneId,
+        refused.openedZoneId
+      );
       const restored = reduceSelection(
-        selectionContextOf(
-          state.view,
-          state.scene,
-          dependencies,
-          state.presentation.openedZoneId
-        ),
+        selectionContextOf(state.view, state.scene, dependencies, viewer),
         NO_SELECTION,
         { kind: 'restore', cardIds: refused.cardIds }
       ).selection;
+      // Shown where a move queued before it puts them (its prediction still
+      // standing), they are not all back yet: they come back with the frame
+      // that withdraws it.
+      if (restored.length < refused.cardIds.length)
+        return accepted(
+          nextState(state, { groupSubmissions, selectionRestore: later })
+        );
       const presentation: BoardPresentation = {
         ...state.presentation,
         selection: restored,
         selectionMode: refused.selectionMode === true && restored.length > 0,
+        ...(viewer !== state.presentation.openedZoneId
+          ? { openedZoneId: viewer }
+          : {}),
       };
       return accepted(
         nextState(state, { groupSubmissions, presentation }),

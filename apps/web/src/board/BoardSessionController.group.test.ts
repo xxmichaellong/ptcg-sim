@@ -352,6 +352,124 @@ describe('a selection of several cards (ADR-042)', () => {
     expect(board.state.presentation.selectionMode).toBe(true);
   });
 
+  it("opens a refused group's emptied pile again with its cards picked, unless the player put it away", () => {
+    const table = groupTable();
+    const pile = table.put(BLUE, 'discard', energy, energy);
+    const pileId = table.zoneId(BLUE, 'discard');
+    const lostId = table.zoneId(BLUE, 'lostZone');
+    const before = table.view;
+    // The group's prediction: the pile emptied into the Lost Zone.
+    const emptied: MatchViewState = {
+      ...before,
+      zones: {
+        ...before.zones,
+        [pileId]: { ...before.zones[pileId]!, cards: [] },
+        [lostId]: {
+          ...before.zones[lostId]!,
+          cards: [...before.zones[pileId]!.cards],
+        },
+      },
+    };
+    const refuse = (putAway: boolean) => {
+      const board = driver(before);
+      board.intent({ kind: 'ZoneOpened', zoneId: pileId });
+      board.intent({ kind: 'CardsSelected', cardIds: pile, mode: 'replace' });
+      board.act({
+        kind: 'GroupActionRequested',
+        action: { kind: 'send', to: 'lostZone' },
+      });
+      board.act({
+        kind: 'SubmissionQueued',
+        commandId: 'group',
+        predicted: true,
+      });
+      board.act({
+        kind: 'FrameReceived',
+        frame: frame(2, emptied, {
+          boundary: 'refresh',
+          pendingCommandIds: ['group'],
+        }),
+      });
+      // Emptied, the pile's viewer closed.
+      expect(board.state.presentation.openedZoneId).toBeNull();
+      if (putAway)
+        board.act({ kind: 'DismissLocalPresentation', scope: 'zone' });
+      board.act({ kind: 'CommandRefused', commandId: 'group' });
+      board.act({
+        kind: 'FrameReceived',
+        frame: frame(
+          3,
+          { ...before },
+          {
+            boundary: 'refresh',
+            motionHint: 'rollback',
+            pendingCommandIds: [],
+          }
+        ),
+      });
+      return board;
+    };
+    const back = refuse(false);
+    expect(back.state.presentation.openedZoneId).toBe(pileId);
+    expect(back.selection).toEqual(pile);
+    // Put away meanwhile: it stays shut.
+    const shut = refuse(true);
+    expect(shut.state.presentation.openedZoneId).toBeNull();
+  });
+
+  it('brings back a refused group shown where a move queued before it put it, once that is withdrawn', () => {
+    const table = groupTable();
+    const hand = table.put(BLUE, 'hand', energy, energy);
+    const handId = table.zoneId(BLUE, 'hand');
+    const deckId = table.zoneId(BLUE, 'deck');
+    const before = table.view;
+    // Shown on the deck by a prediction still standing.
+    const shown: MatchViewState = {
+      ...before,
+      zones: {
+        ...before.zones,
+        [handId]: { ...before.zones[handId]!, cards: [] },
+        [deckId]: {
+          ...before.zones[deckId]!,
+          cards: [
+            ...before.zones[deckId]!.cards,
+            ...before.zones[handId]!.cards,
+          ],
+        },
+      },
+    };
+    const board = driver(before);
+    board.intent({ kind: 'CardsSelected', cardIds: hand, mode: 'replace' });
+    board.act({
+      kind: 'GroupActionRequested',
+      action: { kind: 'send', to: 'deckTop' },
+    });
+    board.act({ kind: 'SubmissionQueued', commandId: 'group' });
+    board.act({
+      kind: 'FrameReceived',
+      frame: frame(2, shown, {
+        boundary: 'refresh',
+        pendingCommandIds: ['earlier', 'group'],
+      }),
+    });
+    board.act({ kind: 'CommandRefused', commandId: 'group' });
+    // Not back yet: the deck's cards aren't a selection's.
+    expect(board.selection).toEqual([]);
+    board.act({
+      kind: 'FrameReceived',
+      frame: frame(
+        3,
+        { ...before },
+        {
+          boundary: 'refresh',
+          motionHint: 'rollback',
+          pendingCommandIds: [],
+        }
+      ),
+    });
+    expect(board.selection).toEqual(hand);
+  });
+
   it('marks every Pokémon of the group and leaves the group selected', () => {
     const table = groupTable();
     const active = table.pokemon(BLUE, 'active', [{ name: 'Pikachu' }]);
