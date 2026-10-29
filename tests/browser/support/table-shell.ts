@@ -113,11 +113,15 @@ export const chooseMoreAction = async (
   id: string
 ): Promise<void> => {
   const onRail = page.locator(`#boardButtonContainer #${id}`);
+  const more = page.locator('#moreActionsButton');
+  // The rail settles on its actions a moment after the table changes (a
+  // deck loaded brings Set up): wait for the action or More, whichever shows.
+  await expect(onRail.or(more).first()).toBeVisible();
   if (await onRail.isVisible()) {
     await onRail.click();
     return;
   }
-  await page.locator('#moreActionsButton').click();
+  await more.click();
   await page.locator(`#${id}`).click();
 };
 
