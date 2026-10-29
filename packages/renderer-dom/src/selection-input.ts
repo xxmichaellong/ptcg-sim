@@ -43,12 +43,14 @@ export interface SweepCandidate {
  * The cards a rectangle drawn in one half may take (ADR-042 §2): the cards
  * of that half the player can pick up -- not a pile's cover or its top
  * (deck, discard pile, Lost Zone: they are opened to pick from), nor the
- * other player's face-down hand.
+ * other player's face-down hand, unless the player works both seats (a Solo
+ * table with that hand covered, `readsEveryHand`).
  */
 export const sweepCandidates = (
   scene: BoardScene,
   side: BoardSide,
-  boxOf: (card: CardSceneNode) => Rect
+  boxOf: (card: CardSceneNode) => Rect,
+  readsEveryHand = false
 ): readonly SweepCandidate[] => {
   const zoneKinds = new Map(scene.zones.map((zone) => [zone.id, zone.kind]));
   const candidates: SweepCandidate[] = [];
@@ -62,7 +64,12 @@ export const sweepCandidates = (
       continue;
     const zoneKind = zoneKinds.get(card.parentId);
     if (zoneKind && PILE_KINDS.has(zoneKind)) continue;
-    if (card.concealed && card.side === 'opponent' && zoneKind === 'hand')
+    if (
+      !readsEveryHand &&
+      card.concealed &&
+      card.side === 'opponent' &&
+      zoneKind === 'hand'
+    )
       continue;
     candidates.push({ card, box: boxOf(card) });
   }

@@ -2,7 +2,12 @@ import { asPlayerId, asViewCardId } from '@ptcgsim/game-core';
 import type { BoardScene, CardSceneNode } from '@ptcgsim/renderer-contract';
 import { describe, expect, it } from 'vitest';
 
-import { addsToSelection, sweepRect, sweptItems } from './selection-input.js';
+import {
+  addsToSelection,
+  sweepCandidates,
+  sweepRect,
+  sweptItems,
+} from './selection-input.js';
 
 const playerId = asPlayerId('p1');
 const card = (id: string, x: number, y: number): CardSceneNode => ({
@@ -58,6 +63,27 @@ describe('picking several cards', () => {
       sweptItems(scene, candidates, { x: 170, y: 0, width: 200, height: 200 })
         .items
     ).toEqual(['right-low']);
+  });
+
+  it("takes the other seat's covered hand only for a player who works both seats", () => {
+    const covered = {
+      ...card('far-hand', 100, 10),
+      parentId: 'zone:p2:hand',
+      side: 'opponent' as const,
+      concealed: true,
+    };
+    const scene = {
+      cards: [covered],
+      zones: [{ id: 'zone:p2:hand', kind: 'hand' }],
+    } as unknown as BoardScene;
+    const ids = (everyHand: boolean) =>
+      sweepCandidates(scene, 'opponent', (item) => item.bounds, everyHand).map(
+        (candidate) => candidate.card.id
+      );
+    // Across the table in a room: not the player's to pick.
+    expect(ids(false)).toEqual([]);
+    // At a Solo table with that hand covered: still theirs.
+    expect(ids(true)).toEqual(['far-hand']);
   });
 
   it('keeps a rectangle to its half', () => {

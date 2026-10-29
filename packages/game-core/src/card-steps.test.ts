@@ -360,6 +360,10 @@ describe('a group move', () => {
       // reveal from the table it ends on.
       steps(reveal(energy!, true), reveal(energy!, false)),
       steps(reveal(energy!, true), toZone(energy!, 'hand', 'discard')),
+      // Shown, then something else: a shuffle hides it again, a move of
+      // its Pokémon takes it away.
+      steps(reveal(energy!, true), toZone(trainer!, 'hand', 'discard')),
+      steps(reveal(energy!, true), { type: 'ShuffleZone', zoneId: deck }),
     ]) {
       const refused = executeCommand(state, command, commandContext, room);
       expect(refused).toMatchObject({

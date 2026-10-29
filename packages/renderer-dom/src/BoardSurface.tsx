@@ -2227,10 +2227,14 @@ export const BoardSurface = ({
     if (sweep.candidates?.scene !== scene)
       sweep.candidates = {
         scene,
-        cards: sweepCandidates(scene, sweep.side, (card) =>
-          depth
-            ? depth.bounds(card)
-            : paintedCardBounds(card.bounds, card.rotationQuarterTurns)
+        cards: sweepCandidates(
+          scene,
+          sweep.side,
+          (card) =>
+            depth
+              ? depth.bounds(card)
+              : paintedCardBounds(card.bounds, card.rotationQuarterTurns),
+          adapters.readsEveryHand?.() === true
         ),
       };
     const rect = sweepRect(sweep.start, point, sweep.limits);

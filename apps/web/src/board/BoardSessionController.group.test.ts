@@ -484,6 +484,17 @@ describe('a selection of several cards (ADR-042)', () => {
     board.act({ kind: 'DismissLocalPresentation', scope: 'all' });
     board.act({ kind: 'CommandRefused', commandId: 'group' });
     expect(board.selection).toEqual([]);
+    // A press on the felt does the same.
+    const felt = driver(table.view);
+    felt.intent({ kind: 'CardsSelected', cardIds: hand, mode: 'replace' });
+    felt.act({
+      kind: 'GroupActionRequested',
+      action: { kind: 'send', to: 'lostZone' },
+    });
+    felt.act({ kind: 'SubmissionQueued', commandId: 'group' });
+    felt.intent({ kind: 'BoardBackgroundPressed' });
+    felt.act({ kind: 'CommandRefused', commandId: 'group' });
+    expect(felt.selection).toEqual([]);
   });
 
   it('marks every Pokémon of the group and leaves the group selected', () => {

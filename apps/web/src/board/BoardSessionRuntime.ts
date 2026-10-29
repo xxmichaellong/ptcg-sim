@@ -246,6 +246,7 @@ export class BoardSessionRuntime {
             this.reportError(error);
           }
         },
+        readsEveryHand: () => this.options.readsEveryHand?.() === true,
         reportError: this.reportError,
         reportStatus: (status) => {
           if (status.kind === 'failed') {

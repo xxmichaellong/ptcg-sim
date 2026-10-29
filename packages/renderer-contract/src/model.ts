@@ -493,6 +493,11 @@ export interface BoardRendererAdapters {
    * dragged out of it comes back once the card has landed.
    */
   readonly reportMotion?: (moving: boolean) => void;
+  /**
+   * Whether the player works both seats (a Solo table): the other seat's
+   * hand, covered, is still theirs to pick from, a rectangle's too.
+   */
+  readonly readsEveryHand?: () => boolean;
 }
 
 export type BoardRendererStatus =

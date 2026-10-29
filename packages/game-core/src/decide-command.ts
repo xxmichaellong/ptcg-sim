@@ -3463,8 +3463,8 @@ const madeStack = (
  * left, and any step refused refuses the whole. `next` gives step `index`
  * on that table, knowing the Pokémon the earlier steps made (`made[k]`,
  * step k's). Only the single-card commands of `CARD_STEP_TYPES` may be
- * steps, shuffles last, no card or Pokémon moves twice, and no card is
- * shown or hidden twice or both shown and moved.
+ * steps, shuffles last, no card or Pokémon moves twice, and a group that
+ * shows or hides cards does only that, each card once.
  */
 export const decideCardStepSequence = <
   Refusal extends { readonly accepted: false },
@@ -3487,6 +3487,7 @@ export const decideCardStepSequence = <
   const made: (StackId | undefined)[] = [];
   const moved = new Set<string>();
   const shown = new Set<string>();
+  let otherSteps = false;
   let shuffled = false;
   for (let index = 0; index < stepCount; index += 1) {
     const step = next(index, scratch, made);
@@ -3507,23 +3508,32 @@ export const decideCardStepSequence = <
     }
     const key = movedBy(command);
     if (key !== undefined) {
-      if (moved.has(key) || shown.has(key)) {
+      if (moved.has(key)) {
         return reject('invalid_command', `${key} moves twice in one move`);
       }
       moved.add(key);
     }
-    // A card is shown or hidden once, and not moved as well: the log tells
-    // a group's reveal from the table it ends on (a group does one thing
-    // to every card).
+    // A group that shows or hides cards does only that, each card once:
+    // the log tells its reveal from the table it ends on, which a move,
+    // a shuffle or a second reveal in the same move would change (a group
+    // does one thing to every card).
     if (command.type === 'SetPublicReveal') {
       const card = `card:${command.cardId}`;
-      if (shown.has(card) || moved.has(card)) {
+      if (shown.has(card)) {
         return reject(
           'invalid_command',
           `${card} is shown or hidden twice in one move`
         );
       }
       shown.add(card);
+    } else {
+      otherSteps = true;
+    }
+    if (shown.size > 0 && otherSteps) {
+      return reject(
+        'invalid_command',
+        'A group move that shows or hides cards does nothing else'
+      );
     }
     const decision = decideCommand(scratch, command, context);
     if (!decision.accepted) return decision;

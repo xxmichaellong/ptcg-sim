@@ -1680,10 +1680,19 @@ const handleIntent = (
     // A press on bare felt puts the selection down and ends any picking
     // of a Pokémon (ADR-042 §1).
     case 'BoardBackgroundPressed': {
-      // The felt pressed: a refused group waiting to come back stays down.
-      const settled = state.selectionRestore
-        ? nextState(state, { selectionRestore: null })
-        : state;
+      // The felt pressed puts the selection down for good: a refused group
+      // waiting to come back, or one still on its way, stays down.
+      const pending = state.groupSubmissions ?? NO_GROUP_SUBMISSIONS;
+      const settled =
+        state.selectionRestore ||
+        pending.some((entry) => entry.cardIds.length > 0)
+          ? nextState(state, {
+              selectionRestore: null,
+              groupSubmissions: pending.map((entry) =>
+                entry.cardIds.length > 0 ? { ...entry, cardIds: [] } : entry
+              ),
+            })
+          : state;
       return state.playTargeting || state.presentation.selection.length > 0
         ? installPresentation(
             settled,
