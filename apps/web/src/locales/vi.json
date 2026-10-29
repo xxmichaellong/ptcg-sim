@@ -6447,5 +6447,72 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "Viền khu vực"
+  },
+  "cJqyrp": {
+    "message": "{name}: {count}",
+    "translation": "{name}: {count}"
+  },
+  "hQE7TV": {
+    "message": "An image URL, or 'default'.",
+    "comments": [
+      "Keep 'default' in English: it is what the player types"
+    ],
+    "translation": "URL hình ảnh hoặc 'default'."
+  },
+  "PCF3WN": {
+    "message": "Change card back",
+    "translation": "Đổi mặt sau bài"
+  },
+  "baWTFO": {
+    "message": "Clear",
+    "context": "attack cost",
+    "translation": "Xóa"
+  },
+  "iIbh2N": {
+    "message": "HP",
+    "translation": "HP"
+  },
+  "fVGc9-": {
+    "message": "https://… or default",
+    "comments": [
+      "Keep 'default' in English: it is what the player types"
+    ],
+    "translation": "https://… hoặc default"
+  },
+  "-IGsZV": {
+    "message": "Lower {label}",
+    "translation": "Giảm {label}"
+  },
+  "CK1KXz": {
+    "message": "Max",
+    "translation": "Tối đa"
+  },
+  "zjSw-O": {
+    "message": "Max HP",
+    "translation": "HP tối đa"
+  },
+  "eTUF28": {
+    "message": "Min",
+    "translation": "Tối thiểu"
+  },
+  "J6QsaV": {
+    "message": "Min HP",
+    "translation": "HP tối thiểu"
+  },
+  "mNXjQA": {
+    "message": "No match",
+    "translation": "Không có kết quả"
+  },
+  "K21Y8W": {
+    "message": "Raise {label}",
+    "translation": "Tăng {label}"
+  },
+  "HLazKQ": {
+    "message": "Remove {name}",
+    "translation": "Xóa {name}"
+  },
+  "PTd_zR": {
+    "message": "Use image",
+    "translation": "Dùng ảnh"
   }
 }

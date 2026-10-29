@@ -6447,5 +6447,72 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "เส้นขอบโซน"
+  },
+  "cJqyrp": {
+    "message": "{name}: {count}",
+    "translation": "{name}: {count}"
+  },
+  "hQE7TV": {
+    "message": "An image URL, or 'default'.",
+    "comments": [
+      "Keep 'default' in English: it is what the player types"
+    ],
+    "translation": "URL ของรูปภาพ หรือ 'default'"
+  },
+  "PCF3WN": {
+    "message": "Change card back",
+    "translation": "เปลี่ยนหลังการ์ด"
+  },
+  "baWTFO": {
+    "message": "Clear",
+    "context": "attack cost",
+    "translation": "ล้าง"
+  },
+  "iIbh2N": {
+    "message": "HP",
+    "translation": "HP"
+  },
+  "fVGc9-": {
+    "message": "https://… or default",
+    "comments": [
+      "Keep 'default' in English: it is what the player types"
+    ],
+    "translation": "https://… หรือ default"
+  },
+  "-IGsZV": {
+    "message": "Lower {label}",
+    "translation": "ลด {label}"
+  },
+  "CK1KXz": {
+    "message": "Max",
+    "translation": "สูงสุด"
+  },
+  "zjSw-O": {
+    "message": "Max HP",
+    "translation": "HP สูงสุด"
+  },
+  "eTUF28": {
+    "message": "Min",
+    "translation": "ต่ำสุด"
+  },
+  "J6QsaV": {
+    "message": "Min HP",
+    "translation": "HP ต่ำสุด"
+  },
+  "mNXjQA": {
+    "message": "No match",
+    "translation": "ไม่พบที่ตรงกัน"
+  },
+  "K21Y8W": {
+    "message": "Raise {label}",
+    "translation": "เพิ่ม {label}"
+  },
+  "HLazKQ": {
+    "message": "Remove {name}",
+    "translation": "นำ {name} ออก"
+  },
+  "PTd_zR": {
+    "message": "Use image",
+    "translation": "ใช้รูปภาพ"
   }
 }

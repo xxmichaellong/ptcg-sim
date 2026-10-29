@@ -157,6 +157,14 @@ specifically without blocking, and go from deck to table in one click.
     damage, attack cost, Weakness, Resistance, Ability, Rule Box,
     regulation marks, set, rarity, illustrator and evolution, a sort, every
     print on demand, and "only legal in this deck's format" on by default.
+    The drawer's controls (2026-10-29) are real ones, not typed fields: HP
+    as a min-max stepper, retreat as Any/0-4, the attack cost built from
+    Energy symbols (each counted; Backspace or right-click takes one off),
+    regulation marks as chips, set and rarity as lists to search, filled
+    from the catalog. Each control is a word of the search box's query
+    (`hp>=200`, `rc<=1`, `ac<=RRC`, `reg:H,I`, `!e:PAL`, `!r:Double_rare`):
+    a filter typed in the box shows on its control, one set on a control
+    shows in the box, and Reset or Clear filters takes those words out.
     Results render as the grid scrolls. Click adds, Shift+click removes,
     right-click opens the card; Enter in the search adds the first card, `/`
     focuses it. The deck is grouped by evolution line, then Supporters,

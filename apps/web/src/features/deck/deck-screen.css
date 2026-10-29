@@ -1533,6 +1533,41 @@ div.deck-tile__choose {
   color: #3b372f;
 }
 
+/* More filters: a drawer that opens and closes on its height. */
+.card-search__advanced-root {
+  display: contents;
+}
+
+.card-search__advanced-panel {
+  /* Its own height, even where the controls scroll (a phone). */
+  flex: none;
+  height: var(--collapsible-panel-height);
+  overflow: hidden;
+  transition-property: height, opacity;
+  transition-duration: var(--surface-enter-duration);
+  transition-timing-function: var(--ease-out), var(--ease-fade);
+}
+
+.card-search__advanced-panel[data-starting-style],
+.card-search__advanced-panel[data-ending-style] {
+  height: 0;
+  opacity: 0;
+}
+
+.card-search__advanced-panel[data-ending-style] {
+  transition-duration: var(--surface-exit-duration);
+}
+
+:root[data-motion='reduced'] .card-search__advanced-panel {
+  transition-property: opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion='full']) .card-search__advanced-panel {
+    transition-property: opacity;
+  }
+}
+
 .card-search__advanced {
   padding: var(--space-3);
   border: 1px solid var(--color-border);
@@ -1541,28 +1576,320 @@ div.deck-tile__choose {
 }
 
 .card-search__advanced-grid {
+  --filter-control: 32px;
+
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: var(--space-2) var(--space-3);
+  grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+  gap: var(--space-3);
 }
 
 .advanced-filter {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
   color: var(--color-text-muted);
   font-size: var(--text-xs);
 }
 
+.advanced-filter--pair {
+  grid-column: span 2;
+}
+
+.advanced-filter--wide {
+  grid-column: 1 / -1;
+}
+
+.advanced-filter--list {
+  grid-column: span 2;
+}
+
 .advanced-filter .ds-input,
 .advanced-filter .ds-select {
-  min-height: 32px;
+  min-height: var(--filter-control);
+  height: auto;
   font-size: var(--text-sm);
 }
 
 .advanced-filter .ptcgsim-segmented-control label {
-  min-height: 28px;
+  height: auto;
+  min-height: calc(var(--filter-control) - 8px);
   font-size: var(--text-xs);
+}
+
+/* HP from - to; damage. */
+.filter-range {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.filter-range > .filter-stepper {
+  flex: 1;
+}
+
+.filter-range__to {
+  color: var(--color-text-faint);
+}
+
+.filter-stepper__group {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-sunken);
+}
+
+.filter-stepper__group:focus-within {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.filter-stepper__input {
+  box-sizing: border-box;
+  flex: 1;
+  width: 100%;
+  min-width: 3ch;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.filter-stepper__input::placeholder {
+  color: var(--color-text-faint);
+}
+
+.filter-stepper__button {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: var(--filter-control);
+  height: var(--filter-control);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.filter-stepper__button:disabled {
+  color: var(--color-text-faint);
+  cursor: default;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .filter-stepper__button:hover:not(:disabled) {
+    background: var(--color-surface-hover);
+    color: var(--color-text);
+  }
+}
+
+/* Attack cost: a symbol per type, counted. */
+.filter-cost {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.filter-cost__type {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: var(--filter-control);
+  height: var(--filter-control);
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-1);
+  cursor: pointer;
+  transition:
+    border-color var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
+}
+
+.filter-cost__type .energy-symbol {
+  opacity: 0.7;
+}
+
+.filter-cost__type[data-count] {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 1px var(--color-accent);
+}
+
+.filter-cost__type[data-count] .energy-symbol {
+  opacity: 1;
+}
+
+.filter-cost__type:focus-visible {
+  outline: var(--ptcgsim-focus-ring);
+  outline-offset: 1px;
+}
+
+.filter-cost__count {
+  position: absolute;
+  inset-block-start: -6px;
+  inset-inline-end: -6px;
+  display: inline-grid;
+  place-items: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 3px;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+  color: var(--color-on-accent, #fff);
+  font-size: 10px;
+  font-weight: var(--weight-bold);
+  line-height: 1;
+}
+
+.filter-cost__clear {
+  width: var(--filter-control);
+  height: var(--filter-control);
+}
+
+.filter-cost__clear:disabled {
+  opacity: 0.4;
+}
+
+/* Regulation marks. */
+.filter-marks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.filter-marks__mark {
+  min-width: var(--filter-control);
+  min-height: var(--filter-control);
+  padding: 0 var(--space-2);
+}
+
+/* Set and rarity: chips and a search in one field. */
+.filter-list {
+  display: flex;
+  align-items: center;
+  padding: 2px var(--space-1);
+  cursor: text;
+}
+
+.filter-list:focus-within {
+  outline: 2px solid var(--color-accent);
+}
+
+.filter-list__chips {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.filter-list__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 24px;
+  padding-inline: var(--space-2) 2px;
+  border-radius: var(--radius-sm);
+  background: var(--color-accent-soft);
+  color: var(--color-text);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  outline: none;
+}
+
+.filter-list__chip:focus-visible,
+.filter-list__chip[data-highlighted] {
+  box-shadow: 0 0 0 2px var(--color-accent);
+}
+
+.filter-list__chip-remove {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.filter-list__input {
+  flex: 1;
+  min-width: 6ch;
+  min-height: 26px;
+  padding: 0 var(--space-1);
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--text-sm);
+}
+
+.filter-list__input::placeholder {
+  color: var(--color-text-faint);
+}
+
+.filter-list__popup {
+  width: max(var(--anchor-width), 240px);
+  max-height: min(320px, var(--available-height, 70dvh));
+}
+
+.filter-list__detail {
+  flex: none;
+  color: var(--color-text-faint);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+}
+
+.filter-list__empty {
+  padding: var(--space-2) var(--space-2-5, 10px);
+  color: var(--color-text-muted);
+}
+
+.filter-list__empty:empty {
+  display: none;
+}
+
+/* A finger needs a 44px target. */
+@media (pointer: coarse) {
+  .card-search__advanced-grid {
+    --filter-control: 44px;
+  }
+
+  .advanced-filter .ptcgsim-segmented-control label {
+    min-height: var(--filter-control);
+  }
+
+  .card-search__advanced-actions .ds-button {
+    min-height: 44px;
+  }
+
+  .filter-list__chip {
+    min-height: 32px;
+  }
+
+  .filter-list__chip-remove {
+    width: 32px;
+    height: 32px;
+  }
+
+  .filter-list__input {
+    min-height: 38px;
+    font-size: var(--text-md);
+  }
 }
 
 .card-search__advanced-actions {

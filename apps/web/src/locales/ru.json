@@ -6447,5 +6447,72 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "Контуры зон"
+  },
+  "cJqyrp": {
+    "message": "{name}: {count}",
+    "translation": "{name}: {count}"
+  },
+  "hQE7TV": {
+    "message": "An image URL, or 'default'.",
+    "comments": [
+      "Keep 'default' in English: it is what the player types"
+    ],
+    "translation": "URL изображения или 'default'."
+  },
+  "PCF3WN": {
+    "message": "Change card back",
+    "translation": "Сменить рубашку"
+  },
+  "baWTFO": {
+    "message": "Clear",
+    "context": "attack cost",
+    "translation": "Очистить"
+  },
+  "iIbh2N": {
+    "message": "HP",
+    "translation": "ОЖ"
+  },
+  "fVGc9-": {
+    "message": "https://… or default",
+    "comments": [
+      "Keep 'default' in English: it is what the player types"
+    ],
+    "translation": "https://… или default"
+  },
+  "-IGsZV": {
+    "message": "Lower {label}",
+    "translation": "Уменьшить: {label}"
+  },
+  "CK1KXz": {
+    "message": "Max",
+    "translation": "Макс."
+  },
+  "zjSw-O": {
+    "message": "Max HP",
+    "translation": "Макс. ОЖ"
+  },
+  "eTUF28": {
+    "message": "Min",
+    "translation": "Мин."
+  },
+  "J6QsaV": {
+    "message": "Min HP",
+    "translation": "Мин. ОЖ"
+  },
+  "mNXjQA": {
+    "message": "No match",
+    "translation": "Нет совпадений"
+  },
+  "K21Y8W": {
+    "message": "Raise {label}",
+    "translation": "Увеличить: {label}"
+  },
+  "HLazKQ": {
+    "message": "Remove {name}",
+    "translation": "Удалить: {name}"
+  },
+  "PTd_zR": {
+    "message": "Use image",
+    "translation": "Использовать изображение"
   }
 }

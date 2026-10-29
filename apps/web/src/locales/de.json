@@ -6447,5 +6447,72 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "Zonenumrisse"
+  },
+  "cJqyrp": {
+    "message": "{name}: {count}",
+    "translation": "{name}: {count}"
+  },
+  "hQE7TV": {
+    "message": "An image URL, or 'default'.",
+    "comments": [
+      "Keep 'default' in English: it is what the player types"
+    ],
+    "translation": "Eine Bild-URL oder 'default'."
+  },
+  "PCF3WN": {
+    "message": "Change card back",
+    "translation": "Kartenrückseite ändern"
+  },
+  "baWTFO": {
+    "message": "Clear",
+    "context": "attack cost",
+    "translation": "Leeren"
+  },
+  "iIbh2N": {
+    "message": "HP",
+    "translation": "KP"
+  },
+  "fVGc9-": {
+    "message": "https://… or default",
+    "comments": [
+      "Keep 'default' in English: it is what the player types"
+    ],
+    "translation": "https://… oder default"
+  },
+  "-IGsZV": {
+    "message": "Lower {label}",
+    "translation": "{label} verringern"
+  },
+  "CK1KXz": {
+    "message": "Max",
+    "translation": "Max."
+  },
+  "zjSw-O": {
+    "message": "Max HP",
+    "translation": "Max. KP"
+  },
+  "eTUF28": {
+    "message": "Min",
+    "translation": "Min."
+  },
+  "J6QsaV": {
+    "message": "Min HP",
+    "translation": "Min. KP"
+  },
+  "mNXjQA": {
+    "message": "No match",
+    "translation": "Keine Treffer"
+  },
+  "K21Y8W": {
+    "message": "Raise {label}",
+    "translation": "{label} erhöhen"
+  },
+  "HLazKQ": {
+    "message": "Remove {name}",
+    "translation": "{name} entfernen"
+  },
+  "PTd_zR": {
+    "message": "Use image",
+    "translation": "Bild verwenden"
   }
 }

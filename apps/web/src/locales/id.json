@@ -6447,5 +6447,72 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "Garis tepi zona"
+  },
+  "cJqyrp": {
+    "message": "{name}: {count}",
+    "translation": "{name}: {count}"
+  },
+  "hQE7TV": {
+    "message": "An image URL, or 'default'.",
+    "comments": [
+      "Keep 'default' in English: it is what the player types"
+    ],
+    "translation": "URL gambar, atau 'default'."
+  },
+  "PCF3WN": {
+    "message": "Change card back",
+    "translation": "Ubah sisi belakang kartu"
+  },
+  "baWTFO": {
+    "message": "Clear",
+    "context": "attack cost",
+    "translation": "Hapus"
+  },
+  "iIbh2N": {
+    "message": "HP",
+    "translation": "HP"
+  },
+  "fVGc9-": {
+    "message": "https://… or default",
+    "comments": [
+      "Keep 'default' in English: it is what the player types"
+    ],
+    "translation": "https://… atau default"
+  },
+  "-IGsZV": {
+    "message": "Lower {label}",
+    "translation": "Turunkan {label}"
+  },
+  "CK1KXz": {
+    "message": "Max",
+    "translation": "Maks"
+  },
+  "zjSw-O": {
+    "message": "Max HP",
+    "translation": "HP maks"
+  },
+  "eTUF28": {
+    "message": "Min",
+    "translation": "Min"
+  },
+  "J6QsaV": {
+    "message": "Min HP",
+    "translation": "HP min"
+  },
+  "mNXjQA": {
+    "message": "No match",
+    "translation": "Tidak ada yang cocok"
+  },
+  "K21Y8W": {
+    "message": "Raise {label}",
+    "translation": "Naikkan {label}"
+  },
+  "HLazKQ": {
+    "message": "Remove {name}",
+    "translation": "Hapus {name}"
+  },
+  "PTd_zR": {
+    "message": "Use image",
+    "translation": "Gunakan gambar"
   }
 }

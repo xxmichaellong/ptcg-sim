@@ -6447,5 +6447,72 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "Bölge çerçeveleri"
+  },
+  "cJqyrp": {
+    "message": "{name}: {count}",
+    "translation": "{name}: {count}"
+  },
+  "hQE7TV": {
+    "message": "An image URL, or 'default'.",
+    "comments": [
+      "Keep 'default' in English: it is what the player types"
+    ],
+    "translation": "Bir görsel URL'si veya 'default'."
+  },
+  "PCF3WN": {
+    "message": "Change card back",
+    "translation": "Kart arkasını değiştir"
+  },
+  "baWTFO": {
+    "message": "Clear",
+    "context": "attack cost",
+    "translation": "Temizle"
+  },
+  "iIbh2N": {
+    "message": "HP",
+    "translation": "HP"
+  },
+  "fVGc9-": {
+    "message": "https://… or default",
+    "comments": [
+      "Keep 'default' in English: it is what the player types"
+    ],
+    "translation": "https://… veya default"
+  },
+  "-IGsZV": {
+    "message": "Lower {label}",
+    "translation": "{label} değerini azalt"
+  },
+  "CK1KXz": {
+    "message": "Max",
+    "translation": "Maks."
+  },
+  "zjSw-O": {
+    "message": "Max HP",
+    "translation": "Maks. HP"
+  },
+  "eTUF28": {
+    "message": "Min",
+    "translation": "Min."
+  },
+  "J6QsaV": {
+    "message": "Min HP",
+    "translation": "Min. HP"
+  },
+  "mNXjQA": {
+    "message": "No match",
+    "translation": "Eşleşme yok"
+  },
+  "K21Y8W": {
+    "message": "Raise {label}",
+    "translation": "{label} değerini artır"
+  },
+  "HLazKQ": {
+    "message": "Remove {name}",
+    "translation": "{name} öğesini kaldır"
+  },
+  "PTd_zR": {
+    "message": "Use image",
+    "translation": "Görseli kullan"
   }
 }

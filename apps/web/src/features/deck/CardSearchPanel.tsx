@@ -25,6 +25,7 @@ import {
 import {
   useDeferredValue,
   useEffect,
+  useId,
   useMemo,
   useRef,
   useState,
@@ -50,6 +51,13 @@ import {
   trainerTypeName,
 } from './deck-labels.js';
 import { DECK_SCREEN_PREFERENCES } from './deck-screen-preferences.js';
+import { EnergySymbol } from './energy-symbol.js';
+import { searchFilterCount, withoutSearchFilters } from './search-filters.js';
+import {
+  filterChoicesOf,
+  NO_FILTER_CHOICES,
+  SearchFiltersDrawer,
+} from './SearchFiltersDrawer.js';
 import { useCardCatalog } from './useCardCatalog.js';
 import { useZoomSource, type ZoomCard } from './useHoverZoom.js';
 import type { WarmCardImage } from './warm-card-images.js';
@@ -74,20 +82,6 @@ export const resultImageOf = (card: CatalogCard): WarmCardImage => ({
   ),
 });
 
-export const ENERGY_LETTER: Readonly<Record<EnergyType, string>> = {
-  Grass: 'G',
-  Fire: 'R',
-  Water: 'W',
-  Lightning: 'L',
-  Psychic: 'P',
-  Fighting: 'F',
-  Darkness: 'D',
-  Metal: 'M',
-  Fairy: 'Y',
-  Dragon: 'N',
-  Colorless: 'C',
-};
-
 type Kind = 'Pokémon' | 'Trainer' | 'Energy';
 
 export interface Chips {
@@ -99,23 +93,6 @@ export interface Chips {
   readonly types: readonly EnergyType[];
 }
 
-export interface Advanced {
-  readonly hpMin: string;
-  readonly hpMax: string;
-  readonly retreatMax: string;
-  readonly payWith: string;
-  readonly damageMin: string;
-  readonly ability: '' | 'yes' | 'no';
-  readonly ruleBox: '' | 'yes' | 'no';
-  readonly weakness: '' | EnergyType;
-  readonly resistance: '' | EnergyType | 'none';
-  readonly marks: string;
-  readonly set: string;
-  readonly rarity: string;
-  readonly artist: string;
-  readonly evolvesFrom: string;
-}
-
 const NO_CHIPS: Chips = {
   kinds: [],
   stages: [],
@@ -123,23 +100,6 @@ const NO_CHIPS: Chips = {
   trainerTypes: [],
   energyKinds: [],
   types: [],
-};
-
-const NO_ADVANCED: Advanced = {
-  hpMin: '',
-  hpMax: '',
-  retreatMax: '',
-  payWith: '',
-  damageMin: '',
-  ability: '',
-  ruleBox: '',
-  weakness: '',
-  resistance: '',
-  marks: '',
-  set: '',
-  rarity: '',
-  artist: '',
-  evolvesFrom: '',
 };
 
 const POKEMON_STAGES = ['Basic', 'Stage 1', 'Stage 2'];
@@ -188,10 +148,12 @@ const clause = (
   negate = false
 ): QueryClause => ({ field, operator, values, ...(negate ? { negate } : {}) });
 
-/** The chips and drawer as query clauses: the same language typed queries use. */
+/**
+ * The chips as query clauses: the same language typed queries use. (The
+ * More filters drawer writes its own into the query: search-filters.ts.)
+ */
 export const searchFilterClauses = (
   chips: Chips,
-  advanced: Advanced,
   legality: DeckFormatId | undefined
 ): readonly QueryClause[] => {
   const clauses: QueryClause[] = [];
@@ -237,35 +199,6 @@ export const searchFilterClauses = (
   }
   if (chips.types.length > 0) clauses.push(clause('type', chips.types));
   if (legality) clauses.push(clause('format', [legality]));
-  const number = (value: string): string | undefined =>
-    /^\d+$/u.test(value.trim()) ? value.trim() : undefined;
-  const hpMin = number(advanced.hpMin);
-  if (hpMin) clauses.push(clause('hp', [hpMin], '>='));
-  const hpMax = number(advanced.hpMax);
-  if (hpMax) clauses.push(clause('hp', [hpMax], '<='));
-  const retreat = number(advanced.retreatMax);
-  if (retreat) clauses.push(clause('retreat', [retreat], '<='));
-  const damage = number(advanced.damageMin);
-  if (damage) clauses.push(clause('damage', [damage], '>='));
-  if (/^[grwlpfdmync]+$/iu.test(advanced.payWith.trim())) {
-    clauses.push(clause('cost', [advanced.payWith.trim()], '<='));
-  }
-  if (advanced.ability)
-    clauses.push(clause('has', ['ability'], ':', advanced.ability === 'no'));
-  if (advanced.ruleBox)
-    clauses.push(clause('has', ['rulebox'], ':', advanced.ruleBox === 'no'));
-  if (advanced.weakness) clauses.push(clause('weakness', [advanced.weakness]));
-  if (advanced.resistance)
-    clauses.push(clause('resistance', [advanced.resistance]));
-  const marks = advanced.marks.toUpperCase().replaceAll(/[^A-Z]/gu, '');
-  if (marks) clauses.push(clause('regulation', [...marks]));
-  if (advanced.set.trim()) clauses.push(clause('set', [advanced.set.trim()]));
-  if (advanced.rarity.trim())
-    clauses.push(clause('rarity', [advanced.rarity.trim()]));
-  if (advanced.artist.trim())
-    clauses.push(clause('artist', [advanced.artist.trim()]));
-  if (advanced.evolvesFrom.trim())
-    clauses.push(clause('evolves', [advanced.evolvesFrom.trim()]));
   return clauses;
 };
 
@@ -275,18 +208,13 @@ export const searchResults = (
   search: {
     readonly query: string;
     readonly chips: Chips;
-    readonly advanced: Advanced;
     readonly legality: DeckFormatId | undefined;
     readonly sort: CatalogSort;
     readonly allPrints: boolean;
   }
 ) =>
   searchCatalog(cards, parseCardQuery(search.query), {
-    clauses: searchFilterClauses(
-      search.chips,
-      search.advanced,
-      search.legality
-    ),
+    clauses: searchFilterClauses(search.chips, search.legality),
     sort: search.sort,
     unique: search.allPrints ? 'prints' : 'cards',
   });
@@ -303,13 +231,9 @@ export const openingSearchResults = (
   searchResults(cards, {
     query: '',
     chips: NO_CHIPS,
-    advanced: NO_ADVANCED,
     legality: format,
     ...order,
   });
-
-const advancedCount = (advanced: Advanced): number =>
-  Object.values(advanced).filter((value) => value !== '').length;
 
 const Chip = ({
   label,
@@ -339,12 +263,6 @@ const Chip = ({
   );
   return title ? <Tooltip content={title}>{button}</Tooltip> : button;
 };
-
-export const EnergySymbol = ({ type }: { readonly type: EnergyType }) => (
-  <span className="energy-symbol" data-type={type} aria-hidden="true">
-    {ENERGY_LETTER[type]}
-  </span>
-);
 
 /**
  * Example queries and what they find. The queries are Limitless's search
@@ -399,18 +317,17 @@ export const CardSearchPanel = ({
   const screenPreferences = usePreference(DECK_SCREEN_PREFERENCES);
   const [text, setText] = useState('');
   const [chips, setChips] = useState<Chips>(NO_CHIPS);
-  const [advanced, setAdvanced] = useState<Advanced>(NO_ADVANCED);
   const [legalOnly, setLegalOnly] = useState(true);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [shown, setShown] = useState(PAGE);
+  const drawerId = useId();
   const sentinel = useRef<HTMLDivElement>(null);
   const grid = useRef<HTMLDivElement>(null);
 
   const legality: DeckFormatId | undefined = legalOnly ? format : undefined;
   const query = useDeferredValue(text);
   const deferredChips = useDeferredValue(chips);
-  const deferredAdvanced = useDeferredValue(advanced);
   const loaded =
     catalogState.status === 'ready' ? catalogState.catalog : undefined;
 
@@ -419,13 +336,11 @@ export const CardSearchPanel = ({
     return searchResults(loaded.cards, {
       query,
       chips: deferredChips,
-      advanced: deferredAdvanced,
       legality,
       sort: screenPreferences.sort,
       allPrints: screenPreferences.allPrints,
     });
   }, [
-    deferredAdvanced,
     deferredChips,
     legality,
     loaded,
@@ -464,6 +379,11 @@ export const CardSearchPanel = ({
     return counts;
   }, [deck]);
 
+  const drawerCount = searchFilterCount(text);
+  const filterChoices = useMemo(
+    () => (loaded ? filterChoicesOf(loaded.cards) : NO_FILTER_CHOICES),
+    [loaded]
+  );
   const kinds = chips.kinds;
   const only = (kind: Kind): boolean => kinds.length === 1 && kinds[0] === kind;
   const filterCount =
@@ -473,11 +393,11 @@ export const CardSearchPanel = ({
     chips.trainerTypes.length +
     chips.energyKinds.length +
     chips.types.length +
-    advancedCount(advanced);
+    drawerCount;
 
   const clearFilters = (): void => {
     setChips(NO_CHIPS);
-    setAdvanced(NO_ADVANCED);
+    setText(withoutSearchFilters);
   };
 
   const setKind = (kind: Kind): void => {
@@ -679,13 +599,14 @@ export const CardSearchPanel = ({
               className="ds-icon-button card-search__more"
               aria-label={t`More filters`}
               aria-expanded={showAdvanced}
-              data-active={advancedCount(advanced) > 0 ? 'true' : undefined}
+              aria-controls={drawerId}
+              data-active={drawerCount > 0 ? 'true' : undefined}
               onClick={() => setShowAdvanced((current) => !current)}
             >
               <FadersHorizontalIcon {...decorative} weight="bold" />
-              {advancedCount(advanced) > 0 ? (
+              {drawerCount > 0 ? (
                 <span className="card-search__badge ds-number">
-                  {advancedCount(advanced)}
+                  {drawerCount}
                 </span>
               ) : null}
             </button>
@@ -829,13 +750,14 @@ export const CardSearchPanel = ({
             </Chip>
           ))}
         </div>
-        {showAdvanced ? (
-          <AdvancedFilters
-            value={advanced}
-            onChange={setAdvanced}
-            onClose={() => setShowAdvanced(false)}
-          />
-        ) : null}
+        <SearchFiltersDrawer
+          id={drawerId}
+          open={showAdvanced}
+          text={text}
+          choices={filterChoices}
+          onText={setText}
+          onClose={() => setShowAdvanced(false)}
+        />
         <div className="card-search__status" id="cardSearchHint">
           <span
             id="nativeDeckBuilderSearchStatus"
@@ -1083,138 +1005,5 @@ const CardResult = ({
         </span>
       </button>
     </li>
-  );
-};
-
-const AdvancedFilters = ({
-  value,
-  onChange,
-  onClose,
-}: {
-  readonly value: Advanced;
-  readonly onChange: (value: Advanced) => void;
-  readonly onClose: () => void;
-}) => {
-  const { t } = useLingui();
-  const field = <Key extends keyof Advanced>(
-    key: Key,
-    next: Advanced[Key]
-  ): void => onChange({ ...value, [key]: next });
-  const text = (
-    key: keyof Advanced,
-    label: string,
-    placeholder = '',
-    inputMode?: 'numeric'
-  ) => (
-    <label className="advanced-filter">
-      <span>{label}</span>
-      <input
-        className="ds-input"
-        value={value[key]}
-        placeholder={placeholder}
-        {...(inputMode ? { inputMode } : {})}
-        onChange={(event) => field(key, event.target.value as never)}
-      />
-    </label>
-  );
-  const typeSelect = (key: 'weakness' | 'resistance', label: string) => (
-    <label className="advanced-filter">
-      <span>{label}</span>
-      <select
-        className="ds-select"
-        value={value[key]}
-        onChange={(event) => field(key, event.target.value as never)}
-      >
-        <option value="">{t({ message: 'Any', context: 'filter' })}</option>
-        {key === 'resistance' ? (
-          <option value="none">
-            {t({ message: 'None', context: 'no Resistance' })}
-          </option>
-        ) : null}
-        {ENERGY_TYPES.filter((type) => type !== 'Colorless').map((type) => (
-          <option key={type} value={type}>
-            {energyTypeName(type)}
-          </option>
-        ))}
-      </select>
-    </label>
-  );
-  const triState = (key: 'ability' | 'ruleBox', label: string) => (
-    <div className="advanced-filter" role="group" aria-label={label}>
-      <span>{label}</span>
-      <div className="ptcgsim-segmented-control">
-        {(
-          [
-            ['', t({ message: 'Any', context: 'filter' })],
-            ['yes', t({ message: 'Yes', context: 'filter' })],
-            ['no', t({ message: 'No', context: 'filter' })],
-          ] as const
-        ).map(([option, optionLabel]) => (
-          <span key={option} className="ptcgsim-segmented-control__option">
-            <input
-              type="radio"
-              id={`advanced-${key}-${option || 'any'}`}
-              name={`advanced-${key}`}
-              checked={value[key] === option}
-              onChange={() => field(key, option)}
-            />
-            <label htmlFor={`advanced-${key}-${option || 'any'}`}>
-              {optionLabel}
-            </label>
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-  return (
-    <div
-      className="card-search__advanced"
-      role="group"
-      aria-label={t`More filters`}
-    >
-      <div className="card-search__advanced-grid">
-        {text('hpMin', t`HP at least`, '0', 'numeric')}
-        {text('hpMax', t`HP at most`, '400', 'numeric')}
-        {text('retreatMax', t`Retreat at most`, '4', 'numeric')}
-        {text('damageMin', t`Damage at least`, '0', 'numeric')}
-        {text(
-          'payWith',
-          t`Attack payable with`,
-          t({
-            message: 'e.g. CC or LL',
-            comment: 'Energy letters (C, L…) stay as they are',
-          })
-        )}
-        {typeSelect('weakness', t`Weakness`)}
-        {typeSelect('resistance', t`Resistance`)}
-        {triState('ability', t({ message: 'Ability', context: 'card filter' }))}
-        {triState('ruleBox', t`Rule Box`)}
-        {text('marks', t`Regulation marks`, t`e.g. HIJ`)}
-        {text(
-          'set',
-          t({ message: 'Set', context: 'card set' }),
-          t`code or name`
-        )}
-        {text('rarity', t`Rarity`, t`e.g. illustration`)}
-        {text('artist', t`Illustrator`)}
-        {text('evolvesFrom', t`Evolves from`)}
-      </div>
-      <div className="card-search__advanced-actions">
-        <button
-          type="button"
-          className="ds-button ds-button--ghost"
-          onClick={() => onChange(NO_ADVANCED)}
-        >
-          <Trans context="clear the filters">Reset</Trans>
-        </button>
-        <button
-          type="button"
-          className="ds-button ds-button--secondary"
-          onClick={onClose}
-        >
-          <Trans>Done</Trans>
-        </button>
-      </div>
-    </div>
   );
 };

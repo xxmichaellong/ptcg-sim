@@ -6447,5 +6447,72 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "Оквири зона"
+  },
+  "cJqyrp": {
+    "message": "{name}: {count}",
+    "translation": "{name}: {count}"
+  },
+  "hQE7TV": {
+    "message": "An image URL, or 'default'.",
+    "comments": [
+      "Keep 'default' in English: it is what the player types"
+    ],
+    "translation": "URL слике или 'default'."
+  },
+  "PCF3WN": {
+    "message": "Change card back",
+    "translation": "Промени полеђину карте"
+  },
+  "baWTFO": {
+    "message": "Clear",
+    "context": "attack cost",
+    "translation": "Обриши"
+  },
+  "iIbh2N": {
+    "message": "HP",
+    "translation": "HP"
+  },
+  "fVGc9-": {
+    "message": "https://… or default",
+    "comments": [
+      "Keep 'default' in English: it is what the player types"
+    ],
+    "translation": "https://… или default"
+  },
+  "-IGsZV": {
+    "message": "Lower {label}",
+    "translation": "Смањи: {label}"
+  },
+  "CK1KXz": {
+    "message": "Max",
+    "translation": "Макс."
+  },
+  "zjSw-O": {
+    "message": "Max HP",
+    "translation": "Макс. HP"
+  },
+  "eTUF28": {
+    "message": "Min",
+    "translation": "Мин."
+  },
+  "J6QsaV": {
+    "message": "Min HP",
+    "translation": "Мин. HP"
+  },
+  "mNXjQA": {
+    "message": "No match",
+    "translation": "Нема резултата"
+  },
+  "K21Y8W": {
+    "message": "Raise {label}",
+    "translation": "Повећај: {label}"
+  },
+  "HLazKQ": {
+    "message": "Remove {name}",
+    "translation": "Уклони {name}"
+  },
+  "PTd_zR": {
+    "message": "Use image",
+    "translation": "Користи слику"
   }
 }

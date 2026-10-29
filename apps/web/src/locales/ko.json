@@ -6447,5 +6447,72 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "영역 윤곽선"
+  },
+  "cJqyrp": {
+    "message": "{name}: {count}",
+    "translation": "{name}: {count}"
+  },
+  "hQE7TV": {
+    "message": "An image URL, or 'default'.",
+    "comments": [
+      "Keep 'default' in English: it is what the player types"
+    ],
+    "translation": "이미지 URL 또는 'default'."
+  },
+  "PCF3WN": {
+    "message": "Change card back",
+    "translation": "카드 뒷면 변경"
+  },
+  "baWTFO": {
+    "message": "Clear",
+    "context": "attack cost",
+    "translation": "비우기"
+  },
+  "iIbh2N": {
+    "message": "HP",
+    "translation": "HP"
+  },
+  "fVGc9-": {
+    "message": "https://… or default",
+    "comments": [
+      "Keep 'default' in English: it is what the player types"
+    ],
+    "translation": "https://… 또는 default"
+  },
+  "-IGsZV": {
+    "message": "Lower {label}",
+    "translation": "{label} 낮추기"
+  },
+  "CK1KXz": {
+    "message": "Max",
+    "translation": "최대"
+  },
+  "zjSw-O": {
+    "message": "Max HP",
+    "translation": "최대 HP"
+  },
+  "eTUF28": {
+    "message": "Min",
+    "translation": "최소"
+  },
+  "J6QsaV": {
+    "message": "Min HP",
+    "translation": "최소 HP"
+  },
+  "mNXjQA": {
+    "message": "No match",
+    "translation": "일치하는 항목 없음"
+  },
+  "K21Y8W": {
+    "message": "Raise {label}",
+    "translation": "{label} 높이기"
+  },
+  "HLazKQ": {
+    "message": "Remove {name}",
+    "translation": "{name} 제거"
+  },
+  "PTd_zR": {
+    "message": "Use image",
+    "translation": "이미지 사용"
   }
 }

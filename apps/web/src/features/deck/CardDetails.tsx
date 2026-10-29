@@ -21,7 +21,7 @@ import { readingImageStyle } from '../../ui/card-artwork.js';
 import { Sheet } from '../../ui/Sheet.js';
 import { Tooltip } from '../../ui/Tooltip.js';
 import { CardImage, limitlessScanOf } from './CardImage.js';
-import { EnergySymbol } from './CardSearchPanel.js';
+import { EnergySymbol } from './energy-symbol.js';
 import {
   categoryName,
   energyCardName,
