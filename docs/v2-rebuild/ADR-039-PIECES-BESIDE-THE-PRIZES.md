@@ -37,12 +37,36 @@ In each player's own frame, the Active's row reads, from the prizes:
    smallest tables, whose row is shorter; a row too short to stack two lays
    them side by side. The column is as wide as the wider of the markers and
    the coin.
-2. **The Lost Zone**, when it is on the table and the row has room for it
-   as well as the Stadium's; otherwise it takes its place at the end of the
-   piles' column. Both halves decide together, so it is in the same place
-   on both. "On the table" means shown, or holding cards whatever the
-   viewer's setting (since 2026-10-29: before, one holding cards with the
-   setting off went to the column's end, under the discard pile).
+2. **The Lost Zone**, whenever it is on the table: shown, or holding cards
+   whatever the viewer's setting. Since 2026-10-29 never at the end of the
+   piles' column under the discard pile (the owner: "i don't think we
+   should ever be rendering our lost zone there"); until then a row too
+   narrow for it put it there, on about half of the mat's sizes (1024x768,
+   1280x1024 and other squarer windows). The row makes room for it, giving
+   up in turn (`lostZoneRoom` in `layout-table.ts`):
+   1. the Active slot's extra width (it is up to 2.2 cards wide for the
+      attachments peeking out), down to 1.3 cards -- the card and a sliver;
+   2. the Stadium's room between the pile and the Active, down to the
+      `+`'s (the Stadium finds its spot with its obstacle search);
+   3. the pile, down to 0.8 of a bench card.
+      A squarer window, whose cards are sized by its height and whose Active
+      row is tall and narrow, lays the pile in the pieces' column under the
+      coin instead, where that holds 0.8 of a bench card (1024x1180 holds a
+      0.75 pile, 768x900 0.69: under 0.8, but the largest place there is).
+      Failing that, whichever is larger of the pile under the coin and the
+      pile past the column with the Active slot down to the card alone and,
+      where the row is deep enough, the `+` at the row's foot under the pile.
+      Both halves lie the same way (past the column or under the coin),
+      whichever leaves the smaller of their piles the larger. The mat, and
+      the table's height on one player's table alone, are chosen as without
+      the Lost Zone, so its first card never turns the table into the other
+      mat; the split between the halves is found with it, so the Stadium keeps
+      clear of the staging area (cards may come out a few per cent smaller or
+      larger than without it). The smallest and squarest windows -- under
+      600px wide or 480 tall, squarish windows such as 768-1180 wide by
+      900-1366 tall with both VSTAR and GX markers kept, and splits far from
+      even -- can still leave the pile under half a bench card; it is never
+      in the piles' column. The portrait mat keeps its row of piles.
 3. **The `+`** for the optional pieces, just past them and past the Lost
    Zone's count, which stands out beyond the pile's corner: at the top of
    the row, by the centre line and level with the pieces' tops (the owner,

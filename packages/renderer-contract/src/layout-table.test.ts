@@ -407,47 +407,55 @@ describe('table layout: the app bar corner (ADR-036)', () => {
     }
   });
 
-  it('turns a half from mat to portrait once at most as the window widens, markers or none', () => {
-    const kindOf = (snapshot: ReturnType<typeof createTableLayoutSnapshot>) => {
-      const far = snapshot.players.find(
-        (player) => player.physicalSide === 'upper'
-      )!;
-      const box = (kind: string) =>
-        far.regions.find((region) => region.kind === kind)!
-          .physicalDeclaredBounds;
-      // Side by side in the portrait mat's pile row; one above the other
-      // down the mat's outer column.
-      return Math.abs(box('deck').y - box('discard').y) < 1
-        ? 'portrait'
-        : 'mat';
-    };
-    for (const height of [500, 640, 1024]) {
-      for (const lowerShare of [0.5, 0.6]) {
-        for (const markers of [0, 1, 2]) {
-          let changes = 0;
-          let last: string | undefined;
-          for (let width = 360; width <= 760; width += 2) {
-            const kind = kindOf(
-              createTableLayoutSnapshot(
-                stateAt(width, height, {
-                  shellMode: 'fullscreen',
-                  appBarPx: BAR,
-                  vertical: tableVerticalLayout(lowerShare),
-                  ...(markers ? { oncePerGameMarkers: markers } : {}),
-                })
-              )
-            );
-            if (last !== undefined && kind !== last) changes += 1;
-            last = kind;
+  // 3,618 tables laid out, each finding its split and its Lost Zone's
+  // room: give a loaded machine time.
+  it(
+    'turns a half from mat to portrait once at most as the window widens, markers or none',
+    { timeout: 15_000 },
+    () => {
+      const kindOf = (
+        snapshot: ReturnType<typeof createTableLayoutSnapshot>
+      ) => {
+        const far = snapshot.players.find(
+          (player) => player.physicalSide === 'upper'
+        )!;
+        const box = (kind: string) =>
+          far.regions.find((region) => region.kind === kind)!
+            .physicalDeclaredBounds;
+        // Side by side in the portrait mat's pile row; one above the other
+        // down the mat's outer column.
+        return Math.abs(box('deck').y - box('discard').y) < 1
+          ? 'portrait'
+          : 'mat';
+      };
+      for (const height of [500, 640, 1024]) {
+        for (const lowerShare of [0.5, 0.6]) {
+          for (const markers of [0, 1, 2]) {
+            let changes = 0;
+            let last: string | undefined;
+            for (let width = 360; width <= 760; width += 2) {
+              const kind = kindOf(
+                createTableLayoutSnapshot(
+                  stateAt(width, height, {
+                    shellMode: 'fullscreen',
+                    appBarPx: BAR,
+                    vertical: tableVerticalLayout(lowerShare),
+                    ...(markers ? { oncePerGameMarkers: markers } : {}),
+                  })
+                )
+              );
+              if (last !== undefined && kind !== last) changes += 1;
+              last = kind;
+            }
+            expect(
+              changes,
+              `${String(height)} split=${String(lowerShare)} markers=${String(markers)}`
+            ).toBeLessThanOrEqual(1);
           }
-          expect(
-            changes,
-            `${String(height)} split=${String(lowerShare)} markers=${String(markers)}`
-          ).toBeLessThanOrEqual(1);
         }
       }
     }
-  });
+  );
 
   it('refits the far half no shorter than it must, its staging area holding the Stadium', () => {
     const far = (snapshot: ReturnType<typeof createTableLayoutSnapshot>) =>
@@ -923,20 +931,34 @@ describe('table layout (geometry v2)', () => {
         }
       }
     }
-    // Too narrow for the Lost Zone there, it keeps its place in the piles'
-    // column on both halves; the markers stay by the prizes.
+    // A narrower row still lays it beside the prizes on both halves, never
+    // in the piles' column under the discard pile; the markers stay by the
+    // prizes, clear of it.
     const narrow = createTableLayoutSnapshot(
       stateAt(900, 700, { oncePerGameMarkers: 2 })
     );
     for (const player of narrow.players) {
-      expect(player.extras?.markers).toBeDefined();
-      const deck = region(narrow, player.side, 'deck').physicalDeclaredBounds;
-      const lost = region(
-        narrow,
-        player.side,
-        'lostZone'
-      ).physicalDeclaredBounds;
-      expect(lost.x).toBeCloseTo(deck.x, 5);
+      const markers = player.extras?.markers;
+      expect(markers).toBeDefined();
+      const rect = (kind: string) =>
+        region(narrow, player.side, kind).physicalDeclaredBounds;
+      const lost = rect('lostZone');
+      const discard = rect('discard');
+      expect(
+        lost.x + lost.width <= discard.x - 1 ||
+          lost.x >= discard.x + discard.width + 1
+      ).toBe(true);
+      expect(lost.height).toBeGreaterThan(0);
+      for (const other of [
+        markers!,
+        player.extras!.coin,
+        player.extras!.control,
+        rect('active'),
+        rect('prizes'),
+        rect('bench'),
+      ]) {
+        expect(overlaps(lost, other)).toBe(false);
+      }
     }
   });
 
@@ -1468,6 +1490,135 @@ describe('table layout (geometry v2)', () => {
     }
     // The mats with room beside the prizes do lay it there.
     expect(beside).toBeGreaterThan(0);
+  });
+
+  it('makes room beside the prizes for a Lost Zone on the table where the row had none, from the Active slot first', () => {
+    // 1024x768: the row held no Lost Zone beside the prizes; it lay under
+    // the discard pile. Now the Active slot gives up its extra width (to
+    // the card and a sliver of its attachments), the Stadium keeps its size.
+    for (const touch of [false, true]) {
+      const at = (extra: Partial<BoardLayoutState>) =>
+        createTableLayoutSnapshot(
+          stateAt(1024, 768, {
+            shellMode: 'fullscreen',
+            ...(touch ? { seamBandPx: 46 } : {}),
+            ...extra,
+          })
+        );
+      const shown = at({});
+      const without = at({ hideEmptyLostZone: true });
+      // The Stadium keeps its size (it follows the Active's edge).
+      const stadium = shown.shared.stadium.physicalDeclaredBounds;
+      const before = without.shared.stadium.physicalDeclaredBounds;
+      expect(stadium.width).toBeCloseTo(before.width, 5);
+      expect(stadium.height).toBeCloseTo(before.height, 5);
+      for (const side of ['local', 'opponent'] as const) {
+        const label = `1024x768${touch ? ' touch' : ''} ${side}`;
+        const rect = (snapshot: typeof shown, kind: string) =>
+          region(snapshot, side, kind).physicalDeclaredBounds;
+        const lost = rect(shown, 'lostZone');
+        const discard = rect(shown, 'discard');
+        const active = rect(shown, 'active');
+        const bench = rect(shown, 'bench');
+        // Not in the piles' column: beside the prizes, level with the
+        // Active, a whole pile.
+        expect(
+          lost.x + lost.width <= discard.x - 1 ||
+            lost.x >= discard.x + discard.width + 1,
+          label
+        ).toBe(true);
+        expect(overlaps(lost, active), label).toBe(false);
+        expect(
+          lost.y < active.y + active.height && lost.y + lost.height > active.y,
+          label
+        ).toBe(true);
+        expect(lost.height, label).toBeGreaterThanOrEqual(
+          bench.height * 0.8 - 0.5
+        );
+        // The Active slot narrower, never under the card and a sliver.
+        const card = active.height * CARD_ASPECT_RATIO;
+        expect(active.width, label).toBeLessThanOrEqual(
+          rect(without, 'active').width + 0.01
+        );
+        expect(active.width, label).toBeGreaterThanOrEqual(
+          Math.min(rect(without, 'active').width, card * 1.3) - 0.5
+        );
+      }
+    }
+  });
+
+  it('lays a Lost Zone too wide for the row past the pieces under the coin, on both halves alike', () => {
+    // 1024x1180: a squarish window's cards are sized by its height and its
+    // Active row is tall and narrow: the pile lies in the pieces' column
+    // under the coin, as large as there is room for.
+    const snapshot = createTableLayoutSnapshot(
+      stateAt(1024, 1180, { shellMode: 'fullscreen' })
+    );
+    for (const player of snapshot.players) {
+      const label = player.side;
+      const rect = (kind: string) =>
+        region(snapshot, player.side, kind).physicalDeclaredBounds;
+      const lost = rect('lostZone');
+      const coin = player.extras!.coin;
+      // In the pieces' column, under the coin's middle.
+      expect(lost.x, label).toBeLessThanOrEqual(coin.x + coin.width / 2);
+      expect(lost.x + lost.width, label).toBeGreaterThanOrEqual(
+        coin.x + coin.width / 2
+      );
+      // Under the coin, toward the player's edge.
+      if (player.side === 'local') {
+        expect(lost.y, label).toBeGreaterThanOrEqual(coin.y + coin.height);
+      } else {
+        expect(lost.y + lost.height, label).toBeLessThanOrEqual(coin.y);
+      }
+      expect(lost.height, label).toBeGreaterThanOrEqual(
+        rect('bench').height * 0.7
+      );
+      for (const kind of ['active', 'prizes', 'bench', 'discard', 'deck']) {
+        expect(overlaps(lost, rect(kind)), `${label} ${kind}`).toBe(false);
+      }
+      expect(overlaps(lost, player.extras!.control), label).toBe(false);
+    }
+  });
+
+  it('never lays a Lost Zone on the table under the discard pile, nor turns the table into the other mat for one', () => {
+    for (const width of [600, 768, 900, 1024, 1180, 1280, 1366, 1440, 1920]) {
+      for (const height of [480, 600, 768, 900, 1024, 1180]) {
+        for (const markers of [0, 2]) {
+          const at = (extra: Partial<BoardLayoutState>) =>
+            createTableLayoutSnapshot(
+              stateAt(width, height, {
+                shellMode: 'fullscreen',
+                oncePerGameMarkers: markers,
+                ...extra,
+              })
+            );
+          const shown = at({});
+          const without = at({ hideEmptyLostZone: true });
+          for (const side of ['local', 'opponent'] as const) {
+            const label = `${width}x${height} m${markers} ${side}`;
+            const rect = (snapshot: typeof shown, kind: string) =>
+              region(snapshot, side, kind).physicalDeclaredBounds;
+            const prizes = rect(shown, 'prizes');
+            const portrait = prizes.width > prizes.height;
+            // One mat with or without it.
+            const otherPrizes = rect(without, 'prizes');
+            expect(otherPrizes.width > otherPrizes.height, label).toBe(
+              portrait
+            );
+            if (portrait) continue; // the portrait mat keeps a pile row
+            const lost = rect(shown, 'lostZone');
+            const discard = rect(shown, 'discard');
+            expect(
+              lost.x + lost.width <= discard.x - 1 ||
+                lost.x >= discard.x + discard.width + 1,
+              label
+            ).toBe(true);
+            expect(lost.height, label).toBeGreaterThan(0);
+          }
+        }
+      }
+    }
   });
 
   it("puts each hand's pill past the far end of its strip, clear of the screen's edge, every zone and the piles' badges", () => {

@@ -202,6 +202,36 @@ test.describe('a short desktop window', () => {
   });
 });
 
+test.describe('a 1024x768 window', () => {
+  test.use({ viewport: { width: 1024, height: 768 } });
+
+  // Its row once held no Lost Zone beside the prizes: it lay under the
+  // discard pile. The Active slot now gives up its extra width for it.
+  test('takes the Lost Zone beside the prizes on the tilted table', async ({
+    page,
+  }) => {
+    test.setTimeout(120_000);
+    await setUpBoth(page);
+    await lostZoneByKey(page);
+    await besidePrizes(page, 'local', '1024x768 tilted');
+  });
+
+  test.describe('flat', () => {
+    test.beforeEach(async ({ page }) => {
+      await useFlatTable(page);
+    });
+
+    test('takes the Lost Zone beside the prizes on the flat table', async ({
+      page,
+    }) => {
+      test.setTimeout(120_000);
+      await setUpBoth(page);
+      await lostZoneByKey(page);
+      await besidePrizes(page, 'local', '1024x768 flat');
+    });
+  });
+});
+
 test.describe('an upright phone', () => {
   test.use({
     viewport: { width: 390, height: 844 },

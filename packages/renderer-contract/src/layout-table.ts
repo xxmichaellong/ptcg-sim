@@ -209,6 +209,11 @@ interface HalfGeometry {
   /** The Lost Zone lies beside the pieces, not in the piles' column. */
   readonly lostZoneBeside: boolean;
   /**
+   * Where a Lost Zone beside the prizes lies in the Active row: past the
+   * pieces' column, or in it under the coin (`LostZoneRoom`).
+   */
+  readonly lostZonePlace?: LostZonePlace;
+  /**
    * The least the staging area keeps when it makes room for the Stadium
    * (`boardStartReservePx`): a pile's width. Short of that it stays whole.
    */
@@ -235,6 +240,11 @@ interface HalfOptions {
    * room, rather than at the end of the piles' column.
    */
   readonly lostZoneBeside?: boolean;
+  /**
+   * Where the Lost Zone lies beside the prizes, decided for both halves
+   * together; absent, each half chooses.
+   */
+  readonly lostZonePlace?: LostZonePlace;
   /** How many once-per-game markers sit beside the prizes, 0 to 2. */
   readonly markerCount?: number;
   /** The hand strip's size against a near hand's: smaller across the table. */
@@ -384,6 +394,21 @@ const STADIUM_OVERLAP_SLACK_PX2 = 24;
 const BENCH_FIT_CARDS = 5.5;
 /** The Active's slot holds a stack with attachments peeking out: this many cards wide. */
 const ACTIVE_SLOT_CARDS = 2.2;
+/**
+ * The Active's slot gives up its extra width for a Lost Zone beside the
+ * prizes no further than this: the card, and a sliver of its attachments.
+ */
+const ACTIVE_SLOT_LEAST_CARDS = 1.3;
+/**
+ * A Lost Zone beside the prizes shrinks, last of all, to this share of a
+ * bench card's height (never below the piles' own size).
+ */
+const LOST_ZONE_LEAST_SHARE = 0.8;
+/**
+ * Where even that leaves no room (a squarish window, whose cards are sized
+ * by its height), the pile goes on shrinking to this share of a bench card.
+ */
+const LOST_ZONE_FLOOR_SHARE = 0.5;
 
 /**
  * The clear space between the outer columns (prizes, piles) and the side
@@ -536,6 +561,189 @@ const handEndFor = (
   return end;
 };
 
+/** The room past a Lost Zone beside the prizes that its `+` needs. */
+const besideControlRoom = (gap: number): number =>
+  Math.max(gap, PILE_BADGE_REACH_PX) + EXTRAS_CONTROL_PX + gap;
+
+/**
+ * Where a Lost Zone beside the prizes lies in the Active row: past the
+ * pieces' column (`beside`), or in the column under the coin (`under`).
+ */
+type LostZonePlace = 'beside' | 'under';
+
+/** How the mat's Active row makes room for a Lost Zone beside the prizes. */
+interface LostZoneRoom {
+  readonly activeWidth: number;
+  /** The room kept for the Stadium between the pieces and the Active. */
+  readonly stadiumRoom: number;
+  /** The pile's height. */
+  readonly pile: number;
+  readonly place: LostZonePlace;
+  /** The `+` sits at the row's foot under the pile, not past it. */
+  readonly controlUnder: boolean;
+}
+
+/**
+ * How the mat's Active row makes room for a Lost Zone beside the prizes.
+ * Past the pieces' column, giving up in turn until the pile fits:
+ * 1. the Active slot's extra width, to `ACTIVE_SLOT_LEAST_CARDS` (never
+ *    wider than it was);
+ * 2. the Stadium's room between the pile and the Active, to the `+`'s
+ *    (the Stadium finds its own spot);
+ * 3. the pile, to `least` (`LOST_ZONE_LEAST_SHARE` of a bench card).
+ * A row narrower still (a squarish window, its cards sized by its height,
+ * its Active row tall) lays the pile in the pieces' column under the coin,
+ * where that holds `least` -- or else whichever holds the larger pile of
+ * that and, past the column, giving up besides:
+ * 4. the Active slot's sliver for attachments: the card alone;
+ * 5. the `+`'s room past the pile: it steps to the row's foot under it;
+ * 6. the pile, below `least` to `floor`, and on the smallest rows as large
+ *    as fits.
+ * Never at the end of the piles' column. `place` holds both halves to one
+ * arrangement.
+ */
+const lostZoneRoom = (row: {
+  readonly middleWidth: number;
+  /** The pieces' column beside the prizes. */
+  readonly column: number;
+  /** What of it the pieces shown take: the markers' room is kept unused. */
+  readonly pieces: number;
+  readonly gap: number;
+  readonly cardWidth: number;
+  /** The Active row's height. */
+  readonly rowHeight: number;
+  /** The height left in the pieces' column under the coin. */
+  readonly under: number;
+  /** The Active slot without a Lost Zone beside the prizes. */
+  readonly freeActiveWidth: number;
+  /** The Stadium's full room between the pieces and the Active. */
+  readonly stadiumRoom: number;
+  /** The pile's height: full, least and floor. */
+  readonly pile: number;
+  readonly least: number;
+  readonly floor: number;
+  readonly place?: LostZonePlace;
+}): LostZoneRoom => {
+  const { middleWidth, column, gap, cardWidth, freeActiveWidth } = row;
+  // Left of the Active: the column, the pile past it, the Stadium's room;
+  // the staging area keeps as much on the right.
+  const needed = (pileWidth: number, stadium: number): number =>
+    column + gap + pileWidth + gap + stadium + gap;
+  const leftOf = (activeWidth: number): number =>
+    (middleWidth - activeWidth) / 2;
+  const fullWidth = row.pile * CARD_ASPECT_RATIO;
+  const pileOf = (width: number): number =>
+    Math.min(row.pile, Math.max(0, width) / CARD_ASPECT_RATIO);
+  const controlRoom = besideControlRoom(gap) - gap;
+  // Under the coin, the `+` lies past the pieces at the row's top: clear
+  // of the coin by its touch area, of the pile's count by the row.
+  const underControlRoom =
+    Math.max(gap, EXTRAS_CONTROL_REACH_PX) + EXTRAS_CONTROL_PX + gap;
+  const slotActive = Math.min(
+    freeActiveWidth,
+    cardWidth * ACTIVE_SLOT_LEAST_CARDS
+  );
+  const cardActive = Math.min(freeActiveWidth, cardWidth);
+  const beside = (
+    activeWidth: number,
+    stadiumRoom: number,
+    pile: number,
+    controlUnder = false
+  ): LostZoneRoom => ({
+    activeWidth,
+    stadiumRoom,
+    pile,
+    place: 'beside',
+    controlUnder,
+  });
+  /**
+   * In the column under the coin: the pile lies at the column's middle, or
+   * from its left edge where it is wider than the column, and with `past`
+   * (the room from what the column holds to the Active) must still fit
+   * beside the Active (else no pile).
+   */
+  const under = (activeWidth: number, past: number): LostZoneRoom => {
+    const room = leftOf(activeWidth) - past;
+    const width = room >= column ? room : 2 * room - column;
+    return {
+      activeWidth,
+      stadiumRoom: Math.max(0, past - 2 * gap),
+      pile: width >= row.pieces ? Math.min(row.under, pileOf(width)) : 0,
+      place: 'under',
+      controlUnder: false,
+    };
+  };
+  const least = (room: LostZoneRoom): boolean => room.pile >= row.least - 0.01;
+
+  // Past the column: 1. the Active slot's extra width.
+  const activeWidth = Math.max(
+    slotActive,
+    Math.min(
+      freeActiveWidth,
+      middleWidth - 2 * needed(fullWidth, row.stadiumRoom)
+    )
+  );
+  const besides: LostZoneRoom[] = [];
+  if (leftOf(activeWidth) >= needed(fullWidth, row.stadiumRoom) - 0.01) {
+    besides.push(beside(activeWidth, row.stadiumRoom, row.pile));
+  } else {
+    // 2. The Stadium's room, down to the `+`'s.
+    const stadium = leftOf(slotActive) - needed(fullWidth, 0);
+    besides.push(
+      stadium >= controlRoom
+        ? beside(slotActive, stadium, row.pile)
+        : // 3. The pile, down to `least`.
+          beside(
+            slotActive,
+            controlRoom,
+            pileOf(leftOf(slotActive) - needed(0, controlRoom))
+          )
+    );
+  }
+  const first = besides[0]!;
+  if (least(first) && row.place !== 'under') return first;
+  // Under the coin, giving up as little as holds `least`.
+  const unders = [
+    under(freeActiveWidth, gap + row.stadiumRoom + gap),
+    under(slotActive, underControlRoom),
+    under(cardActive, underControlRoom),
+  ];
+  const underLeast = unders.find(least);
+  if (row.place === 'under') return underLeast ?? largest(unders);
+  if (row.place === undefined && underLeast) return underLeast;
+  // Past the column, giving up more: 4. the Active slot's sliver.
+  const cardPile = pileOf(leftOf(cardActive) - needed(0, controlRoom));
+  besides.push(beside(cardActive, controlRoom, cardPile));
+  // 5. The `+` under the pile, its room given back, where the row is deep
+  //    enough to hold both.
+  const underPile = Math.min(
+    pileOf(leftOf(cardActive) - needed(0, 0)),
+    row.rowHeight -
+      Math.max(gap, PILE_BADGE_REACH_PX) -
+      EXTRAS_CONTROL_PX -
+      EXTRAS_CONTROL_INSET_PX
+  );
+  if (underPile >= row.floor - 0.01) {
+    besides.push(beside(cardActive, 0, underPile, true));
+  }
+  // 6. The pile below `least` to `floor`; on the smallest rows, as large
+  //    as fits.
+  const pastColumn =
+    besides.find((room) => room !== first && least(room)) ?? largest(besides);
+  return row.place === 'beside' || pastColumn.pile >= largest(unders).pile
+    ? pastColumn
+    : largest(unders);
+};
+
+/** A half's Lost Zone pile height. */
+const lostZoneHeight = (geometry: HalfGeometry): number =>
+  geometry.regions.find((region) => region.kind === 'lostZone')?.rect.height ??
+  0;
+
+/** Of rooms for the Lost Zone, the one with the largest pile (the first of equals). */
+const largest = (rooms: readonly LostZoneRoom[]): LostZoneRoom =>
+  rooms.reduce((best, room) => (room.pile > best.pile + 0.01 ? room : best));
+
 /** Lay out one half in its own frame, centre line at the top. */
 const layoutHalf = (
   width: number,
@@ -614,59 +822,128 @@ const layoutHalf = (
     gap,
     markerCount
   );
-  const stadiumRoom =
+  const fullStadiumRoom =
     bench * CARD_ASPECT_RATIO * (1 + STADIUM_ACTIVE_GAP_SHARE) +
     STADIUM_CLEARANCE_PX;
-  const beforeActive = column.width + gap + stadiumRoom + gap;
+  const beforeActive = column.width + gap + fullStadiumRoom + gap;
   // The Active slot is wide enough for a stack with attachments peeking
   // out, and leaves that room on its left (the staging area as much on its
   // right); never narrower than its card.
-  const activeWidth = Math.min(
+  const cardWidth = active * CARD_ASPECT_RATIO;
+  const freeActiveWidth = Math.min(
     middleWidth,
     Math.max(
-      active * CARD_ASPECT_RATIO,
-      Math.min(
-        active * CARD_ASPECT_RATIO * ACTIVE_SLOT_CARDS,
-        middleWidth - 2 * beforeActive
-      )
+      cardWidth,
+      Math.min(cardWidth * ACTIVE_SLOT_CARDS, middleWidth - 2 * beforeActive)
     )
   );
+  // A Lost Zone on the table (shown, or holding cards) lies beside the
+  // pieces, never at the end of the piles under the discard pile (the
+  // owner, 2026-10-29). Its room comes, in turn, from the Active slot's
+  // extra width (down to the card and a sliver of its attachments), from
+  // the Stadium's reserved room (it finds its own spot; the `+` keeps its
+  // own room past the pile), and last from the pile itself.
+  const besideRoom = options.lostZoneBeside
+    ? lostZoneRoom({
+        middleWidth,
+        column: column.width,
+        pieces: Math.max(column.markers?.width ?? 0, column.coin.width),
+        gap,
+        cardWidth,
+        rowHeight: active,
+        under: Math.max(
+          0,
+          activeTop + active - (column.coin.y + column.coin.height) - gap
+        ),
+        freeActiveWidth,
+        stadiumRoom: fullStadiumRoom,
+        pile: Math.min(pileHeight, active),
+        least: Math.min(pileHeight, active, bench * LOST_ZONE_LEAST_SHARE),
+        floor: Math.min(pileHeight, active, bench * LOST_ZONE_FLOOR_SHARE),
+        ...(options.lostZonePlace ? { place: options.lostZonePlace } : {}),
+      })
+    : undefined;
+  const activeWidth = besideRoom?.activeWidth ?? freeActiveWidth;
+  const stadiumRoom = besideRoom?.stadiumRoom ?? fullStadiumRoom;
   const activeRect: Rect = {
     x: centre - activeWidth / 2,
     y: activeTop,
     width: activeWidth,
     height: active,
   };
-  const lostZoneBeside =
-    options.lostZoneBeside === true &&
-    activeRect.x - middleLeft >= beforeActive + pileWidth + gap;
+  const lostZoneBeside = besideRoom !== undefined;
+  // In the pieces' column under the coin, the pile lies at the column's
+  // middle with the markers and coin; the `+` goes past what the column
+  // holds (its markers' room kept free where they are off).
+  const lostZoneWidth = (besideRoom?.pile ?? 0) * CARD_ASPECT_RATIO;
+  const columnMiddle = middleLeft + column.width / 2;
+  const { markers, coin } = column;
   let piecesRight = middleLeft + column.width;
   let lostZone: Rect | undefined;
-  if (lostZoneBeside) {
-    lostZone = {
-      x: piecesRight + gap,
-      y: activeTop,
-      width: pileWidth,
-      height: Math.min(pileHeight, active),
-    };
-    piecesRight = lostZone.x + lostZone.width;
+  if (besideRoom) {
+    if (besideRoom.place === 'under') {
+      lostZone = {
+        x: Math.max(middleLeft, columnMiddle - lostZoneWidth / 2),
+        y: coin.y + coin.height + gap,
+        width: lostZoneWidth,
+        height: besideRoom.pile,
+      };
+      piecesRight = Math.max(
+        coin.x + coin.width,
+        markers ? markers.x + markers.width : 0,
+        lostZone.x + lostZone.width
+      );
+    } else {
+      lostZone = {
+        x: piecesRight + gap,
+        y: activeTop,
+        width: lostZoneWidth,
+        height: besideRoom.pile,
+      };
+      piecesRight = lostZone.x + lostZone.width;
+    }
   }
   // The control that adds or removes them sits just past them, at the
   // row's top by the centre line, short of the Active (the Stadium keeps
-  // clear of it).
-  const control = extrasControlAt(
-    Math.min(
-      piecesRight +
-        (lostZone
-          ? Math.max(gap, PILE_BADGE_REACH_PX)
-          : Math.max(gap, EXTRAS_CONTROL_REACH_PX)),
-      activeRect.x - gap - EXTRAS_CONTROL_PX
-    ),
-    { y: activeTop, height: active },
-    middleLeft + column.width,
-    activeRect.x - stadiumRoom,
-    gap
-  );
+  // clear of it) -- past the column at the row's top beside a Lost Zone
+  // under the coin, or, where the row gave its room to a Lost Zone past
+  // the column, at the row's foot under the pile.
+  const control =
+    lostZone && besideRoom?.place === 'under'
+      ? {
+          x: Math.min(
+            // Clear of the coin's touch area with a hair to spare
+            // (`coinAbove` keeps the coin whole only clear of it).
+            piecesRight + Math.max(gap, EXTRAS_CONTROL_REACH_PX) + 0.5,
+            activeRect.x - gap - EXTRAS_CONTROL_PX
+          ),
+          y: activeTop + EXTRAS_CONTROL_INSET_PX,
+          width: EXTRAS_CONTROL_PX,
+          height: EXTRAS_CONTROL_PX,
+        }
+      : lostZone && besideRoom?.controlUnder
+        ? {
+            x: Math.min(
+              lostZone.x + (lostZone.width - EXTRAS_CONTROL_PX) / 2,
+              activeRect.x - gap - EXTRAS_CONTROL_PX
+            ),
+            y: activeTop + active - EXTRAS_CONTROL_INSET_PX - EXTRAS_CONTROL_PX,
+            width: EXTRAS_CONTROL_PX,
+            height: EXTRAS_CONTROL_PX,
+          }
+        : extrasControlAt(
+            Math.min(
+              piecesRight +
+                (lostZone
+                  ? Math.max(gap, PILE_BADGE_REACH_PX)
+                  : Math.max(gap, EXTRAS_CONTROL_REACH_PX)),
+              activeRect.x - gap - EXTRAS_CONTROL_PX
+            ),
+            { y: activeTop, height: active },
+            middleLeft + column.width,
+            activeRect.x - stadiumRoom,
+            gap
+          );
   // With the Lost Zone beside the prizes, the deck and discard have the
   // outer column to themselves: they grow to fill both card rows, never
   // past the Active's size. Otherwise the column keeps a slot for it.
@@ -748,11 +1025,12 @@ const layoutHalf = (
     middle: { left: middleLeft, right: Math.max(middleRight, benchRight) },
     seamMargin: margin,
     extras: {
-      ...(column.markers ? { markers: column.markers } : {}),
-      coin: coinAbove(column.coin, control, gap),
+      ...(markers ? { markers } : {}),
+      coin: coinAbove(coin, control, gap),
       control,
     },
     lostZoneBeside,
+    ...(besideRoom ? { lostZonePlace: besideRoom.place } : {}),
     boardMinWidth: pileWidth,
   };
 };
@@ -1074,14 +1352,28 @@ const atPlayerEdge = (geometry: HalfGeometry, band: number): HalfGeometry => {
       control: lowered(geometry.extras.control),
     },
     lostZoneBeside: geometry.lostZoneBeside,
+    ...(geometry.lostZonePlace
+      ? { lostZonePlace: geometry.lostZonePlace }
+      : {}),
     boardMinWidth: geometry.boardMinWidth,
   };
 };
 
+/**
+ * The options a half's mat is chosen by: without its Lost Zone, which the
+ * mat makes room for wherever it is chosen, so the first card into the Lost
+ * Zone never turns the table into the other mat.
+ */
+const withoutLostZone = (options: HalfOptions): HalfOptions => {
+  const { lostZoneBeside: _beside, lostZonePlace: _place, ...rest } = options;
+  return rest;
+};
+
 /** A half's own choice of mat, at the frame's full height. */
 const matOf = (width: number, height: number, options: HalfOptions): Mat => {
-  const portrait = layoutHalfPortrait(width, height, options);
-  return bestOf(layoutHalf(width, height, options), portrait) === portrait
+  const chosenBy = withoutLostZone(options);
+  const portrait = layoutHalfPortrait(width, height, chosenBy);
+  return bestOf(layoutHalf(width, height, chosenBy), portrait) === portrait
     ? 'portrait'
     : 'landscape';
 };
@@ -1124,8 +1416,8 @@ const piecesClear = (geometry: HalfGeometry, own: boolean): boolean => {
  */
 const jointMat = (near: HalfFrame, far: HalfFrame): Mat | undefined => {
   const laidOut = [near, far].map(({ width, height, options }) => ({
-    landscape: layoutHalf(width, height, options),
-    portrait: layoutHalfPortrait(width, height, options),
+    landscape: layoutHalf(width, height, withoutLostZone(options)),
+    portrait: layoutHalfPortrait(width, height, withoutLostZone(options)),
   }));
   const [nearOwn, farOwn] = laidOut.map(({ landscape, portrait }) =>
     bestOf(landscape, portrait) === portrait ? 'portrait' : 'landscape'
@@ -1235,8 +1527,10 @@ const layoutSoloHalf = (
       ? { minHandStripPx: options.minHandStripPx }
       : {}),
   });
+  // Its height is found as without the Lost Zone (`withoutLostZone`).
+  const chosenBy = withoutLostZone(options);
   const fits = (candidate: number): boolean => {
-    const geometry = layoutHalf(width, candidate, options);
+    const geometry = layoutHalf(width, candidate, chosenBy);
     return (
       BENCH_FIT_CARDS * geometry.cardHeights.bench * CARD_ASPECT_RATIO <=
       geometry.middle.right - geometry.middle.left
@@ -1259,7 +1553,14 @@ const layoutSoloHalf = (
     layoutHalf(width, fitted, options),
     height - fitted
   );
-  return bestOf(landscape, portrait) === portrait ? portrait : landscape;
+  // Chosen as without the Lost Zone (`withoutLostZone`).
+  const chooser = options.lostZoneBeside
+    ? atPlayerEdge(
+        layoutHalf(width, fitted, withoutLostZone(options)),
+        height - fitted
+      )
+    : landscape;
+  return bestOf(chooser, portrait) === portrait ? portrait : landscape;
 };
 
 /** A rect in a half's own frame placed in the window. */
@@ -1874,11 +2175,13 @@ export const createTableLayoutSnapshot = (
       ...halfOptions,
       ...(farOptions.handScale ? { handScale: farOptions.handScale } : {}),
     };
-    // `farScale`: the far half refitted on its own, portrait mat too.
+    // `farScale`: the far half refitted on its own, portrait mat too. The
+    // search lays the halves out with their Lost Zone: where a row made
+    // room for it, the Stadium finds its spot anew.
     const splitAt = (scale: number, withBar = false, farScale?: number) => {
       const fit = (frame: Rect, share: number): HalfOptions =>
         share < 1 ? { fitHeight: frame.height * share } : {};
-      let nearFit: HalfOptions = {
+      const nearFit: HalfOptions = {
         ...halfOptions,
         ...fit(frames.lower, scale),
       };
@@ -1890,13 +2193,35 @@ export const createTableLayoutSnapshot = (
       };
       let near = buildPlayer(semantics.players[0], frames.lower, nearFit);
       let far = buildPlayer(semantics.players[1], frames.upper, farFit);
-      // One mat on both sides: the Lost Zone lies beside the prizes on both
-      // halves or on neither.
-      if (near.geometry.lostZoneBeside !== far.geometry.lostZoneBeside) {
-        nearFit = { ...nearFit, lostZoneBeside: false };
-        farFit = { ...farFit, lostZoneBeside: false };
-        near = buildPlayer(semantics.players[0], frames.lower, nearFit);
-        far = buildPlayer(semantics.players[1], frames.upper, farFit);
+      // One mat on both sides: a Lost Zone beside the prizes lies the same
+      // way on both halves -- past the pieces' column on both, or under
+      // the coin on both, whichever leaves the smaller of the two piles
+      // the larger. (A portrait half keeps its pile row.)
+      const nearPlace = near.geometry.lostZonePlace;
+      const farPlace = far.geometry.lostZonePlace;
+      if (nearPlace && farPlace && nearPlace !== farPlace) {
+        // Each half laid out its own way already; only the other half
+        // is laid out again each way.
+        const farAsNear = buildPlayer(semantics.players[1], frames.upper, {
+          ...farFit,
+          lostZonePlace: nearPlace,
+        });
+        const nearAsFar = buildPlayer(semantics.players[0], frames.lower, {
+          ...nearFit,
+          lostZonePlace: farPlace,
+        });
+        const pileOf = (nearBuilt: typeof near, farBuilt: typeof far): number =>
+          Math.min(
+            lostZoneHeight(nearBuilt.geometry),
+            lostZoneHeight(farBuilt.geometry)
+          );
+        const chosen =
+          pileOf(nearAsFar, far) > pileOf(near, farAsNear) + 0.01
+            ? { place: farPlace, near: nearAsFar, far }
+            : { place: nearPlace, near, far: farAsNear };
+        farFit = { ...farFit, lostZonePlace: chosen.place };
+        near = chosen.near;
+        far = chosen.far;
       }
       const stadiumHeight = Math.min(
         near.geometry.cardHeights.bench,

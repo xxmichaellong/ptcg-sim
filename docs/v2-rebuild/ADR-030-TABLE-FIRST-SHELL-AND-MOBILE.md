@@ -189,14 +189,14 @@ table button are gone; their controls are the Table section.
     auto, so the next card it takes shows it. The `+`'s entry still counts
     the cards ("2 cards"), off, and turns it back on without asking.
     Either player's Lost Zone follows the viewer's choice. A Lost Zone on the
-    table lies where a shown one does -- beside the prizes where the mat has
-    room, on both halves alike -- whether it is shown or only holding cards:
-    the board runtime tells the layout when one holds cards
-    (`lostZoneInUse`), the moment the first lands and the last leaves. (Until
-    2026-10-29 one holding cards with the setting off lay at the end of the
-    piles' column, under the discard pile.) A mat without room beside the
-    prizes keeps it at the column's end whichever way it is on the table, as
-    ADR-039 says; an upright phone keeps it in the pile row by design.
+    table lies where a shown one does -- beside the prizes, on both halves
+    alike -- whether it is shown or only holding cards: the board runtime
+    tells the layout when one holds cards (`lostZoneInUse`), the moment the
+    first lands and the last leaves. It is never at the end of the piles'
+    column under the discard pile (until 2026-10-29 it was, holding cards
+    with the setting off, and on narrower mats either way): a narrow row
+    makes room for it, or lays it under the coin (ADR-039 §2). An upright
+    phone keeps it in the pile row by design.
 - **The empty table's welcome** sits in the far half, clear of the rail, and
   can be put away for good. The menu keeps the same help.
 
