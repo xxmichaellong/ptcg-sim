@@ -6769,5 +6769,64 @@
     "message": "Thickness…",
     "context": "the cards' thickness",
     "translation": "Ketebalan…"
+  },
+  "GtJbUa": {
+    "message": "Background",
+    "translation": "Latar belakang"
+  },
+  "c7lN9x": {
+    "message": "Background from a link",
+    "translation": "Latar belakang dari tautan"
+  },
+  "tAWTcI": {
+    "message": "Background…",
+    "translation": "Latar belakang…"
+  },
+  "vN1y3D": {
+    "message": "Couldn't use that picture.",
+    "translation": "Gambar itu tidak bisa dipakai."
+  },
+  "KtuFGB": {
+    "message": "Custom",
+    "context": "the player's own background",
+    "translation": "Kustom"
+  },
+  "qlHGJK": {
+    "message": "Custom image…",
+    "translation": "Gambar kustom…"
+  },
+  "Cn91gu": {
+    "message": "Desk",
+    "context": "the default background",
+    "translation": "Meja"
+  },
+  "jSa1_N": {
+    "message": "From a link…",
+    "translation": "Dari tautan…"
+  },
+  "T7x7bT": {
+    "message": "Image link",
+    "translation": "Tautan gambar"
+  },
+  "YmDThn": {
+    "message": "None",
+    "context": "no background",
+    "translation": "Tidak ada"
+  },
+  "IyUrJ9": {
+    "message": "Or drop or paste a picture.",
+    "translation": "Atau jatuhkan atau tempel gambar."
+  },
+  "Oo42E3": {
+    "message": "Pictures up to 25 MB.",
+    "translation": "Gambar hingga 25 MB."
+  },
+  "abE-Jj": {
+    "message": "Preparing picture…",
+    "translation": "Menyiapkan gambar…"
+  },
+  "LE8SQj": {
+    "message": "Wallpaper {0}",
+    "translation": "Wallpaper {0}"
   }
 }

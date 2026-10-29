@@ -6769,5 +6769,64 @@
     "message": "Thickness…",
     "context": "the cards' thickness",
     "translation": "厚度…"
+  },
+  "GtJbUa": {
+    "message": "Background",
+    "translation": "背景"
+  },
+  "c7lN9x": {
+    "message": "Background from a link",
+    "translation": "链接背景"
+  },
+  "tAWTcI": {
+    "message": "Background…",
+    "translation": "背景…"
+  },
+  "vN1y3D": {
+    "message": "Couldn't use that picture.",
+    "translation": "无法使用该图片。"
+  },
+  "KtuFGB": {
+    "message": "Custom",
+    "context": "the player's own background",
+    "translation": "自定义"
+  },
+  "qlHGJK": {
+    "message": "Custom image…",
+    "translation": "自定义图片…"
+  },
+  "Cn91gu": {
+    "message": "Desk",
+    "context": "the default background",
+    "translation": "桌面"
+  },
+  "jSa1_N": {
+    "message": "From a link…",
+    "translation": "从链接…"
+  },
+  "T7x7bT": {
+    "message": "Image link",
+    "translation": "图片链接"
+  },
+  "YmDThn": {
+    "message": "None",
+    "context": "no background",
+    "translation": "无"
+  },
+  "IyUrJ9": {
+    "message": "Or drop or paste a picture.",
+    "translation": "也可拖入或粘贴图片。"
+  },
+  "Oo42E3": {
+    "message": "Pictures up to 25 MB.",
+    "translation": "图片最大 25 MB。"
+  },
+  "abE-Jj": {
+    "message": "Preparing picture…",
+    "translation": "正在处理图片…"
+  },
+  "LE8SQj": {
+    "message": "Wallpaper {0}",
+    "translation": "壁纸 {0}"
   }
 }

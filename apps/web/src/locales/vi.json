@@ -6769,5 +6769,64 @@
     "message": "Thickness…",
     "context": "the cards' thickness",
     "translation": "Độ dày…"
+  },
+  "GtJbUa": {
+    "message": "Background",
+    "translation": "Hình nền"
+  },
+  "c7lN9x": {
+    "message": "Background from a link",
+    "translation": "Hình nền từ liên kết"
+  },
+  "tAWTcI": {
+    "message": "Background…",
+    "translation": "Hình nền…"
+  },
+  "vN1y3D": {
+    "message": "Couldn't use that picture.",
+    "translation": "Không dùng được ảnh này."
+  },
+  "KtuFGB": {
+    "message": "Custom",
+    "context": "the player's own background",
+    "translation": "Tùy chỉnh"
+  },
+  "qlHGJK": {
+    "message": "Custom image…",
+    "translation": "Ảnh tùy chỉnh…"
+  },
+  "Cn91gu": {
+    "message": "Desk",
+    "context": "the default background",
+    "translation": "Bàn làm việc"
+  },
+  "jSa1_N": {
+    "message": "From a link…",
+    "translation": "Từ liên kết…"
+  },
+  "T7x7bT": {
+    "message": "Image link",
+    "translation": "Liên kết ảnh"
+  },
+  "YmDThn": {
+    "message": "None",
+    "context": "no background",
+    "translation": "Không có"
+  },
+  "IyUrJ9": {
+    "message": "Or drop or paste a picture.",
+    "translation": "Hoặc kéo thả hay dán một ảnh."
+  },
+  "Oo42E3": {
+    "message": "Pictures up to 25 MB.",
+    "translation": "Ảnh tối đa 25 MB."
+  },
+  "abE-Jj": {
+    "message": "Preparing picture…",
+    "translation": "Đang chuẩn bị ảnh…"
+  },
+  "LE8SQj": {
+    "message": "Wallpaper {0}",
+    "translation": "Hình nền {0}"
   }
 }

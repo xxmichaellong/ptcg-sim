@@ -42,6 +42,10 @@ import { preferences } from '../../preferences/preference-store.js';
 import { useHotkeyHints } from '../../hotkeys/hotkey-preferences.js';
 import { openShortcutsDialog } from '../../hotkeys/shortcuts-dialog-state.js';
 import { TOUCH_ONLY_QUERY, useMediaQuery } from '../../ui/breakpoints.js';
+import {
+  BackgroundChooser,
+  type BackgroundChoice,
+} from './BackgroundChooser.js';
 import { DISCORD_URL, openHelpPage, RELEASE_NAME } from './help-pages.js';
 import './settings-sheet.css';
 import {
@@ -252,9 +256,8 @@ export interface SettingsSheetProps {
   readonly section?: SettingsSectionRequest;
   readonly darkMode: boolean;
   readonly onDarkModeChange: (enabled: boolean) => void;
-  readonly onChangeBackground: () => void;
-  /** Offered while a chosen background shows. */
-  readonly onUseDefaultBackground?: () => void;
+  /** What lies around the table, and how it changes. */
+  readonly background: BackgroundChoice;
   /**
    * In a room: whether this player lets the board be turned to the other
    * side's view (both must), changeable any time during the game.
@@ -311,8 +314,7 @@ export const SettingsSheet = ({
   section,
   darkMode,
   onDarkModeChange,
-  onChangeBackground,
-  onUseDefaultBackground,
+  background,
   boardFlip,
 }: SettingsSheetProps) => {
   const { t } = useLingui();
@@ -337,9 +339,10 @@ export const SettingsSheet = ({
       open: (at) => {
         openSettingsSheet(at);
       },
-      hint: hint('table.settings'),
+      ...(touchOnly ? {} : { hint: hint('table.settings') }),
       darkMode,
       onDarkModeChange,
+      background,
     })
   );
   // One window at a time: Settings gives way to what it opens.
@@ -367,26 +370,7 @@ export const SettingsSheet = ({
       ) : null}
       <SettingsSection title={t`Table`} id="settingsTable">
         <TableArtControls />
-        <div className="ptcgsim-settings-actions">
-          <button
-            id="changeBackgroundButton"
-            type="button"
-            className="ds-button ds-button--secondary"
-            onClick={onChangeBackground}
-          >
-            <Trans>Change background</Trans>
-          </button>
-          {onUseDefaultBackground ? (
-            <button
-              id="defaultBackgroundButton"
-              type="button"
-              className="ds-button ds-button--ghost"
-              onClick={onUseDefaultBackground}
-            >
-              <Trans>Use default</Trans>
-            </button>
-          ) : null}
-        </div>
+        {open ? <BackgroundChooser choice={background} /> : null}
         <SwitchRow
           id="darkModeCheckbox"
           label={t`Dark mode`}

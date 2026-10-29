@@ -6769,5 +6769,64 @@
     "message": "Thickness…",
     "context": "the cards' thickness",
     "translation": "ความหนา…"
+  },
+  "GtJbUa": {
+    "message": "Background",
+    "translation": "พื้นหลัง"
+  },
+  "c7lN9x": {
+    "message": "Background from a link",
+    "translation": "พื้นหลังจากลิงก์"
+  },
+  "tAWTcI": {
+    "message": "Background…",
+    "translation": "พื้นหลัง…"
+  },
+  "vN1y3D": {
+    "message": "Couldn't use that picture.",
+    "translation": "ใช้รูปภาพนั้นไม่ได้"
+  },
+  "KtuFGB": {
+    "message": "Custom",
+    "context": "the player's own background",
+    "translation": "กำหนดเอง"
+  },
+  "qlHGJK": {
+    "message": "Custom image…",
+    "translation": "รูปภาพที่กำหนดเอง…"
+  },
+  "Cn91gu": {
+    "message": "Desk",
+    "context": "the default background",
+    "translation": "โต๊ะ"
+  },
+  "jSa1_N": {
+    "message": "From a link…",
+    "translation": "จากลิงก์…"
+  },
+  "T7x7bT": {
+    "message": "Image link",
+    "translation": "ลิงก์รูปภาพ"
+  },
+  "YmDThn": {
+    "message": "None",
+    "context": "no background",
+    "translation": "ไม่มี"
+  },
+  "IyUrJ9": {
+    "message": "Or drop or paste a picture.",
+    "translation": "หรือวางหรือลากรูปภาพมาที่นี่"
+  },
+  "Oo42E3": {
+    "message": "Pictures up to 25 MB.",
+    "translation": "รูปภาพขนาดไม่เกิน 25 MB"
+  },
+  "abE-Jj": {
+    "message": "Preparing picture…",
+    "translation": "กำลังเตรียมรูปภาพ…"
+  },
+  "LE8SQj": {
+    "message": "Wallpaper {0}",
+    "translation": "วอลเปเปอร์ {0}"
   }
 }

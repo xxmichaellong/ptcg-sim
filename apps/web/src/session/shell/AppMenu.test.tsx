@@ -315,6 +315,10 @@ describe('AppBar', () => {
       'fullscreenButton',
       'tutorialButton',
     ]);
+    // No keys under a finger, so no key beside Settings.
+    expect(
+      document.querySelector('[role="menu"] #settingsButton kbd')
+    ).toBeNull();
   });
 
   it('is as wide as the corner the table keeps for it', () => {

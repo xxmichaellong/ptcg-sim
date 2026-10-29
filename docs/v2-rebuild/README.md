@@ -241,12 +241,13 @@ activation remains separate from local implementation and preview deployment.
   multiplayer projection remain concealed. The checkbox covers or uncovers those
   cards only in the live Solo display, preserves their stable interaction IDs,
   and emits no command. The source Twitter mark is inlined to remove its
-  third-party fetch. The final Change background control preserves the source
-  prompt plus `blank`, randomized `theme`, and arbitrary player-pasted image
-  URLs under accepted ADR-013. Images preload before the
-  route background changes and remain page-local across lobby/live/replay/Leave;
-  their URL never enters authority, protocol, replay, storage, or renderer
-  preferences. A direct request still reveals ordinary network
+  third-party fetch. The background is chosen from tiles in Settings (the
+  desk, none, the two shipped wallpapers, a picture of the player's own kept
+  in IndexedDB) or from a link, under accepted ADR-013 as amended 2026-10-29
+  (PX-077); no keyword is typed. Images preload before the
+  route background changes and stay on this device across lobby/live/replay/
+  Leave and reloads; their URL never enters authority, protocol, replay, or
+  renderer preferences. A direct request still reveals ordinary network
   metadata to the player-selected host, an explicitly accepted parity tradeoff.
   The same ADR preserves bounded custom-card face URLs when a recipient is
   authorized to see that face and public player-selected card backs. Those

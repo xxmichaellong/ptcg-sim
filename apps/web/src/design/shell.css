@@ -107,6 +107,11 @@ textarea {
   background: linear-gradient(oklch(0 0 0 / 0.38), oklch(0 0 0 / 0.38));
 }
 
+/* None: the desk's own colour, plain, without its grain or lamp. */
+.remote-room-route[data-room-background='blank'] .board-column::before {
+  background: none;
+}
+
 /* Nothing a rule here shows may outrank the hidden attribute. */
 .remote-room-route [hidden],
 .remote-room-route[hidden] {

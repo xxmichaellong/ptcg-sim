@@ -6769,5 +6769,64 @@
     "message": "Thickness…",
     "context": "the cards' thickness",
     "translation": "두께…"
+  },
+  "GtJbUa": {
+    "message": "Background",
+    "translation": "배경"
+  },
+  "c7lN9x": {
+    "message": "Background from a link",
+    "translation": "링크로 배경 설정"
+  },
+  "tAWTcI": {
+    "message": "Background…",
+    "translation": "배경…"
+  },
+  "vN1y3D": {
+    "message": "Couldn't use that picture.",
+    "translation": "이 사진은 사용할 수 없습니다."
+  },
+  "KtuFGB": {
+    "message": "Custom",
+    "context": "the player's own background",
+    "translation": "사용자 지정"
+  },
+  "qlHGJK": {
+    "message": "Custom image…",
+    "translation": "사용자 지정 이미지…"
+  },
+  "Cn91gu": {
+    "message": "Desk",
+    "context": "the default background",
+    "translation": "책상"
+  },
+  "jSa1_N": {
+    "message": "From a link…",
+    "translation": "링크로 불러오기…"
+  },
+  "T7x7bT": {
+    "message": "Image link",
+    "translation": "이미지 링크"
+  },
+  "YmDThn": {
+    "message": "None",
+    "context": "no background",
+    "translation": "없음"
+  },
+  "IyUrJ9": {
+    "message": "Or drop or paste a picture.",
+    "translation": "사진을 끌어다 놓거나 붙여넣을 수도 있습니다."
+  },
+  "Oo42E3": {
+    "message": "Pictures up to 25 MB.",
+    "translation": "최대 25MB 사진까지 사용할 수 있습니다."
+  },
+  "abE-Jj": {
+    "message": "Preparing picture…",
+    "translation": "사진 준비 중…"
+  },
+  "LE8SQj": {
+    "message": "Wallpaper {0}",
+    "translation": "배경화면 {0}"
   }
 }

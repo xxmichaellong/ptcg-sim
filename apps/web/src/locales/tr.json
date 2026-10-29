@@ -6769,5 +6769,64 @@
     "message": "Thickness…",
     "context": "the cards' thickness",
     "translation": "Kalınlık…"
+  },
+  "GtJbUa": {
+    "message": "Background",
+    "translation": "Arka plan"
+  },
+  "c7lN9x": {
+    "message": "Background from a link",
+    "translation": "Bağlantıdan arka plan"
+  },
+  "tAWTcI": {
+    "message": "Background…",
+    "translation": "Arka plan…"
+  },
+  "vN1y3D": {
+    "message": "Couldn't use that picture.",
+    "translation": "Bu resim kullanılamadı."
+  },
+  "KtuFGB": {
+    "message": "Custom",
+    "context": "the player's own background",
+    "translation": "Özel"
+  },
+  "qlHGJK": {
+    "message": "Custom image…",
+    "translation": "Özel resim…"
+  },
+  "Cn91gu": {
+    "message": "Desk",
+    "context": "the default background",
+    "translation": "Masa"
+  },
+  "jSa1_N": {
+    "message": "From a link…",
+    "translation": "Bağlantıdan…"
+  },
+  "T7x7bT": {
+    "message": "Image link",
+    "translation": "Resim bağlantısı"
+  },
+  "YmDThn": {
+    "message": "None",
+    "context": "no background",
+    "translation": "Yok"
+  },
+  "IyUrJ9": {
+    "message": "Or drop or paste a picture.",
+    "translation": "Ya da bir resim sürükleyip bırak veya yapıştır."
+  },
+  "Oo42E3": {
+    "message": "Pictures up to 25 MB.",
+    "translation": "25 MB'a kadar resimler."
+  },
+  "abE-Jj": {
+    "message": "Preparing picture…",
+    "translation": "Resim hazırlanıyor…"
+  },
+  "LE8SQj": {
+    "message": "Wallpaper {0}",
+    "translation": "Duvar kâğıdı {0}"
   }
 }

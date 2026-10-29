@@ -63,6 +63,11 @@ describe('table preferences', () => {
         background: { kind: 'image', url: '/v2/assets/background1.jpg' },
       }).background
     ).toEqual({ kind: 'image', url: '/v2/assets/background1.jpg' });
+    // The player's own picture: only that it is chosen (it is in IndexedDB).
+    expect(
+      parseTablePreferences({ background: { kind: 'local', url: 'x' } })
+        .background
+    ).toEqual({ kind: 'local' });
     expect(parseTablePreferences('dark')).toBe(DEFAULT_TABLE_PREFERENCES);
   });
 

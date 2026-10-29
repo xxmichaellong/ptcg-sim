@@ -9,13 +9,20 @@ import {
 export interface RoomBackgroundSelectionOptions {
   readonly background?: RoomBackground;
   readonly onBackgroundChange?: (background: RoomBackground) => void;
+  /** Back to the desk, where the background is owned above. */
+  readonly onBackgroundReset?: () => void;
   readonly requestBackground?: BrowserRoomBackgroundRequest;
 }
 
-/** Owns only the latest foreground image request and ignores work after unmount. */
+/**
+ * The room's background: set from Settings' chooser (undefined is the
+ * desk), or from a link it asks for. Owns only the latest link request and
+ * ignores work after unmount.
+ */
 export const useRoomBackground = ({
   background: ownedBackground,
   onBackgroundChange,
+  onBackgroundReset,
   requestBackground = requestBrowserRoomBackground,
 }: RoomBackgroundSelectionOptions = {}) => {
   const [localBackground, setLocalBackground] = useState<
@@ -24,11 +31,12 @@ export const useRoomBackground = ({
   const requestAbortRef = useRef<AbortController | undefined>(undefined);
   const background = onBackgroundChange ? ownedBackground : localBackground;
   const setBackground = useCallback(
-    (next: RoomBackground): void => {
-      if (onBackgroundChange) onBackgroundChange(next);
-      else setLocalBackground(next);
+    (next: RoomBackground | undefined): void => {
+      if (!onBackgroundChange) setLocalBackground(next);
+      else if (next) onBackgroundChange(next);
+      else onBackgroundReset?.();
     },
-    [onBackgroundChange]
+    [onBackgroundChange, onBackgroundReset]
   );
   const chooseBackground = useCallback((): void => {
     requestAbortRef.current?.abort();

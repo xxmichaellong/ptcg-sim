@@ -433,6 +433,8 @@ export const RemoteRoomLobby = ({
     ...(table.background ? { background: table.background } : {}),
     onBackgroundChange: (background) =>
       store.patch(TABLE_PREFERENCES, { background }),
+    onBackgroundReset: () =>
+      store.patch(TABLE_PREFERENCES, { background: null }),
     ...(dependencies.requestBackground
       ? { requestBackground: dependencies.requestBackground }
       : {}),
@@ -1678,10 +1680,11 @@ export const RemoteRoomLobby = ({
         {...(settingsHost.section ? { section: settingsHost.section } : {})}
         darkMode={effectivePreferences.darkMode}
         onDarkModeChange={setDarkMode}
-        onChangeBackground={backgroundSelection.chooseBackground}
-        {...(table.background
-          ? { onUseDefaultBackground: restoreDefaultBackground }
-          : {})}
+        background={{
+          current: backgroundSelection.background,
+          onChange: backgroundSelection.setBackground,
+          onRequestLink: backgroundSelection.chooseBackground,
+        }}
       />
       {deckSurfaceActivated ? (
         <DeckLayer

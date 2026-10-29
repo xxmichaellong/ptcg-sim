@@ -16,6 +16,7 @@ import {
   roomBackgroundCssImage,
   type RoomBackground,
 } from '../browser-room-background.js';
+import { useLocalBackgroundUrl } from '../local-room-background.js';
 import { usePageDirection } from '../../i18n/direction.js';
 import '../../design/panel-controls.css';
 import type { DockSlide } from './dock-slide.js';
@@ -107,6 +108,10 @@ export const TableShell = ({
   );
   const column = useRef<HTMLElement>(null);
   useTableBesideStartDock(column, usePageDirection(), docked, dockSlide);
+  // The player's own picture, read from this device; the desk until then.
+  const localUrl = useLocalBackgroundUrl(background?.kind === 'local');
+  const backgroundImage = roomBackgroundCssImage(background, localUrl);
+  const shown = backgroundImage === undefined ? undefined : background;
   return (
     <DockRevealContext.Provider value={reveal}>
       <main
@@ -116,12 +121,15 @@ export const TableShell = ({
         data-app-route={route}
         data-session-phase={sessionPhase}
         data-dark-mode={String(darkMode)}
-        data-room-background={background?.kind ?? 'default'}
+        // A picture of the player's own is drawn as any other image.
+        data-room-background={
+          shown ? (shown.kind === 'local' ? 'image' : shown.kind) : 'default'
+        }
         data-activity-docked={docked ? 'true' : undefined}
         style={
-          background
+          backgroundImage
             ? {
-                backgroundImage: roomBackgroundCssImage(background),
+                backgroundImage,
                 backgroundSize: '100% 100%',
                 backgroundRepeat: 'no-repeat',
               }

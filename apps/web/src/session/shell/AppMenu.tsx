@@ -35,6 +35,7 @@ import { ActionMenu, type ActionMenuEntry } from '../../ui/ActionMenu.js';
 import { DeckIcon } from '../../ui/DeckIcon.js';
 import {
   COARSE_POINTER_QUERY,
+  TOUCH_ONLY_QUERY,
   useCompactLayout,
   useMediaQuery,
 } from '../../ui/breakpoints.js';
@@ -412,6 +413,7 @@ export const AppBar = ({
 }) => {
   const { t } = useLingui();
   const hint = useHotkeyHints();
+  const touchOnly = useMediaQuery(TOUCH_ONLY_QUERY);
   const coarse = useMediaQuery(COARSE_POINTER_QUERY);
   const compact = useCompactLayout();
   const fullscreen = useBrowserFullscreen();
@@ -424,7 +426,12 @@ export const AppBar = ({
   );
   const commands = primary.find((entry) => entry.id === 'commandsButton');
   const inMenu = primary.filter((entry) => !onBar(entry));
-  const rest = restEntries(model, fullscreen, hint('table.settings'));
+  // A touch screen has no keys to hint at.
+  const rest = restEntries(
+    model,
+    fullscreen,
+    touchOnly ? undefined : hint('table.settings')
+  );
   const entries: ActionMenuEntry[] =
     inMenu.length > 0 ? [...inMenu, { kind: 'separator' }, ...rest] : rest;
   const header = model.heading ? (

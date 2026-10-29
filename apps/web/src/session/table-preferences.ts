@@ -20,7 +20,7 @@ export interface TablePreferences {
   readonly darkMode: boolean;
   /** The desk and playmat (`table-art.ts`). */
   readonly art: TableArtId;
-  /** `null` is the default wallpaper. */
+  /** `null` is the desk of the table's style. */
   readonly background: RoomBackground | null;
 }
 
@@ -42,6 +42,8 @@ const storableBackground = (
 ): background is RoomBackground =>
   background !== null &&
   (background.kind === 'blank' ||
+    // The picture itself is in IndexedDB (local-room-background.ts).
+    background.kind === 'local' ||
     (background.url.length > 0 &&
       background.url.length <= MAX_STORED_BACKGROUND_URL &&
       /^(https?:\/\/|\/)/iu.test(background.url)));
@@ -50,6 +52,7 @@ const parseBackground = (value: unknown): RoomBackground | null => {
   if (typeof value !== 'object' || value === null) return null;
   const kind = Reflect.get(value, 'kind');
   if (kind === 'blank') return { kind: 'blank' };
+  if (kind === 'local') return { kind: 'local' };
   const url = Reflect.get(value, 'url');
   if (kind !== 'image' || typeof url !== 'string') return null;
   const background: RoomBackground = { kind: 'image', url };

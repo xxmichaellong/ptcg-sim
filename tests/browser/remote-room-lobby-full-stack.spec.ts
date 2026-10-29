@@ -543,10 +543,11 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
       playerTwo.page,
       CUSTOM_BACKGROUND_URL
     );
+    // From a link…, beside the chooser's tiles.
     await playerTwo.page.locator('#changeBackgroundButton').click();
-    expect((await backgroundPrompt).message).toBe('Change background');
+    expect((await backgroundPrompt).message).toBe('Background from a link');
     await expect(
-      playerTwo.page.getByRole('dialog', { name: 'Change background' })
+      playerTwo.page.getByRole('dialog', { name: 'Background from a link' })
     ).toHaveCount(0);
     await expect(roomRoute).toHaveAttribute('data-room-background', 'image');
     await expect(roomRoute).toHaveCSS(

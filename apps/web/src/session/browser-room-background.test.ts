@@ -6,7 +6,7 @@ import type { PromptOptions } from '../ui/dialog-requests.js';
 import {
   invalidRoomBackgroundMessage,
   requestBrowserRoomBackground,
-  roomBackgroundPrompt,
+  ROOM_WALLPAPERS,
   roomBackgroundCssImage,
 } from './browser-room-background.js';
 
@@ -64,10 +64,9 @@ const promptAnswering = (...answers: (string | null)[]) => {
 };
 
 describe('browser room background', () => {
-  it('asks in the prompt dialog and treats cancel and empty input as no-ops', async () => {
+  it('asks for a link in the prompt dialog and treats cancel and empty input as no-ops', async () => {
     const images = imageHarness();
     const cancelled = promptAnswering(null);
-
     await expect(
       requestBrowserRoomBackground({
         prompt: cancelled.prompt,
@@ -75,10 +74,12 @@ describe('browser room background', () => {
       })
     ).resolves.toBeUndefined();
     expect(cancelled.asked[0]).toMatchObject({
-      title: 'Change background',
-      body: roomBackgroundPrompt(),
-      label: 'Image URL',
+      title: 'Background from a link',
+      label: 'Image link',
+      placeholder: 'https://…',
     });
+    // Nothing typed is a keyword any more: the chooser has the choices.
+    expect(cancelled.asked[0]?.body).toBeUndefined();
 
     await expect(
       requestBrowserRoomBackground({
@@ -89,36 +90,18 @@ describe('browser room background', () => {
     expect(images.createImage).not.toHaveBeenCalled();
   });
 
-  it('applies blank immediately without loading a resource', async () => {
-    const images = imageHarness();
-    await expect(
-      requestBrowserRoomBackground({
-        prompt: promptAnswering('  BlAnK  ').prompt,
-        createImage: images.createImage,
-      })
-    ).resolves.toEqual({ kind: 'blank' });
-    expect(images.createImage).not.toHaveBeenCalled();
+  it('draws nothing for None, a link as one escaped CSS layer, and the player’s own picture once read', () => {
     expect(roomBackgroundCssImage({ kind: 'blank' })).toBe('none');
+    expect(roomBackgroundCssImage(undefined)).toBeUndefined();
+    expect(roomBackgroundCssImage({ kind: 'local' })).toBeUndefined();
+    expect(roomBackgroundCssImage({ kind: 'local' }, 'blob:here/1')).toBe(
+      'url("blob:here/1")'
+    );
+    expect(ROOM_WALLPAPERS.map((wallpaper) => wallpaper.url)).toEqual([
+      '/v2/assets/background1.jpg',
+      '/v2/assets/background2.webp',
+    ]);
   });
-
-  it.each([
-    [0.1, '/v2/assets/background1.jpg'],
-    [0.9, '/v2/assets/background2.webp'],
-  ])(
-    'preloads the source theme choice for random value %s',
-    async (random, url) => {
-      const harness = imageHarness();
-      const pending = requestBrowserRoomBackground({
-        prompt: promptAnswering('theme').prompt,
-        random: () => random,
-        createImage: harness.createImage,
-      });
-      await vi.waitFor(() => expect(harness.images).toHaveLength(1));
-      expect(harness.images[0]?.src).toBe(url);
-      load(harness.images[0]);
-      await expect(pending).resolves.toEqual({ kind: 'image', url });
-    }
-  );
 
   it('preloads an arbitrary user URL and emits one escaped CSS image layer', async () => {
     const harness = imageHarness();

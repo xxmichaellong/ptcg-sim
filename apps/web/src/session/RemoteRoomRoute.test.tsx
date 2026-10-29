@@ -1060,9 +1060,7 @@ describe('RemoteRoomRoute', () => {
       expect(find('#boardShowBoth')).not.toBeNull();
       // Only Solo covers the opponent's hand (on its pill, not here).
       expect(find('#hideHandCheckbox')).toBeNull();
-      expect(get('#changeBackgroundButton').textContent).toBe(
-        'Change background'
-      );
+      expect(get('#changeBackgroundButton').textContent).toBe('From a link…');
       // The keys are in Settings, their list in a dialog of its own.
       expect(find('#settingsKeys #editShortcutsButton')).not.toBeNull();
 
@@ -1076,6 +1074,10 @@ describe('RemoteRoomRoute', () => {
       expect(main.style.backgroundImage).toBe(
         'url("https://images.example.test/table.png")'
       );
+      // Its own tile now, and the desk one press back.
+      expect(get<HTMLInputElement>('#background-custom').checked).toBe(true);
+      await click('#background-desk');
+      expect(main.dataset.roomBackground).toBe('default');
       expect(main.dataset.darkMode).toBe('true');
       // Turning dark mode off turns the table to Day.
       await click('#darkModeCheckbox');

@@ -6769,5 +6769,64 @@
     "message": "Thickness…",
     "context": "the cards' thickness",
     "translation": "厚み…"
+  },
+  "GtJbUa": {
+    "message": "Background",
+    "translation": "背景"
+  },
+  "c7lN9x": {
+    "message": "Background from a link",
+    "translation": "リンクから背景を設定"
+  },
+  "tAWTcI": {
+    "message": "Background…",
+    "translation": "背景…"
+  },
+  "vN1y3D": {
+    "message": "Couldn't use that picture.",
+    "translation": "その画像は使用できませんでした。"
+  },
+  "KtuFGB": {
+    "message": "Custom",
+    "context": "the player's own background",
+    "translation": "カスタム"
+  },
+  "qlHGJK": {
+    "message": "Custom image…",
+    "translation": "カスタム画像…"
+  },
+  "Cn91gu": {
+    "message": "Desk",
+    "context": "the default background",
+    "translation": "デスク"
+  },
+  "jSa1_N": {
+    "message": "From a link…",
+    "translation": "リンクから…"
+  },
+  "T7x7bT": {
+    "message": "Image link",
+    "translation": "画像のリンク"
+  },
+  "YmDThn": {
+    "message": "None",
+    "context": "no background",
+    "translation": "なし"
+  },
+  "IyUrJ9": {
+    "message": "Or drop or paste a picture.",
+    "translation": "画像をドロップまたは貼り付けることもできます。"
+  },
+  "Oo42E3": {
+    "message": "Pictures up to 25 MB.",
+    "translation": "画像は25 MBまで。"
+  },
+  "abE-Jj": {
+    "message": "Preparing picture…",
+    "translation": "画像を準備しています…"
+  },
+  "LE8SQj": {
+    "message": "Wallpaper {0}",
+    "translation": "壁紙 {0}"
   }
 }

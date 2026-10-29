@@ -78,6 +78,11 @@ describe('the palette’s settings', () => {
       hint: ',',
       darkMode: true,
       onDarkModeChange,
+      background: {
+        current: undefined,
+        onChange: vi.fn(),
+        onRequestLink: vi.fn(),
+      },
     });
     expect(commands.map((command) => command.title)).toEqual([
       'Settings',
@@ -85,6 +90,7 @@ describe('the palette’s settings', () => {
       'Settings: Cards',
       'Settings: Motion',
       'Settings: Language',
+      'Background…',
       'Dark mode',
     ]);
     expect(commands[0]!.hint).toBe(',');
@@ -92,6 +98,44 @@ describe('the palette’s settings', () => {
     expect(open).toHaveBeenCalledWith('cards');
     commands.at(-1)!.run!({});
     expect(onDarkModeChange).toHaveBeenCalledWith(false);
+  });
+
+  it('chooses the background as the tiles do: no words to type', () => {
+    const open = vi.fn();
+    const onChange = vi.fn();
+    const onRequestLink = vi.fn();
+    const background = settingsSheetCommands({
+      sections: [],
+      open,
+      darkMode: false,
+      onDarkModeChange: vi.fn(),
+      background: {
+        current: { kind: 'image', url: '/v2/assets/background1.jpg' },
+        onChange,
+        onRequestLink,
+      },
+    }).find((command) => command.id === 'settings.background')!;
+    expect(background.status).toBe('Wallpaper 1');
+    const choices = background.submenu!().commands;
+    expect(
+      choices.map((command) => [command.title, command.active ?? false])
+    ).toEqual([
+      ['Desk', false],
+      ['None', false],
+      ['Wallpaper 1', true],
+      ['Wallpaper 2', false],
+      ['Custom image…', false],
+      ['From a link…', false],
+    ]);
+    choices[0]!.run!({});
+    expect(onChange).toHaveBeenLastCalledWith(undefined);
+    choices[1]!.run!({});
+    expect(onChange).toHaveBeenLastCalledWith({ kind: 'blank' });
+    // A picture is picked or dropped in Settings, at the table's section.
+    choices[4]!.run!({});
+    expect(open).toHaveBeenCalledWith('table');
+    choices[5]!.run!({});
+    expect(onRequestLink).toHaveBeenCalledOnce();
   });
 
   it('keeps the table’s pieces and the Solo cover with the table', () => {

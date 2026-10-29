@@ -6769,5 +6769,64 @@
     "message": "Thickness…",
     "context": "the cards' thickness",
     "translation": "Grosor…"
+  },
+  "GtJbUa": {
+    "message": "Background",
+    "translation": "Fondo"
+  },
+  "c7lN9x": {
+    "message": "Background from a link",
+    "translation": "Fondo desde un enlace"
+  },
+  "tAWTcI": {
+    "message": "Background…",
+    "translation": "Fondo…"
+  },
+  "vN1y3D": {
+    "message": "Couldn't use that picture.",
+    "translation": "No se pudo usar esa imagen."
+  },
+  "KtuFGB": {
+    "message": "Custom",
+    "context": "the player's own background",
+    "translation": "Personalizado"
+  },
+  "qlHGJK": {
+    "message": "Custom image…",
+    "translation": "Imagen personalizada…"
+  },
+  "Cn91gu": {
+    "message": "Desk",
+    "context": "the default background",
+    "translation": "Escritorio"
+  },
+  "jSa1_N": {
+    "message": "From a link…",
+    "translation": "Desde un enlace…"
+  },
+  "T7x7bT": {
+    "message": "Image link",
+    "translation": "Enlace de la imagen"
+  },
+  "YmDThn": {
+    "message": "None",
+    "context": "no background",
+    "translation": "Ninguno"
+  },
+  "IyUrJ9": {
+    "message": "Or drop or paste a picture.",
+    "translation": "O suelta o pega una imagen."
+  },
+  "Oo42E3": {
+    "message": "Pictures up to 25 MB.",
+    "translation": "Imágenes de hasta 25 MB."
+  },
+  "abE-Jj": {
+    "message": "Preparing picture…",
+    "translation": "Preparando imagen…"
+  },
+  "LE8SQj": {
+    "message": "Wallpaper {0}",
+    "translation": "Fondo {0}"
   }
 }

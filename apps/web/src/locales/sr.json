@@ -6769,5 +6769,64 @@
     "message": "Thickness…",
     "context": "the cards' thickness",
     "translation": "Дебљина…"
+  },
+  "GtJbUa": {
+    "message": "Background",
+    "translation": "Позадина"
+  },
+  "c7lN9x": {
+    "message": "Background from a link",
+    "translation": "Позадина са линка"
+  },
+  "tAWTcI": {
+    "message": "Background…",
+    "translation": "Позадина…"
+  },
+  "vN1y3D": {
+    "message": "Couldn't use that picture.",
+    "translation": "Слика се не може користити."
+  },
+  "KtuFGB": {
+    "message": "Custom",
+    "context": "the player's own background",
+    "translation": "Прилагођена"
+  },
+  "qlHGJK": {
+    "message": "Custom image…",
+    "translation": "Прилагођена слика…"
+  },
+  "Cn91gu": {
+    "message": "Desk",
+    "context": "the default background",
+    "translation": "Сто"
+  },
+  "jSa1_N": {
+    "message": "From a link…",
+    "translation": "Са линка…"
+  },
+  "T7x7bT": {
+    "message": "Image link",
+    "translation": "Линк слике"
+  },
+  "YmDThn": {
+    "message": "None",
+    "context": "no background",
+    "translation": "Без позадине"
+  },
+  "IyUrJ9": {
+    "message": "Or drop or paste a picture.",
+    "translation": "Или превуци или налепи слику."
+  },
+  "Oo42E3": {
+    "message": "Pictures up to 25 MB.",
+    "translation": "Слике до 25 MB."
+  },
+  "abE-Jj": {
+    "message": "Preparing picture…",
+    "translation": "Припрема слике…"
+  },
+  "LE8SQj": {
+    "message": "Wallpaper {0}",
+    "translation": "Позадина {0}"
   }
 }

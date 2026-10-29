@@ -6769,5 +6769,64 @@
     "message": "Thickness…",
     "context": "the cards' thickness",
     "translation": "Kapal…"
+  },
+  "GtJbUa": {
+    "message": "Background",
+    "translation": "Background"
+  },
+  "c7lN9x": {
+    "message": "Background from a link",
+    "translation": "Background mula sa link"
+  },
+  "tAWTcI": {
+    "message": "Background…",
+    "translation": "Background…"
+  },
+  "vN1y3D": {
+    "message": "Couldn't use that picture.",
+    "translation": "Hindi magamit ang larawang iyon."
+  },
+  "KtuFGB": {
+    "message": "Custom",
+    "context": "the player's own background",
+    "translation": "Custom"
+  },
+  "qlHGJK": {
+    "message": "Custom image…",
+    "translation": "Custom na larawan…"
+  },
+  "Cn91gu": {
+    "message": "Desk",
+    "context": "the default background",
+    "translation": "Desk"
+  },
+  "jSa1_N": {
+    "message": "From a link…",
+    "translation": "Mula sa link…"
+  },
+  "T7x7bT": {
+    "message": "Image link",
+    "translation": "Link ng larawan"
+  },
+  "YmDThn": {
+    "message": "None",
+    "context": "no background",
+    "translation": "Wala"
+  },
+  "IyUrJ9": {
+    "message": "Or drop or paste a picture.",
+    "translation": "O i-drop o i-paste ang larawan."
+  },
+  "Oo42E3": {
+    "message": "Pictures up to 25 MB.",
+    "translation": "Hanggang 25 MB ang larawan."
+  },
+  "abE-Jj": {
+    "message": "Preparing picture…",
+    "translation": "Inihahanda ang larawan…"
+  },
+  "LE8SQj": {
+    "message": "Wallpaper {0}",
+    "translation": "Wallpaper {0}"
   }
 }

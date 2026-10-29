@@ -14,6 +14,7 @@ import {
   motionSettings,
 } from '../../motion/motion-settings.js';
 import { closeHelpPage, HelpSheetHost, RELEASE_NAME } from './help-pages.js';
+import { BackgroundChooser } from './BackgroundChooser.js';
 import { SettingsSheet, type SettingsSheetProps } from './SettingsSheet.js';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
@@ -36,7 +37,11 @@ const render = async (props: Partial<SettingsSheetProps> = {}) => {
     onOpenChange: vi.fn(),
     darkMode: true,
     onDarkModeChange: vi.fn(),
-    onChangeBackground: vi.fn(),
+    background: {
+      current: undefined,
+      onChange: vi.fn(),
+      onRequestLink: vi.fn(),
+    },
     ...props,
   };
   await act(async () =>
@@ -238,31 +243,114 @@ describe('SettingsSheet', () => {
     scroll.mockRestore();
   });
 
-  it('changes the theme and the background through the room', async () => {
+  it('changes the theme and the background through the room, by tiles, with no words to type', async () => {
     const onDarkModeChange = vi.fn();
-    const onChangeBackground = vi.fn();
-    await render({ onDarkModeChange, onChangeBackground });
+    const onChange = vi.fn();
+    const onRequestLink = vi.fn();
+    await render({
+      onDarkModeChange,
+      background: { current: undefined, onChange, onRequestLink },
+    });
     expect(input('darkModeCheckbox').checked).toBe(true);
     await act(async () => input('darkModeCheckbox').click());
     expect(onDarkModeChange).toHaveBeenCalledWith(false);
+    const tiles = () =>
+      [...document.querySelectorAll('input[name="roomBackground"]')].map(
+        (tile) => tile.id
+      );
+    // No picture of the player's own yet: no Custom tile, only the way to
+    // add one.
+    expect(tiles()).toEqual([
+      'background-desk',
+      'background-none',
+      'background-wallpaper1',
+      'background-wallpaper2',
+    ]);
+    expect(input('background-desk').checked).toBe(true);
+    await act(async () => input('background-none').click());
+    expect(onChange).toHaveBeenLastCalledWith({ kind: 'blank' });
+    await act(async () => input('background-wallpaper2').click());
+    expect(onChange).toHaveBeenLastCalledWith({
+      kind: 'image',
+      url: '/v2/assets/background2.webp',
+    });
     await act(async () =>
       document
         .querySelector<HTMLButtonElement>('#changeBackgroundButton')!
         .click()
     );
-    expect(onChangeBackground).toHaveBeenCalledOnce();
-    // The default background is offered only while another one shows.
-    expect(document.querySelector('#defaultBackgroundButton')).toBeNull();
+    expect(onRequestLink).toHaveBeenCalledOnce();
 
-    const onUseDefaultBackground = vi.fn();
-    await render({ darkMode: false, onUseDefaultBackground });
+    // A link in use is the Custom tile; the desk is one press back.
+    await render({
+      darkMode: false,
+      background: {
+        current: { kind: 'image', url: 'https://example.test/bg.png' },
+        onChange,
+        onRequestLink,
+      },
+    });
     expect(input('darkModeCheckbox').checked).toBe(false);
+    expect(input('background-custom').checked).toBe(true);
+    await act(async () => input('background-desk').click());
+    expect(onChange).toHaveBeenLastCalledWith(undefined);
+  });
+
+  it('takes a picture of the player’s own, picked or pasted, and keeps it on this device', async () => {
+    const onChange = vi.fn();
+    const encoded = new Blob(['small'], { type: 'image/webp' });
+    const encode = vi.fn(async () => encoded);
+    const save = vi.fn(async () => true);
+    const picture = new File(['big'], 'table.png', { type: 'image/png' });
+    await act(async () =>
+      root.render(
+        <BackgroundChooser
+          choice={{ current: undefined, onChange, onRequestLink: vi.fn() }}
+          encode={encode}
+          save={save}
+        />
+      )
+    );
+    const file = input('backgroundFileInput');
+    const click = vi.spyOn(file, 'click');
     await act(async () =>
       document
-        .querySelector<HTMLButtonElement>('#defaultBackgroundButton')!
+        .querySelector<HTMLButtonElement>('#backgroundFileButton')!
         .click()
     );
-    expect(onUseDefaultBackground).toHaveBeenCalledOnce();
+    expect(click).toHaveBeenCalledOnce();
+    Object.defineProperty(file, 'files', { value: [picture] });
+    await act(async () => {
+      file.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    await settle(1);
+    expect(encode).toHaveBeenCalledWith(picture);
+    expect(save).toHaveBeenCalledWith(encoded);
+    expect(onChange).toHaveBeenLastCalledWith({ kind: 'local' });
+
+    // Pasted anywhere but a field.
+    const paste = new Event('paste', { bubbles: true, cancelable: true });
+    Object.defineProperty(paste, 'clipboardData', {
+      value: { files: [picture] },
+    });
+    await act(async () => {
+      document.body.dispatchEvent(paste);
+    });
+    await settle(1);
+    expect(encode).toHaveBeenCalledTimes(2);
+    expect(paste.defaultPrevented).toBe(true);
+
+    // What can't be read says so, and changes nothing.
+    encode.mockResolvedValueOnce(null as unknown as Blob);
+    onChange.mockClear();
+    await act(async () => {
+      file.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    await settle(1);
+    expect(onChange).not.toHaveBeenCalled();
+    expect(
+      document.querySelector('.background-chooser')?.textContent
+    ).toContain("Couldn't use that picture.");
   });
 
   it('keeps motion choices with the player', async () => {

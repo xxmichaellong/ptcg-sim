@@ -14,6 +14,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CardBackCustodyStore } from '../features/deck/card-back-custody.js';
 import { PreferenceStore } from '../preferences/preference-store.js';
+import { TABLE_PREFERENCES } from './table-preferences.js';
 import { DeckBuilderStore } from '../features/deck/deck-builder-store.js';
 import {
   RemoteRoomInvitationError,
@@ -758,9 +759,10 @@ describe('remote room lobby wiring', () => {
     expect(lobbyBoardHarness.preferences?.showZoneOutlines).toBe(false);
     // The keys open from Settings in their own dialog.
     expect(present('#settings #editShortcutsButton')).toBe(true);
-    expect(element('#changeBackgroundButton').textContent).toBe(
-      'Change background'
-    );
+    // The background is chosen by tiles; a link is asked for only on
+    // From a link….
+    expect(element('#changeBackgroundButton').textContent).toBe('From a link…');
+    expect(element<HTMLInputElement>('#background-desk').checked).toBe(true);
     expect(lobbyRoute().dataset.darkMode).toBe('false');
     await click('#changeBackgroundButton');
     expect(requestBackground).toHaveBeenCalledOnce();
@@ -1325,7 +1327,7 @@ describe('remote room lobby wiring', () => {
     const first = await mount(dependencies);
     await settle();
     await openSettings();
-    expect(present('#defaultBackgroundButton')).toBe(false);
+    expect(element<HTMLInputElement>('#background-desk').checked).toBe(true);
     await act(async () => {
       element<HTMLInputElement>('#darkModeCheckbox').click();
       element<HTMLButtonElement>('#changeBackgroundButton').click();
@@ -1351,9 +1353,21 @@ describe('remote room lobby wiring', () => {
     );
     await openSettings();
     expect(element<HTMLInputElement>('#darkModeCheckbox').checked).toBe(false);
-    await click('#defaultBackgroundButton');
+    expect(element<HTMLInputElement>('#background-custom').checked).toBe(true);
+    // A wallpaper, then None, then back to the desk: each kept as chosen.
+    await click('#background-wallpaper1');
+    expect(lobbyRoute().style.backgroundImage).toBe(
+      'url("/v2/assets/background1.jpg")'
+    );
+    expect(store.get(TABLE_PREFERENCES).background).toEqual({
+      kind: 'image',
+      url: '/v2/assets/background1.jpg',
+    });
+    await click('#background-none');
+    expect(lobbyRoute().dataset.roomBackground).toBe('blank');
+    await click('#background-desk');
     expect(lobbyRoute().style.backgroundImage).toBe('');
-    expect(present('#defaultBackgroundButton')).toBe(false);
+    expect(store.get(TABLE_PREFERENCES).background).toBeNull();
     await act(async () => root.unmount());
   });
 

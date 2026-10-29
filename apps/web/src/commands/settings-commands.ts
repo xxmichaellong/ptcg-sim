@@ -6,6 +6,9 @@ import { CubeIcon } from '@phosphor-icons/react/dist/csr/Cube';
 import { GaugeIcon } from '@phosphor-icons/react/dist/csr/Gauge';
 import { GearSixIcon } from '@phosphor-icons/react/dist/csr/GearSix';
 import { ImageIcon } from '@phosphor-icons/react/dist/csr/Image';
+import { ImageSquareIcon } from '@phosphor-icons/react/dist/csr/ImageSquare';
+import { LinkSimpleIcon } from '@phosphor-icons/react/dist/csr/LinkSimple';
+import { PlusIcon } from '@phosphor-icons/react/dist/csr/Plus';
 import { PaletteIcon } from '@phosphor-icons/react/dist/csr/Palette';
 import { RowsIcon } from '@phosphor-icons/react/dist/csr/Rows';
 import { SlidersHorizontalIcon } from '@phosphor-icons/react/dist/csr/SlidersHorizontal';
@@ -41,6 +44,11 @@ import {
   type ReduceMotionChoice,
 } from '../motion/motion-settings.js';
 import { preferences } from '../preferences/preference-store.js';
+import {
+  ROOM_WALLPAPERS,
+  type BackgroundChoice,
+  type RoomBackground,
+} from '../session/browser-room-background.js';
 import {
   SETTINGS_SECTIONS,
   type SettingsSectionId,
@@ -148,6 +156,7 @@ export const settingsSheetCommands = (options: {
   readonly hint?: string | undefined;
   readonly darkMode: boolean;
   readonly onDarkModeChange: (enabled: boolean) => void;
+  readonly background: BackgroundChoice;
 }): PaletteCommand[] => [
   {
     id: 'menu.settings',
@@ -173,6 +182,7 @@ export const settingsSheetCommands = (options: {
     demoted: true,
     run: () => options.open(section),
   })),
+  backgroundCommand(options.background, () => options.open('table')),
   toggle({
     id: 'settings.darkMode',
     title: t`Dark mode`,
@@ -183,6 +193,88 @@ export const settingsSheetCommands = (options: {
     set: options.onDarkModeChange,
   }),
 ];
+
+/**
+ * Background…: the desk, nothing, a wallpaper, the player's own picture in
+ * use, or one more -- a picture (in Settings, where it is picked or
+ * dropped) or a link.
+ */
+const backgroundCommand = (
+  background: BackgroundChoice,
+  openTable: () => void
+): PaletteCommand => {
+  const { current } = background;
+  const wallpaper =
+    current?.kind === 'image'
+      ? ROOM_WALLPAPERS.findIndex((entry) => entry.url === current.url)
+      : -1;
+  const selected = !current
+    ? 'desk'
+    : current.kind === 'blank'
+      ? 'none'
+      : wallpaper >= 0
+        ? `wallpaper${String(wallpaper + 1)}`
+        : 'custom';
+  const named = (value: string): string => {
+    switch (value) {
+      case 'desk':
+        return t({ message: 'Desk', context: 'the default background' });
+      case 'none':
+        return t({ message: 'None', context: 'no background' });
+      case 'custom':
+        return t({ message: 'Custom', context: "the player's own background" });
+      default:
+        return t`Wallpaper ${value.slice('wallpaper'.length)}`;
+    }
+  };
+  const pick = (
+    value: string,
+    next: RoomBackground | undefined
+  ): PaletteCommand => ({
+    id: `settings.background.${value}`,
+    title: named(value),
+    section: 'settings',
+    active: selected === value,
+    run: () => background.onChange(next),
+  });
+  return {
+    id: 'settings.background',
+    title: t`Background…`,
+    section: 'settings',
+    detail: settingsSectionName('table'),
+    icon: ImageSquareIcon,
+    keywords: ['background', 'wallpaper', 'desk', 'picture', 'image'],
+    status: named(selected),
+    submenu: () => ({
+      breadcrumb: t`Background`,
+      commands: [
+        pick('desk', undefined),
+        pick('none', { kind: 'blank' }),
+        ...ROOM_WALLPAPERS.map((entry, index) =>
+          pick(`wallpaper${String(index + 1)}`, {
+            kind: 'image',
+            url: entry.url,
+          })
+        ),
+        ...(selected === 'custom' ? [pick('custom', current)] : []),
+        {
+          id: 'settings.background.picture',
+          title: t`Custom image…`,
+          section: 'settings',
+          icon: PlusIcon,
+          run: openTable,
+        },
+        {
+          id: 'settings.background.link',
+          title: t`From a link…`,
+          section: 'settings',
+          icon: LinkSimpleIcon,
+          run: background.onRequestLink,
+        },
+      ],
+    }),
+  };
+};
 
 /**
  * Settings' rows kept on this device, wherever the palette opens: titled as

@@ -291,6 +291,7 @@ export const RemoteRoomRoute = ({
   const backgroundSelection = useRoomBackground({
     ...(ownedBackground ? { background: ownedBackground } : {}),
     ...(onBackgroundChange ? { onBackgroundChange } : {}),
+    ...(onBackgroundReset ? { onBackgroundReset } : {}),
     ...(requestBackground ? { requestBackground } : {}),
   });
   const [sheet, setSheet] = useState<RouteSheet | undefined>(initialSheet);
@@ -1024,10 +1025,11 @@ export const RemoteRoomRoute = ({
                 : {})}
               darkMode={effectivePreferences.darkMode}
               onDarkModeChange={setDarkMode}
-              onChangeBackground={backgroundSelection.chooseBackground}
-              {...(onBackgroundReset && backgroundSelection.background
-                ? { onUseDefaultBackground: onBackgroundReset }
-                : {})}
+              background={{
+                current: backgroundSelection.background,
+                onChange: backgroundSelection.setBackground,
+                onRequestLink: backgroundSelection.chooseBackground,
+              }}
               {...(boardFlip ? { boardFlip } : {})}
             />
             {soloLive && multiplayerPanel ? (

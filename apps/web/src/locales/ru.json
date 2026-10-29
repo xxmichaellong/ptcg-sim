@@ -6769,5 +6769,64 @@
     "message": "Thickness…",
     "context": "the cards' thickness",
     "translation": "Толщина…"
+  },
+  "GtJbUa": {
+    "message": "Background",
+    "translation": "Фон"
+  },
+  "c7lN9x": {
+    "message": "Background from a link",
+    "translation": "Фон по ссылке"
+  },
+  "tAWTcI": {
+    "message": "Background…",
+    "translation": "Фон…"
+  },
+  "vN1y3D": {
+    "message": "Couldn't use that picture.",
+    "translation": "Не удалось использовать эту картинку."
+  },
+  "KtuFGB": {
+    "message": "Custom",
+    "context": "the player's own background",
+    "translation": "Свой"
+  },
+  "qlHGJK": {
+    "message": "Custom image…",
+    "translation": "Своя картинка…"
+  },
+  "Cn91gu": {
+    "message": "Desk",
+    "context": "the default background",
+    "translation": "Стол"
+  },
+  "jSa1_N": {
+    "message": "From a link…",
+    "translation": "По ссылке…"
+  },
+  "T7x7bT": {
+    "message": "Image link",
+    "translation": "Ссылка на картинку"
+  },
+  "YmDThn": {
+    "message": "None",
+    "context": "no background",
+    "translation": "Нет"
+  },
+  "IyUrJ9": {
+    "message": "Or drop or paste a picture.",
+    "translation": "Или перетащи либо вставь картинку."
+  },
+  "Oo42E3": {
+    "message": "Pictures up to 25 MB.",
+    "translation": "Картинки до 25 МБ."
+  },
+  "abE-Jj": {
+    "message": "Preparing picture…",
+    "translation": "Подготовка картинки…"
+  },
+  "LE8SQj": {
+    "message": "Wallpaper {0}",
+    "translation": "Обои {0}"
   }
 }

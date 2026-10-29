@@ -6769,5 +6769,64 @@
     "message": "Thickness…",
     "context": "the cards' thickness",
     "translation": "Dikte…"
+  },
+  "GtJbUa": {
+    "message": "Background",
+    "translation": "Achtergrond"
+  },
+  "c7lN9x": {
+    "message": "Background from a link",
+    "translation": "Achtergrond via een link"
+  },
+  "tAWTcI": {
+    "message": "Background…",
+    "translation": "Achtergrond…"
+  },
+  "vN1y3D": {
+    "message": "Couldn't use that picture.",
+    "translation": "Kan die afbeelding niet gebruiken."
+  },
+  "KtuFGB": {
+    "message": "Custom",
+    "context": "the player's own background",
+    "translation": "Eigen"
+  },
+  "qlHGJK": {
+    "message": "Custom image…",
+    "translation": "Eigen afbeelding…"
+  },
+  "Cn91gu": {
+    "message": "Desk",
+    "context": "the default background",
+    "translation": "Bureau"
+  },
+  "jSa1_N": {
+    "message": "From a link…",
+    "translation": "Via een link…"
+  },
+  "T7x7bT": {
+    "message": "Image link",
+    "translation": "Afbeeldingslink"
+  },
+  "YmDThn": {
+    "message": "None",
+    "context": "no background",
+    "translation": "Geen"
+  },
+  "IyUrJ9": {
+    "message": "Or drop or paste a picture.",
+    "translation": "Of sleep of plak een afbeelding."
+  },
+  "Oo42E3": {
+    "message": "Pictures up to 25 MB.",
+    "translation": "Afbeeldingen tot 25 MB."
+  },
+  "abE-Jj": {
+    "message": "Preparing picture…",
+    "translation": "Afbeelding voorbereiden…"
+  },
+  "LE8SQj": {
+    "message": "Wallpaper {0}",
+    "translation": "Wallpaper {0}"
   }
 }

@@ -55,10 +55,23 @@ If a face or back URL later fails, the renderer keeps a neutral card surface and
 all card input available; a later successful URL recovers the same stable card
 node. Image failure never changes game state.
 
-The local Change background control remains narrower: it directly preloads and
-paints the selected browser's page background, but never enters room state,
-protocol traffic, peer projections, replay, storage, telemetry, renderer
-preferences, or Pixi. It lasts only for the mounted page.
+The local background remains narrower: it directly preloads and paints the
+selected browser's page background, but never enters room state, protocol
+traffic, peer projections, replay, telemetry, renderer preferences, or Pixi.
+
+Amended 2026-10-29 (owner request: no typed keywords): the prompt that took
+an image URL, `blank` or `theme` is gone. Settings' Table section has a
+background chooser of tiles -- Desk (the table style's desk, the default),
+None (the desk's colour, plain), Wallpaper 1 and 2 (the shipped
+`background1.jpg` and `background2.webp`), Custom (the picture in use) -- and
+Custom image…, which takes a picked, dropped or pasted picture. That picture
+is re-encoded in the page to at most 2560×1600 (WebP, JPEG where WebP can't be
+encoded, at most 3 MB; 25 MB read at most) and kept in this device's IndexedDB
+(`local-room-background.ts`); the table preference records only `{ kind:
+'local' }`, and it never leaves the browser. From a link… keeps the direct URL
+path above, asked for in a dialog of its own. The choice is remembered across
+reloads (owner decision): `ptcgsim.table.v1` keeps the desk, None, a
+wallpaper, a link of at most 2048 characters, or the local picture's marker.
 
 ### Visibility remains a hard boundary
 
