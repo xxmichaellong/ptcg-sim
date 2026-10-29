@@ -6514,5 +6514,81 @@
   "PTd_zR": {
     "message": "Use image",
     "translation": "استخدام الصورة"
+  },
+  "mOTci6": {
+    "message": "Add a multi-piece card",
+    "translation": "إضافة بطاقة متعددة القطع"
+  },
+  "ZJwR0U": {
+    "message": "Add a picture for each piece.",
+    "translation": "أضف صورة لكل قطعة."
+  },
+  "J8elq3": {
+    "message": "Add a picture.",
+    "translation": "أضف صورة."
+  },
+  "9CyHQP": {
+    "message": "Change the picture",
+    "translation": "تغيير الصورة"
+  },
+  "kT6WGB": {
+    "message": "Choose a picture: {label}",
+    "translation": "اختيار صورة: {label}"
+  },
+  "7ni5yE": {
+    "message": "Drop, paste or choose",
+    "translation": "أفلت أو الصق أو اختر"
+  },
+  "beOAmP": {
+    "message": "Link too long.",
+    "translation": "الرابط طويل جدًا."
+  },
+  "6Leq5p": {
+    "message": "Multi-piece card",
+    "translation": "بطاقة متعددة القطع"
+  },
+  "0iGojz": {
+    "message": "Not a picture.",
+    "translation": "هذا ليس صورة."
+  },
+  "U1CJvq": {
+    "message": "One card",
+    "translation": "بطاقة واحدة"
+  },
+  "ONM3W_": {
+    "message": "or a link",
+    "translation": "أو رابط"
+  },
+  "N0-GsR": {
+    "message": "Picture",
+    "translation": "صورة"
+  },
+  "9uDKal": {
+    "message": "Picture link",
+    "translation": "رابط الصورة"
+  },
+  "eLNVFN": {
+    "message": "Picture link: {label}",
+    "translation": "رابط الصورة: {label}"
+  },
+  "BX1rQx": {
+    "message": "Pieces",
+    "translation": "القطع"
+  },
+  "-WTtkb": {
+    "message": "Remove the picture",
+    "translation": "إزالة الصورة"
+  },
+  "iFt0Ce": {
+    "message": "Still uploading…",
+    "translation": "لا يزال الرفع جاريًا…"
+  },
+  "F9MU8-": {
+    "message": "That picture didn't load.",
+    "translation": "تعذّر تحميل الصورة."
+  },
+  "gANddk": {
+    "message": "Uploading…",
+    "translation": "جارٍ الرفع…"
   }
 }

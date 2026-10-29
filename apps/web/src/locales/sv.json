@@ -6514,5 +6514,81 @@
   "PTd_zR": {
     "message": "Use image",
     "translation": "Använd bild"
+  },
+  "mOTci6": {
+    "message": "Add a multi-piece card",
+    "translation": "Lägg till ett kort i flera delar"
+  },
+  "ZJwR0U": {
+    "message": "Add a picture for each piece.",
+    "translation": "Lägg till en bild för varje del."
+  },
+  "J8elq3": {
+    "message": "Add a picture.",
+    "translation": "Lägg till en bild."
+  },
+  "9CyHQP": {
+    "message": "Change the picture",
+    "translation": "Byt bild"
+  },
+  "kT6WGB": {
+    "message": "Choose a picture: {label}",
+    "translation": "Välj en bild: {label}"
+  },
+  "7ni5yE": {
+    "message": "Drop, paste or choose",
+    "translation": "Släpp, klistra in eller välj"
+  },
+  "beOAmP": {
+    "message": "Link too long.",
+    "translation": "Länken är för lång."
+  },
+  "6Leq5p": {
+    "message": "Multi-piece card",
+    "translation": "Kort i flera delar"
+  },
+  "0iGojz": {
+    "message": "Not a picture.",
+    "translation": "Inte en bild."
+  },
+  "U1CJvq": {
+    "message": "One card",
+    "translation": "Ett kort"
+  },
+  "ONM3W_": {
+    "message": "or a link",
+    "translation": "eller en länk"
+  },
+  "N0-GsR": {
+    "message": "Picture",
+    "translation": "Bild"
+  },
+  "9uDKal": {
+    "message": "Picture link",
+    "translation": "Bildlänk"
+  },
+  "eLNVFN": {
+    "message": "Picture link: {label}",
+    "translation": "Bildlänk: {label}"
+  },
+  "BX1rQx": {
+    "message": "Pieces",
+    "translation": "Delar"
+  },
+  "-WTtkb": {
+    "message": "Remove the picture",
+    "translation": "Ta bort bilden"
+  },
+  "iFt0Ce": {
+    "message": "Still uploading…",
+    "translation": "Laddar fortfarande upp…"
+  },
+  "F9MU8-": {
+    "message": "That picture didn't load.",
+    "translation": "Bilden kunde inte laddas."
+  },
+  "gANddk": {
+    "message": "Uploading…",
+    "translation": "Laddar upp…"
   }
 }

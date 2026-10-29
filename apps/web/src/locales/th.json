@@ -6514,5 +6514,81 @@
   "PTd_zR": {
     "message": "Use image",
     "translation": "ใช้รูปภาพ"
+  },
+  "mOTci6": {
+    "message": "Add a multi-piece card",
+    "translation": "เพิ่มการ์ดหลายชิ้นส่วน"
+  },
+  "ZJwR0U": {
+    "message": "Add a picture for each piece.",
+    "translation": "เพิ่มรูปภาพสำหรับแต่ละชิ้นส่วน"
+  },
+  "J8elq3": {
+    "message": "Add a picture.",
+    "translation": "เพิ่มรูปภาพ"
+  },
+  "9CyHQP": {
+    "message": "Change the picture",
+    "translation": "เปลี่ยนรูปภาพ"
+  },
+  "kT6WGB": {
+    "message": "Choose a picture: {label}",
+    "translation": "เลือกรูปภาพ: {label}"
+  },
+  "7ni5yE": {
+    "message": "Drop, paste or choose",
+    "translation": "วาง วางจากคลิปบอร์ด หรือเลือกไฟล์"
+  },
+  "beOAmP": {
+    "message": "Link too long.",
+    "translation": "ลิงก์ยาวเกินไป"
+  },
+  "6Leq5p": {
+    "message": "Multi-piece card",
+    "translation": "การ์ดหลายชิ้นส่วน"
+  },
+  "0iGojz": {
+    "message": "Not a picture.",
+    "translation": "ไม่ใช่รูปภาพ"
+  },
+  "U1CJvq": {
+    "message": "One card",
+    "translation": "การ์ดใบเดียว"
+  },
+  "ONM3W_": {
+    "message": "or a link",
+    "translation": "หรือใช้ลิงก์"
+  },
+  "N0-GsR": {
+    "message": "Picture",
+    "translation": "รูปภาพ"
+  },
+  "9uDKal": {
+    "message": "Picture link",
+    "translation": "ลิงก์รูปภาพ"
+  },
+  "eLNVFN": {
+    "message": "Picture link: {label}",
+    "translation": "ลิงก์รูปภาพ: {label}"
+  },
+  "BX1rQx": {
+    "message": "Pieces",
+    "translation": "ชิ้นส่วน"
+  },
+  "-WTtkb": {
+    "message": "Remove the picture",
+    "translation": "ลบรูปภาพ"
+  },
+  "iFt0Ce": {
+    "message": "Still uploading…",
+    "translation": "ยังอัปโหลดอยู่…"
+  },
+  "F9MU8-": {
+    "message": "That picture didn't load.",
+    "translation": "โหลดรูปภาพนี้ไม่สำเร็จ"
+  },
+  "gANddk": {
+    "message": "Uploading…",
+    "translation": "กำลังอัปโหลด…"
   }
 }

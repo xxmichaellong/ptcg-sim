@@ -174,7 +174,11 @@ specifically without blocking, and go from deck to table in one click.
     Ctrl+Shift+Z). Card details show the card's text, legality and every
     printing, and can swap the deck's copies to another print or make the
     card the deck's cover. Export copies the list for Pokémon TCG Live or
-    downloads it as text or a simulator file.
+    downloads it as text or a simulator file. A custom card (2026-10-29)
+    takes its picture from a file (chosen, dropped or pasted) or a link,
+    kept in the image store as card backs are (ADR-041); a card in pieces
+    (V-UNION, LEGEND, a split Stadium) is one "Add a multi-piece card" with
+    a picture per piece, added together (PX-076).
 11. **On a phone** the seats wrap under the header and the editor's search
     and deck take turns behind two tabs.
 12. **It opens with its pictures in place** (2026-10-21). A second after the

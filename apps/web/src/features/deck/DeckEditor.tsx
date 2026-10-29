@@ -717,7 +717,14 @@ export const DeckEditor = ({
           if (customOpener.current?.isConnected) customOpener.current.focus();
           customOpener.current = null;
         }}
-        onAdd={(card, quantity) => commit(addCard(current(), card, quantity))}
+        onAdd={(added, quantity) =>
+          commit(
+            added.reduce(
+              (list, card) => addCard(list, card, quantity),
+              current()
+            )
+          )
+        }
       />
     </div>
   );

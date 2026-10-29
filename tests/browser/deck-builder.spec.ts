@@ -236,14 +236,16 @@ test('the focus stays on the screen as the editor opens and closes, and as decks
     ).toBeFocused();
   }
 
-  // A deck deleted from its menu: the focus goes on to the next deck, and
-  // with the last one gone, to New deck.
+  // A deck deleted from its menu, at once (Undo on the notice): the focus
+  // goes on to the next deck, and with the last one gone, to New deck.
   const remove = async (name: string): Promise<void> => {
     await shelf.getByRole('button', { name: `More for ${name}` }).focus();
     await page.keyboard.press('Enter');
     await page.getByRole('menuitem', { name: 'Delete' }).click();
-    await page.getByRole('button', { name: 'Delete deck' }).click();
     await expect(shelf.getByText(name, { exact: true })).toHaveCount(0);
+    await expect(
+      page.locator('.ptcgsim-ui-toast').filter({ hasText: `${name} deleted` })
+    ).toBeVisible();
   };
   await remove('Beta');
   await expect(
@@ -261,6 +263,70 @@ test('the focus stays on the screen as the editor opens and closes, and as decks
   await page.waitForTimeout(300);
   await page.keyboard.press('Escape');
   await expect(page.locator('#deckScreen')).toBeHidden();
+});
+
+test('a deck is renamed on its tile, and a deleted one comes back with Undo, still there after a reload', async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await routeCardCatalog(page);
+  await openSoloDeckScreen(page);
+  await pasteOnScreen(page, LIST);
+  await expect(seatCount(page)).toHaveAttribute('data-card-count', '60');
+  const shelf = page.getByRole('list', { name: 'Your decks' });
+  const tile = shelf.getByRole('listitem').first();
+  const menu = async (): Promise<void> => {
+    await tile.getByRole('button', { name: /^More for / }).click();
+  };
+
+  // Renamed in place: no window; Esc keeps the old name, Enter the new.
+  await menu();
+  await page.getByRole('menuitem', { name: 'Rename' }).click();
+  const field = page.getByRole('textbox', { name: 'Deck name' });
+  await expect(field).toBeFocused();
+  await expect(page.locator('[aria-modal="true"]:not([hidden])')).toHaveCount(
+    0
+  );
+  await field.fill('Never mind');
+  await field.press('Escape');
+  await expect(field).toHaveCount(0);
+  await expect(page.locator('.ptcgsim-deck-layer')).toHaveAttribute(
+    'data-open',
+    'true'
+  );
+  await expect(tile.getByRole('button', { name: /^More for / })).toBeFocused();
+  await menu();
+  await page.getByRole('menuitem', { name: 'Rename' }).click();
+  await field.fill('Phantom Dive');
+  await field.press('Enter');
+  await expect(tile.locator('.deck-tile__name')).toHaveText('Phantom Dive');
+
+  // Deleted at once: the seat keeps its cards, no longer a saved deck.
+  // Undo puts the deck back and on its seat again.
+  const saved = shelf.locator('.deck-tile:not([data-unsaved])');
+  const unsaved = shelf.locator('.deck-tile[data-unsaved]');
+  await menu();
+  await page.getByRole('menuitem', { name: 'Delete' }).click();
+  await expect(saved).toHaveCount(0);
+  await expect(unsaved).toHaveCount(1);
+  const notice = page
+    .locator('.ptcgsim-ui-toast')
+    .filter({ hasText: 'Phantom Dive deleted' });
+  await notice.getByRole('button', { name: 'Undo' }).click();
+  await expect(saved.locator('.deck-tile__name')).toHaveText('Phantom Dive');
+  await expect(saved.locator('.deck-tile__seat')).toHaveText('On P1');
+  await expect(unsaved).toHaveCount(0);
+  await expect(seatCount(page)).toHaveAttribute('data-card-count', '60');
+
+  // It was put back in storage too.
+  await page.reload();
+  await expect(
+    page.locator('[data-app-route="remote-room"][data-session-phase="ready"]')
+  ).toBeVisible({ timeout: 30_000 });
+  await openDeck(page);
+  await expect(shelf.locator('.deck-tile__name').first()).toHaveText(
+    'Phantom Dive'
+  );
 });
 
 test('lines the catalog cannot place are listed, and the rest imports', async ({

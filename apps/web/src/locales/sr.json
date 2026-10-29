@@ -6514,5 +6514,81 @@
   "PTd_zR": {
     "message": "Use image",
     "translation": "Користи слику"
+  },
+  "mOTci6": {
+    "message": "Add a multi-piece card",
+    "translation": "Додај карту од више делова"
+  },
+  "ZJwR0U": {
+    "message": "Add a picture for each piece.",
+    "translation": "Додај слику за сваки део."
+  },
+  "J8elq3": {
+    "message": "Add a picture.",
+    "translation": "Додај слику."
+  },
+  "9CyHQP": {
+    "message": "Change the picture",
+    "translation": "Промени слику"
+  },
+  "kT6WGB": {
+    "message": "Choose a picture: {label}",
+    "translation": "Изабери слику: {label}"
+  },
+  "7ni5yE": {
+    "message": "Drop, paste or choose",
+    "translation": "Превуци, налепи или изабери"
+  },
+  "beOAmP": {
+    "message": "Link too long.",
+    "translation": "Веза је предугачка."
+  },
+  "6Leq5p": {
+    "message": "Multi-piece card",
+    "translation": "Карта од више делова"
+  },
+  "0iGojz": {
+    "message": "Not a picture.",
+    "translation": "Није слика."
+  },
+  "U1CJvq": {
+    "message": "One card",
+    "translation": "Једна карта"
+  },
+  "ONM3W_": {
+    "message": "or a link",
+    "translation": "или веза"
+  },
+  "N0-GsR": {
+    "message": "Picture",
+    "translation": "Слика"
+  },
+  "9uDKal": {
+    "message": "Picture link",
+    "translation": "Веза до слике"
+  },
+  "eLNVFN": {
+    "message": "Picture link: {label}",
+    "translation": "Веза до слике: {label}"
+  },
+  "BX1rQx": {
+    "message": "Pieces",
+    "translation": "Делови"
+  },
+  "-WTtkb": {
+    "message": "Remove the picture",
+    "translation": "Уклони слику"
+  },
+  "iFt0Ce": {
+    "message": "Still uploading…",
+    "translation": "Још се шаље…"
+  },
+  "F9MU8-": {
+    "message": "That picture didn't load.",
+    "translation": "Слика се није учитала."
+  },
+  "gANddk": {
+    "message": "Uploading…",
+    "translation": "Слање…"
   }
 }

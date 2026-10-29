@@ -6514,5 +6514,81 @@
   "PTd_zR": {
     "message": "Use image",
     "translation": "Afbeelding gebruiken"
+  },
+  "mOTci6": {
+    "message": "Add a multi-piece card",
+    "translation": "Kaart met meerdere delen toevoegen"
+  },
+  "ZJwR0U": {
+    "message": "Add a picture for each piece.",
+    "translation": "Voeg een afbeelding toe voor elk deel."
+  },
+  "J8elq3": {
+    "message": "Add a picture.",
+    "translation": "Voeg een afbeelding toe."
+  },
+  "9CyHQP": {
+    "message": "Change the picture",
+    "translation": "Afbeelding wijzigen"
+  },
+  "kT6WGB": {
+    "message": "Choose a picture: {label}",
+    "translation": "Afbeelding kiezen: {label}"
+  },
+  "7ni5yE": {
+    "message": "Drop, paste or choose",
+    "translation": "Slepen, plakken of kiezen"
+  },
+  "beOAmP": {
+    "message": "Link too long.",
+    "translation": "Link is te lang."
+  },
+  "6Leq5p": {
+    "message": "Multi-piece card",
+    "translation": "Kaart met meerdere delen"
+  },
+  "0iGojz": {
+    "message": "Not a picture.",
+    "translation": "Dit is geen afbeelding."
+  },
+  "U1CJvq": {
+    "message": "One card",
+    "translation": "Eén kaart"
+  },
+  "ONM3W_": {
+    "message": "or a link",
+    "translation": "of een link"
+  },
+  "N0-GsR": {
+    "message": "Picture",
+    "translation": "Afbeelding"
+  },
+  "9uDKal": {
+    "message": "Picture link",
+    "translation": "Link naar afbeelding"
+  },
+  "eLNVFN": {
+    "message": "Picture link: {label}",
+    "translation": "Link naar afbeelding: {label}"
+  },
+  "BX1rQx": {
+    "message": "Pieces",
+    "translation": "Delen"
+  },
+  "-WTtkb": {
+    "message": "Remove the picture",
+    "translation": "Afbeelding verwijderen"
+  },
+  "iFt0Ce": {
+    "message": "Still uploading…",
+    "translation": "Nog aan het uploaden…"
+  },
+  "F9MU8-": {
+    "message": "That picture didn't load.",
+    "translation": "Die afbeelding kon niet worden geladen."
+  },
+  "gANddk": {
+    "message": "Uploading…",
+    "translation": "Uploaden…"
   }
 }

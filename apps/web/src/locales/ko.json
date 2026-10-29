@@ -6514,5 +6514,81 @@
   "PTd_zR": {
     "message": "Use image",
     "translation": "이미지 사용"
+  },
+  "mOTci6": {
+    "message": "Add a multi-piece card",
+    "translation": "여러 조각 카드 추가"
+  },
+  "ZJwR0U": {
+    "message": "Add a picture for each piece.",
+    "translation": "조각마다 이미지를 추가하세요."
+  },
+  "J8elq3": {
+    "message": "Add a picture.",
+    "translation": "이미지를 추가하세요."
+  },
+  "9CyHQP": {
+    "message": "Change the picture",
+    "translation": "이미지 변경"
+  },
+  "kT6WGB": {
+    "message": "Choose a picture: {label}",
+    "translation": "이미지 선택: {label}"
+  },
+  "7ni5yE": {
+    "message": "Drop, paste or choose",
+    "translation": "끌어놓기, 붙여넣기 또는 선택"
+  },
+  "beOAmP": {
+    "message": "Link too long.",
+    "translation": "링크가 너무 깁니다."
+  },
+  "6Leq5p": {
+    "message": "Multi-piece card",
+    "translation": "여러 조각 카드"
+  },
+  "0iGojz": {
+    "message": "Not a picture.",
+    "translation": "이미지가 아닙니다."
+  },
+  "U1CJvq": {
+    "message": "One card",
+    "translation": "카드 한 장"
+  },
+  "ONM3W_": {
+    "message": "or a link",
+    "translation": "또는 링크"
+  },
+  "N0-GsR": {
+    "message": "Picture",
+    "translation": "이미지"
+  },
+  "9uDKal": {
+    "message": "Picture link",
+    "translation": "이미지 링크"
+  },
+  "eLNVFN": {
+    "message": "Picture link: {label}",
+    "translation": "이미지 링크: {label}"
+  },
+  "BX1rQx": {
+    "message": "Pieces",
+    "translation": "조각"
+  },
+  "-WTtkb": {
+    "message": "Remove the picture",
+    "translation": "이미지 삭제"
+  },
+  "iFt0Ce": {
+    "message": "Still uploading…",
+    "translation": "아직 업로드 중입니다…"
+  },
+  "F9MU8-": {
+    "message": "That picture didn't load.",
+    "translation": "이미지를 불러오지 못했습니다."
+  },
+  "gANddk": {
+    "message": "Uploading…",
+    "translation": "업로드 중…"
   }
 }

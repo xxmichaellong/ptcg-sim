@@ -6514,5 +6514,81 @@
   "PTd_zR": {
     "message": "Use image",
     "translation": "Gamitin ang larawan"
+  },
+  "mOTci6": {
+    "message": "Add a multi-piece card",
+    "translation": "Magdagdag ng multi-piece card"
+  },
+  "ZJwR0U": {
+    "message": "Add a picture for each piece.",
+    "translation": "Magdagdag ng larawan para sa bawat piece."
+  },
+  "J8elq3": {
+    "message": "Add a picture.",
+    "translation": "Magdagdag ng larawan."
+  },
+  "9CyHQP": {
+    "message": "Change the picture",
+    "translation": "Palitan ang larawan"
+  },
+  "kT6WGB": {
+    "message": "Choose a picture: {label}",
+    "translation": "Pumili ng larawan: {label}"
+  },
+  "7ni5yE": {
+    "message": "Drop, paste or choose",
+    "translation": "I-drop, i-paste o pumili"
+  },
+  "beOAmP": {
+    "message": "Link too long.",
+    "translation": "Masyadong mahaba ang link."
+  },
+  "6Leq5p": {
+    "message": "Multi-piece card",
+    "translation": "Multi-piece card"
+  },
+  "0iGojz": {
+    "message": "Not a picture.",
+    "translation": "Hindi ito larawan."
+  },
+  "U1CJvq": {
+    "message": "One card",
+    "translation": "Isang card"
+  },
+  "ONM3W_": {
+    "message": "or a link",
+    "translation": "o isang link"
+  },
+  "N0-GsR": {
+    "message": "Picture",
+    "translation": "Larawan"
+  },
+  "9uDKal": {
+    "message": "Picture link",
+    "translation": "Link ng larawan"
+  },
+  "eLNVFN": {
+    "message": "Picture link: {label}",
+    "translation": "Link ng larawan: {label}"
+  },
+  "BX1rQx": {
+    "message": "Pieces",
+    "translation": "Mga piece"
+  },
+  "-WTtkb": {
+    "message": "Remove the picture",
+    "translation": "Alisin ang larawan"
+  },
+  "iFt0Ce": {
+    "message": "Still uploading…",
+    "translation": "Nag-a-upload pa…"
+  },
+  "F9MU8-": {
+    "message": "That picture didn't load.",
+    "translation": "Hindi na-load ang larawang iyon."
+  },
+  "gANddk": {
+    "message": "Uploading…",
+    "translation": "Nag-a-upload…"
   }
 }

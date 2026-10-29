@@ -6514,5 +6514,81 @@
   "PTd_zR": {
     "message": "Use image",
     "translation": "使用图片"
+  },
+  "mOTci6": {
+    "message": "Add a multi-piece card",
+    "translation": "添加多部件卡牌"
+  },
+  "ZJwR0U": {
+    "message": "Add a picture for each piece.",
+    "translation": "为每个部件添加图片。"
+  },
+  "J8elq3": {
+    "message": "Add a picture.",
+    "translation": "添加图片。"
+  },
+  "9CyHQP": {
+    "message": "Change the picture",
+    "translation": "更换图片"
+  },
+  "kT6WGB": {
+    "message": "Choose a picture: {label}",
+    "translation": "选择图片：{label}"
+  },
+  "7ni5yE": {
+    "message": "Drop, paste or choose",
+    "translation": "拖放、粘贴或选择"
+  },
+  "beOAmP": {
+    "message": "Link too long.",
+    "translation": "链接过长。"
+  },
+  "6Leq5p": {
+    "message": "Multi-piece card",
+    "translation": "多部件卡牌"
+  },
+  "0iGojz": {
+    "message": "Not a picture.",
+    "translation": "不是图片。"
+  },
+  "U1CJvq": {
+    "message": "One card",
+    "translation": "单张卡牌"
+  },
+  "ONM3W_": {
+    "message": "or a link",
+    "translation": "或使用链接"
+  },
+  "N0-GsR": {
+    "message": "Picture",
+    "translation": "图片"
+  },
+  "9uDKal": {
+    "message": "Picture link",
+    "translation": "图片链接"
+  },
+  "eLNVFN": {
+    "message": "Picture link: {label}",
+    "translation": "图片链接：{label}"
+  },
+  "BX1rQx": {
+    "message": "Pieces",
+    "translation": "部件"
+  },
+  "-WTtkb": {
+    "message": "Remove the picture",
+    "translation": "移除图片"
+  },
+  "iFt0Ce": {
+    "message": "Still uploading…",
+    "translation": "仍在上传…"
+  },
+  "F9MU8-": {
+    "message": "That picture didn't load.",
+    "translation": "该图片未能加载。"
+  },
+  "gANddk": {
+    "message": "Uploading…",
+    "translation": "上传中…"
   }
 }

@@ -6514,5 +6514,81 @@
   "PTd_zR": {
     "message": "Use image",
     "translation": "画像を使用"
+  },
+  "mOTci6": {
+    "message": "Add a multi-piece card",
+    "translation": "複数ピースのカードを追加"
+  },
+  "ZJwR0U": {
+    "message": "Add a picture for each piece.",
+    "translation": "ピースごとに画像を追加してください。"
+  },
+  "J8elq3": {
+    "message": "Add a picture.",
+    "translation": "画像を追加してください。"
+  },
+  "9CyHQP": {
+    "message": "Change the picture",
+    "translation": "画像を変更"
+  },
+  "kT6WGB": {
+    "message": "Choose a picture: {label}",
+    "translation": "画像を選ぶ: {label}"
+  },
+  "7ni5yE": {
+    "message": "Drop, paste or choose",
+    "translation": "ドロップ、貼り付け、または選択"
+  },
+  "beOAmP": {
+    "message": "Link too long.",
+    "translation": "リンクが長すぎます。"
+  },
+  "6Leq5p": {
+    "message": "Multi-piece card",
+    "translation": "複数ピースのカード"
+  },
+  "0iGojz": {
+    "message": "Not a picture.",
+    "translation": "画像ではありません。"
+  },
+  "U1CJvq": {
+    "message": "One card",
+    "translation": "1枚のカード"
+  },
+  "ONM3W_": {
+    "message": "or a link",
+    "translation": "またはリンク"
+  },
+  "N0-GsR": {
+    "message": "Picture",
+    "translation": "画像"
+  },
+  "9uDKal": {
+    "message": "Picture link",
+    "translation": "画像のリンク"
+  },
+  "eLNVFN": {
+    "message": "Picture link: {label}",
+    "translation": "画像のリンク: {label}"
+  },
+  "BX1rQx": {
+    "message": "Pieces",
+    "translation": "ピース"
+  },
+  "-WTtkb": {
+    "message": "Remove the picture",
+    "translation": "画像を削除"
+  },
+  "iFt0Ce": {
+    "message": "Still uploading…",
+    "translation": "アップロード中です…"
+  },
+  "F9MU8-": {
+    "message": "That picture didn't load.",
+    "translation": "画像を読み込めませんでした。"
+  },
+  "gANddk": {
+    "message": "Uploading…",
+    "translation": "アップロード中…"
   }
 }

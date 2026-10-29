@@ -2969,27 +2969,133 @@ button.deck-check__issue {
   width: 100%;
 }
 
-.native-deck-builder-modal-preview {
+/* A custom card's pictures: one, or one per piece in the card's grid. */
+.native-custom-card-slots {
   display: grid;
-  place-items: center;
-  align-self: start;
-  aspect-ratio: 63 / 88;
-  overflow: hidden;
-  border-radius: var(--radius-md);
-  background: var(--color-surface-2);
+  grid-template-columns: 1fr;
+  gap: var(--space-3);
+  align-content: start;
 }
 
-.native-deck-builder-modal-preview-image {
+.native-deck-builder-modal-box[data-multi] {
+  width: min(680px, calc(100% - 2 * var(--space-4)));
+}
+
+.native-deck-builder-modal-box[data-multi] .native-deck-builder-modal-body {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+}
+
+.native-custom-card-mode {
+  align-self: flex-start;
+}
+
+.custom-card-slot {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1-5, 6px);
+  min-width: 0;
+}
+
+.custom-card-slot__frame {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 63 / 88;
+  padding: 0;
+  overflow: hidden;
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+  color: var(--color-text-faint);
+  font: inherit;
+  cursor: pointer;
+  transition:
+    border-color var(--duration-fast) var(--ease-out),
+    background-color var(--duration-fast) var(--ease-out);
+}
+
+.custom-card-slot[data-status='ready'] .custom-card-slot__frame,
+.custom-card-slot[data-status='uploading'] .custom-card-slot__frame {
+  border-style: solid;
+  border-color: var(--color-border);
+}
+
+.custom-card-slot__frame[data-over] {
+  border-color: var(--color-accent);
+  background: var(--color-accent-soft);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .custom-card-slot__frame:hover {
+    border-color: var(--color-accent);
+    color: var(--color-text-muted);
+  }
+}
+
+.custom-card-slot__frame:focus-visible {
+  outline: var(--ptcgsim-focus-ring);
+  outline-offset: 2px;
+}
+
+.custom-card-slot[data-status='failed'] .custom-card-slot__frame {
+  border-color: var(--color-danger);
+}
+
+.custom-card-slot__image {
   width: 100%;
   height: 100%;
   object-fit: contain;
+  animation: custom-card-slot-in var(--surface-enter-duration, 200ms)
+    var(--ease-fade);
 }
 
-.native-deck-builder-modal-preview-placeholder {
+@keyframes custom-card-slot-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.custom-card-slot__empty {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-1);
   padding: var(--space-2);
-  color: var(--color-text-faint);
   font-size: var(--text-xs);
   text-align: center;
+}
+
+.custom-card-slot__empty svg {
+  font-size: 28px;
+}
+
+.custom-card-slot__busy {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: color-mix(in oklab, var(--color-surface-3), transparent 35%);
+  color: var(--color-text);
+  font-size: 22px;
+}
+
+.custom-card-slot__clear {
+  position: absolute;
+  inset-block-start: var(--space-1);
+  inset-inline-end: var(--space-1);
+  background: color-mix(in oklab, var(--color-surface-3), transparent 15%);
+}
+
+.custom-card-slot__link {
+  min-width: 0;
+  font-size: var(--text-sm);
+}
+
+.custom-card-slot__error {
+  margin: 0;
+  color: var(--color-danger);
+  font-size: var(--text-xs);
 }
 
 .native-deck-builder-modal-error {
@@ -3240,9 +3346,17 @@ button.deck-check__issue {
     grid-template-columns: 1fr;
   }
 
-  .native-deck-builder-modal-preview {
-    width: 140px;
+  .native-custom-card-slots {
     justify-self: center;
+    width: min(100%, 160px);
+  }
+
+  .native-deck-builder-modal-box[data-multi] .native-deck-builder-modal-body {
+    grid-template-columns: 1fr;
+  }
+
+  .native-deck-builder-modal-box[data-multi] .native-custom-card-slots {
+    width: 100%;
   }
 
   /* The field across; its buttons share the row under it. */

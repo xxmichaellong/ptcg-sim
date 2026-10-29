@@ -6514,5 +6514,81 @@
   "PTd_zR": {
     "message": "Use image",
     "translation": "Usar imagen"
+  },
+  "mOTci6": {
+    "message": "Add a multi-piece card",
+    "translation": "Añadir una carta de varias piezas"
+  },
+  "ZJwR0U": {
+    "message": "Add a picture for each piece.",
+    "translation": "Añade una imagen para cada pieza."
+  },
+  "J8elq3": {
+    "message": "Add a picture.",
+    "translation": "Añade una imagen."
+  },
+  "9CyHQP": {
+    "message": "Change the picture",
+    "translation": "Cambiar la imagen"
+  },
+  "kT6WGB": {
+    "message": "Choose a picture: {label}",
+    "translation": "Elegir una imagen: {label}"
+  },
+  "7ni5yE": {
+    "message": "Drop, paste or choose",
+    "translation": "Suelta, pega o elige"
+  },
+  "beOAmP": {
+    "message": "Link too long.",
+    "translation": "El enlace es demasiado largo."
+  },
+  "6Leq5p": {
+    "message": "Multi-piece card",
+    "translation": "Carta de varias piezas"
+  },
+  "0iGojz": {
+    "message": "Not a picture.",
+    "translation": "No es una imagen."
+  },
+  "U1CJvq": {
+    "message": "One card",
+    "translation": "Una carta"
+  },
+  "ONM3W_": {
+    "message": "or a link",
+    "translation": "o un enlace"
+  },
+  "N0-GsR": {
+    "message": "Picture",
+    "translation": "Imagen"
+  },
+  "9uDKal": {
+    "message": "Picture link",
+    "translation": "Enlace de la imagen"
+  },
+  "eLNVFN": {
+    "message": "Picture link: {label}",
+    "translation": "Enlace de la imagen: {label}"
+  },
+  "BX1rQx": {
+    "message": "Pieces",
+    "translation": "Piezas"
+  },
+  "-WTtkb": {
+    "message": "Remove the picture",
+    "translation": "Quitar la imagen"
+  },
+  "iFt0Ce": {
+    "message": "Still uploading…",
+    "translation": "Aún se está subiendo…"
+  },
+  "F9MU8-": {
+    "message": "That picture didn't load.",
+    "translation": "No se cargó la imagen."
+  },
+  "gANddk": {
+    "message": "Uploading…",
+    "translation": "Subiendo…"
   }
 }

@@ -6514,5 +6514,81 @@
   "PTd_zR": {
     "message": "Use image",
     "translation": "Dùng ảnh"
+  },
+  "mOTci6": {
+    "message": "Add a multi-piece card",
+    "translation": "Thêm lá bài nhiều phần"
+  },
+  "ZJwR0U": {
+    "message": "Add a picture for each piece.",
+    "translation": "Thêm ảnh cho từng phần."
+  },
+  "J8elq3": {
+    "message": "Add a picture.",
+    "translation": "Thêm ảnh."
+  },
+  "9CyHQP": {
+    "message": "Change the picture",
+    "translation": "Đổi ảnh"
+  },
+  "kT6WGB": {
+    "message": "Choose a picture: {label}",
+    "translation": "Chọn ảnh: {label}"
+  },
+  "7ni5yE": {
+    "message": "Drop, paste or choose",
+    "translation": "Thả, dán hoặc chọn"
+  },
+  "beOAmP": {
+    "message": "Link too long.",
+    "translation": "Liên kết quá dài."
+  },
+  "6Leq5p": {
+    "message": "Multi-piece card",
+    "translation": "Lá bài nhiều phần"
+  },
+  "0iGojz": {
+    "message": "Not a picture.",
+    "translation": "Không phải ảnh."
+  },
+  "U1CJvq": {
+    "message": "One card",
+    "translation": "Một lá bài"
+  },
+  "ONM3W_": {
+    "message": "or a link",
+    "translation": "hoặc dùng liên kết"
+  },
+  "N0-GsR": {
+    "message": "Picture",
+    "translation": "Ảnh"
+  },
+  "9uDKal": {
+    "message": "Picture link",
+    "translation": "Liên kết ảnh"
+  },
+  "eLNVFN": {
+    "message": "Picture link: {label}",
+    "translation": "Liên kết ảnh: {label}"
+  },
+  "BX1rQx": {
+    "message": "Pieces",
+    "translation": "Các phần"
+  },
+  "-WTtkb": {
+    "message": "Remove the picture",
+    "translation": "Xóa ảnh"
+  },
+  "iFt0Ce": {
+    "message": "Still uploading…",
+    "translation": "Đang tải lên…"
+  },
+  "F9MU8-": {
+    "message": "That picture didn't load.",
+    "translation": "Không tải được ảnh này."
+  },
+  "gANddk": {
+    "message": "Uploading…",
+    "translation": "Đang tải lên…"
   }
 }

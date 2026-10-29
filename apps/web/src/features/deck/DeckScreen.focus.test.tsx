@@ -21,6 +21,14 @@ vi.mock('../../ui/dialog-requests.js', async (original) => ({
   ...(await original<typeof import('../../ui/dialog-requests.js')>()),
   confirmAction: vi.fn(async () => true),
 }));
+// No image store here: a custom card's link is taken as it is.
+vi.mock('./custom-card-image.js', () => ({
+  uploadCardImage: vi.fn(async (source: Blob | string) =>
+    typeof source === 'string'
+      ? { url: source, wide: false }
+      : { failure: 'failed' }
+  ),
+}));
 // No server here: the finder's search and the tournaments wait.
 vi.mock('./tournament-decks-hooks.js', async (original) => ({
   ...(await original<typeof import('./tournament-decks-hooks.js')>()),
@@ -366,10 +374,18 @@ describe('the deck screen keeps the focus on the screen', () => {
           'https://example.test/proxy.png'
         );
         await act(async () => {
-          host
-            .querySelector('#nativeCustomCardPreviewImage')!
-            .dispatchEvent(new Event('load'));
+          host.querySelector('#nativeCustomCardImageUrl')!.dispatchEvent(
+            new KeyboardEvent('keydown', {
+              key: 'Enter',
+              bubbles: true,
+              cancelable: true,
+            })
+          );
         });
+        expect(
+          host.querySelector<HTMLImageElement>('#nativeCustomCardPreviewImage')!
+            .src
+        ).toBe('https://example.test/proxy.png');
         await press(button('#nativeCustomCardSubmit'));
         expect(library.getSnapshot().decks[0]!.cards[0]!.card.name).toBe(
           'Proxy'

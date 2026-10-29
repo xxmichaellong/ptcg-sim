@@ -68,7 +68,7 @@ for (const editor of [false, true]) {
 }
 
 for (const action of ['editor-delete', 'shelf-delete', 'shelf-rename']) {
-  test(`${action} cancellation returns to its persistent menu button`, async ({
+  test(`${action} from the keyboard keeps the focus on the screen, then Escape leaves`, async ({
     page,
   }) => {
     await makeDeck(page);
@@ -95,21 +95,26 @@ for (const action of ['editor-delete', 'shelf-delete', 'shelf-rename']) {
     });
     await expect(item).toBeFocused();
     await page.keyboard.press('Enter');
-    const dialog = page.getByRole(rename ? 'dialog' : 'alertdialog');
-    await expect(
-      dialog.locator(rename ? 'input' : '[data-dialog-action="confirm"]')
-    ).toBeFocused();
-    // Its menu item is transient: cancel after the menu has finished
-    // closing, so that item cannot serve as the dialog's return target.
+    // Neither asks first: a rename is typed on the tile, a deletion is
+    // done with Undo on its notice.
+    // (A notice is a dialog too, but never a modal one.)
+    await expect(page.locator('[aria-modal="true"]:not([hidden])')).toHaveCount(
+      0
+    );
     await expect(item).toHaveCount(0);
     await page.waitForTimeout(300);
-    await expect(
-      dialog.locator(rename ? 'input' : '[data-dialog-action="confirm"]')
-    ).toBeFocused();
-    await page.keyboard.press('Escape');
-    await expect(dialog).toBeHidden();
-    await expect(trigger).toBeFocused({ timeout: 1_000 });
-    await noReturnTooltip(page, editor ? 'Export' : 'More');
+    if (rename) {
+      const field = page.getByRole('textbox', { name: 'Deck name' });
+      await expect(field).toBeFocused();
+      await page.keyboard.press('Escape');
+      await expect(field).toHaveCount(0);
+      await expect(trigger).toBeFocused({ timeout: 1_000 });
+      await noReturnTooltip(page, 'More');
+    } else {
+      await expect(page.getByText('Alpha deleted')).toBeVisible();
+      await expect(page.locator('#deckNewButton')).toBeFocused();
+      await noReturnTooltip(page, 'New deck');
+    }
     await page.keyboard.press('Escape');
     await expect(page.locator('.ptcgsim-deck-layer')).toHaveAttribute(
       'data-open',
