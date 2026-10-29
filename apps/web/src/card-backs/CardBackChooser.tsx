@@ -344,16 +344,18 @@ export const CardBackChooser = ({
   };
 
   const [dropping, setDropping] = useState(false);
+  // A drop here is the chooser's, busy or not: the browser would open what
+  // was dropped in place of the app. Busy, it is let go.
   const onDragOver = (event: DragEvent<HTMLDivElement>): void => {
-    if (busy) return;
     event.preventDefault();
+    if (busy) return;
     event.dataTransfer.dropEffect = 'copy';
     setDropping(true);
   };
   const onDrop = (event: DragEvent<HTMLDivElement>): void => {
+    event.preventDefault();
     setDropping(false);
     if (busy) return;
-    event.preventDefault();
     const file = [...event.dataTransfer.files][0];
     if (file) {
       void takePicture(file);

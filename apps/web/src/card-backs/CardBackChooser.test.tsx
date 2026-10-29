@@ -213,6 +213,53 @@ describe('card-back chooser', () => {
     expect(onChoose).toHaveBeenCalledWith(expect.stringMatching(/^design:/));
   });
 
+  it('keeps the browser from opening a file dropped while a link is on its way', async () => {
+    const fetchPicture = vi.fn(() => new Promise<Blob | null>(() => {}));
+    const { host } = await mount({ fetchPicture });
+    await act(async () =>
+      host.querySelector<HTMLInputElement>('#cardBackMode-picture')!.click()
+    );
+    const field = host.querySelector<HTMLInputElement>('#cardBackLinkInput')!;
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(
+        HTMLInputElement.prototype,
+        'value'
+      )!.set!.call(field, 'https://pictures.example/back.png');
+      field.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await act(async () =>
+      field.form!.dispatchEvent(
+        new Event('submit', { bubbles: true, cancelable: true })
+      )
+    );
+    const target = host.querySelector('.card-back-chooser')!;
+    const file = new File(['x'], 'other.png', { type: 'image/png' });
+    const drag = (type: string) => {
+      const event = new Event(type, { bubbles: true, cancelable: true });
+      Object.defineProperty(event, 'dataTransfer', {
+        value: {
+          files: [file],
+          types: ['Files'],
+          dropEffect: 'none',
+          getData: () => '',
+        },
+      });
+      target.dispatchEvent(event);
+      return event;
+    };
+    let over!: Event;
+    let dropped!: Event;
+    await act(async () => {
+      over = drag('dragover');
+      dropped = drag('drop');
+    });
+    expect(over.defaultPrevented).toBe(true);
+    expect(dropped.defaultPrevented).toBe(true);
+    // Busy, the drop is let go: the link is still the one on its way.
+    expect(fetchPicture).toHaveBeenCalledOnce();
+    expect(use(host).disabled).toBe(true);
+  });
+
   it('shows and saves the picture taken last, though an earlier one is read after it', async () => {
     // Each picture is read when the test says so, in any order.
     const reads: (() => void)[] = [];
