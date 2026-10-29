@@ -277,8 +277,8 @@ test('development route reaches and resumes a real durable room through the same
     .toBeLessThan(seamBefore.y - 20);
   await page.keyboard.press('Escape');
   await expect(page.locator('#settings')).toHaveCount(0);
-  // Focus goes back to the toolbar's Settings, which opened it.
-  await expect(page.locator('.ptcgsim-app-bar #settingsButton')).toBeFocused();
+  // Focus goes back to the menu (☰), which Settings opened from.
+  await expect(page.locator('.ptcgsim-app-bar #appMenuButton')).toBeFocused();
 
   // The table has the window (ADR-030); the docked log takes the right
   // column while it is open, and gives it back when it closes.

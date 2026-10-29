@@ -6501,5 +6501,149 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "Contornos das zonas"
+  },
+  "ifsvhW": {
+    "message": "<0>{0}</0>: Settings, saves and replays, and this tutorial whenever you want it.",
+    "translation": "<0>{0}</0>: Configurações, jogos salvos e replays, além deste tutorial sempre que você quiser."
+  },
+  "sDYhDt": {
+    "message": "A deck needs a name.",
+    "translation": "Um baralho precisa de um nome."
+  },
+  "hQE7TV": {
+    "message": "An image URL, or 'default'.",
+    "comments": [
+      "Keep 'default' in English: it is what the player types"
+    ],
+    "translation": "Uma URL de imagem ou 'default'."
+  },
+  "8zanjC": {
+    "message": "Artwork group",
+    "translation": "Grupo de ilustração"
+  },
+  "PCF3WN": {
+    "message": "Change card back",
+    "translation": "Mudar verso da carta"
+  },
+  "HLSSB8": {
+    "message": "code or name",
+    "translation": "código ou nome"
+  },
+  "ibWa1H": {
+    "message": "Delete {deckName}?",
+    "translation": "Excluir {deckName}?"
+  },
+  "iu7vH9": {
+    "message": "e.g. CC or LL",
+    "comments": [
+      "Energy letters (C, L…) stay as they are"
+    ],
+    "translation": "ex.: CC ou LL"
+  },
+  "tg9VdO": {
+    "message": "e.g. HIJ",
+    "translation": "ex.: HIJ"
+  },
+  "3fBsZV": {
+    "message": "e.g. illustration",
+    "translation": "ex.: ilustração"
+  },
+  "CMMU03": {
+    "message": "Edit…",
+    "context": "change the keyboard shortcuts",
+    "translation": "Editar…"
+  },
+  "I7T1ix": {
+    "message": "Enter an image URL.",
+    "translation": "Digite uma URL de imagem."
+  },
+  "8aoXpa": {
+    "message": "Every key is under <0>{0}</0>, in <1>{1}</1>.",
+    "translation": "Todas as teclas estão em <0>{0}</0>, em <1>{1}</1>."
+  },
+  "ZTtNAf": {
+    "message": "HP at least",
+    "translation": "PS no mínimo"
+  },
+  "LgcKSI": {
+    "message": "HP at most",
+    "translation": "PS no máximo"
+  },
+  "fVGc9-": {
+    "message": "https://… or default",
+    "comments": [
+      "Keep 'default' in English: it is what the player types"
+    ],
+    "translation": "https://… ou default"
+  },
+  "1pdLQw": {
+    "message": "Image not found",
+    "translation": "Imagem não encontrada"
+  },
+  "15ARIE": {
+    "message": "Image URL too long",
+    "translation": "URL da imagem muito longa"
+  },
+  "6hbF9e": {
+    "message": "Image URL: up to {max} characters.",
+    "translation": "URL da imagem: até {max} caracteres."
+  },
+  "MIi4yC": {
+    "message": "Keep it to {max} characters.",
+    "translation": "Use no máximo {max} caracteres."
+  },
+  "WQg61I": {
+    "message": "Keys",
+    "translation": "Teclas"
+  },
+  "2fhoKU": {
+    "message": "No image",
+    "translation": "Sem imagem"
+  },
+  "xYvd7u": {
+    "message": "Piece position",
+    "translation": "Posição da peça"
+  },
+  "rkcP1p": {
+    "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
+    "translation": "Coloque as peças de Pokémon em uma pilha e as peças de Estádio no Estádio."
+  },
+  "XsrZAv": {
+    "message": "Rename",
+    "context": "button",
+    "translation": "Renomear"
+  },
+  "Tvyjys": {
+    "message": "Rename deck",
+    "translation": "Renomear baralho"
+  },
+  "CBOI8H": {
+    "message": "Resume saved game…",
+    "translation": "Retomar jogo salvo…"
+  },
+  "qoNq2S": {
+    "message": "Same group for each piece",
+    "translation": "Mesmo grupo para cada peça"
+  },
+  "4XBjuA": {
+    "message": "Save game",
+    "translation": "Salvar jogo"
+  },
+  "y4__tG": {
+    "message": "Settings",
+    "context": "shortcut key caption",
+    "translation": "Configurações"
+  },
+  "ZMr878": {
+    "message": "That image didn't load.",
+    "translation": "Essa imagem não carregou."
+  },
+  "PTd_zR": {
+    "message": "Use image",
+    "translation": "Usar imagem"
+  },
+  "sFWtjQ": {
+    "message": "Watch replay…",
+    "translation": "Assistir ao replay…"
   }
 }

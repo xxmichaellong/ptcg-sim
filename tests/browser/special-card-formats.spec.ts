@@ -351,7 +351,7 @@ for (const mode of ['flat', 'table'] as const)
       const stream = await download.createReadStream();
       const chunks: Buffer[] = [];
       for await (const chunk of stream) chunks.push(Buffer.from(chunk));
-      // Watch a replay… opens this picker.
+      // Watch replay… opens this picker.
       await page.locator('#jsonReplay').setInputFiles({
         name: 'assembled.json',
         mimeType: 'application/json',

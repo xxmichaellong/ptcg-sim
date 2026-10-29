@@ -109,8 +109,8 @@ test('the app bar keeps the top-right corner, clear of every card, and the turn 
   await openTable(page);
   const bar = page.locator('.ptcgsim-app-bar');
   await expect(bar).toBeVisible();
-  // The deck and where to play, the palette, the log and Settings, the menu.
-  await expect(bar.locator('button[id]')).toHaveCount(6);
+  // The deck and where to play, the palette and the log, the menu.
+  await expect(bar.locator('button[id]')).toHaveCount(5);
   expect(
     await bar
       .locator('button[id]')
@@ -120,14 +120,13 @@ test('the app bar keeps the top-right corner, clear of every card, and the turn 
     'p2Button',
     'commandsButton',
     'activityButton',
-    'settingsButton',
     'appMenuButton',
   ]);
   const barBox = await box(bar);
   // 8px in from the corner, and no wider than the corner the table keeps.
   expect(Math.round(barBox.y)).toBe(8);
   expect(Math.round(1440 - barBox.x - barBox.width)).toBe(8);
-  expect(barBox.width).toBeLessThanOrEqual(242.5);
+  expect(barBox.width).toBeLessThanOrEqual(202.5);
 
   await setUpBoth(page);
   for (const rect of await tableBoxes(page)) {
@@ -150,14 +149,22 @@ test('the app bar keeps the top-right corner, clear of every card, and the turn 
   );
   expect(lastButton.x + lastButton.width).toBeLessThanOrEqual(deck.x);
 
-  // The keys live in the menu now.
+  // Settings leads the menu, with its key; the keys are in Settings.
   await page.locator('#appMenuButton').click();
-  await expect(
-    page.locator(
-      '[role="menu"][aria-labelledby="appMenuButton"] #shortcutsButton'
-    )
-  ).toBeVisible();
+  const menu = page.locator('[role="menu"][aria-labelledby="appMenuButton"]');
+  await expect(menu.locator('[role="menuitem"]').first()).toHaveAttribute(
+    'id',
+    'settingsButton'
+  );
+  await expect(menu.locator('#settingsButton kbd')).toHaveText(',');
+  await expect(menu.locator('#shortcutsButton')).toHaveCount(0);
   await page.keyboard.press('Escape');
+  await expect(menu).toHaveCount(0);
+  // The key opens it from the table.
+  await page.keyboard.press(',');
+  await expect(page.locator('#settings')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#settings')).toHaveCount(0);
 });
 
 test('the turn stays past the Stadium beside the docked log, the coin lying on the table', async ({
@@ -208,7 +215,7 @@ test('a toolbar button a click left focused hands the arrow keys on to the table
   await page.keyboard.press('Tab');
   expect(await focused()).toBe('activityButton');
   await page.keyboard.press('ArrowRight');
-  expect(await focused()).toBe('settingsButton');
+  expect(await focused()).toBe('appMenuButton');
 });
 
 test('the bar shows which button the keyboard is on by day as by night', async ({
@@ -292,11 +299,15 @@ test.describe('on a phone', () => {
     for (const rect of await tableBoxes(page)) {
       expect(overlaps(rect, barBox), rect.what).toBe(false);
     }
-    // The deck and Settings lead the menu.
+    // The deck and Play online lead the menu, Settings next.
     await page.locator('#appMenuButton').tap();
     const menu = page.locator('[role="menu"][aria-labelledby="appMenuButton"]');
     await expect(menu.locator('#deckImportButton')).toBeVisible();
-    await expect(menu.locator('#settingsButton')).toBeVisible();
+    expect(
+      await menu
+        .locator('[role="menuitem"][id]')
+        .evaluateAll((nodes) => nodes.slice(0, 3).map((node) => node.id))
+    ).toEqual(['deckImportButton', 'p2Button', 'settingsButton']);
   });
 
   for (const [width, height] of [

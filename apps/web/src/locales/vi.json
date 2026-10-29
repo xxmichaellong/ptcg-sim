@@ -6501,5 +6501,149 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "Viền khu vực"
+  },
+  "ifsvhW": {
+    "message": "<0>{0}</0>: Settings, saves and replays, and this tutorial whenever you want it.",
+    "translation": "<0>{0}</0>: Cài đặt, ván đã lưu, bản xem lại và phần hướng dẫn này, mở lại bất cứ khi nào bạn muốn."
+  },
+  "sDYhDt": {
+    "message": "A deck needs a name.",
+    "translation": "Bộ bài cần có tên."
+  },
+  "hQE7TV": {
+    "message": "An image URL, or 'default'.",
+    "comments": [
+      "Keep 'default' in English: it is what the player types"
+    ],
+    "translation": "URL hình ảnh hoặc 'default'."
+  },
+  "8zanjC": {
+    "message": "Artwork group",
+    "translation": "Nhóm tranh minh họa"
+  },
+  "PCF3WN": {
+    "message": "Change card back",
+    "translation": "Đổi mặt sau bài"
+  },
+  "HLSSB8": {
+    "message": "code or name",
+    "translation": "mã hoặc tên"
+  },
+  "ibWa1H": {
+    "message": "Delete {deckName}?",
+    "translation": "Xóa {deckName}?"
+  },
+  "iu7vH9": {
+    "message": "e.g. CC or LL",
+    "comments": [
+      "Energy letters (C, L…) stay as they are"
+    ],
+    "translation": "VD: CC hoặc LL"
+  },
+  "tg9VdO": {
+    "message": "e.g. HIJ",
+    "translation": "VD: HIJ"
+  },
+  "3fBsZV": {
+    "message": "e.g. illustration",
+    "translation": "VD: minh họa"
+  },
+  "CMMU03": {
+    "message": "Edit…",
+    "context": "change the keyboard shortcuts",
+    "translation": "Chỉnh sửa…"
+  },
+  "I7T1ix": {
+    "message": "Enter an image URL.",
+    "translation": "Hãy nhập URL hình ảnh."
+  },
+  "8aoXpa": {
+    "message": "Every key is under <0>{0}</0>, in <1>{1}</1>.",
+    "translation": "Mọi phím nằm trong <0>{0}</0>, ở mục <1>{1}</1>."
+  },
+  "ZTtNAf": {
+    "message": "HP at least",
+    "translation": "HP tối thiểu"
+  },
+  "LgcKSI": {
+    "message": "HP at most",
+    "translation": "HP tối đa"
+  },
+  "fVGc9-": {
+    "message": "https://… or default",
+    "comments": [
+      "Keep 'default' in English: it is what the player types"
+    ],
+    "translation": "https://… hoặc default"
+  },
+  "1pdLQw": {
+    "message": "Image not found",
+    "translation": "Không tìm thấy hình ảnh"
+  },
+  "15ARIE": {
+    "message": "Image URL too long",
+    "translation": "URL hình ảnh quá dài"
+  },
+  "6hbF9e": {
+    "message": "Image URL: up to {max} characters.",
+    "translation": "URL hình ảnh: tối đa {max} ký tự."
+  },
+  "MIi4yC": {
+    "message": "Keep it to {max} characters.",
+    "translation": "Giữ trong {max} ký tự."
+  },
+  "WQg61I": {
+    "message": "Keys",
+    "translation": "Phím"
+  },
+  "2fhoKU": {
+    "message": "No image",
+    "translation": "Không có ảnh"
+  },
+  "xYvd7u": {
+    "message": "Piece position",
+    "translation": "Vị trí mảnh"
+  },
+  "rkcP1p": {
+    "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
+    "translation": "Đặt các mảnh Pokémon vào một chồng, các mảnh Stadium vào vị trí Stadium."
+  },
+  "XsrZAv": {
+    "message": "Rename",
+    "context": "button",
+    "translation": "Đổi tên"
+  },
+  "Tvyjys": {
+    "message": "Rename deck",
+    "translation": "Đổi tên bộ bài"
+  },
+  "CBOI8H": {
+    "message": "Resume saved game…",
+    "translation": "Tiếp tục ván đã lưu…"
+  },
+  "qoNq2S": {
+    "message": "Same group for each piece",
+    "translation": "Cùng nhóm cho mọi mảnh"
+  },
+  "4XBjuA": {
+    "message": "Save game",
+    "translation": "Lưu ván chơi"
+  },
+  "y4__tG": {
+    "message": "Settings",
+    "context": "shortcut key caption",
+    "translation": "Cài đặt"
+  },
+  "ZMr878": {
+    "message": "That image didn't load.",
+    "translation": "Không tải được ảnh đó."
+  },
+  "PTd_zR": {
+    "message": "Use image",
+    "translation": "Dùng ảnh"
+  },
+  "sFWtjQ": {
+    "message": "Watch replay…",
+    "translation": "Xem bản xem lại…"
   }
 }

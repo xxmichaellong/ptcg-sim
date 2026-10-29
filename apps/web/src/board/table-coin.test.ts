@@ -149,7 +149,7 @@ describe('tableCoinSpots', () => {
         for (const markers of [0, 2]) {
           const spots = tableCoinSpots(
             layoutAt(width, height, {
-              appBarPx: { width: 242, height: 42 },
+              appBarPx: { width: 202, height: 42 },
               ...(markers ? { oncePerGameMarkers: markers } : {}),
             })
           );

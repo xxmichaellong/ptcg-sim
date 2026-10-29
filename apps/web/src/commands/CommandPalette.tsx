@@ -54,6 +54,10 @@ import { LANGUAGE_PREFERENCES } from '../i18n/language-preference.js';
 import { depthSettings } from '../motion/depth-settings.js';
 import { motionSettings } from '../motion/motion-settings.js';
 import { useExitGhost } from '../session/shell/exit-ghost.js';
+import {
+  canOpenSettingsSheet,
+  openSettingsSheet,
+} from '../session/shell/settings-sheet-state.js';
 import { TABLE_PREFERENCES } from '../session/table-preferences.js';
 import type { CommandSection, PaletteCommand, PaletteScreen } from './types.js';
 import './command-palette.css';
@@ -91,7 +95,8 @@ const isEditable = (target: EventTarget | null): boolean =>
 /**
  * Opens the palette from anywhere on the page: its key (`` ` `` unless the
  * player moved it), Ctrl+K or ⌘K. Not while typing, nor over another
- * dialog. Open, `` ` `` or the same chord closes it.
+ * dialog. Open, `` ` `` or the same chord closes it. Settings' key (`,`)
+ * opens Settings the same way.
  */
 const useCommandPaletteKeys = (): void => {
   const keymap = useKeymap();
@@ -122,19 +127,24 @@ const useCommandPaletteKeys = (): void => {
         }
         return;
       }
-      const bound = latest.current.resolve(event, 'table') === 'table.commands';
-      if (!chordK && !bound) return;
+      const action = latest.current.resolve(event, 'table');
+      const settings = action === 'table.settings';
+      if (!chordK && !settings && action !== 'table.commands') return;
       // Not while typing, nor from a dialog; the deck screen, a whole page
-      // over the table, is not one.
+      // over the table, is not one for the palette. Settings opens over
+      // the table only.
       if (
         isEditable(event.target) ||
-        (isOverlayKeyTarget(event.target) && !inDeckScreenOnly(event.target)) ||
-        inBoardWindow(event.target)
+        (isOverlayKeyTarget(event.target) &&
+          (settings || !inDeckScreenOnly(event.target))) ||
+        inBoardWindow(event.target) ||
+        (settings && !canOpenSettingsSheet())
       )
         return;
       event.preventDefault();
       event.stopPropagation();
-      openCommandPalette();
+      if (settings) openSettingsSheet();
+      else openCommandPalette();
     };
     document.addEventListener('keydown', press, true);
     return () => document.removeEventListener('keydown', press, true);

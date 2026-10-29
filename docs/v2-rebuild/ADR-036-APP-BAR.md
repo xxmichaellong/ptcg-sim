@@ -1,9 +1,10 @@
 # ADR-036: the app's controls leave the table for a corner bar
 
 - Status: **ACCEPTED**
-- Decision date: 2026-10-22
-- Scope: where the app's controls (deck, play online, palette, log,
-  Settings, menu) and the turn's game actions sit around the table
+- Decision date: 2026-10-22; amended 2026-10-29 (one menu: Settings moved
+  from the bar into ☰, §1)
+- Scope: where the app's controls (deck, play online, palette, log, menu)
+  and the turn's game actions sit around the table
 - Supersedes: ADR-030 §2 (the rail's ends) and §3 (the toolbar on the rail)
 
 ## Context
@@ -38,15 +39,30 @@ groups, with a hairline between them:
 
 1. The deck and where to play: **Deck**, **Play online** (from a Solo table)
    or **Solo table** (from Play online).
-2. **Commands** (the palette), the **Log** (with its unread count) and
-   **Settings**.
-3. **Menu** (☰): the keys, full screen, saves and replays, help, leaving.
+2. **Commands** (the palette) and the **Log** (with its unread count).
+3. **Menu** (☰): what can be done here, Settings among it.
+
+The menu, by where the player is:
+
+- a Solo table: Settings (`,`), Full screen, Tutorial | Watch replay…,
+  Resume saved game…, Download replay;
+- a room: Invite opponent, Invite spectator | Save game, Download replay |
+  Settings, Full screen | Leave room (in red);
+- a replay leads with Exit replay; the tutorial's table ends with Leave
+  tutorial.
+
+Until 2026-10-29 Settings had its own gear on the bar and ☰ held the keys
+and the help links too; the owner found the two "both basically settings".
+The keyboard shortcuts are now in Settings (Keys, and still `?`), the
+release, Sponsors and Discord at Settings' foot, and the Play online sheet
+has no gear of its own. `,` opens Settings from anywhere over the table (a
+catalogue shortcut, so it can be moved), and the palette finds every row.
 
 The buttons are 36px for a mouse and 44px under a finger, icons with
 tooltips beneath. On a phone (the compact size: under 600px wide or under
 500px tall) the bar keeps the palette, the log and the menu, and the menu
-leads with the deck, where to play and Settings. The toolbar that opened
-and closed along the rail, and its preference, are gone.
+leads with the deck and where to play. The toolbar that opened and closed
+along the rail, and its preference, are gone.
 
 The log's newest lines, shown for a few seconds while it is closed, drop
 below the bar at its right edge. It is a toolbar: the arrow keys move
@@ -130,6 +146,8 @@ loads one moves its name under the `+` (the board marks such decks:
   (`chooseMenuItem` presses a bar button or opens ☰). `#appMoreButton` is
   gone; `#appMenuButton` opens the menu.
 - The control ids are kept: `#deckImportButton`, `#p2Button`, `#p1Button`,
-  `#commandsButton`, `#activityButton`, `#settingsButton`,
-  `#shortcutsButton` (now in the menu), `#boardButtonContainer` and the
-  turn's actions.
+  `#commandsButton`, `#activityButton`, `#settingsButton` (the menu's
+  Settings row), `#boardButtonContainer` and the turn's actions.
+  `#shortcutsButton` is a palette command only; Settings' Keys opens the
+  list (`#editShortcutsButton`). The bar is five buttons at most (202px by
+  mouse), so the corner the table keeps is about 40px narrower.

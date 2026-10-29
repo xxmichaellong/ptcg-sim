@@ -1103,7 +1103,8 @@ const keys: TutorialLesson = {
         ) : (
           <Trans>
             Every key is under{' '}
-            <strong>{controlLabel('keyboardShortcuts')}</strong>, in the menu.
+            <strong>{controlLabel('keyboardShortcuts')}</strong>, in{' '}
+            <strong>{controlLabel('settings')}</strong>.
           </Trans>
         );
       },
@@ -1188,20 +1189,11 @@ const around: TutorialLesson = {
       targets: () => [{ selectors: ['#activityButton'] }],
     },
     {
-      id: 'settings',
-      text: () => (
-        <Trans>
-          <strong>{controlLabel('settings')}</strong>: the table's look, the
-          theme and the language.
-        </Trans>
-      ),
-      targets: () => [barButton('settingsButton')],
-    },
-    {
       id: 'menu',
       text: () => (
         <Trans>
-          This tutorial waits in the <strong>menu</strong> whenever you want it.
+          <strong>{controlLabel('menu')}</strong>: Settings, saves and replays,
+          and this tutorial whenever you want it.
         </Trans>
       ),
       targets: () => [{ selectors: ['#appMenuButton'] }],

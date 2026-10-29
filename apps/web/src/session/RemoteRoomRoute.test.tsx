@@ -627,8 +627,8 @@ describe('RemoteRoomRoute', () => {
     expect(boardHarness.props?.sidePanel).toBe(false);
     expect(boardHarness.props?.keysSuspended).toBe(false);
 
-    // The app bar holds the deck, where to play, the palette, the log and
-    // Settings; the rest is behind its last button, the menu.
+    // The app bar holds the deck, where to play, the palette and the log;
+    // the rest is behind its last button, the menu, Settings first.
     expect(
       [...document.querySelectorAll('.ptcgsim-app-bar button[id]')].map(
         (button) => button.id
@@ -638,11 +638,11 @@ describe('RemoteRoomRoute', () => {
       'p2Button',
       'commandsButton',
       'activityButton',
-      'settingsButton',
       'appMenuButton',
     ]);
     await openMenu();
     expect(get('.ptcgsim-app-menu-heading').textContent).toBe('Solo table');
+    expect(menuIds()[0]).toBe('settingsButton');
     expect(menuIds()).toEqual(
       expect.arrayContaining([
         'importReplay',
@@ -991,8 +991,8 @@ describe('RemoteRoomRoute', () => {
       await settle();
       await act(async () => root.render(route(true)));
       await openMenu();
-      expect(get('#saveOnlineGame').textContent).toBe('Save online game');
-      expect(get('#resumeSavedGame').textContent).toBe('Resume a saved game…');
+      expect(get('#saveOnlineGame').textContent).toBe('Save game');
+      expect(get('#resumeSavedGame').textContent).toBe('Resume saved game…');
       await closeMenu();
 
       // The board always gets preferences: reduced motion follows the
@@ -1063,9 +1063,8 @@ describe('RemoteRoomRoute', () => {
       expect(get('#changeBackgroundButton').textContent).toBe(
         'Change background'
       );
-      // Settings holds settings only: the keys are on the toolbar, the help
-      // and community links in its menu.
-      expect(get('#settings').textContent).not.toContain('Keyboard shortcuts');
+      // The keys are in Settings, their list in a dialog of its own.
+      expect(find('#settingsKeys #editShortcutsButton')).not.toBeNull();
 
       await click('#changeBackgroundButton');
       await act(async () => flushConsumers());
@@ -1333,7 +1332,7 @@ describe('RemoteRoomRoute', () => {
     );
     const socket = await connect(socketFactory);
     await openMenu();
-    expect(get('#importReplay').textContent).toBe('Watch a replay…');
+    expect(get('#importReplay').textContent).toBe('Watch replay…');
     await closeMenu();
 
     const replayContents = await serializeProjectedReplayFile({

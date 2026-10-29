@@ -80,6 +80,7 @@ import { AppBar, type AppMenuModel } from './shell/AppMenu.js';
 import { DeckLayer } from './shell/DeckLayer.js';
 import { OnlineSheet } from './shell/OnlineSheet.js';
 import { SettingsSheet } from './shell/SettingsSheet.js';
+import { useSettingsSheetHost } from './shell/settings-sheet-state.js';
 import { seatStage } from '../board/seat-stage.js';
 import { SHELL_PREFERENCES } from './shell/shell-preferences.js';
 import { TableInvite } from './shell/TableInvite.js';
@@ -294,6 +295,7 @@ export const RemoteRoomRoute = ({
   });
   const [sheet, setSheet] = useState<RouteSheet | undefined>(initialSheet);
   const closeSheet = (): void => setSheet(undefined);
+  const settingsHost = useSettingsSheetHost(() => setSheet('settings'));
   const shownOnlineRequest = useRef(onlineRequest);
   useEffect(() => {
     if (onlineRequest === shownOnlineRequest.current) return;
@@ -715,7 +717,7 @@ export const RemoteRoomRoute = ({
           ...(chrome.visibility.deckImport
             ? { onDeck: () => openDeck(actingTarget) }
             : {}),
-          onSettings: () => setSheet('settings'),
+          onSettings: () => settingsHost.open(),
           onFullscreen: () => {
             if (!requestFullscreen()) toast(fullscreenRefusedNotice());
           },
@@ -953,6 +955,7 @@ export const RemoteRoomRoute = ({
                 ...roomCommands({
                   menu,
                   shortcutsHint: hint('table.shortcuts'),
+                  settingsHint: hint('table.settings'),
                   log: {
                     open: activity.open,
                     setOpen: activity.setOpen,
@@ -1017,6 +1020,9 @@ export const RemoteRoomRoute = ({
             <SettingsSheet
               open={sheet === 'settings'}
               onOpenChange={(open) => setSheet(open ? 'settings' : undefined)}
+              {...(settingsHost.section
+                ? { section: settingsHost.section }
+                : {})}
               solo={solo}
               darkMode={effectivePreferences.darkMode}
               onDarkModeChange={setDarkMode}

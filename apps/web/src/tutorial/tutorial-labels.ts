@@ -15,6 +15,7 @@ export const CONTROL_LABELS = {
   flip: msg({ message: 'Flip', context: 'turn the table around' }),
   keyboardShortcuts: msg`Keyboard shortcuts`,
   log: msg`Log`,
+  menu: msg({ message: 'Menu', context: 'the app menu' }),
   more: msg({ message: 'More', context: 'more actions' }),
   pass: msg({ message: 'Pass', context: 'end the turn' }),
   playOnline: msg`Play online`,

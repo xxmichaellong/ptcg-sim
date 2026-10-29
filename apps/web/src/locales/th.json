@@ -6501,5 +6501,149 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "เส้นขอบโซน"
+  },
+  "ifsvhW": {
+    "message": "<0>{0}</0>: Settings, saves and replays, and this tutorial whenever you want it.",
+    "translation": "<0>{0}</0>: การตั้งค่า เซฟและรีเพลย์ รวมถึงบทสอนเล่นนี้ เปิดดูได้ทุกเมื่อ"
+  },
+  "sDYhDt": {
+    "message": "A deck needs a name.",
+    "translation": "เด็คต้องมีชื่อ"
+  },
+  "hQE7TV": {
+    "message": "An image URL, or 'default'.",
+    "comments": [
+      "Keep 'default' in English: it is what the player types"
+    ],
+    "translation": "URL ของรูปภาพ หรือ 'default'"
+  },
+  "8zanjC": {
+    "message": "Artwork group",
+    "translation": "กลุ่มภาพการ์ด"
+  },
+  "PCF3WN": {
+    "message": "Change card back",
+    "translation": "เปลี่ยนหลังการ์ด"
+  },
+  "HLSSB8": {
+    "message": "code or name",
+    "translation": "รหัสหรือชื่อ"
+  },
+  "ibWa1H": {
+    "message": "Delete {deckName}?",
+    "translation": "ลบ {deckName} หรือไม่"
+  },
+  "iu7vH9": {
+    "message": "e.g. CC or LL",
+    "comments": [
+      "Energy letters (C, L…) stay as they are"
+    ],
+    "translation": "เช่น CC หรือ LL"
+  },
+  "tg9VdO": {
+    "message": "e.g. HIJ",
+    "translation": "เช่น HIJ"
+  },
+  "3fBsZV": {
+    "message": "e.g. illustration",
+    "translation": "เช่น illustration"
+  },
+  "CMMU03": {
+    "message": "Edit…",
+    "context": "change the keyboard shortcuts",
+    "translation": "แก้ไข…"
+  },
+  "I7T1ix": {
+    "message": "Enter an image URL.",
+    "translation": "กรุณาใส่ URL รูปภาพ"
+  },
+  "8aoXpa": {
+    "message": "Every key is under <0>{0}</0>, in <1>{1}</1>.",
+    "translation": "ดูปุ่มทั้งหมดได้ที่ <0>{0}</0> ใน <1>{1}</1>"
+  },
+  "ZTtNAf": {
+    "message": "HP at least",
+    "translation": "HP อย่างน้อย"
+  },
+  "LgcKSI": {
+    "message": "HP at most",
+    "translation": "HP ไม่เกิน"
+  },
+  "fVGc9-": {
+    "message": "https://… or default",
+    "comments": [
+      "Keep 'default' in English: it is what the player types"
+    ],
+    "translation": "https://… หรือ default"
+  },
+  "1pdLQw": {
+    "message": "Image not found",
+    "translation": "ไม่พบรูปภาพ"
+  },
+  "15ARIE": {
+    "message": "Image URL too long",
+    "translation": "URL รูปภาพยาวเกินไป"
+  },
+  "6hbF9e": {
+    "message": "Image URL: up to {max} characters.",
+    "translation": "URL รูปภาพ: ไม่เกิน {max} ตัวอักษร"
+  },
+  "MIi4yC": {
+    "message": "Keep it to {max} characters.",
+    "translation": "ใช้ไม่เกิน {max} อักขระ"
+  },
+  "WQg61I": {
+    "message": "Keys",
+    "translation": "ปุ่มลัด"
+  },
+  "2fhoKU": {
+    "message": "No image",
+    "translation": "ไม่มีรูปภาพ"
+  },
+  "xYvd7u": {
+    "message": "Piece position",
+    "translation": "ตำแหน่งชิ้นส่วน"
+  },
+  "rkcP1p": {
+    "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
+    "translation": "รวมชิ้นส่วนโปเกมอนไว้ในกองเดียว และชิ้นส่วนสเตเดียมไว้ในสเตเดียม"
+  },
+  "XsrZAv": {
+    "message": "Rename",
+    "context": "button",
+    "translation": "เปลี่ยนชื่อ"
+  },
+  "Tvyjys": {
+    "message": "Rename deck",
+    "translation": "เปลี่ยนชื่อเด็ค"
+  },
+  "CBOI8H": {
+    "message": "Resume saved game…",
+    "translation": "เล่นเกมที่บันทึกไว้ต่อ…"
+  },
+  "qoNq2S": {
+    "message": "Same group for each piece",
+    "translation": "กลุ่มเดียวกันสำหรับแต่ละชิ้น"
+  },
+  "4XBjuA": {
+    "message": "Save game",
+    "translation": "บันทึกเกม"
+  },
+  "y4__tG": {
+    "message": "Settings",
+    "context": "shortcut key caption",
+    "translation": "การตั้งค่า"
+  },
+  "ZMr878": {
+    "message": "That image didn't load.",
+    "translation": "โหลดรูปภาพนั้นไม่สำเร็จ"
+  },
+  "PTd_zR": {
+    "message": "Use image",
+    "translation": "ใช้รูปภาพ"
+  },
+  "sFWtjQ": {
+    "message": "Watch replay…",
+    "translation": "ดูรีเพลย์…"
   }
 }

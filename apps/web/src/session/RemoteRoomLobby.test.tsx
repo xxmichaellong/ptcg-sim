@@ -671,7 +671,7 @@ describe('remote room lobby wiring', () => {
     expect(lobbyBoardHarness.table).toEqual({
       lowerShare: TABLE_SPLIT.defaultLowerShare,
       seamBandPx: 42,
-      appBarPx: { width: 242, height: 42 },
+      appBarPx: { width: 202, height: 42 },
       hideEmptyLostZone: true,
     });
     expect(present('[data-testid="parked-solo-board"]')).toBe(false);
@@ -715,11 +715,13 @@ describe('remote room lobby wiring', () => {
         'p1Button',
         'deckImportButton',
         'settingsButton',
-        'shortcutsButton',
         'fullscreenButton',
       ])
     );
     expect(entries).not.toContain('p2Button');
+    // The keys are in Settings, and Settings is not on the Play online sheet.
+    expect(entries).not.toContain('shortcutsButton');
+    expect(present('#onlineSettingsButton')).toBe(false);
     expect(entries).not.toContain('leaveRoomButton');
 
     await openDeck();

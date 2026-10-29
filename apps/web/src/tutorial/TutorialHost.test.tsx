@@ -382,7 +382,7 @@ describe('the tutorial’s cards', () => {
     placed.set(bar, { x: 200, y: 8, width: 400, height: 50 });
     await render('around');
     await wait(1200);
-    for (let step = 0; step < 5; step += 1) {
+    for (let step = 0; step < 4; step += 1) {
       const next = button(coach(), 'Next') ?? button(coach(), 'Done');
       await act(async () => next!.click());
     }
@@ -399,7 +399,7 @@ describe('the tutorial’s cards', () => {
     const errors = vi.spyOn(console, 'error');
     await render('around');
     await wait(1200);
-    for (let step = 0; step < 5; step += 1) {
+    for (let step = 0; step < 4; step += 1) {
       const next = button(coach(), 'Next') ?? button(coach(), 'Done');
       await act(async () => next!.click());
     }

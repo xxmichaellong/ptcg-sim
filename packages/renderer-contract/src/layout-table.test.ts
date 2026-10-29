@@ -63,7 +63,7 @@ const overlaps = (left: Rect, right: Rect) =>
   right.y < left.y + left.height - 0.01;
 
 describe('table layout: the app bar corner (ADR-036)', () => {
-  const BAR = { width: 242, height: 42 };
+  const BAR = { width: 202, height: 42 };
   /** The bar's box, at the play area's top right. */
   const barBox = (snapshot: ReturnType<typeof createTableLayoutSnapshot>) => ({
     x: snapshot.playAreaBounds.width - APP_BAR_INSET_PX - BAR.width,
@@ -470,7 +470,7 @@ describe('table layout: the app bar corner (ADR-036)', () => {
     // the Stadium beside it.
     for (const [width, height, bar, seamBandPx] of [
       [640, 640, BAR, 42],
-      [720, 720, { width: 290, height: 50 }, 46],
+      [720, 720, { width: 242, height: 50 }, 46],
       [656, 600, BAR, 42],
     ] as const) {
       const snapshot = createTableLayoutSnapshot(
@@ -582,7 +582,7 @@ describe('table layout: the app bar corner (ADR-036)', () => {
       createTableLayoutSnapshot(
         stateAt(width, height, {
           shellMode: 'fullscreen',
-          appBarPx: touch ? { width: 290, height: 50 } : BAR,
+          appBarPx: touch ? { width: 242, height: 50 } : BAR,
           vertical: tableVerticalLayout(lowerShare),
           seamBandPx: touch ? 46 : 42,
           oncePerGameMarkers: markers,
@@ -1072,7 +1072,7 @@ describe('table layout (geometry v2)', () => {
       const snapshot = createTableLayoutSnapshot(
         stateAt(width, height, {
           shellMode: 'fullscreen',
-          appBarPx: { width: 302, height: 50 },
+          appBarPx: { width: 242, height: 50 },
           seamBandPx: 46,
           oncePerGameMarkers: 2,
         })
@@ -1089,7 +1089,7 @@ describe('table layout (geometry v2)', () => {
             const snapshot = createTableLayoutSnapshot(
               stateAt(width, height, {
                 shellMode: 'fullscreen',
-                appBarPx: { width: 242, height: 42 },
+                appBarPx: { width: 202, height: 42 },
                 vertical: tableVerticalLayout(lowerShare),
                 ...(markers ? { oncePerGameMarkers: markers } : {}),
               })
@@ -1155,7 +1155,7 @@ describe('table layout (geometry v2)', () => {
       const snapshot = createTableLayoutSnapshot(
         stateAt(width, height, {
           shellMode: 'fullscreen',
-          appBarPx: { width: 242, height: 42 },
+          appBarPx: { width: 202, height: 42 },
           oncePerGameMarkers: 2,
         })
       );
@@ -1658,7 +1658,7 @@ describe('table layout (geometry v2)', () => {
             shellMode: 'fullscreen',
             appBarPx: touch
               ? { width: 146, height: 50 }
-              : { width: 242, height: 42 },
+              : { width: 202, height: 42 },
             ...(touch ? { seamBandPx: 46 } : {}),
             ...(hideEmptyLostZone ? { hideEmptyLostZone } : {}),
           })
@@ -1718,7 +1718,7 @@ describe('table layout (geometry v2)', () => {
           shellMode: 'fullscreen',
           appBarPx: touch
             ? { width: 146, height: 50 }
-            : { width: 242, height: 42 },
+            : { width: 202, height: 42 },
           ...(touch ? { seamBandPx: 46 } : {}),
         })
       );

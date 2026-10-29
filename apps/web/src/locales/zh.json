@@ -6501,5 +6501,149 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "区域轮廓"
+  },
+  "ifsvhW": {
+    "message": "<0>{0}</0>: Settings, saves and replays, and this tutorial whenever you want it.",
+    "translation": "<0>{0}</0>：设置、存档和回放，也可随时重看本教程。"
+  },
+  "sDYhDt": {
+    "message": "A deck needs a name.",
+    "translation": "卡组需要名称。"
+  },
+  "hQE7TV": {
+    "message": "An image URL, or 'default'.",
+    "comments": [
+      "Keep 'default' in English: it is what the player types"
+    ],
+    "translation": "图片网址，或 'default'。"
+  },
+  "8zanjC": {
+    "message": "Artwork group",
+    "translation": "插画分组"
+  },
+  "PCF3WN": {
+    "message": "Change card back",
+    "translation": "更换卡背"
+  },
+  "HLSSB8": {
+    "message": "code or name",
+    "translation": "代码或名称"
+  },
+  "ibWa1H": {
+    "message": "Delete {deckName}?",
+    "translation": "删除 {deckName}？"
+  },
+  "iu7vH9": {
+    "message": "e.g. CC or LL",
+    "comments": [
+      "Energy letters (C, L…) stay as they are"
+    ],
+    "translation": "例如 CC 或 LL"
+  },
+  "tg9VdO": {
+    "message": "e.g. HIJ",
+    "translation": "例如 HIJ"
+  },
+  "3fBsZV": {
+    "message": "e.g. illustration",
+    "translation": "例如 illustration"
+  },
+  "CMMU03": {
+    "message": "Edit…",
+    "context": "change the keyboard shortcuts",
+    "translation": "编辑…"
+  },
+  "I7T1ix": {
+    "message": "Enter an image URL.",
+    "translation": "请输入图片网址。"
+  },
+  "8aoXpa": {
+    "message": "Every key is under <0>{0}</0>, in <1>{1}</1>.",
+    "translation": "所有按键都在 <1>{1}</1> 的<0>{0}</0>下。"
+  },
+  "ZTtNAf": {
+    "message": "HP at least",
+    "translation": "HP 至少"
+  },
+  "LgcKSI": {
+    "message": "HP at most",
+    "translation": "HP 至多"
+  },
+  "fVGc9-": {
+    "message": "https://… or default",
+    "comments": [
+      "Keep 'default' in English: it is what the player types"
+    ],
+    "translation": "https://… 或 default"
+  },
+  "1pdLQw": {
+    "message": "Image not found",
+    "translation": "未找到图片"
+  },
+  "15ARIE": {
+    "message": "Image URL too long",
+    "translation": "图片网址过长"
+  },
+  "6hbF9e": {
+    "message": "Image URL: up to {max} characters.",
+    "translation": "图片网址：最多 {max} 个字符。"
+  },
+  "MIi4yC": {
+    "message": "Keep it to {max} characters.",
+    "translation": "请不要超过 {max} 个字符。"
+  },
+  "WQg61I": {
+    "message": "Keys",
+    "translation": "按键"
+  },
+  "2fhoKU": {
+    "message": "No image",
+    "translation": "无图片"
+  },
+  "xYvd7u": {
+    "message": "Piece position",
+    "translation": "部件位置"
+  },
+  "rkcP1p": {
+    "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
+    "translation": "将宝可梦部件叠放在一起，竞技场部件放入竞技场。"
+  },
+  "XsrZAv": {
+    "message": "Rename",
+    "context": "button",
+    "translation": "重命名"
+  },
+  "Tvyjys": {
+    "message": "Rename deck",
+    "translation": "重命名卡组"
+  },
+  "CBOI8H": {
+    "message": "Resume saved game…",
+    "translation": "继续已存对局…"
+  },
+  "qoNq2S": {
+    "message": "Same group for each piece",
+    "translation": "每个部件使用同一组"
+  },
+  "4XBjuA": {
+    "message": "Save game",
+    "translation": "保存对局"
+  },
+  "y4__tG": {
+    "message": "Settings",
+    "context": "shortcut key caption",
+    "translation": "设置"
+  },
+  "ZMr878": {
+    "message": "That image didn't load.",
+    "translation": "该图片未能加载。"
+  },
+  "PTd_zR": {
+    "message": "Use image",
+    "translation": "使用图片"
+  },
+  "sFWtjQ": {
+    "message": "Watch replay…",
+    "translation": "观看回放…"
   }
 }

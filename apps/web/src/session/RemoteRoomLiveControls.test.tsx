@@ -906,7 +906,7 @@ describe('useLiveRoomControls', () => {
     const input = element<HTMLInputElement>(host, '#jsonReplay');
     expect(input.accept).toBe('.json');
     expect(input.hidden).toBe(true);
-    // The menu's Watch a replay opens the hidden picker.
+    // The menu's Watch replay opens the hidden picker.
     const pick = vi.spyOn(input, 'click');
     await press((live) => live.importReplay());
     expect(pick).toHaveBeenCalledOnce();

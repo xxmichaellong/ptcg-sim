@@ -6501,5 +6501,149 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "Zone-omlijningen"
+  },
+  "ifsvhW": {
+    "message": "<0>{0}</0>: Settings, saves and replays, and this tutorial whenever you want it.",
+    "translation": "<0>{0}</0>: instellingen, opgeslagen spellen en replays, en deze tutorial wanneer je wilt."
+  },
+  "sDYhDt": {
+    "message": "A deck needs a name.",
+    "translation": "Een deck heeft een naam nodig."
+  },
+  "hQE7TV": {
+    "message": "An image URL, or 'default'.",
+    "comments": [
+      "Keep 'default' in English: it is what the player types"
+    ],
+    "translation": "Een afbeeldings-URL of 'default'."
+  },
+  "8zanjC": {
+    "message": "Artwork group",
+    "translation": "Artworkgroep"
+  },
+  "PCF3WN": {
+    "message": "Change card back",
+    "translation": "Kaartrug wijzigen"
+  },
+  "HLSSB8": {
+    "message": "code or name",
+    "translation": "code of naam"
+  },
+  "ibWa1H": {
+    "message": "Delete {deckName}?",
+    "translation": "{deckName} verwijderen?"
+  },
+  "iu7vH9": {
+    "message": "e.g. CC or LL",
+    "comments": [
+      "Energy letters (C, L…) stay as they are"
+    ],
+    "translation": "bijv. CC of LL"
+  },
+  "tg9VdO": {
+    "message": "e.g. HIJ",
+    "translation": "bijv. HIJ"
+  },
+  "3fBsZV": {
+    "message": "e.g. illustration",
+    "translation": "bijv. illustratie"
+  },
+  "CMMU03": {
+    "message": "Edit…",
+    "context": "change the keyboard shortcuts",
+    "translation": "Bewerken…"
+  },
+  "I7T1ix": {
+    "message": "Enter an image URL.",
+    "translation": "Voer een afbeeldings-URL in."
+  },
+  "8aoXpa": {
+    "message": "Every key is under <0>{0}</0>, in <1>{1}</1>.",
+    "translation": "Alle toetsen vind je onder <0>{0}</0>, in <1>{1}</1>."
+  },
+  "ZTtNAf": {
+    "message": "HP at least",
+    "translation": "HP minimaal"
+  },
+  "LgcKSI": {
+    "message": "HP at most",
+    "translation": "HP maximaal"
+  },
+  "fVGc9-": {
+    "message": "https://… or default",
+    "comments": [
+      "Keep 'default' in English: it is what the player types"
+    ],
+    "translation": "https://… of default"
+  },
+  "1pdLQw": {
+    "message": "Image not found",
+    "translation": "Afbeelding niet gevonden"
+  },
+  "15ARIE": {
+    "message": "Image URL too long",
+    "translation": "Afbeeldings-URL te lang"
+  },
+  "6hbF9e": {
+    "message": "Image URL: up to {max} characters.",
+    "translation": "Afbeeldings-URL: maximaal {max} tekens."
+  },
+  "MIi4yC": {
+    "message": "Keep it to {max} characters.",
+    "translation": "Houd het op maximaal {max} tekens."
+  },
+  "WQg61I": {
+    "message": "Keys",
+    "translation": "Toetsen"
+  },
+  "2fhoKU": {
+    "message": "No image",
+    "translation": "Geen afbeelding"
+  },
+  "xYvd7u": {
+    "message": "Piece position",
+    "translation": "Positie van het stuk"
+  },
+  "rkcP1p": {
+    "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
+    "translation": "Leg Pokémon-stukken op één stapel en Stadion-stukken in het Stadion."
+  },
+  "XsrZAv": {
+    "message": "Rename",
+    "context": "button",
+    "translation": "Naam wijzigen"
+  },
+  "Tvyjys": {
+    "message": "Rename deck",
+    "translation": "Deck hernoemen"
+  },
+  "CBOI8H": {
+    "message": "Resume saved game…",
+    "translation": "Opgeslagen spel hervatten…"
+  },
+  "qoNq2S": {
+    "message": "Same group for each piece",
+    "translation": "Zelfde groep voor elk stuk"
+  },
+  "4XBjuA": {
+    "message": "Save game",
+    "translation": "Spel opslaan"
+  },
+  "y4__tG": {
+    "message": "Settings",
+    "context": "shortcut key caption",
+    "translation": "Instellingen"
+  },
+  "ZMr878": {
+    "message": "That image didn't load.",
+    "translation": "Die afbeelding is niet geladen."
+  },
+  "PTd_zR": {
+    "message": "Use image",
+    "translation": "Afbeelding gebruiken"
+  },
+  "sFWtjQ": {
+    "message": "Watch replay…",
+    "translation": "Replay bekijken…"
   }
 }

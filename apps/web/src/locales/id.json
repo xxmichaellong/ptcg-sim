@@ -6501,5 +6501,149 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "Garis tepi zona"
+  },
+  "ifsvhW": {
+    "message": "<0>{0}</0>: Settings, saves and replays, and this tutorial whenever you want it.",
+    "translation": "<0>{0}</0>: Pengaturan, simpanan dan replay, serta tutorial ini kapan pun kamu mau."
+  },
+  "sDYhDt": {
+    "message": "A deck needs a name.",
+    "translation": "Deck harus punya nama."
+  },
+  "hQE7TV": {
+    "message": "An image URL, or 'default'.",
+    "comments": [
+      "Keep 'default' in English: it is what the player types"
+    ],
+    "translation": "URL gambar, atau 'default'."
+  },
+  "8zanjC": {
+    "message": "Artwork group",
+    "translation": "Grup ilustrasi"
+  },
+  "PCF3WN": {
+    "message": "Change card back",
+    "translation": "Ubah sisi belakang kartu"
+  },
+  "HLSSB8": {
+    "message": "code or name",
+    "translation": "kode atau nama"
+  },
+  "ibWa1H": {
+    "message": "Delete {deckName}?",
+    "translation": "Hapus {deckName}?"
+  },
+  "iu7vH9": {
+    "message": "e.g. CC or LL",
+    "comments": [
+      "Energy letters (C, L…) stay as they are"
+    ],
+    "translation": "mis. CC atau LL"
+  },
+  "tg9VdO": {
+    "message": "e.g. HIJ",
+    "translation": "mis. HIJ"
+  },
+  "3fBsZV": {
+    "message": "e.g. illustration",
+    "translation": "mis. ilustrasi"
+  },
+  "CMMU03": {
+    "message": "Edit…",
+    "context": "change the keyboard shortcuts",
+    "translation": "Ubah…"
+  },
+  "I7T1ix": {
+    "message": "Enter an image URL.",
+    "translation": "Masukkan URL gambar."
+  },
+  "8aoXpa": {
+    "message": "Every key is under <0>{0}</0>, in <1>{1}</1>.",
+    "translation": "Semua tombol ada di <0>{0}</0>, di <1>{1}</1>."
+  },
+  "ZTtNAf": {
+    "message": "HP at least",
+    "translation": "HP minimal"
+  },
+  "LgcKSI": {
+    "message": "HP at most",
+    "translation": "HP maksimal"
+  },
+  "fVGc9-": {
+    "message": "https://… or default",
+    "comments": [
+      "Keep 'default' in English: it is what the player types"
+    ],
+    "translation": "https://… atau default"
+  },
+  "1pdLQw": {
+    "message": "Image not found",
+    "translation": "Gambar tidak ditemukan"
+  },
+  "15ARIE": {
+    "message": "Image URL too long",
+    "translation": "URL gambar terlalu panjang"
+  },
+  "6hbF9e": {
+    "message": "Image URL: up to {max} characters.",
+    "translation": "URL gambar: maksimal {max} karakter."
+  },
+  "MIi4yC": {
+    "message": "Keep it to {max} characters.",
+    "translation": "Maksimal {max} karakter."
+  },
+  "WQg61I": {
+    "message": "Keys",
+    "translation": "Tombol"
+  },
+  "2fhoKU": {
+    "message": "No image",
+    "translation": "Tanpa gambar"
+  },
+  "xYvd7u": {
+    "message": "Piece position",
+    "translation": "Posisi bidak"
+  },
+  "rkcP1p": {
+    "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
+    "translation": "Taruh bidak Pokémon dalam satu tumpukan, bidak Stadium di Stadium."
+  },
+  "XsrZAv": {
+    "message": "Rename",
+    "context": "button",
+    "translation": "Ganti nama"
+  },
+  "Tvyjys": {
+    "message": "Rename deck",
+    "translation": "Ganti nama deck"
+  },
+  "CBOI8H": {
+    "message": "Resume saved game…",
+    "translation": "Lanjutkan game tersimpan…"
+  },
+  "qoNq2S": {
+    "message": "Same group for each piece",
+    "translation": "Grup yang sama untuk setiap bidak"
+  },
+  "4XBjuA": {
+    "message": "Save game",
+    "translation": "Simpan game"
+  },
+  "y4__tG": {
+    "message": "Settings",
+    "context": "shortcut key caption",
+    "translation": "Pengaturan"
+  },
+  "ZMr878": {
+    "message": "That image didn't load.",
+    "translation": "Gambar itu gagal dimuat."
+  },
+  "PTd_zR": {
+    "message": "Use image",
+    "translation": "Gunakan gambar"
+  },
+  "sFWtjQ": {
+    "message": "Watch replay…",
+    "translation": "Tonton replay…"
   }
 }

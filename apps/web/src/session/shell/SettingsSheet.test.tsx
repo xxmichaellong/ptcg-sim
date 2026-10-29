@@ -5,7 +5,10 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { boardViewSettings } from '../../board/view/board-view-settings.js';
-import { closeShortcutsDialog } from '../../hotkeys/shortcuts-dialog-state.js';
+import {
+  closeShortcutsDialog,
+  shortcutsDialogState,
+} from '../../hotkeys/shortcuts-dialog-state.js';
 import {
   DEFAULT_MOTION_SETTINGS,
   motionSettings,
@@ -88,7 +91,28 @@ describe('SettingsSheet', () => {
       [...sheet.querySelectorAll('.ptcgsim-settings-section__title')].map(
         (title) => title.textContent
       )
-    ).toEqual(['Table', 'Appearance', 'Language', 'Motion']);
+    ).toEqual(['Table', 'Appearance', 'Language', 'Motion', 'Keys']);
+  });
+
+  it('gives way to the keyboard shortcuts, and has no keys on a touch screen', async () => {
+    const { onOpenChange } = await render();
+    expect(document.querySelector('#settingsKeys kbd')?.textContent).toBe('?');
+    await act(async () =>
+      document.querySelector<HTMLButtonElement>('#editShortcutsButton')!.click()
+    );
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(shortcutsDialogState().open).toBe(true);
+
+    vi.stubGlobal('matchMedia', (query: string) => ({
+      matches: query === '(pointer: coarse) and (hover: none)',
+      media: query,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+    }));
+    await act(async () => root.unmount());
+    root = createRoot(host);
+    await render();
+    expect(document.querySelector('#settingsKeys')).toBeNull();
   });
 
   it('lets a player in a room allow board flip at any time, and only there', async () => {

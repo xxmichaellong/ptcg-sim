@@ -6501,5 +6501,149 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "영역 윤곽선"
+  },
+  "ifsvhW": {
+    "message": "<0>{0}</0>: Settings, saves and replays, and this tutorial whenever you want it.",
+    "translation": "<0>{0}</0>: 설정, 저장 및 리플레이, 그리고 원할 때 언제든 이 튜토리얼을 볼 수 있습니다."
+  },
+  "sDYhDt": {
+    "message": "A deck needs a name.",
+    "translation": "덱에 이름이 필요합니다."
+  },
+  "hQE7TV": {
+    "message": "An image URL, or 'default'.",
+    "comments": [
+      "Keep 'default' in English: it is what the player types"
+    ],
+    "translation": "이미지 URL 또는 'default'."
+  },
+  "8zanjC": {
+    "message": "Artwork group",
+    "translation": "일러스트 그룹"
+  },
+  "PCF3WN": {
+    "message": "Change card back",
+    "translation": "카드 뒷면 변경"
+  },
+  "HLSSB8": {
+    "message": "code or name",
+    "translation": "코드 또는 이름"
+  },
+  "ibWa1H": {
+    "message": "Delete {deckName}?",
+    "translation": "{deckName}을(를) 삭제할까요?"
+  },
+  "iu7vH9": {
+    "message": "e.g. CC or LL",
+    "comments": [
+      "Energy letters (C, L…) stay as they are"
+    ],
+    "translation": "예: CC 또는 LL"
+  },
+  "tg9VdO": {
+    "message": "e.g. HIJ",
+    "translation": "예: HIJ"
+  },
+  "3fBsZV": {
+    "message": "e.g. illustration",
+    "translation": "예: 일러스트"
+  },
+  "CMMU03": {
+    "message": "Edit…",
+    "context": "change the keyboard shortcuts",
+    "translation": "편집…"
+  },
+  "I7T1ix": {
+    "message": "Enter an image URL.",
+    "translation": "이미지 URL을 입력하세요."
+  },
+  "8aoXpa": {
+    "message": "Every key is under <0>{0}</0>, in <1>{1}</1>.",
+    "translation": "모든 키는 <1>{1}</1>의 <0>{0}</0>에서 확인할 수 있습니다."
+  },
+  "ZTtNAf": {
+    "message": "HP at least",
+    "translation": "HP 최소"
+  },
+  "LgcKSI": {
+    "message": "HP at most",
+    "translation": "HP 최대"
+  },
+  "fVGc9-": {
+    "message": "https://… or default",
+    "comments": [
+      "Keep 'default' in English: it is what the player types"
+    ],
+    "translation": "https://… 또는 default"
+  },
+  "1pdLQw": {
+    "message": "Image not found",
+    "translation": "이미지를 찾을 수 없습니다"
+  },
+  "15ARIE": {
+    "message": "Image URL too long",
+    "translation": "이미지 URL이 너무 깁니다"
+  },
+  "6hbF9e": {
+    "message": "Image URL: up to {max} characters.",
+    "translation": "이미지 URL은 최대 {max}자입니다."
+  },
+  "MIi4yC": {
+    "message": "Keep it to {max} characters.",
+    "translation": "{max}자 이내로 입력하세요."
+  },
+  "WQg61I": {
+    "message": "Keys",
+    "translation": "키"
+  },
+  "2fhoKU": {
+    "message": "No image",
+    "translation": "이미지 없음"
+  },
+  "xYvd7u": {
+    "message": "Piece position",
+    "translation": "조각 위치"
+  },
+  "rkcP1p": {
+    "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
+    "translation": "포켓몬 조각은 한 더미에, 스타디움 조각은 스타디움에 놓으세요."
+  },
+  "XsrZAv": {
+    "message": "Rename",
+    "context": "button",
+    "translation": "이름 변경"
+  },
+  "Tvyjys": {
+    "message": "Rename deck",
+    "translation": "덱 이름 변경"
+  },
+  "CBOI8H": {
+    "message": "Resume saved game…",
+    "translation": "저장된 게임 이어하기…"
+  },
+  "qoNq2S": {
+    "message": "Same group for each piece",
+    "translation": "각 조각에 같은 그룹 적용"
+  },
+  "4XBjuA": {
+    "message": "Save game",
+    "translation": "게임 저장"
+  },
+  "y4__tG": {
+    "message": "Settings",
+    "context": "shortcut key caption",
+    "translation": "설정"
+  },
+  "ZMr878": {
+    "message": "That image didn't load.",
+    "translation": "이미지를 불러오지 못했습니다."
+  },
+  "PTd_zR": {
+    "message": "Use image",
+    "translation": "이미지 사용"
+  },
+  "sFWtjQ": {
+    "message": "Watch replay…",
+    "translation": "리플레이 보기…"
   }
 }

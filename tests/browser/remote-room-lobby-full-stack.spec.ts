@@ -583,9 +583,9 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     );
     await playerTwo.page.keyboard.press('Escape');
     await expect(playerTwo.page.locator('#settings')).toHaveCount(0);
-    // Focus goes back to the toolbar's Settings, which opened it.
+    // Focus goes back to the menu (☰), which Settings opened from.
     await expect(
-      playerTwo.page.locator('.ptcgsim-app-bar #settingsButton')
+      playerTwo.page.locator('.ptcgsim-app-bar #appMenuButton')
     ).toBeFocused();
     const hiddenZone = playerTwo.page.locator('[data-zone-id]').first();
     await expect(hiddenZone).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');

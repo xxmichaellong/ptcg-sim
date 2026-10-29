@@ -6501,5 +6501,149 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "Оквири зона"
+  },
+  "ifsvhW": {
+    "message": "<0>{0}</0>: Settings, saves and replays, and this tutorial whenever you want it.",
+    "translation": "<0>{0}</0>: подешавања, сачуване партије и снимци, као и овај водич кад год ти устреба."
+  },
+  "sDYhDt": {
+    "message": "A deck needs a name.",
+    "translation": "Шпил мора да има име."
+  },
+  "hQE7TV": {
+    "message": "An image URL, or 'default'.",
+    "comments": [
+      "Keep 'default' in English: it is what the player types"
+    ],
+    "translation": "URL слике или 'default'."
+  },
+  "8zanjC": {
+    "message": "Artwork group",
+    "translation": "Група илустрација"
+  },
+  "PCF3WN": {
+    "message": "Change card back",
+    "translation": "Промени полеђину карте"
+  },
+  "HLSSB8": {
+    "message": "code or name",
+    "translation": "шифра или име"
+  },
+  "ibWa1H": {
+    "message": "Delete {deckName}?",
+    "translation": "Обрисати {deckName}?"
+  },
+  "iu7vH9": {
+    "message": "e.g. CC or LL",
+    "comments": [
+      "Energy letters (C, L…) stay as they are"
+    ],
+    "translation": "нпр. CC или LL"
+  },
+  "tg9VdO": {
+    "message": "e.g. HIJ",
+    "translation": "нпр. HIJ"
+  },
+  "3fBsZV": {
+    "message": "e.g. illustration",
+    "translation": "нпр. илустрација"
+  },
+  "CMMU03": {
+    "message": "Edit…",
+    "context": "change the keyboard shortcuts",
+    "translation": "Уреди…"
+  },
+  "I7T1ix": {
+    "message": "Enter an image URL.",
+    "translation": "Унеси URL слике."
+  },
+  "8aoXpa": {
+    "message": "Every key is under <0>{0}</0>, in <1>{1}</1>.",
+    "translation": "Сви тастери су под <0>{0}</0>, у <1>{1}</1>."
+  },
+  "ZTtNAf": {
+    "message": "HP at least",
+    "translation": "HP најмање"
+  },
+  "LgcKSI": {
+    "message": "HP at most",
+    "translation": "HP највише"
+  },
+  "fVGc9-": {
+    "message": "https://… or default",
+    "comments": [
+      "Keep 'default' in English: it is what the player types"
+    ],
+    "translation": "https://… или default"
+  },
+  "1pdLQw": {
+    "message": "Image not found",
+    "translation": "Слика није пронађена"
+  },
+  "15ARIE": {
+    "message": "Image URL too long",
+    "translation": "URL слике је предугачак"
+  },
+  "6hbF9e": {
+    "message": "Image URL: up to {max} characters.",
+    "translation": "URL слике: до {max} знакова."
+  },
+  "MIi4yC": {
+    "message": "Keep it to {max} characters.",
+    "translation": "Нека има највише {max} знакова."
+  },
+  "WQg61I": {
+    "message": "Keys",
+    "translation": "Тастери"
+  },
+  "2fhoKU": {
+    "message": "No image",
+    "translation": "Нема слике"
+  },
+  "xYvd7u": {
+    "message": "Piece position",
+    "translation": "Положај дела"
+  },
+  "rkcP1p": {
+    "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
+    "translation": "Стави делове Pokémon-а у једну гомилу, а делове стадиона на стадион."
+  },
+  "XsrZAv": {
+    "message": "Rename",
+    "context": "button",
+    "translation": "Преименуј"
+  },
+  "Tvyjys": {
+    "message": "Rename deck",
+    "translation": "Преименуј шпил"
+  },
+  "CBOI8H": {
+    "message": "Resume saved game…",
+    "translation": "Настави сачувану партију…"
+  },
+  "qoNq2S": {
+    "message": "Same group for each piece",
+    "translation": "Иста група за сваки део"
+  },
+  "4XBjuA": {
+    "message": "Save game",
+    "translation": "Сачувај партију"
+  },
+  "y4__tG": {
+    "message": "Settings",
+    "context": "shortcut key caption",
+    "translation": "Подешавања"
+  },
+  "ZMr878": {
+    "message": "That image didn't load.",
+    "translation": "Та слика се није учитала."
+  },
+  "PTd_zR": {
+    "message": "Use image",
+    "translation": "Користи слику"
+  },
+  "sFWtjQ": {
+    "message": "Watch replay…",
+    "translation": "Гледај снимак…"
   }
 }

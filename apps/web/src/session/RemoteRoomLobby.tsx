@@ -99,6 +99,7 @@ import {
 import { DeckLayer } from './shell/DeckLayer.js';
 import { OnlineSheet } from './shell/OnlineSheet.js';
 import { SettingsSheet } from './shell/SettingsSheet.js';
+import { useSettingsSheetHost } from './shell/settings-sheet-state.js';
 import { tableCurtain, type TableCurtain } from './shell/table-curtain.js';
 import { TableBanner, TableShell } from './shell/TableShell.js';
 
@@ -401,6 +402,11 @@ export const RemoteRoomLobby = ({
   );
   // The deck screen or Settings, over whichever of those is showing.
   const [overlay, setOverlay] = useState<'deck' | 'settings'>();
+  // A room or the tutorial's table, once there, draws its own.
+  const settingsHost = useSettingsSheetHost(
+    () => setOverlay('settings'),
+    !tutorial && !connected
+  );
   const [deckSurfaceActivated, setDeckSurfaceActivated] = useState(false);
   const [deckCustody, setDeckCustody] = useState<DeckBuilderCustody>();
   // Dark mode is remembered on this device (the page's preferences); the
@@ -1574,7 +1580,7 @@ export const RemoteRoomLobby = ({
       ? {}
       : { onPlayOnline: () => setActivePanel('lobby') }),
     onDeck: openDeck,
-    onSettings: () => setOverlay('settings'),
+    onSettings: () => settingsHost.open(),
     onFullscreen: () => {
       requestBrowserFullscreen();
     },
@@ -1658,7 +1664,6 @@ export const RemoteRoomLobby = ({
       <OnlineSheet
         open={activePanel === 'lobby' && overlay === undefined}
         onDeck={openDeck}
-        onSettings={() => setOverlay('settings')}
         onOpenChange={(open) => {
           // Put away, Play online gives way to the Solo table, as v1's Solo
           // tab did; never while a room is being made or joined.
@@ -1670,6 +1675,7 @@ export const RemoteRoomLobby = ({
       <SettingsSheet
         open={overlay === 'settings'}
         onOpenChange={(open) => setOverlay(open ? 'settings' : undefined)}
+        {...(settingsHost.section ? { section: settingsHost.section } : {})}
         solo={parkedSolo !== undefined}
         darkMode={effectivePreferences.darkMode}
         onDarkModeChange={setDarkMode}

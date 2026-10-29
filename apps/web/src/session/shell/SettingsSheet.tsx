@@ -1,6 +1,6 @@
 import { Trans, useLingui } from '@lingui/react/macro';
 import { CARD_IMAGE_LANGUAGES, isCardImageLanguage } from '@ptcgsim/deck-core';
-import { useSyncExternalStore } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 
 import { TableArtControls } from '../../board/view/TableArtControls.js';
 import { CARD_BACK_VIEW_PREFERENCES } from '../../card-backs/card-back-preferences.js';
@@ -30,6 +30,14 @@ import {
 import { Sheet } from '../../ui/Sheet.js';
 import { usePreference } from '../../preferences/usePreference.js';
 import { preferences } from '../../preferences/preference-store.js';
+import { useHotkeyHints } from '../../hotkeys/hotkey-preferences.js';
+import { openShortcutsDialog } from '../../hotkeys/shortcuts-dialog-state.js';
+import { TOUCH_ONLY_QUERY, useMediaQuery } from '../../ui/breakpoints.js';
+import './settings-sheet.css';
+import {
+  SETTINGS_SECTION_IDS,
+  type SettingsSectionRequest,
+} from './settings-sheet-state.js';
 
 const MotionControls = () => {
   const { t } = useLingui();
@@ -201,9 +209,35 @@ const OpponentCardBacksControl = () => {
   );
 };
 
+/**
+ * The keys: their list, where each can be moved, in its own dialog. Not
+ * on a touch screen, which has none.
+ */
+const KeysControl = ({ onEdit }: { readonly onEdit: () => void }) => {
+  const key = useHotkeyHints()('table.shortcuts');
+  return (
+    <div className="ptcgsim-settings-row">
+      <span className="ptcgsim-settings-row__label">
+        <Trans>Keyboard shortcuts</Trans>
+      </span>
+      {key ? <kbd className="ptcgsim-settings-row__key">{key}</kbd> : null}
+      <button
+        id="editShortcutsButton"
+        type="button"
+        className="ds-button ds-button--secondary"
+        onClick={onEdit}
+      >
+        <Trans context="change the keyboard shortcuts">Edit…</Trans>
+      </button>
+    </div>
+  );
+};
+
 export interface SettingsSheetProps {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
+  /** Where to scroll it to as it opens ("Settings: Cards"). */
+  readonly section?: SettingsSectionRequest;
   /** Solo offers to cover the opponent's hand. */
   readonly solo: boolean;
   readonly darkMode: boolean;
@@ -230,6 +264,7 @@ export interface SettingsSheetProps {
 export const SettingsSheet = ({
   open,
   onOpenChange,
+  section,
   solo,
   darkMode,
   onDarkModeChange,
@@ -238,6 +273,17 @@ export const SettingsSheet = ({
   boardFlip,
 }: SettingsSheetProps) => {
   const { t } = useLingui();
+  const touchOnly = useMediaQuery(TOUCH_ONLY_QUERY);
+  useEffect(() => {
+    if (!open || !section) return;
+    // Once the sheet is drawn.
+    const frame = requestAnimationFrame(() => {
+      document
+        .getElementById(SETTINGS_SECTION_IDS[section.section])
+        ?.scrollIntoView({ block: 'start' });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [open, section]);
   return (
     <Sheet
       open={open}
@@ -299,6 +345,17 @@ export const SettingsSheet = ({
       <SettingsSection title={t`Motion`} id="motionSettings">
         <MotionControls />
       </SettingsSection>
+      {touchOnly ? null : (
+        <SettingsSection title={t`Keys`} id="settingsKeys">
+          <KeysControl
+            onEdit={() => {
+              // One window at a time: Settings gives way to the keys.
+              onOpenChange(false);
+              openShortcutsDialog();
+            }}
+          />
+        </SettingsSection>
+      )}
     </Sheet>
   );
 };

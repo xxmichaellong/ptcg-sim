@@ -35,7 +35,6 @@ import { ActionMenu, type ActionMenuEntry } from '../../ui/ActionMenu.js';
 import { DeckIcon } from '../../ui/DeckIcon.js';
 import {
   COARSE_POINTER_QUERY,
-  TOUCH_ONLY_QUERY,
   useCompactLayout,
   useMediaQuery,
 } from '../../ui/breakpoints.js';
@@ -99,14 +98,12 @@ const openOutside = (url: string): void => {
 };
 
 /**
- * What the toolbar shows as buttons while it is open: where to play, the
- * deck, the keys (not on a touch screen, which has none) and Settings.
- * Worded when the toolbar renders, in the language up then.
+ * What the toolbar shows as buttons: where to play, the deck and the
+ * command palette. Worded when the toolbar renders, in the language up
+ * then.
  */
 export const primaryEntries = (
   model: AppMenuModel,
-  shortcutsHint: string | undefined,
-  touchOnly: boolean,
   commandsHint?: string
 ): ToolbarEntry[] => {
   const entries: ToolbarEntry[] = [];
@@ -142,34 +139,66 @@ export const primaryEntries = (
     ...(commandsHint ? { hint: commandsHint } : {}),
     onSelect: openCommandPalette,
   });
-  if (!touchOnly) {
-    entries.push({
-      id: 'shortcutsButton',
-      label: t`Keyboard shortcuts`,
-      icon: KeyboardIcon,
-      ...(shortcutsHint ? { hint: shortcutsHint } : {}),
-      onSelect: () => openShortcutsDialog(),
-    });
-  }
-  entries.push({
-    id: 'settingsButton',
-    label: t`Settings`,
-    icon: GearSixIcon,
-    onSelect: model.onSettings,
-  });
   return entries;
 };
 
-/** Everything else, behind the toolbar's last button (More). */
+/**
+ * The page's help, in no menu: the keys (in Settings, and on their own
+ * key) and the links at the foot of Settings. The palette lists them.
+ */
+export const helpEntries = (shortcutsHint?: string): ToolbarEntry[] => [
+  {
+    id: 'shortcutsButton',
+    label: t`Keyboard shortcuts`,
+    icon: KeyboardIcon,
+    ...(shortcutsHint ? { hint: shortcutsHint } : {}),
+    onSelect: () => openShortcutsDialog(),
+  },
+  {
+    id: 'changelogButton',
+    label: RELEASE_NAME,
+    icon: SparkleIcon,
+    onSelect: () => openHelpPage('changelog'),
+  },
+  {
+    id: 'donationsButton',
+    label: t`Sponsors`,
+    icon: HeartIcon,
+    onSelect: () => openHelpPage('donations'),
+  },
+  {
+    id: 'discordButton',
+    label: t`Discord`,
+    icon: DiscordLogoIcon,
+    onSelect: () => openOutside(DISCORD_URL),
+  },
+];
+
+/** The groups that have entries, a separator between each two. */
+const grouped = (
+  ...groups: readonly (readonly ActionMenuEntry[])[]
+): ActionMenuEntry[] =>
+  groups
+    .filter((group) => group.length > 0)
+    .flatMap((group, index) =>
+      index === 0 ? [...group] : [{ kind: 'separator' as const }, ...group]
+    );
+
+/**
+ * The menu (☰): what can be done here, Settings among it. In a room the
+ * invites, the game's saves, Settings and the way out; at a Solo table
+ * Settings first, then the replays. A replay's way out leads; the
+ * tutorial's comes last.
+ */
 export const restEntries = (
   model: AppMenuModel,
-  fullscreen: boolean
+  fullscreen: boolean,
+  settingsHint?: string
 ): ActionMenuEntry[] => {
-  const entries: ActionMenuEntry[] = [];
   const game = model.game;
-  const gameEntries: ActionMenuEntry[] = [];
+  const exit: ActionMenuEntry[] = [];
   if (game?.onExitReplay) {
-    gameEntries.push({
+    exit.push({
       // The rail's Exit keeps v1's `#exitReplay`.
       id: 'exitReplayMenuItem',
       label: t`Exit replay`,
@@ -177,10 +206,11 @@ export const restEntries = (
       onSelect: game.onExitReplay,
     });
   }
+  const gameEntries: ActionMenuEntry[] = [];
   if (game?.onImportReplay) {
     gameEntries.push({
       id: 'importReplay',
-      label: t`Watch a replay…`,
+      label: t`Watch replay…`,
       icon: FilmReelIcon,
       disabled: game.busy === true,
       onSelect: game.onImportReplay,
@@ -189,7 +219,7 @@ export const restEntries = (
   if (game?.onSaveOnline) {
     gameEntries.push({
       id: 'saveOnlineGame',
-      label: t`Save online game`,
+      label: t`Save game`,
       icon: CloudArrowUpIcon,
       disabled: game.busy === true,
       onSelect: game.onSaveOnline,
@@ -198,7 +228,7 @@ export const restEntries = (
   if (game?.onResumeSaved) {
     gameEntries.push({
       id: 'resumeSavedGame',
-      label: t`Resume a saved game…`,
+      label: t`Resume saved game…`,
       icon: FolderOpenIcon,
       disabled: game.busy === true,
       onSelect: game.onResumeSaved,
@@ -212,12 +242,19 @@ export const restEntries = (
       onSelect: game.onExportState,
     });
   }
-  entries.push(...gameEntries);
 
-  const viewEntries: ActionMenuEntry[] = [];
+  const page: ActionMenuEntry[] = [
+    {
+      id: 'settingsButton',
+      label: t`Settings`,
+      icon: GearSixIcon,
+      hint: settingsHint,
+      onSelect: model.onSettings,
+    },
+  ];
   if (model.onFullscreen) {
     // Full screen already: the same entry takes the page back out.
-    viewEntries.push(
+    page.push(
       fullscreen
         ? {
             id: 'fullscreenButton',
@@ -233,88 +270,66 @@ export const restEntries = (
           }
     );
   }
-  if (viewEntries.length > 0) {
-    if (entries.length > 0) entries.push({ kind: 'separator' });
-    entries.push(...viewEntries);
-  }
-
-  if (entries.length > 0) entries.push({ kind: 'separator' });
-  if (model.onExitTutorial) {
-    entries.push({
-      id: 'leaveTutorialButton',
-      label: t`Leave tutorial`,
-      icon: GraduationCapIcon,
-      onSelect: model.onExitTutorial,
-    });
-  } else if (model.onTutorial) {
-    entries.push({
+  if (model.onTutorial && !model.onExitTutorial) {
+    page.push({
       id: 'tutorialButton',
       label: t`Tutorial`,
       icon: GraduationCapIcon,
       onSelect: model.onTutorial,
     });
   }
-  entries.push(
-    {
-      id: 'changelogButton',
-      label: RELEASE_NAME,
-      icon: SparkleIcon,
-      onSelect: () => openHelpPage('changelog'),
-    },
-    {
-      id: 'donationsButton',
-      label: t`Sponsors`,
-      icon: HeartIcon,
-      onSelect: () => openHelpPage('donations'),
-    },
-    {
-      id: 'discordButton',
-      label: t`Discord`,
-      icon: DiscordLogoIcon,
-      onSelect: () => openOutside(DISCORD_URL),
-    }
-  );
 
   const invites = model.invites;
-  if ((invites && invites.roles.length > 0) || model.onLeave) {
-    entries.push({ kind: 'separator' });
-    if (invites?.roles.includes('player')) {
-      entries.push({
-        id: 'inviteOpponentMenuItem',
-        // Taken, the seat can't be offered again: the row says why.
-        label: invites.seatTaken ? (
-          <>
-            {t`Invite opponent`}{' '}
-            <span className="app-menu-detail">{t`Seat taken`}</span>
-          </>
-        ) : (
-          t`Invite opponent`
-        ),
-        icon: UserPlusIcon,
-        disabled: invites.seatTaken,
-        onSelect: () => invites.onInvite('player'),
-      });
-    }
-    if (invites?.roles.includes('spectator')) {
-      entries.push({
-        id: 'inviteSpectatorMenuItem',
-        label: t`Invite spectator`,
-        icon: EyeIcon,
-        onSelect: () => invites.onInvite('spectator'),
-      });
-    }
-    if (model.onLeave) {
-      entries.push({
-        id: 'leaveRoomButton',
-        label: t`Leave room`,
-        icon: SignOutIcon,
-        mirrored: true,
-        danger: true,
-        onSelect: model.onLeave,
-      });
-    }
+  const inviteEntries: ActionMenuEntry[] = [];
+  if (invites?.roles.includes('player')) {
+    inviteEntries.push({
+      id: 'inviteOpponentMenuItem',
+      // Taken, the seat can't be offered again: the row says why.
+      label: invites.seatTaken ? (
+        <>
+          {t`Invite opponent`}{' '}
+          <span className="app-menu-detail">{t`Seat taken`}</span>
+        </>
+      ) : (
+        t`Invite opponent`
+      ),
+      icon: UserPlusIcon,
+      disabled: invites.seatTaken,
+      onSelect: () => invites.onInvite('player'),
+    });
   }
-  return entries;
+  if (invites?.roles.includes('spectator')) {
+    inviteEntries.push({
+      id: 'inviteSpectatorMenuItem',
+      label: t`Invite spectator`,
+      icon: EyeIcon,
+      onSelect: () => invites.onInvite('spectator'),
+    });
+  }
+
+  const leave: ActionMenuEntry[] = [];
+  if (model.onExitTutorial) {
+    leave.push({
+      id: 'leaveTutorialButton',
+      label: t`Leave tutorial`,
+      icon: GraduationCapIcon,
+      onSelect: model.onExitTutorial,
+    });
+  }
+  if (model.onLeave) {
+    leave.push({
+      id: 'leaveRoomButton',
+      label: t`Leave room`,
+      icon: SignOutIcon,
+      mirrored: true,
+      danger: true,
+      onSelect: model.onLeave,
+    });
+  }
+
+  return inviteEntries.length > 0 || model.onLeave
+    ? grouped(exit, inviteEntries, gameEntries, page, leave)
+    : grouped(exit, page, gameEntries, leave);
 };
 
 /**
@@ -330,9 +345,9 @@ const appBarButtonPx = (coarse: boolean): number => (coarse ? 44 : 36);
 
 /**
  * The most buttons the bar shows: on a phone the palette, the log and the
- * menu; elsewhere also the deck, where to play and Settings.
+ * menu; elsewhere also the deck and where to play.
  */
-export const APP_BAR_SLOTS = { full: 6, compact: 3 } as const;
+export const APP_BAR_SLOTS = { full: 5, compact: 3 } as const;
 
 /** The bar's box for that many buttons. */
 export const appBarSize = (
@@ -381,10 +396,10 @@ const BarButton = ({ entry }: { readonly entry: ToolbarEntry }) => (
 
 /**
  * The app bar (ADR-036), in the table's top-right corner, clear of the
- * play: the deck and where to play, then the command palette, the log and
- * Settings, then the menu (☰) with everything else -- the keys, full
- * screen, saves and replays, help, leaving. On a phone the bar keeps the
- * palette, the log and the menu, and the menu leads with the rest. The
+ * play: the deck and where to play, then the command palette and the log,
+ * then the menu (☰) with what else can be done here -- Settings, full
+ * screen, saves and replays, invites, leaving. On a phone the bar keeps
+ * the palette, the log and the menu, and the menu leads with the rest. The
  * game's own actions are not here: they lie on the table, along the seam.
  */
 export const AppBar = ({
@@ -392,39 +407,24 @@ export const AppBar = ({
   log,
 }: {
   readonly model: AppMenuModel;
-  /** The log's button (ActivityLauncher), between the palette and Settings. */
+  /** The log's button (ActivityLauncher), after the palette. */
   readonly log?: ReactNode;
 }) => {
   const { t } = useLingui();
   const hint = useHotkeyHints();
-  const touchOnly = useMediaQuery(TOUCH_ONLY_QUERY);
   const coarse = useMediaQuery(COARSE_POINTER_QUERY);
   const compact = useCompactLayout();
   const fullscreen = useBrowserFullscreen();
-  const primary = primaryEntries(
-    model,
-    hint('table.shortcuts'),
-    touchOnly,
-    hint('table.commands')
-  );
-  // The keys have their own key (?) and the menu; a phone's bar keeps only
-  // the palette of the rest.
+  const primary = primaryEntries(model, hint('table.commands'));
+  // A phone's bar keeps only the palette of these.
   const onBar = (entry: ToolbarEntry): boolean =>
-    compact ? entry.id === 'commandsButton' : entry.id !== 'shortcutsButton';
+    !compact || entry.id === 'commandsButton';
   const places = primary.filter(
-    (entry) =>
-      onBar(entry) &&
-      entry.id !== 'commandsButton' &&
-      entry.id !== 'settingsButton'
+    (entry) => onBar(entry) && entry.id !== 'commandsButton'
   );
-  const commands = primary.find(
-    (entry) => entry.id === 'commandsButton' && onBar(entry)
-  );
-  const settings = primary.find(
-    (entry) => entry.id === 'settingsButton' && onBar(entry)
-  );
+  const commands = primary.find((entry) => entry.id === 'commandsButton');
   const inMenu = primary.filter((entry) => !onBar(entry));
-  const rest = restEntries(model, fullscreen);
+  const rest = restEntries(model, fullscreen, hint('table.settings'));
   const entries: ActionMenuEntry[] =
     inMenu.length > 0 ? [...inMenu, { kind: 'separator' }, ...rest] : rest;
   const header = model.heading ? (
@@ -452,11 +452,10 @@ export const AppBar = ({
           ))}
         </div>
       ) : null}
-      {commands || log || settings ? (
+      {commands || log ? (
         <div className="ptcgsim-app-bar__group">
           {commands ? <BarButton entry={commands} /> : null}
           {log}
-          {settings ? <BarButton entry={settings} /> : null}
         </div>
       ) : null}
       <div className="ptcgsim-app-bar__group">

@@ -6501,5 +6501,149 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "ゾーンの枠線"
+  },
+  "ifsvhW": {
+    "message": "<0>{0}</0>: Settings, saves and replays, and this tutorial whenever you want it.",
+    "translation": "<0>{0}</0>:設定、セーブとリプレイ、必要なときに開けるこのチュートリアルがあります。"
+  },
+  "sDYhDt": {
+    "message": "A deck needs a name.",
+    "translation": "デッキには名前が必要です。"
+  },
+  "hQE7TV": {
+    "message": "An image URL, or 'default'.",
+    "comments": [
+      "Keep 'default' in English: it is what the player types"
+    ],
+    "translation": "画像のURL、または「default」。"
+  },
+  "8zanjC": {
+    "message": "Artwork group",
+    "translation": "イラストグループ"
+  },
+  "PCF3WN": {
+    "message": "Change card back",
+    "translation": "カードの裏面を変更"
+  },
+  "HLSSB8": {
+    "message": "code or name",
+    "translation": "コードまたは名前"
+  },
+  "ibWa1H": {
+    "message": "Delete {deckName}?",
+    "translation": "{deckName}を削除しますか?"
+  },
+  "iu7vH9": {
+    "message": "e.g. CC or LL",
+    "comments": [
+      "Energy letters (C, L…) stay as they are"
+    ],
+    "translation": "例: CC または LL"
+  },
+  "tg9VdO": {
+    "message": "e.g. HIJ",
+    "translation": "例: HIJ"
+  },
+  "3fBsZV": {
+    "message": "e.g. illustration",
+    "translation": "例: イラスト"
+  },
+  "CMMU03": {
+    "message": "Edit…",
+    "context": "change the keyboard shortcuts",
+    "translation": "編集…"
+  },
+  "I7T1ix": {
+    "message": "Enter an image URL.",
+    "translation": "画像URLを入力してください。"
+  },
+  "8aoXpa": {
+    "message": "Every key is under <0>{0}</0>, in <1>{1}</1>.",
+    "translation": "すべてのキーは<0>{0}</0>の<1>{1}</1>にあります。"
+  },
+  "ZTtNAf": {
+    "message": "HP at least",
+    "translation": "HPの下限"
+  },
+  "LgcKSI": {
+    "message": "HP at most",
+    "translation": "HPの上限"
+  },
+  "fVGc9-": {
+    "message": "https://… or default",
+    "comments": [
+      "Keep 'default' in English: it is what the player types"
+    ],
+    "translation": "https://… または default"
+  },
+  "1pdLQw": {
+    "message": "Image not found",
+    "translation": "画像が見つかりません"
+  },
+  "15ARIE": {
+    "message": "Image URL too long",
+    "translation": "画像URLが長すぎます"
+  },
+  "6hbF9e": {
+    "message": "Image URL: up to {max} characters.",
+    "translation": "画像URL:{max}文字までです。"
+  },
+  "MIi4yC": {
+    "message": "Keep it to {max} characters.",
+    "translation": "{max}文字以内にしてください。"
+  },
+  "WQg61I": {
+    "message": "Keys",
+    "translation": "キー"
+  },
+  "2fhoKU": {
+    "message": "No image",
+    "translation": "画像なし"
+  },
+  "xYvd7u": {
+    "message": "Piece position",
+    "translation": "ピースの位置"
+  },
+  "rkcP1p": {
+    "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
+    "translation": "ポケモンのピースは1つの山にまとめ、スタジアムのピースはスタジアムに置いてください。"
+  },
+  "XsrZAv": {
+    "message": "Rename",
+    "context": "button",
+    "translation": "名前を変更"
+  },
+  "Tvyjys": {
+    "message": "Rename deck",
+    "translation": "デッキ名を変更"
+  },
+  "CBOI8H": {
+    "message": "Resume saved game…",
+    "translation": "セーブした対戦を再開…"
+  },
+  "qoNq2S": {
+    "message": "Same group for each piece",
+    "translation": "ピースごとに同じグループ"
+  },
+  "4XBjuA": {
+    "message": "Save game",
+    "translation": "対戦をセーブ"
+  },
+  "y4__tG": {
+    "message": "Settings",
+    "context": "shortcut key caption",
+    "translation": "設定"
+  },
+  "ZMr878": {
+    "message": "That image didn't load.",
+    "translation": "画像を読み込めませんでした。"
+  },
+  "PTd_zR": {
+    "message": "Use image",
+    "translation": "画像を使用"
+  },
+  "sFWtjQ": {
+    "message": "Watch replay…",
+    "translation": "リプレイを見る…"
   }
 }

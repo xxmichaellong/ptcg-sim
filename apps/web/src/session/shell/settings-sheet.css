@@ -1,0 +1,34 @@
+/* Settings' own rows (SettingsSheet.tsx); the shared ones are in
+   form-controls.css. */
+
+/* A label, its key and a button that opens something: the keys' Edit…. */
+.ptcgsim-settings-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 30px;
+}
+
+.ptcgsim-settings-row__label {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--text-sm);
+}
+
+.ptcgsim-settings-row__key {
+  min-width: 1.6em;
+  padding: 1px var(--space-1-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  text-align: center;
+}
+
+@media (pointer: coarse) {
+  .ptcgsim-settings-row {
+    min-height: 44px;
+  }
+}

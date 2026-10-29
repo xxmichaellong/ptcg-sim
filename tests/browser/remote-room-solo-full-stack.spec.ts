@@ -363,7 +363,7 @@ test('the Solo table owns one authority and keeps it across the menu and sheets'
     .locator('.ptcgsim-board-surface')
     .getAttribute('data-revision');
   await openAppMenu(page);
-  await expect(page.locator('#importReplay')).toHaveText('Watch a replay…');
+  await expect(page.locator('#importReplay')).toHaveText('Watch replay…');
   await page.keyboard.press('Escape');
   const [perspectiveReplay] = await Promise.all([
     page.waitForEvent('download'),
@@ -389,7 +389,7 @@ test('the Solo table owns one authority and keeps it across the menu and sheets'
     },
   });
 
-  // Watch a replay… opens this picker.
+  // Watch replay… opens this picker.
   await page.locator('#jsonReplay').setInputFiles({
     name: 'solo-perspective-replay.json',
     mimeType: 'application/json',

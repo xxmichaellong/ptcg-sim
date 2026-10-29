@@ -1,9 +1,9 @@
 import { expect, test, type Page } from '@playwright/test';
 
-import { chooseMenuItem, closeSheet, openDeck } from './support/table-shell.js';
+import { closeSheet, openDeck, openSettings } from './support/table-shell.js';
 
 /**
- * The keyboard shortcuts list, end to end: opened from the app menu, a
+ * The keyboard shortcuts list, end to end: opened from Settings, a
  * shortcut moved to a key of the player's choosing, kept across a reload,
  * obeyed by the table (and the old key ignored), then put back.
  */
@@ -72,8 +72,11 @@ test('a player moves a shortcut to their own key, keeps it, and puts it back', a
   const shortcuts = page.getByRole('dialog', { name: 'Keyboard shortcuts' });
   const discardRow = shortcuts.locator('[data-action="card.toDiscard"]');
 
-  await chooseMenuItem(page, 'shortcutsButton');
+  await openSettings(page);
+  await page.locator('#editShortcutsButton').click();
+  // Settings gives way to the list.
   await expect(shortcuts).toBeVisible();
+  await expect(page.locator('#settings')).toHaveCount(0);
   await shortcuts.getByRole('radio', { name: 'Card selected' }).click();
   await discardRow.locator('button.ptcgsim-shortcut-key').click();
   await page.keyboard.press('k');

@@ -6,6 +6,7 @@ import { DownloadSimpleIcon } from '@phosphor-icons/react/dist/csr/DownloadSimpl
 import { ScrollIcon } from '@phosphor-icons/react/dist/csr/Scroll';
 
 import {
+  helpEntries,
   primaryEntries,
   restEntries,
   type AppMenuModel,
@@ -16,6 +17,7 @@ import { menuCommands } from './ui-commands.js';
 export interface RoomCommandContext {
   readonly menu: AppMenuModel;
   readonly shortcutsHint?: string | undefined;
+  readonly settingsHint?: string | undefined;
   readonly log: {
     readonly open: boolean;
     readonly setOpen: (open: boolean) => void;
@@ -37,8 +39,9 @@ export const roomCommands = (context: RoomCommandContext): PaletteCommand[] => {
   const fullscreen =
     typeof document !== 'undefined' && document.fullscreenElement !== null;
   const commands = menuCommands([
-    ...primaryEntries(context.menu, context.shortcutsHint, false),
-    ...restEntries(context.menu, fullscreen),
+    ...primaryEntries(context.menu),
+    ...restEntries(context.menu, fullscreen, context.settingsHint),
+    ...helpEntries(context.shortcutsHint),
   ]);
   if (context.deckOpen) {
     commands.unshift({

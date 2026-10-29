@@ -341,7 +341,7 @@ test('walks every lesson with a mouse, each step done by the table', async ({
 
   // 10. Around the table: what each of the app bar's buttons is for.
   await nextLesson(page, 'around:deck');
-  for (const id of ['online', 'log', 'settings', 'menu']) {
+  for (const id of ['online', 'log', 'menu']) {
     await coach(page)
       .getByRole('button', { name: /^(Next|Done)$/u })
       .click();
@@ -622,7 +622,7 @@ test('steps aside for the deck screen and sheets, and comes back after', async (
   await expect(coach(page)).toHaveCount(0);
   await closeDeck(page);
   await atStep(page, 'around:deck');
-  for (const id of ['online', 'log', 'settings', 'menu']) {
+  for (const id of ['online', 'log', 'menu']) {
     await coach(page)
       .getByRole('button', { name: /^(Next|Done)$/u })
       .click();

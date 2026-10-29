@@ -6501,5 +6501,149 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "Mga outline ng zone"
+  },
+  "ifsvhW": {
+    "message": "<0>{0}</0>: Settings, saves and replays, and this tutorial whenever you want it.",
+    "translation": "<0>{0}</0>: Settings, save at replay, at ang tutorial na ito kahit kailan mo gusto."
+  },
+  "sDYhDt": {
+    "message": "A deck needs a name.",
+    "translation": "Kailangan ng pangalan ang deck."
+  },
+  "hQE7TV": {
+    "message": "An image URL, or 'default'.",
+    "comments": [
+      "Keep 'default' in English: it is what the player types"
+    ],
+    "translation": "Isang image URL, o 'default'."
+  },
+  "8zanjC": {
+    "message": "Artwork group",
+    "translation": "Artwork group"
+  },
+  "PCF3WN": {
+    "message": "Change card back",
+    "translation": "Palitan ang card back"
+  },
+  "HLSSB8": {
+    "message": "code or name",
+    "translation": "code o pangalan"
+  },
+  "ibWa1H": {
+    "message": "Delete {deckName}?",
+    "translation": "I-delete ang {deckName}?"
+  },
+  "iu7vH9": {
+    "message": "e.g. CC or LL",
+    "comments": [
+      "Energy letters (C, L…) stay as they are"
+    ],
+    "translation": "hal. CC o LL"
+  },
+  "tg9VdO": {
+    "message": "e.g. HIJ",
+    "translation": "hal. HIJ"
+  },
+  "3fBsZV": {
+    "message": "e.g. illustration",
+    "translation": "hal. illustration"
+  },
+  "CMMU03": {
+    "message": "Edit…",
+    "context": "change the keyboard shortcuts",
+    "translation": "I-edit…"
+  },
+  "I7T1ix": {
+    "message": "Enter an image URL.",
+    "translation": "Maglagay ng image URL."
+  },
+  "8aoXpa": {
+    "message": "Every key is under <0>{0}</0>, in <1>{1}</1>.",
+    "translation": "Lahat ng key ay nasa <0>{0}</0>, sa <1>{1}</1>."
+  },
+  "ZTtNAf": {
+    "message": "HP at least",
+    "translation": "HP na hindi bababa sa"
+  },
+  "LgcKSI": {
+    "message": "HP at most",
+    "translation": "HP na hindi hihigit sa"
+  },
+  "fVGc9-": {
+    "message": "https://… or default",
+    "comments": [
+      "Keep 'default' in English: it is what the player types"
+    ],
+    "translation": "https://… o default"
+  },
+  "1pdLQw": {
+    "message": "Image not found",
+    "translation": "Hindi nahanap ang larawan"
+  },
+  "15ARIE": {
+    "message": "Image URL too long",
+    "translation": "Masyadong mahaba ang URL ng larawan"
+  },
+  "6hbF9e": {
+    "message": "Image URL: up to {max} characters.",
+    "translation": "Image URL: hanggang {max} character."
+  },
+  "MIi4yC": {
+    "message": "Keep it to {max} characters.",
+    "translation": "Hanggang {max} character lang."
+  },
+  "WQg61I": {
+    "message": "Keys",
+    "translation": "Mga key"
+  },
+  "2fhoKU": {
+    "message": "No image",
+    "translation": "Walang image"
+  },
+  "xYvd7u": {
+    "message": "Piece position",
+    "translation": "Posisyon ng piece"
+  },
+  "rkcP1p": {
+    "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
+    "translation": "Ilagay ang mga piece ng Pokémon sa iisang stack, at ang mga piece ng Stadium sa Stadium."
+  },
+  "XsrZAv": {
+    "message": "Rename",
+    "context": "button",
+    "translation": "Palitan ang pangalan"
+  },
+  "Tvyjys": {
+    "message": "Rename deck",
+    "translation": "Palitan ang pangalan ng deck"
+  },
+  "CBOI8H": {
+    "message": "Resume saved game…",
+    "translation": "Ituloy ang naka-save na laro…"
+  },
+  "qoNq2S": {
+    "message": "Same group for each piece",
+    "translation": "Parehong grupo para sa bawat piraso"
+  },
+  "4XBjuA": {
+    "message": "Save game",
+    "translation": "I-save ang laro"
+  },
+  "y4__tG": {
+    "message": "Settings",
+    "context": "shortcut key caption",
+    "translation": "Settings"
+  },
+  "ZMr878": {
+    "message": "That image didn't load.",
+    "translation": "Hindi nag-load ang image na iyon."
+  },
+  "PTd_zR": {
+    "message": "Use image",
+    "translation": "Gamitin ang larawan"
+  },
+  "sFWtjQ": {
+    "message": "Watch replay…",
+    "translation": "Manood ng replay…"
   }
 }

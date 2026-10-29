@@ -177,7 +177,7 @@ describe('live board depth', () => {
 
   it('keeps a full hand, grown to meet the tilted mat, inside its strip and clear of the app bar', () => {
     const base = createRendererSpikeView();
-    const bar = { width: 242, height: 42 };
+    const bar = { width: 202, height: 42 };
     let checked = 0;
     for (const handSize of [7, 12, 20]) {
       // Every hand holds `handSize` cards.
@@ -263,7 +263,7 @@ describe('live board depth', () => {
             shellMode: 'fullscreen',
             geometryVersion: 2,
             vertical: tableVerticalLayout(lowerShare),
-            appBarPx: { width: width < 600 ? 146 : 290, height: 50 },
+            appBarPx: { width: width < 600 ? 146 : 242, height: 50 },
             seamBandPx: 46,
             ...(markers ? { oncePerGameMarkers: markers } : {}),
           });

@@ -41,6 +41,8 @@ const subscribe = (listener: () => void): (() => void) => {
 export const useShortcutsDialogState = (): ShortcutsDialogState =>
   useSyncExternalStore(subscribe, () => state);
 
+export const shortcutsDialogState = (): ShortcutsDialogState => state;
+
 /*
  * One dialog per page. A host mounted later (a harness over the app) takes
  * over from the earlier one until it unmounts; two open modal dialogs would
