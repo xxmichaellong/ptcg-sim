@@ -2645,6 +2645,12 @@ const WorkAreaPanel = ({
   // Only whose cards these are, when they are not the viewer's to move.
   const hint =
     controls || zone.kind !== 'inspection' ? undefined : t`Opponent is looking`;
+  // Leave in play puts the staged Pokémon back: with none staged (the
+  // Pokémon itself made a Tool or Energy), the room would refuse it.
+  const restorable =
+    zone.playerId !== null &&
+    (state.view?.workAreas[zone.playerId]?.attachmentResolution?.evolutionCards
+      .length ?? 0) > 0;
   const count = cards.length;
 
   return (
@@ -2742,35 +2748,37 @@ const WorkAreaPanel = ({
           className="ptcgsim-legacy-work-area-buttons"
           {...hiddenContentProps}
         >
-          {LEGACY_BOARD_WORK_AREA_ACTIONS[source].map((button) => {
-            const ActionIcon = WORK_AREA_ACTION_ICONS[button.id];
-            const label = i18n._(WORK_AREA_ACTION_LABELS[button.id]);
-            // A narrow panel shows only the icons; the tooltip names each.
-            return (
-              <Tooltip key={button.id} content={label} side="top">
-                <button
-                  type="button"
-                  className="ptcgsim-overlay-button ptcgsim-legacy-zone-button"
-                  data-work-area-action={button.id}
-                  aria-label={label}
-                  onClick={() =>
-                    own
-                      ? actions.invokeWorkAreaAction?.(source, button.id)
-                      : actions.invokeWorkAreaAction?.(
-                          source,
-                          button.id,
-                          zone.playerId ?? undefined
-                        )
-                  }
-                >
-                  <ActionIcon aria-hidden="true" />
-                  <span className="ptcgsim-work-area-button-label">
-                    {label}
-                  </span>
-                </button>
-              </Tooltip>
-            );
-          })}
+          {LEGACY_BOARD_WORK_AREA_ACTIONS[source]
+            .filter((button) => button.id !== 'leaveInPlay' || restorable)
+            .map((button) => {
+              const ActionIcon = WORK_AREA_ACTION_ICONS[button.id];
+              const label = i18n._(WORK_AREA_ACTION_LABELS[button.id]);
+              // A narrow panel shows only the icons; the tooltip names each.
+              return (
+                <Tooltip key={button.id} content={label} side="top">
+                  <button
+                    type="button"
+                    className="ptcgsim-overlay-button ptcgsim-legacy-zone-button"
+                    data-work-area-action={button.id}
+                    aria-label={label}
+                    onClick={() =>
+                      own
+                        ? actions.invokeWorkAreaAction?.(source, button.id)
+                        : actions.invokeWorkAreaAction?.(
+                            source,
+                            button.id,
+                            zone.playerId ?? undefined
+                          )
+                    }
+                  >
+                    <ActionIcon aria-hidden="true" />
+                    <span className="ptcgsim-work-area-button-label">
+                      {label}
+                    </span>
+                  </button>
+                </Tooltip>
+              );
+            })}
         </div>
       ) : null}
     </section>

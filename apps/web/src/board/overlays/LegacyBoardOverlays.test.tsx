@@ -2888,6 +2888,67 @@ describe('legacy board overlays', () => {
     expect(JSON.stringify(undamaged.markers)).toBe(markerSnapshot);
   });
 
+  it('offers Leave in play only while a Pokémon is staged to put back', async () => {
+    const hand = Object.values(view.zones).find(
+      (zone) => zone.kind === 'hand' && zone.ownerId === firstPlayer
+    )!;
+    const [first, second] = hand.cards;
+    if (!first || !second) throw new Error('Fixture hand is too small');
+    const staged = (evolutionCards: readonly (typeof first)[]) => {
+      const stagedView: MatchViewState = {
+        ...view,
+        zones: {
+          ...view.zones,
+          [hand.id]: { ...hand, cards: hand.cards.slice(2) },
+        },
+        workAreas: {
+          ...view.workAreas,
+          [firstPlayer]: {
+            inspection: null,
+            attachmentResolution: {
+              id: 'work-area:staged',
+              sourceStackId: 'stack:gone',
+              cards: [first, second],
+              evolutionCards,
+              attachmentCards: [first, second].filter(
+                (card) => !evolutionCards.includes(card)
+              ),
+              suggestedSlot: 'bench',
+            },
+          },
+        },
+      } as MatchViewState;
+      return {
+        view: stagedView,
+        scene: createBoardSceneForViewport(stagedView, {
+          geometryVersion: 1,
+          viewport: { width: 1280, height: 720, devicePixelRatio: 1 },
+          bottomPlayerId: firstPlayer,
+          splitRatio: 0.5,
+        }),
+      };
+    };
+    const offered = async (evolutionCards: readonly (typeof first)[]) => {
+      await act(async () => {
+        root.render(
+          createElement(LegacyBoardOverlays, {
+            state: state(staged(evolutionCards)),
+            darkMode: false,
+            actions: { ...actions(), invokeWorkAreaAction: vi.fn() },
+          })
+        );
+      });
+      return [
+        ...host.querySelectorAll(
+          '[data-legacy-work-area="staged"] [data-work-area-action]'
+        ),
+      ].map((button) => button.getAttribute('data-work-area-action'));
+    };
+    // The Pokémon itself turned into a Tool: nothing to put back in play.
+    expect(await offered([])).not.toContain('leaveInPlay');
+    expect(await offered([first])).toContain('leaveInPlay');
+  });
+
   it('paints the source work-area popup with its cards and bulk buttons', async () => {
     // Move two of the fixture's hand cards into a "Looking at cards..."
     // inspection; the scene lays them out where v1's popup images sit and
