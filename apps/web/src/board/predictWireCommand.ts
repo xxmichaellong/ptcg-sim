@@ -1313,8 +1313,10 @@ const predict = (
       };
     }
     case 'MoveCardToStadium': {
-      // Only a card leaving a zone (normally the hand); leaving a stack or a
-      // work area takes the room's departure rules and waits for it.
+      // A card leaving a zone (normally the hand) or a look at cards (the
+      // inspection window, which only loses it); leaving a stack or the
+      // attached cards' window takes the room's departure rules and waits
+      // for it.
       const stadium = Object.values(view.zones).find(
         (zone) => zone.kind === 'stadium'
       );
@@ -1332,11 +1334,12 @@ const predict = (
       ) {
         return null;
       }
-      const taken = takeFromZone(
-        view,
-        command.expectedSourceId,
-        command.cardId
+      const looking = Object.values(view.workAreas).some(
+        (areas) => areas.inspection?.id === command.expectedSourceId
       );
+      const taken = looking
+        ? takeFromWorkArea(view, command.expectedSourceId, command.cardId)
+        : takeFromZone(view, command.expectedSourceId, command.cardId);
       if (!taken) return null;
       let next = taken.view;
       if (command.placement === 'add' && stadium.cards.length >= 4) return null;

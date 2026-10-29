@@ -565,7 +565,7 @@ const compileStadium = (
         steps.view(),
         cardId,
         undefined,
-        context.actingPlayerId
+        actingFor(context, steps.view(), cardId)
       )
     );
     if (failed) return failed;

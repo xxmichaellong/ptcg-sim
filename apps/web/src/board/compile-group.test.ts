@@ -286,6 +286,18 @@ describe('a group moved by a key', () => {
       const result = compileGroup(context, looked, action);
       expect(result.ok, action.to).toBe(true);
     }
+    // A Stadium's halves looked at in that window go up with `g` too.
+    const stadium = groupTable();
+    const halves = stadium.put(
+      RED,
+      'hand',
+      stadiumHalf(0),
+      stadiumHalf(1)
+    ) as ViewCardId[];
+    const solo = contextOf(intoWindow(stadium.view, RED, halves), {
+      controlsEverySeat: true,
+    });
+    expect(compileGroup(solo, halves, { kind: 'stadium' }).ok).toBe(true);
   });
 
   it('leaves out cards already there, and says so when every one is', () => {

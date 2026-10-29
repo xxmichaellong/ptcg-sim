@@ -166,6 +166,16 @@ const toZone = (
   destinationZoneId: playerZoneId(blue, to),
 });
 
+const reveal = (cardId: CardInstanceId, revealed: boolean): CardStep =>
+  ({
+    type: 'SetPublicReveal',
+    actorPlayerId: blue,
+    playerId: blue,
+    cardId,
+    expectedSourceId: playerZoneId(blue, 'hand'),
+    revealed,
+  }) as CardStep;
+
 const steps = (...list: readonly CardStep[]): GameCommand => ({
   type: 'ApplyCardSteps',
   steps: list,
@@ -326,7 +336,7 @@ describe('a group move', () => {
     expect(refused).toMatchObject({ accepted: false, code: 'invalid_command' });
   });
 
-  it('refuses a card moved twice, a step that is not a single card, and a shuffle before the cards', () => {
+  it('refuses a card moved twice or shown twice, a step that is not a single card, and a shuffle before the cards', () => {
     const { state, commandContext, hand } = table();
     const [energy] = hand('Fire Energy');
     const [trainer] = hand('Switch');
@@ -346,6 +356,10 @@ describe('a group move', () => {
         toZone(trainer!, 'hand', 'discard')
       ),
       steps(toZone(energy!, 'hand', 'discard')),
+      // Shown then hidden, or shown and moved: the log tells a group's
+      // reveal from the table it ends on.
+      steps(reveal(energy!, true), reveal(energy!, false)),
+      steps(reveal(energy!, true), toZone(energy!, 'hand', 'discard')),
     ]) {
       const refused = executeCommand(state, command, commandContext, room);
       expect(refused).toMatchObject({

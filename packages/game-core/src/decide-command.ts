@@ -3463,7 +3463,8 @@ const madeStack = (
  * left, and any step refused refuses the whole. `next` gives step `index`
  * on that table, knowing the Pokémon the earlier steps made (`made[k]`,
  * step k's). Only the single-card commands of `CARD_STEP_TYPES` may be
- * steps, shuffles last, and no card or Pokémon moves twice.
+ * steps, shuffles last, no card or Pokémon moves twice, and no card is
+ * shown or hidden twice or both shown and moved.
  */
 export const decideCardStepSequence = <
   Refusal extends { readonly accepted: false },
@@ -3485,6 +3486,7 @@ export const decideCardStepSequence = <
   const steps: number[] = [];
   const made: (StackId | undefined)[] = [];
   const moved = new Set<string>();
+  const shown = new Set<string>();
   let shuffled = false;
   for (let index = 0; index < stepCount; index += 1) {
     const step = next(index, scratch, made);
@@ -3505,10 +3507,23 @@ export const decideCardStepSequence = <
     }
     const key = movedBy(command);
     if (key !== undefined) {
-      if (moved.has(key)) {
+      if (moved.has(key) || shown.has(key)) {
         return reject('invalid_command', `${key} moves twice in one move`);
       }
       moved.add(key);
+    }
+    // A card is shown or hidden once, and not moved as well: the log tells
+    // a group's reveal from the table it ends on (a group does one thing
+    // to every card).
+    if (command.type === 'SetPublicReveal') {
+      const card = `card:${command.cardId}`;
+      if (shown.has(card) || moved.has(card)) {
+        return reject(
+          'invalid_command',
+          `${card} is shown or hidden twice in one move`
+        );
+      }
+      shown.add(card);
     }
     const decision = decideCommand(scratch, command, context);
     if (!decision.accepted) return decision;
