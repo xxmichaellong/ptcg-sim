@@ -241,7 +241,8 @@ and R's refresh (2026-10-21) are gone.
   hover raises a hand card. A hand showing less than half of each card (a
   phone's sixteen cards show about 10px each) answers a touch with the
   card under it risen clear of the finger, whole, drawn at least 120px
-  wide and over the piles' counts. Sliding along the hand raises each card
+  wide and over the piles' counts (a card at the hand's end steps in from
+  the screen's edge to stay whole). Sliding along the hand raises each card
   under the finger in turn, without dragging or reordering; moving toward
   the table (straight away, or 24px once the finger heads that way, read
   over its last 100ms so a thumb's arc along the hand still slides) picks
