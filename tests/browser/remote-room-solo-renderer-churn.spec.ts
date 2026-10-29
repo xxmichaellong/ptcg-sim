@@ -34,8 +34,8 @@ const MEMORY_SAMPLE_ATTEMPTS = 3;
  * A leak grows with the cycles: one node or listener a cycle is a hundred
  * by the end. What the menu library keeps of a popup it showed does not:
  * it holds one recent More menu, whose items differ with the seat's stage
- * (Set up again and Announce mulligan, 16 nodes and 2 listeners, only
- * while playing), and which one it holds at a snapshot is down to timing.
+ * (Set up again, only while playing), and which one it holds at a
+ * snapshot is down to timing.
  * Growth up to this bound is that, not a leak.
  */
 const BOUNDED_RETENTION = {

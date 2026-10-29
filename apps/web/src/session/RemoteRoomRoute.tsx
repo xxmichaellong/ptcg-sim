@@ -588,9 +588,12 @@ export const RemoteRoomRoute = ({
           if (own.switchSide) actions.push(own.switchSide);
 
           const more: ActionMenuEntry[] = [];
+          // Announcing a mulligan is rare enough to live in the palette and
+          // on M alone, not in More.
+          const unlisted: ActionMenuEntry[] = [];
           if (stage === 'playing') {
             more.push({ ...setup, label: t`Set up again` });
-            if (own.mulligan) more.push(own.mulligan);
+            if (own.mulligan) unlisted.push(own.mulligan);
           }
           if (stage !== 'empty') {
             more.push({
@@ -618,7 +621,11 @@ export const RemoteRoomRoute = ({
               }
             );
           }
-          return { actions, ...(more.length > 0 ? { more } : {}) };
+          return {
+            actions,
+            ...(more.length > 0 ? { more } : {}),
+            ...(unlisted.length > 0 ? { unlisted } : {}),
+          };
         };
 
         const menu: AppMenuModel = {

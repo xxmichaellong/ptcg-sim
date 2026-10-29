@@ -186,6 +186,8 @@ export interface BoardRailModel {
   readonly compose: (own: BoardOwnRailActions) => {
     readonly actions: readonly RailAction[];
     readonly more?: readonly ActionMenuEntry[];
+    /** Offered by the palette and their keys only, not on the rail. */
+    readonly unlisted?: readonly ActionMenuEntry[];
   };
 }
 
@@ -1240,6 +1242,7 @@ export const RemoteSessionBoard = ({
       ...(sidePanelSliding ? { holdSide: true } : {}),
       actions: composed.actions,
       ...(composed.more ? { more: composed.more } : {}),
+      ...(composed.unlisted ? { unlisted: composed.unlisted } : {}),
     };
   }, [
     rail,

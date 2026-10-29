@@ -68,9 +68,10 @@ actions**, stopping short of the Stadium, which straddles the seam:
 | Playing                            | Turn, Attack, Pass, Coin, Undo, Flip     |
 | Replay                             | Restart, Back, **Next**, End, Flip, Exit |
 
-The rarer actions sit behind **More**: Set up again, Announce mulligan,
-Reset, and in Solo Set up both sides / Reset both sides. (Changing the deck
-is the toolbar's Deck.) Spectators see only Flip. The actions are icons, 40px
+The rarer actions sit behind **More**: Set up again, Reset, and in Solo
+Set up both sides / Reset both sides. (Changing the deck is the toolbar's
+Deck.) Announce mulligan, rarer still, is offered by the command palette and
+its key M alone (the rail's `unlisted`; the owner, 2026-10-29). Spectators see only Flip. The actions are icons, 40px
 for a mouse and 44px under a finger; each keeps its full name for its tooltip
 and for assistive tech, with the key that does the same. The board owns
 Turn, Coin (which waits on the room's answer), Flip and Mulligan; the

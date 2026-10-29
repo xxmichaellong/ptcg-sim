@@ -9,7 +9,7 @@ import type { CommandSection, PaletteCommand } from './types.js';
 /**
  * The rail's and the menu's buttons as commands (ADR-035 §1): the palette
  * offers exactly what they offer, when they offer it, and runs the same
- * handler.
+ * handler -- and the seat's actions too rare for the rail (`unlisted`).
  */
 
 interface Meaning {
@@ -94,6 +94,7 @@ export const railCommands = (
   composed: {
     readonly actions: readonly RailAction[];
     readonly more?: readonly ActionMenuEntry[];
+    readonly unlisted?: readonly ActionMenuEntry[];
   },
   options: {
     readonly replaying: boolean;
@@ -152,7 +153,10 @@ export const railCommands = (
       action.onSelect
     );
   }
-  for (const entry of composed.more ?? []) {
+  for (const entry of [
+    ...(composed.more ?? []),
+    ...(composed.unlisted ?? []),
+  ]) {
     if (entry.kind === 'separator' || entry.kind === 'label') continue;
     if (entry.disabled || typeof entry.label !== 'string' || !entry.id)
       continue;

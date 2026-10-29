@@ -1,6 +1,6 @@
 import { i18n } from '@lingui/core';
 import { msg } from '@lingui/core/macro';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { flattenCommands } from './command-tree.js';
 import { rankCommands } from './rank-commands.js';
@@ -67,6 +67,32 @@ describe('railCommands', () => {
     // tooltip still find it.
     expect(found('Flip')[0]).toBe('rail.flipBoard');
     expect(found('Flip the table')[0]).toBe('rail.flipBoard');
+  });
+
+  it('offers the actions too rare for the rail, as their keys do', () => {
+    const run = vi.fn();
+    const commands = railCommands(
+      {
+        actions: [],
+        unlisted: [
+          {
+            id: 'mulliganButton',
+            label: 'Announce mulligan',
+            hint: 'M',
+            onSelect: run,
+          },
+        ],
+      },
+      { replaying: false }
+    );
+    expect(commands.map((command) => command.id)).toEqual(['rail.mulligan']);
+    expect(commands[0]).toMatchObject({
+      title: 'Announce mulligan',
+      section: 'turn',
+      hint: 'M',
+    });
+    commands[0]!.run();
+    expect(run).toHaveBeenCalledOnce();
   });
 
   it("gives either seat's button one id", () => {

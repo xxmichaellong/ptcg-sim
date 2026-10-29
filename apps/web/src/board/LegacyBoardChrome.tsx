@@ -116,6 +116,11 @@ export interface LegacyBoardChromeRail {
   readonly actions: readonly RailAction[];
   /** The rarer actions, behind More. */
   readonly more?: readonly ActionMenuEntry[];
+  /**
+   * The seat's actions the rail doesn't show, too rare even for More
+   * (Announce mulligan): the palette and their keys offer them.
+   */
+  readonly unlisted?: readonly ActionMenuEntry[];
   /** Whose seat the actions act for. */
   readonly seat?: 'you' | 'opponent';
   /** The coin lies on the table: a turn's actions hold no Coin. */

@@ -178,6 +178,22 @@ vi.mock('./RemoteSessionBoard.js', async (importOriginal) => {
                     ]
               )}
             </div>
+            <div data-test-unlisted="true">
+              {composed?.unlisted?.flatMap((entry, index) =>
+                entry.kind === 'separator' || entry.kind === 'label'
+                  ? []
+                  : [
+                      <button
+                        key={entry.id ?? index}
+                        id={entry.id}
+                        type="button"
+                        onClick={entry.onSelect}
+                      >
+                        {entry.label}
+                      </button>,
+                    ]
+              )}
+            </div>
           </div>
         </>
       );
@@ -505,6 +521,11 @@ const moreIds = (): string[] =>
     (button) => button.id
   );
 
+const unlistedIds = (): string[] =>
+  [...document.querySelectorAll('[data-test-unlisted] > button')].map(
+    (button) => button.id
+  );
+
 const openActivity = async (): Promise<void> => {
   if (get('#activityButton').getAttribute('aria-expanded') !== 'true') {
     await click('#activityButton');
@@ -656,6 +677,8 @@ describe('RemoteRoomRoute', () => {
       readonly rail: readonly string[];
       readonly primary: string | undefined;
       readonly more: readonly string[];
+      /** Offered by the palette and keys only. */
+      readonly unlisted?: readonly string[];
     }> = [
       {
         name: 'multiplayer, no deck yet',
@@ -685,7 +708,8 @@ describe('RemoteRoomRoute', () => {
           'p2UndoButton',
         ],
         primary: undefined,
-        more: ['p2SetupButton', 'mulliganButton', 'p2ResetButton'],
+        more: ['p2SetupButton', 'p2ResetButton'],
+        unlisted: ['mulliganButton'],
       },
       {
         name: 'Solo, playing',
@@ -703,11 +727,11 @@ describe('RemoteRoomRoute', () => {
         primary: undefined,
         more: [
           'setupButton',
-          'mulliganButton',
           'resetButton',
           'setupBothButton',
           'resetBothButton',
         ],
+        unlisted: ['mulliganButton'],
       },
       {
         name: 'Solo, no deck yet',
@@ -759,6 +783,7 @@ describe('RemoteRoomRoute', () => {
         stage.name
       ).toBe(stage.primary);
       expect(moreIds(), stage.name).toEqual(stage.more);
+      expect(unlistedIds(), stage.name).toEqual(stage.unlisted ?? []);
       await act(async () => root.unmount());
       runtime.dispose();
     }
