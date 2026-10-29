@@ -30,7 +30,7 @@ describe('zone browser tiles', () => {
 
   it('shows every copy on its own unless copies are stacked', () => {
     expect(zoneBrowserTiles(cards, false)).toEqual(
-      cards.map((entry) => ({ card: entry, count: 1 }))
+      cards.map((entry) => ({ card: entry, count: 1, copies: [entry] }))
     );
   });
 
@@ -43,6 +43,14 @@ describe('zone browser tiles', () => {
       ['d', 1],
       ['e', 1],
     ]);
+  });
+
+  it('keeps every stacked copy, in the shown order, for a selection to take one by one', () => {
+    expect(
+      zoneBrowserTiles(cards, true).map((tile) =>
+        tile.copies.map((copy) => copy.id)
+      )
+    ).toEqual([['a', 'c', 'f'], ['b'], ['d'], ['e']]);
   });
 
   it('stacks piles but not the hand by default, at the fitted size', () => {

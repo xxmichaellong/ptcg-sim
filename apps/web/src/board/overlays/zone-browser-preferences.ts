@@ -76,6 +76,11 @@ export interface ZoneBrowserTile {
   readonly card: CardSceneNode;
   /** How many copies the tile stands for (1 when copies are not stacked). */
   readonly count: number;
+  /**
+   * The copies themselves, the tile's card first, in the shown order: a
+   * selection takes them one by one ("2/5", ADR-042 §2).
+   */
+  readonly copies: readonly CardSceneNode[];
 }
 
 /**
@@ -89,21 +94,30 @@ export const zoneBrowserTiles = (
   cards: readonly CardSceneNode[],
   stackCopies: boolean
 ): readonly ZoneBrowserTile[] => {
-  if (!stackCopies) return cards.map((card) => ({ card, count: 1 }));
-  const tiles: { card: CardSceneNode; count: number }[] = [];
-  const byFace = new Map<string, { card: CardSceneNode; count: number }>();
+  if (!stackCopies)
+    return cards.map((card) => ({ card, count: 1, copies: [card] }));
+  const tiles: {
+    card: CardSceneNode;
+    count: number;
+    copies: CardSceneNode[];
+  }[] = [];
+  const byFace = new Map<
+    string,
+    { card: CardSceneNode; count: number; copies: CardSceneNode[] }
+  >();
   for (const card of cards) {
     if (card.concealed) {
-      tiles.push({ card, count: 1 });
+      tiles.push({ card, count: 1, copies: [card] });
       continue;
     }
     const key = `${card.label}\u0000${card.imageUrl}`;
     const tile = byFace.get(key);
     if (tile) {
       tile.count += 1;
+      tile.copies.push(card);
       continue;
     }
-    const created = { card, count: 1 };
+    const created = { card, count: 1, copies: [card] };
     byFace.set(key, created);
     tiles.push(created);
   }

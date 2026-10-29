@@ -108,7 +108,6 @@ import { useKeymap } from '../../hotkeys/hotkey-preferences.js';
 import type { Keymap } from '../../hotkeys/keymap.js';
 import { pickCount, type CountOptions } from '../../ui/dialog-requests.js';
 import { toast } from '../../ui/toast.js';
-import { isOverlaySurfaceTarget } from '../../ui/overlay-surface.js';
 import {
   stackCardsLayout,
   stackPreviewLayout,
@@ -127,6 +126,12 @@ import {
 import './LegacyBoardOverlays.css';
 import type { TableMotionStore } from '../table-motion.js';
 import { useOverlayCardDrag } from './useOverlayCardDrag.js';
+import {
+  MenuItemContent,
+  moveMenuFocus,
+  useFocusBoundary,
+  useOutsideDismiss,
+} from './overlay-menu.js';
 import { ZONE_NAMES } from './zone-names.js';
 import {
   clampZoneBrowserZoom,
@@ -436,127 +441,6 @@ export const selectLegacyContextEntries = (
   return entries;
 };
 
-const useFocusBoundary = (
-  container: RefObject<HTMLElement | null>,
-  focusSelector: string,
-  identity: string
-): RefObject<HTMLElement | null> => {
-  const opener = useRef<HTMLElement | null>(null);
-  const focusCycle = useRef(0);
-  useLayoutEffect(() => {
-    const cycle = focusCycle.current + 1;
-    focusCycle.current = cycle;
-    const element = container.current;
-    if (!element) return;
-    const active = element.ownerDocument.activeElement;
-    // Keep the external opener captured by the first setup. React StrictMode
-    // immediately replays layout effects while focus is already inside the
-    // overlay; replacing the opener in that replay would leave us trying to
-    // restore focus to a button that disappears with the overlay.
-    if (active instanceof HTMLElement && !element.contains(active)) {
-      opener.current = active;
-    }
-    const first = element.querySelector<HTMLElement>(focusSelector) ?? element;
-    first.focus();
-    // A previous overlay's queued focus restoration (see the cleanup below)
-    // can land after this setup on a slow frame and pull focus back to the
-    // table; claim it again once that microtask has run.
-    const reclaim = element.ownerDocument.defaultView?.requestAnimationFrame(
-      () => {
-        if (
-          focusCycle.current === cycle &&
-          element.isConnected &&
-          !element.contains(element.ownerDocument.activeElement)
-        ) {
-          first.focus();
-        }
-      }
-    );
-    return () => {
-      if (reclaim !== undefined) {
-        element.ownerDocument.defaultView?.cancelAnimationFrame(reclaim);
-      }
-      const previous = opener.current;
-      const current = element.ownerDocument.activeElement;
-      if (!previous?.isConnected || !element.contains(current)) return;
-      queueMicrotask(() => {
-        // React StrictMode replays layout effects without unmounting the DOM.
-        // A replacement setup cancels the first cleanup's queued restoration;
-        // a genuine overlay removal has no replacement cycle and still returns
-        // focus to the opener.
-        const activeNow = element.ownerDocument.activeElement;
-        const replacementClaimedFocus =
-          activeNow instanceof HTMLElement &&
-          activeNow !== element.ownerDocument.body &&
-          activeNow !== current &&
-          !element.contains(activeNow);
-        if (
-          focusCycle.current === cycle &&
-          previous.isConnected &&
-          !replacementClaimedFocus
-        ) {
-          previous.focus();
-        }
-      });
-    };
-  }, [container, focusSelector, identity]);
-  // The element focus returns to when the overlay goes away.
-  return opener;
-};
-
-const useOutsideDismiss = (
-  container: RefObject<HTMLElement | null>,
-  dismiss: () => void,
-  ignoreClosest?: string
-): void => {
-  useEffect(() => {
-    const element = container.current;
-    const document = element?.ownerDocument;
-    if (!element || !document) return;
-    const onPointerDown = (event: PointerEvent): void => {
-      const target = event.target;
-      if (element.contains(target as Node)) return;
-      // A press inside a dialog raised over the table (a confirmation, a
-      // prompt) answers that dialog; it is not a press on the table.
-      if (isOverlaySurfaceTarget(target)) return;
-      if (
-        ignoreClosest &&
-        target instanceof Element &&
-        target.closest(ignoreClosest)
-      ) {
-        return;
-      }
-      dismiss();
-    };
-    document.addEventListener('pointerdown', onPointerDown, true);
-    return () =>
-      document.removeEventListener('pointerdown', onPointerDown, true);
-  }, [container, dismiss, ignoreClosest]);
-};
-
-const moveMenuFocus = (
-  event: ReactKeyboardEvent<HTMLElement>,
-  direction: 'first' | 'last' | 'next' | 'previous',
-  selector = ':scope > ul > li > [role="menuitem"]'
-): void => {
-  const menu = event.currentTarget;
-  const items = [...menu.querySelectorAll<HTMLElement>(selector)];
-  if (items.length === 0) return;
-  const current = items.indexOf(
-    menu.ownerDocument.activeElement as HTMLElement
-  );
-  const index =
-    direction === 'first'
-      ? 0
-      : direction === 'last'
-        ? items.length - 1
-        : direction === 'next'
-          ? (current + 1 + items.length) % items.length
-          : (current - 1 + items.length) % items.length;
-  items[index]?.focus();
-  event.preventDefault();
-};
-
 /**
  * How each menu row looks: its icon, whether it is destructive, and the
  * keyboard shortcut its hint shows (the player's own key for it). `own`
@@ -744,24 +628,6 @@ const MOVE_SUBMENU_CHOICES: readonly ContextSubmenuChoice<LegacyBoardMoveChoice>
       shortcut: MOVE_CHOICE_SHORTCUTS[destination],
     };
   });
-
-/**
- * A menu row's icon and label. The keyboard hint is drawn by the stylesheet
- * from `data-menu-hint`, so a row's text -- and its accessible name -- stay
- * exactly its label.
- */
-const MenuItemContent = ({
-  icon: ItemIcon,
-  label,
-}: {
-  readonly icon: Icon;
-  readonly label: string;
-}) => (
-  <>
-    <ItemIcon className="ptcgsim-menu-icon" aria-hidden="true" />
-    <span className="ptcgsim-menu-label">{label}</span>
-  </>
-);
 
 /** The submenu's top, relative to its row: its first item lines up with it. */
 const SUBMENU_TOP_OFFSET_PX = -5;
