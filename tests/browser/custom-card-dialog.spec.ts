@@ -82,6 +82,50 @@ test('a chosen picture is uploaded to the image store and the card shows our cop
   await expect(page.locator('#deckCheckPanel')).toContainText('(1/60)');
 });
 
+test("a picture dropped on its slot is the card's, not a deck list to import", async ({
+  page,
+}) => {
+  await page.locator('#nativeDeckBuilderAddCustomCard').click();
+  await page.locator('#nativeCustomCardName').fill('Proxy');
+  const transfer = await page.evaluateHandle(
+    (data) => {
+      const transfer = new DataTransfer();
+      transfer.items.add(
+        new File([new Uint8Array(data)], 'dropped.png', { type: 'image/png' })
+      );
+      return transfer;
+    },
+    [...PICTURE]
+  );
+  // Every notice shown from here on, however briefly.
+  await page.evaluate(() => {
+    const seen: string[] = [];
+    (window as { __notices?: string[] }).__notices = seen;
+    new MutationObserver(() => {
+      for (const toast of document.querySelectorAll(
+        '[data-ptcgsim-overlay="toast"]'
+      ))
+        if (!seen.includes(toast.textContent ?? ''))
+          seen.push(toast.textContent ?? '');
+    }).observe(document.body, { childList: true, subtree: true });
+  });
+  const frame = page.locator('.custom-card-slot__frame').first();
+  await frame.dispatchEvent('dragover', { dataTransfer: transfer });
+  await frame.dispatchEvent('drop', { dataTransfer: transfer });
+  await expect(
+    page.locator('.custom-card-slot[data-status="ready"]')
+  ).toHaveCount(1, { timeout: 20_000 });
+  // The deck screen around it read nothing: no list, nor a notice that the
+  // picture is none (a list waits up to 2.5 s for the catalog first).
+  await page.waitForTimeout(4000);
+  const notices = await page.evaluate(
+    () => (window as { __notices?: string[] }).__notices ?? []
+  );
+  expect(
+    notices.filter((notice) => /Couldn't (read|open)/u.test(notice))
+  ).toEqual([]);
+});
+
 test('a V-UNION goes into the deck as four pieces from one window', async ({
   page,
 }) => {

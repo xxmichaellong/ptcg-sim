@@ -1017,6 +1017,9 @@ export const DeckScreen = ({
   };
   const onDrop = (event: DragEvent<HTMLDivElement>): void => {
     setDragging(false);
+    // A drop something inside took already (a custom card's picture) is
+    // not a deck list to import as well.
+    if (event.defaultPrevented) return;
     const file = event.dataTransfer.files[0];
     if (!file) return;
     event.preventDefault();
