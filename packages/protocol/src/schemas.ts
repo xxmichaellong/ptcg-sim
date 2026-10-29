@@ -1176,6 +1176,17 @@ export const PresentationEventSchema = v.variant('type', [
     source: PresentationCardSourceSchema,
     cardCount: PositiveIntegerSchema,
     cardName: v.optional(boundedString(256)),
+    /**
+     * A group's cards revealed one by one, by name in order (ADR-042 §6):
+     * "revealed 2 cards in Red's hand: …". Absent on a single card's line.
+     */
+    cardNames: v.optional(
+      v.pipe(
+        v.array(v.nullable(boundedString(256))),
+        v.minLength(2),
+        v.maxLength(60)
+      )
+    ),
   }),
   v.object({
     type: v.literal('PublicCardsHidden'),

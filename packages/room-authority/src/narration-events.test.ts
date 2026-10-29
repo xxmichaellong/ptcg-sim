@@ -720,3 +720,191 @@ describe('battle-log narration', () => {
     );
   });
 });
+
+describe('a group move in the log (ADR-042 §6)', () => {
+  /** A group's move, and the lines a publication carries for it. */
+  const group = (
+    state: MatchState,
+    steps: Extract<GameCommand, { type: 'ApplyCardSteps' }>['steps'],
+    context: CommandContext
+  ) => {
+    const result = executeCommand(
+      state,
+      { type: 'ApplyCardSteps', steps },
+      context,
+      { promoteLoneBenched: true }
+    );
+    if (!result.accepted) throw new Error(result.message);
+    return {
+      state: result.state,
+      lines: presentationEventsForBatch(result.batch, result.state, state),
+    };
+  };
+  const nameOf = (state: MatchState, cardId: string) =>
+    state.definitions[state.cards[cardId]!.definitionId]!.name;
+
+  it('tells cards put into the deck and shuffled as one shuffle, naming none it hides', () => {
+    const { state, context } = table();
+    const hand = state.zones[playerZoneId(p1, 'hand')]!;
+    const { lines } = group(
+      state,
+      [
+        ...hand.cardIds.slice(0, 3).map((cardId) => ({
+          type: 'MoveCardToDeckTop' as const,
+          playerId: p1,
+          cardId,
+          expectedSourceId: hand.id,
+        })),
+        { type: 'ShuffleZone', zoneId: playerZoneId(p1, 'deck') },
+      ],
+      context
+    );
+    expect(lines).toEqual([
+      {
+        type: 'CardsResolved',
+        revision: state.revision + 1,
+        playerId: p1,
+        verb: 'shuffled',
+        cardCount: 3,
+        source: 'hand',
+        destination: 'deck',
+        cardNames: [null, null, null],
+      },
+    ]);
+  });
+
+  it('tells one line per source and destination, and a card going alone as before', () => {
+    const { state, context } = table();
+    const hand = state.zones[playerZoneId(p1, 'hand')]!;
+    const [first, second, third] = hand.cardIds;
+    // Two to the discard pile, then one onto the Bench.
+    const { lines } = group(
+      state,
+      [
+        {
+          type: 'MoveCard',
+          cardId: first!,
+          expectedSourceZoneId: hand.id,
+          destinationZoneId: playerZoneId(p1, 'discard'),
+        },
+        {
+          type: 'MoveCard',
+          cardId: second!,
+          expectedSourceZoneId: hand.id,
+          destinationZoneId: playerZoneId(p1, 'discard'),
+        },
+        {
+          type: 'MoveCardToPlay',
+          cardId: third!,
+          expectedSourceZoneId: hand.id,
+          boardPlayerId: p1,
+          slot: 'bench',
+        },
+      ],
+      context
+    );
+    expect(lines).toEqual([
+      expect.objectContaining({
+        type: 'CardsResolved',
+        verb: 'moved',
+        cardCount: 2,
+        source: 'hand',
+        destination: 'discard',
+        cardNames: [nameOf(state, first!), nameOf(state, second!)],
+      }),
+      expect.objectContaining({
+        type: 'CardMoved',
+        verb: 'moved',
+        source: 'hand',
+        destination: 'bench',
+        cardName: nameOf(state, third!),
+      }),
+    ]);
+  });
+
+  it('tells the cards a group reveals in one line naming them', () => {
+    const { state, context } = table();
+    const hand = state.zones[playerZoneId(p1, 'hand')]!;
+    const shown = hand.cardIds.slice(0, 2);
+    const { lines } = group(
+      state,
+      shown.map((cardId) => ({
+        type: 'SetPublicReveal' as const,
+        actorPlayerId: p1,
+        playerId: p1,
+        cardId,
+        expectedSourceId: hand.id,
+        revealed: true,
+      })),
+      context
+    );
+    expect(lines).toEqual([
+      expect.objectContaining({
+        type: 'PublicCardsRevealed',
+        scope: 'card',
+        source: 'hand',
+        cardCount: 2,
+        cardNames: shown.map((cardId) => nameOf(state, cardId)),
+      }),
+    ]);
+    expect(lines[0]).not.toHaveProperty('cardName');
+  });
+
+  it("tells a split Stadium's pieces as the one card going in", () => {
+    const context = createContext();
+    let state = createEmptyMatch(asMatchId('narration-stadium'), [
+      { playerId: p1, displayName: 'Blue', cardBackUrl: '/blue.png' },
+      { playerId: p2, displayName: 'Red', cardBackUrl: '/red.png' },
+    ]);
+    state = step(
+      state,
+      {
+        type: 'LoadDeck',
+        playerId: p1,
+        entries: [0, 1].map((index) => ({
+          definition: {
+            id: asCardDefinitionId(`pyroduct-${index}`),
+            name: 'Legendary Pyroduct',
+            category: 'Trainer' as const,
+            imageUrl: `/pyroduct-${index}.png`,
+          },
+          count: 1,
+        })),
+      },
+      context
+    ).state;
+    const deck = state.zones[playerZoneId(p1, 'deck')]!;
+    const [first, second] = deck.cardIds;
+    const { lines } = group(
+      state,
+      [
+        {
+          type: 'MoveCardToStadium',
+          playerId: p1,
+          cardId: first!,
+          expectedSourceId: deck.id,
+          expectedStadiumCardId: null,
+        },
+        {
+          type: 'MoveCardToStadium',
+          playerId: p1,
+          cardId: second!,
+          expectedSourceId: deck.id,
+          expectedStadiumCardId: first!,
+          expectedStadiumCardIds: [first!],
+          placement: 'add',
+        },
+      ],
+      context
+    );
+    expect(lines).toEqual([
+      expect.objectContaining({
+        type: 'CardMoved',
+        verb: 'moved',
+        source: 'deck',
+        destination: 'stadium',
+        cardName: 'Legendary Pyroduct',
+      }),
+    ]);
+  });
+});

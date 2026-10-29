@@ -157,4 +157,23 @@ describe("a group's one move (ApplyCardSteps)", () => {
     const { cardNames: _names, ...unnamed } = line;
     expect(v.safeParse(PresentationEventSchema, unnamed).success).toBe(true);
   });
+
+  it("names a group's revealed cards on one line, two to sixty of them", () => {
+    const line = {
+      type: 'PublicCardsRevealed',
+      revision: 3,
+      actorPlayerId: 'blue',
+      playerId: 'blue',
+      scope: 'card',
+      source: 'hand',
+      cardCount: 2,
+      cardNames: ['Pikachu', 'Switch'],
+    };
+    expect(v.safeParse(PresentationEventSchema, line).success).toBe(true);
+    for (const cardNames of [['Pikachu'], Array(61).fill('Pikachu')]) {
+      expect(
+        v.safeParse(PresentationEventSchema, { ...line, cardNames }).success
+      ).toBe(false);
+    }
+  });
 });

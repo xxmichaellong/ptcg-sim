@@ -826,6 +826,14 @@
               "kind": "type"
             },
             {
+              "name": "CardStepCommand",
+              "kind": "type"
+            },
+            {
+              "name": "CardStepsDecided",
+              "kind": "type"
+            },
+            {
               "name": "CardStepType",
               "kind": "type"
             },
@@ -878,6 +886,14 @@
               "kind": "value"
             },
             {
+              "name": "decideCardSteps",
+              "kind": "value"
+            },
+            {
+              "name": "decideCardStepSequence",
+              "kind": "value"
+            },
+            {
               "name": "decideCommand",
               "kind": "value"
             },
@@ -907,6 +923,10 @@
             },
             {
               "name": "executeCommand",
+              "kind": "value"
+            },
+            {
+              "name": "executeCommandSequence",
               "kind": "value"
             },
             {
@@ -1076,6 +1096,10 @@
             {
               "name": "QuarterTurns",
               "kind": "type"
+            },
+            {
+              "name": "readCardStep",
+              "kind": "value"
             },
             {
               "name": "resetReturnCapacityIsValid",
@@ -2836,6 +2860,10 @@
             {
               "name": "CommandResolution",
               "kind": "type"
+            },
+            {
+              "name": "coreRejectionCode",
+              "kind": "value"
             },
             {
               "name": "createReplayHistory",

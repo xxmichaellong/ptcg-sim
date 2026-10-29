@@ -110,6 +110,13 @@
     ],
     "translation": "{actor} эволюционировал(а) {targetCard} в {card}"
   },
+  "87uB9a": {
+    "message": "{actor} hid {0, plural, one {# card} other {# cards}} in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
+    "comments": [
+      "Log line: a player hid several cards they had shown to everyone. {actor} is who hid them, {owner} whose cards they are, {count} how many; {source} is the zone they are in."
+    ],
+    "translation": "{actor} скрывает {0, plural, one {# карту} few {# карты} many {# карт} other {# карты}} {source, select, hand {в руке} prizes {среди призовых карт} discard {в сбросе} board {на поле} stadium {на стадионе} active {в активной позиции} bench {в запасе} lostZone {в зоне потерь} attachmentResolution {среди присоединённых карт} inspection {при осмотре} other {в колоде}} игрока {owner}"
+  },
   "Gw89O9": {
     "message": "{actor} hid {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
@@ -166,12 +173,12 @@
     ],
     "translation": "{actor} переместил(а) {card} из зоны «{source, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {запас} lostZone {зона потерь} attachmentResolution {присоединённые карты} other {колода}}» на верх колоды"
   },
-  "9RYqFp": {
-    "message": "{actor} moved {count, plural, one {# card} other {# cards}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} other {deck}}",
+  "hLs0yc": {
+    "message": "{actor} moved {count, plural, one {# card} other {# cards}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} prizes {prizes} board {board} other {deck}}",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards; {source} is the zone they left and {destination} where they went (play: onto the table)."
     ],
-    "translation": "{actor} перемещает {count, plural, one {# карту} few {# карты} many {# карт} other {# карты}} из {source, select, hand {руки} prizes {призов} discard {сброса} board {поля} stadium {стадиона} active {активной позиции} bench {запаса} lostZone {зоны потерь} attachmentResolution {присоединённых карт} other {колоды}} {destination, select, hand {в руку} discard {в сброс} lostZone {в зону потерь} deckBottom {под низ колоды} play {в игру} other {в колоду}}"
+    "translation": "{actor} перемещает {count, plural, one {# карту} few {# карты} many {# карт} other {# карты}} из {source, select, hand {руки} prizes {призов} discard {сброса} board {поля} stadium {стадиона} active {активной позиции} bench {запаса} lostZone {зоны потерь} attachmentResolution {присоединённых карт} other {колоды}} в {destination, select, hand {руку} discard {сброс} lostZone {зону потерь} deckBottom {низ колоды} play {игру} prizes {призы} board {поле} other {колоду}}"
   },
   "P4_K0D": {
     "message": "{actor} moved a random card from {target}'s hand to board",
@@ -179,6 +186,13 @@
       "Log line. {actor} is the player who moved the card, {target} the player whose hand it came from."
     ],
     "translation": "{actor} переместил(а) случайную карту из руки игрока {target} на поле"
+  },
+  "G9PVLG": {
+    "message": "{actor} revealed {0, plural, one {# card} other {# cards}} in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
+    "comments": [
+      "Log line: a player showed several cards to everyone at once. {actor} is who showed them, {owner} whose cards they are, {count} how many; {source} is the zone they are in."
+    ],
+    "translation": "{actor} показывает {0, plural, one {# карту} few {# карты} many {# карт} other {# карты}} {source, select, hand {в руке} prizes {среди призовых карт} discard {в сбросе} board {на поле} stadium {на стадионе} active {в активной позиции} bench {в запасе} lostZone {в зоне потерь} attachmentResolution {среди присоединённых карт} inspection {при осмотре} other {в колоде}} игрока {owner}"
   },
   "_qgrvz": {
     "message": "{actor} revealed {card} in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
@@ -520,6 +534,14 @@
       "A button naming a shortcut and its keys; pressing it changes the keys."
     ],
     "translation": "{label}: {spoken}. Изменить"
+  },
+  "AiqpXX": {
+    "message": "{list}, {item}",
+    "context": "a list of card names in a Log line",
+    "comments": [
+      "Adds one card name to a list in a Log line: \"Fire Energy, Switch\". {list} is the names so far, {item} the next. Use the list separator of your language."
+    ],
+    "translation": "{list}, {item}"
   },
   "MglzGu": {
     "message": "{lostZoneCards, plural, one {# card} other {# cards}}",
@@ -875,6 +897,13 @@
     "message": "{prints, plural, one {# print} other {# prints}}",
     "translation": "{prints, plural, one {# вариант печати} few {# варианта печати} many {# вариантов печати} other {# варианта печати}}"
   },
+  "RTnHXI": {
+    "message": "{said}: {cards}",
+    "comments": [
+      "Log line: a line about several cards, then their names. {said} is the line (\"Ash moved 3 cards from hand to discard\"), {cards} the names."
+    ],
+    "translation": "{said}: {cards}"
+  },
   "A8TiPy": {
     "message": "{short, plural, one {# more card needed ({count}/{required}).} other {# more cards needed ({count}/{required}).}}",
     "translation": "{short, plural, one {Нужна ещё # карта ({count}/{required}).} few {Нужны ещё # карты ({count}/{required}).} many {Нужно ещё # карт ({count}/{required}).} other {Нужно ещё # карты ({count}/{required}).}}"
@@ -958,6 +987,13 @@
   "OzYiNM": {
     "message": "{total} of {size} cards",
     "translation": "{total} из {size} карт"
+  },
+  "L3P0at": {
+    "message": "{unnamed, plural, one {# other card} other {# other cards}}",
+    "comments": [
+      "Ends the list of card names in a Log line: how many more cards went unnamed, being face down."
+    ],
+    "translation": "{unnamed, plural, one {ещё # карта} few {ещё # карты} many {ещё # карт} other {ещё # карты}}"
   },
   "AjcrBd": {
     "message": "{viewer} looked at {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",

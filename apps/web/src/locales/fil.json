@@ -110,6 +110,13 @@
     ],
     "translation": "Na-evolve ni {actor} ang {targetCard} papuntang {card}"
   },
+  "87uB9a": {
+    "message": "{actor} hid {0, plural, one {# card} other {# cards}} in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
+    "comments": [
+      "Log line: a player hid several cards they had shown to everyone. {actor} is who hid them, {owner} whose cards they are, {count} how many; {source} is the zone they are in."
+    ],
+    "translation": "Itinago ni {actor} ang {0, plural, one {# card} other {# card}} sa {source, select, hand {hand} prizes {Prizes} discard {discard pile} board {board} stadium {Stadium} active {Active Spot} bench {Bench} lostZone {Lost Zone} attachmentResolution {mga naka-attach na card} inspection {inspection} other {deck}} ni {owner}"
+  },
   "Gw89O9": {
     "message": "{actor} hid {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
@@ -166,12 +173,12 @@
     ],
     "translation": "Inilipat ni {actor} ang {card} mula sa {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {Lost Zone} attachmentResolution {mga naka-attach na card} other {deck}} papunta sa ibabaw ng deck"
   },
-  "9RYqFp": {
-    "message": "{actor} moved {count, plural, one {# card} other {# cards}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} other {deck}}",
+  "hLs0yc": {
+    "message": "{actor} moved {count, plural, one {# card} other {# cards}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} prizes {prizes} board {board} other {deck}}",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards; {source} is the zone they left and {destination} where they went (play: onto the table)."
     ],
-    "translation": "Inilipat ni {actor} ang {count, plural, one {# card} other {# card}} mula sa {source, select, hand {hand} prizes {Prizes} discard {discard pile} board {board} stadium {Stadium} active {Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {mga naka-attach na card} other {deck}} papunta sa {destination, select, hand {hand} discard {discard pile} lostZone {Lost Zone} deckBottom {ilalim ng deck} play {play} other {deck}}"
+    "translation": "Inilipat ni {actor} ang {count, plural, one {# card} other {# card}} mula sa {source, select, hand {hand} prizes {Prizes} discard {discard pile} board {board} stadium {Stadium} active {Active Spot} bench {Bench} lostZone {Lost Zone} attachmentResolution {mga naka-attach na card} other {deck}} papunta sa {destination, select, hand {hand} discard {discard pile} lostZone {Lost Zone} deckBottom {ilalim ng deck} play {play} prizes {Prizes} board {board} other {deck}}"
   },
   "P4_K0D": {
     "message": "{actor} moved a random card from {target}'s hand to board",
@@ -179,6 +186,13 @@
       "Log line. {actor} is the player who moved the card, {target} the player whose hand it came from."
     ],
     "translation": "Naglipat si {actor} ng random na card mula sa hand ni {target} papunta sa board"
+  },
+  "G9PVLG": {
+    "message": "{actor} revealed {0, plural, one {# card} other {# cards}} in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
+    "comments": [
+      "Log line: a player showed several cards to everyone at once. {actor} is who showed them, {owner} whose cards they are, {count} how many; {source} is the zone they are in."
+    ],
+    "translation": "Ipinakita ni {actor} ang {0, plural, one {# card} other {# card}} sa {source, select, hand {hand} prizes {Prizes} discard {discard pile} board {board} stadium {Stadium} active {Active Spot} bench {Bench} lostZone {Lost Zone} attachmentResolution {mga naka-attach na card} inspection {inspection} other {deck}} ni {owner}"
   },
   "_qgrvz": {
     "message": "{actor} revealed {card} in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
@@ -520,6 +534,14 @@
       "A button naming a shortcut and its keys; pressing it changes the keys."
     ],
     "translation": "{label}: {spoken}. Palitan"
+  },
+  "AiqpXX": {
+    "message": "{list}, {item}",
+    "context": "a list of card names in a Log line",
+    "comments": [
+      "Adds one card name to a list in a Log line: \"Fire Energy, Switch\". {list} is the names so far, {item} the next. Use the list separator of your language."
+    ],
+    "translation": "{list}, {item}"
   },
   "MglzGu": {
     "message": "{lostZoneCards, plural, one {# card} other {# cards}}",
@@ -875,6 +897,13 @@
     "message": "{prints, plural, one {# print} other {# prints}}",
     "translation": "{prints, plural, one {# print} other {# print}}"
   },
+  "RTnHXI": {
+    "message": "{said}: {cards}",
+    "comments": [
+      "Log line: a line about several cards, then their names. {said} is the line (\"Ash moved 3 cards from hand to discard\"), {cards} the names."
+    ],
+    "translation": "{said}: {cards}"
+  },
   "A8TiPy": {
     "message": "{short, plural, one {# more card needed ({count}/{required}).} other {# more cards needed ({count}/{required}).}}",
     "translation": "{short, plural, one {# card pa ang kulang ({count}/{required}).} other {# card pa ang kulang ({count}/{required}).}}"
@@ -958,6 +987,13 @@
   "OzYiNM": {
     "message": "{total} of {size} cards",
     "translation": "{total} sa {size} na card"
+  },
+  "L3P0at": {
+    "message": "{unnamed, plural, one {# other card} other {# other cards}}",
+    "comments": [
+      "Ends the list of card names in a Log line: how many more cards went unnamed, being face down."
+    ],
+    "translation": "{unnamed, plural, one {# pang card} other {# pang card}}"
   },
   "AjcrBd": {
     "message": "{viewer} looked at {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",

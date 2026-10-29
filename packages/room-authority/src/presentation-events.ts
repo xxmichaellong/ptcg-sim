@@ -59,7 +59,158 @@ export const presentationEventsForBatch = (
     throw new Error('Presentation state revision does not match event batch');
   }
   const narration = narrationEventsForBatch(batch, state, previousState);
-  return withinOneFrame(narration, declarationEventsForBatch(batch, state));
+  const declarations = declarationEventsForBatch(batch, state);
+  return batch.steps
+    ? withinOneFrame(foldGroupMoves(narration), foldGroupReveals(declarations))
+    : withinOneFrame(narration, declarations);
+};
+
+/** The most names one folded line carries (the schema's bound). */
+const MAX_FOLDED_NAMES = 60;
+
+/** Where a group's card went, as a folded line names it. */
+const groupDestination = (
+  line: PresentationEvent
+): CardsResolved['destination'] | undefined => {
+  if (line.type !== 'CardMoved') return undefined;
+  if (line.verb === 'movedToDeckTop') return 'deck';
+  if (line.verb === 'movedToDeckBottom') return 'deckBottom';
+  if (line.verb !== 'moved') return undefined;
+  switch (line.destination) {
+    case 'hand':
+    case 'discard':
+    case 'lostZone':
+    case 'deck':
+    case 'prizes':
+    case 'board':
+      return line.destination;
+    case 'active':
+    case 'bench':
+      return 'play';
+    default:
+      return undefined;
+  }
+};
+
+/**
+ * A group's move (ADR-042 §6) in one line per source and destination:
+ * cards that went one way together read "moved 3 cards from hand to the
+ * discard pile", with their names in order where public (null where not:
+ * a face-down prize). Cards put into a deck and then shuffled read as
+ * shuffled in. A card going alone keeps its own line.
+ */
+const foldGroupMoves = (
+  lines: readonly PresentationEvent[]
+): readonly PresentationEvent[] => {
+  const folded: PresentationEvent[] = [];
+  let run: CardMoved[] = [];
+  const flush = (): void => {
+    const first = run[0];
+    if (run.length === 1) folded.push(first!);
+    else if (first) {
+      folded.push({
+        type: 'CardsResolved',
+        revision: first.revision,
+        playerId: first.playerId,
+        verb: 'moved',
+        cardCount: run.length,
+        source: first.source,
+        destination: groupDestination(first)!,
+        cardNames: run.map((line) => line.cardName ?? null),
+      });
+    }
+    run = [];
+  };
+  for (const line of lines) {
+    const last = run[0];
+    const destination = groupDestination(line);
+    if (
+      last &&
+      (destination === undefined ||
+        line.type !== 'CardMoved' ||
+        line.playerId !== last.playerId ||
+        line.source !== last.source ||
+        destination !== groupDestination(last) ||
+        run.length === MAX_FOLDED_NAMES)
+    ) {
+      flush();
+    }
+    if (destination !== undefined && line.type === 'CardMoved') {
+      run.push(line);
+      continue;
+    }
+    // "…into the deck" then the deck shuffled: the cards were shuffled in.
+    const previous = folded.at(-1);
+    if (
+      line.type === 'ZoneShuffled' &&
+      line.source === 'deck' &&
+      previous?.type === 'CardsResolved' &&
+      previous.verb === 'moved' &&
+      previous.destination === 'deck' &&
+      previous.playerId === line.playerId
+    ) {
+      folded[folded.length - 1] = { ...previous, verb: 'shuffled' };
+      continue;
+    }
+    folded.push(line);
+  }
+  flush();
+  return folded;
+};
+
+type CardsShown = Extract<
+  PresentationEvent,
+  { readonly type: 'PublicCardsRevealed' | 'PublicCardsHidden' }
+>;
+
+/**
+ * A group's cards shown or hidden one by one, in one line per whose cards
+ * and where: "revealed 2 cards in Red's hand: …".
+ */
+const foldGroupReveals = (
+  lines: readonly PresentationEvent[]
+): readonly PresentationEvent[] => {
+  const folded: PresentationEvent[] = [];
+  const key = (line: CardsShown): string =>
+    JSON.stringify([line.type, line.actorPlayerId, line.playerId, line.source]);
+  for (const line of lines) {
+    const last = folded.at(-1);
+    if (
+      (line.type !== 'PublicCardsRevealed' &&
+        line.type !== 'PublicCardsHidden') ||
+      line.scope !== 'card' ||
+      !last ||
+      (last.type !== 'PublicCardsRevealed' &&
+        last.type !== 'PublicCardsHidden') ||
+      last.scope !== 'card' ||
+      key(last) !== key(line) ||
+      last.cardCount >= MAX_FOLDED_NAMES
+    ) {
+      folded.push(line);
+      continue;
+    }
+    if (line.type === 'PublicCardsHidden') {
+      folded[folded.length - 1] = {
+        ...last,
+        cardCount: last.cardCount + line.cardCount,
+      };
+      continue;
+    }
+    const shown = last as Extract<
+      PresentationEvent,
+      { readonly type: 'PublicCardsRevealed' }
+    >;
+    const { cardName: _name, ...rest } = shown;
+    folded[folded.length - 1] = {
+      ...rest,
+      cardCount: shown.cardCount + line.cardCount,
+      cardNames: [
+        ...(shown.cardNames ?? [shown.cardName ?? null]),
+        line.cardName ?? null,
+      ],
+    };
+  }
+  return folded;
 };
 
 type CardMoved = Extract<PresentationEvent, { readonly type: 'CardMoved' }>;

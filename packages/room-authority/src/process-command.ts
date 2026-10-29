@@ -37,7 +37,7 @@ import type {
   PersistedCommandOutcome,
   RoomAuthoritySnapshot,
 } from './model.js';
-import { resolveWireCommand } from './resolve-command.js';
+import { coreRejectionCode, resolveWireCommand } from './resolve-command.js';
 import { presentationEventsForBatch } from './presentation-events.js';
 import { replayHistoryStates } from './replay-history.js';
 import { undoCheckpointFor } from './undo-history.js';
@@ -178,25 +178,6 @@ const immediateRejection = (
   snapshotValidation,
   timing: timer.finish(),
 });
-
-const coreRejectionCode = (
-  code:
-    | 'invalid_command'
-    | 'not_found'
-    | 'stale_reference'
-    | 'precondition_failed'
-    | 'conflict'
-): AuthorityRejectionCode => {
-  switch (code) {
-    case 'not_found':
-    case 'stale_reference':
-      return 'stale_reference';
-    case 'invalid_command':
-    case 'precondition_failed':
-    case 'conflict':
-      return 'precondition_failed';
-  }
-};
 
 const appendOutcome = (
   session: AuthoritySession,

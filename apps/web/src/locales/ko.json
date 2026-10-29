@@ -110,6 +110,13 @@
     ],
     "translation": "{actor}님이 진화시켰습니다: {targetCard} → {card}"
   },
+  "87uB9a": {
+    "message": "{actor} hid {0, plural, one {# card} other {# cards}} in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
+    "comments": [
+      "Log line: a player hid several cards they had shown to everyone. {actor} is who hid them, {owner} whose cards they are, {count} how many; {source} is the zone they are in."
+    ],
+    "translation": "{actor}님이 {owner}님의 {source, select, hand {패} prizes {프라이즈} discard {트래쉬} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙은 카드} inspection {확인 중인 카드} other {덱}}에 있는 카드 {0, plural, other {#장}}을 숨겼습니다"
+  },
   "Gw89O9": {
     "message": "{actor} hid {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
@@ -166,12 +173,12 @@
     ],
     "translation": "{actor}님이 {card} 이동: {source, select, hand {패} prizes {프라이즈} discard {트래쉬} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙은 카드} other {덱}} → 덱 맨 위"
   },
-  "9RYqFp": {
-    "message": "{actor} moved {count, plural, one {# card} other {# cards}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} other {deck}}",
+  "hLs0yc": {
+    "message": "{actor} moved {count, plural, one {# card} other {# cards}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} prizes {prizes} board {board} other {deck}}",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards; {source} is the zone they left and {destination} where they went (play: onto the table)."
     ],
-    "translation": "{actor}님이 카드 {count, plural, other {#장}}을 {source, select, hand {패} prizes {프라이즈} discard {트래쉬} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙어 있는 카드} other {덱}}에서 {destination, select, hand {패로} discard {트래쉬로} lostZone {로스트존으로} deckBottom {덱 아래로} play {필드로} other {덱으로}} 옮겼습니다"
+    "translation": "{actor}님이 카드 {count, plural, other {#장}}을 {source, select, hand {패} prizes {프라이즈} discard {트래쉬} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙은 카드} other {덱}}에서 {destination, select, hand {패} discard {트래쉬} lostZone {로스트존} deckBottom {덱 바닥} play {필드} prizes {프라이즈} board {보드} other {덱}}에 놓았습니다"
   },
   "P4_K0D": {
     "message": "{actor} moved a random card from {target}'s hand to board",
@@ -179,6 +186,13 @@
       "Log line. {actor} is the player who moved the card, {target} the player whose hand it came from."
     ],
     "translation": "{actor}님이 {target}님의 패에서 무작위 카드 1장을 보드로 옮겼습니다"
+  },
+  "G9PVLG": {
+    "message": "{actor} revealed {0, plural, one {# card} other {# cards}} in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
+    "comments": [
+      "Log line: a player showed several cards to everyone at once. {actor} is who showed them, {owner} whose cards they are, {count} how many; {source} is the zone they are in."
+    ],
+    "translation": "{actor}님이 {owner}님의 {source, select, hand {패} prizes {프라이즈} discard {트래쉬} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙은 카드} inspection {확인 중인 카드} other {덱}}에 있는 카드 {0, plural, other {#장}}을 공개했습니다"
   },
   "_qgrvz": {
     "message": "{actor} revealed {card} in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
@@ -520,6 +534,14 @@
       "A button naming a shortcut and its keys; pressing it changes the keys."
     ],
     "translation": "{label}: {spoken}. 변경"
+  },
+  "AiqpXX": {
+    "message": "{list}, {item}",
+    "context": "a list of card names in a Log line",
+    "comments": [
+      "Adds one card name to a list in a Log line: \"Fire Energy, Switch\". {list} is the names so far, {item} the next. Use the list separator of your language."
+    ],
+    "translation": "{list}, {item}"
   },
   "MglzGu": {
     "message": "{lostZoneCards, plural, one {# card} other {# cards}}",
@@ -875,6 +897,13 @@
     "message": "{prints, plural, one {# print} other {# prints}}",
     "translation": "{prints, plural, other {프린트 #종}}"
   },
+  "RTnHXI": {
+    "message": "{said}: {cards}",
+    "comments": [
+      "Log line: a line about several cards, then their names. {said} is the line (\"Ash moved 3 cards from hand to discard\"), {cards} the names."
+    ],
+    "translation": "{said}: {cards}"
+  },
   "A8TiPy": {
     "message": "{short, plural, one {# more card needed ({count}/{required}).} other {# more cards needed ({count}/{required}).}}",
     "translation": "{short, plural, one {#장 더 필요합니다 ({count}/{required}).} other {#장 더 필요합니다 ({count}/{required}).}}"
@@ -958,6 +987,13 @@
   "OzYiNM": {
     "message": "{total} of {size} cards",
     "translation": "{size}장 중 {total}장"
+  },
+  "L3P0at": {
+    "message": "{unnamed, plural, one {# other card} other {# other cards}}",
+    "comments": [
+      "Ends the list of card names in a Log line: how many more cards went unnamed, being face down."
+    ],
+    "translation": "{unnamed, plural, other {그 외 #장}}"
   },
   "AjcrBd": {
     "message": "{viewer} looked at {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",

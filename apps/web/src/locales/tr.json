@@ -110,6 +110,13 @@
     ],
     "translation": "{actor}, {targetCard} kartını {card} kartına evrimleştirdi"
   },
+  "87uB9a": {
+    "message": "{actor} hid {0, plural, one {# card} other {# cards}} in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
+    "comments": [
+      "Log line: a player hid several cards they had shown to everyone. {actor} is who hid them, {owner} whose cards they are, {count} how many; {source} is the zone they are in."
+    ],
+    "translation": "{actor}, {owner} oyuncusunun {source, select, hand {elindeki} prizes {Ödül kartlarındaki} discard {atık yığınındaki} board {oyun alanındaki} stadium {Stadyumdaki} active {Aktif Alandaki} bench {yedekteki} lostZone {Lost Zone'daki} attachmentResolution {bağlı kartlardaki} inspection {incelemedeki} other {destedeki}} {0, plural, one {# kartı} other {# kartı}} gizledi"
+  },
   "Gw89O9": {
     "message": "{actor} hid {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
@@ -166,12 +173,12 @@
     ],
     "translation": "{actor}, {card} kartını {source, select, hand {elinden} prizes {ödül kartlarından} discard {atık yığınından} board {oyun alanından} stadium {stadyumdan} active {aktif alandan} bench {yedekten} lostZone {Lost Zone'dan} attachmentResolution {bağlı kartlardan} other {desteden}} destenin üstüne taşıdı"
   },
-  "9RYqFp": {
-    "message": "{actor} moved {count, plural, one {# card} other {# cards}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} other {deck}}",
+  "hLs0yc": {
+    "message": "{actor} moved {count, plural, one {# card} other {# cards}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} prizes {prizes} board {board} other {deck}}",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards; {source} is the zone they left and {destination} where they went (play: onto the table)."
     ],
-    "translation": "{actor} {count, plural, one {# kartı} other {# kartı}} {source, select, hand {elden} prizes {Ödüllerden} discard {atık yığınından} board {oyun alanından} stadium {Stadyumdan} active {Aktif Alandan} bench {yedekten} lostZone {Lost Zone'dan} attachmentResolution {bağlı kartlardan} other {desteden}} {destination, select, hand {ele} discard {atık yığınına} lostZone {Lost Zone'a} deckBottom {destenin altına} play {oyuna} other {desteye}} taşıdı"
+    "translation": "{actor}, {count, plural, one {# kartı} other {# kartı}} {source, select, hand {elden} prizes {Ödül kartlarından} discard {atık yığınından} board {oyun alanından} stadium {Stadyumdan} active {Aktif Alandan} bench {yedekten} lostZone {Lost Zone'dan} attachmentResolution {bağlı kartlardan} other {desteden}} {destination, select, hand {ele} discard {atık yığınına} lostZone {Lost Zone'a} deckBottom {destenin altına} play {oyuna} prizes {Ödül kartlarına} board {oyun alanına} other {desteye}} taşıdı"
   },
   "P4_K0D": {
     "message": "{actor} moved a random card from {target}'s hand to board",
@@ -179,6 +186,13 @@
       "Log line. {actor} is the player who moved the card, {target} the player whose hand it came from."
     ],
     "translation": "{actor}, {target} oyuncusunun elinden rastgele bir kartı oyun alanına taşıdı"
+  },
+  "G9PVLG": {
+    "message": "{actor} revealed {0, plural, one {# card} other {# cards}} in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
+    "comments": [
+      "Log line: a player showed several cards to everyone at once. {actor} is who showed them, {owner} whose cards they are, {count} how many; {source} is the zone they are in."
+    ],
+    "translation": "{actor}, {owner} oyuncusunun {source, select, hand {elindeki} prizes {Ödül kartlarındaki} discard {atık yığınındaki} board {oyun alanındaki} stadium {Stadyumdaki} active {Aktif Alandaki} bench {yedekteki} lostZone {Lost Zone'daki} attachmentResolution {bağlı kartlardaki} inspection {incelemedeki} other {destedeki}} {0, plural, one {# kartı} other {# kartı}} gösterdi"
   },
   "_qgrvz": {
     "message": "{actor} revealed {card} in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
@@ -520,6 +534,14 @@
       "A button naming a shortcut and its keys; pressing it changes the keys."
     ],
     "translation": "{label}: {spoken}. Değiştir"
+  },
+  "AiqpXX": {
+    "message": "{list}, {item}",
+    "context": "a list of card names in a Log line",
+    "comments": [
+      "Adds one card name to a list in a Log line: \"Fire Energy, Switch\". {list} is the names so far, {item} the next. Use the list separator of your language."
+    ],
+    "translation": "{list}, {item}"
   },
   "MglzGu": {
     "message": "{lostZoneCards, plural, one {# card} other {# cards}}",
@@ -875,6 +897,13 @@
     "message": "{prints, plural, one {# print} other {# prints}}",
     "translation": "{prints, plural, one {# baskı} other {# baskı}}"
   },
+  "RTnHXI": {
+    "message": "{said}: {cards}",
+    "comments": [
+      "Log line: a line about several cards, then their names. {said} is the line (\"Ash moved 3 cards from hand to discard\"), {cards} the names."
+    ],
+    "translation": "{said}: {cards}"
+  },
   "A8TiPy": {
     "message": "{short, plural, one {# more card needed ({count}/{required}).} other {# more cards needed ({count}/{required}).}}",
     "translation": "{short, plural, one {# kart daha gerekli ({count}/{required}).} other {# kart daha gerekli ({count}/{required}).}}"
@@ -958,6 +987,13 @@
   "OzYiNM": {
     "message": "{total} of {size} cards",
     "translation": "{total} / {size} kart"
+  },
+  "L3P0at": {
+    "message": "{unnamed, plural, one {# other card} other {# other cards}}",
+    "comments": [
+      "Ends the list of card names in a Log line: how many more cards went unnamed, being face down."
+    ],
+    "translation": "{unnamed, plural, one {# diğer kart} other {# diğer kart}}"
   },
   "AjcrBd": {
     "message": "{viewer} looked at {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",

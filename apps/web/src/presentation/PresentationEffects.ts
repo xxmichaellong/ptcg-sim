@@ -120,6 +120,59 @@ const narratedCardName = (cardName: string | undefined): PresentationValue =>
     })
   );
 
+/**
+ * The cards a group's line was about, by name in order ("Fire Energy,
+ * Switch"), then how many went unnamed (face down); nothing when none
+ * was named. Each language joins the names its own way.
+ */
+const namedCards = (
+  names: readonly (string | null)[] | undefined
+): PresentationValue | undefined => {
+  const known = (names ?? []).filter((name): name is string => name !== null);
+  if (known.length === 0) return undefined;
+  const unnamed = names!.length - known.length;
+  const items: PresentationValue[] = [...known];
+  if (unnamed > 0) {
+    items.push(
+      line(
+        msg({
+          message: `${plural(unnamed, {
+            one: '# other card',
+            other: '# other cards',
+          })}`,
+          comment:
+            'Ends the list of card names in a Log line: how many more cards went unnamed, being face down.',
+        })
+      )
+    );
+  }
+  return items.reduce((list, item) =>
+    line(
+      msg({
+        message: `${list}, ${item}`,
+        context: 'a list of card names in a Log line',
+        comment:
+          'Adds one card name to a list in a Log line: "Fire Energy, Switch". {list} is the names so far, {item} the next. Use the list separator of your language.',
+      })
+    )
+  );
+};
+
+/** A line about several cards, then the cards by name where they were seen. */
+const withCardNames = (
+  message: MessageDescriptor,
+  names: readonly (string | null)[] | undefined
+): MessageDescriptor => {
+  const cards = namedCards(names);
+  if (cards === undefined) return message;
+  const said = line(message);
+  return msg({
+    message: `${said}: ${cards}`,
+    comment:
+      'Log line: a line about several cards, then their names. {said} is the line ("Ash moved 3 cards from hand to discard"), {cards} the names.',
+  });
+};
+
 /** The four card kinds, as select keys (ICU keys are plain words). */
 const categoryKey = (
   category: Extract<
@@ -507,6 +560,8 @@ const cardsResolvedMessage = (
           lostZone: 'lost zone',
           deckBottom: 'bottom of deck',
           play: 'play',
+          prizes: 'prizes',
+          board: 'board',
           other: 'deck',
         })}`,
         comment:
@@ -654,7 +709,7 @@ export const presentationEffectsForEvent = (
       return playerEffects(
         event,
         event.playerId,
-        cardsResolvedMessage(event, view)
+        withCardNames(cardsResolvedMessage(event, view), event.cardNames)
       );
     case 'HandReplaced':
       return playerEffects(
@@ -880,26 +935,50 @@ export const presentationEffectsForEvent = (
               comment:
                 'Log line: a player showed a whole zone to everyone. {actor} is who showed it, {owner} whose zone it is; {source} is the zone.',
             })
-          : msg({
-              message: `${actor} revealed ${card} in ${owner}'s ${select(
-                source,
-                {
-                  hand: 'hand',
-                  prizes: 'prizes',
-                  discard: 'discard',
-                  board: 'board',
-                  stadium: 'stadium',
-                  active: 'active',
-                  bench: 'bench',
-                  lostZone: 'lost zone',
-                  attachmentResolution: 'attached cards',
-                  inspection: 'inspection',
-                  other: 'deck',
-                }
-              )}`,
-              comment:
-                "Log line: a player showed one card to everyone. {actor} is who showed it, {owner} whose card it is, {card} the card's name; {source} is the zone it is in.",
-            });
+          : event.cardCount > 1
+            ? withCardNames(
+                msg({
+                  message: `${actor} revealed ${plural(event.cardCount, {
+                    one: '# card',
+                    other: '# cards',
+                  })} in ${owner}'s ${select(source, {
+                    hand: 'hand',
+                    prizes: 'prizes',
+                    discard: 'discard',
+                    board: 'board',
+                    stadium: 'stadium',
+                    active: 'active',
+                    bench: 'bench',
+                    lostZone: 'lost zone',
+                    attachmentResolution: 'attached cards',
+                    inspection: 'inspection',
+                    other: 'deck',
+                  })}`,
+                  comment:
+                    'Log line: a player showed several cards to everyone at once. {actor} is who showed them, {owner} whose cards they are, {count} how many; {source} is the zone they are in.',
+                }),
+                event.cardNames
+              )
+            : msg({
+                message: `${actor} revealed ${card} in ${owner}'s ${select(
+                  source,
+                  {
+                    hand: 'hand',
+                    prizes: 'prizes',
+                    discard: 'discard',
+                    board: 'board',
+                    stadium: 'stadium',
+                    active: 'active',
+                    bench: 'bench',
+                    lostZone: 'lost zone',
+                    attachmentResolution: 'attached cards',
+                    inspection: 'inspection',
+                    other: 'deck',
+                  }
+                )}`,
+                comment:
+                  "Log line: a player showed one card to everyone. {actor} is who showed it, {owner} whose card it is, {card} the card's name; {source} is the zone it is in.",
+              });
       return [
         activity(event, 'player', message, event.actorPlayerId),
         accessibility(event, message),
@@ -928,23 +1007,44 @@ export const presentationEffectsForEvent = (
               comment:
                 'Log line: a player hid a zone they had shown to everyone. {actor} is who hid it, {owner} whose zone it is; {source} is the zone.',
             })
-          : msg({
-              message: `${actor} hid card in ${owner}'s ${select(source, {
-                hand: 'hand',
-                prizes: 'prizes',
-                discard: 'discard',
-                board: 'board',
-                stadium: 'stadium',
-                active: 'active',
-                bench: 'bench',
-                lostZone: 'lost zone',
-                attachmentResolution: 'attached cards',
-                inspection: 'inspection',
-                other: 'deck',
-              })}`,
-              comment:
-                'Log line: a player hid a card they had shown to everyone. {actor} is who hid it, {owner} whose card it is; {source} is the zone it is in.',
-            });
+          : event.cardCount > 1
+            ? msg({
+                message: `${actor} hid ${plural(event.cardCount, {
+                  one: '# card',
+                  other: '# cards',
+                })} in ${owner}'s ${select(source, {
+                  hand: 'hand',
+                  prizes: 'prizes',
+                  discard: 'discard',
+                  board: 'board',
+                  stadium: 'stadium',
+                  active: 'active',
+                  bench: 'bench',
+                  lostZone: 'lost zone',
+                  attachmentResolution: 'attached cards',
+                  inspection: 'inspection',
+                  other: 'deck',
+                })}`,
+                comment:
+                  'Log line: a player hid several cards they had shown to everyone. {actor} is who hid them, {owner} whose cards they are, {count} how many; {source} is the zone they are in.',
+              })
+            : msg({
+                message: `${actor} hid card in ${owner}'s ${select(source, {
+                  hand: 'hand',
+                  prizes: 'prizes',
+                  discard: 'discard',
+                  board: 'board',
+                  stadium: 'stadium',
+                  active: 'active',
+                  bench: 'bench',
+                  lostZone: 'lost zone',
+                  attachmentResolution: 'attached cards',
+                  inspection: 'inspection',
+                  other: 'deck',
+                })}`,
+                comment:
+                  'Log line: a player hid a card they had shown to everyone. {actor} is who hid it, {owner} whose card it is; {source} is the zone it is in.',
+              });
       return [
         activity(event, 'player', message, event.actorPlayerId),
         accessibility(event, message),

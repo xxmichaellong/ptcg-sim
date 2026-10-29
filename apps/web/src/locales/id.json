@@ -110,6 +110,13 @@
     ],
     "translation": "{actor} mengevolusikan {targetCard} menjadi {card}"
   },
+  "87uB9a": {
+    "message": "{actor} hid {0, plural, one {# card} other {# cards}} in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
+    "comments": [
+      "Log line: a player hid several cards they had shown to everyone. {actor} is who hid them, {owner} whose cards they are, {count} how many; {source} is the zone they are in."
+    ],
+    "translation": "{actor} menyembunyikan {0, plural, other {# kartu}} di {source, select, hand {Kartu Pegangan} prizes {Kartu Point} discard {Trash} board {papan} stadium {Stadium} active {Arena Bertarung} bench {Cadangan} lostZone {Lost Zone} attachmentResolution {kartu terpasang} inspection {pemeriksaan} other {deck}} milik {owner}"
+  },
   "Gw89O9": {
     "message": "{actor} hid {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
@@ -166,12 +173,12 @@
     ],
     "translation": "{actor} memindahkan {card} dari {source, select, hand {Kartu Pegangan} prizes {Kartu Point} discard {Trash} board {papan} stadium {Stadium} active {Arena Bertarung} bench {Cadangan} lostZone {Lost Zone} attachmentResolution {kartu terpasang} other {deck}} ke atas deck"
   },
-  "9RYqFp": {
-    "message": "{actor} moved {count, plural, one {# card} other {# cards}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} other {deck}}",
+  "hLs0yc": {
+    "message": "{actor} moved {count, plural, one {# card} other {# cards}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} prizes {prizes} board {board} other {deck}}",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards; {source} is the zone they left and {destination} where they went (play: onto the table)."
     ],
-    "translation": "{actor} memindahkan {count, plural, other {# kartu}} dari {source, select, hand {Kartu Pegangan} prizes {Kartu Point} discard {Trash} board {papan} stadium {Stadium} active {Arena Bertarung} bench {Cadangan} lostZone {Lost Zone} attachmentResolution {kartu terpasang} other {deck}} ke {destination, select, hand {Kartu Pegangan} discard {Trash} lostZone {Lost Zone} deckBottom {bawah deck} play {Arena} other {deck}}"
+    "translation": "{actor} memindahkan {count, plural, other {# kartu}} dari {source, select, hand {Kartu Pegangan} prizes {Kartu Point} discard {Trash} board {papan} stadium {Stadium} active {Arena Bertarung} bench {Cadangan} lostZone {Lost Zone} attachmentResolution {kartu terpasang} other {deck}} ke {destination, select, hand {Kartu Pegangan} discard {Trash} lostZone {Lost Zone} deckBottom {bagian bawah deck} play {Arena} prizes {Kartu Point} board {papan} other {deck}}"
   },
   "P4_K0D": {
     "message": "{actor} moved a random card from {target}'s hand to board",
@@ -179,6 +186,13 @@
       "Log line. {actor} is the player who moved the card, {target} the player whose hand it came from."
     ],
     "translation": "{actor} memindahkan satu kartu acak dari Kartu Pegangan {target} ke papan"
+  },
+  "G9PVLG": {
+    "message": "{actor} revealed {0, plural, one {# card} other {# cards}} in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
+    "comments": [
+      "Log line: a player showed several cards to everyone at once. {actor} is who showed them, {owner} whose cards they are, {count} how many; {source} is the zone they are in."
+    ],
+    "translation": "{actor} memperlihatkan {0, plural, other {# kartu}} di {source, select, hand {Kartu Pegangan} prizes {Kartu Point} discard {Trash} board {papan} stadium {Stadium} active {Arena Bertarung} bench {Cadangan} lostZone {Lost Zone} attachmentResolution {kartu terpasang} inspection {pemeriksaan} other {deck}} milik {owner}"
   },
   "_qgrvz": {
     "message": "{actor} revealed {card} in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
@@ -520,6 +534,14 @@
       "A button naming a shortcut and its keys; pressing it changes the keys."
     ],
     "translation": "{label}: {spoken}. Ubah"
+  },
+  "AiqpXX": {
+    "message": "{list}, {item}",
+    "context": "a list of card names in a Log line",
+    "comments": [
+      "Adds one card name to a list in a Log line: \"Fire Energy, Switch\". {list} is the names so far, {item} the next. Use the list separator of your language."
+    ],
+    "translation": "{list}, {item}"
   },
   "MglzGu": {
     "message": "{lostZoneCards, plural, one {# card} other {# cards}}",
@@ -875,6 +897,13 @@
     "message": "{prints, plural, one {# print} other {# prints}}",
     "translation": "{prints, plural, other {# cetakan}}"
   },
+  "RTnHXI": {
+    "message": "{said}: {cards}",
+    "comments": [
+      "Log line: a line about several cards, then their names. {said} is the line (\"Ash moved 3 cards from hand to discard\"), {cards} the names."
+    ],
+    "translation": "{said}: {cards}"
+  },
   "A8TiPy": {
     "message": "{short, plural, one {# more card needed ({count}/{required}).} other {# more cards needed ({count}/{required}).}}",
     "translation": "{short, plural, other {Perlu # kartu lagi ({count}/{required}).}}"
@@ -958,6 +987,13 @@
   "OzYiNM": {
     "message": "{total} of {size} cards",
     "translation": "{total} dari {size} kartu"
+  },
+  "L3P0at": {
+    "message": "{unnamed, plural, one {# other card} other {# other cards}}",
+    "comments": [
+      "Ends the list of card names in a Log line: how many more cards went unnamed, being face down."
+    ],
+    "translation": "{unnamed, plural, other {# kartu lainnya}}"
   },
   "AjcrBd": {
     "message": "{viewer} looked at {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",

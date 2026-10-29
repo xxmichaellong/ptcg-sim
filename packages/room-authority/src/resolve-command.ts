@@ -6,10 +6,16 @@ import {
   asWorkAreaId,
   asZoneId,
   cardSourceSnapshot,
+  decideCardStepSequence,
   findCardLocation,
   playerZoneId,
   stadiumZoneId,
+  type BaseGameCommand,
   type CardInstanceId,
+  type CardStep,
+  type CardStepCommand,
+  type CommandContext,
+  type CommandRejection,
   type GameCommand,
   type MatchState,
   type PlayerId,
@@ -85,6 +91,17 @@ const canInspectPrivateCards = (
 const ownedDefinitionId = (ownerId: PlayerId, definitionId: string) =>
   asCardDefinitionId(`${ownerId}/${definitionId}`);
 
+interface UndoContext {
+  readonly mode: AuthorityMode;
+  readonly checkpoint?: UndoCheckpoint;
+}
+
+/** A card alias as the room reads it: the card, and whether it was known. */
+type CardResolver = (alias: string) => ReturnType<typeof resolveViewCard>;
+
+/** Every command but a group's, which is made of these. */
+type SingleWireCommand = Exclude<WireGameCommand, { type: 'ApplyCardSteps' }>;
+
 export const resolveWireCommand = (
   state: MatchState,
   identities: ProjectionIdentityState,
@@ -92,10 +109,45 @@ export const resolveWireCommand = (
   wire: WireGameCommand,
   policy: AuthorityPolicy,
   observedRevision: number = state.revision,
-  undoContext: {
-    readonly mode: AuthorityMode;
-    readonly checkpoint?: UndoCheckpoint;
-  } = { mode: 'multiplayer' }
+  undoContext: UndoContext = { mode: 'multiplayer' }
+): CommandResolution => {
+  if (session.viewer.kind !== 'player') return rejected('unauthorized');
+  const viewer = session.viewer;
+  if (wire.type === 'ApplyCardSteps') {
+    return resolveCardSteps(
+      state,
+      identities,
+      session,
+      wire,
+      policy,
+      observedRevision,
+      undoContext
+    );
+  }
+  return resolveSingleCommand(
+    state,
+    session,
+    wire,
+    policy,
+    observedRevision,
+    undoContext,
+    (alias) =>
+      resolveViewCard(state, identities, viewer, alias, undoContext.mode)
+  );
+};
+
+/**
+ * One command as the room reads it, on `state`: its card aliases read by
+ * `resolveCard`, and whether this player may do it.
+ */
+const resolveSingleCommand = (
+  state: MatchState,
+  session: AuthoritySession,
+  wire: SingleWireCommand,
+  policy: AuthorityPolicy,
+  observedRevision: number,
+  undoContext: UndoContext,
+  resolveCard: CardResolver
 ): CommandResolution => {
   if (session.viewer.kind !== 'player') return rejected('unauthorized');
   const actorId = session.viewer.playerId;
@@ -123,16 +175,6 @@ export const resolveWireCommand = (
   // look at a deck, attached cards being moved) whichever side is down.
   const controlsSeat = (playerId: PlayerId): boolean =>
     playerId === actorId || undoContext.mode === 'solo';
-
-  const resolveCard = (alias: string) => {
-    return resolveViewCard(
-      state,
-      identities,
-      session.viewer,
-      alias,
-      undoContext.mode
-    );
-  };
 
   switch (wire.type) {
     case 'LoadDeck': {
@@ -1591,12 +1633,137 @@ export const resolveWireCommand = (
         command: { type: 'FlipCoin', playerId: targetPlayerId },
       };
     }
-    case 'ApplyCardSteps':
-      // Not built yet: every step is resolved as it would be alone, on the
-      // table the steps before it left (ADR-042 §4).
-      return rejected('precondition_failed');
   }
   const exhaustive: never = wire;
   void exhaustive;
   return rejected('precondition_failed');
+};
+
+/** How the room says a command the game refused was refused. */
+export const coreRejectionCode = (
+  code: CommandRejection['code']
+): Exclude<CommandResolution, { accepted: true }>['code'] => {
+  switch (code) {
+    case 'not_found':
+    case 'stale_reference':
+      return 'stale_reference';
+    case 'invalid_command':
+    case 'precondition_failed':
+    case 'conflict':
+      return 'precondition_failed';
+  }
+};
+
+/**
+ * The game's adapters for a group's move as the room reads it: it plays
+ * the steps only to read each on the table the ones before it leave, so
+ * what they make is named by stand-ins (never a room's id), and nothing is
+ * left to chance.
+ */
+const readingContext = (): CommandContext => {
+  let made = 0;
+  return {
+    nextCardId: () => {
+      throw new Error('A group move makes no cards');
+    },
+    nextStackId: () => asStackId(`reading-stack:${++made}`),
+    nextInspectionId: () => asInspectionId(`reading-inspection:${++made}`),
+    nextWorkAreaId: () => asWorkAreaId(`reading-work-area:${++made}`),
+    shuffle: (values) => values,
+    randomInt: () => 0,
+  };
+};
+
+type RoomRefusal = Exclude<CommandResolution, { accepted: true }>;
+
+const refusal = (code: RoomRefusal['code']): RoomRefusal => ({
+  accepted: false,
+  code,
+});
+
+/** Steps that, alone, are read only on the revision the player saw. */
+const REVISION_BOUND_STEPS: ReadonlySet<string> = new Set(['SetPublicReveal']);
+
+/**
+ * A group's move (ADR-042 §4) as the room reads it. Every card alias is
+ * read once, as the registry stood before the command -- as the player saw
+ * the table when they chose. Then each step is read as it would be alone
+ * (resolveSingleCommand), on the table the steps before it leave, a step
+ * naming a Pokémon an earlier one made (`targetStackRef`) read as that
+ * one. Any step refused refuses the whole, with that step's code. The
+ * command keeps its references, for the move itself to make the Pokémon
+ * (decideCardSteps).
+ */
+const resolveCardSteps = (
+  state: MatchState,
+  identities: ProjectionIdentityState,
+  session: AuthoritySession,
+  wire: Extract<WireGameCommand, { type: 'ApplyCardSteps' }>,
+  policy: AuthorityPolicy,
+  observedRevision: number,
+  undoContext: UndoContext
+): CommandResolution => {
+  if (session.viewer.kind !== 'player') return rejected('unauthorized');
+  const viewer = session.viewer;
+  if (
+    observedRevision !== state.revision &&
+    wire.steps.some((step) => REVISION_BOUND_STEPS.has(step.type))
+  ) {
+    return rejected('stale_reference');
+  }
+  const aliases = new Map<string, ReturnType<CardResolver>>();
+  const resolveCard: CardResolver = (alias) => {
+    if (!aliases.has(alias)) {
+      aliases.set(
+        alias,
+        resolveViewCard(state, identities, viewer, alias, undoContext.mode)
+      );
+    }
+    return aliases.get(alias);
+  };
+  const steps: CardStep[] = [];
+  const read = decideCardStepSequence<RoomRefusal>(
+    state,
+    wire.steps.length,
+    (index, scratch, made): CardStepCommand<RoomRefusal> => {
+      const step = wire.steps[index]!;
+      const ref =
+        step.type === 'MoveCardToPlay' || step.type === 'PlaceCardOnPlayStack'
+          ? step.targetStackRef
+          : undefined;
+      let single = step as SingleWireCommand;
+      if (ref !== undefined) {
+        const target = ref < index ? made[ref] : undefined;
+        if (target === undefined) return refusal('precondition_failed');
+        const { targetStackRef: _ref, ...rest } = step as typeof step & {
+          readonly targetStackRef: number;
+        };
+        single = { ...rest, targetStackId: target } as SingleWireCommand;
+      }
+      const resolution = resolveSingleCommand(
+        scratch,
+        session,
+        single,
+        policy,
+        scratch.revision,
+        undoContext,
+        resolveCard
+      );
+      if (!resolution.accepted) return resolution;
+      const command = resolution.command as BaseGameCommand;
+      if (ref === undefined) steps.push(command as CardStep);
+      else {
+        const { targetStackId: _made, ...rest } = command as BaseGameCommand & {
+          readonly targetStackId?: string;
+        };
+        steps.push({ ...rest, targetStackRef: ref } as CardStep);
+      }
+      return { accepted: true, command };
+    },
+    readingContext()
+  );
+  if (!read.accepted) {
+    return 'message' in read ? refusal(coreRejectionCode(read.code)) : read;
+  }
+  return { accepted: true, command: { type: 'ApplyCardSteps', steps } };
 };

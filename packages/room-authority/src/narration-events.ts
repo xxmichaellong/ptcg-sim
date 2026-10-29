@@ -52,14 +52,14 @@ export const narrationEventsForBatch = (
     (event) =>
       event.type === 'TableActionDeclared' && event.action === 'startTurn'
   );
-  const compound = narrateCompound(batch, state, previousState);
-  const lines =
-    compound ??
-    batch.events.flatMap((event) =>
-      turnDraw && event.type === 'CardsDrawn'
-        ? []
-        : narrate(event, batch.revision, state, previousState)
-    );
+  const lines = batch.steps
+    ? narrateSteps(batch, batch.steps, state, previousState)
+    : (narrateCompound(batch, state, previousState) ??
+      batch.events.flatMap((event) =>
+        turnDraw && event.type === 'CardsDrawn'
+          ? []
+          : narrate(event, batch.revision, state, previousState)
+      ));
   // The ledger records who submitted the command; v1 names that initiator
   // even when it was the opponent moving your cards. Older batches carry no
   // actor and fall back to the card's owner.
@@ -71,6 +71,86 @@ export const narrationEventsForBatch = (
           : { ...line, playerId: actorPlayerId }
       )
     : lines;
+};
+
+/**
+ * A group's move (ApplyCardSteps): each step told as it would be alone
+ * (presentation-events folds the lines into one per place). The pieces of
+ * a card printed in pieces read as the card going in: a later piece put on
+ * the Pokémon the group made of an earlier one of the same name, or on the
+ * Stadium one made, says nothing more. Whatever the room did after the
+ * steps (a lone Benched Pokémon brought up) is told as it is alone.
+ */
+const narrateSteps = (
+  batch: EventBatch,
+  steps: readonly number[],
+  state: MatchState,
+  previousState: MatchState
+): readonly Narration[] => {
+  const nameOf = (cardId: CardInstanceId): string | undefined => {
+    const card = state.cards[cardId] ?? previousState.cards[cardId];
+    return card
+      ? (
+          state.definitions[card.definitionId] ??
+          previousState.definitions[card.definitionId]
+        )?.name
+      : undefined;
+  };
+  const made = new Map<StackId, string | undefined>();
+  const stadiumNames = new Set<string>();
+  const joined = (event: DomainEvent): boolean => {
+    if (event.type === 'CardMovedToPlay' && event.mode === 'newStack') {
+      made.set(event.stackId, nameOf(event.cardId));
+      return false;
+    }
+    const onPokemon =
+      event.type === 'CardPlacedOnPlayStack' && event.mode === 'evolution'
+        ? { stackId: event.targetStackId, cardId: event.cardId }
+        : event.type === 'CardMovedToPlay' && event.mode === 'evolution'
+          ? { stackId: event.stackId, cardId: event.cardId }
+          : undefined;
+    if (onPokemon) {
+      const name = nameOf(onPokemon.cardId);
+      return (
+        made.has(onPokemon.stackId) &&
+        name !== undefined &&
+        made.get(onPokemon.stackId) === name
+      );
+    }
+    if (
+      event.type === 'CardMoved' &&
+      event.expectedSourceZoneId !== event.destinationZoneId &&
+      (
+        state.zones[event.destinationZoneId] ??
+        previousState.zones[event.destinationZoneId]
+      )?.kind === 'stadium'
+    ) {
+      const name = nameOf(event.cardId);
+      if (name === undefined) return false;
+      if (stadiumNames.has(name)) return true;
+      stadiumNames.add(name);
+    }
+    return false;
+  };
+  const lines: Narration[] = [];
+  let start = 0;
+  for (const count of steps) {
+    const events = batch.events
+      .slice(start, start + count)
+      .filter((event) => !joined(event));
+    start += count;
+    const step = { ...batch, events };
+    lines.push(
+      ...(narrateCompound(step, state, previousState) ??
+        events.flatMap((event) =>
+          narrate(event, batch.revision, state, previousState)
+        ))
+    );
+  }
+  for (const event of batch.events.slice(start)) {
+    lines.push(...narrate(event, batch.revision, state, previousState));
+  }
+  return lines;
 };
 
 /**

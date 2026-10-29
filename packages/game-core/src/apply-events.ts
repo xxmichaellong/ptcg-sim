@@ -3917,11 +3917,20 @@ export const applyEventBatch = (
   ) {
     throw new Error('Undo event must be the only event in its batch');
   }
+  // A group's move (ApplyCardSteps) was decided step by step: a card moved
+  // into a deck by one step, shuffled by the next, was hidden as it went
+  // in, as it would be alone. Only a step's own shuffle defers it.
+  const stepStarts = new Set<number>();
+  let start = 0;
+  for (const count of batch.steps ?? []) {
+    start += count;
+    stepStarts.add(start);
+  }
   let next = state;
   for (const [index, event] of batch.events.entries()) {
     const following = batch.events[index + 1];
     const deferredConcealment =
-      following?.type === 'ZoneShuffled'
+      following?.type === 'ZoneShuffled' && !stepStarts.has(index + 1)
         ? {
             zoneId: following.zoneId,
             cardIds: new Set(following.concealedCardIds),

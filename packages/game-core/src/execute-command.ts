@@ -1,9 +1,15 @@
 import { applyEventBatch } from './apply-events.js';
 import type { CommandContext, GameCommand } from './commands.js';
-import { decideCommand, type CommandDecision } from './decide-command.js';
+import {
+  decideCardStepSequence,
+  decideCommand,
+  readCardStep,
+  type CardStepCommand,
+  type CommandDecision,
+} from './decide-command.js';
 import type { DomainEvent, EventBatch } from './events.js';
 import { assertMatchInvariants } from './invariants.js';
-import type { PlayerId } from './ids.js';
+import type { PlayerId, StackId } from './ids.js';
 import type { MatchState } from './model.js';
 import { activeWentAway, loneBenchedPromotions } from './play-stack-boards.js';
 
@@ -101,15 +107,71 @@ export const executeCommand = (
   context: CommandContext,
   options: ExecuteOptions = {}
 ): CommandExecution => {
+  if (command.type === 'ApplyCardSteps') {
+    return executeCommandSequence(
+      state,
+      command.steps.length,
+      (index, _scratch, made) =>
+        readCardStep(command.steps[index]!, index, made),
+      context,
+      options
+    );
+  }
   assertMatchInvariants(state);
   const decision = decideCommand(state, command, context);
   if (!decision.accepted) return decision;
-  let batch: EventBatch = {
-    revision: state.revision + 1,
-    events: decision.events,
-  };
+  return settle(
+    state,
+    { revision: state.revision + 1, events: decision.events },
+    options.promoteLoneBenched === true && command.type !== 'ApplySoloUndo'
+  );
+};
+
+/**
+ * A group's move (ApplyCardSteps, ADR-042 §4): its steps decided one by
+ * one on the table the ones before them left (decideCardStepSequence), as
+ * one batch -- one revision, one undo step -- that records each step's
+ * events so the log can tell them. A lone Benched Pokémon comes up, and
+ * the places' limits are checked, once, after the last step. `next` gives
+ * each step as the room resolved it on that table; a refusal it returns is
+ * handed back as it is.
+ */
+export const executeCommandSequence = <
+  Refusal extends { readonly accepted: false },
+>(
+  state: MatchState,
+  stepCount: number,
+  next: (
+    index: number,
+    scratch: MatchState,
+    made: readonly (StackId | undefined)[]
+  ) => CardStepCommand<Refusal>,
+  context: CommandContext,
+  options: ExecuteOptions = {}
+): CommandExecution | Refusal => {
+  assertMatchInvariants(state);
+  const decided = decideCardStepSequence(state, stepCount, next, context);
+  if (!decided.accepted) return decided;
+  return settle(
+    state,
+    {
+      revision: state.revision + 1,
+      events: decided.events,
+      steps: decided.steps,
+    },
+    options.promoteLoneBenched === true
+  );
+};
+
+/** A decided batch applied, then checked as every command's is. */
+const settle = (
+  state: MatchState,
+  decided: EventBatch,
+  promoteLoneBenched: boolean
+): CommandExecution => {
+  let batch = decided;
   let next = applyEventBatch(state, batch);
-  if (options.promoteLoneBenched && command.type !== 'ApplySoloUndo') {
+  if (promoteLoneBenched) {
     const promotions = promotionsAfter(state, next);
     if (promotions.length > 0) {
       batch = { ...batch, events: [...batch.events, ...promotions] };

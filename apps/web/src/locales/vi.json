@@ -110,6 +110,13 @@
     ],
     "translation": "{actor} đã tiến hóa {targetCard} thành {card}"
   },
+  "87uB9a": {
+    "message": "{actor} hid {0, plural, one {# card} other {# cards}} in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
+    "comments": [
+      "Log line: a player hid several cards they had shown to everyone. {actor} is who hid them, {owner} whose cards they are, {count} how many; {source} is the zone they are in."
+    ],
+    "translation": "{actor} đã ẩn {0, plural, other {# lá bài}} trong {source, select, hand {bài trên tay} prizes {Prize} discard {chồng bài bỏ} board {thảm chơi} stadium {Stadium} active {Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {bài gắn kèm} inspection {kiểm tra} other {bộ bài}} của {owner}"
+  },
   "Gw89O9": {
     "message": "{actor} hid {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
     "comments": [
@@ -166,12 +173,12 @@
     ],
     "translation": "{actor} đã chuyển {card} từ {source, select, hand {bài trên tay} prizes {Prize} discard {chồng bài bỏ} board {thảm chơi} stadium {Stadium} active {vị trí Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {bài gắn kèm} other {bộ bài}} lên đỉnh bộ bài"
   },
-  "9RYqFp": {
-    "message": "{actor} moved {count, plural, one {# card} other {# cards}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} other {deck}}",
+  "hLs0yc": {
+    "message": "{actor} moved {count, plural, one {# card} other {# cards}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} prizes {prizes} board {board} other {deck}}",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards; {source} is the zone they left and {destination} where they went (play: onto the table)."
     ],
-    "translation": "{actor} đã chuyển {count, plural, other {# lá bài}} từ {source, select, hand {bài trên tay} prizes {Prize} discard {chồng bài bỏ} board {thảm chơi} stadium {vị trí Stadium} active {vị trí Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {bài gắn kèm} other {bộ bài}} sang {destination, select, hand {bài trên tay} discard {chồng bài bỏ} lostZone {Lost Zone} deckBottom {đáy bộ bài} play {sân} other {bộ bài}}"
+    "translation": "{actor} đã chuyển {count, plural, other {# lá bài}} từ {source, select, hand {bài trên tay} prizes {Prize} discard {chồng bài bỏ} board {thảm chơi} stadium {Stadium} active {Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {bài gắn kèm} other {bộ bài}} đến {destination, select, hand {bài trên tay} discard {chồng bài bỏ} lostZone {Lost Zone} deckBottom {đáy bộ bài} play {trên sân} prizes {Prize} board {thảm chơi} other {bộ bài}}"
   },
   "P4_K0D": {
     "message": "{actor} moved a random card from {target}'s hand to board",
@@ -179,6 +186,13 @@
       "Log line. {actor} is the player who moved the card, {target} the player whose hand it came from."
     ],
     "translation": "{actor} đã chuyển một lá bài ngẫu nhiên từ bài trên tay của {target} ra thảm chơi"
+  },
+  "G9PVLG": {
+    "message": "{actor} revealed {0, plural, one {# card} other {# cards}} in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
+    "comments": [
+      "Log line: a player showed several cards to everyone at once. {actor} is who showed them, {owner} whose cards they are, {count} how many; {source} is the zone they are in."
+    ],
+    "translation": "{actor} đã lật mở {0, plural, other {# lá bài}} trong {source, select, hand {bài trên tay} prizes {Prize} discard {chồng bài bỏ} board {thảm chơi} stadium {Stadium} active {Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {bài gắn kèm} inspection {kiểm tra} other {bộ bài}} của {owner}"
   },
   "_qgrvz": {
     "message": "{actor} revealed {card} in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
@@ -520,6 +534,14 @@
       "A button naming a shortcut and its keys; pressing it changes the keys."
     ],
     "translation": "{label}: {spoken}. Thay đổi"
+  },
+  "AiqpXX": {
+    "message": "{list}, {item}",
+    "context": "a list of card names in a Log line",
+    "comments": [
+      "Adds one card name to a list in a Log line: \"Fire Energy, Switch\". {list} is the names so far, {item} the next. Use the list separator of your language."
+    ],
+    "translation": "{list}, {item}"
   },
   "MglzGu": {
     "message": "{lostZoneCards, plural, one {# card} other {# cards}}",
@@ -875,6 +897,13 @@
     "message": "{prints, plural, one {# print} other {# prints}}",
     "translation": "{prints, plural, other {# bản in}}"
   },
+  "RTnHXI": {
+    "message": "{said}: {cards}",
+    "comments": [
+      "Log line: a line about several cards, then their names. {said} is the line (\"Ash moved 3 cards from hand to discard\"), {cards} the names."
+    ],
+    "translation": "{said}: {cards}"
+  },
   "A8TiPy": {
     "message": "{short, plural, one {# more card needed ({count}/{required}).} other {# more cards needed ({count}/{required}).}}",
     "translation": "{short, plural, other {Cần thêm # lá bài ({count}/{required}).}}"
@@ -958,6 +987,13 @@
   "OzYiNM": {
     "message": "{total} of {size} cards",
     "translation": "{total} trên {size} lá bài"
+  },
+  "L3P0at": {
+    "message": "{unnamed, plural, one {# other card} other {# other cards}}",
+    "comments": [
+      "Ends the list of card names in a Log line: how many more cards went unnamed, being face down."
+    ],
+    "translation": "{unnamed, plural, other {# lá bài khác}}"
   },
   "AjcrBd": {
     "message": "{viewer} looked at {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",

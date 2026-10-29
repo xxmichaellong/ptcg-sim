@@ -1,8 +1,12 @@
-import type {
-  CommandContext,
-  CommandRejection,
-  GameCommand,
-  WorkAreaCardsDestination,
+import {
+  CARD_STEP_TYPES,
+  type ApplyCardStepsCommand,
+  type BaseGameCommand,
+  type CardStep,
+  type CommandContext,
+  type CommandRejection,
+  type GameCommand,
+  type WorkAreaCardsDestination,
 } from './commands.js';
 import {
   coachingConsentRevocations,
@@ -14,7 +18,7 @@ import {
   orderAttachmentCardIdsV1,
 } from './attachment-order.js';
 import { playerZoneId, stadiumZoneId } from './create-match.js';
-import { applyEvent } from './apply-events.js';
+import { applyEvent, applyEventBatch } from './apply-events.js';
 import { isCardBackValue } from './card-back.js';
 import { sameCardPresentation } from './card-presentation.js';
 import type { DomainEvent, WorkAreaArrivalSource } from './events.js';
@@ -3393,9 +3397,166 @@ export const decideCommand = (
         result: result === 0 ? 'heads' : 'tails',
       });
     }
-    case 'ApplyCardSteps':
-      // Not built yet: a group's steps are decided one by one on the table
-      // the steps before them left (ADR-042 §4).
-      return reject('invalid_command', 'Card steps are not supported yet');
+    case 'ApplyCardSteps': {
+      const decided = decideCardSteps(state, command, context);
+      return decided.accepted ? accept(...decided.events) : decided;
+    }
   }
 };
+
+/**
+ * A step of a group's move as the fold asks for it, on the table the steps
+ * before it left: the command it is there, or why it can't be one (a
+ * room's own refusal, which the fold hands back as it is).
+ */
+export type CardStepCommand<Refusal extends { readonly accepted: false }> =
+  { readonly accepted: true; readonly command: BaseGameCommand } | Refusal;
+
+export interface CardStepsDecided {
+  readonly accepted: true;
+  readonly events: readonly DomainEvent[];
+  /** How many events each step made, in order (EventBatch.steps). */
+  readonly steps: readonly number[];
+}
+
+/** What a step moves, by card or Pokémon; an annotation moves nothing. */
+const movedBy = (command: BaseGameCommand): string | undefined => {
+  switch (command.type) {
+    case 'MoveCard':
+    case 'MoveCardFromStack':
+    case 'MoveInspectedCard':
+    case 'MoveStagedCard':
+    case 'MoveCardToPlay':
+    case 'MoveInspectedCardToPlay':
+    case 'PlaceCardOnPlayStack':
+    case 'MoveCardToStadium':
+    case 'MoveCardToDeckTop':
+    case 'MoveCardToDeckBottom':
+      return `card:${command.cardId}`;
+    case 'MovePlayStackToZone':
+      return `stack:${command.stackId}`;
+    default:
+      return undefined;
+  }
+};
+
+/** The Pokémon a step made, if it played a card into a new one. */
+const madeStack = (
+  before: MatchState,
+  after: MatchState,
+  command: BaseGameCommand
+): StackId | undefined => {
+  if (
+    !(command.type === 'MoveCardToPlay' && !command.targetStackId) &&
+    command.type !== 'MoveInspectedCardToPlay'
+  )
+    return undefined;
+  return Object.values(after.stacks).find(
+    (stack) =>
+      !before.stacks[stack.id] && stack.evolutionCardIds[0] === command.cardId
+  )?.id;
+};
+
+/**
+ * A group's move (ApplyCardSteps, ADR-042 §4), decided one step at a time:
+ * each is decided as if it came alone, on the table the steps before it
+ * left, and any step refused refuses the whole. `next` gives step `index`
+ * on that table, knowing the Pokémon the earlier steps made (`made[k]`,
+ * step k's). Only the single-card commands of `CARD_STEP_TYPES` may be
+ * steps, shuffles last, and no card or Pokémon moves twice.
+ */
+export const decideCardStepSequence = <
+  Refusal extends { readonly accepted: false },
+>(
+  state: MatchState,
+  stepCount: number,
+  next: (
+    index: number,
+    scratch: MatchState,
+    made: readonly (StackId | undefined)[]
+  ) => CardStepCommand<Refusal>,
+  context: CommandContext
+): CardStepsDecided | CommandRejection | Refusal => {
+  if (!Number.isSafeInteger(stepCount) || stepCount < 2) {
+    return reject('invalid_command', 'A group move has at least two steps');
+  }
+  let scratch = state;
+  const events: DomainEvent[] = [];
+  const steps: number[] = [];
+  const made: (StackId | undefined)[] = [];
+  const moved = new Set<string>();
+  let shuffled = false;
+  for (let index = 0; index < stepCount; index += 1) {
+    const step = next(index, scratch, made);
+    if (!step.accepted) return step;
+    const { command } = step;
+    if (!(CARD_STEP_TYPES as readonly string[]).includes(command.type)) {
+      return reject(
+        'invalid_command',
+        `${command.type} cannot be a step of a group move`
+      );
+    }
+    if (command.type === 'ShuffleZone') shuffled = true;
+    else if (shuffled) {
+      return reject(
+        'invalid_command',
+        'A group move shuffles only once its cards are in'
+      );
+    }
+    const key = movedBy(command);
+    if (key !== undefined) {
+      if (moved.has(key)) {
+        return reject('invalid_command', `${key} moves twice in one move`);
+      }
+      moved.add(key);
+    }
+    const decision = decideCommand(scratch, command, context);
+    if (!decision.accepted) return decision;
+    const after = applyEventBatch(scratch, {
+      revision: scratch.revision + 1,
+      events: decision.events,
+    });
+    made.push(madeStack(scratch, after, command));
+    events.push(...decision.events);
+    steps.push(decision.events.length);
+    scratch = after;
+  }
+  return { accepted: true, events, steps };
+};
+
+/** A domain step, its `targetStackRef` read as the Pokémon that step made. */
+export const readCardStep = (
+  step: CardStep,
+  index: number,
+  made: readonly (StackId | undefined)[]
+): CardStepCommand<CommandRejection> => {
+  if (!('targetStackRef' in step)) return { accepted: true, command: step };
+  const { targetStackRef, ...rest } = step;
+  const target =
+    Number.isSafeInteger(targetStackRef) && targetStackRef < index
+      ? made[targetStackRef]
+      : undefined;
+  if (target === undefined) {
+    return reject(
+      'invalid_command',
+      `Step ${index} names a Pokémon step ${targetStackRef} did not make`
+    );
+  }
+  return {
+    accepted: true,
+    command: { ...rest, targetStackId: target } as BaseGameCommand,
+  };
+};
+
+/** A group's move whose steps are already the room's commands. */
+export const decideCardSteps = (
+  state: MatchState,
+  command: ApplyCardStepsCommand,
+  context: CommandContext
+): CardStepsDecided | CommandRejection =>
+  decideCardStepSequence(
+    state,
+    command.steps.length,
+    (index, _scratch, made) => readCardStep(command.steps[index]!, index, made),
+    context
+  );

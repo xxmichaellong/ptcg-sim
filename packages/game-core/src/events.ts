@@ -546,11 +546,13 @@ export interface EventBatch {
   readonly revision: number;
   readonly events: readonly DomainEvent[];
   /**
-   * How many single-card steps one move of several selected cards was made
-   * of (ApplyCardSteps), so the log folds its lines into one per place.
+   * One move of several selected cards (ApplyCardSteps): how many events
+   * each of its single-card steps made, in order, so the log tells each
+   * step as it would alone and folds the lines into one per place. Events
+   * past the steps' are the room's own (a lone Benched Pokémon brought up).
    * Absent on every other batch, and on batches written before groups.
    */
-  readonly steps?: number;
+  readonly steps?: readonly number[];
   /**
    * The seat whose command produced this batch, when it was a player's
    * command. Recorded so the battle log can name who acted -- v1 names the

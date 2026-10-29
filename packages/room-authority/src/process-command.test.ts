@@ -46,6 +46,7 @@ import {
   type RoomAuthoritySnapshot,
 } from './model.js';
 import { processAuthorityCommand } from './process-command.js';
+import { buildProjectedReplay } from './projected-replay.js';
 import { undoCheckpointFor } from './undo-history.js';
 
 const p1 = asPlayerId('player-one');
@@ -2859,5 +2860,369 @@ describe('authoritative room command transaction', () => {
       accepted: false,
       code: 'invalid_sequence',
     });
+  });
+});
+
+describe('a group move (ApplyCardSteps) in the room', () => {
+  type View = ReturnType<typeof serializeMatchViewState>;
+  type LoadDeckCommand = Extract<
+    CommandEnvelope['command'],
+    { type: 'LoadDeck' }
+  >;
+  /**
+   * A room whose seats loaded `entries` (each player their own, Solo's one
+   * player both) and, when `setUp`, drew their hands. `send` posts a
+   * command as a session would; `seen` is what each session was last shown.
+   */
+  const room = async (
+    mode: 'multiplayer' | 'solo' = 'multiplayer',
+    entries: LoadDeckCommand['entries'] = (
+      loadDeck().command as LoadDeckCommand
+    ).entries,
+    setUp = true
+  ) => {
+    const persistence = createPersistence();
+    const dependencies = createDependencies(persistence);
+    let current = mode === 'solo' ? createSoloSnapshot() : createSnapshot();
+    const sequences: Record<string, number> = {};
+    const seen: Record<
+      string,
+      { readonly view: View; readonly lines: readonly unknown[] }
+    > = {};
+    const send = async (
+      sessionId: string,
+      commandId: string,
+      gameCommand: CommandEnvelope['command']
+    ) => {
+      sequences[sessionId] = (sequences[sessionId] ?? 0) + 1;
+      const result = await processAuthorityCommand(
+        current,
+        command(
+          sessionId,
+          sequences[sessionId]!,
+          commandId,
+          gameCommand,
+          current.state.revision
+        ),
+        dependencies
+      );
+      current = result.snapshot;
+      for (const delivery of result.deliveries) {
+        if (delivery.message.type !== 'StatePublication') continue;
+        seen[delivery.sessionId] = {
+          view: delivery.message.snapshot,
+          lines: delivery.message.presentationEvents ?? [],
+        };
+      }
+      return result.deliveries.find(
+        (delivery) =>
+          delivery.sessionId === sessionId &&
+          delivery.message.type === 'CommandResult'
+      )?.message;
+    };
+    const blue = 'session-player-one';
+    const red = mode === 'solo' ? blue : 'session-player-two';
+    for (const [sessionId, playerId] of [
+      [blue, p1],
+      [red, p2],
+    ] as const) {
+      const target = mode === 'solo' ? { targetPlayerId: playerId } : {};
+      // Red's cards are named apart, so a name says whose card it is.
+      await send(sessionId, `${playerId}-deck`, {
+        type: 'LoadDeck',
+        ...target,
+        entries:
+          playerId === p1
+            ? entries
+            : entries.map((entry) => ({
+                ...entry,
+                definition: {
+                  ...entry.definition,
+                  name: `Red's ${entry.definition.name}`,
+                },
+              })),
+      });
+      if (setUp) {
+        await send(sessionId, `${playerId}-setup`, {
+          type: 'SetupPlayer',
+          ...target,
+        });
+      }
+    }
+    return {
+      send,
+      seen,
+      blue,
+      red,
+      dependencies,
+      state: () => current,
+      /** A zone's cards as a session sees them. */
+      cards: (sessionId: string, zoneId: string) =>
+        seen[sessionId]!.view.zones[zoneId]!.cards,
+      nameOf: (sessionId: string, card: View['zones'][string]['cards'][0]) =>
+        card.kind === 'known'
+          ? seen[sessionId]!.view.definitions[card.definitionId]!.name
+          : undefined,
+    };
+  };
+  const moveTo = (
+    cardId: string,
+    from: 'hand' | 'discard',
+    to: 'discard' | 'lostZone',
+    owner: string = p1
+  ) => ({
+    type: 'MoveCard' as const,
+    cardId,
+    expectedSourceZoneId: playerZoneId(asPlayerId(owner), from),
+    destinationZoneId: playerZoneId(asPlayerId(owner), to),
+  });
+
+  it('moves cards from the hand in one move, one line naming them, one undo', async () => {
+    const table = await room();
+    const hand = table.cards(table.blue, playerZoneId(p1, 'hand'));
+    const before = table.state().state;
+    const moved = hand.slice(0, 3);
+    expect(
+      await table.send(table.blue, 'blue-group', {
+        type: 'ApplyCardSteps',
+        steps: moved.map((card) => moveTo(card.id, 'hand', 'discard')),
+      })
+    ).toMatchObject({ accepted: true });
+    expect(table.state().state.revision).toBe(before.revision + 1);
+    const names = moved.map((card) => table.nameOf(table.blue, card));
+    for (const sessionId of [table.red, 'session-spectator']) {
+      expect(table.seen[sessionId]!.lines).toEqual([
+        {
+          type: 'CardsResolved',
+          revision: before.revision + 1,
+          playerId: p1,
+          verb: 'moved',
+          cardCount: 3,
+          source: 'hand',
+          destination: 'discard',
+          cardNames: names,
+        },
+      ]);
+    }
+    expect(
+      await table.send(table.blue, 'blue-undo', {
+        type: 'ApplySoloUndo',
+        targetPlayerId: p1,
+      })
+    ).toMatchObject({ accepted: true });
+    expect(table.state().state.zones).toEqual(before.zones);
+    expect(table.state().state.cards).toEqual(before.cards);
+  });
+
+  it("changes nothing when one step is stale, and answers with that step's code", async () => {
+    const table = await room();
+    const hand = table.cards(table.blue, playerZoneId(p1, 'hand'));
+    const before = table.state().state;
+    expect(
+      await table.send(table.blue, 'blue-stale-group', {
+        type: 'ApplyCardSteps',
+        steps: [
+          moveTo(hand[0]!.id, 'hand', 'discard'),
+          // Still in the hand, not the discard pile.
+          moveTo(hand[1]!.id, 'discard', 'lostZone'),
+        ],
+      })
+    ).toMatchObject({ accepted: false, code: 'stale_reference' });
+    expect(table.state().state).toEqual(before);
+  });
+
+  it('refuses a card moved twice in one move', async () => {
+    const table = await room();
+    const [card] = table.cards(table.blue, playerZoneId(p1, 'hand'));
+    expect(
+      await table.send(table.blue, 'blue-twice', {
+        type: 'ApplyCardSteps',
+        steps: [
+          moveTo(card!.id, 'hand', 'discard'),
+          moveTo(card!.id, 'discard', 'lostZone'),
+        ],
+      })
+    ).toMatchObject({ accepted: false, code: 'precondition_failed' });
+  });
+
+  it("asks leave for each step as alone: not the other player's hidden card, but their Pokémon's damage", async () => {
+    const table = await room();
+    const playPokemon = async (sessionId: string, owner: typeof p1) => {
+      const view = table.seen[sessionId]!.view;
+      const pokemon = view.zones[playerZoneId(owner, 'hand')]!.cards.find(
+        (card) =>
+          card.kind === 'known' &&
+          view.definitions[card.definitionId]!.category === 'Pokémon'
+      )!;
+      expect(
+        await table.send(sessionId, `${sessionId}-active`, {
+          type: 'MoveCardToPlay',
+          cardId: pokemon.id,
+          expectedSourceZoneId: playerZoneId(owner, 'hand'),
+          boardPlayerId: owner,
+          slot: 'active',
+        })
+      ).toMatchObject({ accepted: true });
+    };
+    await playPokemon(table.blue, p1);
+    await playPokemon(table.red, p2);
+    const [own] = table.cards(table.blue, playerZoneId(p1, 'hand'));
+    const [hidden] = table.cards(table.blue, playerZoneId(p2, 'hand'));
+    expect(hidden?.kind).toBe('concealed');
+    expect(
+      await table.send(table.blue, 'blue-takes-red', {
+        type: 'ApplyCardSteps',
+        steps: [
+          moveTo(own!.id, 'hand', 'discard'),
+          moveTo(hidden!.id, 'hand', 'discard', p2),
+        ],
+      })
+    ).toMatchObject({ accepted: false, code: 'unauthorized' });
+    const boards = table.state().state.boards;
+    const redActive = boards[p2]!.activeStackId!;
+    expect(
+      await table.send(table.blue, 'blue-spread', {
+        type: 'ApplyCardSteps',
+        steps: [
+          {
+            type: 'SetDamage',
+            stackId: boards[p1]!.activeStackId!,
+            damage: 10,
+          },
+          { type: 'SetDamage', stackId: redActive, damage: 10 },
+        ],
+      })
+    ).toMatchObject({ accepted: true });
+    expect(table.state().state.stacks[redActive]!.damage).toBe(10);
+  });
+
+  it('names no hidden card to the other seat, a spectator, or their replays', async () => {
+    const table = await room();
+    const hand = table.cards(table.blue, playerZoneId(p1, 'hand'));
+    const hidden = hand
+      .slice(0, 2)
+      .map((card) => `"${table.nameOf(table.blue, card)!}"`);
+    expect(
+      await table.send(table.blue, 'blue-bottom', {
+        type: 'ApplyCardSteps',
+        steps: hand.slice(0, 2).map((card) => ({
+          type: 'MoveCardToDeckBottom' as const,
+          cardId: card.id,
+          expectedSourceId: playerZoneId(p1, 'hand'),
+        })),
+      })
+    ).toMatchObject({ accepted: true });
+    for (const sessionId of [table.red, 'session-spectator']) {
+      expect(table.seen[sessionId]!.lines).toEqual([
+        expect.objectContaining({
+          type: 'CardsResolved',
+          cardCount: 2,
+          source: 'hand',
+          destination: 'deck',
+          cardNames: [null, null],
+        }),
+      ]);
+    }
+    for (const viewer of [
+      { kind: 'player' as const, playerId: p2 },
+      { kind: 'spectator' as const },
+    ]) {
+      const replay = buildProjectedReplay(
+        table.state().replayHistory,
+        viewer,
+        table.dependencies.opaqueIds,
+        'multiplayer'
+      );
+      const told = JSON.stringify(replay);
+      for (const name of hidden) expect(told).not.toContain(name);
+      // The replay tells the move as the room did.
+      expect(JSON.stringify(replay.frames.at(-1))).toContain('"cardNames"');
+    }
+  });
+
+  it("refuses to take back a player's group once the other has moved", async () => {
+    const table = await room();
+    const [first, second] = table.cards(table.blue, playerZoneId(p1, 'hand'));
+    expect(
+      await table.send(table.blue, 'blue-group', {
+        type: 'ApplyCardSteps',
+        steps: [
+          moveTo(first!.id, 'hand', 'discard'),
+          moveTo(second!.id, 'hand', 'discard'),
+        ],
+      })
+    ).toMatchObject({ accepted: true });
+    const [redCard] = table.cards(table.red, playerZoneId(p2, 'hand'));
+    expect(
+      await table.send(
+        table.red,
+        'red-move',
+        moveTo(redCard!.id, 'hand', 'discard', p2)
+      )
+    ).toMatchObject({ accepted: true });
+    expect(
+      await table.send(table.blue, 'blue-undo-late', {
+        type: 'ApplySoloUndo',
+        targetPlayerId: p1,
+      })
+    ).toMatchObject({ accepted: false, code: 'precondition_failed' });
+  });
+
+  it('plays the pieces of one card as one Pokémon, told as the card going in', async () => {
+    const piece = (index: number) => ({
+      definition: {
+        id: `union-piece-${index}`,
+        name: 'Mewtwo V-UNION',
+        category: 'Pokémon' as const,
+        imageUrl: `https://cards.invalid/union-${index}.png`,
+      },
+      count: 1,
+    });
+    const table = await room('solo', [piece(1), piece(2)], false);
+    const deck = table.cards(table.blue, playerZoneId(p1, 'deck'));
+    const before = table.state().state;
+    expect(
+      await table.send(table.blue, 'blue-pieces', {
+        type: 'ApplyCardSteps',
+        steps: [
+          {
+            type: 'MoveCardToPlay',
+            cardId: deck[0]!.id,
+            expectedSourceZoneId: playerZoneId(p1, 'deck'),
+            boardPlayerId: p1,
+            slot: 'bench',
+          },
+          {
+            type: 'PlaceCardOnPlayStack',
+            cardId: deck[1]!.id,
+            expectedSourceId: playerZoneId(p1, 'deck'),
+            targetStackRef: 0,
+            expectedTargetTopCardId: deck[0]!.id,
+            mode: 'evolution',
+          },
+        ],
+      })
+    ).toMatchObject({ accepted: true });
+    const state = table.state().state;
+    const made = state.boards[p1]!.benchStackIds.at(-1)!;
+    expect(state.stacks[made]!.evolutionCardIds).toHaveLength(2);
+    expect(table.seen['session-spectator']!.lines).toEqual([
+      expect.objectContaining({
+        type: 'CardMoved',
+        verb: 'moved',
+        source: 'deck',
+        cardName: 'Mewtwo V-UNION',
+      }),
+    ]);
+    // One undo takes the whole move back, at a Solo table too.
+    expect(
+      await table.send(table.blue, 'blue-undo-pieces', {
+        type: 'ApplySoloUndo',
+        targetPlayerId: p1,
+      })
+    ).toMatchObject({ accepted: true });
+    expect(table.state().state.boards).toEqual(before.boards);
+    expect(table.state().state.zones).toEqual(before.zones);
+    expect(table.state().state.stacks).toEqual(before.stacks);
   });
 });

@@ -572,6 +572,72 @@ describe('presentationEffectsForEvent', () => {
     ).toBe('player:Blue used Path to the Peak');
   });
 
+  it("names a group's cards after its line, counting the ones it hides (ADR-042 §6)", () => {
+    const view = createRendererSpikeView();
+    const line = (event: PresentationEvent) =>
+      messages(presentationEffectsForEvent(event, view))[0];
+    const at = { revision: 9, playerId: 'spike-blue' } as const;
+    const moved = {
+      type: 'CardsResolved',
+      ...at,
+      verb: 'moved',
+      source: 'hand',
+    } as const;
+    expect(
+      line({
+        ...moved,
+        cardCount: 3,
+        destination: 'discard',
+        cardNames: ['Fire Energy', 'Fire Energy', 'Switch'],
+      })
+    ).toBe(
+      'player:Blue moved 3 cards from hand to discard: Fire Energy, Fire Energy, Switch'
+    );
+    // Face-down prizes are named by none.
+    expect(
+      line({
+        ...moved,
+        cardCount: 2,
+        destination: 'prizes',
+        cardNames: [null, null],
+      })
+    ).toBe('player:Blue moved 2 cards from hand to prizes');
+    expect(
+      line({
+        ...moved,
+        source: 'discard',
+        cardCount: 3,
+        destination: 'board',
+        cardNames: ['Pikachu', null, null],
+      })
+    ).toBe(
+      'player:Blue moved 3 cards from discard to board: Pikachu, 2 other cards'
+    );
+    expect(
+      line({
+        type: 'PublicCardsRevealed',
+        revision: 9,
+        actorPlayerId: 'spike-blue',
+        playerId: 'spike-blue',
+        scope: 'card',
+        source: 'hand',
+        cardCount: 2,
+        cardNames: ['Pikachu', 'Switch'],
+      })
+    ).toBe("player:Blue revealed 2 cards in Blue's hand: Pikachu, Switch");
+    expect(
+      line({
+        type: 'PublicCardsHidden',
+        revision: 9,
+        actorPlayerId: 'spike-blue',
+        playerId: 'spike-blue',
+        scope: 'card',
+        source: 'hand',
+        cardCount: 2,
+      })
+    ).toBe("player:Blue hid 2 cards in Blue's hand");
+  });
+
   it('announces an invalid deck when setup had nothing to draw', () => {
     const view = createRendererSpikeView();
     expect(
