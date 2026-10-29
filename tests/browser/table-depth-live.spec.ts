@@ -223,6 +223,26 @@ const paintedPoint = (element: Locator, u = 0.5, v = 0.5) =>
     { u, v }
   );
 
+test("a pile's count sits on its top card's corner, as high as the pile stands", async ({
+  page,
+}) => {
+  await start(page);
+  await idle(page);
+  const deck = await cardIn(page, 'deck');
+  // The deck's near corner, where its top card is painted: 47 cards up.
+  const corner = await paintedPoint(
+    page.locator(`[data-card-id="${deck.id}"]`),
+    1,
+    1
+  );
+  // The badge stands 9px out past that corner (margin -9px).
+  const badge = (await page
+    .locator(`[data-zone-count-for="${deck.parentId}"]`)
+    .boundingBox())!;
+  expect(Math.abs(badge.x + badge.width - 9 - corner.x)).toBeLessThan(1.5);
+  expect(Math.abs(badge.y + badge.height - 9 - corner.y)).toBeLessThan(1.5);
+});
+
 test('off-center grips stay exact; Escape, blur and resize cancel cleanly; idle has no animation clock', async ({
   page,
 }) => {

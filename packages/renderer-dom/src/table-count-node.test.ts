@@ -1,6 +1,8 @@
 import { asPlayerId } from '@ptcgsim/game-core';
 import type {
+  BoardDepthProjection,
   BoardSceneLayout,
+  CardSceneNode,
   ZoneCountSceneNode,
 } from '@ptcgsim/renderer-contract';
 import { describe, expect, it } from 'vitest';
@@ -48,5 +50,48 @@ describe('a count on the table', () => {
     expect(tableCountNode(hand, undefined, true, layout)).toBe(hand);
     const legacy = count();
     expect(tableCountNode(legacy, undefined, false, layout)).toBe(legacy);
+  });
+
+  it("puts a pile's badge on its top card's corner, as high as the pile stands", () => {
+    // The near deck: its place's corner at (400, 300), its card a little
+    // inside it.
+    const near = count({
+      side: 'local',
+      anchor: { x: 400, y: 300 },
+      horizontalAlign: 'right',
+      verticalAlign: 'bottom',
+    });
+    const top = {
+      bounds: { x: 340, y: 210, width: 56, height: 78 },
+    } as CardSceneNode;
+    // Flat, on the card's corner and not its place's.
+    expect(tableCountNode(near, undefined, true, layout, top).anchor).toEqual({
+      x: 396,
+      y: 288,
+    });
+    // Tilted, where the top of the pile is painted: a full deck stands
+    // well above the table, and its badge with it.
+    const depth = {
+      pose: () => ({
+        bounds: top.bounds,
+        turns: 0,
+        elevation: 12,
+        thickness: 12,
+        plane: 1,
+      }),
+      point: (
+        point: { x: number; y: number },
+        elevation = 0
+      ): { x: number; y: number } => ({ x: point.x, y: point.y - elevation }),
+    } as unknown as BoardDepthProjection;
+    expect(tableCountNode(near, depth, true, layout, top).anchor).toEqual({
+      x: 396,
+      y: 276,
+    });
+    // An empty pile's badge keeps its place's corner, on the table.
+    expect(tableCountNode(near, depth, true, layout).anchor).toEqual({
+      x: 400,
+      y: 300,
+    });
   });
 });

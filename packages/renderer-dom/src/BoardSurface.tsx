@@ -2751,7 +2751,17 @@ export const BoardSurface = ({
         {scene.counts.map((node) => (
           <ZoneCountNode
             key={node.id}
-            node={tableCountNode(node, depth, table, scene.layout)}
+            node={tableCountNode(
+              node,
+              depth,
+              table,
+              scene.layout,
+              // A pile paints only its top card.
+              scene.cards.find(
+                (card) =>
+                  card.parentId === node.zoneId && card.renderKey !== null
+              )
+            )}
             darkMode={preferences.darkMode}
             table={table}
           />
