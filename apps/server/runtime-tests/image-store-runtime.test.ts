@@ -79,10 +79,18 @@ describe('the image store, through the Worker', () => {
     ).toBe(404);
   });
 
-  it('bans a picture by its hash: neither served nor taken again', async () => {
+  it('bans a picture by its hash: neither served again, even after it was, nor taken again', async () => {
     const bytes = webp(3);
     const { ref } = await (await upload(bytes)).json<{ ref: string }>();
     const sha256 = ref.slice(4);
+    // Served once: no copy may outlive a ban at the edge.
+    expect(
+      (
+        await exports.default.fetch(
+          new Request(`${ORIGIN}/v2/images/${sha256}`)
+        )
+      ).status
+    ).toBe(200);
     const store = env.PTCG_IMAGE_STORE.getByName(`images-${sha256.charAt(0)}`);
     // Moderation is by RPC only: no route bans a picture.
     await store.block(sha256);

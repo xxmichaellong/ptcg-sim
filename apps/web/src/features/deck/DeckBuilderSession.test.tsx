@@ -1328,6 +1328,32 @@ describe('DeckBuilderSession', () => {
       expect(library.get(charizard.id)?.cardBack).toBe(RED);
     });
 
+    it('brings home a URL back two decks share with one import, for both', async () => {
+      const session = new FakeSession();
+      const store = new DeckBuilderStore();
+      const charizard = save('Charizard');
+      const lugia = save('Lugia');
+      library.update(charizard.id, { cardBack: RED });
+      library.update(lugia.id, { cardBack: RED });
+      const imports: Array<(ref: string | null) => void> = [];
+      const importCardBack = vi.fn(
+        () => new Promise<string | null>((done) => imports.push(done))
+      );
+      await renderSession({ session, store, open: true, importCardBack });
+
+      // Both on seats before the picture is home.
+      await click('button[aria-label="Charizard: put on P1"]');
+      await click('#nativeDeckBuilderTargetAlt');
+      await click('button[aria-label="Lugia: put on P2"]');
+      expect(importCardBack).toHaveBeenCalledExactlyOnceWith(RED);
+      const STORED = `img:${'4'.repeat(64)}`;
+      await act(async () => imports[0]?.(STORED));
+      expect(library.get(charizard.id)?.cardBack).toBe(STORED);
+      expect(library.get(lugia.id)?.cardBack).toBe(STORED);
+      expect(sleeve('self')).toBe(`/v2/images/${'4'.repeat(64)}`);
+      expect(sleeve('opponent')).toBe(`/v2/images/${'4'.repeat(64)}`);
+    });
+
     it('brings a URL back home once, the first time its deck goes on a seat (ADR-041)', async () => {
       const session = new FakeSession();
       const store = new DeckBuilderStore();

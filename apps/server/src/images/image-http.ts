@@ -25,7 +25,8 @@ import {
  *
  *   POST /v2/images          a JPEG or WebP's bytes, ≤ 200 KB and
  *                            1000×1400 px → 201 { ref: "img:<sha256>" }
- *   GET  /v2/images/<sha256> the bytes, from our own origin, cached a year
+ *   GET  /v2/images/<sha256> the bytes, from our own origin, which browsers
+ *                            keep a year (never the edge: a ban is at once)
  *   POST /v2/images/import   { url } → an outside picture's bytes, for the
  *                            asking browser to re-encode and upload
  */
@@ -47,11 +48,6 @@ const IMAGE_HEADERS = {
 const MAX_IMPORT_REQUEST_BYTES = MAX_IMPORT_URL_CODE_UNITS + 64;
 
 export type ImageRateLimit = () => Promise<RequestRateLimitDecision>;
-
-export interface ImageServeCache {
-  match(request: Request): Promise<Response | undefined>;
-  put(request: Request, response: Response): Promise<void>;
-}
 
 const rateLimited = async (
   rateLimit: ImageRateLimit | undefined,
@@ -133,15 +129,16 @@ export const handleImageUploadRequest = async (
   }
 };
 
-/** Serves a stored picture, once per Cloudflare location from the store. */
+/**
+ * Serves a stored picture from its store, every time: no copy is kept at the
+ * edge, so a banned picture stops at once for every browser that hasn't it
+ * yet (browsers keep what they have, a year, as its name never changes).
+ * The cost is one store request per browser per picture.
+ */
 export const handleImageServeRequest = async (
   request: Request,
   sha256: string,
-  read: (sha256: string) => Promise<StoredImage | null>,
-  options: {
-    readonly cache?: ImageServeCache | undefined;
-    readonly waitUntil?: (promise: Promise<unknown>) => void;
-  } = {}
+  read: (sha256: string) => Promise<StoredImage | null>
 ): Promise<Response> => {
   if (request.method !== 'GET' && request.method !== 'HEAD') {
     return json({ error: 'method_not_allowed' }, 405, { Allow: 'GET, HEAD' });
@@ -149,19 +146,9 @@ export const handleImageServeRequest = async (
   if (new URL(request.url).search) {
     return json({ error: 'invalid_request' }, 400);
   }
-  const key = new Request(new URL(request.url).toString(), { method: 'GET' });
-  const cached = await options.cache?.match(key).catch(() => undefined);
-  if (cached) return request.method === 'HEAD' ? withoutBody(cached) : cached;
   const image = await read(sha256);
   if (!image) return json({ error: 'not_found' }, 404);
   const response = imageResponse(image.type, image.bytes);
-  if (options.cache) {
-    const caching = options.cache
-      .put(key, response.clone())
-      .catch(() => undefined);
-    if (options.waitUntil) options.waitUntil(caching);
-    else await caching;
-  }
   return request.method === 'HEAD' ? withoutBody(response) : response;
 };
 
@@ -219,9 +206,11 @@ export const handleImageImportRequest = async (
       error instanceof RangeError ? 413 : 400
     );
   }
-  const url =
-    typeof body === 'object' && body !== null ? Reflect.get(body, 'url') : '';
-  if (typeof url !== 'string' || Object.keys(body as object).length !== 1) {
+  if (typeof body !== 'object' || body === null || Array.isArray(body)) {
+    return json({ error: 'invalid_request' }, 400);
+  }
+  const url: unknown = Reflect.get(body, 'url');
+  if (typeof url !== 'string' || Object.keys(body).length !== 1) {
     return json({ error: 'invalid_request' }, 400);
   }
   const limited = await rateLimited(rateLimit, 'image_import_rate_limited');

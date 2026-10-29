@@ -64,6 +64,13 @@ room authority stays, for legacy values only.
 - **Serving:** `GET /v2/images/<sha256>` serves the bytes from our own
   origin, `immutable` for a year, with `nosniff`. An unknown or blocked hash
   is a 404.
+  - No copy is kept at the edge, so a ban takes effect at once for every
+    browser that doesn't have the picture yet. Browsers keep what they have.
+  - The cost is one store request per browser per picture: a player's back
+    is asked for once by each opponent and spectator, then comes from their
+    browser's cache.
+  - On Workers Free that is well inside the daily request and row-read
+    budgets: one row read per first view.
 - **Importing:** `POST /v2/images/import` takes `{ "url" }`.
   - It fetches an outside `https` image once for the asking browser, which
     re-encodes it at card size and uploads it.

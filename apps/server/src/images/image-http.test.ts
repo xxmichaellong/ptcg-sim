@@ -137,28 +137,23 @@ describe('image serving', () => {
     expect(response.status).toBe(404);
   });
 
-  it('reads the store once per location, then serves from the cache', async () => {
-    const entries = new Map<string, Response>();
-    const cache = {
-      match: async (request: Request) => entries.get(request.url)?.clone(),
-      put: async (request: Request, response: Response) => {
-        entries.set(request.url, response);
-      },
-    };
-    const read = vi.fn(async () => ({
-      type: 'image/webp' as const,
-      bytes: webpLossless(10, 10),
-    }));
-    for (let index = 0; index < 3; index += 1) {
-      const response = await handleImageServeRequest(
+  it('asks the store for every request, so a banned picture stops at once', async () => {
+    let banned = false;
+    const read = vi.fn(async () =>
+      banned
+        ? null
+        : { type: 'image/webp' as const, bytes: webpLossless(10, 10) }
+    );
+    const serve = () =>
+      handleImageServeRequest(
         new Request(`${ORIGIN}/v2/images/${sha}`),
         sha,
-        read,
-        { cache }
+        read
       );
-      expect(response.status).toBe(200);
-    }
-    expect(read).toHaveBeenCalledOnce();
+    expect((await serve()).status).toBe(200);
+    banned = true;
+    expect((await serve()).status).toBe(404);
+    expect(read).toHaveBeenCalledTimes(2);
   });
 });
 
@@ -221,6 +216,10 @@ describe('image import', () => {
       { url: 42 },
       { url: 'https://images.example.test/a.png', extra: true },
       [],
+      ['https://images.example.test/a.png'],
+      null,
+      'https://images.example.test/a.png',
+      42,
     ]) {
       expect(
         (await handleImageImportRequest(importRequest(body), fetcher)).status

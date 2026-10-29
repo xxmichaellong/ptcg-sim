@@ -1544,15 +1544,8 @@ const worker: ExportedHandler<Env> = {
     const imageHash = servedImageHash(url.pathname);
     if (imageHash) {
       return observeHttp(telemetry, 'image_serve', () =>
-        handleImageServeRequest(
-          request,
-          imageHash,
-          (sha256) =>
-            env.PTCG_IMAGE_STORE.getByName(imageStoreName(sha256)).get(sha256),
-          {
-            cache: edgeCache(),
-            waitUntil: (promise) => ctx.waitUntil(promise),
-          }
+        handleImageServeRequest(request, imageHash, (sha256) =>
+          env.PTCG_IMAGE_STORE.getByName(imageStoreName(sha256)).get(sha256)
         )
       );
     }

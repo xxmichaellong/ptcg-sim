@@ -422,25 +422,40 @@ export const DeckBuilderSession = ({
    * A deck saved with a URL back (before ADR-041) brings its picture home
    * once: the first time it goes on a seat, the picture is imported as our
    * own, silently, and the deck and the seats wearing it take the new
-   * reference. The URL stays if any step fails, or if the deck's back
-   * changed meanwhile.
+   * reference. One import serves every deck waiting on the same picture
+   * (two decks may share a back), each deck once. The URL stays if any step
+   * fails, or on a deck whose back changed meanwhile.
    */
-  const importing = useRef(new Set<string>());
+  const importing = useRef(
+    new Map<
+      string,
+      { readonly done: Promise<string | null>; readonly decks: Set<string> }
+    >()
+  );
   const importLegacyBack = useCallback(
     (deckId: string, back: string): void => {
       const parsed = parseCardBack(back);
-      if (parsed?.kind !== 'url' || importing.current.has(back)) return;
-      importing.current.add(back);
-      void importCardBack(parsed.url)
-        .catch(() => null)
+      if (parsed?.kind !== 'url') return;
+      const running = importing.current.get(back);
+      if (running) {
+        running.decks.add(deckId);
+        return;
+      }
+      const decks = new Set([deckId]);
+      const done = importCardBack(parsed.url).catch(() => null);
+      importing.current.set(back, { done, decks });
+      void done
         .then((ref) => {
-          if (!ref || library.get(deckId)?.cardBack !== back) return;
-          library.update(deckId, { cardBack: ref });
+          if (!ref) return;
           const { slots } = store.getSnapshot();
           let changed = false;
-          for (const each of ['main', 'alternate'] as const) {
-            if (slots[each].label?.deckId === deckId) {
-              changed = putCardBack(each, ref) || changed;
+          for (const waiting of decks) {
+            if (library.get(waiting)?.cardBack !== back) continue;
+            library.update(waiting, { cardBack: ref });
+            for (const each of ['main', 'alternate'] as const) {
+              if (slots[each].label?.deckId === waiting) {
+                changed = putCardBack(each, ref) || changed;
+              }
             }
           }
           if (changed) cardBackCoordinator.current?.flush();
