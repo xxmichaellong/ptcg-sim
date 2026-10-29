@@ -850,6 +850,41 @@ describe('a group move in the log (ADR-042 §6)', () => {
     expect(lines[0]).not.toHaveProperty('cardName');
   });
 
+  it('tells a group reveal in one line per place, however its cards alternate', () => {
+    const { state, context } = table();
+    const hand = state.zones[playerZoneId(p1, 'hand')]!;
+    const prizes = state.zones[playerZoneId(p1, 'prizes')]!;
+    expect(prizes.cardIds.length).toBeGreaterThanOrEqual(3);
+    // Hand, Prize, hand, Prize, …: one line for each place, not one a card
+    // (a long group would otherwise overflow a publication's bound).
+    const picked = [0, 1, 2].flatMap((index) => [
+      { cardId: hand.cardIds[index]!, source: hand.id },
+      { cardId: prizes.cardIds[index]!, source: prizes.id },
+    ]);
+    const { lines } = group(
+      state,
+      picked.map(({ cardId, source }) => ({
+        type: 'SetPublicReveal' as const,
+        actorPlayerId: p1,
+        playerId: p1,
+        cardId,
+        expectedSourceId: source,
+        revealed: true,
+      })),
+      context
+    );
+    expect(
+      lines.map((line) => [
+        line.type,
+        (line as { source?: string }).source,
+        (line as { cardCount?: number }).cardCount,
+      ])
+    ).toEqual([
+      ['PublicCardsRevealed', 'hand', 3],
+      ['PublicCardsRevealed', 'prizes', 3],
+    ]);
+  });
+
   it("tells a split Stadium's pieces as the one card going in", () => {
     const context = createContext();
     let state = createEmptyMatch(asMatchId('narration-stadium'), [

@@ -165,35 +165,36 @@ type CardsShown = Extract<
 
 /**
  * A group's cards shown or hidden one by one, in one line per whose cards
- * and where: "revealed 2 cards in Red's hand: …".
+ * and where: "revealed 2 cards in Red's hand: …". The group's reveals
+ * happen at once, so the lines are gathered wherever they fall (cards
+ * picked from the hand and the Prizes in turn still make two lines), up
+ * to MAX_FOLDED_NAMES a line: a publication's lines stay within its bound.
  */
 const foldGroupReveals = (
   lines: readonly PresentationEvent[]
 ): readonly PresentationEvent[] => {
   const folded: PresentationEvent[] = [];
+  const open = new Map<string, number>();
   const key = (line: CardsShown): string =>
     JSON.stringify([line.type, line.actorPlayerId, line.playerId, line.source]);
   for (const line of lines) {
-    const last = folded.at(-1);
     if (
       (line.type !== 'PublicCardsRevealed' &&
         line.type !== 'PublicCardsHidden') ||
-      line.scope !== 'card' ||
-      !last ||
-      (last.type !== 'PublicCardsRevealed' &&
-        last.type !== 'PublicCardsHidden') ||
-      last.scope !== 'card' ||
-      key(last) !== key(line) ||
-      last.cardCount >= MAX_FOLDED_NAMES
+      line.scope !== 'card'
     ) {
       folded.push(line);
       continue;
     }
+    const at = open.get(key(line));
+    const last = at === undefined ? undefined : (folded[at] as CardsShown);
+    if (at === undefined || !last || last.cardCount >= MAX_FOLDED_NAMES) {
+      open.set(key(line), folded.length);
+      folded.push(line);
+      continue;
+    }
     if (line.type === 'PublicCardsHidden') {
-      folded[folded.length - 1] = {
-        ...last,
-        cardCount: last.cardCount + line.cardCount,
-      };
+      folded[at] = { ...last, cardCount: last.cardCount + line.cardCount };
       continue;
     }
     const shown = last as Extract<
@@ -201,7 +202,7 @@ const foldGroupReveals = (
       { readonly type: 'PublicCardsRevealed' }
     >;
     const { cardName: _name, ...rest } = shown;
-    folded[folded.length - 1] = {
+    folded[at] = {
       ...rest,
       cardCount: shown.cardCount + line.cardCount,
       cardNames: [
