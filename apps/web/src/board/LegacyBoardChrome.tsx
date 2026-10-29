@@ -357,8 +357,9 @@ const TableHandPill = memo(function TableHandPill({
   /** Where the table ends, short of a docked log. */
   readonly playAreaRight: number;
   /**
-   * The zones beside the hand's end as the tilted table draws them: the mat
-   * widens toward the viewer, so its piles can reach where the pill sits.
+   * The zones beside the hand's end as the table draws them: the tilted mat
+   * widens toward the viewer, and a short flat one's piles run down beside
+   * the hand, so either can reach where the pill sits.
    */
   readonly avoid?: readonly Rect[];
   /** The seat's colour, which follows the player (SeatTone). */
@@ -555,11 +556,13 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
 }) {
   const pills =
     layout.geometryVersion === 2 && handCounts ? handCounts : undefined;
-  // Tilted, each half's zones as the projection draws them, their count
-  // badges with them, for the hand pill to keep off.
+  // Each half's zones as the table draws them (tilted, through the
+  // projection), their count badges with them, for the hand pill to keep
+  // off: on a short flat table too, the piles' column reaches the hand's
+  // end where the pill sits.
   const pillAvoid = useMemo(
     () =>
-      depth && pills
+      pills
         ? new Map(
             layout.players.map((frame) => [
               frame.playerId,
@@ -569,11 +572,13 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
                 )
                 .map((region) => {
                   const box = region.physicalDeclaredBounds;
+                  const at = (point: { x: number; y: number }) =>
+                    depth ? depth.point(point) : point;
                   const corners = [
-                    depth.point({ x: box.x, y: box.y }),
-                    depth.point({ x: box.x + box.width, y: box.y }),
-                    depth.point({ x: box.x, y: box.y + box.height }),
-                    depth.point({
+                    at({ x: box.x, y: box.y }),
+                    at({ x: box.x + box.width, y: box.y }),
+                    at({ x: box.x, y: box.y + box.height }),
+                    at({
                       x: box.x + box.width,
                       y: box.y + box.height,
                     }),

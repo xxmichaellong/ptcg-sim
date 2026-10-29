@@ -116,8 +116,12 @@ the prizes lies nearer the edge than half the chip (an upright phone).
   clear card beside the Stadium; it no longer weighs where the markers go.
 - `BoardPlayerExtrasLayout` gains `coin` and loses `corner` and
   `markersRow`; the scene loses `handHeldFlat`.
-- Tilted, the hand pill keeps off the zones it would cover, their count
-  badges too (`LegacyBoardChrome`).
+- The hand pill keeps off the zones it would cover, their count badges
+  too (`LegacyBoardChrome`): tilted, and since 2026-10-28 flat as well,
+  where a short table's piles run down beside the hand's end. On the
+  shortest (480px tall and less) the screen's edge can still stop it a
+  little over the Lost Zone: the hand's end keeps 44px for a pill 62px
+  wide.
 - Tests: `layout-table.test.ts`, `table-coin.test.ts`, `TableCoin.test.tsx`,
   `TableZoneAffordances.test.tsx`, `LegacyBoardChrome.test.tsx`,
   `LegacyBoardChrome.onehalf.test.tsx`.

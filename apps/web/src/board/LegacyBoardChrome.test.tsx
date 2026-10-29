@@ -925,6 +925,10 @@ describe('LegacyBoardChrome', () => {
     });
     const edge = layout.playAreaBounds.x + layout.playAreaBounds.width;
     expect(edge).toBeLessThan(layout.viewport.width - 100);
+    // Where the near hand's pill sits: level with the top of its strip.
+    const hand = layout.players
+      .find((frame) => frame.physicalSide === 'lower')!
+      .regions.find((region) => region.kind === 'hand')!.physicalDeclaredBounds;
     // The near hand ends at the log; its pill, wider than a badge, hangs
     // 12px past it.
     vi.stubGlobal('innerWidth', layout.viewport.width);
@@ -934,7 +938,7 @@ describe('LegacyBoardChrome', () => {
       const [x, y, width, height] = this.classList.contains(
         'table-hand-pill--local'
       )
-        ? [edge - 50, 600, 62, 28]
+        ? [edge - 50, hand.y + 6, 62, 28]
         : [0, 0, layout.viewport.width, layout.viewport.height];
       return {
         x,
@@ -967,9 +971,9 @@ describe('LegacyBoardChrome', () => {
                   side: 'local',
                   kind: 'hand',
                   count: 7,
-                  anchor: { x: edge - 50, y: 628 },
+                  anchor: { x: edge - 50, y: hand.y + 6 },
                   horizontalAlign: 'left',
-                  verticalAlign: 'bottom',
+                  verticalAlign: 'top',
                   fontSizePx: 13,
                   color: 'rgb(90 110 188)',
                   zIndex: 1,
@@ -981,7 +985,90 @@ describe('LegacyBoardChrome', () => {
         )
       );
       const pill = host.querySelector<HTMLElement>('.table-hand-pill--local')!;
-      expect(pill.style.translate).toBe('-16px 0px');
+      // Back inside the table, short of the log (and, by the piles' column
+      // on this short table, below the pile it would touch).
+      expect(pill.style.translate).toMatch(/^-16px /u);
+    } finally {
+      Element.prototype.getBoundingClientRect = rect;
+      vi.unstubAllGlobals();
+      await act(async () => root.unmount());
+    }
+  });
+
+  it('keeps the hand pill off the piles on a flat table too', async () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+    const layout = createTableLayoutSnapshot({
+      ...layoutState(),
+      geometryVersion: TABLE_LAYOUT_GEOMETRY_VERSION,
+      vertical: DEFAULT_TABLE_VERTICAL_LAYOUT,
+    });
+    // A short table's Lost Zone runs down beside the hand's end, where the
+    // pill sits: here, on it.
+    const lostZone = layout.players
+      .find((frame) => frame.physicalSide === 'lower')!
+      .regions.find(
+        (region) => region.kind === 'lostZone'
+      )!.physicalDeclaredBounds;
+    const at = { x: lostZone.x, y: lostZone.y + 4 };
+    vi.stubGlobal('innerWidth', layout.viewport.width);
+    vi.stubGlobal('innerHeight', layout.viewport.height);
+    const rect = Element.prototype.getBoundingClientRect;
+    Element.prototype.getBoundingClientRect = function (this: Element) {
+      const [x, y, width, height] = this.classList.contains(
+        'table-hand-pill--local'
+      )
+        ? [at.x, at.y, 62, 28]
+        : [0, 0, layout.viewport.width, layout.viewport.height];
+      return {
+        x,
+        y,
+        width,
+        height,
+        left: x,
+        top: y,
+        right: x + width,
+        bottom: y + height,
+        toJSON: () => ({}),
+      } as DOMRect;
+    };
+    try {
+      await act(async () =>
+        root.render(
+          <LegacyBoardChrome
+            layout={layout}
+            localPlayerId={asPlayerId('spike-blue')}
+            players={players}
+            darkMode
+            actions={{ toggleOncePerGame: vi.fn(), toggleHandSort: vi.fn() }}
+            handCounts={[
+              {
+                playerId: asPlayerId('spike-blue'),
+                node: {
+                  id: 'spike-blue-hand-count',
+                  zoneId: 'spike-blue-hand',
+                  playerId: asPlayerId('spike-blue'),
+                  side: 'local',
+                  kind: 'hand',
+                  count: 7,
+                  anchor: at,
+                  horizontalAlign: 'left',
+                  verticalAlign: 'top',
+                  fontSizePx: 13,
+                  color: 'rgb(90 110 188)',
+                  zIndex: 1,
+                  label: '7 cards in hand',
+                },
+              },
+            ]}
+          />
+        )
+      );
+      const pill = host.querySelector<HTMLElement>('.table-hand-pill--local')!;
+      // Moved toward the screen's edge, below the pile.
+      const [, dy] = pill.style.translate.split(' ').map(parseFloat);
+      expect(dy).toBeGreaterThan(0);
     } finally {
       Element.prototype.getBoundingClientRect = rect;
       vi.unstubAllGlobals();
