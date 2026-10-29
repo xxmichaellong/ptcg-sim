@@ -57,4 +57,41 @@ describe('the player’s own background', () => {
     expect(seen.at(-1)).toMatch(/^blob:/u);
     await act(async () => root.unmount());
   });
+
+  it('keeps the picture saved last, though an earlier one is read after it', async () => {
+    const bytes = async (text: string) =>
+      (await new Blob([text]).arrayBuffer()) as ArrayBuffer;
+    let readFirst: () => void = () => undefined;
+    const first = new Blob(['first'], { type: 'image/webp' });
+    const firstBytes = await bytes('first');
+    Object.defineProperty(first, 'arrayBuffer', {
+      value: () =>
+        new Promise<ArrayBuffer>((resolve) => {
+          readFirst = () => resolve(firstBytes);
+        }),
+    });
+    const second = new Blob(['second'], { type: 'image/webp' });
+    const firstSaved = saveLocalBackground(first);
+    await expect(saveLocalBackground(second)).resolves.toBe(true);
+    readFirst();
+    await expect(firstSaved).resolves.toBe(false);
+    // What the next page reads back.
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const opening = indexedDB.open('ptcgsim-backgrounds');
+      opening.onsuccess = () => resolve(opening.result);
+      opening.onerror = () => reject(opening.error);
+    });
+    const stored = await new Promise<{ bytes: ArrayBuffer }>(
+      (resolve, reject) => {
+        const reading = db
+          .transaction('pictures', 'readonly')
+          .objectStore('pictures')
+          .get('custom');
+        reading.onsuccess = () => resolve(reading.result);
+        reading.onerror = () => reject(reading.error);
+      }
+    );
+    db.close();
+    expect(new TextDecoder().decode(stored.bytes)).toBe('second');
+  });
 });

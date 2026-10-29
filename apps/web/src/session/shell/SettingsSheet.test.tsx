@@ -422,6 +422,44 @@ describe('SettingsSheet', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
+  it('lets go of a picture still being prepared when Settings closes', async () => {
+    const onChange = vi.fn();
+    let finish: (blob: Blob) => void = () => undefined;
+    const encode = vi.fn(
+      () =>
+        new Promise<Blob>((resolve) => {
+          finish = resolve;
+        })
+    );
+    const save = vi.fn(async () => true);
+    await act(async () =>
+      root.render(
+        <BackgroundChooser
+          choice={{ current: undefined, onChange, onRequestLink: vi.fn() }}
+          encode={encode}
+          save={save}
+        />
+      )
+    );
+    const paste = new Event('paste', { bubbles: true, cancelable: true });
+    Object.defineProperty(paste, 'clipboardData', {
+      value: {
+        files: [new File(['big'], 'table.png', { type: 'image/png' })],
+      },
+    });
+    await act(async () => {
+      document.body.dispatchEvent(paste);
+    });
+    expect(encode).toHaveBeenCalledOnce();
+    await act(async () => root.render(<></>));
+    await act(async () => {
+      finish(new Blob(['small'], { type: 'image/webp' }));
+    });
+    await settle(1);
+    expect(save).not.toHaveBeenCalled();
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
   it('keeps motion choices with the player', async () => {
     await render();
     expect(input('reduceMotionSystem').checked).toBe(true);

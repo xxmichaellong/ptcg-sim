@@ -147,11 +147,17 @@ const publish = (blob: Blob | undefined): void => {
   for (const listener of listeners) listener();
 };
 
+// Saves begun, so only the latest writes: an earlier picture read slower
+// than a newer one would otherwise be the one the next page brings back.
+let saves = 0;
+
 /**
  * Keeps the picture as the player's background: on this device where
- * IndexedDB opens, for this visit otherwise. False if nothing was kept.
+ * IndexedDB opens, for this visit otherwise. False if nothing was kept
+ * (or a newer picture is kept instead).
  */
 export const saveLocalBackground = async (picture: Blob): Promise<boolean> => {
+  const save = ++saves;
   publish(picture);
   loading = Promise.resolve();
   const db = await database();
@@ -162,6 +168,7 @@ export const saveLocalBackground = async (picture: Blob): Promise<boolean> => {
       type: picture.type,
       bytes: await picture.arrayBuffer(),
     };
+    if (save !== saves) return false;
     const transaction = db.transaction(STORE, 'readwrite');
     transaction.objectStore(STORE).put(stored, KEY);
     await new Promise<void>((resolve, reject) => {

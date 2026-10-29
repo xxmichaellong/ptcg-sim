@@ -120,6 +120,15 @@ export const BackgroundChooser = ({
     latest.current.onChange({ kind: 'local' });
   }, []);
 
+  // Closed, the chooser lets go of a picture still being prepared: what is
+  // chosen afterwards (from the palette, say) is the background.
+  useEffect(
+    () => () => {
+      asked.current += 1;
+    },
+    []
+  );
+
   // A picture pasted while Settings is open, not into a field.
   useEffect(() => {
     const paste = (event: ClipboardEvent): void => {
