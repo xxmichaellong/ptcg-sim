@@ -9,6 +9,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { ActionMenuEntry } from '../../ui/ActionMenu.js';
 import {
   fitRailActions,
+  placeRailActions,
   type RailAction,
   TableRail,
   type TableRailProps,
@@ -269,6 +270,21 @@ describe('placing the rail', () => {
     expect(align()).toBe('end');
     await act(async () => root.unmount());
     host.remove();
+  });
+
+  it('goes past the Stadium where before it has even less room, never over it', () => {
+    // A 320px phone's tilted table: the Stadium near the seam's left end,
+    // room past it for two buttons and before it for none.
+    const placed = placeRailActions({
+      anchor: { x: 8, y: 311, height: 44 },
+      width: 320,
+      avoid: { x: 43, y: 303, width: 46, height: 57 },
+      end: 200,
+      actions: playing,
+      more: rarer,
+    });
+    expect(placed.atRight).toBe(true);
+    expect(placed.start).toBeGreaterThanOrEqual(43 + 46);
   });
 
   it('stays before a Stadium at the right edge', () => {

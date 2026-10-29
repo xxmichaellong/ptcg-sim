@@ -107,7 +107,9 @@ More, with Coin where the coin has no spot on the table and Switch side
 where the table can be turned, in a room once this player asked for
 coaching) would lose one to More there that shows before the Stadium, they
 sit before the Stadium instead, past the near half's `+` where that reaches
-into the seam. The side is the window's, never the stage's: the actions stay
+into the seam -- unless fewer fit before it than past it (a 320px phone's
+tilted table, its Stadium near the seam's left end): then past it, so the
+rail never sits on the Stadium for want of room. The side is the window's, never the stage's: the actions stay
 put from set-up through play and a reconnect. While the log slides in or
 out they cross the Stadium at most once, where more of them show there, and
 choose again once it is there. Tilted, the Stadium and piles are found

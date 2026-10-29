@@ -357,10 +357,14 @@ export const placeRailActions = ({
   const rightSlots = slotsIn(rightWidth, anchor.height);
   const fullRail =
     FULL_RAIL_BUTTONS - (coinOnTable ? 1 : 0) - (canSwitchSide ? 0 : 1);
+  const leftSlots = slotsIn(leftWidth, anchor.height);
+  // Short of its least, past the Stadium still where before it has less
+  // room yet: the rail never sits on the Stadium for want of it.
   const atRight =
     side ??
-    (rightSlots >= RIGHT_END_MIN_BUTTONS &&
-      rightSlots >= Math.min(slotsIn(leftWidth, anchor.height), fullRail));
+    (rightSlots >= RIGHT_END_MIN_BUTTONS
+      ? rightSlots >= Math.min(leftSlots, fullRail)
+      : rightSlots > leftSlots);
   return atRight
     ? {
         atRight,
