@@ -793,6 +793,10 @@
     ],
     "translation": "{name}を使用済み：押すと取り消します"
   },
+  "cJqyrp": {
+    "message": "{name}: {count}",
+    "translation": "{name}: {count}"
+  },
   "2mmBQD": {
     "message": "{name}: try it",
     "translation": "{name}：試してみる"
@@ -1174,6 +1178,18 @@
     "message": "Add a card that isn't listed",
     "translation": "一覧にないカードを追加"
   },
+  "mOTci6": {
+    "message": "Add a multi-piece card",
+    "translation": "複数ピースのカードを追加"
+  },
+  "ZJwR0U": {
+    "message": "Add a picture for each piece.",
+    "translation": "ピースごとに画像を追加してください。"
+  },
+  "J8elq3": {
+    "message": "Add a picture.",
+    "translation": "画像を追加してください。"
+  },
   "6ZbKYu": {
     "message": "Add another stadium piece",
     "translation": "スタジアムのピースを追加"
@@ -1362,10 +1378,6 @@
   "y_Uvam": {
     "message": "Around the table",
     "translation": "テーブルの周り"
-  },
-  "8zanjC": {
-    "message": "Artwork group",
-    "translation": "イラストグループ"
   },
   "2uaWnn": {
     "message": "Artwork window",
@@ -1737,6 +1749,10 @@
     "message": "Change card type",
     "translation": "カードの種類を変更"
   },
+  "9CyHQP": {
+    "message": "Change the picture",
+    "translation": "画像を変更"
+  },
   "nVhPBD": {
     "message": "Change type to Energy",
     "translation": "エネルギーに変更"
@@ -1811,6 +1827,10 @@
     "message": "Choose a picture",
     "translation": "画像を選ぶ"
   },
+  "kT6WGB": {
+    "message": "Choose a picture: {label}",
+    "translation": "画像を選ぶ: {label}"
+  },
   "TvEJEL": {
     "message": "Choose the deck for {slotSeat}",
     "translation": "{slotSeat}のデッキを選択"
@@ -1825,6 +1845,11 @@
   },
   "xCJdfg": {
     "message": "Clear",
+    "translation": "クリア"
+  },
+  "baWTFO": {
+    "message": "Clear",
+    "context": "attack cost",
     "translation": "クリア"
   },
   "XaMzSZ": {
@@ -1892,10 +1917,6 @@
   "PyipSw": {
     "message": "Close popups",
     "translation": "ポップアップを閉じる"
-  },
-  "HLSSB8": {
-    "message": "code or name",
-    "translation": "コードまたは名前"
   },
   "c6pkO-": {
     "message": "Coin",
@@ -2436,6 +2457,10 @@
     "message": "Drop to open",
     "translation": "ドロップして開く"
   },
+  "7ni5yE": {
+    "message": "Drop, paste or choose",
+    "translation": "ドロップ、貼り付け、または選択"
+  },
   "d3YoNV": {
     "message": "Dropped",
     "comments": [
@@ -2452,24 +2477,9 @@
     "message": "Duplicate deck",
     "translation": "デッキを複製"
   },
-  "iu7vH9": {
-    "message": "e.g. CC or LL",
-    "comments": [
-      "Energy letters (C, L…) stay as they are"
-    ],
-    "translation": "例: CC または LL"
-  },
   "mjNeGh": {
     "message": "e.g. Charizard",
     "translation": "例: Charizard"
-  },
-  "tg9VdO": {
-    "message": "e.g. HIJ",
-    "translation": "例: HIJ"
-  },
-  "3fBsZV": {
-    "message": "e.g. illustration",
-    "translation": "例: イラスト"
   },
   "ryuxTz": {
     "message": "Edit {deckName}",
@@ -2532,10 +2542,6 @@
   "0jl-i6": {
     "message": "Enter a valid image URL.",
     "translation": "有効な画像URLを入力してください。"
-  },
-  "I7T1ix": {
-    "message": "Enter an image URL.",
-    "translation": "画像URLを入力してください。"
   },
   "eVVWyt": {
     "message": "Esc",
@@ -3006,6 +3012,10 @@
     "message": "How to choose",
     "translation": "選び方"
   },
+  "iIbh2N": {
+    "message": "HP",
+    "translation": "HP"
+  },
   "oT-Cnl": {
     "message": "HP",
     "context": "sort cards by",
@@ -3014,14 +3024,6 @@
   "36NKhF": {
     "message": "HP and retreat",
     "translation": "HPとにげる"
-  },
-  "ZTtNAf": {
-    "message": "HP at least",
-    "translation": "HPの下限"
-  },
-  "LgcKSI": {
-    "message": "HP at most",
-    "translation": "HPの上限"
   },
   "OaHYvQ": {
     "message": "https://…, blank or theme",
@@ -3052,21 +3054,9 @@
     "message": "Illustrator",
     "translation": "イラストレーター"
   },
-  "1pdLQw": {
-    "message": "Image not found",
-    "translation": "画像が見つかりません"
-  },
   "VyUuZb": {
     "message": "Image URL",
     "translation": "画像URL"
-  },
-  "15ARIE": {
-    "message": "Image URL too long",
-    "translation": "画像URLが長すぎます"
-  },
-  "6hbF9e": {
-    "message": "Image URL: up to {max} characters.",
-    "translation": "画像URL:{max}文字までです。"
   },
   "EUsCHg": {
     "message": "Images",
@@ -3337,6 +3327,10 @@
     "message": "Line {line}: set code too long.",
     "translation": "{line}行目:セットコードが長すぎます。"
   },
+  "beOAmP": {
+    "message": "Link too long.",
+    "translation": "リンクが長すぎます。"
+  },
   "Q8pDHq": {
     "message": "List",
     "context": "show the deck as",
@@ -3512,6 +3506,10 @@
     "message": "Lost Zone and markers",
     "translation": "ロストゾーンとマーカー"
   },
+  "-IGsZV": {
+    "message": "Lower {label}",
+    "translation": "{label}を下げる"
+  },
   "xX-rmn": {
     "message": "Majors",
     "comments": [
@@ -3574,6 +3572,14 @@
     "message": "Matte",
     "translation": "マット"
   },
+  "CK1KXz": {
+    "message": "Max",
+    "translation": "最大"
+  },
+  "zjSw-O": {
+    "message": "Max HP",
+    "translation": "最大HP"
+  },
   "xeC--l": {
     "message": "Mega",
     "context": "Pokémon card mechanic",
@@ -3610,6 +3616,14 @@
       "A table look: midnight blue"
     ],
     "translation": "ミッドナイト"
+  },
+  "eTUF28": {
+    "message": "Min",
+    "translation": "最小"
+  },
+  "J6QsaV": {
+    "message": "Min HP",
+    "translation": "最小HP"
   },
   "_NnUxu": {
     "message": "Mine",
@@ -3717,6 +3731,10 @@
   "8GMjXa": {
     "message": "Mulligan (no Basic in 7)",
     "translation": "マリガン(7枚にたねポケモンなし)"
+  },
+  "6Leq5p": {
+    "message": "Multi-piece card",
+    "translation": "複数ピースのカード"
   },
   "jiY-22": {
     "message": "My deck",
@@ -3872,10 +3890,6 @@
     "message": "No foil",
     "translation": "ホイルなし"
   },
-  "2fhoKU": {
-    "message": "No image",
-    "translation": "画像なし"
-  },
   "nivaRq": {
     "message": "No list",
     "translation": "リストなし"
@@ -3883,6 +3897,10 @@
   "hXMFoN": {
     "message": "No lists",
     "translation": "リストなし"
+  },
+  "mNXjQA": {
+    "message": "No match",
+    "translation": "一致なし"
   },
   "ebeFtm": {
     "message": "No shortcut matches “{search}”.",
@@ -3910,6 +3928,10 @@
     "message": "Normal",
     "context": "animation speed",
     "translation": "標準"
+  },
+  "0iGojz": {
+    "message": "Not a picture.",
+    "translation": "画像ではありません。"
   },
   "S33tz3": {
     "message": "Not connected",
@@ -4014,6 +4036,10 @@
       "{0} is the Flip button's label, which turns the table around"
     ],
     "translation": "ひとりのときは両方の側を操作します。<0>{0}</0>を押すと、相手側にテーブルを向けられます。"
+  },
+  "U1CJvq": {
+    "message": "One card",
+    "translation": "1枚のカード"
   },
   "3GFV_r": {
     "message": "One fewer",
@@ -4140,6 +4166,10 @@
     "message": "Opponents' custom backs",
     "translation": "相手のカスタムカードバック"
   },
+  "ONM3W_": {
+    "message": "or a link",
+    "translation": "またはリンク"
+  },
   "l2I52S": {
     "message": "or drop or paste one here",
     "translation": "または、ここにドロップかペースト"
@@ -4248,14 +4278,26 @@
     "message": "Pick random card",
     "translation": "ランダムにカードを選ぶ"
   },
+  "N0-GsR": {
+    "message": "Picture",
+    "translation": "画像"
+  },
   "KBXd3D": {
     "message": "Picture",
     "context": "a card back from a picture",
     "translation": "画像"
   },
-  "xYvd7u": {
-    "message": "Piece position",
-    "translation": "ピースの位置"
+  "9uDKal": {
+    "message": "Picture link",
+    "translation": "画像のリンク"
+  },
+  "eLNVFN": {
+    "message": "Picture link: {label}",
+    "translation": "画像のリンク: {label}"
+  },
+  "BX1rQx": {
+    "message": "Pieces",
+    "translation": "ピース"
   },
   "CC99uS": {
     "message": "Piles",
@@ -4477,10 +4519,6 @@
     ],
     "translation": "一番上に置く"
   },
-  "rkcP1p": {
-    "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
-    "translation": "ポケモンのピースは1つの山にまとめ、スタジアムのピースはスタジアムに置いてください。"
-  },
   "QEP1VC": {
     "message": "Put the rest of it, <0>{0}</0> and its Energy, in their discard pile too.",
     "translation": "残りの<0>{0}</0>とそのエネルギーも、相手のトラッシュに置きます。"
@@ -4506,6 +4544,10 @@
   "AUzUf9": {
     "message": "Rainbow foil",
     "translation": "レインボーホイル"
+  },
+  "K21Y8W": {
+    "message": "Raise {label}",
+    "translation": "{label}を上げる"
   },
   "PImlBx": {
     "message": "Raised",
@@ -4597,6 +4639,10 @@
     "context": "animation speed",
     "translation": "ゆっくり"
   },
+  "HLazKQ": {
+    "message": "Remove {name}",
+    "translation": "{name}を外す"
+  },
   "hKnn4w": {
     "message": "Remove {name} from {seat}",
     "translation": "{seat}から{name}を外す"
@@ -4628,6 +4674,10 @@
   "5qTkf-": {
     "message": "Remove special condition",
     "translation": "特殊状態を取り除く"
+  },
+  "-WTtkb": {
+    "message": "Remove the picture",
+    "translation": "画像を削除"
   },
   "jionWu": {
     "message": "Rename",
@@ -4916,10 +4966,6 @@
       "A table look: cherry blossom pink"
     ],
     "translation": "さくら"
-  },
-  "qoNq2S": {
-    "message": "Same group for each piece",
-    "translation": "ピースごとに同じグループ"
   },
   "brkgwR": {
     "message": "Sample hand",
@@ -5548,6 +5594,10 @@
     "context": "shortcut key caption",
     "translation": "状態"
   },
+  "iFt0Ce": {
+    "message": "Still uploading…",
+    "translation": "アップロード中です…"
+  },
   "B2cOHf": {
     "message": "Stop sorting hand",
     "translation": "手札の並べ替えを終了"
@@ -5736,10 +5786,6 @@
     "message": "That file isn't a picture.",
     "translation": "このファイルは画像ではありません。"
   },
-  "ZMr878": {
-    "message": "That image didn't load.",
-    "translation": "画像を読み込めませんでした。"
-  },
   "B4ZAXF": {
     "message": "That one was skipped.",
     "translation": "スキップされました。"
@@ -5747,6 +5793,10 @@
   "qqEjGU": {
     "message": "That picture can't be read.",
     "translation": "この画像は読み込めません。"
+  },
+  "F9MU8-": {
+    "message": "That picture didn't load.",
+    "translation": "画像を読み込めませんでした。"
   },
   "HnGmBe": {
     "message": "That picture is over 20 MB.",
@@ -6243,6 +6293,10 @@
     "message": "Untitled deck",
     "translation": "無題のデッキ"
   },
+  "gANddk": {
+    "message": "Uploading…",
+    "translation": "アップロード中…"
+  },
   "aS5ttr": {
     "message": "Use background",
     "translation": "背景を使用"
@@ -6447,148 +6501,5 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "ゾーンの枠線"
-  },
-  "cJqyrp": {
-    "message": "{name}: {count}",
-    "translation": "{name}: {count}"
-  },
-  "hQE7TV": {
-    "message": "An image URL, or 'default'.",
-    "comments": [
-      "Keep 'default' in English: it is what the player types"
-    ],
-    "translation": "画像のURL、または「default」。"
-  },
-  "PCF3WN": {
-    "message": "Change card back",
-    "translation": "カードの裏面を変更"
-  },
-  "baWTFO": {
-    "message": "Clear",
-    "context": "attack cost",
-    "translation": "クリア"
-  },
-  "iIbh2N": {
-    "message": "HP",
-    "translation": "HP"
-  },
-  "fVGc9-": {
-    "message": "https://… or default",
-    "comments": [
-      "Keep 'default' in English: it is what the player types"
-    ],
-    "translation": "https://… または default"
-  },
-  "-IGsZV": {
-    "message": "Lower {label}",
-    "translation": "{label}を下げる"
-  },
-  "CK1KXz": {
-    "message": "Max",
-    "translation": "最大"
-  },
-  "zjSw-O": {
-    "message": "Max HP",
-    "translation": "最大HP"
-  },
-  "eTUF28": {
-    "message": "Min",
-    "translation": "最小"
-  },
-  "J6QsaV": {
-    "message": "Min HP",
-    "translation": "最小HP"
-  },
-  "mNXjQA": {
-    "message": "No match",
-    "translation": "一致なし"
-  },
-  "K21Y8W": {
-    "message": "Raise {label}",
-    "translation": "{label}を上げる"
-  },
-  "HLazKQ": {
-    "message": "Remove {name}",
-    "translation": "{name}を外す"
-  },
-  "PTd_zR": {
-    "message": "Use image",
-    "translation": "画像を使用"
-  },
-  "mOTci6": {
-    "message": "Add a multi-piece card",
-    "translation": "複数ピースのカードを追加"
-  },
-  "ZJwR0U": {
-    "message": "Add a picture for each piece.",
-    "translation": "ピースごとに画像を追加してください。"
-  },
-  "J8elq3": {
-    "message": "Add a picture.",
-    "translation": "画像を追加してください。"
-  },
-  "9CyHQP": {
-    "message": "Change the picture",
-    "translation": "画像を変更"
-  },
-  "kT6WGB": {
-    "message": "Choose a picture: {label}",
-    "translation": "画像を選ぶ: {label}"
-  },
-  "7ni5yE": {
-    "message": "Drop, paste or choose",
-    "translation": "ドロップ、貼り付け、または選択"
-  },
-  "beOAmP": {
-    "message": "Link too long.",
-    "translation": "リンクが長すぎます。"
-  },
-  "6Leq5p": {
-    "message": "Multi-piece card",
-    "translation": "複数ピースのカード"
-  },
-  "0iGojz": {
-    "message": "Not a picture.",
-    "translation": "画像ではありません。"
-  },
-  "U1CJvq": {
-    "message": "One card",
-    "translation": "1枚のカード"
-  },
-  "ONM3W_": {
-    "message": "or a link",
-    "translation": "またはリンク"
-  },
-  "N0-GsR": {
-    "message": "Picture",
-    "translation": "画像"
-  },
-  "9uDKal": {
-    "message": "Picture link",
-    "translation": "画像のリンク"
-  },
-  "eLNVFN": {
-    "message": "Picture link: {label}",
-    "translation": "画像のリンク: {label}"
-  },
-  "BX1rQx": {
-    "message": "Pieces",
-    "translation": "ピース"
-  },
-  "-WTtkb": {
-    "message": "Remove the picture",
-    "translation": "画像を削除"
-  },
-  "iFt0Ce": {
-    "message": "Still uploading…",
-    "translation": "アップロード中です…"
-  },
-  "F9MU8-": {
-    "message": "That picture didn't load.",
-    "translation": "画像を読み込めませんでした。"
-  },
-  "gANddk": {
-    "message": "Uploading…",
-    "translation": "アップロード中…"
   }
 }

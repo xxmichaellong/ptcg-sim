@@ -793,6 +793,10 @@
     ],
     "translation": "{name} искоришћен: притисни за поништавање"
   },
+  "cJqyrp": {
+    "message": "{name}: {count}",
+    "translation": "{name}: {count}"
+  },
   "2mmBQD": {
     "message": "{name}: try it",
     "translation": "{name}: пробај"
@@ -1174,6 +1178,18 @@
     "message": "Add a card that isn't listed",
     "translation": "Додај карту која није на листи"
   },
+  "mOTci6": {
+    "message": "Add a multi-piece card",
+    "translation": "Додај карту од више делова"
+  },
+  "ZJwR0U": {
+    "message": "Add a picture for each piece.",
+    "translation": "Додај слику за сваки део."
+  },
+  "J8elq3": {
+    "message": "Add a picture.",
+    "translation": "Додај слику."
+  },
   "6ZbKYu": {
     "message": "Add another stadium piece",
     "translation": "Додај још један део стадиона"
@@ -1362,10 +1378,6 @@
   "y_Uvam": {
     "message": "Around the table",
     "translation": "Око стола"
-  },
-  "8zanjC": {
-    "message": "Artwork group",
-    "translation": "Група илустрација"
   },
   "2uaWnn": {
     "message": "Artwork window",
@@ -1737,6 +1749,10 @@
     "message": "Change card type",
     "translation": "Промени врсту карте"
   },
+  "9CyHQP": {
+    "message": "Change the picture",
+    "translation": "Промени слику"
+  },
   "nVhPBD": {
     "message": "Change type to Energy",
     "translation": "Промени врсту у енергију"
@@ -1811,6 +1827,10 @@
     "message": "Choose a picture",
     "translation": "Изабери слику"
   },
+  "kT6WGB": {
+    "message": "Choose a picture: {label}",
+    "translation": "Изабери слику: {label}"
+  },
   "TvEJEL": {
     "message": "Choose the deck for {slotSeat}",
     "translation": "Изабери шпил за {slotSeat}"
@@ -1825,6 +1845,11 @@
   },
   "xCJdfg": {
     "message": "Clear",
+    "translation": "Обриши"
+  },
+  "baWTFO": {
+    "message": "Clear",
+    "context": "attack cost",
     "translation": "Обриши"
   },
   "XaMzSZ": {
@@ -1892,10 +1917,6 @@
   "PyipSw": {
     "message": "Close popups",
     "translation": "Затвори искачуће прозоре"
-  },
-  "HLSSB8": {
-    "message": "code or name",
-    "translation": "шифра или име"
   },
   "c6pkO-": {
     "message": "Coin",
@@ -2436,6 +2457,10 @@
     "message": "Drop to open",
     "translation": "Спусти да отвориш"
   },
+  "7ni5yE": {
+    "message": "Drop, paste or choose",
+    "translation": "Превуци, налепи или изабери"
+  },
   "d3YoNV": {
     "message": "Dropped",
     "comments": [
@@ -2452,24 +2477,9 @@
     "message": "Duplicate deck",
     "translation": "Дуплирај шпил"
   },
-  "iu7vH9": {
-    "message": "e.g. CC or LL",
-    "comments": [
-      "Energy letters (C, L…) stay as they are"
-    ],
-    "translation": "нпр. CC или LL"
-  },
   "mjNeGh": {
     "message": "e.g. Charizard",
     "translation": "нпр. Charizard"
-  },
-  "tg9VdO": {
-    "message": "e.g. HIJ",
-    "translation": "нпр. HIJ"
-  },
-  "3fBsZV": {
-    "message": "e.g. illustration",
-    "translation": "нпр. илустрација"
   },
   "ryuxTz": {
     "message": "Edit {deckName}",
@@ -2532,10 +2542,6 @@
   "0jl-i6": {
     "message": "Enter a valid image URL.",
     "translation": "Унеси исправан URL слике."
-  },
-  "I7T1ix": {
-    "message": "Enter an image URL.",
-    "translation": "Унеси URL слике."
   },
   "eVVWyt": {
     "message": "Esc",
@@ -3006,6 +3012,10 @@
     "message": "How to choose",
     "translation": "Како изабрати"
   },
+  "iIbh2N": {
+    "message": "HP",
+    "translation": "HP"
+  },
   "oT-Cnl": {
     "message": "HP",
     "context": "sort cards by",
@@ -3014,14 +3024,6 @@
   "36NKhF": {
     "message": "HP and retreat",
     "translation": "HP и повлачење"
-  },
-  "ZTtNAf": {
-    "message": "HP at least",
-    "translation": "HP најмање"
-  },
-  "LgcKSI": {
-    "message": "HP at most",
-    "translation": "HP највише"
   },
   "OaHYvQ": {
     "message": "https://…, blank or theme",
@@ -3052,21 +3054,9 @@
     "message": "Illustrator",
     "translation": "Илустратор"
   },
-  "1pdLQw": {
-    "message": "Image not found",
-    "translation": "Слика није пронађена"
-  },
   "VyUuZb": {
     "message": "Image URL",
     "translation": "URL слике"
-  },
-  "15ARIE": {
-    "message": "Image URL too long",
-    "translation": "URL слике је предугачак"
-  },
-  "6hbF9e": {
-    "message": "Image URL: up to {max} characters.",
-    "translation": "URL слике: до {max} знакова."
   },
   "EUsCHg": {
     "message": "Images",
@@ -3337,6 +3327,10 @@
     "message": "Line {line}: set code too long.",
     "translation": "Ред {line}: код сета је предугачак."
   },
+  "beOAmP": {
+    "message": "Link too long.",
+    "translation": "Веза је предугачка."
+  },
   "Q8pDHq": {
     "message": "List",
     "context": "show the deck as",
@@ -3512,6 +3506,10 @@
     "message": "Lost Zone and markers",
     "translation": "Lost Zone и маркери"
   },
+  "-IGsZV": {
+    "message": "Lower {label}",
+    "translation": "Смањи: {label}"
+  },
   "xX-rmn": {
     "message": "Majors",
     "comments": [
@@ -3574,6 +3572,14 @@
     "message": "Matte",
     "translation": "Мат"
   },
+  "CK1KXz": {
+    "message": "Max",
+    "translation": "Макс."
+  },
+  "zjSw-O": {
+    "message": "Max HP",
+    "translation": "Макс. HP"
+  },
   "xeC--l": {
     "message": "Mega",
     "context": "Pokémon card mechanic",
@@ -3610,6 +3616,14 @@
       "A table look: midnight blue"
     ],
     "translation": "Поноћ"
+  },
+  "eTUF28": {
+    "message": "Min",
+    "translation": "Мин."
+  },
+  "J6QsaV": {
+    "message": "Min HP",
+    "translation": "Мин. HP"
   },
   "_NnUxu": {
     "message": "Mine",
@@ -3717,6 +3731,10 @@
   "8GMjXa": {
     "message": "Mulligan (no Basic in 7)",
     "translation": "Мулиган (нема основног међу 7 карата)"
+  },
+  "6Leq5p": {
+    "message": "Multi-piece card",
+    "translation": "Карта од више делова"
   },
   "jiY-22": {
     "message": "My deck",
@@ -3872,10 +3890,6 @@
     "message": "No foil",
     "translation": "Без фолије"
   },
-  "2fhoKU": {
-    "message": "No image",
-    "translation": "Нема слике"
-  },
   "nivaRq": {
     "message": "No list",
     "translation": "Нема листе"
@@ -3883,6 +3897,10 @@
   "hXMFoN": {
     "message": "No lists",
     "translation": "Нема листа"
+  },
+  "mNXjQA": {
+    "message": "No match",
+    "translation": "Нема резултата"
   },
   "ebeFtm": {
     "message": "No shortcut matches “{search}”.",
@@ -3910,6 +3928,10 @@
     "message": "Normal",
     "context": "animation speed",
     "translation": "Нормална"
+  },
+  "0iGojz": {
+    "message": "Not a picture.",
+    "translation": "Није слика."
   },
   "S33tz3": {
     "message": "Not connected",
@@ -4014,6 +4036,10 @@
       "{0} is the Flip button's label, which turns the table around"
     ],
     "translation": "Када играш сам, играш обе стране. Притисни <0>{0}</0> да окренеш сто на другу страну."
+  },
+  "U1CJvq": {
+    "message": "One card",
+    "translation": "Једна карта"
   },
   "3GFV_r": {
     "message": "One fewer",
@@ -4140,6 +4166,10 @@
     "message": "Opponents' custom backs",
     "translation": "Прилагођене полеђине противника"
   },
+  "ONM3W_": {
+    "message": "or a link",
+    "translation": "или веза"
+  },
   "l2I52S": {
     "message": "or drop or paste one here",
     "translation": "или је овде превуци или налепи"
@@ -4248,14 +4278,26 @@
     "message": "Pick random card",
     "translation": "Изабери насумичну карту"
   },
+  "N0-GsR": {
+    "message": "Picture",
+    "translation": "Слика"
+  },
   "KBXd3D": {
     "message": "Picture",
     "context": "a card back from a picture",
     "translation": "Слика"
   },
-  "xYvd7u": {
-    "message": "Piece position",
-    "translation": "Положај дела"
+  "9uDKal": {
+    "message": "Picture link",
+    "translation": "Веза до слике"
+  },
+  "eLNVFN": {
+    "message": "Picture link: {label}",
+    "translation": "Веза до слике: {label}"
+  },
+  "BX1rQx": {
+    "message": "Pieces",
+    "translation": "Делови"
   },
   "CC99uS": {
     "message": "Piles",
@@ -4477,10 +4519,6 @@
     ],
     "translation": "Стави на врх"
   },
-  "rkcP1p": {
-    "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
-    "translation": "Стави делове Pokémon-а у једну гомилу, а делове стадиона на стадион."
-  },
   "QEP1VC": {
     "message": "Put the rest of it, <0>{0}</0> and its Energy, in their discard pile too.",
     "translation": "Остатак, <0>{0}</0> и његову енергију, такође стави међу противничке одбачене карте."
@@ -4506,6 +4544,10 @@
   "AUzUf9": {
     "message": "Rainbow foil",
     "translation": "Дугина фолија"
+  },
+  "K21Y8W": {
+    "message": "Raise {label}",
+    "translation": "Повећај: {label}"
   },
   "PImlBx": {
     "message": "Raised",
@@ -4597,6 +4639,10 @@
     "context": "animation speed",
     "translation": "Опуштено"
   },
+  "HLazKQ": {
+    "message": "Remove {name}",
+    "translation": "Уклони {name}"
+  },
   "hKnn4w": {
     "message": "Remove {name} from {seat}",
     "translation": "Уклони {name} са места {seat}"
@@ -4628,6 +4674,10 @@
   "5qTkf-": {
     "message": "Remove special condition",
     "translation": "Уклони посебно стање"
+  },
+  "-WTtkb": {
+    "message": "Remove the picture",
+    "translation": "Уклони слику"
   },
   "jionWu": {
     "message": "Rename",
@@ -4916,10 +4966,6 @@
       "A table look: cherry blossom pink"
     ],
     "translation": "Сакура"
-  },
-  "qoNq2S": {
-    "message": "Same group for each piece",
-    "translation": "Иста група за сваки део"
   },
   "brkgwR": {
     "message": "Sample hand",
@@ -5548,6 +5594,10 @@
     "context": "shortcut key caption",
     "translation": "Стање"
   },
+  "iFt0Ce": {
+    "message": "Still uploading…",
+    "translation": "Још се шаље…"
+  },
   "B2cOHf": {
     "message": "Stop sorting hand",
     "translation": "Престани са сортирањем руке"
@@ -5736,10 +5786,6 @@
     "message": "That file isn't a picture.",
     "translation": "Та датотека није слика."
   },
-  "ZMr878": {
-    "message": "That image didn't load.",
-    "translation": "Та слика се није учитала."
-  },
   "B4ZAXF": {
     "message": "That one was skipped.",
     "translation": "Та је прескочена."
@@ -5747,6 +5793,10 @@
   "qqEjGU": {
     "message": "That picture can't be read.",
     "translation": "Ту слику није могуће прочитати."
+  },
+  "F9MU8-": {
+    "message": "That picture didn't load.",
+    "translation": "Слика се није учитала."
   },
   "HnGmBe": {
     "message": "That picture is over 20 MB.",
@@ -6243,6 +6293,10 @@
     "message": "Untitled deck",
     "translation": "Шпил без имена"
   },
+  "gANddk": {
+    "message": "Uploading…",
+    "translation": "Слање…"
+  },
   "aS5ttr": {
     "message": "Use background",
     "translation": "Користи позадину"
@@ -6447,148 +6501,5 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "Оквири зона"
-  },
-  "cJqyrp": {
-    "message": "{name}: {count}",
-    "translation": "{name}: {count}"
-  },
-  "hQE7TV": {
-    "message": "An image URL, or 'default'.",
-    "comments": [
-      "Keep 'default' in English: it is what the player types"
-    ],
-    "translation": "URL слике или 'default'."
-  },
-  "PCF3WN": {
-    "message": "Change card back",
-    "translation": "Промени полеђину карте"
-  },
-  "baWTFO": {
-    "message": "Clear",
-    "context": "attack cost",
-    "translation": "Обриши"
-  },
-  "iIbh2N": {
-    "message": "HP",
-    "translation": "HP"
-  },
-  "fVGc9-": {
-    "message": "https://… or default",
-    "comments": [
-      "Keep 'default' in English: it is what the player types"
-    ],
-    "translation": "https://… или default"
-  },
-  "-IGsZV": {
-    "message": "Lower {label}",
-    "translation": "Смањи: {label}"
-  },
-  "CK1KXz": {
-    "message": "Max",
-    "translation": "Макс."
-  },
-  "zjSw-O": {
-    "message": "Max HP",
-    "translation": "Макс. HP"
-  },
-  "eTUF28": {
-    "message": "Min",
-    "translation": "Мин."
-  },
-  "J6QsaV": {
-    "message": "Min HP",
-    "translation": "Мин. HP"
-  },
-  "mNXjQA": {
-    "message": "No match",
-    "translation": "Нема резултата"
-  },
-  "K21Y8W": {
-    "message": "Raise {label}",
-    "translation": "Повећај: {label}"
-  },
-  "HLazKQ": {
-    "message": "Remove {name}",
-    "translation": "Уклони {name}"
-  },
-  "PTd_zR": {
-    "message": "Use image",
-    "translation": "Користи слику"
-  },
-  "mOTci6": {
-    "message": "Add a multi-piece card",
-    "translation": "Додај карту од више делова"
-  },
-  "ZJwR0U": {
-    "message": "Add a picture for each piece.",
-    "translation": "Додај слику за сваки део."
-  },
-  "J8elq3": {
-    "message": "Add a picture.",
-    "translation": "Додај слику."
-  },
-  "9CyHQP": {
-    "message": "Change the picture",
-    "translation": "Промени слику"
-  },
-  "kT6WGB": {
-    "message": "Choose a picture: {label}",
-    "translation": "Изабери слику: {label}"
-  },
-  "7ni5yE": {
-    "message": "Drop, paste or choose",
-    "translation": "Превуци, налепи или изабери"
-  },
-  "beOAmP": {
-    "message": "Link too long.",
-    "translation": "Веза је предугачка."
-  },
-  "6Leq5p": {
-    "message": "Multi-piece card",
-    "translation": "Карта од више делова"
-  },
-  "0iGojz": {
-    "message": "Not a picture.",
-    "translation": "Није слика."
-  },
-  "U1CJvq": {
-    "message": "One card",
-    "translation": "Једна карта"
-  },
-  "ONM3W_": {
-    "message": "or a link",
-    "translation": "или веза"
-  },
-  "N0-GsR": {
-    "message": "Picture",
-    "translation": "Слика"
-  },
-  "9uDKal": {
-    "message": "Picture link",
-    "translation": "Веза до слике"
-  },
-  "eLNVFN": {
-    "message": "Picture link: {label}",
-    "translation": "Веза до слике: {label}"
-  },
-  "BX1rQx": {
-    "message": "Pieces",
-    "translation": "Делови"
-  },
-  "-WTtkb": {
-    "message": "Remove the picture",
-    "translation": "Уклони слику"
-  },
-  "iFt0Ce": {
-    "message": "Still uploading…",
-    "translation": "Још се шаље…"
-  },
-  "F9MU8-": {
-    "message": "That picture didn't load.",
-    "translation": "Слика се није учитала."
-  },
-  "gANddk": {
-    "message": "Uploading…",
-    "translation": "Слање…"
   }
 }

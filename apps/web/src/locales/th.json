@@ -793,6 +793,10 @@
     ],
     "translation": "ใช้ {name} แล้ว: กดเพื่อเลิกทำ"
   },
+  "cJqyrp": {
+    "message": "{name}: {count}",
+    "translation": "{name}: {count}"
+  },
   "2mmBQD": {
     "message": "{name}: try it",
     "translation": "{name}: ลองเล่น"
@@ -1174,6 +1178,18 @@
     "message": "Add a card that isn't listed",
     "translation": "เพิ่มการ์ดที่ไม่อยู่ในรายการ"
   },
+  "mOTci6": {
+    "message": "Add a multi-piece card",
+    "translation": "เพิ่มการ์ดหลายชิ้นส่วน"
+  },
+  "ZJwR0U": {
+    "message": "Add a picture for each piece.",
+    "translation": "เพิ่มรูปภาพสำหรับแต่ละชิ้นส่วน"
+  },
+  "J8elq3": {
+    "message": "Add a picture.",
+    "translation": "เพิ่มรูปภาพ"
+  },
   "6ZbKYu": {
     "message": "Add another stadium piece",
     "translation": "เพิ่มชิ้นส่วนสเตเดียมอีกชิ้น"
@@ -1362,10 +1378,6 @@
   "y_Uvam": {
     "message": "Around the table",
     "translation": "รอบโต๊ะ"
-  },
-  "8zanjC": {
-    "message": "Artwork group",
-    "translation": "กลุ่มภาพการ์ด"
   },
   "2uaWnn": {
     "message": "Artwork window",
@@ -1737,6 +1749,10 @@
     "message": "Change card type",
     "translation": "เปลี่ยนประเภทการ์ด"
   },
+  "9CyHQP": {
+    "message": "Change the picture",
+    "translation": "เปลี่ยนรูปภาพ"
+  },
   "nVhPBD": {
     "message": "Change type to Energy",
     "translation": "เปลี่ยนประเภทเป็นพลังงาน"
@@ -1811,6 +1827,10 @@
     "message": "Choose a picture",
     "translation": "เลือกรูปภาพ"
   },
+  "kT6WGB": {
+    "message": "Choose a picture: {label}",
+    "translation": "เลือกรูปภาพ: {label}"
+  },
   "TvEJEL": {
     "message": "Choose the deck for {slotSeat}",
     "translation": "เลือกเด็คสำหรับ {slotSeat}"
@@ -1825,6 +1845,11 @@
   },
   "xCJdfg": {
     "message": "Clear",
+    "translation": "ล้าง"
+  },
+  "baWTFO": {
+    "message": "Clear",
+    "context": "attack cost",
     "translation": "ล้าง"
   },
   "XaMzSZ": {
@@ -1892,10 +1917,6 @@
   "PyipSw": {
     "message": "Close popups",
     "translation": "ปิดป๊อปอัป"
-  },
-  "HLSSB8": {
-    "message": "code or name",
-    "translation": "รหัสหรือชื่อ"
   },
   "c6pkO-": {
     "message": "Coin",
@@ -2436,6 +2457,10 @@
     "message": "Drop to open",
     "translation": "วางเพื่อเปิด"
   },
+  "7ni5yE": {
+    "message": "Drop, paste or choose",
+    "translation": "วาง วางจากคลิปบอร์ด หรือเลือกไฟล์"
+  },
   "d3YoNV": {
     "message": "Dropped",
     "comments": [
@@ -2452,24 +2477,9 @@
     "message": "Duplicate deck",
     "translation": "ทำสำเนาเด็ค"
   },
-  "iu7vH9": {
-    "message": "e.g. CC or LL",
-    "comments": [
-      "Energy letters (C, L…) stay as they are"
-    ],
-    "translation": "เช่น CC หรือ LL"
-  },
   "mjNeGh": {
     "message": "e.g. Charizard",
     "translation": "เช่น Charizard"
-  },
-  "tg9VdO": {
-    "message": "e.g. HIJ",
-    "translation": "เช่น HIJ"
-  },
-  "3fBsZV": {
-    "message": "e.g. illustration",
-    "translation": "เช่น illustration"
   },
   "ryuxTz": {
     "message": "Edit {deckName}",
@@ -2532,10 +2542,6 @@
   "0jl-i6": {
     "message": "Enter a valid image URL.",
     "translation": "กรุณาใส่ URL รูปภาพที่ถูกต้อง"
-  },
-  "I7T1ix": {
-    "message": "Enter an image URL.",
-    "translation": "กรุณาใส่ URL รูปภาพ"
   },
   "eVVWyt": {
     "message": "Esc",
@@ -3006,6 +3012,10 @@
     "message": "How to choose",
     "translation": "วิธีเลือก"
   },
+  "iIbh2N": {
+    "message": "HP",
+    "translation": "HP"
+  },
   "oT-Cnl": {
     "message": "HP",
     "context": "sort cards by",
@@ -3014,14 +3024,6 @@
   "36NKhF": {
     "message": "HP and retreat",
     "translation": "HP และการหนี"
-  },
-  "ZTtNAf": {
-    "message": "HP at least",
-    "translation": "HP อย่างน้อย"
-  },
-  "LgcKSI": {
-    "message": "HP at most",
-    "translation": "HP ไม่เกิน"
   },
   "OaHYvQ": {
     "message": "https://…, blank or theme",
@@ -3052,21 +3054,9 @@
     "message": "Illustrator",
     "translation": "นักวาดภาพประกอบ"
   },
-  "1pdLQw": {
-    "message": "Image not found",
-    "translation": "ไม่พบรูปภาพ"
-  },
   "VyUuZb": {
     "message": "Image URL",
     "translation": "URL รูปภาพ"
-  },
-  "15ARIE": {
-    "message": "Image URL too long",
-    "translation": "URL รูปภาพยาวเกินไป"
-  },
-  "6hbF9e": {
-    "message": "Image URL: up to {max} characters.",
-    "translation": "URL รูปภาพ: ไม่เกิน {max} ตัวอักษร"
   },
   "EUsCHg": {
     "message": "Images",
@@ -3337,6 +3327,10 @@
     "message": "Line {line}: set code too long.",
     "translation": "บรรทัดที่ {line}: รหัสชุดยาวเกินไป"
   },
+  "beOAmP": {
+    "message": "Link too long.",
+    "translation": "ลิงก์ยาวเกินไป"
+  },
   "Q8pDHq": {
     "message": "List",
     "context": "show the deck as",
@@ -3512,6 +3506,10 @@
     "message": "Lost Zone and markers",
     "translation": "ลอสต์โซนและมาร์กเกอร์"
   },
+  "-IGsZV": {
+    "message": "Lower {label}",
+    "translation": "ลด {label}"
+  },
   "xX-rmn": {
     "message": "Majors",
     "comments": [
@@ -3574,6 +3572,14 @@
     "message": "Matte",
     "translation": "ด้าน"
   },
+  "CK1KXz": {
+    "message": "Max",
+    "translation": "สูงสุด"
+  },
+  "zjSw-O": {
+    "message": "Max HP",
+    "translation": "HP สูงสุด"
+  },
   "xeC--l": {
     "message": "Mega",
     "context": "Pokémon card mechanic",
@@ -3610,6 +3616,14 @@
       "A table look: midnight blue"
     ],
     "translation": "น้ำเงินเข้ม"
+  },
+  "eTUF28": {
+    "message": "Min",
+    "translation": "ต่ำสุด"
+  },
+  "J6QsaV": {
+    "message": "Min HP",
+    "translation": "HP ต่ำสุด"
   },
   "_NnUxu": {
     "message": "Mine",
@@ -3717,6 +3731,10 @@
   "8GMjXa": {
     "message": "Mulligan (no Basic in 7)",
     "translation": "มัลลิแกน (ไม่มีโปเกมอนพื้นฐานใน 7 ใบ)"
+  },
+  "6Leq5p": {
+    "message": "Multi-piece card",
+    "translation": "การ์ดหลายชิ้นส่วน"
   },
   "jiY-22": {
     "message": "My deck",
@@ -3872,10 +3890,6 @@
     "message": "No foil",
     "translation": "ไม่มีฟอยล์"
   },
-  "2fhoKU": {
-    "message": "No image",
-    "translation": "ไม่มีรูปภาพ"
-  },
   "nivaRq": {
     "message": "No list",
     "translation": "ไม่มีรายการเด็ค"
@@ -3883,6 +3897,10 @@
   "hXMFoN": {
     "message": "No lists",
     "translation": "ไม่มีรายการเด็ค"
+  },
+  "mNXjQA": {
+    "message": "No match",
+    "translation": "ไม่พบที่ตรงกัน"
   },
   "ebeFtm": {
     "message": "No shortcut matches “{search}”.",
@@ -3910,6 +3928,10 @@
     "message": "Normal",
     "context": "animation speed",
     "translation": "ปกติ"
+  },
+  "0iGojz": {
+    "message": "Not a picture.",
+    "translation": "ไม่ใช่รูปภาพ"
   },
   "S33tz3": {
     "message": "Not connected",
@@ -4014,6 +4036,10 @@
       "{0} is the Flip button's label, which turns the table around"
     ],
     "translation": "เมื่อเล่นคนเดียว คุณจะเล่นทั้งสองฝ่าย กด <0>{0}</0> เพื่อหมุนโต๊ะไปยังฝั่งของอีกฝ่าย"
+  },
+  "U1CJvq": {
+    "message": "One card",
+    "translation": "การ์ดใบเดียว"
   },
   "3GFV_r": {
     "message": "One fewer",
@@ -4140,6 +4166,10 @@
     "message": "Opponents' custom backs",
     "translation": "ด้านหลังการ์ดแบบกำหนดเองของฝ่ายตรงข้าม"
   },
+  "ONM3W_": {
+    "message": "or a link",
+    "translation": "หรือใช้ลิงก์"
+  },
   "l2I52S": {
     "message": "or drop or paste one here",
     "translation": "หรือลากมาวางหรือวางรูปที่นี่"
@@ -4248,14 +4278,26 @@
     "message": "Pick random card",
     "translation": "สุ่มการ์ด"
   },
+  "N0-GsR": {
+    "message": "Picture",
+    "translation": "รูปภาพ"
+  },
   "KBXd3D": {
     "message": "Picture",
     "context": "a card back from a picture",
     "translation": "รูปภาพ"
   },
-  "xYvd7u": {
-    "message": "Piece position",
-    "translation": "ตำแหน่งชิ้นส่วน"
+  "9uDKal": {
+    "message": "Picture link",
+    "translation": "ลิงก์รูปภาพ"
+  },
+  "eLNVFN": {
+    "message": "Picture link: {label}",
+    "translation": "ลิงก์รูปภาพ: {label}"
+  },
+  "BX1rQx": {
+    "message": "Pieces",
+    "translation": "ชิ้นส่วน"
   },
   "CC99uS": {
     "message": "Piles",
@@ -4477,10 +4519,6 @@
     ],
     "translation": "วางไว้บนสุด"
   },
-  "rkcP1p": {
-    "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
-    "translation": "รวมชิ้นส่วนโปเกมอนไว้ในกองเดียว และชิ้นส่วนสเตเดียมไว้ในสเตเดียม"
-  },
   "QEP1VC": {
     "message": "Put the rest of it, <0>{0}</0> and its Energy, in their discard pile too.",
     "translation": "นำส่วนที่เหลือ คือ <0>{0}</0> และพลังงานที่ติดอยู่ ไปไว้ที่ตำแหน่งทิ้งการ์ดของฝ่ายตรงข้ามด้วย"
@@ -4506,6 +4544,10 @@
   "AUzUf9": {
     "message": "Rainbow foil",
     "translation": "ฟอยล์สายรุ้ง"
+  },
+  "K21Y8W": {
+    "message": "Raise {label}",
+    "translation": "เพิ่ม {label}"
   },
   "PImlBx": {
     "message": "Raised",
@@ -4597,6 +4639,10 @@
     "context": "animation speed",
     "translation": "ช้า"
   },
+  "HLazKQ": {
+    "message": "Remove {name}",
+    "translation": "นำ {name} ออก"
+  },
   "hKnn4w": {
     "message": "Remove {name} from {seat}",
     "translation": "นำ {name} ออกจาก {seat}"
@@ -4628,6 +4674,10 @@
   "5qTkf-": {
     "message": "Remove special condition",
     "translation": "ลบสภาวะผิดปกติ"
+  },
+  "-WTtkb": {
+    "message": "Remove the picture",
+    "translation": "ลบรูปภาพ"
   },
   "jionWu": {
     "message": "Rename",
@@ -4916,10 +4966,6 @@
       "A table look: cherry blossom pink"
     ],
     "translation": "ซากุระ"
-  },
-  "qoNq2S": {
-    "message": "Same group for each piece",
-    "translation": "กลุ่มเดียวกันสำหรับแต่ละชิ้น"
   },
   "brkgwR": {
     "message": "Sample hand",
@@ -5548,6 +5594,10 @@
     "context": "shortcut key caption",
     "translation": "สภาวะ"
   },
+  "iFt0Ce": {
+    "message": "Still uploading…",
+    "translation": "ยังอัปโหลดอยู่…"
+  },
   "B2cOHf": {
     "message": "Stop sorting hand",
     "translation": "หยุดเรียงการ์ดบนมือ"
@@ -5736,10 +5786,6 @@
     "message": "That file isn't a picture.",
     "translation": "ไฟล์นี้ไม่ใช่รูปภาพ"
   },
-  "ZMr878": {
-    "message": "That image didn't load.",
-    "translation": "โหลดรูปภาพนั้นไม่สำเร็จ"
-  },
   "B4ZAXF": {
     "message": "That one was skipped.",
     "translation": "ข้ามรายการนั้นแล้ว"
@@ -5747,6 +5793,10 @@
   "qqEjGU": {
     "message": "That picture can't be read.",
     "translation": "ไม่สามารถอ่านรูปภาพนี้ได้"
+  },
+  "F9MU8-": {
+    "message": "That picture didn't load.",
+    "translation": "โหลดรูปภาพนี้ไม่สำเร็จ"
   },
   "HnGmBe": {
     "message": "That picture is over 20 MB.",
@@ -6243,6 +6293,10 @@
     "message": "Untitled deck",
     "translation": "เด็คไม่มีชื่อ"
   },
+  "gANddk": {
+    "message": "Uploading…",
+    "translation": "กำลังอัปโหลด…"
+  },
   "aS5ttr": {
     "message": "Use background",
     "translation": "ใช้พื้นหลัง"
@@ -6447,148 +6501,5 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "เส้นขอบโซน"
-  },
-  "cJqyrp": {
-    "message": "{name}: {count}",
-    "translation": "{name}: {count}"
-  },
-  "hQE7TV": {
-    "message": "An image URL, or 'default'.",
-    "comments": [
-      "Keep 'default' in English: it is what the player types"
-    ],
-    "translation": "URL ของรูปภาพ หรือ 'default'"
-  },
-  "PCF3WN": {
-    "message": "Change card back",
-    "translation": "เปลี่ยนหลังการ์ด"
-  },
-  "baWTFO": {
-    "message": "Clear",
-    "context": "attack cost",
-    "translation": "ล้าง"
-  },
-  "iIbh2N": {
-    "message": "HP",
-    "translation": "HP"
-  },
-  "fVGc9-": {
-    "message": "https://… or default",
-    "comments": [
-      "Keep 'default' in English: it is what the player types"
-    ],
-    "translation": "https://… หรือ default"
-  },
-  "-IGsZV": {
-    "message": "Lower {label}",
-    "translation": "ลด {label}"
-  },
-  "CK1KXz": {
-    "message": "Max",
-    "translation": "สูงสุด"
-  },
-  "zjSw-O": {
-    "message": "Max HP",
-    "translation": "HP สูงสุด"
-  },
-  "eTUF28": {
-    "message": "Min",
-    "translation": "ต่ำสุด"
-  },
-  "J6QsaV": {
-    "message": "Min HP",
-    "translation": "HP ต่ำสุด"
-  },
-  "mNXjQA": {
-    "message": "No match",
-    "translation": "ไม่พบที่ตรงกัน"
-  },
-  "K21Y8W": {
-    "message": "Raise {label}",
-    "translation": "เพิ่ม {label}"
-  },
-  "HLazKQ": {
-    "message": "Remove {name}",
-    "translation": "นำ {name} ออก"
-  },
-  "PTd_zR": {
-    "message": "Use image",
-    "translation": "ใช้รูปภาพ"
-  },
-  "mOTci6": {
-    "message": "Add a multi-piece card",
-    "translation": "เพิ่มการ์ดหลายชิ้นส่วน"
-  },
-  "ZJwR0U": {
-    "message": "Add a picture for each piece.",
-    "translation": "เพิ่มรูปภาพสำหรับแต่ละชิ้นส่วน"
-  },
-  "J8elq3": {
-    "message": "Add a picture.",
-    "translation": "เพิ่มรูปภาพ"
-  },
-  "9CyHQP": {
-    "message": "Change the picture",
-    "translation": "เปลี่ยนรูปภาพ"
-  },
-  "kT6WGB": {
-    "message": "Choose a picture: {label}",
-    "translation": "เลือกรูปภาพ: {label}"
-  },
-  "7ni5yE": {
-    "message": "Drop, paste or choose",
-    "translation": "วาง วางจากคลิปบอร์ด หรือเลือกไฟล์"
-  },
-  "beOAmP": {
-    "message": "Link too long.",
-    "translation": "ลิงก์ยาวเกินไป"
-  },
-  "6Leq5p": {
-    "message": "Multi-piece card",
-    "translation": "การ์ดหลายชิ้นส่วน"
-  },
-  "0iGojz": {
-    "message": "Not a picture.",
-    "translation": "ไม่ใช่รูปภาพ"
-  },
-  "U1CJvq": {
-    "message": "One card",
-    "translation": "การ์ดใบเดียว"
-  },
-  "ONM3W_": {
-    "message": "or a link",
-    "translation": "หรือใช้ลิงก์"
-  },
-  "N0-GsR": {
-    "message": "Picture",
-    "translation": "รูปภาพ"
-  },
-  "9uDKal": {
-    "message": "Picture link",
-    "translation": "ลิงก์รูปภาพ"
-  },
-  "eLNVFN": {
-    "message": "Picture link: {label}",
-    "translation": "ลิงก์รูปภาพ: {label}"
-  },
-  "BX1rQx": {
-    "message": "Pieces",
-    "translation": "ชิ้นส่วน"
-  },
-  "-WTtkb": {
-    "message": "Remove the picture",
-    "translation": "ลบรูปภาพ"
-  },
-  "iFt0Ce": {
-    "message": "Still uploading…",
-    "translation": "ยังอัปโหลดอยู่…"
-  },
-  "F9MU8-": {
-    "message": "That picture didn't load.",
-    "translation": "โหลดรูปภาพนี้ไม่สำเร็จ"
-  },
-  "gANddk": {
-    "message": "Uploading…",
-    "translation": "กำลังอัปโหลด…"
   }
 }

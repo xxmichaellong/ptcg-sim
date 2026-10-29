@@ -793,6 +793,10 @@
     ],
     "translation": "{name}已使用：点击撤销"
   },
+  "cJqyrp": {
+    "message": "{name}: {count}",
+    "translation": "{name}：{count}"
+  },
   "2mmBQD": {
     "message": "{name}: try it",
     "translation": "{name}：试玩"
@@ -1174,6 +1178,18 @@
     "message": "Add a card that isn't listed",
     "translation": "添加未列出的卡牌"
   },
+  "mOTci6": {
+    "message": "Add a multi-piece card",
+    "translation": "添加多部件卡牌"
+  },
+  "ZJwR0U": {
+    "message": "Add a picture for each piece.",
+    "translation": "为每个部件添加图片。"
+  },
+  "J8elq3": {
+    "message": "Add a picture.",
+    "translation": "添加图片。"
+  },
   "6ZbKYu": {
     "message": "Add another stadium piece",
     "translation": "再添加一个竞技场部件"
@@ -1362,10 +1378,6 @@
   "y_Uvam": {
     "message": "Around the table",
     "translation": "牌桌概览"
-  },
-  "8zanjC": {
-    "message": "Artwork group",
-    "translation": "插画分组"
   },
   "2uaWnn": {
     "message": "Artwork window",
@@ -1737,6 +1749,10 @@
     "message": "Change card type",
     "translation": "更改卡牌类型"
   },
+  "9CyHQP": {
+    "message": "Change the picture",
+    "translation": "更换图片"
+  },
   "nVhPBD": {
     "message": "Change type to Energy",
     "translation": "将类型改为能量"
@@ -1811,6 +1827,10 @@
     "message": "Choose a picture",
     "translation": "选择图片"
   },
+  "kT6WGB": {
+    "message": "Choose a picture: {label}",
+    "translation": "选择图片：{label}"
+  },
   "TvEJEL": {
     "message": "Choose the deck for {slotSeat}",
     "translation": "选择 {slotSeat} 的卡组"
@@ -1825,6 +1845,11 @@
   },
   "xCJdfg": {
     "message": "Clear",
+    "translation": "清除"
+  },
+  "baWTFO": {
+    "message": "Clear",
+    "context": "attack cost",
     "translation": "清除"
   },
   "XaMzSZ": {
@@ -1892,10 +1917,6 @@
   "PyipSw": {
     "message": "Close popups",
     "translation": "关闭弹窗"
-  },
-  "HLSSB8": {
-    "message": "code or name",
-    "translation": "代码或名称"
   },
   "c6pkO-": {
     "message": "Coin",
@@ -2436,6 +2457,10 @@
     "message": "Drop to open",
     "translation": "松开以打开"
   },
+  "7ni5yE": {
+    "message": "Drop, paste or choose",
+    "translation": "拖放、粘贴或选择"
+  },
   "d3YoNV": {
     "message": "Dropped",
     "comments": [
@@ -2452,24 +2477,9 @@
     "message": "Duplicate deck",
     "translation": "复制卡组"
   },
-  "iu7vH9": {
-    "message": "e.g. CC or LL",
-    "comments": [
-      "Energy letters (C, L…) stay as they are"
-    ],
-    "translation": "例如 CC 或 LL"
-  },
   "mjNeGh": {
     "message": "e.g. Charizard",
     "translation": "例如 Charizard"
-  },
-  "tg9VdO": {
-    "message": "e.g. HIJ",
-    "translation": "例如 HIJ"
-  },
-  "3fBsZV": {
-    "message": "e.g. illustration",
-    "translation": "例如 illustration"
   },
   "ryuxTz": {
     "message": "Edit {deckName}",
@@ -2532,10 +2542,6 @@
   "0jl-i6": {
     "message": "Enter a valid image URL.",
     "translation": "请输入有效的图片网址。"
-  },
-  "I7T1ix": {
-    "message": "Enter an image URL.",
-    "translation": "请输入图片网址。"
   },
   "eVVWyt": {
     "message": "Esc",
@@ -3006,6 +3012,10 @@
     "message": "How to choose",
     "translation": "如何选择"
   },
+  "iIbh2N": {
+    "message": "HP",
+    "translation": "HP"
+  },
   "oT-Cnl": {
     "message": "HP",
     "context": "sort cards by",
@@ -3014,14 +3024,6 @@
   "36NKhF": {
     "message": "HP and retreat",
     "translation": "HP 与撤退"
-  },
-  "ZTtNAf": {
-    "message": "HP at least",
-    "translation": "HP 至少"
-  },
-  "LgcKSI": {
-    "message": "HP at most",
-    "translation": "HP 至多"
   },
   "OaHYvQ": {
     "message": "https://…, blank or theme",
@@ -3052,21 +3054,9 @@
     "message": "Illustrator",
     "translation": "插画师"
   },
-  "1pdLQw": {
-    "message": "Image not found",
-    "translation": "未找到图片"
-  },
   "VyUuZb": {
     "message": "Image URL",
     "translation": "图片网址"
-  },
-  "15ARIE": {
-    "message": "Image URL too long",
-    "translation": "图片网址过长"
-  },
-  "6hbF9e": {
-    "message": "Image URL: up to {max} characters.",
-    "translation": "图片网址：最多 {max} 个字符。"
   },
   "EUsCHg": {
     "message": "Images",
@@ -3337,6 +3327,10 @@
     "message": "Line {line}: set code too long.",
     "translation": "第 {line} 行：系列代码过长。"
   },
+  "beOAmP": {
+    "message": "Link too long.",
+    "translation": "链接过长。"
+  },
   "Q8pDHq": {
     "message": "List",
     "context": "show the deck as",
@@ -3512,6 +3506,10 @@
     "message": "Lost Zone and markers",
     "translation": "放逐区与标记物"
   },
+  "-IGsZV": {
+    "message": "Lower {label}",
+    "translation": "降低{label}"
+  },
   "xX-rmn": {
     "message": "Majors",
     "comments": [
@@ -3574,6 +3572,14 @@
     "message": "Matte",
     "translation": "哑光"
   },
+  "CK1KXz": {
+    "message": "Max",
+    "translation": "最大"
+  },
+  "zjSw-O": {
+    "message": "Max HP",
+    "translation": "最大HP"
+  },
   "xeC--l": {
     "message": "Mega",
     "context": "Pokémon card mechanic",
@@ -3610,6 +3616,14 @@
       "A table look: midnight blue"
     ],
     "translation": "午夜"
+  },
+  "eTUF28": {
+    "message": "Min",
+    "translation": "最小"
+  },
+  "J6QsaV": {
+    "message": "Min HP",
+    "translation": "最小HP"
   },
   "_NnUxu": {
     "message": "Mine",
@@ -3717,6 +3731,10 @@
   "8GMjXa": {
     "message": "Mulligan (no Basic in 7)",
     "translation": "重抽（7 张中没有基础宝可梦）"
+  },
+  "6Leq5p": {
+    "message": "Multi-piece card",
+    "translation": "多部件卡牌"
   },
   "jiY-22": {
     "message": "My deck",
@@ -3872,10 +3890,6 @@
     "message": "No foil",
     "translation": "无闪箔"
   },
-  "2fhoKU": {
-    "message": "No image",
-    "translation": "无图片"
-  },
   "nivaRq": {
     "message": "No list",
     "translation": "无卡组列表"
@@ -3883,6 +3897,10 @@
   "hXMFoN": {
     "message": "No lists",
     "translation": "无卡组列表"
+  },
+  "mNXjQA": {
+    "message": "No match",
+    "translation": "无匹配项"
   },
   "ebeFtm": {
     "message": "No shortcut matches “{search}”.",
@@ -3910,6 +3928,10 @@
     "message": "Normal",
     "context": "animation speed",
     "translation": "正常"
+  },
+  "0iGojz": {
+    "message": "Not a picture.",
+    "translation": "不是图片。"
   },
   "S33tz3": {
     "message": "Not connected",
@@ -4014,6 +4036,10 @@
       "{0} is the Flip button's label, which turns the table around"
     ],
     "translation": "独自游玩时，你将操控双方。按<0>{0}</0>将牌桌转到对方视角。"
+  },
+  "U1CJvq": {
+    "message": "One card",
+    "translation": "单张卡牌"
   },
   "3GFV_r": {
     "message": "One fewer",
@@ -4140,6 +4166,10 @@
     "message": "Opponents' custom backs",
     "translation": "对手的自定义卡背"
   },
+  "ONM3W_": {
+    "message": "or a link",
+    "translation": "或使用链接"
+  },
   "l2I52S": {
     "message": "or drop or paste one here",
     "translation": "或将图片拖放或粘贴到此处"
@@ -4248,14 +4278,26 @@
     "message": "Pick random card",
     "translation": "随机选择一张卡牌"
   },
+  "N0-GsR": {
+    "message": "Picture",
+    "translation": "图片"
+  },
   "KBXd3D": {
     "message": "Picture",
     "context": "a card back from a picture",
     "translation": "图片"
   },
-  "xYvd7u": {
-    "message": "Piece position",
-    "translation": "部件位置"
+  "9uDKal": {
+    "message": "Picture link",
+    "translation": "图片链接"
+  },
+  "eLNVFN": {
+    "message": "Picture link: {label}",
+    "translation": "图片链接：{label}"
+  },
+  "BX1rQx": {
+    "message": "Pieces",
+    "translation": "部件"
   },
   "CC99uS": {
     "message": "Piles",
@@ -4477,10 +4519,6 @@
     ],
     "translation": "放到最上面"
   },
-  "rkcP1p": {
-    "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
-    "translation": "将宝可梦部件叠放在一起，竞技场部件放入竞技场。"
-  },
   "QEP1VC": {
     "message": "Put the rest of it, <0>{0}</0> and its Energy, in their discard pile too.",
     "translation": "将其余部分，即<0>{0}</0>及其能量，也放入弃牌区。"
@@ -4506,6 +4544,10 @@
   "AUzUf9": {
     "message": "Rainbow foil",
     "translation": "彩虹闪卡"
+  },
+  "K21Y8W": {
+    "message": "Raise {label}",
+    "translation": "提高{label}"
   },
   "PImlBx": {
     "message": "Raised",
@@ -4597,6 +4639,10 @@
     "context": "animation speed",
     "translation": "舒缓"
   },
+  "HLazKQ": {
+    "message": "Remove {name}",
+    "translation": "移除{name}"
+  },
   "hKnn4w": {
     "message": "Remove {name} from {seat}",
     "translation": "从{seat}移除{name}"
@@ -4628,6 +4674,10 @@
   "5qTkf-": {
     "message": "Remove special condition",
     "translation": "移除特殊状态"
+  },
+  "-WTtkb": {
+    "message": "Remove the picture",
+    "translation": "移除图片"
   },
   "jionWu": {
     "message": "Rename",
@@ -4916,10 +4966,6 @@
       "A table look: cherry blossom pink"
     ],
     "translation": "樱花"
-  },
-  "qoNq2S": {
-    "message": "Same group for each piece",
-    "translation": "每个部件使用同一组"
   },
   "brkgwR": {
     "message": "Sample hand",
@@ -5548,6 +5594,10 @@
     "context": "shortcut key caption",
     "translation": "状态"
   },
+  "iFt0Ce": {
+    "message": "Still uploading…",
+    "translation": "仍在上传…"
+  },
   "B2cOHf": {
     "message": "Stop sorting hand",
     "translation": "停止整理手牌"
@@ -5736,10 +5786,6 @@
     "message": "That file isn't a picture.",
     "translation": "该文件不是图片。"
   },
-  "ZMr878": {
-    "message": "That image didn't load.",
-    "translation": "该图片未能加载。"
-  },
   "B4ZAXF": {
     "message": "That one was skipped.",
     "translation": "该项已跳过。"
@@ -5747,6 +5793,10 @@
   "qqEjGU": {
     "message": "That picture can't be read.",
     "translation": "无法读取该图片。"
+  },
+  "F9MU8-": {
+    "message": "That picture didn't load.",
+    "translation": "该图片未能加载。"
   },
   "HnGmBe": {
     "message": "That picture is over 20 MB.",
@@ -6243,6 +6293,10 @@
     "message": "Untitled deck",
     "translation": "未命名卡组"
   },
+  "gANddk": {
+    "message": "Uploading…",
+    "translation": "上传中…"
+  },
   "aS5ttr": {
     "message": "Use background",
     "translation": "使用背景"
@@ -6447,148 +6501,5 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "区域轮廓"
-  },
-  "cJqyrp": {
-    "message": "{name}: {count}",
-    "translation": "{name}：{count}"
-  },
-  "hQE7TV": {
-    "message": "An image URL, or 'default'.",
-    "comments": [
-      "Keep 'default' in English: it is what the player types"
-    ],
-    "translation": "图片网址，或 'default'。"
-  },
-  "PCF3WN": {
-    "message": "Change card back",
-    "translation": "更换卡背"
-  },
-  "baWTFO": {
-    "message": "Clear",
-    "context": "attack cost",
-    "translation": "清除"
-  },
-  "iIbh2N": {
-    "message": "HP",
-    "translation": "HP"
-  },
-  "fVGc9-": {
-    "message": "https://… or default",
-    "comments": [
-      "Keep 'default' in English: it is what the player types"
-    ],
-    "translation": "https://… 或 default"
-  },
-  "-IGsZV": {
-    "message": "Lower {label}",
-    "translation": "降低{label}"
-  },
-  "CK1KXz": {
-    "message": "Max",
-    "translation": "最大"
-  },
-  "zjSw-O": {
-    "message": "Max HP",
-    "translation": "最大HP"
-  },
-  "eTUF28": {
-    "message": "Min",
-    "translation": "最小"
-  },
-  "J6QsaV": {
-    "message": "Min HP",
-    "translation": "最小HP"
-  },
-  "mNXjQA": {
-    "message": "No match",
-    "translation": "无匹配项"
-  },
-  "K21Y8W": {
-    "message": "Raise {label}",
-    "translation": "提高{label}"
-  },
-  "HLazKQ": {
-    "message": "Remove {name}",
-    "translation": "移除{name}"
-  },
-  "PTd_zR": {
-    "message": "Use image",
-    "translation": "使用图片"
-  },
-  "mOTci6": {
-    "message": "Add a multi-piece card",
-    "translation": "添加多部件卡牌"
-  },
-  "ZJwR0U": {
-    "message": "Add a picture for each piece.",
-    "translation": "为每个部件添加图片。"
-  },
-  "J8elq3": {
-    "message": "Add a picture.",
-    "translation": "添加图片。"
-  },
-  "9CyHQP": {
-    "message": "Change the picture",
-    "translation": "更换图片"
-  },
-  "kT6WGB": {
-    "message": "Choose a picture: {label}",
-    "translation": "选择图片：{label}"
-  },
-  "7ni5yE": {
-    "message": "Drop, paste or choose",
-    "translation": "拖放、粘贴或选择"
-  },
-  "beOAmP": {
-    "message": "Link too long.",
-    "translation": "链接过长。"
-  },
-  "6Leq5p": {
-    "message": "Multi-piece card",
-    "translation": "多部件卡牌"
-  },
-  "0iGojz": {
-    "message": "Not a picture.",
-    "translation": "不是图片。"
-  },
-  "U1CJvq": {
-    "message": "One card",
-    "translation": "单张卡牌"
-  },
-  "ONM3W_": {
-    "message": "or a link",
-    "translation": "或使用链接"
-  },
-  "N0-GsR": {
-    "message": "Picture",
-    "translation": "图片"
-  },
-  "9uDKal": {
-    "message": "Picture link",
-    "translation": "图片链接"
-  },
-  "eLNVFN": {
-    "message": "Picture link: {label}",
-    "translation": "图片链接：{label}"
-  },
-  "BX1rQx": {
-    "message": "Pieces",
-    "translation": "部件"
-  },
-  "-WTtkb": {
-    "message": "Remove the picture",
-    "translation": "移除图片"
-  },
-  "iFt0Ce": {
-    "message": "Still uploading…",
-    "translation": "仍在上传…"
-  },
-  "F9MU8-": {
-    "message": "That picture didn't load.",
-    "translation": "该图片未能加载。"
-  },
-  "gANddk": {
-    "message": "Uploading…",
-    "translation": "上传中…"
   }
 }

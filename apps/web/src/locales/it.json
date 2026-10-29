@@ -793,6 +793,10 @@
     ],
     "translation": "{name} usato: premi per annullare"
   },
+  "cJqyrp": {
+    "message": "{name}: {count}",
+    "translation": "{name}: {count}"
+  },
   "2mmBQD": {
     "message": "{name}: try it",
     "translation": "{name}: provalo"
@@ -1174,6 +1178,18 @@
     "message": "Add a card that isn't listed",
     "translation": "Aggiungi una carta non presente nell'elenco"
   },
+  "mOTci6": {
+    "message": "Add a multi-piece card",
+    "translation": "Aggiungi una carta a più pezzi"
+  },
+  "ZJwR0U": {
+    "message": "Add a picture for each piece.",
+    "translation": "Aggiungi un'immagine per ogni pezzo."
+  },
+  "J8elq3": {
+    "message": "Add a picture.",
+    "translation": "Aggiungi un'immagine."
+  },
   "6ZbKYu": {
     "message": "Add another stadium piece",
     "translation": "Aggiungi un altro pezzo di Stadio"
@@ -1362,10 +1378,6 @@
   "y_Uvam": {
     "message": "Around the table",
     "translation": "Intorno al tavolo"
-  },
-  "8zanjC": {
-    "message": "Artwork group",
-    "translation": "Gruppo di illustrazioni"
   },
   "2uaWnn": {
     "message": "Artwork window",
@@ -1737,6 +1749,10 @@
     "message": "Change card type",
     "translation": "Cambia tipo di carta"
   },
+  "9CyHQP": {
+    "message": "Change the picture",
+    "translation": "Cambia l'immagine"
+  },
   "nVhPBD": {
     "message": "Change type to Energy",
     "translation": "Cambia tipo in Energia"
@@ -1811,6 +1827,10 @@
     "message": "Choose a picture",
     "translation": "Scegli un'immagine"
   },
+  "kT6WGB": {
+    "message": "Choose a picture: {label}",
+    "translation": "Scegli un'immagine: {label}"
+  },
   "TvEJEL": {
     "message": "Choose the deck for {slotSeat}",
     "translation": "Scegli il mazzo per {slotSeat}"
@@ -1826,6 +1846,11 @@
   "xCJdfg": {
     "message": "Clear",
     "translation": "Cancella"
+  },
+  "baWTFO": {
+    "message": "Clear",
+    "context": "attack cost",
+    "translation": "Azzera"
   },
   "XaMzSZ": {
     "message": "Clear",
@@ -1892,10 +1917,6 @@
   "PyipSw": {
     "message": "Close popups",
     "translation": "Chiudi i popup"
-  },
-  "HLSSB8": {
-    "message": "code or name",
-    "translation": "codice o nome"
   },
   "c6pkO-": {
     "message": "Coin",
@@ -2436,6 +2457,10 @@
     "message": "Drop to open",
     "translation": "Rilascia per aprire"
   },
+  "7ni5yE": {
+    "message": "Drop, paste or choose",
+    "translation": "Trascina, incolla o scegli"
+  },
   "d3YoNV": {
     "message": "Dropped",
     "comments": [
@@ -2452,24 +2477,9 @@
     "message": "Duplicate deck",
     "translation": "Duplica mazzo"
   },
-  "iu7vH9": {
-    "message": "e.g. CC or LL",
-    "comments": [
-      "Energy letters (C, L…) stay as they are"
-    ],
-    "translation": "es. CC o LL"
-  },
   "mjNeGh": {
     "message": "e.g. Charizard",
     "translation": "es. Charizard"
-  },
-  "tg9VdO": {
-    "message": "e.g. HIJ",
-    "translation": "es. HIJ"
-  },
-  "3fBsZV": {
-    "message": "e.g. illustration",
-    "translation": "es. illustrazione"
   },
   "ryuxTz": {
     "message": "Edit {deckName}",
@@ -2532,10 +2542,6 @@
   "0jl-i6": {
     "message": "Enter a valid image URL.",
     "translation": "Inserisci un URL immagine valido."
-  },
-  "I7T1ix": {
-    "message": "Enter an image URL.",
-    "translation": "Inserisci un URL immagine."
   },
   "eVVWyt": {
     "message": "Esc",
@@ -3006,6 +3012,10 @@
     "message": "How to choose",
     "translation": "Come scegliere"
   },
+  "iIbh2N": {
+    "message": "HP",
+    "translation": "PS"
+  },
   "oT-Cnl": {
     "message": "HP",
     "context": "sort cards by",
@@ -3014,14 +3024,6 @@
   "36NKhF": {
     "message": "HP and retreat",
     "translation": "PS e ritirata"
-  },
-  "ZTtNAf": {
-    "message": "HP at least",
-    "translation": "PS minimi"
-  },
-  "LgcKSI": {
-    "message": "HP at most",
-    "translation": "PS massimi"
   },
   "OaHYvQ": {
     "message": "https://…, blank or theme",
@@ -3052,21 +3054,9 @@
     "message": "Illustrator",
     "translation": "Illustratore"
   },
-  "1pdLQw": {
-    "message": "Image not found",
-    "translation": "Immagine non trovata"
-  },
   "VyUuZb": {
     "message": "Image URL",
     "translation": "URL dell'immagine"
-  },
-  "15ARIE": {
-    "message": "Image URL too long",
-    "translation": "URL dell'immagine troppo lungo"
-  },
-  "6hbF9e": {
-    "message": "Image URL: up to {max} characters.",
-    "translation": "URL immagine: massimo {max} caratteri."
   },
   "EUsCHg": {
     "message": "Images",
@@ -3337,6 +3327,10 @@
     "message": "Line {line}: set code too long.",
     "translation": "Riga {line}: codice del set troppo lungo."
   },
+  "beOAmP": {
+    "message": "Link too long.",
+    "translation": "Link troppo lungo."
+  },
   "Q8pDHq": {
     "message": "List",
     "context": "show the deck as",
@@ -3512,6 +3506,10 @@
     "message": "Lost Zone and markers",
     "translation": "Area perduta e segnalini"
   },
+  "-IGsZV": {
+    "message": "Lower {label}",
+    "translation": "Diminuisci {label}"
+  },
   "xX-rmn": {
     "message": "Majors",
     "comments": [
@@ -3574,6 +3572,14 @@
     "message": "Matte",
     "translation": "Opaca"
   },
+  "CK1KXz": {
+    "message": "Max",
+    "translation": "Max"
+  },
+  "zjSw-O": {
+    "message": "Max HP",
+    "translation": "PS max"
+  },
   "xeC--l": {
     "message": "Mega",
     "context": "Pokémon card mechanic",
@@ -3610,6 +3616,14 @@
       "A table look: midnight blue"
     ],
     "translation": "Mezzanotte"
+  },
+  "eTUF28": {
+    "message": "Min",
+    "translation": "Min"
+  },
+  "J6QsaV": {
+    "message": "Min HP",
+    "translation": "PS min"
   },
   "_NnUxu": {
     "message": "Mine",
@@ -3717,6 +3731,10 @@
   "8GMjXa": {
     "message": "Mulligan (no Basic in 7)",
     "translation": "Mulligan (nessun Pokémon Base su 7)"
+  },
+  "6Leq5p": {
+    "message": "Multi-piece card",
+    "translation": "Carta a più pezzi"
   },
   "jiY-22": {
     "message": "My deck",
@@ -3872,10 +3890,6 @@
     "message": "No foil",
     "translation": "Senza foil"
   },
-  "2fhoKU": {
-    "message": "No image",
-    "translation": "Nessuna immagine"
-  },
   "nivaRq": {
     "message": "No list",
     "translation": "Nessuna lista"
@@ -3883,6 +3897,10 @@
   "hXMFoN": {
     "message": "No lists",
     "translation": "Nessuna lista"
+  },
+  "mNXjQA": {
+    "message": "No match",
+    "translation": "Nessun risultato"
   },
   "ebeFtm": {
     "message": "No shortcut matches “{search}”.",
@@ -3910,6 +3928,10 @@
     "message": "Normal",
     "context": "animation speed",
     "translation": "Normale"
+  },
+  "0iGojz": {
+    "message": "Not a picture.",
+    "translation": "Non è un'immagine."
   },
   "S33tz3": {
     "message": "Not connected",
@@ -4014,6 +4036,10 @@
       "{0} is the Flip button's label, which turns the table around"
     ],
     "translation": "Se sei da solo, giochi entrambi i lati. Premi <0>{0}</0> per girare il tavolo verso l'altro lato."
+  },
+  "U1CJvq": {
+    "message": "One card",
+    "translation": "Una carta"
   },
   "3GFV_r": {
     "message": "One fewer",
@@ -4140,6 +4166,10 @@
     "message": "Opponents' custom backs",
     "translation": "Dorsi personalizzati degli avversari"
   },
+  "ONM3W_": {
+    "message": "or a link",
+    "translation": "oppure un link"
+  },
   "l2I52S": {
     "message": "or drop or paste one here",
     "translation": "oppure trascina o incolla qui un'immagine"
@@ -4248,14 +4278,26 @@
     "message": "Pick random card",
     "translation": "Scegli una carta a caso"
   },
+  "N0-GsR": {
+    "message": "Picture",
+    "translation": "Immagine"
+  },
   "KBXd3D": {
     "message": "Picture",
     "context": "a card back from a picture",
     "translation": "Immagine"
   },
-  "xYvd7u": {
-    "message": "Piece position",
-    "translation": "Posizione del pezzo"
+  "9uDKal": {
+    "message": "Picture link",
+    "translation": "Link dell'immagine"
+  },
+  "eLNVFN": {
+    "message": "Picture link: {label}",
+    "translation": "Link dell'immagine: {label}"
+  },
+  "BX1rQx": {
+    "message": "Pieces",
+    "translation": "Pezzi"
   },
   "CC99uS": {
     "message": "Piles",
@@ -4477,10 +4519,6 @@
     ],
     "translation": "Metti in cima"
   },
-  "rkcP1p": {
-    "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
-    "translation": "Metti i pezzi Pokémon in una pila, i pezzi Stadio nello Stadio."
-  },
   "QEP1VC": {
     "message": "Put the rest of it, <0>{0}</0> and its Energy, in their discard pile too.",
     "translation": "Metti nella pila degli scarti anche il resto, <0>{0}</0> e le sue Energie."
@@ -4506,6 +4544,10 @@
   "AUzUf9": {
     "message": "Rainbow foil",
     "translation": "Foil arcobaleno"
+  },
+  "K21Y8W": {
+    "message": "Raise {label}",
+    "translation": "Aumenta {label}"
   },
   "PImlBx": {
     "message": "Raised",
@@ -4597,6 +4639,10 @@
     "context": "animation speed",
     "translation": "Rilassata"
   },
+  "HLazKQ": {
+    "message": "Remove {name}",
+    "translation": "Rimuovi {name}"
+  },
   "hKnn4w": {
     "message": "Remove {name} from {seat}",
     "translation": "Rimuovi {name} da {seat}"
@@ -4628,6 +4674,10 @@
   "5qTkf-": {
     "message": "Remove special condition",
     "translation": "Rimuovi condizione speciale"
+  },
+  "-WTtkb": {
+    "message": "Remove the picture",
+    "translation": "Rimuovi l'immagine"
   },
   "jionWu": {
     "message": "Rename",
@@ -4916,10 +4966,6 @@
       "A table look: cherry blossom pink"
     ],
     "translation": "Sakura"
-  },
-  "qoNq2S": {
-    "message": "Same group for each piece",
-    "translation": "Stesso gruppo per ogni pezzo"
   },
   "brkgwR": {
     "message": "Sample hand",
@@ -5548,6 +5594,10 @@
     "context": "shortcut key caption",
     "translation": "Stato"
   },
+  "iFt0Ce": {
+    "message": "Still uploading…",
+    "translation": "Caricamento in corso…"
+  },
   "B2cOHf": {
     "message": "Stop sorting hand",
     "translation": "Smetti di ordinare la mano"
@@ -5736,10 +5786,6 @@
     "message": "That file isn't a picture.",
     "translation": "Quel file non è un'immagine."
   },
-  "ZMr878": {
-    "message": "That image didn't load.",
-    "translation": "Impossibile caricare l'immagine."
-  },
   "B4ZAXF": {
     "message": "That one was skipped.",
     "translation": "Questa è stata saltata."
@@ -5747,6 +5793,10 @@
   "qqEjGU": {
     "message": "That picture can't be read.",
     "translation": "Impossibile leggere quell'immagine."
+  },
+  "F9MU8-": {
+    "message": "That picture didn't load.",
+    "translation": "L'immagine non si è caricata."
   },
   "HnGmBe": {
     "message": "That picture is over 20 MB.",
@@ -6243,6 +6293,10 @@
     "message": "Untitled deck",
     "translation": "Mazzo senza titolo"
   },
+  "gANddk": {
+    "message": "Uploading…",
+    "translation": "Caricamento…"
+  },
   "aS5ttr": {
     "message": "Use background",
     "translation": "Usa sfondo"
@@ -6447,148 +6501,5 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "Contorni delle zone"
-  },
-  "cJqyrp": {
-    "message": "{name}: {count}",
-    "translation": "{name}: {count}"
-  },
-  "hQE7TV": {
-    "message": "An image URL, or 'default'.",
-    "comments": [
-      "Keep 'default' in English: it is what the player types"
-    ],
-    "translation": "Un URL di immagine, o 'default'."
-  },
-  "PCF3WN": {
-    "message": "Change card back",
-    "translation": "Cambia dorso della carta"
-  },
-  "baWTFO": {
-    "message": "Clear",
-    "context": "attack cost",
-    "translation": "Azzera"
-  },
-  "iIbh2N": {
-    "message": "HP",
-    "translation": "PS"
-  },
-  "fVGc9-": {
-    "message": "https://… or default",
-    "comments": [
-      "Keep 'default' in English: it is what the player types"
-    ],
-    "translation": "https://… o default"
-  },
-  "-IGsZV": {
-    "message": "Lower {label}",
-    "translation": "Diminuisci {label}"
-  },
-  "CK1KXz": {
-    "message": "Max",
-    "translation": "Max"
-  },
-  "zjSw-O": {
-    "message": "Max HP",
-    "translation": "PS max"
-  },
-  "eTUF28": {
-    "message": "Min",
-    "translation": "Min"
-  },
-  "J6QsaV": {
-    "message": "Min HP",
-    "translation": "PS min"
-  },
-  "mNXjQA": {
-    "message": "No match",
-    "translation": "Nessun risultato"
-  },
-  "K21Y8W": {
-    "message": "Raise {label}",
-    "translation": "Aumenta {label}"
-  },
-  "HLazKQ": {
-    "message": "Remove {name}",
-    "translation": "Rimuovi {name}"
-  },
-  "PTd_zR": {
-    "message": "Use image",
-    "translation": "Usa immagine"
-  },
-  "mOTci6": {
-    "message": "Add a multi-piece card",
-    "translation": "Aggiungi una carta a più pezzi"
-  },
-  "ZJwR0U": {
-    "message": "Add a picture for each piece.",
-    "translation": "Aggiungi un'immagine per ogni pezzo."
-  },
-  "J8elq3": {
-    "message": "Add a picture.",
-    "translation": "Aggiungi un'immagine."
-  },
-  "9CyHQP": {
-    "message": "Change the picture",
-    "translation": "Cambia l'immagine"
-  },
-  "kT6WGB": {
-    "message": "Choose a picture: {label}",
-    "translation": "Scegli un'immagine: {label}"
-  },
-  "7ni5yE": {
-    "message": "Drop, paste or choose",
-    "translation": "Trascina, incolla o scegli"
-  },
-  "beOAmP": {
-    "message": "Link too long.",
-    "translation": "Link troppo lungo."
-  },
-  "6Leq5p": {
-    "message": "Multi-piece card",
-    "translation": "Carta a più pezzi"
-  },
-  "0iGojz": {
-    "message": "Not a picture.",
-    "translation": "Non è un'immagine."
-  },
-  "U1CJvq": {
-    "message": "One card",
-    "translation": "Una carta"
-  },
-  "ONM3W_": {
-    "message": "or a link",
-    "translation": "oppure un link"
-  },
-  "N0-GsR": {
-    "message": "Picture",
-    "translation": "Immagine"
-  },
-  "9uDKal": {
-    "message": "Picture link",
-    "translation": "Link dell'immagine"
-  },
-  "eLNVFN": {
-    "message": "Picture link: {label}",
-    "translation": "Link dell'immagine: {label}"
-  },
-  "BX1rQx": {
-    "message": "Pieces",
-    "translation": "Pezzi"
-  },
-  "-WTtkb": {
-    "message": "Remove the picture",
-    "translation": "Rimuovi l'immagine"
-  },
-  "iFt0Ce": {
-    "message": "Still uploading…",
-    "translation": "Caricamento in corso…"
-  },
-  "F9MU8-": {
-    "message": "That picture didn't load.",
-    "translation": "L'immagine non si è caricata."
-  },
-  "gANddk": {
-    "message": "Uploading…",
-    "translation": "Caricamento…"
   }
 }

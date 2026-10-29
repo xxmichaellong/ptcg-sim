@@ -793,6 +793,10 @@
     ],
     "translation": "Nagamit na ang {name}: pindutin para i-undo"
   },
+  "cJqyrp": {
+    "message": "{name}: {count}",
+    "translation": "{name}: {count}"
+  },
   "2mmBQD": {
     "message": "{name}: try it",
     "translation": "{name}: subukan"
@@ -1174,6 +1178,18 @@
     "message": "Add a card that isn't listed",
     "translation": "Magdagdag ng card na wala sa listahan"
   },
+  "mOTci6": {
+    "message": "Add a multi-piece card",
+    "translation": "Magdagdag ng multi-piece card"
+  },
+  "ZJwR0U": {
+    "message": "Add a picture for each piece.",
+    "translation": "Magdagdag ng larawan para sa bawat piece."
+  },
+  "J8elq3": {
+    "message": "Add a picture.",
+    "translation": "Magdagdag ng larawan."
+  },
   "6ZbKYu": {
     "message": "Add another stadium piece",
     "translation": "Magdagdag ng isa pang piraso ng stadium"
@@ -1362,10 +1378,6 @@
   "y_Uvam": {
     "message": "Around the table",
     "translation": "Sa paligid ng table"
-  },
-  "8zanjC": {
-    "message": "Artwork group",
-    "translation": "Artwork group"
   },
   "2uaWnn": {
     "message": "Artwork window",
@@ -1737,6 +1749,10 @@
     "message": "Change card type",
     "translation": "Palitan ang card type"
   },
+  "9CyHQP": {
+    "message": "Change the picture",
+    "translation": "Palitan ang larawan"
+  },
   "nVhPBD": {
     "message": "Change type to Energy",
     "translation": "Gawing Energy ang type"
@@ -1811,6 +1827,10 @@
     "message": "Choose a picture",
     "translation": "Pumili ng larawan"
   },
+  "kT6WGB": {
+    "message": "Choose a picture: {label}",
+    "translation": "Pumili ng larawan: {label}"
+  },
   "TvEJEL": {
     "message": "Choose the deck for {slotSeat}",
     "translation": "Piliin ang deck para sa {slotSeat}"
@@ -1825,6 +1845,11 @@
   },
   "xCJdfg": {
     "message": "Clear",
+    "translation": "I-clear"
+  },
+  "baWTFO": {
+    "message": "Clear",
+    "context": "attack cost",
     "translation": "I-clear"
   },
   "XaMzSZ": {
@@ -1892,10 +1917,6 @@
   "PyipSw": {
     "message": "Close popups",
     "translation": "Isara ang mga popup"
-  },
-  "HLSSB8": {
-    "message": "code or name",
-    "translation": "code o pangalan"
   },
   "c6pkO-": {
     "message": "Coin",
@@ -2436,6 +2457,10 @@
     "message": "Drop to open",
     "translation": "I-drop para buksan"
   },
+  "7ni5yE": {
+    "message": "Drop, paste or choose",
+    "translation": "I-drop, i-paste o pumili"
+  },
   "d3YoNV": {
     "message": "Dropped",
     "comments": [
@@ -2452,24 +2477,9 @@
     "message": "Duplicate deck",
     "translation": "I-duplicate ang deck"
   },
-  "iu7vH9": {
-    "message": "e.g. CC or LL",
-    "comments": [
-      "Energy letters (C, L…) stay as they are"
-    ],
-    "translation": "hal. CC o LL"
-  },
   "mjNeGh": {
     "message": "e.g. Charizard",
     "translation": "hal. Charizard"
-  },
-  "tg9VdO": {
-    "message": "e.g. HIJ",
-    "translation": "hal. HIJ"
-  },
-  "3fBsZV": {
-    "message": "e.g. illustration",
-    "translation": "hal. illustration"
   },
   "ryuxTz": {
     "message": "Edit {deckName}",
@@ -2532,10 +2542,6 @@
   "0jl-i6": {
     "message": "Enter a valid image URL.",
     "translation": "Maglagay ng valid na image URL."
-  },
-  "I7T1ix": {
-    "message": "Enter an image URL.",
-    "translation": "Maglagay ng image URL."
   },
   "eVVWyt": {
     "message": "Esc",
@@ -3006,6 +3012,10 @@
     "message": "How to choose",
     "translation": "Paano pumili"
   },
+  "iIbh2N": {
+    "message": "HP",
+    "translation": "HP"
+  },
   "oT-Cnl": {
     "message": "HP",
     "context": "sort cards by",
@@ -3014,14 +3024,6 @@
   "36NKhF": {
     "message": "HP and retreat",
     "translation": "HP at retreat"
-  },
-  "ZTtNAf": {
-    "message": "HP at least",
-    "translation": "HP na hindi bababa sa"
-  },
-  "LgcKSI": {
-    "message": "HP at most",
-    "translation": "HP na hindi hihigit sa"
   },
   "OaHYvQ": {
     "message": "https://…, blank or theme",
@@ -3052,21 +3054,9 @@
     "message": "Illustrator",
     "translation": "Illustrator"
   },
-  "1pdLQw": {
-    "message": "Image not found",
-    "translation": "Hindi nahanap ang larawan"
-  },
   "VyUuZb": {
     "message": "Image URL",
     "translation": "URL ng larawan"
-  },
-  "15ARIE": {
-    "message": "Image URL too long",
-    "translation": "Masyadong mahaba ang URL ng larawan"
-  },
-  "6hbF9e": {
-    "message": "Image URL: up to {max} characters.",
-    "translation": "Image URL: hanggang {max} character."
   },
   "EUsCHg": {
     "message": "Images",
@@ -3337,6 +3327,10 @@
     "message": "Line {line}: set code too long.",
     "translation": "Linya {line}: masyadong mahaba ang set code."
   },
+  "beOAmP": {
+    "message": "Link too long.",
+    "translation": "Masyadong mahaba ang link."
+  },
   "Q8pDHq": {
     "message": "List",
     "context": "show the deck as",
@@ -3512,6 +3506,10 @@
     "message": "Lost Zone and markers",
     "translation": "Lost Zone at mga marker"
   },
+  "-IGsZV": {
+    "message": "Lower {label}",
+    "translation": "Ibaba ang {label}"
+  },
   "xX-rmn": {
     "message": "Majors",
     "comments": [
@@ -3574,6 +3572,14 @@
     "message": "Matte",
     "translation": "Matte"
   },
+  "CK1KXz": {
+    "message": "Max",
+    "translation": "Max"
+  },
+  "zjSw-O": {
+    "message": "Max HP",
+    "translation": "Max HP"
+  },
   "xeC--l": {
     "message": "Mega",
     "context": "Pokémon card mechanic",
@@ -3610,6 +3616,14 @@
       "A table look: midnight blue"
     ],
     "translation": "Midnight"
+  },
+  "eTUF28": {
+    "message": "Min",
+    "translation": "Min"
+  },
+  "J6QsaV": {
+    "message": "Min HP",
+    "translation": "Min HP"
   },
   "_NnUxu": {
     "message": "Mine",
@@ -3717,6 +3731,10 @@
   "8GMjXa": {
     "message": "Mulligan (no Basic in 7)",
     "translation": "Mulligan (walang Basic sa 7)"
+  },
+  "6Leq5p": {
+    "message": "Multi-piece card",
+    "translation": "Multi-piece card"
   },
   "jiY-22": {
     "message": "My deck",
@@ -3872,10 +3890,6 @@
     "message": "No foil",
     "translation": "Walang foil"
   },
-  "2fhoKU": {
-    "message": "No image",
-    "translation": "Walang image"
-  },
   "nivaRq": {
     "message": "No list",
     "translation": "Walang list"
@@ -3883,6 +3897,10 @@
   "hXMFoN": {
     "message": "No lists",
     "translation": "Walang mga list"
+  },
+  "mNXjQA": {
+    "message": "No match",
+    "translation": "Walang tugma"
   },
   "ebeFtm": {
     "message": "No shortcut matches “{search}”.",
@@ -3910,6 +3928,10 @@
     "message": "Normal",
     "context": "animation speed",
     "translation": "Normal"
+  },
+  "0iGojz": {
+    "message": "Not a picture.",
+    "translation": "Hindi ito larawan."
   },
   "S33tz3": {
     "message": "Not connected",
@@ -4014,6 +4036,10 @@
       "{0} is the Flip button's label, which turns the table around"
     ],
     "translation": "Kung mag-isa ka, ikaw ang maglalaro sa dalawang panig. Pindutin ang <0>{0}</0> para iikot ang table sa panig nila."
+  },
+  "U1CJvq": {
+    "message": "One card",
+    "translation": "Isang card"
   },
   "3GFV_r": {
     "message": "One fewer",
@@ -4140,6 +4166,10 @@
     "message": "Opponents' custom backs",
     "translation": "Mga custom back ng kalaban"
   },
+  "ONM3W_": {
+    "message": "or a link",
+    "translation": "o isang link"
+  },
   "l2I52S": {
     "message": "or drop or paste one here",
     "translation": "o i-drop o i-paste dito"
@@ -4248,14 +4278,26 @@
     "message": "Pick random card",
     "translation": "Pumili ng random na card"
   },
+  "N0-GsR": {
+    "message": "Picture",
+    "translation": "Larawan"
+  },
   "KBXd3D": {
     "message": "Picture",
     "context": "a card back from a picture",
     "translation": "Larawan"
   },
-  "xYvd7u": {
-    "message": "Piece position",
-    "translation": "Posisyon ng piece"
+  "9uDKal": {
+    "message": "Picture link",
+    "translation": "Link ng larawan"
+  },
+  "eLNVFN": {
+    "message": "Picture link: {label}",
+    "translation": "Link ng larawan: {label}"
+  },
+  "BX1rQx": {
+    "message": "Pieces",
+    "translation": "Mga piece"
   },
   "CC99uS": {
     "message": "Piles",
@@ -4477,10 +4519,6 @@
     ],
     "translation": "Ilagay sa ibabaw"
   },
-  "rkcP1p": {
-    "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
-    "translation": "Ilagay ang mga piece ng Pokémon sa iisang stack, at ang mga piece ng Stadium sa Stadium."
-  },
   "QEP1VC": {
     "message": "Put the rest of it, <0>{0}</0> and its Energy, in their discard pile too.",
     "translation": "Ilagay rin sa discard pile ang natitira, ang <0>{0}</0> at ang mga Energy nito."
@@ -4506,6 +4544,10 @@
   "AUzUf9": {
     "message": "Rainbow foil",
     "translation": "Rainbow foil"
+  },
+  "K21Y8W": {
+    "message": "Raise {label}",
+    "translation": "Itaas ang {label}"
   },
   "PImlBx": {
     "message": "Raised",
@@ -4597,6 +4639,10 @@
     "context": "animation speed",
     "translation": "Relaxed"
   },
+  "HLazKQ": {
+    "message": "Remove {name}",
+    "translation": "Alisin si {name}"
+  },
   "hKnn4w": {
     "message": "Remove {name} from {seat}",
     "translation": "Alisin si {name} sa {seat}"
@@ -4628,6 +4674,10 @@
   "5qTkf-": {
     "message": "Remove special condition",
     "translation": "Alisin ang special condition"
+  },
+  "-WTtkb": {
+    "message": "Remove the picture",
+    "translation": "Alisin ang larawan"
   },
   "jionWu": {
     "message": "Rename",
@@ -4916,10 +4966,6 @@
       "A table look: cherry blossom pink"
     ],
     "translation": "Sakura"
-  },
-  "qoNq2S": {
-    "message": "Same group for each piece",
-    "translation": "Parehong grupo para sa bawat piraso"
   },
   "brkgwR": {
     "message": "Sample hand",
@@ -5548,6 +5594,10 @@
     "context": "shortcut key caption",
     "translation": "Status"
   },
+  "iFt0Ce": {
+    "message": "Still uploading…",
+    "translation": "Nag-a-upload pa…"
+  },
   "B2cOHf": {
     "message": "Stop sorting hand",
     "translation": "Ihinto ang pag-sort ng hand"
@@ -5736,10 +5786,6 @@
     "message": "That file isn't a picture.",
     "translation": "Hindi larawan ang file na iyon."
   },
-  "ZMr878": {
-    "message": "That image didn't load.",
-    "translation": "Hindi nag-load ang image na iyon."
-  },
   "B4ZAXF": {
     "message": "That one was skipped.",
     "translation": "Nilaktawan ang isang iyon."
@@ -5747,6 +5793,10 @@
   "qqEjGU": {
     "message": "That picture can't be read.",
     "translation": "Hindi mabasa ang larawang iyon."
+  },
+  "F9MU8-": {
+    "message": "That picture didn't load.",
+    "translation": "Hindi na-load ang larawang iyon."
   },
   "HnGmBe": {
     "message": "That picture is over 20 MB.",
@@ -6243,6 +6293,10 @@
     "message": "Untitled deck",
     "translation": "Walang pamagat na deck"
   },
+  "gANddk": {
+    "message": "Uploading…",
+    "translation": "Nag-a-upload…"
+  },
   "aS5ttr": {
     "message": "Use background",
     "translation": "Gamitin ang background"
@@ -6447,148 +6501,5 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "Mga outline ng zone"
-  },
-  "cJqyrp": {
-    "message": "{name}: {count}",
-    "translation": "{name}: {count}"
-  },
-  "hQE7TV": {
-    "message": "An image URL, or 'default'.",
-    "comments": [
-      "Keep 'default' in English: it is what the player types"
-    ],
-    "translation": "Isang image URL, o 'default'."
-  },
-  "PCF3WN": {
-    "message": "Change card back",
-    "translation": "Palitan ang card back"
-  },
-  "baWTFO": {
-    "message": "Clear",
-    "context": "attack cost",
-    "translation": "I-clear"
-  },
-  "iIbh2N": {
-    "message": "HP",
-    "translation": "HP"
-  },
-  "fVGc9-": {
-    "message": "https://… or default",
-    "comments": [
-      "Keep 'default' in English: it is what the player types"
-    ],
-    "translation": "https://… o default"
-  },
-  "-IGsZV": {
-    "message": "Lower {label}",
-    "translation": "Ibaba ang {label}"
-  },
-  "CK1KXz": {
-    "message": "Max",
-    "translation": "Max"
-  },
-  "zjSw-O": {
-    "message": "Max HP",
-    "translation": "Max HP"
-  },
-  "eTUF28": {
-    "message": "Min",
-    "translation": "Min"
-  },
-  "J6QsaV": {
-    "message": "Min HP",
-    "translation": "Min HP"
-  },
-  "mNXjQA": {
-    "message": "No match",
-    "translation": "Walang tugma"
-  },
-  "K21Y8W": {
-    "message": "Raise {label}",
-    "translation": "Itaas ang {label}"
-  },
-  "HLazKQ": {
-    "message": "Remove {name}",
-    "translation": "Alisin si {name}"
-  },
-  "PTd_zR": {
-    "message": "Use image",
-    "translation": "Gamitin ang larawan"
-  },
-  "mOTci6": {
-    "message": "Add a multi-piece card",
-    "translation": "Magdagdag ng multi-piece card"
-  },
-  "ZJwR0U": {
-    "message": "Add a picture for each piece.",
-    "translation": "Magdagdag ng larawan para sa bawat piece."
-  },
-  "J8elq3": {
-    "message": "Add a picture.",
-    "translation": "Magdagdag ng larawan."
-  },
-  "9CyHQP": {
-    "message": "Change the picture",
-    "translation": "Palitan ang larawan"
-  },
-  "kT6WGB": {
-    "message": "Choose a picture: {label}",
-    "translation": "Pumili ng larawan: {label}"
-  },
-  "7ni5yE": {
-    "message": "Drop, paste or choose",
-    "translation": "I-drop, i-paste o pumili"
-  },
-  "beOAmP": {
-    "message": "Link too long.",
-    "translation": "Masyadong mahaba ang link."
-  },
-  "6Leq5p": {
-    "message": "Multi-piece card",
-    "translation": "Multi-piece card"
-  },
-  "0iGojz": {
-    "message": "Not a picture.",
-    "translation": "Hindi ito larawan."
-  },
-  "U1CJvq": {
-    "message": "One card",
-    "translation": "Isang card"
-  },
-  "ONM3W_": {
-    "message": "or a link",
-    "translation": "o isang link"
-  },
-  "N0-GsR": {
-    "message": "Picture",
-    "translation": "Larawan"
-  },
-  "9uDKal": {
-    "message": "Picture link",
-    "translation": "Link ng larawan"
-  },
-  "eLNVFN": {
-    "message": "Picture link: {label}",
-    "translation": "Link ng larawan: {label}"
-  },
-  "BX1rQx": {
-    "message": "Pieces",
-    "translation": "Mga piece"
-  },
-  "-WTtkb": {
-    "message": "Remove the picture",
-    "translation": "Alisin ang larawan"
-  },
-  "iFt0Ce": {
-    "message": "Still uploading…",
-    "translation": "Nag-a-upload pa…"
-  },
-  "F9MU8-": {
-    "message": "That picture didn't load.",
-    "translation": "Hindi na-load ang larawang iyon."
-  },
-  "gANddk": {
-    "message": "Uploading…",
-    "translation": "Nag-a-upload…"
   }
 }

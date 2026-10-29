@@ -793,6 +793,10 @@
     ],
     "translation": "Đã dùng {name}: nhấn để hoàn tác"
   },
+  "cJqyrp": {
+    "message": "{name}: {count}",
+    "translation": "{name}: {count}"
+  },
   "2mmBQD": {
     "message": "{name}: try it",
     "translation": "{name}: dùng thử"
@@ -1174,6 +1178,18 @@
     "message": "Add a card that isn't listed",
     "translation": "Thêm lá bài không có trong danh sách"
   },
+  "mOTci6": {
+    "message": "Add a multi-piece card",
+    "translation": "Thêm lá bài nhiều phần"
+  },
+  "ZJwR0U": {
+    "message": "Add a picture for each piece.",
+    "translation": "Thêm ảnh cho từng phần."
+  },
+  "J8elq3": {
+    "message": "Add a picture.",
+    "translation": "Thêm ảnh."
+  },
   "6ZbKYu": {
     "message": "Add another stadium piece",
     "translation": "Thêm một mảnh Stadium nữa"
@@ -1362,10 +1378,6 @@
   "y_Uvam": {
     "message": "Around the table",
     "translation": "Quanh bàn chơi"
-  },
-  "8zanjC": {
-    "message": "Artwork group",
-    "translation": "Nhóm tranh minh họa"
   },
   "2uaWnn": {
     "message": "Artwork window",
@@ -1737,6 +1749,10 @@
     "message": "Change card type",
     "translation": "Đổi loại lá bài"
   },
+  "9CyHQP": {
+    "message": "Change the picture",
+    "translation": "Đổi ảnh"
+  },
   "nVhPBD": {
     "message": "Change type to Energy",
     "translation": "Đổi loại thành Năng lượng"
@@ -1811,6 +1827,10 @@
     "message": "Choose a picture",
     "translation": "Chọn một ảnh"
   },
+  "kT6WGB": {
+    "message": "Choose a picture: {label}",
+    "translation": "Chọn ảnh: {label}"
+  },
   "TvEJEL": {
     "message": "Choose the deck for {slotSeat}",
     "translation": "Chọn bộ bài cho {slotSeat}"
@@ -1825,6 +1845,11 @@
   },
   "xCJdfg": {
     "message": "Clear",
+    "translation": "Xóa"
+  },
+  "baWTFO": {
+    "message": "Clear",
+    "context": "attack cost",
     "translation": "Xóa"
   },
   "XaMzSZ": {
@@ -1892,10 +1917,6 @@
   "PyipSw": {
     "message": "Close popups",
     "translation": "Đóng cửa sổ bật lên"
-  },
-  "HLSSB8": {
-    "message": "code or name",
-    "translation": "mã hoặc tên"
   },
   "c6pkO-": {
     "message": "Coin",
@@ -2436,6 +2457,10 @@
     "message": "Drop to open",
     "translation": "Thả để mở"
   },
+  "7ni5yE": {
+    "message": "Drop, paste or choose",
+    "translation": "Thả, dán hoặc chọn"
+  },
   "d3YoNV": {
     "message": "Dropped",
     "comments": [
@@ -2452,24 +2477,9 @@
     "message": "Duplicate deck",
     "translation": "Nhân bản bộ bài"
   },
-  "iu7vH9": {
-    "message": "e.g. CC or LL",
-    "comments": [
-      "Energy letters (C, L…) stay as they are"
-    ],
-    "translation": "VD: CC hoặc LL"
-  },
   "mjNeGh": {
     "message": "e.g. Charizard",
     "translation": "VD: Charizard"
-  },
-  "tg9VdO": {
-    "message": "e.g. HIJ",
-    "translation": "VD: HIJ"
-  },
-  "3fBsZV": {
-    "message": "e.g. illustration",
-    "translation": "VD: minh họa"
   },
   "ryuxTz": {
     "message": "Edit {deckName}",
@@ -2532,10 +2542,6 @@
   "0jl-i6": {
     "message": "Enter a valid image URL.",
     "translation": "Hãy nhập URL hình ảnh hợp lệ."
-  },
-  "I7T1ix": {
-    "message": "Enter an image URL.",
-    "translation": "Hãy nhập URL hình ảnh."
   },
   "eVVWyt": {
     "message": "Esc",
@@ -3006,6 +3012,10 @@
     "message": "How to choose",
     "translation": "Cách chọn"
   },
+  "iIbh2N": {
+    "message": "HP",
+    "translation": "HP"
+  },
   "oT-Cnl": {
     "message": "HP",
     "context": "sort cards by",
@@ -3014,14 +3024,6 @@
   "36NKhF": {
     "message": "HP and retreat",
     "translation": "HP và rút lui"
-  },
-  "ZTtNAf": {
-    "message": "HP at least",
-    "translation": "HP tối thiểu"
-  },
-  "LgcKSI": {
-    "message": "HP at most",
-    "translation": "HP tối đa"
   },
   "OaHYvQ": {
     "message": "https://…, blank or theme",
@@ -3052,21 +3054,9 @@
     "message": "Illustrator",
     "translation": "Họa sĩ"
   },
-  "1pdLQw": {
-    "message": "Image not found",
-    "translation": "Không tìm thấy hình ảnh"
-  },
   "VyUuZb": {
     "message": "Image URL",
     "translation": "URL hình ảnh"
-  },
-  "15ARIE": {
-    "message": "Image URL too long",
-    "translation": "URL hình ảnh quá dài"
-  },
-  "6hbF9e": {
-    "message": "Image URL: up to {max} characters.",
-    "translation": "URL hình ảnh: tối đa {max} ký tự."
   },
   "EUsCHg": {
     "message": "Images",
@@ -3337,6 +3327,10 @@
     "message": "Line {line}: set code too long.",
     "translation": "Dòng {line}: mã set quá dài."
   },
+  "beOAmP": {
+    "message": "Link too long.",
+    "translation": "Liên kết quá dài."
+  },
   "Q8pDHq": {
     "message": "List",
     "context": "show the deck as",
@@ -3512,6 +3506,10 @@
     "message": "Lost Zone and markers",
     "translation": "Lost Zone và các dấu"
   },
+  "-IGsZV": {
+    "message": "Lower {label}",
+    "translation": "Giảm {label}"
+  },
   "xX-rmn": {
     "message": "Majors",
     "comments": [
@@ -3574,6 +3572,14 @@
     "message": "Matte",
     "translation": "Mờ"
   },
+  "CK1KXz": {
+    "message": "Max",
+    "translation": "Tối đa"
+  },
+  "zjSw-O": {
+    "message": "Max HP",
+    "translation": "HP tối đa"
+  },
   "xeC--l": {
     "message": "Mega",
     "context": "Pokémon card mechanic",
@@ -3610,6 +3616,14 @@
       "A table look: midnight blue"
     ],
     "translation": "Nửa đêm"
+  },
+  "eTUF28": {
+    "message": "Min",
+    "translation": "Tối thiểu"
+  },
+  "J6QsaV": {
+    "message": "Min HP",
+    "translation": "HP tối thiểu"
   },
   "_NnUxu": {
     "message": "Mine",
@@ -3717,6 +3731,10 @@
   "8GMjXa": {
     "message": "Mulligan (no Basic in 7)",
     "translation": "Mulligan (không có Pokémon Cơ bản trong 7 lá)"
+  },
+  "6Leq5p": {
+    "message": "Multi-piece card",
+    "translation": "Lá bài nhiều phần"
   },
   "jiY-22": {
     "message": "My deck",
@@ -3872,10 +3890,6 @@
     "message": "No foil",
     "translation": "Không ánh kim"
   },
-  "2fhoKU": {
-    "message": "No image",
-    "translation": "Không có ảnh"
-  },
   "nivaRq": {
     "message": "No list",
     "translation": "Không có danh sách"
@@ -3883,6 +3897,10 @@
   "hXMFoN": {
     "message": "No lists",
     "translation": "Không có danh sách"
+  },
+  "mNXjQA": {
+    "message": "No match",
+    "translation": "Không có kết quả"
   },
   "ebeFtm": {
     "message": "No shortcut matches “{search}”.",
@@ -3910,6 +3928,10 @@
     "message": "Normal",
     "context": "animation speed",
     "translation": "Bình thường"
+  },
+  "0iGojz": {
+    "message": "Not a picture.",
+    "translation": "Không phải ảnh."
   },
   "S33tz3": {
     "message": "Not connected",
@@ -4014,6 +4036,10 @@
       "{0} is the Flip button's label, which turns the table around"
     ],
     "translation": "Khi chơi một mình, bạn điều khiển cả hai bên. Nhấn <0>{0}</0> để xoay bàn sang phía đối thủ."
+  },
+  "U1CJvq": {
+    "message": "One card",
+    "translation": "Một lá bài"
   },
   "3GFV_r": {
     "message": "One fewer",
@@ -4140,6 +4166,10 @@
     "message": "Opponents' custom backs",
     "translation": "Mặt sau tùy chỉnh của đối thủ"
   },
+  "ONM3W_": {
+    "message": "or a link",
+    "translation": "hoặc dùng liên kết"
+  },
   "l2I52S": {
     "message": "or drop or paste one here",
     "translation": "hoặc thả hay dán ảnh vào đây"
@@ -4248,14 +4278,26 @@
     "message": "Pick random card",
     "translation": "Chọn lá bài ngẫu nhiên"
   },
+  "N0-GsR": {
+    "message": "Picture",
+    "translation": "Ảnh"
+  },
   "KBXd3D": {
     "message": "Picture",
     "context": "a card back from a picture",
     "translation": "Ảnh"
   },
-  "xYvd7u": {
-    "message": "Piece position",
-    "translation": "Vị trí mảnh"
+  "9uDKal": {
+    "message": "Picture link",
+    "translation": "Liên kết ảnh"
+  },
+  "eLNVFN": {
+    "message": "Picture link: {label}",
+    "translation": "Liên kết ảnh: {label}"
+  },
+  "BX1rQx": {
+    "message": "Pieces",
+    "translation": "Các phần"
   },
   "CC99uS": {
     "message": "Piles",
@@ -4477,10 +4519,6 @@
     ],
     "translation": "Đặt lên trên cùng"
   },
-  "rkcP1p": {
-    "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
-    "translation": "Đặt các mảnh Pokémon vào một chồng, các mảnh Stadium vào vị trí Stadium."
-  },
   "QEP1VC": {
     "message": "Put the rest of it, <0>{0}</0> and its Energy, in their discard pile too.",
     "translation": "Bỏ phần còn lại của nó, <0>{0}</0> và Năng lượng của nó, vào chồng bài bỏ của họ."
@@ -4506,6 +4544,10 @@
   "AUzUf9": {
     "message": "Rainbow foil",
     "translation": "Ánh cầu vồng"
+  },
+  "K21Y8W": {
+    "message": "Raise {label}",
+    "translation": "Tăng {label}"
   },
   "PImlBx": {
     "message": "Raised",
@@ -4597,6 +4639,10 @@
     "context": "animation speed",
     "translation": "Thong thả"
   },
+  "HLazKQ": {
+    "message": "Remove {name}",
+    "translation": "Xóa {name}"
+  },
   "hKnn4w": {
     "message": "Remove {name} from {seat}",
     "translation": "Gỡ {name} khỏi {seat}"
@@ -4628,6 +4674,10 @@
   "5qTkf-": {
     "message": "Remove special condition",
     "translation": "Gỡ trạng thái đặc biệt"
+  },
+  "-WTtkb": {
+    "message": "Remove the picture",
+    "translation": "Xóa ảnh"
   },
   "jionWu": {
     "message": "Rename",
@@ -4916,10 +4966,6 @@
       "A table look: cherry blossom pink"
     ],
     "translation": "Sakura"
-  },
-  "qoNq2S": {
-    "message": "Same group for each piece",
-    "translation": "Cùng nhóm cho mọi mảnh"
   },
   "brkgwR": {
     "message": "Sample hand",
@@ -5548,6 +5594,10 @@
     "context": "shortcut key caption",
     "translation": "Trạng thái"
   },
+  "iFt0Ce": {
+    "message": "Still uploading…",
+    "translation": "Đang tải lên…"
+  },
   "B2cOHf": {
     "message": "Stop sorting hand",
     "translation": "Dừng sắp xếp bài trên tay"
@@ -5736,10 +5786,6 @@
     "message": "That file isn't a picture.",
     "translation": "Tệp đó không phải là hình ảnh."
   },
-  "ZMr878": {
-    "message": "That image didn't load.",
-    "translation": "Không tải được ảnh đó."
-  },
   "B4ZAXF": {
     "message": "That one was skipped.",
     "translation": "Thao tác vừa rồi đã bị bỏ qua."
@@ -5747,6 +5793,10 @@
   "qqEjGU": {
     "message": "That picture can't be read.",
     "translation": "Không thể đọc hình ảnh đó."
+  },
+  "F9MU8-": {
+    "message": "That picture didn't load.",
+    "translation": "Không tải được ảnh này."
   },
   "HnGmBe": {
     "message": "That picture is over 20 MB.",
@@ -6243,6 +6293,10 @@
     "message": "Untitled deck",
     "translation": "Bộ bài chưa đặt tên"
   },
+  "gANddk": {
+    "message": "Uploading…",
+    "translation": "Đang tải lên…"
+  },
   "aS5ttr": {
     "message": "Use background",
     "translation": "Dùng làm nền"
@@ -6447,148 +6501,5 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "Viền khu vực"
-  },
-  "cJqyrp": {
-    "message": "{name}: {count}",
-    "translation": "{name}: {count}"
-  },
-  "hQE7TV": {
-    "message": "An image URL, or 'default'.",
-    "comments": [
-      "Keep 'default' in English: it is what the player types"
-    ],
-    "translation": "URL hình ảnh hoặc 'default'."
-  },
-  "PCF3WN": {
-    "message": "Change card back",
-    "translation": "Đổi mặt sau bài"
-  },
-  "baWTFO": {
-    "message": "Clear",
-    "context": "attack cost",
-    "translation": "Xóa"
-  },
-  "iIbh2N": {
-    "message": "HP",
-    "translation": "HP"
-  },
-  "fVGc9-": {
-    "message": "https://… or default",
-    "comments": [
-      "Keep 'default' in English: it is what the player types"
-    ],
-    "translation": "https://… hoặc default"
-  },
-  "-IGsZV": {
-    "message": "Lower {label}",
-    "translation": "Giảm {label}"
-  },
-  "CK1KXz": {
-    "message": "Max",
-    "translation": "Tối đa"
-  },
-  "zjSw-O": {
-    "message": "Max HP",
-    "translation": "HP tối đa"
-  },
-  "eTUF28": {
-    "message": "Min",
-    "translation": "Tối thiểu"
-  },
-  "J6QsaV": {
-    "message": "Min HP",
-    "translation": "HP tối thiểu"
-  },
-  "mNXjQA": {
-    "message": "No match",
-    "translation": "Không có kết quả"
-  },
-  "K21Y8W": {
-    "message": "Raise {label}",
-    "translation": "Tăng {label}"
-  },
-  "HLazKQ": {
-    "message": "Remove {name}",
-    "translation": "Xóa {name}"
-  },
-  "PTd_zR": {
-    "message": "Use image",
-    "translation": "Dùng ảnh"
-  },
-  "mOTci6": {
-    "message": "Add a multi-piece card",
-    "translation": "Thêm lá bài nhiều phần"
-  },
-  "ZJwR0U": {
-    "message": "Add a picture for each piece.",
-    "translation": "Thêm ảnh cho từng phần."
-  },
-  "J8elq3": {
-    "message": "Add a picture.",
-    "translation": "Thêm ảnh."
-  },
-  "9CyHQP": {
-    "message": "Change the picture",
-    "translation": "Đổi ảnh"
-  },
-  "kT6WGB": {
-    "message": "Choose a picture: {label}",
-    "translation": "Chọn ảnh: {label}"
-  },
-  "7ni5yE": {
-    "message": "Drop, paste or choose",
-    "translation": "Thả, dán hoặc chọn"
-  },
-  "beOAmP": {
-    "message": "Link too long.",
-    "translation": "Liên kết quá dài."
-  },
-  "6Leq5p": {
-    "message": "Multi-piece card",
-    "translation": "Lá bài nhiều phần"
-  },
-  "0iGojz": {
-    "message": "Not a picture.",
-    "translation": "Không phải ảnh."
-  },
-  "U1CJvq": {
-    "message": "One card",
-    "translation": "Một lá bài"
-  },
-  "ONM3W_": {
-    "message": "or a link",
-    "translation": "hoặc dùng liên kết"
-  },
-  "N0-GsR": {
-    "message": "Picture",
-    "translation": "Ảnh"
-  },
-  "9uDKal": {
-    "message": "Picture link",
-    "translation": "Liên kết ảnh"
-  },
-  "eLNVFN": {
-    "message": "Picture link: {label}",
-    "translation": "Liên kết ảnh: {label}"
-  },
-  "BX1rQx": {
-    "message": "Pieces",
-    "translation": "Các phần"
-  },
-  "-WTtkb": {
-    "message": "Remove the picture",
-    "translation": "Xóa ảnh"
-  },
-  "iFt0Ce": {
-    "message": "Still uploading…",
-    "translation": "Đang tải lên…"
-  },
-  "F9MU8-": {
-    "message": "That picture didn't load.",
-    "translation": "Không tải được ảnh này."
-  },
-  "gANddk": {
-    "message": "Uploading…",
-    "translation": "Đang tải lên…"
   }
 }

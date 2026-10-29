@@ -793,6 +793,10 @@
     ],
     "translation": "{name} kullanıldı: geri almak için bas"
   },
+  "cJqyrp": {
+    "message": "{name}: {count}",
+    "translation": "{name}: {count}"
+  },
   "2mmBQD": {
     "message": "{name}: try it",
     "translation": "{name}: dene"
@@ -1174,6 +1178,18 @@
     "message": "Add a card that isn't listed",
     "translation": "Listede olmayan bir kart ekle"
   },
+  "mOTci6": {
+    "message": "Add a multi-piece card",
+    "translation": "Çok parçalı kart ekle"
+  },
+  "ZJwR0U": {
+    "message": "Add a picture for each piece.",
+    "translation": "Her parça için bir resim ekle."
+  },
+  "J8elq3": {
+    "message": "Add a picture.",
+    "translation": "Resim ekle."
+  },
   "6ZbKYu": {
     "message": "Add another stadium piece",
     "translation": "Başka bir stadyum parçası ekle"
@@ -1362,10 +1378,6 @@
   "y_Uvam": {
     "message": "Around the table",
     "translation": "Masanın çevresinde"
-  },
-  "8zanjC": {
-    "message": "Artwork group",
-    "translation": "İllüstrasyon grubu"
   },
   "2uaWnn": {
     "message": "Artwork window",
@@ -1737,6 +1749,10 @@
     "message": "Change card type",
     "translation": "Kart türünü değiştir"
   },
+  "9CyHQP": {
+    "message": "Change the picture",
+    "translation": "Resmi değiştir"
+  },
   "nVhPBD": {
     "message": "Change type to Energy",
     "translation": "Türü Enerji olarak değiştir"
@@ -1811,6 +1827,10 @@
     "message": "Choose a picture",
     "translation": "Resim seç"
   },
+  "kT6WGB": {
+    "message": "Choose a picture: {label}",
+    "translation": "Resim seç: {label}"
+  },
   "TvEJEL": {
     "message": "Choose the deck for {slotSeat}",
     "translation": "{slotSeat} için desteyi seç"
@@ -1825,6 +1845,11 @@
   },
   "xCJdfg": {
     "message": "Clear",
+    "translation": "Temizle"
+  },
+  "baWTFO": {
+    "message": "Clear",
+    "context": "attack cost",
     "translation": "Temizle"
   },
   "XaMzSZ": {
@@ -1892,10 +1917,6 @@
   "PyipSw": {
     "message": "Close popups",
     "translation": "Açılır pencereleri kapat"
-  },
-  "HLSSB8": {
-    "message": "code or name",
-    "translation": "kod veya ad"
   },
   "c6pkO-": {
     "message": "Coin",
@@ -2436,6 +2457,10 @@
     "message": "Drop to open",
     "translation": "Açmak için bırak"
   },
+  "7ni5yE": {
+    "message": "Drop, paste or choose",
+    "translation": "Bırak, yapıştır veya seç"
+  },
   "d3YoNV": {
     "message": "Dropped",
     "comments": [
@@ -2452,24 +2477,9 @@
     "message": "Duplicate deck",
     "translation": "Desteyi çoğalt"
   },
-  "iu7vH9": {
-    "message": "e.g. CC or LL",
-    "comments": [
-      "Energy letters (C, L…) stay as they are"
-    ],
-    "translation": "örn. CC veya LL"
-  },
   "mjNeGh": {
     "message": "e.g. Charizard",
     "translation": "örn. Charizard"
-  },
-  "tg9VdO": {
-    "message": "e.g. HIJ",
-    "translation": "örn. HIJ"
-  },
-  "3fBsZV": {
-    "message": "e.g. illustration",
-    "translation": "örn. illüstrasyon"
   },
   "ryuxTz": {
     "message": "Edit {deckName}",
@@ -2532,10 +2542,6 @@
   "0jl-i6": {
     "message": "Enter a valid image URL.",
     "translation": "Geçerli bir görsel URL'si gir."
-  },
-  "I7T1ix": {
-    "message": "Enter an image URL.",
-    "translation": "Bir görsel URL'si gir."
   },
   "eVVWyt": {
     "message": "Esc",
@@ -3006,6 +3012,10 @@
     "message": "How to choose",
     "translation": "Nasıl seçilir"
   },
+  "iIbh2N": {
+    "message": "HP",
+    "translation": "HP"
+  },
   "oT-Cnl": {
     "message": "HP",
     "context": "sort cards by",
@@ -3014,14 +3024,6 @@
   "36NKhF": {
     "message": "HP and retreat",
     "translation": "HP ve geri çekilme"
-  },
-  "ZTtNAf": {
-    "message": "HP at least",
-    "translation": "En az HP"
-  },
-  "LgcKSI": {
-    "message": "HP at most",
-    "translation": "En fazla HP"
   },
   "OaHYvQ": {
     "message": "https://…, blank or theme",
@@ -3052,21 +3054,9 @@
     "message": "Illustrator",
     "translation": "İllüstratör"
   },
-  "1pdLQw": {
-    "message": "Image not found",
-    "translation": "Görsel bulunamadı"
-  },
   "VyUuZb": {
     "message": "Image URL",
     "translation": "Görsel URL'si"
-  },
-  "15ARIE": {
-    "message": "Image URL too long",
-    "translation": "Görsel URL'si çok uzun"
-  },
-  "6hbF9e": {
-    "message": "Image URL: up to {max} characters.",
-    "translation": "Görsel URL'si: en fazla {max} karakter."
   },
   "EUsCHg": {
     "message": "Images",
@@ -3337,6 +3327,10 @@
     "message": "Line {line}: set code too long.",
     "translation": "{line}. satır: set kodu çok uzun."
   },
+  "beOAmP": {
+    "message": "Link too long.",
+    "translation": "Bağlantı çok uzun."
+  },
   "Q8pDHq": {
     "message": "List",
     "context": "show the deck as",
@@ -3512,6 +3506,10 @@
     "message": "Lost Zone and markers",
     "translation": "Lost Zone ve işaretçiler"
   },
+  "-IGsZV": {
+    "message": "Lower {label}",
+    "translation": "{label} değerini azalt"
+  },
   "xX-rmn": {
     "message": "Majors",
     "comments": [
@@ -3574,6 +3572,14 @@
     "message": "Matte",
     "translation": "Mat"
   },
+  "CK1KXz": {
+    "message": "Max",
+    "translation": "Maks."
+  },
+  "zjSw-O": {
+    "message": "Max HP",
+    "translation": "Maks. HP"
+  },
   "xeC--l": {
     "message": "Mega",
     "context": "Pokémon card mechanic",
@@ -3610,6 +3616,14 @@
       "A table look: midnight blue"
     ],
     "translation": "Gece mavisi"
+  },
+  "eTUF28": {
+    "message": "Min",
+    "translation": "Min."
+  },
+  "J6QsaV": {
+    "message": "Min HP",
+    "translation": "Min. HP"
   },
   "_NnUxu": {
     "message": "Mine",
@@ -3717,6 +3731,10 @@
   "8GMjXa": {
     "message": "Mulligan (no Basic in 7)",
     "translation": "Mulligan (ilk 7'de Temel yok)"
+  },
+  "6Leq5p": {
+    "message": "Multi-piece card",
+    "translation": "Çok parçalı kart"
   },
   "jiY-22": {
     "message": "My deck",
@@ -3872,10 +3890,6 @@
     "message": "No foil",
     "translation": "Folyo yok"
   },
-  "2fhoKU": {
-    "message": "No image",
-    "translation": "Görsel yok"
-  },
   "nivaRq": {
     "message": "No list",
     "translation": "Liste yok"
@@ -3883,6 +3897,10 @@
   "hXMFoN": {
     "message": "No lists",
     "translation": "Liste yok"
+  },
+  "mNXjQA": {
+    "message": "No match",
+    "translation": "Eşleşme yok"
   },
   "ebeFtm": {
     "message": "No shortcut matches “{search}”.",
@@ -3910,6 +3928,10 @@
     "message": "Normal",
     "context": "animation speed",
     "translation": "Normal"
+  },
+  "0iGojz": {
+    "message": "Not a picture.",
+    "translation": "Bu bir resim değil."
   },
   "S33tz3": {
     "message": "Not connected",
@@ -4014,6 +4036,10 @@
       "{0} is the Flip button's label, which turns the table around"
     ],
     "translation": "Tek başınayken iki tarafı da sen oynarsın. Masayı karşı tarafa çevirmek için <0>{0}</0> düğmesine bas."
+  },
+  "U1CJvq": {
+    "message": "One card",
+    "translation": "Tek kart"
   },
   "3GFV_r": {
     "message": "One fewer",
@@ -4140,6 +4166,10 @@
     "message": "Opponents' custom backs",
     "translation": "Rakiplerin özel arka yüzleri"
   },
+  "ONM3W_": {
+    "message": "or a link",
+    "translation": "veya bir bağlantı"
+  },
   "l2I52S": {
     "message": "or drop or paste one here",
     "translation": "veya buraya bırak ya da yapıştır"
@@ -4248,14 +4278,26 @@
     "message": "Pick random card",
     "translation": "Rastgele kart seç"
   },
+  "N0-GsR": {
+    "message": "Picture",
+    "translation": "Resim"
+  },
   "KBXd3D": {
     "message": "Picture",
     "context": "a card back from a picture",
     "translation": "Resim"
   },
-  "xYvd7u": {
-    "message": "Piece position",
-    "translation": "Parça konumu"
+  "9uDKal": {
+    "message": "Picture link",
+    "translation": "Resim bağlantısı"
+  },
+  "eLNVFN": {
+    "message": "Picture link: {label}",
+    "translation": "Resim bağlantısı: {label}"
+  },
+  "BX1rQx": {
+    "message": "Pieces",
+    "translation": "Parçalar"
   },
   "CC99uS": {
     "message": "Piles",
@@ -4477,10 +4519,6 @@
     ],
     "translation": "En üste koy"
   },
-  "rkcP1p": {
-    "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
-    "translation": "Pokémon parçalarını tek bir yığına, Stadyum parçalarını Stadyum alanına koy."
-  },
   "QEP1VC": {
     "message": "Put the rest of it, <0>{0}</0> and its Energy, in their discard pile too.",
     "translation": "Geri kalanını, yani <0>{0}</0> ve Enerjilerini de rakibin atık yığınına koy."
@@ -4506,6 +4544,10 @@
   "AUzUf9": {
     "message": "Rainbow foil",
     "translation": "Gökkuşağı folyo"
+  },
+  "K21Y8W": {
+    "message": "Raise {label}",
+    "translation": "{label} değerini artır"
   },
   "PImlBx": {
     "message": "Raised",
@@ -4597,6 +4639,10 @@
     "context": "animation speed",
     "translation": "Rahat"
   },
+  "HLazKQ": {
+    "message": "Remove {name}",
+    "translation": "{name} öğesini kaldır"
+  },
   "hKnn4w": {
     "message": "Remove {name} from {seat}",
     "translation": "{name} destesini {seat} koltuğundan kaldır"
@@ -4628,6 +4674,10 @@
   "5qTkf-": {
     "message": "Remove special condition",
     "translation": "Özel durumu kaldır"
+  },
+  "-WTtkb": {
+    "message": "Remove the picture",
+    "translation": "Resmi kaldır"
   },
   "jionWu": {
     "message": "Rename",
@@ -4916,10 +4966,6 @@
       "A table look: cherry blossom pink"
     ],
     "translation": "Sakura"
-  },
-  "qoNq2S": {
-    "message": "Same group for each piece",
-    "translation": "Her parça için aynı grup"
   },
   "brkgwR": {
     "message": "Sample hand",
@@ -5548,6 +5594,10 @@
     "context": "shortcut key caption",
     "translation": "Durum"
   },
+  "iFt0Ce": {
+    "message": "Still uploading…",
+    "translation": "Hâlâ yükleniyor…"
+  },
   "B2cOHf": {
     "message": "Stop sorting hand",
     "translation": "Eli sıralamayı bırak"
@@ -5736,10 +5786,6 @@
     "message": "That file isn't a picture.",
     "translation": "Bu dosya bir resim değil."
   },
-  "ZMr878": {
-    "message": "That image didn't load.",
-    "translation": "Bu görsel yüklenmedi."
-  },
   "B4ZAXF": {
     "message": "That one was skipped.",
     "translation": "Bu atlandı."
@@ -5747,6 +5793,10 @@
   "qqEjGU": {
     "message": "That picture can't be read.",
     "translation": "Bu resim okunamıyor."
+  },
+  "F9MU8-": {
+    "message": "That picture didn't load.",
+    "translation": "Bu resim yüklenemedi."
   },
   "HnGmBe": {
     "message": "That picture is over 20 MB.",
@@ -6243,6 +6293,10 @@
     "message": "Untitled deck",
     "translation": "Adsız deste"
   },
+  "gANddk": {
+    "message": "Uploading…",
+    "translation": "Yükleniyor…"
+  },
   "aS5ttr": {
     "message": "Use background",
     "translation": "Arka planı kullan"
@@ -6447,148 +6501,5 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "Bölge çerçeveleri"
-  },
-  "cJqyrp": {
-    "message": "{name}: {count}",
-    "translation": "{name}: {count}"
-  },
-  "hQE7TV": {
-    "message": "An image URL, or 'default'.",
-    "comments": [
-      "Keep 'default' in English: it is what the player types"
-    ],
-    "translation": "Bir görsel URL'si veya 'default'."
-  },
-  "PCF3WN": {
-    "message": "Change card back",
-    "translation": "Kart arkasını değiştir"
-  },
-  "baWTFO": {
-    "message": "Clear",
-    "context": "attack cost",
-    "translation": "Temizle"
-  },
-  "iIbh2N": {
-    "message": "HP",
-    "translation": "HP"
-  },
-  "fVGc9-": {
-    "message": "https://… or default",
-    "comments": [
-      "Keep 'default' in English: it is what the player types"
-    ],
-    "translation": "https://… veya default"
-  },
-  "-IGsZV": {
-    "message": "Lower {label}",
-    "translation": "{label} değerini azalt"
-  },
-  "CK1KXz": {
-    "message": "Max",
-    "translation": "Maks."
-  },
-  "zjSw-O": {
-    "message": "Max HP",
-    "translation": "Maks. HP"
-  },
-  "eTUF28": {
-    "message": "Min",
-    "translation": "Min."
-  },
-  "J6QsaV": {
-    "message": "Min HP",
-    "translation": "Min. HP"
-  },
-  "mNXjQA": {
-    "message": "No match",
-    "translation": "Eşleşme yok"
-  },
-  "K21Y8W": {
-    "message": "Raise {label}",
-    "translation": "{label} değerini artır"
-  },
-  "HLazKQ": {
-    "message": "Remove {name}",
-    "translation": "{name} öğesini kaldır"
-  },
-  "PTd_zR": {
-    "message": "Use image",
-    "translation": "Görseli kullan"
-  },
-  "mOTci6": {
-    "message": "Add a multi-piece card",
-    "translation": "Çok parçalı kart ekle"
-  },
-  "ZJwR0U": {
-    "message": "Add a picture for each piece.",
-    "translation": "Her parça için bir resim ekle."
-  },
-  "J8elq3": {
-    "message": "Add a picture.",
-    "translation": "Resim ekle."
-  },
-  "9CyHQP": {
-    "message": "Change the picture",
-    "translation": "Resmi değiştir"
-  },
-  "kT6WGB": {
-    "message": "Choose a picture: {label}",
-    "translation": "Resim seç: {label}"
-  },
-  "7ni5yE": {
-    "message": "Drop, paste or choose",
-    "translation": "Bırak, yapıştır veya seç"
-  },
-  "beOAmP": {
-    "message": "Link too long.",
-    "translation": "Bağlantı çok uzun."
-  },
-  "6Leq5p": {
-    "message": "Multi-piece card",
-    "translation": "Çok parçalı kart"
-  },
-  "0iGojz": {
-    "message": "Not a picture.",
-    "translation": "Bu bir resim değil."
-  },
-  "U1CJvq": {
-    "message": "One card",
-    "translation": "Tek kart"
-  },
-  "ONM3W_": {
-    "message": "or a link",
-    "translation": "veya bir bağlantı"
-  },
-  "N0-GsR": {
-    "message": "Picture",
-    "translation": "Resim"
-  },
-  "9uDKal": {
-    "message": "Picture link",
-    "translation": "Resim bağlantısı"
-  },
-  "eLNVFN": {
-    "message": "Picture link: {label}",
-    "translation": "Resim bağlantısı: {label}"
-  },
-  "BX1rQx": {
-    "message": "Pieces",
-    "translation": "Parçalar"
-  },
-  "-WTtkb": {
-    "message": "Remove the picture",
-    "translation": "Resmi kaldır"
-  },
-  "iFt0Ce": {
-    "message": "Still uploading…",
-    "translation": "Hâlâ yükleniyor…"
-  },
-  "F9MU8-": {
-    "message": "That picture didn't load.",
-    "translation": "Bu resim yüklenemedi."
-  },
-  "gANddk": {
-    "message": "Uploading…",
-    "translation": "Yükleniyor…"
   }
 }
