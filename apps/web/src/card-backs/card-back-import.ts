@@ -60,7 +60,10 @@ export const encodeCardBackImage: CardBackEncoder = async (picture) => {
   const canvas = document.createElement('canvas');
   canvas.width = CARD_BACK_IMAGE_WIDTH;
   canvas.height = CARD_BACK_IMAGE_HEIGHT;
-  const context = canvas.getContext('2d');
+  // A canvas in memory, never the GPU's: encoding reads it back whole, and
+  // where the GPU is emulated (a machine without one) a GPU canvas stalled
+  // the page for seconds before its first picture (CI run 40848329715).
+  const context = canvas.getContext('2d', { willReadFrequently: true });
   if (!context || source.width < 1 || source.height < 1) return null;
   const target = CARD_BACK_IMAGE_WIDTH / CARD_BACK_IMAGE_HEIGHT;
   const width = Math.min(source.width, source.height * target);
