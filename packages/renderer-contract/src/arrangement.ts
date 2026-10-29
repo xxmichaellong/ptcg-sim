@@ -1,6 +1,7 @@
 import type { ViewCardId } from '@ptcgsim/game-core';
 
 import { containsPoint } from './geometry.js';
+import { groupArrivalWidth, groupCardsOf } from './group-carry.js';
 import {
   layoutTableHand,
   layoutTablePrizes,
@@ -112,14 +113,18 @@ export const arrangedCardIds = (scene: BoardScene): ReadonlySet<ViewCardId> => {
 
 /**
  * The zone's items in its own order, without the one being moved: the card
- * itself, or the whole Pokémon when its top card is carried.
+ * itself, or the whole Pokémon when its top card is carried; nor any card
+ * of a group carried with it (`exclude`).
  */
 const rowItems = (
   scene: BoardScene,
   zone: ZoneSceneNode,
-  sourceCardId: ViewCardId
+  sourceCardId: ViewCardId,
+  exclude?: ReadonlySet<ViewCardId>
 ): RowItem[] => {
   const source = scene.cards.find((card) => card.id === sourceCardId);
+  const stays = (cardIds: readonly ViewCardId[]) =>
+    !exclude || cardIds.every((cardId) => !exclude.has(cardId));
   if (zone.kind === 'prizes') {
     // A grid's order is its own (row by row), not across the screen: a
     // zone's cards are painted in it, one above the next.
@@ -128,7 +133,8 @@ const rowItems = (
         (card) =>
           card.parentId === zone.id &&
           card.renderKey !== null &&
-          card.id !== sourceCardId
+          card.id !== sourceCardId &&
+          stays([card.id])
       )
       .sort((left, right) => left.zIndex - right.zIndex)
       .map((card) => ({
@@ -141,14 +147,17 @@ const rowItems = (
     zone.kind === 'bench'
       ? benchItems(scene, zone).filter(
           (item) =>
-            !(source?.role === 'stackEvolution' && item.key === source.parentId)
+            !(
+              source?.role === 'stackEvolution' && item.key === source.parentId
+            ) && stays(item.cardIds)
         )
       : scene.cards
           .filter(
             (card) =>
               card.parentId === zone.id &&
               card.renderKey !== null &&
-              card.id !== sourceCardId
+              card.id !== sourceCardId &&
+              stays([card.id])
           )
           .map((card) => ({
             key: String(card.id),
@@ -200,6 +209,9 @@ const nearestCell = (cells: readonly Rect[], x: number, y: number): number => {
  * is the point on the mat under the pointer itself. A row compares the
  * point with its cards' middles, which reads the same either way; a grid
  * takes the cell the pointer is over, so it needs `aim`.
+ *
+ * A group (`groupCardIds`, the items carried with the card) counts only
+ * the items that stay, as a group's move does (`MovePlayStack.benchIndex`).
  */
 export const arrangementIndexAt = (
   scene: BoardScene,
@@ -207,14 +219,26 @@ export const arrangementIndexAt = (
   targetId: string | null | undefined,
   x: number,
   y: number,
-  aim?: { readonly x: number; readonly y: number }
+  aim?: { readonly x: number; readonly y: number },
+  groupCardIds?: readonly ViewCardId[]
 ): number | null => {
   const zone = arrangedZone(scene, targetId);
   if (!zone) return null;
-  const items = rowItems(scene, zone, sourceCardId);
+  const group =
+    groupCardIds && groupCardIds.length > 1
+      ? groupCardsOf(scene, groupCardIds)
+      : undefined;
+  const items = rowItems(scene, zone, sourceCardId, group);
   if (zone.kind === 'prizes') {
     const point = aim ?? { x, y };
-    return nearestCell(prizeCells(zone, items.length + 1), point.x, point.y);
+    return nearestCell(
+      prizeCells(
+        zone,
+        items.length + groupArrivalWidth(scene, groupCardIds, zone)
+      ),
+      point.x,
+      point.y
+    );
   }
   const forward = zone.side === 'local' ? 1 : -1;
   return items.filter((item) => forward * (centreX(item.rect) - x) < 0).length;
@@ -225,7 +249,28 @@ export interface ArrangementHold {
   readonly cardId: ViewCardId;
   readonly targetId: string;
   readonly index: number;
+  /** How many places it takes: more than one for a group (ADR-042). */
+  readonly width?: number;
+  /** The group's cards, which the row does not count among those staying. */
+  readonly exclude?: ReadonlySet<ViewCardId>;
 }
+
+/** The cards settling entries hold: each entry's card, a whole Pokémon's all. */
+const settlingCards = (
+  scene: BoardScene,
+  entries: BoardPresentation['settling']
+): ReadonlySet<ViewCardId> => {
+  const cards = new Set<ViewCardId>();
+  for (const entry of entries) {
+    cards.add(entry.cardId);
+    if (!entry.wholeStack) continue;
+    const anchor = scene.cards.find((card) => card.id === entry.cardId);
+    if (anchor?.role !== 'stackEvolution') continue;
+    for (const card of scene.cards)
+      if (card.parentId === anchor.parentId) cards.add(card.id);
+  }
+  return cards;
+};
 
 /**
  * The place a zone is opening a gap for: the held card's, or the one just
@@ -238,17 +283,42 @@ export const arrangementHold = (
 ): ArrangementHold | null => {
   const drag = presentation.drag;
   if (drag) {
-    return drag.index !== undefined && drag.targetId !== null
-      ? { cardId: drag.cardId, targetId: drag.targetId, index: drag.index }
-      : null;
+    if (drag.index === undefined || drag.targetId === null) return null;
+    const zone = arrangedZone(scene, drag.targetId);
+    const group = drag.groupCardIds;
+    return {
+      cardId: drag.cardId,
+      targetId: drag.targetId,
+      index: drag.index,
+      ...(zone && group && group.length > 1
+        ? {
+            width: groupArrivalWidth(scene, group, zone),
+            exclude: groupCardsOf(scene, group),
+          }
+        : {}),
+    };
   }
   for (const entry of [...presentation.settling].reverse()) {
     const arrangement = entry.arrangement;
     if (arrangement && arrangement.revision === scene.revision) {
+      // A group's drop: the cards settling with it are not among those
+      // staying either.
+      const together =
+        entry.dropId === undefined
+          ? []
+          : presentation.settling.filter(
+              (other) => other.dropId === entry.dropId
+            );
       return {
         cardId: entry.cardId,
         targetId: arrangement.targetId,
         index: arrangement.index,
+        ...(arrangement.width !== undefined && arrangement.width > 1
+          ? { width: arrangement.width }
+          : {}),
+        ...(together.length > 1
+          ? { exclude: settlingCards(scene, together) }
+          : {}),
       };
     }
   }
@@ -267,11 +337,13 @@ export const arrangementOffsets = (
   if (!hold) return offsets;
   const zone = arrangedZone(scene, hold.targetId);
   if (!zone) return offsets;
-  const items = rowItems(scene, zone, hold.cardId);
+  const items = rowItems(scene, zone, hold.cardId, hold.exclude);
   const index = Math.max(0, Math.min(hold.index, items.length));
-  const count = items.length + 1;
+  // A group opens one place for each card or Pokémon it brings.
+  const width = Math.max(1, hold.width ?? 1);
+  const count = items.length + width;
   const slotOf = (position: number) =>
-    position < index ? position : position + 1;
+    position < index ? position : position + width;
   if (zone.kind === 'prizes') {
     // The grid as it will be: each card one cell on from the gap onwards.
     const cells = prizeCells(zone, count);

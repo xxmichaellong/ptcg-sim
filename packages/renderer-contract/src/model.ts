@@ -111,6 +111,11 @@ export interface SettlingCard {
     readonly targetId: string;
     readonly index: number;
     readonly revision: number;
+    /**
+     * How many places a group's drop takes there (`groupArrivalWidth`),
+     * when more than one: the row keeps a gap that wide.
+     */
+    readonly width?: number;
   };
   /** A whole Pokémon was dropped: its stack settles with the grabbed card. */
   readonly wholeStack?: boolean;

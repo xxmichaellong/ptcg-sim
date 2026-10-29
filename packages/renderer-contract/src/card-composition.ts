@@ -1,4 +1,5 @@
 import type { CardPresentation, QuarterTurns } from '@ptcgsim/game-core';
+import { fannedHoldOf } from './group-carry.js';
 import type {
   Rect,
   BoardScene,
@@ -195,6 +196,10 @@ export const fitCardComposition = (
  * attached to it while it is dragged, wherever it is held, and the stack
  * settles together once dropped as a whole. A card lifted off by a long
  * press (`detached`), or an attached Energy or Tool, moves alone.
+ *
+ * A drag of a selected item carries the group (`groupCardIds`): the next
+ * items of the selection are fanned out behind the gripped card
+ * (`carriedGroup`), each with its `layer` behind it, 1 to 4.
  */
 export const compositionHold = <
   T extends {
@@ -206,14 +211,24 @@ export const compositionHold = <
   scene: BoardScene,
   card: CardSceneNode,
   hold: T | null | undefined
-): T | null => {
+): (T & { readonly layer?: number }) | null => {
   if (!hold) return null;
   if (hold.cardId === card.id) return hold;
-  const { targetId, wholeStack, detached } = hold as {
+  const { targetId, wholeStack, detached, groupCardIds } = hold as {
     readonly targetId?: string | null;
     readonly wholeStack?: boolean;
     readonly detached?: boolean;
+    readonly groupCardIds?: readonly CardSceneNode['id'][];
   };
+  if (groupCardIds && targetId !== undefined) {
+    // Keyed by the hold itself: worked out once for every card it paints.
+    const fanned = fannedHoldOf(
+      scene,
+      card,
+      hold as T & Parameters<typeof fannedHoldOf>[2]
+    );
+    if (fanned) return { ...hold, ...fanned };
+  }
   // A drag has a target (perhaps none yet); a settling drop carries the
   // stack only when the drop moved all of it.
   if (detached || (targetId === undefined && !wholeStack)) return null;

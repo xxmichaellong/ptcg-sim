@@ -1,6 +1,13 @@
+import type { ViewCardId } from '@ptcgsim/game-core';
+
 import { arrangementIndexAt } from './arrangement.js';
 import type { BoardDepthProjection } from './board-depth.js';
 import type { BoardPointerInput } from './drag.js';
+import {
+  carriedGroup,
+  groupCardsOf,
+  selectionItemCardIds,
+} from './group-carry.js';
 import type { BoardPresentation, BoardScene, CardSceneNode } from './model.js';
 
 /** The deck's cover, left on the pile while its top card is in the hand. */
@@ -56,13 +63,22 @@ const asHeldCard = (
  * the same key, so it flies on from where it was dropped rather than
  * appearing in its new place. The deck's cover stays on the pile under a
  * stand-in id, so the pile keeps its height while its top card is away.
+ * A group drag holds the items it carries (`carriedGroup`), the rest of the
+ * group staying where they lie.
  */
 export const withHeldCards = (
   scene: BoardScene,
   presentation: Pick<BoardPresentation, 'drag' | 'settling' | 'openedZoneId'>
 ): BoardScene => {
   const held = new Set<string>();
-  if (presentation.drag) held.add(String(presentation.drag.cardId));
+  const drag = presentation.drag;
+  if (drag) {
+    held.add(String(drag.cardId));
+    if (drag.groupCardIds)
+      for (const item of carriedGroup(scene, drag))
+        for (const cardId of selectionItemCardIds(scene, item.itemId))
+          held.add(String(cardId));
+  }
   const dropped = new Map<string, { readonly x: number; readonly y: number }>();
   for (const entry of presentation.settling) {
     held.add(String(entry.cardId));
@@ -135,7 +151,9 @@ export const boardDragInput = (
   pointerId: number,
   point: { readonly x: number; readonly y: number },
   grip: CardGrip,
-  starting = false
+  starting = false,
+  /** The items carried with it (a group drag): never where it lands. */
+  group?: readonly ViewCardId[]
 ): BoardPointerInput => {
   const offset = gripOffset(card, grip);
   if (starting) {
@@ -158,7 +176,14 @@ export const boardDragInput = (
     plane: 1,
     elevation: base.elevation + depth.liftFor(base.bounds.width),
   });
-  const hit = depth.drop(point, card.id);
+  const hit = depth.drop(
+    point,
+    card.id,
+    undefined,
+    false,
+    undefined,
+    group && group.length > 1 ? groupCardsOf(scene, group) : undefined
+  );
   return {
     pointerId,
     button: 0,
@@ -173,7 +198,8 @@ export const boardDragInput = (
       hit.targetId,
       hit.point.x,
       hit.point.y,
-      depth.boardPoint(point)
+      depth.boardPoint(point),
+      group
     ),
   };
 };

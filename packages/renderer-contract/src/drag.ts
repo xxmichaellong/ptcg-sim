@@ -2,6 +2,7 @@ import type { ViewCardId } from '@ptcgsim/game-core';
 
 import { arrangementIndexAt, benchRearrangementTarget } from './arrangement.js';
 import { containsPoint, containsPointInRotatedRect } from './geometry.js';
+import { groupCardsOf } from './group-carry.js';
 import { TABLE_LAYOUT_GEOMETRY_VERSION } from './layout-table.js';
 import type {
   BoardRendererAdapters,
@@ -23,9 +24,31 @@ export interface BoardPointerInput {
   readonly arrangementIndex?: number | null;
 }
 
+/**
+ * What a press on a card holds beyond the card (ADR-042 §2), as the renderer
+ * read it from the selection when the card was pressed.
+ */
+export interface BoardPress {
+  /**
+   * The items a drag of it carries, in selection order (its own among
+   * them): the selection, when the card's item is in it with others, or
+   * the selection and the card when `adds`. Absent: it goes alone.
+   */
+  readonly group?: readonly ViewCardId[];
+  /**
+   * Pressed with Shift or ⌘/Ctrl on a card not selected: once it moves, it
+   * joins the selection (`CardSelected` with `add`) and drags the group.
+   */
+  readonly adds?: boolean;
+}
+
 interface ActiveGesture {
   readonly pointerId: number;
   readonly cardId: ViewCardId;
+  /** The press's group, the same array for every move (onlyHeldCardMoved). */
+  readonly group?: readonly ViewCardId[];
+  /** It joins the selection once it starts to move (BoardPress.adds). */
+  adds?: boolean;
   /** The painted element pressed: for a pile, its cover (`cover:<zone>`). */
   readonly renderKey: string | null;
   readonly startX: number;
@@ -171,12 +194,15 @@ export const joinedCardTargetAt = (
   y: number,
   detached = false,
   /** Leave out the source's own Pokémon, which travels with it. */
-  skipOwnStack = false
+  skipOwnStack = false,
+  /** The cards of a group carried with it, which travel with it too. */
+  exclude?: ReadonlySet<ViewCardId>
 ): string | null => {
   const source = cardAt(scene, sourceCardId);
   const card = topmostFirst(scene.cards).find(
     (candidate) =>
       candidate.id !== sourceCardId &&
+      !exclude?.has(candidate.id) &&
       candidate.interactive &&
       candidate.role === 'stackEvolution' &&
       candidate.composition?.kind === 'joined' &&
@@ -205,7 +231,9 @@ export const heldCentreCardTarget = (
   sourceCardId: ViewCardId,
   pointer: { readonly x: number; readonly y: number },
   centre: { readonly x: number; readonly y: number },
-  detached = false
+  detached = false,
+  /** The cards of a group carried with it, which travel with it too. */
+  exclude?: ReadonlySet<ViewCardId>
 ): string | null => {
   if (
     scene.layout.geometryVersion !== TABLE_LAYOUT_GEOMETRY_VERSION ||
@@ -216,6 +244,7 @@ export const heldCentreCardTarget = (
   const card = topmostFirst(scene.cards).find(
     (candidate) =>
       candidate.id !== sourceCardId &&
+      !exclude?.has(candidate.id) &&
       candidate.interactive &&
       !(
         source?.role === 'stackEvolution' &&
@@ -236,7 +265,8 @@ export const heldCentreCardTarget = (
       centre.x,
       centre.y,
       detached,
-      true
+      true,
+      exclude
     );
   return (
     benchRearrangementTarget(scene, sourceCardId, card, detached) ??
@@ -249,7 +279,8 @@ export const heldCentreCardTarget = (
  * under the pointer (its stack, to join it), or the whole of a card printed
  * in pieces, else a zone. Players aim with the pointer: a hand card is
  * gripped by its visible top, its face hanging below. Over bare felt, the
- * held card's `centre` aims too.
+ * held card's `centre` aims too. A group's cards (`exclude`) are never
+ * where it lands: they travel with it.
  */
 export const resolveBoardDropTarget = (
   scene: BoardScene,
@@ -257,11 +288,13 @@ export const resolveBoardDropTarget = (
   x: number,
   y: number,
   detached = false,
-  centre?: { readonly x: number; readonly y: number }
+  centre?: { readonly x: number; readonly y: number },
+  exclude?: ReadonlySet<ViewCardId>
 ): string | null => {
   const card = topmostFirst(scene.cards).find(
     (candidate) =>
       candidate.id !== sourceCardId &&
+      !exclude?.has(candidate.id) &&
       candidate.interactive &&
       containsPointInRotatedRect(
         candidate.bounds,
@@ -276,12 +309,30 @@ export const resolveBoardDropTarget = (
       card.parentId
     );
   return (
-    joinedCardTargetAt(scene, sourceCardId, x, y, detached) ||
+    joinedCardTargetAt(scene, sourceCardId, x, y, detached, false, exclude) ||
     (centre &&
-      heldCentreCardTarget(scene, sourceCardId, { x, y }, centre, detached)) ||
+      heldCentreCardTarget(
+        scene,
+        sourceCardId,
+        { x, y },
+        centre,
+        detached,
+        exclude
+      )) ||
     zoneDropTargetAt(scene, x, y, centre)
   );
 };
+
+const pressOf = (
+  press: BoardPress | undefined
+): Pick<ActiveGesture, 'group' | 'adds'> => ({
+  ...(press?.group && press.group.length > 1 ? { group: press.group } : {}),
+  ...(press?.adds ? { adds: true } : {}),
+});
+
+/** The group a drag carries: none for a card lifted off its Pokémon alone. */
+const groupOf = (gesture: ActiveGesture): readonly ViewCardId[] | undefined =>
+  gesture.detached ? undefined : gesture.group;
 
 /** Pointer gesture state that turns presses and moves into drag intent. */
 export class BoardDragController {
@@ -312,7 +363,8 @@ export class BoardDragController {
   pointerDown(
     scene: BoardScene,
     cardId: ViewCardId,
-    input: BoardPointerInput
+    input: BoardPointerInput,
+    press?: BoardPress
   ): boolean {
     if (this.active || input.button !== 0 || !this.validPoint(input)) {
       return false;
@@ -323,6 +375,7 @@ export class BoardDragController {
     this.active = {
       pointerId: input.pointerId,
       cardId,
+      ...pressOf(press),
       renderKey: card.renderKey,
       startX: input.x,
       startY: input.y,
@@ -386,7 +439,8 @@ export class BoardDragController {
     scene: BoardScene,
     cardId: ViewCardId,
     input: BoardPointerInput,
-    centre?: { readonly x: number; readonly y: number }
+    centre?: { readonly x: number; readonly y: number },
+    press?: BoardPress
   ): boolean {
     const gesture = this.active;
     if (
@@ -402,6 +456,7 @@ export class BoardDragController {
     this.active = {
       pointerId: input.pointerId,
       cardId,
+      ...pressOf(press),
       renderKey: card.renderKey,
       startX: input.x,
       startY: input.y,
@@ -413,6 +468,7 @@ export class BoardDragController {
       dragging: true,
       detached: false,
     };
+    this.join(this.active);
     return this.pointerMove(scene, input);
   }
 
@@ -446,7 +502,9 @@ export class BoardDragController {
         return false;
       }
       gesture.dragging = true;
+      this.join(gesture);
     }
+    const group = groupOf(gesture);
     const targetId =
       input.targetId !== undefined
         ? input.targetId
@@ -459,9 +517,10 @@ export class BoardDragController {
             {
               x: input.x + gesture.centerOffsetX,
               y: input.y + gesture.centerOffsetY,
-            }
+            },
+            group ? groupCardsOf(scene, group) : undefined
           );
-    const index = this.arrangementIndex(scene, gesture.cardId, targetId, input);
+    const index = this.arrangementIndex(scene, gesture, targetId, input);
     this.adapters.emitPresentationUpdate({
       kind: 'DragChanged',
       drag: {
@@ -471,20 +530,43 @@ export class BoardDragController {
         targetId,
         ...(index === null ? {} : { index }),
         ...(gesture.detached ? { detached: true } : {}),
+        ...(group ? { groupCardIds: group } : {}),
       },
     });
     return true;
   }
 
+  /**
+   * A card pressed with Shift or ⌘/Ctrl that starts to move joins the
+   * selection first, then drags the group (ADR-042 §2). Once per gesture.
+   */
+  private join(gesture: ActiveGesture): void {
+    if (!gesture.adds || gesture.detached) return;
+    gesture.adds = false;
+    this.adapters.emitIntent({
+      kind: 'CardSelected',
+      cardId: gesture.cardId,
+      mode: 'add',
+    });
+  }
+
   private arrangementIndex(
     scene: BoardScene,
-    cardId: ViewCardId,
+    gesture: ActiveGesture,
     targetId: string | null,
     input: BoardPointerInput
   ): number | null {
     return input.arrangementIndex !== undefined
       ? input.arrangementIndex
-      : arrangementIndexAt(scene, cardId, targetId, input.x, input.y);
+      : arrangementIndexAt(
+          scene,
+          gesture.cardId,
+          targetId,
+          input.x,
+          input.y,
+          undefined,
+          groupOf(gesture)
+        );
   }
 
   pointerUp(scene: BoardScene, input: BoardPointerInput): boolean {
@@ -501,6 +583,7 @@ export class BoardDragController {
     // grip on release.
     const centreX = input.x + gesture.centerOffsetX;
     const centreY = input.y + gesture.centerOffsetY;
+    const group = groupOf(gesture);
     const targetId =
       input.targetId !== undefined
         ? input.targetId
@@ -510,9 +593,10 @@ export class BoardDragController {
             input.x,
             input.y,
             gesture.detached,
-            { x: centreX, y: centreY }
+            { x: centreX, y: centreY },
+            group ? groupCardsOf(scene, group) : undefined
           );
-    const index = this.arrangementIndex(scene, gesture.cardId, targetId, input);
+    const index = this.arrangementIndex(scene, gesture, targetId, input);
     this.suppressClickOf(gesture);
     this.adapters.emitPresentationUpdate({ kind: 'DragChanged', drag: null });
     if (targetId) {
@@ -524,6 +608,7 @@ export class BoardDragController {
         y: input.dropPoint?.y ?? centreY,
         ...(index === null ? {} : { index }),
         ...(gesture.detached ? { detached: true } : {}),
+        ...(group ? { groupCardIds: group } : {}),
       });
     }
     return true;

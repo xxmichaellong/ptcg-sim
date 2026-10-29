@@ -1830,6 +1830,10 @@
               "kind": "type"
             },
             {
+              "name": "BoardPress",
+              "kind": "type"
+            },
+            {
               "name": "BoardRenderer",
               "kind": "type"
             },
@@ -1966,6 +1970,14 @@
               "kind": "value"
             },
             {
+              "name": "carriedGroup",
+              "kind": "value"
+            },
+            {
+              "name": "CarriedItem",
+              "kind": "type"
+            },
+            {
               "name": "composeCardArtwork",
               "kind": "value"
             },
@@ -2082,6 +2094,10 @@
               "kind": "value"
             },
             {
+              "name": "fannedHoldOf",
+              "kind": "value"
+            },
+            {
               "name": "findBoardLayoutRegion",
               "kind": "value"
             },
@@ -2096,6 +2112,18 @@
             {
               "name": "flipBoardLayoutState",
               "kind": "value"
+            },
+            {
+              "name": "groupArrivalWidth",
+              "kind": "value"
+            },
+            {
+              "name": "groupCardsOf",
+              "kind": "value"
+            },
+            {
+              "name": "GroupHold",
+              "kind": "type"
             },
             {
               "name": "heldCentreCardTarget",
@@ -2370,6 +2398,10 @@
               "kind": "type"
             },
             {
+              "name": "MAX_CARRIED_ITEMS",
+              "kind": "value"
+            },
+            {
               "name": "MOTION_STAGGER_SECONDS",
               "kind": "value"
             },
@@ -2467,6 +2499,14 @@
             },
             {
               "name": "selectedCardIdOf",
+              "kind": "value"
+            },
+            {
+              "name": "selectionItemCardIds",
+              "kind": "value"
+            },
+            {
+              "name": "selectionItemOf",
               "kind": "value"
             },
             {

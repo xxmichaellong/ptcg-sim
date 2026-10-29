@@ -33,6 +33,13 @@ import {
 } from './table-camera.js';
 
 export type { BoardDepthPreferences } from './model.js';
+
+/**
+ * How much lower each card of a group fanned out behind the one gripped
+ * is held, as a part of its width (`compositionHold`'s `layer`).
+ */
+const FAN_DROP = 0.02;
+
 export const DEFAULT_BOARD_DEPTH: BoardDepthPreferences = Object.freeze({
   mode: 'flat',
   tilt: 22,
@@ -666,6 +673,9 @@ export class BoardDepthProjection {
         .map((entry) => compositionHold(this.scene, card, entry))
         .find(Boolean);
     if (!hold) return base;
+    // A group's cards fanned out behind the one gripped hang a little
+    // lower each, so the one gripped lies on top of them.
+    const behind = (drag?.layer ?? 0) * FAN_DROP * base.bounds.width;
     return {
       ...base,
       bounds: {
@@ -674,7 +684,9 @@ export class BoardDepthProjection {
         y: hold.y - base.bounds.height / 2,
       },
       plane: this.enabled ? 1 : base.plane,
-      elevation: base.elevation + (drag ? this.liftFor(base.bounds.width) : 0),
+      elevation:
+        base.elevation +
+        (drag ? Math.max(0, this.liftFor(base.bounds.width) - behind) : 0),
       thickness: Math.min(
         base.thickness,
         tablePileHeight(1, base.bounds.width, this.settings.strength)
@@ -723,16 +735,19 @@ export class BoardDepthProjection {
     /** Only the card, lifted off its Pokémon by a long press. */
     detached = false,
     /** The held card's centre on the table, which aims too over bare felt. */
-    centre?: TablePoint
+    centre?: TablePoint,
+    /** The cards of a group carried with it (`groupCardsOf`). */
+    exclude?: ReadonlySet<ViewCardId>
   ): { point: TablePoint; targetId: string | null } {
     const source = this.scene.cards.find((card) => card.id === sourceId);
     this.arrangedCards ??= arrangedCardIds(this.scene);
-    // A Pokémon's own cards travel with it under the pointer: they are
-    // never where it is dropped.
+    // A Pokémon's own cards travel with it under the pointer, and a group's
+    // with the group: they are never where it is dropped.
     const candidates = this.painted.filter(
       (card) =>
         card.interactive &&
         card.id !== sourceId &&
+        !exclude?.has(card.id) &&
         !(
           source?.role === 'stackEvolution' && source.parentId === card.parentId
         )
@@ -802,12 +817,20 @@ export class BoardDepthProjection {
       local.x,
       local.y,
       detached,
-      true
+      true,
+      exclude
     );
     if (joined) return { point: local, targetId: joined };
     const held =
       centre &&
-      heldCentreCardTarget(this.scene, sourceId, local, centre, detached);
+      heldCentreCardTarget(
+        this.scene,
+        sourceId,
+        local,
+        centre,
+        detached,
+        exclude
+      );
     if (held) return { point: centre, targetId: held };
     return {
       point: local,
