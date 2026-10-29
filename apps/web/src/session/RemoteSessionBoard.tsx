@@ -431,6 +431,10 @@ export const RemoteSessionBoard = ({
   // queue; the shuffle's own joins before its notice opens.
   const movesSentRef = useRef(0);
   const lastMoveSentRef = useRef<string | undefined>(undefined);
+  // The session now at the table: Create room over a Solo table, or a
+  // resumed game, brings another to the same board.
+  const sessionRef = useRef(session);
+  sessionRef.current = session;
   useEffect(() => {
     let queued = new Set(
       session.getSnapshot().pendingCommands.map((item) => item.commandId)
@@ -921,7 +925,7 @@ export const RemoteSessionBoard = ({
       movesSent: () => movesSentRef.current,
       lastMoveSent: () => lastMoveSentRef.current,
       moveAccepted: (commandId: string) =>
-        session
+        sessionRef.current
           .getSnapshot()
           .completedCommands.find(
             (completed) => completed.commandId === commandId
@@ -1206,21 +1210,29 @@ export const RemoteSessionBoard = ({
   // again (and with it any across the table).
   // Read from the live game: a replay's earlier frame, before its first
   // card, is no reason to bring it back.
-  const ownLostZoneInUse =
-    liveView !== undefined &&
-    boardState?.scene !== undefined &&
-    Object.values(liveView.zones).some(
-      (zone) =>
-        zone.kind === 'lostZone' &&
-        zone.ownerId === boardState.scene?.bottomPlayerId &&
-        zone.cards.length > 0
-    );
+  // The seat whose Lost Zone was put away is the one at the bottom then:
+  // turning the table around brings another seat's there, which empties
+  // nothing.
+  const hiddenLostZoneOwner = useRef<PlayerId | undefined>(undefined);
+  const bottomPlayerId = boardState?.scene?.bottomPlayerId;
   const viewShown =
     boardState?.view !== undefined && boardState.scene !== undefined;
   useEffect(() => {
-    if (boardView.lostZone === 'hidden' && viewShown && !ownLostZoneInUse)
-      boardViewStore.update({ lostZone: 'auto' });
-  }, [boardView.lostZone, viewShown, ownLostZoneInUse, boardViewStore]);
+    if (boardView.lostZone !== 'hidden') {
+      hiddenLostZoneOwner.current = undefined;
+      return;
+    }
+    if (!viewShown || liveView === undefined) return;
+    hiddenLostZoneOwner.current ??= bottomPlayerId;
+    const owner = hiddenLostZoneOwner.current;
+    const inUse = Object.values(liveView.zones).some(
+      (zone) =>
+        zone.kind === 'lostZone' &&
+        zone.ownerId === owner &&
+        zone.cards.length > 0
+    );
+    if (!inUse) boardViewStore.update({ lostZone: 'auto' });
+  }, [boardView.lostZone, viewShown, liveView, bottomPlayerId, boardViewStore]);
   // The once-per-game markers, off by default and kept on this device.
   const markerControl = useMemo(
     () => ({

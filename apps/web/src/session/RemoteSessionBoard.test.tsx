@@ -1368,6 +1368,198 @@ describe('RemoteSessionBoard replay binding', () => {
     replay.dispose();
   });
 
+  it("undoes a discard shuffle the room took when that room replaced the board's first session", async () => {
+    if (baseView.viewer.kind !== 'player') throw new Error('player view');
+    const viewerId = baseView.viewer.playerId;
+    const first = new FakeRemoteBoardSession();
+    // Create room over the Solo table: another session at the same board,
+    // whose queue takes what is sent.
+    const second = new FakeRemoteBoardSession({
+      ...initialState(),
+      view: atRevision(11),
+    });
+    second.submit.mockImplementation((command: WireGameCommand) => {
+      const state = second.getSnapshot();
+      const commandId = `room-command-${String(state.nextClientSequence)}`;
+      second.publish({
+        ...state,
+        nextClientSequence: state.nextClientSequence + 1,
+        pendingCommands: [
+          ...state.pendingCommands,
+          {
+            commandId,
+            clientSequence: state.nextClientSequence,
+            commandType: command.type,
+            command,
+          },
+        ],
+      });
+      return {
+        queued: true,
+        commandId,
+        clientSequence: state.nextClientSequence,
+      };
+    });
+    const overlayHost = document.createElement('div');
+    document.body.append(overlayHost);
+    const overlayRoot = createRoot(overlayHost);
+    await act(async () => overlayRoot.render(<OverlayHost />));
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+    const board = (session: FakeRemoteBoardSession) => (
+      <RemoteSessionBoard
+        session={session}
+        replay={new ReplaySessionCoordinator(session)}
+        roomMode="solo"
+        onIntent={vi.fn()}
+      />
+    );
+    await act(async () => root.render(board(first)));
+    await waitForRevision(host, 10);
+    await act(async () => root.render(board(second)));
+    await waitForRevision(host, 11);
+
+    // The viewer's discard pile, opened from its top card.
+    const discard = selectedScene().zones.find(
+      (zone) => zone.kind === 'discard' && zone.playerId === viewerId
+    )!;
+    expect(discard.count).toBeGreaterThan(0);
+    const top = selectedScene().cards.find(
+      (card) => card.parentId === discard.id && card.renderKey !== null
+    )!;
+    const pile = host.querySelector<HTMLElement>(`[data-card-id="${top.id}"]`)!;
+    await act(async () => {
+      for (const type of ['pointerdown', 'pointerup'] as const) {
+        pile.dispatchEvent(
+          new PointerEvent(type, {
+            pointerType: 'mouse',
+            pointerId: 4,
+            clientX: 10,
+            clientY: 10,
+            bubbles: true,
+            cancelable: true,
+          })
+        );
+      }
+    });
+    await act(async () => pile.click());
+    const shuffle = await vi.waitFor(() => {
+      const button = document.querySelector<HTMLButtonElement>(
+        '[data-zone-action="shuffleDiscardToDeck"]'
+      );
+      expect(button).not.toBeNull();
+      return button!;
+    });
+    await act(async () => shuffle.click());
+    const shuffled = second.getSnapshot().pendingCommands.at(-1)!;
+    expect(shuffled.commandType).toBe('ShuffleZoneIntoDeck');
+    // The room takes it.
+    await act(async () =>
+      second.publish({
+        ...second.getSnapshot(),
+        pendingCommands: [],
+        completedCommands: [
+          {
+            commandId: shuffled.commandId,
+            clientSequence: shuffled.clientSequence,
+            accepted: true,
+            revision: 12,
+          },
+        ],
+      })
+    );
+    const undo = await vi.waitFor(() => {
+      const button = document.querySelector<HTMLButtonElement>(
+        '[data-ptcgsim-overlay="toast"] [data-toast-action]'
+      );
+      expect(button).not.toBeNull();
+      return button!;
+    });
+    second.submit.mockClear();
+    await act(async () => undo.click());
+    // Read from the room now at the table, the shuffle is taken: Undo goes.
+    await act(async () => {
+      await vi.waitFor(() =>
+        expect(
+          second.submit.mock.calls.some(
+            ([command]) => command.type === 'ApplySoloUndo'
+          )
+        ).toBe(true)
+      );
+    });
+    expect(first.submit).not.toHaveBeenCalled();
+    await act(async () => root.unmount());
+    await act(async () => overlayRoot.unmount());
+  });
+
+  it('keeps a Lost Zone put away while the table turns to a seat whose own is empty', async () => {
+    if (baseView.viewer.kind !== 'player') throw new Error('player view');
+    const viewerId = baseView.viewer.playerId;
+    // The viewer's Lost Zone holds cards; the one across the table none.
+    const view: MatchViewState = {
+      ...baseView,
+      revision: 10,
+      zones: Object.fromEntries(
+        Object.entries(baseView.zones).map(([id, zone]) => [
+          id,
+          zone.kind === 'lostZone' && zone.ownerId !== viewerId
+            ? { ...zone, cards: [] }
+            : zone,
+        ])
+      ),
+    };
+    expect(
+      Object.values(view.zones).some(
+        (zone) =>
+          zone.kind === 'lostZone' &&
+          zone.ownerId === viewerId &&
+          zone.cards.length > 0
+      )
+    ).toBe(true);
+    boardViewSettings().update({ lostZone: 'hidden' });
+    const session = new FakeRemoteBoardSession({ ...initialState(), view });
+    const replay = new ReplaySessionCoordinator(session);
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+    const commands = createRef<BoardCommands>();
+    await act(async () =>
+      root.render(
+        <RemoteSessionBoard
+          session={session}
+          replay={replay}
+          roomMode="solo"
+          commandsRef={commands}
+          onIntent={vi.fn()}
+        />
+      )
+    );
+    await waitForRevision(host, 10);
+    expect(boardViewSettings().getSnapshot().lostZone).toBe('hidden');
+    // Turned around, the seat at the bottom has an empty Lost Zone; the one
+    // put away still holds its cards, and stays away.
+    await act(async () => commands.current?.flipBoard());
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    });
+    expect(boardViewSettings().getSnapshot().lostZone).toBe('hidden');
+    // Its cards gone, it comes back with the next.
+    await act(async () =>
+      session.publish({
+        ...session.getSnapshot(),
+        view: withEmptyLostZones(view),
+      })
+    );
+    await act(async () => {
+      await vi.waitFor(() =>
+        expect(boardViewSettings().getSnapshot().lostZone).toBe('auto')
+      );
+    });
+    await act(async () => root.unmount());
+    replay.dispose();
+  });
+
   it("offers a seat with no cards a + on its deck that opens the route's deck screen", async () => {
     const empty = { ...createEmptyBoardView(), revision: 3 };
     const session = new FakeRemoteBoardSession({
