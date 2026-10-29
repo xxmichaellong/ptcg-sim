@@ -356,6 +356,12 @@ export const RemoteSessionBoard = ({
   const { t } = useLingui();
   const replayState = useReplaySession(replay);
   const identity = viewIdentity(replayState.view);
+  // The live game's own view, never a replay's frame: what the players
+  // have chosen now (board flip consent, a Lost Zone's cards).
+  const liveView = useSyncExternalStore(
+    session.subscribe,
+    () => session.getSnapshot().view
+  );
   const hostRef = useRef<HTMLDivElement>(null);
   const boardViewStore = boardViewSettings();
   const storedBoardView = useSyncExternalStore(
@@ -1185,10 +1191,12 @@ export const RemoteSessionBoard = ({
   // A Lost Zone the viewer put away while it held their cards stays away
   // only as long as it holds any: emptied, the next card it takes shows it
   // again (and with it any across the table).
+  // Read from the live game: a replay's earlier frame, before its first
+  // card, is no reason to bring it back.
   const ownLostZoneInUse =
-    boardState?.view !== undefined &&
-    boardState.scene !== undefined &&
-    Object.values(boardState.view.zones).some(
+    liveView !== undefined &&
+    boardState?.scene !== undefined &&
+    Object.values(liveView.zones).some(
       (zone) =>
         zone.kind === 'lostZone' &&
         zone.ownerId === boardState.scene?.bottomPlayerId &&
@@ -1234,15 +1242,19 @@ export const RemoteSessionBoard = ({
     boardState?.view?.viewer.kind === 'player'
       ? boardState.view.viewer.playerId
       : undefined;
-  const flipWasAllowed = useRef(flipAllowed);
+  // Withdrawn in the live game only, read from the live session, never a
+  // replay's frame (one before the consent was given withdraws nothing, nor
+  // does the frame still shown as the table goes back live).
+  const liveFlipAllowed = boardFlipAllowed(roomMode, liveView);
+  const flipWasAllowed = useRef(liveFlipAllowed);
   useEffect(() => {
-    const withdrawn = flipWasAllowed.current && !flipAllowed;
-    flipWasAllowed.current = flipAllowed;
+    const withdrawn = flipWasAllowed.current && !liveFlipAllowed;
+    flipWasAllowed.current = liveFlipAllowed;
     if (!withdrawn || viewerSeat === undefined) return;
     const runtime = runtimeRef.current;
     if (runtime && runtime.getLayoutState().bottomPlayerId !== viewerSeat)
       runtime.flipBoard();
-  }, [flipAllowed, viewerSeat]);
+  }, [liveFlipAllowed, viewerSeat]);
   // A replay keeps the live table's sizing: its first frames can come before
   // this player's own consent, and the controls would move on Next.
   const switchSideSized = useLiveValue(

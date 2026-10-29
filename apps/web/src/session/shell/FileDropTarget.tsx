@@ -45,9 +45,12 @@ export const FileDropTarget = ({
     };
     const drop = (event: DragEvent): void => {
       if (!carriesFiles(event)) return;
-      event.preventDefault();
       depth.current = 0;
       setOver(false);
+      // A drop something on the page took already (the deck screen's own
+      // import of a list) is not the window's to open as well.
+      if (event.defaultPrevented) return;
+      event.preventDefault();
       const file = event.dataTransfer?.files[0];
       if (!file) return;
       if (!latest.current(file)) {

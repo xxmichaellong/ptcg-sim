@@ -892,6 +892,19 @@ describe('RemoteSessionBoard replay binding', () => {
     expect(onPerspectiveChange).toHaveBeenLastCalledWith(
       expect.objectContaining({ flipped: true })
     );
+    // A replay's earlier frames, before the consent was given, withdraw
+    // nothing: the table stays turned through them and back.
+    const turned = vi.spyOn(BoardSessionRuntime.prototype, 'flipBoard');
+    await act(async () => replay.requestReplay());
+    await act(async () => session.completeReplay());
+    await waitForRevision(host, 0);
+    expect(turned).not.toHaveBeenCalled();
+    turned.mockRestore();
+    await act(async () => replay.exitReplay());
+    await waitForRevision(host, 10);
+    expect(onPerspectiveChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({ flipped: true })
+    );
     // The other player takes their consent back: the table turns back to
     // this player's side, where Flip no longer reaches.
     await act(async () =>
