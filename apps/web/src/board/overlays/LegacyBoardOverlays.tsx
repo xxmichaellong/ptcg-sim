@@ -2269,6 +2269,7 @@ const ZoneBrowser = ({
   useFocusBoundary(container, '[data-zone-close]', zone.id);
   const primaryButton = useRef<HTMLButtonElement>(null);
   const invokePrimaryAction = (id: LegacyBoardZoneActionId): void => {
+    const before = actions.movesSent?.();
     actions.invokeZoneAction(id, zone.id);
     if (id !== 'shuffleDiscardToDeck') return;
     // Done at once, as everything else on the table is, with the way back
@@ -2276,6 +2277,9 @@ const ZoneBrowser = ({
     // latest move, so the notice's does so only while that is the shuffle
     // (a later move also closes the notice: RemoteSessionBoard).
     const sent = actions.movesSent?.();
+    // A shuffle the table didn't send (another player's discard pile) says
+    // nothing: its Undo would take back an earlier move.
+    if (before !== undefined && sent === before) return;
     const latestUndo = actions.undo;
     const undo =
       latestUndo &&

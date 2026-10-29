@@ -2905,7 +2905,15 @@ describe('legacy board overlays', () => {
     // the notice's Undo then takes nothing back.
     let sent = 4;
     const later = vi.fn();
-    const counted = { ...actions(), undo: later, movesSent: () => sent };
+    const counted = {
+      ...actions(),
+      undo: later,
+      movesSent: () => sent,
+      // The shuffle joins the session's queue as it is sent.
+      invokeZoneAction: vi.fn(() => {
+        sent += 1;
+      }),
+    };
     await render(null, counted);
     await render(discard.id, counted);
     await act(async () =>
@@ -2922,6 +2930,36 @@ describe('legacy board overlays', () => {
     sent += 1;
     await act(async () => stale.click());
     await settleDialogs();
+    expect(later).not.toHaveBeenCalled();
+
+    // A shuffle the table refused (another player's discard) sends nothing:
+    // no notice, so no Undo that would take back an earlier move.
+    const refused = {
+      ...actions(),
+      undo: later,
+      movesSent: () => sent,
+      invokeZoneAction: vi.fn(),
+    };
+    await render(null, refused);
+    await render(discard.id, refused);
+    await act(async () =>
+      host
+        .querySelector<HTMLButtonElement>(
+          '[data-zone-action="shuffleDiscardToDeck"]'
+        )!
+        .click()
+    );
+    await settleDialogs();
+    expect(refused.invokeZoneAction).toHaveBeenCalledOnce();
+    // Whatever shuffle notice shows is the earlier, stale one: its Undo
+    // takes nothing back.
+    const shown = toasts()
+      .at(-1)
+      ?.querySelector<HTMLButtonElement>('[data-toast-action]');
+    if (shown) {
+      await act(async () => shown.click());
+      await settleDialogs();
+    }
     expect(later).not.toHaveBeenCalled();
 
     // Where the viewer may not undo, the notice only says what happened.
