@@ -116,8 +116,10 @@ const hideWithConfirmation = async (page: Page, cards: number) => {
   const entry = await lostZoneEntry(page);
   await expect(entry).toContainText(`${String(cards)} card`);
   await entry.click();
-  const dialog = page.getByRole('alertdialog').or(page.getByRole('dialog'));
-  await expect(dialog.getByText('Hide the Lost Zone?')).toBeVisible();
+  // The confirmation by its name: a notice (a toast is a dialog too) may
+  // still be showing beside it.
+  const dialog = page.getByRole('alertdialog', { name: 'Hide the Lost Zone?' });
+  await expect(dialog).toBeVisible();
   await expect(dialog).toContainText(`You have ${String(cards)} card`);
   await dialog.getByRole('button', { name: 'Hide', exact: true }).click();
   await expect(zone(page, 'lostZone', 'local')).toHaveCount(0);
