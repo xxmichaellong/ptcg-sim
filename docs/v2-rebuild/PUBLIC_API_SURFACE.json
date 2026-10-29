@@ -3074,6 +3074,14 @@
               "kind": "value"
             },
             {
+              "name": "consumeImageImportRateLimit",
+              "kind": "value"
+            },
+            {
+              "name": "consumeImageUploadRateLimit",
+              "kind": "value"
+            },
+            {
               "name": "consumeRoomCreationRateLimit",
               "kind": "value"
             },
@@ -3188,6 +3196,14 @@
             {
               "name": "HandshakeResult",
               "kind": "type"
+            },
+            {
+              "name": "IMAGE_IMPORT_RATE_LIMIT_RETRY_SECONDS",
+              "kind": "value"
+            },
+            {
+              "name": "IMAGE_UPLOAD_RATE_LIMIT_RETRY_SECONDS",
+              "kind": "value"
             },
             {
               "name": "initializeNewRoom",

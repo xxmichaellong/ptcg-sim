@@ -97,11 +97,29 @@ import {
   DurableRoomSnapshotStore,
   RoomAlreadyInitializedError,
 } from './durable-storage.js';
+import {
+  handleImageImportRequest,
+  handleImageServeRequest,
+  handleImageUploadRequest,
+  IMAGE_IMPORT_PATH,
+  IMAGE_PATH,
+  servedImageHash,
+} from './images/image-http.js';
+import { sha256Hex as sha256Bytes } from './images/image-bytes.js';
+import {
+  checkImageBytes,
+  imageStoreName,
+  ImageStoreSql,
+  type ImagePutResult,
+  type StoredImage,
+} from './images/image-store.js';
 import { isRoomAlreadyInitialized } from './room-initialization.js';
 import {
   consumeContinuationCreationRateLimit,
   consumeContinuationRestoreRateLimit,
   consumeContinuationRevocationRateLimit,
+  consumeImageImportRateLimit,
+  consumeImageUploadRateLimit,
   consumeRoomCreationRateLimit,
   consumeRoomIngressRateLimit,
   type RoomIngressOperation,
@@ -141,6 +159,8 @@ interface Env {
   readonly PTCG_DECK_FEED: DurableObjectNamespace<PtcgDeckFeed>;
   readonly PTCG_CARD_CATALOG: DurableObjectNamespace<PtcgCardCatalog>;
   readonly PTCG_DECK_INDEX: DurableObjectNamespace<PtcgDeckIndex>;
+  /** Card-back pictures (ADR-041), sixteen stores by hash. */
+  readonly PTCG_IMAGE_STORE: DurableObjectNamespace<PtcgImageStore>;
   /** Optional secret: a Limitless API key raises its rate limit. */
   readonly LIMITLESS_API_KEY?: string;
   /**
@@ -160,6 +180,8 @@ interface Env {
   readonly CONTINUATION_REVOCATION_RATE_LIMITER: RateLimit;
   readonly ROOM_CREATION_RATE_LIMITER: RateLimit;
   readonly ROOM_INGRESS_RATE_LIMITER: RateLimit;
+  readonly IMAGE_UPLOAD_RATE_LIMITER: RateLimit;
+  readonly IMAGE_IMPORT_RATE_LIMITER: RateLimit;
 }
 
 interface SocketAttachment {
@@ -1269,6 +1291,28 @@ export class PtcgCardCatalog extends DurableObject<Env> {
   }
 }
 
+/**
+ * Pictures players upload for their card backs (images/, ADR-041), stored
+ * once each by the SHA-256 of their bytes and spread over sixteen stores by
+ * the hash's first digit. Each store checks the bytes and their hash again.
+ */
+export class PtcgImageStore extends DurableObject<Env> {
+  private readonly store = new ImageStoreSql(this.ctx.storage.sql);
+
+  async put(bytes: Uint8Array): Promise<ImagePutResult> {
+    return this.store.put(new Uint8Array(bytes), Date.now());
+  }
+
+  async get(sha256: string): Promise<StoredImage | null> {
+    return this.store.get(sha256);
+  }
+
+  /** Bans a picture by its hash (moderation, by RPC only). */
+  async block(sha256: string): Promise<void> {
+    this.store.block(sha256, Date.now());
+  }
+}
+
 /** One index for everyone, built from Limitless's online tournaments. */
 const DECK_INDEX_NAME = 'index';
 /** Finishes and tournaments per page. */
@@ -1465,6 +1509,50 @@ const worker: ExportedHandler<Env> = {
           request,
           deckIndex,
           env.PTCG_DECK_INDEX.getByName(DECK_INDEX_NAME)
+        )
+      );
+    }
+    if (url.pathname === IMAGE_PATH) {
+      return observeHttp(telemetry, 'image_upload', () =>
+        handleImageUploadRequest(
+          request,
+          async (bytes) => {
+            // Routed by the hash of what was sent; the store checks both.
+            const checked = checkImageBytes(bytes);
+            if ('refusal' in checked)
+              return { kind: 'invalid', reason: checked.refusal };
+            const sha256 = await sha256Bytes(bytes);
+            return env.PTCG_IMAGE_STORE.getByName(imageStoreName(sha256)).put(
+              bytes
+            );
+          },
+          () =>
+            consumeImageUploadRateLimit(request, env.IMAGE_UPLOAD_RATE_LIMITER)
+        )
+      );
+    }
+    if (url.pathname === IMAGE_IMPORT_PATH) {
+      return observeHttp(telemetry, 'image_import', () =>
+        handleImageImportRequest(
+          request,
+          (input, init) => fetch(input, init),
+          () =>
+            consumeImageImportRateLimit(request, env.IMAGE_IMPORT_RATE_LIMITER)
+        )
+      );
+    }
+    const imageHash = servedImageHash(url.pathname);
+    if (imageHash) {
+      return observeHttp(telemetry, 'image_serve', () =>
+        handleImageServeRequest(
+          request,
+          imageHash,
+          (sha256) =>
+            env.PTCG_IMAGE_STORE.getByName(imageStoreName(sha256)).get(sha256),
+          {
+            cache: edgeCache(),
+            waitUntil: (promise) => ctx.waitUntil(promise),
+          }
         )
       );
     }

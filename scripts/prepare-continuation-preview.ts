@@ -60,6 +60,8 @@ const EXPECTED_RATE_LIMIT_BINDINGS = Object.freeze([
   'CONTINUATION_RESTORE_RATE_LIMITER',
   'CONTINUATION_REVOCATION_RATE_LIMITER',
   'ROOM_INGRESS_RATE_LIMITER',
+  'IMAGE_UPLOAD_RATE_LIMITER',
+  'IMAGE_IMPORT_RATE_LIMITER',
 ]);
 const MAXIMUM_PREVIOUS_CREDENTIAL_BYTES = 8 * 1024;
 const KEY_ID_PATTERN = /^[A-Za-z0-9_-]{1,64}$/u;
@@ -254,7 +256,9 @@ const validateArguments = (
     arguments_.rateNamespaceBase >
       Number.MAX_SAFE_INTEGER - (EXPECTED_RATE_LIMIT_BINDINGS.length - 1)
   ) {
-    throw new Error('--rate-namespace-base cannot allocate four safe IDs');
+    throw new Error(
+      '--rate-namespace-base cannot allocate one safe ID per rate limiter'
+    );
   }
   return arguments_;
 };

@@ -3,6 +3,8 @@ export const CONTINUATION_CREATION_RATE_LIMIT_RETRY_SECONDS = 60;
 export const CONTINUATION_RESTORE_RATE_LIMIT_RETRY_SECONDS = 60;
 export const CONTINUATION_REVOCATION_RATE_LIMIT_RETRY_SECONDS = 60;
 export const ROOM_INGRESS_RATE_LIMIT_RETRY_SECONDS = 60;
+export const IMAGE_UPLOAD_RATE_LIMIT_RETRY_SECONDS = 60;
+export const IMAGE_IMPORT_RATE_LIMIT_RETRY_SECONDS = 60;
 
 export interface EdgeRateLimitBinding {
   readonly limit: (options: {
@@ -139,5 +141,33 @@ export const consumeContinuationRevocationRateLimit = async (
   return {
     allowed: outcome.success,
     retryAfterSeconds: CONTINUATION_REVOCATION_RATE_LIMIT_RETRY_SECONDS,
+  };
+};
+
+/** Card-back pictures uploaded to the image store (ADR-041). */
+export const consumeImageUploadRateLimit = async (
+  request: Request,
+  binding: EdgeRateLimitBinding
+): Promise<RequestRateLimitDecision> => {
+  const outcome = await binding.limit({
+    key: await anonymousRequestRateLimitKey(request, 'image_upload'),
+  });
+  return {
+    allowed: outcome.success,
+    retryAfterSeconds: IMAGE_UPLOAD_RATE_LIMIT_RETRY_SECONDS,
+  };
+};
+
+/** Outside pictures fetched for import (ADR-041). */
+export const consumeImageImportRateLimit = async (
+  request: Request,
+  binding: EdgeRateLimitBinding
+): Promise<RequestRateLimitDecision> => {
+  const outcome = await binding.limit({
+    key: await anonymousRequestRateLimitKey(request, 'image_import'),
+  });
+  return {
+    allowed: outcome.success,
+    retryAfterSeconds: IMAGE_IMPORT_RATE_LIMIT_RETRY_SECONDS,
   };
 };

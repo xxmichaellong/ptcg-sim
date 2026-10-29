@@ -27,6 +27,7 @@
       "!/v2/assets/background1.jpg",
       "!/v2/assets/background2.webp",
       "!/v2/assets/table/*",
+      "!/v2/assets/backs/*",
     ],
   },
   "durable_objects": {
@@ -54,6 +55,10 @@
       {
         "name": "PTCG_DECK_INDEX",
         "class_name": "PtcgDeckIndex",
+      },
+      {
+        "name": "PTCG_IMAGE_STORE",
+        "class_name": "PtcgImageStore",
       },
     ],
   },
@@ -98,6 +103,24 @@
         "period": 60,
       },
     },
+    // Card-back pictures uploaded and outside pictures fetched for import
+    // (ADR-041), per address.
+    {
+      "name": "IMAGE_UPLOAD_RATE_LIMITER",
+      "namespace_id": "260903006",
+      "simple": {
+        "limit": 20,
+        "period": 60,
+      },
+    },
+    {
+      "name": "IMAGE_IMPORT_RATE_LIMITER",
+      "namespace_id": "260903007",
+      "simple": {
+        "limit": 10,
+        "period": 60,
+      },
+    },
   ],
   "exports": {
     "PtcgContinuation": {
@@ -117,6 +140,10 @@
       "storage": "sqlite",
     },
     "PtcgDeckIndex": {
+      "type": "durable-object",
+      "storage": "sqlite",
+    },
+    "PtcgImageStore": {
       "type": "durable-object",
       "storage": "sqlite",
     },
@@ -174,6 +201,10 @@
             "name": "PTCG_DECK_INDEX",
             "class_name": "PtcgDeckIndex",
           },
+          {
+            "name": "PTCG_IMAGE_STORE",
+            "class_name": "PtcgImageStore",
+          },
         ],
       },
       "ratelimits": [
@@ -217,6 +248,22 @@
             "period": 60,
           },
         },
+        {
+          "name": "IMAGE_UPLOAD_RATE_LIMITER",
+          "namespace_id": "260903106",
+          "simple": {
+            "limit": 20,
+            "period": 60,
+          },
+        },
+        {
+          "name": "IMAGE_IMPORT_RATE_LIMITER",
+          "namespace_id": "260903107",
+          "simple": {
+            "limit": 10,
+            "period": 60,
+          },
+        },
       ],
       "exports": {
         "PtcgContinuation": {
@@ -236,6 +283,10 @@
           "storage": "sqlite",
         },
         "PtcgDeckIndex": {
+          "type": "durable-object",
+          "storage": "sqlite",
+        },
+        "PtcgImageStore": {
           "type": "durable-object",
           "storage": "sqlite",
         },

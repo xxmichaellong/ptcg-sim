@@ -190,7 +190,16 @@ describe('continuation managed-preview provisioner', () => {
     });
     assert.deepEqual(
       result.manifest.rateLimitNamespaces.map(({ namespaceId }) => namespaceId),
-      ['260904101', '260904102', '260904103', '260904104', '260904105']
+      [
+        '260904101',
+        '260904102',
+        '260904103',
+        '260904104',
+        '260904105',
+        // The image store's upload and import budgets (ADR-041).
+        '260904106',
+        '260904107',
+      ]
     );
     assert.deepEqual(
       (
