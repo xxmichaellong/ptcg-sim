@@ -314,6 +314,14 @@
     ],
     "translation": "{cardLabel}: mga aksyon"
   },
+  "KVwR0v": {
+    "message": "{cardName} is on the Bench.",
+    "translation": "Nasa Bench ang {cardName}."
+  },
+  "ZpZRof": {
+    "message": "{cardName} isn't in play.",
+    "translation": "Wala sa play ang {cardName}."
+  },
   "cAQ-gI": {
     "message": "{cardName}, {copies, plural, one {# copy} other {# copies}}",
     "comments": [
@@ -422,6 +430,10 @@
     "message": "{count, plural, one {# Radiant card (max 1).} other {# Radiant cards (max 1).}}",
     "translation": "{count, plural, one {# Radiant card (max 1).} other {# Radiant card (max 1).}}"
   },
+  "MJC1vQ": {
+    "message": "{count, plural, one {Can't do that with this card} other {Can't do that with these cards}}",
+    "translation": "{count, plural, one {Hindi ito magagawa sa card na ito} other {Hindi ito magagawa sa mga card na ito}}"
+  },
   "-gAzkm": {
     "message": "{count, plural, one {Discard hand and draw # card} other {Discard hand and draw # cards}}",
     "translation": "{count, plural, one {I-discard ang hand at mag-draw ng # card} other {I-discard ang hand at mag-draw ng # card}}"
@@ -457,6 +469,38 @@
   "aN0Z_E": {
     "message": "{count, plural, one {Shuffle hand to bottom and draw # card} other {Shuffle hand to bottom and draw # cards}}",
     "translation": "{count, plural, one {I-shuffle ang hand sa ilalim ng deck at mag-draw ng # card} other {I-shuffle ang hand sa ilalim ng deck at mag-draw ng # card}}"
+  },
+  "19mL4O": {
+    "message": "{count, plural, other {All # are already in hand}}",
+    "translation": "{count, plural, other {Nasa hand na ang lahat ng #}}"
+  },
+  "jLjgz7": {
+    "message": "{count, plural, other {All # are already in the Active Spot}}",
+    "translation": "{count, plural, other {Nasa Active Spot na ang lahat ng #}}"
+  },
+  "Hsl0oE": {
+    "message": "{count, plural, other {All # are already in the discard pile}}",
+    "translation": "{count, plural, other {Nasa discard pile na ang lahat ng #}}"
+  },
+  "0IQSM-": {
+    "message": "{count, plural, other {All # are already in the Lost Zone}}",
+    "translation": "{count, plural, other {Nasa Lost Zone na ang lahat ng #}}"
+  },
+  "lLOV6i": {
+    "message": "{count, plural, other {All # are already in the Prizes}}",
+    "translation": "{count, plural, other {Nasa Prizes na ang lahat ng #}}"
+  },
+  "o2Cq5Y": {
+    "message": "{count, plural, other {All # are already on the Bench}}",
+    "translation": "{count, plural, other {Nasa Bench na ang lahat ng #}}"
+  },
+  "ANFeum": {
+    "message": "{count, plural, other {All # are already on the Board}}",
+    "translation": "{count, plural, other {Nasa board na ang lahat ng #}}"
+  },
+  "n5DC_e": {
+    "message": "{count, plural, other {All # are already the Stadium}}",
+    "translation": "{count, plural, other {Stadium na ang lahat ng #}}"
   },
   "hMKADB": {
     "message": "{count} × {cardName} ({print}). Details",
@@ -1129,6 +1173,10 @@
     "message": "A card's picture address is too long.",
     "translation": "Masyadong mahaba ang address ng larawan ng isang card."
   },
+  "fbfxt7": {
+    "message": "A Pokémon in play can't join a group going to the Bench",
+    "translation": "Hindi puwedeng isama ang Pokémon na nasa play sa grupong ilalagay sa Bench"
+  },
   "qLI-h5": {
     "message": "A whole number from {0} to {1}",
     "translation": "Isang buong numero mula {0} hanggang {1}"
@@ -1274,6 +1322,11 @@
     "message": "Added by hand · legality not checked",
     "translation": "Manu-manong idinagdag · hindi sinuri ang legality"
   },
+  "vJUsnL": {
+    "message": "All",
+    "context": "shortcut key caption",
+    "translation": "Lahat"
+  },
   "wZthGJ": {
     "message": "All lessons",
     "translation": "Lahat ng aralin"
@@ -1328,6 +1381,10 @@
   "GRgK04": {
     "message": "Already on the Board",
     "translation": "Nasa Board na"
+  },
+  "Y3udby": {
+    "message": "Already part of the selected Pokémon",
+    "translation": "Bahagi na ng napiling Pokémon"
   },
   "uNUEdZ": {
     "message": "Already the Stadium",
@@ -1560,6 +1617,10 @@
     "message": "Basic Energy",
     "translation": "Basic Energy"
   },
+  "4Iwoxh": {
+    "message": "Because of {cardName}.",
+    "translation": "Dahil sa {cardName}."
+  },
   "dkk7vA": {
     "message": "Bench",
     "context": "shortcut key caption",
@@ -1686,6 +1747,10 @@
   "2lorx9": {
     "message": "Can't be changed",
     "translation": "Hindi mababago"
+  },
+  "eBqQIX": {
+    "message": "Can't move these together",
+    "translation": "Hindi maaaring ilipat nang sabay ang mga ito"
   },
   "Sq35G-": {
     "message": "Can't read the clipboard",
@@ -2610,6 +2675,13 @@
     "message": "Esc",
     "context": "keyboard key",
     "translation": "Esc"
+  },
+  "M4cEzY": {
+    "message": "Every card where the focused card lies (⌘A on a Mac)",
+    "comments": [
+      "Ctrl+A selects every card in the same place: a hand, a Bench…"
+    ],
+    "translation": "Lahat ng card sa kinalalagyan ng naka-focus na card (⌘A sa Mac)"
   },
   "8aoXpa": {
     "message": "Every key is under <0>{0}</0>, in <1>{1}</1>.",
@@ -3984,6 +4056,10 @@
     "message": "No match",
     "translation": "Walang tugma"
   },
+  "FQDz2b": {
+    "message": "No Pokémon can take all of these",
+    "translation": "Walang Pokémon na makakakuha ng lahat ng ito"
+  },
   "ebeFtm": {
     "message": "No shortcut matches “{search}”.",
     "translation": "Walang shortcut na tugma sa “{search}”."
@@ -4060,6 +4136,10 @@
   "W8zlv3": {
     "message": "Not yours to do",
     "translation": "Hindi mo ito puwedeng gawin"
+  },
+  "4QPb_7": {
+    "message": "Nothing is selected",
+    "translation": "Walang napili"
   },
   "aq4Vb1": {
     "message": "Nothing selected",
@@ -4153,9 +4233,25 @@
     ],
     "translation": "Mga {formatLabel}-legal lang"
   },
+  "dewWX8": {
+    "message": "Only attachments can go on a Pokémon together",
+    "translation": "Mga naka-attach na card lang ang puwedeng ilagay nang sabay sa isang Pokémon"
+  },
+  "dfVuV_": {
+    "message": "Only one Pokémon can be Active",
+    "translation": "Isang Pokémon lang ang puwedeng maging Active"
+  },
+  "LYmBTw": {
+    "message": "Only one Stadium at a time",
+    "translation": "Isang Stadium lang sa isang pagkakataon"
+  },
   "XXBK3z": {
     "message": "Only players can change the table.",
     "translation": "Mga player lang ang puwedeng magbago ng table."
+  },
+  "xGOaQc": {
+    "message": "Only Pokémon in play take damage",
+    "translation": "Mga Pokémon lang na nasa play ang puwedeng ma-damage"
   },
   "kQ0v6x": {
     "message": "Only that seat's player can.",
@@ -4192,6 +4288,10 @@
   "rT710w": {
     "message": "Open the link again in a moment.",
     "translation": "Buksan ulit ang link mamaya."
+  },
+  "FxfASP": {
+    "message": "Open the pile to pick cards from it",
+    "translation": "Buksan ang pile para pumili ng card mula rito"
   },
   "cCMcAY": {
     "message": "Open their deck",
@@ -4539,6 +4639,10 @@
   "iM-hRS": {
     "message": "Press Enter again to confirm",
     "translation": "Pindutin ulit ang Enter para kumpirmahin"
+  },
+  "YwRyMW": {
+    "message": "Press Esc to put the cards down",
+    "translation": "Pindutin ang Esc para ibaba ang mga card"
   },
   "drY1M6": {
     "message": "Press keys…",
@@ -5174,6 +5278,28 @@
     "message": "Seat taken",
     "translation": "May nakaupo na"
   },
+  "4UhpnZ": {
+    "message": "Select",
+    "context": "shortcut key caption",
+    "translation": "Pumili"
+  },
+  "mGWCew": {
+    "message": "Select all here",
+    "translation": "Piliin lahat dito"
+  },
+  "OWCzWu": {
+    "message": "Select one card for that",
+    "translation": "Pumili ng isang card para diyan"
+  },
+  "FWpeqJ": {
+    "message": "Select or deselect",
+    "translation": "Pumili o alisin sa pagkapili"
+  },
+  "KccOw9": {
+    "message": "Select several cards",
+    "context": "shortcut group",
+    "translation": "Pumili ng maraming card"
+  },
   "tGu7Tl": {
     "message": "Selected card",
     "comments": [
@@ -5577,6 +5703,10 @@
     "message": "Special Condition…",
     "translation": "Special Condition…"
   },
+  "MzE_Dj": {
+    "message": "Special Conditions go only on Active Pokémon",
+    "translation": "Sa Active Pokémon lang puwedeng ilagay ang Special Conditions"
+  },
   "0kjUmj": {
     "message": "Special Energy",
     "translation": "Special Energy"
@@ -5930,6 +6060,10 @@
     "message": "The card went back.",
     "translation": "Bumalik ang card."
   },
+  "LfIGmJ": {
+    "message": "The cards went back.",
+    "translation": "Bumalik ang mga card."
+  },
   "FQpTJZ": {
     "message": "The clipboard isn't available here",
     "translation": "Hindi available ang clipboard dito"
@@ -5978,6 +6112,10 @@
     "message": "The file couldn't be saved",
     "translation": "Hindi na-save ang file"
   },
+  "KsKHA0": {
+    "message": "The focused card, or the one under the pointer",
+    "translation": "Ang naka-focus na card, o ang nasa ilalim ng pointer"
+  },
   "lom6tE": {
     "message": "The last move is still sending.",
     "translation": "Ipinapadala pa ang huling galaw."
@@ -5994,9 +6132,17 @@
     "message": "The room no longer has this seat.",
     "translation": "Wala na sa room ang upuang ito."
   },
+  "Ymn83q": {
+    "message": "The table changed",
+    "translation": "Nagbago ang table"
+  },
   "m6ooXP": {
     "message": "The table changed, so the card went back.",
     "translation": "Nagbago ang table, kaya bumalik ang card."
+  },
+  "sM9zJK": {
+    "message": "The table changed, so the cards went back.",
+    "translation": "Nagbago ang table, kaya bumalik ang mga card."
   },
   "u1UbSB": {
     "message": "The table changed. Try again.",
@@ -6415,6 +6561,10 @@
     "message": "Untitled deck",
     "translation": "Walang pamagat na deck"
   },
+  "k4TQ-Z": {
+    "message": "Up to 60 cards can be selected",
+    "translation": "Hanggang 60 card ang puwedeng piliin"
+  },
   "gANddk": {
     "message": "Uploading…",
     "translation": "Nag-a-upload…"
@@ -6548,6 +6698,10 @@
     "message": "Yes",
     "context": "filter",
     "translation": "Oo"
+  },
+  "aylG7j": {
+    "message": "You can't move that card",
+    "translation": "Hindi mo mailipat ang card na iyon"
   },
   "1hxqre": {
     "message": "You'll invite players from the room.",

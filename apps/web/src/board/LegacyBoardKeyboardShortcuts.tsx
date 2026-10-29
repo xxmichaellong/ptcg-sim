@@ -1,19 +1,25 @@
 import { useEffect } from 'react';
+import type { ViewCardId } from '@ptcgsim/game-core';
 import { selectedCardIdOf, type BoardIntent } from '@ptcgsim/renderer-contract';
 
+import type { KeyInput } from '../hotkeys/chords.js';
 import { useKeymap } from '../hotkeys/hotkey-preferences.js';
 import type { HotkeyMode, Keymap } from '../hotkeys/keymap.js';
 import { toggleShortcutsDialog } from '../hotkeys/shortcuts-dialog-state.js';
 import { isOverlayKeyTarget } from '../ui/overlay-surface.js';
+import { toast, type ToastOptions } from '../ui/toast.js';
 import { actingPlayerIdOf } from './acting-seat.js';
 import type { BoardSessionControllerState } from './BoardSessionController.js';
+import { selectOneNotice, tableKeyNotice } from './group-notice.js';
 import {
   resolveLegacyBoardGlobalShortcutKey,
+  resolveLegacyBoardGroupShortcutKey,
   resolveLegacyBoardShortcutKey,
   resolveLegacyBoardUnselectedShortcutKey,
   type LegacyBoardShortcutActionRequest,
   type LegacyBoardShortcutKey,
 } from './resolveLegacyBoardShortcutAction.js';
+import { selectAllCardIds } from './select-all.js';
 
 export interface LegacyBoardKeyboardShortcutsProps {
   readonly state: BoardSessionControllerState;
@@ -22,7 +28,13 @@ export interface LegacyBoardKeyboardShortcutsProps {
   readonly onLocalIntent?: (
     intent: Extract<
       BoardIntent,
-      { readonly kind: 'CardPreviewRequested' | 'ZoneOpened' }
+      {
+        readonly kind:
+          | 'CardPreviewRequested'
+          | 'ZoneOpened'
+          | 'CardSelected'
+          | 'CardsSelected';
+      }
     >
   ) => void;
   /** Local board-perspective swap; it never enters the command reducer. */
@@ -47,6 +59,8 @@ export interface LegacyBoardKeyboardShortcutsProps {
   readonly onToggleShortcuts?: (mode: HotkeyMode) => void;
   /** Something over the whole table owns the keyboard for now. */
   readonly suspended?: boolean;
+  /** Says why a key did nothing with several cards selected. */
+  readonly onNotice?: (notice: ToastOptions) => void;
 }
 
 const EDITABLE_SHORTCUT_TARGET =
@@ -91,26 +105,108 @@ const isWorkAreaTableKeyTarget = (event: KeyboardEvent): boolean =>
 
 const isSelectedOpenedZoneCardTarget = (
   target: EventTarget | null,
-  selectedCardId: string | null,
+  selection: readonly string[],
   openedZoneId: string | null
 ): boolean => {
-  if (!(target instanceof Element) || selectedCardId === null) {
+  if (!(target instanceof Element) || selection.length === 0) {
     return false;
   }
   // A work-area popup card is a table card in its own right: once selected
   // there, v1's keybinds move it like any other selected card.
   const workAreaCard = target.closest<HTMLElement>('[data-work-area-card-id]');
   if (workAreaCard) {
-    return workAreaCard.dataset.workAreaCardId === selectedCardId;
+    return selection.includes(workAreaCard.dataset.workAreaCardId ?? '');
   }
   if (openedZoneId === null) return false;
   const card = target.closest<HTMLElement>('[data-overlay-card-id]');
   const zone = card?.closest<HTMLElement>('[data-legacy-zone-browser]');
   return (
-    card?.dataset.overlayCardId === selectedCardId &&
+    selection.includes(card?.dataset.overlayCardId ?? '') &&
     zone?.dataset.zoneBrowserId === openedZoneId
   );
 };
+
+/** A card in an overlay (a pile's viewer, a window of cards) has the focus. */
+const isOverlayCardTarget = (target: EventTarget | null): boolean =>
+  target instanceof Element &&
+  target.closest('[data-overlay-card-id], [data-work-area-card-id]') !== null;
+
+/** The card a key press is on: the focused card, tile or window card. */
+const focusedCardOf = (target: EventTarget | null): ViewCardId | null => {
+  if (!(target instanceof Element)) return null;
+  const element = target.closest<HTMLElement>(
+    '[data-overlay-card-id], [data-work-area-card-id], [data-card-id]'
+  );
+  const id =
+    element?.dataset.overlayCardId ??
+    element?.dataset.workAreaCardId ??
+    element?.dataset.cardId;
+  return id ? (id as ViewCardId) : null;
+};
+
+/**
+ * The card under the pointer: the one whose element is hovered, as the
+ * table's own hover look reads it (a tile of the open pile before the
+ * table under it). The table reports its hover to the card inspector, not
+ * to the presentation, so the element is asked.
+ */
+const pointedCardOf = (): ViewCardId | null => {
+  let hovered: readonly HTMLElement[];
+  try {
+    hovered = [
+      ...document.querySelectorAll<HTMLElement>(
+        '[data-overlay-card-id]:hover, [data-work-area-card-id]:hover, [data-card-id]:hover'
+      ),
+    ];
+  } catch {
+    return null;
+  }
+  const element =
+    hovered.find((candidate) => candidate.dataset.overlayCardId) ??
+    hovered.find((candidate) => candidate.dataset.workAreaCardId) ??
+    hovered.at(-1);
+  const id =
+    element?.dataset.overlayCardId ??
+    element?.dataset.workAreaCardId ??
+    element?.dataset.cardId;
+  return id ? (id as ViewCardId) : null;
+};
+
+/**
+ * The selection's own keys (ADR-042 §2), wherever they are: `x` takes a
+ * card in or out, Ctrl/⌘+A takes every card where it lies. ⌘A is Ctrl+A
+ * on a Mac while the shortcut keeps its default.
+ */
+const selectionShortcutOf = (
+  event: KeyboardEvent,
+  keymap: Keymap,
+  mode: HotkeyMode
+): 'select.toggle' | 'select.all' | null => {
+  const id = keymap.resolve(event, mode);
+  if (id === 'select.toggle' || id === 'select.all') return id;
+  const commandA =
+    event.metaKey &&
+    !event.ctrlKey &&
+    !event.altKey &&
+    (event.key.toLowerCase() === 'a' || event.code === 'KeyA');
+  return commandA && keymap.isDefault('select.all') ? 'select.all' : null;
+};
+
+/**
+ * A key press as a group reads it: with several selected, Shift means
+ * nothing (Shift+G is G, Shift+→ is →), as players keep it held after
+ * picking cards with it.
+ */
+const withoutShift = (event: KeyboardEvent): KeyInput => ({
+  key: event.key,
+  code: event.code,
+  altKey: event.altKey,
+  ctrlKey: event.ctrlKey,
+  shiftKey: false,
+  metaKey: event.metaKey,
+  getModifierState: (modifier) =>
+    modifier !== 'Shift' && event.getModifierState(modifier),
+});
 
 /**
  * Enter on something that Enter already activates -- a card, a zone, or any
@@ -147,10 +243,14 @@ export const LegacyBoardKeyboardShortcuts = ({
   keymap: suppliedKeymap,
   onToggleShortcuts = toggleShortcutsDialog,
   suspended = false,
+  onNotice = toast,
 }: LegacyBoardKeyboardShortcutsProps) => {
   const pageKeymap = useKeymap();
   const keymap = suppliedKeymap ?? pageKeymap;
   const selectedCardId = selectedCardIdOf(state.presentation);
+  const selection = state.presentation.selection;
+  // Several selected: the group's keys (ADR-042 §1), read as card keys.
+  const groupSelected = selection.length > 1;
   const isSpectator = state.view?.viewer.kind === 'spectator';
   // V opens the deck of the seat at the bottom of the board (v1's
   // initiator), which a flipped Solo board makes the other seat.
@@ -170,6 +270,9 @@ export const LegacyBoardKeyboardShortcuts = ({
   )?.id;
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent): void => {
+      const mode: HotkeyMode =
+        selectedCardId === null && !groupSelected ? 'table' : 'card';
+      const selectionShortcut = selectionShortcutOf(event, keymap, mode);
       if (
         event.defaultPrevented ||
         event.isComposing ||
@@ -182,13 +285,14 @@ export const LegacyBoardKeyboardShortcuts = ({
           !isWorkAreaTableKeyTarget(event) &&
           !isSelectedOpenedZoneCardTarget(
             event.target,
-            selectedCardId,
+            selection,
             state.presentation.openedZoneId
-          ))
+          ) &&
+          // A pile's tile or a window's card takes `x` and Ctrl/⌘+A.
+          !(selectionShortcut !== null && isOverlayCardTarget(event.target)))
       ) {
         return;
       }
-      const mode: HotkeyMode = selectedCardId === null ? 'table' : 'card';
       // A held key acts once: the system's key repeat would otherwise set
       // up, draw or discard again many times a second. Its default stays
       // kept from the browser (a held Alt+D must not reach the address bar).
@@ -209,7 +313,27 @@ export const LegacyBoardKeyboardShortcuts = ({
         onDismissPresentation?.();
         return;
       }
-      const translation = keymap.translate(event, mode);
+      if (selectionShortcut === 'select.toggle') {
+        // The focused card, or failing that the one under the pointer.
+        const cardId =
+          focusedCardOf(event.target) ??
+          pointedCardOf() ??
+          state.presentation.hoveredCardId;
+        if (cardId === null) return;
+        if (event.cancelable) event.preventDefault();
+        onLocalIntent?.({ kind: 'CardSelected', cardId, mode: 'add' });
+        return;
+      }
+      if (selectionShortcut === 'select.all') {
+        const cardIds = selectAllCardIds(state, focusedCardOf(event.target));
+        // Nowhere to select in: the browser's own Select All.
+        if (cardIds === null) return;
+        if (event.cancelable) event.preventDefault();
+        onLocalIntent?.({ kind: 'CardsSelected', cardIds, mode: 'replace' });
+        return;
+      }
+      const keyInput: KeyInput = groupSelected ? withoutShift(event) : event;
+      const translation = keymap.translate(keyInput, mode);
       if (translation.kind === 'freed') return;
       // The player's own key: handled as the default key it stands for, and
       // kept from the browser, which may have its own use for it.
@@ -217,7 +341,7 @@ export const LegacyBoardKeyboardShortcuts = ({
         event.preventDefault();
       }
       const input: LegacyBoardShortcutKey =
-        translation.kind === 'moved' ? translation.input : event;
+        translation.kind === 'moved' ? translation.input : keyInput;
       const flipsBoard =
         (input.key.toLowerCase() === 'f' || input.code === 'KeyF') &&
         (input.altKey || input.getModifierState?.('Alt') === true);
@@ -235,6 +359,41 @@ export const LegacyBoardKeyboardShortcuts = ({
       // player keys without reopening the deck or mutating the selected card.
       if ((pressesR || viewsDeckOrCard) && state.overlays.preview !== null) {
         if (!isSpectator && event.cancelable) event.preventDefault();
+        return;
+      }
+      if (groupSelected) {
+        if (isSpectator) return;
+        const groupKey = resolveLegacyBoardGroupShortcutKey(input);
+        if (groupKey) {
+          if (event.cancelable) event.preventDefault();
+          if (groupKey.kind === 'action') {
+            onRequest({ action: 'groupAction', group: groupKey.action });
+          } else if (groupKey.kind === 'attach') {
+            onRequest({ action: 'beginGroupAttach' });
+          } else {
+            onNotice(selectOneNotice());
+          }
+          return;
+        }
+        // Enter, Alt+Enter, / and the coin are the table's at any time.
+        const tableRequest = isNativeEnterActivationTarget(event)
+          ? null
+          : resolveLegacyBoardGlobalShortcutKey(input);
+        if (tableRequest) {
+          if (event.cancelable) event.preventDefault();
+          onRequest(tableRequest);
+          return;
+        }
+        // A table key (draw, shuffle the deck, Alt+D…) waits until the
+        // cards are put down, rather than acting behind them.
+        if (
+          resolveLegacyBoardUnselectedShortcutKey(input) !== null ||
+          input.key.toLowerCase() === 'm' ||
+          input.code === 'KeyM'
+        ) {
+          if (event.cancelable) event.preventDefault();
+          onNotice(tableKeyNotice());
+        }
         return;
       }
       if (viewsDeckOrCard && selectedCardId !== null) {
@@ -323,6 +482,10 @@ export const LegacyBoardKeyboardShortcuts = ({
     suspended,
     keymap,
     onToggleShortcuts,
+    onNotice,
+    state,
+    selection,
+    groupSelected,
     state.overlays.preview,
     state.presentation.openedZoneId,
     state.view?.viewer.kind,

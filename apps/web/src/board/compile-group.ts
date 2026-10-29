@@ -1,12 +1,12 @@
-import {
-  CARD_STEP_TYPES,
-  type CardStepType,
-  type MatchViewState,
-  type ViewCardId,
+import type {
+  CardStepType,
+  MatchViewState,
+  ViewCardId,
 } from '@ptcgsim/game-core';
 import {
   cardStepMakesPokemon,
   MAX_CARD_STEPS,
+  WireCardStepSchema,
   type WireCardStep,
   type WireGameCommand,
 } from '@ptcgsim/protocol';
@@ -148,7 +148,14 @@ type Resolution =
 const refuse = (reason: GroupRefusalReason, cardId?: ViewCardId): Refusal =>
   cardId === undefined ? { ok: false, reason } : { ok: false, reason, cardId };
 
-const STEP_TYPES: ReadonlySet<string> = new Set(CARD_STEP_TYPES);
+/**
+ * The commands a group's move may be made of: the wire's own list, the one
+ * the room checks each step against (game-core's `CARD_STEP_TYPES` stays
+ * out of the web bundle).
+ */
+const STEP_TYPES: ReadonlySet<string> = new Set(
+  WireCardStepSchema.options.map((schema) => schema.entries.type.literal)
+);
 
 /** A single command a group's move may be made of. */
 const isCardStep = (

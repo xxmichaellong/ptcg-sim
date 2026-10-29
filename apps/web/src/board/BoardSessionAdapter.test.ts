@@ -982,12 +982,52 @@ describe('BoardSessionAdapter with real session coordinators', () => {
     test.live.disconnect();
   });
 
-  it('takes a group action through the controller, which sends nothing until groups are built', () => {
+  it('takes a group action through the controller, which sends nothing with nothing selected', () => {
     const test = setup();
     test.socket.serverOpen();
     test.socket.serverMessage(welcome(viewAt(1)));
     test.adapter.emitGroupAction({ kind: 'send', to: 'discard' }, 'palette');
     expect(test.submissions).toEqual([]);
+    test.adapter.dispose();
+    test.replay.dispose();
+    test.live.disconnect();
+  });
+
+  it("gives a group's selection back when the room refuses its one move", () => {
+    const test = setup();
+    test.socket.serverOpen();
+    test.socket.serverMessage(welcome(viewAt(1)));
+    const view = test.adapter.getSnapshot().view!;
+    const hand = Object.values(view.zones).find(
+      (zone) => zone.kind === 'hand' && zone.ownerId === 'spike-blue'
+    )!;
+    const cardIds = hand.cards.slice(0, 2).map((card) => card.id);
+    expect(cardIds).toHaveLength(2);
+    test.adapter.emitIntent({
+      kind: 'CardsSelected',
+      cardIds,
+      mode: 'replace',
+    });
+    expect(test.adapter.getSnapshot().presentation.selection).toEqual(cardIds);
+    test.adapter.emitGroupAction({ kind: 'send', to: 'discard' });
+    expect(test.submissions.at(-1)?.result.queued).toBe(true);
+    expect(
+      (test.submissions.at(-1)?.command as { readonly type: string }).type
+    ).toBe('ApplyCardSteps');
+    expect(test.adapter.getSnapshot().presentation.selection).toEqual([]);
+    test.socket.serverMessage({
+      type: 'CommandResult',
+      protocolVersion: PROTOCOL_VERSION,
+      commandId: 'board-command-1',
+      clientSequence: 1,
+      accepted: false,
+      revision: 1,
+      code: 'stale_reference',
+    });
+    expect(test.refusals.map((refusal) => refusal.commandType)).toEqual([
+      'ApplyCardSteps',
+    ]);
+    expect(test.adapter.getSnapshot().presentation.selection).toEqual(cardIds);
     test.adapter.dispose();
     test.replay.dispose();
     test.live.disconnect();

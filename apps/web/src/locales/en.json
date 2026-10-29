@@ -314,6 +314,14 @@
     ],
     "translation": "{cardLabel}: actions"
   },
+  "KVwR0v": {
+    "message": "{cardName} is on the Bench.",
+    "translation": "{cardName} is on the Bench."
+  },
+  "ZpZRof": {
+    "message": "{cardName} isn't in play.",
+    "translation": "{cardName} isn't in play."
+  },
   "cAQ-gI": {
     "message": "{cardName}, {copies, plural, one {# copy} other {# copies}}",
     "comments": [
@@ -422,6 +430,10 @@
     "message": "{count, plural, one {# Radiant card (max 1).} other {# Radiant cards (max 1).}}",
     "translation": "{count, plural, one {# Radiant card (max 1).} other {# Radiant cards (max 1).}}"
   },
+  "MJC1vQ": {
+    "message": "{count, plural, one {Can't do that with this card} other {Can't do that with these cards}}",
+    "translation": "{count, plural, one {Can't do that with this card} other {Can't do that with these cards}}"
+  },
   "-gAzkm": {
     "message": "{count, plural, one {Discard hand and draw # card} other {Discard hand and draw # cards}}",
     "translation": "{count, plural, one {Discard hand and draw # card} other {Discard hand and draw # cards}}"
@@ -457,6 +469,38 @@
   "aN0Z_E": {
     "message": "{count, plural, one {Shuffle hand to bottom and draw # card} other {Shuffle hand to bottom and draw # cards}}",
     "translation": "{count, plural, one {Shuffle hand to bottom and draw # card} other {Shuffle hand to bottom and draw # cards}}"
+  },
+  "19mL4O": {
+    "message": "{count, plural, other {All # are already in hand}}",
+    "translation": "{count, plural, other {All # are already in hand}}"
+  },
+  "jLjgz7": {
+    "message": "{count, plural, other {All # are already in the Active Spot}}",
+    "translation": "{count, plural, other {All # are already in the Active Spot}}"
+  },
+  "Hsl0oE": {
+    "message": "{count, plural, other {All # are already in the discard pile}}",
+    "translation": "{count, plural, other {All # are already in the discard pile}}"
+  },
+  "0IQSM-": {
+    "message": "{count, plural, other {All # are already in the Lost Zone}}",
+    "translation": "{count, plural, other {All # are already in the Lost Zone}}"
+  },
+  "lLOV6i": {
+    "message": "{count, plural, other {All # are already in the Prizes}}",
+    "translation": "{count, plural, other {All # are already in the Prizes}}"
+  },
+  "o2Cq5Y": {
+    "message": "{count, plural, other {All # are already on the Bench}}",
+    "translation": "{count, plural, other {All # are already on the Bench}}"
+  },
+  "ANFeum": {
+    "message": "{count, plural, other {All # are already on the Board}}",
+    "translation": "{count, plural, other {All # are already on the Board}}"
+  },
+  "n5DC_e": {
+    "message": "{count, plural, other {All # are already the Stadium}}",
+    "translation": "{count, plural, other {All # are already the Stadium}}"
   },
   "hMKADB": {
     "message": "{count} × {cardName} ({print}). Details",
@@ -1129,6 +1173,10 @@
     "message": "A card's picture address is too long.",
     "translation": "A card's picture address is too long."
   },
+  "fbfxt7": {
+    "message": "A Pokémon in play can't join a group going to the Bench",
+    "translation": "A Pokémon in play can't join a group going to the Bench"
+  },
   "qLI-h5": {
     "message": "A whole number from {0} to {1}",
     "translation": "A whole number from {0} to {1}"
@@ -1274,6 +1322,11 @@
     "message": "Added by hand · legality not checked",
     "translation": "Added by hand · legality not checked"
   },
+  "vJUsnL": {
+    "message": "All",
+    "context": "shortcut key caption",
+    "translation": "All"
+  },
   "wZthGJ": {
     "message": "All lessons",
     "translation": "All lessons"
@@ -1328,6 +1381,10 @@
   "GRgK04": {
     "message": "Already on the Board",
     "translation": "Already on the Board"
+  },
+  "Y3udby": {
+    "message": "Already part of the selected Pokémon",
+    "translation": "Already part of the selected Pokémon"
   },
   "uNUEdZ": {
     "message": "Already the Stadium",
@@ -1560,6 +1617,10 @@
     "message": "Basic Energy",
     "translation": "Basic Energy"
   },
+  "4Iwoxh": {
+    "message": "Because of {cardName}.",
+    "translation": "Because of {cardName}."
+  },
   "dkk7vA": {
     "message": "Bench",
     "context": "shortcut key caption",
@@ -1686,6 +1747,10 @@
   "2lorx9": {
     "message": "Can't be changed",
     "translation": "Can't be changed"
+  },
+  "eBqQIX": {
+    "message": "Can't move these together",
+    "translation": "Can't move these together"
   },
   "Sq35G-": {
     "message": "Can't read the clipboard",
@@ -2610,6 +2675,13 @@
     "message": "Esc",
     "context": "keyboard key",
     "translation": "Esc"
+  },
+  "M4cEzY": {
+    "message": "Every card where the focused card lies (⌘A on a Mac)",
+    "comments": [
+      "Ctrl+A selects every card in the same place: a hand, a Bench…"
+    ],
+    "translation": "Every card where the focused card lies (⌘A on a Mac)"
   },
   "8aoXpa": {
     "message": "Every key is under <0>{0}</0>, in <1>{1}</1>.",
@@ -3984,6 +4056,10 @@
     "message": "No match",
     "translation": "No match"
   },
+  "FQDz2b": {
+    "message": "No Pokémon can take all of these",
+    "translation": "No Pokémon can take all of these"
+  },
   "ebeFtm": {
     "message": "No shortcut matches “{search}”.",
     "translation": "No shortcut matches “{search}”."
@@ -4060,6 +4136,10 @@
   "W8zlv3": {
     "message": "Not yours to do",
     "translation": "Not yours to do"
+  },
+  "4QPb_7": {
+    "message": "Nothing is selected",
+    "translation": "Nothing is selected"
   },
   "aq4Vb1": {
     "message": "Nothing selected",
@@ -4153,9 +4233,25 @@
     ],
     "translation": "Only {formatLabel}-legal"
   },
+  "dewWX8": {
+    "message": "Only attachments can go on a Pokémon together",
+    "translation": "Only attachments can go on a Pokémon together"
+  },
+  "dfVuV_": {
+    "message": "Only one Pokémon can be Active",
+    "translation": "Only one Pokémon can be Active"
+  },
+  "LYmBTw": {
+    "message": "Only one Stadium at a time",
+    "translation": "Only one Stadium at a time"
+  },
   "XXBK3z": {
     "message": "Only players can change the table.",
     "translation": "Only players can change the table."
+  },
+  "xGOaQc": {
+    "message": "Only Pokémon in play take damage",
+    "translation": "Only Pokémon in play take damage"
   },
   "kQ0v6x": {
     "message": "Only that seat's player can.",
@@ -4192,6 +4288,10 @@
   "rT710w": {
     "message": "Open the link again in a moment.",
     "translation": "Open the link again in a moment."
+  },
+  "FxfASP": {
+    "message": "Open the pile to pick cards from it",
+    "translation": "Open the pile to pick cards from it"
   },
   "cCMcAY": {
     "message": "Open their deck",
@@ -4539,6 +4639,10 @@
   "iM-hRS": {
     "message": "Press Enter again to confirm",
     "translation": "Press Enter again to confirm"
+  },
+  "YwRyMW": {
+    "message": "Press Esc to put the cards down",
+    "translation": "Press Esc to put the cards down"
   },
   "drY1M6": {
     "message": "Press keys…",
@@ -5174,6 +5278,28 @@
     "message": "Seat taken",
     "translation": "Seat taken"
   },
+  "4UhpnZ": {
+    "message": "Select",
+    "context": "shortcut key caption",
+    "translation": "Select"
+  },
+  "mGWCew": {
+    "message": "Select all here",
+    "translation": "Select all here"
+  },
+  "OWCzWu": {
+    "message": "Select one card for that",
+    "translation": "Select one card for that"
+  },
+  "FWpeqJ": {
+    "message": "Select or deselect",
+    "translation": "Select or deselect"
+  },
+  "KccOw9": {
+    "message": "Select several cards",
+    "context": "shortcut group",
+    "translation": "Select several cards"
+  },
   "tGu7Tl": {
     "message": "Selected card",
     "comments": [
@@ -5577,6 +5703,10 @@
     "message": "Special Condition…",
     "translation": "Special Condition…"
   },
+  "MzE_Dj": {
+    "message": "Special Conditions go only on Active Pokémon",
+    "translation": "Special Conditions go only on Active Pokémon"
+  },
   "0kjUmj": {
     "message": "Special Energy",
     "translation": "Special Energy"
@@ -5930,6 +6060,10 @@
     "message": "The card went back.",
     "translation": "The card went back."
   },
+  "LfIGmJ": {
+    "message": "The cards went back.",
+    "translation": "The cards went back."
+  },
   "FQpTJZ": {
     "message": "The clipboard isn't available here",
     "translation": "The clipboard isn't available here"
@@ -5978,6 +6112,10 @@
     "message": "The file couldn't be saved",
     "translation": "The file couldn't be saved"
   },
+  "KsKHA0": {
+    "message": "The focused card, or the one under the pointer",
+    "translation": "The focused card, or the one under the pointer"
+  },
   "lom6tE": {
     "message": "The last move is still sending.",
     "translation": "The last move is still sending."
@@ -5994,9 +6132,17 @@
     "message": "The room no longer has this seat.",
     "translation": "The room no longer has this seat."
   },
+  "Ymn83q": {
+    "message": "The table changed",
+    "translation": "The table changed"
+  },
   "m6ooXP": {
     "message": "The table changed, so the card went back.",
     "translation": "The table changed, so the card went back."
+  },
+  "sM9zJK": {
+    "message": "The table changed, so the cards went back.",
+    "translation": "The table changed, so the cards went back."
   },
   "u1UbSB": {
     "message": "The table changed. Try again.",
@@ -6415,6 +6561,10 @@
     "message": "Untitled deck",
     "translation": "Untitled deck"
   },
+  "k4TQ-Z": {
+    "message": "Up to 60 cards can be selected",
+    "translation": "Up to 60 cards can be selected"
+  },
   "gANddk": {
     "message": "Uploading…",
     "translation": "Uploading…"
@@ -6548,6 +6698,10 @@
     "message": "Yes",
     "context": "filter",
     "translation": "Yes"
+  },
+  "aylG7j": {
+    "message": "You can't move that card",
+    "translation": "You can't move that card"
   },
   "1hxqre": {
     "message": "You'll invite players from the room.",

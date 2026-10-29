@@ -37,6 +37,7 @@ import {
 } from './predictWireCommand.js';
 import type { LegacyBoardShortcutActionRequest } from './resolveLegacyBoardShortcutAction.js';
 import type { OncePerGameAction } from './resolveOncePerGameAction.js';
+import { refusalCommandType } from './refusal-notice.js';
 
 export type BoardSessionLiveSource = Pick<
   RemoteGameSession,
@@ -164,6 +165,9 @@ export class BoardSessionAdapter {
         ? { reportEffectFailure: options.reportEffectFailure }
         : {}),
       ...(options.resolveDrop ? { resolveDrop: options.resolveDrop } : {}),
+      // Solo's player reads both seats' hands and moves both seats' cards:
+      // a selection takes either seat's.
+      controlsEverySeat: () => options.readsEveryHand?.() === true,
     });
     this.synchronize();
     const unsubscribe = options.replay.subscribe(this.synchronize);
@@ -338,7 +342,11 @@ export class BoardSessionAdapter {
     const view = predictedView
       ? (this.options.transformView?.(predictedView, source) ?? predictedView)
       : undefined;
-    this.reportRefusals(liveState);
+    for (const commandId of this.reportRefusals(liveState)) {
+      // Before the frame that withdraws its prediction: a refused group's
+      // selection comes back with it.
+      this.controller.dispatch({ kind: 'CommandRefused', commandId });
+    }
     const boundary = this.boundaryFor(replayState, source, view);
     const motionHint =
       source.kind === 'live' && boundary === 'refresh'
@@ -369,32 +377,39 @@ export class BoardSessionAdapter {
       ...(motionHint ? { motionHint } : {}),
     };
     this.lastPendingCommandIds = frame.pendingCommandIds ?? [];
+    // A group's move is reported by what its steps do: a refused batch of
+    // marks moved no card back.
     this.lastPendingCommandTypes = new Map(
       liveState.pendingCommands.map((pending) => [
         pending.commandId,
-        pending.commandType,
+        refusalCommandType(pending.command),
       ])
     );
     return this.controller.dispatch({ kind: 'FrameReceived', frame });
   };
 
-  /** Commands that left the queue since the last frame because the room refused them. */
+  /**
+   * Commands that left the queue since the last frame because the room
+   * refused them: reported to the route, and returned.
+   */
   private reportRefusals(
     liveState: ReturnType<BoardSessionAdapterOptions['live']['getSnapshot']>
-  ): void {
+  ): readonly string[] {
     const report = this.options.onCommandRefused;
-    if (!report) return;
     const current = new Set(
       liveState.pendingCommands.map((pending) => pending.commandId)
     );
+    const refused: string[] = [];
     for (const commandId of this.lastPendingCommandIds) {
       if (current.has(commandId)) continue;
       const completed = liveState.completedCommands.find(
         (candidate) => candidate.commandId === commandId
       );
-      if (completed && !completed.accepted)
-        report(completed, this.lastPendingCommandTypes.get(commandId));
+      if (!completed || completed.accepted) continue;
+      refused.push(commandId);
+      report?.(completed, this.lastPendingCommandTypes.get(commandId));
     }
+    return refused;
   }
 
   /**

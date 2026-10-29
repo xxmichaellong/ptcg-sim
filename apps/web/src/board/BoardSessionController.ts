@@ -19,7 +19,12 @@ import {
   type MarkerSceneNode,
   type SettlingCard,
 } from '@ptcgsim/renderer-contract';
-import type { GroupAction } from './compile-group.js';
+import {
+  compileGroup,
+  type GroupAction,
+  type GroupCompilation,
+  type GroupRefusalReason,
+} from './compile-group.js';
 import {
   resolveBoardDrop,
   type BoardDropResolution,
@@ -56,6 +61,11 @@ import {
   type AttachEvolveTargetingRejectionReason,
   type BoardPlayTargetingState,
 } from './resolveAttachEvolveTargeting.js';
+import {
+  normalizeSelection,
+  reduceSelection,
+  type SelectionContext,
+} from './selection.js';
 
 type ReplayLocalDisclosureState = NonNullable<
   ReadyReplayPlaybackState['localDisclosure']
@@ -166,10 +176,45 @@ export interface BoardSessionControllerState {
   readonly scene?: BoardScene;
   readonly sceneInstallMode: BoardSceneInstallMode;
   readonly presentation: BoardPresentation;
-  readonly playTargeting: BoardPlayTargetingState | null;
+  readonly playTargeting: BoardTargetingState | null;
   readonly overlays: BoardOverlayState;
   readonly canSubmitCommands: boolean;
+  /**
+   * Groups moved and not yet answered: the selection each took, given back
+   * if the room refuses the move (ADR-042 §1). The newest is unbound until
+   * the adapter queues its command.
+   */
+  readonly groupSubmissions?: readonly GroupSubmission[];
+  /**
+   * A refused group's selection, given back once the table shows the cards
+   * where they were again (the prediction withdrawn).
+   */
+  readonly selectionRestore?: readonly ViewCardId[] | null;
 }
+
+/** A group's move in flight, and the selection it took. */
+export interface GroupSubmission {
+  readonly commandId: string | null;
+  readonly cardIds: readonly ViewCardId[];
+  /** Its outcome is shown on the table, so a refusal withdraws it first. */
+  readonly predicted?: boolean;
+}
+
+/**
+ * `q`/`e` with several selected: the Pokémon every one of them can go on,
+ * lit for the player to pick (ADR-042 §3).
+ */
+export interface GroupPlayTargetingState {
+  readonly kind: 'group';
+  readonly cardIds: readonly ViewCardId[];
+  readonly targets: readonly {
+    readonly stackId: string;
+    readonly topCardId: ViewCardId;
+  }[];
+}
+
+export type BoardTargetingState =
+  BoardPlayTargetingState | GroupPlayTargetingState;
 
 export type BoardSessionControllerAction =
   | { readonly kind: 'FrameReceived'; readonly frame: BoardProjectionFrame }
@@ -214,6 +259,8 @@ export type BoardSessionControllerAction =
       readonly scope?: BoardPresentationDismissScope;
     }
   | { readonly kind: 'SubmissionRejected' }
+  /** The room refused a command this client queued (the adapter saw it go). */
+  | { readonly kind: 'CommandRefused'; readonly commandId: string }
   /**
    * The adapter queued the command emitted by the newest accepted drop.
    * A predicted command already shows its outcome on the table, so its
@@ -233,7 +280,19 @@ export type BoardIntentRejectionReason =
   | 'stale_zone'
   | 'unsupported_intent'
   | AttachEvolveTargetingRejectionReason
+  | GroupRefusalReason
   | Exclude<BoardDropResolution, { readonly ok: true }>['reason'];
+
+/**
+ * Why a group's move or mark wasn't sent: the group's own reasons, a table
+ * not ready for moves, or (`q`/`e`) no Pokémon that takes all of them.
+ */
+export type GroupActionRejectionReason =
+  | 'no_installed_view'
+  | 'not_ready'
+  | 'read_only'
+  | 'no_target'
+  | GroupRefusalReason;
 
 export type BoardOverlayActionRejectionReason =
   | 'no_installed_view'
@@ -296,6 +355,17 @@ export type BoardSessionControllerEffect =
       readonly kind: 'IntentRejected';
       readonly intent: BoardIntent;
       readonly reason: BoardIntentRejectionReason;
+    }
+  | {
+      readonly kind: 'GroupActionRejected';
+      /** What was asked; null for `q`/`e`, which asks for a Pokémon first. */
+      readonly action: GroupAction | null;
+      readonly reason: GroupActionRejectionReason;
+      /** The card it stopped at, and its name, when it is one card's. */
+      readonly cardId?: ViewCardId;
+      readonly cardName?: string;
+      /** How many items the selection held. */
+      readonly itemCount: number;
     };
 
 export interface BoardSessionControllerReduction {
@@ -313,6 +383,11 @@ export interface BoardSessionControllerDependencies {
   readonly resolveShortcutAction?: typeof resolveLegacyBoardShortcutAction;
   readonly resolveOncePerGameAction?: typeof resolveOncePerGameAction;
   readonly resolveAttachEvolveTarget?: typeof resolveAttachEvolveTarget;
+  /**
+   * Solo: the one player moves both seats' cards and works both seats'
+   * windows, so a selection takes either seat's.
+   */
+  readonly controlsEverySeat?: () => boolean;
 }
 
 export interface BoardSessionControllerOptions {
@@ -327,6 +402,7 @@ export interface BoardSessionControllerOptions {
   /** Called each time the dispatch queue drains. */
   readonly onIdle?: () => void;
   readonly resolveDrop?: BoardSessionControllerDependencies['resolveDrop'];
+  readonly controlsEverySeat?: BoardSessionControllerDependencies['controlsEverySeat'];
 }
 
 const EMPTY_OVERLAYS: BoardOverlayState = {
@@ -481,6 +557,21 @@ const pruneSettling = (
   return kept.length === entries.length ? entries : kept;
 };
 
+/**
+ * The newest drop not yet bound to its command: a group's cards together
+ * (one `dropId`), or the one card a drop holds.
+ */
+const newestDrop = (
+  entries: readonly SettlingEntry[]
+): ((entry: SettlingEntry, index: number) => boolean) | null => {
+  const newest = entries.findLastIndex((entry) => entry.commandId === null);
+  if (newest < 0) return null;
+  const dropId = entries[newest]!.dropId;
+  return (entry, index) =>
+    entry.commandId === null &&
+    (dropId === undefined ? index === newest : entry.dropId === dropId);
+};
+
 const sameSettling = (
   left: readonly SettlingCard[],
   right: readonly SettlingCard[]
@@ -544,18 +635,40 @@ const markerControlsStayOpen = (
       (stack) => stack.evolutionCards.at(-1)?.id === controls.cardId
     ));
 
+const NO_GROUP_SUBMISSIONS: readonly GroupSubmission[] = Object.freeze([]);
+
 const clearLocalPresentation = (
   state: BoardSessionControllerState
 ): Pick<
   BoardSessionControllerState,
-  'presentation' | 'playTargeting' | 'overlays'
+  | 'presentation'
+  | 'playTargeting'
+  | 'overlays'
+  | 'groupSubmissions'
+  | 'selectionRestore'
 > => ({
   presentation: presentationIsEmpty(state.presentation)
     ? state.presentation
     : emptyPresentation(),
   playTargeting: null,
   overlays: overlaysAreEmpty(state.overlays) ? state.overlays : emptyOverlays(),
+  groupSubmissions: NO_GROUP_SUBMISSIONS,
+  selectionRestore: null,
 });
+
+/** The groups still waiting on the room: an answered one is let go. */
+const pruneGroupSubmissions = (
+  entries: readonly GroupSubmission[] | undefined,
+  pendingCommandIds: readonly string[] | undefined
+): readonly GroupSubmission[] => {
+  if (!entries || entries.length === 0) return NO_GROUP_SUBMISSIONS;
+  if (pendingCommandIds === undefined) return entries;
+  const kept = entries.filter(
+    (entry) =>
+      entry.commandId === null || pendingCommandIds.includes(entry.commandId)
+  );
+  return kept.length === entries.length ? entries : kept;
+};
 
 const purgeRejectedRecipientProjection = (
   state: BoardSessionControllerState,
@@ -599,14 +712,63 @@ const hasDropTarget = (view: MatchViewState, scene: BoardScene, id: string) =>
       scene.cards.some((card) => card.parentId === id && card.interactive))
   );
 
+/** The table a selection is read against (ADR-042 §1). */
+const selectionContextOf = (
+  view: MatchViewState,
+  scene: BoardScene,
+  dependencies: BoardSessionControllerDependencies,
+  openedZoneId: string | null
+): SelectionContext => {
+  const acting = actingPlayerIdOf(view, scene.bottomPlayerId);
+  return {
+    view,
+    scene,
+    ...(acting ? { actingPlayerId: acting } : {}),
+    ...(dependencies.controlsEverySeat?.() === true
+      ? { controlsEverySeat: true }
+      : {}),
+    openedZoneId,
+  };
+};
+
+/** Several items selected: the group's paths, not one card's. */
+const holdsGroup = (presentation: BoardPresentation): boolean =>
+  presentation.selection.length > 1;
+
+/** Whether a card is one of the selected items, or part of one. */
+const isSelectedItem = (
+  context: SelectionContext,
+  selection: readonly ViewCardId[],
+  cardId: ViewCardId
+): boolean => {
+  if (selection.includes(cardId)) return true;
+  const item = normalizeSelection(context, [cardId]).items[0];
+  return item !== undefined && selection.includes(item);
+};
+
+/** The name a notice gives a card, when the table shows it. */
+const cardNameOf = (
+  scene: BoardScene,
+  cardId: ViewCardId | undefined
+): string | undefined => {
+  if (cardId === undefined) return undefined;
+  const card = scene.cards.find((candidate) => candidate.id === cardId);
+  return card && !card.concealed && card.label ? card.label : undefined;
+};
+
 const reconcilePresentation = (
   state: BoardSessionControllerState,
   view: MatchViewState,
   scene: BoardScene,
+  dependencies: BoardSessionControllerDependencies,
   pendingCommandIds?: readonly string[]
 ): Pick<
   BoardSessionControllerState,
-  'presentation' | 'playTargeting' | 'overlays'
+  | 'presentation'
+  | 'playTargeting'
+  | 'overlays'
+  | 'groupSubmissions'
+  | 'selectionRestore'
 > => {
   const openedZoneId =
     state.presentation.openedZoneId &&
@@ -632,12 +794,29 @@ const reconcilePresentation = (
   const shownSelection = state.presentation.selection.filter(
     (cardId) => stillShown(cardId) !== null
   );
-  const selection =
+  let selection =
     shownSelection.length === state.presentation.selection.length
       ? state.presentation.selection
       : shownSelection.length === 0
         ? NO_SELECTION
         : shownSelection;
+  const context = selectionContextOf(view, scene, dependencies, openedZoneId);
+  // A group keeps the items still on the table: a Pokémon that evolved by
+  // its new top card, a pile's cards while the pile stays open.
+  if (holdsGroup(state.presentation)) {
+    selection = reduceSelection(context, state.presentation.selection, {
+      kind: 'reconcile',
+    }).selection;
+  }
+  // A refused group's cards are back where they were: they are selected
+  // again, unless the player has picked others meanwhile.
+  const restoring = state.selectionRestore;
+  if (restoring && restoring.length > 0 && selection.length === 0) {
+    selection = reduceSelection(context, NO_SELECTION, {
+      kind: 'restore',
+      cardIds: restoring,
+    }).selection;
+  }
   const hoveredCardId = stillShown(state.presentation.hoveredCardId);
   const drag = state.presentation.drag;
   // A new view mid-drag keeps the card in hand; only a target it no longer
@@ -701,7 +880,8 @@ const reconcilePresentation = (
   return {
     presentation: {
       selection,
-      selectionMode: state.presentation.selectionMode,
+      // Touch's selection mode ends with its last item.
+      selectionMode: state.presentation.selectionMode && selection.length > 0,
       hoveredCardId,
       targetableCardIds: [],
       drag: reconciledDrag,
@@ -723,6 +903,11 @@ const reconcilePresentation = (
           : null
       ),
     },
+    groupSubmissions: pruneGroupSubmissions(
+      state.groupSubmissions,
+      pendingCommandIds
+    ),
+    selectionRestore: null,
   };
 };
 
@@ -1157,6 +1342,10 @@ const installFrame = (
         cursor: cursorFor(frame, frame.view),
         canSubmitCommands: canSubmit(frame),
         presentation,
+        groupSubmissions: pruneGroupSubmissions(
+          state.groupSubmissions,
+          frame.pendingCommandIds
+        ),
       }),
       presentation === state.presentation
         ? []
@@ -1216,7 +1405,13 @@ const installFrame = (
     frame.sessionPhase !== 'ready';
   const local = mustClearLocal
     ? clearLocalPresentation(state)
-    : reconcilePresentation(state, frame.view, scene, frame.pendingCommandIds);
+    : reconcilePresentation(
+        state,
+        frame.view,
+        scene,
+        dependencies,
+        frame.pendingCommandIds
+      );
   const installMode: BoardSceneInstallMode =
     mustClearLocal ||
     previousRevision === undefined ||
@@ -1269,7 +1464,7 @@ const installPresentation = (
   state: BoardSessionControllerState,
   presentation: BoardPresentation,
   overlays: BoardOverlayState = state.overlays,
-  playTargeting: BoardPlayTargetingState | null = state.playTargeting
+  playTargeting: BoardTargetingState | null = state.playTargeting
 ): BoardSessionControllerReduction => {
   if (
     samePresentation(state.presentation, presentation) &&
@@ -1300,9 +1495,17 @@ const handleIntent = (
 
   switch (intent.kind) {
     case 'CardSelected': {
+      // A press with Shift or ⌘/Ctrl, or any tap in touch's selection
+      // mode, adds the card to the selection or takes it out (ADR-042 §2):
+      // a card on the table or in the open pile alike.
+      const adding =
+        state.presentation.selectionMode ||
+        cardSelectionModeOf(intent) === 'add';
       const card = scene.cards.find(
         (candidate) =>
-          candidate.id === intent.cardId && hasPresentableCard(candidate.id)
+          candidate.id === intent.cardId &&
+          (hasPresentableCard(candidate.id) ||
+            (adding && hasOpenedZoneCard(state, scene, candidate.id)))
       );
       if (!card) return rejectIntent(state, intent, 'stale_card');
       if (state.playTargeting) {
@@ -1314,7 +1517,18 @@ const handleIntent = (
               card.role === 'stackEvolution' &&
               card.parentId === candidate.stackId)
         );
-        if (target) {
+        if (target && targeting.kind === 'group') {
+          return submitGroup(
+            state,
+            view,
+            scene,
+            dependencies,
+            targeting.cardIds,
+            { kind: 'drop', targetId: target.stackId },
+            null
+          );
+        }
+        if (target && targeting.kind === 'attachOrEvolve') {
           const presentation: BoardPresentation = {
             ...state.presentation,
             selection: NO_SELECTION,
@@ -1347,8 +1561,41 @@ const handleIntent = (
           return accepted(cleared, effects);
         }
       }
-      // A press with Shift or ⌘/Ctrl (`add`) is a plain press until a
-      // selection may hold several (ADR-042).
+      if (adding) {
+        const context = selectionContextOf(
+          view,
+          scene,
+          dependencies,
+          state.presentation.openedZoneId
+        );
+        // One card picked as v1 picks it may be part of a Pokémon: as the
+        // first of a group it stands for the whole Pokémon.
+        const base =
+          state.presentation.selection.length === 1
+            ? normalizeSelection(context, state.presentation.selection).items
+            : state.presentation.selection;
+        const change = reduceSelection(context, base, {
+          kind: 'add',
+          cardId: intent.cardId,
+        });
+        const refused = change.refused[0];
+        if (refused) return rejectIntent(state, intent, refused.reason);
+        return installPresentation(
+          state,
+          {
+            ...state.presentation,
+            selection: change.selection,
+            selectionMode:
+              state.presentation.selectionMode && change.selection.length > 0,
+            targetableCardIds: [],
+            drag: null,
+          },
+          emptyOverlays(),
+          null
+        );
+      }
+      // A plain press: this card alone (v1's click), or none when it was
+      // the one selected.
       if (
         cardSelectionModeOf(intent) !== 'replace' &&
         selectedCardIdOf(state.presentation) === intent.cardId
@@ -1382,20 +1629,100 @@ const handleIntent = (
         null
       );
     }
+    // A press on bare felt puts the selection down and ends any picking
+    // of a Pokémon (ADR-042 §1).
     case 'BoardBackgroundPressed':
-      return state.playTargeting
+      return state.playTargeting || state.presentation.selection.length > 0
         ? installPresentation(
             state,
-            { ...state.presentation, targetableCardIds: [], drag: null },
-            emptyOverlays(),
+            {
+              ...state.presentation,
+              selection: NO_SELECTION,
+              selectionMode: false,
+              targetableCardIds: [],
+              drag: null,
+            },
+            state.playTargeting ? emptyOverlays() : state.overlays,
             null
           )
         : ignored(state);
+    case 'CardsSelected': {
+      if (state.playTargeting) return ignored(state);
+      const context = selectionContextOf(
+        view,
+        scene,
+        dependencies,
+        state.presentation.openedZoneId
+      );
+      // Cards that are no item (a pile's top, the other player's hidden
+      // cards) are left out without a word: the rectangle and Select all
+      // take what they can.
+      const change =
+        intent.mode === 'add'
+          ? reduceSelection(
+              context,
+              normalizeSelection(context, state.presentation.selection).items,
+              { kind: 'addMany', cardIds: intent.cardIds }
+            )
+          : reduceSelection(context, NO_SELECTION, {
+              kind: 'replace',
+              cardIds: intent.cardIds,
+            });
+      return installPresentation(
+        state,
+        {
+          ...state.presentation,
+          selection: change.selection,
+          selectionMode:
+            state.presentation.selectionMode && change.selection.length > 0,
+          targetableCardIds: [],
+          drag: null,
+        },
+        emptyOverlays(),
+        null
+      );
+    }
+    case 'SelectionModeChanged': {
+      if (view.viewer.kind === 'spectator')
+        return rejectIntent(state, intent, 'read_only');
+      // Turned off (✕), it puts the selection down with it.
+      return installPresentation(state, {
+        ...state.presentation,
+        selectionMode: intent.on,
+        ...(intent.on ? {} : { selection: NO_SELECTION }),
+      });
+    }
     case 'CardContextRequested': {
       if (!hasPresentableCard(intent.cardId))
         return rejectIntent(state, intent, 'stale_card');
       if (view.viewer.kind === 'spectator')
         return rejectIntent(state, intent, 'read_only');
+      // On a card of the group: the group's menu, the group kept.
+      if (
+        holdsGroup(state.presentation) &&
+        isSelectedItem(
+          selectionContextOf(
+            view,
+            scene,
+            dependencies,
+            state.presentation.openedZoneId
+          ),
+          state.presentation.selection,
+          intent.cardId
+        )
+      ) {
+        const next = nextState(state, {
+          presentation: { ...state.presentation, drag: null },
+          overlays: {
+            contextMenuCardId: intent.cardId,
+            preview: null,
+            input: null,
+          },
+        });
+        return accepted(next, [
+          { kind: 'InstallPresentation', presentation: next.presentation },
+        ]);
+      }
       const next = nextState(state, {
         presentation: {
           ...state.presentation,
@@ -1443,8 +1770,13 @@ const handleIntent = (
       const next = nextState(state, {
         presentation: {
           ...state.presentation,
-          // Keep the panel selection so its action row is usable on return.
-          selection: allowOpenedZoneCard ? [intent.cardId] : NO_SELECTION,
+          // Keep the panel selection so its action row is usable on return;
+          // reading a card leaves a group standing.
+          selection: holdsGroup(state.presentation)
+            ? state.presentation.selection
+            : allowOpenedZoneCard
+              ? [intent.cardId]
+              : NO_SELECTION,
           drag: null,
         },
         overlays: { contextMenuCardId: null, preview, input: null },
@@ -1474,6 +1806,23 @@ const handleIntent = (
         return rejectIntent(state, intent, 'read_only');
       if (!hasPresentableCard(intent.cardId))
         return rejectIntent(state, intent, 'stale_card');
+      // A selected card let go of with the rest of the group: one move.
+      if (intent.groupCardIds && intent.groupCardIds.length > 1) {
+        return submitGroup(
+          state,
+          view,
+          scene,
+          dependencies,
+          intent.groupCardIds,
+          {
+            kind: 'drop',
+            targetId: intent.targetId,
+            ...(intent.index === undefined ? {} : { index: intent.index }),
+          },
+          { cardId: intent.cardId, x: intent.x, y: intent.y },
+          allowOpenedZoneCard
+        );
+      }
       // Capture one installed pair before invoking a resolver supplied by the
       // application. It can never mix a new view with an old scene.
       const installedView = view;
@@ -1581,11 +1930,328 @@ const handleIntent = (
         }
       );
     }
-    case 'CardsSelected':
-    case 'SelectionModeChanged':
     case 'BoardResizeRequested':
       return rejectIntent(state, intent, 'unsupported_intent');
   }
+};
+
+/** A group's moves take its cards away; its marks leave them selected. */
+const MOVING_GROUP_ACTIONS: ReadonlySet<GroupAction['kind']> = new Set([
+  'send',
+  'play',
+  'stadium',
+  'drop',
+]);
+
+/** The most of a dropped group held at the drop point (ADR-042 §4). */
+const MAX_SETTLING_GROUP = 5;
+
+const rejectGroup = (
+  state: BoardSessionControllerState,
+  action: GroupAction | null,
+  reason: GroupActionRejectionReason,
+  itemCount: number,
+  scene?: BoardScene,
+  cardId?: ViewCardId
+): BoardSessionControllerReduction => {
+  const cardName = scene ? cardNameOf(scene, cardId) : undefined;
+  return accepted(state, [
+    {
+      kind: 'GroupActionRejected',
+      action,
+      reason,
+      itemCount,
+      ...(cardId === undefined ? {} : { cardId }),
+      ...(cardName === undefined ? {} : { cardName }),
+    },
+  ]);
+};
+
+/**
+ * A dropped group, held where it was let go while its move is in flight:
+ * the grabbed card and up to four more, settling and let go together.
+ */
+const groupSettling = (
+  state: BoardSessionControllerState,
+  view: MatchViewState,
+  scene: BoardScene,
+  cardIds: readonly ViewCardId[],
+  compiled: Extract<GroupCompilation, { readonly ok: true }>,
+  drop: { readonly cardId: ViewCardId; readonly x: number; readonly y: number },
+  action: GroupAction,
+  allowOpenedZoneCard: boolean
+): readonly SettlingEntry[] => {
+  const skipped = new Set<ViewCardId>(compiled.skipped);
+  const held = [
+    drop.cardId,
+    ...cardIds.filter((cardId) => cardId !== drop.cardId),
+  ]
+    .filter((cardId) => !skipped.has(cardId))
+    .slice(0, MAX_SETTLING_GROUP);
+  const dropId = `group:${String(state.generation)}`;
+  const whole = wholeStackTops(view, compiled.command);
+  const entries = held.flatMap((cardId): SettlingEntry[] => {
+    const card = scene.cards.find(
+      (candidate) =>
+        candidate.id === cardId &&
+        (candidate.renderKey !== null ||
+          allowOpenedZoneCard ||
+          candidate.parentId === state.presentation.openedZoneId)
+    );
+    if (!card) return [];
+    return [
+      {
+        cardId,
+        x: drop.x,
+        y: drop.y,
+        commandId: null,
+        dropId,
+        ...(whole.has(cardId) ? { wholeStack: true } : {}),
+        ...(action.kind === 'drop' && action.index !== undefined
+          ? {
+              arrangement: {
+                targetId: action.targetId,
+                index: action.index,
+                revision: scene.revision,
+              },
+            }
+          : {}),
+      },
+    ];
+  });
+  return [
+    ...settlingEntries(state.presentation).filter(
+      (entry) => !held.includes(entry.cardId)
+    ),
+    ...entries,
+  ];
+};
+
+/**
+ * A group's one move or mark (ADR-042 §3-4), compiled by `compileGroup`
+ * and sent as one command. A move puts the selection down and remembers
+ * it, to give it back if the room refuses; a mark (damage, a condition,
+ * reveal…) leaves it standing, as a single card's keys do.
+ */
+const submitGroup = (
+  state: BoardSessionControllerState,
+  view: MatchViewState,
+  scene: BoardScene,
+  dependencies: BoardSessionControllerDependencies,
+  cardIds: readonly ViewCardId[],
+  action: GroupAction,
+  drop: {
+    readonly cardId: ViewCardId;
+    readonly x: number;
+    readonly y: number;
+  } | null,
+  allowOpenedZoneCard = false
+): BoardSessionControllerReduction => {
+  if (state.sessionPhase !== 'ready')
+    return rejectGroup(state, action, 'not_ready', cardIds.length);
+  if (!state.canSubmitCommands)
+    return rejectGroup(state, action, 'read_only', cardIds.length);
+  const context = selectionContextOf(
+    view,
+    scene,
+    dependencies,
+    state.presentation.openedZoneId
+  );
+  const compiled = compileGroup(context, cardIds, action);
+  if (!compiled.ok) {
+    return rejectGroup(
+      state,
+      action,
+      compiled.reason,
+      cardIds.length,
+      scene,
+      compiled.cardId
+    );
+  }
+  const moves = MOVING_GROUP_ACTIONS.has(action.kind);
+  const settling = drop
+    ? groupSettling(
+        state,
+        view,
+        scene,
+        cardIds,
+        compiled,
+        drop,
+        action,
+        allowOpenedZoneCard
+      )
+    : state.presentation.settling;
+  const presentation: BoardPresentation = moves
+    ? {
+        ...state.presentation,
+        selection: NO_SELECTION,
+        selectionMode: false,
+        targetableCardIds: [],
+        drag: null,
+        settling,
+      }
+    : { ...state.presentation, targetableCardIds: [], drag: null, settling };
+  const next = nextState(state, {
+    presentation,
+    // The menu or the picking that asked for it is done.
+    overlays: emptyOverlays(),
+    playTargeting: null,
+    ...(moves
+      ? {
+          groupSubmissions: [
+            ...(state.groupSubmissions ?? NO_GROUP_SUBMISSIONS),
+            { commandId: null, cardIds },
+          ],
+        }
+      : {}),
+  });
+  return accepted(next, [
+    ...(samePresentation(state.presentation, presentation)
+      ? []
+      : ([
+          { kind: 'InstallPresentation', presentation },
+        ] satisfies BoardSessionControllerEffect[])),
+    { kind: 'SubmitCommand', command: compiled.command },
+  ]);
+};
+
+/** The selection's move or mark, from its menu, the palette or a key. */
+const handleGroupAction = (
+  state: BoardSessionControllerState,
+  action: GroupAction,
+  dependencies: BoardSessionControllerDependencies
+): BoardSessionControllerReduction => {
+  const selection = state.presentation.selection;
+  if (!state.view || !state.scene)
+    return rejectGroup(state, action, 'no_installed_view', selection.length);
+  if (selection.length === 0) return rejectGroup(state, action, 'empty', 0);
+  return submitGroup(
+    state,
+    state.view,
+    state.scene,
+    dependencies,
+    selection,
+    action,
+    null
+  );
+};
+
+/**
+ * `q`/`e` with a group: lights every Pokémon in play that takes all of
+ * the selected cards, for the player to pick; the group stays selected.
+ */
+const beginGroupTargeting = (
+  state: BoardSessionControllerState,
+  dependencies: BoardSessionControllerDependencies
+): BoardSessionControllerReduction => {
+  const view = state.view;
+  const scene = state.scene;
+  const selection = state.presentation.selection;
+  if (!view || !scene)
+    return rejectGroup(state, null, 'no_installed_view', selection.length);
+  if (state.sessionPhase !== 'ready')
+    return rejectGroup(state, null, 'not_ready', selection.length);
+  if (!state.canSubmitCommands)
+    return rejectGroup(state, null, 'read_only', selection.length);
+  if (selection.length === 0) return rejectGroup(state, null, 'empty', 0);
+  const context = selectionContextOf(
+    view,
+    scene,
+    dependencies,
+    state.presentation.openedZoneId
+  );
+  const targets = view.playerOrder.flatMap((playerId) => {
+    const board = view.boards[playerId];
+    if (!board) return [];
+    return [
+      ...(board.activeStackId ? [board.activeStackId] : []),
+      ...board.benchStackIds,
+    ].flatMap((stackId) => {
+      const topCardId = view.stacks[stackId]?.evolutionCards.at(-1)?.id;
+      return topCardId &&
+        compileGroup(context, selection, { kind: 'drop', targetId: stackId }).ok
+        ? [{ stackId, topCardId }]
+        : [];
+    });
+  });
+  if (targets.length === 0)
+    return rejectGroup(state, null, 'no_target', selection.length);
+  const presentation: BoardPresentation = {
+    ...state.presentation,
+    targetableCardIds: targets.flatMap((target) => {
+      const pieces = scene.cards.filter(
+        (card) =>
+          card.parentId === target.stackId &&
+          card.role === 'stackEvolution' &&
+          card.composition
+      );
+      return pieces.length ? pieces.map((card) => card.id) : [target.topCardId];
+    }),
+    drag: null,
+  };
+  const next = nextState(state, {
+    presentation,
+    playTargeting: { kind: 'group', cardIds: selection, targets },
+    overlays: emptyOverlays(),
+  });
+  return accepted(next, [{ kind: 'InstallPresentation', presentation }]);
+};
+
+/**
+ * A group drag's outcome over one target, compiled once per target and
+ * place rather than on every move of the pointer (ADR-042 §8).
+ */
+let groupDropMemo: {
+  readonly view: MatchViewState;
+  readonly scene: BoardScene;
+  readonly cardIds: readonly ViewCardId[];
+  readonly targetId: string;
+  readonly index: number | undefined;
+  readonly eitherSeat: boolean;
+  readonly result: GroupCompilation;
+} | null = null;
+
+const groupDropCompilation = (
+  view: MatchViewState,
+  scene: BoardScene,
+  dependencies: BoardSessionControllerDependencies,
+  openedZoneId: string | null,
+  cardIds: readonly ViewCardId[],
+  targetId: string,
+  index: number | undefined
+): GroupCompilation => {
+  const eitherSeat = dependencies.controlsEverySeat?.() === true;
+  const memo = groupDropMemo;
+  if (
+    memo &&
+    memo.view === view &&
+    memo.scene === scene &&
+    memo.cardIds === cardIds &&
+    memo.targetId === targetId &&
+    memo.index === index &&
+    memo.eitherSeat === eitherSeat
+  ) {
+    return memo.result;
+  }
+  const result = compileGroup(
+    selectionContextOf(view, scene, dependencies, openedZoneId),
+    cardIds,
+    {
+      kind: 'drop',
+      targetId,
+      ...(index === undefined ? {} : { index }),
+    }
+  );
+  groupDropMemo = {
+    view,
+    scene,
+    cardIds,
+    targetId,
+    index,
+    eitherSeat,
+    result,
+  };
+  return result;
 };
 
 /**
@@ -1613,6 +2279,19 @@ const dropOutcome = (
     !hasDropTarget(view, scene, targetId)
   ) {
     return null;
+  }
+  if (drag.groupCardIds && drag.groupCardIds.length > 1) {
+    const compiled = groupDropCompilation(
+      view,
+      scene,
+      dependencies,
+      state.presentation.openedZoneId,
+      drag.groupCardIds,
+      targetId,
+      drag.index
+    );
+    if (compiled.ok) return { command: compiled.command };
+    return compiled.reason === 'no_op' ? { command: null } : null;
   }
   const resolution = (dependencies.resolveDrop ?? resolveBoardDrop)(
     view,
@@ -1671,12 +2350,36 @@ const swapAction = (
   return undefined;
 };
 
+/** A command's steps: a group's batch, or the one command itself. */
+const stepsOf = (command: WireGameCommand): readonly WireGameCommand[] =>
+  command.type === 'ApplyCardSteps'
+    ? (command.steps as readonly WireGameCommand[])
+    : [command];
+
 /**
  * The drop moved a whole Pokémon: its stack settles with the grabbed card.
- * A group's drop (ApplyCardSteps) settles card by card for now.
+ * A group's move reads its steps: each Pokémon a step moves whole.
  */
 const movesWholeStack = (command: WireGameCommand): boolean =>
-  command.type === 'MovePlayStack' || command.type === 'MovePlayStackToZone';
+  stepsOf(command).some(
+    (step) =>
+      step.type === 'MovePlayStack' || step.type === 'MovePlayStackToZone'
+  );
+
+/** The top cards of the Pokémon a command's steps move whole. */
+const wholeStackTops = (
+  view: MatchViewState,
+  command: WireGameCommand
+): ReadonlySet<ViewCardId> =>
+  new Set(
+    stepsOf(command).flatMap((step) => {
+      const top =
+        step.type === 'MovePlayStack' || step.type === 'MovePlayStackToZone'
+          ? view.stacks[step.stackId]?.evolutionCards.at(-1)?.id
+          : undefined;
+      return top ? [top] : [];
+    })
+  );
 
 const handlePresentationUpdate = (
   state: BoardSessionControllerState,
@@ -1704,10 +2407,16 @@ const handlePresentationUpdate = (
       const action = swapAction(outcome.command);
       return action ? { ...held, action } : held;
     })();
+    // A drag of a selected card carries the group, which stays selected;
+    // any other drag goes alone and puts the selection down (ADR-042 §2).
+    const carriesGroup =
+      drag?.groupCardIds !== undefined && drag.groupCardIds.length > 1;
     return installPresentation(state, {
       ...state.presentation,
       drag: shown,
-      ...(drag ? { selection: NO_SELECTION } : {}),
+      ...(drag && !carriesGroup
+        ? { selection: NO_SELECTION, selectionMode: false }
+        : {}),
     });
   }
   return ignored(state);
@@ -1940,6 +2649,11 @@ const handleShortcutAction = (
   if (!state.canSubmitCommands) {
     return rejectShortcutAction(state, request, 'read_only');
   }
+  // A key pressed with several selected acts on all of them.
+  if (request.action === 'groupAction')
+    return handleGroupAction(state, request.group, dependencies);
+  if (request.action === 'beginGroupAttach')
+    return beginGroupTargeting(state, dependencies);
   if ('cardId' in request) {
     // The palette names any card the table has, a closed pile's buried
     // ones too; a press or key, only one it can reach.
@@ -1952,6 +2666,30 @@ const handleShortcutAction = (
       !reachable
     ) {
       return rejectShortcutAction(state, request, 'stale_card');
+    }
+  }
+  // `b` on a lone piece of a card printed in pieces joins its unfinished
+  // Pokémon in play, as a group's `b` does (ADR-042 §5).
+  if (request.action === 'moveCardToPlay' && request.slot === 'bench') {
+    const joined = compileGroup(
+      selectionContextOf(
+        view,
+        scene,
+        dependencies,
+        state.presentation.openedZoneId
+      ),
+      [request.cardId],
+      { kind: 'play', slot: 'bench' }
+    );
+    if (joined.ok && joined.command.type === 'PlaceCardOnPlayStack') {
+      const presentation: BoardPresentation = {
+        ...state.presentation,
+        selection: NO_SELECTION,
+      };
+      return accepted(nextState(state, { presentation }), [
+        { kind: 'InstallPresentation', presentation },
+        { kind: 'SubmitCommand', command: joined.command },
+      ]);
     }
   }
   const submittedCountInput =
@@ -2096,7 +2834,7 @@ const refreshScene = (
     return rejected(state);
   }
   if (!sceneMatchesProjection(view, scene)) return rejected(state);
-  const reconciled = reconcilePresentation(state, view, scene);
+  const reconciled = reconcilePresentation(state, view, scene, dependencies);
   const presentation = reconciled.presentation.drag
     ? { ...reconciled.presentation, drag: null }
     : reconciled.presentation;
@@ -2106,6 +2844,8 @@ const refreshScene = (
     presentation,
     playTargeting: reconciled.playTargeting,
     overlays: reconciled.overlays,
+    groupSubmissions: reconciled.groupSubmissions,
+    selectionRestore: reconciled.selectionRestore,
   });
   const effects: BoardSessionControllerEffect[] = [
     {
@@ -2185,9 +2925,8 @@ export const reduceBoardSessionController = (
         dependencies,
         action.origin === 'palette'
       );
-    // Refused until the controller's work package compiles the group.
     case 'GroupActionRequested':
-      return ignored(state);
+      return handleGroupAction(state, action.action, dependencies);
     case 'OncePerGameActionRequested':
       return handleOncePerGameAction(
         state,
@@ -2213,41 +2952,130 @@ export const reduceBoardSessionController = (
       return dismissPresentation(state, action.scope ?? 'all');
     case 'SubmissionRejected': {
       const entries = settlingEntries(state.presentation);
-      const newestUnbound = entries.findLastIndex(
+      const inDrop = newestDrop(entries);
+      // A group's move that never left this client: its selection comes
+      // straight back, the cards never having moved.
+      const submissions = state.groupSubmissions ?? NO_GROUP_SUBMISSIONS;
+      const unbound = submissions.findLastIndex(
         (entry) => entry.commandId === null
       );
-      return installPresentation(
+      const restored = unbound < 0 ? undefined : submissions[unbound]!.cardIds;
+      const selection =
+        restored &&
+        state.view &&
+        state.scene &&
+        state.presentation.selection.length === 0
+          ? reduceSelection(
+              selectionContextOf(
+                state.view,
+                state.scene,
+                dependencies,
+                state.presentation.openedZoneId
+              ),
+              NO_SELECTION,
+              { kind: 'restore', cardIds: restored }
+            ).selection
+          : state.presentation.selection;
+      const reduction = installPresentation(
         state,
         {
           ...state.presentation,
+          selection,
           targetableCardIds: [],
           drag: null,
-          settling:
-            newestUnbound < 0
-              ? entries
-              : entries.filter((_, index) => index !== newestUnbound),
+          settling: inDrop
+            ? entries.filter((entry, index) => !inDrop(entry, index))
+            : entries,
         },
         state.overlays,
         null
       );
+      if (unbound < 0) return reduction;
+      return {
+        ...reduction,
+        state: nextState(reduction.state, {
+          groupSubmissions: submissions.filter((_, index) => index !== unbound),
+        }),
+        outcome: 'accepted',
+      };
     }
     case 'SubmissionQueued': {
       const entries = settlingEntries(state.presentation);
-      const newestUnbound = entries.findLastIndex(
+      const inDrop = newestDrop(entries);
+      const submissions = state.groupSubmissions ?? NO_GROUP_SUBMISSIONS;
+      const unbound = submissions.findLastIndex(
         (entry) => entry.commandId === null
       );
-      if (newestUnbound < 0) return ignored(state);
-      const settling = action.predicted
-        ? entries.filter((_, index) => index !== newestUnbound)
-        : entries.map((entry, index) =>
-            index === newestUnbound
-              ? { ...entry, commandId: action.commandId }
-              : entry
-          );
-      const presentation = { ...state.presentation, settling };
+      if (!inDrop && unbound < 0) return ignored(state);
+      const settling = !inDrop
+        ? entries
+        : action.predicted
+          ? entries.filter((entry, index) => !inDrop(entry, index))
+          : entries.map((entry, index) =>
+              inDrop(entry, index)
+                ? { ...entry, commandId: action.commandId }
+                : entry
+            );
+      const presentation =
+        settling === entries
+          ? state.presentation
+          : { ...state.presentation, settling };
+      const groupSubmissions =
+        unbound < 0
+          ? submissions
+          : submissions.map((entry, index) =>
+              index === unbound
+                ? {
+                    ...entry,
+                    commandId: action.commandId,
+                    ...(action.predicted ? { predicted: true } : {}),
+                  }
+                : entry
+            );
       return accepted(
-        nextState(state, { presentation }),
-        action.predicted ? [{ kind: 'InstallPresentation', presentation }] : []
+        nextState(state, { presentation, groupSubmissions }),
+        action.predicted && presentation !== state.presentation
+          ? [{ kind: 'InstallPresentation', presentation }]
+          : []
+      );
+    }
+    case 'CommandRefused': {
+      const submissions = state.groupSubmissions ?? NO_GROUP_SUBMISSIONS;
+      const refused = submissions.find(
+        (entry) => entry.commandId === action.commandId
+      );
+      if (!refused) return ignored(state);
+      const groupSubmissions = submissions.filter((entry) => entry !== refused);
+      // Its cards are shown where it put them: the selection comes back
+      // with the frame that takes them back (reconcilePresentation).
+      if (refused.predicted || !state.view || !state.scene)
+        return accepted(
+          nextState(state, {
+            groupSubmissions,
+            selectionRestore: refused.cardIds,
+          })
+        );
+      // Nothing was shown moving: it comes back now.
+      if (state.presentation.selection.length > 0)
+        return accepted(nextState(state, { groupSubmissions }));
+      const presentation: BoardPresentation = {
+        ...state.presentation,
+        selection: reduceSelection(
+          selectionContextOf(
+            state.view,
+            state.scene,
+            dependencies,
+            state.presentation.openedZoneId
+          ),
+          NO_SELECTION,
+          { kind: 'restore', cardIds: refused.cardIds }
+        ).selection,
+      };
+      return accepted(
+        nextState(state, { groupSubmissions, presentation }),
+        samePresentation(state.presentation, presentation)
+          ? []
+          : [{ kind: 'InstallPresentation', presentation }]
       );
     }
   }

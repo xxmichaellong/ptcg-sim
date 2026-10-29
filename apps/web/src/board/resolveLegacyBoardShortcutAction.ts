@@ -2,6 +2,7 @@ import type { MatchViewState, PlayerId, ViewCardId } from '@ptcgsim/game-core';
 import type { WireGameCommand } from '@ptcgsim/protocol';
 
 import { targetSeatField } from './acting-seat.js';
+import type { GroupAction } from './compile-group.js';
 
 import {
   isLegacyBoardCategoryChoice,
@@ -167,7 +168,11 @@ export type LegacyBoardShortcutActionRequest =
       readonly action: 'moveCardToStadium';
       readonly cardId: ViewCardId;
       readonly placement?: 'add';
-    };
+    }
+  /** A key pressed with several selected: their one move or mark. */
+  | { readonly action: 'groupAction'; readonly group: GroupAction }
+  /** `q`/`e` with several selected: pick the Pokémon they all go on. */
+  | { readonly action: 'beginGroupAttach' };
 
 export type LegacyBoardShortcutActionRejectionReason =
   | 'not_player'
@@ -567,6 +572,11 @@ export const resolveLegacyBoardShortcutAction = (
         ),
         true
       );
+    // The controller compiles a group's keys (compileGroup); one card's
+    // resolver has nothing to say about them.
+    case 'groupAction':
+    case 'beginGroupAttach':
+      return { ok: false, reason: 'unsupported_source' };
   }
 };
 
@@ -702,6 +712,75 @@ export const resolveLegacyBoardShortcutKey = (
   if (matches(input, 'p', 'KeyP')) {
     return { action: 'changeCardType', cardId, category: 'Pokémon' };
   }
+  return null;
+};
+
+/**
+ * What a key means with several selected (ADR-042 §3): a move or mark for
+ * all of them; `q`/`e`, a Pokémon for all of them to go on; or one card's
+ * key (Read, switch with the top of the deck, look/cover, change type)
+ * that asks for a single card. Null for a key that is no card's. Shift
+ * means nothing here, as players keep it held after picking with it.
+ */
+export type LegacyBoardGroupShortcut =
+  | { readonly kind: 'action'; readonly action: GroupAction }
+  | { readonly kind: 'attach' }
+  | { readonly kind: 'single' };
+
+export const resolveLegacyBoardGroupShortcutKey = (
+  input: LegacyBoardShortcutKey
+): LegacyBoardGroupShortcut | null => {
+  const altKey = hasAltModifier(input);
+  const send = (to: Extract<GroupAction, { kind: 'send' }>['to']) =>
+    ({ kind: 'action', action: { kind: 'send', to } }) as const;
+  const digit = digitFor(input);
+  if (digit !== null) {
+    return {
+      kind: 'action',
+      action: { kind: 'damage', delta: digit * 10 * (altKey ? -1 : 1) },
+    };
+  }
+  if (matches(input, '0', 'Digit0'))
+    return { kind: 'action', action: { kind: 'clearDamage' } };
+  if (matches(input, 'y', 'KeyY'))
+    return { kind: 'action', action: { kind: 'condition', remove: altKey } };
+  if (matches(input, 'z', 'KeyZ'))
+    return { kind: 'action', action: { kind: 'reveal', revealed: altKey } };
+  if (matches(input, 'r', 'KeyR'))
+    return { kind: 'action', action: { kind: 'rotate', single: altKey } };
+  if (altKey) {
+    // Alt+E/T/P change one card's type.
+    return matches(input, 'e', 'KeyE') ||
+      matches(input, 't', 'KeyT') ||
+      matches(input, 'p', 'KeyP')
+      ? { kind: 'single' }
+      : null;
+  }
+  if (matches(input, 'w', 'KeyW'))
+    return { kind: 'action', action: { kind: 'ability' } };
+  if (matches(input, 'ArrowUp', 'ArrowUp')) return send('deckTop');
+  if (matches(input, 'ArrowDown', 'ArrowDown')) return send('deckBottom');
+  if (matches(input, 's', 'KeyS')) return send('deckShuffled');
+  if (matches(input, 'h', 'KeyH')) return send('hand');
+  if (matches(input, 'd', 'KeyD')) return send('discard');
+  if (matches(input, 'l', 'KeyL')) return send('lostZone');
+  if (matches(input, 'p', 'KeyP')) return send('prizes');
+  if (matches(input, ' ', 'KeySpace') || matches(input, ' ', 'Space'))
+    return send('board');
+  if (matches(input, 'a', 'KeyA'))
+    return { kind: 'action', action: { kind: 'play', slot: 'active' } };
+  if (matches(input, 'b', 'KeyB'))
+    return { kind: 'action', action: { kind: 'play', slot: 'bench' } };
+  if (matches(input, 'g', 'KeyG'))
+    return { kind: 'action', action: { kind: 'stadium' } };
+  if (matches(input, 'q', 'KeyQ') || matches(input, 'e', 'KeyE'))
+    return { kind: 'attach' };
+  if (
+    matches(input, 'ArrowRight', 'ArrowRight') ||
+    matches(input, 'c', 'KeyC') ||
+    matches(input, 'v', 'KeyV')
+  )
+    return { kind: 'single' };
   return null;
 };
 

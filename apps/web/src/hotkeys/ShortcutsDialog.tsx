@@ -1,6 +1,7 @@
 import { ArrowCounterClockwiseIcon } from '@phosphor-icons/react/dist/csr/ArrowCounterClockwise';
 import { ArrowsOutCardinalIcon } from '@phosphor-icons/react/dist/csr/ArrowsOutCardinal';
 import { CardsIcon } from '@phosphor-icons/react/dist/csr/Cards';
+import { CheckSquareOffsetIcon } from '@phosphor-icons/react/dist/csr/CheckSquareOffset';
 import { CursorClickIcon } from '@phosphor-icons/react/dist/csr/CursorClick';
 import { HandGrabbingIcon } from '@phosphor-icons/react/dist/csr/HandGrabbing';
 import { KeyboardIcon } from '@phosphor-icons/react/dist/csr/Keyboard';
@@ -86,6 +87,7 @@ const decorative = { 'aria-hidden': true, focusable: false } as const;
 const GROUP_ICONS: Readonly<Record<HotkeyGroupId, Icon>> = {
   move: ArrowsOutCardinalIcon,
   card: CardsIcon,
+  select: CheckSquareOffsetIcon,
   deck: DeckIcon,
   hand: HandGrabbingIcon,
   board: SquaresFourIcon,

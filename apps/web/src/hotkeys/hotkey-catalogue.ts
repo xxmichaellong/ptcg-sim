@@ -16,7 +16,7 @@ import { msg } from '@lingui/core/macro';
 export type HotkeyScope = 'card' | 'table' | 'any';
 
 export type HotkeyGroupId =
-  'move' | 'card' | 'deck' | 'hand' | 'board' | 'table';
+  'move' | 'card' | 'select' | 'deck' | 'hand' | 'board' | 'table';
 
 export interface HotkeyGroup {
   readonly id: HotkeyGroupId;
@@ -41,6 +41,10 @@ export const HOTKEY_GROUPS: readonly HotkeyGroup[] = [
   {
     id: 'card',
     title: msg({ message: 'Selected card', context: 'shortcut group' }),
+  },
+  {
+    id: 'select',
+    title: msg({ message: 'Select several cards', context: 'shortcut group' }),
   },
   { id: 'deck', title: msg({ message: 'Deck', context: 'shortcut group' }) },
   { id: 'hand', title: msg({ message: 'Hand', context: 'shortcut group' }) },
@@ -303,6 +307,25 @@ export const HOTKEY_ACTIONS = [
     short: msg({ message: 'Pokémon', context: 'shortcut key caption' }),
     scope: 'card',
     defaultChord: 'alt+p',
+  }),
+  action('select.toggle', {
+    group: 'select',
+    label: msg`Select or deselect`,
+    short: msg({ message: 'Select', context: 'shortcut key caption' }),
+    detail: msg`The focused card, or the one under the pointer`,
+    scope: 'any',
+    defaultChord: 'x',
+  }),
+  action('select.all', {
+    group: 'select',
+    label: msg`Select all here`,
+    short: msg({ message: 'All', context: 'shortcut key caption' }),
+    detail: msg({
+      message: 'Every card where the focused card lies (⌘A on a Mac)',
+      comment: 'Ctrl+A selects every card in the same place: a hand, a Bench…',
+    }),
+    scope: 'any',
+    defaultChord: 'ctrl+a',
   }),
   action('deck.shuffle', {
     group: 'deck',

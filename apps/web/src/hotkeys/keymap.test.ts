@@ -234,11 +234,11 @@ describe('changing shortcuts', () => {
     const moved = assignHotkey(
       NO_HOTKEY_OVERRIDES,
       'card.toHand',
-      chord('x'),
+      chord('j'),
       'clear'
     );
     const taken = assignHotkey(moved, 'card.toDiscard', chord('h'), 'clear');
-    expect(taken).toEqual({ 'card.toHand': 'x', 'card.toDiscard': 'h' });
+    expect(taken).toEqual({ 'card.toHand': 'j', 'card.toDiscard': 'h' });
     expect(resetHotkey(taken, 'card.toHand')).toEqual({
       'card.toDiscard': null,
     });

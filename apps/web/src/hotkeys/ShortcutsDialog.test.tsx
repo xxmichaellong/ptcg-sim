@@ -128,10 +128,10 @@ describe('ShortcutsDialog', () => {
     await render();
     await click(keyButton('card.toHand'));
     expect(keyButton('card.toHand').dataset.recording).toBe('true');
-    await press(keyButton('card.toHand'), { key: 'x', code: 'KeyX' });
-    expect(keycaps('card.toHand')).toEqual(['X']);
+    await press(keyButton('card.toHand'), { key: 'j', code: 'KeyJ' });
+    expect(keycaps('card.toHand')).toEqual(['J']);
     expect(row('card.toHand').dataset.custom).toBe('true');
-    expect(store.get(HOTKEY_PREFERENCES)).toEqual({ 'card.toHand': 'x' });
+    expect(store.get(HOTKEY_PREFERENCES)).toEqual({ 'card.toHand': 'j' });
 
     // Back to v1's key with the row's reset button.
     await click(

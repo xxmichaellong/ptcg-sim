@@ -314,6 +314,14 @@
     ],
     "translation": "{cardLabel}: thao tác"
   },
+  "KVwR0v": {
+    "message": "{cardName} is on the Bench.",
+    "translation": "{cardName} đang ở trên Bench."
+  },
+  "ZpZRof": {
+    "message": "{cardName} isn't in play.",
+    "translation": "{cardName} không ở trên sân."
+  },
   "cAQ-gI": {
     "message": "{cardName}, {copies, plural, one {# copy} other {# copies}}",
     "comments": [
@@ -422,6 +430,10 @@
     "message": "{count, plural, one {# Radiant card (max 1).} other {# Radiant cards (max 1).}}",
     "translation": "{count, plural, other {# lá Radiant (tối đa 1).}}"
   },
+  "MJC1vQ": {
+    "message": "{count, plural, one {Can't do that with this card} other {Can't do that with these cards}}",
+    "translation": "{count, plural, other {Không thể làm vậy với các lá bài này}}"
+  },
   "-gAzkm": {
     "message": "{count, plural, one {Discard hand and draw # card} other {Discard hand and draw # cards}}",
     "translation": "{count, plural, other {Bỏ bài trên tay và rút # lá}}"
@@ -457,6 +469,38 @@
   "aN0Z_E": {
     "message": "{count, plural, one {Shuffle hand to bottom and draw # card} other {Shuffle hand to bottom and draw # cards}}",
     "translation": "{count, plural, other {Xáo bài trên tay xuống đáy bộ bài và rút # lá}}"
+  },
+  "19mL4O": {
+    "message": "{count, plural, other {All # are already in hand}}",
+    "translation": "{count, plural, other {Cả # lá đã ở trong bài trên tay}}"
+  },
+  "jLjgz7": {
+    "message": "{count, plural, other {All # are already in the Active Spot}}",
+    "translation": "{count, plural, other {Cả # lá đã ở vị trí Active}}"
+  },
+  "Hsl0oE": {
+    "message": "{count, plural, other {All # are already in the discard pile}}",
+    "translation": "{count, plural, other {Cả # lá đã ở trong chồng bài bỏ}}"
+  },
+  "0IQSM-": {
+    "message": "{count, plural, other {All # are already in the Lost Zone}}",
+    "translation": "{count, plural, other {Cả # lá đã ở trong Lost Zone}}"
+  },
+  "lLOV6i": {
+    "message": "{count, plural, other {All # are already in the Prizes}}",
+    "translation": "{count, plural, other {Cả # lá đã ở trong Prize}}"
+  },
+  "o2Cq5Y": {
+    "message": "{count, plural, other {All # are already on the Bench}}",
+    "translation": "{count, plural, other {Cả # lá đã ở trên Bench}}"
+  },
+  "ANFeum": {
+    "message": "{count, plural, other {All # are already on the Board}}",
+    "translation": "{count, plural, other {Cả # lá đã ở trên thảm chơi}}"
+  },
+  "n5DC_e": {
+    "message": "{count, plural, other {All # are already the Stadium}}",
+    "translation": "{count, plural, other {Cả # lá đã ở vị trí Stadium}}"
   },
   "hMKADB": {
     "message": "{count} × {cardName} ({print}). Details",
@@ -1129,6 +1173,10 @@
     "message": "A card's picture address is too long.",
     "translation": "Địa chỉ hình của một lá bài quá dài."
   },
+  "fbfxt7": {
+    "message": "A Pokémon in play can't join a group going to the Bench",
+    "translation": "Pokémon trên sân không thể đi cùng nhóm lên Bench"
+  },
   "qLI-h5": {
     "message": "A whole number from {0} to {1}",
     "translation": "Một số nguyên từ {0} đến {1}"
@@ -1274,6 +1322,11 @@
     "message": "Added by hand · legality not checked",
     "translation": "Thêm thủ công · chưa kiểm tra tính hợp lệ"
   },
+  "vJUsnL": {
+    "message": "All",
+    "context": "shortcut key caption",
+    "translation": "Tất cả"
+  },
   "wZthGJ": {
     "message": "All lessons",
     "translation": "Tất cả bài học"
@@ -1328,6 +1381,10 @@
   "GRgK04": {
     "message": "Already on the Board",
     "translation": "Đã ở trên thảm chơi"
+  },
+  "Y3udby": {
+    "message": "Already part of the selected Pokémon",
+    "translation": "Đã thuộc Pokémon được chọn"
   },
   "uNUEdZ": {
     "message": "Already the Stadium",
@@ -1560,6 +1617,10 @@
     "message": "Basic Energy",
     "translation": "Năng lượng Cơ bản"
   },
+  "4Iwoxh": {
+    "message": "Because of {cardName}.",
+    "translation": "Do {cardName}."
+  },
   "dkk7vA": {
     "message": "Bench",
     "context": "shortcut key caption",
@@ -1686,6 +1747,10 @@
   "2lorx9": {
     "message": "Can't be changed",
     "translation": "Không thể thay đổi"
+  },
+  "eBqQIX": {
+    "message": "Can't move these together",
+    "translation": "Không thể di chuyển các lá này cùng nhau"
   },
   "Sq35G-": {
     "message": "Can't read the clipboard",
@@ -2610,6 +2675,13 @@
     "message": "Esc",
     "context": "keyboard key",
     "translation": "Esc"
+  },
+  "M4cEzY": {
+    "message": "Every card where the focused card lies (⌘A on a Mac)",
+    "comments": [
+      "Ctrl+A selects every card in the same place: a hand, a Bench…"
+    ],
+    "translation": "Mọi lá bài ở cùng chỗ với lá bài đang chọn (⌘A trên Mac)"
   },
   "8aoXpa": {
     "message": "Every key is under <0>{0}</0>, in <1>{1}</1>.",
@@ -3984,6 +4056,10 @@
     "message": "No match",
     "translation": "Không có kết quả"
   },
+  "FQDz2b": {
+    "message": "No Pokémon can take all of these",
+    "translation": "Không Pokémon nào có thể nhận tất cả các lá này"
+  },
   "ebeFtm": {
     "message": "No shortcut matches “{search}”.",
     "translation": "Không có phím tắt nào khớp với “{search}”."
@@ -4060,6 +4136,10 @@
   "W8zlv3": {
     "message": "Not yours to do",
     "translation": "Bạn không thể làm việc này"
+  },
+  "4QPb_7": {
+    "message": "Nothing is selected",
+    "translation": "Chưa chọn gì"
   },
   "aq4Vb1": {
     "message": "Nothing selected",
@@ -4153,9 +4233,25 @@
     ],
     "translation": "Chỉ hợp lệ ở {formatLabel}"
   },
+  "dewWX8": {
+    "message": "Only attachments can go on a Pokémon together",
+    "translation": "Chỉ bài gắn kèm mới có thể đặt cùng nhau lên một Pokémon"
+  },
+  "dfVuV_": {
+    "message": "Only one Pokémon can be Active",
+    "translation": "Chỉ có một Pokémon Active"
+  },
+  "LYmBTw": {
+    "message": "Only one Stadium at a time",
+    "translation": "Mỗi lần chỉ có một Stadium"
+  },
   "XXBK3z": {
     "message": "Only players can change the table.",
     "translation": "Chỉ người chơi mới có thể thay đổi bàn chơi."
+  },
+  "xGOaQc": {
+    "message": "Only Pokémon in play take damage",
+    "translation": "Chỉ Pokémon trên sân mới nhận sát thương"
   },
   "kQ0v6x": {
     "message": "Only that seat's player can.",
@@ -4192,6 +4288,10 @@
   "rT710w": {
     "message": "Open the link again in a moment.",
     "translation": "Hãy mở lại liên kết sau giây lát."
+  },
+  "FxfASP": {
+    "message": "Open the pile to pick cards from it",
+    "translation": "Mở chồng bài để chọn lá bài từ đó"
   },
   "cCMcAY": {
     "message": "Open their deck",
@@ -4539,6 +4639,10 @@
   "iM-hRS": {
     "message": "Press Enter again to confirm",
     "translation": "Nhấn Enter lần nữa để xác nhận"
+  },
+  "YwRyMW": {
+    "message": "Press Esc to put the cards down",
+    "translation": "Nhấn Esc để đặt các lá bài xuống"
   },
   "drY1M6": {
     "message": "Press keys…",
@@ -5174,6 +5278,28 @@
     "message": "Seat taken",
     "translation": "Chỗ đã có người"
   },
+  "4UhpnZ": {
+    "message": "Select",
+    "context": "shortcut key caption",
+    "translation": "Chọn"
+  },
+  "mGWCew": {
+    "message": "Select all here",
+    "translation": "Chọn tất cả ở đây"
+  },
+  "OWCzWu": {
+    "message": "Select one card for that",
+    "translation": "Chọn một lá bài cho việc đó"
+  },
+  "FWpeqJ": {
+    "message": "Select or deselect",
+    "translation": "Chọn hoặc bỏ chọn"
+  },
+  "KccOw9": {
+    "message": "Select several cards",
+    "context": "shortcut group",
+    "translation": "Chọn nhiều lá bài"
+  },
   "tGu7Tl": {
     "message": "Selected card",
     "comments": [
@@ -5577,6 +5703,10 @@
     "message": "Special Condition…",
     "translation": "Trạng thái đặc biệt…"
   },
+  "MzE_Dj": {
+    "message": "Special Conditions go only on Active Pokémon",
+    "translation": "Trạng thái đặc biệt chỉ áp dụng cho Pokémon Active"
+  },
   "0kjUmj": {
     "message": "Special Energy",
     "translation": "Năng lượng Đặc biệt"
@@ -5930,6 +6060,10 @@
     "message": "The card went back.",
     "translation": "Lá bài đã được trả về."
   },
+  "LfIGmJ": {
+    "message": "The cards went back.",
+    "translation": "Các lá bài đã quay về chỗ cũ."
+  },
   "FQpTJZ": {
     "message": "The clipboard isn't available here",
     "translation": "Bộ nhớ tạm không khả dụng ở đây"
@@ -5978,6 +6112,10 @@
     "message": "The file couldn't be saved",
     "translation": "Không thể lưu tệp"
   },
+  "KsKHA0": {
+    "message": "The focused card, or the one under the pointer",
+    "translation": "Lá bài đang chọn, hoặc lá bài dưới con trỏ"
+  },
   "lom6tE": {
     "message": "The last move is still sending.",
     "translation": "Nước đi gần nhất vẫn đang được gửi."
@@ -5994,9 +6132,17 @@
     "message": "The room no longer has this seat.",
     "translation": "Phòng không còn chỗ ngồi này."
   },
+  "Ymn83q": {
+    "message": "The table changed",
+    "translation": "Thảm chơi đã thay đổi"
+  },
   "m6ooXP": {
     "message": "The table changed, so the card went back.",
     "translation": "Bàn chơi đã thay đổi nên lá bài đã được trả về."
+  },
+  "sM9zJK": {
+    "message": "The table changed, so the cards went back.",
+    "translation": "Thảm chơi đã thay đổi nên các lá bài đã quay về chỗ cũ."
   },
   "u1UbSB": {
     "message": "The table changed. Try again.",
@@ -6415,6 +6561,10 @@
     "message": "Untitled deck",
     "translation": "Bộ bài chưa đặt tên"
   },
+  "k4TQ-Z": {
+    "message": "Up to 60 cards can be selected",
+    "translation": "Có thể chọn tối đa 60 lá bài"
+  },
   "gANddk": {
     "message": "Uploading…",
     "translation": "Đang tải lên…"
@@ -6548,6 +6698,10 @@
     "message": "Yes",
     "context": "filter",
     "translation": "Có"
+  },
+  "aylG7j": {
+    "message": "You can't move that card",
+    "translation": "Bạn không thể di chuyển lá bài đó"
   },
   "1hxqre": {
     "message": "You'll invite players from the room.",

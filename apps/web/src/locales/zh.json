@@ -314,6 +314,14 @@
     ],
     "translation": "{cardLabel}：操作"
   },
+  "KVwR0v": {
+    "message": "{cardName} is on the Bench.",
+    "translation": "{cardName}在备战区。"
+  },
+  "ZpZRof": {
+    "message": "{cardName} isn't in play.",
+    "translation": "{cardName}不在场上。"
+  },
   "cAQ-gI": {
     "message": "{cardName}, {copies, plural, one {# copy} other {# copies}}",
     "comments": [
@@ -422,6 +430,10 @@
     "message": "{count, plural, one {# Radiant card (max 1).} other {# Radiant cards (max 1).}}",
     "translation": "{count, plural, other {# 张光辉卡（最多1张）。}}"
   },
+  "MJC1vQ": {
+    "message": "{count, plural, one {Can't do that with this card} other {Can't do that with these cards}}",
+    "translation": "{count, plural, one {这张卡牌无法这样操作} other {这些卡牌无法这样操作}}"
+  },
   "-gAzkm": {
     "message": "{count, plural, one {Discard hand and draw # card} other {Discard hand and draw # cards}}",
     "translation": "{count, plural, other {弃掉手牌并抽 # 张牌}}"
@@ -457,6 +469,38 @@
   "aN0Z_E": {
     "message": "{count, plural, one {Shuffle hand to bottom and draw # card} other {Shuffle hand to bottom and draw # cards}}",
     "translation": "{count, plural, other {手牌洗入牌库底并抽 # 张牌}}"
+  },
+  "19mL4O": {
+    "message": "{count, plural, other {All # are already in hand}}",
+    "translation": "{count, plural, other {这#张都已在手牌中}}"
+  },
+  "jLjgz7": {
+    "message": "{count, plural, other {All # are already in the Active Spot}}",
+    "translation": "{count, plural, other {这#张都已在战斗场}}"
+  },
+  "Hsl0oE": {
+    "message": "{count, plural, other {All # are already in the discard pile}}",
+    "translation": "{count, plural, other {这#张都已在弃牌区}}"
+  },
+  "0IQSM-": {
+    "message": "{count, plural, other {All # are already in the Lost Zone}}",
+    "translation": "{count, plural, other {这#张都已在放逐区}}"
+  },
+  "lLOV6i": {
+    "message": "{count, plural, other {All # are already in the Prizes}}",
+    "translation": "{count, plural, other {这#张都已在奖赏卡中}}"
+  },
+  "o2Cq5Y": {
+    "message": "{count, plural, other {All # are already on the Bench}}",
+    "translation": "{count, plural, other {这#张都已在备战区}}"
+  },
+  "ANFeum": {
+    "message": "{count, plural, other {All # are already on the Board}}",
+    "translation": "{count, plural, other {这#张都已在场地上}}"
+  },
+  "n5DC_e": {
+    "message": "{count, plural, other {All # are already the Stadium}}",
+    "translation": "{count, plural, other {这#张都已是竞技场}}"
   },
   "hMKADB": {
     "message": "{count} × {cardName} ({print}). Details",
@@ -1129,6 +1173,10 @@
     "message": "A card's picture address is too long.",
     "translation": "卡牌图片地址过长。"
   },
+  "fbfxt7": {
+    "message": "A Pokémon in play can't join a group going to the Bench",
+    "translation": "场上的宝可梦不能和其他卡牌一起放到备战区"
+  },
   "qLI-h5": {
     "message": "A whole number from {0} to {1}",
     "translation": "{0} 到 {1} 之间的整数"
@@ -1274,6 +1322,11 @@
     "message": "Added by hand · legality not checked",
     "translation": "手动添加 · 未检查合法性"
   },
+  "vJUsnL": {
+    "message": "All",
+    "context": "shortcut key caption",
+    "translation": "全部"
+  },
   "wZthGJ": {
     "message": "All lessons",
     "translation": "全部课程"
@@ -1328,6 +1381,10 @@
   "GRgK04": {
     "message": "Already on the Board",
     "translation": "已在场地上"
+  },
+  "Y3udby": {
+    "message": "Already part of the selected Pokémon",
+    "translation": "已是所选宝可梦的一部分"
   },
   "uNUEdZ": {
     "message": "Already the Stadium",
@@ -1560,6 +1617,10 @@
     "message": "Basic Energy",
     "translation": "基本能量"
   },
+  "4Iwoxh": {
+    "message": "Because of {cardName}.",
+    "translation": "因为{cardName}。"
+  },
   "dkk7vA": {
     "message": "Bench",
     "context": "shortcut key caption",
@@ -1686,6 +1747,10 @@
   "2lorx9": {
     "message": "Can't be changed",
     "translation": "无法更改"
+  },
+  "eBqQIX": {
+    "message": "Can't move these together",
+    "translation": "这些卡牌不能一起移动"
   },
   "Sq35G-": {
     "message": "Can't read the clipboard",
@@ -2610,6 +2675,13 @@
     "message": "Esc",
     "context": "keyboard key",
     "translation": "Esc"
+  },
+  "M4cEzY": {
+    "message": "Every card where the focused card lies (⌘A on a Mac)",
+    "comments": [
+      "Ctrl+A selects every card in the same place: a hand, a Bench…"
+    ],
+    "translation": "选中焦点卡牌所在位置的所有卡牌（Mac 上为 ⌘A）"
   },
   "8aoXpa": {
     "message": "Every key is under <0>{0}</0>, in <1>{1}</1>.",
@@ -3984,6 +4056,10 @@
     "message": "No match",
     "translation": "无匹配项"
   },
+  "FQDz2b": {
+    "message": "No Pokémon can take all of these",
+    "translation": "没有宝可梦能容纳全部这些卡牌"
+  },
   "ebeFtm": {
     "message": "No shortcut matches “{search}”.",
     "translation": "没有与“{search}”匹配的快捷键。"
@@ -4060,6 +4136,10 @@
   "W8zlv3": {
     "message": "Not yours to do",
     "translation": "不能由你操作"
+  },
+  "4QPb_7": {
+    "message": "Nothing is selected",
+    "translation": "未选择任何卡牌"
   },
   "aq4Vb1": {
     "message": "Nothing selected",
@@ -4153,9 +4233,25 @@
     ],
     "translation": "仅限{formatLabel}合法"
   },
+  "dewWX8": {
+    "message": "Only attachments can go on a Pokémon together",
+    "translation": "只有附着的卡牌能一起放到宝可梦上"
+  },
+  "dfVuV_": {
+    "message": "Only one Pokémon can be Active",
+    "translation": "战斗场只能有一只宝可梦"
+  },
+  "LYmBTw": {
+    "message": "Only one Stadium at a time",
+    "translation": "同一时间只能有一张竞技场卡"
+  },
   "XXBK3z": {
     "message": "Only players can change the table.",
     "translation": "只有玩家可以更改牌桌。"
+  },
+  "xGOaQc": {
+    "message": "Only Pokémon in play take damage",
+    "translation": "只有场上的宝可梦会受到伤害"
   },
   "kQ0v6x": {
     "message": "Only that seat's player can.",
@@ -4192,6 +4288,10 @@
   "rT710w": {
     "message": "Open the link again in a moment.",
     "translation": "请稍后再次打开链接。"
+  },
+  "FxfASP": {
+    "message": "Open the pile to pick cards from it",
+    "translation": "打开卡堆后才能从中选牌"
   },
   "cCMcAY": {
     "message": "Open their deck",
@@ -4539,6 +4639,10 @@
   "iM-hRS": {
     "message": "Press Enter again to confirm",
     "translation": "再按一次 Enter 确认"
+  },
+  "YwRyMW": {
+    "message": "Press Esc to put the cards down",
+    "translation": "按 Esc 放下卡牌"
   },
   "drY1M6": {
     "message": "Press keys…",
@@ -5174,6 +5278,28 @@
     "message": "Seat taken",
     "translation": "座位已被占用"
   },
+  "4UhpnZ": {
+    "message": "Select",
+    "context": "shortcut key caption",
+    "translation": "选择"
+  },
+  "mGWCew": {
+    "message": "Select all here",
+    "translation": "选择此处全部"
+  },
+  "OWCzWu": {
+    "message": "Select one card for that",
+    "translation": "请只选择一张卡牌"
+  },
+  "FWpeqJ": {
+    "message": "Select or deselect",
+    "translation": "选择或取消选择"
+  },
+  "KccOw9": {
+    "message": "Select several cards",
+    "context": "shortcut group",
+    "translation": "选择多张卡牌"
+  },
   "tGu7Tl": {
     "message": "Selected card",
     "comments": [
@@ -5577,6 +5703,10 @@
     "message": "Special Condition…",
     "translation": "特殊状态…"
   },
+  "MzE_Dj": {
+    "message": "Special Conditions go only on Active Pokémon",
+    "translation": "特殊状态只能用于战斗宝可梦"
+  },
   "0kjUmj": {
     "message": "Special Energy",
     "translation": "特殊能量"
@@ -5930,6 +6060,10 @@
     "message": "The card went back.",
     "translation": "卡牌已退回。"
   },
+  "LfIGmJ": {
+    "message": "The cards went back.",
+    "translation": "卡牌已放回。"
+  },
   "FQpTJZ": {
     "message": "The clipboard isn't available here",
     "translation": "此处无法使用剪贴板"
@@ -5978,6 +6112,10 @@
     "message": "The file couldn't be saved",
     "translation": "文件保存失败"
   },
+  "KsKHA0": {
+    "message": "The focused card, or the one under the pointer",
+    "translation": "焦点卡牌，或指针下方的卡牌"
+  },
   "lom6tE": {
     "message": "The last move is still sending.",
     "translation": "上一步仍在发送。"
@@ -5994,9 +6132,17 @@
     "message": "The room no longer has this seat.",
     "translation": "房间中已没有这个座位。"
   },
+  "Ymn83q": {
+    "message": "The table changed",
+    "translation": "牌桌已变化"
+  },
   "m6ooXP": {
     "message": "The table changed, so the card went back.",
     "translation": "牌桌已变化，卡牌已退回。"
+  },
+  "sM9zJK": {
+    "message": "The table changed, so the cards went back.",
+    "translation": "牌桌已变化，卡牌已放回。"
   },
   "u1UbSB": {
     "message": "The table changed. Try again.",
@@ -6415,6 +6561,10 @@
     "message": "Untitled deck",
     "translation": "未命名卡组"
   },
+  "k4TQ-Z": {
+    "message": "Up to 60 cards can be selected",
+    "translation": "最多可选择60张卡牌"
+  },
   "gANddk": {
     "message": "Uploading…",
     "translation": "上传中…"
@@ -6548,6 +6698,10 @@
     "message": "Yes",
     "context": "filter",
     "translation": "是"
+  },
+  "aylG7j": {
+    "message": "You can't move that card",
+    "translation": "不能移动那张卡牌"
   },
   "1hxqre": {
     "message": "You'll invite players from the room.",

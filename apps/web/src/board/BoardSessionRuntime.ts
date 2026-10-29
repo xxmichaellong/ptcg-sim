@@ -796,6 +796,7 @@ export class BoardSessionRuntime {
       case 'OverlayActionRejected':
       case 'ShortcutActionRejected':
       case 'OncePerGameActionRejected':
+      case 'GroupActionRejected':
         break;
     }
     this.options.onBoardEffect?.(effect);

@@ -314,6 +314,14 @@
     ],
     "translation": "{cardLabel}: การดำเนินการ"
   },
+  "KVwR0v": {
+    "message": "{cardName} is on the Bench.",
+    "translation": "{cardName} อยู่บนเบนช์"
+  },
+  "ZpZRof": {
+    "message": "{cardName} isn't in play.",
+    "translation": "{cardName} ไม่ได้อยู่บนกระดาน"
+  },
   "cAQ-gI": {
     "message": "{cardName}, {copies, plural, one {# copy} other {# copies}}",
     "comments": [
@@ -422,6 +430,10 @@
     "message": "{count, plural, one {# Radiant card (max 1).} other {# Radiant cards (max 1).}}",
     "translation": "{count, plural, other {การ์ดเรเดียนต์ # ใบ (สูงสุด 1 ใบ)}}"
   },
+  "MJC1vQ": {
+    "message": "{count, plural, one {Can't do that with this card} other {Can't do that with these cards}}",
+    "translation": "{count, plural, other {ทำสิ่งนี้กับการ์ดเหล่านี้ไม่ได้}}"
+  },
   "-gAzkm": {
     "message": "{count, plural, one {Discard hand and draw # card} other {Discard hand and draw # cards}}",
     "translation": "{count, plural, other {ทิ้งการ์ดบนมือและจั่ว # ใบ}}"
@@ -457,6 +469,38 @@
   "aN0Z_E": {
     "message": "{count, plural, one {Shuffle hand to bottom and draw # card} other {Shuffle hand to bottom and draw # cards}}",
     "translation": "{count, plural, other {สับการ์ดบนมือไว้ใต้สำรับการ์ดและจั่ว # ใบ}}"
+  },
+  "19mL4O": {
+    "message": "{count, plural, other {All # are already in hand}}",
+    "translation": "{count, plural, other {ทั้ง # ใบอยู่บนมืออยู่แล้ว}}"
+  },
+  "jLjgz7": {
+    "message": "{count, plural, other {All # are already in the Active Spot}}",
+    "translation": "{count, plural, other {ทั้ง # ใบอยู่บนตำแหน่งต่อสู้อยู่แล้ว}}"
+  },
+  "Hsl0oE": {
+    "message": "{count, plural, other {All # are already in the discard pile}}",
+    "translation": "{count, plural, other {ทั้ง # ใบอยู่ในตำแหน่งทิ้งการ์ดอยู่แล้ว}}"
+  },
+  "0IQSM-": {
+    "message": "{count, plural, other {All # are already in the Lost Zone}}",
+    "translation": "{count, plural, other {ทั้ง # ใบอยู่ในลอสต์โซนอยู่แล้ว}}"
+  },
+  "lLOV6i": {
+    "message": "{count, plural, other {All # are already in the Prizes}}",
+    "translation": "{count, plural, other {ทั้ง # ใบอยู่ในการ์ดรางวัลอยู่แล้ว}}"
+  },
+  "o2Cq5Y": {
+    "message": "{count, plural, other {All # are already on the Bench}}",
+    "translation": "{count, plural, other {ทั้ง # ใบอยู่บนเบนช์อยู่แล้ว}}"
+  },
+  "ANFeum": {
+    "message": "{count, plural, other {All # are already on the Board}}",
+    "translation": "{count, plural, other {ทั้ง # ใบอยู่บนบอร์ดอยู่แล้ว}}"
+  },
+  "n5DC_e": {
+    "message": "{count, plural, other {All # are already the Stadium}}",
+    "translation": "{count, plural, other {ทั้ง # ใบเป็นสเตเดียมอยู่แล้ว}}"
   },
   "hMKADB": {
     "message": "{count} × {cardName} ({print}). Details",
@@ -1129,6 +1173,10 @@
     "message": "A card's picture address is too long.",
     "translation": "ที่อยู่รูปภาพของการ์ดยาวเกินไป"
   },
+  "fbfxt7": {
+    "message": "A Pokémon in play can't join a group going to the Bench",
+    "translation": "โปเกมอนบนกระดานไม่สามารถร่วมกลุ่มที่ไปเบนช์ได้"
+  },
   "qLI-h5": {
     "message": "A whole number from {0} to {1}",
     "translation": "จำนวนเต็มตั้งแต่ {0} ถึง {1}"
@@ -1274,6 +1322,11 @@
     "message": "Added by hand · legality not checked",
     "translation": "เพิ่มด้วยตนเอง · ไม่ได้ตรวจสอบความถูกต้อง"
   },
+  "vJUsnL": {
+    "message": "All",
+    "context": "shortcut key caption",
+    "translation": "ทั้งหมด"
+  },
   "wZthGJ": {
     "message": "All lessons",
     "translation": "บทเรียนทั้งหมด"
@@ -1328,6 +1381,10 @@
   "GRgK04": {
     "message": "Already on the Board",
     "translation": "อยู่บนบอร์ดอยู่แล้ว"
+  },
+  "Y3udby": {
+    "message": "Already part of the selected Pokémon",
+    "translation": "เป็นส่วนหนึ่งของโปเกมอนที่เลือกอยู่แล้ว"
   },
   "uNUEdZ": {
     "message": "Already the Stadium",
@@ -1560,6 +1617,10 @@
     "message": "Basic Energy",
     "translation": "พลังงานพื้นฐาน"
   },
+  "4Iwoxh": {
+    "message": "Because of {cardName}.",
+    "translation": "เพราะ {cardName}"
+  },
   "dkk7vA": {
     "message": "Bench",
     "context": "shortcut key caption",
@@ -1686,6 +1747,10 @@
   "2lorx9": {
     "message": "Can't be changed",
     "translation": "ไม่สามารถเปลี่ยนแปลงได้"
+  },
+  "eBqQIX": {
+    "message": "Can't move these together",
+    "translation": "ย้ายการ์ดเหล่านี้พร้อมกันไม่ได้"
   },
   "Sq35G-": {
     "message": "Can't read the clipboard",
@@ -2610,6 +2675,13 @@
     "message": "Esc",
     "context": "keyboard key",
     "translation": "Esc"
+  },
+  "M4cEzY": {
+    "message": "Every card where the focused card lies (⌘A on a Mac)",
+    "comments": [
+      "Ctrl+A selects every card in the same place: a hand, a Bench…"
+    ],
+    "translation": "การ์ดทุกใบในตำแหน่งเดียวกับการ์ดที่โฟกัสอยู่ (⌘A บน Mac)"
   },
   "8aoXpa": {
     "message": "Every key is under <0>{0}</0>, in <1>{1}</1>.",
@@ -3984,6 +4056,10 @@
     "message": "No match",
     "translation": "ไม่พบที่ตรงกัน"
   },
+  "FQDz2b": {
+    "message": "No Pokémon can take all of these",
+    "translation": "ไม่มีโปเกมอนที่รับทั้งหมดนี้ได้"
+  },
   "ebeFtm": {
     "message": "No shortcut matches “{search}”.",
     "translation": "ไม่มีปุ่มลัดที่ตรงกับ “{search}”"
@@ -4060,6 +4136,10 @@
   "W8zlv3": {
     "message": "Not yours to do",
     "translation": "คุณไม่มีสิทธิ์ทำสิ่งนี้"
+  },
+  "4QPb_7": {
+    "message": "Nothing is selected",
+    "translation": "ยังไม่ได้เลือกอะไร"
   },
   "aq4Vb1": {
     "message": "Nothing selected",
@@ -4153,9 +4233,25 @@
     ],
     "translation": "เฉพาะที่ใช้ได้ใน {formatLabel}"
   },
+  "dewWX8": {
+    "message": "Only attachments can go on a Pokémon together",
+    "translation": "มีเพียงการ์ดที่ติดได้เท่านั้นที่ใส่ให้โปเกมอนพร้อมกันได้"
+  },
+  "dfVuV_": {
+    "message": "Only one Pokémon can be Active",
+    "translation": "มีโปเกมอนบนตำแหน่งต่อสู้ได้เพียงตัวเดียว"
+  },
+  "LYmBTw": {
+    "message": "Only one Stadium at a time",
+    "translation": "มีสเตเดียมได้ครั้งละใบเดียว"
+  },
   "XXBK3z": {
     "message": "Only players can change the table.",
     "translation": "เฉพาะผู้เล่นเท่านั้นที่เปลี่ยนโต๊ะได้"
+  },
+  "xGOaQc": {
+    "message": "Only Pokémon in play take damage",
+    "translation": "เฉพาะโปเกมอนบนกระดานที่รับแดเมจได้"
   },
   "kQ0v6x": {
     "message": "Only that seat's player can.",
@@ -4192,6 +4288,10 @@
   "rT710w": {
     "message": "Open the link again in a moment.",
     "translation": "เปิดลิงก์อีกครั้งในอีกสักครู่"
+  },
+  "FxfASP": {
+    "message": "Open the pile to pick cards from it",
+    "translation": "เปิดกองเพื่อเลือกการ์ดจากกองนั้น"
   },
   "cCMcAY": {
     "message": "Open their deck",
@@ -4539,6 +4639,10 @@
   "iM-hRS": {
     "message": "Press Enter again to confirm",
     "translation": "กด Enter อีกครั้งเพื่อยืนยัน"
+  },
+  "YwRyMW": {
+    "message": "Press Esc to put the cards down",
+    "translation": "กด Esc เพื่อวางการ์ดลง"
   },
   "drY1M6": {
     "message": "Press keys…",
@@ -5174,6 +5278,28 @@
     "message": "Seat taken",
     "translation": "ที่นั่งเต็ม"
   },
+  "4UhpnZ": {
+    "message": "Select",
+    "context": "shortcut key caption",
+    "translation": "เลือก"
+  },
+  "mGWCew": {
+    "message": "Select all here",
+    "translation": "เลือกทั้งหมดที่นี่"
+  },
+  "OWCzWu": {
+    "message": "Select one card for that",
+    "translation": "เลือกการ์ดหนึ่งใบสำหรับสิ่งนั้น"
+  },
+  "FWpeqJ": {
+    "message": "Select or deselect",
+    "translation": "เลือกหรือยกเลิกการเลือก"
+  },
+  "KccOw9": {
+    "message": "Select several cards",
+    "context": "shortcut group",
+    "translation": "เลือกหลายใบ"
+  },
   "tGu7Tl": {
     "message": "Selected card",
     "comments": [
@@ -5577,6 +5703,10 @@
     "message": "Special Condition…",
     "translation": "สภาวะผิดปกติ…"
   },
+  "MzE_Dj": {
+    "message": "Special Conditions go only on Active Pokémon",
+    "translation": "สภาวะผิดปกติใช้ได้เฉพาะโปเกมอนบนตำแหน่งต่อสู้"
+  },
   "0kjUmj": {
     "message": "Special Energy",
     "translation": "พลังงานพิเศษ"
@@ -5930,6 +6060,10 @@
     "message": "The card went back.",
     "translation": "การ์ดถูกส่งกลับแล้ว"
   },
+  "LfIGmJ": {
+    "message": "The cards went back.",
+    "translation": "การ์ดกลับที่เดิมแล้ว"
+  },
   "FQpTJZ": {
     "message": "The clipboard isn't available here",
     "translation": "ไม่สามารถใช้คลิปบอร์ดที่นี่ได้"
@@ -5978,6 +6112,10 @@
     "message": "The file couldn't be saved",
     "translation": "บันทึกไฟล์ไม่สำเร็จ"
   },
+  "KsKHA0": {
+    "message": "The focused card, or the one under the pointer",
+    "translation": "การ์ดที่โฟกัสอยู่ หรือใบที่อยู่ใต้ตัวชี้"
+  },
   "lom6tE": {
     "message": "The last move is still sending.",
     "translation": "การเล่นล่าสุดยังส่งไม่เสร็จ"
@@ -5994,8 +6132,16 @@
     "message": "The room no longer has this seat.",
     "translation": "ห้องไม่มีที่นั่งนี้แล้ว"
   },
+  "Ymn83q": {
+    "message": "The table changed",
+    "translation": "โต๊ะมีการเปลี่ยนแปลง"
+  },
   "m6ooXP": {
     "message": "The table changed, so the card went back.",
+    "translation": "โต๊ะมีการเปลี่ยนแปลง การ์ดจึงกลับที่เดิม"
+  },
+  "sM9zJK": {
+    "message": "The table changed, so the cards went back.",
     "translation": "โต๊ะมีการเปลี่ยนแปลง การ์ดจึงกลับที่เดิม"
   },
   "u1UbSB": {
@@ -6415,6 +6561,10 @@
     "message": "Untitled deck",
     "translation": "เด็คไม่มีชื่อ"
   },
+  "k4TQ-Z": {
+    "message": "Up to 60 cards can be selected",
+    "translation": "เลือกได้สูงสุด 60 ใบ"
+  },
   "gANddk": {
     "message": "Uploading…",
     "translation": "กำลังอัปโหลด…"
@@ -6548,6 +6698,10 @@
     "message": "Yes",
     "context": "filter",
     "translation": "ใช่"
+  },
+  "aylG7j": {
+    "message": "You can't move that card",
+    "translation": "คุณย้ายการ์ดใบนั้นไม่ได้"
   },
   "1hxqre": {
     "message": "You'll invite players from the room.",

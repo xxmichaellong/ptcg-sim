@@ -314,6 +314,14 @@
     ],
     "translation": "{cardLabel}: eylemler"
   },
+  "KVwR0v": {
+    "message": "{cardName} is on the Bench.",
+    "translation": "{cardName} yedekte."
+  },
+  "ZpZRof": {
+    "message": "{cardName} isn't in play.",
+    "translation": "{cardName} oyunda değil."
+  },
   "cAQ-gI": {
     "message": "{cardName}, {copies, plural, one {# copy} other {# copies}}",
     "comments": [
@@ -422,6 +430,10 @@
     "message": "{count, plural, one {# Radiant card (max 1).} other {# Radiant cards (max 1).}}",
     "translation": "{count, plural, one {# Radiant kart (en fazla 1).} other {# Radiant kart (en fazla 1).}}"
   },
+  "MJC1vQ": {
+    "message": "{count, plural, one {Can't do that with this card} other {Can't do that with these cards}}",
+    "translation": "{count, plural, one {Bu kartla bunu yapamazsın} other {Bu kartlarla bunu yapamazsın}}"
+  },
   "-gAzkm": {
     "message": "{count, plural, one {Discard hand and draw # card} other {Discard hand and draw # cards}}",
     "translation": "{count, plural, one {Eldeki kartları at ve # kart çek} other {Eldeki kartları at ve # kart çek}}"
@@ -457,6 +469,38 @@
   "aN0Z_E": {
     "message": "{count, plural, one {Shuffle hand to bottom and draw # card} other {Shuffle hand to bottom and draw # cards}}",
     "translation": "{count, plural, one {Eli destenin altına karıştır ve # kart çek} other {Eli destenin altına karıştır ve # kart çek}}"
+  },
+  "19mL4O": {
+    "message": "{count, plural, other {All # are already in hand}}",
+    "translation": "{count, plural, other {# kartın hepsi zaten elde}}"
+  },
+  "jLjgz7": {
+    "message": "{count, plural, other {All # are already in the Active Spot}}",
+    "translation": "{count, plural, other {# kartın hepsi zaten Aktif Alanda}}"
+  },
+  "Hsl0oE": {
+    "message": "{count, plural, other {All # are already in the discard pile}}",
+    "translation": "{count, plural, other {# kartın hepsi zaten atık yığınında}}"
+  },
+  "0IQSM-": {
+    "message": "{count, plural, other {All # are already in the Lost Zone}}",
+    "translation": "{count, plural, other {# kartın hepsi zaten Lost Zone'da}}"
+  },
+  "lLOV6i": {
+    "message": "{count, plural, other {All # are already in the Prizes}}",
+    "translation": "{count, plural, other {# kartın hepsi zaten Ödüllerde}}"
+  },
+  "o2Cq5Y": {
+    "message": "{count, plural, other {All # are already on the Bench}}",
+    "translation": "{count, plural, other {# kartın hepsi zaten Yedek Alanında}}"
+  },
+  "ANFeum": {
+    "message": "{count, plural, other {All # are already on the Board}}",
+    "translation": "{count, plural, other {# kartın hepsi zaten oyun alanında}}"
+  },
+  "n5DC_e": {
+    "message": "{count, plural, other {All # are already the Stadium}}",
+    "translation": "{count, plural, other {# kartın hepsi zaten Stadyum}}"
   },
   "hMKADB": {
     "message": "{count} × {cardName} ({print}). Details",
@@ -1129,6 +1173,10 @@
     "message": "A card's picture address is too long.",
     "translation": "Bir kartın görsel adresi çok uzun."
   },
+  "fbfxt7": {
+    "message": "A Pokémon in play can't join a group going to the Bench",
+    "translation": "Oyunda olan bir Pokémon, yedeğe giden bir gruba katılamaz"
+  },
   "qLI-h5": {
     "message": "A whole number from {0} to {1}",
     "translation": "{0} ile {1} arasında bir tam sayı"
@@ -1274,6 +1322,11 @@
     "message": "Added by hand · legality not checked",
     "translation": "Elle eklendi · geçerlilik denetlenmedi"
   },
+  "vJUsnL": {
+    "message": "All",
+    "context": "shortcut key caption",
+    "translation": "Tümü"
+  },
   "wZthGJ": {
     "message": "All lessons",
     "translation": "Tüm dersler"
@@ -1328,6 +1381,10 @@
   "GRgK04": {
     "message": "Already on the Board",
     "translation": "Zaten oyun alanında"
+  },
+  "Y3udby": {
+    "message": "Already part of the selected Pokémon",
+    "translation": "Seçili Pokémon'un zaten parçası"
   },
   "uNUEdZ": {
     "message": "Already the Stadium",
@@ -1560,6 +1617,10 @@
     "message": "Basic Energy",
     "translation": "Temel Enerji"
   },
+  "4Iwoxh": {
+    "message": "Because of {cardName}.",
+    "translation": "{cardName} yüzünden."
+  },
   "dkk7vA": {
     "message": "Bench",
     "context": "shortcut key caption",
@@ -1686,6 +1747,10 @@
   "2lorx9": {
     "message": "Can't be changed",
     "translation": "Değiştirilemez"
+  },
+  "eBqQIX": {
+    "message": "Can't move these together",
+    "translation": "Bunlar birlikte taşınamaz"
   },
   "Sq35G-": {
     "message": "Can't read the clipboard",
@@ -2610,6 +2675,13 @@
     "message": "Esc",
     "context": "keyboard key",
     "translation": "Esc"
+  },
+  "M4cEzY": {
+    "message": "Every card where the focused card lies (⌘A on a Mac)",
+    "comments": [
+      "Ctrl+A selects every card in the same place: a hand, a Bench…"
+    ],
+    "translation": "Odaklanılan kartın bulunduğu yerdeki tüm kartlar (Mac'te ⌘A)"
   },
   "8aoXpa": {
     "message": "Every key is under <0>{0}</0>, in <1>{1}</1>.",
@@ -3984,6 +4056,10 @@
     "message": "No match",
     "translation": "Eşleşme yok"
   },
+  "FQDz2b": {
+    "message": "No Pokémon can take all of these",
+    "translation": "Hiçbir Pokémon bunların hepsini alamaz"
+  },
   "ebeFtm": {
     "message": "No shortcut matches “{search}”.",
     "translation": "“{search}” ile eşleşen kısayol yok."
@@ -4060,6 +4136,10 @@
   "W8zlv3": {
     "message": "Not yours to do",
     "translation": "Bunu sen yapamazsın"
+  },
+  "4QPb_7": {
+    "message": "Nothing is selected",
+    "translation": "Hiçbir şey seçili değil"
   },
   "aq4Vb1": {
     "message": "Nothing selected",
@@ -4153,9 +4233,25 @@
     ],
     "translation": "Yalnızca {formatLabel} için geçerli olanlar"
   },
+  "dewWX8": {
+    "message": "Only attachments can go on a Pokémon together",
+    "translation": "Bir Pokémon'a yalnızca bağlı kartlar birlikte konabilir"
+  },
+  "dfVuV_": {
+    "message": "Only one Pokémon can be Active",
+    "translation": "Yalnızca bir Pokémon Aktif olabilir"
+  },
+  "LYmBTw": {
+    "message": "Only one Stadium at a time",
+    "translation": "Aynı anda yalnızca bir Stadyum olabilir"
+  },
   "XXBK3z": {
     "message": "Only players can change the table.",
     "translation": "Masayı yalnızca oyuncular değiştirebilir."
+  },
+  "xGOaQc": {
+    "message": "Only Pokémon in play take damage",
+    "translation": "Yalnızca oyundaki Pokémon hasar alır"
   },
   "kQ0v6x": {
     "message": "Only that seat's player can.",
@@ -4192,6 +4288,10 @@
   "rT710w": {
     "message": "Open the link again in a moment.",
     "translation": "Bağlantıyı birazdan tekrar aç."
+  },
+  "FxfASP": {
+    "message": "Open the pile to pick cards from it",
+    "translation": "Kartları seçmek için yığını aç"
   },
   "cCMcAY": {
     "message": "Open their deck",
@@ -4539,6 +4639,10 @@
   "iM-hRS": {
     "message": "Press Enter again to confirm",
     "translation": "Onaylamak için tekrar Enter'a bas"
+  },
+  "YwRyMW": {
+    "message": "Press Esc to put the cards down",
+    "translation": "Kartları bırakmak için Esc'ye bas"
   },
   "drY1M6": {
     "message": "Press keys…",
@@ -5174,6 +5278,28 @@
     "message": "Seat taken",
     "translation": "Koltuk dolu"
   },
+  "4UhpnZ": {
+    "message": "Select",
+    "context": "shortcut key caption",
+    "translation": "Seç"
+  },
+  "mGWCew": {
+    "message": "Select all here",
+    "translation": "Buradakilerin tümünü seç"
+  },
+  "OWCzWu": {
+    "message": "Select one card for that",
+    "translation": "Bunun için tek bir kart seç"
+  },
+  "FWpeqJ": {
+    "message": "Select or deselect",
+    "translation": "Seç veya seçimi kaldır"
+  },
+  "KccOw9": {
+    "message": "Select several cards",
+    "context": "shortcut group",
+    "translation": "Birden çok kart seç"
+  },
   "tGu7Tl": {
     "message": "Selected card",
     "comments": [
@@ -5577,6 +5703,10 @@
     "message": "Special Condition…",
     "translation": "Özel durum…"
   },
+  "MzE_Dj": {
+    "message": "Special Conditions go only on Active Pokémon",
+    "translation": "Özel Durumlar yalnızca Aktif Pokémon'a uygulanır"
+  },
   "0kjUmj": {
     "message": "Special Energy",
     "translation": "Özel Enerji"
@@ -5930,6 +6060,10 @@
     "message": "The card went back.",
     "translation": "Kart geri döndü."
   },
+  "LfIGmJ": {
+    "message": "The cards went back.",
+    "translation": "Kartlar geri döndü."
+  },
   "FQpTJZ": {
     "message": "The clipboard isn't available here",
     "translation": "Pano burada kullanılamıyor"
@@ -5978,6 +6112,10 @@
     "message": "The file couldn't be saved",
     "translation": "Dosya kaydedilemedi"
   },
+  "KsKHA0": {
+    "message": "The focused card, or the one under the pointer",
+    "translation": "Odaklanılan kart veya imlecin altındaki kart"
+  },
   "lom6tE": {
     "message": "The last move is still sending.",
     "translation": "Son hamle hâlâ gönderiliyor."
@@ -5994,9 +6132,17 @@
     "message": "The room no longer has this seat.",
     "translation": "Odada artık bu koltuk yok."
   },
+  "Ymn83q": {
+    "message": "The table changed",
+    "translation": "Masa değişti"
+  },
   "m6ooXP": {
     "message": "The table changed, so the card went back.",
     "translation": "Masa değişti, bu yüzden kart geri döndü."
+  },
+  "sM9zJK": {
+    "message": "The table changed, so the cards went back.",
+    "translation": "Masa değiştiği için kartlar geri döndü."
   },
   "u1UbSB": {
     "message": "The table changed. Try again.",
@@ -6415,6 +6561,10 @@
     "message": "Untitled deck",
     "translation": "Adsız deste"
   },
+  "k4TQ-Z": {
+    "message": "Up to 60 cards can be selected",
+    "translation": "En fazla 60 kart seçilebilir"
+  },
   "gANddk": {
     "message": "Uploading…",
     "translation": "Yükleniyor…"
@@ -6548,6 +6698,10 @@
     "message": "Yes",
     "context": "filter",
     "translation": "Evet"
+  },
+  "aylG7j": {
+    "message": "You can't move that card",
+    "translation": "Bu kartı taşıyamazsın"
   },
   "1hxqre": {
     "message": "You'll invite players from the room.",

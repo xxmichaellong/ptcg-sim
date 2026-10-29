@@ -314,6 +314,14 @@
     ],
     "translation": "{cardLabel}: радње"
   },
+  "KVwR0v": {
+    "message": "{cardName} is on the Bench.",
+    "translation": "{cardName} је на клупи."
+  },
+  "ZpZRof": {
+    "message": "{cardName} isn't in play.",
+    "translation": "{cardName} није у игри."
+  },
   "cAQ-gI": {
     "message": "{cardName}, {copies, plural, one {# copy} other {# copies}}",
     "comments": [
@@ -422,6 +430,10 @@
     "message": "{count, plural, one {# Radiant card (max 1).} other {# Radiant cards (max 1).}}",
     "translation": "{count, plural, one {# Radiant карта (највише 1).} few {# Radiant карте (највише 1).} other {# Radiant карата (највише 1).}}"
   },
+  "MJC1vQ": {
+    "message": "{count, plural, one {Can't do that with this card} other {Can't do that with these cards}}",
+    "translation": "{count, plural, one {То не можеш са овом картом} few {То не можеш са овим картама} other {То не можеш са овим картама}}"
+  },
   "-gAzkm": {
     "message": "{count, plural, one {Discard hand and draw # card} other {Discard hand and draw # cards}}",
     "translation": "{count, plural, one {Одбаци руку и повуци # карту} few {Одбаци руку и повуци # карте} other {Одбаци руку и повуци # карата}}"
@@ -457,6 +469,38 @@
   "aN0Z_E": {
     "message": "{count, plural, one {Shuffle hand to bottom and draw # card} other {Shuffle hand to bottom and draw # cards}}",
     "translation": "{count, plural, one {Промешај руку на дно шпила и повуци # карту} few {Промешај руку на дно шпила и повуци # карте} other {Промешај руку на дно шпила и повуци # карата}}"
+  },
+  "19mL4O": {
+    "message": "{count, plural, other {All # are already in hand}}",
+    "translation": "{count, plural, one {Карта је већ у руци} few {Све # карте су већ у руци} other {Свих # карата је већ у руци}}"
+  },
+  "jLjgz7": {
+    "message": "{count, plural, other {All # are already in the Active Spot}}",
+    "translation": "{count, plural, one {Карта је већ на активном месту} few {Све # карте су већ на активном месту} other {Свих # карата је већ на активном месту}}"
+  },
+  "Hsl0oE": {
+    "message": "{count, plural, other {All # are already in the discard pile}}",
+    "translation": "{count, plural, one {Карта је већ међу одбаченим картама} few {Све # карте су већ међу одбаченим картама} other {Свих # карата је већ међу одбаченим картама}}"
+  },
+  "0IQSM-": {
+    "message": "{count, plural, other {All # are already in the Lost Zone}}",
+    "translation": "{count, plural, one {Карта је већ у Lost Zone} few {Све # карте су већ у Lost Zone} other {Свих # карата је већ у Lost Zone}}"
+  },
+  "lLOV6i": {
+    "message": "{count, plural, other {All # are already in the Prizes}}",
+    "translation": "{count, plural, one {Карта је већ међу наградним картама} few {Све # карте су већ међу наградним картама} other {Свих # карата је већ међу наградним картама}}"
+  },
+  "o2Cq5Y": {
+    "message": "{count, plural, other {All # are already on the Bench}}",
+    "translation": "{count, plural, one {Карта је већ на клупи} few {Све # карте су већ на клупи} other {Свих # карата је већ на клупи}}"
+  },
+  "ANFeum": {
+    "message": "{count, plural, other {All # are already on the Board}}",
+    "translation": "{count, plural, one {Карта је већ на табли} few {Све # карте су већ на табли} other {Свих # карата је већ на табли}}"
+  },
+  "n5DC_e": {
+    "message": "{count, plural, other {All # are already the Stadium}}",
+    "translation": "{count, plural, one {Карта је већ на стадиону} few {Све # карте су већ на стадиону} other {Свих # карата је већ на стадиону}}"
   },
   "hMKADB": {
     "message": "{count} × {cardName} ({print}). Details",
@@ -1129,6 +1173,10 @@
     "message": "A card's picture address is too long.",
     "translation": "Адреса слике једне карте је предугачка."
   },
+  "fbfxt7": {
+    "message": "A Pokémon in play can't join a group going to the Bench",
+    "translation": "Pokémon у игри не може да се придружи групи која иде на клупу"
+  },
   "qLI-h5": {
     "message": "A whole number from {0} to {1}",
     "translation": "Цео број од {0} до {1}"
@@ -1274,6 +1322,11 @@
     "message": "Added by hand · legality not checked",
     "translation": "Додато ручно · легалност није проверена"
   },
+  "vJUsnL": {
+    "message": "All",
+    "context": "shortcut key caption",
+    "translation": "Све"
+  },
   "wZthGJ": {
     "message": "All lessons",
     "translation": "Све лекције"
@@ -1328,6 +1381,10 @@
   "GRgK04": {
     "message": "Already on the Board",
     "translation": "Већ на табли"
+  },
+  "Y3udby": {
+    "message": "Already part of the selected Pokémon",
+    "translation": "Већ је део изабраног Pokémon-а"
   },
   "uNUEdZ": {
     "message": "Already the Stadium",
@@ -1560,6 +1617,10 @@
     "message": "Basic Energy",
     "translation": "Основна енергија"
   },
+  "4Iwoxh": {
+    "message": "Because of {cardName}.",
+    "translation": "Због карте {cardName}."
+  },
   "dkk7vA": {
     "message": "Bench",
     "context": "shortcut key caption",
@@ -1686,6 +1747,10 @@
   "2lorx9": {
     "message": "Can't be changed",
     "translation": "Не може да се промени"
+  },
+  "eBqQIX": {
+    "message": "Can't move these together",
+    "translation": "Ово се не може преместити заједно"
   },
   "Sq35G-": {
     "message": "Can't read the clipboard",
@@ -2610,6 +2675,13 @@
     "message": "Esc",
     "context": "keyboard key",
     "translation": "Esc"
+  },
+  "M4cEzY": {
+    "message": "Every card where the focused card lies (⌘A on a Mac)",
+    "comments": [
+      "Ctrl+A selects every card in the same place: a hand, a Bench…"
+    ],
+    "translation": "Све карте на месту где је фокусирана карта (⌘A на Mac-у)"
   },
   "8aoXpa": {
     "message": "Every key is under <0>{0}</0>, in <1>{1}</1>.",
@@ -3984,6 +4056,10 @@
     "message": "No match",
     "translation": "Нема резултата"
   },
+  "FQDz2b": {
+    "message": "No Pokémon can take all of these",
+    "translation": "Ниједан Pokémon не може да узме све ово"
+  },
   "ebeFtm": {
     "message": "No shortcut matches “{search}”.",
     "translation": "Ниједна пречица не одговара упиту „{search}“."
@@ -4060,6 +4136,10 @@
   "W8zlv3": {
     "message": "Not yours to do",
     "translation": "Ово није на теби"
+  },
+  "4QPb_7": {
+    "message": "Nothing is selected",
+    "translation": "Ништа није изабрано"
   },
   "aq4Vb1": {
     "message": "Nothing selected",
@@ -4153,9 +4233,25 @@
     ],
     "translation": "Само легално за {formatLabel}"
   },
+  "dewWX8": {
+    "message": "Only attachments can go on a Pokémon together",
+    "translation": "Заједно на Pokémon-а могу само прикачене карте"
+  },
+  "dfVuV_": {
+    "message": "Only one Pokémon can be Active",
+    "translation": "Само један Pokémon може бити активан"
+  },
+  "LYmBTw": {
+    "message": "Only one Stadium at a time",
+    "translation": "Само један стадион истовремено"
+  },
   "XXBK3z": {
     "message": "Only players can change the table.",
     "translation": "Сто могу да мењају само играчи."
+  },
+  "xGOaQc": {
+    "message": "Only Pokémon in play take damage",
+    "translation": "Штету примају само Pokémon-и у игри"
   },
   "kQ0v6x": {
     "message": "Only that seat's player can.",
@@ -4192,6 +4288,10 @@
   "rT710w": {
     "message": "Open the link again in a moment.",
     "translation": "Отвори везу поново за тренутак."
+  },
+  "FxfASP": {
+    "message": "Open the pile to pick cards from it",
+    "translation": "Отвори шпил да бисте бирали карте из њега"
   },
   "cCMcAY": {
     "message": "Open their deck",
@@ -4539,6 +4639,10 @@
   "iM-hRS": {
     "message": "Press Enter again to confirm",
     "translation": "Притисни Enter поново за потврду"
+  },
+  "YwRyMW": {
+    "message": "Press Esc to put the cards down",
+    "translation": "Притисни Esc да спустиш карте"
   },
   "drY1M6": {
     "message": "Press keys…",
@@ -5174,6 +5278,28 @@
     "message": "Seat taken",
     "translation": "Место је заузето"
   },
+  "4UhpnZ": {
+    "message": "Select",
+    "context": "shortcut key caption",
+    "translation": "Избор"
+  },
+  "mGWCew": {
+    "message": "Select all here",
+    "translation": "Изабери све овде"
+  },
+  "OWCzWu": {
+    "message": "Select one card for that",
+    "translation": "Изабери једну карту за то"
+  },
+  "FWpeqJ": {
+    "message": "Select or deselect",
+    "translation": "Изабери или поништи избор"
+  },
+  "KccOw9": {
+    "message": "Select several cards",
+    "context": "shortcut group",
+    "translation": "Изабери више карата"
+  },
   "tGu7Tl": {
     "message": "Selected card",
     "comments": [
@@ -5577,6 +5703,10 @@
     "message": "Special Condition…",
     "translation": "Посебно стање…"
   },
+  "MzE_Dj": {
+    "message": "Special Conditions go only on Active Pokémon",
+    "translation": "Посебна стања иду само на активне Pokémon-е"
+  },
   "0kjUmj": {
     "message": "Special Energy",
     "translation": "Посебна енергија"
@@ -5930,6 +6060,10 @@
     "message": "The card went back.",
     "translation": "Карта је враћена."
   },
+  "LfIGmJ": {
+    "message": "The cards went back.",
+    "translation": "Карте су враћене."
+  },
   "FQpTJZ": {
     "message": "The clipboard isn't available here",
     "translation": "Привремена меморија није доступна овде"
@@ -5978,6 +6112,10 @@
     "message": "The file couldn't be saved",
     "translation": "Датотека није могла да се сачува"
   },
+  "KsKHA0": {
+    "message": "The focused card, or the one under the pointer",
+    "translation": "Фокусирана карта или она испод показивача"
+  },
   "lom6tE": {
     "message": "The last move is still sending.",
     "translation": "Последњи потез се још шаље."
@@ -5994,9 +6132,17 @@
     "message": "The room no longer has this seat.",
     "translation": "Соба више нема ово место."
   },
+  "Ymn83q": {
+    "message": "The table changed",
+    "translation": "Табла се променила"
+  },
   "m6ooXP": {
     "message": "The table changed, so the card went back.",
     "translation": "Сто се променио, па се карта вратила."
+  },
+  "sM9zJK": {
+    "message": "The table changed, so the cards went back.",
+    "translation": "Табла се променила, па су карте враћене."
   },
   "u1UbSB": {
     "message": "The table changed. Try again.",
@@ -6415,6 +6561,10 @@
     "message": "Untitled deck",
     "translation": "Шпил без имена"
   },
+  "k4TQ-Z": {
+    "message": "Up to 60 cards can be selected",
+    "translation": "Може се изабрати до 60 карата"
+  },
   "gANddk": {
     "message": "Uploading…",
     "translation": "Слање…"
@@ -6548,6 +6698,10 @@
     "message": "Yes",
     "context": "filter",
     "translation": "Да"
+  },
+  "aylG7j": {
+    "message": "You can't move that card",
+    "translation": "Ту карту не можеш преместити"
   },
   "1hxqre": {
     "message": "You'll invite players from the room.",

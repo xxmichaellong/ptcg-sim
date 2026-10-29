@@ -1,5 +1,6 @@
 import { t } from '@lingui/core/macro';
 import type { CommandFailureCode } from '@ptcgsim/client-session';
+import type { WireGameCommand } from '@ptcgsim/protocol';
 
 import type { ToastOptions } from '../ui/toast.js';
 
@@ -10,10 +11,23 @@ export const REFUSAL_TOAST_ID = 'board-command-refused';
  * Commands whose prediction moved a card on the table, so a refusal puts it
  * back. Everything else (Set up, Reset, Attack, Pass, Undo, a counter or
  * marker) only says it did not happen. A group's move (ApplyCardSteps)
- * counts as moving cards until its notice reads what its steps did.
+ * counts as moving cards: its notice speaks of them all.
  */
 const MOVES_CARDS =
   /^(?:Move|Play|Place|Shuffle|Swap|Restore|Resolve|Draw|ApplyCardSteps$)/u;
+
+/**
+ * The type a refused command is spoken of by (`refusalNotice`): a group's
+ * one move (ApplyCardSteps) by what its steps do -- a move if one of them
+ * moves a card, else its first mark (damage, a Special Condition…), which
+ * puts nothing back.
+ */
+export const refusalCommandType = (command: WireGameCommand): string => {
+  if (command.type !== 'ApplyCardSteps') return command.type;
+  return command.steps.some((step) => MOVES_CARDS.test(step.type))
+    ? command.type
+    : (command.steps[0]?.type ?? command.type);
+};
 
 /**
  * What to tell the player when the room refuses one of their moves. The
@@ -28,13 +42,17 @@ export const refusalNotice = (
   if (commandType !== undefined && !MOVES_CARDS.test(commandType)) {
     return tableActionNotice(code);
   }
+  // A group's one move puts all its cards back together.
+  const many = commandType === 'ApplyCardSteps';
   switch (code) {
     case 'stale_reference':
     case 'precondition_failed':
       return {
         id: REFUSAL_TOAST_ID,
         title: t`Move didn't go through`,
-        body: t`The table changed, so the card went back.`,
+        body: many
+          ? t`The table changed, so the cards went back.`
+          : t`The table changed, so the card went back.`,
         tone: 'warning',
       };
     case 'rate_limited':
@@ -48,14 +66,14 @@ export const refusalNotice = (
       return {
         id: REFUSAL_TOAST_ID,
         title: t`Not your move`,
-        body: t`The card went back.`,
+        body: many ? t`The cards went back.` : t`The card went back.`,
         tone: 'warning',
       };
     default:
       return {
         id: REFUSAL_TOAST_ID,
         title: t`Move didn't go through`,
-        body: t`The card went back.`,
+        body: many ? t`The cards went back.` : t`The card went back.`,
         tone: 'warning',
       };
   }
