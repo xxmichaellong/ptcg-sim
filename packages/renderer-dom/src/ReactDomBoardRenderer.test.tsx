@@ -2364,6 +2364,13 @@ describe('a finger on a crowded hand', () => {
     // and the hand is not reordered.
     pointer(host, 'pointermove', 64, 792);
     expect(peeked(host)).toEqual(['hand-3']);
+    // Sliding, the surface says so: the release is the slide's, not a tap
+    // on the card first pressed.
+    expect(
+      host
+        .querySelector('.ptcgsim-board-surface')!
+        .hasAttribute('data-peek-slide')
+    ).toBe(true);
     pointer(host, 'pointermove', 112, 788);
     expect(peeked(host)).toEqual(['hand-7']);
     // Past the hand's end, its last card.
@@ -2373,6 +2380,11 @@ describe('a finger on a crowded hand', () => {
     expect(drags).toEqual([]);
     pointer(host, 'pointerup', 112, 790);
     expect(peeked(host)).toEqual([]);
+    expect(
+      host
+        .querySelector('.ptcgsim-board-surface')!
+        .hasAttribute('data-peek-slide')
+    ).toBe(false);
     expect(intents).toEqual([
       { kind: 'CardSelected', cardId: handCardId(7), toggle: true },
     ]);

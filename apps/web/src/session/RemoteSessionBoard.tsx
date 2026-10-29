@@ -505,6 +505,9 @@ export const RemoteSessionBoard = ({
         !pressed ||
         !pressed.wasSelected ||
         pressed.pointerId !== event.pointerId ||
+        // A finger that slid along a crowded hand chose the card it raised
+        // (renderer-dom's peek): not a second tap on the one it pressed.
+        host.querySelector('[data-peek-slide]') !== null ||
         Math.hypot(event.clientX - pressed.x, event.clientY - pressed.y) > 10 ||
         cardIdAt(event.target) !== pressed.cardId
       ) {

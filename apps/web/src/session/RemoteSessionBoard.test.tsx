@@ -1304,6 +1304,27 @@ describe('RemoteSessionBoard replay binding', () => {
     // does with a mouse.
     await press('touch');
     expect(host.querySelector('[data-legacy-card-preview]')).toBeNull();
+    // A finger that slid along a crowded hand from it chose the card it
+    // raised: letting go is no second tap on this one.
+    const surface = host.querySelector<HTMLElement>('.ptcgsim-board-surface')!;
+    surface.setAttribute('data-peek-slide', '');
+    await act(async () => {
+      for (const type of ['pointerdown', 'pointerup'] as const) {
+        card().dispatchEvent(
+          new PointerEvent(type, {
+            pointerType: 'touch',
+            pointerId: 5,
+            clientX: 12,
+            clientY: 12,
+            bubbles: true,
+            cancelable: true,
+          })
+        );
+      }
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(host.querySelector('[data-legacy-card-preview]')).toBeNull();
+    surface.removeAttribute('data-peek-slide');
     await act(async () => {
       for (const type of ['pointerdown', 'pointerup'] as const) {
         card().dispatchEvent(

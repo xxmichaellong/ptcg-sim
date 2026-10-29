@@ -158,6 +158,7 @@ interface HandPeek {
 const lowerPeekedCards = (surface: HTMLElement | null): void => {
   if (!surface?.hasAttribute('data-peeking')) return;
   surface.removeAttribute('data-peeking');
+  surface.removeAttribute('data-peek-slide');
   surface
     .querySelectorAll('[data-peek]')
     .forEach((card) => card.removeAttribute('data-peek'));
@@ -2350,6 +2351,10 @@ export const BoardSurface = ({
               return;
             }
             peek.mode = 'slide';
+            // Until it lets go: the release chooses the card raised, and is
+            // no second tap on the card first pressed (the web app's
+            // tap-again-to-read listens before this surface does).
+            surfaceRef.current?.setAttribute('data-peek-slide', '');
           }
           const { trail } = peek;
           trail.push({
