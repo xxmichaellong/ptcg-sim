@@ -218,16 +218,17 @@ export const normalizeSelection = (
       continue;
     }
     if (items.includes(found.item)) continue;
-    if (items.length >= MAX_SELECTION_ITEMS) {
+    // A Pokémon takes in its attached cards selected before it: room is
+    // counted without them.
+    const kept =
+      found.stackId === undefined
+        ? items
+        : withoutAttachedTo(context, items, found.stackId);
+    if (kept.length >= MAX_SELECTION_ITEMS) {
       refused.push({ cardId, reason: 'full' });
       continue;
     }
-    items = [
-      ...(found.stackId === undefined
-        ? items
-        : withoutAttachedTo(context, items, found.stackId)),
-      found.item,
-    ];
+    items = [...kept, found.item];
   }
   return { items, refused };
 };
@@ -317,17 +318,16 @@ export const reduceSelection = (
           selection.filter((item) => item !== found.item)
         );
       }
-      if (selection.length >= MAX_SELECTION_ITEMS) {
+      const kept =
+        found.stackId === undefined
+          ? selection
+          : withoutAttachedTo(context, selection, found.stackId);
+      if (kept.length >= MAX_SELECTION_ITEMS) {
         return settled(selection, selection, [
           { cardId: operation.cardId, reason: 'full' },
         ]);
       }
-      return settled(selection, [
-        ...(found.stackId === undefined
-          ? selection
-          : withoutAttachedTo(context, selection, found.stackId)),
-        found.item,
-      ]);
+      return settled(selection, [...kept, found.item]);
     }
     case 'addMany': {
       const { items, refused } = normalizeSelection(context, [

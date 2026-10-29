@@ -208,6 +208,27 @@ describe('changes to the selection', () => {
     expect(result.refused).toEqual([{ cardId: hand.at(-1), reason: 'full' }]);
   });
 
+  it('makes room for a Pokémon in a full selection from its own attached cards', () => {
+    const table = groupTable();
+    const hand = table.put(
+      BLUE,
+      'hand',
+      ...Array.from({ length: MAX_SELECTION_ITEMS - 1 }, () => ({}))
+    );
+    const active = table.pokemon(BLUE, 'active', [{}], [{}]);
+    const [energy] = active.attached as [ViewCardId];
+    const full = [...hand, energy];
+    expect(full).toHaveLength(MAX_SELECTION_ITEMS);
+    const context = table.context();
+    expect(
+      reduceSelection(context, full, { kind: 'add', cardId: active.top })
+    ).toEqual({ selection: [...hand, active.top], refused: [], dropped: [] });
+    expect(normalizeSelection(context, [...full, active.top])).toEqual({
+      items: [...hand, active.top],
+      refused: [],
+    });
+  });
+
   it('adds many without taking any out, and names only the new ones refused', () => {
     const table = groupTable();
     const [a, b] = table.put(BLUE, 'hand', {}, {}) as [ViewCardId, ViewCardId];
