@@ -480,6 +480,37 @@ const coinAbove = (coin: Rect, control: Rect, gap: number): Rect => {
 };
 
 /**
+ * The mat's `+` for the optional pieces at `x`, past them: at the top of
+ * the Active row, by the centre line and the pieces' tops (the owner,
+ * 2026-10-29), where it lies clear of their column and its touch area with
+ * it and short of where the Stadium straddles the centre line beside the
+ * Active (`stadiumLeft`); a row too narrow for that (it would crowd the
+ * Stadium, or be pulled under the column's edge), or too short to hold it,
+ * keeps it at the row's foot instead, under the coin (`coinAbove`).
+ */
+const extrasControlAt = (
+  x: number,
+  row: Pick<Rect, 'y' | 'height'>,
+  columnRight: number,
+  stadiumLeft: number,
+  gap: number
+): Rect => {
+  const reach = Math.max(gap / 2, EXTRAS_CONTROL_REACH_PX);
+  const top =
+    x - reach >= columnRight &&
+    x + EXTRAS_CONTROL_PX + STADIUM_CLEARANCE_PX <= stadiumLeft &&
+    row.height >= EXTRAS_CONTROL_PX + 2 * EXTRAS_CONTROL_INSET_PX;
+  return {
+    x,
+    y: top
+      ? row.y + EXTRAS_CONTROL_INSET_PX
+      : row.y + row.height - EXTRAS_CONTROL_INSET_PX - EXTRAS_CONTROL_PX,
+    width: EXTRAS_CONTROL_PX,
+    height: EXTRAS_CONTROL_PX,
+  };
+};
+
+/**
  * Where a hand strip ends, in its half's own frame (the strip runs left to
  * right): short of the screen's edge by its pill and the pill's room, and,
  * where piles beside the hand's end reach down into the pill's band (a
@@ -621,17 +652,21 @@ const layoutHalf = (
     piecesRight = lostZone.x + lostZone.width;
   }
   // The control that adds or removes them sits just past them, at the
-  // row's edge toward the player, below where the Stadium reaches, and
-  // short of the Active.
-  const control: Rect = {
-    x: Math.min(
-      piecesRight + (lostZone ? Math.max(gap, PILE_BADGE_REACH_PX) : gap),
+  // row's top by the centre line, short of the Active (the Stadium keeps
+  // clear of it).
+  const control = extrasControlAt(
+    Math.min(
+      piecesRight +
+        (lostZone
+          ? Math.max(gap, PILE_BADGE_REACH_PX)
+          : Math.max(gap, EXTRAS_CONTROL_REACH_PX)),
       activeRect.x - gap - EXTRAS_CONTROL_PX
     ),
-    y: activeTop + active - EXTRAS_CONTROL_INSET_PX - EXTRAS_CONTROL_PX,
-    width: EXTRAS_CONTROL_PX,
-    height: EXTRAS_CONTROL_PX,
-  };
+    { y: activeTop, height: active },
+    middleLeft + column.width,
+    activeRect.x - stadiumRoom,
+    gap
+  );
   // With the Lost Zone beside the prizes, the deck and discard have the
   // outer column to themselves: they grow to fill both card rows, never
   // past the Active's size. Otherwise the column keeps a slot for it.
@@ -866,6 +901,8 @@ const layoutHalfPortrait = (
     width: activeWidth,
     height: active,
   };
+  // At the row's foot: the Stadium straddles the centre line just past the
+  // pieces on an upright phone, where the mat's `+` would sit.
   const control: Rect = {
     x: edge + column.width + gap,
     y: activeTop + active - EXTRAS_CONTROL_INSET_PX - EXTRAS_CONTROL_PX,

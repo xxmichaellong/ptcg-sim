@@ -41,17 +41,23 @@ In each player's own frame, the Active's row reads, from the prizes:
    as well as the Stadium's; otherwise it takes its place at the end of the
    piles' column. Both halves decide together, so it is in the same place
    on both.
-3. **The `+`** for the optional pieces, just past them at the row's edge
-   toward the player, and past the Lost Zone's count, which stands out
-   beyond the pile's corner.
+3. **The `+`** for the optional pieces, just past them and past the Lost
+   Zone's count, which stands out beyond the pile's corner: at the top of
+   the row, by the centre line and level with the pieces' tops (the owner,
+   2026-10-29: it sat low, by the player's edge, which felt unnatural).
+   Where that would crowd the Stadium's room beside the Active, or the row
+   is too short to hold it, it keeps to the row's edge toward the player.
+   On the smallest tables of one player alone (320–390px tall) the
+   Stadium then lies a little smaller beside it.
 4. **Clear felt** for the Stadium (below).
 5. **The Active**, in the middle of the table. Its slot is up to 2.2 cards
    wide and gives way to the pieces and the Stadium's room first.
 6. **The staging area**, from the Active out to the piles.
 
-On an upright phone the row holds the column at the outer edge, the `+`,
-the Active and the staging area; the Lost Zone keeps its place in the pile
-row.
+On an upright phone the row holds the column at the outer edge, the `+`
+(at the row's foot: the Stadium straddles the centre line just past the
+pieces), the Active and the staging area; the Lost Zone keeps its place in
+the pile row.
 
 The markers never move to the hand's corner, past the app bar or to a row of
 their own. The far hand keeps only the bar's corner (ADR-036).

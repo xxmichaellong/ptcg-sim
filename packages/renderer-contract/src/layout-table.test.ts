@@ -973,6 +973,59 @@ describe('table layout (geometry v2)', () => {
     }
   });
 
+  it('puts the + at the top of the Active row by the centre line, past the pieces, on the mat', () => {
+    for (const [width, height, touch] of [
+      [1440, 900, false],
+      [1280, 720, false],
+      [1920, 1080, false],
+      [1366, 768, true],
+      [844, 390, true],
+    ] as const) {
+      for (const markers of [0, 2]) {
+        const snapshot = createTableLayoutSnapshot(
+          stateAt(width, height, {
+            shellMode: 'fullscreen',
+            oncePerGameMarkers: markers,
+            ...(touch ? { seamBandPx: 46 } : {}),
+          })
+        );
+        for (const player of snapshot.players) {
+          const label = `${width}x${height} ${player.side} m${markers}`;
+          const active = region(
+            snapshot,
+            player.side,
+            'active'
+          ).physicalDeclaredBounds;
+          const { control, coin } = player.extras!;
+          // The row's centre-line edge: its top near the viewer, its foot
+          // across the table.
+          if (player.side === 'local') {
+            expect(control.y, label).toBeCloseTo(active.y + 6, 5);
+          } else {
+            expect(control.y + control.height, label).toBeCloseTo(
+              active.y + active.height - 6,
+              5
+            );
+          }
+          // Beside the pieces' column, not under it.
+          expect(overlaps(coin, control), label).toBe(false);
+        }
+      }
+    }
+    // An upright phone's Stadium straddles the centre line just past the
+    // pieces: there the + keeps to the row's foot.
+    const phone = createTableLayoutSnapshot(
+      stateAt(390, 844, { shellMode: 'fullscreen', seamBandPx: 46 })
+    );
+    const active = region(phone, 'local', 'active').physicalDeclaredBounds;
+    const control = phone.players.find((player) => player.side === 'local')!
+      .extras!.control;
+    expect(control.y + control.height).toBeCloseTo(
+      active.y + active.height - 6,
+      5
+    );
+  });
+
   it('lays both halves out on one mat, the mat or the portrait mat', () => {
     const matOf = (
       snapshot: ReturnType<typeof createTableLayoutSnapshot>,
