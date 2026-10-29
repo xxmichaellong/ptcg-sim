@@ -32,6 +32,10 @@
     "message": "{0, plural, one {# selected} other {# selected}}",
     "translation": "{0, plural, other {# đã chọn}}"
   },
+  "wmB_kS": {
+    "message": "{0, plural, one {Revealed to your opponent} other {Revealed # cards to your opponent}}",
+    "translation": "{0, plural, one {Đã lật mở cho đối thủ} other {Đã lật mở # lá bài cho đối thủ}}"
+  },
   "jnpzPF": {
     "message": "{0, plural, one {Shuffled # card into the deck} other {Shuffled # cards into the deck}}",
     "translation": "{0, plural, other {Đã xáo # lá bài vào bộ bài}}"
@@ -5323,10 +5327,6 @@
   "c6E0p_": {
     "message": "Reveal your Prizes",
     "translation": "Lật mở Prize của bạn"
-  },
-  "fa6wL6": {
-    "message": "Revealed to your opponent",
-    "translation": "Đã lật cho đối thủ xem"
   },
   "XGMYSt": {
     "message": "Right",

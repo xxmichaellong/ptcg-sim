@@ -32,6 +32,10 @@
     "message": "{0, plural, one {# selected} other {# selected}}",
     "translation": "{0, plural, zero {# محدد} one {# محدد} two {# محددان} few {# محددة} many {# محددًا} other {# محدد}}"
   },
+  "wmB_kS": {
+    "message": "{0, plural, one {Revealed to your opponent} other {Revealed # cards to your opponent}}",
+    "translation": "{0, plural, one {كُشفت البطاقة للخصم} two {كُشفت بطاقتان للخصم} few {كُشفت # بطاقات للخصم} many {كُشفت # بطاقة للخصم} other {كُشفت # بطاقة للخصم}}"
+  },
   "jnpzPF": {
     "message": "{0, plural, one {Shuffled # card into the deck} other {Shuffled # cards into the deck}}",
     "translation": "{0, plural, zero {تم خلط # بطاقة في المجموعة} one {تم خلط بطاقة واحدة في المجموعة} two {تم خلط بطاقتين في المجموعة} few {تم خلط # بطاقات في المجموعة} many {تم خلط # بطاقة في المجموعة} other {تم خلط # بطاقة في المجموعة}}"
@@ -5323,10 +5327,6 @@
   "c6E0p_": {
     "message": "Reveal your Prizes",
     "translation": "كشف جوائزك"
-  },
-  "fa6wL6": {
-    "message": "Revealed to your opponent",
-    "translation": "مكشوفة للخصم"
   },
   "XGMYSt": {
     "message": "Right",

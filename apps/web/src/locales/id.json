@@ -32,6 +32,10 @@
     "message": "{0, plural, one {# selected} other {# selected}}",
     "translation": "{0, plural, other {# dipilih}}"
   },
+  "wmB_kS": {
+    "message": "{0, plural, one {Revealed to your opponent} other {Revealed # cards to your opponent}}",
+    "translation": "{0, plural, other {Diperlihatkan # kartu ke lawan}}"
+  },
   "jnpzPF": {
     "message": "{0, plural, one {Shuffled # card into the deck} other {Shuffled # cards into the deck}}",
     "translation": "{0, plural, other {Mengocok # kartu ke dalam deck}}"
@@ -5323,10 +5327,6 @@
   "c6E0p_": {
     "message": "Reveal your Prizes",
     "translation": "Tunjukkan Kartu Pointmu"
-  },
-  "fa6wL6": {
-    "message": "Revealed to your opponent",
-    "translation": "Diperlihatkan ke lawan"
   },
   "XGMYSt": {
     "message": "Right",

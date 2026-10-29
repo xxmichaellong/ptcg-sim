@@ -32,6 +32,10 @@
     "message": "{0, plural, one {# selected} other {# selected}}",
     "translation": "{0, plural, one {# ausgewählt} other {# ausgewählt}}"
   },
+  "wmB_kS": {
+    "message": "{0, plural, one {Revealed to your opponent} other {Revealed # cards to your opponent}}",
+    "translation": "{0, plural, one {Dem Gegner gezeigt} other {# Karten dem Gegner gezeigt}}"
+  },
   "jnpzPF": {
     "message": "{0, plural, one {Shuffled # card into the deck} other {Shuffled # cards into the deck}}",
     "translation": "{0, plural, one {# Karte ins Deck gemischt} other {# Karten ins Deck gemischt}}"
@@ -5323,10 +5327,6 @@
   "c6E0p_": {
     "message": "Reveal your Prizes",
     "translation": "Deine Preiskarten aufdecken"
-  },
-  "fa6wL6": {
-    "message": "Revealed to your opponent",
-    "translation": "Deinem Gegner gezeigt"
   },
   "XGMYSt": {
     "message": "Right",

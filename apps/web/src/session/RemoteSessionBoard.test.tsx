@@ -423,6 +423,135 @@ describe('RemoteSessionBoard replay binding', () => {
     replay.dispose();
   });
 
+  it("says a group's reveal of own hand cards in one notice, whose Hide hides them all as one move", async () => {
+    const overlayHost = document.createElement('div');
+    document.body.append(overlayHost);
+    const overlayRoot = createRoot(overlayHost);
+    await act(async () => overlayRoot.render(<OverlayHost />));
+    const session = new FakeRemoteBoardSession();
+    const replay = new ReplaySessionCoordinator(session);
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+    await act(async () =>
+      root.render(
+        <RemoteSessionBoard
+          session={session}
+          replay={replay}
+          onIntent={vi.fn()}
+          roomMode="multiplayer"
+        />
+      )
+    );
+    await waitForRevision(host, 10);
+    if (baseView.viewer.kind !== 'player') throw new Error('player view');
+    const hand = Object.values(baseView.zones).find(
+      (zone) =>
+        zone.kind === 'hand' &&
+        baseView.viewer.kind === 'player' &&
+        zone.ownerId === baseView.viewer.playerId
+    )!;
+    const picked = [hand.cards[0]!.id, hand.cards[1]!.id];
+    const press = async (cardId: string, shiftKey: boolean) => {
+      const card = host.querySelector<HTMLElement>(
+        `[data-card-id="${cardId}"]`
+      )!;
+      await act(async () => {
+        for (const type of ['pointerdown', 'pointerup'] as const) {
+          card.dispatchEvent(
+            new PointerEvent(type, {
+              pointerType: 'mouse',
+              pointerId: 5,
+              clientX: 10,
+              clientY: 10,
+              shiftKey,
+              bubbles: true,
+              cancelable: true,
+            })
+          );
+        }
+        card.dispatchEvent(
+          new MouseEvent('click', { shiftKey, bubbles: true, cancelable: true })
+        );
+      });
+    };
+    await press(picked[0]!, false);
+    await press(picked[1]!, true);
+    await act(async () => {
+      document.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'z',
+          altKey: true,
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    });
+    expect(session.submit).toHaveBeenCalledWith({
+      type: 'ApplyCardSteps',
+      steps: picked.map((cardId) =>
+        expect.objectContaining({
+          type: 'SetPublicReveal',
+          cardId,
+          revealed: true,
+        })
+      ),
+    });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    });
+    const notices = document.querySelectorAll<HTMLElement>(
+      '[data-ptcgsim-overlay="toast"]'
+    );
+    expect(notices).toHaveLength(1);
+    expect(notices[0]!.textContent).toContain(
+      'Revealed 2 cards to your opponent'
+    );
+    // The room shows them; Hide hides both, as one move.
+    await act(async () => {
+      session.publish({
+        ...session.getSnapshot(),
+        view: {
+          ...baseView,
+          revision: 11,
+          zones: {
+            ...baseView.zones,
+            [hand.id]: {
+              ...hand,
+              cards: hand.cards.map((entry) =>
+                picked.includes(entry.id) && entry.kind === 'known'
+                  ? { ...entry, publiclyRevealed: true, face: 'up' as const }
+                  : entry
+              ),
+            },
+          },
+        },
+      });
+    });
+    await waitForRevision(host, 11);
+    session.submit.mockClear();
+    await act(async () =>
+      notices[0]!
+        .querySelector<HTMLButtonElement>('[data-toast-action]')!
+        .click()
+    );
+    expect(session.submit).toHaveBeenCalledExactlyOnceWith({
+      type: 'ApplyCardSteps',
+      steps: picked.map((cardId) =>
+        expect.objectContaining({
+          type: 'SetPublicReveal',
+          cardId,
+          revealed: false,
+        })
+      ),
+    });
+    await act(async () => root.unmount());
+    await act(async () => overlayRoot.unmount());
+    overlayHost.remove();
+    host.remove();
+    replay.dispose();
+  });
+
   it('says a room reveal of an own hand card in a notice, and the card wears an eye that hides it', async () => {
     // v1 reveal-and-hide.js asked "Press OK to stop revealing card to
     // opponent" in a popup that took the focus; v2 says it in a notice with

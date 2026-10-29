@@ -1,3 +1,4 @@
+import { plural } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react/macro';
 
 import { loadBoardRenderer } from '../load-board-renderer.js';
@@ -512,17 +513,31 @@ export const RemoteSessionBoard = ({
   // opens a modal that ends the reveal when it is acknowledged.
   // A card of one's own hand shown to the opponent, hidden again by its
   // eye or its notice's Hide (v1 asked in a popup that took the focus).
-  const hideRevealedRef = useRef<(cardId: ViewCardId) => void>(() => {});
-  hideRevealedRef.current = (cardId) => {
+  // A group's reveal is hidden again as one move, as it was made (ADR-042).
+  const hideRevealedRef = useRef<(cardIds: readonly ViewCardId[]) => void>(
+    () => {}
+  );
+  hideRevealedRef.current = (cardIds) => {
     const view = runtimeRef.current?.getBoardSnapshot()?.view;
-    const resolution = view
-      ? resolvePublicCardVisibilityAction(view, cardId, false)
-      : { ok: false as const };
-    if (resolution.ok) session.submit(resolution.command);
+    const hides = view
+      ? cardIds.flatMap((cardId) => {
+          const resolution = resolvePublicCardVisibilityAction(
+            view,
+            cardId,
+            false
+          );
+          return resolution.ok && resolution.command.type === 'SetPublicReveal'
+            ? [resolution.command]
+            : [];
+        })
+      : [];
+    if (hides.length === 1) session.submit(hides[0]!);
+    else if (hides.length > 1)
+      session.submit({ type: 'ApplyCardSteps', steps: hides });
     dismissToast(REVEALED_TOAST_ID);
   };
   const hideRevealed = useCallback(
-    (cardId: ViewCardId) => hideRevealedRef.current(cardId),
+    (cardId: ViewCardId) => hideRevealedRef.current([cardId]),
     []
   );
   useEffect(() => () => clearTimeout(coinPendingTimerRef.current), []);
@@ -808,26 +823,42 @@ export const RemoteSessionBoard = ({
               const notice = unsentNotice(result.reason, command.type);
               if (notice) toast(notice);
             }
+            // A card of one's own hand shown to the opponent, or a group's
+            // (one notice for all of them, ADR-042 §3).
+            const shown =
+              command.type === 'SetPublicReveal'
+                ? command.revealed
+                  ? [command.cardId]
+                  : []
+                : command.type === 'ApplyCardSteps' &&
+                    command.steps.every(
+                      (step) => step.type === 'SetPublicReveal' && step.revealed
+                    )
+                  ? command.steps.flatMap((step) =>
+                      'cardId' in step ? [step.cardId] : []
+                    )
+                  : [];
+            const view = runtimeRef.current?.getBoardSnapshot()?.view;
+            const ownShown = shown.filter((cardId) =>
+              revealedOwnHandCardId(view, cardId)
+            ) as ViewCardId[];
             if (
               result.queued &&
-              command.type === 'SetPublicReveal' &&
-              command.revealed &&
-              displayPolicyRef.current.roomMode === 'multiplayer' &&
-              revealedOwnHandCardId(
-                runtimeRef.current?.getBoardSnapshot()?.view,
-                command.cardId
-              )
+              ownShown.length > 0 &&
+              displayPolicyRef.current.roomMode === 'multiplayer'
             ) {
-              const cardId = command.cardId as ViewCardId;
               toast({
                 id: REVEALED_TOAST_ID,
-                title: t`Revealed to your opponent`,
+                title: plural(ownShown.length, {
+                  one: 'Revealed to your opponent',
+                  other: 'Revealed # cards to your opponent',
+                }),
                 action: {
                   label: t({
                     message: 'Hide',
                     context: 'stop revealing a card',
                   }),
-                  onAction: () => hideRevealedRef.current(cardId),
+                  onAction: () => hideRevealedRef.current(ownShown),
                 },
               });
             }
