@@ -1033,9 +1033,9 @@
     "message": "<0>{0}</0>: every move, and the chat.",
     "translation": "<0>{0}</0>: varje drag och chatten."
   },
-  "NaneTg": {
-    "message": "<0>{0}</0>: the table's look, the theme and the language.",
-    "translation": "<0>{0}</0>: bordets utseende, tema och språk."
+  "ifsvhW": {
+    "message": "<0>{0}</0>: Settings, saves and replays, and this tutorial whenever you want it.",
+    "translation": "<0>{0}</0>: Inställningar, sparade spel och repriser, samt den här handledningen när du vill ha den."
   },
   "C0rMdv": {
     "message": "− Damage",
@@ -1302,10 +1302,6 @@
     "context": "keyboard key",
     "translation": "Alt"
   },
-  "JxKdEp": {
-    "message": "Always shown while it holds cards.",
-    "translation": "Visas alltid när den innehåller kort."
-  },
   "Cpqhqr": {
     "message": "Amber",
     "context": "card back",
@@ -1324,29 +1320,32 @@
     "message": "An attack payable with two Energy",
     "translation": "En attack som kan betalas med två energier"
   },
-  "bK6Mfx": {
-    "message": "An image URL, 'blank' or 'theme'.",
-    "comments": [
-      "Keep 'blank' and 'theme' in English: they are what the player types"
-    ],
-    "translation": "En bild-URL, 'blank' eller 'theme'."
-  },
   "ctNH7H": {
     "message": "Ancient",
     "context": "Pokémon card mechanic",
     "translation": "Ancient"
   },
-  "Jvmvx4": {
-    "message": "Animate stack height",
-    "translation": "Animera stackhöjd"
+  "qTeX2A": {
+    "message": "Angle",
+    "context": "the table's tilt",
+    "translation": "Vinkel"
   },
-  "d3fmj9": {
-    "message": "Animation speed",
-    "translation": "Animationshastighet"
+  "y3FF_5": {
+    "message": "Angle {count}°",
+    "translation": "Vinkel {count}°"
   },
-  "vaiuUS": {
-    "message": "Animation speed…",
-    "translation": "Animationshastighet…"
+  "tuSC5H": {
+    "message": "Angle in degrees",
+    "translation": "Vinkel i grader"
+  },
+  "4GuGTB": {
+    "message": "Angle…",
+    "context": "the table's tilt",
+    "translation": "Vinkel…"
+  },
+  "WDup2O": {
+    "message": "Animate stacks",
+    "translation": "Animera högar"
   },
   "PR1zNf": {
     "message": "Announce mulligan",
@@ -1366,10 +1365,6 @@
     "message": "App",
     "context": "the app toolbar",
     "translation": "App"
-  },
-  "aAIQg2": {
-    "message": "Appearance",
-    "translation": "Utseende"
   },
   "Lx0XC_": {
     "message": "Are you sure you want to leave? Any unsaved game data will be lost.",
@@ -1483,6 +1478,18 @@
   "1JYYQn": {
     "message": "Back to your decks",
     "translation": "Tillbaka till dina lekar"
+  },
+  "GtJbUa": {
+    "message": "Background",
+    "translation": "Bakgrund"
+  },
+  "c7lN9x": {
+    "message": "Background from a link",
+    "translation": "Bakgrund från en länk"
+  },
+  "tAWTcI": {
+    "message": "Background…",
+    "translation": "Bakgrund…"
   },
   "GhQ0ZN": {
     "message": "Backs",
@@ -1681,13 +1688,13 @@
     "message": "Card back for {slotSeat}",
     "translation": "Kortbaksida för {slotSeat}"
   },
-  "tii3sv": {
-    "message": "Card image language…",
-    "translation": "Språk för kortbilder…"
-  },
   "8xaYE9": {
     "message": "Card images",
     "translation": "Kortbilder"
+  },
+  "n7tTKf": {
+    "message": "Card images…",
+    "translation": "Kortbilder…"
   },
   "ymPKi7": {
     "message": "Card preview",
@@ -1709,10 +1716,6 @@
   "kLlRKH": {
     "message": "Card stack preview",
     "translation": "Förhandsvisning av korthög"
-  },
-  "TH1VPk": {
-    "message": "Card thickness",
-    "translation": "Korttjocklek"
   },
   "Ccpbzh": {
     "message": "Cards",
@@ -1736,10 +1739,6 @@
   "IuDYMd": {
     "message": "Cards in deck",
     "translation": "Kort i leken"
-  },
-  "sIpTuZ": {
-    "message": "Change background",
-    "translation": "Byt bakgrund"
   },
   "lKPW0c": {
     "message": "Change card back for {slotSeat}",
@@ -2049,6 +2048,10 @@
     "message": "Couldn't start the tutorial. Try again.",
     "translation": "Det gick inte att starta handledningen. Försök igen."
   },
+  "vN1y3D": {
+    "message": "Couldn't use that picture.",
+    "translation": "Det gick inte att använda bilden."
+  },
   "U9OFiD": {
     "message": "cover",
     "context": "the deck's cover card",
@@ -2118,6 +2121,11 @@
     "message": "Current",
     "translation": "Nuvarande"
   },
+  "KtuFGB": {
+    "message": "Custom",
+    "context": "the player's own background",
+    "translation": "Egen"
+  },
   "qT5p-1": {
     "message": "Custom card",
     "translation": "Eget kort"
@@ -2125,6 +2133,10 @@
   "rlm3op": {
     "message": "Custom flair on Discord & open reign on self-nicknames.",
     "translation": "Eget märke på Discord och fritt spelrum för egna smeknamn."
+  },
+  "qlHGJK": {
+    "message": "Custom image…",
+    "translation": "Egen bild…"
   },
   "UxNmvS": {
     "message": "Damage and conditions",
@@ -2254,6 +2266,11 @@
     "context": "how 3D the table looks",
     "translation": "Djup"
   },
+  "SOHyuG": {
+    "message": "Depth…",
+    "context": "how 3D the table looks",
+    "translation": "Djup…"
+  },
   "HlKgQk": {
     "message": "Deselect",
     "translation": "Avmarkera"
@@ -2267,6 +2284,11 @@
     "message": "Design",
     "context": "design a card back",
     "translation": "Designa"
+  },
+  "Cn91gu": {
+    "message": "Desk",
+    "context": "the default background",
+    "translation": "Skrivbord"
   },
   "zhmNG6": {
     "message": "Diamonds",
@@ -2497,6 +2519,11 @@
     "message": "Edit deck",
     "translation": "Redigera lek"
   },
+  "CMMU03": {
+    "message": "Edit…",
+    "context": "change the keyboard shortcuts",
+    "translation": "Redigera…"
+  },
   "eAabzD": {
     "message": "Emblem",
     "context": "sleeve",
@@ -2548,9 +2575,9 @@
     "context": "keyboard key",
     "translation": "Esc"
   },
-  "y3HN5z": {
-    "message": "Every key is under <0>{0}</0>, in the menu.",
-    "translation": "Alla tangenter finns under <0>{0}</0> i menyn."
+  "8aoXpa": {
+    "message": "Every key is under <0>{0}</0>, in <1>{1}</1>.",
+    "translation": "Alla tangenter finns under <0>{0}</0>, i <1>{1}</1>."
   },
   "yJW_id": {
     "message": "Evolution and previous stage",
@@ -2782,6 +2809,10 @@
     "message": "From a link",
     "translation": "Från en länk"
   },
+  "jSa1_N": {
+    "message": "From a link…",
+    "translation": "Från en länk…"
+  },
   "qIodFG": {
     "message": "Frost",
     "comments": [
@@ -2863,6 +2894,16 @@
   "TALrFf": {
     "message": "GX marker",
     "translation": "GX-markör"
+  },
+  "hLFd9M": {
+    "message": "Halves",
+    "context": "which halves of the table",
+    "translation": "Halvor"
+  },
+  "ZWEhc2": {
+    "message": "Halves…",
+    "context": "which halves of the table",
+    "translation": "Halvor…"
   },
   "FpHzzD": {
     "message": "Hand",
@@ -3025,13 +3066,6 @@
     "message": "HP and retreat",
     "translation": "HP och reträtt"
   },
-  "OaHYvQ": {
-    "message": "https://…, blank or theme",
-    "comments": [
-      "Keep 'blank' and 'theme' in English: they are what the player types"
-    ],
-    "translation": "https://…, blank eller theme"
-  },
   "hlQWeh": {
     "message": "I publicly launched the sim on Christmas, and it has already grown an incredible community of players and developers. There's a lot more to do, and I could use as much help as I can get!",
     "comments": [
@@ -3054,9 +3088,9 @@
     "message": "Illustrator",
     "translation": "Illustratör"
   },
-  "VyUuZb": {
-    "message": "Image URL",
-    "translation": "Bildens URL"
+  "T7x7bT": {
+    "message": "Image link",
+    "translation": "Bildlänk"
   },
   "EUsCHg": {
     "message": "Images",
@@ -3193,6 +3227,10 @@
     "message": "Keyboard shortcuts",
     "translation": "Kortkommandon"
   },
+  "WQg61I": {
+    "message": "Keys",
+    "translation": "Tangenter"
+  },
   "vFjc7h": {
     "message": "Keys",
     "context": "the keyboard map with no modifier held",
@@ -3217,10 +3255,6 @@
   "2S2hKS": {
     "message": "Language…",
     "translation": "Språk…"
-  },
-  "pOmqOF": {
-    "message": "Large card preview on hover",
-    "translation": "Stor kortförhandsvisning vid hovring"
   },
   "NMzrpD": {
     "message": "Larger cards",
@@ -3286,9 +3320,9 @@
     "context": "Pokémon stage",
     "translation": "Level-Up"
   },
-  "Fu5KED": {
-    "message": "Lift cards while dragging",
-    "translation": "Lyft korten när du drar"
+  "szYoqS": {
+    "message": "Lift while dragging",
+    "translation": "Lyft vid dragning"
   },
   "Lnx2DC": {
     "message": "Lightning",
@@ -3744,9 +3778,17 @@
     "message": "My eternal thanks!!!!!",
     "translation": "Evigt tack!!!!!"
   },
+  "7WBRHp": {
+    "message": "My half {count}% of the table",
+    "translation": "Min halva {count} % av bordet"
+  },
   "KJeM1I": {
     "message": "My half {percent}% of the table",
     "translation": "Min halva {percent} % av bordet"
+  },
+  "gQKQDm": {
+    "message": "My half, in percent",
+    "translation": "Min halva, i procent"
   },
   "6YtxFj": {
     "message": "Name",
@@ -3773,9 +3815,9 @@
     "message": "Name: up to {max} characters.",
     "translation": "Namn: högst {max} tecken."
   },
-  "OzETXo": {
-    "message": "Natural card placement",
-    "translation": "Naturlig kortplacering"
+  "4fxEIx": {
+    "message": "Natural placement",
+    "translation": "Naturlig placering"
   },
   "hmYrgt": {
     "message": "Navy",
@@ -3785,6 +3827,10 @@
   "rf9azy": {
     "message": "Needs at least one Basic Pokémon.",
     "translation": "Behöver minst en Basic Pokémon."
+  },
+  "Ek_k_Q": {
+    "message": "Needs depth",
+    "translation": "Kräver djup"
   },
   "W_gspM": {
     "message": "New deck",
@@ -3913,6 +3959,11 @@
   "lChsa8": {
     "message": "No tournament decks right now.",
     "translation": "Inga turneringslekar just nu."
+  },
+  "YmDThn": {
+    "message": "None",
+    "context": "no background",
+    "translation": "Ingen"
   },
   "6psMRl": {
     "message": "None",
@@ -4170,6 +4221,10 @@
     "message": "or a link",
     "translation": "eller en länk"
   },
+  "IyUrJ9": {
+    "message": "Or drop or paste a picture.",
+    "translation": "Eller släpp eller klistra in en bild."
+  },
   "l2I52S": {
     "message": "or drop or paste one here",
     "translation": "eller släpp eller klistra in en här"
@@ -4201,6 +4256,10 @@
     "message": "Page Up",
     "context": "keyboard key",
     "translation": "Page Up"
+  },
+  "UyDcwK": {
+    "message": "Parallax",
+    "translation": "Parallax"
   },
   "xun4kD": {
     "message": "Paralyzed",
@@ -4295,6 +4354,10 @@
     "message": "Picture link: {label}",
     "translation": "Bildlänk: {label}"
   },
+  "Oo42E3": {
+    "message": "Pictures up to 25 MB.",
+    "translation": "Bilder upp till 25 MB."
+  },
   "BX1rQx": {
     "message": "Pieces",
     "translation": "Delar"
@@ -4369,10 +4432,6 @@
     "message": "Pocket decks have no Energy cards.",
     "translation": "Pocket-lekar har inga energikort."
   },
-  "S-nXVo": {
-    "message": "Pointer parallax",
-    "translation": "Pekarparallax"
-  },
   "95vGpJ": {
     "message": "Poisoned",
     "context": "special condition",
@@ -4395,6 +4454,10 @@
   "RNaprm": {
     "message": "Pokémon cards",
     "translation": "Pokémonkort"
+  },
+  "abE-Jj": {
+    "message": "Preparing picture…",
+    "translation": "Förbereder bild…"
   },
   "_0G332": {
     "message": "Press {keys} for <0>shortcuts</0>.",
@@ -4459,6 +4522,10 @@
       "{cardName} is a card; the button opens it large."
     ],
     "translation": "Förhandsgranska {cardName}"
+  },
+  "Kr1v1U": {
+    "message": "Preview on hover",
+    "translation": "Förhandsvisa vid hovring"
   },
   "Lxdrcy": {
     "message": "Previous replay action",
@@ -4736,9 +4803,14 @@
     "message": "Reset both sides",
     "translation": "Återställ båda sidor"
   },
-  "xNq549": {
-    "message": "Reset table view",
-    "translation": "Återställ bordsvyn"
+  "hlMODd": {
+    "message": "Reset table",
+    "context": "put the table's settings back",
+    "translation": "Återställ bord"
+  },
+  "4VQN2q": {
+    "message": "Reset table settings",
+    "translation": "Återställ bordsinställningar"
   },
   "1IWc1n": {
     "message": "Reset to",
@@ -4777,9 +4849,9 @@
     "context": "Pokémon stage",
     "translation": "Restored"
   },
-  "Dwpy1Z": {
-    "message": "Resume a saved game…",
-    "translation": "Återuppta ett sparat spel…"
+  "CBOI8H": {
+    "message": "Resume saved game…",
+    "translation": "Återuppta sparat spel…"
   },
   "X1Npk-": {
     "message": "Retreat {retreat}",
@@ -4996,9 +5068,9 @@
     "message": "Save and edit {title}",
     "translation": "Spara och redigera {title}"
   },
-  "4ibQSn": {
-    "message": "Save online game",
-    "translation": "Spara onlinespel"
+  "4XBjuA": {
+    "message": "Save game",
+    "translation": "Spara spel"
   },
   "OnrVKw": {
     "message": "Saved",
@@ -5169,6 +5241,18 @@
     ],
     "translation": "Inställningar"
   },
+  "y4__tG": {
+    "message": "Settings",
+    "context": "shortcut key caption",
+    "translation": "Inställningar"
+  },
+  "8OT456": {
+    "message": "Settings: {0}",
+    "comments": [
+      "Opens Settings at that section"
+    ],
+    "translation": "Inställningar: {0}"
+  },
   "Z8lGw6": {
     "message": "Share",
     "translation": "Dela"
@@ -5206,15 +5290,6 @@
     "message": "Shoutout in the next changelog.",
     "translation": "Shoutout i nästa ändringslogg."
   },
-  "8vETh9": {
-    "message": "Show",
-    "translation": "Visa"
-  },
-  "qTlQOF": {
-    "message": "Show",
-    "context": "which halves of the table",
-    "translation": "Visa"
-  },
   "nogPed": {
     "message": "Show",
     "context": "which pane to show",
@@ -5228,10 +5303,6 @@
     "message": "Show every print",
     "translation": "Visa alla tryckningar"
   },
-  "UXsj50": {
-    "message": "Show halves…",
-    "translation": "Visa halvor…"
-  },
   "nyTrvq": {
     "message": "Show keyboard",
     "translation": "Visa tangentbord"
@@ -5243,6 +5314,10 @@
   "FBwNsr": {
     "message": "Show one per card",
     "translation": "Visa ett per kort"
+  },
+  "ifu0mt": {
+    "message": "Show opponent's hand",
+    "translation": "Visa motståndarens hand"
   },
   "NQ5xRS": {
     "message": "Show the deck as",
@@ -5477,10 +5552,25 @@
     ],
     "translation": "Special Event"
   },
+  "Q7FDck": {
+    "message": "Speed",
+    "context": "animation speed",
+    "translation": "Hastighet"
+  },
+  "TMNS59": {
+    "message": "Speed…",
+    "context": "animation speed",
+    "translation": "Hastighet…"
+  },
   "h5EwqW": {
     "message": "Split",
     "context": "the table between the halves",
     "translation": "Delning"
+  },
+  "yI0x30": {
+    "message": "Split…",
+    "context": "the table between the halves",
+    "translation": "Delning…"
   },
   "Y6mTBn": {
     "message": "SPONSOR TIERS",
@@ -5607,6 +5697,16 @@
     "context": "sleeve pattern",
     "translation": "Ränder"
   },
+  "Qyf2Yu": {
+    "message": "Style",
+    "context": "the table's look",
+    "translation": "Stil"
+  },
+  "-wDRPC": {
+    "message": "Style…",
+    "context": "the table's look",
+    "translation": "Stil…"
+  },
   "yqeLY3": {
     "message": "Supporter",
     "context": "Trainer card kind",
@@ -5668,26 +5768,6 @@
     "message": "Table",
     "context": "shortcut group",
     "translation": "Bord"
-  },
-  "viTXNi": {
-    "message": "Table angle",
-    "translation": "Bordsvinkel"
-  },
-  "eqSg9V": {
-    "message": "Table style",
-    "translation": "Bordsstil"
-  },
-  "Z3nJeW": {
-    "message": "Table style…",
-    "translation": "Bordsstil…"
-  },
-  "f9jgd2": {
-    "message": "Table view",
-    "translation": "Bordsvy"
-  },
-  "cHwqmY": {
-    "message": "Table view…",
-    "translation": "Bordsvy…"
   },
   "Qd2uqp": {
     "message": "Tabletop",
@@ -5957,6 +6037,16 @@
     "message": "They bring up the next: drag a <0>{0}</0> from their Bench to their Active Spot.",
     "translation": "De sätter in nästa: dra en <0>{0}</0> från deras bänk till deras aktiva plats."
   },
+  "lW4c-5": {
+    "message": "Thickness",
+    "context": "the cards' thickness",
+    "translation": "Tjocklek"
+  },
+  "BPVdia": {
+    "message": "Thickness…",
+    "context": "the cards' thickness",
+    "translation": "Tjocklek…"
+  },
   "WsAkgd": {
     "message": "This browser won't keep your decks after you close the page.",
     "translation": "Den här webbläsaren sparar inte dina lekar när du stänger sidan."
@@ -5968,10 +6058,6 @@
   "5HIoIb": {
     "message": "This invitation was used or has expired. Ask for a new one.",
     "translation": "Den här inbjudan har använts eller gått ut. Be om en ny."
-  },
-  "L7LU5x": {
-    "message": "This tutorial waits in the <0>menu</0> whenever you want it.",
-    "translation": "Den här handledningen finns i <0>menyn</0> när du vill ha den."
   },
   "YcMvP7": {
     "message": "Tilted on wide screens, flat on phones.",
@@ -6301,10 +6387,6 @@
     "message": "Use background",
     "translation": "Använd bakgrund"
   },
-  "kqaF8V": {
-    "message": "Use default",
-    "translation": "Använd standard"
-  },
   "pEHkP7": {
     "message": "Use GX attack",
     "translation": "Använd GX-attack"
@@ -6369,9 +6451,13 @@
     "message": "VSTAR marker",
     "translation": "VSTAR-markör"
   },
-  "inq7iN": {
-    "message": "Watch a replay…",
-    "translation": "Titta på en repris…"
+  "LE8SQj": {
+    "message": "Wallpaper {0}",
+    "translation": "Bakgrund {0}"
+  },
+  "sFWtjQ": {
+    "message": "Watch replay…",
+    "translation": "Titta på repris…"
   },
   "2kl5Uf": {
     "message": "Water",
@@ -6501,332 +6587,5 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "Zonkonturer"
-  },
-  "ifsvhW": {
-    "message": "<0>{0}</0>: Settings, saves and replays, and this tutorial whenever you want it.",
-    "translation": "<0>{0}</0>: Inställningar, sparade spel och repriser, samt den här handledningen när du vill ha den."
-  },
-  "sDYhDt": {
-    "message": "A deck needs a name.",
-    "translation": "En lek behöver ett namn."
-  },
-  "hQE7TV": {
-    "message": "An image URL, or 'default'.",
-    "comments": [
-      "Keep 'default' in English: it is what the player types"
-    ],
-    "translation": "En bild-URL eller 'default'."
-  },
-  "8zanjC": {
-    "message": "Artwork group",
-    "translation": "Illustrationsgrupp"
-  },
-  "PCF3WN": {
-    "message": "Change card back",
-    "translation": "Byt kortbaksida"
-  },
-  "HLSSB8": {
-    "message": "code or name",
-    "translation": "kod eller namn"
-  },
-  "ibWa1H": {
-    "message": "Delete {deckName}?",
-    "translation": "Ta bort {deckName}?"
-  },
-  "iu7vH9": {
-    "message": "e.g. CC or LL",
-    "comments": [
-      "Energy letters (C, L…) stay as they are"
-    ],
-    "translation": "t.ex. CC eller LL"
-  },
-  "tg9VdO": {
-    "message": "e.g. HIJ",
-    "translation": "t.ex. HIJ"
-  },
-  "3fBsZV": {
-    "message": "e.g. illustration",
-    "translation": "t.ex. illustration"
-  },
-  "CMMU03": {
-    "message": "Edit…",
-    "context": "change the keyboard shortcuts",
-    "translation": "Redigera…"
-  },
-  "I7T1ix": {
-    "message": "Enter an image URL.",
-    "translation": "Ange en bild-URL."
-  },
-  "8aoXpa": {
-    "message": "Every key is under <0>{0}</0>, in <1>{1}</1>.",
-    "translation": "Alla tangenter finns under <0>{0}</0>, i <1>{1}</1>."
-  },
-  "ZTtNAf": {
-    "message": "HP at least",
-    "translation": "HP minst"
-  },
-  "LgcKSI": {
-    "message": "HP at most",
-    "translation": "HP högst"
-  },
-  "fVGc9-": {
-    "message": "https://… or default",
-    "comments": [
-      "Keep 'default' in English: it is what the player types"
-    ],
-    "translation": "https://… eller default"
-  },
-  "1pdLQw": {
-    "message": "Image not found",
-    "translation": "Bilden hittades inte"
-  },
-  "15ARIE": {
-    "message": "Image URL too long",
-    "translation": "Bildens URL är för lång"
-  },
-  "6hbF9e": {
-    "message": "Image URL: up to {max} characters.",
-    "translation": "Bild-URL: högst {max} tecken."
-  },
-  "MIi4yC": {
-    "message": "Keep it to {max} characters.",
-    "translation": "Håll det till {max} tecken."
-  },
-  "WQg61I": {
-    "message": "Keys",
-    "translation": "Tangenter"
-  },
-  "2fhoKU": {
-    "message": "No image",
-    "translation": "Ingen bild"
-  },
-  "xYvd7u": {
-    "message": "Piece position",
-    "translation": "Delens position"
-  },
-  "rkcP1p": {
-    "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
-    "translation": "Lägg Pokémondelar i en hög och stadiondelar på stadion."
-  },
-  "XsrZAv": {
-    "message": "Rename",
-    "context": "button",
-    "translation": "Byt namn"
-  },
-  "Tvyjys": {
-    "message": "Rename deck",
-    "translation": "Byt namn på lek"
-  },
-  "CBOI8H": {
-    "message": "Resume saved game…",
-    "translation": "Återuppta sparat spel…"
-  },
-  "qoNq2S": {
-    "message": "Same group for each piece",
-    "translation": "Samma grupp för varje del"
-  },
-  "4XBjuA": {
-    "message": "Save game",
-    "translation": "Spara spel"
-  },
-  "y4__tG": {
-    "message": "Settings",
-    "context": "shortcut key caption",
-    "translation": "Inställningar"
-  },
-  "ZMr878": {
-    "message": "That image didn't load.",
-    "translation": "Bilden kunde inte laddas."
-  },
-  "PTd_zR": {
-    "message": "Use image",
-    "translation": "Använd bild"
-  },
-  "sFWtjQ": {
-    "message": "Watch replay…",
-    "translation": "Titta på repris…"
-  },
-  "qTeX2A": {
-    "message": "Angle",
-    "context": "the table's tilt",
-    "translation": "Vinkel"
-  },
-  "y3FF_5": {
-    "message": "Angle {count}°",
-    "translation": "Vinkel {count}°"
-  },
-  "tuSC5H": {
-    "message": "Angle in degrees",
-    "translation": "Vinkel i grader"
-  },
-  "4GuGTB": {
-    "message": "Angle…",
-    "context": "the table's tilt",
-    "translation": "Vinkel…"
-  },
-  "WDup2O": {
-    "message": "Animate stacks",
-    "translation": "Animera högar"
-  },
-  "n7tTKf": {
-    "message": "Card images…",
-    "translation": "Kortbilder…"
-  },
-  "SOHyuG": {
-    "message": "Depth…",
-    "context": "how 3D the table looks",
-    "translation": "Djup…"
-  },
-  "hLFd9M": {
-    "message": "Halves",
-    "context": "which halves of the table",
-    "translation": "Halvor"
-  },
-  "ZWEhc2": {
-    "message": "Halves…",
-    "context": "which halves of the table",
-    "translation": "Halvor…"
-  },
-  "szYoqS": {
-    "message": "Lift while dragging",
-    "translation": "Lyft vid dragning"
-  },
-  "7WBRHp": {
-    "message": "My half {count}% of the table",
-    "translation": "Min halva {count} % av bordet"
-  },
-  "gQKQDm": {
-    "message": "My half, in percent",
-    "translation": "Min halva, i procent"
-  },
-  "4fxEIx": {
-    "message": "Natural placement",
-    "translation": "Naturlig placering"
-  },
-  "Ek_k_Q": {
-    "message": "Needs depth",
-    "translation": "Kräver djup"
-  },
-  "UyDcwK": {
-    "message": "Parallax",
-    "translation": "Parallax"
-  },
-  "Kr1v1U": {
-    "message": "Preview on hover",
-    "translation": "Förhandsvisa vid hovring"
-  },
-  "hlMODd": {
-    "message": "Reset table",
-    "context": "put the table's settings back",
-    "translation": "Återställ bord"
-  },
-  "4VQN2q": {
-    "message": "Reset table settings",
-    "translation": "Återställ bordsinställningar"
-  },
-  "8OT456": {
-    "message": "Settings: {0}",
-    "comments": [
-      "Opens Settings at that section"
-    ],
-    "translation": "Inställningar: {0}"
-  },
-  "ifu0mt": {
-    "message": "Show opponent's hand",
-    "translation": "Visa motståndarens hand"
-  },
-  "Q7FDck": {
-    "message": "Speed",
-    "context": "animation speed",
-    "translation": "Hastighet"
-  },
-  "TMNS59": {
-    "message": "Speed…",
-    "context": "animation speed",
-    "translation": "Hastighet…"
-  },
-  "yI0x30": {
-    "message": "Split…",
-    "context": "the table between the halves",
-    "translation": "Delning…"
-  },
-  "Qyf2Yu": {
-    "message": "Style",
-    "context": "the table's look",
-    "translation": "Stil"
-  },
-  "-wDRPC": {
-    "message": "Style…",
-    "context": "the table's look",
-    "translation": "Stil…"
-  },
-  "lW4c-5": {
-    "message": "Thickness",
-    "context": "the cards' thickness",
-    "translation": "Tjocklek"
-  },
-  "BPVdia": {
-    "message": "Thickness…",
-    "context": "the cards' thickness",
-    "translation": "Tjocklek…"
-  },
-  "GtJbUa": {
-    "message": "Background",
-    "translation": "Bakgrund"
-  },
-  "c7lN9x": {
-    "message": "Background from a link",
-    "translation": "Bakgrund från en länk"
-  },
-  "tAWTcI": {
-    "message": "Background…",
-    "translation": "Bakgrund…"
-  },
-  "vN1y3D": {
-    "message": "Couldn't use that picture.",
-    "translation": "Det gick inte att använda bilden."
-  },
-  "KtuFGB": {
-    "message": "Custom",
-    "context": "the player's own background",
-    "translation": "Egen"
-  },
-  "qlHGJK": {
-    "message": "Custom image…",
-    "translation": "Egen bild…"
-  },
-  "Cn91gu": {
-    "message": "Desk",
-    "context": "the default background",
-    "translation": "Skrivbord"
-  },
-  "jSa1_N": {
-    "message": "From a link…",
-    "translation": "Från en länk…"
-  },
-  "T7x7bT": {
-    "message": "Image link",
-    "translation": "Bildlänk"
-  },
-  "YmDThn": {
-    "message": "None",
-    "context": "no background",
-    "translation": "Ingen"
-  },
-  "IyUrJ9": {
-    "message": "Or drop or paste a picture.",
-    "translation": "Eller släpp eller klistra in en bild."
-  },
-  "Oo42E3": {
-    "message": "Pictures up to 25 MB.",
-    "translation": "Bilder upp till 25 MB."
-  },
-  "abE-Jj": {
-    "message": "Preparing picture…",
-    "translation": "Förbereder bild…"
-  },
-  "LE8SQj": {
-    "message": "Wallpaper {0}",
-    "translation": "Bakgrund {0}"
   }
 }

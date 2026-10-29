@@ -1033,9 +1033,9 @@
     "message": "<0>{0}</0>: every move, and the chat.",
     "translation": "<0>{0}</0>:すべての操作とチャットです。"
   },
-  "NaneTg": {
-    "message": "<0>{0}</0>: the table's look, the theme and the language.",
-    "translation": "<0>{0}</0>:テーブルの見た目、テーマ、言語を設定できます。"
+  "ifsvhW": {
+    "message": "<0>{0}</0>: Settings, saves and replays, and this tutorial whenever you want it.",
+    "translation": "<0>{0}</0>:設定、セーブとリプレイ、必要なときに開けるこのチュートリアルがあります。"
   },
   "C0rMdv": {
     "message": "− Damage",
@@ -1302,10 +1302,6 @@
     "context": "keyboard key",
     "translation": "Alt"
   },
-  "JxKdEp": {
-    "message": "Always shown while it holds cards.",
-    "translation": "カードがある間は常に表示されます。"
-  },
   "Cpqhqr": {
     "message": "Amber",
     "context": "card back",
@@ -1324,29 +1320,32 @@
     "message": "An attack payable with two Energy",
     "translation": "エネルギー2個で使えるワザ"
   },
-  "bK6Mfx": {
-    "message": "An image URL, 'blank' or 'theme'.",
-    "comments": [
-      "Keep 'blank' and 'theme' in English: they are what the player types"
-    ],
-    "translation": "画像のURL、「blank」または「theme」。"
-  },
   "ctNH7H": {
     "message": "Ancient",
     "context": "Pokémon card mechanic",
     "translation": "古代"
   },
-  "Jvmvx4": {
-    "message": "Animate stack height",
-    "translation": "山の高さをアニメーションで表示"
+  "qTeX2A": {
+    "message": "Angle",
+    "context": "the table's tilt",
+    "translation": "角度"
   },
-  "d3fmj9": {
-    "message": "Animation speed",
-    "translation": "アニメーション速度"
+  "y3FF_5": {
+    "message": "Angle {count}°",
+    "translation": "角度 {count}°"
   },
-  "vaiuUS": {
-    "message": "Animation speed…",
-    "translation": "アニメーション速度…"
+  "tuSC5H": {
+    "message": "Angle in degrees",
+    "translation": "角度(度数)"
+  },
+  "4GuGTB": {
+    "message": "Angle…",
+    "context": "the table's tilt",
+    "translation": "角度…"
+  },
+  "WDup2O": {
+    "message": "Animate stacks",
+    "translation": "山札の動きを表示"
   },
   "PR1zNf": {
     "message": "Announce mulligan",
@@ -1366,10 +1365,6 @@
     "message": "App",
     "context": "the app toolbar",
     "translation": "アプリ"
-  },
-  "aAIQg2": {
-    "message": "Appearance",
-    "translation": "外観"
   },
   "Lx0XC_": {
     "message": "Are you sure you want to leave? Any unsaved game data will be lost.",
@@ -1483,6 +1478,18 @@
   "1JYYQn": {
     "message": "Back to your decks",
     "translation": "デッキ一覧に戻る"
+  },
+  "GtJbUa": {
+    "message": "Background",
+    "translation": "背景"
+  },
+  "c7lN9x": {
+    "message": "Background from a link",
+    "translation": "リンクから背景を設定"
+  },
+  "tAWTcI": {
+    "message": "Background…",
+    "translation": "背景…"
   },
   "GhQ0ZN": {
     "message": "Backs",
@@ -1681,13 +1688,13 @@
     "message": "Card back for {slotSeat}",
     "translation": "{slotSeat}のカードの裏面"
   },
-  "tii3sv": {
-    "message": "Card image language…",
-    "translation": "カード画像の言語…"
-  },
   "8xaYE9": {
     "message": "Card images",
     "translation": "カード画像"
+  },
+  "n7tTKf": {
+    "message": "Card images…",
+    "translation": "カード画像…"
   },
   "ymPKi7": {
     "message": "Card preview",
@@ -1709,10 +1716,6 @@
   "kLlRKH": {
     "message": "Card stack preview",
     "translation": "カードの束のプレビュー"
-  },
-  "TH1VPk": {
-    "message": "Card thickness",
-    "translation": "カードの厚み"
   },
   "Ccpbzh": {
     "message": "Cards",
@@ -1736,10 +1739,6 @@
   "IuDYMd": {
     "message": "Cards in deck",
     "translation": "デッキのカード"
-  },
-  "sIpTuZ": {
-    "message": "Change background",
-    "translation": "背景を変更"
   },
   "lKPW0c": {
     "message": "Change card back for {slotSeat}",
@@ -2049,6 +2048,10 @@
     "message": "Couldn't start the tutorial. Try again.",
     "translation": "チュートリアルを開始できませんでした。もう一度お試しください。"
   },
+  "vN1y3D": {
+    "message": "Couldn't use that picture.",
+    "translation": "その画像は使用できませんでした。"
+  },
   "U9OFiD": {
     "message": "cover",
     "context": "the deck's cover card",
@@ -2118,6 +2121,11 @@
     "message": "Current",
     "translation": "現在"
   },
+  "KtuFGB": {
+    "message": "Custom",
+    "context": "the player's own background",
+    "translation": "カスタム"
+  },
   "qT5p-1": {
     "message": "Custom card",
     "translation": "カスタムカード"
@@ -2125,6 +2133,10 @@
   "rlm3op": {
     "message": "Custom flair on Discord & open reign on self-nicknames.",
     "translation": "Discordでの専用ロールと、ニックネームを自由に変更できる権利。"
+  },
+  "qlHGJK": {
+    "message": "Custom image…",
+    "translation": "カスタム画像…"
   },
   "UxNmvS": {
     "message": "Damage and conditions",
@@ -2254,6 +2266,11 @@
     "context": "how 3D the table looks",
     "translation": "奥行き"
   },
+  "SOHyuG": {
+    "message": "Depth…",
+    "context": "how 3D the table looks",
+    "translation": "奥行き…"
+  },
   "HlKgQk": {
     "message": "Deselect",
     "translation": "選択解除"
@@ -2267,6 +2284,11 @@
     "message": "Design",
     "context": "design a card back",
     "translation": "デザインする"
+  },
+  "Cn91gu": {
+    "message": "Desk",
+    "context": "the default background",
+    "translation": "デスク"
   },
   "zhmNG6": {
     "message": "Diamonds",
@@ -2497,6 +2519,11 @@
     "message": "Edit deck",
     "translation": "デッキを編集"
   },
+  "CMMU03": {
+    "message": "Edit…",
+    "context": "change the keyboard shortcuts",
+    "translation": "編集…"
+  },
   "eAabzD": {
     "message": "Emblem",
     "context": "sleeve",
@@ -2548,9 +2575,9 @@
     "context": "keyboard key",
     "translation": "Esc"
   },
-  "y3HN5z": {
-    "message": "Every key is under <0>{0}</0>, in the menu.",
-    "translation": "すべてのキーはメニューの<0>{0}</0>にあります。"
+  "8aoXpa": {
+    "message": "Every key is under <0>{0}</0>, in <1>{1}</1>.",
+    "translation": "すべてのキーは<0>{0}</0>の<1>{1}</1>にあります。"
   },
   "yJW_id": {
     "message": "Evolution and previous stage",
@@ -2782,6 +2809,10 @@
     "message": "From a link",
     "translation": "リンクから"
   },
+  "jSa1_N": {
+    "message": "From a link…",
+    "translation": "リンクから…"
+  },
   "qIodFG": {
     "message": "Frost",
     "comments": [
@@ -2863,6 +2894,16 @@
   "TALrFf": {
     "message": "GX marker",
     "translation": "GXマーカー"
+  },
+  "hLFd9M": {
+    "message": "Halves",
+    "context": "which halves of the table",
+    "translation": "ハーフ"
+  },
+  "ZWEhc2": {
+    "message": "Halves…",
+    "context": "which halves of the table",
+    "translation": "ハーフ…"
   },
   "FpHzzD": {
     "message": "Hand",
@@ -3025,13 +3066,6 @@
     "message": "HP and retreat",
     "translation": "HPとにげる"
   },
-  "OaHYvQ": {
-    "message": "https://…, blank or theme",
-    "comments": [
-      "Keep 'blank' and 'theme' in English: they are what the player types"
-    ],
-    "translation": "https://…、blank または theme"
-  },
   "hlQWeh": {
     "message": "I publicly launched the sim on Christmas, and it has already grown an incredible community of players and developers. There's a lot more to do, and I could use as much help as I can get!",
     "comments": [
@@ -3054,9 +3088,9 @@
     "message": "Illustrator",
     "translation": "イラストレーター"
   },
-  "VyUuZb": {
-    "message": "Image URL",
-    "translation": "画像URL"
+  "T7x7bT": {
+    "message": "Image link",
+    "translation": "画像のリンク"
   },
   "EUsCHg": {
     "message": "Images",
@@ -3193,6 +3227,10 @@
     "message": "Keyboard shortcuts",
     "translation": "キーボードショートカット"
   },
+  "WQg61I": {
+    "message": "Keys",
+    "translation": "キー"
+  },
   "vFjc7h": {
     "message": "Keys",
     "context": "the keyboard map with no modifier held",
@@ -3217,10 +3255,6 @@
   "2S2hKS": {
     "message": "Language…",
     "translation": "言語…"
-  },
-  "pOmqOF": {
-    "message": "Large card preview on hover",
-    "translation": "ホバーで大きなカードプレビューを表示"
   },
   "NMzrpD": {
     "message": "Larger cards",
@@ -3286,9 +3320,9 @@
     "context": "Pokémon stage",
     "translation": "レベルアップ"
   },
-  "Fu5KED": {
-    "message": "Lift cards while dragging",
-    "translation": "ドラッグ中にカードを持ち上げる"
+  "szYoqS": {
+    "message": "Lift while dragging",
+    "translation": "ドラッグ中に持ち上げる"
   },
   "Lnx2DC": {
     "message": "Lightning",
@@ -3744,9 +3778,17 @@
     "message": "My eternal thanks!!!!!",
     "translation": "心から感謝します!!!!!"
   },
+  "7WBRHp": {
+    "message": "My half {count}% of the table",
+    "translation": "自分側 テーブルの{count}%"
+  },
   "KJeM1I": {
     "message": "My half {percent}% of the table",
     "translation": "テーブルの自分側 {percent}%"
+  },
+  "gQKQDm": {
+    "message": "My half, in percent",
+    "translation": "自分側(%)"
   },
   "6YtxFj": {
     "message": "Name",
@@ -3773,9 +3815,9 @@
     "message": "Name: up to {max} characters.",
     "translation": "名前:{max}文字までです。"
   },
-  "OzETXo": {
-    "message": "Natural card placement",
-    "translation": "カードを自然に配置"
+  "4fxEIx": {
+    "message": "Natural placement",
+    "translation": "自然な配置"
   },
   "hmYrgt": {
     "message": "Navy",
@@ -3785,6 +3827,10 @@
   "rf9azy": {
     "message": "Needs at least one Basic Pokémon.",
     "translation": "たねポケモンが1枚以上必要です。"
+  },
+  "Ek_k_Q": {
+    "message": "Needs depth",
+    "translation": "奥行きが必要です"
   },
   "W_gspM": {
     "message": "New deck",
@@ -3913,6 +3959,11 @@
   "lChsa8": {
     "message": "No tournament decks right now.",
     "translation": "現在、大会デッキはありません。"
+  },
+  "YmDThn": {
+    "message": "None",
+    "context": "no background",
+    "translation": "なし"
   },
   "6psMRl": {
     "message": "None",
@@ -4170,6 +4221,10 @@
     "message": "or a link",
     "translation": "またはリンク"
   },
+  "IyUrJ9": {
+    "message": "Or drop or paste a picture.",
+    "translation": "画像をドロップまたは貼り付けることもできます。"
+  },
   "l2I52S": {
     "message": "or drop or paste one here",
     "translation": "または、ここにドロップかペースト"
@@ -4201,6 +4256,10 @@
     "message": "Page Up",
     "context": "keyboard key",
     "translation": "Page Up"
+  },
+  "UyDcwK": {
+    "message": "Parallax",
+    "translation": "視差"
   },
   "xun4kD": {
     "message": "Paralyzed",
@@ -4295,6 +4354,10 @@
     "message": "Picture link: {label}",
     "translation": "画像のリンク: {label}"
   },
+  "Oo42E3": {
+    "message": "Pictures up to 25 MB.",
+    "translation": "画像は25 MBまで。"
+  },
   "BX1rQx": {
     "message": "Pieces",
     "translation": "ピース"
@@ -4369,10 +4432,6 @@
     "message": "Pocket decks have no Energy cards.",
     "translation": "ポケポケのデッキにはエネルギーカードがありません。"
   },
-  "S-nXVo": {
-    "message": "Pointer parallax",
-    "translation": "ポインターのパララックス"
-  },
   "95vGpJ": {
     "message": "Poisoned",
     "context": "special condition",
@@ -4395,6 +4454,10 @@
   "RNaprm": {
     "message": "Pokémon cards",
     "translation": "ポケモンカード"
+  },
+  "abE-Jj": {
+    "message": "Preparing picture…",
+    "translation": "画像を準備しています…"
   },
   "_0G332": {
     "message": "Press {keys} for <0>shortcuts</0>.",
@@ -4459,6 +4522,10 @@
       "{cardName} is a card; the button opens it large."
     ],
     "translation": "{cardName}をプレビュー"
+  },
+  "Kr1v1U": {
+    "message": "Preview on hover",
+    "translation": "ホバーでプレビュー"
   },
   "Lxdrcy": {
     "message": "Previous replay action",
@@ -4736,9 +4803,14 @@
     "message": "Reset both sides",
     "translation": "両側をリセット"
   },
-  "xNq549": {
-    "message": "Reset table view",
-    "translation": "テーブルの表示をリセット"
+  "hlMODd": {
+    "message": "Reset table",
+    "context": "put the table's settings back",
+    "translation": "テーブルをリセット"
+  },
+  "4VQN2q": {
+    "message": "Reset table settings",
+    "translation": "テーブル設定をリセット"
   },
   "1IWc1n": {
     "message": "Reset to",
@@ -4777,9 +4849,9 @@
     "context": "Pokémon stage",
     "translation": "復元"
   },
-  "Dwpy1Z": {
-    "message": "Resume a saved game…",
-    "translation": "保存したゲームを再開…"
+  "CBOI8H": {
+    "message": "Resume saved game…",
+    "translation": "セーブした対戦を再開…"
   },
   "X1Npk-": {
     "message": "Retreat {retreat}",
@@ -4996,9 +5068,9 @@
     "message": "Save and edit {title}",
     "translation": "{title}を保存して編集"
   },
-  "4ibQSn": {
-    "message": "Save online game",
-    "translation": "オンライン対戦を保存"
+  "4XBjuA": {
+    "message": "Save game",
+    "translation": "対戦をセーブ"
   },
   "OnrVKw": {
     "message": "Saved",
@@ -5169,6 +5241,18 @@
     ],
     "translation": "設定"
   },
+  "y4__tG": {
+    "message": "Settings",
+    "context": "shortcut key caption",
+    "translation": "設定"
+  },
+  "8OT456": {
+    "message": "Settings: {0}",
+    "comments": [
+      "Opens Settings at that section"
+    ],
+    "translation": "設定: {0}"
+  },
   "Z8lGw6": {
     "message": "Share",
     "translation": "共有"
@@ -5206,15 +5290,6 @@
     "message": "Shoutout in the next changelog.",
     "translation": "次の更新履歴でお礼を掲載します。"
   },
-  "8vETh9": {
-    "message": "Show",
-    "translation": "表示"
-  },
-  "qTlQOF": {
-    "message": "Show",
-    "context": "which halves of the table",
-    "translation": "表示"
-  },
   "nogPed": {
     "message": "Show",
     "context": "which pane to show",
@@ -5228,10 +5303,6 @@
     "message": "Show every print",
     "translation": "すべての版を表示"
   },
-  "UXsj50": {
-    "message": "Show halves…",
-    "translation": "半分を表示…"
-  },
   "nyTrvq": {
     "message": "Show keyboard",
     "translation": "キーボードを表示"
@@ -5243,6 +5314,10 @@
   "FBwNsr": {
     "message": "Show one per card",
     "translation": "カードごとに1枚表示"
+  },
+  "ifu0mt": {
+    "message": "Show opponent's hand",
+    "translation": "相手の手札を表示"
   },
   "NQ5xRS": {
     "message": "Show the deck as",
@@ -5477,10 +5552,25 @@
     ],
     "translation": "スペシャルイベント"
   },
+  "Q7FDck": {
+    "message": "Speed",
+    "context": "animation speed",
+    "translation": "速度"
+  },
+  "TMNS59": {
+    "message": "Speed…",
+    "context": "animation speed",
+    "translation": "速度…"
+  },
   "h5EwqW": {
     "message": "Split",
     "context": "the table between the halves",
     "translation": "分割"
+  },
+  "yI0x30": {
+    "message": "Split…",
+    "context": "the table between the halves",
+    "translation": "分割…"
   },
   "Y6mTBn": {
     "message": "SPONSOR TIERS",
@@ -5607,6 +5697,16 @@
     "context": "sleeve pattern",
     "translation": "ストライプ"
   },
+  "Qyf2Yu": {
+    "message": "Style",
+    "context": "the table's look",
+    "translation": "スタイル"
+  },
+  "-wDRPC": {
+    "message": "Style…",
+    "context": "the table's look",
+    "translation": "スタイル…"
+  },
   "yqeLY3": {
     "message": "Supporter",
     "context": "Trainer card kind",
@@ -5668,26 +5768,6 @@
     "message": "Table",
     "context": "shortcut group",
     "translation": "テーブル"
-  },
-  "viTXNi": {
-    "message": "Table angle",
-    "translation": "テーブルの角度"
-  },
-  "eqSg9V": {
-    "message": "Table style",
-    "translation": "テーブルのスタイル"
-  },
-  "Z3nJeW": {
-    "message": "Table style…",
-    "translation": "テーブルスタイル…"
-  },
-  "f9jgd2": {
-    "message": "Table view",
-    "translation": "テーブル表示"
-  },
-  "cHwqmY": {
-    "message": "Table view…",
-    "translation": "テーブル表示…"
   },
   "Qd2uqp": {
     "message": "Tabletop",
@@ -5957,6 +6037,16 @@
     "message": "They bring up the next: drag a <0>{0}</0> from their Bench to their Active Spot.",
     "translation": "相手が次のポケモンを出します。相手のベンチから<0>{0}</0>を相手のバトル場へドラッグしてください。"
   },
+  "lW4c-5": {
+    "message": "Thickness",
+    "context": "the cards' thickness",
+    "translation": "厚み"
+  },
+  "BPVdia": {
+    "message": "Thickness…",
+    "context": "the cards' thickness",
+    "translation": "厚み…"
+  },
   "WsAkgd": {
     "message": "This browser won't keep your decks after you close the page.",
     "translation": "このブラウザでは、ページを閉じるとデッキが保存されません。"
@@ -5968,10 +6058,6 @@
   "5HIoIb": {
     "message": "This invitation was used or has expired. Ask for a new one.",
     "translation": "この招待は使用済みか、期限切れです。新しい招待をお願いしてください。"
-  },
-  "L7LU5x": {
-    "message": "This tutorial waits in the <0>menu</0> whenever you want it.",
-    "translation": "このチュートリアルは、いつでも<0>メニュー</0>から開けます。"
   },
   "YcMvP7": {
     "message": "Tilted on wide screens, flat on phones.",
@@ -6301,10 +6387,6 @@
     "message": "Use background",
     "translation": "背景を使用"
   },
-  "kqaF8V": {
-    "message": "Use default",
-    "translation": "デフォルトを使用"
-  },
   "pEHkP7": {
     "message": "Use GX attack",
     "translation": "GXワザを使う"
@@ -6369,8 +6451,12 @@
     "message": "VSTAR marker",
     "translation": "VSTARマーカー"
   },
-  "inq7iN": {
-    "message": "Watch a replay…",
+  "LE8SQj": {
+    "message": "Wallpaper {0}",
+    "translation": "壁紙 {0}"
+  },
+  "sFWtjQ": {
+    "message": "Watch replay…",
     "translation": "リプレイを見る…"
   },
   "2kl5Uf": {
@@ -6501,332 +6587,5 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "ゾーンの枠線"
-  },
-  "ifsvhW": {
-    "message": "<0>{0}</0>: Settings, saves and replays, and this tutorial whenever you want it.",
-    "translation": "<0>{0}</0>:設定、セーブとリプレイ、必要なときに開けるこのチュートリアルがあります。"
-  },
-  "sDYhDt": {
-    "message": "A deck needs a name.",
-    "translation": "デッキには名前が必要です。"
-  },
-  "hQE7TV": {
-    "message": "An image URL, or 'default'.",
-    "comments": [
-      "Keep 'default' in English: it is what the player types"
-    ],
-    "translation": "画像のURL、または「default」。"
-  },
-  "8zanjC": {
-    "message": "Artwork group",
-    "translation": "イラストグループ"
-  },
-  "PCF3WN": {
-    "message": "Change card back",
-    "translation": "カードの裏面を変更"
-  },
-  "HLSSB8": {
-    "message": "code or name",
-    "translation": "コードまたは名前"
-  },
-  "ibWa1H": {
-    "message": "Delete {deckName}?",
-    "translation": "{deckName}を削除しますか?"
-  },
-  "iu7vH9": {
-    "message": "e.g. CC or LL",
-    "comments": [
-      "Energy letters (C, L…) stay as they are"
-    ],
-    "translation": "例: CC または LL"
-  },
-  "tg9VdO": {
-    "message": "e.g. HIJ",
-    "translation": "例: HIJ"
-  },
-  "3fBsZV": {
-    "message": "e.g. illustration",
-    "translation": "例: イラスト"
-  },
-  "CMMU03": {
-    "message": "Edit…",
-    "context": "change the keyboard shortcuts",
-    "translation": "編集…"
-  },
-  "I7T1ix": {
-    "message": "Enter an image URL.",
-    "translation": "画像URLを入力してください。"
-  },
-  "8aoXpa": {
-    "message": "Every key is under <0>{0}</0>, in <1>{1}</1>.",
-    "translation": "すべてのキーは<0>{0}</0>の<1>{1}</1>にあります。"
-  },
-  "ZTtNAf": {
-    "message": "HP at least",
-    "translation": "HPの下限"
-  },
-  "LgcKSI": {
-    "message": "HP at most",
-    "translation": "HPの上限"
-  },
-  "fVGc9-": {
-    "message": "https://… or default",
-    "comments": [
-      "Keep 'default' in English: it is what the player types"
-    ],
-    "translation": "https://… または default"
-  },
-  "1pdLQw": {
-    "message": "Image not found",
-    "translation": "画像が見つかりません"
-  },
-  "15ARIE": {
-    "message": "Image URL too long",
-    "translation": "画像URLが長すぎます"
-  },
-  "6hbF9e": {
-    "message": "Image URL: up to {max} characters.",
-    "translation": "画像URL:{max}文字までです。"
-  },
-  "MIi4yC": {
-    "message": "Keep it to {max} characters.",
-    "translation": "{max}文字以内にしてください。"
-  },
-  "WQg61I": {
-    "message": "Keys",
-    "translation": "キー"
-  },
-  "2fhoKU": {
-    "message": "No image",
-    "translation": "画像なし"
-  },
-  "xYvd7u": {
-    "message": "Piece position",
-    "translation": "ピースの位置"
-  },
-  "rkcP1p": {
-    "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
-    "translation": "ポケモンのピースは1つの山にまとめ、スタジアムのピースはスタジアムに置いてください。"
-  },
-  "XsrZAv": {
-    "message": "Rename",
-    "context": "button",
-    "translation": "名前を変更"
-  },
-  "Tvyjys": {
-    "message": "Rename deck",
-    "translation": "デッキ名を変更"
-  },
-  "CBOI8H": {
-    "message": "Resume saved game…",
-    "translation": "セーブした対戦を再開…"
-  },
-  "qoNq2S": {
-    "message": "Same group for each piece",
-    "translation": "ピースごとに同じグループ"
-  },
-  "4XBjuA": {
-    "message": "Save game",
-    "translation": "対戦をセーブ"
-  },
-  "y4__tG": {
-    "message": "Settings",
-    "context": "shortcut key caption",
-    "translation": "設定"
-  },
-  "ZMr878": {
-    "message": "That image didn't load.",
-    "translation": "画像を読み込めませんでした。"
-  },
-  "PTd_zR": {
-    "message": "Use image",
-    "translation": "画像を使用"
-  },
-  "sFWtjQ": {
-    "message": "Watch replay…",
-    "translation": "リプレイを見る…"
-  },
-  "qTeX2A": {
-    "message": "Angle",
-    "context": "the table's tilt",
-    "translation": "角度"
-  },
-  "y3FF_5": {
-    "message": "Angle {count}°",
-    "translation": "角度 {count}°"
-  },
-  "tuSC5H": {
-    "message": "Angle in degrees",
-    "translation": "角度(度数)"
-  },
-  "4GuGTB": {
-    "message": "Angle…",
-    "context": "the table's tilt",
-    "translation": "角度…"
-  },
-  "WDup2O": {
-    "message": "Animate stacks",
-    "translation": "山札の動きを表示"
-  },
-  "n7tTKf": {
-    "message": "Card images…",
-    "translation": "カード画像…"
-  },
-  "SOHyuG": {
-    "message": "Depth…",
-    "context": "how 3D the table looks",
-    "translation": "奥行き…"
-  },
-  "hLFd9M": {
-    "message": "Halves",
-    "context": "which halves of the table",
-    "translation": "ハーフ"
-  },
-  "ZWEhc2": {
-    "message": "Halves…",
-    "context": "which halves of the table",
-    "translation": "ハーフ…"
-  },
-  "szYoqS": {
-    "message": "Lift while dragging",
-    "translation": "ドラッグ中に持ち上げる"
-  },
-  "7WBRHp": {
-    "message": "My half {count}% of the table",
-    "translation": "自分側 テーブルの{count}%"
-  },
-  "gQKQDm": {
-    "message": "My half, in percent",
-    "translation": "自分側(%)"
-  },
-  "4fxEIx": {
-    "message": "Natural placement",
-    "translation": "自然な配置"
-  },
-  "Ek_k_Q": {
-    "message": "Needs depth",
-    "translation": "奥行きが必要です"
-  },
-  "UyDcwK": {
-    "message": "Parallax",
-    "translation": "視差"
-  },
-  "Kr1v1U": {
-    "message": "Preview on hover",
-    "translation": "ホバーでプレビュー"
-  },
-  "hlMODd": {
-    "message": "Reset table",
-    "context": "put the table's settings back",
-    "translation": "テーブルをリセット"
-  },
-  "4VQN2q": {
-    "message": "Reset table settings",
-    "translation": "テーブル設定をリセット"
-  },
-  "8OT456": {
-    "message": "Settings: {0}",
-    "comments": [
-      "Opens Settings at that section"
-    ],
-    "translation": "設定: {0}"
-  },
-  "ifu0mt": {
-    "message": "Show opponent's hand",
-    "translation": "相手の手札を表示"
-  },
-  "Q7FDck": {
-    "message": "Speed",
-    "context": "animation speed",
-    "translation": "速度"
-  },
-  "TMNS59": {
-    "message": "Speed…",
-    "context": "animation speed",
-    "translation": "速度…"
-  },
-  "yI0x30": {
-    "message": "Split…",
-    "context": "the table between the halves",
-    "translation": "分割…"
-  },
-  "Qyf2Yu": {
-    "message": "Style",
-    "context": "the table's look",
-    "translation": "スタイル"
-  },
-  "-wDRPC": {
-    "message": "Style…",
-    "context": "the table's look",
-    "translation": "スタイル…"
-  },
-  "lW4c-5": {
-    "message": "Thickness",
-    "context": "the cards' thickness",
-    "translation": "厚み"
-  },
-  "BPVdia": {
-    "message": "Thickness…",
-    "context": "the cards' thickness",
-    "translation": "厚み…"
-  },
-  "GtJbUa": {
-    "message": "Background",
-    "translation": "背景"
-  },
-  "c7lN9x": {
-    "message": "Background from a link",
-    "translation": "リンクから背景を設定"
-  },
-  "tAWTcI": {
-    "message": "Background…",
-    "translation": "背景…"
-  },
-  "vN1y3D": {
-    "message": "Couldn't use that picture.",
-    "translation": "その画像は使用できませんでした。"
-  },
-  "KtuFGB": {
-    "message": "Custom",
-    "context": "the player's own background",
-    "translation": "カスタム"
-  },
-  "qlHGJK": {
-    "message": "Custom image…",
-    "translation": "カスタム画像…"
-  },
-  "Cn91gu": {
-    "message": "Desk",
-    "context": "the default background",
-    "translation": "デスク"
-  },
-  "jSa1_N": {
-    "message": "From a link…",
-    "translation": "リンクから…"
-  },
-  "T7x7bT": {
-    "message": "Image link",
-    "translation": "画像のリンク"
-  },
-  "YmDThn": {
-    "message": "None",
-    "context": "no background",
-    "translation": "なし"
-  },
-  "IyUrJ9": {
-    "message": "Or drop or paste a picture.",
-    "translation": "画像をドロップまたは貼り付けることもできます。"
-  },
-  "Oo42E3": {
-    "message": "Pictures up to 25 MB.",
-    "translation": "画像は25 MBまで。"
-  },
-  "abE-Jj": {
-    "message": "Preparing picture…",
-    "translation": "画像を準備しています…"
-  },
-  "LE8SQj": {
-    "message": "Wallpaper {0}",
-    "translation": "壁紙 {0}"
   }
 }

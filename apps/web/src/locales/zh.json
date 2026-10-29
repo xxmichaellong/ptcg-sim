@@ -1033,9 +1033,9 @@
     "message": "<0>{0}</0>: every move, and the chat.",
     "translation": "<0>{0}</0>：所有操作和聊天记录。"
   },
-  "NaneTg": {
-    "message": "<0>{0}</0>: the table's look, the theme and the language.",
-    "translation": "<0>{0}</0>：牌桌外观、主题和语言。"
+  "ifsvhW": {
+    "message": "<0>{0}</0>: Settings, saves and replays, and this tutorial whenever you want it.",
+    "translation": "<0>{0}</0>：设置、存档和回放，也可随时重看本教程。"
   },
   "C0rMdv": {
     "message": "− Damage",
@@ -1302,10 +1302,6 @@
     "context": "keyboard key",
     "translation": "Alt"
   },
-  "JxKdEp": {
-    "message": "Always shown while it holds cards.",
-    "translation": "有卡牌时始终显示。"
-  },
   "Cpqhqr": {
     "message": "Amber",
     "context": "card back",
@@ -1324,29 +1320,32 @@
     "message": "An attack payable with two Energy",
     "translation": "需要两个能量的招式"
   },
-  "bK6Mfx": {
-    "message": "An image URL, 'blank' or 'theme'.",
-    "comments": [
-      "Keep 'blank' and 'theme' in English: they are what the player types"
-    ],
-    "translation": "图片网址，或 'blank' 或 'theme'。"
-  },
   "ctNH7H": {
     "message": "Ancient",
     "context": "Pokémon card mechanic",
     "translation": "古代"
   },
-  "Jvmvx4": {
-    "message": "Animate stack height",
-    "translation": "牌堆高度动画"
+  "qTeX2A": {
+    "message": "Angle",
+    "context": "the table's tilt",
+    "translation": "角度"
   },
-  "d3fmj9": {
-    "message": "Animation speed",
-    "translation": "动画速度"
+  "y3FF_5": {
+    "message": "Angle {count}°",
+    "translation": "角度 {count}°"
   },
-  "vaiuUS": {
-    "message": "Animation speed…",
-    "translation": "动画速度…"
+  "tuSC5H": {
+    "message": "Angle in degrees",
+    "translation": "角度（度数）"
+  },
+  "4GuGTB": {
+    "message": "Angle…",
+    "context": "the table's tilt",
+    "translation": "角度…"
+  },
+  "WDup2O": {
+    "message": "Animate stacks",
+    "translation": "牌堆动画"
   },
   "PR1zNf": {
     "message": "Announce mulligan",
@@ -1366,10 +1365,6 @@
     "message": "App",
     "context": "the app toolbar",
     "translation": "应用"
-  },
-  "aAIQg2": {
-    "message": "Appearance",
-    "translation": "外观"
   },
   "Lx0XC_": {
     "message": "Are you sure you want to leave? Any unsaved game data will be lost.",
@@ -1483,6 +1478,18 @@
   "1JYYQn": {
     "message": "Back to your decks",
     "translation": "返回我的卡组"
+  },
+  "GtJbUa": {
+    "message": "Background",
+    "translation": "背景"
+  },
+  "c7lN9x": {
+    "message": "Background from a link",
+    "translation": "链接背景"
+  },
+  "tAWTcI": {
+    "message": "Background…",
+    "translation": "背景…"
   },
   "GhQ0ZN": {
     "message": "Backs",
@@ -1681,13 +1688,13 @@
     "message": "Card back for {slotSeat}",
     "translation": "{slotSeat}的卡背"
   },
-  "tii3sv": {
-    "message": "Card image language…",
-    "translation": "卡牌图片语言…"
-  },
   "8xaYE9": {
     "message": "Card images",
     "translation": "卡牌图片"
+  },
+  "n7tTKf": {
+    "message": "Card images…",
+    "translation": "卡牌图片…"
   },
   "ymPKi7": {
     "message": "Card preview",
@@ -1709,10 +1716,6 @@
   "kLlRKH": {
     "message": "Card stack preview",
     "translation": "卡堆预览"
-  },
-  "TH1VPk": {
-    "message": "Card thickness",
-    "translation": "卡牌厚度"
   },
   "Ccpbzh": {
     "message": "Cards",
@@ -1736,10 +1739,6 @@
   "IuDYMd": {
     "message": "Cards in deck",
     "translation": "卡组中的卡牌"
-  },
-  "sIpTuZ": {
-    "message": "Change background",
-    "translation": "更换背景"
   },
   "lKPW0c": {
     "message": "Change card back for {slotSeat}",
@@ -2049,6 +2048,10 @@
     "message": "Couldn't start the tutorial. Try again.",
     "translation": "无法开始教程，请重试。"
   },
+  "vN1y3D": {
+    "message": "Couldn't use that picture.",
+    "translation": "无法使用该图片。"
+  },
   "U9OFiD": {
     "message": "cover",
     "context": "the deck's cover card",
@@ -2118,6 +2121,11 @@
     "message": "Current",
     "translation": "当前"
   },
+  "KtuFGB": {
+    "message": "Custom",
+    "context": "the player's own background",
+    "translation": "自定义"
+  },
   "qT5p-1": {
     "message": "Custom card",
     "translation": "自定义卡牌"
@@ -2125,6 +2133,10 @@
   "rlm3op": {
     "message": "Custom flair on Discord & open reign on self-nicknames.",
     "translation": "在 Discord 上获得专属标识，并可自由设置自己的昵称。"
+  },
+  "qlHGJK": {
+    "message": "Custom image…",
+    "translation": "自定义图片…"
   },
   "UxNmvS": {
     "message": "Damage and conditions",
@@ -2254,6 +2266,11 @@
     "context": "how 3D the table looks",
     "translation": "深度"
   },
+  "SOHyuG": {
+    "message": "Depth…",
+    "context": "how 3D the table looks",
+    "translation": "景深…"
+  },
   "HlKgQk": {
     "message": "Deselect",
     "translation": "取消选择"
@@ -2267,6 +2284,11 @@
     "message": "Design",
     "context": "design a card back",
     "translation": "设计"
+  },
+  "Cn91gu": {
+    "message": "Desk",
+    "context": "the default background",
+    "translation": "桌面"
   },
   "zhmNG6": {
     "message": "Diamonds",
@@ -2497,6 +2519,11 @@
     "message": "Edit deck",
     "translation": "编辑卡组"
   },
+  "CMMU03": {
+    "message": "Edit…",
+    "context": "change the keyboard shortcuts",
+    "translation": "编辑…"
+  },
   "eAabzD": {
     "message": "Emblem",
     "context": "sleeve",
@@ -2548,9 +2575,9 @@
     "context": "keyboard key",
     "translation": "Esc"
   },
-  "y3HN5z": {
-    "message": "Every key is under <0>{0}</0>, in the menu.",
-    "translation": "所有按键都在菜单的<0>{0}</0>中。"
+  "8aoXpa": {
+    "message": "Every key is under <0>{0}</0>, in <1>{1}</1>.",
+    "translation": "所有按键都在 <1>{1}</1> 的<0>{0}</0>下。"
   },
   "yJW_id": {
     "message": "Evolution and previous stage",
@@ -2782,6 +2809,10 @@
     "message": "From a link",
     "translation": "来自链接"
   },
+  "jSa1_N": {
+    "message": "From a link…",
+    "translation": "从链接…"
+  },
   "qIodFG": {
     "message": "Frost",
     "comments": [
@@ -2863,6 +2894,16 @@
   "TALrFf": {
     "message": "GX marker",
     "translation": "GX标记"
+  },
+  "hLFd9M": {
+    "message": "Halves",
+    "context": "which halves of the table",
+    "translation": "半场"
+  },
+  "ZWEhc2": {
+    "message": "Halves…",
+    "context": "which halves of the table",
+    "translation": "半场…"
   },
   "FpHzzD": {
     "message": "Hand",
@@ -3025,13 +3066,6 @@
     "message": "HP and retreat",
     "translation": "HP 与撤退"
   },
-  "OaHYvQ": {
-    "message": "https://…, blank or theme",
-    "comments": [
-      "Keep 'blank' and 'theme' in English: they are what the player types"
-    ],
-    "translation": "https://…、blank 或 theme"
-  },
   "hlQWeh": {
     "message": "I publicly launched the sim on Christmas, and it has already grown an incredible community of players and developers. There's a lot more to do, and I could use as much help as I can get!",
     "comments": [
@@ -3054,9 +3088,9 @@
     "message": "Illustrator",
     "translation": "插画师"
   },
-  "VyUuZb": {
-    "message": "Image URL",
-    "translation": "图片网址"
+  "T7x7bT": {
+    "message": "Image link",
+    "translation": "图片链接"
   },
   "EUsCHg": {
     "message": "Images",
@@ -3193,6 +3227,10 @@
     "message": "Keyboard shortcuts",
     "translation": "键盘快捷键"
   },
+  "WQg61I": {
+    "message": "Keys",
+    "translation": "按键"
+  },
   "vFjc7h": {
     "message": "Keys",
     "context": "the keyboard map with no modifier held",
@@ -3217,10 +3255,6 @@
   "2S2hKS": {
     "message": "Language…",
     "translation": "语言…"
-  },
-  "pOmqOF": {
-    "message": "Large card preview on hover",
-    "translation": "悬停时显示大图卡牌预览"
   },
   "NMzrpD": {
     "message": "Larger cards",
@@ -3286,9 +3320,9 @@
     "context": "Pokémon stage",
     "translation": "LV.X"
   },
-  "Fu5KED": {
-    "message": "Lift cards while dragging",
-    "translation": "拖动时抬起卡牌"
+  "szYoqS": {
+    "message": "Lift while dragging",
+    "translation": "拖动时抬起"
   },
   "Lnx2DC": {
     "message": "Lightning",
@@ -3744,9 +3778,17 @@
     "message": "My eternal thanks!!!!!",
     "translation": "万分感谢！！！！！"
   },
+  "7WBRHp": {
+    "message": "My half {count}% of the table",
+    "translation": "我的半场占牌桌 {count}%"
+  },
   "KJeM1I": {
     "message": "My half {percent}% of the table",
     "translation": "我方占桌面的{percent}%"
+  },
+  "gQKQDm": {
+    "message": "My half, in percent",
+    "translation": "我的半场（百分比）"
   },
   "6YtxFj": {
     "message": "Name",
@@ -3773,9 +3815,9 @@
     "message": "Name: up to {max} characters.",
     "translation": "名称：最多 {max} 个字符。"
   },
-  "OzETXo": {
-    "message": "Natural card placement",
-    "translation": "自然摆放卡牌"
+  "4fxEIx": {
+    "message": "Natural placement",
+    "translation": "自然摆放"
   },
   "hmYrgt": {
     "message": "Navy",
@@ -3785,6 +3827,10 @@
   "rf9azy": {
     "message": "Needs at least one Basic Pokémon.",
     "translation": "至少需要一张基础宝可梦。"
+  },
+  "Ek_k_Q": {
+    "message": "Needs depth",
+    "translation": "需要景深"
   },
   "W_gspM": {
     "message": "New deck",
@@ -3913,6 +3959,11 @@
   "lChsa8": {
     "message": "No tournament decks right now.",
     "translation": "目前没有锦标赛卡组。"
+  },
+  "YmDThn": {
+    "message": "None",
+    "context": "no background",
+    "translation": "无"
   },
   "6psMRl": {
     "message": "None",
@@ -4170,6 +4221,10 @@
     "message": "or a link",
     "translation": "或使用链接"
   },
+  "IyUrJ9": {
+    "message": "Or drop or paste a picture.",
+    "translation": "也可拖入或粘贴图片。"
+  },
   "l2I52S": {
     "message": "or drop or paste one here",
     "translation": "或将图片拖放或粘贴到此处"
@@ -4201,6 +4256,10 @@
     "message": "Page Up",
     "context": "keyboard key",
     "translation": "Page Up"
+  },
+  "UyDcwK": {
+    "message": "Parallax",
+    "translation": "视差"
   },
   "xun4kD": {
     "message": "Paralyzed",
@@ -4295,6 +4354,10 @@
     "message": "Picture link: {label}",
     "translation": "图片链接：{label}"
   },
+  "Oo42E3": {
+    "message": "Pictures up to 25 MB.",
+    "translation": "图片最大 25 MB。"
+  },
   "BX1rQx": {
     "message": "Pieces",
     "translation": "部件"
@@ -4369,10 +4432,6 @@
     "message": "Pocket decks have no Energy cards.",
     "translation": "Pocket 卡组没有能量卡。"
   },
-  "S-nXVo": {
-    "message": "Pointer parallax",
-    "translation": "指针视差"
-  },
   "95vGpJ": {
     "message": "Poisoned",
     "context": "special condition",
@@ -4395,6 +4454,10 @@
   "RNaprm": {
     "message": "Pokémon cards",
     "translation": "宝可梦卡"
+  },
+  "abE-Jj": {
+    "message": "Preparing picture…",
+    "translation": "正在处理图片…"
   },
   "_0G332": {
     "message": "Press {keys} for <0>shortcuts</0>.",
@@ -4459,6 +4522,10 @@
       "{cardName} is a card; the button opens it large."
     ],
     "translation": "预览 {cardName}"
+  },
+  "Kr1v1U": {
+    "message": "Preview on hover",
+    "translation": "悬停预览"
   },
   "Lxdrcy": {
     "message": "Previous replay action",
@@ -4736,9 +4803,14 @@
     "message": "Reset both sides",
     "translation": "重置双方"
   },
-  "xNq549": {
-    "message": "Reset table view",
-    "translation": "重置牌桌视角"
+  "hlMODd": {
+    "message": "Reset table",
+    "context": "put the table's settings back",
+    "translation": "重置牌桌"
+  },
+  "4VQN2q": {
+    "message": "Reset table settings",
+    "translation": "重置牌桌设置"
   },
   "1IWc1n": {
     "message": "Reset to",
@@ -4777,9 +4849,9 @@
     "context": "Pokémon stage",
     "translation": "复原宝可梦"
   },
-  "Dwpy1Z": {
-    "message": "Resume a saved game…",
-    "translation": "继续已保存的对战…"
+  "CBOI8H": {
+    "message": "Resume saved game…",
+    "translation": "继续已存对局…"
   },
   "X1Npk-": {
     "message": "Retreat {retreat}",
@@ -4996,9 +5068,9 @@
     "message": "Save and edit {title}",
     "translation": "保存并编辑 {title}"
   },
-  "4ibQSn": {
-    "message": "Save online game",
-    "translation": "保存在线对战"
+  "4XBjuA": {
+    "message": "Save game",
+    "translation": "保存对局"
   },
   "OnrVKw": {
     "message": "Saved",
@@ -5169,6 +5241,18 @@
     ],
     "translation": "设置"
   },
+  "y4__tG": {
+    "message": "Settings",
+    "context": "shortcut key caption",
+    "translation": "设置"
+  },
+  "8OT456": {
+    "message": "Settings: {0}",
+    "comments": [
+      "Opens Settings at that section"
+    ],
+    "translation": "设置：{0}"
+  },
   "Z8lGw6": {
     "message": "Share",
     "translation": "分享"
@@ -5206,15 +5290,6 @@
     "message": "Shoutout in the next changelog.",
     "translation": "在下一次更新日志中特别感谢你。"
   },
-  "8vETh9": {
-    "message": "Show",
-    "translation": "显示"
-  },
-  "qTlQOF": {
-    "message": "Show",
-    "context": "which halves of the table",
-    "translation": "显示"
-  },
   "nogPed": {
     "message": "Show",
     "context": "which pane to show",
@@ -5228,10 +5303,6 @@
     "message": "Show every print",
     "translation": "显示所有版本"
   },
-  "UXsj50": {
-    "message": "Show halves…",
-    "translation": "显示一半…"
-  },
   "nyTrvq": {
     "message": "Show keyboard",
     "translation": "显示键盘"
@@ -5243,6 +5314,10 @@
   "FBwNsr": {
     "message": "Show one per card",
     "translation": "每张卡只显示一张"
+  },
+  "ifu0mt": {
+    "message": "Show opponent's hand",
+    "translation": "显示对手的手牌"
   },
   "NQ5xRS": {
     "message": "Show the deck as",
@@ -5477,10 +5552,25 @@
     ],
     "translation": "特别活动"
   },
+  "Q7FDck": {
+    "message": "Speed",
+    "context": "animation speed",
+    "translation": "速度"
+  },
+  "TMNS59": {
+    "message": "Speed…",
+    "context": "animation speed",
+    "translation": "速度…"
+  },
   "h5EwqW": {
     "message": "Split",
     "context": "the table between the halves",
     "translation": "分配"
+  },
+  "yI0x30": {
+    "message": "Split…",
+    "context": "the table between the halves",
+    "translation": "分割…"
   },
   "Y6mTBn": {
     "message": "SPONSOR TIERS",
@@ -5607,6 +5697,16 @@
     "context": "sleeve pattern",
     "translation": "条纹"
   },
+  "Qyf2Yu": {
+    "message": "Style",
+    "context": "the table's look",
+    "translation": "样式"
+  },
+  "-wDRPC": {
+    "message": "Style…",
+    "context": "the table's look",
+    "translation": "样式…"
+  },
   "yqeLY3": {
     "message": "Supporter",
     "context": "Trainer card kind",
@@ -5668,26 +5768,6 @@
     "message": "Table",
     "context": "shortcut group",
     "translation": "牌桌"
-  },
-  "viTXNi": {
-    "message": "Table angle",
-    "translation": "牌桌角度"
-  },
-  "eqSg9V": {
-    "message": "Table style",
-    "translation": "牌桌样式"
-  },
-  "Z3nJeW": {
-    "message": "Table style…",
-    "translation": "牌桌样式…"
-  },
-  "f9jgd2": {
-    "message": "Table view",
-    "translation": "牌桌视角"
-  },
-  "cHwqmY": {
-    "message": "Table view…",
-    "translation": "牌桌视角…"
   },
   "Qd2uqp": {
     "message": "Tabletop",
@@ -5957,6 +6037,16 @@
     "message": "They bring up the next: drag a <0>{0}</0> from their Bench to their Active Spot.",
     "translation": "对手换上下一只：将一张<0>{0}</0>从其备战区拖到其战斗场。"
   },
+  "lW4c-5": {
+    "message": "Thickness",
+    "context": "the cards' thickness",
+    "translation": "厚度"
+  },
+  "BPVdia": {
+    "message": "Thickness…",
+    "context": "the cards' thickness",
+    "translation": "厚度…"
+  },
   "WsAkgd": {
     "message": "This browser won't keep your decks after you close the page.",
     "translation": "关闭页面后，此浏览器不会保留你的卡组。"
@@ -5968,10 +6058,6 @@
   "5HIoIb": {
     "message": "This invitation was used or has expired. Ask for a new one.",
     "translation": "此邀请已被使用或已过期，请索取新的邀请。"
-  },
-  "L7LU5x": {
-    "message": "This tutorial waits in the <0>menu</0> whenever you want it.",
-    "translation": "需要时，可随时在<0>菜单</0>中重新打开本教程。"
   },
   "YcMvP7": {
     "message": "Tilted on wide screens, flat on phones.",
@@ -6301,10 +6387,6 @@
     "message": "Use background",
     "translation": "使用背景"
   },
-  "kqaF8V": {
-    "message": "Use default",
-    "translation": "使用默认"
-  },
   "pEHkP7": {
     "message": "Use GX attack",
     "translation": "使用GX招式"
@@ -6369,8 +6451,12 @@
     "message": "VSTAR marker",
     "translation": "VSTAR标记"
   },
-  "inq7iN": {
-    "message": "Watch a replay…",
+  "LE8SQj": {
+    "message": "Wallpaper {0}",
+    "translation": "壁纸 {0}"
+  },
+  "sFWtjQ": {
+    "message": "Watch replay…",
     "translation": "观看回放…"
   },
   "2kl5Uf": {
@@ -6501,332 +6587,5 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "区域轮廓"
-  },
-  "ifsvhW": {
-    "message": "<0>{0}</0>: Settings, saves and replays, and this tutorial whenever you want it.",
-    "translation": "<0>{0}</0>：设置、存档和回放，也可随时重看本教程。"
-  },
-  "sDYhDt": {
-    "message": "A deck needs a name.",
-    "translation": "卡组需要名称。"
-  },
-  "hQE7TV": {
-    "message": "An image URL, or 'default'.",
-    "comments": [
-      "Keep 'default' in English: it is what the player types"
-    ],
-    "translation": "图片网址，或 'default'。"
-  },
-  "8zanjC": {
-    "message": "Artwork group",
-    "translation": "插画分组"
-  },
-  "PCF3WN": {
-    "message": "Change card back",
-    "translation": "更换卡背"
-  },
-  "HLSSB8": {
-    "message": "code or name",
-    "translation": "代码或名称"
-  },
-  "ibWa1H": {
-    "message": "Delete {deckName}?",
-    "translation": "删除 {deckName}？"
-  },
-  "iu7vH9": {
-    "message": "e.g. CC or LL",
-    "comments": [
-      "Energy letters (C, L…) stay as they are"
-    ],
-    "translation": "例如 CC 或 LL"
-  },
-  "tg9VdO": {
-    "message": "e.g. HIJ",
-    "translation": "例如 HIJ"
-  },
-  "3fBsZV": {
-    "message": "e.g. illustration",
-    "translation": "例如 illustration"
-  },
-  "CMMU03": {
-    "message": "Edit…",
-    "context": "change the keyboard shortcuts",
-    "translation": "编辑…"
-  },
-  "I7T1ix": {
-    "message": "Enter an image URL.",
-    "translation": "请输入图片网址。"
-  },
-  "8aoXpa": {
-    "message": "Every key is under <0>{0}</0>, in <1>{1}</1>.",
-    "translation": "所有按键都在 <1>{1}</1> 的<0>{0}</0>下。"
-  },
-  "ZTtNAf": {
-    "message": "HP at least",
-    "translation": "HP 至少"
-  },
-  "LgcKSI": {
-    "message": "HP at most",
-    "translation": "HP 至多"
-  },
-  "fVGc9-": {
-    "message": "https://… or default",
-    "comments": [
-      "Keep 'default' in English: it is what the player types"
-    ],
-    "translation": "https://… 或 default"
-  },
-  "1pdLQw": {
-    "message": "Image not found",
-    "translation": "未找到图片"
-  },
-  "15ARIE": {
-    "message": "Image URL too long",
-    "translation": "图片网址过长"
-  },
-  "6hbF9e": {
-    "message": "Image URL: up to {max} characters.",
-    "translation": "图片网址：最多 {max} 个字符。"
-  },
-  "MIi4yC": {
-    "message": "Keep it to {max} characters.",
-    "translation": "请不要超过 {max} 个字符。"
-  },
-  "WQg61I": {
-    "message": "Keys",
-    "translation": "按键"
-  },
-  "2fhoKU": {
-    "message": "No image",
-    "translation": "无图片"
-  },
-  "xYvd7u": {
-    "message": "Piece position",
-    "translation": "部件位置"
-  },
-  "rkcP1p": {
-    "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
-    "translation": "将宝可梦部件叠放在一起，竞技场部件放入竞技场。"
-  },
-  "XsrZAv": {
-    "message": "Rename",
-    "context": "button",
-    "translation": "重命名"
-  },
-  "Tvyjys": {
-    "message": "Rename deck",
-    "translation": "重命名卡组"
-  },
-  "CBOI8H": {
-    "message": "Resume saved game…",
-    "translation": "继续已存对局…"
-  },
-  "qoNq2S": {
-    "message": "Same group for each piece",
-    "translation": "每个部件使用同一组"
-  },
-  "4XBjuA": {
-    "message": "Save game",
-    "translation": "保存对局"
-  },
-  "y4__tG": {
-    "message": "Settings",
-    "context": "shortcut key caption",
-    "translation": "设置"
-  },
-  "ZMr878": {
-    "message": "That image didn't load.",
-    "translation": "该图片未能加载。"
-  },
-  "PTd_zR": {
-    "message": "Use image",
-    "translation": "使用图片"
-  },
-  "sFWtjQ": {
-    "message": "Watch replay…",
-    "translation": "观看回放…"
-  },
-  "qTeX2A": {
-    "message": "Angle",
-    "context": "the table's tilt",
-    "translation": "角度"
-  },
-  "y3FF_5": {
-    "message": "Angle {count}°",
-    "translation": "角度 {count}°"
-  },
-  "tuSC5H": {
-    "message": "Angle in degrees",
-    "translation": "角度（度数）"
-  },
-  "4GuGTB": {
-    "message": "Angle…",
-    "context": "the table's tilt",
-    "translation": "角度…"
-  },
-  "WDup2O": {
-    "message": "Animate stacks",
-    "translation": "牌堆动画"
-  },
-  "n7tTKf": {
-    "message": "Card images…",
-    "translation": "卡牌图片…"
-  },
-  "SOHyuG": {
-    "message": "Depth…",
-    "context": "how 3D the table looks",
-    "translation": "景深…"
-  },
-  "hLFd9M": {
-    "message": "Halves",
-    "context": "which halves of the table",
-    "translation": "半场"
-  },
-  "ZWEhc2": {
-    "message": "Halves…",
-    "context": "which halves of the table",
-    "translation": "半场…"
-  },
-  "szYoqS": {
-    "message": "Lift while dragging",
-    "translation": "拖动时抬起"
-  },
-  "7WBRHp": {
-    "message": "My half {count}% of the table",
-    "translation": "我的半场占牌桌 {count}%"
-  },
-  "gQKQDm": {
-    "message": "My half, in percent",
-    "translation": "我的半场（百分比）"
-  },
-  "4fxEIx": {
-    "message": "Natural placement",
-    "translation": "自然摆放"
-  },
-  "Ek_k_Q": {
-    "message": "Needs depth",
-    "translation": "需要景深"
-  },
-  "UyDcwK": {
-    "message": "Parallax",
-    "translation": "视差"
-  },
-  "Kr1v1U": {
-    "message": "Preview on hover",
-    "translation": "悬停预览"
-  },
-  "hlMODd": {
-    "message": "Reset table",
-    "context": "put the table's settings back",
-    "translation": "重置牌桌"
-  },
-  "4VQN2q": {
-    "message": "Reset table settings",
-    "translation": "重置牌桌设置"
-  },
-  "8OT456": {
-    "message": "Settings: {0}",
-    "comments": [
-      "Opens Settings at that section"
-    ],
-    "translation": "设置：{0}"
-  },
-  "ifu0mt": {
-    "message": "Show opponent's hand",
-    "translation": "显示对手的手牌"
-  },
-  "Q7FDck": {
-    "message": "Speed",
-    "context": "animation speed",
-    "translation": "速度"
-  },
-  "TMNS59": {
-    "message": "Speed…",
-    "context": "animation speed",
-    "translation": "速度…"
-  },
-  "yI0x30": {
-    "message": "Split…",
-    "context": "the table between the halves",
-    "translation": "分割…"
-  },
-  "Qyf2Yu": {
-    "message": "Style",
-    "context": "the table's look",
-    "translation": "样式"
-  },
-  "-wDRPC": {
-    "message": "Style…",
-    "context": "the table's look",
-    "translation": "样式…"
-  },
-  "lW4c-5": {
-    "message": "Thickness",
-    "context": "the cards' thickness",
-    "translation": "厚度"
-  },
-  "BPVdia": {
-    "message": "Thickness…",
-    "context": "the cards' thickness",
-    "translation": "厚度…"
-  },
-  "GtJbUa": {
-    "message": "Background",
-    "translation": "背景"
-  },
-  "c7lN9x": {
-    "message": "Background from a link",
-    "translation": "链接背景"
-  },
-  "tAWTcI": {
-    "message": "Background…",
-    "translation": "背景…"
-  },
-  "vN1y3D": {
-    "message": "Couldn't use that picture.",
-    "translation": "无法使用该图片。"
-  },
-  "KtuFGB": {
-    "message": "Custom",
-    "context": "the player's own background",
-    "translation": "自定义"
-  },
-  "qlHGJK": {
-    "message": "Custom image…",
-    "translation": "自定义图片…"
-  },
-  "Cn91gu": {
-    "message": "Desk",
-    "context": "the default background",
-    "translation": "桌面"
-  },
-  "jSa1_N": {
-    "message": "From a link…",
-    "translation": "从链接…"
-  },
-  "T7x7bT": {
-    "message": "Image link",
-    "translation": "图片链接"
-  },
-  "YmDThn": {
-    "message": "None",
-    "context": "no background",
-    "translation": "无"
-  },
-  "IyUrJ9": {
-    "message": "Or drop or paste a picture.",
-    "translation": "也可拖入或粘贴图片。"
-  },
-  "Oo42E3": {
-    "message": "Pictures up to 25 MB.",
-    "translation": "图片最大 25 MB。"
-  },
-  "abE-Jj": {
-    "message": "Preparing picture…",
-    "translation": "正在处理图片…"
-  },
-  "LE8SQj": {
-    "message": "Wallpaper {0}",
-    "translation": "壁纸 {0}"
   }
 }

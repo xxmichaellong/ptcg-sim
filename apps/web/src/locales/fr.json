@@ -1033,9 +1033,9 @@
     "message": "<0>{0}</0>: every move, and the chat.",
     "translation": "<0>{0}</0> : tous les coups et le chat."
   },
-  "NaneTg": {
-    "message": "<0>{0}</0>: the table's look, the theme and the language.",
-    "translation": "<0>{0}</0> : l'apparence de la table, le thème et la langue."
+  "ifsvhW": {
+    "message": "<0>{0}</0>: Settings, saves and replays, and this tutorial whenever you want it.",
+    "translation": "<0>{0}</0> : paramètres, sauvegardes et replays, ainsi que ce tutoriel quand vous le souhaitez."
   },
   "C0rMdv": {
     "message": "− Damage",
@@ -1302,10 +1302,6 @@
     "context": "keyboard key",
     "translation": "Alt"
   },
-  "JxKdEp": {
-    "message": "Always shown while it holds cards.",
-    "translation": "Toujours affichée tant qu’elle contient des cartes."
-  },
   "Cpqhqr": {
     "message": "Amber",
     "context": "card back",
@@ -1324,29 +1320,32 @@
     "message": "An attack payable with two Energy",
     "translation": "Une attaque payable avec deux Énergies"
   },
-  "bK6Mfx": {
-    "message": "An image URL, 'blank' or 'theme'.",
-    "comments": [
-      "Keep 'blank' and 'theme' in English: they are what the player types"
-    ],
-    "translation": "Une URL d’image, « blank » ou « theme »."
-  },
   "ctNH7H": {
     "message": "Ancient",
     "context": "Pokémon card mechanic",
     "translation": "Temps passé"
   },
-  "Jvmvx4": {
-    "message": "Animate stack height",
-    "translation": "Animer la hauteur de la pile"
+  "qTeX2A": {
+    "message": "Angle",
+    "context": "the table's tilt",
+    "translation": "Angle"
   },
-  "d3fmj9": {
-    "message": "Animation speed",
-    "translation": "Vitesse d'animation"
+  "y3FF_5": {
+    "message": "Angle {count}°",
+    "translation": "Angle : {count}°"
   },
-  "vaiuUS": {
-    "message": "Animation speed…",
-    "translation": "Vitesse d’animation…"
+  "tuSC5H": {
+    "message": "Angle in degrees",
+    "translation": "Angle en degrés"
+  },
+  "4GuGTB": {
+    "message": "Angle…",
+    "context": "the table's tilt",
+    "translation": "Angle…"
+  },
+  "WDup2O": {
+    "message": "Animate stacks",
+    "translation": "Animer les piles"
   },
   "PR1zNf": {
     "message": "Announce mulligan",
@@ -1366,10 +1365,6 @@
     "message": "App",
     "context": "the app toolbar",
     "translation": "App"
-  },
-  "aAIQg2": {
-    "message": "Appearance",
-    "translation": "Apparence"
   },
   "Lx0XC_": {
     "message": "Are you sure you want to leave? Any unsaved game data will be lost.",
@@ -1483,6 +1478,18 @@
   "1JYYQn": {
     "message": "Back to your decks",
     "translation": "Retour à vos decks"
+  },
+  "GtJbUa": {
+    "message": "Background",
+    "translation": "Arrière-plan"
+  },
+  "c7lN9x": {
+    "message": "Background from a link",
+    "translation": "Arrière-plan depuis un lien"
+  },
+  "tAWTcI": {
+    "message": "Background…",
+    "translation": "Arrière-plan…"
   },
   "GhQ0ZN": {
     "message": "Backs",
@@ -1681,13 +1688,13 @@
     "message": "Card back for {slotSeat}",
     "translation": "Dos de carte pour {slotSeat}"
   },
-  "tii3sv": {
-    "message": "Card image language…",
-    "translation": "Langue des images de cartes…"
-  },
   "8xaYE9": {
     "message": "Card images",
     "translation": "Images des cartes"
+  },
+  "n7tTKf": {
+    "message": "Card images…",
+    "translation": "Images des cartes…"
   },
   "ymPKi7": {
     "message": "Card preview",
@@ -1709,10 +1716,6 @@
   "kLlRKH": {
     "message": "Card stack preview",
     "translation": "Aperçu de la pile de cartes"
-  },
-  "TH1VPk": {
-    "message": "Card thickness",
-    "translation": "Épaisseur des cartes"
   },
   "Ccpbzh": {
     "message": "Cards",
@@ -1736,10 +1739,6 @@
   "IuDYMd": {
     "message": "Cards in deck",
     "translation": "Cartes dans le deck"
-  },
-  "sIpTuZ": {
-    "message": "Change background",
-    "translation": "Changer l'arrière-plan"
   },
   "lKPW0c": {
     "message": "Change card back for {slotSeat}",
@@ -2049,6 +2048,10 @@
     "message": "Couldn't start the tutorial. Try again.",
     "translation": "Impossible de lancer le tutoriel. Réessayez."
   },
+  "vN1y3D": {
+    "message": "Couldn't use that picture.",
+    "translation": "Impossible d’utiliser cette image."
+  },
   "U9OFiD": {
     "message": "cover",
     "context": "the deck's cover card",
@@ -2118,6 +2121,11 @@
     "message": "Current",
     "translation": "Actuel"
   },
+  "KtuFGB": {
+    "message": "Custom",
+    "context": "the player's own background",
+    "translation": "Personnalisé"
+  },
   "qT5p-1": {
     "message": "Custom card",
     "translation": "Carte personnalisée"
@@ -2125,6 +2133,10 @@
   "rlm3op": {
     "message": "Custom flair on Discord & open reign on self-nicknames.",
     "translation": "Badge personnalisé sur Discord et liberté totale pour votre pseudo."
+  },
+  "qlHGJK": {
+    "message": "Custom image…",
+    "translation": "Image personnalisée…"
   },
   "UxNmvS": {
     "message": "Damage and conditions",
@@ -2254,6 +2266,11 @@
     "context": "how 3D the table looks",
     "translation": "Profondeur"
   },
+  "SOHyuG": {
+    "message": "Depth…",
+    "context": "how 3D the table looks",
+    "translation": "Profondeur…"
+  },
   "HlKgQk": {
     "message": "Deselect",
     "translation": "Désélectionner"
@@ -2267,6 +2284,11 @@
     "message": "Design",
     "context": "design a card back",
     "translation": "Créer"
+  },
+  "Cn91gu": {
+    "message": "Desk",
+    "context": "the default background",
+    "translation": "Bureau"
   },
   "zhmNG6": {
     "message": "Diamonds",
@@ -2497,6 +2519,11 @@
     "message": "Edit deck",
     "translation": "Modifier le deck"
   },
+  "CMMU03": {
+    "message": "Edit…",
+    "context": "change the keyboard shortcuts",
+    "translation": "Modifier…"
+  },
   "eAabzD": {
     "message": "Emblem",
     "context": "sleeve",
@@ -2548,9 +2575,9 @@
     "context": "keyboard key",
     "translation": "Échap"
   },
-  "y3HN5z": {
-    "message": "Every key is under <0>{0}</0>, in the menu.",
-    "translation": "Toutes les touches sont sous <0>{0}</0>, dans le menu."
+  "8aoXpa": {
+    "message": "Every key is under <0>{0}</0>, in <1>{1}</1>.",
+    "translation": "Toutes les touches se trouvent sous <0>{0}</0>, dans <1>{1}</1>."
   },
   "yJW_id": {
     "message": "Evolution and previous stage",
@@ -2782,6 +2809,10 @@
     "message": "From a link",
     "translation": "Depuis un lien"
   },
+  "jSa1_N": {
+    "message": "From a link…",
+    "translation": "Depuis un lien…"
+  },
   "qIodFG": {
     "message": "Frost",
     "comments": [
@@ -2863,6 +2894,16 @@
   "TALrFf": {
     "message": "GX marker",
     "translation": "Marqueur GX"
+  },
+  "hLFd9M": {
+    "message": "Halves",
+    "context": "which halves of the table",
+    "translation": "Moitiés"
+  },
+  "ZWEhc2": {
+    "message": "Halves…",
+    "context": "which halves of the table",
+    "translation": "Moitiés…"
   },
   "FpHzzD": {
     "message": "Hand",
@@ -3025,13 +3066,6 @@
     "message": "HP and retreat",
     "translation": "PV et retraite"
   },
-  "OaHYvQ": {
-    "message": "https://…, blank or theme",
-    "comments": [
-      "Keep 'blank' and 'theme' in English: they are what the player types"
-    ],
-    "translation": "https://…, blank ou theme"
-  },
   "hlQWeh": {
     "message": "I publicly launched the sim on Christmas, and it has already grown an incredible community of players and developers. There's a lot more to do, and I could use as much help as I can get!",
     "comments": [
@@ -3054,9 +3088,9 @@
     "message": "Illustrator",
     "translation": "Illustrateur"
   },
-  "VyUuZb": {
-    "message": "Image URL",
-    "translation": "URL de l'image"
+  "T7x7bT": {
+    "message": "Image link",
+    "translation": "Lien de l’image"
   },
   "EUsCHg": {
     "message": "Images",
@@ -3193,6 +3227,10 @@
     "message": "Keyboard shortcuts",
     "translation": "Raccourcis clavier"
   },
+  "WQg61I": {
+    "message": "Keys",
+    "translation": "Touches"
+  },
   "vFjc7h": {
     "message": "Keys",
     "context": "the keyboard map with no modifier held",
@@ -3217,10 +3255,6 @@
   "2S2hKS": {
     "message": "Language…",
     "translation": "Langue…"
-  },
-  "pOmqOF": {
-    "message": "Large card preview on hover",
-    "translation": "Grand aperçu de la carte au survol"
   },
   "NMzrpD": {
     "message": "Larger cards",
@@ -3286,9 +3320,9 @@
     "context": "Pokémon stage",
     "translation": "Niveau Sup"
   },
-  "Fu5KED": {
-    "message": "Lift cards while dragging",
-    "translation": "Soulever les cartes pendant le glissement"
+  "szYoqS": {
+    "message": "Lift while dragging",
+    "translation": "Soulever pendant le glissement"
   },
   "Lnx2DC": {
     "message": "Lightning",
@@ -3744,9 +3778,17 @@
     "message": "My eternal thanks!!!!!",
     "translation": "Mille mercis !!!!!"
   },
+  "7WBRHp": {
+    "message": "My half {count}% of the table",
+    "translation": "Ma moitié : {count} % de la table"
+  },
   "KJeM1I": {
     "message": "My half {percent}% of the table",
     "translation": "Ma moitié : {percent} % de la table"
+  },
+  "gQKQDm": {
+    "message": "My half, in percent",
+    "translation": "Ma moitié, en pourcentage"
   },
   "6YtxFj": {
     "message": "Name",
@@ -3773,9 +3815,9 @@
     "message": "Name: up to {max} characters.",
     "translation": "Nom : {max} caractères maximum."
   },
-  "OzETXo": {
-    "message": "Natural card placement",
-    "translation": "Placement naturel des cartes"
+  "4fxEIx": {
+    "message": "Natural placement",
+    "translation": "Placement naturel"
   },
   "hmYrgt": {
     "message": "Navy",
@@ -3785,6 +3827,10 @@
   "rf9azy": {
     "message": "Needs at least one Basic Pokémon.",
     "translation": "Il faut au moins un Pokémon de base."
+  },
+  "Ek_k_Q": {
+    "message": "Needs depth",
+    "translation": "Nécessite la profondeur"
   },
   "W_gspM": {
     "message": "New deck",
@@ -3913,6 +3959,11 @@
   "lChsa8": {
     "message": "No tournament decks right now.",
     "translation": "Aucun deck de tournoi pour le moment."
+  },
+  "YmDThn": {
+    "message": "None",
+    "context": "no background",
+    "translation": "Aucun"
   },
   "6psMRl": {
     "message": "None",
@@ -4170,6 +4221,10 @@
     "message": "or a link",
     "translation": "ou un lien"
   },
+  "IyUrJ9": {
+    "message": "Or drop or paste a picture.",
+    "translation": "Ou déposez ou collez une image."
+  },
   "l2I52S": {
     "message": "or drop or paste one here",
     "translation": "ou déposez-en ou collez-en une ici"
@@ -4201,6 +4256,10 @@
     "message": "Page Up",
     "context": "keyboard key",
     "translation": "Pg préc"
+  },
+  "UyDcwK": {
+    "message": "Parallax",
+    "translation": "Parallaxe"
   },
   "xun4kD": {
     "message": "Paralyzed",
@@ -4295,6 +4354,10 @@
     "message": "Picture link: {label}",
     "translation": "Lien de l'image : {label}"
   },
+  "Oo42E3": {
+    "message": "Pictures up to 25 MB.",
+    "translation": "Images jusqu’à 25 Mo."
+  },
   "BX1rQx": {
     "message": "Pieces",
     "translation": "Pièces"
@@ -4369,10 +4432,6 @@
     "message": "Pocket decks have no Energy cards.",
     "translation": "Les decks Pocket n'ont pas de cartes Énergie."
   },
-  "S-nXVo": {
-    "message": "Pointer parallax",
-    "translation": "Parallaxe du pointeur"
-  },
   "95vGpJ": {
     "message": "Poisoned",
     "context": "special condition",
@@ -4395,6 +4454,10 @@
   "RNaprm": {
     "message": "Pokémon cards",
     "translation": "Cartes Pokémon"
+  },
+  "abE-Jj": {
+    "message": "Preparing picture…",
+    "translation": "Préparation de l’image…"
   },
   "_0G332": {
     "message": "Press {keys} for <0>shortcuts</0>.",
@@ -4459,6 +4522,10 @@
       "{cardName} is a card; the button opens it large."
     ],
     "translation": "Aperçu de {cardName}"
+  },
+  "Kr1v1U": {
+    "message": "Preview on hover",
+    "translation": "Aperçu au survol"
   },
   "Lxdrcy": {
     "message": "Previous replay action",
@@ -4736,9 +4803,14 @@
     "message": "Reset both sides",
     "translation": "Réinitialiser les deux côtés"
   },
-  "xNq549": {
-    "message": "Reset table view",
-    "translation": "Réinitialiser la vue de la table"
+  "hlMODd": {
+    "message": "Reset table",
+    "context": "put the table's settings back",
+    "translation": "Réinitialiser la table"
+  },
+  "4VQN2q": {
+    "message": "Reset table settings",
+    "translation": "Réinitialiser les réglages de la table"
   },
   "1IWc1n": {
     "message": "Reset to",
@@ -4777,8 +4849,8 @@
     "context": "Pokémon stage",
     "translation": "Recréé"
   },
-  "Dwpy1Z": {
-    "message": "Resume a saved game…",
+  "CBOI8H": {
+    "message": "Resume saved game…",
     "translation": "Reprendre une partie sauvegardée…"
   },
   "X1Npk-": {
@@ -4996,9 +5068,9 @@
     "message": "Save and edit {title}",
     "translation": "Enregistrer et modifier {title}"
   },
-  "4ibQSn": {
-    "message": "Save online game",
-    "translation": "Sauvegarder la partie en ligne"
+  "4XBjuA": {
+    "message": "Save game",
+    "translation": "Sauvegarder la partie"
   },
   "OnrVKw": {
     "message": "Saved",
@@ -5169,6 +5241,18 @@
     ],
     "translation": "Paramètres"
   },
+  "y4__tG": {
+    "message": "Settings",
+    "context": "shortcut key caption",
+    "translation": "Paramètres"
+  },
+  "8OT456": {
+    "message": "Settings: {0}",
+    "comments": [
+      "Opens Settings at that section"
+    ],
+    "translation": "Paramètres : {0}"
+  },
   "Z8lGw6": {
     "message": "Share",
     "translation": "Partager"
@@ -5206,15 +5290,6 @@
     "message": "Shoutout in the next changelog.",
     "translation": "Mention dans le prochain journal des modifications."
   },
-  "8vETh9": {
-    "message": "Show",
-    "translation": "Afficher"
-  },
-  "qTlQOF": {
-    "message": "Show",
-    "context": "which halves of the table",
-    "translation": "Afficher"
-  },
   "nogPed": {
     "message": "Show",
     "context": "which pane to show",
@@ -5228,10 +5303,6 @@
     "message": "Show every print",
     "translation": "Afficher chaque impression"
   },
-  "UXsj50": {
-    "message": "Show halves…",
-    "translation": "Afficher les moitiés…"
-  },
   "nyTrvq": {
     "message": "Show keyboard",
     "translation": "Afficher le clavier"
@@ -5243,6 +5314,10 @@
   "FBwNsr": {
     "message": "Show one per card",
     "translation": "Afficher un exemplaire par carte"
+  },
+  "ifu0mt": {
+    "message": "Show opponent's hand",
+    "translation": "Afficher la main de l'adversaire"
   },
   "NQ5xRS": {
     "message": "Show the deck as",
@@ -5477,10 +5552,25 @@
     ],
     "translation": "Événement spécial"
   },
+  "Q7FDck": {
+    "message": "Speed",
+    "context": "animation speed",
+    "translation": "Vitesse"
+  },
+  "TMNS59": {
+    "message": "Speed…",
+    "context": "animation speed",
+    "translation": "Vitesse…"
+  },
   "h5EwqW": {
     "message": "Split",
     "context": "the table between the halves",
     "translation": "Répartition"
+  },
+  "yI0x30": {
+    "message": "Split…",
+    "context": "the table between the halves",
+    "translation": "Répartition…"
   },
   "Y6mTBn": {
     "message": "SPONSOR TIERS",
@@ -5607,6 +5697,16 @@
     "context": "sleeve pattern",
     "translation": "Rayures"
   },
+  "Qyf2Yu": {
+    "message": "Style",
+    "context": "the table's look",
+    "translation": "Style"
+  },
+  "-wDRPC": {
+    "message": "Style…",
+    "context": "the table's look",
+    "translation": "Style…"
+  },
   "yqeLY3": {
     "message": "Supporter",
     "context": "Trainer card kind",
@@ -5668,26 +5768,6 @@
     "message": "Table",
     "context": "shortcut group",
     "translation": "Table"
-  },
-  "viTXNi": {
-    "message": "Table angle",
-    "translation": "Angle de la table"
-  },
-  "eqSg9V": {
-    "message": "Table style",
-    "translation": "Style de la table"
-  },
-  "Z3nJeW": {
-    "message": "Table style…",
-    "translation": "Style de table…"
-  },
-  "f9jgd2": {
-    "message": "Table view",
-    "translation": "Vue de la table"
-  },
-  "cHwqmY": {
-    "message": "Table view…",
-    "translation": "Vue de la table…"
   },
   "Qd2uqp": {
     "message": "Tabletop",
@@ -5957,6 +6037,16 @@
     "message": "They bring up the next: drag a <0>{0}</0> from their Bench to their Active Spot.",
     "translation": "Votre adversaire envoie le suivant : faites glisser un <0>{0}</0> de son Banc vers son Poste Actif."
   },
+  "lW4c-5": {
+    "message": "Thickness",
+    "context": "the cards' thickness",
+    "translation": "Épaisseur"
+  },
+  "BPVdia": {
+    "message": "Thickness…",
+    "context": "the cards' thickness",
+    "translation": "Épaisseur…"
+  },
   "WsAkgd": {
     "message": "This browser won't keep your decks after you close the page.",
     "translation": "Ce navigateur ne conservera pas vos decks après la fermeture de la page."
@@ -5968,10 +6058,6 @@
   "5HIoIb": {
     "message": "This invitation was used or has expired. Ask for a new one.",
     "translation": "Cette invitation a déjà été utilisée ou a expiré. Demandez-en une nouvelle."
-  },
-  "L7LU5x": {
-    "message": "This tutorial waits in the <0>menu</0> whenever you want it.",
-    "translation": "Ce tutoriel vous attend dans le <0>menu</0> quand vous le voulez."
   },
   "YcMvP7": {
     "message": "Tilted on wide screens, flat on phones.",
@@ -6301,10 +6387,6 @@
     "message": "Use background",
     "translation": "Utiliser l'arrière-plan"
   },
-  "kqaF8V": {
-    "message": "Use default",
-    "translation": "Utiliser la valeur par défaut"
-  },
   "pEHkP7": {
     "message": "Use GX attack",
     "translation": "Utiliser l'attaque GX"
@@ -6369,8 +6451,12 @@
     "message": "VSTAR marker",
     "translation": "Marqueur VSTAR"
   },
-  "inq7iN": {
-    "message": "Watch a replay…",
+  "LE8SQj": {
+    "message": "Wallpaper {0}",
+    "translation": "Fond d’écran {0}"
+  },
+  "sFWtjQ": {
+    "message": "Watch replay…",
     "translation": "Regarder un replay…"
   },
   "2kl5Uf": {
@@ -6501,332 +6587,5 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "Contours des zones"
-  },
-  "ifsvhW": {
-    "message": "<0>{0}</0>: Settings, saves and replays, and this tutorial whenever you want it.",
-    "translation": "<0>{0}</0> : paramètres, sauvegardes et replays, ainsi que ce tutoriel quand vous le souhaitez."
-  },
-  "sDYhDt": {
-    "message": "A deck needs a name.",
-    "translation": "Un deck doit avoir un nom."
-  },
-  "hQE7TV": {
-    "message": "An image URL, or 'default'.",
-    "comments": [
-      "Keep 'default' in English: it is what the player types"
-    ],
-    "translation": "Une URL d’image ou « default »."
-  },
-  "8zanjC": {
-    "message": "Artwork group",
-    "translation": "Groupe d'illustrations"
-  },
-  "PCF3WN": {
-    "message": "Change card back",
-    "translation": "Changer le dos de carte"
-  },
-  "HLSSB8": {
-    "message": "code or name",
-    "translation": "code ou nom"
-  },
-  "ibWa1H": {
-    "message": "Delete {deckName}?",
-    "translation": "Supprimer {deckName} ?"
-  },
-  "iu7vH9": {
-    "message": "e.g. CC or LL",
-    "comments": [
-      "Energy letters (C, L…) stay as they are"
-    ],
-    "translation": "p. ex. CC ou LL"
-  },
-  "tg9VdO": {
-    "message": "e.g. HIJ",
-    "translation": "p. ex. HIJ"
-  },
-  "3fBsZV": {
-    "message": "e.g. illustration",
-    "translation": "p. ex. illustration"
-  },
-  "CMMU03": {
-    "message": "Edit…",
-    "context": "change the keyboard shortcuts",
-    "translation": "Modifier…"
-  },
-  "I7T1ix": {
-    "message": "Enter an image URL.",
-    "translation": "Saisissez une URL d'image."
-  },
-  "8aoXpa": {
-    "message": "Every key is under <0>{0}</0>, in <1>{1}</1>.",
-    "translation": "Toutes les touches se trouvent sous <0>{0}</0>, dans <1>{1}</1>."
-  },
-  "ZTtNAf": {
-    "message": "HP at least",
-    "translation": "PV minimum"
-  },
-  "LgcKSI": {
-    "message": "HP at most",
-    "translation": "PV maximum"
-  },
-  "fVGc9-": {
-    "message": "https://… or default",
-    "comments": [
-      "Keep 'default' in English: it is what the player types"
-    ],
-    "translation": "https://… ou default"
-  },
-  "1pdLQw": {
-    "message": "Image not found",
-    "translation": "Image introuvable"
-  },
-  "15ARIE": {
-    "message": "Image URL too long",
-    "translation": "URL de l'image trop longue"
-  },
-  "6hbF9e": {
-    "message": "Image URL: up to {max} characters.",
-    "translation": "URL de l'image : {max} caractères maximum."
-  },
-  "MIi4yC": {
-    "message": "Keep it to {max} characters.",
-    "translation": "Limitez-vous à {max} caractères."
-  },
-  "WQg61I": {
-    "message": "Keys",
-    "translation": "Touches"
-  },
-  "2fhoKU": {
-    "message": "No image",
-    "translation": "Aucune image"
-  },
-  "xYvd7u": {
-    "message": "Piece position",
-    "translation": "Position de la pièce"
-  },
-  "rkcP1p": {
-    "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
-    "translation": "Mettez les pièces Pokémon dans une même pile, et les pièces Stade dans le Stade."
-  },
-  "XsrZAv": {
-    "message": "Rename",
-    "context": "button",
-    "translation": "Renommer"
-  },
-  "Tvyjys": {
-    "message": "Rename deck",
-    "translation": "Renommer le deck"
-  },
-  "CBOI8H": {
-    "message": "Resume saved game…",
-    "translation": "Reprendre une partie sauvegardée…"
-  },
-  "qoNq2S": {
-    "message": "Same group for each piece",
-    "translation": "Même groupe pour chaque pièce"
-  },
-  "4XBjuA": {
-    "message": "Save game",
-    "translation": "Sauvegarder la partie"
-  },
-  "y4__tG": {
-    "message": "Settings",
-    "context": "shortcut key caption",
-    "translation": "Paramètres"
-  },
-  "ZMr878": {
-    "message": "That image didn't load.",
-    "translation": "Cette image n'a pas pu être chargée."
-  },
-  "PTd_zR": {
-    "message": "Use image",
-    "translation": "Utiliser l'image"
-  },
-  "sFWtjQ": {
-    "message": "Watch replay…",
-    "translation": "Regarder un replay…"
-  },
-  "qTeX2A": {
-    "message": "Angle",
-    "context": "the table's tilt",
-    "translation": "Angle"
-  },
-  "y3FF_5": {
-    "message": "Angle {count}°",
-    "translation": "Angle : {count}°"
-  },
-  "tuSC5H": {
-    "message": "Angle in degrees",
-    "translation": "Angle en degrés"
-  },
-  "4GuGTB": {
-    "message": "Angle…",
-    "context": "the table's tilt",
-    "translation": "Angle…"
-  },
-  "WDup2O": {
-    "message": "Animate stacks",
-    "translation": "Animer les piles"
-  },
-  "n7tTKf": {
-    "message": "Card images…",
-    "translation": "Images des cartes…"
-  },
-  "SOHyuG": {
-    "message": "Depth…",
-    "context": "how 3D the table looks",
-    "translation": "Profondeur…"
-  },
-  "hLFd9M": {
-    "message": "Halves",
-    "context": "which halves of the table",
-    "translation": "Moitiés"
-  },
-  "ZWEhc2": {
-    "message": "Halves…",
-    "context": "which halves of the table",
-    "translation": "Moitiés…"
-  },
-  "szYoqS": {
-    "message": "Lift while dragging",
-    "translation": "Soulever pendant le glissement"
-  },
-  "7WBRHp": {
-    "message": "My half {count}% of the table",
-    "translation": "Ma moitié : {count} % de la table"
-  },
-  "gQKQDm": {
-    "message": "My half, in percent",
-    "translation": "Ma moitié, en pourcentage"
-  },
-  "4fxEIx": {
-    "message": "Natural placement",
-    "translation": "Placement naturel"
-  },
-  "Ek_k_Q": {
-    "message": "Needs depth",
-    "translation": "Nécessite la profondeur"
-  },
-  "UyDcwK": {
-    "message": "Parallax",
-    "translation": "Parallaxe"
-  },
-  "Kr1v1U": {
-    "message": "Preview on hover",
-    "translation": "Aperçu au survol"
-  },
-  "hlMODd": {
-    "message": "Reset table",
-    "context": "put the table's settings back",
-    "translation": "Réinitialiser la table"
-  },
-  "4VQN2q": {
-    "message": "Reset table settings",
-    "translation": "Réinitialiser les réglages de la table"
-  },
-  "8OT456": {
-    "message": "Settings: {0}",
-    "comments": [
-      "Opens Settings at that section"
-    ],
-    "translation": "Paramètres : {0}"
-  },
-  "ifu0mt": {
-    "message": "Show opponent's hand",
-    "translation": "Afficher la main de l'adversaire"
-  },
-  "Q7FDck": {
-    "message": "Speed",
-    "context": "animation speed",
-    "translation": "Vitesse"
-  },
-  "TMNS59": {
-    "message": "Speed…",
-    "context": "animation speed",
-    "translation": "Vitesse…"
-  },
-  "yI0x30": {
-    "message": "Split…",
-    "context": "the table between the halves",
-    "translation": "Répartition…"
-  },
-  "Qyf2Yu": {
-    "message": "Style",
-    "context": "the table's look",
-    "translation": "Style"
-  },
-  "-wDRPC": {
-    "message": "Style…",
-    "context": "the table's look",
-    "translation": "Style…"
-  },
-  "lW4c-5": {
-    "message": "Thickness",
-    "context": "the cards' thickness",
-    "translation": "Épaisseur"
-  },
-  "BPVdia": {
-    "message": "Thickness…",
-    "context": "the cards' thickness",
-    "translation": "Épaisseur…"
-  },
-  "GtJbUa": {
-    "message": "Background",
-    "translation": "Arrière-plan"
-  },
-  "c7lN9x": {
-    "message": "Background from a link",
-    "translation": "Arrière-plan depuis un lien"
-  },
-  "tAWTcI": {
-    "message": "Background…",
-    "translation": "Arrière-plan…"
-  },
-  "vN1y3D": {
-    "message": "Couldn't use that picture.",
-    "translation": "Impossible d’utiliser cette image."
-  },
-  "KtuFGB": {
-    "message": "Custom",
-    "context": "the player's own background",
-    "translation": "Personnalisé"
-  },
-  "qlHGJK": {
-    "message": "Custom image…",
-    "translation": "Image personnalisée…"
-  },
-  "Cn91gu": {
-    "message": "Desk",
-    "context": "the default background",
-    "translation": "Bureau"
-  },
-  "jSa1_N": {
-    "message": "From a link…",
-    "translation": "Depuis un lien…"
-  },
-  "T7x7bT": {
-    "message": "Image link",
-    "translation": "Lien de l’image"
-  },
-  "YmDThn": {
-    "message": "None",
-    "context": "no background",
-    "translation": "Aucun"
-  },
-  "IyUrJ9": {
-    "message": "Or drop or paste a picture.",
-    "translation": "Ou déposez ou collez une image."
-  },
-  "Oo42E3": {
-    "message": "Pictures up to 25 MB.",
-    "translation": "Images jusqu’à 25 Mo."
-  },
-  "abE-Jj": {
-    "message": "Preparing picture…",
-    "translation": "Préparation de l’image…"
-  },
-  "LE8SQj": {
-    "message": "Wallpaper {0}",
-    "translation": "Fond d’écran {0}"
   }
 }

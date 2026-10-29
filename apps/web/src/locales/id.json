@@ -1033,9 +1033,9 @@
     "message": "<0>{0}</0>: every move, and the chat.",
     "translation": "<0>{0}</0>: semua langkah dan obrolan."
   },
-  "NaneTg": {
-    "message": "<0>{0}</0>: the table's look, the theme and the language.",
-    "translation": "<0>{0}</0>: tampilan meja, tema, dan bahasa."
+  "ifsvhW": {
+    "message": "<0>{0}</0>: Settings, saves and replays, and this tutorial whenever you want it.",
+    "translation": "<0>{0}</0>: Pengaturan, simpanan dan replay, serta tutorial ini kapan pun kamu mau."
   },
   "C0rMdv": {
     "message": "− Damage",
@@ -1302,10 +1302,6 @@
     "context": "keyboard key",
     "translation": "Alt"
   },
-  "JxKdEp": {
-    "message": "Always shown while it holds cards.",
-    "translation": "Selalu tampil selama berisi kartu."
-  },
   "Cpqhqr": {
     "message": "Amber",
     "context": "card back",
@@ -1324,29 +1320,32 @@
     "message": "An attack payable with two Energy",
     "translation": "Serangan yang bisa dibayar dengan dua Energi"
   },
-  "bK6Mfx": {
-    "message": "An image URL, 'blank' or 'theme'.",
-    "comments": [
-      "Keep 'blank' and 'theme' in English: they are what the player types"
-    ],
-    "translation": "URL gambar, 'blank', atau 'theme'."
-  },
   "ctNH7H": {
     "message": "Ancient",
     "context": "Pokémon card mechanic",
     "translation": "Purba"
   },
-  "Jvmvx4": {
-    "message": "Animate stack height",
-    "translation": "Animasikan tinggi tumpukan"
+  "qTeX2A": {
+    "message": "Angle",
+    "context": "the table's tilt",
+    "translation": "Sudut"
   },
-  "d3fmj9": {
-    "message": "Animation speed",
-    "translation": "Kecepatan animasi"
+  "y3FF_5": {
+    "message": "Angle {count}°",
+    "translation": "Sudut {count}°"
   },
-  "vaiuUS": {
-    "message": "Animation speed…",
-    "translation": "Kecepatan animasi…"
+  "tuSC5H": {
+    "message": "Angle in degrees",
+    "translation": "Sudut dalam derajat"
+  },
+  "4GuGTB": {
+    "message": "Angle…",
+    "context": "the table's tilt",
+    "translation": "Sudut…"
+  },
+  "WDup2O": {
+    "message": "Animate stacks",
+    "translation": "Animasikan tumpukan"
   },
   "PR1zNf": {
     "message": "Announce mulligan",
@@ -1366,10 +1365,6 @@
     "message": "App",
     "context": "the app toolbar",
     "translation": "Aplikasi"
-  },
-  "aAIQg2": {
-    "message": "Appearance",
-    "translation": "Tampilan"
   },
   "Lx0XC_": {
     "message": "Are you sure you want to leave? Any unsaved game data will be lost.",
@@ -1483,6 +1478,18 @@
   "1JYYQn": {
     "message": "Back to your decks",
     "translation": "Kembali ke deck-mu"
+  },
+  "GtJbUa": {
+    "message": "Background",
+    "translation": "Latar belakang"
+  },
+  "c7lN9x": {
+    "message": "Background from a link",
+    "translation": "Latar belakang dari tautan"
+  },
+  "tAWTcI": {
+    "message": "Background…",
+    "translation": "Latar belakang…"
   },
   "GhQ0ZN": {
     "message": "Backs",
@@ -1681,13 +1688,13 @@
     "message": "Card back for {slotSeat}",
     "translation": "Sisi belakang kartu untuk {slotSeat}"
   },
-  "tii3sv": {
-    "message": "Card image language…",
-    "translation": "Bahasa gambar kartu…"
-  },
   "8xaYE9": {
     "message": "Card images",
     "translation": "Gambar kartu"
+  },
+  "n7tTKf": {
+    "message": "Card images…",
+    "translation": "Gambar kartu…"
   },
   "ymPKi7": {
     "message": "Card preview",
@@ -1709,10 +1716,6 @@
   "kLlRKH": {
     "message": "Card stack preview",
     "translation": "Pratinjau tumpukan kartu"
-  },
-  "TH1VPk": {
-    "message": "Card thickness",
-    "translation": "Ketebalan kartu"
   },
   "Ccpbzh": {
     "message": "Cards",
@@ -1736,10 +1739,6 @@
   "IuDYMd": {
     "message": "Cards in deck",
     "translation": "Kartu di deck"
-  },
-  "sIpTuZ": {
-    "message": "Change background",
-    "translation": "Ubah latar belakang"
   },
   "lKPW0c": {
     "message": "Change card back for {slotSeat}",
@@ -2049,6 +2048,10 @@
     "message": "Couldn't start the tutorial. Try again.",
     "translation": "Tidak dapat memulai tutorial. Coba lagi."
   },
+  "vN1y3D": {
+    "message": "Couldn't use that picture.",
+    "translation": "Gambar itu tidak bisa dipakai."
+  },
   "U9OFiD": {
     "message": "cover",
     "context": "the deck's cover card",
@@ -2118,6 +2121,11 @@
     "message": "Current",
     "translation": "Saat ini"
   },
+  "KtuFGB": {
+    "message": "Custom",
+    "context": "the player's own background",
+    "translation": "Kustom"
+  },
   "qT5p-1": {
     "message": "Custom card",
     "translation": "Kartu kustom"
@@ -2125,6 +2133,10 @@
   "rlm3op": {
     "message": "Custom flair on Discord & open reign on self-nicknames.",
     "translation": "Flair kustom di Discord & kuasa penuh atas nama panggilan sendiri."
+  },
+  "qlHGJK": {
+    "message": "Custom image…",
+    "translation": "Gambar kustom…"
   },
   "UxNmvS": {
     "message": "Damage and conditions",
@@ -2254,6 +2266,11 @@
     "context": "how 3D the table looks",
     "translation": "Kedalaman"
   },
+  "SOHyuG": {
+    "message": "Depth…",
+    "context": "how 3D the table looks",
+    "translation": "Kedalaman…"
+  },
   "HlKgQk": {
     "message": "Deselect",
     "translation": "Batalkan pilihan"
@@ -2267,6 +2284,11 @@
     "message": "Design",
     "context": "design a card back",
     "translation": "Desain"
+  },
+  "Cn91gu": {
+    "message": "Desk",
+    "context": "the default background",
+    "translation": "Meja"
   },
   "zhmNG6": {
     "message": "Diamonds",
@@ -2497,6 +2519,11 @@
     "message": "Edit deck",
     "translation": "Edit deck"
   },
+  "CMMU03": {
+    "message": "Edit…",
+    "context": "change the keyboard shortcuts",
+    "translation": "Ubah…"
+  },
   "eAabzD": {
     "message": "Emblem",
     "context": "sleeve",
@@ -2548,9 +2575,9 @@
     "context": "keyboard key",
     "translation": "Esc"
   },
-  "y3HN5z": {
-    "message": "Every key is under <0>{0}</0>, in the menu.",
-    "translation": "Semua tombol ada di <0>{0}</0>, di dalam menu."
+  "8aoXpa": {
+    "message": "Every key is under <0>{0}</0>, in <1>{1}</1>.",
+    "translation": "Semua tombol ada di <0>{0}</0>, di <1>{1}</1>."
   },
   "yJW_id": {
     "message": "Evolution and previous stage",
@@ -2782,6 +2809,10 @@
     "message": "From a link",
     "translation": "Dari tautan"
   },
+  "jSa1_N": {
+    "message": "From a link…",
+    "translation": "Dari tautan…"
+  },
   "qIodFG": {
     "message": "Frost",
     "comments": [
@@ -2863,6 +2894,16 @@
   "TALrFf": {
     "message": "GX marker",
     "translation": "Penanda GX"
+  },
+  "hLFd9M": {
+    "message": "Halves",
+    "context": "which halves of the table",
+    "translation": "Sisi"
+  },
+  "ZWEhc2": {
+    "message": "Halves…",
+    "context": "which halves of the table",
+    "translation": "Sisi…"
   },
   "FpHzzD": {
     "message": "Hand",
@@ -3025,13 +3066,6 @@
     "message": "HP and retreat",
     "translation": "HP dan Mundur"
   },
-  "OaHYvQ": {
-    "message": "https://…, blank or theme",
-    "comments": [
-      "Keep 'blank' and 'theme' in English: they are what the player types"
-    ],
-    "translation": "https://…, blank atau theme"
-  },
   "hlQWeh": {
     "message": "I publicly launched the sim on Christmas, and it has already grown an incredible community of players and developers. There's a lot more to do, and I could use as much help as I can get!",
     "comments": [
@@ -3054,9 +3088,9 @@
     "message": "Illustrator",
     "translation": "Ilustrator"
   },
-  "VyUuZb": {
-    "message": "Image URL",
-    "translation": "URL gambar"
+  "T7x7bT": {
+    "message": "Image link",
+    "translation": "Tautan gambar"
   },
   "EUsCHg": {
     "message": "Images",
@@ -3193,6 +3227,10 @@
     "message": "Keyboard shortcuts",
     "translation": "Pintasan keyboard"
   },
+  "WQg61I": {
+    "message": "Keys",
+    "translation": "Tombol"
+  },
   "vFjc7h": {
     "message": "Keys",
     "context": "the keyboard map with no modifier held",
@@ -3217,10 +3255,6 @@
   "2S2hKS": {
     "message": "Language…",
     "translation": "Bahasa…"
-  },
-  "pOmqOF": {
-    "message": "Large card preview on hover",
-    "translation": "Pratinjau kartu besar saat diarahkan kursor"
   },
   "NMzrpD": {
     "message": "Larger cards",
@@ -3286,9 +3320,9 @@
     "context": "Pokémon stage",
     "translation": "Level-Up"
   },
-  "Fu5KED": {
-    "message": "Lift cards while dragging",
-    "translation": "Angkat kartu saat diseret"
+  "szYoqS": {
+    "message": "Lift while dragging",
+    "translation": "Angkat saat menyeret"
   },
   "Lnx2DC": {
     "message": "Lightning",
@@ -3744,9 +3778,17 @@
     "message": "My eternal thanks!!!!!",
     "translation": "Terima kasih tak terhingga!!!!!"
   },
+  "7WBRHp": {
+    "message": "My half {count}% of the table",
+    "translation": "Sisiku {count}% dari meja"
+  },
   "KJeM1I": {
     "message": "My half {percent}% of the table",
     "translation": "Separuhku {percent}% dari meja"
+  },
+  "gQKQDm": {
+    "message": "My half, in percent",
+    "translation": "Sisiku, dalam persen"
   },
   "6YtxFj": {
     "message": "Name",
@@ -3773,9 +3815,9 @@
     "message": "Name: up to {max} characters.",
     "translation": "Nama: maksimal {max} karakter."
   },
-  "OzETXo": {
-    "message": "Natural card placement",
-    "translation": "Penempatan kartu alami"
+  "4fxEIx": {
+    "message": "Natural placement",
+    "translation": "Penempatan alami"
   },
   "hmYrgt": {
     "message": "Navy",
@@ -3785,6 +3827,10 @@
   "rf9azy": {
     "message": "Needs at least one Basic Pokémon.",
     "translation": "Butuh setidaknya satu Pokémon Basic."
+  },
+  "Ek_k_Q": {
+    "message": "Needs depth",
+    "translation": "Perlu kedalaman"
   },
   "W_gspM": {
     "message": "New deck",
@@ -3913,6 +3959,11 @@
   "lChsa8": {
     "message": "No tournament decks right now.",
     "translation": "Saat ini tidak ada deck turnamen."
+  },
+  "YmDThn": {
+    "message": "None",
+    "context": "no background",
+    "translation": "Tidak ada"
   },
   "6psMRl": {
     "message": "None",
@@ -4170,6 +4221,10 @@
     "message": "or a link",
     "translation": "atau tautan"
   },
+  "IyUrJ9": {
+    "message": "Or drop or paste a picture.",
+    "translation": "Atau jatuhkan atau tempel gambar."
+  },
   "l2I52S": {
     "message": "or drop or paste one here",
     "translation": "atau jatuhkan atau tempel satu di sini"
@@ -4201,6 +4256,10 @@
     "message": "Page Up",
     "context": "keyboard key",
     "translation": "Page Up"
+  },
+  "UyDcwK": {
+    "message": "Parallax",
+    "translation": "Paralaks"
   },
   "xun4kD": {
     "message": "Paralyzed",
@@ -4295,6 +4354,10 @@
     "message": "Picture link: {label}",
     "translation": "Tautan gambar: {label}"
   },
+  "Oo42E3": {
+    "message": "Pictures up to 25 MB.",
+    "translation": "Gambar hingga 25 MB."
+  },
   "BX1rQx": {
     "message": "Pieces",
     "translation": "Bagian"
@@ -4369,10 +4432,6 @@
     "message": "Pocket decks have no Energy cards.",
     "translation": "Deck Pocket tidak punya kartu Energi."
   },
-  "S-nXVo": {
-    "message": "Pointer parallax",
-    "translation": "Paralaks penunjuk"
-  },
   "95vGpJ": {
     "message": "Poisoned",
     "context": "special condition",
@@ -4395,6 +4454,10 @@
   "RNaprm": {
     "message": "Pokémon cards",
     "translation": "Kartu Pokémon"
+  },
+  "abE-Jj": {
+    "message": "Preparing picture…",
+    "translation": "Menyiapkan gambar…"
   },
   "_0G332": {
     "message": "Press {keys} for <0>shortcuts</0>.",
@@ -4459,6 +4522,10 @@
       "{cardName} is a card; the button opens it large."
     ],
     "translation": "Pratinjau {cardName}"
+  },
+  "Kr1v1U": {
+    "message": "Preview on hover",
+    "translation": "Pratinjau saat diarahkan"
   },
   "Lxdrcy": {
     "message": "Previous replay action",
@@ -4736,9 +4803,14 @@
     "message": "Reset both sides",
     "translation": "Reset kedua sisi"
   },
-  "xNq549": {
-    "message": "Reset table view",
-    "translation": "Reset tampilan meja"
+  "hlMODd": {
+    "message": "Reset table",
+    "context": "put the table's settings back",
+    "translation": "Reset meja"
+  },
+  "4VQN2q": {
+    "message": "Reset table settings",
+    "translation": "Reset pengaturan meja"
   },
   "1IWc1n": {
     "message": "Reset to",
@@ -4777,9 +4849,9 @@
     "context": "Pokémon stage",
     "translation": "Restored"
   },
-  "Dwpy1Z": {
-    "message": "Resume a saved game…",
-    "translation": "Lanjutkan permainan tersimpan…"
+  "CBOI8H": {
+    "message": "Resume saved game…",
+    "translation": "Lanjutkan game tersimpan…"
   },
   "X1Npk-": {
     "message": "Retreat {retreat}",
@@ -4996,9 +5068,9 @@
     "message": "Save and edit {title}",
     "translation": "Simpan dan edit {title}"
   },
-  "4ibQSn": {
-    "message": "Save online game",
-    "translation": "Simpan game online"
+  "4XBjuA": {
+    "message": "Save game",
+    "translation": "Simpan game"
   },
   "OnrVKw": {
     "message": "Saved",
@@ -5169,6 +5241,18 @@
     ],
     "translation": "Pengaturan"
   },
+  "y4__tG": {
+    "message": "Settings",
+    "context": "shortcut key caption",
+    "translation": "Pengaturan"
+  },
+  "8OT456": {
+    "message": "Settings: {0}",
+    "comments": [
+      "Opens Settings at that section"
+    ],
+    "translation": "Pengaturan: {0}"
+  },
   "Z8lGw6": {
     "message": "Share",
     "translation": "Bagikan"
@@ -5206,15 +5290,6 @@
     "message": "Shoutout in the next changelog.",
     "translation": "Ucapan terima kasih di changelog berikutnya."
   },
-  "8vETh9": {
-    "message": "Show",
-    "translation": "Tampilkan"
-  },
-  "qTlQOF": {
-    "message": "Show",
-    "context": "which halves of the table",
-    "translation": "Tampilkan"
-  },
   "nogPed": {
     "message": "Show",
     "context": "which pane to show",
@@ -5228,10 +5303,6 @@
     "message": "Show every print",
     "translation": "Tampilkan setiap cetakan"
   },
-  "UXsj50": {
-    "message": "Show halves…",
-    "translation": "Tampilkan separuh…"
-  },
   "nyTrvq": {
     "message": "Show keyboard",
     "translation": "Tampilkan keyboard"
@@ -5243,6 +5314,10 @@
   "FBwNsr": {
     "message": "Show one per card",
     "translation": "Tampilkan satu per kartu"
+  },
+  "ifu0mt": {
+    "message": "Show opponent's hand",
+    "translation": "Tampilkan Kartu Pegangan lawan"
   },
   "NQ5xRS": {
     "message": "Show the deck as",
@@ -5477,10 +5552,25 @@
     ],
     "translation": "Acara Spesial"
   },
+  "Q7FDck": {
+    "message": "Speed",
+    "context": "animation speed",
+    "translation": "Kecepatan"
+  },
+  "TMNS59": {
+    "message": "Speed…",
+    "context": "animation speed",
+    "translation": "Kecepatan…"
+  },
   "h5EwqW": {
     "message": "Split",
     "context": "the table between the halves",
     "translation": "Pembagian"
+  },
+  "yI0x30": {
+    "message": "Split…",
+    "context": "the table between the halves",
+    "translation": "Pembagian…"
   },
   "Y6mTBn": {
     "message": "SPONSOR TIERS",
@@ -5607,6 +5697,16 @@
     "context": "sleeve pattern",
     "translation": "Garis"
   },
+  "Qyf2Yu": {
+    "message": "Style",
+    "context": "the table's look",
+    "translation": "Gaya"
+  },
+  "-wDRPC": {
+    "message": "Style…",
+    "context": "the table's look",
+    "translation": "Gaya…"
+  },
   "yqeLY3": {
     "message": "Supporter",
     "context": "Trainer card kind",
@@ -5668,26 +5768,6 @@
     "message": "Table",
     "context": "shortcut group",
     "translation": "Meja"
-  },
-  "viTXNi": {
-    "message": "Table angle",
-    "translation": "Sudut meja"
-  },
-  "eqSg9V": {
-    "message": "Table style",
-    "translation": "Gaya meja"
-  },
-  "Z3nJeW": {
-    "message": "Table style…",
-    "translation": "Gaya meja…"
-  },
-  "f9jgd2": {
-    "message": "Table view",
-    "translation": "Tampilan meja"
-  },
-  "cHwqmY": {
-    "message": "Table view…",
-    "translation": "Tampilan meja…"
   },
   "Qd2uqp": {
     "message": "Tabletop",
@@ -5957,6 +6037,16 @@
     "message": "They bring up the next: drag a <0>{0}</0> from their Bench to their Active Spot.",
     "translation": "Lawan memajukan Pokémon berikutnya: seret <0>{0}</0> dari Cadangannya ke Arena Bertarungnya."
   },
+  "lW4c-5": {
+    "message": "Thickness",
+    "context": "the cards' thickness",
+    "translation": "Ketebalan"
+  },
+  "BPVdia": {
+    "message": "Thickness…",
+    "context": "the cards' thickness",
+    "translation": "Ketebalan…"
+  },
   "WsAkgd": {
     "message": "This browser won't keep your decks after you close the page.",
     "translation": "Browser ini tidak akan menyimpan deck-mu setelah halaman ditutup."
@@ -5968,10 +6058,6 @@
   "5HIoIb": {
     "message": "This invitation was used or has expired. Ask for a new one.",
     "translation": "Undangan ini sudah dipakai atau kedaluwarsa. Minta yang baru."
-  },
-  "L7LU5x": {
-    "message": "This tutorial waits in the <0>menu</0> whenever you want it.",
-    "translation": "Tutorial ini menunggu di <0>menu</0> kapan pun kamu mau."
   },
   "YcMvP7": {
     "message": "Tilted on wide screens, flat on phones.",
@@ -6301,10 +6387,6 @@
     "message": "Use background",
     "translation": "Gunakan latar"
   },
-  "kqaF8V": {
-    "message": "Use default",
-    "translation": "Gunakan default"
-  },
   "pEHkP7": {
     "message": "Use GX attack",
     "translation": "Pakai serangan GX"
@@ -6369,8 +6451,12 @@
     "message": "VSTAR marker",
     "translation": "Penanda VSTAR"
   },
-  "inq7iN": {
-    "message": "Watch a replay…",
+  "LE8SQj": {
+    "message": "Wallpaper {0}",
+    "translation": "Wallpaper {0}"
+  },
+  "sFWtjQ": {
+    "message": "Watch replay…",
     "translation": "Tonton replay…"
   },
   "2kl5Uf": {
@@ -6501,332 +6587,5 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "Garis tepi zona"
-  },
-  "ifsvhW": {
-    "message": "<0>{0}</0>: Settings, saves and replays, and this tutorial whenever you want it.",
-    "translation": "<0>{0}</0>: Pengaturan, simpanan dan replay, serta tutorial ini kapan pun kamu mau."
-  },
-  "sDYhDt": {
-    "message": "A deck needs a name.",
-    "translation": "Deck harus punya nama."
-  },
-  "hQE7TV": {
-    "message": "An image URL, or 'default'.",
-    "comments": [
-      "Keep 'default' in English: it is what the player types"
-    ],
-    "translation": "URL gambar, atau 'default'."
-  },
-  "8zanjC": {
-    "message": "Artwork group",
-    "translation": "Grup ilustrasi"
-  },
-  "PCF3WN": {
-    "message": "Change card back",
-    "translation": "Ubah sisi belakang kartu"
-  },
-  "HLSSB8": {
-    "message": "code or name",
-    "translation": "kode atau nama"
-  },
-  "ibWa1H": {
-    "message": "Delete {deckName}?",
-    "translation": "Hapus {deckName}?"
-  },
-  "iu7vH9": {
-    "message": "e.g. CC or LL",
-    "comments": [
-      "Energy letters (C, L…) stay as they are"
-    ],
-    "translation": "mis. CC atau LL"
-  },
-  "tg9VdO": {
-    "message": "e.g. HIJ",
-    "translation": "mis. HIJ"
-  },
-  "3fBsZV": {
-    "message": "e.g. illustration",
-    "translation": "mis. ilustrasi"
-  },
-  "CMMU03": {
-    "message": "Edit…",
-    "context": "change the keyboard shortcuts",
-    "translation": "Ubah…"
-  },
-  "I7T1ix": {
-    "message": "Enter an image URL.",
-    "translation": "Masukkan URL gambar."
-  },
-  "8aoXpa": {
-    "message": "Every key is under <0>{0}</0>, in <1>{1}</1>.",
-    "translation": "Semua tombol ada di <0>{0}</0>, di <1>{1}</1>."
-  },
-  "ZTtNAf": {
-    "message": "HP at least",
-    "translation": "HP minimal"
-  },
-  "LgcKSI": {
-    "message": "HP at most",
-    "translation": "HP maksimal"
-  },
-  "fVGc9-": {
-    "message": "https://… or default",
-    "comments": [
-      "Keep 'default' in English: it is what the player types"
-    ],
-    "translation": "https://… atau default"
-  },
-  "1pdLQw": {
-    "message": "Image not found",
-    "translation": "Gambar tidak ditemukan"
-  },
-  "15ARIE": {
-    "message": "Image URL too long",
-    "translation": "URL gambar terlalu panjang"
-  },
-  "6hbF9e": {
-    "message": "Image URL: up to {max} characters.",
-    "translation": "URL gambar: maksimal {max} karakter."
-  },
-  "MIi4yC": {
-    "message": "Keep it to {max} characters.",
-    "translation": "Maksimal {max} karakter."
-  },
-  "WQg61I": {
-    "message": "Keys",
-    "translation": "Tombol"
-  },
-  "2fhoKU": {
-    "message": "No image",
-    "translation": "Tanpa gambar"
-  },
-  "xYvd7u": {
-    "message": "Piece position",
-    "translation": "Posisi bidak"
-  },
-  "rkcP1p": {
-    "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
-    "translation": "Taruh bidak Pokémon dalam satu tumpukan, bidak Stadium di Stadium."
-  },
-  "XsrZAv": {
-    "message": "Rename",
-    "context": "button",
-    "translation": "Ganti nama"
-  },
-  "Tvyjys": {
-    "message": "Rename deck",
-    "translation": "Ganti nama deck"
-  },
-  "CBOI8H": {
-    "message": "Resume saved game…",
-    "translation": "Lanjutkan game tersimpan…"
-  },
-  "qoNq2S": {
-    "message": "Same group for each piece",
-    "translation": "Grup yang sama untuk setiap bidak"
-  },
-  "4XBjuA": {
-    "message": "Save game",
-    "translation": "Simpan game"
-  },
-  "y4__tG": {
-    "message": "Settings",
-    "context": "shortcut key caption",
-    "translation": "Pengaturan"
-  },
-  "ZMr878": {
-    "message": "That image didn't load.",
-    "translation": "Gambar itu gagal dimuat."
-  },
-  "PTd_zR": {
-    "message": "Use image",
-    "translation": "Gunakan gambar"
-  },
-  "sFWtjQ": {
-    "message": "Watch replay…",
-    "translation": "Tonton replay…"
-  },
-  "qTeX2A": {
-    "message": "Angle",
-    "context": "the table's tilt",
-    "translation": "Sudut"
-  },
-  "y3FF_5": {
-    "message": "Angle {count}°",
-    "translation": "Sudut {count}°"
-  },
-  "tuSC5H": {
-    "message": "Angle in degrees",
-    "translation": "Sudut dalam derajat"
-  },
-  "4GuGTB": {
-    "message": "Angle…",
-    "context": "the table's tilt",
-    "translation": "Sudut…"
-  },
-  "WDup2O": {
-    "message": "Animate stacks",
-    "translation": "Animasikan tumpukan"
-  },
-  "n7tTKf": {
-    "message": "Card images…",
-    "translation": "Gambar kartu…"
-  },
-  "SOHyuG": {
-    "message": "Depth…",
-    "context": "how 3D the table looks",
-    "translation": "Kedalaman…"
-  },
-  "hLFd9M": {
-    "message": "Halves",
-    "context": "which halves of the table",
-    "translation": "Sisi"
-  },
-  "ZWEhc2": {
-    "message": "Halves…",
-    "context": "which halves of the table",
-    "translation": "Sisi…"
-  },
-  "szYoqS": {
-    "message": "Lift while dragging",
-    "translation": "Angkat saat menyeret"
-  },
-  "7WBRHp": {
-    "message": "My half {count}% of the table",
-    "translation": "Sisiku {count}% dari meja"
-  },
-  "gQKQDm": {
-    "message": "My half, in percent",
-    "translation": "Sisiku, dalam persen"
-  },
-  "4fxEIx": {
-    "message": "Natural placement",
-    "translation": "Penempatan alami"
-  },
-  "Ek_k_Q": {
-    "message": "Needs depth",
-    "translation": "Perlu kedalaman"
-  },
-  "UyDcwK": {
-    "message": "Parallax",
-    "translation": "Paralaks"
-  },
-  "Kr1v1U": {
-    "message": "Preview on hover",
-    "translation": "Pratinjau saat diarahkan"
-  },
-  "hlMODd": {
-    "message": "Reset table",
-    "context": "put the table's settings back",
-    "translation": "Reset meja"
-  },
-  "4VQN2q": {
-    "message": "Reset table settings",
-    "translation": "Reset pengaturan meja"
-  },
-  "8OT456": {
-    "message": "Settings: {0}",
-    "comments": [
-      "Opens Settings at that section"
-    ],
-    "translation": "Pengaturan: {0}"
-  },
-  "ifu0mt": {
-    "message": "Show opponent's hand",
-    "translation": "Tampilkan Kartu Pegangan lawan"
-  },
-  "Q7FDck": {
-    "message": "Speed",
-    "context": "animation speed",
-    "translation": "Kecepatan"
-  },
-  "TMNS59": {
-    "message": "Speed…",
-    "context": "animation speed",
-    "translation": "Kecepatan…"
-  },
-  "yI0x30": {
-    "message": "Split…",
-    "context": "the table between the halves",
-    "translation": "Pembagian…"
-  },
-  "Qyf2Yu": {
-    "message": "Style",
-    "context": "the table's look",
-    "translation": "Gaya"
-  },
-  "-wDRPC": {
-    "message": "Style…",
-    "context": "the table's look",
-    "translation": "Gaya…"
-  },
-  "lW4c-5": {
-    "message": "Thickness",
-    "context": "the cards' thickness",
-    "translation": "Ketebalan"
-  },
-  "BPVdia": {
-    "message": "Thickness…",
-    "context": "the cards' thickness",
-    "translation": "Ketebalan…"
-  },
-  "GtJbUa": {
-    "message": "Background",
-    "translation": "Latar belakang"
-  },
-  "c7lN9x": {
-    "message": "Background from a link",
-    "translation": "Latar belakang dari tautan"
-  },
-  "tAWTcI": {
-    "message": "Background…",
-    "translation": "Latar belakang…"
-  },
-  "vN1y3D": {
-    "message": "Couldn't use that picture.",
-    "translation": "Gambar itu tidak bisa dipakai."
-  },
-  "KtuFGB": {
-    "message": "Custom",
-    "context": "the player's own background",
-    "translation": "Kustom"
-  },
-  "qlHGJK": {
-    "message": "Custom image…",
-    "translation": "Gambar kustom…"
-  },
-  "Cn91gu": {
-    "message": "Desk",
-    "context": "the default background",
-    "translation": "Meja"
-  },
-  "jSa1_N": {
-    "message": "From a link…",
-    "translation": "Dari tautan…"
-  },
-  "T7x7bT": {
-    "message": "Image link",
-    "translation": "Tautan gambar"
-  },
-  "YmDThn": {
-    "message": "None",
-    "context": "no background",
-    "translation": "Tidak ada"
-  },
-  "IyUrJ9": {
-    "message": "Or drop or paste a picture.",
-    "translation": "Atau jatuhkan atau tempel gambar."
-  },
-  "Oo42E3": {
-    "message": "Pictures up to 25 MB.",
-    "translation": "Gambar hingga 25 MB."
-  },
-  "abE-Jj": {
-    "message": "Preparing picture…",
-    "translation": "Menyiapkan gambar…"
-  },
-  "LE8SQj": {
-    "message": "Wallpaper {0}",
-    "translation": "Wallpaper {0}"
   }
 }

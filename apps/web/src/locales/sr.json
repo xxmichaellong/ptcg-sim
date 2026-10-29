@@ -1033,9 +1033,9 @@
     "message": "<0>{0}</0>: every move, and the chat.",
     "translation": "<0>{0}</0>: сваки потез и ћаскање."
   },
-  "NaneTg": {
-    "message": "<0>{0}</0>: the table's look, the theme and the language.",
-    "translation": "<0>{0}</0>: изглед стола, тема и језик."
+  "ifsvhW": {
+    "message": "<0>{0}</0>: Settings, saves and replays, and this tutorial whenever you want it.",
+    "translation": "<0>{0}</0>: подешавања, сачуване партије и снимци, као и овај водич кад год ти устреба."
   },
   "C0rMdv": {
     "message": "− Damage",
@@ -1302,10 +1302,6 @@
     "context": "keyboard key",
     "translation": "Alt"
   },
-  "JxKdEp": {
-    "message": "Always shown while it holds cards.",
-    "translation": "Увек је приказано док садржи карте."
-  },
   "Cpqhqr": {
     "message": "Amber",
     "context": "card back",
@@ -1324,29 +1320,32 @@
     "message": "An attack payable with two Energy",
     "translation": "Напад који се плаћа са две енергије"
   },
-  "bK6Mfx": {
-    "message": "An image URL, 'blank' or 'theme'.",
-    "comments": [
-      "Keep 'blank' and 'theme' in English: they are what the player types"
-    ],
-    "translation": "URL слике, 'blank' или 'theme'."
-  },
   "ctNH7H": {
     "message": "Ancient",
     "context": "Pokémon card mechanic",
     "translation": "Древни"
   },
-  "Jvmvx4": {
-    "message": "Animate stack height",
-    "translation": "Анимирај висину гомиле"
+  "qTeX2A": {
+    "message": "Angle",
+    "context": "the table's tilt",
+    "translation": "Угао"
   },
-  "d3fmj9": {
-    "message": "Animation speed",
-    "translation": "Брзина анимације"
+  "y3FF_5": {
+    "message": "Angle {count}°",
+    "translation": "Угао {count}°"
   },
-  "vaiuUS": {
-    "message": "Animation speed…",
-    "translation": "Брзина анимације…"
+  "tuSC5H": {
+    "message": "Angle in degrees",
+    "translation": "Угао у степенима"
+  },
+  "4GuGTB": {
+    "message": "Angle…",
+    "context": "the table's tilt",
+    "translation": "Угао…"
+  },
+  "WDup2O": {
+    "message": "Animate stacks",
+    "translation": "Анимирај шпилове"
   },
   "PR1zNf": {
     "message": "Announce mulligan",
@@ -1366,10 +1365,6 @@
     "message": "App",
     "context": "the app toolbar",
     "translation": "Апликација"
-  },
-  "aAIQg2": {
-    "message": "Appearance",
-    "translation": "Изглед"
   },
   "Lx0XC_": {
     "message": "Are you sure you want to leave? Any unsaved game data will be lost.",
@@ -1483,6 +1478,18 @@
   "1JYYQn": {
     "message": "Back to your decks",
     "translation": "Назад на твоје шпилове"
+  },
+  "GtJbUa": {
+    "message": "Background",
+    "translation": "Позадина"
+  },
+  "c7lN9x": {
+    "message": "Background from a link",
+    "translation": "Позадина са линка"
+  },
+  "tAWTcI": {
+    "message": "Background…",
+    "translation": "Позадина…"
   },
   "GhQ0ZN": {
     "message": "Backs",
@@ -1681,13 +1688,13 @@
     "message": "Card back for {slotSeat}",
     "translation": "Полеђина карте за {slotSeat}"
   },
-  "tii3sv": {
-    "message": "Card image language…",
-    "translation": "Језик слика карата…"
-  },
   "8xaYE9": {
     "message": "Card images",
     "translation": "Слике карата"
+  },
+  "n7tTKf": {
+    "message": "Card images…",
+    "translation": "Слике карата…"
   },
   "ymPKi7": {
     "message": "Card preview",
@@ -1709,10 +1716,6 @@
   "kLlRKH": {
     "message": "Card stack preview",
     "translation": "Преглед гомиле карата"
-  },
-  "TH1VPk": {
-    "message": "Card thickness",
-    "translation": "Дебљина карте"
   },
   "Ccpbzh": {
     "message": "Cards",
@@ -1736,10 +1739,6 @@
   "IuDYMd": {
     "message": "Cards in deck",
     "translation": "Карте у шпилу"
-  },
-  "sIpTuZ": {
-    "message": "Change background",
-    "translation": "Промени позадину"
   },
   "lKPW0c": {
     "message": "Change card back for {slotSeat}",
@@ -2049,6 +2048,10 @@
     "message": "Couldn't start the tutorial. Try again.",
     "translation": "Туторијал није покренут. Покушај поново."
   },
+  "vN1y3D": {
+    "message": "Couldn't use that picture.",
+    "translation": "Слика се не може користити."
+  },
   "U9OFiD": {
     "message": "cover",
     "context": "the deck's cover card",
@@ -2118,6 +2121,11 @@
     "message": "Current",
     "translation": "Тренутно"
   },
+  "KtuFGB": {
+    "message": "Custom",
+    "context": "the player's own background",
+    "translation": "Прилагођена"
+  },
   "qT5p-1": {
     "message": "Custom card",
     "translation": "Прилагођена карта"
@@ -2125,6 +2133,10 @@
   "rlm3op": {
     "message": "Custom flair on Discord & open reign on self-nicknames.",
     "translation": "Посебна ознака на Discord-у и слободно мењање надимка."
+  },
+  "qlHGJK": {
+    "message": "Custom image…",
+    "translation": "Прилагођена слика…"
   },
   "UxNmvS": {
     "message": "Damage and conditions",
@@ -2254,6 +2266,11 @@
     "context": "how 3D the table looks",
     "translation": "Дубина"
   },
+  "SOHyuG": {
+    "message": "Depth…",
+    "context": "how 3D the table looks",
+    "translation": "Дубина…"
+  },
   "HlKgQk": {
     "message": "Deselect",
     "translation": "Поништи избор"
@@ -2267,6 +2284,11 @@
     "message": "Design",
     "context": "design a card back",
     "translation": "Дизајнирај"
+  },
+  "Cn91gu": {
+    "message": "Desk",
+    "context": "the default background",
+    "translation": "Сто"
   },
   "zhmNG6": {
     "message": "Diamonds",
@@ -2497,6 +2519,11 @@
     "message": "Edit deck",
     "translation": "Уреди шпил"
   },
+  "CMMU03": {
+    "message": "Edit…",
+    "context": "change the keyboard shortcuts",
+    "translation": "Уреди…"
+  },
   "eAabzD": {
     "message": "Emblem",
     "context": "sleeve",
@@ -2548,9 +2575,9 @@
     "context": "keyboard key",
     "translation": "Esc"
   },
-  "y3HN5z": {
-    "message": "Every key is under <0>{0}</0>, in the menu.",
-    "translation": "Сви тастери су под <0>{0}</0>, у менију."
+  "8aoXpa": {
+    "message": "Every key is under <0>{0}</0>, in <1>{1}</1>.",
+    "translation": "Сви тастери су под <0>{0}</0>, у <1>{1}</1>."
   },
   "yJW_id": {
     "message": "Evolution and previous stage",
@@ -2782,6 +2809,10 @@
     "message": "From a link",
     "translation": "Са везе"
   },
+  "jSa1_N": {
+    "message": "From a link…",
+    "translation": "Са линка…"
+  },
   "qIodFG": {
     "message": "Frost",
     "comments": [
@@ -2863,6 +2894,16 @@
   "TALrFf": {
     "message": "GX marker",
     "translation": "GX маркер"
+  },
+  "hLFd9M": {
+    "message": "Halves",
+    "context": "which halves of the table",
+    "translation": "Половине"
+  },
+  "ZWEhc2": {
+    "message": "Halves…",
+    "context": "which halves of the table",
+    "translation": "Половине…"
   },
   "FpHzzD": {
     "message": "Hand",
@@ -3025,13 +3066,6 @@
     "message": "HP and retreat",
     "translation": "HP и повлачење"
   },
-  "OaHYvQ": {
-    "message": "https://…, blank or theme",
-    "comments": [
-      "Keep 'blank' and 'theme' in English: they are what the player types"
-    ],
-    "translation": "https://…, blank или theme"
-  },
   "hlQWeh": {
     "message": "I publicly launched the sim on Christmas, and it has already grown an incredible community of players and developers. There's a lot more to do, and I could use as much help as I can get!",
     "comments": [
@@ -3054,9 +3088,9 @@
     "message": "Illustrator",
     "translation": "Илустратор"
   },
-  "VyUuZb": {
-    "message": "Image URL",
-    "translation": "URL слике"
+  "T7x7bT": {
+    "message": "Image link",
+    "translation": "Линк слике"
   },
   "EUsCHg": {
     "message": "Images",
@@ -3193,6 +3227,10 @@
     "message": "Keyboard shortcuts",
     "translation": "Пречице на тастатури"
   },
+  "WQg61I": {
+    "message": "Keys",
+    "translation": "Тастери"
+  },
   "vFjc7h": {
     "message": "Keys",
     "context": "the keyboard map with no modifier held",
@@ -3217,10 +3255,6 @@
   "2S2hKS": {
     "message": "Language…",
     "translation": "Језик…"
-  },
-  "pOmqOF": {
-    "message": "Large card preview on hover",
-    "translation": "Велики приказ карте при преласку мишем"
   },
   "NMzrpD": {
     "message": "Larger cards",
@@ -3286,9 +3320,9 @@
     "context": "Pokémon stage",
     "translation": "Level-Up"
   },
-  "Fu5KED": {
-    "message": "Lift cards while dragging",
-    "translation": "Подигни карте током превлачења"
+  "szYoqS": {
+    "message": "Lift while dragging",
+    "translation": "Подигни при превлачењу"
   },
   "Lnx2DC": {
     "message": "Lightning",
@@ -3744,9 +3778,17 @@
     "message": "My eternal thanks!!!!!",
     "translation": "Вечно хвала!!!!!"
   },
+  "7WBRHp": {
+    "message": "My half {count}% of the table",
+    "translation": "Моја половина {count}% табле"
+  },
   "KJeM1I": {
     "message": "My half {percent}% of the table",
     "translation": "Моја половина {percent}% стола"
+  },
+  "gQKQDm": {
+    "message": "My half, in percent",
+    "translation": "Моја половина, у процентима"
   },
   "6YtxFj": {
     "message": "Name",
@@ -3773,9 +3815,9 @@
     "message": "Name: up to {max} characters.",
     "translation": "Назив: до {max} знакова."
   },
-  "OzETXo": {
-    "message": "Natural card placement",
-    "translation": "Природан распоред карата"
+  "4fxEIx": {
+    "message": "Natural placement",
+    "translation": "Природан распоред"
   },
   "hmYrgt": {
     "message": "Navy",
@@ -3785,6 +3827,10 @@
   "rf9azy": {
     "message": "Needs at least one Basic Pokémon.",
     "translation": "Потребан је бар један основни Pokémon."
+  },
+  "Ek_k_Q": {
+    "message": "Needs depth",
+    "translation": "Захтева дубину"
   },
   "W_gspM": {
     "message": "New deck",
@@ -3913,6 +3959,11 @@
   "lChsa8": {
     "message": "No tournament decks right now.",
     "translation": "Тренутно нема турнирских шпилова."
+  },
+  "YmDThn": {
+    "message": "None",
+    "context": "no background",
+    "translation": "Без позадине"
   },
   "6psMRl": {
     "message": "None",
@@ -4170,6 +4221,10 @@
     "message": "or a link",
     "translation": "или веза"
   },
+  "IyUrJ9": {
+    "message": "Or drop or paste a picture.",
+    "translation": "Или превуци или налепи слику."
+  },
   "l2I52S": {
     "message": "or drop or paste one here",
     "translation": "или је овде превуци или налепи"
@@ -4201,6 +4256,10 @@
     "message": "Page Up",
     "context": "keyboard key",
     "translation": "Page Up"
+  },
+  "UyDcwK": {
+    "message": "Parallax",
+    "translation": "Паралакса"
   },
   "xun4kD": {
     "message": "Paralyzed",
@@ -4295,6 +4354,10 @@
     "message": "Picture link: {label}",
     "translation": "Веза до слике: {label}"
   },
+  "Oo42E3": {
+    "message": "Pictures up to 25 MB.",
+    "translation": "Слике до 25 MB."
+  },
   "BX1rQx": {
     "message": "Pieces",
     "translation": "Делови"
@@ -4369,10 +4432,6 @@
     "message": "Pocket decks have no Energy cards.",
     "translation": "Pocket шпилови немају карте енергије."
   },
-  "S-nXVo": {
-    "message": "Pointer parallax",
-    "translation": "Паралакса показивача"
-  },
   "95vGpJ": {
     "message": "Poisoned",
     "context": "special condition",
@@ -4395,6 +4454,10 @@
   "RNaprm": {
     "message": "Pokémon cards",
     "translation": "Pokémon карте"
+  },
+  "abE-Jj": {
+    "message": "Preparing picture…",
+    "translation": "Припрема слике…"
   },
   "_0G332": {
     "message": "Press {keys} for <0>shortcuts</0>.",
@@ -4459,6 +4522,10 @@
       "{cardName} is a card; the button opens it large."
     ],
     "translation": "Прегледај {cardName}"
+  },
+  "Kr1v1U": {
+    "message": "Preview on hover",
+    "translation": "Преглед при преласку мишем"
   },
   "Lxdrcy": {
     "message": "Previous replay action",
@@ -4736,9 +4803,14 @@
     "message": "Reset both sides",
     "translation": "Ресетуј обе стране"
   },
-  "xNq549": {
-    "message": "Reset table view",
-    "translation": "Ресетуј приказ стола"
+  "hlMODd": {
+    "message": "Reset table",
+    "context": "put the table's settings back",
+    "translation": "Ресетуј таблу"
+  },
+  "4VQN2q": {
+    "message": "Reset table settings",
+    "translation": "Ресетуј подешавања табле"
   },
   "1IWc1n": {
     "message": "Reset to",
@@ -4777,9 +4849,9 @@
     "context": "Pokémon stage",
     "translation": "Обновљен"
   },
-  "Dwpy1Z": {
-    "message": "Resume a saved game…",
-    "translation": "Настави сачувану игру…"
+  "CBOI8H": {
+    "message": "Resume saved game…",
+    "translation": "Настави сачувану партију…"
   },
   "X1Npk-": {
     "message": "Retreat {retreat}",
@@ -4996,9 +5068,9 @@
     "message": "Save and edit {title}",
     "translation": "Сачувај и уреди {title}"
   },
-  "4ibQSn": {
-    "message": "Save online game",
-    "translation": "Сачувај онлајн игру"
+  "4XBjuA": {
+    "message": "Save game",
+    "translation": "Сачувај партију"
   },
   "OnrVKw": {
     "message": "Saved",
@@ -5169,6 +5241,18 @@
     ],
     "translation": "Подешавања"
   },
+  "y4__tG": {
+    "message": "Settings",
+    "context": "shortcut key caption",
+    "translation": "Подешавања"
+  },
+  "8OT456": {
+    "message": "Settings: {0}",
+    "comments": [
+      "Opens Settings at that section"
+    ],
+    "translation": "Подешавања: {0}"
+  },
   "Z8lGw6": {
     "message": "Share",
     "translation": "Подели"
@@ -5206,15 +5290,6 @@
     "message": "Shoutout in the next changelog.",
     "translation": "Помен у следећем запису промена."
   },
-  "8vETh9": {
-    "message": "Show",
-    "translation": "Прикажи"
-  },
-  "qTlQOF": {
-    "message": "Show",
-    "context": "which halves of the table",
-    "translation": "Прикажи"
-  },
   "nogPed": {
     "message": "Show",
     "context": "which pane to show",
@@ -5228,10 +5303,6 @@
     "message": "Show every print",
     "translation": "Прикажи сва издања"
   },
-  "UXsj50": {
-    "message": "Show halves…",
-    "translation": "Прикажи половине…"
-  },
   "nyTrvq": {
     "message": "Show keyboard",
     "translation": "Прикажи тастатуру"
@@ -5243,6 +5314,10 @@
   "FBwNsr": {
     "message": "Show one per card",
     "translation": "Прикажи по једну за сваку карту"
+  },
+  "ifu0mt": {
+    "message": "Show opponent's hand",
+    "translation": "Прикажи руку противника"
   },
   "NQ5xRS": {
     "message": "Show the deck as",
@@ -5477,10 +5552,25 @@
     ],
     "translation": "Посебан догађај"
   },
+  "Q7FDck": {
+    "message": "Speed",
+    "context": "animation speed",
+    "translation": "Брзина"
+  },
+  "TMNS59": {
+    "message": "Speed…",
+    "context": "animation speed",
+    "translation": "Брзина…"
+  },
   "h5EwqW": {
     "message": "Split",
     "context": "the table between the halves",
     "translation": "Подела"
+  },
+  "yI0x30": {
+    "message": "Split…",
+    "context": "the table between the halves",
+    "translation": "Подела…"
   },
   "Y6mTBn": {
     "message": "SPONSOR TIERS",
@@ -5607,6 +5697,16 @@
     "context": "sleeve pattern",
     "translation": "Пруге"
   },
+  "Qyf2Yu": {
+    "message": "Style",
+    "context": "the table's look",
+    "translation": "Стил"
+  },
+  "-wDRPC": {
+    "message": "Style…",
+    "context": "the table's look",
+    "translation": "Стил…"
+  },
   "yqeLY3": {
     "message": "Supporter",
     "context": "Trainer card kind",
@@ -5668,26 +5768,6 @@
     "message": "Table",
     "context": "shortcut group",
     "translation": "Сто"
-  },
-  "viTXNi": {
-    "message": "Table angle",
-    "translation": "Нагиб стола"
-  },
-  "eqSg9V": {
-    "message": "Table style",
-    "translation": "Стил стола"
-  },
-  "Z3nJeW": {
-    "message": "Table style…",
-    "translation": "Стил стола…"
-  },
-  "f9jgd2": {
-    "message": "Table view",
-    "translation": "Приказ стола"
-  },
-  "cHwqmY": {
-    "message": "Table view…",
-    "translation": "Приказ стола…"
   },
   "Qd2uqp": {
     "message": "Tabletop",
@@ -5957,6 +6037,16 @@
     "message": "They bring up the next: drag a <0>{0}</0> from their Bench to their Active Spot.",
     "translation": "Противник доводи следећег: превуци <0>{0}</0> са његове клупе на његово активно место."
   },
+  "lW4c-5": {
+    "message": "Thickness",
+    "context": "the cards' thickness",
+    "translation": "Дебљина"
+  },
+  "BPVdia": {
+    "message": "Thickness…",
+    "context": "the cards' thickness",
+    "translation": "Дебљина…"
+  },
   "WsAkgd": {
     "message": "This browser won't keep your decks after you close the page.",
     "translation": "Овај прегледач неће сачувати твоје шпилове након затварања странице."
@@ -5968,10 +6058,6 @@
   "5HIoIb": {
     "message": "This invitation was used or has expired. Ask for a new one.",
     "translation": "Ова позивница је искоришћена или је истекла. Затражи нову."
-  },
-  "L7LU5x": {
-    "message": "This tutorial waits in the <0>menu</0> whenever you want it.",
-    "translation": "Овај туторијал те чека у <0>менију</0> кад год ти затреба."
   },
   "YcMvP7": {
     "message": "Tilted on wide screens, flat on phones.",
@@ -6301,10 +6387,6 @@
     "message": "Use background",
     "translation": "Користи позадину"
   },
-  "kqaF8V": {
-    "message": "Use default",
-    "translation": "Користи подразумевано"
-  },
   "pEHkP7": {
     "message": "Use GX attack",
     "translation": "Користи GX напад"
@@ -6369,9 +6451,13 @@
     "message": "VSTAR marker",
     "translation": "VSTAR маркер"
   },
-  "inq7iN": {
-    "message": "Watch a replay…",
-    "translation": "Погледај снимак партије…"
+  "LE8SQj": {
+    "message": "Wallpaper {0}",
+    "translation": "Позадина {0}"
+  },
+  "sFWtjQ": {
+    "message": "Watch replay…",
+    "translation": "Гледај снимак…"
   },
   "2kl5Uf": {
     "message": "Water",
@@ -6501,332 +6587,5 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "Оквири зона"
-  },
-  "ifsvhW": {
-    "message": "<0>{0}</0>: Settings, saves and replays, and this tutorial whenever you want it.",
-    "translation": "<0>{0}</0>: подешавања, сачуване партије и снимци, као и овај водич кад год ти устреба."
-  },
-  "sDYhDt": {
-    "message": "A deck needs a name.",
-    "translation": "Шпил мора да има име."
-  },
-  "hQE7TV": {
-    "message": "An image URL, or 'default'.",
-    "comments": [
-      "Keep 'default' in English: it is what the player types"
-    ],
-    "translation": "URL слике или 'default'."
-  },
-  "8zanjC": {
-    "message": "Artwork group",
-    "translation": "Група илустрација"
-  },
-  "PCF3WN": {
-    "message": "Change card back",
-    "translation": "Промени полеђину карте"
-  },
-  "HLSSB8": {
-    "message": "code or name",
-    "translation": "шифра или име"
-  },
-  "ibWa1H": {
-    "message": "Delete {deckName}?",
-    "translation": "Обрисати {deckName}?"
-  },
-  "iu7vH9": {
-    "message": "e.g. CC or LL",
-    "comments": [
-      "Energy letters (C, L…) stay as they are"
-    ],
-    "translation": "нпр. CC или LL"
-  },
-  "tg9VdO": {
-    "message": "e.g. HIJ",
-    "translation": "нпр. HIJ"
-  },
-  "3fBsZV": {
-    "message": "e.g. illustration",
-    "translation": "нпр. илустрација"
-  },
-  "CMMU03": {
-    "message": "Edit…",
-    "context": "change the keyboard shortcuts",
-    "translation": "Уреди…"
-  },
-  "I7T1ix": {
-    "message": "Enter an image URL.",
-    "translation": "Унеси URL слике."
-  },
-  "8aoXpa": {
-    "message": "Every key is under <0>{0}</0>, in <1>{1}</1>.",
-    "translation": "Сви тастери су под <0>{0}</0>, у <1>{1}</1>."
-  },
-  "ZTtNAf": {
-    "message": "HP at least",
-    "translation": "HP најмање"
-  },
-  "LgcKSI": {
-    "message": "HP at most",
-    "translation": "HP највише"
-  },
-  "fVGc9-": {
-    "message": "https://… or default",
-    "comments": [
-      "Keep 'default' in English: it is what the player types"
-    ],
-    "translation": "https://… или default"
-  },
-  "1pdLQw": {
-    "message": "Image not found",
-    "translation": "Слика није пронађена"
-  },
-  "15ARIE": {
-    "message": "Image URL too long",
-    "translation": "URL слике је предугачак"
-  },
-  "6hbF9e": {
-    "message": "Image URL: up to {max} characters.",
-    "translation": "URL слике: до {max} знакова."
-  },
-  "MIi4yC": {
-    "message": "Keep it to {max} characters.",
-    "translation": "Нека има највише {max} знакова."
-  },
-  "WQg61I": {
-    "message": "Keys",
-    "translation": "Тастери"
-  },
-  "2fhoKU": {
-    "message": "No image",
-    "translation": "Нема слике"
-  },
-  "xYvd7u": {
-    "message": "Piece position",
-    "translation": "Положај дела"
-  },
-  "rkcP1p": {
-    "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
-    "translation": "Стави делове Pokémon-а у једну гомилу, а делове стадиона на стадион."
-  },
-  "XsrZAv": {
-    "message": "Rename",
-    "context": "button",
-    "translation": "Преименуј"
-  },
-  "Tvyjys": {
-    "message": "Rename deck",
-    "translation": "Преименуј шпил"
-  },
-  "CBOI8H": {
-    "message": "Resume saved game…",
-    "translation": "Настави сачувану партију…"
-  },
-  "qoNq2S": {
-    "message": "Same group for each piece",
-    "translation": "Иста група за сваки део"
-  },
-  "4XBjuA": {
-    "message": "Save game",
-    "translation": "Сачувај партију"
-  },
-  "y4__tG": {
-    "message": "Settings",
-    "context": "shortcut key caption",
-    "translation": "Подешавања"
-  },
-  "ZMr878": {
-    "message": "That image didn't load.",
-    "translation": "Та слика се није учитала."
-  },
-  "PTd_zR": {
-    "message": "Use image",
-    "translation": "Користи слику"
-  },
-  "sFWtjQ": {
-    "message": "Watch replay…",
-    "translation": "Гледај снимак…"
-  },
-  "qTeX2A": {
-    "message": "Angle",
-    "context": "the table's tilt",
-    "translation": "Угао"
-  },
-  "y3FF_5": {
-    "message": "Angle {count}°",
-    "translation": "Угао {count}°"
-  },
-  "tuSC5H": {
-    "message": "Angle in degrees",
-    "translation": "Угао у степенима"
-  },
-  "4GuGTB": {
-    "message": "Angle…",
-    "context": "the table's tilt",
-    "translation": "Угао…"
-  },
-  "WDup2O": {
-    "message": "Animate stacks",
-    "translation": "Анимирај шпилове"
-  },
-  "n7tTKf": {
-    "message": "Card images…",
-    "translation": "Слике карата…"
-  },
-  "SOHyuG": {
-    "message": "Depth…",
-    "context": "how 3D the table looks",
-    "translation": "Дубина…"
-  },
-  "hLFd9M": {
-    "message": "Halves",
-    "context": "which halves of the table",
-    "translation": "Половине"
-  },
-  "ZWEhc2": {
-    "message": "Halves…",
-    "context": "which halves of the table",
-    "translation": "Половине…"
-  },
-  "szYoqS": {
-    "message": "Lift while dragging",
-    "translation": "Подигни при превлачењу"
-  },
-  "7WBRHp": {
-    "message": "My half {count}% of the table",
-    "translation": "Моја половина {count}% табле"
-  },
-  "gQKQDm": {
-    "message": "My half, in percent",
-    "translation": "Моја половина, у процентима"
-  },
-  "4fxEIx": {
-    "message": "Natural placement",
-    "translation": "Природан распоред"
-  },
-  "Ek_k_Q": {
-    "message": "Needs depth",
-    "translation": "Захтева дубину"
-  },
-  "UyDcwK": {
-    "message": "Parallax",
-    "translation": "Паралакса"
-  },
-  "Kr1v1U": {
-    "message": "Preview on hover",
-    "translation": "Преглед при преласку мишем"
-  },
-  "hlMODd": {
-    "message": "Reset table",
-    "context": "put the table's settings back",
-    "translation": "Ресетуј таблу"
-  },
-  "4VQN2q": {
-    "message": "Reset table settings",
-    "translation": "Ресетуј подешавања табле"
-  },
-  "8OT456": {
-    "message": "Settings: {0}",
-    "comments": [
-      "Opens Settings at that section"
-    ],
-    "translation": "Подешавања: {0}"
-  },
-  "ifu0mt": {
-    "message": "Show opponent's hand",
-    "translation": "Прикажи руку противника"
-  },
-  "Q7FDck": {
-    "message": "Speed",
-    "context": "animation speed",
-    "translation": "Брзина"
-  },
-  "TMNS59": {
-    "message": "Speed…",
-    "context": "animation speed",
-    "translation": "Брзина…"
-  },
-  "yI0x30": {
-    "message": "Split…",
-    "context": "the table between the halves",
-    "translation": "Подела…"
-  },
-  "Qyf2Yu": {
-    "message": "Style",
-    "context": "the table's look",
-    "translation": "Стил"
-  },
-  "-wDRPC": {
-    "message": "Style…",
-    "context": "the table's look",
-    "translation": "Стил…"
-  },
-  "lW4c-5": {
-    "message": "Thickness",
-    "context": "the cards' thickness",
-    "translation": "Дебљина"
-  },
-  "BPVdia": {
-    "message": "Thickness…",
-    "context": "the cards' thickness",
-    "translation": "Дебљина…"
-  },
-  "GtJbUa": {
-    "message": "Background",
-    "translation": "Позадина"
-  },
-  "c7lN9x": {
-    "message": "Background from a link",
-    "translation": "Позадина са линка"
-  },
-  "tAWTcI": {
-    "message": "Background…",
-    "translation": "Позадина…"
-  },
-  "vN1y3D": {
-    "message": "Couldn't use that picture.",
-    "translation": "Слика се не може користити."
-  },
-  "KtuFGB": {
-    "message": "Custom",
-    "context": "the player's own background",
-    "translation": "Прилагођена"
-  },
-  "qlHGJK": {
-    "message": "Custom image…",
-    "translation": "Прилагођена слика…"
-  },
-  "Cn91gu": {
-    "message": "Desk",
-    "context": "the default background",
-    "translation": "Сто"
-  },
-  "jSa1_N": {
-    "message": "From a link…",
-    "translation": "Са линка…"
-  },
-  "T7x7bT": {
-    "message": "Image link",
-    "translation": "Линк слике"
-  },
-  "YmDThn": {
-    "message": "None",
-    "context": "no background",
-    "translation": "Без позадине"
-  },
-  "IyUrJ9": {
-    "message": "Or drop or paste a picture.",
-    "translation": "Или превуци или налепи слику."
-  },
-  "Oo42E3": {
-    "message": "Pictures up to 25 MB.",
-    "translation": "Слике до 25 MB."
-  },
-  "abE-Jj": {
-    "message": "Preparing picture…",
-    "translation": "Припрема слике…"
-  },
-  "LE8SQj": {
-    "message": "Wallpaper {0}",
-    "translation": "Позадина {0}"
   }
 }

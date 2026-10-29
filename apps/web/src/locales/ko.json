@@ -1033,9 +1033,9 @@
     "message": "<0>{0}</0>: every move, and the chat.",
     "translation": "<0>{0}</0>: 모든 동작과 채팅을 확인합니다."
   },
-  "NaneTg": {
-    "message": "<0>{0}</0>: the table's look, the theme and the language.",
-    "translation": "<0>{0}</0>: 테이블 모양, 테마, 언어를 설정합니다."
+  "ifsvhW": {
+    "message": "<0>{0}</0>: Settings, saves and replays, and this tutorial whenever you want it.",
+    "translation": "<0>{0}</0>: 설정, 저장 및 리플레이, 그리고 원할 때 언제든 이 튜토리얼을 볼 수 있습니다."
   },
   "C0rMdv": {
     "message": "− Damage",
@@ -1302,10 +1302,6 @@
     "context": "keyboard key",
     "translation": "Alt"
   },
-  "JxKdEp": {
-    "message": "Always shown while it holds cards.",
-    "translation": "카드가 있는 동안 항상 표시됩니다."
-  },
   "Cpqhqr": {
     "message": "Amber",
     "context": "card back",
@@ -1324,29 +1320,32 @@
     "message": "An attack payable with two Energy",
     "translation": "에너지 2개로 사용할 수 있는 기술"
   },
-  "bK6Mfx": {
-    "message": "An image URL, 'blank' or 'theme'.",
-    "comments": [
-      "Keep 'blank' and 'theme' in English: they are what the player types"
-    ],
-    "translation": "이미지 URL, 'blank' 또는 'theme'."
-  },
   "ctNH7H": {
     "message": "Ancient",
     "context": "Pokémon card mechanic",
     "translation": "고대"
   },
-  "Jvmvx4": {
-    "message": "Animate stack height",
-    "translation": "더미 높이 애니메이션"
+  "qTeX2A": {
+    "message": "Angle",
+    "context": "the table's tilt",
+    "translation": "각도"
   },
-  "d3fmj9": {
-    "message": "Animation speed",
-    "translation": "애니메이션 속도"
+  "y3FF_5": {
+    "message": "Angle {count}°",
+    "translation": "각도 {count}°"
   },
-  "vaiuUS": {
-    "message": "Animation speed…",
-    "translation": "애니메이션 속도…"
+  "tuSC5H": {
+    "message": "Angle in degrees",
+    "translation": "각도(도 단위)"
+  },
+  "4GuGTB": {
+    "message": "Angle…",
+    "context": "the table's tilt",
+    "translation": "각도…"
+  },
+  "WDup2O": {
+    "message": "Animate stacks",
+    "translation": "더미 애니메이션"
   },
   "PR1zNf": {
     "message": "Announce mulligan",
@@ -1366,10 +1365,6 @@
     "message": "App",
     "context": "the app toolbar",
     "translation": "앱"
-  },
-  "aAIQg2": {
-    "message": "Appearance",
-    "translation": "화면 설정"
   },
   "Lx0XC_": {
     "message": "Are you sure you want to leave? Any unsaved game data will be lost.",
@@ -1483,6 +1478,18 @@
   "1JYYQn": {
     "message": "Back to your decks",
     "translation": "내 덱으로 돌아가기"
+  },
+  "GtJbUa": {
+    "message": "Background",
+    "translation": "배경"
+  },
+  "c7lN9x": {
+    "message": "Background from a link",
+    "translation": "링크로 배경 설정"
+  },
+  "tAWTcI": {
+    "message": "Background…",
+    "translation": "배경…"
   },
   "GhQ0ZN": {
     "message": "Backs",
@@ -1681,13 +1688,13 @@
     "message": "Card back for {slotSeat}",
     "translation": "{slotSeat}의 카드 뒷면"
   },
-  "tii3sv": {
-    "message": "Card image language…",
-    "translation": "카드 이미지 언어…"
-  },
   "8xaYE9": {
     "message": "Card images",
     "translation": "카드 이미지"
+  },
+  "n7tTKf": {
+    "message": "Card images…",
+    "translation": "카드 이미지…"
   },
   "ymPKi7": {
     "message": "Card preview",
@@ -1709,10 +1716,6 @@
   "kLlRKH": {
     "message": "Card stack preview",
     "translation": "카드 더미 미리보기"
-  },
-  "TH1VPk": {
-    "message": "Card thickness",
-    "translation": "카드 두께"
   },
   "Ccpbzh": {
     "message": "Cards",
@@ -1736,10 +1739,6 @@
   "IuDYMd": {
     "message": "Cards in deck",
     "translation": "덱의 카드"
-  },
-  "sIpTuZ": {
-    "message": "Change background",
-    "translation": "배경 변경"
   },
   "lKPW0c": {
     "message": "Change card back for {slotSeat}",
@@ -2049,6 +2048,10 @@
     "message": "Couldn't start the tutorial. Try again.",
     "translation": "튜토리얼을 시작할 수 없습니다. 다시 시도하세요."
   },
+  "vN1y3D": {
+    "message": "Couldn't use that picture.",
+    "translation": "이 사진은 사용할 수 없습니다."
+  },
   "U9OFiD": {
     "message": "cover",
     "context": "the deck's cover card",
@@ -2118,6 +2121,11 @@
     "message": "Current",
     "translation": "현재"
   },
+  "KtuFGB": {
+    "message": "Custom",
+    "context": "the player's own background",
+    "translation": "사용자 지정"
+  },
   "qT5p-1": {
     "message": "Custom card",
     "translation": "커스텀 카드"
@@ -2125,6 +2133,10 @@
   "rlm3op": {
     "message": "Custom flair on Discord & open reign on self-nicknames.",
     "translation": "Discord에서 맞춤 플레어를 받고 닉네임을 자유롭게 설정할 수 있습니다."
+  },
+  "qlHGJK": {
+    "message": "Custom image…",
+    "translation": "사용자 지정 이미지…"
   },
   "UxNmvS": {
     "message": "Damage and conditions",
@@ -2254,6 +2266,11 @@
     "context": "how 3D the table looks",
     "translation": "깊이"
   },
+  "SOHyuG": {
+    "message": "Depth…",
+    "context": "how 3D the table looks",
+    "translation": "깊이…"
+  },
   "HlKgQk": {
     "message": "Deselect",
     "translation": "선택 해제"
@@ -2267,6 +2284,11 @@
     "message": "Design",
     "context": "design a card back",
     "translation": "디자인"
+  },
+  "Cn91gu": {
+    "message": "Desk",
+    "context": "the default background",
+    "translation": "책상"
   },
   "zhmNG6": {
     "message": "Diamonds",
@@ -2497,6 +2519,11 @@
     "message": "Edit deck",
     "translation": "덱 편집"
   },
+  "CMMU03": {
+    "message": "Edit…",
+    "context": "change the keyboard shortcuts",
+    "translation": "편집…"
+  },
   "eAabzD": {
     "message": "Emblem",
     "context": "sleeve",
@@ -2548,9 +2575,9 @@
     "context": "keyboard key",
     "translation": "Esc"
   },
-  "y3HN5z": {
-    "message": "Every key is under <0>{0}</0>, in the menu.",
-    "translation": "모든 키는 메뉴의 <0>{0}</0>에서 확인할 수 있습니다."
+  "8aoXpa": {
+    "message": "Every key is under <0>{0}</0>, in <1>{1}</1>.",
+    "translation": "모든 키는 <1>{1}</1>의 <0>{0}</0>에서 확인할 수 있습니다."
   },
   "yJW_id": {
     "message": "Evolution and previous stage",
@@ -2782,6 +2809,10 @@
     "message": "From a link",
     "translation": "링크로 가져오기"
   },
+  "jSa1_N": {
+    "message": "From a link…",
+    "translation": "링크로 불러오기…"
+  },
   "qIodFG": {
     "message": "Frost",
     "comments": [
@@ -2863,6 +2894,16 @@
   "TALrFf": {
     "message": "GX marker",
     "translation": "GX 마커"
+  },
+  "hLFd9M": {
+    "message": "Halves",
+    "context": "which halves of the table",
+    "translation": "절반"
+  },
+  "ZWEhc2": {
+    "message": "Halves…",
+    "context": "which halves of the table",
+    "translation": "절반…"
   },
   "FpHzzD": {
     "message": "Hand",
@@ -3025,13 +3066,6 @@
     "message": "HP and retreat",
     "translation": "HP와 후퇴"
   },
-  "OaHYvQ": {
-    "message": "https://…, blank or theme",
-    "comments": [
-      "Keep 'blank' and 'theme' in English: they are what the player types"
-    ],
-    "translation": "https://…, blank 또는 theme"
-  },
   "hlQWeh": {
     "message": "I publicly launched the sim on Christmas, and it has already grown an incredible community of players and developers. There's a lot more to do, and I could use as much help as I can get!",
     "comments": [
@@ -3054,9 +3088,9 @@
     "message": "Illustrator",
     "translation": "일러스트레이터"
   },
-  "VyUuZb": {
-    "message": "Image URL",
-    "translation": "이미지 URL"
+  "T7x7bT": {
+    "message": "Image link",
+    "translation": "이미지 링크"
   },
   "EUsCHg": {
     "message": "Images",
@@ -3193,6 +3227,10 @@
     "message": "Keyboard shortcuts",
     "translation": "키보드 단축키"
   },
+  "WQg61I": {
+    "message": "Keys",
+    "translation": "키"
+  },
   "vFjc7h": {
     "message": "Keys",
     "context": "the keyboard map with no modifier held",
@@ -3217,10 +3255,6 @@
   "2S2hKS": {
     "message": "Language…",
     "translation": "언어…"
-  },
-  "pOmqOF": {
-    "message": "Large card preview on hover",
-    "translation": "마우스를 올리면 카드 크게 보기"
   },
   "NMzrpD": {
     "message": "Larger cards",
@@ -3286,9 +3320,9 @@
     "context": "Pokémon stage",
     "translation": "레벨업"
   },
-  "Fu5KED": {
-    "message": "Lift cards while dragging",
-    "translation": "드래그할 때 카드 들어 올리기"
+  "szYoqS": {
+    "message": "Lift while dragging",
+    "translation": "드래그 중 들어올리기"
   },
   "Lnx2DC": {
     "message": "Lightning",
@@ -3744,9 +3778,17 @@
     "message": "My eternal thanks!!!!!",
     "translation": "영원히 감사합니다!!!!!"
   },
+  "7WBRHp": {
+    "message": "My half {count}% of the table",
+    "translation": "내 영역 테이블의 {count}%"
+  },
   "KJeM1I": {
     "message": "My half {percent}% of the table",
     "translation": "내 쪽 테이블의 {percent}%"
+  },
+  "gQKQDm": {
+    "message": "My half, in percent",
+    "translation": "내 영역 비율(%)"
   },
   "6YtxFj": {
     "message": "Name",
@@ -3773,9 +3815,9 @@
     "message": "Name: up to {max} characters.",
     "translation": "이름은 최대 {max}자입니다."
   },
-  "OzETXo": {
-    "message": "Natural card placement",
-    "translation": "자연스러운 카드 배치"
+  "4fxEIx": {
+    "message": "Natural placement",
+    "translation": "자연스러운 배치"
   },
   "hmYrgt": {
     "message": "Navy",
@@ -3785,6 +3827,10 @@
   "rf9azy": {
     "message": "Needs at least one Basic Pokémon.",
     "translation": "기본 포켓몬이 한 장 이상 필요합니다."
+  },
+  "Ek_k_Q": {
+    "message": "Needs depth",
+    "translation": "깊이 필요"
   },
   "W_gspM": {
     "message": "New deck",
@@ -3913,6 +3959,11 @@
   "lChsa8": {
     "message": "No tournament decks right now.",
     "translation": "현재 대회 덱이 없습니다."
+  },
+  "YmDThn": {
+    "message": "None",
+    "context": "no background",
+    "translation": "없음"
   },
   "6psMRl": {
     "message": "None",
@@ -4170,6 +4221,10 @@
     "message": "or a link",
     "translation": "또는 링크"
   },
+  "IyUrJ9": {
+    "message": "Or drop or paste a picture.",
+    "translation": "사진을 끌어다 놓거나 붙여넣을 수도 있습니다."
+  },
   "l2I52S": {
     "message": "or drop or paste one here",
     "translation": "또는 여기에 끌어다 놓거나 붙여넣으세요"
@@ -4201,6 +4256,10 @@
     "message": "Page Up",
     "context": "keyboard key",
     "translation": "Page Up"
+  },
+  "UyDcwK": {
+    "message": "Parallax",
+    "translation": "시차 효과"
   },
   "xun4kD": {
     "message": "Paralyzed",
@@ -4295,6 +4354,10 @@
     "message": "Picture link: {label}",
     "translation": "이미지 링크: {label}"
   },
+  "Oo42E3": {
+    "message": "Pictures up to 25 MB.",
+    "translation": "최대 25MB 사진까지 사용할 수 있습니다."
+  },
   "BX1rQx": {
     "message": "Pieces",
     "translation": "조각"
@@ -4369,10 +4432,6 @@
     "message": "Pocket decks have no Energy cards.",
     "translation": "Pocket 덱에는 에너지 카드가 없습니다."
   },
-  "S-nXVo": {
-    "message": "Pointer parallax",
-    "translation": "포인터 시차 효과"
-  },
   "95vGpJ": {
     "message": "Poisoned",
     "context": "special condition",
@@ -4395,6 +4454,10 @@
   "RNaprm": {
     "message": "Pokémon cards",
     "translation": "포켓몬 카드"
+  },
+  "abE-Jj": {
+    "message": "Preparing picture…",
+    "translation": "사진 준비 중…"
   },
   "_0G332": {
     "message": "Press {keys} for <0>shortcuts</0>.",
@@ -4459,6 +4522,10 @@
       "{cardName} is a card; the button opens it large."
     ],
     "translation": "{cardName} 미리보기"
+  },
+  "Kr1v1U": {
+    "message": "Preview on hover",
+    "translation": "마우스를 올리면 미리보기"
   },
   "Lxdrcy": {
     "message": "Previous replay action",
@@ -4736,9 +4803,14 @@
     "message": "Reset both sides",
     "translation": "양쪽 모두 초기화"
   },
-  "xNq549": {
-    "message": "Reset table view",
-    "translation": "테이블 시점 초기화"
+  "hlMODd": {
+    "message": "Reset table",
+    "context": "put the table's settings back",
+    "translation": "테이블 초기화"
+  },
+  "4VQN2q": {
+    "message": "Reset table settings",
+    "translation": "테이블 설정 초기화"
   },
   "1IWc1n": {
     "message": "Reset to",
@@ -4777,8 +4849,8 @@
     "context": "Pokémon stage",
     "translation": "복원"
   },
-  "Dwpy1Z": {
-    "message": "Resume a saved game…",
+  "CBOI8H": {
+    "message": "Resume saved game…",
     "translation": "저장된 게임 이어하기…"
   },
   "X1Npk-": {
@@ -4996,9 +5068,9 @@
     "message": "Save and edit {title}",
     "translation": "{title} 저장 후 편집"
   },
-  "4ibQSn": {
-    "message": "Save online game",
-    "translation": "온라인 게임 저장"
+  "4XBjuA": {
+    "message": "Save game",
+    "translation": "게임 저장"
   },
   "OnrVKw": {
     "message": "Saved",
@@ -5169,6 +5241,18 @@
     ],
     "translation": "설정"
   },
+  "y4__tG": {
+    "message": "Settings",
+    "context": "shortcut key caption",
+    "translation": "설정"
+  },
+  "8OT456": {
+    "message": "Settings: {0}",
+    "comments": [
+      "Opens Settings at that section"
+    ],
+    "translation": "설정: {0}"
+  },
   "Z8lGw6": {
     "message": "Share",
     "translation": "공유"
@@ -5206,15 +5290,6 @@
     "message": "Shoutout in the next changelog.",
     "translation": "다음 변경 내역에 감사 인사를 남겨 드립니다."
   },
-  "8vETh9": {
-    "message": "Show",
-    "translation": "보이기"
-  },
-  "qTlQOF": {
-    "message": "Show",
-    "context": "which halves of the table",
-    "translation": "표시"
-  },
   "nogPed": {
     "message": "Show",
     "context": "which pane to show",
@@ -5228,10 +5303,6 @@
     "message": "Show every print",
     "translation": "모든 프린트 표시"
   },
-  "UXsj50": {
-    "message": "Show halves…",
-    "translation": "절반 보기…"
-  },
   "nyTrvq": {
     "message": "Show keyboard",
     "translation": "키보드 표시"
@@ -5243,6 +5314,10 @@
   "FBwNsr": {
     "message": "Show one per card",
     "translation": "카드당 하나씩 보기"
+  },
+  "ifu0mt": {
+    "message": "Show opponent's hand",
+    "translation": "상대 패 보기"
   },
   "NQ5xRS": {
     "message": "Show the deck as",
@@ -5477,10 +5552,25 @@
     ],
     "translation": "스페셜 이벤트"
   },
+  "Q7FDck": {
+    "message": "Speed",
+    "context": "animation speed",
+    "translation": "속도"
+  },
+  "TMNS59": {
+    "message": "Speed…",
+    "context": "animation speed",
+    "translation": "속도…"
+  },
   "h5EwqW": {
     "message": "Split",
     "context": "the table between the halves",
     "translation": "분할"
+  },
+  "yI0x30": {
+    "message": "Split…",
+    "context": "the table between the halves",
+    "translation": "분할…"
   },
   "Y6mTBn": {
     "message": "SPONSOR TIERS",
@@ -5607,6 +5697,16 @@
     "context": "sleeve pattern",
     "translation": "줄무늬"
   },
+  "Qyf2Yu": {
+    "message": "Style",
+    "context": "the table's look",
+    "translation": "스타일"
+  },
+  "-wDRPC": {
+    "message": "Style…",
+    "context": "the table's look",
+    "translation": "스타일…"
+  },
   "yqeLY3": {
     "message": "Supporter",
     "context": "Trainer card kind",
@@ -5668,26 +5768,6 @@
     "message": "Table",
     "context": "shortcut group",
     "translation": "테이블"
-  },
-  "viTXNi": {
-    "message": "Table angle",
-    "translation": "테이블 각도"
-  },
-  "eqSg9V": {
-    "message": "Table style",
-    "translation": "테이블 스타일"
-  },
-  "Z3nJeW": {
-    "message": "Table style…",
-    "translation": "테이블 스타일…"
-  },
-  "f9jgd2": {
-    "message": "Table view",
-    "translation": "테이블 시점"
-  },
-  "cHwqmY": {
-    "message": "Table view…",
-    "translation": "테이블 시점…"
   },
   "Qd2uqp": {
     "message": "Tabletop",
@@ -5957,6 +6037,16 @@
     "message": "They bring up the next: drag a <0>{0}</0> from their Bench to their Active Spot.",
     "translation": "상대가 다음 포켓몬을 내보냅니다. 상대 벤치의 <0>{0}</0>을(를) 상대 배틀필드로 드래그하세요."
   },
+  "lW4c-5": {
+    "message": "Thickness",
+    "context": "the cards' thickness",
+    "translation": "두께"
+  },
+  "BPVdia": {
+    "message": "Thickness…",
+    "context": "the cards' thickness",
+    "translation": "두께…"
+  },
   "WsAkgd": {
     "message": "This browser won't keep your decks after you close the page.",
     "translation": "이 브라우저는 페이지를 닫으면 덱을 보관하지 않습니다."
@@ -5968,10 +6058,6 @@
   "5HIoIb": {
     "message": "This invitation was used or has expired. Ask for a new one.",
     "translation": "이 초대는 이미 사용되었거나 만료되었습니다. 새 초대를 요청하세요."
-  },
-  "L7LU5x": {
-    "message": "This tutorial waits in the <0>menu</0> whenever you want it.",
-    "translation": "이 튜토리얼은 필요할 때 언제든 <0>메뉴</0>에서 볼 수 있습니다."
   },
   "YcMvP7": {
     "message": "Tilted on wide screens, flat on phones.",
@@ -6301,10 +6387,6 @@
     "message": "Use background",
     "translation": "배경 사용"
   },
-  "kqaF8V": {
-    "message": "Use default",
-    "translation": "기본값 사용"
-  },
   "pEHkP7": {
     "message": "Use GX attack",
     "translation": "GX기술 사용"
@@ -6369,8 +6451,12 @@
     "message": "VSTAR marker",
     "translation": "VSTAR 마커"
   },
-  "inq7iN": {
-    "message": "Watch a replay…",
+  "LE8SQj": {
+    "message": "Wallpaper {0}",
+    "translation": "배경화면 {0}"
+  },
+  "sFWtjQ": {
+    "message": "Watch replay…",
     "translation": "리플레이 보기…"
   },
   "2kl5Uf": {
@@ -6501,332 +6587,5 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "영역 윤곽선"
-  },
-  "ifsvhW": {
-    "message": "<0>{0}</0>: Settings, saves and replays, and this tutorial whenever you want it.",
-    "translation": "<0>{0}</0>: 설정, 저장 및 리플레이, 그리고 원할 때 언제든 이 튜토리얼을 볼 수 있습니다."
-  },
-  "sDYhDt": {
-    "message": "A deck needs a name.",
-    "translation": "덱에 이름이 필요합니다."
-  },
-  "hQE7TV": {
-    "message": "An image URL, or 'default'.",
-    "comments": [
-      "Keep 'default' in English: it is what the player types"
-    ],
-    "translation": "이미지 URL 또는 'default'."
-  },
-  "8zanjC": {
-    "message": "Artwork group",
-    "translation": "일러스트 그룹"
-  },
-  "PCF3WN": {
-    "message": "Change card back",
-    "translation": "카드 뒷면 변경"
-  },
-  "HLSSB8": {
-    "message": "code or name",
-    "translation": "코드 또는 이름"
-  },
-  "ibWa1H": {
-    "message": "Delete {deckName}?",
-    "translation": "{deckName}을(를) 삭제할까요?"
-  },
-  "iu7vH9": {
-    "message": "e.g. CC or LL",
-    "comments": [
-      "Energy letters (C, L…) stay as they are"
-    ],
-    "translation": "예: CC 또는 LL"
-  },
-  "tg9VdO": {
-    "message": "e.g. HIJ",
-    "translation": "예: HIJ"
-  },
-  "3fBsZV": {
-    "message": "e.g. illustration",
-    "translation": "예: 일러스트"
-  },
-  "CMMU03": {
-    "message": "Edit…",
-    "context": "change the keyboard shortcuts",
-    "translation": "편집…"
-  },
-  "I7T1ix": {
-    "message": "Enter an image URL.",
-    "translation": "이미지 URL을 입력하세요."
-  },
-  "8aoXpa": {
-    "message": "Every key is under <0>{0}</0>, in <1>{1}</1>.",
-    "translation": "모든 키는 <1>{1}</1>의 <0>{0}</0>에서 확인할 수 있습니다."
-  },
-  "ZTtNAf": {
-    "message": "HP at least",
-    "translation": "HP 최소"
-  },
-  "LgcKSI": {
-    "message": "HP at most",
-    "translation": "HP 최대"
-  },
-  "fVGc9-": {
-    "message": "https://… or default",
-    "comments": [
-      "Keep 'default' in English: it is what the player types"
-    ],
-    "translation": "https://… 또는 default"
-  },
-  "1pdLQw": {
-    "message": "Image not found",
-    "translation": "이미지를 찾을 수 없습니다"
-  },
-  "15ARIE": {
-    "message": "Image URL too long",
-    "translation": "이미지 URL이 너무 깁니다"
-  },
-  "6hbF9e": {
-    "message": "Image URL: up to {max} characters.",
-    "translation": "이미지 URL은 최대 {max}자입니다."
-  },
-  "MIi4yC": {
-    "message": "Keep it to {max} characters.",
-    "translation": "{max}자 이내로 입력하세요."
-  },
-  "WQg61I": {
-    "message": "Keys",
-    "translation": "키"
-  },
-  "2fhoKU": {
-    "message": "No image",
-    "translation": "이미지 없음"
-  },
-  "xYvd7u": {
-    "message": "Piece position",
-    "translation": "조각 위치"
-  },
-  "rkcP1p": {
-    "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
-    "translation": "포켓몬 조각은 한 더미에, 스타디움 조각은 스타디움에 놓으세요."
-  },
-  "XsrZAv": {
-    "message": "Rename",
-    "context": "button",
-    "translation": "이름 변경"
-  },
-  "Tvyjys": {
-    "message": "Rename deck",
-    "translation": "덱 이름 변경"
-  },
-  "CBOI8H": {
-    "message": "Resume saved game…",
-    "translation": "저장된 게임 이어하기…"
-  },
-  "qoNq2S": {
-    "message": "Same group for each piece",
-    "translation": "각 조각에 같은 그룹 적용"
-  },
-  "4XBjuA": {
-    "message": "Save game",
-    "translation": "게임 저장"
-  },
-  "y4__tG": {
-    "message": "Settings",
-    "context": "shortcut key caption",
-    "translation": "설정"
-  },
-  "ZMr878": {
-    "message": "That image didn't load.",
-    "translation": "이미지를 불러오지 못했습니다."
-  },
-  "PTd_zR": {
-    "message": "Use image",
-    "translation": "이미지 사용"
-  },
-  "sFWtjQ": {
-    "message": "Watch replay…",
-    "translation": "리플레이 보기…"
-  },
-  "qTeX2A": {
-    "message": "Angle",
-    "context": "the table's tilt",
-    "translation": "각도"
-  },
-  "y3FF_5": {
-    "message": "Angle {count}°",
-    "translation": "각도 {count}°"
-  },
-  "tuSC5H": {
-    "message": "Angle in degrees",
-    "translation": "각도(도 단위)"
-  },
-  "4GuGTB": {
-    "message": "Angle…",
-    "context": "the table's tilt",
-    "translation": "각도…"
-  },
-  "WDup2O": {
-    "message": "Animate stacks",
-    "translation": "더미 애니메이션"
-  },
-  "n7tTKf": {
-    "message": "Card images…",
-    "translation": "카드 이미지…"
-  },
-  "SOHyuG": {
-    "message": "Depth…",
-    "context": "how 3D the table looks",
-    "translation": "깊이…"
-  },
-  "hLFd9M": {
-    "message": "Halves",
-    "context": "which halves of the table",
-    "translation": "절반"
-  },
-  "ZWEhc2": {
-    "message": "Halves…",
-    "context": "which halves of the table",
-    "translation": "절반…"
-  },
-  "szYoqS": {
-    "message": "Lift while dragging",
-    "translation": "드래그 중 들어올리기"
-  },
-  "7WBRHp": {
-    "message": "My half {count}% of the table",
-    "translation": "내 영역 테이블의 {count}%"
-  },
-  "gQKQDm": {
-    "message": "My half, in percent",
-    "translation": "내 영역 비율(%)"
-  },
-  "4fxEIx": {
-    "message": "Natural placement",
-    "translation": "자연스러운 배치"
-  },
-  "Ek_k_Q": {
-    "message": "Needs depth",
-    "translation": "깊이 필요"
-  },
-  "UyDcwK": {
-    "message": "Parallax",
-    "translation": "시차 효과"
-  },
-  "Kr1v1U": {
-    "message": "Preview on hover",
-    "translation": "마우스를 올리면 미리보기"
-  },
-  "hlMODd": {
-    "message": "Reset table",
-    "context": "put the table's settings back",
-    "translation": "테이블 초기화"
-  },
-  "4VQN2q": {
-    "message": "Reset table settings",
-    "translation": "테이블 설정 초기화"
-  },
-  "8OT456": {
-    "message": "Settings: {0}",
-    "comments": [
-      "Opens Settings at that section"
-    ],
-    "translation": "설정: {0}"
-  },
-  "ifu0mt": {
-    "message": "Show opponent's hand",
-    "translation": "상대 패 보기"
-  },
-  "Q7FDck": {
-    "message": "Speed",
-    "context": "animation speed",
-    "translation": "속도"
-  },
-  "TMNS59": {
-    "message": "Speed…",
-    "context": "animation speed",
-    "translation": "속도…"
-  },
-  "yI0x30": {
-    "message": "Split…",
-    "context": "the table between the halves",
-    "translation": "분할…"
-  },
-  "Qyf2Yu": {
-    "message": "Style",
-    "context": "the table's look",
-    "translation": "스타일"
-  },
-  "-wDRPC": {
-    "message": "Style…",
-    "context": "the table's look",
-    "translation": "스타일…"
-  },
-  "lW4c-5": {
-    "message": "Thickness",
-    "context": "the cards' thickness",
-    "translation": "두께"
-  },
-  "BPVdia": {
-    "message": "Thickness…",
-    "context": "the cards' thickness",
-    "translation": "두께…"
-  },
-  "GtJbUa": {
-    "message": "Background",
-    "translation": "배경"
-  },
-  "c7lN9x": {
-    "message": "Background from a link",
-    "translation": "링크로 배경 설정"
-  },
-  "tAWTcI": {
-    "message": "Background…",
-    "translation": "배경…"
-  },
-  "vN1y3D": {
-    "message": "Couldn't use that picture.",
-    "translation": "이 사진은 사용할 수 없습니다."
-  },
-  "KtuFGB": {
-    "message": "Custom",
-    "context": "the player's own background",
-    "translation": "사용자 지정"
-  },
-  "qlHGJK": {
-    "message": "Custom image…",
-    "translation": "사용자 지정 이미지…"
-  },
-  "Cn91gu": {
-    "message": "Desk",
-    "context": "the default background",
-    "translation": "책상"
-  },
-  "jSa1_N": {
-    "message": "From a link…",
-    "translation": "링크로 불러오기…"
-  },
-  "T7x7bT": {
-    "message": "Image link",
-    "translation": "이미지 링크"
-  },
-  "YmDThn": {
-    "message": "None",
-    "context": "no background",
-    "translation": "없음"
-  },
-  "IyUrJ9": {
-    "message": "Or drop or paste a picture.",
-    "translation": "사진을 끌어다 놓거나 붙여넣을 수도 있습니다."
-  },
-  "Oo42E3": {
-    "message": "Pictures up to 25 MB.",
-    "translation": "최대 25MB 사진까지 사용할 수 있습니다."
-  },
-  "abE-Jj": {
-    "message": "Preparing picture…",
-    "translation": "사진 준비 중…"
-  },
-  "LE8SQj": {
-    "message": "Wallpaper {0}",
-    "translation": "배경화면 {0}"
   }
 }

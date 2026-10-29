@@ -1033,9 +1033,9 @@
     "message": "<0>{0}</0>: every move, and the chat.",
     "translation": "<0>{0}</0>: ทุกการเล่นและแชท"
   },
-  "NaneTg": {
-    "message": "<0>{0}</0>: the table's look, the theme and the language.",
-    "translation": "<0>{0}</0>: หน้าตาของโต๊ะ ธีม และภาษา"
+  "ifsvhW": {
+    "message": "<0>{0}</0>: Settings, saves and replays, and this tutorial whenever you want it.",
+    "translation": "<0>{0}</0>: การตั้งค่า เซฟและรีเพลย์ รวมถึงบทสอนเล่นนี้ เปิดดูได้ทุกเมื่อ"
   },
   "C0rMdv": {
     "message": "− Damage",
@@ -1302,10 +1302,6 @@
     "context": "keyboard key",
     "translation": "Alt"
   },
-  "JxKdEp": {
-    "message": "Always shown while it holds cards.",
-    "translation": "แสดงตลอดเมื่อมีการ์ดอยู่"
-  },
   "Cpqhqr": {
     "message": "Amber",
     "context": "card back",
@@ -1324,29 +1320,32 @@
     "message": "An attack payable with two Energy",
     "translation": "ท่าต่อสู้ที่ใช้พลังงาน 2 ลูก"
   },
-  "bK6Mfx": {
-    "message": "An image URL, 'blank' or 'theme'.",
-    "comments": [
-      "Keep 'blank' and 'theme' in English: they are what the player types"
-    ],
-    "translation": "URL ของรูปภาพ, 'blank' หรือ 'theme'"
-  },
   "ctNH7H": {
     "message": "Ancient",
     "context": "Pokémon card mechanic",
     "translation": "โบราณ"
   },
-  "Jvmvx4": {
-    "message": "Animate stack height",
-    "translation": "แสดงความสูงของกองด้วยแอนิเมชัน"
+  "qTeX2A": {
+    "message": "Angle",
+    "context": "the table's tilt",
+    "translation": "มุมมอง"
   },
-  "d3fmj9": {
-    "message": "Animation speed",
-    "translation": "ความเร็วแอนิเมชัน"
+  "y3FF_5": {
+    "message": "Angle {count}°",
+    "translation": "มุมมอง {count}°"
   },
-  "vaiuUS": {
-    "message": "Animation speed…",
-    "translation": "ความเร็วแอนิเมชัน…"
+  "tuSC5H": {
+    "message": "Angle in degrees",
+    "translation": "มุมมองเป็นองศา"
+  },
+  "4GuGTB": {
+    "message": "Angle…",
+    "context": "the table's tilt",
+    "translation": "มุมมอง…"
+  },
+  "WDup2O": {
+    "message": "Animate stacks",
+    "translation": "เคลื่อนไหวสำรับ"
   },
   "PR1zNf": {
     "message": "Announce mulligan",
@@ -1366,10 +1365,6 @@
     "message": "App",
     "context": "the app toolbar",
     "translation": "แอป"
-  },
-  "aAIQg2": {
-    "message": "Appearance",
-    "translation": "การแสดงผล"
   },
   "Lx0XC_": {
     "message": "Are you sure you want to leave? Any unsaved game data will be lost.",
@@ -1483,6 +1478,18 @@
   "1JYYQn": {
     "message": "Back to your decks",
     "translation": "กลับไปที่เด็คของคุณ"
+  },
+  "GtJbUa": {
+    "message": "Background",
+    "translation": "พื้นหลัง"
+  },
+  "c7lN9x": {
+    "message": "Background from a link",
+    "translation": "พื้นหลังจากลิงก์"
+  },
+  "tAWTcI": {
+    "message": "Background…",
+    "translation": "พื้นหลัง…"
   },
   "GhQ0ZN": {
     "message": "Backs",
@@ -1681,13 +1688,13 @@
     "message": "Card back for {slotSeat}",
     "translation": "หลังการ์ดของ {slotSeat}"
   },
-  "tii3sv": {
-    "message": "Card image language…",
-    "translation": "ภาษาของภาพการ์ด…"
-  },
   "8xaYE9": {
     "message": "Card images",
     "translation": "ภาพการ์ด"
+  },
+  "n7tTKf": {
+    "message": "Card images…",
+    "translation": "รูปการ์ด…"
   },
   "ymPKi7": {
     "message": "Card preview",
@@ -1709,10 +1716,6 @@
   "kLlRKH": {
     "message": "Card stack preview",
     "translation": "ตัวอย่างกองการ์ด"
-  },
-  "TH1VPk": {
-    "message": "Card thickness",
-    "translation": "ความหนาของการ์ด"
   },
   "Ccpbzh": {
     "message": "Cards",
@@ -1736,10 +1739,6 @@
   "IuDYMd": {
     "message": "Cards in deck",
     "translation": "การ์ดในเด็ค"
-  },
-  "sIpTuZ": {
-    "message": "Change background",
-    "translation": "เปลี่ยนพื้นหลัง"
   },
   "lKPW0c": {
     "message": "Change card back for {slotSeat}",
@@ -2049,6 +2048,10 @@
     "message": "Couldn't start the tutorial. Try again.",
     "translation": "เริ่มบทช่วยสอนไม่ได้ โปรดลองอีกครั้ง"
   },
+  "vN1y3D": {
+    "message": "Couldn't use that picture.",
+    "translation": "ใช้รูปภาพนั้นไม่ได้"
+  },
   "U9OFiD": {
     "message": "cover",
     "context": "the deck's cover card",
@@ -2118,6 +2121,11 @@
     "message": "Current",
     "translation": "ปัจจุบัน"
   },
+  "KtuFGB": {
+    "message": "Custom",
+    "context": "the player's own background",
+    "translation": "กำหนดเอง"
+  },
   "qT5p-1": {
     "message": "Custom card",
     "translation": "การ์ดกำหนดเอง"
@@ -2125,6 +2133,10 @@
   "rlm3op": {
     "message": "Custom flair on Discord & open reign on self-nicknames.",
     "translation": "สิทธิพิเศษบน Discord และเปลี่ยนชื่อเล่นตัวเองได้อย่างอิสระ"
+  },
+  "qlHGJK": {
+    "message": "Custom image…",
+    "translation": "รูปภาพที่กำหนดเอง…"
   },
   "UxNmvS": {
     "message": "Damage and conditions",
@@ -2254,6 +2266,11 @@
     "context": "how 3D the table looks",
     "translation": "ความลึก"
   },
+  "SOHyuG": {
+    "message": "Depth…",
+    "context": "how 3D the table looks",
+    "translation": "ความลึก…"
+  },
   "HlKgQk": {
     "message": "Deselect",
     "translation": "ยกเลิกการเลือก"
@@ -2267,6 +2284,11 @@
     "message": "Design",
     "context": "design a card back",
     "translation": "ออกแบบ"
+  },
+  "Cn91gu": {
+    "message": "Desk",
+    "context": "the default background",
+    "translation": "โต๊ะ"
   },
   "zhmNG6": {
     "message": "Diamonds",
@@ -2497,6 +2519,11 @@
     "message": "Edit deck",
     "translation": "แก้ไขเด็ค"
   },
+  "CMMU03": {
+    "message": "Edit…",
+    "context": "change the keyboard shortcuts",
+    "translation": "แก้ไข…"
+  },
   "eAabzD": {
     "message": "Emblem",
     "context": "sleeve",
@@ -2548,9 +2575,9 @@
     "context": "keyboard key",
     "translation": "Esc"
   },
-  "y3HN5z": {
-    "message": "Every key is under <0>{0}</0>, in the menu.",
-    "translation": "ปุ่มลัดทั้งหมดอยู่ใน <0>{0}</0> ในเมนู"
+  "8aoXpa": {
+    "message": "Every key is under <0>{0}</0>, in <1>{1}</1>.",
+    "translation": "ดูปุ่มทั้งหมดได้ที่ <0>{0}</0> ใน <1>{1}</1>"
   },
   "yJW_id": {
     "message": "Evolution and previous stage",
@@ -2782,6 +2809,10 @@
     "message": "From a link",
     "translation": "จากลิงก์"
   },
+  "jSa1_N": {
+    "message": "From a link…",
+    "translation": "จากลิงก์…"
+  },
   "qIodFG": {
     "message": "Frost",
     "comments": [
@@ -2863,6 +2894,16 @@
   "TALrFf": {
     "message": "GX marker",
     "translation": "มาร์กเกอร์ GX"
+  },
+  "hLFd9M": {
+    "message": "Halves",
+    "context": "which halves of the table",
+    "translation": "ฝั่ง"
+  },
+  "ZWEhc2": {
+    "message": "Halves…",
+    "context": "which halves of the table",
+    "translation": "ฝั่ง…"
   },
   "FpHzzD": {
     "message": "Hand",
@@ -3025,13 +3066,6 @@
     "message": "HP and retreat",
     "translation": "HP และการหนี"
   },
-  "OaHYvQ": {
-    "message": "https://…, blank or theme",
-    "comments": [
-      "Keep 'blank' and 'theme' in English: they are what the player types"
-    ],
-    "translation": "https://…, blank หรือ theme"
-  },
   "hlQWeh": {
     "message": "I publicly launched the sim on Christmas, and it has already grown an incredible community of players and developers. There's a lot more to do, and I could use as much help as I can get!",
     "comments": [
@@ -3054,9 +3088,9 @@
     "message": "Illustrator",
     "translation": "นักวาดภาพประกอบ"
   },
-  "VyUuZb": {
-    "message": "Image URL",
-    "translation": "URL รูปภาพ"
+  "T7x7bT": {
+    "message": "Image link",
+    "translation": "ลิงก์รูปภาพ"
   },
   "EUsCHg": {
     "message": "Images",
@@ -3193,6 +3227,10 @@
     "message": "Keyboard shortcuts",
     "translation": "แป้นพิมพ์ลัด"
   },
+  "WQg61I": {
+    "message": "Keys",
+    "translation": "ปุ่มลัด"
+  },
   "vFjc7h": {
     "message": "Keys",
     "context": "the keyboard map with no modifier held",
@@ -3217,10 +3255,6 @@
   "2S2hKS": {
     "message": "Language…",
     "translation": "ภาษา…"
-  },
-  "pOmqOF": {
-    "message": "Large card preview on hover",
-    "translation": "แสดงตัวอย่างการ์ดขนาดใหญ่เมื่อวางเมาส์"
   },
   "NMzrpD": {
     "message": "Larger cards",
@@ -3286,9 +3320,9 @@
     "context": "Pokémon stage",
     "translation": "เลเวลอัป"
   },
-  "Fu5KED": {
-    "message": "Lift cards while dragging",
-    "translation": "ยกการ์ดขึ้นขณะลาก"
+  "szYoqS": {
+    "message": "Lift while dragging",
+    "translation": "ยกการ์ดขณะลาก"
   },
   "Lnx2DC": {
     "message": "Lightning",
@@ -3744,9 +3778,17 @@
     "message": "My eternal thanks!!!!!",
     "translation": "ขอบคุณมากๆ ตลอดไป!!!!!"
   },
+  "7WBRHp": {
+    "message": "My half {count}% of the table",
+    "translation": "ฝั่งของฉัน {count}% ของโต๊ะ"
+  },
   "KJeM1I": {
     "message": "My half {percent}% of the table",
     "translation": "ฝั่งของฉัน {percent}% ของโต๊ะ"
+  },
+  "gQKQDm": {
+    "message": "My half, in percent",
+    "translation": "ฝั่งของฉัน เป็นเปอร์เซ็นต์"
   },
   "6YtxFj": {
     "message": "Name",
@@ -3773,9 +3815,9 @@
     "message": "Name: up to {max} characters.",
     "translation": "ชื่อ: ไม่เกิน {max} ตัวอักษร"
   },
-  "OzETXo": {
-    "message": "Natural card placement",
-    "translation": "วางการ์ดแบบเป็นธรรมชาติ"
+  "4fxEIx": {
+    "message": "Natural placement",
+    "translation": "วางแบบธรรมชาติ"
   },
   "hmYrgt": {
     "message": "Navy",
@@ -3785,6 +3827,10 @@
   "rf9azy": {
     "message": "Needs at least one Basic Pokémon.",
     "translation": "ต้องมีโปเกมอนพื้นฐานอย่างน้อยหนึ่งใบ"
+  },
+  "Ek_k_Q": {
+    "message": "Needs depth",
+    "translation": "ต้องใช้ความลึก"
   },
   "W_gspM": {
     "message": "New deck",
@@ -3913,6 +3959,11 @@
   "lChsa8": {
     "message": "No tournament decks right now.",
     "translation": "ขณะนี้ไม่มีเด็คทัวร์นาเมนต์"
+  },
+  "YmDThn": {
+    "message": "None",
+    "context": "no background",
+    "translation": "ไม่มี"
   },
   "6psMRl": {
     "message": "None",
@@ -4170,6 +4221,10 @@
     "message": "or a link",
     "translation": "หรือใช้ลิงก์"
   },
+  "IyUrJ9": {
+    "message": "Or drop or paste a picture.",
+    "translation": "หรือวางหรือลากรูปภาพมาที่นี่"
+  },
   "l2I52S": {
     "message": "or drop or paste one here",
     "translation": "หรือลากมาวางหรือวางรูปที่นี่"
@@ -4201,6 +4256,10 @@
     "message": "Page Up",
     "context": "keyboard key",
     "translation": "Page Up"
+  },
+  "UyDcwK": {
+    "message": "Parallax",
+    "translation": "พาราแลกซ์"
   },
   "xun4kD": {
     "message": "Paralyzed",
@@ -4295,6 +4354,10 @@
     "message": "Picture link: {label}",
     "translation": "ลิงก์รูปภาพ: {label}"
   },
+  "Oo42E3": {
+    "message": "Pictures up to 25 MB.",
+    "translation": "รูปภาพขนาดไม่เกิน 25 MB"
+  },
   "BX1rQx": {
     "message": "Pieces",
     "translation": "ชิ้นส่วน"
@@ -4369,10 +4432,6 @@
     "message": "Pocket decks have no Energy cards.",
     "translation": "เด็ค Pocket ไม่มีการ์ดพลังงาน"
   },
-  "S-nXVo": {
-    "message": "Pointer parallax",
-    "translation": "พารัลแลกซ์ตามตัวชี้"
-  },
   "95vGpJ": {
     "message": "Poisoned",
     "context": "special condition",
@@ -4395,6 +4454,10 @@
   "RNaprm": {
     "message": "Pokémon cards",
     "translation": "การ์ดโปเกมอน"
+  },
+  "abE-Jj": {
+    "message": "Preparing picture…",
+    "translation": "กำลังเตรียมรูปภาพ…"
   },
   "_0G332": {
     "message": "Press {keys} for <0>shortcuts</0>.",
@@ -4459,6 +4522,10 @@
       "{cardName} is a card; the button opens it large."
     ],
     "translation": "ดูตัวอย่าง {cardName}"
+  },
+  "Kr1v1U": {
+    "message": "Preview on hover",
+    "translation": "แสดงตัวอย่างเมื่อเลื่อนเมาส์ผ่าน"
   },
   "Lxdrcy": {
     "message": "Previous replay action",
@@ -4736,9 +4803,14 @@
     "message": "Reset both sides",
     "translation": "รีเซ็ตทั้งสองฝั่ง"
   },
-  "xNq549": {
-    "message": "Reset table view",
-    "translation": "รีเซ็ตมุมมองโต๊ะ"
+  "hlMODd": {
+    "message": "Reset table",
+    "context": "put the table's settings back",
+    "translation": "รีเซ็ตโต๊ะ"
+  },
+  "4VQN2q": {
+    "message": "Reset table settings",
+    "translation": "รีเซ็ตการตั้งค่าโต๊ะ"
   },
   "1IWc1n": {
     "message": "Reset to",
@@ -4777,8 +4849,8 @@
     "context": "Pokémon stage",
     "translation": "ฟื้นคืนชีพ"
   },
-  "Dwpy1Z": {
-    "message": "Resume a saved game…",
+  "CBOI8H": {
+    "message": "Resume saved game…",
     "translation": "เล่นเกมที่บันทึกไว้ต่อ…"
   },
   "X1Npk-": {
@@ -4996,9 +5068,9 @@
     "message": "Save and edit {title}",
     "translation": "บันทึกและแก้ไข {title}"
   },
-  "4ibQSn": {
-    "message": "Save online game",
-    "translation": "บันทึกเกมออนไลน์"
+  "4XBjuA": {
+    "message": "Save game",
+    "translation": "บันทึกเกม"
   },
   "OnrVKw": {
     "message": "Saved",
@@ -5169,6 +5241,18 @@
     ],
     "translation": "การตั้งค่า"
   },
+  "y4__tG": {
+    "message": "Settings",
+    "context": "shortcut key caption",
+    "translation": "การตั้งค่า"
+  },
+  "8OT456": {
+    "message": "Settings: {0}",
+    "comments": [
+      "Opens Settings at that section"
+    ],
+    "translation": "การตั้งค่า: {0}"
+  },
   "Z8lGw6": {
     "message": "Share",
     "translation": "แชร์"
@@ -5206,15 +5290,6 @@
     "message": "Shoutout in the next changelog.",
     "translation": "ขอบคุณพิเศษในบันทึกการเปลี่ยนแปลงครั้งถัดไป"
   },
-  "8vETh9": {
-    "message": "Show",
-    "translation": "แสดง"
-  },
-  "qTlQOF": {
-    "message": "Show",
-    "context": "which halves of the table",
-    "translation": "แสดง"
-  },
   "nogPed": {
     "message": "Show",
     "context": "which pane to show",
@@ -5228,10 +5303,6 @@
     "message": "Show every print",
     "translation": "แสดงทุกเวอร์ชัน"
   },
-  "UXsj50": {
-    "message": "Show halves…",
-    "translation": "แสดงครึ่งโต๊ะ…"
-  },
   "nyTrvq": {
     "message": "Show keyboard",
     "translation": "แสดงคีย์บอร์ด"
@@ -5243,6 +5314,10 @@
   "FBwNsr": {
     "message": "Show one per card",
     "translation": "แสดงอย่างละหนึ่งใบ"
+  },
+  "ifu0mt": {
+    "message": "Show opponent's hand",
+    "translation": "แสดงการ์ดบนมือของฝ่ายตรงข้าม"
   },
   "NQ5xRS": {
     "message": "Show the deck as",
@@ -5477,10 +5552,25 @@
     ],
     "translation": "งานพิเศษ"
   },
+  "Q7FDck": {
+    "message": "Speed",
+    "context": "animation speed",
+    "translation": "ความเร็ว"
+  },
+  "TMNS59": {
+    "message": "Speed…",
+    "context": "animation speed",
+    "translation": "ความเร็ว…"
+  },
   "h5EwqW": {
     "message": "Split",
     "context": "the table between the halves",
     "translation": "แบ่ง"
+  },
+  "yI0x30": {
+    "message": "Split…",
+    "context": "the table between the halves",
+    "translation": "สัดส่วน…"
   },
   "Y6mTBn": {
     "message": "SPONSOR TIERS",
@@ -5607,6 +5697,16 @@
     "context": "sleeve pattern",
     "translation": "ลายทาง"
   },
+  "Qyf2Yu": {
+    "message": "Style",
+    "context": "the table's look",
+    "translation": "สไตล์"
+  },
+  "-wDRPC": {
+    "message": "Style…",
+    "context": "the table's look",
+    "translation": "สไตล์…"
+  },
   "yqeLY3": {
     "message": "Supporter",
     "context": "Trainer card kind",
@@ -5668,26 +5768,6 @@
     "message": "Table",
     "context": "shortcut group",
     "translation": "โต๊ะ"
-  },
-  "viTXNi": {
-    "message": "Table angle",
-    "translation": "มุมของโต๊ะ"
-  },
-  "eqSg9V": {
-    "message": "Table style",
-    "translation": "สไตล์โต๊ะ"
-  },
-  "Z3nJeW": {
-    "message": "Table style…",
-    "translation": "สไตล์โต๊ะ…"
-  },
-  "f9jgd2": {
-    "message": "Table view",
-    "translation": "มุมมองโต๊ะ"
-  },
-  "cHwqmY": {
-    "message": "Table view…",
-    "translation": "มุมมองโต๊ะ…"
   },
   "Qd2uqp": {
     "message": "Tabletop",
@@ -5957,6 +6037,16 @@
     "message": "They bring up the next: drag a <0>{0}</0> from their Bench to their Active Spot.",
     "translation": "อีกฝ่ายนำตัวถัดไปขึ้นมา: ลาก <0>{0}</0> จากเบนช์ของอีกฝ่ายไปที่ตำแหน่งต่อสู้"
   },
+  "lW4c-5": {
+    "message": "Thickness",
+    "context": "the cards' thickness",
+    "translation": "ความหนา"
+  },
+  "BPVdia": {
+    "message": "Thickness…",
+    "context": "the cards' thickness",
+    "translation": "ความหนา…"
+  },
   "WsAkgd": {
     "message": "This browser won't keep your decks after you close the page.",
     "translation": "เบราว์เซอร์นี้จะไม่เก็บเด็คของคุณไว้หลังปิดหน้านี้"
@@ -5968,10 +6058,6 @@
   "5HIoIb": {
     "message": "This invitation was used or has expired. Ask for a new one.",
     "translation": "คำเชิญนี้ถูกใช้แล้วหรือหมดอายุ ขอคำเชิญใหม่"
-  },
-  "L7LU5x": {
-    "message": "This tutorial waits in the <0>menu</0> whenever you want it.",
-    "translation": "บทช่วยสอนนี้อยู่ใน<0>เมนู</0> เปิดดูได้ทุกเมื่อ"
   },
   "YcMvP7": {
     "message": "Tilted on wide screens, flat on phones.",
@@ -6301,10 +6387,6 @@
     "message": "Use background",
     "translation": "ใช้พื้นหลัง"
   },
-  "kqaF8V": {
-    "message": "Use default",
-    "translation": "ใช้ค่าเริ่มต้น"
-  },
   "pEHkP7": {
     "message": "Use GX attack",
     "translation": "ใช้ท่าต่อสู้ GX"
@@ -6369,8 +6451,12 @@
     "message": "VSTAR marker",
     "translation": "มาร์กเกอร์ VSTAR"
   },
-  "inq7iN": {
-    "message": "Watch a replay…",
+  "LE8SQj": {
+    "message": "Wallpaper {0}",
+    "translation": "วอลเปเปอร์ {0}"
+  },
+  "sFWtjQ": {
+    "message": "Watch replay…",
     "translation": "ดูรีเพลย์…"
   },
   "2kl5Uf": {
@@ -6501,332 +6587,5 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "เส้นขอบโซน"
-  },
-  "ifsvhW": {
-    "message": "<0>{0}</0>: Settings, saves and replays, and this tutorial whenever you want it.",
-    "translation": "<0>{0}</0>: การตั้งค่า เซฟและรีเพลย์ รวมถึงบทสอนเล่นนี้ เปิดดูได้ทุกเมื่อ"
-  },
-  "sDYhDt": {
-    "message": "A deck needs a name.",
-    "translation": "เด็คต้องมีชื่อ"
-  },
-  "hQE7TV": {
-    "message": "An image URL, or 'default'.",
-    "comments": [
-      "Keep 'default' in English: it is what the player types"
-    ],
-    "translation": "URL ของรูปภาพ หรือ 'default'"
-  },
-  "8zanjC": {
-    "message": "Artwork group",
-    "translation": "กลุ่มภาพการ์ด"
-  },
-  "PCF3WN": {
-    "message": "Change card back",
-    "translation": "เปลี่ยนหลังการ์ด"
-  },
-  "HLSSB8": {
-    "message": "code or name",
-    "translation": "รหัสหรือชื่อ"
-  },
-  "ibWa1H": {
-    "message": "Delete {deckName}?",
-    "translation": "ลบ {deckName} หรือไม่"
-  },
-  "iu7vH9": {
-    "message": "e.g. CC or LL",
-    "comments": [
-      "Energy letters (C, L…) stay as they are"
-    ],
-    "translation": "เช่น CC หรือ LL"
-  },
-  "tg9VdO": {
-    "message": "e.g. HIJ",
-    "translation": "เช่น HIJ"
-  },
-  "3fBsZV": {
-    "message": "e.g. illustration",
-    "translation": "เช่น illustration"
-  },
-  "CMMU03": {
-    "message": "Edit…",
-    "context": "change the keyboard shortcuts",
-    "translation": "แก้ไข…"
-  },
-  "I7T1ix": {
-    "message": "Enter an image URL.",
-    "translation": "กรุณาใส่ URL รูปภาพ"
-  },
-  "8aoXpa": {
-    "message": "Every key is under <0>{0}</0>, in <1>{1}</1>.",
-    "translation": "ดูปุ่มทั้งหมดได้ที่ <0>{0}</0> ใน <1>{1}</1>"
-  },
-  "ZTtNAf": {
-    "message": "HP at least",
-    "translation": "HP อย่างน้อย"
-  },
-  "LgcKSI": {
-    "message": "HP at most",
-    "translation": "HP ไม่เกิน"
-  },
-  "fVGc9-": {
-    "message": "https://… or default",
-    "comments": [
-      "Keep 'default' in English: it is what the player types"
-    ],
-    "translation": "https://… หรือ default"
-  },
-  "1pdLQw": {
-    "message": "Image not found",
-    "translation": "ไม่พบรูปภาพ"
-  },
-  "15ARIE": {
-    "message": "Image URL too long",
-    "translation": "URL รูปภาพยาวเกินไป"
-  },
-  "6hbF9e": {
-    "message": "Image URL: up to {max} characters.",
-    "translation": "URL รูปภาพ: ไม่เกิน {max} ตัวอักษร"
-  },
-  "MIi4yC": {
-    "message": "Keep it to {max} characters.",
-    "translation": "ใช้ไม่เกิน {max} อักขระ"
-  },
-  "WQg61I": {
-    "message": "Keys",
-    "translation": "ปุ่มลัด"
-  },
-  "2fhoKU": {
-    "message": "No image",
-    "translation": "ไม่มีรูปภาพ"
-  },
-  "xYvd7u": {
-    "message": "Piece position",
-    "translation": "ตำแหน่งชิ้นส่วน"
-  },
-  "rkcP1p": {
-    "message": "Put Pokémon pieces in one stack, Stadium pieces in the Stadium.",
-    "translation": "รวมชิ้นส่วนโปเกมอนไว้ในกองเดียว และชิ้นส่วนสเตเดียมไว้ในสเตเดียม"
-  },
-  "XsrZAv": {
-    "message": "Rename",
-    "context": "button",
-    "translation": "เปลี่ยนชื่อ"
-  },
-  "Tvyjys": {
-    "message": "Rename deck",
-    "translation": "เปลี่ยนชื่อเด็ค"
-  },
-  "CBOI8H": {
-    "message": "Resume saved game…",
-    "translation": "เล่นเกมที่บันทึกไว้ต่อ…"
-  },
-  "qoNq2S": {
-    "message": "Same group for each piece",
-    "translation": "กลุ่มเดียวกันสำหรับแต่ละชิ้น"
-  },
-  "4XBjuA": {
-    "message": "Save game",
-    "translation": "บันทึกเกม"
-  },
-  "y4__tG": {
-    "message": "Settings",
-    "context": "shortcut key caption",
-    "translation": "การตั้งค่า"
-  },
-  "ZMr878": {
-    "message": "That image didn't load.",
-    "translation": "โหลดรูปภาพนั้นไม่สำเร็จ"
-  },
-  "PTd_zR": {
-    "message": "Use image",
-    "translation": "ใช้รูปภาพ"
-  },
-  "sFWtjQ": {
-    "message": "Watch replay…",
-    "translation": "ดูรีเพลย์…"
-  },
-  "qTeX2A": {
-    "message": "Angle",
-    "context": "the table's tilt",
-    "translation": "มุมมอง"
-  },
-  "y3FF_5": {
-    "message": "Angle {count}°",
-    "translation": "มุมมอง {count}°"
-  },
-  "tuSC5H": {
-    "message": "Angle in degrees",
-    "translation": "มุมมองเป็นองศา"
-  },
-  "4GuGTB": {
-    "message": "Angle…",
-    "context": "the table's tilt",
-    "translation": "มุมมอง…"
-  },
-  "WDup2O": {
-    "message": "Animate stacks",
-    "translation": "เคลื่อนไหวสำรับ"
-  },
-  "n7tTKf": {
-    "message": "Card images…",
-    "translation": "รูปการ์ด…"
-  },
-  "SOHyuG": {
-    "message": "Depth…",
-    "context": "how 3D the table looks",
-    "translation": "ความลึก…"
-  },
-  "hLFd9M": {
-    "message": "Halves",
-    "context": "which halves of the table",
-    "translation": "ฝั่ง"
-  },
-  "ZWEhc2": {
-    "message": "Halves…",
-    "context": "which halves of the table",
-    "translation": "ฝั่ง…"
-  },
-  "szYoqS": {
-    "message": "Lift while dragging",
-    "translation": "ยกการ์ดขณะลาก"
-  },
-  "7WBRHp": {
-    "message": "My half {count}% of the table",
-    "translation": "ฝั่งของฉัน {count}% ของโต๊ะ"
-  },
-  "gQKQDm": {
-    "message": "My half, in percent",
-    "translation": "ฝั่งของฉัน เป็นเปอร์เซ็นต์"
-  },
-  "4fxEIx": {
-    "message": "Natural placement",
-    "translation": "วางแบบธรรมชาติ"
-  },
-  "Ek_k_Q": {
-    "message": "Needs depth",
-    "translation": "ต้องใช้ความลึก"
-  },
-  "UyDcwK": {
-    "message": "Parallax",
-    "translation": "พาราแลกซ์"
-  },
-  "Kr1v1U": {
-    "message": "Preview on hover",
-    "translation": "แสดงตัวอย่างเมื่อเลื่อนเมาส์ผ่าน"
-  },
-  "hlMODd": {
-    "message": "Reset table",
-    "context": "put the table's settings back",
-    "translation": "รีเซ็ตโต๊ะ"
-  },
-  "4VQN2q": {
-    "message": "Reset table settings",
-    "translation": "รีเซ็ตการตั้งค่าโต๊ะ"
-  },
-  "8OT456": {
-    "message": "Settings: {0}",
-    "comments": [
-      "Opens Settings at that section"
-    ],
-    "translation": "การตั้งค่า: {0}"
-  },
-  "ifu0mt": {
-    "message": "Show opponent's hand",
-    "translation": "แสดงการ์ดบนมือของฝ่ายตรงข้าม"
-  },
-  "Q7FDck": {
-    "message": "Speed",
-    "context": "animation speed",
-    "translation": "ความเร็ว"
-  },
-  "TMNS59": {
-    "message": "Speed…",
-    "context": "animation speed",
-    "translation": "ความเร็ว…"
-  },
-  "yI0x30": {
-    "message": "Split…",
-    "context": "the table between the halves",
-    "translation": "สัดส่วน…"
-  },
-  "Qyf2Yu": {
-    "message": "Style",
-    "context": "the table's look",
-    "translation": "สไตล์"
-  },
-  "-wDRPC": {
-    "message": "Style…",
-    "context": "the table's look",
-    "translation": "สไตล์…"
-  },
-  "lW4c-5": {
-    "message": "Thickness",
-    "context": "the cards' thickness",
-    "translation": "ความหนา"
-  },
-  "BPVdia": {
-    "message": "Thickness…",
-    "context": "the cards' thickness",
-    "translation": "ความหนา…"
-  },
-  "GtJbUa": {
-    "message": "Background",
-    "translation": "พื้นหลัง"
-  },
-  "c7lN9x": {
-    "message": "Background from a link",
-    "translation": "พื้นหลังจากลิงก์"
-  },
-  "tAWTcI": {
-    "message": "Background…",
-    "translation": "พื้นหลัง…"
-  },
-  "vN1y3D": {
-    "message": "Couldn't use that picture.",
-    "translation": "ใช้รูปภาพนั้นไม่ได้"
-  },
-  "KtuFGB": {
-    "message": "Custom",
-    "context": "the player's own background",
-    "translation": "กำหนดเอง"
-  },
-  "qlHGJK": {
-    "message": "Custom image…",
-    "translation": "รูปภาพที่กำหนดเอง…"
-  },
-  "Cn91gu": {
-    "message": "Desk",
-    "context": "the default background",
-    "translation": "โต๊ะ"
-  },
-  "jSa1_N": {
-    "message": "From a link…",
-    "translation": "จากลิงก์…"
-  },
-  "T7x7bT": {
-    "message": "Image link",
-    "translation": "ลิงก์รูปภาพ"
-  },
-  "YmDThn": {
-    "message": "None",
-    "context": "no background",
-    "translation": "ไม่มี"
-  },
-  "IyUrJ9": {
-    "message": "Or drop or paste a picture.",
-    "translation": "หรือวางหรือลากรูปภาพมาที่นี่"
-  },
-  "Oo42E3": {
-    "message": "Pictures up to 25 MB.",
-    "translation": "รูปภาพขนาดไม่เกิน 25 MB"
-  },
-  "abE-Jj": {
-    "message": "Preparing picture…",
-    "translation": "กำลังเตรียมรูปภาพ…"
-  },
-  "LE8SQj": {
-    "message": "Wallpaper {0}",
-    "translation": "วอลเปเปอร์ {0}"
   }
 }
