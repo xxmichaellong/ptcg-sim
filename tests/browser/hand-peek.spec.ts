@@ -3,6 +3,7 @@ import {
   expect,
   test,
   type CDPSession,
+  type Locator,
   type Page,
 } from '@playwright/test';
 
@@ -57,23 +58,29 @@ const handCount = (page: Page) =>
   );
 
 /** A random deck on the near seat, set up, and a hand of `size`. */
-const dealBigHand = async (page: Page, size = 20): Promise<void> => {
+const dealBigHand = async (
+  page: Page,
+  size = 20,
+  input: 'touch' | 'mouse' = 'touch'
+): Promise<void> => {
+  const press = (locator: Locator) =>
+    input === 'touch' ? locator.tap() : locator.click();
   const plus = page.locator(
     '[data-load-deck-player][aria-label="Load a deck"]'
   );
-  await plus.first().tap();
+  await press(plus.first());
   await expect(
     page.locator('.ptcgsim-deck-layer[data-open="true"]')
   ).toBeVisible();
-  await page.locator('#deckSurpriseButton').tap();
+  await press(page.locator('#deckSurpriseButton'));
   await expect(
     page.locator('#nativeDeckBuilderSummaryPanel')
   ).not.toHaveAttribute('data-card-count', '0');
-  await page.locator('#deckBackButton').tap();
+  await press(page.locator('#deckBackButton'));
   await expect(
     page.locator('.ptcgsim-deck-layer[data-open="false"]')
   ).toBeAttached();
-  await page.locator('#setupButton').tap();
+  await press(page.locator('#setupButton'));
   await expect.poll(() => handCount(page)).toBe(7);
   await idle(page);
   // The digit keys draw that many cards.
@@ -316,5 +323,48 @@ test.describe('a tablet', () => {
     await dealBigHand(page);
     await peekAndPlay(page);
     expect(errors).toEqual([]);
+  });
+});
+
+test.describe('a laptop with a touch screen', () => {
+  // A mouse's context (hover rules apply); the finger's touches come
+  // straight from the input pipeline.
+  test.use({ viewport: { width: 1280, height: 720 } });
+
+  test('a finger raises the card the mouse rests on as high as on a phone', async ({
+    page,
+  }) => {
+    test.setTimeout(120_000);
+    await openSoloTable(page, 'flat');
+    const cdp = await page.context().newCDPSession(page);
+    expect(
+      await page.evaluate(
+        () => matchMedia('(hover: hover) and (pointer: fine)').matches
+      )
+    ).toBe(true);
+    await dealBigHand(page, 30, 'mouse');
+    expect(await crowded(page)).toBe(true);
+    const card = (await handCards(page))[12]!;
+    const at = { x: card.x + 3, y: card.y + Math.min(card.height * 0.4, 40) };
+    await page.mouse.move(at.x, at.y);
+    await touch(cdp, 'touchStart', at);
+    await expect.poll(() => peeked(page)).toEqual([card.id]);
+    const raised = page.locator('.ptcgsim-card[data-peek]');
+    // The peek's own rise, not the mouse hover's smaller one: over the
+    // piles' counts and clear of the finger.
+    await expect
+      .poll(() =>
+        raised.evaluate((element) => getComputedStyle(element).zIndex)
+      )
+      .toBe('9300');
+    await expect
+      .poll(async () => {
+        const box = (await raised
+          .locator('.ptcgsim-card__body')
+          .boundingBox())!;
+        return box.y + box.height <= at.y;
+      })
+      .toBe(true);
+    await touch(cdp, 'touchEnd');
   });
 });
