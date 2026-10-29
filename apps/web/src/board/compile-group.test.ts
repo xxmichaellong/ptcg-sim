@@ -300,6 +300,25 @@ describe('a group moved by a key', () => {
     expect(compileGroup(solo, halves, { kind: 'stadium' }).ok).toBe(true);
   });
 
+  it('reveals and hides cards in a window of cards, as each would alone', () => {
+    const table = groupTable();
+    const looked = table.put(BLUE, 'hand', {}, {}) as ViewCardId[];
+    const view = intoWindow(table.view, BLUE, looked);
+    const context = contextOf(view);
+    const shown = compiled(context, looked, {
+      kind: 'reveal',
+      revealed: true,
+    });
+    const window = after(view, shown).workAreas[BLUE]!.inspection!.cards;
+    expect(
+      window.map((card) => card.kind === 'known' && card.publiclyRevealed)
+    ).toEqual([true, true]);
+    const revealed = contextOf(after(view, shown));
+    expect(
+      compileGroup(revealed, looked, { kind: 'reveal', revealed: false }).ok
+    ).toBe(true);
+  });
+
   it('leaves out cards already there, and says so when every one is', () => {
     const table = groupTable();
     const discard = table.zoneId(BLUE, 'discard');

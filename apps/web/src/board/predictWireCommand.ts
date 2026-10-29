@@ -556,6 +556,34 @@ const updateCard = (
       });
     }
   }
+  // A card in a window of cards: looked at, or come off a Pokémon.
+  const each = (cards: readonly ViewCard[]) =>
+    cards.map((card) => (card.id === cardId ? update(card) : card));
+  const holds = (cards: readonly ViewCard[]) =>
+    cards.some((card) => card.id === cardId);
+  for (const [playerId, areas] of Object.entries(view.workAreas)) {
+    const { inspection, attachmentResolution: staged } = areas;
+    if (inspection && holds(inspection.cards))
+      return withWorkAreas(view, playerId as PlayerId, {
+        ...areas,
+        inspection: { ...inspection, cards: each(inspection.cards) },
+      });
+    if (
+      staged &&
+      (holds(staged.cards) ||
+        holds(staged.evolutionCards) ||
+        holds(staged.attachmentCards))
+    )
+      return withWorkAreas(view, playerId as PlayerId, {
+        ...areas,
+        attachmentResolution: {
+          ...staged,
+          cards: each(staged.cards),
+          evolutionCards: each(staged.evolutionCards),
+          attachmentCards: each(staged.attachmentCards),
+        },
+      });
+  }
   return null;
 };
 
