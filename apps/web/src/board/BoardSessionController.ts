@@ -193,6 +193,13 @@ export interface BoardSessionControllerState {
    * selection mode if it was on.
    */
   readonly selectionRestore?: SelectionRestore | null;
+  /**
+   * Cards a reveal, hide or turn of face this client sent: the room may
+   * renew their aliases where they lie, and only these does the selection
+   * follow to a new alias (`followRenamedCards`). Let go of once nothing
+   * is waiting on the room.
+   */
+  readonly aliasRenewals?: readonly ViewCardId[];
 }
 
 /** A selection to give back, and whether touch's selection mode was on. */
@@ -665,7 +672,9 @@ const clearLocalPresentation = (
   | 'overlays'
   | 'groupSubmissions'
   | 'selectionRestore'
+  | 'aliasRenewals'
 > => ({
+  aliasRenewals: undefined,
   presentation: presentationIsEmpty(state.presentation)
     ? state.presentation
     : emptyPresentation(),
@@ -802,23 +811,33 @@ const selectionContextOf = (
 
 /** Several items selected: the group's paths, not one card's. */
 /**
- * Cards the room gave a new alias where they lie (hidden again, their
- * visibility renewed): each is the card now in its place, new to the
- * table and of its printing, the place holding as many cards as before.
- * The selection follows them there, as it follows a Pokémon that evolved.
+ * Cards the room gave a new alias where they lie (hidden again by this
+ * client, their visibility renewed): each is the card now in its place --
+ * a zone, a window of cards, a Pokémon's line or what is attached to it --
+ * new to the table and of its printing, the place holding as many cards
+ * as before. The selection follows them there, as it follows a Pokémon
+ * that evolved.
  */
 const followRenamedCards = (
   previous: MatchViewState | undefined,
   view: MatchViewState,
-  cardIds: readonly ViewCardId[]
+  cardIds: readonly ViewCardId[],
+  renewals: readonly ViewCardId[] | undefined
 ): readonly ViewCardId[] => {
-  if (!previous || cardIds.length === 0) return cardIds;
+  if (!previous || !renewals?.length || cardIds.length === 0) return cardIds;
   const now = publicCardIds(view);
-  if (cardIds.every((cardId) => now.has(cardId))) return cardIds;
+  // Only a card this client changed the visibility of: a copy swapped
+  // into a card's place by someone else is another card.
+  if (cardIds.every((cardId) => now.has(cardId) || !renewals.includes(cardId)))
+    return cardIds;
   const before = publicCardIds(previous);
   const places = (of: MatchViewState) =>
     new Map<string, readonly ViewCard[]>([
       ...Object.values(of.zones).map((zone) => [zone.id, zone.cards] as const),
+      ...Object.values(of.stacks).flatMap((stack) => [
+        [`${stack.id}\u0000line`, stack.evolutionCards] as const,
+        [`${stack.id}\u0000attached`, stack.attachmentCards] as const,
+      ]),
       ...Object.values(of.workAreas).flatMap((areas) => [
         ...(areas.inspection
           ? [[areas.inspection.id, areas.inspection.cards] as const]
@@ -840,7 +859,12 @@ const followRenamedCards = (
     if (!there || there.length !== cards.length) continue;
     cards.forEach((card, index) => {
       const next = there[index]!;
-      if (now.has(card.id) || before.has(next.id) || card.kind !== next.kind)
+      if (
+        !renewals.includes(card.id) ||
+        now.has(card.id) ||
+        before.has(next.id) ||
+        card.kind !== next.kind
+      )
         return;
       if (
         card.kind === 'known' &&
@@ -893,6 +917,7 @@ const reconcilePresentation = (
   | 'overlays'
   | 'groupSubmissions'
   | 'selectionRestore'
+  | 'aliasRenewals'
 > => {
   const openedZoneId =
     state.presentation.openedZoneId &&
@@ -919,7 +944,8 @@ const reconcilePresentation = (
   const followed = followRenamedCards(
     state.view,
     view,
-    state.presentation.selection
+    state.presentation.selection,
+    state.aliasRenewals
   );
   const shownSelection = followed.filter(
     (cardId) => stillShown(cardId) !== null
@@ -1046,6 +1072,8 @@ const reconcilePresentation = (
       pendingCommandIds
     ),
     selectionRestore: null,
+    // Waited on no longer once the room has answered everything sent.
+    aliasRenewals: pendingCommandIds?.length ? state.aliasRenewals : undefined,
   };
 };
 
@@ -3094,7 +3122,45 @@ const dismissPresentation = (
   );
 };
 
+/**
+ * The cards a command sent changes the visibility of: a reveal, a hide or
+ * a turn of face, alone or among a group's steps.
+ */
+const visibilityChangedBy = (
+  effects: readonly BoardSessionControllerEffect[]
+): readonly ViewCardId[] =>
+  effects.flatMap((effect) => {
+    if (effect.kind !== 'SubmitCommand') return [];
+    const { command } = effect;
+    const steps = command.type === 'ApplyCardSteps' ? command.steps : [command];
+    return steps.flatMap((step): ViewCardId[] =>
+      step.type === 'SetPublicReveal' || step.type === 'SetCardFace'
+        ? [step.cardId as ViewCardId]
+        : step.type === 'SetZonePublicReveal'
+          ? step.expectedCardIds.map((cardId) => cardId as ViewCardId)
+          : []
+    );
+  });
+
 export const reduceBoardSessionController = (
+  state: BoardSessionControllerState,
+  action: BoardSessionControllerAction,
+  dependencies: BoardSessionControllerDependencies
+): BoardSessionControllerReduction => {
+  const reduction = reduceAction(state, action, dependencies);
+  const changed = visibilityChangedBy(reduction.effects);
+  return changed.length === 0
+    ? reduction
+    : {
+        ...reduction,
+        state: {
+          ...reduction.state,
+          aliasRenewals: [...(reduction.state.aliasRenewals ?? []), ...changed],
+        },
+      };
+};
+
+const reduceAction = (
   state: BoardSessionControllerState,
   action: BoardSessionControllerAction,
   dependencies: BoardSessionControllerDependencies

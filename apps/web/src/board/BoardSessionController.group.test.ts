@@ -441,6 +441,92 @@ describe('a selection of several cards (ADR-042)', () => {
     expect(board.state.presentation.selectionMode).toBe(true);
   });
 
+  it('keeps hidden Pokémon in play selected under their new aliases', () => {
+    const table = groupTable();
+    const first = table.pokemon(BLUE, 'bench', [{}]);
+    const second = table.pokemon(BLUE, 'bench', [{}]);
+    const reveal = (view: MatchViewState, revealed: boolean) => ({
+      ...view,
+      stacks: Object.fromEntries(
+        Object.entries(view.stacks).map(([id, stack]) => [
+          id,
+          {
+            ...stack,
+            evolutionCards: stack.evolutionCards.map((card) =>
+              card.kind === 'known'
+                ? { ...card, publiclyRevealed: revealed }
+                : card
+            ),
+          },
+        ])
+      ),
+    });
+    const shown = reveal(table.view, true);
+    const board = driver(shown);
+    board.intent({
+      kind: 'CardsSelected',
+      cardIds: [first.top, second.top],
+      mode: 'replace',
+    });
+    board.act({
+      kind: 'GroupActionRequested',
+      action: { kind: 'reveal', revealed: false },
+    });
+    expect(board.submitted()).toHaveLength(1);
+    const renamed = ['renamed-a', 'renamed-b'] as ViewCardId[];
+    const hidden = reveal(shown, false);
+    const tops = [first.stackId, second.stackId];
+    const next = {
+      ...hidden,
+      revision: shown.revision + 1,
+      stacks: Object.fromEntries(
+        Object.entries(hidden.stacks).map(([id, stack]) => [
+          id,
+          tops.includes(id)
+            ? {
+                ...stack,
+                evolutionCards: stack.evolutionCards.map((card) => ({
+                  ...card,
+                  id: renamed[tops.indexOf(id)]!,
+                })),
+              }
+            : stack,
+        ])
+      ),
+    };
+    board.act({ kind: 'FrameReceived', frame: frame(2, next) });
+    expect(board.selection).toEqual(renamed);
+  });
+
+  it("never takes a copy someone else put in a selected card's place for it", () => {
+    const table = groupTable();
+    const hand = table.put(BLUE, 'hand', energy, energy, energy);
+    const handZone = table.view.zones[table.zoneId(BLUE, 'hand')]!;
+    const board = driver(table.view);
+    board.intent({
+      kind: 'CardsSelected',
+      cardIds: hand.slice(0, 2),
+      mode: 'replace',
+    });
+    // The other player swaps the first with the same card from the deck's
+    // top: it lies where the picked one did, under an alias of its own.
+    const swapped = {
+      ...table.view,
+      revision: table.view.revision + 1,
+      zones: {
+        ...table.view.zones,
+        [handZone.id]: {
+          ...handZone,
+          cards: handZone.cards.map((card, index) =>
+            index === 0 ? { ...card, id: 'from-the-deck' as ViewCardId } : card
+          ),
+        },
+      },
+    };
+    board.act({ kind: 'FrameReceived', frame: frame(2, swapped) });
+    expect(board.selection).toEqual([hand[1]]);
+  });
+
   it("opens a refused group's emptied pile again with its cards picked, unless the player put it away", () => {
     const table = groupTable();
     const pile = table.put(BLUE, 'discard', energy, energy);
