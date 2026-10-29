@@ -117,6 +117,22 @@ export const openNamedSolo = async (
   await idle(page);
 };
 
+/**
+ * Puts away the notices a setup leaves (a deck loaded on a seat, say): on
+ * a phone they lie over the near Prizes, where a finger would start.
+ */
+export const clearNotices = async (page: Page): Promise<void> => {
+  const notices = page.locator('[data-ptcgsim-overlay="toast"]');
+  for (let left = await notices.count(); left > 0; left -= 1) {
+    const close = notices
+      .first()
+      .getByRole('button', { name: 'Dismiss notification' });
+    if (!(await close.isVisible())) break;
+    await close.click();
+  }
+  await expect(notices).toHaveCount(0);
+};
+
 /** A seat's cards in one of its zones, as the scene lists them. */
 export const zoneCardIds = (
   page: Page,
