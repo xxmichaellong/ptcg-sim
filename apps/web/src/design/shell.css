@@ -247,6 +247,20 @@ textarea {
   width: 10px;
   height: 2px;
 }
+/* For a finger, the checkbox reaches past the thin end it fills, above,
+   below and outward (never over the count): a tap a little off still
+   sorts, and the pill looks the same. */
+@media (pointer: coarse) {
+  .board-spike-host[data-geometry='2']
+    .table-hand-pill
+    .legacy-hand-sort--toggle.table-hand-pill__sort
+    input {
+    inset-block: -6px;
+    inset-inline: 0 -6px;
+    width: auto;
+    height: auto;
+  }
+}
 .board-spike-host[data-geometry='2'] .table-hand-pill--opponent {
   --table-hand-tint: var(--color-opponent);
 }

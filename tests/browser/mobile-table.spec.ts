@@ -179,6 +179,35 @@ test.describe('an upright phone', () => {
       expect(box.x + box.width).toBeLessThanOrEqual(size.width);
       expect(box.y + box.height).toBeLessThanOrEqual(size.height);
     }
+    // Each pill's Sort, thinner than a fingertip, takes a tap anywhere in a
+    // 32px square round its end, and none on the count beside it.
+    const reach = await pills.evaluateAll((elements) =>
+      elements.map((pill) => {
+        const sort = pill.querySelector('.table-hand-pill__sort')!;
+        const count = pill.querySelector('.table-hand-pill__count')!;
+        const box = sort.getBoundingClientRect();
+        const middle = box.y + box.height / 2;
+        const checkbox = sort.querySelector('input');
+        const hits = (x: number, y: number) =>
+          document.elementFromPoint(x, y) === checkbox;
+        const countBox = count.getBoundingClientRect();
+        return {
+          square: [
+            hits(box.x + 2, middle - 16 + 1),
+            hits(box.x + 2, middle + 16 - 1),
+            hits(box.x + 32 - 1, middle),
+          ],
+          count: hits(
+            countBox.x + countBox.width / 2,
+            countBox.y + countBox.height / 2
+          ),
+        };
+      })
+    );
+    expect(reach).toEqual([
+      { square: [true, true, true], count: false },
+      { square: [true, true, true], count: false },
+    ]);
 
     // The rail: 44px targets inside the window, clear of the Stadium and
     // of the log's button; what does not fit waits in More.
