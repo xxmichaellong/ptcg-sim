@@ -1035,6 +1035,7 @@
   "68ccPL": {
     "message": "{name}, selected, {order} of {0}",
     "comments": [
+      "A selected card among several, e.g. \"Switch, selected, 2 of 3\".",
       "A selected card among several, e.g. \"Switch, selected, 2 of 3\"."
     ],
     "translation": "{name}, geselecteerd, {order} van {0}"
@@ -1265,6 +1266,7 @@
   "-AEMvi": {
     "message": "{zoneName}, {0} selected",
     "comments": [
+      "The cards of an open pile, e.g. \"Your discard pile, 3 selected\".",
       "The cards of an open pile, e.g. \"Your discard pile, 3 selected\"."
     ],
     "translation": "{zoneName}, {0} geselecteerd"

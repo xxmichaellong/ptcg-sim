@@ -2847,6 +2847,7 @@ const WorkAreaPanel = ({
   captureContextAnchor,
   actions,
   allowOpponentResolution = false,
+  onOpenGroupMenu,
 }: {
   readonly allowOpponentResolution?: boolean;
   readonly state: BoardSessionControllerState;
@@ -2861,12 +2862,24 @@ const WorkAreaPanel = ({
     bounds: Rect
   ) => void;
   readonly actions: LegacyBoardOverlayActions;
+  /** Several selected: Move N… opens the group menu here. */
+  readonly onOpenGroupMenu?: (anchor: Rect) => void;
 }) => {
   const { t, i18n } = useLingui();
   const direction = usePageDirection();
   const container = useRef<HTMLElement>(null);
   const firstClickCard = useRef<ViewCardId | null>(null);
   const [showingBoard, setShowingBoard] = useState(false);
+  // The window's cards are items of the selection (ADR-042), as an open
+  // pile's are: picked with Shift or ⌘/Ctrl, carried together.
+  const selection = state.presentation.selection;
+  const selectionMode = state.presentation.selectionMode;
+  const group = isGroupSelection(selection);
+  const selectedHere = useMemo(
+    () => cards.filter((card) => selection.includes(card.id)),
+    [cards, selection]
+  );
+  const allSelected = cards.length > 0 && selectedHere.length === cards.length;
   const hiddenContentProps = {
     inert: showingBoard || undefined,
     'aria-hidden': showingBoard || undefined,
@@ -2887,6 +2900,8 @@ const WorkAreaPanel = ({
       : controls
         ? [t`Move attached cards`, t`Move attached cards`]
         : [t`Opponent moving cards`, t`Opponent moving cards`];
+  // Its cards are named by the window when some are selected.
+  const zoneName = heading;
   const emit = actions.emitCardIntent;
   const interactive = controls && state.canSubmitCommands && emit !== undefined;
   const drag = useOverlayCardDrag({
@@ -2898,8 +2913,26 @@ const WorkAreaPanel = ({
     ...(actions.updateDrag ? { updateDrag: actions.updateDrag } : {}),
     settling: state.presentation.settling,
     ...(tableMotion ? { tableMotion } : {}),
+    ...(selection.length > 0 ? { group: selection } : {}),
   });
   const asideCardId = drag.asideCardId;
+  const selectAll = (): void => {
+    if (!allSelected) {
+      actions.emitSelectionIntent?.({
+        kind: 'CardsSelected',
+        cardIds: cards.map((card) => card.id),
+        mode: 'add',
+      });
+      return;
+    }
+    // Every card here already: they go, and the rest stay.
+    if (selection.every((item) => cards.some((card) => card.id === item))) {
+      actions.dismiss('selection');
+      return;
+    }
+    for (const card of selectedHere)
+      emit?.({ kind: 'CardSelected', cardId: card.id, mode: 'add' });
+  };
   const withActions =
     controls &&
     state.canSubmitCommands &&
@@ -2956,55 +2989,108 @@ const WorkAreaPanel = ({
           />
         </div>
       </header>
-      <div className="ptcgsim-legacy-work-area-cards" {...hiddenContentProps}>
-        {cards.map((card) => (
-          <button
-            type="button"
-            key={card.id}
-            className="ptcgsim-legacy-work-area-card"
-            data-work-area-card-id={card.id}
-            data-motion-origin={card.id}
-            aria-label={card.label}
-            aria-pressed={selectedCardIdOf(state.presentation) === card.id}
-            data-armed={drag.armedCardId === card.id ? 'true' : undefined}
-            disabled={!interactive}
-            draggable={false}
-            onDragStart={drag.onDragStart}
-            onPointerDown={(event) => drag.onPointerDown(event, card)}
-            onClick={(event) => {
-              if (drag.consumeClick(card.id) && event.detail > 0) {
-                firstClickCard.current = null;
-                return;
+      <div
+        className="ptcgsim-legacy-work-area-cards"
+        {...hiddenContentProps}
+        data-selected-count={selectedHere.length || undefined}
+        {...(selectedHere.length > 0
+          ? {
+              role: 'group',
+              'aria-label': t({
+                message: `${zoneName}, ${selectedHere.length} selected`,
+                comment:
+                  'The cards of an open pile, e.g. "Your discard pile, 3 selected".',
+              }),
+            }
+          : {})}
+      >
+        {cards.map((card) => {
+          const order = selection.indexOf(card.id) + 1;
+          const ticked = order > 0 && (group || selectionMode);
+          const name = card.label;
+          return (
+            <button
+              type="button"
+              key={card.id}
+              className="ptcgsim-legacy-work-area-card"
+              data-work-area-card-id={card.id}
+              data-motion-origin={card.id}
+              data-selection-ticked={ticked ? 'true' : undefined}
+              aria-label={
+                ticked
+                  ? t({
+                      message: `${name}, selected, ${order} of ${selection.length}`,
+                      comment:
+                        'A selected card among several, e.g. "Switch, selected, 2 of 3".',
+                    })
+                  : name
               }
-              if (event.detail === 2) return;
-              if (event.detail <= 1) firstClickCard.current = card.id;
-              emit?.({
-                kind: 'CardSelected',
-                cardId: card.id,
-                ...(event.detail > 2 ? {} : { toggle: true }),
-              });
-            }}
-            onDoubleClick={(event) => {
-              if (event.detail === 0 || firstClickCard.current === card.id)
-                emit?.({ kind: 'CardPreviewRequested', cardId: card.id });
-              firstClickCard.current = null;
-            }}
-            onContextMenu={(event) => {
-              event.preventDefault();
-              if (!emit) return;
-              const bounds = event.currentTarget.getBoundingClientRect();
-              captureContextAnchor(card.id, zone.id, {
-                x: bounds.x,
-                y: bounds.y,
-                width: bounds.width,
-                height: bounds.height,
-              });
-              emit({ kind: 'CardContextRequested', cardId: card.id });
-            }}
-          >
-            <OverlayCardImage card={card} variant="zone" />
-          </button>
-        ))}
+              aria-pressed={
+                group || selectionMode
+                  ? order > 0
+                  : selectedCardIdOf(state.presentation) === card.id
+              }
+              data-armed={drag.armedCardId === card.id ? 'true' : undefined}
+              disabled={!interactive}
+              draggable={false}
+              onDragStart={drag.onDragStart}
+              onPointerDown={(event) => drag.onPointerDown(event, card)}
+              onClick={(event) => {
+                if (drag.consumeClick(card.id) && event.detail > 0) {
+                  firstClickCard.current = null;
+                  return;
+                }
+                // Shift or ⌘/Ctrl, or a tap in selection mode, adds or
+                // takes out (ADR-042 §2).
+                if (selectionMode || isSelectionModifier(event)) {
+                  firstClickCard.current = null;
+                  emit?.({
+                    kind: 'CardSelected',
+                    cardId: card.id,
+                    mode: 'add',
+                  });
+                  return;
+                }
+                if (event.detail === 2) return;
+                if (event.detail <= 1) firstClickCard.current = card.id;
+                emit?.({
+                  kind: 'CardSelected',
+                  cardId: card.id,
+                  ...(event.detail > 2 ? {} : { toggle: true }),
+                });
+              }}
+              onDoubleClick={(event) => {
+                if (selectionMode || isSelectionModifier(event)) return;
+                if (event.detail === 0 || firstClickCard.current === card.id)
+                  emit?.({ kind: 'CardPreviewRequested', cardId: card.id });
+                firstClickCard.current = null;
+              }}
+              onContextMenu={(event) => {
+                event.preventDefault();
+                if (!emit) return;
+                const bounds = event.currentTarget.getBoundingClientRect();
+                captureContextAnchor(card.id, zone.id, {
+                  x: bounds.x,
+                  y: bounds.y,
+                  width: bounds.width,
+                  height: bounds.height,
+                });
+                emit({ kind: 'CardContextRequested', cardId: card.id });
+              }}
+            >
+              <OverlayCardImage card={card} variant="zone" />
+              {ticked ? (
+                <span
+                  className="ptcgsim-zone-select-badge"
+                  data-zone-select-badge={String(order)}
+                  aria-hidden="true"
+                >
+                  {order}
+                </span>
+              ) : null}
+            </button>
+          );
+        })}
       </div>
       {controls && emit ? (
         <OverlayCardActions
@@ -3015,6 +3101,30 @@ const WorkAreaPanel = ({
           enabled={interactive}
           inert={showingBoard}
           emit={emit}
+          {...(interactive && cards.length > 1 && actions.emitSelectionIntent
+            ? {
+                selection: {
+                  count: selection.length,
+                  here: selectedHere.length,
+                  allSelected,
+                  selectionMode,
+                  onSelectAll: selectAll,
+                  ...(group && onOpenGroupMenu
+                    ? {
+                        onMove: (button: HTMLElement) =>
+                          onOpenGroupMenu(boardRectOf(button, state.scene!)),
+                      }
+                    : {}),
+                  onDone: () => {
+                    actions.emitSelectionIntent?.({
+                      kind: 'SelectionModeChanged',
+                      on: false,
+                    });
+                    actions.dismiss('selection');
+                  },
+                },
+              }
+            : {})}
         />
       ) : null}
       {withActions ? (
@@ -3476,6 +3586,12 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
             setContextAnchor({ cardId, zoneId, bounds })
           }
           actions={actions}
+          {...(onGroupSurfaceChange
+            ? {
+                onOpenGroupMenu: (anchor: Rect) =>
+                  onGroupSurfaceChange({ kind: 'menu', anchor }),
+              }
+            : {})}
         />
       ))}
       {openedZone ? (

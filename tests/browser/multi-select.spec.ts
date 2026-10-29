@@ -271,6 +271,46 @@ for (const mode of ['flat', 'table'] as const satisfies readonly TableMode[])
         .toBe(1);
     });
 
+    test('cards picked with Shift in the window of cards are marked in order and go together where one is dragged', async ({
+      page,
+    }) => {
+      test.setTimeout(120_000);
+      await openNamedSolo(page);
+      await page
+        .locator('.ptcgsim-board-surface')
+        .click({ position: { x: 5, y: 5 } });
+      await page.keyboard.press('Alt+3');
+      const looking = page.locator('[data-legacy-work-area="inspection"]');
+      const tiles = looking.locator('[data-work-area-card-id]');
+      await expect(tiles).toHaveCount(3);
+      await idle(page);
+      const ids = await tiles.evaluateAll((all) =>
+        all.map((tile) => tile.getAttribute('data-work-area-card-id')!)
+      );
+      await tiles.nth(2).click({ modifiers: ['Shift'] });
+      await tiles.nth(0).click({ modifiers: ['Shift'] });
+      await expectSelection(page, [ids[2]!, ids[0]!]);
+      await expect(tiles.nth(0)).toHaveAttribute('aria-pressed', 'true');
+      await expect(tiles.nth(1)).toHaveAttribute('aria-pressed', 'false');
+      await expect(
+        tiles.nth(0).locator('[data-zone-select-badge="2"]')
+      ).toHaveCount(1);
+      const discard = await zoneId(page, 'local', 'discard');
+      const from = await centre(page, `[data-work-area-card-id="${ids[0]}"]`);
+      const to = await centre(page, `[data-zone-id="${discard}"]`);
+      await moved(page, async () => {
+        await page.mouse.move(from.x, from.y);
+        await page.mouse.down();
+        await page.mouse.move(to.x, to.y, { steps: 14 });
+        await page.mouse.up();
+      });
+      expect((await zoneCardIds(page, 'local', 'discard')).sort()).toEqual(
+        [ids[2]!, ids[0]!].sort()
+      );
+      await expect(tiles).toHaveCount(1);
+      await expectSelection(page, []);
+    });
+
     test('x and Ctrl/⌘+A pick, Esc and a press on the felt put down', async ({
       page,
     }) => {
