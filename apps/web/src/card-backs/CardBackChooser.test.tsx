@@ -174,6 +174,45 @@ describe('card-back chooser', () => {
     );
   });
 
+  it('lets go of a link still on its way when another way is chosen', async () => {
+    let arrive: (blob: Blob) => void = () => undefined;
+    const fetchPicture = vi.fn(
+      () =>
+        new Promise<Blob | null>((resolve) => {
+          arrive = resolve;
+        })
+    );
+    const { host, onChoose } = await mount({ fetchPicture });
+    await act(async () =>
+      host.querySelector<HTMLInputElement>('#cardBackMode-picture')!.click()
+    );
+    const field = host.querySelector<HTMLInputElement>('#cardBackLinkInput')!;
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(
+        HTMLInputElement.prototype,
+        'value'
+      )!.set!.call(field, 'https://pictures.example/back.png');
+      field.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await act(async () =>
+      field.form!.dispatchEvent(
+        new Event('submit', { bubbles: true, cancelable: true })
+      )
+    );
+    expect(use(host).disabled).toBe(true);
+    await act(async () =>
+      host.querySelector<HTMLInputElement>('#cardBackMode-design')!.click()
+    );
+    expect(use(host).disabled).toBe(false);
+    // The picture arriving late leaves the chooser where it is.
+    await act(async () => arrive(new Blob(['back'], { type: 'image/png' })));
+    expect(
+      host.querySelector('.card-back-chooser')?.getAttribute('data-mode')
+    ).toBe('design');
+    await act(async () => use(host).click());
+    expect(onChoose).toHaveBeenCalledWith(expect.stringMatching(/^design:/));
+  });
+
   it('shows and saves the picture taken last, though an earlier one is read after it', async () => {
     // Each picture is read when the test says so, in any order.
     const reads: (() => void)[] = [];

@@ -629,6 +629,12 @@ export const CardBackChooser = ({
                   checked={mode === each.value}
                   onChange={() => {
                     setMode(each.value);
+                    // Another way of choosing lets go of a picture still
+                    // on its way: it would take the chooser back.
+                    if (busy && each.value !== 'picture') {
+                      work.current?.abort();
+                      setStatus(IDLE);
+                    }
                     if (status.kind === 'error') setStatus(IDLE);
                   }}
                 />
