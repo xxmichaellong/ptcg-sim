@@ -352,6 +352,44 @@ describe('a selection of several cards (ADR-042)', () => {
     expect(board.state.presentation.selectionMode).toBe(true);
   });
 
+  it('gives a refused group its selection back when another move already took its cards back', () => {
+    const table = groupTable();
+    const hand = table.put(BLUE, 'hand', energy, energy, energy);
+    const board = driver(table.view);
+    board.intent({ kind: 'SelectionModeChanged', on: true });
+    board.intent({
+      kind: 'CardsSelected',
+      cardIds: hand.slice(0, 2),
+      mode: 'replace',
+    });
+    board.act({
+      kind: 'GroupActionRequested',
+      action: { kind: 'send', to: 'lostZone' },
+    });
+    board.act({
+      kind: 'SubmissionQueued',
+      commandId: 'group',
+      predicted: true,
+    });
+    // The other player's move lands first and undoes the prediction: the
+    // cards are shown in the hand again, the group still waiting.
+    const competing = { ...table.view, revision: 2 };
+    board.act({
+      kind: 'FrameReceived',
+      frame: frame(2, competing, { pendingCommandIds: ['group'] }),
+    });
+    expect(board.selection).toEqual([]);
+    // Refused, the room republishes the same table with the queue emptied.
+    board.act({ kind: 'CommandRefused', commandId: 'group' });
+    board.act({
+      kind: 'FrameReceived',
+      frame: frame(3, competing, { pendingCommandIds: [] }),
+    });
+    expect(board.selection).toEqual(hand.slice(0, 2));
+    expect(board.state.presentation.selectionMode).toBe(true);
+    expect(board.state.selectionRestore ?? null).toBeNull();
+  });
+
   it("opens a refused group's emptied pile again with its cards picked, unless the player put it away", () => {
     const table = groupTable();
     const pile = table.put(BLUE, 'discard', energy, energy);

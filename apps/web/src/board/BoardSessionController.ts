@@ -741,6 +741,39 @@ const restoreViewer = (
     ? pickedIn
     : null);
 
+/**
+ * A refused group's cards selected again where they are back: the
+ * selection, touch's selection mode it was picked in, and the pile it was
+ * picked in when that is open no longer (to open again). Null unless one
+ * waits and the player has picked nothing meanwhile.
+ */
+const restoredSelection = (
+  restoring: SelectionRestore | null | undefined,
+  selection: readonly ViewCardId[],
+  view: MatchViewState,
+  scene: BoardScene,
+  dependencies: BoardSessionControllerDependencies,
+  openedZoneId: string | null
+): {
+  readonly selection: readonly ViewCardId[];
+  readonly selectionMode: boolean;
+  readonly reopened: string | null;
+} | null => {
+  if (!restoring || restoring.cardIds.length === 0 || selection.length > 0)
+    return null;
+  const viewer = restoreViewer(scene, openedZoneId, restoring.openedZoneId);
+  const restored = reduceSelection(
+    selectionContextOf(view, scene, dependencies, viewer),
+    NO_SELECTION,
+    { kind: 'restore', cardIds: restoring.cardIds }
+  ).selection;
+  return {
+    selection: restored,
+    selectionMode: restoring.selectionMode,
+    reopened: restored.length > 0 && viewer !== openedZoneId ? viewer : null,
+  };
+};
+
 const hasDropTarget = (view: MatchViewState, scene: BoardScene, id: string) =>
   Boolean(
     scene.zones.some((zone) => zone.id === id && zone.interactive) ||
@@ -846,21 +879,17 @@ const reconcilePresentation = (
   }
   // A refused group's cards are back where they were: they are selected
   // again, unless the player has picked others meanwhile.
-  const restoring = state.selectionRestore;
-  let restoredMode = false;
-  let reopened: string | null = null;
-  if (restoring && restoring.cardIds.length > 0 && selection.length === 0) {
-    const viewer = restoreViewer(scene, openedZoneId, restoring.openedZoneId);
-    selection = reduceSelection(
-      viewer === openedZoneId
-        ? context
-        : selectionContextOf(view, scene, dependencies, viewer),
-      NO_SELECTION,
-      { kind: 'restore', cardIds: restoring.cardIds }
-    ).selection;
-    restoredMode = restoring.selectionMode;
-    if (selection.length > 0 && viewer !== openedZoneId) reopened = viewer;
-  }
+  const restored = restoredSelection(
+    state.selectionRestore,
+    selection,
+    view,
+    scene,
+    dependencies,
+    openedZoneId
+  );
+  if (restored) selection = restored.selection;
+  const restoredMode = restored?.selectionMode ?? false;
+  const reopened = restored?.reopened ?? null;
   const hoveredCardId = stillShown(state.presentation.hoveredCardId);
   const drag = state.presentation.drag;
   // A new view mid-drag keeps the card in hand; only a target it no longer
@@ -1380,10 +1409,36 @@ const installFrame = (
       state.scene,
       frame.pendingCommandIds
     );
-    const presentation =
+    const settled =
       settling === state.presentation.settling
         ? state.presentation
         : { ...state.presentation, settling };
+    // A refused group whose cards another move already took back: the
+    // refusal changes only the queue, and its selection comes back now.
+    // Not all back (a move queued before it still shows some elsewhere),
+    // it waits for the frame that withdraws that.
+    const restored =
+      state.view && state.scene
+        ? restoredSelection(
+            state.selectionRestore,
+            settled.selection,
+            state.view,
+            state.scene,
+            dependencies,
+            settled.openedZoneId
+          )
+        : null;
+    const restoresNow =
+      restored !== null &&
+      restored.selection.length === state.selectionRestore!.cardIds.length;
+    const presentation: BoardPresentation = restoresNow
+      ? {
+          ...settled,
+          selection: restored.selection,
+          selectionMode: restored.selectionMode,
+          ...(restored.reopened ? { openedZoneId: restored.reopened } : {}),
+        }
+      : settled;
     return accepted(
       nextState(state, {
         source: frame.source,
@@ -1394,6 +1449,7 @@ const installFrame = (
           state.groupSubmissions,
           frame.pendingCommandIds
         ),
+        ...(restoresNow ? { selectionRestore: null } : {}),
       }),
       presentation === state.presentation
         ? []
