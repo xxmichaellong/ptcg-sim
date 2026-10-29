@@ -1216,6 +1216,38 @@
     "message": "Allow board flip <0>(both players)</0>",
     "translation": "Permitir virar o tabuleiro <0>(ambos os jogadores)</0>"
   },
+  "vj7KYC": {
+    "message": "Already in hand",
+    "translation": "Já está na mão"
+  },
+  "vukkry": {
+    "message": "Already in the Active Spot",
+    "translation": "Já está no Campo Ativo"
+  },
+  "NGBodu": {
+    "message": "Already in the discard pile",
+    "translation": "Já está na pilha de descarte"
+  },
+  "DWBYZ9": {
+    "message": "Already in the Lost Zone",
+    "translation": "Já está na Zona Perdida"
+  },
+  "xRZA24": {
+    "message": "Already in the Prizes",
+    "translation": "Já está nos Prêmios"
+  },
+  "cVsm7h": {
+    "message": "Already on the Bench",
+    "translation": "Já está no Banco"
+  },
+  "GRgK04": {
+    "message": "Already on the Board",
+    "translation": "Já está no tabuleiro"
+  },
+  "uNUEdZ": {
+    "message": "Already the Stadium",
+    "translation": "Já é o Estádio"
+  },
   "Fcj7e-": {
     "message": "Alt",
     "context": "keyboard key",

@@ -1216,6 +1216,38 @@
     "message": "Allow board flip <0>(both players)</0>",
     "translation": "السماح بقلب الطاولة <0>(لكلا اللاعبين)</0>"
   },
+  "vj7KYC": {
+    "message": "Already in hand",
+    "translation": "موجودة في اليد بالفعل"
+  },
+  "vukkry": {
+    "message": "Already in the Active Spot",
+    "translation": "موجودة في الخانة النشطة بالفعل"
+  },
+  "NGBodu": {
+    "message": "Already in the discard pile",
+    "translation": "موجودة في المهملات بالفعل"
+  },
+  "DWBYZ9": {
+    "message": "Already in the Lost Zone",
+    "translation": "موجودة في Lost Zone بالفعل"
+  },
+  "xRZA24": {
+    "message": "Already in the Prizes",
+    "translation": "موجودة في الجوائز بالفعل"
+  },
+  "cVsm7h": {
+    "message": "Already on the Bench",
+    "translation": "موجودة على الاحتياط بالفعل"
+  },
+  "GRgK04": {
+    "message": "Already on the Board",
+    "translation": "موجودة في الميدان بالفعل"
+  },
+  "uNUEdZ": {
+    "message": "Already the Stadium",
+    "translation": "هي الملعب بالفعل"
+  },
   "Fcj7e-": {
     "message": "Alt",
     "context": "keyboard key",

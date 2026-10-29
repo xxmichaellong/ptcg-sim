@@ -1216,6 +1216,38 @@
     "message": "Allow board flip <0>(both players)</0>",
     "translation": "盤面の反転を許可<0>(両プレイヤー)</0>"
   },
+  "vj7KYC": {
+    "message": "Already in hand",
+    "translation": "すでに手札にあります"
+  },
+  "vukkry": {
+    "message": "Already in the Active Spot",
+    "translation": "すでにバトル場にあります"
+  },
+  "NGBodu": {
+    "message": "Already in the discard pile",
+    "translation": "すでにトラッシュにあります"
+  },
+  "DWBYZ9": {
+    "message": "Already in the Lost Zone",
+    "translation": "すでにロストゾーンにあります"
+  },
+  "xRZA24": {
+    "message": "Already in the Prizes",
+    "translation": "すでにサイドにあります"
+  },
+  "cVsm7h": {
+    "message": "Already on the Bench",
+    "translation": "すでにベンチにあります"
+  },
+  "GRgK04": {
+    "message": "Already on the Board",
+    "translation": "すでに盤面にあります"
+  },
+  "uNUEdZ": {
+    "message": "Already the Stadium",
+    "translation": "すでにスタジアムです"
+  },
   "Fcj7e-": {
     "message": "Alt",
     "context": "keyboard key",

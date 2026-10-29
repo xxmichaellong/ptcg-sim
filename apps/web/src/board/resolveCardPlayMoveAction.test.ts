@@ -161,6 +161,38 @@ describe('selected-card play placement', () => {
         'active'
       )
     ).toEqual({ ok: false, reason: 'no_op' });
+    // A Benched Pokémon sent to the Bench is already there: the room is not
+    // asked (v1 put it back at the Bench's end; the room refused it as a
+    // changed table when it was already last).
+    const benched: MatchViewState = {
+      ...view,
+      stacks: { ...view.stacks, [active.id]: { ...active, slot: 'bench' } },
+      boards: {
+        ...view.boards,
+        [playerId]: {
+          ...view.boards[playerId]!,
+          activeStackId: null,
+          benchStackIds: [active.id],
+        },
+      },
+    };
+    expect(
+      resolveCardPlayMoveAction(
+        benched,
+        active.evolutionCards.at(-1)!.id,
+        'bench'
+      )
+    ).toEqual({ ok: false, reason: 'no_op' });
+    expect(
+      resolveCardPlayMoveAction(
+        benched,
+        active.evolutionCards.at(-1)!.id,
+        'active'
+      )
+    ).toMatchObject({
+      ok: true,
+      command: { type: 'MovePlayStack', destinationSlot: 'active' },
+    });
 
     const withoutBoard: MatchViewState = {
       ...view,

@@ -1216,6 +1216,38 @@
     "message": "Allow board flip <0>(both players)</0>",
     "translation": "Allow board flip <0>(both players)</0>"
   },
+  "vj7KYC": {
+    "message": "Already in hand",
+    "translation": "Already in hand"
+  },
+  "vukkry": {
+    "message": "Already in the Active Spot",
+    "translation": "Already in the Active Spot"
+  },
+  "NGBodu": {
+    "message": "Already in the discard pile",
+    "translation": "Already in the discard pile"
+  },
+  "DWBYZ9": {
+    "message": "Already in the Lost Zone",
+    "translation": "Already in the Lost Zone"
+  },
+  "xRZA24": {
+    "message": "Already in the Prizes",
+    "translation": "Already in the Prizes"
+  },
+  "cVsm7h": {
+    "message": "Already on the Bench",
+    "translation": "Already on the Bench"
+  },
+  "GRgK04": {
+    "message": "Already on the Board",
+    "translation": "Already on the Board"
+  },
+  "uNUEdZ": {
+    "message": "Already the Stadium",
+    "translation": "Already the Stadium"
+  },
   "Fcj7e-": {
     "message": "Alt",
     "context": "keyboard key",

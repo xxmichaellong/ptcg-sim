@@ -698,6 +698,33 @@ describe('legacy board overlays', () => {
     });
   });
 
+  it('does not offer to move a card to the Board it already lies on', async () => {
+    const card = cardIn(`:${firstPlayer}:board`);
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardOverlays, {
+          state: state({
+            overlays: {
+              contextMenuCardId: card.id,
+              preview: null,
+              input: null,
+            },
+          }),
+          darkMode: false,
+          actions: actions(),
+        })
+      );
+    });
+    const submenu = host.querySelector<HTMLElement>(
+      '[data-context-submenu="moveCard"]'
+    )!;
+    expect(
+      [
+        ...submenu.querySelectorAll<HTMLButtonElement>('[data-move-choice]'),
+      ].map((choice) => choice.dataset.moveChoice)
+    ).toEqual(['deckTop', 'deckBottom', 'deckSwitch', 'deckShuffle']);
+  });
+
   it('recreates the ordered move submenu and delegates one typed choice', async () => {
     const card = cardIn(`:${firstPlayer}:hand`);
     const callbacks = actions();

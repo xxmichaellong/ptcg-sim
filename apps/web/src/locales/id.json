@@ -1216,6 +1216,38 @@
     "message": "Allow board flip <0>(both players)</0>",
     "translation": "Izinkan membalik papan <0>(kedua pemain)</0>"
   },
+  "vj7KYC": {
+    "message": "Already in hand",
+    "translation": "Sudah di Kartu Pegangan"
+  },
+  "vukkry": {
+    "message": "Already in the Active Spot",
+    "translation": "Sudah di Arena Bertarung"
+  },
+  "NGBodu": {
+    "message": "Already in the discard pile",
+    "translation": "Sudah di Trash"
+  },
+  "DWBYZ9": {
+    "message": "Already in the Lost Zone",
+    "translation": "Sudah di Lost Zone"
+  },
+  "xRZA24": {
+    "message": "Already in the Prizes",
+    "translation": "Sudah di Kartu Point"
+  },
+  "cVsm7h": {
+    "message": "Already on the Bench",
+    "translation": "Sudah di Cadangan"
+  },
+  "GRgK04": {
+    "message": "Already on the Board",
+    "translation": "Sudah di papan"
+  },
+  "uNUEdZ": {
+    "message": "Already the Stadium",
+    "translation": "Sudah menjadi Stadium"
+  },
   "Fcj7e-": {
     "message": "Alt",
     "context": "keyboard key",

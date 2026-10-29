@@ -11,12 +11,14 @@ import { installPageMotion } from './motion/page-motion.js';
 import { applySavedPageTheme, installTableArt } from './session/page-theme.js';
 import { HelpSheetHost } from './session/shell/help-pages.js';
 import { tableCurtain } from './session/shell/table-curtain.js';
+import { installFocusFrom } from './ui/focus-from.js';
 import { OverlayHost } from './ui/OverlayHost.js';
 import './design/tokens.css';
 import './design/table-art.css';
 import './styles.css';
 import './design/shell.css';
 import './design/card-material.css';
+import './design/focus-from.css';
 
 // Developer-only escape hatch: `?dev-room=1` boots the real remote-room stack
 // (durable room creation, ADR-018 ticket exchange, socket session, projection,
@@ -68,6 +70,8 @@ applySavedPageTheme();
 installTableArt();
 // The page asks before a reload or a closed tab discards the table.
 installLeaveGuard();
+// Focus rings follow keys that move the focus, not a hotkey after a click.
+installFocusFrom(document);
 // A card scan in the player's language that does not exist is asked for
 // once a visit; every later copy shows the deck's own scan.
 watchCardImageFailures();

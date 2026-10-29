@@ -1216,6 +1216,38 @@
     "message": "Allow board flip <0>(both players)</0>",
     "translation": "Tillåt att bordet vänds <0>(båda spelarna)</0>"
   },
+  "vj7KYC": {
+    "message": "Already in hand",
+    "translation": "Redan på handen"
+  },
+  "vukkry": {
+    "message": "Already in the Active Spot",
+    "translation": "Redan på aktiva platsen"
+  },
+  "NGBodu": {
+    "message": "Already in the discard pile",
+    "translation": "Redan i kasthögen"
+  },
+  "DWBYZ9": {
+    "message": "Already in the Lost Zone",
+    "translation": "Redan i Lost Zone"
+  },
+  "xRZA24": {
+    "message": "Already in the Prizes",
+    "translation": "Redan bland priskorten"
+  },
+  "cVsm7h": {
+    "message": "Already on the Bench",
+    "translation": "Redan på bänken"
+  },
+  "GRgK04": {
+    "message": "Already on the Board",
+    "translation": "Redan på spelplanen"
+  },
+  "uNUEdZ": {
+    "message": "Already the Stadium",
+    "translation": "Redan stadion"
+  },
   "Fcj7e-": {
     "message": "Alt",
     "context": "keyboard key",

@@ -112,3 +112,64 @@ test('a player moves a shortcut to their own key, keeps it, and puts it back', a
   await page.keyboard.press('d');
   await expect.poll(() => zoneCount(page, 'discard')).toBe(2);
 });
+
+/** Picks the near seat's card named `label` from where `role` puts it. */
+const pickCard = async (
+  page: Page,
+  label: string,
+  role: 'zone' | 'stackEvolution'
+): Promise<void> => {
+  const cardId = await page.evaluate(
+    ({ label, role }) => {
+      const scene = window.__PTCG_RENDERER_SPIKE__!.scene;
+      const hand = scene.zones.find(
+        (zone) => zone.side === 'local' && zone.kind === 'hand'
+      )!;
+      return scene.cards.find(
+        (card) =>
+          card.label === label &&
+          card.role === role &&
+          card.side === 'local' &&
+          (role === 'stackEvolution' || card.parentId === hand.id)
+      )!.id;
+    },
+    { label, role }
+  );
+  const card = page.locator(`[data-card-id="${cardId}"]`).first();
+  await card.click();
+  await expect(card).toHaveAttribute('aria-pressed', 'true');
+};
+
+test('a key that sends a card where it already lies says so, and leaves no focus ring after a click', async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await startTable(page);
+  const toasts = page.locator('.ptcgsim-ui-toast');
+
+  // A Pokémon from the hand to the Bench by key, then B again on it there.
+  await pickCard(page, 'Ember ex', 'zone');
+  await page.keyboard.press('b');
+  await expect.poll(() => zoneCount(page, 'bench')).toBe(1);
+  await pickCard(page, 'Ember ex', 'stackEvolution');
+  const focused = page.locator('.ptcgsim-card:focus');
+  // Picked by a click: no keyboard ring on it, before or after a key.
+  const ring = () =>
+    focused
+      .locator('> .ptcgsim-card__body')
+      .evaluate((body) => getComputedStyle(body).outlineColor);
+  await page.keyboard.press('b');
+  await expect(toasts.filter({ hasText: 'Already on the Bench' })).toHaveCount(
+    1
+  );
+  await expect(toasts.filter({ hasText: "didn't go through" })).toHaveCount(0);
+  expect(await zoneCount(page, 'bench')).toBe(1);
+  await expect(focused).toHaveCount(1);
+  expect(await ring()).toBe('rgba(0, 0, 0, 0)');
+  // Moving by keyboard (on and back to it), the ring shows.
+  await page.keyboard.press('Tab');
+  await page.keyboard.press('Shift+Tab');
+  await expect(focused).toHaveCount(1);
+  expect(await ring()).not.toBe('rgba(0, 0, 0, 0)');
+});

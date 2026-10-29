@@ -1216,6 +1216,38 @@
     "message": "Allow board flip <0>(both players)</0>",
     "translation": "Дозволи окретање табле <0>(оба играча)</0>"
   },
+  "vj7KYC": {
+    "message": "Already in hand",
+    "translation": "Већ у руци"
+  },
+  "vukkry": {
+    "message": "Already in the Active Spot",
+    "translation": "Већ на активном месту"
+  },
+  "NGBodu": {
+    "message": "Already in the discard pile",
+    "translation": "Већ у одбаченим картама"
+  },
+  "DWBYZ9": {
+    "message": "Already in the Lost Zone",
+    "translation": "Већ у Lost Zone"
+  },
+  "xRZA24": {
+    "message": "Already in the Prizes",
+    "translation": "Већ у наградама"
+  },
+  "cVsm7h": {
+    "message": "Already on the Bench",
+    "translation": "Већ на клупи"
+  },
+  "GRgK04": {
+    "message": "Already on the Board",
+    "translation": "Већ на табли"
+  },
+  "uNUEdZ": {
+    "message": "Already the Stadium",
+    "translation": "Већ је стадион"
+  },
   "Fcj7e-": {
     "message": "Alt",
     "context": "keyboard key",

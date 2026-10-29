@@ -1216,6 +1216,38 @@
     "message": "Allow board flip <0>(both players)</0>",
     "translation": "Cho phép lật bàn <0>(cả hai người chơi)</0>"
   },
+  "vj7KYC": {
+    "message": "Already in hand",
+    "translation": "Đã ở bài trên tay"
+  },
+  "vukkry": {
+    "message": "Already in the Active Spot",
+    "translation": "Đã ở vị trí Active"
+  },
+  "NGBodu": {
+    "message": "Already in the discard pile",
+    "translation": "Đã ở chồng bài bỏ"
+  },
+  "DWBYZ9": {
+    "message": "Already in the Lost Zone",
+    "translation": "Đã ở Lost Zone"
+  },
+  "xRZA24": {
+    "message": "Already in the Prizes",
+    "translation": "Đã ở Prize"
+  },
+  "cVsm7h": {
+    "message": "Already on the Bench",
+    "translation": "Đã ở trên Bench"
+  },
+  "GRgK04": {
+    "message": "Already on the Board",
+    "translation": "Đã ở trên thảm chơi"
+  },
+  "uNUEdZ": {
+    "message": "Already the Stadium",
+    "translation": "Đã là Stadium"
+  },
   "Fcj7e-": {
     "message": "Alt",
     "context": "keyboard key",

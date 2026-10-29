@@ -1216,6 +1216,38 @@
     "message": "Allow board flip <0>(both players)</0>",
     "translation": "Autoriser le retournement du plateau <0>(les deux joueurs)</0>"
   },
+  "vj7KYC": {
+    "message": "Already in hand",
+    "translation": "Déjà dans la main"
+  },
+  "vukkry": {
+    "message": "Already in the Active Spot",
+    "translation": "Déjà dans le Poste Actif"
+  },
+  "NGBodu": {
+    "message": "Already in the discard pile",
+    "translation": "Déjà dans la pile de défausse"
+  },
+  "DWBYZ9": {
+    "message": "Already in the Lost Zone",
+    "translation": "Déjà dans la Zone Perdue"
+  },
+  "xRZA24": {
+    "message": "Already in the Prizes",
+    "translation": "Déjà dans les Récompenses"
+  },
+  "cVsm7h": {
+    "message": "Already on the Bench",
+    "translation": "Déjà sur le Banc"
+  },
+  "GRgK04": {
+    "message": "Already on the Board",
+    "translation": "Déjà sur le plateau"
+  },
+  "uNUEdZ": {
+    "message": "Already the Stadium",
+    "translation": "Déjà le Stade"
+  },
   "Fcj7e-": {
     "message": "Alt",
     "context": "keyboard key",

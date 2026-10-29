@@ -1216,6 +1216,38 @@
     "message": "Allow board flip <0>(both players)</0>",
     "translation": "Payagan ang board flip <0>(parehong player)</0>"
   },
+  "vj7KYC": {
+    "message": "Already in hand",
+    "translation": "Nasa hand na"
+  },
+  "vukkry": {
+    "message": "Already in the Active Spot",
+    "translation": "Nasa Active Spot na"
+  },
+  "NGBodu": {
+    "message": "Already in the discard pile",
+    "translation": "Nasa discard pile na"
+  },
+  "DWBYZ9": {
+    "message": "Already in the Lost Zone",
+    "translation": "Nasa Lost Zone na"
+  },
+  "xRZA24": {
+    "message": "Already in the Prizes",
+    "translation": "Nasa Prizes na"
+  },
+  "cVsm7h": {
+    "message": "Already on the Bench",
+    "translation": "Nasa Bench na"
+  },
+  "GRgK04": {
+    "message": "Already on the Board",
+    "translation": "Nasa Board na"
+  },
+  "uNUEdZ": {
+    "message": "Already the Stadium",
+    "translation": "Siya na ang Stadium"
+  },
   "Fcj7e-": {
     "message": "Alt",
     "context": "keyboard key",

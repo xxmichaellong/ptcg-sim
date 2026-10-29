@@ -1,0 +1,24 @@
+/* After a pointer's press, keys that act (a table hotkey, a digit) paint no
+   focus ring: browsers show :focus-visible after any key, so a card picked
+   by a click and sent with `b` wore a keyboard ring it was never moved to.
+   A key that moves the focus brings the rings back (ui/focus-from.ts); a
+   field being typed in keeps its own. Rings are outlines and, on the
+   table's controls, a halo drawn from the focus tones, both cleared here. */
+:root[data-focus-from='pointer']
+  :focus-visible:not(
+    input:not([type='checkbox'], [type='radio'], [type='range']),
+    textarea,
+    select,
+    [contenteditable]:not([contenteditable='false'])
+  ),
+:root[data-focus-from='pointer']
+  :has(> input:is([type='checkbox'], [type='radio']):focus-visible),
+:root[data-focus-from='pointer']
+  input:is([type='checkbox'], [type='radio']):focus-visible
+  + label,
+:root[data-focus-from='pointer'] .ptcgsim-card:focus-visible > * {
+  outline-color: transparent !important;
+  --color-felt-focus-halo: transparent;
+  --color-desk-focus-halo: transparent;
+  --ptcgsim-focus-ring: transparent;
+}

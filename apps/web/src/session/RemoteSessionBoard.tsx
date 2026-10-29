@@ -62,6 +62,7 @@ import { FacePreloader } from '../board/face-preload.js';
 import { onlyHeldCardMovedOn } from '../board/held-card-moves.js';
 import { LegacyBoardKeyboardShortcuts } from '../board/LegacyBoardKeyboardShortcuts.js';
 import type { LegacyBoardShortcutActionRequest } from '../board/resolveLegacyBoardShortcutAction.js';
+import { alreadyThereNotice } from '../board/already-there-notice.js';
 import { refusalNotice, unsentNotice } from '../board/refusal-notice.js';
 import { resolveBoardDrop } from '../board/resolveBoardDrop.js';
 import { resolvePublicCardVisibilityAction } from '../board/resolvePublicVisibilityAction.js';
@@ -744,6 +745,12 @@ export const RemoteSessionBoard = ({
           },
           onCardHover: hoverStore.set,
           onMotion: tableMotion.set,
+          // A move to where the card already lies never leaves this client:
+          // say where it is, rather than nothing or a refusal.
+          onBoardEffect: (effect) => {
+            const notice = alreadyThereNotice(effect);
+            if (notice && !disposed) toast(notice);
+          },
         });
         runtimeRef.current = runtime;
         await runtime.mount(host);

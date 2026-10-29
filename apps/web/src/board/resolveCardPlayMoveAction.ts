@@ -104,9 +104,10 @@ export const resolveCardPlayMoveAction = (
     }
     const board = view.boards[sourceStack.boardPlayerId];
     if (!board) return rejected('unsupported_target');
-    if (sourceStack.slot === 'active' && destinationSlot === 'active') {
-      return rejected('no_op');
-    }
+    // Already where it is sent: the Active to the Active, a Benched
+    // Pokémon to its own Bench. v1 put the latter back at the Bench's end;
+    // the room refuses it, and the player is told where it already is.
+    if (sourceStack.slot === destinationSlot) return rejected('no_op');
     return {
       ok: true,
       command: {

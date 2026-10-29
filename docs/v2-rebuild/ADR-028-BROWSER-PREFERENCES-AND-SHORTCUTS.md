@@ -105,6 +105,19 @@ way back to the defaults.
    as it was left. Each changed shortcut
    resets on its own, and "Reset to defaults" resets them all. Mac players
    see ⌥ Option and ⌘ in place of Alt and Win.
+6. **A shortcut paints no focus ring** (2026-10-29). Browsers show
+   `:focus-visible` after any key, so a card picked with a click wore a
+   keyboard ring once `b` sent it on. The page notes how the focus last
+   moved (`data-focus-from`, `ui/focus-from.ts`): a press makes it the
+   pointer's, and Tab, F6, the menu key or Shift+F10 make it the keyboard's,
+   as do the arrows, Home/End and Page Up/Down when they actually move the
+   focus (on a card, or from a clicked rail button, the arrows send the
+   selected card to the deck). Under the pointer no ring is painted
+   (`design/focus-from.css`), except on a field being typed in.
+7. **A move to where the card already is never reaches the room**
+   (2026-10-29, PX-068): `b` on a Benched Pokémon, `a` on the Active, `d`
+   in the discard pile say "Already on the Bench" and the like, a calm
+   notice, not a refusal; menus and the palette don't offer them.
 
 ## Consequences
 

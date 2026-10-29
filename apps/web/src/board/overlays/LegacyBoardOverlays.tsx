@@ -1248,7 +1248,15 @@ const ContextMenu = ({
                 open={openSubmenu === 'moveCard'}
                 ariaLabel={t`Move card`}
                 choiceKind="move"
-                choices={withHints(MOVE_SUBMENU_CHOICES, keymap)}
+                choices={withHints(
+                  // Not to the playboard it already lies on.
+                  zoneForCard(state, card)?.kind === 'board'
+                    ? MOVE_SUBMENU_CHOICES.filter(
+                        (choice) => choice.value !== 'board'
+                      )
+                    : MOVE_SUBMENU_CHOICES,
+                  keymap
+                )}
                 onOpenChange={(open) =>
                   setOpenSubmenu(open ? 'moveCard' : null)
                 }

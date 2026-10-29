@@ -1216,6 +1216,38 @@
     "message": "Allow board flip <0>(both players)</0>",
     "translation": "Bord omdraaien toestaan <0>(beide spelers)</0>"
   },
+  "vj7KYC": {
+    "message": "Already in hand",
+    "translation": "Al in de hand"
+  },
+  "vukkry": {
+    "message": "Already in the Active Spot",
+    "translation": "Al op de Actieve plek"
+  },
+  "NGBodu": {
+    "message": "Already in the discard pile",
+    "translation": "Al in de aflegstapel"
+  },
+  "DWBYZ9": {
+    "message": "Already in the Lost Zone",
+    "translation": "Al in de Lost Zone"
+  },
+  "xRZA24": {
+    "message": "Already in the Prizes",
+    "translation": "Al bij de Prijzen"
+  },
+  "cVsm7h": {
+    "message": "Already on the Bench",
+    "translation": "Al op de Bank"
+  },
+  "GRgK04": {
+    "message": "Already on the Board",
+    "translation": "Al op het bord"
+  },
+  "uNUEdZ": {
+    "message": "Already the Stadium",
+    "translation": "Al het Stadion"
+  },
   "Fcj7e-": {
     "message": "Alt",
     "context": "keyboard key",

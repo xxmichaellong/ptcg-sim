@@ -1216,6 +1216,38 @@
     "message": "Allow board flip <0>(both players)</0>",
     "translation": "보드 뒤집기 허용 <0>(양쪽 플레이어)</0>"
   },
+  "vj7KYC": {
+    "message": "Already in hand",
+    "translation": "이미 패에 있습니다"
+  },
+  "vukkry": {
+    "message": "Already in the Active Spot",
+    "translation": "이미 배틀필드에 있습니다"
+  },
+  "NGBodu": {
+    "message": "Already in the discard pile",
+    "translation": "이미 트래쉬에 있습니다"
+  },
+  "DWBYZ9": {
+    "message": "Already in the Lost Zone",
+    "translation": "이미 로스트존에 있습니다"
+  },
+  "xRZA24": {
+    "message": "Already in the Prizes",
+    "translation": "이미 프라이즈에 있습니다"
+  },
+  "cVsm7h": {
+    "message": "Already on the Bench",
+    "translation": "이미 벤치에 있습니다"
+  },
+  "GRgK04": {
+    "message": "Already on the Board",
+    "translation": "이미 보드에 있습니다"
+  },
+  "uNUEdZ": {
+    "message": "Already the Stadium",
+    "translation": "이미 스타디움입니다"
+  },
   "Fcj7e-": {
     "message": "Alt",
     "context": "keyboard key",

@@ -1216,6 +1216,38 @@
     "message": "Allow board flip <0>(both players)</0>",
     "translation": "Masayı çevirmeye izin ver <0>(iki oyuncu için)</0>"
   },
+  "vj7KYC": {
+    "message": "Already in hand",
+    "translation": "Zaten elde"
+  },
+  "vukkry": {
+    "message": "Already in the Active Spot",
+    "translation": "Zaten Aktif Alanda"
+  },
+  "NGBodu": {
+    "message": "Already in the discard pile",
+    "translation": "Zaten atık yığınında"
+  },
+  "DWBYZ9": {
+    "message": "Already in the Lost Zone",
+    "translation": "Zaten Lost Zone'da"
+  },
+  "xRZA24": {
+    "message": "Already in the Prizes",
+    "translation": "Zaten Ödüllerde"
+  },
+  "cVsm7h": {
+    "message": "Already on the Bench",
+    "translation": "Zaten Yedek Alanında"
+  },
+  "GRgK04": {
+    "message": "Already on the Board",
+    "translation": "Zaten oyun alanında"
+  },
+  "uNUEdZ": {
+    "message": "Already the Stadium",
+    "translation": "Zaten Stadyum"
+  },
   "Fcj7e-": {
     "message": "Alt",
     "context": "keyboard key",

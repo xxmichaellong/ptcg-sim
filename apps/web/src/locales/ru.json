@@ -1216,6 +1216,38 @@
     "message": "Allow board flip <0>(both players)</0>",
     "translation": "Разрешить переворот поля <0>(обоим игрокам)</0>"
   },
+  "vj7KYC": {
+    "message": "Already in hand",
+    "translation": "Уже в руке"
+  },
+  "vukkry": {
+    "message": "Already in the Active Spot",
+    "translation": "Уже в активной позиции"
+  },
+  "NGBodu": {
+    "message": "Already in the discard pile",
+    "translation": "Уже в стопке сброса"
+  },
+  "DWBYZ9": {
+    "message": "Already in the Lost Zone",
+    "translation": "Уже в зоне потерь"
+  },
+  "xRZA24": {
+    "message": "Already in the Prizes",
+    "translation": "Уже в призах"
+  },
+  "cVsm7h": {
+    "message": "Already on the Bench",
+    "translation": "Уже в запасе"
+  },
+  "GRgK04": {
+    "message": "Already on the Board",
+    "translation": "Уже на поле"
+  },
+  "uNUEdZ": {
+    "message": "Already the Stadium",
+    "translation": "Уже на стадионе"
+  },
   "Fcj7e-": {
     "message": "Alt",
     "context": "keyboard key",

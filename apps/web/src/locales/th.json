@@ -1216,6 +1216,38 @@
     "message": "Allow board flip <0>(both players)</0>",
     "translation": "อนุญาตให้พลิกโต๊ะ <0>(ผู้เล่นทั้งสองฝ่าย)</0>"
   },
+  "vj7KYC": {
+    "message": "Already in hand",
+    "translation": "อยู่บนมืออยู่แล้ว"
+  },
+  "vukkry": {
+    "message": "Already in the Active Spot",
+    "translation": "อยู่บนตำแหน่งต่อสู้อยู่แล้ว"
+  },
+  "NGBodu": {
+    "message": "Already in the discard pile",
+    "translation": "อยู่บนตำแหน่งทิ้งการ์ดอยู่แล้ว"
+  },
+  "DWBYZ9": {
+    "message": "Already in the Lost Zone",
+    "translation": "อยู่ในลอสต์โซนอยู่แล้ว"
+  },
+  "xRZA24": {
+    "message": "Already in the Prizes",
+    "translation": "อยู่ในการ์ดรางวัลอยู่แล้ว"
+  },
+  "cVsm7h": {
+    "message": "Already on the Bench",
+    "translation": "อยู่บนเบนช์อยู่แล้ว"
+  },
+  "GRgK04": {
+    "message": "Already on the Board",
+    "translation": "อยู่บนบอร์ดอยู่แล้ว"
+  },
+  "uNUEdZ": {
+    "message": "Already the Stadium",
+    "translation": "เป็นสเตเดียมอยู่แล้ว"
+  },
   "Fcj7e-": {
     "message": "Alt",
     "context": "keyboard key",
