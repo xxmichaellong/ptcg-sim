@@ -713,51 +713,30 @@ export class BoardDepthProjection {
   ): { point: TablePoint; targetId: string | null } {
     const source = this.scene.cards.find((card) => card.id === sourceId);
     this.arrangedCards ??= arrangedCardIds(this.scene);
-    for (const card of this.painted) {
-      // A Pokémon's own cards travel with it under the pointer: they are
-      // never where it is dropped.
+    // A Pokémon's own cards travel with it under the pointer: they are
+    // never where it is dropped.
+    const candidates = this.painted.filter(
+      (card) =>
+        card.interactive &&
+        card.id !== sourceId &&
+        !(
+          source?.role === 'stackEvolution' && source.parentId === card.parentId
+        )
+    );
+    const aim = (
+      card: CardSceneNode,
+      pose: TableCardPose
+    ): { point: TablePoint; targetId: string | null } | undefined => {
+      const face = tablePoseLocalPoint(this.camera, pose, point);
       if (
-        !card.interactive ||
-        card.id === sourceId ||
-        (source?.role === 'stackEvolution' && source.parentId === card.parentId)
+        !face ||
+        !containsPoint(
+          { x: 0, y: 0, width: pose.bounds.width, height: pose.bounds.height },
+          face.x,
+          face.y
+        )
       )
-        continue;
-      // Where it is painted, and for a card of a row that opens a gap for a
-      // held card (a bench, a hand), where it lies too, as the flat table
-      // aims: aiming there closes the gap and brings it back under the
-      // pointer. Its painted place alone, moved aside, kept it from the
-      // pointer as the row made room, and the card went in the gap.
-      const painted = paintedPose?.(card) ?? this.pose(card);
-      const poses = this.arrangedCards.has(card.id)
-        ? [painted, this.pose(card)]
-        : [painted];
-      let hit:
-        | {
-            readonly pose: TableCardPose;
-            readonly face: TablePoint;
-          }
-        | undefined;
-      for (const pose of poses) {
-        const face = tablePoseLocalPoint(this.camera, pose, point);
-        if (
-          face &&
-          containsPoint(
-            {
-              x: 0,
-              y: 0,
-              width: pose.bounds.width,
-              height: pose.bounds.height,
-            },
-            face.x,
-            face.y
-          )
-        ) {
-          hit = { pose, face };
-          break;
-        }
-      }
-      if (!hit) continue;
-      const { pose, face } = hit;
+        return undefined;
       // Return the logical target point even when its painted face is in flight.
       const x = (face.x / pose.bounds.width - 0.5) * card.bounds.width;
       const y = (face.y / pose.bounds.height - 0.5) * card.bounds.height;
@@ -775,7 +754,7 @@ export class BoardDepthProjection {
           y * Math.cos(angle),
       };
       if (card.clipBounds && !containsPoint(card.clipBounds, local.x, local.y))
-        continue;
+        return undefined;
       const bench = benchRearrangementTarget(
         this.scene,
         sourceId,
@@ -784,6 +763,22 @@ export class BoardDepthProjection {
       );
       if (bench) return { point: this.boardPoint(point), targetId: bench };
       return { point: local, targetId: card.parentId };
+    };
+    // What the player sees first: each card where it is painted.
+    for (const card of candidates) {
+      const hit = aim(card, paintedPose?.(card) ?? this.pose(card));
+      if (hit) return hit;
+    }
+    // Then a card of a row that opens a gap for a held card (a bench, a
+    // hand) where it lies, as the flat table aims: aiming there closes the
+    // gap and brings it back under the pointer. Its painted place alone,
+    // moved aside, kept it from the pointer as the row made room, and the
+    // card went in the gap. Never before a card painted there: one moved
+    // aside over a neighbour's place is the one the player aims at.
+    for (const card of candidates) {
+      if (!this.arrangedCards.has(card.id)) continue;
+      const hit = aim(card, this.pose(card));
+      if (hit) return hit;
     }
     const local = this.boardPoint(point);
     // Between the pieces of a card printed in pieces: the whole card.

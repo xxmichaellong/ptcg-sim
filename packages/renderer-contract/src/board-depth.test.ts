@@ -419,6 +419,8 @@ describe('live board depth', () => {
       id: `benched-${String(index)}` as CardSceneNode['id'],
       renderKey: `card:benched-${String(index)}`,
       parentId: `stack:benched-${String(index)}`,
+      // Each one along drawn over the one before, as the bench draws them.
+      zIndex: template.zIndex + index,
       bounds: {
         x: middle + (index - 1) * width * 1.17 - width / 2,
         y: bench.contentBounds.y,
@@ -468,6 +470,14 @@ describe('live board depth', () => {
         aside.bounds.y + aside.bounds.height / 2,
         aside.elevation
       )
+    ).toBe(first.parentId);
+    // Its right edge, painted over where the next Pokémon lies: the one the
+    // player sees, not the one that lies there unseen.
+    const second = projection.pose(benched[1]!);
+    const edge = aside.bounds.x + aside.bounds.width * 0.92;
+    expect(edge).toBeGreaterThan(second.bounds.x);
+    expect(
+      aimAt(edge, aside.bounds.y + aside.bounds.height / 2, aside.elevation)
     ).toBe(first.parentId);
     // The gap itself, left of where it lies, is the bench's.
     expect(
