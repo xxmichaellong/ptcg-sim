@@ -698,6 +698,27 @@ describe('damage, conditions and markers on a group', () => {
       })),
     });
   });
+
+  it('turns a Pokémon once for the cards picked on it, and each card with Alt', () => {
+    const table = groupTable();
+    const charged = table.pokemon(BLUE, 'active', [{}], [{}, {}]);
+    const context = table.context();
+    // Two Energy on it: one turn, not two.
+    expect(
+      compiled(context, charged.attached, { kind: 'rotate', single: false })
+    ).toEqual({
+      type: 'RotateStack',
+      stackId: charged.stackId,
+      rotationQuarterTurns: 1,
+    });
+    // Alt+`r` turns each card on its own.
+    const each = compiled(context, charged.attached, {
+      kind: 'rotate',
+      single: true,
+    });
+    expect(each.type).toBe('ApplyCardSteps');
+    expect(each.type === 'ApplyCardSteps' && each.steps).toHaveLength(2);
+  });
 });
 
 describe('what a group can hold', () => {

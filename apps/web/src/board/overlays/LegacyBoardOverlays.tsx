@@ -1533,11 +1533,16 @@ const OverlayCardImage = ({
   readonly variant: 'preview' | 'stack' | 'zone' | 'piece';
 }) => {
   // A face asked for in the player's language that has no such printing
-  // shows the deck's own scan instead, and keeps showing it.
+  // shows the deck's own scan instead, and keeps showing it; a back that
+  // won't load (an uploaded one gone, or blocked) shows the standard back,
+  // as the table does (ADR-041).
   const [fellBackFrom, setFellBackFrom] = useState<string | null>(null);
+  const fallbackUrl = card.concealed
+    ? card.backFallbackUrl
+    : card.imageFallbackUrl;
   const src =
-    fellBackFrom === card.imageUrl && card.imageFallbackUrl !== undefined
-      ? card.imageFallbackUrl
+    fellBackFrom === card.imageUrl && fallbackUrl !== undefined
+      ? fallbackUrl
       : card.imageUrl;
   // Whether the address shown has loaded, kept by that address: a scene
   // built later that asks for the fallback itself finds it already loaded.
@@ -1568,7 +1573,7 @@ const OverlayCardImage = ({
         draggable={false}
         onLoad={() => setLoadedImage({ src, state: 'ready' })}
         onError={() => {
-          if (src === card.imageUrl && card.imageFallbackUrl !== undefined)
+          if (src === card.imageUrl && fallbackUrl !== undefined)
             setFellBackFrom(card.imageUrl);
           else setLoadedImage({ src, state: 'failed' });
         }}

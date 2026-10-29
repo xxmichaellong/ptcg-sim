@@ -776,11 +776,13 @@ const compileAnnotation = (
       return null;
     }
     case 'reveal':
-    case 'rotate':
+    case 'rotate': {
+      // `r` turns each Pokémon once, however many of its cards are picked:
+      // two Energy on one Pokémon would turn it twice, four all the way
+      // round. Alt+`r` turns each card on its own.
+      const turned = new Set<string>();
       for (const item of items) {
-        const failed = take(
-          steps,
-          item,
+        const resolution =
           action.kind === 'reveal'
             ? resolvePublicCardVisibilityAction(
                 steps.view(),
@@ -790,11 +792,16 @@ const compileAnnotation = (
             : resolveCardAnnotationAction(steps.view(), item, {
                 type: 'rotate',
                 single: action.single,
-              })
-        );
+              });
+        if (resolution.ok && resolution.command.type === 'RotateStack') {
+          if (turned.has(resolution.command.stackId)) continue;
+          turned.add(resolution.command.stackId);
+        }
+        const failed = take(steps, item, resolution);
         if (failed) return failed;
       }
       return null;
+    }
   }
 };
 

@@ -77,15 +77,23 @@ export const boardRectOf = (
   };
 };
 
-/** The Pokémon in play a selection holds, each once (by its stack). */
+/**
+ * The Pokémon in play a selection reaches, each once (by its stack): a
+ * Pokémon picked, or a card attached to one -- damage and the like go on
+ * the Pokémon a card is part of (ADR-042 §3).
+ */
 export const pokemonInPlayOf = (
   context: SelectionContext,
   selection: readonly ViewCardId[]
-): readonly string[] =>
-  Object.values(context.view.stacks).flatMap((stack) => {
-    const top = stack.evolutionCards.at(-1);
-    return top && selection.includes(top.id) ? [stack.id] : [];
-  });
+): readonly string[] => {
+  const picked = new Set(selection);
+  return Object.values(context.view.stacks).flatMap((stack) =>
+    stack.evolutionCards.some((card) => picked.has(card.id)) ||
+    stack.attachmentCards.some((card) => picked.has(card.id))
+      ? [stack.id]
+      : []
+  );
+};
 
 /**
  * "Attach to…": the Pokémon in play the whole group can go on, as the

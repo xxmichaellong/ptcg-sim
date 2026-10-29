@@ -1838,6 +1838,51 @@ describe('legacy board overlays', () => {
     expect(getComputedStyle(stableImage).opacity).toBe('1');
   });
 
+  it("shows the standard back for a face-down card whose own back won't load", async () => {
+    const callbacks = actions();
+    const card = cardIn(`:${firstPlayer}:hand`);
+    const missing = 'https://pictures.example.invalid/v2/images/gone.webp';
+    const standard = '/v2/assets/backs/standard.webp';
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardOverlays, {
+          state: state({
+            scene: {
+              ...scene,
+              cards: scene.cards.map((candidate) =>
+                candidate.id === card.id
+                  ? {
+                      ...candidate,
+                      concealed: true,
+                      imageUrl: missing,
+                      backFallbackUrl: standard,
+                    }
+                  : candidate
+              ),
+            },
+            overlays: {
+              contextMenuCardId: null,
+              preview: { kind: 'card', cardId: card.id },
+              input: null,
+            },
+          }),
+          darkMode: false,
+          actions: callbacks,
+        })
+      );
+    });
+    const image = host.querySelector<HTMLImageElement>(
+      '[data-overlay-image-card-id] img'
+    )!;
+    expect(image.getAttribute('src')).toBe(missing);
+    await act(async () => image.dispatchEvent(new Event('error')));
+    expect(
+      host
+        .querySelector<HTMLImageElement>('[data-overlay-image-card-id] img')!
+        .getAttribute('src')
+    ).toBe(standard);
+  });
+
   it('sorts only disclosed decklist ranks locally and restores authoritative scene order', async () => {
     const callbacks = actions();
     const discard = scene.zones.find(

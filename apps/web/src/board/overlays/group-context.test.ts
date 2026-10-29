@@ -71,6 +71,21 @@ describe('a selection read by the overlays', () => {
     expect(selectedItemOf(context, [topCard, hand], other)).toBeNull();
   });
 
+  it('reaches a Pokémon through the cards attached to it, each Pokémon once', () => {
+    const context = selectionContextOf(board, true)!;
+    const withAttached = Object.values(view.stacks).filter(
+      (stack) => stack.attachmentCards.length > 0
+    );
+    expect(withAttached.length).toBeGreaterThan(0);
+    const stack = withAttached[0]!;
+    const attached = stack.attachmentCards.map((card) => card.id);
+    // Its attached cards alone, or with the Pokémon itself: that Pokémon.
+    expect(pokemonInPlayOf(context, attached)).toEqual([stack.id]);
+    expect(
+      pokemonInPlayOf(context, [stack.evolutionCards.at(-1)!.id, ...attached])
+    ).toEqual([stack.id]);
+  });
+
   it('attaches a group holding a Pokémon in play to nothing: only attachments go on a Pokémon together', () => {
     const context = selectionContextOf(board, true)!;
     const stackId = view.boards[firstPlayer]!.activeStackId!;
