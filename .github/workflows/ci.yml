@@ -134,8 +134,13 @@ jobs:
       - name: Report flaky tests
         if: ${{ !cancelled() }}
         run: node scripts/report-flaky.mjs test-results/results.json
+      # Wrangler writes the dev server's own errors to a file, not the job log.
+      - name: Keep the dev server's log
+        if: always()
+        run: mkdir -p test-results && cp -r ~/.config/.wrangler/logs test-results/wrangler-logs || true
+      # Always, so a job that ran out of time still leaves its evidence.
       - name: Upload browser diagnostics
-        if: ${{ !cancelled() }}
+        if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: playwright-chromium-${{ matrix.shard }}-${{ github.run_attempt }}
@@ -201,8 +206,11 @@ jobs:
           done
       - name: Run the evidence spec
         run: corepack pnpm exec playwright test --project=chromium --retries=0 tests/browser/${{ matrix.spec }}
+      - name: Keep the dev server's log
+        if: always()
+        run: mkdir -p test-results && cp -r ~/.config/.wrangler/logs test-results/wrangler-logs || true
       - name: Upload evidence diagnostics
-        if: ${{ !cancelled() }}
+        if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: playwright-evidence-${{ strategy.job-index }}-${{ github.run_attempt }}
@@ -300,8 +308,11 @@ jobs:
       - name: Report flaky tests
         if: ${{ !cancelled() }}
         run: node scripts/report-flaky.mjs test-results/cross-browser/results.json
+      - name: Keep the dev server's log
+        if: always()
+        run: mkdir -p test-results/cross-browser && cp -r ~/.config/.wrangler/logs test-results/cross-browser/wrangler-logs || true
       - name: Upload cross-browser diagnostics
-        if: ${{ !cancelled() }}
+        if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: playwright-${{ matrix.browser }}-${{ github.run_attempt }}
