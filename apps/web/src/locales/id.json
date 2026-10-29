@@ -13,6 +13,17 @@
     ],
     "translation": ", nyala"
   },
+  "2X9O8a": {
+    "message": "{0, plural, one {# card left the selection} other {# cards left the selection}}, {1}",
+    "comments": [
+      "Selected cards that were moved away, e.g. by the other player."
+    ],
+    "translation": "{0, plural, other {# kartu keluar dari pilihan}}, {1}"
+  },
+  "6Lo6B5": {
+    "message": "{0, plural, one {# card selected} other {# cards selected}}",
+    "translation": "{0, plural, other {# kartu dipilih}}"
+  },
   "W8KEEX": {
     "message": "{0, plural, one {# player} other {# players}}",
     "translation": "{0, plural, other {# pemain}}"
@@ -24,6 +35,18 @@
   "jnpzPF": {
     "message": "{0, plural, one {Shuffled # card into the deck} other {Shuffled # cards into the deck}}",
     "translation": "{0, plural, other {Mengocok # kartu ke dalam deck}}"
+  },
+  "TDU04N": {
+    "message": "{0, plural, other {Mark # as unused}}",
+    "translation": "{0, plural, other {Tandai # sebagai belum dipakai}}"
+  },
+  "thQz5O": {
+    "message": "{0, plural, other {Mark # as used}}",
+    "translation": "{0, plural, other {Tandai # sebagai sudah dipakai}}"
+  },
+  "OUc2yQ": {
+    "message": "{0, plural, other {Put # Pokémon on the Bench}}",
+    "translation": "{0, plural, other {Masukkan # Pokémon ke Cadangan}}"
   },
   "yW-SAQ": {
     "message": "{0} ({1})",
@@ -57,6 +80,13 @@
       "How many tutorial lessons are finished, like \"3 of 10 done\"."
     ],
     "translation": "{0} dari {1} selesai"
+  },
+  "fvImQM": {
+    "message": "{0} selected",
+    "comments": [
+      "How many cards are selected, e.g. \"3 selected\"."
+    ],
+    "translation": "{0} dipilih"
   },
   "9dbhR8": {
     "message": "{actor} attached {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {target, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}}",
@@ -355,9 +385,17 @@
     "message": "{classicName} decks",
     "translation": "Deck {classicName}"
   },
+  "T2CvPc": {
+    "message": "{cleared, plural, one {Clear damage} other {Clear damage on #}}",
+    "translation": "{cleared, plural, other {Hapus kerusakan pada #}}"
+  },
   "shahtf": {
     "message": "{compositionName} assembled preview",
     "translation": "Pratinjau {compositionName} yang sudah dirakit"
+  },
+  "d5-G2p": {
+    "message": "{conditioned, plural, one {Add or switch Special Condition} other {Add or switch Special Conditions on #}}",
+    "translation": "{conditioned, plural, other {Tambah atau ganti Kondisi Khusus pada #}}"
   },
   "f0WoGd": {
     "message": "{count, plural, one {{label}, # card} other {{label}, # cards}}",
@@ -418,6 +456,10 @@
     "message": "{count, plural, one {# copy of {name} (Prism Star: max 1).} other {# copies of {name} (Prism Star: max 1).}}",
     "translation": "{count, plural, other {# salinan {name} (Prism Star: maks. 1).}}"
   },
+  "0GBBWg": {
+    "message": "{count, plural, one {# of {ownerName}'s cards} other {# of {ownerName}'s cards}}",
+    "translation": "{count, plural, other {# kartu milik {ownerName}}}"
+  },
   "eFRg1z": {
     "message": "{count, plural, one {# Pokémon ☆ card (max 1).} other {# Pokémon ☆ cards (max 1).}}",
     "translation": "{count, plural, other {# kartu Pokémon ☆ (maks. 1).}}"
@@ -437,6 +479,10 @@
   "MJC1vQ": {
     "message": "{count, plural, one {Can't do that with this card} other {Can't do that with these cards}}",
     "translation": "{count, plural, other {Tidak bisa dilakukan dengan kartu ini}}"
+  },
+  "LrKYZV": {
+    "message": "{count, plural, one {Discard # card} other {Discard # cards}}",
+    "translation": "{count, plural, other {Buang # kartu ke Trash}}"
   },
   "-gAzkm": {
     "message": "{count, plural, one {Discard hand and draw # card} other {Discard hand and draw # cards}}",
@@ -466,6 +512,34 @@
     "message": "{count, plural, one {Look at top card} other {Look at top # cards}}",
     "translation": "{count, plural, other {Lihat # kartu teratas}}"
   },
+  "0oSCag": {
+    "message": "{count, plural, one {Move # card to hand} other {Move # cards to hand}}",
+    "translation": "{count, plural, other {Pindahkan # kartu ke Kartu Pegangan}}"
+  },
+  "VPXqBr": {
+    "message": "{count, plural, one {Put # card in the Lost Zone} other {Put # cards in the Lost Zone}}",
+    "translation": "{count, plural, other {Masukkan # kartu ke Lost Zone}}"
+  },
+  "QcZX-S": {
+    "message": "{count, plural, one {Put # card in the Prizes} other {Put # cards in the Prizes}}",
+    "translation": "{count, plural, other {Taruh # kartu di Kartu Point}}"
+  },
+  "rVI1D1": {
+    "message": "{count, plural, one {Put # card on the board} other {Put # cards on the board}}",
+    "translation": "{count, plural, other {Taruh # kartu di papan}}"
+  },
+  "CEIRsk": {
+    "message": "{count, plural, one {Put # card on the bottom of the deck} other {Put # cards on the bottom of the deck}}",
+    "translation": "{count, plural, other {Taruh # kartu di bawah deck}}"
+  },
+  "Iqt60a": {
+    "message": "{count, plural, one {Put # card on top of the deck} other {Put # cards on top of the deck}}",
+    "translation": "{count, plural, other {Taruh # kartu di atas deck}}"
+  },
+  "L80QZi": {
+    "message": "{count, plural, one {Shuffle # card into the deck} other {Shuffle # cards into the deck}}",
+    "translation": "{count, plural, other {Kocok # kartu ke dalam deck}}"
+  },
   "-r4674": {
     "message": "{count, plural, one {Shuffle hand in and draw # card} other {Shuffle hand in and draw # cards}}",
     "translation": "{count, plural, other {Kocok Kartu Pegangan ke deck dan ambil # kartu}}"
@@ -473,6 +547,10 @@
   "aN0Z_E": {
     "message": "{count, plural, one {Shuffle hand to bottom and draw # card} other {Shuffle hand to bottom and draw # cards}}",
     "translation": "{count, plural, other {Kocok Kartu Pegangan ke bawah deck dan ambil # kartu}}"
+  },
+  "SdtOTJ": {
+    "message": "{count, plural, other {Add # damage to each}}",
+    "translation": "{count, plural, other {Tambah # kerusakan ke masing-masing}}"
   },
   "19mL4O": {
     "message": "{count, plural, other {All # are already in hand}}",
@@ -506,6 +584,38 @@
     "message": "{count, plural, other {All # are already the Stadium}}",
     "translation": "{count, plural, other {Semua # sudah menjadi Stadium}}"
   },
+  "Kv5Eze": {
+    "message": "{count, plural, other {Discard # Pokémon}}",
+    "translation": "{count, plural, other {Buang # Pokémon ke Trash}}"
+  },
+  "DxATQp": {
+    "message": "{count, plural, other {Move # Pokémon to hand}}",
+    "translation": "{count, plural, other {Pindahkan # Pokémon ke Kartu Pegangan}}"
+  },
+  "Rdmkvn": {
+    "message": "{count, plural, other {Put # Pokémon in the Lost Zone}}",
+    "translation": "{count, plural, other {Masukkan # Pokémon ke Lost Zone}}"
+  },
+  "JUDcg5": {
+    "message": "{count, plural, other {Put # Pokémon in the Prizes}}",
+    "translation": "{count, plural, other {Taruh # Pokémon di Kartu Point}}"
+  },
+  "Jv3nIR": {
+    "message": "{count, plural, other {Put # Pokémon on the board}}",
+    "translation": "{count, plural, other {Taruh # Pokémon di papan}}"
+  },
+  "lkpEPZ": {
+    "message": "{count, plural, other {Put # Pokémon on the bottom of the deck}}",
+    "translation": "{count, plural, other {Taruh # Pokémon di bawah deck}}"
+  },
+  "qtwSJv": {
+    "message": "{count, plural, other {Put # Pokémon on top of the deck}}",
+    "translation": "{count, plural, other {Taruh # Pokémon di atas deck}}"
+  },
+  "P13x5M": {
+    "message": "{count, plural, other {Shuffle # Pokémon into the deck}}",
+    "translation": "{count, plural, other {Kocok # Pokémon ke dalam deck}}"
+  },
   "hMKADB": {
     "message": "{count} × {cardName} ({print}). Details",
     "comments": [
@@ -516,6 +626,21 @@
   "QugGSf": {
     "message": "{count} in deck",
     "translation": "{count} di deck"
+  },
+  "tYyyLp": {
+    "message": "{count} selected: actions",
+    "comments": [
+      "The touch toolbar for several selected cards, e.g. \"3 selected: actions\"."
+    ],
+    "translation": "{count} dipilih: aksi"
+  },
+  "5VUOI1": {
+    "message": "{cured, plural, one {Remove Special Condition} other {Remove Special Conditions on #}}",
+    "translation": "{cured, plural, other {Hapus Kondisi Khusus pada #}}"
+  },
+  "3W5Y-K": {
+    "message": "{damaged, plural, one {Add 10 damage} other {Add 10 damage to each of #}}",
+    "translation": "{damaged, plural, other {Tambah 10 kerusakan pada #}}"
   },
   "7prUK_": {
     "message": "{deck}, {place}, {playerName}: try it",
@@ -558,9 +683,17 @@
     "message": "{firstReloading} will reload",
     "translation": "{firstReloading} akan dimuat ulang"
   },
+  "iovK0L": {
+    "message": "{hidden, plural, one {Hide # card} other {Hide # cards}}",
+    "translation": "{hidden, plural, other {Sembunyikan # kartu}}"
+  },
   "k0g2Da": {
     "message": "{hp} HP",
     "translation": "HP {hp}"
+  },
+  "Mh1NmC": {
+    "message": "{items, plural, one {# selected} other {# selected}}",
+    "translation": "{items, plural, other {# dipilih}}"
   },
   "BwX3jA": {
     "message": "{key} is reserved for {action}.",
@@ -582,6 +715,10 @@
       "A button naming a shortcut and its keys; pressing it changes the keys."
     ],
     "translation": "{label}: {spoken}. Ubah"
+  },
+  "1z1iU-": {
+    "message": "{last} ends on top",
+    "translation": "{last} berakhir di atas"
   },
   "AiqpXX": {
     "message": "{list}, {item}",
@@ -623,6 +760,13 @@
       "A zone's name for screen readers; name is its player. The Active Spot."
     ],
     "translation": "Arena Bertarung {name}"
+  },
+  "Q29GRK": {
+    "message": "{name} added, {0}",
+    "comments": [
+      "A card joined the selection, e.g. \"Fire Energy added, 4 selected\"."
+    ],
+    "translation": "{name} ditambahkan, {0}"
   },
   "2jVmMm": {
     "message": "{name} attacked",
@@ -807,6 +951,13 @@
     ],
     "translation": "{name} tersambung kembali"
   },
+  "rObKhV": {
+    "message": "{name} removed, {0}",
+    "comments": [
+      "A card left the selection, e.g. \"Fire Energy removed, 3 selected\"."
+    ],
+    "translation": "{name} dihapus, {0}"
+  },
   "VcNbQ-": {
     "message": "{name} reset",
     "comments": [
@@ -862,6 +1013,27 @@
       "name is GX or VSTAR, the once-per-game marker."
     ],
     "translation": "{name} terpakai: tekan untuk membatalkan"
+  },
+  "9NXGJ_": {
+    "message": "{name}, Active",
+    "comments": [
+      "A Pokémon to attach cards to, e.g. \"Pikachu, Active\"."
+    ],
+    "translation": "{name}, Arena Bertarung"
+  },
+  "J9Wtim": {
+    "message": "{name}, Bench",
+    "comments": [
+      "A Pokémon to attach cards to, e.g. \"Pikachu, Bench\"."
+    ],
+    "translation": "{name}, Cadangan"
+  },
+  "68ccPL": {
+    "message": "{name}, selected, {order} of {0}",
+    "comments": [
+      "A selected card among several, e.g. \"Switch, selected, 2 of 3\"."
+    ],
+    "translation": "{name}, dipilih, {order} dari {0}"
   },
   "Dh0OFs": {
     "message": "{name}, selected, number {order}",
@@ -951,6 +1123,14 @@
   "huIm_e": {
     "message": "{prints, plural, one {# print} other {# prints}}",
     "translation": "{prints, plural, other {# cetakan}}"
+  },
+  "Lg_lp9": {
+    "message": "{revealed, plural, one {Reveal # card} other {Reveal # cards}}",
+    "translation": "{revealed, plural, other {Tampilkan # kartu}}"
+  },
+  "ZAbJN6": {
+    "message": "{rotated, plural, one {Rotate # card} other {Rotate # cards}}",
+    "translation": "{rotated, plural, other {Putar # kartu}}"
   },
   "RTnHXI": {
     "message": "{said}: {cards}",
@@ -1078,6 +1258,13 @@
     ],
     "translation": "{viewer} berhenti melihat kartu di {source, select, hand {Kartu Pegangan} prizes {Kartu Point} discard {Trash} board {papan} stadium {Stadium} active {Arena Bertarung} bench {Cadangan} lostZone {Lost Zone} attachmentResolution {kartu terpasang} inspection {pemeriksaan} other {deck}} milik {owner}"
   },
+  "-AEMvi": {
+    "message": "{zoneName}, {0} selected",
+    "comments": [
+      "The cards of an open pile, e.g. \"Your discard pile, 3 selected\"."
+    ],
+    "translation": "{zoneName}, {0} dipilih"
+  },
   "JirPbT": {
     "message": "{zoneName}, {count, plural, one {# card} other {# cards}}",
     "comments": [
@@ -1094,6 +1281,13 @@
     "message": "+ Stadium",
     "context": "shortcut key caption",
     "translation": "+ Stadium"
+  },
+  "T_K7zW": {
+    "message": "×{pokemon}",
+    "comments": [
+      "How many Pokémon the damage stepper marks, e.g. \"×3\"."
+    ],
+    "translation": "×{pokemon}"
   },
   "cTPeOy": {
     "message": "<0/> already does <1>{clashNames}</1>.",
@@ -1153,9 +1347,17 @@
     "message": "10 less damage",
     "translation": "Kurangi 10 kerusakan"
   },
+  "n-Gc4A": {
+    "message": "10 less damage on each",
+    "translation": "Kerusakan berkurang 10 pada tiap Pokémon"
+  },
   "AHfGsB": {
     "message": "10 more damage",
     "translation": "Tambah 10 kerusakan"
+  },
+  "07KhVj": {
+    "message": "10 more damage on each",
+    "translation": "Kerusakan bertambah 10 pada tiap Pokémon"
   },
   "c224Tl": {
     "message": "3 draws three",
@@ -1292,6 +1494,10 @@
   "vz22MV": {
     "message": "Add damage",
     "translation": "Tambah kerusakan"
+  },
+  "abXnG-": {
+    "message": "Add damage to each…",
+    "translation": "Tambah kerusakan ke setiap…"
   },
   "mOz7te": {
     "message": "Add damage…",
@@ -1482,6 +1688,11 @@
     "message": "Artwork window",
     "translation": "Jendela ilustrasi"
   },
+  "qeQjlL": {
+    "message": "As one",
+    "context": "play the selected pieces as one card",
+    "translation": "Sebagai satu"
+  },
   "eiQJaM": {
     "message": "Asleep",
     "context": "special condition",
@@ -1499,6 +1710,10 @@
   "jrzyuC": {
     "message": "Attach and evolve",
     "translation": "Kenakan dan evolusi"
+  },
+  "8vfaut": {
+    "message": "Attach to",
+    "translation": "Kenakan ke"
   },
   "uUaeMQ": {
     "message": "Attach to a Pokémon…",
@@ -2262,6 +2477,22 @@
     "message": "Damage counter",
     "translation": "Token Kerusakan"
   },
+  "DFzJxl": {
+    "message": "Damage on each of {pokemon, plural, one {# Pokémon} other {# Pokémon}}",
+    "comments": [
+      "The damage stepper for several selected Pokémon at once."
+    ],
+    "translation": "Kerusakan pada tiap dari {pokemon, plural, other {# Pokémon}}"
+  },
+  "Ee-egz": {
+    "message": "Damage…",
+    "translation": "Kerusakan…"
+  },
+  "4xW71x": {
+    "message": "Damage…",
+    "context": "damage on the selected Pokémon; a stepper follows",
+    "translation": "Kerusakan…"
+  },
   "yB1YpA": {
     "message": "Dark mode",
     "translation": "Mode gelap"
@@ -2387,6 +2618,13 @@
     "message": "Deselect",
     "translation": "Batalkan pilihan"
   },
+  "U-R4tW": {
+    "message": "Deselect all",
+    "comments": [
+      "Takes every card of the open pile out of the selection."
+    ],
+    "translation": "Batal pilih semua"
+  },
   "lJjOBS": {
     "message": "Design",
     "context": "a card back the player designed",
@@ -2490,6 +2728,11 @@
   "8Gsx4j": {
     "message": "Done",
     "context": "finished",
+    "translation": "Selesai"
+  },
+  "YLZBXb": {
+    "message": "Done",
+    "context": "stop picking cards",
     "translation": "Selesai"
   },
   "6yxheJ": {
@@ -3828,6 +4071,13 @@
     "context": "move the selected card",
     "translation": "Pindahkan"
   },
+  "2kUZvq": {
+    "message": "Move {0}…",
+    "comments": [
+      "Opens the menu of what the selected cards can do, e.g. \"Move 3…\"."
+    ],
+    "translation": "Pindahkan {0}…"
+  },
   "B8Y72Z": {
     "message": "Move {cardName} to",
     "comments": [
@@ -3875,6 +4125,11 @@
   "rzLbnt": {
     "message": "Move to hand",
     "translation": "Pindahkan ke Kartu Pegangan"
+  },
+  "v1NcRU": {
+    "message": "Move…",
+    "context": "move the selected cards; a menu of places follows",
+    "translation": "Pindahkan…"
   },
   "mP7YPE": {
     "message": "Mulligan",
@@ -4526,6 +4781,10 @@
     "context": "take the decks to the table",
     "translation": "Main"
   },
+  "BEfUVX": {
+    "message": "Play {name} as the Stadium",
+    "translation": "Mainkan {name} sebagai Stadium"
+  },
   "Sky344": {
     "message": "Play <0>{0}</0>: drag it onto the open mat. Ending your turn clears it away.",
     "translation": "Mainkan <0>{0}</0>: seret ke alas yang terbuka. Mengakhiri giliranmu akan menyingkirkannya."
@@ -4533,6 +4792,14 @@
   "7LIRc6": {
     "message": "Play a random deck",
     "translation": "Mainkan deck acak"
+  },
+  "Yo-ZmX": {
+    "message": "Play as one card",
+    "translation": "Mainkan sebagai satu kartu"
+  },
+  "NZZ8TY": {
+    "message": "Play as the Stadium",
+    "translation": "Mainkan sebagai Stadium"
   },
   "0wpoN_": {
     "message": "Play faster from the keyboard",
@@ -4583,6 +4850,10 @@
     "message": "Poisoned",
     "context": "special condition",
     "translation": "Racun"
+  },
+  "eqRr09": {
+    "message": "Pokémon",
+    "translation": "Pokémon"
   },
   "icgZ-R": {
     "message": "Pokémon",
@@ -4715,6 +4986,14 @@
     "context": "Pokémon type",
     "translation": "Psychic"
   },
+  "YLetgL": {
+    "message": "Put {name} in the Active Spot",
+    "translation": "Masukkan {name} ke Arena Bertarung"
+  },
+  "wj75Qo": {
+    "message": "Put {name} on the Bench",
+    "translation": "Masukkan {name} ke Cadangan"
+  },
   "jG4a_T": {
     "message": "Put another on your <0>Bench</0>. Up to five fit there.",
     "translation": "Masukkan satu lagi ke <0>Cadangan</0> kamu. Muat sampai lima."
@@ -4722,6 +5001,10 @@
   "5XURu8": {
     "message": "Put damage and Poisoned on their Pokémon",
     "translation": "Beri kerusakan dan Racun pada Pokémon lawan"
+  },
+  "4X3mBx": {
+    "message": "Put in the Active Spot",
+    "translation": "Masukkan ke Arena Bertarung"
   },
   "vGO8Cg": {
     "message": "Put on bottom",
@@ -4868,6 +5151,10 @@
   "-cND-P": {
     "message": "Remove all damage",
     "translation": "Hapus semua kerusakan"
+  },
+  "YF7gJY": {
+    "message": "Remove all damage from each",
+    "translation": "Hapus semua kerusakan dari tiap Pokémon"
   },
   "sR6lTH": {
     "message": "Remove condition",
@@ -5289,10 +5576,24 @@
     "message": "Seat taken",
     "translation": "Kursi terisi"
   },
+  "rG3WVm": {
+    "message": "Select",
+    "comments": [
+      "Starts picking several cards: each tap then adds a card or takes it out."
+    ],
+    "translation": "Pilih"
+  },
   "4UhpnZ": {
     "message": "Select",
     "context": "shortcut key caption",
     "translation": "Pilih"
+  },
+  "wgNoIs": {
+    "message": "Select all",
+    "comments": [
+      "Takes every card of the open pile into the selection."
+    ],
+    "translation": "Pilih semua"
   },
   "mGWCew": {
     "message": "Select all here",
@@ -5326,6 +5627,21 @@
   "k32jF1": {
     "message": "Selected card actions",
     "translation": "Aksi kartu terpilih"
+  },
+  "Dm5gKG": {
+    "message": "Selected cards actions",
+    "translation": "Aksi kartu terpilih"
+  },
+  "sYGBP5": {
+    "message": "Selecting: tap cards to add them",
+    "comments": [
+      "Read out as touch selection mode starts."
+    ],
+    "translation": "Memilih: ketuk kartu untuk menambahkannya"
+  },
+  "GvCs21": {
+    "message": "Selection cleared",
+    "translation": "Pilihan dikosongkan"
   },
   "PzW-3k": {
     "message": "Send",
@@ -6698,6 +7014,10 @@
     "message": "Winning now",
     "translation": "Sedang menang"
   },
+  "SzQFzV": {
+    "message": "With their attached cards",
+    "translation": "Beserta kartu yang terpasang"
+  },
   "QjlnU1": {
     "message": "Worlds",
     "comments": [
@@ -6788,332 +7108,5 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "Garis tepi zona"
-  },
-  "TDU04N": {
-    "message": "{0, plural, other {Mark # as unused}}",
-    "translation": "{0, plural, other {Tandai # sebagai belum dipakai}}"
-  },
-  "thQz5O": {
-    "message": "{0, plural, other {Mark # as used}}",
-    "translation": "{0, plural, other {Tandai # sebagai sudah dipakai}}"
-  },
-  "OUc2yQ": {
-    "message": "{0, plural, other {Put # Pokémon on the Bench}}",
-    "translation": "{0, plural, other {Masukkan # Pokémon ke Cadangan}}"
-  },
-  "9RYqFp": {
-    "message": "{actor} moved {count, plural, one {# card} other {# cards}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} other {deck}}",
-    "comments": [
-      "Log line. {actor} is a player's name, {count} how many cards; {source} is the zone they left and {destination} where they went (play: onto the table)."
-    ],
-    "translation": "{actor} memindahkan {count, plural, other {# kartu}} dari {source, select, hand {Kartu Pegangan} prizes {Kartu Point} discard {Trash} board {papan} stadium {Stadium} active {Arena Bertarung} bench {Cadangan} lostZone {Lost Zone} attachmentResolution {kartu terpasang} other {deck}} ke {destination, select, hand {Kartu Pegangan} discard {Trash} lostZone {Lost Zone} deckBottom {bawah deck} play {Arena} other {deck}}"
-  },
-  "T2CvPc": {
-    "message": "{cleared, plural, one {Clear damage} other {Clear damage on #}}",
-    "translation": "{cleared, plural, other {Hapus kerusakan pada #}}"
-  },
-  "d5-G2p": {
-    "message": "{conditioned, plural, one {Add or switch Special Condition} other {Add or switch Special Conditions on #}}",
-    "translation": "{conditioned, plural, other {Tambah atau ganti Kondisi Khusus pada #}}"
-  },
-  "0GBBWg": {
-    "message": "{count, plural, one {# of {ownerName}'s cards} other {# of {ownerName}'s cards}}",
-    "translation": "{count, plural, other {# kartu milik {ownerName}}}"
-  },
-  "LrKYZV": {
-    "message": "{count, plural, one {Discard # card} other {Discard # cards}}",
-    "translation": "{count, plural, other {Buang # kartu ke Trash}}"
-  },
-  "0oSCag": {
-    "message": "{count, plural, one {Move # card to hand} other {Move # cards to hand}}",
-    "translation": "{count, plural, other {Pindahkan # kartu ke Kartu Pegangan}}"
-  },
-  "VPXqBr": {
-    "message": "{count, plural, one {Put # card in the Lost Zone} other {Put # cards in the Lost Zone}}",
-    "translation": "{count, plural, other {Masukkan # kartu ke Lost Zone}}"
-  },
-  "QcZX-S": {
-    "message": "{count, plural, one {Put # card in the Prizes} other {Put # cards in the Prizes}}",
-    "translation": "{count, plural, other {Taruh # kartu di Kartu Point}}"
-  },
-  "rVI1D1": {
-    "message": "{count, plural, one {Put # card on the board} other {Put # cards on the board}}",
-    "translation": "{count, plural, other {Taruh # kartu di papan}}"
-  },
-  "CEIRsk": {
-    "message": "{count, plural, one {Put # card on the bottom of the deck} other {Put # cards on the bottom of the deck}}",
-    "translation": "{count, plural, other {Taruh # kartu di bawah deck}}"
-  },
-  "Iqt60a": {
-    "message": "{count, plural, one {Put # card on top of the deck} other {Put # cards on top of the deck}}",
-    "translation": "{count, plural, other {Taruh # kartu di atas deck}}"
-  },
-  "L80QZi": {
-    "message": "{count, plural, one {Shuffle # card into the deck} other {Shuffle # cards into the deck}}",
-    "translation": "{count, plural, other {Kocok # kartu ke dalam deck}}"
-  },
-  "SdtOTJ": {
-    "message": "{count, plural, other {Add # damage to each}}",
-    "translation": "{count, plural, other {Tambah # kerusakan ke masing-masing}}"
-  },
-  "Kv5Eze": {
-    "message": "{count, plural, other {Discard # Pokémon}}",
-    "translation": "{count, plural, other {Buang # Pokémon ke Trash}}"
-  },
-  "DxATQp": {
-    "message": "{count, plural, other {Move # Pokémon to hand}}",
-    "translation": "{count, plural, other {Pindahkan # Pokémon ke Kartu Pegangan}}"
-  },
-  "Rdmkvn": {
-    "message": "{count, plural, other {Put # Pokémon in the Lost Zone}}",
-    "translation": "{count, plural, other {Masukkan # Pokémon ke Lost Zone}}"
-  },
-  "JUDcg5": {
-    "message": "{count, plural, other {Put # Pokémon in the Prizes}}",
-    "translation": "{count, plural, other {Taruh # Pokémon di Kartu Point}}"
-  },
-  "Jv3nIR": {
-    "message": "{count, plural, other {Put # Pokémon on the board}}",
-    "translation": "{count, plural, other {Taruh # Pokémon di papan}}"
-  },
-  "lkpEPZ": {
-    "message": "{count, plural, other {Put # Pokémon on the bottom of the deck}}",
-    "translation": "{count, plural, other {Taruh # Pokémon di bawah deck}}"
-  },
-  "qtwSJv": {
-    "message": "{count, plural, other {Put # Pokémon on top of the deck}}",
-    "translation": "{count, plural, other {Taruh # Pokémon di atas deck}}"
-  },
-  "P13x5M": {
-    "message": "{count, plural, other {Shuffle # Pokémon into the deck}}",
-    "translation": "{count, plural, other {Kocok # Pokémon ke dalam deck}}"
-  },
-  "5VUOI1": {
-    "message": "{cured, plural, one {Remove Special Condition} other {Remove Special Conditions on #}}",
-    "translation": "{cured, plural, other {Hapus Kondisi Khusus pada #}}"
-  },
-  "3W5Y-K": {
-    "message": "{damaged, plural, one {Add 10 damage} other {Add 10 damage to each of #}}",
-    "translation": "{damaged, plural, other {Tambah 10 kerusakan pada #}}"
-  },
-  "iovK0L": {
-    "message": "{hidden, plural, one {Hide # card} other {Hide # cards}}",
-    "translation": "{hidden, plural, other {Sembunyikan # kartu}}"
-  },
-  "1z1iU-": {
-    "message": "{last} ends on top",
-    "translation": "{last} berakhir di atas"
-  },
-  "Lg_lp9": {
-    "message": "{revealed, plural, one {Reveal # card} other {Reveal # cards}}",
-    "translation": "{revealed, plural, other {Tampilkan # kartu}}"
-  },
-  "ZAbJN6": {
-    "message": "{rotated, plural, one {Rotate # card} other {Rotate # cards}}",
-    "translation": "{rotated, plural, other {Putar # kartu}}"
-  },
-  "abXnG-": {
-    "message": "Add damage to each…",
-    "translation": "Tambah kerusakan ke setiap…"
-  },
-  "Ee-egz": {
-    "message": "Damage…",
-    "translation": "Kerusakan…"
-  },
-  "BEfUVX": {
-    "message": "Play {name} as the Stadium",
-    "translation": "Mainkan {name} sebagai Stadium"
-  },
-  "Yo-ZmX": {
-    "message": "Play as one card",
-    "translation": "Mainkan sebagai satu kartu"
-  },
-  "NZZ8TY": {
-    "message": "Play as the Stadium",
-    "translation": "Mainkan sebagai Stadium"
-  },
-  "YLetgL": {
-    "message": "Put {name} in the Active Spot",
-    "translation": "Masukkan {name} ke Arena Bertarung"
-  },
-  "wj75Qo": {
-    "message": "Put {name} on the Bench",
-    "translation": "Masukkan {name} ke Cadangan"
-  },
-  "4X3mBx": {
-    "message": "Put in the Active Spot",
-    "translation": "Masukkan ke Arena Bertarung"
-  },
-  "SzQFzV": {
-    "message": "With their attached cards",
-    "translation": "Beserta kartu yang terpasang"
-  },
-  "2X9O8a": {
-    "message": "{0, plural, one {# card left the selection} other {# cards left the selection}}, {1}",
-    "comments": [
-      "Selected cards that were moved away, e.g. by the other player."
-    ],
-    "translation": "{0, plural, other {# kartu keluar dari pilihan}}, {1}"
-  },
-  "6Lo6B5": {
-    "message": "{0, plural, one {# card selected} other {# cards selected}}",
-    "translation": "{0, plural, other {# kartu dipilih}}"
-  },
-  "fvImQM": {
-    "message": "{0} selected",
-    "comments": [
-      "How many cards are selected, e.g. \"3 selected\"."
-    ],
-    "translation": "{0} dipilih"
-  },
-  "tYyyLp": {
-    "message": "{count} selected: actions",
-    "comments": [
-      "The touch toolbar for several selected cards, e.g. \"3 selected: actions\"."
-    ],
-    "translation": "{count} dipilih: aksi"
-  },
-  "Mh1NmC": {
-    "message": "{items, plural, one {# selected} other {# selected}}",
-    "translation": "{items, plural, other {# dipilih}}"
-  },
-  "Q29GRK": {
-    "message": "{name} added, {0}",
-    "comments": [
-      "A card joined the selection, e.g. \"Fire Energy added, 4 selected\"."
-    ],
-    "translation": "{name} ditambahkan, {0}"
-  },
-  "rObKhV": {
-    "message": "{name} removed, {0}",
-    "comments": [
-      "A card left the selection, e.g. \"Fire Energy removed, 3 selected\"."
-    ],
-    "translation": "{name} dihapus, {0}"
-  },
-  "9NXGJ_": {
-    "message": "{name}, Active",
-    "comments": [
-      "A Pokémon to attach cards to, e.g. \"Pikachu, Active\"."
-    ],
-    "translation": "{name}, Arena Bertarung"
-  },
-  "J9Wtim": {
-    "message": "{name}, Bench",
-    "comments": [
-      "A Pokémon to attach cards to, e.g. \"Pikachu, Bench\"."
-    ],
-    "translation": "{name}, Cadangan"
-  },
-  "68ccPL": {
-    "message": "{name}, selected, {order} of {0}",
-    "comments": [
-      "A selected card among several, e.g. \"Switch, selected, 2 of 3\"."
-    ],
-    "translation": "{name}, dipilih, {order} dari {0}"
-  },
-  "-AEMvi": {
-    "message": "{zoneName}, {0} selected",
-    "comments": [
-      "The cards of an open pile, e.g. \"Your discard pile, 3 selected\"."
-    ],
-    "translation": "{zoneName}, {0} dipilih"
-  },
-  "T_K7zW": {
-    "message": "×{pokemon}",
-    "comments": [
-      "How many Pokémon the damage stepper marks, e.g. \"×3\"."
-    ],
-    "translation": "×{pokemon}"
-  },
-  "n-Gc4A": {
-    "message": "10 less damage on each",
-    "translation": "Kerusakan berkurang 10 pada tiap Pokémon"
-  },
-  "07KhVj": {
-    "message": "10 more damage on each",
-    "translation": "Kerusakan bertambah 10 pada tiap Pokémon"
-  },
-  "qeQjlL": {
-    "message": "As one",
-    "context": "play the selected pieces as one card",
-    "translation": "Sebagai satu"
-  },
-  "8vfaut": {
-    "message": "Attach to",
-    "translation": "Kenakan ke"
-  },
-  "DFzJxl": {
-    "message": "Damage on each of {pokemon, plural, one {# Pokémon} other {# Pokémon}}",
-    "comments": [
-      "The damage stepper for several selected Pokémon at once."
-    ],
-    "translation": "Kerusakan pada tiap dari {pokemon, plural, other {# Pokémon}}"
-  },
-  "4xW71x": {
-    "message": "Damage…",
-    "context": "damage on the selected Pokémon; a stepper follows",
-    "translation": "Kerusakan…"
-  },
-  "U-R4tW": {
-    "message": "Deselect all",
-    "comments": [
-      "Takes every card of the open pile out of the selection."
-    ],
-    "translation": "Batal pilih semua"
-  },
-  "YLZBXb": {
-    "message": "Done",
-    "context": "stop picking cards",
-    "translation": "Selesai"
-  },
-  "2kUZvq": {
-    "message": "Move {0}…",
-    "comments": [
-      "Opens the menu of what the selected cards can do, e.g. \"Move 3…\"."
-    ],
-    "translation": "Pindahkan {0}…"
-  },
-  "v1NcRU": {
-    "message": "Move…",
-    "context": "move the selected cards; a menu of places follows",
-    "translation": "Pindahkan…"
-  },
-  "eqRr09": {
-    "message": "Pokémon",
-    "translation": "Pokémon"
-  },
-  "YF7gJY": {
-    "message": "Remove all damage from each",
-    "translation": "Hapus semua kerusakan dari tiap Pokémon"
-  },
-  "rG3WVm": {
-    "message": "Select",
-    "comments": [
-      "Starts picking several cards: each tap then adds a card or takes it out."
-    ],
-    "translation": "Pilih"
-  },
-  "wgNoIs": {
-    "message": "Select all",
-    "comments": [
-      "Takes every card of the open pile into the selection."
-    ],
-    "translation": "Pilih semua"
-  },
-  "Dm5gKG": {
-    "message": "Selected cards actions",
-    "translation": "Aksi kartu terpilih"
-  },
-  "sYGBP5": {
-    "message": "Selecting: tap cards to add them",
-    "comments": [
-      "Read out as touch selection mode starts."
-    ],
-    "translation": "Memilih: ketuk kartu untuk menambahkannya"
-  },
-  "GvCs21": {
-    "message": "Selection cleared",
-    "translation": "Pilihan dikosongkan"
   }
 }

@@ -13,6 +13,17 @@
     ],
     "translation": ", på"
   },
+  "2X9O8a": {
+    "message": "{0, plural, one {# card left the selection} other {# cards left the selection}}, {1}",
+    "comments": [
+      "Selected cards that were moved away, e.g. by the other player."
+    ],
+    "translation": "{0, plural, one {# kort lämnade markeringen} other {# kort lämnade markeringen}}, {1}"
+  },
+  "6Lo6B5": {
+    "message": "{0, plural, one {# card selected} other {# cards selected}}",
+    "translation": "{0, plural, one {# kort markerat} other {# kort markerade}}"
+  },
   "W8KEEX": {
     "message": "{0, plural, one {# player} other {# players}}",
     "translation": "{0, plural, one {# spelare} other {# spelare}}"
@@ -24,6 +35,18 @@
   "jnpzPF": {
     "message": "{0, plural, one {Shuffled # card into the deck} other {Shuffled # cards into the deck}}",
     "translation": "{0, plural, one {Blandade # kort i leken} other {Blandade # kort i leken}}"
+  },
+  "TDU04N": {
+    "message": "{0, plural, other {Mark # as unused}}",
+    "translation": "{0, plural, other {Markera # som oanvända}}"
+  },
+  "thQz5O": {
+    "message": "{0, plural, other {Mark # as used}}",
+    "translation": "{0, plural, other {Markera # som använda}}"
+  },
+  "OUc2yQ": {
+    "message": "{0, plural, other {Put # Pokémon on the Bench}}",
+    "translation": "{0, plural, other {Lägg # Pokémon på bänken}}"
   },
   "yW-SAQ": {
     "message": "{0} ({1})",
@@ -57,6 +80,13 @@
       "How many tutorial lessons are finished, like \"3 of 10 done\"."
     ],
     "translation": "{0} av {1} klara"
+  },
+  "fvImQM": {
+    "message": "{0} selected",
+    "comments": [
+      "How many cards are selected, e.g. \"3 selected\"."
+    ],
+    "translation": "{0} markerade"
   },
   "9dbhR8": {
     "message": "{actor} attached {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {target, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}}",
@@ -355,9 +385,17 @@
     "message": "{classicName} decks",
     "translation": "{classicName}-lekar"
   },
+  "T2CvPc": {
+    "message": "{cleared, plural, one {Clear damage} other {Clear damage on #}}",
+    "translation": "{cleared, plural, one {Ta bort skada} other {Ta bort skada på #}}"
+  },
   "shahtf": {
     "message": "{compositionName} assembled preview",
     "translation": "Förhandsvisning av hopsatt {compositionName}"
+  },
+  "d5-G2p": {
+    "message": "{conditioned, plural, one {Add or switch Special Condition} other {Add or switch Special Conditions on #}}",
+    "translation": "{conditioned, plural, one {Lägg till eller byt specialtillstånd} other {Lägg till eller byt specialtillstånd på #}}"
   },
   "f0WoGd": {
     "message": "{count, plural, one {{label}, # card} other {{label}, # cards}}",
@@ -418,6 +456,10 @@
     "message": "{count, plural, one {# copy of {name} (Prism Star: max 1).} other {# copies of {name} (Prism Star: max 1).}}",
     "translation": "{count, plural, one {# exemplar av {name} (Prism Star: max 1).} other {# exemplar av {name} (Prism Star: max 1).}}"
   },
+  "0GBBWg": {
+    "message": "{count, plural, one {# of {ownerName}'s cards} other {# of {ownerName}'s cards}}",
+    "translation": "{count, plural, one {# av {ownerName}s kort} other {# av {ownerName}s kort}}"
+  },
   "eFRg1z": {
     "message": "{count, plural, one {# Pokémon ☆ card (max 1).} other {# Pokémon ☆ cards (max 1).}}",
     "translation": "{count, plural, one {# Pokémon ☆-kort (max 1).} other {# Pokémon ☆-kort (max 1).}}"
@@ -437,6 +479,10 @@
   "MJC1vQ": {
     "message": "{count, plural, one {Can't do that with this card} other {Can't do that with these cards}}",
     "translation": "{count, plural, one {Det går inte med det här kortet} other {Det går inte med de här korten}}"
+  },
+  "LrKYZV": {
+    "message": "{count, plural, one {Discard # card} other {Discard # cards}}",
+    "translation": "{count, plural, one {Kasta # kort} other {Kasta # kort}}"
   },
   "-gAzkm": {
     "message": "{count, plural, one {Discard hand and draw # card} other {Discard hand and draw # cards}}",
@@ -466,6 +512,34 @@
     "message": "{count, plural, one {Look at top card} other {Look at top # cards}}",
     "translation": "{count, plural, one {Titta på översta kortet} other {Titta på de # översta korten}}"
   },
+  "0oSCag": {
+    "message": "{count, plural, one {Move # card to hand} other {Move # cards to hand}}",
+    "translation": "{count, plural, one {Flytta # kort till handen} other {Flytta # kort till handen}}"
+  },
+  "VPXqBr": {
+    "message": "{count, plural, one {Put # card in the Lost Zone} other {Put # cards in the Lost Zone}}",
+    "translation": "{count, plural, one {Lägg # kort i Lost Zone} other {Lägg # kort i Lost Zone}}"
+  },
+  "QcZX-S": {
+    "message": "{count, plural, one {Put # card in the Prizes} other {Put # cards in the Prizes}}",
+    "translation": "{count, plural, one {Lägg # kort bland priskorten} other {Lägg # kort bland priskorten}}"
+  },
+  "rVI1D1": {
+    "message": "{count, plural, one {Put # card on the board} other {Put # cards on the board}}",
+    "translation": "{count, plural, one {Lägg # kort på spelplanen} other {Lägg # kort på spelplanen}}"
+  },
+  "CEIRsk": {
+    "message": "{count, plural, one {Put # card on the bottom of the deck} other {Put # cards on the bottom of the deck}}",
+    "translation": "{count, plural, one {Lägg # kort längst ner i leken} other {Lägg # kort längst ner i leken}}"
+  },
+  "Iqt60a": {
+    "message": "{count, plural, one {Put # card on top of the deck} other {Put # cards on top of the deck}}",
+    "translation": "{count, plural, one {Lägg # kort överst i leken} other {Lägg # kort överst i leken}}"
+  },
+  "L80QZi": {
+    "message": "{count, plural, one {Shuffle # card into the deck} other {Shuffle # cards into the deck}}",
+    "translation": "{count, plural, one {Blanda in # kort i leken} other {Blanda in # kort i leken}}"
+  },
   "-r4674": {
     "message": "{count, plural, one {Shuffle hand in and draw # card} other {Shuffle hand in and draw # cards}}",
     "translation": "{count, plural, one {Blanda in handen och dra # kort} other {Blanda in handen och dra # kort}}"
@@ -473,6 +547,10 @@
   "aN0Z_E": {
     "message": "{count, plural, one {Shuffle hand to bottom and draw # card} other {Shuffle hand to bottom and draw # cards}}",
     "translation": "{count, plural, one {Blanda in handen underst och dra # kort} other {Blanda in handen underst och dra # kort}}"
+  },
+  "SdtOTJ": {
+    "message": "{count, plural, other {Add # damage to each}}",
+    "translation": "{count, plural, other {Lägg till # skada på varje}}"
   },
   "19mL4O": {
     "message": "{count, plural, other {All # are already in hand}}",
@@ -506,6 +584,38 @@
     "message": "{count, plural, other {All # are already the Stadium}}",
     "translation": "{count, plural, other {Alla # är redan stadion}}"
   },
+  "Kv5Eze": {
+    "message": "{count, plural, other {Discard # Pokémon}}",
+    "translation": "{count, plural, other {Kasta # Pokémon}}"
+  },
+  "DxATQp": {
+    "message": "{count, plural, other {Move # Pokémon to hand}}",
+    "translation": "{count, plural, other {Flytta # Pokémon till handen}}"
+  },
+  "Rdmkvn": {
+    "message": "{count, plural, other {Put # Pokémon in the Lost Zone}}",
+    "translation": "{count, plural, other {Lägg # Pokémon i Lost Zone}}"
+  },
+  "JUDcg5": {
+    "message": "{count, plural, other {Put # Pokémon in the Prizes}}",
+    "translation": "{count, plural, other {Lägg # Pokémon bland priskorten}}"
+  },
+  "Jv3nIR": {
+    "message": "{count, plural, other {Put # Pokémon on the board}}",
+    "translation": "{count, plural, other {Lägg # Pokémon på spelplanen}}"
+  },
+  "lkpEPZ": {
+    "message": "{count, plural, other {Put # Pokémon on the bottom of the deck}}",
+    "translation": "{count, plural, other {Lägg # Pokémon längst ner i leken}}"
+  },
+  "qtwSJv": {
+    "message": "{count, plural, other {Put # Pokémon on top of the deck}}",
+    "translation": "{count, plural, other {Lägg # Pokémon överst i leken}}"
+  },
+  "P13x5M": {
+    "message": "{count, plural, other {Shuffle # Pokémon into the deck}}",
+    "translation": "{count, plural, other {Blanda in # Pokémon i leken}}"
+  },
   "hMKADB": {
     "message": "{count} × {cardName} ({print}). Details",
     "comments": [
@@ -516,6 +626,21 @@
   "QugGSf": {
     "message": "{count} in deck",
     "translation": "{count} i leken"
+  },
+  "tYyyLp": {
+    "message": "{count} selected: actions",
+    "comments": [
+      "The touch toolbar for several selected cards, e.g. \"3 selected: actions\"."
+    ],
+    "translation": "{count} markerade: åtgärder"
+  },
+  "5VUOI1": {
+    "message": "{cured, plural, one {Remove Special Condition} other {Remove Special Conditions on #}}",
+    "translation": "{cured, plural, one {Ta bort specialtillstånd} other {Ta bort specialtillstånd på #}}"
+  },
+  "3W5Y-K": {
+    "message": "{damaged, plural, one {Add 10 damage} other {Add 10 damage to each of #}}",
+    "translation": "{damaged, plural, one {Lägg till 10 skada} other {Lägg till 10 skada på var och en av #}}"
   },
   "7prUK_": {
     "message": "{deck}, {place}, {playerName}: try it",
@@ -558,9 +683,17 @@
     "message": "{firstReloading} will reload",
     "translation": "{firstReloading} laddas om"
   },
+  "iovK0L": {
+    "message": "{hidden, plural, one {Hide # card} other {Hide # cards}}",
+    "translation": "{hidden, plural, one {Dölj # kort} other {Dölj # kort}}"
+  },
   "k0g2Da": {
     "message": "{hp} HP",
     "translation": "{hp} HP"
+  },
+  "Mh1NmC": {
+    "message": "{items, plural, one {# selected} other {# selected}}",
+    "translation": "{items, plural, one {# markerat} other {# markerade}}"
   },
   "BwX3jA": {
     "message": "{key} is reserved for {action}.",
@@ -582,6 +715,10 @@
       "A button naming a shortcut and its keys; pressing it changes the keys."
     ],
     "translation": "{label}: {spoken}. Ändra"
+  },
+  "1z1iU-": {
+    "message": "{last} ends on top",
+    "translation": "{last} hamnar överst"
   },
   "AiqpXX": {
     "message": "{list}, {item}",
@@ -623,6 +760,13 @@
       "A zone's name for screen readers; name is its player. The Active Spot."
     ],
     "translation": "{name}s aktiva plats"
+  },
+  "Q29GRK": {
+    "message": "{name} added, {0}",
+    "comments": [
+      "A card joined the selection, e.g. \"Fire Energy added, 4 selected\"."
+    ],
+    "translation": "{name} tillagd, {0}"
   },
   "2jVmMm": {
     "message": "{name} attacked",
@@ -807,6 +951,13 @@
     ],
     "translation": "{name} återanslöt"
   },
+  "rObKhV": {
+    "message": "{name} removed, {0}",
+    "comments": [
+      "A card left the selection, e.g. \"Fire Energy removed, 3 selected\"."
+    ],
+    "translation": "{name} borttagen, {0}"
+  },
   "VcNbQ-": {
     "message": "{name} reset",
     "comments": [
@@ -862,6 +1013,27 @@
       "name is GX or VSTAR, the once-per-game marker."
     ],
     "translation": "{name} använd: tryck för att ångra"
+  },
+  "9NXGJ_": {
+    "message": "{name}, Active",
+    "comments": [
+      "A Pokémon to attach cards to, e.g. \"Pikachu, Active\"."
+    ],
+    "translation": "{name}, Aktiv"
+  },
+  "J9Wtim": {
+    "message": "{name}, Bench",
+    "comments": [
+      "A Pokémon to attach cards to, e.g. \"Pikachu, Bench\"."
+    ],
+    "translation": "{name}, bänk"
+  },
+  "68ccPL": {
+    "message": "{name}, selected, {order} of {0}",
+    "comments": [
+      "A selected card among several, e.g. \"Switch, selected, 2 of 3\"."
+    ],
+    "translation": "{name}, markerad, {order} av {0}"
   },
   "Dh0OFs": {
     "message": "{name}, selected, number {order}",
@@ -951,6 +1123,14 @@
   "huIm_e": {
     "message": "{prints, plural, one {# print} other {# prints}}",
     "translation": "{prints, plural, one {# tryckning} other {# tryckningar}}"
+  },
+  "Lg_lp9": {
+    "message": "{revealed, plural, one {Reveal # card} other {Reveal # cards}}",
+    "translation": "{revealed, plural, one {Visa # kort} other {Visa # kort}}"
+  },
+  "ZAbJN6": {
+    "message": "{rotated, plural, one {Rotate # card} other {Rotate # cards}}",
+    "translation": "{rotated, plural, one {Rotera # kort} other {Rotera # kort}}"
   },
   "RTnHXI": {
     "message": "{said}: {cards}",
@@ -1078,6 +1258,13 @@
     ],
     "translation": "{viewer} slutade titta på ett kort i {owner}s {source, select, hand {hand} prizes {priskort} discard {kasthög} board {spelplan} stadium {stadion} active {aktiva plats} bench {bänk} lostZone {Lost Zone} attachmentResolution {fästa kort} inspection {granskning} other {lek}}"
   },
+  "-AEMvi": {
+    "message": "{zoneName}, {0} selected",
+    "comments": [
+      "The cards of an open pile, e.g. \"Your discard pile, 3 selected\"."
+    ],
+    "translation": "{zoneName}, {0} markerade"
+  },
   "JirPbT": {
     "message": "{zoneName}, {count, plural, one {# card} other {# cards}}",
     "comments": [
@@ -1094,6 +1281,13 @@
     "message": "+ Stadium",
     "context": "shortcut key caption",
     "translation": "+ Stadion"
+  },
+  "T_K7zW": {
+    "message": "×{pokemon}",
+    "comments": [
+      "How many Pokémon the damage stepper marks, e.g. \"×3\"."
+    ],
+    "translation": "×{pokemon}"
   },
   "cTPeOy": {
     "message": "<0/> already does <1>{clashNames}</1>.",
@@ -1153,9 +1347,17 @@
     "message": "10 less damage",
     "translation": "10 mindre skada"
   },
+  "n-Gc4A": {
+    "message": "10 less damage on each",
+    "translation": "10 mindre skada på varje"
+  },
   "AHfGsB": {
     "message": "10 more damage",
     "translation": "10 mer skada"
+  },
+  "07KhVj": {
+    "message": "10 more damage on each",
+    "translation": "10 mer skada på varje"
   },
   "c224Tl": {
     "message": "3 draws three",
@@ -1292,6 +1494,10 @@
   "vz22MV": {
     "message": "Add damage",
     "translation": "Lägg till skada"
+  },
+  "abXnG-": {
+    "message": "Add damage to each…",
+    "translation": "Lägg till skada på varje…"
   },
   "mOz7te": {
     "message": "Add damage…",
@@ -1482,6 +1688,11 @@
     "message": "Artwork window",
     "translation": "Illustrationsfönster"
   },
+  "qeQjlL": {
+    "message": "As one",
+    "context": "play the selected pieces as one card",
+    "translation": "Som ett"
+  },
   "eiQJaM": {
     "message": "Asleep",
     "context": "special condition",
@@ -1499,6 +1710,10 @@
   "jrzyuC": {
     "message": "Attach and evolve",
     "translation": "Fäst och utveckla"
+  },
+  "8vfaut": {
+    "message": "Attach to",
+    "translation": "Fäst på"
   },
   "uUaeMQ": {
     "message": "Attach to a Pokémon…",
@@ -2262,6 +2477,22 @@
     "message": "Damage counter",
     "translation": "Skademarkör"
   },
+  "DFzJxl": {
+    "message": "Damage on each of {pokemon, plural, one {# Pokémon} other {# Pokémon}}",
+    "comments": [
+      "The damage stepper for several selected Pokémon at once."
+    ],
+    "translation": "Skada på var och en av {pokemon, plural, one {# Pokémon} other {# Pokémon}}"
+  },
+  "Ee-egz": {
+    "message": "Damage…",
+    "translation": "Skada…"
+  },
+  "4xW71x": {
+    "message": "Damage…",
+    "context": "damage on the selected Pokémon; a stepper follows",
+    "translation": "Skada…"
+  },
   "yB1YpA": {
     "message": "Dark mode",
     "translation": "Mörkt läge"
@@ -2387,6 +2618,13 @@
     "message": "Deselect",
     "translation": "Avmarkera"
   },
+  "U-R4tW": {
+    "message": "Deselect all",
+    "comments": [
+      "Takes every card of the open pile out of the selection."
+    ],
+    "translation": "Avmarkera alla"
+  },
   "lJjOBS": {
     "message": "Design",
     "context": "a card back the player designed",
@@ -2491,6 +2729,11 @@
     "message": "Done",
     "context": "finished",
     "translation": "Klart"
+  },
+  "YLZBXb": {
+    "message": "Done",
+    "context": "stop picking cards",
+    "translation": "Klar"
   },
   "6yxheJ": {
     "message": "Dots",
@@ -3828,6 +4071,13 @@
     "context": "move the selected card",
     "translation": "Flytta"
   },
+  "2kUZvq": {
+    "message": "Move {0}…",
+    "comments": [
+      "Opens the menu of what the selected cards can do, e.g. \"Move 3…\"."
+    ],
+    "translation": "Flytta {0}…"
+  },
   "B8Y72Z": {
     "message": "Move {cardName} to",
     "comments": [
@@ -3875,6 +4125,11 @@
   "rzLbnt": {
     "message": "Move to hand",
     "translation": "Flytta till handen"
+  },
+  "v1NcRU": {
+    "message": "Move…",
+    "context": "move the selected cards; a menu of places follows",
+    "translation": "Flytta…"
   },
   "mP7YPE": {
     "message": "Mulligan",
@@ -4526,6 +4781,10 @@
     "context": "take the decks to the table",
     "translation": "Spela"
   },
+  "BEfUVX": {
+    "message": "Play {name} as the Stadium",
+    "translation": "Spela {name} som stadion"
+  },
   "Sky344": {
     "message": "Play <0>{0}</0>: drag it onto the open mat. Ending your turn clears it away.",
     "translation": "Spela <0>{0}</0>: dra det till den öppna mattan. När du avslutar din tur städas det bort."
@@ -4533,6 +4792,14 @@
   "7LIRc6": {
     "message": "Play a random deck",
     "translation": "Spela en slumpmässig lek"
+  },
+  "Yo-ZmX": {
+    "message": "Play as one card",
+    "translation": "Spela som ett kort"
+  },
+  "NZZ8TY": {
+    "message": "Play as the Stadium",
+    "translation": "Spela som stadion"
   },
   "0wpoN_": {
     "message": "Play faster from the keyboard",
@@ -4583,6 +4850,10 @@
     "message": "Poisoned",
     "context": "special condition",
     "translation": "Förgiftad"
+  },
+  "eqRr09": {
+    "message": "Pokémon",
+    "translation": "Pokémon"
   },
   "icgZ-R": {
     "message": "Pokémon",
@@ -4715,6 +4986,14 @@
     "context": "Pokémon type",
     "translation": "Psykisk"
   },
+  "YLetgL": {
+    "message": "Put {name} in the Active Spot",
+    "translation": "Lägg {name} på aktiva platsen"
+  },
+  "wj75Qo": {
+    "message": "Put {name} on the Bench",
+    "translation": "Lägg {name} på bänken"
+  },
   "jG4a_T": {
     "message": "Put another on your <0>Bench</0>. Up to five fit there.",
     "translation": "Lägg ut en till på din <0>bänk</0>. Det ryms upp till fem där."
@@ -4722,6 +5001,10 @@
   "5XURu8": {
     "message": "Put damage and Poisoned on their Pokémon",
     "translation": "Skada och förgifta deras Pokémon"
+  },
+  "4X3mBx": {
+    "message": "Put in the Active Spot",
+    "translation": "Lägg på aktiva platsen"
   },
   "vGO8Cg": {
     "message": "Put on bottom",
@@ -4868,6 +5151,10 @@
   "-cND-P": {
     "message": "Remove all damage",
     "translation": "Ta bort all skada"
+  },
+  "YF7gJY": {
+    "message": "Remove all damage from each",
+    "translation": "Ta bort all skada från varje"
   },
   "sR6lTH": {
     "message": "Remove condition",
@@ -5289,10 +5576,24 @@
     "message": "Seat taken",
     "translation": "Platsen är upptagen"
   },
+  "rG3WVm": {
+    "message": "Select",
+    "comments": [
+      "Starts picking several cards: each tap then adds a card or takes it out."
+    ],
+    "translation": "Markera"
+  },
   "4UhpnZ": {
     "message": "Select",
     "context": "shortcut key caption",
     "translation": "Välj"
+  },
+  "wgNoIs": {
+    "message": "Select all",
+    "comments": [
+      "Takes every card of the open pile into the selection."
+    ],
+    "translation": "Markera alla"
   },
   "mGWCew": {
     "message": "Select all here",
@@ -5326,6 +5627,21 @@
   "k32jF1": {
     "message": "Selected card actions",
     "translation": "Åtgärder för valt kort"
+  },
+  "Dm5gKG": {
+    "message": "Selected cards actions",
+    "translation": "Åtgärder för markerade kort"
+  },
+  "sYGBP5": {
+    "message": "Selecting: tap cards to add them",
+    "comments": [
+      "Read out as touch selection mode starts."
+    ],
+    "translation": "Markerar: tryck på kort för att lägga till dem"
+  },
+  "GvCs21": {
+    "message": "Selection cleared",
+    "translation": "Markeringen rensad"
   },
   "PzW-3k": {
     "message": "Send",
@@ -6698,6 +7014,10 @@
     "message": "Winning now",
     "translation": "Vinner just nu"
   },
+  "SzQFzV": {
+    "message": "With their attached cards",
+    "translation": "Med sina fästa kort"
+  },
   "QjlnU1": {
     "message": "Worlds",
     "comments": [
@@ -6788,332 +7108,5 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "Zonkonturer"
-  },
-  "TDU04N": {
-    "message": "{0, plural, other {Mark # as unused}}",
-    "translation": "{0, plural, other {Markera # som oanvända}}"
-  },
-  "thQz5O": {
-    "message": "{0, plural, other {Mark # as used}}",
-    "translation": "{0, plural, other {Markera # som använda}}"
-  },
-  "OUc2yQ": {
-    "message": "{0, plural, other {Put # Pokémon on the Bench}}",
-    "translation": "{0, plural, other {Lägg # Pokémon på bänken}}"
-  },
-  "9RYqFp": {
-    "message": "{actor} moved {count, plural, one {# card} other {# cards}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} other {deck}}",
-    "comments": [
-      "Log line. {actor} is a player's name, {count} how many cards; {source} is the zone they left and {destination} where they went (play: onto the table)."
-    ],
-    "translation": "{actor} flyttade {count, plural, one {# kort} other {# kort}} från {source, select, hand {handen} prizes {priskorten} discard {kasthögen} board {spelplanen} stadium {stadion} active {aktiva platsen} bench {bänken} lostZone {Lost Zone} attachmentResolution {fästa kort} other {leken}} till {destination, select, hand {handen} discard {kasthögen} lostZone {Lost Zone} deckBottom {botten av leken} play {spel} other {leken}}"
-  },
-  "T2CvPc": {
-    "message": "{cleared, plural, one {Clear damage} other {Clear damage on #}}",
-    "translation": "{cleared, plural, one {Ta bort skada} other {Ta bort skada på #}}"
-  },
-  "d5-G2p": {
-    "message": "{conditioned, plural, one {Add or switch Special Condition} other {Add or switch Special Conditions on #}}",
-    "translation": "{conditioned, plural, one {Lägg till eller byt specialtillstånd} other {Lägg till eller byt specialtillstånd på #}}"
-  },
-  "0GBBWg": {
-    "message": "{count, plural, one {# of {ownerName}'s cards} other {# of {ownerName}'s cards}}",
-    "translation": "{count, plural, one {# av {ownerName}s kort} other {# av {ownerName}s kort}}"
-  },
-  "LrKYZV": {
-    "message": "{count, plural, one {Discard # card} other {Discard # cards}}",
-    "translation": "{count, plural, one {Kasta # kort} other {Kasta # kort}}"
-  },
-  "0oSCag": {
-    "message": "{count, plural, one {Move # card to hand} other {Move # cards to hand}}",
-    "translation": "{count, plural, one {Flytta # kort till handen} other {Flytta # kort till handen}}"
-  },
-  "VPXqBr": {
-    "message": "{count, plural, one {Put # card in the Lost Zone} other {Put # cards in the Lost Zone}}",
-    "translation": "{count, plural, one {Lägg # kort i Lost Zone} other {Lägg # kort i Lost Zone}}"
-  },
-  "QcZX-S": {
-    "message": "{count, plural, one {Put # card in the Prizes} other {Put # cards in the Prizes}}",
-    "translation": "{count, plural, one {Lägg # kort bland priskorten} other {Lägg # kort bland priskorten}}"
-  },
-  "rVI1D1": {
-    "message": "{count, plural, one {Put # card on the board} other {Put # cards on the board}}",
-    "translation": "{count, plural, one {Lägg # kort på spelplanen} other {Lägg # kort på spelplanen}}"
-  },
-  "CEIRsk": {
-    "message": "{count, plural, one {Put # card on the bottom of the deck} other {Put # cards on the bottom of the deck}}",
-    "translation": "{count, plural, one {Lägg # kort längst ner i leken} other {Lägg # kort längst ner i leken}}"
-  },
-  "Iqt60a": {
-    "message": "{count, plural, one {Put # card on top of the deck} other {Put # cards on top of the deck}}",
-    "translation": "{count, plural, one {Lägg # kort överst i leken} other {Lägg # kort överst i leken}}"
-  },
-  "L80QZi": {
-    "message": "{count, plural, one {Shuffle # card into the deck} other {Shuffle # cards into the deck}}",
-    "translation": "{count, plural, one {Blanda in # kort i leken} other {Blanda in # kort i leken}}"
-  },
-  "SdtOTJ": {
-    "message": "{count, plural, other {Add # damage to each}}",
-    "translation": "{count, plural, other {Lägg till # skada på varje}}"
-  },
-  "Kv5Eze": {
-    "message": "{count, plural, other {Discard # Pokémon}}",
-    "translation": "{count, plural, other {Kasta # Pokémon}}"
-  },
-  "DxATQp": {
-    "message": "{count, plural, other {Move # Pokémon to hand}}",
-    "translation": "{count, plural, other {Flytta # Pokémon till handen}}"
-  },
-  "Rdmkvn": {
-    "message": "{count, plural, other {Put # Pokémon in the Lost Zone}}",
-    "translation": "{count, plural, other {Lägg # Pokémon i Lost Zone}}"
-  },
-  "JUDcg5": {
-    "message": "{count, plural, other {Put # Pokémon in the Prizes}}",
-    "translation": "{count, plural, other {Lägg # Pokémon bland priskorten}}"
-  },
-  "Jv3nIR": {
-    "message": "{count, plural, other {Put # Pokémon on the board}}",
-    "translation": "{count, plural, other {Lägg # Pokémon på spelplanen}}"
-  },
-  "lkpEPZ": {
-    "message": "{count, plural, other {Put # Pokémon on the bottom of the deck}}",
-    "translation": "{count, plural, other {Lägg # Pokémon längst ner i leken}}"
-  },
-  "qtwSJv": {
-    "message": "{count, plural, other {Put # Pokémon on top of the deck}}",
-    "translation": "{count, plural, other {Lägg # Pokémon överst i leken}}"
-  },
-  "P13x5M": {
-    "message": "{count, plural, other {Shuffle # Pokémon into the deck}}",
-    "translation": "{count, plural, other {Blanda in # Pokémon i leken}}"
-  },
-  "5VUOI1": {
-    "message": "{cured, plural, one {Remove Special Condition} other {Remove Special Conditions on #}}",
-    "translation": "{cured, plural, one {Ta bort specialtillstånd} other {Ta bort specialtillstånd på #}}"
-  },
-  "3W5Y-K": {
-    "message": "{damaged, plural, one {Add 10 damage} other {Add 10 damage to each of #}}",
-    "translation": "{damaged, plural, one {Lägg till 10 skada} other {Lägg till 10 skada på var och en av #}}"
-  },
-  "iovK0L": {
-    "message": "{hidden, plural, one {Hide # card} other {Hide # cards}}",
-    "translation": "{hidden, plural, one {Dölj # kort} other {Dölj # kort}}"
-  },
-  "1z1iU-": {
-    "message": "{last} ends on top",
-    "translation": "{last} hamnar överst"
-  },
-  "Lg_lp9": {
-    "message": "{revealed, plural, one {Reveal # card} other {Reveal # cards}}",
-    "translation": "{revealed, plural, one {Visa # kort} other {Visa # kort}}"
-  },
-  "ZAbJN6": {
-    "message": "{rotated, plural, one {Rotate # card} other {Rotate # cards}}",
-    "translation": "{rotated, plural, one {Rotera # kort} other {Rotera # kort}}"
-  },
-  "abXnG-": {
-    "message": "Add damage to each…",
-    "translation": "Lägg till skada på varje…"
-  },
-  "Ee-egz": {
-    "message": "Damage…",
-    "translation": "Skada…"
-  },
-  "BEfUVX": {
-    "message": "Play {name} as the Stadium",
-    "translation": "Spela {name} som stadion"
-  },
-  "Yo-ZmX": {
-    "message": "Play as one card",
-    "translation": "Spela som ett kort"
-  },
-  "NZZ8TY": {
-    "message": "Play as the Stadium",
-    "translation": "Spela som stadion"
-  },
-  "YLetgL": {
-    "message": "Put {name} in the Active Spot",
-    "translation": "Lägg {name} på aktiva platsen"
-  },
-  "wj75Qo": {
-    "message": "Put {name} on the Bench",
-    "translation": "Lägg {name} på bänken"
-  },
-  "4X3mBx": {
-    "message": "Put in the Active Spot",
-    "translation": "Lägg på aktiva platsen"
-  },
-  "SzQFzV": {
-    "message": "With their attached cards",
-    "translation": "Med sina fästa kort"
-  },
-  "2X9O8a": {
-    "message": "{0, plural, one {# card left the selection} other {# cards left the selection}}, {1}",
-    "comments": [
-      "Selected cards that were moved away, e.g. by the other player."
-    ],
-    "translation": "{0, plural, one {# kort lämnade markeringen} other {# kort lämnade markeringen}}, {1}"
-  },
-  "6Lo6B5": {
-    "message": "{0, plural, one {# card selected} other {# cards selected}}",
-    "translation": "{0, plural, one {# kort markerat} other {# kort markerade}}"
-  },
-  "fvImQM": {
-    "message": "{0} selected",
-    "comments": [
-      "How many cards are selected, e.g. \"3 selected\"."
-    ],
-    "translation": "{0} markerade"
-  },
-  "tYyyLp": {
-    "message": "{count} selected: actions",
-    "comments": [
-      "The touch toolbar for several selected cards, e.g. \"3 selected: actions\"."
-    ],
-    "translation": "{count} markerade: åtgärder"
-  },
-  "Mh1NmC": {
-    "message": "{items, plural, one {# selected} other {# selected}}",
-    "translation": "{items, plural, one {# markerat} other {# markerade}}"
-  },
-  "Q29GRK": {
-    "message": "{name} added, {0}",
-    "comments": [
-      "A card joined the selection, e.g. \"Fire Energy added, 4 selected\"."
-    ],
-    "translation": "{name} tillagd, {0}"
-  },
-  "rObKhV": {
-    "message": "{name} removed, {0}",
-    "comments": [
-      "A card left the selection, e.g. \"Fire Energy removed, 3 selected\"."
-    ],
-    "translation": "{name} borttagen, {0}"
-  },
-  "9NXGJ_": {
-    "message": "{name}, Active",
-    "comments": [
-      "A Pokémon to attach cards to, e.g. \"Pikachu, Active\"."
-    ],
-    "translation": "{name}, Aktiv"
-  },
-  "J9Wtim": {
-    "message": "{name}, Bench",
-    "comments": [
-      "A Pokémon to attach cards to, e.g. \"Pikachu, Bench\"."
-    ],
-    "translation": "{name}, bänk"
-  },
-  "68ccPL": {
-    "message": "{name}, selected, {order} of {0}",
-    "comments": [
-      "A selected card among several, e.g. \"Switch, selected, 2 of 3\"."
-    ],
-    "translation": "{name}, markerad, {order} av {0}"
-  },
-  "-AEMvi": {
-    "message": "{zoneName}, {0} selected",
-    "comments": [
-      "The cards of an open pile, e.g. \"Your discard pile, 3 selected\"."
-    ],
-    "translation": "{zoneName}, {0} markerade"
-  },
-  "T_K7zW": {
-    "message": "×{pokemon}",
-    "comments": [
-      "How many Pokémon the damage stepper marks, e.g. \"×3\"."
-    ],
-    "translation": "×{pokemon}"
-  },
-  "n-Gc4A": {
-    "message": "10 less damage on each",
-    "translation": "10 mindre skada på varje"
-  },
-  "07KhVj": {
-    "message": "10 more damage on each",
-    "translation": "10 mer skada på varje"
-  },
-  "qeQjlL": {
-    "message": "As one",
-    "context": "play the selected pieces as one card",
-    "translation": "Som ett"
-  },
-  "8vfaut": {
-    "message": "Attach to",
-    "translation": "Fäst på"
-  },
-  "DFzJxl": {
-    "message": "Damage on each of {pokemon, plural, one {# Pokémon} other {# Pokémon}}",
-    "comments": [
-      "The damage stepper for several selected Pokémon at once."
-    ],
-    "translation": "Skada på var och en av {pokemon, plural, one {# Pokémon} other {# Pokémon}}"
-  },
-  "4xW71x": {
-    "message": "Damage…",
-    "context": "damage on the selected Pokémon; a stepper follows",
-    "translation": "Skada…"
-  },
-  "U-R4tW": {
-    "message": "Deselect all",
-    "comments": [
-      "Takes every card of the open pile out of the selection."
-    ],
-    "translation": "Avmarkera alla"
-  },
-  "YLZBXb": {
-    "message": "Done",
-    "context": "stop picking cards",
-    "translation": "Klar"
-  },
-  "2kUZvq": {
-    "message": "Move {0}…",
-    "comments": [
-      "Opens the menu of what the selected cards can do, e.g. \"Move 3…\"."
-    ],
-    "translation": "Flytta {0}…"
-  },
-  "v1NcRU": {
-    "message": "Move…",
-    "context": "move the selected cards; a menu of places follows",
-    "translation": "Flytta…"
-  },
-  "eqRr09": {
-    "message": "Pokémon",
-    "translation": "Pokémon"
-  },
-  "YF7gJY": {
-    "message": "Remove all damage from each",
-    "translation": "Ta bort all skada från varje"
-  },
-  "rG3WVm": {
-    "message": "Select",
-    "comments": [
-      "Starts picking several cards: each tap then adds a card or takes it out."
-    ],
-    "translation": "Markera"
-  },
-  "wgNoIs": {
-    "message": "Select all",
-    "comments": [
-      "Takes every card of the open pile into the selection."
-    ],
-    "translation": "Markera alla"
-  },
-  "Dm5gKG": {
-    "message": "Selected cards actions",
-    "translation": "Åtgärder för markerade kort"
-  },
-  "sYGBP5": {
-    "message": "Selecting: tap cards to add them",
-    "comments": [
-      "Read out as touch selection mode starts."
-    ],
-    "translation": "Markerar: tryck på kort för att lägga till dem"
-  },
-  "GvCs21": {
-    "message": "Selection cleared",
-    "translation": "Markeringen rensad"
   }
 }

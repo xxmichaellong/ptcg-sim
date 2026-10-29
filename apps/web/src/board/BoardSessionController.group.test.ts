@@ -393,7 +393,9 @@ describe('a selection of several cards (ADR-042)', () => {
     });
     expect(board.submitted()[0]?.type).toBe('ApplyCardSteps');
     const settling = board.state.presentation.settling;
-    // The grabbed card and four more, one drop.
+    // The grabbed card and four more, one drop, each where the hand held
+    // it (carriedGroup): the grabbed card where it was let go, the others
+    // fanned a little further down and to the right.
     expect(settling.map((entry) => entry.cardId)).toEqual([
       hand[2],
       hand[0],
@@ -402,9 +404,12 @@ describe('a selection of several cards (ADR-042)', () => {
       hand[4],
     ]);
     expect(new Set(settling.map((entry) => entry.dropId)).size).toBe(1);
-    expect(settling.every((entry) => entry.x === 40 && entry.y === 50)).toBe(
-      true
-    );
+    expect(settling[0]).toMatchObject({ x: 40, y: 50 });
+    for (const [index, entry] of settling.entries()) {
+      if (index === 0) continue;
+      expect(entry.x).toBeGreaterThan(settling[index - 1]!.x);
+      expect(entry.y).toBeGreaterThan(settling[index - 1]!.y);
+    }
     board.act({ kind: 'SubmissionQueued', commandId: 'drop' });
     expect(
       board.state.presentation.settling.map(

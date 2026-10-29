@@ -13,6 +13,17 @@
     ],
     "translation": ", укључено"
   },
+  "2X9O8a": {
+    "message": "{0, plural, one {# card left the selection} other {# cards left the selection}}, {1}",
+    "comments": [
+      "Selected cards that were moved away, e.g. by the other player."
+    ],
+    "translation": "{0, plural, one {# карта је изашла из избора} few {# карте су изашле из избора} other {# карата је изашло из избора}}, {1}"
+  },
+  "6Lo6B5": {
+    "message": "{0, plural, one {# card selected} other {# cards selected}}",
+    "translation": "{0, plural, one {# карта изабрана} few {# карте изабране} other {# карата изабрано}}"
+  },
   "W8KEEX": {
     "message": "{0, plural, one {# player} other {# players}}",
     "translation": "{0, plural, one {# играч} few {# играча} other {# играча}}"
@@ -24,6 +35,18 @@
   "jnpzPF": {
     "message": "{0, plural, one {Shuffled # card into the deck} other {Shuffled # cards into the deck}}",
     "translation": "{0, plural, one {Промешана # карта у шпил} few {Промешане # карте у шпил} other {Промешано # карата у шпил}}"
+  },
+  "TDU04N": {
+    "message": "{0, plural, other {Mark # as unused}}",
+    "translation": "{0, plural, one {Означи # као неискоришћено} few {Означи # као неискоришћена} other {Означи # као неискоришћених}}"
+  },
+  "thQz5O": {
+    "message": "{0, plural, other {Mark # as used}}",
+    "translation": "{0, plural, one {Означи # као искоришћено} few {Означи # као искоришћена} other {Означи # као искоришћених}}"
+  },
+  "OUc2yQ": {
+    "message": "{0, plural, other {Put # Pokémon on the Bench}}",
+    "translation": "{0, plural, one {Стави # Pokémon на клупу} few {Стави # Pokémon-а на клупу} other {Стави # Pokémon-а на клупу}}"
   },
   "yW-SAQ": {
     "message": "{0} ({1})",
@@ -57,6 +80,13 @@
       "How many tutorial lessons are finished, like \"3 of 10 done\"."
     ],
     "translation": "{0} од {1} завршено"
+  },
+  "fvImQM": {
+    "message": "{0} selected",
+    "comments": [
+      "How many cards are selected, e.g. \"3 selected\"."
+    ],
+    "translation": "{0} изабрано"
   },
   "9dbhR8": {
     "message": "{actor} attached {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {target, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}}",
@@ -355,9 +385,17 @@
     "message": "{classicName} decks",
     "translation": "{classicName} шпилови"
   },
+  "T2CvPc": {
+    "message": "{cleared, plural, one {Clear damage} other {Clear damage on #}}",
+    "translation": "{cleared, plural, one {Уклони штету} few {Уклони штету на #} other {Уклони штету на #}}"
+  },
   "shahtf": {
     "message": "{compositionName} assembled preview",
     "translation": "{compositionName}: преглед састављене карте"
+  },
+  "d5-G2p": {
+    "message": "{conditioned, plural, one {Add or switch Special Condition} other {Add or switch Special Conditions on #}}",
+    "translation": "{conditioned, plural, one {Додај или промени посебно стање} few {Додај или промени посебна стања на #} other {Додај или промени посебна стања на #}}"
   },
   "f0WoGd": {
     "message": "{count, plural, one {{label}, # card} other {{label}, # cards}}",
@@ -418,6 +456,10 @@
     "message": "{count, plural, one {# copy of {name} (Prism Star: max 1).} other {# copies of {name} (Prism Star: max 1).}}",
     "translation": "{count, plural, one {# примерак карте {name} (Prism Star: највише 1).} few {# примерка карте {name} (Prism Star: највише 1).} other {# примерака карте {name} (Prism Star: највише 1).}}"
   },
+  "0GBBWg": {
+    "message": "{count, plural, one {# of {ownerName}'s cards} other {# of {ownerName}'s cards}}",
+    "translation": "{count, plural, one {# од карата играча {ownerName}} few {# од карата играча {ownerName}} other {# од карата играча {ownerName}}}"
+  },
   "eFRg1z": {
     "message": "{count, plural, one {# Pokémon ☆ card (max 1).} other {# Pokémon ☆ cards (max 1).}}",
     "translation": "{count, plural, one {# карта Pokémon ☆ (највише 1).} few {# карте Pokémon ☆ (највише 1).} other {# карата Pokémon ☆ (највише 1).}}"
@@ -437,6 +479,10 @@
   "MJC1vQ": {
     "message": "{count, plural, one {Can't do that with this card} other {Can't do that with these cards}}",
     "translation": "{count, plural, one {То не можеш са овом картом} few {То не можеш са овим картама} other {То не можеш са овим картама}}"
+  },
+  "LrKYZV": {
+    "message": "{count, plural, one {Discard # card} other {Discard # cards}}",
+    "translation": "{count, plural, one {Одбаци # карту} few {Одбаци # карте} other {Одбаци # карата}}"
   },
   "-gAzkm": {
     "message": "{count, plural, one {Discard hand and draw # card} other {Discard hand and draw # cards}}",
@@ -466,6 +512,34 @@
     "message": "{count, plural, one {Look at top card} other {Look at top # cards}}",
     "translation": "{count, plural, one {Погледај горњу карту} few {Погледај горње # карте} other {Погледај горњих # карата}}"
   },
+  "0oSCag": {
+    "message": "{count, plural, one {Move # card to hand} other {Move # cards to hand}}",
+    "translation": "{count, plural, one {Премести # карту у руку} few {Премести # карте у руку} other {Премести # карата у руку}}"
+  },
+  "VPXqBr": {
+    "message": "{count, plural, one {Put # card in the Lost Zone} other {Put # cards in the Lost Zone}}",
+    "translation": "{count, plural, one {Стави # карту у Lost Zone} few {Стави # карте у Lost Zone} other {Стави # карата у Lost Zone}}"
+  },
+  "QcZX-S": {
+    "message": "{count, plural, one {Put # card in the Prizes} other {Put # cards in the Prizes}}",
+    "translation": "{count, plural, one {Стави # карту међу наградне карте} few {Стави # карте међу наградне карте} other {Стави # карата међу наградне карте}}"
+  },
+  "rVI1D1": {
+    "message": "{count, plural, one {Put # card on the board} other {Put # cards on the board}}",
+    "translation": "{count, plural, one {Стави # карту на таблу} few {Стави # карте на таблу} other {Стави # карата на таблу}}"
+  },
+  "CEIRsk": {
+    "message": "{count, plural, one {Put # card on the bottom of the deck} other {Put # cards on the bottom of the deck}}",
+    "translation": "{count, plural, one {Стави # карту на дно шпила} few {Стави # карте на дно шпила} other {Стави # карата на дно шпила}}"
+  },
+  "Iqt60a": {
+    "message": "{count, plural, one {Put # card on top of the deck} other {Put # cards on top of the deck}}",
+    "translation": "{count, plural, one {Стави # карту на врх шпила} few {Стави # карте на врх шпила} other {Стави # карата на врх шпила}}"
+  },
+  "L80QZi": {
+    "message": "{count, plural, one {Shuffle # card into the deck} other {Shuffle # cards into the deck}}",
+    "translation": "{count, plural, one {Промешај # карту у шпил} few {Промешај # карте у шпил} other {Промешај # карата у шпил}}"
+  },
   "-r4674": {
     "message": "{count, plural, one {Shuffle hand in and draw # card} other {Shuffle hand in and draw # cards}}",
     "translation": "{count, plural, one {Промешај руку у шпил и повуци # карту} few {Промешај руку у шпил и повуци # карте} other {Промешај руку у шпил и повуци # карата}}"
@@ -473,6 +547,10 @@
   "aN0Z_E": {
     "message": "{count, plural, one {Shuffle hand to bottom and draw # card} other {Shuffle hand to bottom and draw # cards}}",
     "translation": "{count, plural, one {Промешај руку на дно шпила и повуци # карту} few {Промешај руку на дно шпила и повуци # карте} other {Промешај руку на дно шпила и повуци # карата}}"
+  },
+  "SdtOTJ": {
+    "message": "{count, plural, other {Add # damage to each}}",
+    "translation": "{count, plural, one {Додај # штете на сваки} few {Додај # штете на сваки} other {Додај # штете на сваки}}"
   },
   "19mL4O": {
     "message": "{count, plural, other {All # are already in hand}}",
@@ -506,6 +584,38 @@
     "message": "{count, plural, other {All # are already the Stadium}}",
     "translation": "{count, plural, one {Карта је већ на стадиону} few {Све # карте су већ на стадиону} other {Свих # карата је већ на стадиону}}"
   },
+  "Kv5Eze": {
+    "message": "{count, plural, other {Discard # Pokémon}}",
+    "translation": "{count, plural, one {Одбаци # Pokémon} few {Одбаци # Pokémon-а} other {Одбаци # Pokémon-а}}"
+  },
+  "DxATQp": {
+    "message": "{count, plural, other {Move # Pokémon to hand}}",
+    "translation": "{count, plural, one {Премести # Pokémon у руку} few {Премести # Pokémon-а у руку} other {Премести # Pokémon-а у руку}}"
+  },
+  "Rdmkvn": {
+    "message": "{count, plural, other {Put # Pokémon in the Lost Zone}}",
+    "translation": "{count, plural, one {Стави # Pokémon у Lost Zone} few {Стави # Pokémon-а у Lost Zone} other {Стави # Pokémon-а у Lost Zone}}"
+  },
+  "JUDcg5": {
+    "message": "{count, plural, other {Put # Pokémon in the Prizes}}",
+    "translation": "{count, plural, one {Стави # Pokémon међу наградне карте} few {Стави # Pokémon-а међу наградне карте} other {Стави # Pokémon-а међу наградне карте}}"
+  },
+  "Jv3nIR": {
+    "message": "{count, plural, other {Put # Pokémon on the board}}",
+    "translation": "{count, plural, one {Стави # Pokémon на таблу} few {Стави # Pokémon-а на таблу} other {Стави # Pokémon-а на таблу}}"
+  },
+  "lkpEPZ": {
+    "message": "{count, plural, other {Put # Pokémon on the bottom of the deck}}",
+    "translation": "{count, plural, one {Стави # Pokémon на дно шпила} few {Стави # Pokémon-а на дно шпила} other {Стави # Pokémon-а на дно шпила}}"
+  },
+  "qtwSJv": {
+    "message": "{count, plural, other {Put # Pokémon on top of the deck}}",
+    "translation": "{count, plural, one {Стави # Pokémon на врх шпила} few {Стави # Pokémon-а на врх шпила} other {Стави # Pokémon-а на врх шпила}}"
+  },
+  "P13x5M": {
+    "message": "{count, plural, other {Shuffle # Pokémon into the deck}}",
+    "translation": "{count, plural, one {Промешај # Pokémon у шпил} few {Промешај # Pokémon-а у шпил} other {Промешај # Pokémon-а у шпил}}"
+  },
   "hMKADB": {
     "message": "{count} × {cardName} ({print}). Details",
     "comments": [
@@ -516,6 +626,21 @@
   "QugGSf": {
     "message": "{count} in deck",
     "translation": "{count} у шпилу"
+  },
+  "tYyyLp": {
+    "message": "{count} selected: actions",
+    "comments": [
+      "The touch toolbar for several selected cards, e.g. \"3 selected: actions\"."
+    ],
+    "translation": "{count} изабрано: радње"
+  },
+  "5VUOI1": {
+    "message": "{cured, plural, one {Remove Special Condition} other {Remove Special Conditions on #}}",
+    "translation": "{cured, plural, one {Уклони посебно стање} few {Уклони посебна стања на #} other {Уклони посебна стања на #}}"
+  },
+  "3W5Y-K": {
+    "message": "{damaged, plural, one {Add 10 damage} other {Add 10 damage to each of #}}",
+    "translation": "{damaged, plural, one {Додај 10 штете} few {Додај 10 штете на сваки од #} other {Додај 10 штете на сваки од #}}"
   },
   "7prUK_": {
     "message": "{deck}, {place}, {playerName}: try it",
@@ -558,9 +683,17 @@
     "message": "{firstReloading} will reload",
     "translation": "{firstReloading} ће се поново учитати"
   },
+  "iovK0L": {
+    "message": "{hidden, plural, one {Hide # card} other {Hide # cards}}",
+    "translation": "{hidden, plural, one {Сакриј # карту} few {Сакриј # карте} other {Сакриј # карата}}"
+  },
   "k0g2Da": {
     "message": "{hp} HP",
     "translation": "{hp} HP"
+  },
+  "Mh1NmC": {
+    "message": "{items, plural, one {# selected} other {# selected}}",
+    "translation": "{items, plural, one {# изабрана} few {# изабране} other {# изабрано}}"
   },
   "BwX3jA": {
     "message": "{key} is reserved for {action}.",
@@ -582,6 +715,10 @@
       "A button naming a shortcut and its keys; pressing it changes the keys."
     ],
     "translation": "{label}: {spoken}. Промени"
+  },
+  "1z1iU-": {
+    "message": "{last} ends on top",
+    "translation": "{last} завршава на врху"
   },
   "AiqpXX": {
     "message": "{list}, {item}",
@@ -623,6 +760,13 @@
       "A zone's name for screen readers; name is its player. The Active Spot."
     ],
     "translation": "Активно место играча {name}"
+  },
+  "Q29GRK": {
+    "message": "{name} added, {0}",
+    "comments": [
+      "A card joined the selection, e.g. \"Fire Energy added, 4 selected\"."
+    ],
+    "translation": "{name}: додато, {0}"
   },
   "2jVmMm": {
     "message": "{name} attacked",
@@ -807,6 +951,13 @@
     ],
     "translation": "{name} се поново повезује"
   },
+  "rObKhV": {
+    "message": "{name} removed, {0}",
+    "comments": [
+      "A card left the selection, e.g. \"Fire Energy removed, 3 selected\"."
+    ],
+    "translation": "{name}: уклоњено, {0}"
+  },
   "VcNbQ-": {
     "message": "{name} reset",
     "comments": [
@@ -862,6 +1013,27 @@
       "name is GX or VSTAR, the once-per-game marker."
     ],
     "translation": "{name} искоришћен: притисни за поништавање"
+  },
+  "9NXGJ_": {
+    "message": "{name}, Active",
+    "comments": [
+      "A Pokémon to attach cards to, e.g. \"Pikachu, Active\"."
+    ],
+    "translation": "{name}, Активни"
+  },
+  "J9Wtim": {
+    "message": "{name}, Bench",
+    "comments": [
+      "A Pokémon to attach cards to, e.g. \"Pikachu, Bench\"."
+    ],
+    "translation": "{name}, клупа"
+  },
+  "68ccPL": {
+    "message": "{name}, selected, {order} of {0}",
+    "comments": [
+      "A selected card among several, e.g. \"Switch, selected, 2 of 3\"."
+    ],
+    "translation": "{name}, изабрано, {order} од {0}"
   },
   "Dh0OFs": {
     "message": "{name}, selected, number {order}",
@@ -951,6 +1123,14 @@
   "huIm_e": {
     "message": "{prints, plural, one {# print} other {# prints}}",
     "translation": "{prints, plural, one {# издање} few {# издања} other {# издања}}"
+  },
+  "Lg_lp9": {
+    "message": "{revealed, plural, one {Reveal # card} other {Reveal # cards}}",
+    "translation": "{revealed, plural, one {Откриј # карту} few {Откриј # карте} other {Откриј # карата}}"
+  },
+  "ZAbJN6": {
+    "message": "{rotated, plural, one {Rotate # card} other {Rotate # cards}}",
+    "translation": "{rotated, plural, one {Ротирај # карту} few {Ротирај # карте} other {Ротирај # карата}}"
   },
   "RTnHXI": {
     "message": "{said}: {cards}",
@@ -1078,6 +1258,13 @@
     ],
     "translation": "{viewer} више не гледа карту {source, select, hand {у руци} prizes {у наградама} discard {у одбаченим картама} board {на табли} stadium {на стадиону} active {на активном месту} bench {на клупи} lostZone {у Lost Zone} attachmentResolution {у прикаченим картама} inspection {у прегледу} other {у шпилу}} играча {owner}"
   },
+  "-AEMvi": {
+    "message": "{zoneName}, {0} selected",
+    "comments": [
+      "The cards of an open pile, e.g. \"Your discard pile, 3 selected\"."
+    ],
+    "translation": "{zoneName}, {0} изабрано"
+  },
   "JirPbT": {
     "message": "{zoneName}, {count, plural, one {# card} other {# cards}}",
     "comments": [
@@ -1094,6 +1281,13 @@
     "message": "+ Stadium",
     "context": "shortcut key caption",
     "translation": "+ Стадион"
+  },
+  "T_K7zW": {
+    "message": "×{pokemon}",
+    "comments": [
+      "How many Pokémon the damage stepper marks, e.g. \"×3\"."
+    ],
+    "translation": "×{pokemon}"
   },
   "cTPeOy": {
     "message": "<0/> already does <1>{clashNames}</1>.",
@@ -1153,9 +1347,17 @@
     "message": "10 less damage",
     "translation": "10 штете мање"
   },
+  "n-Gc4A": {
+    "message": "10 less damage on each",
+    "translation": "10 штете мање на сваком"
+  },
   "AHfGsB": {
     "message": "10 more damage",
     "translation": "10 штете више"
+  },
+  "07KhVj": {
+    "message": "10 more damage on each",
+    "translation": "10 штете више на сваком"
   },
   "c224Tl": {
     "message": "3 draws three",
@@ -1292,6 +1494,10 @@
   "vz22MV": {
     "message": "Add damage",
     "translation": "Додај штету"
+  },
+  "abXnG-": {
+    "message": "Add damage to each…",
+    "translation": "Додај штету сваком…"
   },
   "mOz7te": {
     "message": "Add damage…",
@@ -1482,6 +1688,11 @@
     "message": "Artwork window",
     "translation": "Прозор илустрације"
   },
+  "qeQjlL": {
+    "message": "As one",
+    "context": "play the selected pieces as one card",
+    "translation": "Као једну"
+  },
   "eiQJaM": {
     "message": "Asleep",
     "context": "special condition",
@@ -1499,6 +1710,10 @@
   "jrzyuC": {
     "message": "Attach and evolve",
     "translation": "Прикачи и еволуирај"
+  },
+  "8vfaut": {
+    "message": "Attach to",
+    "translation": "Прикачи на"
   },
   "uUaeMQ": {
     "message": "Attach to a Pokémon…",
@@ -2262,6 +2477,22 @@
     "message": "Damage counter",
     "translation": "Бројач штете"
   },
+  "DFzJxl": {
+    "message": "Damage on each of {pokemon, plural, one {# Pokémon} other {# Pokémon}}",
+    "comments": [
+      "The damage stepper for several selected Pokémon at once."
+    ],
+    "translation": "Штета на сваком од {pokemon, plural, one {# Pokémon-а} few {# Pokémon-а} other {# Pokémon-а}}"
+  },
+  "Ee-egz": {
+    "message": "Damage…",
+    "translation": "Штета…"
+  },
+  "4xW71x": {
+    "message": "Damage…",
+    "context": "damage on the selected Pokémon; a stepper follows",
+    "translation": "Штета…"
+  },
   "yB1YpA": {
     "message": "Dark mode",
     "translation": "Тамни режим"
@@ -2387,6 +2618,13 @@
     "message": "Deselect",
     "translation": "Поништи избор"
   },
+  "U-R4tW": {
+    "message": "Deselect all",
+    "comments": [
+      "Takes every card of the open pile out of the selection."
+    ],
+    "translation": "Поништи избор свих"
+  },
   "lJjOBS": {
     "message": "Design",
     "context": "a card back the player designed",
@@ -2490,6 +2728,11 @@
   "8Gsx4j": {
     "message": "Done",
     "context": "finished",
+    "translation": "Готово"
+  },
+  "YLZBXb": {
+    "message": "Done",
+    "context": "stop picking cards",
     "translation": "Готово"
   },
   "6yxheJ": {
@@ -3828,6 +4071,13 @@
     "context": "move the selected card",
     "translation": "Премести"
   },
+  "2kUZvq": {
+    "message": "Move {0}…",
+    "comments": [
+      "Opens the menu of what the selected cards can do, e.g. \"Move 3…\"."
+    ],
+    "translation": "Премести {0}…"
+  },
   "B8Y72Z": {
     "message": "Move {cardName} to",
     "comments": [
@@ -3875,6 +4125,11 @@
   "rzLbnt": {
     "message": "Move to hand",
     "translation": "Премести у руку"
+  },
+  "v1NcRU": {
+    "message": "Move…",
+    "context": "move the selected cards; a menu of places follows",
+    "translation": "Премести…"
   },
   "mP7YPE": {
     "message": "Mulligan",
@@ -4526,6 +4781,10 @@
     "context": "take the decks to the table",
     "translation": "Играј"
   },
+  "BEfUVX": {
+    "message": "Play {name} as the Stadium",
+    "translation": "Играј {name} као стадион"
+  },
   "Sky344": {
     "message": "Play <0>{0}</0>: drag it onto the open mat. Ending your turn clears it away.",
     "translation": "Играј <0>{0}</0>: превуци је на отворену подлогу. Крај потеза је уклања."
@@ -4533,6 +4792,14 @@
   "7LIRc6": {
     "message": "Play a random deck",
     "translation": "Играј насумичан шпил"
+  },
+  "Yo-ZmX": {
+    "message": "Play as one card",
+    "translation": "Играј као једну карту"
+  },
+  "NZZ8TY": {
+    "message": "Play as the Stadium",
+    "translation": "Играј као стадион"
   },
   "0wpoN_": {
     "message": "Play faster from the keyboard",
@@ -4583,6 +4850,10 @@
     "message": "Poisoned",
     "context": "special condition",
     "translation": "Отрован"
+  },
+  "eqRr09": {
+    "message": "Pokémon",
+    "translation": "Pokémon"
   },
   "icgZ-R": {
     "message": "Pokémon",
@@ -4715,6 +4986,14 @@
     "context": "Pokémon type",
     "translation": "Психички"
   },
+  "YLetgL": {
+    "message": "Put {name} in the Active Spot",
+    "translation": "Стави {name} на активно место"
+  },
+  "wj75Qo": {
+    "message": "Put {name} on the Bench",
+    "translation": "Стави {name} на клупу"
+  },
   "jG4a_T": {
     "message": "Put another on your <0>Bench</0>. Up to five fit there.",
     "translation": "Стави још једног на своју <0>клупу</0>. Тамо стане до пет."
@@ -4722,6 +5001,10 @@
   "5XURu8": {
     "message": "Put damage and Poisoned on their Pokémon",
     "translation": "Стави штету и тровање на противничког Pokémon-а"
+  },
+  "4X3mBx": {
+    "message": "Put in the Active Spot",
+    "translation": "Стави на активно место"
   },
   "vGO8Cg": {
     "message": "Put on bottom",
@@ -4868,6 +5151,10 @@
   "-cND-P": {
     "message": "Remove all damage",
     "translation": "Уклони сву штету"
+  },
+  "YF7gJY": {
+    "message": "Remove all damage from each",
+    "translation": "Уклони сву штету са сваког"
   },
   "sR6lTH": {
     "message": "Remove condition",
@@ -5289,10 +5576,24 @@
     "message": "Seat taken",
     "translation": "Место је заузето"
   },
+  "rG3WVm": {
+    "message": "Select",
+    "comments": [
+      "Starts picking several cards: each tap then adds a card or takes it out."
+    ],
+    "translation": "Изабери"
+  },
   "4UhpnZ": {
     "message": "Select",
     "context": "shortcut key caption",
     "translation": "Избор"
+  },
+  "wgNoIs": {
+    "message": "Select all",
+    "comments": [
+      "Takes every card of the open pile into the selection."
+    ],
+    "translation": "Изабери све"
   },
   "mGWCew": {
     "message": "Select all here",
@@ -5326,6 +5627,21 @@
   "k32jF1": {
     "message": "Selected card actions",
     "translation": "Радње за изабрану карту"
+  },
+  "Dm5gKG": {
+    "message": "Selected cards actions",
+    "translation": "Радње за изабране карте"
+  },
+  "sYGBP5": {
+    "message": "Selecting: tap cards to add them",
+    "comments": [
+      "Read out as touch selection mode starts."
+    ],
+    "translation": "Бирање: додирни карте да их додаш"
+  },
+  "GvCs21": {
+    "message": "Selection cleared",
+    "translation": "Избор поништен"
   },
   "PzW-3k": {
     "message": "Send",
@@ -6698,6 +7014,10 @@
     "message": "Winning now",
     "translation": "Тренутно побеђују"
   },
+  "SzQFzV": {
+    "message": "With their attached cards",
+    "translation": "Са њиховим прикаченим картама"
+  },
   "QjlnU1": {
     "message": "Worlds",
     "comments": [
@@ -6788,332 +7108,5 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "Оквири зона"
-  },
-  "TDU04N": {
-    "message": "{0, plural, other {Mark # as unused}}",
-    "translation": "{0, plural, one {Означи # као неискоришћено} few {Означи # као неискоришћена} other {Означи # као неискоришћених}}"
-  },
-  "thQz5O": {
-    "message": "{0, plural, other {Mark # as used}}",
-    "translation": "{0, plural, one {Означи # као искоришћено} few {Означи # као искоришћена} other {Означи # као искоришћених}}"
-  },
-  "OUc2yQ": {
-    "message": "{0, plural, other {Put # Pokémon on the Bench}}",
-    "translation": "{0, plural, one {Стави # Pokémon на клупу} few {Стави # Pokémon-а на клупу} other {Стави # Pokémon-а на клупу}}"
-  },
-  "9RYqFp": {
-    "message": "{actor} moved {count, plural, one {# card} other {# cards}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} other {deck}}",
-    "comments": [
-      "Log line. {actor} is a player's name, {count} how many cards; {source} is the zone they left and {destination} where they went (play: onto the table)."
-    ],
-    "translation": "{actor} премешта {count, plural, one {# карту} few {# карте} other {# карата}} {source, select, hand {из руке} prizes {из наградних карата} discard {из одбачених карата} board {са табле} stadium {са стадиона} active {из активног места} bench {са клупе} lostZone {из Lost Zone} attachmentResolution {из прикачених карата} other {из шпила}} {destination, select, hand {у руку} discard {у одбачене карте} lostZone {у Lost Zone} deckBottom {на дно шпила} play {у игру} other {у шпил}}"
-  },
-  "T2CvPc": {
-    "message": "{cleared, plural, one {Clear damage} other {Clear damage on #}}",
-    "translation": "{cleared, plural, one {Уклони штету} few {Уклони штету на #} other {Уклони штету на #}}"
-  },
-  "d5-G2p": {
-    "message": "{conditioned, plural, one {Add or switch Special Condition} other {Add or switch Special Conditions on #}}",
-    "translation": "{conditioned, plural, one {Додај или промени посебно стање} few {Додај или промени посебна стања на #} other {Додај или промени посебна стања на #}}"
-  },
-  "0GBBWg": {
-    "message": "{count, plural, one {# of {ownerName}'s cards} other {# of {ownerName}'s cards}}",
-    "translation": "{count, plural, one {# од карата играча {ownerName}} few {# од карата играча {ownerName}} other {# од карата играча {ownerName}}}"
-  },
-  "LrKYZV": {
-    "message": "{count, plural, one {Discard # card} other {Discard # cards}}",
-    "translation": "{count, plural, one {Одбаци # карту} few {Одбаци # карте} other {Одбаци # карата}}"
-  },
-  "0oSCag": {
-    "message": "{count, plural, one {Move # card to hand} other {Move # cards to hand}}",
-    "translation": "{count, plural, one {Премести # карту у руку} few {Премести # карте у руку} other {Премести # карата у руку}}"
-  },
-  "VPXqBr": {
-    "message": "{count, plural, one {Put # card in the Lost Zone} other {Put # cards in the Lost Zone}}",
-    "translation": "{count, plural, one {Стави # карту у Lost Zone} few {Стави # карте у Lost Zone} other {Стави # карата у Lost Zone}}"
-  },
-  "QcZX-S": {
-    "message": "{count, plural, one {Put # card in the Prizes} other {Put # cards in the Prizes}}",
-    "translation": "{count, plural, one {Стави # карту међу наградне карте} few {Стави # карте међу наградне карте} other {Стави # карата међу наградне карте}}"
-  },
-  "rVI1D1": {
-    "message": "{count, plural, one {Put # card on the board} other {Put # cards on the board}}",
-    "translation": "{count, plural, one {Стави # карту на таблу} few {Стави # карте на таблу} other {Стави # карата на таблу}}"
-  },
-  "CEIRsk": {
-    "message": "{count, plural, one {Put # card on the bottom of the deck} other {Put # cards on the bottom of the deck}}",
-    "translation": "{count, plural, one {Стави # карту на дно шпила} few {Стави # карте на дно шпила} other {Стави # карата на дно шпила}}"
-  },
-  "Iqt60a": {
-    "message": "{count, plural, one {Put # card on top of the deck} other {Put # cards on top of the deck}}",
-    "translation": "{count, plural, one {Стави # карту на врх шпила} few {Стави # карте на врх шпила} other {Стави # карата на врх шпила}}"
-  },
-  "L80QZi": {
-    "message": "{count, plural, one {Shuffle # card into the deck} other {Shuffle # cards into the deck}}",
-    "translation": "{count, plural, one {Промешај # карту у шпил} few {Промешај # карте у шпил} other {Промешај # карата у шпил}}"
-  },
-  "SdtOTJ": {
-    "message": "{count, plural, other {Add # damage to each}}",
-    "translation": "{count, plural, one {Додај # штете на сваки} few {Додај # штете на сваки} other {Додај # штете на сваки}}"
-  },
-  "Kv5Eze": {
-    "message": "{count, plural, other {Discard # Pokémon}}",
-    "translation": "{count, plural, one {Одбаци # Pokémon} few {Одбаци # Pokémon-а} other {Одбаци # Pokémon-а}}"
-  },
-  "DxATQp": {
-    "message": "{count, plural, other {Move # Pokémon to hand}}",
-    "translation": "{count, plural, one {Премести # Pokémon у руку} few {Премести # Pokémon-а у руку} other {Премести # Pokémon-а у руку}}"
-  },
-  "Rdmkvn": {
-    "message": "{count, plural, other {Put # Pokémon in the Lost Zone}}",
-    "translation": "{count, plural, one {Стави # Pokémon у Lost Zone} few {Стави # Pokémon-а у Lost Zone} other {Стави # Pokémon-а у Lost Zone}}"
-  },
-  "JUDcg5": {
-    "message": "{count, plural, other {Put # Pokémon in the Prizes}}",
-    "translation": "{count, plural, one {Стави # Pokémon међу наградне карте} few {Стави # Pokémon-а међу наградне карте} other {Стави # Pokémon-а међу наградне карте}}"
-  },
-  "Jv3nIR": {
-    "message": "{count, plural, other {Put # Pokémon on the board}}",
-    "translation": "{count, plural, one {Стави # Pokémon на таблу} few {Стави # Pokémon-а на таблу} other {Стави # Pokémon-а на таблу}}"
-  },
-  "lkpEPZ": {
-    "message": "{count, plural, other {Put # Pokémon on the bottom of the deck}}",
-    "translation": "{count, plural, one {Стави # Pokémon на дно шпила} few {Стави # Pokémon-а на дно шпила} other {Стави # Pokémon-а на дно шпила}}"
-  },
-  "qtwSJv": {
-    "message": "{count, plural, other {Put # Pokémon on top of the deck}}",
-    "translation": "{count, plural, one {Стави # Pokémon на врх шпила} few {Стави # Pokémon-а на врх шпила} other {Стави # Pokémon-а на врх шпила}}"
-  },
-  "P13x5M": {
-    "message": "{count, plural, other {Shuffle # Pokémon into the deck}}",
-    "translation": "{count, plural, one {Промешај # Pokémon у шпил} few {Промешај # Pokémon-а у шпил} other {Промешај # Pokémon-а у шпил}}"
-  },
-  "5VUOI1": {
-    "message": "{cured, plural, one {Remove Special Condition} other {Remove Special Conditions on #}}",
-    "translation": "{cured, plural, one {Уклони посебно стање} few {Уклони посебна стања на #} other {Уклони посебна стања на #}}"
-  },
-  "3W5Y-K": {
-    "message": "{damaged, plural, one {Add 10 damage} other {Add 10 damage to each of #}}",
-    "translation": "{damaged, plural, one {Додај 10 штете} few {Додај 10 штете на сваки од #} other {Додај 10 штете на сваки од #}}"
-  },
-  "iovK0L": {
-    "message": "{hidden, plural, one {Hide # card} other {Hide # cards}}",
-    "translation": "{hidden, plural, one {Сакриј # карту} few {Сакриј # карте} other {Сакриј # карата}}"
-  },
-  "1z1iU-": {
-    "message": "{last} ends on top",
-    "translation": "{last} завршава на врху"
-  },
-  "Lg_lp9": {
-    "message": "{revealed, plural, one {Reveal # card} other {Reveal # cards}}",
-    "translation": "{revealed, plural, one {Откриј # карту} few {Откриј # карте} other {Откриј # карата}}"
-  },
-  "ZAbJN6": {
-    "message": "{rotated, plural, one {Rotate # card} other {Rotate # cards}}",
-    "translation": "{rotated, plural, one {Ротирај # карту} few {Ротирај # карте} other {Ротирај # карата}}"
-  },
-  "abXnG-": {
-    "message": "Add damage to each…",
-    "translation": "Додај штету сваком…"
-  },
-  "Ee-egz": {
-    "message": "Damage…",
-    "translation": "Штета…"
-  },
-  "BEfUVX": {
-    "message": "Play {name} as the Stadium",
-    "translation": "Играј {name} као стадион"
-  },
-  "Yo-ZmX": {
-    "message": "Play as one card",
-    "translation": "Играј као једну карту"
-  },
-  "NZZ8TY": {
-    "message": "Play as the Stadium",
-    "translation": "Играј као стадион"
-  },
-  "YLetgL": {
-    "message": "Put {name} in the Active Spot",
-    "translation": "Стави {name} на активно место"
-  },
-  "wj75Qo": {
-    "message": "Put {name} on the Bench",
-    "translation": "Стави {name} на клупу"
-  },
-  "4X3mBx": {
-    "message": "Put in the Active Spot",
-    "translation": "Стави на активно место"
-  },
-  "SzQFzV": {
-    "message": "With their attached cards",
-    "translation": "Са њиховим прикаченим картама"
-  },
-  "2X9O8a": {
-    "message": "{0, plural, one {# card left the selection} other {# cards left the selection}}, {1}",
-    "comments": [
-      "Selected cards that were moved away, e.g. by the other player."
-    ],
-    "translation": "{0, plural, one {# карта је изашла из избора} few {# карте су изашле из избора} other {# карата је изашло из избора}}, {1}"
-  },
-  "6Lo6B5": {
-    "message": "{0, plural, one {# card selected} other {# cards selected}}",
-    "translation": "{0, plural, one {# карта изабрана} few {# карте изабране} other {# карата изабрано}}"
-  },
-  "fvImQM": {
-    "message": "{0} selected",
-    "comments": [
-      "How many cards are selected, e.g. \"3 selected\"."
-    ],
-    "translation": "{0} изабрано"
-  },
-  "tYyyLp": {
-    "message": "{count} selected: actions",
-    "comments": [
-      "The touch toolbar for several selected cards, e.g. \"3 selected: actions\"."
-    ],
-    "translation": "{count} изабрано: радње"
-  },
-  "Mh1NmC": {
-    "message": "{items, plural, one {# selected} other {# selected}}",
-    "translation": "{items, plural, one {# изабрана} few {# изабране} other {# изабрано}}"
-  },
-  "Q29GRK": {
-    "message": "{name} added, {0}",
-    "comments": [
-      "A card joined the selection, e.g. \"Fire Energy added, 4 selected\"."
-    ],
-    "translation": "{name}: додато, {0}"
-  },
-  "rObKhV": {
-    "message": "{name} removed, {0}",
-    "comments": [
-      "A card left the selection, e.g. \"Fire Energy removed, 3 selected\"."
-    ],
-    "translation": "{name}: уклоњено, {0}"
-  },
-  "9NXGJ_": {
-    "message": "{name}, Active",
-    "comments": [
-      "A Pokémon to attach cards to, e.g. \"Pikachu, Active\"."
-    ],
-    "translation": "{name}, Активни"
-  },
-  "J9Wtim": {
-    "message": "{name}, Bench",
-    "comments": [
-      "A Pokémon to attach cards to, e.g. \"Pikachu, Bench\"."
-    ],
-    "translation": "{name}, клупа"
-  },
-  "68ccPL": {
-    "message": "{name}, selected, {order} of {0}",
-    "comments": [
-      "A selected card among several, e.g. \"Switch, selected, 2 of 3\"."
-    ],
-    "translation": "{name}, изабрано, {order} од {0}"
-  },
-  "-AEMvi": {
-    "message": "{zoneName}, {0} selected",
-    "comments": [
-      "The cards of an open pile, e.g. \"Your discard pile, 3 selected\"."
-    ],
-    "translation": "{zoneName}, {0} изабрано"
-  },
-  "T_K7zW": {
-    "message": "×{pokemon}",
-    "comments": [
-      "How many Pokémon the damage stepper marks, e.g. \"×3\"."
-    ],
-    "translation": "×{pokemon}"
-  },
-  "n-Gc4A": {
-    "message": "10 less damage on each",
-    "translation": "10 штете мање на сваком"
-  },
-  "07KhVj": {
-    "message": "10 more damage on each",
-    "translation": "10 штете више на сваком"
-  },
-  "qeQjlL": {
-    "message": "As one",
-    "context": "play the selected pieces as one card",
-    "translation": "Као једну"
-  },
-  "8vfaut": {
-    "message": "Attach to",
-    "translation": "Прикачи на"
-  },
-  "DFzJxl": {
-    "message": "Damage on each of {pokemon, plural, one {# Pokémon} other {# Pokémon}}",
-    "comments": [
-      "The damage stepper for several selected Pokémon at once."
-    ],
-    "translation": "Штета на сваком од {pokemon, plural, one {# Pokémon-а} few {# Pokémon-а} other {# Pokémon-а}}"
-  },
-  "4xW71x": {
-    "message": "Damage…",
-    "context": "damage on the selected Pokémon; a stepper follows",
-    "translation": "Штета…"
-  },
-  "U-R4tW": {
-    "message": "Deselect all",
-    "comments": [
-      "Takes every card of the open pile out of the selection."
-    ],
-    "translation": "Поништи избор свих"
-  },
-  "YLZBXb": {
-    "message": "Done",
-    "context": "stop picking cards",
-    "translation": "Готово"
-  },
-  "2kUZvq": {
-    "message": "Move {0}…",
-    "comments": [
-      "Opens the menu of what the selected cards can do, e.g. \"Move 3…\"."
-    ],
-    "translation": "Премести {0}…"
-  },
-  "v1NcRU": {
-    "message": "Move…",
-    "context": "move the selected cards; a menu of places follows",
-    "translation": "Премести…"
-  },
-  "eqRr09": {
-    "message": "Pokémon",
-    "translation": "Pokémon"
-  },
-  "YF7gJY": {
-    "message": "Remove all damage from each",
-    "translation": "Уклони сву штету са сваког"
-  },
-  "rG3WVm": {
-    "message": "Select",
-    "comments": [
-      "Starts picking several cards: each tap then adds a card or takes it out."
-    ],
-    "translation": "Изабери"
-  },
-  "wgNoIs": {
-    "message": "Select all",
-    "comments": [
-      "Takes every card of the open pile into the selection."
-    ],
-    "translation": "Изабери све"
-  },
-  "Dm5gKG": {
-    "message": "Selected cards actions",
-    "translation": "Радње за изабране карте"
-  },
-  "sYGBP5": {
-    "message": "Selecting: tap cards to add them",
-    "comments": [
-      "Read out as touch selection mode starts."
-    ],
-    "translation": "Бирање: додирни карте да их додаш"
-  },
-  "GvCs21": {
-    "message": "Selection cleared",
-    "translation": "Избор поништен"
   }
 }

@@ -13,6 +13,17 @@
     ],
     "translation": ", вкл."
   },
+  "2X9O8a": {
+    "message": "{0, plural, one {# card left the selection} other {# cards left the selection}}, {1}",
+    "comments": [
+      "Selected cards that were moved away, e.g. by the other player."
+    ],
+    "translation": "{0, plural, one {# карта вышла из выбора} few {# карты вышли из выбора} many {# карт вышли из выбора} other {# карты вышли из выбора}}, {1}"
+  },
+  "6Lo6B5": {
+    "message": "{0, plural, one {# card selected} other {# cards selected}}",
+    "translation": "{0, plural, one {Выбрана # карта} few {Выбраны # карты} many {Выбрано # карт} other {Выбрано # карты}}"
+  },
   "W8KEEX": {
     "message": "{0, plural, one {# player} other {# players}}",
     "translation": "{0, plural, one {# игрок} few {# игрока} many {# игроков} other {# игрока}}"
@@ -24,6 +35,18 @@
   "jnpzPF": {
     "message": "{0, plural, one {Shuffled # card into the deck} other {Shuffled # cards into the deck}}",
     "translation": "{0, plural, one {# карта замешана в колоду} few {# карты замешаны в колоду} many {# карт замешано в колоду} other {# карты замешано в колоду}}"
+  },
+  "TDU04N": {
+    "message": "{0, plural, other {Mark # as unused}}",
+    "translation": "{0, plural, one {Отметить как неиспользованные: #} few {Отметить как неиспользованные: #} many {Отметить как неиспользованные: #} other {Отметить как неиспользованные: #}}"
+  },
+  "thQz5O": {
+    "message": "{0, plural, other {Mark # as used}}",
+    "translation": "{0, plural, one {Отметить как использованные: #} few {Отметить как использованные: #} many {Отметить как использованные: #} other {Отметить как использованные: #}}"
+  },
+  "OUc2yQ": {
+    "message": "{0, plural, other {Put # Pokémon on the Bench}}",
+    "translation": "{0, plural, one {Положить # покемона в запас} few {Положить # покемонов в запас} many {Положить # покемонов в запас} other {Положить # покемона в запас}}"
   },
   "yW-SAQ": {
     "message": "{0} ({1})",
@@ -57,6 +80,13 @@
       "How many tutorial lessons are finished, like \"3 of 10 done\"."
     ],
     "translation": "{0} из {1} пройдено"
+  },
+  "fvImQM": {
+    "message": "{0} selected",
+    "comments": [
+      "How many cards are selected, e.g. \"3 selected\"."
+    ],
+    "translation": "Выбрано: {0}"
   },
   "9dbhR8": {
     "message": "{actor} attached {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {target, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}}",
@@ -355,9 +385,17 @@
     "message": "{classicName} decks",
     "translation": "Колоды «{classicName}»"
   },
+  "T2CvPc": {
+    "message": "{cleared, plural, one {Clear damage} other {Clear damage on #}}",
+    "translation": "{cleared, plural, =1 {Убрать урон} one {Убрать урон у #} few {Убрать урон у #} many {Убрать урон у #} other {Убрать урон у #}}"
+  },
   "shahtf": {
     "message": "{compositionName} assembled preview",
     "translation": "Предпросмотр сборки: {compositionName}"
+  },
+  "d5-G2p": {
+    "message": "{conditioned, plural, one {Add or switch Special Condition} other {Add or switch Special Conditions on #}}",
+    "translation": "{conditioned, plural, =1 {Добавить или сменить особое состояние} one {Добавить или сменить особые состояния у #} few {Добавить или сменить особые состояния у #} many {Добавить или сменить особые состояния у #} other {Добавить или сменить особые состояния у #}}"
   },
   "f0WoGd": {
     "message": "{count, plural, one {{label}, # card} other {{label}, # cards}}",
@@ -418,6 +456,10 @@
     "message": "{count, plural, one {# copy of {name} (Prism Star: max 1).} other {# copies of {name} (Prism Star: max 1).}}",
     "translation": "{count, plural, one {# копия {name} (Prism Star: максимум 1).} few {# копии {name} (Prism Star: максимум 1).} many {# копий {name} (Prism Star: максимум 1).} other {# копии {name} (Prism Star: максимум 1).}}"
   },
+  "0GBBWg": {
+    "message": "{count, plural, one {# of {ownerName}'s cards} other {# of {ownerName}'s cards}}",
+    "translation": "{count, plural, one {# карта игрока {ownerName}} few {# карты игрока {ownerName}} many {# карт игрока {ownerName}} other {# карты игрока {ownerName}}}"
+  },
   "eFRg1z": {
     "message": "{count, plural, one {# Pokémon ☆ card (max 1).} other {# Pokémon ☆ cards (max 1).}}",
     "translation": "{count, plural, one {# карта Pokémon ☆ (максимум 1).} few {# карты Pokémon ☆ (максимум 1).} many {# карт Pokémon ☆ (максимум 1).} other {# карты Pokémon ☆ (максимум 1).}}"
@@ -437,6 +479,10 @@
   "MJC1vQ": {
     "message": "{count, plural, one {Can't do that with this card} other {Can't do that with these cards}}",
     "translation": "{count, plural, one {С этой картой так нельзя} few {С этими картами так нельзя} many {С этими картами так нельзя} other {С этими картами так нельзя}}"
+  },
+  "LrKYZV": {
+    "message": "{count, plural, one {Discard # card} other {Discard # cards}}",
+    "translation": "{count, plural, one {Сбросить # карту} few {Сбросить # карты} many {Сбросить # карт} other {Сбросить # карты}}"
   },
   "-gAzkm": {
     "message": "{count, plural, one {Discard hand and draw # card} other {Discard hand and draw # cards}}",
@@ -466,6 +512,34 @@
     "message": "{count, plural, one {Look at top card} other {Look at top # cards}}",
     "translation": "{count, plural, =1 {Посмотреть верхнюю карту} one {Посмотреть # верхнюю карту} few {Посмотреть # верхние карты} many {Посмотреть # верхних карт} other {Посмотреть # верхней карты}}"
   },
+  "0oSCag": {
+    "message": "{count, plural, one {Move # card to hand} other {Move # cards to hand}}",
+    "translation": "{count, plural, one {Переместить # карту в руку} few {Переместить # карты в руку} many {Переместить # карт в руку} other {Переместить # карты в руку}}"
+  },
+  "VPXqBr": {
+    "message": "{count, plural, one {Put # card in the Lost Zone} other {Put # cards in the Lost Zone}}",
+    "translation": "{count, plural, one {Поместить # карту в зону потерь} few {Поместить # карты в зону потерь} many {Поместить # карт в зону потерь} other {Поместить # карты в зону потерь}}"
+  },
+  "QcZX-S": {
+    "message": "{count, plural, one {Put # card in the Prizes} other {Put # cards in the Prizes}}",
+    "translation": "{count, plural, one {Положить # карту в призовые карты} few {Положить # карты в призовые карты} many {Положить # карт в призовые карты} other {Положить # карты в призовые карты}}"
+  },
+  "rVI1D1": {
+    "message": "{count, plural, one {Put # card on the board} other {Put # cards on the board}}",
+    "translation": "{count, plural, one {Выложить # карту на поле} few {Выложить # карты на поле} many {Выложить # карт на поле} other {Выложить # карты на поле}}"
+  },
+  "CEIRsk": {
+    "message": "{count, plural, one {Put # card on the bottom of the deck} other {Put # cards on the bottom of the deck}}",
+    "translation": "{count, plural, one {Положить # карту под колоду} few {Положить # карты под колоду} many {Положить # карт под колоду} other {Положить # карты под колоду}}"
+  },
+  "Iqt60a": {
+    "message": "{count, plural, one {Put # card on top of the deck} other {Put # cards on top of the deck}}",
+    "translation": "{count, plural, one {Положить # карту на верх колоды} few {Положить # карты на верх колоды} many {Положить # карт на верх колоды} other {Положить # карты на верх колоды}}"
+  },
+  "L80QZi": {
+    "message": "{count, plural, one {Shuffle # card into the deck} other {Shuffle # cards into the deck}}",
+    "translation": "{count, plural, one {Замешать # карту в колоду} few {Замешать # карты в колоду} many {Замешать # карт в колоду} other {Замешать # карты в колоду}}"
+  },
   "-r4674": {
     "message": "{count, plural, one {Shuffle hand in and draw # card} other {Shuffle hand in and draw # cards}}",
     "translation": "{count, plural, one {Замешать руку в колоду и взять # карту} few {Замешать руку в колоду и взять # карты} many {Замешать руку в колоду и взять # карт} other {Замешать руку в колоду и взять # карты}}"
@@ -473,6 +547,10 @@
   "aN0Z_E": {
     "message": "{count, plural, one {Shuffle hand to bottom and draw # card} other {Shuffle hand to bottom and draw # cards}}",
     "translation": "{count, plural, one {Перемешать руку, положить под колоду и взять # карту} few {Перемешать руку, положить под колоду и взять # карты} many {Перемешать руку, положить под колоду и взять # карт} other {Перемешать руку, положить под колоду и взять # карты}}"
+  },
+  "SdtOTJ": {
+    "message": "{count, plural, other {Add # damage to each}}",
+    "translation": "{count, plural, one {Добавить по # урона каждому} few {Добавить по # урона каждому} many {Добавить по # урона каждому} other {Добавить по # урона каждому}}"
   },
   "19mL4O": {
     "message": "{count, plural, other {All # are already in hand}}",
@@ -506,6 +584,38 @@
     "message": "{count, plural, other {All # are already the Stadium}}",
     "translation": "{count, plural, one {Все # уже на стадионе} few {Все # уже на стадионе} many {Все # уже на стадионе} other {Все # уже на стадионе}}"
   },
+  "Kv5Eze": {
+    "message": "{count, plural, other {Discard # Pokémon}}",
+    "translation": "{count, plural, one {Сбросить # покемона} few {Сбросить # покемонов} many {Сбросить # покемонов} other {Сбросить # покемона}}"
+  },
+  "DxATQp": {
+    "message": "{count, plural, other {Move # Pokémon to hand}}",
+    "translation": "{count, plural, one {Переместить # покемона в руку} few {Переместить # покемонов в руку} many {Переместить # покемонов в руку} other {Переместить # покемона в руку}}"
+  },
+  "Rdmkvn": {
+    "message": "{count, plural, other {Put # Pokémon in the Lost Zone}}",
+    "translation": "{count, plural, one {Поместить # покемона в зону потерь} few {Поместить # покемонов в зону потерь} many {Поместить # покемонов в зону потерь} other {Поместить # покемона в зону потерь}}"
+  },
+  "JUDcg5": {
+    "message": "{count, plural, other {Put # Pokémon in the Prizes}}",
+    "translation": "{count, plural, one {Положить # покемона в призовые карты} few {Положить # покемонов в призовые карты} many {Положить # покемонов в призовые карты} other {Положить # покемона в призовые карты}}"
+  },
+  "Jv3nIR": {
+    "message": "{count, plural, other {Put # Pokémon on the board}}",
+    "translation": "{count, plural, one {Выложить # покемона на поле} few {Выложить # покемонов на поле} many {Выложить # покемонов на поле} other {Выложить # покемона на поле}}"
+  },
+  "lkpEPZ": {
+    "message": "{count, plural, other {Put # Pokémon on the bottom of the deck}}",
+    "translation": "{count, plural, one {Положить # покемона под колоду} few {Положить # покемонов под колоду} many {Положить # покемонов под колоду} other {Положить # покемона под колоду}}"
+  },
+  "qtwSJv": {
+    "message": "{count, plural, other {Put # Pokémon on top of the deck}}",
+    "translation": "{count, plural, one {Положить # покемона на верх колоды} few {Положить # покемонов на верх колоды} many {Положить # покемонов на верх колоды} other {Положить # покемона на верх колоды}}"
+  },
+  "P13x5M": {
+    "message": "{count, plural, other {Shuffle # Pokémon into the deck}}",
+    "translation": "{count, plural, one {Замешать # покемона в колоду} few {Замешать # покемонов в колоду} many {Замешать # покемонов в колоду} other {Замешать # покемона в колоду}}"
+  },
   "hMKADB": {
     "message": "{count} × {cardName} ({print}). Details",
     "comments": [
@@ -516,6 +626,21 @@
   "QugGSf": {
     "message": "{count} in deck",
     "translation": "В колоде: {count}"
+  },
+  "tYyyLp": {
+    "message": "{count} selected: actions",
+    "comments": [
+      "The touch toolbar for several selected cards, e.g. \"3 selected: actions\"."
+    ],
+    "translation": "Выбрано: {count}, действия"
+  },
+  "5VUOI1": {
+    "message": "{cured, plural, one {Remove Special Condition} other {Remove Special Conditions on #}}",
+    "translation": "{cured, plural, =1 {Снять особое состояние} one {Снять особые состояния у #} few {Снять особые состояния у #} many {Снять особые состояния у #} other {Снять особые состояния у #}}"
+  },
+  "3W5Y-K": {
+    "message": "{damaged, plural, one {Add 10 damage} other {Add 10 damage to each of #}}",
+    "translation": "{damaged, plural, =1 {Добавить 10 урона} one {Добавить 10 урона каждому из #} few {Добавить 10 урона каждому из #} many {Добавить 10 урона каждому из #} other {Добавить 10 урона каждому из #}}"
   },
   "7prUK_": {
     "message": "{deck}, {place}, {playerName}: try it",
@@ -558,9 +683,17 @@
     "message": "{firstReloading} will reload",
     "translation": "{firstReloading} перезагрузится"
   },
+  "iovK0L": {
+    "message": "{hidden, plural, one {Hide # card} other {Hide # cards}}",
+    "translation": "{hidden, plural, one {Скрыть # карту} few {Скрыть # карты} many {Скрыть # карт} other {Скрыть # карты}}"
+  },
   "k0g2Da": {
     "message": "{hp} HP",
     "translation": "{hp} ОЖ"
+  },
+  "Mh1NmC": {
+    "message": "{items, plural, one {# selected} other {# selected}}",
+    "translation": "{items, plural, one {Выбрано: #} few {Выбрано: #} many {Выбрано: #} other {Выбрано: #}}"
   },
   "BwX3jA": {
     "message": "{key} is reserved for {action}.",
@@ -582,6 +715,10 @@
       "A button naming a shortcut and its keys; pressing it changes the keys."
     ],
     "translation": "{label}: {spoken}. Изменить"
+  },
+  "1z1iU-": {
+    "message": "{last} ends on top",
+    "translation": "{last} окажется сверху"
   },
   "AiqpXX": {
     "message": "{list}, {item}",
@@ -623,6 +760,13 @@
       "A zone's name for screen readers; name is its player. The Active Spot."
     ],
     "translation": "Активная позиция игрока {name}"
+  },
+  "Q29GRK": {
+    "message": "{name} added, {0}",
+    "comments": [
+      "A card joined the selection, e.g. \"Fire Energy added, 4 selected\"."
+    ],
+    "translation": "Добавлено: {name}, {0}"
   },
   "2jVmMm": {
     "message": "{name} attacked",
@@ -807,6 +951,13 @@
     ],
     "translation": "{name} снова в сети"
   },
+  "rObKhV": {
+    "message": "{name} removed, {0}",
+    "comments": [
+      "A card left the selection, e.g. \"Fire Energy removed, 3 selected\"."
+    ],
+    "translation": "Убрано: {name}, {0}"
+  },
   "VcNbQ-": {
     "message": "{name} reset",
     "comments": [
@@ -862,6 +1013,27 @@
       "name is GX or VSTAR, the once-per-game marker."
     ],
     "translation": "{name} использован: нажми, чтобы отменить"
+  },
+  "9NXGJ_": {
+    "message": "{name}, Active",
+    "comments": [
+      "A Pokémon to attach cards to, e.g. \"Pikachu, Active\"."
+    ],
+    "translation": "{name}, активный"
+  },
+  "J9Wtim": {
+    "message": "{name}, Bench",
+    "comments": [
+      "A Pokémon to attach cards to, e.g. \"Pikachu, Bench\"."
+    ],
+    "translation": "{name}, в запасе"
+  },
+  "68ccPL": {
+    "message": "{name}, selected, {order} of {0}",
+    "comments": [
+      "A selected card among several, e.g. \"Switch, selected, 2 of 3\"."
+    ],
+    "translation": "{name}, выбрано, {order} из {0}"
   },
   "Dh0OFs": {
     "message": "{name}, selected, number {order}",
@@ -951,6 +1123,14 @@
   "huIm_e": {
     "message": "{prints, plural, one {# print} other {# prints}}",
     "translation": "{prints, plural, one {# вариант печати} few {# варианта печати} many {# вариантов печати} other {# варианта печати}}"
+  },
+  "Lg_lp9": {
+    "message": "{revealed, plural, one {Reveal # card} other {Reveal # cards}}",
+    "translation": "{revealed, plural, one {Показать # карту} few {Показать # карты} many {Показать # карт} other {Показать # карты}}"
+  },
+  "ZAbJN6": {
+    "message": "{rotated, plural, one {Rotate # card} other {Rotate # cards}}",
+    "translation": "{rotated, plural, one {Повернуть # карту} few {Повернуть # карты} many {Повернуть # карт} other {Повернуть # карты}}"
   },
   "RTnHXI": {
     "message": "{said}: {cards}",
@@ -1078,6 +1258,13 @@
     ],
     "translation": "{viewer} больше не смотрит карту в зоне «{source, select, hand {рука} prizes {призы} discard {сброс} board {поле} stadium {стадион} active {активный} bench {запас} lostZone {зона потерь} attachmentResolution {присоединённые карты} inspection {просмотр} other {колода}}» игрока {owner}"
   },
+  "-AEMvi": {
+    "message": "{zoneName}, {0} selected",
+    "comments": [
+      "The cards of an open pile, e.g. \"Your discard pile, 3 selected\"."
+    ],
+    "translation": "{zoneName}, выбрано: {0}"
+  },
   "JirPbT": {
     "message": "{zoneName}, {count, plural, one {# card} other {# cards}}",
     "comments": [
@@ -1094,6 +1281,13 @@
     "message": "+ Stadium",
     "context": "shortcut key caption",
     "translation": "+ стадион"
+  },
+  "T_K7zW": {
+    "message": "×{pokemon}",
+    "comments": [
+      "How many Pokémon the damage stepper marks, e.g. \"×3\"."
+    ],
+    "translation": "×{pokemon}"
   },
   "cTPeOy": {
     "message": "<0/> already does <1>{clashNames}</1>.",
@@ -1153,9 +1347,17 @@
     "message": "10 less damage",
     "translation": "На 10 урона меньше"
   },
+  "n-Gc4A": {
+    "message": "10 less damage on each",
+    "translation": "На 10 урона меньше каждому"
+  },
   "AHfGsB": {
     "message": "10 more damage",
     "translation": "На 10 урона больше"
+  },
+  "07KhVj": {
+    "message": "10 more damage on each",
+    "translation": "На 10 урона больше каждому"
   },
   "c224Tl": {
     "message": "3 draws three",
@@ -1292,6 +1494,10 @@
   "vz22MV": {
     "message": "Add damage",
     "translation": "Добавить урон"
+  },
+  "abXnG-": {
+    "message": "Add damage to each…",
+    "translation": "Добавить урон каждому…"
   },
   "mOz7te": {
     "message": "Add damage…",
@@ -1482,6 +1688,11 @@
     "message": "Artwork window",
     "translation": "Окно арта"
   },
+  "qeQjlL": {
+    "message": "As one",
+    "context": "play the selected pieces as one card",
+    "translation": "Как одну"
+  },
   "eiQJaM": {
     "message": "Asleep",
     "context": "special condition",
@@ -1499,6 +1710,10 @@
   "jrzyuC": {
     "message": "Attach and evolve",
     "translation": "Присоединение и эволюция"
+  },
+  "8vfaut": {
+    "message": "Attach to",
+    "translation": "Присоединить к"
   },
   "uUaeMQ": {
     "message": "Attach to a Pokémon…",
@@ -2262,6 +2477,22 @@
     "message": "Damage counter",
     "translation": "Фишка урона"
   },
+  "DFzJxl": {
+    "message": "Damage on each of {pokemon, plural, one {# Pokémon} other {# Pokémon}}",
+    "comments": [
+      "The damage stepper for several selected Pokémon at once."
+    ],
+    "translation": "Урон каждому из {pokemon, plural, one {# покемона} few {# покемонов} many {# покемонов} other {# покемона}}"
+  },
+  "Ee-egz": {
+    "message": "Damage…",
+    "translation": "Урон…"
+  },
+  "4xW71x": {
+    "message": "Damage…",
+    "context": "damage on the selected Pokémon; a stepper follows",
+    "translation": "Урон…"
+  },
   "yB1YpA": {
     "message": "Dark mode",
     "translation": "Тёмная тема"
@@ -2387,6 +2618,13 @@
     "message": "Deselect",
     "translation": "Снять выделение"
   },
+  "U-R4tW": {
+    "message": "Deselect all",
+    "comments": [
+      "Takes every card of the open pile out of the selection."
+    ],
+    "translation": "Снять выбор со всех"
+  },
   "lJjOBS": {
     "message": "Design",
     "context": "a card back the player designed",
@@ -2490,6 +2728,11 @@
   "8Gsx4j": {
     "message": "Done",
     "context": "finished",
+    "translation": "Готово"
+  },
+  "YLZBXb": {
+    "message": "Done",
+    "context": "stop picking cards",
     "translation": "Готово"
   },
   "6yxheJ": {
@@ -3828,6 +4071,13 @@
     "context": "move the selected card",
     "translation": "Переместить"
   },
+  "2kUZvq": {
+    "message": "Move {0}…",
+    "comments": [
+      "Opens the menu of what the selected cards can do, e.g. \"Move 3…\"."
+    ],
+    "translation": "Переместить {0}…"
+  },
   "B8Y72Z": {
     "message": "Move {cardName} to",
     "comments": [
@@ -3875,6 +4125,11 @@
   "rzLbnt": {
     "message": "Move to hand",
     "translation": "Взять в руку"
+  },
+  "v1NcRU": {
+    "message": "Move…",
+    "context": "move the selected cards; a menu of places follows",
+    "translation": "Переместить…"
   },
   "mP7YPE": {
     "message": "Mulligan",
@@ -4526,6 +4781,10 @@
     "context": "take the decks to the table",
     "translation": "Играть"
   },
+  "BEfUVX": {
+    "message": "Play {name} as the Stadium",
+    "translation": "Сыграть {name} как Стадион"
+  },
   "Sky344": {
     "message": "Play <0>{0}</0>: drag it onto the open mat. Ending your turn clears it away.",
     "translation": "Сыграй <0>{0}</0>: перетащи карту на поле. Конец хода уберёт её."
@@ -4533,6 +4792,14 @@
   "7LIRc6": {
     "message": "Play a random deck",
     "translation": "Играть случайной колодой"
+  },
+  "Yo-ZmX": {
+    "message": "Play as one card",
+    "translation": "Сыграть как одну карту"
+  },
+  "NZZ8TY": {
+    "message": "Play as the Stadium",
+    "translation": "Сыграть как Стадион"
   },
   "0wpoN_": {
     "message": "Play faster from the keyboard",
@@ -4583,6 +4850,10 @@
     "message": "Poisoned",
     "context": "special condition",
     "translation": "Отравлен"
+  },
+  "eqRr09": {
+    "message": "Pokémon",
+    "translation": "Покемон"
   },
   "icgZ-R": {
     "message": "Pokémon",
@@ -4715,6 +4986,14 @@
     "context": "Pokémon type",
     "translation": "Психо"
   },
+  "YLetgL": {
+    "message": "Put {name} in the Active Spot",
+    "translation": "Поставить {name} на активную позицию"
+  },
+  "wj75Qo": {
+    "message": "Put {name} on the Bench",
+    "translation": "Положить {name} в запас"
+  },
   "jG4a_T": {
     "message": "Put another on your <0>Bench</0>. Up to five fit there.",
     "translation": "Положи ещё одного в <0>запас</0>. Туда помещается до пяти."
@@ -4722,6 +5001,10 @@
   "5XURu8": {
     "message": "Put damage and Poisoned on their Pokémon",
     "translation": "Нанеси урон покемону противника и отрави его"
+  },
+  "4X3mBx": {
+    "message": "Put in the Active Spot",
+    "translation": "Поставить на активную позицию"
   },
   "vGO8Cg": {
     "message": "Put on bottom",
@@ -4868,6 +5151,10 @@
   "-cND-P": {
     "message": "Remove all damage",
     "translation": "Убрать весь урон"
+  },
+  "YF7gJY": {
+    "message": "Remove all damage from each",
+    "translation": "Убрать весь урон с каждого"
   },
   "sR6lTH": {
     "message": "Remove condition",
@@ -5289,10 +5576,24 @@
     "message": "Seat taken",
     "translation": "Место занято"
   },
+  "rG3WVm": {
+    "message": "Select",
+    "comments": [
+      "Starts picking several cards: each tap then adds a card or takes it out."
+    ],
+    "translation": "Выбрать"
+  },
   "4UhpnZ": {
     "message": "Select",
     "context": "shortcut key caption",
     "translation": "Выбор"
+  },
+  "wgNoIs": {
+    "message": "Select all",
+    "comments": [
+      "Takes every card of the open pile into the selection."
+    ],
+    "translation": "Выбрать все"
   },
   "mGWCew": {
     "message": "Select all here",
@@ -5326,6 +5627,21 @@
   "k32jF1": {
     "message": "Selected card actions",
     "translation": "Действия с выбранной картой"
+  },
+  "Dm5gKG": {
+    "message": "Selected cards actions",
+    "translation": "Действия с выбранными картами"
+  },
+  "sYGBP5": {
+    "message": "Selecting: tap cards to add them",
+    "comments": [
+      "Read out as touch selection mode starts."
+    ],
+    "translation": "Выбор: нажимай на карты, чтобы добавить их"
+  },
+  "GvCs21": {
+    "message": "Selection cleared",
+    "translation": "Выбор сброшен"
   },
   "PzW-3k": {
     "message": "Send",
@@ -6698,6 +7014,10 @@
     "message": "Winning now",
     "translation": "Сейчас побеждают"
   },
+  "SzQFzV": {
+    "message": "With their attached cards",
+    "translation": "Вместе с присоединёнными картами"
+  },
   "QjlnU1": {
     "message": "Worlds",
     "comments": [
@@ -6788,332 +7108,5 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "Контуры зон"
-  },
-  "TDU04N": {
-    "message": "{0, plural, other {Mark # as unused}}",
-    "translation": "{0, plural, one {Отметить как неиспользованные: #} few {Отметить как неиспользованные: #} many {Отметить как неиспользованные: #} other {Отметить как неиспользованные: #}}"
-  },
-  "thQz5O": {
-    "message": "{0, plural, other {Mark # as used}}",
-    "translation": "{0, plural, one {Отметить как использованные: #} few {Отметить как использованные: #} many {Отметить как использованные: #} other {Отметить как использованные: #}}"
-  },
-  "OUc2yQ": {
-    "message": "{0, plural, other {Put # Pokémon on the Bench}}",
-    "translation": "{0, plural, one {Положить # покемона в запас} few {Положить # покемонов в запас} many {Положить # покемонов в запас} other {Положить # покемона в запас}}"
-  },
-  "9RYqFp": {
-    "message": "{actor} moved {count, plural, one {# card} other {# cards}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} other {deck}}",
-    "comments": [
-      "Log line. {actor} is a player's name, {count} how many cards; {source} is the zone they left and {destination} where they went (play: onto the table)."
-    ],
-    "translation": "{actor} перемещает {count, plural, one {# карту} few {# карты} many {# карт} other {# карты}} из {source, select, hand {руки} prizes {призов} discard {сброса} board {поля} stadium {стадиона} active {активной позиции} bench {запаса} lostZone {зоны потерь} attachmentResolution {присоединённых карт} other {колоды}} {destination, select, hand {в руку} discard {в сброс} lostZone {в зону потерь} deckBottom {под низ колоды} play {в игру} other {в колоду}}"
-  },
-  "T2CvPc": {
-    "message": "{cleared, plural, one {Clear damage} other {Clear damage on #}}",
-    "translation": "{cleared, plural, =1 {Убрать урон} one {Убрать урон у #} few {Убрать урон у #} many {Убрать урон у #} other {Убрать урон у #}}"
-  },
-  "d5-G2p": {
-    "message": "{conditioned, plural, one {Add or switch Special Condition} other {Add or switch Special Conditions on #}}",
-    "translation": "{conditioned, plural, =1 {Добавить или сменить особое состояние} one {Добавить или сменить особые состояния у #} few {Добавить или сменить особые состояния у #} many {Добавить или сменить особые состояния у #} other {Добавить или сменить особые состояния у #}}"
-  },
-  "0GBBWg": {
-    "message": "{count, plural, one {# of {ownerName}'s cards} other {# of {ownerName}'s cards}}",
-    "translation": "{count, plural, one {# карта игрока {ownerName}} few {# карты игрока {ownerName}} many {# карт игрока {ownerName}} other {# карты игрока {ownerName}}}"
-  },
-  "LrKYZV": {
-    "message": "{count, plural, one {Discard # card} other {Discard # cards}}",
-    "translation": "{count, plural, one {Сбросить # карту} few {Сбросить # карты} many {Сбросить # карт} other {Сбросить # карты}}"
-  },
-  "0oSCag": {
-    "message": "{count, plural, one {Move # card to hand} other {Move # cards to hand}}",
-    "translation": "{count, plural, one {Переместить # карту в руку} few {Переместить # карты в руку} many {Переместить # карт в руку} other {Переместить # карты в руку}}"
-  },
-  "VPXqBr": {
-    "message": "{count, plural, one {Put # card in the Lost Zone} other {Put # cards in the Lost Zone}}",
-    "translation": "{count, plural, one {Поместить # карту в зону потерь} few {Поместить # карты в зону потерь} many {Поместить # карт в зону потерь} other {Поместить # карты в зону потерь}}"
-  },
-  "QcZX-S": {
-    "message": "{count, plural, one {Put # card in the Prizes} other {Put # cards in the Prizes}}",
-    "translation": "{count, plural, one {Положить # карту в призовые карты} few {Положить # карты в призовые карты} many {Положить # карт в призовые карты} other {Положить # карты в призовые карты}}"
-  },
-  "rVI1D1": {
-    "message": "{count, plural, one {Put # card on the board} other {Put # cards on the board}}",
-    "translation": "{count, plural, one {Выложить # карту на поле} few {Выложить # карты на поле} many {Выложить # карт на поле} other {Выложить # карты на поле}}"
-  },
-  "CEIRsk": {
-    "message": "{count, plural, one {Put # card on the bottom of the deck} other {Put # cards on the bottom of the deck}}",
-    "translation": "{count, plural, one {Положить # карту под колоду} few {Положить # карты под колоду} many {Положить # карт под колоду} other {Положить # карты под колоду}}"
-  },
-  "Iqt60a": {
-    "message": "{count, plural, one {Put # card on top of the deck} other {Put # cards on top of the deck}}",
-    "translation": "{count, plural, one {Положить # карту на верх колоды} few {Положить # карты на верх колоды} many {Положить # карт на верх колоды} other {Положить # карты на верх колоды}}"
-  },
-  "L80QZi": {
-    "message": "{count, plural, one {Shuffle # card into the deck} other {Shuffle # cards into the deck}}",
-    "translation": "{count, plural, one {Замешать # карту в колоду} few {Замешать # карты в колоду} many {Замешать # карт в колоду} other {Замешать # карты в колоду}}"
-  },
-  "SdtOTJ": {
-    "message": "{count, plural, other {Add # damage to each}}",
-    "translation": "{count, plural, one {Добавить по # урона каждому} few {Добавить по # урона каждому} many {Добавить по # урона каждому} other {Добавить по # урона каждому}}"
-  },
-  "Kv5Eze": {
-    "message": "{count, plural, other {Discard # Pokémon}}",
-    "translation": "{count, plural, one {Сбросить # покемона} few {Сбросить # покемонов} many {Сбросить # покемонов} other {Сбросить # покемона}}"
-  },
-  "DxATQp": {
-    "message": "{count, plural, other {Move # Pokémon to hand}}",
-    "translation": "{count, plural, one {Переместить # покемона в руку} few {Переместить # покемонов в руку} many {Переместить # покемонов в руку} other {Переместить # покемона в руку}}"
-  },
-  "Rdmkvn": {
-    "message": "{count, plural, other {Put # Pokémon in the Lost Zone}}",
-    "translation": "{count, plural, one {Поместить # покемона в зону потерь} few {Поместить # покемонов в зону потерь} many {Поместить # покемонов в зону потерь} other {Поместить # покемона в зону потерь}}"
-  },
-  "JUDcg5": {
-    "message": "{count, plural, other {Put # Pokémon in the Prizes}}",
-    "translation": "{count, plural, one {Положить # покемона в призовые карты} few {Положить # покемонов в призовые карты} many {Положить # покемонов в призовые карты} other {Положить # покемона в призовые карты}}"
-  },
-  "Jv3nIR": {
-    "message": "{count, plural, other {Put # Pokémon on the board}}",
-    "translation": "{count, plural, one {Выложить # покемона на поле} few {Выложить # покемонов на поле} many {Выложить # покемонов на поле} other {Выложить # покемона на поле}}"
-  },
-  "lkpEPZ": {
-    "message": "{count, plural, other {Put # Pokémon on the bottom of the deck}}",
-    "translation": "{count, plural, one {Положить # покемона под колоду} few {Положить # покемонов под колоду} many {Положить # покемонов под колоду} other {Положить # покемона под колоду}}"
-  },
-  "qtwSJv": {
-    "message": "{count, plural, other {Put # Pokémon on top of the deck}}",
-    "translation": "{count, plural, one {Положить # покемона на верх колоды} few {Положить # покемонов на верх колоды} many {Положить # покемонов на верх колоды} other {Положить # покемона на верх колоды}}"
-  },
-  "P13x5M": {
-    "message": "{count, plural, other {Shuffle # Pokémon into the deck}}",
-    "translation": "{count, plural, one {Замешать # покемона в колоду} few {Замешать # покемонов в колоду} many {Замешать # покемонов в колоду} other {Замешать # покемона в колоду}}"
-  },
-  "5VUOI1": {
-    "message": "{cured, plural, one {Remove Special Condition} other {Remove Special Conditions on #}}",
-    "translation": "{cured, plural, =1 {Снять особое состояние} one {Снять особые состояния у #} few {Снять особые состояния у #} many {Снять особые состояния у #} other {Снять особые состояния у #}}"
-  },
-  "3W5Y-K": {
-    "message": "{damaged, plural, one {Add 10 damage} other {Add 10 damage to each of #}}",
-    "translation": "{damaged, plural, =1 {Добавить 10 урона} one {Добавить 10 урона каждому из #} few {Добавить 10 урона каждому из #} many {Добавить 10 урона каждому из #} other {Добавить 10 урона каждому из #}}"
-  },
-  "iovK0L": {
-    "message": "{hidden, plural, one {Hide # card} other {Hide # cards}}",
-    "translation": "{hidden, plural, one {Скрыть # карту} few {Скрыть # карты} many {Скрыть # карт} other {Скрыть # карты}}"
-  },
-  "1z1iU-": {
-    "message": "{last} ends on top",
-    "translation": "{last} окажется сверху"
-  },
-  "Lg_lp9": {
-    "message": "{revealed, plural, one {Reveal # card} other {Reveal # cards}}",
-    "translation": "{revealed, plural, one {Показать # карту} few {Показать # карты} many {Показать # карт} other {Показать # карты}}"
-  },
-  "ZAbJN6": {
-    "message": "{rotated, plural, one {Rotate # card} other {Rotate # cards}}",
-    "translation": "{rotated, plural, one {Повернуть # карту} few {Повернуть # карты} many {Повернуть # карт} other {Повернуть # карты}}"
-  },
-  "abXnG-": {
-    "message": "Add damage to each…",
-    "translation": "Добавить урон каждому…"
-  },
-  "Ee-egz": {
-    "message": "Damage…",
-    "translation": "Урон…"
-  },
-  "BEfUVX": {
-    "message": "Play {name} as the Stadium",
-    "translation": "Сыграть {name} как Стадион"
-  },
-  "Yo-ZmX": {
-    "message": "Play as one card",
-    "translation": "Сыграть как одну карту"
-  },
-  "NZZ8TY": {
-    "message": "Play as the Stadium",
-    "translation": "Сыграть как Стадион"
-  },
-  "YLetgL": {
-    "message": "Put {name} in the Active Spot",
-    "translation": "Поставить {name} на активную позицию"
-  },
-  "wj75Qo": {
-    "message": "Put {name} on the Bench",
-    "translation": "Положить {name} в запас"
-  },
-  "4X3mBx": {
-    "message": "Put in the Active Spot",
-    "translation": "Поставить на активную позицию"
-  },
-  "SzQFzV": {
-    "message": "With their attached cards",
-    "translation": "Вместе с присоединёнными картами"
-  },
-  "2X9O8a": {
-    "message": "{0, plural, one {# card left the selection} other {# cards left the selection}}, {1}",
-    "comments": [
-      "Selected cards that were moved away, e.g. by the other player."
-    ],
-    "translation": "{0, plural, one {# карта вышла из выбора} few {# карты вышли из выбора} many {# карт вышли из выбора} other {# карты вышли из выбора}}, {1}"
-  },
-  "6Lo6B5": {
-    "message": "{0, plural, one {# card selected} other {# cards selected}}",
-    "translation": "{0, plural, one {Выбрана # карта} few {Выбраны # карты} many {Выбрано # карт} other {Выбрано # карты}}"
-  },
-  "fvImQM": {
-    "message": "{0} selected",
-    "comments": [
-      "How many cards are selected, e.g. \"3 selected\"."
-    ],
-    "translation": "Выбрано: {0}"
-  },
-  "tYyyLp": {
-    "message": "{count} selected: actions",
-    "comments": [
-      "The touch toolbar for several selected cards, e.g. \"3 selected: actions\"."
-    ],
-    "translation": "Выбрано: {count}, действия"
-  },
-  "Mh1NmC": {
-    "message": "{items, plural, one {# selected} other {# selected}}",
-    "translation": "{items, plural, one {Выбрано: #} few {Выбрано: #} many {Выбрано: #} other {Выбрано: #}}"
-  },
-  "Q29GRK": {
-    "message": "{name} added, {0}",
-    "comments": [
-      "A card joined the selection, e.g. \"Fire Energy added, 4 selected\"."
-    ],
-    "translation": "Добавлено: {name}, {0}"
-  },
-  "rObKhV": {
-    "message": "{name} removed, {0}",
-    "comments": [
-      "A card left the selection, e.g. \"Fire Energy removed, 3 selected\"."
-    ],
-    "translation": "Убрано: {name}, {0}"
-  },
-  "9NXGJ_": {
-    "message": "{name}, Active",
-    "comments": [
-      "A Pokémon to attach cards to, e.g. \"Pikachu, Active\"."
-    ],
-    "translation": "{name}, активный"
-  },
-  "J9Wtim": {
-    "message": "{name}, Bench",
-    "comments": [
-      "A Pokémon to attach cards to, e.g. \"Pikachu, Bench\"."
-    ],
-    "translation": "{name}, в запасе"
-  },
-  "68ccPL": {
-    "message": "{name}, selected, {order} of {0}",
-    "comments": [
-      "A selected card among several, e.g. \"Switch, selected, 2 of 3\"."
-    ],
-    "translation": "{name}, выбрано, {order} из {0}"
-  },
-  "-AEMvi": {
-    "message": "{zoneName}, {0} selected",
-    "comments": [
-      "The cards of an open pile, e.g. \"Your discard pile, 3 selected\"."
-    ],
-    "translation": "{zoneName}, выбрано: {0}"
-  },
-  "T_K7zW": {
-    "message": "×{pokemon}",
-    "comments": [
-      "How many Pokémon the damage stepper marks, e.g. \"×3\"."
-    ],
-    "translation": "×{pokemon}"
-  },
-  "n-Gc4A": {
-    "message": "10 less damage on each",
-    "translation": "На 10 урона меньше каждому"
-  },
-  "07KhVj": {
-    "message": "10 more damage on each",
-    "translation": "На 10 урона больше каждому"
-  },
-  "qeQjlL": {
-    "message": "As one",
-    "context": "play the selected pieces as one card",
-    "translation": "Как одну"
-  },
-  "8vfaut": {
-    "message": "Attach to",
-    "translation": "Присоединить к"
-  },
-  "DFzJxl": {
-    "message": "Damage on each of {pokemon, plural, one {# Pokémon} other {# Pokémon}}",
-    "comments": [
-      "The damage stepper for several selected Pokémon at once."
-    ],
-    "translation": "Урон каждому из {pokemon, plural, one {# покемона} few {# покемонов} many {# покемонов} other {# покемона}}"
-  },
-  "4xW71x": {
-    "message": "Damage…",
-    "context": "damage on the selected Pokémon; a stepper follows",
-    "translation": "Урон…"
-  },
-  "U-R4tW": {
-    "message": "Deselect all",
-    "comments": [
-      "Takes every card of the open pile out of the selection."
-    ],
-    "translation": "Снять выбор со всех"
-  },
-  "YLZBXb": {
-    "message": "Done",
-    "context": "stop picking cards",
-    "translation": "Готово"
-  },
-  "2kUZvq": {
-    "message": "Move {0}…",
-    "comments": [
-      "Opens the menu of what the selected cards can do, e.g. \"Move 3…\"."
-    ],
-    "translation": "Переместить {0}…"
-  },
-  "v1NcRU": {
-    "message": "Move…",
-    "context": "move the selected cards; a menu of places follows",
-    "translation": "Переместить…"
-  },
-  "eqRr09": {
-    "message": "Pokémon",
-    "translation": "Покемон"
-  },
-  "YF7gJY": {
-    "message": "Remove all damage from each",
-    "translation": "Убрать весь урон с каждого"
-  },
-  "rG3WVm": {
-    "message": "Select",
-    "comments": [
-      "Starts picking several cards: each tap then adds a card or takes it out."
-    ],
-    "translation": "Выбрать"
-  },
-  "wgNoIs": {
-    "message": "Select all",
-    "comments": [
-      "Takes every card of the open pile into the selection."
-    ],
-    "translation": "Выбрать все"
-  },
-  "Dm5gKG": {
-    "message": "Selected cards actions",
-    "translation": "Действия с выбранными картами"
-  },
-  "sYGBP5": {
-    "message": "Selecting: tap cards to add them",
-    "comments": [
-      "Read out as touch selection mode starts."
-    ],
-    "translation": "Выбор: нажимай на карты, чтобы добавить их"
-  },
-  "GvCs21": {
-    "message": "Selection cleared",
-    "translation": "Выбор сброшен"
   }
 }

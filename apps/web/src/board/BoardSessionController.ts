@@ -6,7 +6,9 @@ import type {
 } from '@ptcgsim/client-session';
 import {
   cardSelectionModeOf,
+  carriedGroup,
   DEFAULT_BOARD_PRESENTATION,
+  groupArrivalWidth,
   NO_SELECTION,
   sameSelection,
   selectedCardIdOf,
@@ -1943,9 +1945,6 @@ const MOVING_GROUP_ACTIONS: ReadonlySet<GroupAction['kind']> = new Set([
   'drop',
 ]);
 
-/** The most of a dropped group held at the drop point (ADR-042 §4). */
-const MAX_SETTLING_GROUP = 5;
-
 const rejectGroup = (
   state: BoardSessionControllerState,
   action: GroupAction | null,
@@ -1982,14 +1981,22 @@ const groupSettling = (
   allowOpenedZoneCard: boolean
 ): readonly SettlingEntry[] => {
   const skipped = new Set<ViewCardId>(compiled.skipped);
-  const held = [
-    drop.cardId,
-    ...cardIds.filter((cardId) => cardId !== drop.cardId),
-  ]
-    .filter((cardId) => !skipped.has(cardId))
-    .slice(0, MAX_SETTLING_GROUP);
+  // The items the hand carried (carriedGroup, the gripped one and up to
+  // four fanned behind it) come down where they were held; the rest fly
+  // to their places when the room has moved them.
+  const carried = new Map(
+    carriedGroup(scene, { cardId: drop.cardId, groupCardIds: cardIds }).map(
+      (item) => [item.itemId, item] as const
+    )
+  );
+  const held = [...carried.keys()].filter((cardId) => !skipped.has(cardId));
   const dropId = `group:${String(state.generation)}`;
   const whole = wholeStackTops(view, compiled.command);
+  const target =
+    action.kind === 'drop'
+      ? scene.zones.find((zone) => zone.id === action.targetId)
+      : undefined;
+  const width = target ? groupArrivalWidth(scene, cardIds, target) : 1;
   const entries = held.flatMap((cardId): SettlingEntry[] => {
     const card = scene.cards.find(
       (candidate) =>
@@ -1999,11 +2006,12 @@ const groupSettling = (
           candidate.parentId === state.presentation.openedZoneId)
     );
     if (!card) return [];
+    const item = carried.get(cardId);
     return [
       {
         cardId,
-        x: drop.x,
-        y: drop.y,
+        x: drop.x + (item?.dx ?? 0),
+        y: drop.y + (item?.dy ?? 0),
         commandId: null,
         dropId,
         ...(whole.has(cardId) ? { wholeStack: true } : {}),
@@ -2013,6 +2021,7 @@ const groupSettling = (
                 targetId: action.targetId,
                 index: action.index,
                 revision: scene.revision,
+                ...(width > 1 ? { width } : {}),
               },
             }
           : {}),

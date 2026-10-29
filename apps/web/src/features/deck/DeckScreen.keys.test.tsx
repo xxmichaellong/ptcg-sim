@@ -628,7 +628,7 @@ describe('the deck screen from the keyboard', () => {
     window.focus();
     const event = new Event('paste', { bubbles: true, cancelable: true });
     Object.defineProperty(event, 'clipboardData', {
-      value: { getData: () => '4 Zzzzz XYZ 1\n4 Yyyyy ABC 2' },
+      value: { files: [], getData: () => '4 Zzzzz XYZ 1\n4 Yyyyy ABC 2' },
     });
     await act(async () => {
       window.dispatchEvent(event);

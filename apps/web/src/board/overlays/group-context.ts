@@ -8,7 +8,7 @@ import {
 } from '../../hotkeys/chords.js';
 import { actingPlayerIdOf } from '../acting-seat.js';
 import type { BoardSessionControllerState } from '../BoardSessionController.js';
-import { resolveBoardDrop } from '../resolveBoardDrop.js';
+import { groupAttachTargets as attachTargetsOf } from '../group-menu-entries.js';
 import { normalizeSelection, type SelectionContext } from '../selection.js';
 import type { GroupAttachTarget } from './GroupMenu.js';
 
@@ -88,37 +88,24 @@ export const pokemonInPlayOf = (
   });
 
 /**
- * "Attach to…": the Pokémon in play every card of the group can go on,
- * named as the table names them, with where they are. Each card is asked
- * as its own drop there would be (resolveBoardDrop, the rule a single drag
- * follows): a group holding a Pokémon in play attaches to nothing, as only
- * attachments go on a Pokémon together (ADR-042 §3). The move itself is
- * the group's, compiled when it is chosen.
+ * "Attach to…": the Pokémon in play the whole group can go on, as the
+ * group's own rule decides (`groupAttachTargets`, from `compileGroup`),
+ * named as the table names them, with where they are. The move itself is
+ * the group's, compiled again when it is chosen.
  */
 export const groupAttachTargets = (
   context: SelectionContext,
   selection: readonly ViewCardId[]
-): readonly GroupAttachTarget[] => {
-  if (pokemonInPlayOf(context, selection).length > 0) return [];
-  return Object.values(context.view.stacks).flatMap((stack) => {
-    const top = stack.evolutionCards.at(-1);
-    if (!top) return [];
-    const fits = selection.every(
-      (cardId) =>
-        resolveBoardDrop(
-          context.view,
-          context.scene,
-          { kind: 'CardDropRequested', cardId, targetId: stack.id, x: 0, y: 0 },
-          { eitherSeatsWindows: context.controlsEverySeat === true }
-        ).ok
-    );
-    if (!fits) return [];
+): readonly GroupAttachTarget[] =>
+  attachTargetsOf(context, selection).flatMap(({ stackId, topCardId }) => {
+    const stack = context.view.stacks[stackId];
+    if (!stack) return [];
     const name =
-      context.scene.cards.find((card) => card.id === top.id)?.label ??
+      context.scene.cards.find((card) => card.id === topCardId)?.label ??
       t`Pokémon`;
     return [
       {
-        id: stack.id,
+        id: stackId,
         label:
           stack.slot === 'active'
             ? t({
@@ -133,7 +120,6 @@ export const groupAttachTargets = (
       },
     ];
   });
-};
 
 /**
  * The item a card stands for in the selection (a Pokémon's lower stage is
