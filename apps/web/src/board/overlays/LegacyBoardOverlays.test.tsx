@@ -2932,6 +2932,46 @@ describe('legacy board overlays', () => {
     await settleDialogs();
     expect(later).not.toHaveBeenCalled();
 
+    // A shuffle sent but not (yet) taken by the room, or refused by it: the
+    // notice's Undo leaves the player's previous move alone until the room
+    // takes this very shuffle.
+    let accepted = false;
+    const undoOnce = vi.fn();
+    const pending = {
+      ...actions(),
+      undo: undoOnce,
+      movesSent: () => sent,
+      lastMoveSent: () => 'shuffle-command',
+      // Undefined while the shuffle is on its way.
+      moveAccepted: (commandId: string) =>
+        commandId === 'shuffle-command' && accepted ? true : undefined,
+      invokeZoneAction: vi.fn(() => {
+        sent += 1;
+      }),
+    };
+    await render(null, pending);
+    await render(discard.id, pending);
+    await act(async () =>
+      host
+        .querySelector<HTMLButtonElement>(
+          '[data-zone-action="shuffleDiscardToDeck"]'
+        )!
+        .click()
+    );
+    await settleDialogs();
+    const waiting = toasts()
+      .at(-1)!
+      .querySelector<HTMLButtonElement>('[data-toast-action]')!;
+    // Pressed while the room has not answered: nothing yet, then the
+    // shuffle taken, it is undone.
+    await act(async () => waiting.click());
+    expect(undoOnce).not.toHaveBeenCalled();
+    accepted = true;
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 250));
+    });
+    expect(undoOnce).toHaveBeenCalledOnce();
+
     // A shuffle the table refused (another player's discard) sends nothing:
     // no notice, so no Undo that would take back an earlier move.
     const refused = {

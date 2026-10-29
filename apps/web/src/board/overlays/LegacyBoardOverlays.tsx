@@ -186,6 +186,14 @@ export interface LegacyBoardOverlayActions {
    * move has followed: Undo takes back the latest.
    */
   readonly movesSent?: () => number;
+  /** The latest move this table sent, by its command id. */
+  readonly lastMoveSent?: () => string | undefined;
+  /**
+   * Whether the room took that move: true or false once it answered (false
+   * when refused: another player's pile, a seat this player may not act
+   * for), undefined while the move is on its way.
+   */
+  readonly moveAccepted?: (commandId: string) => boolean | undefined;
   readonly dismiss: (scope: BoardPresentationDismissScope) => void;
   readonly invokeContextAction: (
     action: LegacyBoardContextActionId,
@@ -2280,11 +2288,30 @@ const ZoneBrowser = ({
     // A shuffle the table didn't send (another player's discard pile) says
     // nothing: its Undo would take back an earlier move.
     if (before !== undefined && sent === before) return;
+    // Nor does one the room refuses (RemoteSessionBoard closes the notice):
+    // its Undo acts only once the room took this very shuffle.
+    const shuffle = actions.lastMoveSent?.();
     const latestUndo = actions.undo;
     const undo =
       latestUndo &&
       (() => {
-        if (actions.movesSent?.() === sent) latestUndo();
+        // Pressed before the room answered, it waits for the answer (a
+        // moment), then undoes only a shuffle taken and still the latest.
+        const started = Date.now();
+        const attempt = (): void => {
+          if (actions.movesSent?.() !== sent) return;
+          const taken =
+            shuffle !== undefined && actions.moveAccepted
+              ? actions.moveAccepted(shuffle)
+              : true;
+          if (taken === undefined) {
+            if (Date.now() - started < SHUFFLE_UNDO_WAIT_MS)
+              setTimeout(attempt, 100);
+            return;
+          }
+          if (taken) latestUndo();
+        };
+        attempt();
       });
     toast({
       id: DISCARD_SHUFFLED_TOAST_ID,
@@ -2928,6 +2955,8 @@ type LegacyBoardCountInput =
 
 /** One notice for a discard pile shuffled in: a second replaces the first. */
 export const DISCARD_SHUFFLED_TOAST_ID = 'discard-shuffled-into-deck';
+/** How long the notice's Undo waits for the room to take its shuffle. */
+const SHUFFLE_UNDO_WAIT_MS = 5_000;
 
 /** The count questions, by what the count is for. */
 type CountQuestion =

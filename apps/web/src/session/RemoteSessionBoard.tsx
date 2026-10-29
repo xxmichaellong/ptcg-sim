@@ -430,6 +430,7 @@ export const RemoteSessionBoard = ({
   // has followed, and goes as one does. Counted as they join the session's
   // queue; the shuffle's own joins before its notice opens.
   const movesSentRef = useRef(0);
+  const lastMoveSentRef = useRef<string | undefined>(undefined);
   useEffect(() => {
     let queued = new Set(
       session.getSnapshot().pendingCommands.map((item) => item.commandId)
@@ -442,6 +443,7 @@ export const RemoteSessionBoard = ({
       queued = new Set(pending);
       if (fresh.length === 0) return;
       movesSentRef.current += fresh.length;
+      lastMoveSentRef.current = fresh.at(-1);
       dismissToast(DISCARD_SHUFFLED_TOAST_ID);
     });
   }, [session]);
@@ -795,7 +797,11 @@ export const RemoteSessionBoard = ({
           },
           // The card has already gone back; say why.
           onCommandRefused: (completed, commandType) => {
-            if (!disposed) toast(refusalNotice(completed.code, commandType));
+            if (disposed) return;
+            // A refused discard shuffle takes its notice (and its Undo) away.
+            if (commandType === 'ShuffleZoneIntoDeck')
+              dismissToast(DISCARD_SHUFFLED_TOAST_ID);
+            toast(refusalNotice(completed.code, commandType));
           },
           reportError: (error) => console.error('[board-session]', error),
           reportRendererStatus: (status) => {
@@ -913,6 +919,13 @@ export const RemoteSessionBoard = ({
   const overlayActions = useMemo<LegacyBoardOverlayActions>(
     () => ({
       movesSent: () => movesSentRef.current,
+      lastMoveSent: () => lastMoveSentRef.current,
+      moveAccepted: (commandId: string) =>
+        session
+          .getSnapshot()
+          .completedCommands.find(
+            (completed) => completed.commandId === commandId
+          )?.accepted,
       emitOpenedZoneCardIntent: (intent) => {
         runtimeRef.current?.emitOpenedZoneCardIntent(intent);
       },
