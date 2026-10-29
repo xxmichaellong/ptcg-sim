@@ -215,7 +215,12 @@ and R's refresh (2026-10-21) are gone.
   portrait mat (Active row, a full-width bench, a pile row of prizes 3×2 and
   deck, discard and Lost Zone side by side, then the hand) gives 64×90px
   bench cards where the landscape mat gave 10×14. Landscape sizes are
-  unchanged.
+  unchanged. A mat whose hand would show less than 20px of each of seven
+  cards fanned across it gives way to one whose hand shows more, where that
+  keeps a bench card 40px tall (2026-10-28): short portrait phones (412×568,
+  480×640 with a browser's bars) took the mat for its larger cards and held
+  a hand two cards wide, the Stadium in its row. Portrait tablets keep the
+  mat they had; a near-square window, small on either, its larger cards.
 - **Touch:** a tapped card gets a bar beside it with Read and Actions (the
   full card menu, as a right-click opens) and Deselect; tapping a selected
   card again reads it; drag works as with a mouse. Card submenus open in

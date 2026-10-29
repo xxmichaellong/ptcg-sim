@@ -148,6 +148,18 @@ const HAND_COUNT_SLOT_PX = 44;
  * gives way to one that doesn't (`bestOf`).
  */
 const MIN_FAR_HAND_PX = 128;
+/**
+ * How much of each card a hand of seven, fanned across its strip, shows at
+ * least: a mat whose hand shows less gives way to one whose hand doesn't
+ * (`bestOf`, `jointMat`), however much larger its board's cards.
+ */
+const MIN_HAND_SLIVER_PX = 20;
+const TYPICAL_HAND_CARDS = 7;
+/**
+ * The bench card that mat keeps at least: a smaller one is no trade for the
+ * hand (a near-square window, small either way, keeps the larger cards).
+ */
+const MIN_HAND_TRADE_BENCH_PX = 40;
 /** The least an Active card keeps: the app bar's corner never costs the board more. */
 const MIN_BOARD_ROW_PX = 12;
 /** The least clear space between a pile and the screen edge. */
@@ -890,12 +902,30 @@ const handCrampedIn = (geometry: HalfGeometry): boolean =>
   handWidthOf(geometry) < MIN_FAR_HAND_PX;
 
 /**
+ * A hand whose seven cards, fanned across its strip, show less than
+ * MIN_HAND_SLIVER_PX of each: wide in pixels, but its cards (a share of
+ * them off the screen) too large for it.
+ */
+const handShortIn = (geometry: HalfGeometry): boolean => {
+  const hand = geometry.regions.find((region) => region.kind === 'hand');
+  if (!hand || hand.rect.height <= 0) return false;
+  const card =
+    (hand.rect.height / TABLE_HAND_VISIBLE_SHARE) * CARD_ASPECT_RATIO;
+  return (
+    (hand.rect.width - card) / (TYPICAL_HAND_CARDS - 1) < MIN_HAND_SLIVER_PX
+  );
+};
+
+/**
  * Whichever of the mat (columns down the sides) and the portrait mat (rows
  * down the middle) shows this half's cards larger. Wide halves -- desktops,
  * a tablet or phone held sideways -- get the mat; tall ones, the portrait.
  * Either way the hand keeps room to hold its cards apart: across the table,
  * past the app bar, one that leaves it cramped gives way to one that
  * doesn't, and of two cramped (the narrowest phones) the wider hand wins.
+ * Nor does a hand too short for its cards (handShortIn: a short portrait
+ * phone's mat) win the larger board, where the other mat keeps a bench card
+ * of MIN_HAND_TRADE_BENCH_PX.
  */
 const bestOf = (
   landscape: HalfGeometry,
@@ -908,6 +938,15 @@ const bestOf = (
   if (cramped) {
     const difference = handWidthOf(portrait) - handWidthOf(landscape);
     if (Math.abs(difference) >= 1) return difference > 0 ? portrait : landscape;
+  } else {
+    const short = handShortIn(landscape);
+    const roomy = short ? portrait : landscape;
+    if (
+      short !== handShortIn(portrait) &&
+      benchCardHeightOf(roomy) >= MIN_HAND_TRADE_BENCH_PX
+    ) {
+      return roomy;
+    }
   }
   return benchCardHeightOf(portrait) > benchCardHeightOf(landscape)
     ? portrait
@@ -1011,6 +1050,16 @@ const jointMat = (near: HalfFrame, far: HalfFrame): Mat | undefined => {
         least(portrait, handWidthOf) - least(landscape, handWidthOf);
       if (Math.abs(difference) >= 1) {
         return difference > 0 ? 'portrait' : 'landscape';
+      }
+    } else {
+      const short = (geometries: readonly HalfGeometry[]): boolean =>
+        geometries.some(handShortIn);
+      const roomy = short(landscape) ? portrait : landscape;
+      if (
+        short(landscape) !== short(portrait) &&
+        least(roomy, benchCardHeightOf) >= MIN_HAND_TRADE_BENCH_PX
+      ) {
+        return roomy === portrait ? 'portrait' : 'landscape';
       }
     }
     return least(portrait, benchCardHeightOf) >

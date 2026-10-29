@@ -1034,6 +1034,65 @@ describe('table layout (geometry v2)', () => {
     }
   });
 
+  it('gives the portrait mat to a phone whose mat would leave the hand slivers of its cards', () => {
+    // A hand of seven fanned across its strip, as the mats are judged by.
+    const sliver = (snapshot: ReturnType<typeof createTableLayoutSnapshot>) => {
+      const hand = region(snapshot, 'local', 'hand').physicalDeclaredBounds;
+      const card = (hand.height / 0.8) * (63 / 88);
+      return (hand.width - card) / 6;
+    };
+    const portrait = (
+      snapshot: ReturnType<typeof createTableLayoutSnapshot>
+    ): boolean => {
+      const box = (kind: string) =>
+        region(snapshot, 'local', kind).physicalDeclaredBounds;
+      return Math.abs(box('deck').y - box('discard').y) < 1;
+    };
+    // Short portrait phones (a browser's bars, a keyboard): the mat gave
+    // these a hand two cards wide, the Stadium in its row.
+    for (const [width, height, touch] of [
+      [412, 568, true],
+      [430, 568, true],
+      [480, 640, true],
+      [412, 540, false],
+      [390, 480, false],
+    ] as const) {
+      const snapshot = createTableLayoutSnapshot(
+        stateAt(width, height, {
+          shellMode: 'fullscreen',
+          appBarPx: touch
+            ? { width: 146, height: 50 }
+            : { width: 122, height: 42 },
+          ...(touch ? { seamBandPx: 46 } : {}),
+          oncePerGameMarkers: 2,
+        })
+      );
+      const label = `${width}x${height}${touch ? ' touch' : ''}`;
+      expect(portrait(snapshot), label).toBe(true);
+      expect(sliver(snapshot), label).toBeGreaterThanOrEqual(20);
+      const stadium = snapshot.shared.stadium.physicalDeclaredBounds;
+      const hand = region(snapshot, 'local', 'hand').physicalDeclaredBounds;
+      expect(stadium.y + stadium.height, label).toBeLessThanOrEqual(hand.y);
+    }
+    // A portrait tablet's mat holds its hand apart well enough: it keeps
+    // the larger cards; so does a near-square window, small either way.
+    for (const [width, height] of [
+      [820, 1024],
+      [700, 900],
+      [360, 360],
+      [375, 390],
+    ] as const) {
+      const snapshot = createTableLayoutSnapshot(
+        stateAt(width, height, {
+          shellMode: 'fullscreen',
+          appBarPx: { width: 242, height: 42 },
+          oncePerGameMarkers: 2,
+        })
+      );
+      expect(portrait(snapshot), `${width}x${height}`).toBe(false);
+    }
+  });
+
   it('keeps a full Bench, its Pokémon carrying Energy, inside its zone on any table', () => {
     const base = createRendererSpikeView();
     const me = base.playerOrder[0]!;
