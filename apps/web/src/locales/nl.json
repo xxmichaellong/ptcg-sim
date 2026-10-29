@@ -466,6 +466,10 @@
     "message": "{deckName} actions",
     "translation": "Acties voor {deckName}"
   },
+  "HLqzH4": {
+    "message": "{deckName} deleted",
+    "translation": "{deckName} verwijderd"
+  },
   "DPza0y": {
     "message": "{deckName}, {place} of {players}, {playerName}: try it",
     "comments": [
@@ -1084,10 +1088,6 @@
   "CZWQLJ": {
     "message": "A card's picture address is too long.",
     "translation": "Het afbeeldingsadres van een kaart is te lang."
-  },
-  "sDYhDt": {
-    "message": "A deck needs a name.",
-    "translation": "Een deck heeft een naam nodig."
   },
   "qLI-h5": {
     "message": "A whole number from {0} to {1}",
@@ -2224,10 +2224,6 @@
     "context": "menu item",
     "translation": "Verwijderen"
   },
-  "ibWa1H": {
-    "message": "Delete {deckName}?",
-    "translation": "{deckName} verwijderen?"
-  },
   "j8-EnI": {
     "message": "Delete deck",
     "translation": "Deck verwijderen"
@@ -3198,10 +3194,6 @@
     "message": "Keep",
     "context": "keep the changed shortcuts",
     "translation": "Behouden"
-  },
-  "MIi4yC": {
-    "message": "Keep it to {max} characters.",
-    "translation": "Houd het op maximaal {max} tekens."
   },
   "gsDcZw": {
     "message": "Keyboard map layer",
@@ -4637,19 +4629,10 @@
     "message": "Remove special condition",
     "translation": "Speciale conditie verwijderen"
   },
-  "XsrZAv": {
-    "message": "Rename",
-    "context": "button",
-    "translation": "Naam wijzigen"
-  },
   "jionWu": {
     "message": "Rename",
     "context": "menu item",
     "translation": "Naam wijzigen"
-  },
-  "Tvyjys": {
-    "message": "Rename deck",
-    "translation": "Deck hernoemen"
   },
   "cDnZvG": {
     "message": "Replay",

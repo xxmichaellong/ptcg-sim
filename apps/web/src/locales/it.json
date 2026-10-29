@@ -466,6 +466,10 @@
     "message": "{deckName} actions",
     "translation": "Azioni di {deckName}"
   },
+  "HLqzH4": {
+    "message": "{deckName} deleted",
+    "translation": "{deckName} eliminato"
+  },
   "DPza0y": {
     "message": "{deckName}, {place} of {players}, {playerName}: try it",
     "comments": [
@@ -1084,10 +1088,6 @@
   "CZWQLJ": {
     "message": "A card's picture address is too long.",
     "translation": "L'indirizzo dell'immagine di una carta è troppo lungo."
-  },
-  "sDYhDt": {
-    "message": "A deck needs a name.",
-    "translation": "Il mazzo ha bisogno di un nome."
   },
   "qLI-h5": {
     "message": "A whole number from {0} to {1}",
@@ -2224,10 +2224,6 @@
     "context": "menu item",
     "translation": "Elimina"
   },
-  "ibWa1H": {
-    "message": "Delete {deckName}?",
-    "translation": "Eliminare {deckName}?"
-  },
   "j8-EnI": {
     "message": "Delete deck",
     "translation": "Elimina mazzo"
@@ -3198,10 +3194,6 @@
     "message": "Keep",
     "context": "keep the changed shortcuts",
     "translation": "Mantieni"
-  },
-  "MIi4yC": {
-    "message": "Keep it to {max} characters.",
-    "translation": "Usa al massimo {max} caratteri."
   },
   "gsDcZw": {
     "message": "Keyboard map layer",
@@ -4637,19 +4629,10 @@
     "message": "Remove special condition",
     "translation": "Rimuovi condizione speciale"
   },
-  "XsrZAv": {
-    "message": "Rename",
-    "context": "button",
-    "translation": "Rinomina"
-  },
   "jionWu": {
     "message": "Rename",
     "context": "menu item",
     "translation": "Rinomina"
-  },
-  "Tvyjys": {
-    "message": "Rename deck",
-    "translation": "Rinomina mazzo"
   },
   "cDnZvG": {
     "message": "Replay",

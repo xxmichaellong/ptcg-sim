@@ -27,6 +27,7 @@ import {
 import {
   useEffect,
   useId,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -36,7 +37,6 @@ import { flushSync } from 'react-dom';
 
 import { usePreference } from '../../preferences/usePreference.js';
 import { ActionMenu } from '../../ui/ActionMenu.js';
-import { confirmAction, promptValue } from '../../ui/dialog-requests.js';
 import { toast } from '../../ui/toast.js';
 import { Tooltip } from '../../ui/Tooltip.js';
 import { skipDialogReturnTooltip } from '../../ui/tooltip-focus.js';
@@ -52,6 +52,7 @@ import {
   wordFinish,
   wordName,
 } from './deck-home-covers.js';
+import { deleteDeckWithUndo } from './deck-delete.js';
 import { warmCardImages } from './warm-card-images.js';
 import type {
   DeckBuilderSnapshot,
@@ -140,6 +141,65 @@ const SeatBadges = ({
   </>
 );
 
+/**
+ * A deck's name edited over its tile: Enter or leaving the field keeps it,
+ * Escape keeps the old one; an empty name is no name.
+ */
+const DeckTileRename = ({
+  name,
+  place,
+  onDone,
+}: {
+  readonly name: string;
+  readonly place: {
+    readonly left: number;
+    readonly top: number;
+    readonly width: number;
+  };
+  readonly onDone: (name: string | null) => void;
+}) => {
+  const { t } = useLingui();
+  const done = useRef(false);
+  const field = useRef<HTMLInputElement>(null);
+  // The player asked to rename it: the field takes the focus, its name
+  // selected to type over.
+  useLayoutEffect(() => {
+    field.current?.focus();
+    field.current?.select();
+  }, []);
+  const finish = (value: string | null): void => {
+    if (done.current) return;
+    done.current = true;
+    onDone(value);
+  };
+  return (
+    <input
+      ref={field}
+      className="ds-input deck-tile__rename"
+      aria-label={t`Deck name`}
+      defaultValue={name}
+      maxLength={MAX_DECK_NAME_LENGTH}
+      style={{ left: place.left, top: place.top, width: place.width }}
+      onBlur={(event) => {
+        // Only the window went (another app or tab): it stays being renamed.
+        if (document.activeElement === event.currentTarget) return;
+        finish(event.currentTarget.value);
+      }}
+      onKeyDown={(event) => {
+        if (isInputMethodKey(event.nativeEvent)) return;
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          finish(event.currentTarget.value);
+        } else if (event.key === 'Escape') {
+          event.preventDefault();
+          event.stopPropagation();
+          finish(null);
+        }
+      }}
+    />
+  );
+};
+
 const SavedDeckTile = ({
   deck,
   seats,
@@ -168,31 +228,37 @@ const SavedDeckTile = ({
   // Its format, count and whether it plays, heard after its name.
   const about = useId();
   const menuButton = useRef<HTMLButtonElement>(null);
-  const rename = async (): Promise<void> => {
-    const name = await promptValue({
-      title: t`Rename deck`,
-      label: t`Deck name`,
-      defaultValue: deck.name,
-      submitLabel: t({ message: 'Rename', context: 'button' }),
-      finalFocus: () => menuButton.current,
-      validate: (value) =>
-        !value.trim()
-          ? t`A deck needs a name.`
-          : value.trim().length > MAX_DECK_NAME_LENGTH
-            ? t`Keep it to ${{ max: MAX_DECK_NAME_LENGTH }} characters.`
-            : undefined,
+  // Renamed in place, over the name on the tile, as the editor does: Enter
+  // or leaving the field keeps it, Escape puts the old one back.
+  const [renaming, setRenaming] = useState<{
+    readonly left: number;
+    readonly top: number;
+    readonly width: number;
+  } | null>(null);
+  const nameText = useRef<HTMLSpanElement>(null);
+  const rename = (): void => {
+    const name = nameText.current;
+    const here = tile.current;
+    if (!name || !here) return;
+    const box = name.getBoundingClientRect();
+    const frame = here.getBoundingClientRect();
+    setRenaming({
+      left: box.left - frame.left,
+      top: box.top - frame.top,
+      width: Math.max(box.width, frame.width - (box.left - frame.left) - 8),
     });
-    if (name?.trim()) library.update(deck.id, { name });
+  };
+  const finishRename = (name: string | null): void => {
+    setRenaming(null);
+    const next = name?.trim() ?? '';
+    if (next && next !== deck.name) library.update(deck.id, { name: next });
+    menuButton.current?.focus();
   };
   const tile = useRef<HTMLLIElement>(null);
+  // At once, with Undo on the notice (v1 asked first) -- once the menu it
+  // was chosen from has closed and handed the focus back to the tile.
   const remove = async (): Promise<void> => {
-    const confirmed = await confirmAction({
-      title: t`Delete ${deckName}?`,
-      confirmLabel: t`Delete deck`,
-      tone: 'danger',
-      finalFocus: () => menuButton.current,
-    });
-    if (!confirmed) return;
+    await Promise.resolve();
     // The focus goes on to the deck after it, else the one before, else
     // the shelf's New deck, not out to the page with the tile. The tile
     // itself, not its button, where a second Enter would put that deck on
@@ -206,7 +272,7 @@ const SavedDeckTile = ({
       here?.closest('.deck-home')?.contains(active) !== true;
     const next = here?.nextElementSibling ?? here?.previousElementSibling;
     const shelf = here?.closest('.deck-shelf');
-    library.remove(deck.id);
+    deleteDeckWithUndo(library, deck.id);
     if (!held) return;
     if (next instanceof HTMLElement) {
       next.tabIndex = -1;
@@ -242,7 +308,13 @@ const SavedDeckTile = ({
           invalid={!check.valid}
         />
         <span className="deck-tile__text">
-          <span className="deck-tile__name">{deckName}</span>
+          <span
+            ref={nameText}
+            className="deck-tile__name"
+            data-renaming={renaming ? 'true' : undefined}
+          >
+            {deckName}
+          </span>
           <span id={about} className="deck-tile__meta">
             <span className="deck-tile__format">{formatName(deck.format)}</span>
             <span
@@ -277,6 +349,13 @@ const SavedDeckTile = ({
         </span>
         <SeatBadges seats={seats} deckId={deck.id} />
       </button>
+      {renaming ? (
+        <DeckTileRename
+          name={deck.name}
+          place={renaming}
+          onDone={finishRename}
+        />
+      ) : null}
       <div className="deck-tile__actions">
         <Tooltip content={t`Edit deck`}>
           <button

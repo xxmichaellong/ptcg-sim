@@ -1038,6 +1038,21 @@ div.deck-tile__choose {
   max-width: 100%;
 }
 
+/* Renamed in place: the field lies over the name, which steps aside. */
+.deck-tile__rename {
+  position: absolute;
+  z-index: 2;
+  max-width: calc(100% - var(--space-2));
+  height: 32px;
+  padding-inline: var(--space-2);
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+}
+
+.deck-tile__name[data-renaming] {
+  visibility: hidden;
+}
+
 .deck-tile__name {
   display: -webkit-box;
   max-width: 100%;

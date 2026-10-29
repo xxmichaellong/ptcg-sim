@@ -466,6 +466,10 @@
     "message": "{deckName} actions",
     "translation": "Akcje talii {deckName}"
   },
+  "HLqzH4": {
+    "message": "{deckName} deleted",
+    "translation": "Usunięto talię {deckName}"
+  },
   "DPza0y": {
     "message": "{deckName}, {place} of {players}, {playerName}: try it",
     "comments": [
@@ -1084,10 +1088,6 @@
   "CZWQLJ": {
     "message": "A card's picture address is too long.",
     "translation": "Adres obrazka karty jest za długi."
-  },
-  "sDYhDt": {
-    "message": "A deck needs a name.",
-    "translation": "Talia musi mieć nazwę."
   },
   "qLI-h5": {
     "message": "A whole number from {0} to {1}",
@@ -2224,10 +2224,6 @@
     "context": "menu item",
     "translation": "Usuń"
   },
-  "ibWa1H": {
-    "message": "Delete {deckName}?",
-    "translation": "Usunąć {deckName}?"
-  },
   "j8-EnI": {
     "message": "Delete deck",
     "translation": "Usuń talię"
@@ -3198,10 +3194,6 @@
     "message": "Keep",
     "context": "keep the changed shortcuts",
     "translation": "Zachowaj"
-  },
-  "MIi4yC": {
-    "message": "Keep it to {max} characters.",
-    "translation": "Maksymalnie {max} znaków."
   },
   "gsDcZw": {
     "message": "Keyboard map layer",
@@ -4637,19 +4629,10 @@
     "message": "Remove special condition",
     "translation": "Usuń stan specjalny"
   },
-  "XsrZAv": {
-    "message": "Rename",
-    "context": "button",
-    "translation": "Zmień nazwę"
-  },
   "jionWu": {
     "message": "Rename",
     "context": "menu item",
     "translation": "Zmień nazwę"
-  },
-  "Tvyjys": {
-    "message": "Rename deck",
-    "translation": "Zmień nazwę talii"
   },
   "cDnZvG": {
     "message": "Replay",

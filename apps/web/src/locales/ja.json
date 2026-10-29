@@ -466,6 +466,10 @@
     "message": "{deckName} actions",
     "translation": "{deckName}の操作"
   },
+  "HLqzH4": {
+    "message": "{deckName} deleted",
+    "translation": "{deckName}を削除しました"
+  },
   "DPza0y": {
     "message": "{deckName}, {place} of {players}, {playerName}: try it",
     "comments": [
@@ -1084,10 +1088,6 @@
   "CZWQLJ": {
     "message": "A card's picture address is too long.",
     "translation": "カードの画像アドレスが長すぎます。"
-  },
-  "sDYhDt": {
-    "message": "A deck needs a name.",
-    "translation": "デッキには名前が必要です。"
   },
   "qLI-h5": {
     "message": "A whole number from {0} to {1}",
@@ -2224,10 +2224,6 @@
     "context": "menu item",
     "translation": "削除"
   },
-  "ibWa1H": {
-    "message": "Delete {deckName}?",
-    "translation": "{deckName}を削除しますか?"
-  },
   "j8-EnI": {
     "message": "Delete deck",
     "translation": "デッキを削除"
@@ -3198,10 +3194,6 @@
     "message": "Keep",
     "context": "keep the changed shortcuts",
     "translation": "保持"
-  },
-  "MIi4yC": {
-    "message": "Keep it to {max} characters.",
-    "translation": "{max}文字以内にしてください。"
   },
   "gsDcZw": {
     "message": "Keyboard map layer",
@@ -4637,19 +4629,10 @@
     "message": "Remove special condition",
     "translation": "特殊状態を取り除く"
   },
-  "XsrZAv": {
-    "message": "Rename",
-    "context": "button",
-    "translation": "名前を変更"
-  },
   "jionWu": {
     "message": "Rename",
     "context": "menu item",
     "translation": "名前を変更"
-  },
-  "Tvyjys": {
-    "message": "Rename deck",
-    "translation": "デッキ名を変更"
   },
   "cDnZvG": {
     "message": "Replay",

@@ -466,6 +466,10 @@
     "message": "{deckName} actions",
     "translation": "{deckName} işlemleri"
   },
+  "HLqzH4": {
+    "message": "{deckName} deleted",
+    "translation": "{deckName} destesi silindi"
+  },
   "DPza0y": {
     "message": "{deckName}, {place} of {players}, {playerName}: try it",
     "comments": [
@@ -1084,10 +1088,6 @@
   "CZWQLJ": {
     "message": "A card's picture address is too long.",
     "translation": "Bir kartın görsel adresi çok uzun."
-  },
-  "sDYhDt": {
-    "message": "A deck needs a name.",
-    "translation": "Destenin bir adı olmalı."
   },
   "qLI-h5": {
     "message": "A whole number from {0} to {1}",
@@ -2224,10 +2224,6 @@
     "context": "menu item",
     "translation": "Sil"
   },
-  "ibWa1H": {
-    "message": "Delete {deckName}?",
-    "translation": "{deckName} silinsin mi?"
-  },
   "j8-EnI": {
     "message": "Delete deck",
     "translation": "Desteyi sil"
@@ -3198,10 +3194,6 @@
     "message": "Keep",
     "context": "keep the changed shortcuts",
     "translation": "Koru"
-  },
-  "MIi4yC": {
-    "message": "Keep it to {max} characters.",
-    "translation": "En fazla {max} karakter olsun."
   },
   "gsDcZw": {
     "message": "Keyboard map layer",
@@ -4637,19 +4629,10 @@
     "message": "Remove special condition",
     "translation": "Özel durumu kaldır"
   },
-  "XsrZAv": {
-    "message": "Rename",
-    "context": "button",
-    "translation": "Yeniden adlandır"
-  },
   "jionWu": {
     "message": "Rename",
     "context": "menu item",
     "translation": "Yeniden adlandır"
-  },
-  "Tvyjys": {
-    "message": "Rename deck",
-    "translation": "Desteyi yeniden adlandır"
   },
   "cDnZvG": {
     "message": "Replay",

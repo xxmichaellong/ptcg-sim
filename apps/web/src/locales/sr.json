@@ -466,6 +466,10 @@
     "message": "{deckName} actions",
     "translation": "Радње за шпил {deckName}"
   },
+  "HLqzH4": {
+    "message": "{deckName} deleted",
+    "translation": "{deckName} је обрисан"
+  },
   "DPza0y": {
     "message": "{deckName}, {place} of {players}, {playerName}: try it",
     "comments": [
@@ -1084,10 +1088,6 @@
   "CZWQLJ": {
     "message": "A card's picture address is too long.",
     "translation": "Адреса слике једне карте је предугачка."
-  },
-  "sDYhDt": {
-    "message": "A deck needs a name.",
-    "translation": "Шпил мора да има име."
   },
   "qLI-h5": {
     "message": "A whole number from {0} to {1}",
@@ -2224,10 +2224,6 @@
     "context": "menu item",
     "translation": "Обриши"
   },
-  "ibWa1H": {
-    "message": "Delete {deckName}?",
-    "translation": "Обрисати {deckName}?"
-  },
   "j8-EnI": {
     "message": "Delete deck",
     "translation": "Обриши шпил"
@@ -3198,10 +3194,6 @@
     "message": "Keep",
     "context": "keep the changed shortcuts",
     "translation": "Задржи"
-  },
-  "MIi4yC": {
-    "message": "Keep it to {max} characters.",
-    "translation": "Нека има највише {max} знакова."
   },
   "gsDcZw": {
     "message": "Keyboard map layer",
@@ -4637,19 +4629,10 @@
     "message": "Remove special condition",
     "translation": "Уклони посебно стање"
   },
-  "XsrZAv": {
-    "message": "Rename",
-    "context": "button",
-    "translation": "Преименуј"
-  },
   "jionWu": {
     "message": "Rename",
     "context": "menu item",
     "translation": "Преименуј"
-  },
-  "Tvyjys": {
-    "message": "Rename deck",
-    "translation": "Преименуј шпил"
   },
   "cDnZvG": {
     "message": "Replay",

@@ -466,6 +466,10 @@
     "message": "{deckName} actions",
     "translation": "การดำเนินการของ {deckName}"
   },
+  "HLqzH4": {
+    "message": "{deckName} deleted",
+    "translation": "ลบ {deckName} แล้ว"
+  },
   "DPza0y": {
     "message": "{deckName}, {place} of {players}, {playerName}: try it",
     "comments": [
@@ -1084,10 +1088,6 @@
   "CZWQLJ": {
     "message": "A card's picture address is too long.",
     "translation": "ที่อยู่รูปภาพของการ์ดยาวเกินไป"
-  },
-  "sDYhDt": {
-    "message": "A deck needs a name.",
-    "translation": "เด็คต้องมีชื่อ"
   },
   "qLI-h5": {
     "message": "A whole number from {0} to {1}",
@@ -2224,10 +2224,6 @@
     "context": "menu item",
     "translation": "ลบ"
   },
-  "ibWa1H": {
-    "message": "Delete {deckName}?",
-    "translation": "ลบ {deckName} หรือไม่"
-  },
   "j8-EnI": {
     "message": "Delete deck",
     "translation": "ลบเด็ค"
@@ -3198,10 +3194,6 @@
     "message": "Keep",
     "context": "keep the changed shortcuts",
     "translation": "เก็บไว้"
-  },
-  "MIi4yC": {
-    "message": "Keep it to {max} characters.",
-    "translation": "ใช้ไม่เกิน {max} อักขระ"
   },
   "gsDcZw": {
     "message": "Keyboard map layer",
@@ -4637,19 +4629,10 @@
     "message": "Remove special condition",
     "translation": "ลบสภาวะผิดปกติ"
   },
-  "XsrZAv": {
-    "message": "Rename",
-    "context": "button",
-    "translation": "เปลี่ยนชื่อ"
-  },
   "jionWu": {
     "message": "Rename",
     "context": "menu item",
     "translation": "เปลี่ยนชื่อ"
-  },
-  "Tvyjys": {
-    "message": "Rename deck",
-    "translation": "เปลี่ยนชื่อเด็ค"
   },
   "cDnZvG": {
     "message": "Replay",

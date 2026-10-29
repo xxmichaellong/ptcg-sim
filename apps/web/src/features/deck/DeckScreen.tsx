@@ -8,6 +8,7 @@ import {
   DECK_FORMATS,
   coverCardOf,
   deckTotals,
+  sameDeckList,
   type DeckFormatId,
   type DeckList,
 } from '@ptcgsim/deck-core';
@@ -261,6 +262,9 @@ export const DeckScreen = ({
     [library, store]
   );
 
+  // The seats a deleted deck was on, so Undo puts it back on them as the
+  // saved deck it was (they kept its cards, unsaved).
+  const deletedFrom = useRef(new Map<string, readonly DeckBuilderTarget[]>());
   const decks = useMemo<DeckLibraryActions>(
     () => ({
       get: (id) => library.get(id),
@@ -270,13 +274,36 @@ export const DeckScreen = ({
         return next;
       },
       remove: (id) => {
+        const { slots } = store.getSnapshot();
+        const seats = (['main', 'alternate'] as const).filter(
+          (slotTarget) => slots[slotTarget].label?.deckId === id
+        );
         const removed = library.remove(id);
-        if (removed) followOnSeats(id);
+        if (removed) {
+          deletedFrom.current.set(id, seats);
+          followOnSeats(id);
+        }
         return removed;
+      },
+      restore: (deck) => {
+        library.restore(deck);
+        const seats = deletedFrom.current.get(deck.id) ?? [];
+        deletedFrom.current.delete(deck.id);
+        for (const slotTarget of seats) {
+          const slot = store.getSnapshot().slots[slotTarget];
+          // Only a seat still holding those cards, its link not changed.
+          if (slot.label?.deckId || !sameDeckList(slot.deck, deck.cards))
+            continue;
+          store.replaceDeck(slotTarget, deck.cards, {
+            deckId: deck.id,
+            name: deck.name,
+            format: deck.format,
+          });
+        }
       },
       duplicate: (id) => library.duplicate(id),
     }),
-    [followOnSeats, library]
+    [followOnSeats, library, store]
   );
 
   const rememberSeatDeck = useCallback(

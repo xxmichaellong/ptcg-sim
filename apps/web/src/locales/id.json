@@ -466,6 +466,10 @@
     "message": "{deckName} actions",
     "translation": "Aksi {deckName}"
   },
+  "HLqzH4": {
+    "message": "{deckName} deleted",
+    "translation": "{deckName} dihapus"
+  },
   "DPza0y": {
     "message": "{deckName}, {place} of {players}, {playerName}: try it",
     "comments": [
@@ -1084,10 +1088,6 @@
   "CZWQLJ": {
     "message": "A card's picture address is too long.",
     "translation": "Alamat gambar kartu terlalu panjang."
-  },
-  "sDYhDt": {
-    "message": "A deck needs a name.",
-    "translation": "Deck harus punya nama."
   },
   "qLI-h5": {
     "message": "A whole number from {0} to {1}",
@@ -2224,10 +2224,6 @@
     "context": "menu item",
     "translation": "Hapus"
   },
-  "ibWa1H": {
-    "message": "Delete {deckName}?",
-    "translation": "Hapus {deckName}?"
-  },
   "j8-EnI": {
     "message": "Delete deck",
     "translation": "Hapus deck"
@@ -3198,10 +3194,6 @@
     "message": "Keep",
     "context": "keep the changed shortcuts",
     "translation": "Simpan"
-  },
-  "MIi4yC": {
-    "message": "Keep it to {max} characters.",
-    "translation": "Maksimal {max} karakter."
   },
   "gsDcZw": {
     "message": "Keyboard map layer",
@@ -4637,19 +4629,10 @@
     "message": "Remove special condition",
     "translation": "Hapus Kondisi Khusus"
   },
-  "XsrZAv": {
-    "message": "Rename",
-    "context": "button",
-    "translation": "Ganti nama"
-  },
   "jionWu": {
     "message": "Rename",
     "context": "menu item",
     "translation": "Ganti nama"
-  },
-  "Tvyjys": {
-    "message": "Rename deck",
-    "translation": "Ganti nama deck"
   },
   "cDnZvG": {
     "message": "Replay",

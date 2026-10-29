@@ -466,6 +466,10 @@
     "message": "{deckName} actions",
     "translation": "{deckName}: действия"
   },
+  "HLqzH4": {
+    "message": "{deckName} deleted",
+    "translation": "Колода {deckName} удалена"
+  },
   "DPza0y": {
     "message": "{deckName}, {place} of {players}, {playerName}: try it",
     "comments": [
@@ -1084,10 +1088,6 @@
   "CZWQLJ": {
     "message": "A card's picture address is too long.",
     "translation": "Адрес изображения карты слишком длинный."
-  },
-  "sDYhDt": {
-    "message": "A deck needs a name.",
-    "translation": "У колоды должно быть название."
   },
   "qLI-h5": {
     "message": "A whole number from {0} to {1}",
@@ -2224,10 +2224,6 @@
     "context": "menu item",
     "translation": "Удалить"
   },
-  "ibWa1H": {
-    "message": "Delete {deckName}?",
-    "translation": "Удалить {deckName}?"
-  },
   "j8-EnI": {
     "message": "Delete deck",
     "translation": "Удалить колоду"
@@ -3198,10 +3194,6 @@
     "message": "Keep",
     "context": "keep the changed shortcuts",
     "translation": "Оставить"
-  },
-  "MIi4yC": {
-    "message": "Keep it to {max} characters.",
-    "translation": "Не больше {max} симв."
   },
   "gsDcZw": {
     "message": "Keyboard map layer",
@@ -4637,19 +4629,10 @@
     "message": "Remove special condition",
     "translation": "Убрать особое состояние"
   },
-  "XsrZAv": {
-    "message": "Rename",
-    "context": "button",
-    "translation": "Переименовать"
-  },
   "jionWu": {
     "message": "Rename",
     "context": "menu item",
     "translation": "Переименовать"
-  },
-  "Tvyjys": {
-    "message": "Rename deck",
-    "translation": "Переименовать колоду"
   },
   "cDnZvG": {
     "message": "Replay",

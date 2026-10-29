@@ -466,6 +466,10 @@
     "message": "{deckName} actions",
     "translation": "{deckName} 동작"
   },
+  "HLqzH4": {
+    "message": "{deckName} deleted",
+    "translation": "{deckName} 삭제됨"
+  },
   "DPza0y": {
     "message": "{deckName}, {place} of {players}, {playerName}: try it",
     "comments": [
@@ -1084,10 +1088,6 @@
   "CZWQLJ": {
     "message": "A card's picture address is too long.",
     "translation": "카드 이미지 주소가 너무 깁니다."
-  },
-  "sDYhDt": {
-    "message": "A deck needs a name.",
-    "translation": "덱에 이름이 필요합니다."
   },
   "qLI-h5": {
     "message": "A whole number from {0} to {1}",
@@ -2224,10 +2224,6 @@
     "context": "menu item",
     "translation": "삭제"
   },
-  "ibWa1H": {
-    "message": "Delete {deckName}?",
-    "translation": "{deckName}을(를) 삭제할까요?"
-  },
   "j8-EnI": {
     "message": "Delete deck",
     "translation": "덱 삭제"
@@ -3198,10 +3194,6 @@
     "message": "Keep",
     "context": "keep the changed shortcuts",
     "translation": "유지"
-  },
-  "MIi4yC": {
-    "message": "Keep it to {max} characters.",
-    "translation": "{max}자 이내로 입력하세요."
   },
   "gsDcZw": {
     "message": "Keyboard map layer",
@@ -4637,19 +4629,10 @@
     "message": "Remove special condition",
     "translation": "특수 상태 제거"
   },
-  "XsrZAv": {
-    "message": "Rename",
-    "context": "button",
-    "translation": "이름 변경"
-  },
   "jionWu": {
     "message": "Rename",
     "context": "menu item",
     "translation": "이름 변경"
-  },
-  "Tvyjys": {
-    "message": "Rename deck",
-    "translation": "덱 이름 변경"
   },
   "cDnZvG": {
     "message": "Replay",

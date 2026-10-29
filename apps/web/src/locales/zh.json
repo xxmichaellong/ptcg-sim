@@ -466,6 +466,10 @@
     "message": "{deckName} actions",
     "translation": "{deckName}操作"
   },
+  "HLqzH4": {
+    "message": "{deckName} deleted",
+    "translation": "已删除{deckName}"
+  },
   "DPza0y": {
     "message": "{deckName}, {place} of {players}, {playerName}: try it",
     "comments": [
@@ -1084,10 +1088,6 @@
   "CZWQLJ": {
     "message": "A card's picture address is too long.",
     "translation": "卡牌图片地址过长。"
-  },
-  "sDYhDt": {
-    "message": "A deck needs a name.",
-    "translation": "卡组需要名称。"
   },
   "qLI-h5": {
     "message": "A whole number from {0} to {1}",
@@ -2224,10 +2224,6 @@
     "context": "menu item",
     "translation": "删除"
   },
-  "ibWa1H": {
-    "message": "Delete {deckName}?",
-    "translation": "删除 {deckName}？"
-  },
   "j8-EnI": {
     "message": "Delete deck",
     "translation": "删除卡组"
@@ -3198,10 +3194,6 @@
     "message": "Keep",
     "context": "keep the changed shortcuts",
     "translation": "保留"
-  },
-  "MIi4yC": {
-    "message": "Keep it to {max} characters.",
-    "translation": "请不要超过 {max} 个字符。"
   },
   "gsDcZw": {
     "message": "Keyboard map layer",
@@ -4637,19 +4629,10 @@
     "message": "Remove special condition",
     "translation": "移除特殊状态"
   },
-  "XsrZAv": {
-    "message": "Rename",
-    "context": "button",
-    "translation": "重命名"
-  },
   "jionWu": {
     "message": "Rename",
     "context": "menu item",
     "translation": "重命名"
-  },
-  "Tvyjys": {
-    "message": "Rename deck",
-    "translation": "重命名卡组"
   },
   "cDnZvG": {
     "message": "Replay",

@@ -466,6 +466,10 @@
     "message": "{deckName} actions",
     "translation": "إجراءات {deckName}"
   },
+  "HLqzH4": {
+    "message": "{deckName} deleted",
+    "translation": "تم حذف {deckName}"
+  },
   "DPza0y": {
     "message": "{deckName}, {place} of {players}, {playerName}: try it",
     "comments": [
@@ -1084,10 +1088,6 @@
   "CZWQLJ": {
     "message": "A card's picture address is too long.",
     "translation": "عنوان صورة إحدى البطاقات طويل جدًا."
-  },
-  "sDYhDt": {
-    "message": "A deck needs a name.",
-    "translation": "تحتاج المجموعة إلى اسم."
   },
   "qLI-h5": {
     "message": "A whole number from {0} to {1}",
@@ -2224,10 +2224,6 @@
     "context": "menu item",
     "translation": "حذف"
   },
-  "ibWa1H": {
-    "message": "Delete {deckName}?",
-    "translation": "حذف {deckName}؟"
-  },
   "j8-EnI": {
     "message": "Delete deck",
     "translation": "حذف المجموعة"
@@ -3198,10 +3194,6 @@
     "message": "Keep",
     "context": "keep the changed shortcuts",
     "translation": "إبقاء"
-  },
-  "MIi4yC": {
-    "message": "Keep it to {max} characters.",
-    "translation": "اجعله {max} حرفًا أو أقل."
   },
   "gsDcZw": {
     "message": "Keyboard map layer",
@@ -4637,19 +4629,10 @@
     "message": "Remove special condition",
     "translation": "إزالة الحالة الخاصة"
   },
-  "XsrZAv": {
-    "message": "Rename",
-    "context": "button",
-    "translation": "إعادة تسمية"
-  },
   "jionWu": {
     "message": "Rename",
     "context": "menu item",
     "translation": "إعادة تسمية"
-  },
-  "Tvyjys": {
-    "message": "Rename deck",
-    "translation": "إعادة تسمية المجموعة"
   },
   "cDnZvG": {
     "message": "Replay",

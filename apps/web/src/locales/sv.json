@@ -466,6 +466,10 @@
     "message": "{deckName} actions",
     "translation": "Åtgärder för {deckName}"
   },
+  "HLqzH4": {
+    "message": "{deckName} deleted",
+    "translation": "{deckName} raderades"
+  },
   "DPza0y": {
     "message": "{deckName}, {place} of {players}, {playerName}: try it",
     "comments": [
@@ -1084,10 +1088,6 @@
   "CZWQLJ": {
     "message": "A card's picture address is too long.",
     "translation": "Ett korts bildadress är för lång."
-  },
-  "sDYhDt": {
-    "message": "A deck needs a name.",
-    "translation": "En lek behöver ett namn."
   },
   "qLI-h5": {
     "message": "A whole number from {0} to {1}",
@@ -2224,10 +2224,6 @@
     "context": "menu item",
     "translation": "Ta bort"
   },
-  "ibWa1H": {
-    "message": "Delete {deckName}?",
-    "translation": "Ta bort {deckName}?"
-  },
   "j8-EnI": {
     "message": "Delete deck",
     "translation": "Ta bort lek"
@@ -3198,10 +3194,6 @@
     "message": "Keep",
     "context": "keep the changed shortcuts",
     "translation": "Behåll"
-  },
-  "MIi4yC": {
-    "message": "Keep it to {max} characters.",
-    "translation": "Håll det till {max} tecken."
   },
   "gsDcZw": {
     "message": "Keyboard map layer",
@@ -4637,19 +4629,10 @@
     "message": "Remove special condition",
     "translation": "Ta bort specialtillstånd"
   },
-  "XsrZAv": {
-    "message": "Rename",
-    "context": "button",
-    "translation": "Byt namn"
-  },
   "jionWu": {
     "message": "Rename",
     "context": "menu item",
     "translation": "Byt namn"
-  },
-  "Tvyjys": {
-    "message": "Rename deck",
-    "translation": "Byt namn på lek"
   },
   "cDnZvG": {
     "message": "Replay",

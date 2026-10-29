@@ -36,13 +36,11 @@ import {
 import { flushSync } from 'react-dom';
 
 import { ActionMenu } from '../../ui/ActionMenu.js';
-import {
-  confirmAction,
-  dialogRequestsSnapshot,
-} from '../../ui/dialog-requests.js';
+import { dialogRequestsSnapshot } from '../../ui/dialog-requests.js';
 import { Tooltip } from '../../ui/Tooltip.js';
 import { skipDialogReturnTooltip } from '../../ui/tooltip-focus.js';
 import type { CardCatalogSource } from './card-catalog-contract.js';
+import { deleteDeckWithUndo } from './deck-delete.js';
 import {
   CardDetails,
   cardDetailsFacts,
@@ -390,18 +388,9 @@ export const DeckEditor = ({
     return () => document.removeEventListener('keydown', around);
   }, []);
 
-  const deleteDeck = async (): Promise<void> => {
-    const deckName = deck.name;
-    const confirmed = await confirmAction({
-      title: t`Delete ${deckName}?`,
-      confirmLabel: t`Delete deck`,
-      tone: 'danger',
-      finalFocus: () => exportButton.current,
-    });
-    if (confirmed) {
-      library.remove(deck.id);
-      onBack();
-    }
+  // At once, with Undo on the notice (v1 asked first).
+  const deleteDeck = (): void => {
+    if (deleteDeckWithUndo(library, deck.id)) onBack();
   };
 
   const searchFor = (name: string): void => {
@@ -604,7 +593,7 @@ export const DeckEditor = ({
                 label: t`Delete deck`,
                 icon: TrashIcon,
                 danger: true,
-                onSelect: () => void deleteDeck(),
+                onSelect: deleteDeck,
               },
             ]}
           />

@@ -466,6 +466,10 @@
     "message": "{deckName} actions",
     "translation": "Thao tác với {deckName}"
   },
+  "HLqzH4": {
+    "message": "{deckName} deleted",
+    "translation": "Đã xóa {deckName}"
+  },
   "DPza0y": {
     "message": "{deckName}, {place} of {players}, {playerName}: try it",
     "comments": [
@@ -1084,10 +1088,6 @@
   "CZWQLJ": {
     "message": "A card's picture address is too long.",
     "translation": "Địa chỉ hình của một lá bài quá dài."
-  },
-  "sDYhDt": {
-    "message": "A deck needs a name.",
-    "translation": "Bộ bài cần có tên."
   },
   "qLI-h5": {
     "message": "A whole number from {0} to {1}",
@@ -2224,10 +2224,6 @@
     "context": "menu item",
     "translation": "Xóa"
   },
-  "ibWa1H": {
-    "message": "Delete {deckName}?",
-    "translation": "Xóa {deckName}?"
-  },
   "j8-EnI": {
     "message": "Delete deck",
     "translation": "Xóa bộ bài"
@@ -3198,10 +3194,6 @@
     "message": "Keep",
     "context": "keep the changed shortcuts",
     "translation": "Giữ lại"
-  },
-  "MIi4yC": {
-    "message": "Keep it to {max} characters.",
-    "translation": "Giữ trong {max} ký tự."
   },
   "gsDcZw": {
     "message": "Keyboard map layer",
@@ -4637,19 +4629,10 @@
     "message": "Remove special condition",
     "translation": "Gỡ trạng thái đặc biệt"
   },
-  "XsrZAv": {
-    "message": "Rename",
-    "context": "button",
-    "translation": "Đổi tên"
-  },
   "jionWu": {
     "message": "Rename",
     "context": "menu item",
     "translation": "Đổi tên"
-  },
-  "Tvyjys": {
-    "message": "Rename deck",
-    "translation": "Đổi tên bộ bài"
   },
   "cDnZvG": {
     "message": "Replay",

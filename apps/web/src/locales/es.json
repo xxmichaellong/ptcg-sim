@@ -466,6 +466,10 @@
     "message": "{deckName} actions",
     "translation": "Acciones de {deckName}"
   },
+  "HLqzH4": {
+    "message": "{deckName} deleted",
+    "translation": "{deckName} eliminada"
+  },
   "DPza0y": {
     "message": "{deckName}, {place} of {players}, {playerName}: try it",
     "comments": [
@@ -1084,10 +1088,6 @@
   "CZWQLJ": {
     "message": "A card's picture address is too long.",
     "translation": "La dirección de la imagen de una carta es demasiado larga."
-  },
-  "sDYhDt": {
-    "message": "A deck needs a name.",
-    "translation": "Una baraja necesita un nombre."
   },
   "qLI-h5": {
     "message": "A whole number from {0} to {1}",
@@ -2224,10 +2224,6 @@
     "context": "menu item",
     "translation": "Eliminar"
   },
-  "ibWa1H": {
-    "message": "Delete {deckName}?",
-    "translation": "¿Eliminar {deckName}?"
-  },
   "j8-EnI": {
     "message": "Delete deck",
     "translation": "Eliminar baraja"
@@ -3198,10 +3194,6 @@
     "message": "Keep",
     "context": "keep the changed shortcuts",
     "translation": "Conservar"
-  },
-  "MIi4yC": {
-    "message": "Keep it to {max} characters.",
-    "translation": "Máximo {max} caracteres."
   },
   "gsDcZw": {
     "message": "Keyboard map layer",
@@ -4637,19 +4629,10 @@
     "message": "Remove special condition",
     "translation": "Quitar Condición Especial"
   },
-  "XsrZAv": {
-    "message": "Rename",
-    "context": "button",
-    "translation": "Renombrar"
-  },
   "jionWu": {
     "message": "Rename",
     "context": "menu item",
     "translation": "Renombrar"
-  },
-  "Tvyjys": {
-    "message": "Rename deck",
-    "translation": "Renombrar baraja"
   },
   "cDnZvG": {
     "message": "Replay",

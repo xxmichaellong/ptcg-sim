@@ -129,6 +129,12 @@ specifically without blocking, and go from deck to table in one click.
    seat stays there in its back, as its cards do. The chooser (ADR-041
    stage 2) opens on the seat's back and offers again the backs the saved
    decks wear.
+9. **Deleted at once, renamed in place** (2026-10-29, the owner's "much
+   better ui/ux"). Delete asks nothing: the deck goes, and a notice says so
+   with Undo, which puts it back exactly as it was (`DeckLibrary.restore`)
+   and on the seats it was on, where they still hold its cards. Rename
+   edits the name over the deck's tile, as the editor does: Enter or
+   leaving the field keeps it, Escape or an empty name keeps the old one.
 
 ### The screen
 

@@ -466,6 +466,10 @@
     "message": "{deckName} actions",
     "translation": "Mga aksyon ng {deckName}"
   },
+  "HLqzH4": {
+    "message": "{deckName} deleted",
+    "translation": "Natanggal na ang {deckName}"
+  },
   "DPza0y": {
     "message": "{deckName}, {place} of {players}, {playerName}: try it",
     "comments": [
@@ -1084,10 +1088,6 @@
   "CZWQLJ": {
     "message": "A card's picture address is too long.",
     "translation": "Masyadong mahaba ang address ng larawan ng isang card."
-  },
-  "sDYhDt": {
-    "message": "A deck needs a name.",
-    "translation": "Kailangan ng pangalan ang deck."
   },
   "qLI-h5": {
     "message": "A whole number from {0} to {1}",
@@ -2224,10 +2224,6 @@
     "context": "menu item",
     "translation": "I-delete"
   },
-  "ibWa1H": {
-    "message": "Delete {deckName}?",
-    "translation": "I-delete ang {deckName}?"
-  },
   "j8-EnI": {
     "message": "Delete deck",
     "translation": "I-delete ang deck"
@@ -3198,10 +3194,6 @@
     "message": "Keep",
     "context": "keep the changed shortcuts",
     "translation": "Panatilihin"
-  },
-  "MIi4yC": {
-    "message": "Keep it to {max} characters.",
-    "translation": "Hanggang {max} character lang."
   },
   "gsDcZw": {
     "message": "Keyboard map layer",
@@ -4637,19 +4629,10 @@
     "message": "Remove special condition",
     "translation": "Alisin ang special condition"
   },
-  "XsrZAv": {
-    "message": "Rename",
-    "context": "button",
-    "translation": "Palitan ang pangalan"
-  },
   "jionWu": {
     "message": "Rename",
     "context": "menu item",
     "translation": "Palitan ang pangalan"
-  },
-  "Tvyjys": {
-    "message": "Rename deck",
-    "translation": "Palitan ang pangalan ng deck"
   },
   "cDnZvG": {
     "message": "Replay",
