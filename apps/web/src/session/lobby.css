@@ -17,7 +17,7 @@
   line-height: var(--leading-normal);
   scrollbar-width: thin;
   transition:
-    opacity var(--ds-enter-duration) var(--ease-out),
+    opacity var(--ds-enter-duration) var(--ease-fade),
     translate var(--ds-enter-duration) var(--ease-snappy);
 }
 

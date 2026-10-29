@@ -29,6 +29,11 @@ export interface BoardHintTarget {
 /** As the app's tooltips: a rest, or none while one was just showing. */
 export const BOARD_HINT_DELAY_MS = 100;
 const BOARD_HINT_WARM_MS = 400;
+/**
+ * How long a hidden hint stays to fade out: longer than its exit
+ * (overlays.css) at the slowest animation speed.
+ */
+const BOARD_HINT_LEAVE_MS = 320;
 const BOARD_HINT_GAP_PX = 8;
 const BOARD_HINT_EDGE_PX = 8;
 
@@ -247,8 +252,36 @@ export const BoardHintTooltip = ({
   const ref = useRef<HTMLDivElement>(null);
   const [placement, setPlacement] = useState<Placement | null>(null);
   const [entered, setEntered] = useState(false);
-  const element = showing?.element ?? null;
-  const text = element?.isConnected ? (element.dataset.boardHint ?? '') : '';
+  // Hidden, the last one fades out where it was (as the app's tooltips
+  // do), no longer a tooltip to assistive technology or a query.
+  const lastShown = useRef<{ element: HTMLElement; text: string } | null>(null);
+  const [leaving, setLeaving] = useState<{
+    element: HTMLElement;
+    text: string;
+  } | null>(null);
+  const showingElement = showing?.element ?? null;
+  const element = showingElement ?? leaving?.element ?? null;
+  const text =
+    showingElement === null && leaving
+      ? leaving.text
+      : element?.isConnected
+        ? (element.dataset.boardHint ?? '')
+        : '';
+  useEffect(() => {
+    if (showingElement) {
+      setLeaving(null);
+      return;
+    }
+    const last = lastShown.current;
+    lastShown.current = null;
+    if (!last) return;
+    setLeaving(last);
+    // Its exit (overlays.css, data-ending-style) ends well within this.
+    const timer = setTimeout(() => setLeaving(null), BOARD_HINT_LEAVE_MS);
+    return () => clearTimeout(timer);
+  }, [showingElement]);
+  if (showingElement && text !== '')
+    lastShown.current = { element: showingElement, text };
   useLayoutEffect(() => {
     const popup = ref.current;
     if (!element?.isConnected || !popup) {
@@ -290,7 +323,9 @@ export const BoardHintTooltip = ({
     >
       <div
         ref={ref}
-        role="tooltip"
+        {...(showingElement
+          ? { role: 'tooltip' }
+          : { 'aria-hidden': true, 'data-ending-style': '' })}
         className="ptcgsim-ui-tooltip"
         data-side={placement?.side ?? 'top'}
         {...(entered && placement ? {} : { 'data-starting-style': '' })}

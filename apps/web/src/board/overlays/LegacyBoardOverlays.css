@@ -3,15 +3,12 @@
  * marker editors. Every visual constant comes from the design tokens
  * (design/tokens.css). Every overlay animates in on insertion; exits are
  * played by inert ghosts (see overlayMotion.ts), so the real overlay leaves
- * the DOM at once.
+ * the DOM at once. Opacity fades on its own even curve (--ease-fade) while
+ * the travel and scale keep the spring (ADR-027, decision 7).
  */
 .ptcgsim-legacy-board-overlays {
-  --overlay-enter-duration: calc(
-    var(--duration-normal, 200ms) * var(--motion-scale, 1)
-  );
-  --overlay-exit-duration: calc(
-    var(--duration-fast, 140ms) * var(--motion-scale, 1)
-  );
+  --overlay-enter-duration: var(--surface-enter-duration, 200ms);
+  --overlay-exit-duration: var(--surface-exit-duration, 140ms);
   --overlay-slow-duration: calc(
     var(--duration-slow, 320ms) * var(--motion-scale, 1)
   );
@@ -31,11 +28,9 @@
   pointer-events: none;
 }
 
-/* Reduced motion: opacity only, and quick. */
+/* Reduced motion: opacity only, and quick (the surface tokens' times). */
 :root[data-motion='reduced'] .ptcgsim-legacy-board-overlays {
-  --overlay-enter-duration: 120ms;
-  --overlay-exit-duration: 100ms;
-  --overlay-slow-duration: 120ms;
+  --overlay-slow-duration: var(--surface-enter-duration, 150ms);
   --overlay-menu-from-scale: 1;
   --overlay-submenu-from-x: 0px;
   --overlay-panel-from-y: 0px;
@@ -44,9 +39,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   :root:not([data-motion='full']) .ptcgsim-legacy-board-overlays {
-    --overlay-enter-duration: 120ms;
-    --overlay-exit-duration: 100ms;
-    --overlay-slow-duration: 120ms;
+    --overlay-slow-duration: var(--surface-enter-duration, 150ms);
     --overlay-menu-from-scale: 1;
     --overlay-submenu-from-x: 0px;
     --overlay-panel-from-y: 0px;
@@ -54,9 +47,10 @@
   }
 }
 
+/* Entrances: the travel or growth alone, on the spring; each overlay fades
+   in alongside with ptcgsim-overlay-fade-in on --ease-fade. */
 @keyframes ptcgsim-overlay-menu-in {
   from {
-    opacity: 0;
     scale: var(--overlay-menu-from-scale);
   }
 }
@@ -70,7 +64,6 @@
 
 @keyframes ptcgsim-overlay-panel-in {
   from {
-    opacity: 0;
     translate: 0 var(--overlay-panel-from-y);
   }
 }
@@ -96,7 +89,6 @@
 
 @keyframes ptcgsim-overlay-preview-in {
   from {
-    opacity: 0;
     scale: var(--overlay-preview-from-scale);
   }
 }
@@ -114,7 +106,7 @@
   transition: none;
   animation-duration: var(--overlay-exit-duration);
   animation-fill-mode: forwards;
-  animation-timing-function: var(--ease-in);
+  animation-timing-function: var(--ease-fade);
 }
 
 .ptcgsim-legacy-board-overlays .ptcgsim-overlay-ghost * {
@@ -156,8 +148,11 @@
   z-index: var(--viewer-layer-menu);
   isolation: isolate;
   pointer-events: auto;
-  animation: ptcgsim-overlay-menu-in var(--overlay-enter-duration)
-    var(--ease-snappy) backwards;
+  animation:
+    ptcgsim-overlay-fade-in var(--overlay-enter-duration) var(--ease-fade)
+      backwards,
+    ptcgsim-overlay-menu-in var(--overlay-enter-duration) var(--ease-snappy)
+      backwards;
 }
 
 .ptcgsim-legacy-card-context-menu:focus-visible {
@@ -332,7 +327,7 @@
   transition-behavior: allow-discrete;
   transition-duration: var(--overlay-exit-duration);
   transition-property: opacity, translate, display;
-  transition-timing-function: var(--ease-in);
+  transition-timing-function: var(--ease-fade), var(--ease-in), linear;
 }
 
 .ptcgsim-legacy-card-context-menu
@@ -353,7 +348,7 @@
     translate: 0 0;
     pointer-events: auto;
     transition-duration: var(--overlay-enter-duration);
-    transition-timing-function: var(--ease-snappy);
+    transition-timing-function: var(--ease-fade), var(--ease-snappy), linear;
   }
 }
 .ptcgsim-legacy-card-context-menu
@@ -364,7 +359,7 @@
   translate: 0 0;
   pointer-events: auto;
   transition-duration: var(--overlay-enter-duration);
-  transition-timing-function: var(--ease-snappy);
+  transition-timing-function: var(--ease-fade), var(--ease-snappy), linear;
 }
 
 @starting-style {
@@ -511,7 +506,9 @@
   cursor: zoom-out;
   pointer-events: auto;
   animation: ptcgsim-overlay-fade-in var(--overlay-enter-duration)
-    var(--ease-out) backwards;
+    var(--ease-fade) backwards;
+  /* Back after a card dragged out of it lands (data-preview-dragging-card). */
+  transition: opacity var(--overlay-enter-duration) var(--ease-fade);
 }
 
 .ptcgsim-legacy-card-preview:focus-visible {
@@ -684,8 +681,11 @@
   background: var(--color-surface-2);
   box-shadow: var(--shadow-5), var(--highlight-top);
   pointer-events: auto;
-  animation: ptcgsim-overlay-menu-in var(--overlay-enter-duration)
-    var(--ease-snappy) backwards;
+  animation:
+    ptcgsim-overlay-fade-in var(--overlay-enter-duration) var(--ease-fade)
+      backwards,
+    ptcgsim-overlay-menu-in var(--overlay-enter-duration) var(--ease-snappy)
+      backwards;
 }
 
 .ptcgsim-legacy-stack-preview:focus-visible {
@@ -753,12 +753,16 @@
   background: var(--color-scrim);
   pointer-events: none;
   animation: ptcgsim-overlay-fade-in var(--overlay-enter-duration)
-    var(--ease-out) backwards;
-  transition: opacity var(--overlay-exit-duration) var(--ease-out);
+    var(--ease-fade) backwards;
+  /* Back as the panel comes back (a dragged card landed, Show board
+     ended): the entrance's time. A transition takes its time from the
+     style it goes to. */
+  transition: opacity var(--overlay-enter-duration) var(--ease-fade);
 }
 
 .ptcgsim-overlay-scrim.is-hidden {
   opacity: 0;
+  transition-duration: var(--overlay-exit-duration);
 }
 
 /* A panel's title bar: name, count and owner on the left, actions on the
@@ -1063,10 +1067,15 @@ button.ptcgsim-overlay-toggle:focus-visible {
   pointer-events: auto;
   scrollbar-color: var(--color-border-strong) transparent;
   scrollbar-width: thin;
-  animation: ptcgsim-overlay-panel-in var(--overlay-enter-duration)
-    var(--ease-snappy) backwards;
+  animation:
+    ptcgsim-overlay-fade-in var(--overlay-enter-duration) var(--ease-fade)
+      backwards,
+    ptcgsim-overlay-panel-in var(--overlay-enter-duration) var(--ease-snappy)
+      backwards;
+  /* Back once a card dragged out of it has landed: as it first came in. */
   transition:
-    opacity var(--overlay-exit-duration) var(--ease-out),
+    opacity var(--overlay-enter-duration) var(--ease-fade),
+    translate var(--overlay-enter-duration) var(--ease-snappy),
     background-color var(--duration-fast) ease,
     border-color var(--duration-fast) ease,
     box-shadow var(--duration-fast) ease,
@@ -1078,10 +1087,20 @@ button.ptcgsim-overlay-toggle:focus-visible {
   outline: none;
 }
 
-/* Dragging a card out: the panel gets out of the way of the drop. */
+/* Dragging a card out: the panel gets out of the way of the drop, fading
+   and sinking a little as it goes. */
 .ptcgsim-legacy-zone-browser[data-zone-dragging-card] {
   z-index: -2;
   opacity: 0;
+  translate: 0 var(--overlay-panel-from-y);
+  transition:
+    opacity var(--overlay-exit-duration) var(--ease-fade),
+    translate var(--overlay-exit-duration) var(--ease-in),
+    background-color var(--duration-fast) ease,
+    border-color var(--duration-fast) ease,
+    box-shadow var(--duration-fast) ease,
+    --ptcgsim-zone-card-height
+      calc(var(--duration-normal) * var(--motion-scale, 1)) var(--ease-out);
 }
 
 .ptcgsim-zone-card,
@@ -1105,10 +1124,12 @@ button.ptcgsim-overlay-toggle:focus-visible {
   outline-offset: 2px;
 }
 
-/* The preview steps aside while a card shown in it is dragged to the table. */
+/* The preview steps aside while a card shown in it is dragged to the table:
+   it fades out, and back in once the card has landed. */
 .ptcgsim-legacy-card-preview[data-preview-dragging-card] {
   opacity: 0;
   pointer-events: none;
+  transition-duration: var(--overlay-exit-duration);
 }
 
 .ptcgsim-card-actions {
@@ -1488,19 +1509,32 @@ button.ptcgsim-overlay-toggle:focus-visible {
   box-shadow: var(--shadow-5), var(--highlight-top);
   color: var(--color-text);
   pointer-events: auto;
-  animation: ptcgsim-overlay-panel-in var(--overlay-enter-duration)
-    var(--ease-snappy) backwards;
+  animation:
+    ptcgsim-overlay-fade-in var(--overlay-enter-duration) var(--ease-fade)
+      backwards,
+    ptcgsim-overlay-panel-in var(--overlay-enter-duration) var(--ease-snappy)
+      backwards;
+  /* Back once a card dragged out of it has landed: as it first came in. */
   transition:
-    opacity var(--overlay-exit-duration) var(--ease-out),
+    opacity var(--overlay-enter-duration) var(--ease-fade),
+    translate var(--overlay-enter-duration) var(--ease-snappy),
     background-color var(--duration-fast) ease,
     border-color var(--duration-fast) ease,
     box-shadow var(--duration-fast) ease;
 }
 
-/* Dragging a card out: the panel gets out of the way of the drop. */
+/* Dragging a card out: the panel gets out of the way of the drop, fading
+   and sinking a little as it goes. */
 .ptcgsim-legacy-work-area[data-work-area-dragging-card] {
   z-index: -2;
   opacity: 0;
+  translate: 0 var(--overlay-panel-from-y);
+  transition:
+    opacity var(--overlay-exit-duration) var(--ease-fade),
+    translate var(--overlay-exit-duration) var(--ease-in),
+    background-color var(--duration-fast) ease,
+    border-color var(--duration-fast) ease,
+    box-shadow var(--duration-fast) ease;
 }
 
 /* The player whose cards these are, by seat colour. */

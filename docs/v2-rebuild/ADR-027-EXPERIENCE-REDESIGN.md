@@ -67,6 +67,26 @@ summarised in `EXPERIENCE_DESIGN.md`.
 6. **A new board geometry** (`geometryVersion: 2`) lays the table out like
    the official play mat at readable sizes. `geometryVersion: 1` stays frozen
    with its v1 oracle tests until it is retired; it is not edited in place.
+7. **Every surface comes and goes with a transition, every time**
+   (2026-10-29, the owner: "all modals to have clean in and out transitions,
+   always"). Windows, sheets, menus, popups, toasts, tooltips, the touch
+   card bar, the palette, the tutorial's coach and the welcome card:
+   - Times are the surface tokens (`--surface-enter-duration` 200ms,
+     `--surface-exit-duration` 140ms, scaled by the animation speed; 0 at
+     "instant"). Under reduced motion a brief fade stays (150/100ms), with
+     no travel or growth -- never nothing.
+   - Opacity fades on its own even curve (`--ease-fade`); travel and growth
+     keep the spring. On opacity a spring all but pops (85% in ~30ms).
+   - Exits never hold up focus, tests or the next press: Base UI's ending
+     styles, or an inert, unfindable copy of the last frame that plays the
+     exit and removes itself (`useOverlayExit`, `useExitGhost`; the copy
+     keeps the place it was drawn at, its placing attributes stripped).
+   - A window that steps aside for a drag (pile viewer, work areas, the
+     preview) fades and sinks out of the way, and comes back once the card
+     has landed with its entrance's fade and rise, not a snap.
+   - `surface-transitions.spec.ts` reads the browser's animation inspector
+     (DevTools' Animation domain), so a busy runner neither hides nor fakes
+     a transition.
 
 ## Consequences
 

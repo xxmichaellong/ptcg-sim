@@ -16,13 +16,22 @@
   font-size: var(--text-sm);
   line-height: var(--leading-normal);
   pointer-events: auto;
-  animation: table-welcome-in
-    calc(var(--duration-slow) * var(--motion-scale, 1)) var(--ease-snappy) both;
+  animation:
+    table-welcome-fade var(--surface-enter-duration, 200ms) var(--ease-fade)
+      both,
+    table-welcome-in calc(var(--duration-slow) * var(--motion-scale, 1))
+      var(--ease-snappy) both;
 }
 
-@keyframes table-welcome-in {
+@keyframes table-welcome-fade {
   from {
     opacity: 0;
+  }
+}
+
+/* The travel alone: the fade beside it keeps its own curve. */
+@keyframes table-welcome-in {
+  from {
     translate: 0 8px;
     scale: 0.98;
   }

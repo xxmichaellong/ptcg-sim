@@ -13,7 +13,7 @@
   min-height: 100dvh;
   background: var(--color-scrim);
   opacity: calc(1 - var(--drawer-swipe-progress, 0));
-  transition: opacity var(--ui-overlay-enter-duration) var(--ease-out);
+  transition: opacity var(--ui-overlay-enter-duration) var(--ease-fade);
 }
 
 .ptcgsim-sheet-backdrop[data-starting-style],
@@ -86,7 +86,9 @@
   border-radius: var(--radius-xl);
   transition-property: opacity, scale, translate;
   transition-duration: var(--ui-overlay-enter-duration);
-  transition-timing-function: var(--ui-overlay-enter-easing);
+  transition-timing-function:
+    var(--ease-fade), var(--ui-overlay-enter-easing),
+    var(--ui-overlay-enter-easing);
 }
 
 .ptcgsim-sheet[data-size='sm'] {
@@ -115,7 +117,7 @@
 
 .ptcgsim-sheet[data-variant='center'][data-ending-style] {
   transition-duration: var(--ui-overlay-exit-duration);
-  transition-timing-function: var(--ease-in);
+  transition-timing-function: var(--ease-fade), var(--ease-in), var(--ease-in);
 }
 
 /* ---- Side (the activity drawer) ------------------------------------ */
@@ -163,6 +165,39 @@
 .ptcgsim-sheet[data-variant='bottom'][data-starting-style],
 .ptcgsim-sheet[data-variant='bottom'][data-ending-style] {
   transform: translateY(100%);
+}
+
+/* Reduced motion: a drawer fades where it would slide (its slide is scaled
+   to nothing), briefly, in the surface tokens' times. */
+:root[data-motion='reduced']
+  .ptcgsim-sheet:is([data-variant='side'], [data-variant='bottom']) {
+  transition: opacity var(--surface-enter-duration) var(--ease-fade);
+}
+
+:root[data-motion='reduced']
+  .ptcgsim-sheet[data-variant='side']:is(
+    [data-starting-style],
+    [data-ending-style]
+  ) {
+  opacity: 0;
+  transform: translateX(var(--drawer-swipe-movement-x, 0px));
+}
+
+:root[data-motion='reduced']
+  .ptcgsim-sheet[data-variant='bottom']:is(
+    [data-starting-style],
+    [data-ending-style]
+  ) {
+  opacity: 0;
+  transform: translateY(var(--drawer-swipe-movement-y, 0px));
+}
+
+:root[data-motion='reduced']
+  .ptcgsim-sheet:is(
+    [data-variant='side'],
+    [data-variant='bottom']
+  )[data-ending-style] {
+  transition-duration: var(--surface-exit-duration);
 }
 
 .ptcgsim-sheet[data-swiping] {

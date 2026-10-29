@@ -24,14 +24,52 @@
   background: oklch(0.12 0.01 50 / 0.5);
   -webkit-backdrop-filter: blur(2px);
   backdrop-filter: blur(2px);
-  animation: tutorial-fade-in
-    calc(var(--duration-normal) * var(--motion-scale, 1)) var(--ease-out);
+  animation: tutorial-fade-in var(--surface-enter-duration, 200ms)
+    var(--ease-fade);
 }
 
 @keyframes tutorial-fade-in {
   from {
     opacity: 0;
   }
+}
+
+@keyframes tutorial-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes tutorial-sink {
+  to {
+    opacity: 0;
+    translate: 0 6px;
+    scale: 0.98;
+  }
+}
+
+/* Put away, a scrim, its card or the coach fades where it was
+   (exit-ghost.ts), never taking a press. */
+.tutorial-scrim.is-leaving,
+.tutorial-coach.is-leaving {
+  pointer-events: none;
+}
+
+.tutorial-scrim.is-leaving {
+  animation: tutorial-fade-out var(--surface-exit-duration, 140ms)
+    var(--ease-fade) forwards;
+}
+
+.tutorial-scrim.is-leaving > *,
+.tutorial-coach.is-leaving {
+  animation: tutorial-sink var(--surface-exit-duration, 140ms) var(--ease-fade)
+    forwards;
+}
+
+.tutorial-scrim.is-leaving > * *,
+.tutorial-coach.is-leaving * {
+  animation: none !important;
+  transition: none !important;
 }
 
 .tutorial-lessons,
@@ -52,13 +90,15 @@
   width: min(460px, 100%);
   max-height: min(720px, calc(100dvh - 2 * var(--space-4)));
   padding: var(--space-4);
-  animation: tutorial-rise calc(var(--duration-slow) * var(--motion-scale, 1))
-    var(--ease-snappy) both;
+  animation:
+    tutorial-fade-in var(--surface-enter-duration, 200ms) var(--ease-fade) both,
+    tutorial-rise calc(var(--duration-slow) * var(--motion-scale, 1))
+      var(--ease-snappy) both;
 }
 
+/* The travel alone: the fade beside it keeps its own curve. */
 @keyframes tutorial-rise {
   from {
-    opacity: 0;
     translate: 0 10px;
     scale: 0.98;
   }
@@ -231,8 +271,10 @@
   transition:
     left calc(var(--duration-slow) * var(--motion-scale, 1)) var(--ease-out),
     top calc(var(--duration-slow) * var(--motion-scale, 1)) var(--ease-out);
-  animation: tutorial-rise calc(var(--duration-slow) * var(--motion-scale, 1))
-    var(--ease-snappy) both;
+  animation:
+    tutorial-fade-in var(--surface-enter-duration, 200ms) var(--ease-fade) both,
+    tutorial-rise calc(var(--duration-slow) * var(--motion-scale, 1))
+      var(--ease-snappy) both;
 }
 
 .tutorial-coach__head {
@@ -467,11 +509,23 @@
   }
 }
 
-:root[data-motion='reduced'] .tutorial-ring,
+:root[data-motion='reduced'] .tutorial-ring {
+  animation: none;
+}
+
+/* Reduced motion: windows still fade in and out, briefly, without travel. */
 :root[data-motion='reduced'] .tutorial-coach,
 :root[data-motion='reduced'] .tutorial-lessons,
 :root[data-motion='reduced'] .tutorial-scrim {
-  animation: none;
+  animation: tutorial-fade-in var(--surface-enter-duration, 150ms)
+    var(--ease-fade) both;
+}
+
+:root[data-motion='reduced'] .tutorial-scrim.is-leaving,
+:root[data-motion='reduced'] .tutorial-scrim.is-leaving > *,
+:root[data-motion='reduced'] .tutorial-coach.is-leaving {
+  animation: tutorial-fade-out var(--surface-exit-duration, 100ms)
+    var(--ease-fade) forwards;
 }
 
 /* The hand that shows a drag: the fingertip at the card's centre. */

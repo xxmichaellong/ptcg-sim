@@ -1,11 +1,14 @@
 // @vitest-environment happy-dom
 
+import { act, createElement } from 'react';
+import { createRoot } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   BOARD_HINT_DELAY_MS,
   BoardHintIndex,
   BoardHintTimer,
+  BoardHintTooltip,
   boardHintAt,
   placeBoardHint,
   type BoardHintShowing,
@@ -183,5 +186,44 @@ describe('boardHintAt', () => {
     badge.remove();
     expect(index.at(root, 115, 15, null)).toBeNull();
     root.remove();
+  });
+});
+
+describe('BoardHintTooltip', () => {
+  it('fades out where it was when hidden, no longer a tooltip, then goes', async () => {
+    (
+      globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+    ).IS_REACT_ACT_ENVIRONMENT = true;
+    vi.useFakeTimers();
+    const badge = document.createElement('div');
+    badge.dataset.boardHint = '47 cards in your deck';
+    document.body.append(badge);
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+    const render = (showing: BoardHintShowing | null) =>
+      act(() => root.render(createElement(BoardHintTooltip, { showing })));
+    await render({ element: badge, tapped: false });
+    const tooltip = () =>
+      document.querySelector<HTMLElement>('.ptcgsim-board-hint > *');
+    expect(tooltip()?.getAttribute('role')).toBe('tooltip');
+    await render(null);
+    // Still drawn, fading (overlays.css's data-ending-style), with its
+    // words, but no tooltip any more.
+    expect(tooltip()?.textContent).toBe('47 cards in your deck');
+    expect(tooltip()?.hasAttribute('data-ending-style')).toBe(true);
+    expect(tooltip()?.hasAttribute('role')).toBe(false);
+    expect(document.querySelector('[role="tooltip"]')).toBeNull();
+    await act(async () => {
+      vi.advanceTimersByTime(400);
+    });
+    expect(tooltip()).toBeNull();
+    // Shown again at once, it is a tooltip again.
+    await render({ element: badge, tapped: true });
+    expect(tooltip()?.getAttribute('role')).toBe('tooltip');
+    await act(async () => root.unmount());
+    host.remove();
+    badge.remove();
+    vi.useRealTimers();
   });
 });

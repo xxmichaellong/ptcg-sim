@@ -21,14 +21,23 @@
   pointer-events: auto;
   user-select: none;
   white-space: nowrap;
-  animation: ptcgsim-marker-controls-in calc(160ms * var(--motion-scale, 1))
-    var(--ease-out, ease-out) backwards;
+  animation:
+    ptcgsim-marker-controls-fade var(--surface-enter-duration, 200ms)
+      var(--ease-fade) backwards,
+    ptcgsim-marker-controls-in var(--surface-enter-duration, 200ms)
+      var(--ease-snappy) backwards;
 }
 
-/* It comes out of the card's side. */
-@keyframes ptcgsim-marker-controls-in {
+@keyframes ptcgsim-marker-controls-fade {
   from {
     opacity: 0;
+  }
+}
+
+/* It comes out of the card's side (the fade beside it keeps its own
+   curve); closed, it fades back in (overlayMotion.ts's menu exit). */
+@keyframes ptcgsim-marker-controls-in {
+  from {
     translate: var(--marker-controls-from, 0 4px);
     scale: 0.96;
   }
@@ -201,9 +210,11 @@
   background: var(--color-border);
 }
 
-:root[data-motion='reduced'] .ptcgsim-marker-controls,
-:root[data-motion-speed='instant'] .ptcgsim-marker-controls {
-  animation: none;
+/* Reduced motion: a brief fade, no travel (its exit is the overlays'). */
+:root[data-motion='reduced']
+  .ptcgsim-marker-controls:not(.ptcgsim-overlay-ghost) {
+  animation: ptcgsim-marker-controls-fade var(--surface-enter-duration, 150ms)
+    var(--ease-fade) backwards;
 }
 
 :root[data-motion='reduced'] .ptcgsim-marker-controls__button,

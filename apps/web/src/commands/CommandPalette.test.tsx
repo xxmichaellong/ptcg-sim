@@ -20,7 +20,9 @@ const press = async (init: KeyboardEventInit, target?: Element | null) => {
 };
 
 const field = () =>
-  document.querySelector<HTMLInputElement>('.ptcgsim-command-palette__field');
+  document.querySelector<HTMLInputElement>(
+    '.ptcgsim-command-palette-layer:not(.is-leaving) .ptcgsim-command-palette__field'
+  );
 
 const type = async (value: string) => {
   await act(async () => {
@@ -35,11 +37,15 @@ const type = async (value: string) => {
 const selected = () =>
   document.querySelector<HTMLElement>('[role="option"][aria-selected="true"]');
 const crumbs = () =>
-  [...document.querySelectorAll('.ptcgsim-command-palette__crumb')].map(
-    (crumb) => crumb.textContent
-  );
+  [
+    ...document.querySelectorAll(
+      '.ptcgsim-command-palette-layer:not(.is-leaving) .ptcgsim-command-palette__crumb'
+    ),
+  ].map((crumb) => crumb.textContent);
 const asked = () =>
-  document.querySelector('.ptcgsim-command-palette__asking')?.textContent;
+  document.querySelector(
+    '.ptcgsim-command-palette-layer:not(.is-leaving) .ptcgsim-command-palette__asking'
+  )?.textContent;
 
 describe('CommandPalette', () => {
   let host: HTMLDivElement;
@@ -138,6 +144,28 @@ describe('CommandPalette', () => {
     await act(async () => root.unmount());
     host.remove();
     unregister();
+    // A closed palette's fading copy (exit-ghost.ts), never ended here.
+    for (const ghost of document.querySelectorAll('.is-leaving'))
+      ghost.remove();
+  });
+
+  it('fades out when closed, as an inert copy nothing can find', async () => {
+    await open();
+    await press({ key: 'Escape' });
+    expect(isCommandPaletteOpen()).toBe(false);
+    expect(document.querySelector('[data-command-palette]')).toBeNull();
+    const ghost = document.querySelector<HTMLElement>(
+      '.ptcgsim-command-palette-layer.is-leaving'
+    );
+    expect(ghost).not.toBeNull();
+    expect(ghost!.getAttribute('aria-hidden')).toBe('true');
+    expect(ghost!.hasAttribute('inert')).toBe(true);
+    expect(ghost!.querySelector('[role]')).toBeNull();
+    // Gone once its exit has played.
+    act(() => {
+      ghost!.dispatchEvent(new Event('animationend', { bubbles: true }));
+    });
+    expect(ghost!.isConnected).toBe(false);
   });
 
   const open = async () => {
@@ -227,7 +255,9 @@ describe('CommandPalette', () => {
     // And remembers it, first on an empty search next time.
     await open();
     expect(
-      document.querySelector('.ptcgsim-command-palette__heading')?.textContent
+      document.querySelector(
+        '.ptcgsim-command-palette-layer:not(.is-leaving) .ptcgsim-command-palette__heading'
+      )?.textContent
     ).toBe('Recent');
     expect(selected()?.textContent).toContain('Pass the turn');
   });
@@ -335,7 +365,7 @@ describe('CommandPalette', () => {
     await press({ key: 'Enter' });
     await type('5');
     const done = document.querySelector<HTMLButtonElement>(
-      '.ptcgsim-command-palette__submit'
+      '.ptcgsim-command-palette-layer:not(.is-leaving) .ptcgsim-command-palette__submit'
     )!;
     expect(done.textContent).toBe('Done');
     await act(async () => done.click());
@@ -380,7 +410,7 @@ describe('CommandPalette', () => {
     document.body.append(outside);
     await open();
     const heading = document.querySelector(
-      '.ptcgsim-command-palette__heading'
+      '.ptcgsim-command-palette-layer:not(.is-leaving) .ptcgsim-command-palette__heading'
     )!;
     const mousedown = new MouseEvent('mousedown', {
       bubbles: true,

@@ -23,7 +23,7 @@
   transform-origin: var(--transform-origin);
   transition-property: opacity, scale;
   transition-duration: var(--ui-overlay-enter-duration);
-  transition-timing-function: var(--ui-overlay-enter-easing);
+  transition-timing-function: var(--ease-fade), var(--ui-overlay-enter-easing);
 }
 
 .ptcgsim-action-menu[data-starting-style],
@@ -34,6 +34,7 @@
 
 .ptcgsim-action-menu[data-ending-style] {
   transition-duration: var(--ui-overlay-exit-duration);
+  transition-timing-function: var(--ease-fade), var(--ease-in);
 }
 
 .ptcgsim-action-menu__header {

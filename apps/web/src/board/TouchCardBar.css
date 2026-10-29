@@ -13,17 +13,26 @@
   background: var(--color-surface-2);
   box-shadow: var(--shadow-4), var(--highlight-top);
   pointer-events: auto;
-  animation: touch-card-bar-in
-    calc(var(--duration-normal) * var(--motion-scale, 1)) var(--ease-snappy);
+  animation:
+    touch-card-bar-fade var(--surface-enter-duration, 200ms) var(--ease-fade)
+      backwards,
+    touch-card-bar-in var(--surface-enter-duration, 200ms) var(--ease-snappy)
+      backwards;
 }
 
 .touch-card-bar[data-placement='below'] {
-  animation-name: touch-card-bar-in-below;
+  animation-name: touch-card-bar-fade, touch-card-bar-in-below;
 }
 
-@keyframes touch-card-bar-in {
+@keyframes touch-card-bar-fade {
   from {
     opacity: 0;
+  }
+}
+
+/* The travel alone: the fade beside it keeps its own curve. */
+@keyframes touch-card-bar-in {
+  from {
     translate: 0 6px;
     scale: 0.96;
   }
@@ -31,10 +40,27 @@
 
 @keyframes touch-card-bar-in-below {
   from {
-    opacity: 0;
     translate: 0 -6px;
     scale: 0.96;
   }
+}
+
+@keyframes touch-card-bar-out {
+  to {
+    opacity: 0;
+    scale: 0.96;
+  }
+}
+
+/* Put away, its last frame fades where it was (exit-ghost.ts). */
+.touch-card-bar.is-leaving {
+  pointer-events: none;
+  animation: touch-card-bar-out var(--surface-exit-duration, 140ms)
+    var(--ease-fade) forwards;
+}
+
+.touch-card-bar.is-leaving * {
+  transition: none !important;
 }
 
 .touch-card-bar__button {
@@ -78,6 +104,13 @@
   outline-offset: -2px;
 }
 
+/* Reduced motion: a brief fade in and out, no travel. */
 :root[data-motion='reduced'] .touch-card-bar {
-  animation: none;
+  animation: touch-card-bar-fade var(--surface-enter-duration, 150ms)
+    var(--ease-fade) backwards;
+}
+
+:root[data-motion='reduced'] .touch-card-bar.is-leaving {
+  animation: touch-card-bar-fade var(--surface-exit-duration, 100ms)
+    var(--ease-fade) reverse forwards;
 }

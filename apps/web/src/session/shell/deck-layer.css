@@ -33,8 +33,15 @@
   outline: none;
   opacity: 1;
   transition:
-    opacity var(--ds-enter-duration, 180ms) var(--ease-out),
+    opacity var(--surface-enter-duration, 200ms) var(--ease-fade),
     visibility 0s;
+}
+
+/* Its first opening fades in too: it is put on the page already open. */
+@starting-style {
+  .ptcgsim-deck-layer[data-open='true'] {
+    opacity: 0;
+  }
 }
 
 .ptcgsim-deck-layer[data-open='false'] {
@@ -42,8 +49,8 @@
   opacity: 0;
   pointer-events: none;
   transition:
-    opacity var(--ds-exit-duration, 120ms) var(--ease-in),
-    visibility 0s linear var(--ds-exit-duration, 120ms);
+    opacity var(--surface-exit-duration, 140ms) var(--ease-fade),
+    visibility 0s linear var(--surface-exit-duration, 140ms);
 }
 
 /* While the deck screen's script arrives, and if it can't. */

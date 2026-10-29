@@ -18,8 +18,8 @@
   position: absolute;
   inset: 0;
   background: color-mix(in oklch, var(--color-scrim) 70%, transparent);
-  animation: ptcgsim-command-fade calc(140ms * var(--motion-scale, 1))
-    var(--ease-out, ease-out) backwards;
+  animation: ptcgsim-command-fade var(--surface-enter-duration, 200ms)
+    var(--ease-fade) backwards;
 }
 
 .ptcgsim-command-palette {
@@ -35,8 +35,11 @@
   background: var(--color-surface-2);
   box-shadow: var(--shadow-4, var(--shadow-3)), var(--highlight-top);
   color: var(--color-text);
-  animation: ptcgsim-command-in calc(160ms * var(--motion-scale, 1))
-    var(--ease-out, ease-out) backwards;
+  animation:
+    ptcgsim-command-fade var(--surface-enter-duration, 200ms) var(--ease-fade)
+      backwards,
+    ptcgsim-command-in var(--surface-enter-duration, 200ms) var(--ease-snappy)
+      backwards;
 }
 
 @keyframes ptcgsim-command-fade {
@@ -45,19 +48,59 @@
   }
 }
 
+/* The travel alone: the fade beside it keeps its own curve. */
 @keyframes ptcgsim-command-in {
   from {
-    opacity: 0;
     translate: 0 -6px;
     scale: 0.98;
   }
 }
 
-:root[data-motion='reduced'] .ptcgsim-command-palette,
-:root[data-motion='reduced'] .ptcgsim-command-palette__scrim,
-:root[data-motion-speed='instant'] .ptcgsim-command-palette,
-:root[data-motion-speed='instant'] .ptcgsim-command-palette__scrim {
-  animation: none;
+@keyframes ptcgsim-command-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes ptcgsim-command-out {
+  to {
+    opacity: 0;
+    translate: 0 -4px;
+    scale: 0.98;
+  }
+}
+
+/* Closed, its last frame fades (exit-ghost.ts), never taking a press. */
+.ptcgsim-command-palette-layer.is-leaving {
+  pointer-events: none;
+}
+
+.ptcgsim-command-palette-layer.is-leaving > * * {
+  animation: none !important;
+  transition: none !important;
+}
+
+.ptcgsim-command-palette-layer.is-leaving .ptcgsim-command-palette__scrim {
+  animation: ptcgsim-command-fade-out var(--surface-exit-duration, 140ms)
+    var(--ease-fade) forwards;
+}
+
+.ptcgsim-command-palette-layer.is-leaving .ptcgsim-command-palette {
+  animation: ptcgsim-command-out var(--surface-exit-duration, 140ms)
+    var(--ease-fade) forwards;
+}
+
+/* Reduced motion: a brief fade, no travel. */
+:root[data-motion='reduced'] .ptcgsim-command-palette {
+  animation: ptcgsim-command-fade var(--surface-enter-duration, 150ms)
+    var(--ease-fade) backwards;
+}
+
+:root[data-motion='reduced']
+  .ptcgsim-command-palette-layer.is-leaving
+  .ptcgsim-command-palette {
+  animation: ptcgsim-command-fade-out var(--surface-exit-duration, 100ms)
+    var(--ease-fade) forwards;
 }
 
 /* ---- Search field and breadcrumbs ------------------------------------- */

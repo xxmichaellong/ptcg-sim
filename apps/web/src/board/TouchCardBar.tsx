@@ -4,12 +4,14 @@ import type {
   BoardDepthProjection,
   BoardScene,
   BoardViewport,
+  Rect,
 } from '@ptcgsim/renderer-contract';
 import { DotsThreeCircleIcon } from '@phosphor-icons/react/dist/csr/DotsThreeCircle';
 import { MagnifyingGlassPlusIcon } from '@phosphor-icons/react/dist/csr/MagnifyingGlassPlus';
 import { XIcon } from '@phosphor-icons/react/dist/csr/X';
-import { memo } from 'react';
+import { memo, useRef } from 'react';
 
+import { useExitGhost } from '../session/shell/exit-ghost.js';
 import './TouchCardBar.css';
 
 const decorative = { 'aria-hidden': true, focusable: false } as const;
@@ -42,11 +44,43 @@ export const TouchCardBar = memo(function TouchCardBar({
   readonly onActions: () => void;
   readonly onDismiss: () => void;
 }) {
-  const { t } = useLingui();
   const card = scene.cards.find((candidate) => candidate.id === cardId);
   if (!card) return null;
-  const cardLabel = card.label;
-  const bounds = depth ? depth.bounds(card) : card.bounds;
+  // One bar per card: tapping another card fades this bar out as that
+  // card's comes in, rather than moving it there.
+  return (
+    <TouchCardBarPanel
+      key={card.id}
+      cardLabel={card.label}
+      bounds={depth ? depth.bounds(card) : card.bounds}
+      viewport={viewport}
+      onRead={onRead}
+      onActions={onActions}
+      onDismiss={onDismiss}
+    />
+  );
+});
+
+const TouchCardBarPanel = ({
+  cardLabel,
+  bounds,
+  viewport,
+  onRead,
+  onActions,
+  onDismiss,
+}: {
+  readonly cardLabel: string | undefined;
+  readonly bounds: Rect;
+  readonly viewport: BoardViewport;
+  readonly onRead: () => void;
+  readonly onActions: () => void;
+  readonly onDismiss: () => void;
+}) => {
+  const { t } = useLingui();
+  const bar = useRef<HTMLDivElement>(null);
+  // Put away (the card let go of, a drag begun, its menu opened), it fades
+  // rather than vanishing (TouchCardBar.css).
+  useExitGhost(bar);
   // Above the card where there is room (the hand is at the bottom edge),
   // below it otherwise; never past the window's edges.
   const above = bounds.y - GAP_PX - BAR_HEIGHT_PX >= GAP_PX;
@@ -62,6 +96,7 @@ export const TouchCardBar = memo(function TouchCardBar({
   );
   return (
     <div
+      ref={bar}
       className="touch-card-bar"
       role="toolbar"
       aria-label={
@@ -105,4 +140,4 @@ export const TouchCardBar = memo(function TouchCardBar({
       </button>
     </div>
   );
-});
+};

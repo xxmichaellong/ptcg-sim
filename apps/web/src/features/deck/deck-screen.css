@@ -2540,10 +2540,43 @@ button.deck-check__issue {
   align-items: center;
   justify-content: center;
   background: var(--color-scrim);
+  opacity: 1;
+  /* It comes and goes like every window (ADR-027): it stays drawn while
+     it fades out, its box settling as it fades in. */
+  transition:
+    opacity var(--surface-enter-duration, 200ms) var(--ease-fade),
+    display var(--surface-enter-duration, 200ms) allow-discrete;
 }
 
 .native-deck-builder-modal[hidden] {
   display: none;
+  opacity: 0;
+  transition-duration: var(--surface-exit-duration, 140ms);
+}
+
+@starting-style {
+  .native-deck-builder-modal:not([hidden]) {
+    opacity: 0;
+  }
+}
+
+.native-deck-builder-modal > .native-deck-builder-modal-box {
+  transition:
+    scale var(--surface-enter-duration, 200ms) var(--ease-snappy),
+    translate var(--surface-enter-duration, 200ms) var(--ease-snappy);
+}
+
+.native-deck-builder-modal[hidden] > .native-deck-builder-modal-box {
+  scale: var(--ds-enter-scale, 0.96);
+  translate: 0 var(--ds-enter-rise, 6px);
+  transition-duration: var(--surface-exit-duration, 140ms);
+}
+
+@starting-style {
+  .native-deck-builder-modal:not([hidden]) > .native-deck-builder-modal-box {
+    scale: var(--ds-enter-scale, 0.96);
+    translate: 0 var(--ds-enter-rise, 6px);
+  }
 }
 
 .native-deck-builder-modal-box {

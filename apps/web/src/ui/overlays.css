@@ -4,19 +4,16 @@
  * design tokens (design/tokens.css); nothing here hard-codes a colour.
  *
  * Motion: an overlay enters by fading in while it grows from 0.96 and rises
- * 6px, on the snappy spring; it leaves faster, fading and shrinking to 0.98.
- * The animation-speed setting scales both (via --motion-scale). Reduced
+ * 6px, the growth on the snappy spring and the fade on its own even curve
+ * (--ease-fade); it leaves faster, fading and shrinking to 0.98. The
+ * animation-speed setting scales both (the surface tokens, ADR-027). Reduced
  * motion -- chosen in Settings, or the system's when the player has not
  * chosen -- keeps only a short fade.
  */
 
 :root {
-  --ui-overlay-enter-duration: calc(
-    var(--duration-normal) * var(--motion-scale, 1)
-  );
-  --ui-overlay-exit-duration: calc(
-    var(--duration-fast) * var(--motion-scale, 1)
-  );
+  --ui-overlay-enter-duration: var(--surface-enter-duration);
+  --ui-overlay-exit-duration: var(--surface-exit-duration);
   --ui-overlay-enter-easing: var(--ease-snappy);
   --ui-overlay-enter-scale: 0.96;
   --ui-overlay-enter-shift: 6px;
@@ -28,8 +25,6 @@
 }
 
 :root[data-motion='reduced'] {
-  --ui-overlay-enter-duration: 120ms;
-  --ui-overlay-exit-duration: 100ms;
   --ui-overlay-enter-easing: var(--ease-out);
   --ui-overlay-enter-scale: 1;
   --ui-overlay-enter-shift: 0px;
@@ -40,8 +35,6 @@
 
 @media (prefers-reduced-motion: reduce) {
   :root:not([data-motion='full']) {
-    --ui-overlay-enter-duration: 120ms;
-    --ui-overlay-exit-duration: 100ms;
     --ui-overlay-enter-easing: var(--ease-out);
     --ui-overlay-enter-scale: 1;
     --ui-overlay-enter-shift: 0px;
@@ -153,7 +146,7 @@
   inset: 0;
   z-index: var(--layer-dialog);
   background: var(--color-scrim);
-  transition: opacity var(--ui-overlay-enter-duration) var(--ease-out);
+  transition: opacity var(--ui-overlay-enter-duration) var(--ease-fade);
 }
 
 .ptcgsim-ui-scrim[data-starting-style],
@@ -203,7 +196,9 @@
   outline: none;
   transition-property: opacity, scale, translate;
   transition-duration: var(--ui-overlay-enter-duration);
-  transition-timing-function: var(--ui-overlay-enter-easing);
+  transition-timing-function:
+    var(--ease-fade), var(--ui-overlay-enter-easing),
+    var(--ui-overlay-enter-easing);
 }
 
 .ptcgsim-ui-dialog[data-starting-style] {
@@ -216,7 +211,7 @@
   opacity: 0;
   scale: var(--ui-overlay-exit-scale);
   transition-duration: var(--ui-overlay-exit-duration);
-  transition-timing-function: var(--ease-in);
+  transition-timing-function: var(--ease-fade), var(--ease-in), var(--ease-in);
 }
 
 .ptcgsim-ui-dialog__form {
@@ -354,7 +349,7 @@
   cursor: default;
   transition:
     transform var(--ui-overlay-enter-duration) var(--ui-overlay-enter-easing),
-    opacity var(--ui-overlay-enter-duration) var(--ease-out),
+    opacity var(--ui-overlay-enter-duration) var(--ease-fade),
     height var(--duration-fast) var(--ease-out);
 }
 
@@ -380,7 +375,8 @@
     translateY(var(--stacked-y))
     scale(calc(var(--scale) * var(--ui-overlay-exit-scale)));
   transition-duration: var(--ui-overlay-exit-duration);
-  transition-timing-function: var(--ease-in);
+  /* transform, opacity, height (the list above). */
+  transition-timing-function: var(--ease-in), var(--ease-fade), var(--ease-in);
 }
 
 .ptcgsim-ui-toast[data-ending-style][data-swipe-direction='down'] {
@@ -540,7 +536,7 @@
   transform-origin: var(--transform-origin);
   transition-property: opacity, scale;
   transition-duration: var(--ui-overlay-enter-duration);
-  transition-timing-function: var(--ui-overlay-enter-easing);
+  transition-timing-function: var(--ease-fade), var(--ui-overlay-enter-easing);
 }
 
 /* The key that does the same, after the words (withKeyHint). */
@@ -565,7 +561,7 @@
   opacity: 0;
   scale: var(--ui-overlay-exit-scale);
   transition-duration: var(--ui-overlay-exit-duration);
-  transition-timing-function: var(--ease-in);
+  transition-timing-function: var(--ease-fade), var(--ease-in);
 }
 
 .ptcgsim-ui-tooltip[data-instant] {

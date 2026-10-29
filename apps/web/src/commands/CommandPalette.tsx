@@ -53,6 +53,7 @@ import { CARD_IMAGE_PREFERENCES } from '../i18n/card-image-language.js';
 import { LANGUAGE_PREFERENCES } from '../i18n/language-preference.js';
 import { depthSettings } from '../motion/depth-settings.js';
 import { motionSettings } from '../motion/motion-settings.js';
+import { useExitGhost } from '../session/shell/exit-ghost.js';
 import { TABLE_PREFERENCES } from '../session/table-preferences.js';
 import type { CommandSection, PaletteCommand, PaletteScreen } from './types.js';
 import './command-palette.css';
@@ -345,6 +346,8 @@ export const CommandPalette = ({
   // Escape is the palette's while it is open, before anything under it
   // listening on the document (a marker's controls) can take it.
   const layer = useRef<HTMLDivElement>(null);
+  // Closed, it fades out rather than vanishing (command-palette.css).
+  useExitGhost(layer);
   const backRef = useRef<() => void>(() => undefined);
   useEffect(() => {
     const escape = (event: KeyboardEvent): void => {

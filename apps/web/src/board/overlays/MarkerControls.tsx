@@ -26,6 +26,7 @@ import type { BoardSessionControllerState } from '../BoardSessionController.js';
 import { isInputMethodKey } from '../../ui/input-method.js';
 import { parseLegacyDamageInput } from '../resolveLegacyBoardOverlayAction.js';
 import { visualCardBounds } from './card-bounds.js';
+import { useOverlayExit } from './overlayMotion.js';
 import './MarkerControls.css';
 
 /** What the controls do: the overlays' own actions (LegacyBoardOverlays). */
@@ -356,6 +357,8 @@ export const MarkerControls = ({
   const { t } = useLingui();
   const marker = markerControlsMarker(state);
   const panel = useRef<HTMLDivElement>(null);
+  // Closed, it fades back into the card's side (overlayMotion.ts).
+  useOverlayExit(panel, 'menu');
   const [size, setSize] = useState<{
     readonly width: number;
     readonly height: number;

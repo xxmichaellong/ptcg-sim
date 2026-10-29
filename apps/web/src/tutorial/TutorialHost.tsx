@@ -24,6 +24,7 @@ import { localizedCardImage } from '../i18n/card-image-language.js';
 import { motionSettings } from '../motion/motion-settings.js';
 import { preferences } from '../preferences/preference-store.js';
 import { usePreference } from '../preferences/usePreference.js';
+import { useExitGhost } from '../session/shell/exit-ghost.js';
 import { COARSE_POINTER_QUERY, useMediaQuery } from '../ui/breakpoints.js';
 import { TUTORIAL_IMAGE_URLS } from './tutorial-cards.js';
 import {
@@ -525,7 +526,7 @@ export const TutorialHost = ({
       ) : null}
       {(phase.kind === 'dealing' || phase.kind === 'failed') &&
       !overlaysHidden ? (
-        <div className="tutorial-scrim" data-tutorial-dealing="true">
+        <DealingScrim>
           <div className="tutorial-dealing" role="status">
             <span className="tutorial-dealing__title">
               {i18n._(phase.lesson.title)}
@@ -571,7 +572,7 @@ export const TutorialHost = ({
               </>
             )}
           </div>
-        </div>
+        </DealingScrim>
       ) : null}
       {playing && step && world && !hidden ? (
         <>
@@ -752,6 +753,9 @@ const Coach = ({
 }) => {
   const { t, i18n } = useLingui();
   const ref = useRef<HTMLDivElement>(null);
+  // Put away (the lesson done or left, a window over it), it fades out
+  // where it was (tutorial.css).
+  useExitGhost(ref);
   const compact = useMediaQuery('(max-width: 599px)');
   const [place, setPlace] = useState<{
     left: number;
@@ -946,6 +950,17 @@ const Coach = ({
 
 // ---- The list of lessons, and a lesson done ---------------------------------
 
+/** The scrim a lesson is dealt behind: dealt, it fades away (tutorial.css). */
+const DealingScrim = ({ children }: { readonly children: ReactNode }) => {
+  const scrim = useRef<HTMLDivElement>(null);
+  useExitGhost(scrim);
+  return (
+    <div ref={scrim} className="tutorial-scrim" data-tutorial-dealing="true">
+      {children}
+    </div>
+  );
+};
+
 const LessonList = ({
   lessons,
   isDone,
@@ -966,8 +981,10 @@ const LessonList = ({
   useEffect(() => {
     first.current?.focus({ preventScroll: true });
   }, []);
+  const scrim = useRef<HTMLDivElement>(null);
+  useExitGhost(scrim);
   return (
-    <div className="tutorial-scrim">
+    <div ref={scrim} className="tutorial-scrim">
       <section
         className="tutorial-lessons"
         role="dialog"
@@ -1060,6 +1077,7 @@ const LessonDone = ({
   // Centred at the top, under the app bar where the two would meet (a
   // phone).
   const section = useRef<HTMLElement>(null);
+  useExitGhost(section);
   const [top, setTop] = useState<number>();
   useLayoutEffect(() => {
     const measure = (): void => {
