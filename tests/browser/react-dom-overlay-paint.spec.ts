@@ -606,9 +606,12 @@ const captureLegacyReplayDisclosure = async (
       systemState.isReplay = true;
       systemState.isTwoPlayer = false;
       systemState.initiator = 'self';
-      systemState.cardBackSrc = ownBack;
-      systemState.p1OppCardBackSrc = opponentBack;
-      systemState.p2OppCardBackSrc = opponentBack;
+      // v1 tells a back by comparing an image's resolved src with these: v2
+      // may draw its backs from a path (an ADR-041 preset), so resolve them
+      // here as the image will be.
+      systemState.cardBackSrc = new URL(ownBack, location.href).href;
+      systemState.p1OppCardBackSrc = new URL(opponentBack, location.href).href;
+      systemState.p2OppCardBackSrc = new URL(opponentBack, location.href).href;
 
       const mount = async (
         user: 'self' | 'opp',
@@ -1087,10 +1090,24 @@ test('solo replay disclosure retains source paint and a complete keyboard bounda
   expectStableFaceSwap(candidateHandHidden, candidateHandShown);
   expectStableFaceSwap(source.prizeHidden, source.prizeShown);
   expectStableFaceSwap(source.handHidden, source.handShown);
-  expect(candidatePrizeHidden.imageSrc).toBe(source.prizeHidden.imageSrc);
-  expect(candidatePrizeShown.imageSrc).toBe(source.prizeShown.imageSrc);
-  expect(candidateHandHidden.imageSrc).toBe(source.handHidden.imageSrc);
-  expect(candidateHandShown.imageSrc).toBe(source.handShown.imageSrc);
+  // The same picture: v1 was handed v2's back resolved on its own page
+  // (its src reads back whole), so compare where each points, not how.
+  const picture = (src: string): string =>
+    src.startsWith('data:')
+      ? src
+      : ((url) => url.pathname + url.search)(new URL(src, 'http://v2.test'));
+  expect(picture(candidatePrizeHidden.imageSrc)).toBe(
+    picture(source.prizeHidden.imageSrc)
+  );
+  expect(picture(candidatePrizeShown.imageSrc)).toBe(
+    picture(source.prizeShown.imageSrc)
+  );
+  expect(picture(candidateHandHidden.imageSrc)).toBe(
+    picture(source.handHidden.imageSrc)
+  );
+  expect(picture(candidateHandShown.imageSrc)).toBe(
+    picture(source.handShown.imageSrc)
+  );
   expect(candidatePrizeShown.accessibleLabel).toBe(
     source.prizeShown.accessibleLabel
   );

@@ -13,6 +13,7 @@ const CONTENT_TYPES: Readonly<Record<string, string>> = {
   '.mjs': 'application/javascript',
   '.css': 'text/css',
   '.png': 'image/png',
+  '.webp': 'image/webp',
   '.ico': 'image/x-icon',
   '.html': 'text/html',
   '.json': 'application/json',
@@ -73,8 +74,14 @@ export const loadLegacyRuntime = async (
       await route.abort('blockedbyclient');
       return;
     }
+    // v1's own files, and v2's public card backs (ADR-041 presets), so a
+    // paint comparison can hand v1 the very back v2 draws.
     const file =
-      url.pathname === '/' ? 'client/index.ejs' : `client${url.pathname}`;
+      url.pathname === '/'
+        ? 'client/index.ejs'
+        : url.pathname.startsWith('/v2/assets/')
+          ? `apps/web/public${url.pathname}`
+          : `client${url.pathname}`;
     let body: Buffer;
     try {
       body = await readFile(`${repositoryRoot}${file}`);
