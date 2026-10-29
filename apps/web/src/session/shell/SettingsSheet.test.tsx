@@ -91,6 +91,23 @@ describe('SettingsSheet', () => {
     ).toEqual(['Table', 'Appearance', 'Language', 'Motion']);
   });
 
+  it('lets a player in a room allow board flip at any time, and only there', async () => {
+    await render();
+    // A Solo table has no other player to agree with.
+    expect(input('coachingModeCheckbox')).toBeNull();
+    const onChange = vi.fn();
+    await render({ solo: false, boardFlip: { allowed: false, onChange } });
+    const allow = input('coachingModeCheckbox');
+    expect(allow.checked).toBe(false);
+    expect(document.querySelector('#settingsRoom')?.textContent).toContain(
+      'Both players must allow it.'
+    );
+    await act(async () => allow.click());
+    expect(onChange).toHaveBeenCalledWith(true);
+    await render({ solo: false, boardFlip: { allowed: true, onChange } });
+    expect(input('coachingModeCheckbox').checked).toBe(true);
+  });
+
   it('is not on the page while closed', async () => {
     await render({ open: false });
     expect(document.querySelector('#settings')).toBeNull();

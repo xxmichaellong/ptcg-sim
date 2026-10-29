@@ -25,6 +25,12 @@ import {
   currentBrowserInvitationClipboard,
   type DeferredTextClipboardWriter,
 } from './browser-invitation-clipboard.js';
+import {
+  currentInvitationLinkBase,
+  invitationLink,
+  type InvitationDelivery,
+  type InvitationDeliveryOutcome,
+} from './invitation-share.js';
 
 const MAX_CREATION_RESPONSE_BYTES = 4_096;
 const MAX_INVITATION_RESPONSE_BYTES = 2_048;
@@ -53,6 +59,8 @@ export type RemoteRoomInvitationFailureCode =
   | 'issue_failed'
   | 'invalid_response'
   | 'expired_invitation'
+  /** The room refused the claim: used already, expired, or revoked. */
+  | 'invitation_refused'
   | 'seat_unavailable'
   | 'clipboard_unavailable'
   | 'clipboard_failed'
@@ -75,6 +83,8 @@ export interface RemoteRoomInvitationCustodyOptions {
   readonly signal?: AbortSignal;
   /** How long issuing one invitation may take (ROOM_REQUEST_TIMEOUT_MS). */
   readonly requestTimeoutMs?: number;
+  /** Where an invitation link opens the game: this page, by default. */
+  readonly linkBase?: string;
 }
 
 /**
@@ -85,6 +95,7 @@ export class RemoteRoomInvitationCustody {
   readonly #roomCode: string;
   readonly #fetch: typeof globalThis.fetch;
   readonly #origin: URL;
+  readonly #linkBase: string;
   readonly #ownerSignal: AbortSignal | undefined;
   readonly #requestTimeoutMs: number | undefined;
   readonly #abort = new AbortController();
@@ -98,6 +109,10 @@ export class RemoteRoomInvitationCustody {
     this.#spectatorCapability = options.spectatorCapability;
     this.#fetch = options.fetch;
     this.#origin = options.origin;
+    this.#linkBase =
+      options.linkBase ??
+      currentInvitationLinkBase() ??
+      new URL('/', options.origin).href;
     this.#ownerSignal = options.signal;
     this.#requestTimeoutMs = options.requestTimeoutMs;
   }
@@ -117,16 +132,23 @@ export class RemoteRoomInvitationCustody {
   }
 
   /**
-   * v1's one copy key: a player invitation while a seat is free, a spectator
-   * invitation once both are taken. One clipboard write either way, begun
-   * while the click still counts: a second write after a slow refusal would
-   * have no user gesture left, and the browser would refuse it.
+   * Mints an invitation for `role` and passes it on as a link that opens
+   * the game straight into this room (ADR-020, 2026-10-29): `deliver`
+   * chooses the share sheet or the clipboard, and is handed the link still
+   * being minted so a copy begins while the press still counts.
    */
-  copyPlayerOrSpectatorInvitation(
-    clipboard = currentBrowserInvitationClipboard(),
+  invite(
+    role: RemoteRoomInvitation['requestedRole'],
+    deliver: InvitationDelivery | undefined,
     signal?: AbortSignal
-  ): Promise<RemoteRoomInvitationCopyReceipt> {
-    return this.copy(['player', 'spectator'], clipboard, signal);
+  ): Promise<RemoteRoomInvitationShareReceipt> {
+    const base = this.#linkBase;
+    return this.pass(
+      [role],
+      (handoff) => invitationLink(base, handoff),
+      deliver,
+      signal
+    );
   }
 
   get roomCode(): string {
@@ -146,7 +168,27 @@ export class RemoteRoomInvitationCustody {
     clipboard: DeferredTextClipboardWriter | undefined,
     signal?: AbortSignal
   ): Promise<RemoteRoomInvitationCopyReceipt> {
-    if (!clipboard) {
+    const { outcome: _outcome, ...receipt } = await this.pass(
+      typeof roles === 'string' ? [roles] : roles,
+      serializeRoomInvitationHandoffText,
+      clipboard
+        ? async (text) => {
+            await clipboard.writeText(text);
+            return 'copied';
+          }
+        : undefined,
+      signal
+    );
+    return Object.freeze(receipt);
+  }
+
+  private async pass(
+    roles: readonly RemoteRoomInvitation['requestedRole'][],
+    format: (handoff: RemoteRoomInvitation) => string,
+    send: InvitationDelivery | undefined,
+    signal?: AbortSignal
+  ): Promise<RemoteRoomInvitationShareReceipt> {
+    if (!send) {
       throw new RemoteRoomInvitationError('clipboard_unavailable');
     }
     if (this.#copying) {
@@ -155,17 +197,15 @@ export class RemoteRoomInvitationCustody {
     this.#copying = true;
     let invitation: Promise<RemoteRoomInvitation> | undefined;
     try {
-      invitation = this.issueFirstAvailable(
-        typeof roles === 'string' ? [roles] : roles,
-        signal
-      );
-      const text = invitation.then(serializeRoomInvitationHandoffText);
-      await Promise.all([clipboard.writeText(text), text]);
+      invitation = this.issueFirstAvailable(roles, signal);
+      const text = invitation.then(format);
+      const [outcome] = await Promise.all([send(text), text]);
       const handoff = await invitation;
       return Object.freeze({
         roomCode: handoff.roomCode,
         requestedRole: handoff.requestedRole,
         expiresAt: handoff.expiresAt,
+        outcome,
       });
     } catch (error) {
       if (
@@ -303,6 +343,11 @@ export interface RemoteRoomInvitationCopyReceipt {
   readonly expiresAt: number;
 }
 
+/** An invitation passed on, and how: shared, copied, or the sheet put away. */
+export interface RemoteRoomInvitationShareReceipt extends RemoteRoomInvitationCopyReceipt {
+  readonly outcome: InvitationDeliveryOutcome;
+}
+
 export interface RemoteRoomCreationDependencies {
   readonly fetch?: typeof globalThis.fetch;
   readonly origin?: string;
@@ -364,10 +409,19 @@ export const bootstrapRemoteRoomInvitation = async (
   } catch (error) {
     if (
       error instanceof RemoteRoomBootstrapError &&
-      error.code === 'exchange_failed' &&
-      expiredHere()
+      error.code === 'exchange_failed'
     ) {
-      throw new RemoteRoomInvitationError('expired_invitation');
+      if (expiredHere()) {
+        throw new RemoteRoomInvitationError('expired_invitation');
+      }
+      // The room said why: the claim is spent (or expired by its clock),
+      // or the seat it offers has been taken since.
+      if (error.refusal === 'admission_rejected') {
+        throw new RemoteRoomInvitationError('invitation_refused');
+      }
+      if (error.refusal === 'seat_unavailable') {
+        throw new RemoteRoomInvitationError('seat_unavailable');
+      }
     }
     throw error;
   }

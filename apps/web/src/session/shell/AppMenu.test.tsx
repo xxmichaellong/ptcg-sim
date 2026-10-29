@@ -189,16 +189,58 @@ describe('AppBar', () => {
   });
 
   it('turns the way out round in a right-to-left language, and nothing else', async () => {
-    await render(model({ onLeave: vi.fn(), onCopyInvitation: vi.fn() }));
+    await render(
+      model({
+        onLeave: vi.fn(),
+        invites: {
+          roles: ['player', 'spectator'],
+          seatTaken: false,
+          onInvite: vi.fn(),
+        },
+      })
+    );
     await openMenu('#appMenuButton');
     // Leaving points the way the line reads (ds-mirror-rtl: it turns round
-    // only under dir="rtl"); a copy, a screen or a heart has no direction.
+    // only under dir="rtl"); an invite, a screen or a heart has no
+    // direction.
     const mirrored = [
       ...document.querySelectorAll('[role="menu"] [role="menuitem"][id]'),
     ]
       .filter((item) => item.querySelector('svg.ds-mirror-rtl'))
       .map((item) => item.id);
     expect(mirrored).toEqual(['leaveRoomButton']);
+  });
+
+  it("offers both invites, and says why the opponent's is off once their seat is taken", async () => {
+    const onInvite = vi.fn();
+    await render(
+      model({
+        invites: { roles: ['player', 'spectator'], seatTaken: false, onInvite },
+      })
+    );
+    expect(await openMenu('#appMenuButton')).toEqual(
+      expect.arrayContaining([
+        'inviteOpponentMenuItem',
+        'inviteSpectatorMenuItem',
+      ])
+    );
+    await act(async () => {
+      document.querySelector<HTMLElement>('#inviteSpectatorMenuItem')!.click();
+    });
+    expect(onInvite).toHaveBeenCalledWith('spectator');
+    await settle();
+
+    await render(
+      model({
+        invites: { roles: ['player', 'spectator'], seatTaken: true, onInvite },
+      })
+    );
+    await openMenu('#appMenuButton');
+    const opponent = document.querySelector<HTMLElement>(
+      '#inviteOpponentMenuItem'
+    )!;
+    expect(opponent.getAttribute('aria-disabled')).toBe('true');
+    expect(opponent.textContent).toContain('Seat taken');
   });
 
   it('has no keys to offer on a touch screen', async () => {

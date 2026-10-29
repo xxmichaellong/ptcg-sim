@@ -4,23 +4,22 @@ import {
 } from './support/assembled-save.js';
 import {
   parseContinuationHandoffText,
-  parseRoomInvitationHandoffText,
+  parseRoomInvitationText,
 } from '../../packages/protocol/src/index.js';
 import { expect, test } from '@playwright/test';
 
 import {
   expectContinuationRestoreSuccess,
   EXPECTED_REVOKED_CONSOLE_ERROR,
-  ROOM_CODE,
   boardIdentity,
-  copyInvitation,
+  createRoomAndInvite,
+  inviteOpponent,
   downloadText,
   exposedBrowserState,
   expectReadyRoom,
   joinReadyRoom,
   openLobby,
   pasteInvitation,
-  readClipboard,
   roomCode,
   roomStatus,
   type OpenedLobby,
@@ -87,14 +86,10 @@ test('online save downloads, restores, rotates both players, and revokes its bea
       });
     }
 
-    await creator.page.locator('#nameInput').fill('Blue');
-    await creator.page.locator('#generateIdButton').click();
-    await expect(creator.page.locator('#roomIdInput')).toHaveValue(ROOM_CODE);
-    const sourceInvitation = await copyInvitation(creator.page);
+    const sourceInvitation = await createRoomAndInvite(creator.page, 'Blue');
 
     await pasteInvitation(sourceOpponent.page, sourceInvitation, 'Red');
     await joinReadyRoom(sourceOpponent.page);
-    await joinReadyRoom(creator.page);
     const sourceRoomCode = await roomCode(creator.page);
     expect(await roomCode(sourceOpponent.page)).toBe(sourceRoomCode);
 
@@ -189,8 +184,8 @@ test('online save downloads, restores, rotates both players, and revokes its bea
     expect(await boardIdentity(creator.page)).toEqual(sourceCheckpoint);
 
     await expectSavedPrint(creator.page);
-    const targetInvitation = await readClipboard(creator.page);
-    const parsedInvitation = parseRoomInvitationHandoffText(targetInvitation);
+    const targetInvitation = await inviteOpponent(creator.page);
+    const parsedInvitation = parseRoomInvitationText(targetInvitation);
     expect(parsedInvitation.ok).toBe(true);
     if (!parsedInvitation.ok) {
       throw new Error('Restored opponent invitation is invalid');

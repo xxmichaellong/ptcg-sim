@@ -2,7 +2,7 @@ import { resolve } from 'node:path';
 
 import {
   parseContinuationHandoffText,
-  parseRoomInvitationHandoffText,
+  parseRoomInvitationText,
 } from '../../packages/protocol/src/index.js';
 import {
   prepareContinuationRotationArtifactDirectory,
@@ -20,16 +20,15 @@ import {
 
 import {
   expectContinuationRestoreSuccess,
-  ROOM_CODE,
   boardIdentity,
-  copyInvitation,
+  createRoomAndInvite,
+  inviteOpponent,
   downloadText,
   exposedBrowserState,
   expectReadyRoom,
   joinReadyRoom,
   openLobby,
   pasteInvitation,
-  readClipboard,
   roomCode,
   type OpenedLobby,
 } from './continuation-browser-helpers.js';
@@ -84,13 +83,9 @@ const createReadyPair = async (
   ownerName: string,
   opponentName: string
 ): Promise<ReadyPair> => {
-  await owner.page.locator('#nameInput').fill(ownerName);
-  await owner.page.locator('#generateIdButton').click();
-  await expect(owner.page.locator('#roomIdInput')).toHaveValue(ROOM_CODE);
-  const invitation = await copyInvitation(owner.page);
+  const invitation = await createRoomAndInvite(owner.page, ownerName);
   await pasteInvitation(opponent.page, invitation, opponentName);
   await joinReadyRoom(opponent.page);
-  await joinReadyRoom(owner.page);
   const createdRoomCode = await roomCode(owner.page);
   expect(await roomCode(opponent.page)).toBe(createdRoomCode);
   return { owner, opponent, roomCode: createdRoomCode, invitation };
@@ -157,7 +152,7 @@ const restoreSave = async (
   expect(revokeResponse.status()).toBe(204);
   expect(revokeResponse.headers()['cache-control']).toContain('no-store');
   await expectContinuationRestoreSuccess(page);
-  return readClipboard(page);
+  return inviteOpponent(page);
 };
 
 const assertBearerIsolation = async (
@@ -263,7 +258,7 @@ const transition = async (
     expect(restoredRoomCode).not.toBe(stagingPair.roomCode);
     expect(await boardIdentity(owner.page)).toEqual(input.manifest.checkpoint);
 
-    const parsedInvitation = parseRoomInvitationHandoffText(restoredInvitation);
+    const parsedInvitation = parseRoomInvitationText(restoredInvitation);
     expect(parsedInvitation.ok).toBe(true);
     if (!parsedInvitation.ok) {
       throw new Error('Restored rotation invitation is invalid');

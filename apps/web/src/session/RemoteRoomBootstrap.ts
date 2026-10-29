@@ -21,12 +21,41 @@ const MAX_RESPONSE_BYTES = 2_048;
 export type RemoteRoomBootstrapFailureCode =
   'invalid_input' | 'exchange_failed' | 'invalid_response';
 
+/**
+ * Why the room refused an exchange, where it said: the claim is spent,
+ * expired or unknown, or the seat it offers is taken.
+ */
+export type RemoteRoomExchangeRefusal =
+  'admission_rejected' | 'seat_unavailable';
+
 export class RemoteRoomBootstrapError extends Error {
-  constructor(readonly code: RemoteRoomBootstrapFailureCode) {
+  constructor(
+    readonly code: RemoteRoomBootstrapFailureCode,
+    readonly refusal?: RemoteRoomExchangeRefusal
+  ) {
     super(`Remote room bootstrap failed: ${code}`);
     this.name = 'RemoteRoomBootstrapError';
   }
 }
+
+/** The room's stated reason for refusing an exchange, if it gave one. */
+const exchangeRefusal = async (
+  response: Response
+): Promise<RemoteRoomExchangeRefusal | undefined> => {
+  if (response.status !== 403 && response.status !== 409) return undefined;
+  try {
+    const body = await readBoundedJsonResponse(response, MAX_RESPONSE_BYTES);
+    const error =
+      body.ok && typeof body.value === 'object' && body.value !== null
+        ? (body.value as { readonly error?: unknown }).error
+        : undefined;
+    return error === 'admission_rejected' || error === 'seat_unavailable'
+      ? error
+      : undefined;
+  } catch {
+    return undefined;
+  }
+};
 
 export interface RemoteRoomBootstrapInput {
   readonly buildId: string;
@@ -117,7 +146,10 @@ export const bootstrapRemoteRoom = async (
     throw new RemoteRoomBootstrapError('exchange_failed');
   }
   if (response.status !== 201) {
-    throw new RemoteRoomBootstrapError('exchange_failed');
+    throw new RemoteRoomBootstrapError(
+      'exchange_failed',
+      await exchangeRefusal(response)
+    );
   }
   const responseBody = await readBoundedJsonResponse(
     response,

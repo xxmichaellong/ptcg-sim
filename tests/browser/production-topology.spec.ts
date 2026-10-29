@@ -117,7 +117,6 @@ test('built SPA and room authority share one production-like Worker origin', asy
   await expect(page.locator('#nameInput')).toBeVisible();
   await expect(page.locator('#roomIdInput')).toBeVisible();
   await expect(page.locator('#generateIdButton')).toBeVisible();
-  await expect(page.locator('#copyButton')).toBeVisible();
   await expect(page.locator('#joinRoomButton')).toBeVisible();
   await expect(page.locator('[data-app-route^="dev-room"]')).toHaveCount(0);
   expect(authorityRequests).toEqual([]);

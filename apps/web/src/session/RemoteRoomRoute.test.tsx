@@ -653,7 +653,7 @@ describe('RemoteRoomRoute', () => {
     // Solo has no room to leave and nothing to save online.
     for (const id of [
       'leaveRoomButton',
-      'copyInvitationMenuItem',
+      'inviteOpponentMenuItem',
       'saveOnlineGame',
       'resumeSavedGame',
       'exitReplayMenuItem',
@@ -859,7 +859,10 @@ describe('RemoteRoomRoute', () => {
       <RemoteRoomRoute
         runtime={runtime}
         onLeave={vi.fn()}
-        onCopyInvitation={vi.fn(async () => true)}
+        invitations={{
+          roles: ['player', 'spectator'],
+          invite: vi.fn(async () => 'copied' as const),
+        }}
         continuationAvailable
         onResumeSavedGame={vi.fn(async () => undefined)}
       />
@@ -904,14 +907,17 @@ describe('RemoteRoomRoute', () => {
       kind: 'image' as const,
       url: 'https://images.example.test/table.png',
     }));
-    const onCopyInvitation = vi.fn(async () => true);
+    const invite = vi.fn(
+      async (_role: 'player' | 'spectator') => 'copied' as const
+    );
+    const invitations = { roles: ['player', 'spectator'] as const, invite };
     const route = (continuationAvailable: boolean) => (
       <RemoteRoomRoute
         runtime={runtime}
         onIntent={onIntent}
         onSubmission={onSubmission}
         onLeave={onLeave}
-        onCopyInvitation={onCopyInvitation}
+        invitations={invitations}
         onResumeSavedGame={onResumeSavedGame}
         continuationAvailable={continuationAvailable}
         downloadTextFile={downloadTextFile}
@@ -935,8 +941,9 @@ describe('RemoteRoomRoute', () => {
       expect(find('#chatbox')).toBeNull();
       expect(get<HTMLInputElement>('#p2MessageInput').disabled).toBe(true);
       expect(get('#activitySheet').textContent).toContain('Connecting…');
-      // No copying before the room is live.
-      expect(find('#roomHeaderCopyButton')).toBeNull();
+      // No inviting before the room is live.
+      expect(find('#roomHeaderInviteButton')).toBeNull();
+      expect(find('#inviteOpponentButton')).toBeNull();
 
       // The deck screen opens over the table; a room has no second seat.
       await openDeckFromMenu();
@@ -953,13 +960,17 @@ describe('RemoteRoomRoute', () => {
       await openActivity();
       expect(get('#activitySheet').textContent).toContain('Room ABCDEFGH2345');
       expect(get<HTMLInputElement>('#p2MessageInput').disabled).toBe(false);
-      // One key, as in v1: an invitation whose holder may choose to watch.
-      await click('#roomHeaderCopyButton');
-      expect(onCopyInvitation).toHaveBeenCalledWith('player');
+      // Live and waiting for the opponent: the room says how to invite
+      // them, and the log's header names the invite it sends.
+      expect(get('[data-table-invite]').textContent).toContain('Room ready');
+      await click('#roomHeaderInviteButton');
+      expect(invite).toHaveBeenLastCalledWith('player');
       expect(toast).toHaveBeenCalledWith({
-        title: 'Invitation copied',
+        title: 'Invitation link copied',
         tone: 'success',
       });
+      await click('#inviteSpectatorButton');
+      expect(invite).toHaveBeenLastCalledWith('spectator');
 
       // Online save and resume are default-off on the Worker; until it
       // reports them enabled there is nothing to press.
@@ -972,9 +983,11 @@ describe('RemoteRoomRoute', () => {
       expect(menuIds()).not.toContain('importReplay');
       // Play online is where a Solo table goes; a room is already online.
       expect(menuIds()).not.toContain('p2Button');
-      expect(menuIds()).toContain('copyInvitationMenuItem');
-      await click('#copyInvitationMenuItem');
-      expect(onCopyInvitation).toHaveBeenCalledTimes(2);
+      expect(menuIds()).toContain('inviteOpponentMenuItem');
+      expect(menuIds()).toContain('inviteSpectatorMenuItem');
+      await click('#inviteOpponentMenuItem');
+      expect(invite).toHaveBeenCalledTimes(3);
+      expect(invite).toHaveBeenLastCalledWith('player');
       await settle();
       await act(async () => root.render(route(true)));
       await openMenu();
@@ -1196,7 +1209,7 @@ describe('RemoteRoomRoute', () => {
         'deckImportButton',
         'p2Button',
         'leaveRoomButton',
-        'copyInvitationMenuItem',
+        'inviteOpponentMenuItem',
         'saveOnlineGame',
       ]) {
         expect(menuIds(), id).not.toContain(id);

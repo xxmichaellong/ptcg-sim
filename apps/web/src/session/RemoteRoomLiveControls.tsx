@@ -31,10 +31,6 @@ import {
   type BrowserContinuationFileReadResult,
 } from './browser-continuation-file.js';
 import {
-  currentBrowserInvitationClipboard,
-  type DeferredTextClipboardWriter,
-} from './browser-invitation-clipboard.js';
-import {
   readBrowserReplayFileBytes,
   type BrowserReplayFileLike,
   type BrowserReplayFileReadResult,
@@ -87,11 +83,8 @@ const reportContinuationFailure = (action: 'save' | 'resume'): void => {
 };
 
 const reportContinuationResumeSuccess = (): void => {
-  toast({
-    title: t`Game resumed`,
-    body: t`Invitation copied to your clipboard.`,
-    tone: 'success',
-  });
+  // The room offers Invite opponent from here (ADR-020).
+  toast({ title: t`Game resumed`, tone: 'success' });
 };
 
 /** Asks before the sidebar's Leave Room ends a multiplayer game. */
@@ -118,8 +111,6 @@ export type BrowserContinuationFileReader = (
   options?: { readonly signal?: AbortSignal }
 ) => Promise<BrowserContinuationFileReadResult>;
 
-export type OpponentInvitationDelivery = (text: string) => Promise<void>;
-
 /**
  * The connected room's controls, without a place on screen (ADR-030): the
  * table rail shows the turn's actions, the activity sheet the chat field,
@@ -142,7 +133,6 @@ export const useLiveRoomControls = ({
   requestFullscreen = requestBrowserFullscreen,
   readReplayFile = readBrowserReplayFileBytes,
   readContinuationFile = readBrowserContinuationFileText,
-  getInvitationClipboard = currentBrowserInvitationClipboard,
   reportReplayImportFailure = reportInvalidReplayFile,
   reportOnlineSaveFailure = () => reportContinuationFailure('save'),
   reportSavedGameResumeFailure = () => reportContinuationFailure('resume'),
@@ -164,7 +154,6 @@ export const useLiveRoomControls = ({
   readonly onSaveOnlineGame?: (signal: AbortSignal) => Promise<void>;
   readonly onResumeSavedGame?: (
     contents: string,
-    deliverOpponentInvitation: OpponentInvitationDelivery,
     signal: AbortSignal
   ) => Promise<void>;
   readonly confirmLeave?: LiveRoomLeaveConfirmation;
@@ -172,8 +161,6 @@ export const useLiveRoomControls = ({
   readonly requestFullscreen?: () => boolean;
   readonly readReplayFile?: BrowserReplayFileReader;
   readonly readContinuationFile?: BrowserContinuationFileReader;
-  readonly getInvitationClipboard?: () =>
-    DeferredTextClipboardWriter | undefined;
   readonly reportReplayImportFailure?: () => void;
   readonly reportOnlineSaveFailure?: () => void;
   readonly reportSavedGameResumeFailure?: () => void;
@@ -305,14 +292,19 @@ export const useLiveRoomControls = ({
       }
     }
   };
-  const resumeSavedGame = async (
-    event: ChangeEvent<HTMLInputElement>
+  const canResumeSaved =
+    !solo && playerControls && onResumeSavedGame !== undefined;
+  const canImportReplay = solo && onImportReplayFile !== undefined;
+  /**
+   * Resumes a saved game from its file, picked or dropped on the window.
+   * The resumed room comes with an opponent invitation, which the room
+   * offers with Invite opponent: nothing is written to the clipboard
+   * unasked (ADR-020, 2026-10-29).
+   */
+  const resumeSavedFile = async (
+    file: BrowserContinuationFileLike
   ): Promise<void> => {
-    const input = event.currentTarget;
-    const file = input.files?.[0];
-    input.value = '';
     if (
-      !file ||
       !onResumeSavedGame ||
       !ready ||
       !playerControls ||
@@ -320,43 +312,9 @@ export const useLiveRoomControls = ({
     ) {
       return;
     }
-
-    const clipboard = getInvitationClipboard();
-    if (!clipboard) {
-      reportSavedGameResumeFailure();
-      return;
-    }
     const controller = new AbortController();
     continuationAbortRef.current = controller;
     setContinuationPending('resume');
-
-    let resolveInvitation!: (text: string) => void;
-    let rejectInvitation!: () => void;
-    let invitationDelivered = false;
-    const invitationText = new Promise<string>((resolve, reject) => {
-      resolveInvitation = resolve;
-      rejectInvitation = () => reject(new Error('Invitation unavailable'));
-    });
-    void invitationText.catch(() => undefined);
-    let clipboardWrite: Promise<void>;
-    try {
-      clipboardWrite = clipboard.writeText(invitationText);
-    } catch {
-      rejectInvitation();
-      continuationAbortRef.current = undefined;
-      setContinuationPending(undefined);
-      reportSavedGameResumeFailure();
-      return;
-    }
-    void clipboardWrite.catch(() => undefined);
-    const deliverOpponentInvitation: OpponentInvitationDelivery = async (
-      text
-    ) => {
-      if (invitationDelivered) throw new Error('Invitation already delivered');
-      invitationDelivered = true;
-      resolveInvitation(text);
-      await clipboardWrite;
-    };
 
     try {
       let read: BrowserContinuationFileReadResult;
@@ -371,15 +329,10 @@ export const useLiveRoomControls = ({
         controller.signal.aborted ||
         continuationAbortRef.current !== controller
       ) {
-        if (!invitationDelivered) rejectInvitation();
         return;
       }
       if (!read.ok) throw new Error('Invalid continuation file');
-      await onResumeSavedGame(
-        read.text,
-        deliverOpponentInvitation,
-        controller.signal
-      );
+      await onResumeSavedGame(read.text, controller.signal);
       if (
         controller.signal.aborted ||
         continuationAbortRef.current !== controller
@@ -388,7 +341,6 @@ export const useLiveRoomControls = ({
       }
       reportSavedGameResumeSuccess();
     } catch {
-      if (!invitationDelivered) rejectInvitation();
       if (!controller.signal.aborted) reportSavedGameResumeFailure();
     } finally {
       if (continuationAbortRef.current === controller) {
@@ -397,14 +349,36 @@ export const useLiveRoomControls = ({
       }
     }
   };
-  const importReplayFile = async (
-    event: ChangeEvent<HTMLInputElement>
-  ): Promise<void> => {
+  const resumeSavedGame = (event: ChangeEvent<HTMLInputElement>): void => {
     const input = event.currentTarget;
     const file = input.files?.[0];
     input.value = '';
+    if (file) void resumeSavedFile(file);
+  };
+  const importReplayFile = (event: ChangeEvent<HTMLInputElement>): void => {
+    const input = event.currentTarget;
+    const file = input.files?.[0];
+    input.value = '';
+    if (file) void importReplay(file);
+  };
+  /**
+   * Opens a file dropped on the window as its picker would: a replay at a
+   * Solo table, a saved game in a room. False for a file neither takes.
+   */
+  const openDroppedFile = (file: File): boolean => {
+    const name = file.name.toLowerCase();
+    if (canResumeSaved && name.endsWith('.ptcgsave')) {
+      void resumeSavedFile(file);
+      return true;
+    }
+    if (canImportReplay && name.endsWith('.json')) {
+      void importReplay(file);
+      return true;
+    }
+    return false;
+  };
+  const importReplay = async (file: BrowserReplayFileLike): Promise<void> => {
     if (
-      !file ||
       !onImportReplayFile ||
       !ready ||
       state.replayLoading ||
@@ -501,7 +475,7 @@ export const useLiveRoomControls = ({
           type="file"
           accept=".json"
           hidden
-          onChange={(event) => void importReplayFile(event)}
+          onChange={importReplayFile}
         />
       ) : null}
       {!solo && playerControls && onResumeSavedGame ? (
@@ -511,7 +485,7 @@ export const useLiveRoomControls = ({
           type="file"
           accept=".ptcgsave"
           hidden
-          onChange={(event) => void resumeSavedGame(event)}
+          onChange={resumeSavedGame}
         />
       ) : null}
     </>
@@ -537,13 +511,16 @@ export const useLiveRoomControls = ({
     submitBothLifecycle,
     submitUndo,
     leaveRoom: onLeave && !solo ? leaveRoom : undefined,
-    canImportReplay: solo && onImportReplayFile !== undefined,
+    canImportReplay,
     importReplay: () => replayFileInputRef.current?.click(),
     exportState: onExportState,
     canSaveOnline: !solo && playerControls && onSaveOnlineGame !== undefined,
     saveOnlineGame: () => void saveOnlineGame(),
-    canResumeSaved: !solo && playerControls && onResumeSavedGame !== undefined,
+    canResumeSaved,
     resumeSavedGame: () => continuationFileInputRef.current?.click(),
+    /** A replay or saved game dropped on the window, where it applies. */
+    openDroppedFile:
+      canResumeSaved || canImportReplay ? openDroppedFile : undefined,
     exportLog,
     clearLog,
     fullscreen,

@@ -1001,13 +1001,13 @@
     ],
     "translation": "<0>{0}</0>：为双方构筑、导入或选择卡组。"
   },
+  "SZcDv9": {
+    "message": "<0>{0}</0>: create a room, then send a friend its link.",
+    "translation": "<0>{0}</0>：创建房间，然后把链接发给朋友。"
+  },
   "F7xH8_": {
     "message": "<0>{0}</0>: every move, and the chat.",
     "translation": "<0>{0}</0>：所有操作和聊天记录。"
-  },
-  "l7W_Ze": {
-    "message": "<0>{0}</0>: send a friend a link to your table.",
-    "translation": "<0>{0}</0>：把牌桌链接发给朋友。"
   },
   "NaneTg": {
     "message": "<0>{0}</0>: the table's look, the theme and the language.",
@@ -1220,9 +1220,9 @@
     "context": "shortcut key caption",
     "translation": "全部加入手牌"
   },
-  "Sb4b2A": {
-    "message": "Allow board flip <0>(both players)</0>",
-    "translation": "允许翻转牌桌<0>（双方玩家）</0>"
+  "Z2UuYT": {
+    "message": "Allow board flip",
+    "translation": "允许翻转牌桌"
   },
   "vj7KYC": {
     "message": "Already in hand",
@@ -1516,6 +1516,18 @@
     "message": "Both",
     "context": "show both halves of the table",
     "translation": "双方"
+  },
+  "-xs46B": {
+    "message": "Both players must allow it.",
+    "translation": "需要双方玩家都允许。"
+  },
+  "nqjpOW": {
+    "message": "Both seats are taken.",
+    "translation": "座位已满。"
+  },
+  "5XVQGs": {
+    "message": "Both seats are taken. Ask for a spectator invitation.",
+    "translation": "座位已满。请索取观战邀请。"
   },
   "7jOTCJ": {
     "message": "Both sides",
@@ -1874,19 +1886,6 @@
     "message": "Connection lost.",
     "translation": "连接已断开。"
   },
-  "c0_6W9": {
-    "message": "Copied",
-    "context": "an invitation",
-    "translation": "已复制"
-  },
-  "ITnJNv": {
-    "message": "Copy an invitation",
-    "translation": "复制邀请"
-  },
-  "Yc1XTF": {
-    "message": "Copy invitation",
-    "translation": "复制邀请"
-  },
   "PSlXm_": {
     "message": "Copy list",
     "translation": "复制列表"
@@ -1899,17 +1898,9 @@
     "message": "Couldn't check that. Try again.",
     "translation": "无法检查，请重试。"
   },
-  "gklFA4": {
-    "message": "Couldn't copy the invitation",
-    "translation": "无法复制邀请"
-  },
-  "sA7lnV": {
-    "message": "Couldn't copy the invitation. Try again.",
-    "translation": "无法复制邀请，请重试。"
-  },
-  "O3p0SF": {
-    "message": "Couldn't generate a room. Try again.",
-    "translation": "无法生成房间，请重试。"
+  "8T-Jx-": {
+    "message": "Couldn't create a room. Try again.",
+    "translation": "无法创建房间，请重试。"
   },
   "Glz9_Y": {
     "message": "Couldn't join the room. Try again.",
@@ -1939,6 +1930,10 @@
     "message": "Couldn't read that list",
     "translation": "无法读取该列表"
   },
+  "cU_nca": {
+    "message": "Couldn't read the clipboard. Paste with the keyboard.",
+    "translation": "无法读取剪贴板，请用键盘粘贴。"
+  },
   "heYM3E": {
     "message": "Couldn't resume the game",
     "translation": "无法继续游戏"
@@ -1947,6 +1942,10 @@
     "message": "Couldn't save the game",
     "translation": "无法保存对战"
   },
+  "TC3rNW": {
+    "message": "Couldn't share the invitation. Try again.",
+    "translation": "无法分享邀请，请重试。"
+  },
   "hCQkU8": {
     "message": "Couldn't start Solo mode. Try again.",
     "translation": "无法开始单人模式，请重试。"
@@ -1954,10 +1953,6 @@
   "eP7qeF": {
     "message": "Couldn't start the tutorial. Try again.",
     "translation": "无法开始教程，请重试。"
-  },
-  "nzVItu": {
-    "message": "Couldn't use the clipboard. Allow access and try again.",
-    "translation": "无法使用剪贴板，请允许访问后重试。"
   },
   "U9OFiD": {
     "message": "cover",
@@ -1970,6 +1965,20 @@
       "A table look: the colour"
     ],
     "translation": "奶油色"
+  },
+  "E6-4ez": {
+    "message": "Create a room, or join one with a link.",
+    "translation": "创建房间，或通过链接加入。"
+  },
+  "xE_hmo": {
+    "message": "Create room",
+    "context": "a room",
+    "translation": "创建房间"
+  },
+  "_LHski": {
+    "message": "Creating…",
+    "context": "a room",
+    "translation": "创建中…"
   },
   "ETt3ev": {
     "message": "Ctrl",
@@ -2287,6 +2296,10 @@
   "IsvGW6": {
     "message": "Drop to import",
     "translation": "拖放以导入"
+  },
+  "kWPbQy": {
+    "message": "Drop to open",
+    "translation": "松开以打开"
   },
   "d3YoNV": {
     "message": "Dropped",
@@ -2655,28 +2668,6 @@
     "message": "Game resumed",
     "translation": "对战已继续"
   },
-  "oP3kz7": {
-    "message": "Generate",
-    "context": "a room",
-    "translation": "生成"
-  },
-  "mb6Tyv": {
-    "message": "Generate a room and send the invitation. With <0>Join as spectator</0> on, it invites a spectator.",
-    "translation": "生成房间并发送邀请。开启<0>以观战者身份加入</0>后，将邀请观战者。"
-  },
-  "5NEkeP": {
-    "message": "Generate a room first.",
-    "translation": "请先生成房间。"
-  },
-  "G7A2K4": {
-    "message": "Generate a room, then send the invitation.",
-    "translation": "请先生成房间，再发送邀请。"
-  },
-  "fQq7dv": {
-    "message": "Generating…",
-    "context": "a room",
-    "translation": "生成中…"
-  },
   "4RM73X": {
     "message": "Get a sponsor tag on your GitHub profile (if sponsoring via GitHub, not applicable for sponsors through PayPal. Currently in the process of getting my GH sponsor page approved 😛).",
     "translation": "在你的 GitHub 个人资料上获得赞助者标签（仅适用于通过 GitHub 赞助，通过 PayPal 赞助不适用。目前正在申请我的 GitHub 赞助页面审核 😛）。"
@@ -2761,6 +2752,10 @@
       "The developer's personal note on the Sponsors & Donations page"
     ],
     "translation": "大家好！我是 Michael/Xiao Xiao Long，来自加拿大圭尔夫，今年 21 岁，2023 年秋天开始学习编程。我玩宝可梦集换式卡牌游戏已经超过 8 年，并花了最近 3 个月开发 PTCG-sim，这是一个免费的工具，供大家测试和游玩我们喜爱的卡牌游戏。"
+  },
+  "vLyv1R": {
+    "message": "Hide",
+    "translation": "隐藏"
   },
   "pWgsbk": {
     "message": "Hide",
@@ -2925,13 +2920,24 @@
     ],
     "translation": "国际赛"
   },
-  "6vI3XA": {
-    "message": "Invitation copied",
-    "translation": "已复制邀请"
+  "KhBSE_": {
+    "message": "Invitation",
+    "comments": [
+      "The link or code that lets someone join a room"
+    ],
+    "translation": "邀请"
   },
-  "z1vTYz": {
-    "message": "Invitation copied to your clipboard.",
-    "translation": "邀请已复制到剪贴板。"
+  "au3LEA": {
+    "message": "Invitation link copied",
+    "translation": "已复制邀请链接"
+  },
+  "Za0iMR": {
+    "message": "Invite opponent",
+    "translation": "邀请对手"
+  },
+  "UoRWrm": {
+    "message": "Invite spectator",
+    "translation": "邀请观战者"
   },
   "0pN9y3": {
     "message": "It stays open for another draw. Press <0>Esc</0> twice to close it.",
@@ -3041,6 +3047,10 @@
   "M-FK_f": {
     "message": "Leave room",
     "translation": "离开房间"
+  },
+  "Qxgi9O": {
+    "message": "Leave the room to join another.",
+    "translation": "离开当前房间后才能加入其他房间。"
   },
   "82LZ4F": {
     "message": "Leave the room to start the tutorial.",
@@ -3800,6 +3810,10 @@
     "message": "Open the deck screen",
     "translation": "打开卡组界面"
   },
+  "rT710w": {
+    "message": "Open the link again in a moment.",
+    "translation": "请稍后再次打开链接。"
+  },
   "cCMcAY": {
     "message": "Open their deck",
     "translation": "打开对方牌库"
@@ -3910,6 +3924,11 @@
     "context": "paste a list from the clipboard",
     "translation": "粘贴"
   },
+  "L3kYdG": {
+    "message": "Paste",
+    "context": "paste from the clipboard",
+    "translation": "粘贴"
+  },
   "BRnJkz": {
     "message": "Paste a decklist first.",
     "translation": "请先粘贴卡组列表。"
@@ -3918,21 +3937,17 @@
     "message": "Paste a list from the clipboard",
     "translation": "从剪贴板粘贴卡组列表"
   },
-  "Ig8A-t": {
-    "message": "Paste a valid invitation into Room ID.",
-    "translation": "请将有效的邀请粘贴到房间 ID。"
+  "7hnHtA": {
+    "message": "Paste or drop the link you were sent.",
+    "translation": "粘贴或拖入收到的链接。"
   },
-  "pJRgD4": {
-    "message": "Paste an invitation",
-    "translation": "粘贴邀请"
+  "erh83Q": {
+    "message": "Paste the invitation link you were sent.",
+    "translation": "粘贴收到的邀请链接。"
   },
-  "4LC7ch": {
-    "message": "Paste an invitation, or join your own room.",
-    "translation": "粘贴邀请，或加入你自己的房间。"
-  },
-  "3J14ru": {
-    "message": "Paste the invitation into Room ID.",
-    "translation": "请将邀请粘贴到房间 ID。"
+  "ax6uck": {
+    "message": "Paste the link",
+    "translation": "粘贴链接"
   },
   "MfH2NF": {
     "message": "Paste with Ctrl+V (⌘V) instead",
@@ -4478,6 +4493,20 @@
     ],
     "translation": "房间"
   },
+  "GzC7XU": {
+    "message": "Room {0} · to play",
+    "comments": [
+      "roomCode is a short code like K7PQ2M"
+    ],
+    "translation": "房间 {0} · 对战"
+  },
+  "0sQWkX": {
+    "message": "Room {0} · to watch",
+    "comments": [
+      "roomCode is a short code like K7PQ2M"
+    ],
+    "translation": "房间 {0} · 观战"
+  },
   "euMx3W": {
     "message": "Room {roomCode}",
     "comments": [
@@ -4485,9 +4514,9 @@
     ],
     "translation": "房间 {roomCode}"
   },
-  "QoZkYe": {
-    "message": "Room ID",
-    "translation": "房间 ID"
+  "tFii6J": {
+    "message": "Room ready",
+    "translation": "房间已就绪"
   },
   "pbJSIc": {
     "message": "Rotate",
@@ -4664,6 +4693,10 @@
     "message": "Season",
     "translation": "赛季"
   },
+  "wRfrN3": {
+    "message": "Seat taken",
+    "translation": "座位已被占用"
+  },
   "tGu7Tl": {
     "message": "Selected card",
     "comments": [
@@ -4688,6 +4721,10 @@
   "pi1oME": {
     "message": "Send message",
     "translation": "发送消息"
+  },
+  "QYIzdx": {
+    "message": "Send your opponent a link. Each works once.",
+    "translation": "把链接发给对手。每个链接只能使用一次。"
   },
   "Of0ksK": {
     "message": "Seriously do not think anyone will subscribe to this, but I would be immensely grateful.",
@@ -5317,13 +5354,13 @@
     "message": "That Energy has left your hand.",
     "translation": "那张能量已离开你的手牌。"
   },
+  "fIHd89": {
+    "message": "That file can't be opened here.",
+    "translation": "无法在此打开该文件。"
+  },
   "ZMr878": {
     "message": "That image didn't load.",
     "translation": "该图片未能加载。"
-  },
-  "UoxtKp": {
-    "message": "That invitation expired. Ask for a new one.",
-    "translation": "该邀请已过期。请重新索取。"
   },
   "B4ZAXF": {
     "message": "That one was skipped.",
@@ -5491,6 +5528,10 @@
   "5PdIYU": {
     "message": "This game will be lost.",
     "translation": "本局对战将会丢失。"
+  },
+  "5HIoIb": {
+    "message": "This invitation was used or has expired. Ask for a new one.",
+    "translation": "此邀请已被使用或已过期，请索取新的邀请。"
   },
   "L7LU5x": {
     "message": "This tutorial waits in the <0>menu</0> whenever you want it.",
@@ -5948,6 +5989,10 @@
     "context": "filter",
     "translation": "是"
   },
+  "1hxqre": {
+    "message": "You'll invite players from the room.",
+    "translation": "你将在房间内邀请玩家。"
+  },
   "VvkF_g": {
     "message": "You're watching",
     "translation": "你正在观战"
@@ -5993,10 +6038,6 @@
   "BHcJOF": {
     "message": "Your Lost Zone",
     "translation": "我方放逐区"
-  },
-  "23cwkx": {
-    "message": "Your name changed. Generate a new room.",
-    "translation": "你的名称已更改。请重新生成房间。"
   },
   "Oi-Qz3": {
     "message": "Your playboard",

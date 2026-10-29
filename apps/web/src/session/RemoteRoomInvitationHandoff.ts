@@ -1,5 +1,5 @@
 import {
-  parseRoomInvitationHandoffText,
+  parseRoomInvitationText,
   type RoomInvitationHandoff,
 } from '@ptcgsim/protocol';
 
@@ -79,11 +79,25 @@ export class RemoteRoomInvitationJoinCustody {
     } catch {
       throw new RemoteRoomInvitationHandoffError('invalid_handoff');
     }
-    return this.acceptText(text);
+    return this.#accept(text);
   }
 
-  private acceptText(text: unknown): RemoteRoomInvitationHandoffReceipt {
-    const parsed = parseRoomInvitationHandoffText(text);
+  /**
+   * Takes an invitation that reached the page another way: a link opened
+   * (its fragment, captured before the app ran), text dropped on the Play
+   * online sheet, or the clipboard read by its Paste button. The text goes
+   * no further than this custody either way.
+   */
+  acceptText(text: unknown): RemoteRoomInvitationHandoffReceipt {
+    this.assertAvailable();
+    this.assertIdle();
+    this.#handoff = undefined;
+    return this.#accept(text);
+  }
+
+  #accept(text: unknown): RemoteRoomInvitationHandoffReceipt {
+    // The envelope, a link to it, or the link's fragment.
+    const parsed = parseRoomInvitationText(text);
     if (!parsed.ok) {
       throw new RemoteRoomInvitationHandoffError('invalid_handoff');
     }

@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
-import { parseRoomInvitationHandoffText } from '@ptcgsim/protocol';
+import {
+  parseRoomInvitationHandoffText,
+  parseRoomInvitationText,
+} from '@ptcgsim/protocol';
 
 import {
   bootstrapRemoteRoomInvitation,
@@ -453,43 +456,76 @@ describe('remote room invitation custody', () => {
     expect(receivers).toEqual([undefined]);
   });
 
-  it('copies a spectator invitation once both seats are taken, in the one clipboard write the click began', async () => {
-    const fetchImplementation = vi
-      .fn<typeof fetch>()
-      .mockResolvedValueOnce(
-        Response.json({ error: 'seat_unavailable' }, { status: 409 })
+  it('passes an invitation on as a link that opens the game into its room, begun inside the press', async () => {
+    const fetchImplementation = vi.fn(async () =>
+      Response.json(
+        {
+          invitation: spectatorInvitation,
+          requestedRole: 'spectator',
+          expiresAt: 910_000,
+        },
+        { status: 201 }
       )
-      .mockResolvedValueOnce(
-        Response.json(
-          {
-            invitation: spectatorInvitation,
-            requestedRole: 'spectator',
-            expiresAt: 910_000,
-          },
-          { status: 201 }
-        )
-      );
+    );
     const custody = new RemoteRoomInvitationCustody({
       roomCode: 'ABCDEFGH2345',
       playerCapability: credentials.playerTwoSeatCapability,
       spectatorCapability: credentials.spectatorCapability,
       fetch: fetchImplementation,
       origin: new URL('https://play.example'),
+      linkBase: 'https://play.example/',
     });
-    const clipboard = capturingClipboard();
-    let writes = 0;
+    const links: Promise<string>[] = [];
+    const receipt = custody.invite('spectator', (link) => {
+      links.push(link);
+      return link.then(() => 'shared' as const);
+    });
+    // Handed the link still being minted, at once: a copy can begin while
+    // the press still counts.
+    expect(links).toHaveLength(1);
+    await expect(receipt).resolves.toEqual({
+      roomCode: 'ABCDEFGH2345',
+      requestedRole: 'spectator',
+      expiresAt: 910_000,
+      outcome: 'shared',
+    });
+    const link = await links[0]!;
+    expect(link).toMatch(/^https:\/\/play\.example\/#invite=[A-Za-z0-9_-]+$/u);
+    // The link carries exactly the invitation the room minted.
+    expect(parseRoomInvitationText(link)).toEqual({
+      ok: true,
+      value: {
+        roomCode: 'ABCDEFGH2345',
+        invitation: spectatorInvitation,
+        requestedRole: 'spectator',
+        expiresAt: 910_000,
+      },
+    });
+    expect(JSON.stringify(receipt)).not.toContain(spectatorInvitation);
+  });
+
+  it('answers an opponent invite with the room’s word that the seat is taken, passing nothing on', async () => {
+    const custody = new RemoteRoomInvitationCustody({
+      roomCode: 'ABCDEFGH2345',
+      playerCapability: credentials.playerTwoSeatCapability,
+      spectatorCapability: credentials.spectatorCapability,
+      fetch: vi.fn(async () =>
+        Response.json({ error: 'seat_unavailable' }, { status: 409 })
+      ),
+      origin: new URL('https://play.example'),
+    });
+    let delivered = false;
     await expect(
-      custody.copyPlayerOrSpectatorInvitation({
-        writeText: (text) => {
-          writes += 1;
-          return clipboard.writer.writeText(text);
-        },
+      custody.invite('player', async (link) => {
+        await link;
+        delivered = true;
+        return 'copied';
       })
-    ).resolves.toMatchObject({ requestedRole: 'spectator' });
-    expect(writes).toBe(1);
-    expect(clipboard.values).toHaveLength(1);
-    expect(clipboard.values[0]).toContain(spectatorInvitation);
-    expect(fetchImplementation).toHaveBeenCalledTimes(2);
+    ).rejects.toMatchObject({ code: 'seat_unavailable' });
+    expect(delivered).toBe(false);
+    await expect(custody.invite('player', undefined)).rejects.toMatchObject({
+      code: 'clipboard_unavailable',
+    });
   });
 
   it('does not serialize secrets and clears every master credential on dispose', async () => {
@@ -797,5 +833,36 @@ describe('invited remote room bootstrap', () => {
     await expect(join(5_000).joined).rejects.toMatchObject({
       code: 'exchange_failed',
     });
+  });
+
+  it('says why the room refused an invitation, where it said: used up, or its seat taken', async () => {
+    const invitation = {
+      roomCode: 'ABCDEFGH2345',
+      requestedRole: 'player' as const,
+      invitation: playerInvitation,
+      expiresAt: 900_000,
+    };
+    const joinAgainst = (response: Response) =>
+      bootstrapRemoteRoomInvitation(
+        { buildId: 'client-build', displayName: 'Red', invitation },
+        {
+          fetch: vi.fn<typeof fetch>(async () => response),
+          origin: 'https://play.example',
+          now: () => 1_000,
+        }
+      );
+    // A link opened a second time: the room has spent its claim.
+    await expect(
+      joinAgainst(
+        Response.json({ error: 'admission_rejected' }, { status: 403 })
+      )
+    ).rejects.toMatchObject({ code: 'invitation_refused' });
+    await expect(
+      joinAgainst(Response.json({ error: 'seat_unavailable' }, { status: 409 }))
+    ).rejects.toMatchObject({ code: 'seat_unavailable' });
+    // Busy, or a reason it didn't give: a failure to retry.
+    await expect(
+      joinAgainst(Response.json({ error: 'rate_limited' }, { status: 429 }))
+    ).rejects.toMatchObject({ code: 'exchange_failed' });
   });
 });

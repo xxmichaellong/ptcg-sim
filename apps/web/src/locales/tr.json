@@ -1001,13 +1001,13 @@
     ],
     "translation": "<0>{0}</0>: her iki taraf için bir deste oluştur, içe aktar ya da seç."
   },
+  "SZcDv9": {
+    "message": "<0>{0}</0>: create a room, then send a friend its link.",
+    "translation": "<0>{0}</0>: bir oda oluştur, sonra bağlantısını bir arkadaşına gönder."
+  },
   "F7xH8_": {
     "message": "<0>{0}</0>: every move, and the chat.",
     "translation": "<0>{0}</0>: tüm hamleler ve sohbet."
-  },
-  "l7W_Ze": {
-    "message": "<0>{0}</0>: send a friend a link to your table.",
-    "translation": "<0>{0}</0>: masanın bağlantısını bir arkadaşına gönder."
   },
   "NaneTg": {
     "message": "<0>{0}</0>: the table's look, the theme and the language.",
@@ -1220,9 +1220,9 @@
     "context": "shortcut key caption",
     "translation": "Hepsi ele"
   },
-  "Sb4b2A": {
-    "message": "Allow board flip <0>(both players)</0>",
-    "translation": "Masayı çevirmeye izin ver <0>(iki oyuncu için)</0>"
+  "Z2UuYT": {
+    "message": "Allow board flip",
+    "translation": "Oyun alanını çevirmeye izin ver"
   },
   "vj7KYC": {
     "message": "Already in hand",
@@ -1516,6 +1516,18 @@
     "message": "Both",
     "context": "show both halves of the table",
     "translation": "İkisi"
+  },
+  "-xs46B": {
+    "message": "Both players must allow it.",
+    "translation": "İki oyuncunun da izin vermesi gerekir."
+  },
+  "nqjpOW": {
+    "message": "Both seats are taken.",
+    "translation": "İki koltuk da dolu."
+  },
+  "5XVQGs": {
+    "message": "Both seats are taken. Ask for a spectator invitation.",
+    "translation": "İki koltuk da dolu. Seyirci daveti iste."
   },
   "7jOTCJ": {
     "message": "Both sides",
@@ -1874,19 +1886,6 @@
     "message": "Connection lost.",
     "translation": "Bağlantı koptu."
   },
-  "c0_6W9": {
-    "message": "Copied",
-    "context": "an invitation",
-    "translation": "Kopyalandı"
-  },
-  "ITnJNv": {
-    "message": "Copy an invitation",
-    "translation": "Davet kopyala"
-  },
-  "Yc1XTF": {
-    "message": "Copy invitation",
-    "translation": "Daveti kopyala"
-  },
   "PSlXm_": {
     "message": "Copy list",
     "translation": "Listeyi kopyala"
@@ -1899,17 +1898,9 @@
     "message": "Couldn't check that. Try again.",
     "translation": "Bu denetlenemedi. Yeniden dene."
   },
-  "gklFA4": {
-    "message": "Couldn't copy the invitation",
-    "translation": "Davet kopyalanamadı"
-  },
-  "sA7lnV": {
-    "message": "Couldn't copy the invitation. Try again.",
-    "translation": "Davet kopyalanamadı. Yeniden dene."
-  },
-  "O3p0SF": {
-    "message": "Couldn't generate a room. Try again.",
-    "translation": "Oda oluşturulamadı. Yeniden dene."
+  "8T-Jx-": {
+    "message": "Couldn't create a room. Try again.",
+    "translation": "Oda oluşturulamadı. Tekrar dene."
   },
   "Glz9_Y": {
     "message": "Couldn't join the room. Try again.",
@@ -1939,6 +1930,10 @@
     "message": "Couldn't read that list",
     "translation": "Bu liste okunamadı"
   },
+  "cU_nca": {
+    "message": "Couldn't read the clipboard. Paste with the keyboard.",
+    "translation": "Pano okunamadı. Klavyeyle yapıştır."
+  },
   "heYM3E": {
     "message": "Couldn't resume the game",
     "translation": "Oyuna devam edilemedi"
@@ -1947,6 +1942,10 @@
     "message": "Couldn't save the game",
     "translation": "Oyun kaydedilemedi"
   },
+  "TC3rNW": {
+    "message": "Couldn't share the invitation. Try again.",
+    "translation": "Davet paylaşılamadı. Tekrar dene."
+  },
   "hCQkU8": {
     "message": "Couldn't start Solo mode. Try again.",
     "translation": "Solo modu başlatılamadı. Tekrar dene."
@@ -1954,10 +1953,6 @@
   "eP7qeF": {
     "message": "Couldn't start the tutorial. Try again.",
     "translation": "Eğitim başlatılamadı. Tekrar dene."
-  },
-  "nzVItu": {
-    "message": "Couldn't use the clipboard. Allow access and try again.",
-    "translation": "Panoya erişilemedi. Erişime izin ver ve tekrar dene."
   },
   "U9OFiD": {
     "message": "cover",
@@ -1970,6 +1965,20 @@
       "A table look: the colour"
     ],
     "translation": "Krem"
+  },
+  "E6-4ez": {
+    "message": "Create a room, or join one with a link.",
+    "translation": "Bir oda oluştur ya da bir bağlantıyla katıl."
+  },
+  "xE_hmo": {
+    "message": "Create room",
+    "context": "a room",
+    "translation": "Oda oluştur"
+  },
+  "_LHski": {
+    "message": "Creating…",
+    "context": "a room",
+    "translation": "Oluşturuluyor…"
   },
   "ETt3ev": {
     "message": "Ctrl",
@@ -2287,6 +2296,10 @@
   "IsvGW6": {
     "message": "Drop to import",
     "translation": "İçe aktarmak için bırak"
+  },
+  "kWPbQy": {
+    "message": "Drop to open",
+    "translation": "Açmak için bırak"
   },
   "d3YoNV": {
     "message": "Dropped",
@@ -2655,28 +2668,6 @@
     "message": "Game resumed",
     "translation": "Oyun devam ediyor"
   },
-  "oP3kz7": {
-    "message": "Generate",
-    "context": "a room",
-    "translation": "Oluştur"
-  },
-  "mb6Tyv": {
-    "message": "Generate a room and send the invitation. With <0>Join as spectator</0> on, it invites a spectator.",
-    "translation": "Bir oda oluştur ve daveti gönder. <0>İzleyici olarak katıl</0> açıksa izleyici davet eder."
-  },
-  "5NEkeP": {
-    "message": "Generate a room first.",
-    "translation": "Önce bir oda oluştur."
-  },
-  "G7A2K4": {
-    "message": "Generate a room, then send the invitation.",
-    "translation": "Bir oda oluştur, sonra daveti gönder."
-  },
-  "fQq7dv": {
-    "message": "Generating…",
-    "context": "a room",
-    "translation": "Oluşturuluyor…"
-  },
   "4RM73X": {
     "message": "Get a sponsor tag on your GitHub profile (if sponsoring via GitHub, not applicable for sponsors through PayPal. Currently in the process of getting my GH sponsor page approved 😛).",
     "translation": "GitHub profilinde sponsor etiketi kazan (yalnızca GitHub üzerinden sponsor olanlar için geçerlidir, PayPal ile sponsor olanlar için geçerli değildir. GH sponsor sayfamın onaylanması şu an süreçte 😛)."
@@ -2761,6 +2752,10 @@
       "The developer's personal note on the Sponsors & Donations page"
     ],
     "translation": "Herkese merhaba! Ben Michael/Xiao Xiao Long. Kanada'nın Guelph şehrinden 21 yaşında biriyim ve 2023 sonbaharında programlamaya başladım. 8 yıldan uzun süredir Pokémon TCG oynuyorum ve son 3 ayı, en sevdiğimiz kart oyununu test etmek ve oynamak için toplulukla paylaşılan ücretsiz bir araç olan PTCG-sim'i geliştirerek geçirdim."
+  },
+  "vLyv1R": {
+    "message": "Hide",
+    "translation": "Gizle"
   },
   "pWgsbk": {
     "message": "Hide",
@@ -2925,13 +2920,24 @@
     ],
     "translation": "Uluslararası"
   },
-  "6vI3XA": {
-    "message": "Invitation copied",
-    "translation": "Davet kopyalandı"
+  "KhBSE_": {
+    "message": "Invitation",
+    "comments": [
+      "The link or code that lets someone join a room"
+    ],
+    "translation": "Davet"
   },
-  "z1vTYz": {
-    "message": "Invitation copied to your clipboard.",
-    "translation": "Davet panoya kopyalandı."
+  "au3LEA": {
+    "message": "Invitation link copied",
+    "translation": "Davet bağlantısı kopyalandı"
+  },
+  "Za0iMR": {
+    "message": "Invite opponent",
+    "translation": "Rakibi davet et"
+  },
+  "UoRWrm": {
+    "message": "Invite spectator",
+    "translation": "Seyirci davet et"
   },
   "0pN9y3": {
     "message": "It stays open for another draw. Press <0>Esc</0> twice to close it.",
@@ -3041,6 +3047,10 @@
   "M-FK_f": {
     "message": "Leave room",
     "translation": "Odadan ayrıl"
+  },
+  "Qxgi9O": {
+    "message": "Leave the room to join another.",
+    "translation": "Başka bir odaya katılmak için odadan ayrıl."
   },
   "82LZ4F": {
     "message": "Leave the room to start the tutorial.",
@@ -3800,6 +3810,10 @@
     "message": "Open the deck screen",
     "translation": "Deste ekranını aç"
   },
+  "rT710w": {
+    "message": "Open the link again in a moment.",
+    "translation": "Bağlantıyı birazdan tekrar aç."
+  },
   "cCMcAY": {
     "message": "Open their deck",
     "translation": "Rakibin destesini aç"
@@ -3910,6 +3924,11 @@
     "context": "paste a list from the clipboard",
     "translation": "Yapıştır"
   },
+  "L3kYdG": {
+    "message": "Paste",
+    "context": "paste from the clipboard",
+    "translation": "Yapıştır"
+  },
   "BRnJkz": {
     "message": "Paste a decklist first.",
     "translation": "Önce bir deste listesi yapıştır."
@@ -3918,21 +3937,17 @@
     "message": "Paste a list from the clipboard",
     "translation": "Panodan bir liste yapıştır"
   },
-  "Ig8A-t": {
-    "message": "Paste a valid invitation into Room ID.",
-    "translation": "Oda kimliği alanına geçerli bir davet yapıştır."
+  "7hnHtA": {
+    "message": "Paste or drop the link you were sent.",
+    "translation": "Sana gönderilen bağlantıyı yapıştır veya bırak."
   },
-  "pJRgD4": {
-    "message": "Paste an invitation",
-    "translation": "Davet yapıştır"
+  "erh83Q": {
+    "message": "Paste the invitation link you were sent.",
+    "translation": "Sana gönderilen davet bağlantısını yapıştır."
   },
-  "4LC7ch": {
-    "message": "Paste an invitation, or join your own room.",
-    "translation": "Bir davet yapıştır veya kendi odana katıl."
-  },
-  "3J14ru": {
-    "message": "Paste the invitation into Room ID.",
-    "translation": "Daveti Oda kimliği alanına yapıştır."
+  "ax6uck": {
+    "message": "Paste the link",
+    "translation": "Bağlantıyı yapıştır"
   },
   "MfH2NF": {
     "message": "Paste with Ctrl+V (⌘V) instead",
@@ -4478,6 +4493,20 @@
     ],
     "translation": "Oda"
   },
+  "GzC7XU": {
+    "message": "Room {0} · to play",
+    "comments": [
+      "roomCode is a short code like K7PQ2M"
+    ],
+    "translation": "Oda {0} · oynamak için"
+  },
+  "0sQWkX": {
+    "message": "Room {0} · to watch",
+    "comments": [
+      "roomCode is a short code like K7PQ2M"
+    ],
+    "translation": "Oda {0} · izlemek için"
+  },
   "euMx3W": {
     "message": "Room {roomCode}",
     "comments": [
@@ -4485,9 +4514,9 @@
     ],
     "translation": "Oda {roomCode}"
   },
-  "QoZkYe": {
-    "message": "Room ID",
-    "translation": "Oda kimliği"
+  "tFii6J": {
+    "message": "Room ready",
+    "translation": "Oda hazır"
   },
   "pbJSIc": {
     "message": "Rotate",
@@ -4664,6 +4693,10 @@
     "message": "Season",
     "translation": "Sezon"
   },
+  "wRfrN3": {
+    "message": "Seat taken",
+    "translation": "Koltuk dolu"
+  },
   "tGu7Tl": {
     "message": "Selected card",
     "comments": [
@@ -4688,6 +4721,10 @@
   "pi1oME": {
     "message": "Send message",
     "translation": "Mesaj gönder"
+  },
+  "QYIzdx": {
+    "message": "Send your opponent a link. Each works once.",
+    "translation": "Rakibine bir bağlantı gönder. Her biri bir kez çalışır."
   },
   "Of0ksK": {
     "message": "Seriously do not think anyone will subscribe to this, but I would be immensely grateful.",
@@ -5317,13 +5354,13 @@
     "message": "That Energy has left your hand.",
     "translation": "O Enerji elinden çıktı."
   },
+  "fIHd89": {
+    "message": "That file can't be opened here.",
+    "translation": "Bu dosya burada açılamıyor."
+  },
   "ZMr878": {
     "message": "That image didn't load.",
     "translation": "Bu görsel yüklenmedi."
-  },
-  "UoxtKp": {
-    "message": "That invitation expired. Ask for a new one.",
-    "translation": "Bu davetin süresi doldu. Yeni bir davet iste."
   },
   "B4ZAXF": {
     "message": "That one was skipped.",
@@ -5491,6 +5528,10 @@
   "5PdIYU": {
     "message": "This game will be lost.",
     "translation": "Bu oyun kaybolacak."
+  },
+  "5HIoIb": {
+    "message": "This invitation was used or has expired. Ask for a new one.",
+    "translation": "Bu davet kullanılmış veya süresi dolmuş. Yenisini iste."
   },
   "L7LU5x": {
     "message": "This tutorial waits in the <0>menu</0> whenever you want it.",
@@ -5948,6 +5989,10 @@
     "context": "filter",
     "translation": "Evet"
   },
+  "1hxqre": {
+    "message": "You'll invite players from the room.",
+    "translation": "Oyuncuları odadan davet edeceksin."
+  },
   "VvkF_g": {
     "message": "You're watching",
     "translation": "İzliyorsun"
@@ -5993,10 +6038,6 @@
   "BHcJOF": {
     "message": "Your Lost Zone",
     "translation": "Lost Zone'un"
-  },
-  "23cwkx": {
-    "message": "Your name changed. Generate a new room.",
-    "translation": "Adın değişti. Yeni bir oda oluştur."
   },
   "Oi-Qz3": {
     "message": "Your playboard",

@@ -1001,13 +1001,13 @@
     ],
     "translation": "<0>{0}</0>: tạo, nhập hoặc chọn bộ bài cho mỗi bên."
   },
+  "SZcDv9": {
+    "message": "<0>{0}</0>: create a room, then send a friend its link.",
+    "translation": "<0>{0}</0>: tạo phòng, rồi gửi liên kết của phòng cho bạn bè."
+  },
   "F7xH8_": {
     "message": "<0>{0}</0>: every move, and the chat.",
     "translation": "<0>{0}</0>: mọi nước đi và cuộc trò chuyện."
-  },
-  "l7W_Ze": {
-    "message": "<0>{0}</0>: send a friend a link to your table.",
-    "translation": "<0>{0}</0>: gửi cho bạn bè liên kết đến bàn của bạn."
   },
   "NaneTg": {
     "message": "<0>{0}</0>: the table's look, the theme and the language.",
@@ -1220,9 +1220,9 @@
     "context": "shortcut key caption",
     "translation": "Tất cả lên tay"
   },
-  "Sb4b2A": {
-    "message": "Allow board flip <0>(both players)</0>",
-    "translation": "Cho phép lật bàn <0>(cả hai người chơi)</0>"
+  "Z2UuYT": {
+    "message": "Allow board flip",
+    "translation": "Cho phép lật thảm chơi"
   },
   "vj7KYC": {
     "message": "Already in hand",
@@ -1516,6 +1516,18 @@
     "message": "Both",
     "context": "show both halves of the table",
     "translation": "Cả hai"
+  },
+  "-xs46B": {
+    "message": "Both players must allow it.",
+    "translation": "Cả hai người chơi đều phải cho phép."
+  },
+  "nqjpOW": {
+    "message": "Both seats are taken.",
+    "translation": "Cả hai chỗ ngồi đã có người."
+  },
+  "5XVQGs": {
+    "message": "Both seats are taken. Ask for a spectator invitation.",
+    "translation": "Cả hai chỗ ngồi đã có người. Hãy xin lời mời xem trận."
   },
   "7jOTCJ": {
     "message": "Both sides",
@@ -1874,19 +1886,6 @@
     "message": "Connection lost.",
     "translation": "Mất kết nối."
   },
-  "c0_6W9": {
-    "message": "Copied",
-    "context": "an invitation",
-    "translation": "Đã sao chép"
-  },
-  "ITnJNv": {
-    "message": "Copy an invitation",
-    "translation": "Sao chép lời mời"
-  },
-  "Yc1XTF": {
-    "message": "Copy invitation",
-    "translation": "Sao chép lời mời"
-  },
   "PSlXm_": {
     "message": "Copy list",
     "translation": "Sao chép danh sách"
@@ -1899,17 +1898,9 @@
     "message": "Couldn't check that. Try again.",
     "translation": "Không kiểm tra được. Hãy thử lại."
   },
-  "gklFA4": {
-    "message": "Couldn't copy the invitation",
-    "translation": "Không sao chép được lời mời"
-  },
-  "sA7lnV": {
-    "message": "Couldn't copy the invitation. Try again.",
-    "translation": "Không sao chép được lời mời. Hãy thử lại."
-  },
-  "O3p0SF": {
-    "message": "Couldn't generate a room. Try again.",
-    "translation": "Không tạo được phòng. Hãy thử lại."
+  "8T-Jx-": {
+    "message": "Couldn't create a room. Try again.",
+    "translation": "Không thể tạo phòng. Hãy thử lại."
   },
   "Glz9_Y": {
     "message": "Couldn't join the room. Try again.",
@@ -1939,6 +1930,10 @@
     "message": "Couldn't read that list",
     "translation": "Không đọc được danh sách đó"
   },
+  "cU_nca": {
+    "message": "Couldn't read the clipboard. Paste with the keyboard.",
+    "translation": "Không đọc được bộ nhớ tạm. Hãy dán bằng bàn phím."
+  },
   "heYM3E": {
     "message": "Couldn't resume the game",
     "translation": "Không tiếp tục được ván đấu"
@@ -1947,6 +1942,10 @@
     "message": "Couldn't save the game",
     "translation": "Không lưu được ván đấu"
   },
+  "TC3rNW": {
+    "message": "Couldn't share the invitation. Try again.",
+    "translation": "Không thể chia sẻ lời mời. Hãy thử lại."
+  },
   "hCQkU8": {
     "message": "Couldn't start Solo mode. Try again.",
     "translation": "Không bắt đầu được chế độ Solo. Hãy thử lại."
@@ -1954,10 +1953,6 @@
   "eP7qeF": {
     "message": "Couldn't start the tutorial. Try again.",
     "translation": "Không thể bắt đầu hướng dẫn. Hãy thử lại."
-  },
-  "nzVItu": {
-    "message": "Couldn't use the clipboard. Allow access and try again.",
-    "translation": "Không dùng được bộ nhớ tạm. Hãy cho phép truy cập rồi thử lại."
   },
   "U9OFiD": {
     "message": "cover",
@@ -1970,6 +1965,20 @@
       "A table look: the colour"
     ],
     "translation": "Kem"
+  },
+  "E6-4ez": {
+    "message": "Create a room, or join one with a link.",
+    "translation": "Tạo phòng, hoặc vào phòng bằng liên kết."
+  },
+  "xE_hmo": {
+    "message": "Create room",
+    "context": "a room",
+    "translation": "Tạo phòng"
+  },
+  "_LHski": {
+    "message": "Creating…",
+    "context": "a room",
+    "translation": "Đang tạo…"
   },
   "ETt3ev": {
     "message": "Ctrl",
@@ -2287,6 +2296,10 @@
   "IsvGW6": {
     "message": "Drop to import",
     "translation": "Thả vào để nhập"
+  },
+  "kWPbQy": {
+    "message": "Drop to open",
+    "translation": "Thả để mở"
   },
   "d3YoNV": {
     "message": "Dropped",
@@ -2655,28 +2668,6 @@
     "message": "Game resumed",
     "translation": "Ván đấu đã tiếp tục"
   },
-  "oP3kz7": {
-    "message": "Generate",
-    "context": "a room",
-    "translation": "Tạo"
-  },
-  "mb6Tyv": {
-    "message": "Generate a room and send the invitation. With <0>Join as spectator</0> on, it invites a spectator.",
-    "translation": "Tạo phòng và gửi lời mời. Khi bật <0>Vào với tư cách khán giả</0>, lời mời sẽ dành cho khán giả."
-  },
-  "5NEkeP": {
-    "message": "Generate a room first.",
-    "translation": "Hãy tạo phòng trước."
-  },
-  "G7A2K4": {
-    "message": "Generate a room, then send the invitation.",
-    "translation": "Hãy tạo phòng, rồi gửi lời mời."
-  },
-  "fQq7dv": {
-    "message": "Generating…",
-    "context": "a room",
-    "translation": "Đang tạo…"
-  },
   "4RM73X": {
     "message": "Get a sponsor tag on your GitHub profile (if sponsoring via GitHub, not applicable for sponsors through PayPal. Currently in the process of getting my GH sponsor page approved 😛).",
     "translation": "Nhận thẻ nhà tài trợ trên hồ sơ GitHub của bạn (chỉ áp dụng khi tài trợ qua GitHub, không áp dụng cho tài trợ qua PayPal. Hiện mình đang chờ duyệt trang GitHub Sponsors 😛)."
@@ -2761,6 +2752,10 @@
       "The developer's personal note on the Sponsors & Donations page"
     ],
     "translation": "Chào mọi người! Mình là Michael/Xiao Xiao Long, 21 tuổi, đến từ Guelph, Canada, bắt đầu lập trình từ mùa thu năm 2023. Mình chơi Pokémon TCG hơn 8 năm và đã dành 3 tháng gần đây để xây dựng PTCG-sim, một công cụ miễn phí để cộng đồng thử nghiệm và chơi trò chơi bài yêu thích của chúng ta."
+  },
+  "vLyv1R": {
+    "message": "Hide",
+    "translation": "Ẩn"
   },
   "pWgsbk": {
     "message": "Hide",
@@ -2925,13 +2920,24 @@
     ],
     "translation": "International"
   },
-  "6vI3XA": {
-    "message": "Invitation copied",
-    "translation": "Đã sao chép lời mời"
+  "KhBSE_": {
+    "message": "Invitation",
+    "comments": [
+      "The link or code that lets someone join a room"
+    ],
+    "translation": "Lời mời"
   },
-  "z1vTYz": {
-    "message": "Invitation copied to your clipboard.",
-    "translation": "Đã sao chép lời mời vào bộ nhớ tạm."
+  "au3LEA": {
+    "message": "Invitation link copied",
+    "translation": "Đã sao chép liên kết mời"
+  },
+  "Za0iMR": {
+    "message": "Invite opponent",
+    "translation": "Mời đối thủ"
+  },
+  "UoRWrm": {
+    "message": "Invite spectator",
+    "translation": "Mời người xem"
   },
   "0pN9y3": {
     "message": "It stays open for another draw. Press <0>Esc</0> twice to close it.",
@@ -3041,6 +3047,10 @@
   "M-FK_f": {
     "message": "Leave room",
     "translation": "Rời phòng"
+  },
+  "Qxgi9O": {
+    "message": "Leave the room to join another.",
+    "translation": "Hãy rời phòng để vào phòng khác."
   },
   "82LZ4F": {
     "message": "Leave the room to start the tutorial.",
@@ -3800,6 +3810,10 @@
     "message": "Open the deck screen",
     "translation": "Mở màn hình bộ bài"
   },
+  "rT710w": {
+    "message": "Open the link again in a moment.",
+    "translation": "Hãy mở lại liên kết sau giây lát."
+  },
   "cCMcAY": {
     "message": "Open their deck",
     "translation": "Mở bộ bài của đối thủ"
@@ -3910,6 +3924,11 @@
     "context": "paste a list from the clipboard",
     "translation": "Dán"
   },
+  "L3kYdG": {
+    "message": "Paste",
+    "context": "paste from the clipboard",
+    "translation": "Dán"
+  },
   "BRnJkz": {
     "message": "Paste a decklist first.",
     "translation": "Hãy dán danh sách bộ bài trước."
@@ -3918,21 +3937,17 @@
     "message": "Paste a list from the clipboard",
     "translation": "Dán danh sách từ bộ nhớ tạm"
   },
-  "Ig8A-t": {
-    "message": "Paste a valid invitation into Room ID.",
-    "translation": "Dán lời mời hợp lệ vào ô ID phòng."
+  "7hnHtA": {
+    "message": "Paste or drop the link you were sent.",
+    "translation": "Dán hoặc thả liên kết bạn được gửi."
   },
-  "pJRgD4": {
-    "message": "Paste an invitation",
-    "translation": "Dán lời mời"
+  "erh83Q": {
+    "message": "Paste the invitation link you were sent.",
+    "translation": "Dán liên kết mời bạn được gửi."
   },
-  "4LC7ch": {
-    "message": "Paste an invitation, or join your own room.",
-    "translation": "Dán lời mời, hoặc vào phòng của chính bạn."
-  },
-  "3J14ru": {
-    "message": "Paste the invitation into Room ID.",
-    "translation": "Dán lời mời vào ô ID phòng."
+  "ax6uck": {
+    "message": "Paste the link",
+    "translation": "Dán liên kết"
   },
   "MfH2NF": {
     "message": "Paste with Ctrl+V (⌘V) instead",
@@ -4478,6 +4493,20 @@
     ],
     "translation": "Phòng"
   },
+  "GzC7XU": {
+    "message": "Room {0} · to play",
+    "comments": [
+      "roomCode is a short code like K7PQ2M"
+    ],
+    "translation": "Phòng {0} · để chơi"
+  },
+  "0sQWkX": {
+    "message": "Room {0} · to watch",
+    "comments": [
+      "roomCode is a short code like K7PQ2M"
+    ],
+    "translation": "Phòng {0} · để xem"
+  },
   "euMx3W": {
     "message": "Room {roomCode}",
     "comments": [
@@ -4485,9 +4514,9 @@
     ],
     "translation": "Phòng {roomCode}"
   },
-  "QoZkYe": {
-    "message": "Room ID",
-    "translation": "ID phòng"
+  "tFii6J": {
+    "message": "Room ready",
+    "translation": "Phòng đã sẵn sàng"
   },
   "pbJSIc": {
     "message": "Rotate",
@@ -4664,6 +4693,10 @@
     "message": "Season",
     "translation": "Mùa giải"
   },
+  "wRfrN3": {
+    "message": "Seat taken",
+    "translation": "Chỗ đã có người"
+  },
   "tGu7Tl": {
     "message": "Selected card",
     "comments": [
@@ -4688,6 +4721,10 @@
   "pi1oME": {
     "message": "Send message",
     "translation": "Gửi tin nhắn"
+  },
+  "QYIzdx": {
+    "message": "Send your opponent a link. Each works once.",
+    "translation": "Gửi đối thủ một liên kết. Mỗi liên kết chỉ dùng được một lần."
   },
   "Of0ksK": {
     "message": "Seriously do not think anyone will subscribe to this, but I would be immensely grateful.",
@@ -5317,13 +5354,13 @@
     "message": "That Energy has left your hand.",
     "translation": "Năng lượng đó đã rời khỏi tay bạn."
   },
+  "fIHd89": {
+    "message": "That file can't be opened here.",
+    "translation": "Không thể mở tệp đó ở đây."
+  },
   "ZMr878": {
     "message": "That image didn't load.",
     "translation": "Không tải được ảnh đó."
-  },
-  "UoxtKp": {
-    "message": "That invitation expired. Ask for a new one.",
-    "translation": "Lời mời đó đã hết hạn. Hãy xin lời mời mới."
   },
   "B4ZAXF": {
     "message": "That one was skipped.",
@@ -5491,6 +5528,10 @@
   "5PdIYU": {
     "message": "This game will be lost.",
     "translation": "Ván chơi này sẽ bị mất."
+  },
+  "5HIoIb": {
+    "message": "This invitation was used or has expired. Ask for a new one.",
+    "translation": "Lời mời này đã được dùng hoặc đã hết hạn. Hãy xin lời mời mới."
   },
   "L7LU5x": {
     "message": "This tutorial waits in the <0>menu</0> whenever you want it.",
@@ -5948,6 +5989,10 @@
     "context": "filter",
     "translation": "Có"
   },
+  "1hxqre": {
+    "message": "You'll invite players from the room.",
+    "translation": "Bạn sẽ mời người chơi từ trong phòng."
+  },
   "VvkF_g": {
     "message": "You're watching",
     "translation": "Bạn đang xem"
@@ -5993,10 +6038,6 @@
   "BHcJOF": {
     "message": "Your Lost Zone",
     "translation": "Lost Zone của bạn"
-  },
-  "23cwkx": {
-    "message": "Your name changed. Generate a new room.",
-    "translation": "Tên của bạn đã thay đổi. Hãy tạo phòng mới."
   },
   "Oi-Qz3": {
     "message": "Your playboard",

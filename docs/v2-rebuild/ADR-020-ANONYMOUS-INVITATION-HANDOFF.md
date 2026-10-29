@@ -140,6 +140,75 @@ The normal v2 entry and the v1 application remain unchanged. Rollback removes
 the query-route branch and lobby presentation adapter without weakening or
 migrating the existing authority, invitation, ticket, or persistence protocols.
 
+## 2026-10-29: invitation links and a modern lobby (owner direction)
+
+The owner asked for v1-era interaction workarounds to give way to modern
+controls, and approved invitation **links**. This reverses the rejection of
+"bearer in a link, hash" above. The claim itself is unchanged: it is
+role-bound, one-use, expires in 15 minutes, is rotated by a newer player
+invitation, and is spent by admission, not by exchange.
+
+- **The link.** `<page address>#invite=<base64url of the PTCGSIM2-INVITE
+envelope>` (`serializeRoomInvitationLinkFragment`; parsed strictly, one
+  spelling per invitation, by `parseRoomInvitationLinkFragment`). The claim
+  rides in the fragment, which browsers never send to a server (not in the
+  request, not in a `Referer`).
+  - The first module `main.tsx` imports (`invitation-link-capture.ts`) moves
+    the fragment into memory and clears it from the address bar and history
+    entry with `history.replaceState`. This happens before any other app
+    code runs, so no later `location` read, log or report can see it.
+  - A link opened while the page is up (`hashchange`) is taken the same way.
+  - The lobby hands the fragment to the guest custody (`acceptText`) and
+    joins at once with the invitation's own role, instead of opening the
+    Solo table. The link stays pending (`pendingInvitationLink`) until a
+    join with it is seen through, so StrictMode's replaced owner does not
+    lose it.
+  - A used, expired or revoked claim comes back as the room's 403
+    `admission_rejected`, now carried through as `invitation_refused`. Play
+    online then says "This invitation was used or has expired. Ask for a new
+    one." and offers Create room and the Invitation field.
+  - A taken seat (409 `seat_unavailable`) says so, and points to a
+    spectator invitation.
+- **Inviting.** Create room takes the host straight into their room. It
+  replaces Generate, then Copy, then joining your own room, as well as "Your
+  name changed. Generate a new room."
+  - A room waiting for its opponent shows a "Room ready" card with **Invite
+    opponent** and **Invite spectator**. The app menu and the log's header
+    carry the same invites.
+  - Each press mints a link (`RemoteRoomInvitationCustody.invite`). It goes
+    to the system share sheet on a touch screen (`navigator.share`), and to
+    the clipboard elsewhere or when the sheet is refused. The copy starts
+    inside the press, with the link still being minted.
+  - Invite opponent is off, with the reason shown, once the opponent has
+    been seen in their seat (Presence) or the room answers
+    `seat_unavailable`.
+  - v1's single copy key, which silently switched to a spectator invitation
+    when the seats were full (`copyPlayerOrSpectatorInvitation`), is gone.
+- **Joining.** The field is labelled **Invitation** and accepts the envelope,
+  a link or a fragment.
+  - A paste anywhere in Play online except the Name field is intercepted
+    before it could reach a field, as before.
+  - Text or a link dropped on the sheet is read by the custody alone.
+  - A **Paste** button reads the clipboard where the browser allows it.
+  - The field shows only the room code and the role ("Room … · to play").
+  - "Join as spectator" appears only for an invitation to play.
+- **Board flip.** Each player allows it in the room's Settings (Room →
+  Allow board flip, `SetCoachingConsent`), at any time during the game, not
+  only before joining. The lobby's switch and its initial-consent
+  submission are gone.
+- **A resumed game** no longer writes its opponent invitation to the
+  clipboard unasked. `RemoteRoomHeldInvitation` keeps it in memory, and the
+  room offers it through Invite opponent, as a link. A restored seat holds
+  no credential to mint others, so it has no spectator invite.
+- **Files.** A replay (`.json`, Solo) or saved game (`.ptcgsave`, in a room)
+  dropped on the window opens as its picker would.
+
+Residual risk: the address the browser navigated to may be recorded in its
+own history database before the page clears it. A recipient's messaging
+app keeps the link, as it kept the copied envelope before. Both are bounded
+as before: the claim is spent by the first admission and expires in 15
+minutes. The share sheet hands the link to the app the player picks.
+
 ## References
 
 - [W3C Clipboard API and events](https://www.w3.org/TR/clipboard-apis/)

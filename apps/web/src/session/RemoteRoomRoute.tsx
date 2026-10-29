@@ -15,12 +15,13 @@ import { ArrowCounterClockwiseIcon } from '@phosphor-icons/react/dist/csr/ArrowC
 import { ArrowsClockwiseIcon } from '@phosphor-icons/react/dist/csr/ArrowsClockwise';
 import { CaretLeftIcon } from '@phosphor-icons/react/dist/csr/CaretLeft';
 import { CaretRightIcon } from '@phosphor-icons/react/dist/csr/CaretRight';
-import { CopyIcon } from '@phosphor-icons/react/dist/csr/Copy';
+import { EyeIcon } from '@phosphor-icons/react/dist/csr/Eye';
 import { FastForwardIcon } from '@phosphor-icons/react/dist/csr/FastForward';
 import { FlagIcon } from '@phosphor-icons/react/dist/csr/Flag';
 import { SkipBackIcon } from '@phosphor-icons/react/dist/csr/SkipBack';
 import { StackIcon } from '@phosphor-icons/react/dist/csr/Stack';
 import { SwordIcon } from '@phosphor-icons/react/dist/csr/Sword';
+import { UserPlusIcon } from '@phosphor-icons/react/dist/csr/UserPlus';
 import { XCircleIcon } from '@phosphor-icons/react/dist/csr/XCircle';
 import {
   useEffect,
@@ -58,10 +59,8 @@ import {
   type BoardRailModel,
   type RemoteBoardSubmissionResult,
 } from './RemoteSessionBoard.js';
-import {
-  useLiveRoomControls,
-  type OpponentInvitationDelivery,
-} from './RemoteRoomLiveControls.js';
+import { useLiveRoomControls } from './RemoteRoomLiveControls.js';
+import { FileDropTarget } from './shell/FileDropTarget.js';
 import type { RemoteRoomRuntime } from './RemoteRoomRuntime.js';
 import type {
   BrowserRoomBackgroundRequest,
@@ -83,7 +82,14 @@ import { OnlineSheet } from './shell/OnlineSheet.js';
 import { SettingsSheet } from './shell/SettingsSheet.js';
 import { seatStage } from '../board/seat-stage.js';
 import { SHELL_PREFERENCES } from './shell/shell-preferences.js';
+import { TableInvite } from './shell/TableInvite.js';
 import { TableWelcome } from './shell/TableWelcome.js';
+import {
+  useRoomInvites,
+  type RoomInvitations,
+  type RoomInviteRole,
+} from './room-invites.js';
+import { submitCoachingConsentAction } from '../board/resolveCoachingConsentAction.js';
 import { TutorialHost } from '../tutorial/TutorialHost.js';
 import { startTutorial } from '../tutorial/tutorial-state.js';
 import { lessonsFor } from '../tutorial/tutorial-lessons.js';
@@ -152,7 +158,6 @@ export interface RemoteRoomRouteProps {
   /** Atomic owner-level replacement after a server-held save is restored. */
   readonly onResumeSavedGame?: (
     contents: string,
-    deliverOpponentInvitation: OpponentInvitationDelivery,
     signal: AbortSignal
   ) => Promise<void>;
   /**
@@ -171,12 +176,10 @@ export interface RemoteRoomRouteProps {
   readonly multiplayerPanel?: (hidden: boolean) => ReactNode;
   readonly onMultiplayerPanelOpen?: () => void;
   /**
-   * Mints and copies a fresh invitation from inside the room, for the seat
-   * that holds creator custody.
+   * The room's invites (ADR-020): links for the opponent's seat and for
+   * spectators, from the seat that created the room or resumed a game.
    */
-  readonly onCopyInvitation?: (
-    role: 'player' | 'spectator'
-  ) => Promise<boolean>;
+  readonly invitations?: RoomInvitations;
   /** When supplied with onPreferencesChange, ownership remains above the route. */
   readonly preferences?: BoardPreferences;
   readonly onPreferencesChange?: (preferences: BoardPreferences) => void;
@@ -264,7 +267,7 @@ export const RemoteRoomRoute = ({
   onMultiplayerNavigate,
   multiplayerPanel,
   onMultiplayerPanelOpen,
-  onCopyInvitation,
+  invitations,
   preferences: ownedPreferences,
   onPreferencesChange,
   background: ownedBackground,
@@ -356,17 +359,6 @@ export const RemoteRoomRoute = ({
       )
       .catch(() => undefined);
   };
-  const copyInvitation = async (
-    role: 'player' | 'spectator'
-  ): Promise<void> => {
-    if (!onCopyInvitation) return;
-    const copied = await onCopyInvitation(role).catch(() => false);
-    toast(
-      copied
-        ? { title: t`Invitation copied`, tone: 'success' }
-        : { title: t`Couldn't copy the invitation`, tone: 'danger' }
-    );
-  };
   const exportLivePerspective = (): void => {
     void runtime.exportReplay().then((result) => {
       if (result.ok) downloadPerspectiveReplay(result.artifact);
@@ -394,6 +386,15 @@ export const RemoteRoomRoute = ({
     downloadTextFile,
     requestFullscreen,
   });
+  const invites = useRoomInvites({
+    invitations,
+    session: runtime.session,
+    ownSeat: live.ownSeat,
+  });
+  // The room-ready card, put away by the player (the menu keeps both); a
+  // new room brings it back.
+  const [inviteDismissed, setInviteDismissed] = useState(false);
+  useEffect(() => setInviteDismissed(false), [runtime]);
   const hint = useHotkeyHints();
   // A browser that takes the request and then declines it says so only
   // with an event; the player hears it too.
@@ -442,10 +443,56 @@ export const RemoteRoomRoute = ({
                   comment: 'roomCode is a short code like K7PQ2M',
                 })
               : t`Connecting…`;
-        const canCopy =
+        const canInvite =
           !replaying &&
-          onCopyInvitation !== undefined &&
+          invites.roles.length > 0 &&
           state.sessionPhase === 'ready';
+        // The log's header holds the invite the room most needs, named for
+        // what it sends: the opponent's seat while it is free, then a
+        // spectator's.
+        const headerInviteRole: RoomInviteRole | undefined = !canInvite
+          ? undefined
+          : invites.roles.includes('player') && !invites.seatTaken
+            ? 'player'
+            : invites.roles.includes('spectator')
+              ? 'spectator'
+              : undefined;
+        const headerInvite = headerInviteRole
+          ? {
+              role: headerInviteRole,
+              label:
+                headerInviteRole === 'player'
+                  ? t`Invite opponent`
+                  : t`Invite spectator`,
+            }
+          : undefined;
+        // A room waiting for its opponent says how to invite them, where a
+        // Solo table says welcome.
+        const waitingForOpponent =
+          canInvite &&
+          !solo &&
+          !tutorial &&
+          !inviteDismissed &&
+          invites.roles.includes('player') &&
+          !invites.seatTaken &&
+          sheet === undefined;
+        // Each player lets the board be turned to the other side's view, at
+        // any time in the game (both must).
+        const viewer = state.view?.viewer;
+        const boardFlip =
+          !solo && !replaying && viewer?.kind === 'player' && state.view
+            ? {
+                allowed:
+                  state.view.players[viewer.playerId]?.coachingConsent === true,
+                onChange: (allowed: boolean) => {
+                  const view = runtime.session.getSnapshot().view;
+                  if (view)
+                    submitCoachingConsentAction(view, allowed, (command) =>
+                      runtime.session.submit(command)
+                    );
+                },
+              }
+            : undefined;
         const deckOpen = sheet === 'deck' && !replaying;
         // The deck the rail loads or changes is the acting seat's: P2's at a
         // Solo table turned around.
@@ -650,8 +697,14 @@ export const RemoteRoomRoute = ({
           onFullscreen: () => {
             if (!requestFullscreen()) toast(fullscreenRefusedNotice());
           },
-          ...(canCopy
-            ? { onCopyInvitation: () => void copyInvitation('player') }
+          ...(canInvite
+            ? {
+                invites: {
+                  roles: invites.roles,
+                  seatTaken: invites.seatTaken,
+                  onInvite: invites.invite,
+                },
+              }
             : {}),
           ...(live.leaveRoom && !replaying ? { onLeave: live.leaveRoom } : {}),
           // The practice table keeps no saves or replays of its own.
@@ -840,6 +893,19 @@ export const RemoteRoomRoute = ({
                 onUndoBlockedChange={setLessonUndoBlocked}
               />
             ) : null}
+            {waitingForOpponent ? (
+              <TableCentre
+                {...(boardView.show === 'both'
+                  ? { seam: 1 - boardView.split }
+                  : {})}
+              >
+                <TableInvite
+                  roles={invites.roles}
+                  onInvite={invites.invite}
+                  onDismiss={() => setInviteDismissed(true)}
+                />
+              </TableCentre>
+            ) : null}
             {welcome ? (
               <TableCentre
                 {...(boardView.show === 'both'
@@ -897,18 +963,22 @@ export const RemoteRoomRoute = ({
               {...(state.view ? { perspective: state.view } : {})}
               feedId={feedId}
               status={roomName}
-              {...(canCopy
+              {...(headerInvite
                 ? {
                     headerActions: (
-                      <Tooltip content={t`Copy an invitation`} side="bottom">
+                      <Tooltip content={headerInvite.label} side="bottom">
                         <button
-                          id="roomHeaderCopyButton"
+                          id="roomHeaderInviteButton"
                           type="button"
                           className="ds-icon-button"
-                          aria-label={t`Copy an invitation`}
-                          onClick={() => void copyInvitation('player')}
+                          aria-label={headerInvite.label}
+                          onClick={() => invites.invite(headerInvite.role)}
                         >
-                          <CopyIcon aria-hidden="true" weight="bold" />
+                          {headerInvite.role === 'player' ? (
+                            <UserPlusIcon aria-hidden="true" weight="bold" />
+                          ) : (
+                            <EyeIcon aria-hidden="true" weight="bold" />
+                          )}
                         </button>
                       </Tooltip>
                     ),
@@ -932,6 +1002,7 @@ export const RemoteRoomRoute = ({
               {...(onBackgroundReset && backgroundSelection.background
                 ? { onUseDefaultBackground: onBackgroundReset }
                 : {})}
+              {...(boardFlip ? { boardFlip } : {})}
             />
             {soloLive && multiplayerPanel ? (
               <OnlineSheet
@@ -962,6 +1033,9 @@ export const RemoteRoomRoute = ({
               </DeckLayer>
             ) : null}
             {live.fileInputs}
+            {live.openDroppedFile && !replaying && !deckOpen ? (
+              <FileDropTarget onFile={live.openDroppedFile} />
+            ) : null}
             {/* The deck screen opens ready: warmed up once the table has
                 drawn, never while it is still arriving. */}
             <DeckScreenWarmup ready={state.sessionPhase === 'ready'} />

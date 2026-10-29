@@ -240,9 +240,13 @@ const MENU_MEANINGS: Readonly<Record<string, () => Meaning>> = {
     section: 'help',
     keywords: ['discord', 'community', 'chat'],
   }),
-  copyInvitation: () => ({
+  inviteOpponent: () => ({
     section: 'room',
-    keywords: ['invite', 'invitation', 'copy', 'friend'],
+    keywords: ['invite', 'invitation', 'link', 'share', 'copy', 'friend'],
+  }),
+  inviteSpectator: () => ({
+    section: 'room',
+    keywords: ['invite', 'invitation', 'link', 'share', 'watch', 'spectator'],
   }),
   leaveRoom: () => ({ section: 'room', keywords: ['leave', 'quit', 'exit'] }),
 };

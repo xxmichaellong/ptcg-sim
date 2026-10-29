@@ -1310,6 +1310,10 @@
               "kind": "value"
             },
             {
+              "name": "MAX_ROOM_INVITATION_LINK_PAYLOAD_LENGTH",
+              "kind": "value"
+            },
+            {
               "name": "MAX_SERVER_FRAME_CODE_UNITS",
               "kind": "value"
             },
@@ -1374,6 +1378,14 @@
               "kind": "value"
             },
             {
+              "name": "parseRoomInvitationLinkFragment",
+              "kind": "value"
+            },
+            {
+              "name": "parseRoomInvitationText",
+              "kind": "value"
+            },
+            {
               "name": "parseServerFrame",
               "kind": "value"
             },
@@ -1391,6 +1403,10 @@
             },
             {
               "name": "ROOM_INVITATION_HANDOFF_TEXT_PREFIX",
+              "kind": "value"
+            },
+            {
+              "name": "ROOM_INVITATION_LINK_KEY",
               "kind": "value"
             },
             {
@@ -1475,6 +1491,10 @@
             },
             {
               "name": "serializeRoomInvitationHandoffText",
+              "kind": "value"
+            },
+            {
+              "name": "serializeRoomInvitationLinkFragment",
               "kind": "value"
             },
             {

@@ -1001,13 +1001,13 @@
     ],
     "translation": "<0>{0}</0>: 각 쪽의 덱을 만들거나 가져오거나 선택하세요."
   },
+  "SZcDv9": {
+    "message": "<0>{0}</0>: create a room, then send a friend its link.",
+    "translation": "<0>{0}</0>: 방을 만든 뒤 친구에게 링크를 보내세요."
+  },
   "F7xH8_": {
     "message": "<0>{0}</0>: every move, and the chat.",
     "translation": "<0>{0}</0>: 모든 동작과 채팅을 확인합니다."
-  },
-  "l7W_Ze": {
-    "message": "<0>{0}</0>: send a friend a link to your table.",
-    "translation": "<0>{0}</0>: 친구에게 테이블 링크를 보냅니다."
   },
   "NaneTg": {
     "message": "<0>{0}</0>: the table's look, the theme and the language.",
@@ -1220,9 +1220,9 @@
     "context": "shortcut key caption",
     "translation": "모두 패로"
   },
-  "Sb4b2A": {
-    "message": "Allow board flip <0>(both players)</0>",
-    "translation": "보드 뒤집기 허용 <0>(양쪽 플레이어)</0>"
+  "Z2UuYT": {
+    "message": "Allow board flip",
+    "translation": "보드 뒤집기 허용"
   },
   "vj7KYC": {
     "message": "Already in hand",
@@ -1516,6 +1516,18 @@
     "message": "Both",
     "context": "show both halves of the table",
     "translation": "둘 다"
+  },
+  "-xs46B": {
+    "message": "Both players must allow it.",
+    "translation": "두 플레이어 모두 허용해야 합니다."
+  },
+  "nqjpOW": {
+    "message": "Both seats are taken.",
+    "translation": "두 자리가 모두 찼습니다."
+  },
+  "5XVQGs": {
+    "message": "Both seats are taken. Ask for a spectator invitation.",
+    "translation": "두 자리가 모두 찼습니다. 관전 초대를 요청하세요."
   },
   "7jOTCJ": {
     "message": "Both sides",
@@ -1874,19 +1886,6 @@
     "message": "Connection lost.",
     "translation": "연결이 끊어졌습니다."
   },
-  "c0_6W9": {
-    "message": "Copied",
-    "context": "an invitation",
-    "translation": "복사됨"
-  },
-  "ITnJNv": {
-    "message": "Copy an invitation",
-    "translation": "초대 링크 복사"
-  },
-  "Yc1XTF": {
-    "message": "Copy invitation",
-    "translation": "초대 복사"
-  },
   "PSlXm_": {
     "message": "Copy list",
     "translation": "목록 복사"
@@ -1899,17 +1898,9 @@
     "message": "Couldn't check that. Try again.",
     "translation": "확인하지 못했습니다. 다시 시도하세요."
   },
-  "gklFA4": {
-    "message": "Couldn't copy the invitation",
-    "translation": "초대 링크를 복사하지 못했습니다"
-  },
-  "sA7lnV": {
-    "message": "Couldn't copy the invitation. Try again.",
-    "translation": "초대 링크를 복사하지 못했습니다. 다시 시도하세요."
-  },
-  "O3p0SF": {
-    "message": "Couldn't generate a room. Try again.",
-    "translation": "방을 만들지 못했습니다. 다시 시도하세요."
+  "8T-Jx-": {
+    "message": "Couldn't create a room. Try again.",
+    "translation": "방을 만들 수 없습니다. 다시 시도하세요."
   },
   "Glz9_Y": {
     "message": "Couldn't join the room. Try again.",
@@ -1939,6 +1930,10 @@
     "message": "Couldn't read that list",
     "translation": "목록을 읽을 수 없음"
   },
+  "cU_nca": {
+    "message": "Couldn't read the clipboard. Paste with the keyboard.",
+    "translation": "클립보드를 읽을 수 없습니다. 키보드로 붙여넣으세요."
+  },
   "heYM3E": {
     "message": "Couldn't resume the game",
     "translation": "게임을 재개할 수 없음"
@@ -1947,6 +1942,10 @@
     "message": "Couldn't save the game",
     "translation": "게임을 저장하지 못했습니다"
   },
+  "TC3rNW": {
+    "message": "Couldn't share the invitation. Try again.",
+    "translation": "초대를 공유할 수 없습니다. 다시 시도하세요."
+  },
   "hCQkU8": {
     "message": "Couldn't start Solo mode. Try again.",
     "translation": "솔로 모드를 시작하지 못했습니다. 다시 시도하세요."
@@ -1954,10 +1953,6 @@
   "eP7qeF": {
     "message": "Couldn't start the tutorial. Try again.",
     "translation": "튜토리얼을 시작할 수 없습니다. 다시 시도하세요."
-  },
-  "nzVItu": {
-    "message": "Couldn't use the clipboard. Allow access and try again.",
-    "translation": "클립보드를 사용하지 못했습니다. 접근을 허용한 뒤 다시 시도하세요."
   },
   "U9OFiD": {
     "message": "cover",
@@ -1970,6 +1965,20 @@
       "A table look: the colour"
     ],
     "translation": "크림"
+  },
+  "E6-4ez": {
+    "message": "Create a room, or join one with a link.",
+    "translation": "방을 만들거나 링크로 참가하세요."
+  },
+  "xE_hmo": {
+    "message": "Create room",
+    "context": "a room",
+    "translation": "방 만들기"
+  },
+  "_LHski": {
+    "message": "Creating…",
+    "context": "a room",
+    "translation": "만드는 중…"
   },
   "ETt3ev": {
     "message": "Ctrl",
@@ -2287,6 +2296,10 @@
   "IsvGW6": {
     "message": "Drop to import",
     "translation": "놓아서 가져오기"
+  },
+  "kWPbQy": {
+    "message": "Drop to open",
+    "translation": "놓아서 열기"
   },
   "d3YoNV": {
     "message": "Dropped",
@@ -2655,28 +2668,6 @@
     "message": "Game resumed",
     "translation": "게임이 재개되었습니다"
   },
-  "oP3kz7": {
-    "message": "Generate",
-    "context": "a room",
-    "translation": "생성"
-  },
-  "mb6Tyv": {
-    "message": "Generate a room and send the invitation. With <0>Join as spectator</0> on, it invites a spectator.",
-    "translation": "방을 생성하고 초대장을 보냅니다. <0>관전자로 참가</0>를 켜면 관전자를 초대합니다."
-  },
-  "5NEkeP": {
-    "message": "Generate a room first.",
-    "translation": "먼저 방을 생성하세요."
-  },
-  "G7A2K4": {
-    "message": "Generate a room, then send the invitation.",
-    "translation": "방을 생성한 뒤 초대장을 보내세요."
-  },
-  "fQq7dv": {
-    "message": "Generating…",
-    "context": "a room",
-    "translation": "생성 중…"
-  },
   "4RM73X": {
     "message": "Get a sponsor tag on your GitHub profile (if sponsoring via GitHub, not applicable for sponsors through PayPal. Currently in the process of getting my GH sponsor page approved 😛).",
     "translation": "GitHub 프로필에 후원자 태그를 받으세요. (GitHub로 후원하는 경우에만 해당하며 PayPal 후원자는 해당되지 않습니다. 현재 GitHub 후원 페이지 승인을 받는 중입니다 😛)"
@@ -2761,6 +2752,10 @@
       "The developer's personal note on the Sponsors & Donations page"
     ],
     "translation": "안녕하세요, 여러분! 저는 Michael/Xiao Xiao Long입니다. 캐나다 궬프에 사는 21살이고, 2023년 가을에 프로그래밍을 시작했습니다. 포켓몬 카드 게임은 8년 넘게 해왔고, 지난 3개월 동안 커뮤니티가 좋아하는 카드 게임을 테스트하고 플레이할 수 있는 무료 도구인 PTCG-sim을 만들었습니다."
+  },
+  "vLyv1R": {
+    "message": "Hide",
+    "translation": "숨기기"
   },
   "pWgsbk": {
     "message": "Hide",
@@ -2925,13 +2920,24 @@
     ],
     "translation": "인터내셔널"
   },
-  "6vI3XA": {
-    "message": "Invitation copied",
+  "KhBSE_": {
+    "message": "Invitation",
+    "comments": [
+      "The link or code that lets someone join a room"
+    ],
+    "translation": "초대"
+  },
+  "au3LEA": {
+    "message": "Invitation link copied",
     "translation": "초대 링크를 복사했습니다"
   },
-  "z1vTYz": {
-    "message": "Invitation copied to your clipboard.",
-    "translation": "초대장이 클립보드에 복사되었습니다."
+  "Za0iMR": {
+    "message": "Invite opponent",
+    "translation": "상대 초대"
+  },
+  "UoRWrm": {
+    "message": "Invite spectator",
+    "translation": "관전자 초대"
   },
   "0pN9y3": {
     "message": "It stays open for another draw. Press <0>Esc</0> twice to close it.",
@@ -3041,6 +3047,10 @@
   "M-FK_f": {
     "message": "Leave room",
     "translation": "방 나가기"
+  },
+  "Qxgi9O": {
+    "message": "Leave the room to join another.",
+    "translation": "다른 방에 참가하려면 방에서 나가세요."
   },
   "82LZ4F": {
     "message": "Leave the room to start the tutorial.",
@@ -3800,6 +3810,10 @@
     "message": "Open the deck screen",
     "translation": "덱 화면 열기"
   },
+  "rT710w": {
+    "message": "Open the link again in a moment.",
+    "translation": "잠시 후 링크를 다시 여세요."
+  },
   "cCMcAY": {
     "message": "Open their deck",
     "translation": "상대 덱 열기"
@@ -3910,6 +3924,11 @@
     "context": "paste a list from the clipboard",
     "translation": "붙여넣기"
   },
+  "L3kYdG": {
+    "message": "Paste",
+    "context": "paste from the clipboard",
+    "translation": "붙여넣기"
+  },
   "BRnJkz": {
     "message": "Paste a decklist first.",
     "translation": "먼저 덱 리스트를 붙여넣으세요."
@@ -3918,21 +3937,17 @@
     "message": "Paste a list from the clipboard",
     "translation": "클립보드에서 목록 붙여넣기"
   },
-  "Ig8A-t": {
-    "message": "Paste a valid invitation into Room ID.",
-    "translation": "올바른 초대를 방 ID에 붙여넣으세요."
+  "7hnHtA": {
+    "message": "Paste or drop the link you were sent.",
+    "translation": "받은 링크를 붙여넣거나 놓으세요."
   },
-  "pJRgD4": {
-    "message": "Paste an invitation",
-    "translation": "초대 붙여넣기"
+  "erh83Q": {
+    "message": "Paste the invitation link you were sent.",
+    "translation": "받은 초대 링크를 붙여넣으세요."
   },
-  "4LC7ch": {
-    "message": "Paste an invitation, or join your own room.",
-    "translation": "초대를 붙여넣거나 내 방에 참가하세요."
-  },
-  "3J14ru": {
-    "message": "Paste the invitation into Room ID.",
-    "translation": "초대를 방 ID에 붙여넣으세요."
+  "ax6uck": {
+    "message": "Paste the link",
+    "translation": "링크 붙여넣기"
   },
   "MfH2NF": {
     "message": "Paste with Ctrl+V (⌘V) instead",
@@ -4478,6 +4493,20 @@
     ],
     "translation": "방"
   },
+  "GzC7XU": {
+    "message": "Room {0} · to play",
+    "comments": [
+      "roomCode is a short code like K7PQ2M"
+    ],
+    "translation": "방 {0} · 플레이"
+  },
+  "0sQWkX": {
+    "message": "Room {0} · to watch",
+    "comments": [
+      "roomCode is a short code like K7PQ2M"
+    ],
+    "translation": "방 {0} · 관전"
+  },
   "euMx3W": {
     "message": "Room {roomCode}",
     "comments": [
@@ -4485,9 +4514,9 @@
     ],
     "translation": "방 {roomCode}"
   },
-  "QoZkYe": {
-    "message": "Room ID",
-    "translation": "방 ID"
+  "tFii6J": {
+    "message": "Room ready",
+    "translation": "방이 준비되었습니다"
   },
   "pbJSIc": {
     "message": "Rotate",
@@ -4664,6 +4693,10 @@
     "message": "Season",
     "translation": "시즌"
   },
+  "wRfrN3": {
+    "message": "Seat taken",
+    "translation": "자리가 찼습니다"
+  },
   "tGu7Tl": {
     "message": "Selected card",
     "comments": [
@@ -4688,6 +4721,10 @@
   "pi1oME": {
     "message": "Send message",
     "translation": "메시지 보내기"
+  },
+  "QYIzdx": {
+    "message": "Send your opponent a link. Each works once.",
+    "translation": "상대에게 링크를 보내세요. 각 링크는 한 번만 사용할 수 있습니다."
   },
   "Of0ksK": {
     "message": "Seriously do not think anyone will subscribe to this, but I would be immensely grateful.",
@@ -5317,13 +5354,13 @@
     "message": "That Energy has left your hand.",
     "translation": "그 에너지가 패에서 사라졌습니다."
   },
+  "fIHd89": {
+    "message": "That file can't be opened here.",
+    "translation": "이 파일은 여기서 열 수 없습니다."
+  },
   "ZMr878": {
     "message": "That image didn't load.",
     "translation": "이미지를 불러오지 못했습니다."
-  },
-  "UoxtKp": {
-    "message": "That invitation expired. Ask for a new one.",
-    "translation": "초대가 만료되었습니다. 새 초대를 요청하세요."
   },
   "B4ZAXF": {
     "message": "That one was skipped.",
@@ -5491,6 +5528,10 @@
   "5PdIYU": {
     "message": "This game will be lost.",
     "translation": "이 게임은 사라집니다."
+  },
+  "5HIoIb": {
+    "message": "This invitation was used or has expired. Ask for a new one.",
+    "translation": "이 초대는 이미 사용되었거나 만료되었습니다. 새 초대를 요청하세요."
   },
   "L7LU5x": {
     "message": "This tutorial waits in the <0>menu</0> whenever you want it.",
@@ -5948,6 +5989,10 @@
     "context": "filter",
     "translation": "예"
   },
+  "1hxqre": {
+    "message": "You'll invite players from the room.",
+    "translation": "방에서 플레이어를 초대할 수 있습니다."
+  },
   "VvkF_g": {
     "message": "You're watching",
     "translation": "관전 중입니다"
@@ -5993,10 +6038,6 @@
   "BHcJOF": {
     "message": "Your Lost Zone",
     "translation": "내 로스트존"
-  },
-  "23cwkx": {
-    "message": "Your name changed. Generate a new room.",
-    "translation": "이름이 변경되었습니다. 새 방을 생성하세요."
   },
   "Oi-Qz3": {
     "message": "Your playboard",

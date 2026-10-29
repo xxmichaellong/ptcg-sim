@@ -2,8 +2,8 @@ import { t } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react/macro';
 import { MagnifyingGlassIcon } from '@phosphor-icons/react/dist/csr/MagnifyingGlass';
 import { CloudArrowUpIcon } from '@phosphor-icons/react/dist/csr/CloudArrowUp';
-import { CopyIcon } from '@phosphor-icons/react/dist/csr/Copy';
 import { DiscordLogoIcon } from '@phosphor-icons/react/dist/csr/DiscordLogo';
+import { EyeIcon } from '@phosphor-icons/react/dist/csr/Eye';
 import type { Icon } from '@phosphor-icons/react';
 import { CornersInIcon } from '@phosphor-icons/react/dist/csr/CornersIn';
 import { CornersOutIcon } from '@phosphor-icons/react/dist/csr/CornersOut';
@@ -18,6 +18,7 @@ import { ListIcon } from '@phosphor-icons/react/dist/csr/List';
 import { SignOutIcon } from '@phosphor-icons/react/dist/csr/SignOut';
 import { SparkleIcon } from '@phosphor-icons/react/dist/csr/Sparkle';
 import { UserIcon } from '@phosphor-icons/react/dist/csr/User';
+import { UserPlusIcon } from '@phosphor-icons/react/dist/csr/UserPlus';
 import { UsersThreeIcon } from '@phosphor-icons/react/dist/csr/UsersThree';
 import { XCircleIcon } from '@phosphor-icons/react/dist/csr/XCircle';
 import { useMemo, type CSSProperties, type ReactNode } from 'react';
@@ -43,7 +44,9 @@ import {
   useBrowserFullscreen,
 } from '../browser-room-options.js';
 import { Tooltip, withKeyHint } from '../../ui/Tooltip.js';
+import type { RoomInviteRole } from '../room-invites.js';
 import { DISCORD_URL, openHelpPage, RELEASE_NAME } from './help-pages.js';
+import './app-menu.css';
 
 /** What the app menu can do in the current room and mode. */
 export interface AppMenuModel {
@@ -54,7 +57,15 @@ export interface AppMenuModel {
   readonly onPlayOnline?: () => void;
   readonly onDeck?: () => void;
   readonly onSettings: () => void;
-  readonly onCopyInvitation?: () => void;
+  /**
+   * The room's invites (ADR-020): a link for the opponent's seat, off once
+   * it is taken, and one for a spectator, where the room can mint them.
+   */
+  readonly invites?: {
+    readonly roles: readonly RoomInviteRole[];
+    readonly seatTaken: boolean;
+    readonly onInvite: (role: RoomInviteRole) => void;
+  };
   readonly onFullscreen?: () => void;
   /** Saves and replays; each present only where it applies. */
   readonly game?: {
@@ -264,14 +275,32 @@ export const restEntries = (
     }
   );
 
-  if (model.onCopyInvitation || model.onLeave) {
+  const invites = model.invites;
+  if ((invites && invites.roles.length > 0) || model.onLeave) {
     entries.push({ kind: 'separator' });
-    if (model.onCopyInvitation) {
+    if (invites?.roles.includes('player')) {
       entries.push({
-        id: 'copyInvitationMenuItem',
-        label: t`Copy an invitation`,
-        icon: CopyIcon,
-        onSelect: model.onCopyInvitation,
+        id: 'inviteOpponentMenuItem',
+        // Taken, the seat can't be offered again: the row says why.
+        label: invites.seatTaken ? (
+          <>
+            {t`Invite opponent`}{' '}
+            <span className="app-menu-detail">{t`Seat taken`}</span>
+          </>
+        ) : (
+          t`Invite opponent`
+        ),
+        icon: UserPlusIcon,
+        disabled: invites.seatTaken,
+        onSelect: () => invites.onInvite('player'),
+      });
+    }
+    if (invites?.roles.includes('spectator')) {
+      entries.push({
+        id: 'inviteSpectatorMenuItem',
+        label: t`Invite spectator`,
+        icon: EyeIcon,
+        onSelect: () => invites.onInvite('spectator'),
       });
     }
     if (model.onLeave) {

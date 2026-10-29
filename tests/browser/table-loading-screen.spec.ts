@@ -257,13 +257,11 @@ test('joining a room trades tables under the curtain, never over a bare desk', a
     await host.goto('/?room-lobby=1');
     await curtainGone(host);
     await host.locator('#generateIdButton').click();
-    await expect(host.locator('#roomIdInput')).toHaveValue(
-      /^[A-HJ-NP-Z2-9]{12}$/u
-    );
-    await host.locator('#copyButton').click();
+    // Create room takes the host in; the room's card invites.
+    await host.locator('#inviteOpponentButton').click();
     await expect
       .poll(() => host.evaluate(() => navigator.clipboard.readText()))
-      .toMatch(/^PTCGSIM2-INVITE:/u);
+      .toMatch(/#invite=[A-Za-z0-9_-]+$/u);
     const invitation = await host.evaluate(() =>
       navigator.clipboard.readText()
     );

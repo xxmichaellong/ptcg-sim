@@ -173,7 +173,7 @@ test('manual handoff admits player two and distinct repeat spectators across iso
   const errors: string[] = [];
   const requestUrls: string[] = [];
   const contextOptions = {
-    baseURL: 'http://127.0.0.1:4173',
+    baseURL: test.info().project.use.baseURL ?? 'http://127.0.0.1:4173',
     permissions: ['clipboard-read', 'clipboard-write'],
   };
   const contexts = await Promise.all([

@@ -1001,13 +1001,13 @@
     ],
     "translation": "<0>{0}</0> : créez, importez ou choisissez un deck pour chaque camp."
   },
+  "SZcDv9": {
+    "message": "<0>{0}</0>: create a room, then send a friend its link.",
+    "translation": "<0>{0}</0> : créez une salle, puis envoyez-en le lien à un ami."
+  },
   "F7xH8_": {
     "message": "<0>{0}</0>: every move, and the chat.",
     "translation": "<0>{0}</0> : tous les coups et le chat."
-  },
-  "l7W_Ze": {
-    "message": "<0>{0}</0>: send a friend a link to your table.",
-    "translation": "<0>{0}</0> : envoyez à un ami un lien vers votre table."
   },
   "NaneTg": {
     "message": "<0>{0}</0>: the table's look, the theme and the language.",
@@ -1220,9 +1220,9 @@
     "context": "shortcut key caption",
     "translation": "Tout dans la main"
   },
-  "Sb4b2A": {
-    "message": "Allow board flip <0>(both players)</0>",
-    "translation": "Autoriser le retournement du plateau <0>(les deux joueurs)</0>"
+  "Z2UuYT": {
+    "message": "Allow board flip",
+    "translation": "Autoriser le retournement du plateau"
   },
   "vj7KYC": {
     "message": "Already in hand",
@@ -1516,6 +1516,18 @@
     "message": "Both",
     "context": "show both halves of the table",
     "translation": "Les deux"
+  },
+  "-xs46B": {
+    "message": "Both players must allow it.",
+    "translation": "Les deux joueurs doivent l’autoriser."
+  },
+  "nqjpOW": {
+    "message": "Both seats are taken.",
+    "translation": "Les deux places sont prises."
+  },
+  "5XVQGs": {
+    "message": "Both seats are taken. Ask for a spectator invitation.",
+    "translation": "Les deux places sont prises. Demandez une invitation de spectateur."
   },
   "7jOTCJ": {
     "message": "Both sides",
@@ -1874,19 +1886,6 @@
     "message": "Connection lost.",
     "translation": "Connexion perdue."
   },
-  "c0_6W9": {
-    "message": "Copied",
-    "context": "an invitation",
-    "translation": "Copiée"
-  },
-  "ITnJNv": {
-    "message": "Copy an invitation",
-    "translation": "Copier une invitation"
-  },
-  "Yc1XTF": {
-    "message": "Copy invitation",
-    "translation": "Copier l’invitation"
-  },
   "PSlXm_": {
     "message": "Copy list",
     "translation": "Copier la liste"
@@ -1899,17 +1898,9 @@
     "message": "Couldn't check that. Try again.",
     "translation": "Vérification impossible. Réessayez."
   },
-  "gklFA4": {
-    "message": "Couldn't copy the invitation",
-    "translation": "Impossible de copier l’invitation"
-  },
-  "sA7lnV": {
-    "message": "Couldn't copy the invitation. Try again.",
-    "translation": "Impossible de copier l’invitation. Réessayez."
-  },
-  "O3p0SF": {
-    "message": "Couldn't generate a room. Try again.",
-    "translation": "Impossible de générer une salle. Réessayez."
+  "8T-Jx-": {
+    "message": "Couldn't create a room. Try again.",
+    "translation": "Impossible de créer une salle. Réessayez."
   },
   "Glz9_Y": {
     "message": "Couldn't join the room. Try again.",
@@ -1939,6 +1930,10 @@
     "message": "Couldn't read that list",
     "translation": "Impossible de lire cette liste"
   },
+  "cU_nca": {
+    "message": "Couldn't read the clipboard. Paste with the keyboard.",
+    "translation": "Impossible de lire le presse-papiers. Collez avec le clavier."
+  },
   "heYM3E": {
     "message": "Couldn't resume the game",
     "translation": "Impossible de reprendre la partie"
@@ -1947,6 +1942,10 @@
     "message": "Couldn't save the game",
     "translation": "Impossible de sauvegarder la partie"
   },
+  "TC3rNW": {
+    "message": "Couldn't share the invitation. Try again.",
+    "translation": "Impossible de partager l’invitation. Réessayez."
+  },
   "hCQkU8": {
     "message": "Couldn't start Solo mode. Try again.",
     "translation": "Impossible de lancer le mode Solo. Réessayez."
@@ -1954,10 +1953,6 @@
   "eP7qeF": {
     "message": "Couldn't start the tutorial. Try again.",
     "translation": "Impossible de lancer le tutoriel. Réessayez."
-  },
-  "nzVItu": {
-    "message": "Couldn't use the clipboard. Allow access and try again.",
-    "translation": "Impossible d'utiliser le presse-papiers. Autorisez l'accès et réessayez."
   },
   "U9OFiD": {
     "message": "cover",
@@ -1970,6 +1965,20 @@
       "A table look: the colour"
     ],
     "translation": "Crème"
+  },
+  "E6-4ez": {
+    "message": "Create a room, or join one with a link.",
+    "translation": "Créez une salle ou rejoignez-en une avec un lien."
+  },
+  "xE_hmo": {
+    "message": "Create room",
+    "context": "a room",
+    "translation": "Créer une salle"
+  },
+  "_LHski": {
+    "message": "Creating…",
+    "context": "a room",
+    "translation": "Création…"
   },
   "ETt3ev": {
     "message": "Ctrl",
@@ -2287,6 +2296,10 @@
   "IsvGW6": {
     "message": "Drop to import",
     "translation": "Déposez pour importer"
+  },
+  "kWPbQy": {
+    "message": "Drop to open",
+    "translation": "Déposer pour ouvrir"
   },
   "d3YoNV": {
     "message": "Dropped",
@@ -2655,28 +2668,6 @@
     "message": "Game resumed",
     "translation": "Partie reprise"
   },
-  "oP3kz7": {
-    "message": "Generate",
-    "context": "a room",
-    "translation": "Générer"
-  },
-  "mb6Tyv": {
-    "message": "Generate a room and send the invitation. With <0>Join as spectator</0> on, it invites a spectator.",
-    "translation": "Générez une salle et envoyez l'invitation. Avec <0>Rejoindre en tant que spectateur</0> activé, elle invite un spectateur."
-  },
-  "5NEkeP": {
-    "message": "Generate a room first.",
-    "translation": "Générez d'abord une salle."
-  },
-  "G7A2K4": {
-    "message": "Generate a room, then send the invitation.",
-    "translation": "Générez une salle, puis envoyez l'invitation."
-  },
-  "fQq7dv": {
-    "message": "Generating…",
-    "context": "a room",
-    "translation": "Génération…"
-  },
   "4RM73X": {
     "message": "Get a sponsor tag on your GitHub profile (if sponsoring via GitHub, not applicable for sponsors through PayPal. Currently in the process of getting my GH sponsor page approved 😛).",
     "translation": "Obtenez un badge de sponsor sur votre profil GitHub (uniquement pour les sponsors via GitHub, pas pour ceux passant par PayPal. La page GH Sponsors est en cours d'approbation 😛)."
@@ -2761,6 +2752,10 @@
       "The developer's personal note on the Sponsors & Donations page"
     ],
     "translation": "Salut à tous ! Je suis Michael/Xiao Xiao Long. J'ai 21 ans, je viens de Guelph, au Canada, et j'ai commencé la programmation à l'automne 2023. Je joue au JCC Pokémon depuis plus de 8 ans, et j'ai passé les 3 derniers mois à créer PTCG-sim, un outil gratuit permettant à la communauté de tester et de jouer à notre jeu de cartes préféré."
+  },
+  "vLyv1R": {
+    "message": "Hide",
+    "translation": "Masquer"
   },
   "pWgsbk": {
     "message": "Hide",
@@ -2925,13 +2920,24 @@
     ],
     "translation": "International"
   },
-  "6vI3XA": {
-    "message": "Invitation copied",
-    "translation": "Invitation copiée"
+  "KhBSE_": {
+    "message": "Invitation",
+    "comments": [
+      "The link or code that lets someone join a room"
+    ],
+    "translation": "Invitation"
   },
-  "z1vTYz": {
-    "message": "Invitation copied to your clipboard.",
-    "translation": "Invitation copiée dans votre presse-papiers."
+  "au3LEA": {
+    "message": "Invitation link copied",
+    "translation": "Lien d’invitation copié"
+  },
+  "Za0iMR": {
+    "message": "Invite opponent",
+    "translation": "Inviter un adversaire"
+  },
+  "UoRWrm": {
+    "message": "Invite spectator",
+    "translation": "Inviter un spectateur"
   },
   "0pN9y3": {
     "message": "It stays open for another draw. Press <0>Esc</0> twice to close it.",
@@ -3041,6 +3047,10 @@
   "M-FK_f": {
     "message": "Leave room",
     "translation": "Quitter la salle"
+  },
+  "Qxgi9O": {
+    "message": "Leave the room to join another.",
+    "translation": "Quittez la salle pour en rejoindre une autre."
   },
   "82LZ4F": {
     "message": "Leave the room to start the tutorial.",
@@ -3800,6 +3810,10 @@
     "message": "Open the deck screen",
     "translation": "Ouvrir l'écran des decks"
   },
+  "rT710w": {
+    "message": "Open the link again in a moment.",
+    "translation": "Rouvrez le lien dans un instant."
+  },
   "cCMcAY": {
     "message": "Open their deck",
     "translation": "Ouvrir son deck"
@@ -3910,6 +3924,11 @@
     "context": "paste a list from the clipboard",
     "translation": "Coller"
   },
+  "L3kYdG": {
+    "message": "Paste",
+    "context": "paste from the clipboard",
+    "translation": "Coller"
+  },
   "BRnJkz": {
     "message": "Paste a decklist first.",
     "translation": "Collez d'abord une liste de deck."
@@ -3918,21 +3937,17 @@
     "message": "Paste a list from the clipboard",
     "translation": "Coller une liste depuis le presse-papiers"
   },
-  "Ig8A-t": {
-    "message": "Paste a valid invitation into Room ID.",
-    "translation": "Collez une invitation valide dans l'ID de salle."
+  "7hnHtA": {
+    "message": "Paste or drop the link you were sent.",
+    "translation": "Collez ou déposez le lien reçu."
   },
-  "pJRgD4": {
-    "message": "Paste an invitation",
-    "translation": "Coller une invitation"
+  "erh83Q": {
+    "message": "Paste the invitation link you were sent.",
+    "translation": "Collez le lien d’invitation que vous avez reçu."
   },
-  "4LC7ch": {
-    "message": "Paste an invitation, or join your own room.",
-    "translation": "Collez une invitation, ou rejoignez votre propre salle."
-  },
-  "3J14ru": {
-    "message": "Paste the invitation into Room ID.",
-    "translation": "Collez l'invitation dans l'ID de salle."
+  "ax6uck": {
+    "message": "Paste the link",
+    "translation": "Coller le lien"
   },
   "MfH2NF": {
     "message": "Paste with Ctrl+V (⌘V) instead",
@@ -4478,6 +4493,20 @@
     ],
     "translation": "Salle"
   },
+  "GzC7XU": {
+    "message": "Room {0} · to play",
+    "comments": [
+      "roomCode is a short code like K7PQ2M"
+    ],
+    "translation": "Salle {0} · pour jouer"
+  },
+  "0sQWkX": {
+    "message": "Room {0} · to watch",
+    "comments": [
+      "roomCode is a short code like K7PQ2M"
+    ],
+    "translation": "Salle {0} · pour regarder"
+  },
   "euMx3W": {
     "message": "Room {roomCode}",
     "comments": [
@@ -4485,9 +4514,9 @@
     ],
     "translation": "Salle {roomCode}"
   },
-  "QoZkYe": {
-    "message": "Room ID",
-    "translation": "ID de la salle"
+  "tFii6J": {
+    "message": "Room ready",
+    "translation": "Salle prête"
   },
   "pbJSIc": {
     "message": "Rotate",
@@ -4664,6 +4693,10 @@
     "message": "Season",
     "translation": "Saison"
   },
+  "wRfrN3": {
+    "message": "Seat taken",
+    "translation": "Place prise"
+  },
   "tGu7Tl": {
     "message": "Selected card",
     "comments": [
@@ -4688,6 +4721,10 @@
   "pi1oME": {
     "message": "Send message",
     "translation": "Envoyer le message"
+  },
+  "QYIzdx": {
+    "message": "Send your opponent a link. Each works once.",
+    "translation": "Envoyez un lien à votre adversaire. Chacun ne fonctionne qu’une fois."
   },
   "Of0ksK": {
     "message": "Seriously do not think anyone will subscribe to this, but I would be immensely grateful.",
@@ -5317,13 +5354,13 @@
     "message": "That Energy has left your hand.",
     "translation": "Cette Énergie a quitté votre main."
   },
+  "fIHd89": {
+    "message": "That file can't be opened here.",
+    "translation": "Ce fichier ne peut pas être ouvert ici."
+  },
   "ZMr878": {
     "message": "That image didn't load.",
     "translation": "Cette image n'a pas pu être chargée."
-  },
-  "UoxtKp": {
-    "message": "That invitation expired. Ask for a new one.",
-    "translation": "Cette invitation a expiré. Demandez-en une nouvelle."
   },
   "B4ZAXF": {
     "message": "That one was skipped.",
@@ -5491,6 +5528,10 @@
   "5PdIYU": {
     "message": "This game will be lost.",
     "translation": "Cette partie sera perdue."
+  },
+  "5HIoIb": {
+    "message": "This invitation was used or has expired. Ask for a new one.",
+    "translation": "Cette invitation a déjà été utilisée ou a expiré. Demandez-en une nouvelle."
   },
   "L7LU5x": {
     "message": "This tutorial waits in the <0>menu</0> whenever you want it.",
@@ -5948,6 +5989,10 @@
     "context": "filter",
     "translation": "Oui"
   },
+  "1hxqre": {
+    "message": "You'll invite players from the room.",
+    "translation": "Vous inviterez des joueurs depuis la salle."
+  },
   "VvkF_g": {
     "message": "You're watching",
     "translation": "Vous regardez"
@@ -5993,10 +6038,6 @@
   "BHcJOF": {
     "message": "Your Lost Zone",
     "translation": "Votre Zone Perdue"
-  },
-  "23cwkx": {
-    "message": "Your name changed. Generate a new room.",
-    "translation": "Votre nom a changé. Générez une nouvelle salle."
   },
   "Oi-Qz3": {
     "message": "Your playboard",

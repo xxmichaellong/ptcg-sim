@@ -1001,13 +1001,13 @@
     ],
     "translation": "<0>{0}</0>: bouw, importeer of kies een deck voor elke kant."
   },
+  "SZcDv9": {
+    "message": "<0>{0}</0>: create a room, then send a friend its link.",
+    "translation": "<0>{0}</0>: maak een room aan en stuur een vriend de link."
+  },
   "F7xH8_": {
     "message": "<0>{0}</0>: every move, and the chat.",
     "translation": "<0>{0}</0>: elke zet en de chat."
-  },
-  "l7W_Ze": {
-    "message": "<0>{0}</0>: send a friend a link to your table.",
-    "translation": "<0>{0}</0>: stuur een vriend een link naar je tafel."
   },
   "NaneTg": {
     "message": "<0>{0}</0>: the table's look, the theme and the language.",
@@ -1220,9 +1220,9 @@
     "context": "shortcut key caption",
     "translation": "Alles naar hand"
   },
-  "Sb4b2A": {
-    "message": "Allow board flip <0>(both players)</0>",
-    "translation": "Bord omdraaien toestaan <0>(beide spelers)</0>"
+  "Z2UuYT": {
+    "message": "Allow board flip",
+    "translation": "Bord draaien toestaan"
   },
   "vj7KYC": {
     "message": "Already in hand",
@@ -1516,6 +1516,18 @@
     "message": "Both",
     "context": "show both halves of the table",
     "translation": "Beide"
+  },
+  "-xs46B": {
+    "message": "Both players must allow it.",
+    "translation": "Beide spelers moeten dit toestaan."
+  },
+  "nqjpOW": {
+    "message": "Both seats are taken.",
+    "translation": "Beide plekken zijn bezet."
+  },
+  "5XVQGs": {
+    "message": "Both seats are taken. Ask for a spectator invitation.",
+    "translation": "Beide plekken zijn bezet. Vraag om een uitnodiging als toeschouwer."
   },
   "7jOTCJ": {
     "message": "Both sides",
@@ -1874,19 +1886,6 @@
     "message": "Connection lost.",
     "translation": "Verbinding verbroken."
   },
-  "c0_6W9": {
-    "message": "Copied",
-    "context": "an invitation",
-    "translation": "Gekopieerd"
-  },
-  "ITnJNv": {
-    "message": "Copy an invitation",
-    "translation": "Kopieer een uitnodiging"
-  },
-  "Yc1XTF": {
-    "message": "Copy invitation",
-    "translation": "Uitnodiging kopiëren"
-  },
   "PSlXm_": {
     "message": "Copy list",
     "translation": "Lijst kopiëren"
@@ -1899,17 +1898,9 @@
     "message": "Couldn't check that. Try again.",
     "translation": "Kon dat niet controleren. Probeer het opnieuw."
   },
-  "gklFA4": {
-    "message": "Couldn't copy the invitation",
-    "translation": "Kon de uitnodiging niet kopiëren"
-  },
-  "sA7lnV": {
-    "message": "Couldn't copy the invitation. Try again.",
-    "translation": "Kon de uitnodiging niet kopiëren. Probeer het opnieuw."
-  },
-  "O3p0SF": {
-    "message": "Couldn't generate a room. Try again.",
-    "translation": "Kon geen kamer aanmaken. Probeer het opnieuw."
+  "8T-Jx-": {
+    "message": "Couldn't create a room. Try again.",
+    "translation": "Kan de room niet aanmaken. Probeer het opnieuw."
   },
   "Glz9_Y": {
     "message": "Couldn't join the room. Try again.",
@@ -1939,6 +1930,10 @@
     "message": "Couldn't read that list",
     "translation": "Kon die lijst niet lezen"
   },
+  "cU_nca": {
+    "message": "Couldn't read the clipboard. Paste with the keyboard.",
+    "translation": "Kan het klembord niet lezen. Plak met het toetsenbord."
+  },
   "heYM3E": {
     "message": "Couldn't resume the game",
     "translation": "Kon het spel niet hervatten"
@@ -1947,6 +1942,10 @@
     "message": "Couldn't save the game",
     "translation": "Kon het spel niet opslaan"
   },
+  "TC3rNW": {
+    "message": "Couldn't share the invitation. Try again.",
+    "translation": "Kan de uitnodiging niet delen. Probeer het opnieuw."
+  },
   "hCQkU8": {
     "message": "Couldn't start Solo mode. Try again.",
     "translation": "Kon de solomodus niet starten. Probeer het opnieuw."
@@ -1954,10 +1953,6 @@
   "eP7qeF": {
     "message": "Couldn't start the tutorial. Try again.",
     "translation": "Kan de tutorial niet starten. Probeer het opnieuw."
-  },
-  "nzVItu": {
-    "message": "Couldn't use the clipboard. Allow access and try again.",
-    "translation": "Kon het klembord niet gebruiken. Geef toegang en probeer het opnieuw."
   },
   "U9OFiD": {
     "message": "cover",
@@ -1970,6 +1965,20 @@
       "A table look: the colour"
     ],
     "translation": "Crème"
+  },
+  "E6-4ez": {
+    "message": "Create a room, or join one with a link.",
+    "translation": "Maak een room aan of neem deel met een link."
+  },
+  "xE_hmo": {
+    "message": "Create room",
+    "context": "a room",
+    "translation": "Room aanmaken"
+  },
+  "_LHski": {
+    "message": "Creating…",
+    "context": "a room",
+    "translation": "Aanmaken…"
   },
   "ETt3ev": {
     "message": "Ctrl",
@@ -2287,6 +2296,10 @@
   "IsvGW6": {
     "message": "Drop to import",
     "translation": "Laat los om te importeren"
+  },
+  "kWPbQy": {
+    "message": "Drop to open",
+    "translation": "Loslaten om te openen"
   },
   "d3YoNV": {
     "message": "Dropped",
@@ -2655,28 +2668,6 @@
     "message": "Game resumed",
     "translation": "Spel hervat"
   },
-  "oP3kz7": {
-    "message": "Generate",
-    "context": "a room",
-    "translation": "Aanmaken"
-  },
-  "mb6Tyv": {
-    "message": "Generate a room and send the invitation. With <0>Join as spectator</0> on, it invites a spectator.",
-    "translation": "Maak een kamer aan en stuur de uitnodiging. Met <0>Meedoen als toeschouwer</0> aan nodig je een toeschouwer uit."
-  },
-  "5NEkeP": {
-    "message": "Generate a room first.",
-    "translation": "Maak eerst een kamer aan."
-  },
-  "G7A2K4": {
-    "message": "Generate a room, then send the invitation.",
-    "translation": "Maak een kamer aan en stuur dan de uitnodiging."
-  },
-  "fQq7dv": {
-    "message": "Generating…",
-    "context": "a room",
-    "translation": "Aanmaken…"
-  },
   "4RM73X": {
     "message": "Get a sponsor tag on your GitHub profile (if sponsoring via GitHub, not applicable for sponsors through PayPal. Currently in the process of getting my GH sponsor page approved 😛).",
     "translation": "Krijg een sponsorlabel op je GitHub-profiel (alleen bij sponsoring via GitHub, niet van toepassing op sponsors via PayPal. Ik ben nog bezig om mijn GH-sponsorpagina goedgekeurd te krijgen 😛)."
@@ -2761,6 +2752,10 @@
       "The developer's personal note on the Sponsors & Donations page"
     ],
     "translation": "Hoi allemaal! Ik ben Michael/Xiao Xiao Long, een 21-jarige uit Guelph, Canada, die in de herfst van 2023 begon met programmeren. Ik speel al meer dan 8 jaar Pokémon TCG en heb de afgelopen 3 maanden PTCG-sim gebouwd, een gratis tool waarmee de community ons favoriete kaartspel kan testen en spelen."
+  },
+  "vLyv1R": {
+    "message": "Hide",
+    "translation": "Verbergen"
   },
   "pWgsbk": {
     "message": "Hide",
@@ -2925,13 +2920,24 @@
     ],
     "translation": "International"
   },
-  "6vI3XA": {
-    "message": "Invitation copied",
-    "translation": "Uitnodiging gekopieerd"
+  "KhBSE_": {
+    "message": "Invitation",
+    "comments": [
+      "The link or code that lets someone join a room"
+    ],
+    "translation": "Uitnodiging"
   },
-  "z1vTYz": {
-    "message": "Invitation copied to your clipboard.",
-    "translation": "Uitnodiging naar je klembord gekopieerd."
+  "au3LEA": {
+    "message": "Invitation link copied",
+    "translation": "Uitnodigingslink gekopieerd"
+  },
+  "Za0iMR": {
+    "message": "Invite opponent",
+    "translation": "Tegenstander uitnodigen"
+  },
+  "UoRWrm": {
+    "message": "Invite spectator",
+    "translation": "Toeschouwer uitnodigen"
   },
   "0pN9y3": {
     "message": "It stays open for another draw. Press <0>Esc</0> twice to close it.",
@@ -3041,6 +3047,10 @@
   "M-FK_f": {
     "message": "Leave room",
     "translation": "Kamer verlaten"
+  },
+  "Qxgi9O": {
+    "message": "Leave the room to join another.",
+    "translation": "Verlaat de room om aan een andere deel te nemen."
   },
   "82LZ4F": {
     "message": "Leave the room to start the tutorial.",
@@ -3800,6 +3810,10 @@
     "message": "Open the deck screen",
     "translation": "Deckscherm openen"
   },
+  "rT710w": {
+    "message": "Open the link again in a moment.",
+    "translation": "Open de link zo meteen opnieuw."
+  },
   "cCMcAY": {
     "message": "Open their deck",
     "translation": "Open hun deck"
@@ -3910,6 +3924,11 @@
     "context": "paste a list from the clipboard",
     "translation": "Plakken"
   },
+  "L3kYdG": {
+    "message": "Paste",
+    "context": "paste from the clipboard",
+    "translation": "Plakken"
+  },
   "BRnJkz": {
     "message": "Paste a decklist first.",
     "translation": "Plak eerst een decklijst."
@@ -3918,21 +3937,17 @@
     "message": "Paste a list from the clipboard",
     "translation": "Plak een lijst vanaf het klembord"
   },
-  "Ig8A-t": {
-    "message": "Paste a valid invitation into Room ID.",
-    "translation": "Plak een geldige uitnodiging in Kamer-ID."
+  "7hnHtA": {
+    "message": "Paste or drop the link you were sent.",
+    "translation": "Plak of sleep de link die je hebt ontvangen."
   },
-  "pJRgD4": {
-    "message": "Paste an invitation",
-    "translation": "Een uitnodiging plakken"
+  "erh83Q": {
+    "message": "Paste the invitation link you were sent.",
+    "translation": "Plak de uitnodigingslink die je hebt ontvangen."
   },
-  "4LC7ch": {
-    "message": "Paste an invitation, or join your own room.",
-    "translation": "Plak een uitnodiging, of ga naar je eigen kamer."
-  },
-  "3J14ru": {
-    "message": "Paste the invitation into Room ID.",
-    "translation": "Plak de uitnodiging in Kamer-ID."
+  "ax6uck": {
+    "message": "Paste the link",
+    "translation": "Plak de link"
   },
   "MfH2NF": {
     "message": "Paste with Ctrl+V (⌘V) instead",
@@ -4478,6 +4493,20 @@
     ],
     "translation": "Kamer"
   },
+  "GzC7XU": {
+    "message": "Room {0} · to play",
+    "comments": [
+      "roomCode is a short code like K7PQ2M"
+    ],
+    "translation": "Room {0} · om te spelen"
+  },
+  "0sQWkX": {
+    "message": "Room {0} · to watch",
+    "comments": [
+      "roomCode is a short code like K7PQ2M"
+    ],
+    "translation": "Room {0} · om te kijken"
+  },
   "euMx3W": {
     "message": "Room {roomCode}",
     "comments": [
@@ -4485,9 +4514,9 @@
     ],
     "translation": "Kamer {roomCode}"
   },
-  "QoZkYe": {
-    "message": "Room ID",
-    "translation": "Kamer-ID"
+  "tFii6J": {
+    "message": "Room ready",
+    "translation": "Room klaar"
   },
   "pbJSIc": {
     "message": "Rotate",
@@ -4664,6 +4693,10 @@
     "message": "Season",
     "translation": "Seizoen"
   },
+  "wRfrN3": {
+    "message": "Seat taken",
+    "translation": "Plek bezet"
+  },
   "tGu7Tl": {
     "message": "Selected card",
     "comments": [
@@ -4688,6 +4721,10 @@
   "pi1oME": {
     "message": "Send message",
     "translation": "Bericht versturen"
+  },
+  "QYIzdx": {
+    "message": "Send your opponent a link. Each works once.",
+    "translation": "Stuur je tegenstander een link. Elke link werkt één keer."
   },
   "Of0ksK": {
     "message": "Seriously do not think anyone will subscribe to this, but I would be immensely grateful.",
@@ -5317,13 +5354,13 @@
     "message": "That Energy has left your hand.",
     "translation": "Die Energie heeft je hand verlaten."
   },
+  "fIHd89": {
+    "message": "That file can't be opened here.",
+    "translation": "Dat bestand kan hier niet worden geopend."
+  },
   "ZMr878": {
     "message": "That image didn't load.",
     "translation": "Die afbeelding is niet geladen."
-  },
-  "UoxtKp": {
-    "message": "That invitation expired. Ask for a new one.",
-    "translation": "Die uitnodiging is verlopen. Vraag een nieuwe aan."
   },
   "B4ZAXF": {
     "message": "That one was skipped.",
@@ -5491,6 +5528,10 @@
   "5PdIYU": {
     "message": "This game will be lost.",
     "translation": "Dit spel gaat verloren."
+  },
+  "5HIoIb": {
+    "message": "This invitation was used or has expired. Ask for a new one.",
+    "translation": "Deze uitnodiging is gebruikt of verlopen. Vraag om een nieuwe."
   },
   "L7LU5x": {
     "message": "This tutorial waits in the <0>menu</0> whenever you want it.",
@@ -5948,6 +5989,10 @@
     "context": "filter",
     "translation": "Ja"
   },
+  "1hxqre": {
+    "message": "You'll invite players from the room.",
+    "translation": "Je nodigt spelers uit vanuit de room."
+  },
   "VvkF_g": {
     "message": "You're watching",
     "translation": "Je kijkt mee"
@@ -5993,10 +6038,6 @@
   "BHcJOF": {
     "message": "Your Lost Zone",
     "translation": "Je Lost Zone"
-  },
-  "23cwkx": {
-    "message": "Your name changed. Generate a new room.",
-    "translation": "Je naam is veranderd. Maak een nieuwe kamer aan."
   },
   "Oi-Qz3": {
     "message": "Your playboard",

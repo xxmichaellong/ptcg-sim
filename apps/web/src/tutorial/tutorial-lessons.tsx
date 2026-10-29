@@ -1172,8 +1172,8 @@ const around: TutorialLesson = {
       id: 'online',
       text: () => (
         <Trans>
-          <strong>{controlLabel('playOnline')}</strong>: send a friend a link to
-          your table.
+          <strong>{controlLabel('playOnline')}</strong>: create a room, then
+          send a friend its link.
         </Trans>
       ),
       targets: () => [barButton('p2Button')],

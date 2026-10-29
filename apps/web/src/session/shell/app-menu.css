@@ -1,0 +1,9 @@
+/* Why a menu row is off, after its label: "Invite opponent · Seat taken". */
+.app-menu-detail {
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+
+.app-menu-detail::before {
+  content: '· ';
+}

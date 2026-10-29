@@ -1,9 +1,8 @@
 import type { MessageDescriptor } from '@lingui/core';
 import { msg } from '@lingui/core/macro';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { CheckIcon } from '@phosphor-icons/react/dist/csr/Check';
 import { CircleNotchIcon } from '@phosphor-icons/react/dist/csr/CircleNotch';
-import { CopyIcon } from '@phosphor-icons/react/dist/csr/Copy';
+import { ClipboardTextIcon } from '@phosphor-icons/react/dist/csr/ClipboardText';
 import { PlusIcon } from '@phosphor-icons/react/dist/csr/Plus';
 import { SignInIcon } from '@phosphor-icons/react/dist/csr/SignIn';
 import { UsersThreeIcon } from '@phosphor-icons/react/dist/csr/UsersThree';
@@ -21,7 +20,11 @@ import {
   useState,
   useSyncExternalStore,
 } from 'react';
-import type { ClipboardEvent as ReactClipboardEvent, ReactNode } from 'react';
+import type {
+  ClipboardEvent as ReactClipboardEvent,
+  DragEvent as ReactDragEvent,
+  ReactNode,
+} from 'react';
 
 import {
   preferences as pagePreferences,
@@ -32,7 +35,6 @@ import { PLAYER_PREFERENCES } from './player-preferences.js';
 import { ROOM_DEFAULT_PREFERENCES } from './room-preferences.js';
 import { TABLE_PREFERENCES } from './table-preferences.js';
 import { RendererSpikeBoard } from '../RendererSpikeBoard.js';
-import { resolveCoachingConsentAction } from '../board/resolveCoachingConsentAction.js';
 import { AppBarSlot } from '../board/LegacyBoardChrome.js';
 import {
   boardViewSettings,
@@ -43,16 +45,29 @@ import type { DeckBuilderCustody } from '../features/deck/DeckBuilderSession.js'
 import { LazyDeckBuilderSession } from '../features/deck/LazyDeckBuilderSession.js';
 import {
   createRemoteRoom,
+  RemoteRoomInvitationError,
   type RemoteRoomCreationResult,
+  type RemoteRoomInvitationShareReceipt,
 } from './RemoteRoomCreation.js';
 import { waitForAdmission } from './wait-for-admission.js';
 import {
   RemoteRoomInvitationJoinCustody,
   type RemoteRoomInvitationHandoffReceipt,
 } from './RemoteRoomInvitationHandoff.js';
+import { RemoteRoomHeldInvitation } from './RemoteRoomHeldInvitation.js';
+import {
+  onInvitationLink,
+  takeInvitationLink,
+} from './invitation-link-capture.js';
+import { browserInvitationDelivery } from './invitation-share.js';
+import type { RoomInvitations, RoomInviteOutcome } from './room-invites.js';
 import { RemoteRoomRoute } from './RemoteRoomRoute.js';
 import { RemoteSessionBoard } from './RemoteSessionBoard.js';
-import { COARSE_POINTER_QUERY, useMediaQuery } from '../ui/breakpoints.js';
+import {
+  COARSE_POINTER_QUERY,
+  TOUCH_ONLY_QUERY,
+  useMediaQuery,
+} from '../ui/breakpoints.js';
 import {
   RemoteRoomRestorationCustody,
   type RemoteRoomRestorationInput,
@@ -134,11 +149,11 @@ const LEGACY_FALLBACK_NAMES = Object.freeze([
   'Sycamore',
 ]);
 
-type LobbyOperation =
-  'solo' | 'generate' | 'copy' | 'join' | 'resume' | 'tutorial';
+type LobbyOperation = 'solo' | 'create' | 'join' | 'resume' | 'tutorial';
 
 interface InvitationJoinCustody {
   readonly acceptPaste: RemoteRoomInvitationJoinCustody['acceptPaste'];
+  readonly acceptText: RemoteRoomInvitationJoinCustody['acceptText'];
   readonly bootstrap: RemoteRoomInvitationJoinCustody['bootstrap'];
   readonly clear: RemoteRoomInvitationJoinCustody['clear'];
   readonly dispose: RemoteRoomInvitationJoinCustody['dispose'];
@@ -167,7 +182,8 @@ interface LobbyOwner {
   };
   guestRuntime?: RemoteRoomRuntime;
   restoration?: RoomRestorationCustody;
-  copyReset?: ReturnType<typeof setTimeout>;
+  /** A resumed game's opponent invitation, until it is passed on. */
+  held?: RemoteRoomHeldInvitation;
   /** The tutorial's practice table (ADR-038), while it is open. */
   tutorial?: RemoteRoomCreationResult;
 }
@@ -202,9 +218,22 @@ const defaultDependencies: RemoteRoomLobbyDependencies = {
 interface ConnectedRoom {
   readonly runtime: RemoteRoomRuntime;
   readonly mode: 'solo' | 'multiplayer';
-  /** Set once admitted; left out, the room keeps its own (a restored game). */
-  readonly coachingConsent?: boolean;
 }
+
+/**
+ * The invitation link the page was opened with (or given since), from the
+ * capture that took it off the address (invitation-link-capture.ts): kept
+ * until a join with it is seen through, so StrictMode's replaced owner, or
+ * a lobby that remounts, does not lose it.
+ */
+let waitingInvitationLink: string | undefined;
+const pendingInvitationLink = (): string | undefined => {
+  waitingInvitationLink ??= takeInvitationLink();
+  return waitingInvitationLink;
+};
+const consumeInvitationLink = (): void => {
+  waitingInvitationLink = undefined;
+};
 
 const normalizeDisplayName = (
   candidate: string,
@@ -215,9 +244,9 @@ const disposeOwner = (owner: LobbyOwner): void => {
   if (owner.disposed) return;
   owner.disposed = true;
   owner.operation?.abort.abort();
-  if (owner.copyReset !== undefined) clearTimeout(owner.copyReset);
   owner.invitation.dispose();
   owner.restoration?.dispose();
+  owner.held?.dispose();
   if (owner.creator) {
     owner.creator.result.dispose();
   } else {
@@ -240,18 +269,15 @@ const safeFailureMessage = (
     typeof error === 'object' && error !== null && 'code' in error
       ? String(error.code)
       : '';
-  if (operation === 'copy') {
-    if (code === 'clipboard_unavailable' || code === 'clipboard_failed') {
-      return msg`Couldn't use the clipboard. Allow access and try again.`;
-    }
-    return msg`Couldn't copy the invitation. Try again.`;
-  }
   if (operation === 'join') {
     if (code === 'missing_invitation' || code === 'invalid_handoff') {
-      return msg`Paste a valid invitation into Room ID.`;
+      return msg`Paste the invitation link you were sent.`;
     }
-    if (code === 'expired_invitation') {
-      return msg`That invitation expired. Ask for a new one.`;
+    if (code === 'expired_invitation' || code === 'invitation_refused') {
+      return msg`This invitation was used or has expired. Ask for a new one.`;
+    }
+    if (code === 'seat_unavailable') {
+      return msg`Both seats are taken. Ask for a spectator invitation.`;
     }
     return msg`Couldn't join the room. Try again.`;
   }
@@ -261,39 +287,31 @@ const safeFailureMessage = (
   if (operation === 'tutorial') {
     return msg`Couldn't start the tutorial. Try again.`;
   }
-  return msg`Couldn't generate a room. Try again.`;
+  return msg`Couldn't create a room. Try again.`;
 };
 
-const InitialCoachingConsent = ({
-  runtime,
-  consent,
-}: {
-  readonly runtime: RemoteRoomRuntime;
-  readonly consent: boolean;
-}) => {
-  useEffect(() => {
-    let settled = false;
-    let attempting = false;
-    const apply = (): void => {
-      if (settled || attempting) return;
-      const state = runtime.session.getSnapshot();
-      if (state.phase !== 'ready' || !state.view) return;
-      const resolution = resolveCoachingConsentAction(state.view, consent);
-      if (!resolution.ok) {
-        if (resolution.reason !== 'stale_player') settled = true;
-        return;
-      }
-      attempting = true;
-      const submission = runtime.session.submit(resolution.command);
-      if (submission.queued) settled = true;
-      attempting = false;
-    };
-    const unsubscribe = runtime.session.subscribe(apply);
-    apply();
-    return unsubscribe;
-  }, [consent, runtime]);
-  return null;
+/** An invite press passed to the room's custody, as the room hears it. */
+const inviteOutcome = async (
+  send: () => Promise<RemoteRoomInvitationShareReceipt>
+): Promise<RoomInviteOutcome> => {
+  try {
+    return (await send()).outcome;
+  } catch (error) {
+    return error instanceof RemoteRoomInvitationError &&
+      error.code === 'seat_unavailable'
+      ? 'seat_unavailable'
+      : 'failed';
+  }
 };
+
+/**
+ * How this device passes a link on: the share sheet on a touch screen, the
+ * clipboard with a mouse. Asked at each press, as the device may change.
+ */
+const currentDelivery = () =>
+  browserInvitationDelivery({
+    preferShare: globalThis.matchMedia?.(TOUCH_ONLY_QUERY).matches === true,
+  });
 
 const decorative = { 'aria-hidden': true, focusable: 'false' } as const;
 
@@ -344,14 +362,14 @@ export const RemoteRoomLobby = ({
     const typed = name.trim();
     if (typed !== '') store.set(PLAYER_PREFERENCES, { displayName: typed });
   };
+  // The invitation field shows the room an accepted invitation names,
+  // never the invitation itself (ADR-020).
   const [roomCode, setRoomCode] = useState('');
-  const [coachingConsent, setCoachingConsent] = useState(false);
   const [spectator, setSpectator] = useState(false);
   const [receipt, setReceipt] = useState<RemoteRoomInvitationHandoffReceipt>();
   const [operation, setOperation] = useState<LobbyOperation>();
   // Kept as a message, so it reads in whatever language is up when shown.
   const [status, setStatus] = useState<MessageDescriptor>();
-  const [copyConfirmed, setCopyConfirmed] = useState(false);
   const [connected, setConnected] = useState<ConnectedRoom>();
   const [parkedSolo, setParkedSolo] = useState<ConnectedRoom>();
   // The tutorial's practice table, shown in place of the player's own
@@ -484,13 +502,66 @@ export const RemoteRoomLobby = ({
     };
   }, [dependencies]);
 
+  /**
+   * Joins the room an invitation link names (ADR-020): opened with it, the
+   * page goes straight there instead of to the Solo table; given one while
+   * up, it goes there from the lobby or a Solo table, never from a room.
+   * Refused, Play online shows why, its fields ready to try another.
+   */
+  const joinFromLink = (link: string): void => {
+    const owner = ownerRef.current;
+    if (!owner || owner.disposed) return;
+    if (connected?.mode === 'multiplayer' || owner.operation) {
+      consumeInvitationLink();
+      toast({
+        id: 'invitation-link',
+        title: owner.operation
+          ? t`Open the link again in a moment.`
+          : t`Leave the room to join another.`,
+        tone: 'warning',
+      });
+      return;
+    }
+    setActivePanel('lobby');
+    let accepted: RemoteRoomInvitationHandoffReceipt;
+    try {
+      accepted = owner.invitation.acceptText(link);
+    } catch (error) {
+      consumeInvitationLink();
+      refuseInvitation(error);
+      return;
+    }
+    showAccepted(accepted);
+    void handleJoin(accepted.requestedRole === 'spectator').finally(() => {
+      // A join this owner saw through has used the link; one a replaced
+      // owner gave up on leaves it for the next.
+      if (!owner.disposed) consumeInvitationLink();
+    });
+  };
+  const joinFromLinkRef = useRef(joinFromLink);
+  joinFromLinkRef.current = joinFromLink;
+  useEffect(
+    () =>
+      onInvitationLink(() => {
+        const link = pendingInvitationLink();
+        if (link) joinFromLinkRef.current(link);
+      }),
+    []
+  );
+
   useEffect(() => {
     // Guarded per owner rather than per component: StrictMode replays the
     // owner effect with a fresh owner, and the first owner's room creation
-    // is discarded on arrival because that owner was disposed.
+    // (or join) is discarded on arrival because that owner was disposed.
     const owner = ownerRef.current;
-    if (landing !== 'solo' || !owner || owner.disposed || owner.landedOnSolo)
+    if (!owner || owner.disposed || owner.landedOnSolo) return;
+    const link = pendingInvitationLink();
+    if (link) {
+      owner.landedOnSolo = true;
+      joinFromLink(link);
       return;
+    }
+    if (landing !== 'solo') return;
     owner.landedOnSolo = true;
     void handleSolo();
   });
@@ -571,8 +642,12 @@ export const RemoteRoomLobby = ({
     if (ownerRef.current === owner && !owner.disposed) setOperation(undefined);
   };
 
-  const handleGenerate = async (): Promise<void> => {
-    const active = beginOperation('generate');
+  /**
+   * Create room: makes a multiplayer room and takes its host straight into
+   * it, where the room offers its invites (ADR-020, 2026-10-29).
+   */
+  const handleCreate = async (): Promise<void> => {
+    const active = beginOperation('create');
     if (!active) return;
     const displayName = normalizeDisplayName(
       name,
@@ -602,38 +677,34 @@ export const RemoteRoomLobby = ({
         return;
       }
       const owner = active.owner;
-      const settle = (): boolean => {
+      // The room's table takes the screen from whatever was on it: a live
+      // Solo game (left behind, as v1 left it for its Multiplayer tab), a
+      // parked one, or the lobby's empty table.
+      await handOffTable(() => {
         if (owner.disposed || ownerRef.current !== owner) {
           result.dispose();
           return false;
         }
-        // Reading the Multiplayer panel leaves a live Solo table alone; a
-        // room that actually exists is the real transition, and that is
-        // where v1's park belongs. A refused generate leaves the table where
-        // it was.
-        parkSoloForMultiplayer();
         const previous = owner.creator;
         owner.creator = { result, displayName };
         owner.guestRuntime?.dispose();
         delete owner.guestRuntime;
+        owner.held?.dispose();
+        delete owner.held;
         previous?.result.dispose();
         setParkedSolo(undefined);
         owner.invitation.clear();
         setName(displayName);
         rememberName();
-        setRoomCode(result.invitations.roomCode);
+        setRoomCode('');
         setReceipt(undefined);
-        setCopyConfirmed(false);
         // A retry that works retires the failure it follows.
         setStatus(undefined);
-        return true;
-      };
-      // Leaving a live Solo table for the lobby's trades the table.
-      if (connected?.mode === 'solo') await handOffTable(settle);
-      else settle();
+        setConnected({ runtime: result.runtime, mode: 'multiplayer' });
+      });
     } catch (error) {
       if (!active.owner.disposed) {
-        setStatus(safeFailureMessage('generate', error));
+        setStatus(safeFailureMessage('create', error));
       }
     } finally {
       endOperation(active.owner);
@@ -688,19 +759,15 @@ export const RemoteRoomLobby = ({
         owner.guestRuntime?.dispose();
         delete owner.guestRuntime;
         previous?.result.dispose();
+        owner.held?.dispose();
+        delete owner.held;
         owner.invitation.clear();
         // Solo's fixed name is never written back into the Multiplayer Name
         // box, which v1 leaves for the visitor to fill in themselves.
         setRoomCode('');
         setReceipt(undefined);
-        setCoachingConsent(false);
-        setCopyConfirmed(false);
         setStatus(undefined);
-        setConnected({
-          runtime: result.runtime,
-          mode: result.mode,
-          coachingConsent: false,
-        });
+        setConnected({ runtime: result.runtime, mode: result.mode });
       });
     } catch (error) {
       if (!active.owner.disposed) {
@@ -825,67 +892,79 @@ export const RemoteRoomLobby = ({
     void handleTutorial(tutorialRequest);
   });
 
-  const handleCopy = async (): Promise<void> => {
-    const active = beginOperation('copy');
-    if (!active) return;
-    const creator = active.owner.creator;
-    if (
-      !creator ||
-      roomCode.trim().toUpperCase() !== creator.result.invitations.roomCode
-    ) {
-      setStatus(msg`Generate a room first.`);
-      endOperation(active.owner);
-      return;
-    }
-    setCopyConfirmed(false);
-    try {
-      const copy = spectator
-        ? creator.result.invitations.copySpectatorInvitation(
-            undefined,
-            active.abort.signal
-          )
-        : creator.result.invitations.copyPlayerInvitation(
-            undefined,
-            active.abort.signal
-          );
-      await copy;
-      if (active.owner.disposed) return;
-      if (active.owner.copyReset !== undefined) {
-        clearTimeout(active.owner.copyReset);
-      }
-      setCopyConfirmed(true);
-      setStatus(undefined);
-      active.owner.copyReset = setTimeout(() => {
-        if (ownerRef.current === active.owner && !active.owner.disposed) {
-          setCopyConfirmed(false);
-        }
-      }, 1_000);
-    } catch (error) {
-      if (!active.owner.disposed) {
-        setStatus(safeFailureMessage('copy', error));
-      }
-    } finally {
-      endOperation(active.owner);
-    }
+  /** Shows an invitation the custody accepted, as its room and role only. */
+  const showAccepted = (accepted: RemoteRoomInvitationHandoffReceipt): void => {
+    setReceipt(accepted);
+    setRoomCode(accepted.roomCode);
+    setSpectator(accepted.requestedRole === 'spectator');
+    setStatus(undefined);
+  };
+  const refuseInvitation = (error: unknown): void => {
+    setReceipt(undefined);
+    setStatus(safeFailureMessage('join', error));
   };
 
-  const handlePaste = (event: ReactClipboardEvent<HTMLInputElement>): void => {
+  /**
+   * A paste anywhere in Play online but the Name field takes an invitation
+   * (its envelope or its link): intercepted before the browser could put
+   * it in a field, kept by the custody alone (ADR-020).
+   */
+  const handlePaste = (event: ReactClipboardEvent<HTMLElement>): void => {
+    if (event.target instanceof HTMLElement && event.target.id === 'nameInput')
+      return;
     const owner = ownerRef.current;
-    if (!owner || owner.disposed) {
+    if (!owner || owner.disposed || owner.operation) {
       event.preventDefault();
       return;
     }
     try {
-      const accepted = owner.invitation.acceptPaste({
-        clipboardData: event.clipboardData,
-        preventDefault: () => event.preventDefault(),
-      });
-      setReceipt(accepted);
-      setRoomCode(accepted.roomCode);
-      setSpectator(accepted.requestedRole === 'spectator');
+      showAccepted(
+        owner.invitation.acceptPaste({
+          clipboardData: event.clipboardData,
+          preventDefault: () => event.preventDefault(),
+        })
+      );
     } catch (error) {
-      setReceipt(undefined);
-      setStatus(safeFailureMessage('join', error));
+      refuseInvitation(error);
+    }
+  };
+
+  /** An invitation's text or link dropped on Play online. */
+  const handleDrop = (event: ReactDragEvent<HTMLElement>): void => {
+    const types = event.dataTransfer.types;
+    if (!types.includes('text/plain') && !types.includes('text/uri-list'))
+      return;
+    event.preventDefault();
+    const owner = ownerRef.current;
+    if (!owner || owner.disposed || owner.operation) return;
+    const text =
+      event.dataTransfer.getData('text/uri-list') ||
+      event.dataTransfer.getData('text/plain');
+    try {
+      showAccepted(owner.invitation.acceptText(text));
+    } catch (error) {
+      refuseInvitation(error);
+    }
+  };
+
+  /** The Paste button: the clipboard read where the browser allows it. */
+  const clipboardReadable =
+    typeof globalThis.navigator?.clipboard?.readText === 'function';
+  const handlePasteButton = async (): Promise<void> => {
+    const owner = ownerRef.current;
+    if (!owner || owner.disposed || owner.operation) return;
+    let text: string;
+    try {
+      text = await globalThis.navigator.clipboard.readText();
+    } catch {
+      setStatus(msg`Couldn't read the clipboard. Paste with the keyboard.`);
+      return;
+    }
+    if (owner.disposed || ownerRef.current !== owner || owner.operation) return;
+    try {
+      showAccepted(owner.invitation.acceptText(text));
+    } catch (error) {
+      refuseInvitation(error);
     }
   };
 
@@ -898,34 +977,16 @@ export const RemoteRoomLobby = ({
     setRoomCode(sanitizeRoomCodeInput(value));
   };
 
-  const handleJoin = async (): Promise<void> => {
-    // No park here: a join that succeeds replaces the live table outright,
-    // and one that is refused must leave both the table and the pasted
-    // invitation where they were.
+  /**
+   * Joins with the invitation the custody holds. No park here: a join that
+   * succeeds replaces the live table outright, and one that is refused must
+   * leave both the table and the invitation where they were.
+   */
+  const handleJoin = async (
+    asSpectator: boolean = spectator
+  ): Promise<void> => {
     const owner = ownerRef.current;
     if (!owner || owner.disposed || owner.operation) return;
-    const normalizedRoomCode = roomCode.trim().toUpperCase();
-    const creator = owner.creator;
-    if (
-      !receipt &&
-      creator &&
-      normalizedRoomCode === creator.result.invitations.roomCode
-    ) {
-      if (name.trim() !== creator.displayName) {
-        setStatus(msg`Your name changed. Generate a new room.`);
-        return;
-      }
-      await handOffTable(() => {
-        if (owner.disposed) return false;
-        setConnected({
-          runtime: creator.result.runtime,
-          mode: creator.result.mode,
-          coachingConsent,
-        });
-      });
-      return;
-    }
-
     const active = beginOperation('join');
     if (!active) return;
     const displayName = normalizeDisplayName(
@@ -936,7 +997,7 @@ export const RemoteRoomLobby = ({
       const result = await active.owner.invitation.bootstrap({
         buildId,
         displayName,
-        asSpectator: spectator,
+        asSpectator,
         signal: active.abort.signal,
       });
       if (active.owner.disposed || ownerRef.current !== active.owner) {
@@ -963,17 +1024,19 @@ export const RemoteRoomLobby = ({
         }
         // Admitted: the invitation is used up.
         joined.invitation.clear();
+        joined.guestRuntime?.dispose();
         joined.guestRuntime = result.runtime;
         joined.creator?.result.dispose();
         joined.creator = undefined;
+        joined.held?.dispose();
+        delete joined.held;
         setParkedSolo(undefined);
         setName(displayName);
         rememberName();
-        setConnected({
-          runtime: result.runtime,
-          mode: 'multiplayer',
-          coachingConsent,
-        });
+        setReceipt(undefined);
+        setRoomCode('');
+        setStatus(undefined);
+        setConnected({ runtime: result.runtime, mode: 'multiplayer' });
       });
     } catch (error) {
       if (!active.owner.disposed) setStatus(safeFailureMessage('join', error));
@@ -988,14 +1051,12 @@ export const RemoteRoomLobby = ({
     void handOffTable(() => {
       if (owner.disposed || ownerRef.current !== owner) return false;
       const nextInvitation = dependencies.createInvitationJoinCustody();
-      if (owner.copyReset !== undefined) {
-        clearTimeout(owner.copyReset);
-        delete owner.copyReset;
-      }
       owner.invitation.dispose();
       owner.invitation = nextInvitation;
       owner.restoration?.dispose();
       delete owner.restoration;
+      owner.held?.dispose();
+      delete owner.held;
       if (owner.creator) {
         owner.creator.result.dispose();
         delete owner.creator;
@@ -1005,8 +1066,6 @@ export const RemoteRoomLobby = ({
       }
       setReceipt(undefined);
       setRoomCode('');
-      setCoachingConsent(false);
-      setCopyConfirmed(false);
       setConnected(undefined);
       setParkedSolo(undefined);
       setStatus(undefined);
@@ -1015,9 +1074,16 @@ export const RemoteRoomLobby = ({
 
   const handleResumeSavedGame = async (
     contents: string,
-    deliverOpponentInvitation: RemoteRoomRestorationInput['deliverOpponentInvitation'],
     signal: AbortSignal
   ): Promise<void> => {
+    // The restore mints the opponent's invitation; it waits here for the
+    // player's Invite opponent rather than going to the clipboard unasked.
+    const held = new RemoteRoomHeldInvitation();
+    const deliverOpponentInvitation: RemoteRoomRestorationInput['deliverOpponentInvitation'] =
+      (text) => {
+        held.hold(text);
+        return Promise.resolve();
+      };
     const active = beginOperation('resume');
     if (!active) throw new Error('A room operation is already in progress');
     const displayName = normalizeDisplayName(
@@ -1069,14 +1135,14 @@ export const RemoteRoomLobby = ({
         owner.guestRuntime = result.runtime;
         delete owner.creator;
         delete owner.restoration;
+        owner.held?.dispose();
+        owner.held = held;
         setParkedSolo(undefined);
         setName(displayName);
         rememberName();
         setReceipt(undefined);
-        setRoomCode(result.runtime.roomCode);
-        setCoachingConsent(false);
-        setCopyConfirmed(false);
-        // The save keeps the consent it was made with.
+        setRoomCode('');
+        // The save keeps the board-flip consent it was made with.
         setConnected({
           runtime: result.runtime,
           mode: 'multiplayer',
@@ -1095,33 +1161,35 @@ export const RemoteRoomLobby = ({
     }
   };
 
-  /** In-room copy for the creator: v1's room header copy button. */
-  const handleCopyInvitationFromRoom = async (
-    role: 'player' | 'spectator'
-  ): Promise<boolean> => {
-    const owner = ownerRef.current;
-    const creator = owner?.creator;
-    if (!owner || owner.disposed || !creator) return false;
-    const invitations = creator.result.invitations;
-    if (role === 'spectator') {
-      await invitations.copySpectatorInvitation();
-      return true;
-    }
-    // One key, as in v1: a player invitation while a seat is free (its
-    // holder may still choose to watch), a spectator invitation once both
-    // seats are taken.
-    await invitations.copyPlayerOrSpectatorInvitation();
-    return true;
-  };
-
   /**
-   * Moves a live Solo table into the park so the Multiplayer panel's own
-   * room can take the screen. Doing nothing when Solo is not live keeps this
-   * safe to call from every entry point into a multiplayer room.
+   * The connected room's invites (ADR-020): the creator mints links for
+   * either role; a resumed game passes on the one invitation it holds.
+   * One object per room, so the room's invite actions keep still.
    */
-  const parkSoloForMultiplayer = (): void => {
-    if (connected?.mode === 'solo') handleMultiplayerNavigate();
-  };
+  const roomInvitations = useMemo((): RoomInvitations | undefined => {
+    const owner = ownerRef.current;
+    if (!connected || connected.mode !== 'multiplayer' || !owner) {
+      return undefined;
+    }
+    const creator = owner.creator;
+    if (creator?.result.runtime === connected.runtime) {
+      return {
+        roles: ['player', 'spectator'],
+        invite: (role) =>
+          inviteOutcome(() =>
+            creator.result.invitations.invite(role, currentDelivery())
+          ),
+      };
+    }
+    const held = owner.held;
+    if (held?.held && owner.guestRuntime === connected.runtime) {
+      return {
+        roles: ['player'],
+        invite: () => inviteOutcome(() => held.invite(currentDelivery())),
+      };
+    }
+    return undefined;
+  }, [connected]);
 
   const handleMultiplayerNavigate = (): void => {
     if (!connected || connected.mode !== 'solo') return;
@@ -1130,7 +1198,6 @@ export const RemoteRoomLobby = ({
     setActivePanel('lobby');
     setReceipt(undefined);
     setRoomCode('');
-    setCopyConfirmed(false);
     // v1 says nothing when you leave the Solo tab; the game simply waits.
     setStatus(undefined);
   };
@@ -1150,7 +1217,20 @@ export const RemoteRoomLobby = ({
       hidden={hidden}
     >
       <div className="lobby-panel">
-        <div id="lobby" className="lobby-form" aria-busy={busy}>
+        <div
+          id="lobby"
+          className="lobby-form"
+          aria-busy={busy}
+          // An invitation pasted or dropped anywhere here is taken in, but
+          // into the Name field (handlePaste lets that one through).
+          onPaste={handlePaste}
+          onDragOver={(event) => {
+            const types = event.dataTransfer.types;
+            if (types.includes('text/plain') || types.includes('text/uri-list'))
+              event.preventDefault();
+          }}
+          onDrop={handleDrop}
+        >
           <section className="lobby-intro" aria-labelledby="lobbyTitle">
             <header id="p2ExplanationBox" className="lobby-intro-head">
               <span className="lobby-intro-icon">
@@ -1161,7 +1241,7 @@ export const RemoteRoomLobby = ({
                   <Trans>Play online</Trans>
                 </h2>
                 <p className="lobby-intro-text">
-                  <Trans>Generate a room, then send the invitation.</Trans>
+                  <Trans>Create a room, or join one with a link.</Trans>
                 </p>
               </div>
             </header>
@@ -1194,10 +1274,7 @@ export const RemoteRoomLobby = ({
                   <Trans>Host a room</Trans>
                 </h3>
                 <p className="ds-hint">
-                  <Trans>
-                    Generate a room and send the invitation. With{' '}
-                    <em>Join as spectator</em> on, it invites a spectator.
-                  </Trans>
+                  <Trans>You'll invite players from the room.</Trans>
                 </p>
               </div>
             </div>
@@ -1207,9 +1284,9 @@ export const RemoteRoomLobby = ({
                 type="button"
                 className="ds-button ds-button--primary"
                 disabled={busy}
-                onClick={() => void handleGenerate()}
+                onClick={() => void handleCreate()}
               >
-                {operation === 'generate' ? (
+                {operation === 'create' ? (
                   <CircleNotchIcon
                     {...decorative}
                     weight="bold"
@@ -1218,32 +1295,9 @@ export const RemoteRoomLobby = ({
                 ) : (
                   <PlusIcon {...decorative} weight="bold" />
                 )}
-                {operation === 'generate'
-                  ? t({ message: 'Generating…', context: 'a room' })
-                  : t({ message: 'Generate', context: 'a room' })}
-              </button>
-              <button
-                id="copyButton"
-                type="button"
-                className={`ds-button ds-button--secondary lobby-copy${
-                  copyConfirmed ? ' copied' : ''
-                }`}
-                aria-label={t`Copy invitation`}
-                disabled={busy}
-                onClick={() => void handleCopy()}
-              >
-                <span className="lobby-copy-icon">
-                  {copyConfirmed ? (
-                    <CheckIcon key="copied" {...decorative} weight="bold" />
-                  ) : (
-                    <CopyIcon key="copy" {...decorative} weight="bold" />
-                  )}
-                </span>
-                <span aria-hidden="true">
-                  {copyConfirmed
-                    ? t({ message: 'Copied', context: 'an invitation' })
-                    : t`Copy invitation`}
-                </span>
+                {operation === 'create'
+                  ? t({ message: 'Creating…', context: 'a room' })
+                  : t({ message: 'Create room', context: 'a room' })}
               </button>
             </div>
           </section>
@@ -1257,64 +1311,77 @@ export const RemoteRoomLobby = ({
                   <Trans>Join a room</Trans>
                 </h3>
                 <p className="ds-hint">
-                  <Trans>Paste an invitation, or join your own room.</Trans>
+                  <Trans>Paste or drop the link you were sent.</Trans>
                 </p>
               </div>
             </div>
             <div id="roomId" className="ds-field">
               <label className="ds-label" htmlFor="roomIdInput">
-                <Trans>Room ID</Trans>
+                <Trans comment="The link or code that lets someone join a room">
+                  Invitation
+                </Trans>
               </label>
-              <input
-                id="roomIdInput"
-                className="ds-input lobby-room-input"
-                type="text"
-                placeholder={t`Paste an invitation`}
-                autoComplete="off"
-                spellCheck={false}
-                value={roomCode}
-                disabled={busy}
-                onPaste={handlePaste}
-                onDrop={(event) => {
-                  event.preventDefault();
-                  setStatus(msg`Paste the invitation into Room ID.`);
-                }}
-                onChange={(event) => handleRoomCodeChange(event.target.value)}
-              />
-            </div>
-            <div className="lobby-switches">
-              <div id="spectatorModeLabel" className="ds-switch-row">
+              <div className="lobby-invitation-row">
+                {/* Shows the room an invitation names, never the invitation:
+                    a paste is taken before it could reach the field. */}
                 <input
-                  type="checkbox"
-                  id="spectatorModeCheckbox"
-                  className="ds-switch"
-                  checked={spectator}
-                  // A spectator invitation only ever watches; a player
-                  // invitation leaves the choice to its holder, as v1's room
-                  // key did.
-                  disabled={busy || receipt?.requestedRole === 'spectator'}
-                  onChange={(event) => setSpectator(event.target.checked)}
-                />{' '}
-                <label htmlFor="spectatorModeCheckbox">
-                  <Trans>Join as spectator</Trans>
-                </label>
-              </div>
-              <div id="coachingModeLabel" className="ds-switch-row">
-                <input
-                  type="checkbox"
-                  id="coachingModeCheckbox"
-                  className="ds-switch"
-                  checked={coachingConsent}
+                  id="roomIdInput"
+                  className="ds-input lobby-room-input"
+                  type="text"
+                  placeholder={t`Paste the link`}
+                  autoComplete="off"
+                  spellCheck={false}
+                  value={roomCode}
                   disabled={busy}
-                  onChange={(event) => setCoachingConsent(event.target.checked)}
-                />{' '}
-                <label htmlFor="coachingModeCheckbox">
-                  <Trans>
-                    Allow board flip <span>(both players)</span>
-                  </Trans>
-                </label>
+                  aria-describedby={receipt ? 'invitationReceipt' : undefined}
+                  onChange={(event) => handleRoomCodeChange(event.target.value)}
+                />
+                {clipboardReadable ? (
+                  <button
+                    id="pasteInvitationButton"
+                    type="button"
+                    className="ds-button ds-button--secondary"
+                    disabled={busy}
+                    onClick={() => void handlePasteButton()}
+                  >
+                    <ClipboardTextIcon {...decorative} weight="bold" />
+                    <Trans context="paste from the clipboard">Paste</Trans>
+                  </button>
+                ) : null}
               </div>
+              {receipt ? (
+                <p id="invitationReceipt" className="ds-hint">
+                  {receipt.requestedRole === 'player'
+                    ? t({
+                        message: `Room ${receipt.roomCode} · to play`,
+                        comment: 'roomCode is a short code like K7PQ2M',
+                      })
+                    : t({
+                        message: `Room ${receipt.roomCode} · to watch`,
+                        comment: 'roomCode is a short code like K7PQ2M',
+                      })}
+                </p>
+              ) : null}
             </div>
+            {receipt?.requestedRole === 'player' ? (
+              // An invitation to play leaves the choice to its holder, as
+              // v1's room key did; one to watch only ever watches.
+              <div className="lobby-switches">
+                <div id="spectatorModeLabel" className="ds-switch-row">
+                  <input
+                    type="checkbox"
+                    id="spectatorModeCheckbox"
+                    className="ds-switch"
+                    checked={spectator}
+                    disabled={busy}
+                    onChange={(event) => setSpectator(event.target.checked)}
+                  />{' '}
+                  <label htmlFor="spectatorModeCheckbox">
+                    <Trans>Join as spectator</Trans>
+                  </label>
+                </div>
+              </div>
+            ) : null}
             <button
               id="joinRoomButton"
               type="button"
@@ -1403,13 +1470,6 @@ export const RemoteRoomLobby = ({
   if (connected) {
     return (
       <>
-        {connected.mode === 'multiplayer' &&
-          connected.coachingConsent !== undefined && (
-            <InitialCoachingConsent
-              runtime={connected.runtime}
-              consent={connected.coachingConsent}
-            />
-          )}
         <RemoteRoomRoute
           runtime={connected.runtime}
           roomMode={connected.mode}
@@ -1453,9 +1513,7 @@ export const RemoteRoomLobby = ({
                 onMultiplayerPanelOpen: () => setActivePanel('lobby'),
               }
             : {})}
-          {...(connected.mode === 'multiplayer' && ownerRef.current?.creator
-            ? { onCopyInvitation: handleCopyInvitationFromRoom }
-            : {})}
+          {...(roomInvitations ? { invitations: roomInvitations } : {})}
           {...(preferences ? { preferences } : {})}
           onPreferencesChange={setPreferences}
           {...(backgroundSelection.background

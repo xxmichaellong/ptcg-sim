@@ -16,14 +16,12 @@ import { dismissToast } from '../ui/toast.js';
 import {
   ChatComposer,
   useLiveRoomControls,
-  type BrowserContinuationFileReader,
   type BrowserReplayFileReader,
   type LiveRoomControls,
   type LiveRoomLeaveConfirmation,
   type RemoteRoomLivePresentation,
   type RemoteRoomLiveSession,
 } from './RemoteRoomLiveControls.js';
-import type { DeferredTextClipboardWriter } from './browser-invitation-clipboard.js';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -710,32 +708,22 @@ describe('useLiveRoomControls', () => {
     expect(reportOnlineSaveFailure).toHaveBeenCalledOnce();
   });
 
-  it('reads a saved-game file and starts opponent clipboard custody synchronously', async () => {
-    const order: string[] = [];
-    let clipboardText: Promise<string> | undefined;
-    const clipboard: DeferredTextClipboardWriter = {
-      writeText: vi.fn((text) => {
-        order.push('clipboard');
-        clipboardText = text;
-        return Promise.resolve();
-      }),
-    };
-    const readContinuationFile = vi.fn(async () => {
-      order.push('read');
-      return { ok: true as const, text: 'opaque-save-file' };
+  it('reads a saved-game file and resumes it, writing nothing to the clipboard', async () => {
+    const writeText = vi.fn(async () => undefined);
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText, write: writeText },
     });
-    const onResumeSavedGame = vi.fn(
-      async (
-        _contents: string,
-        deliverOpponentInvitation: (text: string) => Promise<void>
-      ) => deliverOpponentInvitation('opaque-opponent-invitation')
-    );
+    const readContinuationFile = vi.fn(async () => ({
+      ok: true as const,
+      text: 'opaque-save-file',
+    }));
+    const onResumeSavedGame = vi.fn(async () => undefined);
     const reportSavedGameResumeFailure = vi.fn();
     const reportSavedGameResumeSuccess = vi.fn();
     const { host, root } = await mount(new FakeLiveSession(), {
       onResumeSavedGame,
       readContinuationFile,
-      getInvitationClipboard: () => clipboard,
       reportSavedGameResumeFailure,
       reportSavedGameResumeSuccess,
     });
@@ -758,37 +746,64 @@ describe('useLiveRoomControls', () => {
         expect(reportSavedGameResumeSuccess).toHaveBeenCalledOnce()
       );
     });
-    expect(order).toEqual(['clipboard', 'read']);
     expect(readContinuationFile.mock.calls[0]?.[1]?.signal.aborted).toBe(false);
     expect(onResumeSavedGame).toHaveBeenCalledWith(
       'opaque-save-file',
-      expect.any(Function),
       expect.any(AbortSignal)
     );
-    await expect(clipboardText).resolves.toBe('opaque-opponent-invitation');
+    // The resumed room offers its invitation with Invite opponent: nothing
+    // goes to the clipboard unasked (ADR-020).
+    expect(writeText).not.toHaveBeenCalled();
     expect(reportSavedGameResumeFailure).not.toHaveBeenCalled();
     expect(input.value).toBe('');
     expect(controls().continuationPending).toBeUndefined();
 
     await act(async () => root.unmount());
+    Reflect.deleteProperty(navigator, 'clipboard');
   });
 
-  it('reports a resume without a clipboard and never reads the file', async () => {
-    const readContinuationFile = vi.fn<BrowserContinuationFileReader>();
-    const reportSavedGameResumeFailure = vi.fn();
-    const { host, root } = await mount(new FakeLiveSession(), {
-      onResumeSavedGame: vi.fn(async () => undefined),
+  it('opens a saved game or a replay dropped on the window, where its picker would', async () => {
+    const readContinuationFile = vi.fn(async () => ({
+      ok: true as const,
+      text: 'opaque-save-file',
+    }));
+    const onResumeSavedGame = vi.fn(async () => undefined);
+    const room = await mount(new FakeLiveSession(), {
+      onResumeSavedGame,
       readContinuationFile,
-      getInvitationClipboard: () => undefined,
-      reportSavedGameResumeFailure,
+      reportSavedGameResumeSuccess: vi.fn(),
     });
-    await chooseFile(
-      element<HTMLInputElement>(host, '#continuationSaveFile'),
-      new File(['ignored'], 'game.ptcgsave')
+    // In a room: a saved game opens; a replay is not this table's to open.
+    expect(controls().openDroppedFile?.(new File(['x'], 'replay.json'))).toBe(
+      false
     );
-    expect(readContinuationFile).not.toHaveBeenCalled();
-    expect(reportSavedGameResumeFailure).toHaveBeenCalledOnce();
-    await act(async () => root.unmount());
+    await act(async () => {
+      expect(
+        controls().openDroppedFile?.(new File(['x'], 'Game.PTCGSAVE'))
+      ).toBe(true);
+      await vi.waitFor(() => expect(onResumeSavedGame).toHaveBeenCalledOnce());
+    });
+    await act(async () => room.root.unmount());
+
+    const onImportReplayFile = vi.fn(async () => true);
+    const solo = await mount(new FakeLiveSession(), {
+      roomMode: 'solo',
+      onImportReplayFile,
+      readReplayFile: vi.fn(async () => ({
+        ok: true as const,
+        bytes: new Uint8Array([1]),
+      })),
+    });
+    expect(controls().openDroppedFile?.(new File(['x'], 'game.ptcgsave'))).toBe(
+      false
+    );
+    await act(async () => {
+      expect(controls().openDroppedFile?.(new File(['x'], 'replay.json'))).toBe(
+        true
+      );
+      await vi.waitFor(() => expect(onImportReplayFile).toHaveBeenCalledOnce());
+    });
+    await act(async () => solo.root.unmount());
   });
 
   it('offers saves, resumes and replay imports only where they apply', async () => {
@@ -849,15 +864,9 @@ describe('useLiveRoomControls', () => {
     const readContinuationFile = vi.fn(() => pending.promise);
     const onResumeSavedGame = vi.fn(async () => undefined);
     const reportSavedGameResumeFailure = vi.fn();
-    const clipboard: DeferredTextClipboardWriter = {
-      writeText: vi.fn(async (text) => {
-        await text.catch(() => undefined);
-      }),
-    };
     const { host, root } = await mount(new FakeLiveSession(), {
       onResumeSavedGame,
       readContinuationFile,
-      getInvitationClipboard: () => clipboard,
       reportSavedGameResumeFailure,
     });
     await chooseFile(

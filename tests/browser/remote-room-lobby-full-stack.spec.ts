@@ -51,15 +51,27 @@ const openLobby = async (context: BrowserContext): Promise<OpenedLobby> => {
 const readClipboard = (page: Page): Promise<string> =>
   page.evaluate(() => globalThis.navigator.clipboard.readText());
 
-const copyFreshInvitation = async (
+/**
+ * Invites from inside the room (its Room ready card): a fresh link on the
+ * clipboard, as a mouse's press copies it.
+ */
+const inviteFresh = async (
   page: Page,
+  role: 'player' | 'spectator',
   previous = ''
 ): Promise<string> => {
-  await page.locator('#copyButton').click();
+  await page
+    .locator(
+      role === 'player' ? '#inviteOpponentButton' : '#inviteSpectatorButton'
+    )
+    .click();
   await expect.poll(() => readClipboard(page)).not.toBe(previous);
-  await expect(page.locator('#copyButton')).toBeEnabled();
   return readClipboard(page);
 };
+
+/** The invitation envelope a link carries in its fragment. */
+const envelopeOf = (link: string): string =>
+  Buffer.from(link.split('#invite=')[1] ?? '', 'base64url').toString('utf8');
 
 const pasteInvitation = async (
   page: Page,
@@ -78,11 +90,12 @@ const pasteInvitation = async (
   await expect(roomInput).toHaveValue(ROOM_CODE);
   const spectator = page.locator('#spectatorModeCheckbox');
   if (role === 'spectator') {
-    // A spectator invitation only ever watches.
-    await expect(spectator).toBeChecked();
-    await expect(spectator).toBeDisabled();
+    // A spectator invitation only ever watches: no choice is offered.
+    await expect(page.locator('#invitationReceipt')).toContainText('to watch');
+    await expect(spectator).toHaveCount(0);
   } else {
     // A player invitation leaves the choice to its holder, as v1's key did.
+    await expect(page.locator('#invitationReceipt')).toContainText('to play');
     await expect(spectator).not.toBeChecked();
     await expect(spectator).toBeEnabled();
   }
@@ -106,7 +119,8 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
   // Four pages on one table: CI's software renderer takes 40-60 s of it.
   test.setTimeout(120_000);
   const options = {
-    baseURL: 'http://127.0.0.1:4173',
+    // The project's own server (a private port when run beside another).
+    baseURL: test.info().project.use.baseURL ?? 'http://127.0.0.1:4173',
     permissions: ['clipboard-read', 'clipboard-write'],
   };
   const contexts = await Promise.all([
@@ -202,11 +216,13 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
       'Play online'
     );
     expect(initialChrome.hasRemoteCopyImage).toBe(false);
-    await expect(creator.page.locator('#coachingModeLabel')).toContainText(
-      'Allow board flip (both players)'
-    );
-    await expect(creator.page.locator('#spectatorModeLabel')).toHaveText(
-      'Join as spectator'
+    // Copying waits for a room, board flip is the room's to allow, and the
+    // choice to watch comes with an invitation to play.
+    await expect(creator.page.locator('#copyButton')).toHaveCount(0);
+    await expect(creator.page.locator('#coachingModeLabel')).toHaveCount(0);
+    await expect(creator.page.locator('#spectatorModeLabel')).toHaveCount(0);
+    await expect(creator.page.locator('label[for="roomIdInput"]')).toHaveText(
+      'Invitation'
     );
 
     // Play online is a sheet over the table; the deck is reached from the
@@ -252,20 +268,41 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     ).toBeVisible();
 
     await creator.page.locator('#nameInput').fill('Blue');
+    await expect(creator.page.locator('#generateIdButton')).toHaveText(
+      'Create room'
+    );
     await creator.page.locator('#generateIdButton').click();
-    await expect(creator.page.locator('#roomIdInput')).toHaveValue(ROOM_CODE);
-    await expect(creator.page.locator('.lobby-status')).toHaveCount(0);
+    // Straight into the room, which says how to invite.
+    await expect(
+      creator.page.locator(
+        '[data-app-route="remote-room"][data-session-phase="ready"]'
+      )
+    ).toBeVisible();
+    await expect(creator.page.locator('[data-table-invite]')).toContainText(
+      'Room ready'
+    );
 
-    const rotatedPlayer = await copyFreshInvitation(creator.page);
-    const activePlayer = await copyFreshInvitation(creator.page, rotatedPlayer);
-    await creator.page.locator('#spectatorModeCheckbox').check();
-    const spectatorInvitation = await copyFreshInvitation(
+    const rotatedPlayer = await inviteFresh(creator.page, 'player');
+    const activePlayer = await inviteFresh(
       creator.page,
+      'player',
+      rotatedPlayer
+    );
+    const spectatorInvitation = await inviteFresh(
+      creator.page,
+      'spectator',
       activePlayer
     );
-    expect(rotatedPlayer).toContain('PTCGSIM2-INVITE:');
-    expect(activePlayer).toContain('"requestedRole":"player"');
-    expect(spectatorInvitation).toContain('"requestedRole":"spectator"');
+    for (const link of [rotatedPlayer, activePlayer, spectatorInvitation]) {
+      expect(link).toMatch(
+        /^http:\/\/127\.0\.0\.1:\d+\/#invite=[A-Za-z0-9_-]+$/u
+      );
+      expect(envelopeOf(link)).toContain('PTCGSIM2-INVITE:');
+    }
+    expect(envelopeOf(activePlayer)).toContain('"requestedRole":"player"');
+    expect(envelopeOf(spectatorInvitation)).toContain(
+      '"requestedRole":"spectator"'
+    );
 
     await pasteInvitation(
       rotatedGuest.page,
@@ -274,8 +311,9 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
       'player'
     );
     await rotatedGuest.page.locator('#joinRoomButton').click();
+    // A newer invitation to play revoked it: the room says so.
     await expect(rotatedGuest.page.locator('.lobby-status')).toHaveText(
-      "Couldn't join the room. Try again."
+      'This invitation was used or has expired. Ask for a new one.'
     );
     await expect(
       rotatedGuest.page.locator('[data-app-route="remote-room-lobby"]')
@@ -291,7 +329,8 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
       'spectator'
     );
     await joinReadyRoom(spectator.page);
-    await joinReadyRoom(creator.page);
+    // The opponent has their seat: the room stops offering it.
+    await expect(creator.page.locator('[data-table-invite]')).toHaveCount(0);
 
     for (const { page } of [creator, playerTwo, spectator]) {
       await expect(
@@ -361,12 +400,13 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
       connectedChrome.panel.left
     );
 
-    const handoffs = [rotatedPlayer, activePlayer, spectatorInvitation];
-    const bearerValues = handoffs.flatMap((handoff) => {
-      const parsed = JSON.parse(handoff.slice('PTCGSIM2-INVITE:'.length)) as {
+    const links = [rotatedPlayer, activePlayer, spectatorInvitation];
+    const bearerValues = links.flatMap((link) => {
+      const envelope = envelopeOf(link);
+      const parsed = JSON.parse(envelope.slice('PTCGSIM2-INVITE:'.length)) as {
         readonly invitation: string;
       };
-      return [handoff, parsed.invitation];
+      return [link.split('#')[1]!, envelope, parsed.invitation];
     });
     for (const url of requestUrls) {
       expect(new URL(url).search).toBe('');
@@ -472,6 +512,13 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     await expect(
       playerTwo.page.locator('#settingsTable #zoneOutlinesCheckbox')
     ).toBeAttached();
+    // Board flip is each player's to allow in the room, at any time.
+    const allowFlip = playerTwo.page.locator(
+      '#settingsRoom #coachingModeCheckbox'
+    );
+    await expect(allowFlip).not.toBeChecked();
+    await allowFlip.check();
+    await expect(allowFlip).toBeChecked();
     // Settings holds settings only: the keys, the help and community links
     // are in the app bar's menu.
     await expect(playerTwo.page.locator('#settings')).not.toContainText(

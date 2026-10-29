@@ -34,8 +34,12 @@ import {
 } from './ingress.js';
 import {
   MAX_ROOM_INVITATION_HANDOFF_TEXT_CODE_UNITS,
+  MAX_ROOM_INVITATION_LINK_PAYLOAD_LENGTH,
   parseRoomInvitationHandoffText,
+  parseRoomInvitationLinkFragment,
+  parseRoomInvitationText,
   serializeRoomInvitationHandoffText,
+  serializeRoomInvitationLinkFragment,
 } from './invitation-handoff.js';
 import { PresentationEventSchema } from './schemas.js';
 
@@ -398,6 +402,72 @@ describe('room invitation HTTP schemas', () => {
         'x'.repeat(MAX_ROOM_INVITATION_HANDOFF_TEXT_CODE_UNITS + 1)
       )
     ).toEqual({ ok: false, reason: 'text_too_large' });
+  });
+
+  it('carries an invitation in a link fragment of one exact spelling', () => {
+    const handoff = {
+      roomCode: 'ABCDEFGH2345',
+      invitation,
+      requestedRole: 'spectator' as const,
+      expiresAt: 900_000,
+    };
+    const fragment = serializeRoomInvitationLinkFragment(handoff);
+    expect(fragment).toMatch(/^invite=[A-Za-z0-9_-]+$/u);
+    expect(parseRoomInvitationLinkFragment(fragment)).toEqual({
+      ok: true,
+      value: handoff,
+    });
+    expect(parseRoomInvitationLinkFragment(`#${fragment}`)).toEqual({
+      ok: true,
+      value: handoff,
+    });
+    // Padding, another key, a stray parameter or a broken payload: refused.
+    for (const wrong of [
+      `${fragment}=`,
+      `${fragment}&x=1`,
+      fragment.replace('invite=', 'join='),
+      'invite=%%%',
+      'invite=AAAA',
+    ]) {
+      expect(parseRoomInvitationLinkFragment(wrong).ok, wrong).toBe(false);
+    }
+    expect(
+      parseRoomInvitationLinkFragment(
+        `invite=${'A'.repeat(MAX_ROOM_INVITATION_LINK_PAYLOAD_LENGTH + 1)}`
+      )
+    ).toEqual({ ok: false, reason: 'text_too_large' });
+    expect(parseRoomInvitationLinkFragment(42)).toEqual({
+      ok: false,
+      reason: 'invalid_type',
+    });
+  });
+
+  it('reads an invitation passed on as its envelope, its link or the fragment', () => {
+    const handoff = {
+      roomCode: 'ABCDEFGH2345',
+      invitation,
+      requestedRole: 'player' as const,
+      expiresAt: 900_000,
+    };
+    const fragment = serializeRoomInvitationLinkFragment(handoff);
+    for (const text of [
+      serializeRoomInvitationHandoffText(handoff),
+      `${serializeRoomInvitationHandoffText(handoff)}\n`,
+      `https://ptcgsim.example/#${fragment}`,
+      `  https://ptcgsim.example/play#${fragment}\n`,
+      fragment,
+    ]) {
+      expect(parseRoomInvitationText(text), text).toEqual({
+        ok: true,
+        value: handoff,
+      });
+    }
+    expect(parseRoomInvitationText('ABCDEFGH2345').ok).toBe(false);
+    expect(parseRoomInvitationText('https://ptcgsim.example/').ok).toBe(false);
+    expect(parseRoomInvitationText(null)).toEqual({
+      ok: false,
+      reason: 'invalid_type',
+    });
   });
 });
 

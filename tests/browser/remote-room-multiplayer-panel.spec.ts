@@ -71,15 +71,15 @@ test('reading Play online leaves a live Solo table mounted', async ({
   expect(await marked()).toBe(1);
   await closeSheet(page);
 
-  // Acting on the panel is the real transition: generating a room parks the
-  // Solo table and hands the screen to the lobby, as v1's tab did.
+  // Acting on the panel is the real transition: Create room takes the
+  // table into the new room, which offers its invites.
   await openPlayOnline(page);
   await page.locator('#generateIdButton').click();
   await expect(
-    page.locator('[data-app-route="remote-room-lobby"]')
+    page.locator('[data-app-route="remote-room"][data-session-phase="ready"]')
   ).toBeVisible();
-  await expect(page.locator('#playOnlineSheet #p2Box')).toBeVisible();
-  await expect(page.locator('#roomIdInput')).not.toHaveValue('');
+  await expect(page.locator('#playOnlineSheet')).toHaveCount(0);
+  await expect(page.locator('#inviteOpponentButton')).toBeVisible();
 
   expect(errors).toEqual([]);
 });

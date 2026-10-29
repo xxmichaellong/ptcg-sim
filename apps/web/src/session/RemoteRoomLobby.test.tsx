@@ -26,7 +26,9 @@ import {
 import type { RemoteRoomRuntime } from './RemoteRoomRuntime.js';
 import type { BoardRailModel } from './RemoteSessionBoard.js';
 import type { RoomBackground } from './browser-room-background.js';
+import type { RoomInvitations } from './room-invites.js';
 import { boardViewSettings } from '../board/view/board-view-settings.js';
+import { serializeRoomInvitationHandoffText } from '@ptcgsim/protocol';
 import {
   pendingTutorialRequest,
   startTutorial,
@@ -66,21 +68,32 @@ const roomRouteHarness = vi.hoisted(() => ({
   onMultiplayerPanelOpen: undefined as (() => void) | undefined,
   deckStore: undefined as DeckBuilderStore | undefined,
   cardBackStore: undefined as CardBackCustodyStore | undefined,
-  onCopyInvitation: undefined as
-    ((role: 'player' | 'spectator') => Promise<boolean>) | undefined,
+  invitations: undefined as RoomInvitations | undefined,
   continuationAvailable: undefined as boolean | undefined,
   installDeckOnSessionAttach: undefined as boolean | undefined,
   onResumeSavedGame: undefined as
-    | ((
-        contents: string,
-        deliverOpponentInvitation: (text: string) => Promise<void>,
-        signal: AbortSignal
-      ) => Promise<void>)
-    | undefined,
+    ((contents: string, signal: AbortSignal) => Promise<void>) | undefined,
   onTableSettledChange: undefined as ((settled: boolean) => void) | undefined,
   tutorial: undefined as { readonly onExit: () => void } | undefined,
   initialFlipped: undefined as boolean | undefined,
   onFlippedChange: undefined as ((flipped: boolean) => void) | undefined,
+}));
+
+/** The invitation link the page was opened with, as the capture holds it. */
+const linkHarness = vi.hoisted(() => ({
+  link: undefined as string | undefined,
+  listeners: new Set<() => void>(),
+}));
+vi.mock('./invitation-link-capture.js', () => ({
+  takeInvitationLink: () => {
+    const link = linkHarness.link;
+    linkHarness.link = undefined;
+    return link;
+  },
+  onInvitationLink: (listener: () => void) => {
+    linkHarness.listeners.add(listener);
+    return () => linkHarness.listeners.delete(listener);
+  },
 }));
 
 /** Enough of a table layout for the empty table's app bar to place itself. */
@@ -157,6 +170,7 @@ vi.mock('./RemoteRoomRoute.js', () => ({
   RemoteRoomRoute: ({
     runtime,
     onLeave,
+    onNewSoloTable,
     preferences,
     onPreferencesChange,
     background,
@@ -167,7 +181,7 @@ vi.mock('./RemoteRoomRoute.js', () => ({
     onMultiplayerPanelOpen,
     deckStore,
     cardBackStore,
-    onCopyInvitation,
+    invitations,
     continuationAvailable,
     installDeckOnSessionAttach,
     onResumeSavedGame,
@@ -179,6 +193,7 @@ vi.mock('./RemoteRoomRoute.js', () => ({
   }: {
     readonly runtime: { readonly label?: string };
     readonly onLeave?: () => void;
+    readonly onNewSoloTable?: () => void;
     readonly preferences?: BoardPreferences;
     readonly onPreferencesChange?: (preferences: BoardPreferences) => void;
     readonly background?: RoomBackground;
@@ -189,14 +204,11 @@ vi.mock('./RemoteRoomRoute.js', () => ({
     readonly onMultiplayerPanelOpen?: () => void;
     readonly deckStore?: DeckBuilderStore;
     readonly cardBackStore?: CardBackCustodyStore;
-    readonly onCopyInvitation?: (
-      role: 'player' | 'spectator'
-    ) => Promise<boolean>;
+    readonly invitations?: RoomInvitations;
     readonly continuationAvailable?: boolean;
     readonly installDeckOnSessionAttach?: boolean;
     readonly onResumeSavedGame?: (
       contents: string,
-      deliverOpponentInvitation: (text: string) => Promise<void>,
       signal: AbortSignal
     ) => Promise<void>;
     readonly onTableSettledChange?: (settled: boolean) => void;
@@ -222,7 +234,7 @@ vi.mock('./RemoteRoomRoute.js', () => ({
     roomRouteHarness.onMultiplayerPanelOpen = onMultiplayerPanelOpen;
     roomRouteHarness.deckStore = deckStore;
     roomRouteHarness.cardBackStore = cardBackStore;
-    roomRouteHarness.onCopyInvitation = onCopyInvitation;
+    roomRouteHarness.invitations = invitations;
     roomRouteHarness.continuationAvailable = continuationAvailable;
     roomRouteHarness.installDeckOnSessionAttach = installDeckOnSessionAttach;
     roomRouteHarness.onResumeSavedGame = onResumeSavedGame;
@@ -246,6 +258,11 @@ vi.mock('./RemoteRoomRoute.js', () => ({
             Leave
           </button>
         )}
+        {onNewSoloTable && (
+          <button id="testNewSoloTable" type="button" onClick={onNewSoloTable}>
+            New table
+          </button>
+        )}
         {multiplayerPanel?.(false)}
       </main>
     );
@@ -255,6 +272,9 @@ vi.mock('./RemoteRoomRoute.js', () => ({
 const ROOM_CODE = 'ABCDEFGH2345';
 const RAW_HANDOFF =
   'PTCGSIM2-INVITE:{"roomCode":"ABCDEFGH2345","requestedRole":"spectator","invitation":"secret-bearer-never-rendered","expiresAt":9999999999999}';
+
+/** The same invitation as a link's fragment (`#invite=…`). */
+const RAW_LINK = '#invite=c2VjcmV0LWJlYXJlci1uZXZlci1yZW5kZXJlZA';
 
 const flush = async (): Promise<void> => {
   await Promise.resolve();
@@ -307,6 +327,22 @@ const custody = () => ({
       };
     }
   ),
+  // A link, dropped text or the Paste button's read: the same check.
+  acceptText: vi.fn((text: unknown) => {
+    if (
+      typeof text !== 'string' ||
+      (text !== RAW_HANDOFF && !text.endsWith(RAW_LINK))
+    ) {
+      throw Object.assign(new Error('redacted'), {
+        code: 'invalid_handoff',
+      });
+    }
+    return {
+      roomCode: ROOM_CODE,
+      requestedRole: 'spectator' as const,
+      expiresAt: 40_000,
+    };
+  }),
   bootstrap: vi.fn(),
   clear: vi.fn(),
   dispose: vi.fn(),
@@ -376,10 +412,11 @@ const creationResult = (
     requestedRole: 'spectator' as const,
     expiresAt: 40_000,
   }));
-  const copyPlayerOrSpectatorInvitation = vi.fn(async () => ({
+  const invite = vi.fn(async (role: 'player' | 'spectator') => ({
     roomCode: ROOM_CODE,
-    requestedRole: 'player' as const,
+    requestedRole: role,
     expiresAt: 40_000,
+    outcome: 'copied' as const,
   }));
   const dispose = vi.fn();
   const value = {
@@ -393,7 +430,7 @@ const creationResult = (
       roomCode: ROOM_CODE,
       copyPlayerInvitation,
       copySpectatorInvitation,
-      copyPlayerOrSpectatorInvitation,
+      invite,
     },
     dispose,
   } as unknown as RemoteRoomCreationResult;
@@ -402,7 +439,7 @@ const creationResult = (
     dispose,
     copyPlayerInvitation,
     copySpectatorInvitation,
-    copyPlayerOrSpectatorInvitation,
+    invite,
     roomRuntime,
   };
 };
@@ -585,6 +622,7 @@ describe('remote room lobby wiring', () => {
   beforeEach(() => {
     document.body.replaceChildren();
     vi.clearAllMocks();
+    linkHarness.link = undefined;
     lobbyBoardHarness.preferences = undefined;
     lobbyBoardHarness.table = undefined;
     lobbyBoardHarness.parkedRail = undefined;
@@ -637,14 +675,22 @@ describe('remote room lobby wiring', () => {
     for (const id of [
       'nameInput',
       'roomIdInput',
-      'copyButton',
       'generateIdButton',
-      'coachingModeCheckbox',
-      'spectatorModeCheckbox',
       'joinRoomButton',
     ]) {
       expect(present(`#playOnlineSheet #${id}`), id).toBe(true);
     }
+    // Copying waits for a room, from inside it; board flip is the room's
+    // to set; watching is a choice only an invitation to play offers.
+    for (const id of [
+      'copyButton',
+      'coachingModeCheckbox',
+      'spectatorModeCheckbox',
+    ]) {
+      expect(present(`#${id}`), id).toBe(false);
+    }
+    expect(element('#generateIdButton').textContent).toBe('Create room');
+    expect(element('label[for="roomIdInput"]').textContent).toBe('Invitation');
     expect(element('#joinRoomButton').tagName).toBe('BUTTON');
     expect(createRoom).not.toHaveBeenCalled();
     expect(document.body.innerHTML).not.toContain('PTCGSIM2-INVITE:');
@@ -934,12 +980,8 @@ describe('remote room lobby wiring', () => {
       element<HTMLButtonElement>('#generateIdButton').click();
       await flush();
     });
-    // Making a room keeps the empty table: nothing to trade yet.
-    expect(curtain.value.handOff).not.toHaveBeenCalled();
-    await act(async () => {
-      element<HTMLButtonElement>('#joinRoomButton').click();
-      await flush();
-    });
+    // Create room takes its host straight in: the table is traded once
+    // the room has admitted them.
     expect(curtain.value.handOff).toHaveBeenCalledOnce();
     expect(present('[data-app-route="test-remote-room"]')).toBe(false);
     expect(present('[data-app-route="remote-room-lobby"]')).toBe(true);
@@ -1159,32 +1201,30 @@ describe('remote room lobby wiring', () => {
     await act(async () => root.unmount());
   });
 
-  it('keeps the current room when a new one is made but never admits its host', async () => {
-    const first = creationResult(runtime({ label: 'current table' }));
-    const second = creationResult(
+  it('keeps the table when a new room never admits its host', async () => {
+    const never = creationResult(
       runtime({ label: 'never admitted', phase: 'failed' })
     );
-    const createRoom = vi
-      .fn()
-      .mockResolvedValueOnce(first.value)
-      .mockResolvedValueOnce(second.value);
+    const createRoom = vi.fn().mockResolvedValueOnce(never.value);
     const { root } = await mount(lobbyDependencies(custody(), createRoom));
     await settle();
-    for (let attempt = 0; attempt < 2; attempt += 1) {
-      await act(async () => {
-        element<HTMLButtonElement>('#generateIdButton').click();
-        await flush();
-      });
-    }
-    expect(createRoom).toHaveBeenCalledTimes(2);
-    // The new room's handshake failed: it goes, the first stays.
-    expect(second.dispose).toHaveBeenCalledOnce();
-    expect(first.dispose).not.toHaveBeenCalled();
+    await act(async () => {
+      element<HTMLButtonElement>('#generateIdButton').click();
+      await flush();
+    });
+    expect(createRoom).toHaveBeenCalledOnce();
+    // The new room's handshake failed: it goes, and Play online says so.
+    expect(never.dispose).toHaveBeenCalledOnce();
+    expect(present('[data-app-route="test-remote-room"]')).toBe(false);
+    expect(playOnlineOpen()).toBe(true);
+    expect(element('.lobby-status').textContent).toContain(
+      "Couldn't create a room. Try again."
+    );
     await act(async () => root.unmount());
   });
 
-  it('keeps a generated room when the Solo table that would replace it never admits', async () => {
-    const room = creationResult(runtime({ label: 'generated room' }));
+  it('keeps a created room when the Solo table that would replace it never admits', async () => {
+    const room = creationResult(runtime({ label: 'created room' }));
     const solo = creationResult(
       runtime({ label: 'solo never admitted', phase: 'failed' }),
       'solo'
@@ -1199,12 +1239,19 @@ describe('remote room lobby wiring', () => {
       element<HTMLButtonElement>('#generateIdButton').click();
       await flush();
     });
-    // Putting Play online away goes to Solo; Solo's handshake fails.
-    await closeSheet('playOnlineSheet');
+    // Created, the host is in their room at once.
+    expect(
+      element('[data-app-route="test-remote-room"]').textContent
+    ).toContain('created room');
+    // A new Solo table from there; its handshake fails.
+    await click('#testNewSoloTable');
     expect(createRoom).toHaveBeenCalledTimes(2);
     expect(createRoom.mock.calls[1]?.[0]).toMatchObject({ mode: 'solo' });
     expect(solo.dispose).toHaveBeenCalledOnce();
     expect(room.dispose).not.toHaveBeenCalled();
+    expect(
+      element('[data-app-route="test-remote-room"]').textContent
+    ).toContain('created room');
     await act(async () => root.unmount());
     expect(room.dispose).toHaveBeenCalledOnce();
   });
@@ -1233,12 +1280,7 @@ describe('remote room lobby wiring', () => {
       )
     );
     await settle();
-    // A table of this player's own is ready to join...
-    await act(async () => {
-      element<HTMLButtonElement>('#generateIdButton').click();
-      await flush();
-    });
-    // ...when they paste someone's invitation and join that instead.
+    // They paste someone's invitation and join.
     await act(async () => {
       paste(element<HTMLInputElement>('#roomIdInput'), RAW_HANDOFF);
       await flush();
@@ -1303,7 +1345,7 @@ describe('remote room lobby wiring', () => {
     await act(async () => root.unmount());
   });
 
-  it('generates with the chosen identity and copies role-bound invitations directly from the button gesture', async () => {
+  it('creates a room with the chosen identity, enters it, and invites with links from inside it', async () => {
     const invitation = custody();
     const created = creationResult();
     const createRoom = vi.fn(async () => created.value);
@@ -1324,28 +1366,33 @@ describe('remote room lobby wiring', () => {
       mode: 'multiplayer',
     });
     expect(createRoom.mock.calls[0]?.[0].signal).toBeInstanceOf(AbortSignal);
-    expect(element<HTMLInputElement>('#nameInput').value).toBe('Blue');
-    expect(element<HTMLInputElement>('#roomIdInput').value).toBe(ROOM_CODE);
+    // Straight into the room: no Generate, Copy, then join-your-own.
+    expect(
+      element('[data-app-route="test-remote-room"]').textContent
+    ).toContain('creator');
+    expect(playOnlineOpen()).toBe(false);
 
-    await act(async () => {
-      element<HTMLButtonElement>('#copyButton').click();
-      await flush();
-    });
-    expect(created.copyPlayerInvitation).toHaveBeenCalledOnce();
-    expect(created.copyPlayerInvitation.mock.calls[0]?.[0]).toBeUndefined();
-    expect(created.copyPlayerInvitation.mock.calls[0]?.[1]).toBeInstanceOf(
-      AbortSignal
+    // The room invites either role with a link, each press its own.
+    const invitations = roomRouteHarness.invitations!;
+    expect(invitations.roles).toEqual(['player', 'spectator']);
+    await expect(invitations.invite('player')).resolves.toBe('copied');
+    await expect(invitations.invite('spectator')).resolves.toBe('copied');
+    expect(created.invite.mock.calls.map(([role]) => role)).toEqual([
+      'player',
+      'spectator',
+    ]);
+    // A taken seat is the room's answer, not a failure.
+    created.invite.mockRejectedValueOnce(
+      new RemoteRoomInvitationError('seat_unavailable')
     );
-
-    await act(async () => {
-      element<HTMLInputElement>('#spectatorModeCheckbox').click();
-      element<HTMLButtonElement>('#copyButton').click();
-      await flush();
-    });
-    expect(created.copySpectatorInvitation).toHaveBeenCalledOnce();
-    // The button confirms the copy; the lobby narrates nothing, as in v1.
-    expect(element('#copyButton').classList.contains('copied')).toBe(true);
-    expect(present('.lobby-status')).toBe(false);
+    await expect(invitations.invite('player')).resolves.toBe(
+      'seat_unavailable'
+    );
+    created.invite.mockRejectedValueOnce(
+      new RemoteRoomInvitationError('clipboard_failed')
+    );
+    await expect(invitations.invite('player')).resolves.toBe('failed');
+    expect(created.copyPlayerInvitation).not.toHaveBeenCalled();
     expect(document.body.innerHTML).not.toContain('secret-bearer');
 
     await act(async () => root.unmount());
@@ -1377,14 +1424,15 @@ describe('remote room lobby wiring', () => {
       await flush();
     });
     await settle();
-    expect(playOnlineOpen()).toBe(true);
-    expect(await menuEntryIds()).toContain('p1Button');
+    // Made, the room takes the screen.
+    expect(playOnlineOpen()).toBe(false);
+    expect(present('[data-app-route="test-remote-room"]')).toBe(true);
 
     await act(async () => root.unmount());
     expect(created.dispose).toHaveBeenCalledOnce();
   });
 
-  it('retires a failure message once the retried generate and copy succeed', async () => {
+  it('retires a failure message once the retried create succeeds', async () => {
     const created = creationResult();
     const createRoom = vi
       .fn()
@@ -1392,27 +1440,19 @@ describe('remote room lobby wiring', () => {
       .mockResolvedValue(created.value);
     const { root } = await mount(lobbyDependencies(custody(), createRoom));
     await settle();
-    const generate = async () =>
+    const create = async () =>
       act(async () => {
         element<HTMLButtonElement>('#generateIdButton').click();
         await flush();
       });
 
-    await generate();
-    expect(present('.lobby-status')).toBe(true);
-    await generate();
+    await create();
+    expect(element('.lobby-status').textContent).toContain(
+      "Couldn't create a room. Try again."
+    );
+    await create();
     expect(present('.lobby-status')).toBe(false);
-
-    created.copyPlayerInvitation.mockRejectedValueOnce(new Error('denied'));
-    const copy = async () =>
-      act(async () => {
-        element<HTMLButtonElement>('#copyButton').click();
-        await flush();
-      });
-    await copy();
-    expect(present('.lobby-status')).toBe(true);
-    await copy();
-    expect(present('.lobby-status')).toBe(false);
+    expect(present('[data-app-route="test-remote-room"]')).toBe(true);
 
     await act(async () => root.unmount());
   });
@@ -1429,14 +1469,10 @@ describe('remote room lobby wiring', () => {
         continuationAvailability,
       });
       await settle();
-      await act(async () => {
-        element<HTMLButtonElement>('#generateIdButton').click();
-        await flush();
-      });
       // The lobby itself makes no authority request.
       expect(continuationAvailability).not.toHaveBeenCalled();
       await act(async () => {
-        element<HTMLButtonElement>('#joinRoomButton').click();
+        element<HTMLButtonElement>('#generateIdButton').click();
         await flush();
       });
       expect(continuationAvailability).toHaveBeenCalledOnce();
@@ -1446,36 +1482,138 @@ describe('remote room lobby wiring', () => {
     }
   });
 
-  it('copies a spectator invitation from the room only once the player seat is taken', async () => {
+  it('opens the room an invitation link names at once, instead of a Solo table', async () => {
     const invitation = custody();
-    const created = creationResult();
-    const createRoom = vi.fn(async () => created.value);
-    const { root } = await mount(lobbyDependencies(invitation, createRoom));
-    await settle();
-    await act(async () => {
-      element<HTMLButtonElement>('#generateIdButton').click();
-      await flush();
+    const guest = runtime({ label: 'guest by link' });
+    invitation.bootstrap.mockResolvedValueOnce({
+      runtime: guest.value,
+      route: { kind: 'remote-room', runtime: guest.value },
     });
-    await act(async () => {
-      element<HTMLButtonElement>('#joinRoomButton').click();
-      await flush();
+    invitation.bootstrap.mockResolvedValueOnce({
+      runtime: guest.value,
+      route: { kind: 'remote-room', runtime: guest.value },
     });
-
-    // The one copy key asks custody for whichever invitation the room has
-    // room for, in a single clipboard write (RemoteRoomCreation.test.ts),
-    // and reports a failure as it is.
-    const copy = roomRouteHarness.onCopyInvitation!;
-    created.copyPlayerOrSpectatorInvitation.mockRejectedValueOnce(
-      new RemoteRoomInvitationError('issue_failed')
+    const createRoom = vi.fn();
+    linkHarness.link = RAW_LINK;
+    // StrictMode replays the lobby's owner: the replaced owner's join is
+    // called off before any admission (an exchange alone never spends the
+    // claim), and the owner that stays joins with the link it kept.
+    const { root } = await mount(
+      lobbyDependencies(invitation, createRoom),
+      true,
+      'solo'
     );
-    await expect(copy('player')).rejects.toMatchObject({
-      code: 'issue_failed',
+    await settle();
+    expect(createRoom).not.toHaveBeenCalled();
+    expect(invitation.acceptText).toHaveBeenCalledWith(RAW_LINK);
+    const joins = invitation.bootstrap.mock.calls.map(([input]) => input);
+    expect(joins.length).toBeGreaterThanOrEqual(1);
+    expect(joins.slice(0, -1).every((input) => input.signal.aborted)).toBe(
+      true
+    );
+    expect(joins.at(-1)?.signal.aborted).toBe(false);
+    expect(joins.at(-1)).toMatchObject({
+      displayName: 'Froakie',
+      // The invitation's own role: this one is to watch.
+      asSpectator: true,
     });
-    await expect(copy('player')).resolves.toBe(true);
-    expect(created.copyPlayerOrSpectatorInvitation).toHaveBeenCalledTimes(2);
-    expect(created.copyPlayerInvitation).not.toHaveBeenCalled();
-    expect(created.copySpectatorInvitation).not.toHaveBeenCalled();
+    expect(
+      element('[data-app-route="test-remote-room"]').textContent
+    ).toContain('guest by link');
+    expect(document.body.innerHTML).not.toContain('invite=');
+    expect(document.body.innerHTML).not.toContain('secret-bearer');
+    await act(async () => root.unmount());
+  });
 
+  it('says on Play online that a used or expired link was refused, making no Solo room', async () => {
+    const invitation = custody();
+    invitation.bootstrap.mockRejectedValueOnce(
+      new RemoteRoomInvitationError('invitation_refused')
+    );
+    const createRoom = vi.fn();
+    linkHarness.link = RAW_LINK;
+    const { root } = await mount(
+      lobbyDependencies(invitation, createRoom),
+      false,
+      'solo'
+    );
+    await settle();
+    expect(createRoom).not.toHaveBeenCalled();
+    expect(playOnlineOpen()).toBe(true);
+    expect(element('.lobby-status').textContent).toContain(
+      'This invitation was used or has expired. Ask for a new one.'
+    );
+    // Play online is the way on: a room of their own, or another link.
+    expect(element<HTMLButtonElement>('#generateIdButton').disabled).toBe(
+      false
+    );
+    await act(async () => root.unmount());
+  });
+
+  it('joins from a link opened while the page is up, from the lobby', async () => {
+    const invitation = custody();
+    const guest = runtime({ label: 'guest by later link' });
+    invitation.bootstrap.mockResolvedValueOnce({
+      runtime: guest.value,
+      route: { kind: 'remote-room', runtime: guest.value },
+    });
+    const { root } = await mount(lobbyDependencies(invitation, vi.fn()));
+    await settle();
+    expect(invitation.bootstrap).not.toHaveBeenCalled();
+    linkHarness.link = RAW_LINK;
+    await act(async () => {
+      for (const listener of linkHarness.listeners) listener();
+      await flush();
+    });
+    await settle();
+    expect(invitation.bootstrap).toHaveBeenCalledOnce();
+    expect(
+      element('[data-app-route="test-remote-room"]').textContent
+    ).toContain('guest by later link');
+    await act(async () => root.unmount());
+  });
+
+  it('takes an invitation dropped or pasted anywhere on Play online but the Name field', async () => {
+    const invitation = custody();
+    const { root } = await mount(lobbyDependencies(invitation, vi.fn()));
+    await settle();
+    // Pasted on the panel, not into the field: still taken in.
+    let pasteEvent!: Event;
+    await act(async () => {
+      pasteEvent = paste(
+        element<HTMLInputElement>('#generateIdButton'),
+        RAW_HANDOFF
+      );
+      await flush();
+    });
+    expect(pasteEvent.defaultPrevented).toBe(true);
+    expect(invitation.acceptPaste).toHaveBeenCalledOnce();
+    expect(element<HTMLInputElement>('#roomIdInput').value).toBe(ROOM_CODE);
+    // Into the Name field, a paste is the name's.
+    await act(async () => {
+      pasteEvent = paste(element<HTMLInputElement>('#nameInput'), 'Ash');
+      await flush();
+    });
+    expect(pasteEvent.defaultPrevented).toBe(false);
+    expect(invitation.acceptPaste).toHaveBeenCalledOnce();
+    // A link dropped on the panel.
+    await act(async () => {
+      const drop = new Event('drop', { bubbles: true, cancelable: true });
+      Object.defineProperty(drop, 'dataTransfer', {
+        value: {
+          types: ['text/uri-list', 'text/plain'],
+          getData: (type: string) =>
+            type === 'text/uri-list'
+              ? `https://ptcgsim.example/${RAW_LINK}`
+              : '',
+        },
+      });
+      element('#lobby').dispatchEvent(drop);
+      await flush();
+    });
+    expect(invitation.acceptText).toHaveBeenCalledWith(
+      `https://ptcgsim.example/${RAW_LINK}`
+    );
     await act(async () => root.unmount());
   });
 
@@ -1501,9 +1639,11 @@ describe('remote room lobby wiring', () => {
     expect(pasteEvent.defaultPrevented).toBe(true);
     expect(invitation.acceptPaste).toHaveBeenCalledOnce();
     expect(roomInput.value).toBe(ROOM_CODE);
-    const spectator = element<HTMLInputElement>('#spectatorModeCheckbox');
-    expect(spectator.checked).toBe(true);
-    expect(spectator.disabled).toBe(true);
+    // An invitation to watch only ever watches: no choice is offered.
+    expect(element('#invitationReceipt').textContent).toBe(
+      `Room ${ROOM_CODE} · to watch`
+    );
+    expect(present('#spectatorModeCheckbox')).toBe(false);
     expect(document.body.innerHTML).not.toContain(RAW_HANDOFF);
     expect(document.body.innerHTML).not.toContain(
       'secret-bearer-never-rendered'
@@ -1514,9 +1654,9 @@ describe('remote room lobby wiring', () => {
       await flush();
     });
     expect(document.body.textContent).toContain(
-      'Paste a valid invitation into Room ID.'
+      'Paste the invitation link you were sent.'
     );
-    expect(spectator.disabled).toBe(false);
+    expect(present('#invitationReceipt')).toBe(false);
 
     await act(async () => {
       paste(roomInput, RAW_HANDOFF);
@@ -1567,7 +1707,7 @@ describe('remote room lobby wiring', () => {
 
     expect(invitation.bootstrap).toHaveBeenCalledOnce();
     expect(document.body.textContent).toContain(
-      'Paste a valid invitation into Room ID.'
+      'Paste the invitation link you were sent.'
     );
     const safeInput = element<HTMLInputElement>('#roomIdInput').value;
     expect(safeInput).toMatch(/^[A-HJ-NP-Z2-9]{0,12}$/u);
@@ -1618,7 +1758,7 @@ describe('remote room lobby wiring', () => {
     expect(created.dispose).toHaveBeenCalledOnce();
   });
 
-  it('keeps the current room until replacement succeeds and then disposes only the superseded owner', async () => {
+  it('disposes a left room once, and only the room that is left', async () => {
     const invitation = custody();
     const first = creationResult();
     const second = creationResult();
@@ -1634,6 +1774,8 @@ describe('remote room lobby wiring', () => {
       await flush();
     });
     expect(first.dispose).not.toHaveBeenCalled();
+    await click('#testLeaveRoom');
+    expect(first.dispose).toHaveBeenCalledOnce();
     await act(async () => {
       element<HTMLButtonElement>('#generateIdButton').click();
       await flush();
@@ -1646,7 +1788,7 @@ describe('remote room lobby wiring', () => {
     expect(second.dispose).toHaveBeenCalledOnce();
   });
 
-  it('transfers creator ownership into the room route and submits initial coaching consent once ready', async () => {
+  it('transfers creator ownership into the room route with the card back chosen before', async () => {
     const invitation = custody();
     const created = creationResult();
     const createRoom = vi.fn(async () => created.value);
@@ -1663,21 +1805,16 @@ describe('remote room lobby wiring', () => {
     await closeDeck();
     await act(async () => {
       inputValue(element('#nameInput'), 'Blue');
-      element<HTMLInputElement>('#coachingModeCheckbox').click();
       element<HTMLButtonElement>('#generateIdButton').click();
-      await flush();
-    });
-    await act(async () => {
-      element<HTMLButtonElement>('#joinRoomButton').click();
       await flush();
     });
 
     expect(present('[data-app-route="test-remote-room"]')).toBe(true);
-    expect(created.roomRuntime.submit).toHaveBeenCalledOnce();
-    expect(created.roomRuntime.submit).toHaveBeenCalledWith({
-      type: 'SetCoachingConsent',
-      consent: true,
-    });
+    // Board flip is the room's to allow, in its Settings: nothing is sent
+    // on the way in.
+    expect(created.roomRuntime.submit).not.toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'SetCoachingConsent' })
+    );
     expect(roomRouteHarness.roomMode).toBe('multiplayer');
     expect(roomRouteHarness.deckStore).toBeDefined();
     expect(roomRouteHarness.cardBackStore).toBeDefined();
@@ -1695,11 +1832,17 @@ describe('remote room lobby wiring', () => {
     const created = creationResult(runtime({ label: 'source' }));
     // Saved with coaching consent on.
     const restored = runtime({ label: 'restored', coachingConsent: true });
+    const opponentInvitation = serializeRoomInvitationHandoffText({
+      roomCode: ROOM_CODE,
+      invitation: 'secret-opponent-bearer-never-rendered-0000',
+      requestedRole: 'player',
+      expiresAt: 9_999_999_999_999,
+    });
     const restore = vi
       .fn()
       .mockRejectedValueOnce(new Error('redacted restore failure'))
       .mockImplementationOnce(async (input) => {
-        await input.deliverOpponentInvitation('private opponent invitation');
+        await input.deliverOpponentInvitation(opponentInvitation);
         return { runtime: restored.value };
       });
     const restoration = {
@@ -1715,27 +1858,23 @@ describe('remote room lobby wiring', () => {
       ),
       createRestorationCustody,
     };
+    const writeText = vi.fn(async (_text: string) => undefined);
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText },
+    });
     const { root } = await mount(dependencies);
     await settle();
     await act(async () => {
       element<HTMLButtonElement>('#generateIdButton').click();
       await flush();
     });
-    await act(async () => {
-      element<HTMLButtonElement>('#joinRoomButton').click();
-      await flush();
-    });
     expect(document.body.textContent).toContain('source');
     const resume = roomRouteHarness.onResumeSavedGame!;
-    const deliverOpponentInvitation = vi.fn(async () => undefined);
 
     await expect(
       act(async () =>
-        resume(
-          'opaque continuation file',
-          deliverOpponentInvitation,
-          new AbortController().signal
-        )
+        resume('opaque continuation file', new AbortController().signal)
       )
     ).rejects.toThrow('redacted restore failure');
     expect(document.body.textContent).toContain('source');
@@ -1743,20 +1882,13 @@ describe('remote room lobby wiring', () => {
     expect(restored.dispose).not.toHaveBeenCalled();
 
     await act(async () =>
-      resume(
-        'opaque continuation file',
-        deliverOpponentInvitation,
-        new AbortController().signal
-      )
+      resume('opaque continuation file', new AbortController().signal)
     );
     expect(createRestorationCustody).toHaveBeenCalledOnce();
     expect(restoration.matchesHandoff).toHaveBeenCalledWith(
       'opaque continuation file'
     );
     expect(restore).toHaveBeenCalledTimes(2);
-    expect(deliverOpponentInvitation).toHaveBeenCalledWith(
-      'private opponent invitation'
-    );
     expect(document.body.textContent).toContain('restored');
     // The save keeps the coaching consent it was made with.
     expect(restored.submit).not.toHaveBeenCalledWith(
@@ -1765,10 +1897,20 @@ describe('remote room lobby wiring', () => {
     expect(roomRouteHarness.installDeckOnSessionAttach).toBe(false);
     expect(created.dispose).toHaveBeenCalledOnce();
     expect(restored.dispose).not.toHaveBeenCalled();
+    // The opponent's invitation waits for Invite opponent: nothing went to
+    // the clipboard on the way in.
+    expect(writeText).not.toHaveBeenCalled();
+    const invitations = roomRouteHarness.invitations!;
+    expect(invitations.roles).toEqual(['player']);
+    await expect(invitations.invite('player')).resolves.toBe('copied');
+    expect(writeText).toHaveBeenCalledOnce();
+    expect(writeText.mock.calls[0]?.[0]).toMatch(/#invite=[A-Za-z0-9_-]+$/u);
+    expect(document.body.innerHTML).not.toContain('secret-opponent-bearer');
 
     await act(async () => root.unmount());
     expect(restored.dispose).toHaveBeenCalledOnce();
     expect(restoration.dispose).not.toHaveBeenCalled();
+    Reflect.deleteProperty(navigator, 'clipboard');
   });
 
   it('returns a creator to a fresh lobby and disposes each ownership generation once', async () => {
@@ -1802,10 +1944,6 @@ describe('remote room lobby wiring', () => {
     await closeSheet('settings');
     await act(async () => {
       element<HTMLButtonElement>('#generateIdButton').click();
-      await flush();
-    });
-    await act(async () => {
-      element<HTMLButtonElement>('#joinRoomButton').click();
       await flush();
     });
     expect(present('#testLeaveRoom')).toBe(true);
@@ -1907,9 +2045,9 @@ describe('remote room lobby wiring', () => {
     expect(guest.dispose).toHaveBeenCalledOnce();
     expect(firstInvitation.dispose).toHaveBeenCalledOnce();
     expect(element<HTMLInputElement>('#roomIdInput').value).toBe('');
-    expect(element<HTMLInputElement>('#spectatorModeCheckbox').disabled).toBe(
-      false
-    );
+    // A fresh lobby: no invitation held, so no choice to watch on offer.
+    expect(present('#invitationReceipt')).toBe(false);
+    expect(present('#spectatorModeCheckbox')).toBe(false);
 
     await act(async () => root.unmount());
     expect(guest.dispose).toHaveBeenCalledOnce();

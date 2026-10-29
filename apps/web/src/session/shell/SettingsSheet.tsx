@@ -189,6 +189,14 @@ export interface SettingsSheetProps {
   readonly onChangeBackground: () => void;
   /** Offered while a chosen background shows. */
   readonly onUseDefaultBackground?: () => void;
+  /**
+   * In a room: whether this player lets the board be turned to the other
+   * side's view (both must), changeable any time during the game.
+   */
+  readonly boardFlip?: {
+    readonly allowed: boolean;
+    readonly onChange: (allowed: boolean) => void;
+  };
 }
 
 /**
@@ -205,6 +213,7 @@ export const SettingsSheet = ({
   onDarkModeChange,
   onChangeBackground,
   onUseDefaultBackground,
+  boardFlip,
 }: SettingsSheetProps) => {
   const { t } = useLingui();
   return (
@@ -217,6 +226,17 @@ export const SettingsSheet = ({
       id="settings"
       className="ptcgsim-settings-sheet"
     >
+      {boardFlip ? (
+        <SettingsSection title={t`Room`} id="settingsRoom">
+          <SwitchRow
+            id="coachingModeCheckbox"
+            label={t`Allow board flip`}
+            hint={t`Both players must allow it.`}
+            checked={boardFlip.allowed}
+            onChange={boardFlip.onChange}
+          />
+        </SettingsSection>
+      ) : null}
       <SettingsSection title={t`Table`} id="settingsTable">
         <TableViewControls solo={solo} />
       </SettingsSection>

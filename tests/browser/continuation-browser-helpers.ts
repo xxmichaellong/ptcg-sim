@@ -9,8 +9,6 @@ import { openActivity } from './support/table-shell.js';
 
 export const ROOM_CODE = /^[A-HJ-NP-Z2-9]{12}$/u;
 export const CONTINUATION_RESTORE_SUCCESS_TITLE = 'Game resumed';
-export const CONTINUATION_RESTORE_SUCCESS_MESSAGE =
-  'Invitation copied to your clipboard.';
 export const EXPECTED_REVOKED_CONSOLE_ERROR =
   'console: Failed to load resource: the server responded with a status of 404 (Not Found)';
 
@@ -43,10 +41,28 @@ export const openLobby = async (
 export const readClipboard = (page: Page): Promise<string> =>
   page.evaluate(() => globalThis.navigator.clipboard.readText());
 
-export const copyInvitation = async (page: Page): Promise<string> => {
-  await page.locator('#copyButton').click();
-  await expect.poll(() => readClipboard(page)).toContain('PTCGSIM2-INVITE:');
-  return readClipboard(page);
+/**
+ * The room's Invite opponent (its Room ready card): a link to the room, on
+ * the clipboard as a mouse's press copies it (ADR-020).
+ */
+export const inviteOpponent = async (page: Page): Promise<string> => {
+  const before = await readClipboard(page).catch(() => '');
+  await page.locator('#inviteOpponentButton').click();
+  await expect.poll(() => readClipboard(page)).not.toBe(before);
+  const link = await readClipboard(page);
+  expect(link).toContain('#invite=');
+  return link;
+};
+
+/** Create room: its host is in the room at once, and invites from there. */
+export const createRoomAndInvite = async (
+  page: Page,
+  displayName: string
+): Promise<string> => {
+  await page.locator('#nameInput').fill(displayName);
+  await page.locator('#generateIdButton').click();
+  await expectReadyRoom(page);
+  return inviteOpponent(page);
 };
 
 export const pasteInvitation = async (
@@ -63,8 +79,8 @@ export const pasteInvitation = async (
   await roomInput.focus();
   await page.keyboard.press('Control+V');
   await expect(roomInput).toHaveValue(ROOM_CODE);
-  // A pasted player invitation leaves the spectator choice to its holder and,
-  // as in v1, announces nothing.
+  // A pasted invitation to play leaves the spectator choice to its holder
+  // and, as in v1, announces nothing.
   await expect(page.locator('#spectatorModeCheckbox')).toBeEnabled();
   await expect(page.locator('.lobby-status')).toHaveCount(0);
 };
@@ -161,5 +177,7 @@ export const expectContinuationRestoreSuccess = async (
     .filter({ hasText: CONTINUATION_RESTORE_SUCCESS_TITLE });
   await expect(notice).toBeVisible();
   await expect(notice).toHaveAttribute('data-tone', 'success');
-  await expect(notice).toContainText(CONTINUATION_RESTORE_SUCCESS_MESSAGE);
+  // Its opponent invitation waits for Invite opponent: the room says so,
+  // and nothing went to the clipboard unasked.
+  await expect(page.locator('#inviteOpponentButton')).toBeVisible();
 };
