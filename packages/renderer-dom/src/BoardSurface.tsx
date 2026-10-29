@@ -1723,6 +1723,8 @@ export const BoardSurface = ({
   );
   // A finger's press on a crowded hand, peeking at its cards.
   const peekRef = useRef<HandPeek | null>(null);
+  // The card a finger last pressed, until a long press opens its menu.
+  const touchPressRef = useRef<CardSceneNode | null>(null);
   // The cards whose click the browser may still send after a finger slid
   // along the hand: the release has already tapped the card it raised.
   const peekClickRef = useRef<{
@@ -2477,6 +2479,14 @@ export const BoardSurface = ({
   ) => {
     cancelDetachTimer();
     dragController.cancel(event.pointerId);
+    // Held still, it opened a menu: the click a browser may still send
+    // after the long press would tap the card under it, putting a group's
+    // card down and the group's menu away.
+    if (peek.mode === 'menu')
+      peekClickRef.current = {
+        cardIds: new Set([peek.pressed.id, peek.peeked]),
+        until: performance.now() + PEEK_CLICK_MS,
+      };
     if (peek.mode === 'slide') {
       peekClickRef.current = {
         cardIds: new Set([peek.pressed.id, peek.peeked]),
@@ -2639,6 +2649,8 @@ export const BoardSurface = ({
         )
           hints.hide();
         const target = pointerCard(event);
+        touchPressRef.current =
+          event.pointerType === 'touch' ? (target?.card ?? null) : null;
         // Shift or ⌘/Ctrl held: the press adds, and the felt keeps the
         // selection (ADR-042 §2). A finger has no keys to hold.
         const adds = event.pointerType !== 'touch' && addsToSelection(event);
@@ -2875,7 +2887,16 @@ export const BoardSurface = ({
         // A finger held still on a crowded hand opens the menu of the card
         // it raised, which the letting go then leaves alone.
         const peek = peekRef.current;
-        if (peek?.mode !== 'press' && peek?.mode !== 'slide') return;
+        if (peek?.mode !== 'press' && peek?.mode !== 'slide') {
+          // Held still on any other card, it opens that card's menu (a
+          // group's, on a selected one): the click a browser may still send
+          // after the long press must not tap the card too.
+          const pressed = touchPressRef.current;
+          touchPressRef.current = null;
+          if (pressed)
+            dragController.suppressClick(pressed.id, pressed.renderKey);
+          return;
+        }
         dragController.cancel(peek.pointerId);
         lowerPeekedCards(surfaceRef.current);
         const raised = peek.peeked;

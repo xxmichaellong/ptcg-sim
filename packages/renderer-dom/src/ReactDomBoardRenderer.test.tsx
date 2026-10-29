@@ -2582,6 +2582,46 @@ describe('a finger on a crowded hand', () => {
     pointer(host, 'pointerup', 90, 790);
     expect(intents).toHaveLength(1);
     expect(drags).toEqual([]);
+    // Nor does a click the browser still sends after the long press.
+    act(() => {
+      cardNode(host, 0).dispatchEvent(
+        new MouseEvent('click', { bubbles: true, cancelable: true, detail: 1 })
+      );
+    });
+    expect(intents).toHaveLength(1);
+    await unmount(renderer, host);
+  });
+
+  it("lets a long press on a roomy hand's card open its menu, and no click after it tap the card", async () => {
+    const { renderer, host, intents } = await mountHand(handScene(3, 100));
+    pointer(host, 'pointerdown', 40, 790, 'touch', cardNode(host, 0));
+    act(() => {
+      cardNode(host, 0).dispatchEvent(
+        new MouseEvent('contextmenu', { bubbles: true, cancelable: true })
+      );
+    });
+    expect(intents).toEqual([
+      { kind: 'CardContextRequested', cardId: handCardId(0) },
+    ]);
+    pointer(host, 'pointerup', 40, 790);
+    act(() => {
+      cardNode(host, 0).dispatchEvent(
+        new MouseEvent('click', { bubbles: true, cancelable: true, detail: 1 })
+      );
+    });
+    expect(intents).toHaveLength(1);
+    // A tap afterwards is a tap.
+    pointer(host, 'pointerdown', 40, 790, 'touch', cardNode(host, 0));
+    pointer(host, 'pointerup', 40, 790);
+    act(() => {
+      cardNode(host, 0).dispatchEvent(
+        new MouseEvent('click', { bubbles: true, cancelable: true, detail: 1 })
+      );
+    });
+    expect(intents.at(-1)).toMatchObject({
+      kind: 'CardSelected',
+      cardId: handCardId(0),
+    });
     await unmount(renderer, host);
   });
 
