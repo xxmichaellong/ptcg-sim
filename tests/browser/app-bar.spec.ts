@@ -163,6 +163,18 @@ test('the app bar keeps the top-right corner, clear of every card, and the turn 
   // The key opens it from the table.
   await page.keyboard.press(',');
   await expect(page.locator('#settings')).toBeVisible();
+  // Escape is the sheet's once it has the focus: on a slow runner a key
+  // pressed in the frame it first shows in comes before that.
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          document
+            .querySelector('#settings')
+            ?.contains(document.activeElement) ?? false
+      )
+    )
+    .toBe(true);
   await page.keyboard.press('Escape');
   await expect(page.locator('#settings')).toHaveCount(0);
 });
