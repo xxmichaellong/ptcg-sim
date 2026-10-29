@@ -3983,6 +3983,10 @@
     "message": "Opponent's cards face me",
     "translation": "Противничке карте су окренуте према мени"
   },
+  "xzPwKo": {
+    "message": "Opponents' custom backs",
+    "translation": "Прилагођене полеђине противника"
+  },
   "eH_2Pb": {
     "message": "Other",
     "context": "Trainer card kind",

@@ -640,6 +640,37 @@ describe('React DOM board renderer', () => {
     });
   });
 
+  it('falls a card back that will not load back to the standard back, telling its host nothing (ADR-041)', async () => {
+    const renderer = new ReactDomBoardRenderer({
+      emitIntent: vi.fn(),
+      emitPresentationUpdate: vi.fn(),
+      reportError: vi.fn(),
+    });
+    const host = document.createElement('div');
+    document.body.append(host);
+    const scene = createScene();
+    await mountInAct(renderer, host, {
+      ...scene,
+      cards: scene.cards.map((candidate) => ({
+        ...candidate,
+        concealed: true,
+        imageUrl: '/v2/images/broken',
+        backFallbackUrl: '/v2/assets/backs/standard.webp',
+        // A face's fallback is never a back's.
+        imageFallbackUrl: '/face-scan.png',
+      })),
+    });
+    const image = host.querySelector<HTMLImageElement>('[data-card-id] img')!;
+    expect(image.getAttribute('referrerpolicy')).toBe('no-referrer');
+    image.dispatchEvent(new Event('error'));
+    expect(image.getAttribute('src')).toBe('/v2/assets/backs/standard.webp');
+
+    await act(async () => {
+      renderer.destroy();
+      await Promise.resolve();
+    });
+  });
+
   it('reveals an already decoded cache hit on a fresh card mount', async () => {
     const complete = vi
       .spyOn(HTMLImageElement.prototype, 'complete', 'get')

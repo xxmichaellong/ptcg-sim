@@ -3,6 +3,7 @@ import { CARD_IMAGE_LANGUAGES, isCardImageLanguage } from '@ptcgsim/deck-core';
 import { useSyncExternalStore } from 'react';
 
 import { TableArtControls } from '../../board/view/TableArtControls.js';
+import { CARD_BACK_VIEW_PREFERENCES } from '../../card-backs/card-back-preferences.js';
 import { TableViewControls } from '../../board/view/TableViewControls.js';
 import {
   CARD_IMAGE_LANGUAGE_NAMES,
@@ -179,6 +180,27 @@ const CardImageLanguageControl = () => {
   );
 };
 
+/**
+ * Whether other players' uploaded and designed card backs show as they
+ * chose them, or as the standard back (ADR-041). Presets always show.
+ */
+const OpponentCardBacksControl = () => {
+  const { t } = useLingui();
+  const { opponentCustomBacks } = usePreference(CARD_BACK_VIEW_PREFERENCES);
+  return (
+    <SwitchRow
+      id="opponentCardBacksCheckbox"
+      label={t`Opponents' custom backs`}
+      checked={opponentCustomBacks}
+      onChange={(enabled) =>
+        preferences().set(CARD_BACK_VIEW_PREFERENCES, {
+          opponentCustomBacks: enabled,
+        })
+      }
+    />
+  );
+};
+
 export interface SettingsSheetProps {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
@@ -248,6 +270,7 @@ export const SettingsSheet = ({
           checked={darkMode}
           onChange={onDarkModeChange}
         />
+        <OpponentCardBacksControl />
         <div className="ptcgsim-settings-actions">
           <button
             id="changeBackgroundButton"

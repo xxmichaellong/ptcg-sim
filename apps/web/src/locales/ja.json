@@ -3983,6 +3983,10 @@
     "message": "Opponent's cards face me",
     "translation": "相手のカードを自分側に向ける"
   },
+  "xzPwKo": {
+    "message": "Opponents' custom backs",
+    "translation": "相手のカスタムカードバック"
+  },
   "eH_2Pb": {
     "message": "Other",
     "context": "Trainer card kind",

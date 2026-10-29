@@ -23,6 +23,8 @@ import {
   type BoardViewport,
 } from '@ptcgsim/renderer-contract';
 
+import { resolveSceneCardBacks } from '../card-backs/card-back-image.js';
+import { CARD_BACK_VIEW_PREFERENCES } from '../card-backs/card-back-preferences.js';
 import {
   CARD_IMAGE_PREFERENCES,
   localizeSceneCardImages,
@@ -273,6 +275,10 @@ export class BoardSessionRuntime {
         CARD_IMAGE_PREFERENCES,
         rebuild
       );
+      const stopCardBacks = preferences().subscribe(
+        CARD_BACK_VIEW_PREFERENCES,
+        rebuild
+      );
       const stopPageLanguage = preferences().subscribe(
         LANGUAGE_PREFERENCES,
         rebuild
@@ -280,6 +286,7 @@ export class BoardSessionRuntime {
       this.stopFollowingLanguage = () => {
         stopWording();
         stopCardImages();
+        stopCardBacks();
         stopPageLanguage();
       };
       await this.whenSettled();
@@ -695,7 +702,24 @@ export class BoardSessionRuntime {
         'Characterized layout player order does not match the projected view'
       );
     }
-    return localizeSceneCardImages(createBoardScene(view, snapshot));
+    // Card backs are references each viewer draws for itself (ADR-041):
+    // its own (both seats at a Solo table) as chosen, other players'
+    // uploaded and designed ones only while Settings allows them.
+    const ownPlayerIds = new Set(
+      this.options.readsEveryHand?.() === true
+        ? view.playerOrder
+        : view.viewer.kind === 'player'
+          ? [view.viewer.playerId]
+          : []
+    );
+    return resolveSceneCardBacks(
+      localizeSceneCardImages(createBoardScene(view, snapshot)),
+      {
+        ownPlayerIds,
+        opponentCustomBacks: preferences().get(CARD_BACK_VIEW_PREFERENCES)
+          .opponentCustomBacks,
+      }
+    );
   }
 
   private readonly handleBoardEffect = (

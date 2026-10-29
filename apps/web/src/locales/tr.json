@@ -3983,6 +3983,10 @@
     "message": "Opponent's cards face me",
     "translation": "Rakibin kartları bana dönük"
   },
+  "xzPwKo": {
+    "message": "Opponents' custom backs",
+    "translation": "Rakiplerin özel arka yüzleri"
+  },
   "eH_2Pb": {
     "message": "Other",
     "context": "Trainer card kind",

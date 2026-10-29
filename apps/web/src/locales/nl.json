@@ -3983,6 +3983,10 @@
     "message": "Opponent's cards face me",
     "translation": "Kaarten van de tegenstander naar mij gericht"
   },
+  "xzPwKo": {
+    "message": "Opponents' custom backs",
+    "translation": "Aangepaste ruggen van tegenstanders"
+  },
   "eH_2Pb": {
     "message": "Other",
     "context": "Trainer card kind",

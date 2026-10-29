@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 
 import { DeckBox, deckBoxToneOf } from './DeckBox.js';
 import { finderMode } from './DeckHome.js';
+import { STANDARD_CARD_BACK_IMAGE } from '../../card-backs/card-back-presets.js';
 import { cardBackSource } from './DeckScreen.js';
 import { splitFinish } from './deck-home-covers.js';
 import { importDeckText } from './deck-import.js';
@@ -126,7 +127,6 @@ describe("a seat's card back on its tray", () => {
       'Https://i.imgur.com/back.png',
       'HTTPS://i.imgur.com/back.png',
       '//cdn.example/back.png',
-      '/v2/assets/cardback.png',
       'blob:https://ptcgsim.online/1234',
       'data:image/png;base64,AAAA',
       // v1 kept what was pasted, a space before it and all: the table's
@@ -136,10 +136,26 @@ describe("a seat's card back on its tray", () => {
     ]) {
       expect(cardBackSource(url), url).toBe(url);
     }
-    expect(cardBackSource(undefined)).toBe('/v2/assets/cardback.png');
-    expect(cardBackSource('javascript:alert(1)')).toBe(
-      '/v2/assets/cardback.png'
+    expect(cardBackSource(undefined)).toBe(STANDARD_CARD_BACK_IMAGE);
+    expect(cardBackSource('/v2/assets/cardback.png')).toBe(
+      STANDARD_CARD_BACK_IMAGE
     );
+    expect(cardBackSource('javascript:alert(1)')).toBe(
+      STANDARD_CARD_BACK_IMAGE
+    );
+  });
+
+  it('draws a reference as its picture (ADR-041)', () => {
+    expect(cardBackSource('preset:crimson')).toBe(
+      '/v2/assets/backs/crimson.ded5ececb4.webp'
+    );
+    expect(cardBackSource(`img:${'e'.repeat(64)}`)).toBe(
+      `/v2/images/${'e'.repeat(64)}`
+    );
+    expect(cardBackSource('design:1.navy.stripes.gold.ball')).toMatch(
+      /^data:image\/svg\+xml,/u
+    );
+    expect(cardBackSource('preset:Not Valid')).toBe(STANDARD_CARD_BACK_IMAGE);
   });
 });
 

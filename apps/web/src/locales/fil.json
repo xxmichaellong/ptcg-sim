@@ -3983,6 +3983,10 @@
     "message": "Opponent's cards face me",
     "translation": "Nakaharap sa akin ang mga card ng kalaban"
   },
+  "xzPwKo": {
+    "message": "Opponents' custom backs",
+    "translation": "Mga custom back ng kalaban"
+  },
   "eH_2Pb": {
     "message": "Other",
     "context": "Trainer card kind",

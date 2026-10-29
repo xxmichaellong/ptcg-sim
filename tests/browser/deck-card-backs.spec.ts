@@ -1,5 +1,9 @@
 import { expect, test, type Page } from '@playwright/test';
 
+import {
+  routeCardBackImport,
+  STORED_CARD_BACK,
+} from './support/card-back-import.js';
 import { answerOverlayPrompt } from './support/overlay-dialogs.js';
 import { ownRoomBudget } from './support/room-budget.js';
 import {
@@ -11,10 +15,8 @@ import {
 
 const RED = 'https://images.example.test/red-sleeves.png';
 const STANDARD = '/v2/assets/cardback.png';
-const ONE_PIXEL_PNG = Buffer.from(
-  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
-  'base64'
-);
+/** The standard back as it is drawn (ADR-041). */
+const STANDARD_BACK = /^\/v2\/assets\/backs\/standard\.[0-9a-f]{10}\.webp$/u;
 
 const openTable = async (page: Page) => {
   await expect(
@@ -40,20 +42,20 @@ const importDeck = async (page: Page, name: string) => {
 /**
  * A card back belongs to its deck (ADR-033): chosen on a seat holding a
  * saved deck, it is kept with that deck, through a reload, and goes on the
- * table with it; a deck without one is played in the seat's own.
+ * table with it; a deck without one is played in the seat's own. A pasted
+ * address is made a back of our own (ADR-041): the page never loads it.
  */
 test('a deck keeps its card back and brings it to the table', async ({
   page,
 }) => {
   test.setTimeout(90_000);
   await ownRoomBudget(page.context());
-  await page.route(RED, (route) =>
-    route.fulfill({
-      status: 200,
-      contentType: 'image/png',
-      body: ONE_PIXEL_PNG,
-    })
-  );
+  const imported = await routeCardBackImport(page);
+  const outside: string[] = [];
+  page.on('request', (request) => {
+    if (request.url().startsWith('https://images.example.test/'))
+      outside.push(request.url());
+  });
   const sleeve = page.locator(
     '.deck-tray[data-seat="self"] .deck-tray__sleeve img'
   );
@@ -65,11 +67,13 @@ test('a deck keeps its card back and brings it to the table', async ({
   const prompt = answerOverlayPrompt(page, RED);
   await page.locator('#changeCardBackButton').click();
   expect((await prompt).message).toBe('Change card back');
-  await expect(sleeve).toHaveAttribute('src', RED);
+  await expect(sleeve).toHaveAttribute('src', STORED_CARD_BACK);
+  expect(imported).toEqual([RED]);
+  const stored = (await sleeve.getAttribute('src'))!;
 
   // Another deck, with no back of its own: the standard one.
   await importDeck(page, 'Lugia');
-  await expect(sleeve).toHaveAttribute('src', STANDARD);
+  await expect(sleeve).toHaveAttribute('src', STANDARD_BACK);
   await page.locator('#nativeDeckBuilderPlayButton').click();
   await expect(
     page.locator('.ptcgsim-deck-layer[data-open="false"]')
@@ -79,17 +83,19 @@ test('a deck keeps its card back and brings it to the table', async ({
     page.locator('#chatbox [data-event-type="DeckLoaded"]')
   ).toHaveCount(1);
   await closeActivity(page);
-  await expect(page.locator(`img[src="${RED}"]`)).toHaveCount(0);
+  await expect(page.locator(`img[src="${stored}"]`)).toHaveCount(0);
 
   // Saved with the deck: after a reload, putting it on brings its back.
   await page.reload();
   await openTable(page);
   await openDeck(page);
   await page.locator('button[aria-label="Charizard deck: put on P1"]').click();
-  await expect(sleeve).toHaveAttribute('src', RED);
+  await expect(sleeve).toHaveAttribute('src', stored);
   await page.locator('#nativeDeckBuilderPlayButton').click();
   await expect(
     page.locator('.ptcgsim-deck-layer[data-open="false"]')
   ).toBeAttached();
-  await expect(page.locator(`img[src="${RED}"]`).first()).toBeVisible();
+  await expect(page.locator(`img[src="${stored}"]`).first()).toBeVisible();
+  // The outside address was never loaded by the page.
+  expect(outside).toEqual([]);
 });

@@ -3983,6 +3983,10 @@
     "message": "Opponent's cards face me",
     "translation": "对手的卡牌朝向我"
   },
+  "xzPwKo": {
+    "message": "Opponents' custom backs",
+    "translation": "对手的自定义卡背"
+  },
   "eH_2Pb": {
     "message": "Other",
     "context": "Trainer card kind",

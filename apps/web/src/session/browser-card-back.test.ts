@@ -9,36 +9,28 @@ import {
   DEFAULT_CARD_BACK_URL,
   invalidCardBackMessage,
   requestBrowserCardBack,
+  type CardBackUrlImport,
 } from './browser-card-back.js';
 
-interface FakeImage {
-  onload: HTMLImageElement['onload'];
-  onerror: HTMLImageElement['onerror'];
-  src: string;
-}
+const STORED = `img:${'ab'.repeat(32)}`;
 
-const imageHarness = () => {
-  const images: FakeImage[] = [];
-  const createImage = vi.fn(() => {
-    const image: FakeImage = { onload: null, onerror: null, src: '' };
-    images.push(image);
-    return image;
-  });
-  return { images, createImage };
-};
-
-const complete = (image: FakeImage): void => {
-  image.onload?.call(
-    image as unknown as GlobalEventHandlers,
-    new Event('load')
+/**
+ * Stands in for the import: each call waits for the test to answer it with
+ * a reference (made a back) or null (couldn't be).
+ */
+const importHarness = () => {
+  const calls: {
+    readonly url: string;
+    readonly signal: AbortSignal;
+    readonly answer: (ref: string | null) => void;
+  }[] = [];
+  const importUrl = vi.fn<CardBackUrlImport>(
+    (url, signal) =>
+      new Promise((resolve) => {
+        calls.push({ url, signal, answer: resolve });
+      })
   );
-};
-
-const fail = (image: FakeImage): void => {
-  image.onerror?.call(
-    image as unknown as GlobalEventHandlers,
-    new Event('error')
-  );
+  return { calls, importUrl };
 };
 
 /**
@@ -74,13 +66,13 @@ const promptAnswering = (...answers: (string | null)[]) => {
 
 describe('browser card-back request', () => {
   it('asks in the prompt dialog with the source wording', async () => {
-    const harness = imageHarness();
+    const harness = importHarness();
     const dialog = promptAnswering(null);
 
     await expect(
       requestBrowserCardBack({
         prompt: dialog.prompt,
-        createImage: harness.createImage,
+        importUrl: harness.importUrl,
       })
     ).resolves.toBeUndefined();
     expect(dialog.asked[0]).toMatchObject({
@@ -88,114 +80,107 @@ describe('browser card-back request', () => {
       body: cardBackPrompt(),
       label: 'Image URL',
     });
-    expect(harness.createImage).not.toHaveBeenCalled();
+    expect(harness.importUrl).not.toHaveBeenCalled();
   });
 
   it('treats cancel and an empty answer as no-ops', async () => {
-    const harness = imageHarness();
+    const harness = importHarness();
     await expect(
       requestBrowserCardBack({
         prompt: promptAnswering('   ').prompt,
-        createImage: harness.createImage,
+        importUrl: harness.importUrl,
       })
     ).resolves.toBeUndefined();
-    expect(harness.createImage).not.toHaveBeenCalled();
+    expect(harness.importUrl).not.toHaveBeenCalled();
   });
 
-  it("maps the source 'default' choice to the shipped card back", async () => {
-    const harness = imageHarness();
+  it("maps the source 'default' choice to the standard back, fetching nothing", async () => {
+    const harness = importHarness();
+    await expect(
+      requestBrowserCardBack({
+        prompt: promptAnswering('  DeFaUlT  ').prompt,
+        importUrl: harness.importUrl,
+      })
+    ).resolves.toBe(DEFAULT_CARD_BACK_URL);
+    expect(harness.importUrl).not.toHaveBeenCalled();
+  });
+
+  it('makes a pasted address a back of our own and returns its reference, never the address (ADR-041)', async () => {
+    const harness = importHarness();
+    const requestedUrl = 'https://unlisted-images.example/back.png';
     const pending = requestBrowserCardBack({
-      prompt: promptAnswering('  DeFaUlT  ').prompt,
-      createImage: harness.createImage,
+      prompt: promptAnswering(`  ${requestedUrl}  `).prompt,
+      importUrl: harness.importUrl,
     });
 
-    await vi.waitFor(() => expect(harness.images).toHaveLength(1));
-    expect(harness.images[0]?.src).toBe(DEFAULT_CARD_BACK_URL);
-    complete(harness.images[0]!);
-    await expect(pending).resolves.toBe(DEFAULT_CARD_BACK_URL);
+    await vi.waitFor(() => expect(harness.calls).toHaveLength(1));
+    expect(harness.calls[0]?.url).toBe(requestedUrl);
+    harness.calls[0]!.answer(STORED);
+    await expect(pending).resolves.toBe(STORED);
   });
 
-  it('preloads and returns an arbitrary unlisted URL without rewriting it', async () => {
-    const harness = imageHarness();
-    const requestedUrl =
-      'data:image/png;base64,cGxheWVyLXNlbGVjdGVkLWNhcmQtYmFjaw==';
-    const pending = requestBrowserCardBack({
-      prompt: promptAnswering(requestedUrl).prompt,
-      createImage: harness.createImage,
-    });
-
-    await vi.waitFor(() => expect(harness.images).toHaveLength(1));
-    expect(harness.images[0]?.src).toBe(requestedUrl);
-    complete(harness.images[0]!);
-    await expect(pending).resolves.toBe(requestedUrl);
-  });
-
-  it('keeps the dialog open on oversized input without requesting an image', async () => {
-    const harness = imageHarness();
+  it('keeps the dialog open on oversized input without importing anything', async () => {
+    const harness = importHarness();
     const dialog = promptAnswering('x'.repeat(MAX_IMAGE_URL_CODE_UNITS + 1));
 
     await expect(
       requestBrowserCardBack({
         prompt: dialog.prompt,
-        createImage: harness.createImage,
+        importUrl: harness.importUrl,
       })
     ).resolves.toBeUndefined();
-    expect(harness.createImage).not.toHaveBeenCalled();
+    expect(harness.importUrl).not.toHaveBeenCalled();
     expect(dialog.errors).toEqual([invalidCardBackMessage()]);
   });
 
-  it('keeps the dialog open when the image fails, then accepts a fixed URL', async () => {
-    const harness = imageHarness();
+  it('keeps the dialog open when the picture cannot be made a back, then accepts a fixed URL', async () => {
+    const harness = importHarness();
     const dialog = promptAnswering(
       'https://unlisted-images.example/missing.png',
       'https://unlisted-images.example/found.png'
     );
     const pending = requestBrowserCardBack({
       prompt: dialog.prompt,
-      createImage: harness.createImage,
+      importUrl: harness.importUrl,
     });
 
-    await vi.waitFor(() => expect(harness.images).toHaveLength(1));
-    fail(harness.images[0]!);
-    await vi.waitFor(() => expect(harness.images).toHaveLength(2));
+    await vi.waitFor(() => expect(harness.calls).toHaveLength(1));
+    harness.calls[0]!.answer(null);
+    await vi.waitFor(() => expect(harness.calls).toHaveLength(2));
     expect(dialog.errors).toEqual([invalidCardBackMessage()]);
-    complete(harness.images[1]!);
-    await expect(pending).resolves.toBe(
-      'https://unlisted-images.example/found.png'
-    );
+    harness.calls[1]!.answer(STORED);
+    await expect(pending).resolves.toBe(STORED);
   });
 
-  it('changes nothing when the player gives up after a failed image', async () => {
-    const harness = imageHarness();
+  it('changes nothing when the player gives up after a failed import', async () => {
+    const harness = importHarness();
     const dialog = promptAnswering('https://unlisted-images.example/x.png');
     const pending = requestBrowserCardBack({
       prompt: dialog.prompt,
-      createImage: harness.createImage,
+      importUrl: harness.importUrl,
     });
-    await vi.waitFor(() => expect(harness.images).toHaveLength(1));
-    fail(harness.images[0]!);
+    await vi.waitFor(() => expect(harness.calls).toHaveLength(1));
+    harness.calls[0]!.answer(null);
     await expect(pending).resolves.toBeUndefined();
     expect(dialog.errors).toEqual([invalidCardBackMessage()]);
   });
 
-  it('cancels a pending load without an error or a stale completion', async () => {
-    const harness = imageHarness();
+  it('cancels a pending import without an error or a stale completion', async () => {
+    const harness = importHarness();
     const abort = new AbortController();
     const dialog = promptAnswering('https://unlisted-images.example/slow.png');
     const pending = requestBrowserCardBack({
       signal: abort.signal,
       prompt: dialog.prompt,
-      createImage: harness.createImage,
+      importUrl: harness.importUrl,
     });
-    await vi.waitFor(() => expect(harness.images).toHaveLength(1));
-    const image = harness.images[0]!;
+    await vi.waitFor(() => expect(harness.calls).toHaveLength(1));
     expect(dialog.asked[0]?.signal).toBe(abort.signal);
 
     abort.abort();
+    expect(harness.calls[0]?.signal.aborted).toBe(true);
+    harness.calls[0]!.answer(STORED);
     await expect(pending).resolves.toBeUndefined();
-    expect(dialog.checks[0]?.signal.aborted).toBe(true);
-    expect(image.onload).toBeNull();
-    expect(image.onerror).toBeNull();
     expect(dialog.errors).toEqual([]);
   });
 

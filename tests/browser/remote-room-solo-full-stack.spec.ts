@@ -6,6 +6,10 @@ import {
 } from './support/overlay-dialogs.js';
 import { closeBoardView, openBoardView } from './support/board-view.js';
 import {
+  routeCardBackImport,
+  STORED_CARD_BACK,
+} from './support/card-back-import.js';
+import {
   chooseMenuItem,
   chooseMoreAction,
   closeDeck,
@@ -43,14 +47,13 @@ test('the Solo table owns one authority and keeps it across the menu and sheets'
       creationBodies.push(request.postDataJSON());
     }
   });
+  // The pasted back is made one of our own (ADR-041): the page never asks
+  // its host for it.
   await page.route(SOLO_CARD_BACK_URL, async (route) => {
     cardBackRequests += 1;
-    await route.fulfill({
-      status: 200,
-      contentType: 'image/png',
-      body: ONE_PIXEL_PNG,
-    });
+    await route.abort();
   });
+  const imported = await routeCardBackImport(page, ONE_PIXEL_PNG);
   await page.route(SOLO_CARD_FACE_URL, async (route) => {
     await route.fulfill({
       status: 200,
@@ -118,13 +121,16 @@ test('the Solo table owns one authority and keeps it across the menu and sheets'
   await expect(
     page.getByRole('dialog', { name: 'Change card back' })
   ).toHaveCount(0);
-  // The back is read once to check it, then shown as P2's sleeve in its
-  // tray.
-  await expect.poll(() => cardBackRequests).toBeGreaterThanOrEqual(1);
+  // The back is fetched once through the app and stored as our own, then
+  // shown as P2's sleeve in its tray.
+  expect(imported).toEqual([SOLO_CARD_BACK_URL]);
   await expect(page.locator('#changeCardBackButton img')).toHaveAttribute(
     'src',
-    SOLO_CARD_BACK_URL
+    STORED_CARD_BACK
   );
+  const storedBack = (await page
+    .locator('#changeCardBackButton img')
+    .getAttribute('src'))!;
   await page.locator('#nativeDeckBuilderCsvImport').setInputFiles({
     name: 'solo-player-two.csv',
     mimeType: 'text/csv',
@@ -162,10 +168,8 @@ test('the Solo table owns one authority and keeps it across the menu and sheets'
   await expect(
     page.locator('#chatbox [data-event-type="DeckLoaded"]')
   ).toHaveCount(2);
-  await expect(
-    page.locator(`img[src="${SOLO_CARD_BACK_URL}"]`).first()
-  ).toBeVisible();
-  expect(cardBackRequests).toBeGreaterThanOrEqual(1);
+  await expect(page.locator(`img[src="${storedBack}"]`).first()).toBeVisible();
+  expect(cardBackRequests).toBe(0);
 
   // With a deck on a side, both sides can be reset and set up at once.
   await chooseMoreAction(page, 'resetBothButton');
@@ -211,7 +215,7 @@ test('the Solo table owns one authority and keeps it across the menu and sheets'
         };
       }, disclosedHandCard.cardId)
     )
-    .toEqual({ concealed: true, imageUrl: SOLO_CARD_BACK_URL });
+    .toEqual({ concealed: true, imageUrl: storedBack });
   await expect(page.locator('.ptcgsim-board-surface')).toHaveAttribute(
     'data-revision',
     String(revisionBeforeLocalCover)

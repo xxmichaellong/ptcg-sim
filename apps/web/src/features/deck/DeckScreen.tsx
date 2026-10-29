@@ -22,7 +22,8 @@ import {
 } from 'react';
 
 import { preferences } from '../../preferences/preference-store.js';
-import { DEFAULT_CARD_BACK_URL } from '../../session/browser-card-back.js';
+import { cardBackImage } from '../../card-backs/card-back-image.js';
+import { STANDARD_CARD_BACK_IMAGE } from '../../card-backs/card-back-presets.js';
 import { dialogRequestsSnapshot } from '../../ui/dialog-requests.js';
 import { useKeyboardInset } from '../../ui/keyboard-inset.js';
 import { useSearchTyping } from '../../ui/search-typing.js';
@@ -116,19 +117,28 @@ const isTextEntry = (element: EventTarget | null): boolean =>
 const browserClipboard = async (): Promise<string> =>
   await navigator.clipboard.readText();
 
-const DEFAULT_SLEEVE = DEFAULT_CARD_BACK_URL;
+const DEFAULT_SLEEVE = STANDARD_CARD_BACK_IMAGE;
 
 /**
- * A card back the tray can show: an address on the web (whatever its
- * scheme's case: a phone's keyboard writes "Https://"; spaces before it, as
- * v1 kept a pasted one, which the table's image reads past), on this site
- * or protocol-relative, else the standard back (a back the room was given
- * some other way still reaches the table; only its swatch here falls back).
+ * A card back as the tray shows it: its picture, resolved for its owner
+ * (ADR-041). A legacy URL back shows as it is here, on its owner's own
+ * screen only, while it waits to be imported: an address on the web
+ * (whatever its scheme's case: a phone's keyboard writes "Https://"; spaces
+ * before it, as v1 kept a pasted one), on this site or protocol-relative;
+ * anything else is the standard back.
  */
-export const cardBackSource = (url: string | undefined): string =>
-  url && /^(?:https?:|\/|blob:|data:image\/)/iu.test(url.trim())
-    ? url
-    : DEFAULT_SLEEVE;
+export const cardBackSource = (back: string | undefined): string => {
+  const shown = cardBackImage(back, {
+    own: true,
+    opponentCustomBacks: true,
+    ownDeckScreen: true,
+  });
+  return shown.startsWith('/v2/') || shown.startsWith('data:image/svg+xml,')
+    ? shown
+    : /^(?:https?:|\/|blob:|data:image\/)/iu.test(shown.trim())
+      ? shown
+      : DEFAULT_SLEEVE;
+};
 
 /**
  * The deck screen: the player's decks and the decks to try (home), and the
@@ -1170,6 +1180,7 @@ export const DeckScreen = ({
                       alt=""
                       draggable={false}
                       decoding="async"
+                      referrerPolicy="no-referrer"
                       onError={(event) => {
                         if (!event.currentTarget.src.endsWith(DEFAULT_SLEEVE)) {
                           event.currentTarget.src = DEFAULT_SLEEVE;

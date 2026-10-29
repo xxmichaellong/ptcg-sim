@@ -195,6 +195,12 @@ export interface CardSceneNode {
    * may not exist in it. Renderers switch to it on the first failure.
    */
   readonly imageFallbackUrl?: string;
+  /**
+   * What a card back (a concealed card's `imageUrl`, a deck's
+   * `tableImageUrl`) shows when it does not load: the standard back, so a
+   * back never goes blank (ADR-041). Faces keep `imageFallbackUrl`.
+   */
+  readonly backFallbackUrl?: string;
   readonly concealed: boolean;
   readonly label: string;
   /**

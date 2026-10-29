@@ -9,6 +9,7 @@ import { deckListOf, deckTotals, type DeckCard } from '@ptcgsim/deck-core';
 import type { MatchViewState } from '@ptcgsim/game-core';
 import type { WireGameCommand } from '@ptcgsim/protocol';
 import { createRendererSpikeView } from '@ptcgsim/renderer-contract';
+import { STANDARD_CARD_BACK_IMAGE } from '../../card-backs/card-back-presets.js';
 import { act, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -242,6 +243,8 @@ const renderSession = async (options: {
   readonly onSessionAttach?: (session: DeckInstallSession) => void;
   readonly onRequestClose?: () => void;
   readonly requestCardBack?: BrowserCardBackRequest;
+  /** A legacy URL back's import; none succeeds unless a test says so. */
+  readonly importCardBack?: (url: string) => Promise<string | null>;
   readonly readClipboard?: () => Promise<string>;
   readonly beforeUnloadTarget?: DeckBeforeUnloadTarget;
   readonly onInstallFailure?: (failure: DeckInstallCoordinatorFailure) => void;
@@ -278,6 +281,7 @@ const renderSession = async (options: {
         {...(options.requestCardBack
           ? { requestCardBack: options.requestCardBack }
           : {})}
+        importCardBack={options.importCardBack ?? (async () => null)}
         {...(options.readClipboard
           ? { readClipboard: options.readClipboard }
           : {})}
@@ -1315,13 +1319,69 @@ describe('DeckBuilderSession', () => {
         url: DEFAULT_CARD_BACK_URL,
         dirty: true,
       });
-      expect(sleeve()).toBe(DEFAULT_CARD_BACK_URL);
+      expect(sleeve()).toBe(STANDARD_CARD_BACK_IMAGE);
       // Its deck goes on when the screen closes, and its back with it.
       expect(session.commands).toHaveLength(1);
 
       await click('button[aria-label="Charizard: put on P1"]');
       expect(sleeve()).toBe(RED);
       expect(library.get(charizard.id)?.cardBack).toBe(RED);
+    });
+
+    it('brings a URL back home once, the first time its deck goes on a seat (ADR-041)', async () => {
+      const session = new FakeSession();
+      const store = new DeckBuilderStore();
+      const charizard = save('Charizard');
+      library.update(charizard.id, { cardBack: RED });
+      const imports: Array<{
+        readonly url: string;
+        readonly done: (ref: string | null) => void;
+      }> = [];
+      const importCardBack = vi.fn(
+        (url: string) =>
+          new Promise<string | null>((done) => imports.push({ url, done }))
+      );
+      await renderSession({ session, store, open: true, importCardBack });
+
+      await click('button[aria-label="Charizard: put on P1"]');
+      await click('#nativeDeckBuilderTargetAlt');
+      await click('button[aria-label="Charizard: put on P2"]');
+      // One import for the one picture, however many seats wear it.
+      expect(importCardBack).toHaveBeenCalledExactlyOnceWith(RED);
+      const STORED = `img:${'5'.repeat(64)}`;
+      await act(async () => imports[0]?.done(STORED));
+      expect(library.get(charizard.id)?.cardBack).toBe(STORED);
+      expect(sleeve('self')).toBe(`/v2/images/${'5'.repeat(64)}`);
+      expect(sleeve('opponent')).toBe(`/v2/images/${'5'.repeat(64)}`);
+      // The table gets our copy, never the address.
+      expect(session.commands).toContainEqual({
+        type: 'SetCardBack',
+        cardBackUrl: STORED,
+      });
+    });
+
+    it('keeps a URL back when bringing it home fails, or its deck took another meanwhile', async () => {
+      const session = new FakeSession();
+      const store = new DeckBuilderStore();
+      const charizard = save('Charizard');
+      const lugia = save('Lugia');
+      library.update(charizard.id, { cardBack: RED });
+      library.update(lugia.id, { cardBack: GREEN });
+      const imports: Array<(ref: string | null) => void> = [];
+      const importCardBack = vi.fn(
+        () => new Promise<string | null>((done) => imports.push(done))
+      );
+      await renderSession({ session, store, open: true, importCardBack });
+
+      await click('button[aria-label="Charizard: put on P1"]');
+      await act(async () => imports[0]?.(null));
+      expect(library.get(charizard.id)?.cardBack).toBe(RED);
+      expect(sleeve()).toBe(RED);
+
+      await click('button[aria-label="Lugia: put on P1"]');
+      library.update(lugia.id, { cardBack: 'preset:jade' });
+      await act(async () => imports[1]?.(`img:${'6'.repeat(64)}`));
+      expect(library.get(lugia.id)?.cardBack).toBe('preset:jade');
     });
 
     it('gives a seat holding no saved deck the back as its own, worn by any deck without one', async () => {

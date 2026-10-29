@@ -3983,6 +3983,10 @@
     "message": "Opponent's cards face me",
     "translation": "بطاقات الخصم تواجهني"
   },
+  "xzPwKo": {
+    "message": "Opponents' custom backs",
+    "translation": "ظهر البطاقات المخصصة للخصوم"
+  },
   "eH_2Pb": {
     "message": "Other",
     "context": "Trainer card kind",

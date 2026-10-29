@@ -1,3 +1,4 @@
+import { parseCardBack } from '@ptcgsim/game-core';
 import {
   useCallback,
   useEffect,
@@ -8,6 +9,7 @@ import {
   useSyncExternalStore,
 } from 'react';
 
+import { importCardBackFromUrl } from '../../card-backs/card-back-import.js';
 import { DEFAULT_CARD_BACK_URL } from '../../session/browser-card-back.js';
 import {
   useCardBackSelection,
@@ -117,6 +119,11 @@ export interface DeckBuilderSessionProps {
   /** Deck text from the clipboard; the browser's by default. */
   readonly readClipboard?: () => Promise<string>;
   readonly requestCardBack?: CardBackSelectionOptions<DeckBuilderTarget>['requestCardBack'];
+  /**
+   * Makes a saved deck's legacy URL back a picture of our own (ADR-041):
+   * its `img:` reference, or null. The browser's import by default.
+   */
+  readonly importCardBack?: (url: string) => Promise<string | null>;
   readonly beforeUnloadTarget?: DeckBeforeUnloadTarget;
   readonly digest?: DeckDefinitionDigest;
   readonly onInstallFailure?: (failure: DeckInstallCoordinatorFailure) => void;
@@ -153,6 +160,7 @@ export const DeckBuilderSession = ({
   samples = popularDecklistSource,
   readClipboard,
   requestCardBack,
+  importCardBack = importCardBackFromUrl,
   beforeUnloadTarget,
   digest,
   onInstallFailure,
@@ -411,6 +419,38 @@ export const DeckBuilderSession = ({
   );
 
   /**
+   * A deck saved with a URL back (before ADR-041) brings its picture home
+   * once: the first time it goes on a seat, the picture is imported as our
+   * own, silently, and the deck and the seats wearing it take the new
+   * reference. The URL stays if any step fails, or if the deck's back
+   * changed meanwhile.
+   */
+  const importing = useRef(new Set<string>());
+  const importLegacyBack = useCallback(
+    (deckId: string, back: string): void => {
+      const parsed = parseCardBack(back);
+      if (parsed?.kind !== 'url' || importing.current.has(back)) return;
+      importing.current.add(back);
+      void importCardBack(parsed.url)
+        .catch(() => null)
+        .then((ref) => {
+          if (!ref || library.get(deckId)?.cardBack !== back) return;
+          library.update(deckId, { cardBack: ref });
+          const { slots } = store.getSnapshot();
+          let changed = false;
+          for (const each of ['main', 'alternate'] as const) {
+            if (slots[each].label?.deckId === deckId) {
+              changed = putCardBack(each, ref) || changed;
+            }
+          }
+          if (changed) cardBackCoordinator.current?.flush();
+        })
+        .finally(() => importing.current.delete(back));
+    },
+    [importCardBack, library, putCardBack, store]
+  );
+
+  /**
    * A deck the player puts on a seat brings its card back, else the seat's
    * own (the standard one, if the seat has none): it goes to the table with
    * the deck, or at once if the screen has closed (an import that landed
@@ -420,6 +460,7 @@ export const DeckBuilderSession = ({
     (seat: DeckBuilderTarget): void => {
       const deckId = store.getSnapshot().slots[seat].label?.deckId;
       const own = deckId ? library.get(deckId)?.cardBack : undefined;
+      if (deckId && own) importLegacyBack(deckId, own);
       const back = own ?? cardBackStore.seatCardBack(seat);
       // A seat that never had a back chosen still shows the standard one,
       // unless the room shows another (a restored game, a room joined).
@@ -437,7 +478,15 @@ export const DeckBuilderSession = ({
         cardBackCoordinator.current?.flush();
       }
     },
-    [cardBackStore, library, putCardBack, session, shownSession, store]
+    [
+      cardBackStore,
+      importLegacyBack,
+      library,
+      putCardBack,
+      session,
+      shownSession,
+      store,
+    ]
   );
 
   // P2 given back (Multiplayer to Solo) wears its deck's back as it is now:

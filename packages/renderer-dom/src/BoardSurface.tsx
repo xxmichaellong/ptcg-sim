@@ -762,8 +762,10 @@ const CardNode = memo(
         const ready = image.naturalWidth > 0;
         if (
           !ready &&
-          !paintsBack(card) &&
-          fallBackCardImage(image, card.imageFallbackUrl)
+          fallBackCardImage(
+            image,
+            paintsBack(card) ? card.backFallbackUrl : card.imageFallbackUrl
+          )
         ) {
           image.style.visibility = 'hidden';
           return;
@@ -880,6 +882,10 @@ const CardNode = memo(
               src={card.tableImageUrl ?? card.imageUrl}
               alt=""
               draggable={false}
+              // A back never tells a host where it is shown (ADR-041).
+              {...(paintsBack(card)
+                ? { referrerPolicy: 'no-referrer' as const }
+                : {})}
               onLoad={(event) => {
                 event.currentTarget.dataset.cardImageState = 'ready';
                 event.currentTarget.style.visibility = 'visible';
@@ -888,10 +894,15 @@ const CardNode = memo(
               onError={(event) => {
                 event.currentTarget.style.visibility = 'hidden';
                 // A face asked for in the player's language that has no
-                // such printing shows the deck's own scan instead.
+                // such printing shows the deck's own scan instead; a back
+                // that won't load, the standard back.
                 if (
-                  !paintsBack(card) &&
-                  fallBackCardImage(event.currentTarget, card.imageFallbackUrl)
+                  fallBackCardImage(
+                    event.currentTarget,
+                    paintsBack(card)
+                      ? card.backFallbackUrl
+                      : card.imageFallbackUrl
+                  )
                 )
                   return;
                 event.currentTarget.dataset.cardImageState = 'failed';
@@ -2695,6 +2706,7 @@ export const BoardSurface = ({
                         src={draggedCard.tableImageUrl ?? draggedCard.imageUrl}
                         alt=""
                         draggable={false}
+                        referrerPolicy="no-referrer"
                       />
                     ) : null}
                   </span>

@@ -5,6 +5,10 @@ import {
   answerOverlayPrompt,
 } from './support/overlay-dialogs.js';
 import {
+  routeCardBackImport,
+  STORED_CARD_BACK,
+} from './support/card-back-import.js';
+import {
   chooseLogAction,
   chooseMenuItem,
   closeDeck,
@@ -135,6 +139,7 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
       contexts.map(openLobby)
     )) as [OpenedLobby, OpenedLobby, OpenedLobby, OpenedLobby];
     const lobbies = [creator, rotatedGuest, playerTwo, spectator];
+    const importedCardBacks = await routeCardBackImport(playerTwo.page);
     const customCardBackRequests = new Map<Page, number>();
     const privateFaceRequests = new Map<Page, number>();
     for (const { page } of lobbies) {
@@ -257,9 +262,15 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     await expect(
       playerTwo.page.getByRole('dialog', { name: 'Change card back' })
     ).toHaveCount(0);
-    await expect
-      .poll(() => customCardBackRequests.get(playerTwo.page) ?? 0)
-      .toBe(1);
+    // Made a back of our own (ADR-041): fetched once through the app, never
+    // by the page.
+    expect(importedCardBacks).toEqual([CUSTOM_CARD_BACK_URL]);
+    await expect(
+      playerTwo.page.locator('#changeCardBackButton img')
+    ).toHaveAttribute('src', STORED_CARD_BACK);
+    const storedCardBack = (await playerTwo.page
+      .locator('#changeCardBackButton img')
+      .getAttribute('src'))!;
     await closeDeck(playerTwo.page);
     await openPlayOnline(playerTwo.page);
     await expect(playerTwo.page.locator('#deckPasteInput')).toBeHidden();
@@ -332,22 +343,16 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     // The opponent has their seat: the room stops offering it.
     await expect(creator.page.locator('[data-table-invite]')).toHaveCount(0);
 
+    // Everyone sees player two's back, from our own origin; nobody's browser
+    // asked the outside host for it.
     for (const { page } of [creator, playerTwo, spectator]) {
       await expect(
-        page.locator(`img[src="${CUSTOM_CARD_BACK_URL}"]`).first()
+        page.locator(`img[src="${storedCardBack}"]`).first()
       ).toBeVisible();
     }
-    // Player two's table paints the custom back on the deck cover (asserted
-    // visible above). Whether that paint hits the network again after the
-    // deck panel's preview already fetched the same URL is up to the memory
-    // cache, so only the first fetch is required.
-    expect(customCardBackRequests.get(playerTwo.page)).toBeGreaterThanOrEqual(
-      1
-    );
-    expect(customCardBackRequests.get(creator.page)).toBeGreaterThanOrEqual(1);
-    expect(customCardBackRequests.get(spectator.page)).toBeGreaterThanOrEqual(
-      1
-    );
+    expect(customCardBackRequests.get(playerTwo.page)).toBe(0);
+    expect(customCardBackRequests.get(creator.page)).toBe(0);
+    expect(customCardBackRequests.get(spectator.page)).toBe(0);
     expect(privateFaceRequests.get(playerTwo.page)).toBeGreaterThanOrEqual(1);
     expect(privateFaceRequests.get(creator.page)).toBe(0);
     expect(privateFaceRequests.get(spectator.page)).toBe(0);
