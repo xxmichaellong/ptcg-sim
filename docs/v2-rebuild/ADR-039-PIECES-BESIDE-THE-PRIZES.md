@@ -118,10 +118,17 @@ the prizes lies nearer the edge than half the chip (an upright phone).
   `markersRow`; the scene loses `handHeldFlat`.
 - The hand pill keeps off the zones it would cover, their count badges
   too (`LegacyBoardChrome`): tilted, and since 2026-10-28 flat as well,
-  where a short table's piles run down beside the hand's end. On the
-  shortest (480px tall and less) the screen's edge can still stop it a
-  little over the Lost Zone: the hand's end keeps 44px for a pill 62px
-  wide.
+  where a short table's piles run down beside the hand's end. Since
+  2026-10-29 the layout keeps its room (`handEndFor`): the hand ends 8px +
+  a 64px pill + 4px short of the screen's edge, and, where the piles'
+  column reaches down beside the pill, 12px + 72px short of the column. In
+  25,872 probed layouts the flat pill then covers no pile, badge or hand
+  card, where before it lay over the Lost Zone 11,304 times and over a hand
+  card 15,924 times; on the real table (190 sizes, mouse and touch, flat
+  and tilted, both hands at 16 cards) it covers nothing, where before it
+  covered a hand card at 140 sizes and the Lost Zone at up to 31. Across
+  the table the pill's room past the column costs the far hand about 28px
+  on short mats.
 - Tests: `layout-table.test.ts`, `table-coin.test.ts`, `TableCoin.test.tsx`,
   `TableZoneAffordances.test.tsx`, `LegacyBoardChrome.test.tsx`,
   `LegacyBoardChrome.onehalf.test.tsx`.

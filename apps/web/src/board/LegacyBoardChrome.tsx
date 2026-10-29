@@ -48,8 +48,8 @@ const ONCE_PER_GAME_COMPACT_PX = 24;
 /**
  * A GX or VSTAR button's size: the tile, its padding round it. Side by
  * side in a corner too short to stack them (an upright phone), sized to
- * that row's height, so both fit the corner beside the hand
- * (`TABLE_CONTROL_CORNER_PX`) rather than reaching over its first cards.
+ * that row's height, so both fit the corner beside the hand rather than
+ * reaching over its first cards.
  */
 export const oncePerGameButtonSize = (
   marker: OncePerGameMarker,
@@ -378,9 +378,11 @@ const TableHandPill = memo(function TableHandPill({
     node.verticalAlign === 'top'
       ? { top: node.anchor.y }
       : { bottom: `calc(100% - ${String(node.anchor.y)}px)` };
-  // The pill is wider than a badge: on a narrow screen a badge's anchor sits
-  // so near the edge that the pill would hang off the table, or under the
-  // docked log. Measured after layout, it is nudged back inside.
+  // The table keeps the pill's room past the hand's end, clear of the
+  // screen's edge and of the piles beside it (layout-table's handEndFor).
+  // Measured after layout, it is still nudged back inside the table (short
+  // of a docked log) and off the zones as drawn, should a font or a tilt
+  // make it reach them.
   const pill = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
     const element = pill.current;

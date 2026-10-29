@@ -221,6 +221,14 @@ and R's refresh (2026-10-21) are gone.
   480×640 with a browser's bars) took the mat for its larger cards and held
   a hand two cards wide, the Stadium in its row. Portrait tablets keep the
   mat they had; a near-square window, small on either, its larger cards.
+- **The hand takes the width it has** (2026-10-29): its strip runs from the
+  mat's edge (across the table, from past the app bar) to its pill, with
+  no corner kept beside it any more (the markers lie by the prizes since
+  ADR-039), so a 390px phone's hand is about 300px wide, not 242. Its cards
+  keep to the table's centre until they need the room. The mat is still
+  chosen by the hand's room as it was (`JUDGED_HAND_*`), so no window
+  changes mat; where the Stadium had sat in the free corner (540×700,
+  800×1080) it moves to the seam and the board is up to 9% smaller.
 - **Touch:** a tapped card gets a bar beside it with Read and Actions (the
   full card menu, as a right-click opens) and Deselect; tapping a selected
   card again reads it; drag works as with a mouse. Card submenus open in

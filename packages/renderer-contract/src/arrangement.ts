@@ -288,11 +288,16 @@ export const arrangementOffsets = (
   }
   if (zone.kind === 'hand' || zone.kind === 'board') {
     const side = zone.side === 'shared' ? 'local' : zone.side;
-    const slots = (zone.kind === 'hand' ? layoutTableHand : layoutTableRow)(
-      zone.contentBounds,
-      side,
-      count
-    );
+    const play = scene.layout.playAreaBounds;
+    const slots =
+      zone.kind === 'hand'
+        ? layoutTableHand(
+            zone.contentBounds,
+            side,
+            count,
+            play.x + play.width / 2
+          )
+        : layoutTableRow(zone.contentBounds, side, count);
     items.forEach((item, position) => {
       const slot = slots[slotOf(position)];
       if (!slot) return;

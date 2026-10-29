@@ -143,10 +143,10 @@ textarea {
 
 /* ---- Board chrome on the play-mat table (geometry v2) ------------------
  * Each player's chrome box is their half, turned with it, so these offsets
- * are in that player's own frame: bottom is their screen edge. The corner
- * is TABLE_CONTROL_CORNER_PX (96px) wide, beside the hand; a hand's Sort
- * sits there where the table has no pill for that hand (the markers lie
- * beside the prizes, TableZoneAffordances).
+ * are in that player's own frame: bottom is their screen edge. A hand's
+ * Sort sits in the corner beside the hand where the table has no pill for
+ * that hand (the markers lie beside the prizes, TableZoneAffordances); the
+ * table keeps no room there, as every table route shows the pills.
  */
 .board-spike-host[data-geometry='2'] .legacy-once-per-game-controls {
   top: auto;

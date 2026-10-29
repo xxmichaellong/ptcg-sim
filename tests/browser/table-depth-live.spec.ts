@@ -109,13 +109,15 @@ const centre = async (page: Page, id: string) => {
   const current = await scene(page);
   const card = current.cards.find((card) => card.id === id)!;
   const projection = new BoardDepthProjection(current, preferences);
+  // Where it is painted: a tilted hand's cards grow and spread to meet
+  // the mat (BoardDepthProjection's hand fit), off where they lie.
   const pose = projection.pose(card);
   return screen(
     page,
     projection.point(
       {
-        x: card.bounds.x + card.bounds.width / 2,
-        y: card.bounds.y + card.bounds.height / 2,
+        x: pose.bounds.x + pose.bounds.width / 2,
+        y: pose.bounds.y + pose.bounds.height / 2,
       },
       pose.elevation,
       pose.plane === 0

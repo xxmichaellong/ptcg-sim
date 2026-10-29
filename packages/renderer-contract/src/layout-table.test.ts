@@ -12,7 +12,6 @@ import {
   APP_BAR_INSET_PX,
   DEFAULT_TABLE_VERTICAL_LAYOUT,
   TABLE_COIN_MIN_PX,
-  TABLE_CONTROL_CORNER_PX,
   TABLE_FAR_HAND_SCALE,
   TABLE_LAYOUT_GEOMETRY_VERSION,
   TABLE_SPLIT,
@@ -728,7 +727,7 @@ describe('table layout (geometry v2)', () => {
     }
   });
 
-  it("keeps the seam clear for the table controls and a corner for each player's markers", () => {
+  it('keeps the seam clear for the table controls', () => {
     for (const [width, height] of [
       [1280, 720],
       [1440, 900],
@@ -745,10 +744,6 @@ describe('table layout (geometry v2)', () => {
           expect(clear, `${width} ${player.side} ${candidate.kind}`).toBe(true);
         }
       }
-      // The hand starts after its owner's marker corner.
-      const hand = region(snapshot, 'local', 'hand').physicalDeclaredBounds;
-      const prizes = region(snapshot, 'local', 'prizes').physicalDeclaredBounds;
-      expect(hand.x - prizes.x).toBeGreaterThanOrEqual(TABLE_CONTROL_CORNER_PX);
     }
   });
 
@@ -1366,52 +1361,138 @@ describe('table layout (geometry v2)', () => {
     }
   });
 
-  it("puts each hand's count at the far end of its strip, clear of every zone", () => {
-    for (const [width, height] of [
-      [1280, 720],
-      [1440, 900],
-      [1920, 1080],
+  it("puts each hand's pill past the far end of its strip, clear of the screen's edge, every zone and the piles' badges", () => {
+    // The pill (the web app's TableHandPill) at its widest, two digits
+    // beside Sort, grows away from its anchor; it keeps 4px from the
+    // screen's edge and stays off the piles' count badges, which stand
+    // 9px out past their corners.
+    const PILL = { width: 64, height: 26 };
+    const grownBy = (rect: Rect, by: number): Rect => ({
+      x: rect.x - by,
+      y: rect.y - by,
+      width: rect.width + 2 * by,
+      height: rect.height + 2 * by,
+    });
+    for (const [width, height, touch] of [
+      [1280, 720, false],
+      [1440, 900, false],
+      [1920, 1080, false],
+      // Short tables, where the piles' column runs down beside the hand.
+      [480, 480, false],
+      [600, 480, false],
+      [1024, 568, true],
+      [1280, 568, false],
+      [1366, 640, false],
+      [1440, 720, false],
+      [1600, 800, false],
+      [1920, 568, false],
+      [844, 390, true],
+      // Portrait phones and tablets.
+      [390, 844, true],
+      [600, 800, false],
+      [820, 1180, true],
     ] as const) {
-      const snapshot = createTableLayoutSnapshot(stateAt(width, height));
-      for (const player of snapshot.players) {
-        const hand = player.regions.find(
-          (candidate) => candidate.kind === 'hand'
-        )!;
-        const count = hand.countLabel!;
-        // A 22px badge, up to 48px wide, grows away from the anchor.
-        const badge: Rect = {
-          x:
-            count.horizontalAlign === 'left'
-              ? count.anchor.x
-              : count.anchor.x - 48,
-          y:
-            count.verticalAlign === 'top'
-              ? count.anchor.y
-              : count.anchor.y - 22,
-          width: 48,
-          height: 22,
-        };
-        const label = `${width} ${player.side}`;
-        expect(
-          inside(badge, player.frameBounds),
-          `${label} inside its half`
-        ).toBe(true);
-        for (const other of player.regions) {
-          if (other.kind === 'hand') continue;
-          expect(
-            overlaps(badge, other.physicalDeclaredBounds),
-            `${label} / ${other.kind}`
-          ).toBe(false);
-        }
-        // It sits level with the hand, past its last card.
-        const strip = hand.physicalDeclaredBounds;
-        expect(badge.y, label).toBeGreaterThanOrEqual(strip.y);
-        expect(badge.y + badge.height, label).toBeLessThanOrEqual(
-          strip.y + strip.height
+      for (const hideEmptyLostZone of [false, true]) {
+        const snapshot = createTableLayoutSnapshot(
+          stateAt(width, height, {
+            shellMode: 'fullscreen',
+            appBarPx: touch
+              ? { width: 146, height: 50 }
+              : { width: 242, height: 42 },
+            ...(touch ? { seamBandPx: 46 } : {}),
+            ...(hideEmptyLostZone ? { hideEmptyLostZone } : {}),
+          })
         );
-        expect(overlaps(badge, strip), label).toBe(false);
+        const screen = snapshot.playAreaBounds;
+        for (const player of snapshot.players) {
+          const hand = player.regions.find(
+            (candidate) => candidate.kind === 'hand'
+          )!;
+          const count = hand.countLabel!;
+          const pill: Rect = {
+            x:
+              count.horizontalAlign === 'left'
+                ? count.anchor.x
+                : count.anchor.x - PILL.width,
+            y:
+              count.verticalAlign === 'top'
+                ? count.anchor.y
+                : count.anchor.y - PILL.height,
+            ...PILL,
+          };
+          const label = `${width}x${height}${touch ? ' touch' : ''}${
+            hideEmptyLostZone ? ' no Lost Zone' : ''
+          } ${player.side}`;
+          expect(
+            inside(pill, grownBy(screen, -4)),
+            `${label} inside the screen`
+          ).toBe(true);
+          for (const other of player.regions) {
+            if (other.kind === 'hand') continue;
+            const box = other.countLabel
+              ? grownBy(other.physicalDeclaredBounds, 10)
+              : other.physicalDeclaredBounds;
+            expect(overlaps(pill, box), `${label} / ${other.kind}`).toBe(false);
+          }
+          // It sits level with the hand, past its last card.
+          const strip = hand.physicalDeclaredBounds;
+          expect(pill.y, label).toBeGreaterThanOrEqual(strip.y);
+          expect(pill.y + pill.height, label).toBeLessThanOrEqual(
+            strip.y + strip.height
+          );
+          expect(overlaps(pill, strip), label).toBe(false);
+        }
       }
     }
+  });
+
+  it("runs the hand from the mat's edge to its pill, its cards at the table's centre until they need the room", () => {
+    for (const [width, height, touch] of [
+      [1440, 900, false],
+      [1280, 568, false],
+      [390, 844, true],
+      [412, 915, true],
+    ] as const) {
+      const snapshot = createTableLayoutSnapshot(
+        stateAt(width, height, {
+          shellMode: 'fullscreen',
+          appBarPx: touch
+            ? { width: 146, height: 50 }
+            : { width: 242, height: 42 },
+          ...(touch ? { seamBandPx: 46 } : {}),
+        })
+      );
+      const label = `${width}x${height}`;
+      const hand = region(snapshot, 'local', 'hand').physicalDeclaredBounds;
+      const prizes = region(snapshot, 'local', 'prizes').physicalDeclaredBounds;
+      // No corner kept beside the near hand: it starts at the mat's edge,
+      // where the prizes do.
+      expect(hand.x, label).toBeLessThanOrEqual(prizes.x + 0.01);
+      const centre = snapshot.playAreaBounds.width / 2;
+      const few = layoutTableHand(hand, 'local', 2, centre);
+      expect(
+        (few[0]!.x + few[1]!.x + few[1]!.width) / 2,
+        `${label} two cards at the centre`
+      ).toBeCloseTo(centre, 5);
+      const many = layoutTableHand(hand, 'local', 40, centre);
+      expect(many[0]!.x, `${label} a crowded hand`).toBeCloseTo(hand.x, 5);
+      expect(many.at(-1)!.x + many.at(-1)!.width, label).toBeCloseTo(
+        hand.x + hand.width,
+        5
+      );
+    }
+    // A portrait phone's hand: from the edge to its pill, not from past a
+    // 96px corner (2026-10-28 device QA: a big hand showed 9px slivers).
+    const phone = createTableLayoutSnapshot(
+      stateAt(390, 844, {
+        shellMode: 'fullscreen',
+        appBarPx: { width: 146, height: 50 },
+        seamBandPx: 46,
+      })
+    );
+    expect(
+      region(phone, 'local', 'hand').physicalDeclaredBounds.width
+    ).toBeGreaterThan(300);
   });
 
   it('runs the hand off the screen edge and overlaps it when crowded', () => {

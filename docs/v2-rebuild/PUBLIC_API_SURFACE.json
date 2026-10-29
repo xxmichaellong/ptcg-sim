@@ -2358,10 +2358,6 @@
               "kind": "value"
             },
             {
-              "name": "TABLE_CONTROL_CORNER_PX",
-              "kind": "value"
-            },
-            {
               "name": "TABLE_FAR_HAND_SCALE",
               "kind": "value"
             },

@@ -1018,11 +1018,19 @@ export const createBoardScene = (
       zone.ownerId && (zone.kind === 'hand' || zone.kind === 'board')
         ? table
           ? {
-              cards: (zone.kind === 'hand' ? layoutTableHand : layoutTableRow)(
-                contentBounds,
-                playerLayout(zone.ownerId).side,
-                zone.cards.length
-              ),
+              cards:
+                zone.kind === 'hand'
+                  ? layoutTableHand(
+                      contentBounds,
+                      playerLayout(zone.ownerId).side,
+                      zone.cards.length,
+                      layout.playAreaBounds.x + layout.playAreaBounds.width / 2
+                    )
+                  : layoutTableRow(
+                      contentBounds,
+                      playerLayout(zone.ownerId).side,
+                      zone.cards.length
+                    ),
               scroll: undefined,
             }
           : (zone.kind === 'hand'

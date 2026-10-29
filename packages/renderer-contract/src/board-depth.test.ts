@@ -148,6 +148,33 @@ describe('live board depth', () => {
     expect(checked).toBeGreaterThan(0);
   });
 
+  it("grows a tilted hand about its own middle, the table's centre, though its strip runs from the mat's edge to its pill", () => {
+    const scene = fixture();
+    const table = new BoardDepthProjection(scene, preferences);
+    const middle =
+      scene.layout.playAreaBounds.x + scene.layout.playAreaBounds.width / 2;
+    const hand = scene.zones.find(
+      (zone) => zone.kind === 'hand' && zone.side === 'local'
+    )!;
+    // The strip isn't centred on the table; the cards that fit are.
+    expect(
+      Math.abs(hand.bounds.x + hand.bounds.width / 2 - middle)
+    ).toBeGreaterThan(10);
+    const cards = scene.cards.filter(
+      (card) => card.parentId === hand.id && card.renderKey !== null
+    );
+    expect(cards.length).toBeGreaterThan(1);
+    const centreOf = (rects: readonly { x: number; width: number }[]) =>
+      (Math.min(...rects.map((rect) => rect.x)) +
+        Math.max(...rects.map((rect) => rect.x + rect.width))) /
+      2;
+    expect(centreOf(cards.map((card) => card.bounds))).toBeCloseTo(middle, 6);
+    expect(centreOf(cards.map((card) => table.pose(card).bounds))).toBeCloseTo(
+      middle,
+      6
+    );
+  });
+
   it('keeps a full hand, grown to meet the tilted mat, inside its strip and clear of the app bar', () => {
     const base = createRendererSpikeView();
     const bar = { width: 242, height: 42 };

@@ -124,13 +124,6 @@ const HALF_PROPORTIONS: HalfProportions = {
 export const TABLE_HAND_VISIBLE_SHARE = 0.8;
 
 /**
- * The corner of each hand strip beside the hand, kept clear: the hand
- * starts past it. Mirrored by the web app's chrome stylesheet, which lays
- * v1's markers there.
- */
-export const TABLE_CONTROL_CORNER_PX = 96;
-
-/**
  * How far up from the player's edge v1's corner controls reach: its
  * VSTAR/GX markers stacked under the hand-sort control. A hand strip
  * shorter than this lays them side by side instead (the web app's chrome),
@@ -140,8 +133,33 @@ export const TABLE_CONTROL_CORNER_PX = 96;
 export const TABLE_CONTROL_CORNER_HEIGHT_PX = 104;
 export const TABLE_COMPACT_CORNER_HEIGHT_PX = 56;
 
-/** Room at the far end of each hand strip for its card-count badge. */
-const HAND_COUNT_SLOT_PX = 44;
+/**
+ * The hand's count and its Sort, one pill past the far end of its strip
+ * (the web app's TableHandPill): this far past the strip's end and below
+ * its top, and at most this wide (a two-digit count beside Sort) and tall.
+ */
+const HAND_PILL_GAP_PX = 8;
+const HAND_PILL_DROP_PX = 6;
+const HAND_PILL_WIDTH_PX = 64;
+const HAND_PILL_HEIGHT_PX = 26;
+/** The least room between the pill and the screen's edge (TableHandPill). */
+const HAND_PILL_EDGE_PX = 4;
+/**
+ * The least room between the pill and a pile beside the hand's end: more
+ * than the reach of the pile's count badge, which the pill keeps off too
+ * (LegacyBoardChrome keeps it 10px off the piles).
+ */
+const HAND_PILL_PILE_CLEARANCE_PX = 12;
+/**
+ * How a mat's hand is judged when a window's mat is chosen (`bestOf`,
+ * `jointMat`): by the room it had before its strip ran out into the free
+ * corner beside it and made its pill room at its end (2026-10-29) -- short
+ * of a corner this wide at its start and of a count slot this wide past
+ * the piles at its end. Judged as they were, the wider strips leave every
+ * window on the mat the layout probes and the device QA settled for it.
+ */
+const JUDGED_HAND_CORNER_PX = 96;
+const JUDGED_HAND_SLOT_PX = 44;
 
 /**
  * The least a far hand keeps past the app bar: a layout that leaves it less
@@ -176,6 +194,8 @@ interface LocalRegion {
 
 interface HalfGeometry {
   readonly regions: readonly LocalRegion[];
+  /** The width its hand is judged by when the mat is chosen (JUDGED_HAND_*). */
+  readonly handRoom: number;
   /**
    * The pieces beside the prizes, in the half's own frame: the VSTAR/GX
    * markers (where the viewer keeps them), the coin under them, and the
@@ -459,6 +479,32 @@ const coinAbove = (coin: Rect, control: Rect, gap: number): Rect => {
   };
 };
 
+/**
+ * Where a hand strip ends, in its half's own frame (the strip runs left to
+ * right): short of the screen's edge by its pill and the pill's room, and,
+ * where piles beside the hand's end reach down into the pill's band (a
+ * short mat's column), short of those piles and their count badges too.
+ */
+const handEndFor = (
+  width: number,
+  handTop: number,
+  piles: readonly Rect[]
+): number => {
+  const pillTop = handTop + HAND_PILL_DROP_PX;
+  const pillBottom = pillTop + HAND_PILL_HEIGHT_PX;
+  const slot = HAND_PILL_GAP_PX + HAND_PILL_WIDTH_PX;
+  let end = width - HAND_PILL_EDGE_PX - slot;
+  for (const pile of piles) {
+    if (
+      pile.y - HAND_PILL_PILE_CLEARANCE_PX < pillBottom &&
+      pile.y + pile.height + HAND_PILL_PILE_CLEARANCE_PX > pillTop
+    ) {
+      end = Math.min(end, pile.x - HAND_PILL_PILE_CLEARANCE_PX - slot);
+    }
+  }
+  return end;
+};
+
 /** Lay out one half in its own frame, centre line at the top. */
 const layoutHalf = (
   width: number,
@@ -625,21 +671,34 @@ const layoutHalf = (
     width: Math.max(0, benchRight - boardLeft),
     height: active,
   };
-  const handLeft =
-    margin +
-    Math.max(
-      TABLE_CONTROL_CORNER_PX,
-      pileWidth + gap * 1.5 + HAND_COUNT_SLOT_PX
-    );
-  const handRight = width - handLeft;
-  const handStart = Math.max(handLeft, options.handStartReservePx ?? 0);
+  // The hand runs from the mat's edge (across the table, from past the
+  // app bar) to its pill, which keeps off the piles where the column runs
+  // down beside the hand. Its cards keep to the table's centre while they
+  // fit (layoutTableHand), so the strip need not be.
+  const lostZoneRect = lostZone ?? columnAt(2);
+  const handStart = Math.max(side, options.handStartReservePx ?? 0);
+  const handEnd = handEndFor(width, handTop, [
+    deck,
+    discard,
+    ...(lostZone ? [] : [lostZoneRect]),
+  ]);
   const handRect: Rect = {
     x: handStart,
     y: handTop,
-    width: Math.max(0, handRight - handStart),
+    width: Math.max(0, handEnd - handStart),
     height: handStrip,
   };
+  const judgedEdge =
+    margin +
+    Math.max(
+      JUDGED_HAND_CORNER_PX,
+      pileWidth + gap * 1.5 + JUDGED_HAND_SLOT_PX
+    );
   return {
+    handRoom: Math.max(
+      0,
+      width - judgedEdge - Math.max(judgedEdge, options.handStartReservePx ?? 0)
+    ),
     regions: [
       { kind: 'hand', rect: handRect, countAnchor: 'hand' },
       { kind: 'board', rect: boardRect },
@@ -648,11 +707,7 @@ const layoutHalf = (
       { kind: 'prizes', rect: prizes },
       { kind: 'deck', rect: deck, countAnchor: 'pile' },
       { kind: 'discard', rect: discard, countAnchor: 'pile' },
-      {
-        kind: 'lostZone',
-        rect: lostZone ?? columnAt(2),
-        countAnchor: 'pile',
-      },
+      { kind: 'lostZone', rect: lostZoneRect, countAnchor: 'pile' },
     ],
     cardHeights: { active, bench },
     middle: { left: middleLeft, right: Math.max(middleRight, benchRight) },
@@ -851,18 +906,24 @@ const layoutHalfPortrait = (
     width: pileWidth,
     height: pile,
   });
-  // Across the table the hand starts past the app bar.
-  const handStart = Math.max(
-    TABLE_CONTROL_CORNER_PX,
-    options.handStartReservePx ?? 0
-  );
+  // The hand runs from the edge (across the table, from past the app bar)
+  // to its pill; the pile row ends above the pill's band.
+  const handStart = Math.max(edge, options.handStartReservePx ?? 0);
+  const handEnd = handEndFor(width, handTop, [pileAt(0), pileAt(1), pileAt(2)]);
   const handRect: Rect = {
     x: handStart,
     y: handTop,
-    width: Math.max(0, width - edge - HAND_COUNT_SLOT_PX - handStart),
+    width: Math.max(0, handEnd - handStart),
     height: handStrip,
   };
   return {
+    handRoom: Math.max(
+      0,
+      width -
+        edge -
+        JUDGED_HAND_SLOT_PX -
+        Math.max(JUDGED_HAND_CORNER_PX, options.handStartReservePx ?? 0)
+    ),
     regions: [
       { kind: 'hand', rect: handRect, countAnchor: 'hand' },
       { kind: 'board', rect: boardRect },
@@ -895,14 +956,13 @@ const benchCardHeightOf = (geometry: HalfGeometry): number =>
       (BENCH_FIT_CARDS * CARD_ASPECT_RATIO)
   );
 
-const handWidthOf = (geometry: HalfGeometry): number =>
-  geometry.regions.find((region) => region.kind === 'hand')?.rect.width ?? 0;
+const handWidthOf = (geometry: HalfGeometry): number => geometry.handRoom;
 
 const handCrampedIn = (geometry: HalfGeometry): boolean =>
   handWidthOf(geometry) < MIN_FAR_HAND_PX;
 
 /**
- * A hand whose seven cards, fanned across its strip, show less than
+ * A hand whose seven cards, fanned across its room, show less than
  * MIN_HAND_SLIVER_PX of each: wide in pixels, but its cards (a share of
  * them off the screen) too large for it.
  */
@@ -912,7 +972,7 @@ const handShortIn = (geometry: HalfGeometry): boolean => {
   const card =
     (hand.rect.height / TABLE_HAND_VISIBLE_SHARE) * CARD_ASPECT_RATIO;
   return (
-    (hand.rect.width - card) / (TYPICAL_HAND_CARDS - 1) < MIN_HAND_SLIVER_PX
+    (geometry.handRoom - card) / (TYPICAL_HAND_CARDS - 1) < MIN_HAND_SLIVER_PX
   );
 };
 
@@ -961,6 +1021,7 @@ const atPlayerEdge = (geometry: HalfGeometry, band: number): HalfGeometry => {
   if (band <= 0) return geometry;
   const lowered = (rect: Rect): Rect => ({ ...rect, y: rect.y + band });
   return {
+    handRoom: geometry.handRoom,
     regions: geometry.regions.map((region) => ({
       ...region,
       rect: lowered(region.rect),
@@ -1210,13 +1271,19 @@ const countLabelFor = (
   }
   return side === 'local'
     ? {
-        anchor: { x: physical.x + physical.width + 8, y: physical.y + 6 },
+        anchor: {
+          x: physical.x + physical.width + HAND_PILL_GAP_PX,
+          y: physical.y + HAND_PILL_DROP_PX,
+        },
         horizontalAlign: 'left',
         verticalAlign: 'top',
         fontSizePx: 13,
       }
     : {
-        anchor: { x: physical.x - 8, y: physical.y + physical.height - 6 },
+        anchor: {
+          x: physical.x - HAND_PILL_GAP_PX,
+          y: physical.y + physical.height - HAND_PILL_DROP_PX,
+        },
         horizontalAlign: 'right',
         verticalAlign: 'bottom',
         fontSizePx: 13,
@@ -2118,12 +2185,16 @@ export const resizeLayoutStateFor = (
     ? resizeTableLayoutState(state, handleId, clientY)
     : resizeBoardLayoutState(state, handleId, clientY);
 
-/** Cards side by side across a row, overlapping evenly once they run out of room. */
+/**
+ * Cards side by side across a row, overlapping evenly once they run out of
+ * room: centred in the row, or on `centre` as far as the row allows.
+ */
 const spreadRow = (
   content: Rect,
   count: number,
   cardWidth: number,
-  reversed: boolean
+  reversed: boolean,
+  centre?: number
 ): number[] => {
   if (count <= 0) return [];
   const gap = Math.max(4, cardWidth * 0.06);
@@ -2135,7 +2206,13 @@ const spreadRow = (
         ? Math.max(0, (content.width - cardWidth) / (count - 1))
         : 0;
   const total = cardWidth + step * (count - 1);
-  const start = content.x + (content.width - total) / 2;
+  const start =
+    centre === undefined || !Number.isFinite(centre)
+      ? content.x + (content.width - total) / 2
+      : Math.max(
+          content.x,
+          Math.min(content.x + content.width - total, centre - total / 2)
+        );
   return Array.from({ length: count }, (_, index) =>
     reversed ? start + total - cardWidth - index * step : start + index * step
   );
@@ -2144,23 +2221,29 @@ const spreadRow = (
 /**
  * The hand along the screen edge. Its strip shows the top of each card; the
  * rest runs off the edge until hovered. The opponent's mat is turned, so
- * their hand runs off the top and in mirrored order.
+ * their hand runs off the top and in mirrored order. The strip runs from
+ * one side of the table to the hand's pill at the other, so the cards keep
+ * to the table's centre (`centre`, the play area's) while they fit, and
+ * take the whole strip only when crowded.
  */
 export const layoutTableHand = (
   content: Rect,
   side: BoardSide,
-  count: number
+  count: number,
+  centre?: number
 ): Rect[] => {
   const cardHeight = content.height / TABLE_HAND_VISIBLE_SHARE;
   const cardWidth = cardHeight * CARD_ASPECT_RATIO;
   const y =
     side === 'local' ? content.y : content.y + content.height - cardHeight;
-  return spreadRow(content, count, cardWidth, side !== 'local').map((x) => ({
-    x,
-    y,
-    width: cardWidth,
-    height: cardHeight,
-  }));
+  return spreadRow(content, count, cardWidth, side !== 'local', centre).map(
+    (x) => ({
+      x,
+      y,
+      width: cardWidth,
+      height: cardHeight,
+    })
+  );
 };
 
 /** The staging area: whole cards in a row, overlapping when crowded. */

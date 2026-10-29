@@ -465,7 +465,22 @@ export class BoardDepthProjection {
         if (strip.height <= 0) continue;
         const near = strip.y + strip.height / 2 >= centre;
         const inner = near ? strip.y : strip.y + strip.height;
-        const middle = strip.x + strip.width / 2;
+        const cards = scene.cards.filter((card) => card.parentId === zone.id);
+        // The fan's own middle: a hand that fits keeps to the table's
+        // centre, which need not be its strip's (layoutTableHand).
+        const middle =
+          cards.length > 0
+            ? (Math.min(...cards.map((card) => card.bounds.x)) +
+                Math.max(
+                  ...cards.map((card) => card.bounds.x + card.bounds.width)
+                )) /
+              2
+            : strip.x + strip.width / 2;
+        // How far the fan may reach either way from it, within its strip.
+        const room = Math.max(
+          0,
+          Math.min(middle - strip.x, strip.x + strip.width - middle)
+        );
         const edge = projectTablePoint(this.camera, {
           x: middle,
           y: inner,
@@ -473,7 +488,6 @@ export class BoardDepthProjection {
         }).y;
         const reach = (near ? inner - edge : edge - inner) - HAND_EDGE_GAP_PX;
         if (!(reach > 1)) continue;
-        const cards = scene.cards.filter((card) => card.parentId === zone.id);
         const spread = Math.max(
           1,
           ...cards.map((card) =>
@@ -489,7 +503,7 @@ export class BoardDepthProjection {
           HAND_GROWTH_MAXIMUM,
           (strip.height + reach) / strip.height,
           widest > 0
-            ? Math.max(1, (strip.width - 2 * spread * MIN_HAND_FAN) / widest)
+            ? Math.max(1, (2 * room - 2 * spread * MIN_HAND_FAN) / widest)
             : Infinity
         );
         const reached = near ? inner - reach : inner + reach;
@@ -498,7 +512,7 @@ export class BoardDepthProjection {
         // table, short of the app bar).
         const across = Math.max(
           0,
-          Math.min(grow, (strip.width / 2 - (widest * grow) / 2) / spread)
+          Math.min(grow, (room - (widest * grow) / 2) / spread)
         );
         handFits.set(zone.id, (rect) => {
           const centreX = middle + (rect.x + rect.width / 2 - middle) * across;

@@ -221,7 +221,14 @@ describe('free arrangement', () => {
       index: 0,
     });
     // Every card that stays moves one place along; the held card does not.
-    const slots = layoutTableHand(zone.contentBounds, 'local', hand.length);
+    // The hand keeps to the table's centre, as the scene lays it out.
+    const play = scene.layout.playAreaBounds;
+    const slots = layoutTableHand(
+      zone.contentBounds,
+      'local',
+      hand.length,
+      play.x + play.width / 2
+    );
     hand.slice(0, -1).forEach((card, position) => {
       expect(card.bounds.x + offsets.get(card.id)!.x).toBeCloseTo(
         slots[position + 1]!.x,
