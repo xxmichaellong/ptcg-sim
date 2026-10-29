@@ -521,11 +521,17 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     await expect(allowFlip).not.toBeChecked();
     await allowFlip.check();
     await expect(allowFlip).toBeChecked();
-    // Settings holds settings only: the keys, the help and community links
-    // are in the app bar's menu.
-    await expect(playerTwo.page.locator('#settings')).not.toContainText(
-      'Keyboard shortcuts'
-    );
+    // The room's switch leads; the keys and the community links are in
+    // Settings too, the menu holding what can be done in the room.
+    await expect(
+      playerTwo.page.locator('.ptcgsim-settings-section__title').first()
+    ).toHaveText('Room');
+    await expect(
+      playerTwo.page.locator('#settingsKeys #editShortcutsButton')
+    ).toBeVisible();
+    await expect(
+      playerTwo.page.locator('.ptcgsim-settings-footer #discordButton')
+    ).toBeAttached();
     await expect(
       playerTwo.page.locator('.ptcgsim-app-bar #appMenuButton')
     ).toBeVisible();
