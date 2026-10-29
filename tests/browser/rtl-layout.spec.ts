@@ -40,10 +40,18 @@ const centreX = async (locator: Locator) => {
 };
 
 const settings = (page: Page) => page.locator('#settings');
-const settingsTitle = (page: Page) =>
-  settings(page).locator('.ptcgsim-sheet__title');
-const settingsClose = (page: Page) =>
-  settings(page).locator('.ptcgsim-sheet__close');
+/**
+ * Whether the sheet's heading lies left of its way out: both read in one
+ * frame, as the sheet may still be sliding in.
+ */
+const settingsTitleLeftOfClose = (page: Page): Promise<boolean> =>
+  settings(page).evaluate((sheet) => {
+    const centre = (selector: string): number => {
+      const rect = sheet.querySelector(selector)!.getBoundingClientRect();
+      return rect.left + rect.width / 2;
+    };
+    return centre('.ptcgsim-sheet__title') < centre('.ptcgsim-sheet__close');
+  });
 
 const openTable = async (page: Page): Promise<void> => {
   await page.setViewportSize({ width: 1440, height: 900 });
@@ -105,22 +113,14 @@ test('Arabic mirrors the chrome around the table, and English puts it back', asy
 
   await openSettings(page);
   // English: the heading at the left, the way out at the right.
-  expect(await centreX(settingsTitle(page))).toBeLessThan(
-    await centreX(settingsClose(page))
-  );
+  expect(await settingsTitleLeftOfClose(page)).toBe(true);
   await page.locator('#languageSelect').selectOption('ar');
   await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
   await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
 
   // The sheet's heading mirrors, and the sheet opens at the left now, where
   // the log docks.
-  await expect
-    .poll(
-      async () =>
-        (await centreX(settingsTitle(page))) >
-        (await centreX(settingsClose(page)))
-    )
-    .toBe(true);
+  await expect.poll(() => settingsTitleLeftOfClose(page)).toBe(false);
   await expect.poll(async () => (await box(settings(page))).x).toBeLessThan(40);
   // A switch is on towards the end of the line: the left, now.
   const firstSwitch = settings(page).locator('.ds-switch').first();
@@ -236,13 +236,7 @@ test('Arabic mirrors the chrome around the table, and English puts it back', asy
   await openSettings(page);
   await page.locator('#languageSelect').selectOption('en');
   await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');
-  await expect
-    .poll(
-      async () =>
-        (await centreX(settingsTitle(page))) <
-        (await centreX(settingsClose(page)))
-    )
-    .toBe(true);
+  await expect.poll(() => settingsTitleLeftOfClose(page)).toBe(true);
 });
 
 /**
