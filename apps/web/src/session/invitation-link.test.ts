@@ -217,21 +217,25 @@ describe('a resumed game’s held invitation', () => {
     expect(held.held).toBe(false);
   });
 
-  it('passes on nothing once its invitation is past its time, and says why', async () => {
-    let now = handoff.expiresAt - 1;
+  it('passes on nothing once its invitation is past its time, timed on this device, and says why', async () => {
+    // This device's clock runs twenty minutes past the server's: the
+    // invitation's own expiry is behind it already, yet it has a minute
+    // left of the lifetime the server gave it.
+    let now = handoff.expiresAt + 20 * 60_000;
     const held = new RemoteRoomHeldInvitation(
       'https://ptcgsim.example/',
       () => now
     );
-    held.hold(serializeRoomInvitationHandoffText(handoff));
+    held.hold(serializeRoomInvitationHandoffText(handoff), 60_000);
     const deliver = vi.fn(async (link: Promise<string>) => {
       await link;
       return 'copied' as const;
     });
+    now += 59_999;
     await expect(held.invite(deliver)).resolves.toMatchObject({
       outcome: 'copied',
     });
-    now = handoff.expiresAt;
+    now += 1;
     deliver.mockClear();
     await expect(held.invite(deliver)).rejects.toMatchObject({
       code: 'expired_invitation',

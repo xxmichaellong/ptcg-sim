@@ -24,23 +24,32 @@ export class RemoteRoomHeldInvitation {
   readonly #linkBase: string;
   readonly #now: () => number;
   #handoff: RoomInvitationHandoff | undefined;
+  /** When it stops counting, by this device's own steady clock. */
+  #deadline: number | undefined;
   #sharing = false;
 
   constructor(
     linkBase = currentInvitationLinkBase() ?? '/',
-    now: () => number = Date.now
+    now: () => number = () => performance.now()
   ) {
     this.#linkBase = linkBase;
     this.#now = now;
   }
 
-  /** Holds the restore's invitation envelope; refuses anything else. */
-  hold(text: string): void {
+  /**
+   * Holds the restore's invitation envelope; refuses anything else. Its
+   * time is counted here from now for the lifetime the server gave it
+   * (`expiresAt` is the server's clock, which this device's needn't
+   * match); without one, the room alone judges it.
+   */
+  hold(text: string, lifetimeMs?: number): void {
     const parsed = parseRoomInvitationHandoffText(text);
     if (!parsed.ok || parsed.value.requestedRole !== 'player') {
       throw new RemoteRoomInvitationError('invalid_input');
     }
     this.#handoff = parsed.value;
+    this.#deadline =
+      lifetimeMs === undefined ? undefined : this.#now() + lifetimeMs;
   }
 
   get held(): boolean {
@@ -54,7 +63,7 @@ export class RemoteRoomHeldInvitation {
     if (!handoff) throw new RemoteRoomInvitationError('invalid_input');
     // Past its time the room refuses the claim, and this seat can't mint
     // another: say so, rather than pass on a link that only fails there.
-    if (this.#now() >= handoff.expiresAt) {
+    if (this.#deadline !== undefined && this.#now() >= this.#deadline) {
       throw new RemoteRoomInvitationError('expired_invitation');
     }
     if (!deliver) throw new RemoteRoomInvitationError('clipboard_unavailable');
@@ -79,5 +88,6 @@ export class RemoteRoomHeldInvitation {
 
   dispose(): void {
     this.#handoff = undefined;
+    this.#deadline = undefined;
   }
 }

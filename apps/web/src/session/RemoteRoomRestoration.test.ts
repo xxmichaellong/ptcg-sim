@@ -97,8 +97,10 @@ describe('remote room restoration custody', () => {
       capability: requesterSeatCapability,
       signal: expect.any(AbortSignal),
     });
+    // Its lifetime by the server's clock: expiry less completion.
     expect(deliverOpponentInvitation).toHaveBeenCalledWith(
-      expect.stringContaining('PTCGSIM2-INVITE:')
+      expect.stringContaining('PTCGSIM2-INVITE:'),
+      60_000
     );
     expect(adapter.revoke).toHaveBeenCalledWith(
       expect.objectContaining({ capability })

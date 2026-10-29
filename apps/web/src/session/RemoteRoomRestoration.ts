@@ -33,7 +33,15 @@ export class RemoteRoomRestorationError extends Error {
 export interface RemoteRoomRestorationInput {
   readonly buildId: string;
   readonly displayName: string;
-  readonly deliverOpponentInvitation: (text: string) => Promise<void>;
+  /**
+   * The opponent's invitation, and how long it lasts from the restore by
+   * the server's clock (its expiry less the restore's completion), to be
+   * timed on this device: the two clocks needn't agree.
+   */
+  readonly deliverOpponentInvitation: (
+    text: string,
+    lifetimeMs: number
+  ) => Promise<void>;
   readonly signal?: AbortSignal;
 }
 
@@ -131,7 +139,10 @@ export class RemoteRoomRestorationCustody {
             invitation: receipt.opponentInvitation.invitation,
             expiresAt: receipt.opponentInvitation.expiresAt,
           });
-          await input.deliverOpponentInvitation(invitation);
+          await input.deliverOpponentInvitation(
+            invitation,
+            receipt.opponentInvitation.expiresAt - receipt.completedAt
+          );
           if (signal.aborted) throw new Error('Restoration was cancelled');
           installed = candidate;
         } catch {

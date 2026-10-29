@@ -1119,8 +1119,8 @@ export const RemoteRoomLobby = ({
     // player's Invite opponent rather than going to the clipboard unasked.
     const held = new RemoteRoomHeldInvitation();
     const deliverOpponentInvitation: RemoteRoomRestorationInput['deliverOpponentInvitation'] =
-      (text) => {
-        held.hold(text);
+      (text, lifetimeMs) => {
+        held.hold(text, lifetimeMs);
         return Promise.resolve();
       };
     const active = beginOperation('resume');
