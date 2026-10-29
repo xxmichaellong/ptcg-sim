@@ -28,6 +28,7 @@ import { BoardSessionRuntime } from '../board/BoardSessionRuntime.js';
 import { COIN_PENDING_GRACE_MS } from '../board/TableCoin.js';
 import type { RailAction } from '../board/rail/TableRail.js';
 import { boardViewSettings } from '../board/view/board-view-settings.js';
+import { OverlayHost } from '../ui/OverlayHost.js';
 import { collectCommands } from '../commands/registry.js';
 import {
   ReplaySessionCoordinator,
@@ -418,10 +419,14 @@ describe('RemoteSessionBoard replay binding', () => {
     replay.dispose();
   });
 
-  it("offers v1's stop-revealing modal after a room reveal of an own hand card", async () => {
-    // v1 reveal-and-hide.js shows "Press OK to stop revealing card to
-    // opponent" when a player reveals a card from their own hand in a room;
-    // acknowledging it hides the card again.
+  it('says a room reveal of an own hand card in a notice, and the card wears an eye that hides it', async () => {
+    // v1 reveal-and-hide.js asked "Press OK to stop revealing card to
+    // opponent" in a popup that took the focus; v2 says it in a notice with
+    // Hide on it, and the revealed card wears an eye that hides it again.
+    const overlayHost = document.createElement('div');
+    document.body.append(overlayHost);
+    const overlayRoot = createRoot(overlayHost);
+    await act(async () => overlayRoot.render(<OverlayHost />));
     const session = new FakeRemoteBoardSession();
     const replay = new ReplaySessionCoordinator(session);
     const host = document.createElement('div');
@@ -467,10 +472,22 @@ describe('RemoteSessionBoard replay binding', () => {
       })
     );
 
-    const popup = host.querySelector<HTMLElement>('[data-legacy-popup]')!;
-    expect(popup.textContent).toContain('Revealed to your opponent');
+    // Nothing takes the focus: the notice says it, with Hide on it.
+    expect(host.querySelector('[data-legacy-popup]')).toBeNull();
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    });
+    const notice = document.querySelector<HTMLElement>(
+      '[data-ptcgsim-overlay="toast"]'
+    )!;
+    expect(notice.textContent).toContain('Revealed to your opponent');
+    expect(
+      notice.querySelector<HTMLButtonElement>('[data-toast-action]')
+        ?.textContent
+    ).toBe('Hide');
+    expect(notice.contains(document.activeElement)).toBe(false);
 
-    // The room publishes the reveal; acknowledging then hides it again.
+    // The room publishes the reveal; the card wears an eye that hides it.
     const revealed: MatchViewState = {
       ...baseView,
       revision: 11,
@@ -491,9 +508,11 @@ describe('RemoteSessionBoard replay binding', () => {
     });
     await waitForRevision(host, 11);
     session.submit.mockClear();
-    await act(async () =>
-      popup.querySelector<HTMLButtonElement>('.popup-button')!.click()
+    const eyes = host.querySelectorAll<HTMLButtonElement>(
+      '[data-revealed-card]'
     );
+    expect([...eyes].map((eye) => eye.dataset.revealedCard)).toEqual([cardId]);
+    await act(async () => eyes[0]!.click());
     expect(session.submit).toHaveBeenCalledWith(
       expect.objectContaining({
         type: 'SetPublicReveal',
@@ -501,9 +520,10 @@ describe('RemoteSessionBoard replay binding', () => {
         revealed: false,
       })
     );
-    expect(host.querySelector('[data-legacy-popup]')).toBeNull();
 
     await act(async () => root.unmount());
+    await act(async () => overlayRoot.unmount());
+    overlayHost.remove();
     host.remove();
   });
 

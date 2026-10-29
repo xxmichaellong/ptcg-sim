@@ -6435,5 +6435,16 @@
   "-qToFp": {
     "message": "Shuffle hand to deck…",
     "translation": "Eli desteye karıştır…"
+  },
+  "ASNDad": {
+    "message": "Hide {name}",
+    "comments": [
+      "A button on a hand card the opponent can see; it hides the card again. {name} is the card."
+    ],
+    "translation": "{name} kartını gizle"
+  },
+  "g5A2ic": {
+    "message": "Shown to your opponent",
+    "translation": "Rakibine gösteriliyor"
   }
 }

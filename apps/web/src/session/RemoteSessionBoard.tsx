@@ -1,4 +1,4 @@
-import { Trans, useLingui } from '@lingui/react/macro';
+import { useLingui } from '@lingui/react/macro';
 
 import { loadBoardRenderer } from '../load-board-renderer.js';
 import { useBoardParallax } from '../motion/useBoardParallax.js';
@@ -25,6 +25,7 @@ import { CoinIcon } from '@phosphor-icons/react/dist/csr/Coin';
 import { ShuffleIcon } from '@phosphor-icons/react/dist/csr/Shuffle';
 import { PlayIcon } from '@phosphor-icons/react/dist/csr/Play';
 import {
+  useCallback,
   useEffect,
   useImperativeHandle,
   useLayoutEffect,
@@ -93,7 +94,7 @@ import { useAppBarReserve } from './shell/AppMenu.js';
 import type { DockSlide } from './shell/dock-slide.js';
 import type { ActionMenuEntry } from '../ui/ActionMenu.js';
 import { COARSE_POINTER_QUERY, useMediaQuery } from '../ui/breakpoints.js';
-import { toast } from '../ui/toast.js';
+import { dismissToast, toast } from '../ui/toast.js';
 import { boardCommands } from '../commands/board-commands.js';
 import { useCommandSource } from '../commands/registry.js';
 import type { PaletteCommand } from '../commands/types.js';
@@ -200,6 +201,9 @@ export interface BoardCommands {
   /** Whether turning the table around is allowed here. */
   readonly canFlipBoard: () => boolean;
 }
+
+/** One notice for a card revealed from one's own hand: a newer replaces it. */
+const REVEALED_TOAST_ID = 'revealed-hand-card';
 
 /** How long the Coin control may say it is waiting if no answer arrives. */
 const COIN_PENDING_CEILING_MS = 4_000;
@@ -446,7 +450,21 @@ export const RemoteSessionBoard = ({
   const [touchInput, setTouchInput] = useState(false);
   // v1 reveal-and-hide.js: revealing a card from your own hand in a room
   // opens a modal that ends the reveal when it is acknowledged.
-  const [revealNotice, setRevealNotice] = useState<ViewCardId | null>(null);
+  // A card of one's own hand shown to the opponent, hidden again by its
+  // eye or its notice's Hide (v1 asked in a popup that took the focus).
+  const hideRevealedRef = useRef<(cardId: ViewCardId) => void>(() => {});
+  hideRevealedRef.current = (cardId) => {
+    const view = runtimeRef.current?.getBoardSnapshot()?.view;
+    const resolution = view
+      ? resolvePublicCardVisibilityAction(view, cardId, false)
+      : { ok: false as const };
+    if (resolution.ok) session.submit(resolution.command);
+    dismissToast(REVEALED_TOAST_ID);
+  };
+  const hideRevealed = useCallback(
+    (cardId: ViewCardId) => hideRevealedRef.current(cardId),
+    []
+  );
   useEffect(() => () => clearTimeout(coinPendingTimerRef.current), []);
 
   // Touch (ADR-030): tapping a card that is already selected reads it, the
@@ -734,7 +752,18 @@ export const RemoteSessionBoard = ({
                 command.cardId
               )
             ) {
-              setRevealNotice(command.cardId as ViewCardId);
+              const cardId = command.cardId as ViewCardId;
+              toast({
+                id: REVEALED_TOAST_ID,
+                title: t`Revealed to your opponent`,
+                action: {
+                  label: t({
+                    message: 'Hide',
+                    context: 'stop revealing a card',
+                  }),
+                  onAction: () => hideRevealedRef.current(cardId),
+                },
+              });
             }
           },
           // The card has already gone back; say why.
@@ -1511,6 +1540,9 @@ export const RemoteSessionBoard = ({
           <LegacyBoardOverlays
             {...(depthProjection ? { depth: depthProjection } : {})}
             allowOpponentResolution={roomMode === 'solo'}
+            {...(roomMode === 'multiplayer'
+              ? { onHideRevealed: hideRevealed }
+              : {})}
             {...(roomMode === 'solo' && replayState.mode === 'live'
               ? { soloOpponentHandHidden: hideOpponentHand }
               : {})}
@@ -1544,28 +1576,6 @@ export const RemoteSessionBoard = ({
           />
         </>
       ) : null}
-      {revealNotice !== null && (
-        <div className="custom-popup" data-legacy-popup="reveal">
-          <div className="popup-content">
-            <Trans>Revealed to your opponent</Trans>
-            <button
-              type="button"
-              className="popup-button"
-              autoFocus
-              onClick={() => {
-                const view = runtimeRef.current?.getBoardSnapshot()?.view;
-                const resolution = view
-                  ? resolvePublicCardVisibilityAction(view, revealNotice, false)
-                  : { ok: false as const };
-                if (resolution.ok) session.submit(resolution.command);
-                setRevealNotice(null);
-              }}
-            >
-              <Trans context="stop revealing a card">Hide</Trans>
-            </button>
-          </div>
-        </div>
-      )}
       <span
         className="renderer-status"
         role="status"

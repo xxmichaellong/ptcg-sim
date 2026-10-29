@@ -1,4 +1,5 @@
 import { MarkerControls } from './MarkerControls.js';
+import { RevealedHandBadges } from './RevealedHandBadges.js';
 import { visualCardBounds } from './card-bounds.js';
 import { OverlayCardActions } from './OverlayCardActions.js';
 import type { MatchViewState, ViewCardId, PlayerId } from '@ptcgsim/game-core';
@@ -3077,8 +3078,14 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
   tableMotion,
   allowOpponentResolution = false,
   soloOpponentHandHidden,
+  onHideRevealed,
 }: {
   readonly allowOpponentResolution?: boolean;
+  /**
+   * In a room, hides a card of the player's own hand that their opponent
+   * can see: each wears an eye that does so (RevealedHandBadges).
+   */
+  readonly onHideRevealed?: (cardId: ViewCardId) => void;
   readonly state: BoardSessionControllerState;
   readonly depth?: BoardDepthProjection;
   readonly darkMode: boolean;
@@ -3251,6 +3258,13 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
           {...(depth ? { depth } : {})}
           state={state}
           actions={actions}
+        />
+      ) : null}
+      {onHideRevealed ? (
+        <RevealedHandBadges
+          {...(depth ? { depth } : {})}
+          state={state}
+          onHide={onHideRevealed}
         />
       ) : null}
       {contextCard ? (

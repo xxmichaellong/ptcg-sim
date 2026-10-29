@@ -6435,5 +6435,16 @@
   "-qToFp": {
     "message": "Shuffle hand to deck…",
     "translation": "Shuffle hand to deck…"
+  },
+  "ASNDad": {
+    "message": "Hide {name}",
+    "comments": [
+      "A button on a hand card the opponent can see; it hides the card again. {name} is the card."
+    ],
+    "translation": "Hide {name}"
+  },
+  "g5A2ic": {
+    "message": "Shown to your opponent",
+    "translation": "Shown to your opponent"
   }
 }

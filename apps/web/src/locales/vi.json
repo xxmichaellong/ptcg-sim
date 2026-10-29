@@ -6435,5 +6435,16 @@
   "-qToFp": {
     "message": "Shuffle hand to deck…",
     "translation": "Xáo bài trên tay vào bộ bài…"
+  },
+  "ASNDad": {
+    "message": "Hide {name}",
+    "comments": [
+      "A button on a hand card the opponent can see; it hides the card again. {name} is the card."
+    ],
+    "translation": "Ẩn {name}"
+  },
+  "g5A2ic": {
+    "message": "Shown to your opponent",
+    "translation": "Đối thủ có thể thấy"
   }
 }
