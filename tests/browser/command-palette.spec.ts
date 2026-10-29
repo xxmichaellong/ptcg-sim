@@ -24,7 +24,10 @@ const idle = (page: Page) =>
   ).toHaveCount(1);
 
 const palette = (page: Page) => page.locator('[data-command-palette]');
-const field = (page: Page) => page.locator('.ptcgsim-command-palette__field');
+// The open palette's field, not one in a closing palette's fading copy
+// (exit-ghost.ts, `is-leaving`).
+const field = (page: Page) =>
+  page.locator('.ptcgsim-command-palette__field:not(.is-leaving *)');
 const rows = (page: Page) => palette(page).locator('[role="option"]');
 const selectedRow = (page: Page) =>
   palette(page).locator('[role="option"][aria-selected="true"]');

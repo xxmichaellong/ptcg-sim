@@ -68,19 +68,19 @@
     ],
     "translation": "{actor} ติด {card} จาก{source, select, hand {มือ} prizes {การ์ดรางวัล} discard {ตำแหน่งทิ้งการ์ด} board {บอร์ด} stadium {สเตเดียม} active {ตำแหน่งต่อสู้} bench {เบนช์} lostZone {ลอสต์โซน} attachmentResolution {การ์ดที่ติดอยู่} other {สำรับการ์ด}} ไปที่ {targetCard}"
   },
-  "nb_tRJ": {
-    "message": "{actor} discarded {count, plural, one {# attached card(s)} other {# attached card(s)}}",
+  "eJ4Drn": {
+    "message": "{actor} discarded {count, plural, one {# attached card} other {# attached cards}}",
     "comments": [
       "Log line: a player discarded the cards attached to a Pokémon. {actor} is a player's name, {count} how many cards."
     ],
-    "translation": "{actor} ทิ้งการ์ดที่ติดอยู่ {count, plural, one {# ใบ} other {# ใบ}}"
+    "translation": "{actor} ทิ้งการ์ดที่ติดอยู่ {count, plural, other {# ใบ}}"
   },
-  "KeKqt_": {
-    "message": "{actor} discarded {count, plural, one {# card(s)} other {# card(s)}}",
+  "0bIo3n": {
+    "message": "{actor} discarded {count, plural, one {# card} other {# cards}}",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards."
     ],
-    "translation": "{actor} ทิ้งการ์ด {count, plural, one {# ใบ} other {# ใบ}}"
+    "translation": "{actor} ทิ้งการ์ด {count, plural, other {# ใบ}}"
   },
   "fFHUli": {
     "message": "{actor} discarded hand",
@@ -89,12 +89,12 @@
     ],
     "translation": "{actor} ทิ้งการ์ดบนมือ"
   },
-  "qIBRqY": {
-    "message": "{actor} discarded hand and drew {count, plural, one {# card(s)} other {# card(s)}}",
+  "7ULDVQ": {
+    "message": "{actor} discarded hand and drew {count, plural, one {# card} other {# cards}}",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards they drew."
     ],
-    "translation": "{actor} ทิ้งการ์ดบนมือและจั่วการ์ด {count, plural, one {# ใบ} other {# ใบ}}"
+    "translation": "{actor} ทิ้งการ์ดบนมือและจั่วการ์ด {count, plural, other {# ใบ}}"
   },
   "68TI_t": {
     "message": "{actor} evolved {target, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} into {card}",
@@ -124,12 +124,12 @@
     ],
     "translation": "{actor} ซ่อนการ์ดใน{source, select, hand {มือ} prizes {การ์ดรางวัล} discard {ตำแหน่งทิ้งการ์ด} board {บอร์ด} stadium {สเตเดียม} active {ตำแหน่งต่อสู้} bench {เบนช์} lostZone {ลอสต์โซน} attachmentResolution {การ์ดที่ติดอยู่} inspection {การตรวจดู} other {สำรับการ์ด}}ของ {owner}"
   },
-  "PZVwKy": {
-    "message": "{actor} left {count, plural, one {# attached card(s)} other {# attached card(s)}} in play",
+  "VgwRoT": {
+    "message": "{actor} left {count, plural, one {# attached card} other {# attached cards}} in play",
     "comments": [
       "Log line: a player kept the cards attached to a Pokémon on the table. {actor} is a player's name, {count} how many cards."
     ],
-    "translation": "{actor} ปล่อยการ์ดที่ติดอยู่ {count, plural, one {# ใบ} other {# ใบ}} ไว้บนกระดาน"
+    "translation": "{actor} ปล่อยการ์ดที่ติดอยู่ {count, plural, other {# ใบ}} ไว้บนกระดาน"
   },
   "c5qeZl": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {boardOwner}'s {target, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}}",
@@ -166,12 +166,12 @@
     ],
     "translation": "{actor} ย้าย {card} จาก{source, select, hand {มือ} prizes {การ์ดรางวัล} discard {ตำแหน่งทิ้งการ์ด} board {บอร์ด} stadium {สเตเดียม} active {ตำแหน่งต่อสู้} bench {เบนช์} lostZone {ลอสต์โซน} attachmentResolution {การ์ดที่ติดอยู่} other {สำรับการ์ด}} ไปไว้บนสุดของสำรับการ์ด"
   },
-  "WBnnCz": {
-    "message": "{actor} moved {count, plural, one {# card(s)} other {# card(s)}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} other {deck}}",
+  "9RYqFp": {
+    "message": "{actor} moved {count, plural, one {# card} other {# cards}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} other {deck}}",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards; {source} is the zone they left and {destination} where they went (play: onto the table)."
     ],
-    "translation": "{actor} ย้ายการ์ด {count, plural, one {# ใบ} other {# ใบ}} จาก{source, select, hand {มือ} prizes {การ์ดรางวัล} discard {ตำแหน่งทิ้งการ์ด} board {บอร์ด} stadium {สเตเดียม} active {ตำแหน่งต่อสู้} bench {เบนช์} lostZone {ลอสต์โซน} attachmentResolution {การ์ดที่ติดอยู่} other {สำรับการ์ด}} ไปที่{destination, select, hand {มือ} discard {ตำแหน่งทิ้งการ์ด} lostZone {ลอสต์โซน} deckBottom {ใต้สำรับการ์ด} play {กระดาน} other {สำรับการ์ด}}"
+    "translation": "{actor} ย้ายการ์ด {count, plural, other {# ใบ}} จาก{source, select, hand {มือ} prizes {การ์ดรางวัล} discard {ตำแหน่งทิ้งการ์ด} board {บอร์ด} stadium {สเตเดียม} active {ตำแหน่งต่อสู้} bench {เบนช์} lostZone {ลอสต์โซน} attachmentResolution {การ์ดที่ติดอยู่} other {สำรับการ์ด}}ไปยัง{destination, select, hand {มือ} discard {ตำแหน่งทิ้งการ์ด} lostZone {ลอสต์โซน} deckBottom {ด้านล่างของสำรับการ์ด} play {บนกระดาน} other {สำรับการ์ด}}"
   },
   "P4_K0D": {
     "message": "{actor} moved a random card from {target}'s hand to board",
@@ -201,33 +201,33 @@
     ],
     "translation": "{actor} สับ {card} จาก{source, select, hand {มือ} prizes {การ์ดรางวัล} discard {ตำแหน่งทิ้งการ์ด} board {บอร์ด} stadium {สเตเดียม} active {ตำแหน่งต่อสู้} bench {เบนช์} lostZone {ลอสต์โซน} attachmentResolution {การ์ดที่ติดอยู่} other {สำรับการ์ด}} เข้าสำรับการ์ด"
   },
-  "xEKtXt": {
-    "message": "{actor} shuffled {count, plural, one {# attached card(s)} other {# attached card(s)}} into deck",
+  "e9cTIS": {
+    "message": "{actor} shuffled {count, plural, one {# attached card} other {# attached cards}} into deck",
     "comments": [
       "Log line: a player shuffled the cards attached to a Pokémon into their deck. {actor} is a player's name, {count} how many cards."
     ],
-    "translation": "{actor} สับการ์ดที่ติดอยู่ {count, plural, one {# ใบ} other {# ใบ}} เข้าสำรับการ์ด"
+    "translation": "{actor} สับการ์ดที่ติดอยู่ {count, plural, other {# ใบ}} เข้าสำรับการ์ด"
   },
-  "Ggdxd3": {
-    "message": "{actor} shuffled {count, plural, one {# card(s)} other {# card(s)}} from board to deck",
+  "99ycft": {
+    "message": "{actor} shuffled {count, plural, one {# card} other {# cards}} from board to deck",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards."
     ],
-    "translation": "{actor} สับการ์ด {count, plural, one {# ใบ} other {# ใบ}} จากบอร์ดเข้าสำรับการ์ด"
+    "translation": "{actor} สับการ์ด {count, plural, other {# ใบ}} จากบอร์ดเข้าสำรับการ์ด"
   },
-  "PoaZgj": {
-    "message": "{actor} shuffled {count, plural, one {# card(s)} other {# card(s)}} into deck",
+  "RpAS5v": {
+    "message": "{actor} shuffled {count, plural, one {# card} other {# cards}} into deck",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards."
     ],
-    "translation": "{actor} สับการ์ด {count, plural, one {# ใบ} other {# ใบ}} เข้าสำรับการ์ด"
+    "translation": "{actor} สับการ์ด {count, plural, other {# ใบ}} เข้าสำรับการ์ด"
   },
-  "DilVHS": {
-    "message": "{actor} shuffled {count, plural, one {# card(s)} other {# card(s)}} to bottom of deck",
+  "cFSyyy": {
+    "message": "{actor} shuffled {count, plural, one {# card} other {# cards}} to bottom of deck",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards."
     ],
-    "translation": "{actor} สับการ์ด {count, plural, one {# ใบ} other {# ใบ}} ไว้ใต้สำรับการ์ด"
+    "translation": "{actor} สับการ์ด {count, plural, other {# ใบ}} ไว้ด้านล่างของสำรับการ์ด"
   },
   "s-CcLE": {
     "message": "{actor} shuffled discard into deck",
@@ -243,12 +243,12 @@
     ],
     "translation": "{actor} สับการ์ดบนมือเข้าสำรับการ์ด"
   },
-  "h6k_d9": {
-    "message": "{actor} shuffled hand into deck and drew {count, plural, one {# card(s)} other {# card(s)}}",
+  "xZranI": {
+    "message": "{actor} shuffled hand into deck and drew {count, plural, one {# card} other {# cards}}",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards they drew."
     ],
-    "translation": "{actor} สับการ์ดบนมือเข้าสำรับการ์ดและจั่วการ์ด {count, plural, one {# ใบ} other {# ใบ}}"
+    "translation": "{actor} สับการ์ดบนมือเข้าสำรับการ์ดและจั่วการ์ด {count, plural, other {# ใบ}}"
   },
   "DLPemk": {
     "message": "{actor} shuffled hand to bottom of deck",
@@ -257,12 +257,12 @@
     ],
     "translation": "{actor} สับการ์ดบนมือไว้ใต้สำรับการ์ด"
   },
-  "xT_uho": {
-    "message": "{actor} shuffled hand to bottom of deck and drew {count, plural, one {# card(s)} other {# card(s)}}",
+  "TWahFj": {
+    "message": "{actor} shuffled hand to bottom of deck and drew {count, plural, one {# card} other {# cards}}",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards they drew."
     ],
-    "translation": "{actor} สับการ์ดบนมือไว้ใต้สำรับการ์ดและจั่วการ์ด {count, plural, one {# ใบ} other {# ใบ}}"
+    "translation": "{actor} สับการ์ดบนมือไว้ด้านล่างของสำรับการ์ดและจั่วการ์ด {count, plural, other {# ใบ}}"
   },
   "QGyAAz": {
     "message": "{actor} shuffled prizes to bottom of deck",
@@ -284,6 +284,14 @@
       "Log line: one player undid the other's last move. {actor} is who undid it, {target} whose move it was."
     ],
     "translation": "{actor} ย้อนการเล่นล่าสุดของ {target}"
+  },
+  "MyTf22": {
+    "message": "{available, plural, one {# card in deck} other {# cards in deck}}",
+    "translation": "{available, plural, other {การ์ด # ใบในสำรับ}}"
+  },
+  "DcTMVd": {
+    "message": "{available, plural, one {# card to draw from} other {# cards to draw from}}",
+    "translation": "{available, plural, other {การ์ด # ใบที่จั่วได้}}"
   },
   "iwKsQi": {
     "message": "{cardLabel}: actions",
@@ -407,6 +415,10 @@
   "0ZvQu6": {
     "message": "{count, plural, one {Draw # card} other {Draw # cards}}",
     "translation": "{count, plural, other {จั่ว # ใบ}}"
+  },
+  "nlUJMk": {
+    "message": "{count, plural, one {Look at # card} other {Look at # cards}}",
+    "translation": "{count, plural, other {ดูการ์ด # ใบ}}"
   },
   "UJXyU7": {
     "message": "{count, plural, one {Look at bottom card} other {Look at bottom # cards}}",
@@ -668,19 +680,19 @@
     ],
     "translation": "{name} โหลดเด็คแล้ว"
   },
-  "lcx9nx": {
-    "message": "{name} looked at bottom {count, plural, one {# card(s)} other {# card(s)}} of deck",
+  "E887wo": {
+    "message": "{name} looked at bottom {count, plural, one {# card} other {# cards}} of deck",
     "comments": [
       "Log line. {name} is a player's name, {count} how many cards from the bottom of their deck they looked at."
     ],
-    "translation": "{name} ดูการ์ด {count, plural, other {# ใบ}} จากด้านล่างของสำรับการ์ด"
+    "translation": "{name} ดูการ์ด {count, plural, other {# ใบ}} ล่างสุดของสำรับการ์ด"
   },
-  "ok9Ijw": {
-    "message": "{name} looked at top {count, plural, one {# card(s)} other {# card(s)}} of deck",
+  "imtKoA": {
+    "message": "{name} looked at top {count, plural, one {# card} other {# cards}} of deck",
     "comments": [
       "Log line. {name} is a player's name, {count} how many cards from the top of their deck they looked at."
     ],
-    "translation": "{name} ดูการ์ด {count, plural, other {# ใบ}} จากด้านบนของสำรับการ์ด"
+    "translation": "{name} ดูการ์ด {count, plural, other {# ใบ}} บนสุดของสำรับการ์ด"
   },
   "A7bcR4": {
     "message": "{name} Lost Zone",
@@ -1185,6 +1197,10 @@
     "message": "Add or switch special condition",
     "translation": "เพิ่มหรือเปลี่ยนสภาวะผิดปกติ"
   },
+  "JTbT6L": {
+    "message": "Add special condition",
+    "translation": "เพิ่มสภาวะผิดปกติ"
+  },
   "ZVI875": {
     "message": "Add to deck",
     "translation": "เพิ่มลงในเด็ค"
@@ -1352,10 +1368,6 @@
     "context": "special condition",
     "translation": "หลับ"
   },
-  "hXSSHx": {
-    "message": "Assemble / attach to a card…",
-    "translation": "ประกอบ / ติดกับการ์ด…"
-  },
   "igVDFt": {
     "message": "Attach",
     "translation": "ติด"
@@ -1368,6 +1380,10 @@
   "jrzyuC": {
     "message": "Attach and evolve",
     "translation": "ติดและวิวัฒนาการ"
+  },
+  "uUaeMQ": {
+    "message": "Attach to a Pokémon…",
+    "translation": "ติดกับโปเกมอน…"
   },
   "E9l6HC": {
     "message": "Attached cards being moved",
@@ -1963,6 +1979,30 @@
     "context": "the deck's cover card",
     "translation": "ปก"
   },
+  "rNIlQ5": {
+    "message": "Cover card (only you)",
+    "translation": "คลุมการ์ด (เฉพาะคุณ)"
+  },
+  "dyMutU": {
+    "message": "Cover hand",
+    "translation": "คลุมการ์ดบนมือ"
+  },
+  "6BoNqk": {
+    "message": "Cover prizes",
+    "translation": "คลุมการ์ดรางวัล"
+  },
+  "h-zJzU": {
+    "message": "Cover their hand",
+    "translation": "คลุมการ์ดบนมือของฝ่ายตรงข้าม"
+  },
+  "7x4VPZ": {
+    "message": "Cover their Prizes",
+    "translation": "คลุมการ์ดรางวัลของฝ่ายตรงข้าม"
+  },
+  "urHEvq": {
+    "message": "Cover your Prizes",
+    "translation": "คลุมการ์ดรางวัลของคุณ"
+  },
   "LwyL9G": {
     "message": "Cream",
     "comments": [
@@ -2188,6 +2228,14 @@
     "message": "Discard hand and draw…",
     "translation": "ทิ้งการ์ดบนมือและจั่ว…"
   },
+  "ruBWQi": {
+    "message": "Discard hand, then draw",
+    "translation": "ทิ้งการ์ดบนมือ แล้วจั่ว"
+  },
+  "JrTBPO": {
+    "message": "Discard hand…",
+    "translation": "ทิ้งการ์ดบนมือ…"
+  },
   "eEqZQd": {
     "message": "Discard pile",
     "context": "zone",
@@ -2251,11 +2299,6 @@
     "context": "Pokémon type",
     "translation": "มังกร"
   },
-  "LU-TxR": {
-    "message": "Draw",
-    "context": "draw cards",
-    "translation": "จั่ว"
-  },
   "mBdQmZ": {
     "message": "Draw",
     "context": "shortcut key caption",
@@ -2273,10 +2316,6 @@
     "message": "Draw a card: drag the top of your deck into your hand.",
     "translation": "จั่วการ์ด: ลากการ์ดใบบนสุดของสำรับการ์ดขึ้นมือ"
   },
-  "to34yF": {
-    "message": "Draw card(s)",
-    "translation": "จั่วการ์ด"
-  },
   "ZQB_oJ": {
     "message": "Draw cards",
     "translation": "จั่วการ์ด"
@@ -2285,13 +2324,16 @@
     "message": "Draw cards…",
     "translation": "จั่วการ์ด…"
   },
-  "SAb30P": {
-    "message": "Draw how many cards?",
-    "translation": "จั่วกี่ใบ?"
-  },
   "SP_Sjy": {
     "message": "Draw how many?",
     "translation": "จั่วกี่ใบ?"
+  },
+  "7cFPiW": {
+    "message": "Draw none",
+    "comments": [
+      "Accepts a hand put away (discarded or shuffled into the deck) without drawing."
+    ],
+    "translation": "ไม่จั่ว"
   },
   "b0MOy2": {
     "message": "Draw, search and shuffle",
@@ -2393,10 +2435,6 @@
     "message": "Enter a name.",
     "translation": "กรุณาใส่ชื่อ"
   },
-  "u2fAme": {
-    "message": "Enter a number",
-    "translation": "กรุณาใส่ตัวเลข"
-  },
   "0jl-i6": {
     "message": "Enter a valid image URL.",
     "translation": "กรุณาใส่ URL รูปภาพที่ถูกต้อง"
@@ -2429,6 +2467,10 @@
     "message": "Evolve",
     "context": "shortcut key caption",
     "translation": "วิวัฒนาการ"
+  },
+  "CulBzv": {
+    "message": "Evolve a Pokémon…",
+    "translation": "วิวัฒนาการโปเกมอน…"
   },
   "vb1XQU": {
     "message": "Evolve it: drag <0>{0}</0> onto {1}.",
@@ -2729,6 +2771,10 @@
     "context": "shortcut key caption",
     "translation": "มือไปใต้สำรับ"
   },
+  "gZAkYU": {
+    "message": "Hand to bottom of deck, then draw",
+    "translation": "ใส่การ์ดบนมือใต้สำรับ แล้วจั่ว"
+  },
   "n04_a0": {
     "message": "Hand to deck",
     "context": "shortcut key caption",
@@ -2776,6 +2822,17 @@
     "context": "stop revealing a card",
     "translation": "ซ่อน"
   },
+  "ASNDad": {
+    "message": "Hide {name}",
+    "comments": [
+      "A button on a hand card the opponent can see; it hides the card again. {name} is the card."
+    ],
+    "translation": "ซ่อน {name}"
+  },
+  "HY40z4": {
+    "message": "Hide card",
+    "translation": "ซ่อนการ์ด"
+  },
   "po1CV7": {
     "message": "Hide keyboard",
     "translation": "ซ่อนคีย์บอร์ด"
@@ -2788,13 +2845,25 @@
     "message": "Hide opponent's hand",
     "translation": "ซ่อนมือของฝ่ายตรงข้าม"
   },
+  "Z7lHUH": {
+    "message": "Hide prizes",
+    "translation": "ซ่อนการ์ดรางวัล"
+  },
   "OIoFPQ": {
     "message": "Hide the Lost Zone?",
     "translation": "ซ่อนลอสต์โซนไหม"
   },
+  "q2aSzG": {
+    "message": "Hide their Prizes",
+    "translation": "ซ่อนการ์ดรางวัลของฝ่ายตรงข้าม"
+  },
   "ZQLqYr": {
     "message": "Hide welcome",
     "translation": "ซ่อนหน้าต้อนรับ"
+  },
+  "9EQ4Zd": {
+    "message": "Hide your Prizes",
+    "translation": "ซ่อนการ์ดรางวัลของคุณ"
   },
   "tgYI8X": {
     "message": "Holographic",
@@ -2972,6 +3041,10 @@
   "G7O46F": {
     "message": "Join as spectator",
     "translation": "เข้าร่วมเป็นผู้ชม"
+  },
+  "XbqMCS": {
+    "message": "Join pieces…",
+    "translation": "รวมชิ้นส่วน…"
   },
   "t5uRiA": {
     "message": "Join room",
@@ -3194,6 +3267,14 @@
     "context": "shortcut key caption",
     "translation": "ดู"
   },
+  "QW7fGB": {
+    "message": "Look at bottom cards",
+    "translation": "ดูการ์ดใต้สำรับ"
+  },
+  "nshEL9": {
+    "message": "Look at bottom cards…",
+    "translation": "ดูการ์ดใต้สำรับ…"
+  },
   "f55U3C": {
     "message": "Look at bottom of deck…",
     "translation": "ดูด้านล่างของสำรับการ์ด…"
@@ -3202,29 +3283,25 @@
     "message": "Look at bottom of their deck…",
     "translation": "ดูด้านล่างของสำรับการ์ดฝ่ายตรงข้าม…"
   },
+  "2_dOwA": {
+    "message": "Look at card (only you)",
+    "translation": "ดูการ์ด (เฉพาะคุณ)"
+  },
   "C5D5j0": {
     "message": "Look at cards",
     "translation": "ดูการ์ด"
   },
-  "Q1s-WM": {
-    "message": "Look at how many cards?",
-    "translation": "ดูการ์ดกี่ใบ"
+  "4rquUI": {
+    "message": "Look at hand",
+    "translation": "ดูการ์ดบนมือ"
   },
   "I3be0u": {
     "message": "Look at or cover (only you)",
     "translation": "ดูหรือคว่ำการ์ด (เฉพาะคุณ)"
   },
-  "nZyxDJ": {
-    "message": "Look at or cover their hand",
-    "translation": "ดูหรือคว่ำการ์ดบนมือของฝ่ายตรงข้าม"
-  },
-  "qJ_tx1": {
-    "message": "Look at or cover their Prizes",
-    "translation": "ดูหรือคว่ำการ์ดรางวัลของฝ่ายตรงข้าม"
-  },
-  "bQF9w4": {
-    "message": "Look at or cover your Prizes",
-    "translation": "ดูหรือคว่ำการ์ดรางวัลของคุณ"
+  "FtU5OB": {
+    "message": "Look at prizes",
+    "translation": "ดูการ์ดรางวัล"
   },
   "I7Daes": {
     "message": "Look at the bottom cards",
@@ -3234,6 +3311,22 @@
     "message": "Look at the top cards",
     "translation": "ดูการ์ดด้านบนสุด"
   },
+  "-wf39o": {
+    "message": "Look at their hand",
+    "translation": "ดูการ์ดบนมือของฝ่ายตรงข้าม"
+  },
+  "Ky418J": {
+    "message": "Look at their Prizes",
+    "translation": "ดูการ์ดรางวัลของฝ่ายตรงข้าม"
+  },
+  "g4nsbt": {
+    "message": "Look at top cards",
+    "translation": "ดูการ์ดบนสุดของสำรับ"
+  },
+  "KzU3sj": {
+    "message": "Look at top cards…",
+    "translation": "ดูการ์ดบนสุดของสำรับ…"
+  },
   "bIo9OM": {
     "message": "Look at top of deck…",
     "translation": "ดูด้านบนของสำรับการ์ด…"
@@ -3242,13 +3335,9 @@
     "message": "Look at top of their deck…",
     "translation": "ดูด้านบนของสำรับการ์ดฝ่ายตรงข้าม…"
   },
-  "ktAl1J": {
-    "message": "Look/cover hand",
-    "translation": "ดู/คว่ำการ์ดบนมือ"
-  },
-  "TYI_fo": {
-    "message": "Look/cover prizes",
-    "translation": "ดู/คว่ำการ์ดรางวัล"
+  "C4R15y": {
+    "message": "Look at your Prizes",
+    "translation": "ดูการ์ดรางวัลของคุณ"
   },
   "pKU2VG": {
     "message": "Looking at cards",
@@ -3317,9 +3406,19 @@
   "386rEt": {
     "message": "Mark as unused",
     "comments": [
+      "Takes the \"Ability used\" marker off a Pokémon.",
+      "Takes the \"Ability used\" marker off a Pokémon.",
       "Takes the \"Ability used\" marker off a Pokémon."
     ],
     "translation": "ทำเครื่องหมายว่ายังไม่ได้ใช้"
+  },
+  "WTIxhp": {
+    "message": "Mark as used",
+    "comments": [
+      "Puts the \"Ability used\" marker on a card: its Ability or effect was used this turn.",
+      "Puts the \"Ability used\" marker on a card: its Ability or effect was used this turn."
+    ],
+    "translation": "ทำเครื่องหมายว่าใช้แล้ว"
   },
   "IHU0N1": {
     "message": "Mark GX attack unused",
@@ -3763,6 +3862,11 @@
     ],
     "translation": "เมื่อเล่นคนเดียว คุณจะเล่นทั้งสองฝ่าย กด <0>{0}</0> เพื่อหมุนโต๊ะไปยังฝั่งของอีกฝ่าย"
   },
+  "3GFV_r": {
+    "message": "One fewer",
+    "context": "card count",
+    "translation": "น้อยลงหนึ่งใบ"
+  },
   "eVFY7w": {
     "message": "One half fills the table",
     "translation": "ครึ่งหนึ่งเต็มโต๊ะ"
@@ -3770,6 +3874,11 @@
   "MCTQfb": {
     "message": "One moment",
     "translation": "รอสักครู่"
+  },
+  "qTM8Kd": {
+    "message": "One more",
+    "context": "card count",
+    "translation": "มากขึ้นหนึ่งใบ"
   },
   "-EDLvw": {
     "message": "Only {formatLabel}-legal",
@@ -4199,6 +4308,11 @@
     "message": "Quantity: 1 to {max}.",
     "translation": "จำนวน: 1 ถึง {max}"
   },
+  "P7jzR_": {
+    "message": "Quick picks",
+    "context": "card count",
+    "translation": "ตัวเลือกด่วน"
+  },
   "KgxgFc": {
     "message": "Radiant",
     "context": "Pokémon card mechanic",
@@ -4453,21 +4567,21 @@
     "message": "Reveal (both players)",
     "translation": "เปิดเผย (ผู้เล่นทั้งสองฝ่าย)"
   },
-  "MFV2V6": {
-    "message": "Reveal or hide their Prizes",
-    "translation": "เปิดหรือซ่อนการ์ดรางวัลของฝ่ายตรงข้าม"
+  "6M-csj": {
+    "message": "Reveal card",
+    "translation": "เปิดเผยการ์ด"
   },
-  "FnwG7O": {
-    "message": "Reveal or hide your Prizes",
-    "translation": "เปิดหรือซ่อนการ์ดรางวัลของคุณ"
+  "wY30n_": {
+    "message": "Reveal prizes",
+    "translation": "เปิดเผยการ์ดรางวัล"
   },
-  "p7M2KL": {
-    "message": "Reveal/hide card",
-    "translation": "เปิดเผย/ซ่อนการ์ด"
+  "n75nZA": {
+    "message": "Reveal their Prizes",
+    "translation": "เปิดเผยการ์ดรางวัลของฝ่ายตรงข้าม"
   },
-  "lHuUt0": {
-    "message": "Reveal/hide prizes",
-    "translation": "เปิดเผย/ซ่อนการ์ดรางวัล"
+  "c6E0p_": {
+    "message": "Reveal your Prizes",
+    "translation": "เปิดเผยการ์ดรางวัลของคุณ"
   },
   "fa6wL6": {
     "message": "Revealed to your opponent",
@@ -4522,6 +4636,10 @@
     "message": "Room ready",
     "translation": "ห้องพร้อมแล้ว"
   },
+  "BulyBf": {
+    "message": "Rotate",
+    "translation": "หมุน"
+  },
   "pbJSIc": {
     "message": "Rotate",
     "context": "shortcut key caption",
@@ -4530,10 +4648,6 @@
   "M2Hp6y": {
     "message": "Rotate BREAK",
     "translation": "หมุน BREAK"
-  },
-  "86ffek": {
-    "message": "Rotate card(s)",
-    "translation": "หมุนการ์ด"
   },
   "JRfxmI": {
     "message": "Row {row}: text after a closing quote.",
@@ -4899,6 +5013,10 @@
     "message": "Show this card on the deck",
     "translation": "แสดงการ์ดใบนี้ในเด็ค"
   },
+  "g5A2ic": {
+    "message": "Shown to your opponent",
+    "translation": "แสดงให้ฝ่ายตรงข้ามเห็นอยู่"
+  },
   "sf2cQK": {
     "message": "Shuffle",
     "context": "shortcut key caption",
@@ -4937,9 +5055,9 @@
     "message": "Shuffle hand into deck and draw…",
     "translation": "สับการ์ดบนมือเข้าสำรับการ์ดและจั่ว…"
   },
-  "VD_Lux": {
-    "message": "Shuffle hand to bottom",
-    "translation": "สับการ์ดบนมือไว้ใต้สำรับการ์ด"
+  "DpAKOl": {
+    "message": "Shuffle hand into deck, then draw",
+    "translation": "สับการ์ดบนมือเข้าสำรับ แล้วจั่ว"
   },
   "weBDkm": {
     "message": "Shuffle hand to bottom of deck",
@@ -4949,9 +5067,13 @@
     "message": "Shuffle hand to bottom of deck and draw…",
     "translation": "สับการ์ดบนมือไว้ใต้สำรับการ์ดแล้วจั่ว…"
   },
-  "RdPVNx": {
-    "message": "Shuffle hand to deck",
-    "translation": "สับการ์ดบนมือเข้าสำรับการ์ด"
+  "M8Ea7C": {
+    "message": "Shuffle hand to bottom…",
+    "translation": "สับการ์ดบนมือไว้ใต้สำรับ…"
+  },
+  "-qToFp": {
+    "message": "Shuffle hand to deck…",
+    "translation": "สับการ์ดบนมือเข้าสำรับ…"
   },
   "Tbmmyh": {
     "message": "Shuffle in",
@@ -5214,6 +5336,10 @@
     "message": "Switch",
     "context": "shortcut key caption",
     "translation": "สลับ"
+  },
+  "W2pBH8": {
+    "message": "Switch special condition",
+    "translation": "สลับสภาวะผิดปกติ"
   },
   "Q1BDRW": {
     "message": "Switch with top of deck",
@@ -5632,10 +5758,6 @@
     "message": "Toggle ability used",
     "translation": "สลับสถานะใช้ความสามารถแล้ว"
   },
-  "OLgB6p": {
-    "message": "Toggle ability/effect",
-    "translation": "สลับความสามารถ/เอฟเฟกต์"
-  },
   "6QCyrU": {
     "message": "Too large for a deck",
     "translation": "ใหญ่เกินไปสำหรับเด็ค"
@@ -5902,19 +6024,10 @@
     "message": "V-UNION · 4 pieces",
     "translation": "V-UNION · 4 ชิ้น"
   },
-  "VO6wBK": {
-    "message": "View",
-    "context": "look at cards from the deck",
-    "translation": "ดู"
-  },
   "W-3MjD": {
     "message": "View",
     "context": "shortcut key caption",
     "translation": "ดู"
-  },
-  "BqYI8B": {
-    "message": "View bottom card(s)",
-    "translation": "ดูการ์ดล่างสุด"
   },
   "9AKt60": {
     "message": "View card",
@@ -5923,10 +6036,6 @@
   "w3eDyf": {
     "message": "View each card",
     "translation": "ดูการ์ดทีละใบ"
-  },
-  "VKXHWy": {
-    "message": "View top card(s)",
-    "translation": "ดูการ์ดบนสุด"
   },
   "s3cHPo": {
     "message": "View whole card",
@@ -6054,397 +6163,5 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "เส้นขอบโซน"
-  },
-  "eJ4Drn": {
-    "message": "{actor} discarded {count, plural, one {# attached card} other {# attached cards}}",
-    "comments": [
-      "Log line: a player discarded the cards attached to a Pokémon. {actor} is a player's name, {count} how many cards."
-    ],
-    "translation": "{actor} ทิ้งการ์ดที่ติดอยู่ {count, plural, other {# ใบ}}"
-  },
-  "0bIo3n": {
-    "message": "{actor} discarded {count, plural, one {# card} other {# cards}}",
-    "comments": [
-      "Log line. {actor} is a player's name, {count} how many cards."
-    ],
-    "translation": "{actor} ทิ้งการ์ด {count, plural, other {# ใบ}}"
-  },
-  "7ULDVQ": {
-    "message": "{actor} discarded hand and drew {count, plural, one {# card} other {# cards}}",
-    "comments": [
-      "Log line. {actor} is a player's name, {count} how many cards they drew."
-    ],
-    "translation": "{actor} ทิ้งการ์ดบนมือและจั่วการ์ด {count, plural, other {# ใบ}}"
-  },
-  "VgwRoT": {
-    "message": "{actor} left {count, plural, one {# attached card} other {# attached cards}} in play",
-    "comments": [
-      "Log line: a player kept the cards attached to a Pokémon on the table. {actor} is a player's name, {count} how many cards."
-    ],
-    "translation": "{actor} ปล่อยการ์ดที่ติดอยู่ {count, plural, other {# ใบ}} ไว้บนกระดาน"
-  },
-  "9RYqFp": {
-    "message": "{actor} moved {count, plural, one {# card} other {# cards}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} other {deck}}",
-    "comments": [
-      "Log line. {actor} is a player's name, {count} how many cards; {source} is the zone they left and {destination} where they went (play: onto the table)."
-    ],
-    "translation": "{actor} ย้ายการ์ด {count, plural, other {# ใบ}} จาก{source, select, hand {มือ} prizes {การ์ดรางวัล} discard {ตำแหน่งทิ้งการ์ด} board {บอร์ด} stadium {สเตเดียม} active {ตำแหน่งต่อสู้} bench {เบนช์} lostZone {ลอสต์โซน} attachmentResolution {การ์ดที่ติดอยู่} other {สำรับการ์ด}}ไปยัง{destination, select, hand {มือ} discard {ตำแหน่งทิ้งการ์ด} lostZone {ลอสต์โซน} deckBottom {ด้านล่างของสำรับการ์ด} play {บนกระดาน} other {สำรับการ์ด}}"
-  },
-  "e9cTIS": {
-    "message": "{actor} shuffled {count, plural, one {# attached card} other {# attached cards}} into deck",
-    "comments": [
-      "Log line: a player shuffled the cards attached to a Pokémon into their deck. {actor} is a player's name, {count} how many cards."
-    ],
-    "translation": "{actor} สับการ์ดที่ติดอยู่ {count, plural, other {# ใบ}} เข้าสำรับการ์ด"
-  },
-  "99ycft": {
-    "message": "{actor} shuffled {count, plural, one {# card} other {# cards}} from board to deck",
-    "comments": [
-      "Log line. {actor} is a player's name, {count} how many cards."
-    ],
-    "translation": "{actor} สับการ์ด {count, plural, other {# ใบ}} จากบอร์ดเข้าสำรับการ์ด"
-  },
-  "RpAS5v": {
-    "message": "{actor} shuffled {count, plural, one {# card} other {# cards}} into deck",
-    "comments": [
-      "Log line. {actor} is a player's name, {count} how many cards."
-    ],
-    "translation": "{actor} สับการ์ด {count, plural, other {# ใบ}} เข้าสำรับการ์ด"
-  },
-  "cFSyyy": {
-    "message": "{actor} shuffled {count, plural, one {# card} other {# cards}} to bottom of deck",
-    "comments": [
-      "Log line. {actor} is a player's name, {count} how many cards."
-    ],
-    "translation": "{actor} สับการ์ด {count, plural, other {# ใบ}} ไว้ด้านล่างของสำรับการ์ด"
-  },
-  "xZranI": {
-    "message": "{actor} shuffled hand into deck and drew {count, plural, one {# card} other {# cards}}",
-    "comments": [
-      "Log line. {actor} is a player's name, {count} how many cards they drew."
-    ],
-    "translation": "{actor} สับการ์ดบนมือเข้าสำรับการ์ดและจั่วการ์ด {count, plural, other {# ใบ}}"
-  },
-  "TWahFj": {
-    "message": "{actor} shuffled hand to bottom of deck and drew {count, plural, one {# card} other {# cards}}",
-    "comments": [
-      "Log line. {actor} is a player's name, {count} how many cards they drew."
-    ],
-    "translation": "{actor} สับการ์ดบนมือไว้ด้านล่างของสำรับการ์ดและจั่วการ์ด {count, plural, other {# ใบ}}"
-  },
-  "E887wo": {
-    "message": "{name} looked at bottom {count, plural, one {# card} other {# cards}} of deck",
-    "comments": [
-      "Log line. {name} is a player's name, {count} how many cards from the bottom of their deck they looked at."
-    ],
-    "translation": "{name} ดูการ์ด {count, plural, other {# ใบ}} ล่างสุดของสำรับการ์ด"
-  },
-  "imtKoA": {
-    "message": "{name} looked at top {count, plural, one {# card} other {# cards}} of deck",
-    "comments": [
-      "Log line. {name} is a player's name, {count} how many cards from the top of their deck they looked at."
-    ],
-    "translation": "{name} ดูการ์ด {count, plural, other {# ใบ}} บนสุดของสำรับการ์ด"
-  },
-  "l7W_Ze": {
-    "message": "<0>{0}</0>: send a friend a link to your table.",
-    "translation": "<0>{0}</0>: ส่งลิงก์โต๊ะของคุณให้เพื่อน"
-  },
-  "JTbT6L": {
-    "message": "Add special condition",
-    "translation": "เพิ่มสภาวะผิดปกติ"
-  },
-  "Sb4b2A": {
-    "message": "Allow board flip <0>(both players)</0>",
-    "translation": "อนุญาตให้พลิกโต๊ะ <0>(ผู้เล่นทั้งสองฝ่าย)</0>"
-  },
-  "uUaeMQ": {
-    "message": "Attach to a Pokémon…",
-    "translation": "ติดกับโปเกมอน…"
-  },
-  "c0_6W9": {
-    "message": "Copied",
-    "context": "an invitation",
-    "translation": "คัดลอกแล้ว"
-  },
-  "ITnJNv": {
-    "message": "Copy an invitation",
-    "translation": "คัดลอกคำเชิญ"
-  },
-  "Yc1XTF": {
-    "message": "Copy invitation",
-    "translation": "คัดลอกคำเชิญ"
-  },
-  "gklFA4": {
-    "message": "Couldn't copy the invitation",
-    "translation": "คัดลอกคำเชิญไม่สำเร็จ"
-  },
-  "sA7lnV": {
-    "message": "Couldn't copy the invitation. Try again.",
-    "translation": "คัดลอกคำเชิญไม่สำเร็จ ลองอีกครั้ง"
-  },
-  "O3p0SF": {
-    "message": "Couldn't generate a room. Try again.",
-    "translation": "สร้างห้องไม่สำเร็จ ลองอีกครั้ง"
-  },
-  "nzVItu": {
-    "message": "Couldn't use the clipboard. Allow access and try again.",
-    "translation": "ใช้คลิปบอร์ดไม่ได้ โปรดอนุญาตการเข้าถึงแล้วลองอีกครั้ง"
-  },
-  "rNIlQ5": {
-    "message": "Cover card (only you)",
-    "translation": "คลุมการ์ด (เฉพาะคุณ)"
-  },
-  "dyMutU": {
-    "message": "Cover hand",
-    "translation": "คลุมการ์ดบนมือ"
-  },
-  "6BoNqk": {
-    "message": "Cover prizes",
-    "translation": "คลุมการ์ดรางวัล"
-  },
-  "h-zJzU": {
-    "message": "Cover their hand",
-    "translation": "คลุมการ์ดบนมือของฝ่ายตรงข้าม"
-  },
-  "7x4VPZ": {
-    "message": "Cover their Prizes",
-    "translation": "คลุมการ์ดรางวัลของฝ่ายตรงข้าม"
-  },
-  "urHEvq": {
-    "message": "Cover your Prizes",
-    "translation": "คลุมการ์ดรางวัลของคุณ"
-  },
-  "CulBzv": {
-    "message": "Evolve a Pokémon…",
-    "translation": "วิวัฒนาการโปเกมอน…"
-  },
-  "oP3kz7": {
-    "message": "Generate",
-    "context": "a room",
-    "translation": "สร้าง"
-  },
-  "mb6Tyv": {
-    "message": "Generate a room and send the invitation. With <0>Join as spectator</0> on, it invites a spectator.",
-    "translation": "สร้างห้องแล้วส่งคำเชิญ หากเปิด <0>เข้าร่วมในฐานะผู้ชม</0> จะเป็นการเชิญผู้ชม"
-  },
-  "5NEkeP": {
-    "message": "Generate a room first.",
-    "translation": "กรุณาสร้างห้องก่อน"
-  },
-  "G7A2K4": {
-    "message": "Generate a room, then send the invitation.",
-    "translation": "สร้างห้อง แล้วส่งคำเชิญ"
-  },
-  "fQq7dv": {
-    "message": "Generating…",
-    "context": "a room",
-    "translation": "กำลังสร้าง…"
-  },
-  "HY40z4": {
-    "message": "Hide card",
-    "translation": "ซ่อนการ์ด"
-  },
-  "_hwQqt": {
-    "message": "Hide Lost Zone",
-    "translation": "ซ่อนลอสต์โซน"
-  },
-  "Z7lHUH": {
-    "message": "Hide prizes",
-    "translation": "ซ่อนการ์ดรางวัล"
-  },
-  "q2aSzG": {
-    "message": "Hide their Prizes",
-    "translation": "ซ่อนการ์ดรางวัลของฝ่ายตรงข้าม"
-  },
-  "9EQ4Zd": {
-    "message": "Hide your Prizes",
-    "translation": "ซ่อนการ์ดรางวัลของคุณ"
-  },
-  "EqLwOt": {
-    "message": "In use",
-    "context": "a table piece holding cards",
-    "translation": "กำลังใช้งาน"
-  },
-  "6vI3XA": {
-    "message": "Invitation copied",
-    "translation": "คัดลอกคำเชิญแล้ว"
-  },
-  "z1vTYz": {
-    "message": "Invitation copied to your clipboard.",
-    "translation": "คัดลอกคำเชิญไปยังคลิปบอร์ดแล้ว"
-  },
-  "XbqMCS": {
-    "message": "Join pieces…",
-    "translation": "รวมชิ้นส่วน…"
-  },
-  "2_dOwA": {
-    "message": "Look at card (only you)",
-    "translation": "ดูการ์ด (เฉพาะคุณ)"
-  },
-  "4rquUI": {
-    "message": "Look at hand",
-    "translation": "ดูการ์ดบนมือ"
-  },
-  "FtU5OB": {
-    "message": "Look at prizes",
-    "translation": "ดูการ์ดรางวัล"
-  },
-  "-wf39o": {
-    "message": "Look at their hand",
-    "translation": "ดูการ์ดบนมือของฝ่ายตรงข้าม"
-  },
-  "Ky418J": {
-    "message": "Look at their Prizes",
-    "translation": "ดูการ์ดรางวัลของฝ่ายตรงข้าม"
-  },
-  "C4R15y": {
-    "message": "Look at your Prizes",
-    "translation": "ดูการ์ดรางวัลของคุณ"
-  },
-  "WTIxhp": {
-    "message": "Mark as used",
-    "comments": [
-      "Puts the \"Ability used\" marker on a card: its Ability or effect was used this turn.",
-      "Puts the \"Ability used\" marker on a card: its Ability or effect was used this turn."
-    ],
-    "translation": "ทำเครื่องหมายว่าใช้แล้ว"
-  },
-  "Ig8A-t": {
-    "message": "Paste a valid invitation into Room ID.",
-    "translation": "วางคำเชิญที่ถูกต้องลงในรหัสห้อง"
-  },
-  "pJRgD4": {
-    "message": "Paste an invitation",
-    "translation": "วางคำเชิญ"
-  },
-  "4LC7ch": {
-    "message": "Paste an invitation, or join your own room.",
-    "translation": "วางคำเชิญ หรือเข้าห้องของคุณเอง"
-  },
-  "3J14ru": {
-    "message": "Paste the invitation into Room ID.",
-    "translation": "วางคำเชิญลงในรหัสห้อง"
-  },
-  "6M-csj": {
-    "message": "Reveal card",
-    "translation": "เปิดเผยการ์ด"
-  },
-  "wY30n_": {
-    "message": "Reveal prizes",
-    "translation": "เปิดเผยการ์ดรางวัล"
-  },
-  "n75nZA": {
-    "message": "Reveal their Prizes",
-    "translation": "เปิดเผยการ์ดรางวัลของฝ่ายตรงข้าม"
-  },
-  "c6E0p_": {
-    "message": "Reveal your Prizes",
-    "translation": "เปิดเผยการ์ดรางวัลของคุณ"
-  },
-  "QoZkYe": {
-    "message": "Room ID",
-    "translation": "รหัสห้อง"
-  },
-  "BulyBf": {
-    "message": "Rotate",
-    "translation": "หมุน"
-  },
-  "W2pBH8": {
-    "message": "Switch special condition",
-    "translation": "สลับสภาวะผิดปกติ"
-  },
-  "UoxtKp": {
-    "message": "That invitation expired. Ask for a new one.",
-    "translation": "คำเชิญนั้นหมดอายุแล้ว โปรดขอคำเชิญใหม่"
-  },
-  "23cwkx": {
-    "message": "Your name changed. Generate a new room.",
-    "translation": "ชื่อของคุณเปลี่ยนแล้ว สร้างห้องใหม่"
-  },
-  "MyTf22": {
-    "message": "{available, plural, one {# card in deck} other {# cards in deck}}",
-    "translation": "{available, plural, other {การ์ด # ใบในสำรับ}}"
-  },
-  "DcTMVd": {
-    "message": "{available, plural, one {# card to draw from} other {# cards to draw from}}",
-    "translation": "{available, plural, other {การ์ด # ใบที่จั่วได้}}"
-  },
-  "nlUJMk": {
-    "message": "{count, plural, one {Look at # card} other {Look at # cards}}",
-    "translation": "{count, plural, other {ดูการ์ด # ใบ}}"
-  },
-  "ruBWQi": {
-    "message": "Discard hand, then draw",
-    "translation": "ทิ้งการ์ดบนมือ แล้วจั่ว"
-  },
-  "JrTBPO": {
-    "message": "Discard hand…",
-    "translation": "ทิ้งการ์ดบนมือ…"
-  },
-  "7cFPiW": {
-    "message": "Draw none",
-    "comments": [
-      "Accepts a hand put away (discarded or shuffled into the deck) without drawing."
-    ],
-    "translation": "ไม่จั่ว"
-  },
-  "gZAkYU": {
-    "message": "Hand to bottom of deck, then draw",
-    "translation": "ใส่การ์ดบนมือใต้สำรับ แล้วจั่ว"
-  },
-  "QW7fGB": {
-    "message": "Look at bottom cards",
-    "translation": "ดูการ์ดใต้สำรับ"
-  },
-  "nshEL9": {
-    "message": "Look at bottom cards…",
-    "translation": "ดูการ์ดใต้สำรับ…"
-  },
-  "g4nsbt": {
-    "message": "Look at top cards",
-    "translation": "ดูการ์ดบนสุดของสำรับ"
-  },
-  "KzU3sj": {
-    "message": "Look at top cards…",
-    "translation": "ดูการ์ดบนสุดของสำรับ…"
-  },
-  "3GFV_r": {
-    "message": "One fewer",
-    "context": "card count",
-    "translation": "น้อยลงหนึ่งใบ"
-  },
-  "qTM8Kd": {
-    "message": "One more",
-    "context": "card count",
-    "translation": "มากขึ้นหนึ่งใบ"
-  },
-  "P7jzR_": {
-    "message": "Quick picks",
-    "context": "card count",
-    "translation": "ตัวเลือกด่วน"
-  },
-  "DpAKOl": {
-    "message": "Shuffle hand into deck, then draw",
-    "translation": "สับการ์ดบนมือเข้าสำรับ แล้วจั่ว"
-  },
-  "M8Ea7C": {
-    "message": "Shuffle hand to bottom…",
-    "translation": "สับการ์ดบนมือไว้ใต้สำรับ…"
-  },
-  "-qToFp": {
-    "message": "Shuffle hand to deck…",
-    "translation": "สับการ์ดบนมือเข้าสำรับ…"
-  },
-  "ASNDad": {
-    "message": "Hide {name}",
-    "comments": [
-      "A button on a hand card the opponent can see; it hides the card again. {name} is the card."
-    ],
-    "translation": "ซ่อน {name}"
-  },
-  "g5A2ic": {
-    "message": "Shown to your opponent",
-    "translation": "แสดงให้ฝ่ายตรงข้ามเห็นอยู่"
   }
 }

@@ -68,15 +68,15 @@
     ],
     "translation": "{actor} fäste {card} från {source, select, hand {handen} prizes {priskorten} discard {kasthögen} board {spelplanen} stadium {stadion} active {aktiva platsen} bench {bänken} lostZone {Lost Zone} attachmentResolution {de fästa korten} other {leken}} på {targetCard}"
   },
-  "nb_tRJ": {
-    "message": "{actor} discarded {count, plural, one {# attached card(s)} other {# attached card(s)}}",
+  "eJ4Drn": {
+    "message": "{actor} discarded {count, plural, one {# attached card} other {# attached cards}}",
     "comments": [
       "Log line: a player discarded the cards attached to a Pokémon. {actor} is a player's name, {count} how many cards."
     ],
     "translation": "{actor} kastade {count, plural, one {# fäst kort} other {# fästa kort}}"
   },
-  "KeKqt_": {
-    "message": "{actor} discarded {count, plural, one {# card(s)} other {# card(s)}}",
+  "0bIo3n": {
+    "message": "{actor} discarded {count, plural, one {# card} other {# cards}}",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards."
     ],
@@ -89,8 +89,8 @@
     ],
     "translation": "{actor} kastade handen"
   },
-  "qIBRqY": {
-    "message": "{actor} discarded hand and drew {count, plural, one {# card(s)} other {# card(s)}}",
+  "7ULDVQ": {
+    "message": "{actor} discarded hand and drew {count, plural, one {# card} other {# cards}}",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards they drew."
     ],
@@ -124,8 +124,8 @@
     ],
     "translation": "{actor} dolde ett kort i {owner}s {source, select, hand {hand} prizes {priskort} discard {kasthög} board {spelplan} stadium {stadion} active {aktiva plats} bench {bänk} lostZone {Lost Zone} attachmentResolution {fästa kort} inspection {granskning} other {lek}}"
   },
-  "PZVwKy": {
-    "message": "{actor} left {count, plural, one {# attached card(s)} other {# attached card(s)}} in play",
+  "VgwRoT": {
+    "message": "{actor} left {count, plural, one {# attached card} other {# attached cards}} in play",
     "comments": [
       "Log line: a player kept the cards attached to a Pokémon on the table. {actor} is a player's name, {count} how many cards."
     ],
@@ -166,12 +166,12 @@
     ],
     "translation": "{actor} flyttade {card} från {source, select, hand {handen} prizes {priskorten} discard {kasthögen} board {spelplanen} stadium {stadion} active {aktiva platsen} bench {bänken} lostZone {Lost Zone} attachmentResolution {de fästa korten} other {leken}} till toppen av leken"
   },
-  "WBnnCz": {
-    "message": "{actor} moved {count, plural, one {# card(s)} other {# card(s)}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} other {deck}}",
+  "9RYqFp": {
+    "message": "{actor} moved {count, plural, one {# card} other {# cards}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} other {deck}}",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards; {source} is the zone they left and {destination} where they went (play: onto the table)."
     ],
-    "translation": "{actor} flyttade {count, plural, one {# kort} other {# kort}} från {source, select, hand {handen} prizes {priskorten} discard {kasthögen} board {spelplanen} stadium {stadion} active {aktiva platsen} bench {bänken} lostZone {Lost Zone} attachmentResolution {de fästa korten} other {leken}} till {destination, select, hand {handen} discard {kasthögen} lostZone {Lost Zone} deckBottom {botten av leken} play {bordet} other {leken}}"
+    "translation": "{actor} flyttade {count, plural, one {# kort} other {# kort}} från {source, select, hand {handen} prizes {priskorten} discard {kasthögen} board {spelplanen} stadium {stadion} active {aktiva platsen} bench {bänken} lostZone {Lost Zone} attachmentResolution {fästa kort} other {leken}} till {destination, select, hand {handen} discard {kasthögen} lostZone {Lost Zone} deckBottom {botten av leken} play {spel} other {leken}}"
   },
   "P4_K0D": {
     "message": "{actor} moved a random card from {target}'s hand to board",
@@ -201,33 +201,33 @@
     ],
     "translation": "{actor} blandade in {card} från {source, select, hand {handen} prizes {priskorten} discard {kasthögen} board {spelplanen} stadium {stadion} active {aktiva platsen} bench {bänken} lostZone {Lost Zone} attachmentResolution {de fästa korten} other {leken}} i leken"
   },
-  "xEKtXt": {
-    "message": "{actor} shuffled {count, plural, one {# attached card(s)} other {# attached card(s)}} into deck",
+  "e9cTIS": {
+    "message": "{actor} shuffled {count, plural, one {# attached card} other {# attached cards}} into deck",
     "comments": [
       "Log line: a player shuffled the cards attached to a Pokémon into their deck. {actor} is a player's name, {count} how many cards."
     ],
     "translation": "{actor} blandade in {count, plural, one {# fäst kort} other {# fästa kort}} i leken"
   },
-  "Ggdxd3": {
-    "message": "{actor} shuffled {count, plural, one {# card(s)} other {# card(s)}} from board to deck",
+  "99ycft": {
+    "message": "{actor} shuffled {count, plural, one {# card} other {# cards}} from board to deck",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards."
     ],
-    "translation": "{actor} blandade in {count, plural, one {# kort} other {# kort}} från spelplanen i leken"
+    "translation": "{actor} blandade {count, plural, one {# kort} other {# kort}} från spelplanen till leken"
   },
-  "PoaZgj": {
-    "message": "{actor} shuffled {count, plural, one {# card(s)} other {# card(s)}} into deck",
+  "RpAS5v": {
+    "message": "{actor} shuffled {count, plural, one {# card} other {# cards}} into deck",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards."
     ],
     "translation": "{actor} blandade in {count, plural, one {# kort} other {# kort}} i leken"
   },
-  "DilVHS": {
-    "message": "{actor} shuffled {count, plural, one {# card(s)} other {# card(s)}} to bottom of deck",
+  "cFSyyy": {
+    "message": "{actor} shuffled {count, plural, one {# card} other {# cards}} to bottom of deck",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards."
     ],
-    "translation": "{actor} blandade in {count, plural, one {# kort} other {# kort}} längst ned i leken"
+    "translation": "{actor} lade {count, plural, one {# kort} other {# kort}} längst ned i leken"
   },
   "s-CcLE": {
     "message": "{actor} shuffled discard into deck",
@@ -243,8 +243,8 @@
     ],
     "translation": "{actor} blandade in handen i leken"
   },
-  "h6k_d9": {
-    "message": "{actor} shuffled hand into deck and drew {count, plural, one {# card(s)} other {# card(s)}}",
+  "xZranI": {
+    "message": "{actor} shuffled hand into deck and drew {count, plural, one {# card} other {# cards}}",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards they drew."
     ],
@@ -257,12 +257,12 @@
     ],
     "translation": "{actor} blandade handen och la den längst ned i leken"
   },
-  "xT_uho": {
-    "message": "{actor} shuffled hand to bottom of deck and drew {count, plural, one {# card(s)} other {# card(s)}}",
+  "TWahFj": {
+    "message": "{actor} shuffled hand to bottom of deck and drew {count, plural, one {# card} other {# cards}}",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards they drew."
     ],
-    "translation": "{actor} blandade handen, la den längst ned i leken och drog {count, plural, one {# kort} other {# kort}}"
+    "translation": "{actor} lade handen längst ned i leken och drog {count, plural, one {# kort} other {# kort}}"
   },
   "QGyAAz": {
     "message": "{actor} shuffled prizes to bottom of deck",
@@ -284,6 +284,14 @@
       "Log line: one player undid the other's last move. {actor} is who undid it, {target} whose move it was."
     ],
     "translation": "{actor} ångrade {target}s senaste drag"
+  },
+  "MyTf22": {
+    "message": "{available, plural, one {# card in deck} other {# cards in deck}}",
+    "translation": "{available, plural, one {# kort i leken} other {# kort i leken}}"
+  },
+  "DcTMVd": {
+    "message": "{available, plural, one {# card to draw from} other {# cards to draw from}}",
+    "translation": "{available, plural, one {# kort att dra från} other {# kort att dra från}}"
   },
   "iwKsQi": {
     "message": "{cardLabel}: actions",
@@ -407,6 +415,10 @@
   "0ZvQu6": {
     "message": "{count, plural, one {Draw # card} other {Draw # cards}}",
     "translation": "{count, plural, one {Dra # kort} other {Dra # kort}}"
+  },
+  "nlUJMk": {
+    "message": "{count, plural, one {Look at # card} other {Look at # cards}}",
+    "translation": "{count, plural, one {Titta på # kort} other {Titta på # kort}}"
   },
   "UJXyU7": {
     "message": "{count, plural, one {Look at bottom card} other {Look at bottom # cards}}",
@@ -668,19 +680,19 @@
     ],
     "translation": "{name} laddade en lek"
   },
-  "lcx9nx": {
-    "message": "{name} looked at bottom {count, plural, one {# card(s)} other {# card(s)}} of deck",
+  "E887wo": {
+    "message": "{name} looked at bottom {count, plural, one {# card} other {# cards}} of deck",
     "comments": [
       "Log line. {name} is a player's name, {count} how many cards from the bottom of their deck they looked at."
     ],
-    "translation": "{name} tittade på {count, plural, one {det understa kortet} other {de # understa korten}} i leken"
+    "translation": "{name} tittade på de nedersta {count, plural, one {# kortet} other {# korten}} i leken"
   },
-  "ok9Ijw": {
-    "message": "{name} looked at top {count, plural, one {# card(s)} other {# card(s)}} of deck",
+  "imtKoA": {
+    "message": "{name} looked at top {count, plural, one {# card} other {# cards}} of deck",
     "comments": [
       "Log line. {name} is a player's name, {count} how many cards from the top of their deck they looked at."
     ],
-    "translation": "{name} tittade på {count, plural, one {det översta kortet} other {de # översta korten}} i leken"
+    "translation": "{name} tittade på de översta {count, plural, one {# kortet} other {# korten}} i leken"
   },
   "A7bcR4": {
     "message": "{name} Lost Zone",
@@ -1185,6 +1197,10 @@
     "message": "Add or switch special condition",
     "translation": "Lägg till eller byt specialtillstånd"
   },
+  "JTbT6L": {
+    "message": "Add special condition",
+    "translation": "Lägg till specialtillstånd"
+  },
   "ZVI875": {
     "message": "Add to deck",
     "translation": "Lägg till i leken"
@@ -1352,10 +1368,6 @@
     "context": "special condition",
     "translation": "Sovande"
   },
-  "hXSSHx": {
-    "message": "Assemble / attach to a card…",
-    "translation": "Sätt ihop / fäst vid ett kort…"
-  },
   "igVDFt": {
     "message": "Attach",
     "translation": "Fäst"
@@ -1368,6 +1380,10 @@
   "jrzyuC": {
     "message": "Attach and evolve",
     "translation": "Fäst och utveckla"
+  },
+  "uUaeMQ": {
+    "message": "Attach to a Pokémon…",
+    "translation": "Fäst på en Pokémon…"
   },
   "E9l6HC": {
     "message": "Attached cards being moved",
@@ -1963,6 +1979,30 @@
     "context": "the deck's cover card",
     "translation": "omslag"
   },
+  "rNIlQ5": {
+    "message": "Cover card (only you)",
+    "translation": "Dölj kort (endast du)"
+  },
+  "dyMutU": {
+    "message": "Cover hand",
+    "translation": "Dölj handen"
+  },
+  "6BoNqk": {
+    "message": "Cover prizes",
+    "translation": "Dölj priskort"
+  },
+  "h-zJzU": {
+    "message": "Cover their hand",
+    "translation": "Dölj deras hand"
+  },
+  "7x4VPZ": {
+    "message": "Cover their Prizes",
+    "translation": "Dölj deras priskort"
+  },
+  "urHEvq": {
+    "message": "Cover your Prizes",
+    "translation": "Dölj dina priskort"
+  },
   "LwyL9G": {
     "message": "Cream",
     "comments": [
@@ -2188,6 +2228,14 @@
     "message": "Discard hand and draw…",
     "translation": "Kasta handen och dra…"
   },
+  "ruBWQi": {
+    "message": "Discard hand, then draw",
+    "translation": "Kasta handen, dra sedan"
+  },
+  "JrTBPO": {
+    "message": "Discard hand…",
+    "translation": "Kasta handen…"
+  },
   "eEqZQd": {
     "message": "Discard pile",
     "context": "zone",
@@ -2251,11 +2299,6 @@
     "context": "Pokémon type",
     "translation": "Drake"
   },
-  "LU-TxR": {
-    "message": "Draw",
-    "context": "draw cards",
-    "translation": "Dra"
-  },
   "mBdQmZ": {
     "message": "Draw",
     "context": "shortcut key caption",
@@ -2273,10 +2316,6 @@
     "message": "Draw a card: drag the top of your deck into your hand.",
     "translation": "Dra ett kort: dra det översta kortet i din lek till din hand."
   },
-  "to34yF": {
-    "message": "Draw card(s)",
-    "translation": "Dra kort"
-  },
   "ZQB_oJ": {
     "message": "Draw cards",
     "translation": "Dra kort"
@@ -2285,13 +2324,16 @@
     "message": "Draw cards…",
     "translation": "Dra kort…"
   },
-  "SAb30P": {
-    "message": "Draw how many cards?",
-    "translation": "Hur många kort vill du dra?"
-  },
   "SP_Sjy": {
     "message": "Draw how many?",
     "translation": "Hur många vill du dra?"
+  },
+  "7cFPiW": {
+    "message": "Draw none",
+    "comments": [
+      "Accepts a hand put away (discarded or shuffled into the deck) without drawing."
+    ],
+    "translation": "Dra inga"
   },
   "b0MOy2": {
     "message": "Draw, search and shuffle",
@@ -2393,10 +2435,6 @@
     "message": "Enter a name.",
     "translation": "Ange ett namn."
   },
-  "u2fAme": {
-    "message": "Enter a number",
-    "translation": "Ange ett tal"
-  },
   "0jl-i6": {
     "message": "Enter a valid image URL.",
     "translation": "Ange en giltig bild-URL."
@@ -2429,6 +2467,10 @@
     "message": "Evolve",
     "context": "shortcut key caption",
     "translation": "Utveckla"
+  },
+  "CulBzv": {
+    "message": "Evolve a Pokémon…",
+    "translation": "Utveckla en Pokémon…"
   },
   "vb1XQU": {
     "message": "Evolve it: drag <0>{0}</0> onto {1}.",
@@ -2729,6 +2771,10 @@
     "context": "shortcut key caption",
     "translation": "Hand längst ned"
   },
+  "gZAkYU": {
+    "message": "Hand to bottom of deck, then draw",
+    "translation": "Handen längst ner i leken, dra sedan"
+  },
   "n04_a0": {
     "message": "Hand to deck",
     "context": "shortcut key caption",
@@ -2776,6 +2822,17 @@
     "context": "stop revealing a card",
     "translation": "Dölj"
   },
+  "ASNDad": {
+    "message": "Hide {name}",
+    "comments": [
+      "A button on a hand card the opponent can see; it hides the card again. {name} is the card."
+    ],
+    "translation": "Dölj {name}"
+  },
+  "HY40z4": {
+    "message": "Hide card",
+    "translation": "Dölj kort"
+  },
   "po1CV7": {
     "message": "Hide keyboard",
     "translation": "Dölj tangentbord"
@@ -2788,13 +2845,25 @@
     "message": "Hide opponent's hand",
     "translation": "Dölj motståndarens hand"
   },
+  "Z7lHUH": {
+    "message": "Hide prizes",
+    "translation": "Dölj priskort"
+  },
   "OIoFPQ": {
     "message": "Hide the Lost Zone?",
     "translation": "Dölja Lost Zone?"
   },
+  "q2aSzG": {
+    "message": "Hide their Prizes",
+    "translation": "Dölj deras priskort"
+  },
   "ZQLqYr": {
     "message": "Hide welcome",
     "translation": "Dölj välkomstmeddelandet"
+  },
+  "9EQ4Zd": {
+    "message": "Hide your Prizes",
+    "translation": "Dölj dina priskort"
   },
   "tgYI8X": {
     "message": "Holographic",
@@ -2972,6 +3041,10 @@
   "G7O46F": {
     "message": "Join as spectator",
     "translation": "Gå med som åskådare"
+  },
+  "XbqMCS": {
+    "message": "Join pieces…",
+    "translation": "Sätt ihop pjäser…"
   },
   "t5uRiA": {
     "message": "Join room",
@@ -3194,6 +3267,14 @@
     "context": "shortcut key caption",
     "translation": "Titta"
   },
+  "QW7fGB": {
+    "message": "Look at bottom cards",
+    "translation": "Titta på nedersta korten"
+  },
+  "nshEL9": {
+    "message": "Look at bottom cards…",
+    "translation": "Titta på nedersta korten…"
+  },
   "f55U3C": {
     "message": "Look at bottom of deck…",
     "translation": "Titta på understa kortet i leken…"
@@ -3202,29 +3283,25 @@
     "message": "Look at bottom of their deck…",
     "translation": "Titta på understa kortet i deras lek…"
   },
+  "2_dOwA": {
+    "message": "Look at card (only you)",
+    "translation": "Titta på kort (endast du)"
+  },
   "C5D5j0": {
     "message": "Look at cards",
     "translation": "Titta på kort"
   },
-  "Q1s-WM": {
-    "message": "Look at how many cards?",
-    "translation": "Titta på hur många kort?"
+  "4rquUI": {
+    "message": "Look at hand",
+    "translation": "Titta på handen"
   },
   "I3be0u": {
     "message": "Look at or cover (only you)",
     "translation": "Titta på eller täck över (bara du)"
   },
-  "nZyxDJ": {
-    "message": "Look at or cover their hand",
-    "translation": "Titta på eller täck över deras hand"
-  },
-  "qJ_tx1": {
-    "message": "Look at or cover their Prizes",
-    "translation": "Titta på eller täck över deras priskort"
-  },
-  "bQF9w4": {
-    "message": "Look at or cover your Prizes",
-    "translation": "Titta på eller täck över dina priskort"
+  "FtU5OB": {
+    "message": "Look at prizes",
+    "translation": "Titta på priskort"
   },
   "I7Daes": {
     "message": "Look at the bottom cards",
@@ -3234,6 +3311,22 @@
     "message": "Look at the top cards",
     "translation": "Titta på de översta korten"
   },
+  "-wf39o": {
+    "message": "Look at their hand",
+    "translation": "Titta på deras hand"
+  },
+  "Ky418J": {
+    "message": "Look at their Prizes",
+    "translation": "Titta på deras priskort"
+  },
+  "g4nsbt": {
+    "message": "Look at top cards",
+    "translation": "Titta på översta korten"
+  },
+  "KzU3sj": {
+    "message": "Look at top cards…",
+    "translation": "Titta på översta korten…"
+  },
   "bIo9OM": {
     "message": "Look at top of deck…",
     "translation": "Titta på översta kortet i leken…"
@@ -3242,13 +3335,9 @@
     "message": "Look at top of their deck…",
     "translation": "Titta på översta kortet i deras lek…"
   },
-  "ktAl1J": {
-    "message": "Look/cover hand",
-    "translation": "Titta på/täck över hand"
-  },
-  "TYI_fo": {
-    "message": "Look/cover prizes",
-    "translation": "Titta på/täck över priskort"
+  "C4R15y": {
+    "message": "Look at your Prizes",
+    "translation": "Titta på dina priskort"
   },
   "pKU2VG": {
     "message": "Looking at cards",
@@ -3317,9 +3406,19 @@
   "386rEt": {
     "message": "Mark as unused",
     "comments": [
+      "Takes the \"Ability used\" marker off a Pokémon.",
+      "Takes the \"Ability used\" marker off a Pokémon.",
       "Takes the \"Ability used\" marker off a Pokémon."
     ],
     "translation": "Markera som oanvänd"
+  },
+  "WTIxhp": {
+    "message": "Mark as used",
+    "comments": [
+      "Puts the \"Ability used\" marker on a card: its Ability or effect was used this turn.",
+      "Puts the \"Ability used\" marker on a card: its Ability or effect was used this turn."
+    ],
+    "translation": "Markera som använd"
   },
   "IHU0N1": {
     "message": "Mark GX attack unused",
@@ -3763,6 +3862,11 @@
     ],
     "translation": "När du är ensam spelar du båda sidorna. Tryck på <0>{0}</0> för att vända bordet mot deras sida."
   },
+  "3GFV_r": {
+    "message": "One fewer",
+    "context": "card count",
+    "translation": "Ett färre"
+  },
   "eVFY7w": {
     "message": "One half fills the table",
     "translation": "Ena halvan fyller bordet"
@@ -3770,6 +3874,11 @@
   "MCTQfb": {
     "message": "One moment",
     "translation": "Ett ögonblick"
+  },
+  "qTM8Kd": {
+    "message": "One more",
+    "context": "card count",
+    "translation": "Ett till"
   },
   "-EDLvw": {
     "message": "Only {formatLabel}-legal",
@@ -4199,6 +4308,11 @@
     "message": "Quantity: 1 to {max}.",
     "translation": "Antal: 1 till {max}."
   },
+  "P7jzR_": {
+    "message": "Quick picks",
+    "context": "card count",
+    "translation": "Snabbval"
+  },
   "KgxgFc": {
     "message": "Radiant",
     "context": "Pokémon card mechanic",
@@ -4453,21 +4567,21 @@
     "message": "Reveal (both players)",
     "translation": "Visa (båda spelarna)"
   },
-  "MFV2V6": {
-    "message": "Reveal or hide their Prizes",
-    "translation": "Visa eller dölj deras priskort"
+  "6M-csj": {
+    "message": "Reveal card",
+    "translation": "Visa kort"
   },
-  "FnwG7O": {
-    "message": "Reveal or hide your Prizes",
-    "translation": "Visa eller dölj dina priskort"
+  "wY30n_": {
+    "message": "Reveal prizes",
+    "translation": "Visa priskort"
   },
-  "p7M2KL": {
-    "message": "Reveal/hide card",
-    "translation": "Visa/dölj kort"
+  "n75nZA": {
+    "message": "Reveal their Prizes",
+    "translation": "Visa deras priskort"
   },
-  "lHuUt0": {
-    "message": "Reveal/hide prizes",
-    "translation": "Visa/dölj priskort"
+  "c6E0p_": {
+    "message": "Reveal your Prizes",
+    "translation": "Visa dina priskort"
   },
   "fa6wL6": {
     "message": "Revealed to your opponent",
@@ -4522,6 +4636,10 @@
     "message": "Room ready",
     "translation": "Rummet är klart"
   },
+  "BulyBf": {
+    "message": "Rotate",
+    "translation": "Rotera"
+  },
   "pbJSIc": {
     "message": "Rotate",
     "context": "shortcut key caption",
@@ -4530,10 +4648,6 @@
   "M2Hp6y": {
     "message": "Rotate BREAK",
     "translation": "Rotera BREAK"
-  },
-  "86ffek": {
-    "message": "Rotate card(s)",
-    "translation": "Rotera kort"
   },
   "JRfxmI": {
     "message": "Row {row}: text after a closing quote.",
@@ -4899,6 +5013,10 @@
     "message": "Show this card on the deck",
     "translation": "Visa det här kortet i leken"
   },
+  "g5A2ic": {
+    "message": "Shown to your opponent",
+    "translation": "Visas för din motståndare"
+  },
   "sf2cQK": {
     "message": "Shuffle",
     "context": "shortcut key caption",
@@ -4937,9 +5055,9 @@
     "message": "Shuffle hand into deck and draw…",
     "translation": "Blanda in handen i leken och dra…"
   },
-  "VD_Lux": {
-    "message": "Shuffle hand to bottom",
-    "translation": "Blanda in handen längst ner"
+  "DpAKOl": {
+    "message": "Shuffle hand into deck, then draw",
+    "translation": "Blanda in handen i leken, dra sedan"
   },
   "weBDkm": {
     "message": "Shuffle hand to bottom of deck",
@@ -4949,9 +5067,13 @@
     "message": "Shuffle hand to bottom of deck and draw…",
     "translation": "Blanda in handen längst ned i leken och dra…"
   },
-  "RdPVNx": {
-    "message": "Shuffle hand to deck",
-    "translation": "Blanda in handen i leken"
+  "M8Ea7C": {
+    "message": "Shuffle hand to bottom…",
+    "translation": "Blanda in handen längst ner…"
+  },
+  "-qToFp": {
+    "message": "Shuffle hand to deck…",
+    "translation": "Blanda in handen i leken…"
   },
   "Tbmmyh": {
     "message": "Shuffle in",
@@ -5214,6 +5336,10 @@
     "message": "Switch",
     "context": "shortcut key caption",
     "translation": "Byt"
+  },
+  "W2pBH8": {
+    "message": "Switch special condition",
+    "translation": "Byt specialtillstånd"
   },
   "Q1BDRW": {
     "message": "Switch with top of deck",
@@ -5632,10 +5758,6 @@
     "message": "Toggle ability used",
     "translation": "Växla förmåga använd"
   },
-  "OLgB6p": {
-    "message": "Toggle ability/effect",
-    "translation": "Växla förmåga/effekt"
-  },
   "6QCyrU": {
     "message": "Too large for a deck",
     "translation": "För stor för en lek"
@@ -5902,19 +6024,10 @@
     "message": "V-UNION · 4 pieces",
     "translation": "V-UNION · 4 delar"
   },
-  "VO6wBK": {
-    "message": "View",
-    "context": "look at cards from the deck",
-    "translation": "Titta"
-  },
   "W-3MjD": {
     "message": "View",
     "context": "shortcut key caption",
     "translation": "Visa"
-  },
-  "BqYI8B": {
-    "message": "View bottom card(s)",
-    "translation": "Titta på understa kortet/korten"
   },
   "9AKt60": {
     "message": "View card",
@@ -5923,10 +6036,6 @@
   "w3eDyf": {
     "message": "View each card",
     "translation": "Visa varje kort"
-  },
-  "VKXHWy": {
-    "message": "View top card(s)",
-    "translation": "Titta på översta kortet/korten"
   },
   "s3cHPo": {
     "message": "View whole card",
@@ -6054,397 +6163,5 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "Zonkonturer"
-  },
-  "eJ4Drn": {
-    "message": "{actor} discarded {count, plural, one {# attached card} other {# attached cards}}",
-    "comments": [
-      "Log line: a player discarded the cards attached to a Pokémon. {actor} is a player's name, {count} how many cards."
-    ],
-    "translation": "{actor} kastade {count, plural, one {# fäst kort} other {# fästa kort}}"
-  },
-  "0bIo3n": {
-    "message": "{actor} discarded {count, plural, one {# card} other {# cards}}",
-    "comments": [
-      "Log line. {actor} is a player's name, {count} how many cards."
-    ],
-    "translation": "{actor} kastade {count, plural, one {# kort} other {# kort}}"
-  },
-  "7ULDVQ": {
-    "message": "{actor} discarded hand and drew {count, plural, one {# card} other {# cards}}",
-    "comments": [
-      "Log line. {actor} is a player's name, {count} how many cards they drew."
-    ],
-    "translation": "{actor} kastade handen och drog {count, plural, one {# kort} other {# kort}}"
-  },
-  "VgwRoT": {
-    "message": "{actor} left {count, plural, one {# attached card} other {# attached cards}} in play",
-    "comments": [
-      "Log line: a player kept the cards attached to a Pokémon on the table. {actor} is a player's name, {count} how many cards."
-    ],
-    "translation": "{actor} lämnade kvar {count, plural, one {# fäst kort} other {# fästa kort}} i spel"
-  },
-  "9RYqFp": {
-    "message": "{actor} moved {count, plural, one {# card} other {# cards}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} other {deck}}",
-    "comments": [
-      "Log line. {actor} is a player's name, {count} how many cards; {source} is the zone they left and {destination} where they went (play: onto the table)."
-    ],
-    "translation": "{actor} flyttade {count, plural, one {# kort} other {# kort}} från {source, select, hand {handen} prizes {priskorten} discard {kasthögen} board {spelplanen} stadium {stadion} active {aktiva platsen} bench {bänken} lostZone {Lost Zone} attachmentResolution {fästa kort} other {leken}} till {destination, select, hand {handen} discard {kasthögen} lostZone {Lost Zone} deckBottom {botten av leken} play {spel} other {leken}}"
-  },
-  "e9cTIS": {
-    "message": "{actor} shuffled {count, plural, one {# attached card} other {# attached cards}} into deck",
-    "comments": [
-      "Log line: a player shuffled the cards attached to a Pokémon into their deck. {actor} is a player's name, {count} how many cards."
-    ],
-    "translation": "{actor} blandade in {count, plural, one {# fäst kort} other {# fästa kort}} i leken"
-  },
-  "99ycft": {
-    "message": "{actor} shuffled {count, plural, one {# card} other {# cards}} from board to deck",
-    "comments": [
-      "Log line. {actor} is a player's name, {count} how many cards."
-    ],
-    "translation": "{actor} blandade {count, plural, one {# kort} other {# kort}} från spelplanen till leken"
-  },
-  "RpAS5v": {
-    "message": "{actor} shuffled {count, plural, one {# card} other {# cards}} into deck",
-    "comments": [
-      "Log line. {actor} is a player's name, {count} how many cards."
-    ],
-    "translation": "{actor} blandade in {count, plural, one {# kort} other {# kort}} i leken"
-  },
-  "cFSyyy": {
-    "message": "{actor} shuffled {count, plural, one {# card} other {# cards}} to bottom of deck",
-    "comments": [
-      "Log line. {actor} is a player's name, {count} how many cards."
-    ],
-    "translation": "{actor} lade {count, plural, one {# kort} other {# kort}} längst ned i leken"
-  },
-  "xZranI": {
-    "message": "{actor} shuffled hand into deck and drew {count, plural, one {# card} other {# cards}}",
-    "comments": [
-      "Log line. {actor} is a player's name, {count} how many cards they drew."
-    ],
-    "translation": "{actor} blandade in handen i leken och drog {count, plural, one {# kort} other {# kort}}"
-  },
-  "TWahFj": {
-    "message": "{actor} shuffled hand to bottom of deck and drew {count, plural, one {# card} other {# cards}}",
-    "comments": [
-      "Log line. {actor} is a player's name, {count} how many cards they drew."
-    ],
-    "translation": "{actor} lade handen längst ned i leken och drog {count, plural, one {# kort} other {# kort}}"
-  },
-  "E887wo": {
-    "message": "{name} looked at bottom {count, plural, one {# card} other {# cards}} of deck",
-    "comments": [
-      "Log line. {name} is a player's name, {count} how many cards from the bottom of their deck they looked at."
-    ],
-    "translation": "{name} tittade på de nedersta {count, plural, one {# kortet} other {# korten}} i leken"
-  },
-  "imtKoA": {
-    "message": "{name} looked at top {count, plural, one {# card} other {# cards}} of deck",
-    "comments": [
-      "Log line. {name} is a player's name, {count} how many cards from the top of their deck they looked at."
-    ],
-    "translation": "{name} tittade på de översta {count, plural, one {# kortet} other {# korten}} i leken"
-  },
-  "l7W_Ze": {
-    "message": "<0>{0}</0>: send a friend a link to your table.",
-    "translation": "<0>{0}</0>: skicka en länk till ditt bord till en vän."
-  },
-  "JTbT6L": {
-    "message": "Add special condition",
-    "translation": "Lägg till specialtillstånd"
-  },
-  "Sb4b2A": {
-    "message": "Allow board flip <0>(both players)</0>",
-    "translation": "Tillåt att bordet vänds <0>(båda spelarna)</0>"
-  },
-  "uUaeMQ": {
-    "message": "Attach to a Pokémon…",
-    "translation": "Fäst på en Pokémon…"
-  },
-  "c0_6W9": {
-    "message": "Copied",
-    "context": "an invitation",
-    "translation": "Kopierad"
-  },
-  "ITnJNv": {
-    "message": "Copy an invitation",
-    "translation": "Kopiera en inbjudan"
-  },
-  "Yc1XTF": {
-    "message": "Copy invitation",
-    "translation": "Kopiera inbjudan"
-  },
-  "gklFA4": {
-    "message": "Couldn't copy the invitation",
-    "translation": "Det gick inte att kopiera inbjudan"
-  },
-  "sA7lnV": {
-    "message": "Couldn't copy the invitation. Try again.",
-    "translation": "Det gick inte att kopiera inbjudan. Försök igen."
-  },
-  "O3p0SF": {
-    "message": "Couldn't generate a room. Try again.",
-    "translation": "Det gick inte att skapa ett rum. Försök igen."
-  },
-  "nzVItu": {
-    "message": "Couldn't use the clipboard. Allow access and try again.",
-    "translation": "Det gick inte att använda urklipp. Ge åtkomst och försök igen."
-  },
-  "rNIlQ5": {
-    "message": "Cover card (only you)",
-    "translation": "Dölj kort (endast du)"
-  },
-  "dyMutU": {
-    "message": "Cover hand",
-    "translation": "Dölj handen"
-  },
-  "6BoNqk": {
-    "message": "Cover prizes",
-    "translation": "Dölj priskort"
-  },
-  "h-zJzU": {
-    "message": "Cover their hand",
-    "translation": "Dölj deras hand"
-  },
-  "7x4VPZ": {
-    "message": "Cover their Prizes",
-    "translation": "Dölj deras priskort"
-  },
-  "urHEvq": {
-    "message": "Cover your Prizes",
-    "translation": "Dölj dina priskort"
-  },
-  "CulBzv": {
-    "message": "Evolve a Pokémon…",
-    "translation": "Utveckla en Pokémon…"
-  },
-  "oP3kz7": {
-    "message": "Generate",
-    "context": "a room",
-    "translation": "Skapa"
-  },
-  "mb6Tyv": {
-    "message": "Generate a room and send the invitation. With <0>Join as spectator</0> on, it invites a spectator.",
-    "translation": "Skapa ett rum och skicka inbjudan. Med <0>Gå med som åskådare</0> aktiverat bjuds en åskådare in."
-  },
-  "5NEkeP": {
-    "message": "Generate a room first.",
-    "translation": "Skapa ett rum först."
-  },
-  "G7A2K4": {
-    "message": "Generate a room, then send the invitation.",
-    "translation": "Skapa ett rum och skicka sedan inbjudan."
-  },
-  "fQq7dv": {
-    "message": "Generating…",
-    "context": "a room",
-    "translation": "Skapar…"
-  },
-  "HY40z4": {
-    "message": "Hide card",
-    "translation": "Dölj kort"
-  },
-  "_hwQqt": {
-    "message": "Hide Lost Zone",
-    "translation": "Dölj Lost Zone"
-  },
-  "Z7lHUH": {
-    "message": "Hide prizes",
-    "translation": "Dölj priskort"
-  },
-  "q2aSzG": {
-    "message": "Hide their Prizes",
-    "translation": "Dölj deras priskort"
-  },
-  "9EQ4Zd": {
-    "message": "Hide your Prizes",
-    "translation": "Dölj dina priskort"
-  },
-  "EqLwOt": {
-    "message": "In use",
-    "context": "a table piece holding cards",
-    "translation": "Används"
-  },
-  "6vI3XA": {
-    "message": "Invitation copied",
-    "translation": "Inbjudan kopierad"
-  },
-  "z1vTYz": {
-    "message": "Invitation copied to your clipboard.",
-    "translation": "Inbjudan kopierades till urklipp."
-  },
-  "XbqMCS": {
-    "message": "Join pieces…",
-    "translation": "Sätt ihop pjäser…"
-  },
-  "2_dOwA": {
-    "message": "Look at card (only you)",
-    "translation": "Titta på kort (endast du)"
-  },
-  "4rquUI": {
-    "message": "Look at hand",
-    "translation": "Titta på handen"
-  },
-  "FtU5OB": {
-    "message": "Look at prizes",
-    "translation": "Titta på priskort"
-  },
-  "-wf39o": {
-    "message": "Look at their hand",
-    "translation": "Titta på deras hand"
-  },
-  "Ky418J": {
-    "message": "Look at their Prizes",
-    "translation": "Titta på deras priskort"
-  },
-  "C4R15y": {
-    "message": "Look at your Prizes",
-    "translation": "Titta på dina priskort"
-  },
-  "WTIxhp": {
-    "message": "Mark as used",
-    "comments": [
-      "Puts the \"Ability used\" marker on a card: its Ability or effect was used this turn.",
-      "Puts the \"Ability used\" marker on a card: its Ability or effect was used this turn."
-    ],
-    "translation": "Markera som använd"
-  },
-  "Ig8A-t": {
-    "message": "Paste a valid invitation into Room ID.",
-    "translation": "Klistra in en giltig inbjudan i Rums-ID."
-  },
-  "pJRgD4": {
-    "message": "Paste an invitation",
-    "translation": "Klistra in en inbjudan"
-  },
-  "4LC7ch": {
-    "message": "Paste an invitation, or join your own room.",
-    "translation": "Klistra in en inbjudan, eller gå med i ditt eget rum."
-  },
-  "3J14ru": {
-    "message": "Paste the invitation into Room ID.",
-    "translation": "Klistra in inbjudan i Rums-ID."
-  },
-  "6M-csj": {
-    "message": "Reveal card",
-    "translation": "Visa kort"
-  },
-  "wY30n_": {
-    "message": "Reveal prizes",
-    "translation": "Visa priskort"
-  },
-  "n75nZA": {
-    "message": "Reveal their Prizes",
-    "translation": "Visa deras priskort"
-  },
-  "c6E0p_": {
-    "message": "Reveal your Prizes",
-    "translation": "Visa dina priskort"
-  },
-  "QoZkYe": {
-    "message": "Room ID",
-    "translation": "Rums-ID"
-  },
-  "BulyBf": {
-    "message": "Rotate",
-    "translation": "Rotera"
-  },
-  "W2pBH8": {
-    "message": "Switch special condition",
-    "translation": "Byt specialtillstånd"
-  },
-  "UoxtKp": {
-    "message": "That invitation expired. Ask for a new one.",
-    "translation": "Inbjudan har gått ut. Be om en ny."
-  },
-  "23cwkx": {
-    "message": "Your name changed. Generate a new room.",
-    "translation": "Ditt namn har ändrats. Skapa ett nytt rum."
-  },
-  "MyTf22": {
-    "message": "{available, plural, one {# card in deck} other {# cards in deck}}",
-    "translation": "{available, plural, one {# kort i leken} other {# kort i leken}}"
-  },
-  "DcTMVd": {
-    "message": "{available, plural, one {# card to draw from} other {# cards to draw from}}",
-    "translation": "{available, plural, one {# kort att dra från} other {# kort att dra från}}"
-  },
-  "nlUJMk": {
-    "message": "{count, plural, one {Look at # card} other {Look at # cards}}",
-    "translation": "{count, plural, one {Titta på # kort} other {Titta på # kort}}"
-  },
-  "ruBWQi": {
-    "message": "Discard hand, then draw",
-    "translation": "Kasta handen, dra sedan"
-  },
-  "JrTBPO": {
-    "message": "Discard hand…",
-    "translation": "Kasta handen…"
-  },
-  "7cFPiW": {
-    "message": "Draw none",
-    "comments": [
-      "Accepts a hand put away (discarded or shuffled into the deck) without drawing."
-    ],
-    "translation": "Dra inga"
-  },
-  "gZAkYU": {
-    "message": "Hand to bottom of deck, then draw",
-    "translation": "Handen längst ner i leken, dra sedan"
-  },
-  "QW7fGB": {
-    "message": "Look at bottom cards",
-    "translation": "Titta på nedersta korten"
-  },
-  "nshEL9": {
-    "message": "Look at bottom cards…",
-    "translation": "Titta på nedersta korten…"
-  },
-  "g4nsbt": {
-    "message": "Look at top cards",
-    "translation": "Titta på översta korten"
-  },
-  "KzU3sj": {
-    "message": "Look at top cards…",
-    "translation": "Titta på översta korten…"
-  },
-  "3GFV_r": {
-    "message": "One fewer",
-    "context": "card count",
-    "translation": "Ett färre"
-  },
-  "qTM8Kd": {
-    "message": "One more",
-    "context": "card count",
-    "translation": "Ett till"
-  },
-  "P7jzR_": {
-    "message": "Quick picks",
-    "context": "card count",
-    "translation": "Snabbval"
-  },
-  "DpAKOl": {
-    "message": "Shuffle hand into deck, then draw",
-    "translation": "Blanda in handen i leken, dra sedan"
-  },
-  "M8Ea7C": {
-    "message": "Shuffle hand to bottom…",
-    "translation": "Blanda in handen längst ner…"
-  },
-  "-qToFp": {
-    "message": "Shuffle hand to deck…",
-    "translation": "Blanda in handen i leken…"
-  },
-  "ASNDad": {
-    "message": "Hide {name}",
-    "comments": [
-      "A button on a hand card the opponent can see; it hides the card again. {name} is the card."
-    ],
-    "translation": "Dölj {name}"
-  },
-  "g5A2ic": {
-    "message": "Shown to your opponent",
-    "translation": "Visas för din motståndare"
   }
 }

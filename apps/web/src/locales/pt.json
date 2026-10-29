@@ -68,19 +68,19 @@
     ],
     "translation": "{actor} ligou {card} {source, select, hand {da mão} prizes {das cartas de Prêmio} discard {da pilha de descarte} board {do tabuleiro} stadium {do Estádio} active {do Campo Ativo} bench {do Banco} lostZone {da Zona Perdida} attachmentResolution {das cartas ligadas} other {do baralho}} a {targetCard}"
   },
-  "nb_tRJ": {
-    "message": "{actor} discarded {count, plural, one {# attached card(s)} other {# attached card(s)}}",
+  "eJ4Drn": {
+    "message": "{actor} discarded {count, plural, one {# attached card} other {# attached cards}}",
     "comments": [
       "Log line: a player discarded the cards attached to a Pokémon. {actor} is a player's name, {count} how many cards."
     ],
-    "translation": "{actor} descartou {count, plural, one {# carta ligada} many {# de cartas ligadas} other {# cartas ligadas}}"
+    "translation": "{actor} descartou {count, plural, one {# carta ligada} other {# cartas ligadas}}"
   },
-  "KeKqt_": {
-    "message": "{actor} discarded {count, plural, one {# card(s)} other {# card(s)}}",
+  "0bIo3n": {
+    "message": "{actor} discarded {count, plural, one {# card} other {# cards}}",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards."
     ],
-    "translation": "{actor} descartou {count, plural, one {# carta} many {# de cartas} other {# cartas}}"
+    "translation": "{actor} descartou {count, plural, one {# carta} other {# cartas}}"
   },
   "fFHUli": {
     "message": "{actor} discarded hand",
@@ -89,12 +89,12 @@
     ],
     "translation": "{actor} descartou a mão"
   },
-  "qIBRqY": {
-    "message": "{actor} discarded hand and drew {count, plural, one {# card(s)} other {# card(s)}}",
+  "7ULDVQ": {
+    "message": "{actor} discarded hand and drew {count, plural, one {# card} other {# cards}}",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards they drew."
     ],
-    "translation": "{actor} descartou a mão e comprou {count, plural, one {# carta} many {# de cartas} other {# cartas}}"
+    "translation": "{actor} descartou a mão e comprou {count, plural, one {# carta} other {# cartas}}"
   },
   "68TI_t": {
     "message": "{actor} evolved {target, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} into {card}",
@@ -124,12 +124,12 @@
     ],
     "translation": "{actor} ocultou uma carta {source, select, hand {na mão} prizes {nas cartas de Prêmio} discard {na pilha de descarte} board {no tabuleiro} stadium {no Estádio} active {no Campo Ativo} bench {no Banco} lostZone {na Zona Perdida} attachmentResolution {nas cartas ligadas} inspection {na inspeção} other {no baralho}} de {owner}"
   },
-  "PZVwKy": {
-    "message": "{actor} left {count, plural, one {# attached card(s)} other {# attached card(s)}} in play",
+  "VgwRoT": {
+    "message": "{actor} left {count, plural, one {# attached card} other {# attached cards}} in play",
     "comments": [
       "Log line: a player kept the cards attached to a Pokémon on the table. {actor} is a player's name, {count} how many cards."
     ],
-    "translation": "{actor} deixou {count, plural, one {# carta ligada} many {# de cartas ligadas} other {# cartas ligadas}} em jogo"
+    "translation": "{actor} deixou {count, plural, one {# carta ligada} other {# cartas ligadas}} em jogo"
   },
   "c5qeZl": {
     "message": "{actor} moved {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {boardOwner}'s {target, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}}",
@@ -166,12 +166,12 @@
     ],
     "translation": "{actor} moveu {card} {source, select, hand {da mão} prizes {das cartas de Prêmio} discard {da pilha de descarte} board {do tabuleiro} stadium {do Estádio} active {do Campo Ativo} bench {do Banco} lostZone {da Zona Perdida} attachmentResolution {das cartas ligadas} other {do baralho}} para o topo do baralho"
   },
-  "WBnnCz": {
-    "message": "{actor} moved {count, plural, one {# card(s)} other {# card(s)}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} other {deck}}",
+  "9RYqFp": {
+    "message": "{actor} moved {count, plural, one {# card} other {# cards}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} other {deck}}",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards; {source} is the zone they left and {destination} where they went (play: onto the table)."
     ],
-    "translation": "{actor} moveu {count, plural, one {# carta} many {# de cartas} other {# cartas}} {source, select, hand {da mão} prizes {das cartas de Prêmio} discard {da pilha de descarte} board {do tabuleiro} stadium {do Estádio} active {do Campo Ativo} bench {do Banco} lostZone {da Zona Perdida} attachmentResolution {das cartas ligadas} other {do baralho}} para {destination, select, hand {a mão} discard {a pilha de descarte} lostZone {a Zona Perdida} deckBottom {o fundo do baralho} play {o jogo} other {o baralho}}"
+    "translation": "{actor} moveu {count, plural, one {# carta} other {# cartas}} de {source, select, hand {mão} prizes {Prêmios} discard {Descarte} board {tabuleiro} stadium {Estádio} active {Ativo} bench {Banco} lostZone {Zona Perdida} attachmentResolution {cartas ligadas} other {baralho}} para {destination, select, hand {mão} discard {Descarte} lostZone {Zona Perdida} deckBottom {fundo do baralho} play {jogo} other {baralho}}"
   },
   "P4_K0D": {
     "message": "{actor} moved a random card from {target}'s hand to board",
@@ -201,33 +201,33 @@
     ],
     "translation": "{actor} embaralhou {card} {source, select, hand {da mão} prizes {das cartas de Prêmio} discard {da pilha de descarte} board {do tabuleiro} stadium {do Estádio} active {do Campo Ativo} bench {do Banco} lostZone {da Zona Perdida} attachmentResolution {das cartas ligadas} other {do baralho}} no baralho"
   },
-  "xEKtXt": {
-    "message": "{actor} shuffled {count, plural, one {# attached card(s)} other {# attached card(s)}} into deck",
+  "e9cTIS": {
+    "message": "{actor} shuffled {count, plural, one {# attached card} other {# attached cards}} into deck",
     "comments": [
       "Log line: a player shuffled the cards attached to a Pokémon into their deck. {actor} is a player's name, {count} how many cards."
     ],
-    "translation": "{actor} embaralhou {count, plural, one {# carta ligada} many {# de cartas ligadas} other {# cartas ligadas}} no baralho"
+    "translation": "{actor} embaralhou {count, plural, one {# carta ligada} other {# cartas ligadas}} no baralho"
   },
-  "Ggdxd3": {
-    "message": "{actor} shuffled {count, plural, one {# card(s)} other {# card(s)}} from board to deck",
+  "99ycft": {
+    "message": "{actor} shuffled {count, plural, one {# card} other {# cards}} from board to deck",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards."
     ],
-    "translation": "{actor} embaralhou {count, plural, one {# carta} many {# de cartas} other {# cartas}} do tabuleiro no baralho"
+    "translation": "{actor} embaralhou {count, plural, one {# carta} other {# cartas}} do tabuleiro no baralho"
   },
-  "PoaZgj": {
-    "message": "{actor} shuffled {count, plural, one {# card(s)} other {# card(s)}} into deck",
+  "RpAS5v": {
+    "message": "{actor} shuffled {count, plural, one {# card} other {# cards}} into deck",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards."
     ],
-    "translation": "{actor} embaralhou {count, plural, one {# carta} many {# de cartas} other {# cartas}} no baralho"
+    "translation": "{actor} embaralhou {count, plural, one {# carta} other {# cartas}} no baralho"
   },
-  "DilVHS": {
-    "message": "{actor} shuffled {count, plural, one {# card(s)} other {# card(s)}} to bottom of deck",
+  "cFSyyy": {
+    "message": "{actor} shuffled {count, plural, one {# card} other {# cards}} to bottom of deck",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards."
     ],
-    "translation": "{actor} colocou {count, plural, one {# carta} many {# de cartas} other {# cartas}} embaralhadas no fundo do baralho"
+    "translation": "{actor} embaralhou {count, plural, one {# carta} other {# cartas}} no fundo do baralho"
   },
   "s-CcLE": {
     "message": "{actor} shuffled discard into deck",
@@ -243,12 +243,12 @@
     ],
     "translation": "{actor} embaralhou a mão no baralho"
   },
-  "h6k_d9": {
-    "message": "{actor} shuffled hand into deck and drew {count, plural, one {# card(s)} other {# card(s)}}",
+  "xZranI": {
+    "message": "{actor} shuffled hand into deck and drew {count, plural, one {# card} other {# cards}}",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards they drew."
     ],
-    "translation": "{actor} embaralhou a mão no baralho e comprou {count, plural, one {# carta} many {# de cartas} other {# cartas}}"
+    "translation": "{actor} embaralhou a mão no baralho e comprou {count, plural, one {# carta} other {# cartas}}"
   },
   "DLPemk": {
     "message": "{actor} shuffled hand to bottom of deck",
@@ -257,12 +257,12 @@
     ],
     "translation": "{actor} colocou a mão embaralhada no fundo do baralho"
   },
-  "xT_uho": {
-    "message": "{actor} shuffled hand to bottom of deck and drew {count, plural, one {# card(s)} other {# card(s)}}",
+  "TWahFj": {
+    "message": "{actor} shuffled hand to bottom of deck and drew {count, plural, one {# card} other {# cards}}",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards they drew."
     ],
-    "translation": "{actor} colocou a mão embaralhada no fundo do baralho e comprou {count, plural, one {# carta} many {# de cartas} other {# cartas}}"
+    "translation": "{actor} embaralhou a mão no fundo do baralho e comprou {count, plural, one {# carta} other {# cartas}}"
   },
   "QGyAAz": {
     "message": "{actor} shuffled prizes to bottom of deck",
@@ -284,6 +284,14 @@
       "Log line: one player undid the other's last move. {actor} is who undid it, {target} whose move it was."
     ],
     "translation": "{actor} desfez a última jogada de {target}"
+  },
+  "MyTf22": {
+    "message": "{available, plural, one {# card in deck} other {# cards in deck}}",
+    "translation": "{available, plural, one {# carta no baralho} other {# cartas no baralho}}"
+  },
+  "DcTMVd": {
+    "message": "{available, plural, one {# card to draw from} other {# cards to draw from}}",
+    "translation": "{available, plural, one {# carta para comprar} other {# cartas para comprar}}"
   },
   "iwKsQi": {
     "message": "{cardLabel}: actions",
@@ -407,6 +415,10 @@
   "0ZvQu6": {
     "message": "{count, plural, one {Draw # card} other {Draw # cards}}",
     "translation": "{count, plural, one {Comprar # carta} many {Comprar # de cartas} other {Comprar # cartas}}"
+  },
+  "nlUJMk": {
+    "message": "{count, plural, one {Look at # card} other {Look at # cards}}",
+    "translation": "{count, plural, one {Olhar # carta} other {Olhar # cartas}}"
   },
   "UJXyU7": {
     "message": "{count, plural, one {Look at bottom card} other {Look at bottom # cards}}",
@@ -668,19 +680,19 @@
     ],
     "translation": "{name} carregou o baralho"
   },
-  "lcx9nx": {
-    "message": "{name} looked at bottom {count, plural, one {# card(s)} other {# card(s)}} of deck",
+  "E887wo": {
+    "message": "{name} looked at bottom {count, plural, one {# card} other {# cards}} of deck",
     "comments": [
       "Log line. {name} is a player's name, {count} how many cards from the bottom of their deck they looked at."
     ],
-    "translation": "{name} olhou {count, plural, one {# carta} other {# cartas}} do fundo do baralho"
+    "translation": "{name} olhou {count, plural, one {a # carta} other {as # cartas}} do fundo do baralho"
   },
-  "ok9Ijw": {
-    "message": "{name} looked at top {count, plural, one {# card(s)} other {# card(s)}} of deck",
+  "imtKoA": {
+    "message": "{name} looked at top {count, plural, one {# card} other {# cards}} of deck",
     "comments": [
       "Log line. {name} is a player's name, {count} how many cards from the top of their deck they looked at."
     ],
-    "translation": "{name} olhou {count, plural, one {# carta} other {# cartas}} do topo do baralho"
+    "translation": "{name} olhou {count, plural, one {a # carta} other {as # cartas}} do topo do baralho"
   },
   "A7bcR4": {
     "message": "{name} Lost Zone",
@@ -1185,6 +1197,10 @@
     "message": "Add or switch special condition",
     "translation": "Adicionar ou trocar Condição Especial"
   },
+  "JTbT6L": {
+    "message": "Add special condition",
+    "translation": "Adicionar Condição Especial"
+  },
   "ZVI875": {
     "message": "Add to deck",
     "translation": "Adicionar ao baralho"
@@ -1352,10 +1368,6 @@
     "context": "special condition",
     "translation": "Adormecido"
   },
-  "hXSSHx": {
-    "message": "Assemble / attach to a card…",
-    "translation": "Montar / ligar a uma carta…"
-  },
   "igVDFt": {
     "message": "Attach",
     "translation": "Ligar"
@@ -1368,6 +1380,10 @@
   "jrzyuC": {
     "message": "Attach and evolve",
     "translation": "Ligar e evoluir"
+  },
+  "uUaeMQ": {
+    "message": "Attach to a Pokémon…",
+    "translation": "Ligar a um Pokémon…"
   },
   "E9l6HC": {
     "message": "Attached cards being moved",
@@ -1963,6 +1979,30 @@
     "context": "the deck's cover card",
     "translation": "capa"
   },
+  "rNIlQ5": {
+    "message": "Cover card (only you)",
+    "translation": "Cobrir carta (só você)"
+  },
+  "dyMutU": {
+    "message": "Cover hand",
+    "translation": "Cobrir mão"
+  },
+  "6BoNqk": {
+    "message": "Cover prizes",
+    "translation": "Cobrir Prêmios"
+  },
+  "h-zJzU": {
+    "message": "Cover their hand",
+    "translation": "Cobrir a mão do oponente"
+  },
+  "7x4VPZ": {
+    "message": "Cover their Prizes",
+    "translation": "Cobrir os Prêmios do oponente"
+  },
+  "urHEvq": {
+    "message": "Cover your Prizes",
+    "translation": "Cobrir seus Prêmios"
+  },
   "LwyL9G": {
     "message": "Cream",
     "comments": [
@@ -2188,6 +2228,14 @@
     "message": "Discard hand and draw…",
     "translation": "Descartar a mão e comprar…"
   },
+  "ruBWQi": {
+    "message": "Discard hand, then draw",
+    "translation": "Descartar a mão e comprar"
+  },
+  "JrTBPO": {
+    "message": "Discard hand…",
+    "translation": "Descartar a mão…"
+  },
   "eEqZQd": {
     "message": "Discard pile",
     "context": "zone",
@@ -2251,11 +2299,6 @@
     "context": "Pokémon type",
     "translation": "Dragão"
   },
-  "LU-TxR": {
-    "message": "Draw",
-    "context": "draw cards",
-    "translation": "Comprar"
-  },
   "mBdQmZ": {
     "message": "Draw",
     "context": "shortcut key caption",
@@ -2273,10 +2316,6 @@
     "message": "Draw a card: drag the top of your deck into your hand.",
     "translation": "Compre uma carta: arraste o topo do seu baralho para a sua mão."
   },
-  "to34yF": {
-    "message": "Draw card(s)",
-    "translation": "Comprar carta(s)"
-  },
   "ZQB_oJ": {
     "message": "Draw cards",
     "translation": "Comprar cartas"
@@ -2285,13 +2324,16 @@
     "message": "Draw cards…",
     "translation": "Comprar cartas…"
   },
-  "SAb30P": {
-    "message": "Draw how many cards?",
-    "translation": "Quantas cartas comprar?"
-  },
   "SP_Sjy": {
     "message": "Draw how many?",
     "translation": "Quantas cartas comprar?"
+  },
+  "7cFPiW": {
+    "message": "Draw none",
+    "comments": [
+      "Accepts a hand put away (discarded or shuffled into the deck) without drawing."
+    ],
+    "translation": "Não comprar"
   },
   "b0MOy2": {
     "message": "Draw, search and shuffle",
@@ -2393,10 +2435,6 @@
     "message": "Enter a name.",
     "translation": "Digite um nome."
   },
-  "u2fAme": {
-    "message": "Enter a number",
-    "translation": "Digite um número"
-  },
   "0jl-i6": {
     "message": "Enter a valid image URL.",
     "translation": "Digite uma URL de imagem válida."
@@ -2429,6 +2467,10 @@
     "message": "Evolve",
     "context": "shortcut key caption",
     "translation": "Evoluir"
+  },
+  "CulBzv": {
+    "message": "Evolve a Pokémon…",
+    "translation": "Evoluir um Pokémon…"
   },
   "vb1XQU": {
     "message": "Evolve it: drag <0>{0}</0> onto {1}.",
@@ -2729,6 +2771,10 @@
     "context": "shortcut key caption",
     "translation": "Mão para o fundo"
   },
+  "gZAkYU": {
+    "message": "Hand to bottom of deck, then draw",
+    "translation": "Mão para o fundo do baralho e comprar"
+  },
   "n04_a0": {
     "message": "Hand to deck",
     "context": "shortcut key caption",
@@ -2776,6 +2822,17 @@
     "context": "stop revealing a card",
     "translation": "Ocultar"
   },
+  "ASNDad": {
+    "message": "Hide {name}",
+    "comments": [
+      "A button on a hand card the opponent can see; it hides the card again. {name} is the card."
+    ],
+    "translation": "Ocultar {name}"
+  },
+  "HY40z4": {
+    "message": "Hide card",
+    "translation": "Ocultar carta"
+  },
   "po1CV7": {
     "message": "Hide keyboard",
     "translation": "Ocultar teclado"
@@ -2788,13 +2845,25 @@
     "message": "Hide opponent's hand",
     "translation": "Ocultar a mão do oponente"
   },
+  "Z7lHUH": {
+    "message": "Hide prizes",
+    "translation": "Ocultar Prêmios"
+  },
   "OIoFPQ": {
     "message": "Hide the Lost Zone?",
     "translation": "Ocultar a Zona Perdida?"
   },
+  "q2aSzG": {
+    "message": "Hide their Prizes",
+    "translation": "Ocultar os Prêmios do oponente"
+  },
   "ZQLqYr": {
     "message": "Hide welcome",
     "translation": "Ocultar boas-vindas"
+  },
+  "9EQ4Zd": {
+    "message": "Hide your Prizes",
+    "translation": "Ocultar seus Prêmios"
   },
   "tgYI8X": {
     "message": "Holographic",
@@ -2972,6 +3041,10 @@
   "G7O46F": {
     "message": "Join as spectator",
     "translation": "Entrar como espectador"
+  },
+  "XbqMCS": {
+    "message": "Join pieces…",
+    "translation": "Juntar peças…"
   },
   "t5uRiA": {
     "message": "Join room",
@@ -3194,6 +3267,14 @@
     "context": "shortcut key caption",
     "translation": "Ver"
   },
+  "QW7fGB": {
+    "message": "Look at bottom cards",
+    "translation": "Olhar as cartas do fundo"
+  },
+  "nshEL9": {
+    "message": "Look at bottom cards…",
+    "translation": "Olhar as cartas do fundo…"
+  },
   "f55U3C": {
     "message": "Look at bottom of deck…",
     "translation": "Olhar o fundo do baralho…"
@@ -3202,29 +3283,25 @@
     "message": "Look at bottom of their deck…",
     "translation": "Olhar o fundo do baralho do oponente…"
   },
+  "2_dOwA": {
+    "message": "Look at card (only you)",
+    "translation": "Ver carta (só você)"
+  },
   "C5D5j0": {
     "message": "Look at cards",
     "translation": "Ver cartas"
   },
-  "Q1s-WM": {
-    "message": "Look at how many cards?",
-    "translation": "Olhar quantas cartas?"
+  "4rquUI": {
+    "message": "Look at hand",
+    "translation": "Ver mão"
   },
   "I3be0u": {
     "message": "Look at or cover (only you)",
     "translation": "Ver ou cobrir (só você)"
   },
-  "nZyxDJ": {
-    "message": "Look at or cover their hand",
-    "translation": "Ver ou cobrir a mão do oponente"
-  },
-  "qJ_tx1": {
-    "message": "Look at or cover their Prizes",
-    "translation": "Ver ou cobrir as cartas de Prêmio do oponente"
-  },
-  "bQF9w4": {
-    "message": "Look at or cover your Prizes",
-    "translation": "Ver ou cobrir suas cartas de Prêmio"
+  "FtU5OB": {
+    "message": "Look at prizes",
+    "translation": "Ver Prêmios"
   },
   "I7Daes": {
     "message": "Look at the bottom cards",
@@ -3234,6 +3311,22 @@
     "message": "Look at the top cards",
     "translation": "Ver as cartas de cima"
   },
+  "-wf39o": {
+    "message": "Look at their hand",
+    "translation": "Ver a mão do oponente"
+  },
+  "Ky418J": {
+    "message": "Look at their Prizes",
+    "translation": "Ver os Prêmios do oponente"
+  },
+  "g4nsbt": {
+    "message": "Look at top cards",
+    "translation": "Olhar as cartas do topo"
+  },
+  "KzU3sj": {
+    "message": "Look at top cards…",
+    "translation": "Olhar as cartas do topo…"
+  },
   "bIo9OM": {
     "message": "Look at top of deck…",
     "translation": "Olhar o topo do baralho…"
@@ -3242,13 +3335,9 @@
     "message": "Look at top of their deck…",
     "translation": "Olhar o topo do baralho do oponente…"
   },
-  "ktAl1J": {
-    "message": "Look/cover hand",
-    "translation": "Ver/cobrir mão"
-  },
-  "TYI_fo": {
-    "message": "Look/cover prizes",
-    "translation": "Ver/cobrir Prêmios"
+  "C4R15y": {
+    "message": "Look at your Prizes",
+    "translation": "Ver seus Prêmios"
   },
   "pKU2VG": {
     "message": "Looking at cards",
@@ -3317,9 +3406,19 @@
   "386rEt": {
     "message": "Mark as unused",
     "comments": [
+      "Takes the \"Ability used\" marker off a Pokémon.",
+      "Takes the \"Ability used\" marker off a Pokémon.",
       "Takes the \"Ability used\" marker off a Pokémon."
     ],
     "translation": "Marcar como não usada"
+  },
+  "WTIxhp": {
+    "message": "Mark as used",
+    "comments": [
+      "Puts the \"Ability used\" marker on a card: its Ability or effect was used this turn.",
+      "Puts the \"Ability used\" marker on a card: its Ability or effect was used this turn."
+    ],
+    "translation": "Marcar como usada"
   },
   "IHU0N1": {
     "message": "Mark GX attack unused",
@@ -3763,6 +3862,11 @@
     ],
     "translation": "Sozinho, você joga pelos dois lados. Pressione <0>{0}</0> para virar a mesa para o lado do oponente."
   },
+  "3GFV_r": {
+    "message": "One fewer",
+    "context": "card count",
+    "translation": "Uma a menos"
+  },
   "eVFY7w": {
     "message": "One half fills the table",
     "translation": "Uma metade ocupa a mesa"
@@ -3770,6 +3874,11 @@
   "MCTQfb": {
     "message": "One moment",
     "translation": "Um momento"
+  },
+  "qTM8Kd": {
+    "message": "One more",
+    "context": "card count",
+    "translation": "Mais uma"
   },
   "-EDLvw": {
     "message": "Only {formatLabel}-legal",
@@ -4199,6 +4308,11 @@
     "message": "Quantity: 1 to {max}.",
     "translation": "Quantidade: de 1 a {max}."
   },
+  "P7jzR_": {
+    "message": "Quick picks",
+    "context": "card count",
+    "translation": "Atalhos"
+  },
   "KgxgFc": {
     "message": "Radiant",
     "context": "Pokémon card mechanic",
@@ -4453,21 +4567,21 @@
     "message": "Reveal (both players)",
     "translation": "Revelar (ambos os jogadores)"
   },
-  "MFV2V6": {
-    "message": "Reveal or hide their Prizes",
-    "translation": "Revelar ou ocultar as cartas de Prêmio do oponente"
+  "6M-csj": {
+    "message": "Reveal card",
+    "translation": "Revelar carta"
   },
-  "FnwG7O": {
-    "message": "Reveal or hide your Prizes",
-    "translation": "Revelar ou ocultar suas cartas de Prêmio"
+  "wY30n_": {
+    "message": "Reveal prizes",
+    "translation": "Revelar Prêmios"
   },
-  "p7M2KL": {
-    "message": "Reveal/hide card",
-    "translation": "Revelar/ocultar carta"
+  "n75nZA": {
+    "message": "Reveal their Prizes",
+    "translation": "Revelar os Prêmios do oponente"
   },
-  "lHuUt0": {
-    "message": "Reveal/hide prizes",
-    "translation": "Revelar/ocultar Prêmios"
+  "c6E0p_": {
+    "message": "Reveal your Prizes",
+    "translation": "Revelar seus Prêmios"
   },
   "fa6wL6": {
     "message": "Revealed to your opponent",
@@ -4522,6 +4636,10 @@
     "message": "Room ready",
     "translation": "Sala pronta"
   },
+  "BulyBf": {
+    "message": "Rotate",
+    "translation": "Girar"
+  },
   "pbJSIc": {
     "message": "Rotate",
     "context": "shortcut key caption",
@@ -4530,10 +4648,6 @@
   "M2Hp6y": {
     "message": "Rotate BREAK",
     "translation": "Girar TURBO"
-  },
-  "86ffek": {
-    "message": "Rotate card(s)",
-    "translation": "Girar carta(s)"
   },
   "JRfxmI": {
     "message": "Row {row}: text after a closing quote.",
@@ -4899,6 +5013,10 @@
     "message": "Show this card on the deck",
     "translation": "Mostrar esta carta no baralho"
   },
+  "g5A2ic": {
+    "message": "Shown to your opponent",
+    "translation": "Mostrada ao oponente"
+  },
   "sf2cQK": {
     "message": "Shuffle",
     "context": "shortcut key caption",
@@ -4937,9 +5055,9 @@
     "message": "Shuffle hand into deck and draw…",
     "translation": "Embaralhar a mão no baralho e comprar…"
   },
-  "VD_Lux": {
-    "message": "Shuffle hand to bottom",
-    "translation": "Embaralhar mão no fundo do baralho"
+  "DpAKOl": {
+    "message": "Shuffle hand into deck, then draw",
+    "translation": "Embaralhar a mão no baralho e comprar"
   },
   "weBDkm": {
     "message": "Shuffle hand to bottom of deck",
@@ -4949,9 +5067,13 @@
     "message": "Shuffle hand to bottom of deck and draw…",
     "translation": "Embaralhar a mão no fundo do baralho e comprar…"
   },
-  "RdPVNx": {
-    "message": "Shuffle hand to deck",
-    "translation": "Embaralhar mão no baralho"
+  "M8Ea7C": {
+    "message": "Shuffle hand to bottom…",
+    "translation": "Embaralhar a mão no fundo…"
+  },
+  "-qToFp": {
+    "message": "Shuffle hand to deck…",
+    "translation": "Embaralhar a mão no baralho…"
   },
   "Tbmmyh": {
     "message": "Shuffle in",
@@ -5214,6 +5336,10 @@
     "message": "Switch",
     "context": "shortcut key caption",
     "translation": "Trocar"
+  },
+  "W2pBH8": {
+    "message": "Switch special condition",
+    "translation": "Trocar Condição Especial"
   },
   "Q1BDRW": {
     "message": "Switch with top of deck",
@@ -5632,10 +5758,6 @@
     "message": "Toggle ability used",
     "translation": "Alternar Habilidade usada"
   },
-  "OLgB6p": {
-    "message": "Toggle ability/effect",
-    "translation": "Alternar Habilidade/efeito"
-  },
   "6QCyrU": {
     "message": "Too large for a deck",
     "translation": "Grande demais para um baralho"
@@ -5902,19 +6024,10 @@
     "message": "V-UNION · 4 pieces",
     "translation": "V-UNIÃO · 4 peças"
   },
-  "VO6wBK": {
-    "message": "View",
-    "context": "look at cards from the deck",
-    "translation": "Ver"
-  },
   "W-3MjD": {
     "message": "View",
     "context": "shortcut key caption",
     "translation": "Ver"
-  },
-  "BqYI8B": {
-    "message": "View bottom card(s)",
-    "translation": "Ver carta(s) de baixo"
   },
   "9AKt60": {
     "message": "View card",
@@ -5923,10 +6036,6 @@
   "w3eDyf": {
     "message": "View each card",
     "translation": "Ver cada carta"
-  },
-  "VKXHWy": {
-    "message": "View top card(s)",
-    "translation": "Ver carta(s) de cima"
   },
   "s3cHPo": {
     "message": "View whole card",
@@ -6054,397 +6163,5 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "Contornos das zonas"
-  },
-  "eJ4Drn": {
-    "message": "{actor} discarded {count, plural, one {# attached card} other {# attached cards}}",
-    "comments": [
-      "Log line: a player discarded the cards attached to a Pokémon. {actor} is a player's name, {count} how many cards."
-    ],
-    "translation": "{actor} descartou {count, plural, one {# carta ligada} other {# cartas ligadas}}"
-  },
-  "0bIo3n": {
-    "message": "{actor} discarded {count, plural, one {# card} other {# cards}}",
-    "comments": [
-      "Log line. {actor} is a player's name, {count} how many cards."
-    ],
-    "translation": "{actor} descartou {count, plural, one {# carta} other {# cartas}}"
-  },
-  "7ULDVQ": {
-    "message": "{actor} discarded hand and drew {count, plural, one {# card} other {# cards}}",
-    "comments": [
-      "Log line. {actor} is a player's name, {count} how many cards they drew."
-    ],
-    "translation": "{actor} descartou a mão e comprou {count, plural, one {# carta} other {# cartas}}"
-  },
-  "VgwRoT": {
-    "message": "{actor} left {count, plural, one {# attached card} other {# attached cards}} in play",
-    "comments": [
-      "Log line: a player kept the cards attached to a Pokémon on the table. {actor} is a player's name, {count} how many cards."
-    ],
-    "translation": "{actor} deixou {count, plural, one {# carta ligada} other {# cartas ligadas}} em jogo"
-  },
-  "9RYqFp": {
-    "message": "{actor} moved {count, plural, one {# card} other {# cards}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} other {deck}}",
-    "comments": [
-      "Log line. {actor} is a player's name, {count} how many cards; {source} is the zone they left and {destination} where they went (play: onto the table)."
-    ],
-    "translation": "{actor} moveu {count, plural, one {# carta} other {# cartas}} de {source, select, hand {mão} prizes {Prêmios} discard {Descarte} board {tabuleiro} stadium {Estádio} active {Ativo} bench {Banco} lostZone {Zona Perdida} attachmentResolution {cartas ligadas} other {baralho}} para {destination, select, hand {mão} discard {Descarte} lostZone {Zona Perdida} deckBottom {fundo do baralho} play {jogo} other {baralho}}"
-  },
-  "e9cTIS": {
-    "message": "{actor} shuffled {count, plural, one {# attached card} other {# attached cards}} into deck",
-    "comments": [
-      "Log line: a player shuffled the cards attached to a Pokémon into their deck. {actor} is a player's name, {count} how many cards."
-    ],
-    "translation": "{actor} embaralhou {count, plural, one {# carta ligada} other {# cartas ligadas}} no baralho"
-  },
-  "99ycft": {
-    "message": "{actor} shuffled {count, plural, one {# card} other {# cards}} from board to deck",
-    "comments": [
-      "Log line. {actor} is a player's name, {count} how many cards."
-    ],
-    "translation": "{actor} embaralhou {count, plural, one {# carta} other {# cartas}} do tabuleiro no baralho"
-  },
-  "RpAS5v": {
-    "message": "{actor} shuffled {count, plural, one {# card} other {# cards}} into deck",
-    "comments": [
-      "Log line. {actor} is a player's name, {count} how many cards."
-    ],
-    "translation": "{actor} embaralhou {count, plural, one {# carta} other {# cartas}} no baralho"
-  },
-  "cFSyyy": {
-    "message": "{actor} shuffled {count, plural, one {# card} other {# cards}} to bottom of deck",
-    "comments": [
-      "Log line. {actor} is a player's name, {count} how many cards."
-    ],
-    "translation": "{actor} embaralhou {count, plural, one {# carta} other {# cartas}} no fundo do baralho"
-  },
-  "xZranI": {
-    "message": "{actor} shuffled hand into deck and drew {count, plural, one {# card} other {# cards}}",
-    "comments": [
-      "Log line. {actor} is a player's name, {count} how many cards they drew."
-    ],
-    "translation": "{actor} embaralhou a mão no baralho e comprou {count, plural, one {# carta} other {# cartas}}"
-  },
-  "TWahFj": {
-    "message": "{actor} shuffled hand to bottom of deck and drew {count, plural, one {# card} other {# cards}}",
-    "comments": [
-      "Log line. {actor} is a player's name, {count} how many cards they drew."
-    ],
-    "translation": "{actor} embaralhou a mão no fundo do baralho e comprou {count, plural, one {# carta} other {# cartas}}"
-  },
-  "E887wo": {
-    "message": "{name} looked at bottom {count, plural, one {# card} other {# cards}} of deck",
-    "comments": [
-      "Log line. {name} is a player's name, {count} how many cards from the bottom of their deck they looked at."
-    ],
-    "translation": "{name} olhou {count, plural, one {a # carta} other {as # cartas}} do fundo do baralho"
-  },
-  "imtKoA": {
-    "message": "{name} looked at top {count, plural, one {# card} other {# cards}} of deck",
-    "comments": [
-      "Log line. {name} is a player's name, {count} how many cards from the top of their deck they looked at."
-    ],
-    "translation": "{name} olhou {count, plural, one {a # carta} other {as # cartas}} do topo do baralho"
-  },
-  "l7W_Ze": {
-    "message": "<0>{0}</0>: send a friend a link to your table.",
-    "translation": "<0>{0}</0>: envie a um amigo o link da sua mesa."
-  },
-  "JTbT6L": {
-    "message": "Add special condition",
-    "translation": "Adicionar Condição Especial"
-  },
-  "Sb4b2A": {
-    "message": "Allow board flip <0>(both players)</0>",
-    "translation": "Permitir virar o tabuleiro <0>(ambos os jogadores)</0>"
-  },
-  "uUaeMQ": {
-    "message": "Attach to a Pokémon…",
-    "translation": "Ligar a um Pokémon…"
-  },
-  "c0_6W9": {
-    "message": "Copied",
-    "context": "an invitation",
-    "translation": "Copiado"
-  },
-  "ITnJNv": {
-    "message": "Copy an invitation",
-    "translation": "Copiar um convite"
-  },
-  "Yc1XTF": {
-    "message": "Copy invitation",
-    "translation": "Copiar convite"
-  },
-  "gklFA4": {
-    "message": "Couldn't copy the invitation",
-    "translation": "Não foi possível copiar o convite"
-  },
-  "sA7lnV": {
-    "message": "Couldn't copy the invitation. Try again.",
-    "translation": "Não foi possível copiar o convite. Tente novamente."
-  },
-  "O3p0SF": {
-    "message": "Couldn't generate a room. Try again.",
-    "translation": "Não foi possível gerar uma sala. Tente novamente."
-  },
-  "nzVItu": {
-    "message": "Couldn't use the clipboard. Allow access and try again.",
-    "translation": "Não foi possível usar a área de transferência. Permita o acesso e tente novamente."
-  },
-  "rNIlQ5": {
-    "message": "Cover card (only you)",
-    "translation": "Cobrir carta (só você)"
-  },
-  "dyMutU": {
-    "message": "Cover hand",
-    "translation": "Cobrir mão"
-  },
-  "6BoNqk": {
-    "message": "Cover prizes",
-    "translation": "Cobrir Prêmios"
-  },
-  "h-zJzU": {
-    "message": "Cover their hand",
-    "translation": "Cobrir a mão do oponente"
-  },
-  "7x4VPZ": {
-    "message": "Cover their Prizes",
-    "translation": "Cobrir os Prêmios do oponente"
-  },
-  "urHEvq": {
-    "message": "Cover your Prizes",
-    "translation": "Cobrir seus Prêmios"
-  },
-  "CulBzv": {
-    "message": "Evolve a Pokémon…",
-    "translation": "Evoluir um Pokémon…"
-  },
-  "oP3kz7": {
-    "message": "Generate",
-    "context": "a room",
-    "translation": "Gerar"
-  },
-  "mb6Tyv": {
-    "message": "Generate a room and send the invitation. With <0>Join as spectator</0> on, it invites a spectator.",
-    "translation": "Gere uma sala e envie o convite. Com <0>Entrar como espectador</0> ativado, o convite é para um espectador."
-  },
-  "5NEkeP": {
-    "message": "Generate a room first.",
-    "translation": "Gere uma sala primeiro."
-  },
-  "G7A2K4": {
-    "message": "Generate a room, then send the invitation.",
-    "translation": "Gere uma sala e depois envie o convite."
-  },
-  "fQq7dv": {
-    "message": "Generating…",
-    "context": "a room",
-    "translation": "Gerando…"
-  },
-  "HY40z4": {
-    "message": "Hide card",
-    "translation": "Ocultar carta"
-  },
-  "_hwQqt": {
-    "message": "Hide Lost Zone",
-    "translation": "Ocultar Zona Perdida"
-  },
-  "Z7lHUH": {
-    "message": "Hide prizes",
-    "translation": "Ocultar Prêmios"
-  },
-  "q2aSzG": {
-    "message": "Hide their Prizes",
-    "translation": "Ocultar os Prêmios do oponente"
-  },
-  "9EQ4Zd": {
-    "message": "Hide your Prizes",
-    "translation": "Ocultar seus Prêmios"
-  },
-  "EqLwOt": {
-    "message": "In use",
-    "context": "a table piece holding cards",
-    "translation": "Em uso"
-  },
-  "6vI3XA": {
-    "message": "Invitation copied",
-    "translation": "Convite copiado"
-  },
-  "z1vTYz": {
-    "message": "Invitation copied to your clipboard.",
-    "translation": "Convite copiado para a área de transferência."
-  },
-  "XbqMCS": {
-    "message": "Join pieces…",
-    "translation": "Juntar peças…"
-  },
-  "2_dOwA": {
-    "message": "Look at card (only you)",
-    "translation": "Ver carta (só você)"
-  },
-  "4rquUI": {
-    "message": "Look at hand",
-    "translation": "Ver mão"
-  },
-  "FtU5OB": {
-    "message": "Look at prizes",
-    "translation": "Ver Prêmios"
-  },
-  "-wf39o": {
-    "message": "Look at their hand",
-    "translation": "Ver a mão do oponente"
-  },
-  "Ky418J": {
-    "message": "Look at their Prizes",
-    "translation": "Ver os Prêmios do oponente"
-  },
-  "C4R15y": {
-    "message": "Look at your Prizes",
-    "translation": "Ver seus Prêmios"
-  },
-  "WTIxhp": {
-    "message": "Mark as used",
-    "comments": [
-      "Puts the \"Ability used\" marker on a card: its Ability or effect was used this turn.",
-      "Puts the \"Ability used\" marker on a card: its Ability or effect was used this turn."
-    ],
-    "translation": "Marcar como usada"
-  },
-  "Ig8A-t": {
-    "message": "Paste a valid invitation into Room ID.",
-    "translation": "Cole um convite válido no ID da sala."
-  },
-  "pJRgD4": {
-    "message": "Paste an invitation",
-    "translation": "Colar um convite"
-  },
-  "4LC7ch": {
-    "message": "Paste an invitation, or join your own room.",
-    "translation": "Cole um convite ou entre na sua própria sala."
-  },
-  "3J14ru": {
-    "message": "Paste the invitation into Room ID.",
-    "translation": "Cole o convite no ID da sala."
-  },
-  "6M-csj": {
-    "message": "Reveal card",
-    "translation": "Revelar carta"
-  },
-  "wY30n_": {
-    "message": "Reveal prizes",
-    "translation": "Revelar Prêmios"
-  },
-  "n75nZA": {
-    "message": "Reveal their Prizes",
-    "translation": "Revelar os Prêmios do oponente"
-  },
-  "c6E0p_": {
-    "message": "Reveal your Prizes",
-    "translation": "Revelar seus Prêmios"
-  },
-  "QoZkYe": {
-    "message": "Room ID",
-    "translation": "ID da sala"
-  },
-  "BulyBf": {
-    "message": "Rotate",
-    "translation": "Girar"
-  },
-  "W2pBH8": {
-    "message": "Switch special condition",
-    "translation": "Trocar Condição Especial"
-  },
-  "UoxtKp": {
-    "message": "That invitation expired. Ask for a new one.",
-    "translation": "Esse convite expirou. Peça um novo."
-  },
-  "23cwkx": {
-    "message": "Your name changed. Generate a new room.",
-    "translation": "Seu nome mudou. Gere uma nova sala."
-  },
-  "MyTf22": {
-    "message": "{available, plural, one {# card in deck} other {# cards in deck}}",
-    "translation": "{available, plural, one {# carta no baralho} other {# cartas no baralho}}"
-  },
-  "DcTMVd": {
-    "message": "{available, plural, one {# card to draw from} other {# cards to draw from}}",
-    "translation": "{available, plural, one {# carta para comprar} other {# cartas para comprar}}"
-  },
-  "nlUJMk": {
-    "message": "{count, plural, one {Look at # card} other {Look at # cards}}",
-    "translation": "{count, plural, one {Olhar # carta} other {Olhar # cartas}}"
-  },
-  "ruBWQi": {
-    "message": "Discard hand, then draw",
-    "translation": "Descartar a mão e comprar"
-  },
-  "JrTBPO": {
-    "message": "Discard hand…",
-    "translation": "Descartar a mão…"
-  },
-  "7cFPiW": {
-    "message": "Draw none",
-    "comments": [
-      "Accepts a hand put away (discarded or shuffled into the deck) without drawing."
-    ],
-    "translation": "Não comprar"
-  },
-  "gZAkYU": {
-    "message": "Hand to bottom of deck, then draw",
-    "translation": "Mão para o fundo do baralho e comprar"
-  },
-  "QW7fGB": {
-    "message": "Look at bottom cards",
-    "translation": "Olhar as cartas do fundo"
-  },
-  "nshEL9": {
-    "message": "Look at bottom cards…",
-    "translation": "Olhar as cartas do fundo…"
-  },
-  "g4nsbt": {
-    "message": "Look at top cards",
-    "translation": "Olhar as cartas do topo"
-  },
-  "KzU3sj": {
-    "message": "Look at top cards…",
-    "translation": "Olhar as cartas do topo…"
-  },
-  "3GFV_r": {
-    "message": "One fewer",
-    "context": "card count",
-    "translation": "Uma a menos"
-  },
-  "qTM8Kd": {
-    "message": "One more",
-    "context": "card count",
-    "translation": "Mais uma"
-  },
-  "P7jzR_": {
-    "message": "Quick picks",
-    "context": "card count",
-    "translation": "Atalhos"
-  },
-  "DpAKOl": {
-    "message": "Shuffle hand into deck, then draw",
-    "translation": "Embaralhar a mão no baralho e comprar"
-  },
-  "M8Ea7C": {
-    "message": "Shuffle hand to bottom…",
-    "translation": "Embaralhar a mão no fundo…"
-  },
-  "-qToFp": {
-    "message": "Shuffle hand to deck…",
-    "translation": "Embaralhar a mão no baralho…"
-  },
-  "ASNDad": {
-    "message": "Hide {name}",
-    "comments": [
-      "A button on a hand card the opponent can see; it hides the card again. {name} is the card."
-    ],
-    "translation": "Ocultar {name}"
-  },
-  "g5A2ic": {
-    "message": "Shown to your opponent",
-    "translation": "Mostrada ao oponente"
   }
 }

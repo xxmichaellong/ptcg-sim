@@ -68,15 +68,15 @@
     ],
     "translation": "{actor}が{card}を{source, select, hand {手札} prizes {サイド} discard {トラッシュ} board {盤面} stadium {スタジアム} active {バトル場} bench {ベンチ} lostZone {ロストゾーン} attachmentResolution {ついているカード} other {山札}}から{targetCard}につけました"
   },
-  "nb_tRJ": {
-    "message": "{actor} discarded {count, plural, one {# attached card(s)} other {# attached card(s)}}",
+  "eJ4Drn": {
+    "message": "{actor} discarded {count, plural, one {# attached card} other {# attached cards}}",
     "comments": [
       "Log line: a player discarded the cards attached to a Pokémon. {actor} is a player's name, {count} how many cards."
     ],
     "translation": "{actor}がついているカード{count, plural, other {#枚}}をトラッシュしました"
   },
-  "KeKqt_": {
-    "message": "{actor} discarded {count, plural, one {# card(s)} other {# card(s)}}",
+  "0bIo3n": {
+    "message": "{actor} discarded {count, plural, one {# card} other {# cards}}",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards."
     ],
@@ -89,8 +89,8 @@
     ],
     "translation": "{actor}が手札をトラッシュしました"
   },
-  "qIBRqY": {
-    "message": "{actor} discarded hand and drew {count, plural, one {# card(s)} other {# card(s)}}",
+  "7ULDVQ": {
+    "message": "{actor} discarded hand and drew {count, plural, one {# card} other {# cards}}",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards they drew."
     ],
@@ -124,8 +124,8 @@
     ],
     "translation": "{actor}が{owner}の{source, select, hand {手札} prizes {サイド} discard {トラッシュ} board {盤面} stadium {スタジアム} active {バトル場} bench {ベンチ} lostZone {ロストゾーン} attachmentResolution {ついているカード} inspection {確認中のカード} other {山札}}のカードを隠しました"
   },
-  "PZVwKy": {
-    "message": "{actor} left {count, plural, one {# attached card(s)} other {# attached card(s)}} in play",
+  "VgwRoT": {
+    "message": "{actor} left {count, plural, one {# attached card} other {# attached cards}} in play",
     "comments": [
       "Log line: a player kept the cards attached to a Pokémon on the table. {actor} is a player's name, {count} how many cards."
     ],
@@ -166,8 +166,8 @@
     ],
     "translation": "{actor}が{card}を{source, select, hand {手札} prizes {サイド} discard {トラッシュ} board {盤面} stadium {スタジアム} active {バトル場} bench {ベンチ} lostZone {ロストゾーン} attachmentResolution {ついているカード} other {山札}}から山札の上に移動しました"
   },
-  "WBnnCz": {
-    "message": "{actor} moved {count, plural, one {# card(s)} other {# card(s)}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} other {deck}}",
+  "9RYqFp": {
+    "message": "{actor} moved {count, plural, one {# card} other {# cards}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} other {deck}}",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards; {source} is the zone they left and {destination} where they went (play: onto the table)."
     ],
@@ -201,29 +201,29 @@
     ],
     "translation": "{actor}が{card}を{source, select, hand {手札} prizes {サイド} discard {トラッシュ} board {盤面} stadium {スタジアム} active {バトル場} bench {ベンチ} lostZone {ロストゾーン} attachmentResolution {ついているカード} other {山札}}から山札に戻して切りました"
   },
-  "xEKtXt": {
-    "message": "{actor} shuffled {count, plural, one {# attached card(s)} other {# attached card(s)}} into deck",
+  "e9cTIS": {
+    "message": "{actor} shuffled {count, plural, one {# attached card} other {# attached cards}} into deck",
     "comments": [
       "Log line: a player shuffled the cards attached to a Pokémon into their deck. {actor} is a player's name, {count} how many cards."
     ],
     "translation": "{actor}がついているカード{count, plural, other {#枚}}を山札に戻して切りました"
   },
-  "Ggdxd3": {
-    "message": "{actor} shuffled {count, plural, one {# card(s)} other {# card(s)}} from board to deck",
+  "99ycft": {
+    "message": "{actor} shuffled {count, plural, one {# card} other {# cards}} from board to deck",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards."
     ],
     "translation": "{actor}が盤面のカード{count, plural, other {#枚}}を山札に戻して切りました"
   },
-  "PoaZgj": {
-    "message": "{actor} shuffled {count, plural, one {# card(s)} other {# card(s)}} into deck",
+  "RpAS5v": {
+    "message": "{actor} shuffled {count, plural, one {# card} other {# cards}} into deck",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards."
     ],
     "translation": "{actor}がカード{count, plural, other {#枚}}を山札に戻して切りました"
   },
-  "DilVHS": {
-    "message": "{actor} shuffled {count, plural, one {# card(s)} other {# card(s)}} to bottom of deck",
+  "cFSyyy": {
+    "message": "{actor} shuffled {count, plural, one {# card} other {# cards}} to bottom of deck",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards."
     ],
@@ -243,8 +243,8 @@
     ],
     "translation": "{actor}が手札を山札に戻して切りました"
   },
-  "h6k_d9": {
-    "message": "{actor} shuffled hand into deck and drew {count, plural, one {# card(s)} other {# card(s)}}",
+  "xZranI": {
+    "message": "{actor} shuffled hand into deck and drew {count, plural, one {# card} other {# cards}}",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards they drew."
     ],
@@ -257,8 +257,8 @@
     ],
     "translation": "{actor}が手札を切って山札の下に戻しました"
   },
-  "xT_uho": {
-    "message": "{actor} shuffled hand to bottom of deck and drew {count, plural, one {# card(s)} other {# card(s)}}",
+  "TWahFj": {
+    "message": "{actor} shuffled hand to bottom of deck and drew {count, plural, one {# card} other {# cards}}",
     "comments": [
       "Log line. {actor} is a player's name, {count} how many cards they drew."
     ],
@@ -284,6 +284,14 @@
       "Log line: one player undid the other's last move. {actor} is who undid it, {target} whose move it was."
     ],
     "translation": "{actor}が{target}の直前の操作を取り消しました"
+  },
+  "MyTf22": {
+    "message": "{available, plural, one {# card in deck} other {# cards in deck}}",
+    "translation": "{available, plural, other {デッキ内のカード: #枚}}"
+  },
+  "DcTMVd": {
+    "message": "{available, plural, one {# card to draw from} other {# cards to draw from}}",
+    "translation": "{available, plural, other {引けるカード: #枚}}"
   },
   "iwKsQi": {
     "message": "{cardLabel}: actions",
@@ -407,6 +415,10 @@
   "0ZvQu6": {
     "message": "{count, plural, one {Draw # card} other {Draw # cards}}",
     "translation": "{count, plural, other {{count}枚引く}}"
+  },
+  "nlUJMk": {
+    "message": "{count, plural, one {Look at # card} other {Look at # cards}}",
+    "translation": "{count, plural, other {#枚を見る}}"
   },
   "UJXyU7": {
     "message": "{count, plural, one {Look at bottom card} other {Look at bottom # cards}}",
@@ -668,19 +680,19 @@
     ],
     "translation": "{name}がデッキを読み込みました"
   },
-  "lcx9nx": {
-    "message": "{name} looked at bottom {count, plural, one {# card(s)} other {# card(s)}} of deck",
+  "E887wo": {
+    "message": "{name} looked at bottom {count, plural, one {# card} other {# cards}} of deck",
     "comments": [
       "Log line. {name} is a player's name, {count} how many cards from the bottom of their deck they looked at."
     ],
-    "translation": "{name}は山札の下から{count, plural, other {#枚}}を見ました"
+    "translation": "{name}が山札の下から{count, plural, other {#枚}}を見ました"
   },
-  "ok9Ijw": {
-    "message": "{name} looked at top {count, plural, one {# card(s)} other {# card(s)}} of deck",
+  "imtKoA": {
+    "message": "{name} looked at top {count, plural, one {# card} other {# cards}} of deck",
     "comments": [
       "Log line. {name} is a player's name, {count} how many cards from the top of their deck they looked at."
     ],
-    "translation": "{name}は山札の上から{count, plural, other {#枚}}を見ました"
+    "translation": "{name}が山札の上から{count, plural, other {#枚}}を見ました"
   },
   "A7bcR4": {
     "message": "{name} Lost Zone",
@@ -1185,6 +1197,10 @@
     "message": "Add or switch special condition",
     "translation": "特殊状態を追加または切り替え"
   },
+  "JTbT6L": {
+    "message": "Add special condition",
+    "translation": "特殊状態を追加"
+  },
   "ZVI875": {
     "message": "Add to deck",
     "translation": "デッキに追加"
@@ -1352,10 +1368,6 @@
     "context": "special condition",
     "translation": "ねむり"
   },
-  "hXSSHx": {
-    "message": "Assemble / attach to a card…",
-    "translation": "組み立て / カードにつける…"
-  },
   "igVDFt": {
     "message": "Attach",
     "translation": "つける"
@@ -1368,6 +1380,10 @@
   "jrzyuC": {
     "message": "Attach and evolve",
     "translation": "つけて進化させる"
+  },
+  "uUaeMQ": {
+    "message": "Attach to a Pokémon…",
+    "translation": "ポケモンにつける…"
   },
   "E9l6HC": {
     "message": "Attached cards being moved",
@@ -1963,6 +1979,30 @@
     "context": "the deck's cover card",
     "translation": "カバー"
   },
+  "rNIlQ5": {
+    "message": "Cover card (only you)",
+    "translation": "カードを伏せる(自分のみ)"
+  },
+  "dyMutU": {
+    "message": "Cover hand",
+    "translation": "手札を伏せる"
+  },
+  "6BoNqk": {
+    "message": "Cover prizes",
+    "translation": "サイドを伏せる"
+  },
+  "h-zJzU": {
+    "message": "Cover their hand",
+    "translation": "相手の手札を伏せる"
+  },
+  "7x4VPZ": {
+    "message": "Cover their Prizes",
+    "translation": "相手のサイドを伏せる"
+  },
+  "urHEvq": {
+    "message": "Cover your Prizes",
+    "translation": "自分のサイドを伏せる"
+  },
   "LwyL9G": {
     "message": "Cream",
     "comments": [
@@ -2188,6 +2228,14 @@
     "message": "Discard hand and draw…",
     "translation": "手札をトラッシュして引く…"
   },
+  "ruBWQi": {
+    "message": "Discard hand, then draw",
+    "translation": "手札をトラッシュして引く"
+  },
+  "JrTBPO": {
+    "message": "Discard hand…",
+    "translation": "手札をトラッシュ…"
+  },
   "eEqZQd": {
     "message": "Discard pile",
     "context": "zone",
@@ -2251,11 +2299,6 @@
     "context": "Pokémon type",
     "translation": "ドラゴン"
   },
-  "LU-TxR": {
-    "message": "Draw",
-    "context": "draw cards",
-    "translation": "引く"
-  },
   "mBdQmZ": {
     "message": "Draw",
     "context": "shortcut key caption",
@@ -2273,10 +2316,6 @@
     "message": "Draw a card: drag the top of your deck into your hand.",
     "translation": "カードを引く:山札の上を手札にドラッグします。"
   },
-  "to34yF": {
-    "message": "Draw card(s)",
-    "translation": "カードを引く"
-  },
   "ZQB_oJ": {
     "message": "Draw cards",
     "translation": "カードを引く"
@@ -2285,13 +2324,16 @@
     "message": "Draw cards…",
     "translation": "カードを引く…"
   },
-  "SAb30P": {
-    "message": "Draw how many cards?",
-    "translation": "何枚引きますか?"
-  },
   "SP_Sjy": {
     "message": "Draw how many?",
     "translation": "何枚引きますか?"
+  },
+  "7cFPiW": {
+    "message": "Draw none",
+    "comments": [
+      "Accepts a hand put away (discarded or shuffled into the deck) without drawing."
+    ],
+    "translation": "引かない"
   },
   "b0MOy2": {
     "message": "Draw, search and shuffle",
@@ -2393,10 +2435,6 @@
     "message": "Enter a name.",
     "translation": "名前を入力してください。"
   },
-  "u2fAme": {
-    "message": "Enter a number",
-    "translation": "数字を入力してください"
-  },
   "0jl-i6": {
     "message": "Enter a valid image URL.",
     "translation": "有効な画像URLを入力してください。"
@@ -2429,6 +2467,10 @@
     "message": "Evolve",
     "context": "shortcut key caption",
     "translation": "進化"
+  },
+  "CulBzv": {
+    "message": "Evolve a Pokémon…",
+    "translation": "ポケモンを進化させる…"
   },
   "vb1XQU": {
     "message": "Evolve it: drag <0>{0}</0> onto {1}.",
@@ -2729,6 +2771,10 @@
     "context": "shortcut key caption",
     "translation": "手札を山札の下へ"
   },
+  "gZAkYU": {
+    "message": "Hand to bottom of deck, then draw",
+    "translation": "手札を山札の下に戻して引く"
+  },
   "n04_a0": {
     "message": "Hand to deck",
     "context": "shortcut key caption",
@@ -2776,6 +2822,17 @@
     "context": "stop revealing a card",
     "translation": "隠す"
   },
+  "ASNDad": {
+    "message": "Hide {name}",
+    "comments": [
+      "A button on a hand card the opponent can see; it hides the card again. {name} is the card."
+    ],
+    "translation": "{name}を隠す"
+  },
+  "HY40z4": {
+    "message": "Hide card",
+    "translation": "カードを隠す"
+  },
   "po1CV7": {
     "message": "Hide keyboard",
     "translation": "キーボードを隠す"
@@ -2788,13 +2845,25 @@
     "message": "Hide opponent's hand",
     "translation": "相手の手札を隠す"
   },
+  "Z7lHUH": {
+    "message": "Hide prizes",
+    "translation": "サイドを隠す"
+  },
   "OIoFPQ": {
     "message": "Hide the Lost Zone?",
     "translation": "ロストゾーンを隠しますか?"
   },
+  "q2aSzG": {
+    "message": "Hide their Prizes",
+    "translation": "相手のサイドを隠す"
+  },
   "ZQLqYr": {
     "message": "Hide welcome",
     "translation": "ウェルカムを隠す"
+  },
+  "9EQ4Zd": {
+    "message": "Hide your Prizes",
+    "translation": "自分のサイドを隠す"
   },
   "tgYI8X": {
     "message": "Holographic",
@@ -2972,6 +3041,10 @@
   "G7O46F": {
     "message": "Join as spectator",
     "translation": "観戦者として参加"
+  },
+  "XbqMCS": {
+    "message": "Join pieces…",
+    "translation": "ピースを合わせる…"
   },
   "t5uRiA": {
     "message": "Join room",
@@ -3194,6 +3267,14 @@
     "context": "shortcut key caption",
     "translation": "見る"
   },
+  "QW7fGB": {
+    "message": "Look at bottom cards",
+    "translation": "山札の下を見る"
+  },
+  "nshEL9": {
+    "message": "Look at bottom cards…",
+    "translation": "山札の下を見る…"
+  },
   "f55U3C": {
     "message": "Look at bottom of deck…",
     "translation": "山札の下を見る…"
@@ -3202,29 +3283,25 @@
     "message": "Look at bottom of their deck…",
     "translation": "相手の山札の下を見る…"
   },
+  "2_dOwA": {
+    "message": "Look at card (only you)",
+    "translation": "カードを見る(自分のみ)"
+  },
   "C5D5j0": {
     "message": "Look at cards",
     "translation": "カードを見る"
   },
-  "Q1s-WM": {
-    "message": "Look at how many cards?",
-    "translation": "何枚見ますか?"
+  "4rquUI": {
+    "message": "Look at hand",
+    "translation": "手札を見る"
   },
   "I3be0u": {
     "message": "Look at or cover (only you)",
     "translation": "見る/伏せる(自分のみ)"
   },
-  "nZyxDJ": {
-    "message": "Look at or cover their hand",
-    "translation": "相手の手札を見る/隠す"
-  },
-  "qJ_tx1": {
-    "message": "Look at or cover their Prizes",
-    "translation": "相手のサイドを見る/隠す"
-  },
-  "bQF9w4": {
-    "message": "Look at or cover your Prizes",
-    "translation": "サイドを見る/隠す"
+  "FtU5OB": {
+    "message": "Look at prizes",
+    "translation": "サイドを見る"
   },
   "I7Daes": {
     "message": "Look at the bottom cards",
@@ -3234,6 +3311,22 @@
     "message": "Look at the top cards",
     "translation": "山札の上のカードを見る"
   },
+  "-wf39o": {
+    "message": "Look at their hand",
+    "translation": "相手の手札を見る"
+  },
+  "Ky418J": {
+    "message": "Look at their Prizes",
+    "translation": "相手のサイドを見る"
+  },
+  "g4nsbt": {
+    "message": "Look at top cards",
+    "translation": "山札の上を見る"
+  },
+  "KzU3sj": {
+    "message": "Look at top cards…",
+    "translation": "山札の上を見る…"
+  },
   "bIo9OM": {
     "message": "Look at top of deck…",
     "translation": "山札の上を見る…"
@@ -3242,13 +3335,9 @@
     "message": "Look at top of their deck…",
     "translation": "相手の山札の上を見る…"
   },
-  "ktAl1J": {
-    "message": "Look/cover hand",
-    "translation": "手札を見る/伏せる"
-  },
-  "TYI_fo": {
-    "message": "Look/cover prizes",
-    "translation": "サイドを見る/伏せる"
+  "C4R15y": {
+    "message": "Look at your Prizes",
+    "translation": "自分のサイドを見る"
   },
   "pKU2VG": {
     "message": "Looking at cards",
@@ -3317,9 +3406,19 @@
   "386rEt": {
     "message": "Mark as unused",
     "comments": [
+      "Takes the \"Ability used\" marker off a Pokémon.",
+      "Takes the \"Ability used\" marker off a Pokémon.",
       "Takes the \"Ability used\" marker off a Pokémon."
     ],
     "translation": "未使用にする"
+  },
+  "WTIxhp": {
+    "message": "Mark as used",
+    "comments": [
+      "Puts the \"Ability used\" marker on a card: its Ability or effect was used this turn.",
+      "Puts the \"Ability used\" marker on a card: its Ability or effect was used this turn."
+    ],
+    "translation": "使用済みにする"
   },
   "IHU0N1": {
     "message": "Mark GX attack unused",
@@ -3763,6 +3862,11 @@
     ],
     "translation": "ひとりのときは両方の側を操作します。<0>{0}</0>を押すと、相手側にテーブルを向けられます。"
   },
+  "3GFV_r": {
+    "message": "One fewer",
+    "context": "card count",
+    "translation": "1枚減らす"
+  },
   "eVFY7w": {
     "message": "One half fills the table",
     "translation": "半分がテーブルいっぱいに広がります"
@@ -3770,6 +3874,11 @@
   "MCTQfb": {
     "message": "One moment",
     "translation": "少々お待ちください"
+  },
+  "qTM8Kd": {
+    "message": "One more",
+    "context": "card count",
+    "translation": "1枚増やす"
   },
   "-EDLvw": {
     "message": "Only {formatLabel}-legal",
@@ -4199,6 +4308,11 @@
     "message": "Quantity: 1 to {max}.",
     "translation": "枚数:1~{max}"
   },
+  "P7jzR_": {
+    "message": "Quick picks",
+    "context": "card count",
+    "translation": "クイック選択"
+  },
   "KgxgFc": {
     "message": "Radiant",
     "context": "Pokémon card mechanic",
@@ -4453,21 +4567,21 @@
     "message": "Reveal (both players)",
     "translation": "公開(両プレイヤー)"
   },
-  "MFV2V6": {
-    "message": "Reveal or hide their Prizes",
-    "translation": "相手のサイドを表向き/裏向きにする"
+  "6M-csj": {
+    "message": "Reveal card",
+    "translation": "カードを公開"
   },
-  "FnwG7O": {
-    "message": "Reveal or hide your Prizes",
-    "translation": "自分のサイドを表向き/裏向きにする"
+  "wY30n_": {
+    "message": "Reveal prizes",
+    "translation": "サイドを公開"
   },
-  "p7M2KL": {
-    "message": "Reveal/hide card",
-    "translation": "カードを公開/非公開"
+  "n75nZA": {
+    "message": "Reveal their Prizes",
+    "translation": "相手のサイドを公開"
   },
-  "lHuUt0": {
-    "message": "Reveal/hide prizes",
-    "translation": "サイドを公開/非公開"
+  "c6E0p_": {
+    "message": "Reveal your Prizes",
+    "translation": "自分のサイドを公開"
   },
   "fa6wL6": {
     "message": "Revealed to your opponent",
@@ -4522,6 +4636,10 @@
     "message": "Room ready",
     "translation": "ルーム準備完了"
   },
+  "BulyBf": {
+    "message": "Rotate",
+    "translation": "回転"
+  },
   "pbJSIc": {
     "message": "Rotate",
     "context": "shortcut key caption",
@@ -4530,10 +4648,6 @@
   "M2Hp6y": {
     "message": "Rotate BREAK",
     "translation": "BREAKを回転"
-  },
-  "86ffek": {
-    "message": "Rotate card(s)",
-    "translation": "カードを回転"
   },
   "JRfxmI": {
     "message": "Row {row}: text after a closing quote.",
@@ -4899,6 +5013,10 @@
     "message": "Show this card on the deck",
     "translation": "このカードをデッキに表示"
   },
+  "g5A2ic": {
+    "message": "Shown to your opponent",
+    "translation": "相手に公開中"
+  },
   "sf2cQK": {
     "message": "Shuffle",
     "context": "shortcut key caption",
@@ -4937,9 +5055,9 @@
     "message": "Shuffle hand into deck and draw…",
     "translation": "手札を山札に戻して切り、引く…"
   },
-  "VD_Lux": {
-    "message": "Shuffle hand to bottom",
-    "translation": "手札を切って山札の下に戻す"
+  "DpAKOl": {
+    "message": "Shuffle hand into deck, then draw",
+    "translation": "手札を山札に戻して切り、引く"
   },
   "weBDkm": {
     "message": "Shuffle hand to bottom of deck",
@@ -4949,9 +5067,13 @@
     "message": "Shuffle hand to bottom of deck and draw…",
     "translation": "手札を切って山札の下に戻し、引く…"
   },
-  "RdPVNx": {
-    "message": "Shuffle hand to deck",
-    "translation": "手札を山札に戻して切る"
+  "M8Ea7C": {
+    "message": "Shuffle hand to bottom…",
+    "translation": "手札を切って山札の下に戻す…"
+  },
+  "-qToFp": {
+    "message": "Shuffle hand to deck…",
+    "translation": "手札を山札に戻して切る…"
   },
   "Tbmmyh": {
     "message": "Shuffle in",
@@ -5214,6 +5336,10 @@
     "message": "Switch",
     "context": "shortcut key caption",
     "translation": "入れ替え"
+  },
+  "W2pBH8": {
+    "message": "Switch special condition",
+    "translation": "特殊状態を切り替える"
   },
   "Q1BDRW": {
     "message": "Switch with top of deck",
@@ -5632,10 +5758,6 @@
     "message": "Toggle ability used",
     "translation": "特性の使用を切り替え"
   },
-  "OLgB6p": {
-    "message": "Toggle ability/effect",
-    "translation": "特性/効果を切り替え"
-  },
   "6QCyrU": {
     "message": "Too large for a deck",
     "translation": "デッキには大きすぎます"
@@ -5902,19 +6024,10 @@
     "message": "V-UNION · 4 pieces",
     "translation": "V-UNION・4ピース"
   },
-  "VO6wBK": {
-    "message": "View",
-    "context": "look at cards from the deck",
-    "translation": "見る"
-  },
   "W-3MjD": {
     "message": "View",
     "context": "shortcut key caption",
     "translation": "見る"
-  },
-  "BqYI8B": {
-    "message": "View bottom card(s)",
-    "translation": "下のカードを見る"
   },
   "9AKt60": {
     "message": "View card",
@@ -5923,10 +6036,6 @@
   "w3eDyf": {
     "message": "View each card",
     "translation": "カードを1枚ずつ表示"
-  },
-  "VKXHWy": {
-    "message": "View top card(s)",
-    "translation": "上のカードを見る"
   },
   "s3cHPo": {
     "message": "View whole card",
@@ -6054,397 +6163,5 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "ゾーンの枠線"
-  },
-  "eJ4Drn": {
-    "message": "{actor} discarded {count, plural, one {# attached card} other {# attached cards}}",
-    "comments": [
-      "Log line: a player discarded the cards attached to a Pokémon. {actor} is a player's name, {count} how many cards."
-    ],
-    "translation": "{actor}がついているカード{count, plural, other {#枚}}をトラッシュしました"
-  },
-  "0bIo3n": {
-    "message": "{actor} discarded {count, plural, one {# card} other {# cards}}",
-    "comments": [
-      "Log line. {actor} is a player's name, {count} how many cards."
-    ],
-    "translation": "{actor}がカード{count, plural, other {#枚}}をトラッシュしました"
-  },
-  "7ULDVQ": {
-    "message": "{actor} discarded hand and drew {count, plural, one {# card} other {# cards}}",
-    "comments": [
-      "Log line. {actor} is a player's name, {count} how many cards they drew."
-    ],
-    "translation": "{actor}が手札をトラッシュして{count, plural, other {#枚}}引きました"
-  },
-  "VgwRoT": {
-    "message": "{actor} left {count, plural, one {# attached card} other {# attached cards}} in play",
-    "comments": [
-      "Log line: a player kept the cards attached to a Pokémon on the table. {actor} is a player's name, {count} how many cards."
-    ],
-    "translation": "{actor}がついているカード{count, plural, other {#枚}}を場に残しました"
-  },
-  "9RYqFp": {
-    "message": "{actor} moved {count, plural, one {# card} other {# cards}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} other {deck}}",
-    "comments": [
-      "Log line. {actor} is a player's name, {count} how many cards; {source} is the zone they left and {destination} where they went (play: onto the table)."
-    ],
-    "translation": "{actor}がカード{count, plural, other {#枚}}を{source, select, hand {手札} prizes {サイド} discard {トラッシュ} board {盤面} stadium {スタジアム} active {バトル場} bench {ベンチ} lostZone {ロストゾーン} attachmentResolution {ついているカード} other {山札}}から{destination, select, hand {手札} discard {トラッシュ} lostZone {ロストゾーン} deckBottom {山札の下} play {場} other {山札}}に移動しました"
-  },
-  "e9cTIS": {
-    "message": "{actor} shuffled {count, plural, one {# attached card} other {# attached cards}} into deck",
-    "comments": [
-      "Log line: a player shuffled the cards attached to a Pokémon into their deck. {actor} is a player's name, {count} how many cards."
-    ],
-    "translation": "{actor}がついているカード{count, plural, other {#枚}}を山札に戻して切りました"
-  },
-  "99ycft": {
-    "message": "{actor} shuffled {count, plural, one {# card} other {# cards}} from board to deck",
-    "comments": [
-      "Log line. {actor} is a player's name, {count} how many cards."
-    ],
-    "translation": "{actor}が盤面のカード{count, plural, other {#枚}}を山札に戻して切りました"
-  },
-  "RpAS5v": {
-    "message": "{actor} shuffled {count, plural, one {# card} other {# cards}} into deck",
-    "comments": [
-      "Log line. {actor} is a player's name, {count} how many cards."
-    ],
-    "translation": "{actor}がカード{count, plural, other {#枚}}を山札に戻して切りました"
-  },
-  "cFSyyy": {
-    "message": "{actor} shuffled {count, plural, one {# card} other {# cards}} to bottom of deck",
-    "comments": [
-      "Log line. {actor} is a player's name, {count} how many cards."
-    ],
-    "translation": "{actor}がカード{count, plural, other {#枚}}を切って山札の下に戻しました"
-  },
-  "xZranI": {
-    "message": "{actor} shuffled hand into deck and drew {count, plural, one {# card} other {# cards}}",
-    "comments": [
-      "Log line. {actor} is a player's name, {count} how many cards they drew."
-    ],
-    "translation": "{actor}が手札を山札に戻して切り、{count, plural, other {#枚}}引きました"
-  },
-  "TWahFj": {
-    "message": "{actor} shuffled hand to bottom of deck and drew {count, plural, one {# card} other {# cards}}",
-    "comments": [
-      "Log line. {actor} is a player's name, {count} how many cards they drew."
-    ],
-    "translation": "{actor}が手札を切って山札の下に戻し、{count, plural, other {#枚}}引きました"
-  },
-  "E887wo": {
-    "message": "{name} looked at bottom {count, plural, one {# card} other {# cards}} of deck",
-    "comments": [
-      "Log line. {name} is a player's name, {count} how many cards from the bottom of their deck they looked at."
-    ],
-    "translation": "{name}が山札の下から{count, plural, other {#枚}}を見ました"
-  },
-  "imtKoA": {
-    "message": "{name} looked at top {count, plural, one {# card} other {# cards}} of deck",
-    "comments": [
-      "Log line. {name} is a player's name, {count} how many cards from the top of their deck they looked at."
-    ],
-    "translation": "{name}が山札の上から{count, plural, other {#枚}}を見ました"
-  },
-  "l7W_Ze": {
-    "message": "<0>{0}</0>: send a friend a link to your table.",
-    "translation": "<0>{0}</0>:テーブルのリンクを友達に送れます。"
-  },
-  "JTbT6L": {
-    "message": "Add special condition",
-    "translation": "特殊状態を追加"
-  },
-  "Sb4b2A": {
-    "message": "Allow board flip <0>(both players)</0>",
-    "translation": "盤面の反転を許可<0>(両プレイヤー)</0>"
-  },
-  "uUaeMQ": {
-    "message": "Attach to a Pokémon…",
-    "translation": "ポケモンにつける…"
-  },
-  "c0_6W9": {
-    "message": "Copied",
-    "context": "an invitation",
-    "translation": "コピーしました"
-  },
-  "ITnJNv": {
-    "message": "Copy an invitation",
-    "translation": "招待をコピー"
-  },
-  "Yc1XTF": {
-    "message": "Copy invitation",
-    "translation": "招待をコピー"
-  },
-  "gklFA4": {
-    "message": "Couldn't copy the invitation",
-    "translation": "招待をコピーできませんでした"
-  },
-  "sA7lnV": {
-    "message": "Couldn't copy the invitation. Try again.",
-    "translation": "招待をコピーできませんでした。もう一度お試しください。"
-  },
-  "O3p0SF": {
-    "message": "Couldn't generate a room. Try again.",
-    "translation": "ルームを作成できませんでした。もう一度お試しください。"
-  },
-  "nzVItu": {
-    "message": "Couldn't use the clipboard. Allow access and try again.",
-    "translation": "クリップボードを使用できませんでした。アクセスを許可してもう一度お試しください。"
-  },
-  "rNIlQ5": {
-    "message": "Cover card (only you)",
-    "translation": "カードを伏せる(自分のみ)"
-  },
-  "dyMutU": {
-    "message": "Cover hand",
-    "translation": "手札を伏せる"
-  },
-  "6BoNqk": {
-    "message": "Cover prizes",
-    "translation": "サイドを伏せる"
-  },
-  "h-zJzU": {
-    "message": "Cover their hand",
-    "translation": "相手の手札を伏せる"
-  },
-  "7x4VPZ": {
-    "message": "Cover their Prizes",
-    "translation": "相手のサイドを伏せる"
-  },
-  "urHEvq": {
-    "message": "Cover your Prizes",
-    "translation": "自分のサイドを伏せる"
-  },
-  "CulBzv": {
-    "message": "Evolve a Pokémon…",
-    "translation": "ポケモンを進化させる…"
-  },
-  "oP3kz7": {
-    "message": "Generate",
-    "context": "a room",
-    "translation": "生成"
-  },
-  "mb6Tyv": {
-    "message": "Generate a room and send the invitation. With <0>Join as spectator</0> on, it invites a spectator.",
-    "translation": "ルームを作成して招待を送ります。<0>観戦者として参加</0>がオンの場合は、観戦者を招待します。"
-  },
-  "5NEkeP": {
-    "message": "Generate a room first.",
-    "translation": "先にルームを作成してください。"
-  },
-  "G7A2K4": {
-    "message": "Generate a room, then send the invitation.",
-    "translation": "ルームを作成してから、招待を送ってください。"
-  },
-  "fQq7dv": {
-    "message": "Generating…",
-    "context": "a room",
-    "translation": "作成中…"
-  },
-  "HY40z4": {
-    "message": "Hide card",
-    "translation": "カードを隠す"
-  },
-  "_hwQqt": {
-    "message": "Hide Lost Zone",
-    "translation": "ロストゾーンを隠す"
-  },
-  "Z7lHUH": {
-    "message": "Hide prizes",
-    "translation": "サイドを隠す"
-  },
-  "q2aSzG": {
-    "message": "Hide their Prizes",
-    "translation": "相手のサイドを隠す"
-  },
-  "9EQ4Zd": {
-    "message": "Hide your Prizes",
-    "translation": "自分のサイドを隠す"
-  },
-  "EqLwOt": {
-    "message": "In use",
-    "context": "a table piece holding cards",
-    "translation": "使用中"
-  },
-  "6vI3XA": {
-    "message": "Invitation copied",
-    "translation": "招待をコピーしました"
-  },
-  "z1vTYz": {
-    "message": "Invitation copied to your clipboard.",
-    "translation": "招待をクリップボードにコピーしました。"
-  },
-  "XbqMCS": {
-    "message": "Join pieces…",
-    "translation": "ピースを合わせる…"
-  },
-  "2_dOwA": {
-    "message": "Look at card (only you)",
-    "translation": "カードを見る(自分のみ)"
-  },
-  "4rquUI": {
-    "message": "Look at hand",
-    "translation": "手札を見る"
-  },
-  "FtU5OB": {
-    "message": "Look at prizes",
-    "translation": "サイドを見る"
-  },
-  "-wf39o": {
-    "message": "Look at their hand",
-    "translation": "相手の手札を見る"
-  },
-  "Ky418J": {
-    "message": "Look at their Prizes",
-    "translation": "相手のサイドを見る"
-  },
-  "C4R15y": {
-    "message": "Look at your Prizes",
-    "translation": "自分のサイドを見る"
-  },
-  "WTIxhp": {
-    "message": "Mark as used",
-    "comments": [
-      "Puts the \"Ability used\" marker on a card: its Ability or effect was used this turn.",
-      "Puts the \"Ability used\" marker on a card: its Ability or effect was used this turn."
-    ],
-    "translation": "使用済みにする"
-  },
-  "Ig8A-t": {
-    "message": "Paste a valid invitation into Room ID.",
-    "translation": "有効な招待をルームIDに貼り付けてください。"
-  },
-  "pJRgD4": {
-    "message": "Paste an invitation",
-    "translation": "招待を貼り付ける"
-  },
-  "4LC7ch": {
-    "message": "Paste an invitation, or join your own room.",
-    "translation": "招待を貼り付けるか、自分のルームに参加してください。"
-  },
-  "3J14ru": {
-    "message": "Paste the invitation into Room ID.",
-    "translation": "招待をルームIDに貼り付けてください。"
-  },
-  "6M-csj": {
-    "message": "Reveal card",
-    "translation": "カードを公開"
-  },
-  "wY30n_": {
-    "message": "Reveal prizes",
-    "translation": "サイドを公開"
-  },
-  "n75nZA": {
-    "message": "Reveal their Prizes",
-    "translation": "相手のサイドを公開"
-  },
-  "c6E0p_": {
-    "message": "Reveal your Prizes",
-    "translation": "自分のサイドを公開"
-  },
-  "QoZkYe": {
-    "message": "Room ID",
-    "translation": "ルームID"
-  },
-  "BulyBf": {
-    "message": "Rotate",
-    "translation": "回転"
-  },
-  "W2pBH8": {
-    "message": "Switch special condition",
-    "translation": "特殊状態を切り替える"
-  },
-  "UoxtKp": {
-    "message": "That invitation expired. Ask for a new one.",
-    "translation": "この招待は期限切れです。新しい招待を依頼してください。"
-  },
-  "23cwkx": {
-    "message": "Your name changed. Generate a new room.",
-    "translation": "名前が変更されました。新しいルームを作成してください。"
-  },
-  "MyTf22": {
-    "message": "{available, plural, one {# card in deck} other {# cards in deck}}",
-    "translation": "{available, plural, other {デッキ内のカード: #枚}}"
-  },
-  "DcTMVd": {
-    "message": "{available, plural, one {# card to draw from} other {# cards to draw from}}",
-    "translation": "{available, plural, other {引けるカード: #枚}}"
-  },
-  "nlUJMk": {
-    "message": "{count, plural, one {Look at # card} other {Look at # cards}}",
-    "translation": "{count, plural, other {#枚を見る}}"
-  },
-  "ruBWQi": {
-    "message": "Discard hand, then draw",
-    "translation": "手札をトラッシュして引く"
-  },
-  "JrTBPO": {
-    "message": "Discard hand…",
-    "translation": "手札をトラッシュ…"
-  },
-  "7cFPiW": {
-    "message": "Draw none",
-    "comments": [
-      "Accepts a hand put away (discarded or shuffled into the deck) without drawing."
-    ],
-    "translation": "引かない"
-  },
-  "gZAkYU": {
-    "message": "Hand to bottom of deck, then draw",
-    "translation": "手札を山札の下に戻して引く"
-  },
-  "QW7fGB": {
-    "message": "Look at bottom cards",
-    "translation": "山札の下を見る"
-  },
-  "nshEL9": {
-    "message": "Look at bottom cards…",
-    "translation": "山札の下を見る…"
-  },
-  "g4nsbt": {
-    "message": "Look at top cards",
-    "translation": "山札の上を見る"
-  },
-  "KzU3sj": {
-    "message": "Look at top cards…",
-    "translation": "山札の上を見る…"
-  },
-  "3GFV_r": {
-    "message": "One fewer",
-    "context": "card count",
-    "translation": "1枚減らす"
-  },
-  "qTM8Kd": {
-    "message": "One more",
-    "context": "card count",
-    "translation": "1枚増やす"
-  },
-  "P7jzR_": {
-    "message": "Quick picks",
-    "context": "card count",
-    "translation": "クイック選択"
-  },
-  "DpAKOl": {
-    "message": "Shuffle hand into deck, then draw",
-    "translation": "手札を山札に戻して切り、引く"
-  },
-  "M8Ea7C": {
-    "message": "Shuffle hand to bottom…",
-    "translation": "手札を切って山札の下に戻す…"
-  },
-  "-qToFp": {
-    "message": "Shuffle hand to deck…",
-    "translation": "手札を山札に戻して切る…"
-  },
-  "ASNDad": {
-    "message": "Hide {name}",
-    "comments": [
-      "A button on a hand card the opponent can see; it hides the card again. {name} is the card."
-    ],
-    "translation": "{name}を隠す"
-  },
-  "g5A2ic": {
-    "message": "Shown to your opponent",
-    "translation": "相手に公開中"
   }
 }
