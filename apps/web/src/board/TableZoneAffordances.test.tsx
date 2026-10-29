@@ -7,6 +7,8 @@ import {
   type PlayerId,
 } from '@ptcgsim/game-core';
 import {
+  countBadgeAnchorWithin,
+  countBadgeBox,
   createBoardScene,
   createEmptyBoardView,
   createTableLayoutSnapshot,
@@ -19,6 +21,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  deckPlusPlacement,
   TableZoneAffordances,
   type TableZoneAffordancesProps,
 } from './TableZoneAffordances.js';
@@ -163,6 +166,59 @@ describe('TableZoneAffordances', () => {
     expect(affordance(red).seatTone).toBe('opponent');
     expect(affordance(blue).playerSide).toBe('opponent');
     expect(affordance(blue).seatTone).toBe('local');
+  });
+
+  it("keeps an empty deck's 0 clear of its + where the pile is narrower than the + (a phone held sideways)", async () => {
+    const layout = await render(
+      createEmptyBoardView(),
+      { loadDeck: { playerIds: [blue, red], onLoad: vi.fn() } },
+      layoutState({
+        viewport: { width: 844, height: 390, devicePixelRatio: 1 },
+        seamBandPx: 46,
+        appBarPx: { width: 146, height: 50 },
+      })
+    );
+    for (const playerId of [blue, red]) {
+      const deck = layout.players
+        .find((frame) => frame.playerId === playerId)!
+        .regions.find((region) => region.kind === 'deck')!;
+      const box = deck.physicalDeclaredBounds;
+      const button = deckButton(playerId)!;
+      const size = Number.parseFloat(button.style.width);
+      // Across the table the pile is narrower than the + itself.
+      if (playerId === red) expect(size).toBeGreaterThan(box.width);
+      const [dx = 0, dy = 0] = (button.style.translate || '0px 0px')
+        .split(' ')
+        .map((part) => Number.parseFloat(part));
+      const plus = {
+        x: box.x + (box.width - size) / 2 + dx,
+        y: box.y + (box.height - size) / 2 + dy,
+        width: size,
+        height: size,
+      };
+      const badge = countBadgeBox({
+        ...deck.countLabel!,
+        anchor: countBadgeAnchorWithin(deck.countLabel!, layout.playAreaBounds),
+      });
+      const overlap =
+        plus.x < badge.x + badge.width &&
+        badge.x < plus.x + plus.width &&
+        plus.y < badge.y + badge.height &&
+        badge.y < plus.y + plus.height;
+      expect(overlap, `${playerId}'s + over its 0`).toBe(false);
+      // Still mostly on its own pile.
+      expect(Math.abs(dx) + Math.abs(dy), playerId).toBeLessThan(size / 2);
+    }
+  });
+
+  it('centres the + on a pile that leaves its count clear', () => {
+    const badge = { x: 300, y: 300, width: 26, height: 22 };
+    const plus = deckPlusPlacement(
+      { x: 100, y: 100, width: 110, height: 154 },
+      badge
+    );
+    expect(plus.size).toBeCloseTo(46.2, 6);
+    expect([plus.dx, plus.dy]).toEqual([0, 0]);
   });
 
   it('offers the + only to listed seats that have no cards yet', async () => {

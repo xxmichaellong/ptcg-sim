@@ -1830,6 +1830,18 @@
               "kind": "value"
             },
             {
+              "name": "CountBadgeAnchor",
+              "kind": "type"
+            },
+            {
+              "name": "countBadgeAnchorWithin",
+              "kind": "value"
+            },
+            {
+              "name": "countBadgeBox",
+              "kind": "value"
+            },
+            {
               "name": "createBoardLayoutSnapshot",
               "kind": "value"
             },
@@ -2355,6 +2367,10 @@
             },
             {
               "name": "TABLE_CONTROL_CORNER_HEIGHT_PX",
+              "kind": "value"
+            },
+            {
+              "name": "TABLE_COUNT_BADGE",
               "kind": "value"
             },
             {

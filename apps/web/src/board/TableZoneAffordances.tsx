@@ -1,10 +1,12 @@
 import { useLingui } from '@lingui/react/macro';
 import type { MatchViewState, PlayerId } from '@ptcgsim/game-core';
-import type {
-  BoardDepthProjection,
-  BoardLayoutSnapshot,
-  BoardScene,
-  Rect,
+import {
+  countBadgeAnchorWithin,
+  countBadgeBox,
+  type BoardDepthProjection,
+  type BoardLayoutSnapshot,
+  type BoardScene,
+  type Rect,
 } from '@ptcgsim/renderer-contract';
 import { CheckSquareIcon } from '@phosphor-icons/react/dist/csr/CheckSquare';
 import { EyeSlashIcon } from '@phosphor-icons/react/dist/csr/EyeSlash';
@@ -55,6 +57,52 @@ const boxStyle = (rect: Rect): CSSProperties => ({
   width: rect.width,
   height: rect.height,
 });
+
+/** The deck's `+`: 42% of its pile's width, within these bounds. */
+const DECK_PLUS_SHARE = 0.42;
+const DECK_PLUS_MIN_PX = 36;
+const DECK_PLUS_MAX_PX = 52;
+/** The least room between the `+` and the pile's count badge. */
+const DECK_PLUS_BADGE_GAP_PX = 2;
+
+/**
+ * The deck's `+`, centred on its pile (`box`, on screen) where that leaves
+ * the pile's count badge (`badge`, on screen) clear: on a pile narrower
+ * than the `+` (a phone held sideways) it would cover the "0", so it moves
+ * off the badge -- along the column toward the centre line, or across into
+ * the empty seat's felt, whichever is the shorter way -- and spills past
+ * the pile rather than hide its count.
+ */
+export const deckPlusPlacement = (
+  box: Rect,
+  badge: Rect
+): { readonly size: number; readonly dx: number; readonly dy: number } => {
+  const size = Math.min(
+    DECK_PLUS_MAX_PX,
+    Math.max(DECK_PLUS_MIN_PX, box.width * DECK_PLUS_SHARE)
+  );
+  const left = box.x + (box.width - size) / 2;
+  const top = box.y + (box.height - size) / 2;
+  const gap = DECK_PLUS_BADGE_GAP_PX;
+  const covers =
+    left < badge.x + badge.width + gap &&
+    badge.x - gap < left + size &&
+    top < badge.y + badge.height + gap &&
+    badge.y - gap < top + size;
+  if (!covers) return { size, dx: 0, dy: 0 };
+  // Away from the badge's corner of the pile, each way.
+  const badgeRight = badge.x + badge.width / 2 > box.x + box.width / 2;
+  const badgeBelow = badge.y + badge.height / 2 > box.y + box.height / 2;
+  const dx = badgeRight
+    ? badge.x - gap - (left + size)
+    : badge.x + badge.width + gap - left;
+  const dy = badgeBelow
+    ? badge.y - gap - (top + size)
+    : badge.y + badge.height + gap - top;
+  return Math.abs(dy) <= Math.abs(dx)
+    ? { size, dx: 0, dy }
+    : { size, dx, dy: 0 };
+};
 
 export interface TableZoneAffordancesProps {
   readonly layout: BoardLayoutSnapshot;
@@ -158,13 +206,32 @@ export const TableZoneAffordances = memo(function TableZoneAffordances({
           if (!deck) return [];
           const own = frame.playerId === layout.bottomPlayerId;
           const label = own ? t`Load a deck` : t`Load the other side's deck`;
+          const box = onScreen(deck.physicalDeclaredBounds, depth);
+          // Its count badge where the board draws it (renderer-dom's
+          // tableCountNode): projected when tilted, kept on the table.
+          const count = deck.countLabel;
+          const plus = count
+            ? deckPlusPlacement(
+                box,
+                countBadgeBox({
+                  ...count,
+                  anchor: countBadgeAnchorWithin(
+                    {
+                      ...count,
+                      anchor: depth ? depth.point(count.anchor) : count.anchor,
+                    },
+                    scene.layout.playAreaBounds
+                  ),
+                })
+              )
+            : undefined;
           return [
             <div
               key={`deck-${frame.playerId}`}
               className="table-zone-affordance table-zone-affordance--deck"
               data-player-side={own ? 'local' : 'opponent'}
               data-seat-tone={toneOf(frame.playerId)}
-              style={boxStyle(onScreen(deck.physicalDeclaredBounds, depth))}
+              style={boxStyle(box)}
             >
               <Tooltip content={label} side={own ? 'top' : 'bottom'}>
                 <button
@@ -172,6 +239,18 @@ export const TableZoneAffordances = memo(function TableZoneAffordances({
                   className="table-zone-add"
                   data-load-deck-player={frame.playerId}
                   aria-label={label}
+                  style={
+                    plus
+                      ? {
+                          width: plus.size,
+                          ...(plus.dx || plus.dy
+                            ? {
+                                translate: `${String(plus.dx)}px ${String(plus.dy)}px`,
+                              }
+                            : {}),
+                        }
+                      : undefined
+                  }
                   onClick={() => loadDeck.onLoad(frame.playerId)}
                 >
                   <PlusIcon {...decorative} weight="bold" />

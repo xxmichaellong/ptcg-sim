@@ -170,6 +170,9 @@ table button are gone; their controls are the Table section.
 - **An empty deck shows `+`.** Before a seat has any cards its deck pile
   carries a `+` that opens the deck screen for that seat (P2 at a Solo
   table). A deck emptied in play shows nothing: decking out is a game state.
+  Where the pile is narrower than the `+` (a phone held sideways) the `+`
+  steps off the pile's "0", the shorter way, and spills past the pile
+  (2026-10-29, the owner: "spilling is fine").
 - **The Lost Zone is optional.** Few formats use it, so it is off by
   default: an empty Lost Zone leaves the table (`hideEmptyLostZone` in the
   layout state; its zone and count leave the scene). A `+ Lost Zone` chip

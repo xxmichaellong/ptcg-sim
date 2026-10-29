@@ -67,6 +67,7 @@ import {
 import { BOARD_MARKER_CSS } from './markers/marker-css.js';
 import { tableMatBounds } from './mat-bounds.js';
 import { MarkerNode } from './markers/MarkerNode.js';
+import { tableCountNode } from './table-count-node.js';
 import {
   BoardMotionDirector,
   type PaintedCard,
@@ -2727,14 +2728,7 @@ export const BoardSurface = ({
         {scene.counts.map((node) => (
           <ZoneCountNode
             key={node.id}
-            node={
-              depth
-                ? {
-                    ...node,
-                    anchor: depth.point(node.anchor, 0, node.kind === 'hand'),
-                  }
-                : node
-            }
+            node={tableCountNode(node, depth, table, scene.layout)}
             darkMode={preferences.darkMode}
             table={table}
           />

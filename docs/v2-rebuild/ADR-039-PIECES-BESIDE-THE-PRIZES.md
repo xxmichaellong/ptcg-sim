@@ -128,7 +128,8 @@ the prizes lies nearer the edge than half the chip (an upright phone).
   and tilted, both hands at 16 cards) it covers nothing, where before it
   covered a hand card at 140 sizes and the Lost Zone at up to 31. Across
   the table the pill's room past the column costs the far hand about 28px
-  on short mats.
+  on short mats. The piles' badges are kept on the table too
+  (`countBadgeAnchorWithin`): at the screen's edge they stood 1px off it.
 - Tests: `layout-table.test.ts`, `table-coin.test.ts`, `TableCoin.test.tsx`,
   `TableZoneAffordances.test.tsx`, `LegacyBoardChrome.test.tsx`,
   `LegacyBoardChrome.onehalf.test.tsx`.

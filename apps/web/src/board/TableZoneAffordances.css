@@ -59,6 +59,8 @@
 .table-zone-add {
   display: inline-grid;
   place-items: center;
+  /* The deck's + is sized and moved off its pile's count inline
+     (deckPlusPlacement); this is the same size where it isn't. */
   width: clamp(36px, 42%, 52px);
   aspect-ratio: 1;
   padding: 0;
