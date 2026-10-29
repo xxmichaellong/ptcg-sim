@@ -6361,5 +6361,79 @@
   "23cwkx": {
     "message": "Your name changed. Generate a new room.",
     "translation": "Ditt namn har ändrats. Skapa ett nytt rum."
+  },
+  "MyTf22": {
+    "message": "{available, plural, one {# card in deck} other {# cards in deck}}",
+    "translation": "{available, plural, one {# kort i leken} other {# kort i leken}}"
+  },
+  "DcTMVd": {
+    "message": "{available, plural, one {# card to draw from} other {# cards to draw from}}",
+    "translation": "{available, plural, one {# kort att dra från} other {# kort att dra från}}"
+  },
+  "nlUJMk": {
+    "message": "{count, plural, one {Look at # card} other {Look at # cards}}",
+    "translation": "{count, plural, one {Titta på # kort} other {Titta på # kort}}"
+  },
+  "ruBWQi": {
+    "message": "Discard hand, then draw",
+    "translation": "Kasta handen, dra sedan"
+  },
+  "JrTBPO": {
+    "message": "Discard hand…",
+    "translation": "Kasta handen…"
+  },
+  "7cFPiW": {
+    "message": "Draw none",
+    "comments": [
+      "Accepts a hand put away (discarded or shuffled into the deck) without drawing."
+    ],
+    "translation": "Dra inga"
+  },
+  "gZAkYU": {
+    "message": "Hand to bottom of deck, then draw",
+    "translation": "Handen längst ner i leken, dra sedan"
+  },
+  "QW7fGB": {
+    "message": "Look at bottom cards",
+    "translation": "Titta på nedersta korten"
+  },
+  "nshEL9": {
+    "message": "Look at bottom cards…",
+    "translation": "Titta på nedersta korten…"
+  },
+  "g4nsbt": {
+    "message": "Look at top cards",
+    "translation": "Titta på översta korten"
+  },
+  "KzU3sj": {
+    "message": "Look at top cards…",
+    "translation": "Titta på översta korten…"
+  },
+  "3GFV_r": {
+    "message": "One fewer",
+    "context": "card count",
+    "translation": "Ett färre"
+  },
+  "qTM8Kd": {
+    "message": "One more",
+    "context": "card count",
+    "translation": "Ett till"
+  },
+  "P7jzR_": {
+    "message": "Quick picks",
+    "context": "card count",
+    "translation": "Snabbval"
+  },
+  "DpAKOl": {
+    "message": "Shuffle hand into deck, then draw",
+    "translation": "Blanda in handen i leken, dra sedan"
+  },
+  "M8Ea7C": {
+    "message": "Shuffle hand to bottom…",
+    "translation": "Blanda in handen längst ner…"
+  },
+  "-qToFp": {
+    "message": "Shuffle hand to deck…",
+    "translation": "Blanda in handen i leken…"
   }
 }

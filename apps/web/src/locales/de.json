@@ -6361,5 +6361,79 @@
   "23cwkx": {
     "message": "Your name changed. Generate a new room.",
     "translation": "Dein Name hat sich geändert. Erstelle einen neuen Raum."
+  },
+  "MyTf22": {
+    "message": "{available, plural, one {# card in deck} other {# cards in deck}}",
+    "translation": "{available, plural, one {# Karte im Deck} other {# Karten im Deck}}"
+  },
+  "DcTMVd": {
+    "message": "{available, plural, one {# card to draw from} other {# cards to draw from}}",
+    "translation": "{available, plural, one {# Karte zum Ziehen} other {# Karten zum Ziehen}}"
+  },
+  "nlUJMk": {
+    "message": "{count, plural, one {Look at # card} other {Look at # cards}}",
+    "translation": "{count, plural, one {# Karte ansehen} other {# Karten ansehen}}"
+  },
+  "ruBWQi": {
+    "message": "Discard hand, then draw",
+    "translation": "Hand ablegen, dann ziehen"
+  },
+  "JrTBPO": {
+    "message": "Discard hand…",
+    "translation": "Hand ablegen …"
+  },
+  "7cFPiW": {
+    "message": "Draw none",
+    "comments": [
+      "Accepts a hand put away (discarded or shuffled into the deck) without drawing."
+    ],
+    "translation": "Nichts ziehen"
+  },
+  "gZAkYU": {
+    "message": "Hand to bottom of deck, then draw",
+    "translation": "Hand unter das Deck legen, dann ziehen"
+  },
+  "QW7fGB": {
+    "message": "Look at bottom cards",
+    "translation": "Unterste Karten ansehen"
+  },
+  "nshEL9": {
+    "message": "Look at bottom cards…",
+    "translation": "Unterste Karten ansehen …"
+  },
+  "g4nsbt": {
+    "message": "Look at top cards",
+    "translation": "Oberste Karten ansehen"
+  },
+  "KzU3sj": {
+    "message": "Look at top cards…",
+    "translation": "Oberste Karten ansehen …"
+  },
+  "3GFV_r": {
+    "message": "One fewer",
+    "context": "card count",
+    "translation": "Eine weniger"
+  },
+  "qTM8Kd": {
+    "message": "One more",
+    "context": "card count",
+    "translation": "Eine mehr"
+  },
+  "P7jzR_": {
+    "message": "Quick picks",
+    "context": "card count",
+    "translation": "Schnellauswahl"
+  },
+  "DpAKOl": {
+    "message": "Shuffle hand into deck, then draw",
+    "translation": "Hand ins Deck mischen, dann ziehen"
+  },
+  "M8Ea7C": {
+    "message": "Shuffle hand to bottom…",
+    "translation": "Hand unter das Deck mischen …"
+  },
+  "-qToFp": {
+    "message": "Shuffle hand to deck…",
+    "translation": "Hand ins Deck mischen …"
   }
 }

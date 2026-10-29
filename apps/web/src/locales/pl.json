@@ -6361,5 +6361,79 @@
   "23cwkx": {
     "message": "Your name changed. Generate a new room.",
     "translation": "Twoja nazwa się zmieniła. Wygeneruj nowy pokój."
+  },
+  "MyTf22": {
+    "message": "{available, plural, one {# card in deck} other {# cards in deck}}",
+    "translation": "{available, plural, one {# karta w talii} few {# karty w talii} many {# kart w talii} other {# karty w talii}}"
+  },
+  "DcTMVd": {
+    "message": "{available, plural, one {# card to draw from} other {# cards to draw from}}",
+    "translation": "{available, plural, one {# karta do dobrania} few {# karty do dobrania} many {# kart do dobrania} other {# karty do dobrania}}"
+  },
+  "nlUJMk": {
+    "message": "{count, plural, one {Look at # card} other {Look at # cards}}",
+    "translation": "{count, plural, one {Podejrzyj # kartę} few {Podejrzyj # karty} many {Podejrzyj # kart} other {Podejrzyj # karty}}"
+  },
+  "ruBWQi": {
+    "message": "Discard hand, then draw",
+    "translation": "Odrzuć rękę, potem dobierz"
+  },
+  "JrTBPO": {
+    "message": "Discard hand…",
+    "translation": "Odrzuć rękę…"
+  },
+  "7cFPiW": {
+    "message": "Draw none",
+    "comments": [
+      "Accepts a hand put away (discarded or shuffled into the deck) without drawing."
+    ],
+    "translation": "Nie dobieraj"
+  },
+  "gZAkYU": {
+    "message": "Hand to bottom of deck, then draw",
+    "translation": "Rękę pod spód talii, potem dobierz"
+  },
+  "QW7fGB": {
+    "message": "Look at bottom cards",
+    "translation": "Podejrzyj dolne karty"
+  },
+  "nshEL9": {
+    "message": "Look at bottom cards…",
+    "translation": "Podejrzyj dolne karty…"
+  },
+  "g4nsbt": {
+    "message": "Look at top cards",
+    "translation": "Podejrzyj górne karty"
+  },
+  "KzU3sj": {
+    "message": "Look at top cards…",
+    "translation": "Podejrzyj górne karty…"
+  },
+  "3GFV_r": {
+    "message": "One fewer",
+    "context": "card count",
+    "translation": "O jedną mniej"
+  },
+  "qTM8Kd": {
+    "message": "One more",
+    "context": "card count",
+    "translation": "O jedną więcej"
+  },
+  "P7jzR_": {
+    "message": "Quick picks",
+    "context": "card count",
+    "translation": "Szybki wybór"
+  },
+  "DpAKOl": {
+    "message": "Shuffle hand into deck, then draw",
+    "translation": "Wtasuj rękę do talii, potem dobierz"
+  },
+  "M8Ea7C": {
+    "message": "Shuffle hand to bottom…",
+    "translation": "Wtasuj rękę pod spód talii…"
+  },
+  "-qToFp": {
+    "message": "Shuffle hand to deck…",
+    "translation": "Wtasuj rękę do talii…"
   }
 }

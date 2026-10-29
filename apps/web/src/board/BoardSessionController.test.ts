@@ -1541,10 +1541,8 @@ describe('headless board session controller', () => {
         action,
         playerId,
         zoneId: hand.id,
-        message: 'Draw how many cards?',
         initialValue: '0',
         minimum: 0,
-        invalidMessage: 'Enter a number',
       });
 
       const submitted = apply(opened.state, {
@@ -2429,10 +2427,8 @@ describe('headless board session controller', () => {
       action: 'discardHand',
       cardId,
       zoneId: hand.id,
-      message: 'Draw how many cards?',
       initialValue: '0',
       minimum: 0,
-      invalidMessage: 'Enter a number',
     });
 
     const wrongAction = apply(opened.state, {

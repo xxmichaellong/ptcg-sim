@@ -157,8 +157,8 @@ export const LegacyBoardKeyboardShortcuts = ({
   const deckViewPlayerId =
     actingPlayerIdOf(state.view, state.scene?.bottomPlayerId) ??
     state.scene?.bottomPlayerId;
-  // A count prompt (Alt+D's "Draw how many cards?") is a modal question, as
-  // v1's native prompt was: the table takes no keys until it is answered.
+  // A count question (Alt+D's "Discard hand, then draw") is modal, as v1's
+  // native prompt was: the table takes no keys until it is answered.
   const countPromptOpen =
     state.overlays.input?.kind === 'count' ||
     state.overlays.input?.kind === 'shortcutCount';

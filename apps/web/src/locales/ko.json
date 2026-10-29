@@ -6361,5 +6361,79 @@
   "23cwkx": {
     "message": "Your name changed. Generate a new room.",
     "translation": "이름이 변경되었습니다. 새 방을 생성하세요."
+  },
+  "MyTf22": {
+    "message": "{available, plural, one {# card in deck} other {# cards in deck}}",
+    "translation": "{available, plural, other {덱에 카드 #장}}"
+  },
+  "DcTMVd": {
+    "message": "{available, plural, one {# card to draw from} other {# cards to draw from}}",
+    "translation": "{available, plural, other {뽑을 수 있는 카드 #장}}"
+  },
+  "nlUJMk": {
+    "message": "{count, plural, one {Look at # card} other {Look at # cards}}",
+    "translation": "{count, plural, other {카드 #장 보기}}"
+  },
+  "ruBWQi": {
+    "message": "Discard hand, then draw",
+    "translation": "패를 트래쉬하고 뽑기"
+  },
+  "JrTBPO": {
+    "message": "Discard hand…",
+    "translation": "패 트래쉬…"
+  },
+  "7cFPiW": {
+    "message": "Draw none",
+    "comments": [
+      "Accepts a hand put away (discarded or shuffled into the deck) without drawing."
+    ],
+    "translation": "뽑지 않기"
+  },
+  "gZAkYU": {
+    "message": "Hand to bottom of deck, then draw",
+    "translation": "패를 덱 아래에 놓고 뽑기"
+  },
+  "QW7fGB": {
+    "message": "Look at bottom cards",
+    "translation": "아래 카드 보기"
+  },
+  "nshEL9": {
+    "message": "Look at bottom cards…",
+    "translation": "아래 카드 보기…"
+  },
+  "g4nsbt": {
+    "message": "Look at top cards",
+    "translation": "위 카드 보기"
+  },
+  "KzU3sj": {
+    "message": "Look at top cards…",
+    "translation": "위 카드 보기…"
+  },
+  "3GFV_r": {
+    "message": "One fewer",
+    "context": "card count",
+    "translation": "한 장 적게"
+  },
+  "qTM8Kd": {
+    "message": "One more",
+    "context": "card count",
+    "translation": "한 장 더"
+  },
+  "P7jzR_": {
+    "message": "Quick picks",
+    "context": "card count",
+    "translation": "빠른 선택"
+  },
+  "DpAKOl": {
+    "message": "Shuffle hand into deck, then draw",
+    "translation": "패를 덱에 섞고 뽑기"
+  },
+  "M8Ea7C": {
+    "message": "Shuffle hand to bottom…",
+    "translation": "패를 아래에 섞기…"
+  },
+  "-qToFp": {
+    "message": "Shuffle hand to deck…",
+    "translation": "패를 덱에 섞기…"
   }
 }

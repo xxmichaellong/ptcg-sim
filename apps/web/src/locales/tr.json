@@ -6361,5 +6361,79 @@
   "23cwkx": {
     "message": "Your name changed. Generate a new room.",
     "translation": "Adın değişti. Yeni bir oda oluştur."
+  },
+  "MyTf22": {
+    "message": "{available, plural, one {# card in deck} other {# cards in deck}}",
+    "translation": "{available, plural, one {Destede # kart} other {Destede # kart}}"
+  },
+  "DcTMVd": {
+    "message": "{available, plural, one {# card to draw from} other {# cards to draw from}}",
+    "translation": "{available, plural, one {Çekilecek # kart} other {Çekilecek # kart}}"
+  },
+  "nlUJMk": {
+    "message": "{count, plural, one {Look at # card} other {Look at # cards}}",
+    "translation": "{count, plural, one {# karta bak} other {# karta bak}}"
+  },
+  "ruBWQi": {
+    "message": "Discard hand, then draw",
+    "translation": "Eli at, sonra çek"
+  },
+  "JrTBPO": {
+    "message": "Discard hand…",
+    "translation": "Eli at…"
+  },
+  "7cFPiW": {
+    "message": "Draw none",
+    "comments": [
+      "Accepts a hand put away (discarded or shuffled into the deck) without drawing."
+    ],
+    "translation": "Hiç çekme"
+  },
+  "gZAkYU": {
+    "message": "Hand to bottom of deck, then draw",
+    "translation": "Eli destenin altına koy, sonra çek"
+  },
+  "QW7fGB": {
+    "message": "Look at bottom cards",
+    "translation": "Alttaki kartlara bak"
+  },
+  "nshEL9": {
+    "message": "Look at bottom cards…",
+    "translation": "Alttaki kartlara bak…"
+  },
+  "g4nsbt": {
+    "message": "Look at top cards",
+    "translation": "Üstteki kartlara bak"
+  },
+  "KzU3sj": {
+    "message": "Look at top cards…",
+    "translation": "Üstteki kartlara bak…"
+  },
+  "3GFV_r": {
+    "message": "One fewer",
+    "context": "card count",
+    "translation": "Bir eksik"
+  },
+  "qTM8Kd": {
+    "message": "One more",
+    "context": "card count",
+    "translation": "Bir fazla"
+  },
+  "P7jzR_": {
+    "message": "Quick picks",
+    "context": "card count",
+    "translation": "Hızlı seçimler"
+  },
+  "DpAKOl": {
+    "message": "Shuffle hand into deck, then draw",
+    "translation": "Eli desteye karıştır, sonra çek"
+  },
+  "M8Ea7C": {
+    "message": "Shuffle hand to bottom…",
+    "translation": "Eli destenin altına karıştır…"
+  },
+  "-qToFp": {
+    "message": "Shuffle hand to deck…",
+    "translation": "Eli desteye karıştır…"
   }
 }

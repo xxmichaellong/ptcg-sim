@@ -11,6 +11,7 @@ import {
   isOverlayKeyTarget,
   isOverlaySurfaceTarget,
   OverlayHost,
+  pickCount,
   promptValue,
   toast,
   Tooltip,
@@ -461,6 +462,103 @@ describe('promptValue', () => {
     expect(check?.signal.aborted).toBe(true);
     await act(async () => check?.resolve(null));
     expect(answer.value).toBeNull();
+  });
+});
+
+describe('pickCount', () => {
+  const countOptions = {
+    title: 'Discard hand, then draw',
+    body: '12 cards to draw from',
+    label: 'Number of cards',
+    min: 0,
+    max: 12,
+    initial: 0,
+    presets: [0, 4, 5, 6, 7, 8, 20],
+    submitLabel: (count: number) =>
+      count === 0 ? 'Draw none' : `Draw ${String(count)}`,
+  };
+
+  it('picks a count by stepper, quick pick or typing, and resolves it', async () => {
+    await mountHost();
+    const answer = await ask(() => pickCount(countOptions));
+    await settle();
+    expect(dialog()?.textContent).toContain('Discard hand, then draw');
+    expect(dialog()?.textContent).toContain('12 cards to draw from');
+    // A mouse starts in the number, selected, so typing replaces it.
+    const input = field();
+    expect(document.activeElement).toBe(input);
+    expect(input.getAttribute('role')).toBe('spinbutton');
+    expect(input.getAttribute('aria-label')).toBe('Number of cards');
+    // Picks past the most it can be are left out.
+    const picks = [
+      ...document.querySelectorAll<HTMLButtonElement>('[data-count-pick]'),
+    ];
+    expect(picks.map((pick) => pick.textContent)).toEqual([
+      '0',
+      '4',
+      '5',
+      '6',
+      '7',
+      '8',
+    ]);
+    const fewer = document.querySelector<HTMLButtonElement>(
+      '[aria-label="One fewer"]'
+    )!;
+    expect(fewer.disabled).toBe(true);
+    expect(button('submit').textContent).toBe('Draw none');
+    await pressKey(input, 'ArrowUp');
+    expect(input.value).toBe('1');
+    await click(picks[4]!);
+    expect(input.value).toBe('7');
+    expect(picks[4]!.getAttribute('aria-pressed')).toBe('true');
+    expect(button('submit').textContent).toBe('Draw 7');
+    await typeInto(input, '50');
+    await submitForm(input);
+    await settle();
+    // No more than there is.
+    expect(answer).toEqual({ settled: true, value: 12 });
+  });
+
+  it('resolves null on Cancel and on Escape', async () => {
+    await mountHost();
+    const cancelled = await ask(() => pickCount(countOptions));
+    await settle();
+    await click(button('cancel'));
+    await settle();
+    expect(cancelled).toEqual({ settled: true, value: null });
+    const escaped = await ask(() => pickCount(countOptions));
+    await settle();
+    await pressKey(field(), 'Escape');
+    await settle();
+    expect(escaped).toEqual({ settled: true, value: null });
+  });
+
+  it('starts a finger on the accept button, so no keyboard comes up', async () => {
+    const matchMedia = window.matchMedia;
+    window.matchMedia = ((query: string) => ({
+      matches: query.includes('pointer: coarse'),
+      media: query,
+      onchange: null,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+      addListener: () => undefined,
+      removeListener: () => undefined,
+      dispatchEvent: () => false,
+    })) as typeof window.matchMedia;
+    try {
+      await mountHost();
+      const answer = await ask(() => pickCount(countOptions));
+      await settle();
+      expect(document.activeElement).toBe(button('submit'));
+      // Digits typed there still set the number.
+      await pressKey(button('submit'), '5');
+      expect(field().value).toBe('5');
+      await click(button('submit'));
+      await settle();
+      expect(answer).toEqual({ settled: true, value: 5 });
+    } finally {
+      window.matchMedia = matchMedia;
+    }
   });
 });
 

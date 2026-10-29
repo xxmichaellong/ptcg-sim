@@ -6361,5 +6361,79 @@
   "23cwkx": {
     "message": "Your name changed. Generate a new room.",
     "translation": "Il tuo nome è cambiato. Genera una nuova stanza."
+  },
+  "MyTf22": {
+    "message": "{available, plural, one {# card in deck} other {# cards in deck}}",
+    "translation": "{available, plural, one {# carta nel mazzo} other {# carte nel mazzo}}"
+  },
+  "DcTMVd": {
+    "message": "{available, plural, one {# card to draw from} other {# cards to draw from}}",
+    "translation": "{available, plural, one {# carta da pescare} other {# carte da pescare}}"
+  },
+  "nlUJMk": {
+    "message": "{count, plural, one {Look at # card} other {Look at # cards}}",
+    "translation": "{count, plural, one {Guarda # carta} other {Guarda # carte}}"
+  },
+  "ruBWQi": {
+    "message": "Discard hand, then draw",
+    "translation": "Scarta la mano, poi pesca"
+  },
+  "JrTBPO": {
+    "message": "Discard hand…",
+    "translation": "Scarta la mano…"
+  },
+  "7cFPiW": {
+    "message": "Draw none",
+    "comments": [
+      "Accepts a hand put away (discarded or shuffled into the deck) without drawing."
+    ],
+    "translation": "Non pescare"
+  },
+  "gZAkYU": {
+    "message": "Hand to bottom of deck, then draw",
+    "translation": "Mano in fondo al mazzo, poi pesca"
+  },
+  "QW7fGB": {
+    "message": "Look at bottom cards",
+    "translation": "Guarda le carte in fondo"
+  },
+  "nshEL9": {
+    "message": "Look at bottom cards…",
+    "translation": "Guarda le carte in fondo…"
+  },
+  "g4nsbt": {
+    "message": "Look at top cards",
+    "translation": "Guarda le prime carte"
+  },
+  "KzU3sj": {
+    "message": "Look at top cards…",
+    "translation": "Guarda le prime carte…"
+  },
+  "3GFV_r": {
+    "message": "One fewer",
+    "context": "card count",
+    "translation": "Una in meno"
+  },
+  "qTM8Kd": {
+    "message": "One more",
+    "context": "card count",
+    "translation": "Una in più"
+  },
+  "P7jzR_": {
+    "message": "Quick picks",
+    "context": "card count",
+    "translation": "Scelte rapide"
+  },
+  "DpAKOl": {
+    "message": "Shuffle hand into deck, then draw",
+    "translation": "Rimischia la mano nel mazzo, poi pesca"
+  },
+  "M8Ea7C": {
+    "message": "Shuffle hand to bottom…",
+    "translation": "Rimischia la mano in fondo…"
+  },
+  "-qToFp": {
+    "message": "Shuffle hand to deck…",
+    "translation": "Rimischia la mano nel mazzo…"
   }
 }

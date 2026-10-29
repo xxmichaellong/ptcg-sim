@@ -785,10 +785,8 @@ describe('legacy board overlay action resolver', () => {
         action: 'discardHand',
         cardId: hand.cards[0]!.id,
         zoneId: hand.id,
-        message: 'Draw how many cards?',
         initialValue: '0',
         minimum: 0,
-        invalidMessage: 'Enter a number',
       },
     });
     expect(

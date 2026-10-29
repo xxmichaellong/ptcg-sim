@@ -223,9 +223,9 @@ describe('legacy board overlays', () => {
       ])
     ).toEqual([
       ['header', 'hand', 'Hand'],
-      ['action', 'discardHand', 'Discard hand'],
-      ['action', 'shuffleHandToDeck', 'Shuffle hand to deck'],
-      ['action', 'shuffleHandToDeckBottom', 'Shuffle hand to bottom'],
+      ['action', 'discardHand', 'Discard hand…'],
+      ['action', 'shuffleHandToDeck', 'Shuffle hand to deck…'],
+      ['action', 'shuffleHandToDeckBottom', 'Shuffle hand to bottom…'],
       ['action', 'moveCard', 'Move card...'],
       ['action', 'revealCard', 'Reveal card'],
     ]);
@@ -1013,7 +1013,7 @@ describe('legacy board overlays', () => {
     ]);
     expect(
       host.querySelector('[data-context-action="discardHand"]')?.textContent
-    ).toBe('Discard hand');
+    ).toBe('Discard hand…');
     expect(
       host
         .querySelector('[data-context-action="discardHand"]')
@@ -1166,7 +1166,7 @@ describe('legacy board overlays', () => {
     expect(ghosts[1]!.classList).toContain('is-exit-panel');
   });
 
-  it('asks each controller count descriptor in one StrictMode-safe prompt dialog', async () => {
+  it('asks each controller count descriptor in one StrictMode-safe count picker', async () => {
     await mountOverlayHost();
     const callbacks = actions();
     const card = cardIn(`:${firstPlayer}:deck`);
@@ -1199,27 +1199,54 @@ describe('legacy board overlays', () => {
       await settleDialogs();
     };
 
+    const pick = (count: number): HTMLButtonElement => {
+      const button = document.querySelector<HTMLButtonElement>(
+        `[data-count-pick="${String(count)}"]`
+      );
+      if (!button) throw new Error(`No quick pick ${String(count)}`);
+      return button;
+    };
+    const picks = (): string[] =>
+      [...document.querySelectorAll<HTMLElement>('[data-count-pick]')].map(
+        (button) => button.dataset.countPick ?? ''
+      );
+    const title = (): string | null | undefined =>
+      document.querySelector('.ptcgsim-ui-dialog__title')?.textContent;
+
     await renderInput({
       kind: 'count',
       action: 'drawCards',
       cardId: card.id,
       zoneId: card.parentId,
-      message: 'Draw how many cards?',
       initialValue: '1',
       minimum: 1,
-      invalidMessage: 'Enter a number',
     });
-    // StrictMode replays the effect; the player still sees one question.
+    // StrictMode replays the effect; the player still sees one question,
+    // named for the whole action and what it draws from.
     expect(openDialogs()).toHaveLength(1);
-    expect(openDialogs()[0]?.textContent).toContain('Draw how many cards?');
+    expect(title()).toBe('Draw cards');
+    expect(openDialogs()[0]?.textContent).toContain('5 cards in deck');
     expect(dialogField().value).toBe('1');
     expect(dialogField().inputMode).toBe('numeric');
-    expect(dialogButton('submit').textContent).toBe('Draw');
-    await typeAndSubmit(' 3 ');
+    expect(picks()).toEqual(['1', '2', '3']);
+    expect(dialogButton('submit').textContent).toBe('Draw 1 card');
+    // A step, then a quick pick; the accept button names the count.
+    await act(async () =>
+      document
+        .querySelector<HTMLButtonElement>('[aria-label="One more"]')!
+        .click()
+    );
+    expect(dialogField().value).toBe('2');
+    expect(dialogButton('submit').textContent).toBe('Draw 2 cards');
+    await act(async () => pick(3).click());
+    expect(pick(3).getAttribute('aria-pressed')).toBe('true');
+    expect(document.activeElement).toBe(dialogButton('submit'));
+    await act(async () => dialogButton('submit').click());
+    await settleDialogs();
     expect(callbacks.submitCountInput).toHaveBeenCalledExactlyOnceWith(
       'drawCards',
       card.id,
-      ' 3 '
+      '3'
     );
     expect(openDialogs()).toHaveLength(0);
 
@@ -1228,24 +1255,33 @@ describe('legacy board overlays', () => {
       action: 'viewDeckTop',
       cardId: card.id,
       zoneId: card.parentId,
-      message: 'Look at how many cards?',
       initialValue: '1',
       minimum: 1,
-      invalidMessage: 'Enter a number',
     });
-    expect(dialogButton('submit').textContent).toBe('View');
-    // An invalid count keeps the question open with the source's message.
-    await typeAndSubmit('2.5');
-    expect(openDialogs()).toHaveLength(1);
-    expect(document.querySelector('[role="alert"]')?.textContent).toBe(
-      'Enter a number'
+    expect(title()).toBe('Look at top cards');
+    expect(dialogButton('submit').textContent).toBe('Look at 1 card');
+    // More than the deck holds is the whole deck; letters don't type.
+    await typeAndSubmit('9x');
+    expect(callbacks.submitCountInput).toHaveBeenLastCalledWith(
+      'viewDeckTop',
+      card.id,
+      '5'
     );
-    expect(callbacks.submitCountInput).toHaveBeenCalledTimes(1);
+    expect(openDialogs()).toHaveLength(0);
+
+    await renderInput({
+      kind: 'count',
+      action: 'viewDeckBottom',
+      cardId: card.id,
+      zoneId: card.parentId,
+      initialValue: '1',
+      minimum: 1,
+    });
     expect(callbacks.dismiss).not.toHaveBeenCalled();
     await act(async () => dialogButton('cancel').click());
     await settleDialogs();
     expect(callbacks.dismiss).toHaveBeenCalledExactlyOnceWith('input');
-    expect(callbacks.submitCountInput).toHaveBeenCalledTimes(1);
+    expect(callbacks.submitCountInput).toHaveBeenCalledTimes(2);
     expect(openDialogs()).toHaveLength(0);
 
     // Cancelling Alt+D's question simply withdraws it -- no error.
@@ -1254,12 +1290,14 @@ describe('legacy board overlays', () => {
       action: 'discardOwnHandAndDraw',
       playerId: firstPlayer,
       zoneId: `zone:${firstPlayer}:hand`,
-      message: 'Draw how many cards?',
       initialValue: '0',
       minimum: 0,
-      invalidMessage: 'Enter a number',
     });
+    expect(title()).toBe('Discard hand, then draw');
     expect(dialogField().value).toBe('0');
+    // A hand refresh's picks, as far as the five-card deck reaches.
+    expect(picks()).toEqual(['0', '4', '5']);
+    expect(dialogButton('submit').textContent).toBe('Draw none');
     await act(async () => dialogButton('cancel').click());
     await settleDialogs();
     expect(callbacks.dismiss).toHaveBeenCalledTimes(2);
@@ -1272,15 +1310,27 @@ describe('legacy board overlays', () => {
       action: 'shuffleOwnHandAndDraw',
       playerId: firstPlayer,
       zoneId: `zone:${firstPlayer}:hand`,
-      message: 'Draw how many cards?',
       initialValue: '0',
       minimum: 0,
-      invalidMessage: 'Enter a number',
     });
-    await typeAndSubmit('2');
+    // The hand goes into the deck first: twelve to draw from.
+    expect(openDialogs()[0]?.textContent).toContain('12 cards to draw from');
+    expect(picks()).toEqual(['0', '4', '5', '6', '7', '8']);
+    // Digits typed on a button still type the number.
+    dialogButton('submit').focus();
+    for (const key of ['1', '1']) {
+      await act(async () => {
+        dialogButton('submit').dispatchEvent(
+          new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true })
+        );
+      });
+    }
+    expect(dialogField().value).toBe('11');
+    await act(async () => dialogButton('submit').click());
+    await settleDialogs();
     expect(callbacks.submitShortcutCountInput).toHaveBeenCalledExactlyOnceWith(
       'shuffleOwnHandAndDraw',
-      '2'
+      '11'
     );
     expect(alert).not.toHaveBeenCalled();
     expect(prompt).not.toHaveBeenCalled();
@@ -1311,10 +1361,8 @@ describe('legacy board overlays', () => {
       action: 'drawCards',
       cardId: card.id,
       zoneId: card.parentId,
-      message: 'Draw how many cards?',
       initialValue: '1',
       minimum: 1,
-      invalidMessage: 'Enter a number',
     });
     expect(openDialogs()).toHaveLength(1);
 

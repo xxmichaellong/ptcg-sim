@@ -6361,5 +6361,79 @@
   "23cwkx": {
     "message": "Your name changed. Generate a new room.",
     "translation": "名前が変更されました。新しいルームを作成してください。"
+  },
+  "MyTf22": {
+    "message": "{available, plural, one {# card in deck} other {# cards in deck}}",
+    "translation": "{available, plural, other {デッキ内のカード: #枚}}"
+  },
+  "DcTMVd": {
+    "message": "{available, plural, one {# card to draw from} other {# cards to draw from}}",
+    "translation": "{available, plural, other {引けるカード: #枚}}"
+  },
+  "nlUJMk": {
+    "message": "{count, plural, one {Look at # card} other {Look at # cards}}",
+    "translation": "{count, plural, other {#枚を見る}}"
+  },
+  "ruBWQi": {
+    "message": "Discard hand, then draw",
+    "translation": "手札をトラッシュして引く"
+  },
+  "JrTBPO": {
+    "message": "Discard hand…",
+    "translation": "手札をトラッシュ…"
+  },
+  "7cFPiW": {
+    "message": "Draw none",
+    "comments": [
+      "Accepts a hand put away (discarded or shuffled into the deck) without drawing."
+    ],
+    "translation": "引かない"
+  },
+  "gZAkYU": {
+    "message": "Hand to bottom of deck, then draw",
+    "translation": "手札を山札の下に戻して引く"
+  },
+  "QW7fGB": {
+    "message": "Look at bottom cards",
+    "translation": "山札の下を見る"
+  },
+  "nshEL9": {
+    "message": "Look at bottom cards…",
+    "translation": "山札の下を見る…"
+  },
+  "g4nsbt": {
+    "message": "Look at top cards",
+    "translation": "山札の上を見る"
+  },
+  "KzU3sj": {
+    "message": "Look at top cards…",
+    "translation": "山札の上を見る…"
+  },
+  "3GFV_r": {
+    "message": "One fewer",
+    "context": "card count",
+    "translation": "1枚減らす"
+  },
+  "qTM8Kd": {
+    "message": "One more",
+    "context": "card count",
+    "translation": "1枚増やす"
+  },
+  "P7jzR_": {
+    "message": "Quick picks",
+    "context": "card count",
+    "translation": "クイック選択"
+  },
+  "DpAKOl": {
+    "message": "Shuffle hand into deck, then draw",
+    "translation": "手札を山札に戻して切り、引く"
+  },
+  "M8Ea7C": {
+    "message": "Shuffle hand to bottom…",
+    "translation": "手札を切って山札の下に戻す…"
+  },
+  "-qToFp": {
+    "message": "Shuffle hand to deck…",
+    "translation": "手札を山札に戻して切る…"
   }
 }

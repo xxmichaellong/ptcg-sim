@@ -6361,5 +6361,79 @@
   "23cwkx": {
     "message": "Your name changed. Generate a new room.",
     "translation": "Je naam is veranderd. Maak een nieuwe kamer aan."
+  },
+  "MyTf22": {
+    "message": "{available, plural, one {# card in deck} other {# cards in deck}}",
+    "translation": "{available, plural, one {# kaart in deck} other {# kaarten in deck}}"
+  },
+  "DcTMVd": {
+    "message": "{available, plural, one {# card to draw from} other {# cards to draw from}}",
+    "translation": "{available, plural, one {# kaart om van te trekken} other {# kaarten om van te trekken}}"
+  },
+  "nlUJMk": {
+    "message": "{count, plural, one {Look at # card} other {Look at # cards}}",
+    "translation": "{count, plural, one {# kaart bekijken} other {# kaarten bekijken}}"
+  },
+  "ruBWQi": {
+    "message": "Discard hand, then draw",
+    "translation": "Hand afleggen, dan trekken"
+  },
+  "JrTBPO": {
+    "message": "Discard hand…",
+    "translation": "Hand afleggen…"
+  },
+  "7cFPiW": {
+    "message": "Draw none",
+    "comments": [
+      "Accepts a hand put away (discarded or shuffled into the deck) without drawing."
+    ],
+    "translation": "Niet trekken"
+  },
+  "gZAkYU": {
+    "message": "Hand to bottom of deck, then draw",
+    "translation": "Hand onderop het deck, dan trekken"
+  },
+  "QW7fGB": {
+    "message": "Look at bottom cards",
+    "translation": "Onderste kaarten bekijken"
+  },
+  "nshEL9": {
+    "message": "Look at bottom cards…",
+    "translation": "Onderste kaarten bekijken…"
+  },
+  "g4nsbt": {
+    "message": "Look at top cards",
+    "translation": "Bovenste kaarten bekijken"
+  },
+  "KzU3sj": {
+    "message": "Look at top cards…",
+    "translation": "Bovenste kaarten bekijken…"
+  },
+  "3GFV_r": {
+    "message": "One fewer",
+    "context": "card count",
+    "translation": "Eén minder"
+  },
+  "qTM8Kd": {
+    "message": "One more",
+    "context": "card count",
+    "translation": "Eén meer"
+  },
+  "P7jzR_": {
+    "message": "Quick picks",
+    "context": "card count",
+    "translation": "Snelle keuzes"
+  },
+  "DpAKOl": {
+    "message": "Shuffle hand into deck, then draw",
+    "translation": "Hand in het deck schudden, dan trekken"
+  },
+  "M8Ea7C": {
+    "message": "Shuffle hand to bottom…",
+    "translation": "Hand onderop schudden…"
+  },
+  "-qToFp": {
+    "message": "Shuffle hand to deck…",
+    "translation": "Hand in het deck schudden…"
   }
 }

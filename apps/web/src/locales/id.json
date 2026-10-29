@@ -6361,5 +6361,79 @@
   "23cwkx": {
     "message": "Your name changed. Generate a new room.",
     "translation": "Namamu berubah. Buat ruangan baru."
+  },
+  "MyTf22": {
+    "message": "{available, plural, one {# card in deck} other {# cards in deck}}",
+    "translation": "{available, plural, other {# kartu di deck}}"
+  },
+  "DcTMVd": {
+    "message": "{available, plural, one {# card to draw from} other {# cards to draw from}}",
+    "translation": "{available, plural, other {# kartu untuk diambil}}"
+  },
+  "nlUJMk": {
+    "message": "{count, plural, one {Look at # card} other {Look at # cards}}",
+    "translation": "{count, plural, other {Lihat # kartu}}"
+  },
+  "ruBWQi": {
+    "message": "Discard hand, then draw",
+    "translation": "Buang Kartu Pegangan, lalu ambil kartu"
+  },
+  "JrTBPO": {
+    "message": "Discard hand…",
+    "translation": "Buang Kartu Pegangan…"
+  },
+  "7cFPiW": {
+    "message": "Draw none",
+    "comments": [
+      "Accepts a hand put away (discarded or shuffled into the deck) without drawing."
+    ],
+    "translation": "Tidak mengambil"
+  },
+  "gZAkYU": {
+    "message": "Hand to bottom of deck, then draw",
+    "translation": "Kartu Pegangan ke bawah deck, lalu ambil kartu"
+  },
+  "QW7fGB": {
+    "message": "Look at bottom cards",
+    "translation": "Lihat kartu terbawah"
+  },
+  "nshEL9": {
+    "message": "Look at bottom cards…",
+    "translation": "Lihat kartu terbawah…"
+  },
+  "g4nsbt": {
+    "message": "Look at top cards",
+    "translation": "Lihat kartu teratas"
+  },
+  "KzU3sj": {
+    "message": "Look at top cards…",
+    "translation": "Lihat kartu teratas…"
+  },
+  "3GFV_r": {
+    "message": "One fewer",
+    "context": "card count",
+    "translation": "Kurangi satu"
+  },
+  "qTM8Kd": {
+    "message": "One more",
+    "context": "card count",
+    "translation": "Tambah satu"
+  },
+  "P7jzR_": {
+    "message": "Quick picks",
+    "context": "card count",
+    "translation": "Pilihan cepat"
+  },
+  "DpAKOl": {
+    "message": "Shuffle hand into deck, then draw",
+    "translation": "Kocok Kartu Pegangan ke deck, lalu ambil kartu"
+  },
+  "M8Ea7C": {
+    "message": "Shuffle hand to bottom…",
+    "translation": "Kocok Kartu Pegangan ke bawah deck…"
+  },
+  "-qToFp": {
+    "message": "Shuffle hand to deck…",
+    "translation": "Kocok Kartu Pegangan ke deck…"
   }
 }

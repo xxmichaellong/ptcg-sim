@@ -6361,5 +6361,79 @@
   "23cwkx": {
     "message": "Your name changed. Generate a new room.",
     "translation": "Tu nombre ha cambiado. Genera una sala nueva."
+  },
+  "MyTf22": {
+    "message": "{available, plural, one {# card in deck} other {# cards in deck}}",
+    "translation": "{available, plural, one {# carta en la baraja} other {# cartas en la baraja}}"
+  },
+  "DcTMVd": {
+    "message": "{available, plural, one {# card to draw from} other {# cards to draw from}}",
+    "translation": "{available, plural, one {# carta para robar} other {# cartas para robar}}"
+  },
+  "nlUJMk": {
+    "message": "{count, plural, one {Look at # card} other {Look at # cards}}",
+    "translation": "{count, plural, one {Mirar # carta} other {Mirar # cartas}}"
+  },
+  "ruBWQi": {
+    "message": "Discard hand, then draw",
+    "translation": "Descartar la mano y robar"
+  },
+  "JrTBPO": {
+    "message": "Discard hand…",
+    "translation": "Descartar la mano…"
+  },
+  "7cFPiW": {
+    "message": "Draw none",
+    "comments": [
+      "Accepts a hand put away (discarded or shuffled into the deck) without drawing."
+    ],
+    "translation": "No robar"
+  },
+  "gZAkYU": {
+    "message": "Hand to bottom of deck, then draw",
+    "translation": "Mano al fondo de la baraja y robar"
+  },
+  "QW7fGB": {
+    "message": "Look at bottom cards",
+    "translation": "Mirar las últimas cartas"
+  },
+  "nshEL9": {
+    "message": "Look at bottom cards…",
+    "translation": "Mirar las últimas cartas…"
+  },
+  "g4nsbt": {
+    "message": "Look at top cards",
+    "translation": "Mirar las primeras cartas"
+  },
+  "KzU3sj": {
+    "message": "Look at top cards…",
+    "translation": "Mirar las primeras cartas…"
+  },
+  "3GFV_r": {
+    "message": "One fewer",
+    "context": "card count",
+    "translation": "Una menos"
+  },
+  "qTM8Kd": {
+    "message": "One more",
+    "context": "card count",
+    "translation": "Una más"
+  },
+  "P7jzR_": {
+    "message": "Quick picks",
+    "context": "card count",
+    "translation": "Selección rápida"
+  },
+  "DpAKOl": {
+    "message": "Shuffle hand into deck, then draw",
+    "translation": "Barajar la mano en la baraja y robar"
+  },
+  "M8Ea7C": {
+    "message": "Shuffle hand to bottom…",
+    "translation": "Barajar la mano al fondo…"
+  },
+  "-qToFp": {
+    "message": "Shuffle hand to deck…",
+    "translation": "Barajar la mano en la baraja…"
   }
 }

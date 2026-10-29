@@ -91,10 +91,9 @@ import {
   type LegacyBoardWorkAreaActionId,
   type LegacyBoardWorkAreaSource,
 } from '../resolveLegacyBoardOverlayAction.js';
-import {
-  parseLegacyCountInput,
-  type LegacyBoardCountActionId,
-  type LegacyBoardCountPrompt,
+import type {
+  LegacyBoardCountActionId,
+  LegacyBoardCountPrompt,
 } from '../resolveLegacyBoardCountAction.js';
 import type {
   LegacyBoardShortcutCountPrompt,
@@ -105,7 +104,11 @@ import type { HotkeyActionId } from '../../hotkeys/hotkey-catalogue.js';
 import { usePageDirection } from '../../i18n/direction.js';
 import { useKeymap } from '../../hotkeys/hotkey-preferences.js';
 import type { Keymap } from '../../hotkeys/keymap.js';
-import { confirmAction, promptValue } from '../../ui/dialog-requests.js';
+import {
+  confirmAction,
+  pickCount,
+  type CountOptions,
+} from '../../ui/dialog-requests.js';
 import { isOverlaySurfaceTarget } from '../../ui/overlay-surface.js';
 import {
   stackCardsLayout,
@@ -378,9 +381,9 @@ export const selectLegacyContextEntries = (
     entries.push(header('hand', t({ message: 'Hand', context: 'zone' })));
     if (own) {
       entries.push(
-        action('discardHand', t`Discard hand`),
-        action('shuffleHandToDeck', t`Shuffle hand to deck`),
-        action('shuffleHandToDeckBottom', t`Shuffle hand to bottom`)
+        action('discardHand', t`Discard hand…`),
+        action('shuffleHandToDeck', t`Shuffle hand to deck…`),
+        action('shuffleHandToDeckBottom', t`Shuffle hand to bottom…`)
       );
     } else if (opponent) {
       entries.push(
@@ -394,10 +397,10 @@ export const selectLegacyContextEntries = (
       header('deck', t({ message: 'Deck', context: 'zone' })),
       action('shuffleDeck', t`Shuffle deck`)
     );
-    if (own) entries.push(action('drawCards', t`Draw card(s)`));
+    if (own) entries.push(action('drawCards', t`Draw cards…`));
     entries.push(
-      action('viewDeckTop', t`View top card(s)`),
-      action('viewDeckBottom', t`View bottom card(s)`)
+      action('viewDeckTop', t`Look at top cards…`),
+      action('viewDeckBottom', t`Look at bottom cards…`)
     );
   }
   if (location.kind === 'board') {
@@ -2926,56 +2929,154 @@ const WorkAreaPanel = ({
 type LegacyBoardCountInput =
   LegacyBoardCountPrompt | LegacyBoardShortcutCountPrompt;
 
-const VIEW_COUNT_ACTIONS: ReadonlySet<string> = new Set([
-  'viewDeckTop',
-  'viewDeckBottom',
-]);
+/** The count questions, by what the count is for. */
+type CountQuestion =
+  | 'draw'
+  | 'lookTop'
+  | 'lookBottom'
+  | 'discardThenDraw'
+  | 'shuffleThenDraw'
+  | 'bottomThenDraw';
+
+const COUNT_QUESTIONS: Readonly<
+  Record<LegacyBoardCountInput['action'], CountQuestion>
+> = {
+  drawCards: 'draw',
+  viewDeckTop: 'lookTop',
+  viewDeckBottom: 'lookBottom',
+  discardHand: 'discardThenDraw',
+  discardOwnHandAndDraw: 'discardThenDraw',
+  shuffleHandToDeck: 'shuffleThenDraw',
+  shuffleOwnHandAndDraw: 'shuffleThenDraw',
+  shuffleHandToDeckBottom: 'bottomThenDraw',
+  shuffleOwnHandToDeckBottomAndDraw: 'bottomThenDraw',
+};
+
+/** The most cards a count asks for at once (the room's ceiling). */
+const MAX_COUNT = 200;
 
 /**
- * Asks the controller's pending count question in a prompt dialog. The
- * question lives as long as the controller holds it: if the table moves on
- * (the hand or deck it counts is gone), the dialog closes unanswered. An
- * invalid number keeps the dialog open with the source's message; Cancel or
- * Escape simply withdraws the question.
+ * What a count question shows: its title naming the whole action, what the
+ * count is out of, its accept button and its quick picks. `available` is
+ * how many cards the count can reach (the deck, and for a shuffle the hand
+ * going into it).
+ */
+const countOptions = (
+  question: CountQuestion,
+  input: LegacyBoardCountInput,
+  available: number
+): Omit<CountOptions, 'signal'> => {
+  const looking = question === 'lookTop' || question === 'lookBottom';
+  const refresh = !looking && question !== 'draw';
+  const draw = (count: number): string =>
+    plural(count, { one: 'Draw # card', other: 'Draw # cards' });
+  return {
+    title:
+      question === 'draw'
+        ? t`Draw cards`
+        : question === 'lookTop'
+          ? t`Look at top cards`
+          : question === 'lookBottom'
+            ? t`Look at bottom cards`
+            : question === 'discardThenDraw'
+              ? t`Discard hand, then draw`
+              : question === 'shuffleThenDraw'
+                ? t`Shuffle hand into deck, then draw`
+                : t`Hand to bottom of deck, then draw`,
+    body: refresh
+      ? plural(available, {
+          one: '# card to draw from',
+          other: '# cards to draw from',
+        })
+      : plural(available, { one: '# card in deck', other: '# cards in deck' }),
+    label: t`Number of cards`,
+    min: input.minimum,
+    max: Math.min(available, MAX_COUNT),
+    initial: Number(input.initialValue),
+    presets: refresh ? [0, 4, 5, 6, 7, 8] : [1, 2, 3],
+    submitLabel: looking
+      ? (count) =>
+          plural(count, { one: 'Look at # card', other: 'Look at # cards' })
+      : refresh
+        ? (count) =>
+            count === 0
+              ? t({
+                  message: 'Draw none',
+                  comment:
+                    'Accepts a hand put away (discarded or shuffled into the deck) without drawing.',
+                })
+              : draw(count)
+        : draw,
+  };
+};
+
+/** How many cards a count question can reach on the table now. */
+const countAvailable = (
+  view: MatchViewState | null | undefined,
+  input: LegacyBoardCountInput,
+  question: CountQuestion
+): number => {
+  const zone = view?.zones[input.zoneId];
+  if (!view || !zone) return MAX_COUNT;
+  if (
+    question === 'draw' ||
+    question === 'lookTop' ||
+    question === 'lookBottom'
+  )
+    return zone.cards.length;
+  const deck = Object.values(view.zones).find(
+    (candidate) =>
+      candidate.kind === 'deck' && candidate.ownerId === zone.ownerId
+  );
+  const deckCards = deck?.cards.length ?? 0;
+  return question === 'discardThenDraw'
+    ? deckCards
+    : deckCards + zone.cards.length;
+};
+
+/**
+ * Asks the controller's pending count question with the count picker
+ * (stepper, quick picks, the number itself). The question lives as long as
+ * the controller holds it: if the table moves on (the hand or deck it counts
+ * is gone), the dialog closes unanswered. Cancel or Escape simply withdraws
+ * the question.
  */
 const CountPrompt = ({
   input,
+  view,
   actions,
 }: {
   readonly input: LegacyBoardCountInput;
+  readonly view: MatchViewState | null | undefined;
   readonly actions: LegacyBoardOverlayActions;
 }) => {
   // Re-rendering with new callbacks must not re-ask: only a new question
-  // does, and the dialog keeps what the player has typed.
+  // does, and the dialog keeps what the player has chosen.
   const latestActions = useRef(actions);
   useEffect(() => {
     latestActions.current = actions;
   }, [actions]);
+  const latestView = useRef(view);
+  latestView.current = view;
   useEffect(() => {
     const question = new AbortController();
-    const view = VIEW_COUNT_ACTIONS.has(input.action);
-    void promptValue({
-      title: view ? t`Look at how many cards?` : t`Draw how many cards?`,
-      label: t`Number of cards`,
-      defaultValue: input.initialValue,
-      inputMode: 'numeric',
-      submitLabel: view
-        ? t({ message: 'View', context: 'look at cards from the deck' })
-        : t({ message: 'Draw', context: 'draw cards' }),
-      validate: (value) =>
-        parseLegacyCountInput(value, input.minimum) === undefined
-          ? t`Enter a number`
-          : null,
+    const kind = COUNT_QUESTIONS[input.action];
+    void pickCount({
+      ...countOptions(
+        kind,
+        input,
+        countAvailable(latestView.current, input, kind)
+      ),
       signal: question.signal,
-    }).then((value) => {
+    }).then((count) => {
       if (question.signal.aborted) return;
       const current = latestActions.current;
-      if (value === null) {
+      if (count === null) {
         current.dismiss('input');
       } else if (input.kind === 'shortcutCount') {
-        current.submitShortcutCountInput(input.action, value);
+        current.submitShortcutCountInput(input.action, String(count));
       } else {
-        current.submitCountInput(input.action, input.cardId, value);
+        current.submitCountInput(input.action, input.cardId, String(count));
       }
     });
     return () => question.abort();
@@ -3160,6 +3261,7 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
         <CountPrompt
           key={`${state.overlays.input.kind}:${state.overlays.input.action}:${state.overlays.input.zoneId}`}
           input={state.overlays.input}
+          view={state.view}
           actions={actions}
         />
       ) : null}

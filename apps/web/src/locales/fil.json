@@ -6361,5 +6361,79 @@
   "23cwkx": {
     "message": "Your name changed. Generate a new room.",
     "translation": "Nagbago ang pangalan mo. Gumawa ng bagong room."
+  },
+  "MyTf22": {
+    "message": "{available, plural, one {# card in deck} other {# cards in deck}}",
+    "translation": "{available, plural, one {# card sa deck} other {# card sa deck}}"
+  },
+  "DcTMVd": {
+    "message": "{available, plural, one {# card to draw from} other {# cards to draw from}}",
+    "translation": "{available, plural, one {# card na pwedeng i-draw} other {# card na pwedeng i-draw}}"
+  },
+  "nlUJMk": {
+    "message": "{count, plural, one {Look at # card} other {Look at # cards}}",
+    "translation": "{count, plural, one {Tingnan ang # card} other {Tingnan ang # card}}"
+  },
+  "ruBWQi": {
+    "message": "Discard hand, then draw",
+    "translation": "I-discard ang hand, tapos mag-draw"
+  },
+  "JrTBPO": {
+    "message": "Discard hand…",
+    "translation": "I-discard ang hand…"
+  },
+  "7cFPiW": {
+    "message": "Draw none",
+    "comments": [
+      "Accepts a hand put away (discarded or shuffled into the deck) without drawing."
+    ],
+    "translation": "Huwag mag-draw"
+  },
+  "gZAkYU": {
+    "message": "Hand to bottom of deck, then draw",
+    "translation": "Ilagay ang hand sa ilalim ng deck, tapos mag-draw"
+  },
+  "QW7fGB": {
+    "message": "Look at bottom cards",
+    "translation": "Tingnan ang card sa ilalim"
+  },
+  "nshEL9": {
+    "message": "Look at bottom cards…",
+    "translation": "Tingnan ang card sa ilalim…"
+  },
+  "g4nsbt": {
+    "message": "Look at top cards",
+    "translation": "Tingnan ang card sa itaas"
+  },
+  "KzU3sj": {
+    "message": "Look at top cards…",
+    "translation": "Tingnan ang card sa itaas…"
+  },
+  "3GFV_r": {
+    "message": "One fewer",
+    "context": "card count",
+    "translation": "Bawasan ng isa"
+  },
+  "qTM8Kd": {
+    "message": "One more",
+    "context": "card count",
+    "translation": "Dagdagan ng isa"
+  },
+  "P7jzR_": {
+    "message": "Quick picks",
+    "context": "card count",
+    "translation": "Mabilisang pili"
+  },
+  "DpAKOl": {
+    "message": "Shuffle hand into deck, then draw",
+    "translation": "I-shuffle ang hand sa deck, tapos mag-draw"
+  },
+  "M8Ea7C": {
+    "message": "Shuffle hand to bottom…",
+    "translation": "I-shuffle ang hand sa ilalim…"
+  },
+  "-qToFp": {
+    "message": "Shuffle hand to deck…",
+    "translation": "I-shuffle ang hand sa deck…"
   }
 }

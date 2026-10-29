@@ -6361,5 +6361,79 @@
   "23cwkx": {
     "message": "Your name changed. Generate a new room.",
     "translation": "Seu nome mudou. Gere uma nova sala."
+  },
+  "MyTf22": {
+    "message": "{available, plural, one {# card in deck} other {# cards in deck}}",
+    "translation": "{available, plural, one {# carta no baralho} other {# cartas no baralho}}"
+  },
+  "DcTMVd": {
+    "message": "{available, plural, one {# card to draw from} other {# cards to draw from}}",
+    "translation": "{available, plural, one {# carta para comprar} other {# cartas para comprar}}"
+  },
+  "nlUJMk": {
+    "message": "{count, plural, one {Look at # card} other {Look at # cards}}",
+    "translation": "{count, plural, one {Olhar # carta} other {Olhar # cartas}}"
+  },
+  "ruBWQi": {
+    "message": "Discard hand, then draw",
+    "translation": "Descartar a mão e comprar"
+  },
+  "JrTBPO": {
+    "message": "Discard hand…",
+    "translation": "Descartar a mão…"
+  },
+  "7cFPiW": {
+    "message": "Draw none",
+    "comments": [
+      "Accepts a hand put away (discarded or shuffled into the deck) without drawing."
+    ],
+    "translation": "Não comprar"
+  },
+  "gZAkYU": {
+    "message": "Hand to bottom of deck, then draw",
+    "translation": "Mão para o fundo do baralho e comprar"
+  },
+  "QW7fGB": {
+    "message": "Look at bottom cards",
+    "translation": "Olhar as cartas do fundo"
+  },
+  "nshEL9": {
+    "message": "Look at bottom cards…",
+    "translation": "Olhar as cartas do fundo…"
+  },
+  "g4nsbt": {
+    "message": "Look at top cards",
+    "translation": "Olhar as cartas do topo"
+  },
+  "KzU3sj": {
+    "message": "Look at top cards…",
+    "translation": "Olhar as cartas do topo…"
+  },
+  "3GFV_r": {
+    "message": "One fewer",
+    "context": "card count",
+    "translation": "Uma a menos"
+  },
+  "qTM8Kd": {
+    "message": "One more",
+    "context": "card count",
+    "translation": "Mais uma"
+  },
+  "P7jzR_": {
+    "message": "Quick picks",
+    "context": "card count",
+    "translation": "Atalhos"
+  },
+  "DpAKOl": {
+    "message": "Shuffle hand into deck, then draw",
+    "translation": "Embaralhar a mão no baralho e comprar"
+  },
+  "M8Ea7C": {
+    "message": "Shuffle hand to bottom…",
+    "translation": "Embaralhar a mão no fundo…"
+  },
+  "-qToFp": {
+    "message": "Shuffle hand to deck…",
+    "translation": "Embaralhar a mão no baralho…"
   }
 }

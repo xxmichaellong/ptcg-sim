@@ -6361,5 +6361,79 @@
   "23cwkx": {
     "message": "Your name changed. Generate a new room.",
     "translation": "Votre nom a changé. Générez une nouvelle salle."
+  },
+  "MyTf22": {
+    "message": "{available, plural, one {# card in deck} other {# cards in deck}}",
+    "translation": "{available, plural, one {# carte dans le deck} other {# cartes dans le deck}}"
+  },
+  "DcTMVd": {
+    "message": "{available, plural, one {# card to draw from} other {# cards to draw from}}",
+    "translation": "{available, plural, one {# carte à piocher} other {# cartes à piocher}}"
+  },
+  "nlUJMk": {
+    "message": "{count, plural, one {Look at # card} other {Look at # cards}}",
+    "translation": "{count, plural, one {Regarder # carte} other {Regarder # cartes}}"
+  },
+  "ruBWQi": {
+    "message": "Discard hand, then draw",
+    "translation": "Défausser la main, puis piocher"
+  },
+  "JrTBPO": {
+    "message": "Discard hand…",
+    "translation": "Défausser la main…"
+  },
+  "7cFPiW": {
+    "message": "Draw none",
+    "comments": [
+      "Accepts a hand put away (discarded or shuffled into the deck) without drawing."
+    ],
+    "translation": "Ne pas piocher"
+  },
+  "gZAkYU": {
+    "message": "Hand to bottom of deck, then draw",
+    "translation": "Main sous le deck, puis piocher"
+  },
+  "QW7fGB": {
+    "message": "Look at bottom cards",
+    "translation": "Regarder les cartes du dessous"
+  },
+  "nshEL9": {
+    "message": "Look at bottom cards…",
+    "translation": "Regarder les cartes du dessous…"
+  },
+  "g4nsbt": {
+    "message": "Look at top cards",
+    "translation": "Regarder les cartes du dessus"
+  },
+  "KzU3sj": {
+    "message": "Look at top cards…",
+    "translation": "Regarder les cartes du dessus…"
+  },
+  "3GFV_r": {
+    "message": "One fewer",
+    "context": "card count",
+    "translation": "Une de moins"
+  },
+  "qTM8Kd": {
+    "message": "One more",
+    "context": "card count",
+    "translation": "Une de plus"
+  },
+  "P7jzR_": {
+    "message": "Quick picks",
+    "context": "card count",
+    "translation": "Choix rapides"
+  },
+  "DpAKOl": {
+    "message": "Shuffle hand into deck, then draw",
+    "translation": "Mélanger la main dans le deck, puis piocher"
+  },
+  "M8Ea7C": {
+    "message": "Shuffle hand to bottom…",
+    "translation": "Mélanger la main sous le deck…"
+  },
+  "-qToFp": {
+    "message": "Shuffle hand to deck…",
+    "translation": "Mélanger la main dans le deck…"
   }
 }

@@ -6361,5 +6361,79 @@
   "23cwkx": {
     "message": "Your name changed. Generate a new room.",
     "translation": "ชื่อของคุณเปลี่ยนแล้ว สร้างห้องใหม่"
+  },
+  "MyTf22": {
+    "message": "{available, plural, one {# card in deck} other {# cards in deck}}",
+    "translation": "{available, plural, other {การ์ด # ใบในสำรับ}}"
+  },
+  "DcTMVd": {
+    "message": "{available, plural, one {# card to draw from} other {# cards to draw from}}",
+    "translation": "{available, plural, other {การ์ด # ใบที่จั่วได้}}"
+  },
+  "nlUJMk": {
+    "message": "{count, plural, one {Look at # card} other {Look at # cards}}",
+    "translation": "{count, plural, other {ดูการ์ด # ใบ}}"
+  },
+  "ruBWQi": {
+    "message": "Discard hand, then draw",
+    "translation": "ทิ้งการ์ดบนมือ แล้วจั่ว"
+  },
+  "JrTBPO": {
+    "message": "Discard hand…",
+    "translation": "ทิ้งการ์ดบนมือ…"
+  },
+  "7cFPiW": {
+    "message": "Draw none",
+    "comments": [
+      "Accepts a hand put away (discarded or shuffled into the deck) without drawing."
+    ],
+    "translation": "ไม่จั่ว"
+  },
+  "gZAkYU": {
+    "message": "Hand to bottom of deck, then draw",
+    "translation": "ใส่การ์ดบนมือใต้สำรับ แล้วจั่ว"
+  },
+  "QW7fGB": {
+    "message": "Look at bottom cards",
+    "translation": "ดูการ์ดใต้สำรับ"
+  },
+  "nshEL9": {
+    "message": "Look at bottom cards…",
+    "translation": "ดูการ์ดใต้สำรับ…"
+  },
+  "g4nsbt": {
+    "message": "Look at top cards",
+    "translation": "ดูการ์ดบนสุดของสำรับ"
+  },
+  "KzU3sj": {
+    "message": "Look at top cards…",
+    "translation": "ดูการ์ดบนสุดของสำรับ…"
+  },
+  "3GFV_r": {
+    "message": "One fewer",
+    "context": "card count",
+    "translation": "น้อยลงหนึ่งใบ"
+  },
+  "qTM8Kd": {
+    "message": "One more",
+    "context": "card count",
+    "translation": "มากขึ้นหนึ่งใบ"
+  },
+  "P7jzR_": {
+    "message": "Quick picks",
+    "context": "card count",
+    "translation": "ตัวเลือกด่วน"
+  },
+  "DpAKOl": {
+    "message": "Shuffle hand into deck, then draw",
+    "translation": "สับการ์ดบนมือเข้าสำรับ แล้วจั่ว"
+  },
+  "M8Ea7C": {
+    "message": "Shuffle hand to bottom…",
+    "translation": "สับการ์ดบนมือไว้ใต้สำรับ…"
+  },
+  "-qToFp": {
+    "message": "Shuffle hand to deck…",
+    "translation": "สับการ์ดบนมือเข้าสำรับ…"
   }
 }

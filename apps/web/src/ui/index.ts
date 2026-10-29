@@ -1,8 +1,8 @@
 /**
  * Overlay primitives (ADR-027): one dialog, confirm, prompt, toast and
  * tooltip set with shared look, motion and focus behaviour. Mount
- * `OverlayHost` once per React root; then `confirmAction`, `promptValue` and
- * `toast` work from anywhere.
+ * `OverlayHost` once per React root; then `confirmAction`, `promptValue`,
+ * `pickCount` and `toast` work from anywhere.
  */
 export {
   UiButton,
@@ -11,18 +11,22 @@ export {
 } from './Button.js';
 export {
   ConfirmDialog,
+  CountDialog,
   Dialog,
   DialogCloseButton,
   PromptDialog,
   type ConfirmDialogProps,
+  type CountDialogProps,
   type DialogProps,
   type PromptDialogProps,
 } from './Dialog.js';
 export {
   cancelAllDialogRequests,
   confirmAction,
+  pickCount,
   promptValue,
   type ConfirmOptions,
+  type CountOptions,
   type DialogFinalFocus,
   type DialogTone,
   type PromptOptions,

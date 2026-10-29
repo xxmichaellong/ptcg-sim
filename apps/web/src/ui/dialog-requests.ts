@@ -67,6 +67,33 @@ export interface PromptOptions {
   readonly finalFocus?: DialogFinalFocus;
 }
 
+/**
+ * A number of cards, picked rather than typed: a stepper, quick picks and
+ * the number itself (digits still type it). See `CountDialog`.
+ */
+export interface CountOptions {
+  /** The whole action: "Discard hand, then draw". */
+  readonly title: string;
+  /** What the count is out of: "47 cards in deck". */
+  readonly body?: ReactNode;
+  /** The number's accessible name. */
+  readonly label: string;
+  readonly min: number;
+  /** The most it can be; never below `min`. */
+  readonly max: number;
+  readonly initial: number;
+  /** Quick picks, each a button; those past `max` are left out. */
+  readonly presets?: readonly number[];
+  /** The accept button, for the count chosen: "Draw 3". */
+  readonly submitLabel: (count: number) => string;
+  /** Defaults to "Cancel". */
+  readonly cancelLabel?: string;
+  /** Aborting closes the dialog and resolves `null`. */
+  readonly signal?: AbortSignal;
+  /** See `DialogFinalFocus`. */
+  readonly finalFocus?: DialogFinalFocus;
+}
+
 export type DialogRequest =
   | {
       readonly kind: 'confirm';
@@ -77,9 +104,16 @@ export type DialogRequest =
       readonly kind: 'prompt';
       readonly id: number;
       readonly options: PromptOptions;
+    }
+  | {
+      readonly kind: 'count';
+      readonly id: number;
+      readonly options: CountOptions;
     };
 
-type Settle = (answer: boolean | string | null) => void;
+type DialogAnswer = boolean | string | number | null;
+
+type Settle = (answer: DialogAnswer) => void;
 
 let nextRequestId = 1;
 let queue: readonly DialogRequest[] = [];
@@ -100,7 +134,7 @@ export const subscribeDialogRequests = (listener: () => void): (() => void) => {
 /** The pending requests, oldest first. The front one is on screen. */
 export const dialogRequestsSnapshot = (): readonly DialogRequest[] => queue;
 
-const enqueue = <Answer extends boolean | string | null>(
+const enqueue = <Answer extends DialogAnswer>(
   request: DialogRequest,
   signal: AbortSignal | undefined,
   cancelled: Answer
@@ -124,10 +158,7 @@ const enqueue = <Answer extends boolean | string | null>(
  * Answers one request and takes it off the queue. Later answers to the same
  * request are ignored, so a click racing an abort can never resolve twice.
  */
-export const settleDialogRequest = (
-  id: number,
-  answer: boolean | string | null
-): void => {
+export const settleDialogRequest = (id: number, answer: DialogAnswer): void => {
   const settle = settlers.get(id);
   if (!settle) return;
   settlers.delete(id);
@@ -158,6 +189,17 @@ export const confirmAction = (options: ConfirmOptions): Promise<boolean> =>
 export const promptValue = (options: PromptOptions): Promise<string | null> =>
   enqueue<string | null>(
     { kind: 'prompt', id: nextRequestId++, options },
+    options.signal,
+    null
+  );
+
+/**
+ * Asks how many cards; resolves the count chosen, or `null` when the player
+ * cancels.
+ */
+export const pickCount = (options: CountOptions): Promise<number | null> =>
+  enqueue<number | null>(
+    { kind: 'count', id: nextRequestId++, options },
     options.signal,
     null
   );

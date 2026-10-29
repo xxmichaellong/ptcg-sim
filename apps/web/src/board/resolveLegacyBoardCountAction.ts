@@ -1,4 +1,3 @@
-import { t } from '@lingui/core/macro';
 import type { MatchViewState, PlayerId, ViewCardId } from '@ptcgsim/game-core';
 import type { WireGameCommand } from '@ptcgsim/protocol';
 
@@ -21,10 +20,8 @@ export interface LegacyBoardCountPrompt {
   readonly action: LegacyBoardCountActionId;
   readonly cardId: ViewCardId;
   readonly zoneId: string;
-  readonly message: string;
   readonly initialValue: '0' | '1';
   readonly minimum: 0 | 1;
-  readonly invalidMessage: string;
 }
 
 export type LegacyBoardCountActionResolution =
@@ -36,11 +33,6 @@ export type LegacyBoardCountActionResolution =
         'not_player' | 'stale_card' | 'unsupported_target' | 'invalid_value';
     };
 
-// Worded when asked, in the language of the moment.
-const drawPrompt = () => t`Draw how many cards?`;
-const viewPrompt = () => t`Look at how many cards?`;
-const invalidDraw = () => t`Enter a number`;
-const invalidView = () => t`Enter a number`;
 const MAX_WIRE_COUNT = 200;
 
 export const isLegacyBoardCountActionId = (
@@ -68,16 +60,13 @@ const promptFor = (
     action === 'discardHand' ||
     action === 'shuffleHandToDeck' ||
     action === 'shuffleHandToDeckBottom';
-  const viewAction = action === 'viewDeckTop' || action === 'viewDeckBottom';
   return {
     kind: 'count',
     action,
     cardId,
     zoneId,
-    message: viewAction ? viewPrompt() : drawPrompt(),
     initialValue: handAction ? '0' : '1',
     minimum: handAction ? 0 : 1,
-    invalidMessage: viewAction ? invalidView() : invalidDraw(),
   };
 };
 

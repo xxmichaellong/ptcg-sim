@@ -6361,5 +6361,79 @@
   "23cwkx": {
     "message": "Your name changed. Generate a new room.",
     "translation": "تغيّر اسمك. أنشئ غرفة جديدة."
+  },
+  "MyTf22": {
+    "message": "{available, plural, one {# card in deck} other {# cards in deck}}",
+    "translation": "{available, plural, one {بطاقة واحدة في المجموعة} two {بطاقتان في المجموعة} few {# بطاقات في المجموعة} many {# بطاقة في المجموعة} other {# بطاقة في المجموعة}}"
+  },
+  "DcTMVd": {
+    "message": "{available, plural, one {# card to draw from} other {# cards to draw from}}",
+    "translation": "{available, plural, one {بطاقة واحدة للسحب منها} two {بطاقتان للسحب منهما} few {# بطاقات للسحب منها} many {# بطاقة للسحب منها} other {# بطاقة للسحب منها}}"
+  },
+  "nlUJMk": {
+    "message": "{count, plural, one {Look at # card} other {Look at # cards}}",
+    "translation": "{count, plural, one {اطّلع على بطاقة واحدة} two {اطّلع على بطاقتين} few {اطّلع على # بطاقات} many {اطّلع على # بطاقة} other {اطّلع على # بطاقة}}"
+  },
+  "ruBWQi": {
+    "message": "Discard hand, then draw",
+    "translation": "تخلّص من اليد ثم اسحب"
+  },
+  "JrTBPO": {
+    "message": "Discard hand…",
+    "translation": "تخلّص من اليد…"
+  },
+  "7cFPiW": {
+    "message": "Draw none",
+    "comments": [
+      "Accepts a hand put away (discarded or shuffled into the deck) without drawing."
+    ],
+    "translation": "بدون سحب"
+  },
+  "gZAkYU": {
+    "message": "Hand to bottom of deck, then draw",
+    "translation": "ضع اليد أسفل المجموعة ثم اسحب"
+  },
+  "QW7fGB": {
+    "message": "Look at bottom cards",
+    "translation": "اطّلع على البطاقات السفلية"
+  },
+  "nshEL9": {
+    "message": "Look at bottom cards…",
+    "translation": "اطّلع على البطاقات السفلية…"
+  },
+  "g4nsbt": {
+    "message": "Look at top cards",
+    "translation": "اطّلع على البطاقات العلوية"
+  },
+  "KzU3sj": {
+    "message": "Look at top cards…",
+    "translation": "اطّلع على البطاقات العلوية…"
+  },
+  "3GFV_r": {
+    "message": "One fewer",
+    "context": "card count",
+    "translation": "أقل بواحدة"
+  },
+  "qTM8Kd": {
+    "message": "One more",
+    "context": "card count",
+    "translation": "أكثر بواحدة"
+  },
+  "P7jzR_": {
+    "message": "Quick picks",
+    "context": "card count",
+    "translation": "اختيارات سريعة"
+  },
+  "DpAKOl": {
+    "message": "Shuffle hand into deck, then draw",
+    "translation": "اخلط اليد في المجموعة ثم اسحب"
+  },
+  "M8Ea7C": {
+    "message": "Shuffle hand to bottom…",
+    "translation": "اخلط اليد أسفل المجموعة…"
+  },
+  "-qToFp": {
+    "message": "Shuffle hand to deck…",
+    "translation": "اخلط اليد في المجموعة…"
   }
 }

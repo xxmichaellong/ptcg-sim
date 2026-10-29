@@ -623,10 +623,8 @@ describe('legacy board shortcut action resolver', () => {
         action,
         playerId: viewerId,
         zoneId: hand.id,
-        message: 'Draw how many cards?',
         initialValue: '0',
         minimum: 0,
-        invalidMessage: 'Enter a number',
       },
       dismissSelection: false,
     });

@@ -524,10 +524,8 @@ describe('legacy board keyboard shortcut bridge', () => {
       action: 'discardOwnHandAndDraw',
       playerId: 'player-1',
       zoneId: 'zone:player-1:hand',
-      message: 'Draw how many cards?',
       initialValue: '0',
       minimum: 0,
-      invalidMessage: 'Enter a number',
     });
     expect(document.body.dispatchEvent(altD())).toBe(true);
     expect(document.body.dispatchEvent(escape())).toBe(true);

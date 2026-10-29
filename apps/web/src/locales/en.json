@@ -6361,5 +6361,79 @@
   "23cwkx": {
     "message": "Your name changed. Generate a new room.",
     "translation": "Your name changed. Generate a new room."
+  },
+  "MyTf22": {
+    "message": "{available, plural, one {# card in deck} other {# cards in deck}}",
+    "translation": "{available, plural, one {# card in deck} other {# cards in deck}}"
+  },
+  "DcTMVd": {
+    "message": "{available, plural, one {# card to draw from} other {# cards to draw from}}",
+    "translation": "{available, plural, one {# card to draw from} other {# cards to draw from}}"
+  },
+  "nlUJMk": {
+    "message": "{count, plural, one {Look at # card} other {Look at # cards}}",
+    "translation": "{count, plural, one {Look at # card} other {Look at # cards}}"
+  },
+  "ruBWQi": {
+    "message": "Discard hand, then draw",
+    "translation": "Discard hand, then draw"
+  },
+  "JrTBPO": {
+    "message": "Discard hand…",
+    "translation": "Discard hand…"
+  },
+  "7cFPiW": {
+    "message": "Draw none",
+    "comments": [
+      "Accepts a hand put away (discarded or shuffled into the deck) without drawing."
+    ],
+    "translation": "Draw none"
+  },
+  "gZAkYU": {
+    "message": "Hand to bottom of deck, then draw",
+    "translation": "Hand to bottom of deck, then draw"
+  },
+  "QW7fGB": {
+    "message": "Look at bottom cards",
+    "translation": "Look at bottom cards"
+  },
+  "nshEL9": {
+    "message": "Look at bottom cards…",
+    "translation": "Look at bottom cards…"
+  },
+  "g4nsbt": {
+    "message": "Look at top cards",
+    "translation": "Look at top cards"
+  },
+  "KzU3sj": {
+    "message": "Look at top cards…",
+    "translation": "Look at top cards…"
+  },
+  "3GFV_r": {
+    "message": "One fewer",
+    "context": "card count",
+    "translation": "One fewer"
+  },
+  "qTM8Kd": {
+    "message": "One more",
+    "context": "card count",
+    "translation": "One more"
+  },
+  "P7jzR_": {
+    "message": "Quick picks",
+    "context": "card count",
+    "translation": "Quick picks"
+  },
+  "DpAKOl": {
+    "message": "Shuffle hand into deck, then draw",
+    "translation": "Shuffle hand into deck, then draw"
+  },
+  "M8Ea7C": {
+    "message": "Shuffle hand to bottom…",
+    "translation": "Shuffle hand to bottom…"
+  },
+  "-qToFp": {
+    "message": "Shuffle hand to deck…",
+    "translation": "Shuffle hand to deck…"
   }
 }

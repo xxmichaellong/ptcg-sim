@@ -59,7 +59,9 @@ summarised in `EXPERIENCE_DESIGN.md`.
      dragging is never slowed.
 4. **Overlays use one primitive set** (dialog, popover, menu, context menu,
    tooltip, toast) with shared animation and focus behaviour, replacing every
-   `window.confirm`, `alert` and `prompt`.
+   `window.confirm`, `alert` and `prompt`. A number of cards is picked, not
+   typed (`pickCount`, 2026-10-29): a stepper, quick picks and an accept
+   button naming the count; digits still type it.
 5. **Design tokens** (CSS custom properties: colour in `oklch`, type, space,
    radii, elevation, motion) are the only source of visual constants. The
    renderer reads them through `var()` with fallbacks, so it stays usable

@@ -6361,5 +6361,79 @@
   "23cwkx": {
     "message": "Your name changed. Generate a new room.",
     "translation": "你的名称已更改。请重新生成房间。"
+  },
+  "MyTf22": {
+    "message": "{available, plural, one {# card in deck} other {# cards in deck}}",
+    "translation": "{available, plural, other {牌库中有#张卡牌}}"
+  },
+  "DcTMVd": {
+    "message": "{available, plural, one {# card to draw from} other {# cards to draw from}}",
+    "translation": "{available, plural, other {可抽取#张卡牌}}"
+  },
+  "nlUJMk": {
+    "message": "{count, plural, one {Look at # card} other {Look at # cards}}",
+    "translation": "{count, plural, other {查看#张卡牌}}"
+  },
+  "ruBWQi": {
+    "message": "Discard hand, then draw",
+    "translation": "弃掉手牌，然后抽牌"
+  },
+  "JrTBPO": {
+    "message": "Discard hand…",
+    "translation": "弃掉手牌…"
+  },
+  "7cFPiW": {
+    "message": "Draw none",
+    "comments": [
+      "Accepts a hand put away (discarded or shuffled into the deck) without drawing."
+    ],
+    "translation": "不抽牌"
+  },
+  "gZAkYU": {
+    "message": "Hand to bottom of deck, then draw",
+    "translation": "手牌放到牌库底，然后抽牌"
+  },
+  "QW7fGB": {
+    "message": "Look at bottom cards",
+    "translation": "查看牌库底的卡牌"
+  },
+  "nshEL9": {
+    "message": "Look at bottom cards…",
+    "translation": "查看牌库底的卡牌…"
+  },
+  "g4nsbt": {
+    "message": "Look at top cards",
+    "translation": "查看牌库顶的卡牌"
+  },
+  "KzU3sj": {
+    "message": "Look at top cards…",
+    "translation": "查看牌库顶的卡牌…"
+  },
+  "3GFV_r": {
+    "message": "One fewer",
+    "context": "card count",
+    "translation": "少一张"
+  },
+  "qTM8Kd": {
+    "message": "One more",
+    "context": "card count",
+    "translation": "多一张"
+  },
+  "P7jzR_": {
+    "message": "Quick picks",
+    "context": "card count",
+    "translation": "快速选择"
+  },
+  "DpAKOl": {
+    "message": "Shuffle hand into deck, then draw",
+    "translation": "手牌洗入牌库，然后抽牌"
+  },
+  "M8Ea7C": {
+    "message": "Shuffle hand to bottom…",
+    "translation": "手牌洗牌后放到牌库底…"
+  },
+  "-qToFp": {
+    "message": "Shuffle hand to deck…",
+    "translation": "手牌洗入牌库…"
   }
 }

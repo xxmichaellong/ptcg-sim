@@ -6361,5 +6361,79 @@
   "23cwkx": {
     "message": "Your name changed. Generate a new room.",
     "translation": "Твоё имя изменилось. Создай новую комнату."
+  },
+  "MyTf22": {
+    "message": "{available, plural, one {# card in deck} other {# cards in deck}}",
+    "translation": "{available, plural, one {# карта в колоде} few {# карты в колоде} many {# карт в колоде} other {# карты в колоде}}"
+  },
+  "DcTMVd": {
+    "message": "{available, plural, one {# card to draw from} other {# cards to draw from}}",
+    "translation": "{available, plural, one {# карта, из которых можно взять} few {# карты, из которых можно взять} many {# карт, из которых можно взять} other {# карты, из которых можно взять}}"
+  },
+  "nlUJMk": {
+    "message": "{count, plural, one {Look at # card} other {Look at # cards}}",
+    "translation": "{count, plural, one {Посмотреть # карту} few {Посмотреть # карты} many {Посмотреть # карт} other {Посмотреть # карты}}"
+  },
+  "ruBWQi": {
+    "message": "Discard hand, then draw",
+    "translation": "Сбросить руку и взять карты"
+  },
+  "JrTBPO": {
+    "message": "Discard hand…",
+    "translation": "Сбросить руку…"
+  },
+  "7cFPiW": {
+    "message": "Draw none",
+    "comments": [
+      "Accepts a hand put away (discarded or shuffled into the deck) without drawing."
+    ],
+    "translation": "Не брать карты"
+  },
+  "gZAkYU": {
+    "message": "Hand to bottom of deck, then draw",
+    "translation": "Руку под низ колоды и взять карты"
+  },
+  "QW7fGB": {
+    "message": "Look at bottom cards",
+    "translation": "Посмотреть нижние карты"
+  },
+  "nshEL9": {
+    "message": "Look at bottom cards…",
+    "translation": "Посмотреть нижние карты…"
+  },
+  "g4nsbt": {
+    "message": "Look at top cards",
+    "translation": "Посмотреть верхние карты"
+  },
+  "KzU3sj": {
+    "message": "Look at top cards…",
+    "translation": "Посмотреть верхние карты…"
+  },
+  "3GFV_r": {
+    "message": "One fewer",
+    "context": "card count",
+    "translation": "На одну меньше"
+  },
+  "qTM8Kd": {
+    "message": "One more",
+    "context": "card count",
+    "translation": "На одну больше"
+  },
+  "P7jzR_": {
+    "message": "Quick picks",
+    "context": "card count",
+    "translation": "Быстрый выбор"
+  },
+  "DpAKOl": {
+    "message": "Shuffle hand into deck, then draw",
+    "translation": "Замешать руку в колоду и взять карты"
+  },
+  "M8Ea7C": {
+    "message": "Shuffle hand to bottom…",
+    "translation": "Замешать руку под низ…"
+  },
+  "-qToFp": {
+    "message": "Shuffle hand to deck…",
+    "translation": "Замешать руку в колоду…"
   }
 }

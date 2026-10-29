@@ -88,7 +88,6 @@ interface ProtectedInputEvidence {
           readonly message: string;
           readonly initialValue: '0' | '1';
           readonly minimum: 0 | 1;
-          readonly invalidMessage: string;
         }
       | {
           readonly kind: 'shortcutCount';
@@ -98,7 +97,6 @@ interface ProtectedInputEvidence {
           readonly message: string;
           readonly initialValue: '0';
           readonly minimum: 0;
-          readonly invalidMessage: string;
         }
       | null;
     readonly marker?: {
@@ -686,9 +684,9 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
   expect(
     await menu.locator(':scope > ul > li > [role="menuitem"]').allTextContents()
   ).toEqual([
-    'Discard hand',
-    'Shuffle hand to deck',
-    'Shuffle hand to bottom',
+    'Discard hand…',
+    'Shuffle hand to deck…',
+    'Shuffle hand to bottom…',
     'Move card...',
     'Reveal card',
   ]);
@@ -724,7 +722,7 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
   await menu.locator('[data-context-action="discardHand"]').click();
   expect(await cancelledPrompt).toEqual({
     type: 'prompt',
-    message: 'Draw how many cards?',
+    message: 'Discard hand, then draw',
     defaultValue: '0',
   });
   await expect(menu).toHaveCount(0);
@@ -1160,7 +1158,7 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
       cardId: fixture.sourceCardId,
       action: 'discardHand',
       value: '999',
-      message: 'Draw how many cards?',
+      message: 'Discard hand, then draw',
       defaultValue: '0',
       command: {
         type: 'DiscardHandAndDraw',
@@ -1171,7 +1169,7 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
       cardId: fixture.sourceCardId,
       action: 'shuffleHandToDeck',
       value: '999',
-      message: 'Draw how many cards?',
+      message: 'Shuffle hand into deck, then draw',
       defaultValue: '0',
       command: {
         type: 'ShuffleHandIntoDeckAndDraw',
@@ -1182,7 +1180,7 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
       cardId: fixture.sourceCardId,
       action: 'shuffleHandToDeckBottom',
       value: '0',
-      message: 'Draw how many cards?',
+      message: 'Hand to bottom of deck, then draw',
       defaultValue: '0',
       command: {
         type: 'ShuffleHandToDeckBottomAndDraw',
@@ -1193,7 +1191,7 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
       cardId: fixture.ownDeckCardId,
       action: 'drawCards',
       value: '999',
-      message: 'Draw how many cards?',
+      message: 'Draw cards',
       defaultValue: '1',
       command: { type: 'DrawCards', count: fixture.ownDeckCount },
     },
@@ -1201,7 +1199,7 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
       cardId: fixture.ownDeckCardId,
       action: 'viewDeckTop',
       value: '2',
-      message: 'Look at how many cards?',
+      message: 'Look at top cards',
       defaultValue: '1',
       command: {
         type: 'ExtractDeckCardsForInspection',
@@ -1215,7 +1213,7 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
       cardId: fixture.opponentDeckCardId,
       action: 'viewDeckBottom',
       value: '999',
-      message: 'Look at how many cards?',
+      message: 'Look at bottom cards',
       defaultValue: '1',
       command: {
         type: 'ExtractDeckCardsForInspection',
@@ -2329,16 +2327,19 @@ test('unselected hand shortcuts stage prompted counts before atomic authority co
     {
       key: 'Alt+KeyD',
       action: 'discardOwnHandAndDraw',
+      title: 'Discard hand, then draw',
       command: { type: 'DiscardHandAndDraw', count: 2 },
     },
     {
       key: 'Alt+KeyS',
       action: 'shuffleOwnHandAndDraw',
+      title: 'Shuffle hand into deck, then draw',
       command: { type: 'ShuffleHandIntoDeckAndDraw', count: 2 },
     },
     {
       key: 'Alt+ArrowDown',
       action: 'shuffleOwnHandToDeckBottomAndDraw',
+      title: 'Hand to bottom of deck, then draw',
       command: { type: 'ShuffleHandToDeckBottomAndDraw', count: 2 },
     },
   ] as const;
@@ -2349,7 +2350,7 @@ test('unselected hand shortcuts stage prompted counts before atomic authority co
     await page.keyboard.press(scenario.key);
     expect(await prompt).toEqual({
       type: 'prompt',
-      message: 'Draw how many cards?',
+      message: scenario.title,
       defaultValue: '0',
     });
     await expect
@@ -2379,7 +2380,7 @@ test('unselected hand shortcuts stage prompted counts before atomic authority co
   await page.keyboard.press('Alt+KeyD');
   expect(await cancelledPrompt).toEqual({
     type: 'prompt',
-    message: 'Draw how many cards?',
+    message: 'Discard hand, then draw',
     defaultValue: '0',
   });
   await expect
@@ -2394,20 +2395,20 @@ test('unselected hand shortcuts stage prompted counts before atomic authority co
   ]);
   expect(current.shortcutRejections).toEqual([]);
 
-  // An invalid count keeps the question open with v1's message; nothing is
-  // submitted, and Cancel then withdraws it.
+  // The count is picked: letters don't type into it, nothing is submitted
+  // while it is open, and Cancel withdraws it.
   await clearEvidence(page);
   await page.keyboard.press('Alt+KeyS');
   const invalidPrompt = openOverlayPrompt(page);
   await expect(invalidPrompt).toBeVisible();
   await expect(invalidPrompt.locator('.ptcgsim-ui-dialog__title')).toHaveText(
-    'Draw how many cards?'
+    'Shuffle hand into deck, then draw'
   );
   const invalidField = invalidPrompt.locator('.ptcgsim-ui-field__input');
   await expect(invalidField).toHaveValue('0');
   await invalidField.fill('invalid');
-  await invalidField.press('Enter');
-  await expect(invalidPrompt.getByRole('alert')).toHaveText('Enter a number');
+  await expect(invalidField).toHaveValue('');
+  await expect(invalidPrompt.getByRole('alert')).toHaveCount(0);
   await expect(invalidPrompt).toBeVisible();
   current = await evidence(page);
   expect(current.submissions).toEqual([]);

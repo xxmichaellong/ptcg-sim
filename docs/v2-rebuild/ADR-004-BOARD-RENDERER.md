@@ -232,7 +232,8 @@ controlled by the mounted zone browser:
 it derives a stable copy from disclosed labels and never enters the controller
 or mutates its projection; forged requests still fail closed as `local_only`.
 Native Chromium pins exact damage and condition edit/removal plus ability-marker
-commands, all six count prompts/commands, all three category choices, all five
+commands, all six count prompts/commands (asked with the count picker since
+2026-10-29, PX-071), all three category choices, all five
 move choices, all twenty-six selected-card shortcut commands, all three global
 loose-board commands, all four intended unselected deck commands, the global
 coin command, all three lifecycle commands, all three staged hand commands, the

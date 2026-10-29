@@ -6361,5 +6361,79 @@
   "23cwkx": {
     "message": "Your name changed. Generate a new room.",
     "translation": "Tên của bạn đã thay đổi. Hãy tạo phòng mới."
+  },
+  "MyTf22": {
+    "message": "{available, plural, one {# card in deck} other {# cards in deck}}",
+    "translation": "{available, plural, other {# lá bài trong bộ bài}}"
+  },
+  "DcTMVd": {
+    "message": "{available, plural, one {# card to draw from} other {# cards to draw from}}",
+    "translation": "{available, plural, other {# lá bài để rút}}"
+  },
+  "nlUJMk": {
+    "message": "{count, plural, one {Look at # card} other {Look at # cards}}",
+    "translation": "{count, plural, other {Xem # lá bài}}"
+  },
+  "ruBWQi": {
+    "message": "Discard hand, then draw",
+    "translation": "Bỏ bài trên tay, rồi rút"
+  },
+  "JrTBPO": {
+    "message": "Discard hand…",
+    "translation": "Bỏ bài trên tay…"
+  },
+  "7cFPiW": {
+    "message": "Draw none",
+    "comments": [
+      "Accepts a hand put away (discarded or shuffled into the deck) without drawing."
+    ],
+    "translation": "Không rút"
+  },
+  "gZAkYU": {
+    "message": "Hand to bottom of deck, then draw",
+    "translation": "Đưa bài trên tay xuống đáy bộ bài, rồi rút"
+  },
+  "QW7fGB": {
+    "message": "Look at bottom cards",
+    "translation": "Xem các lá bài dưới đáy"
+  },
+  "nshEL9": {
+    "message": "Look at bottom cards…",
+    "translation": "Xem các lá bài dưới đáy…"
+  },
+  "g4nsbt": {
+    "message": "Look at top cards",
+    "translation": "Xem các lá bài trên cùng"
+  },
+  "KzU3sj": {
+    "message": "Look at top cards…",
+    "translation": "Xem các lá bài trên cùng…"
+  },
+  "3GFV_r": {
+    "message": "One fewer",
+    "context": "card count",
+    "translation": "Bớt một lá"
+  },
+  "qTM8Kd": {
+    "message": "One more",
+    "context": "card count",
+    "translation": "Thêm một lá"
+  },
+  "P7jzR_": {
+    "message": "Quick picks",
+    "context": "card count",
+    "translation": "Chọn nhanh"
+  },
+  "DpAKOl": {
+    "message": "Shuffle hand into deck, then draw",
+    "translation": "Xáo bài trên tay vào bộ bài, rồi rút"
+  },
+  "M8Ea7C": {
+    "message": "Shuffle hand to bottom…",
+    "translation": "Xáo bài trên tay xuống đáy…"
+  },
+  "-qToFp": {
+    "message": "Shuffle hand to deck…",
+    "translation": "Xáo bài trên tay vào bộ bài…"
   }
 }

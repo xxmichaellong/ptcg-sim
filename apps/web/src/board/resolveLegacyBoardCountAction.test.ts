@@ -48,40 +48,30 @@ describe('legacy board count action resolver', () => {
     const playerId = view.viewer.kind === 'player' ? view.viewer.playerId : '';
     const hand = zone(view, playerId, 'hand');
     const deck = zone(view, playerId, 'deck');
-    const actions: readonly [
-      LegacyBoardCountActionId,
-      string,
-      '0' | '1',
-      0 | 1,
-    ][] = [
-      ['discardHand', 'Draw how many cards?', '0', 0],
-      ['shuffleHandToDeck', 'Draw how many cards?', '0', 0],
-      ['shuffleHandToDeckBottom', 'Draw how many cards?', '0', 0],
-      ['drawCards', 'Draw how many cards?', '1', 1],
-      ['viewDeckTop', 'Look at how many cards?', '1', 1],
-      ['viewDeckBottom', 'Look at how many cards?', '1', 1],
+    const actions: readonly [LegacyBoardCountActionId, '0' | '1', 0 | 1][] = [
+      ['discardHand', '0', 0],
+      ['shuffleHandToDeck', '0', 0],
+      ['shuffleHandToDeckBottom', '0', 0],
+      ['drawCards', '1', 1],
+      ['viewDeckTop', '1', 1],
+      ['viewDeckBottom', '1', 1],
     ];
-    for (const [action, message, initialValue, minimum] of actions) {
+    for (const [action, initialValue, minimum] of actions) {
       const target =
         action.includes('Hand') || action.startsWith('shuffleHand')
           ? hand
           : deck;
-      const invalidMessage = action.startsWith('viewDeck')
-        ? 'Enter a number'
-        : 'Enter a number';
       expect(
         resolveLegacyBoardCountAction(view, action, target.cards[0]!.id)
-      ).toMatchObject({
+      ).toEqual({
         ok: true,
         input: {
           kind: 'count',
           action,
           cardId: target.cards[0]!.id,
           zoneId: target.id,
-          message,
           initialValue,
           minimum,
-          invalidMessage,
         },
       });
     }

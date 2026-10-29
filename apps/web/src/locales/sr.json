@@ -6361,5 +6361,79 @@
   "23cwkx": {
     "message": "Your name changed. Generate a new room.",
     "translation": "Твоје име је промењено. Направи нову собу."
+  },
+  "MyTf22": {
+    "message": "{available, plural, one {# card in deck} other {# cards in deck}}",
+    "translation": "{available, plural, one {# карта у шпилу} few {# карте у шпилу} other {# карата у шпилу}}"
+  },
+  "DcTMVd": {
+    "message": "{available, plural, one {# card to draw from} other {# cards to draw from}}",
+    "translation": "{available, plural, one {# карта за вучење} few {# карте за вучење} other {# карата за вучење}}"
+  },
+  "nlUJMk": {
+    "message": "{count, plural, one {Look at # card} other {Look at # cards}}",
+    "translation": "{count, plural, one {Погледај # карту} few {Погледај # карте} other {Погледај # карата}}"
+  },
+  "ruBWQi": {
+    "message": "Discard hand, then draw",
+    "translation": "Одбаци руку, затим вуци"
+  },
+  "JrTBPO": {
+    "message": "Discard hand…",
+    "translation": "Одбаци руку…"
+  },
+  "7cFPiW": {
+    "message": "Draw none",
+    "comments": [
+      "Accepts a hand put away (discarded or shuffled into the deck) without drawing."
+    ],
+    "translation": "Не вучи ништа"
+  },
+  "gZAkYU": {
+    "message": "Hand to bottom of deck, then draw",
+    "translation": "Рука на дно шпила, затим вуци"
+  },
+  "QW7fGB": {
+    "message": "Look at bottom cards",
+    "translation": "Погледај доње карте"
+  },
+  "nshEL9": {
+    "message": "Look at bottom cards…",
+    "translation": "Погледај доње карте…"
+  },
+  "g4nsbt": {
+    "message": "Look at top cards",
+    "translation": "Погледај горње карте"
+  },
+  "KzU3sj": {
+    "message": "Look at top cards…",
+    "translation": "Погледај горње карте…"
+  },
+  "3GFV_r": {
+    "message": "One fewer",
+    "context": "card count",
+    "translation": "Једна мање"
+  },
+  "qTM8Kd": {
+    "message": "One more",
+    "context": "card count",
+    "translation": "Једна више"
+  },
+  "P7jzR_": {
+    "message": "Quick picks",
+    "context": "card count",
+    "translation": "Брзи избори"
+  },
+  "DpAKOl": {
+    "message": "Shuffle hand into deck, then draw",
+    "translation": "Промешај руку у шпил, затим вуци"
+  },
+  "M8Ea7C": {
+    "message": "Shuffle hand to bottom…",
+    "translation": "Промешај руку на дно…"
+  },
+  "-qToFp": {
+    "message": "Shuffle hand to deck…",
+    "translation": "Промешај руку у шпил…"
   }
 }
