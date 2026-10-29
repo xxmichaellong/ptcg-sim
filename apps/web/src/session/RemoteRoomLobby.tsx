@@ -895,8 +895,19 @@ export const RemoteRoomLobby = ({
     void handleTutorial(tutorialRequest);
   });
 
-  /** Opens Play online over a Solo table, to say what went wrong there. */
+  /**
+   * Opens Play online over a Solo table, to say what went wrong there. Over
+   * the tutorial, as its own Play online does: the player's table comes
+   * back with Play online open on it (a link that works leaves the
+   * tutorial too).
+   */
   const showOnlineOverTable = (): void => {
+    if (tutorial) {
+      setOnlineOnReturn(true);
+      setActivePanel('lobby');
+      void leaveTutorial();
+      return;
+    }
     if (connected?.mode === 'solo') setOnlineRequest((request) => request + 1);
   };
 

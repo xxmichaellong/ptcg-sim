@@ -76,6 +76,7 @@ const roomRouteHarness = vi.hoisted(() => ({
   onTableSettledChange: undefined as ((settled: boolean) => void) | undefined,
   tutorial: undefined as { readonly onExit: () => void } | undefined,
   onlineRequest: undefined as number | undefined,
+  initialSheet: undefined as 'online' | undefined,
   initialFlipped: undefined as boolean | undefined,
   onFlippedChange: undefined as ((flipped: boolean) => void) | undefined,
 }));
@@ -189,6 +190,7 @@ vi.mock('./RemoteRoomRoute.js', () => ({
     onTableSettledChange,
     tutorial,
     onlineRequest,
+    initialSheet,
     initialFlipped,
     onFlippedChange,
     onDeckCustodyChange,
@@ -216,6 +218,7 @@ vi.mock('./RemoteRoomRoute.js', () => ({
     readonly onTableSettledChange?: (settled: boolean) => void;
     readonly tutorial?: { readonly onExit: () => void };
     readonly onlineRequest?: number;
+    readonly initialSheet?: 'online';
     readonly initialFlipped?: boolean;
     readonly onFlippedChange?: (flipped: boolean) => void;
     readonly onDeckCustodyChange?: (custody: {
@@ -227,6 +230,9 @@ vi.mock('./RemoteRoomRoute.js', () => ({
     roomRouteHarness.onDeckCustodyChange = onDeckCustodyChange;
     roomRouteHarness.tutorial = tutorial;
     roomRouteHarness.onlineRequest = onlineRequest;
+    // Opened with Play online at least once since the test began (the
+    // lobby stops asking once the route has it).
+    if (initialSheet) roomRouteHarness.initialSheet = initialSheet;
     roomRouteHarness.initialFlipped = initialFlipped;
     roomRouteHarness.onFlippedChange = onFlippedChange;
     roomRouteHarness.preferences = preferences;
@@ -638,6 +644,7 @@ describe('remote room lobby wiring', () => {
     roomRouteHarness.roomMode = undefined;
     roomRouteHarness.onMultiplayerNavigate = undefined;
     roomRouteHarness.onMultiplayerPanelOpen = undefined;
+    roomRouteHarness.initialSheet = undefined;
     roomRouteHarness.deckStore = undefined;
     roomRouteHarness.cardBackStore = undefined;
     roomRouteHarness.onResumeSavedGame = undefined;
@@ -2111,6 +2118,50 @@ describe('remote room lobby wiring', () => {
       expect(createRoom).toHaveBeenCalledOnce();
       expect(present('[data-tutorial="true"]')).toBe(false);
       expect(created.dispose).not.toHaveBeenCalled();
+      await act(async () => root.unmount());
+    });
+
+    it("goes back to the player's table, Play online open on it, to say a link was refused", async () => {
+      const invitation = custody();
+      const solo = creationResult(runtime({ label: 'solo' }), 'solo');
+      const practice = creationResult(runtime({ label: 'practice' }), 'solo');
+      const createRoom = vi
+        .fn()
+        .mockResolvedValueOnce(solo.value)
+        .mockResolvedValueOnce(practice.value);
+      const { root } = await mount(
+        lobbyDependencies(invitation, createRoom),
+        false,
+        'solo'
+      );
+      await settle();
+      await act(async () => {
+        startTutorial();
+        await flush();
+      });
+      await settle();
+      expect(present('[data-tutorial="true"]')).toBe(true);
+      invitation.acceptText.mockImplementationOnce(() => {
+        throw new RemoteRoomInvitationError('invalid_handoff');
+      });
+      linkHarness.link = RAW_LINK;
+      await act(async () => {
+        for (const listener of linkHarness.listeners) listener();
+        await flush();
+      });
+      await settle();
+      // The practice table goes, as Play online pressed there would have
+      // it; the player's own table comes back with Play online saying why.
+      expect(present('[data-tutorial="true"]')).toBe(false);
+      expect(practice.dispose).toHaveBeenCalled();
+      expect(solo.dispose).not.toHaveBeenCalled();
+      expect(
+        element('[data-app-route="test-remote-room"]').textContent
+      ).toContain('solo');
+      expect(roomRouteHarness.initialSheet).toBe('online');
+      expect(element('.lobby-status').textContent).toContain(
+        'Paste the invitation link you were sent.'
+      );
       await act(async () => root.unmount());
     });
 

@@ -170,7 +170,10 @@ envelope>` (`serializeRoomInvitationLinkFragment`; parsed strictly, one
     table, whose Play online is that table's own sheet, the sheet opens to
     say so (`onlineRequest`), and a join that failed does the same.
   - A link followed from the tutorial puts the practice table away once the
-    room admits the player, as Back does (ADR-038).
+    room admits the player, as Back does (ADR-038). One that is refused, or
+    a join with it that fails, leaves the tutorial too, as its own Play
+    online does: the player's table comes back with Play online open on it,
+    saying why.
   - A taken seat (409 `seat_unavailable`) says so, and points to a
     spectator invitation.
 - **Inviting.** Create room takes the host straight into their room. It
