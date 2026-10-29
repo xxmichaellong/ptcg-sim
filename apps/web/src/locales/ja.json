@@ -6777,5 +6777,164 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "ゾーンの枠線"
+  },
+  "TDU04N": {
+    "message": "{0, plural, other {Mark # as unused}}",
+    "translation": "{0, plural, other {#枚を未使用にする}}"
+  },
+  "thQz5O": {
+    "message": "{0, plural, other {Mark # as used}}",
+    "translation": "{0, plural, other {#枚を使用済みにする}}"
+  },
+  "OUc2yQ": {
+    "message": "{0, plural, other {Put # Pokémon on the Bench}}",
+    "translation": "{0, plural, other {ポケモン#匹をベンチに出す}}"
+  },
+  "9RYqFp": {
+    "message": "{actor} moved {count, plural, one {# card} other {# cards}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} other {deck}}",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards; {source} is the zone they left and {destination} where they went (play: onto the table)."
+    ],
+    "translation": "{actor}がカード{count, plural, other {#枚}}を{source, select, hand {手札} prizes {サイド} discard {トラッシュ} board {盤面} stadium {スタジアム} active {バトル場} bench {ベンチ} lostZone {ロストゾーン} attachmentResolution {ついているカード} other {山札}}から{destination, select, hand {手札} discard {トラッシュ} lostZone {ロストゾーン} deckBottom {山札の下} play {場} other {山札}}に移動しました"
+  },
+  "T2CvPc": {
+    "message": "{cleared, plural, one {Clear damage} other {Clear damage on #}}",
+    "translation": "{cleared, plural, other {#匹のダメージを消す}}"
+  },
+  "d5-G2p": {
+    "message": "{conditioned, plural, one {Add or switch Special Condition} other {Add or switch Special Conditions on #}}",
+    "translation": "{conditioned, plural, other {#匹の特殊状態を追加・切り替え}}"
+  },
+  "0GBBWg": {
+    "message": "{count, plural, one {# of {ownerName}'s cards} other {# of {ownerName}'s cards}}",
+    "translation": "{count, plural, other {{ownerName}のカード#枚}}"
+  },
+  "LrKYZV": {
+    "message": "{count, plural, one {Discard # card} other {Discard # cards}}",
+    "translation": "{count, plural, other {カード#枚をトラッシュする}}"
+  },
+  "0oSCag": {
+    "message": "{count, plural, one {Move # card to hand} other {Move # cards to hand}}",
+    "translation": "{count, plural, other {カード#枚を手札に移す}}"
+  },
+  "VPXqBr": {
+    "message": "{count, plural, one {Put # card in the Lost Zone} other {Put # cards in the Lost Zone}}",
+    "translation": "{count, plural, other {カード#枚をロストゾーンに置く}}"
+  },
+  "QcZX-S": {
+    "message": "{count, plural, one {Put # card in the Prizes} other {Put # cards in the Prizes}}",
+    "translation": "{count, plural, other {カード#枚をサイドに置く}}"
+  },
+  "rVI1D1": {
+    "message": "{count, plural, one {Put # card on the board} other {Put # cards on the board}}",
+    "translation": "{count, plural, other {カード#枚を盤面に出す}}"
+  },
+  "CEIRsk": {
+    "message": "{count, plural, one {Put # card on the bottom of the deck} other {Put # cards on the bottom of the deck}}",
+    "translation": "{count, plural, other {カード#枚を山札の下に置く}}"
+  },
+  "Iqt60a": {
+    "message": "{count, plural, one {Put # card on top of the deck} other {Put # cards on top of the deck}}",
+    "translation": "{count, plural, other {カード#枚を山札の上に置く}}"
+  },
+  "L80QZi": {
+    "message": "{count, plural, one {Shuffle # card into the deck} other {Shuffle # cards into the deck}}",
+    "translation": "{count, plural, other {カード#枚を山札に戻して切る}}"
+  },
+  "SdtOTJ": {
+    "message": "{count, plural, other {Add # damage to each}}",
+    "translation": "{count, plural, other {それぞれにダメージを追加(#匹)}}"
+  },
+  "Kv5Eze": {
+    "message": "{count, plural, other {Discard # Pokémon}}",
+    "translation": "{count, plural, other {ポケモン#匹をトラッシュする}}"
+  },
+  "DxATQp": {
+    "message": "{count, plural, other {Move # Pokémon to hand}}",
+    "translation": "{count, plural, other {ポケモン#匹を手札に移す}}"
+  },
+  "Rdmkvn": {
+    "message": "{count, plural, other {Put # Pokémon in the Lost Zone}}",
+    "translation": "{count, plural, other {ポケモン#匹をロストゾーンに置く}}"
+  },
+  "JUDcg5": {
+    "message": "{count, plural, other {Put # Pokémon in the Prizes}}",
+    "translation": "{count, plural, other {ポケモン#匹をサイドに置く}}"
+  },
+  "Jv3nIR": {
+    "message": "{count, plural, other {Put # Pokémon on the board}}",
+    "translation": "{count, plural, other {ポケモン#匹を盤面に出す}}"
+  },
+  "lkpEPZ": {
+    "message": "{count, plural, other {Put # Pokémon on the bottom of the deck}}",
+    "translation": "{count, plural, other {ポケモン#匹を山札の下に置く}}"
+  },
+  "qtwSJv": {
+    "message": "{count, plural, other {Put # Pokémon on top of the deck}}",
+    "translation": "{count, plural, other {ポケモン#匹を山札の上に置く}}"
+  },
+  "P13x5M": {
+    "message": "{count, plural, other {Shuffle # Pokémon into the deck}}",
+    "translation": "{count, plural, other {ポケモン#匹を山札に戻して切る}}"
+  },
+  "5VUOI1": {
+    "message": "{cured, plural, one {Remove Special Condition} other {Remove Special Conditions on #}}",
+    "translation": "{cured, plural, other {#匹の特殊状態を取り除く}}"
+  },
+  "3W5Y-K": {
+    "message": "{damaged, plural, one {Add 10 damage} other {Add 10 damage to each of #}}",
+    "translation": "{damaged, plural, other {#匹それぞれにダメージ10を追加}}"
+  },
+  "iovK0L": {
+    "message": "{hidden, plural, one {Hide # card} other {Hide # cards}}",
+    "translation": "{hidden, plural, other {カード#枚を伏せる}}"
+  },
+  "1z1iU-": {
+    "message": "{last} ends on top",
+    "translation": "{last}が一番上になります"
+  },
+  "Lg_lp9": {
+    "message": "{revealed, plural, one {Reveal # card} other {Reveal # cards}}",
+    "translation": "{revealed, plural, other {カード#枚を公開する}}"
+  },
+  "ZAbJN6": {
+    "message": "{rotated, plural, one {Rotate # card} other {Rotate # cards}}",
+    "translation": "{rotated, plural, other {カード#枚を回転する}}"
+  },
+  "abXnG-": {
+    "message": "Add damage to each…",
+    "translation": "それぞれにダメージを追加…"
+  },
+  "Ee-egz": {
+    "message": "Damage…",
+    "translation": "ダメージ…"
+  },
+  "BEfUVX": {
+    "message": "Play {name} as the Stadium",
+    "translation": "{name}をスタジアムとして出す"
+  },
+  "Yo-ZmX": {
+    "message": "Play as one card",
+    "translation": "1枚のカードとして出す"
+  },
+  "NZZ8TY": {
+    "message": "Play as the Stadium",
+    "translation": "スタジアムとして出す"
+  },
+  "YLetgL": {
+    "message": "Put {name} in the Active Spot",
+    "translation": "{name}をバトル場に出す"
+  },
+  "wj75Qo": {
+    "message": "Put {name} on the Bench",
+    "translation": "{name}をベンチに出す"
+  },
+  "4X3mBx": {
+    "message": "Put in the Active Spot",
+    "translation": "バトル場に出す"
+  },
+  "SzQFzV": {
+    "message": "With their attached cards",
+    "translation": "ついているカードごと"
   }
 }

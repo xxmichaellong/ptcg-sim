@@ -6777,5 +6777,164 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "Контуры зон"
+  },
+  "TDU04N": {
+    "message": "{0, plural, other {Mark # as unused}}",
+    "translation": "{0, plural, one {Отметить как неиспользованные: #} few {Отметить как неиспользованные: #} many {Отметить как неиспользованные: #} other {Отметить как неиспользованные: #}}"
+  },
+  "thQz5O": {
+    "message": "{0, plural, other {Mark # as used}}",
+    "translation": "{0, plural, one {Отметить как использованные: #} few {Отметить как использованные: #} many {Отметить как использованные: #} other {Отметить как использованные: #}}"
+  },
+  "OUc2yQ": {
+    "message": "{0, plural, other {Put # Pokémon on the Bench}}",
+    "translation": "{0, plural, one {Положить # покемона в запас} few {Положить # покемонов в запас} many {Положить # покемонов в запас} other {Положить # покемона в запас}}"
+  },
+  "9RYqFp": {
+    "message": "{actor} moved {count, plural, one {# card} other {# cards}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} other {deck}}",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards; {source} is the zone they left and {destination} where they went (play: onto the table)."
+    ],
+    "translation": "{actor} перемещает {count, plural, one {# карту} few {# карты} many {# карт} other {# карты}} из {source, select, hand {руки} prizes {призов} discard {сброса} board {поля} stadium {стадиона} active {активной позиции} bench {запаса} lostZone {зоны потерь} attachmentResolution {присоединённых карт} other {колоды}} {destination, select, hand {в руку} discard {в сброс} lostZone {в зону потерь} deckBottom {под низ колоды} play {в игру} other {в колоду}}"
+  },
+  "T2CvPc": {
+    "message": "{cleared, plural, one {Clear damage} other {Clear damage on #}}",
+    "translation": "{cleared, plural, =1 {Убрать урон} one {Убрать урон у #} few {Убрать урон у #} many {Убрать урон у #} other {Убрать урон у #}}"
+  },
+  "d5-G2p": {
+    "message": "{conditioned, plural, one {Add or switch Special Condition} other {Add or switch Special Conditions on #}}",
+    "translation": "{conditioned, plural, =1 {Добавить или сменить особое состояние} one {Добавить или сменить особые состояния у #} few {Добавить или сменить особые состояния у #} many {Добавить или сменить особые состояния у #} other {Добавить или сменить особые состояния у #}}"
+  },
+  "0GBBWg": {
+    "message": "{count, plural, one {# of {ownerName}'s cards} other {# of {ownerName}'s cards}}",
+    "translation": "{count, plural, one {# карта игрока {ownerName}} few {# карты игрока {ownerName}} many {# карт игрока {ownerName}} other {# карты игрока {ownerName}}}"
+  },
+  "LrKYZV": {
+    "message": "{count, plural, one {Discard # card} other {Discard # cards}}",
+    "translation": "{count, plural, one {Сбросить # карту} few {Сбросить # карты} many {Сбросить # карт} other {Сбросить # карты}}"
+  },
+  "0oSCag": {
+    "message": "{count, plural, one {Move # card to hand} other {Move # cards to hand}}",
+    "translation": "{count, plural, one {Переместить # карту в руку} few {Переместить # карты в руку} many {Переместить # карт в руку} other {Переместить # карты в руку}}"
+  },
+  "VPXqBr": {
+    "message": "{count, plural, one {Put # card in the Lost Zone} other {Put # cards in the Lost Zone}}",
+    "translation": "{count, plural, one {Поместить # карту в зону потерь} few {Поместить # карты в зону потерь} many {Поместить # карт в зону потерь} other {Поместить # карты в зону потерь}}"
+  },
+  "QcZX-S": {
+    "message": "{count, plural, one {Put # card in the Prizes} other {Put # cards in the Prizes}}",
+    "translation": "{count, plural, one {Положить # карту в призовые карты} few {Положить # карты в призовые карты} many {Положить # карт в призовые карты} other {Положить # карты в призовые карты}}"
+  },
+  "rVI1D1": {
+    "message": "{count, plural, one {Put # card on the board} other {Put # cards on the board}}",
+    "translation": "{count, plural, one {Выложить # карту на поле} few {Выложить # карты на поле} many {Выложить # карт на поле} other {Выложить # карты на поле}}"
+  },
+  "CEIRsk": {
+    "message": "{count, plural, one {Put # card on the bottom of the deck} other {Put # cards on the bottom of the deck}}",
+    "translation": "{count, plural, one {Положить # карту под колоду} few {Положить # карты под колоду} many {Положить # карт под колоду} other {Положить # карты под колоду}}"
+  },
+  "Iqt60a": {
+    "message": "{count, plural, one {Put # card on top of the deck} other {Put # cards on top of the deck}}",
+    "translation": "{count, plural, one {Положить # карту на верх колоды} few {Положить # карты на верх колоды} many {Положить # карт на верх колоды} other {Положить # карты на верх колоды}}"
+  },
+  "L80QZi": {
+    "message": "{count, plural, one {Shuffle # card into the deck} other {Shuffle # cards into the deck}}",
+    "translation": "{count, plural, one {Замешать # карту в колоду} few {Замешать # карты в колоду} many {Замешать # карт в колоду} other {Замешать # карты в колоду}}"
+  },
+  "SdtOTJ": {
+    "message": "{count, plural, other {Add # damage to each}}",
+    "translation": "{count, plural, one {Добавить по # урона каждому} few {Добавить по # урона каждому} many {Добавить по # урона каждому} other {Добавить по # урона каждому}}"
+  },
+  "Kv5Eze": {
+    "message": "{count, plural, other {Discard # Pokémon}}",
+    "translation": "{count, plural, one {Сбросить # покемона} few {Сбросить # покемонов} many {Сбросить # покемонов} other {Сбросить # покемона}}"
+  },
+  "DxATQp": {
+    "message": "{count, plural, other {Move # Pokémon to hand}}",
+    "translation": "{count, plural, one {Переместить # покемона в руку} few {Переместить # покемонов в руку} many {Переместить # покемонов в руку} other {Переместить # покемона в руку}}"
+  },
+  "Rdmkvn": {
+    "message": "{count, plural, other {Put # Pokémon in the Lost Zone}}",
+    "translation": "{count, plural, one {Поместить # покемона в зону потерь} few {Поместить # покемонов в зону потерь} many {Поместить # покемонов в зону потерь} other {Поместить # покемона в зону потерь}}"
+  },
+  "JUDcg5": {
+    "message": "{count, plural, other {Put # Pokémon in the Prizes}}",
+    "translation": "{count, plural, one {Положить # покемона в призовые карты} few {Положить # покемонов в призовые карты} many {Положить # покемонов в призовые карты} other {Положить # покемона в призовые карты}}"
+  },
+  "Jv3nIR": {
+    "message": "{count, plural, other {Put # Pokémon on the board}}",
+    "translation": "{count, plural, one {Выложить # покемона на поле} few {Выложить # покемонов на поле} many {Выложить # покемонов на поле} other {Выложить # покемона на поле}}"
+  },
+  "lkpEPZ": {
+    "message": "{count, plural, other {Put # Pokémon on the bottom of the deck}}",
+    "translation": "{count, plural, one {Положить # покемона под колоду} few {Положить # покемонов под колоду} many {Положить # покемонов под колоду} other {Положить # покемона под колоду}}"
+  },
+  "qtwSJv": {
+    "message": "{count, plural, other {Put # Pokémon on top of the deck}}",
+    "translation": "{count, plural, one {Положить # покемона на верх колоды} few {Положить # покемонов на верх колоды} many {Положить # покемонов на верх колоды} other {Положить # покемона на верх колоды}}"
+  },
+  "P13x5M": {
+    "message": "{count, plural, other {Shuffle # Pokémon into the deck}}",
+    "translation": "{count, plural, one {Замешать # покемона в колоду} few {Замешать # покемонов в колоду} many {Замешать # покемонов в колоду} other {Замешать # покемона в колоду}}"
+  },
+  "5VUOI1": {
+    "message": "{cured, plural, one {Remove Special Condition} other {Remove Special Conditions on #}}",
+    "translation": "{cured, plural, =1 {Снять особое состояние} one {Снять особые состояния у #} few {Снять особые состояния у #} many {Снять особые состояния у #} other {Снять особые состояния у #}}"
+  },
+  "3W5Y-K": {
+    "message": "{damaged, plural, one {Add 10 damage} other {Add 10 damage to each of #}}",
+    "translation": "{damaged, plural, =1 {Добавить 10 урона} one {Добавить 10 урона каждому из #} few {Добавить 10 урона каждому из #} many {Добавить 10 урона каждому из #} other {Добавить 10 урона каждому из #}}"
+  },
+  "iovK0L": {
+    "message": "{hidden, plural, one {Hide # card} other {Hide # cards}}",
+    "translation": "{hidden, plural, one {Скрыть # карту} few {Скрыть # карты} many {Скрыть # карт} other {Скрыть # карты}}"
+  },
+  "1z1iU-": {
+    "message": "{last} ends on top",
+    "translation": "{last} окажется сверху"
+  },
+  "Lg_lp9": {
+    "message": "{revealed, plural, one {Reveal # card} other {Reveal # cards}}",
+    "translation": "{revealed, plural, one {Показать # карту} few {Показать # карты} many {Показать # карт} other {Показать # карты}}"
+  },
+  "ZAbJN6": {
+    "message": "{rotated, plural, one {Rotate # card} other {Rotate # cards}}",
+    "translation": "{rotated, plural, one {Повернуть # карту} few {Повернуть # карты} many {Повернуть # карт} other {Повернуть # карты}}"
+  },
+  "abXnG-": {
+    "message": "Add damage to each…",
+    "translation": "Добавить урон каждому…"
+  },
+  "Ee-egz": {
+    "message": "Damage…",
+    "translation": "Урон…"
+  },
+  "BEfUVX": {
+    "message": "Play {name} as the Stadium",
+    "translation": "Сыграть {name} как Стадион"
+  },
+  "Yo-ZmX": {
+    "message": "Play as one card",
+    "translation": "Сыграть как одну карту"
+  },
+  "NZZ8TY": {
+    "message": "Play as the Stadium",
+    "translation": "Сыграть как Стадион"
+  },
+  "YLetgL": {
+    "message": "Put {name} in the Active Spot",
+    "translation": "Поставить {name} на активную позицию"
+  },
+  "wj75Qo": {
+    "message": "Put {name} on the Bench",
+    "translation": "Положить {name} в запас"
+  },
+  "4X3mBx": {
+    "message": "Put in the Active Spot",
+    "translation": "Поставить на активную позицию"
+  },
+  "SzQFzV": {
+    "message": "With their attached cards",
+    "translation": "Вместе с присоединёнными картами"
   }
 }

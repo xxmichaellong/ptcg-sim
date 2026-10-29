@@ -6777,5 +6777,164 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "เส้นขอบโซน"
+  },
+  "TDU04N": {
+    "message": "{0, plural, other {Mark # as unused}}",
+    "translation": "{0, plural, other {ทำเครื่องหมาย # ใบว่ายังไม่ได้ใช้}}"
+  },
+  "thQz5O": {
+    "message": "{0, plural, other {Mark # as used}}",
+    "translation": "{0, plural, other {ทำเครื่องหมาย # ใบว่าใช้แล้ว}}"
+  },
+  "OUc2yQ": {
+    "message": "{0, plural, other {Put # Pokémon on the Bench}}",
+    "translation": "{0, plural, other {วางโปเกมอน # ตัวบนเบนช์}}"
+  },
+  "9RYqFp": {
+    "message": "{actor} moved {count, plural, one {# card} other {# cards}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} other {deck}}",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards; {source} is the zone they left and {destination} where they went (play: onto the table)."
+    ],
+    "translation": "{actor} ย้ายการ์ด {count, plural, other {# ใบ}} จาก{source, select, hand {มือ} prizes {การ์ดรางวัล} discard {ตำแหน่งทิ้งการ์ด} board {บอร์ด} stadium {สเตเดียม} active {ตำแหน่งต่อสู้} bench {เบนช์} lostZone {ลอสต์โซน} attachmentResolution {การ์ดที่ติดอยู่} other {สำรับการ์ด}}ไปยัง{destination, select, hand {มือ} discard {ตำแหน่งทิ้งการ์ด} lostZone {ลอสต์โซน} deckBottom {ด้านล่างของสำรับการ์ด} play {บนกระดาน} other {สำรับการ์ด}}"
+  },
+  "T2CvPc": {
+    "message": "{cleared, plural, one {Clear damage} other {Clear damage on #}}",
+    "translation": "{cleared, plural, other {ล้างแดเมจของ # ใบ}}"
+  },
+  "d5-G2p": {
+    "message": "{conditioned, plural, one {Add or switch Special Condition} other {Add or switch Special Conditions on #}}",
+    "translation": "{conditioned, plural, other {เพิ่มหรือสลับสภาวะผิดปกติของ # ใบ}}"
+  },
+  "0GBBWg": {
+    "message": "{count, plural, one {# of {ownerName}'s cards} other {# of {ownerName}'s cards}}",
+    "translation": "{count, plural, other {การ์ด # ใบของ {ownerName}}}"
+  },
+  "LrKYZV": {
+    "message": "{count, plural, one {Discard # card} other {Discard # cards}}",
+    "translation": "{count, plural, other {ทิ้งการ์ด # ใบ}}"
+  },
+  "0oSCag": {
+    "message": "{count, plural, one {Move # card to hand} other {Move # cards to hand}}",
+    "translation": "{count, plural, other {ย้ายการ์ด # ใบไปบนมือ}}"
+  },
+  "VPXqBr": {
+    "message": "{count, plural, one {Put # card in the Lost Zone} other {Put # cards in the Lost Zone}}",
+    "translation": "{count, plural, other {ใส่การ์ด # ใบในลอสต์โซน}}"
+  },
+  "QcZX-S": {
+    "message": "{count, plural, one {Put # card in the Prizes} other {Put # cards in the Prizes}}",
+    "translation": "{count, plural, other {ใส่การ์ด # ใบในการ์ดรางวัล}}"
+  },
+  "rVI1D1": {
+    "message": "{count, plural, one {Put # card on the board} other {Put # cards on the board}}",
+    "translation": "{count, plural, other {วางการ์ด # ใบบนกระดาน}}"
+  },
+  "CEIRsk": {
+    "message": "{count, plural, one {Put # card on the bottom of the deck} other {Put # cards on the bottom of the deck}}",
+    "translation": "{count, plural, other {วางการ์ด # ใบไว้ล่างสุดของสำรับการ์ด}}"
+  },
+  "Iqt60a": {
+    "message": "{count, plural, one {Put # card on top of the deck} other {Put # cards on top of the deck}}",
+    "translation": "{count, plural, other {วางการ์ด # ใบไว้บนสุดของสำรับการ์ด}}"
+  },
+  "L80QZi": {
+    "message": "{count, plural, one {Shuffle # card into the deck} other {Shuffle # cards into the deck}}",
+    "translation": "{count, plural, other {สับการ์ด # ใบเข้าสำรับการ์ด}}"
+  },
+  "SdtOTJ": {
+    "message": "{count, plural, other {Add # damage to each}}",
+    "translation": "{count, plural, other {เพิ่มแดเมจ # ให้แต่ละใบ}}"
+  },
+  "Kv5Eze": {
+    "message": "{count, plural, other {Discard # Pokémon}}",
+    "translation": "{count, plural, other {ทิ้งโปเกมอน # ตัว}}"
+  },
+  "DxATQp": {
+    "message": "{count, plural, other {Move # Pokémon to hand}}",
+    "translation": "{count, plural, other {ย้ายโปเกมอน # ตัวไปบนมือ}}"
+  },
+  "Rdmkvn": {
+    "message": "{count, plural, other {Put # Pokémon in the Lost Zone}}",
+    "translation": "{count, plural, other {ใส่โปเกมอน # ตัวในลอสต์โซน}}"
+  },
+  "JUDcg5": {
+    "message": "{count, plural, other {Put # Pokémon in the Prizes}}",
+    "translation": "{count, plural, other {ใส่โปเกมอน # ตัวในการ์ดรางวัล}}"
+  },
+  "Jv3nIR": {
+    "message": "{count, plural, other {Put # Pokémon on the board}}",
+    "translation": "{count, plural, other {วางโปเกมอน # ตัวบนกระดาน}}"
+  },
+  "lkpEPZ": {
+    "message": "{count, plural, other {Put # Pokémon on the bottom of the deck}}",
+    "translation": "{count, plural, other {วางโปเกมอน # ตัวไว้ล่างสุดของสำรับการ์ด}}"
+  },
+  "qtwSJv": {
+    "message": "{count, plural, other {Put # Pokémon on top of the deck}}",
+    "translation": "{count, plural, other {วางโปเกมอน # ตัวไว้บนสุดของสำรับการ์ด}}"
+  },
+  "P13x5M": {
+    "message": "{count, plural, other {Shuffle # Pokémon into the deck}}",
+    "translation": "{count, plural, other {สับโปเกมอน # ตัวเข้าสำรับการ์ด}}"
+  },
+  "5VUOI1": {
+    "message": "{cured, plural, one {Remove Special Condition} other {Remove Special Conditions on #}}",
+    "translation": "{cured, plural, other {ลบสภาวะผิดปกติของ # ใบ}}"
+  },
+  "3W5Y-K": {
+    "message": "{damaged, plural, one {Add 10 damage} other {Add 10 damage to each of #}}",
+    "translation": "{damaged, plural, other {เพิ่มแดเมจ 10 ให้ # ใบ}}"
+  },
+  "iovK0L": {
+    "message": "{hidden, plural, one {Hide # card} other {Hide # cards}}",
+    "translation": "{hidden, plural, other {ซ่อนการ์ด # ใบ}}"
+  },
+  "1z1iU-": {
+    "message": "{last} ends on top",
+    "translation": "{last} อยู่บนสุด"
+  },
+  "Lg_lp9": {
+    "message": "{revealed, plural, one {Reveal # card} other {Reveal # cards}}",
+    "translation": "{revealed, plural, other {เปิดเผยการ์ด # ใบ}}"
+  },
+  "ZAbJN6": {
+    "message": "{rotated, plural, one {Rotate # card} other {Rotate # cards}}",
+    "translation": "{rotated, plural, other {หมุนการ์ด # ใบ}}"
+  },
+  "abXnG-": {
+    "message": "Add damage to each…",
+    "translation": "เพิ่มแดเมจให้แต่ละใบ…"
+  },
+  "Ee-egz": {
+    "message": "Damage…",
+    "translation": "แดเมจ…"
+  },
+  "BEfUVX": {
+    "message": "Play {name} as the Stadium",
+    "translation": "เล่น {name} เป็นสเตเดียม"
+  },
+  "Yo-ZmX": {
+    "message": "Play as one card",
+    "translation": "เล่นเป็นการ์ดใบเดียว"
+  },
+  "NZZ8TY": {
+    "message": "Play as the Stadium",
+    "translation": "เล่นเป็นสเตเดียม"
+  },
+  "YLetgL": {
+    "message": "Put {name} in the Active Spot",
+    "translation": "วาง {name} บนตำแหน่งต่อสู้"
+  },
+  "wj75Qo": {
+    "message": "Put {name} on the Bench",
+    "translation": "วาง {name} บนเบนช์"
+  },
+  "4X3mBx": {
+    "message": "Put in the Active Spot",
+    "translation": "วางบนตำแหน่งต่อสู้"
+  },
+  "SzQFzV": {
+    "message": "With their attached cards",
+    "translation": "พร้อมการ์ดที่ติดอยู่"
   }
 }

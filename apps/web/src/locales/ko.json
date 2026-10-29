@@ -6777,5 +6777,164 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "영역 윤곽선"
+  },
+  "TDU04N": {
+    "message": "{0, plural, other {Mark # as unused}}",
+    "translation": "{0, plural, other {#장 사용 안 함으로 표시}}"
+  },
+  "thQz5O": {
+    "message": "{0, plural, other {Mark # as used}}",
+    "translation": "{0, plural, other {#장 사용함으로 표시}}"
+  },
+  "OUc2yQ": {
+    "message": "{0, plural, other {Put # Pokémon on the Bench}}",
+    "translation": "{0, plural, other {포켓몬 #장을 벤치로 내보내기}}"
+  },
+  "9RYqFp": {
+    "message": "{actor} moved {count, plural, one {# card} other {# cards}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} other {deck}}",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards; {source} is the zone they left and {destination} where they went (play: onto the table)."
+    ],
+    "translation": "{actor}님이 카드 {count, plural, other {#장}}을 {source, select, hand {패} prizes {프라이즈} discard {트래쉬} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙어 있는 카드} other {덱}}에서 {destination, select, hand {패로} discard {트래쉬로} lostZone {로스트존으로} deckBottom {덱 아래로} play {필드로} other {덱으로}} 옮겼습니다"
+  },
+  "T2CvPc": {
+    "message": "{cleared, plural, one {Clear damage} other {Clear damage on #}}",
+    "translation": "{cleared, plural, one {데미지 지우기} other {#장의 데미지 지우기}}"
+  },
+  "d5-G2p": {
+    "message": "{conditioned, plural, one {Add or switch Special Condition} other {Add or switch Special Conditions on #}}",
+    "translation": "{conditioned, plural, one {특수 상태 추가 또는 변경} other {#장의 특수 상태 추가 또는 변경}}"
+  },
+  "0GBBWg": {
+    "message": "{count, plural, one {# of {ownerName}'s cards} other {# of {ownerName}'s cards}}",
+    "translation": "{count, plural, one {{ownerName}님의 카드 #장} other {{ownerName}님의 카드 #장}}"
+  },
+  "LrKYZV": {
+    "message": "{count, plural, one {Discard # card} other {Discard # cards}}",
+    "translation": "{count, plural, one {카드 #장 트래쉬} other {카드 #장 트래쉬}}"
+  },
+  "0oSCag": {
+    "message": "{count, plural, one {Move # card to hand} other {Move # cards to hand}}",
+    "translation": "{count, plural, one {카드 #장을 패로 이동} other {카드 #장을 패로 이동}}"
+  },
+  "VPXqBr": {
+    "message": "{count, plural, one {Put # card in the Lost Zone} other {Put # cards in the Lost Zone}}",
+    "translation": "{count, plural, one {카드 #장을 로스트존에 놓기} other {카드 #장을 로스트존에 놓기}}"
+  },
+  "QcZX-S": {
+    "message": "{count, plural, one {Put # card in the Prizes} other {Put # cards in the Prizes}}",
+    "translation": "{count, plural, one {카드 #장을 프라이즈에 놓기} other {카드 #장을 프라이즈에 놓기}}"
+  },
+  "rVI1D1": {
+    "message": "{count, plural, one {Put # card on the board} other {Put # cards on the board}}",
+    "translation": "{count, plural, one {카드 #장을 보드에 놓기} other {카드 #장을 보드에 놓기}}"
+  },
+  "CEIRsk": {
+    "message": "{count, plural, one {Put # card on the bottom of the deck} other {Put # cards on the bottom of the deck}}",
+    "translation": "{count, plural, one {카드 #장을 덱 아래에 놓기} other {카드 #장을 덱 아래에 놓기}}"
+  },
+  "Iqt60a": {
+    "message": "{count, plural, one {Put # card on top of the deck} other {Put # cards on top of the deck}}",
+    "translation": "{count, plural, one {카드 #장을 덱 위에 놓기} other {카드 #장을 덱 위에 놓기}}"
+  },
+  "L80QZi": {
+    "message": "{count, plural, one {Shuffle # card into the deck} other {Shuffle # cards into the deck}}",
+    "translation": "{count, plural, one {카드 #장을 덱에 섞기} other {카드 #장을 덱에 섞기}}"
+  },
+  "SdtOTJ": {
+    "message": "{count, plural, other {Add # damage to each}}",
+    "translation": "{count, plural, other {각각에 데미지 추가 (#장)}}"
+  },
+  "Kv5Eze": {
+    "message": "{count, plural, other {Discard # Pokémon}}",
+    "translation": "{count, plural, other {포켓몬 #장 트래쉬}}"
+  },
+  "DxATQp": {
+    "message": "{count, plural, other {Move # Pokémon to hand}}",
+    "translation": "{count, plural, other {포켓몬 #장을 패로 이동}}"
+  },
+  "Rdmkvn": {
+    "message": "{count, plural, other {Put # Pokémon in the Lost Zone}}",
+    "translation": "{count, plural, other {포켓몬 #장을 로스트존에 놓기}}"
+  },
+  "JUDcg5": {
+    "message": "{count, plural, other {Put # Pokémon in the Prizes}}",
+    "translation": "{count, plural, other {포켓몬 #장을 프라이즈에 놓기}}"
+  },
+  "Jv3nIR": {
+    "message": "{count, plural, other {Put # Pokémon on the board}}",
+    "translation": "{count, plural, other {포켓몬 #장을 보드에 놓기}}"
+  },
+  "lkpEPZ": {
+    "message": "{count, plural, other {Put # Pokémon on the bottom of the deck}}",
+    "translation": "{count, plural, other {포켓몬 #장을 덱 아래에 놓기}}"
+  },
+  "qtwSJv": {
+    "message": "{count, plural, other {Put # Pokémon on top of the deck}}",
+    "translation": "{count, plural, other {포켓몬 #장을 덱 위에 놓기}}"
+  },
+  "P13x5M": {
+    "message": "{count, plural, other {Shuffle # Pokémon into the deck}}",
+    "translation": "{count, plural, other {포켓몬 #장을 덱에 섞기}}"
+  },
+  "5VUOI1": {
+    "message": "{cured, plural, one {Remove Special Condition} other {Remove Special Conditions on #}}",
+    "translation": "{cured, plural, one {특수 상태 해제} other {#장의 특수 상태 해제}}"
+  },
+  "3W5Y-K": {
+    "message": "{damaged, plural, one {Add 10 damage} other {Add 10 damage to each of #}}",
+    "translation": "{damaged, plural, one {데미지 10 추가} other {#장 각각에 데미지 10 추가}}"
+  },
+  "iovK0L": {
+    "message": "{hidden, plural, one {Hide # card} other {Hide # cards}}",
+    "translation": "{hidden, plural, one {카드 #장 숨기기} other {카드 #장 숨기기}}"
+  },
+  "1z1iU-": {
+    "message": "{last} ends on top",
+    "translation": "{last}이(가) 맨 위에 옵니다"
+  },
+  "Lg_lp9": {
+    "message": "{revealed, plural, one {Reveal # card} other {Reveal # cards}}",
+    "translation": "{revealed, plural, one {카드 #장 공개} other {카드 #장 공개}}"
+  },
+  "ZAbJN6": {
+    "message": "{rotated, plural, one {Rotate # card} other {Rotate # cards}}",
+    "translation": "{rotated, plural, one {카드 #장 회전} other {카드 #장 회전}}"
+  },
+  "abXnG-": {
+    "message": "Add damage to each…",
+    "translation": "각각에 데미지 추가…"
+  },
+  "Ee-egz": {
+    "message": "Damage…",
+    "translation": "데미지…"
+  },
+  "BEfUVX": {
+    "message": "Play {name} as the Stadium",
+    "translation": "{name}을(를) 스타디움으로 내기"
+  },
+  "Yo-ZmX": {
+    "message": "Play as one card",
+    "translation": "한 장으로 내기"
+  },
+  "NZZ8TY": {
+    "message": "Play as the Stadium",
+    "translation": "스타디움으로 내기"
+  },
+  "YLetgL": {
+    "message": "Put {name} in the Active Spot",
+    "translation": "{name}을(를) 배틀필드에 내보내기"
+  },
+  "wj75Qo": {
+    "message": "Put {name} on the Bench",
+    "translation": "{name}을(를) 벤치로 내보내기"
+  },
+  "4X3mBx": {
+    "message": "Put in the Active Spot",
+    "translation": "배틀필드에 내보내기"
+  },
+  "SzQFzV": {
+    "message": "With their attached cards",
+    "translation": "붙어 있는 카드와 함께"
   }
 }

@@ -6777,5 +6777,164 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "Mga outline ng zone"
+  },
+  "TDU04N": {
+    "message": "{0, plural, other {Mark # as unused}}",
+    "translation": "{0, plural, other {Markahan na hindi pa nagagamit ang #}}"
+  },
+  "thQz5O": {
+    "message": "{0, plural, other {Mark # as used}}",
+    "translation": "{0, plural, other {Markahan na nagamit na ang #}}"
+  },
+  "OUc2yQ": {
+    "message": "{0, plural, other {Put # Pokémon on the Bench}}",
+    "translation": "{0, plural, other {Ilagay ang # Pokémon sa Bench}}"
+  },
+  "9RYqFp": {
+    "message": "{actor} moved {count, plural, one {# card} other {# cards}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} other {deck}}",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards; {source} is the zone they left and {destination} where they went (play: onto the table)."
+    ],
+    "translation": "Inilipat ni {actor} ang {count, plural, one {# card} other {# card}} mula sa {source, select, hand {hand} prizes {Prizes} discard {discard pile} board {board} stadium {Stadium} active {Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {mga naka-attach na card} other {deck}} papunta sa {destination, select, hand {hand} discard {discard pile} lostZone {Lost Zone} deckBottom {ilalim ng deck} play {play} other {deck}}"
+  },
+  "T2CvPc": {
+    "message": "{cleared, plural, one {Clear damage} other {Clear damage on #}}",
+    "translation": "{cleared, plural, one {I-clear ang damage} other {I-clear ang damage sa #}}"
+  },
+  "d5-G2p": {
+    "message": "{conditioned, plural, one {Add or switch Special Condition} other {Add or switch Special Conditions on #}}",
+    "translation": "{conditioned, plural, one {Magdagdag o magpalit ng Special Condition} other {Magdagdag o magpalit ng Special Condition sa #}}"
+  },
+  "0GBBWg": {
+    "message": "{count, plural, one {# of {ownerName}'s cards} other {# of {ownerName}'s cards}}",
+    "translation": "{count, plural, one {# card ni {ownerName}} other {# card ni {ownerName}}}"
+  },
+  "LrKYZV": {
+    "message": "{count, plural, one {Discard # card} other {Discard # cards}}",
+    "translation": "{count, plural, one {I-discard ang # card} other {I-discard ang # card}}"
+  },
+  "0oSCag": {
+    "message": "{count, plural, one {Move # card to hand} other {Move # cards to hand}}",
+    "translation": "{count, plural, one {Ilipat ang # card sa hand} other {Ilipat ang # card sa hand}}"
+  },
+  "VPXqBr": {
+    "message": "{count, plural, one {Put # card in the Lost Zone} other {Put # cards in the Lost Zone}}",
+    "translation": "{count, plural, one {Ilagay ang # card sa Lost Zone} other {Ilagay ang # card sa Lost Zone}}"
+  },
+  "QcZX-S": {
+    "message": "{count, plural, one {Put # card in the Prizes} other {Put # cards in the Prizes}}",
+    "translation": "{count, plural, one {Ilagay ang # card sa Prizes} other {Ilagay ang # card sa Prizes}}"
+  },
+  "rVI1D1": {
+    "message": "{count, plural, one {Put # card on the board} other {Put # cards on the board}}",
+    "translation": "{count, plural, one {Ilagay ang # card sa board} other {Ilagay ang # card sa board}}"
+  },
+  "CEIRsk": {
+    "message": "{count, plural, one {Put # card on the bottom of the deck} other {Put # cards on the bottom of the deck}}",
+    "translation": "{count, plural, one {Ilagay ang # card sa ilalim ng deck} other {Ilagay ang # card sa ilalim ng deck}}"
+  },
+  "Iqt60a": {
+    "message": "{count, plural, one {Put # card on top of the deck} other {Put # cards on top of the deck}}",
+    "translation": "{count, plural, one {Ilagay ang # card sa ibabaw ng deck} other {Ilagay ang # card sa ibabaw ng deck}}"
+  },
+  "L80QZi": {
+    "message": "{count, plural, one {Shuffle # card into the deck} other {Shuffle # cards into the deck}}",
+    "translation": "{count, plural, one {I-shuffle ang # card sa deck} other {I-shuffle ang # card sa deck}}"
+  },
+  "SdtOTJ": {
+    "message": "{count, plural, other {Add # damage to each}}",
+    "translation": "{count, plural, other {Magdagdag ng damage sa bawat isa}}"
+  },
+  "Kv5Eze": {
+    "message": "{count, plural, other {Discard # Pokémon}}",
+    "translation": "{count, plural, other {I-discard ang # Pokémon}}"
+  },
+  "DxATQp": {
+    "message": "{count, plural, other {Move # Pokémon to hand}}",
+    "translation": "{count, plural, other {Ilipat ang # Pokémon sa hand}}"
+  },
+  "Rdmkvn": {
+    "message": "{count, plural, other {Put # Pokémon in the Lost Zone}}",
+    "translation": "{count, plural, other {Ilagay ang # Pokémon sa Lost Zone}}"
+  },
+  "JUDcg5": {
+    "message": "{count, plural, other {Put # Pokémon in the Prizes}}",
+    "translation": "{count, plural, other {Ilagay ang # Pokémon sa Prizes}}"
+  },
+  "Jv3nIR": {
+    "message": "{count, plural, other {Put # Pokémon on the board}}",
+    "translation": "{count, plural, other {Ilagay ang # Pokémon sa board}}"
+  },
+  "lkpEPZ": {
+    "message": "{count, plural, other {Put # Pokémon on the bottom of the deck}}",
+    "translation": "{count, plural, other {Ilagay ang # Pokémon sa ilalim ng deck}}"
+  },
+  "qtwSJv": {
+    "message": "{count, plural, other {Put # Pokémon on top of the deck}}",
+    "translation": "{count, plural, other {Ilagay ang # Pokémon sa ibabaw ng deck}}"
+  },
+  "P13x5M": {
+    "message": "{count, plural, other {Shuffle # Pokémon into the deck}}",
+    "translation": "{count, plural, other {I-shuffle ang # Pokémon sa deck}}"
+  },
+  "5VUOI1": {
+    "message": "{cured, plural, one {Remove Special Condition} other {Remove Special Conditions on #}}",
+    "translation": "{cured, plural, one {Alisin ang Special Condition} other {Alisin ang Special Condition sa #}}"
+  },
+  "3W5Y-K": {
+    "message": "{damaged, plural, one {Add 10 damage} other {Add 10 damage to each of #}}",
+    "translation": "{damaged, plural, one {Magdagdag ng 10 damage} other {Magdagdag ng 10 damage sa bawat isa sa #}}"
+  },
+  "iovK0L": {
+    "message": "{hidden, plural, one {Hide # card} other {Hide # cards}}",
+    "translation": "{hidden, plural, one {Itago ang # card} other {Itago ang # card}}"
+  },
+  "1z1iU-": {
+    "message": "{last} ends on top",
+    "translation": "Nasa ibabaw ang {last}"
+  },
+  "Lg_lp9": {
+    "message": "{revealed, plural, one {Reveal # card} other {Reveal # cards}}",
+    "translation": "{revealed, plural, one {I-reveal ang # card} other {I-reveal ang # card}}"
+  },
+  "ZAbJN6": {
+    "message": "{rotated, plural, one {Rotate # card} other {Rotate # cards}}",
+    "translation": "{rotated, plural, one {I-rotate ang # card} other {I-rotate ang # card}}"
+  },
+  "abXnG-": {
+    "message": "Add damage to each…",
+    "translation": "Magdagdag ng damage sa bawat…"
+  },
+  "Ee-egz": {
+    "message": "Damage…",
+    "translation": "Damage…"
+  },
+  "BEfUVX": {
+    "message": "Play {name} as the Stadium",
+    "translation": "I-play ang {name} bilang Stadium"
+  },
+  "Yo-ZmX": {
+    "message": "Play as one card",
+    "translation": "I-play bilang isang card"
+  },
+  "NZZ8TY": {
+    "message": "Play as the Stadium",
+    "translation": "I-play bilang Stadium"
+  },
+  "YLetgL": {
+    "message": "Put {name} in the Active Spot",
+    "translation": "Ilagay ang {name} sa Active Spot"
+  },
+  "wj75Qo": {
+    "message": "Put {name} on the Bench",
+    "translation": "Ilagay ang {name} sa Bench"
+  },
+  "4X3mBx": {
+    "message": "Put in the Active Spot",
+    "translation": "Ilagay sa Active Spot"
+  },
+  "SzQFzV": {
+    "message": "With their attached cards",
+    "translation": "Kasama ang mga naka-attach na card"
   }
 }

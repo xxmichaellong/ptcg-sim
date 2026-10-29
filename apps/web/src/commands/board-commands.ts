@@ -30,6 +30,14 @@ import type {
   OpenedZoneCardIntent,
 } from '../board/BoardSessionController.js';
 import { actingPlayerIdOf } from '../board/acting-seat.js';
+import type { GroupAction } from '../board/compile-group.js';
+import {
+  groupAttachTargets,
+  groupMenuOf,
+  playAsOneSelection,
+  type GroupMenuEntry,
+} from '../board/group-menu-entries.js';
+import type { SelectionContext } from '../board/selection.js';
 import { selectLegacyContextEntries } from '../board/overlays/LegacyBoardOverlays.js';
 import {
   outcomeOfCommand,
@@ -68,6 +76,11 @@ export interface BoardCommandRuntime {
   ) => boolean;
   readonly emitLegacyOverlayAction: (
     request: LegacyBoardOverlayActionRequest,
+    origin?: BoardActionOrigin
+  ) => boolean;
+  /** The selection's one move or mark (ADR-042 §3). */
+  readonly emitGroupAction: (
+    action: GroupAction,
     origin?: BoardActionOrigin
   ) => boolean;
   readonly declareDeckView: (actingPlayerId?: string) => unknown;
@@ -438,12 +451,127 @@ export const boardCommands = (
   const commands: PaletteCommand[] = [];
 
   // ---- Selected card ----------------------------------------------------
+  const selectionContext: SelectionContext = {
+    view,
+    scene,
+    ...(acting ? { actingPlayerId: acting } : {}),
+    ...(soloTable ? { controlsEverySeat: true } : {}),
+    openedZoneId: state.presentation.openedZoneId,
+  };
   const selectedId = selectedCardIdOf(state.presentation);
   const selected = selectedId
     ? scene.cards.find((card) => card.id === selectedId)
     : undefined;
   if (selected)
     commands.push(...cardCommands(selected, 'selected', 'selected'));
+  // A piece of a card printed in pieces brings the others in sight.
+  const pieces = live
+    ? playAsOneSelection(selectionContext, state.presentation.selection)
+    : null;
+  if (selected && pieces) {
+    commands.push({
+      id: 'selected.playAsOne',
+      title: t`Play as one card`,
+      section: 'selected',
+      detail: selected.label,
+      icon: CardsIcon,
+      keywords: ['v-union', 'legend', 'pieces', 'join'],
+      run: () =>
+        runtime.emitIntent({
+          kind: 'CardsSelected',
+          cardIds: pieces,
+          mode: 'replace',
+        }),
+    });
+  }
+
+  // ---- Selected cards (several) -----------------------------------------
+  const menu =
+    live && state.presentation.selection.length > 1
+      ? groupMenuOf(selectionContext, state.presentation.selection, {
+          hint,
+        })
+      : null;
+  if (menu) {
+    const group = (action: GroupAction) => () => {
+      runtime.emitGroupAction(action, 'palette');
+    };
+    const groupCommand = (entry: GroupMenuEntry): PaletteCommand | null => {
+      const base = {
+        id: `selected.group.${entry.id}`,
+        title: entry.label,
+        section: 'selected' as const,
+        detail: menu.header,
+        icon: GROUP_ENTRY_ICONS[entry.id.split(':')[0] ?? ''] ?? StackIcon,
+        ...(entry.shortcut ? { hint: entry.shortcut } : {}),
+      };
+      switch (entry.run.kind) {
+        case 'action':
+          return { ...base, run: group(entry.run.action) };
+        case 'deselect':
+          return {
+            ...base,
+            run: () =>
+              runtime.emitIntent({
+                kind: 'CardsSelected',
+                cardIds: [],
+                mode: 'replace',
+              }),
+          };
+        case 'playAsOne': {
+          const set = pieces;
+          return set
+            ? {
+                ...base,
+                run: () =>
+                  runtime.emitIntent({
+                    kind: 'CardsSelected',
+                    cardIds: set,
+                    mode: 'replace',
+                  }),
+              }
+            : null;
+        }
+        case 'picker':
+          if (entry.run.picker === 'damage') {
+            return {
+              ...base,
+              title: t`Add damage to each…`,
+              keywords: ['damage', 'counter', 'hp', 'spread'],
+              count: {
+                label: t`How much damage?`,
+                min: 10,
+                max: MAX_DAMAGE,
+                initial: 10,
+                title: (count) =>
+                  plural(count, { other: 'Add # damage to each' }),
+              },
+              run: ({ count = 10 }) =>
+                group({ kind: 'damage', delta: count })(),
+            };
+          }
+          return {
+            ...base,
+            submenu: () => ({
+              breadcrumb: entry.label,
+              commands: groupAttachTargets(
+                selectionContext,
+                state.presentation.selection
+              ).map((target): PaletteCommand => ({
+                id: `${base.id}.${target.stackId}`,
+                title: cardName(target.topCardId),
+                section: 'selected',
+                run: group({ kind: 'drop', targetId: target.stackId }),
+              })),
+            }),
+          };
+      }
+    };
+    for (const entry of menu.entries) {
+      const command = groupCommand(entry);
+      if (command) commands.push(command);
+    }
+  }
 
   // ---- Deck and hand (the acting seat's) ---------------------------------
   const seat = seatName(acting);
@@ -1025,3 +1153,19 @@ const CARD_ACTION_ICONS: Partial<Record<HotkeyActionId, Icon>> = {
 
 const cardActionIcon = (id: HotkeyActionId): Icon =>
   CARD_ACTION_ICONS[id] ?? StackIcon;
+
+/** A group entry's icon, by the kind of entry (`send:discard` → `send`). */
+const GROUP_ENTRY_ICONS: Readonly<Record<string, Icon>> = {
+  send: StackIcon,
+  attach: StackIcon,
+  play: CardsIcon,
+  stadium: CardsIcon,
+  playAsOne: CardsIcon,
+  damage: HeartBreakIcon,
+  condition: SparkleIcon,
+  ability: SparkleIcon,
+  reveal: EyeIcon,
+  hide: EyeIcon,
+  rotate: ArrowsDownUpIcon,
+  deselect: StackIcon,
+};

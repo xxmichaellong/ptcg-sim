@@ -6777,5 +6777,164 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "Viền khu vực"
+  },
+  "TDU04N": {
+    "message": "{0, plural, other {Mark # as unused}}",
+    "translation": "{0, plural, other {Đánh dấu # lá là chưa dùng}}"
+  },
+  "thQz5O": {
+    "message": "{0, plural, other {Mark # as used}}",
+    "translation": "{0, plural, other {Đánh dấu # lá là đã dùng}}"
+  },
+  "OUc2yQ": {
+    "message": "{0, plural, other {Put # Pokémon on the Bench}}",
+    "translation": "{0, plural, other {Đặt # Pokémon lên Bench}}"
+  },
+  "9RYqFp": {
+    "message": "{actor} moved {count, plural, one {# card} other {# cards}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} other {deck}}",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards; {source} is the zone they left and {destination} where they went (play: onto the table)."
+    ],
+    "translation": "{actor} đã chuyển {count, plural, other {# lá bài}} từ {source, select, hand {bài trên tay} prizes {Prize} discard {chồng bài bỏ} board {thảm chơi} stadium {vị trí Stadium} active {vị trí Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {bài gắn kèm} other {bộ bài}} sang {destination, select, hand {bài trên tay} discard {chồng bài bỏ} lostZone {Lost Zone} deckBottom {đáy bộ bài} play {sân} other {bộ bài}}"
+  },
+  "T2CvPc": {
+    "message": "{cleared, plural, one {Clear damage} other {Clear damage on #}}",
+    "translation": "{cleared, plural, other {Xóa sát thương trên #}}"
+  },
+  "d5-G2p": {
+    "message": "{conditioned, plural, one {Add or switch Special Condition} other {Add or switch Special Conditions on #}}",
+    "translation": "{conditioned, plural, other {Thêm hoặc đổi trạng thái đặc biệt trên #}}"
+  },
+  "0GBBWg": {
+    "message": "{count, plural, one {# of {ownerName}'s cards} other {# of {ownerName}'s cards}}",
+    "translation": "{count, plural, other {# lá bài của {ownerName}}}"
+  },
+  "LrKYZV": {
+    "message": "{count, plural, one {Discard # card} other {Discard # cards}}",
+    "translation": "{count, plural, other {Bỏ # lá bài}}"
+  },
+  "0oSCag": {
+    "message": "{count, plural, one {Move # card to hand} other {Move # cards to hand}}",
+    "translation": "{count, plural, other {Chuyển # lá bài về bài trên tay}}"
+  },
+  "VPXqBr": {
+    "message": "{count, plural, one {Put # card in the Lost Zone} other {Put # cards in the Lost Zone}}",
+    "translation": "{count, plural, other {Đặt # lá bài vào Lost Zone}}"
+  },
+  "QcZX-S": {
+    "message": "{count, plural, one {Put # card in the Prizes} other {Put # cards in the Prizes}}",
+    "translation": "{count, plural, other {Đặt # lá bài vào Prize}}"
+  },
+  "rVI1D1": {
+    "message": "{count, plural, one {Put # card on the board} other {Put # cards on the board}}",
+    "translation": "{count, plural, other {Đặt # lá bài lên thảm chơi}}"
+  },
+  "CEIRsk": {
+    "message": "{count, plural, one {Put # card on the bottom of the deck} other {Put # cards on the bottom of the deck}}",
+    "translation": "{count, plural, other {Đặt # lá bài xuống đáy bộ bài}}"
+  },
+  "Iqt60a": {
+    "message": "{count, plural, one {Put # card on top of the deck} other {Put # cards on top of the deck}}",
+    "translation": "{count, plural, other {Đặt # lá bài lên đầu bộ bài}}"
+  },
+  "L80QZi": {
+    "message": "{count, plural, one {Shuffle # card into the deck} other {Shuffle # cards into the deck}}",
+    "translation": "{count, plural, other {Xáo # lá bài vào bộ bài}}"
+  },
+  "SdtOTJ": {
+    "message": "{count, plural, other {Add # damage to each}}",
+    "translation": "{count, plural, other {Thêm sát thương cho từng lá trong # lá}}"
+  },
+  "Kv5Eze": {
+    "message": "{count, plural, other {Discard # Pokémon}}",
+    "translation": "{count, plural, other {Bỏ # Pokémon}}"
+  },
+  "DxATQp": {
+    "message": "{count, plural, other {Move # Pokémon to hand}}",
+    "translation": "{count, plural, other {Chuyển # Pokémon về bài trên tay}}"
+  },
+  "Rdmkvn": {
+    "message": "{count, plural, other {Put # Pokémon in the Lost Zone}}",
+    "translation": "{count, plural, other {Đặt # Pokémon vào Lost Zone}}"
+  },
+  "JUDcg5": {
+    "message": "{count, plural, other {Put # Pokémon in the Prizes}}",
+    "translation": "{count, plural, other {Đặt # Pokémon vào Prize}}"
+  },
+  "Jv3nIR": {
+    "message": "{count, plural, other {Put # Pokémon on the board}}",
+    "translation": "{count, plural, other {Đặt # Pokémon lên thảm chơi}}"
+  },
+  "lkpEPZ": {
+    "message": "{count, plural, other {Put # Pokémon on the bottom of the deck}}",
+    "translation": "{count, plural, other {Đặt # Pokémon xuống đáy bộ bài}}"
+  },
+  "qtwSJv": {
+    "message": "{count, plural, other {Put # Pokémon on top of the deck}}",
+    "translation": "{count, plural, other {Đặt # Pokémon lên đầu bộ bài}}"
+  },
+  "P13x5M": {
+    "message": "{count, plural, other {Shuffle # Pokémon into the deck}}",
+    "translation": "{count, plural, other {Xáo # Pokémon vào bộ bài}}"
+  },
+  "5VUOI1": {
+    "message": "{cured, plural, one {Remove Special Condition} other {Remove Special Conditions on #}}",
+    "translation": "{cured, plural, other {Gỡ trạng thái đặc biệt trên #}}"
+  },
+  "3W5Y-K": {
+    "message": "{damaged, plural, one {Add 10 damage} other {Add 10 damage to each of #}}",
+    "translation": "{damaged, plural, other {Thêm 10 sát thương cho từng lá trong #}}"
+  },
+  "iovK0L": {
+    "message": "{hidden, plural, one {Hide # card} other {Hide # cards}}",
+    "translation": "{hidden, plural, other {Ẩn # lá bài}}"
+  },
+  "1z1iU-": {
+    "message": "{last} ends on top",
+    "translation": "{last} nằm trên cùng"
+  },
+  "Lg_lp9": {
+    "message": "{revealed, plural, one {Reveal # card} other {Reveal # cards}}",
+    "translation": "{revealed, plural, other {Lật mở # lá bài}}"
+  },
+  "ZAbJN6": {
+    "message": "{rotated, plural, one {Rotate # card} other {Rotate # cards}}",
+    "translation": "{rotated, plural, other {Xoay # lá bài}}"
+  },
+  "abXnG-": {
+    "message": "Add damage to each…",
+    "translation": "Thêm sát thương cho từng…"
+  },
+  "Ee-egz": {
+    "message": "Damage…",
+    "translation": "Sát thương…"
+  },
+  "BEfUVX": {
+    "message": "Play {name} as the Stadium",
+    "translation": "Chơi {name} làm Stadium"
+  },
+  "Yo-ZmX": {
+    "message": "Play as one card",
+    "translation": "Chơi như một lá bài"
+  },
+  "NZZ8TY": {
+    "message": "Play as the Stadium",
+    "translation": "Chơi làm Stadium"
+  },
+  "YLetgL": {
+    "message": "Put {name} in the Active Spot",
+    "translation": "Đặt {name} vào vị trí Active"
+  },
+  "wj75Qo": {
+    "message": "Put {name} on the Bench",
+    "translation": "Đặt {name} lên Bench"
+  },
+  "4X3mBx": {
+    "message": "Put in the Active Spot",
+    "translation": "Đặt vào vị trí Active"
+  },
+  "SzQFzV": {
+    "message": "With their attached cards",
+    "translation": "Cùng với bài gắn kèm"
   }
 }

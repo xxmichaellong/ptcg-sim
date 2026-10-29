@@ -6777,5 +6777,164 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "Contorni delle zone"
+  },
+  "TDU04N": {
+    "message": "{0, plural, other {Mark # as unused}}",
+    "translation": "{0, plural, other {Segna # come non usate}}"
+  },
+  "thQz5O": {
+    "message": "{0, plural, other {Mark # as used}}",
+    "translation": "{0, plural, other {Segna # come usate}}"
+  },
+  "OUc2yQ": {
+    "message": "{0, plural, other {Put # Pokémon on the Bench}}",
+    "translation": "{0, plural, other {Metti # Pokémon in panchina}}"
+  },
+  "9RYqFp": {
+    "message": "{actor} moved {count, plural, one {# card} other {# cards}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} other {deck}}",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards; {source} is the zone they left and {destination} where they went (play: onto the table)."
+    ],
+    "translation": "{actor} ha spostato {count, plural, one {# carta} other {# carte}} {source, select, hand {dalla mano} prizes {dalle carte Premio} discard {dalla pila degli scarti} board {dal campo} stadium {dallo Stadio} active {dalla posizione attiva} bench {dalla panchina} lostZone {dall'area perduta} attachmentResolution {dalle carte assegnate} other {dal mazzo}} {destination, select, hand {alla mano} discard {nella pila degli scarti} lostZone {nell'area perduta} deckBottom {in fondo al mazzo} play {in gioco} other {nel mazzo}}"
+  },
+  "T2CvPc": {
+    "message": "{cleared, plural, one {Clear damage} other {Clear damage on #}}",
+    "translation": "{cleared, plural, one {Rimuovi i danni} other {Rimuovi i danni da #}}"
+  },
+  "d5-G2p": {
+    "message": "{conditioned, plural, one {Add or switch Special Condition} other {Add or switch Special Conditions on #}}",
+    "translation": "{conditioned, plural, one {Aggiungi o cambia condizione speciale} other {Aggiungi o cambia condizioni speciali su #}}"
+  },
+  "0GBBWg": {
+    "message": "{count, plural, one {# of {ownerName}'s cards} other {# of {ownerName}'s cards}}",
+    "translation": "{count, plural, one {# carta di {ownerName}} other {# carte di {ownerName}}}"
+  },
+  "LrKYZV": {
+    "message": "{count, plural, one {Discard # card} other {Discard # cards}}",
+    "translation": "{count, plural, one {Scarta # carta} other {Scarta # carte}}"
+  },
+  "0oSCag": {
+    "message": "{count, plural, one {Move # card to hand} other {Move # cards to hand}}",
+    "translation": "{count, plural, one {Sposta # carta nella mano} other {Sposta # carte nella mano}}"
+  },
+  "VPXqBr": {
+    "message": "{count, plural, one {Put # card in the Lost Zone} other {Put # cards in the Lost Zone}}",
+    "translation": "{count, plural, one {Metti # carta nell'area perduta} other {Metti # carte nell'area perduta}}"
+  },
+  "QcZX-S": {
+    "message": "{count, plural, one {Put # card in the Prizes} other {Put # cards in the Prizes}}",
+    "translation": "{count, plural, one {Metti # carta tra le carte Premio} other {Metti # carte tra le carte Premio}}"
+  },
+  "rVI1D1": {
+    "message": "{count, plural, one {Put # card on the board} other {Put # cards on the board}}",
+    "translation": "{count, plural, one {Metti # carta sul campo} other {Metti # carte sul campo}}"
+  },
+  "CEIRsk": {
+    "message": "{count, plural, one {Put # card on the bottom of the deck} other {Put # cards on the bottom of the deck}}",
+    "translation": "{count, plural, one {Metti # carta in fondo al mazzo} other {Metti # carte in fondo al mazzo}}"
+  },
+  "Iqt60a": {
+    "message": "{count, plural, one {Put # card on top of the deck} other {Put # cards on top of the deck}}",
+    "translation": "{count, plural, one {Metti # carta in cima al mazzo} other {Metti # carte in cima al mazzo}}"
+  },
+  "L80QZi": {
+    "message": "{count, plural, one {Shuffle # card into the deck} other {Shuffle # cards into the deck}}",
+    "translation": "{count, plural, one {Rimischia # carta nel mazzo} other {Rimischia # carte nel mazzo}}"
+  },
+  "SdtOTJ": {
+    "message": "{count, plural, other {Add # damage to each}}",
+    "translation": "{count, plural, other {Aggiungi # danni a ciascuno}}"
+  },
+  "Kv5Eze": {
+    "message": "{count, plural, other {Discard # Pokémon}}",
+    "translation": "{count, plural, other {Scarta # Pokémon}}"
+  },
+  "DxATQp": {
+    "message": "{count, plural, other {Move # Pokémon to hand}}",
+    "translation": "{count, plural, other {Sposta # Pokémon nella mano}}"
+  },
+  "Rdmkvn": {
+    "message": "{count, plural, other {Put # Pokémon in the Lost Zone}}",
+    "translation": "{count, plural, other {Metti # Pokémon nell'area perduta}}"
+  },
+  "JUDcg5": {
+    "message": "{count, plural, other {Put # Pokémon in the Prizes}}",
+    "translation": "{count, plural, other {Metti # Pokémon tra le carte Premio}}"
+  },
+  "Jv3nIR": {
+    "message": "{count, plural, other {Put # Pokémon on the board}}",
+    "translation": "{count, plural, other {Metti # Pokémon sul campo}}"
+  },
+  "lkpEPZ": {
+    "message": "{count, plural, other {Put # Pokémon on the bottom of the deck}}",
+    "translation": "{count, plural, other {Metti # Pokémon in fondo al mazzo}}"
+  },
+  "qtwSJv": {
+    "message": "{count, plural, other {Put # Pokémon on top of the deck}}",
+    "translation": "{count, plural, other {Metti # Pokémon in cima al mazzo}}"
+  },
+  "P13x5M": {
+    "message": "{count, plural, other {Shuffle # Pokémon into the deck}}",
+    "translation": "{count, plural, other {Rimischia # Pokémon nel mazzo}}"
+  },
+  "5VUOI1": {
+    "message": "{cured, plural, one {Remove Special Condition} other {Remove Special Conditions on #}}",
+    "translation": "{cured, plural, one {Rimuovi condizione speciale} other {Rimuovi condizioni speciali da #}}"
+  },
+  "3W5Y-K": {
+    "message": "{damaged, plural, one {Add 10 damage} other {Add 10 damage to each of #}}",
+    "translation": "{damaged, plural, one {Aggiungi 10 danni} other {Aggiungi 10 danni a ciascuno di #}}"
+  },
+  "iovK0L": {
+    "message": "{hidden, plural, one {Hide # card} other {Hide # cards}}",
+    "translation": "{hidden, plural, one {Nascondi # carta} other {Nascondi # carte}}"
+  },
+  "1z1iU-": {
+    "message": "{last} ends on top",
+    "translation": "{last} finisce in cima"
+  },
+  "Lg_lp9": {
+    "message": "{revealed, plural, one {Reveal # card} other {Reveal # cards}}",
+    "translation": "{revealed, plural, one {Mostra # carta} other {Mostra # carte}}"
+  },
+  "ZAbJN6": {
+    "message": "{rotated, plural, one {Rotate # card} other {Rotate # cards}}",
+    "translation": "{rotated, plural, one {Ruota # carta} other {Ruota # carte}}"
+  },
+  "abXnG-": {
+    "message": "Add damage to each…",
+    "translation": "Aggiungi danni a ciascuno…"
+  },
+  "Ee-egz": {
+    "message": "Damage…",
+    "translation": "Danni…"
+  },
+  "BEfUVX": {
+    "message": "Play {name} as the Stadium",
+    "translation": "Gioca {name} come Stadio"
+  },
+  "Yo-ZmX": {
+    "message": "Play as one card",
+    "translation": "Gioca come una sola carta"
+  },
+  "NZZ8TY": {
+    "message": "Play as the Stadium",
+    "translation": "Gioca come Stadio"
+  },
+  "YLetgL": {
+    "message": "Put {name} in the Active Spot",
+    "translation": "Metti {name} in posizione attiva"
+  },
+  "wj75Qo": {
+    "message": "Put {name} on the Bench",
+    "translation": "Metti {name} in panchina"
+  },
+  "4X3mBx": {
+    "message": "Put in the Active Spot",
+    "translation": "Metti in posizione attiva"
+  },
+  "SzQFzV": {
+    "message": "With their attached cards",
+    "translation": "Con le loro carte assegnate"
   }
 }

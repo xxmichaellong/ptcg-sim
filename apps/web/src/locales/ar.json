@@ -6777,5 +6777,164 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "حدود المناطق"
+  },
+  "TDU04N": {
+    "message": "{0, plural, other {Mark # as unused}}",
+    "translation": "{0, plural, other {وسم # كغير مستخدم}}"
+  },
+  "thQz5O": {
+    "message": "{0, plural, other {Mark # as used}}",
+    "translation": "{0, plural, other {وسم # كمستخدم}}"
+  },
+  "OUc2yQ": {
+    "message": "{0, plural, other {Put # Pokémon on the Bench}}",
+    "translation": "{0, plural, other {وضع # Pokémon على الاحتياط}}"
+  },
+  "9RYqFp": {
+    "message": "{actor} moved {count, plural, one {# card} other {# cards}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} other {deck}}",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards; {source} is the zone they left and {destination} where they went (play: onto the table)."
+    ],
+    "translation": "نقل {actor} {count, plural, one {بطاقة واحدة} two {بطاقتين} few {# بطاقات} many {# بطاقة} other {# بطاقة}} من {source, select, hand {اليد} prizes {الجوائز} discard {المهملات} board {الميدان} stadium {الملعب} active {الخانة النشطة} bench {الاحتياط} lostZone {Lost Zone} attachmentResolution {البطاقات المرفقة} other {المجموعة}} إلى {destination, select, hand {اليد} discard {المهملات} lostZone {Lost Zone} deckBottom {أسفل المجموعة} play {اللعب} other {المجموعة}}"
+  },
+  "T2CvPc": {
+    "message": "{cleared, plural, one {Clear damage} other {Clear damage on #}}",
+    "translation": "{cleared, plural, one {إزالة الضرر} other {إزالة الضرر عن #}}"
+  },
+  "d5-G2p": {
+    "message": "{conditioned, plural, one {Add or switch Special Condition} other {Add or switch Special Conditions on #}}",
+    "translation": "{conditioned, plural, one {إضافة حالة خاصة أو تبديلها} other {إضافة الحالات الخاصة أو تبديلها على #}}"
+  },
+  "0GBBWg": {
+    "message": "{count, plural, one {# of {ownerName}'s cards} other {# of {ownerName}'s cards}}",
+    "translation": "{count, plural, one {# من بطاقات {ownerName}} other {# من بطاقات {ownerName}}}"
+  },
+  "LrKYZV": {
+    "message": "{count, plural, one {Discard # card} other {Discard # cards}}",
+    "translation": "{count, plural, one {التخلص من # بطاقة} two {التخلص من بطاقتين} few {التخلص من # بطاقات} other {التخلص من # بطاقة}}"
+  },
+  "0oSCag": {
+    "message": "{count, plural, one {Move # card to hand} other {Move # cards to hand}}",
+    "translation": "{count, plural, one {نقل # بطاقة إلى اليد} two {نقل بطاقتين إلى اليد} few {نقل # بطاقات إلى اليد} other {نقل # بطاقة إلى اليد}}"
+  },
+  "VPXqBr": {
+    "message": "{count, plural, one {Put # card in the Lost Zone} other {Put # cards in the Lost Zone}}",
+    "translation": "{count, plural, one {وضع # بطاقة في Lost Zone} two {وضع بطاقتين في Lost Zone} few {وضع # بطاقات في Lost Zone} other {وضع # بطاقة في Lost Zone}}"
+  },
+  "QcZX-S": {
+    "message": "{count, plural, one {Put # card in the Prizes} other {Put # cards in the Prizes}}",
+    "translation": "{count, plural, one {وضع # بطاقة في الجوائز} two {وضع بطاقتين في الجوائز} few {وضع # بطاقات في الجوائز} other {وضع # بطاقة في الجوائز}}"
+  },
+  "rVI1D1": {
+    "message": "{count, plural, one {Put # card on the board} other {Put # cards on the board}}",
+    "translation": "{count, plural, one {وضع # بطاقة في الميدان} two {وضع بطاقتين في الميدان} few {وضع # بطاقات في الميدان} other {وضع # بطاقة في الميدان}}"
+  },
+  "CEIRsk": {
+    "message": "{count, plural, one {Put # card on the bottom of the deck} other {Put # cards on the bottom of the deck}}",
+    "translation": "{count, plural, one {وضع # بطاقة أسفل المجموعة} two {وضع بطاقتين أسفل المجموعة} few {وضع # بطاقات أسفل المجموعة} other {وضع # بطاقة أسفل المجموعة}}"
+  },
+  "Iqt60a": {
+    "message": "{count, plural, one {Put # card on top of the deck} other {Put # cards on top of the deck}}",
+    "translation": "{count, plural, one {وضع # بطاقة أعلى المجموعة} two {وضع بطاقتين أعلى المجموعة} few {وضع # بطاقات أعلى المجموعة} other {وضع # بطاقة أعلى المجموعة}}"
+  },
+  "L80QZi": {
+    "message": "{count, plural, one {Shuffle # card into the deck} other {Shuffle # cards into the deck}}",
+    "translation": "{count, plural, one {خلط # بطاقة في المجموعة} two {خلط بطاقتين في المجموعة} few {خلط # بطاقات في المجموعة} other {خلط # بطاقة في المجموعة}}"
+  },
+  "SdtOTJ": {
+    "message": "{count, plural, other {Add # damage to each}}",
+    "translation": "{count, plural, other {إضافة # ضرر إلى كل منها}}"
+  },
+  "Kv5Eze": {
+    "message": "{count, plural, other {Discard # Pokémon}}",
+    "translation": "{count, plural, other {التخلص من # Pokémon}}"
+  },
+  "DxATQp": {
+    "message": "{count, plural, other {Move # Pokémon to hand}}",
+    "translation": "{count, plural, other {نقل # Pokémon إلى اليد}}"
+  },
+  "Rdmkvn": {
+    "message": "{count, plural, other {Put # Pokémon in the Lost Zone}}",
+    "translation": "{count, plural, other {وضع # Pokémon في Lost Zone}}"
+  },
+  "JUDcg5": {
+    "message": "{count, plural, other {Put # Pokémon in the Prizes}}",
+    "translation": "{count, plural, other {وضع # Pokémon في الجوائز}}"
+  },
+  "Jv3nIR": {
+    "message": "{count, plural, other {Put # Pokémon on the board}}",
+    "translation": "{count, plural, other {وضع # Pokémon في الميدان}}"
+  },
+  "lkpEPZ": {
+    "message": "{count, plural, other {Put # Pokémon on the bottom of the deck}}",
+    "translation": "{count, plural, other {وضع # Pokémon أسفل المجموعة}}"
+  },
+  "qtwSJv": {
+    "message": "{count, plural, other {Put # Pokémon on top of the deck}}",
+    "translation": "{count, plural, other {وضع # Pokémon أعلى المجموعة}}"
+  },
+  "P13x5M": {
+    "message": "{count, plural, other {Shuffle # Pokémon into the deck}}",
+    "translation": "{count, plural, other {خلط # Pokémon في المجموعة}}"
+  },
+  "5VUOI1": {
+    "message": "{cured, plural, one {Remove Special Condition} other {Remove Special Conditions on #}}",
+    "translation": "{cured, plural, one {إزالة الحالة الخاصة} other {إزالة الحالات الخاصة عن #}}"
+  },
+  "3W5Y-K": {
+    "message": "{damaged, plural, one {Add 10 damage} other {Add 10 damage to each of #}}",
+    "translation": "{damaged, plural, one {إضافة 10 ضرر} other {إضافة 10 ضرر إلى كل من #}}"
+  },
+  "iovK0L": {
+    "message": "{hidden, plural, one {Hide # card} other {Hide # cards}}",
+    "translation": "{hidden, plural, one {إخفاء # بطاقة} two {إخفاء بطاقتين} few {إخفاء # بطاقات} other {إخفاء # بطاقة}}"
+  },
+  "1z1iU-": {
+    "message": "{last} ends on top",
+    "translation": "{last} تنتهي في الأعلى"
+  },
+  "Lg_lp9": {
+    "message": "{revealed, plural, one {Reveal # card} other {Reveal # cards}}",
+    "translation": "{revealed, plural, one {كشف # بطاقة} two {كشف بطاقتين} few {كشف # بطاقات} other {كشف # بطاقة}}"
+  },
+  "ZAbJN6": {
+    "message": "{rotated, plural, one {Rotate # card} other {Rotate # cards}}",
+    "translation": "{rotated, plural, one {تدوير # بطاقة} two {تدوير بطاقتين} few {تدوير # بطاقات} other {تدوير # بطاقة}}"
+  },
+  "abXnG-": {
+    "message": "Add damage to each…",
+    "translation": "إضافة ضرر إلى كل…"
+  },
+  "Ee-egz": {
+    "message": "Damage…",
+    "translation": "الضرر…"
+  },
+  "BEfUVX": {
+    "message": "Play {name} as the Stadium",
+    "translation": "العب {name} كملعب"
+  },
+  "Yo-ZmX": {
+    "message": "Play as one card",
+    "translation": "العب كبطاقة واحدة"
+  },
+  "NZZ8TY": {
+    "message": "Play as the Stadium",
+    "translation": "العب كملعب"
+  },
+  "YLetgL": {
+    "message": "Put {name} in the Active Spot",
+    "translation": "ضع {name} في الخانة النشطة"
+  },
+  "wj75Qo": {
+    "message": "Put {name} on the Bench",
+    "translation": "ضع {name} على الاحتياط"
+  },
+  "4X3mBx": {
+    "message": "Put in the Active Spot",
+    "translation": "ضع في الخانة النشطة"
+  },
+  "SzQFzV": {
+    "message": "With their attached cards",
+    "translation": "مع بطاقاتها المرفقة"
   }
 }

@@ -6777,5 +6777,164 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "区域轮廓"
+  },
+  "TDU04N": {
+    "message": "{0, plural, other {Mark # as unused}}",
+    "translation": "{0, plural, other {将#张标记为未使用}}"
+  },
+  "thQz5O": {
+    "message": "{0, plural, other {Mark # as used}}",
+    "translation": "{0, plural, other {将#张标记为已使用}}"
+  },
+  "OUc2yQ": {
+    "message": "{0, plural, other {Put # Pokémon on the Bench}}",
+    "translation": "{0, plural, other {将#只宝可梦放到备战区}}"
+  },
+  "9RYqFp": {
+    "message": "{actor} moved {count, plural, one {# card} other {# cards}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} other {deck}}",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards; {source} is the zone they left and {destination} where they went (play: onto the table)."
+    ],
+    "translation": "{actor}将{count, plural, other {#张卡牌}}从{source, select, hand {手牌} prizes {奖赏卡} discard {弃牌区} board {场地} stadium {竞技场} active {战斗场} bench {备战区} lostZone {放逐区} attachmentResolution {附着的卡牌} other {牌库}}移至{destination, select, hand {手牌} discard {弃牌区} lostZone {放逐区} deckBottom {牌库底} play {场上} other {牌库}}"
+  },
+  "T2CvPc": {
+    "message": "{cleared, plural, one {Clear damage} other {Clear damage on #}}",
+    "translation": "{cleared, plural, one {清除伤害} other {清除#张的伤害}}"
+  },
+  "d5-G2p": {
+    "message": "{conditioned, plural, one {Add or switch Special Condition} other {Add or switch Special Conditions on #}}",
+    "translation": "{conditioned, plural, one {添加或切换特殊状态} other {为#张添加或切换特殊状态}}"
+  },
+  "0GBBWg": {
+    "message": "{count, plural, one {# of {ownerName}'s cards} other {# of {ownerName}'s cards}}",
+    "translation": "{count, plural, one {{ownerName}的#张卡牌} other {{ownerName}的#张卡牌}}"
+  },
+  "LrKYZV": {
+    "message": "{count, plural, one {Discard # card} other {Discard # cards}}",
+    "translation": "{count, plural, one {弃掉#张卡牌} other {弃掉#张卡牌}}"
+  },
+  "0oSCag": {
+    "message": "{count, plural, one {Move # card to hand} other {Move # cards to hand}}",
+    "translation": "{count, plural, one {将#张卡牌移到手牌} other {将#张卡牌移到手牌}}"
+  },
+  "VPXqBr": {
+    "message": "{count, plural, one {Put # card in the Lost Zone} other {Put # cards in the Lost Zone}}",
+    "translation": "{count, plural, one {将#张卡牌放入放逐区} other {将#张卡牌放入放逐区}}"
+  },
+  "QcZX-S": {
+    "message": "{count, plural, one {Put # card in the Prizes} other {Put # cards in the Prizes}}",
+    "translation": "{count, plural, one {将#张卡牌放入奖赏卡} other {将#张卡牌放入奖赏卡}}"
+  },
+  "rVI1D1": {
+    "message": "{count, plural, one {Put # card on the board} other {Put # cards on the board}}",
+    "translation": "{count, plural, one {将#张卡牌放到场地上} other {将#张卡牌放到场地上}}"
+  },
+  "CEIRsk": {
+    "message": "{count, plural, one {Put # card on the bottom of the deck} other {Put # cards on the bottom of the deck}}",
+    "translation": "{count, plural, one {将#张卡牌放到牌库底} other {将#张卡牌放到牌库底}}"
+  },
+  "Iqt60a": {
+    "message": "{count, plural, one {Put # card on top of the deck} other {Put # cards on top of the deck}}",
+    "translation": "{count, plural, one {将#张卡牌放到牌库顶} other {将#张卡牌放到牌库顶}}"
+  },
+  "L80QZi": {
+    "message": "{count, plural, one {Shuffle # card into the deck} other {Shuffle # cards into the deck}}",
+    "translation": "{count, plural, one {将#张卡牌洗入牌库} other {将#张卡牌洗入牌库}}"
+  },
+  "SdtOTJ": {
+    "message": "{count, plural, other {Add # damage to each}}",
+    "translation": "{count, plural, other {为每张添加#点伤害}}"
+  },
+  "Kv5Eze": {
+    "message": "{count, plural, other {Discard # Pokémon}}",
+    "translation": "{count, plural, other {弃掉#只宝可梦}}"
+  },
+  "DxATQp": {
+    "message": "{count, plural, other {Move # Pokémon to hand}}",
+    "translation": "{count, plural, other {将#只宝可梦移到手牌}}"
+  },
+  "Rdmkvn": {
+    "message": "{count, plural, other {Put # Pokémon in the Lost Zone}}",
+    "translation": "{count, plural, other {将#只宝可梦放入放逐区}}"
+  },
+  "JUDcg5": {
+    "message": "{count, plural, other {Put # Pokémon in the Prizes}}",
+    "translation": "{count, plural, other {将#只宝可梦放入奖赏卡}}"
+  },
+  "Jv3nIR": {
+    "message": "{count, plural, other {Put # Pokémon on the board}}",
+    "translation": "{count, plural, other {将#只宝可梦放到场地上}}"
+  },
+  "lkpEPZ": {
+    "message": "{count, plural, other {Put # Pokémon on the bottom of the deck}}",
+    "translation": "{count, plural, other {将#只宝可梦放到牌库底}}"
+  },
+  "qtwSJv": {
+    "message": "{count, plural, other {Put # Pokémon on top of the deck}}",
+    "translation": "{count, plural, other {将#只宝可梦放到牌库顶}}"
+  },
+  "P13x5M": {
+    "message": "{count, plural, other {Shuffle # Pokémon into the deck}}",
+    "translation": "{count, plural, other {将#只宝可梦洗入牌库}}"
+  },
+  "5VUOI1": {
+    "message": "{cured, plural, one {Remove Special Condition} other {Remove Special Conditions on #}}",
+    "translation": "{cured, plural, one {解除特殊状态} other {解除#张的特殊状态}}"
+  },
+  "3W5Y-K": {
+    "message": "{damaged, plural, one {Add 10 damage} other {Add 10 damage to each of #}}",
+    "translation": "{damaged, plural, one {添加10点伤害} other {为#张各添加10点伤害}}"
+  },
+  "iovK0L": {
+    "message": "{hidden, plural, one {Hide # card} other {Hide # cards}}",
+    "translation": "{hidden, plural, one {隐藏#张卡牌} other {隐藏#张卡牌}}"
+  },
+  "1z1iU-": {
+    "message": "{last} ends on top",
+    "translation": "{last}最终在最上面"
+  },
+  "Lg_lp9": {
+    "message": "{revealed, plural, one {Reveal # card} other {Reveal # cards}}",
+    "translation": "{revealed, plural, one {展示#张卡牌} other {展示#张卡牌}}"
+  },
+  "ZAbJN6": {
+    "message": "{rotated, plural, one {Rotate # card} other {Rotate # cards}}",
+    "translation": "{rotated, plural, one {旋转#张卡牌} other {旋转#张卡牌}}"
+  },
+  "abXnG-": {
+    "message": "Add damage to each…",
+    "translation": "为每只添加伤害…"
+  },
+  "Ee-egz": {
+    "message": "Damage…",
+    "translation": "伤害…"
+  },
+  "BEfUVX": {
+    "message": "Play {name} as the Stadium",
+    "translation": "将{name}作为竞技场卡使用"
+  },
+  "Yo-ZmX": {
+    "message": "Play as one card",
+    "translation": "作为一张卡牌使用"
+  },
+  "NZZ8TY": {
+    "message": "Play as the Stadium",
+    "translation": "作为竞技场卡使用"
+  },
+  "YLetgL": {
+    "message": "Put {name} in the Active Spot",
+    "translation": "将{name}放到战斗场"
+  },
+  "wj75Qo": {
+    "message": "Put {name} on the Bench",
+    "translation": "将{name}放到备战区"
+  },
+  "4X3mBx": {
+    "message": "Put in the Active Spot",
+    "translation": "放到战斗场"
+  },
+  "SzQFzV": {
+    "message": "With their attached cards",
+    "translation": "包含其附着的卡牌"
   }
 }

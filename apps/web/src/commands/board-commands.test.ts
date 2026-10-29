@@ -46,6 +46,7 @@ const runtimeFor = (state: BoardSessionControllerState) => {
     emitOpenedZoneCardIntent: vi.fn(),
     emitLegacyShortcutAction: vi.fn(() => true),
     emitLegacyOverlayAction: vi.fn(() => true),
+    emitGroupAction: vi.fn(() => true),
     declareDeckView: vi.fn(),
   };
   return runtime as typeof runtime & {
@@ -53,6 +54,7 @@ const runtimeFor = (state: BoardSessionControllerState) => {
     emitOpenedZoneCardIntent: ReturnType<typeof vi.fn>;
     emitLegacyShortcutAction: ReturnType<typeof vi.fn>;
     emitLegacyOverlayAction: ReturnType<typeof vi.fn>;
+    emitGroupAction: ReturnType<typeof vi.fn>;
   };
 };
 

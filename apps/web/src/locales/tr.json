@@ -6777,5 +6777,164 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "Bölge çerçeveleri"
+  },
+  "TDU04N": {
+    "message": "{0, plural, other {Mark # as unused}}",
+    "translation": "{0, plural, other {# kartı kullanılmadı olarak işaretle}}"
+  },
+  "thQz5O": {
+    "message": "{0, plural, other {Mark # as used}}",
+    "translation": "{0, plural, other {# kartı kullanıldı olarak işaretle}}"
+  },
+  "OUc2yQ": {
+    "message": "{0, plural, other {Put # Pokémon on the Bench}}",
+    "translation": "{0, plural, other {# Pokémon'u yedeğe al}}"
+  },
+  "9RYqFp": {
+    "message": "{actor} moved {count, plural, one {# card} other {# cards}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} other {deck}}",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards; {source} is the zone they left and {destination} where they went (play: onto the table)."
+    ],
+    "translation": "{actor} {count, plural, one {# kartı} other {# kartı}} {source, select, hand {elden} prizes {Ödüllerden} discard {atık yığınından} board {oyun alanından} stadium {Stadyumdan} active {Aktif Alandan} bench {yedekten} lostZone {Lost Zone'dan} attachmentResolution {bağlı kartlardan} other {desteden}} {destination, select, hand {ele} discard {atık yığınına} lostZone {Lost Zone'a} deckBottom {destenin altına} play {oyuna} other {desteye}} taşıdı"
+  },
+  "T2CvPc": {
+    "message": "{cleared, plural, one {Clear damage} other {Clear damage on #}}",
+    "translation": "{cleared, plural, one {Hasarı temizle} other {# Pokémon'daki hasarı temizle}}"
+  },
+  "d5-G2p": {
+    "message": "{conditioned, plural, one {Add or switch Special Condition} other {Add or switch Special Conditions on #}}",
+    "translation": "{conditioned, plural, one {Özel Durum ekle veya değiştir} other {# Pokémon'da Özel Durum ekle veya değiştir}}"
+  },
+  "0GBBWg": {
+    "message": "{count, plural, one {# of {ownerName}'s cards} other {# of {ownerName}'s cards}}",
+    "translation": "{count, plural, one {{ownerName} oyuncusunun # kartı} other {{ownerName} oyuncusunun # kartı}}"
+  },
+  "LrKYZV": {
+    "message": "{count, plural, one {Discard # card} other {Discard # cards}}",
+    "translation": "{count, plural, one {# kartı atık yığınına at} other {# kartı atık yığınına at}}"
+  },
+  "0oSCag": {
+    "message": "{count, plural, one {Move # card to hand} other {Move # cards to hand}}",
+    "translation": "{count, plural, one {# kartı ele al} other {# kartı ele al}}"
+  },
+  "VPXqBr": {
+    "message": "{count, plural, one {Put # card in the Lost Zone} other {Put # cards in the Lost Zone}}",
+    "translation": "{count, plural, one {# kartı Lost Zone'a koy} other {# kartı Lost Zone'a koy}}"
+  },
+  "QcZX-S": {
+    "message": "{count, plural, one {Put # card in the Prizes} other {Put # cards in the Prizes}}",
+    "translation": "{count, plural, one {# kartı Ödüllere koy} other {# kartı Ödüllere koy}}"
+  },
+  "rVI1D1": {
+    "message": "{count, plural, one {Put # card on the board} other {Put # cards on the board}}",
+    "translation": "{count, plural, one {# kartı oyun alanına koy} other {# kartı oyun alanına koy}}"
+  },
+  "CEIRsk": {
+    "message": "{count, plural, one {Put # card on the bottom of the deck} other {Put # cards on the bottom of the deck}}",
+    "translation": "{count, plural, one {# kartı destenin altına koy} other {# kartı destenin altına koy}}"
+  },
+  "Iqt60a": {
+    "message": "{count, plural, one {Put # card on top of the deck} other {Put # cards on top of the deck}}",
+    "translation": "{count, plural, one {# kartı destenin üstüne koy} other {# kartı destenin üstüne koy}}"
+  },
+  "L80QZi": {
+    "message": "{count, plural, one {Shuffle # card into the deck} other {Shuffle # cards into the deck}}",
+    "translation": "{count, plural, one {# kartı deste içine karıştır} other {# kartı deste içine karıştır}}"
+  },
+  "SdtOTJ": {
+    "message": "{count, plural, other {Add # damage to each}}",
+    "translation": "{count, plural, other {Her birine # hasar ekle}}"
+  },
+  "Kv5Eze": {
+    "message": "{count, plural, other {Discard # Pokémon}}",
+    "translation": "{count, plural, other {# Pokémon'u at}}"
+  },
+  "DxATQp": {
+    "message": "{count, plural, other {Move # Pokémon to hand}}",
+    "translation": "{count, plural, other {# Pokémon'u ele al}}"
+  },
+  "Rdmkvn": {
+    "message": "{count, plural, other {Put # Pokémon in the Lost Zone}}",
+    "translation": "{count, plural, other {# Pokémon'u Lost Zone'a koy}}"
+  },
+  "JUDcg5": {
+    "message": "{count, plural, other {Put # Pokémon in the Prizes}}",
+    "translation": "{count, plural, other {# Pokémon'u Ödüllere koy}}"
+  },
+  "Jv3nIR": {
+    "message": "{count, plural, other {Put # Pokémon on the board}}",
+    "translation": "{count, plural, other {# Pokémon'u oyun alanına koy}}"
+  },
+  "lkpEPZ": {
+    "message": "{count, plural, other {Put # Pokémon on the bottom of the deck}}",
+    "translation": "{count, plural, other {# Pokémon'u destenin altına koy}}"
+  },
+  "qtwSJv": {
+    "message": "{count, plural, other {Put # Pokémon on top of the deck}}",
+    "translation": "{count, plural, other {# Pokémon'u destenin üstüne koy}}"
+  },
+  "P13x5M": {
+    "message": "{count, plural, other {Shuffle # Pokémon into the deck}}",
+    "translation": "{count, plural, other {# Pokémon'u deste içine karıştır}}"
+  },
+  "5VUOI1": {
+    "message": "{cured, plural, one {Remove Special Condition} other {Remove Special Conditions on #}}",
+    "translation": "{cured, plural, one {Özel Durumu kaldır} other {# Pokémon'daki Özel Durumları kaldır}}"
+  },
+  "3W5Y-K": {
+    "message": "{damaged, plural, one {Add 10 damage} other {Add 10 damage to each of #}}",
+    "translation": "{damaged, plural, one {10 hasar ekle} other {# Pokémon'un her birine 10 hasar ekle}}"
+  },
+  "iovK0L": {
+    "message": "{hidden, plural, one {Hide # card} other {Hide # cards}}",
+    "translation": "{hidden, plural, one {# kartı gizle} other {# kartı gizle}}"
+  },
+  "1z1iU-": {
+    "message": "{last} ends on top",
+    "translation": "{last} en üstte kalır"
+  },
+  "Lg_lp9": {
+    "message": "{revealed, plural, one {Reveal # card} other {Reveal # cards}}",
+    "translation": "{revealed, plural, one {# kartı göster} other {# kartı göster}}"
+  },
+  "ZAbJN6": {
+    "message": "{rotated, plural, one {Rotate # card} other {Rotate # cards}}",
+    "translation": "{rotated, plural, one {# kartı döndür} other {# kartı döndür}}"
+  },
+  "abXnG-": {
+    "message": "Add damage to each…",
+    "translation": "Her birine hasar ekle…"
+  },
+  "Ee-egz": {
+    "message": "Damage…",
+    "translation": "Hasar…"
+  },
+  "BEfUVX": {
+    "message": "Play {name} as the Stadium",
+    "translation": "{name} kartını Stadyum olarak oyna"
+  },
+  "Yo-ZmX": {
+    "message": "Play as one card",
+    "translation": "Tek kart olarak oyna"
+  },
+  "NZZ8TY": {
+    "message": "Play as the Stadium",
+    "translation": "Stadyum olarak oyna"
+  },
+  "YLetgL": {
+    "message": "Put {name} in the Active Spot",
+    "translation": "{name} kartını Aktif Alan'a koy"
+  },
+  "wj75Qo": {
+    "message": "Put {name} on the Bench",
+    "translation": "{name} kartını yedeğe koy"
+  },
+  "4X3mBx": {
+    "message": "Put in the Active Spot",
+    "translation": "Aktif Alan'a koy"
+  },
+  "SzQFzV": {
+    "message": "With their attached cards",
+    "translation": "Bağlı kartlarıyla birlikte"
   }
 }
