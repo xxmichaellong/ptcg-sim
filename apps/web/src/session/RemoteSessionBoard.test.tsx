@@ -853,6 +853,63 @@ describe('RemoteSessionBoard replay binding', () => {
     replay.dispose();
   });
 
+  it('turns a player back to their own side when either withdraws board flip', async () => {
+    if (baseView.viewer.kind !== 'player') throw new Error('player view');
+    const consenting = (consent: boolean): MatchViewState => ({
+      ...atRevision(10),
+      players: Object.fromEntries(
+        Object.entries(baseView.players).map(([id, player]) => [
+          id,
+          { ...player, coachingConsent: consent },
+        ])
+      ),
+    });
+    const session = new FakeRemoteBoardSession({
+      ...initialState(),
+      view: consenting(true),
+    });
+    const replay = new ReplaySessionCoordinator(session);
+    const onPerspectiveChange = vi.fn();
+    const commands = createRef<BoardCommands>();
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+    await act(async () =>
+      root.render(
+        <RemoteSessionBoard
+          session={session}
+          replay={replay}
+          roomMode="multiplayer"
+          onIntent={vi.fn()}
+          onPerspectiveChange={onPerspectiveChange}
+          commandsRef={commands}
+        />
+      )
+    );
+    await waitForRevision(host, 10);
+    expect(commands.current?.canFlipBoard()).toBe(true);
+    await act(async () => commands.current?.flipBoard());
+    expect(onPerspectiveChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({ flipped: true })
+    );
+    // The other player takes their consent back: the table turns back to
+    // this player's side, where Flip no longer reaches.
+    await act(async () =>
+      session.publish({
+        ...session.getSnapshot(),
+        view: { ...consenting(false), revision: 11 },
+      })
+    );
+    await waitForRevision(host, 11);
+    expect(commands.current?.canFlipBoard()).toBe(false);
+    expect(onPerspectiveChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({ flipped: false })
+    );
+
+    await act(async () => root.unmount());
+    replay.dispose();
+  });
+
   it('shows only local and perspective controls to a multiplayer spectator', async () => {
     const spectatorView: MatchViewState = {
       ...atRevision(10),

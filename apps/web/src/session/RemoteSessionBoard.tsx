@@ -1226,6 +1226,23 @@ export const RemoteSessionBoard = ({
     boardState.view?.viewer.kind === 'player';
   const flipAllowed = boardFlipAllowed(roomMode, boardState?.view);
   flipAllowedRef.current = flipAllowed;
+  // A player turned around while both allowed it is turned back the moment
+  // either withdraws: Flip, its key and its menu entry go with the consent,
+  // and the rail and keys would go on acting for the other seat. Only on
+  // that withdrawal: a table turned from its first scene stays as it is.
+  const viewerSeat =
+    boardState?.view?.viewer.kind === 'player'
+      ? boardState.view.viewer.playerId
+      : undefined;
+  const flipWasAllowed = useRef(flipAllowed);
+  useEffect(() => {
+    const withdrawn = flipWasAllowed.current && !flipAllowed;
+    flipWasAllowed.current = flipAllowed;
+    if (!withdrawn || viewerSeat === undefined) return;
+    const runtime = runtimeRef.current;
+    if (runtime && runtime.getLayoutState().bottomPlayerId !== viewerSeat)
+      runtime.flipBoard();
+  }, [flipAllowed, viewerSeat]);
   // A replay keeps the live table's sizing: its first frames can come before
   // this player's own consent, and the controls would move on Next.
   const switchSideSized = useLiveValue(
