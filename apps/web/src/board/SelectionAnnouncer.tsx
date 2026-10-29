@@ -121,9 +121,12 @@ export const SelectionAnnouncer = ({
       if (said !== null) setMessage(said);
     }, SELECTION_ANNOUNCE_MS);
   }, [selection, selectionMode]);
+  // Let go of, the timer is forgotten too: StrictMode runs this and the
+  // effect above again at once, and a timer kept would silence it.
   useEffect(
     () => () => {
       if (timer.current !== null) clearTimeout(timer.current);
+      timer.current = null;
     },
     []
   );

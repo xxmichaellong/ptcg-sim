@@ -1392,6 +1392,7 @@ export const BoardSurface = ({
     () => () => {
       if (hintFrameRef.current !== null)
         cancelAnimationFrame(hintFrameRef.current);
+      hintFrameRef.current = null;
     },
     []
   );

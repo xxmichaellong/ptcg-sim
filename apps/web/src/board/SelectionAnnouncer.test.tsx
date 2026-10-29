@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 
 import { asViewCardId, type ViewCardId } from '@ptcgsim/game-core';
-import { act } from 'react';
+import { act, StrictMode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -109,6 +109,26 @@ describe('the selection status region', () => {
     );
   const region = () =>
     host.querySelector<HTMLElement>('[data-selection-announcer]')!;
+
+  it('still speaks after StrictMode runs its effects twice', async () => {
+    const strict = (selection: readonly ViewCardId[]) =>
+      act(async () =>
+        root.render(
+          <StrictMode>
+            <SelectionAnnouncer
+              selection={selection}
+              selectionMode={false}
+              labelOf={labelOf}
+              present={onTable}
+            />
+          </StrictMode>
+        )
+      );
+    await strict([]);
+    await strict([a, b]);
+    await act(async () => vi.advanceTimersByTime(SELECTION_ANNOUNCE_MS));
+    expect(region().textContent).toBe('2 cards selected');
+  });
 
   it('reads changes close together as one, replacing what it said', async () => {
     await render([]);
