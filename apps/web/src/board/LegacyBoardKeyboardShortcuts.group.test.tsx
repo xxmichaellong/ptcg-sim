@@ -373,4 +373,33 @@ describe('the keys with several cards selected (ADR-042)', () => {
       mode: 'add',
     });
   });
+
+  it("reads the player's own Shift key for a group as they bound it", async () => {
+    const onRequest = vi.fn();
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardKeyboardShortcuts, {
+          state: withSelection(['one', 'two']),
+          onRequest,
+          onNotice: vi.fn(),
+          keymap: keymapFor(
+            parseHotkeyOverrides({ 'card.toDiscard': 'shift+h' })
+          ),
+        })
+      );
+    });
+    // Shift+H, bound to the discard: the group goes there, not to the hand.
+    expect(press({ key: 'H', code: 'KeyH', shiftKey: true })).toBe(false);
+    expect(onRequest).toHaveBeenCalledExactlyOnceWith({
+      action: 'groupAction',
+      group: { kind: 'send', to: 'discard' },
+    });
+    // H alone is still the hand.
+    onRequest.mockClear();
+    expect(press({ key: 'h', code: 'KeyH' })).toBe(false);
+    expect(onRequest).toHaveBeenCalledExactlyOnceWith({
+      action: 'groupAction',
+      group: { kind: 'send', to: 'hand' },
+    });
+  });
 });

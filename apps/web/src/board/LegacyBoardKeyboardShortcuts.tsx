@@ -332,8 +332,13 @@ export const LegacyBoardKeyboardShortcuts = ({
         onLocalIntent?.({ kind: 'CardsSelected', cardIds, mode: 'replace' });
         return;
       }
-      const keyInput: KeyInput = groupSelected ? withoutShift(event) : event;
-      const translation = keymap.translate(keyInput, mode);
+      // With a group, Shift means nothing -- unless the player bound a key
+      // with it: their own Shift+key is read as they set it first.
+      const own = groupSelected ? keymap.translate(event, mode) : undefined;
+      const keyInput: KeyInput =
+        groupSelected && own?.kind !== 'moved' ? withoutShift(event) : event;
+      const translation =
+        own?.kind === 'moved' ? own : keymap.translate(keyInput, mode);
       if (translation.kind === 'freed') return;
       // The player's own key: handled as the default key it stands for, and
       // kept from the browser, which may have its own use for it.
