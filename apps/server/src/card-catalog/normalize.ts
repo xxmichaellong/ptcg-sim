@@ -252,6 +252,24 @@ export interface WireCard {
   tg?: string[];
   lg?: number;
   im?: string;
+  /** A card printed in pieces: its place in its whole. */
+  pz?: WirePieces;
+}
+
+/**
+ * Where a card printed in pieces sits in its whole (ADR-0XX §5): a
+ * V-UNION's quarter, a LEGEND's half, a split Stadium's half.
+ */
+export interface WirePieces {
+  /** The print the pieces make together: `<set>:<first number>:<name>`. */
+  k: string;
+  /** Columns and rows of the whole. */
+  c: number;
+  r: number;
+  /** Its place, in reading order from the top left. */
+  p: number;
+  /** Quarter turns it reads turned (a LEGEND's halves read sideways). */
+  q?: number;
 }
 
 const damageText = (value: unknown): string | undefined => {
@@ -394,6 +412,101 @@ export const normalizeTcgdexCard = (
     card.im = '';
   } else if (image !== `${imageBase ?? ''}${number}`) card.im = image;
   return card;
+};
+
+/**
+ * The rule printed on a split Stadium's halves: "This card can't be played
+ * on its own. Combine the 2 kinds of this Stadium from your hand and play
+ * them as 1 Stadium."
+ */
+const SPLIT_STADIUM_RULE =
+  /can[’']t be played on its own|combine the (?:2|two) kinds/iu;
+
+interface PieceShape {
+  readonly pieces: number;
+  readonly columns: number;
+  readonly rows: number;
+  readonly turns: number;
+}
+
+const V_UNION: PieceShape = { pieces: 4, columns: 2, rows: 2, turns: 0 };
+const LEGEND: PieceShape = { pieces: 2, columns: 1, rows: 2, turns: 1 };
+const SPLIT_STADIUM: PieceShape = { pieces: 2, columns: 2, rows: 1, turns: 0 };
+
+/** A piece's kind, by its stage, or its name where TCGdex has no stage. */
+const pieceShapeOf = (card: WireCard): PieceShape | undefined => {
+  if (card.c === 'P') {
+    if (card.st === 'V-UNION' || / V-UNION$/u.test(card.nm)) return V_UNION;
+    if (card.st === 'LEGEND' || / LEGEND$/u.test(card.nm)) return LEGEND;
+    return undefined;
+  }
+  return card.c === 'T' &&
+    (card.tt === undefined || card.tt === 'Stadium') &&
+    SPLIT_STADIUM_RULE.test(card.tx ?? '')
+    ? SPLIT_STADIUM
+    : undefined;
+};
+
+/**
+ * A set's cards printed in pieces, each given its place in its whole:
+ * runs of consecutive numbers with one name (four V-UNION pieces, two
+ * LEGEND halves, two halves of a Stadium printed with the split rule),
+ * the lowest number first. A run short of a whole is left as it is.
+ */
+export const withCardPieces = (setId: string, cards: WireCard[]): void => {
+  const candidates = cards
+    .flatMap((card) => {
+      const shape = pieceShapeOf(card);
+      const number = /^(\D*)(\d+)$/u.exec(card.n);
+      return shape && number
+        ? [{ card, shape, prefix: number[1]!, value: Number(number[2]) }]
+        : [];
+    })
+    .sort(
+      (left, right) =>
+        left.prefix.localeCompare(right.prefix) || left.value - right.value
+    );
+  type Candidate = (typeof candidates)[number];
+  let run: Candidate[] = [];
+  const close = () => {
+    const shape = run[0]?.shape;
+    if (!shape) return;
+    for (
+      let start = 0;
+      start + shape.pieces <= run.length;
+      start += shape.pieces
+    ) {
+      const whole = run.slice(start, start + shape.pieces);
+      const key = `${setId}:${whole[0]!.value}:${whole[0]!.card.nm}`.slice(
+        0,
+        128
+      );
+      whole.forEach(({ card }, part) => {
+        card.pz = {
+          k: key,
+          c: shape.columns,
+          r: shape.rows,
+          p: part,
+          ...(shape.turns ? { q: shape.turns } : {}),
+        };
+      });
+    }
+    run = [];
+  };
+  for (const candidate of candidates) {
+    const last = run.at(-1);
+    if (
+      last &&
+      (last.shape !== candidate.shape ||
+        last.card.nm !== candidate.card.nm ||
+        last.prefix !== candidate.prefix ||
+        last.value + 1 !== candidate.value)
+    ) {
+      close();
+    }
+    run.push(candidate);
+  }
+  close();
 };
 
 /** A set as TCGdex's sets query lists it. */
@@ -597,6 +710,7 @@ export const wireSetJson = (
     numbers.add(normalized.n);
     wireCards.push(normalized);
   }
+  withCardPieces(set.id, wireCards);
   const json = JSON.stringify({
     id: set.id,
     ...(code ? { code } : {}),

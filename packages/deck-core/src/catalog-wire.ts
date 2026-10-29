@@ -3,6 +3,7 @@ import {
   type CatalogAbility,
   type CatalogAttack,
   type CatalogCard,
+  type CatalogCardPresentation,
   type CatalogSet,
   type EnergyType,
   type LoadedCatalog,
@@ -38,7 +39,9 @@ import type { CardCategory } from './deck-list.js';
  * ab abilities [kind, name, text], at attacks [name, cost letters, damage,
  * text?], wk weakness, rs resistance (letters), tg tags, lg the source's
  * legality (1 Standard, 2 Expanded), im image base when it isn't the set's
- * `img` + `n` ("" when the source has none).
+ * `img` + `n` ("" when the source has none), pz a card printed in pieces'
+ * place in its whole ({ k key, c columns, r rows, p part, q quarter turns
+ * it reads turned }).
  *
  * Decoding is defensive: a card that doesn't decode is skipped, and only a
  * body that isn't a catalog at all is an error.
@@ -91,6 +94,13 @@ export interface WireCatalogCard {
   readonly tg?: readonly string[];
   readonly lg?: number;
   readonly im?: string;
+  readonly pz?: {
+    readonly k: string;
+    readonly c: number;
+    readonly r: number;
+    readonly p: number;
+    readonly q?: number;
+  };
 }
 
 export interface WireCatalogSet {
@@ -510,6 +520,40 @@ export const printGroupKey = (card: {
   return `${game}g${hash.digest()}`;
 };
 
+/**
+ * A card printed in pieces' place in its whole (`pz`), as the table joins
+ * it; undefined for any other card, and for one that doesn't decode.
+ */
+const decodePieces = (value: unknown): CatalogCardPresentation | undefined => {
+  if (!isRecord(value)) return undefined;
+  const key = text(value.k, 128);
+  const columns = integer(value.c, 4);
+  const rows = integer(value.r, 4);
+  const part = integer(value.p, 3);
+  const turns = value.q === undefined ? 0 : integer(value.q, 3);
+  if (
+    !key?.trim() ||
+    !columns ||
+    !rows ||
+    part === undefined ||
+    turns === undefined ||
+    columns * rows < 2 ||
+    columns * rows > 4 ||
+    part >= columns * rows
+  ) {
+    return undefined;
+  }
+  return Object.freeze({
+    readingQuarterTurns: turns as 0 | 1 | 2 | 3,
+    join: Object.freeze({
+      key,
+      columns: columns as 1 | 2 | 3 | 4,
+      rows: rows as 1 | 2 | 3 | 4,
+      part: part as 0 | 1 | 2 | 3,
+    }),
+  });
+};
+
 const decodeCard = (
   value: unknown,
   set: CatalogSet,
@@ -576,6 +620,7 @@ const decodeCard = (
   if (!image || !imageSmall) return undefined;
 
   const effect = text(value.tx, LIMITS.text);
+  const presentation = decodePieces(value.pz);
   const hp = integer(value.hp, 1_000);
   const retreat = integer(value.rt, 10);
   // One object per card, filled in place: the decoder makes 20,000 of
@@ -605,6 +650,7 @@ const decodeCard = (
   assign(card, 'trainerType', trainerType);
   assign(card, 'energyType', energyType);
   assign(card, 'text', effect);
+  assign(card, 'presentation', presentation);
   return {
     card,
     tags,
@@ -625,7 +671,8 @@ const decodeCard = (
       // their rules text, but one doesn't stand in for another.
       ...(stage === 'V-UNION' ||
       stage === 'LEGEND' ||
-      / (?:V-UNION|LEGEND)$/u.test(name)
+      / (?:V-UNION|LEGEND)$/u.test(name) ||
+      presentation !== undefined
         ? { piece: catalogCardId(set.code ?? set.id, number) }
         : {}),
     }),

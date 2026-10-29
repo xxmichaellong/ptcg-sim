@@ -112,7 +112,7 @@ const TRANSLATED_SERIES = new Set([
  * `decodeCatalog`, the reprint rules). Raised with any change to that, so a
  * deck saved with facts worked out before is brought up to date once.
  */
-export const DECK_FACTS_VERSION = 1;
+export const DECK_FACTS_VERSION = 2;
 
 /** A deck card for a catalogued printing, with the facts the rules check. */
 export const deckCardFromCatalog = (
@@ -162,6 +162,7 @@ export const deckCardFromCatalog = (
       legal: Object.freeze({ ...card.legal }),
       ...(card.set.pocket ? { pocket: true } : {}),
     }),
+    ...(card.presentation ? { presentation: card.presentation } : {}),
   });
 };
 
@@ -415,8 +416,10 @@ const sameFacts = (left: unknown, right: unknown): boolean => {
  * A deck with its cards' facts as the catalog has them now: added where a
  * card has none (imported while the catalog was away, or from a v1 file),
  * and updated where they changed (a rotation, a ban, a legal reprint).
- * Everything the table shows is kept as it was, its type included, and a
- * card made by hand is left alone. The same list back when nothing changed.
+ * Everything the table shows is kept as it was, its type included, but for
+ * how a card printed in pieces joins the others, given where it is
+ * missing. A card made by hand (its own layout) is left alone. The same
+ * list back when nothing changed.
  */
 export const withCatalogFacts = (
   list: readonly { readonly card: DeckCard; readonly count: number }[],
@@ -426,23 +429,41 @@ export const withCatalogFacts = (
   let changed = false;
   const next = list.map((entry) => {
     const { card } = entry;
-    if (card.presentation !== undefined) return entry;
     const print = findCatalogPrint(catalog, card);
-    // A card given another type than the catalog's (in the card dialog) is
-    // played as its maker said, not as that print.
-    if (!print || print.category !== card.category) return entry;
+    // A card laid out otherwise than its print (made by hand in the card
+    // dialog), or given another type than the catalog's, is played as its
+    // maker said, not as that print.
+    if (
+      !print ||
+      print.category !== card.category ||
+      (card.presentation !== undefined &&
+        !sameFacts(card.presentation, print.presentation))
+    )
+      return entry;
     const {
       image: _image,
       imageSmall: _imageSmall,
       ...found
     } = deckCardFromCatalog(print, { catalog });
-    if (card.facts && sameFacts(card.facts, found.facts)) return entry;
+    // A card printed in pieces saved without its place in the whole.
+    const presentation =
+      card.presentation === undefined ? found.presentation : undefined;
+    if (
+      card.facts &&
+      sameFacts(card.facts, found.facts) &&
+      presentation === undefined
+    )
+      return entry;
     changed = true;
     return Object.freeze({
       count: entry.count,
       card: Object.freeze(
         card.facts
-          ? { ...card, facts: found.facts }
+          ? {
+              ...card,
+              facts: found.facts,
+              ...(presentation ? { presentation } : {}),
+            }
           : {
               ...found,
               id: card.id,

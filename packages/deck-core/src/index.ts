@@ -49,6 +49,7 @@ export type {
   CatalogAbility,
   CatalogAttack,
   CatalogCard,
+  CatalogCardPresentation,
   CatalogSet,
   CatalogSort,
   EnergyType,

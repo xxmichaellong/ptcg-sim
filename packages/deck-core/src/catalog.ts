@@ -87,6 +87,26 @@ export interface CatalogCard {
   readonly dex: readonly number[];
   /** Cards with the same name and rules share it: one card, several prints. */
   readonly printGroup: string;
+  /**
+   * How a card printed in pieces (a V-UNION's quarter, a LEGEND's half, a
+   * split Stadium's half) joins the others on the table: game-core's
+   * `CardPresentation`.
+   */
+  readonly presentation?: CatalogCardPresentation;
+}
+
+/** A card printed in pieces, as the table joins it (`CardPresentation`). */
+export interface CatalogCardPresentation {
+  /** Quarter turns it reads turned: a LEGEND's halves read sideways. */
+  readonly readingQuarterTurns: 0 | 1 | 2 | 3;
+  readonly join: {
+    /** The print the pieces make together: `<set>:<first number>:<name>`. */
+    readonly key: string;
+    readonly columns: 1 | 2 | 3 | 4;
+    readonly rows: 1 | 2 | 3 | 4;
+    /** Its place, in reading order from the top left. */
+    readonly part: 0 | 1 | 2 | 3;
+  };
 }
 
 /** Sort keys a search can order by. */

@@ -242,6 +242,10 @@
               "kind": "value"
             },
             {
+              "name": "CatalogCardPresentation",
+              "kind": "type"
+            },
+            {
               "name": "catalogIndex",
               "kind": "value"
             },

@@ -81,4 +81,25 @@ describe('card artwork metadata', () => {
       })
     ).toEqual({ readingQuarterTurns: 0 });
   });
+  it("joins Storm Emeralda's split Stadiums by their left and right numbers", () => {
+    // TCGdex's Japanese M6 (2026-10-29): 伝説の海溝 71/72, 伝説の山頂 73/74.
+    const half = (name: string, number: string) =>
+      resolveCardPresentation({
+        name,
+        imageUrl: `https://assets.tcgdex.net/ja/m/m6/${number}/high.webp`,
+      })?.join;
+    expect(half('伝説の海溝', '071')).toEqual({
+      key: 'm6:71:伝説の海溝',
+      columns: 2,
+      rows: 1,
+      part: 0,
+    });
+    expect(half('伝説の海溝', '072')?.part).toBe(1);
+    expect(half('伝説の山頂', '073')?.key).toBe('m6:73:伝説の山頂');
+    expect(half('伝説の山頂', '074')?.part).toBe(1);
+    // 伝説の溶岩洞 75/76 is a third pair, not yet in the fallback; the
+    // catalog's English halves come from their printed rule instead.
+    expect(half('伝説の溶岩洞', '075')).toBeUndefined();
+    expect(half('ポケモン', '071')).toBeUndefined();
+  });
 });
