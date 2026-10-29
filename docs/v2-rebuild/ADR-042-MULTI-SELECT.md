@@ -1,10 +1,11 @@
 # ADR-042: selecting several cards at once
 
-- Status: **PROPOSED** (2026-10-29, after a review of an earlier draft
-  against 6d642963). Phase 0, the contract below (§11), is in.
-- Decision date: —
-- Number: 042, given at merge; the parity exception's comes with the first
-  visible change (WP4).
+- Status: **ACCEPTED** (2026-10-29, the owner's request to build it out,
+  after a review of an earlier draft against 6d642963). Built the same day:
+  the contract below (§11), then the room and core, the controller and
+  keys, the renderer, and the overlays and touch, with end-to-end specs.
+- Decision date: 2026-10-29
+- Number: 042; its parity exception is PX-079.
 - Scope:
   - a selection of several cards (and whole Pokémon) on the table and in the
     pile viewer;
@@ -680,7 +681,7 @@ annotations, pieces; B: touch, rectangle, viewer), shipped together.
 - the performance trace;
 - the extended test matrix.
 
-PX (number at merge): v1 selects one card. v2:
+PX-079: v1 selects one card. v2:
 
 - selects several;
 - acts on them as one move;
