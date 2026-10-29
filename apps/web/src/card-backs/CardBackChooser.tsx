@@ -39,6 +39,7 @@ import {
   type CardBackCropFocus,
 } from './card-back-import.js';
 import { CARD_BACK_PRESETS } from './card-back-presets.js';
+import { isTextEntry } from '../ui/text-entry.js';
 import './card-back-chooser.css';
 
 /**
@@ -309,8 +310,9 @@ export const CardBackChooser = ({
   };
 
   const onPaste = (event: ClipboardEvent<HTMLDivElement>): void => {
-    // A link typed into its own field stays there.
-    if (event.target instanceof HTMLInputElement) return;
+    // A link typed into its own field stays there; a back or a mode with
+    // the focus leaves the paste to the window.
+    if (isTextEntry(event.target)) return;
     const file = [...event.clipboardData.files].find((each) =>
       each.type.startsWith('image/')
     );

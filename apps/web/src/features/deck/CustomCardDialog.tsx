@@ -24,6 +24,7 @@ import { trapFocus } from '../../ui/focus.js';
 import { isInputMethodKey } from '../../ui/input-method.js';
 import { uploadCardImage, type CardImageFailure } from './custom-card-image.js';
 import { categoryName } from './deck-labels.js';
+import { isTextEntry } from '../../ui/text-entry.js';
 
 const CUSTOM_CARD_QUANTITY_MAX = 99;
 const CUSTOM_CARD_NAME_MAX = 256;
@@ -473,12 +474,9 @@ export const CustomCardDialog = ({
   const onPaste = (event: ClipboardEvent<HTMLDivElement>): void => {
     const target = event.target as HTMLElement;
     const picture = pictureOf(event.clipboardData);
-    const typing =
-      target instanceof HTMLInputElement ||
-      target instanceof HTMLTextAreaElement ||
-      target instanceof HTMLSelectElement;
     const pasted =
-      picture ?? (typing ? undefined : linkOf(event.clipboardData));
+      picture ??
+      (isTextEntry(target) ? undefined : linkOf(event.clipboardData));
     if (!pasted) return;
     event.preventDefault();
     const focused = Number(

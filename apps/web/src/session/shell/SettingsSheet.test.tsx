@@ -15,6 +15,7 @@ import {
 } from '../../motion/motion-settings.js';
 import { closeHelpPage, HelpSheetHost, RELEASE_NAME } from './help-pages.js';
 import { BackgroundChooser } from './BackgroundChooser.js';
+import type { RoomBackground } from '../browser-room-background.js';
 import { SettingsSheet, type SettingsSheetProps } from './SettingsSheet.js';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
@@ -351,6 +352,74 @@ describe('SettingsSheet', () => {
     expect(
       document.querySelector('.background-chooser')?.textContent
     ).toContain("Couldn't use that picture.");
+  });
+
+  it('lets a tile or a link chosen while a picture is prepared stand, and takes a picture pasted on a tile', async () => {
+    const onChange = vi.fn();
+    const encoded = new Blob(['small'], { type: 'image/webp' });
+    let finish: (blob: Blob) => void = () => undefined;
+    const encode = vi.fn(
+      () =>
+        new Promise<Blob>((resolve) => {
+          finish = resolve;
+        })
+    );
+    const save = vi.fn(async () => true);
+    const picture = new File(['big'], 'table.png', { type: 'image/png' });
+    const chooser = (current?: RoomBackground) => (
+      <BackgroundChooser
+        choice={{ current, onChange, onRequestLink: vi.fn() }}
+        encode={encode}
+        save={save}
+      />
+    );
+    await act(async () => root.render(chooser()));
+    // Pasted with a tile focused: the tile takes no text, so it's the
+    // picture's.
+    const desk = input('background-desk');
+    desk.focus();
+    const paste = () => {
+      const event = new Event('paste', { bubbles: true, cancelable: true });
+      Object.defineProperty(event, 'clipboardData', {
+        value: { files: [picture] },
+      });
+      return event;
+    };
+    await act(async () => {
+      desk.dispatchEvent(paste());
+    });
+    expect(encode).toHaveBeenCalledOnce();
+
+    // A wallpaper chosen while it is prepared stays chosen.
+    await act(async () => input('background-wallpaper1').click());
+    const wallpaper = onChange.mock.lastCall?.[0] as RoomBackground;
+    expect(wallpaper).toMatchObject({ kind: 'image' });
+    await act(async () => {
+      finish(encoded);
+    });
+    await settle(1);
+    expect(save).not.toHaveBeenCalled();
+    expect(onChange).toHaveBeenLastCalledWith(wallpaper);
+    expect(
+      document.querySelector('.background-chooser')?.textContent
+    ).not.toContain('Preparing picture…');
+
+    // A link chosen meanwhile (the choice changes from outside) too.
+    onChange.mockClear();
+    await act(async () => {
+      document.body.dispatchEvent(paste());
+    });
+    const link: RoomBackground = {
+      kind: 'image',
+      url: 'https://pictures.example/table.jpg',
+    };
+    await act(async () => root.render(chooser(link)));
+    await act(async () => {
+      finish(encoded);
+    });
+    await settle(1);
+    expect(save).not.toHaveBeenCalled();
+    expect(onChange).not.toHaveBeenCalled();
   });
 
   it('keeps motion choices with the player', async () => {

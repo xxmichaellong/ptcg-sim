@@ -150,6 +150,30 @@ describe('card-back chooser', () => {
     expect(onChoose).not.toHaveBeenCalled();
   });
 
+  it('takes a picture link pasted while a back or a mode has the focus', async () => {
+    const { host, fetchPicture } = await mount();
+    const preset = host.querySelector<HTMLInputElement>(
+      '#standardCardBackChoice'
+    )!;
+    preset.focus();
+    const paste = new Event('paste', { bubbles: true, cancelable: true });
+    Object.defineProperty(paste, 'clipboardData', {
+      value: {
+        files: [],
+        getData: (type: string) =>
+          type === 'text/plain' ? 'https://pictures.example/back.png' : '',
+      },
+    });
+    await act(async () => {
+      preset.dispatchEvent(paste);
+    });
+    expect(paste.defaultPrevented).toBe(true);
+    expect(fetchPicture).toHaveBeenCalledWith(
+      'https://pictures.example/back.png',
+      expect.any(AbortSignal)
+    );
+  });
+
   it('turns away a file that is not a picture, in plain words', async () => {
     const { host } = await mount();
     await act(async () =>

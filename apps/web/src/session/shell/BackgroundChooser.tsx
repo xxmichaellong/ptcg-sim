@@ -23,6 +23,7 @@ import {
   useLocalBackgroundUrl,
   type BackgroundEncoder,
 } from '../local-room-background.js';
+import { isTextEntry } from '../../ui/text-entry.js';
 import '../../board/view/table-art-controls.css';
 import './background-chooser.css';
 
@@ -43,11 +44,11 @@ const tileOf = (background: RoomBackground | undefined): Tile => {
 const firstPicture = (files: FileList | null | undefined): File | undefined =>
   [...(files ?? [])].find((file) => file.type.startsWith('image/'));
 
-const typing = (target: EventTarget | null): boolean =>
-  target instanceof HTMLElement &&
-  (target.isContentEditable ||
-    target.closest('input, textarea, select, [contenteditable="true"]') !==
-      null);
+/** Whether two choices are the same background. */
+const sameBackground = (
+  a: RoomBackground | undefined,
+  b: RoomBackground | undefined
+): boolean => JSON.stringify(a) === JSON.stringify(b);
 
 /**
  * The background chooser (Settings, Table): the desk, nothing, the two
@@ -84,21 +85,37 @@ export const BackgroundChooser = ({
         ? { kind: 'local' }
         : undefined;
 
-  const latest = useRef({ encode, save, onChange });
-  latest.current = { encode, save, onChange };
+  const latest = useRef({ encode, save, onChange, current });
+  latest.current = { encode, save, onChange, current };
+  // A picture still being prepared gives way to whatever is chosen
+  // meanwhile: a tile, a link, or another picture.
+  const asked = useRef(0);
   const takePicture = useCallback(async (picture: Blob): Promise<void> => {
+    const request = ++asked.current;
+    const before = latest.current.current;
+    const superseded = (): boolean => {
+      if (
+        request === asked.current &&
+        sameBackground(latest.current.current, before)
+      )
+        return false;
+      if (request === asked.current) setStatus('idle');
+      return true;
+    };
     if (picture.size > BACKGROUND_SOURCE_BYTES) {
       setStatus('large');
       return;
     }
     setStatus('busy');
     const encoded = await latest.current.encode(picture);
+    if (superseded()) return;
     if (!encoded) {
       setStatus('failed');
       return;
     }
     // Kept on this device where it can be; for this visit otherwise.
     await latest.current.save(encoded);
+    if (superseded()) return;
     setStatus('idle');
     latest.current.onChange({ kind: 'local' });
   }, []);
@@ -106,7 +123,7 @@ export const BackgroundChooser = ({
   // A picture pasted while Settings is open, not into a field.
   useEffect(() => {
     const paste = (event: ClipboardEvent): void => {
-      if (typing(event.target)) return;
+      if (isTextEntry(event.target)) return;
       const picture = firstPicture(event.clipboardData?.files);
       if (!picture) return;
       event.preventDefault();
@@ -137,7 +154,11 @@ export const BackgroundChooser = ({
         name="roomBackground"
         value={id}
         checked={selected === id}
-        onChange={() => onChange(value)}
+        onChange={() => {
+          asked.current += 1;
+          setStatus('idle');
+          onChange(value);
+        }}
       />
       <label htmlFor={`background-${id}`}>
         {preview}
