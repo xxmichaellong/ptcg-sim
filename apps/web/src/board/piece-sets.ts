@@ -90,9 +90,9 @@ const setOf = (
 };
 
 /**
- * A group split into what plays as one: the pieces of one print, one per
- * part (two copies of a LEGEND's halves make two sets, as artwork never
- * repeats a part), and every other card on its own. A set stands where its
+ * A group split into what plays as one: the pieces of one print and owner,
+ * one per part (two copies of a LEGEND's halves make two sets, as artwork
+ * never repeats a part), and every other card on its own. A set stands where its
  * first piece was selected; a piece alone is a card. Cards in play are a
  * Pokémon's own and never pieces here.
  */
@@ -114,7 +114,9 @@ export const partitionPieceSets = (
       slots.push(cardId);
       continue;
     }
-    const key = `${piece.key}\u0000${piece.columns}x${piece.rows}`;
+    // One owner's pieces only: each seat's go to its own board, and a card
+    // is never made of two players' cards.
+    const key = `${card.ownerId}\u0000${piece.key}\u0000${piece.columns}x${piece.rows}`;
     const sets = open.get(key) ?? [];
     const target = sets.find(
       (set) => !set.members.some((member) => member.part === piece.part)

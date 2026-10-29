@@ -116,6 +116,29 @@ describe("a group's pieces", () => {
     ]);
   });
 
+  it("never joins two players' pieces: each seat's go to its own board", () => {
+    const table = groupTable();
+    const [blueTop, blueBottom] = table.put(
+      BLUE,
+      'hand',
+      legend(0),
+      legend(1)
+    ) as ViewCardId[];
+    const [redBottom] = table.put(RED, 'hand', legend(1)) as ViewCardId[];
+    expect(partitionPieceSets(table.view, [blueTop!, redBottom!])).toEqual([
+      { kind: 'card', cardId: blueTop },
+      { kind: 'card', cardId: redBottom },
+    ]);
+    const units = partitionPieceSets(table.view, [
+      blueTop!,
+      redBottom!,
+      blueBottom!,
+    ]);
+    expect(
+      units.map((unit) => (unit.kind === 'set' ? unit.set.cardIds : unit))
+    ).toEqual([[blueTop, blueBottom], { kind: 'card', cardId: redBottom }]);
+  });
+
   it('leaves a lone piece a card, and a Pokémon in play out of any set', () => {
     const table = groupTable();
     const [lone] = table.put(BLUE, 'hand', union(MORPEKO, 0));
