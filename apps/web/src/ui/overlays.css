@@ -403,6 +403,16 @@
   left: 50%;
   width: min(380px, calc(100vw - 2 * var(--space-4)));
   translate: -50% 0;
+  transition: opacity var(--duration-fast) var(--ease-out);
+}
+
+/* A menu the player opened is never under a notice: while one is open (the
+   table's card and group menus, the app's menus), the notices step aside --
+   faded, taking no presses -- and come back as it is put away (a leaving
+   menu has no role, exit-ghost.ts). */
+html:has([role='menu']) .ptcgsim-ui-toast-viewport {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .ptcgsim-ui-toast {

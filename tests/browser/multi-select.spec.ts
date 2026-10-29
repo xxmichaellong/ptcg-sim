@@ -8,6 +8,7 @@ import {
   logLines,
   markers,
   nextRevision,
+  clearNotices,
   openNamedSolo,
   POKEMON_DECK,
   pokemonCards,
@@ -129,6 +130,36 @@ for (const mode of ['flat', 'table'] as const satisfies readonly TableMode[])
         [...hand].sort()
       );
       expect(errors).toEqual([]);
+    });
+
+    test("a notice steps aside while the group's menu is open, and comes back as it closes", async ({
+      page,
+    }) => {
+      test.setTimeout(120_000);
+      await openNamedSolo(page);
+      await clearNotices(page);
+      const notices = page.locator('.ptcgsim-ui-toast-viewport');
+      const hand = await zoneCardIds(page, 'local', 'hand');
+      // A card sent where it already is says so in a notice.
+      await card(page, hand[0]!).click();
+      await page.locator('.ptcgsim-board-surface').focus();
+      await page.keyboard.press('h');
+      await expect(
+        page.locator('[data-ptcgsim-overlay="toast"]').first()
+      ).toBeVisible();
+      await shiftClick(page, hand[1]!);
+      await expectSelection(page, [hand[0]!, hand[1]!]);
+      await card(page, hand[1]!).click({ button: 'right' });
+      await expect(page.locator('[data-group-menu]')).toBeVisible();
+      const look = () =>
+        notices.evaluate((element) => {
+          const style = getComputedStyle(element);
+          return { opacity: style.opacity, presses: style.pointerEvents };
+        });
+      await expect.poll(look).toEqual({ opacity: '0', presses: 'none' });
+      await page.keyboard.press('Escape');
+      await expect(page.locator('[data-group-menu]')).toHaveCount(0);
+      await expect.poll(look).toEqual({ opacity: '1', presses: 'auto' });
     });
 
     test('⌘/Ctrl picks across the hand and the open discard, and ↑ puts them on the deck, the last picked on top', async ({
