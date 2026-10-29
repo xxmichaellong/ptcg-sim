@@ -123,6 +123,12 @@ export interface RemoteRoomRouteProps {
    * left the tutorial's practice table for it.
    */
   readonly initialSheet?: 'online';
+  /**
+   * Changed by the page to open Play online over this (Solo) table since it
+   * mounted: an invitation link refused over it, or a join that failed,
+   * shows why there rather than nowhere.
+   */
+  readonly onlineRequest?: number;
   /** Retained above the route when lobby/room transitions share Deck custody. */
   readonly deckStore?: DeckBuilderStore;
   readonly cardBackStore?: CardBackCustodyStore;
@@ -246,6 +252,7 @@ export const RemoteRoomRoute = ({
   roomMode = 'multiplayer',
   tutorial,
   initialSheet,
+  onlineRequest,
   deckStore,
   cardBackStore,
   requestCardBack,
@@ -287,6 +294,12 @@ export const RemoteRoomRoute = ({
   });
   const [sheet, setSheet] = useState<RouteSheet | undefined>(initialSheet);
   const closeSheet = (): void => setSheet(undefined);
+  const shownOnlineRequest = useRef(onlineRequest);
+  useEffect(() => {
+    if (onlineRequest === shownOnlineRequest.current) return;
+    shownOnlineRequest.current = onlineRequest;
+    if (solo && multiplayerPanel) setSheet('online');
+  }, [onlineRequest, solo, multiplayerPanel]);
   // On the practice table Undo takes back the player's moves, never the
   // lesson's deal: the coach says when it has nothing of theirs to take.
   const [lessonUndoBlocked, setLessonUndoBlocked] = useState(true);

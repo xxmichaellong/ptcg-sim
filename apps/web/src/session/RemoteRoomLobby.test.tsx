@@ -75,6 +75,7 @@ const roomRouteHarness = vi.hoisted(() => ({
     ((contents: string, signal: AbortSignal) => Promise<void>) | undefined,
   onTableSettledChange: undefined as ((settled: boolean) => void) | undefined,
   tutorial: undefined as { readonly onExit: () => void } | undefined,
+  onlineRequest: undefined as number | undefined,
   initialFlipped: undefined as boolean | undefined,
   onFlippedChange: undefined as ((flipped: boolean) => void) | undefined,
 }));
@@ -187,6 +188,7 @@ vi.mock('./RemoteRoomRoute.js', () => ({
     onResumeSavedGame,
     onTableSettledChange,
     tutorial,
+    onlineRequest,
     initialFlipped,
     onFlippedChange,
     onDeckCustodyChange,
@@ -213,6 +215,7 @@ vi.mock('./RemoteRoomRoute.js', () => ({
     ) => Promise<void>;
     readonly onTableSettledChange?: (settled: boolean) => void;
     readonly tutorial?: { readonly onExit: () => void };
+    readonly onlineRequest?: number;
     readonly initialFlipped?: boolean;
     readonly onFlippedChange?: (flipped: boolean) => void;
     readonly onDeckCustodyChange?: (custody: {
@@ -223,6 +226,7 @@ vi.mock('./RemoteRoomRoute.js', () => ({
     roomRouteHarness.onTableSettledChange = onTableSettledChange;
     roomRouteHarness.onDeckCustodyChange = onDeckCustodyChange;
     roomRouteHarness.tutorial = tutorial;
+    roomRouteHarness.onlineRequest = onlineRequest;
     roomRouteHarness.initialFlipped = initialFlipped;
     roomRouteHarness.onFlippedChange = onFlippedChange;
     roomRouteHarness.preferences = preferences;
@@ -1550,6 +1554,36 @@ describe('remote room lobby wiring', () => {
     await act(async () => root.unmount());
   });
 
+  it('opens Play online over a Solo table to say a link given since was refused', async () => {
+    const invitation = custody();
+    const solo = creationResult(runtime({ label: 'solo' }), 'solo');
+    const createRoom = vi.fn(async () => solo.value);
+    const { root } = await mount(
+      lobbyDependencies(invitation, createRoom),
+      false,
+      'solo'
+    );
+    await settle();
+    expect(roomRouteHarness.roomMode).toBe('solo');
+    const before = roomRouteHarness.onlineRequest;
+    invitation.acceptText.mockImplementationOnce(() => {
+      throw new RemoteRoomInvitationError('invalid_handoff');
+    });
+    linkHarness.link = RAW_LINK;
+    await act(async () => {
+      for (const listener of linkHarness.listeners) listener();
+      await flush();
+    });
+    await settle();
+    // The table stays; its own Play online opens, saying why.
+    expect(roomRouteHarness.onlineRequest).not.toBe(before);
+    expect(element('.lobby-status').textContent).toContain(
+      'Paste the invitation link you were sent.'
+    );
+    expect(solo.dispose).not.toHaveBeenCalled();
+    await act(async () => root.unmount());
+  });
+
   it('joins from a link opened while the page is up, from the lobby', async () => {
     const invitation = custody();
     const guest = runtime({ label: 'guest by later link' });
@@ -2077,6 +2111,42 @@ describe('remote room lobby wiring', () => {
       expect(createRoom).toHaveBeenCalledOnce();
       expect(present('[data-tutorial="true"]')).toBe(false);
       expect(created.dispose).not.toHaveBeenCalled();
+      await act(async () => root.unmount());
+    });
+
+    it('gives way to the room an invitation link opens, its practice table put away', async () => {
+      const practice = creationResult(runtime({ label: 'practice' }), 'solo');
+      const createRoom = vi.fn(async () => practice.value);
+      const invitation = custody();
+      const guest = runtime({ label: 'guest by link' });
+      invitation.bootstrap.mockResolvedValueOnce({
+        runtime: guest.value,
+        route: { kind: 'remote-room', runtime: guest.value },
+      });
+      const { root } = await mount(
+        lobbyDependencies(invitation, createRoom),
+        false,
+        'lobby'
+      );
+      await settle();
+      await act(async () => {
+        startTutorial();
+        await flush();
+      });
+      await settle();
+      expect(present('[data-tutorial="true"]')).toBe(true);
+      linkHarness.link = RAW_LINK;
+      await act(async () => {
+        for (const listener of linkHarness.listeners) listener();
+        await flush();
+      });
+      await settle();
+      expect(invitation.bootstrap).toHaveBeenCalledOnce();
+      expect(present('[data-tutorial="true"]')).toBe(false);
+      expect(practice.dispose).toHaveBeenCalled();
+      expect(
+        element('[data-app-route="test-remote-room"]').textContent
+      ).toContain('guest by link');
       await act(async () => root.unmount());
     });
 

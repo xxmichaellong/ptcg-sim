@@ -382,6 +382,9 @@ export const RemoteRoomLobby = ({
   // Play online pressed on the practice table: the player's own table opens
   // to it once they are back.
   const [onlineOnReturn, setOnlineOnReturn] = useState(false);
+  // Over a Solo table Play online is that table's own sheet: changed, it
+  // opens there (a link refused or a join that failed says why in it).
+  const [onlineRequest, setOnlineRequest] = useState(0);
   // Whether the player had their own table turned around, so it comes back
   // that way from the tutorial.
   const [ownTableFlip, setOwnTableFlip] = useState<{
@@ -892,6 +895,11 @@ export const RemoteRoomLobby = ({
     void handleTutorial(tutorialRequest);
   });
 
+  /** Opens Play online over a Solo table, to say what went wrong there. */
+  const showOnlineOverTable = (): void => {
+    if (connected?.mode === 'solo') setOnlineRequest((request) => request + 1);
+  };
+
   /** Shows an invitation the custody accepted, as its room and role only. */
   const showAccepted = (accepted: RemoteRoomInvitationHandoffReceipt): void => {
     setReceipt(accepted);
@@ -902,6 +910,7 @@ export const RemoteRoomLobby = ({
   const refuseInvitation = (error: unknown): void => {
     setReceipt(undefined);
     setStatus(safeFailureMessage('join', error));
+    showOnlineOverTable();
   };
 
   /**
@@ -1030,6 +1039,12 @@ export const RemoteRoomLobby = ({
         joined.creator = undefined;
         joined.held?.dispose();
         delete joined.held;
+        // A link followed from the practice table leaves it, as Back does
+        // (ADR-038): the room it joined is shown, not the tutorial over it.
+        joined.tutorial?.dispose();
+        delete joined.tutorial;
+        setTutorial(undefined);
+        setOnlineOnReturn(false);
         setParkedSolo(undefined);
         setName(displayName);
         rememberName();
@@ -1039,7 +1054,10 @@ export const RemoteRoomLobby = ({
         setConnected({ runtime: result.runtime, mode: 'multiplayer' });
       });
     } catch (error) {
-      if (!active.owner.disposed) setStatus(safeFailureMessage('join', error));
+      if (!active.owner.disposed) {
+        setStatus(safeFailureMessage('join', error));
+        showOnlineOverTable();
+      }
     } finally {
       endOperation(active.owner);
     }
@@ -1476,6 +1494,7 @@ export const RemoteRoomLobby = ({
           {...(onlineOnReturn && connected.mode === 'solo'
             ? { initialSheet: 'online' as const }
             : {})}
+          {...(connected.mode === 'solo' ? { onlineRequest } : {})}
           initialFlipped={
             ownTableFlip?.roomCode === connected.runtime.roomCode &&
             ownTableFlip.flipped

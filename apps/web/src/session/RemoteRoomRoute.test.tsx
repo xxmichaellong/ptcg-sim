@@ -1415,6 +1415,35 @@ describe('RemoteRoomRoute', () => {
     runtime.dispose();
   });
 
+  it('opens Play online over a live Solo table when the page asks again', async () => {
+    const socketFactory = new FakeSocketFactory();
+    const runtime = createRuntime(socketFactory);
+    const panel = () => <section id="p2Box">Online Multiplayer Mode</section>;
+    const route = (onlineRequest: number) => (
+      <RemoteRoomRoute
+        runtime={runtime}
+        roomMode="solo"
+        multiplayerPanel={panel}
+        onlineRequest={onlineRequest}
+      />
+    );
+    const { root } = await mountRoute(route(0));
+    await connect(socketFactory);
+    // Mounted with a request already made: nothing opens of itself.
+    expect(find('#playOnlineSheet')).toBeNull();
+    await act(async () => root.render(route(1)));
+    expect(find('#playOnlineSheet')).not.toBeNull();
+    await pressEscape(get('#playOnlineSheet'));
+    expect(find('#playOnlineSheet')).toBeNull();
+    // The same request again opens nothing; a new one does.
+    await act(async () => root.render(route(1)));
+    expect(find('#playOnlineSheet')).toBeNull();
+    await act(async () => root.render(route(2)));
+    expect(find('#playOnlineSheet')).not.toBeNull();
+    await act(async () => root.unmount());
+    runtime.dispose();
+  });
+
   it('blocks Undo on the practice table while the coach says it has nothing of the player’s to take back', async () => {
     const socketFactory = new FakeSocketFactory();
     const runtime = createRuntime(socketFactory);

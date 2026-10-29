@@ -26,11 +26,17 @@ interface PresenceSource {
   readonly getSnapshot: () => Pick<ClientSessionState, 'presence'>;
 }
 
-/** Someone other than this seat has been seen in a player's seat. */
+/**
+ * Someone other than this seat has been seen in a player's seat. Only once
+ * this seat is known: while it reconnects the room's controls have none,
+ * and the presence kept from before still holds this seat's own arrival,
+ * which is no opponent.
+ */
 const opponentSeen = (
   state: Pick<ClientSessionState, 'presence'>,
   ownSeat: string | undefined
 ): boolean =>
+  ownSeat !== undefined &&
   state.presence.some(
     (presence) =>
       presence.playerId !== undefined && presence.playerId !== ownSeat

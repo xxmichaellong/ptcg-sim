@@ -148,6 +148,33 @@ describe('the room’s invites', () => {
     expect(latest.seatTaken).toBe(false);
   });
 
+  it('keeps the seat free through a reconnect, while this seat is not yet known', async () => {
+    const room = presenceSession();
+    const invitations: RoomInvitations = { roles: ['player'], invite: vi.fn() };
+    const render = (ownSeat: string | undefined) =>
+      act(async () =>
+        root.render(
+          <Probe
+            invitations={invitations}
+            session={room.session}
+            ownSeat={ownSeat}
+          />
+        )
+      );
+    await render('blue');
+    await act(async () => room.arrive({ playerId: 'blue', status: 'joined' }));
+    expect(latest.seatTaken).toBe(false);
+    // Reconnecting: the controls know no seat yet, and the presence kept
+    // from before still holds our own arrival.
+    await render(undefined);
+    expect(latest.seatTaken).toBe(false);
+    await render('blue');
+    expect(latest.seatTaken).toBe(false);
+    // An opponent seen later still takes it.
+    await act(async () => room.arrive({ playerId: 'red', status: 'joined' }));
+    expect(latest.seatTaken).toBe(true);
+  });
+
   it('counts the opponent seen in their seat as taken', async () => {
     const room = presenceSession();
     await act(async () =>
