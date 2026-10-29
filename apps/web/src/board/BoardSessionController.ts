@@ -1,4 +1,4 @@
-import type { MatchViewState, ViewCardId } from '@ptcgsim/game-core';
+import type { MatchViewState, ViewCard, ViewCardId } from '@ptcgsim/game-core';
 import type { WireGameCommand } from '@ptcgsim/protocol';
 import type {
   ClientSessionPhase,
@@ -801,6 +801,61 @@ const selectionContextOf = (
 };
 
 /** Several items selected: the group's paths, not one card's. */
+/**
+ * Cards the room gave a new alias where they lie (hidden again, their
+ * visibility renewed): each is the card now in its place, new to the
+ * table and of its printing, the place holding as many cards as before.
+ * The selection follows them there, as it follows a Pokémon that evolved.
+ */
+const followRenamedCards = (
+  previous: MatchViewState | undefined,
+  view: MatchViewState,
+  cardIds: readonly ViewCardId[]
+): readonly ViewCardId[] => {
+  if (!previous || cardIds.length === 0) return cardIds;
+  const now = publicCardIds(view);
+  if (cardIds.every((cardId) => now.has(cardId))) return cardIds;
+  const before = publicCardIds(previous);
+  const places = (of: MatchViewState) =>
+    new Map<string, readonly ViewCard[]>([
+      ...Object.values(of.zones).map((zone) => [zone.id, zone.cards] as const),
+      ...Object.values(of.workAreas).flatMap((areas) => [
+        ...(areas.inspection
+          ? [[areas.inspection.id, areas.inspection.cards] as const]
+          : []),
+        ...(areas.attachmentResolution
+          ? [
+              [
+                areas.attachmentResolution.id,
+                areas.attachmentResolution.cards,
+              ] as const,
+            ]
+          : []),
+      ]),
+    ]);
+  const current = places(view);
+  const renamed = new Map<ViewCardId, ViewCardId>();
+  for (const [placeId, cards] of places(previous)) {
+    const there = current.get(placeId);
+    if (!there || there.length !== cards.length) continue;
+    cards.forEach((card, index) => {
+      const next = there[index]!;
+      if (now.has(card.id) || before.has(next.id) || card.kind !== next.kind)
+        return;
+      if (
+        card.kind === 'known' &&
+        next.kind === 'known' &&
+        card.definitionId !== next.definitionId
+      )
+        return;
+      renamed.set(card.id, next.id);
+    });
+  }
+  return renamed.size === 0
+    ? cardIds
+    : cardIds.map((cardId) => renamed.get(cardId) ?? cardId);
+};
+
 const holdsGroup = (presentation: BoardPresentation): boolean =>
   presentation.selection.length > 1;
 
@@ -860,12 +915,18 @@ const reconcilePresentation = (
         )))
       ? cardId
       : null;
-  const shownSelection = state.presentation.selection.filter(
+  // A card hidden again keeps its place under a new alias: still picked.
+  const followed = followRenamedCards(
+    state.view,
+    view,
+    state.presentation.selection
+  );
+  const shownSelection = followed.filter(
     (cardId) => stillShown(cardId) !== null
   );
   let selection =
     shownSelection.length === state.presentation.selection.length
-      ? state.presentation.selection
+      ? followed
       : shownSelection.length === 0
         ? NO_SELECTION
         : shownSelection;
@@ -873,7 +934,7 @@ const reconcilePresentation = (
   // A group keeps the items still on the table: a Pokémon that evolved by
   // its new top card, a pile's cards while the pile stays open.
   if (holdsGroup(state.presentation)) {
-    selection = reduceSelection(context, state.presentation.selection, {
+    selection = reduceSelection(context, followed, {
       kind: 'reconcile',
     }).selection;
   }

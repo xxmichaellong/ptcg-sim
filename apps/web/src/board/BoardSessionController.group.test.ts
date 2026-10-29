@@ -390,6 +390,57 @@ describe('a selection of several cards (ADR-042)', () => {
     expect(board.state.selectionRestore ?? null).toBeNull();
   });
 
+  it('keeps a group it hid selected, though the room gives the cards new aliases', () => {
+    const table = groupTable();
+    const hand = table.put(BLUE, 'hand', energy, energy, energy);
+    const handZone = table.view.zones[table.zoneId(BLUE, 'hand')]!;
+    const shown = {
+      ...table.view,
+      zones: {
+        ...table.view.zones,
+        [handZone.id]: {
+          ...handZone,
+          cards: handZone.cards.map((card) =>
+            card.kind === 'known' ? { ...card, publiclyRevealed: true } : card
+          ),
+        },
+      },
+    };
+    const board = driver(shown);
+    board.intent({ kind: 'SelectionModeChanged', on: true });
+    board.intent({
+      kind: 'CardsSelected',
+      cardIds: hand.slice(0, 2),
+      mode: 'replace',
+    });
+    board.act({
+      kind: 'GroupActionRequested',
+      action: { kind: 'reveal', revealed: false },
+    });
+    expect(board.submitted()).toHaveLength(1);
+    expect(board.selection).toEqual(hand.slice(0, 2));
+    // Hidden again, the two come back under new aliases in their places.
+    const renamed = ['renamed-0', 'renamed-1'] as ViewCardId[];
+    const hidden = {
+      ...shown,
+      revision: shown.revision + 1,
+      zones: {
+        ...shown.zones,
+        [handZone.id]: {
+          ...handZone,
+          cards: shown.zones[handZone.id]!.cards.map((card, index) =>
+            index < 2
+              ? { ...card, id: renamed[index]!, publiclyRevealed: false }
+              : card
+          ),
+        },
+      },
+    };
+    board.act({ kind: 'FrameReceived', frame: frame(2, hidden) });
+    expect(board.selection).toEqual(renamed);
+    expect(board.state.presentation.selectionMode).toBe(true);
+  });
+
   it("opens a refused group's emptied pile again with its cards picked, unless the player put it away", () => {
     const table = groupTable();
     const pile = table.put(BLUE, 'discard', energy, energy);

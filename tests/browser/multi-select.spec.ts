@@ -411,6 +411,15 @@ for (const mode of ['flat', 'table'] as const satisfies readonly TableMode[])
         lines.join('\n')
       ).toHaveLength(1);
       await moved(page, () => page.keyboard.press('z'));
+      // Hidden again, the room renews their aliases; the group stays picked,
+      // the same three cards of the hand.
+      await expect
+        .poll(async () => {
+          const now = await zoneCardIds(page, 'local', 'hand');
+          const picked = await selection(page);
+          return picked.length === 3 && picked.every((id) => now.includes(id));
+        })
+        .toBe(true);
       await page.keyboard.press('Escape');
       // Two on the Bench, then w on both.
       const row = await bench(page, 'local', 2);
