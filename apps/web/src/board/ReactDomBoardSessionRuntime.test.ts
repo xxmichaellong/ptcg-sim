@@ -23,6 +23,8 @@ import {
   createRendererSpikeView,
   DEFAULT_BOARD_PREFERENCES,
   DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
+  TABLE_LAYOUT_GEOMETRY_VERSION,
+  tableVerticalLayout,
   type BoardLayoutState,
   type BoardRenderer,
   type BoardRendererStatus,
@@ -369,6 +371,17 @@ const layoutState = (): BoardLayoutState => ({
     upperHandle: { ...DEFAULT_BOARD_VERTICAL_LAYOUT_V1.upperHandle },
     sharedPlacement: DEFAULT_BOARD_VERTICAL_LAYOUT_V1.sharedPlacement,
   },
+});
+
+/** `view` with every Lost Zone empty. */
+const withEmptyLostZones = (view: MatchViewState): MatchViewState => ({
+  ...view,
+  zones: Object.fromEntries(
+    Object.entries(view.zones).map(([id, zone]) => [
+      id,
+      zone.kind === 'lostZone' ? { ...zone, cards: [] } : zone,
+    ])
+  ),
 });
 
 const installSurfaceBounds = (
@@ -956,6 +969,81 @@ describe('opt-in React DOM board session runtime', () => {
       await Promise.resolve();
     });
     presentation.dispose();
+  });
+
+  it('lays the table out again as the first card goes to a Lost Zone and the last leaves', async () => {
+    const empty = readyState(withEmptyLostZones(atRevision(1)));
+    const live = new MutableLiveSource(empty);
+    const replay = new MutableReplaySource(empty);
+    const runtime = new ReactDomBoardSessionRuntime({
+      live,
+      replay,
+      layout: {
+        geometryVersion: TABLE_LAYOUT_GEOMETRY_VERSION,
+        viewport: { width: 1440, height: 900, devicePixelRatio: 1 },
+        playerIds: [baseView.playerOrder[0]!, baseView.playerOrder[1]!],
+        bottomPlayerId: baseView.playerOrder[0]!,
+        shellMode: 'fullscreen',
+        vertical: tableVerticalLayout(0.54),
+        hideEmptyLostZone: true,
+      },
+    });
+    const host = document.createElement('div');
+    document.body.append(host);
+    await mountRuntime(runtime, host);
+    const lostZone = () => {
+      const frame = runtime.getCharacterizedLayoutSnapshot().players[0];
+      const rect = (kind: string) =>
+        frame.regions.find((region) => region.kind === kind)!
+          .physicalDeclaredBounds;
+      return { lost: rect('lostZone'), discard: rect('discard') };
+    };
+    // Optional and empty: off the table, its slot kept under the discard.
+    expect(runtime.getLayoutState().lostZoneInUse).toBeUndefined();
+    expect(lostZone().lost.x).toBeCloseTo(lostZone().discard.x, 5);
+    const notified = vi.fn();
+    const unsubscribe = runtime.subscribeLayout(notified);
+
+    // A card goes there: the table is laid out again before its scene is
+    // drawn, the Lost Zone beside the prizes, and the layout's readers hear.
+    const holding = readyState(atRevision(2));
+    await act(async () => {
+      live.publish(holding);
+      replay.syncLive(holding);
+    });
+    expect(runtime.getLayoutState().lostZoneInUse).toBe(true);
+    expect(Math.abs(lostZone().lost.x - lostZone().discard.x)).toBeGreaterThan(
+      1
+    );
+    const sceneLostZone = runtime
+      .getBoardSnapshot()!
+      .scene!.zones.find(
+        (zone) =>
+          zone.kind === 'lostZone' && zone.playerId === baseView.playerOrder[0]
+      )!;
+    expect(sceneLostZone.bounds.x).toBeCloseTo(lostZone().lost.x, 5);
+    await act(async () => Promise.resolve());
+    expect(notified).toHaveBeenCalled();
+
+    // The viewer's table settings change: it stays where it is.
+    act(() =>
+      runtime.setTableView({ lowerShare: 0.5, hideEmptyLostZone: true })
+    );
+    expect(runtime.getLayoutState().lostZoneInUse).toBe(true);
+
+    // The last card leaves: back off the table.
+    const emptied = readyState(withEmptyLostZones(atRevision(3)));
+    await act(async () => {
+      live.publish(emptied);
+      replay.syncLive(emptied);
+    });
+    expect(runtime.getLayoutState().lostZoneInUse).toBeUndefined();
+    expect(lostZone().lost.x).toBeCloseTo(lostZone().discard.x, 5);
+    unsubscribe();
+    await act(async () => {
+      runtime.dispose();
+      await Promise.resolve();
+    });
   });
 
   it('projects every characterized frame and shared-placement change into the installed scene', async () => {

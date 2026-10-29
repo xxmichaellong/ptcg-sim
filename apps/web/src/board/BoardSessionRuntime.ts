@@ -82,6 +82,25 @@ const copyLayoutState = (state: BoardLayoutState): BoardLayoutState => ({
   },
 });
 
+/**
+ * The layout as the view finds it: whether some player's Lost Zone holds
+ * cards, which lays an optional Lost Zone beside the prizes rather than at
+ * the end of the piles' column (`lostZoneInUse`).
+ */
+const withLostZoneUse = (
+  layout: BoardLayoutState,
+  view: MatchViewState | undefined
+): BoardLayoutState => {
+  const inUse =
+    view !== undefined &&
+    Object.values(view.zones).some(
+      (zone) => zone.kind === 'lostZone' && zone.cards.length > 0
+    );
+  if ((layout.lostZoneInUse ?? false) === inUse) return layout;
+  const { lostZoneInUse: _previous, ...rest } = layout;
+  return inUse ? { ...rest, lostZoneInUse: true } : rest;
+};
+
 const deepFreeze = <Value>(value: Value): Value => {
   if (value === null || typeof value !== 'object' || Object.isFrozen(value)) {
     return value;
@@ -127,6 +146,8 @@ const sameLayoutState = (
   left.vertical.sharedPlacement === right.vertical.sharedPlacement &&
   left.hiddenPhysicalSide === right.hiddenPhysicalSide &&
   (left.hideEmptyLostZone ?? false) === (right.hideEmptyLostZone ?? false) &&
+  (left.lostZoneInUse ?? false) === (right.lostZoneInUse ?? false) &&
+  (left.hideLostZone ?? false) === (right.hideLostZone ?? false) &&
   (left.seamBandPx ?? 0) === (right.seamBandPx ?? 0) &&
   (left.appBarPx?.width ?? 0) === (right.appBarPx?.width ?? 0) &&
   (left.appBarPx?.height ?? 0) === (right.appBarPx?.height ?? 0) &&
@@ -471,9 +492,9 @@ export class BoardSessionRuntime {
     cause: 'layout' | 'flip' = 'layout'
   ): boolean {
     this.assertUsable();
-    const nextState = retainLayoutState(layout);
-    const nextSnapshot = retainLayoutSnapshot(nextState);
     const view = this.adapter?.getSnapshot().view;
+    const nextState = retainLayoutState(withLostZoneUse(layout, view));
+    const nextSnapshot = retainLayoutSnapshot(nextState);
     if (view) this.createScene(view, nextState, nextSnapshot);
     const changesScene = !sameLayoutState(this.layoutState, nextState);
     if (!changesScene) return false;
@@ -571,6 +592,7 @@ export class BoardSessionRuntime {
     readonly lowerShare: number;
     readonly hiddenPhysicalSide?: BoardPhysicalSide;
     readonly hideEmptyLostZone?: boolean;
+    readonly hideLostZone?: boolean;
     readonly seamBandPx?: number;
     readonly appBarPx?: { readonly width: number; readonly height: number };
     readonly oncePerGameMarkers?: number;
@@ -579,6 +601,7 @@ export class BoardSessionRuntime {
     const {
       hiddenPhysicalSide: _previous,
       hideEmptyLostZone: _lostZone,
+      hideLostZone: _lostZoneAway,
       seamBandPx: _seam,
       appBarPx: _bar,
       oncePerGameMarkers: _markers,
@@ -592,6 +615,7 @@ export class BoardSessionRuntime {
         ? { hiddenPhysicalSide: view.hiddenPhysicalSide }
         : {}),
       ...(view.hideEmptyLostZone ? { hideEmptyLostZone: true } : {}),
+      ...(view.hideLostZone ? { hideLostZone: true } : {}),
       ...(view.seamBandPx ? { seamBandPx: view.seamBandPx } : {}),
       ...(view.appBarPx ? { appBarPx: view.appBarPx } : {}),
       ...(view.oncePerGameMarkers
@@ -634,8 +658,10 @@ export class BoardSessionRuntime {
     return new BoardSessionAdapter({
       live: this.options.live,
       replay: this.options.replay,
-      createScene: (view) =>
-        this.createScene(view, this.layoutState, this.layoutSnapshot),
+      createScene: (view) => {
+        this.followLostZoneUse(view);
+        return this.createScene(view, this.layoutState, this.layoutSnapshot);
+      },
       emitRendererEffect: this.handleBoardEffect,
       ...(this.options.transformView
         ? { transformView: this.options.transformView }
@@ -793,6 +819,22 @@ export class BoardSessionRuntime {
       // Diagnostics cannot interrupt renderer/session cleanup.
     }
   };
+
+  /**
+   * The first card into a Lost Zone, or the last out, lays the table out
+   * again before its scene is built: an optional Lost Zone holding cards
+   * lies beside the prizes. The layout's readers hear of it once the
+   * scene is installed.
+   */
+  private followLostZoneUse(view: MatchViewState): void {
+    const next = withLostZoneUse(this.layoutState, view);
+    if (next === this.layoutState) return;
+    this.layoutState = retainLayoutState(next);
+    this.layoutSnapshot = retainLayoutSnapshot(this.layoutState);
+    queueMicrotask(() => {
+      if (!this.disposed) this.notifyLayoutListeners();
+    });
+  }
 
   private notifyLayoutListeners(): void {
     for (const listener of [...this.layoutListeners]) {

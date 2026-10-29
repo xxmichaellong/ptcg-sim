@@ -142,9 +142,22 @@ export interface BoardLayoutState {
   readonly hiddenPhysicalSide?: BoardPhysicalSide;
   /**
    * Geometry v2 only: the Lost Zone is optional (few formats use it), so an
-   * empty one leaves the table. One holding cards always shows.
+   * empty one leaves the table. One holding cards always shows (unless the
+   * viewer put it away, `hideLostZone`).
    */
   readonly hideEmptyLostZone?: boolean;
+  /**
+   * Geometry v2 only: some player's Lost Zone holds cards (the board runtime
+   * reads it from the view). A Lost Zone holding cards lies where a shown
+   * one does, beside the prizes on both halves, whatever
+   * `hideEmptyLostZone` says -- never at the end of the piles' column.
+   */
+  readonly lostZoneInUse?: boolean;
+  /**
+   * Geometry v2 only: the viewer put the Lost Zone away while it held
+   * cards: no Lost Zone is on the table, cards and all.
+   */
+  readonly hideLostZone?: boolean;
   /**
    * The viewer reads the far player's cards the right way up rather than
    * facing their owner across the table. Only which way those cards face
@@ -339,6 +352,8 @@ export interface BoardLayoutSnapshot {
   readonly zoneScrollPx: Readonly<Record<string, number>>;
   /** Carried from the layout state: an empty Lost Zone is not shown. */
   readonly hideEmptyLostZone?: boolean;
+  /** Carried from the layout state: no Lost Zone is shown, cards and all. */
+  readonly hideLostZone?: boolean;
   /** Carried from the layout state: the far player's cards face the viewer. */
   readonly farCardsUpright?: boolean;
 }

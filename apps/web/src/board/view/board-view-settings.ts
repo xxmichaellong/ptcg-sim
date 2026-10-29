@@ -17,6 +17,17 @@ import {
  */
 export type BoardShowChoice = 'both' | 'mine' | 'theirs';
 
+/**
+ * Where the Lost Zone is on the table (few formats use it):
+ * - `auto`, the default: while it holds cards, beside the prizes; empty, off
+ *   the table;
+ * - `shown`: beside the prizes even while empty;
+ * - `hidden`: put away while it held cards (the player confirmed it), off
+ *   the table cards and all, until no Lost Zone holds any (then `auto`).
+ * Either player's Lost Zone follows the viewer's choice.
+ */
+export type LostZoneChoice = 'auto' | 'shown' | 'hidden';
+
 export interface BoardViewSettings {
   /** Which halves to show: "mine" is the bottom half, "theirs" the top. */
   readonly show: BoardShowChoice;
@@ -27,11 +38,8 @@ export interface BoardViewSettings {
   readonly hideOpponentHand: boolean;
   /** A large copy of the hovered card beside the table. */
   readonly hoverPreview: boolean;
-  /**
-   * Show the Lost Zone pile even while it is empty. Few formats use it, so
-   * it is off by default; a Lost Zone holding cards always shows.
-   */
-  readonly lostZone: boolean;
+  /** Where the Lost Zone is: see `LostZoneChoice`. */
+  readonly lostZone: LostZoneChoice;
   /**
    * The once-per-game markers on the table, beside each player's prizes.
    * Off by default: only some formats have VSTAR Powers or GX attacks.
@@ -51,7 +59,7 @@ export const DEFAULT_BOARD_VIEW: BoardViewSettings = {
   zoneOutlines: DEFAULT_BOARD_PREFERENCES.showZoneOutlines,
   hideOpponentHand: false,
   hoverPreview: false,
-  lostZone: false,
+  lostZone: 'auto',
   vstarMarker: false,
   gxMarker: false,
   opponentCardsUpright: false,
@@ -62,6 +70,14 @@ const isShow = (value: unknown): value is BoardShowChoice =>
 
 const flag = (value: unknown, fallback: boolean): boolean =>
   typeof value === 'boolean' ? value : fallback;
+
+/** The Lost Zone's choice; a value kept before it had three, a switch. */
+const parseLostZone = (value: unknown): LostZoneChoice =>
+  value === 'auto' || value === 'shown' || value === 'hidden'
+    ? value
+    : value === true
+      ? 'shown'
+      : DEFAULT_BOARD_VIEW.lostZone;
 
 /** Whole percentages, inside the range the table allows. */
 const parseSplit = (value: unknown): number => {
@@ -93,7 +109,7 @@ export const parseBoardView = (value: unknown): BoardViewSettings => {
       Reflect.get(value, 'hoverPreview'),
       DEFAULT_BOARD_VIEW.hoverPreview
     ),
-    lostZone: flag(Reflect.get(value, 'lostZone'), DEFAULT_BOARD_VIEW.lostZone),
+    lostZone: parseLostZone(Reflect.get(value, 'lostZone')),
     vstarMarker: flag(
       Reflect.get(value, 'vstarMarker'),
       DEFAULT_BOARD_VIEW.vstarMarker
@@ -147,6 +163,16 @@ export const boardViewSettings = (): BoardViewSettingsStore => {
   pageStore ??= new BoardViewSettingsStore();
   return pageStore;
 };
+
+/** The layout's part of the Lost Zone choice (`BoardLayoutState`). */
+export const lostZoneLayout = (
+  choice: LostZoneChoice
+): { readonly hideEmptyLostZone?: true; readonly hideLostZone?: true } =>
+  choice === 'shown'
+    ? {}
+    : choice === 'hidden'
+      ? { hideEmptyLostZone: true, hideLostZone: true }
+      : { hideEmptyLostZone: true };
 
 /** How many once-per-game markers the table keeps beside each player's prizes. */
 export const oncePerGameMarkerCount = (view: BoardViewSettings): number =>

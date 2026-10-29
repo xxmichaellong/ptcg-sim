@@ -90,7 +90,7 @@ describe('TableViewControls', () => {
       zoneOutlines: false,
       hideOpponentHand: true,
       hoverPreview: true,
-      lostZone: true,
+      lostZone: 'shown',
       opponentCardsUpright: true,
     });
 

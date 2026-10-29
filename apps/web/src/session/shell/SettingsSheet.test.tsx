@@ -100,7 +100,11 @@ describe('SettingsSheet', () => {
     await render();
     expect(input('lostZoneCheckbox').checked).toBe(false);
     await act(async () => input('lostZoneCheckbox').click());
-    expect(boardViewSettings().getSnapshot().lostZone).toBe(true);
+    // Shown even while empty; off again, shown while it holds cards.
+    expect(boardViewSettings().getSnapshot().lostZone).toBe('shown');
+    await act(async () => input('lostZoneCheckbox').click());
+    expect(boardViewSettings().getSnapshot().lostZone).toBe('auto');
+    await act(async () => input('lostZoneCheckbox').click());
     await act(async () => input('zoneOutlinesCheckbox').click());
     expect(boardViewSettings().getSnapshot().zoneOutlines).toBe(false);
     await act(async () => input('hideHandCheckbox').click());

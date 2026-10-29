@@ -14,7 +14,15 @@ import {
 } from '@ptcgsim/renderer-contract';
 import { act, createRef } from 'react';
 import { createRoot } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  onTestFinished,
+  vi,
+} from 'vitest';
 
 import { BoardSessionRuntime } from '../board/BoardSessionRuntime.js';
 import { COIN_PENDING_GRACE_MS } from '../board/TableCoin.js';
@@ -25,6 +33,10 @@ import {
   ReplaySessionCoordinator,
   type ReplaySessionSource,
 } from '../replay/ReplaySessionCoordinator.js';
+import {
+  dialogRequestsSnapshot,
+  settleDialogRequest,
+} from '../ui/dialog-requests.js';
 import {
   RemoteSessionBoard,
   switchSideExpected,
@@ -74,6 +86,18 @@ const withDisclosedOpponentHand = (): MatchViewState => {
 };
 
 /** The fixture with the viewer's own Lost Zone emptied. */
+/** `view` with every Lost Zone empty, a revision on. */
+const withEmptyLostZones = (view: MatchViewState): MatchViewState => ({
+  ...view,
+  revision: view.revision + 1,
+  zones: Object.fromEntries(
+    Object.entries(view.zones).map(([id, zone]) => [
+      id,
+      zone.kind === 'lostZone' ? { ...zone, cards: [] } : zone,
+    ])
+  ),
+});
+
 const withEmptyOwnLostZone = (): MatchViewState => {
   if (baseView.viewer.kind !== 'player')
     throw new Error('player view required');
@@ -1093,7 +1117,30 @@ describe('RemoteSessionBoard replay binding', () => {
     reread.mockRestore();
   });
 
-  it('keeps an empty Lost Zone off the table until the player adds it', async () => {
+  it('keeps an empty Lost Zone off the table until the player adds it, and one holding cards beside the prizes', async () => {
+    // A desktop table, whose Active row has room beside the prizes.
+    const window = {
+      width: globalThis.innerWidth,
+      height: globalThis.innerHeight,
+    };
+    Object.defineProperty(globalThis, 'innerWidth', {
+      configurable: true,
+      value: 1440,
+    });
+    Object.defineProperty(globalThis, 'innerHeight', {
+      configurable: true,
+      value: 900,
+    });
+    onTestFinished(() => {
+      Object.defineProperty(globalThis, 'innerWidth', {
+        configurable: true,
+        value: window.width,
+      });
+      Object.defineProperty(globalThis, 'innerHeight', {
+        configurable: true,
+        value: window.height,
+      });
+    });
     const view = withEmptyOwnLostZone();
     const session = new FakeRemoteBoardSession({ ...initialState(), view });
     const replay = new ReplaySessionCoordinator(session);
@@ -1114,9 +1161,20 @@ describe('RemoteSessionBoard replay binding', () => {
       selectedScene()
         .zones.filter((zone) => zone.kind === 'lostZone')
         .map((zone) => zone.side);
-    // Off by default: the empty one leaves; the one holding a card stays.
-    expect(boardViewSettings().getSnapshot().lostZone).toBe(false);
+    // Off by default: the empty one leaves; the one holding a card stays,
+    // where a shown Lost Zone lies (beside the prizes), not at the end of
+    // the piles' column under the discard pile.
+    expect(boardViewSettings().getSnapshot().lostZone).toBe('auto');
     expect(lostZones()).toEqual(['opponent']);
+    const zoneOf = (kind: string) =>
+      selectedScene().zones.find(
+        (zone) => zone.kind === kind && zone.side === 'opponent'
+      )!.bounds;
+    expect(zoneOf('lostZone').x).not.toBeCloseTo(zoneOf('discard').x, 0);
+    const prizes = zoneOf('prizes');
+    const lostZone = zoneOf('lostZone');
+    expect(lostZone.y + lostZone.height).toBeGreaterThan(prizes.y);
+    expect(lostZone.y).toBeLessThan(prizes.y + prizes.height);
 
     // Added from the + in the staging area.
     await act(async () =>
@@ -1130,28 +1188,90 @@ describe('RemoteSessionBoard replay binding', () => {
     await act(async () =>
       document.querySelector<HTMLElement>('#lostZoneToggle')?.click()
     );
-    expect(boardViewSettings().getSnapshot().lostZone).toBe(true);
+    expect(boardViewSettings().getSnapshot().lostZone).toBe('shown');
     await act(async () => {
       await vi.waitFor(() =>
         expect(lostZones().sort()).toEqual(['local', 'opponent'])
       );
     });
 
-    // Put away again from the same entry.
+    const lostZoneEntry = async () => {
+      await act(async () =>
+        host.querySelector<HTMLButtonElement>('#tableExtrasButton')?.click()
+      );
+      await act(async () => {
+        await vi.waitFor(() =>
+          expect(document.querySelector('#lostZoneToggle')).not.toBeNull()
+        );
+      });
+      return document.querySelector<HTMLElement>('#lostZoneToggle')!;
+    };
+    // Put away again from the same entry: empty, it leaves without asking;
+    // the one across the table holding a card stays.
+    await act(async () => (await lostZoneEntry()).click());
+    expect(boardViewSettings().getSnapshot().lostZone).toBe('auto');
+    expect(dialogRequestsSnapshot()).toEqual([]);
+    await act(async () => {
+      await vi.waitFor(() => expect(lostZones()).toEqual(['opponent']));
+    });
+
+    // A card of the viewer's own goes there: their Lost Zone shows at once,
+    // beside their prizes too, though the setting is the default.
     await act(async () =>
-      host.querySelector<HTMLButtonElement>('#tableExtrasButton')?.click()
+      session.publish({
+        ...session.getSnapshot(),
+        view: { ...baseView, revision: view.revision + 1 },
+      })
     );
     await act(async () => {
       await vi.waitFor(() =>
-        expect(document.querySelector('#lostZoneToggle')).not.toBeNull()
+        expect(lostZones().sort()).toEqual(['local', 'opponent'])
       );
     });
-    await act(async () =>
-      document.querySelector<HTMLElement>('#lostZoneToggle')?.click()
+    const ownZone = (kind: string) =>
+      selectedScene().zones.find(
+        (zone) => zone.kind === kind && zone.side === 'local'
+      )!.bounds;
+    expect(ownZone('lostZone').x).not.toBeCloseTo(ownZone('discard').x, 0);
+
+    // Putting away the viewer's cards asks first, then puts both away,
+    // cards and all.
+    const ownCards = Object.values(baseView.zones).find(
+      (zone) =>
+        zone.kind === 'lostZone' &&
+        baseView.viewer.kind === 'player' &&
+        zone.ownerId === baseView.viewer.playerId
+    )!.cards.length;
+    expect(ownCards).toBeGreaterThan(0);
+    await act(async () => (await lostZoneEntry()).click());
+    expect(boardViewSettings().getSnapshot().lostZone).toBe('auto');
+    const [asked] = dialogRequestsSnapshot();
+    expect(asked?.options.title).toBe('Hide the Lost Zone?');
+    expect(asked?.options.body).toBe(
+      ownCards === 1
+        ? 'You have 1 card in it.'
+        : `You have ${String(ownCards)} cards in it.`
     );
-    expect(boardViewSettings().getSnapshot().lostZone).toBe(false);
     await act(async () => {
-      await vi.waitFor(() => expect(lostZones()).toEqual(['opponent']));
+      settleDialogRequest(asked!.id, true);
+      await Promise.resolve();
+    });
+    expect(boardViewSettings().getSnapshot().lostZone).toBe('hidden');
+    await act(async () => {
+      await vi.waitFor(() => expect(lostZones()).toEqual([]));
+    });
+
+    // Emptied, the next card it takes shows it again.
+    await act(async () =>
+      session.publish({
+        ...session.getSnapshot(),
+        view: withEmptyLostZones({ ...baseView, revision: view.revision + 1 }),
+      })
+    );
+    await act(async () => {
+      await vi.waitFor(() =>
+        expect(boardViewSettings().getSnapshot().lostZone).toBe('auto')
+      );
     });
 
     await act(async () => root.unmount());

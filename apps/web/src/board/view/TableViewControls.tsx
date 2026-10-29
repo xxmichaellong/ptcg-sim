@@ -173,8 +173,10 @@ export const TableViewControls = ({ solo }: { readonly solo: boolean }) => {
         id="lostZoneCheckbox"
         label={t`Lost Zone`}
         hint={t`Always shown while it holds cards.`}
-        checked={view.lostZone}
-        onChange={(lostZone) => viewStore.update({ lostZone })}
+        checked={view.lostZone === 'shown'}
+        onChange={(shown) =>
+          viewStore.update({ lostZone: shown ? 'shown' : 'auto' })
+        }
       />
       <SwitchRow
         id="vstarMarkerCheckbox"

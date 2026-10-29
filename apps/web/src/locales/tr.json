@@ -501,6 +501,14 @@
     ],
     "translation": "{label}: {spoken}. Değiştir"
   },
+  "MglzGu": {
+    "message": "{lostZoneCards, plural, one {# card} other {# cards}}",
+    "translation": "{lostZoneCards, plural, one {# kart} other {# kart}}"
+  },
+  "0ebCnt": {
+    "message": "{lostZoneCards, plural, one {You have # card in it.} other {You have # cards in it.}}",
+    "translation": "{lostZoneCards, plural, one {İçinde # kartın var.} other {İçinde # kartın var.}}"
+  },
   "TW6vJM": {
     "message": "{markerName} marker",
     "comments": [
@@ -2754,6 +2762,11 @@
     ],
     "translation": "Herkese merhaba! Ben Michael/Xiao Xiao Long. Kanada'nın Guelph şehrinden 21 yaşında biriyim ve 2023 sonbaharında programlamaya başladım. 8 yıldan uzun süredir Pokémon TCG oynuyorum ve son 3 ayı, en sevdiğimiz kart oyununu test etmek ve oynamak için toplulukla paylaşılan ücretsiz bir araç olan PTCG-sim'i geliştirerek geçirdim."
   },
+  "pWgsbk": {
+    "message": "Hide",
+    "context": "hide the Lost Zone",
+    "translation": "Gizle"
+  },
   "DA8dCZ": {
     "message": "Hide",
     "context": "shortcut key caption",
@@ -2775,6 +2788,10 @@
   "v8upxe": {
     "message": "Hide opponent's hand",
     "translation": "Rakibin elini gizle"
+  },
+  "OIoFPQ": {
+    "message": "Hide the Lost Zone?",
+    "translation": "Lost Zone gizlensin mi?"
   },
   "ZQLqYr": {
     "message": "Hide welcome",
@@ -2890,11 +2907,6 @@
       "After the number of copies in the deck"
     ],
     "translation": "destede"
-  },
-  "EqLwOt": {
-    "message": "In use",
-    "context": "a table piece holding cards",
-    "translation": "Kullanımda"
   },
   "fZsAhg": {
     "message": "Insert",

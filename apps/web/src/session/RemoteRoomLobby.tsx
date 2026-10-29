@@ -36,6 +36,7 @@ import { resolveCoachingConsentAction } from '../board/resolveCoachingConsentAct
 import { AppBarSlot } from '../board/LegacyBoardChrome.js';
 import {
   boardViewSettings,
+  lostZoneLayout,
   oncePerGameMarkerCount,
 } from '../board/view/board-view-settings.js';
 import type { DeckBuilderCustody } from '../features/deck/DeckBuilderSession.js';
@@ -428,7 +429,7 @@ export const RemoteRoomLobby = ({
       seamBandPx: coarsePointer ? TOUCH_SEAM_BAND_PX : POINTER_SEAM_BAND_PX,
       appBarPx,
       // The optional pieces as the room will show them.
-      ...(boardView.lostZone ? {} : { hideEmptyLostZone: true }),
+      ...lostZoneLayout(boardView.lostZone),
       ...(oncePerGameMarkerCount(boardView) > 0
         ? { oncePerGameMarkers: oncePerGameMarkerCount(boardView) }
         : {}),

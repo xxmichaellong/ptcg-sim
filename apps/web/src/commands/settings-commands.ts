@@ -290,8 +290,9 @@ export const boardViewCommands = (options: {
       title: t`Lost Zone`,
       section: 'table',
       keywords: ['lost zone', 'piece'],
-      on: view.lostZone,
-      set: set('lostZone'),
+      // On: shown even while empty; off: shown while it holds cards.
+      on: view.lostZone === 'shown',
+      set: (on) => store.update({ lostZone: on ? 'shown' : 'auto' }),
     }),
     toggle({
       id: 'table.vstarMarker',

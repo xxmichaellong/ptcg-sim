@@ -1440,15 +1440,22 @@ export const createBoardScene = (
       .filter((player) => player.hidden)
       .map((player) => player.side)
   );
-  const shownCards = cards.filter((card) => !hiddenSides.has(card.side));
   // An optional Lost Zone with nothing in it is not on the table at all;
-  // the moment a card goes there it is.
-  const absentZoneIds = new Set(
-    layout.hideEmptyLostZone
+  // the moment a card goes there it is. One the viewer put away is not
+  // there even holding cards: its cards leave with it.
+  const absentZoneIds = new Set<string>(
+    layout.hideLostZone || layout.hideEmptyLostZone
       ? zones
-          .filter((zone) => zone.kind === 'lostZone' && zone.count === 0)
+          .filter(
+            (zone) =>
+              zone.kind === 'lostZone' &&
+              (layout.hideLostZone || zone.count === 0)
+          )
           .map((zone) => zone.id)
       : []
+  );
+  const shownCards = cards.filter(
+    (card) => !hiddenSides.has(card.side) && !absentZoneIds.has(card.parentId)
   );
   const shownCardIds = new Set<ViewCardId>(shownCards.map((card) => card.id));
   const faced = layout.farCardsUpright

@@ -6,6 +6,7 @@ import {
   BoardViewSettingsStore,
   DEFAULT_BOARD_VIEW,
   hiddenPhysicalSideFor,
+  lostZoneLayout,
   parseBoardView,
 } from './board-view-settings.js';
 
@@ -30,7 +31,7 @@ it('starts with both halves, an even split, no hover preview and no optional pie
     zoneOutlines: true,
     hideOpponentHand: false,
     hoverPreview: false,
-    lostZone: false,
+    lostZone: 'auto',
     vstarMarker: false,
     gxMarker: false,
     opponentCardsUpright: false,
@@ -38,6 +39,30 @@ it('starts with both halves, an even split, no hover preview and no optional pie
   expect(new BoardViewSettingsStore(new PreferenceStore()).getSnapshot()).toBe(
     DEFAULT_BOARD_VIEW
   );
+});
+
+it("reads the Lost Zone's choice, and the switch it was before as one", () => {
+  for (const [stored, choice] of [
+    [true, 'shown'],
+    [false, 'auto'],
+    ['auto', 'auto'],
+    ['shown', 'shown'],
+    ['hidden', 'hidden'],
+    ['sometimes', 'auto'],
+    [undefined, 'auto'],
+  ] as const) {
+    expect(parseBoardView({ lostZone: stored }).lostZone, String(stored)).toBe(
+      choice
+    );
+  }
+  // The layout's part: shown keeps it even empty; auto shows it holding
+  // cards; hidden keeps it off the table cards and all.
+  expect(lostZoneLayout('shown')).toEqual({});
+  expect(lostZoneLayout('auto')).toEqual({ hideEmptyLostZone: true });
+  expect(lostZoneLayout('hidden')).toEqual({
+    hideEmptyLostZone: true,
+    hideLostZone: true,
+  });
 });
 
 it('keeps choices on this device and notifies only for real changes', () => {

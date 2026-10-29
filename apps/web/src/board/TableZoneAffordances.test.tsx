@@ -21,6 +21,11 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  cancelAllDialogRequests,
+  dialogRequestsSnapshot,
+  settleDialogRequest,
+} from '../ui/dialog-requests.js';
+import {
   deckPlusPlacement,
   TableZoneAffordances,
   type TableZoneAffordancesProps,
@@ -114,6 +119,7 @@ beforeEach(() => {
 
 afterEach(async () => {
   await act(async () => root.unmount());
+  cancelAllDialogRequests();
   document.body.replaceChildren();
 });
 
@@ -252,7 +258,7 @@ describe('TableZoneAffordances', () => {
   });
 
   it("adds the optional pieces from a small + beside the viewer's pieces by the prizes", async () => {
-    const lostZone = { shown: false, onShownChange: vi.fn() };
+    const lostZone = { choice: 'auto' as const, onChoiceChange: vi.fn() };
     const markers = {
       vstar: false,
       gx: false,
@@ -299,7 +305,7 @@ describe('TableZoneAffordances', () => {
     await act(async () =>
       document.querySelector<HTMLElement>('#lostZoneToggle')!.click()
     );
-    expect(lostZone.onShownChange).toHaveBeenCalledExactlyOnceWith(true);
+    expect(lostZone.onChoiceChange).toHaveBeenCalledExactlyOnceWith('shown');
     await act(async () => add[0]!.click());
     await settle();
     await act(async () =>
@@ -311,41 +317,78 @@ describe('TableZoneAffordances', () => {
     );
   });
 
-  it('puts an empty Lost Zone away again from the +, and never one holding cards', async () => {
-    const onShownChange = vi.fn();
+  it('puts an empty Lost Zone away again from the +, and asks first to put one away that holds cards', async () => {
+    const onChoiceChange = vi.fn();
     await render(createEmptyBoardView(), {
-      lostZone: { shown: true, onShownChange },
+      lostZone: { choice: 'shown', onChoiceChange },
     });
-    // No second control on the pile: the + puts it away.
+    // No second control on the pile: the + puts it away, back to showing
+    // only while it holds cards.
     expect(host.querySelector('.ptcgsim-zone-lostZone button')).toBeNull();
-    await act(async () =>
-      host.querySelector<HTMLButtonElement>('#tableExtrasButton')!.click()
-    );
-    await settle();
-    await act(async () =>
-      document.querySelector<HTMLElement>('#lostZoneToggle')!.click()
-    );
-    expect(onShownChange).toHaveBeenCalledExactlyOnceWith(false);
-    await act(async () => root.render(<></>));
-    await settle();
-
-    for (const shown of [true, false]) {
-      await render(
-        withCards(createEmptyBoardView(), blue, 'lostZone', 2),
-        { lostZone: { shown, onShownChange } },
-        layoutState(shown ? {} : { hideEmptyLostZone: true })
-      );
-      // Holding cards, it stays: its entry in the + is on and cannot change.
+    const openEntry = async () => {
       await act(async () =>
         host.querySelector<HTMLButtonElement>('#tableExtrasButton')!.click()
       );
       await settle();
-      const entry = document.querySelector<HTMLElement>('#lostZoneToggle')!;
-      expect(entry.textContent, String(shown)).toContain('In use');
-      expect(entry.getAttribute('aria-disabled'), String(shown)).toBe('true');
+      return document.querySelector<HTMLElement>('#lostZoneToggle')!;
+    };
+    await act(async () => (await openEntry()).click());
+    expect(onChoiceChange).toHaveBeenCalledExactlyOnceWith('auto');
+    expect(dialogRequestsSnapshot()).toEqual([]);
+    await act(async () => root.render(<></>));
+    await settle();
+
+    // Holding cards it is on the table whichever way it was left: its entry
+    // is on and says how many it holds; putting it away asks first.
+    for (const choice of ['auto', 'shown'] as const) {
+      onChoiceChange.mockClear();
+      await render(
+        withCards(createEmptyBoardView(), blue, 'lostZone', 2),
+        { lostZone: { choice, onChoiceChange } },
+        layoutState(choice === 'auto' ? { hideEmptyLostZone: true } : {})
+      );
+      const entry = await openEntry();
+      expect(entry.textContent, choice).toContain('Lost Zone, on');
+      expect(entry.textContent, choice).toContain('2 cards');
+      expect(entry.getAttribute('aria-disabled'), choice).not.toBe('true');
+      await act(async () => entry.click());
+      await settle();
+      const [asked] = dialogRequestsSnapshot();
+      expect(asked?.kind, choice).toBe('confirm');
+      expect(asked?.options.title).toBe('Hide the Lost Zone?');
+      expect(asked?.options.body).toBe('You have 2 cards in it.');
+      // Kept: nothing changes.
+      await act(async () => {
+        settleDialogRequest(asked!.id, false);
+        await Promise.resolve();
+      });
+      expect(onChoiceChange).not.toHaveBeenCalled();
+      // Confirmed: put away, cards and all.
+      await act(async () => (await openEntry()).click());
+      await settle();
+      await act(async () => {
+        settleDialogRequest(dialogRequestsSnapshot()[0]!.id, true);
+        await Promise.resolve();
+      });
+      expect(onChoiceChange).toHaveBeenCalledExactlyOnceWith('hidden');
       await act(async () => root.render(<></>));
       await settle();
     }
+
+    // Put away holding cards: its entry is off, still counts them, and
+    // brings it back without asking.
+    onChoiceChange.mockClear();
+    await render(
+      withCards(createEmptyBoardView(), blue, 'lostZone', 1),
+      { lostZone: { choice: 'hidden', onChoiceChange } },
+      layoutState({ hideEmptyLostZone: true, hideLostZone: true })
+    );
+    const entry = await openEntry();
+    expect(entry.textContent).toContain('Lost Zone, off');
+    expect(entry.textContent).toContain('1 card');
+    await act(async () => entry.click());
+    expect(dialogRequestsSnapshot()).toEqual([]);
+    expect(onChoiceChange).toHaveBeenCalledExactlyOnceWith('shown');
   });
 
   it("lays each player's markers on the mat beside their prizes", async () => {
@@ -414,7 +457,7 @@ describe('TableZoneAffordances', () => {
   it('offers nothing while a pile browser or work area covers the table', async () => {
     await render(createEmptyBoardView(), {
       loadDeck: { playerIds: [blue, red], onLoad: vi.fn() },
-      lostZone: { shown: false, onShownChange: vi.fn() },
+      lostZone: { choice: 'auto', onChoiceChange: vi.fn() },
       covered: true,
     });
     expect(host.querySelector('[data-table-zone-affordances]')).toBeNull();

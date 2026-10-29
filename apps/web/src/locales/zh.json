@@ -501,6 +501,14 @@
     ],
     "translation": "{label}：{spoken}。更改"
   },
+  "MglzGu": {
+    "message": "{lostZoneCards, plural, one {# card} other {# cards}}",
+    "translation": "{lostZoneCards, plural, other {#张卡}}"
+  },
+  "0ebCnt": {
+    "message": "{lostZoneCards, plural, one {You have # card in it.} other {You have # cards in it.}}",
+    "translation": "{lostZoneCards, plural, other {放逐区中有#张卡。}}"
+  },
   "TW6vJM": {
     "message": "{markerName} marker",
     "comments": [
@@ -2754,6 +2762,11 @@
     ],
     "translation": "大家好！我是 Michael/Xiao Xiao Long，来自加拿大圭尔夫，今年 21 岁，2023 年秋天开始学习编程。我玩宝可梦集换式卡牌游戏已经超过 8 年，并花了最近 3 个月开发 PTCG-sim，这是一个免费的工具，供大家测试和游玩我们喜爱的卡牌游戏。"
   },
+  "pWgsbk": {
+    "message": "Hide",
+    "context": "hide the Lost Zone",
+    "translation": "隐藏"
+  },
   "DA8dCZ": {
     "message": "Hide",
     "context": "shortcut key caption",
@@ -2775,6 +2788,10 @@
   "v8upxe": {
     "message": "Hide opponent's hand",
     "translation": "隐藏对手的手牌"
+  },
+  "OIoFPQ": {
+    "message": "Hide the Lost Zone?",
+    "translation": "隐藏放逐区？"
   },
   "ZQLqYr": {
     "message": "Hide welcome",
@@ -2890,11 +2907,6 @@
       "After the number of copies in the deck"
     ],
     "translation": "在卡组中"
-  },
-  "EqLwOt": {
-    "message": "In use",
-    "context": "a table piece holding cards",
-    "translation": "使用中"
   },
   "fZsAhg": {
     "message": "Insert",

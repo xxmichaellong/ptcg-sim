@@ -501,6 +501,14 @@
     ],
     "translation": "{label}: {spoken}. 변경"
   },
+  "MglzGu": {
+    "message": "{lostZoneCards, plural, one {# card} other {# cards}}",
+    "translation": "{lostZoneCards, plural, other {#장}}"
+  },
+  "0ebCnt": {
+    "message": "{lostZoneCards, plural, one {You have # card in it.} other {You have # cards in it.}}",
+    "translation": "{lostZoneCards, plural, other {로스트존에 카드가 #장 있습니다.}}"
+  },
   "TW6vJM": {
     "message": "{markerName} marker",
     "comments": [
@@ -2754,6 +2762,11 @@
     ],
     "translation": "안녕하세요, 여러분! 저는 Michael/Xiao Xiao Long입니다. 캐나다 궬프에 사는 21살이고, 2023년 가을에 프로그래밍을 시작했습니다. 포켓몬 카드 게임은 8년 넘게 해왔고, 지난 3개월 동안 커뮤니티가 좋아하는 카드 게임을 테스트하고 플레이할 수 있는 무료 도구인 PTCG-sim을 만들었습니다."
   },
+  "pWgsbk": {
+    "message": "Hide",
+    "context": "hide the Lost Zone",
+    "translation": "숨기기"
+  },
   "DA8dCZ": {
     "message": "Hide",
     "context": "shortcut key caption",
@@ -2775,6 +2788,10 @@
   "v8upxe": {
     "message": "Hide opponent's hand",
     "translation": "상대 패 숨기기"
+  },
+  "OIoFPQ": {
+    "message": "Hide the Lost Zone?",
+    "translation": "로스트존을 숨기시겠습니까?"
   },
   "ZQLqYr": {
     "message": "Hide welcome",
@@ -2890,11 +2907,6 @@
       "After the number of copies in the deck"
     ],
     "translation": "덱에 포함"
-  },
-  "EqLwOt": {
-    "message": "In use",
-    "context": "a table piece holding cards",
-    "translation": "사용 중"
   },
   "fZsAhg": {
     "message": "Insert",

@@ -40,7 +40,9 @@ In each player's own frame, the Active's row reads, from the prizes:
 2. **The Lost Zone**, when it is on the table and the row has room for it
    as well as the Stadium's; otherwise it takes its place at the end of the
    piles' column. Both halves decide together, so it is in the same place
-   on both.
+   on both. "On the table" means shown, or holding cards whatever the
+   viewer's setting (since 2026-10-29: before, one holding cards with the
+   setting off went to the column's end, under the discard pile).
 3. **The `+`** for the optional pieces, just past them and past the Lost
    Zone's count, which stands out beyond the pile's corner: at the top of
    the row, by the centre line and level with the pieces' tops (the owner,

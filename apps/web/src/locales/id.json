@@ -501,6 +501,14 @@
     ],
     "translation": "{label}: {spoken}. Ubah"
   },
+  "MglzGu": {
+    "message": "{lostZoneCards, plural, one {# card} other {# cards}}",
+    "translation": "{lostZoneCards, plural, other {# kartu}}"
+  },
+  "0ebCnt": {
+    "message": "{lostZoneCards, plural, one {You have # card in it.} other {You have # cards in it.}}",
+    "translation": "{lostZoneCards, plural, other {Ada # kartu di dalamnya.}}"
+  },
   "TW6vJM": {
     "message": "{markerName} marker",
     "comments": [
@@ -2754,6 +2762,11 @@
     ],
     "translation": "Halo semuanya! Saya Michael/Xiao Xiao Long. Saya berusia 21 tahun, dari Guelph, Kanada, dan mulai belajar pemrograman pada musim gugur 2023. Saya sudah bermain Kartu Pokémon lebih dari 8 tahun, dan 3 bulan terakhir saya habiskan untuk membangun PTCG-sim, alat gratis bagi komunitas untuk mencoba dan memainkan permainan kartu favorit kita."
   },
+  "pWgsbk": {
+    "message": "Hide",
+    "context": "hide the Lost Zone",
+    "translation": "Sembunyikan"
+  },
   "DA8dCZ": {
     "message": "Hide",
     "context": "shortcut key caption",
@@ -2775,6 +2788,10 @@
   "v8upxe": {
     "message": "Hide opponent's hand",
     "translation": "Sembunyikan Kartu Pegangan lawan"
+  },
+  "OIoFPQ": {
+    "message": "Hide the Lost Zone?",
+    "translation": "Sembunyikan Lost Zone?"
   },
   "ZQLqYr": {
     "message": "Hide welcome",
@@ -2890,11 +2907,6 @@
       "After the number of copies in the deck"
     ],
     "translation": "di deck"
-  },
-  "EqLwOt": {
-    "message": "In use",
-    "context": "a table piece holding cards",
-    "translation": "Sedang dipakai"
   },
   "fZsAhg": {
     "message": "Insert",

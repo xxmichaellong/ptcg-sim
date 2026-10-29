@@ -1,3 +1,4 @@
+import { plural } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react/macro';
 import type { MatchViewState, PlayerId } from '@ptcgsim/game-core';
 import {
@@ -14,6 +15,7 @@ import { SquareIcon } from '@phosphor-icons/react/dist/csr/Square';
 import { memo, type CSSProperties } from 'react';
 
 import { ActionMenu, type ActionMenuEntry } from '../ui/ActionMenu.js';
+import { confirmAction } from '../ui/dialog-requests.js';
 import { Tooltip } from '../ui/Tooltip.js';
 import {
   ONCE_PER_GAME_TILE_ASPECT,
@@ -21,6 +23,7 @@ import {
   oncePerGameTooltip,
 } from './OncePerGameTile.js';
 import { seatStage } from './seat-stage.js';
+import type { LostZoneChoice } from './view/board-view-settings.js';
 import './TableZoneAffordances.css';
 
 const decorative = { 'aria-hidden': true, focusable: false } as const;
@@ -115,8 +118,9 @@ export interface TableZoneAffordancesProps {
   };
   /** The optional Lost Zone (ADR-030): shown even when empty, or not. */
   readonly lostZone?: {
-    readonly shown: boolean;
-    readonly onShownChange: (shown: boolean) => void;
+    /** Where the Lost Zone is (`LostZoneChoice`). */
+    readonly choice: LostZoneChoice;
+    readonly onChoiceChange: (choice: LostZoneChoice) => void;
   };
   /**
    * The once-per-game markers the viewer keeps on the table (off by
@@ -191,12 +195,6 @@ export const TableZoneAffordances = memo(function TableZoneAffordances({
   const toneOf = (playerId: PlayerId) =>
     scene.layout.players.find((frame) => frame.playerId === playerId)?.tone ??
     'opponent';
-  const lostZoneHasCards = (playerId: PlayerId): boolean =>
-    scene.zones.some(
-      (zone) =>
-        zone.kind === 'lostZone' && zone.playerId === playerId && zone.count > 0
-    );
-
   const deckButtons =
     loadDeck && !covered
       ? layout.players.flatMap((frame) => {
@@ -260,11 +258,46 @@ export const TableZoneAffordances = memo(function TableZoneAffordances({
         })
       : [];
 
-  // An empty Lost Zone is put away again from the + (its entry), as it was
-  // laid out: no second control on the pile itself (the owner, 2026-10-29).
-  const bottomLostZoneInUse = bottom
-    ? lostZoneHasCards(bottom.playerId)
-    : false;
+  // The viewer's own Lost Zone, as the + beside their pieces speaks of it:
+  // the cards in it, on the table or put away (the view knows them either
+  // way). Holding any it is on the table, unless the viewer put it away,
+  // which they are asked to confirm.
+  const lostZoneCards =
+    view && bottom
+      ? Object.values(view.zones).reduce(
+          (sum, zone) =>
+            zone.kind === 'lostZone' && zone.ownerId === bottom.playerId
+              ? sum + zone.cards.length
+              : sum,
+          0
+        )
+      : 0;
+  const lostZoneOnTable =
+    lostZone !== undefined &&
+    (lostZone.choice === 'shown' ||
+      (lostZone.choice === 'auto' && lostZoneCards > 0));
+  // The + (its entry) adds the Lost Zone and puts it away again: no second
+  // control on the pile itself (the owner, 2026-10-29).
+  const toggleLostZone = (control: NonNullable<typeof lostZone>): void => {
+    if (!lostZoneOnTable) {
+      control.onChoiceChange('shown');
+      return;
+    }
+    // Empty, it leaves; one across the table holding cards stays.
+    if (lostZoneCards === 0) {
+      control.onChoiceChange('auto');
+      return;
+    }
+    void confirmAction({
+      title: t`Hide the Lost Zone?`,
+      body: t`${plural(lostZoneCards, { one: 'You have # card in it.', other: 'You have # cards in it.' })}`,
+      confirmLabel: t({ message: 'Hide', context: 'hide the Lost Zone' }),
+      // The menu that asked has closed: back to its +.
+      finalFocus: () => document.getElementById('tableExtrasButton'),
+    }).then((confirmed) => {
+      if (confirmed) control.onChoiceChange('hidden');
+    });
+  };
 
   const markerLabel = (markerName: string) =>
     t({
@@ -278,7 +311,7 @@ export const TableZoneAffordances = memo(function TableZoneAffordances({
     label: string,
     shown: boolean,
     onSelect: () => void,
-    inUse = false
+    detail?: string
   ): ActionMenuEntry => ({
     id,
     label: (
@@ -300,15 +333,7 @@ export const TableZoneAffordances = memo(function TableZoneAffordances({
       </>
     ),
     icon: shown ? CheckSquareIcon : SquareIcon,
-    ...(inUse
-      ? {
-          hint: t({
-            message: 'In use',
-            context: 'a table piece holding cards',
-          }),
-          disabled: true,
-        }
-      : {}),
+    ...(detail ? { hint: detail } : {}),
     onSelect,
   });
   const extrasControl =
@@ -328,9 +353,12 @@ export const TableZoneAffordances = memo(function TableZoneAffordances({
                   pieceEntry(
                     'lostZoneToggle',
                     t`Lost Zone`,
-                    lostZone.shown || bottomLostZoneInUse,
-                    () => lostZone.onShownChange(!lostZone.shown),
-                    bottomLostZoneInUse
+                    lostZoneOnTable,
+                    () => toggleLostZone(lostZone),
+                    // How many cards it holds, shown or put away.
+                    lostZoneCards > 0
+                      ? t`${plural(lostZoneCards, { one: '# card', other: '# cards' })}`
+                      : undefined
                   ),
                 ]
               : []),

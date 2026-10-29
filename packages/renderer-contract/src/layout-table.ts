@@ -1578,6 +1578,8 @@ export const createTableLayoutSnapshot = (
   const {
     hiddenPhysicalSide: _hidden,
     hideEmptyLostZone,
+    lostZoneInUse,
+    hideLostZone,
     seamBandPx,
     appBarPx,
     sidePanelReveal,
@@ -1622,7 +1624,12 @@ export const createTableLayoutSnapshot = (
     : {};
   const sharedOptions: HalfOptions = {
     ...(seamBandPx === undefined ? {} : { seamBandPx }),
-    ...(hideEmptyLostZone ? {} : { lostZoneBeside: true }),
+    // A Lost Zone on the table lies beside the prizes: one shown even while
+    // empty, and one holding cards whatever the viewer's setting (both
+    // halves alike: one mat). Put away, cards and all, none is there.
+    ...(!hideLostZone && (!hideEmptyLostZone || lostZoneInUse)
+      ? { lostZoneBeside: true }
+      : {}),
     ...(oncePerGameMarkers ? { markerCount: oncePerGameMarkers } : {}),
   };
   // The controls fill the seam band: 32px on a desktop, taller where a
@@ -2182,6 +2189,7 @@ export const createTableLayoutSnapshot = (
     },
     zoneScrollPx: {},
     ...(state.hideEmptyLostZone ? { hideEmptyLostZone: true as const } : {}),
+    ...(state.hideLostZone ? { hideLostZone: true as const } : {}),
     ...(state.farCardsUpright ? { farCardsUpright: true as const } : {}),
   };
 };

@@ -1380,8 +1380,8 @@ describe('table layout (geometry v2)', () => {
       [1440, 900],
       [1920, 1080],
     ] as const) {
-      // Optional and off, an empty Lost Zone is not shown; one with cards
-      // shows at the end of the outer column.
+      // Optional and off, an empty Lost Zone is not shown: the outer column
+      // keeps its slot at its end (the scene leaves it empty).
       const snapshot = createTableLayoutSnapshot(
         stateAt(width, height, { hideEmptyLostZone: true })
       );
@@ -1412,6 +1412,62 @@ describe('table layout (geometry v2)', () => {
         expect(lost.y + lost.height, label).toBeLessThanOrEqual(height - 10);
       }
     }
+  });
+
+  it('lays a Lost Zone holding cards where a shown one lies, whatever the setting, and none put away', () => {
+    let beside = 0;
+    for (const [width, height] of [
+      [1024, 768],
+      [1280, 720],
+      [1280, 568],
+      [1440, 900],
+      [1920, 1080],
+      [390, 844],
+      [844, 390],
+    ] as const) {
+      for (const markers of [0, 2]) {
+        const at = (extra: Partial<BoardLayoutState>) =>
+          createTableLayoutSnapshot(
+            stateAt(width, height, {
+              shellMode: 'fullscreen',
+              oncePerGameMarkers: markers,
+              ...extra,
+            })
+          );
+        const shown = at({});
+        const holding = at({ hideEmptyLostZone: true, lostZoneInUse: true });
+        const empty = at({ hideEmptyLostZone: true });
+        const away = at({
+          hideEmptyLostZone: true,
+          hideLostZone: true,
+          lostZoneInUse: true,
+        });
+        for (const side of ['local', 'opponent'] as const) {
+          const label = `${width}x${height} m${markers} ${side}`;
+          const lost = (snapshot: typeof shown) =>
+            region(snapshot, side, 'lostZone').physicalDeclaredBounds;
+          const discard = (snapshot: typeof shown) =>
+            region(snapshot, side, 'discard').physicalDeclaredBounds;
+          // Holding cards: exactly where a shown one is, on both halves.
+          expect(lost(holding), label).toEqual(lost(shown));
+          expect(discard(holding), label).toEqual(discard(shown));
+          // Where the mat has room beside the prizes, a shown one lies
+          // there, not in the slot kept at the end of the piles for an
+          // empty one (under the discard pile); one holding cards too.
+          if (
+            Math.abs(lost(shown).x - lost(empty).x) > 0.5 ||
+            Math.abs(lost(shown).y - lost(empty).y) > 0.5
+          ) {
+            beside += 1;
+            expect(lost(empty).x, label).toBeCloseTo(discard(empty).x, 5);
+          }
+          // Put away, cards and all: laid out as an empty one off the table.
+          expect(lost(away), label).toEqual(lost(empty));
+        }
+      }
+    }
+    // The mats with room beside the prizes do lay it there.
+    expect(beside).toBeGreaterThan(0);
   });
 
   it("puts each hand's pill past the far end of its strip, clear of the screen's edge, every zone and the piles' badges", () => {

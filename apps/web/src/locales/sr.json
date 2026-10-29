@@ -501,6 +501,14 @@
     ],
     "translation": "{label}: {spoken}. Промени"
   },
+  "MglzGu": {
+    "message": "{lostZoneCards, plural, one {# card} other {# cards}}",
+    "translation": "{lostZoneCards, plural, one {# карта} few {# карте} other {# карата}}"
+  },
+  "0ebCnt": {
+    "message": "{lostZoneCards, plural, one {You have # card in it.} other {You have # cards in it.}}",
+    "translation": "{lostZoneCards, plural, one {У њој имаш # карту.} few {У њој имаш # карте.} other {У њој имаш # карата.}}"
+  },
   "TW6vJM": {
     "message": "{markerName} marker",
     "comments": [
@@ -2754,6 +2762,11 @@
     ],
     "translation": "Здраво свима! Ја сам Michael/Xiao Xiao Long, имам 21 годину, из Guelpha у Канади, и програмирам од јесени 2023. Pokémon TCG играм више од 8 година, а последња 3 месеца градио сам PTCG-sim, бесплатан алат за заједницу да тестирамо и играмо нашу омиљену карташку игру."
   },
+  "pWgsbk": {
+    "message": "Hide",
+    "context": "hide the Lost Zone",
+    "translation": "Сакриј"
+  },
   "DA8dCZ": {
     "message": "Hide",
     "context": "shortcut key caption",
@@ -2775,6 +2788,10 @@
   "v8upxe": {
     "message": "Hide opponent's hand",
     "translation": "Сакриј противничку руку"
+  },
+  "OIoFPQ": {
+    "message": "Hide the Lost Zone?",
+    "translation": "Сакрити Lost Zone?"
   },
   "ZQLqYr": {
     "message": "Hide welcome",
@@ -2890,11 +2907,6 @@
       "After the number of copies in the deck"
     ],
     "translation": "у шпилу"
-  },
-  "EqLwOt": {
-    "message": "In use",
-    "context": "a table piece holding cards",
-    "translation": "У употреби"
   },
   "fZsAhg": {
     "message": "Insert",

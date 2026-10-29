@@ -501,6 +501,14 @@
     ],
     "translation": "{label}: {spoken} เปลี่ยน"
   },
+  "MglzGu": {
+    "message": "{lostZoneCards, plural, one {# card} other {# cards}}",
+    "translation": "{lostZoneCards, plural, other {# ใบ}}"
+  },
+  "0ebCnt": {
+    "message": "{lostZoneCards, plural, one {You have # card in it.} other {You have # cards in it.}}",
+    "translation": "{lostZoneCards, plural, other {คุณมีการ์ดอยู่ในนั้น # ใบ}}"
+  },
   "TW6vJM": {
     "message": "{markerName} marker",
     "comments": [
@@ -2754,6 +2762,11 @@
     ],
     "translation": "สวัสดีทุกคน! ผมไมเคิล/เซียวเซียวหลง อายุ 21 ปี มาจากเมืองเกลฟ์ ประเทศแคนาดา เริ่มเขียนโปรแกรมในฤดูใบไม้ร่วงปี 2023 ผมเล่น Pokémon TCG มากกว่า 8 ปี และใช้เวลา 3 เดือนที่ผ่านมาสร้าง PTCG-sim เครื่องมือฟรีให้ชุมชนใช้ทดสอบและเล่นเกมการ์ดที่เรารัก"
   },
+  "pWgsbk": {
+    "message": "Hide",
+    "context": "hide the Lost Zone",
+    "translation": "ซ่อน"
+  },
   "DA8dCZ": {
     "message": "Hide",
     "context": "shortcut key caption",
@@ -2775,6 +2788,10 @@
   "v8upxe": {
     "message": "Hide opponent's hand",
     "translation": "ซ่อนมือของฝ่ายตรงข้าม"
+  },
+  "OIoFPQ": {
+    "message": "Hide the Lost Zone?",
+    "translation": "ซ่อนลอสต์โซนไหม"
   },
   "ZQLqYr": {
     "message": "Hide welcome",
@@ -2890,11 +2907,6 @@
       "After the number of copies in the deck"
     ],
     "translation": "ในเด็ค"
-  },
-  "EqLwOt": {
-    "message": "In use",
-    "context": "a table piece holding cards",
-    "translation": "กำลังใช้งาน"
   },
   "fZsAhg": {
     "message": "Insert",

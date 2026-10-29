@@ -69,8 +69,10 @@ import { resolvePublicCardVisibilityAction } from '../board/resolvePublicVisibil
 import {
   boardViewSettings,
   hiddenPhysicalSideFor,
+  lostZoneLayout,
   oncePerGameMarkerCount,
   type BoardViewSettings,
+  type LostZoneChoice,
 } from '../board/view/board-view-settings.js';
 import {
   LegacyBoardOverlays,
@@ -140,7 +142,7 @@ const layoutFor = (
     ...(sidePanel > 0 && sidePanel < 1 ? { sidePanelReveal: sidePanel } : {}),
     vertical: tableVerticalLayout(boardView.split),
     ...(hiddenPhysicalSide ? { hiddenPhysicalSide } : {}),
-    ...(boardView.lostZone ? {} : { hideEmptyLostZone: true }),
+    ...lostZoneLayout(boardView.lostZone),
     ...(seamBandPx ? { seamBandPx } : {}),
     ...(appBarPx ? { appBarPx } : {}),
     ...(oncePerGameMarkerCount(boardView) > 0
@@ -836,7 +838,7 @@ export const RemoteSessionBoard = ({
     runtimeRef.current?.setTableView({
       lowerShare: boardView.split,
       ...(hiddenPhysicalSide ? { hiddenPhysicalSide } : {}),
-      hideEmptyLostZone: !boardView.lostZone,
+      ...lostZoneLayout(boardView.lostZone),
       ...(seamBandPx ? { seamBandPx } : {}),
       ...(appBarPx ? { appBarPx } : {}),
       oncePerGameMarkers: markerCount,
@@ -1123,11 +1125,30 @@ export const RemoteSessionBoard = ({
         false));
   const lostZoneControl = useMemo(
     () => ({
-      shown: boardView.lostZone,
-      onShownChange: (lostZone: boolean) => boardViewStore.update({ lostZone }),
+      choice: boardView.lostZone,
+      onChoiceChange: (lostZone: LostZoneChoice) =>
+        boardViewStore.update({ lostZone }),
     }),
     [boardView.lostZone, boardViewStore]
   );
+  // A Lost Zone the viewer put away while it held their cards stays away
+  // only as long as it holds any: emptied, the next card it takes shows it
+  // again (and with it any across the table).
+  const ownLostZoneInUse =
+    boardState?.view !== undefined &&
+    boardState.scene !== undefined &&
+    Object.values(boardState.view.zones).some(
+      (zone) =>
+        zone.kind === 'lostZone' &&
+        zone.ownerId === boardState.scene?.bottomPlayerId &&
+        zone.cards.length > 0
+    );
+  const viewShown =
+    boardState?.view !== undefined && boardState.scene !== undefined;
+  useEffect(() => {
+    if (boardView.lostZone === 'hidden' && viewShown && !ownLostZoneInUse)
+      boardViewStore.update({ lostZone: 'auto' });
+  }, [boardView.lostZone, viewShown, ownLostZoneInUse, boardViewStore]);
   // The once-per-game markers, off by default and kept on this device.
   const markerControl = useMemo(
     () => ({

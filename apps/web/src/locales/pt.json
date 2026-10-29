@@ -501,6 +501,14 @@
     ],
     "translation": "{label}: {spoken}. Alterar"
   },
+  "MglzGu": {
+    "message": "{lostZoneCards, plural, one {# card} other {# cards}}",
+    "translation": "{lostZoneCards, plural, one {# carta} other {# cartas}}"
+  },
+  "0ebCnt": {
+    "message": "{lostZoneCards, plural, one {You have # card in it.} other {You have # cards in it.}}",
+    "translation": "{lostZoneCards, plural, one {Você tem # carta nela.} other {Você tem # cartas nela.}}"
+  },
   "TW6vJM": {
     "message": "{markerName} marker",
     "comments": [
@@ -2754,6 +2762,11 @@
     ],
     "translation": "Olá, pessoal! Eu sou o Michael/Xiao Xiao Long. Tenho 21 anos, sou de Guelph, no Canadá, e comecei a programar no outono de 2023. Jogo Pokémon TCG há mais de 8 anos e passei os últimos 3 meses criando o PTCG-sim, uma ferramenta gratuita para a comunidade testar e jogar nosso card game favorito."
   },
+  "pWgsbk": {
+    "message": "Hide",
+    "context": "hide the Lost Zone",
+    "translation": "Ocultar"
+  },
   "DA8dCZ": {
     "message": "Hide",
     "context": "shortcut key caption",
@@ -2775,6 +2788,10 @@
   "v8upxe": {
     "message": "Hide opponent's hand",
     "translation": "Ocultar a mão do oponente"
+  },
+  "OIoFPQ": {
+    "message": "Hide the Lost Zone?",
+    "translation": "Ocultar a Zona Perdida?"
   },
   "ZQLqYr": {
     "message": "Hide welcome",
@@ -2890,11 +2907,6 @@
       "After the number of copies in the deck"
     ],
     "translation": "no baralho"
-  },
-  "EqLwOt": {
-    "message": "In use",
-    "context": "a table piece holding cards",
-    "translation": "Em uso"
   },
   "fZsAhg": {
     "message": "Insert",

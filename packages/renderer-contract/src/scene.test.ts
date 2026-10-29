@@ -31,6 +31,11 @@ import {
   diffBoardScenes,
   hitTestBoardScene,
 } from './scene.js';
+import {
+  createTableLayoutSnapshot,
+  TABLE_LAYOUT_GEOMETRY_VERSION,
+  tableVerticalLayout,
+} from './layout-table.js';
 import type { Rect } from './model.js';
 import { createRendererSpikeView } from './spike-fixture.js';
 
@@ -3568,5 +3573,58 @@ describe('renderer-neutral board scene', () => {
         splitRatio: 0.99,
       })
     ).toThrow('between 0.2 and 0.8');
+  });
+});
+
+describe('the optional Lost Zone on the table', () => {
+  const view = createRendererSpikeView();
+  const sceneFor = (state: Partial<BoardLayoutState>) =>
+    createBoardScene(
+      view,
+      createTableLayoutSnapshot({
+        geometryVersion: TABLE_LAYOUT_GEOMETRY_VERSION,
+        viewport: { width: 1440, height: 900, devicePixelRatio: 1 },
+        playerIds: [view.playerOrder[0]!, view.playerOrder[1]!],
+        bottomPlayerId: view.playerOrder[0]!,
+        shellMode: 'fullscreen',
+        vertical: tableVerticalLayout(0.54),
+        ...state,
+      })
+    );
+
+  it('shows one holding cards whatever the setting, unless the viewer put it away', () => {
+    const holding = Object.values(view.zones).filter(
+      (zone) => zone.kind === 'lostZone' && zone.cards.length > 0
+    );
+    expect(holding.length).toBeGreaterThan(0);
+    const onTable = (state: Partial<BoardLayoutState>) => {
+      const scene = sceneFor(state);
+      return {
+        zones: scene.zones
+          .filter((zone) => zone.kind === 'lostZone')
+          .map((zone) => zone.id)
+          .sort(),
+        counts: scene.counts
+          .filter((count) => count.kind === 'lostZone')
+          .map((count) => count.zoneId)
+          .sort(),
+        cards: scene.cards.filter((card) =>
+          holding.some((zone) => card.parentId === zone.id)
+        ).length,
+      };
+    };
+    const ids = holding.map((zone) => zone.id).sort();
+    const shown = onTable({ hideEmptyLostZone: true, lostZoneInUse: true });
+    expect(shown.zones).toEqual(ids);
+    expect(shown.counts).toEqual(ids);
+    expect(shown.cards).toBeGreaterThan(0);
+    // Put away, cards and all: no Lost Zone, count or card of one.
+    expect(
+      onTable({
+        hideEmptyLostZone: true,
+        hideLostZone: true,
+        lostZoneInUse: true,
+      })
+    ).toEqual({ zones: [], counts: [], cards: 0 });
   });
 });

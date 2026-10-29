@@ -501,6 +501,14 @@
     ],
     "translation": "{label}: {spoken}. Palitan"
   },
+  "MglzGu": {
+    "message": "{lostZoneCards, plural, one {# card} other {# cards}}",
+    "translation": "{lostZoneCards, plural, one {# card} other {# card}}"
+  },
+  "0ebCnt": {
+    "message": "{lostZoneCards, plural, one {You have # card in it.} other {You have # cards in it.}}",
+    "translation": "{lostZoneCards, plural, one {May # card ka rito.} other {May # card ka rito.}}"
+  },
   "TW6vJM": {
     "message": "{markerName} marker",
     "comments": [
@@ -2754,6 +2762,11 @@
     ],
     "translation": "Kumusta, lahat! Ako si Michael/Xiao Xiao Long. 21 taong gulang ako mula sa Guelph, Canada, at nagsimulang mag-program noong taglagas ng 2023. Mahigit 8 taon na akong naglalaro ng Pokémon TCG, at ginugol ko ang huling 3 buwan sa paggawa ng PTCG-sim, isang libreng tool para magamit ng komunidad sa pagsubok at paglalaro ng paborito nating card game."
   },
+  "pWgsbk": {
+    "message": "Hide",
+    "context": "hide the Lost Zone",
+    "translation": "Itago"
+  },
   "DA8dCZ": {
     "message": "Hide",
     "context": "shortcut key caption",
@@ -2775,6 +2788,10 @@
   "v8upxe": {
     "message": "Hide opponent's hand",
     "translation": "Itago ang hand ng kalaban"
+  },
+  "OIoFPQ": {
+    "message": "Hide the Lost Zone?",
+    "translation": "Itago ang Lost Zone?"
   },
   "ZQLqYr": {
     "message": "Hide welcome",
@@ -2890,11 +2907,6 @@
       "After the number of copies in the deck"
     ],
     "translation": "sa deck"
-  },
-  "EqLwOt": {
-    "message": "In use",
-    "context": "a table piece holding cards",
-    "translation": "Ginagamit"
   },
   "fZsAhg": {
     "message": "Insert",

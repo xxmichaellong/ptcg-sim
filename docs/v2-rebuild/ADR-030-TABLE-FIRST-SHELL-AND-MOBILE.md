@@ -134,7 +134,7 @@ at the end of the outer column and the markers by the hand. A small `+` in
 the viewer's staging area adds or removes them; Settings has the same
 switches; an empty Lost Zone is put away again from the `+` (since
 2026-10-29 the pile carries no hide button of its own: the owner found it
-redundant). A Lost Zone holding cards always shows.
+redundant). A Lost Zone holding cards always shows, in a shown one's place.
 
 ### 4b. A Pokémon moves whole
 
@@ -175,12 +175,28 @@ table button are gone; their controls are the Table section.
   Where the pile is narrower than the `+` (a phone held sideways) the `+`
   steps off the pile's "0", the shorter way, and spills past the pile
   (2026-10-29, the owner: "spilling is fine").
-- **The Lost Zone is optional.** Few formats use it, so it is off by
-  default: an empty Lost Zone leaves the table (`hideEmptyLostZone` in the
-  layout state; its zone and count leave the scene). The `+` beside the
-  pieces adds it and puts an empty one away again; the Table section has
-  the same switch. A Lost Zone holding cards always shows,
-  whatever the setting.
+- **The Lost Zone is optional.** Few formats use it, so by default an empty
+  Lost Zone leaves the table (`hideEmptyLostZone` in the layout state; its
+  zone and count leave the scene). The viewer's choice (`LostZoneChoice` in
+  `board-view-settings.ts`, 2026-10-29) is one of three:
+  - **auto** (the default): on the table while it holds cards, off it while
+    empty;
+  - **shown**: on the table even while empty (the `+`'s entry on, or the
+    Table section's switch);
+  - **hidden**: put away while it held the viewer's own cards, after the `+`
+    asked "Hide the Lost Zone? You have N cards in it." Off the table, cards
+    and all, until the viewer's Lost Zone is empty again: then back to
+    auto, so the next card it takes shows it. The `+`'s entry still counts
+    the cards ("2 cards"), off, and turns it back on without asking.
+    Either player's Lost Zone follows the viewer's choice. A Lost Zone on the
+    table lies where a shown one does -- beside the prizes where the mat has
+    room, on both halves alike -- whether it is shown or only holding cards:
+    the board runtime tells the layout when one holds cards
+    (`lostZoneInUse`), the moment the first lands and the last leaves. (Until
+    2026-10-29 one holding cards with the setting off lay at the end of the
+    piles' column, under the discard pile.) A mat without room beside the
+    prizes keeps it at the column's end whichever way it is on the table, as
+    ADR-039 says; an upright phone keeps it in the pile row by design.
 - **The empty table's welcome** sits in the far half, clear of the rail, and
   can be put away for good. The menu keeps the same help.
 
