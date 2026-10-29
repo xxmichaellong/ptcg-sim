@@ -1117,7 +1117,6 @@ describe('RemoteSessionBoard replay binding', () => {
     // Off by default: the empty one leaves; the one holding a card stays.
     expect(boardViewSettings().getSnapshot().lostZone).toBe(false);
     expect(lostZones()).toEqual(['opponent']);
-    expect(host.querySelector('#hideLostZoneButton')).toBeNull();
 
     // Added from the + in the staging area.
     await act(async () =>
@@ -1137,14 +1136,18 @@ describe('RemoteSessionBoard replay binding', () => {
         expect(lostZones().sort()).toEqual(['local', 'opponent'])
       );
     });
+
+    // Put away again from the same entry.
+    await act(async () =>
+      host.querySelector<HTMLButtonElement>('#tableExtrasButton')?.click()
+    );
     await act(async () => {
       await vi.waitFor(() =>
-        expect(host.querySelector('#hideLostZoneButton')).not.toBeNull()
+        expect(document.querySelector('#lostZoneToggle')).not.toBeNull()
       );
     });
-
     await act(async () =>
-      host.querySelector<HTMLButtonElement>('#hideLostZoneButton')?.click()
+      document.querySelector<HTMLElement>('#lostZoneToggle')?.click()
     );
     expect(boardViewSettings().getSnapshot().lostZone).toBe(false);
     await act(async () => {

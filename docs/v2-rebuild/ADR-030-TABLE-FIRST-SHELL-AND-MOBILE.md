@@ -132,8 +132,9 @@ markers beside it; the staging area takes the rest of the row
 (`BoardPlayerLayout.extras`). A table too narrow for them keeps the Lost Zone
 at the end of the outer column and the markers by the hand. A small `+` in
 the viewer's staging area adds or removes them; Settings has the same
-switches; an empty Lost Zone can be put away from its corner. A Lost Zone
-holding cards always shows.
+switches; an empty Lost Zone is put away again from the `+` (since
+2026-10-29 the pile carries no hide button of its own: the owner found it
+redundant). A Lost Zone holding cards always shows.
 
 ### 4b. A Pokémon moves whole
 
@@ -176,9 +177,9 @@ table button are gone; their controls are the Table section.
   (2026-10-29, the owner: "spilling is fine").
 - **The Lost Zone is optional.** Few formats use it, so it is off by
   default: an empty Lost Zone leaves the table (`hideEmptyLostZone` in the
-  layout state; its zone and count leave the scene). A `+ Lost Zone` chip
-  under the discard pile adds it; an empty one shown has a hide button; the
-  Table section has the same switch. A Lost Zone holding cards always shows,
+  layout state; its zone and count leave the scene). The `+` beside the
+  pieces adds it and puts an empty one away again; the Table section has
+  the same switch. A Lost Zone holding cards always shows,
   whatever the setting.
 - **The empty table's welcome** sits in the far half, clear of the rail, and
   can be put away for good. The menu keeps the same help.

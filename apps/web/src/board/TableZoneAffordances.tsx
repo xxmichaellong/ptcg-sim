@@ -9,7 +9,6 @@ import {
   type Rect,
 } from '@ptcgsim/renderer-contract';
 import { CheckSquareIcon } from '@phosphor-icons/react/dist/csr/CheckSquare';
-import { EyeSlashIcon } from '@phosphor-icons/react/dist/csr/EyeSlash';
 import { PlusIcon } from '@phosphor-icons/react/dist/csr/Plus';
 import { SquareIcon } from '@phosphor-icons/react/dist/csr/Square';
 import { memo, type CSSProperties } from 'react';
@@ -261,37 +260,11 @@ export const TableZoneAffordances = memo(function TableZoneAffordances({
         })
       : [];
 
-  let lostZoneControl = null;
-  const bottomLostZone = bottom ? region(bottom, 'lostZone') : undefined;
+  // An empty Lost Zone is put away again from the + (its entry), as it was
+  // laid out: no second control on the pile itself (the owner, 2026-10-29).
   const bottomLostZoneInUse = bottom
     ? lostZoneHasCards(bottom.playerId)
     : false;
-  if (
-    !covered &&
-    lostZone?.shown &&
-    bottom &&
-    bottomLostZone &&
-    !bottomLostZoneInUse
-  ) {
-    lostZoneControl = (
-      <div
-        className="table-zone-affordance table-zone-affordance--lost-zone-hide"
-        style={boxStyle(onScreen(bottomLostZone.physicalDeclaredBounds, depth))}
-      >
-        <Tooltip content={t`Hide Lost Zone`} side="left">
-          <button
-            id="hideLostZoneButton"
-            type="button"
-            className="table-zone-chip table-zone-chip--icon"
-            aria-label={t`Hide Lost Zone`}
-            onClick={() => lostZone.onShownChange(false)}
-          >
-            <EyeSlashIcon {...decorative} weight="bold" />
-          </button>
-        </Tooltip>
-      </div>
-    );
-  }
 
   const markerLabel = (markerName: string) =>
     t({
@@ -456,19 +429,13 @@ export const TableZoneAffordances = memo(function TableZoneAffordances({
       })
     : [];
 
-  if (
-    deckButtons.length === 0 &&
-    !lostZoneControl &&
-    !extrasControl &&
-    markerTiles.length === 0
-  ) {
+  if (deckButtons.length === 0 && !extrasControl && markerTiles.length === 0) {
     return null;
   }
   return (
     <div className="table-zone-affordances" data-table-zone-affordances="true">
       {deckButtons}
       {markerTiles}
-      {lostZoneControl}
       {extrasControl}
     </div>
   );

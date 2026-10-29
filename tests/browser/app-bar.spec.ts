@@ -418,8 +418,8 @@ test('a zone’s hover name is centred, but an empty deck’s sits under its +',
     right: '2px',
     display: 'block',
   });
-  // The empty Lost Zone, shown: its hide chip takes its top corner, and
-  // its name starts below it.
+  // The empty Lost Zone, shown: nothing on it but its name, across the
+  // middle (the + puts it away again).
   await page.evaluate(() =>
     localStorage.setItem(
       'ptcgsim.board-view.v1',
@@ -427,14 +427,17 @@ test('a zone’s hover name is centred, but an empty deck’s sits under its +',
     )
   );
   await openTable(page);
-  await expect(page.locator('#hideLostZoneButton')).toBeVisible();
-  expect(
-    await label(
-      page.locator(
-        '.ptcgsim-zone[data-zone-kind="lostZone"][data-zone-side="local"]'
-      )
-    )
-  ).toMatchObject({ top: '30px' });
+  const lostZone = page.locator(
+    '.ptcgsim-zone[data-zone-kind="lostZone"][data-zone-side="local"]'
+  );
+  await expect(lostZone).toBeVisible();
+  await expect(lostZone.locator('button')).toHaveCount(0);
+  expect(await label(lostZone)).toMatchObject({
+    top: '0px',
+    bottom: '0px',
+    display: 'flex',
+    alignItems: 'center',
+  });
   // Once the seat has cards there is no +, and the name is centred again.
   await setUpBoth(page);
   const discard = page.locator(

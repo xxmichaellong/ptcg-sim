@@ -311,15 +311,23 @@ describe('TableZoneAffordances', () => {
     );
   });
 
-  it('puts an empty Lost Zone away again, and never one holding cards', async () => {
+  it('puts an empty Lost Zone away again from the +, and never one holding cards', async () => {
     const onShownChange = vi.fn();
     await render(createEmptyBoardView(), {
       lostZone: { shown: true, onShownChange },
     });
-    const hide = host.querySelector<HTMLButtonElement>('#hideLostZoneButton')!;
-    expect(hide.getAttribute('aria-label')).toBe('Hide Lost Zone');
-    await act(async () => hide.click());
+    // No second control on the pile: the + puts it away.
+    expect(host.querySelector('.ptcgsim-zone-lostZone button')).toBeNull();
+    await act(async () =>
+      host.querySelector<HTMLButtonElement>('#tableExtrasButton')!.click()
+    );
+    await settle();
+    await act(async () =>
+      document.querySelector<HTMLElement>('#lostZoneToggle')!.click()
+    );
     expect(onShownChange).toHaveBeenCalledExactlyOnceWith(false);
+    await act(async () => root.render(<></>));
+    await settle();
 
     for (const shown of [true, false]) {
       await render(
@@ -327,10 +335,6 @@ describe('TableZoneAffordances', () => {
         { lostZone: { shown, onShownChange } },
         layoutState(shown ? {} : { hideEmptyLostZone: true })
       );
-      expect(
-        host.querySelector('#hideLostZoneButton'),
-        String(shown)
-      ).toBeNull();
       // Holding cards, it stays: its entry in the + is on and cannot change.
       await act(async () =>
         host.querySelector<HTMLButtonElement>('#tableExtrasButton')!.click()

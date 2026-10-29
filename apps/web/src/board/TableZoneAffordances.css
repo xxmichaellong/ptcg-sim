@@ -44,14 +44,6 @@
   display: block;
 }
 
-/* The empty Lost Zone's hide chip takes its top corner: its hover name
-   starts below the chip's row. */
-.board-spike-host:has(#hideLostZoneButton)
-  .ptcgsim-board-surface[data-geometry='2']
-  .ptcgsim-zone-lostZone[data-zone-side='local'][data-zone-outline='true'][data-zone-label]::after {
-  inset: 30px 4px 0;
-}
-
 .table-zone-affordance--deck {
   place-items: center;
 }
@@ -291,13 +283,6 @@
 :root[data-motion='reduced'] .table-marker,
 :root[data-motion='reduced'] .table-marker .once-per-game-tile {
   transition: none;
-}
-
-/* Hidden again from its corner while it is empty. */
-.table-zone-affordance--lost-zone-hide {
-  align-items: start;
-  justify-items: end;
-  padding: var(--space-1);
 }
 
 .table-zone-chip {
