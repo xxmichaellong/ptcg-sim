@@ -4,7 +4,11 @@ import {
   type ViewCard,
 } from '@ptcgsim/game-core';
 import { DEFAULT_CLIENT_SESSION_POLICY } from '@ptcgsim/client-session';
-import { cardStepMakesPokemon, type WireGameCommand } from '@ptcgsim/protocol';
+import {
+  cardStepMakesPokemon,
+  type WireCardStep,
+  type WireGameCommand,
+} from '@ptcgsim/protocol';
 
 import {
   isRandomizingCommand,
@@ -533,16 +537,24 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
     // it lands is chance, and a card found there by its place would be
     // another card.
     // A group's cards each, as each would go alone; the one of them left on
-    // an edge is found there.
+    // an edge is found there. A whole Pokémon names no one card: it brings
+    // its line and what was attached.
+    const carried = (
+      move: WireGameCommand | WireCardStep
+    ): readonly string[] =>
+      'cardId' in move
+        ? [move.cardId]
+        : move.type === 'MovePlayStackToZone'
+          ? [
+              ...move.expectedEvolutionCardIds,
+              ...move.expectedAttachmentCardIds,
+            ]
+          : [];
     const cardIds = isRandomizingCommand(command)
       ? []
       : command.type === 'ApplyCardSteps'
-        ? command.steps.flatMap((step) =>
-            'cardId' in step ? [step.cardId] : []
-          )
-        : 'cardId' in command
-          ? [command.cardId]
-          : [];
+        ? command.steps.flatMap(carried)
+        : carried(command);
     const inserted = new Set(cardIds);
     for (const deck of Object.values(predicted.zones)) {
       if (deck.kind !== 'deck' || inserted.size === 0) continue;
