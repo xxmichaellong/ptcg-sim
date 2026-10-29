@@ -53,3 +53,34 @@ test('orders individual discard copies through the keyboard, preserves markers, 
   expect((await pile(page, 'discard')).cards).toEqual(originalCards);
   expect(errors).toEqual([]);
 });
+
+test("the discard shuffle's notice undoes the shuffle, and goes once another move follows", async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  const { cardIds } = await fillPile(page, 'discard');
+  const notice = page.locator('[data-ptcgsim-overlay="toast"]', {
+    hasText: 'into the deck',
+  });
+  const shuffleIn = async (): Promise<void> => {
+    const browser = await openPile(page, 'discard');
+    await browser.locator('[data-zone-action="shuffleDiscardToDeck"]').click();
+    await expect(notice).toBeVisible();
+    await expect.poll(() => ids(page, 'discard')).toEqual([]);
+  };
+  // Back from the deck, a card has a new id (the deck hid it): count them.
+  const discarded = async () => (await ids(page, 'discard')).length;
+  // Its Undo takes the shuffle back.
+  await shuffleIn();
+  await notice.locator('[data-toast-action]').click();
+  await expect.poll(discarded).toBe(cardIds.length);
+  // Shuffled in again, then another move (the table's Undo, here): the
+  // notice's Undo would now be that move's, so the notice goes.
+  await shuffleIn();
+  await page.locator('#undoButton').click();
+  // At once, not when it would have timed out.
+  await expect(notice).toHaveCount(0, { timeout: 1_500 });
+  await expect.poll(discarded).toBe(cardIds.length);
+  expect(errors).toEqual([]);
+});

@@ -2901,6 +2901,29 @@ describe('legacy board overlays', () => {
     await settleDialogs();
     expect(undo).toHaveBeenCalledOnce();
 
+    // Another move after the shuffle makes the table's Undo that move's:
+    // the notice's Undo then takes nothing back.
+    let sent = 4;
+    const later = vi.fn();
+    const counted = { ...actions(), undo: later, movesSent: () => sent };
+    await render(null, counted);
+    await render(discard.id, counted);
+    await act(async () =>
+      host
+        .querySelector<HTMLButtonElement>(
+          '[data-zone-action="shuffleDiscardToDeck"]'
+        )!
+        .click()
+    );
+    await settleDialogs();
+    const stale = toasts()
+      .at(-1)!
+      .querySelector<HTMLButtonElement>('[data-toast-action]')!;
+    sent += 1;
+    await act(async () => stale.click());
+    await settleDialogs();
+    expect(later).not.toHaveBeenCalled();
+
     // Where the viewer may not undo, the notice only says what happened.
     const noUndo = actions();
     await render(null, noUndo);

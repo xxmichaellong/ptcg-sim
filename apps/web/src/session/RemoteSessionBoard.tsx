@@ -76,6 +76,7 @@ import {
   type LostZoneChoice,
 } from '../board/view/board-view-settings.js';
 import {
+  DISCARD_SHUFFLED_TOAST_ID,
   LegacyBoardOverlays,
   type LegacyBoardOverlayActions,
 } from '../board/overlays/LegacyBoardOverlays.js';
@@ -418,6 +419,26 @@ export const RemoteSessionBoard = ({
   const preferencesRef = useRef(preferences);
   const onIntentRef = useRef(onIntent);
   const onSubmissionRef = useRef(onSubmission);
+  // The moves this table has sent, whichever way (the board, the rail, a
+  // key): a notice offering to undo one move offers it only while no other
+  // has followed, and goes as one does. Counted as they join the session's
+  // queue; the shuffle's own joins before its notice opens.
+  const movesSentRef = useRef(0);
+  useEffect(() => {
+    let queued = new Set(
+      session.getSnapshot().pendingCommands.map((item) => item.commandId)
+    );
+    return session.subscribe(() => {
+      const pending = session
+        .getSnapshot()
+        .pendingCommands.map((item) => item.commandId);
+      const fresh = pending.filter((commandId) => !queued.has(commandId));
+      queued = new Set(pending);
+      if (fresh.length === 0) return;
+      movesSentRef.current += fresh.length;
+      dismissToast(DISCARD_SHUFFLED_TOAST_ID);
+    });
+  }, [session]);
   const onPerspectiveChangeRef = useRef(onPerspectiveChange);
   const initialFlipRef = useRef(initialFlipped);
   const onSettledChangeRef = useRef(onSettledChange);
@@ -885,6 +906,7 @@ export const RemoteSessionBoard = ({
 
   const overlayActions = useMemo<LegacyBoardOverlayActions>(
     () => ({
+      movesSent: () => movesSentRef.current,
       emitOpenedZoneCardIntent: (intent) => {
         runtimeRef.current?.emitOpenedZoneCardIntent(intent);
       },

@@ -180,6 +180,12 @@ export interface LegacyBoardOverlayActions {
    * are resolved, so it is the way back from the move that opened it.
    */
   readonly undo?: () => void;
+  /**
+   * How many moves this table has sent so far. A notice that offers to
+   * undo one move (the discard shuffled in) offers it only while no other
+   * move has followed: Undo takes back the latest.
+   */
+  readonly movesSent?: () => number;
   readonly dismiss: (scope: BoardPresentationDismissScope) => void;
   readonly invokeContextAction: (
     action: LegacyBoardContextActionId,
@@ -2266,8 +2272,16 @@ const ZoneBrowser = ({
     actions.invokeZoneAction(id, zone.id);
     if (id !== 'shuffleDiscardToDeck') return;
     // Done at once, as everything else on the table is, with the way back
-    // on the notice (v1 asked first).
-    const undo = actions.undo;
+    // on the notice (v1 asked first). The table's Undo takes back the
+    // latest move, so the notice's does so only while that is the shuffle
+    // (a later move also closes the notice: RemoteSessionBoard).
+    const sent = actions.movesSent?.();
+    const latestUndo = actions.undo;
+    const undo =
+      latestUndo &&
+      (() => {
+        if (actions.movesSent?.() === sent) latestUndo();
+      });
     toast({
       id: DISCARD_SHUFFLED_TOAST_ID,
       title: plural(zone.count, {
@@ -2909,7 +2923,7 @@ type LegacyBoardCountInput =
   LegacyBoardCountPrompt | LegacyBoardShortcutCountPrompt;
 
 /** One notice for a discard pile shuffled in: a second replaces the first. */
-const DISCARD_SHUFFLED_TOAST_ID = 'discard-shuffled-into-deck';
+export const DISCARD_SHUFFLED_TOAST_ID = 'discard-shuffled-into-deck';
 
 /** The count questions, by what the count is for. */
 type CountQuestion =
