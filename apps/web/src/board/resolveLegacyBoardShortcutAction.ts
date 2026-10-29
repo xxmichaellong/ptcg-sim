@@ -35,7 +35,11 @@ import { resolveLooseBoardAction } from './resolveLooseBoardAction.js';
 import { resolveLifecycleAction } from './resolveLifecycleAction.js';
 import { parseLegacyCountInput } from './resolveLegacyBoardCountAction.js';
 import { resolveSoloUndoAction } from './resolveSoloUndoAction.js';
-import { resolveStackStateAction } from './resolveStackStateAction.js';
+import {
+  resolveConditionKeyAction,
+  resolveDamageKeyAction,
+  resolveStackStateAction,
+} from './resolveStackStateAction.js';
 import { resolveTableAction } from './resolveTableAction.js';
 
 export type LegacyLooseBoardShortcutDestination =
@@ -430,24 +434,11 @@ export const resolveLegacyBoardShortcutAction = (
       };
     }
     case 'adjustDamage': {
-      const resolution = resolveStackStateAction(view, request.cardId, {
-        type: 'adjustDamage',
-        delta: request.delta,
-      });
-      if (
-        !resolution.ok &&
-        resolution.reason === 'no_op' &&
-        request.delta < 0
-      ) {
-        // V1 applies Alt subtraction only after a damage marker exists.
-        return retainResolution(
-          resolveStackStateAction(view, request.cardId, {
-            type: 'setDamage',
-            damage: -request.delta,
-          }),
-          false
-        );
-      }
+      const resolution = resolveDamageKeyAction(
+        view,
+        request.cardId,
+        request.delta
+      );
       return retainResolution(
         resolution,
         resolution.ok &&
@@ -464,27 +455,18 @@ export const resolveLegacyBoardShortcutAction = (
         true
       );
     case 'cycleSpecialCondition': {
-      if (!request.remove) {
-        return retainResolution(
-          resolveStackStateAction(view, request.cardId, {
-            type: 'cycleSpecialCondition',
-          }),
-          false
-        );
-      }
-      const removal = resolveStackStateAction(view, request.cardId, {
-        type: 'setSpecialCondition',
-        condition: null,
-      });
-      // V1's Alt-Y branch creates the default P marker when one is absent.
-      return !removal.ok && removal.reason === 'no_op'
-        ? retainResolution(
-            resolveStackStateAction(view, request.cardId, {
-              type: 'cycleSpecialCondition',
-            }),
-            false
-          )
-        : retainResolution(removal, true);
+      const resolution = resolveConditionKeyAction(
+        view,
+        request.cardId,
+        request.remove
+      );
+      // Taking it off lets the card go; putting one on keeps it selected.
+      return retainResolution(
+        resolution,
+        resolution.ok &&
+          resolution.command.type === 'SetSpecialCondition' &&
+          resolution.command.condition === null
+      );
     }
     case 'toggleAbility':
       return retainResolution(

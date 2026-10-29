@@ -203,6 +203,46 @@ export const resolveStackStateAction = (
   }
 };
 
+/**
+ * A number key's damage (Alt takes it off): v1 applies Alt's subtraction
+ * only once a damage counter is there, and puts that much on otherwise.
+ */
+export const resolveDamageKeyAction = (
+  view: MatchViewState,
+  cardId: string,
+  delta: number
+): StackStateActionResolution => {
+  const resolution = resolveStackStateAction(view, cardId, {
+    type: 'adjustDamage',
+    delta,
+  });
+  return !resolution.ok && resolution.reason === 'no_op' && delta < 0
+    ? resolveStackStateAction(view, cardId, {
+        type: 'setDamage',
+        damage: -delta,
+      })
+    : resolution;
+};
+
+/**
+ * Y's next Special Condition, or Alt+Y's removal: with none to remove,
+ * v1's Alt+Y puts the first one (Poisoned) on.
+ */
+export const resolveConditionKeyAction = (
+  view: MatchViewState,
+  cardId: string,
+  remove: boolean
+): StackStateActionResolution => {
+  const cycle = () =>
+    resolveStackStateAction(view, cardId, { type: 'cycleSpecialCondition' });
+  if (!remove) return cycle();
+  const removal = resolveStackStateAction(view, cardId, {
+    type: 'setSpecialCondition',
+    condition: null,
+  });
+  return !removal.ok && removal.reason === 'no_op' ? cycle() : removal;
+};
+
 export const submitStackStateAction = (
   view: MatchViewState,
   cardId: string,
