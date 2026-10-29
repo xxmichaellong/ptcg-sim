@@ -32,6 +32,34 @@ const GAP_PX = 8;
 const GROUP_BAR_ONE_WIDTH_PX = 190;
 const GROUP_BAR_TWO_WIDTH_PX = 280;
 
+/** The group bar's width: one worded button, or two. */
+export const touchGroupBarWidth = (twoButtons: boolean): number =>
+  twoButtons ? GROUP_BAR_TWO_WIDTH_PX : GROUP_BAR_ONE_WIDTH_PX;
+
+/**
+ * Where an element of the table's chrome lies in the table's own
+ * coordinates (the board may be drawn scaled), for a menu to open from it.
+ */
+const boardRectOfElement = (
+  element: Element,
+  viewport: BoardViewport
+): Rect => {
+  const box = element.getBoundingClientRect();
+  const root = element
+    .closest('[data-legacy-board-chrome], [data-legacy-board-overlays]')
+    ?.getBoundingClientRect();
+  if (!root?.width || !root.height)
+    return { x: box.left, y: box.top, width: box.width, height: box.height };
+  const scaleX = viewport.width / root.width;
+  const scaleY = viewport.height / root.height;
+  return {
+    x: (box.left - root.left) * scaleX,
+    y: (box.top - root.top) * scaleY,
+    width: box.width * scaleX,
+    height: box.height * scaleY,
+  };
+};
+
 /** Where a bar of `width` sits by a card: above it if there is room. */
 export const touchBarPlacement = (
   bounds: Rect,
@@ -115,6 +143,7 @@ const BarShell = ({
   viewport,
   label,
   group,
+  docked,
   children,
 }: {
   readonly bounds: Rect;
@@ -122,6 +151,8 @@ const BarShell = ({
   readonly viewport: BoardViewport;
   readonly label: string;
   readonly group?: boolean;
+  /** In the rail's place at the seam (TableRail's `taken`), not by a card. */
+  readonly docked?: boolean;
   readonly children: ReactNode;
 }) => {
   const bar = useRef<HTMLDivElement>(null);
@@ -132,13 +163,20 @@ const BarShell = ({
   return (
     <div
       ref={bar}
-      className={`touch-card-bar${group ? ' touch-card-bar--group' : ''}`}
+      className={`touch-card-bar${group ? ' touch-card-bar--group' : ''}${
+        docked ? ' touch-card-bar--docked' : ''
+      }`}
       role="toolbar"
       aria-label={label}
       data-touch-card-bar="true"
       data-touch-group-bar={group ? 'true' : undefined}
-      data-placement={above ? 'above' : 'below'}
-      style={{ left, top, width, height: BAR_HEIGHT_PX }}
+      data-docked={docked ? 'true' : undefined}
+      data-placement={docked ? undefined : above ? 'above' : 'below'}
+      style={
+        docked
+          ? { width, height: BAR_HEIGHT_PX }
+          : { left, top, width, height: BAR_HEIGHT_PX }
+      }
     >
       {children}
     </div>
@@ -264,9 +302,10 @@ export const TouchGroupBar = memo(function TouchGroupBar({
   onDamage,
   onPlayAsOne,
   onDone,
+  docked = false,
 }: {
   readonly scene: BoardScene;
-  /** The card last touched, which the bar sits by. */
+  /** The card last touched, which the bar sits by unless docked. */
   readonly cardId: ViewCardId;
   /** How many items are selected. */
   readonly count: number;
@@ -276,6 +315,11 @@ export const TouchGroupBar = memo(function TouchGroupBar({
   readonly onDamage?: (anchor: Rect) => void;
   readonly onPlayAsOne?: () => void;
   readonly onDone: () => void;
+  /**
+   * In the rail's place at the seam, where it covers no card (TableRail's
+   * `taken`): on a phone, by the card it would lie over the piles.
+   */
+  readonly docked?: boolean;
 }) {
   const { t } = useLingui();
   const card = scene.cards.find((candidate) => candidate.id === cardId);
@@ -283,8 +327,9 @@ export const TouchGroupBar = memo(function TouchGroupBar({
   const bounds = depth ? depth.bounds(card) : card.bounds;
   // Damage and Play as one card never both apply: pieces are not in play.
   const second = onDamage ? 'damage' : onPlayAsOne ? 'playAsOne' : null;
-  const width = second ? GROUP_BAR_TWO_WIDTH_PX : GROUP_BAR_ONE_WIDTH_PX;
+  const width = touchGroupBarWidth(second !== null);
   const anchorOf = (button: HTMLElement): Rect => {
+    if (docked) return boardRectOfElement(button, viewport);
     const bar = button.closest<HTMLElement>('[data-touch-card-bar]');
     const left = bar ? Number.parseFloat(bar.style.left) : bounds.x;
     const top = bar ? Number.parseFloat(bar.style.top) : bounds.y;
@@ -301,6 +346,7 @@ export const TouchGroupBar = memo(function TouchGroupBar({
       width={width}
       viewport={viewport}
       group
+      docked={docked}
       label={t({
         message: `${count} selected: actions`,
         comment:

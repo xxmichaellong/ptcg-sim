@@ -11,6 +11,7 @@ import {
   type CSSProperties,
   type FocusEvent as ReactFocusEvent,
   type KeyboardEvent as ReactKeyboardEvent,
+  type ReactNode,
 } from 'react';
 
 import { ActionMenu, type ActionMenuEntry } from '../../ui/ActionMenu.js';
@@ -190,6 +191,12 @@ export interface TableRailProps {
   readonly more?: readonly ActionMenuEntry[];
   /** A pile or work-area panel is open over the table. */
   readonly covered?: boolean;
+  /**
+   * What takes the actions' place while it shows: a group's bar on a touch
+   * screen (ADR-042 §2), at the seam where it covers no card. The actions
+   * fade and take no presses; it sits where they are, against the same end.
+   */
+  readonly taken?: { readonly width: number; readonly node: ReactNode };
   /**
    * Whose seat the actions act for. Turned around, a Solo player or a
    * coach acts for the other seat, and the rail wears its colour, as v1's
@@ -401,6 +408,7 @@ export const TableRail = memo(function TableRail({
   covered = false,
   seat = 'you',
   overDesk = false,
+  taken,
 }: TableRailProps) {
   const { t } = useLingui();
   // The side last drawn, and whether a slide under way has moved it: the
@@ -466,6 +474,8 @@ export const TableRail = memo(function TableRail({
         aria-label={t`Game actions`}
         data-board-controls="true"
         data-covered={covered ? 'true' : undefined}
+        data-yielded={taken ? 'true' : undefined}
+        inert={taken ? true : undefined}
         // Icons only: the tooltips carry the words and the keys.
         data-labels="none"
         data-seat={seat}
@@ -512,6 +522,21 @@ export const TableRail = memo(function TableRail({
           />
         ) : null}
       </div>
+      {taken ? (
+        <div
+          className="ptcgsim-table-rail__taken"
+          data-rail-taken="true"
+          style={{
+            left: Math.max(
+              0,
+              atRight ? actionsStart + actionsWidth - taken.width : actionsStart
+            ),
+            width: taken.width,
+          }}
+        >
+          {taken.node}
+        </div>
+      ) : null}
     </div>
   );
 });

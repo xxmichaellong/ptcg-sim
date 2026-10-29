@@ -20,6 +20,8 @@ import {
   type BoardLayoutState,
   type BoardPreferences,
   type BoardRendererStatus,
+  type BoardScene,
+  type BoardViewport,
   type Rect,
 } from '@ptcgsim/renderer-contract';
 import type { WireGameCommand } from '@ptcgsim/protocol';
@@ -54,7 +56,11 @@ import {
   CardInspector,
 } from '../board/inspector/CardInspector.js';
 import { TurnBanner } from '../board/banner/TurnBanner.js';
-import { TouchCardBar, TouchGroupBar } from '../board/TouchCardBar.js';
+import {
+  TouchCardBar,
+  TouchGroupBar,
+  touchGroupBarWidth,
+} from '../board/TouchCardBar.js';
 import {
   loadDeckSides,
   TableZoneAffordances,
@@ -1667,6 +1673,68 @@ export const RemoteSessionBoard = ({
     });
   };
 
+  // A group's bar (ADR-042 §2): at the seam in the rail's place, where it
+  // covers no card -- by the card last tapped it lay over the piles and the
+  // Prizes on a phone; by that card where there is no rail.
+  const groupBar = (
+    scene: BoardScene,
+    viewport: BoardViewport,
+    docked: boolean
+  ): ReactNode =>
+    touchBars?.group && boardState ? (
+      <TouchGroupBar
+        scene={scene}
+        cardId={touchBars.group}
+        count={boardState.presentation.selection.length}
+        {...(depthProjection ? { depth: depthProjection } : {})}
+        viewport={viewport}
+        onMove={(anchor) => {
+          const selection =
+            runtimeRef.current?.getBoardSnapshot()?.presentation.selection ??
+            [];
+          if (isGroupSelection(selection)) {
+            setGroupSurface({ kind: 'menu', anchor });
+            return;
+          }
+          // One card in selection mode: its own menu.
+          const only = selection[0];
+          if (only)
+            runtimeRef.current?.emitIntent({
+              kind: 'CardContextRequested',
+              cardId: only,
+            });
+        }}
+        {...(touchBars.damage
+          ? {
+              onDamage: (anchor: Rect) =>
+                setGroupSurface({ kind: 'damage', anchor }),
+            }
+          : {})}
+        {...(touchBars.pieces
+          ? {
+              onPlayAsOne: () => playAsOneFromBar(touchBars.pieces!),
+            }
+          : {})}
+        docked={docked}
+        onDone={() => {
+          runtimeRef.current?.emitIntent({
+            kind: 'SelectionModeChanged',
+            on: false,
+          });
+          runtimeRef.current?.dismissLocalPresentation('selection');
+        }}
+      />
+    ) : null;
+  const railTaken =
+    layout && boardState?.scene && touchBars?.group && chromeRail
+      ? {
+          width: touchGroupBarWidth(
+            touchBars.damage || touchBars.pieces !== undefined
+          ),
+          node: groupBar(boardState.scene, layout.viewport, true),
+        }
+      : undefined;
+
   return (
     // The table is laid out in the world, not in the page's language: it
     // stays left to right in Arabic too (ADR-034). What it raises to be
@@ -1697,6 +1765,7 @@ export const RemoteSessionBoard = ({
               darkMode={preferences.darkMode}
               actions={chromeActions}
               {...(chromeRail ? { rail: chromeRail } : {})}
+              {...(railTaken ? { railTaken } : {})}
               sortedHandPlayerIds={sortedHandPlayerIds}
               coveredByPopup={coveredByPopup}
               oncePerGameMarkers={shownMarkers}
@@ -1790,49 +1859,9 @@ export const RemoteSessionBoard = ({
                 : {})}
             />
           ) : null}
-          {layout && touchBars?.group ? (
-            <TouchGroupBar
-              scene={boardState.scene}
-              cardId={touchBars.group}
-              count={boardState.presentation.selection.length}
-              {...(depthProjection ? { depth: depthProjection } : {})}
-              viewport={layout.viewport}
-              onMove={(anchor) => {
-                const selection =
-                  runtimeRef.current?.getBoardSnapshot()?.presentation
-                    .selection ?? [];
-                if (isGroupSelection(selection)) {
-                  setGroupSurface({ kind: 'menu', anchor });
-                  return;
-                }
-                // One card in selection mode: its own menu.
-                const only = selection[0];
-                if (only)
-                  runtimeRef.current?.emitIntent({
-                    kind: 'CardContextRequested',
-                    cardId: only,
-                  });
-              }}
-              {...(touchBars.damage
-                ? {
-                    onDamage: (anchor: Rect) =>
-                      setGroupSurface({ kind: 'damage', anchor }),
-                  }
-                : {})}
-              {...(touchBars.pieces
-                ? {
-                    onPlayAsOne: () => playAsOneFromBar(touchBars.pieces!),
-                  }
-                : {})}
-              onDone={() => {
-                runtimeRef.current?.emitIntent({
-                  kind: 'SelectionModeChanged',
-                  on: false,
-                });
-                runtimeRef.current?.dismissLocalPresentation('selection');
-              }}
-            />
-          ) : null}
+          {layout && touchBars?.group && !chromeRail
+            ? groupBar(boardState.scene, layout.viewport, false)
+            : null}
           <SelectionAnnouncer
             selection={boardState.presentation.selection}
             selectionMode={boardState.presentation.selectionMode}

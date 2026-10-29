@@ -20,6 +20,11 @@
       backwards;
 }
 
+.touch-card-bar--docked {
+  position: relative;
+  flex: none;
+}
+
 .touch-card-bar[data-placement='below'] {
   animation-name: touch-card-bar-fade, touch-card-bar-in-below;
 }

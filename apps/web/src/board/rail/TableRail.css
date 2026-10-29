@@ -37,6 +37,21 @@
   transition: opacity var(--duration-fast) var(--ease-out);
 }
 
+/* A group's bar has the seam (TableRail's `taken`): the actions make way. */
+.ptcgsim-table-rail__actions[data-yielded='true'] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ptcgsim-table-rail__taken {
+  position: absolute;
+  top: 50%;
+  display: flex;
+  justify-content: center;
+  transform: translateY(-50%);
+  pointer-events: auto;
+}
+
 /* Past the Stadium, the actions line up against the seam's right end. */
 .ptcgsim-table-rail__actions[data-align='end'] {
   justify-content: flex-end;

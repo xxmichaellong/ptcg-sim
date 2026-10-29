@@ -108,6 +108,35 @@ for (const size of SIZES)
         .toEqual([hand[0]!, hand[2]!, hand[4]!].sort());
       await expect(page.locator('[data-touch-group-count]')).toHaveText('3');
       await expectOnScreen(page, await groupBar(page).boundingBox(), size);
+      // The group's bar has the seam, in the game actions' place: it covers
+      // none of the player's places (by a hand card it lay over the deck and
+      // the Prizes), and the actions make way while it shows.
+      await expect(groupBar(page)).toHaveAttribute('data-docked', 'true');
+      await expect(page.locator('#boardButtonContainer')).toHaveAttribute(
+        'data-yielded',
+        'true'
+      );
+      const bar = (await groupBar(page).boundingBox())!;
+      for (const kind of [
+        'deck',
+        'discard',
+        'prizes',
+        'active',
+        'bench',
+        'hand',
+      ]) {
+        const place = await zoneBox(page, 'local', kind);
+        const overlapX =
+          Math.min(bar.x + bar.width, place.x + place.width) -
+          Math.max(bar.x, place.x);
+        const overlapY =
+          Math.min(bar.y + bar.height, place.y + place.height) -
+          Math.max(bar.y, place.y);
+        expect(
+          overlapX > 1 && overlapY > 1,
+          `the group's bar covers the ${kind}`
+        ).toBe(false);
+      }
       const before = await revision(page);
       await page.locator('#touchGroupMoveButton').tap();
       const menu = page.locator('[data-group-menu]');
@@ -118,6 +147,11 @@ for (const size of SIZES)
       await idle(page);
       expect(await zoneCount(page, 'local', 'lostZone')).toBe(3);
       await expect(groupBar(page)).toHaveCount(0);
+      // The game actions are back.
+      await expect(page.locator('#boardButtonContainer')).not.toHaveAttribute(
+        'data-yielded',
+        'true'
+      );
     });
   });
 

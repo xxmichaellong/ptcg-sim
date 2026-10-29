@@ -570,6 +570,7 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
   rail,
   sortedHandPlayerIds,
   coveredByPopup = false,
+  railTaken,
   depth,
   oncePerGameMarkers = BOTH_MARKERS,
   handCounts,
@@ -591,6 +592,11 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
    * and take no clicks until it closes.
    */
   readonly coveredByPopup?: boolean;
+  /**
+   * What takes the rail's actions' place while it shows (TableRail's
+   * `taken`): a group's bar on a touch screen.
+   */
+  readonly railTaken?: { readonly width: number; readonly node: ReactNode };
   /**
    * Which once-per-game markers the table shows (both, as v1 did, unless
    * the viewer chose), in the corner by the hand. On the play mat they lie
@@ -901,6 +907,7 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
           actions={rail.actions}
           {...(rail.more ? { more: rail.more } : {})}
           covered={coveredByPopup}
+          {...(railTaken ? { taken: railTaken } : {})}
           {...(rail.seat ? { seat: rail.seat } : {})}
           {...(railOverDesk ? { overDesk: true } : {})}
         />
