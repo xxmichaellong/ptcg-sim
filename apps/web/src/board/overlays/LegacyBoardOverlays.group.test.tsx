@@ -7,8 +7,12 @@ import {
   type ViewCardId,
 } from '@ptcgsim/game-core';
 import {
+  createBoardScene,
   createBoardSceneForViewport,
   createRendererSpikeView,
+  createTableLayoutSnapshot,
+  DEFAULT_TABLE_VERTICAL_LAYOUT,
+  TABLE_LAYOUT_GEOMETRY_VERSION,
   type BoardPresentation,
   type Rect,
 } from '@ptcgsim/renderer-contract';
@@ -715,6 +719,95 @@ describe('the group carried out of the pile viewer', () => {
         kind: 'CardDropRequested',
         cardId: copies[0],
         groupCardIds: [copies[0], other],
+      })
+    );
+  });
+
+  it('makes room in the hand counting only the cards that stay, not the selected ones it carries', async () => {
+    const callbacks = actions();
+    const [first] = hand.cards.map((card) => card.id);
+    // The table's own layout, where the hand keeps an order.
+    const table = createBoardScene(
+      view,
+      createTableLayoutSnapshot({
+        geometryVersion: TABLE_LAYOUT_GEOMETRY_VERSION,
+        viewport: { width: 1280, height: 720, devicePixelRatio: 1 },
+        playerIds: [view.playerOrder[0]!, view.playerOrder[1]!],
+        bottomPlayerId: firstPlayer,
+        shellMode: 'fullscreen',
+        vertical: DEFAULT_TABLE_VERTICAL_LAYOUT,
+      })
+    );
+    await render(
+      state({
+        scene: table,
+        presentation: presentation({
+          openedZoneId: discard.id,
+          selection: [copies[0]!, first!],
+        }),
+      }),
+      callbacks
+    );
+    const overlay = host.querySelector<HTMLElement>(
+      '[data-legacy-board-overlays]'
+    )!;
+    vi.spyOn(overlay, 'getBoundingClientRect').mockReturnValue({
+      x: 0,
+      y: 0,
+      left: 0,
+      top: 0,
+      right: scene.viewport.width,
+      bottom: scene.viewport.height,
+      width: scene.viewport.width,
+      height: scene.viewport.height,
+      toJSON: () => ({}),
+    });
+    const source = host.querySelector<HTMLElement>('.ptcgsim-zone-card')!;
+    vi.spyOn(source, 'getBoundingClientRect').mockReturnValue({
+      x: 100,
+      y: 100,
+      left: 100,
+      top: 100,
+      right: 226,
+      bottom: 276,
+      width: 126,
+      height: 176,
+      toJSON: () => ({}),
+    });
+    const pointer = (type: string, x: number, y: number): Event => {
+      const event = new Event(type, { bubbles: true, cancelable: true });
+      Object.defineProperties(event, {
+        clientX: { value: x },
+        clientY: { value: y },
+        pointerId: { value: 9 },
+        button: { value: 0 },
+        pointerType: { value: 'mouse' },
+      });
+      return event;
+    };
+    // Let go just inside the hand's second card: the first, carried with
+    // it, leaves, so this is the hand's first place.
+    const second = table.cards.filter((card) => card.parentId === hand.id)[1]!;
+    const at = {
+      x: second.bounds.x + 4,
+      y: second.bounds.y + second.bounds.height / 2,
+    };
+    await act(async () =>
+      source.dispatchEvent(pointer('pointerdown', 163, 188))
+    );
+    await act(async () =>
+      document.dispatchEvent(pointer('pointermove', at.x, at.y))
+    );
+    await act(async () =>
+      document.dispatchEvent(pointer('pointerup', at.x, at.y))
+    );
+    expect(callbacks.emitOpenedZoneCardIntent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: 'CardDropRequested',
+        cardId: copies[0],
+        targetId: hand.id,
+        index: 0,
+        groupCardIds: [copies[0], first],
       })
     );
   });

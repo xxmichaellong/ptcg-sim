@@ -6,6 +6,7 @@ import {
 } from '@ptcgsim/renderer-contract';
 
 import { locateViewCardActionSource } from './locateViewCardActionSource.js';
+import { visiblePieceSetOf } from './piece-sets.js';
 
 /** The most items one selection holds: a deck's worth. */
 export const MAX_SELECTION_ITEMS = 60;
@@ -169,10 +170,31 @@ export interface NormalizedSelection {
 }
 
 /**
+ * The pieces "Play as one card" finds beside the ones asked for (ADR-042
+ * §5, `visiblePieceSetOf`): face up in their owner's hand or discard pile,
+ * they are items while a piece of their set that is an item is asked for
+ * with them -- though a closed pile's top, or a card under it, is not one
+ * alone.
+ */
+const piecesBeside = (
+  context: SelectionContext,
+  cardIds: readonly ViewCardId[]
+): ReadonlySet<ViewCardId> => {
+  const beside = new Set<ViewCardId>();
+  for (const cardId of cardIds) {
+    if ('reason' in lookUpItem(context, cardId)) continue;
+    const set = visiblePieceSetOf(context.view, cardId, context.openedZoneId);
+    for (const member of set?.cardIds ?? []) beside.add(member);
+  }
+  return beside;
+};
+
+/**
  * Cards made into items (a whole Pokémon by its top card, any other card
  * itself), each once, in the order they came, at most MAX_SELECTION_ITEMS.
  * A card attached to a Pokémon that is selected goes with it, so it is not
- * an item of its own.
+ * an item of its own; a piece found beside another (`piecesBeside`) is
+ * one, wherever it lies.
  */
 export const normalizeSelection = (
   context: SelectionContext,
@@ -180,8 +202,17 @@ export const normalizeSelection = (
 ): NormalizedSelection => {
   let items: readonly ViewCardId[] = [];
   const refused: SelectionRefusal[] = [];
+  let beside: ReadonlySet<ViewCardId> | undefined;
   for (const cardId of cardIds) {
-    const found = itemAmong(context, cardId, items);
+    const asked = itemAmong(context, cardId, items);
+    let found = asked;
+    if (
+      'reason' in asked &&
+      (asked.reason === 'stale_card' || asked.reason === 'not_an_item')
+    ) {
+      beside ??= piecesBeside(context, cardIds);
+      if (beside.has(cardId)) found = { item: cardId };
+    }
     if ('reason' in found) {
       refused.push({ cardId, reason: found.reason });
       continue;

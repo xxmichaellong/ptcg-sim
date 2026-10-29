@@ -2,7 +2,8 @@ import { asViewCardId, type ViewCardId } from '@ptcgsim/game-core';
 import { NO_SELECTION } from '@ptcgsim/renderer-contract';
 import { describe, expect, it } from 'vitest';
 
-import { BLUE, RED, groupTable } from './group-table.test-support.js';
+import { BLUE, RED, groupTable, piece } from './group-table.test-support.js';
+import { visiblePieceSetOf } from './piece-sets.js';
 import {
   MAX_SELECTION_ITEMS,
   normalizeSelection,
@@ -157,6 +158,42 @@ describe('changes to the selection', () => {
       selection: [active.top],
       refused: [{ cardId: energy, reason: 'in_selected_pokemon' }],
       dropped: [],
+    });
+  });
+
+  it('takes the pieces Play as one card finds in a closed discard pile, beside one that is an item', () => {
+    const table = groupTable();
+    const union = (part: number) => ({
+      name: 'Morpeko V-UNION',
+      presentation: piece('swshp:155:Morpeko V-UNION', part),
+    });
+    const [inHand] = table.put(BLUE, 'hand', union(0)) as [ViewCardId];
+    // Under the discard's top, and its top: no items alone.
+    const [buried, , top] = table.put(
+      BLUE,
+      'discard',
+      union(1),
+      {},
+      union(2)
+    ) as [ViewCardId, ViewCardId, ViewCardId];
+    const context = table.context();
+    const pieces = visiblePieceSetOf(table.view, inHand)!.cardIds;
+    expect([...pieces].sort()).toEqual([inHand, buried, top].sort());
+    const taken = reduceSelection(context, NO_SELECTION, {
+      kind: 'replace',
+      cardIds: pieces,
+    });
+    expect(taken).toEqual({ selection: pieces, refused: [], dropped: [] });
+    // Kept as the table changes, while the piece in hand is with them.
+    expect(
+      reduceSelection(context, taken.selection, { kind: 'reconcile' }).selection
+    ).toBe(taken.selection);
+    expect(normalizeSelection(context, [buried, top])).toEqual({
+      items: [],
+      refused: [
+        { cardId: buried, reason: 'stale_card' },
+        { cardId: top, reason: 'not_an_item' },
+      ],
     });
   });
 

@@ -161,112 +161,119 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
       readonly attachmentCards: readonly ViewCard[];
     }
   >();
+  interface PublicArrival {
+    readonly aliases: readonly string[];
+    readonly sentAlias: string;
+    readonly zoneId: string;
+    readonly ownerId: string;
+    readonly definitionId: string;
+    readonly before: ReadonlySet<string>;
+  }
+  /** A command's cards going public; a group's, one for each of its moves. */
   const publicArrivals = new WeakMap<
     WireGameCommand,
-    {
-      readonly aliases: readonly string[];
-      readonly sentAlias: string;
-      readonly zoneId: string;
-      readonly ownerId: string;
-      readonly definitionId: string;
-      readonly before: ReadonlySet<string>;
-    }
+    readonly PublicArrival[]
   >();
+  /** The pairs of a move as asked for and as sent: a group's, step by step. */
+  const movesOf = (
+    original: WireGameCommand,
+    command: WireGameCommand
+  ): readonly (readonly [unknown, unknown])[] =>
+    command.type === 'ApplyCardSteps' && original.type === 'ApplyCardSteps'
+      ? command.steps.map((step, index) => [original.steps[index], step])
+      : [[original, command]];
   const recordPublicArrival = (
     original: WireGameCommand,
     command: WireGameCommand,
     view: MatchViewState,
     predicted: MatchViewState | null
   ): void => {
-    if (
-      original.type !== 'MoveCard' ||
-      command.type !== 'MoveCard' ||
-      command.expectedSourceZoneId === command.destinationZoneId
-    )
-      return;
-    const zone = predicted?.zones[command.destinationZoneId];
-    if (
-      !zone ||
-      (zone.kind !== 'board' &&
-        zone.kind !== 'discard' &&
-        zone.kind !== 'lostZone')
-    )
-      return;
-    const card = zone.cards.find(
-      (candidate) => candidate.id === command.cardId
-    );
-    if (card?.kind !== 'known') return;
-    publicArrivals.set(command, {
-      aliases: [...new Set([original.cardId, command.cardId])],
-      sentAlias: command.cardId,
-      zoneId: zone.id,
-      ownerId: card.ownerId,
-      definitionId: card.definitionId,
-      before: new Set(
-        visibilityContainers(view).flatMap((container) =>
-          container.cards.map((candidate) => candidate.id)
+    let before: ReadonlySet<string> | undefined;
+    const hints = movesOf(original, command).flatMap(
+      ([asked, sent]): PublicArrival[] => {
+        const move = sent as WireGameCommand;
+        const askedMove = asked as WireGameCommand | undefined;
+        if (
+          askedMove?.type !== 'MoveCard' ||
+          move.type !== 'MoveCard' ||
+          move.expectedSourceZoneId === move.destinationZoneId
         )
-      ),
-    });
+          return [];
+        const zone = predicted?.zones[move.destinationZoneId];
+        if (
+          !zone ||
+          (zone.kind !== 'board' &&
+            zone.kind !== 'discard' &&
+            zone.kind !== 'lostZone')
+        )
+          return [];
+        const card = zone.cards.find(
+          (candidate) => candidate.id === move.cardId
+        );
+        if (card?.kind !== 'known') return [];
+        before ??= new Set(
+          visibilityContainers(view).flatMap((container) =>
+            container.cards.map((candidate) => candidate.id)
+          )
+        );
+        return [
+          {
+            aliases: [...new Set([askedMove.cardId, move.cardId])],
+            sentAlias: move.cardId,
+            zoneId: zone.id,
+            ownerId: card.ownerId,
+            definitionId: card.definitionId,
+            before,
+          },
+        ];
+      }
+    );
+    if (hints.length > 0) publicArrivals.set(command, hints);
   };
   const settlePublicArrival = (
     command: WireGameCommand,
     view: MatchViewState
   ): void => {
-    const hint = publicArrivals.get(command);
-    const zone = hint && view.zones[hint.zoneId];
-    // Own-seat cards usually retain their alias. A different fresh copy in
-    // the destination must never replace an unchanged, still-present target.
-    if (!hint || !zone || zone.cards.some((card) => card.id === hint.sentAlias))
-      return;
-    const candidates = zone.cards.filter(
-      (card) =>
-        card.kind === 'known' &&
-        card.ownerId === hint.ownerId &&
-        card.definitionId === hint.definitionId &&
-        !hint.before.has(card.id)
-    );
-    if (candidates.length !== 1) return;
-    for (const alias of hint.aliases) {
-      if (alias !== candidates[0]!.id) rememberCard(alias, candidates[0]!.id);
+    for (const hint of publicArrivals.get(command) ?? []) {
+      const zone = view.zones[hint.zoneId];
+      // Own-seat cards usually retain their alias. A different fresh copy
+      // in the destination must never replace an unchanged, still-present
+      // target.
+      if (!zone || zone.cards.some((card) => card.id === hint.sentAlias))
+        continue;
+      const candidates = zone.cards.filter(
+        (card) =>
+          card.kind === 'known' &&
+          card.ownerId === hint.ownerId &&
+          card.definitionId === hint.definitionId &&
+          !hint.before.has(card.id)
+      );
+      if (candidates.length !== 1) continue;
+      for (const alias of hint.aliases) {
+        if (alias !== candidates[0]!.id) rememberCard(alias, candidates[0]!.id);
+      }
     }
   };
   // Visibility changes keep the card in its source but may rotate its alias.
   // Never match by an old definition alone or infer a reordered source index.
-  const visibility = new WeakMap<
-    WireGameCommand,
-    {
-      readonly source: VisibilityContainer;
-      readonly targets: ReadonlySet<string>;
-      readonly before: ReadonlySet<string>;
-      readonly global?: readonly VisibilityContainer[];
-    }
-  >();
-  const recordVisibility = (
-    command: WireGameCommand,
-    view: MatchViewState
-  ): void => {
-    let targetIds: readonly string[];
-    let sourceId: string | undefined;
-    let completeOrder = false;
-    switch (command.type) {
-      case 'SetPublicReveal':
-      case 'BeginCardInspection':
-        targetIds = [command.cardId];
-        sourceId = command.expectedSourceId;
-        break;
-      case 'SetCardFace':
-        targetIds = [command.cardId];
-        break;
-      case 'SetZonePublicReveal':
-      case 'BeginZoneInspection':
-        targetIds = command.expectedCardIds;
-        sourceId = command.zoneId;
-        completeOrder = true;
-        break;
-      default:
-        return;
-    }
+  interface VisibilityHint {
+    readonly source: VisibilityContainer;
+    readonly targets: ReadonlySet<string>;
+    readonly before: ReadonlySet<string>;
+    readonly global?: readonly VisibilityContainer[];
+    /** What the room must show for the match to hold. */
+    readonly shows?:
+      { readonly revealed: boolean } | { readonly face: 'up' | 'down' };
+  }
+  /** A command's hints; a group's reveal, one for each place it reveals in. */
+  const visibility = new WeakMap<WireGameCommand, readonly VisibilityHint[]>();
+  const visibilityHint = (
+    view: MatchViewState,
+    targetIds: readonly string[],
+    sourceId: string | undefined,
+    completeOrder: boolean,
+    extra: Pick<VisibilityHint, 'shows'> & { readonly anywhere?: boolean }
+  ): VisibilityHint | undefined => {
     const all = visibilityContainers(view);
     const source = all.find(
       (container) =>
@@ -280,22 +287,112 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
         (targetIds.length !== source.cards.length ||
           targetIds.some((id, index) => source.cards[index]?.id !== id)))
     )
-      return;
-    visibility.set(command, {
+      return undefined;
+    return {
       source,
       targets: new Set(targetIds),
       before: new Set(
         all.flatMap((container) => container.cards.map((card) => card.id))
       ),
-      ...(command.type === 'SetCardFace' ? { global: all } : {}),
-    });
+      ...(extra.anywhere ? { global: all } : {}),
+      ...(extra.shows ? { shows: extra.shows } : {}),
+    };
   };
-  const settleVisibility = (
+  const recordVisibility = (
     command: WireGameCommand,
     view: MatchViewState
   ): void => {
-    const hint = visibility.get(command);
-    if (!hint) return;
+    let hints: readonly (VisibilityHint | undefined)[];
+    switch (command.type) {
+      case 'SetPublicReveal':
+        hints = [
+          visibilityHint(
+            view,
+            [command.cardId],
+            command.expectedSourceId,
+            false,
+            {
+              shows: { revealed: command.revealed },
+            }
+          ),
+        ];
+        break;
+      case 'BeginCardInspection':
+        hints = [
+          visibilityHint(
+            view,
+            [command.cardId],
+            command.expectedSourceId,
+            false,
+            {}
+          ),
+        ];
+        break;
+      case 'SetCardFace':
+        hints = [
+          visibilityHint(view, [command.cardId], undefined, false, {
+            shows: { face: command.face },
+            anywhere: true,
+          }),
+        ];
+        break;
+      case 'SetZonePublicReveal':
+        hints = [
+          visibilityHint(view, command.expectedCardIds, command.zoneId, true, {
+            shows: { revealed: command.revealed },
+          }),
+        ];
+        break;
+      case 'BeginZoneInspection':
+        hints = [
+          visibilityHint(
+            view,
+            command.expectedCardIds,
+            command.zoneId,
+            true,
+            {}
+          ),
+        ];
+        break;
+      case 'ApplyCardSteps': {
+        // A group's reveal or hide (ADR-042 §3): one hint for each place its
+        // cards lie in, as one card's would be -- only when every step is
+        // one, as a move among them would change the places they are
+        // matched in.
+        const places = new Map<
+          string,
+          { readonly cardIds: string[]; readonly revealed: boolean }
+        >();
+        for (const step of command.steps) {
+          if (step.type !== 'SetPublicReveal') return;
+          const place = places.get(step.expectedSourceId);
+          if (place && place.revealed !== step.revealed) return;
+          if (place) place.cardIds.push(step.cardId);
+          else
+            places.set(step.expectedSourceId, {
+              cardIds: [step.cardId],
+              revealed: step.revealed,
+            });
+        }
+        hints = [...places].map(([sourceId, place]) =>
+          visibilityHint(view, place.cardIds, sourceId, false, {
+            shows: { revealed: place.revealed },
+          })
+        );
+        break;
+      }
+      default:
+        return;
+    }
+    const recorded = hints.filter(
+      (hint): hint is VisibilityHint => hint !== undefined
+    );
+    if (recorded.length > 0) visibility.set(command, recorded);
+  };
+  const settleVisibilityHint = (
+    hint: VisibilityHint,
+    view: MatchViewState
+  ): void => {
     const all = visibilityContainers(view);
     const source = all.find((container) => container.key === hint.source.key);
     if (
@@ -335,13 +432,14 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
       if (after.kind !== 'known') continue;
       if (before.kind === 'known' && before.definitionId !== after.definitionId)
         return;
-      if (command.type === 'SetCardFace' && after.face !== command.face) return;
+      const shows = hint.shows;
+      if (shows && 'face' in shows && after.face !== shows.face) return;
       if (
-        (command.type === 'SetPublicReveal' ||
-          command.type === 'SetZonePublicReveal') &&
-        (after.publiclyRevealed !== command.revealed ||
+        shows &&
+        'revealed' in shows &&
+        (after.publiclyRevealed !== shows.revealed ||
           after.face !==
-            (command.revealed ||
+            (shows.revealed ||
             hint.source.zoneKind === 'hand' ||
             hint.source.zoneKind === 'prizes'
               ? 'up'
@@ -353,6 +451,13 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
     // For a whole-zone command, expectedCardIds guards the complete native
     // order; a competing reorder makes that command fail before completion.
     for (const match of matched) rememberCard(match.before, match.after);
+  };
+  const settleVisibility = (
+    command: WireGameCommand,
+    view: MatchViewState
+  ): void => {
+    for (const hint of visibility.get(command) ?? [])
+      settleVisibilityHint(hint, view);
   };
 
   /**
@@ -408,35 +513,41 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
     // the card dragged onto the pile. Never one the room shuffles in: where
     // it lands is chance, and a card found there by its place would be
     // another card.
-    const cardId =
-      'cardId' in command && !isRandomizingCommand(command)
-        ? command.cardId
-        : undefined;
-    const deck =
-      cardId === undefined
-        ? undefined
-        : Object.values(predicted.zones).find(
-            (zone) =>
-              zone.kind === 'deck' &&
-              zone.cards.some((card) => card.id === cardId) &&
-              !view.zones[zone.id]?.cards.some((card) => card.id === cardId)
-          );
-    const edge =
-      deck?.cards[0]?.id === cardId
-        ? 'top'
-        : deck?.cards.at(-1)?.id === cardId
-          ? 'bottom'
-          : undefined;
-    if (cardId !== undefined && deck && edge) {
-      deckEdges.push({
-        zoneId: deck.id,
-        edge,
-        alias: cardId,
-        before: new Set(
-          (view.zones[deck.id]?.cards ?? []).map((card) => card.id)
-        ),
-        command,
-      });
+    // A group's cards each, as each would go alone; the one of them left on
+    // an edge is found there.
+    const cardIds = isRandomizingCommand(command)
+      ? []
+      : command.type === 'ApplyCardSteps'
+        ? command.steps.flatMap((step) =>
+            'cardId' in step ? [step.cardId] : []
+          )
+        : 'cardId' in command
+          ? [command.cardId]
+          : [];
+    for (const cardId of cardIds) {
+      const deck = Object.values(predicted.zones).find(
+        (zone) =>
+          zone.kind === 'deck' &&
+          zone.cards.some((card) => card.id === cardId) &&
+          !view.zones[zone.id]?.cards.some((card) => card.id === cardId)
+      );
+      const edge =
+        deck?.cards[0]?.id === cardId
+          ? 'top'
+          : deck?.cards.at(-1)?.id === cardId
+            ? 'bottom'
+            : undefined;
+      if (deck && edge) {
+        deckEdges.push({
+          zoneId: deck.id,
+          edge,
+          alias: cardId,
+          before: new Set(
+            (view.zones[deck.id]?.cards ?? []).map((card) => card.id)
+          ),
+          command,
+        });
+      }
     }
     const moved = command.type === 'MoveCard' ? command.cardId : undefined;
     for (const zone of Object.values(predicted.zones)) {

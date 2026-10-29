@@ -171,6 +171,9 @@ export const useOverlayCardDrag = (options: Options) => {
     if (!scene) return false;
     const point = boardPoint(current.target, scene, clientX, clientY);
     if (!point) return false;
+    // The group goes to the drag itself, as a press on the table gives it:
+    // the place it is aimed at counts only the cards that stay.
+    const group = groupOf(heldGroup.current, current.card.id);
     return controller.pointerDown(
       gestureScene(scene, current.card.id),
       current.card.id,
@@ -182,7 +185,8 @@ export const useOverlayCardDrag = (options: Options) => {
         point,
         current.grip,
         true
-      )
+      ),
+      group ? { group } : undefined
     );
   };
 
@@ -222,7 +226,9 @@ export const useOverlayCardDrag = (options: Options) => {
         current.card,
         event.pointerId,
         point,
-        current.grip
+        current.grip,
+        false,
+        groupOf(heldGroup.current, current.card.id)
       );
       // Off the table there is nothing to drop on.
       const inside =

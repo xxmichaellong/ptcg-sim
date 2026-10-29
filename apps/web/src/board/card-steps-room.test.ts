@@ -232,6 +232,97 @@ describe('a group move against the room', () => {
     });
   });
 
+  it("rebinds a move queued behind it to the other seat's cards it put in the discard pile", () => {
+    const table = soloTable();
+    const rebind = createProvisionalRebinder();
+    const view = table.project();
+    const hand = view.zones[playerZoneId(red, 'hand')]!.cards;
+    const named = (wanted: string) =>
+      hand.find(
+        (card) =>
+          card.kind === 'known' &&
+          view.definitions[card.definitionId]?.name === wanted
+      )!.id;
+    const handId = playerZoneId(red, 'hand');
+    const discardId = playerZoneId(red, 'discard');
+    // Red's Energy and Switch discarded as a group: public now, they come
+    // back from the room under aliases of their own.
+    const group = rebind(
+      {
+        type: 'ApplyCardSteps',
+        steps: ['Fire Energy', 'Switch'].map((name) => ({
+          type: 'MoveCard' as const,
+          cardId: named(name),
+          expectedSourceZoneId: handId,
+          destinationZoneId: discardId,
+        })),
+      },
+      view
+    );
+    // The Switch taken back, queued on the card as the board shows it.
+    const queued: WireGameCommand = {
+      type: 'MoveCard',
+      cardId: named('Switch'),
+      expectedSourceZoneId: discardId,
+      destinationZoneId: handId,
+    };
+    table.send(group);
+    const published = table.project();
+    rebind.accepted(group, published.revision, published);
+    const sent = rebind(queued, published);
+    const switchNow = published.zones[discardId]!.cards.find(
+      (card) =>
+        card.kind === 'known' &&
+        published.definitions[card.definitionId]?.name === 'Switch'
+    )!.id;
+    expect(sent).toEqual({ ...queued, cardId: switchNow });
+    table.send(sent);
+    expect(shape(table.project()).zones[discardId]).toEqual(['Fire Energy']);
+  });
+
+  it("rebinds a move queued behind a group's reveal to the cards it showed", () => {
+    const table = soloTable();
+    const rebind = createProvisionalRebinder();
+    const view = table.project();
+    const hand = view.zones[playerZoneId(red, 'hand')]!.cards;
+    const named = (wanted: string) =>
+      hand.find(
+        (card) =>
+          card.kind === 'known' &&
+          view.definitions[card.definitionId]?.name === wanted
+      )!.id;
+    const handId = playerZoneId(red, 'hand');
+    const group = rebind(
+      {
+        type: 'ApplyCardSteps',
+        steps: ['Fire Energy', 'Switch'].map((name) => ({
+          type: 'SetPublicReveal' as const,
+          cardId: named(name),
+          expectedSourceId: handId,
+          revealed: true,
+        })),
+      },
+      view
+    );
+    const queued: WireGameCommand = {
+      type: 'MoveCard',
+      cardId: named('Switch'),
+      expectedSourceZoneId: handId,
+      destinationZoneId: playerZoneId(red, 'discard'),
+    };
+    table.send(group);
+    const published = table.project();
+    rebind.accepted(group, published.revision, published);
+    const sent = rebind(queued, published);
+    const switchNow = published.zones[handId]!.cards.find(
+      (card) =>
+        card.kind === 'known' &&
+        published.definitions[card.definitionId]?.name === 'Switch'
+    )!.id;
+    expect(sent).toEqual({ ...queued, cardId: switchNow });
+    table.send(sent);
+  });
+
   it('rebinds a move queued behind it to the Pokémon it made', () => {
     const table = soloTable();
     const rebind = createProvisionalRebinder();
