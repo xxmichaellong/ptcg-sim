@@ -120,6 +120,34 @@ describe('the room’s invites', () => {
     expect(toasts.at(-1)?.tone).toBe('danger');
   });
 
+  it('starts a new room (a resumed game) with its seat free again', async () => {
+    const first = presenceSession();
+    const invitations: RoomInvitations = { roles: ['player'], invite: vi.fn() };
+    await act(async () =>
+      root.render(
+        <Probe
+          invitations={invitations}
+          session={first.session}
+          ownSeat="blue"
+        />
+      )
+    );
+    await act(async () => first.arrive({ playerId: 'red', status: 'joined' }));
+    expect(latest.seatTaken).toBe(true);
+    // The same route, now on the resumed game's room: nobody in it yet.
+    const resumed = presenceSession();
+    await act(async () =>
+      root.render(
+        <Probe
+          invitations={invitations}
+          session={resumed.session}
+          ownSeat="blue"
+        />
+      )
+    );
+    expect(latest.seatTaken).toBe(false);
+  });
+
   it('counts the opponent seen in their seat as taken', async () => {
     const room = presenceSession();
     await act(async () =>

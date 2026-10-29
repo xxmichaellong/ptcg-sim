@@ -394,7 +394,16 @@ export const RemoteRoomRoute = ({
   // The room-ready card, put away by the player (the menu keeps both); a
   // new room brings it back.
   const [inviteDismissed, setInviteDismissed] = useState(false);
-  useEffect(() => setInviteDismissed(false), [runtime]);
+  // A new room on this route (Create room from Play online over a Solo
+  // table): its card comes back, and the Play online sheet it was made
+  // from is done.
+  const shownRuntime = useRef(runtime);
+  useEffect(() => {
+    if (shownRuntime.current === runtime) return;
+    shownRuntime.current = runtime;
+    setInviteDismissed(false);
+    setSheet((current) => (current === 'online' ? undefined : current));
+  }, [runtime]);
   const hint = useHotkeyHints();
   // A browser that takes the request and then declines it says so only
   // with an event; the player hears it too.

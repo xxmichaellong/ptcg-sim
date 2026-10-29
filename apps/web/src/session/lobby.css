@@ -161,30 +161,33 @@
   letter-spacing: normal;
 }
 
+/* Under a finger the panel's buttons and fields are 44px tall. */
+@media (pointer: coarse) {
+  .legacy-lobby-sidebox {
+    --ds-control-height: 44px;
+  }
+}
+
+/* The invitation's field with its Paste button beside it. */
+.legacy-lobby-sidebox .lobby-invitation-row {
+  display: flex;
+  gap: var(--space-2);
+  align-items: stretch;
+}
+
+.legacy-lobby-sidebox .lobby-invitation-row .lobby-room-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.legacy-lobby-sidebox .lobby-invitation-row .ds-button {
+  flex: none;
+}
+
 .legacy-lobby-sidebox .lobby-switches {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
-}
-
-.legacy-lobby-sidebox #coachingModeLabel span {
-  color: var(--color-text-muted);
-  font-size: var(--text-xs);
-}
-
-/* Copy confirms with a check that pops in and a success tint. */
-.legacy-lobby-sidebox .lobby-copy-icon {
-  display: inline-flex;
-}
-
-.legacy-lobby-sidebox .lobby-copy.copied {
-  border-color: color-mix(in oklch, var(--color-success) 55%, transparent);
-  background: color-mix(in oklch, var(--color-success) 18%, transparent);
-  color: var(--ds-success-text);
-}
-
-.legacy-lobby-sidebox .lobby-copy.copied .lobby-copy-icon svg {
-  animation: ds-pop var(--duration-bouncy) var(--ease-bouncy);
 }
 
 .legacy-lobby-sidebox #lobby[aria-busy='true'] button:disabled,

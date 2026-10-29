@@ -409,7 +409,11 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
       return [link.split('#')[1]!, envelope, parsed.invitation];
     });
     for (const url of requestUrls) {
-      expect(new URL(url).search).toBe('');
+      // The room's own endpoints carry nothing in their address (others,
+      // such as the deck screen's tournament list, may have a query).
+      if (new URL(url).pathname.startsWith('/v2/rooms')) {
+        expect(new URL(url).search).toBe('');
+      }
       expect(new URL(url).hash).toBe('');
       for (const bearer of bearerValues) expect(url).not.toContain(bearer);
     }

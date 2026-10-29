@@ -49,11 +49,11 @@ test('a link opens the game straight into its room, once, and leaves the address
     await host.locator('#nameInput').fill('Blue');
     await host.locator('#generateIdButton').click();
     await expect(readyRoom(host)).toBeVisible({ timeout: 30_000 });
+    const before = await readClipboard(host).catch(() => '');
     await host.locator('#inviteOpponentButton').click();
-    await expect
-      .poll(() => readClipboard(host))
-      .toMatch(/#invite=[A-Za-z0-9_-]+$/u);
+    await expect.poll(() => readClipboard(host)).not.toBe(before);
     const link = await readClipboard(host);
+    expect(link).toMatch(/#invite=[A-Za-z0-9_-]+$/u);
     expect(new URL(link).origin).toBe(new URL(baseURL).origin);
     const payload = link.split('#invite=')[1]!;
 
@@ -141,9 +141,13 @@ test('a link opened while the page is up joins from the lobby', async ({
     await host.goto('/?room-lobby=1');
     await host.locator('#generateIdButton').click();
     await expect(readyRoom(host)).toBeVisible({ timeout: 30_000 });
+    // The browser's clipboard outlives a test's contexts: wait for this
+    // press's link, not one left from before.
+    const before = await readClipboard(host).catch(() => '');
     await host.locator('#inviteOpponentButton').click();
-    await expect.poll(() => readClipboard(host)).toContain('#invite=');
+    await expect.poll(() => readClipboard(host)).not.toBe(before);
     const link = await readClipboard(host);
+    expect(link).toContain('#invite=');
 
     // The guest's page is already up on Play online; the link is pasted
     // into its address bar (same page: only the fragment changes).
@@ -162,4 +166,53 @@ test('a link opened while the page is up joins from the lobby', async ({
     await hostContext.close();
     await guestContext.close();
   }
+});
+
+test.describe('on a phone', () => {
+  test.use({
+    viewport: { width: 390, height: 844 },
+    hasTouch: true,
+    isMobile: true,
+  });
+
+  test('Play online and the room’s invites are 44px under a finger', async ({
+    page,
+    context,
+  }) => {
+    test.setTimeout(60_000);
+    await ownRoomBudget(context);
+    await page.goto('/?room-lobby=1');
+    await expect(page.locator('#playOnlineSheet')).toBeVisible();
+    const heights = (selectors: readonly string[]) =>
+      page.evaluate(
+        (list) =>
+          list.map(
+            (selector) =>
+              document.querySelector(selector)?.getBoundingClientRect()
+                .height ?? 0
+          ),
+        selectors
+      );
+    for (const height of await heights([
+      '#nameInput',
+      '#generateIdButton',
+      '#roomIdInput',
+      '#joinRoomButton',
+    ])) {
+      expect(height).toBeGreaterThanOrEqual(44);
+    }
+    await page.locator('#generateIdButton').tap();
+    await expect(readyRoom(page)).toBeVisible({ timeout: 30_000 });
+    // Measured once the card has risen into place (it enters from 98%).
+    await expect
+      .poll(async () =>
+        Math.min(
+          ...(await heights([
+            '#inviteOpponentButton',
+            '#inviteSpectatorButton',
+          ]))
+        )
+      )
+      .toBeGreaterThanOrEqual(44);
+  });
 });

@@ -261,7 +261,12 @@ test('online save downloads, restores, rotates both players, and revokes its bea
     ];
     for (const requestUrl of requestUrls) {
       const url = new URL(requestUrl);
-      expect(url.search).toBe('');
+      // The room's and the save's own endpoints carry nothing in their
+      // address (others, such as the deck screen's tournament list, may
+      // have a query); no address carries a bearer (below).
+      if (/^\/v2\/(?:rooms|continuations)\b/u.test(url.pathname)) {
+        expect(url.search).toBe('');
+      }
       expect(url.hash).toBe('');
       for (const bearer of bearerValues) {
         if (requestUrl.includes(bearer)) {

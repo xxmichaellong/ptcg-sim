@@ -248,7 +248,8 @@ test('manual handoff admits player two and distinct repeat spectators across iso
       },
       { text: rotatedPlayerHandoff, modulePath: handoffModulePath }
     );
-    expect(rotatedResult).toBe('exchange_failed');
+    // The room says why: a newer invitation to play revoked this one.
+    expect(rotatedResult).toBe('invitation_refused');
 
     const playerReceipt = await joinFromHandoff(
       playerTwo,

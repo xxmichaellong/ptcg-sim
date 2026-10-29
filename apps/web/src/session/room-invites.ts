@@ -54,10 +54,14 @@ export const useRoomInvites = ({
   const seen = useSyncExternalStore(session.subscribe, () =>
     opponentSeen(session.getSnapshot(), ownSeat)
   );
-  // Once taken, a seat stays taken: the room's own answer says so too.
-  const [refused, setRefused] = useState(false);
-  const taken = useRef(false);
-  if (seen || refused) taken.current = true;
+  // Once taken, a seat stays taken (the room's own answer says so too),
+  // in this room: a resumed game's new room starts with it free.
+  const [refusedIn, setRefusedIn] = useState<PresenceSource>();
+  const taken = useRef({ session, taken: false });
+  if (taken.current.session !== session) {
+    taken.current = { session, taken: false };
+  }
+  if (seen || refusedIn === session) taken.current.taken = true;
   const pending = useRef(false);
   const invite = useCallback(
     (role: RoomInviteRole): void => {
@@ -72,7 +76,7 @@ export const useRoomInvites = ({
               toast({ title: t`Invitation link copied`, tone: 'success' });
               return;
             case 'seat_unavailable':
-              setRefused(true);
+              setRefusedIn(session);
               toast({ title: t`Both seats are taken.`, tone: 'warning' });
               return;
             case 'failed':
@@ -90,11 +94,11 @@ export const useRoomInvites = ({
           pending.current = false;
         });
     },
-    [invitations]
+    [invitations, session]
   );
   return {
     roles: invitations?.roles ?? [],
-    seatTaken: taken.current,
+    seatTaken: taken.current.taken,
     invite,
   };
 };

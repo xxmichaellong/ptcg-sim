@@ -229,3 +229,11 @@
   outline-offset: 2px;
   border-radius: 2px;
 }
+
+/* A room's invite card (TableInvite): under a finger its buttons are 44px
+   tall. */
+@media (pointer: coarse) {
+  .table-welcome--invite {
+    --ds-control-height: 44px;
+  }
+}
