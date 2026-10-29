@@ -255,17 +255,21 @@ export const BOARD_SURFACE_CSS = `
 /* A finger on a crowded hand peeks at its cards (BoardSurface): the card
    under it rises clear of the finger, whole and large enough to read
    (--ptcgsim-peek-scale, set for its size), above its neighbours and the
-   piles' counts, quickly enough to follow a slide along the hand. */
+   piles' counts, quickly enough to follow a slide along the hand; a card
+   at the hand's end steps in from the screen's edge to stay whole
+   (--ptcgsim-peek-shift). */
 :is(.ptcgsim-board-surface, .ptcgsim-board-lift)[data-geometry='2'] .ptcgsim-card[data-in-hand][data-peek]:not([data-held]) {
   z-index: 9300 !important;
 }
 :is(.ptcgsim-board-surface, .ptcgsim-board-lift)[data-geometry='2'] .ptcgsim-card[data-in-hand][data-peek]:not([data-held]) > .ptcgsim-card__body {
-  translate: 0 calc(-100% - (var(--ptcgsim-peek-scale, 1.12) - 1) * 45%);
+  translate: var(--ptcgsim-peek-shift, 0px)
+    calc(-100% - (var(--ptcgsim-peek-scale, 1.12) - 1) * 45%);
   scale: var(--ptcgsim-peek-scale, 1.12);
   transition-duration: calc(90ms * var(--motion-scale, 1));
 }
 :is(.ptcgsim-board-surface, .ptcgsim-board-lift)[data-geometry='2'][data-far-upright] .ptcgsim-card[data-in-hand][data-card-side='opponent'][data-peek]:not([data-held]) > .ptcgsim-card__body {
-  translate: 0 calc(100% + (var(--ptcgsim-peek-scale, 1.12) - 1) * 55%);
+  translate: var(--ptcgsim-peek-shift, 0px)
+    calc(100% + (var(--ptcgsim-peek-scale, 1.12) - 1) * 55%);
 }
 /* Picked up, it is held where it was raised to, without sliding back;
    only its size settles to a held card's. */

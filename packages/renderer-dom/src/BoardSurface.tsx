@@ -72,6 +72,7 @@ import {
   BoardMotionDirector,
   type PaintedCard,
 } from './motion/BoardMotionDirector.js';
+import { peekShift } from './hand-peek.js';
 import { DragSwing } from './motion/DragSwing.js';
 import { liftHeldCards } from './motion/held-card-lift.js';
 import { depthPaintKey } from './motion/depth-paint-key.js';
@@ -1982,20 +1983,21 @@ export const BoardSurface = ({
     const card = scene.cards.find((candidate) => candidate.id === cardId);
     if (element && card) {
       // A small hand card grows to be read; the screen draws it larger.
+      const painted = handCardRect(card);
       const width =
-        (handCardRect(card).width * surface.getBoundingClientRect().width) /
+        (painted.width * surface.getBoundingClientRect().width) /
         scene.viewport.width;
-      element.style.setProperty(
-        '--ptcgsim-peek-scale',
-        String(
-          Math.min(
-            PEEK_SCALE.most,
-            Math.max(
-              PEEK_SCALE.least,
-              width > 0 ? PEEK_READ_WIDTH_PX / width : PEEK_SCALE.least
-            )
-          )
+      const scale = Math.min(
+        PEEK_SCALE.most,
+        Math.max(
+          PEEK_SCALE.least,
+          width > 0 ? PEEK_READ_WIDTH_PX / width : PEEK_SCALE.least
         )
+      );
+      element.style.setProperty('--ptcgsim-peek-scale', String(scale));
+      element.style.setProperty(
+        '--ptcgsim-peek-shift',
+        `${String(peekShift(card, painted, scale, scene.viewport.width))}px`
       );
       element.setAttribute('data-peek', '');
     }
@@ -2250,6 +2252,10 @@ export const BoardSurface = ({
       }}
       onPointerDown={(event) => {
         director.interruptTableTurn();
+        // The browser's click after a slide comes before any new press, if
+        // at all (Chromium sends none): a new press is its own gesture,
+        // and a tap on the card just raised must reach it.
+        peekClickRef.current = null;
         const hint = surfaceRef.current
           ? boardHintAt(surfaceRef.current, event.clientX, event.clientY)
           : null;

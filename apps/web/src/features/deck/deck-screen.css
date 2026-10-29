@@ -2888,14 +2888,15 @@ button.deck-check__issue {
 /* Typing a search on a touch screen, whose keyboard leaves it a strip: the
    seats' trays step aside, and in the editor its header and tabs too, so
    the field sits near the top with the cards it finds under it. They come
-   back as the search lets go of the focus. */
+   back as the field lets go of the focus, a tap on a card found too (the
+   Deck tab shows what it added). */
 @media (hover: none) and (max-width: 899px),
   (hover: none) and (max-height: 499px) {
   .deck-screen:has(
       .deck-screen__body :is(input[type='search'], #deckPasteInput):focus
     )
     .deck-screen__seats,
-  .deck-editor:has(.card-search:focus-within)
+  .deck-editor:has(.card-search input[type='search']:focus)
     :is(.deck-editor__head, .deck-editor__tabs) {
     display: none;
   }

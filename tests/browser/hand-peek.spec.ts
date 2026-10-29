@@ -170,12 +170,17 @@ const peekAndPlay = async (page: Page, size = 20): Promise<void> => {
   await touch(cdp, 'touchStart', start);
   await expect.poll(() => peeked(page)).toEqual([cards[0]!.id]);
   // The raised card is whole, clear of the finger and above its
-  // neighbours.
+  // neighbours, and the first card, drawn larger, steps in from the
+  // screen's edge rather than run off it.
   const raised = page.locator('[data-peek] > .ptcgsim-card__body');
   await expect
     .poll(async () => {
       const box = (await raised.boundingBox())!;
-      return box.y + box.height <= fingerY;
+      return (
+        box.y + box.height <= fingerY &&
+        box.x >= 0 &&
+        box.x + box.width <= viewport.width
+      );
     })
     .toBe(true);
   const seen: string[] = [];

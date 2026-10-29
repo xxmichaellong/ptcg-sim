@@ -402,8 +402,21 @@ test.describe('on a phone', () => {
         })
       )
       .toBeGreaterThan(120);
-    // Done typing, they come back.
+    // A tap on a card found ends the typing: the header and its tabs come
+    // back to show the deck it went into, though the focus stays in the
+    // search's results.
     await page.setViewportSize({ width: 390, height: 844 });
+    await results
+      .getByRole('listitem')
+      .first()
+      .getByRole('button')
+      .first()
+      .tap();
+    await expect(head).toBeVisible();
+    await expect(page.locator('.deck-editor__tabs')).toBeVisible();
+    // Typing again, they step aside; done typing, they come back.
+    await search.tap();
+    await expect(head).toBeHidden();
     await search.blur();
     await expect(head).toBeVisible();
     await expect(page.locator('.deck-screen__seats')).toBeVisible();

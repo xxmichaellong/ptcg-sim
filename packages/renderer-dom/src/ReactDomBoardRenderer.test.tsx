@@ -2387,6 +2387,50 @@ describe('a finger on a crowded hand', () => {
     await unmount(renderer, host);
   });
 
+  it('lets a tap right after a slide reach the card it raised', async () => {
+    const { renderer, host, intents } = await mountHand(handScene(16, 12));
+    pointer(host, 'pointerdown', 25, 790, 'touch', cardNode(host, 0));
+    pointer(host, 'pointermove', 64, 792);
+    pointer(host, 'pointermove', 112, 788);
+    pointer(host, 'pointerup', 112, 788);
+    expect(intents).toEqual([
+      { kind: 'CardSelected', cardId: handCardId(7), toggle: true },
+    ]);
+    // Chromium sends no click after the slide. A deliberate tap on the card
+    // now selected is a new gesture, and reaches it at once.
+    pointer(host, 'pointerdown', 112, 790, 'touch', cardNode(host, 7));
+    pointer(host, 'pointerup', 112, 790, 'touch', cardNode(host, 7));
+    act(() => {
+      cardNode(host, 7).dispatchEvent(
+        new MouseEvent('click', { bubbles: true, detail: 1 })
+      );
+    });
+    expect(intents).toEqual([
+      { kind: 'CardSelected', cardId: handCardId(7), toggle: true },
+      { kind: 'CardSelected', cardId: handCardId(7), toggle: true },
+    ]);
+    await unmount(renderer, host);
+  });
+
+  it("keeps a card raised at the hand's end whole on the screen", async () => {
+    const scene = handScene(16, 12);
+    const { renderer, host } = await mountHand({
+      ...scene,
+      cards: scene.cards.map((card, index) =>
+        index === 0 ? { ...card, bounds: { ...card.bounds, x: 0 } } : card
+      ),
+    });
+    pointer(host, 'pointerdown', 5, 790, 'touch', cardNode(host, 0));
+    expect(peeked(host)).toEqual(['hand-0']);
+    // 90px drawn 4/3 larger about its middle would start at -15px; it steps
+    // in to keep 4px from the edge.
+    expect(
+      cardNode(host, 0).style.getPropertyValue('--ptcgsim-peek-shift')
+    ).toBe('19px');
+    pointer(host, 'pointerup', 5, 790);
+    await unmount(renderer, host);
+  });
+
   it('picks up the raised card when the finger moves on toward the table', async () => {
     const { renderer, host, intents, drags } = await mountHand(
       handScene(16, 12)
