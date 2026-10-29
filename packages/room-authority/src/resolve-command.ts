@@ -1731,6 +1731,27 @@ const resolveCardSteps = (
         step.type === 'MoveCardToPlay' || step.type === 'PlaceCardOnPlayStack'
           ? step.targetStackRef
           : undefined;
+      // The group's own shuffle of a deck its earlier steps put cards into
+      // (`s`: each on top, then each deck once) is theirs to make, whosever
+      // deck it is -- as each card shuffled in alone would be. A shuffle of
+      // a deck the group put nothing into is judged as one alone.
+      if (step.type === 'ShuffleZone') {
+        const deck = scratch.zones[asZoneId(step.zoneId)];
+        const before = new Set<string>(
+          state.zones[asZoneId(step.zoneId)]?.cardIds ?? []
+        );
+        if (
+          deck?.kind === 'deck' &&
+          deck.cardIds.some((id) => !before.has(id))
+        ) {
+          const command: BaseGameCommand = {
+            type: 'ShuffleZone',
+            zoneId: asZoneId(step.zoneId),
+          };
+          steps.push(command as CardStep);
+          return { accepted: true, command };
+        }
+      }
       let single = step as SingleWireCommand;
       if (ref !== undefined) {
         const target = ref < index ? made[ref] : undefined;

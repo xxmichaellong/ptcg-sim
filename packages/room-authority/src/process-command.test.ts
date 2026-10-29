@@ -3096,6 +3096,51 @@ describe('a group move (ApplyCardSteps) in the room', () => {
     expect(table.state().state.stacks[redActive]!.damage).toBe(10);
   });
 
+  it("shuffles the other player's public cards into their deck as a group, as each alone, but not their deck by itself", async () => {
+    const table = await room();
+    // Two of Red's cards in Red's discard pile, for all to see.
+    const theirs = table.cards(table.red, playerZoneId(p2, 'hand')).slice(0, 2);
+    for (const [index, card] of theirs.entries())
+      expect(
+        await table.send(
+          table.red,
+          `red-discards-${String(index)}`,
+          moveTo(card.id, 'hand', 'discard', p2)
+        )
+      ).toMatchObject({ accepted: true });
+    const shown = table.cards(table.blue, playerZoneId(p2, 'discard'));
+    expect(shown).toHaveLength(2);
+    const redDeck = playerZoneId(p2, 'deck');
+    const deckSize = table.state().state.zones[redDeck]!.cardIds.length;
+    expect(
+      await table.send(table.blue, 'blue-shuffles-red-in', {
+        type: 'ApplyCardSteps',
+        steps: [
+          ...shown.map((card) => ({
+            type: 'MoveCardToDeckTop' as const,
+            cardId: card.id,
+            expectedSourceId: playerZoneId(p2, 'discard'),
+          })),
+          { type: 'ShuffleZone' as const, zoneId: redDeck },
+        ],
+      })
+    ).toMatchObject({ accepted: true });
+    expect(table.state().state.zones[redDeck]!.cardIds).toHaveLength(
+      deckSize + 2
+    );
+    // A group that puts nothing in it may not shuffle it.
+    const [own] = table.cards(table.blue, playerZoneId(p1, 'hand'));
+    expect(
+      await table.send(table.blue, 'blue-shuffles-red', {
+        type: 'ApplyCardSteps',
+        steps: [
+          moveTo(own!.id, 'hand', 'discard'),
+          { type: 'ShuffleZone' as const, zoneId: redDeck },
+        ],
+      })
+    ).toMatchObject({ accepted: false, code: 'unauthorized' });
+  });
+
   it('names no hidden card to the other seat, a spectator, or their replays', async () => {
     const table = await room();
     const hand = table.cards(table.blue, playerZoneId(p1, 'hand'));
