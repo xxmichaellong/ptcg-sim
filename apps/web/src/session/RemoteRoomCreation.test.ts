@@ -316,6 +316,68 @@ describe('remote room creation bootstrap', () => {
     }
   });
 
+  it('sends a room creation lost in passing once more, and only that', async () => {
+    const created = () =>
+      Response.json(
+        {
+          mode: 'solo',
+          roomCode: 'ABCDEFGH2345',
+          credentials: {
+            playerOneSeatCapability: credentials.playerOneSeatCapability,
+          },
+        },
+        { status: 201 }
+      );
+    // A dropped connection, then a server or proxy failing in passing: the
+    // second try makes the room.
+    for (const first of [
+      async () => {
+        throw new TypeError('Failed to fetch');
+      },
+      async () => Response.json({ error: 'lost' }, { status: 502 }),
+      async () => Response.json({ error: 'busy' }, { status: 503 }),
+    ]) {
+      const fetchImplementation = vi
+        .fn<typeof fetch>()
+        .mockImplementationOnce(first)
+        .mockImplementationOnce(async () => created());
+      const bootstrap = vi.fn(async () => ({}) as never);
+      await createRemoteRoom(
+        { ...input, mode: 'solo' },
+        {
+          fetch: fetchImplementation,
+          origin: 'https://play.example',
+          bootstrap,
+        }
+      ).catch(() => undefined);
+      expect(fetchImplementation).toHaveBeenCalledTimes(2);
+      expect(bootstrap).toHaveBeenCalledOnce();
+    }
+    // A refusal is not tried again, nor is a creation the player cancelled.
+    const refused = vi.fn<typeof fetch>(async () =>
+      Response.json({ error: 'rate_limited' }, { status: 429 })
+    );
+    await expect(
+      createRemoteRoom(input, {
+        fetch: refused,
+        origin: 'https://play.example',
+      })
+    ).rejects.toMatchObject({ code: 'creation_failed' });
+    expect(refused).toHaveBeenCalledOnce();
+    const controller = new AbortController();
+    const cancelled = vi.fn<typeof fetch>(async () => {
+      controller.abort();
+      throw new DOMException('Aborted', 'AbortError');
+    });
+    await expect(
+      createRemoteRoom(
+        { ...input, signal: controller.signal },
+        { fetch: cancelled, origin: 'https://play.example' }
+      )
+    ).rejects.toMatchObject({ code: 'creation_failed' });
+    expect(cancelled).toHaveBeenCalledOnce();
+  });
+
   it('clears untaken invitations and redacts a failed owner bootstrap', async () => {
     const fetchImplementation = vi.fn(async () =>
       Response.json(

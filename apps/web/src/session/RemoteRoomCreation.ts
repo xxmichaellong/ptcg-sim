@@ -427,6 +427,31 @@ export const bootstrapRemoteRoomInvitation = async (
   }
 };
 
+/** A room creation's tries: the first, and one more if it was lost in passing. */
+const CREATION_ATTEMPTS = 2;
+/** How long the second try waits. */
+const CREATION_RETRY_MS = 400;
+/** Statuses of a failure in passing, which a second try may get past. */
+const PASSING_FAILURES: ReadonlySet<number> = new Set([500, 502, 503, 504]);
+
+/** Waits, unless cancelled first: true if the wait ran its course. */
+const pause = (ms: number, signal: AbortSignal | undefined): Promise<boolean> =>
+  new Promise((resolve) => {
+    if (signal?.aborted) {
+      resolve(false);
+      return;
+    }
+    const timer = setTimeout(() => {
+      signal?.removeEventListener('abort', cancel);
+      resolve(true);
+    }, ms);
+    const cancel = (): void => {
+      clearTimeout(timer);
+      resolve(false);
+    };
+    signal?.addEventListener('abort', cancel, { once: true });
+  });
+
 const validInput = (input: RemoteRoomCreationInput): boolean => {
   const displayName = input.displayName.trim();
   return (
@@ -468,22 +493,37 @@ export const createRemoteRoom = async (
     throw new RemoteRoomCreationError('invalid_input');
   }
 
-  let response: Response;
-  try {
-    response = await fetchImplementation(new URL('/v2/rooms', origin), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ mode: input.mode }),
-      cache: 'no-store',
-      credentials: 'omit',
-      redirect: 'error',
-      referrerPolicy: 'no-referrer',
-      signal: withRequestDeadline(input.signal, dependencies.requestTimeoutMs),
-    });
-  } catch {
-    throw new RemoteRoomCreationError('creation_failed');
+  // A request lost in passing (a dropped connection, or the server or a
+  // proxy before it failing on the way: 500, 502-504) is sent once more
+  // before the player is told; a room made by the first that nobody
+  // claims expires on its own. A refusal (429 among them), a stalled
+  // answer or the player's own cancel is not tried again.
+  let response: Response | undefined;
+  for (let attempt = 1; attempt <= CREATION_ATTEMPTS; attempt += 1) {
+    if (attempt > 1 && !(await pause(CREATION_RETRY_MS, input.signal))) break;
+    const signal = withRequestDeadline(
+      input.signal,
+      dependencies.requestTimeoutMs
+    );
+    try {
+      response = await fetchImplementation(new URL('/v2/rooms', origin), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: input.mode }),
+        cache: 'no-store',
+        credentials: 'omit',
+        redirect: 'error',
+        referrerPolicy: 'no-referrer',
+        signal,
+      });
+    } catch {
+      response = undefined;
+      if (signal.aborted) break;
+      continue;
+    }
+    if (!PASSING_FAILURES.has(response.status)) break;
   }
-  if (response.status !== 201) {
+  if (response?.status !== 201) {
     throw new RemoteRoomCreationError('creation_failed');
   }
   const responseBody = await readBoundedJsonResponse(
