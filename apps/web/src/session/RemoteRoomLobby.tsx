@@ -298,10 +298,12 @@ const inviteOutcome = async (
   try {
     return (await send()).outcome;
   } catch (error) {
-    return error instanceof RemoteRoomInvitationError &&
-      error.code === 'seat_unavailable'
+    if (!(error instanceof RemoteRoomInvitationError)) return 'failed';
+    return error.code === 'seat_unavailable'
       ? 'seat_unavailable'
-      : 'failed';
+      : error.code === 'expired_invitation'
+        ? 'expired'
+        : 'failed';
   }
 };
 

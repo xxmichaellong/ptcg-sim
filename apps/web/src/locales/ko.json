@@ -5510,6 +5510,13 @@
     "message": "Save game",
     "translation": "게임 저장"
   },
+  "s7g8Y-": {
+    "message": "Save the game and resume it to get a new invitation.",
+    "comments": [
+      "Advice after an expired invitation: saving the game and resuming it issues a fresh invitation link."
+    ],
+    "translation": "게임을 저장한 뒤 다시 시작하면 새 초대를 받을 수 있습니다."
+  },
   "OnrVKw": {
     "message": "Saved",
     "context": "the deck's changes are kept",
@@ -6563,6 +6570,10 @@
   "5PdIYU": {
     "message": "This game will be lost.",
     "translation": "이 게임은 사라집니다."
+  },
+  "eBiRbO": {
+    "message": "This invitation has expired.",
+    "translation": "이 초대가 만료되었습니다."
   },
   "5HIoIb": {
     "message": "This invitation was used or has expired. Ask for a new one.",

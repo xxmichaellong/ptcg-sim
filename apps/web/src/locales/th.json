@@ -5510,6 +5510,13 @@
     "message": "Save game",
     "translation": "บันทึกเกม"
   },
+  "s7g8Y-": {
+    "message": "Save the game and resume it to get a new invitation.",
+    "comments": [
+      "Advice after an expired invitation: saving the game and resuming it issues a fresh invitation link."
+    ],
+    "translation": "บันทึกเกมแล้วเล่นต่อเพื่อรับคำเชิญใหม่"
+  },
   "OnrVKw": {
     "message": "Saved",
     "context": "the deck's changes are kept",
@@ -6563,6 +6570,10 @@
   "5PdIYU": {
     "message": "This game will be lost.",
     "translation": "เกมนี้จะหายไป"
+  },
+  "eBiRbO": {
+    "message": "This invitation has expired.",
+    "translation": "คำเชิญนี้หมดอายุแล้ว"
   },
   "5HIoIb": {
     "message": "This invitation was used or has expired. Ask for a new one.",

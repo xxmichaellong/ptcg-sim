@@ -118,6 +118,17 @@ describe('the room’s invites', () => {
       await Promise.resolve();
     });
     expect(toasts.at(-1)?.tone).toBe('danger');
+    // A resumed game's invitation past its time: says so, and the way on.
+    answer = 'expired';
+    await act(async () => {
+      latest.invite('spectator');
+      await Promise.resolve();
+    });
+    expect(toasts.at(-1)).toEqual({
+      title: 'This invitation has expired.',
+      body: 'Save the game and resume it to get a new invitation.',
+      tone: 'warning',
+    });
   });
 
   it('starts a new room (a resumed game) with its seat free again', async () => {

@@ -8,7 +8,13 @@ export type RoomInviteRole = 'player' | 'spectator';
 
 /** What became of an Invite press. */
 export type RoomInviteOutcome =
-  'shared' | 'copied' | 'cancelled' | 'seat_unavailable' | 'failed';
+  | 'shared'
+  | 'copied'
+  | 'cancelled'
+  | 'seat_unavailable'
+  /** A resumed game's one invitation, past its time. */
+  | 'expired'
+  | 'failed';
 
 /**
  * What a room can invite with (ADR-020): the creator's custody mints a new
@@ -84,6 +90,19 @@ export const useRoomInvites = ({
             case 'seat_unavailable':
               setRefusedIn(session);
               toast({ title: t`Both seats are taken.`, tone: 'warning' });
+              return;
+            case 'expired':
+              // The seat can't mint another; a fresh resume brings one.
+              toast({
+                title: t`This invitation has expired.`,
+                body: t({
+                  message:
+                    'Save the game and resume it to get a new invitation.',
+                  comment:
+                    'Advice after an expired invitation: saving the game and resuming it issues a fresh invitation link.',
+                }),
+                tone: 'warning',
+              });
               return;
             case 'failed':
               toast({

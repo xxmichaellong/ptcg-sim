@@ -22,11 +22,16 @@ import {
  */
 export class RemoteRoomHeldInvitation {
   readonly #linkBase: string;
+  readonly #now: () => number;
   #handoff: RoomInvitationHandoff | undefined;
   #sharing = false;
 
-  constructor(linkBase = currentInvitationLinkBase() ?? '/') {
+  constructor(
+    linkBase = currentInvitationLinkBase() ?? '/',
+    now: () => number = Date.now
+  ) {
     this.#linkBase = linkBase;
+    this.#now = now;
   }
 
   /** Holds the restore's invitation envelope; refuses anything else. */
@@ -47,6 +52,11 @@ export class RemoteRoomHeldInvitation {
   ): Promise<RemoteRoomInvitationShareReceipt> {
     const handoff = this.#handoff;
     if (!handoff) throw new RemoteRoomInvitationError('invalid_input');
+    // Past its time the room refuses the claim, and this seat can't mint
+    // another: say so, rather than pass on a link that only fails there.
+    if (this.#now() >= handoff.expiresAt) {
+      throw new RemoteRoomInvitationError('expired_invitation');
+    }
     if (!deliver) throw new RemoteRoomInvitationError('clipboard_unavailable');
     if (this.#sharing) throw new RemoteRoomInvitationError('copy_in_progress');
     this.#sharing = true;

@@ -216,6 +216,28 @@ describe('a resumed game’s held invitation', () => {
     held.dispose();
     expect(held.held).toBe(false);
   });
+
+  it('passes on nothing once its invitation is past its time, and says why', async () => {
+    let now = handoff.expiresAt - 1;
+    const held = new RemoteRoomHeldInvitation(
+      'https://ptcgsim.example/',
+      () => now
+    );
+    held.hold(serializeRoomInvitationHandoffText(handoff));
+    const deliver = vi.fn(async (link: Promise<string>) => {
+      await link;
+      return 'copied' as const;
+    });
+    await expect(held.invite(deliver)).resolves.toMatchObject({
+      outcome: 'copied',
+    });
+    now = handoff.expiresAt;
+    deliver.mockClear();
+    await expect(held.invite(deliver)).rejects.toMatchObject({
+      code: 'expired_invitation',
+    });
+    expect(deliver).not.toHaveBeenCalled();
+  });
 });
 
 describe('a guest’s invitation custody', () => {

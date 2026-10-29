@@ -5510,6 +5510,13 @@
     "message": "Save game",
     "translation": "Spel opslaan"
   },
+  "s7g8Y-": {
+    "message": "Save the game and resume it to get a new invitation.",
+    "comments": [
+      "Advice after an expired invitation: saving the game and resuming it issues a fresh invitation link."
+    ],
+    "translation": "Sla het spel op en hervat het om een nieuwe uitnodiging te krijgen."
+  },
   "OnrVKw": {
     "message": "Saved",
     "context": "the deck's changes are kept",
@@ -6563,6 +6570,10 @@
   "5PdIYU": {
     "message": "This game will be lost.",
     "translation": "Dit spel gaat verloren."
+  },
+  "eBiRbO": {
+    "message": "This invitation has expired.",
+    "translation": "Deze uitnodiging is verlopen."
   },
   "5HIoIb": {
     "message": "This invitation was used or has expired. Ask for a new one.",
