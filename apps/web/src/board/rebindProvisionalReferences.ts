@@ -4,7 +4,7 @@ import {
   type ViewCard,
 } from '@ptcgsim/game-core';
 import { DEFAULT_CLIENT_SESSION_POLICY } from '@ptcgsim/client-session';
-import type { WireGameCommand } from '@ptcgsim/protocol';
+import { cardStepMakesPokemon, type WireGameCommand } from '@ptcgsim/protocol';
 
 import {
   isRandomizingCommand,
@@ -129,6 +129,11 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
       readonly before: ReadonlySet<string>;
       /** What the played card is, when the sender could read it. */
       readonly definitionId?: string;
+      /**
+       * A card played in pieces in one move (a V-UNION): every piece's
+       * alias, the played one first, as they lie in the Pokémon it made.
+       */
+      readonly pieces?: readonly string[];
       /** Restore can rotate every staged alias, including evolutions and Tools. */
       readonly restored?: {
         readonly revision: number;
@@ -562,15 +567,19 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
       return found;
     }
     // Not under its old alias: the stack where it was played, if that is
-    // still the one-card stack it made.
+    // still the stack it made, of the one card (or the pieces) it played.
     const placed = placedStack(id, view);
+    const placement = placements.get(id);
+    const pieces = placement?.pieces ?? [cardId];
     if (
       placed &&
-      !placements.get(id)?.restored &&
-      placed.evolutionCards.length === 1
+      !placement?.restored &&
+      placed.evolutionCards.length === pieces.length
     ) {
       remember(stacks, id, placed.id);
-      rememberCard(cardId, placed.evolutionCards[0]!.id);
+      pieces.forEach((alias, index) =>
+        rememberCard(alias, placed.evolutionCards[index]!.id)
+      );
       return placed.id;
     }
     return id;
@@ -770,6 +779,37 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
             attachmentCards: area.attachmentCards,
           });
         }
+      }
+    }
+    // A group's move can make several Pokémon (a V-UNION from its pieces,
+    // two Basics benched at once): each is remembered where the prediction
+    // put it, so a move queued behind the group finds the one the room made.
+    if (rebound.type === 'ApplyCardSteps' && predicted) {
+      for (const [index, step] of rebound.steps.entries()) {
+        if (!cardStepMakesPokemon(step)) continue;
+        const key = `${PREDICTED_STACK}${step.cardId}`;
+        const stack = predicted.stacks[key];
+        const board = stack && predicted.boards[stack.boardPlayerId];
+        if (!stack || !board) continue;
+        // The later pieces the group put on it, in order.
+        const pieces = rebound.steps.flatMap((later) =>
+          later.type === 'PlaceCardOnPlayStack' &&
+          later.mode === 'evolution' &&
+          later.targetStackRef === index
+            ? [later.cardId]
+            : []
+        );
+        remember(placements, key, {
+          boardPlayerId: stack.boardPlayerId,
+          slot: stack.slot,
+          ...(stack.slot === 'bench'
+            ? { benchIndex: board.benchStackIds.indexOf(key) }
+            : {}),
+          before: new Set(Object.keys(view.stacks)),
+          ...definitionOf(view, step.cardId),
+          ...(pieces.length > 0 ? { pieces: [step.cardId, ...pieces] } : {}),
+        });
+        placedKeys.push(key);
       }
     }
     if (rebound.type === 'RestoreStagedStack') {

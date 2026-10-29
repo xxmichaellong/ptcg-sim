@@ -44,6 +44,11 @@ export const predictWireCommand = (
   options: PredictionOptions = {}
 ): MatchViewState | null => {
   if (view.viewer.kind !== 'player') return null;
+  // A group's steps, folded one by one; it brings a lone Benched Pokémon
+  // up once, after the last, as the room does.
+  if (command.type === 'ApplyCardSteps') {
+    return predictCardSteps(view, command.steps, options);
+  }
   const viewerId: Reader = {
     id: view.viewer.playerId,
     readsEveryHand: options.readsEveryHand === true,
@@ -1503,8 +1508,7 @@ const predict = (
       return null;
     }
     case 'ApplyCardSteps':
-      // Not predicted yet: a group's steps are to be folded one by one,
-      // each on the view the steps before it left.
+      // Folded step by step in predictWireCommand (predictCardSteps).
       return null;
     default:
       return null;
