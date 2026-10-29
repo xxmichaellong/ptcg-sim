@@ -139,6 +139,30 @@ describe('custom card pictures', () => {
     });
   });
 
+  it('forgets the link when a file takes its place', async () => {
+    await fill('#nativeCustomCardName', 'Scan');
+    await fill('#nativeCustomCardImageUrl', 'https://example.test/scan.png');
+    await act(async () => {
+      $('#nativeCustomCardImageUrl').dispatchEvent(
+        new FocusEvent('focusout', { bubbles: true })
+      );
+    });
+    expect($<HTMLImageElement>('#nativeCustomCardPreviewImage').src).toBe(
+      'https://example.test/scan.png'
+    );
+    await pickFile(0, picture('proxy.png'));
+    expect($<HTMLInputElement>('#nativeCustomCardImageUrl').value).toBe('');
+    // Passing through the empty field leaves the file be.
+    await act(async () => {
+      $('#nativeCustomCardImageUrl').dispatchEvent(
+        new FocusEvent('focusout', { bubbles: true })
+      );
+    });
+    expect(uploadCardImage).toHaveBeenCalledTimes(2);
+    await click('#nativeCustomCardSubmit');
+    expect(onAdd.mock.calls[0]![0][0]!.image).toBe('/v2/images/proxy.png');
+  });
+
   it('adds a V-UNION as four pieces at once, one picture each', async () => {
     await fill('#nativeCustomCardName', 'Mewtwo V-UNION');
     await fill('#nativeCustomCardQty', '2');

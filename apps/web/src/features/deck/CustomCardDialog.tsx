@@ -91,11 +91,11 @@ const ImageSlot = ({
   readonly onPicture: (source: Blob | string | null) => void;
 }) => {
   const { t } = useLingui();
-  const [link, setLink] = useState(
+  const slotLink =
     slot.status === 'ready' || slot.status === 'uploading'
-      ? (slot.link ?? '')
-      : ''
-  );
+      ? slot.link
+      : undefined;
+  const [link, setLink] = useState(slotLink ?? '');
   const [over, setOver] = useState(false);
   const file = useRef<HTMLInputElement>(null);
   const first = index === 0;
@@ -105,16 +105,14 @@ const ImageSlot = ({
       : slot.status === 'uploading'
         ? slot.preview
         : undefined;
+  // The field shows where the picture came from: its link, or nothing
+  // for a file. A link that failed stays, to be put right.
   useEffect(() => {
-    if (slot.status === 'empty') setLink('');
-  }, [slot.status]);
+    if (slot.status !== 'failed') setLink(slotLink ?? '');
+  }, [slot.status, slotLink]);
   const commitLink = (value: string): void => {
     const next = value.trim();
-    const current =
-      slot.status === 'ready' || slot.status === 'uploading'
-        ? slot.link
-        : undefined;
-    if (next && next !== current) onPicture(next);
+    if (next && next !== slotLink) onPicture(next);
   };
   const failure =
     slot.status !== 'failed'
