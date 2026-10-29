@@ -5,6 +5,7 @@ import {
   parseBoardDepth,
 } from '../../packages/renderer-contract/src/index.js';
 
+import { logLines } from './support/multi-select.js';
 import {
   chooseMenuItem,
   closeSheet,
@@ -13,7 +14,8 @@ import {
 } from './support/table-shell.js';
 
 const escape = (value: unknown) => `"${String(value).replaceAll('"', '""')}"`;
-const csv = () => {
+/** The deck; with a second copy of the LEGEND's halves when asked. */
+const csv = ({ secondLegend = false } = {}) => {
   const rows: unknown[][] = [];
   const add = (
     name: string,
@@ -40,6 +42,12 @@ const csv = () => {
       readingQuarterTurns: 1,
       join: { key: 'lugia', columns: 1, rows: 2, part },
     });
+  if (secondLegend)
+    for (let part = 0; part < 2; part++)
+      add('Lugia LEGEND', 'Pokémon', `legend-${part + 2}`, {
+        readingQuarterTurns: 1,
+        join: { key: 'lugia', columns: 1, rows: 2, part },
+      });
   add('Greninja', 'Pokémon', 'greninja');
   add('Greninja BREAK', 'Pokémon', 'break', {
     readingQuarterTurns: 1,
@@ -58,7 +66,8 @@ const csv = () => {
   ].join('\n');
 };
 
-const start = async (page: Page) => {
+const start = async (page: Page, options: { secondLegend?: boolean } = {}) => {
+  const count = options.secondLegend ? 14 : 12;
   await page.goto('/?room-lobby=1');
   await page.locator('#nameInput').fill('Special card review');
   // Putting Play online away goes to the Solo table.
@@ -71,18 +80,18 @@ const start = async (page: Page) => {
   await page.locator('#nativeDeckBuilderCsvImport').setInputFiles({
     name: 'formats.csv',
     mimeType: 'text/csv',
-    buffer: Buffer.from(csv()),
+    buffer: Buffer.from(csv(options)),
   });
   await expect(page.locator('#nativeDeckBuilderSummaryPanel')).toHaveAttribute(
     'data-card-count',
-    '12'
+    String(count)
   );
   await page.locator('#nativeDeckBuilderPlayButton').click();
   await expect
     .poll(() =>
       page.evaluate(() => window.__PTCG_RENDERER_SPIKE__?.scene.cards.length)
     )
-    .toBe(12);
+    .toBe(count);
 };
 
 const sceneCard = (page: Page, piece: string) =>
@@ -210,6 +219,64 @@ const dragFromDeck = async (
   });
   await page.mouse.up();
 };
+
+const idleTable = (page: Page) =>
+  expect(
+    page.locator('.ptcgsim-board-surface[data-board-motion="idle"]')
+  ).toHaveCount(1, { timeout: 15_000 });
+
+/** The near seat's pile open in its viewer. */
+const openPile = async (page: Page, kind: 'deck' | 'discard') => {
+  const viewer = page.locator('[data-legacy-zone-browser]');
+  if (await viewer.isVisible()) {
+    await page.keyboard.press('Escape');
+    await expect(viewer).toHaveCount(0);
+  }
+  await idleTable(page);
+  const top = await page.evaluate(
+    (kind) =>
+      window.__PTCG_RENDERER_SPIKE__!.scene.cards.find(
+        (card) =>
+          card.side === 'local' &&
+          card.parentId.endsWith(`:${kind}`) &&
+          card.renderKey !== null
+      )!.id,
+    kind
+  );
+  await page.locator(`[data-card-id="${top}"]`).dblclick();
+  await expect(viewer).toBeVisible();
+};
+
+const tileOf = async (page: Page, piece: string) =>
+  page.locator(
+    `[data-legacy-zone-browser] button[data-overlay-card-id="${(await sceneCard(page, piece)).id}"]`
+  );
+
+/** Pieces taken into the selection with Shift, in the open viewer. */
+const pickInViewer = async (page: Page, ...pieces: string[]) => {
+  for (const piece of pieces)
+    await (await tileOf(page, piece)).click({ modifiers: ['Shift'] });
+};
+
+const tableRevision = (page: Page) =>
+  page.evaluate(() => window.__PTCG_RENDERER_SPIKE__!.scene.revision);
+
+/** Does something that moves cards, and waits for the room's answer. */
+const afterMove = async (page: Page, act: () => Promise<void>) => {
+  const before = await tableRevision(page);
+  await act();
+  await expect.poll(() => tableRevision(page)).toBeGreaterThan(before);
+  await idleTable(page);
+};
+
+const pileCount = (page: Page, kind: 'deck' | 'discard') =>
+  page.evaluate(
+    (kind) =>
+      window.__PTCG_RENDERER_SPIKE__!.scene.zones.find(
+        (zone) => zone.side === 'local' && zone.kind === kind
+      )!.count,
+    kind
+  );
 
 for (const mode of ['flat', 'table'] as const)
   test.describe(`${mode} table`, () => {
@@ -571,5 +638,141 @@ for (const mode of ['flat', 'table'] as const)
             ).length
         )
       ).toBe(1);
+    });
+
+    test('a V-UNION in the discard pile plays as one card: one Pokémon on the Bench, one line, one Undo', async ({
+      page,
+    }) => {
+      test.setTimeout(120_000);
+      await start(page);
+      const union = ['union-0', 'union-1', 'union-2', 'union-3'];
+      // Its four pieces put in the discard pile, as a group.
+      await openPile(page, 'deck');
+      await pickInViewer(page, ...union);
+      await afterMove(page, () => page.keyboard.press('d'));
+      expect(await pileCount(page, 'discard')).toBe(4);
+      const viewer = page.locator('[data-legacy-zone-browser]');
+      if (await viewer.isVisible()) await page.keyboard.press('Escape');
+      await expect(viewer).toHaveCount(0);
+      const lines = (await logLines(page)).length;
+      // Play as one card, from a piece's own menu in the discard's viewer.
+      await openPile(page, 'discard');
+      await (await tileOf(page, 'union-2')).click({ button: 'right' });
+      await page.locator('[data-context-action="playAsOne"]').click();
+      const menu = page.locator('[data-group-menu]');
+      await expect(menu).toBeVisible();
+      await afterMove(page, () =>
+        menu.locator('[data-group-entry="play:bench"]').click()
+      );
+      const pieces = await Promise.all(
+        union.map((piece) => sceneCard(page, piece))
+      );
+      expect(new Set(pieces.map((card) => card.parentId)).size).toBe(1);
+      expect(pieces.every((card) => card.role === 'stackEvolution')).toBe(true);
+      expect(pieces[0]!.composition?.kind).toBe('joined');
+      expect(await pileCount(page, 'discard')).toBe(0);
+      expect((await logLines(page)).length).toBe(lines + 1);
+      // One Undo takes the whole play back.
+      await page.keyboard.press('Escape');
+      await afterMove(page, () => page.keyboard.press('u'));
+      expect(await pileCount(page, 'discard')).toBe(4);
+    });
+
+    test('two pieces of a V-UNION play as one unfinished Pokémon', async ({
+      page,
+    }) => {
+      test.setTimeout(120_000);
+      await start(page);
+      await openPile(page, 'deck');
+      await pickInViewer(page, 'union-0', 'union-1');
+      await afterMove(page, () => page.keyboard.press('d'));
+      await openPile(page, 'discard');
+      await (await tileOf(page, 'union-1')).click({ button: 'right' });
+      await page.locator('[data-context-action="playAsOne"]').click();
+      const menu = page.locator('[data-group-menu]');
+      await expect(menu).toBeVisible();
+      await afterMove(page, () =>
+        menu.locator('[data-group-entry="play:bench"]').click()
+      );
+      const [first, second] = await Promise.all([
+        sceneCard(page, 'union-0'),
+        sceneCard(page, 'union-1'),
+      ]);
+      expect(first.parentId).toBe(second.parentId);
+      expect(first.role).toBe('stackEvolution');
+      expect(await pileCount(page, 'discard')).toBe(0);
+    });
+
+    test('two copies of a LEGEND dragged together make two Pokémon', async ({
+      page,
+    }) => {
+      test.setTimeout(120_000);
+      await start(page, { secondLegend: true });
+      await openPile(page, 'deck');
+      await pickInViewer(page, 'legend-0', 'legend-1', 'legend-2', 'legend-3');
+      const bench = await page.evaluate(
+        () =>
+          window.__PTCG_RENDERER_SPIKE__!.scene.zones.find(
+            (zone) => zone.side === 'local' && zone.kind === 'bench'
+          )!.bounds
+      );
+      await afterMove(page, () =>
+        dragFromDeck(page, 'legend-0', {
+          x: bench.x + bench.width / 2,
+          y: bench.y + bench.height / 2,
+        })
+      );
+      const halves = await Promise.all(
+        ['legend-0', 'legend-1', 'legend-2', 'legend-3'].map((piece) =>
+          sceneCard(page, piece)
+        )
+      );
+      expect(halves.every((card) => card.role === 'stackEvolution')).toBe(true);
+      const pokemon = new Set(halves.map((card) => card.parentId));
+      expect(pokemon.size).toBe(2);
+      for (const stack of pokemon)
+        expect(halves.filter((card) => card.parentId === stack)).toHaveLength(
+          2
+        );
+    });
+
+    test('a split Stadium played as a group replaces the one in play', async ({
+      page,
+    }) => {
+      test.setTimeout(120_000);
+      await start(page);
+      await fromDeck(page, 'replacement', 'g');
+      await openPile(page, 'deck');
+      await pickInViewer(page, 'stadium-0', 'stadium-1');
+      await afterMove(page, () => page.keyboard.press('g'));
+      await expect
+        .poll(() =>
+          page.evaluate(
+            () =>
+              window.__PTCG_RENDERER_SPIKE__!.scene.zones.find(
+                (zone) => zone.kind === 'stadium'
+              )!.count
+          )
+        )
+        .toBe(2);
+      expect((await sceneCard(page, 'replacement')).parentId).toMatch(
+        /:discard$/
+      );
+    });
+
+    test('b on a lone piece joins the unfinished Pokémon of its print', async ({
+      page,
+    }) => {
+      test.setTimeout(120_000);
+      await start(page);
+      await fromDeck(page, 'union-3', 'b');
+      await page.keyboard.press('Escape');
+      await fromDeck(page, 'union-2', 'b');
+      const [lone, joined] = await Promise.all([
+        sceneCard(page, 'union-3'),
+        sceneCard(page, 'union-2'),
+      ]);
+      expect(joined.parentId).toBe(lone.parentId);
+      expect(joined.role).toBe('stackEvolution');
     });
   });

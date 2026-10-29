@@ -14,6 +14,7 @@ const sharedSpecs = [
   'show-board-keyboard.spec.ts',
   'deck-hover-zoom.spec.ts',
   'deck-dialog-focus.spec.ts',
+  'multi-select-modifiers.spec.ts',
 ];
 
 export default defineConfig({
