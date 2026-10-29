@@ -407,13 +407,30 @@ const unfinishedFor = (
     : null;
 };
 
+/**
+ * The seat a card's move acts for: at a Solo table that works both seats'
+ * windows (`controlsEverySeat`), the seat whose window the card is in, as
+ * turning the table to it would make it; otherwise the acting seat.
+ */
+const actingFor = (
+  context: SelectionContext,
+  view: MatchViewState,
+  cardId: ViewCardId
+): string | undefined => {
+  if (context.controlsEverySeat !== true) return context.actingPlayerId;
+  const located = locateViewCardActionSource(view, cardId);
+  return located?.sourceKind === 'inspection' ||
+    located?.sourceKind === 'staged'
+    ? located.sourcePlayerId
+    : context.actingPlayerId;
+};
+
 const compileSend = (
   context: SelectionContext,
   steps: Steps,
   items: readonly ViewCardId[],
   to: GroupPlace
 ): Refusal | null => {
-  const acting = context.actingPlayerId;
   const shuffled: string[] = [];
   for (const item of items) {
     const view = steps.view();
@@ -466,10 +483,15 @@ const compileSend = (
         view,
         item,
         to === 'deckBottom' ? 'moveToBottom' : 'moveToTop',
-        acting
+        actingFor(context, view, item)
       );
     } else {
-      resolution = resolveCardZoneMoveAction(view, item, to, acting);
+      resolution = resolveCardZoneMoveAction(
+        view,
+        item,
+        to,
+        actingFor(context, view, item)
+      );
     }
     const failed = take(steps, item, resolution);
     if (failed) return failed;
@@ -484,7 +506,30 @@ const compilePlay = (
   items: readonly ViewCardId[],
   slot: 'active' | 'bench'
 ): Refusal | null => {
-  const acting = context.actingPlayerId;
+  // Into play as each goes alone; a card being looked at in a window goes
+  // as a drag puts it there (`MoveInspectedCardToPlay`), which the keys'
+  // own resolver doesn't take.
+  const played = (cardId: ViewCardId): Resolution => {
+    const view = steps.view();
+    const located = locateViewCardActionSource(view, cardId);
+    if (located?.sourceKind !== 'inspection')
+      return resolveCardPlayMoveAction(
+        view,
+        cardId,
+        slot,
+        actingFor(context, view, cardId)
+      );
+    const place = context.scene.zones.find(
+      (zone) => zone.kind === slot && zone.playerId === located.card.ownerId
+    );
+    if (!place) return { ok: false, reason: 'unsupported_target' };
+    return resolveBoardDrop(
+      view,
+      context.scene,
+      { kind: 'CardDropRequested', cardId, targetId: place.id, x: 0, y: 0 },
+      { eitherSeatsWindows: context.controlsEverySeat === true }
+    );
+  };
   const units = playUnits(context.view, items);
   if (slot === 'active' && units.length > 1) return refuse('one_active');
   for (const unit of units) {
@@ -496,14 +541,8 @@ const compilePlay = (
     const failed = unfinished
       ? joinPokemon(steps, cardIds, unfinished)
       : unit.kind === 'set'
-        ? playPieceSet(steps, unit.set, (cardId) =>
-            resolveCardPlayMoveAction(steps.view(), cardId, slot, acting)
-          )
-        : take(
-            steps,
-            unit.cardId,
-            resolveCardPlayMoveAction(steps.view(), unit.cardId, slot, acting)
-          );
+        ? playPieceSet(steps, unit.set, played)
+        : take(steps, unit.cardId, played(unit.cardId));
     if (failed) return failed;
   }
   return null;

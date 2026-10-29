@@ -470,6 +470,22 @@ describe('a selection of several cards (ADR-042)', () => {
     expect(board.selection).toEqual(hand);
   });
 
+  it('leaves a refused group down when the player put the selection down while it was on its way', () => {
+    const table = groupTable();
+    const hand = table.put(BLUE, 'hand', energy, energy);
+    const board = driver(table.view);
+    board.intent({ kind: 'CardsSelected', cardIds: hand, mode: 'replace' });
+    board.act({
+      kind: 'GroupActionRequested',
+      action: { kind: 'send', to: 'lostZone' },
+    });
+    board.act({ kind: 'SubmissionQueued', commandId: 'group' });
+    // Escape before the room answers.
+    board.act({ kind: 'DismissLocalPresentation', scope: 'all' });
+    board.act({ kind: 'CommandRefused', commandId: 'group' });
+    expect(board.selection).toEqual([]);
+  });
+
   it('marks every Pokémon of the group and leaves the group selected', () => {
     const table = groupTable();
     const active = table.pokemon(BLUE, 'active', [{ name: 'Pikachu' }]);

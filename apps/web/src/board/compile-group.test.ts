@@ -4,6 +4,7 @@ import {
   PROTOCOL_VERSION,
   type WireGameCommand,
 } from '@ptcgsim/protocol';
+import { createBoardSceneForViewport } from '@ptcgsim/renderer-contract';
 import { describe, expect, it } from 'vitest';
 
 import { compileGroup, type GroupAction } from './compile-group.js';
@@ -31,6 +32,52 @@ const stadiumHalf = (part: number) => ({
   presentation: piece(PYRODUCT, part, 2, 1),
 });
 const energy = { category: 'Energy' as const, name: 'Fire Energy' };
+
+/** These cards of a seat's hand taken up into its inspection window. */
+const intoWindow = (
+  view: MatchViewState,
+  seat: string,
+  cardIds: readonly ViewCardId[]
+): MatchViewState => {
+  const hand = Object.values(view.zones).find(
+    (zone) => zone.kind === 'hand' && zone.ownerId === seat
+  )!;
+  return {
+    ...view,
+    zones: {
+      ...view.zones,
+      [hand.id]: {
+        ...hand,
+        cards: hand.cards.filter((card) => !cardIds.includes(card.id)),
+      },
+    },
+    workAreas: {
+      ...view.workAreas,
+      [seat]: {
+        ...view.workAreas[seat]!,
+        inspection: {
+          id: `inspection:${seat}`,
+          cards: hand.cards.filter((card) => cardIds.includes(card.id)),
+          sourceZoneId: hand.id,
+        },
+      },
+    },
+  };
+};
+
+const contextOf = (
+  view: MatchViewState,
+  options: Omit<SelectionContext, 'view' | 'scene'> = {}
+): SelectionContext => ({
+  view,
+  scene: createBoardSceneForViewport(view, {
+    viewport: { width: 1208, height: 900, devicePixelRatio: 1 },
+    bottomPlayerId: BLUE,
+    splitRatio: 0.5,
+    geometryVersion: 1,
+  }),
+  ...options,
+});
 
 /** The group's move compiled, sent as one command the wire accepts. */
 const compiled = (
@@ -203,6 +250,42 @@ describe('a group moved by a key', () => {
     expect(ids(next.zones[table.zoneId(RED, 'lostZone')]!.cards)).toEqual([
       red,
     ]);
+  });
+
+  it('plays a card in pieces from the inspection window, as a drag does', () => {
+    const table = groupTable();
+    const halves = table.put(
+      BLUE,
+      'hand',
+      legend(0),
+      legend(1)
+    ) as ViewCardId[];
+    const context = contextOf(intoWindow(table.view, BLUE, halves));
+    const result = compileGroup(context, halves, {
+      kind: 'play',
+      slot: 'bench',
+    });
+    expect(result.ok).toBe(true);
+    const command = result.ok ? result.command : undefined;
+    expect(
+      command?.type === 'ApplyCardSteps' &&
+        command.steps.map((step) => step.type)
+    ).toEqual(['MoveInspectedCardToPlay', 'PlaceCardOnPlayStack']);
+  });
+
+  it("moves cards out of the other seat's window at a Solo table that works both", () => {
+    const table = groupTable();
+    const looked = table.put(RED, 'hand', {}, {}) as ViewCardId[];
+    const context = contextOf(intoWindow(table.view, RED, looked), {
+      controlsEverySeat: true,
+    });
+    for (const action of [
+      { kind: 'send', to: 'discard' },
+      { kind: 'send', to: 'deckBottom' },
+    ] as const) {
+      const result = compileGroup(context, looked, action);
+      expect(result.ok, action.to).toBe(true);
+    }
   });
 
   it('leaves out cards already there, and says so when every one is', () => {

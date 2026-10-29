@@ -3038,9 +3038,13 @@ export const reduceBoardSessionController = (
       return {
         ...reduction,
         state: nextState(reduction.state, {
+          // A group still on its way gives nothing back if refused: its
+          // selection was put down.
           groupSubmissions: (
             reduction.state.groupSubmissions ?? NO_GROUP_SUBMISSIONS
-          ).map(forget),
+          ).map((entry) =>
+            selection ? { ...forget(entry), cardIds: [] } : forget(entry)
+          ),
           selectionRestore: selection || !restore ? null : forget(restore),
         }),
       };
