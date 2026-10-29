@@ -219,8 +219,11 @@
   white-space: nowrap;
 }
 
+/* A row too long for its width gives up the path first, then the title's
+   end: the detail (the seat, the card) stays whole up to two fifths of the
+   row, so "Shuffle hand to bottom of deck and draw…" still says whose. */
 .ptcgsim-command__path {
-  flex: 0 1 auto;
+  flex: 0 100 auto;
   min-width: 2ch;
   overflow: hidden;
   color: var(--color-text-muted);
@@ -229,16 +232,16 @@
 }
 
 .ptcgsim-command__title {
-  flex: 0 0 auto;
-  max-width: 100%;
+  flex: 0 1 auto;
+  min-width: 4ch;
   overflow: hidden;
   font-size: var(--text-md, 15px);
   text-overflow: ellipsis;
 }
 
 .ptcgsim-command__detail {
-  flex: 0 1 auto;
-  min-width: 0;
+  flex: 0 0 auto;
+  max-width: 40%;
   overflow: hidden;
   color: var(--color-text-muted);
   font-size: var(--text-sm);

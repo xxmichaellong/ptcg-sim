@@ -250,4 +250,30 @@ test.describe('on a phone', () => {
       palette(page).locator('.ptcgsim-command-palette__submit')
     ).toBeVisible();
   });
+
+  test('a title too long for the row gives way to its seat', async ({
+    page,
+  }) => {
+    test.setTimeout(120_000);
+    await openSoloTable(page);
+    await page.setViewportSize({ width: 320, height: 844 });
+    await page.locator('.ptcgsim-app-bar #commandsButton').tap();
+    await field(page).fill('shuffle hand to bottom');
+    const row = rows(page).first();
+    await expect(row.locator('.ptcgsim-command__title')).toHaveText(
+      'Shuffle hand to bottom of deck and draw…'
+    );
+    // The title's end gives way; the seat stays whole.
+    const seat = row.locator('.ptcgsim-command__detail');
+    await expect(seat).toHaveText('Blue');
+    const fit = await row.evaluate((element) => {
+      const title = element.querySelector('.ptcgsim-command__title')!;
+      const detail = element.querySelector('.ptcgsim-command__detail')!;
+      return {
+        titleCut: title.scrollWidth > title.clientWidth,
+        seatWhole: detail.clientWidth >= detail.scrollWidth,
+      };
+    });
+    expect(fit).toEqual({ titleCut: true, seatWhole: true });
+  });
 });
