@@ -324,3 +324,51 @@ test('a deck chosen while an import still reads keeps the seat', async ({
     page.getByRole('list', { name: 'Your decks' }).getByRole('listitem')
   ).toHaveCount(1);
 });
+
+test.describe('on a phone', () => {
+  test.use({ hasTouch: true, isMobile: true });
+
+  test('typing a card search keeps the cards found in sight above the keyboard', async ({
+    page,
+  }) => {
+    test.setTimeout(90_000);
+    await routeCardCatalog(page);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/');
+    await expect(
+      page.locator('[data-app-route="remote-room"][data-session-phase="ready"]')
+    ).toBeVisible({ timeout: 30_000 });
+    await openDeck(page);
+    await page.locator('#deckNewButton').tap();
+    const search = page.locator('#nativeDeckBuilderSearchInput');
+    const results = page.getByRole('list', { name: 'Cards found' });
+    const head = page.locator('.deck-editor__head');
+    await expect(head).toBeVisible();
+    await search.tap();
+    await search.fill('dragapult');
+    await expect(results.getByRole('listitem').first()).toContainText(
+      'Dragapult ex'
+    );
+    // The seats' trays and the editor's header step aside for the typing:
+    // a keyboard over the screen's lower 40% leaves the first cards found
+    // in sight.
+    await expect(page.locator('.deck-screen__seats')).toBeHidden();
+    await expect(head).toBeHidden();
+    expect((await results.boundingBox())!.y).toBeLessThan(844 * 0.6 - 100);
+    // A screen the keyboard has shrunk keeps its cards a useful strip.
+    await page.setViewportSize({ width: 390, height: 450 });
+    await expect
+      .poll(() =>
+        page.locator('.card-search__results').evaluate((element) => {
+          const box = element.getBoundingClientRect();
+          return Math.min(box.bottom, innerHeight) - Math.max(box.top, 0);
+        })
+      )
+      .toBeGreaterThan(120);
+    // Done typing, they come back.
+    await page.setViewportSize({ width: 390, height: 844 });
+    await search.blur();
+    await expect(head).toBeVisible();
+    await expect(page.locator('.deck-screen__seats')).toBeVisible();
+  });
+});

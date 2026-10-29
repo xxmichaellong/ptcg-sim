@@ -24,6 +24,7 @@ import {
 import { preferences } from '../../preferences/preference-store.js';
 import { DEFAULT_CARD_BACK_URL } from '../../session/browser-card-back.js';
 import { dialogRequestsSnapshot } from '../../ui/dialog-requests.js';
+import { useKeyboardInset } from '../../ui/keyboard-inset.js';
 import { toast } from '../../ui/toast.js';
 import { Tooltip } from '../../ui/Tooltip.js';
 import { skipDialogReturnTooltip } from '../../ui/tooltip-focus.js';
@@ -180,6 +181,9 @@ export const DeckScreen = ({
   const importSeat = useRef<DeckBuilderTarget | undefined>(undefined);
   const fileInput = useRef<HTMLInputElement>(null);
   const screen = useRef<HTMLDivElement>(null);
+  // A phone's keyboard lies over the screen's foot: lists pad their end by
+  // it (deck-screen.css), so their last rows scroll up above it.
+  useKeyboardInset(screen);
   const target = seats.target;
   const targetNow = useRef(target);
   targetNow.current = target;
