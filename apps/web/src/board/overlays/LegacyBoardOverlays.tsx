@@ -18,6 +18,7 @@ import type { Icon } from '@phosphor-icons/react';
 import type { MessageDescriptor } from '@lingui/core';
 import { msg, plural, t } from '@lingui/core/macro';
 import { Trans, useLingui } from '@lingui/react/macro';
+import { ArrowCounterClockwiseIcon } from '@phosphor-icons/react/dist/csr/ArrowCounterClockwise';
 import { ArrowFatLinesDownIcon } from '@phosphor-icons/react/dist/csr/ArrowFatLinesDown';
 import { ArrowLineDownIcon } from '@phosphor-icons/react/dist/csr/ArrowLineDown';
 import { SortAscendingIcon } from '@phosphor-icons/react/dist/csr/SortAscending';
@@ -135,7 +136,7 @@ import { preferences } from '../../preferences/preference-store.js';
 import { usePreference } from '../../preferences/usePreference.js';
 import { readingImageStyle } from '../../ui/card-artwork.js';
 import { trapFocus as trapModalTab } from '../../ui/focus.js';
-import { Tooltip } from '../../ui/Tooltip.js';
+import { Tooltip, withKeyHint } from '../../ui/Tooltip.js';
 
 export type {
   LegacyBoardCategoryChoice,
@@ -165,6 +166,12 @@ export interface LegacyBoardOverlayActions {
     action: LegacyBoardWorkAreaActionId,
     targetPlayerId?: PlayerId
   ) => void;
+  /**
+   * The table's Undo (the U key), where the viewer may undo. A work-area
+   * popup offers it: it lies over the rail's, and stays until its cards
+   * are resolved, so it is the way back from the move that opened it.
+   */
+  readonly undo?: () => void;
   readonly dismiss: (scope: BoardPresentationDismissScope) => void;
   readonly invokeContextAction: (
     action: LegacyBoardContextActionId,
@@ -1430,6 +1437,38 @@ const ShowBoardButton = ({
   );
 };
 
+/**
+ * The table's Undo in a work-area popup's header: the popup lies over the
+ * rail's own, and can't be put away until its cards are resolved.
+ */
+const WorkAreaUndoButton = ({
+  onUndo,
+  inert,
+}: {
+  readonly onUndo: () => void;
+  readonly inert: boolean;
+}) => {
+  const { t } = useLingui();
+  const keymap = useKeymap();
+  const label = t`Undo`;
+  const hint = shortcutHint(keymap, 'table.undo');
+  return (
+    <Tooltip content={withKeyHint(label, hint)} side="bottom">
+      <button
+        type="button"
+        className="ptcgsim-overlay-button is-quiet ptcgsim-overlay-undo"
+        data-work-area-undo="true"
+        aria-label={label}
+        inert={inert || undefined}
+        aria-hidden={inert || undefined}
+        onClick={onUndo}
+      >
+        <ArrowCounterClockwiseIcon aria-hidden="true" />
+      </button>
+    </Tooltip>
+  );
+};
+
 const OverlayCardImage = ({
   card,
   variant,
@@ -2566,7 +2605,9 @@ const WORK_AREA_ACTION_ICONS: Readonly<
  * (see `workAreaPanelLayout`) and paints its own copies of the cards for
  * dragging, selecting, previewing and the context menu. It is not modal and,
  * as in v1, Escape leaves it open: the cards are in a work area of the game,
- * and must be resolved with the buttons or by moving them.
+ * and must be resolved with the buttons or by moving them. Undo takes back
+ * the move that opened it: the U key from anywhere, its buttons included,
+ * and its own Undo, since it lies over the rail's.
  */
 const WorkAreaPanel = ({
   state,
@@ -2635,6 +2676,8 @@ const WorkAreaPanel = ({
     controls &&
     state.canSubmitCommands &&
     actions.invokeWorkAreaAction !== undefined;
+  // The way back from the move that opened it, where the viewer may undo.
+  const undo = controls && state.canSubmitCommands ? actions.undo : undefined;
   const layout = workAreaPanelLayout(
     zone.bounds,
     board,
@@ -2675,6 +2718,9 @@ const WorkAreaPanel = ({
           {hint ? <span className="ptcgsim-overlay-hint">{hint}</span> : null}
         </div>
         <div className="ptcgsim-overlay-actions">
+          {undo ? (
+            <WorkAreaUndoButton onUndo={undo} inert={showingBoard} />
+          ) : null}
           <ShowBoardButton
             showingBoard={showingBoard}
             panelName={panelName}

@@ -74,6 +74,21 @@ const isLegacyBoardOverlayTarget = (target: EventTarget | null): boolean =>
   target instanceof Element &&
   target.closest('[data-legacy-board-overlays]') !== null;
 
+/**
+ * A key pressed on a work-area window's buttons (v1's attached cards and
+ * "Looking at cards") is the table's: the window is no dialog, and v1's
+ * keys went on working while it was open, its Undo among them, which is the
+ * way back from the move that opened it (the window stays until its cards
+ * are resolved). Escape stays the window's: it keeps the window open, as
+ * in v1. Its cards keep their own rule below.
+ */
+const isWorkAreaTableKeyTarget = (event: KeyboardEvent): boolean =>
+  event.key !== 'Escape' &&
+  event.code !== 'Escape' &&
+  event.target instanceof Element &&
+  event.target.closest('[data-legacy-work-area]') !== null &&
+  event.target.closest('[data-work-area-card-id]') === null;
+
 const isSelectedOpenedZoneCardTarget = (
   target: EventTarget | null,
   selectedCardId: string | null,
@@ -164,6 +179,7 @@ export const LegacyBoardKeyboardShortcuts = ({
         isOverlayKeyTarget(event.target) ||
         isLegacyBoardShortcutEditableTarget(event.target, event.key) ||
         (isLegacyBoardOverlayTarget(event.target) &&
+          !isWorkAreaTableKeyTarget(event) &&
           !isSelectedOpenedZoneCardTarget(
             event.target,
             selectedCardId,

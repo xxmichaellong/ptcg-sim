@@ -618,6 +618,66 @@ describe('legacy board keyboard shortcut bridge', () => {
     expect(onRequest).not.toHaveBeenCalled();
   });
 
+  it("lets a work-area window's buttons pass the table's keys on, Undo among them, but not Escape", async () => {
+    const onRequest = vi.fn();
+    const onDismissPresentation = vi.fn();
+    const state = createInitialBoardSessionControllerState();
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardKeyboardShortcuts, {
+          state,
+          onRequest,
+          onDismissPresentation,
+          undoSeat: 'acting',
+        })
+      );
+    });
+    const overlays = document.createElement('div');
+    overlays.dataset.legacyBoardOverlays = 'true';
+    const area = document.createElement('section');
+    area.dataset.legacyWorkArea = 'staged';
+    const toHand = document.createElement('button');
+    toHand.dataset.workAreaAction = 'toHand';
+    const card = document.createElement('button');
+    card.dataset.workAreaCardId = 'staged-card';
+    area.append(toHand, card);
+    const pile = document.createElement('section');
+    pile.dataset.legacyZoneBrowser = 'true';
+    const pileButton = document.createElement('button');
+    pile.append(pileButton);
+    overlays.append(area, pile);
+    document.body.append(overlays);
+    const press = (target: EventTarget, key: string, code: string) =>
+      target.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key,
+          code,
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+
+    // A button of the window (the last one pressed keeps the focus).
+    press(toHand, 'u', 'KeyU');
+    expect(onRequest).toHaveBeenCalledExactlyOnceWith({
+      action: 'undoOwnLastMove',
+    });
+    press(toHand, '2', 'Digit2');
+    expect(onRequest).toHaveBeenLastCalledWith({
+      action: 'drawOwnDeck',
+      count: 2,
+    });
+    onRequest.mockClear();
+    // Escape keeps the window open, as in v1; an unselected card of the
+    // window and a pile's window keep their keys.
+    press(toHand, 'Escape', 'Escape');
+    press(card, 'u', 'KeyU');
+    press(pileButton, 'u', 'KeyU');
+    expect(onDismissPresentation).not.toHaveBeenCalled();
+    expect(onRequest).not.toHaveBeenCalled();
+    overlays.remove();
+  });
+
   it('routes modifier-agnostic M through the separate unselected announcement callback', async () => {
     const onRequest = vi.fn();
     const onDeclareMulligan = vi.fn();

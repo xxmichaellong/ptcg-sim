@@ -947,6 +947,12 @@
   color: var(--color-text);
 }
 
+/* A work-area popup's Undo: the icon alone, square, as the close is. */
+.ptcgsim-overlay-button.ptcgsim-overlay-undo {
+  width: var(--control-height);
+  padding: 0;
+}
+
 :root[data-motion='reduced'] .ptcgsim-overlay-button:active:not(:disabled) {
   scale: none;
 }

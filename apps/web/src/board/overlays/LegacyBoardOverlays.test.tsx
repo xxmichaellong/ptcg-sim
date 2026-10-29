@@ -2949,6 +2949,69 @@ describe('legacy board overlays', () => {
     expect(await offered([first])).toContain('leaveInPlay');
   });
 
+  it("offers the table's Undo in an attached-card window, which lies over the rail's", async () => {
+    const hand = Object.values(view.zones).find(
+      (zone) => zone.kind === 'hand' && zone.ownerId === firstPlayer
+    )!;
+    const [first, second] = hand.cards;
+    if (!first || !second) throw new Error('Fixture hand is too small');
+    const stagedView = {
+      ...view,
+      zones: {
+        ...view.zones,
+        [hand.id]: { ...hand, cards: hand.cards.slice(2) },
+      },
+      workAreas: {
+        ...view.workAreas,
+        [firstPlayer]: {
+          inspection: null,
+          attachmentResolution: {
+            id: 'work-area:staged',
+            sourceStackId: 'stack:gone',
+            cards: [first, second],
+            evolutionCards: [],
+            attachmentCards: [first, second],
+            suggestedSlot: 'bench',
+          },
+        },
+      },
+    } as MatchViewState;
+    const staged = state({
+      view: stagedView,
+      scene: createBoardSceneForViewport(stagedView, {
+        geometryVersion: 1,
+        viewport: { width: 1280, height: 720, devicePixelRatio: 1 },
+        bottomPlayerId: firstPlayer,
+        splitRatio: 0.5,
+      }),
+    });
+    const undo = vi.fn();
+    const render = async (
+      patch: Partial<LegacyBoardOverlayActions>,
+      canSubmitCommands = true
+    ) => {
+      await act(async () => {
+        root.render(
+          createElement(LegacyBoardOverlays, {
+            state: { ...staged, canSubmitCommands },
+            darkMode: false,
+            actions: { ...actions(), invokeWorkAreaAction: vi.fn(), ...patch },
+          })
+        );
+      });
+      return host.querySelector<HTMLButtonElement>(
+        '[data-legacy-work-area="staged"] [data-work-area-undo]'
+      );
+    };
+    const button = await render({ undo });
+    expect(button?.getAttribute('aria-label')).toBe('Undo');
+    await act(async () => button?.click());
+    expect(undo).toHaveBeenCalledOnce();
+    // Where the viewer can't undo (a tutorial step, a replay), none.
+    expect(await render({})).toBeNull();
+    expect(await render({ undo }, false)).toBeNull();
+  });
+
   it('paints the source work-area popup with its cards and bulk buttons', async () => {
     // Move two of the fixture's hand cards into a "Looking at cards..."
     // inspection; the scene lays them out where v1's popup images sit and

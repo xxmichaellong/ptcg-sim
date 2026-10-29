@@ -961,6 +961,28 @@ export const RemoteSessionBoard = ({
     }),
     []
   );
+  // Whose move U takes back: the acting seat's at a Solo table, the
+  // player's own in a room. A work-area popup's Undo does the same.
+  const undoSeat: 'acting' | 'own' | undefined = undoBlocked
+    ? undefined
+    : roomMode === 'solo'
+      ? 'acting'
+      : 'own';
+  const boardOverlayActions = useMemo<LegacyBoardOverlayActions>(
+    () =>
+      undoSeat === undefined
+        ? overlayActions
+        : {
+            ...overlayActions,
+            undo: () => {
+              runtimeRef.current?.emitLegacyShortcutAction({
+                action: 'undoOwnLastMove',
+                ...(undoSeat === 'own' ? { ownSeat: true } : {}),
+              });
+            },
+          },
+    [overlayActions, undoSeat]
+  );
   const keyboardActions = useMemo(
     () => ({
       onRequest: (request: LegacyBoardShortcutActionRequest): void => {
@@ -1453,7 +1475,7 @@ export const RemoteSessionBoard = ({
             allowOpponentResolution={roomMode === 'solo'}
             state={boardState}
             darkMode={preferences.darkMode}
-            actions={overlayActions}
+            actions={boardOverlayActions}
             tableMotion={tableMotion}
           />
           <TurnBanner
@@ -1474,13 +1496,7 @@ export const RemoteSessionBoard = ({
           ) : null}
           <LegacyBoardKeyboardShortcuts
             state={boardState}
-            {...(undoBlocked
-              ? {}
-              : roomMode === 'solo'
-                ? { undoSeat: 'acting' as const }
-                : roomMode === 'multiplayer'
-                  ? { undoSeat: 'own' as const }
-                  : {})}
+            {...(undoSeat ? { undoSeat } : {})}
             boardFlipEnabled={flipAllowed}
             suspended={keysSuspended}
             {...keyboardActions}
