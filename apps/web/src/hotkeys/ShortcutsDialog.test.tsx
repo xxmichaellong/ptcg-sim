@@ -7,7 +7,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PreferenceStore } from '../preferences/preference-store.js';
 import { HOTKEY_GROUPS } from './hotkey-catalogue.js';
-import { HOTKEY_PREFERENCES } from './hotkey-preferences.js';
+import {
+  HOTKEY_PREFERENCES,
+  SHORTCUTS_DIALOG_PREFERENCES,
+} from './hotkey-preferences.js';
 import { ShortcutsDialog } from './ShortcutsDialog.js';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
@@ -83,7 +86,7 @@ describe('ShortcutsDialog', () => {
     host.remove();
   });
 
-  it('opens on the keys for what is selected, with a map of the keyboard', async () => {
+  it('opens on the keys for what is selected, its keyboard map shown when asked for', async () => {
     await render('card');
     expect(document.querySelector('[role="dialog"]')).not.toBeNull();
     expect(keycaps('card.toHand')).toEqual(['H']);
@@ -93,11 +96,24 @@ describe('ShortcutsDialog', () => {
     expect(
       row('card.addDamage').querySelector('button.ptcgsim-shortcut-key')
     ).toBeNull();
-    const mapKeys = [
-      ...document.querySelectorAll<HTMLElement>('.ptcgsim-map-key[data-group]'),
-    ].map((key) => key.textContent);
-    expect(mapKeys).toContain('HHand');
-    expect(mapKeys).toContain('5+50');
+    const mapKeys = () =>
+      [
+        ...document.querySelectorAll<HTMLElement>(
+          '.ptcgsim-map-key[data-group]'
+        ),
+      ].map((key) => key.textContent);
+    // The map is hidden until asked for, and stays as it was left.
+    expect(mapKeys()).toEqual([]);
+    await click(
+      [...document.querySelectorAll('button')].find(
+        (button) => button.textContent === 'Show keyboard'
+      )!
+    );
+    expect(mapKeys()).toContain('HHand');
+    expect(mapKeys()).toContain('5+50');
+    expect(store.get(SHORTCUTS_DIALOG_PREFERENCES)).toEqual({
+      showKeyboard: true,
+    });
 
     await click(
       [...document.querySelectorAll('[role="radio"]')].find(

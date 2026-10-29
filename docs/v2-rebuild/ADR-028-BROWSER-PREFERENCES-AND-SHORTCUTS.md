@@ -100,7 +100,9 @@ way back to the defaults.
 5. **The dialog** opens from `?`, the keyboard button in the sidebar, the
    Settings panel or the welcome card. It opens on the keys for the current
    situation (card selected or not). A keyboard map, with Shift, Alt and Ctrl
-   layers, sits over a grouped and searchable list. Each changed shortcut
+   layers, can sit over a grouped and searchable list: hidden until the
+   player shows it (since 2026-10-29; the owner found it noisy), then kept
+   as it was left. Each changed shortcut
    resets on its own, and "Reset to defaults" resets them all. Mac players
    see ⌥ Option and ⌘ in place of Alt and Win.
 

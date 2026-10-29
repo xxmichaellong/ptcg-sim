@@ -25,19 +25,22 @@ export const HOTKEY_PREFERENCES = definePreference<HotkeyOverrides>({
 
 /** How the shortcuts dialog was last left. */
 export interface ShortcutsDialogPreferences {
-  /** The keyboard map above the list; hidden leaves more room for the list. */
+  /**
+   * The keyboard map above the list; hidden leaves more room for the list.
+   * Hidden until asked for (the owner, 2026-10-29: "a bit noisy").
+   */
   readonly showKeyboard: boolean;
 }
 
 export const SHORTCUTS_DIALOG_PREFERENCES =
   definePreference<ShortcutsDialogPreferences>({
     key: 'ptcgsim.shortcuts-dialog.v1',
-    defaults: Object.freeze({ showKeyboard: true }),
+    defaults: Object.freeze({ showKeyboard: false }),
     parse: (value) => ({
       showKeyboard:
-        typeof value !== 'object' ||
-        value === null ||
-        Reflect.get(value, 'showKeyboard') !== false,
+        typeof value === 'object' &&
+        value !== null &&
+        Reflect.get(value, 'showKeyboard') === true,
     }),
   });
 
