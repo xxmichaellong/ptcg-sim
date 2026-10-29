@@ -6947,5 +6947,173 @@
   "SzQFzV": {
     "message": "With their attached cards",
     "translation": "Cùng với bài gắn kèm"
+  },
+  "2X9O8a": {
+    "message": "{0, plural, one {# card left the selection} other {# cards left the selection}}, {1}",
+    "comments": [
+      "Selected cards that were moved away, e.g. by the other player."
+    ],
+    "translation": "{0, plural, other {# lá bài đã rời khỏi vùng chọn}}, {1}"
+  },
+  "6Lo6B5": {
+    "message": "{0, plural, one {# card selected} other {# cards selected}}",
+    "translation": "{0, plural, other {Đã chọn # lá bài}}"
+  },
+  "fvImQM": {
+    "message": "{0} selected",
+    "comments": [
+      "How many cards are selected, e.g. \"3 selected\"."
+    ],
+    "translation": "Đã chọn {0}"
+  },
+  "tYyyLp": {
+    "message": "{count} selected: actions",
+    "comments": [
+      "The touch toolbar for several selected cards, e.g. \"3 selected: actions\"."
+    ],
+    "translation": "Đã chọn {count}: thao tác"
+  },
+  "Mh1NmC": {
+    "message": "{items, plural, one {# selected} other {# selected}}",
+    "translation": "{items, plural, other {Đã chọn #}}"
+  },
+  "Q29GRK": {
+    "message": "{name} added, {0}",
+    "comments": [
+      "A card joined the selection, e.g. \"Fire Energy added, 4 selected\"."
+    ],
+    "translation": "Đã thêm {name}, {0}"
+  },
+  "rObKhV": {
+    "message": "{name} removed, {0}",
+    "comments": [
+      "A card left the selection, e.g. \"Fire Energy removed, 3 selected\"."
+    ],
+    "translation": "Đã bỏ {name}, {0}"
+  },
+  "9NXGJ_": {
+    "message": "{name}, Active",
+    "comments": [
+      "A Pokémon to attach cards to, e.g. \"Pikachu, Active\"."
+    ],
+    "translation": "{name}, Active"
+  },
+  "J9Wtim": {
+    "message": "{name}, Bench",
+    "comments": [
+      "A Pokémon to attach cards to, e.g. \"Pikachu, Bench\"."
+    ],
+    "translation": "{name}, Bench"
+  },
+  "68ccPL": {
+    "message": "{name}, selected, {order} of {0}",
+    "comments": [
+      "A selected card among several, e.g. \"Switch, selected, 2 of 3\"."
+    ],
+    "translation": "{name}, đã chọn, {order}/{0}"
+  },
+  "-AEMvi": {
+    "message": "{zoneName}, {0} selected",
+    "comments": [
+      "The cards of an open pile, e.g. \"Your discard pile, 3 selected\"."
+    ],
+    "translation": "{zoneName}, đã chọn {0}"
+  },
+  "T_K7zW": {
+    "message": "×{pokemon}",
+    "comments": [
+      "How many Pokémon the damage stepper marks, e.g. \"×3\"."
+    ],
+    "translation": "×{pokemon}"
+  },
+  "n-Gc4A": {
+    "message": "10 less damage on each",
+    "translation": "Bớt 10 sát thương trên mỗi Pokémon"
+  },
+  "07KhVj": {
+    "message": "10 more damage on each",
+    "translation": "Thêm 10 sát thương trên mỗi Pokémon"
+  },
+  "qeQjlL": {
+    "message": "As one",
+    "context": "play the selected pieces as one card",
+    "translation": "Gộp thành một"
+  },
+  "8vfaut": {
+    "message": "Attach to",
+    "translation": "Gắn vào"
+  },
+  "DFzJxl": {
+    "message": "Damage on each of {pokemon, plural, one {# Pokémon} other {# Pokémon}}",
+    "comments": [
+      "The damage stepper for several selected Pokémon at once."
+    ],
+    "translation": "Sát thương trên mỗi Pokémon trong số {pokemon, plural, other {# Pokémon}}"
+  },
+  "4xW71x": {
+    "message": "Damage…",
+    "context": "damage on the selected Pokémon; a stepper follows",
+    "translation": "Sát thương…"
+  },
+  "U-R4tW": {
+    "message": "Deselect all",
+    "comments": [
+      "Takes every card of the open pile out of the selection."
+    ],
+    "translation": "Bỏ chọn tất cả"
+  },
+  "YLZBXb": {
+    "message": "Done",
+    "context": "stop picking cards",
+    "translation": "Xong"
+  },
+  "2kUZvq": {
+    "message": "Move {0}…",
+    "comments": [
+      "Opens the menu of what the selected cards can do, e.g. \"Move 3…\"."
+    ],
+    "translation": "Di chuyển {0}…"
+  },
+  "v1NcRU": {
+    "message": "Move…",
+    "context": "move the selected cards; a menu of places follows",
+    "translation": "Di chuyển…"
+  },
+  "eqRr09": {
+    "message": "Pokémon",
+    "translation": "Pokémon"
+  },
+  "YF7gJY": {
+    "message": "Remove all damage from each",
+    "translation": "Xóa hết sát thương trên từng Pokémon"
+  },
+  "rG3WVm": {
+    "message": "Select",
+    "comments": [
+      "Starts picking several cards: each tap then adds a card or takes it out."
+    ],
+    "translation": "Chọn"
+  },
+  "wgNoIs": {
+    "message": "Select all",
+    "comments": [
+      "Takes every card of the open pile into the selection."
+    ],
+    "translation": "Chọn tất cả"
+  },
+  "Dm5gKG": {
+    "message": "Selected cards actions",
+    "translation": "Thao tác với các lá bài đã chọn"
+  },
+  "sYGBP5": {
+    "message": "Selecting: tap cards to add them",
+    "comments": [
+      "Read out as touch selection mode starts."
+    ],
+    "translation": "Đang chọn: chạm vào lá bài để thêm"
+  },
+  "GvCs21": {
+    "message": "Selection cleared",
+    "translation": "Đã bỏ chọn"
   }
 }

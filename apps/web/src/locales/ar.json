@@ -6947,5 +6947,173 @@
   "SzQFzV": {
     "message": "With their attached cards",
     "translation": "مع بطاقاتها المرفقة"
+  },
+  "2X9O8a": {
+    "message": "{0, plural, one {# card left the selection} other {# cards left the selection}}, {1}",
+    "comments": [
+      "Selected cards that were moved away, e.g. by the other player."
+    ],
+    "translation": "{0, plural, one {غادرت بطاقة واحدة التحديد} two {غادرت بطاقتان التحديد} few {غادرت # بطاقات التحديد} many {غادرت # بطاقة التحديد} other {غادرت # بطاقة التحديد}}، {1}"
+  },
+  "6Lo6B5": {
+    "message": "{0, plural, one {# card selected} other {# cards selected}}",
+    "translation": "{0, plural, one {تم تحديد بطاقة واحدة} two {تم تحديد بطاقتين} few {تم تحديد # بطاقات} many {تم تحديد # بطاقة} other {تم تحديد # بطاقة}}"
+  },
+  "fvImQM": {
+    "message": "{0} selected",
+    "comments": [
+      "How many cards are selected, e.g. \"3 selected\"."
+    ],
+    "translation": "محدّد: {0}"
+  },
+  "tYyyLp": {
+    "message": "{count} selected: actions",
+    "comments": [
+      "The touch toolbar for several selected cards, e.g. \"3 selected: actions\"."
+    ],
+    "translation": "إجراءات المحدّد: {count}"
+  },
+  "Mh1NmC": {
+    "message": "{items, plural, one {# selected} other {# selected}}",
+    "translation": "{items, plural, other {# محدّد}}"
+  },
+  "Q29GRK": {
+    "message": "{name} added, {0}",
+    "comments": [
+      "A card joined the selection, e.g. \"Fire Energy added, 4 selected\"."
+    ],
+    "translation": "أُضيفت {name}، {0}"
+  },
+  "rObKhV": {
+    "message": "{name} removed, {0}",
+    "comments": [
+      "A card left the selection, e.g. \"Fire Energy removed, 3 selected\"."
+    ],
+    "translation": "أُزيلت {name}، {0}"
+  },
+  "9NXGJ_": {
+    "message": "{name}, Active",
+    "comments": [
+      "A Pokémon to attach cards to, e.g. \"Pikachu, Active\"."
+    ],
+    "translation": "{name}، نشط"
+  },
+  "J9Wtim": {
+    "message": "{name}, Bench",
+    "comments": [
+      "A Pokémon to attach cards to, e.g. \"Pikachu, Bench\"."
+    ],
+    "translation": "{name}، على الاحتياط"
+  },
+  "68ccPL": {
+    "message": "{name}, selected, {order} of {0}",
+    "comments": [
+      "A selected card among several, e.g. \"Switch, selected, 2 of 3\"."
+    ],
+    "translation": "{name}، محدّدة، {order} من {0}"
+  },
+  "-AEMvi": {
+    "message": "{zoneName}, {0} selected",
+    "comments": [
+      "The cards of an open pile, e.g. \"Your discard pile, 3 selected\"."
+    ],
+    "translation": "{zoneName}، {0} محدّد"
+  },
+  "T_K7zW": {
+    "message": "×{pokemon}",
+    "comments": [
+      "How many Pokémon the damage stepper marks, e.g. \"×3\"."
+    ],
+    "translation": "×{pokemon}"
+  },
+  "n-Gc4A": {
+    "message": "10 less damage on each",
+    "translation": "ضرر أقل بمقدار 10 على كل واحد"
+  },
+  "07KhVj": {
+    "message": "10 more damage on each",
+    "translation": "ضرر أكثر بمقدار 10 على كل واحد"
+  },
+  "qeQjlL": {
+    "message": "As one",
+    "context": "play the selected pieces as one card",
+    "translation": "كبطاقة واحدة"
+  },
+  "8vfaut": {
+    "message": "Attach to",
+    "translation": "إرفاق بـ"
+  },
+  "DFzJxl": {
+    "message": "Damage on each of {pokemon, plural, one {# Pokémon} other {# Pokémon}}",
+    "comments": [
+      "The damage stepper for several selected Pokémon at once."
+    ],
+    "translation": "{pokemon, plural, one {الضرر على Pokémon واحد} two {الضرر على كل من Pokémon اثنين} few {الضرر على كل من # Pokémon} many {الضرر على كل من # Pokémon} other {الضرر على كل من # Pokémon}}"
+  },
+  "4xW71x": {
+    "message": "Damage…",
+    "context": "damage on the selected Pokémon; a stepper follows",
+    "translation": "ضرر…"
+  },
+  "U-R4tW": {
+    "message": "Deselect all",
+    "comments": [
+      "Takes every card of the open pile out of the selection."
+    ],
+    "translation": "إلغاء تحديد الكل"
+  },
+  "YLZBXb": {
+    "message": "Done",
+    "context": "stop picking cards",
+    "translation": "تم"
+  },
+  "2kUZvq": {
+    "message": "Move {0}…",
+    "comments": [
+      "Opens the menu of what the selected cards can do, e.g. \"Move 3…\"."
+    ],
+    "translation": "نقل {0}…"
+  },
+  "v1NcRU": {
+    "message": "Move…",
+    "context": "move the selected cards; a menu of places follows",
+    "translation": "نقل…"
+  },
+  "eqRr09": {
+    "message": "Pokémon",
+    "translation": "Pokémon"
+  },
+  "YF7gJY": {
+    "message": "Remove all damage from each",
+    "translation": "إزالة كل الضرر عن كل واحد"
+  },
+  "rG3WVm": {
+    "message": "Select",
+    "comments": [
+      "Starts picking several cards: each tap then adds a card or takes it out."
+    ],
+    "translation": "تحديد"
+  },
+  "wgNoIs": {
+    "message": "Select all",
+    "comments": [
+      "Takes every card of the open pile into the selection."
+    ],
+    "translation": "تحديد الكل"
+  },
+  "Dm5gKG": {
+    "message": "Selected cards actions",
+    "translation": "إجراءات البطاقات المحدّدة"
+  },
+  "sYGBP5": {
+    "message": "Selecting: tap cards to add them",
+    "comments": [
+      "Read out as touch selection mode starts."
+    ],
+    "translation": "وضع التحديد: المس البطاقات لإضافتها"
+  },
+  "GvCs21": {
+    "message": "Selection cleared",
+    "translation": "تم مسح التحديد"
   }
 }

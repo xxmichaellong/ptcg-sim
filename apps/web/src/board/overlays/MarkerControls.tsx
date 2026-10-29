@@ -176,7 +176,8 @@ export const markerControlsMarker = (
   };
 };
 
-const ControlButton = ({
+/** One of the controls' round buttons, named by its tooltip. */
+export const ControlButton = ({
   label,
   className,
   pressed,

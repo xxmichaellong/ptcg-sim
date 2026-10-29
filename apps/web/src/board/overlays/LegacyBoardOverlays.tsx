@@ -1,4 +1,15 @@
 import { MarkerControls } from './MarkerControls.js';
+import { GroupDamageControls } from './GroupDamageControls.js';
+import { GroupMenuView, type GroupMenuChoice } from './GroupMenu.js';
+import {
+  boardRectOf,
+  groupAttachTargets,
+  isGroupSelection,
+  isSelectionModifier,
+  pokemonInPlayOf,
+  selectedItemOf,
+  selectionContextOf,
+} from './group-context.js';
 import { RevealedHandBadges } from './RevealedHandBadges.js';
 import { visualCardBounds } from './card-bounds.js';
 import { OverlayCardActions } from './OverlayCardActions.js';
@@ -9,6 +20,7 @@ import {
   resolveBoardDropTarget,
   selectedCardIdOf,
   type BoardDepthProjection,
+  type BoardIntent,
   type BoardPresentation,
   type BoardScene,
   type BoardScenePlayerFrame,
@@ -42,6 +54,7 @@ import { LightningIcon } from '@phosphor-icons/react/dist/csr/Lightning';
 import { MagnifyingGlassMinusIcon } from '@phosphor-icons/react/dist/csr/MagnifyingGlassMinus';
 import { MagnifyingGlassPlusIcon } from '@phosphor-icons/react/dist/csr/MagnifyingGlassPlus';
 import { PawPrintIcon } from '@phosphor-icons/react/dist/csr/PawPrint';
+import { PuzzlePieceIcon } from '@phosphor-icons/react/dist/csr/PuzzlePiece';
 import { ShuffleIcon } from '@phosphor-icons/react/dist/csr/Shuffle';
 import { SparkleIcon } from '@phosphor-icons/react/dist/csr/Sparkle';
 import { SpiralIcon } from '@phosphor-icons/react/dist/csr/Spiral';
@@ -67,6 +80,9 @@ import {
 } from 'react';
 
 import { resolveAttachEvolveTargeting } from '../resolveAttachEvolveTargeting.js';
+import type { GroupAction } from '../compile-group.js';
+import { groupMenuOf } from '../group-menu-entries.js';
+import { visiblePieceSetOf } from '../piece-sets.js';
 import {
   contextActionOutcome,
   type ContextActionLocalState,
@@ -231,6 +247,31 @@ export interface LegacyBoardOverlayActions {
     cardId: ViewCardId,
     destination: LegacyBoardMoveChoice
   ) => void;
+  /**
+   * A move or mark for every selected item at once (ADR-042 §3): the group
+   * menu's rows, the damage stepper, "Attach to…".
+   */
+  readonly emitGroupAction?: (action: GroupAction) => void;
+  /**
+   * Several cards taken into the selection at once (Select all, Play as
+   * one card), or touch's selection mode turned on or off.
+   */
+  readonly emitSelectionIntent?: (
+    intent: Extract<
+      BoardIntent,
+      { readonly kind: 'CardsSelected' | 'SelectionModeChanged' }
+    >
+  ) => void;
+}
+
+/**
+ * The group menu or the group's damage stepper, opened from outside the
+ * table's card menu (the group bar, the viewer's Move N…), and where from,
+ * in the table's own coordinates.
+ */
+export interface GroupSurface {
+  readonly kind: 'menu' | 'damage';
+  readonly anchor: Rect;
 }
 
 export type ContextEntry =
@@ -247,6 +288,16 @@ export type ContextEntry =
       readonly boundary: boolean;
       /** Which way a two-way entry goes (its label and icon say so). */
       readonly outcome?: ContextActionOutcome;
+    }
+  /**
+   * "Play as one card" (ADR-042 §5): on a piece of a card printed in pieces
+   * whose other pieces are in sight, it takes them all into the selection
+   * and opens the group menu on where they can go.
+   */
+  | {
+      readonly kind: 'playAsOne';
+      readonly id: 'playAsOne';
+      readonly label: string;
     };
 
 const header = (id: string, label: string): ContextEntry => ({
@@ -371,6 +422,17 @@ export const selectLegacyContextEntries = (
   }
   const entries: ContextEntry[] = [];
 
+  // A piece whose others are in sight plays with them, as one card.
+  if (
+    visiblePieceSetOf(state.view, card.id, state.presentation.openedZoneId) !==
+    null
+  ) {
+    entries.push({
+      kind: 'playAsOne',
+      id: 'playAsOne',
+      label: t`Play as one card`,
+    });
+  }
   if (
     location.kind === 'active' ||
     location.kind === 'bench' ||
@@ -955,6 +1017,7 @@ const ContextMenu = ({
   darkMode,
   actions,
   soloOpponentHandHidden,
+  onPlayAsOne,
 }: {
   readonly state: BoardSessionControllerState;
   readonly depth?: BoardDepthProjection;
@@ -964,6 +1027,8 @@ const ContextMenu = ({
   readonly darkMode: boolean;
   readonly actions: LegacyBoardOverlayActions;
   readonly soloOpponentHandHidden?: boolean;
+  /** "Play as one card": takes the card's pieces in sight, from `bounds`. */
+  readonly onPlayAsOne?: (card: CardSceneNode, bounds: Rect) => void;
 }) => {
   const { t, i18n } = useLingui();
   const direction = usePageDirection();
@@ -1207,6 +1272,23 @@ const ContextMenu = ({
               >
                 {entry.label}
               </li>
+            ) : entry.kind === 'playAsOne' ? (
+              onPlayAsOne ? (
+                <li key={entry.id} role="none">
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="ptcgsim-menu-item"
+                    data-context-action="playAsOne"
+                    onClick={() => onPlayAsOne(card, bounds)}
+                  >
+                    <MenuItemContent
+                      icon={PuzzlePieceIcon}
+                      label={entry.label}
+                    />
+                  </button>
+                </li>
+              ) : null
             ) : entry.action === 'moveCard' ? (
               <ContextSubmenu
                 key={entry.id}
@@ -2113,6 +2195,7 @@ const ZoneBrowser = ({
   obscured,
   captureContextAnchor,
   actions,
+  onOpenGroupMenu,
 }: {
   readonly state: BoardSessionControllerState;
   readonly depth?: BoardDepthProjection;
@@ -2127,12 +2210,30 @@ const ZoneBrowser = ({
     bounds: Rect
   ) => void;
   readonly actions: LegacyBoardOverlayActions;
+  /** "Move N…": the group menu, from the button pressed. */
+  readonly onOpenGroupMenu?: (anchor: Rect) => void;
 }) => {
   const { t, i18n } = useLingui();
   const direction = usePageDirection();
   const container = useRef<HTMLElement>(null);
   const scrim = useRef<HTMLDivElement>(null);
   const firstClickCard = useRef<ViewCardId | null>(null);
+  // The selection (ADR-042): several items, in the order picked; on
+  // touch, its mode, in which a tap adds or takes out.
+  const selection = state.presentation.selection;
+  const selectionMode = state.presentation.selectionMode;
+  const group = isGroupSelection(selection);
+  const selectionModeRef = useRef(selectionMode);
+  selectionModeRef.current = selectionMode;
+  // A card on the table added with a modifier, or tapped in selection
+  // mode, joins the selection and leaves the pile open.
+  const letThrough = useCallback(
+    (event: PointerEvent): boolean =>
+      event.target instanceof Element &&
+      event.target.closest('[data-card-id]') !== null &&
+      (selectionModeRef.current || isSelectionModifier(event)),
+    []
+  );
   const [sortEnabled, setSortEnabled] = useState(false);
   const [showingBoard, setShowingBoard] = useState(false);
   // The panel keeps its place while peeking; only Back remains interactive.
@@ -2199,7 +2300,8 @@ const ZoneBrowser = ({
   useOutsideDismiss(
     container,
     dismiss,
-    '[data-legacy-card-preview], [data-legacy-card-context-menu]'
+    '[data-legacy-card-preview], [data-legacy-card-context-menu], [data-group-menu], [data-group-damage-controls], [data-touch-card-bar]',
+    letThrough
   );
   useOverlayExit(container, 'panel');
   useOverlayExit(scrim, 'scrim');
@@ -2256,12 +2358,63 @@ const ZoneBrowser = ({
     ...(actions.updateDrag ? { updateDrag: actions.updateDrag } : {}),
     settling: state.presentation.settling,
     ...(tableMotion ? { tableMotion } : {}),
+    ...(group ? { group: selection } : {}),
   });
   const asideCardId = drag.asideCardId;
   const tiles = useMemo(
     () => zoneBrowserTiles(renderedCards, stackCopies),
     [renderedCards, stackCopies]
   );
+  // This pile's cards in the selection, and every card it holds, for its
+  // count, Select all and the tiles' ticks.
+  const selectedHere = useMemo(
+    () => cards.filter((card) => selection.includes(card.id)),
+    [cards, selection]
+  );
+  const selectable = state.canSubmitCommands && !obscured && cards.length > 1;
+  const allSelected = cards.length > 0 && selectedHere.length === cards.length;
+  const selectAll = (): void => {
+    if (!allSelected) {
+      actions.emitSelectionIntent?.({
+        kind: 'CardsSelected',
+        cardIds: tiles.flatMap((tile) => tile.copies.map((copy) => copy.id)),
+        mode: 'add',
+      });
+      return;
+    }
+    // Every card here already: they go, and the rest stay.
+    if (selection.every((item) => cards.some((card) => card.id === item))) {
+      actions.dismiss('selection');
+      return;
+    }
+    for (const card of selectedHere)
+      actions.emitOpenedZoneCardIntent({
+        kind: 'CardSelected',
+        cardId: card.id,
+        mode: 'add',
+      });
+  };
+  /**
+   * A tile taken into the selection or out of it: a stacked tile takes its
+   * next copy each time ("2/5"), and past the last lets them all go.
+   */
+  const toggleTile = (copies: readonly CardSceneNode[]): void => {
+    const next = copies.find((copy) => !selection.includes(copy.id));
+    if (next) {
+      actions.emitOpenedZoneCardIntent({
+        kind: 'CardSelected',
+        cardId: next.id,
+        mode: 'add',
+      });
+      return;
+    }
+    for (const copy of copies)
+      actions.emitOpenedZoneCardIntent({
+        kind: 'CardSelected',
+        cardId: copy.id,
+        mode: 'add',
+      });
+  };
 
   return (
     <>
@@ -2456,85 +2609,145 @@ const ZoneBrowser = ({
             </Tooltip>
           </div>
         </div>
-        <div className="ptcgsim-legacy-zone-cards" {...hiddenContentProps}>
+        <div
+          className="ptcgsim-legacy-zone-cards"
+          {...hiddenContentProps}
+          data-selected-count={selectedHere.length || undefined}
+          {...(selectedHere.length > 0
+            ? {
+                role: 'group',
+                'aria-label': t({
+                  message: `${zoneName}, ${selectedHere.length} selected`,
+                  comment:
+                    'The cards of an open pile, e.g. "Your discard pile, 3 selected".',
+                }),
+              }
+            : {})}
+        >
           {renderedCards.length === 0 ? (
             <p className="ptcgsim-overlay-empty">
               <Trans>No cards here</Trans>
             </p>
           ) : null}
-          {tiles.map(({ card, count }) => (
-            <button
-              type="button"
-              key={card.id}
-              className="ptcgsim-zone-card"
-              data-overlay-card-id={card.id}
-              data-motion-origin={card.id}
-              data-copy-stack={count > 1 ? count : undefined}
-              data-armed={drag.armedCardId === card.id ? 'true' : undefined}
-              aria-label={
-                count > 1 ? copiesLabel(card.label, count) : card.label
-              }
-              aria-pressed={selectedCardIdOf(state.presentation) === card.id}
-              draggable={false}
-              onDragStart={drag.onDragStart}
-              onPointerDown={(event) => drag.onPointerDown(event, card)}
-              onClick={(event) => {
-                if (drag.consumeClick(card.id) && event.detail > 0) {
-                  firstClickCard.current = null;
-                  return;
+          {tiles.map(({ card: shown, count, copies }) => {
+            // A stack is picked up by a copy in the selection, if any is,
+            // so it carries the group.
+            const taken = copies.filter((copy) => selection.includes(copy.id));
+            const card = taken[0] ?? shown;
+            const order = taken[0] ? selection.indexOf(taken[0].id) + 1 : 0;
+            const ticked = taken.length > 0 && (group || selectionMode);
+            const name =
+              count > 1 ? copiesLabel(card.label, count) : card.label;
+            return (
+              <button
+                type="button"
+                key={shown.id}
+                className="ptcgsim-zone-card"
+                data-overlay-card-id={card.id}
+                data-motion-origin={card.id}
+                data-copy-stack={count > 1 ? count : undefined}
+                data-armed={drag.armedCardId === card.id ? 'true' : undefined}
+                data-selection-ticked={ticked ? 'true' : undefined}
+                aria-label={
+                  ticked
+                    ? t({
+                        message: `${name}, selected, ${order} of ${selection.length}`,
+                        comment:
+                          'A selected card among several, e.g. "Switch, selected, 2 of 3".',
+                      })
+                    : name
                 }
-                // A second click that opened this panel belongs to the pile,
-                // not to the card that just appeared under the pointer; one
-                // that opens a preview leaves the selection as it was.
-                if (event.detail === 2) return;
-                if (event.detail <= 1) firstClickCard.current = card.id;
-                actions.emitOpenedZoneCardIntent({
-                  kind: 'CardSelected',
-                  cardId: card.id,
-                  ...(event.detail > 2 ? {} : { toggle: true }),
-                });
-              }}
-              onDoubleClick={(event) => {
-                if (event.detail === 0 || firstClickCard.current === card.id)
+                aria-pressed={
+                  group || selectionMode
+                    ? taken.length > 0
+                    : selectedCardIdOf(state.presentation) === card.id
+                }
+                draggable={false}
+                onDragStart={drag.onDragStart}
+                onPointerDown={(event) => drag.onPointerDown(event, card)}
+                onClick={(event) => {
+                  if (drag.consumeClick(card.id) && event.detail > 0) {
+                    firstClickCard.current = null;
+                    return;
+                  }
+                  // Shift or ⌘/Ctrl, or a tap in selection mode, adds or
+                  // takes out (ADR-042 §2): on every click, never counted
+                  // toward a double-click's preview.
+                  if (
+                    state.canSubmitCommands &&
+                    (selectionMode || isSelectionModifier(event))
+                  ) {
+                    firstClickCard.current = null;
+                    toggleTile(copies);
+                    return;
+                  }
+                  // A second click that opened this panel belongs to the pile,
+                  // not to the card that just appeared under the pointer; one
+                  // that opens a preview leaves the selection as it was.
+                  if (event.detail === 2) return;
+                  if (event.detail <= 1) firstClickCard.current = card.id;
                   actions.emitOpenedZoneCardIntent({
-                    kind: 'CardPreviewRequested',
+                    kind: 'CardSelected',
+                    cardId: card.id,
+                    ...(event.detail > 2 ? {} : { toggle: true }),
+                  });
+                }}
+                onDoubleClick={(event) => {
+                  if (selectionMode || isSelectionModifier(event)) return;
+                  if (event.detail === 0 || firstClickCard.current === card.id)
+                    actions.emitOpenedZoneCardIntent({
+                      kind: 'CardPreviewRequested',
+                      cardId: card.id,
+                    });
+                  firstClickCard.current = null;
+                }}
+                onContextMenu={(event) => {
+                  event.preventDefault();
+                  const bounds = event.currentTarget.getBoundingClientRect();
+                  captureContextAnchor(card.id, zone.id, {
+                    x: bounds.x,
+                    y: bounds.y,
+                    width: bounds.width,
+                    height: bounds.height,
+                  });
+                  actions.emitOpenedZoneCardIntent({
+                    kind: 'CardContextRequested',
                     cardId: card.id,
                   });
-                firstClickCard.current = null;
-              }}
-              onContextMenu={(event) => {
-                event.preventDefault();
-                const bounds = event.currentTarget.getBoundingClientRect();
-                captureContextAnchor(card.id, zone.id, {
-                  x: bounds.x,
-                  y: bounds.y,
-                  width: bounds.width,
-                  height: bounds.height,
-                });
-                actions.emitOpenedZoneCardIntent({
-                  kind: 'CardContextRequested',
-                  cardId: card.id,
-                });
-              }}
-            >
-              <OverlayCardImage card={card} variant="zone" />
-              {abilityMarkedCardIds.has(card.id) ? (
-                <span
-                  className="ptcgsim-legacy-zone-ability-marker"
-                  data-opened-zone-ability-marker="true"
-                  data-marker-card-id={card.id}
-                  aria-hidden="true"
-                />
-              ) : null}
-              {/* Copies shown one by one carry no count: a ×N on each would
-                  read as a stack. Stacked, the tile counts its copies. */}
-              {count > 1 ? (
-                <span className="ptcgsim-zone-copy-badge" aria-hidden="true">
-                  ×{count}
-                </span>
-              ) : null}
-            </button>
-          ))}
+                }}
+              >
+                <OverlayCardImage card={card} variant="zone" />
+                {abilityMarkedCardIds.has(card.id) ? (
+                  <span
+                    className="ptcgsim-legacy-zone-ability-marker"
+                    data-opened-zone-ability-marker="true"
+                    data-marker-card-id={card.id}
+                    aria-hidden="true"
+                  />
+                ) : null}
+                {/* Copies shown one by one carry no count: a ×N on each would
+                    read as a stack. Stacked, the tile counts its copies. */}
+                {count > 1 ? (
+                  <span className="ptcgsim-zone-copy-badge" aria-hidden="true">
+                    ×{count}
+                  </span>
+                ) : null}
+                {/* Its place in the selection, or how many of its copies
+                    are in it ("2/5"). */}
+                {ticked ? (
+                  <span
+                    className="ptcgsim-zone-select-badge"
+                    data-zone-select-badge={
+                      count > 1 ? `${taken.length}/${count}` : String(order)
+                    }
+                    aria-hidden="true"
+                  >
+                    {count > 1 ? `${taken.length}/${count}` : order}
+                  </span>
+                ) : null}
+              </button>
+            );
+          })}
         </div>
         <OverlayCardActions
           card={cards.find(
@@ -2553,6 +2766,30 @@ const ZoneBrowser = ({
             }
             actions.emitOpenedZoneCardIntent(intent);
           }}
+          {...(selectable && actions.emitSelectionIntent
+            ? {
+                selection: {
+                  count: selection.length,
+                  here: selectedHere.length,
+                  allSelected,
+                  selectionMode,
+                  onSelectAll: selectAll,
+                  ...(group && onOpenGroupMenu
+                    ? {
+                        onMove: (button: HTMLElement) =>
+                          onOpenGroupMenu(boardRectOf(button, state.scene!)),
+                      }
+                    : {}),
+                  onDone: () => {
+                    actions.emitSelectionIntent?.({
+                      kind: 'SelectionModeChanged',
+                      on: false,
+                    });
+                    actions.dismiss('selection');
+                  },
+                },
+              }
+            : {})}
         />
       </section>
     </>
@@ -2993,8 +3230,16 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
   allowOpponentResolution = false,
   soloOpponentHandHidden,
   onHideRevealed,
+  groupSurface = null,
+  onGroupSurfaceChange,
 }: {
   readonly allowOpponentResolution?: boolean;
+  /**
+   * The group menu or damage stepper opened from outside the card menu (the
+   * group bar), and the way to open or close them (ADR-042 §3).
+   */
+  readonly groupSurface?: GroupSurface | null;
+  readonly onGroupSurfaceChange?: (surface: GroupSurface | null) => void;
   /**
    * In a room, hides a card of the player's own hand that their opponent
    * can see: each wears an eye that does so (RevealedHandBadges).
@@ -3052,6 +3297,93 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
         (card) => card.id === state.overlays.contextMenuCardId
       ) ?? null)
     : null;
+  // Several selected (ADR-042): a right-click or long press on one of them
+  // opens the group's menu, not that card's; so do the group bar and the
+  // viewer's Move N….
+  const selectionContext = selectionContextOf(state, allowOpponentResolution);
+  const selection = state.presentation.selection;
+  const grouped = isGroupSelection(selection);
+  const contextInGroup =
+    contextCard !== null &&
+    grouped &&
+    selectionContext !== null &&
+    selectedItemOf(selectionContext, selection, contextCard.id) !== null;
+  const groupMenu =
+    selectionContext &&
+    grouped &&
+    (contextInGroup || groupSurface?.kind === 'menu')
+      ? groupMenuOf(selectionContext, selection)
+      : null;
+  const contextAnchorBounds =
+    contextCard &&
+    contextAnchor?.cardId === contextCard.id &&
+    (contextAnchor.zoneId === state.presentation.openedZoneId ||
+      contextAnchor.zoneId === contextCard.parentId)
+      ? contextAnchor.bounds
+      : undefined;
+  const groupMenuAnchor =
+    contextInGroup && contextCard
+      ? (contextAnchorBounds ?? visualCardBounds(contextCard, depth))
+      : groupSurface?.kind === 'menu'
+        ? groupSurface.anchor
+        : null;
+  const closeGroupSurfaces = (): void => {
+    if (contextInGroup) actions.dismiss('context');
+    onGroupSurfaceChange?.(null);
+  };
+  const groupDamagePokemon =
+    groupSurface?.kind === 'damage' && selectionContext && grouped
+      ? pokemonInPlayOf(selectionContext, selection).length
+      : 0;
+  // "Play as one card": the pieces in sight, selected in part order, and
+  // the group menu on where they can go (ADR-042 §5).
+  const playAsOne = (cardId: ViewCardId, anchor: Rect): void => {
+    const set = state.view
+      ? visiblePieceSetOf(state.view, cardId, state.presentation.openedZoneId)
+      : null;
+    if (!set || !actions.emitSelectionIntent) return;
+    actions.emitSelectionIntent({
+      kind: 'CardsSelected',
+      cardIds: set.cardIds,
+      mode: 'replace',
+    });
+    actions.dismiss('context');
+    onGroupSurfaceChange?.({ kind: 'menu', anchor });
+  };
+  const chooseGroup = (choice: GroupMenuChoice, anchor: Rect): void => {
+    switch (choice.kind) {
+      case 'action':
+        actions.emitGroupAction?.(choice.action);
+        closeGroupSurfaces();
+        return;
+      case 'damage':
+        if (contextInGroup) actions.dismiss('context');
+        onGroupSurfaceChange?.({ kind: 'damage', anchor });
+        return;
+      case 'playAsOne': {
+        const piece = selection.find(
+          (item) =>
+            state.view &&
+            visiblePieceSetOf(
+              state.view,
+              item,
+              state.presentation.openedZoneId
+            ) !== null
+        );
+        if (piece) playAsOne(piece, anchor);
+        return;
+      }
+      case 'deselect':
+        closeGroupSurfaces();
+        if (state.presentation.selectionMode)
+          actions.emitSelectionIntent?.({
+            kind: 'SelectionModeChanged',
+            on: false,
+          });
+        actions.dismiss('selection');
+        return;
+    }
+  };
   const preview = state.overlays.preview;
   const previewCard =
     preview?.kind === 'card'
@@ -3156,6 +3488,12 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
             setContextAnchor({ cardId, zoneId, bounds })
           }
           actions={actions}
+          {...(onGroupSurfaceChange
+            ? {
+                onOpenGroupMenu: (anchor: Rect) =>
+                  onGroupSurfaceChange({ kind: 'menu', anchor }),
+              }
+            : {})}
         />
       ) : null}
       {state.overlays.input?.kind === 'count' ||
@@ -3181,24 +3519,58 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
           onHide={onHideRevealed}
         />
       ) : null}
-      {contextCard ? (
+      {contextCard && !(contextInGroup && groupMenu) ? (
         <ContextMenu
           {...(depth ? { depth } : {})}
           state={state}
           card={contextCard}
-          anchorBounds={
-            contextAnchor?.cardId === contextCard.id &&
-            (contextAnchor.zoneId === state.presentation.openedZoneId ||
-              contextAnchor.zoneId === contextCard.parentId)
-              ? contextAnchor.bounds
-              : undefined
-          }
+          {...(contextAnchorBounds
+            ? { anchorBounds: contextAnchorBounds }
+            : {})}
           pointer={contextPointer}
           darkMode={darkMode}
           actions={actions}
           {...(soloOpponentHandHidden === undefined
             ? {}
             : { soloOpponentHandHidden })}
+          {...(actions.emitSelectionIntent
+            ? {
+                onPlayAsOne: (card: CardSceneNode, bounds: Rect) =>
+                  playAsOne(card.id, bounds),
+              }
+            : {})}
+        />
+      ) : null}
+      {groupMenu && groupMenuAnchor ? (
+        <GroupMenuView
+          menu={groupMenu}
+          anchor={groupMenuAnchor}
+          board={scene.viewport}
+          darkMode={darkMode}
+          attachTargets={
+            selectionContext &&
+            groupMenu.entries.some(
+              (entry) =>
+                entry.run.kind === 'picker' &&
+                entry.run.picker === 'attachTarget'
+            )
+              ? groupAttachTargets(selectionContext, selection)
+              : []
+          }
+          onChoose={(choice) => chooseGroup(choice, groupMenuAnchor)}
+          onDismiss={closeGroupSurfaces}
+        />
+      ) : null}
+      {groupSurface?.kind === 'damage' && groupDamagePokemon > 0 ? (
+        <GroupDamageControls
+          pokemon={groupDamagePokemon}
+          anchor={groupSurface.anchor}
+          board={scene.viewport}
+          onStep={(delta) =>
+            actions.emitGroupAction?.({ kind: 'damage', delta })
+          }
+          onClear={() => actions.emitGroupAction?.({ kind: 'clearDamage' })}
+          onDismiss={() => onGroupSurfaceChange?.(null)}
         />
       ) : null}
       {preview ? (

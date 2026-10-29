@@ -95,6 +95,32 @@
   color: var(--color-text-muted);
 }
 
+/* A worded button too narrow for its word (a long language) is clipped
+   rather than pushing the bar wider than the phone. */
+.touch-card-bar__button {
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* The group bar's count: how many cards it acts on, in the selected
+   cards' gold (their rings, the viewer's badges). */
+.touch-card-bar__count {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  box-sizing: border-box;
+  min-width: 44px;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--ptcgsim-ring-selected, var(--color-gold));
+  /* Dark on the gold in either theme (the gold is the same in both). */
+  color: #2a2008;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--weight-bold, 700);
+}
+
 .touch-card-bar__button:active {
   background: var(--color-surface-pressed);
 }

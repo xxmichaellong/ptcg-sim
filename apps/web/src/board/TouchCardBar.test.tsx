@@ -6,7 +6,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { TouchCardBar } from './TouchCardBar.js';
+import { TouchCardBar, TouchGroupBar } from './TouchCardBar.js';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -118,5 +118,143 @@ describe('TouchCardBar', () => {
     expect(
       await render({ x: 0, y: 0, width: 1, height: 1 }, asViewCardId('gone'))
     ).toBeNull();
+  });
+
+  it("gives a player's bar Select, 280px wide, which a 320px phone holds", async () => {
+    const onSelect = vi.fn();
+    const card = { x: 300, y: 300, width: 60, height: 84 };
+    await act(async () =>
+      root.render(
+        <TouchCardBar
+          scene={sceneWith(card)}
+          cardId={asViewCardId('tapped')}
+          viewport={VIEWPORT}
+          {...actions}
+          onSelect={onSelect}
+        />
+      )
+    );
+    const bar = host.querySelector<HTMLElement>('[data-touch-card-bar]')!;
+    expect(px(bar.style.width)).toBe(280);
+    expect(px(bar.style.left)).toBe(card.x + card.width / 2 - 280 / 2);
+    const select = host.querySelector<HTMLButtonElement>(
+      '#touchSelectCardButton'
+    )!;
+    expect(select.getAttribute('aria-label')).toBe('Select');
+    await act(async () => select.click());
+    expect(onSelect).toHaveBeenCalledOnce();
+    // On a 320px phone it keeps 8px from each side.
+    await act(async () =>
+      root.render(
+        <TouchCardBar
+          scene={sceneWith({ x: 0, y: 300, width: 40, height: 56 })}
+          cardId={asViewCardId('tapped')}
+          viewport={{ width: 320, height: 640, devicePixelRatio: 3 }}
+          {...actions}
+          onSelect={onSelect}
+        />
+      )
+    );
+    const narrow = host.querySelector<HTMLElement>('[data-touch-card-bar]')!;
+    expect(px(narrow.style.left)).toBe(BAR.gap);
+    expect(px(narrow.style.left) + px(narrow.style.width)).toBeLessThanOrEqual(
+      320 - BAR.gap
+    );
+  });
+
+  it('plays a piece with its others as one card, Read giving up its word for the room', async () => {
+    const onPlayAsOne = vi.fn();
+    await act(async () =>
+      root.render(
+        <TouchCardBar
+          scene={sceneWith({ x: 300, y: 300, width: 60, height: 84 })}
+          cardId={asViewCardId('tapped')}
+          viewport={VIEWPORT}
+          {...actions}
+          onSelect={vi.fn()}
+          onPlayAsOne={onPlayAsOne}
+        />
+      )
+    );
+    const bar = host.querySelector<HTMLElement>('[data-touch-card-bar]')!;
+    expect(px(bar.style.width)).toBe(280);
+    expect(bar.querySelectorAll('button')).toHaveLength(5);
+    const read = host.querySelector<HTMLButtonElement>('#touchReadCardButton')!;
+    expect(read.textContent).toBe('');
+    expect(read.getAttribute('aria-label')).toBe('Read');
+    const play = host.querySelector<HTMLButtonElement>(
+      '#touchPlayAsOneButton'
+    )!;
+    expect(play.getAttribute('aria-label')).toBe('Play as one card');
+    await act(async () => play.click());
+    expect(onPlayAsOne).toHaveBeenCalledOnce();
+  });
+});
+
+describe('TouchGroupBar', () => {
+  const groupScene = sceneWith({ x: 300, y: 300, width: 60, height: 84 });
+  const renderGroup = async (
+    props: Partial<Parameters<typeof TouchGroupBar>[0]> = {}
+  ) => {
+    const handlers = {
+      onMove: vi.fn(),
+      onDone: vi.fn(),
+    };
+    await act(async () =>
+      root.render(
+        <TouchGroupBar
+          scene={groupScene}
+          cardId={asViewCardId('tapped')}
+          count={3}
+          viewport={VIEWPORT}
+          {...handlers}
+          {...props}
+        />
+      )
+    );
+    return {
+      handlers,
+      bar: host.querySelector<HTMLElement>('[data-touch-group-bar]')!,
+    };
+  };
+
+  it('says how many, moves them through the group menu, and lets them go', async () => {
+    const onDamage = vi.fn();
+    const { handlers, bar } = await renderGroup({ onDamage });
+    expect(bar.getAttribute('aria-label')).toBe('3 selected: actions');
+    expect(bar.querySelector('[data-touch-group-count]')?.textContent).toBe(
+      '3'
+    );
+    // "3 · Move… · Damage… · ✕": at most four, 44px each at the least.
+    const buttons = [...bar.querySelectorAll('button')];
+    expect(buttons.map((button) => button.id)).toEqual([
+      'touchGroupMoveButton',
+      'touchGroupDamageButton',
+      'touchGroupDoneButton',
+    ]);
+    expect(px(bar.style.width)).toBe(280);
+    await act(async () => buttons[0]!.click());
+    expect(handlers.onMove).toHaveBeenCalledWith(
+      expect.objectContaining({ width: expect.any(Number) })
+    );
+    await act(async () => buttons[1]!.click());
+    expect(onDamage).toHaveBeenCalledOnce();
+    await act(async () => buttons[2]!.click());
+    expect(handlers.onDone).toHaveBeenCalledOnce();
+    expect(buttons[2]!.getAttribute('aria-label')).toBe('Deselect all');
+  });
+
+  it('is narrower with one worded button, and offers Play as one card for pieces', async () => {
+    const plain = await renderGroup();
+    expect(px(plain.bar.style.width)).toBe(190);
+    expect(plain.bar.querySelectorAll('button')).toHaveLength(2);
+    const onPlayAsOne = vi.fn();
+    const pieces = await renderGroup({ onPlayAsOne });
+    const play = pieces.bar.querySelector<HTMLButtonElement>(
+      '#touchGroupPlayAsOneButton'
+    )!;
+    expect(play.getAttribute('aria-label')).toBe('Play as one card');
+    await act(async () => play.click());
+    expect(onPlayAsOne).toHaveBeenCalledOnce();
   });
 });

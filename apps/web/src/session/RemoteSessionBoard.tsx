@@ -19,6 +19,7 @@ import {
   type BoardLayoutState,
   type BoardPreferences,
   type BoardRendererStatus,
+  type Rect,
 } from '@ptcgsim/renderer-contract';
 import type { WireGameCommand } from '@ptcgsim/protocol';
 import { ArrowsDownUpIcon } from '@phosphor-icons/react/dist/csr/ArrowsDownUp';
@@ -52,7 +53,7 @@ import {
   CardInspector,
 } from '../board/inspector/CardInspector.js';
 import { TurnBanner } from '../board/banner/TurnBanner.js';
-import { TouchCardBar } from '../board/TouchCardBar.js';
+import { TouchCardBar, TouchGroupBar } from '../board/TouchCardBar.js';
 import {
   loadDeckSides,
   TableZoneAffordances,
@@ -79,8 +80,16 @@ import {
 import {
   DISCARD_SHUFFLED_TOAST_ID,
   LegacyBoardOverlays,
+  type GroupSurface,
   type LegacyBoardOverlayActions,
 } from '../board/overlays/LegacyBoardOverlays.js';
+import {
+  isGroupSelection,
+  pokemonInPlayOf,
+  selectionContextOf,
+} from '../board/overlays/group-context.js';
+import { visiblePieceSetOf } from '../board/piece-sets.js';
+import { SelectionAnnouncer } from '../board/SelectionAnnouncer.js';
 import type { CoinFlipSnapshot } from '../presentation/CoinFlipController.js';
 import type { PresentationStateSource } from '../presentation/PresentationRuntime.js';
 import type { ReplaySessionCoordinator } from '../replay/ReplaySessionCoordinator.js';
@@ -198,6 +207,20 @@ export interface BoardRailModel {
 }
 
 /** What a route's menu can ask of the table. */
+/** Which of a finger's bars shows, and what it offers. */
+interface TouchBars {
+  /** One card's bar, by the card selected. */
+  readonly single?: ViewCardId;
+  /** The group's bar, by the card last selected. */
+  readonly group?: ViewCardId;
+  /** Select: selection mode, for a player. */
+  readonly canSelect?: boolean;
+  /** Damage…: the group holds Pokémon in play. */
+  readonly damage?: boolean;
+  /** Play as one card, from this piece. */
+  readonly pieces?: ViewCardId;
+}
+
 export interface BoardCommands {
   readonly flipBoard: () => void;
   /** Whether turning the table around is allowed here. */
@@ -482,6 +505,9 @@ export const RemoteSessionBoard = ({
   // Whether the last press on the table was a finger's: a tapped card then
   // gets the touch bar, since a finger has no right-click or double-click.
   const [touchInput, setTouchInput] = useState(false);
+  // The group menu or damage stepper opened by the group bar (ADR-042 §2):
+  // the table's own menus open from a card, these from the bar's buttons.
+  const [groupSurface, setGroupSurface] = useState<GroupSurface | null>(null);
   // v1 reveal-and-hide.js: revealing a card from your own hand in a room
   // opens a modal that ends the reveal when it is acknowledged.
   // A card of one's own hand shown to the opponent, hidden again by its
@@ -546,10 +572,12 @@ export const RemoteSessionBoard = ({
       tap = {
         pointerId: event.pointerId,
         cardId,
+        // In selection mode a tap adds or takes out: reading a card
+        // tapped again is off there (ADR-042 §2).
         wasSelected: (() => {
           const presentation =
             runtimeRef.current?.getBoardSnapshot()?.presentation;
-          return presentation
+          return presentation && !presentation.selectionMode
             ? selectedCardIdOf(presentation) === cardId
             : false;
         })(),
@@ -927,6 +955,12 @@ export const RemoteSessionBoard = ({
 
   const overlayActions = useMemo<LegacyBoardOverlayActions>(
     () => ({
+      emitGroupAction: (action) => {
+        runtimeRef.current?.emitGroupAction(action);
+      },
+      emitSelectionIntent: (intent) => {
+        runtimeRef.current?.emitIntent(intent);
+      },
       movesSent: () => movesSentRef.current,
       lastMoveSent: () => lastMoveSentRef.current,
       moveAccepted: (commandId: string) =>
@@ -1202,6 +1236,14 @@ export const RemoteSessionBoard = ({
           zone.count > 0
       ) ??
         false));
+  // The group's menu and stepper go with the group: a move the room took,
+  // Esc, the last card let go of.
+  const grouped =
+    boardState !== undefined &&
+    isGroupSelection(boardState.presentation.selection);
+  useEffect(() => {
+    if (!grouped) setGroupSurface(null);
+  }, [grouped]);
   const lostZoneControl = useMemo(
     () => ({
       choice: boardView.lostZone,
@@ -1523,6 +1565,77 @@ export const RemoteSessionBoard = ({
         ).join(' ')
       : '';
 
+  // A finger's bars (ADR-030, ADR-042 §2): one card's (Read, Actions,
+  // Select), or the group's while several are selected or the selection
+  // mode is on. Neither while a card is held, a menu, preview or window is
+  // open, or the group's menu or stepper.
+  const touchBars = ((): TouchBars | null => {
+    if (!touchInput || !boardState?.scene) return null;
+    const { presentation, overlays } = boardState;
+    if (
+      presentation.drag !== null ||
+      presentation.openedZoneId !== null ||
+      overlays.contextMenuCardId !== null ||
+      overlays.preview !== null ||
+      overlays.input !== null ||
+      groupSurface !== null
+    )
+      return null;
+    const selection = presentation.selection;
+    const context = boardState.canSubmitCommands
+      ? selectionContextOf(boardState, roomMode === 'solo')
+      : null;
+    const view = boardState.view;
+    // A piece whose others are in sight: "Play as one card".
+    const pieceAmong = (ids: readonly ViewCardId[]): ViewCardId | undefined =>
+      context && view
+        ? ids.find((id) => visiblePieceSetOf(view, id, null) !== null)
+        : undefined;
+    if (presentation.selectionMode || isGroupSelection(selection)) {
+      const last = selection.at(-1);
+      if (last === undefined) return null;
+      const damage =
+        context !== null &&
+        isGroupSelection(selection) &&
+        pokemonInPlayOf(context, selection).length > 0;
+      const pieces = damage ? undefined : pieceAmong(selection);
+      return { group: last, damage, ...(pieces ? { pieces } : {}) };
+    }
+    const single = selectedCardIdOf(presentation);
+    if (single === null) return null;
+    const pieces = pieceAmong([single]);
+    return {
+      single,
+      canSelect: context !== null,
+      ...(pieces ? { pieces } : {}),
+    };
+  })();
+  // "Play as one card" from a bar: the pieces in sight, and the group menu
+  // on where they can go, from the card.
+  const playAsOneFromBar = (cardId: ViewCardId): void => {
+    const snapshot = runtimeRef.current?.getBoardSnapshot();
+    const set = snapshot?.view
+      ? visiblePieceSetOf(
+          snapshot.view,
+          cardId,
+          snapshot.presentation.openedZoneId
+        )
+      : null;
+    const card = snapshot?.scene?.cards.find(
+      (candidate) => candidate.id === cardId
+    );
+    if (!set || !card) return;
+    runtimeRef.current?.emitIntent({
+      kind: 'CardsSelected',
+      cardIds: set.cardIds,
+      mode: 'replace',
+    });
+    setGroupSurface({
+      kind: 'menu',
+      anchor: depthProjection ? depthProjection.bounds(card) : card.bounds,
+    });
+  };
+
   return (
     // The table is laid out in the world, not in the page's language: it
     // stays left to right in Arabic too (ADR-034). What it raises to be
@@ -1599,17 +1712,10 @@ export const RemoteSessionBoard = ({
               covered={coveredByPopup}
             />
           ) : null}
-          {layout &&
-          touchInput &&
-          selectedCardIdOf(boardState.presentation) !== null &&
-          boardState.presentation.drag === null &&
-          boardState.presentation.openedZoneId === null &&
-          boardState.overlays.contextMenuCardId === null &&
-          boardState.overlays.preview === null &&
-          boardState.overlays.input === null ? (
+          {layout && touchBars?.single ? (
             <TouchCardBar
               scene={boardState.scene}
-              cardId={selectedCardIdOf(boardState.presentation)!}
+              cardId={touchBars.single}
               {...(depthProjection ? { depth: depthProjection } : {})}
               viewport={layout.viewport}
               onRead={() => {
@@ -1637,8 +1743,76 @@ export const RemoteSessionBoard = ({
               onDismiss={() =>
                 runtimeRef.current?.dismissLocalPresentation('selection')
               }
+              {...(touchBars.canSelect
+                ? {
+                    onSelect: () =>
+                      runtimeRef.current?.emitIntent({
+                        kind: 'SelectionModeChanged',
+                        on: true,
+                      }),
+                  }
+                : {})}
+              {...(touchBars.pieces
+                ? {
+                    onPlayAsOne: () => playAsOneFromBar(touchBars.single!),
+                  }
+                : {})}
             />
           ) : null}
+          {layout && touchBars?.group ? (
+            <TouchGroupBar
+              scene={boardState.scene}
+              cardId={touchBars.group}
+              count={boardState.presentation.selection.length}
+              {...(depthProjection ? { depth: depthProjection } : {})}
+              viewport={layout.viewport}
+              onMove={(anchor) => {
+                const selection =
+                  runtimeRef.current?.getBoardSnapshot()?.presentation
+                    .selection ?? [];
+                if (isGroupSelection(selection)) {
+                  setGroupSurface({ kind: 'menu', anchor });
+                  return;
+                }
+                // One card in selection mode: its own menu.
+                const only = selection[0];
+                if (only)
+                  runtimeRef.current?.emitIntent({
+                    kind: 'CardContextRequested',
+                    cardId: only,
+                  });
+              }}
+              {...(touchBars.damage
+                ? {
+                    onDamage: (anchor: Rect) =>
+                      setGroupSurface({ kind: 'damage', anchor }),
+                  }
+                : {})}
+              {...(touchBars.pieces
+                ? {
+                    onPlayAsOne: () => playAsOneFromBar(touchBars.pieces!),
+                  }
+                : {})}
+              onDone={() => {
+                runtimeRef.current?.emitIntent({
+                  kind: 'SelectionModeChanged',
+                  on: false,
+                });
+                runtimeRef.current?.dismissLocalPresentation('selection');
+              }}
+            />
+          ) : null}
+          <SelectionAnnouncer
+            selection={boardState.presentation.selection}
+            selectionMode={boardState.presentation.selectionMode}
+            labelOf={(cardId) =>
+              boardState.scene?.cards.find((card) => card.id === cardId)?.label
+            }
+            present={(cardId) =>
+              boardState.scene?.cards.some((card) => card.id === cardId) ??
+              false
+            }
+          />
           <LegacyBoardOverlays
             {...(depthProjection ? { depth: depthProjection } : {})}
             allowOpponentResolution={roomMode === 'solo'}
@@ -1652,6 +1826,8 @@ export const RemoteSessionBoard = ({
             darkMode={preferences.darkMode}
             actions={boardOverlayActions}
             tableMotion={tableMotion}
+            groupSurface={groupSurface}
+            onGroupSurfaceChange={setGroupSurface}
           />
           <TurnBanner
             view={boardState.view}

@@ -38,7 +38,20 @@ interface Options {
   readonly settling?: readonly SettlingCard[];
   /** Whether the table is still moving, so a dropped card is seen to land. */
   readonly tableMotion?: TableMotionStore;
+  /**
+   * The selected items, in order, when several are (ADR-042 §2): a card
+   * picked up from among them carries them all, and its drop moves them
+   * together. A card outside them goes alone.
+   */
+  readonly group?: readonly ViewCardId[];
 }
+
+/** The items a held card carries: the group, when it is one of them. */
+const groupOf = (
+  group: readonly ViewCardId[] | undefined,
+  cardId: ViewCardId
+): readonly ViewCardId[] | undefined =>
+  group && group.length >= 2 && group.includes(cardId) ? group : undefined;
 
 interface Grip {
   readonly card: CardSceneNode;
@@ -82,6 +95,9 @@ export const useOverlayCardDrag = (options: Options) => {
     ),
   });
   const grip = useRef<Grip | null>(null);
+  // The group as it was when the card was picked up: the selection may
+  // change under the drag, but what was picked up is what is carried.
+  const heldGroup = useRef<readonly ViewCardId[] | undefined>(undefined);
   const [draggingCardId, setDraggingCardId] = useState<ViewCardId | null>(null);
   const [armedCardId, setArmedCardId] = useState<ViewCardId | null>(null);
   /** Let go of here and still on its way to where it was put. */
@@ -92,12 +108,25 @@ export const useOverlayCardDrag = (options: Options) => {
         emitIntent: (intent) => {
           if (intent.kind !== 'CardDropRequested') return;
           setLandingCardId(intent.cardId);
-          latest.current.emit(intent);
+          const group = groupOf(heldGroup.current, intent.cardId);
+          latest.current.emit(
+            group && !intent.groupCardIds
+              ? { ...intent, groupCardIds: group }
+              : intent
+          );
         },
         emitPresentationUpdate: (update) => {
           if (update.kind !== 'DragChanged') return;
           setDraggingCardId(update.drag?.cardId ?? null);
-          latest.current.updateDrag?.(update.drag);
+          const drag = update.drag;
+          const group = drag
+            ? groupOf(heldGroup.current, drag.cardId)
+            : undefined;
+          latest.current.updateDrag?.(
+            drag && group && !drag.groupCardIds
+              ? { ...drag, groupCardIds: group }
+              : drag
+          );
         },
       }),
     []
@@ -374,6 +403,7 @@ export const useOverlayCardDrag = (options: Options) => {
         startX: event.clientX,
         startY: event.clientY,
       };
+      heldGroup.current = latest.current.group;
       if (current.armed && !pickUp(current, event.clientX, event.clientY))
         return;
       grip.current = current;

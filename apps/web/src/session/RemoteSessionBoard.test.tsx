@@ -5,7 +5,11 @@ import type {
   ProjectedReplayArtifact,
   SubmitCommandResult,
 } from '@ptcgsim/client-session';
-import { asPlayerId, type MatchViewState } from '@ptcgsim/game-core';
+import {
+  asPlayerId,
+  type MatchViewState,
+  type ViewCardId,
+} from '@ptcgsim/game-core';
 import type { WireGameCommand } from '@ptcgsim/protocol';
 import {
   createEmptyBoardView,
@@ -1601,6 +1605,120 @@ describe('RemoteSessionBoard replay binding', () => {
     await act(async () => plus.click());
     expect(onLoad).toHaveBeenCalledExactlyOnceWith('lobby-blue');
 
+    await act(async () => root.unmount());
+    replay.dispose();
+  });
+
+  it("gives a finger the group's bar for several cards, and in selection mode a tap never reads", async () => {
+    // The controller can't make a group yet (ADR-042 WP2): the table's
+    // snapshot is given one.
+    let forced: {
+      readonly selection?: readonly ViewCardId[];
+      readonly selectionMode?: boolean;
+    } | null = null;
+    const real = BoardSessionRuntime.prototype.getBoardSnapshot;
+    vi.spyOn(
+      BoardSessionRuntime.prototype,
+      'getBoardSnapshot'
+    ).mockImplementation(function (this: BoardSessionRuntime) {
+      const snapshot = real.call(this);
+      return snapshot && forced
+        ? {
+            ...snapshot,
+            presentation: { ...snapshot.presentation, ...forced },
+          }
+        : snapshot;
+    });
+    const emitted = vi.spyOn(BoardSessionRuntime.prototype, 'emitIntent');
+    const session = new FakeRemoteBoardSession();
+    const replay = new ReplaySessionCoordinator(session);
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+    await act(async () =>
+      root.render(
+        <RemoteSessionBoard
+          session={session}
+          replay={replay}
+          roomMode="solo"
+          onIntent={vi.fn()}
+        />
+      )
+    );
+    await waitForRevision(host, 10);
+    if (baseView.viewer.kind !== 'player') throw new Error('player view');
+    const viewerId = baseView.viewer.playerId;
+    const hand = Object.values(baseView.zones).find(
+      (zone) => zone.kind === 'hand' && zone.ownerId === viewerId
+    )!;
+    const [first, second] = [hand.cards[0]!.id, hand.cards[1]!.id];
+    const tap = async (cardId: ViewCardId) => {
+      const card = host.querySelector<HTMLElement>(
+        `[data-card-id="${cardId}"]`
+      )!;
+      await act(async () => {
+        for (const type of ['pointerdown', 'pointerup'] as const) {
+          card.dispatchEvent(
+            new PointerEvent(type, {
+              pointerType: 'touch',
+              pointerId: 4,
+              clientX: 10,
+              clientY: 10,
+              bubbles: true,
+              cancelable: true,
+            })
+          );
+        }
+      });
+      await act(async () => card.click());
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+    };
+    const kinds = () => emitted.mock.calls.map(([intent]) => intent.kind);
+    expect(host.querySelector('[data-selection-announcer]')).not.toBeNull();
+
+    // One card: its own bar, which starts selection mode.
+    await tap(first);
+    const select = host.querySelector<HTMLButtonElement>(
+      '#touchSelectCardButton'
+    )!;
+    await act(async () => select.click());
+    expect(emitted).toHaveBeenLastCalledWith({
+      kind: 'SelectionModeChanged',
+      on: true,
+    });
+
+    // Two: the group's bar, by the last one, in place of the card's.
+    forced = { selection: [first, second] };
+    await tap(second);
+    const group = host.querySelector<HTMLElement>('[data-touch-group-bar]')!;
+    expect(group).not.toBeNull();
+    expect(host.querySelector('#touchReadCardButton')).toBeNull();
+    expect(group.querySelector('[data-touch-group-count]')?.textContent).toBe(
+      '2'
+    );
+    // Move… opens the group's menu, and the bar steps aside for it.
+    await act(async () =>
+      group.querySelector<HTMLButtonElement>('#touchGroupMoveButton')!.click()
+    );
+    expect(host.querySelector('[data-touch-group-bar]')).toBeNull();
+
+    // In selection mode a tap on a selected card adds or takes out: it
+    // never reads the card, as a second tap otherwise does.
+    forced = { selection: [first], selectionMode: true };
+    await tap(first);
+    emitted.mockClear();
+    await tap(first);
+    expect(kinds()).not.toContain('CardPreviewRequested');
+    const done = host.querySelector<HTMLButtonElement>(
+      '#touchGroupDoneButton'
+    )!;
+    await act(async () => done.click());
+    expect(emitted).toHaveBeenCalledWith({
+      kind: 'SelectionModeChanged',
+      on: false,
+    });
     await act(async () => root.unmount());
     replay.dispose();
   });
