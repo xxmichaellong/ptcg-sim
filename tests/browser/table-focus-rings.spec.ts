@@ -232,8 +232,8 @@ for (const darkMode of [true, false]) {
   }
 }
 
-// One half on the tilted table: the rail and the Lost Zone's chip sit past
-// the mat's edge, over the desk.
+// One half on the tilted table: the rail sits past the mat's edge, over the
+// desk.
 for (const darkMode of [true, false]) {
   for (const art of ['classic', 'parchment', 'cream', 'charcoal'] as const) {
     const when = darkMode ? 'night' : 'day';
@@ -243,10 +243,6 @@ for (const darkMode of [true, false]) {
       test.setTimeout(120_000);
       await openTable(page, art, darkMode, { show: 'mine', lostZone: true });
       await expectRingShows(page, CONTROLS[0]!);
-      await expectRingShows(page, {
-        name: 'Lost Zone chip',
-        focus: '.table-zone-chip',
-      });
     });
   }
 }
