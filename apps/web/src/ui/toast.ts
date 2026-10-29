@@ -9,6 +9,16 @@ import { Toast } from '@base-ui/react/toast';
 
 export type ToastTone = 'default' | 'success' | 'warning' | 'danger';
 
+/**
+ * A button on a notice, such as "Undo": pressing it runs `onAction` and
+ * closes the notice. Like the notice, it never takes the focus; F6 reaches
+ * the stack from the keyboard.
+ */
+export interface ToastAction {
+  readonly label: string;
+  readonly onAction: () => void;
+}
+
 export interface ToastOptions {
   readonly title: string;
   readonly body?: string;
@@ -17,10 +27,13 @@ export interface ToastOptions {
   readonly timeout?: number;
   /** Re-using an id replaces that notice instead of stacking another. */
   readonly id?: string;
+  /** A button on the notice; it stays a little longer for it. */
+  readonly action?: ToastAction;
 }
 
 export const DEFAULT_TOAST_TIMEOUT_MS = 5000;
 const DANGER_TOAST_TIMEOUT_MS = 8000;
+const ACTION_TOAST_TIMEOUT_MS = 8000;
 const MAX_PENDING_TOASTS = 8;
 
 /** The Base UI manager the connected `Toast.Provider` listens to. */
@@ -42,7 +55,22 @@ const deliver = (options: ToastOptions & { readonly id: string }): void => {
     priority: tone === 'danger' ? 'high' : 'low',
     timeout:
       options.timeout ??
-      (tone === 'danger' ? DANGER_TOAST_TIMEOUT_MS : DEFAULT_TOAST_TIMEOUT_MS),
+      (tone === 'danger'
+        ? DANGER_TOAST_TIMEOUT_MS
+        : options.action
+          ? ACTION_TOAST_TIMEOUT_MS
+          : DEFAULT_TOAST_TIMEOUT_MS),
+    ...(options.action
+      ? {
+          actionProps: {
+            children: options.action.label,
+            onClick: () => {
+              toastManager.close(options.id);
+              options.action?.onAction();
+            },
+          },
+        }
+      : {}),
   });
 };
 

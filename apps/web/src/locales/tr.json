@@ -17,6 +17,10 @@
     "message": "{0, plural, one {# player} other {# players}}",
     "translation": "{0, plural, one {# oyuncu} other {# oyuncu}}"
   },
+  "jnpzPF": {
+    "message": "{0, plural, one {Shuffled # card into the deck} other {Shuffled # cards into the deck}}",
+    "translation": "{0, plural, one {# kart desteye karıştırıldı} other {# kart desteye karıştırıldı}}"
+  },
   "yW-SAQ": {
     "message": "{0} ({1})",
     "translation": "{0} ({1})"
@@ -4912,10 +4916,6 @@
   "XNhlHk": {
     "message": "Shuffle all into deck",
     "translation": "Hepsini desteye karıştır"
-  },
-  "Fnz7SK": {
-    "message": "Shuffle all into the deck?",
-    "translation": "Hepsi desteye karıştırılsın mı?"
   },
   "Ad3M_2": {
     "message": "Shuffle all on playboard into deck",

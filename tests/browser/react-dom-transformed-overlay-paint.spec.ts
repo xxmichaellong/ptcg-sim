@@ -9,10 +9,7 @@ import {
 
 import { alphaOf } from './support/computed-color.js';
 import { loadLegacyRuntime } from './support/legacy-runtime.js';
-import {
-  answerOverlayConfirm,
-  openOverlayDialogs,
-} from './support/overlay-dialogs.js';
+import { openOverlayDialogs, overlayToast } from './support/overlay-dialogs.js';
 
 interface OverlayFixture {
   readonly ownPlayerId: string;
@@ -299,7 +296,7 @@ const scrollToEnd = async (surface: Locator): Promise<ScrollEvidence> => {
 };
 
 // v1's legacy runtime (the source page) still asks with a native confirm;
-// the v2 candidate asks in the overlay confirmation (answerOverlayConfirm).
+// the v2 candidate shuffles at once and offers Undo on a notice (PX-072).
 const answerNextConfirmation = (
   page: Page,
   accept: boolean
@@ -1433,41 +1430,16 @@ test('opened-pile bulk actions retain real-v1 confirmation and teardown after fu
   }));
   const sort = zoneBrowser.locator('[data-zone-action="sortZone"]');
   await sort.check();
-  const candidateScrollEnd = await scrollToEnd(zoneBrowser);
+  await scrollToEnd(zoneBrowser);
   const discardAction = zoneBrowser.locator(
     '[data-zone-action="shuffleDiscardToDeck"]'
   );
 
-  const cancelledConfirmation = answerOverlayConfirm(page, false);
+  // Shuffled in at once (v1 asked first), and said so; where the table
+  // can undo, the notice carries its Undo (LegacyBoardOverlays.test.tsx).
   await discardAction.click();
-  expect(await cancelledConfirmation).toEqual({
-    type: 'confirm',
-    message: 'Shuffle all into the deck?',
-  });
-  await expect(zoneBrowser).toBeVisible();
-  await expect(sort).toBeChecked();
-  await expect(discardAction).toBeFocused();
-  expect((await readScrollEvidence(zoneBrowser)).scrollTop).toBe(
-    candidateScrollEnd.scrollTop
-  );
-  expect(await candidateEvidence(page)).toMatchObject({
-    submissions: [],
-    submissionResults: [],
-    overlayRejections: [],
-    overlayActions: [],
-    presentation: {
-      selectedCardId: null,
-      openedZoneId: `zone:${fixture.ownPlayerId}:discard`,
-    },
-    reportedErrors: [],
-  });
-
-  const acceptedConfirmation = answerOverlayConfirm(page, true);
-  await discardAction.click();
-  expect(await acceptedConfirmation).toEqual({
-    type: 'confirm',
-    message: 'Shuffle all into the deck?',
-  });
+  await expect(openOverlayDialogs(page)).toHaveCount(0);
+  await expect(overlayToast(page, 'into the deck')).toBeVisible();
   await expect(zoneBrowser).toHaveCount(0);
   await expect(discardTarget).toBeFocused();
   expect(await candidateEvidence(page)).toMatchObject({

@@ -566,6 +566,30 @@
   overflow-wrap: anywhere;
 }
 
+.ptcgsim-ui-toast__action {
+  flex: none;
+  align-self: center;
+  height: 32px;
+  margin: 0;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-3);
+  color: var(--color-accent);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ptcgsim-ui-toast__action:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
 .ptcgsim-ui-toast__close {
   display: inline-flex;
   flex: none;

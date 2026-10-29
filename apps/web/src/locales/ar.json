@@ -17,6 +17,10 @@
     "message": "{0, plural, one {# player} other {# players}}",
     "translation": "{0, plural, zero {# لاعب} one {لاعب واحد} two {لاعبان} few {# لاعبين} many {# لاعبًا} other {# لاعب}}"
   },
+  "jnpzPF": {
+    "message": "{0, plural, one {Shuffled # card into the deck} other {Shuffled # cards into the deck}}",
+    "translation": "{0, plural, zero {تم خلط # بطاقة في المجموعة} one {تم خلط بطاقة واحدة في المجموعة} two {تم خلط بطاقتين في المجموعة} few {تم خلط # بطاقات في المجموعة} many {تم خلط # بطاقة في المجموعة} other {تم خلط # بطاقة في المجموعة}}"
+  },
   "yW-SAQ": {
     "message": "{0} ({1})",
     "translation": "{0} ({1})"
@@ -4912,10 +4916,6 @@
   "XNhlHk": {
     "message": "Shuffle all into deck",
     "translation": "خلط الكل في المجموعة"
-  },
-  "Fnz7SK": {
-    "message": "Shuffle all into the deck?",
-    "translation": "هل تريد خلط الكل في المجموعة؟"
   },
   "Ad3M_2": {
     "message": "Shuffle all on playboard into deck",

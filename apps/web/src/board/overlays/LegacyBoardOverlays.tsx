@@ -104,11 +104,8 @@ import type { HotkeyActionId } from '../../hotkeys/hotkey-catalogue.js';
 import { usePageDirection } from '../../i18n/direction.js';
 import { useKeymap } from '../../hotkeys/hotkey-preferences.js';
 import type { Keymap } from '../../hotkeys/keymap.js';
-import {
-  confirmAction,
-  pickCount,
-  type CountOptions,
-} from '../../ui/dialog-requests.js';
+import { pickCount, type CountOptions } from '../../ui/dialog-requests.js';
+import { toast } from '../../ui/toast.js';
 import { isOverlaySurfaceTarget } from '../../ui/overlay-surface.js';
 import {
   stackCardsLayout,
@@ -2262,47 +2259,28 @@ const ZoneBrowser = ({
     'aria-hidden': showingBoard || undefined,
   };
   const dismiss = useCallback(() => actions.dismiss('zone'), [actions]);
-  const opener = useFocusBoundary(container, '[data-zone-close]', zone.id);
-  // The "Shuffle all to Deck" confirmation still being asked, if any. It
-  // belongs to this pile: closing the browser withdraws the question.
-  const shuffleConfirmation = useRef<AbortController | undefined>(undefined);
-  useEffect(
-    () => () => {
-      shuffleConfirmation.current?.abort();
-      shuffleConfirmation.current = undefined;
-    },
-    []
-  );
+  useFocusBoundary(container, '[data-zone-close]', zone.id);
   const primaryButton = useRef<HTMLButtonElement>(null);
   const invokePrimaryAction = (id: LegacyBoardZoneActionId): void => {
-    if (id !== 'shuffleDiscardToDeck') {
-      actions.invokeZoneAction(id, zone.id);
-      return;
-    }
-    if (shuffleConfirmation.current) return;
-    const question = new AbortController();
-    shuffleConfirmation.current = question;
-    void confirmAction({
-      title: t`Shuffle all into the deck?`,
-      confirmLabel: t({ message: 'Shuffle', context: 'shuffle the deck' }),
-      tone: 'danger',
-      signal: question.signal,
-      // Back to the button if the pile is still open; once the answer has
-      // closed it, to whatever opened the pile, as closing it would.
-      finalFocus: () =>
-        primaryButton.current?.isConnected
-          ? primaryButton.current
-          : opener.current?.isConnected
-            ? opener.current
-            : null,
-    }).then((confirmed) => {
-      if (shuffleConfirmation.current === question) {
-        shuffleConfirmation.current = undefined;
-      }
-      // The controller still refuses a pile that has closed or changed.
-      if (confirmed && !question.signal.aborted) {
-        actions.invokeZoneAction(id, zone.id);
-      }
+    actions.invokeZoneAction(id, zone.id);
+    if (id !== 'shuffleDiscardToDeck') return;
+    // Done at once, as everything else on the table is, with the way back
+    // on the notice (v1 asked first).
+    const undo = actions.undo;
+    toast({
+      id: DISCARD_SHUFFLED_TOAST_ID,
+      title: plural(zone.count, {
+        one: 'Shuffled # card into the deck',
+        other: 'Shuffled # cards into the deck',
+      }),
+      ...(undo
+        ? {
+            action: {
+              label: t`Undo`,
+              onAction: undo,
+            },
+          }
+        : {}),
     });
   };
   useOutsideDismiss(
@@ -2928,6 +2906,9 @@ const WorkAreaPanel = ({
 
 type LegacyBoardCountInput =
   LegacyBoardCountPrompt | LegacyBoardShortcutCountPrompt;
+
+/** One notice for a discard pile shuffled in: a second replaces the first. */
+const DISCARD_SHUFFLED_TOAST_ID = 'discard-shuffled-into-deck';
 
 /** The count questions, by what the count is for. */
 type CountQuestion =

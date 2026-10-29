@@ -17,6 +17,10 @@
     "message": "{0, plural, one {# player} other {# players}}",
     "translation": "{0, plural, one {# игрок} few {# игрока} many {# игроков} other {# игрока}}"
   },
+  "jnpzPF": {
+    "message": "{0, plural, one {Shuffled # card into the deck} other {Shuffled # cards into the deck}}",
+    "translation": "{0, plural, one {# карта замешана в колоду} few {# карты замешаны в колоду} many {# карт замешано в колоду} other {# карты замешано в колоду}}"
+  },
   "yW-SAQ": {
     "message": "{0} ({1})",
     "translation": "{0} ({1})"
@@ -4912,10 +4916,6 @@
   "XNhlHk": {
     "message": "Shuffle all into deck",
     "translation": "Замешать всё в колоду"
-  },
-  "Fnz7SK": {
-    "message": "Shuffle all into the deck?",
-    "translation": "Замешать всё в колоду?"
   },
   "Ad3M_2": {
     "message": "Shuffle all on playboard into deck",

@@ -1421,9 +1421,9 @@ unchecked, and never invokes the controller. A forged `sortZone` request still
 returns `local_only`. V1 used the exchanged full deck list as its sort rank;
 because that data is intentionally absent from protected opponent projections,
 V2 uses the disclosed-label order without leaking hidden definitions. V1
-discard bulk shuffle's exact native confirmation is retained. Cancel does not
-cross the typed action boundary and preserves the mounted browser's Sort,
-scroll, and focus state. Once either discard-to-deck or deck shuffle resolves
+discard bulk shuffle's native confirmation was retained until 2026-10-29;
+since then the shuffle happens at once and a notice offers Undo (PX-072).
+Once either discard-to-deck or deck shuffle resolves
 successfully, the controller clears selection, targeting, drag, hover, the open
 zone, and transient overlays before emitting its one semantic command; stale,
 read-only, replay, and otherwise rejected requests do not dismiss anything.

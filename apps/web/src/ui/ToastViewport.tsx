@@ -56,6 +56,11 @@ const ToastList = () => {
             <Toast.Title className="ptcgsim-ui-toast__title" />
             <Toast.Description className="ptcgsim-ui-toast__body" />
           </div>
+          {/* A notice's own button ("Undo"), when it has one. */}
+          <Toast.Action
+            className="ptcgsim-ui-toast__action"
+            data-toast-action=""
+          />
           <Toast.Close
             className="ptcgsim-ui-toast__close"
             aria-label={t`Dismiss notification`}

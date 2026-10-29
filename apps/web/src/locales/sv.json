@@ -17,6 +17,10 @@
     "message": "{0, plural, one {# player} other {# players}}",
     "translation": "{0, plural, one {# spelare} other {# spelare}}"
   },
+  "jnpzPF": {
+    "message": "{0, plural, one {Shuffled # card into the deck} other {Shuffled # cards into the deck}}",
+    "translation": "{0, plural, one {Blandade # kort i leken} other {Blandade # kort i leken}}"
+  },
   "yW-SAQ": {
     "message": "{0} ({1})",
     "translation": "{0} ({1})"
@@ -4912,10 +4916,6 @@
   "XNhlHk": {
     "message": "Shuffle all into deck",
     "translation": "Blanda in alla i leken"
-  },
-  "Fnz7SK": {
-    "message": "Shuffle all into the deck?",
-    "translation": "Blanda in allt i leken?"
   },
   "Ad3M_2": {
     "message": "Shuffle all on playboard into deck",

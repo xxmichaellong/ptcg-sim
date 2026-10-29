@@ -2836,90 +2836,88 @@ describe('legacy board overlays', () => {
     }
   });
 
-  it('preserves the source discard confirmation without adding one to deck shuffle', async () => {
+  it('shuffles a discard pile in at once, with Undo on the notice instead of a question', async () => {
     await mountOverlayHost();
-    const callbacks = actions();
+    const undo = vi.fn();
+    const callbacks = { ...actions(), undo };
     const confirm = vi.fn();
     vi.stubGlobal('confirm', confirm);
     const discard = scene.zones.find(
       (candidate) => candidate.id === `zone:${firstPlayer}:discard`
     )!;
-    const opened = (zoneId: string | null) =>
-      state({
-        presentation: {
-          selectedCardId: null,
-          hoveredCardId: null,
-          targetableCardIds: [],
-          drag: null,
-          openedZoneId: zoneId,
-        },
-      });
-    const render = async (zoneId: string | null) => {
+    const render = async (
+      zoneId: string | null,
+      withActions: LegacyBoardOverlayActions = callbacks
+    ) => {
       await act(async () => {
         root.render(
           createElement(LegacyBoardOverlays, {
-            state: opened(zoneId),
+            state: state({
+              presentation: {
+                selectedCardId: null,
+                hoveredCardId: null,
+                targetableCardIds: [],
+                drag: null,
+                openedZoneId: zoneId,
+              },
+            }),
             darkMode: false,
-            actions: callbacks,
+            actions: withActions,
           })
         );
       });
     };
+    const toasts = () => [
+      ...document.querySelectorAll<HTMLElement>(
+        '[data-ptcgsim-overlay="toast"]'
+      ),
+    ];
 
     await render(discard.id);
-    const discardAction = () =>
-      host.querySelector<HTMLButtonElement>(
-        '[data-zone-action="shuffleDiscardToDeck"]'
-      )!;
-    await act(async () => discardAction().click());
+    await act(async () =>
+      host
+        .querySelector<HTMLButtonElement>(
+          '[data-zone-action="shuffleDiscardToDeck"]'
+        )!
+        .click()
+    );
     await settleDialogs();
-    const question = openDialogs()[0];
-    expect(question?.getAttribute('role')).toBe('alertdialog');
-    expect(question?.textContent).toContain('Shuffle all into the deck?');
-    expect(dialogButton('confirm').dataset.variant).toBe('danger');
-    // Asking twice while the question is open asks once.
-    await act(async () => discardAction().click());
-    await settleDialogs();
-    expect(openDialogs()).toHaveLength(1);
-    expect(callbacks.invokeZoneAction).not.toHaveBeenCalled();
-
-    // Pressing inside the dialog answers it; it is not a press outside the
-    // pile browser, so the browser stays open.
-    await act(async () => {
-      dialogButton('cancel').dispatchEvent(
-        new PointerEvent('pointerdown', { bubbles: true })
-      );
-      dialogButton('cancel').click();
-    });
-    await settleDialogs();
-    expect(callbacks.dismiss).not.toHaveBeenCalled();
-    expect(callbacks.invokeZoneAction).not.toHaveBeenCalled();
     expect(openDialogs()).toHaveLength(0);
-
-    await act(async () => discardAction().click());
-    await settleDialogs();
-    await act(async () => {
-      dialogButton('confirm').dispatchEvent(
-        new PointerEvent('pointerdown', { bubbles: true })
-      );
-      dialogButton('confirm').click();
-    });
-    await settleDialogs();
-    expect(callbacks.dismiss).not.toHaveBeenCalled();
     expect(callbacks.invokeZoneAction).toHaveBeenCalledExactlyOnceWith(
       'shuffleDiscardToDeck',
       discard.id
     );
-
-    // Closing the pile withdraws an unanswered question.
-    await act(async () => discardAction().click());
+    expect(toasts()).toHaveLength(1);
+    expect(toasts()[0]?.textContent).toContain(
+      `Shuffled ${String(discard.count)} cards into the deck`
+    );
+    // The notice's Undo takes the shuffle back and goes away.
+    const undoButton = toasts()[0]!.querySelector<HTMLButtonElement>(
+      '[data-toast-action]'
+    )!;
+    expect(undoButton.textContent).toBe('Undo');
+    expect(document.activeElement).not.toBe(undoButton);
+    await act(async () => undoButton.click());
     await settleDialogs();
-    expect(openDialogs()).toHaveLength(1);
-    await render(null);
-    await settleDialogs();
-    expect(openDialogs()).toHaveLength(0);
-    expect(callbacks.invokeZoneAction).toHaveBeenCalledTimes(1);
+    expect(undo).toHaveBeenCalledOnce();
 
+    // Where the viewer may not undo, the notice only says what happened.
+    const noUndo = actions();
+    await render(null, noUndo);
+    await render(discard.id, noUndo);
+    await act(async () =>
+      host
+        .querySelector<HTMLButtonElement>(
+          '[data-zone-action="shuffleDiscardToDeck"]'
+        )!
+        .click()
+    );
+    await settleDialogs();
+    expect(
+      toasts().some((notice) => notice.querySelector('[data-toast-action]'))
+    ).toBe(false);
+
+    // A deck shuffle asks nothing and says nothing.
     const deck = scene.zones.find(
       (candidate) => candidate.id === `zone:${firstPlayer}:deck`
     )!;
@@ -2931,15 +2929,14 @@ describe('legacy board overlays', () => {
     );
     await settleDialogs();
     expect(openDialogs()).toHaveLength(0);
-    expect(callbacks.invokeZoneAction).toHaveBeenNthCalledWith(
-      2,
+    expect(callbacks.invokeZoneAction).toHaveBeenLastCalledWith(
       'shuffleDeck',
       deck.id
     );
     expect(confirm).not.toHaveBeenCalled();
   });
 
-  it('returns focus to the shuffle button on cancel and to the pile opener once confirmed', async () => {
+  it('returns focus to the pile opener once the shuffle closes the pile', async () => {
     await mountOverlayHost();
     const discard = scene.zones.find(
       (candidate) => candidate.id === `zone:${firstPlayer}:discard`
@@ -2964,34 +2961,18 @@ describe('legacy board overlays', () => {
         darkMode: false,
         actions: callbacks,
       });
-    const render = async () => {
-      await act(async () => root.render(overlays()));
-    };
-    // As the controller does: shuffling the pile into the deck closes it,
-    // straight away -- before the confirmation has finished animating out.
+    // As the controller does: shuffling the pile into the deck closes it.
     vi.mocked(callbacks.invokeZoneAction).mockImplementation(() => {
       openedZoneId = null;
       root.render(overlays());
     });
-    await render();
+    await act(async () => root.render(overlays()));
     await settleDialogs();
     const shuffle = host.querySelector<HTMLButtonElement>(
       '[data-zone-action="shuffleDiscardToDeck"]'
     )!;
-
     shuffle.focus();
     await act(async () => shuffle.click());
-    await settleDialogs();
-    // Like v1's confirm(), Enter would answer yes.
-    expect(document.activeElement).toBe(dialogButton('confirm'));
-    await act(async () => dialogButton('cancel').click());
-    await settleDialogs();
-    expect(openDialogs()).toHaveLength(0);
-    expect(document.activeElement).toBe(shuffle);
-
-    await act(async () => shuffle.click());
-    await settleDialogs();
-    await act(async () => dialogButton('confirm').click());
     await settleDialogs();
     expect(callbacks.invokeZoneAction).toHaveBeenCalledExactlyOnceWith(
       'shuffleDiscardToDeck',

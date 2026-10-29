@@ -586,6 +586,39 @@ describe('toast', () => {
     ).not.toBeNull();
   });
 
+  it('carries its own button, which acts once and closes it, never taking the focus', async () => {
+    await mountHost();
+    const before = document.activeElement;
+    let undone = 0;
+    await inAct(() =>
+      toast({
+        title: 'Shuffled 4 cards into the deck',
+        action: { label: 'Undo', onAction: () => (undone += 1) },
+      })
+    );
+    await settle();
+    const notice = document.querySelector<HTMLElement>(
+      '[data-ptcgsim-overlay="toast"]'
+    )!;
+    const action = notice.querySelector<HTMLButtonElement>(
+      '[data-toast-action]'
+    )!;
+    expect(action.textContent).toBe('Undo');
+    expect(document.activeElement).toBe(before);
+    await click(action);
+    await settle();
+    expect(undone).toBe(1);
+    expect(
+      document.querySelector(
+        '[data-ptcgsim-overlay="toast"] [data-toast-action]'
+      )
+    ).toBeNull();
+    // A plain notice has no button.
+    await inAct(() => toast({ title: 'Saved' }));
+    await settle();
+    expect(document.querySelector('[data-toast-action]')).toBeNull();
+  });
+
   it('stacks notices and dismisses them by id', async () => {
     await mountHost();
     const { result: first } = await inAct(() =>

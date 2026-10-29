@@ -55,6 +55,7 @@ export {
 export {
   dismissToast,
   toast,
+  type ToastAction,
   type ToastOptions,
   type ToastTone,
 } from './toast.js';
