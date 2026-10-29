@@ -227,7 +227,7 @@ describe('legacy board overlays', () => {
       ['action', 'shuffleHandToDeck', 'Shuffle hand to deck'],
       ['action', 'shuffleHandToDeckBottom', 'Shuffle hand to bottom'],
       ['action', 'moveCard', 'Move card...'],
-      ['action', 'revealCard', 'Reveal/hide card'],
+      ['action', 'revealCard', 'Reveal card'],
     ]);
 
     const opponent = view.playerOrder[1]!;
@@ -328,8 +328,9 @@ describe('legacy board overlays', () => {
       ['header', 'prizes'],
       ['action', 'revealPrizes'],
       ['action', 'togglePrizes'],
-      ['action', 'revealCard'],
     ]);
+    // Reveal card is offered only for a card the replay can disclose (none
+    // here).
     expect(
       selectLegacyContextEntries(replayState, cardIn(`:${opponent}:hand`)).map(
         (entry) => [entry.kind, entry.id]
@@ -337,7 +338,6 @@ describe('legacy board overlays', () => {
     ).toEqual([
       ['header', 'hand'],
       ['action', 'toggleOpponentHand'],
-      ['action', 'revealCard'],
     ]);
     expect(
       selectLegacyContextEntries(replayState, cardIn(`:${firstPlayer}:deck`))
@@ -375,10 +375,90 @@ describe('legacy board overlays', () => {
     const ownHand = flippedScene.cards.find((card) =>
       card.parentId.endsWith(`:${firstPlayer}:hand`)
     )!;
-    expect(entryIds(ownHand)).toEqual(
-      expect.arrayContaining(['toggleOpponentHand', 'randomOpponentHandCard'])
-    );
+    expect(entryIds(ownHand)).toContain('randomOpponentHandCard');
     expect(entryIds(ownHand)).not.toContain('discardHand');
+    // The viewer sees their own hand whole: there is nothing to look at.
+    expect(entryIds(ownHand)).not.toContain('toggleOpponentHand');
+    // On a live Solo table the hand is the table's switch: named for it.
+    const soloLabel = (hidden: boolean) =>
+      selectLegacyContextEntries(flipped, ownHand, {
+        soloOpponentHandHidden: hidden,
+      }).find((entry) => entry.id === 'toggleOpponentHand')?.label;
+    expect(soloLabel(false)).toBe('Cover hand');
+    expect(soloLabel(true)).toBe('Look at hand');
+  });
+
+  it('names each two-way entry for the way it goes now, not both ways', () => {
+    const labels = (card: CardSceneNode, patch = {}) =>
+      selectLegacyContextEntries(state(patch), card)
+        .filter((entry) => entry.kind === 'action')
+        .map((entry) => entry.label);
+    expect(labels(cardIn(`:${firstPlayer}:prizes`))).toEqual([
+      'Shuffle prizes',
+      'Reveal prizes',
+      'Look at prizes',
+      'Shuffle to deck (bottom)',
+      'Move card...',
+      'Reveal card',
+    ]);
+    // Its Ability is marked used.
+    expect(labels(cardIn('stack:blue:active'))[0]).toBe('Mark as unused');
+    expect(labels(cardIn(`:${firstPlayer}:discard`))[0]).toBe('Mark as used');
+    const opponent = view.playerOrder[1]!;
+    expect(labels(cardIn(`:${opponent}:hand`))[0]).toBe('Look at hand');
+    // A Prize shown to both players: the menu opened on it hides them all,
+    // and says so.
+    const prizes = `zone:${firstPlayer}:prizes`;
+    const shownPrize = view.zones[prizes]!.cards[0]!;
+    const definitionId = Object.keys(view.definitions)[0]!;
+    const revealedView: MatchViewState = {
+      ...view,
+      zones: {
+        ...view.zones,
+        [prizes]: {
+          ...view.zones[prizes]!,
+          cards: view.zones[prizes]!.cards.map((card) =>
+            card.id === shownPrize.id
+              ? {
+                  kind: 'known' as const,
+                  id: card.id,
+                  definitionId: definitionId as never,
+                  ownerId: card.ownerId,
+                  category: 'Pokémon' as const,
+                  face: 'up' as const,
+                  orientationQuarterTurns: 0 as const,
+                  abilityUsed: false,
+                  publiclyRevealed: true,
+                  decklistRank: 0,
+                }
+              : card
+          ),
+        },
+      },
+    };
+    const revealedScene = createBoardSceneForViewport(revealedView, {
+      geometryVersion: 1,
+      viewport: { width: 1280, height: 720, devicePixelRatio: 1 },
+      bottomPlayerId: firstPlayer,
+      splitRatio: 0.5,
+    });
+    const shown = revealedScene.cards.find(
+      (card) => card.id === shownPrize.id
+    )!;
+    const entries = selectLegacyContextEntries(
+      state({ view: revealedView, scene: revealedScene }),
+      shown
+    );
+    expect(
+      entries
+        .filter((entry) => entry.kind === 'action')
+        .map((entry) => [entry.id, entry.label])
+    ).toEqual(
+      expect.arrayContaining([
+        ['revealPrizes', 'Hide prizes'],
+        ['revealCard', 'Hide card'],
+      ])
+    );
   });
 
   it('delegates a focused context-menu action to controller-owned teardown', async () => {
@@ -414,6 +494,70 @@ describe('legacy board overlays', () => {
       card.id
     );
     expect(callbacks.dismiss).not.toHaveBeenCalled();
+  });
+
+  it('names the way a card goes onto a Pokémon: attach, evolve or join its pieces', async () => {
+    const hand = `zone:${firstPlayer}:hand`;
+    const labelFor = async (
+      viewed: MatchViewState,
+      cardId: string
+    ): Promise<string | undefined> => {
+      const viewedScene = createBoardSceneForViewport(viewed, {
+        geometryVersion: 1,
+        viewport: { width: 1280, height: 720, devicePixelRatio: 1 },
+        bottomPlayerId: firstPlayer,
+        splitRatio: 0.5,
+      });
+      await act(async () => {
+        root.render(
+          createElement(LegacyBoardOverlays, {
+            state: state({
+              view: viewed,
+              scene: viewedScene,
+              overlays: {
+                contextMenuCardId: cardId as never,
+                preview: null,
+                input: null,
+              },
+            }),
+            darkMode: false,
+            actions: { ...actions(), beginCardAssembly: vi.fn() },
+          })
+        );
+      });
+      return [
+        ...host.querySelectorAll<HTMLElement>(
+          '[data-legacy-card-context-menu] [role="menuitem"]'
+        ),
+      ][0]?.textContent?.trim();
+    };
+    const cards = view.zones[hand]!.cards;
+    const ofCategory = (category: string) =>
+      cards.find(
+        (card) => card.kind === 'known' && card.category === category
+      )!;
+    expect(await labelFor(view, ofCategory('Energy').id)).toBe(
+      'Attach to a Pokémon…'
+    );
+    const pokemon = ofCategory('Pokémon');
+    expect(await labelFor(view, pokemon.id)).toBe('Evolve a Pokémon…');
+    // A V-UNION's piece joins its others.
+    const definitionId =
+      pokemon.kind === 'known' ? pokemon.definitionId : undefined;
+    const pieces: MatchViewState = {
+      ...view,
+      definitions: {
+        ...view.definitions,
+        [definitionId!]: {
+          ...view.definitions[definitionId!]!,
+          presentation: {
+            readingQuarterTurns: 0,
+            join: { key: 'union', columns: 2, rows: 2, part: 1 },
+          },
+        },
+      },
+    };
+    expect(await labelFor(pieces, pokemon.id)).toBe('Join pieces…');
   });
 
   it('recreates the ordered category submenu and delegates one typed choice', async () => {

@@ -6054,5 +6054,312 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "区域轮廓"
+  },
+  "eJ4Drn": {
+    "message": "{actor} discarded {count, plural, one {# attached card} other {# attached cards}}",
+    "comments": [
+      "Log line: a player discarded the cards attached to a Pokémon. {actor} is a player's name, {count} how many cards."
+    ],
+    "translation": "{actor}弃掉了{count, plural, other {#张附着的卡牌}}"
+  },
+  "0bIo3n": {
+    "message": "{actor} discarded {count, plural, one {# card} other {# cards}}",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards."
+    ],
+    "translation": "{actor}弃掉了{count, plural, other {#张卡牌}}"
+  },
+  "7ULDVQ": {
+    "message": "{actor} discarded hand and drew {count, plural, one {# card} other {# cards}}",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards they drew."
+    ],
+    "translation": "{actor}弃掉了手牌并抽了{count, plural, other {#张卡牌}}"
+  },
+  "VgwRoT": {
+    "message": "{actor} left {count, plural, one {# attached card} other {# attached cards}} in play",
+    "comments": [
+      "Log line: a player kept the cards attached to a Pokémon on the table. {actor} is a player's name, {count} how many cards."
+    ],
+    "translation": "{actor}将{count, plural, other {#张附着的卡牌}}留在了场上"
+  },
+  "9RYqFp": {
+    "message": "{actor} moved {count, plural, one {# card} other {# cards}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} other {deck}}",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards; {source} is the zone they left and {destination} where they went (play: onto the table)."
+    ],
+    "translation": "{actor}将{count, plural, other {#张卡牌}}从{source, select, hand {手牌} prizes {奖赏卡} discard {弃牌区} board {场地} stadium {竞技场} active {战斗场} bench {备战区} lostZone {放逐区} attachmentResolution {附着的卡牌} other {牌库}}移至{destination, select, hand {手牌} discard {弃牌区} lostZone {放逐区} deckBottom {牌库底} play {场上} other {牌库}}"
+  },
+  "e9cTIS": {
+    "message": "{actor} shuffled {count, plural, one {# attached card} other {# attached cards}} into deck",
+    "comments": [
+      "Log line: a player shuffled the cards attached to a Pokémon into their deck. {actor} is a player's name, {count} how many cards."
+    ],
+    "translation": "{actor}将{count, plural, other {#张附着的卡牌}}洗入了牌库"
+  },
+  "99ycft": {
+    "message": "{actor} shuffled {count, plural, one {# card} other {# cards}} from board to deck",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards."
+    ],
+    "translation": "{actor}将{count, plural, other {#张卡牌}}从场地洗入了牌库"
+  },
+  "RpAS5v": {
+    "message": "{actor} shuffled {count, plural, one {# card} other {# cards}} into deck",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards."
+    ],
+    "translation": "{actor}将{count, plural, other {#张卡牌}}洗入了牌库"
+  },
+  "cFSyyy": {
+    "message": "{actor} shuffled {count, plural, one {# card} other {# cards}} to bottom of deck",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards."
+    ],
+    "translation": "{actor}将{count, plural, other {#张卡牌}}放到了牌库底"
+  },
+  "xZranI": {
+    "message": "{actor} shuffled hand into deck and drew {count, plural, one {# card} other {# cards}}",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards they drew."
+    ],
+    "translation": "{actor}将手牌洗入牌库并抽了{count, plural, other {#张卡牌}}"
+  },
+  "TWahFj": {
+    "message": "{actor} shuffled hand to bottom of deck and drew {count, plural, one {# card} other {# cards}}",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards they drew."
+    ],
+    "translation": "{actor}将手牌放到牌库底并抽了{count, plural, other {#张卡牌}}"
+  },
+  "E887wo": {
+    "message": "{name} looked at bottom {count, plural, one {# card} other {# cards}} of deck",
+    "comments": [
+      "Log line. {name} is a player's name, {count} how many cards from the bottom of their deck they looked at."
+    ],
+    "translation": "{name}查看了牌库底的{count, plural, other {#张卡牌}}"
+  },
+  "imtKoA": {
+    "message": "{name} looked at top {count, plural, one {# card} other {# cards}} of deck",
+    "comments": [
+      "Log line. {name} is a player's name, {count} how many cards from the top of their deck they looked at."
+    ],
+    "translation": "{name}查看了牌库顶的{count, plural, other {#张卡牌}}"
+  },
+  "l7W_Ze": {
+    "message": "<0>{0}</0>: send a friend a link to your table.",
+    "translation": "<0>{0}</0>：把牌桌链接发给朋友。"
+  },
+  "JTbT6L": {
+    "message": "Add special condition",
+    "translation": "添加特殊状态"
+  },
+  "Sb4b2A": {
+    "message": "Allow board flip <0>(both players)</0>",
+    "translation": "允许翻转牌桌<0>（双方玩家）</0>"
+  },
+  "uUaeMQ": {
+    "message": "Attach to a Pokémon…",
+    "translation": "附着到宝可梦…"
+  },
+  "c0_6W9": {
+    "message": "Copied",
+    "context": "an invitation",
+    "translation": "已复制"
+  },
+  "ITnJNv": {
+    "message": "Copy an invitation",
+    "translation": "复制邀请"
+  },
+  "Yc1XTF": {
+    "message": "Copy invitation",
+    "translation": "复制邀请"
+  },
+  "gklFA4": {
+    "message": "Couldn't copy the invitation",
+    "translation": "无法复制邀请"
+  },
+  "sA7lnV": {
+    "message": "Couldn't copy the invitation. Try again.",
+    "translation": "无法复制邀请，请重试。"
+  },
+  "O3p0SF": {
+    "message": "Couldn't generate a room. Try again.",
+    "translation": "无法生成房间，请重试。"
+  },
+  "nzVItu": {
+    "message": "Couldn't use the clipboard. Allow access and try again.",
+    "translation": "无法使用剪贴板，请允许访问后重试。"
+  },
+  "rNIlQ5": {
+    "message": "Cover card (only you)",
+    "translation": "盖住卡牌（仅你可见）"
+  },
+  "dyMutU": {
+    "message": "Cover hand",
+    "translation": "盖住手牌"
+  },
+  "6BoNqk": {
+    "message": "Cover prizes",
+    "translation": "盖住奖赏卡"
+  },
+  "h-zJzU": {
+    "message": "Cover their hand",
+    "translation": "盖住对方手牌"
+  },
+  "7x4VPZ": {
+    "message": "Cover their Prizes",
+    "translation": "盖住对方奖赏卡"
+  },
+  "urHEvq": {
+    "message": "Cover your Prizes",
+    "translation": "盖住你的奖赏卡"
+  },
+  "CulBzv": {
+    "message": "Evolve a Pokémon…",
+    "translation": "进化宝可梦…"
+  },
+  "oP3kz7": {
+    "message": "Generate",
+    "context": "a room",
+    "translation": "生成"
+  },
+  "mb6Tyv": {
+    "message": "Generate a room and send the invitation. With <0>Join as spectator</0> on, it invites a spectator.",
+    "translation": "生成房间并发送邀请。开启<0>以观战者身份加入</0>后，将邀请观战者。"
+  },
+  "5NEkeP": {
+    "message": "Generate a room first.",
+    "translation": "请先生成房间。"
+  },
+  "G7A2K4": {
+    "message": "Generate a room, then send the invitation.",
+    "translation": "请先生成房间，再发送邀请。"
+  },
+  "fQq7dv": {
+    "message": "Generating…",
+    "context": "a room",
+    "translation": "生成中…"
+  },
+  "HY40z4": {
+    "message": "Hide card",
+    "translation": "隐藏卡牌"
+  },
+  "_hwQqt": {
+    "message": "Hide Lost Zone",
+    "translation": "隐藏放逐区"
+  },
+  "Z7lHUH": {
+    "message": "Hide prizes",
+    "translation": "隐藏奖赏卡"
+  },
+  "q2aSzG": {
+    "message": "Hide their Prizes",
+    "translation": "隐藏对方奖赏卡"
+  },
+  "9EQ4Zd": {
+    "message": "Hide your Prizes",
+    "translation": "隐藏你的奖赏卡"
+  },
+  "EqLwOt": {
+    "message": "In use",
+    "context": "a table piece holding cards",
+    "translation": "使用中"
+  },
+  "6vI3XA": {
+    "message": "Invitation copied",
+    "translation": "已复制邀请"
+  },
+  "z1vTYz": {
+    "message": "Invitation copied to your clipboard.",
+    "translation": "邀请已复制到剪贴板。"
+  },
+  "XbqMCS": {
+    "message": "Join pieces…",
+    "translation": "合并卡片…"
+  },
+  "2_dOwA": {
+    "message": "Look at card (only you)",
+    "translation": "查看卡牌（仅你可见）"
+  },
+  "4rquUI": {
+    "message": "Look at hand",
+    "translation": "查看手牌"
+  },
+  "FtU5OB": {
+    "message": "Look at prizes",
+    "translation": "查看奖赏卡"
+  },
+  "-wf39o": {
+    "message": "Look at their hand",
+    "translation": "查看对方手牌"
+  },
+  "Ky418J": {
+    "message": "Look at their Prizes",
+    "translation": "查看对方奖赏卡"
+  },
+  "C4R15y": {
+    "message": "Look at your Prizes",
+    "translation": "查看你的奖赏卡"
+  },
+  "WTIxhp": {
+    "message": "Mark as used",
+    "comments": [
+      "Puts the \"Ability used\" marker on a card: its Ability or effect was used this turn.",
+      "Puts the \"Ability used\" marker on a card: its Ability or effect was used this turn."
+    ],
+    "translation": "标记为已使用"
+  },
+  "Ig8A-t": {
+    "message": "Paste a valid invitation into Room ID.",
+    "translation": "请将有效的邀请粘贴到房间 ID。"
+  },
+  "pJRgD4": {
+    "message": "Paste an invitation",
+    "translation": "粘贴邀请"
+  },
+  "4LC7ch": {
+    "message": "Paste an invitation, or join your own room.",
+    "translation": "粘贴邀请，或加入你自己的房间。"
+  },
+  "3J14ru": {
+    "message": "Paste the invitation into Room ID.",
+    "translation": "请将邀请粘贴到房间 ID。"
+  },
+  "6M-csj": {
+    "message": "Reveal card",
+    "translation": "公开卡牌"
+  },
+  "wY30n_": {
+    "message": "Reveal prizes",
+    "translation": "公开奖赏卡"
+  },
+  "n75nZA": {
+    "message": "Reveal their Prizes",
+    "translation": "公开对方奖赏卡"
+  },
+  "c6E0p_": {
+    "message": "Reveal your Prizes",
+    "translation": "公开你的奖赏卡"
+  },
+  "QoZkYe": {
+    "message": "Room ID",
+    "translation": "房间 ID"
+  },
+  "BulyBf": {
+    "message": "Rotate",
+    "translation": "旋转"
+  },
+  "W2pBH8": {
+    "message": "Switch special condition",
+    "translation": "切换特殊状态"
+  },
+  "UoxtKp": {
+    "message": "That invitation expired. Ask for a new one.",
+    "translation": "该邀请已过期。请重新索取。"
+  },
+  "23cwkx": {
+    "message": "Your name changed. Generate a new room.",
+    "translation": "你的名称已更改。请重新生成房间。"
   }
 }

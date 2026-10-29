@@ -183,12 +183,18 @@ export const applyReplayLocalDisclosure = (
   };
 };
 
-export const toggleReplayLocalDisclosure = (
+/**
+ * What a disclosure action on a card does to the replay's display now:
+ * shows what is hidden, or hides what is shown (judged by the card the menu
+ * was opened on); null where it does nothing. The menu names its entry by
+ * this, and the toggle below carries it out.
+ */
+export const replayLocalDisclosureMode = (
   view: MatchViewState,
   state: ReplayLocalDisplayState,
   action: LegacyBoardContextActionId,
   cardId: ViewCardId
-): ReplayLocalDisplayState | null => {
+): ReplayLocalDisclosureMode | null => {
   if (!isReplayLocalDisclosureAction(action)) return null;
   const zone = Object.values(view.zones).find((candidate) =>
     candidate.cards.some((card) => card.id === cardId)
@@ -209,8 +215,23 @@ export const toggleReplayLocalDisclosure = (
     zone.id
   ]?.cards.find((card) => card.id === cardId);
   if (!displayed) return null;
-  const mode: ReplayLocalDisclosureMode =
-    displayed.kind === 'known' && displayed.face === 'up' ? 'hidden' : 'shown';
+  return displayed.kind === 'known' && displayed.face === 'up'
+    ? 'hidden'
+    : 'shown';
+};
+
+export const toggleReplayLocalDisclosure = (
+  view: MatchViewState,
+  state: ReplayLocalDisplayState,
+  action: LegacyBoardContextActionId,
+  cardId: ViewCardId
+): ReplayLocalDisplayState | null => {
+  const mode = replayLocalDisclosureMode(view, state, action, cardId);
+  if (!mode) return null;
+  const zone = Object.values(view.zones).find((candidate) =>
+    candidate.cards.some((card) => card.id === cardId)
+  );
+  if (!zone) return null;
   if (action === 'revealCard') {
     return {
       ...state,

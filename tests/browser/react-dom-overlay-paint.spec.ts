@@ -304,12 +304,20 @@ const submenuMetrics = (submenu: Locator): Promise<SubmenuMetrics> =>
 const expectMenuDesign = (
   candidate: MenuMetrics | SubmenuMetrics,
   legacy: MenuMetrics | SubmenuMetrics,
-  label: string
+  label: string,
+  /**
+   * The rows' words where v2 names them for the way they go now (v1's
+   * "Reveal/hide card" reads "Reveal card" on a card face down), in v1's
+   * order.
+   */
+  wording?: Readonly<Record<string, string>>
 ): void => {
   expect(
     candidate.rows.map((row) => [row.kind, row.label]),
     `${label} rows`
-  ).toEqual(legacy.rows.map((row) => [row.kind, row.label]));
+  ).toEqual(
+    legacy.rows.map((row) => [row.kind, wording?.[row.label] ?? row.label])
+  );
   expect(
     alphaOf(candidate.backgroundColor),
     `${label} surface`
@@ -938,9 +946,9 @@ test('solo replay disclosure retains source paint and a complete keyboard bounda
   );
   const prizeItems = menu.getByRole('menuitem');
   await expect(prizeItems).toHaveCount(3);
-  await expect(prizeItems.nth(0)).toHaveText('Reveal/hide prizes');
-  await expect(prizeItems.nth(1)).toHaveText('Look/cover prizes');
-  await expect(prizeItems.nth(2)).toHaveText('Reveal/hide card');
+  await expect(prizeItems.nth(0)).toHaveText('Reveal prizes');
+  await expect(prizeItems.nth(1)).toHaveText('Look at prizes');
+  await expect(prizeItems.nth(2)).toHaveText('Reveal card');
   await expect(prizeItems.nth(0)).toBeFocused();
   await settlePaint(page);
   const candidatePrizeMenu = await menu.screenshot({
@@ -998,8 +1006,8 @@ test('solo replay disclosure retains source paint and a complete keyboard bounda
   );
   const handItems = menu.getByRole('menuitem');
   await expect(handItems).toHaveCount(2);
-  await expect(handItems.nth(0)).toHaveText('Look/cover hand');
-  await expect(handItems.nth(1)).toHaveText('Reveal/hide card');
+  await expect(handItems.nth(0)).toHaveText('Look at hand');
+  await expect(handItems.nth(1)).toHaveText('Reveal card');
   await expect(handItems.nth(0)).toBeFocused();
   await settlePaint(page);
   const candidateHandMenu = await menu.screenshot({
@@ -1045,12 +1053,18 @@ test('solo replay disclosure retains source paint and a complete keyboard bounda
   expectMenuDesign(
     candidatePrizeMenuMetrics,
     source.prizeMenuMetrics,
-    'prize menu'
+    'prize menu',
+    {
+      'Reveal/hide prizes': 'Reveal prizes',
+      'Look/cover prizes': 'Look at prizes',
+      'Reveal/hide card': 'Reveal card',
+    }
   );
   expectMenuDesign(
     candidateHandMenuMetrics,
     source.handMenuMetrics,
-    'hand menu'
+    'hand menu',
+    { 'Look/cover hand': 'Look at hand', 'Reveal/hide card': 'Reveal card' }
   );
 
   const expectStableFaceSwap = (

@@ -400,7 +400,7 @@ const cardMovedMessage = (
   }
 };
 
-/** The line for several cards moving at once ("moved 3 card(s) from …"). */
+/** The line for several cards moving at once ("moved 3 cards from …"). */
 const cardsResolvedMessage = (
   event: Extract<PresentationEvent, { readonly type: 'CardsResolved' }>,
   view: PresentationView | undefined
@@ -413,8 +413,8 @@ const cardsResolvedMessage = (
     case 'left':
       return msg({
         message: `${actor} left ${plural(count, {
-          one: '# attached card(s)',
-          other: '# attached card(s)',
+          one: '# attached card',
+          other: '# attached cards',
         })} in play`,
         comment:
           "Log line: a player kept the cards attached to a Pokémon on the table. {actor} is a player's name, {count} how many cards.",
@@ -423,16 +423,16 @@ const cardsResolvedMessage = (
       return source === 'attachmentResolution'
         ? msg({
             message: `${actor} discarded ${plural(count, {
-              one: '# attached card(s)',
-              other: '# attached card(s)',
+              one: '# attached card',
+              other: '# attached cards',
             })}`,
             comment:
               "Log line: a player discarded the cards attached to a Pokémon. {actor} is a player's name, {count} how many cards.",
           })
         : msg({
             message: `${actor} discarded ${plural(count, {
-              one: '# card(s)',
-              other: '# card(s)',
+              one: '# card',
+              other: '# cards',
             })}`,
             comment:
               "Log line. {actor} is a player's name, {count} how many cards.",
@@ -446,8 +446,8 @@ const cardsResolvedMessage = (
             })
           : msg({
               message: `${actor} shuffled ${plural(count, {
-                one: '# card(s)',
-                other: '# card(s)',
+                one: '# card',
+                other: '# cards',
               })} to bottom of deck`,
               comment:
                 "Log line. {actor} is a player's name, {count} how many cards.",
@@ -462,8 +462,8 @@ const cardsResolvedMessage = (
         : source === 'attachmentResolution'
           ? msg({
               message: `${actor} shuffled ${plural(count, {
-                one: '# attached card(s)',
-                other: '# attached card(s)',
+                one: '# attached card',
+                other: '# attached cards',
               })} into deck`,
               comment:
                 "Log line: a player shuffled the cards attached to a Pokémon into their deck. {actor} is a player's name, {count} how many cards.",
@@ -471,16 +471,16 @@ const cardsResolvedMessage = (
           : source === 'board'
             ? msg({
                 message: `${actor} shuffled ${plural(count, {
-                  one: '# card(s)',
-                  other: '# card(s)',
+                  one: '# card',
+                  other: '# cards',
                 })} from board to deck`,
                 comment:
                   "Log line. {actor} is a player's name, {count} how many cards.",
               })
             : msg({
                 message: `${actor} shuffled ${plural(count, {
-                  one: '# card(s)',
-                  other: '# card(s)',
+                  one: '# card',
+                  other: '# cards',
                 })} into deck`,
                 comment:
                   "Log line. {actor} is a player's name, {count} how many cards.",
@@ -488,8 +488,8 @@ const cardsResolvedMessage = (
     case 'moved':
       return msg({
         message: `${actor} moved ${plural(count, {
-          one: '# card(s)',
-          other: '# card(s)',
+          one: '# card',
+          other: '# cards',
         })} from ${select(source, {
           hand: 'hand',
           prizes: 'prizes',
@@ -528,8 +528,8 @@ const handReplacedMessage = (
       return drew
         ? msg({
             message: `${actor} discarded hand and drew ${plural(count, {
-              one: '# card(s)',
-              other: '# card(s)',
+              one: '# card',
+              other: '# cards',
             })}`,
             comment:
               "Log line. {actor} is a player's name, {count} how many cards they drew.",
@@ -543,7 +543,7 @@ const handReplacedMessage = (
         ? msg({
             message: `${actor} shuffled hand into deck and drew ${plural(
               count,
-              { one: '# card(s)', other: '# card(s)' }
+              { one: '# card', other: '# cards' }
             )}`,
             comment:
               "Log line. {actor} is a player's name, {count} how many cards they drew.",
@@ -557,7 +557,7 @@ const handReplacedMessage = (
         ? msg({
             message: `${actor} shuffled hand to bottom of deck and drew ${plural(
               count,
-              { one: '# card(s)', other: '# card(s)' }
+              { one: '# card', other: '# cards' }
             )}`,
             comment:
               "Log line. {actor} is a player's name, {count} how many cards they drew.",
@@ -634,16 +634,16 @@ export const presentationEffectsForEvent = (
         event.edge === 'top'
           ? msg({
               message: `${name} looked at top ${plural(count, {
-                one: '# card(s)',
-                other: '# card(s)',
+                one: '# card',
+                other: '# cards',
               })} of deck`,
               comment:
                 "Log line. {name} is a player's name, {count} how many cards from the top of their deck they looked at.",
             })
           : msg({
               message: `${name} looked at bottom ${plural(count, {
-                one: '# card(s)',
-                other: '# card(s)',
+                one: '# card',
+                other: '# cards',
               })} of deck`,
               comment:
                 "Log line. {name} is a player's name, {count} how many cards from the bottom of their deck they looked at.",

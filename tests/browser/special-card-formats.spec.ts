@@ -125,7 +125,9 @@ const fromDeck = async (page: Page, piece: string, key: string) => {
       .getByRole('button', { name: 'Actions', exact: true })
       .click();
     await page
-      .getByRole('menuitem', { name: 'Assemble / attach to a card…' })
+      .getByRole('menuitem', {
+        name: /^(?:Join pieces|Attach to a Pokémon)…$/u,
+      })
       .click();
   } else await page.keyboard.press(key);
   if (key !== 'q')

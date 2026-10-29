@@ -1307,7 +1307,11 @@ export const RemoteSessionBoard = ({
             skip: new Set(['flipCoin']),
           })
         : []),
-      ...boardCommands({ runtime, hint }),
+      ...boardCommands({
+        runtime,
+        hint,
+        soloTable: roomMode === 'solo' && replayState.mode === 'live',
+      }),
       ...seatPieceCommands(),
       ...boardViewCommands({ solo: roomMode === 'solo' }),
     ];
@@ -1507,6 +1511,9 @@ export const RemoteSessionBoard = ({
           <LegacyBoardOverlays
             {...(depthProjection ? { depth: depthProjection } : {})}
             allowOpponentResolution={roomMode === 'solo'}
+            {...(roomMode === 'solo' && replayState.mode === 'live'
+              ? { soloOpponentHandHidden: hideOpponentHand }
+              : {})}
             state={boardState}
             darkMode={preferences.darkMode}
             actions={boardOverlayActions}

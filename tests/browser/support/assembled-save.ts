@@ -47,9 +47,7 @@ export const assembleSavedPrint = async (page: Page) => {
     if (part === 1) await page.keyboard.press('b');
     else {
       await pile.getByRole('button', { name: 'Actions', exact: true }).click();
-      await page
-        .getByRole('menuitem', { name: 'Assemble / attach to a card…' })
-        .click();
+      await page.getByRole('menuitem', { name: 'Join pieces…' }).click();
       await page
         .locator('.ptcgsim-card[data-card-role="stackEvolution"]')
         .first()

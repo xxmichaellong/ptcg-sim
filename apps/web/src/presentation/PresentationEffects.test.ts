@@ -474,7 +474,7 @@ describe('presentationEffectsForEvent', () => {
     );
     expect(
       line({ type: 'DeckCardsLooked', ...at, cardCount: 2, edge: 'top' })
-    ).toBe('player:Blue looked at top 2 card(s) of deck');
+    ).toBe('player:Blue looked at top 2 cards of deck');
     expect(
       line({
         type: 'CardsResolved',
@@ -484,7 +484,7 @@ describe('presentationEffectsForEvent', () => {
         source: 'board',
         destination: 'discard',
       })
-    ).toBe('player:Blue moved 3 card(s) from board to discard');
+    ).toBe('player:Blue moved 3 cards from board to discard');
     expect(
       line({
         type: 'CardsResolved',
@@ -494,7 +494,7 @@ describe('presentationEffectsForEvent', () => {
         source: 'board',
         destination: 'deck',
       })
-    ).toBe('player:Blue shuffled 3 card(s) from board to deck');
+    ).toBe('player:Blue shuffled 3 cards from board to deck');
     expect(
       line({
         type: 'CardsResolved',
@@ -524,7 +524,7 @@ describe('presentationEffectsForEvent', () => {
         source: 'attachmentResolution',
         destination: 'discard',
       })
-    ).toBe('player:Blue discarded 2 attached card(s)');
+    ).toBe('player:Blue discarded 2 attached cards');
     expect(
       line({
         type: 'CardsResolved',
@@ -534,7 +534,7 @@ describe('presentationEffectsForEvent', () => {
         source: 'attachmentResolution',
         destination: 'play',
       })
-    ).toBe('player:Blue left 2 attached card(s) in play');
+    ).toBe('player:Blue left 2 attached cards in play');
     expect(
       line({ type: 'HandReplaced', ...at, mode: 'discard', drawCount: 0 })
     ).toBe('player:Blue discarded hand');
@@ -545,7 +545,7 @@ describe('presentationEffectsForEvent', () => {
         mode: 'shuffleIntoDeck',
         drawCount: 5,
       })
-    ).toBe('player:Blue shuffled hand into deck and drew 5 card(s)');
+    ).toBe('player:Blue shuffled hand into deck and drew 5 cards');
     expect(
       line({
         type: 'CardCategoryChanged',

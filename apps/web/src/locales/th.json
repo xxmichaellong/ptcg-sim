@@ -6054,5 +6054,312 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "เส้นขอบโซน"
+  },
+  "eJ4Drn": {
+    "message": "{actor} discarded {count, plural, one {# attached card} other {# attached cards}}",
+    "comments": [
+      "Log line: a player discarded the cards attached to a Pokémon. {actor} is a player's name, {count} how many cards."
+    ],
+    "translation": "{actor} ทิ้งการ์ดที่ติดอยู่ {count, plural, other {# ใบ}}"
+  },
+  "0bIo3n": {
+    "message": "{actor} discarded {count, plural, one {# card} other {# cards}}",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards."
+    ],
+    "translation": "{actor} ทิ้งการ์ด {count, plural, other {# ใบ}}"
+  },
+  "7ULDVQ": {
+    "message": "{actor} discarded hand and drew {count, plural, one {# card} other {# cards}}",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards they drew."
+    ],
+    "translation": "{actor} ทิ้งการ์ดบนมือและจั่วการ์ด {count, plural, other {# ใบ}}"
+  },
+  "VgwRoT": {
+    "message": "{actor} left {count, plural, one {# attached card} other {# attached cards}} in play",
+    "comments": [
+      "Log line: a player kept the cards attached to a Pokémon on the table. {actor} is a player's name, {count} how many cards."
+    ],
+    "translation": "{actor} ปล่อยการ์ดที่ติดอยู่ {count, plural, other {# ใบ}} ไว้บนกระดาน"
+  },
+  "9RYqFp": {
+    "message": "{actor} moved {count, plural, one {# card} other {# cards}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} other {deck}}",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards; {source} is the zone they left and {destination} where they went (play: onto the table)."
+    ],
+    "translation": "{actor} ย้ายการ์ด {count, plural, other {# ใบ}} จาก{source, select, hand {มือ} prizes {การ์ดรางวัล} discard {ตำแหน่งทิ้งการ์ด} board {บอร์ด} stadium {สเตเดียม} active {ตำแหน่งต่อสู้} bench {เบนช์} lostZone {ลอสต์โซน} attachmentResolution {การ์ดที่ติดอยู่} other {สำรับการ์ด}}ไปยัง{destination, select, hand {มือ} discard {ตำแหน่งทิ้งการ์ด} lostZone {ลอสต์โซน} deckBottom {ด้านล่างของสำรับการ์ด} play {บนกระดาน} other {สำรับการ์ด}}"
+  },
+  "e9cTIS": {
+    "message": "{actor} shuffled {count, plural, one {# attached card} other {# attached cards}} into deck",
+    "comments": [
+      "Log line: a player shuffled the cards attached to a Pokémon into their deck. {actor} is a player's name, {count} how many cards."
+    ],
+    "translation": "{actor} สับการ์ดที่ติดอยู่ {count, plural, other {# ใบ}} เข้าสำรับการ์ด"
+  },
+  "99ycft": {
+    "message": "{actor} shuffled {count, plural, one {# card} other {# cards}} from board to deck",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards."
+    ],
+    "translation": "{actor} สับการ์ด {count, plural, other {# ใบ}} จากบอร์ดเข้าสำรับการ์ด"
+  },
+  "RpAS5v": {
+    "message": "{actor} shuffled {count, plural, one {# card} other {# cards}} into deck",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards."
+    ],
+    "translation": "{actor} สับการ์ด {count, plural, other {# ใบ}} เข้าสำรับการ์ด"
+  },
+  "cFSyyy": {
+    "message": "{actor} shuffled {count, plural, one {# card} other {# cards}} to bottom of deck",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards."
+    ],
+    "translation": "{actor} สับการ์ด {count, plural, other {# ใบ}} ไว้ด้านล่างของสำรับการ์ด"
+  },
+  "xZranI": {
+    "message": "{actor} shuffled hand into deck and drew {count, plural, one {# card} other {# cards}}",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards they drew."
+    ],
+    "translation": "{actor} สับการ์ดบนมือเข้าสำรับการ์ดและจั่วการ์ด {count, plural, other {# ใบ}}"
+  },
+  "TWahFj": {
+    "message": "{actor} shuffled hand to bottom of deck and drew {count, plural, one {# card} other {# cards}}",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards they drew."
+    ],
+    "translation": "{actor} สับการ์ดบนมือไว้ด้านล่างของสำรับการ์ดและจั่วการ์ด {count, plural, other {# ใบ}}"
+  },
+  "E887wo": {
+    "message": "{name} looked at bottom {count, plural, one {# card} other {# cards}} of deck",
+    "comments": [
+      "Log line. {name} is a player's name, {count} how many cards from the bottom of their deck they looked at."
+    ],
+    "translation": "{name} ดูการ์ด {count, plural, other {# ใบ}} ล่างสุดของสำรับการ์ด"
+  },
+  "imtKoA": {
+    "message": "{name} looked at top {count, plural, one {# card} other {# cards}} of deck",
+    "comments": [
+      "Log line. {name} is a player's name, {count} how many cards from the top of their deck they looked at."
+    ],
+    "translation": "{name} ดูการ์ด {count, plural, other {# ใบ}} บนสุดของสำรับการ์ด"
+  },
+  "l7W_Ze": {
+    "message": "<0>{0}</0>: send a friend a link to your table.",
+    "translation": "<0>{0}</0>: ส่งลิงก์โต๊ะของคุณให้เพื่อน"
+  },
+  "JTbT6L": {
+    "message": "Add special condition",
+    "translation": "เพิ่มสภาวะผิดปกติ"
+  },
+  "Sb4b2A": {
+    "message": "Allow board flip <0>(both players)</0>",
+    "translation": "อนุญาตให้พลิกโต๊ะ <0>(ผู้เล่นทั้งสองฝ่าย)</0>"
+  },
+  "uUaeMQ": {
+    "message": "Attach to a Pokémon…",
+    "translation": "ติดกับโปเกมอน…"
+  },
+  "c0_6W9": {
+    "message": "Copied",
+    "context": "an invitation",
+    "translation": "คัดลอกแล้ว"
+  },
+  "ITnJNv": {
+    "message": "Copy an invitation",
+    "translation": "คัดลอกคำเชิญ"
+  },
+  "Yc1XTF": {
+    "message": "Copy invitation",
+    "translation": "คัดลอกคำเชิญ"
+  },
+  "gklFA4": {
+    "message": "Couldn't copy the invitation",
+    "translation": "คัดลอกคำเชิญไม่สำเร็จ"
+  },
+  "sA7lnV": {
+    "message": "Couldn't copy the invitation. Try again.",
+    "translation": "คัดลอกคำเชิญไม่สำเร็จ ลองอีกครั้ง"
+  },
+  "O3p0SF": {
+    "message": "Couldn't generate a room. Try again.",
+    "translation": "สร้างห้องไม่สำเร็จ ลองอีกครั้ง"
+  },
+  "nzVItu": {
+    "message": "Couldn't use the clipboard. Allow access and try again.",
+    "translation": "ใช้คลิปบอร์ดไม่ได้ โปรดอนุญาตการเข้าถึงแล้วลองอีกครั้ง"
+  },
+  "rNIlQ5": {
+    "message": "Cover card (only you)",
+    "translation": "คลุมการ์ด (เฉพาะคุณ)"
+  },
+  "dyMutU": {
+    "message": "Cover hand",
+    "translation": "คลุมการ์ดบนมือ"
+  },
+  "6BoNqk": {
+    "message": "Cover prizes",
+    "translation": "คลุมการ์ดรางวัล"
+  },
+  "h-zJzU": {
+    "message": "Cover their hand",
+    "translation": "คลุมการ์ดบนมือของฝ่ายตรงข้าม"
+  },
+  "7x4VPZ": {
+    "message": "Cover their Prizes",
+    "translation": "คลุมการ์ดรางวัลของฝ่ายตรงข้าม"
+  },
+  "urHEvq": {
+    "message": "Cover your Prizes",
+    "translation": "คลุมการ์ดรางวัลของคุณ"
+  },
+  "CulBzv": {
+    "message": "Evolve a Pokémon…",
+    "translation": "วิวัฒนาการโปเกมอน…"
+  },
+  "oP3kz7": {
+    "message": "Generate",
+    "context": "a room",
+    "translation": "สร้าง"
+  },
+  "mb6Tyv": {
+    "message": "Generate a room and send the invitation. With <0>Join as spectator</0> on, it invites a spectator.",
+    "translation": "สร้างห้องแล้วส่งคำเชิญ หากเปิด <0>เข้าร่วมในฐานะผู้ชม</0> จะเป็นการเชิญผู้ชม"
+  },
+  "5NEkeP": {
+    "message": "Generate a room first.",
+    "translation": "กรุณาสร้างห้องก่อน"
+  },
+  "G7A2K4": {
+    "message": "Generate a room, then send the invitation.",
+    "translation": "สร้างห้อง แล้วส่งคำเชิญ"
+  },
+  "fQq7dv": {
+    "message": "Generating…",
+    "context": "a room",
+    "translation": "กำลังสร้าง…"
+  },
+  "HY40z4": {
+    "message": "Hide card",
+    "translation": "ซ่อนการ์ด"
+  },
+  "_hwQqt": {
+    "message": "Hide Lost Zone",
+    "translation": "ซ่อนลอสต์โซน"
+  },
+  "Z7lHUH": {
+    "message": "Hide prizes",
+    "translation": "ซ่อนการ์ดรางวัล"
+  },
+  "q2aSzG": {
+    "message": "Hide their Prizes",
+    "translation": "ซ่อนการ์ดรางวัลของฝ่ายตรงข้าม"
+  },
+  "9EQ4Zd": {
+    "message": "Hide your Prizes",
+    "translation": "ซ่อนการ์ดรางวัลของคุณ"
+  },
+  "EqLwOt": {
+    "message": "In use",
+    "context": "a table piece holding cards",
+    "translation": "กำลังใช้งาน"
+  },
+  "6vI3XA": {
+    "message": "Invitation copied",
+    "translation": "คัดลอกคำเชิญแล้ว"
+  },
+  "z1vTYz": {
+    "message": "Invitation copied to your clipboard.",
+    "translation": "คัดลอกคำเชิญไปยังคลิปบอร์ดแล้ว"
+  },
+  "XbqMCS": {
+    "message": "Join pieces…",
+    "translation": "รวมชิ้นส่วน…"
+  },
+  "2_dOwA": {
+    "message": "Look at card (only you)",
+    "translation": "ดูการ์ด (เฉพาะคุณ)"
+  },
+  "4rquUI": {
+    "message": "Look at hand",
+    "translation": "ดูการ์ดบนมือ"
+  },
+  "FtU5OB": {
+    "message": "Look at prizes",
+    "translation": "ดูการ์ดรางวัล"
+  },
+  "-wf39o": {
+    "message": "Look at their hand",
+    "translation": "ดูการ์ดบนมือของฝ่ายตรงข้าม"
+  },
+  "Ky418J": {
+    "message": "Look at their Prizes",
+    "translation": "ดูการ์ดรางวัลของฝ่ายตรงข้าม"
+  },
+  "C4R15y": {
+    "message": "Look at your Prizes",
+    "translation": "ดูการ์ดรางวัลของคุณ"
+  },
+  "WTIxhp": {
+    "message": "Mark as used",
+    "comments": [
+      "Puts the \"Ability used\" marker on a card: its Ability or effect was used this turn.",
+      "Puts the \"Ability used\" marker on a card: its Ability or effect was used this turn."
+    ],
+    "translation": "ทำเครื่องหมายว่าใช้แล้ว"
+  },
+  "Ig8A-t": {
+    "message": "Paste a valid invitation into Room ID.",
+    "translation": "วางคำเชิญที่ถูกต้องลงในรหัสห้อง"
+  },
+  "pJRgD4": {
+    "message": "Paste an invitation",
+    "translation": "วางคำเชิญ"
+  },
+  "4LC7ch": {
+    "message": "Paste an invitation, or join your own room.",
+    "translation": "วางคำเชิญ หรือเข้าห้องของคุณเอง"
+  },
+  "3J14ru": {
+    "message": "Paste the invitation into Room ID.",
+    "translation": "วางคำเชิญลงในรหัสห้อง"
+  },
+  "6M-csj": {
+    "message": "Reveal card",
+    "translation": "เปิดเผยการ์ด"
+  },
+  "wY30n_": {
+    "message": "Reveal prizes",
+    "translation": "เปิดเผยการ์ดรางวัล"
+  },
+  "n75nZA": {
+    "message": "Reveal their Prizes",
+    "translation": "เปิดเผยการ์ดรางวัลของฝ่ายตรงข้าม"
+  },
+  "c6E0p_": {
+    "message": "Reveal your Prizes",
+    "translation": "เปิดเผยการ์ดรางวัลของคุณ"
+  },
+  "QoZkYe": {
+    "message": "Room ID",
+    "translation": "รหัสห้อง"
+  },
+  "BulyBf": {
+    "message": "Rotate",
+    "translation": "หมุน"
+  },
+  "W2pBH8": {
+    "message": "Switch special condition",
+    "translation": "สลับสภาวะผิดปกติ"
+  },
+  "UoxtKp": {
+    "message": "That invitation expired. Ask for a new one.",
+    "translation": "คำเชิญนั้นหมดอายุแล้ว โปรดขอคำเชิญใหม่"
+  },
+  "23cwkx": {
+    "message": "Your name changed. Generate a new room.",
+    "translation": "ชื่อของคุณเปลี่ยนแล้ว สร้างห้องใหม่"
   }
 }

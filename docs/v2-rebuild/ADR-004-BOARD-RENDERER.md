@@ -240,7 +240,10 @@ solo undo key, and reversible sorting with zero action/effect/command traffic.
 Replay-local prize/hand disclosure now uses an isolated solo-player-only
 projection. Its opaque catalog never enters the historical view. Prize menus
 offer their two source zone rows plus `Reveal/hide card`; opponent-hand menus
-offer hand look plus the same card row. Zone and per-card overrides emit
+offer hand look plus the same card row. (Since 2026-10-29 each row is named
+for the way it goes on the card it was opened on, "Reveal prizes" or "Hide
+prizes", and a card the replay cannot disclose has no Reveal row: PX-070.)
+Zone and per-card overrides emit
 replacement scenes without commands, reconcile only on forward playback, and
 clear at seek/resync/reconnect/exit/identity/terminal boundaries. Native
 Chromium covers real-v1 menu/card paint, exact face assets, stable face-swap

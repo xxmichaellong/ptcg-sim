@@ -32,6 +32,7 @@ import { CaretRightIcon } from '@phosphor-icons/react/dist/csr/CaretRight';
 import { DiceFiveIcon } from '@phosphor-icons/react/dist/csr/DiceFive';
 import { ArrowUUpLeftIcon } from '@phosphor-icons/react/dist/csr/ArrowUUpLeft';
 import { EyeIcon } from '@phosphor-icons/react/dist/csr/Eye';
+import { EyeSlashIcon } from '@phosphor-icons/react/dist/csr/EyeSlash';
 import { FlaskIcon } from '@phosphor-icons/react/dist/csr/Flask';
 import { HandGrabbingIcon } from '@phosphor-icons/react/dist/csr/HandGrabbing';
 import { HeartBreakIcon } from '@phosphor-icons/react/dist/csr/HeartBreak';
@@ -64,6 +65,12 @@ import {
 } from 'react';
 
 import { resolveAttachEvolveTargeting } from '../resolveAttachEvolveTargeting.js';
+import {
+  contextActionOutcome,
+  type ContextActionLocalState,
+  type ContextActionOutcome,
+  type TwoWayContextAction,
+} from '../contextActionOutcome.js';
 import { actingPlayerIdOf, seatToneOf } from '../acting-seat.js';
 import { locateViewCardActionSource } from '../locateViewCardActionSource.js';
 import type {
@@ -217,6 +224,8 @@ export type ContextEntry =
       readonly label: string;
       readonly action: LegacyBoardContextActionId;
       readonly boundary: boolean;
+      /** Which way a two-way entry goes (its label and icon say so). */
+      readonly outcome?: ContextActionOutcome;
     };
 
 const header = (id: string, label: string): ContextEntry => ({
@@ -228,13 +237,15 @@ const header = (id: string, label: string): ContextEntry => ({
 const action = (
   actionId: LegacyBoardContextActionId,
   label: string,
-  boundary = false
+  boundary = false,
+  outcome?: ContextActionOutcome
 ): ContextEntry => ({
   kind: 'action',
   id: actionId,
   label,
   action: actionId,
   boundary,
+  ...(outcome ? { outcome } : {}),
 });
 
 const zoneForCard = (
@@ -259,14 +270,53 @@ const zoneForCard = (
     : null;
 };
 
+/**
+ * A two-way entry named for the way it goes now ("Hide card", not v1's
+ * "Reveal/hide card"), read from the decision that carries it out; left
+ * out where it would do nothing.
+ */
+const twoWayLabel = (
+  action: TwoWayContextAction,
+  outcome: ContextActionOutcome
+): string => {
+  switch (action) {
+    case 'revealCard':
+      return outcome === 'hide' ? t`Hide card` : t`Reveal card`;
+    case 'revealPrizes':
+      return outcome === 'hide' ? t`Hide prizes` : t`Reveal prizes`;
+    case 'togglePrizes':
+      return outcome === 'cover' ? t`Cover prizes` : t`Look at prizes`;
+    case 'toggleOpponentHand':
+      return outcome === 'cover' ? t`Cover hand` : t`Look at hand`;
+    case 'toggleAbility':
+      return outcome === 'markUnused'
+        ? t({
+            message: 'Mark as unused',
+            comment: 'Takes the "Ability used" marker off a Pokémon.',
+          })
+        : t({
+            message: 'Mark as used',
+            comment:
+              'Puts the "Ability used" marker on a card: its Ability or effect was used this turn.',
+          });
+  }
+};
+
 /** Mirrors the legacy menu's source order without authorizing any mutation. */
 export const selectLegacyContextEntries = (
   state: BoardSessionControllerState,
-  card: CardSceneNode
+  card: CardSceneNode,
+  local: ContextActionLocalState = {}
 ): readonly ContextEntry[] => {
   if (state.view?.viewer.kind !== 'player') {
     return [];
   }
+  const twoWay = (actionId: TwoWayContextAction): ContextEntry[] => {
+    const outcome = contextActionOutcome(state, card.id, actionId, local);
+    return outcome
+      ? [action(actionId, twoWayLabel(actionId, outcome), false, outcome)]
+      : [];
+  };
   const location = zoneForCard(state, card);
   if (!location) return [];
   // v1's selfView: the own-only entries belong to the seat at the bottom of
@@ -284,16 +334,16 @@ export const selectLegacyContextEntries = (
     if (location.kind === 'prizes') {
       return [
         header('prizes', t({ message: 'Prizes', context: 'zone' })),
-        action('revealPrizes', t`Reveal/hide prizes`),
-        action('togglePrizes', t`Look/cover prizes`),
-        action('revealCard', t`Reveal/hide card`),
+        ...twoWay('revealPrizes'),
+        ...twoWay('togglePrizes'),
+        ...twoWay('revealCard'),
       ];
     }
     if (location.kind === 'hand' && opponent) {
       return [
         header('hand', t({ message: 'Hand', context: 'zone' })),
-        action('toggleOpponentHand', t`Look/cover hand`),
-        action('revealCard', t`Reveal/hide card`),
+        ...twoWay('toggleOpponentHand'),
+        ...twoWay('revealCard'),
       ];
     }
     return [];
@@ -306,7 +356,7 @@ export const selectLegacyContextEntries = (
     location.kind === 'stadium' ||
     location.kind === 'discard'
   ) {
-    entries.push(action('toggleAbility', t`Toggle ability/effect`));
+    entries.push(...twoWay('toggleAbility'));
   }
   if (location.kind === 'active' || location.kind === 'bench') {
     entries.push(action('setDamage', t`Damage counter`));
@@ -317,10 +367,7 @@ export const selectLegacyContextEntries = (
   if (location.kind === 'prizes') {
     entries.push(header('prizes', t({ message: 'Prizes', context: 'zone' })));
     if (own) entries.push(action('shufflePrizes', t`Shuffle prizes`));
-    entries.push(
-      action('revealPrizes', t`Reveal/hide prizes`),
-      action('togglePrizes', t`Look/cover prizes`)
-    );
+    entries.push(...twoWay('revealPrizes'), ...twoWay('togglePrizes'));
     if (own) {
       entries.push(
         action('shufflePrizesToDeckBottom', t`Shuffle to deck (bottom)`)
@@ -337,7 +384,7 @@ export const selectLegacyContextEntries = (
       );
     } else if (opponent) {
       entries.push(
-        action('toggleOpponentHand', t`Look/cover hand`),
+        ...twoWay('toggleOpponentHand'),
         action('randomOpponentHandCard', t`Pick random card`)
       );
     }
@@ -365,7 +412,7 @@ export const selectLegacyContextEntries = (
 
   entries.push(
     action('moveCard', t`Move card...`, true),
-    action('revealCard', t`Reveal/hide card`)
+    ...twoWay('revealCard')
   );
   if (location.kind === 'active' || location.kind === 'bench') {
     entries.push(action('changeCardType', t`Change type...`));
@@ -572,6 +619,14 @@ const CONTEXT_ACTION_DECOR: Readonly<
   revealCard: { icon: EyeIcon },
   changeCardType: { icon: SwapIcon },
 };
+
+/** An entry's icon: one that hides or covers shows the eye shut. */
+const entryIcon = (
+  entry: Extract<ContextEntry, { readonly kind: 'action' }>
+): Icon =>
+  entry.outcome === 'hide' || entry.outcome === 'cover'
+    ? EyeSlashIcon
+    : CONTEXT_ACTION_DECOR[entry.action].icon;
 
 const contextActionHint = (
   keymap: Keymap,
@@ -1017,6 +1072,7 @@ const ContextMenu = ({
   pointer,
   darkMode,
   actions,
+  soloOpponentHandHidden,
 }: {
   readonly state: BoardSessionControllerState;
   readonly depth?: BoardDepthProjection;
@@ -1025,6 +1081,7 @@ const ContextMenu = ({
   readonly pointer: RefObject<ContextPointer | null>;
   readonly darkMode: boolean;
   readonly actions: LegacyBoardOverlayActions;
+  readonly soloOpponentHandHidden?: boolean;
 }) => {
   const { t, i18n } = useLingui();
   const direction = usePageDirection();
@@ -1035,11 +1092,35 @@ const ContextMenu = ({
   >(null);
   const dismiss = useCallback(() => actions.dismiss('context'), [actions]);
   const entries = useMemo(
-    () => selectLegacyContextEntries(state, card),
+    () =>
+      selectLegacyContextEntries(
+        state,
+        card,
+        soloOpponentHandHidden === undefined ? {} : { soloOpponentHandHidden }
+      ),
     // Worded in the language shown.
-    [card, state, i18n.locale]
+    [card, state, soloOpponentHandHidden, i18n.locale]
   );
   const own = isOwnLocation(state, card);
+  // A card that goes onto a Pokémon picks one: named for what it will do
+  // there (the targeting's mode), not v1's "Assemble / attach".
+  const targeting =
+    state.canSubmitCommands && state.view && actions.beginCardAssembly
+      ? resolveAttachEvolveTargeting(state.view, card.id)
+      : null;
+  const placement = targeting?.ok ? targeting.targeting.mode : null;
+  // A piece of a multi-piece card (V-UNION, LEGEND) joins its others as a
+  // Pokémon evolves.
+  const located =
+    placement === 'evolution' && state.view
+      ? locateViewCardActionSource(state.view, card.id)
+      : null;
+  const assembly =
+    placement === 'evolution' &&
+    located?.card.kind === 'known' &&
+    state.view?.definitions[located.card.definitionId]?.presentation?.join
+      ? 'join'
+      : placement;
   const cardName = card.label;
   useFocusBoundary(container, '[role="menuitem"]', String(card.id));
   useOutsideDismiss(container, dismiss);
@@ -1209,10 +1290,7 @@ const ContextMenu = ({
       }}
     >
       <ul>
-        {state.canSubmitCommands &&
-        state.view &&
-        actions.beginCardAssembly &&
-        resolveAttachEvolveTargeting(state.view, card.id).ok ? (
+        {assembly ? (
           <li role="none">
             <button
               type="button"
@@ -1222,7 +1300,13 @@ const ContextMenu = ({
             >
               <MenuItemContent
                 icon={CardsIcon}
-                label={t`Assemble / attach to a card…`}
+                label={
+                  assembly === 'join'
+                    ? t`Join pieces…`
+                    : assembly === 'evolution'
+                      ? t`Evolve a Pokémon…`
+                      : t`Attach to a Pokémon…`
+                }
               />
             </button>
           </li>
@@ -1296,7 +1380,7 @@ const ContextMenu = ({
                   }}
                 >
                   <MenuItemContent
-                    icon={CONTEXT_ACTION_DECOR[entry.action].icon}
+                    icon={entryIcon(entry)}
                     label={entry.label}
                   />
                 </button>
@@ -2910,6 +2994,7 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
   actions,
   tableMotion,
   allowOpponentResolution = false,
+  soloOpponentHandHidden,
 }: {
   readonly allowOpponentResolution?: boolean;
   readonly state: BoardSessionControllerState;
@@ -2918,6 +3003,11 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
   readonly actions: LegacyBoardOverlayActions;
   /** Whether the table is moving, for a window waiting on a card to land. */
   readonly tableMotion?: TableMotionStore;
+  /**
+   * A live Solo table: whether the other seat's hand is hidden, which its
+   * Look/Cover switches (ContextActionLocalState).
+   */
+  readonly soloOpponentHandHidden?: boolean;
 }) {
   const cardImages = useCardImageLanguage();
   const [contextAnchor, setContextAnchor] = useState<{
@@ -3095,6 +3185,9 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
           pointer={contextPointer}
           darkMode={darkMode}
           actions={actions}
+          {...(soloOpponentHandHidden === undefined
+            ? {}
+            : { soloOpponentHandHidden })}
         />
       ) : null}
       {preview ? (

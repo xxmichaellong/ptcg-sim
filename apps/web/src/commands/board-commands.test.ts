@@ -435,3 +435,95 @@ describe('boardCommands', () => {
     ).toEqual([]);
   });
 });
+
+describe('two-way commands', () => {
+  it('names Prizes and hands for the way their menu entry goes now', () => {
+    const titleOf = (state: BoardSessionControllerState, id: string) =>
+      find(
+        boardCommands({ runtime: runtimeFor(state), hint: () => undefined }),
+        id
+      ).title;
+    expect(titleOf(stateWith(), 'piles.own.revealPrizes')).toBe(
+      'Reveal your Prizes'
+    );
+    expect(titleOf(stateWith(), 'piles.own.togglePrizes')).toBe(
+      'Look at your Prizes'
+    );
+    expect(titleOf(stateWith(), 'piles.their.toggleOpponentHand')).toBe(
+      'Look at their hand'
+    );
+    // The menu is opened on their first Prize: shown, the Prizes are hidden.
+    const prizes = `zone:${bottom}:prizes`;
+    const first = view.zones[prizes]!.cards[0]!;
+    const definitionId = Object.keys(view.definitions)[0]!;
+    const revealed = {
+      ...view,
+      zones: {
+        ...view.zones,
+        [prizes]: {
+          ...view.zones[prizes]!,
+          cards: view.zones[prizes]!.cards.map((card) =>
+            card.id === first.id
+              ? {
+                  kind: 'known' as const,
+                  id: card.id,
+                  definitionId: definitionId as never,
+                  ownerId: card.ownerId,
+                  category: 'Pokémon' as const,
+                  face: 'up' as const,
+                  orientationQuarterTurns: 0 as const,
+                  abilityUsed: false,
+                  publiclyRevealed: true,
+                  decklistRank: 0,
+                }
+              : card
+          ),
+        },
+      },
+    };
+    const revealedScene = createBoardSceneForViewport(revealed, {
+      geometryVersion: 1,
+      viewport: { width: 1280, height: 720, devicePixelRatio: 1 },
+      bottomPlayerId: bottom,
+      splitRatio: 0.5,
+    });
+    expect(
+      titleOf(
+        stateWith({ view: revealed, scene: revealedScene }),
+        'piles.own.revealPrizes'
+      )
+    ).toBe('Hide your Prizes');
+    // A live Solo table hides their hand with the table's switch instead.
+    expect(
+      ids(
+        boardCommands({
+          runtime: runtimeFor(stateWith()),
+          hint: () => undefined,
+          soloTable: true,
+        })
+      )
+    ).not.toContain('piles.their.toggleOpponentHand');
+  });
+
+  it("names a selected card's two-way keys for the way they go on it", () => {
+    const active = view.stacks['stack:blue:active']!.evolutionCards.at(-1)!;
+    const commands = boardCommands({
+      runtime: runtimeFor(
+        stateWith({
+          presentation: {
+            ...createInitialBoardSessionControllerState().presentation,
+            selectedCardId: active.id,
+          },
+        })
+      ),
+      hint: () => undefined,
+    });
+    // Its Ability is marked used, and it is Poisoned.
+    expect(find(commands, 'selected.toggleAbility').title).toBe(
+      'Mark as unused'
+    );
+    expect(find(commands, 'selected.addCondition').title).toBe(
+      'Switch special condition'
+    );
+  });
+});

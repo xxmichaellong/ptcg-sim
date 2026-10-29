@@ -6054,5 +6054,312 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "Mga outline ng zone"
+  },
+  "eJ4Drn": {
+    "message": "{actor} discarded {count, plural, one {# attached card} other {# attached cards}}",
+    "comments": [
+      "Log line: a player discarded the cards attached to a Pokémon. {actor} is a player's name, {count} how many cards."
+    ],
+    "translation": "Nag-discard si {actor} ng {count, plural, one {# naka-attach na card} other {# naka-attach na card}}"
+  },
+  "0bIo3n": {
+    "message": "{actor} discarded {count, plural, one {# card} other {# cards}}",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards."
+    ],
+    "translation": "Nag-discard si {actor} ng {count, plural, one {# card} other {# card}}"
+  },
+  "7ULDVQ": {
+    "message": "{actor} discarded hand and drew {count, plural, one {# card} other {# cards}}",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards they drew."
+    ],
+    "translation": "Ni-discard ni {actor} ang hand at nag-draw ng {count, plural, one {# card} other {# card}}"
+  },
+  "VgwRoT": {
+    "message": "{actor} left {count, plural, one {# attached card} other {# attached cards}} in play",
+    "comments": [
+      "Log line: a player kept the cards attached to a Pokémon on the table. {actor} is a player's name, {count} how many cards."
+    ],
+    "translation": "Iniwan ni {actor} sa play ang {count, plural, one {# naka-attach na card} other {# naka-attach na card}}"
+  },
+  "9RYqFp": {
+    "message": "{actor} moved {count, plural, one {# card} other {# cards}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} other {deck}}",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards; {source} is the zone they left and {destination} where they went (play: onto the table)."
+    ],
+    "translation": "Inilipat ni {actor} ang {count, plural, one {# card} other {# card}} mula sa {source, select, hand {hand} prizes {Prizes} discard {discard pile} board {board} stadium {Stadium} active {Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {mga naka-attach na card} other {deck}} papunta sa {destination, select, hand {hand} discard {discard pile} lostZone {Lost Zone} deckBottom {ilalim ng deck} play {play} other {deck}}"
+  },
+  "e9cTIS": {
+    "message": "{actor} shuffled {count, plural, one {# attached card} other {# attached cards}} into deck",
+    "comments": [
+      "Log line: a player shuffled the cards attached to a Pokémon into their deck. {actor} is a player's name, {count} how many cards."
+    ],
+    "translation": "Ni-shuffle ni {actor} sa deck ang {count, plural, one {# naka-attach na card} other {# naka-attach na card}}"
+  },
+  "99ycft": {
+    "message": "{actor} shuffled {count, plural, one {# card} other {# cards}} from board to deck",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards."
+    ],
+    "translation": "Ni-shuffle ni {actor} mula board papunta sa deck ang {count, plural, one {# card} other {# card}}"
+  },
+  "RpAS5v": {
+    "message": "{actor} shuffled {count, plural, one {# card} other {# cards}} into deck",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards."
+    ],
+    "translation": "Ni-shuffle ni {actor} sa deck ang {count, plural, one {# card} other {# card}}"
+  },
+  "cFSyyy": {
+    "message": "{actor} shuffled {count, plural, one {# card} other {# cards}} to bottom of deck",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards."
+    ],
+    "translation": "Ni-shuffle ni {actor} sa ilalim ng deck ang {count, plural, one {# card} other {# card}}"
+  },
+  "xZranI": {
+    "message": "{actor} shuffled hand into deck and drew {count, plural, one {# card} other {# cards}}",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards they drew."
+    ],
+    "translation": "Ni-shuffle ni {actor} ang hand sa deck at nag-draw ng {count, plural, one {# card} other {# card}}"
+  },
+  "TWahFj": {
+    "message": "{actor} shuffled hand to bottom of deck and drew {count, plural, one {# card} other {# cards}}",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards they drew."
+    ],
+    "translation": "Ni-shuffle ni {actor} ang hand sa ilalim ng deck at nag-draw ng {count, plural, one {# card} other {# card}}"
+  },
+  "E887wo": {
+    "message": "{name} looked at bottom {count, plural, one {# card} other {# cards}} of deck",
+    "comments": [
+      "Log line. {name} is a player's name, {count} how many cards from the bottom of their deck they looked at."
+    ],
+    "translation": "Tiningnan ni {name} ang {count, plural, one {# card} other {# card}} sa ilalim ng deck"
+  },
+  "imtKoA": {
+    "message": "{name} looked at top {count, plural, one {# card} other {# cards}} of deck",
+    "comments": [
+      "Log line. {name} is a player's name, {count} how many cards from the top of their deck they looked at."
+    ],
+    "translation": "Tiningnan ni {name} ang {count, plural, one {# card} other {# card}} sa ibabaw ng deck"
+  },
+  "l7W_Ze": {
+    "message": "<0>{0}</0>: send a friend a link to your table.",
+    "translation": "<0>{0}</0>: magpadala ng link ng table mo sa kaibigan."
+  },
+  "JTbT6L": {
+    "message": "Add special condition",
+    "translation": "Magdagdag ng special condition"
+  },
+  "Sb4b2A": {
+    "message": "Allow board flip <0>(both players)</0>",
+    "translation": "Payagan ang board flip <0>(parehong player)</0>"
+  },
+  "uUaeMQ": {
+    "message": "Attach to a Pokémon…",
+    "translation": "I-attach sa isang Pokémon…"
+  },
+  "c0_6W9": {
+    "message": "Copied",
+    "context": "an invitation",
+    "translation": "Nakopya"
+  },
+  "ITnJNv": {
+    "message": "Copy an invitation",
+    "translation": "Kopyahin ang imbitasyon"
+  },
+  "Yc1XTF": {
+    "message": "Copy invitation",
+    "translation": "Kopyahin ang imbitasyon"
+  },
+  "gklFA4": {
+    "message": "Couldn't copy the invitation",
+    "translation": "Hindi makopya ang imbitasyon"
+  },
+  "sA7lnV": {
+    "message": "Couldn't copy the invitation. Try again.",
+    "translation": "Hindi makopya ang imbitasyon. Subukan ulit."
+  },
+  "O3p0SF": {
+    "message": "Couldn't generate a room. Try again.",
+    "translation": "Hindi makagawa ng room. Subukan ulit."
+  },
+  "nzVItu": {
+    "message": "Couldn't use the clipboard. Allow access and try again.",
+    "translation": "Hindi magamit ang clipboard. Payagan ang access at subukan ulit."
+  },
+  "rNIlQ5": {
+    "message": "Cover card (only you)",
+    "translation": "Takpan ang card (ikaw lang)"
+  },
+  "dyMutU": {
+    "message": "Cover hand",
+    "translation": "Takpan ang hand"
+  },
+  "6BoNqk": {
+    "message": "Cover prizes",
+    "translation": "Takpan ang Prizes"
+  },
+  "h-zJzU": {
+    "message": "Cover their hand",
+    "translation": "Takpan ang hand nila"
+  },
+  "7x4VPZ": {
+    "message": "Cover their Prizes",
+    "translation": "Takpan ang Prizes nila"
+  },
+  "urHEvq": {
+    "message": "Cover your Prizes",
+    "translation": "Takpan ang Prizes mo"
+  },
+  "CulBzv": {
+    "message": "Evolve a Pokémon…",
+    "translation": "I-evolve ang isang Pokémon…"
+  },
+  "oP3kz7": {
+    "message": "Generate",
+    "context": "a room",
+    "translation": "Gumawa"
+  },
+  "mb6Tyv": {
+    "message": "Generate a room and send the invitation. With <0>Join as spectator</0> on, it invites a spectator.",
+    "translation": "Gumawa ng room at ipadala ang imbitasyon. Kapag naka-on ang <0>Sumali bilang manonood</0>, manonood ang iimbitahan."
+  },
+  "5NEkeP": {
+    "message": "Generate a room first.",
+    "translation": "Gumawa muna ng room."
+  },
+  "G7A2K4": {
+    "message": "Generate a room, then send the invitation.",
+    "translation": "Gumawa ng room, tapos ipadala ang imbitasyon."
+  },
+  "fQq7dv": {
+    "message": "Generating…",
+    "context": "a room",
+    "translation": "Gumagawa…"
+  },
+  "HY40z4": {
+    "message": "Hide card",
+    "translation": "Itago ang card"
+  },
+  "_hwQqt": {
+    "message": "Hide Lost Zone",
+    "translation": "Itago ang Lost Zone"
+  },
+  "Z7lHUH": {
+    "message": "Hide prizes",
+    "translation": "Itago ang Prizes"
+  },
+  "q2aSzG": {
+    "message": "Hide their Prizes",
+    "translation": "Itago ang Prizes nila"
+  },
+  "9EQ4Zd": {
+    "message": "Hide your Prizes",
+    "translation": "Itago ang Prizes mo"
+  },
+  "EqLwOt": {
+    "message": "In use",
+    "context": "a table piece holding cards",
+    "translation": "Ginagamit"
+  },
+  "6vI3XA": {
+    "message": "Invitation copied",
+    "translation": "Nakopya ang imbitasyon"
+  },
+  "z1vTYz": {
+    "message": "Invitation copied to your clipboard.",
+    "translation": "Nakopya sa clipboard ang imbitasyon."
+  },
+  "XbqMCS": {
+    "message": "Join pieces…",
+    "translation": "Pagdugtungin ang mga piraso…"
+  },
+  "2_dOwA": {
+    "message": "Look at card (only you)",
+    "translation": "Tingnan ang card (ikaw lang)"
+  },
+  "4rquUI": {
+    "message": "Look at hand",
+    "translation": "Tingnan ang hand"
+  },
+  "FtU5OB": {
+    "message": "Look at prizes",
+    "translation": "Tingnan ang Prizes"
+  },
+  "-wf39o": {
+    "message": "Look at their hand",
+    "translation": "Tingnan ang hand nila"
+  },
+  "Ky418J": {
+    "message": "Look at their Prizes",
+    "translation": "Tingnan ang Prizes nila"
+  },
+  "C4R15y": {
+    "message": "Look at your Prizes",
+    "translation": "Tingnan ang Prizes mo"
+  },
+  "WTIxhp": {
+    "message": "Mark as used",
+    "comments": [
+      "Puts the \"Ability used\" marker on a card: its Ability or effect was used this turn.",
+      "Puts the \"Ability used\" marker on a card: its Ability or effect was used this turn."
+    ],
+    "translation": "Markahang nagamit na"
+  },
+  "Ig8A-t": {
+    "message": "Paste a valid invitation into Room ID.",
+    "translation": "Mag-paste ng valid na imbitasyon sa Room ID."
+  },
+  "pJRgD4": {
+    "message": "Paste an invitation",
+    "translation": "Mag-paste ng imbitasyon"
+  },
+  "4LC7ch": {
+    "message": "Paste an invitation, or join your own room.",
+    "translation": "Mag-paste ng imbitasyon, o sumali sa sarili mong room."
+  },
+  "3J14ru": {
+    "message": "Paste the invitation into Room ID.",
+    "translation": "I-paste ang imbitasyon sa Room ID."
+  },
+  "6M-csj": {
+    "message": "Reveal card",
+    "translation": "Ipakita ang card"
+  },
+  "wY30n_": {
+    "message": "Reveal prizes",
+    "translation": "Ipakita ang Prizes"
+  },
+  "n75nZA": {
+    "message": "Reveal their Prizes",
+    "translation": "Ipakita ang Prizes nila"
+  },
+  "c6E0p_": {
+    "message": "Reveal your Prizes",
+    "translation": "Ipakita ang Prizes mo"
+  },
+  "QoZkYe": {
+    "message": "Room ID",
+    "translation": "Room ID"
+  },
+  "BulyBf": {
+    "message": "Rotate",
+    "translation": "I-rotate"
+  },
+  "W2pBH8": {
+    "message": "Switch special condition",
+    "translation": "Palitan ang special condition"
+  },
+  "UoxtKp": {
+    "message": "That invitation expired. Ask for a new one.",
+    "translation": "Expired na ang imbitasyong iyon. Humingi ng bago."
+  },
+  "23cwkx": {
+    "message": "Your name changed. Generate a new room.",
+    "translation": "Nagbago ang pangalan mo. Gumawa ng bagong room."
   }
 }

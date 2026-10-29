@@ -6054,5 +6054,312 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "Bölge çerçeveleri"
+  },
+  "eJ4Drn": {
+    "message": "{actor} discarded {count, plural, one {# attached card} other {# attached cards}}",
+    "comments": [
+      "Log line: a player discarded the cards attached to a Pokémon. {actor} is a player's name, {count} how many cards."
+    ],
+    "translation": "{actor} {count, plural, one {bağlı # kartı} other {bağlı # kartı}} atık yığınına attı"
+  },
+  "0bIo3n": {
+    "message": "{actor} discarded {count, plural, one {# card} other {# cards}}",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards."
+    ],
+    "translation": "{actor} {count, plural, one {# kart} other {# kart}} attı"
+  },
+  "7ULDVQ": {
+    "message": "{actor} discarded hand and drew {count, plural, one {# card} other {# cards}}",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards they drew."
+    ],
+    "translation": "{actor} elini attı ve {count, plural, one {# kart} other {# kart}} çekti"
+  },
+  "VgwRoT": {
+    "message": "{actor} left {count, plural, one {# attached card} other {# attached cards}} in play",
+    "comments": [
+      "Log line: a player kept the cards attached to a Pokémon on the table. {actor} is a player's name, {count} how many cards."
+    ],
+    "translation": "{actor} {count, plural, one {bağlı # kartı} other {bağlı # kartı}} oyunda bıraktı"
+  },
+  "9RYqFp": {
+    "message": "{actor} moved {count, plural, one {# card} other {# cards}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} other {deck}}",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards; {source} is the zone they left and {destination} where they went (play: onto the table)."
+    ],
+    "translation": "{actor} {count, plural, one {# kartı} other {# kartı}} {source, select, hand {elden} prizes {Ödüllerden} discard {atık yığınından} board {oyun alanından} stadium {Stadyumdan} active {Aktif Alandan} bench {yedekten} lostZone {Lost Zone'dan} attachmentResolution {bağlı kartlardan} other {desteden}} {destination, select, hand {ele} discard {atık yığınına} lostZone {Lost Zone'a} deckBottom {destenin altına} play {oyuna} other {desteye}} taşıdı"
+  },
+  "e9cTIS": {
+    "message": "{actor} shuffled {count, plural, one {# attached card} other {# attached cards}} into deck",
+    "comments": [
+      "Log line: a player shuffled the cards attached to a Pokémon into their deck. {actor} is a player's name, {count} how many cards."
+    ],
+    "translation": "{actor} {count, plural, one {bağlı # kartı} other {bağlı # kartı}} desteye karıştırdı"
+  },
+  "99ycft": {
+    "message": "{actor} shuffled {count, plural, one {# card} other {# cards}} from board to deck",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards."
+    ],
+    "translation": "{actor} {count, plural, one {# kartı} other {# kartı}} oyun alanından desteye karıştırdı"
+  },
+  "RpAS5v": {
+    "message": "{actor} shuffled {count, plural, one {# card} other {# cards}} into deck",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards."
+    ],
+    "translation": "{actor} {count, plural, one {# kartı} other {# kartı}} desteye karıştırdı"
+  },
+  "cFSyyy": {
+    "message": "{actor} shuffled {count, plural, one {# card} other {# cards}} to bottom of deck",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards."
+    ],
+    "translation": "{actor} {count, plural, one {# kartı} other {# kartı}} destenin altına karıştırdı"
+  },
+  "xZranI": {
+    "message": "{actor} shuffled hand into deck and drew {count, plural, one {# card} other {# cards}}",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards they drew."
+    ],
+    "translation": "{actor} elini desteye karıştırdı ve {count, plural, one {# kart} other {# kart}} çekti"
+  },
+  "TWahFj": {
+    "message": "{actor} shuffled hand to bottom of deck and drew {count, plural, one {# card} other {# cards}}",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards they drew."
+    ],
+    "translation": "{actor} elini destenin altına karıştırdı ve {count, plural, one {# kart} other {# kart}} çekti"
+  },
+  "E887wo": {
+    "message": "{name} looked at bottom {count, plural, one {# card} other {# cards}} of deck",
+    "comments": [
+      "Log line. {name} is a player's name, {count} how many cards from the bottom of their deck they looked at."
+    ],
+    "translation": "{name} destenin altındaki {count, plural, one {# karta} other {# karta}} baktı"
+  },
+  "imtKoA": {
+    "message": "{name} looked at top {count, plural, one {# card} other {# cards}} of deck",
+    "comments": [
+      "Log line. {name} is a player's name, {count} how many cards from the top of their deck they looked at."
+    ],
+    "translation": "{name} destenin üstündeki {count, plural, one {# karta} other {# karta}} baktı"
+  },
+  "l7W_Ze": {
+    "message": "<0>{0}</0>: send a friend a link to your table.",
+    "translation": "<0>{0}</0>: masanın bağlantısını bir arkadaşına gönder."
+  },
+  "JTbT6L": {
+    "message": "Add special condition",
+    "translation": "Özel durum ekle"
+  },
+  "Sb4b2A": {
+    "message": "Allow board flip <0>(both players)</0>",
+    "translation": "Masayı çevirmeye izin ver <0>(iki oyuncu için)</0>"
+  },
+  "uUaeMQ": {
+    "message": "Attach to a Pokémon…",
+    "translation": "Bir Pokémon'a bağla…"
+  },
+  "c0_6W9": {
+    "message": "Copied",
+    "context": "an invitation",
+    "translation": "Kopyalandı"
+  },
+  "ITnJNv": {
+    "message": "Copy an invitation",
+    "translation": "Davet kopyala"
+  },
+  "Yc1XTF": {
+    "message": "Copy invitation",
+    "translation": "Daveti kopyala"
+  },
+  "gklFA4": {
+    "message": "Couldn't copy the invitation",
+    "translation": "Davet kopyalanamadı"
+  },
+  "sA7lnV": {
+    "message": "Couldn't copy the invitation. Try again.",
+    "translation": "Davet kopyalanamadı. Yeniden dene."
+  },
+  "O3p0SF": {
+    "message": "Couldn't generate a room. Try again.",
+    "translation": "Oda oluşturulamadı. Yeniden dene."
+  },
+  "nzVItu": {
+    "message": "Couldn't use the clipboard. Allow access and try again.",
+    "translation": "Panoya erişilemedi. Erişime izin ver ve tekrar dene."
+  },
+  "rNIlQ5": {
+    "message": "Cover card (only you)",
+    "translation": "Kartı kapat (sadece sen)"
+  },
+  "dyMutU": {
+    "message": "Cover hand",
+    "translation": "Eli kapat"
+  },
+  "6BoNqk": {
+    "message": "Cover prizes",
+    "translation": "Ödülleri kapat"
+  },
+  "h-zJzU": {
+    "message": "Cover their hand",
+    "translation": "Rakibin elini kapat"
+  },
+  "7x4VPZ": {
+    "message": "Cover their Prizes",
+    "translation": "Rakibin Ödüllerini kapat"
+  },
+  "urHEvq": {
+    "message": "Cover your Prizes",
+    "translation": "Ödüllerini kapat"
+  },
+  "CulBzv": {
+    "message": "Evolve a Pokémon…",
+    "translation": "Bir Pokémon'u evrimleştir…"
+  },
+  "oP3kz7": {
+    "message": "Generate",
+    "context": "a room",
+    "translation": "Oluştur"
+  },
+  "mb6Tyv": {
+    "message": "Generate a room and send the invitation. With <0>Join as spectator</0> on, it invites a spectator.",
+    "translation": "Bir oda oluştur ve daveti gönder. <0>İzleyici olarak katıl</0> açıksa izleyici davet eder."
+  },
+  "5NEkeP": {
+    "message": "Generate a room first.",
+    "translation": "Önce bir oda oluştur."
+  },
+  "G7A2K4": {
+    "message": "Generate a room, then send the invitation.",
+    "translation": "Bir oda oluştur, sonra daveti gönder."
+  },
+  "fQq7dv": {
+    "message": "Generating…",
+    "context": "a room",
+    "translation": "Oluşturuluyor…"
+  },
+  "HY40z4": {
+    "message": "Hide card",
+    "translation": "Kartı gizle"
+  },
+  "_hwQqt": {
+    "message": "Hide Lost Zone",
+    "translation": "Lost Zone'u gizle"
+  },
+  "Z7lHUH": {
+    "message": "Hide prizes",
+    "translation": "Ödülleri gizle"
+  },
+  "q2aSzG": {
+    "message": "Hide their Prizes",
+    "translation": "Rakibin Ödüllerini gizle"
+  },
+  "9EQ4Zd": {
+    "message": "Hide your Prizes",
+    "translation": "Ödüllerini gizle"
+  },
+  "EqLwOt": {
+    "message": "In use",
+    "context": "a table piece holding cards",
+    "translation": "Kullanımda"
+  },
+  "6vI3XA": {
+    "message": "Invitation copied",
+    "translation": "Davet kopyalandı"
+  },
+  "z1vTYz": {
+    "message": "Invitation copied to your clipboard.",
+    "translation": "Davet panoya kopyalandı."
+  },
+  "XbqMCS": {
+    "message": "Join pieces…",
+    "translation": "Parçaları birleştir…"
+  },
+  "2_dOwA": {
+    "message": "Look at card (only you)",
+    "translation": "Karta bak (sadece sen)"
+  },
+  "4rquUI": {
+    "message": "Look at hand",
+    "translation": "Ele bak"
+  },
+  "FtU5OB": {
+    "message": "Look at prizes",
+    "translation": "Ödüllere bak"
+  },
+  "-wf39o": {
+    "message": "Look at their hand",
+    "translation": "Rakibin eline bak"
+  },
+  "Ky418J": {
+    "message": "Look at their Prizes",
+    "translation": "Rakibin Ödüllerine bak"
+  },
+  "C4R15y": {
+    "message": "Look at your Prizes",
+    "translation": "Ödüllerine bak"
+  },
+  "WTIxhp": {
+    "message": "Mark as used",
+    "comments": [
+      "Puts the \"Ability used\" marker on a card: its Ability or effect was used this turn.",
+      "Puts the \"Ability used\" marker on a card: its Ability or effect was used this turn."
+    ],
+    "translation": "Kullanıldı olarak işaretle"
+  },
+  "Ig8A-t": {
+    "message": "Paste a valid invitation into Room ID.",
+    "translation": "Oda kimliği alanına geçerli bir davet yapıştır."
+  },
+  "pJRgD4": {
+    "message": "Paste an invitation",
+    "translation": "Davet yapıştır"
+  },
+  "4LC7ch": {
+    "message": "Paste an invitation, or join your own room.",
+    "translation": "Bir davet yapıştır veya kendi odana katıl."
+  },
+  "3J14ru": {
+    "message": "Paste the invitation into Room ID.",
+    "translation": "Daveti Oda kimliği alanına yapıştır."
+  },
+  "6M-csj": {
+    "message": "Reveal card",
+    "translation": "Kartı göster"
+  },
+  "wY30n_": {
+    "message": "Reveal prizes",
+    "translation": "Ödülleri göster"
+  },
+  "n75nZA": {
+    "message": "Reveal their Prizes",
+    "translation": "Rakibin Ödüllerini göster"
+  },
+  "c6E0p_": {
+    "message": "Reveal your Prizes",
+    "translation": "Ödüllerini göster"
+  },
+  "QoZkYe": {
+    "message": "Room ID",
+    "translation": "Oda kimliği"
+  },
+  "BulyBf": {
+    "message": "Rotate",
+    "translation": "Döndür"
+  },
+  "W2pBH8": {
+    "message": "Switch special condition",
+    "translation": "Özel durumu değiştir"
+  },
+  "UoxtKp": {
+    "message": "That invitation expired. Ask for a new one.",
+    "translation": "Bu davetin süresi doldu. Yeni bir davet iste."
+  },
+  "23cwkx": {
+    "message": "Your name changed. Generate a new room.",
+    "translation": "Adın değişti. Yeni bir oda oluştur."
   }
 }

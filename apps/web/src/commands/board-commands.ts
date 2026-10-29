@@ -31,6 +31,10 @@ import type {
 import { actingPlayerIdOf } from '../board/acting-seat.js';
 import { selectLegacyContextEntries } from '../board/overlays/LegacyBoardOverlays.js';
 import {
+  outcomeOfCommand,
+  type ContextActionOutcome,
+} from '../board/contextActionOutcome.js';
+import {
   CONDITION_CODES,
   CONDITIONS,
 } from '../board/overlays/MarkerControls.js';
@@ -72,6 +76,11 @@ export interface BoardCommandContext {
   readonly runtime: BoardCommandRuntime;
   /** The key for an action, from the player's keymap. */
   readonly hint: (id: HotkeyActionId) => string | undefined;
+  /**
+   * A live Solo table: the other seat's hand is shown or hidden by the
+   * table's switch, not looked at (ContextActionLocalState).
+   */
+  readonly soloTable?: boolean;
 }
 
 /** The most cards a palette count asks for at once (the room caps at 200). */
@@ -99,6 +108,7 @@ export const boardCommands = (
   const acting = actingPlayerIdOf(view, scene.bottomPlayerId);
   const live = state.canSubmitCommands && acting !== undefined;
   const { runtime, hint } = context;
+  const soloTable = context.soloTable === true;
 
   const accepts = (request: Shortcut): boolean => {
     if (!live) return false;
@@ -158,6 +168,55 @@ export const boardCommands = (
 
   // ---- A card's actions -------------------------------------------------
 
+  /**
+   * A key that goes one way or the other on a card, named for the way it
+   * goes on this one (the command its resolver chose), where the key list
+   * names both ("Toggle ability used").
+   */
+  const twoWayCardTitle = (
+    id: HotkeyActionId,
+    request: Shortcut
+  ): string | undefined => {
+    if (
+      id !== 'card.toggleAbility' &&
+      id !== 'card.lookCover' &&
+      id !== 'card.addCondition'
+    )
+      return undefined;
+    let resolution: ReturnType<typeof resolveLegacyBoardShortcutAction>;
+    try {
+      resolution = resolveLegacyBoardShortcutAction(view, request, acting);
+    } catch {
+      return undefined;
+    }
+    if (!resolution.ok || !('command' in resolution) || !resolution.command)
+      return undefined;
+    const command = resolution.command;
+    if (command.type === 'SetSpecialCondition') {
+      return view.stacks[command.stackId]?.specialCondition
+        ? t`Switch special condition`
+        : t`Add special condition`;
+    }
+    switch (outcomeOfCommand(command)) {
+      case 'markUsed':
+        return t({
+          message: 'Mark as used',
+          comment:
+            'Puts the "Ability used" marker on a card: its Ability or effect was used this turn.',
+        });
+      case 'markUnused':
+        return t({
+          message: 'Mark as unused',
+          comment: 'Takes the "Ability used" marker off a Pokémon.',
+        });
+      case 'look':
+        return t`Look at card (only you)`;
+      case 'cover':
+        return t`Cover card (only you)`;
+      default:
+        return undefined;
+    }
+  };
   /**
    * Everything a card can do: its keys (to hand, to the Bench, rotate,
    * look…) checked by the resolver its key goes through, and from its menu
@@ -224,7 +283,7 @@ export const boardCommands = (
       if (!request || !accepts(request)) continue;
       commands.push({
         id: `${prefix}.${entry.id.replace(/^card\./u, '')}`,
-        title: i18n._(entry.label),
+        title: twoWayCardTitle(entry.id, request) ?? i18n._(entry.label),
         section,
         detail,
         icon: cardActionIcon(entry.id),
@@ -729,7 +788,8 @@ export const boardCommands = (
       playerId: string | undefined,
       wanted: readonly {
         readonly action: LegacyBoardContextActionId;
-        readonly title: string;
+        /** A two-way action's title follows the way its menu entry goes. */
+        readonly title: string | ((outcome?: ContextActionOutcome) => string);
         readonly icon: Icon;
         readonly count?: true;
         readonly keywords?: readonly string[];
@@ -741,13 +801,20 @@ export const boardCommands = (
         return zone?.kind === zoneKind && zone.ownerId === playerId;
       });
       if (!card) return;
-      const offered = new Set(
+      // The menu's own entries, on the card it would be opened on: a
+      // two-way one goes the way its entry is named.
+      const offered = new Map(
         selectLegacyContextEntries(state, card).flatMap((entry) =>
-          entry.kind === 'action' ? [entry.action] : []
+          entry.kind === 'action' ? [[entry.action, entry] as const] : []
         )
       );
       for (const item of wanted) {
-        if (!offered.has(item.action)) continue;
+        const entry = offered.get(item.action);
+        if (!entry) continue;
+        const title =
+          typeof item.title === 'string'
+            ? item.title
+            : item.title(entry.kind === 'action' ? entry.outcome : undefined);
         const request = (value?: string): LegacyBoardOverlayActionRequest => ({
           kind: 'context',
           action: item.action,
@@ -756,7 +823,7 @@ export const boardCommands = (
         });
         commands.push({
           id: `piles.${own ? 'own' : 'their'}.${item.action}`,
-          title: item.title,
+          title,
           section: 'piles',
           icon: item.icon,
           ...(seatName(playerId) ? { detail: seatName(playerId)! } : {}),
@@ -813,19 +880,29 @@ export const boardCommands = (
             : []),
           {
             action: 'togglePrizes',
-            title: own
-              ? t`Look at or cover your Prizes`
-              : t`Look at or cover their Prizes`,
+            title: (outcome) =>
+              outcome === 'cover'
+                ? own
+                  ? t`Cover your Prizes`
+                  : t`Cover their Prizes`
+                : own
+                  ? t`Look at your Prizes`
+                  : t`Look at their Prizes`,
             icon: EyeIcon,
-            keywords: ['prize', 'look'],
+            keywords: ['prize', 'look', 'cover'],
           },
           {
             action: 'revealPrizes',
-            title: own
-              ? t`Reveal or hide your Prizes`
-              : t`Reveal or hide their Prizes`,
+            title: (outcome) =>
+              outcome === 'hide'
+                ? own
+                  ? t`Hide your Prizes`
+                  : t`Hide their Prizes`
+                : own
+                  ? t`Reveal your Prizes`
+                  : t`Reveal their Prizes`,
             icon: EyeIcon,
-            keywords: ['prize', 'reveal'],
+            keywords: ['prize', 'reveal', 'hide'],
           },
         ],
         own
@@ -835,12 +912,21 @@ export const boardCommands = (
           'hand',
           playerId,
           [
-            {
-              action: 'toggleOpponentHand',
-              title: t`Look at or cover their hand`,
-              icon: EyeIcon,
-              keywords: ['hand', 'look'],
-            },
+            // A live Solo table's Table switch hides their hand instead
+            // ("Hide opponent's hand").
+            ...(soloTable
+              ? []
+              : [
+                  {
+                    action: 'toggleOpponentHand' as const,
+                    title: (outcome?: ContextActionOutcome) =>
+                      outcome === 'cover'
+                        ? t`Cover their hand`
+                        : t`Look at their hand`,
+                    icon: EyeIcon,
+                    keywords: ['hand', 'look', 'cover'],
+                  },
+                ]),
             {
               action: 'randomOpponentHandCard',
               title: t`Pick a random card from their hand`,

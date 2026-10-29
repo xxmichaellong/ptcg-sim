@@ -6054,5 +6054,312 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "Contorni delle zone"
+  },
+  "eJ4Drn": {
+    "message": "{actor} discarded {count, plural, one {# attached card} other {# attached cards}}",
+    "comments": [
+      "Log line: a player discarded the cards attached to a Pokémon. {actor} is a player's name, {count} how many cards."
+    ],
+    "translation": "{actor} ha scartato {count, plural, one {# carta assegnata} other {# carte assegnate}}"
+  },
+  "0bIo3n": {
+    "message": "{actor} discarded {count, plural, one {# card} other {# cards}}",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards."
+    ],
+    "translation": "{actor} ha scartato {count, plural, one {# carta} other {# carte}}"
+  },
+  "7ULDVQ": {
+    "message": "{actor} discarded hand and drew {count, plural, one {# card} other {# cards}}",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards they drew."
+    ],
+    "translation": "{actor} ha scartato la mano e ha pescato {count, plural, one {# carta} other {# carte}}"
+  },
+  "VgwRoT": {
+    "message": "{actor} left {count, plural, one {# attached card} other {# attached cards}} in play",
+    "comments": [
+      "Log line: a player kept the cards attached to a Pokémon on the table. {actor} is a player's name, {count} how many cards."
+    ],
+    "translation": "{actor} ha lasciato in gioco {count, plural, one {# carta assegnata} other {# carte assegnate}}"
+  },
+  "9RYqFp": {
+    "message": "{actor} moved {count, plural, one {# card} other {# cards}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} other {deck}}",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards; {source} is the zone they left and {destination} where they went (play: onto the table)."
+    ],
+    "translation": "{actor} ha spostato {count, plural, one {# carta} other {# carte}} {source, select, hand {dalla mano} prizes {dalle carte Premio} discard {dalla pila degli scarti} board {dal campo} stadium {dallo Stadio} active {dalla posizione attiva} bench {dalla panchina} lostZone {dall'area perduta} attachmentResolution {dalle carte assegnate} other {dal mazzo}} {destination, select, hand {alla mano} discard {nella pila degli scarti} lostZone {nell'area perduta} deckBottom {in fondo al mazzo} play {in gioco} other {nel mazzo}}"
+  },
+  "e9cTIS": {
+    "message": "{actor} shuffled {count, plural, one {# attached card} other {# attached cards}} into deck",
+    "comments": [
+      "Log line: a player shuffled the cards attached to a Pokémon into their deck. {actor} is a player's name, {count} how many cards."
+    ],
+    "translation": "{actor} ha rimischiato nel mazzo {count, plural, one {# carta assegnata} other {# carte assegnate}}"
+  },
+  "99ycft": {
+    "message": "{actor} shuffled {count, plural, one {# card} other {# cards}} from board to deck",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards."
+    ],
+    "translation": "{actor} ha rimischiato dal campo al mazzo {count, plural, one {# carta} other {# carte}}"
+  },
+  "RpAS5v": {
+    "message": "{actor} shuffled {count, plural, one {# card} other {# cards}} into deck",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards."
+    ],
+    "translation": "{actor} ha rimischiato nel mazzo {count, plural, one {# carta} other {# carte}}"
+  },
+  "cFSyyy": {
+    "message": "{actor} shuffled {count, plural, one {# card} other {# cards}} to bottom of deck",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards."
+    ],
+    "translation": "{actor} ha messo in fondo al mazzo {count, plural, one {# carta} other {# carte}}"
+  },
+  "xZranI": {
+    "message": "{actor} shuffled hand into deck and drew {count, plural, one {# card} other {# cards}}",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards they drew."
+    ],
+    "translation": "{actor} ha rimischiato la mano nel mazzo e ha pescato {count, plural, one {# carta} other {# carte}}"
+  },
+  "TWahFj": {
+    "message": "{actor} shuffled hand to bottom of deck and drew {count, plural, one {# card} other {# cards}}",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards they drew."
+    ],
+    "translation": "{actor} ha messo la mano in fondo al mazzo e ha pescato {count, plural, one {# carta} other {# carte}}"
+  },
+  "E887wo": {
+    "message": "{name} looked at bottom {count, plural, one {# card} other {# cards}} of deck",
+    "comments": [
+      "Log line. {name} is a player's name, {count} how many cards from the bottom of their deck they looked at."
+    ],
+    "translation": "{name} ha guardato {count, plural, one {la carta in fondo} other {le # carte in fondo}} al mazzo"
+  },
+  "imtKoA": {
+    "message": "{name} looked at top {count, plural, one {# card} other {# cards}} of deck",
+    "comments": [
+      "Log line. {name} is a player's name, {count} how many cards from the top of their deck they looked at."
+    ],
+    "translation": "{name} ha guardato {count, plural, one {la carta in cima} other {le # carte in cima}} al mazzo"
+  },
+  "l7W_Ze": {
+    "message": "<0>{0}</0>: send a friend a link to your table.",
+    "translation": "<0>{0}</0>: manda a un amico il link al tuo tavolo."
+  },
+  "JTbT6L": {
+    "message": "Add special condition",
+    "translation": "Aggiungi condizione speciale"
+  },
+  "Sb4b2A": {
+    "message": "Allow board flip <0>(both players)</0>",
+    "translation": "Consenti di girare il tavolo <0>(entrambi i giocatori)</0>"
+  },
+  "uUaeMQ": {
+    "message": "Attach to a Pokémon…",
+    "translation": "Assegna a un Pokémon…"
+  },
+  "c0_6W9": {
+    "message": "Copied",
+    "context": "an invitation",
+    "translation": "Copiato"
+  },
+  "ITnJNv": {
+    "message": "Copy an invitation",
+    "translation": "Copia un invito"
+  },
+  "Yc1XTF": {
+    "message": "Copy invitation",
+    "translation": "Copia invito"
+  },
+  "gklFA4": {
+    "message": "Couldn't copy the invitation",
+    "translation": "Impossibile copiare l'invito"
+  },
+  "sA7lnV": {
+    "message": "Couldn't copy the invitation. Try again.",
+    "translation": "Impossibile copiare l'invito. Riprova."
+  },
+  "O3p0SF": {
+    "message": "Couldn't generate a room. Try again.",
+    "translation": "Impossibile generare una stanza. Riprova."
+  },
+  "nzVItu": {
+    "message": "Couldn't use the clipboard. Allow access and try again.",
+    "translation": "Impossibile usare gli appunti. Consenti l'accesso e riprova."
+  },
+  "rNIlQ5": {
+    "message": "Cover card (only you)",
+    "translation": "Copri carta (solo tu)"
+  },
+  "dyMutU": {
+    "message": "Cover hand",
+    "translation": "Copri la mano"
+  },
+  "6BoNqk": {
+    "message": "Cover prizes",
+    "translation": "Copri le carte Premio"
+  },
+  "h-zJzU": {
+    "message": "Cover their hand",
+    "translation": "Copri la sua mano"
+  },
+  "7x4VPZ": {
+    "message": "Cover their Prizes",
+    "translation": "Copri le sue carte Premio"
+  },
+  "urHEvq": {
+    "message": "Cover your Prizes",
+    "translation": "Copri le tue carte Premio"
+  },
+  "CulBzv": {
+    "message": "Evolve a Pokémon…",
+    "translation": "Fai evolvere un Pokémon…"
+  },
+  "oP3kz7": {
+    "message": "Generate",
+    "context": "a room",
+    "translation": "Genera"
+  },
+  "mb6Tyv": {
+    "message": "Generate a room and send the invitation. With <0>Join as spectator</0> on, it invites a spectator.",
+    "translation": "Genera una stanza e invia l'invito. Con <0>Entra come spettatore</0> attivo, inviti uno spettatore."
+  },
+  "5NEkeP": {
+    "message": "Generate a room first.",
+    "translation": "Genera prima una stanza."
+  },
+  "G7A2K4": {
+    "message": "Generate a room, then send the invitation.",
+    "translation": "Genera una stanza, poi invia l'invito."
+  },
+  "fQq7dv": {
+    "message": "Generating…",
+    "context": "a room",
+    "translation": "Generazione in corso…"
+  },
+  "HY40z4": {
+    "message": "Hide card",
+    "translation": "Nascondi carta"
+  },
+  "_hwQqt": {
+    "message": "Hide Lost Zone",
+    "translation": "Nascondi area perduta"
+  },
+  "Z7lHUH": {
+    "message": "Hide prizes",
+    "translation": "Nascondi le carte Premio"
+  },
+  "q2aSzG": {
+    "message": "Hide their Prizes",
+    "translation": "Nascondi le sue carte Premio"
+  },
+  "9EQ4Zd": {
+    "message": "Hide your Prizes",
+    "translation": "Nascondi le tue carte Premio"
+  },
+  "EqLwOt": {
+    "message": "In use",
+    "context": "a table piece holding cards",
+    "translation": "In uso"
+  },
+  "6vI3XA": {
+    "message": "Invitation copied",
+    "translation": "Invito copiato"
+  },
+  "z1vTYz": {
+    "message": "Invitation copied to your clipboard.",
+    "translation": "Invito copiato negli appunti."
+  },
+  "XbqMCS": {
+    "message": "Join pieces…",
+    "translation": "Unisci pezzi…"
+  },
+  "2_dOwA": {
+    "message": "Look at card (only you)",
+    "translation": "Guarda carta (solo tu)"
+  },
+  "4rquUI": {
+    "message": "Look at hand",
+    "translation": "Guarda la mano"
+  },
+  "FtU5OB": {
+    "message": "Look at prizes",
+    "translation": "Guarda le carte Premio"
+  },
+  "-wf39o": {
+    "message": "Look at their hand",
+    "translation": "Guarda la sua mano"
+  },
+  "Ky418J": {
+    "message": "Look at their Prizes",
+    "translation": "Guarda le sue carte Premio"
+  },
+  "C4R15y": {
+    "message": "Look at your Prizes",
+    "translation": "Guarda le tue carte Premio"
+  },
+  "WTIxhp": {
+    "message": "Mark as used",
+    "comments": [
+      "Puts the \"Ability used\" marker on a card: its Ability or effect was used this turn.",
+      "Puts the \"Ability used\" marker on a card: its Ability or effect was used this turn."
+    ],
+    "translation": "Segna come usata"
+  },
+  "Ig8A-t": {
+    "message": "Paste a valid invitation into Room ID.",
+    "translation": "Incolla un invito valido in ID stanza."
+  },
+  "pJRgD4": {
+    "message": "Paste an invitation",
+    "translation": "Incolla un invito"
+  },
+  "4LC7ch": {
+    "message": "Paste an invitation, or join your own room.",
+    "translation": "Incolla un invito o entra nella tua stanza."
+  },
+  "3J14ru": {
+    "message": "Paste the invitation into Room ID.",
+    "translation": "Incolla l'invito in ID stanza."
+  },
+  "6M-csj": {
+    "message": "Reveal card",
+    "translation": "Rivela carta"
+  },
+  "wY30n_": {
+    "message": "Reveal prizes",
+    "translation": "Rivela le carte Premio"
+  },
+  "n75nZA": {
+    "message": "Reveal their Prizes",
+    "translation": "Rivela le sue carte Premio"
+  },
+  "c6E0p_": {
+    "message": "Reveal your Prizes",
+    "translation": "Rivela le tue carte Premio"
+  },
+  "QoZkYe": {
+    "message": "Room ID",
+    "translation": "ID stanza"
+  },
+  "BulyBf": {
+    "message": "Rotate",
+    "translation": "Ruota"
+  },
+  "W2pBH8": {
+    "message": "Switch special condition",
+    "translation": "Cambia condizione speciale"
+  },
+  "UoxtKp": {
+    "message": "That invitation expired. Ask for a new one.",
+    "translation": "Questo invito è scaduto. Chiedine uno nuovo."
+  },
+  "23cwkx": {
+    "message": "Your name changed. Generate a new room.",
+    "translation": "Il tuo nome è cambiato. Genera una nuova stanza."
   }
 }

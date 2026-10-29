@@ -6054,5 +6054,312 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "영역 윤곽선"
+  },
+  "eJ4Drn": {
+    "message": "{actor} discarded {count, plural, one {# attached card} other {# attached cards}}",
+    "comments": [
+      "Log line: a player discarded the cards attached to a Pokémon. {actor} is a player's name, {count} how many cards."
+    ],
+    "translation": "{actor}님이 붙어 있는 카드 {count, plural, other {#장}}을 트래쉬했습니다"
+  },
+  "0bIo3n": {
+    "message": "{actor} discarded {count, plural, one {# card} other {# cards}}",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards."
+    ],
+    "translation": "{actor}님이 카드 {count, plural, other {#장}}을 트래쉬했습니다"
+  },
+  "7ULDVQ": {
+    "message": "{actor} discarded hand and drew {count, plural, one {# card} other {# cards}}",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards they drew."
+    ],
+    "translation": "{actor}님이 패를 트래쉬하고 카드 {count, plural, other {#장}}을 뽑았습니다"
+  },
+  "VgwRoT": {
+    "message": "{actor} left {count, plural, one {# attached card} other {# attached cards}} in play",
+    "comments": [
+      "Log line: a player kept the cards attached to a Pokémon on the table. {actor} is a player's name, {count} how many cards."
+    ],
+    "translation": "{actor}님이 붙어 있는 카드 {count, plural, other {#장}}을 필드에 남겼습니다"
+  },
+  "9RYqFp": {
+    "message": "{actor} moved {count, plural, one {# card} other {# cards}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} other {deck}}",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards; {source} is the zone they left and {destination} where they went (play: onto the table)."
+    ],
+    "translation": "{actor}님이 카드 {count, plural, other {#장}}을 {source, select, hand {패} prizes {프라이즈} discard {트래쉬} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙어 있는 카드} other {덱}}에서 {destination, select, hand {패로} discard {트래쉬로} lostZone {로스트존으로} deckBottom {덱 아래로} play {필드로} other {덱으로}} 옮겼습니다"
+  },
+  "e9cTIS": {
+    "message": "{actor} shuffled {count, plural, one {# attached card} other {# attached cards}} into deck",
+    "comments": [
+      "Log line: a player shuffled the cards attached to a Pokémon into their deck. {actor} is a player's name, {count} how many cards."
+    ],
+    "translation": "{actor}님이 붙어 있는 카드 {count, plural, other {#장}}을 덱에 섞었습니다"
+  },
+  "99ycft": {
+    "message": "{actor} shuffled {count, plural, one {# card} other {# cards}} from board to deck",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards."
+    ],
+    "translation": "{actor}님이 보드의 카드 {count, plural, other {#장}}을 덱에 섞었습니다"
+  },
+  "RpAS5v": {
+    "message": "{actor} shuffled {count, plural, one {# card} other {# cards}} into deck",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards."
+    ],
+    "translation": "{actor}님이 카드 {count, plural, other {#장}}을 덱에 섞었습니다"
+  },
+  "cFSyyy": {
+    "message": "{actor} shuffled {count, plural, one {# card} other {# cards}} to bottom of deck",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards."
+    ],
+    "translation": "{actor}님이 카드 {count, plural, other {#장}}을 덱 아래에 섞어 넣었습니다"
+  },
+  "xZranI": {
+    "message": "{actor} shuffled hand into deck and drew {count, plural, one {# card} other {# cards}}",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards they drew."
+    ],
+    "translation": "{actor}님이 패를 덱에 섞고 카드 {count, plural, other {#장}}을 뽑았습니다"
+  },
+  "TWahFj": {
+    "message": "{actor} shuffled hand to bottom of deck and drew {count, plural, one {# card} other {# cards}}",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards they drew."
+    ],
+    "translation": "{actor}님이 패를 덱 아래에 섞어 넣고 카드 {count, plural, other {#장}}을 뽑았습니다"
+  },
+  "E887wo": {
+    "message": "{name} looked at bottom {count, plural, one {# card} other {# cards}} of deck",
+    "comments": [
+      "Log line. {name} is a player's name, {count} how many cards from the bottom of their deck they looked at."
+    ],
+    "translation": "{name}님이 덱 아래 카드 {count, plural, other {#장}}을 확인했습니다"
+  },
+  "imtKoA": {
+    "message": "{name} looked at top {count, plural, one {# card} other {# cards}} of deck",
+    "comments": [
+      "Log line. {name} is a player's name, {count} how many cards from the top of their deck they looked at."
+    ],
+    "translation": "{name}님이 덱 위 카드 {count, plural, other {#장}}을 확인했습니다"
+  },
+  "l7W_Ze": {
+    "message": "<0>{0}</0>: send a friend a link to your table.",
+    "translation": "<0>{0}</0>: 친구에게 테이블 링크를 보냅니다."
+  },
+  "JTbT6L": {
+    "message": "Add special condition",
+    "translation": "특수 상태 추가"
+  },
+  "Sb4b2A": {
+    "message": "Allow board flip <0>(both players)</0>",
+    "translation": "보드 뒤집기 허용 <0>(양쪽 플레이어)</0>"
+  },
+  "uUaeMQ": {
+    "message": "Attach to a Pokémon…",
+    "translation": "포켓몬에 붙이기…"
+  },
+  "c0_6W9": {
+    "message": "Copied",
+    "context": "an invitation",
+    "translation": "복사됨"
+  },
+  "ITnJNv": {
+    "message": "Copy an invitation",
+    "translation": "초대 링크 복사"
+  },
+  "Yc1XTF": {
+    "message": "Copy invitation",
+    "translation": "초대 복사"
+  },
+  "gklFA4": {
+    "message": "Couldn't copy the invitation",
+    "translation": "초대 링크를 복사하지 못했습니다"
+  },
+  "sA7lnV": {
+    "message": "Couldn't copy the invitation. Try again.",
+    "translation": "초대 링크를 복사하지 못했습니다. 다시 시도하세요."
+  },
+  "O3p0SF": {
+    "message": "Couldn't generate a room. Try again.",
+    "translation": "방을 만들지 못했습니다. 다시 시도하세요."
+  },
+  "nzVItu": {
+    "message": "Couldn't use the clipboard. Allow access and try again.",
+    "translation": "클립보드를 사용하지 못했습니다. 접근을 허용한 뒤 다시 시도하세요."
+  },
+  "rNIlQ5": {
+    "message": "Cover card (only you)",
+    "translation": "카드 가리기 (나만)"
+  },
+  "dyMutU": {
+    "message": "Cover hand",
+    "translation": "패 가리기"
+  },
+  "6BoNqk": {
+    "message": "Cover prizes",
+    "translation": "프라이즈 가리기"
+  },
+  "h-zJzU": {
+    "message": "Cover their hand",
+    "translation": "상대 패 가리기"
+  },
+  "7x4VPZ": {
+    "message": "Cover their Prizes",
+    "translation": "상대 프라이즈 가리기"
+  },
+  "urHEvq": {
+    "message": "Cover your Prizes",
+    "translation": "내 프라이즈 가리기"
+  },
+  "CulBzv": {
+    "message": "Evolve a Pokémon…",
+    "translation": "포켓몬 진화…"
+  },
+  "oP3kz7": {
+    "message": "Generate",
+    "context": "a room",
+    "translation": "생성"
+  },
+  "mb6Tyv": {
+    "message": "Generate a room and send the invitation. With <0>Join as spectator</0> on, it invites a spectator.",
+    "translation": "방을 생성하고 초대장을 보냅니다. <0>관전자로 참가</0>를 켜면 관전자를 초대합니다."
+  },
+  "5NEkeP": {
+    "message": "Generate a room first.",
+    "translation": "먼저 방을 생성하세요."
+  },
+  "G7A2K4": {
+    "message": "Generate a room, then send the invitation.",
+    "translation": "방을 생성한 뒤 초대장을 보내세요."
+  },
+  "fQq7dv": {
+    "message": "Generating…",
+    "context": "a room",
+    "translation": "생성 중…"
+  },
+  "HY40z4": {
+    "message": "Hide card",
+    "translation": "카드 숨기기"
+  },
+  "_hwQqt": {
+    "message": "Hide Lost Zone",
+    "translation": "로스트존 숨기기"
+  },
+  "Z7lHUH": {
+    "message": "Hide prizes",
+    "translation": "프라이즈 숨기기"
+  },
+  "q2aSzG": {
+    "message": "Hide their Prizes",
+    "translation": "상대 프라이즈 숨기기"
+  },
+  "9EQ4Zd": {
+    "message": "Hide your Prizes",
+    "translation": "내 프라이즈 숨기기"
+  },
+  "EqLwOt": {
+    "message": "In use",
+    "context": "a table piece holding cards",
+    "translation": "사용 중"
+  },
+  "6vI3XA": {
+    "message": "Invitation copied",
+    "translation": "초대 링크를 복사했습니다"
+  },
+  "z1vTYz": {
+    "message": "Invitation copied to your clipboard.",
+    "translation": "초대장이 클립보드에 복사되었습니다."
+  },
+  "XbqMCS": {
+    "message": "Join pieces…",
+    "translation": "조각 합치기…"
+  },
+  "2_dOwA": {
+    "message": "Look at card (only you)",
+    "translation": "카드 보기 (나만)"
+  },
+  "4rquUI": {
+    "message": "Look at hand",
+    "translation": "패 보기"
+  },
+  "FtU5OB": {
+    "message": "Look at prizes",
+    "translation": "프라이즈 보기"
+  },
+  "-wf39o": {
+    "message": "Look at their hand",
+    "translation": "상대 패 보기"
+  },
+  "Ky418J": {
+    "message": "Look at their Prizes",
+    "translation": "상대 프라이즈 보기"
+  },
+  "C4R15y": {
+    "message": "Look at your Prizes",
+    "translation": "내 프라이즈 보기"
+  },
+  "WTIxhp": {
+    "message": "Mark as used",
+    "comments": [
+      "Puts the \"Ability used\" marker on a card: its Ability or effect was used this turn.",
+      "Puts the \"Ability used\" marker on a card: its Ability or effect was used this turn."
+    ],
+    "translation": "사용함으로 표시"
+  },
+  "Ig8A-t": {
+    "message": "Paste a valid invitation into Room ID.",
+    "translation": "올바른 초대를 방 ID에 붙여넣으세요."
+  },
+  "pJRgD4": {
+    "message": "Paste an invitation",
+    "translation": "초대 붙여넣기"
+  },
+  "4LC7ch": {
+    "message": "Paste an invitation, or join your own room.",
+    "translation": "초대를 붙여넣거나 내 방에 참가하세요."
+  },
+  "3J14ru": {
+    "message": "Paste the invitation into Room ID.",
+    "translation": "초대를 방 ID에 붙여넣으세요."
+  },
+  "6M-csj": {
+    "message": "Reveal card",
+    "translation": "카드 공개"
+  },
+  "wY30n_": {
+    "message": "Reveal prizes",
+    "translation": "프라이즈 공개"
+  },
+  "n75nZA": {
+    "message": "Reveal their Prizes",
+    "translation": "상대 프라이즈 공개"
+  },
+  "c6E0p_": {
+    "message": "Reveal your Prizes",
+    "translation": "내 프라이즈 공개"
+  },
+  "QoZkYe": {
+    "message": "Room ID",
+    "translation": "방 ID"
+  },
+  "BulyBf": {
+    "message": "Rotate",
+    "translation": "회전"
+  },
+  "W2pBH8": {
+    "message": "Switch special condition",
+    "translation": "특수 상태 전환"
+  },
+  "UoxtKp": {
+    "message": "That invitation expired. Ask for a new one.",
+    "translation": "초대가 만료되었습니다. 새 초대를 요청하세요."
+  },
+  "23cwkx": {
+    "message": "Your name changed. Generate a new room.",
+    "translation": "이름이 변경되었습니다. 새 방을 생성하세요."
   }
 }

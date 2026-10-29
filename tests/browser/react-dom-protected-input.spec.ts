@@ -690,7 +690,7 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
     'Shuffle hand to deck',
     'Shuffle hand to bottom',
     'Move card...',
-    'Reveal/hide card',
+    'Reveal card',
   ]);
   const menuBounds = await menu.boundingBox();
   if (!menuBounds) throw new Error('Context menu has no rendered bounds');
@@ -3352,14 +3352,18 @@ test('solo replay disclosure changes only local DOM card faces and never submits
   await openMenu(fixture.ownPrizeCardId);
   expect(
     await menu.locator(':scope > ul > li > [role="menuitem"]').allTextContents()
-  ).toEqual(['Reveal/hide prizes', 'Look/cover prizes', 'Reveal/hide card']);
+  ).toEqual(['Reveal prizes', 'Look at prizes', 'Reveal card']);
   await menu.locator('[data-context-action="togglePrizes"]').click();
   await expect(menu).toHaveCount(0);
   await expect
     .poll(() => labelsFor(fixture.ownPrizeCardIds))
     .toEqual(fixture.ownPrizeCardIds.map(() => fixture.replayLocalCardLabel));
 
+  // Shown now, the Prizes' entries say they hide and cover them.
   await openMenu(fixture.ownPrizeCardId);
+  expect(
+    await menu.locator(':scope > ul > li > [role="menuitem"]').allTextContents()
+  ).toEqual(['Hide prizes', 'Cover prizes', 'Hide card']);
   await menu.locator('[data-context-action="revealPrizes"]').click();
   await expect
     .poll(() => labelsFor(fixture.ownPrizeCardIds))
@@ -3368,7 +3372,7 @@ test('solo replay disclosure changes only local DOM card faces and never submits
   await openMenu(fixture.opponentHandCardId);
   expect(
     await menu.locator(':scope > ul > li > [role="menuitem"]').allTextContents()
-  ).toEqual(['Look/cover hand', 'Reveal/hide card']);
+  ).toEqual(['Look at hand', 'Reveal card']);
   await menu.locator('[data-context-action="toggleOpponentHand"]').click();
   await expect
     .poll(() => labelsFor(fixture.opponentHandCardIds))

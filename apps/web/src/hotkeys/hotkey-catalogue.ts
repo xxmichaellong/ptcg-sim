@@ -245,7 +245,7 @@ export const HOTKEY_ACTIONS = [
   }),
   action('card.rotate', {
     group: 'card',
-    label: msg`Rotate card(s)`,
+    label: msg`Rotate`,
     short: msg({ message: 'Rotate', context: 'shortcut key caption' }),
     scope: 'card',
     defaultChord: 'r',

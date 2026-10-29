@@ -6054,5 +6054,312 @@
   "XQaL9V": {
     "message": "Zone outlines",
     "translation": "Viền khu vực"
+  },
+  "eJ4Drn": {
+    "message": "{actor} discarded {count, plural, one {# attached card} other {# attached cards}}",
+    "comments": [
+      "Log line: a player discarded the cards attached to a Pokémon. {actor} is a player's name, {count} how many cards."
+    ],
+    "translation": "{actor} đã bỏ {count, plural, other {# lá bài gắn kèm}}"
+  },
+  "0bIo3n": {
+    "message": "{actor} discarded {count, plural, one {# card} other {# cards}}",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards."
+    ],
+    "translation": "{actor} đã bỏ {count, plural, other {# lá bài}}"
+  },
+  "7ULDVQ": {
+    "message": "{actor} discarded hand and drew {count, plural, one {# card} other {# cards}}",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards they drew."
+    ],
+    "translation": "{actor} đã bỏ bài trên tay và rút {count, plural, other {# lá bài}}"
+  },
+  "VgwRoT": {
+    "message": "{actor} left {count, plural, one {# attached card} other {# attached cards}} in play",
+    "comments": [
+      "Log line: a player kept the cards attached to a Pokémon on the table. {actor} is a player's name, {count} how many cards."
+    ],
+    "translation": "{actor} đã để lại {count, plural, other {# lá bài gắn kèm}} trên sân"
+  },
+  "9RYqFp": {
+    "message": "{actor} moved {count, plural, one {# card} other {# cards}} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {destination, select, hand {hand} discard {discard} lostZone {lost zone} deckBottom {bottom of deck} play {play} other {deck}}",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards; {source} is the zone they left and {destination} where they went (play: onto the table)."
+    ],
+    "translation": "{actor} đã chuyển {count, plural, other {# lá bài}} từ {source, select, hand {bài trên tay} prizes {Prize} discard {chồng bài bỏ} board {thảm chơi} stadium {vị trí Stadium} active {vị trí Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {bài gắn kèm} other {bộ bài}} sang {destination, select, hand {bài trên tay} discard {chồng bài bỏ} lostZone {Lost Zone} deckBottom {đáy bộ bài} play {sân} other {bộ bài}}"
+  },
+  "e9cTIS": {
+    "message": "{actor} shuffled {count, plural, one {# attached card} other {# attached cards}} into deck",
+    "comments": [
+      "Log line: a player shuffled the cards attached to a Pokémon into their deck. {actor} is a player's name, {count} how many cards."
+    ],
+    "translation": "{actor} đã xáo {count, plural, other {# lá bài gắn kèm}} vào bộ bài"
+  },
+  "99ycft": {
+    "message": "{actor} shuffled {count, plural, one {# card} other {# cards}} from board to deck",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards."
+    ],
+    "translation": "{actor} đã xáo {count, plural, other {# lá bài}} từ thảm chơi vào bộ bài"
+  },
+  "RpAS5v": {
+    "message": "{actor} shuffled {count, plural, one {# card} other {# cards}} into deck",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards."
+    ],
+    "translation": "{actor} đã xáo {count, plural, other {# lá bài}} vào bộ bài"
+  },
+  "cFSyyy": {
+    "message": "{actor} shuffled {count, plural, one {# card} other {# cards}} to bottom of deck",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards."
+    ],
+    "translation": "{actor} đã xáo {count, plural, other {# lá bài}} xuống đáy bộ bài"
+  },
+  "xZranI": {
+    "message": "{actor} shuffled hand into deck and drew {count, plural, one {# card} other {# cards}}",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards they drew."
+    ],
+    "translation": "{actor} đã xáo bài trên tay vào bộ bài và rút {count, plural, other {# lá bài}}"
+  },
+  "TWahFj": {
+    "message": "{actor} shuffled hand to bottom of deck and drew {count, plural, one {# card} other {# cards}}",
+    "comments": [
+      "Log line. {actor} is a player's name, {count} how many cards they drew."
+    ],
+    "translation": "{actor} đã xáo bài trên tay xuống đáy bộ bài và rút {count, plural, other {# lá bài}}"
+  },
+  "E887wo": {
+    "message": "{name} looked at bottom {count, plural, one {# card} other {# cards}} of deck",
+    "comments": [
+      "Log line. {name} is a player's name, {count} how many cards from the bottom of their deck they looked at."
+    ],
+    "translation": "{name} đã xem {count, plural, other {# lá bài}} dưới cùng của bộ bài"
+  },
+  "imtKoA": {
+    "message": "{name} looked at top {count, plural, one {# card} other {# cards}} of deck",
+    "comments": [
+      "Log line. {name} is a player's name, {count} how many cards from the top of their deck they looked at."
+    ],
+    "translation": "{name} đã xem {count, plural, other {# lá bài}} trên cùng của bộ bài"
+  },
+  "l7W_Ze": {
+    "message": "<0>{0}</0>: send a friend a link to your table.",
+    "translation": "<0>{0}</0>: gửi cho bạn bè liên kết đến bàn của bạn."
+  },
+  "JTbT6L": {
+    "message": "Add special condition",
+    "translation": "Thêm trạng thái đặc biệt"
+  },
+  "Sb4b2A": {
+    "message": "Allow board flip <0>(both players)</0>",
+    "translation": "Cho phép lật bàn <0>(cả hai người chơi)</0>"
+  },
+  "uUaeMQ": {
+    "message": "Attach to a Pokémon…",
+    "translation": "Gắn vào một Pokémon…"
+  },
+  "c0_6W9": {
+    "message": "Copied",
+    "context": "an invitation",
+    "translation": "Đã sao chép"
+  },
+  "ITnJNv": {
+    "message": "Copy an invitation",
+    "translation": "Sao chép lời mời"
+  },
+  "Yc1XTF": {
+    "message": "Copy invitation",
+    "translation": "Sao chép lời mời"
+  },
+  "gklFA4": {
+    "message": "Couldn't copy the invitation",
+    "translation": "Không sao chép được lời mời"
+  },
+  "sA7lnV": {
+    "message": "Couldn't copy the invitation. Try again.",
+    "translation": "Không sao chép được lời mời. Hãy thử lại."
+  },
+  "O3p0SF": {
+    "message": "Couldn't generate a room. Try again.",
+    "translation": "Không tạo được phòng. Hãy thử lại."
+  },
+  "nzVItu": {
+    "message": "Couldn't use the clipboard. Allow access and try again.",
+    "translation": "Không dùng được bộ nhớ tạm. Hãy cho phép truy cập rồi thử lại."
+  },
+  "rNIlQ5": {
+    "message": "Cover card (only you)",
+    "translation": "Che lá bài (chỉ mình bạn)"
+  },
+  "dyMutU": {
+    "message": "Cover hand",
+    "translation": "Che bài trên tay"
+  },
+  "6BoNqk": {
+    "message": "Cover prizes",
+    "translation": "Che Prize"
+  },
+  "h-zJzU": {
+    "message": "Cover their hand",
+    "translation": "Che bài trên tay của đối thủ"
+  },
+  "7x4VPZ": {
+    "message": "Cover their Prizes",
+    "translation": "Che Prize của đối thủ"
+  },
+  "urHEvq": {
+    "message": "Cover your Prizes",
+    "translation": "Che Prize của bạn"
+  },
+  "CulBzv": {
+    "message": "Evolve a Pokémon…",
+    "translation": "Tiến hóa một Pokémon…"
+  },
+  "oP3kz7": {
+    "message": "Generate",
+    "context": "a room",
+    "translation": "Tạo"
+  },
+  "mb6Tyv": {
+    "message": "Generate a room and send the invitation. With <0>Join as spectator</0> on, it invites a spectator.",
+    "translation": "Tạo phòng và gửi lời mời. Khi bật <0>Vào với tư cách khán giả</0>, lời mời sẽ dành cho khán giả."
+  },
+  "5NEkeP": {
+    "message": "Generate a room first.",
+    "translation": "Hãy tạo phòng trước."
+  },
+  "G7A2K4": {
+    "message": "Generate a room, then send the invitation.",
+    "translation": "Hãy tạo phòng, rồi gửi lời mời."
+  },
+  "fQq7dv": {
+    "message": "Generating…",
+    "context": "a room",
+    "translation": "Đang tạo…"
+  },
+  "HY40z4": {
+    "message": "Hide card",
+    "translation": "Ẩn lá bài"
+  },
+  "_hwQqt": {
+    "message": "Hide Lost Zone",
+    "translation": "Ẩn Lost Zone"
+  },
+  "Z7lHUH": {
+    "message": "Hide prizes",
+    "translation": "Ẩn Prize"
+  },
+  "q2aSzG": {
+    "message": "Hide their Prizes",
+    "translation": "Ẩn Prize của đối thủ"
+  },
+  "9EQ4Zd": {
+    "message": "Hide your Prizes",
+    "translation": "Ẩn Prize của bạn"
+  },
+  "EqLwOt": {
+    "message": "In use",
+    "context": "a table piece holding cards",
+    "translation": "Đang dùng"
+  },
+  "6vI3XA": {
+    "message": "Invitation copied",
+    "translation": "Đã sao chép lời mời"
+  },
+  "z1vTYz": {
+    "message": "Invitation copied to your clipboard.",
+    "translation": "Đã sao chép lời mời vào bộ nhớ tạm."
+  },
+  "XbqMCS": {
+    "message": "Join pieces…",
+    "translation": "Ghép các lá…"
+  },
+  "2_dOwA": {
+    "message": "Look at card (only you)",
+    "translation": "Xem lá bài (chỉ mình bạn)"
+  },
+  "4rquUI": {
+    "message": "Look at hand",
+    "translation": "Xem bài trên tay"
+  },
+  "FtU5OB": {
+    "message": "Look at prizes",
+    "translation": "Xem Prize"
+  },
+  "-wf39o": {
+    "message": "Look at their hand",
+    "translation": "Xem bài trên tay của đối thủ"
+  },
+  "Ky418J": {
+    "message": "Look at their Prizes",
+    "translation": "Xem Prize của đối thủ"
+  },
+  "C4R15y": {
+    "message": "Look at your Prizes",
+    "translation": "Xem Prize của bạn"
+  },
+  "WTIxhp": {
+    "message": "Mark as used",
+    "comments": [
+      "Puts the \"Ability used\" marker on a card: its Ability or effect was used this turn.",
+      "Puts the \"Ability used\" marker on a card: its Ability or effect was used this turn."
+    ],
+    "translation": "Đánh dấu đã dùng"
+  },
+  "Ig8A-t": {
+    "message": "Paste a valid invitation into Room ID.",
+    "translation": "Dán lời mời hợp lệ vào ô ID phòng."
+  },
+  "pJRgD4": {
+    "message": "Paste an invitation",
+    "translation": "Dán lời mời"
+  },
+  "4LC7ch": {
+    "message": "Paste an invitation, or join your own room.",
+    "translation": "Dán lời mời, hoặc vào phòng của chính bạn."
+  },
+  "3J14ru": {
+    "message": "Paste the invitation into Room ID.",
+    "translation": "Dán lời mời vào ô ID phòng."
+  },
+  "6M-csj": {
+    "message": "Reveal card",
+    "translation": "Lật mở lá bài"
+  },
+  "wY30n_": {
+    "message": "Reveal prizes",
+    "translation": "Lật mở Prize"
+  },
+  "n75nZA": {
+    "message": "Reveal their Prizes",
+    "translation": "Lật mở Prize của đối thủ"
+  },
+  "c6E0p_": {
+    "message": "Reveal your Prizes",
+    "translation": "Lật mở Prize của bạn"
+  },
+  "QoZkYe": {
+    "message": "Room ID",
+    "translation": "ID phòng"
+  },
+  "BulyBf": {
+    "message": "Rotate",
+    "translation": "Xoay"
+  },
+  "W2pBH8": {
+    "message": "Switch special condition",
+    "translation": "Đổi trạng thái đặc biệt"
+  },
+  "UoxtKp": {
+    "message": "That invitation expired. Ask for a new one.",
+    "translation": "Lời mời đó đã hết hạn. Hãy xin lời mời mới."
+  },
+  "23cwkx": {
+    "message": "Your name changed. Generate a new room.",
+    "translation": "Tên của bạn đã thay đổi. Hãy tạo phòng mới."
   }
 }
