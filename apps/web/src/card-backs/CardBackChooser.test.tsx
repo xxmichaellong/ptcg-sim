@@ -174,6 +174,51 @@ describe('card-back chooser', () => {
     );
   });
 
+  it('shows and saves the picture taken last, though an earlier one is read after it', async () => {
+    // Each picture is read when the test says so, in any order.
+    const reads: (() => void)[] = [];
+    vi.spyOn(HTMLImageElement.prototype, 'decode').mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          reads.push(resolve);
+        })
+    );
+    vi.spyOn(HTMLImageElement.prototype, 'naturalWidth', 'get').mockReturnValue(
+      504
+    );
+    vi.spyOn(
+      HTMLImageElement.prototype,
+      'naturalHeight',
+      'get'
+    ).mockReturnValue(704);
+    const savePicture = vi.fn(async () => STORED);
+    const { host, onChoose } = await mount({ savePicture });
+    const paste = async (file: File): Promise<void> => {
+      const event = new Event('paste', { bubbles: true, cancelable: true });
+      Object.defineProperty(event, 'clipboardData', {
+        value: { files: [file], getData: () => '' },
+      });
+      await act(async () => {
+        host.firstElementChild!.dispatchEvent(event);
+      });
+    };
+    const first = new File(['first'], 'first.png', { type: 'image/png' });
+    const second = new File(['second'], 'second.png', { type: 'image/png' });
+    await paste(first);
+    await paste(second);
+    expect(reads).toHaveLength(2);
+    // Nothing to use while a picture is being read.
+    expect(use(host).disabled).toBe(true);
+    await act(async () => reads[1]!());
+    await act(async () => reads[0]!());
+    expect(use(host).disabled).toBe(false);
+    await act(async () => use(host).click());
+    expect(savePicture).toHaveBeenCalledOnce();
+    expect(savePicture.mock.calls[0]![0]).toBe(second);
+    expect(onChoose).toHaveBeenCalledWith(STORED);
+    vi.restoreAllMocks();
+  });
+
   it('turns away a file that is not a picture, in plain words', async () => {
     const { host } = await mount();
     await act(async () =>

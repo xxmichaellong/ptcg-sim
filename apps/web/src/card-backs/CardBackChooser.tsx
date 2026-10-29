@@ -98,6 +98,7 @@ interface Picture {
 type Status =
   | { readonly kind: 'idle' }
   | { readonly kind: 'fetching' }
+  | { readonly kind: 'reading' }
   | { readonly kind: 'saving' }
   | { readonly kind: 'error'; readonly message: string };
 
@@ -212,7 +213,10 @@ export const CardBackChooser = ({
     []
   );
 
-  const busy = status.kind === 'fetching' || status.kind === 'saving';
+  const busy =
+    status.kind === 'fetching' ||
+    status.kind === 'reading' ||
+    status.kind === 'saving';
   const startWork = (): AbortSignal => {
     work.current?.abort();
     const controller = new AbortController();
@@ -220,7 +224,12 @@ export const CardBackChooser = ({
     return controller.signal;
   };
 
-  const takePicture = async (blob: Blob): Promise<void> => {
+  // The picture taken last is the one shown and used: taking one lets go
+  // of any still being read, fetched from a link or saved.
+  const takePicture = async (
+    blob: Blob,
+    signal: AbortSignal = startWork()
+  ): Promise<void> => {
     if (!blob.type.startsWith('image/')) {
       setStatus({ kind: 'error', message: t`That file isn't a picture.` });
       return;
@@ -232,7 +241,12 @@ export const CardBackChooser = ({
       });
       return;
     }
+    setStatus({ kind: 'reading' });
     const read = await readPicture(blob);
+    if (signal.aborted) {
+      if (read) URL.revokeObjectURL(read.url);
+      return;
+    }
     if (!read) {
       setStatus({
         kind: 'error',
@@ -264,7 +278,7 @@ export const CardBackChooser = ({
       });
       return;
     }
-    await takePicture(blob);
+    await takePicture(blob, signal);
   };
 
   const choice = (): string | undefined =>
