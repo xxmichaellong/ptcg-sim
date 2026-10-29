@@ -300,6 +300,58 @@ describe('a selection of several cards (ADR-042)', () => {
     expect(board.selection).toEqual([]);
   });
 
+  it("gives a refused group from touch's selection mode its mode back too", () => {
+    const table = groupTable();
+    const hand = table.put(BLUE, 'hand', energy, energy, energy);
+    const board = driver(table.view);
+    const send = () => {
+      board.intent({ kind: 'SelectionModeChanged', on: true });
+      board.intent({
+        kind: 'CardsSelected',
+        cardIds: hand.slice(0, 2),
+        mode: 'replace',
+      });
+      expect(board.state.presentation.selectionMode).toBe(true);
+      board.act({
+        kind: 'GroupActionRequested',
+        action: { kind: 'send', to: 'lostZone' },
+      });
+      expect(board.state.presentation.selectionMode).toBe(false);
+    };
+    // Refused at once: the group comes back in selection mode, so the next
+    // tap adds to it rather than replacing it.
+    send();
+    board.act({ kind: 'SubmissionQueued', commandId: 'first' });
+    board.act({ kind: 'CommandRefused', commandId: 'first' });
+    expect(board.selection).toEqual(hand.slice(0, 2));
+    expect(board.state.presentation.selectionMode).toBe(true);
+    board.intent({ kind: 'CardSelected', cardId: hand[2]!, mode: 'toggle' });
+    expect(board.selection).toEqual(hand);
+    board.intent({ kind: 'SelectionModeChanged', on: false });
+    // Predicted, then refused: back with the frame that takes it back.
+    send();
+    board.act({
+      kind: 'SubmissionQueued',
+      commandId: 'second',
+      predicted: true,
+    });
+    board.act({ kind: 'CommandRefused', commandId: 'second' });
+    board.act({
+      kind: 'FrameReceived',
+      frame: frame(
+        2,
+        { ...table.view },
+        {
+          boundary: 'refresh',
+          motionHint: 'rollback',
+          pendingCommandIds: [],
+        }
+      ),
+    });
+    expect(board.selection).toEqual(hand.slice(0, 2));
+    expect(board.state.presentation.selectionMode).toBe(true);
+  });
+
   it('marks every Pokémon of the group and leaves the group selected', () => {
     const table = groupTable();
     const active = table.pokemon(BLUE, 'active', [{ name: 'Pikachu' }]);

@@ -189,15 +189,24 @@ export interface BoardSessionControllerState {
   readonly groupSubmissions?: readonly GroupSubmission[];
   /**
    * A refused group's selection, given back once the table shows the cards
-   * where they were again (the prediction withdrawn).
+   * where they were again (the prediction withdrawn), with touch's
+   * selection mode if it was on.
    */
-  readonly selectionRestore?: readonly ViewCardId[] | null;
+  readonly selectionRestore?: SelectionRestore | null;
+}
+
+/** A selection to give back, and whether touch's selection mode was on. */
+export interface SelectionRestore {
+  readonly cardIds: readonly ViewCardId[];
+  readonly selectionMode: boolean;
 }
 
 /** A group's move in flight, and the selection it took. */
 export interface GroupSubmission {
   readonly commandId: string | null;
   readonly cardIds: readonly ViewCardId[];
+  /** Touch's selection mode was on when it went: a refusal turns it back on. */
+  readonly selectionMode?: boolean;
   /** Its outcome is shown on the table, so a refusal withdraws it first. */
   readonly predicted?: boolean;
 }
@@ -813,11 +822,13 @@ const reconcilePresentation = (
   // A refused group's cards are back where they were: they are selected
   // again, unless the player has picked others meanwhile.
   const restoring = state.selectionRestore;
-  if (restoring && restoring.length > 0 && selection.length === 0) {
+  let restoredMode = false;
+  if (restoring && restoring.cardIds.length > 0 && selection.length === 0) {
     selection = reduceSelection(context, NO_SELECTION, {
       kind: 'restore',
-      cardIds: restoring,
+      cardIds: restoring.cardIds,
     }).selection;
+    restoredMode = restoring.selectionMode;
   }
   const hoveredCardId = stillShown(state.presentation.hoveredCardId);
   const drag = state.presentation.drag;
@@ -882,8 +893,11 @@ const reconcilePresentation = (
   return {
     presentation: {
       selection,
-      // Touch's selection mode ends with its last item.
-      selectionMode: state.presentation.selectionMode && selection.length > 0,
+      // Touch's selection mode ends with its last item, and comes back
+      // with a refused group's.
+      selectionMode:
+        (state.presentation.selectionMode || restoredMode) &&
+        selection.length > 0,
       hoveredCardId,
       targetableCardIds: [],
       drag: reconciledDrag,
@@ -2109,7 +2123,13 @@ const submitGroup = (
       ? {
           groupSubmissions: [
             ...(state.groupSubmissions ?? NO_GROUP_SUBMISSIONS),
-            { commandId: null, cardIds },
+            {
+              commandId: null,
+              cardIds,
+              ...(state.presentation.selectionMode
+                ? { selectionMode: true }
+                : {}),
+            },
           ],
         }
       : {}),
@@ -2968,12 +2988,15 @@ export const reduceBoardSessionController = (
       const unbound = submissions.findLastIndex(
         (entry) => entry.commandId === null
       );
-      const restored = unbound < 0 ? undefined : submissions[unbound]!.cardIds;
+      const unsent = unbound < 0 ? undefined : submissions[unbound];
+      const restored = unsent?.cardIds;
+      const restoring =
+        restored !== undefined &&
+        state.view !== undefined &&
+        state.scene !== undefined &&
+        state.presentation.selection.length === 0;
       const selection =
-        restored &&
-        state.view &&
-        state.scene &&
-        state.presentation.selection.length === 0
+        restoring && state.view && state.scene
           ? reduceSelection(
               selectionContextOf(
                 state.view,
@@ -2982,7 +3005,7 @@ export const reduceBoardSessionController = (
                 state.presentation.openedZoneId
               ),
               NO_SELECTION,
-              { kind: 'restore', cardIds: restored }
+              { kind: 'restore', cardIds: restored! }
             ).selection
           : state.presentation.selection;
       const reduction = installPresentation(
@@ -2990,6 +3013,13 @@ export const reduceBoardSessionController = (
         {
           ...state.presentation,
           selection,
+          // Touch's selection mode comes back with the group it went with.
+          ...(restoring
+            ? {
+                selectionMode:
+                  unsent?.selectionMode === true && selection.length > 0,
+              }
+            : {}),
           targetableCardIds: [],
           drag: null,
           settling: inDrop
@@ -3061,24 +3091,29 @@ export const reduceBoardSessionController = (
         return accepted(
           nextState(state, {
             groupSubmissions,
-            selectionRestore: refused.cardIds,
+            selectionRestore: {
+              cardIds: refused.cardIds,
+              selectionMode: refused.selectionMode === true,
+            },
           })
         );
       // Nothing was shown moving: it comes back now.
       if (state.presentation.selection.length > 0)
         return accepted(nextState(state, { groupSubmissions }));
+      const restored = reduceSelection(
+        selectionContextOf(
+          state.view,
+          state.scene,
+          dependencies,
+          state.presentation.openedZoneId
+        ),
+        NO_SELECTION,
+        { kind: 'restore', cardIds: refused.cardIds }
+      ).selection;
       const presentation: BoardPresentation = {
         ...state.presentation,
-        selection: reduceSelection(
-          selectionContextOf(
-            state.view,
-            state.scene,
-            dependencies,
-            state.presentation.openedZoneId
-          ),
-          NO_SELECTION,
-          { kind: 'restore', cardIds: refused.cardIds }
-        ).selection,
+        selection: restored,
+        selectionMode: refused.selectionMode === true && restored.length > 0,
       };
       return accepted(
         nextState(state, { groupSubmissions, presentation }),

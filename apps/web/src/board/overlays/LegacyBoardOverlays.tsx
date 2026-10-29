@@ -2358,7 +2358,7 @@ const ZoneBrowser = ({
     ...(actions.updateDrag ? { updateDrag: actions.updateDrag } : {}),
     settling: state.presentation.settling,
     ...(tableMotion ? { tableMotion } : {}),
-    ...(group ? { group: selection } : {}),
+    ...(selection.length > 0 ? { group: selection } : {}),
   });
   const asideCardId = drag.asideCardId;
   const tiles = useMemo(

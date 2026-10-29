@@ -946,4 +946,76 @@ describe('the group carried out of the pile viewer', () => {
     expect(drag?.groupCardIds).toBeUndefined();
     expect(asViewCardId(String(third))).toBe(third);
   });
+
+  it('carries a card pressed with Shift from outside the selection with it, joining it to the group', async () => {
+    const callbacks = actions();
+    const [first, second, third] = hand.cards
+      .slice(3, 6)
+      .map((card) => card.id);
+    await render(
+      state({
+        presentation: presentation({
+          openedZoneId: hand.id,
+          selection: [first!, second!],
+        }),
+      }),
+      callbacks
+    );
+    const overlay = host.querySelector<HTMLElement>(
+      '[data-legacy-board-overlays]'
+    )!;
+    vi.spyOn(overlay, 'getBoundingClientRect').mockReturnValue({
+      x: 0,
+      y: 0,
+      left: 0,
+      top: 0,
+      right: scene.viewport.width,
+      bottom: scene.viewport.height,
+      width: scene.viewport.width,
+      height: scene.viewport.height,
+      toJSON: () => ({}),
+    });
+    const source = host.querySelector<HTMLElement>(
+      `[data-overlay-card-id="${String(third)}"]`
+    )!;
+    vi.spyOn(source, 'getBoundingClientRect').mockReturnValue({
+      x: 100,
+      y: 100,
+      left: 100,
+      top: 100,
+      right: 226,
+      bottom: 276,
+      width: 126,
+      height: 176,
+      toJSON: () => ({}),
+    });
+    const event = (type: string, x: number, y: number): Event => {
+      const dispatched = new Event(type, { bubbles: true, cancelable: true });
+      Object.defineProperties(dispatched, {
+        clientX: { value: x },
+        clientY: { value: y },
+        pointerId: { value: 9 },
+        button: { value: 0 },
+        pointerType: { value: 'mouse' },
+        shiftKey: { value: true },
+        metaKey: { value: false },
+        ctrlKey: { value: false },
+      });
+      return dispatched;
+    };
+    await act(async () => source.dispatchEvent(event('pointerdown', 163, 188)));
+    await act(async () =>
+      document.dispatchEvent(event('pointermove', 300, 300))
+    );
+    // It joins the selection as it starts to move, and the drag carries
+    // the selection and it, as Shift-dragging a card on the table does.
+    expect(callbacks.emitOpenedZoneCardIntent).toHaveBeenCalledWith({
+      kind: 'CardSelected',
+      cardId: third,
+      mode: 'add',
+    });
+    const drag = vi.mocked(callbacks.updateDrag).mock.calls.at(-1)?.[0];
+    expect(drag?.cardId).toBe(third);
+    expect(drag?.groupCardIds).toEqual([first, second, third]);
+  });
 });

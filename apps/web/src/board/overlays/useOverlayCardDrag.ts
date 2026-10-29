@@ -20,6 +20,7 @@ import {
 } from 'react';
 
 import type { TableMotionStore } from '../table-motion.js';
+import { isSelectionModifier } from './group-context.js';
 
 interface Options {
   readonly scene: BoardScene | undefined;
@@ -27,7 +28,7 @@ interface Options {
   readonly cards: readonly CardSceneNode[];
   readonly enabled: boolean;
   readonly emit: (
-    intent: Extract<BoardIntent, { kind: 'CardDropRequested' }>
+    intent: Extract<BoardIntent, { kind: 'CardDropRequested' | 'CardSelected' }>
   ) => void;
   /**
    * The table's drag: the card picked up here is held over the table as one
@@ -39,9 +40,10 @@ interface Options {
   /** Whether the table is still moving, so a dropped card is seen to land. */
   readonly tableMotion?: TableMotionStore;
   /**
-   * The selected items, in order, when several are (ADR-042 §2): a card
-   * picked up from among them carries them all, and its drop moves them
-   * together. A card outside them goes alone.
+   * The selected items, in order (ADR-042 §2): a card picked up from among
+   * several carries them all, and its drop moves them together. A card
+   * outside them goes alone -- or, pressed with Shift or ⌘/Ctrl, joins
+   * them and carries the lot, as on the table.
    */
   readonly group?: readonly ViewCardId[];
 }
@@ -64,6 +66,8 @@ interface Grip {
   hold: number | null;
   readonly startX: number;
   readonly startY: number;
+  /** Pressed with Shift or ⌘/Ctrl, not selected: it joins the group. */
+  readonly adds: boolean;
 }
 
 /** A finger held this long on a card picks it up; a swipe scrolls the pile. */
@@ -106,6 +110,11 @@ export const useOverlayCardDrag = (options: Options) => {
     () =>
       new BoardDragController({
         emitIntent: (intent) => {
+          // A card pressed with a modifier joins the selection as it moves.
+          if (intent.kind === 'CardSelected') {
+            latest.current.emit(intent);
+            return;
+          }
           if (intent.kind !== 'CardDropRequested') return;
           setLandingCardId(intent.cardId);
           const group = groupOf(heldGroup.current, intent.cardId);
@@ -186,7 +195,7 @@ export const useOverlayCardDrag = (options: Options) => {
         current.grip,
         true
       ),
-      group ? { group } : undefined
+      group ? { group, ...(current.adds ? { adds: true } : {}) } : undefined
     );
   };
 
@@ -396,10 +405,16 @@ export const useOverlayCardDrag = (options: Options) => {
       if (!enabled || !scene || grip.current || event.button !== 0) return;
       const bounds = event.currentTarget.getBoundingClientRect();
       if (!bounds.width || !bounds.height) return;
+      const selection = latest.current.group ?? [];
+      const adds =
+        event.pointerType !== 'touch' &&
+        isSelectionModifier(event) &&
+        !selection.includes(card.id);
       const current: Grip = {
         card,
         target: event.currentTarget,
         pointerId: event.pointerId,
+        adds,
         grip: {
           x: (event.clientX - bounds.left) / bounds.width,
           y: (event.clientY - bounds.top) / bounds.height,
@@ -409,7 +424,7 @@ export const useOverlayCardDrag = (options: Options) => {
         startX: event.clientX,
         startY: event.clientY,
       };
-      heldGroup.current = latest.current.group;
+      heldGroup.current = adds ? [...selection, card.id] : selection;
       if (current.armed && !pickUp(current, event.clientX, event.clientY))
         return;
       grip.current = current;
