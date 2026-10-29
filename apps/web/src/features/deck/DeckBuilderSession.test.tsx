@@ -1386,6 +1386,46 @@ describe('DeckBuilderSession', () => {
       });
     });
 
+    it('sends a URL back brought home after its screen went through the screen now holding the seats', async () => {
+      const session = new FakeSession();
+      const store = new DeckBuilderStore();
+      const cardBackStore = new CardBackCustodyStore();
+      const charizard = save('Charizard');
+      library.update(charizard.id, { cardBack: RED });
+      const imports: Array<(ref: string | null) => void> = [];
+      const importCardBack = vi.fn(
+        () => new Promise<string | null>((done) => imports.push(done))
+      );
+      await renderSession({
+        session,
+        store,
+        cardBackStore,
+        open: true,
+        importCardBack,
+      });
+      await click('button[aria-label="Charizard: put on P1"]');
+      expect(importCardBack).toHaveBeenCalledOnce();
+      // The screen goes before the picture is home (the lobby handing its
+      // stores to the room's), and another holds the same seats.
+      await act(async () => root?.unmount());
+      root = undefined;
+      await renderSession({
+        session,
+        store,
+        cardBackStore,
+        open: false,
+        importCardBack,
+      });
+      const STORED = `img:${'7'.repeat(64)}`;
+      await act(async () => imports[0]?.(STORED));
+      expect(library.get(charizard.id)?.cardBack).toBe(STORED);
+      // The table gets it all the same, through the screen there now.
+      expect(session.commands).toContainEqual({
+        type: 'SetCardBack',
+        cardBackUrl: STORED,
+      });
+    });
+
     it('keeps a URL back when bringing it home fails, or its deck took another meanwhile', async () => {
       const session = new FakeSession();
       const store = new DeckBuilderStore();

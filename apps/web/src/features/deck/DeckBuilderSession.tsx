@@ -89,6 +89,14 @@ const markHandled = (
   tables.set(session, how);
 };
 
+/**
+ * Each set of card backs' live screen, to send what changed in them to the
+ * table: a URL back brought home after the screen that sent for it went
+ * (the lobby handing its stores to the room's screen) goes through the one
+ * holding them now, whose coordinator would otherwise never hear of it.
+ */
+const cardBackFlushers = new WeakMap<CardBackCustodyStore, () => void>();
+
 export interface DeckBuilderSessionProps {
   readonly session?: DeckInstallSession;
   /**
@@ -216,6 +224,18 @@ export const DeckBuilderSession = ({
     store.setAlternateEnabled(alternateEnabled);
     cardBackStore.setAlternateEnabled(alternateEnabled);
   }, [alternateEnabled, cardBackStore, store]);
+
+  // The latest screen mounted over these card backs sends them on.
+  useEffect(() => {
+    const flush = (): void => {
+      cardBackCoordinator.current?.flush();
+    };
+    cardBackFlushers.set(cardBackStore, flush);
+    return () => {
+      if (cardBackFlushers.get(cardBackStore) === flush)
+        cardBackFlushers.delete(cardBackStore);
+    };
+  }, [cardBackStore]);
 
   useEffect(() => {
     if (!session) {
@@ -458,11 +478,13 @@ export const DeckBuilderSession = ({
               }
             }
           }
-          if (changed) cardBackCoordinator.current?.flush();
+          // Through whichever screen holds these backs now: this one may
+          // have gone while the picture came home.
+          if (changed) cardBackFlushers.get(cardBackStore)?.();
         })
         .finally(() => importing.current.delete(back));
     },
-    [importCardBack, library, putCardBack, store]
+    [cardBackStore, importCardBack, library, putCardBack, store]
   );
 
   /**
