@@ -7,7 +7,7 @@ import { TABLE_PREFERENCES } from '../../session/table-preferences.js';
 import './table-art-controls.css';
 
 /**
- * The table's artwork (Settings, Appearance): a swatch for each desk and
+ * The table's artwork (Settings, Table): a swatch for each desk and
  * playmat, each a small table painted with that look's own tokens. A choice
  * repaints the table at once and stays on this device.
  */
@@ -18,7 +18,7 @@ export const TableArtControls = () => {
   return (
     <fieldset className="ptcgsim-form-group">
       <legend className="ptcgsim-form-label">
-        <Trans>Table style</Trans>
+        <Trans context="the table's look">Style</Trans>
       </legend>
       <div className="table-art-swatches">
         {TABLE_ARTS.map((look) => (

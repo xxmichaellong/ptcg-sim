@@ -1,20 +1,28 @@
 import { i18n } from '@lingui/core';
 import { t } from '@lingui/core/macro';
+import { ArrowCounterClockwiseIcon } from '@phosphor-icons/react/dist/csr/ArrowCounterClockwise';
+import { AngleIcon } from '@phosphor-icons/react/dist/csr/Angle';
 import { CubeIcon } from '@phosphor-icons/react/dist/csr/Cube';
 import { GaugeIcon } from '@phosphor-icons/react/dist/csr/Gauge';
+import { GearSixIcon } from '@phosphor-icons/react/dist/csr/GearSix';
 import { ImageIcon } from '@phosphor-icons/react/dist/csr/Image';
 import { PaletteIcon } from '@phosphor-icons/react/dist/csr/Palette';
+import { RowsIcon } from '@phosphor-icons/react/dist/csr/Rows';
 import { SlidersHorizontalIcon } from '@phosphor-icons/react/dist/csr/SlidersHorizontal';
+import { StackIcon } from '@phosphor-icons/react/dist/csr/Stack';
 import { ToggleRightIcon } from '@phosphor-icons/react/dist/csr/ToggleRight';
 import { TranslateIcon } from '@phosphor-icons/react/dist/csr/Translate';
 import { WaveSineIcon } from '@phosphor-icons/react/dist/csr/WaveSine';
 import type { Icon } from '@phosphor-icons/react';
+import { TABLE_SPLIT, TABLE_TILT_MAXIMUM } from '@ptcgsim/renderer-contract';
 
 import {
   boardViewSettings,
   type BoardShowChoice,
   type BoardViewSettings,
 } from '../board/view/board-view-settings.js';
+import { resetTableView } from '../board/view/TableViewControls.js';
+import { CARD_BACK_VIEW_PREFERENCES } from '../card-backs/card-back-preferences.js';
 import {
   CARD_IMAGE_LANGUAGE_NAMES,
   CARD_IMAGE_PREFERENCES,
@@ -33,16 +41,23 @@ import {
   type ReduceMotionChoice,
 } from '../motion/motion-settings.js';
 import { preferences } from '../preferences/preference-store.js';
+import {
+  SETTINGS_SECTIONS,
+  type SettingsSectionId,
+} from '../session/shell/settings-sheet-state.js';
 import { TABLE_ARTS } from '../session/table-art.js';
 import { TABLE_PREFERENCES } from '../session/table-preferences.js';
+import { TOUCH_ONLY_QUERY } from '../ui/breakpoints.js';
 import type { CommandSection, PaletteCommand } from './types.js';
 
 /** A setting with a few values: its current one shown, the rest one press away. */
-const choice = <Value extends string>(options: {
+export const choice = <Value extends string>(options: {
   readonly id: string;
   readonly title: string;
   readonly breadcrumb: string;
   readonly section: CommandSection;
+  /** Where it is in Settings: the section's heading. */
+  readonly detail?: string;
   readonly icon: Icon;
   readonly keywords: readonly string[];
   readonly current: Value;
@@ -58,6 +73,7 @@ const choice = <Value extends string>(options: {
   id: options.id,
   title: options.title,
   section: options.section,
+  ...(options.detail ? { detail: options.detail } : {}),
   icon: options.icon,
   keywords: options.keywords,
   status:
@@ -77,10 +93,11 @@ const choice = <Value extends string>(options: {
 });
 
 /** A setting that is on or off: the command turns it the other way. */
-const toggle = (options: {
+export const toggle = (options: {
   readonly id: string;
   readonly title: string;
   readonly section: CommandSection;
+  readonly detail?: string;
   readonly keywords: readonly string[];
   readonly on: boolean;
   readonly set: (on: boolean) => void;
@@ -88,6 +105,7 @@ const toggle = (options: {
   id: options.id,
   title: options.title,
   section: options.section,
+  ...(options.detail ? { detail: options.detail } : {}),
   icon: ToggleRightIcon,
   keywords: options.keywords,
   status: options.on
@@ -97,7 +115,79 @@ const toggle = (options: {
   run: () => options.set(!options.on),
 });
 
-/** The page's own settings, wherever the palette opens. */
+/** Settings' section headings, as the sheet shows them. */
+export const settingsSectionName = (section: SettingsSectionId): string => {
+  switch (section) {
+    case 'room':
+      return t`Room`;
+    case 'table':
+      return t`Table`;
+    case 'cards':
+      return t`Cards`;
+    case 'motion':
+      return t`Motion`;
+    case 'keys':
+      return t`Keys`;
+    case 'language':
+      return t`Language`;
+  }
+};
+
+const touchOnly = (): boolean =>
+  typeof globalThis.matchMedia === 'function' &&
+  globalThis.matchMedia(TOUCH_ONLY_QUERY).matches;
+
+/**
+ * Settings itself, and each of its sections ("Settings: Cards"), for the
+ * screen whose sheet it is.
+ */
+export const settingsSheetCommands = (options: {
+  readonly sections: readonly SettingsSectionId[];
+  readonly open: (section?: SettingsSectionId) => void;
+  /** Settings' own key (`,`). */
+  readonly hint?: string | undefined;
+  readonly darkMode: boolean;
+  readonly onDarkModeChange: (enabled: boolean) => void;
+}): PaletteCommand[] => [
+  {
+    id: 'menu.settings',
+    title: t`Settings`,
+    section: 'settings',
+    icon: GearSixIcon,
+    ...(options.hint ? { hint: options.hint } : {}),
+    keywords: ['settings', 'options', 'preferences'],
+    promoted: true,
+    run: () => options.open(),
+  },
+  ...SETTINGS_SECTIONS.filter((section) =>
+    options.sections.includes(section)
+  ).map((section): PaletteCommand => ({
+    id: `settings.section.${section}`,
+    title: t({
+      message: `Settings: ${settingsSectionName(section)}`,
+      comment: 'Opens Settings at that section',
+    }),
+    section: 'settings',
+    icon: GearSixIcon,
+    keywords: ['settings', section],
+    demoted: true,
+    run: () => options.open(section),
+  })),
+  toggle({
+    id: 'settings.darkMode',
+    title: t`Dark mode`,
+    section: 'settings',
+    detail: settingsSectionName('table'),
+    keywords: ['dark', 'night', 'day', 'theme', 'light'],
+    on: options.darkMode,
+    set: options.onDarkModeChange,
+  }),
+];
+
+/**
+ * Settings' rows kept on this device, wherever the palette opens: titled as
+ * in the sheet, its section read after.
+ */
 export const appSettingCommands = (): PaletteCommand[] => {
   const store = preferences();
   const { language } = store.get(LANGUAGE_PREFERENCES);
@@ -112,54 +202,47 @@ export const appSettingCommands = (): PaletteCommand[] => {
       )
     ];
   const motion = motionSettings().getSnapshot();
-  const depth = depthSettings().getSnapshot();
+  const depthStore = depthSettings();
+  const depth = depthStore.getSnapshot();
+  const viewStore = boardViewSettings();
+  const view = viewStore.getSnapshot();
   const { art } = store.get(TABLE_PREFERENCES);
-  return [
+  const { opponentCustomBacks } = store.get(CARD_BACK_VIEW_PREFERENCES);
+  const setView =
+    <Key extends keyof BoardViewSettings>(key: Key) =>
+    (value: BoardViewSettings[Key]) =>
+      viewStore.update({ [key]: value } as Partial<BoardViewSettings>);
+  const table = settingsSectionName('table');
+  const cards = settingsSectionName('cards');
+  const motionName = settingsSectionName('motion');
+  const languageName = settingsSectionName('language');
+  const touch = touchOnly();
+  const lower = Math.round(view.split * 100);
+  const commands: PaletteCommand[] = [
+    // Table
     choice({
-      id: 'settings.language',
-      title: t`Language…`,
-      breadcrumb: t`Language`,
+      id: 'settings.tableStyle',
+      title: t({ message: 'Style…', context: "the table's look" }),
+      breadcrumb: t({ message: 'Style', context: "the table's look" }),
       section: 'settings',
-      icon: TranslateIcon,
-      keywords: ['language', 'translate', 'locale'],
-      current: language,
-      ...(language === 'auto' ? { status: browser } : {}),
-      choices: [
-        { value: 'auto', label: t`Browser language (${browser})` },
-        ...LOCALES.map(({ locale, name }) => ({
-          value: locale,
-          label: name,
-          lang: locale,
-        })),
-      ],
-      choose: (value) => store.set(LANGUAGE_PREFERENCES, { language: value }),
-    }),
-    choice<CardImageChoice>({
-      id: 'settings.cardImages',
-      title: t`Card image language…`,
-      breadcrumb: t`Card images`,
-      section: 'settings',
-      icon: ImageIcon,
-      keywords: ['card images', 'scans', 'language'],
-      current: cardImages,
-      ...(cardImages === 'app' ? { status: following } : {}),
-      choices: [
-        { value: 'app', label: t`Page language (${following})` },
-        ...Object.entries(CARD_IMAGE_LANGUAGE_NAMES).map(([value, label]) => ({
-          value: value as CardImageChoice,
-          label,
-        })),
-      ],
-      choose: (value) =>
-        store.set(CARD_IMAGE_PREFERENCES, { cardImages: value }),
+      detail: table,
+      icon: PaletteIcon,
+      keywords: ['table style', 'theme', 'look', 'colour', 'color', 'mat'],
+      current: art,
+      choices: TABLE_ARTS.map((look) => ({
+        value: look.id,
+        label: i18n._(look.name),
+      })),
+      choose: (value) => store.patch(TABLE_PREFERENCES, { art: value }),
     }),
     choice<TableDepthMode>({
       id: 'settings.tableView',
-      title: t`Table view…`,
-      breadcrumb: t`Table view`,
-      section: 'table',
+      title: t({ message: 'Depth…', context: 'how 3D the table looks' }),
+      breadcrumb: t({ message: 'Depth', context: 'how 3D the table looks' }),
+      section: 'settings',
+      detail: table,
       icon: CubeIcon,
-      keywords: ['3d', 'flat', 'raised', 'tabletop', 'tilt', 'depth'],
+      keywords: ['3d', 'flat', 'raised', 'tabletop', 'tilt', 'table view'],
       current: depth.mode,
       choices: [
         {
@@ -179,27 +262,184 @@ export const appSettingCommands = (): PaletteCommand[] => {
           label: t({ message: 'Tabletop', context: 'table depth setting' }),
         },
       ],
-      choose: (mode) => depthSettings().update({ mode }),
+      choose: (mode) => depthStore.update({ mode }),
     }),
+    {
+      id: 'settings.tableAngle',
+      title: t({ message: 'Angle…', context: "the table's tilt" }),
+      section: 'settings',
+      detail: table,
+      icon: AngleIcon,
+      keywords: ['angle', 'tilt', 'tabletop'],
+      status: `${String(depth.tilt)}°`,
+      count: {
+        label: t`Angle in degrees`,
+        min: 0,
+        max: TABLE_TILT_MAXIMUM,
+        initial: depth.tilt,
+        title: (count) => t`Angle ${count}°`,
+      },
+      run: ({ count }) => {
+        if (count !== undefined) depthStore.update({ tilt: count });
+      },
+    },
     choice({
-      id: 'settings.tableStyle',
-      title: t`Table style…`,
-      breadcrumb: t`Table style`,
-      section: 'table',
-      icon: PaletteIcon,
-      keywords: ['theme', 'look', 'colour', 'color', 'mat'],
-      current: art,
-      choices: TABLE_ARTS.map((look) => ({
-        value: look.id,
-        label: i18n._(look.name),
+      id: 'settings.tableThickness',
+      title: t({ message: 'Thickness…', context: "the cards' thickness" }),
+      breadcrumb: t({ message: 'Thickness', context: "the cards' thickness" }),
+      section: 'settings',
+      detail: table,
+      icon: StackIcon,
+      keywords: ['thickness', 'card thickness', 'depth'],
+      current: depth.strength.toFixed(1),
+      status: `${depth.strength.toFixed(1)}×`,
+      choices: ['0.0', '0.5', '1.0', '1.5', '2.0'].map((value) => ({
+        value,
+        label: `${value}×`,
       })),
-      choose: (value) => store.patch(TABLE_PREFERENCES, { art: value }),
+      choose: (value) => depthStore.update({ strength: Number(value) }),
+    }),
+    choice<BoardShowChoice>({
+      id: 'table.show',
+      title: t({ message: 'Halves…', context: 'which halves of the table' }),
+      breadcrumb: t({
+        message: 'Halves',
+        context: 'which halves of the table',
+      }),
+      section: 'settings',
+      detail: table,
+      icon: SlidersHorizontalIcon,
+      keywords: ['show', 'hide', 'half', 'mine', 'theirs', 'both'],
+      current: view.show,
+      choices: [
+        {
+          value: 'both',
+          label: t({
+            message: 'Both',
+            context: 'show both halves of the table',
+          }),
+        },
+        {
+          value: 'mine',
+          label: t({ message: 'Mine', context: 'my half of the table' }),
+        },
+        {
+          value: 'theirs',
+          label: t({
+            message: 'Theirs',
+            context: "the opponent's half of the table",
+          }),
+        },
+      ],
+      choose: setView('show'),
+    }),
+    {
+      id: 'settings.tableSplit',
+      title: t({ message: 'Split…', context: 'the table between the halves' }),
+      section: 'settings',
+      detail: table,
+      icon: RowsIcon,
+      keywords: ['split', 'halves', 'height', 'resize'],
+      status: `${String(100 - lower)} · ${String(lower)}`,
+      count: {
+        label: t`My half, in percent`,
+        min: Math.round(TABLE_SPLIT.minimumLowerShare * 100),
+        max: Math.round(TABLE_SPLIT.maximumLowerShare * 100),
+        initial: lower,
+        title: (count) => t`My half ${count}% of the table`,
+      },
+      run: ({ count }) => {
+        if (count !== undefined) viewStore.update({ split: count / 100 });
+      },
+    },
+    toggle({
+      id: 'table.zoneOutlines',
+      title: t`Zone outlines`,
+      section: 'settings',
+      detail: table,
+      keywords: ['outline', 'zones'],
+      on: view.zoneOutlines,
+      set: setView('zoneOutlines'),
+    }),
+    {
+      id: 'settings.resetTable',
+      title: t`Reset table settings`,
+      section: 'settings',
+      detail: table,
+      icon: ArrowCounterClockwiseIcon,
+      keywords: ['reset', 'default', 'table view', 'depth'],
+      run: resetTableView,
+    },
+    // Cards
+    toggle({
+      id: 'table.opponentCardsUpright',
+      title: t`Opponent's cards face me`,
+      section: 'settings',
+      detail: cards,
+      keywords: ['upright', 'rotate', 'opponent'],
+      on: view.opponentCardsUpright,
+      set: setView('opponentCardsUpright'),
+    }),
+    ...(touch
+      ? []
+      : [
+          toggle({
+            id: 'table.hoverPreview',
+            title: t`Preview on hover`,
+            section: 'settings',
+            detail: cards,
+            keywords: ['preview', 'hover', 'zoom', 'large'],
+            on: view.hoverPreview,
+            set: setView('hoverPreview'),
+          }),
+        ]),
+    toggle({
+      id: 'settings.naturalPlacement',
+      title: t`Natural placement`,
+      section: 'settings',
+      detail: cards,
+      keywords: ['scatter', 'askew', 'natural', 'placement'],
+      on: depth.scatter !== false,
+      set: (scatter) => depthStore.update({ scatter }),
+    }),
+    toggle({
+      id: 'settings.opponentCustomBacks',
+      title: t`Opponents' custom backs`,
+      section: 'settings',
+      detail: cards,
+      keywords: ['card back', 'sleeve', 'opponent', 'custom'],
+      on: opponentCustomBacks,
+      set: (enabled) =>
+        store.set(CARD_BACK_VIEW_PREFERENCES, {
+          opponentCustomBacks: enabled,
+        }),
+    }),
+    // Motion
+    choice<ReduceMotionChoice>({
+      id: 'settings.reduceMotion',
+      title: t`Reduce motion…`,
+      breadcrumb: t`Reduce motion`,
+      section: 'settings',
+      detail: motionName,
+      icon: WaveSineIcon,
+      keywords: ['motion', 'animation', 'accessibility'],
+      current: motion.reduceMotion,
+      choices: [
+        {
+          value: 'system',
+          label: t({ message: 'System', context: 'reduce motion setting' }),
+        },
+        { value: 'reduce', label: t({ message: 'On', context: 'setting' }) },
+        { value: 'full', label: t({ message: 'Off', context: 'setting' }) },
+      ],
+      choose: (reduceMotion) => motionSettings().update({ reduceMotion }),
     }),
     choice<AnimationSpeed>({
       id: 'settings.animationSpeed',
-      title: t`Animation speed…`,
-      breadcrumb: t`Animation speed`,
+      title: t({ message: 'Speed…', context: 'animation speed' }),
+      breadcrumb: t({ message: 'Speed', context: 'animation speed' }),
       section: 'settings',
+      detail: motionName,
       icon: GaugeIcon,
       keywords: ['animation', 'speed', 'fast', 'slow'],
       current: motion.animationSpeed,
@@ -223,28 +463,87 @@ export const appSettingCommands = (): PaletteCommand[] => {
       ],
       choose: (animationSpeed) => motionSettings().update({ animationSpeed }),
     }),
-    choice<ReduceMotionChoice>({
-      id: 'settings.reduceMotion',
-      title: t`Reduce motion…`,
-      breadcrumb: t`Reduce motion`,
+    toggle({
+      id: 'settings.liftWhileDragging',
+      title: t`Lift while dragging`,
       section: 'settings',
-      icon: WaveSineIcon,
-      keywords: ['motion', 'animation', 'accessibility'],
-      current: motion.reduceMotion,
+      detail: motionName,
+      keywords: ['lift', 'drag', 'depth'],
+      on: depth.lift,
+      set: (lift) => depthStore.update({ lift }),
+    }),
+    toggle({
+      id: 'settings.animateStacks',
+      title: t`Animate stacks`,
+      section: 'settings',
+      detail: motionName,
+      keywords: ['stack', 'height', 'animate'],
+      on: depth.animate,
+      set: (animate) => depthStore.update({ animate }),
+    }),
+    ...(touch
+      ? []
+      : [
+          toggle({
+            id: 'settings.parallax',
+            title: t`Parallax`,
+            section: 'settings',
+            detail: motionName,
+            keywords: ['parallax', 'pointer', 'lean', 'tilt'],
+            on: depth.parallax === true,
+            set: (parallax) => depthStore.update({ parallax }),
+          }),
+        ]),
+    // Language
+    choice({
+      id: 'settings.language',
+      title: t`Language…`,
+      breadcrumb: t`Language`,
+      section: 'settings',
+      detail: languageName,
+      icon: TranslateIcon,
+      keywords: ['language', 'translate', 'locale'],
+      current: language,
+      ...(language === 'auto' ? { status: browser } : {}),
       choices: [
-        {
-          value: 'system',
-          label: t({ message: 'System', context: 'reduce motion setting' }),
-        },
-        { value: 'reduce', label: t({ message: 'On', context: 'setting' }) },
-        { value: 'full', label: t({ message: 'Off', context: 'setting' }) },
+        { value: 'auto', label: t`Browser language (${browser})` },
+        ...LOCALES.map(({ locale, name }) => ({
+          value: locale,
+          label: name,
+          lang: locale,
+        })),
       ],
-      choose: (reduceMotion) => motionSettings().update({ reduceMotion }),
+      choose: (value) => store.set(LANGUAGE_PREFERENCES, { language: value }),
+    }),
+    choice<CardImageChoice>({
+      id: 'settings.cardImages',
+      title: t`Card images…`,
+      breadcrumb: t`Card images`,
+      section: 'settings',
+      detail: languageName,
+      icon: ImageIcon,
+      keywords: ['card images', 'scans', 'language'],
+      current: cardImages,
+      ...(cardImages === 'app' ? { status: following } : {}),
+      choices: [
+        { value: 'app', label: t`Page language (${following})` },
+        ...Object.entries(CARD_IMAGE_LANGUAGE_NAMES).map(([value, label]) => ({
+          value: value as CardImageChoice,
+          label,
+        })),
+      ],
+      choose: (value) =>
+        store.set(CARD_IMAGE_PREFERENCES, { cardImages: value }),
     }),
   ];
+  return commands;
 };
 
-/** The table's view switches (Settings, Table), for the room's mode. */
+/**
+ * The table's own pieces and the Solo cover, which are not Settings: the
+ * Lost Zone and the markers (also on the mat's +) and the opponent's hand
+ * (also on its pill).
+ */
 export const boardViewCommands = (options: {
   readonly solo: boolean;
 }): PaletteCommand[] => {
@@ -255,36 +554,6 @@ export const boardViewCommands = (options: {
     (value: BoardViewSettings[Key]) =>
       store.update({ [key]: value } as Partial<BoardViewSettings>);
   const commands: PaletteCommand[] = [
-    choice<BoardShowChoice>({
-      id: 'table.show',
-      title: t`Show halves…`,
-      breadcrumb: t`Show`,
-      section: 'table',
-      icon: SlidersHorizontalIcon,
-      keywords: ['hide', 'half', 'mine', 'theirs', 'both'],
-      current: view.show,
-      choices: [
-        {
-          value: 'both',
-          label: t({
-            message: 'Both',
-            context: 'show both halves of the table',
-          }),
-        },
-        {
-          value: 'mine',
-          label: t({ message: 'Mine', context: 'my half of the table' }),
-        },
-        {
-          value: 'theirs',
-          label: t({
-            message: 'Theirs',
-            context: "the opponent's half of the table",
-          }),
-        },
-      ],
-      choose: set('show'),
-    }),
     toggle({
       id: 'table.lostZone',
       title: t`Lost Zone`,
@@ -309,30 +578,6 @@ export const boardViewCommands = (options: {
       keywords: ['gx', 'marker', 'piece'],
       on: view.gxMarker,
       set: set('gxMarker'),
-    }),
-    toggle({
-      id: 'table.opponentCardsUpright',
-      title: t`Opponent's cards face me`,
-      section: 'table',
-      keywords: ['upright', 'rotate', 'opponent'],
-      on: view.opponentCardsUpright,
-      set: set('opponentCardsUpright'),
-    }),
-    toggle({
-      id: 'table.zoneOutlines',
-      title: t`Zone outlines`,
-      section: 'table',
-      keywords: ['outline', 'zones'],
-      on: view.zoneOutlines,
-      set: set('zoneOutlines'),
-    }),
-    toggle({
-      id: 'table.hoverPreview',
-      title: t`Large card preview on hover`,
-      section: 'table',
-      keywords: ['preview', 'hover', 'zoom'],
-      on: view.hoverPreview,
-      set: set('hoverPreview'),
     }),
   ];
   if (options.solo) {

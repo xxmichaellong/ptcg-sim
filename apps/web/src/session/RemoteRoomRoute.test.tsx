@@ -1058,7 +1058,7 @@ describe('RemoteRoomRoute', () => {
       expect(find('#darkModeCheckbox')).not.toBeNull();
       // How the table is shown is part of Settings now.
       expect(find('#boardShowBoth')).not.toBeNull();
-      // Only Solo offers to cover the opponent's hand.
+      // Only Solo covers the opponent's hand (on its pill, not here).
       expect(find('#hideHandCheckbox')).toBeNull();
       expect(get('#changeBackgroundButton').textContent).toBe(
         'Change background'

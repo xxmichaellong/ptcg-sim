@@ -6645,5 +6645,129 @@
   "sFWtjQ": {
     "message": "Watch replay…",
     "translation": "Replay bekijken…"
+  },
+  "qTeX2A": {
+    "message": "Angle",
+    "context": "the table's tilt",
+    "translation": "Hoek"
+  },
+  "y3FF_5": {
+    "message": "Angle {count}°",
+    "translation": "Hoek {count}°"
+  },
+  "tuSC5H": {
+    "message": "Angle in degrees",
+    "translation": "Hoek in graden"
+  },
+  "4GuGTB": {
+    "message": "Angle…",
+    "context": "the table's tilt",
+    "translation": "Hoek…"
+  },
+  "WDup2O": {
+    "message": "Animate stacks",
+    "translation": "Stapels animeren"
+  },
+  "n7tTKf": {
+    "message": "Card images…",
+    "translation": "Kaartafbeeldingen…"
+  },
+  "SOHyuG": {
+    "message": "Depth…",
+    "context": "how 3D the table looks",
+    "translation": "Diepte…"
+  },
+  "hLFd9M": {
+    "message": "Halves",
+    "context": "which halves of the table",
+    "translation": "Helften"
+  },
+  "ZWEhc2": {
+    "message": "Halves…",
+    "context": "which halves of the table",
+    "translation": "Helften…"
+  },
+  "szYoqS": {
+    "message": "Lift while dragging",
+    "translation": "Optillen tijdens slepen"
+  },
+  "7WBRHp": {
+    "message": "My half {count}% of the table",
+    "translation": "Mijn helft {count}% van de tafel"
+  },
+  "gQKQDm": {
+    "message": "My half, in percent",
+    "translation": "Mijn helft, in procenten"
+  },
+  "4fxEIx": {
+    "message": "Natural placement",
+    "translation": "Natuurlijke plaatsing"
+  },
+  "Ek_k_Q": {
+    "message": "Needs depth",
+    "translation": "Vereist diepte"
+  },
+  "UyDcwK": {
+    "message": "Parallax",
+    "translation": "Parallax"
+  },
+  "Kr1v1U": {
+    "message": "Preview on hover",
+    "translation": "Voorbeeld bij aanwijzen"
+  },
+  "hlMODd": {
+    "message": "Reset table",
+    "context": "put the table's settings back",
+    "translation": "Tafel resetten"
+  },
+  "4VQN2q": {
+    "message": "Reset table settings",
+    "translation": "Tafelinstellingen resetten"
+  },
+  "8OT456": {
+    "message": "Settings: {0}",
+    "comments": [
+      "Opens Settings at that section"
+    ],
+    "translation": "Instellingen: {0}"
+  },
+  "ifu0mt": {
+    "message": "Show opponent's hand",
+    "translation": "Hand van tegenstander tonen"
+  },
+  "Q7FDck": {
+    "message": "Speed",
+    "context": "animation speed",
+    "translation": "Snelheid"
+  },
+  "TMNS59": {
+    "message": "Speed…",
+    "context": "animation speed",
+    "translation": "Snelheid…"
+  },
+  "yI0x30": {
+    "message": "Split…",
+    "context": "the table between the halves",
+    "translation": "Verdeling…"
+  },
+  "Qyf2Yu": {
+    "message": "Style",
+    "context": "the table's look",
+    "translation": "Stijl"
+  },
+  "-wDRPC": {
+    "message": "Style…",
+    "context": "the table's look",
+    "translation": "Stijl…"
+  },
+  "lW4c-5": {
+    "message": "Thickness",
+    "context": "the cards' thickness",
+    "translation": "Dikte"
+  },
+  "BPVdia": {
+    "message": "Thickness…",
+    "context": "the cards' thickness",
+    "translation": "Dikte…"
   }
 }

@@ -8,7 +8,14 @@ import {
   DEFAULT_TABLE_DEPTH,
   depthSettings,
 } from '../../motion/depth-settings.js';
-import { TableViewControls } from './TableViewControls.js';
+import {
+  CardViewControls,
+  DepthMotionControls,
+  ResetTableButton,
+  TableDepthControls,
+  TableHalvesControls,
+  ZoneOutlinesControl,
+} from './TableViewControls.js';
 import {
   boardViewSettings,
   DEFAULT_BOARD_VIEW,
@@ -19,8 +26,20 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 let host: HTMLDivElement;
 let root: Root;
 
-const render = async (solo = true): Promise<void> => {
-  await act(async () => root.render(<TableViewControls solo={solo} />));
+/** Every control, as Settings lays them out across its sections. */
+const render = async (touchOnly = false): Promise<void> => {
+  await act(async () =>
+    root.render(
+      <>
+        <TableDepthControls />
+        <TableHalvesControls />
+        <ZoneOutlinesControl />
+        <ResetTableButton />
+        <CardViewControls touchOnly={touchOnly} />
+        <DepthMotionControls touchOnly={touchOnly} />
+      </>
+    )
+  );
 };
 
 const input = (id: string) => host.querySelector<HTMLInputElement>(`#${id}`)!;
@@ -74,6 +93,7 @@ describe('TableViewControls', () => {
     expect(host.querySelector('#tableTiltRange')).not.toBeNull();
     await choose('tableViewFlat');
     expect(host.querySelector('#tableTiltRange')).toBeNull();
+    expect(host.querySelector('#tableThicknessRange')).toBeNull();
     await choose('tableViewTable');
     expect(depthSettings().getSnapshot().mode).toBe('table');
     await slide('tableTiltRange', '14');
@@ -82,15 +102,11 @@ describe('TableViewControls', () => {
     expect(depthSettings().getSnapshot().lift).toBe(false);
 
     await act(async () => input('zoneOutlinesCheckbox').click());
-    await act(async () => input('hideHandCheckbox').click());
     await act(async () => input('hoverPreviewCheckbox').click());
-    await act(async () => input('lostZoneCheckbox').click());
     await act(async () => input('opponentUprightCheckbox').click());
     expect(boardViewSettings().getSnapshot()).toMatchObject({
       zoneOutlines: false,
-      hideOpponentHand: true,
       hoverPreview: true,
-      lostZone: 'shown',
       opponentCardsUpright: true,
     });
 
@@ -101,9 +117,36 @@ describe('TableViewControls', () => {
     expect(depthSettings().getSnapshot()).toEqual(DEFAULT_TABLE_DEPTH);
   });
 
-  it("offers to cover the opponent's hand only in Solo", async () => {
-    await render(false);
+  it('keeps what needs depth, says so while the table is flat, and leaves the pointer’s rows off a touch screen', async () => {
+    await render();
+    for (const id of [
+      'tableLiftCheckbox',
+      'tableHeightMotionCheckbox',
+      'tableScatterCheckbox',
+      'tableParallaxCheckbox',
+    ]) {
+      expect(input(id).disabled, id).toBe(false);
+    }
+    await choose('tableViewFlat');
+    for (const id of [
+      'tableLiftCheckbox',
+      'tableHeightMotionCheckbox',
+      'tableScatterCheckbox',
+      'tableParallaxCheckbox',
+    ]) {
+      expect(input(id).disabled, id).toBe(true);
+      expect(
+        input(id).closest('.ptcgsim-switch-row')?.textContent,
+        id
+      ).toContain('Needs depth');
+    }
+
+    await render(true);
+    expect(host.querySelector('#hoverPreviewCheckbox')).toBeNull();
+    expect(host.querySelector('#tableParallaxCheckbox')).toBeNull();
+    expect(host.querySelector('#tableLiftCheckbox')).not.toBeNull();
+    // The table's pieces and the Solo cover are not settings.
+    expect(host.querySelector('#lostZoneCheckbox')).toBeNull();
     expect(host.querySelector('#hideHandCheckbox')).toBeNull();
-    expect(host.querySelector('#zoneOutlinesCheckbox')).not.toBeNull();
   });
 });

@@ -6645,5 +6645,129 @@
   "sFWtjQ": {
     "message": "Watch replay…",
     "translation": "Manood ng replay…"
+  },
+  "qTeX2A": {
+    "message": "Angle",
+    "context": "the table's tilt",
+    "translation": "Anggulo"
+  },
+  "y3FF_5": {
+    "message": "Angle {count}°",
+    "translation": "Anggulo {count}°"
+  },
+  "tuSC5H": {
+    "message": "Angle in degrees",
+    "translation": "Anggulo sa degrees"
+  },
+  "4GuGTB": {
+    "message": "Angle…",
+    "context": "the table's tilt",
+    "translation": "Anggulo…"
+  },
+  "WDup2O": {
+    "message": "Animate stacks",
+    "translation": "I-animate ang mga stack"
+  },
+  "n7tTKf": {
+    "message": "Card images…",
+    "translation": "Mga larawan ng card…"
+  },
+  "SOHyuG": {
+    "message": "Depth…",
+    "context": "how 3D the table looks",
+    "translation": "Lalim…"
+  },
+  "hLFd9M": {
+    "message": "Halves",
+    "context": "which halves of the table",
+    "translation": "Mga kalahati"
+  },
+  "ZWEhc2": {
+    "message": "Halves…",
+    "context": "which halves of the table",
+    "translation": "Mga kalahati…"
+  },
+  "szYoqS": {
+    "message": "Lift while dragging",
+    "translation": "I-angat habang dina-drag"
+  },
+  "7WBRHp": {
+    "message": "My half {count}% of the table",
+    "translation": "Aking kalahati: {count}% ng table"
+  },
+  "gQKQDm": {
+    "message": "My half, in percent",
+    "translation": "Aking kalahati, sa porsyento"
+  },
+  "4fxEIx": {
+    "message": "Natural placement",
+    "translation": "Natural na pagkakalagay"
+  },
+  "Ek_k_Q": {
+    "message": "Needs depth",
+    "translation": "Kailangan ng lalim"
+  },
+  "UyDcwK": {
+    "message": "Parallax",
+    "translation": "Parallax"
+  },
+  "Kr1v1U": {
+    "message": "Preview on hover",
+    "translation": "Preview kapag nag-hover"
+  },
+  "hlMODd": {
+    "message": "Reset table",
+    "context": "put the table's settings back",
+    "translation": "I-reset ang table"
+  },
+  "4VQN2q": {
+    "message": "Reset table settings",
+    "translation": "I-reset ang settings ng table"
+  },
+  "8OT456": {
+    "message": "Settings: {0}",
+    "comments": [
+      "Opens Settings at that section"
+    ],
+    "translation": "Settings: {0}"
+  },
+  "ifu0mt": {
+    "message": "Show opponent's hand",
+    "translation": "Ipakita ang hand ng kalaban"
+  },
+  "Q7FDck": {
+    "message": "Speed",
+    "context": "animation speed",
+    "translation": "Bilis"
+  },
+  "TMNS59": {
+    "message": "Speed…",
+    "context": "animation speed",
+    "translation": "Bilis…"
+  },
+  "yI0x30": {
+    "message": "Split…",
+    "context": "the table between the halves",
+    "translation": "Hatian…"
+  },
+  "Qyf2Yu": {
+    "message": "Style",
+    "context": "the table's look",
+    "translation": "Istilo"
+  },
+  "-wDRPC": {
+    "message": "Style…",
+    "context": "the table's look",
+    "translation": "Istilo…"
+  },
+  "lW4c-5": {
+    "message": "Thickness",
+    "context": "the cards' thickness",
+    "translation": "Kapal"
+  },
+  "BPVdia": {
+    "message": "Thickness…",
+    "context": "the cards' thickness",
+    "translation": "Kapal…"
   }
 }

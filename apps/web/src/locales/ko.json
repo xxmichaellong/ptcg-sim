@@ -6645,5 +6645,129 @@
   "sFWtjQ": {
     "message": "Watch replay…",
     "translation": "리플레이 보기…"
+  },
+  "qTeX2A": {
+    "message": "Angle",
+    "context": "the table's tilt",
+    "translation": "각도"
+  },
+  "y3FF_5": {
+    "message": "Angle {count}°",
+    "translation": "각도 {count}°"
+  },
+  "tuSC5H": {
+    "message": "Angle in degrees",
+    "translation": "각도(도 단위)"
+  },
+  "4GuGTB": {
+    "message": "Angle…",
+    "context": "the table's tilt",
+    "translation": "각도…"
+  },
+  "WDup2O": {
+    "message": "Animate stacks",
+    "translation": "더미 애니메이션"
+  },
+  "n7tTKf": {
+    "message": "Card images…",
+    "translation": "카드 이미지…"
+  },
+  "SOHyuG": {
+    "message": "Depth…",
+    "context": "how 3D the table looks",
+    "translation": "깊이…"
+  },
+  "hLFd9M": {
+    "message": "Halves",
+    "context": "which halves of the table",
+    "translation": "절반"
+  },
+  "ZWEhc2": {
+    "message": "Halves…",
+    "context": "which halves of the table",
+    "translation": "절반…"
+  },
+  "szYoqS": {
+    "message": "Lift while dragging",
+    "translation": "드래그 중 들어올리기"
+  },
+  "7WBRHp": {
+    "message": "My half {count}% of the table",
+    "translation": "내 영역 테이블의 {count}%"
+  },
+  "gQKQDm": {
+    "message": "My half, in percent",
+    "translation": "내 영역 비율(%)"
+  },
+  "4fxEIx": {
+    "message": "Natural placement",
+    "translation": "자연스러운 배치"
+  },
+  "Ek_k_Q": {
+    "message": "Needs depth",
+    "translation": "깊이 필요"
+  },
+  "UyDcwK": {
+    "message": "Parallax",
+    "translation": "시차 효과"
+  },
+  "Kr1v1U": {
+    "message": "Preview on hover",
+    "translation": "마우스를 올리면 미리보기"
+  },
+  "hlMODd": {
+    "message": "Reset table",
+    "context": "put the table's settings back",
+    "translation": "테이블 초기화"
+  },
+  "4VQN2q": {
+    "message": "Reset table settings",
+    "translation": "테이블 설정 초기화"
+  },
+  "8OT456": {
+    "message": "Settings: {0}",
+    "comments": [
+      "Opens Settings at that section"
+    ],
+    "translation": "설정: {0}"
+  },
+  "ifu0mt": {
+    "message": "Show opponent's hand",
+    "translation": "상대 패 보기"
+  },
+  "Q7FDck": {
+    "message": "Speed",
+    "context": "animation speed",
+    "translation": "속도"
+  },
+  "TMNS59": {
+    "message": "Speed…",
+    "context": "animation speed",
+    "translation": "속도…"
+  },
+  "yI0x30": {
+    "message": "Split…",
+    "context": "the table between the halves",
+    "translation": "분할…"
+  },
+  "Qyf2Yu": {
+    "message": "Style",
+    "context": "the table's look",
+    "translation": "스타일"
+  },
+  "-wDRPC": {
+    "message": "Style…",
+    "context": "the table's look",
+    "translation": "스타일…"
+  },
+  "lW4c-5": {
+    "message": "Thickness",
+    "context": "the cards' thickness",
+    "translation": "두께"
+  },
+  "BPVdia": {
+    "message": "Thickness…",
+    "context": "the cards' thickness",
+    "translation": "두께…"
   }
 }

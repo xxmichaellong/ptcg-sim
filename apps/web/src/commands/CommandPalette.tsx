@@ -49,6 +49,8 @@ import {
   useCommandSource,
 } from './registry.js';
 import { appSettingCommands } from './settings-commands.js';
+import { boardViewSettings } from '../board/view/board-view-settings.js';
+import { CARD_BACK_VIEW_PREFERENCES } from '../card-backs/card-back-preferences.js';
 import { CARD_IMAGE_PREFERENCES } from '../i18n/card-image-language.js';
 import { LANGUAGE_PREFERENCES } from '../i18n/language-preference.js';
 import { depthSettings } from '../motion/depth-settings.js';
@@ -160,6 +162,9 @@ const useAppSettingCommands = (): void => {
   useSyncExternalStore(motion.subscribe, motion.getSnapshot);
   const depth = depthSettings();
   useSyncExternalStore(depth.subscribe, depth.getSnapshot);
+  const view = boardViewSettings();
+  useSyncExternalStore(view.subscribe, view.getSnapshot);
+  usePreference(CARD_BACK_VIEW_PREFERENCES);
   useCommandSource(appSettingCommands);
 };
 

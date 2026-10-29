@@ -176,12 +176,14 @@ test('a setting is chosen from its choices, and Escape steps back one at a time'
   test.setTimeout(120_000);
   await openSoloTable(page, false);
   await page.keyboard.press('Backquote');
-  await page.keyboard.type('table view');
-  await expect(selectedRow(page)).toContainText('Table view');
+  // Named as in Settings, its section beside it.
+  await page.keyboard.type('depth');
+  await expect(selectedRow(page)).toContainText('Depth…');
+  await expect(selectedRow(page)).toContainText('Table');
   await page.keyboard.press('Enter');
   await expect(
     palette(page).locator('.ptcgsim-command-palette__crumb')
-  ).toHaveText('Table view');
+  ).toHaveText('Depth');
   await page.keyboard.type('flat');
   await expect(selectedRow(page)).toContainText('Flat');
   // Escape: the search, then the screen, then the palette.
@@ -197,7 +199,7 @@ test('a setting is chosen from its choices, and Escape steps back one at a time'
   await page.keyboard.press('Escape');
   await expect(palette(page)).toHaveCount(0);
 
-  // Found from the root: "Table view › Flat" in one go.
+  // Found from the root: "Depth › Flat" in one go.
   await page.keyboard.press('Backquote');
   await page.keyboard.type('flat');
   await expect(selectedRow(page)).toContainText('Flat');
@@ -206,6 +208,20 @@ test('a setting is chosen from its choices, and Escape steps back one at a time'
   await expect(
     page.locator('.ptcgsim-board-surface[data-table-view="flat"]')
   ).toHaveCount(1);
+});
+
+test('opens Settings at the section asked for', async ({ page }) => {
+  test.setTimeout(120_000);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await openSoloTable(page, false);
+  await page.keyboard.press('Backquote');
+  await page.keyboard.type('settings: language');
+  await expect(selectedRow(page)).toContainText('Settings: Language');
+  await page.keyboard.press('Enter');
+  await expect(palette(page)).toHaveCount(0);
+  await expect(page.locator('#settings')).toBeVisible();
+  await expect(page.locator('#languageSettings')).toBeInViewport();
+  await expect(page.locator('#languageSelect')).toBeInViewport();
 });
 
 test('a dangerous command asks for a second Enter', async ({ page }) => {

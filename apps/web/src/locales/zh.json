@@ -6645,5 +6645,129 @@
   "sFWtjQ": {
     "message": "Watch replay…",
     "translation": "观看回放…"
+  },
+  "qTeX2A": {
+    "message": "Angle",
+    "context": "the table's tilt",
+    "translation": "角度"
+  },
+  "y3FF_5": {
+    "message": "Angle {count}°",
+    "translation": "角度 {count}°"
+  },
+  "tuSC5H": {
+    "message": "Angle in degrees",
+    "translation": "角度（度数）"
+  },
+  "4GuGTB": {
+    "message": "Angle…",
+    "context": "the table's tilt",
+    "translation": "角度…"
+  },
+  "WDup2O": {
+    "message": "Animate stacks",
+    "translation": "牌堆动画"
+  },
+  "n7tTKf": {
+    "message": "Card images…",
+    "translation": "卡牌图片…"
+  },
+  "SOHyuG": {
+    "message": "Depth…",
+    "context": "how 3D the table looks",
+    "translation": "景深…"
+  },
+  "hLFd9M": {
+    "message": "Halves",
+    "context": "which halves of the table",
+    "translation": "半场"
+  },
+  "ZWEhc2": {
+    "message": "Halves…",
+    "context": "which halves of the table",
+    "translation": "半场…"
+  },
+  "szYoqS": {
+    "message": "Lift while dragging",
+    "translation": "拖动时抬起"
+  },
+  "7WBRHp": {
+    "message": "My half {count}% of the table",
+    "translation": "我的半场占牌桌 {count}%"
+  },
+  "gQKQDm": {
+    "message": "My half, in percent",
+    "translation": "我的半场（百分比）"
+  },
+  "4fxEIx": {
+    "message": "Natural placement",
+    "translation": "自然摆放"
+  },
+  "Ek_k_Q": {
+    "message": "Needs depth",
+    "translation": "需要景深"
+  },
+  "UyDcwK": {
+    "message": "Parallax",
+    "translation": "视差"
+  },
+  "Kr1v1U": {
+    "message": "Preview on hover",
+    "translation": "悬停预览"
+  },
+  "hlMODd": {
+    "message": "Reset table",
+    "context": "put the table's settings back",
+    "translation": "重置牌桌"
+  },
+  "4VQN2q": {
+    "message": "Reset table settings",
+    "translation": "重置牌桌设置"
+  },
+  "8OT456": {
+    "message": "Settings: {0}",
+    "comments": [
+      "Opens Settings at that section"
+    ],
+    "translation": "设置：{0}"
+  },
+  "ifu0mt": {
+    "message": "Show opponent's hand",
+    "translation": "显示对手的手牌"
+  },
+  "Q7FDck": {
+    "message": "Speed",
+    "context": "animation speed",
+    "translation": "速度"
+  },
+  "TMNS59": {
+    "message": "Speed…",
+    "context": "animation speed",
+    "translation": "速度…"
+  },
+  "yI0x30": {
+    "message": "Split…",
+    "context": "the table between the halves",
+    "translation": "分割…"
+  },
+  "Qyf2Yu": {
+    "message": "Style",
+    "context": "the table's look",
+    "translation": "样式"
+  },
+  "-wDRPC": {
+    "message": "Style…",
+    "context": "the table's look",
+    "translation": "样式…"
+  },
+  "lW4c-5": {
+    "message": "Thickness",
+    "context": "the cards' thickness",
+    "translation": "厚度"
+  },
+  "BPVdia": {
+    "message": "Thickness…",
+    "context": "the cards' thickness",
+    "translation": "厚度…"
   }
 }

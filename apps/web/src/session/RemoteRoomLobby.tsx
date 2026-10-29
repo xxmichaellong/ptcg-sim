@@ -1676,7 +1676,6 @@ export const RemoteRoomLobby = ({
         open={overlay === 'settings'}
         onOpenChange={(open) => setOverlay(open ? 'settings' : undefined)}
         {...(settingsHost.section ? { section: settingsHost.section } : {})}
-        solo={parkedSolo !== undefined}
         darkMode={effectivePreferences.darkMode}
         onDarkModeChange={setDarkMode}
         onChangeBackground={backgroundSelection.chooseBackground}

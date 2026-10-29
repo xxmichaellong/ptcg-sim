@@ -911,6 +911,56 @@ describe('LegacyBoardChrome', () => {
         document.querySelector('[data-ptcgsim-overlay="tooltip"]')?.textContent
       ).toBe('Stop sorting hand')
     );
+
+    // At a Solo table the far hand's pill covers it: an eye between the
+    // count and Sort, latched in while hidden.
+    const onChange = vi.fn();
+    const covered = (hidden: boolean) =>
+      act(async () =>
+        root.render(
+          <LegacyBoardChrome
+            layout={createTableLayoutSnapshot({
+              ...layoutState(),
+              geometryVersion: TABLE_LAYOUT_GEOMETRY_VERSION,
+              shellMode: 'fullscreen',
+              vertical: DEFAULT_TABLE_VERTICAL_LAYOUT,
+            })}
+            localPlayerId={asPlayerId('spike-blue')}
+            players={players}
+            darkMode
+            actions={{ toggleOncePerGame: vi.fn(), toggleHandSort }}
+            handCounts={[
+              handCount('spike-blue', 'local', 7),
+              handCount('spike-red', 'opponent', 6),
+            ]}
+            handCover={{
+              playerId: asPlayerId('spike-red'),
+              hidden,
+              onChange,
+            }}
+          />
+        )
+      );
+    await covered(false);
+    expect(
+      host.querySelector('.table-hand-pill--local .table-hand-pill__cover')
+    ).toBeNull();
+    const far = host.querySelector<HTMLElement>('.table-hand-pill--opponent')!;
+    expect(
+      [...far.children].map((child) => child.className.split(' ').at(-1))
+    ).toEqual([
+      'table-hand-pill__count',
+      'table-hand-pill__cover',
+      'table-hand-pill__sort',
+    ]);
+    const eye = far.querySelector<HTMLInputElement>('#hideHandCheckbox')!;
+    expect(eye.checked).toBe(false);
+    await act(async () => eye.click());
+    expect(onChange).toHaveBeenCalledWith(true);
+    await covered(true);
+    expect(
+      host.querySelector<HTMLInputElement>('#hideHandCheckbox')!.checked
+    ).toBe(true);
     await act(async () => root.unmount());
   });
 

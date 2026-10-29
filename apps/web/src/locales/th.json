@@ -6645,5 +6645,129 @@
   "sFWtjQ": {
     "message": "Watch replay…",
     "translation": "ดูรีเพลย์…"
+  },
+  "qTeX2A": {
+    "message": "Angle",
+    "context": "the table's tilt",
+    "translation": "มุมมอง"
+  },
+  "y3FF_5": {
+    "message": "Angle {count}°",
+    "translation": "มุมมอง {count}°"
+  },
+  "tuSC5H": {
+    "message": "Angle in degrees",
+    "translation": "มุมมองเป็นองศา"
+  },
+  "4GuGTB": {
+    "message": "Angle…",
+    "context": "the table's tilt",
+    "translation": "มุมมอง…"
+  },
+  "WDup2O": {
+    "message": "Animate stacks",
+    "translation": "เคลื่อนไหวสำรับ"
+  },
+  "n7tTKf": {
+    "message": "Card images…",
+    "translation": "รูปการ์ด…"
+  },
+  "SOHyuG": {
+    "message": "Depth…",
+    "context": "how 3D the table looks",
+    "translation": "ความลึก…"
+  },
+  "hLFd9M": {
+    "message": "Halves",
+    "context": "which halves of the table",
+    "translation": "ฝั่ง"
+  },
+  "ZWEhc2": {
+    "message": "Halves…",
+    "context": "which halves of the table",
+    "translation": "ฝั่ง…"
+  },
+  "szYoqS": {
+    "message": "Lift while dragging",
+    "translation": "ยกการ์ดขณะลาก"
+  },
+  "7WBRHp": {
+    "message": "My half {count}% of the table",
+    "translation": "ฝั่งของฉัน {count}% ของโต๊ะ"
+  },
+  "gQKQDm": {
+    "message": "My half, in percent",
+    "translation": "ฝั่งของฉัน เป็นเปอร์เซ็นต์"
+  },
+  "4fxEIx": {
+    "message": "Natural placement",
+    "translation": "วางแบบธรรมชาติ"
+  },
+  "Ek_k_Q": {
+    "message": "Needs depth",
+    "translation": "ต้องใช้ความลึก"
+  },
+  "UyDcwK": {
+    "message": "Parallax",
+    "translation": "พาราแลกซ์"
+  },
+  "Kr1v1U": {
+    "message": "Preview on hover",
+    "translation": "แสดงตัวอย่างเมื่อเลื่อนเมาส์ผ่าน"
+  },
+  "hlMODd": {
+    "message": "Reset table",
+    "context": "put the table's settings back",
+    "translation": "รีเซ็ตโต๊ะ"
+  },
+  "4VQN2q": {
+    "message": "Reset table settings",
+    "translation": "รีเซ็ตการตั้งค่าโต๊ะ"
+  },
+  "8OT456": {
+    "message": "Settings: {0}",
+    "comments": [
+      "Opens Settings at that section"
+    ],
+    "translation": "การตั้งค่า: {0}"
+  },
+  "ifu0mt": {
+    "message": "Show opponent's hand",
+    "translation": "แสดงการ์ดบนมือของฝ่ายตรงข้าม"
+  },
+  "Q7FDck": {
+    "message": "Speed",
+    "context": "animation speed",
+    "translation": "ความเร็ว"
+  },
+  "TMNS59": {
+    "message": "Speed…",
+    "context": "animation speed",
+    "translation": "ความเร็ว…"
+  },
+  "yI0x30": {
+    "message": "Split…",
+    "context": "the table between the halves",
+    "translation": "สัดส่วน…"
+  },
+  "Qyf2Yu": {
+    "message": "Style",
+    "context": "the table's look",
+    "translation": "สไตล์"
+  },
+  "-wDRPC": {
+    "message": "Style…",
+    "context": "the table's look",
+    "translation": "สไตล์…"
+  },
+  "lW4c-5": {
+    "message": "Thickness",
+    "context": "the cards' thickness",
+    "translation": "ความหนา"
+  },
+  "BPVdia": {
+    "message": "Thickness…",
+    "context": "the cards' thickness",
+    "translation": "ความหนา…"
   }
 }

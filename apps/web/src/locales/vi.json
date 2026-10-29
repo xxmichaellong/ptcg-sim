@@ -6645,5 +6645,129 @@
   "sFWtjQ": {
     "message": "Watch replay…",
     "translation": "Xem bản xem lại…"
+  },
+  "qTeX2A": {
+    "message": "Angle",
+    "context": "the table's tilt",
+    "translation": "Góc nghiêng"
+  },
+  "y3FF_5": {
+    "message": "Angle {count}°",
+    "translation": "Góc nghiêng {count}°"
+  },
+  "tuSC5H": {
+    "message": "Angle in degrees",
+    "translation": "Góc nghiêng theo độ"
+  },
+  "4GuGTB": {
+    "message": "Angle…",
+    "context": "the table's tilt",
+    "translation": "Góc nghiêng…"
+  },
+  "WDup2O": {
+    "message": "Animate stacks",
+    "translation": "Hiệu ứng chồng bài"
+  },
+  "n7tTKf": {
+    "message": "Card images…",
+    "translation": "Hình ảnh lá bài…"
+  },
+  "SOHyuG": {
+    "message": "Depth…",
+    "context": "how 3D the table looks",
+    "translation": "Độ sâu…"
+  },
+  "hLFd9M": {
+    "message": "Halves",
+    "context": "which halves of the table",
+    "translation": "Nửa bàn"
+  },
+  "ZWEhc2": {
+    "message": "Halves…",
+    "context": "which halves of the table",
+    "translation": "Nửa bàn…"
+  },
+  "szYoqS": {
+    "message": "Lift while dragging",
+    "translation": "Nhấc lên khi kéo"
+  },
+  "7WBRHp": {
+    "message": "My half {count}% of the table",
+    "translation": "Nửa bàn của tôi chiếm {count}% thảm chơi"
+  },
+  "gQKQDm": {
+    "message": "My half, in percent",
+    "translation": "Nửa bàn của tôi, theo phần trăm"
+  },
+  "4fxEIx": {
+    "message": "Natural placement",
+    "translation": "Đặt tự nhiên"
+  },
+  "Ek_k_Q": {
+    "message": "Needs depth",
+    "translation": "Cần độ sâu"
+  },
+  "UyDcwK": {
+    "message": "Parallax",
+    "translation": "Parallax"
+  },
+  "Kr1v1U": {
+    "message": "Preview on hover",
+    "translation": "Xem trước khi di chuột"
+  },
+  "hlMODd": {
+    "message": "Reset table",
+    "context": "put the table's settings back",
+    "translation": "Đặt lại bàn"
+  },
+  "4VQN2q": {
+    "message": "Reset table settings",
+    "translation": "Đặt lại cài đặt bàn"
+  },
+  "8OT456": {
+    "message": "Settings: {0}",
+    "comments": [
+      "Opens Settings at that section"
+    ],
+    "translation": "Cài đặt: {0}"
+  },
+  "ifu0mt": {
+    "message": "Show opponent's hand",
+    "translation": "Hiện bài trên tay của đối thủ"
+  },
+  "Q7FDck": {
+    "message": "Speed",
+    "context": "animation speed",
+    "translation": "Tốc độ"
+  },
+  "TMNS59": {
+    "message": "Speed…",
+    "context": "animation speed",
+    "translation": "Tốc độ…"
+  },
+  "yI0x30": {
+    "message": "Split…",
+    "context": "the table between the halves",
+    "translation": "Chia…"
+  },
+  "Qyf2Yu": {
+    "message": "Style",
+    "context": "the table's look",
+    "translation": "Kiểu dáng"
+  },
+  "-wDRPC": {
+    "message": "Style…",
+    "context": "the table's look",
+    "translation": "Kiểu dáng…"
+  },
+  "lW4c-5": {
+    "message": "Thickness",
+    "context": "the cards' thickness",
+    "translation": "Độ dày"
+  },
+  "BPVdia": {
+    "message": "Thickness…",
+    "context": "the cards' thickness",
+    "translation": "Độ dày…"
   }
 }

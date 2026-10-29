@@ -3,8 +3,17 @@ import { CARD_IMAGE_LANGUAGES, isCardImageLanguage } from '@ptcgsim/deck-core';
 import { useEffect, useSyncExternalStore } from 'react';
 
 import { TableArtControls } from '../../board/view/TableArtControls.js';
+import {
+  CardViewControls,
+  DepthMotionControls,
+  ResetTableButton,
+  TableDepthControls,
+  TableHalvesControls,
+  ZoneOutlinesControl,
+} from '../../board/view/TableViewControls.js';
 import { CARD_BACK_VIEW_PREFERENCES } from '../../card-backs/card-back-preferences.js';
-import { TableViewControls } from '../../board/view/TableViewControls.js';
+import { settingsSheetCommands } from '../../commands/settings-commands.js';
+import { useCommandSource } from '../../commands/registry.js';
 import {
   CARD_IMAGE_LANGUAGE_NAMES,
   CARD_IMAGE_PREFERENCES,
@@ -33,9 +42,12 @@ import { preferences } from '../../preferences/preference-store.js';
 import { useHotkeyHints } from '../../hotkeys/hotkey-preferences.js';
 import { openShortcutsDialog } from '../../hotkeys/shortcuts-dialog-state.js';
 import { TOUCH_ONLY_QUERY, useMediaQuery } from '../../ui/breakpoints.js';
+import { DISCORD_URL, openHelpPage, RELEASE_NAME } from './help-pages.js';
 import './settings-sheet.css';
 import {
+  openSettingsSheet,
   SETTINGS_SECTION_IDS,
+  SETTINGS_SECTIONS,
   type SettingsSectionRequest,
 } from './settings-sheet-state.js';
 
@@ -93,7 +105,7 @@ const MotionControls = () => {
       />
       <SegmentedControl
         name="animationSpeed"
-        legend={t`Animation speed`}
+        legend={t({ message: 'Speed', context: 'animation speed' })}
         choices={animationSpeedChoices}
         value={motion.animationSpeed}
         onChange={(animationSpeed) => store.update({ animationSpeed })}
@@ -238,8 +250,6 @@ export interface SettingsSheetProps {
   readonly onOpenChange: (open: boolean) => void;
   /** Where to scroll it to as it opens ("Settings: Cards"). */
   readonly section?: SettingsSectionRequest;
-  /** Solo offers to cover the opponent's hand. */
-  readonly solo: boolean;
   readonly darkMode: boolean;
   readonly onDarkModeChange: (enabled: boolean) => void;
   readonly onChangeBackground: () => void;
@@ -255,17 +265,50 @@ export interface SettingsSheetProps {
   };
 }
 
+/** The release, the community and the sponsors, at Settings' foot. */
+const SettingsFooter = ({ onLeave }: { readonly onLeave: () => void }) => {
+  const { t } = useLingui();
+  const link = (id: string, label: string, open: () => void) => (
+    <button
+      id={id}
+      type="button"
+      className="ptcgsim-settings-footer__link"
+      onClick={open}
+    >
+      {label}
+    </button>
+  );
+  return (
+    <footer className="ptcgsim-settings-footer">
+      {link('changelogButton', RELEASE_NAME, () => {
+        onLeave();
+        openHelpPage('changelog');
+      })}
+      <span aria-hidden="true">·</span>
+      {link('discordButton', t`Discord`, () => {
+        window.open(DISCORD_URL, '_blank', 'noopener,noreferrer');
+      })}
+      <span aria-hidden="true">·</span>
+      {link('donationsButton', t`Sponsors`, () => {
+        onLeave();
+        openHelpPage('donations');
+      })}
+    </footer>
+  );
+};
+
 /**
- * Settings (ADR-030), in order of use: what the table shows, how the page
- * looks, how much it moves, the keys, and about. Every choice applies live
- * and is kept on this device. Beside the table where there is room, so the
- * table changes in view; from the bottom on a phone.
+ * Settings (ADR-030), one sheet in sections: the room (in one), the table,
+ * the cards, motion, the keys (where there are keys) and the language,
+ * with the release and the community at its foot. Every choice applies
+ * live and is kept on this device. Beside the table where there is room,
+ * so the table changes in view; from the bottom on a phone. The palette
+ * finds each row by the same name, and each section ("Settings: Cards").
  */
 export const SettingsSheet = ({
   open,
   onOpenChange,
   section,
-  solo,
   darkMode,
   onDarkModeChange,
   onChangeBackground,
@@ -274,6 +317,7 @@ export const SettingsSheet = ({
 }: SettingsSheetProps) => {
   const { t } = useLingui();
   const touchOnly = useMediaQuery(TOUCH_ONLY_QUERY);
+  const hint = useHotkeyHints();
   useEffect(() => {
     if (!open || !section) return;
     // Once the sheet is drawn.
@@ -284,6 +328,22 @@ export const SettingsSheet = ({
     });
     return () => cancelAnimationFrame(frame);
   }, [open, section]);
+  const sections = SETTINGS_SECTIONS.filter(
+    (id) => (id !== 'room' || boardFlip) && (id !== 'keys' || !touchOnly)
+  );
+  useCommandSource(() =>
+    settingsSheetCommands({
+      sections,
+      open: (at) => {
+        openSettingsSheet(at);
+      },
+      hint: hint('table.settings'),
+      darkMode,
+      onDarkModeChange,
+    })
+  );
+  // One window at a time: Settings gives way to what it opens.
+  const leave = (): void => onOpenChange(false);
   return (
     <Sheet
       open={open}
@@ -306,17 +366,7 @@ export const SettingsSheet = ({
         </SettingsSection>
       ) : null}
       <SettingsSection title={t`Table`} id="settingsTable">
-        <TableViewControls solo={solo} />
-      </SettingsSection>
-      <SettingsSection title={t`Appearance`}>
         <TableArtControls />
-        <SwitchRow
-          id="darkModeCheckbox"
-          label={t`Dark mode`}
-          checked={darkMode}
-          onChange={onDarkModeChange}
-        />
-        <OpponentCardBacksControl />
         <div className="ptcgsim-settings-actions">
           <button
             id="changeBackgroundButton"
@@ -337,25 +387,42 @@ export const SettingsSheet = ({
             </button>
           ) : null}
         </div>
+        <SwitchRow
+          id="darkModeCheckbox"
+          label={t`Dark mode`}
+          checked={darkMode}
+          onChange={onDarkModeChange}
+        />
+        <TableDepthControls />
+        <TableHalvesControls />
+        <ZoneOutlinesControl />
+        <ResetTableButton />
       </SettingsSection>
-      <SettingsSection title={t`Language`} id="languageSettings">
-        <LanguageControl />
-        <CardImageLanguageControl />
+      <SettingsSection title={t`Cards`} id="settingsCards">
+        <CardViewControls touchOnly={touchOnly} />
+        <OpponentCardBacksControl />
+        {/* A default back for new decks joins these (the deck screen's
+            card-back chooser). */}
       </SettingsSection>
       <SettingsSection title={t`Motion`} id="motionSettings">
         <MotionControls />
+        <DepthMotionControls touchOnly={touchOnly} />
       </SettingsSection>
       {touchOnly ? null : (
         <SettingsSection title={t`Keys`} id="settingsKeys">
           <KeysControl
             onEdit={() => {
-              // One window at a time: Settings gives way to the keys.
-              onOpenChange(false);
+              leave();
               openShortcutsDialog();
             }}
           />
         </SettingsSection>
       )}
+      <SettingsSection title={t`Language`} id="languageSettings">
+        <LanguageControl />
+        <CardImageLanguageControl />
+      </SettingsSection>
+      <SettingsFooter onLeave={leave} />
     </Sheet>
   );
 };

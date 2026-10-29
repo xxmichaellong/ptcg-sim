@@ -27,8 +27,51 @@
   text-align: center;
 }
 
+/* The release, the community and the sponsors, quiet at the foot. */
+.ptcgsim-settings-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1) var(--space-2);
+  margin: var(--space-2) 0 var(--space-1);
+  color: var(--color-text-faint);
+  font-size: var(--text-xs);
+}
+
+.ptcgsim-settings-footer__link {
+  padding: var(--space-1);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.ptcgsim-settings-footer__link:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ptcgsim-settings-footer__link:hover {
+    color: var(--color-accent);
+    text-decoration: underline;
+  }
+}
+
+/* Reset sits at the end of the Table section, on its own. */
+.ptcgsim-settings-reset {
+  justify-self: start;
+}
+
 @media (pointer: coarse) {
   .ptcgsim-settings-row {
     min-height: 44px;
+  }
+  .ptcgsim-settings-footer__link {
+    min-height: 44px;
+    padding-inline: var(--space-2);
   }
 }

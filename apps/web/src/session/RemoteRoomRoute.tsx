@@ -955,7 +955,6 @@ export const RemoteRoomRoute = ({
                 ...roomCommands({
                   menu,
                   shortcutsHint: hint('table.shortcuts'),
-                  settingsHint: hint('table.settings'),
                   log: {
                     open: activity.open,
                     setOpen: activity.setOpen,
@@ -1023,7 +1022,6 @@ export const RemoteRoomRoute = ({
               {...(settingsHost.section
                 ? { section: settingsHost.section }
                 : {})}
-              solo={solo}
               darkMode={effectivePreferences.darkMode}
               onDarkModeChange={setDarkMode}
               onChangeBackground={backgroundSelection.chooseBackground}

@@ -6645,5 +6645,129 @@
   "sFWtjQ": {
     "message": "Watch replay…",
     "translation": "リプレイを見る…"
+  },
+  "qTeX2A": {
+    "message": "Angle",
+    "context": "the table's tilt",
+    "translation": "角度"
+  },
+  "y3FF_5": {
+    "message": "Angle {count}°",
+    "translation": "角度 {count}°"
+  },
+  "tuSC5H": {
+    "message": "Angle in degrees",
+    "translation": "角度(度数)"
+  },
+  "4GuGTB": {
+    "message": "Angle…",
+    "context": "the table's tilt",
+    "translation": "角度…"
+  },
+  "WDup2O": {
+    "message": "Animate stacks",
+    "translation": "山札の動きを表示"
+  },
+  "n7tTKf": {
+    "message": "Card images…",
+    "translation": "カード画像…"
+  },
+  "SOHyuG": {
+    "message": "Depth…",
+    "context": "how 3D the table looks",
+    "translation": "奥行き…"
+  },
+  "hLFd9M": {
+    "message": "Halves",
+    "context": "which halves of the table",
+    "translation": "ハーフ"
+  },
+  "ZWEhc2": {
+    "message": "Halves…",
+    "context": "which halves of the table",
+    "translation": "ハーフ…"
+  },
+  "szYoqS": {
+    "message": "Lift while dragging",
+    "translation": "ドラッグ中に持ち上げる"
+  },
+  "7WBRHp": {
+    "message": "My half {count}% of the table",
+    "translation": "自分側 テーブルの{count}%"
+  },
+  "gQKQDm": {
+    "message": "My half, in percent",
+    "translation": "自分側(%)"
+  },
+  "4fxEIx": {
+    "message": "Natural placement",
+    "translation": "自然な配置"
+  },
+  "Ek_k_Q": {
+    "message": "Needs depth",
+    "translation": "奥行きが必要です"
+  },
+  "UyDcwK": {
+    "message": "Parallax",
+    "translation": "視差"
+  },
+  "Kr1v1U": {
+    "message": "Preview on hover",
+    "translation": "ホバーでプレビュー"
+  },
+  "hlMODd": {
+    "message": "Reset table",
+    "context": "put the table's settings back",
+    "translation": "テーブルをリセット"
+  },
+  "4VQN2q": {
+    "message": "Reset table settings",
+    "translation": "テーブル設定をリセット"
+  },
+  "8OT456": {
+    "message": "Settings: {0}",
+    "comments": [
+      "Opens Settings at that section"
+    ],
+    "translation": "設定: {0}"
+  },
+  "ifu0mt": {
+    "message": "Show opponent's hand",
+    "translation": "相手の手札を表示"
+  },
+  "Q7FDck": {
+    "message": "Speed",
+    "context": "animation speed",
+    "translation": "速度"
+  },
+  "TMNS59": {
+    "message": "Speed…",
+    "context": "animation speed",
+    "translation": "速度…"
+  },
+  "yI0x30": {
+    "message": "Split…",
+    "context": "the table between the halves",
+    "translation": "分割…"
+  },
+  "Qyf2Yu": {
+    "message": "Style",
+    "context": "the table's look",
+    "translation": "スタイル"
+  },
+  "-wDRPC": {
+    "message": "Style…",
+    "context": "the table's look",
+    "translation": "スタイル…"
+  },
+  "lW4c-5": {
+    "message": "Thickness",
+    "context": "the cards' thickness",
+    "translation": "厚み"
+  },
+  "BPVdia": {
+    "message": "Thickness…",
+    "context": "the cards' thickness",
+    "translation": "厚み…"
   }
 }

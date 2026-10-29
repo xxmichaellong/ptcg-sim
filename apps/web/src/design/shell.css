@@ -236,6 +236,52 @@ textarea {
 .board-spike-host[data-geometry='2'] .table-hand-pill--opponent {
   --table-hand-tint: var(--color-opponent);
 }
+/* Solo's far hand: an eye between the count and Sort covers it, latched in
+   (as Sort is) while the hand is hidden. */
+.board-spike-host[data-geometry='2']
+  .table-hand-pill
+  .legacy-hand-sort--toggle.table-hand-pill__cover {
+  width: 30px;
+  height: auto;
+  border: 0;
+  border-left: 1px solid var(--color-border);
+  border-radius: 0;
+}
+.board-spike-host[data-geometry='2']
+  .table-hand-pill
+  .legacy-hand-sort--toggle.table-hand-pill__cover:last-child {
+  border-radius: 0 999px 999px 0;
+}
+.board-spike-host[data-geometry='2']
+  .table-hand-pill
+  .legacy-hand-sort--toggle.table-hand-pill__cover:not(:has(:checked)) {
+  background: transparent;
+  box-shadow: none;
+}
+.board-spike-host[data-geometry='2']
+  .table-hand-pill
+  .legacy-hand-sort--toggle.table-hand-pill__cover
+  svg {
+  width: 14px;
+  height: 14px;
+}
+.board-spike-host[data-geometry='2']
+  .table-hand-pill
+  .legacy-hand-sort--toggle.table-hand-pill__cover:has(input:focus-visible) {
+  outline-color: var(--color-text);
+  outline-offset: -2px;
+  box-shadow: none;
+}
+@media (pointer: coarse) {
+  .board-spike-host[data-geometry='2']
+    .table-hand-pill
+    .legacy-hand-sort--toggle.table-hand-pill__cover
+    input {
+    inset-block: -6px;
+    width: auto;
+    height: auto;
+  }
+}
 
 /* Sort hand: an icon toggle at the head of the corner's markers. On, it is
    latched in: sunk into its socket in the seat's colour, with a bar under

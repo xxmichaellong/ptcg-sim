@@ -6645,5 +6645,129 @@
   "sFWtjQ": {
     "message": "Watch replay…",
     "translation": "Assistir ao replay…"
+  },
+  "qTeX2A": {
+    "message": "Angle",
+    "context": "the table's tilt",
+    "translation": "Ângulo"
+  },
+  "y3FF_5": {
+    "message": "Angle {count}°",
+    "translation": "Ângulo de {count}°"
+  },
+  "tuSC5H": {
+    "message": "Angle in degrees",
+    "translation": "Ângulo em graus"
+  },
+  "4GuGTB": {
+    "message": "Angle…",
+    "context": "the table's tilt",
+    "translation": "Ângulo…"
+  },
+  "WDup2O": {
+    "message": "Animate stacks",
+    "translation": "Animar pilhas"
+  },
+  "n7tTKf": {
+    "message": "Card images…",
+    "translation": "Imagens das cartas…"
+  },
+  "SOHyuG": {
+    "message": "Depth…",
+    "context": "how 3D the table looks",
+    "translation": "Profundidade…"
+  },
+  "hLFd9M": {
+    "message": "Halves",
+    "context": "which halves of the table",
+    "translation": "Metades"
+  },
+  "ZWEhc2": {
+    "message": "Halves…",
+    "context": "which halves of the table",
+    "translation": "Metades…"
+  },
+  "szYoqS": {
+    "message": "Lift while dragging",
+    "translation": "Levantar ao arrastar"
+  },
+  "7WBRHp": {
+    "message": "My half {count}% of the table",
+    "translation": "Minha metade: {count}% da mesa"
+  },
+  "gQKQDm": {
+    "message": "My half, in percent",
+    "translation": "Minha metade, em porcentagem"
+  },
+  "4fxEIx": {
+    "message": "Natural placement",
+    "translation": "Posição natural"
+  },
+  "Ek_k_Q": {
+    "message": "Needs depth",
+    "translation": "Requer profundidade"
+  },
+  "UyDcwK": {
+    "message": "Parallax",
+    "translation": "Paralaxe"
+  },
+  "Kr1v1U": {
+    "message": "Preview on hover",
+    "translation": "Prévia ao passar o mouse"
+  },
+  "hlMODd": {
+    "message": "Reset table",
+    "context": "put the table's settings back",
+    "translation": "Redefinir mesa"
+  },
+  "4VQN2q": {
+    "message": "Reset table settings",
+    "translation": "Redefinir configurações da mesa"
+  },
+  "8OT456": {
+    "message": "Settings: {0}",
+    "comments": [
+      "Opens Settings at that section"
+    ],
+    "translation": "Configurações: {0}"
+  },
+  "ifu0mt": {
+    "message": "Show opponent's hand",
+    "translation": "Mostrar a mão do oponente"
+  },
+  "Q7FDck": {
+    "message": "Speed",
+    "context": "animation speed",
+    "translation": "Velocidade"
+  },
+  "TMNS59": {
+    "message": "Speed…",
+    "context": "animation speed",
+    "translation": "Velocidade…"
+  },
+  "yI0x30": {
+    "message": "Split…",
+    "context": "the table between the halves",
+    "translation": "Divisão…"
+  },
+  "Qyf2Yu": {
+    "message": "Style",
+    "context": "the table's look",
+    "translation": "Estilo"
+  },
+  "-wDRPC": {
+    "message": "Style…",
+    "context": "the table's look",
+    "translation": "Estilo…"
+  },
+  "lW4c-5": {
+    "message": "Thickness",
+    "context": "the cards' thickness",
+    "translation": "Espessura"
+  },
+  "BPVdia": {
+    "message": "Thickness…",
+    "context": "the cards' thickness",
+    "translation": "Espessura…"
   }
 }

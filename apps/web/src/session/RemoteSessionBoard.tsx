@@ -1487,6 +1487,26 @@ export const RemoteSessionBoard = ({
       return playerId ? [{ node, playerId }] : [];
     });
   }, [boardState?.scene]);
+  // At a live Solo table the far hand's pill covers it (an eye): the hand
+  // of the seat not played from, at the top.
+  const farHandPlayerId =
+    roomMode === 'solo' && replayState.mode === 'live'
+      ? handCounts?.find(
+          (count) => count.playerId !== boardState?.scene?.bottomPlayerId
+        )?.playerId
+      : undefined;
+  const handCover = useMemo(
+    () =>
+      farHandPlayerId === undefined
+        ? undefined
+        : {
+            playerId: farHandPlayerId,
+            hidden: hideOpponentHand,
+            onChange: (hidden: boolean) =>
+              boardViewSettings().update({ hideOpponentHand: hidden }),
+          },
+    [farHandPlayerId, hideOpponentHand]
+  );
 
   const deckPlusSides =
     layout && boardState?.scene
@@ -1532,6 +1552,7 @@ export const RemoteSessionBoard = ({
               coveredByPopup={coveredByPopup}
               oncePerGameMarkers={shownMarkers}
               handCounts={handCounts}
+              {...(handCover ? { handCover } : {})}
             />
           ) : null}
           {layout ? (

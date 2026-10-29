@@ -17,7 +17,6 @@ import { menuCommands } from './ui-commands.js';
 export interface RoomCommandContext {
   readonly menu: AppMenuModel;
   readonly shortcutsHint?: string | undefined;
-  readonly settingsHint?: string | undefined;
   readonly log: {
     readonly open: boolean;
     readonly setOpen: (open: boolean) => void;
@@ -40,7 +39,10 @@ export const roomCommands = (context: RoomCommandContext): PaletteCommand[] => {
     typeof document !== 'undefined' && document.fullscreenElement !== null;
   const commands = menuCommands([
     ...primaryEntries(context.menu),
-    ...restEntries(context.menu, fullscreen, context.settingsHint),
+    // Settings lists itself and its sections (SettingsSheet).
+    ...restEntries(context.menu, fullscreen).filter(
+      (entry) => !('id' in entry) || entry.id !== 'settingsButton'
+    ),
     ...helpEntries(context.shortcutsHint),
   ]);
   if (context.deckOpen) {

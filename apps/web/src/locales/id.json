@@ -6645,5 +6645,129 @@
   "sFWtjQ": {
     "message": "Watch replay…",
     "translation": "Tonton replay…"
+  },
+  "qTeX2A": {
+    "message": "Angle",
+    "context": "the table's tilt",
+    "translation": "Sudut"
+  },
+  "y3FF_5": {
+    "message": "Angle {count}°",
+    "translation": "Sudut {count}°"
+  },
+  "tuSC5H": {
+    "message": "Angle in degrees",
+    "translation": "Sudut dalam derajat"
+  },
+  "4GuGTB": {
+    "message": "Angle…",
+    "context": "the table's tilt",
+    "translation": "Sudut…"
+  },
+  "WDup2O": {
+    "message": "Animate stacks",
+    "translation": "Animasikan tumpukan"
+  },
+  "n7tTKf": {
+    "message": "Card images…",
+    "translation": "Gambar kartu…"
+  },
+  "SOHyuG": {
+    "message": "Depth…",
+    "context": "how 3D the table looks",
+    "translation": "Kedalaman…"
+  },
+  "hLFd9M": {
+    "message": "Halves",
+    "context": "which halves of the table",
+    "translation": "Sisi"
+  },
+  "ZWEhc2": {
+    "message": "Halves…",
+    "context": "which halves of the table",
+    "translation": "Sisi…"
+  },
+  "szYoqS": {
+    "message": "Lift while dragging",
+    "translation": "Angkat saat menyeret"
+  },
+  "7WBRHp": {
+    "message": "My half {count}% of the table",
+    "translation": "Sisiku {count}% dari meja"
+  },
+  "gQKQDm": {
+    "message": "My half, in percent",
+    "translation": "Sisiku, dalam persen"
+  },
+  "4fxEIx": {
+    "message": "Natural placement",
+    "translation": "Penempatan alami"
+  },
+  "Ek_k_Q": {
+    "message": "Needs depth",
+    "translation": "Perlu kedalaman"
+  },
+  "UyDcwK": {
+    "message": "Parallax",
+    "translation": "Paralaks"
+  },
+  "Kr1v1U": {
+    "message": "Preview on hover",
+    "translation": "Pratinjau saat diarahkan"
+  },
+  "hlMODd": {
+    "message": "Reset table",
+    "context": "put the table's settings back",
+    "translation": "Reset meja"
+  },
+  "4VQN2q": {
+    "message": "Reset table settings",
+    "translation": "Reset pengaturan meja"
+  },
+  "8OT456": {
+    "message": "Settings: {0}",
+    "comments": [
+      "Opens Settings at that section"
+    ],
+    "translation": "Pengaturan: {0}"
+  },
+  "ifu0mt": {
+    "message": "Show opponent's hand",
+    "translation": "Tampilkan Kartu Pegangan lawan"
+  },
+  "Q7FDck": {
+    "message": "Speed",
+    "context": "animation speed",
+    "translation": "Kecepatan"
+  },
+  "TMNS59": {
+    "message": "Speed…",
+    "context": "animation speed",
+    "translation": "Kecepatan…"
+  },
+  "yI0x30": {
+    "message": "Split…",
+    "context": "the table between the halves",
+    "translation": "Pembagian…"
+  },
+  "Qyf2Yu": {
+    "message": "Style",
+    "context": "the table's look",
+    "translation": "Gaya"
+  },
+  "-wDRPC": {
+    "message": "Style…",
+    "context": "the table's look",
+    "translation": "Gaya…"
+  },
+  "lW4c-5": {
+    "message": "Thickness",
+    "context": "the cards' thickness",
+    "translation": "Ketebalan"
+  },
+  "BPVdia": {
+    "message": "Thickness…",
+    "context": "the cards' thickness",
+    "translation": "Ketebalan…"
   }
 }

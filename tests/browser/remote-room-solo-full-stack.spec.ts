@@ -1,7 +1,6 @@
 import { expect, test } from '@playwright/test';
 
 import { overlayToast } from './support/overlay-dialogs.js';
-import { closeBoardView, openBoardView } from './support/board-view.js';
 import { chooseCardBackFromLink } from './support/card-back-chooser.js';
 import {
   routeCardBackImport,
@@ -194,7 +193,10 @@ test('the Solo table owns one authority and keeps it across the menu and sheets'
     await page.locator('.ptcgsim-board-surface').getAttribute('data-revision')
   );
 
-  await openBoardView(page);
+  // The far hand's pill covers it: an eye beside its count.
+  await expect(
+    page.locator('.table-hand-pill--opponent #hideHandCheckbox')
+  ).toBeVisible();
   await page.locator('#hideHandCheckbox').check();
   await expect
     .poll(() =>
@@ -243,7 +245,6 @@ test('the Solo table owns one authority and keeps it across the menu and sheets'
     )
     .toBe(true);
 
-  await closeBoardView(page);
   const opponentMove = await page.evaluate((cardId) => {
     const scene = window.__PTCG_RENDERER_SPIKE__?.scene;
     const source = scene?.cards.find((candidate) => candidate.id === cardId);

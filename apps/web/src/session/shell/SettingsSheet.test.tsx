@@ -13,7 +13,7 @@ import {
   DEFAULT_MOTION_SETTINGS,
   motionSettings,
 } from '../../motion/motion-settings.js';
-import { closeHelpPage, HelpSheetHost } from './help-pages.js';
+import { closeHelpPage, HelpSheetHost, RELEASE_NAME } from './help-pages.js';
 import { SettingsSheet, type SettingsSheetProps } from './SettingsSheet.js';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
@@ -34,7 +34,6 @@ const render = async (props: Partial<SettingsSheetProps> = {}) => {
   const full: SettingsSheetProps = {
     open: true,
     onOpenChange: vi.fn(),
-    solo: true,
     darkMode: true,
     onDarkModeChange: vi.fn(),
     onChangeBackground: vi.fn(),
@@ -82,7 +81,7 @@ afterEach(async () => {
 });
 
 describe('SettingsSheet', () => {
-  it('holds settings only, by use: the table, the page, language, motion', async () => {
+  it('holds settings only, in sections: the table, cards, motion, keys, language', async () => {
     await render();
     const sheet = document.querySelector<HTMLElement>('#settings')!;
     expect(sheet.dataset.variant).toBe('side');
@@ -91,7 +90,84 @@ describe('SettingsSheet', () => {
       [...sheet.querySelectorAll('.ptcgsim-settings-section__title')].map(
         (title) => title.textContent
       )
-    ).toEqual(['Table', 'Appearance', 'Language', 'Motion', 'Keys']);
+    ).toEqual(['Table', 'Cards', 'Motion', 'Keys', 'Language']);
+    const rows = (section: string) =>
+      [
+        ...sheet.querySelectorAll(
+          `#${section} input[id], #${section} select[id], #${section} button[id]`
+        ),
+      ].map((control) => control.id);
+    expect(rows('settingsTable')).toEqual(
+      expect.arrayContaining([
+        'tableArt-cream',
+        'changeBackgroundButton',
+        'darkModeCheckbox',
+        'tableViewAuto',
+        'tableTiltRange',
+        'tableThicknessRange',
+        'boardShowBoth',
+        'boardSplitRange',
+        'zoneOutlinesCheckbox',
+        'boardViewResetButton',
+      ])
+    );
+    expect(rows('settingsCards')).toEqual([
+      'opponentUprightCheckbox',
+      'hoverPreviewCheckbox',
+      'tableScatterCheckbox',
+      'opponentCardBacksCheckbox',
+    ]);
+    expect(rows('motionSettings')).toEqual(
+      expect.arrayContaining([
+        'reduceMotionSystem',
+        'animationSpeedNormal',
+        'tableLiftCheckbox',
+        'tableHeightMotionCheckbox',
+        'tableParallaxCheckbox',
+      ])
+    );
+    expect(rows('languageSettings')).toEqual([
+      'languageSelect',
+      'cardImageLanguageSelect',
+    ]);
+    // The table's pieces live on the mat's + and the palette; the Solo
+    // cover on the far hand's pill.
+    for (const id of [
+      'lostZoneCheckbox',
+      'vstarMarkerCheckbox',
+      'gxMarkerCheckbox',
+      'hideHandCheckbox',
+    ]) {
+      expect(sheet.querySelector(`#${id}`), id).toBeNull();
+    }
+  });
+
+  it('closes for the release notes and the sponsors at its foot, and opens Discord outside', async () => {
+    const open = vi.fn();
+    vi.stubGlobal('open', open);
+    const { onOpenChange } = await render();
+    const footer = document.querySelector('.ptcgsim-settings-footer')!;
+    expect(
+      [...footer.querySelectorAll('button')].map((button) => button.id)
+    ).toEqual(['changelogButton', 'discordButton', 'donationsButton']);
+    expect(footer.querySelector('#changelogButton')?.textContent).toBe(
+      RELEASE_NAME
+    );
+    await act(async () =>
+      footer.querySelector<HTMLButtonElement>('#discordButton')!.click()
+    );
+    expect(open).toHaveBeenCalledWith(
+      expect.stringContaining('discord.gg'),
+      '_blank',
+      'noopener,noreferrer'
+    );
+    expect(onOpenChange).not.toHaveBeenCalled();
+    await act(async () =>
+      footer.querySelector<HTMLButtonElement>('#changelogButton')!.click()
+    );
+    await settle();
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(document.querySelector('#changelog')).not.toBeNull();
   });
 
   it('gives way to the keyboard shortcuts, and has no keys on a touch screen', async () => {
@@ -120,7 +196,11 @@ describe('SettingsSheet', () => {
     // A Solo table has no other player to agree with.
     expect(input('coachingModeCheckbox')).toBeNull();
     const onChange = vi.fn();
-    await render({ solo: false, boardFlip: { allowed: false, onChange } });
+    await render({ boardFlip: { allowed: false, onChange } });
+    // The room's own switch leads.
+    expect(
+      document.querySelector('.ptcgsim-settings-section__title')?.textContent
+    ).toBe('Room');
     const allow = input('coachingModeCheckbox');
     expect(allow.checked).toBe(false);
     expect(document.querySelector('#settingsRoom')?.textContent).toContain(
@@ -128,7 +208,7 @@ describe('SettingsSheet', () => {
     );
     await act(async () => allow.click());
     expect(onChange).toHaveBeenCalledWith(true);
-    await render({ solo: false, boardFlip: { allowed: true, onChange } });
+    await render({ boardFlip: { allowed: true, onChange } });
     expect(input('coachingModeCheckbox').checked).toBe(true);
   });
 
@@ -139,22 +219,23 @@ describe('SettingsSheet', () => {
 
   it('applies how the table shows as each choice is made', async () => {
     await render();
-    expect(input('lostZoneCheckbox').checked).toBe(false);
-    await act(async () => input('lostZoneCheckbox').click());
-    // Shown even while empty; off again, shown while it holds cards.
-    expect(boardViewSettings().getSnapshot().lostZone).toBe('shown');
-    await act(async () => input('lostZoneCheckbox').click());
-    expect(boardViewSettings().getSnapshot().lostZone).toBe('auto');
-    await act(async () => input('lostZoneCheckbox').click());
     await act(async () => input('zoneOutlinesCheckbox').click());
     expect(boardViewSettings().getSnapshot().zoneOutlines).toBe(false);
-    await act(async () => input('hideHandCheckbox').click());
-    expect(boardViewSettings().getSnapshot().hideOpponentHand).toBe(true);
+    await act(async () => input('opponentUprightCheckbox').click());
+    expect(boardViewSettings().getSnapshot().opponentCardsUpright).toBe(true);
+  });
 
-    // Covering the opponent's hand is a Solo choice.
-    await render({ solo: false });
-    expect(document.querySelector('#hideHandCheckbox')).toBeNull();
-    expect(document.querySelector('#lostZoneCheckbox')).not.toBeNull();
+  it('scrolls to the section the palette asked for', async () => {
+    const scrolled: string[] = [];
+    const scroll = vi
+      .spyOn(HTMLElement.prototype, 'scrollIntoView')
+      .mockImplementation(function (this: HTMLElement) {
+        scrolled.push(this.id);
+      });
+    await render({ section: { section: 'motion', serial: 1 } });
+    await settle();
+    expect(scrolled).toEqual(['motionSettings']);
+    scroll.mockRestore();
   });
 
   it('changes the theme and the background through the room', async () => {

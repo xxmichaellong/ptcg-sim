@@ -749,16 +749,15 @@ describe('remote room lobby wiring', () => {
       showZoneOutlines: true,
       depth: expect.objectContaining({ mode: 'table' }),
     });
-    // How the table shows is in Settings too; covering the opponent's hand
-    // is a Solo choice, offered only with a Solo table.
+    // How the table shows is in Settings too; the table's pieces are on
+    // the mat's +, and the Solo cover on the far hand's pill.
     expect(present('#zoneOutlinesCheckbox')).toBe(true);
-    expect(present('#lostZoneCheckbox')).toBe(true);
+    expect(present('#lostZoneCheckbox')).toBe(false);
     expect(present('#hideHandCheckbox')).toBe(false);
     await act(async () => boardViewSettings().update({ zoneOutlines: false }));
     expect(lobbyBoardHarness.preferences?.showZoneOutlines).toBe(false);
-    // Settings holds settings only: the keys and the help pages live on
-    // the toolbar and in its menu.
-    expect(present('#settings #keyboardShortcutsButton')).toBe(false);
+    // The keys open from Settings in their own dialog.
+    expect(present('#settings #editShortcutsButton')).toBe(true);
     expect(element('#changeBackgroundButton').textContent).toBe(
       'Change background'
     );

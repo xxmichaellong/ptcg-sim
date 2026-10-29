@@ -1,5 +1,7 @@
 import { t } from '@lingui/core/macro';
 import { Trans, useLingui } from '@lingui/react/macro';
+import { EyeIcon } from '@phosphor-icons/react/dist/csr/Eye';
+import { EyeSlashIcon } from '@phosphor-icons/react/dist/csr/EyeSlash';
 import { SortAscendingIcon } from '@phosphor-icons/react/dist/csr/SortAscending';
 import type { MatchViewState, PlayerId } from '@ptcgsim/game-core';
 import {
@@ -335,6 +337,13 @@ export interface TableHandCount {
   readonly playerId: PlayerId;
 }
 
+/** The Solo table's cover over the far seat's hand. */
+export interface HandCover {
+  readonly playerId: PlayerId;
+  readonly hidden: boolean;
+  readonly onChange: (hidden: boolean) => void;
+}
+
 /** The least room between a hand's pill and the table's edge. */
 const HAND_PILL_EDGE = 4;
 /**
@@ -357,6 +366,7 @@ const TableHandPill = memo(function TableHandPill({
   playerSide,
   sorted,
   onToggleHandSort,
+  cover,
 }: {
   readonly count: TableHandCount;
   /** Where the table ends, short of a docked log. */
@@ -371,6 +381,8 @@ const TableHandPill = memo(function TableHandPill({
   readonly playerSide: 'local' | 'opponent';
   readonly sorted: boolean;
   readonly onToggleHandSort: LegacyBoardChromeActions['toggleHandSort'];
+  /** The far hand at a Solo table: an eye that covers it. */
+  readonly cover?: HandCover;
 }) {
   const { t } = useLingui();
   const { node, playerId } = count;
@@ -482,6 +494,35 @@ const TableHandPill = memo(function TableHandPill({
           {node.count}
         </span>
       </Tooltip>
+      {cover ? (
+        <Tooltip
+          content={
+            cover.hidden ? t`Show opponent's hand` : t`Hide opponent's hand`
+          }
+          side={node.side === 'local' ? 'top' : 'bottom'}
+        >
+          <label
+            className="legacy-hand-sort legacy-hand-sort--toggle table-hand-pill__cover"
+            htmlFor="hideHandCheckbox"
+            data-player-side={playerSide}
+          >
+            <input
+              id="hideHandCheckbox"
+              type="checkbox"
+              checked={cover.hidden}
+              onChange={(event) => cover.onChange(event.currentTarget.checked)}
+            />
+            {cover.hidden ? (
+              <EyeSlashIcon aria-hidden="true" weight="bold" />
+            ) : (
+              <EyeIcon aria-hidden="true" weight="bold" />
+            )}
+            <span className="ds-visually-hidden">
+              <Trans>Hide opponent's hand</Trans>
+            </span>
+          </label>
+        </Tooltip>
+      ) : null}
       {onToggleHandSort ? (
         <Tooltip
           content={
@@ -532,6 +573,7 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
   depth,
   oncePerGameMarkers = BOTH_MARKERS,
   handCounts,
+  handCover,
 }: {
   readonly layout: BoardLayoutSnapshot;
   readonly depth?: BoardDepthProjection;
@@ -560,6 +602,11 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
    * hand's Sort at its end.
    */
   readonly handCounts?: readonly TableHandCount[];
+  /**
+   * At a Solo table, the far hand's cover: an eye on its pill hides it
+   * from the near seat (and shows it again).
+   */
+  readonly handCover?: HandCover;
 }) {
   const pills =
     layout.geometryVersion === 2 && handCounts ? handCounts : undefined;
@@ -814,6 +861,9 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
             playerSide={count.playerId === localPlayerId ? 'local' : 'opponent'}
             sorted={sortedHandPlayerIds?.has(count.playerId) ?? false}
             onToggleHandSort={actions.toggleHandSort}
+            {...(handCover?.playerId === count.playerId
+              ? { cover: handCover }
+              : {})}
           />
         ) : null
       )}
