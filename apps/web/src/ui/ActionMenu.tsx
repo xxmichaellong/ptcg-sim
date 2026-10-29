@@ -1,6 +1,14 @@
 import { Menu } from '@base-ui/react/menu';
 import type { Icon } from '@phosphor-icons/react';
-import { useContext, useState, type ReactElement, type ReactNode } from 'react';
+import {
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ReactElement,
+  type ReactNode,
+  type RefObject,
+} from 'react';
 
 import { OverlayContainerContext } from './overlay-host-registry.js';
 import { OVERLAY_SURFACE_ATTRIBUTE } from './overlay-surface.js';
@@ -29,6 +37,71 @@ export type ActionMenuEntry =
   | { readonly kind: 'label'; readonly label: string };
 
 const decorative = { 'aria-hidden': true, focusable: false } as const;
+
+/** How long, at most, an open menu follows its button after a resize. */
+const FOLLOW_AFTER_RESIZE_FRAMES = 90;
+/** Frames the button must keep still before the menu stops following it. */
+const SETTLED_FRAMES = 3;
+
+/**
+ * An open menu follows its button while the page lays out again after the
+ * window changes size (a phone turned on its side). The menu is placed as
+ * the window resizes, before the page has moved the button: a window's
+ * panel sliding to its new place carries it there over several frames, and
+ * its first place may be off the new screen, which the positioner's own
+ * watch only looks at again a second later. So, frame by frame until the
+ * button keeps still, every move of it has the menu placed again, by the
+ * visual viewport's resize, which is what the positioner listens to.
+ */
+const useFollowAfterResize = (
+  open: boolean,
+  trigger: RefObject<HTMLElement | null>
+): void => {
+  useEffect(() => {
+    if (!open) return;
+    const view = trigger.current?.ownerDocument.defaultView;
+    const viewport = view?.visualViewport;
+    if (!view || !viewport) return;
+    let frame = 0;
+    let last: DOMRect | undefined;
+    let frames = 0;
+    let still = 0;
+    const follow = (): void => {
+      const rect = trigger.current?.getBoundingClientRect();
+      if (!rect) return;
+      if (
+        last === undefined ||
+        rect.x !== last.x ||
+        rect.y !== last.y ||
+        rect.width !== last.width ||
+        rect.height !== last.height
+      ) {
+        last = rect;
+        still = 0;
+        viewport.dispatchEvent(new Event('resize'));
+      } else {
+        still += 1;
+      }
+      frames += 1;
+      if (still < SETTLED_FRAMES && frames < FOLLOW_AFTER_RESIZE_FRAMES)
+        frame = view.requestAnimationFrame(follow);
+    };
+    const resized = (event: Event): void => {
+      // The menu's own nudges come back here; only the window's count.
+      if (!event.isTrusted) return;
+      view.cancelAnimationFrame(frame);
+      last = trigger.current?.getBoundingClientRect();
+      frames = 0;
+      still = 0;
+      frame = view.requestAnimationFrame(follow);
+    };
+    view.addEventListener('resize', resized);
+    return () => {
+      view.removeEventListener('resize', resized);
+      view.cancelAnimationFrame(frame);
+    };
+  }, [open, trigger]);
+};
 
 /**
  * A menu of actions opened from a button: the table rail's More, and the
@@ -67,7 +140,9 @@ export const ActionMenu = ({
 }) => {
   const container = useContext(OverlayContainerContext);
   const [shown, setShown] = useState(false);
-  const menuTrigger = <Menu.Trigger render={trigger} />;
+  const triggerElement = useRef<HTMLButtonElement>(null);
+  useFollowAfterResize(open ?? shown, triggerElement);
+  const menuTrigger = <Menu.Trigger ref={triggerElement} render={trigger} />;
   return (
     <Menu.Root
       {...(open === undefined ? {} : { open })}
