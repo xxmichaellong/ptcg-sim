@@ -63,6 +63,7 @@
     "legacy-two-energy-attachment-compaction-geometry.spec.ts": 11,
     "legacy-viewport-generalization.spec.ts": 8,
     "mobile-table.spec.ts": 26,
+    "multi-select.spec.ts": 600,
     "opponent-cards-upright.spec.ts": 52,
     "optimistic-feedback.spec.ts": 24,
     "react-dom-board-chrome.spec.ts": 13,
