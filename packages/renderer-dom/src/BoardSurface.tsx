@@ -6,8 +6,13 @@ import {
   arrangementOffsets,
   BoardDragController,
   canDetachFromStack,
+  carriedGroup,
   compositionHold,
+  containsPoint,
+  groupCardsOf,
+  paintedCardBounds,
   presentHeldMarker,
+  selectionItemOf,
   VelocityTracker,
   BoardDepthProjection,
   tableCardMatrix,
@@ -17,7 +22,6 @@ import {
   tablePileHeight,
   tableShadowStyle,
   sameTablePose,
-  selectedCardIdOf,
   withHeldCards,
   type TableCardPose,
   type TableCamera,
@@ -26,9 +30,11 @@ import type {
   BoardPointerInput,
   BoardPreferences,
   BoardPresentation,
+  BoardPress,
   BoardRendererAdapters,
   BoardScene,
   BoardSceneMotion,
+  BoardSide,
   CardSceneNode,
   SettlingCard,
   ZoneCountSceneNode,
@@ -39,6 +45,7 @@ import {
   memo,
   useCallback,
   useEffect,
+  useId,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -74,6 +81,15 @@ import {
   type PaintedCard,
 } from './motion/BoardMotionDirector.js';
 import { peekShift } from './hand-peek.js';
+import {
+  addsToSelection,
+  SWEEP_THRESHOLD_PX,
+  sweepCandidates,
+  sweepRect,
+  sweptItems,
+  type Sweep,
+  type SweepCandidate,
+} from './selection-input.js';
 import { DragSwing } from './motion/DragSwing.js';
 import { liftHeldCards } from './motion/held-card-lift.js';
 import { depthPaintKey } from './motion/depth-paint-key.js';
@@ -101,6 +117,11 @@ const readLocale = () => i18n.locale;
  */
 const LIFTED_Z_INDEX = 9_000;
 const DRAG_Z_INDEX = 20_000;
+/**
+ * Each item of a group fanned out behind the card in the hand lies this
+ * much lower, so the one gripped is on top (above anything settling).
+ */
+const FAN_Z_STEP = 1_200;
 /** How far the pointer moves after a drop before hover answers it again. */
 const HOVER_REST_SLOP_PX = 4;
 /**
@@ -127,6 +148,8 @@ const PEEK_PICK_PX = 24;
 const PEEK_HEADING_MS = 100;
 /** How long the browser's own click after a slide may take to arrive. */
 const PEEK_CLICK_MS = 700;
+/** The same, after a rectangle drawn on the felt is let go of. */
+const SWEEP_CLICK_MS = 400;
 /** How wide a raised card is drawn at least, and how much it may grow. */
 const PEEK_READ_WIDTH_PX = 120;
 const PEEK_SCALE = { least: 1.12, most: 1.6 } as const;
@@ -649,6 +672,10 @@ const CardNode = memo(
   function CardNode({
     card,
     selected,
+    order,
+    describedBy,
+    selectionMode = false,
+    carryMore = 0,
     targetable,
     dropTarget,
     dropAction,
@@ -667,12 +694,33 @@ const CardNode = memo(
     readonly locale?: string;
     readonly card: CardSceneNode;
     readonly selected: boolean;
+    /**
+     * Its place in a selection of several (1, 2, 3…), shown on its face:
+     * the card a selected item is selected by.
+     */
+    readonly order?: number;
+    /**
+     * The element saying how many are selected, which a numbered card's
+     * accessible name is followed by. One for the table, so a card's own
+     * name changes only with its own number: a toggle repaints only the
+     * cards it renumbers.
+     */
+    readonly describedBy?: string;
+    /** Touch's selection mode: a tap picks it up or puts it back. */
+    readonly selectionMode?: boolean;
+    /** The card in the hand of a group: how many more come than it carries. */
+    readonly carryMore?: number;
     readonly targetable: boolean;
     /** The stack card under a dragged card: v1 rings it like a selection. */
     readonly dropTarget: boolean;
     /** Held, it would swap places with the Pokémon under it: it shows ⇄. */
     readonly dropAction?: 'swap';
-    readonly drag: BoardPresentation['drag'];
+    /** Held, and how far behind the card in the hand it is fanned (`layer`). */
+    readonly drag:
+      | (NonNullable<BoardPresentation['drag']> & {
+          readonly layer?: number;
+        })
+      | null;
     readonly settle: SettlingCard | null;
     readonly emitIntent: BoardRendererAdapters['emitIntent'];
     readonly consumeSuppressedClick: (
@@ -741,9 +789,16 @@ const CardNode = memo(
       event.preventDefault();
       emitIntent({ kind: 'CardContextRequested', cardId: card.id });
     };
-    const activate = (clicks: number) => {
+    const activate = (clicks: number, adds: boolean) => {
       if (card.primaryAction?.kind === 'openZone') {
         emitIntent({ kind: 'ZoneOpened', zoneId: card.primaryAction.zoneId });
+        return;
+      }
+      // Shift or ⌘/Ctrl, or a tap in selection mode: the card joins the
+      // selection, or leaves it, the rest staying. Every such click counts,
+      // however quickly it follows the last (ADR-042 §2).
+      if (adds || selectionMode) {
+        emitIntent({ kind: 'CardSelected', cardId: card.id, mode: 'add' });
         return;
       }
       // The second click of a double click opens the preview; it leaves the
@@ -753,9 +808,10 @@ const CardNode = memo(
       emitIntent({
         kind: 'CardSelected',
         cardId: card.id,
-        ...(clicks > 2 ? {} : { toggle: true }),
+        ...(clicks > 2 ? {} : { mode: 'toggle' as const }),
       });
     };
+    const name = paintsBack(card) ? faceDownLabel() : card.label;
     useLayoutEffect(() => {
       const image = imageRef.current;
       if (!image) return;
@@ -791,13 +847,23 @@ const CardNode = memo(
         data-card-composition={card.composition?.kind}
         data-card-primary-action={card.primaryAction?.kind}
         data-ring={ring}
+        data-select-order={order}
         data-held={drag ? 'drag' : settle ? 'settle' : undefined}
         data-in-hand={
           card.role === 'zone' && card.parentId.endsWith(':hand')
             ? 'true'
             : undefined
         }
-        aria-label={paintsBack(card) ? faceDownLabel() : card.label}
+        aria-label={
+          order === undefined
+            ? name
+            : t({
+                message: `${name}, selected, number ${order}`,
+                comment:
+                  "A card's name for screen readers while several are selected: name is the card's, order its place in the selection (1 for the first picked). Followed by how many are selected.",
+              })
+        }
+        aria-describedby={order === undefined ? undefined : describedBy}
         aria-haspopup={
           card.primaryAction?.kind === 'openZone' ? 'dialog' : undefined
         }
@@ -810,7 +876,7 @@ const CardNode = memo(
             ...absoluteRect(
               bounds,
               drag
-                ? DRAG_Z_INDEX + card.zIndex
+                ? DRAG_Z_INDEX - (drag.layer ?? 0) * FAN_Z_STEP + card.zIndex
                 : settle
                   ? LIFTED_Z_INDEX + card.zIndex
                   : card.zIndex
@@ -846,10 +912,12 @@ const CardNode = memo(
             !consumeSuppressedClick(card.id, card.renderKey) ||
             event.detail === 0
           ) {
-            activate(event.detail);
+            activate(event.detail, addsToSelection(event));
           }
         }}
         onDoubleClick={(event) => {
+          // Picking cards one by one never opens the preview.
+          if (addsToSelection(event) || selectionMode) return;
           // A double press on a marker lying on the card is the marker's.
           const surface = event.currentTarget.closest(
             '.ptcgsim-board-surface, .ptcgsim-board-lift'
@@ -911,6 +979,24 @@ const CardNode = memo(
               }}
             />
           </span>
+          {order === undefined ? null : (
+            <span
+              className="ptcgsim-card__order"
+              data-turn={card.rotationQuarterTurns}
+              aria-hidden="true"
+            >
+              {order}
+            </span>
+          )}
+          {carryMore > 0 ? (
+            <span
+              className="ptcgsim-card__carry-more"
+              data-turn={card.rotationQuarterTurns}
+              aria-hidden="true"
+            >
+              +{carryMore}
+            </span>
+          ) : null}
           {dropAction === 'swap' ? (
             <span
               className="ptcgsim-card__drop-action"
@@ -953,6 +1039,10 @@ const CardNode = memo(
       after.pose !== undefined &&
       sameTablePose(before.pose, after.pose) &&
       before.selected === after.selected &&
+      before.order === after.order &&
+      before.describedBy === after.describedBy &&
+      before.selectionMode === after.selectionMode &&
+      before.carryMore === after.carryMore &&
       before.targetable === after.targetable &&
       before.dropTarget === after.dropTarget &&
       before.dropAction === after.dropAction &&
@@ -965,44 +1055,54 @@ const CardNode = memo(
   }
 );
 
-const CardDepthGeometry = ({
-  camera,
-  pose,
-  bands,
-}: {
-  camera: TableCamera;
-  pose: TableCardPose;
-  bands: number;
-}) => {
-  const paths = tablePoseEdges(camera, pose, bands);
-  const shadow = tableShadowStyle(paths.above, pose.bounds.width);
-  return (
-    <svg
-      className="ptcgsim-card__depth"
-      viewBox={`0 0 ${pose.bounds.width} ${pose.bounds.height}`}
-      aria-hidden="true"
-    >
-      <path
-        data-depth-contact=""
-        d={paths.contact}
-        style={{ opacity: shadow.contactOpacity }}
-      />
-      <path
-        data-depth-shadow=""
-        d={paths.shadow}
-        style={{
-          opacity: shadow.castOpacity,
-          filter:
-            shadow.castBlur > 0
-              ? `blur(${shadow.castBlur.toFixed(2)}px)`
-              : 'none',
-        }}
-      />
-      <path data-depth-side="" d={paths.sides} />
-      <path data-depth-lines="" d={paths.lines} />
-    </svg>
-  );
-};
+/**
+ * A card's edges and shadow on the tilted table, drawn again only when its
+ * pose changes: a card repainted for its ring or number keeps its edges.
+ */
+const CardDepthGeometry = memo(
+  function CardDepthGeometry({
+    camera,
+    pose,
+    bands,
+  }: {
+    camera: TableCamera;
+    pose: TableCardPose;
+    bands: number;
+  }) {
+    const paths = tablePoseEdges(camera, pose, bands);
+    const shadow = tableShadowStyle(paths.above, pose.bounds.width);
+    return (
+      <svg
+        className="ptcgsim-card__depth"
+        viewBox={`0 0 ${pose.bounds.width} ${pose.bounds.height}`}
+        aria-hidden="true"
+      >
+        <path
+          data-depth-contact=""
+          d={paths.contact}
+          style={{ opacity: shadow.contactOpacity }}
+        />
+        <path
+          data-depth-shadow=""
+          d={paths.shadow}
+          style={{
+            opacity: shadow.castOpacity,
+            filter:
+              shadow.castBlur > 0
+                ? `blur(${shadow.castBlur.toFixed(2)}px)`
+                : 'none',
+          }}
+        />
+        <path data-depth-side="" d={paths.sides} />
+        <path data-depth-lines="" d={paths.lines} />
+      </svg>
+    );
+  },
+  (before, after) =>
+    before.bands === after.bands &&
+    sameTablePose(before.pose, after.pose) &&
+    depthPaintKey(before.camera) === depthPaintKey(after.camera)
+);
 
 const ZoneCountNode = memo(function ZoneCountNode({
   node,
@@ -1148,6 +1248,8 @@ export const BoardSurface = ({
   const heldKey = [
     presentation.openedZoneId ?? '',
     presentation.drag?.cardId ?? '',
+    // The items a group drag carries (the same array the whole drag).
+    presentation.drag?.groupCardIds?.join(',') ?? '',
     ...presentation.settling.map(
       (entry) => `${entry.cardId}@${String(entry.x)},${String(entry.y)}`
     ),
@@ -1647,6 +1749,61 @@ export const BoardSurface = ({
     draggedCardId === null
       ? undefined
       : scene.cards.find((card) => card.id === draggedCardId);
+  // The selection as the table shows it (ADR-042 §1): each item ringed --
+  // a card printed in pieces on every piece, as its targets are lit -- and,
+  // with several, numbered in the order they were picked.
+  const selectionOrder = useMemo(
+    () =>
+      new Map(
+        presentation.selection.map((cardId, index) => [cardId, index + 1])
+      ),
+    [presentation.selection]
+  );
+  const selectionRings = useMemo(() => {
+    const ringed = new Set<CardSceneNode['id']>(presentation.selection);
+    for (const cardId of presentation.selection) {
+      const card = scene.cards.find((candidate) => candidate.id === cardId);
+      if (
+        card?.role !== 'stackEvolution' ||
+        card.composition?.kind !== 'joined'
+      )
+        continue;
+      for (const piece of scene.cards)
+        if (piece.parentId === card.parentId && piece.role === 'stackEvolution')
+          ringed.add(piece.id);
+    }
+    return ringed;
+  }, [presentation.selection, scene]);
+  const numbered = presentation.selection.length > 1;
+  const selectionCountId = useId();
+  // A group drag carries a few items in the hand; the rest are counted on
+  // the card gripped.
+  const carryMore =
+    presentation.drag?.groupCardIds && draggedCard
+      ? Math.max(
+          0,
+          presentation.drag.groupCardIds.length -
+            carriedGroup(scene, presentation.drag).length
+        )
+      : 0;
+  /**
+   * What a press on a card holds beyond the card (ADR-042 §2): a selected
+   * item among others drags them all; one pressed with Shift or ⌘/Ctrl
+   * joins them once it moves, then drags them all; any other goes alone.
+   */
+  const pressOf = (
+    card: CardSceneNode,
+    adds: boolean
+  ): BoardPress | undefined => {
+    const selection = presentation.selection;
+    const item = selectionItemOf(scene, card.id);
+    if (selection.includes(item) || selection.includes(card.id))
+      return selection.length > 1 ? { group: selection } : undefined;
+    if (!adds) return undefined;
+    return selection.length > 0
+      ? { adds: true, group: [...selection, item] }
+      : { adds: true };
+  };
   const paintedById = useMemo(
     () =>
       new Map(
@@ -1912,13 +2069,18 @@ export const BoardSurface = ({
           (u * source.bounds.width * Math.sin(turn) +
             v * source.bounds.height * Math.cos(turn)),
       };
+      // A group's own cards travel with it: never where it lands.
+      const group = dragRef.current?.detached
+        ? undefined
+        : (dragRef.current?.groupCardIds ?? pressedGroupRef.current);
       const hit = depth.drop(
         point,
         source.id,
         (card) =>
           card.renderKey ? director.depth.current(card.renderKey) : undefined,
         dragRef.current?.detached === true,
-        centre
+        centre,
+        group ? groupCardsOf(scene, group) : undefined
       );
       return {
         pointerId: event.pointerId,
@@ -1934,7 +2096,8 @@ export const BoardSurface = ({
           hit.targetId,
           hit.point.x,
           hit.point.y,
-          depth.boardPoint(point)
+          depth.boardPoint(point),
+          group
         ),
       };
     }
@@ -1944,6 +2107,185 @@ export const BoardSurface = ({
       y: ((event.clientY - bounds.top) * scene.viewport.height) / bounds.height,
       button: event.button,
     };
+  };
+  /**
+   * A rectangle drawn on the felt (ADR-042 §2): it starts on empty felt in
+   * one half and stays in it, lights the cards it would take as it is drawn
+   * -- on the table only, by an attribute no `:root` rule names -- and
+   * selects them once, when let go of.
+   */
+  const sweepRef = useRef<{
+    readonly pointerId: number;
+    readonly touch: boolean;
+    readonly adds: boolean;
+    readonly start: { readonly x: number; readonly y: number };
+    readonly side: BoardSide;
+    readonly limits: { readonly top: number; readonly bottom: number };
+    candidates: {
+      readonly scene: BoardScene;
+      readonly cards: readonly SweepCandidate[];
+    } | null;
+    swept: Sweep | null;
+    element: HTMLDivElement | null;
+    readonly marked: Set<HTMLElement>;
+  } | null>(null);
+  // The click a drawn rectangle ends with is not a press on what it ends on.
+  const sweepClickRef = useRef(0);
+  // The group a press holds, for the drop it aims before its first move.
+  const pressedGroupRef = useRef<readonly CardSceneNode['id'][] | undefined>(
+    undefined
+  );
+  const startSweep = (
+    event: ReactPointerEvent<HTMLDivElement>,
+    adds: boolean
+  ) => {
+    sweepRef.current = null;
+    if (event.button !== 0) return;
+    const target = event.target;
+    if (
+      target instanceof Element &&
+      target.closest('button, a, input, select, textarea, [data-no-sweep]')
+    )
+      return;
+    const point = scenePoint(event.clientX, event.clientY);
+    if (!point) return;
+    const board = depth ? depth.boardPoint(point) : point;
+    const frames = scene.layout.players.filter((frame) => !frame.hidden);
+    const side =
+      frames.find((frame) => containsPoint(frame.bounds, board.x, board.y))
+        ?.side ??
+      scene.zones.find(
+        (zone) =>
+          zone.kind === 'hand' &&
+          zone.interactive &&
+          containsPoint(zone.bounds, board.x, board.y)
+      )?.side;
+    if (side !== 'local' && side !== 'opponent') return;
+    // The halves meet at the lower frame's top edge, where it is painted.
+    const lower = frames.find((frame) => frame.physicalSide === 'lower');
+    const upper = frames.find((frame) => frame.physicalSide === 'upper');
+    const seam =
+      lower && upper
+        ? depth
+          ? depth.point({
+              x: lower.bounds.x + lower.bounds.width / 2,
+              y: lower.bounds.y,
+            }).y
+          : lower.bounds.y
+        : undefined;
+    const height = scene.viewport.height;
+    sweepRef.current = {
+      pointerId: event.pointerId,
+      touch: event.pointerType === 'touch',
+      adds,
+      start: point,
+      side,
+      limits:
+        seam === undefined
+          ? { top: 0, bottom: height }
+          : side === 'local'
+            ? { top: seam, bottom: height }
+            : { top: 0, bottom: seam },
+      candidates: null,
+      swept: null,
+      element: null,
+      marked: new Set(),
+    };
+  };
+  /** Draws the rectangle as the pointer moves; true while there is one. */
+  const moveSweep = (event: ReactPointerEvent<HTMLDivElement>): boolean => {
+    const sweep = sweepRef.current;
+    const surface = surfaceRef.current;
+    if (!sweep || sweep.pointerId !== event.pointerId || !surface) return false;
+    const point = scenePoint(event.clientX, event.clientY);
+    if (!point) return true;
+    if (!sweep.element) {
+      if (
+        Math.hypot(point.x - sweep.start.x, point.y - sweep.start.y) <
+        SWEEP_THRESHOLD_PX
+      )
+        return true;
+      const element = document.createElement('div');
+      element.className = 'ptcgsim-board-sweep';
+      element.setAttribute('aria-hidden', 'true');
+      surface.append(element);
+      sweep.element = element;
+      try {
+        surface.setPointerCapture?.(event.pointerId);
+      } catch {
+        // Capture is best effort; the rectangle still follows on the table.
+      }
+      clearHover();
+      hints.hide();
+    }
+    event.preventDefault();
+    if (sweep.candidates?.scene !== scene)
+      sweep.candidates = {
+        scene,
+        cards: sweepCandidates(scene, sweep.side, (card) =>
+          depth
+            ? depth.bounds(card)
+            : paintedCardBounds(card.bounds, card.rotationQuarterTurns)
+        ),
+      };
+    const rect = sweepRect(sweep.start, point, sweep.limits);
+    const style = sweep.element.style;
+    style.left = `${String(rect.x)}px`;
+    style.top = `${String(rect.y)}px`;
+    style.width = `${String(rect.width)}px`;
+    style.height = `${String(rect.height)}px`;
+    const swept = sweptItems(scene, sweep.candidates.cards, rect);
+    sweep.swept = swept;
+    const lit = new Set<HTMLElement>();
+    for (const card of swept.cards) {
+      const element = cardElement(card.id);
+      if (element) lit.add(element);
+    }
+    for (const element of sweep.marked)
+      if (!lit.has(element)) element.removeAttribute('data-sweep');
+    for (const element of lit)
+      if (!sweep.marked.has(element)) element.setAttribute('data-sweep', '');
+    sweep.marked.clear();
+    for (const element of lit) sweep.marked.add(element);
+    return true;
+  };
+  /** Takes the rectangle away; whether one was drawn. */
+  const clearSweep = (pointerId?: number): boolean => {
+    const sweep = sweepRef.current;
+    if (!sweep || (pointerId !== undefined && sweep.pointerId !== pointerId))
+      return false;
+    sweepRef.current = null;
+    for (const element of sweep.marked) element.removeAttribute('data-sweep');
+    sweep.marked.clear();
+    if (!sweep.element) return false;
+    sweep.element.remove();
+    const surface = surfaceRef.current;
+    try {
+      if (surface?.hasPointerCapture?.(sweep.pointerId))
+        surface.releasePointerCapture(sweep.pointerId);
+    } catch {
+      // Capture can already be released by the browser.
+    }
+    return true;
+  };
+  /** Let go of: the rectangle selects what it took, once. */
+  const finishSweep = (event: ReactPointerEvent<HTMLDivElement>): boolean => {
+    const sweep = sweepRef.current;
+    if (!sweep || sweep.pointerId !== event.pointerId) return false;
+    if (sweep.element) moveSweep(event);
+    const swept = sweep.swept;
+    if (!clearSweep(event.pointerId)) return false;
+    sweepClickRef.current = performance.now() + SWEEP_CLICK_MS;
+    if (!swept || swept.items.length === 0) return true;
+    // A finger's rectangle starts selection mode: further taps pick cards.
+    if (sweep.touch)
+      adapters.emitIntent({ kind: 'SelectionModeChanged', on: true });
+    adapters.emitIntent({
+      kind: 'CardsSelected',
+      cardIds: swept.items,
+      mode: sweep.adds ? 'add' : 'replace',
+    });
+    return true;
   };
   const pointerCard = (
     event: ReactPointerEvent<HTMLDivElement>
@@ -2100,7 +2442,10 @@ export const BoardSurface = ({
         y: Math.min(1, Math.max(0, grip.y + 0.5)),
       };
     }
-    if (!dragController.pick(scene, card.id, input, centre)) return false;
+    if (
+      !dragController.pick(scene, card.id, input, centre, pressOf(card, false))
+    )
+      return false;
     grabbed.current = card;
     clearHover();
     velocity.add(input.x, input.y, event.timeStamp);
@@ -2140,11 +2485,16 @@ export const BoardSurface = ({
       const card = scene.cards.find(
         (candidate) => candidate.id === peek.peeked
       );
+      // In selection mode it is picked up into the group, or put back.
       if (card?.interactive)
         adapters.emitIntent(
           card.primaryAction?.kind === 'openZone'
             ? { kind: 'ZoneOpened', zoneId: card.primaryAction.zoneId }
-            : { kind: 'CardSelected', cardId: card.id, toggle: true }
+            : {
+                kind: 'CardSelected',
+                cardId: card.id,
+                mode: presentation.selectionMode ? 'add' : 'toggle',
+              }
         );
     }
     velocity.reset();
@@ -2289,13 +2639,19 @@ export const BoardSurface = ({
         )
           hints.hide();
         const target = pointerCard(event);
+        // Shift or ⌘/Ctrl held: the press adds, and the felt keeps the
+        // selection (ADR-042 §2). A finger has no keys to hold.
+        const adds = event.pointerType !== 'touch' && addsToSelection(event);
         if (!target) {
-          adapters.emitIntent({ kind: 'BoardBackgroundPressed' });
+          if (!adds) adapters.emitIntent({ kind: 'BoardBackgroundPressed' });
+          if (!hint) startSweep(event, adds);
           return;
         }
         const input = pointerInput(event, target.card);
         if (!input) return;
-        if (dragController.pointerDown(scene, target.card.id, input)) {
+        const press = pressOf(target.card, adds);
+        pressedGroupRef.current = press?.group;
+        if (dragController.pointerDown(scene, target.card.id, input, press)) {
           grabbed.current = target.card;
           cancelDetachTimer();
           if (
@@ -2345,6 +2701,7 @@ export const BoardSurface = ({
         }
       }}
       onPointerMove={(event) => {
+        if (moveSweep(event)) return;
         // A finger on a crowded hand: a slide along it raises the card under
         // the finger; a move toward the table picks the raised card up.
         const peek = peekRef.current;
@@ -2440,6 +2797,7 @@ export const BoardSurface = ({
         hoverHint(null);
       }}
       onPointerUp={(event) => {
+        if (finishSweep(event)) return;
         const peek = peekRef.current;
         if (peek?.pointerId === event.pointerId) {
           peekRef.current = null;
@@ -2527,7 +2885,14 @@ export const BoardSurface = ({
         event.stopPropagation();
         adapters.emitIntent({ kind: 'CardContextRequested', cardId: raised });
       }}
+      onClickCapture={(event) => {
+        if (performance.now() > sweepClickRef.current) return;
+        sweepClickRef.current = 0;
+        event.stopPropagation();
+        event.preventDefault();
+      }}
       onPointerCancel={(event) => {
+        clearSweep(event.pointerId);
         if (peekRef.current?.pointerId === event.pointerId) {
           peekRef.current = null;
           lowerPeekedCards(surfaceRef.current);
@@ -2542,6 +2907,7 @@ export const BoardSurface = ({
         releaseCapture(event);
       }}
       onLostPointerCapture={(event) => {
+        if (event.target === event.currentTarget) clearSweep(event.pointerId);
         if (peekRef.current?.pointerId === event.pointerId) {
           peekRef.current = null;
           lowerPeekedCards(surfaceRef.current);
@@ -2570,6 +2936,14 @@ export const BoardSurface = ({
       <style>{BOARD_SURFACE_CSS}</style>
       <style>{BOARD_MARKER_CSS}</style>
       <BoardHintTooltip showing={hintShowing} layoutKey={scene} />
+      {numbered ? (
+        <span id={selectionCountId} hidden>
+          {plural(presentation.selection.length, {
+            one: '# selected',
+            other: '# selected',
+          })}
+        </span>
+      ) : null}
       <div
         ref={tableRef}
         className="ptcgsim-board-table"
@@ -2640,7 +3014,17 @@ export const BoardSurface = ({
               key={card.renderKey}
               locale={locale}
               card={card}
-              selected={selectedCardIdOf(presentation) === card.id}
+              selected={selectionRings.has(card.id)}
+              {...(numbered && selectionOrder.has(card.id)
+                ? {
+                    order: selectionOrder.get(card.id)!,
+                    describedBy: selectionCountId,
+                  }
+                : {})}
+              {...(presentation.selectionMode ? { selectionMode: true } : {})}
+              {...(carryMore > 0 && card.id === draggedCardId
+                ? { carryMore }
+                : {})}
               targetable={presentation.targetableCardIds.includes(card.id)}
               dropTarget={dropTargetCardIds.has(card.id)}
               {...(swapCardId === card.id

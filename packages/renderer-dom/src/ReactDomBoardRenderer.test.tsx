@@ -13,6 +13,7 @@ import {
   DEFAULT_BOARD_PREFERENCES,
   DEFAULT_BOARD_PRESENTATION,
   type BoardIntent,
+  type BoardPresentationUpdate,
   markerLabelFontSizePx,
   type MarkerSceneNode,
   type ZoneCountSceneNode,
@@ -298,7 +299,7 @@ describe('React DOM board renderer', () => {
     );
     // The second click of the double click leaves the selection alone.
     expect(intents).toEqual([
-      { kind: 'CardSelected', cardId, toggle: true },
+      { kind: 'CardSelected', cardId, mode: 'toggle' },
       { kind: 'CardPreviewRequested', cardId },
       { kind: 'CardContextRequested', cardId },
       { kind: 'ZoneOpened', zoneId: 'zone:p1:hand' },
@@ -607,7 +608,7 @@ describe('React DOM board renderer', () => {
     expect(emitIntent).toHaveBeenCalledWith({
       kind: 'CardSelected',
       cardId,
-      toggle: true,
+      mode: 'toggle',
     });
 
     const recovered = createScene(2);
@@ -2417,7 +2418,7 @@ describe('a finger on a crowded hand', () => {
         .hasAttribute('data-peek-slide')
     ).toBe(false);
     expect(intents).toEqual([
-      { kind: 'CardSelected', cardId: handCardId(7), toggle: true },
+      { kind: 'CardSelected', cardId: handCardId(7), mode: 'toggle' },
     ]);
     // The browser's own click lands on the card first pressed: it is not a
     // second tap.
@@ -2437,7 +2438,7 @@ describe('a finger on a crowded hand', () => {
     pointer(host, 'pointermove', 112, 788);
     pointer(host, 'pointerup', 112, 788);
     expect(intents).toEqual([
-      { kind: 'CardSelected', cardId: handCardId(7), toggle: true },
+      { kind: 'CardSelected', cardId: handCardId(7), mode: 'toggle' },
     ]);
     // Chromium sends no click after the slide. A deliberate tap on the card
     // now selected is a new gesture, and reaches it at once.
@@ -2449,8 +2450,27 @@ describe('a finger on a crowded hand', () => {
       );
     });
     expect(intents).toEqual([
-      { kind: 'CardSelected', cardId: handCardId(7), toggle: true },
-      { kind: 'CardSelected', cardId: handCardId(7), toggle: true },
+      { kind: 'CardSelected', cardId: handCardId(7), mode: 'toggle' },
+      { kind: 'CardSelected', cardId: handCardId(7), mode: 'toggle' },
+    ]);
+    await unmount(renderer, host);
+  });
+
+  it('picks the card it raised into the group in selection mode', async () => {
+    const { renderer, host, intents } = await mountHand(handScene(16, 12));
+    act(() =>
+      renderer.installPresentation({
+        ...DEFAULT_BOARD_PRESENTATION,
+        selection: [handCardId(0)],
+        selectionMode: true,
+      })
+    );
+    pointer(host, 'pointerdown', 25, 790, 'touch', cardNode(host, 0));
+    pointer(host, 'pointermove', 64, 792);
+    pointer(host, 'pointermove', 112, 788);
+    pointer(host, 'pointerup', 112, 788);
+    expect(intents).toEqual([
+      { kind: 'CardSelected', cardId: handCardId(7), mode: 'add' },
     ]);
     await unmount(renderer, host);
   });
@@ -2604,7 +2624,7 @@ describe('a finger on a crowded hand', () => {
       );
     });
     expect(crowded.intents).toEqual([
-      { kind: 'CardSelected', cardId: handCardId(3), toggle: true },
+      { kind: 'CardSelected', cardId: handCardId(3), mode: 'toggle' },
     ]);
     // A mouse drags the card it pressed, sideways or not.
     pointer(
@@ -2621,5 +2641,606 @@ describe('a finger on a crowded hand', () => {
     pointer(crowded.host, 'pointerup', 80, 792, 'mouse');
     expect(new Set(crowded.drags)).toEqual(new Set(['hand-0', null]));
     await unmount(crowded.renderer, crowded.host);
+  });
+});
+
+describe('selecting several cards (ADR-042)', () => {
+  const tableLayout = createBoardSceneLayout(
+    createTableLayoutSnapshot({
+      geometryVersion: TABLE_LAYOUT_GEOMETRY_VERSION,
+      viewport: { width: 390, height: 844, devicePixelRatio: 1 },
+      playerIds: [playerId, opponentId],
+      bottomPlayerId: playerId,
+      shellMode: 'fullscreen',
+      vertical: DEFAULT_TABLE_VERTICAL_LAYOUT,
+    })
+  );
+  const id = asViewCardId;
+  type Card = BoardScene['cards'][number];
+  const card = (
+    cardId: string,
+    parentId: string,
+    x: number,
+    y: number,
+    overrides: Partial<Card> = {}
+  ): Card => ({
+    id: id(cardId),
+    ownerId: playerId,
+    parentId,
+    side: 'local',
+    role: 'zone',
+    bounds: { x, y, width: 80, height: 112 },
+    zIndex: 100,
+    rotationQuarterTurns: 0,
+    imageUrl: `/${cardId}.png`,
+    concealed: false,
+    label: `Card ${cardId}`,
+    interactive: true,
+    renderKey: `card:${cardId}`,
+    ...overrides,
+  });
+  const zone = (
+    zoneId: string,
+    kind: BoardScene['zones'][number]['kind'],
+    bounds: { x: number; y: number; width: number; height: number },
+    side: 'local' | 'opponent' = 'local'
+  ): BoardScene['zones'][number] => ({
+    id: zoneId,
+    playerId: side === 'local' ? playerId : opponentId,
+    side,
+    kind,
+    bounds,
+    contentBounds: bounds,
+    surface: 'zone',
+    count: 0,
+    zIndex: 10,
+    label: zoneId,
+    interactive: true,
+  });
+  const joined = {
+    kind: 'joined' as const,
+    bounds: { x: 260, y: 430, width: 120, height: 112 },
+  };
+  /**
+   * A phone table: Blue's Bench (a Stage 1 with an Energy, a Basic, a card
+   * printed in two pieces), hand and discard pile; Red's Bench and
+   * face-down hand across the seam (at y 388).
+   */
+  const scene = (): BoardScene => ({
+    matchId: 'match',
+    revision: 1,
+    viewport: { width: 390, height: 844, devicePixelRatio: 1 },
+    bottomPlayerId: playerId,
+    layout: tableLayout,
+    zones: [
+      zone('zone:p1:hand', 'hand', { x: 0, y: 730, width: 390, height: 114 }),
+      zone('zone:p1:bench', 'bench', { x: 0, y: 420, width: 390, height: 140 }),
+      zone('zone:p1:discard', 'discard', {
+        x: 300,
+        y: 600,
+        width: 80,
+        height: 112,
+      }),
+      zone(
+        'zone:p2:bench',
+        'bench',
+        { x: 0, y: 200, width: 390, height: 140 },
+        'opponent'
+      ),
+      zone(
+        'zone:p2:hand',
+        'hand',
+        { x: 0, y: 0, width: 390, height: 112 },
+        'opponent'
+      ),
+    ],
+    cards: [
+      card('b0-basic', 'stack:p1:b0', 20, 430, {
+        role: 'stackEvolution',
+        zIndex: 300,
+      }),
+      card('b0-stage1', 'stack:p1:b0', 20, 430, {
+        role: 'stackEvolution',
+        zIndex: 301,
+      }),
+      card('b0-energy', 'stack:p1:b0', 24, 470, {
+        role: 'stackAttachment',
+        zIndex: 299,
+      }),
+      card('b1', 'stack:p1:b1', 140, 430, { role: 'stackEvolution' }),
+      card('b2a', 'stack:p1:b2', 260, 430, {
+        role: 'stackEvolution',
+        composition: joined,
+        bounds: { x: 260, y: 430, width: 60, height: 112 },
+      }),
+      card('b2b', 'stack:p1:b2', 320, 430, {
+        role: 'stackEvolution',
+        composition: joined,
+        bounds: { x: 320, y: 430, width: 60, height: 112 },
+      }),
+      ...[0, 1, 2, 3].map((index) =>
+        card(`h${String(index)}`, 'zone:p1:hand', 20 + index * 90, 730, {
+          zIndex: 100 + index,
+        })
+      ),
+      card('d0', 'zone:p1:discard', 300, 600),
+      card('o0', 'stack:p2:b0', 20, 210, {
+        ownerId: opponentId,
+        side: 'opponent',
+        role: 'stackEvolution',
+        rotationQuarterTurns: 2,
+      }),
+      card('oh0', 'zone:p2:hand', 20, 0, {
+        ownerId: opponentId,
+        side: 'opponent',
+        rotationQuarterTurns: 2,
+        concealed: true,
+      }),
+    ],
+    markers: [],
+    counts: [],
+  });
+  const mount = async (
+    tilted = false
+  ): Promise<{
+    readonly renderer: ReactDomBoardRenderer;
+    readonly host: HTMLElement;
+    readonly surface: HTMLElement;
+    readonly intents: BoardIntent[];
+    readonly updates: BoardPresentationUpdate[];
+  }> => {
+    const intents: BoardIntent[] = [];
+    const updates: BoardPresentationUpdate[] = [];
+    const renderer = new ReactDomBoardRenderer({
+      emitIntent: (intent) => intents.push(intent),
+      emitPresentationUpdate: (update) => updates.push(update),
+      reportError: vi.fn(),
+    });
+    const host = document.createElement('div');
+    document.body.append(host);
+    await mountInAct(renderer, host, scene());
+    if (tilted)
+      act(() =>
+        renderer.setPreferences({
+          ...DEFAULT_BOARD_PREFERENCES,
+          depth: { ...DEFAULT_BOARD_DEPTH, mode: 'table' },
+        })
+      );
+    const surface = host.querySelector<HTMLElement>('.ptcgsim-board-surface')!;
+    surface.getBoundingClientRect = () =>
+      ({
+        x: 0,
+        y: 0,
+        left: 0,
+        top: 0,
+        right: 390,
+        bottom: 844,
+        width: 390,
+        height: 844,
+        toJSON: () => ({}),
+      }) as DOMRect;
+    surface.setPointerCapture = vi.fn();
+    surface.hasPointerCapture = vi.fn(() => true);
+    surface.releasePointerCapture = vi.fn();
+    for (const node of host.querySelectorAll<HTMLElement>('[data-card-id]')) {
+      node.setPointerCapture = vi.fn();
+      node.hasPointerCapture = vi.fn(() => true);
+      node.releasePointerCapture = vi.fn();
+    }
+    return { renderer, host, surface, intents, updates };
+  };
+  const node = (host: HTMLElement, cardId: string) =>
+    host.querySelector<HTMLElement>(`[data-card-id="${cardId}"]`)!;
+  const pointer = (
+    target: Element,
+    type: 'pointerdown' | 'pointermove' | 'pointerup',
+    x: number,
+    y: number,
+    options: { pointerType?: string; shiftKey?: boolean } = {}
+  ) =>
+    act(() => {
+      target.dispatchEvent(
+        new PointerEvent(type, {
+          bubbles: true,
+          cancelable: true,
+          pointerId: 5,
+          button: 0,
+          clientX: x,
+          clientY: y,
+          pointerType: options.pointerType ?? 'mouse',
+          shiftKey: options.shiftKey ?? false,
+        })
+      );
+    });
+  const click = (
+    target: Element,
+    init: MouseEventInit & { detail?: number } = {}
+  ) =>
+    act(() => {
+      target.dispatchEvent(
+        new MouseEvent('click', { bubbles: true, detail: 1, ...init })
+      );
+    });
+  const unmount = async (
+    renderer: ReactDomBoardRenderer,
+    host: HTMLElement
+  ) => {
+    await act(async () => {
+      renderer.destroy();
+      await Promise.resolve();
+    });
+    host.remove();
+  };
+  const onPlatform = (platform: string) => {
+    const before = Object.getOwnPropertyDescriptor(navigator, 'platform');
+    Object.defineProperty(navigator, 'platform', {
+      value: platform,
+      configurable: true,
+    });
+    return () => {
+      if (before) Object.defineProperty(navigator, 'platform', before);
+      else Reflect.deleteProperty(navigator, 'platform');
+    };
+  };
+  const selected = (intents: readonly BoardIntent[]) =>
+    intents.filter(
+      (intent) =>
+        intent.kind === 'CardSelected' ||
+        intent.kind === 'CardsSelected' ||
+        intent.kind === 'SelectionModeChanged'
+    );
+
+  it('adds a card with Shift, or ⌘ on a Mac and Ctrl elsewhere, on every click, and never previews it', async () => {
+    const { renderer, host, intents } = await mount();
+    const h2 = node(host, 'h2');
+    click(h2, { shiftKey: true });
+    click(h2, { shiftKey: true, detail: 2 });
+    act(() => {
+      h2.dispatchEvent(
+        new MouseEvent('dblclick', {
+          bubbles: true,
+          detail: 2,
+          shiftKey: true,
+        })
+      );
+    });
+    const add = { kind: 'CardSelected', cardId: id('h2'), mode: 'add' };
+    expect(intents).toEqual([add, add]);
+    intents.length = 0;
+
+    let restore = onPlatform('MacIntel');
+    click(h2, { metaKey: true });
+    restore();
+    restore = onPlatform('Linux x86_64');
+    click(h2, { ctrlKey: true });
+    // ⌘ elsewhere is no modifier: a plain click.
+    click(h2, { metaKey: true });
+    restore();
+    expect(intents).toEqual([
+      add,
+      add,
+      { kind: 'CardSelected', cardId: id('h2'), mode: 'toggle' },
+    ]);
+    await unmount(renderer, host);
+  });
+
+  it('picks cards up one tap at a time in selection mode', async () => {
+    const { renderer, host, intents } = await mount();
+    act(() =>
+      renderer.installPresentation({
+        ...DEFAULT_BOARD_PRESENTATION,
+        selection: [id('h0')],
+        selectionMode: true,
+      })
+    );
+    click(node(host, 'h1'));
+    act(() => {
+      node(host, 'h1').dispatchEvent(
+        new MouseEvent('dblclick', { bubbles: true, detail: 2 })
+      );
+    });
+    expect(intents).toEqual([
+      { kind: 'CardSelected', cardId: id('h1'), mode: 'add' },
+    ]);
+    await unmount(renderer, host);
+  });
+
+  it('numbers each item of a selection of several, rings it, and says so', async () => {
+    const { renderer, host } = await mount();
+    act(() =>
+      renderer.installPresentation({
+        ...DEFAULT_BOARD_PRESENTATION,
+        selection: [id('b1'), id('h0'), id('b2b')],
+      })
+    );
+    const order = (cardId: string) =>
+      node(host, cardId).dataset.selectOrder ?? null;
+    expect(['b1', 'h0', 'b2b', 'h1'].map(order)).toEqual(['1', '2', '3', null]);
+    expect(
+      node(host, 'h0').querySelector('.ptcgsim-card__order')?.textContent
+    ).toBe('2');
+    expect(node(host, 'h0').getAttribute('aria-label')).toBe(
+      'Card h0, selected, number 2'
+    );
+    // How many, said once for the table, after each numbered card's name.
+    const count = node(host, 'h0').getAttribute('aria-describedby')!;
+    expect(node(host, 'b1').getAttribute('aria-describedby')).toBe(count);
+    expect(host.ownerDocument.getElementById(count)?.textContent).toBe(
+      '3 selected'
+    );
+    expect(node(host, 'h0').getAttribute('aria-pressed')).toBe('true');
+    // A card printed in pieces is ringed whole, numbered once.
+    expect(node(host, 'b2a').dataset.ring).toBe('selected');
+    expect(node(host, 'b2b').dataset.ring).toBe('selected');
+    expect(order('b2a')).toBeNull();
+    expect(node(host, 'h1').dataset.ring).toBeUndefined();
+
+    // One card alone is ringed, with no number.
+    act(() =>
+      renderer.installPresentation({
+        ...DEFAULT_BOARD_PRESENTATION,
+        selection: [id('h0')],
+      })
+    );
+    expect(node(host, 'h0').dataset.ring).toBe('selected');
+    expect(order('h0')).toBeNull();
+    expect(node(host, 'h0').getAttribute('aria-label')).toBe('Card h0');
+    expect(node(host, 'h0').hasAttribute('aria-describedby')).toBe(false);
+    await unmount(renderer, host);
+  });
+
+  it('selects what a rectangle drawn on the felt takes, once, when let go of', async () => {
+    const { renderer, host, surface, intents } = await mount();
+    pointer(surface, 'pointerdown', 5, 400);
+    expect(intents).toEqual([{ kind: 'BoardBackgroundPressed' }]);
+    pointer(surface, 'pointermove', 200, 520);
+    pointer(surface, 'pointermove', 385, 650);
+    // Drawn as it goes, on the table only: nothing is sent yet.
+    const sweep = host.querySelector<HTMLElement>('.ptcgsim-board-sweep')!;
+    expect(sweep).not.toBeNull();
+    expect([sweep.style.top, sweep.style.height]).toEqual(['400px', '250px']);
+    const lit = () =>
+      [...host.querySelectorAll<HTMLElement>('[data-sweep]')]
+        .map((element) => element.dataset.cardId)
+        .sort();
+    // The pile's top is no item; an Energy goes with its Pokémon.
+    expect(lit()).toEqual(['b0-basic', 'b0-stage1', 'b1', 'b2a', 'b2b']);
+    expect(intents).toHaveLength(1);
+    pointer(surface, 'pointerup', 385, 650);
+    expect(selected(intents)).toEqual([
+      {
+        kind: 'CardsSelected',
+        cardIds: [id('b0-stage1'), id('b1'), id('b2b')],
+        mode: 'replace',
+      },
+    ]);
+    expect(host.querySelector('.ptcgsim-board-sweep')).toBeNull();
+    expect(lit()).toEqual([]);
+    await unmount(renderer, host);
+  });
+
+  it('keeps a rectangle to the half it began in, the far one too, and adds with Shift', async () => {
+    const { renderer, host, surface, intents } = await mount();
+    // Up across the seam: it stops there, Red's Bench untouched.
+    pointer(surface, 'pointerdown', 385, 600, { shiftKey: true });
+    pointer(surface, 'pointermove', 5, 150, { shiftKey: true });
+    const sweep = host.querySelector<HTMLElement>('.ptcgsim-board-sweep')!;
+    expect(parseFloat(sweep.style.top)).toBeCloseTo(388.24, 1);
+    pointer(surface, 'pointerup', 5, 150, { shiftKey: true });
+    // Shift keeps the selection: no press on the felt, and it adds.
+    expect(intents).toEqual([
+      {
+        kind: 'CardsSelected',
+        cardIds: [id('b0-stage1'), id('b1'), id('b2b')],
+        mode: 'add',
+      },
+    ]);
+    intents.length = 0;
+    // In Red's half: their Pokémon, never their face-down hand.
+    pointer(surface, 'pointerdown', 385, 5);
+    pointer(surface, 'pointermove', 5, 380);
+    pointer(surface, 'pointerup', 5, 380);
+    expect(selected(intents)).toEqual([
+      { kind: 'CardsSelected', cardIds: [id('o0')], mode: 'replace' },
+    ]);
+    await unmount(renderer, host);
+  });
+
+  it('takes a press on the felt that hardly moves for a press, and a finger rectangle starts selection mode', async () => {
+    const { renderer, host, surface, intents } = await mount();
+    pointer(surface, 'pointerdown', 5, 400);
+    pointer(surface, 'pointermove', 8, 403);
+    pointer(surface, 'pointerup', 8, 403);
+    expect(host.querySelector('.ptcgsim-board-sweep')).toBeNull();
+    expect(intents).toEqual([{ kind: 'BoardBackgroundPressed' }]);
+    intents.length = 0;
+    const touch = { pointerType: 'touch' };
+    pointer(surface, 'pointerdown', 5, 600, touch);
+    pointer(surface, 'pointermove', 385, 842, touch);
+    pointer(surface, 'pointerup', 385, 842, touch);
+    expect(selected(intents)).toEqual([
+      { kind: 'SelectionModeChanged', on: true },
+      {
+        kind: 'CardsSelected',
+        cardIds: [id('h0'), id('h1'), id('h2'), id('h3')],
+        mode: 'replace',
+      },
+    ]);
+    await unmount(renderer, host);
+  });
+
+  it('takes the cards a rectangle covers where the tilted table paints them', async () => {
+    const { renderer, surface, host, intents } = await mount(true);
+    pointer(surface, 'pointerdown', 2, 842);
+    pointer(surface, 'pointermove', 388, 395);
+    pointer(surface, 'pointerup', 388, 395);
+    const [sent] = selected(intents);
+    expect(sent).toMatchObject({ kind: 'CardsSelected', mode: 'replace' });
+    // The whole near half, row by row: the Bench, then the hand.
+    expect(sent?.kind === 'CardsSelected' ? sent.cardIds : []).toEqual([
+      id('b0-stage1'),
+      id('b1'),
+      id('b2b'),
+      id('h0'),
+      id('h1'),
+      id('h2'),
+      id('h3'),
+    ]);
+    await unmount(renderer, host);
+  });
+
+  it('drags the selection when one of its items is pressed, adding a card pressed with Shift', async () => {
+    const { renderer, host, intents, updates } = await mount();
+    const selection = [id('h0'), id('h1'), id('h2')];
+    act(() =>
+      renderer.installPresentation({
+        ...DEFAULT_BOARD_PRESENTATION,
+        selection,
+      })
+    );
+    pointer(node(host, 'h1'), 'pointerdown', 150, 760);
+    pointer(node(host, 'h1'), 'pointermove', 150, 500);
+    const drags = () =>
+      updates.flatMap((update) =>
+        update.kind === 'DragChanged' && update.drag ? [update.drag] : []
+      );
+    expect(drags()[0]?.groupCardIds).toBe(selection);
+    pointer(node(host, 'h1'), 'pointerup', 150, 500);
+    expect(
+      intents.find((intent) => intent.kind === 'CardDropRequested')
+    ).toMatchObject({ cardId: id('h1'), groupCardIds: selection });
+    updates.length = 0;
+    intents.length = 0;
+    // Shift held on a card not selected: it joins, then the group goes.
+    pointer(node(host, 'h3'), 'pointerdown', 330, 760, { shiftKey: true });
+    pointer(node(host, 'h3'), 'pointermove', 330, 500, { shiftKey: true });
+    expect(intents[0]).toEqual({
+      kind: 'CardSelected',
+      cardId: id('h3'),
+      mode: 'add',
+    });
+    expect(drags()[0]?.groupCardIds).toEqual([...selection, id('h3')]);
+    pointer(node(host, 'h3'), 'pointerup', 330, 500, { shiftKey: true });
+    await unmount(renderer, host);
+  });
+
+  it('carries the group fanned out behind the card gripped without drawing the table again', async () => {
+    const { renderer, host } = await mount();
+    const selection = [id('h0'), id('h1'), id('h2')];
+    const drag = {
+      cardId: id('h1'),
+      x: 200,
+      y: 300,
+      targetId: 'zone:p1:bench',
+      groupCardIds: selection,
+    };
+    act(() =>
+      renderer.installPresentation({
+        ...DEFAULT_BOARD_PRESENTATION,
+        selection,
+        drag,
+      })
+    );
+    const [lead, first, second] = ['h1', 'h0', 'h2'].map((cardId) =>
+      node(host, cardId)
+    );
+    for (const element of [lead, first, second])
+      expect(element!.dataset.held).toBe('drag');
+    // Behind it, each a little further down and to the right.
+    expect(lead!.style.left).toBe('160px');
+    expect(parseFloat(first!.style.left)).toBeCloseTo(160 + 12.8);
+    expect(parseFloat(first!.style.top)).toBeCloseTo(244 + 7.84);
+    expect(parseFloat(second!.style.left)).toBeCloseTo(160 + 25.6);
+    expect(Number(first!.style.zIndex)).toBeLessThan(
+      Number(lead!.style.zIndex)
+    );
+    // The one left in the hand stays there.
+    expect(node(host, 'h3').dataset.held).toBeUndefined();
+    const commits = renderer.getDiagnostics().renderCommits;
+    act(() =>
+      renderer.installPresentation({
+        ...DEFAULT_BOARD_PRESENTATION,
+        selection,
+        drag: { ...drag, x: 250, y: 280 },
+      })
+    );
+    expect(renderer.getDiagnostics().renderCommits).toBe(commits);
+    expect(lead!.style.left).toBe('210px');
+    expect(parseFloat(first!.style.left)).toBeCloseTo(210 + 12.8);
+    expect(parseFloat(first!.style.top)).toBeCloseTo(224 + 7.84);
+    await unmount(renderer, host);
+  });
+
+  it('carries the group on the tilted table too, posed in table space, without drawing it again', async () => {
+    const { renderer, host, intents } = await mount(true);
+    // A Shift press is the same there.
+    click(node(host, 'h2'), { shiftKey: true });
+    expect(intents).toEqual([
+      { kind: 'CardSelected', cardId: id('h2'), mode: 'add' },
+    ]);
+    const selection = [id('h0'), id('h1'), id('h2')];
+    const drag = {
+      cardId: id('h1'),
+      x: 200,
+      y: 300,
+      targetId: 'zone:p1:bench',
+      groupCardIds: selection,
+    };
+    act(() =>
+      renderer.installPresentation({
+        ...DEFAULT_BOARD_PRESENTATION,
+        selection,
+        drag,
+      })
+    );
+    const lead = node(host, 'h1');
+    const fanned = node(host, 'h0');
+    expect(fanned.dataset.held).toBe('drag');
+    expect(fanned.dataset.depthCard).toBe('true');
+    // Painted apart from the card gripped (how high each is held is the
+    // projection's: board-depth's group tests).
+    expect(fanned.style.transform).not.toBe(lead.style.transform);
+    const before = fanned.style.transform;
+    const commits = renderer.getDiagnostics().renderCommits;
+    act(() =>
+      renderer.installPresentation({
+        ...DEFAULT_BOARD_PRESENTATION,
+        selection,
+        drag: { ...drag, x: 260, y: 280 },
+      })
+    );
+    expect(renderer.getDiagnostics().renderCommits).toBe(commits);
+    expect(fanned.style.transform).not.toBe(before);
+    expect(node(host, 'h3').dataset.held).toBeUndefined();
+    await unmount(renderer, host);
+  });
+
+  it('counts the items a group drag leaves behind on the card gripped', async () => {
+    const { renderer, host } = await mount();
+    const selection = ['h0', 'h1', 'h2', 'h3', 'b1', 'b2b', 'b0-stage1'].map(
+      id
+    );
+    act(() =>
+      renderer.installPresentation({
+        ...DEFAULT_BOARD_PRESENTATION,
+        selection,
+        drag: {
+          cardId: id('h0'),
+          x: 200,
+          y: 300,
+          targetId: null,
+          groupCardIds: selection,
+        },
+      })
+    );
+    expect(
+      node(host, 'h0').querySelector('.ptcgsim-card__carry-more')?.textContent
+    ).toBe('+2');
+    expect(node(host, 'b1').dataset.held).toBe('drag');
+    expect(node(host, 'b2b').dataset.held).toBeUndefined();
+    expect(
+      node(host, 'h1').querySelector('.ptcgsim-card__carry-more')
+    ).toBeNull();
+    await unmount(renderer, host);
   });
 });

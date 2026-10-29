@@ -17,6 +17,10 @@
     "message": "{0, plural, one {# player} other {# players}}",
     "translation": "{0, plural, one {# gracz} few {# graczy} many {# graczy} other {# gracza}}"
   },
+  "Tqs9eY": {
+    "message": "{0, plural, one {# selected} other {# selected}}",
+    "translation": "{0, plural, one {Zaznaczono #} few {Zaznaczono #} many {Zaznaczono #} other {Zaznaczono #}}"
+  },
   "jnpzPF": {
     "message": "{0, plural, one {Shuffled # card into the deck} other {Shuffled # cards into the deck}}",
     "translation": "{0, plural, one {Przetasowano # kartę do talii} few {Przetasowano # karty do talii} many {Przetasowano # kart do talii} other {Przetasowano # karty do talii}}"
@@ -858,6 +862,13 @@
       "name is GX or VSTAR, the once-per-game marker."
     ],
     "translation": "{name} użyty: naciśnij, aby cofnąć"
+  },
+  "Dh0OFs": {
+    "message": "{name}, selected, number {order}",
+    "comments": [
+      "A card's name for screen readers while several are selected: name is the card's, order its place in the selection (1 for the first picked). Followed by how many are selected."
+    ],
+    "translation": "{name}, zaznaczona, numer {order}"
   },
   "cJqyrp": {
     "message": "{name}: {count}",

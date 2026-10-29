@@ -17,6 +17,10 @@
     "message": "{0, plural, one {# player} other {# players}}",
     "translation": "{0, plural, other {#명}}"
   },
+  "Tqs9eY": {
+    "message": "{0, plural, one {# selected} other {# selected}}",
+    "translation": "{0, plural, other {#개 선택됨}}"
+  },
   "jnpzPF": {
     "message": "{0, plural, one {Shuffled # card into the deck} other {Shuffled # cards into the deck}}",
     "translation": "{0, plural, other {카드 #장을 덱에 섞었습니다}}"
@@ -858,6 +862,13 @@
       "name is GX or VSTAR, the once-per-game marker."
     ],
     "translation": "{name} 사용함: 눌러서 되돌리기"
+  },
+  "Dh0OFs": {
+    "message": "{name}, selected, number {order}",
+    "comments": [
+      "A card's name for screen readers while several are selected: name is the card's, order its place in the selection (1 for the first picked). Followed by how many are selected."
+    ],
+    "translation": "{name}, 선택됨, {order}번째"
   },
   "cJqyrp": {
     "message": "{name}: {count}",

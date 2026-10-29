@@ -228,6 +228,91 @@ export const BOARD_SURFACE_CSS = `
   --ptcgsim-ring: 0 0 0 calc(var(--ptcgsim-ring-width, 4px))
     var(--ptcgsim-ring-target, rgb(143 215 153 / 0.86));
 }
+/* Under a rectangle being drawn on the felt: what it would select. */
+.ptcgsim-card[data-sweep]:not([data-ring]) .ptcgsim-card__face {
+  --ptcgsim-ring: 0 0 0 calc(var(--ptcgsim-ring-width, 4px))
+    color-mix(
+      in srgb,
+      var(--ptcgsim-ring-selected, rgb(90 110 188)) 55%,
+      transparent
+    );
+}
+/* With several selected, each item's number in the selection, upright on
+   screen in the corner nearest the top left, whichever way the card lies. */
+.ptcgsim-card__order,
+.ptcgsim-card__carry-more {
+  position: absolute;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  box-sizing: border-box;
+  border-radius: 999px;
+  font: 700 12px/1 var(--font-ui, system-ui, sans-serif);
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  user-select: none;
+}
+.ptcgsim-card__order {
+  left: 4%;
+  top: 3%;
+  background: var(--ptcgsim-ring-selected, rgb(90 110 188));
+  color: #fff;
+  box-shadow:
+    0 0 0 2px rgb(255 255 255 / 0.92),
+    0 2px 6px rgb(0 0 0 / 0.35);
+}
+.ptcgsim-card__order[data-turn='1'] {
+  left: 4%;
+  top: auto;
+  bottom: 3%;
+  rotate: -90deg;
+}
+.ptcgsim-card__order[data-turn='2'] {
+  left: auto;
+  top: auto;
+  right: 4%;
+  bottom: 3%;
+  rotate: 180deg;
+}
+.ptcgsim-card__order[data-turn='3'] {
+  left: auto;
+  right: 4%;
+  rotate: 90deg;
+}
+/* The card in the hand of a group drag: how many more come than it shows. */
+.ptcgsim-card__carry-more {
+  right: -8px;
+  top: -8px;
+  background: rgb(22 15 10 / 0.86);
+  color: #f3ebdc;
+  box-shadow:
+    0 0 0 2px rgb(243 235 220 / 0.9),
+    0 4px 10px rgb(0 0 0 / 0.35);
+}
+.ptcgsim-card__carry-more[data-turn='2'] {
+  right: auto;
+  top: auto;
+  left: -8px;
+  bottom: -8px;
+  rotate: 180deg;
+}
+/* A rectangle drawn on the felt to select what it takes (ADR-042 §2). */
+.ptcgsim-board-sweep {
+  position: absolute;
+  z-index: 30000;
+  box-sizing: border-box;
+  border: 1.5px solid var(--ptcgsim-ring-selected, rgb(90 110 188 / 0.9));
+  border-radius: 4px;
+  background: color-mix(
+    in srgb,
+    var(--ptcgsim-ring-selected, rgb(90 110 188)) 14%,
+    transparent
+  );
+  pointer-events: none;
+}
 @media (hover: hover) and (pointer: fine) {
   /* On the table the hand runs off the screen edge: a hovered card rises
      fully into view, above its neighbours (in its own frame, so the

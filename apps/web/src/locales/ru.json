@@ -17,6 +17,10 @@
     "message": "{0, plural, one {# player} other {# players}}",
     "translation": "{0, plural, one {# игрок} few {# игрока} many {# игроков} other {# игрока}}"
   },
+  "Tqs9eY": {
+    "message": "{0, plural, one {# selected} other {# selected}}",
+    "translation": "{0, plural, one {Выбрана #} few {Выбраны #} many {Выбрано #} other {Выбрано #}}"
+  },
   "jnpzPF": {
     "message": "{0, plural, one {Shuffled # card into the deck} other {Shuffled # cards into the deck}}",
     "translation": "{0, plural, one {# карта замешана в колоду} few {# карты замешаны в колоду} many {# карт замешано в колоду} other {# карты замешано в колоду}}"
@@ -858,6 +862,13 @@
       "name is GX or VSTAR, the once-per-game marker."
     ],
     "translation": "{name} использован: нажми, чтобы отменить"
+  },
+  "Dh0OFs": {
+    "message": "{name}, selected, number {order}",
+    "comments": [
+      "A card's name for screen readers while several are selected: name is the card's, order its place in the selection (1 for the first picked). Followed by how many are selected."
+    ],
+    "translation": "{name}, выбрана, номер {order}"
   },
   "cJqyrp": {
     "message": "{name}: {count}",

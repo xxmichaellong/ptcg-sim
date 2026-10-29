@@ -17,6 +17,10 @@
     "message": "{0, plural, one {# player} other {# players}}",
     "translation": "{0, plural, zero {# لاعب} one {لاعب واحد} two {لاعبان} few {# لاعبين} many {# لاعبًا} other {# لاعب}}"
   },
+  "Tqs9eY": {
+    "message": "{0, plural, one {# selected} other {# selected}}",
+    "translation": "{0, plural, zero {# محدد} one {# محدد} two {# محددان} few {# محددة} many {# محددًا} other {# محدد}}"
+  },
   "jnpzPF": {
     "message": "{0, plural, one {Shuffled # card into the deck} other {Shuffled # cards into the deck}}",
     "translation": "{0, plural, zero {تم خلط # بطاقة في المجموعة} one {تم خلط بطاقة واحدة في المجموعة} two {تم خلط بطاقتين في المجموعة} few {تم خلط # بطاقات في المجموعة} many {تم خلط # بطاقة في المجموعة} other {تم خلط # بطاقة في المجموعة}}"
@@ -858,6 +862,13 @@
       "name is GX or VSTAR, the once-per-game marker."
     ],
     "translation": "{name} مستخدم: اضغط للتراجع"
+  },
+  "Dh0OFs": {
+    "message": "{name}, selected, number {order}",
+    "comments": [
+      "A card's name for screen readers while several are selected: name is the card's, order its place in the selection (1 for the first picked). Followed by how many are selected."
+    ],
+    "translation": "{name}، محدد، رقم {order}"
   },
   "cJqyrp": {
     "message": "{name}: {count}",
