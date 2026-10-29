@@ -255,13 +255,18 @@ const TRAINER_TYPES = new Set([
 /**
  * A number as Limitless names its scans: three digits, and an alternate
  * printing's letter in lower case ("24A" is PHF_024a; "PHF_024A" is 403).
+ * A gallery's number keeps its letters and drops its zeros: TCGdex's
+ * "TG01", "GG05", "SV030" and "CC001" are BRS_TG1, CRZ_GG5, SHF_SV30 and
+ * 30C_CC1 there (the padded names are 403).
  */
 export const limitlessNumber = (number: string): string =>
-  number.replace(
-    /^(\d+)([A-Za-z]?)$/u,
-    (_, digits: string, letter: string) =>
-      `${digits.padStart(3, '0')}${letter.toLowerCase()}`
-  );
+  number
+    .replace(
+      /^(\d+)([A-Za-z]?)$/u,
+      (_, digits: string, letter: string) =>
+        `${digits.padStart(3, '0')}${letter.toLowerCase()}`
+    )
+    .replace(/^([A-Za-z]+)0+(?=\d)/u, '$1');
 
 const LIMITLESS_CDN = 'https://limitlesstcg.nyc3.cdn.digitaloceanspaces.com';
 

@@ -40,9 +40,23 @@ export const limitlessScanOf = (
 };
 
 /**
+ * What a card shows when no address has its picture (a promo neither
+ * source has scanned, SVP 85): a blank card with a picture's outline, not
+ * the browser's broken image. Its name is beside it wherever it is drawn.
+ */
+export const MISSING_CARD_IMAGE = `data:image/svg+xml,${encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" width="630" height="880" viewBox="0 0 63 88">' +
+    '<rect x="0.5" y="0.5" width="62" height="87" rx="3.5" fill="#8a8178" fill-opacity="0.2" stroke="#8a8178" stroke-opacity="0.55"/>' +
+    '<g fill="none" stroke="#8a8178" stroke-opacity="0.8" stroke-width="1.6" stroke-linejoin="round">' +
+    '<rect x="21" y="35" width="21" height="17" rx="2"/>' +
+    '<path d="M21 49l6-6 4 4 3-3 8 7"/></g></svg>'
+)}`;
+
+/**
  * A card image in the language this player sees cards in. It tries each
- * address in turn before showing as broken: the scan in that language, the
- * fallback source's in it, then each as given (cardImageCandidates).
+ * address in turn: the scan in that language, the fallback source's in it,
+ * then each as given (cardImageCandidates); with none left, a blank card
+ * (MISSING_CARD_IMAGE).
  */
 export const CardImage = ({
   src,
@@ -60,13 +74,14 @@ export const CardImage = ({
     readonly count: number;
   }>();
   const tried = failed?.key === key ? failed.count : 0;
-  const last = addresses.length - 1;
+  const missing = tried >= addresses.length;
   return (
     <img
       {...rest}
-      src={addresses[Math.min(tried, last)] ?? src}
+      src={missing ? MISSING_CARD_IMAGE : (addresses[tried] ?? src)}
+      data-image-missing={missing ? '' : undefined}
       onError={(event) => {
-        if (tried < last) setFailed({ key, count: tried + 1 });
+        if (!missing) setFailed({ key, count: tried + 1 });
         rest.onError?.(event);
       }}
     />

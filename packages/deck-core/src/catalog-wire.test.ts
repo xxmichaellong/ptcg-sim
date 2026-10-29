@@ -59,6 +59,23 @@ describe('collector numbers', () => {
     expect(limitlessImages('BRS', 'TG1', false).large).toContain(
       '/tpci/BRS/BRS_TG1_R_EN_LG.png'
     );
+    // A gallery's number as TCGdex pads it: Limitless drops the zeros.
+    for (const [code, number, file] of [
+      ['BRS', 'TG01', 'BRS_TG1'],
+      ['CRZ', 'GG05', 'CRZ_GG5'],
+      ['CRZ', 'GG40', 'CRZ_GG40'],
+      ['SHF', 'SV030', 'SHF_SV30'],
+      ['SHF', 'SV111', 'SHF_SV111'],
+      ['CEL', 'CC013', 'CEL_CC13'],
+      ['30C', 'CC001', '30C_CC1'],
+    ] as const)
+      expect(limitlessImages(code, number, false).small).toContain(
+        `/tpci/${code}/${file}_R_EN_SM.png`
+      );
+    // A promo's number is its digits: padded as any set's.
+    expect(limitlessImages('SVP', '85', false).small).toContain(
+      '/tpci/SVP/SVP_085_R_EN_SM.png'
+    );
     // An alternate printing: padded, its letter in lower case.
     expect(limitlessImages('PHF', '24A', false).large).toContain(
       '/tpci/PHF/PHF_024a_R_EN_LG.png'

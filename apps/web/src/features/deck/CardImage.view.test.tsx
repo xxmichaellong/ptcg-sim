@@ -9,7 +9,7 @@ import {
   forgetCardImageFailures,
 } from '../../i18n/card-image-language.js';
 import { preferences } from '../../preferences/preference-store.js';
-import { CardImage } from './CardImage.js';
+import { CardImage, MISSING_CARD_IMAGE } from './CardImage.js';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -50,9 +50,12 @@ describe('a card image', () => {
     expect(shown()).toBe(TCGDEX);
     await fail();
     expect(shown()).toBe(SCAN);
-    // Nothing left to try: it stays, broken.
+    // Nothing left to try: a blank card, not a broken image.
     await fail();
-    expect(shown()).toBe(SCAN);
+    expect(shown()).toBe(MISSING_CARD_IMAGE);
+    expect(
+      document.querySelector('img')!.hasAttribute('data-image-missing')
+    ).toBe(true);
     // Another language asks again from the top.
     await act(async () =>
       preferences().set(CARD_IMAGE_PREFERENCES, { cardImages: 'en' })

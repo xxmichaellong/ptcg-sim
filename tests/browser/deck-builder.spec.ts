@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page, type Route } from '@playwright/test';
 
 import { routeCardCatalog } from './support/card-catalog-fixture.js';
 import { ownRoomBudget } from './support/room-budget.js';
@@ -323,6 +323,43 @@ test('a deck chosen while an import still reads keeps the seat', async ({
   await expect(
     page.getByRole('list', { name: 'Your decks' }).getByRole('listitem')
   ).toHaveCount(1);
+});
+
+test('a card no scan host has shows as a blank card, not a broken image', async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await routeCardCatalog(page);
+  // Both hosts answer as Limitless does for a scan it lacks: an XML 403,
+  // which the browser blocks (ORB) as it would a 404.
+  const missing = (route: Route) =>
+    route.fulfill({
+      status: 403,
+      contentType: 'application/xml',
+      headers: { 'access-control-allow-origin': '*' },
+      body: '<?xml version="1.0"?><Error><Code>AccessDenied</Code></Error>',
+    });
+  await page.route('https://assets.tcgdex.net/**', missing);
+  await page.route(/^https:\/\/limitlesstcg\.nyc3\./u, missing);
+  await openSoloDeckScreen(page);
+  await page.locator('#deckNewButton').click();
+  await page.locator('#nativeDeckBuilderSearchInput').fill('dragapult');
+  const image = page
+    .getByRole('list', { name: 'Cards found' })
+    .getByRole('listitem')
+    .first()
+    .locator('img');
+  await expect(image).toHaveAttribute('data-image-missing', '');
+  // The blank card itself loads: no broken-image icon.
+  await expect
+    .poll(() =>
+      image.evaluate(
+        (element) =>
+          (element as HTMLImageElement).complete &&
+          (element as HTMLImageElement).naturalWidth
+      )
+    )
+    .toBeGreaterThan(0);
 });
 
 test.describe('on a phone', () => {
