@@ -38,7 +38,10 @@ const red = asPlayerId('group-red');
  * A Solo table: Blue plays both seats. Red's hand holds a V-UNION's two
  * pieces, a Fire Energy and a Switch; each seat has an Active.
  */
-const soloTable = () => {
+const soloTable = (
+  /** More of Red's cards: copies of one printing each. */
+  redCopies: readonly { readonly name: string; readonly count: number }[] = []
+) => {
   let next = 0;
   const context: CommandContext = {
     nextCardId: () => asCardInstanceId(`card-${++next}`),
@@ -77,13 +80,24 @@ const soloTable = () => {
   run({
     type: 'LoadDeck',
     playerId: red,
-    entries: deck('red', [
-      'Pikachu',
-      'Mewtwo V-UNION',
-      'Mewtwo V-UNION',
-      'Fire Energy',
-      'Switch',
-    ]),
+    entries: [
+      ...deck('red', [
+        'Pikachu',
+        'Mewtwo V-UNION',
+        'Mewtwo V-UNION',
+        'Fire Energy',
+        'Switch',
+      ]),
+      ...redCopies.map(({ name, count }, index) => ({
+        definition: {
+          id: asCardDefinitionId(`red-copies-${index}`),
+          name,
+          category: 'Energy' as const,
+          imageUrl: `/red-copies-${index}.png`,
+        },
+        count,
+      })),
+    ],
   });
   for (const player of [blue, red]) {
     const cards = state.zones[playerZoneId(player, 'deck')]!.cardIds.length;
@@ -278,6 +292,109 @@ describe('a group move against the room', () => {
     expect(sent).toEqual({ ...queued, cardId: switchNow });
     table.send(sent);
     expect(shape(table.project()).zones[discardId]).toEqual(['Fire Energy']);
+  });
+
+  it('rebinds a move queued behind it to the right one of two copies it discarded together', () => {
+    const table = soloTable([{ name: 'Water Energy', count: 2 }]);
+    const rebind = createProvisionalRebinder();
+    const view = table.project();
+    const handId = playerZoneId(red, 'hand');
+    const discardId = playerZoneId(red, 'discard');
+    const waters = view.zones[handId]!.cards.filter(
+      (card) =>
+        card.kind === 'known' &&
+        view.definitions[card.definitionId]?.name === 'Water Energy'
+    );
+    expect(waters).toHaveLength(2);
+    const group = rebind(
+      {
+        type: 'ApplyCardSteps',
+        steps: waters.map((card) => ({
+          type: 'MoveCard' as const,
+          cardId: card.id,
+          expectedSourceZoneId: handId,
+          destinationZoneId: discardId,
+        })),
+      },
+      view
+    );
+    // The second copy taken back, queued on it as the board shows it.
+    const queued: WireGameCommand = {
+      type: 'MoveCard',
+      cardId: waters[1]!.id,
+      expectedSourceZoneId: discardId,
+      destinationZoneId: handId,
+    };
+    table.send(group);
+    const published = table.project();
+    rebind.accepted(group, published.revision, published);
+    const sent = rebind(queued, published);
+    expect(sent).toEqual({
+      ...queued,
+      cardId: published.zones[discardId]!.cards[1]!.id,
+    });
+    table.send(sent);
+    expect(shape(table.project()).zones[discardId]).toEqual(['Water Energy']);
+  });
+
+  it('rebinds a move queued behind a draw to a card a group put under the top of the deck', () => {
+    const table = soloTable();
+    const rebind = createProvisionalRebinder();
+    const view = table.project();
+    const handId = playerZoneId(red, 'hand');
+    const hand = view.zones[handId]!.cards;
+    // Three of Red's cards on top of the deck, as one group.
+    const group = rebind(
+      {
+        type: 'ApplyCardSteps',
+        steps: hand.slice(0, 3).map((card) => ({
+          type: 'MoveCardToDeckTop' as const,
+          cardId: card.id,
+          expectedSourceId: handId,
+        })),
+      },
+      view
+    );
+    const afterGroup = predictWireCommand(view, group, {
+      readsEveryHand: true,
+    })!;
+    // Two drawn back, and the second of them discarded, queued as the board
+    // shows them.
+    const draw: WireGameCommand = {
+      type: 'DrawCards',
+      count: 2,
+      targetPlayerId: red,
+    };
+    const afterDraw = predictWireCommand(afterGroup, draw, {
+      readsEveryHand: true,
+    })!;
+    const before = new Set(
+      afterGroup.zones[handId]!.cards.map((card) => card.id)
+    );
+    const drawn = afterDraw.zones[handId]!.cards.filter(
+      (card) => !before.has(card.id)
+    );
+    expect(drawn).toHaveLength(2);
+    const queued: WireGameCommand = {
+      type: 'MoveCard',
+      cardId: drawn[1]!.id,
+      expectedSourceZoneId: handId,
+      destinationZoneId: playerZoneId(red, 'discard'),
+    };
+    table.send(group);
+    let published = table.project();
+    rebind.accepted(group, published.revision, published);
+    const drawSent = rebind(draw, published);
+    table.send(drawSent);
+    published = table.project();
+    rebind.accepted(drawSent, published.revision, published);
+    const sent = rebind(queued, published);
+    expect(
+      published.zones[handId]!.cards.some(
+        (card) => sent.type === 'MoveCard' && card.id === sent.cardId
+      )
+    ).toBe(true);
+    table.send(sent);
   });
 
   it("rebinds a move queued behind a group's reveal to the cards it showed", () => {

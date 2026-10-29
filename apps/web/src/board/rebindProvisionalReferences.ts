@@ -234,6 +234,10 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
     command: WireGameCommand,
     view: MatchViewState
   ): void => {
+    // Copies of one printing that went to one place together (a group's
+    // two Energy discarded) are matched together, in the order they went,
+    // as the hand's arrivals are: only when exactly as many came.
+    const together = new Map<string, PublicArrival[]>();
     for (const hint of publicArrivals.get(command) ?? []) {
       const zone = view.zones[hint.zoneId];
       // Own-seat cards usually retain their alias. A different fresh copy
@@ -241,17 +245,28 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
       // target.
       if (!zone || zone.cards.some((card) => card.id === hint.sentAlias))
         continue;
-      const candidates = zone.cards.filter(
+      const key = `${hint.zoneId}\u0000${hint.ownerId}\u0000${hint.definitionId}`;
+      together.set(key, [...(together.get(key) ?? []), hint]);
+    }
+    for (const hints of together.values()) {
+      const first = hints[0]!;
+      const kept = new Set(
+        (publicArrivals.get(command) ?? []).map((hint) => hint.sentAlias)
+      );
+      const candidates = view.zones[first.zoneId]!.cards.filter(
         (card) =>
           card.kind === 'known' &&
-          card.ownerId === hint.ownerId &&
-          card.definitionId === hint.definitionId &&
-          !hint.before.has(card.id)
+          card.ownerId === first.ownerId &&
+          card.definitionId === first.definitionId &&
+          !first.before.has(card.id) &&
+          !kept.has(card.id)
       );
-      if (candidates.length !== 1) continue;
-      for (const alias of hint.aliases) {
-        if (alias !== candidates[0]!.id) rememberCard(alias, candidates[0]!.id);
-      }
+      if (candidates.length !== hints.length) continue;
+      hints.forEach((hint, index) => {
+        const arrived = candidates[index]!.id;
+        for (const alias of hint.aliases)
+          if (alias !== arrived) rememberCard(alias, arrived);
+      });
     }
   };
   // Visibility changes keep the card in its source but may rotate its alias.
@@ -490,7 +505,11 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
   let deckEdges: {
     readonly zoneId: string;
     readonly edge: 'top' | 'bottom';
-    readonly alias: string;
+    /**
+     * The cards it put there, from the edge inward: a group's several, the
+     * ones under the top card too, each found by its place among them.
+     */
+    readonly aliases: readonly string[];
     readonly before: ReadonlySet<string>;
     readonly command: WireGameCommand;
   }[] = [];
@@ -524,29 +543,25 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
         : 'cardId' in command
           ? [command.cardId]
           : [];
-    for (const cardId of cardIds) {
-      const deck = Object.values(predicted.zones).find(
-        (zone) =>
-          zone.kind === 'deck' &&
-          zone.cards.some((card) => card.id === cardId) &&
-          !view.zones[zone.id]?.cards.some((card) => card.id === cardId)
+    const inserted = new Set(cardIds);
+    for (const deck of Object.values(predicted.zones)) {
+      if (deck.kind !== 'deck' || inserted.size === 0) continue;
+      const before = new Set(
+        (view.zones[deck.id]?.cards ?? []).map((card) => card.id)
       );
-      const edge =
-        deck?.cards[0]?.id === cardId
-          ? 'top'
-          : deck?.cards.at(-1)?.id === cardId
-            ? 'bottom'
-            : undefined;
-      if (deck && edge) {
-        deckEdges.push({
-          zoneId: deck.id,
-          edge,
-          alias: cardId,
-          before: new Set(
-            (view.zones[deck.id]?.cards ?? []).map((card) => card.id)
-          ),
-          command,
-        });
+      let top = 0;
+      for (const edge of ['top', 'bottom'] as const) {
+        const cards = edge === 'top' ? deck.cards : [...deck.cards].reverse();
+        const aliases: string[] = [];
+        for (const card of cards) {
+          if (!inserted.has(card.id) || before.has(card.id)) break;
+          aliases.push(card.id);
+        }
+        // Into an empty deck: the cards from its top are all there are.
+        if (edge === 'bottom' && top === deck.cards.length) continue;
+        if (edge === 'top') top = aliases.length;
+        if (aliases.length > 0)
+          deckEdges.push({ zoneId: deck.id, edge, aliases, before, command });
       }
     }
     const moved = command.type === 'MoveCard' ? command.cardId : undefined;
@@ -574,12 +589,17 @@ export const createProvisionalRebinder = (): ProvisionalRebinder => {
       command === undefined || candidate === command;
     for (const entry of deckEdges) {
       if (!settles(entry.command)) continue;
-      if (cardInView(entry.alias, view)) continue;
       const deck = view.zones[entry.zoneId]?.cards ?? [];
-      const landed = entry.edge === 'top' ? deck[0] : deck.at(-1);
-      if (landed && !entry.before.has(landed.id)) {
-        rememberCard(entry.alias, landed.id);
-      }
+      const cards = entry.edge === 'top' ? deck : [...deck].reverse();
+      // Only as many new cards at that edge as it put there: a card some
+      // other move put beside them would shift every place.
+      let fresh = 0;
+      while (fresh < cards.length && !entry.before.has(cards[fresh]!.id))
+        fresh += 1;
+      if (fresh !== entry.aliases.length) continue;
+      entry.aliases.forEach((alias, index) => {
+        if (!cardInView(alias, view)) rememberCard(alias, cards[index]!.id);
+      });
     }
     deckEdges = deckEdges.filter((entry) => !settles(entry.command));
     for (const arrival of arrivals) {
