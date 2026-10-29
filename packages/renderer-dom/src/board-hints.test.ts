@@ -207,9 +207,12 @@ describe('BoardHintTooltip', () => {
     const tooltip = () =>
       document.querySelector<HTMLElement>('.ptcgsim-board-hint > *');
     expect(tooltip()?.getAttribute('role')).toBe('tooltip');
+    const shown = tooltip();
     await render(null);
     // Still drawn, fading (overlays.css's data-ending-style), with its
-    // words, but no tooltip any more.
+    // words, but no tooltip any more: the same node, so its fade runs
+    // (a new one mounted at its ending style would just appear faded).
+    expect(tooltip()).toBe(shown);
     expect(tooltip()?.textContent).toBe('47 cards in your deck');
     expect(tooltip()?.hasAttribute('data-ending-style')).toBe(true);
     expect(tooltip()?.hasAttribute('role')).toBe(false);

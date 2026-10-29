@@ -25,6 +25,7 @@ import { preferences } from '../../preferences/preference-store.js';
 import { DEFAULT_CARD_BACK_URL } from '../../session/browser-card-back.js';
 import { dialogRequestsSnapshot } from '../../ui/dialog-requests.js';
 import { useKeyboardInset } from '../../ui/keyboard-inset.js';
+import { useSearchTyping } from '../../ui/search-typing.js';
 import { toast } from '../../ui/toast.js';
 import { Tooltip } from '../../ui/Tooltip.js';
 import { skipDialogReturnTooltip } from '../../ui/tooltip-focus.js';
@@ -184,6 +185,7 @@ export const DeckScreen = ({
   // A phone's keyboard lies over the screen's foot: lists pad their end by
   // it (deck-screen.css), so their last rows scroll up above it.
   useKeyboardInset(screen);
+  useSearchTyping(screen);
   const target = seats.target;
   const targetNow = useRef(target);
   targetNow.current = target;

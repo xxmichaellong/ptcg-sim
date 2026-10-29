@@ -260,13 +260,16 @@ export const BoardHintTooltip = ({
     text: string;
   } | null>(null);
   const showingElement = showing?.element ?? null;
-  const element = showingElement ?? leaving?.element ?? null;
-  const text =
-    showingElement === null && leaving
-      ? leaving.text
-      : element?.isConnected
-        ? (element.dataset.boardHint ?? '')
-        : '';
+  // The render that hides it keeps it, already leaving: the same node then
+  // fades out, rather than a new one mounted at its ending style.
+  const departing =
+    showingElement === null ? (leaving ?? lastShown.current) : null;
+  const element = showingElement ?? departing?.element ?? null;
+  const text = departing
+    ? departing.text
+    : element?.isConnected
+      ? (element.dataset.boardHint ?? '')
+      : '';
   useEffect(() => {
     if (showingElement) {
       setLeaving(null);

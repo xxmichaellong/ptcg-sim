@@ -402,16 +402,19 @@ test.describe('on a phone', () => {
         })
       )
       .toBeGreaterThan(120);
-    // A tap on a card found ends the typing: the header and its tabs come
-    // back to show the deck it went into, though the focus stays in the
-    // search's results.
+    // A tap on a card found adds it, the first time (the layout holds
+    // still under the finger until its click is through), and ends the
+    // typing: the header and its tabs come back to show the deck it went
+    // into, though the focus stays in the search's results.
     await page.setViewportSize({ width: 390, height: 844 });
-    await results
+    const found = results
       .getByRole('listitem')
       .first()
       .getByRole('button')
-      .first()
-      .tap();
+      .first();
+    await expect(found).not.toHaveAttribute('data-in-deck');
+    await found.tap();
+    await expect(found).toHaveAttribute('data-in-deck', 'true');
     await expect(head).toBeVisible();
     await expect(page.locator('.deck-editor__tabs')).toBeVisible();
     // Typing again, they step aside; done typing, they come back.
