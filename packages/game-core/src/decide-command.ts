@@ -3395,7 +3395,7 @@ export const decideCommand = (
     }
     case 'ApplyCardSteps':
       // Not built yet: a group's steps are decided one by one on the table
-      // the steps before them left (ADR-0XX §4).
+      // the steps before them left (ADR-042 §4).
       return reject('invalid_command', 'Card steps are not supported yet');
   }
 };

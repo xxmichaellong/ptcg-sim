@@ -447,7 +447,7 @@ export type CardStep =
     >;
 
 /**
- * Several selected cards acted on as one move (ADR-0XX): each step is
+ * Several selected cards acted on as one move (ADR-042): each step is
  * decided as if it came alone, on the table the steps before it left, and
  * the whole is one batch, one undo step. Any step refused refuses all.
  */

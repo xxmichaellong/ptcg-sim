@@ -1,9 +1,10 @@
-# ADR-0XX: selecting several cards at once
+# ADR-042: selecting several cards at once
 
 - Status: **PROPOSED** (2026-10-29, after a review of an earlier draft
   against 6d642963). Phase 0, the contract below (§11), is in.
 - Decision date: —
-- Number: the ADR's and the parity exception's are given at merge.
+- Number: 042, given at merge; the parity exception's comes with the first
+  visible change (WP4).
 - Scope:
   - a selection of several cards (and whole Pokémon) on the table and in the
     pile viewer;

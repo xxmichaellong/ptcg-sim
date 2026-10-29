@@ -257,7 +257,7 @@ export interface WireCard {
 }
 
 /**
- * Where a card printed in pieces sits in its whole (ADR-0XX §5): a
+ * Where a card printed in pieces sits in its whole (ADR-042 §5): a
  * V-UNION's quarter, a LEGEND's half, a split Stadium's half.
  */
 export interface WirePieces {

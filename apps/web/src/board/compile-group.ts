@@ -54,7 +54,7 @@ export type GroupPlace =
   | 'deckShuffled';
 
 /**
- * What a group is asked to do (ADR-0XX §3):
+ * What a group is asked to do (ADR-042 §3):
  * - `send`: a key (`h`, `d`, `l`, `p`, Space, `↑`, `↓`, `s`);
  * - `play`: `b` or `a`, onto the board each would go to alone;
  * - `stadium`: `g`;
@@ -792,7 +792,7 @@ const compileAnnotation = (
 };
 
 /**
- * A group's one move (ADR-0XX §3-5): every item's own single command, in
+ * A group's one move (ADR-042 §3-5): every item's own single command, in
  * the order they were selected (item 1 lands first), each expecting the
  * table the ones before it leave, sent as one `ApplyCardSteps` -- one
  * undo step. Destinations are each item's owner's, as each goes alone; a

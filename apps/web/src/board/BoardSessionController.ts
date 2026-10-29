@@ -1341,7 +1341,7 @@ const handleIntent = (
         }
       }
       // A press with Shift or ⌘/Ctrl (`add`) is a plain press until a
-      // selection may hold several (ADR-0XX).
+      // selection may hold several (ADR-042).
       if (
         cardSelectionModeOf(intent) !== 'replace' &&
         selectedCardIdOf(state.presentation) === intent.cardId
