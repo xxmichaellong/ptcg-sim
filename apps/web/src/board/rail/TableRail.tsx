@@ -211,8 +211,21 @@ export interface TableRailProps {
 }
 
 const EDGE_PX = 8;
-/** The gap between rail buttons (`--space-1-5`). */
-const GAP_PX = 6;
+/** The gap between rail buttons (TableRail.css's `gap`). */
+const GAP_PX = 10;
+/**
+ * The room kept clear above and below the buttons in the seam, so they
+ * don't crowd the markers, coin and outlines beside it -- where the seam
+ * has room for it: a button is never made smaller than MIN_BUTTON_PX for
+ * it. Under a finger the seam is made taller to keep 44px targets
+ * (table-seam.ts).
+ */
+const BREATHE_PX = 4;
+const MIN_BUTTON_PX = 28;
+
+/** How tall the rail's buttons are in a seam `band` tall. */
+export const railButtonPx = (band: number): number =>
+  Math.max(Math.min(band, MIN_BUTTON_PX), band - 2 * BREATHE_PX);
 /**
  * The actions sit past the Stadium, at the seam's right end, where a
  * right hand and the player's piles are (ADR-036), when at least this many
@@ -361,10 +374,11 @@ export const placeRailActions = ({
   const leftEnd = straddles ? avoid.x - EDGE_PX : rightEnd;
   const rightWidth = Math.max(0, rightEnd - rightStart);
   const leftWidth = Math.max(0, leftEnd - leftStart);
-  const rightSlots = slotsIn(rightWidth, anchor.height);
+  const buttonPx = railButtonPx(anchor.height);
+  const rightSlots = slotsIn(rightWidth, buttonPx);
   const fullRail =
     FULL_RAIL_BUTTONS - (coinOnTable ? 1 : 0) - (canSwitchSide ? 0 : 1);
-  const leftSlots = slotsIn(leftWidth, anchor.height);
+  const leftSlots = slotsIn(leftWidth, buttonPx);
   // Short of its least, past the Stadium still where before it has less
   // room yet: the rail never sits on the Stadium for want of it.
   const atRight =
@@ -377,13 +391,13 @@ export const placeRailActions = ({
         atRight,
         start: rightStart,
         width: rightWidth,
-        fitted: fitRailActions(actions, more, rightWidth, anchor.height),
+        fitted: fitRailActions(actions, more, rightWidth, buttonPx),
       }
     : {
         atRight,
         start: leftStart,
         width: leftWidth,
-        fitted: fitRailActions(actions, more, leftWidth, anchor.height),
+        fitted: fitRailActions(actions, more, leftWidth, buttonPx),
       };
 };
 
@@ -463,7 +477,7 @@ export const TableRail = memo(function TableRail({
           // The table's width: a docked log beside it keeps its own column.
           width,
           height: anchor.height,
-          '--rail-height': `${anchor.height}px`,
+          '--rail-height': `${railButtonPx(anchor.height)}px`,
         } as CSSProperties
       }
     >

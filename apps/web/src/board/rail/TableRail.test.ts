@@ -9,6 +9,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { ActionMenuEntry } from '../../ui/ActionMenu.js';
 import {
   fitRailActions,
+  railButtonPx,
   placeRailActions,
   type RailAction,
   TableRail,
@@ -37,10 +38,22 @@ const ids = (entries: readonly ActionMenuEntry[]): (string | undefined)[] =>
         : entry.id
   );
 
+describe("the rail's room in the seam", () => {
+  it('keeps clear room above and below its buttons where the seam has it', () => {
+    // A mouse's seam (40px): 32px buttons, 4px clear either side.
+    expect(railButtonPx(40)).toBe(32);
+    // A finger's (52px): the 44px targets, with the same room.
+    expect(railButtonPx(52)).toBe(44);
+    // A tight seam gives up the room before the buttons go below 28px.
+    expect(railButtonPx(32)).toBe(28);
+    expect(railButtonPx(24)).toBe(24);
+  });
+});
+
 describe('fitting the rail', () => {
   it('keeps every action when they fit as icons', () => {
     const actions = [action('turn'), action('coin'), action('undo')];
-    const fitted = fitRailActions(actions, undefined, 3 * 46 + 2 * 6, 46);
+    const fitted = fitRailActions(actions, undefined, 3 * 46 + 2 * 10, 46);
     expect(fitted.shown).toBe(actions);
     expect(fitted.more).toEqual([]);
   });
@@ -60,7 +73,7 @@ describe('fitting the rail', () => {
       onSelect: vi.fn(),
     };
     // Room for four buttons: three actions and More.
-    const fitted = fitRailActions(actions, [reset], 4 * 46 + 3 * 6, 46);
+    const fitted = fitRailActions(actions, [reset], 4 * 46 + 3 * 10, 46);
     expect(fitted.shown.map((shown) => shown.id)).toEqual([
       'turn',
       'coin',
@@ -87,7 +100,7 @@ describe('fitting the rail', () => {
       action('pass', 5),
     ];
     // Room for two buttons: Turn and More.
-    const fitted = fitRailActions(actions, undefined, 2 * 46 + 6, 46);
+    const fitted = fitRailActions(actions, undefined, 2 * 46 + 10, 46);
     expect(fitted.shown.map((shown) => shown.id)).toEqual(['turn']);
     expect(fitted.more).toEqual([
       expect.objectContaining({ id: 'undo', disabled: true }),
@@ -97,7 +110,7 @@ describe('fitting the rail', () => {
 
   it('falls back to positions when no priorities are given', () => {
     const actions = [action('a'), action('b'), action('c')];
-    const fitted = fitRailActions(actions, undefined, 2 * 46 + 6, 46);
+    const fitted = fitRailActions(actions, undefined, 2 * 46 + 10, 46);
     expect(fitted.shown.map((shown) => shown.id)).toEqual(['a']);
     expect(ids(fitted.more)).toEqual(['b', 'c']);
   });
@@ -118,7 +131,7 @@ describe('fitting the rail', () => {
         onSelect: vi.fn(),
       },
     ];
-    const roomy = fitRailActions(actions, both, 6 * 46 + 5 * 6, 46);
+    const roomy = fitRailActions(actions, both, 6 * 46 + 5 * 10, 46);
     expect(roomy.shown.map((shown) => shown.id)).toEqual([
       'turn',
       'coin',
@@ -134,7 +147,7 @@ describe('fitting the rail', () => {
         ...both,
         { id: 'reset', label: 'Reset', icon: CoinIcon, onSelect: vi.fn() },
       ],
-      9 * 46 + 8 * 6,
+      9 * 46 + 8 * 10,
       46
     );
     expect(three.shown.map((shown) => shown.id)).toEqual(['turn', 'coin']);
@@ -144,7 +157,7 @@ describe('fitting the rail', () => {
       'reset',
     ]);
     // Short of room, they are the first back into More.
-    const short = fitRailActions(actions, both, 3 * 46 + 2 * 6, 46);
+    const short = fitRailActions(actions, both, 3 * 46 + 2 * 10, 46);
     expect(short.shown.map((shown) => shown.id)).toEqual(['turn', 'coin']);
     expect(ids(short.more)).toEqual(['setupBothButton', 'resetBothButton']);
   });

@@ -123,13 +123,21 @@
   height: 100%;
   margin: 0;
   padding: 0;
-  border: 1px solid var(--color-felt-line-strong, var(--color-border-strong));
+  /* Printed on the mat like the rail's actions (TableRail.css): its cloth,
+     outline and ink, solid so no outline under it shows through, and light
+     on a light mat rather than the app's grey. */
+  border: 1.5px solid var(--color-felt-line-strong, var(--color-border-strong));
   border-radius: 50%;
-  background: color-mix(in oklab, var(--color-surface-2) 55%, transparent);
+  background-color: var(--color-felt, var(--color-surface-2));
+  background-image: linear-gradient(
+    var(--color-felt-mark, transparent),
+    var(--color-felt-mark, transparent)
+  );
+  box-shadow: inset 0 1px 1.5px
+    color-mix(in oklab, var(--color-felt-rim, black) 30%, transparent);
   color: var(--color-felt-label, var(--color-text-muted));
   font-size: 14px;
   cursor: pointer;
-  opacity: 0.75;
   -webkit-tap-highlight-color: transparent;
   transition:
     opacity var(--duration-fast) var(--ease-out),
@@ -145,17 +153,24 @@
   inset: -9px;
 }
 
+/* Pointed at or open: inked in, as a printed action under the pointer. */
 .table-zone-extras[aria-expanded='true'] {
-  opacity: 1;
-  color: var(--color-text);
-  background-color: var(--color-surface-3);
+  border-color: var(--color-felt-hover-line, var(--color-border-strong));
+  background-image: linear-gradient(
+    var(--color-felt-hover, transparent),
+    var(--color-felt-hover, transparent)
+  );
+  color: var(--color-desk-ink, var(--color-text));
 }
 
 @media (hover: hover) and (pointer: fine) {
   .table-zone-extras:hover {
-    opacity: 1;
-    color: var(--color-text);
-    background-color: var(--color-surface-3);
+    border-color: var(--color-felt-hover-line, var(--color-border-strong));
+    background-image: linear-gradient(
+      var(--color-felt-hover, transparent),
+      var(--color-felt-hover, transparent)
+    );
+    color: var(--color-desk-ink, var(--color-text));
   }
 }
 

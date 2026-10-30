@@ -31,7 +31,8 @@
   bottom: 0;
   display: flex;
   align-items: center;
-  gap: var(--space-1-5);
+  /* GAP_PX in TableRail.tsx: room between the printed buttons. */
+  gap: 10px;
 }
 
 .ptcgsim-table-rail__actions {
@@ -249,13 +250,20 @@
   --rail-fill: var(--color-felt-mark);
   --rail-press: color-mix(in oklab, var(--color-felt-rim) 42%, transparent);
   --rail-lip: color-mix(in oklab, var(--color-felt-thread-hi) 60%, transparent);
+  /* The cloth under the print, solid: printed ink covers the centre line
+     and the zone outlines it crosses, so none shows through a button. */
+  --rail-ground: var(--color-felt);
+  --rail-wash: transparent;
   border: 1.5px solid var(--rail-line);
-  background-color: var(--rail-fill);
-  background-image: linear-gradient(
-    180deg,
-    color-mix(in oklab, var(--color-felt-deep) 60%, transparent),
-    transparent 60%
-  );
+  background-color: var(--rail-ground);
+  background-image:
+    linear-gradient(var(--rail-wash), var(--rail-wash)),
+    linear-gradient(var(--rail-fill), var(--rail-fill)),
+    linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--color-felt-deep) 60%, transparent),
+      transparent 60%
+    );
   box-shadow:
     inset 0 1.5px 2px var(--rail-press),
     inset 0 -1px 0 var(--rail-lip),
@@ -298,30 +306,21 @@
   --rail-fill: color-mix(in oklab, var(--color-desk-ink) 7%, transparent);
   --rail-press: var(--color-desk-vignette);
   --rail-lip: color-mix(in oklab, var(--color-desk-hi) 60%, transparent);
-  background-image: none;
+  --rail-ground: var(--color-desk);
 }
 
 @media (hover: hover) and (pointer: fine) {
   .ptcgsim-table-rail .ptcgsim-rail-button:hover {
-    background-color: var(--rail-fill);
-    background-image: linear-gradient(
-      var(--color-felt-hover),
-      var(--color-felt-hover)
-    );
+    --rail-wash: var(--color-felt-hover);
     box-shadow:
       inset 0 2px 3px var(--rail-press),
       inset 0 -1px 0 var(--rail-lip);
   }
   .ptcgsim-table-rail .ptcgsim-rail-button[data-tone='primary']:hover {
-    background-color: color-mix(
-      in oklab,
-      var(--rail-fill),
-      var(--rail-line) 22%
-    );
+    --rail-wash: color-mix(in oklab, var(--rail-line) 22%, transparent);
   }
   .ptcgsim-table-rail .ptcgsim-rail-button[aria-disabled='true']:hover {
-    background-color: var(--rail-fill);
-    background-image: none;
+    --rail-wash: transparent;
     box-shadow:
       inset 0 1.5px 2px var(--rail-press),
       inset 0 -1px 0 var(--rail-lip);
@@ -338,12 +337,8 @@
 
 .ptcgsim-table-rail .ptcgsim-rail-button[aria-expanded='true'],
 .ptcgsim-table-rail .ptcgsim-rail-button[aria-pressed='true'] {
+  --rail-wash: var(--color-felt-hover);
   border-color: var(--rail-line);
-  background-color: var(--rail-fill);
-  background-image: linear-gradient(
-    var(--color-felt-hover),
-    var(--color-felt-hover)
-  );
   box-shadow:
     inset 0 2.5px 3px var(--rail-press),
     inset 0 -1px 0 var(--rail-lip);
@@ -361,8 +356,16 @@
     inset 0 1.5px 2px var(--rail-press);
 }
 
-/* Nothing to do now: its print faded, still in its place. */
+/* Nothing to do now: its print faded, still in its place. The ink fades,
+   not the button, which keeps covering the lines under it. */
 .ptcgsim-table-rail .ptcgsim-rail-button[aria-disabled='true'] {
+  --rail-ink: color-mix(in oklab, var(--color-felt-label) 45%, transparent);
+  --rail-line: color-mix(
+    in oklab,
+    var(--color-felt-line-strong) 50%,
+    transparent
+  );
+  opacity: 1;
   box-shadow:
     inset 0 1.5px 2px var(--rail-press),
     inset 0 -1px 0 var(--rail-lip);
