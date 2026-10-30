@@ -208,15 +208,16 @@ export const visiblePieceSetOf = (
 
 /**
  * The unfinished Pokémon a piece joins (`b` on a lone V-UNION piece): one
- * of the same print in play on that board, whose top card is a piece and
- * which lacks every part given. Null when there is none, or more than one
- * to choose between.
+ * of the same print and owner in play on that board (another player's
+ * pieces may lie on it), whose top card is a piece and which lacks every
+ * part given. Null when there is none, or more than one to choose between.
  */
 export const unfinishedPokemonFor = (
   view: MatchViewState,
   piece: CardPiece,
   parts: readonly number[],
-  boardPlayerId: string
+  boardPlayerId: string,
+  ownerId: string
 ): string | null => {
   const matching = Object.values(view.stacks).filter((stack) => {
     if (stack.boardPlayerId !== boardPlayerId) return false;
@@ -224,6 +225,9 @@ export const unfinishedPokemonFor = (
     const top = pieces.at(-1);
     return (
       top != null &&
+      stack.evolutionCards.every(
+        (card, index) => pieces[index] === null || card.ownerId === ownerId
+      ) &&
       top.key === piece.key &&
       top.columns === piece.columns &&
       top.rows === piece.rows &&

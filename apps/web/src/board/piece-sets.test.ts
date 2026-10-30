@@ -215,15 +215,40 @@ describe('an unfinished Pokémon a piece joins', () => {
     const other = table.pokemon(BLUE, 'bench', [union(MEWTWO, 0)]);
     table.pokemon(RED, 'bench', [union(MORPEKO, 0)]);
     const morpeko = { key: MORPEKO, columns: 2, rows: 2, part: 2 };
-    expect(unfinishedPokemonFor(table.view, morpeko, [2, 3], BLUE)).toBe(
+    expect(unfinishedPokemonFor(table.view, morpeko, [2, 3], BLUE, BLUE)).toBe(
       half.stackId
     );
-    expect(unfinishedPokemonFor(table.view, morpeko, [1], BLUE)).toBeNull();
     expect(
-      unfinishedPokemonFor(table.view, { ...morpeko, key: MEWTWO }, [1], BLUE)
+      unfinishedPokemonFor(table.view, morpeko, [1], BLUE, BLUE)
+    ).toBeNull();
+    expect(
+      unfinishedPokemonFor(
+        table.view,
+        { ...morpeko, key: MEWTWO },
+        [1],
+        BLUE,
+        BLUE
+      )
     ).toBe(other.stackId);
     // Two to choose between: none.
     table.pokemon(BLUE, 'bench', [union(MORPEKO, 0)]);
-    expect(unfinishedPokemonFor(table.view, morpeko, [3], BLUE)).toBeNull();
+    expect(
+      unfinishedPokemonFor(table.view, morpeko, [3], BLUE, BLUE)
+    ).toBeNull();
+  });
+
+  it("is never another player's, though it lies on that board", () => {
+    const table = groupTable();
+    // Red's top-left piece dragged onto Blue's Bench.
+    const theirs = table.pokemon(BLUE, 'bench', [union(MORPEKO, 0)]);
+    const stack = table.view.stacks[theirs.stackId]!;
+    (stack.evolutionCards[0] as { ownerId: string }).ownerId = RED;
+    const morpeko = { key: MORPEKO, columns: 2, rows: 2, part: 1 };
+    expect(
+      unfinishedPokemonFor(table.view, morpeko, [1], BLUE, BLUE)
+    ).toBeNull();
+    expect(unfinishedPokemonFor(table.view, morpeko, [1], BLUE, RED)).toBe(
+      theirs.stackId
+    );
   });
 });

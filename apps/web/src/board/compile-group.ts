@@ -403,7 +403,13 @@ const unfinishedFor = (
     return card ? cardPieceOf(view, card)?.part : undefined;
   });
   return parts.every((part) => part !== undefined)
-    ? unfinishedPokemonFor(view, piece, parts, located.sourcePlayerId)
+    ? unfinishedPokemonFor(
+        view,
+        piece,
+        parts,
+        located.sourcePlayerId,
+        located.card.ownerId
+      )
     : null;
 };
 
