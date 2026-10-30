@@ -24,13 +24,24 @@ export const playsAsOf = (
 /**
  * A Pokémon its print lets attach as an Energy, still a Pokémon where it
  * is: put on a Pokémon, it attaches as an Energy rather than evolve it.
+ * Not one that is a Pokémon in play itself (its top card): attaching
+ * starts from the hand, a window of cards, or under or on a Pokémon
+ * (resolveAttachEvolveTargeting), so nothing offers what would do nothing.
  */
 export const attachesAsEnergy = (
   view: MatchViewState,
   cardId: ViewCardId
 ): boolean => {
-  const card = locateViewCardActionSource(view, cardId)?.card;
+  const located = locateViewCardActionSource(view, cardId);
+  const card = located?.card;
+  const topOfAPokemon =
+    located?.sourceKind === 'stack' &&
+    !located.isLowerEvolution &&
+    !(view.stacks[located.sourceId]?.attachmentCards ?? []).some(
+      (attached) => attached.id === cardId
+    );
   return (
+    !topOfAPokemon &&
     card?.kind === 'known' &&
     card.category === 'Pokémon' &&
     view.definitions[card.definitionId]?.playsAs === 'Energy'

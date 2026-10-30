@@ -79,7 +79,8 @@ const catalog = decodeCatalog({
             [
               'Pokémon Power',
               'Buzzap',
-              'You may Knock Out Electrode and attach it to 1 of your other Pokémon as an Energy card.',
+              // Verbatim from TCGdex (base1-21).
+              "At any time during your turn (before your attack) you may Knock Out Electrode and attach it to 1 of your other Pokémon. If you do, chose a type of Energy. Electrode is now an Energy card (instead of a Pokémon) that provides 2 energy of that type. This power can't be used if Electrode is Asleep, Confused, or Paralyzed.",
             ],
           ],
         },

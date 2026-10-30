@@ -69,6 +69,16 @@ describe('a card played as another kind', () => {
     expect(playsAsPokemon(table.view, castform)).toBe(false);
   });
 
+  it('offers no Energy attach for a Holon’s Pokémon that is a Pokémon in play', () => {
+    const table = groupTable();
+    // Played as a Pokémon, its top card: attaching can't start there.
+    const benched = table.pokemon(BLUE, 'bench', [holon]);
+    expect(attachesAsEnergy(table.view, benched.top)).toBe(false);
+    // Under another, or attached, it can still go on as an Energy.
+    const under = table.pokemon(BLUE, 'bench', [holon, {}]);
+    expect(attachesAsEnergy(table.view, under.line[0]!)).toBe(true);
+  });
+
   it('attaches a dropped Holon’s Pokémon as an Energy, and evolves with any other', () => {
     const table = groupTable();
     const active = table.pokemon(BLUE, 'active', [{}]);

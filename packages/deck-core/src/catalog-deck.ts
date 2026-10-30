@@ -112,7 +112,7 @@ const TRANSLATED_SERIES = new Set([
  * `decodeCatalog`, the reprint rules). Raised with any change to that, so a
  * deck saved with facts worked out before is brought up to date once.
  */
-export const DECK_FACTS_VERSION = 2;
+export const DECK_FACTS_VERSION = 3;
 
 /**
  * A Trainer printed to be played "as if it were a … Basic Pokémon" (the
@@ -124,6 +124,13 @@ export const DECK_FACTS_VERSION = 2;
 const PLAYED_AS_A_POKEMON = /\bas if it were an? [^.]*\bBasic\b[^.]*Pokémon/iu;
 const ATTACHED_AS_AN_ENERGY =
   /\battach (?:this|it)(?: card)?\b[^.]*\bas an? (?:[\w{}-]+ )?Energy\b/iu;
+/**
+ * Base Set Electrode's Buzzap, as the catalog prints it: "… attach it to 1
+ * of your other Pokémon. … Electrode is now an Energy card (instead of a
+ * Pokémon) …", the attaching and the Energy in sentences of their own.
+ */
+const ATTACHED_THEN_AN_ENERGY =
+  /\battach (?:this|it)\b(?:[^.]*\.)+?[^.]*\bis now an? (?:[\w{}-]+ )?Energy card\b/iu;
 
 /** What a card is played as, where its print says it may be another kind. */
 export const playsAsOf = (
@@ -133,7 +140,11 @@ export const playsAsOf = (
     return PLAYED_AS_A_POKEMON.test(card.text ?? '') ? 'Pokémon' : undefined;
   if (card.category !== 'Pokémon') return undefined;
   return /^Holon's /u.test(card.name) ||
-    card.abilities.some((ability) => ATTACHED_AS_AN_ENERGY.test(ability.text))
+    card.abilities.some(
+      (ability) =>
+        ATTACHED_AS_AN_ENERGY.test(ability.text) ||
+        ATTACHED_THEN_AN_ENERGY.test(ability.text)
+    )
     ? 'Energy'
     : undefined;
 };

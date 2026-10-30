@@ -322,3 +322,52 @@ describe('two tabs a catalog rebuild apart', () => {
     expect(a.getSnapshot().status).toBe('ready');
   });
 });
+
+describe('a release that works facts out anew', () => {
+  it('brings a deck stamped by the build before it up to date, though the catalog is the same', () => {
+    const fossil = {
+      ...print,
+      id: 'TEF 1',
+      name: 'Antique Fossil',
+      number: '1',
+      printGroup: 'Antique Fossil',
+      tags: [],
+      text: 'Play this card as if it were a 60-HP Basic Colorless Pokémon.',
+      legal: { standard: true, expanded: true },
+    } as unknown as CatalogCard;
+    const catalog: LoadedCatalog = {
+      builtAt: '2026-10-30T06:17:00Z',
+      cards: [fossil],
+      sets: [set],
+      byId: new Map([[fossil.id, fossil]]),
+      byName: new Map(),
+    };
+    const { playsAs: _, ...before } = deckCardFromCatalog(fossil, { catalog });
+    const updates: { id: string; cards: unknown }[] = [];
+    const library = {
+      update: (id: string, patch: { cards: unknown }) =>
+        updates.push({ id, cards: patch.cards }),
+    } as unknown as DeckLibrary;
+    bringDeckFactsUpToDate(
+      library,
+      [
+        {
+          id: 'd1',
+          name: 'Deck',
+          format: 'standard',
+          cards: deckListOf([{ card: before, count: 2 }]),
+          // The build before the plays-as facts, this very catalog.
+          factsFrom: `2/${catalog.builtAt}`,
+          createdAt: 1,
+          updatedAt: 1,
+        } as never,
+      ],
+      catalog
+    );
+    expect(DECK_FACTS_VERSION).toBeGreaterThan(2);
+    expect(updates).toHaveLength(1);
+    expect(
+      (updates[0]!.cards as { card: { playsAs?: string } }[])[0]!.card.playsAs
+    ).toBe('Pokémon');
+  });
+});
