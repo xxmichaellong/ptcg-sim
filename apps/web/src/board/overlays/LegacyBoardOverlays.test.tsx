@@ -561,6 +561,103 @@ describe('legacy board overlays', () => {
     expect(await labelFor(pieces, pokemon.id)).toBe('Join pieces…');
   });
 
+  it('offers a card played as another kind its own way: as an Energy, or as a Pokémon', async () => {
+    const hand = `zone:${firstPlayer}:hand`;
+    const cards = view.zones[hand]!.cards;
+    const ofCategory = (category: string) =>
+      cards.find(
+        (card) => card.kind === 'known' && card.category === category
+      )!;
+    const pokemon = ofCategory('Pokémon');
+    const trainer = ofCategory('Trainer');
+    const definitionOf = (card: typeof pokemon) =>
+      card.kind === 'known' ? card.definitionId : '';
+    const playsAs: MatchViewState = {
+      ...view,
+      definitions: {
+        ...view.definitions,
+        [definitionOf(pokemon)]: {
+          ...view.definitions[definitionOf(pokemon)]!,
+          playsAs: 'Energy',
+        },
+        [definitionOf(trainer)]: {
+          ...view.definitions[definitionOf(trainer)]!,
+          playsAs: 'Pokémon',
+        },
+      },
+    };
+    const callbacks = {
+      ...actions(),
+      beginCardAssembly: vi.fn(),
+      playCardAsPokemon: vi.fn(),
+    };
+    const open = async (cardId: string) => {
+      await act(async () => {
+        root.render(
+          createElement(LegacyBoardOverlays, {
+            state: state({
+              view: playsAs,
+              scene: createBoardSceneForViewport(playsAs, {
+                geometryVersion: 1,
+                viewport: { width: 1280, height: 720, devicePixelRatio: 1 },
+                bottomPlayerId: firstPlayer,
+                splitRatio: 0.5,
+              }),
+              overlays: {
+                contextMenuCardId: cardId as never,
+                preview: null,
+                input: null,
+              },
+            }),
+            darkMode: false,
+            actions: callbacks,
+          })
+        );
+      });
+      return (action: string) =>
+        host.querySelector<HTMLButtonElement>(
+          `[data-context-action="${action}"]`
+        );
+    };
+    const pokemonMenu = await open(pokemon.id);
+    expect(pokemonMenu('attachAsEnergy')?.textContent?.trim()).toBe(
+      'Attach as an Energy…'
+    );
+    expect(pokemonMenu('playAsPokemon')).toBeNull();
+    await act(async () => pokemonMenu('attachAsEnergy')!.click());
+    expect(callbacks.beginCardAssembly).toHaveBeenCalledWith(pokemon.id, {
+      asCategory: 'Energy',
+    });
+
+    const trainerMenu = await open(trainer.id);
+    expect(trainerMenu('playAsPokemon')?.textContent?.trim()).toBe(
+      'Play as a Pokémon'
+    );
+    expect(trainerMenu('attachAsEnergy')).toBeNull();
+    await act(async () => trainerMenu('playAsPokemon')!.click());
+    expect(callbacks.playCardAsPokemon).toHaveBeenCalledWith(trainer.id);
+
+    // Without the fact, neither.
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardOverlays, {
+          state: state({
+            overlays: {
+              contextMenuCardId: pokemon.id,
+              preview: null,
+              input: null,
+            },
+          }),
+          darkMode: false,
+          actions: callbacks,
+        })
+      );
+    });
+    expect(
+      host.querySelector('[data-context-action="attachAsEnergy"]')
+    ).toBeNull();
+  });
+
   it('recreates the ordered category submenu and delegates one typed choice', async () => {
     const activeStack = view.stacks[view.boards[firstPlayer]!.activeStackId!]!;
     const cardId = activeStack.evolutionCards.at(-1)!.id;

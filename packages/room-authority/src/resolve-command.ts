@@ -333,6 +333,7 @@ const resolveSingleCommand = (
           ...(wire.benchIndex === undefined
             ? {}
             : { benchIndex: wire.benchIndex }),
+          ...(wire.asCategory ? { asCategory: wire.asCategory } : {}),
         },
       };
     }
@@ -440,10 +441,11 @@ const resolveSingleCommand = (
       } else if (location.kind === 'stackAttachment') {
         derivedMode = 'attachment';
       } else {
+        // Attached as an Energy, any card is one (a Holon's Pokémon).
         derivedMode =
-          canonicalCard.currentCategory === 'Pokémon'
-            ? 'evolution'
-            : 'attachment';
+          wire.asCategory || canonicalCard.currentCategory !== 'Pokémon'
+            ? 'attachment'
+            : 'evolution';
       }
       if (derivedMode !== wire.mode) return rejected('stale_reference');
       // A Pokémon evolving one on the other player's board changes their
@@ -468,6 +470,7 @@ const resolveSingleCommand = (
           targetStackId: asStackId(wire.targetStackId),
           expectedTargetTopCardId: expectedTargetTop.cardId,
           mode: derivedMode,
+          ...(wire.asCategory ? { asCategory: wire.asCategory } : {}),
         },
       };
     }

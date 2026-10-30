@@ -217,6 +217,8 @@ export const SerializedCardDefinitionSchema = v.object({
   imageUrl: UrlSchema,
   imageUrlSmall: v.optional(UrlSchema),
   presentation: v.optional(CardPresentationSchema),
+  /** The other kind its print lets it be played as (game-core's). */
+  playsAs: v.optional(v.picklist(['Pokémon', 'Energy'] as const)),
 });
 
 const WireDeckEntrySchema = v.object({
@@ -282,6 +284,8 @@ const MoveCardToPlayCommandSchema = v.object({
   slot: v.picklist(['active', 'bench'] as const),
   targetStackId: v.optional(IdentifierSchema),
   benchIndex: v.optional(NonNegativeIntegerSchema),
+  /** Onto a Pokémon, attached as an Energy whatever its kind. */
+  asCategory: v.optional(v.literal('Energy')),
 });
 
 const MoveInspectedCardToPlayCommandSchema = v.strictObject({
@@ -301,6 +305,8 @@ const PlaceCardOnPlayStackCommandSchema = v.strictObject({
   targetStackId: IdentifierSchema,
   expectedTargetTopCardId: IdentifierSchema,
   mode: v.picklist(['attachment', 'evolution'] as const),
+  /** Attached as an Energy whatever its kind. */
+  asCategory: v.optional(v.literal('Energy')),
 });
 
 const MoveCardToStadiumCommandSchema = v.object({
@@ -889,6 +895,7 @@ const ViewDefinitionSchema = v.object({
   imageUrl: UrlSchema,
   imageUrlSmall: v.optional(UrlSchema),
   presentation: v.optional(CardPresentationSchema),
+  playsAs: v.optional(v.picklist(['Pokémon', 'Energy'] as const)),
 });
 
 const PlayerViewSchema = v.object({
@@ -1059,6 +1066,11 @@ const CardMovedPresentationEventSchema = v.object({
   destinationPlayerId: v.optional(IdentifierSchema),
   cardName: v.optional(boundedString(256)),
   targetCardName: v.optional(boundedString(256)),
+  /**
+   * Played as another kind than its own: a Trainer put into play as a
+   * Pokémon, or a card attached as an Energy.
+   */
+  asCategory: v.optional(v.picklist(['Pokémon', 'Energy'] as const)),
 });
 
 const CardsDrawnPresentationEventSchema = v.object({

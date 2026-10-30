@@ -225,6 +225,9 @@ export const buildProjectedReplay = (
                   ...(definition.imageUrlSmall
                     ? { imageUrlSmall: definition.imageUrlSmall }
                     : {}),
+                  ...(definition.playsAs
+                    ? { playsAs: definition.playsAs }
+                    : {}),
                 });
               }
               cards.push({

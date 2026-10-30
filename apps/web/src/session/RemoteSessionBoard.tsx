@@ -101,6 +101,7 @@ import {
   selectionContextOf,
 } from '../board/overlays/group-context.js';
 import { visiblePieceSetOf } from '../board/piece-sets.js';
+import { attachesAsEnergy, playsAsPokemon } from '../board/plays-as.js';
 import { SelectionAnnouncer } from '../board/SelectionAnnouncer.js';
 import type { CoinFlipSnapshot } from '../presentation/CoinFlipController.js';
 import type { PresentationStateSource } from '../presentation/PresentationRuntime.js';
@@ -231,6 +232,8 @@ interface TouchBars {
   readonly damage?: boolean;
   /** Play as one card, from this piece. */
   readonly pieces?: ViewCardId;
+  /** What its print lets the one card be played as, offered on the bar. */
+  readonly playsAs?: 'Pokémon' | 'Energy';
 }
 
 export interface BoardCommands {
@@ -1028,7 +1031,7 @@ export const RemoteSessionBoard = ({
           action,
         });
       },
-      beginCardAssembly: (cardId) => {
+      beginCardAssembly: (cardId, options) => {
         const runtime = runtimeRef.current;
         if (!runtime) return;
         const opened = runtime.getBoardSnapshot()?.presentation.openedZoneId;
@@ -1038,6 +1041,14 @@ export const RemoteSessionBoard = ({
         runtime.emitLegacyShortcutAction({
           action: 'beginAttachOrEvolve',
           cardId,
+          ...(options?.asCategory ? { asCategory: options.asCategory } : {}),
+        });
+      },
+      playCardAsPokemon: (cardId) => {
+        runtimeRef.current?.emitLegacyShortcutAction({
+          action: 'moveCardToPlay',
+          cardId,
+          slot: 'bench',
         });
       },
       separateCard: (cardId) => {
@@ -1658,10 +1669,20 @@ export const RemoteSessionBoard = ({
     const single = selectedCardIdOf(presentation);
     if (single === null) return null;
     const pieces = pieceAmong([single]);
+    // A Holon's Pokémon attached as an Energy, a Fossil played as a Pokémon.
+    const playsAs =
+      context && view && !pieces
+        ? attachesAsEnergy(view, single)
+          ? 'Energy'
+          : playsAsPokemon(view, single)
+            ? 'Pokémon'
+            : undefined
+        : undefined;
     return {
       single,
       canSelect: context !== null,
       ...(pieces ? { pieces } : {}),
+      ...(playsAs ? { playsAs } : {}),
     };
   })();
   // "Play as one card" from a bar: the pieces in sight, and the group menu
@@ -1872,6 +1893,22 @@ export const RemoteSessionBoard = ({
               {...(touchBars.pieces
                 ? {
                     onPlayAsOne: () => playAsOneFromBar(touchBars.single!),
+                  }
+                : {})}
+              {...(touchBars.playsAs
+                ? {
+                    onPlayAs: {
+                      as: touchBars.playsAs,
+                      run: () =>
+                        touchBars.playsAs === 'Energy'
+                          ? overlayActions.beginCardAssembly?.(
+                              touchBars.single!,
+                              { asCategory: 'Energy' }
+                            )
+                          : overlayActions.playCardAsPokemon?.(
+                              touchBars.single!
+                            ),
+                    },
                   }
                 : {})}
             />

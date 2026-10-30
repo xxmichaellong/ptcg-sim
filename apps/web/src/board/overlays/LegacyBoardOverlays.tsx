@@ -47,6 +47,7 @@ import { ArrowsDownUpIcon } from '@phosphor-icons/react/dist/csr/ArrowsDownUp';
 import { ArrowsOutCardinalIcon } from '@phosphor-icons/react/dist/csr/ArrowsOutCardinal';
 import { ArrowUDownLeftIcon } from '@phosphor-icons/react/dist/csr/ArrowUDownLeft';
 import { BinocularsIcon } from '@phosphor-icons/react/dist/csr/Binoculars';
+import { ArrowFatLineUpIcon } from '@phosphor-icons/react/dist/csr/ArrowFatLineUp';
 import { CardsIcon } from '@phosphor-icons/react/dist/csr/Cards';
 import { CaretRightIcon } from '@phosphor-icons/react/dist/csr/CaretRight';
 import { DiceFiveIcon } from '@phosphor-icons/react/dist/csr/DiceFive';
@@ -89,6 +90,7 @@ import { resolveAttachEvolveTargeting } from '../resolveAttachEvolveTargeting.js
 import type { GroupAction } from '../compile-group.js';
 import { groupMenuOf, playAsOneSelection } from '../group-menu-entries.js';
 import { visiblePieceSetOf } from '../piece-sets.js';
+import { attachesAsEnergy, playsAsPokemon } from '../plays-as.js';
 import {
   contextActionOutcome,
   type ContextActionLocalState,
@@ -194,7 +196,16 @@ export interface LegacyBoardOverlayActions {
   readonly emitCardIntent?: (intent: OpenedZoneCardIntent) => void;
   /** Opens one card's full preview from inside the stack view. */
   readonly previewCard?: (cardId: ViewCardId) => void;
-  readonly beginCardAssembly?: (cardId: ViewCardId) => void;
+  /**
+   * Picks the Pokémon a card goes on: attached as an Energy whatever its
+   * kind with `asCategory` (a Holon's Pokémon).
+   */
+  readonly beginCardAssembly?: (
+    cardId: ViewCardId,
+    options?: { readonly asCategory?: 'Energy' }
+  ) => void;
+  /** Plays a card its print lets be a Basic Pokémon onto the Bench. */
+  readonly playCardAsPokemon?: (cardId: ViewCardId) => void;
   readonly separateCard?: (cardId: ViewCardId) => void;
   /** One of the bulk buttons along the bottom of a work-area popup. */
   readonly invokeWorkAreaAction?: (
@@ -1093,6 +1104,17 @@ const ContextMenu = ({
     state.view?.definitions[located.card.definitionId]?.presentation?.join
       ? 'join'
       : placement;
+  // A card printed to be played as another kind offers that too: a Holon's
+  // Pokémon attached as an Energy, a Fossil played as a Pokémon.
+  const asEnergy =
+    placement !== null &&
+    state.view !== undefined &&
+    attachesAsEnergy(state.view, card.id);
+  const asPokemon =
+    state.canSubmitCommands &&
+    actions.playCardAsPokemon !== undefined &&
+    state.view !== undefined &&
+    playsAsPokemon(state.view, card.id);
   const cardName = card.label;
   useFocusBoundary(container, '[role="menuitem"]', String(card.id));
   useOutsideDismiss(container, dismiss);
@@ -1279,6 +1301,51 @@ const ContextMenu = ({
                       ? t`Evolve a Pokémon…`
                       : t`Attach to a Pokémon…`
                 }
+              />
+            </button>
+          </li>
+        ) : null}
+        {asEnergy ? (
+          <li role="none">
+            <button
+              type="button"
+              role="menuitem"
+              className="ptcgsim-menu-item"
+              data-context-action="attachAsEnergy"
+              onClick={() =>
+                actions.beginCardAssembly?.(card.id, { asCategory: 'Energy' })
+              }
+            >
+              <MenuItemContent
+                icon={LightningIcon}
+                label={t({
+                  message: 'Attach as an Energy…',
+                  comment:
+                    "Card menu, for a Pokémon whose card lets it be attached as an Energy (a Holon's Pokémon): pick the Pokémon it goes on.",
+                })}
+              />
+            </button>
+          </li>
+        ) : null}
+        {asPokemon ? (
+          <li role="none">
+            <button
+              type="button"
+              role="menuitem"
+              className="ptcgsim-menu-item"
+              data-context-action="playAsPokemon"
+              onClick={() => {
+                actions.playCardAsPokemon?.(card.id);
+                dismiss();
+              }}
+            >
+              <MenuItemContent
+                icon={ArrowFatLineUpIcon}
+                label={t({
+                  message: 'Play as a Pokémon',
+                  comment:
+                    'Card menu, for a Trainer played as if it were a Basic Pokémon (a Fossil): puts it on the Bench.',
+                })}
               />
             </button>
           </li>

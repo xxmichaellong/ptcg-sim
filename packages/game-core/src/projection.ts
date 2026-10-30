@@ -70,6 +70,7 @@ export interface ViewCardDefinition {
   readonly imageUrl: string;
   readonly imageUrlSmall?: string;
   readonly presentation?: import('./card-presentation.js').CardPresentation;
+  readonly playsAs?: import('./model.js').CardPlaysAs;
 }
 
 export interface MatchViewState {
@@ -448,4 +449,5 @@ const projectDefinition = (
   ...(definition.imageUrlSmall
     ? { imageUrlSmall: definition.imageUrlSmall }
     : {}),
+  ...(definition.playsAs ? { playsAs: definition.playsAs } : {}),
 });

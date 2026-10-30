@@ -177,3 +177,72 @@ describe("a group's one move (ApplyCardSteps)", () => {
     }
   });
 });
+
+describe('a card played as another kind on the wire', () => {
+  const single = (command: unknown) =>
+    parseClientFrame(
+      JSON.stringify({
+        type: 'Command',
+        protocolVersion: PROTOCOL_VERSION,
+        sessionId: 'session',
+        clientSequence: 1,
+        commandId: 'command',
+        lastSeenRevision: 0,
+        command,
+      })
+    );
+  const onto = {
+    type: 'MoveCardToPlay',
+    cardId: id('card', 1),
+    expectedSourceZoneId: `zone:${seat}:hand`,
+    boardPlayerId: seat,
+    slot: 'active',
+    targetStackId: id('stack', 1),
+  };
+
+  it('attaches as an Energy, and as nothing else', () => {
+    expect(single({ ...onto, asCategory: 'Energy' }).ok).toBe(true);
+    expect(single({ ...onto, asCategory: 'Trainer' }).ok).toBe(false);
+    expect(
+      single({
+        type: 'PlaceCardOnPlayStack',
+        cardId: id('card', 1),
+        expectedSourceId: `zone:${seat}:hand`,
+        targetStackId: id('stack', 1),
+        expectedTargetTopCardId: id('card', 2),
+        mode: 'attachment',
+        asCategory: 'Energy',
+      }).ok
+    ).toBe(true);
+    // A group's step carries it too.
+    expect(frame([{ ...onto, asCategory: 'Energy' }, move(2)]).ok).toBe(true);
+  });
+
+  it("loads a deck whose card says what it's played as, and reads it in a log line", () => {
+    const definition = {
+      id: 'deck:fossil',
+      name: 'Unidentified Fossil',
+      category: 'Trainer',
+      imageUrl: 'https://images.example/fossil.png',
+    };
+    const load = (playsAs: unknown) =>
+      single({
+        type: 'LoadDeck',
+        entries: [{ definition: { ...definition, playsAs }, count: 1 }],
+      }).ok;
+    expect(load('Pokémon')).toBe(true);
+    expect(load('Stadium')).toBe(false);
+    expect(
+      v.safeParse(PresentationEventSchema, {
+        type: 'CardMoved',
+        revision: 2,
+        playerId: seat,
+        verb: 'moved',
+        source: 'hand',
+        destination: 'bench',
+        cardName: 'Unidentified Fossil',
+        asCategory: 'Pokémon',
+      }).success
+    ).toBe(true);
+  });
+});

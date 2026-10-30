@@ -53,7 +53,21 @@ export interface CardDefinition {
   readonly imageUrl: string;
   readonly imageUrlSmall?: string;
   readonly presentation?: import('./card-presentation.js').CardPresentation;
+  /**
+   * The other kind its print lets it be played as (a Fossil played as a
+   * Basic Pokémon, a Holon's Pokémon attached as an Energy): a fact for
+   * the table to offer, never a rule it enforces.
+   */
+  readonly playsAs?: CardPlaysAs;
 }
+
+/** What a card may be played as besides its own kind. */
+export type CardPlaysAs = 'Pokémon' | 'Energy';
+
+export const CARD_PLAYS_AS: readonly CardPlaysAs[] = Object.freeze([
+  'Pokémon',
+  'Energy',
+]);
 
 export interface CardInstance {
   readonly id: CardInstanceId;

@@ -202,6 +202,7 @@ export const projectRecipient = (
                 ...(definition.imageUrlSmall
                   ? { imageUrlSmall: definition.imageUrlSmall }
                   : {}),
+                ...(definition.playsAs ? { playsAs: definition.playsAs } : {}),
               };
             }
             changed = true;

@@ -31,6 +31,8 @@ export interface CardSpec {
   /** Dealt face down and unknown to the viewer. */
   readonly concealed?: boolean;
   readonly abilityUsed?: boolean;
+  /** What its print lets it be played as (a Fossil, a Holon's Pokémon). */
+  readonly playsAs?: 'Pokémon' | 'Energy';
 }
 
 /** One of a print's pieces (a V-UNION's quarter, a split Stadium's half). */
@@ -80,6 +82,7 @@ export const groupTable = () => {
       ...(spec.presentation
         ? { presentation: spec.presentation as Mutable<CardPresentation> }
         : {}),
+      ...(spec.playsAs ? { playsAs: spec.playsAs } : {}),
     };
     return {
       kind: 'known',

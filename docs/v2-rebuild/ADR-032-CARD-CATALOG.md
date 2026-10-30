@@ -108,7 +108,19 @@ fast and current. The sources, measured on 2026-10-15:
 7. **Images** are TCGdex's (600×825 WebP for the table, 245×337 for
    results; CORS-enabled). Where TCGdex has none, the card uses Limitless's
    scan, for the series Limitless covers; a card with neither is left out.
-8. **Everything from TCGdex is untrusted.** Each response is capped at 8 MB
+8. **Cards played as another kind** (2026-10-30). A deck card made from
+   the catalog says what its print lets it be played as besides its own
+   kind (`playsAs`, `packages/deck-core/src/catalog-deck.ts` `playsAsOf`):
+   a Trainer whose text plays it "as if it were a … Basic Pokémon" (the
+   Fossils, Clefairy Doll, Robo Substitute) is played as a Pokémon; a
+   Holon's Pokémon (whose rule TCGdex doesn't carry, so known by its name),
+   or a Pokémon whose Ability attaches it as an Energy, is attached as an
+   Energy. A saved deck gets it from the catalog the next time it loads,
+   as a card printed in pieces gets its place. The table offers it in one
+   move (PX-082); nothing enforces it. A BREAK card needs no fact: one
+   named "… BREAK" is already laid sideways across the upper half of the
+   card below it (`resolveCardPresentation`).
+9. **Everything from TCGdex is untrusted.** Each response is capped at 8 MB
    with a 20-second deadline; values are checked and a card that doesn't fit
    is left out. A failed request holds the next one back ten minutes (stored,
    so it survives eviction); a set that fails three times keeps its last

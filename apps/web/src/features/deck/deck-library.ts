@@ -204,6 +204,9 @@ const decodeCard = (value: unknown): DeckCard | undefined => {
     ...(value.presentation !== undefined
       ? { presentation: value.presentation }
       : {}),
+    ...(value.playsAs === 'Pokémon' || value.playsAs === 'Energy'
+      ? { playsAs: value.playsAs }
+      : {}),
   });
 };
 

@@ -1,4 +1,5 @@
 import type { MatchViewState, ViewCardId } from '@ptcgsim/game-core';
+import { attachesAsEnergy } from './plays-as.js';
 import { resolveAttachEvolveTargeting } from './resolveAttachEvolveTargeting.js';
 import { resolveCardStadiumMoveAction } from './resolveCardStadiumMoveAction.js';
 import type { WireGameCommand } from '@ptcgsim/protocol';
@@ -42,8 +43,11 @@ const placeOnPokemon = (
   cardId: ViewCardId,
   targetStackId: string
 ): BoardDropResolution => {
+  // A Holon's Pokémon put on a Pokémon is attached as an Energy.
+  const asEnergy = attachesAsEnergy(view, cardId);
   const targeting = resolveAttachEvolveTargeting(view, cardId, {
     evolveOnEitherBoard: true,
+    ...(asEnergy ? { asCategory: 'Energy' as const } : {}),
   });
   if (!targeting.ok) {
     return rejected(
@@ -66,6 +70,7 @@ const placeOnPokemon = (
       targetStackId: target.stackId,
       expectedTargetTopCardId: target.topCardId,
       mode: targeting.targeting.mode,
+      ...(asEnergy ? { asCategory: 'Energy' as const } : {}),
     },
   };
 };
@@ -421,6 +426,10 @@ export const resolveBoardDrop = (
         boardPlayerId: targetStack.boardPlayerId,
         slot: targetStack.slot,
         targetStackId: targetStack.id,
+        // A Holon's Pokémon put on a Pokémon is attached as an Energy.
+        ...(attachesAsEnergy(view, intent.cardId)
+          ? { asCategory: 'Energy' as const }
+          : {}),
       },
     };
   }

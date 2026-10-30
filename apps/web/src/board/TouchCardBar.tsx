@@ -10,6 +10,8 @@ import { CheckSquareIcon } from '@phosphor-icons/react/dist/csr/CheckSquare';
 import { DotsThreeCircleIcon } from '@phosphor-icons/react/dist/csr/DotsThreeCircle';
 import { HeartBreakIcon } from '@phosphor-icons/react/dist/csr/HeartBreak';
 import { MagnifyingGlassPlusIcon } from '@phosphor-icons/react/dist/csr/MagnifyingGlassPlus';
+import { ArrowFatLineUpIcon } from '@phosphor-icons/react/dist/csr/ArrowFatLineUp';
+import { LightningIcon } from '@phosphor-icons/react/dist/csr/Lightning';
 import { PuzzlePieceIcon } from '@phosphor-icons/react/dist/csr/PuzzlePiece';
 import { ArrowsOutCardinalIcon } from '@phosphor-icons/react/dist/csr/ArrowsOutCardinal';
 import { XIcon } from '@phosphor-icons/react/dist/csr/X';
@@ -105,6 +107,7 @@ export const TouchCardBar = memo(function TouchCardBar({
   onDismiss,
   onSelect,
   onPlayAsOne,
+  onPlayAs,
 }: {
   readonly scene: BoardScene;
   readonly cardId: ViewCardId;
@@ -117,6 +120,11 @@ export const TouchCardBar = memo(function TouchCardBar({
   readonly onSelect?: () => void;
   /** Takes the pieces in sight with this one: "Play as one card". */
   readonly onPlayAsOne?: () => void;
+  /**
+   * Plays it as the other kind its print allows: a Fossil onto the Bench
+   * as a Pokémon, a Holon's Pokémon onto a Pokémon as an Energy.
+   */
+  readonly onPlayAs?: PlayAs;
 }) {
   const card = scene.cards.find((candidate) => candidate.id === cardId);
   if (!card) return null;
@@ -133,9 +141,16 @@ export const TouchCardBar = memo(function TouchCardBar({
       onDismiss={onDismiss}
       {...(onSelect ? { onSelect } : {})}
       {...(onPlayAsOne ? { onPlayAsOne } : {})}
+      {...(onPlayAs ? { onPlayAs } : {})}
     />
   );
 });
+
+/** A card played as another kind than its own, from the bar. */
+interface PlayAs {
+  readonly as: 'Pokémon' | 'Energy';
+  readonly run: () => void;
+}
 
 const BarShell = ({
   bounds,
@@ -192,6 +207,7 @@ const TouchCardBarPanel = ({
   onDismiss,
   onSelect,
   onPlayAsOne,
+  onPlayAs,
 }: {
   readonly cardLabel: string | undefined;
   readonly bounds: Rect;
@@ -201,14 +217,17 @@ const TouchCardBarPanel = ({
   readonly onDismiss: () => void;
   readonly onSelect?: () => void;
   readonly onPlayAsOne?: () => void;
+  readonly onPlayAs?: PlayAs;
 }) => {
   const { t } = useLingui();
   // Five buttons keep the same width: Read gives up its word.
-  const crowded = Boolean(onSelect && onPlayAsOne);
+  const crowded = Boolean(onSelect && (onPlayAsOne || onPlayAs));
   return (
     <BarShell
       bounds={bounds}
-      width={onSelect || onPlayAsOne ? SELECT_BAR_WIDTH_PX : BAR_WIDTH_PX}
+      width={
+        onSelect || onPlayAsOne || onPlayAs ? SELECT_BAR_WIDTH_PX : BAR_WIDTH_PX
+      }
       viewport={viewport}
       label={
         cardLabel
@@ -255,6 +274,34 @@ const TouchCardBarPanel = ({
           onClick={onPlayAsOne}
         >
           <PuzzlePieceIcon {...decorative} weight="bold" />
+        </button>
+      ) : null}
+      {onPlayAs ? (
+        <button
+          id="touchPlayAsButton"
+          type="button"
+          className="touch-card-bar__button touch-card-bar__button--icon"
+          data-plays-as={onPlayAs.as}
+          aria-label={
+            onPlayAs.as === 'Energy'
+              ? t({
+                  message: 'Attach as an Energy…',
+                  comment:
+                    "Card menu, for a Pokémon whose card lets it be attached as an Energy (a Holon's Pokémon): pick the Pokémon it goes on.",
+                })
+              : t({
+                  message: 'Play as a Pokémon',
+                  comment:
+                    'Card menu, for a Trainer played as if it were a Basic Pokémon (a Fossil): puts it on the Bench.',
+                })
+          }
+          onClick={onPlayAs.run}
+        >
+          {onPlayAs.as === 'Energy' ? (
+            <LightningIcon {...decorative} weight="bold" />
+          ) : (
+            <ArrowFatLineUpIcon {...decorative} weight="bold" />
+          )}
         </button>
       ) : null}
       {onSelect ? (

@@ -7,8 +7,10 @@ import {
 } from '@ptcgsim/client-session';
 import type { DeckList } from '@ptcgsim/deck-core';
 import {
+  CARD_PLAYS_AS,
   isCardPresentation,
   resolveCardPresentation,
+  type CardPlaysAs,
   type CardPresentation,
   type MatchViewState,
 } from '@ptcgsim/game-core';
@@ -91,6 +93,7 @@ interface DefinitionCandidate {
   readonly imageUrl: string;
   readonly imageUrlSmall?: string;
   readonly presentation?: CardPresentation;
+  readonly playsAs?: CardPlaysAs;
   count: number;
 }
 
@@ -163,12 +166,15 @@ export const deckToLoadDeckEntries = async (
       typeof small === 'string' && small !== '' && small !== imageUrl
         ? small
         : undefined;
+    // What its print lets it be played as: only a known kind is kept.
+    const playsAs = CARD_PLAYS_AS.find((kind) => kind === card.playsAs);
     const identity = JSON.stringify([
       name,
       category,
       imageUrl,
       imageUrlSmall ?? null,
       ...(presentation ? [presentation] : []),
+      ...(playsAs ? [{ playsAs }] : []),
     ]);
     const existing = candidates.get(identity);
     if (existing) existing.count += count as number;
@@ -179,6 +185,7 @@ export const deckToLoadDeckEntries = async (
         category,
         imageUrl,
         ...(presentation ? { presentation } : {}),
+        ...(playsAs ? { playsAs } : {}),
         ...(imageUrlSmall === undefined ? {} : { imageUrlSmall }),
         count: count as number,
       });
@@ -211,6 +218,7 @@ export const deckToLoadDeckEntries = async (
         ...(candidate.presentation
           ? { presentation: candidate.presentation }
           : {}),
+        ...(candidate.playsAs ? { playsAs: candidate.playsAs } : {}),
         ...(candidate.imageUrlSmall === undefined
           ? {}
           : { imageUrlSmall: candidate.imageUrlSmall }),

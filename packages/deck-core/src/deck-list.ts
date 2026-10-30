@@ -59,6 +59,13 @@ export interface DeckCard {
   readonly facts?: CardRuleFacts;
   /** How the table lays the card out (game-core `CardPresentation`). */
   readonly presentation?: unknown;
+  /**
+   * The other kind its print lets it be played as: a Trainer played as a
+   * Basic Pokémon (a Fossil), or a Pokémon attached as an Energy (a
+   * Holon's Pokémon). The table offers it in one move (game-core
+   * `CardDefinition.playsAs`).
+   */
+  readonly playsAs?: 'Pokémon' | 'Energy';
 }
 
 export interface DeckEntry {

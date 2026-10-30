@@ -92,6 +92,13 @@
     ],
     "translation": "{0} selezionate"
   },
+  "3amk2q": {
+    "message": "{actor} attached {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} as an Energy",
+    "comments": [
+      "Log line for a Pokémon attached as an Energy card, the Pokémon it went on hidden. {actor} is a player's name, {card} the card attached; {source} is the zone it came from."
+    ],
+    "translation": ""
+  },
   "9dbhR8": {
     "message": "{actor} attached {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {target, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}}",
     "comments": [
@@ -105,6 +112,13 @@
       "Log line. {actor} is a player's name; {card} is the card attached (Energy, a Tool) and {targetCard} the Pokémon it went on; {source} is the zone it came from."
     ],
     "translation": "{actor} ha assegnato {card} {source, select, hand {dalla mano} prizes {dalle carte Premio} discard {dalla pila degli scarti} board {dal campo} stadium {dallo Stadio} active {dalla posizione attiva} bench {dalla panchina} lostZone {dall'area perduta} attachmentResolution {dalle carte assegnate} other {dal mazzo}} a {targetCard}"
+  },
+  "EZciZl": {
+    "message": "{actor} attached {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {targetCard} as an Energy",
+    "comments": [
+      "Log line for a Pokémon attached as an Energy card (a Holon's Pokémon). {actor} is a player's name; {card} is the card attached and {targetCard} the Pokémon it went on; {source} is the zone it came from."
+    ],
+    "translation": ""
   },
   "eJ4Drn": {
     "message": "{actor} discarded {count, plural, one {# attached card} other {# attached cards}}",
@@ -224,6 +238,13 @@
       "Log line. {actor} is the player who moved the card, {target} the player whose hand it came from."
     ],
     "translation": "{actor} ha spostato una carta a caso dalla mano di {target} in campo"
+  },
+  "_lJBIJ": {
+    "message": "{actor} played {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {target, select, active {active} other {bench}} as a Pokémon",
+    "comments": [
+      "Log line for a Trainer played as a Basic Pokémon (a Fossil). {actor} is a player's name, {card} the card's name; {source} is the zone it came from and {target} the Active Spot or the Bench."
+    ],
+    "translation": ""
   },
   "G9PVLG": {
     "message": "{actor} revealed {0, plural, one {# card} other {# cards}} in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
@@ -1799,6 +1820,14 @@
   "jrzyuC": {
     "message": "Attach and evolve",
     "translation": "Assegna ed evolvi"
+  },
+  "2FtXYw": {
+    "message": "Attach as an Energy…",
+    "comments": [
+      "Card menu, for a Pokémon whose card lets it be attached as an Energy (a Holon's Pokémon): pick the Pokémon it goes on.",
+      "Card menu, for a Pokémon whose card lets it be attached as an Energy (a Holon's Pokémon): pick the Pokémon it goes on."
+    ],
+    "translation": ""
   },
   "8vfaut": {
     "message": "Attach to",
@@ -4938,6 +4967,14 @@
   "7LIRc6": {
     "message": "Play a random deck",
     "translation": "Gioca con un mazzo a caso"
+  },
+  "EeTmt3": {
+    "message": "Play as a Pokémon",
+    "comments": [
+      "Card menu, for a Trainer played as if it were a Basic Pokémon (a Fossil): puts it on the Bench.",
+      "Card menu, for a Trainer played as if it were a Basic Pokémon (a Fossil): puts it on the Bench."
+    ],
+    "translation": ""
   },
   "Yo-ZmX": {
     "message": "Play as one card",

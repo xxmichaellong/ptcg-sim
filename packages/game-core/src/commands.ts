@@ -78,6 +78,11 @@ export type BaseGameCommand =
       readonly slot: PlaySlot;
       readonly targetStackId?: StackId;
       readonly benchIndex?: number;
+      /**
+       * Onto a Pokémon, attached as an Energy whatever its kind (a Holon's
+       * Pokémon): one move, its own kind again once it leaves play.
+       */
+      readonly asCategory?: 'Energy';
     }
   | {
       readonly type: 'PlaceCardOnPlayStack';
@@ -87,6 +92,8 @@ export type BaseGameCommand =
       readonly targetStackId: StackId;
       readonly expectedTargetTopCardId: CardInstanceId;
       readonly mode: PlayStackPlacementMode;
+      /** Attached as an Energy whatever its kind (MoveCardToPlay's). */
+      readonly asCategory?: 'Energy';
     }
   | {
       readonly type: 'MoveCardFromStack';

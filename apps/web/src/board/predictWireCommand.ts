@@ -597,6 +597,10 @@ const updateCard = (
   return null;
 };
 
+/** A card attached as another kind (a Pokémon as an Energy) while it stays. */
+const attachedAs = (card: ViewCard, category: 'Energy'): ViewCard =>
+  card.kind === 'known' ? { ...card, category } : card;
+
 const updateStack = (
   view: MatchViewState,
   stackId: string,
@@ -825,6 +829,12 @@ const predict = (
       if (command.targetStackId) {
         const target = taken.view.stacks[command.targetStackId];
         if (!target) return null;
+        // Attached as an Energy, a Pokémon is one where it lies.
+        if (command.asCategory)
+          return withStack(
+            taken.view,
+            attachTo(target, attachedAs(card, command.asCategory))
+          );
         const isPokemon = card.kind === 'known' && card.category === 'Pokémon';
         return withStack(
           taken.view,
@@ -884,7 +894,12 @@ const predict = (
         taken.view,
         command.mode === 'evolution'
           ? evolveWith(refreshed, taken.card)
-          : attachTo(refreshed, taken.card)
+          : attachTo(
+              refreshed,
+              command.asCategory
+                ? attachedAs(taken.card, command.asCategory)
+                : taken.card
+            )
       );
     }
     case 'MoveCardFromStack': {

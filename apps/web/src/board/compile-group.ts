@@ -19,6 +19,7 @@ import {
   type GroupUnit,
   type PieceSet,
 } from './piece-sets.js';
+import { attachesAsEnergy } from './plays-as.js';
 import { predictCardStep } from './predictWireCommand.js';
 import { resolveBoardDrop } from './resolveBoardDrop.js';
 import { resolveCardAnnotationAction } from './resolveCardAnnotationAction.js';
@@ -723,7 +724,11 @@ const compileOntoPokemon = (
       parts.add(piece.part);
       continue;
     }
-    if (card.kind !== 'known' || card.category === 'Pokémon')
+    // A Holon's Pokémon goes on as an Energy, as it does alone.
+    if (
+      card.kind !== 'known' ||
+      (card.category === 'Pokémon' && !attachesAsEnergy(view, item))
+    )
       return refuse('attachments_only', item);
   }
   for (const item of items) {

@@ -114,6 +114,30 @@ const TRANSLATED_SERIES = new Set([
  */
 export const DECK_FACTS_VERSION = 2;
 
+/**
+ * A Trainer printed to be played "as if it were a … Basic Pokémon" (the
+ * Fossils, Clefairy Doll, Robo Substitute), and a Pokémon that may be
+ * attached as an Energy (the Holon's Pokémon of EX Holon Phantoms and
+ * Delta Species, whose rule TCGdex doesn't carry, or a card whose Ability
+ * says so).
+ */
+const PLAYED_AS_A_POKEMON = /\bas if it were an? [^.]*\bBasic\b[^.]*Pokémon/iu;
+const ATTACHED_AS_AN_ENERGY =
+  /\battach (?:this|it)(?: card)?\b[^.]*\bas an? (?:[\w{}-]+ )?Energy\b/iu;
+
+/** What a card is played as, where its print says it may be another kind. */
+export const playsAsOf = (
+  card: Pick<CatalogCard, 'name' | 'category' | 'text' | 'abilities'>
+): 'Pokémon' | 'Energy' | undefined => {
+  if (card.category === 'Trainer')
+    return PLAYED_AS_A_POKEMON.test(card.text ?? '') ? 'Pokémon' : undefined;
+  if (card.category !== 'Pokémon') return undefined;
+  return /^Holon's /u.test(card.name) ||
+    card.abilities.some((ability) => ATTACHED_AS_AN_ENERGY.test(ability.text))
+    ? 'Energy'
+    : undefined;
+};
+
 /** A deck card for a catalogued printing, with the facts the rules check. */
 export const deckCardFromCatalog = (
   card: CatalogCard,
@@ -141,6 +165,7 @@ export const deckCardFromCatalog = (
   const tags = card.tags.filter((tag) =>
     ['ACE SPEC', 'Radiant', 'Prism Star', 'Star'].includes(tag)
   );
+  const playsAs = playsAsOf(card);
   return Object.freeze({
     id: card.id,
     name: card.name,
@@ -163,6 +188,7 @@ export const deckCardFromCatalog = (
       ...(card.set.pocket ? { pocket: true } : {}),
     }),
     ...(card.presentation ? { presentation: card.presentation } : {}),
+    ...(playsAs ? { playsAs } : {}),
   });
 };
 
@@ -445,13 +471,16 @@ export const withCatalogFacts = (
       imageSmall: _imageSmall,
       ...found
     } = deckCardFromCatalog(print, { catalog });
-    // A card printed in pieces saved without its place in the whole.
+    // A card printed in pieces saved without its place in the whole, and
+    // one played as another kind saved before the table knew it.
     const presentation =
       card.presentation === undefined ? found.presentation : undefined;
+    const playsAs = card.playsAs === undefined ? found.playsAs : undefined;
     if (
       card.facts &&
       sameFacts(card.facts, found.facts) &&
-      presentation === undefined
+      presentation === undefined &&
+      playsAs === undefined
     )
       return entry;
     changed = true;
@@ -463,6 +492,7 @@ export const withCatalogFacts = (
               ...card,
               facts: found.facts,
               ...(presentation ? { presentation } : {}),
+              ...(playsAs ? { playsAs } : {}),
             }
           : {
               ...found,

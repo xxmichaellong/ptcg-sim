@@ -350,6 +350,71 @@ describe('battle-log narration', () => {
     ]);
   });
 
+  it('says when a card is played as another kind: a Pokémon as an Energy, any other as a Pokémon', () => {
+    const { state, context } = table();
+    const hand = state.zones[playerZoneId(p1, 'hand')]!;
+    const [first, second] = hand.cardIds.filter(
+      (id) => state.cards[id]!.currentCategory === 'Pokémon'
+    );
+    const energy = hand.cardIds.find(
+      (id) => state.cards[id]!.currentCategory === 'Energy'
+    )!;
+    const played = step(
+      state,
+      {
+        type: 'MoveCardToPlay',
+        cardId: first!,
+        expectedSourceZoneId: hand.id,
+        boardPlayerId: p1,
+        slot: 'active',
+      },
+      context
+    );
+    const stackId = played.state.boards[p1]!.activeStackId!;
+    const asEnergy = step(
+      played.state,
+      {
+        type: 'MoveCardToPlay',
+        cardId: second!,
+        expectedSourceZoneId: hand.id,
+        boardPlayerId: p1,
+        slot: 'active',
+        targetStackId: stackId,
+        asCategory: 'Energy',
+      },
+      context
+    );
+    expect(asEnergy.narration).toEqual([
+      expect.objectContaining({
+        verb: 'attached',
+        asCategory: 'Energy',
+        targetCardName:
+          state.definitions[state.cards[first!]!.definitionId]!.name,
+      }),
+    ]);
+    // An Energy put on the Bench starts a Pokémon there: played as one.
+    const benched = step(
+      played.state,
+      {
+        type: 'MoveCardToPlay',
+        cardId: energy,
+        expectedSourceZoneId: hand.id,
+        boardPlayerId: p1,
+        slot: 'bench',
+      },
+      context
+    );
+    expect(benched.narration).toEqual([
+      expect.objectContaining({
+        verb: 'moved',
+        destination: 'bench',
+        asCategory: 'Pokémon',
+      }),
+    ]);
+    // A Pokémon played as itself says nothing more.
+    expect(played.narration[0]).not.toHaveProperty('asCategory');
+  });
+
   it('narrates draws, shuffles, deck looks, bulk resolutions and hand replacement', () => {
     const { state, context } = table();
     const drew = step(

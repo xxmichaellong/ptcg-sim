@@ -346,6 +346,8 @@ const moved = (
     readonly destinationPlayerId?: PlayerId;
     readonly cardName?: string;
     readonly targetCardName?: string;
+    /** Played as another kind than its own (a Fossil, a Holon's Pokémon). */
+    readonly asCategory?: 'Pokémon' | 'Energy';
   }
 ): Narration =>
   ({
@@ -360,6 +362,7 @@ const moved = (
       : {}),
     ...(fields.cardName ? { cardName: fields.cardName } : {}),
     ...(fields.targetCardName ? { targetCardName: fields.targetCardName } : {}),
+    ...(fields.asCategory ? { asCategory: fields.asCategory } : {}),
   }) satisfies Narration;
 
 const narrate = (
@@ -410,10 +413,15 @@ const narrate = (
       if (!playerId || !source) return [];
       const cardName = publicName(state, previousState, event.cardId);
       if (event.mode === 'newStack') {
+        // A Trainer put into play is played as a Pokémon (a Fossil).
+        const own = previousState.cards[event.cardId]?.originalCategory;
         return [
           moved(revision, playerId, 'moved', source, {
             destination: event.slot,
             cardName,
+            ...(own && own !== 'Pokémon'
+              ? { asCategory: 'Pokémon' as const }
+              : {}),
           }),
         ];
       }
@@ -452,6 +460,7 @@ const narrate = (
             event.stackId,
             event.cardId
           ),
+          ...(event.category ? { asCategory: event.category } : {}),
         }),
       ];
     }
@@ -478,6 +487,7 @@ const narrate = (
               event.targetStackId,
               event.cardId
             ),
+            ...(event.category ? { asCategory: event.category } : {}),
           }
         ),
       ];

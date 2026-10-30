@@ -488,6 +488,34 @@ describe('presentationEffectsForEvent', () => {
         targetCardName: 'Pikachu',
       })
     ).toBe('player:Blue attached Lightning Energy from hand to Pikachu');
+    // Played as another kind than its own.
+    expect(
+      line({
+        type: 'CardMoved',
+        ...at,
+        verb: 'attached',
+        source: 'hand',
+        destination: 'active',
+        cardName: "Holon's Castform",
+        targetCardName: 'Pikachu',
+        asCategory: 'Energy',
+      })
+    ).toBe(
+      "player:Blue attached Holon's Castform from hand to Pikachu as an Energy"
+    );
+    expect(
+      line({
+        type: 'CardMoved',
+        ...at,
+        verb: 'moved',
+        source: 'hand',
+        destination: 'bench',
+        cardName: 'Unidentified Fossil',
+        asCategory: 'Pokémon',
+      })
+    ).toBe(
+      'player:Blue played Unidentified Fossil from hand to bench as a Pokémon'
+    );
     expect(
       line({
         type: 'CardMoved',

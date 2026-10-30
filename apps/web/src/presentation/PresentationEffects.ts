@@ -294,6 +294,68 @@ const cardMovedMessage = (
   const source = event.source;
   const target = event.destination ?? 'deck';
   const targetCard = event.targetCardName;
+  // Played as another kind than its own: a Fossil put into play as a
+  // Pokémon, a Holon's Pokémon attached as an Energy.
+  if (
+    event.verb === 'moved' &&
+    event.asCategory === 'Pokémon' &&
+    (event.destination === 'active' || event.destination === 'bench')
+  ) {
+    return msg({
+      message: `${actor} played ${card} from ${select(source, {
+        hand: 'hand',
+        prizes: 'prizes',
+        discard: 'discard',
+        board: 'board',
+        stadium: 'stadium',
+        active: 'active',
+        bench: 'bench',
+        lostZone: 'lost zone',
+        attachmentResolution: 'attached cards',
+        other: 'deck',
+      })} to ${select(target, {
+        active: 'active',
+        other: 'bench',
+      })} as a Pokémon`,
+      comment:
+        "Log line for a Trainer played as a Basic Pokémon (a Fossil). {actor} is a player's name, {card} the card's name; {source} is the zone it came from and {target} the Active Spot or the Bench.",
+    });
+  }
+  if (event.verb === 'attached' && event.asCategory === 'Energy') {
+    return targetCard !== undefined
+      ? msg({
+          message: `${actor} attached ${card} from ${select(source, {
+            hand: 'hand',
+            prizes: 'prizes',
+            discard: 'discard',
+            board: 'board',
+            stadium: 'stadium',
+            active: 'active',
+            bench: 'bench',
+            lostZone: 'lost zone',
+            attachmentResolution: 'attached cards',
+            other: 'deck',
+          })} to ${targetCard} as an Energy`,
+          comment:
+            "Log line for a Pokémon attached as an Energy card (a Holon's Pokémon). {actor} is a player's name; {card} is the card attached and {targetCard} the Pokémon it went on; {source} is the zone it came from.",
+        })
+      : msg({
+          message: `${actor} attached ${card} from ${select(source, {
+            hand: 'hand',
+            prizes: 'prizes',
+            discard: 'discard',
+            board: 'board',
+            stadium: 'stadium',
+            active: 'active',
+            bench: 'bench',
+            lostZone: 'lost zone',
+            attachmentResolution: 'attached cards',
+            other: 'deck',
+          })} as an Energy`,
+          comment:
+            "Log line for a Pokémon attached as an Energy card, the Pokémon it went on hidden. {actor} is a player's name, {card} the card attached; {source} is the zone it came from.",
+        });
+  }
   switch (event.verb) {
     case 'moved':
       // A Pokémon that changed boards: whose board it went to.

@@ -193,6 +193,8 @@ export type DomainEvent =
       readonly attachmentOrderVersion: 1;
       readonly expectedAttachmentCardIds: readonly CardInstanceId[];
       readonly attachmentCardIds: readonly CardInstanceId[];
+      /** Attached as this kind rather than its own (a Pokémon as an Energy). */
+      readonly category?: 'Energy';
     }
   | {
       /** Atomic source departure plus target evolution/attachment. */
@@ -208,6 +210,8 @@ export type DomainEvent =
       readonly attachmentOrderVersion: 1;
       readonly evolutionCardIds: readonly CardInstanceId[];
       readonly attachmentCardIds: readonly CardInstanceId[];
+      /** Attached as this kind rather than its own (a Pokémon as an Energy). */
+      readonly category?: 'Energy';
     }
   | {
       readonly type: 'CardMovedFromStack';

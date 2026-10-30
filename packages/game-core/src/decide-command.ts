@@ -187,12 +187,25 @@ const sameOrder = <Value>(
   left.length === right.length &&
   left.every((value, index) => value === right[index]);
 
+/** The cards as an attachment orders them: one attached as an Energy is one. */
+const cardsAttachedAs = (
+  cards: MatchState['cards'],
+  cardId: CardInstanceId,
+  category: 'Energy' | undefined
+): MatchState['cards'] => {
+  const card = cards[cardId];
+  return category && card
+    ? { ...cards, [cardId]: { ...card, currentCategory: category } }
+    : cards;
+};
+
 const sameDefinition = (left: CardDefinition, right: CardDefinition): boolean =>
   left.id === right.id &&
   left.name === right.name &&
   left.category === right.category &&
   left.imageUrl === right.imageUrl &&
   left.imageUrlSmall === right.imageUrlSmall &&
+  left.playsAs === right.playsAs &&
   sameCardPresentation(left.presentation, right.presentation);
 
 type DeckRelativeCommand = Extract<
@@ -740,7 +753,12 @@ const decidePlaceCardOnPlayStack = (
     derivedMode = 'attachment';
   } else {
     derivedMode =
-      source.card.currentCategory === 'Pokémon' ? 'evolution' : 'attachment';
+      command.asCategory || source.card.currentCategory !== 'Pokémon'
+        ? 'attachment'
+        : 'evolution';
+  }
+  if (command.asCategory !== undefined && command.asCategory !== 'Energy') {
+    return reject('invalid_command', 'A card is attached only as an Energy');
   }
   if (derivedMode !== command.mode) {
     return reject('stale_reference', 'Attach/evolve placement mode changed');
@@ -763,7 +781,7 @@ const decidePlaceCardOnPlayStack = (
   const attachmentCardIds =
     derivedMode === 'attachment'
       ? orderAttachmentCardIdsV1(
-          state.cards,
+          cardsAttachedAs(state.cards, source.card.id, command.asCategory),
           attachmentsBeforePlacement,
           source.card.id
         )
@@ -782,6 +800,7 @@ const decidePlaceCardOnPlayStack = (
     attachmentOrderVersion: 1,
     evolutionCardIds,
     attachmentCardIds,
+    ...(command.asCategory ? { category: command.asCategory } : {}),
   });
 };
 
@@ -1334,6 +1353,15 @@ export const decideCommand = (
       const card = state.cards[command.cardId];
       if (!card)
         return reject('not_found', `Card ${command.cardId} does not exist`);
+      if (
+        command.asCategory !== undefined &&
+        (command.asCategory !== 'Energy' || !command.targetStackId)
+      ) {
+        return reject(
+          'invalid_command',
+          'Only a card put on a Pokémon is attached as an Energy'
+        );
+      }
       const location = findCardLocation(state, command.cardId);
       if (
         !location ||
@@ -1359,7 +1387,7 @@ export const decideCommand = (
             'Target stack no longer exists on this board'
           );
         }
-        if (card.currentCategory !== 'Pokémon') {
+        if (command.asCategory || card.currentCategory !== 'Pokémon') {
           return accept({
             type: 'CardAttachedToPlayStack',
             cardId: card.id,
@@ -1369,10 +1397,11 @@ export const decideCommand = (
             attachmentOrderVersion: 1,
             expectedAttachmentCardIds: [...stack.attachmentCardIds],
             attachmentCardIds: orderAttachmentCardIdsV1(
-              state.cards,
+              cardsAttachedAs(state.cards, card.id, command.asCategory),
               stack.attachmentCardIds,
               card.id
             ),
+            ...(command.asCategory ? { category: command.asCategory } : {}),
           });
         }
         return accept({

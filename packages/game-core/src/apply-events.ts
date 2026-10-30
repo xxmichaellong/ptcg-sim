@@ -150,6 +150,7 @@ const sameDefinition = (
   left.category === right.category &&
   left.imageUrl === right.imageUrl &&
   left.imageUrlSmall === right.imageUrlSmall &&
+  left.playsAs === right.playsAs &&
   // The command side compares presentation too; an applied event must not
   // quietly re-present a definition the other seat still uses.
   sameCardPresentation(left.presentation, right.presentation);
@@ -1609,8 +1610,15 @@ const applyEventInternal = (
       if (!source.cardIds.includes(event.cardId)) {
         throw new Error(`Card ${event.cardId} is not in expected source zone`);
       }
-      const card = state.cards[event.cardId];
-      if (!card) throw new Error(`Missing card ${event.cardId}`);
+      const held = state.cards[event.cardId];
+      if (!held) throw new Error(`Missing card ${event.cardId}`);
+      if (event.category !== undefined && event.category !== 'Energy') {
+        throw new Error('A card is attached only as an Energy');
+      }
+      // Attached as an Energy, a Pokémon is one while it stays there.
+      const card = event.category
+        ? { ...held, currentCategory: event.category }
+        : held;
       if (card.currentCategory === 'Pokémon') {
         throw new Error('Pokémon cannot use attachment event semantics');
       }
@@ -1624,7 +1632,7 @@ const applyEventInternal = (
         throw new Error('Attachment event has stale card ordering');
       }
       const expectedAttachmentCardIds = orderAttachmentCardIdsV1(
-        state.cards,
+        { ...state.cards, [card.id]: card },
         stack.attachmentCardIds,
         event.cardId
       );
@@ -1701,11 +1709,20 @@ const applyEventInternal = (
         derivedMode = 'attachment';
       } else {
         derivedMode =
-          card.currentCategory === 'Pokémon' ? 'evolution' : 'attachment';
+          event.category || card.currentCategory !== 'Pokémon'
+            ? 'attachment'
+            : 'evolution';
       }
       if (event.mode !== derivedMode) {
         throw new Error('Atomic play-stack placement mode is malformed');
       }
+      if (event.category !== undefined && event.category !== 'Energy') {
+        throw new Error('A card is attached only as an Energy');
+      }
+      // Attached as an Energy, a Pokémon is one while it stays there.
+      const placed = event.category
+        ? { ...card, currentCategory: event.category }
+        : card;
 
       const sameStackSource =
         (location.kind === 'stackEvolution' ||
@@ -1724,7 +1741,7 @@ const applyEventInternal = (
       const expectedAttachmentCardIds =
         derivedMode === 'attachment'
           ? orderAttachmentCardIdsV1(
-              state.cards,
+              { ...state.cards, [placed.id]: placed },
               attachmentsBeforePlacement,
               card.id
             )
@@ -1864,7 +1881,7 @@ const applyEventInternal = (
         cards: {
           ...state.cards,
           [card.id]: {
-            ...card,
+            ...placed,
             face: 'up',
             ...(derivedMode === 'evolution' ? { abilityUsed: false } : {}),
           },

@@ -10,6 +10,8 @@ export interface BoardPlayTargetingState {
   readonly sourceCardId: ViewCardId;
   readonly expectedSourceId: string;
   readonly mode: AttachEvolvePlacementMode;
+  /** Attached as an Energy whatever its kind (a Holon's Pokémon). */
+  readonly asCategory?: 'Energy';
   readonly targets: readonly {
     readonly stackId: string;
     readonly topCardId: ViewCardId;
@@ -65,6 +67,8 @@ export const resolveAttachEvolveTargeting = (
      * Q/E's targets keep to its own board, where it evolves every time.
      */
     readonly evolveOnEitherBoard?: boolean;
+    /** Attached as an Energy whatever its kind (a Holon's Pokémon). */
+    readonly asCategory?: 'Energy';
   } = {}
 ): AttachEvolveTargetingResolution => {
   if (view.viewer.kind !== 'player') return rejectedTargeting('not_player');
@@ -86,7 +90,10 @@ export const resolveAttachEvolveTargeting = (
     if (source.card.kind !== 'known') {
       return rejectedTargeting('unsupported_source');
     }
-    mode = source.card.category === 'Pokémon' ? 'evolution' : 'attachment';
+    mode =
+      options.asCategory || source.card.category !== 'Pokémon'
+        ? 'attachment'
+        : 'evolution';
   }
 
   const boardIds =
@@ -116,6 +123,7 @@ export const resolveAttachEvolveTargeting = (
       sourceCardId: cardId,
       expectedSourceId: source.sourceId,
       mode,
+      ...(options.asCategory ? { asCategory: options.asCategory } : {}),
       targets,
     },
   };
@@ -127,7 +135,11 @@ export const resolveAttachEvolveTarget = (
   targeting: BoardPlayTargetingState,
   targetCardId: ViewCardId
 ): AttachEvolvePlacementResolution => {
-  const current = resolveAttachEvolveTargeting(view, targeting.sourceCardId);
+  const current = resolveAttachEvolveTargeting(
+    view,
+    targeting.sourceCardId,
+    targeting.asCategory ? { asCategory: targeting.asCategory } : {}
+  );
   if (!current.ok) return rejectedPlacement(current.reason);
   if (current.targeting.expectedSourceId !== targeting.expectedSourceId) {
     return rejectedPlacement('stale_source');
@@ -155,6 +167,7 @@ export const resolveAttachEvolveTarget = (
       targetStackId: expectedTarget.stackId,
       expectedTargetTopCardId: targetCardId,
       mode: targeting.mode,
+      ...(targeting.asCategory ? { asCategory: targeting.asCategory } : {}),
     },
   };
 };

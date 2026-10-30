@@ -4,6 +4,7 @@ import { isCardPresentation } from './card-presentation.js';
 import { playersHaveMutualCoachingConsent } from './coaching-consent.js';
 import { findCardLocations } from './location.js';
 import {
+  CARD_PLAYS_AS,
   isStackReminder,
   MATCH_STATE_SCHEMA_VERSION,
   MAX_IMAGE_URL_CODE_UNITS,
@@ -170,6 +171,12 @@ export const collectInvariantProblems = (
         definition.imageUrlSmall.length > MAX_IMAGE_URL_CODE_UNITS)
     ) {
       problems.push(`definition ${definition.id} has invalid small image URL`);
+    }
+    if (
+      definition.playsAs !== undefined &&
+      !CARD_PLAYS_AS.includes(definition.playsAs)
+    ) {
+      problems.push(`definition ${definition.id} has invalid plays-as kind`);
     }
   }
 

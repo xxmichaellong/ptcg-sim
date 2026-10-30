@@ -170,6 +170,8 @@ export type LegacyBoardShortcutActionRequest =
   | {
       readonly action: 'beginAttachOrEvolve';
       readonly cardId: ViewCardId;
+      /** Attached as an Energy whatever its kind (a Holon's Pokémon). */
+      readonly asCategory?: 'Energy';
     }
   | {
       readonly action: 'moveCardToStadium';
@@ -564,7 +566,11 @@ export const resolveLegacyBoardShortcutAction = (
         true
       );
     case 'beginAttachOrEvolve': {
-      const resolution = resolveAttachEvolveTargeting(view, request.cardId);
+      const resolution = resolveAttachEvolveTargeting(
+        view,
+        request.cardId,
+        request.asCategory ? { asCategory: request.asCategory } : {}
+      );
       return resolution.ok
         ? {
             ok: true,
