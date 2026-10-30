@@ -2230,15 +2230,22 @@ const ZoneBrowser = ({
   const group = isGroupSelection(selection);
   const selectionModeRef = useRef(selectionMode);
   selectionModeRef.current = selectionMode;
+  const selectionRef = useRef(selection);
+  selectionRef.current = selection;
   // A card on the table added with a modifier, or tapped in selection
-  // mode, joins the selection and leaves the pile open.
-  const letThrough = useCallback(
-    (event: PointerEvent): boolean =>
-      event.target instanceof Element &&
-      event.target.closest('[data-card-id]') !== null &&
-      (selectionModeRef.current || isSelectionModifier(event)),
-    []
-  );
+  // mode, joins the selection and leaves the pile open; one of a group
+  // pressed to carry it leaves it open too, its cards here still in it.
+  const letThrough = useCallback((event: PointerEvent): boolean => {
+    if (!(event.target instanceof Element)) return false;
+    const card = event.target.closest<HTMLElement>('[data-card-id]');
+    if (!card) return false;
+    if (selectionModeRef.current || isSelectionModifier(event)) return true;
+    const picked = selectionRef.current;
+    return (
+      isGroupSelection(picked) &&
+      picked.includes(card.dataset.cardId as ViewCardId)
+    );
+  }, []);
   const [sortEnabled, setSortEnabled] = useState(false);
   const [showingBoard, setShowingBoard] = useState(false);
   // The panel keeps its place while peeking; only Back remains interactive.

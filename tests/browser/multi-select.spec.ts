@@ -217,6 +217,48 @@ for (const mode of ['flat', 'table'] as const satisfies readonly TableMode[])
       }
     });
 
+    test('a group across the hand and the open discard goes whole where one of its hand cards is dragged', async ({
+      page,
+    }) => {
+      test.setTimeout(120_000);
+      await openNamedSolo(page);
+      const hand = await zoneCardIds(page, 'local', 'hand');
+      await shiftClick(page, hand[0]!, hand[1]!);
+      await moved(page, () => page.keyboard.press('d'));
+      const discarded = await zoneCardIds(page, 'local', 'discard');
+      const pile = await page.evaluate(
+        () =>
+          window.__PTCG_RENDERER_SPIKE__!.scene.cards.find(
+            (candidate) =>
+              candidate.side === 'local' &&
+              candidate.parentId.endsWith(':discard') &&
+              candidate.renderKey !== null
+          )!.id
+      );
+      await card(page, pile).click();
+      const viewer = page.locator('[data-legacy-zone-browser]');
+      await expect(viewer).toBeVisible();
+      await card(page, hand[2]!).click({ modifiers: ['ControlOrMeta'] });
+      const fromPile = discarded[0]!;
+      await viewer
+        .locator(`button[data-overlay-card-id="${fromPile}"]`)
+        .click({ modifiers: ['ControlOrMeta'] });
+      await expect(
+        viewer.locator(
+          `button[data-overlay-card-id="${fromPile}"][data-selection-ticked="true"]`
+        )
+      ).toBeVisible();
+      await expectSelection(page, [hand[2]!]);
+      // No key held: a press on the hand card of the group carries it all,
+      // the pile's card with it.
+      const deck = await zoneId(page, 'local', 'deck');
+      const deckCount = await zoneCount(page, 'local', 'deck');
+      await moved(page, () => dragTo(page, hand[2]!, deck));
+      expect(await zoneCount(page, 'local', 'deck')).toBe(deckCount + 2);
+      expect(await zoneCount(page, 'local', 'discard')).toBe(1);
+      expect(await zoneCount(page, 'local', 'hand')).toBe(hand.length - 3);
+    });
+
     test('a rectangle over the Bench takes its Pokémon, and d discards each whole', async ({
       page,
     }) => {
