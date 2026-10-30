@@ -181,7 +181,7 @@ const useCoinTally = () => {
       // Never landed tails: stopped at the most it throws.
       return t({
         message: `${plural(heads, {
-          one: '# heads, no tails',
+          one: '# head, no tails',
           other: '# heads, no tails',
         })}`,
         comment:
@@ -195,7 +195,7 @@ const useCoinTally = () => {
         })
       : t({
           message: `${plural(heads, {
-            one: '# heads, then tails',
+            one: '# head, then tails',
             other: '# heads, then tails',
           })}`,
           comment:

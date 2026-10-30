@@ -199,7 +199,7 @@ const coinSeriesLine = (
   return untilTails
     ? msg({
         message: `${name} flipped until tails: ${faces} (${plural(heads, {
-          one: '# heads',
+          one: '# head',
           other: '# heads',
         })})`,
         comment:
@@ -209,7 +209,7 @@ const coinSeriesLine = (
         message: `${name} flipped ${plural(count, {
           one: '# coin',
           other: '# coins',
-        })}: ${faces} (${plural(heads, { one: '# heads', other: '# heads' })})`,
+        })}: ${faces} (${plural(heads, { one: '# head', other: '# heads' })})`,
         comment:
           'Log line: a player flipped several coins at once. {name} is a player\'s name, then how many coins, {faces} the faces in order ("heads, tails, heads"), then how many came up heads.',
       });
