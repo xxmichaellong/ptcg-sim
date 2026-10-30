@@ -97,7 +97,7 @@
     "comments": [
       "Log line for a Pokémon attached as an Energy card, the Pokémon it went on hidden. {actor} is a player's name, {card} the card attached; {source} is the zone it came from."
     ],
-    "translation": ""
+    "translation": "{actor} присоединяет {card} {source, select, hand {из руки} prizes {из призовых карт} discard {из сброса} board {с поля} stadium {со стадиона} active {из активной позиции} bench {из запаса} lostZone {из зоны потерь} attachmentResolution {из присоединённых карт} other {из колоды}} как Энергию"
   },
   "9dbhR8": {
     "message": "{actor} attached {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} to {target, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}}",
@@ -118,7 +118,7 @@
     "comments": [
       "Log line for a Pokémon attached as an Energy card (a Holon's Pokémon). {actor} is a player's name; {card} is the card attached and {targetCard} the Pokémon it went on; {source} is the zone it came from."
     ],
-    "translation": ""
+    "translation": "{actor} присоединяет {card} {source, select, hand {из руки} prizes {из призовых карт} discard {из сброса} board {с поля} stadium {со стадиона} active {из активной позиции} bench {из запаса} lostZone {из зоны потерь} attachmentResolution {из присоединённых карт} other {из колоды}} к {targetCard} как Энергию"
   },
   "eJ4Drn": {
     "message": "{actor} discarded {count, plural, one {# attached card} other {# attached cards}}",
@@ -244,7 +244,7 @@
     "comments": [
       "Log line for a Trainer played as a Basic Pokémon (a Fossil). {actor} is a player's name, {card} the card's name; {source} is the zone it came from and {target} the Active Spot or the Bench."
     ],
-    "translation": ""
+    "translation": "{actor} кладёт {card} {source, select, hand {из руки} prizes {из призовых карт} discard {из сброса} board {с поля} stadium {со стадиона} active {из активной позиции} bench {из запаса} lostZone {из зоны потерь} attachmentResolution {из присоединённых карт} other {из колоды}} {target, select, active {в активную позицию} other {в запас}} как покемона"
   },
   "G9PVLG": {
     "message": "{actor} revealed {0, plural, one {# card} other {# cards}} in {owner}'s {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} inspection {inspection} other {deck}}",
@@ -519,7 +519,7 @@
   },
   "WvSbnr": {
     "message": "{count, plural, one {Flip # coin} other {Flip # coins}}",
-    "translation": ""
+    "translation": "{count, plural, one {Подбросить # монетку} few {Подбросить # монетки} many {Подбросить # монеток} other {Подбросить # монетки}}"
   },
   "nlUJMk": {
     "message": "{count, plural, one {Look at # card} other {Look at # cards}}",
@@ -710,7 +710,7 @@
     "comments": [
       "One coin's face in a Log line listing several flips: \"heads\" or \"tails\", lowercase."
     ],
-    "translation": ""
+    "translation": "{face, select, heads {орёл} other {решка}}"
   },
   "p0vgdf": {
     "message": "{firstReloading} and {secondReloading} will reload",
@@ -720,26 +720,26 @@
     "message": "{firstReloading} will reload",
     "translation": "{firstReloading} перезагрузится"
   },
-  "l6Nsza": {
-    "message": "{heads, plural, one {# heads, no tails} other {# heads, no tails}}",
+  "fJzj-F": {
+    "message": "{heads, plural, one {# head, no tails} other {# heads, no tails}}",
     "comments": [
       "Under the coin after flipping until tails stopped at its limit without a tails."
     ],
-    "translation": ""
+    "translation": "{heads, plural, one {# орёл, решки нет} few {# орла, решки нет} many {# орлов, решки нет} other {# орла, решки нет}}"
   },
-  "ZlmQA2": {
-    "message": "{heads, plural, one {# heads, then tails} other {# heads, then tails}}",
+  "0TD1D2": {
+    "message": "{heads, plural, one {# head, then tails} other {# heads, then tails}}",
     "comments": [
       "Under the coin after flipping until tails: how many heads came before the tails."
     ],
-    "translation": ""
+    "translation": "{heads, plural, one {# орёл, затем решка} few {# орла, затем решка} many {# орлов, затем решка} other {# орла, затем решка}}"
   },
   "DO0IzM": {
     "message": "{heads, plural, one {# of {total} heads} other {# of {total} heads}}",
     "comments": [
       "Under the coin after several coins at once: how many came up heads, of how many (\"2 of 3 heads\")."
     ],
-    "translation": ""
+    "translation": "{heads, plural, one {# из {total} орлов} few {# из {total} орлов} many {# из {total} орлов} other {# из {total} орлов}}"
   },
   "iovK0L": {
     "message": "{hidden, plural, one {Hide # card} other {Hide # cards}}",
@@ -792,7 +792,7 @@
     "comments": [
       "Adds one coin face to a list in a Log line: \"heads, tails\". {list} is the faces so far, {item} the next. Use the list separator of your language."
     ],
-    "translation": ""
+    "translation": "{list}, {item}"
   },
   "MglzGu": {
     "message": "{lostZoneCards, plural, one {# card} other {# cards}}",
@@ -904,12 +904,12 @@
     ],
     "translation": "{name} берёт стартовую руку и выкладывает призы"
   },
-  "5I-LDX": {
-    "message": "{name} flipped {count, plural, one {# coin} other {# coins}}: {faces} ({heads, plural, one {# heads} other {# heads}})",
+  "hAew-o": {
+    "message": "{name} flipped {count, plural, one {# coin} other {# coins}}: {faces} ({heads, plural, one {# head} other {# heads}})",
     "comments": [
       "Log line: a player flipped several coins at once. {name} is a player's name, then how many coins, {faces} the faces in order (\"heads, tails, heads\"), then how many came up heads."
     ],
-    "translation": ""
+    "translation": "{name} подбрасывает {count, plural, one {# монетку} few {# монетки} many {# монеток} other {# монетки}}: {faces} ({heads, plural, one {орлов: #} few {орлов: #} many {орлов: #} other {орлов: #}})"
   },
   "01JuD1": {
     "message": "{name} flipped {result, select, heads {heads} other {tails}}",
@@ -918,12 +918,12 @@
     ],
     "translation": "{name} подбрасывает монету: {result, select, heads {орёл} other {решка}}"
   },
-  "fJ5IET": {
-    "message": "{name} flipped until tails: {faces} ({heads, plural, one {# heads} other {# heads}})",
+  "Q4JiA6": {
+    "message": "{name} flipped until tails: {faces} ({heads, plural, one {# head} other {# heads}})",
     "comments": [
       "Log line: a player flipped coins one after another until one landed tails. {name} is a player's name, {faces} the faces in order (\"heads, heads, tails\"), then how many came up heads."
     ],
-    "translation": ""
+    "translation": "{name} подбрасывает монетку до решки: {faces} ({heads, plural, one {орлов: #} few {орлов: #} many {орлов: #} other {орлов: #}})"
   },
   "Bqr3lz": {
     "message": "{name} hand",
@@ -1029,7 +1029,7 @@
     "comments": [
       "Log line: a player put a reminder of a lasting effect on a Pokémon. {name} is a player's name, {card} the Pokémon's name; {reminder} is what the reminder says."
     ],
-    "translation": ""
+    "translation": "{name} ставит напоминание на {card}: {reminder, select, cantAttack {не может атаковать} cantRetreat {не может отступать} takesLess {получает меньше урона} hitsHarder {атаки наносят больше урона} other {нет талантов}}"
   },
   "g7DH0W": {
     "message": "{name} reconnected",
@@ -1078,7 +1078,7 @@
     "comments": [
       "Log line: a player took the reminder of a lasting effect off a Pokémon. {name} is a player's name, {card} the Pokémon's name; {reminder} is what the reminder said."
     ],
-    "translation": ""
+    "translation": "{name} снимает напоминание с {card}: {reminder, select, cantAttack {не может атаковать} cantRetreat {не может отступать} takesLess {получает меньше урона} hitsHarder {атаки наносят больше урона} other {нет талантов}}"
   },
   "I_6aBo": {
     "message": "{name} used {card}",
@@ -1264,14 +1264,14 @@
     "comments": [
       "The seat whose deck the deck screen works on (P2)"
     ],
-    "translation": ""
+    "translation": "Колода {slotSeat}"
   },
   "7XuIFQ": {
     "message": "{slotSeat}'s deck (you)",
     "comments": [
       "The seat whose deck the deck screen works on (P1)"
     ],
-    "translation": ""
+    "translation": "Колода {slotSeat} (ты)"
   },
   "w6530e": {
     "message": "{speaker}: {text}",
@@ -1827,7 +1827,7 @@
       "Card menu, for a Pokémon whose card lets it be attached as an Energy (a Holon's Pokémon): pick the Pokémon it goes on.",
       "Card menu, for a Pokémon whose card lets it be attached as an Energy (a Holon's Pokémon): pick the Pokémon it goes on."
     ],
-    "translation": ""
+    "translation": "Присоединить как Энергию…"
   },
   "8vfaut": {
     "message": "Attach to",
@@ -1859,7 +1859,7 @@
     "comments": [
       "A reminder on a Pokémon: an effect raises its attacks' damage."
     ],
-    "translation": ""
+    "translation": "Атаки наносят больше урона"
   },
   "cBTHD8": {
     "message": "Auto",
@@ -2100,7 +2100,7 @@
     "comments": [
       "A reminder on a Pokémon: an effect stops it attacking."
     ],
-    "translation": ""
+    "translation": "Не может атаковать"
   },
   "2lorx9": {
     "message": "Can't be changed",
@@ -2119,7 +2119,7 @@
     "comments": [
       "A reminder on a Pokémon: an effect stops it retreating."
     ],
-    "translation": ""
+    "translation": "Не может отступать"
   },
   "dEgA5A": {
     "message": "Cancel",
@@ -3260,7 +3260,7 @@
     "comments": [
       "The coin's menu: flip several coins at once. {0} is 2 or more."
     ],
-    "translation": ""
+    "translation": "Подбросить монетки: {0}"
   },
   "sFwtdu": {
     "message": "Flip a coin",
@@ -3283,7 +3283,7 @@
   },
   "NekElE": {
     "message": "Flip coins…",
-    "translation": ""
+    "translation": "Подбросить монетки…"
   },
   "mnc6b3": {
     "message": "Flip the table",
@@ -3299,7 +3299,7 @@
       "The coin's menu: flip coins one after another until one lands tails.",
       "The coin's menu: flip coins one after another until one lands tails."
     ],
-    "translation": ""
+    "translation": "Подбрасывать до решки"
   },
   "zoSOoE": {
     "message": "Foil coverage",
@@ -3317,7 +3317,7 @@
     "comments": [
       "Which deck format tournament data is shown for"
     ],
-    "translation": ""
+    "translation": "Формат"
   },
   "pniSGu": {
     "message": "Format",
@@ -3566,7 +3566,7 @@
   },
   "dJ4hUd": {
     "message": "How many coins?",
-    "translation": ""
+    "translation": "Сколько монеток?"
   },
   "dB9f8y": {
     "message": "How much damage?",
@@ -4400,7 +4400,7 @@
     "comments": [
       "A reminder on a Pokémon: an effect stops its Abilities."
     ],
-    "translation": ""
+    "translation": "Нет талантов"
   },
   "we3XEV": {
     "message": "No actions available",
@@ -4484,7 +4484,7 @@
     "comments": [
       "Official major tournaments (Regionals and up) are all Standard; formatName is the format picked"
     ],
-    "translation": ""
+    "translation": "Нет крупных турниров в формате {formatName}"
   },
   "mNXjQA": {
     "message": "No match",
@@ -4665,7 +4665,7 @@
     "comments": [
       "Also shows Limitless's online tournaments, besides official majors (Regionals and up)"
     ],
-    "translation": ""
+    "translation": "Онлайн-турниры"
   },
   "-EDLvw": {
     "message": "Only {formatLabel}-legal",
@@ -4974,7 +4974,7 @@
       "Card menu, for a Trainer played as if it were a Basic Pokémon (a Fossil): puts it on the Bench.",
       "Card menu, for a Trainer played as if it were a Basic Pokémon (a Fossil): puts it on the Bench."
     ],
-    "translation": ""
+    "translation": "Сыграть как покемона"
   },
   "Yo-ZmX": {
     "message": "Play as one card",
@@ -5328,28 +5328,28 @@
     "comments": [
       "Card menu: opens the reminders a player can put on a Pokémon for an effect that lasts (can't attack, takes less damage…)."
     ],
-    "translation": ""
+    "translation": "Напоминание"
   },
   "7I9AYm": {
     "message": "Reminder: {name}",
     "comments": [
       "Tooltip of a reminder chip on a Pokémon, e.g. \"Reminder: Can't attack\". {name} is what it reminds of."
     ],
-    "translation": ""
+    "translation": "Напоминание: {name}"
   },
   "J6vBFG": {
     "message": "Reminder…",
     "comments": [
       "Command palette: put a reminder of a lasting effect on the selected Pokémon, or take one off (can't attack, takes less damage…)."
     ],
-    "translation": ""
+    "translation": "Напоминание…"
   },
   "crwali": {
     "message": "Reminders",
     "comments": [
       "The controls for the reminders on a Pokémon (can't attack, takes less damage…)."
     ],
-    "translation": ""
+    "translation": "Напоминания"
   },
   "HLazKQ": {
     "message": "Remove {name}",
@@ -6020,7 +6020,7 @@
   },
   "jIzADR": {
     "message": "Show online events",
-    "translation": ""
+    "translation": "Показывать онлайн-турниры"
   },
   "ifu0mt": {
     "message": "Show opponent's hand",
@@ -6450,7 +6450,7 @@
     "comments": [
       "Work on the other seat's deck (P1, P2) on the deck screen"
     ],
-    "translation": ""
+    "translation": "Перейти к {slotSeat}"
   },
   "Q1BDRW": {
     "message": "Switch with top of deck",
@@ -6502,7 +6502,7 @@
     "comments": [
       "Under the coin after flipping until tails: the very first coin landed tails."
     ],
-    "translation": ""
+    "translation": "Сразу решка"
   },
   "yJtTpT": {
     "message": "Take a <0>Prize card</0>: drag one into your hand.",
@@ -6525,14 +6525,14 @@
     "comments": [
       "Command palette: takes a reminder off the selected Pokémon. The reminder follows, e.g. \"Take off: Can't attack\"."
     ],
-    "translation": ""
+    "translation": "Снять: {0}"
   },
   "ACKCfc": {
     "message": "Takes less damage",
     "comments": [
       "A reminder on a Pokémon: an effect reduces the damage it takes."
     ],
-    "translation": ""
+    "translation": "Получает меньше урона"
   },
   "O3tcf1": {
     "message": "Tap <0>{0}</0> in your hand, then <1>{1}</1>.",

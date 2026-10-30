@@ -754,6 +754,10 @@
               "kind": "value"
             },
             {
+              "name": "CARD_PLAYS_AS",
+              "kind": "value"
+            },
+            {
               "name": "CARD_STEP_TYPES",
               "kind": "value"
             },
@@ -810,6 +814,10 @@
               "kind": "type"
             },
             {
+              "name": "CardPlaysAs",
+              "kind": "type"
+            },
+            {
               "name": "CardPresentation",
               "kind": "type"
             },
@@ -844,6 +852,10 @@
             {
               "name": "cloneMatchState",
               "kind": "value"
+            },
+            {
+              "name": "CoinFlipSeries",
+              "kind": "type"
             },
             {
               "name": "collectInvariantProblems",
@@ -966,6 +978,10 @@
               "kind": "value"
             },
             {
+              "name": "isStackReminder",
+              "kind": "value"
+            },
+            {
               "name": "isStandardCardBack",
               "kind": "value"
             },
@@ -1026,11 +1042,19 @@
               "kind": "type"
             },
             {
+              "name": "MAX_COIN_FLIP_COUNT",
+              "kind": "value"
+            },
+            {
               "name": "MAX_DECK_CARDS",
               "kind": "value"
             },
             {
               "name": "MAX_IMAGE_URL_CODE_UNITS",
+              "kind": "value"
+            },
+            {
+              "name": "MAX_UNTIL_TAILS_FLIPS",
               "kind": "value"
             },
             {
@@ -1130,7 +1154,15 @@
               "kind": "value"
             },
             {
+              "name": "STACK_REMINDERS",
+              "kind": "value"
+            },
+            {
               "name": "StackId",
+              "kind": "type"
+            },
+            {
+              "name": "StackReminder",
               "kind": "type"
             },
             {
@@ -2206,6 +2238,10 @@
               "kind": "value"
             },
             {
+              "name": "layoutReminderMarkers",
+              "kind": "value"
+            },
+            {
               "name": "layoutStadium",
               "kind": "value"
             },
@@ -2464,6 +2500,10 @@
             {
               "name": "Rect",
               "kind": "type"
+            },
+            {
+              "name": "reminderName",
+              "kind": "value"
             },
             {
               "name": "resizeBoardLayoutState",

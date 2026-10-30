@@ -720,19 +720,19 @@
     "message": "{firstReloading} will reload",
     "translation": "{firstReloading} will reload"
   },
-  "l6Nsza": {
-    "message": "{heads, plural, one {# heads, no tails} other {# heads, no tails}}",
+  "fJzj-F": {
+    "message": "{heads, plural, one {# head, no tails} other {# heads, no tails}}",
     "comments": [
       "Under the coin after flipping until tails stopped at its limit without a tails."
     ],
-    "translation": "{heads, plural, one {# heads, no tails} other {# heads, no tails}}"
+    "translation": "{heads, plural, one {# head, no tails} other {# heads, no tails}}"
   },
-  "ZlmQA2": {
-    "message": "{heads, plural, one {# heads, then tails} other {# heads, then tails}}",
+  "0TD1D2": {
+    "message": "{heads, plural, one {# head, then tails} other {# heads, then tails}}",
     "comments": [
       "Under the coin after flipping until tails: how many heads came before the tails."
     ],
-    "translation": "{heads, plural, one {# heads, then tails} other {# heads, then tails}}"
+    "translation": "{heads, plural, one {# head, then tails} other {# heads, then tails}}"
   },
   "DO0IzM": {
     "message": "{heads, plural, one {# of {total} heads} other {# of {total} heads}}",
@@ -904,12 +904,12 @@
     ],
     "translation": "{name} drew starting hand and set prizes"
   },
-  "5I-LDX": {
-    "message": "{name} flipped {count, plural, one {# coin} other {# coins}}: {faces} ({heads, plural, one {# heads} other {# heads}})",
+  "hAew-o": {
+    "message": "{name} flipped {count, plural, one {# coin} other {# coins}}: {faces} ({heads, plural, one {# head} other {# heads}})",
     "comments": [
       "Log line: a player flipped several coins at once. {name} is a player's name, then how many coins, {faces} the faces in order (\"heads, tails, heads\"), then how many came up heads."
     ],
-    "translation": "{name} flipped {count, plural, one {# coin} other {# coins}}: {faces} ({heads, plural, one {# heads} other {# heads}})"
+    "translation": "{name} flipped {count, plural, one {# coin} other {# coins}}: {faces} ({heads, plural, one {# head} other {# heads}})"
   },
   "01JuD1": {
     "message": "{name} flipped {result, select, heads {heads} other {tails}}",
@@ -918,12 +918,12 @@
     ],
     "translation": "{name} flipped {result, select, heads {heads} other {tails}}"
   },
-  "fJ5IET": {
-    "message": "{name} flipped until tails: {faces} ({heads, plural, one {# heads} other {# heads}})",
+  "Q4JiA6": {
+    "message": "{name} flipped until tails: {faces} ({heads, plural, one {# head} other {# heads}})",
     "comments": [
       "Log line: a player flipped coins one after another until one landed tails. {name} is a player's name, {faces} the faces in order (\"heads, heads, tails\"), then how many came up heads."
     ],
-    "translation": "{name} flipped until tails: {faces} ({heads, plural, one {# heads} other {# heads}})"
+    "translation": "{name} flipped until tails: {faces} ({heads, plural, one {# head} other {# heads}})"
   },
   "Bqr3lz": {
     "message": "{name} hand",
