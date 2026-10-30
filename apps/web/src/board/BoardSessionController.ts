@@ -68,6 +68,7 @@ import {
   reduceSelection,
   type SelectionContext,
 } from './selection.js';
+import { visibilityChangedCardIds } from './visibility-renewals.js';
 
 type ReplayLocalDisclosureState = NonNullable<
   ReadyReplayPlaybackState['localDisclosure']
@@ -106,6 +107,12 @@ export interface BoardProjectionFrame {
    * session has either published the accepted move or recorded a rejection.
    */
   readonly pendingCommandIds?: readonly string[];
+  /**
+   * The cards the queued commands change the visibility of
+   * (`visibilityChangedCardIds`), whichever control sent them: the room
+   * may renew their aliases where they lie.
+   */
+  readonly pendingVisibilityCardIds?: readonly ViewCardId[];
   /**
    * Set by the source when a same-revision frame comes from this client's own
    * queue: a prediction just shown (`predict`) or one the room refused and
@@ -1144,11 +1151,23 @@ const samePresentation = (
   sameSettling(left.settling, right.settling);
 
 const installFrame = (
-  state: BoardSessionControllerState,
+  received: BoardSessionControllerState,
   frame: BoardProjectionFrame,
   dependencies: BoardSessionControllerDependencies
 ): BoardSessionControllerReduction => {
-  if (!validFrameHeader(frame)) return rejected(state);
+  if (!validFrameHeader(frame)) return rejected(received);
+  // Cards a queued command changes the visibility of, from any control:
+  // kept until the room has answered everything (reconcilePresentation).
+  const renewing = frame.pendingVisibilityCardIds ?? [];
+  const state =
+    renewing.length === 0
+      ? received
+      : {
+          ...received,
+          aliasRenewals: [
+            ...new Set([...(received.aliasRenewals ?? []), ...renewing]),
+          ],
+        };
   const cursor = state.cursor;
   if (cursor && frame.frameToken <= cursor.frameToken) return ignored(state);
 
@@ -3123,39 +3142,16 @@ const dismissPresentation = (
   );
 };
 
-/**
- * The cards a command sent changes the visibility of where they lie (the
- * room renews their aliases): a reveal, a hide, a turn of face, a private
- * look begun or ended, alone or among a group's steps.
- */
+/** The cards the commands a reduction sends change the visibility of. */
 const visibilityChangedBy = (
   effects: readonly BoardSessionControllerEffect[],
   view: MatchViewState | undefined
 ): readonly ViewCardId[] =>
-  effects.flatMap((effect) => {
-    if (effect.kind !== 'SubmitCommand') return [];
-    const { command } = effect;
-    const steps = command.type === 'ApplyCardSteps' ? command.steps : [command];
-    return steps.flatMap((step): ViewCardId[] => {
-      switch (step.type) {
-        case 'SetPublicReveal':
-        case 'SetCardFace':
-        case 'BeginCardInspection':
-          return [step.cardId as ViewCardId];
-        case 'SetZonePublicReveal':
-        case 'BeginZoneInspection':
-          return step.expectedCardIds.map((cardId) => cardId as ViewCardId);
-        case 'EndPrivateInspection':
-          return (
-            view?.privateInspections.find(
-              (inspection) => inspection.id === step.inspectionId
-            )?.cardIds ?? []
-          ).slice();
-        default:
-          return [];
-      }
-    });
-  });
+  effects.flatMap((effect) =>
+    effect.kind === 'SubmitCommand'
+      ? visibilityChangedCardIds(effect.command, view)
+      : []
+  );
 
 export const reduceBoardSessionController = (
   state: BoardSessionControllerState,

@@ -38,6 +38,7 @@ import {
 import type { LegacyBoardShortcutActionRequest } from './resolveLegacyBoardShortcutAction.js';
 import type { OncePerGameAction } from './resolveOncePerGameAction.js';
 import { refusalCommandType } from './refusal-notice.js';
+import { visibilityChangedCardIds } from './visibility-renewals.js';
 
 export type BoardSessionLiveSource = Pick<
   RemoteGameSession,
@@ -374,6 +375,16 @@ export class BoardSessionAdapter {
       pendingCommandIds: liveState.pendingCommands.map(
         (pending) => pending.commandId
       ),
+      // Whichever control queued it (the board, a notice's Hide, a card's
+      // eye): the cards whose aliases the room may renew in place.
+      ...(() => {
+        const renewing = liveState.pendingCommands.flatMap((pending) =>
+          visibilityChangedCardIds(pending.command, sourceView)
+        );
+        return renewing.length > 0
+          ? { pendingVisibilityCardIds: renewing }
+          : {};
+      })(),
       ...(motionHint ? { motionHint } : {}),
     };
     this.lastPendingCommandIds = frame.pendingCommandIds ?? [];

@@ -575,6 +575,47 @@ describe('a selection of several cards (ADR-042)', () => {
     expect(board.selection).toEqual(['looked-at']);
   });
 
+  it('keeps a group selected through a hide queued outside the board', () => {
+    const table = groupTable();
+    const hand = table.put(BLUE, 'hand', energy, energy);
+    const handZone = table.view.zones[table.zoneId(BLUE, 'hand')]!;
+    const board = driver(table.view);
+    board.intent({ kind: 'CardsSelected', cardIds: hand, mode: 'replace' });
+    // The reveal notice's Hide, straight to the session: the queue says so.
+    board.act({
+      kind: 'FrameReceived',
+      frame: frame(
+        2,
+        { ...table.view },
+        { pendingCommandIds: ['hide'], pendingVisibilityCardIds: hand }
+      ),
+    });
+    const renamed = ['hidden-0', 'hidden-1'] as ViewCardId[];
+    board.act({
+      kind: 'FrameReceived',
+      frame: frame(
+        3,
+        {
+          ...table.view,
+          revision: table.view.revision + 1,
+          zones: {
+            ...table.view.zones,
+            [handZone.id]: {
+              ...handZone,
+              cards: handZone.cards.map((card, index) => ({
+                ...card,
+                id: renamed[index]!,
+              })),
+            },
+          },
+        },
+        { pendingCommandIds: [] }
+      ),
+    });
+    expect(board.selection).toEqual(renamed);
+    expect(board.state.aliasRenewals).toBeUndefined();
+  });
+
   it("never takes a copy someone else put in a selected card's place for it", () => {
     const table = groupTable();
     const hand = table.put(BLUE, 'hand', energy, energy, energy);

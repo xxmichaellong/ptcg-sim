@@ -940,6 +940,31 @@ describe('BoardSessionAdapter with real session coordinators', () => {
     test.live.disconnect();
   });
 
+  it("notes the cards a hide sent outside the board renews, as a notice's Hide does", () => {
+    const test = setup();
+    test.socket.serverOpen();
+    test.socket.serverMessage(welcome(viewAt(1)));
+    const scene = test.adapter.getSnapshot().scene!;
+    const card = scene.cards.find((candidate) =>
+      candidate.parentId.endsWith(':hand')
+    )!;
+    expect(test.adapter.getSnapshot().aliasRenewals ?? []).toEqual([]);
+    // Straight to the session, never through the controller's submitter.
+    expect(
+      test.live.submit({
+        type: 'SetPublicReveal',
+        cardId: card.id,
+        expectedSourceId: card.parentId,
+        revealed: false,
+      }).queued
+    ).toBe(true);
+    expect(test.adapter.getSnapshot().aliasRenewals).toEqual([card.id]);
+
+    test.adapter.dispose();
+    test.replay.dispose();
+    test.live.disconnect();
+  });
+
   it('routes an open overlay target through the real guarded submitter', () => {
     const test = setup();
     test.socket.serverOpen();
