@@ -519,7 +519,12 @@ export type DomainEvent =
   | {
       readonly type: 'CoinFlipped';
       readonly playerId: PlayerId;
+      /** The coin's face, or the last coin's of several. */
       readonly result: 'heads' | 'tails';
+      /** Several coins (FlipCoin's `series`): each, in the order thrown. */
+      readonly results?: readonly ('heads' | 'tails')[];
+      /** Thrown one after another until tails, rather than so many. */
+      readonly untilTails?: true;
     };
 
 interface UndoAppliedEventBase {

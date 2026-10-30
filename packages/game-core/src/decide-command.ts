@@ -1,5 +1,7 @@
 import {
   CARD_STEP_TYPES,
+  MAX_COIN_FLIP_COUNT,
+  MAX_UNTIL_TAILS_FLIPS,
   type ApplyCardStepsCommand,
   type BaseGameCommand,
   type CardStep,
@@ -3384,17 +3386,46 @@ export const decideCommand = (
     case 'FlipCoin': {
       const playerError = requirePlayer(state, command.playerId);
       if (playerError) return playerError;
-      const result = context.randomInt(2);
-      if (result !== 0 && result !== 1) {
+      const series = command.series;
+      if (
+        series !== undefined &&
+        !(
+          (series.kind === 'count' &&
+            Number.isSafeInteger(series.count) &&
+            series.count >= 2 &&
+            series.count <= MAX_COIN_FLIP_COUNT) ||
+          series.kind === 'untilTails'
+        )
+      ) {
         return reject(
           'invalid_command',
-          'Random adapter returned an invalid coin result'
+          `A coin series is 2 to ${MAX_COIN_FLIP_COUNT} coins, or until tails`
         );
+      }
+      const results: ('heads' | 'tails')[] = [];
+      const most =
+        series === undefined
+          ? 1
+          : series.kind === 'count'
+            ? series.count
+            : MAX_UNTIL_TAILS_FLIPS;
+      while (results.length < most) {
+        const result = context.randomInt(2);
+        if (result !== 0 && result !== 1) {
+          return reject(
+            'invalid_command',
+            'Random adapter returned an invalid coin result'
+          );
+        }
+        results.push(result === 0 ? 'heads' : 'tails');
+        if (series?.kind === 'untilTails' && result === 1) break;
       }
       return accept({
         type: 'CoinFlipped',
         playerId: command.playerId,
-        result: result === 0 ? 'heads' : 'tails',
+        result: results.at(-1)!,
+        ...(series === undefined ? {} : { results }),
+        ...(series?.kind === 'untilTails' ? { untilTails: true } : {}),
       });
     }
     case 'ApplyCardSteps': {

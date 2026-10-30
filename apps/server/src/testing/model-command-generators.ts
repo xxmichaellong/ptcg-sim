@@ -809,7 +809,12 @@ export const MODEL_COMMAND_GENERATORS = {
       : undefined;
   },
   ApplySoloUndo: () => undefined,
-  FlipCoin: () => ({ type: 'FlipCoin' }),
+  FlipCoin: (context) =>
+    context.random.pick([
+      { type: 'FlipCoin' },
+      { type: 'FlipCoin', series: { kind: 'count', count: 3 } },
+      { type: 'FlipCoin', series: { kind: 'untilTails' } },
+    ] as const),
   ApplyCardSteps: () => undefined,
 } satisfies {
   readonly [Type in WireGameCommandType]: ModelCommandGenerator<Type>;

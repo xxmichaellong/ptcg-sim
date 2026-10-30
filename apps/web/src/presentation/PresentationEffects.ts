@@ -41,7 +41,12 @@ export interface AnimationPresentationEffect extends PresentationEffectBase {
   readonly animation: {
     readonly kind: 'coinFlip';
     readonly playerId: string;
+    /** The face it lands on: the last coin's of several. */
     readonly result: 'heads' | 'tails';
+    /** Several coins at once: each, in the order thrown. */
+    readonly results?: readonly ('heads' | 'tails')[];
+    /** Thrown until one landed tails, rather than so many. */
+    readonly untilTails?: true;
   };
 }
 
@@ -156,6 +161,58 @@ const namedCards = (
       })
     )
   );
+};
+
+/**
+ * Several coins thrown at once, each face in order, then how many came up
+ * heads: "Ash flipped 3 coins: heads, tails, heads (2 heads)", or "Ash
+ * flipped until tails: heads, heads, tails (2 heads)".
+ */
+const coinSeriesLine = (
+  name: PresentationValue,
+  results: readonly ('heads' | 'tails')[],
+  untilTails: boolean
+): MessageDescriptor => {
+  const faces = results
+    .map((face): PresentationValue =>
+      line(
+        msg({
+          message: `${select(face, { heads: 'heads', other: 'tails' })}`,
+          context: 'a coin face in a list of coin flips',
+          comment:
+            'One coin\'s face in a Log line listing several flips: "heads" or "tails", lowercase.',
+        })
+      )
+    )
+    .reduce((list, item) =>
+      line(
+        msg({
+          message: `${list}, ${item}`,
+          context: 'a list of coin faces in a Log line',
+          comment:
+            'Adds one coin face to a list in a Log line: "heads, tails". {list} is the faces so far, {item} the next. Use the list separator of your language.',
+        })
+      )
+    );
+  const heads = results.filter((face) => face === 'heads').length;
+  const count = results.length;
+  return untilTails
+    ? msg({
+        message: `${name} flipped until tails: ${faces} (${plural(heads, {
+          one: '# heads',
+          other: '# heads',
+        })})`,
+        comment:
+          'Log line: a player flipped coins one after another until one landed tails. {name} is a player\'s name, {faces} the faces in order ("heads, heads, tails"), then how many came up heads.',
+      })
+    : msg({
+        message: `${name} flipped ${plural(count, {
+          one: '# coin',
+          other: '# coins',
+        })}: ${faces} (${plural(heads, { one: '# heads', other: '# heads' })})`,
+        comment:
+          'Log line: a player flipped several coins at once. {name} is a player\'s name, then how many coins, {faces} the faces in order ("heads, tails, heads"), then how many came up heads.',
+      });
 };
 
 /** A line about several cards, then the cards by name where they were seen. */
@@ -758,14 +815,16 @@ export const presentationEffectsForEvent = (
     case 'CoinFlipped': {
       const name = playerName(view, event.playerId);
       const result = event.result;
-      const message = msg({
-        message: `${name} flipped ${select(result, {
-          heads: 'heads',
-          other: 'tails',
-        })}`,
-        comment:
-          "Log line: a coin flip's result. {name} is a player's name; {result} is heads or tails.",
-      });
+      const message = event.results
+        ? coinSeriesLine(name, event.results, event.untilTails === true)
+        : msg({
+            message: `${name} flipped ${select(result, {
+              heads: 'heads',
+              other: 'tails',
+            })}`,
+            comment:
+              "Log line: a coin flip's result. {name} is a player's name; {result} is heads or tails.",
+          });
       return [
         activity(event, 'player', message, event.playerId),
         accessibility(event, message),
@@ -777,6 +836,8 @@ export const presentationEffectsForEvent = (
             kind: 'coinFlip',
             playerId: event.playerId,
             result: event.result,
+            ...(event.results ? { results: event.results } : {}),
+            ...(event.untilTails ? { untilTails: true } : {}),
           },
         },
       ];

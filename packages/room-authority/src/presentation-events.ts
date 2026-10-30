@@ -288,6 +288,8 @@ const declarationEventsForBatch = (
           revision: batch.revision,
           playerId: event.playerId,
           result: event.result,
+          ...(event.results ? { results: [...event.results] } : {}),
+          ...(event.untilTails ? { untilTails: true } : {}),
         },
       ];
     }

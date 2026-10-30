@@ -496,6 +496,10 @@
     "message": "{count, plural, one {Draw # card} other {Draw # cards}}",
     "translation": "{count, plural, one {Повуци # карту} few {Повуци # карте} other {Повуци # карата}}"
   },
+  "WvSbnr": {
+    "message": "{count, plural, one {Flip # coin} other {Flip # coins}}",
+    "translation": ""
+  },
   "nlUJMk": {
     "message": "{count, plural, one {Look at # card} other {Look at # cards}}",
     "translation": "{count, plural, one {Погледај # карту} few {Погледај # карте} other {Погледај # карата}}"
@@ -679,6 +683,14 @@
     ],
     "translation": "{errorCount, plural, one {# ствар за исправку за формат {format}} few {# ствари за исправку за формат {format}} other {# ствари за исправку за формат {format}}}"
   },
+  "k0BWnM": {
+    "message": "{face, select, heads {heads} other {tails}}",
+    "context": "a coin face in a list of coin flips",
+    "comments": [
+      "One coin's face in a Log line listing several flips: \"heads\" or \"tails\", lowercase."
+    ],
+    "translation": ""
+  },
   "p0vgdf": {
     "message": "{firstReloading} and {secondReloading} will reload",
     "translation": "{firstReloading} и {secondReloading} ће се поново учитати"
@@ -686,6 +698,27 @@
   "YWFA46": {
     "message": "{firstReloading} will reload",
     "translation": "{firstReloading} ће се поново учитати"
+  },
+  "l6Nsza": {
+    "message": "{heads, plural, one {# heads, no tails} other {# heads, no tails}}",
+    "comments": [
+      "Under the coin after flipping until tails stopped at its limit without a tails."
+    ],
+    "translation": ""
+  },
+  "ZlmQA2": {
+    "message": "{heads, plural, one {# heads, then tails} other {# heads, then tails}}",
+    "comments": [
+      "Under the coin after flipping until tails: how many heads came before the tails."
+    ],
+    "translation": ""
+  },
+  "DO0IzM": {
+    "message": "{heads, plural, one {# of {total} heads} other {# of {total} heads}}",
+    "comments": [
+      "Under the coin after several coins at once: how many came up heads, of how many (\"2 of 3 heads\")."
+    ],
+    "translation": ""
   },
   "iovK0L": {
     "message": "{hidden, plural, one {Hide # card} other {Hide # cards}}",
@@ -731,6 +764,14 @@
       "Adds one card name to a list in a Log line: \"Fire Energy, Switch\". {list} is the names so far, {item} the next. Use the list separator of your language."
     ],
     "translation": "{list}, {item}"
+  },
+  "AV9hT-": {
+    "message": "{list}, {item}",
+    "context": "a list of coin faces in a Log line",
+    "comments": [
+      "Adds one coin face to a list in a Log line: \"heads, tails\". {list} is the faces so far, {item} the next. Use the list separator of your language."
+    ],
+    "translation": ""
   },
   "MglzGu": {
     "message": "{lostZoneCards, plural, one {# card} other {# cards}}",
@@ -842,12 +883,26 @@
     ],
     "translation": "{name} вуче почетну руку и поставља награде"
   },
+  "5I-LDX": {
+    "message": "{name} flipped {count, plural, one {# coin} other {# coins}}: {faces} ({heads, plural, one {# heads} other {# heads}})",
+    "comments": [
+      "Log line: a player flipped several coins at once. {name} is a player's name, then how many coins, {faces} the faces in order (\"heads, tails, heads\"), then how many came up heads."
+    ],
+    "translation": ""
+  },
   "01JuD1": {
     "message": "{name} flipped {result, select, heads {heads} other {tails}}",
     "comments": [
       "Log line: a coin flip's result. {name} is a player's name; {result} is heads or tails."
     ],
     "translation": "{name} баца новчић: {result, select, heads {глава} other {писмо}}"
+  },
+  "fJ5IET": {
+    "message": "{name} flipped until tails: {faces} ({heads, plural, one {# heads} other {# heads}})",
+    "comments": [
+      "Log line: a player flipped coins one after another until one landed tails. {name} is a player's name, {faces} the faces in order (\"heads, heads, tails\"), then how many came up heads."
+    ],
+    "translation": ""
   },
   "Bqr3lz": {
     "message": "{name} hand",
@@ -3130,6 +3185,13 @@
     "context": "turn the table around",
     "translation": "Окрени"
   },
+  "-s_hqS": {
+    "message": "Flip {0} coins",
+    "comments": [
+      "The coin's menu: flip several coins at once. {0} is 2 or more."
+    ],
+    "translation": ""
+  },
   "sFwtdu": {
     "message": "Flip a coin",
     "translation": "Баци новчић"
@@ -3149,6 +3211,10 @@
     "message": "Flip coin",
     "translation": "Баци новчић"
   },
+  "NekElE": {
+    "message": "Flip coins…",
+    "translation": ""
+  },
   "mnc6b3": {
     "message": "Flip the table",
     "translation": "Окрени сто"
@@ -3156,6 +3222,14 @@
   "CK2j9j": {
     "message": "Flip their coin",
     "translation": "Баци противнички новчић"
+  },
+  "Xyi6X0": {
+    "message": "Flip until tails",
+    "comments": [
+      "The coin's menu: flip coins one after another until one lands tails.",
+      "The coin's menu: flip coins one after another until one lands tails."
+    ],
+    "translation": ""
   },
   "zoSOoE": {
     "message": "Foil coverage",
@@ -3412,6 +3486,10 @@
   "_vIqw9": {
     "message": "How many cards?",
     "translation": "Колико карата?"
+  },
+  "dJ4hUd": {
+    "message": "How many coins?",
+    "translation": ""
   },
   "dB9f8y": {
     "message": "How much damage?",
@@ -6280,6 +6358,13 @@
     "message": "Tails",
     "context": "coin flip",
     "translation": "Писмо"
+  },
+  "kwERhT": {
+    "message": "Tails first",
+    "comments": [
+      "Under the coin after flipping until tails: the very first coin landed tails."
+    ],
+    "translation": ""
   },
   "yJtTpT": {
     "message": "Take a <0>Prize card</0>: drag one into your hand.",

@@ -469,6 +469,32 @@ describe('legacy board shortcut action resolver', () => {
         playerId: asPlayerId('nobody'),
       })
     ).toEqual({ ok: false, reason: 'stale_player' });
+    // Several coins at once, from the coin's menu or the palette.
+    expect(
+      resolveLegacyBoardShortcutAction(view, {
+        action: 'flipCoin',
+        playerId: asPlayerId(other),
+        series: { kind: 'count', count: 4 },
+      })
+    ).toEqual({
+      ok: true,
+      command: {
+        type: 'FlipCoin',
+        targetPlayerId: other,
+        series: { kind: 'count', count: 4 },
+      },
+      dismissSelection: false,
+    });
+    expect(
+      resolveLegacyBoardShortcutAction(view, {
+        action: 'flipCoin',
+        series: { kind: 'untilTails' },
+      })
+    ).toEqual({
+      ok: true,
+      command: { type: 'FlipCoin', series: { kind: 'untilTails' } },
+      dismissSelection: false,
+    });
   });
 
   it('derives lifecycle, turn, and solo-undo targets from the viewer perspective', () => {

@@ -33,14 +33,20 @@ export interface RankedSection {
   readonly entries: readonly RankedEntry[];
 }
 
-/** "draw 3" → the words and the number; a lone number has no words. */
+/**
+ * "draw 3" → the words and the number; a lone number has no words. The
+ * number may come before one last word too, as said: "flip 3 coins",
+ * "draw 2 cards".
+ */
 export const splitTrailingCount = (
   query: string
 ): { readonly text: string; readonly count?: number } => {
   // Up to five digits: damage goes to 9990; each command holds its own range.
   const match = /^(.*\S)\s+(\d{1,5})$/u.exec(query.trim());
-  return match
-    ? { text: match[1]!, count: Number(match[2]) }
+  if (match) return { text: match[1]!, count: Number(match[2]) };
+  const said = /^(.*\S)\s+(\d{1,5})\s+(\p{L}+)$/u.exec(query.trim());
+  return said
+    ? { text: `${said[1]!} ${said[3]!}`, count: Number(said[2]) }
     : { text: query.trim() };
 };
 

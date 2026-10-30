@@ -384,6 +384,54 @@ describe('presentationEffectsForEvent', () => {
     });
   });
 
+  it('names each of several coins in order, and how many came up heads', () => {
+    const view = createRendererSpikeView();
+    const three: PresentationEvent = {
+      type: 'CoinFlipped',
+      revision: 7,
+      playerId: 'spike-blue',
+      result: 'heads',
+      results: ['heads', 'tails', 'heads'],
+    };
+    expect(messages(presentationEffectsForEvent(three, view))).toEqual([
+      'player:Blue flipped 3 coins: heads, tails, heads (2 heads)',
+      'accessibility:Blue flipped 3 coins: heads, tails, heads (2 heads)',
+    ]);
+    const until: PresentationEvent = {
+      type: 'CoinFlipped',
+      revision: 8,
+      playerId: 'spike-red',
+      result: 'tails',
+      results: ['heads', 'heads', 'tails'],
+      untilTails: true,
+    };
+    expect(messages(presentationEffectsForEvent(until, view))).toEqual([
+      'player:Red flipped until tails: heads, heads, tails (2 heads)',
+      'accessibility:Red flipped until tails: heads, heads, tails (2 heads)',
+    ]);
+    expect(
+      messages(
+        presentationEffectsForEvent(
+          { ...until, result: 'tails', results: ['tails'] },
+          view
+        )
+      )[0]
+    ).toBe('player:Red flipped until tails: tails (0 heads)');
+    // The coin lands on the last, and the table reads the tally from all.
+    expect(presentationEffectsForEvent(until, view)).toContainEqual({
+      kind: 'animation',
+      revision: 8,
+      eventType: 'CoinFlipped',
+      animation: {
+        kind: 'coinFlip',
+        playerId: 'spike-red',
+        result: 'tails',
+        results: ['heads', 'heads', 'tails'],
+        untilTails: true,
+      },
+    });
+  });
+
   it('narrates card actions in the v1 battle-log grammar', () => {
     const view = createRendererSpikeView();
     const line = (event: PresentationEvent) =>

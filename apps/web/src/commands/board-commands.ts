@@ -15,7 +15,7 @@ import { SparkleIcon } from '@phosphor-icons/react/dist/csr/Sparkle';
 import { StackIcon } from '@phosphor-icons/react/dist/csr/Stack';
 import { TrashIcon } from '@phosphor-icons/react/dist/csr/Trash';
 import type { Icon } from '@phosphor-icons/react';
-import type { ViewCardId } from '@ptcgsim/game-core';
+import { MAX_COIN_FLIP_COUNT, type ViewCardId } from '@ptcgsim/game-core';
 import {
   markerHint,
   selectedCardIdOf,
@@ -1130,6 +1130,44 @@ export const boardCommands = (
         keywords: ['coin', 'flip', 'heads', 'tails'],
         run: shortcut(request),
       });
+      // Several coins at once, as cards ask: "flip 3 coins", until tails.
+      if (!own) continue;
+      commands.push(
+        {
+          id: 'turn.coins',
+          title: t`Flip coins…`,
+          section: 'turn',
+          icon: CoinIcon,
+          ...(seatName(playerId) ? { detail: seatName(playerId)! } : {}),
+          count: {
+            label: t`How many coins?`,
+            min: 2,
+            max: MAX_COIN_FLIP_COUNT,
+            initial: 2,
+            title: (count) =>
+              plural(count, { one: 'Flip # coin', other: 'Flip # coins' }),
+          },
+          keywords: ['coin', 'coins', 'flip', 'heads', 'tails'],
+          run: ({ count = 2 }) =>
+            shortcut({
+              ...request,
+              series: { kind: 'count', count },
+            })(),
+        },
+        {
+          id: 'turn.coinsUntilTails',
+          title: t({
+            message: 'Flip until tails',
+            comment:
+              "The coin's menu: flip coins one after another until one lands tails.",
+          }),
+          section: 'turn',
+          icon: CoinIcon,
+          ...(seatName(playerId) ? { detail: seatName(playerId)! } : {}),
+          keywords: ['coin', 'coins', 'flip', 'until', 'tails', 'heads'],
+          run: shortcut({ ...request, series: { kind: 'untilTails' } }),
+        }
+      );
     }
   }
   return commands;

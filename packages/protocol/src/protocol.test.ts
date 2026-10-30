@@ -583,6 +583,41 @@ describe('client protocol ingress', () => {
     expect(result.value.command).toEqual({ type: 'FlipCoin' });
   });
 
+  it('takes several coins at once: 2 to 10, or until tails, nothing else', () => {
+    const coin = (series: unknown) =>
+      parseClientFrame(
+        JSON.stringify({
+          type: 'Command',
+          protocolVersion: PROTOCOL_VERSION,
+          sessionId: 'session',
+          clientSequence: 1,
+          commandId: 'coin-command',
+          lastSeenRevision: 0,
+          command: { type: 'FlipCoin', series },
+        })
+      );
+    for (const series of [
+      { kind: 'count', count: 2 },
+      { kind: 'count', count: 10 },
+      { kind: 'untilTails' },
+    ]) {
+      const parsed = coin(series);
+      expect(parsed.ok, JSON.stringify(series)).toBe(true);
+      if (parsed.ok && parsed.value.type === 'Command')
+        expect(parsed.value.command).toEqual({ type: 'FlipCoin', series });
+    }
+    for (const series of [
+      { kind: 'count', count: 1 },
+      { kind: 'count', count: 11 },
+      { kind: 'count', count: 2.5 },
+      { kind: 'count' },
+      { kind: 'untilTails', count: 3 },
+      { kind: 'untilHeads' },
+      3,
+    ])
+      expect(coin(series).ok, JSON.stringify(series)).toBe(false);
+  });
+
   it('rejects oversized input before JSON traversal', () => {
     const result = parseClientFrame(
       ' '.repeat(MAX_CLIENT_FRAME_CODE_UNITS + 1)

@@ -8,7 +8,12 @@ export interface CoinFlipShowing {
   /** The presentation entry it came from; a new id is a new toss. */
   readonly id: number;
   readonly playerId: string;
+  /** The face it lands on: the last coin's of several. */
   readonly result: 'heads' | 'tails';
+  /** Several coins at once: each, in the order thrown. */
+  readonly results?: readonly ('heads' | 'tails')[];
+  /** Thrown until one landed tails, rather than so many. */
+  readonly untilTails?: true;
   /** `spin` tosses the coin; `static` only shows the result (reduced motion). */
   readonly motion: 'spin' | 'static';
   /**
@@ -40,6 +45,13 @@ export interface CoinFlipControllerOptions {
 export const COIN_SPIN_MS = 1_050;
 /** How long the result stays readable after the coin lands. */
 export const COIN_RESULT_LINGER_MS = 1_500;
+/** Several coins' tally ("2 of 3 heads") takes a little longer to read. */
+export const COIN_SERIES_LINGER_MS = 2_500;
+
+const lingerOf = (entry: QueuedPresentationAnimation): number =>
+  entry.effect.animation.results
+    ? COIN_SERIES_LINGER_MS
+    : COIN_RESULT_LINGER_MS;
 /** The coin and its result fading away. */
 export const COIN_FADE_MS = 220;
 
@@ -100,7 +112,7 @@ export class CoinFlipController implements PresentationStateSource<CoinFlipSnaps
       this.after(spinMs, () => {
         signal.removeEventListener('abort', abort);
         this.setPhase(entry.id, 'landed');
-        this.after(COIN_RESULT_LINGER_MS, () => {
+        this.after(lingerOf(entry), () => {
           this.setPhase(entry.id, 'fading');
           this.after(COIN_FADE_MS, () => this.clear());
         });
@@ -117,7 +129,7 @@ export class CoinFlipController implements PresentationStateSource<CoinFlipSnaps
   ): void => {
     if (this.disposed || signal.aborted) return;
     this.show(entry, 'static', 0);
-    this.after(COIN_RESULT_LINGER_MS, () => this.clear());
+    this.after(lingerOf(entry), () => this.clear());
   };
 
   dispose(): void {
@@ -133,12 +145,14 @@ export class CoinFlipController implements PresentationStateSource<CoinFlipSnaps
     spinMs: number
   ): void {
     this.cancelAll();
-    const { playerId, result } = entry.effect.animation;
+    const { playerId, result, results, untilTails } = entry.effect.animation;
     this.publish({
       flip: {
         id: entry.id,
         playerId,
         result,
+        ...(results ? { results } : {}),
+        ...(untilTails ? { untilTails } : {}),
         motion,
         phase: motion === 'spin' ? 'spinning' : 'landed',
         spinMs,

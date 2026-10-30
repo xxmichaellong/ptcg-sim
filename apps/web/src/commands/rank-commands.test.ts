@@ -164,5 +164,15 @@ describe('splitTrailingCount', () => {
       text: 'set damage',
       count: 9990,
     });
+    // As said: the number before one last word.
+    expect(splitTrailingCount('flip 3 coins')).toEqual({
+      text: 'flip coins',
+      count: 3,
+    });
+    expect(splitTrailingCount('draw 2 cards')).toEqual({
+      text: 'draw cards',
+      count: 2,
+    });
+    expect(splitTrailingCount('3 coins')).toEqual({ text: '3 coins' });
   });
 });

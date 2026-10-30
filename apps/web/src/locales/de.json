@@ -496,6 +496,10 @@
     "message": "{count, plural, one {Draw # card} other {Draw # cards}}",
     "translation": "{count, plural, one {# Karte ziehen} other {# Karten ziehen}}"
   },
+  "WvSbnr": {
+    "message": "{count, plural, one {Flip # coin} other {Flip # coins}}",
+    "translation": ""
+  },
   "nlUJMk": {
     "message": "{count, plural, one {Look at # card} other {Look at # cards}}",
     "translation": "{count, plural, one {# Karte ansehen} other {# Karten ansehen}}"
@@ -679,6 +683,14 @@
     ],
     "translation": "{errorCount, plural, one {# Problem für {format} zu beheben} other {# Probleme für {format} zu beheben}}"
   },
+  "k0BWnM": {
+    "message": "{face, select, heads {heads} other {tails}}",
+    "context": "a coin face in a list of coin flips",
+    "comments": [
+      "One coin's face in a Log line listing several flips: \"heads\" or \"tails\", lowercase."
+    ],
+    "translation": ""
+  },
   "p0vgdf": {
     "message": "{firstReloading} and {secondReloading} will reload",
     "translation": "{firstReloading} und {secondReloading} werden neu geladen"
@@ -686,6 +698,27 @@
   "YWFA46": {
     "message": "{firstReloading} will reload",
     "translation": "{firstReloading} wird neu geladen"
+  },
+  "l6Nsza": {
+    "message": "{heads, plural, one {# heads, no tails} other {# heads, no tails}}",
+    "comments": [
+      "Under the coin after flipping until tails stopped at its limit without a tails."
+    ],
+    "translation": ""
+  },
+  "ZlmQA2": {
+    "message": "{heads, plural, one {# heads, then tails} other {# heads, then tails}}",
+    "comments": [
+      "Under the coin after flipping until tails: how many heads came before the tails."
+    ],
+    "translation": ""
+  },
+  "DO0IzM": {
+    "message": "{heads, plural, one {# of {total} heads} other {# of {total} heads}}",
+    "comments": [
+      "Under the coin after several coins at once: how many came up heads, of how many (\"2 of 3 heads\")."
+    ],
+    "translation": ""
   },
   "iovK0L": {
     "message": "{hidden, plural, one {Hide # card} other {Hide # cards}}",
@@ -731,6 +764,14 @@
       "Adds one card name to a list in a Log line: \"Fire Energy, Switch\". {list} is the names so far, {item} the next. Use the list separator of your language."
     ],
     "translation": "{list}, {item}"
+  },
+  "AV9hT-": {
+    "message": "{list}, {item}",
+    "context": "a list of coin faces in a Log line",
+    "comments": [
+      "Adds one coin face to a list in a Log line: \"heads, tails\". {list} is the faces so far, {item} the next. Use the list separator of your language."
+    ],
+    "translation": ""
   },
   "MglzGu": {
     "message": "{lostZoneCards, plural, one {# card} other {# cards}}",
@@ -842,12 +883,26 @@
     ],
     "translation": "{name} hat die Starthand gezogen und die Preiskarten gelegt"
   },
+  "5I-LDX": {
+    "message": "{name} flipped {count, plural, one {# coin} other {# coins}}: {faces} ({heads, plural, one {# heads} other {# heads}})",
+    "comments": [
+      "Log line: a player flipped several coins at once. {name} is a player's name, then how many coins, {faces} the faces in order (\"heads, tails, heads\"), then how many came up heads."
+    ],
+    "translation": ""
+  },
   "01JuD1": {
     "message": "{name} flipped {result, select, heads {heads} other {tails}}",
     "comments": [
       "Log line: a coin flip's result. {name} is a player's name; {result} is heads or tails."
     ],
     "translation": "{name} hat {result, select, heads {Kopf} other {Zahl}} geworfen"
+  },
+  "fJ5IET": {
+    "message": "{name} flipped until tails: {faces} ({heads, plural, one {# heads} other {# heads}})",
+    "comments": [
+      "Log line: a player flipped coins one after another until one landed tails. {name} is a player's name, {faces} the faces in order (\"heads, heads, tails\"), then how many came up heads."
+    ],
+    "translation": ""
   },
   "Bqr3lz": {
     "message": "{name} hand",
@@ -3130,6 +3185,13 @@
     "context": "turn the table around",
     "translation": "Drehen"
   },
+  "-s_hqS": {
+    "message": "Flip {0} coins",
+    "comments": [
+      "The coin's menu: flip several coins at once. {0} is 2 or more."
+    ],
+    "translation": ""
+  },
   "sFwtdu": {
     "message": "Flip a coin",
     "translation": "Münze werfen"
@@ -3149,6 +3211,10 @@
     "message": "Flip coin",
     "translation": "Münze werfen"
   },
+  "NekElE": {
+    "message": "Flip coins…",
+    "translation": ""
+  },
   "mnc6b3": {
     "message": "Flip the table",
     "translation": "Tisch umdrehen"
@@ -3156,6 +3222,14 @@
   "CK2j9j": {
     "message": "Flip their coin",
     "translation": "Münze des Gegners werfen"
+  },
+  "Xyi6X0": {
+    "message": "Flip until tails",
+    "comments": [
+      "The coin's menu: flip coins one after another until one lands tails.",
+      "The coin's menu: flip coins one after another until one lands tails."
+    ],
+    "translation": ""
   },
   "zoSOoE": {
     "message": "Foil coverage",
@@ -3412,6 +3486,10 @@
   "_vIqw9": {
     "message": "How many cards?",
     "translation": "Wie viele Karten?"
+  },
+  "dJ4hUd": {
+    "message": "How many coins?",
+    "translation": ""
   },
   "dB9f8y": {
     "message": "How much damage?",
@@ -6280,6 +6358,13 @@
     "message": "Tails",
     "context": "coin flip",
     "translation": "Zahl"
+  },
+  "kwERhT": {
+    "message": "Tails first",
+    "comments": [
+      "Under the coin after flipping until tails: the very first coin landed tails."
+    ],
+    "translation": ""
   },
   "yJtTpT": {
     "message": "Take a <0>Prize card</0>: drag one into your hand.",

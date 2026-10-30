@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 
-import { asPlayerId } from '@ptcgsim/game-core';
+import { asPlayerId, type CoinFlipSeries } from '@ptcgsim/game-core';
 import {
   BoardDepthProjection,
   createBoardScene,
@@ -82,7 +82,9 @@ describe('TableCoins', () => {
   let root: Root;
   let source: CoinSource;
   let calls: AnimateCall[];
-  let onFlip: ReturnType<typeof vi.fn<(playerId: string) => void>>;
+  let onFlip: ReturnType<
+    typeof vi.fn<(playerId: string, series?: CoinFlipSeries) => void>
+  >;
 
   beforeEach(() => {
     host = document.createElement('div');
@@ -90,7 +92,7 @@ describe('TableCoins', () => {
     root = createRoot(host);
     source = new CoinSource();
     calls = [];
-    onFlip = vi.fn<(playerId: string) => void>();
+    onFlip = vi.fn<(playerId: string, series?: CoinFlipSeries) => void>();
     // happy-dom has no Web Animations; record what the coin asks for.
     HTMLElement.prototype.animate = function animate(
       this: HTMLElement,
@@ -180,6 +182,120 @@ describe('TableCoins', () => {
     expect(far.id).not.toBe('flipCoinButton');
     far.click();
     expect(onFlip).toHaveBeenLastCalledWith(red);
+  });
+
+  it('offers several coins at once from its menu, which a right-click opens', async () => {
+    await render();
+    const button = host.querySelector<HTMLButtonElement>('#flipCoinButton')!;
+    expect(button.getAttribute('aria-haspopup')).toBe('menu');
+    expect(document.querySelector('[data-coin-menu]')).toBeNull();
+    await act(async () => {
+      button.dispatchEvent(
+        new MouseEvent('contextmenu', {
+          bubbles: true,
+          cancelable: true,
+          clientX: 20,
+          clientY: 20,
+        })
+      );
+    });
+    const menu = document.querySelector('[data-coin-menu="local"]');
+    expect(menu).not.toBeNull();
+    // A right-click flips nothing by itself.
+    expect(onFlip).not.toHaveBeenCalled();
+    expect(
+      [...menu!.querySelectorAll('[data-coin-series]')].map(
+        (item) => item.textContent
+      )
+    ).toEqual([
+      'Flip a coinF',
+      'Flip 2 coins',
+      'Flip 3 coins',
+      'Flip 4 coins',
+      'Flip until tails',
+    ]);
+    await act(async () => {
+      menu!.querySelector<HTMLElement>('[data-coin-series="3"]')!.click();
+    });
+    expect(onFlip).toHaveBeenLastCalledWith(blue, { kind: 'count', count: 3 });
+  });
+
+  it('flips until tails from its menu, and one coin from its first row', async () => {
+    await render();
+    const open = async () =>
+      act(async () => {
+        host
+          .querySelector('#flipCoinButton')!
+          .dispatchEvent(
+            new MouseEvent('contextmenu', { bubbles: true, cancelable: true })
+          );
+      });
+    await open();
+    await act(async () => {
+      document
+        .querySelector<HTMLElement>('[data-coin-series="untilTails"]')!
+        .click();
+    });
+    expect(onFlip).toHaveBeenLastCalledWith(blue, { kind: 'untilTails' });
+    await open();
+    await act(async () => {
+      document.querySelector<HTMLElement>('[data-coin-series="1"]')!.click();
+    });
+    expect(onFlip).toHaveBeenLastCalledWith(blue);
+  });
+
+  it('reads several coins as a tally under the coin', async () => {
+    await render();
+    const chip = () =>
+      host.querySelector('[data-coin-result-chip]')?.textContent;
+    await act(async () =>
+      source.set(
+        flip({
+          phase: 'landed',
+          result: 'heads',
+          results: ['heads', 'tails', 'heads'],
+        })
+      )
+    );
+    expect(chip()).toBe('2 of 3 heads');
+    await act(async () =>
+      source.set(
+        flip({
+          id: 2,
+          phase: 'landed',
+          result: 'tails',
+          results: ['heads', 'heads', 'tails'],
+          untilTails: true,
+        })
+      )
+    );
+    expect(chip()).toBe('2 heads, then tails');
+    await act(async () =>
+      source.set(
+        flip({
+          id: 3,
+          phase: 'landed',
+          result: 'tails',
+          results: ['tails'],
+          untilTails: true,
+        })
+      )
+    );
+    expect(chip()).toBe('Tails first');
+    await act(async () =>
+      source.set(
+        flip({
+          id: 4,
+          phase: 'landed',
+          result: 'heads',
+          results: Array<'heads'>(30).fill('heads'),
+          untilTails: true,
+        })
+      )
+    );
+    expect(chip()).toBe('30 heads, no tails');
+    // The coin lies on the last coin's face.
+    expect(coin('local')!.dataset.coinFace).toBe('heads');
   });
 
   it('only shows the room’s flips to a spectator or a replay', async () => {

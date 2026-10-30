@@ -7,7 +7,12 @@ import type {
   RemoteGameSession,
   SubmitCommandResult,
 } from '@ptcgsim/client-session';
-import type { MatchViewState, PlayerId, ViewCardId } from '@ptcgsim/game-core';
+import type {
+  CoinFlipSeries,
+  MatchViewState,
+  PlayerId,
+  ViewCardId,
+} from '@ptcgsim/game-core';
 import {
   BoardDepthProjection,
   TABLE_LAYOUT_GEOMETRY_VERSION,
@@ -1205,11 +1210,15 @@ export const RemoteSessionBoard = ({
           action: 'startOwnTurn',
         });
       },
-      /** Flips for `playerId`'s coin on the table, or the acting seat's. */
-      flipCoin: (playerId?: PlayerId): void => {
+      /**
+       * Flips for `playerId`'s coin on the table, or the acting seat's:
+       * one coin, or several at once (the coin's menu).
+       */
+      flipCoin: (playerId?: PlayerId, series?: CoinFlipSeries): void => {
         const submitted = runtimeRef.current?.emitLegacyShortcutAction({
           action: 'flipCoin',
           ...(playerId === undefined ? {} : { playerId }),
+          ...(series === undefined ? {} : { series }),
         });
         if (submitted === false) return;
         const seat = playerId ?? displayPolicyRef.current.actingPlayerId;

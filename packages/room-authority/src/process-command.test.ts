@@ -8,11 +8,13 @@ import {
   asWorkAreaId,
   createEmptyMatch,
   executeCommand,
+  MAX_UNTIL_TAILS_FLIPS,
   playerZoneId,
   type CommandContext,
 } from '@ptcgsim/game-core';
 import {
   MAX_SERVER_FRAME_CODE_UNITS,
+  parseServerFrame,
   PROTOCOL_VERSION,
   serializeMatchViewState,
   type ClientMessage,
@@ -873,6 +875,60 @@ describe('authoritative room command transaction', () => {
       'CommandResult',
     ]);
     expect(result.deliveries.at(-1)?.sessionId).toBe('session-player-one');
+  });
+
+  it('flips several coins as one move, each result in what every seat reads', async () => {
+    const three = await processAuthorityCommand(
+      createSnapshot(),
+      command('session-player-one', 1, 'three-coins', {
+        type: 'FlipCoin',
+        series: { kind: 'count', count: 3 },
+      }),
+      createDependencies(createPersistence())
+    );
+    expect(three.committed).toBe(true);
+    expect(three.snapshot.replayHistory.entries).toHaveLength(1);
+    // The context always rolls 0: until tails runs to its cap.
+    const until = await processAuthorityCommand(
+      three.snapshot,
+      command(
+        'session-player-one',
+        2,
+        'until-tails',
+        { type: 'FlipCoin', series: { kind: 'untilTails' } },
+        three.snapshot.state.revision
+      ),
+      createDependencies(createPersistence())
+    );
+    expect(until.committed).toBe(true);
+    for (const [result, expected] of [
+      [three, { results: ['heads', 'heads', 'heads'] }],
+      [
+        until,
+        {
+          results: Array<string>(MAX_UNTIL_TAILS_FLIPS).fill('heads'),
+          untilTails: true,
+        },
+      ],
+    ] as const) {
+      const publications = result.deliveries.filter(
+        (delivery) => delivery.message.type === 'StatePublication'
+      );
+      expect(publications.length).toBeGreaterThan(1);
+      for (const { message } of publications) {
+        if (message.type !== 'StatePublication') continue;
+        expect(message.presentationEvents).toEqual([
+          {
+            type: 'CoinFlipped',
+            revision: result.snapshot.state.revision,
+            playerId: p1,
+            result: 'heads',
+            ...expected,
+          },
+        ]);
+        expect(parseServerFrame(JSON.stringify(message)).ok).toBe(true);
+      }
+    }
   });
 
   it('reports isolated authority, projection, and persistence phases without affecting the transaction', async () => {

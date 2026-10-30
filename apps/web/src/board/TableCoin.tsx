@@ -1,5 +1,7 @@
+import { ContextMenu } from '@base-ui/react/context-menu';
+import { plural } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react/macro';
-import type { PlayerId } from '@ptcgsim/game-core';
+import type { CoinFlipSeries, PlayerId } from '@ptcgsim/game-core';
 import type {
   BoardDepthProjection,
   BoardLayoutSnapshot,
@@ -7,6 +9,7 @@ import type {
 } from '@ptcgsim/renderer-contract';
 import { tablePoseMatrix } from '@ptcgsim/renderer-contract';
 import {
+  useContext,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -21,8 +24,11 @@ import type {
   CoinFlipSnapshot,
 } from '../presentation/CoinFlipController.js';
 import type { PresentationStateSource } from '../presentation/PresentationRuntime.js';
+import { OverlayContainerContext } from '../ui/overlay-host-registry.js';
+import { OVERLAY_SURFACE_ATTRIBUTE } from '../ui/overlay-surface.js';
 import { Tooltip, withKeyHint } from '../ui/Tooltip.js';
 import { tableCoinSpots } from './table-coin.js';
+import '../ui/action-menu.css';
 import './TableCoin.css';
 
 /** A coin that was waiting for the room stays up this long after it answers. */
@@ -137,6 +143,67 @@ const chipAnchor = (
 /** The least felt kept between the result chip and the table's edge. */
 const CHIP_EDGE_PX = 4;
 
+/** What the coin's menu offers besides one coin: so many, or until tails. */
+const MENU_SERIES: readonly CoinFlipSeries[] = [
+  { kind: 'count', count: 2 },
+  { kind: 'count', count: 3 },
+  { kind: 'count', count: 4 },
+  { kind: 'untilTails' },
+];
+
+/** A tap that ends a long press opened the menu: it flips nothing. */
+const LONG_PRESS_CLICK_MS = 800;
+
+/**
+ * The result under the coin: its face, or several coins' tally ("2 of 3
+ * heads", "2 heads, then tails").
+ */
+const useCoinTally = () => {
+  const { t } = useLingui();
+  return (flip: CoinFlipShowing): string => {
+    const results = flip.results;
+    if (!results)
+      return flip.result === 'heads'
+        ? t({ message: 'Heads', context: 'coin flip' })
+        : t({ message: 'Tails', context: 'coin flip' });
+    const heads = results.filter((face) => face === 'heads').length;
+    const total = results.length;
+    if (!flip.untilTails)
+      return t({
+        message: `${plural(heads, {
+          one: `# of ${total} heads`,
+          other: `# of ${total} heads`,
+        })}`,
+        comment:
+          'Under the coin after several coins at once: how many came up heads, of how many ("2 of 3 heads").',
+      });
+    if (flip.result === 'heads')
+      // Never landed tails: stopped at the most it throws.
+      return t({
+        message: `${plural(heads, {
+          one: '# heads, no tails',
+          other: '# heads, no tails',
+        })}`,
+        comment:
+          'Under the coin after flipping until tails stopped at its limit without a tails.',
+      });
+    return heads === 0
+      ? t({
+          message: 'Tails first',
+          comment:
+            'Under the coin after flipping until tails: the very first coin landed tails.',
+        })
+      : t({
+          message: `${plural(heads, {
+            one: '# heads, then tails',
+            other: '# heads, then tails',
+          })}`,
+          comment:
+            'Under the coin after flipping until tails: how many heads came before the tails.',
+        });
+  };
+};
+
 /**
  * The coin's result, centred on it but kept inside the table: a coin by the
  * prizes on an upright phone lies nearer the edge than half the chip.
@@ -195,8 +262,11 @@ interface TableCoinProps {
   readonly face: Face;
   /** Turned to face the far player, as their cards are. */
   readonly turned: boolean;
-  /** Flips this seat's coin; absent when the viewer cannot flip it. */
-  readonly onFlip: (() => void) | undefined;
+  /**
+   * Flips this seat's coin, or several coins at once (its menu); absent
+   * when the viewer cannot flip it.
+   */
+  readonly onFlip: ((series?: CoinFlipSeries) => void) | undefined;
   readonly label: string;
   readonly hint: string | undefined;
   /** A pile viewer or work area is over the table. */
@@ -218,6 +288,9 @@ const TableCoin = ({
   covered,
 }: TableCoinProps) => {
   const { t } = useLingui();
+  const tally = useCoinTally();
+  const container = useContext(OverlayContainerContext);
+  const menuOpenedAt = useRef(0);
   const coinRef = useRef<HTMLSpanElement>(null);
   const tossRef = useRef<HTMLSpanElement>(null);
   const shadowRef = useRef<HTMLSpanElement>(null);
@@ -405,31 +478,111 @@ const TableCoin = ({
       >
         <span className="table-coin__shadow" ref={shadowRef} />
         {onFlip ? (
-          <Tooltip content={withKeyHint(label, hint)} side="top">
-            <button
-              {...(own ? { id: 'flipCoinButton' } : {})}
-              type="button"
-              className="table-coin__button"
-              aria-label={label}
-              aria-busy={inAir || undefined}
-              // Under an open pile viewer it stays on the felt, out of reach.
-              disabled={covered}
-              onClick={() => {
-                // One toss at a time: a press while it is in the air waits
-                // for nothing and asks the room for nothing.
-                if (!inAir) onFlip();
-              }}
-            >
-              {coin}
-            </button>
-          </Tooltip>
+          // A press flips one coin; a right-click, a long press or the
+          // menu key offers several at once.
+          <ContextMenu.Root
+            disabled={covered || inAir}
+            onOpenChange={(open) => {
+              if (open) menuOpenedAt.current = Date.now();
+            }}
+          >
+            <Tooltip content={withKeyHint(label, hint)} side="top">
+              <ContextMenu.Trigger
+                render={
+                  <button
+                    {...(own ? { id: 'flipCoinButton' } : {})}
+                    type="button"
+                    className="table-coin__button"
+                    aria-label={label}
+                    aria-haspopup="menu"
+                    aria-busy={inAir || undefined}
+                    // Under an open pile viewer it stays on the felt, out of
+                    // reach.
+                    disabled={covered}
+                    onClick={() => {
+                      // The tap that ends a long press opened the menu.
+                      if (
+                        Date.now() - menuOpenedAt.current <
+                        LONG_PRESS_CLICK_MS
+                      )
+                        return;
+                      // One toss at a time: a press while it is in the air
+                      // waits for nothing and asks the room for nothing.
+                      if (!inAir) onFlip();
+                    }}
+                  >
+                    {coin}
+                  </button>
+                }
+              />
+            </Tooltip>
+            <ContextMenu.Portal container={container}>
+              <ContextMenu.Positioner
+                className="ptcgsim-action-menu-positioner"
+                sideOffset={8}
+                collisionPadding={8}
+              >
+                <ContextMenu.Popup
+                  className="ptcgsim-action-menu"
+                  data-coin-menu={own ? 'local' : 'opponent'}
+                  aria-label={label}
+                  {...{ [OVERLAY_SURFACE_ATTRIBUTE]: 'popover' }}
+                >
+                  <ContextMenu.Item
+                    className="ptcgsim-action-menu__item"
+                    data-coin-series="1"
+                    onClick={() => onFlip()}
+                  >
+                    <span className="ptcgsim-action-menu__icon" />
+                    <span className="ptcgsim-action-menu__text">
+                      {t`Flip a coin`}
+                    </span>
+                    {hint ? (
+                      <kbd className="ptcgsim-action-menu__hint">{hint}</kbd>
+                    ) : null}
+                  </ContextMenu.Item>
+                  {MENU_SERIES.map((series) => (
+                    <ContextMenu.Item
+                      key={
+                        series.kind === 'count'
+                          ? String(series.count)
+                          : series.kind
+                      }
+                      className="ptcgsim-action-menu__item"
+                      data-coin-series={
+                        series.kind === 'count'
+                          ? String(series.count)
+                          : series.kind
+                      }
+                      onClick={() => onFlip(series)}
+                    >
+                      <span className="ptcgsim-action-menu__icon" />
+                      <span className="ptcgsim-action-menu__text">
+                        {series.kind === 'count'
+                          ? t({
+                              message: `Flip ${series.count} coins`,
+                              comment:
+                                "The coin's menu: flip several coins at once. {0} is 2 or more.",
+                            })
+                          : t({
+                              message: 'Flip until tails',
+                              comment:
+                                "The coin's menu: flip coins one after another until one lands tails.",
+                            })}
+                      </span>
+                    </ContextMenu.Item>
+                  ))}
+                </ContextMenu.Popup>
+              </ContextMenu.Positioner>
+            </ContextMenu.Portal>
+          </ContextMenu.Root>
         ) : (
           <span className="table-coin__button" aria-hidden="true">
             {coin}
           </span>
         )}
       </div>
-      {result ? (
+      {result && motion.kind === 'flip' ? (
         <CoinResultChip
           anchor={chip}
           bounds={bounds}
@@ -438,9 +591,7 @@ const TableCoin = ({
           playerId={playerId}
           above={!own}
         >
-          {result === 'heads'
-            ? t({ message: 'Heads', context: 'coin flip' })
-            : t({ message: 'Tails', context: 'coin flip' })}
+          {tally(motion.flip)}
         </CoinResultChip>
       ) : null}
     </>
@@ -461,7 +612,8 @@ export interface TableCoinsProps {
    */
   readonly flip?: {
     readonly playerIds: readonly PlayerId[];
-    readonly onFlip: (playerId: PlayerId) => void;
+    /** One coin, or several at once (the coin's menu). */
+    readonly onFlip: (playerId: PlayerId, series?: CoinFlipSeries) => void;
     /** The flip's key, shown in the tooltip. */
     readonly hint?: string;
   };
@@ -550,10 +702,14 @@ export const TableCoins = ({
   const canFlip = new Set(flipControl?.playerIds ?? []);
   const onFlip = flipControl?.onFlip;
   const handlers = useMemo(() => {
-    const byPlayer = new Map<PlayerId, () => void>();
+    const byPlayer = new Map<PlayerId, (series?: CoinFlipSeries) => void>();
     if (onFlip)
       for (const spot of spots)
-        byPlayer.set(spot.playerId, () => onFlip(spot.playerId));
+        byPlayer.set(spot.playerId, (series) =>
+          series === undefined
+            ? onFlip(spot.playerId)
+            : onFlip(spot.playerId, series)
+        );
     return byPlayer;
   }, [onFlip, spots]);
 

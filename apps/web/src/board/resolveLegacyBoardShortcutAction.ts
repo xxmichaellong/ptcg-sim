@@ -1,4 +1,9 @@
-import type { MatchViewState, PlayerId, ViewCardId } from '@ptcgsim/game-core';
+import type {
+  CoinFlipSeries,
+  MatchViewState,
+  PlayerId,
+  ViewCardId,
+} from '@ptcgsim/game-core';
 import type { WireGameCommand } from '@ptcgsim/protocol';
 
 import { targetSeatField } from './acting-seat.js';
@@ -99,6 +104,8 @@ export type LegacyBoardShortcutActionRequest =
        * the acting seat when absent, as the key flips.
        */
       readonly playerId?: PlayerId;
+      /** Several coins at once (the coin's menu, the palette); one if absent. */
+      readonly series?: CoinFlipSeries;
     }
   | { readonly action: 'setupOwnPlayer' }
   | { readonly action: 'resetOwnPlayer' }
@@ -343,7 +350,11 @@ export const resolveLegacyBoardShortcutAction = (
       }
       return {
         ok: true,
-        command: { type: 'FlipCoin', ...targetSeatField(view, seat) },
+        command: {
+          type: 'FlipCoin',
+          ...targetSeatField(view, seat),
+          ...(request.series ? { series: request.series } : {}),
+        },
         dismissSelection: false,
       };
     }

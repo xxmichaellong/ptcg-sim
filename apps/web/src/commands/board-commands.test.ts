@@ -122,6 +122,35 @@ describe('boardCommands', () => {
     ).toBe('turn.coin');
   });
 
+  it('flips several coins, so many or until tails, for the acting seat', () => {
+    const runtime = runtimeFor(stateWith());
+    const commands = boardCommands({ runtime, hint: () => undefined });
+    const several = find(commands, 'turn.coins');
+    expect(several.count).toMatchObject({ min: 2, max: 10 });
+    expect(several.count!.title(3)).toBe('Flip 3 coins');
+    several.run!({ count: 3 });
+    expect(runtime.emitLegacyShortcutAction).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        action: 'flipCoin',
+        series: { kind: 'count', count: 3 },
+      }),
+      'palette'
+    );
+    find(commands, 'turn.coinsUntilTails').run!({});
+    expect(runtime.emitLegacyShortcutAction).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        action: 'flipCoin',
+        series: { kind: 'untilTails' },
+      }),
+      'palette'
+    );
+    // "flip 3 coins", as "draw 3" finds drawing.
+    expect(
+      rankCommands(flattenCommands(commands), 'flip 3 coins', [])[0]?.entries[0]
+        ?.entry.command.id
+    ).toBe('turn.coins');
+  });
+
   it("lists the acting seat's deck and hand, and runs them as the palette", () => {
     const state = stateWith();
     const runtime = runtimeFor(state);

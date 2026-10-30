@@ -8,6 +8,7 @@ import type { ReplayPresentationSource } from '../replay/ReplayPresentationDispa
 import {
   COIN_FADE_MS,
   COIN_RESULT_LINGER_MS,
+  COIN_SERIES_LINGER_MS,
   COIN_SPIN_MS,
   CoinFlipController,
 } from './CoinFlipController.js';
@@ -81,6 +82,41 @@ describe('CoinFlipController', () => {
         flip === null ? null : (flip as { phase: string }).phase
       )
     ).toEqual(['spinning', 'landed', 'fading', null]);
+  });
+
+  it('tosses several coins once, lands on the last, and leaves the tally up longer', async () => {
+    const controller = new CoinFlipController();
+    const several: QueuedPresentationAnimation = {
+      id: 9,
+      effect: {
+        kind: 'animation',
+        revision: 9,
+        eventType: 'CoinFlipped',
+        animation: {
+          kind: 'coinFlip',
+          playerId: 'red',
+          result: 'tails',
+          results: ['heads', 'heads', 'tails'],
+          untilTails: true,
+        },
+      },
+    };
+    const done = controller.animate(several, new AbortController().signal);
+    expect(controller.getSnapshot().flip).toMatchObject({
+      id: 9,
+      result: 'tails',
+      results: ['heads', 'heads', 'tails'],
+      untilTails: true,
+      phase: 'spinning',
+    });
+    vi.advanceTimersByTime(COIN_SPIN_MS);
+    await done;
+    expect(COIN_SERIES_LINGER_MS).toBeGreaterThan(COIN_RESULT_LINGER_MS);
+    vi.advanceTimersByTime(COIN_RESULT_LINGER_MS);
+    // A single coin would be fading by now; the tally is still up.
+    expect(controller.getSnapshot().flip?.phase).toBe('landed');
+    vi.advanceTimersByTime(COIN_SERIES_LINGER_MS - COIN_RESULT_LINGER_MS);
+    expect(controller.getSnapshot().flip?.phase).toBe('fading');
   });
 
   it('scales the toss with the animation speed and skips it at instant', async () => {

@@ -1630,7 +1630,19 @@ const resolveSingleCommand = (
       }
       return {
         accepted: true,
-        command: { type: 'FlipCoin', playerId: targetPlayerId },
+        command: {
+          type: 'FlipCoin',
+          playerId: targetPlayerId,
+          // The wire's own bounds already hold; the engine checks again.
+          ...(wire.series === undefined
+            ? {}
+            : {
+                series:
+                  wire.series.kind === 'count'
+                    ? { kind: 'count', count: wire.series.count }
+                    : { kind: 'untilTails' },
+              }),
+        },
       };
     }
   }

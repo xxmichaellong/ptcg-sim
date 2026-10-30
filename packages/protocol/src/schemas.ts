@@ -1,4 +1,8 @@
-import { isCardBackValue } from '@ptcgsim/game-core';
+import {
+  isCardBackValue,
+  MAX_COIN_FLIP_COUNT,
+  MAX_UNTIL_TAILS_FLIPS,
+} from '@ptcgsim/game-core';
 import * as v from 'valibot';
 import {
   MAX_CARD_STEPS,
@@ -734,6 +738,21 @@ export const WireGameCommandSchema = v.variant('type', [
   v.object({
     type: v.literal('FlipCoin'),
     targetPlayerId: v.optional(IdentifierSchema),
+    // Several coins at once: so many, or until one lands tails.
+    series: v.optional(
+      v.variant('kind', [
+        v.strictObject({
+          kind: v.literal('count'),
+          count: v.pipe(
+            v.number(),
+            v.integer(),
+            v.minValue(2),
+            v.maxValue(MAX_COIN_FLIP_COUNT)
+          ),
+        }),
+        v.strictObject({ kind: v.literal('untilTails') }),
+      ])
+    ),
   }),
   ApplyCardStepsCommandSchema,
 ]);
@@ -1118,6 +1137,16 @@ export const PresentationEventSchema = v.variant('type', [
     revision: RevisionSchema,
     playerId: IdentifierSchema,
     result: v.picklist(['heads', 'tails'] as const),
+    // Several coins: each, in order (the last is `result`).
+    results: v.optional(
+      v.pipe(
+        v.array(v.picklist(['heads', 'tails'] as const)),
+        // Until tails may land tails at once: one coin.
+        v.minLength(1),
+        v.maxLength(MAX_UNTIL_TAILS_FLIPS)
+      )
+    ),
+    untilTails: v.optional(v.literal(true)),
   }),
   v.object({
     type: v.literal('PlayerReset'),

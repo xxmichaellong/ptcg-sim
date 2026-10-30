@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 
+import { ownRoomBudget } from './support/room-budget.js';
 import {
   chooseMoreAction,
   closeActivity,
@@ -17,6 +18,9 @@ import {
  */
 
 const openSolo = async (page: Page): Promise<void> => {
+  // Each test its own room budget: the file opens more Solo rooms than one
+  // address may in a minute.
+  await ownRoomBudget(page.context());
   await page.goto('/');
   await expect(
     page.locator('[data-app-route="remote-room"][data-session-phase="ready"]')
@@ -194,6 +198,127 @@ test('with reduced motion the coin turns straight to its face', async ({
   );
   expect(await recordedPhases(page)).not.toContain('spinning');
   expect(await recordedPhases(page)).not.toContain('tossing');
+});
+
+for (const table of ['tilted', 'flat'] as const)
+  test(`several coins at once from the coin's menu and the palette (${table})`, async ({
+    page,
+  }) => {
+    test.setTimeout(120_000);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    if (table === 'flat') await useFlatTable(page);
+    await openSolo(page);
+    const own = coin(page, 'local');
+    const seat = await own.getAttribute('data-coin-player-id');
+    const chip = page.locator(
+      `[data-coin-result-chip][data-coin-player-id="${seat}"]`
+    );
+    const menu = page.locator('[data-coin-menu="local"]');
+    const log = () => page.locator('#activitySheet');
+
+    // A right-click opens its menu; that alone flips nothing.
+    await own.locator('#flipCoinButton').click({ button: 'right' });
+    await expect(menu).toBeVisible();
+    await expect(own).toHaveAttribute('data-coin-phase', 'resting');
+    await expect(menu.locator('[data-coin-series]')).toHaveText([
+      /^Flip a coin/u,
+      'Flip 2 coins',
+      'Flip 3 coins',
+      'Flip 4 coins',
+      'Flip until tails',
+    ]);
+    await menu.locator('[data-coin-series="3"]').click();
+    await expect(menu).toHaveCount(0);
+    await expect(chip).toBeVisible({ timeout: 10_000 });
+    await expect(chip).toHaveText(/^[0-3] of 3 heads$/u);
+    const heads = Number((await chip.textContent())!.split(' ')[0]);
+    await expect(chip).toHaveCount(0, { timeout: 8_000 });
+    await openActivity(page);
+    // One line, each face in order, and the heads it counted.
+    const three = log().getByText(
+      /flipped 3 coins: (heads|tails), (heads|tails), (heads|tails) \((\d) heads\)$/u
+    );
+    await expect(three).toHaveCount(1);
+    const faces = (await three.textContent())!.match(/heads|tails/gu)!;
+    expect(faces.slice(0, 3).filter((face) => face === 'heads')).toHaveLength(
+      heads
+    );
+    await closeActivity(page);
+
+    // The menu key opens it from the keyboard.
+    await own.locator('#flipCoinButton').focus();
+    await page.keyboard.press('Shift+F10');
+    await expect(menu).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(menu).toHaveCount(0);
+
+    // The palette: "flip 4 coins", then until tails.
+    await page.mouse.move(5, 5);
+    await page.keyboard.press('Backquote');
+    await page.keyboard.type('flip 4 coins');
+    await expect(
+      page.locator(
+        '[data-command-palette] [role="option"][aria-selected="true"]'
+      )
+    ).toContainText('Flip 4 coins');
+    await page.keyboard.press('Enter');
+    await expect(chip).toHaveText(/^[0-4] of 4 heads$/u, { timeout: 10_000 });
+    await expect(chip).toHaveCount(0, { timeout: 8_000 });
+    await page.keyboard.press('Backquote');
+    await page.keyboard.type('flip until tails');
+    await expect(
+      page.locator(
+        '[data-command-palette] [role="option"][aria-selected="true"]'
+      )
+    ).toContainText('Flip until tails');
+    await page.keyboard.press('Enter');
+    await expect(chip).toHaveText(
+      /^(Tails first|\d+ heads, then tails|\d+ heads, no tails)$/u,
+      { timeout: 10_000 }
+    );
+    await openActivity(page);
+    await expect(
+      log().getByText(/flipped until tails: .*\(\d+ heads\)$/u)
+    ).toHaveCount(1);
+    await expect(log().getByText(/flipped 4 coins: /u)).toHaveCount(1);
+  });
+
+test('a long press on a phone opens the coin’s menu, and flips nothing by itself', async ({
+  browser,
+}) => {
+  test.setTimeout(90_000);
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    hasTouch: true,
+    isMobile: true,
+  });
+  const page = await context.newPage();
+  await openSolo(page);
+  const own = coin(page, 'local');
+  const box = (await own.boundingBox())!;
+  const at = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  const cdp = await context.newCDPSession(page);
+  await cdp.send('Input.dispatchTouchEvent', {
+    type: 'touchStart',
+    touchPoints: [at],
+  });
+  await page.waitForTimeout(700);
+  await cdp.send('Input.dispatchTouchEvent', {
+    type: 'touchEnd',
+    touchPoints: [],
+  });
+  const menu = page.locator('[data-coin-menu="local"]');
+  await expect(menu).toBeVisible();
+  // The finger lifting is no tap on the coin.
+  await page.waitForTimeout(600);
+  await expect(own).toHaveAttribute('data-coin-phase', 'resting');
+  await menu.locator('[data-coin-series="2"]').tap();
+  await expect(
+    page.locator(
+      `[data-coin-result-chip][data-coin-player-id="${await own.getAttribute('data-coin-player-id')}"]`
+    )
+  ).toHaveText(/^[0-2] of 2 heads$/u, { timeout: 10_000 });
+  await context.close();
 });
 
 test('a phone keeps both coins on the table and a tap flips', async ({
