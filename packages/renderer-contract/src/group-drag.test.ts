@@ -325,6 +325,16 @@ describe('a group put into a row', () => {
       .map((item) => item.id);
     expect(loose).toHaveLength(2);
     expect(groupArrivalWidth(joined, [hand[0]!.id, ...loose], bench)).toBe(3);
+    // Two players' halves make a Pokémon each (a Solo table's two seats).
+    const mixed: BoardScene = {
+      ...joined,
+      cards: joined.cards.map((item) =>
+        item.id === hand[1]!.id
+          ? { ...item, ownerId: 'other-seat' as typeof item.ownerId }
+          : item
+      ),
+    };
+    expect(groupArrivalWidth(mixed, [hand[0]!.id, hand[1]!.id], bench)).toBe(2);
   });
 });
 

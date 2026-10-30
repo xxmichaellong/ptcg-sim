@@ -696,6 +696,7 @@ const compileOntoPokemon = (
   const target = view.stacks[stackId]!;
   const pieces = target.evolutionCards.map((card) => cardPieceOf(view, card));
   const targetPiece = pieces.at(-1) ?? null;
+  const targetOwner = target.evolutionCards.at(-1)?.ownerId;
   const parts = new Set<number>();
   for (const piece of pieces) if (piece) parts.add(piece.part);
   for (const item of items) {
@@ -703,9 +704,11 @@ const compileOntoPokemon = (
     const card = locateViewCardActionSource(view, item)?.card;
     if (!card) return refuse('stale_card', item);
     const piece = cardPieceOf(view, card);
+    // Its own missing piece: of the same print and owner.
     const joins =
       piece !== null &&
       targetPiece !== null &&
+      card.ownerId === targetOwner &&
       piece.key === targetPiece.key &&
       piece.columns === targetPiece.columns &&
       piece.rows === targetPiece.rows &&

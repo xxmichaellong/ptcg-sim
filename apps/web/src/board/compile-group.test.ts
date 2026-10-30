@@ -11,6 +11,7 @@ import { compileGroup, type GroupAction } from './compile-group.js';
 import { BLUE, RED, groupTable, piece } from './group-table.test-support.js';
 import { predictCardSteps, predictWireCommand } from './predictWireCommand.js';
 import { resolveBoardDrop } from './resolveBoardDrop.js';
+import { resolveCardStadiumMoveAction } from './resolveCardStadiumMoveAction.js';
 import { resolveLegacyBoardShortcutAction } from './resolveLegacyBoardShortcutAction.js';
 import type { SelectionContext } from './selection.js';
 
@@ -614,6 +615,45 @@ describe('cards printed in pieces', () => {
       halves[1],
       halves[0],
     ]);
+  });
+
+  it("joins a piece only to its own player's: a Stadium half, a Pokémon's missing piece", () => {
+    const table = groupTable();
+    const [inPlay] = table.put(null, 'stadium', stadiumHalf(0));
+    const [ownHalf] = table.put(BLUE, 'hand', stadiumHalf(1));
+    const [theirHalf] = table.put(RED, 'hand', stadiumHalf(1));
+    expect(inPlay).toBeDefined();
+    const own = resolveCardStadiumMoveAction(table.view, ownHalf!);
+    expect(own.ok && own.command).toMatchObject({ placement: 'add' });
+    // The other player's half is a Stadium of theirs: it takes the place.
+    const theirs = resolveCardStadiumMoveAction(
+      table.view,
+      theirHalf!,
+      undefined,
+      RED
+    );
+    expect(theirs.ok && 'placement' in theirs.command).toBe(false);
+
+    const legends = groupTable();
+    const lugia = legends.pokemon(BLUE, 'bench', [legend(0)]);
+    const [theirBottom] = legends.put(RED, 'hand', legend(1));
+    const [fire] = legends.put(BLUE, 'hand', energy);
+    const context = legends.context({ controlsEverySeat: true });
+    // The other player's bottom half is no missing piece of Blue's Lugia.
+    expect(
+      compileGroup(context, [theirBottom!, fire!], {
+        kind: 'drop',
+        targetId: lugia.stackId,
+      })
+    ).toMatchObject({ ok: false, reason: 'attachments_only' });
+    const [ownBottom] = legends.put(BLUE, 'hand', legend(1));
+    expect(
+      compileGroup(
+        legends.context({ controlsEverySeat: true }),
+        [ownBottom!, fire!],
+        { kind: 'drop', targetId: lugia.stackId }
+      ).ok
+    ).toBe(true);
   });
 
   it('takes one card, or one Stadium, into the Stadium', () => {

@@ -66,7 +66,9 @@ export const resolveCardStadiumMoveAction = (
       stadium.cards.length > 0 &&
       stadium.cards.every((card) => {
         const other = joinOf(card);
+        // A Stadium is one player's card: another's half replaces it.
         return (
+          card.ownerId === located.card.ownerId &&
           other?.key === join.key &&
           other.columns === join.columns &&
           other.rows === join.rows &&

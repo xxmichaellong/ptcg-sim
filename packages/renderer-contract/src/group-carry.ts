@@ -193,7 +193,8 @@ export const fannedHoldOf = (
  * hand, the loose board or the Prizes, one for each card that arrives (a
  * whole Pokémon's cards each have their own); on the Bench, one for each
  * Pokémon it makes -- a card printed in pieces makes one Pokémon of one of
- * each piece, so two copies of a LEGEND's halves make two.
+ * each piece of one owner's, so two copies of a LEGEND's halves make two,
+ * as do two players' halves.
  */
 export const groupArrivalWidth = (
   scene: BoardScene,
@@ -206,14 +207,17 @@ export const groupArrivalWidth = (
   let loose = 0;
   const pieces = new Map<string, number[]>();
   for (const itemId of groupCardIds) {
-    const join = sceneCard(scene, itemId)?.presentation?.join;
-    if (!join) {
+    const card = sceneCard(scene, itemId);
+    const join = card?.presentation?.join;
+    if (!card || !join) {
       loose += 1;
       continue;
     }
-    const parts = pieces.get(join.key) ?? [0, 0, 0, 0];
+    // One owner's pieces of one print join (as `partitionPieceSets`).
+    const key = `${card.ownerId}\u0000${join.key}\u0000${join.columns}x${join.rows}`;
+    const parts = pieces.get(key) ?? [0, 0, 0, 0];
     parts[join.part] = (parts[join.part] ?? 0) + 1;
-    pieces.set(join.key, parts);
+    pieces.set(key, parts);
   }
   let made = loose;
   for (const parts of pieces.values()) made += Math.max(...parts);
