@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 
+import { ownRoomBudget } from './support/room-budget.js';
 import { chooseMoreAction, openDeck } from './support/table-shell.js';
 
 /**
@@ -34,6 +35,7 @@ const selectedRow = (page: Page) =>
 
 const openSoloTable = async (page: Page, setUp = true): Promise<void> => {
   await page.setViewportSize({ width: 1440, height: 900 });
+  await ownRoomBudget(page.context());
   await page.goto('/');
   await expect(page.locator('[data-app-route="remote-room"]')).toBeVisible({
     timeout: 30_000,
@@ -246,6 +248,7 @@ test.describe('on a phone', () => {
   test('the app bar’s Commands opens it across the width', async ({ page }) => {
     test.setTimeout(120_000);
     await page.setViewportSize({ width: 390, height: 844 });
+    await ownRoomBudget(page.context());
     await page.goto('/');
     await expect(page.locator('[data-app-route="remote-room"]')).toBeVisible({
       timeout: 30_000,

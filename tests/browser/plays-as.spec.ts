@@ -10,6 +10,7 @@ import {
   nextRevision,
   revision,
   zoneCardIds,
+  zoneCount,
 } from './support/multi-select.js';
 import { ownRoomBudget } from './support/room-budget.js';
 import { dismissWelcome, openDeck } from './support/table-shell.js';
@@ -157,13 +158,15 @@ test('a Fossil goes on the Bench as a Pokémon, and a Holon’s Pokémon onto a 
   ).toBeAttached();
   await idle(page);
 
-  // The whole deck into the hand.
+  // The whole deck into the hand, once the deck is on the table (its load
+  // is a move of its own, which a revision taken before it would catch).
+  await expect.poll(() => zoneCount(page, 'local', 'deck')).toBe(5);
   await page.locator('.ptcgsim-board-surface').focus();
-  const before = await revision(page);
   await page.keyboard.press('5');
-  await nextRevision(page, before);
+  await expect
+    .poll(() => zoneCardIds(page, 'local', 'hand').then((ids) => ids.length))
+    .toBe(5);
   await idle(page);
-  expect(await zoneCardIds(page, 'local', 'hand')).toHaveLength(5);
 
   const active = await page.evaluate(
     () =>

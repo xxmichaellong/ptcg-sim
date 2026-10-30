@@ -236,7 +236,7 @@ for (const table of ['tilted', 'flat'] as const)
     await openActivity(page);
     // One line, each face in order, and the heads it counted.
     const three = log().getByText(
-      /flipped 3 coins: (heads|tails), (heads|tails), (heads|tails) \((\d) heads\)$/u
+      /flipped 3 coins: (heads|tails), (heads|tails), (heads|tails) \((\d) heads?\)$/u
     );
     await expect(three).toHaveCount(1);
     const faces = (await three.textContent())!.match(/heads|tails/gu)!;
@@ -278,7 +278,7 @@ for (const table of ['tilted', 'flat'] as const)
     );
     await openActivity(page);
     await expect(
-      log().getByText(/flipped until tails: .*\(\d+ heads\)$/u)
+      log().getByText(/flipped until tails: .*\(\d+ heads?\)$/u)
     ).toHaveCount(1);
     await expect(log().getByText(/flipped 4 coins: /u)).toHaveCount(1);
   });
