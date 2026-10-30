@@ -194,10 +194,10 @@ export interface BoardSessionControllerState {
    */
   readonly selectionRestore?: SelectionRestore | null;
   /**
-   * Cards a reveal, hide or turn of face this client sent: the room may
-   * renew their aliases where they lie, and only these does the selection
-   * follow to a new alias (`followRenamedCards`). Let go of once nothing
-   * is waiting on the room.
+   * Cards a reveal, hide, turn of face or private look this client sent:
+   * the room may renew their aliases where they lie, and only these does
+   * the selection follow to a new alias (`followRenamedCards`). Let go of
+   * once nothing is waiting on the room.
    */
   readonly aliasRenewals?: readonly ViewCardId[];
 }
@@ -862,10 +862,11 @@ const followRenamedCards = (
       if (
         !renewals.includes(card.id) ||
         now.has(card.id) ||
-        before.has(next.id) ||
-        card.kind !== next.kind
+        before.has(next.id)
       )
         return;
+      // A face-down Prize revealed is known only now, and hidden again is
+      // known no longer: its printing is compared when both are known.
       if (
         card.kind === 'known' &&
         next.kind === 'known' &&
@@ -3123,23 +3124,37 @@ const dismissPresentation = (
 };
 
 /**
- * The cards a command sent changes the visibility of: a reveal, a hide or
- * a turn of face, alone or among a group's steps.
+ * The cards a command sent changes the visibility of where they lie (the
+ * room renews their aliases): a reveal, a hide, a turn of face, a private
+ * look begun or ended, alone or among a group's steps.
  */
 const visibilityChangedBy = (
-  effects: readonly BoardSessionControllerEffect[]
+  effects: readonly BoardSessionControllerEffect[],
+  view: MatchViewState | undefined
 ): readonly ViewCardId[] =>
   effects.flatMap((effect) => {
     if (effect.kind !== 'SubmitCommand') return [];
     const { command } = effect;
     const steps = command.type === 'ApplyCardSteps' ? command.steps : [command];
-    return steps.flatMap((step): ViewCardId[] =>
-      step.type === 'SetPublicReveal' || step.type === 'SetCardFace'
-        ? [step.cardId as ViewCardId]
-        : step.type === 'SetZonePublicReveal'
-          ? step.expectedCardIds.map((cardId) => cardId as ViewCardId)
-          : []
-    );
+    return steps.flatMap((step): ViewCardId[] => {
+      switch (step.type) {
+        case 'SetPublicReveal':
+        case 'SetCardFace':
+        case 'BeginCardInspection':
+          return [step.cardId as ViewCardId];
+        case 'SetZonePublicReveal':
+        case 'BeginZoneInspection':
+          return step.expectedCardIds.map((cardId) => cardId as ViewCardId);
+        case 'EndPrivateInspection':
+          return (
+            view?.privateInspections.find(
+              (inspection) => inspection.id === step.inspectionId
+            )?.cardIds ?? []
+          ).slice();
+        default:
+          return [];
+      }
+    });
   });
 
 export const reduceBoardSessionController = (
@@ -3148,7 +3163,10 @@ export const reduceBoardSessionController = (
   dependencies: BoardSessionControllerDependencies
 ): BoardSessionControllerReduction => {
   const reduction = reduceAction(state, action, dependencies);
-  const changed = visibilityChangedBy(reduction.effects);
+  const changed = visibilityChangedBy(
+    reduction.effects,
+    reduction.state.view ?? state.view
+  );
   return changed.length === 0
     ? reduction
     : {

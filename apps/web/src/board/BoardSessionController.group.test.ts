@@ -498,6 +498,83 @@ describe('a selection of several cards (ADR-042)', () => {
     expect(board.selection).toEqual(renamed);
   });
 
+  it('keeps face-down Prizes it revealed selected, known now under new aliases', () => {
+    const table = groupTable();
+    const prizes = table.put(
+      BLUE,
+      'prizes',
+      { concealed: true },
+      { concealed: true },
+      { concealed: true }
+    );
+    const prizeZone = table.view.zones[table.zoneId(BLUE, 'prizes')]!;
+    const board = driver(table.view);
+    board.intent({
+      kind: 'CardsSelected',
+      cardIds: prizes.slice(0, 2),
+      mode: 'replace',
+    });
+    board.act({
+      kind: 'GroupActionRequested',
+      action: { kind: 'reveal', revealed: true },
+    });
+    expect(board.submitted()).toHaveLength(1);
+    const [known] = table.put(BLUE, 'hand', energy);
+    const shown = table.view.zones[table.zoneId(BLUE, 'hand')]!.cards.find(
+      (card) => card.id === known
+    )!;
+    const renamed = ['shown-0', 'shown-1'] as ViewCardId[];
+    const revealed = {
+      ...table.view,
+      revision: table.view.revision + 1,
+      zones: {
+        ...table.view.zones,
+        [prizeZone.id]: {
+          ...prizeZone,
+          cards: prizeZone.cards.map((card, index) =>
+            index < 2
+              ? { ...shown, id: renamed[index]!, publiclyRevealed: true }
+              : card
+          ),
+        },
+      },
+    };
+    board.act({ kind: 'FrameReceived', frame: frame(2, revealed) });
+    expect(board.selection).toEqual(renamed);
+  });
+
+  it('keeps a face-down Prize selected through a private look at it', () => {
+    const table = groupTable();
+    const [prize] = table.put(BLUE, 'prizes', { concealed: true });
+    const prizeZone = table.view.zones[table.zoneId(BLUE, 'prizes')]!;
+    const board = driver(table.view);
+    board.intent({ kind: 'CardSelected', cardId: prize!, mode: 'replace' });
+    board.act({
+      kind: 'LegacyShortcutActionRequested',
+      request: { action: 'togglePrivateInspection', cardId: prize! },
+    });
+    expect(board.submitted()).toEqual([
+      expect.objectContaining({ type: 'BeginCardInspection' }),
+    ]);
+    const [known] = table.put(BLUE, 'hand', energy);
+    const shown = table.view.zones[table.zoneId(BLUE, 'hand')]!.cards.find(
+      (card) => card.id === known
+    )!;
+    const looked = {
+      ...table.view,
+      revision: table.view.revision + 1,
+      zones: {
+        ...table.view.zones,
+        [prizeZone.id]: {
+          ...prizeZone,
+          cards: [{ ...shown, id: 'looked-at' as ViewCardId }],
+        },
+      },
+    };
+    board.act({ kind: 'FrameReceived', frame: frame(2, looked) });
+    expect(board.selection).toEqual(['looked-at']);
+  });
+
   it("never takes a copy someone else put in a selected card's place for it", () => {
     const table = groupTable();
     const hand = table.put(BLUE, 'hand', energy, energy, energy);
