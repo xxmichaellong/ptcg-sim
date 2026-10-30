@@ -7,6 +7,7 @@ import type { MatchViewState, PlayerId } from '@ptcgsim/game-core';
 import {
   APP_BAR_INSET_PX,
   TABLE_CONTROL_CORNER_HEIGHT_PX,
+  tablePoseMatrix,
 } from '@ptcgsim/renderer-contract';
 import type {
   BoardLayoutSnapshot,
@@ -683,45 +684,12 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
   if (!lower || !upper) throw new Error('Board chrome requires both handles');
   // The play-mat table is split from Settings, not dragged.
   const showResizers = layout.geometryVersion !== 2;
-  const logicalAnchor = layout.shared.boardControlsAnchor;
-  const activeZones = depth?.scene.zones
-    .filter((zone) => zone.kind === 'active')
-    .sort((a, b) => a.bounds.y - b.bounds.y);
-  let anchor = logicalAnchor;
-  if (depth && activeZones?.length === 2) {
-    // Tilted, the seam narrows; the rail follows it on screen.
-    const upper = activeZones[0]!.bounds;
-    const lower = activeZones[1]!.bounds;
-    const gapTop = depth.point({
-      x: upper.x + upper.width / 2,
-      y: upper.y + upper.height,
-    }).y;
-    const gapBottom = depth.point({
-      x: lower.x + lower.width / 2,
-      y: lower.y,
-    }).y;
-    const height = Math.max(
-      24,
-      Math.min(logicalAnchor.height, gapBottom - gapTop - 4)
-    );
-    anchor = { ...logicalAnchor, height, y: (gapTop + gapBottom - height) / 2 };
-  } else if (depth && activeZones?.length === 1) {
-    // One half alone: the rail keeps the layout's gap from that Active's
-    // edge toward the seam, as the projection draws it.
-    const active = activeZones[0]!.bounds;
-    const atTop = logicalAnchor.y < active.y;
-    const edge = depth.point({
-      x: active.x + active.width / 2,
-      y: atTop ? active.y : active.y + active.height,
-    }).y;
-    const gap = atTop
-      ? active.y - (logicalAnchor.y + logicalAnchor.height)
-      : logicalAnchor.y - (active.y + active.height);
-    anchor = {
-      ...logicalAnchor,
-      y: atTop ? edge - gap - logicalAnchor.height : edge + gap,
-    };
-  }
+  // The game's actions are printed into the mat at the seam, in its ink
+  // (ADR-036 §3, the owner's choice of 2026-10-30): placed on the table as
+  // the layout lays it out, then, tilted, laid on the table's plane with
+  // the mat, as the coin is (TableCoin's placement). So every measure here
+  // is the table's own, before the projection.
+  const anchor = layout.shared.boardControlsAnchor;
   // The mat as the table draws it (renderer-dom's tableMatBounds): around
   // all that is laid on it, the hands aside. With one half shown the rail's
   // row can lie past its edge, over the desk.
@@ -737,47 +705,18 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
       layout.shared.stadium.physicalDeclaredBounds,
     ].filter((rect) => rect.width > 0 && rect.height > 0);
     if (spots.length === 0) return false;
-    const onScreen = (y: number): number =>
-      depth ? depth.point({ x: layout.playAreaBounds.width / 2, y }).y : y;
-    const top = onScreen(
-      Math.max(0, Math.min(...spots.map((rect) => rect.y)) - MAT_MARGIN_PX)
+    const top = Math.max(
+      0,
+      Math.min(...spots.map((rect) => rect.y)) - MAT_MARGIN_PX
     );
-    const bottom = onScreen(
-      Math.min(
-        layout.viewport.height,
-        Math.max(...spots.map((rect) => rect.y + rect.height)) + MAT_MARGIN_PX
-      )
+    const bottom = Math.min(
+      layout.viewport.height,
+      Math.max(...spots.map((rect) => rect.y + rect.height)) + MAT_MARGIN_PX
     );
     const middle = anchor.y + anchor.height / 2;
     return middle < top || middle > bottom;
   })();
-  // Where the seam's things lie on screen: tilted, the table narrows, so
-  // the Stadium and the piles at the seam's right end are found through
-  // the same projection the cards take.
-  const seamY = anchor.y + anchor.height / 2;
-  const screenX = (x: number): number =>
-    depth ? depth.point({ x, y: seamY }).x : x;
-  const logicalStadium = layout.shared.stadium.physicalDeclaredBounds;
-  // Its height too, as the rail's own row is placed on screen: one half
-  // shown, the Stadium lies in the Active's row, which the projection moves.
-  const stadium = depth
-    ? (() => {
-        const left = screenX(logicalStadium.x);
-        const right = screenX(logicalStadium.x + logicalStadium.width);
-        const middle = logicalStadium.x + logicalStadium.width / 2;
-        const top = depth.point({ x: middle, y: logicalStadium.y }).y;
-        const bottom = depth.point({
-          x: middle,
-          y: logicalStadium.y + logicalStadium.height,
-        }).y;
-        return {
-          x: Math.min(left, right),
-          y: Math.min(top, bottom),
-          width: Math.abs(right - left),
-          height: Math.abs(bottom - top),
-        };
-      })()
-    : logicalStadium;
+  const stadium = layout.shared.stadium.physicalDeclaredBounds;
   // The actions at the seam's right end stop short of the near piles there
   // (their stacks rise toward the seam), or of the mat's edge.
   const bottomFrame = layout.players.find(
@@ -789,34 +728,46 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
         (region.kind === 'deck' ||
           region.kind === 'discard' ||
           region.kind === 'lostZone') &&
-        region.physicalDeclaredBounds.x >
-          logicalStadium.x + logicalStadium.width &&
+        region.physicalDeclaredBounds.x > stadium.x + stadium.width &&
         region.physicalDeclaredBounds.y <
-          logicalAnchor.y + logicalAnchor.height + SEAM_PILE_REACH_PX
+          anchor.y + anchor.height + SEAM_PILE_REACH_PX
     )
-    .map((region) => screenX(region.physicalDeclaredBounds.x));
+    .map((region) => region.physicalDeclaredBounds.x);
   const railEnd = Math.min(
-    screenX(layout.playAreaBounds.width) - RAIL_EDGE_PX,
+    layout.playAreaBounds.width - RAIL_EDGE_PX,
     ...seamPiles.map((x) => x - RAIL_EDGE_PX)
   );
   // On a small table the near half's `+` for the optional pieces reaches
   // into the seam before the Stadium: actions placed there start past it.
   const extras = bottomFrame?.extras?.control;
-  const extrasTop = extras && depth ? depth.point(extras).y : extras?.y;
-  const extrasBottom =
-    extras && depth
-      ? depth.point({ x: extras.x, y: extras.y + extras.height }).y
-      : extras && extras.y + extras.height;
   const railStart =
     extras &&
-    extrasTop !== undefined &&
-    extrasBottom !== undefined &&
-    extrasTop < anchor.y + anchor.height &&
-    extrasBottom > anchor.y &&
-    screenX(extras.x) < stadium.x
-      ? Math.max(screenX(extras.x + extras.width), screenX(extras.x)) +
-        RAIL_EDGE_PX
+    extras.y < anchor.y + anchor.height &&
+    extras.y + extras.height > anchor.y &&
+    extras.x < stadium.x
+      ? extras.x + extras.width + RAIL_EDGE_PX
       : undefined;
+  // The table's plane: flat, the chrome itself; tilted, the mat's pose.
+  const tableSize = {
+    x: 0,
+    y: 0,
+    width: layout.playAreaBounds.width,
+    height: layout.viewport.height,
+  };
+  const railPlane: CSSProperties = depth?.enabled
+    ? {
+        width: tableSize.width,
+        height: tableSize.height,
+        transformOrigin: '0 0',
+        transform: `matrix3d(${tablePoseMatrix(depth.camera, {
+          bounds: tableSize,
+          turns: 0,
+          elevation: 0,
+          thickness: 0,
+          plane: 1,
+        }).join(',')})`,
+      }
+    : { inset: 0 };
 
   return (
     <div
@@ -895,22 +846,28 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
       )}
       {rail?.bar ? <AppBarSlot layout={layout}>{rail.bar}</AppBarSlot> : null}
       {rail ? (
-        <TableRail
-          anchor={anchor}
-          width={layout.playAreaBounds.width}
-          avoid={stadium}
-          end={railEnd}
-          {...(railStart === undefined ? {} : { start: railStart })}
-          {...(rail.coinOnTable ? { coinOnTable: true } : {})}
-          {...(rail.canSwitchSide === false ? { canSwitchSide: false } : {})}
-          {...(rail.holdSide ? { holdSide: true } : {})}
-          actions={rail.actions}
-          {...(rail.more ? { more: rail.more } : {})}
-          covered={coveredByPopup}
-          {...(railTaken ? { taken: railTaken } : {})}
-          {...(rail.seat ? { seat: rail.seat } : {})}
-          {...(railOverDesk ? { overDesk: true } : {})}
-        />
+        <div
+          className="ptcgsim-table-rail-plane"
+          data-tilted={depth?.enabled ? 'true' : undefined}
+          style={railPlane}
+        >
+          <TableRail
+            anchor={anchor}
+            width={layout.playAreaBounds.width}
+            avoid={stadium}
+            end={railEnd}
+            {...(railStart === undefined ? {} : { start: railStart })}
+            {...(rail.coinOnTable ? { coinOnTable: true } : {})}
+            {...(rail.canSwitchSide === false ? { canSwitchSide: false } : {})}
+            {...(rail.holdSide ? { holdSide: true } : {})}
+            actions={rail.actions}
+            {...(rail.more ? { more: rail.more } : {})}
+            covered={coveredByPopup}
+            {...(railTaken ? { taken: railTaken } : {})}
+            {...(rail.seat ? { seat: rail.seat } : {})}
+            {...(railOverDesk ? { overDesk: true } : {})}
+          />
+        </div>
       ) : null}
     </div>
   );

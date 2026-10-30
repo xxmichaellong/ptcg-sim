@@ -83,7 +83,15 @@ const railWith = async (
     )
   );
   const bar = host.querySelector<HTMLElement>('#boardButtonContainer')!;
+  const plane = host.querySelector<HTMLElement>('.ptcgsim-table-rail-plane')!;
+  const railNode = host.querySelector<HTMLElement>('[data-table-rail]')!;
   const rail = {
+    plane: {
+      tilted: plane.dataset['tilted'] === 'true',
+      transform: plane.style.transform,
+    },
+    top: Number.parseFloat(railNode.style.top),
+    seamTop: layout.shared.boardControlsAnchor.y,
     overDesk:
       host
         .querySelector('[data-table-rail]')
@@ -97,6 +105,18 @@ const railWith = async (
   host.remove();
   return rail;
 };
+
+describe('the rail printed into the mat', () => {
+  it("lies where the layout puts the seam, on the mat's plane when tilted", async () => {
+    for (const tilted of [false, true]) {
+      const rail = await railWith(1440, 900, 'upper', tilted);
+      expect(rail.top).toBeCloseTo(rail.seamTop, 3);
+      expect(rail.plane.tilted).toBe(tilted);
+      if (tilted) expect(rail.plane.transform).toMatch(/^matrix3d\(/u);
+      else expect(rail.plane.transform).toBe('');
+    }
+  });
+});
 
 describe('the rail with one half shown on the tilted table', () => {
   it('keeps its actions as on the flat table, the Stadium in the Active row not in its way', async () => {

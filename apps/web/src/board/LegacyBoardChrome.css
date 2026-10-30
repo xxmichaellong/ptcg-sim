@@ -206,3 +206,14 @@
 .ptcgsim-legacy-board-chrome .legacy-hand-sort span {
   display: inline-block;
 }
+
+/* The table's plane the rail is printed on (LegacyBoardChrome): the chrome
+   itself on a flat table; the mat's pose on a tilted one, which carries the
+   rail's layer with it. */
+.ptcgsim-table-rail-plane {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: var(--table-layer-rail);
+  pointer-events: none;
+}

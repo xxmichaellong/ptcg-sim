@@ -2,7 +2,8 @@
 
 - Status: **ACCEPTED**
 - Decision date: 2026-10-22; amended 2026-10-29 (one menu: Settings moved
-  from the bar into ☰, §1)
+  from the bar into ☰, §1) and 2026-10-30 (the actions printed into the mat,
+  §3)
 - Scope: where the app's controls (deck, play online, palette, log, menu)
   and the turn's game actions sit around the table
 - Supersedes: ADR-030 §2 (the rail's ends) and §3 (the toolbar on the rail)
@@ -128,8 +129,24 @@ tilted table, its Stadium near the seam's left end): then past it, so the
 rail never sits on the Stadium for want of room. The side is the window's, never the stage's: the actions stay
 put from set-up through play and a reconnect. While the log slides in or
 out they cross the Stadium at most once, where more of them show there, and
-choose again once it is there. Tilted, the Stadium and piles are found
-on screen through the table's projection.
+choose again once it is there.
+
+**Printed into the mat** (2026-10-30, the owner's choice among three
+prototypes: "let's do c everywhere"). The actions are part of the playmat's
+print, in its ink, like the zone outlines and the ring under each Active:
+debossed rounded squares with the icon struck in, no glass and no shadow
+over the felt (`TableRail.css`). Every look inks them in its own tokens by
+Night and by Day (`table-art.css`); the stage's main action is printed in the
+accent, an acting seat's in its colour, and a row that lies past the mat's
+edge is struck into the desk in its ink. The rail is placed in the table's
+own coordinates, as the layout lays the seam out; tilted, it lies on the
+table's plane with the mat (`LegacyBoardChrome`'s rail plane, the coin's
+`tablePoseMatrix`), so it narrows with the seam rather than floating over
+it. Its tooltips and More menu stay upright, in the overlay layer. The
+alternatives (a chess-clock piece or a tray of studs in the bottom-right
+corner, on tables at least 560px tall) cost the hand about a quarter of its
+width on a desktop and were declined; the app bar's buttons keep the
+control look.
 
 ### 4. Every zone's hover name is centred
 
