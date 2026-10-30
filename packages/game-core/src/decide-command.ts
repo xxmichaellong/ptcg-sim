@@ -1,7 +1,7 @@
+import { MAX_COIN_FLIP_COUNT, MAX_UNTIL_TAILS_FLIPS } from './coin-flips.js';
+import { isStackReminder } from './stack-reminders.js';
 import {
   CARD_STEP_TYPES,
-  MAX_COIN_FLIP_COUNT,
-  MAX_UNTIL_TAILS_FLIPS,
   type ApplyCardStepsCommand,
   type BaseGameCommand,
   type CardStep,
@@ -40,11 +40,7 @@ import {
   analyzePlayerReset,
   resetReturnCapacityIsValid,
 } from './lifecycle-reset.js';
-import {
-  isStackReminder,
-  MAX_DECK_CARDS,
-  MAX_IMAGE_URL_CODE_UNITS,
-} from './model.js';
+import { MAX_DECK_CARDS, MAX_IMAGE_URL_CODE_UNITS } from './model.js';
 import type {
   CardDefinition,
   CardInstance,

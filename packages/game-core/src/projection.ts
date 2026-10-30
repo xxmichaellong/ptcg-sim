@@ -1,3 +1,4 @@
+import type { StackReminder } from './stack-reminders.js';
 import type {
   CardDefinitionId,
   CardInstanceId,
@@ -13,7 +14,6 @@ import type {
   CardInstance,
   MatchState,
   QuarterTurns,
-  StackReminder,
 } from './model.js';
 
 export type ViewerRole =
@@ -70,7 +70,7 @@ export interface ViewCardDefinition {
   readonly imageUrl: string;
   readonly imageUrlSmall?: string;
   readonly presentation?: import('./card-presentation.js').CardPresentation;
-  readonly playsAs?: import('./model.js').CardPlaysAs;
+  readonly playsAs?: import('./card-plays-as.js').CardPlaysAs;
 }
 
 export interface MatchViewState {

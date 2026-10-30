@@ -1,10 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import {
-  MAX_COIN_FLIP_COUNT,
-  MAX_UNTIL_TAILS_FLIPS,
-  type CommandContext,
-} from './commands.js';
+import { MAX_COIN_FLIP_COUNT, MAX_UNTIL_TAILS_FLIPS } from './coin-flips.js';
+import type { CommandContext } from './commands.js';
 import { createEmptyMatch } from './create-match.js';
 import { executeCommand } from './execute-command.js';
 import {

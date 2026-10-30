@@ -1,3 +1,4 @@
+import { STACK_REMINDERS, type StackReminder } from './stack-reminders.js';
 import { isCardBackValue } from './card-back.js';
 import { playerZoneId } from './create-match.js';
 import { cloneMatchState } from './clone.js';
@@ -34,9 +35,7 @@ import type {
   MatchState,
   PlaySlot,
   PlayStack,
-  StackReminder,
 } from './model.js';
-import { STACK_REMINDERS } from './model.js';
 import {
   cardSourceSnapshot,
   publicVisibilityFace,

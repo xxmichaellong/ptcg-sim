@@ -1,3 +1,5 @@
+import type { CardPlaysAs } from './card-plays-as.js';
+import type { StackReminder } from './stack-reminders.js';
 import type {
   CardDefinitionId,
   CardInstanceId,
@@ -25,27 +27,6 @@ export type CardFace = 'up' | 'down';
 export type QuarterTurns = 0 | 1 | 2 | 3;
 export type SpecialCondition = string;
 
-/**
- * A reminder a player puts on a Pokémon for an effect that lasts (an
- * attack's "can't attack during your next turn", "takes 30 less damage"):
- * the table only shows it -- nothing reads it, as ADR-001 keeps the table
- * manual -- and players take it off when the effect ends. It also comes off
- * as a Special Condition does: when the Pokémon evolves, goes from the
- * Active Spot to the Bench, or leaves play.
- */
-export const STACK_REMINDERS = [
-  'cantAttack',
-  'cantRetreat',
-  'takesLess',
-  'hitsHarder',
-  'noAbilities',
-] as const;
-export type StackReminder = (typeof STACK_REMINDERS)[number];
-
-export const isStackReminder = (value: unknown): value is StackReminder =>
-  typeof value === 'string' &&
-  (STACK_REMINDERS as readonly string[]).includes(value);
-
 export interface CardDefinition {
   readonly id: CardDefinitionId;
   readonly name: string;
@@ -60,14 +41,6 @@ export interface CardDefinition {
    */
   readonly playsAs?: CardPlaysAs;
 }
-
-/** What a card may be played as besides its own kind. */
-export type CardPlaysAs = 'Pokémon' | 'Energy';
-
-export const CARD_PLAYS_AS: readonly CardPlaysAs[] = Object.freeze([
-  'Pokémon',
-  'Energy',
-]);
 
 export interface CardInstance {
   readonly id: CardInstanceId;

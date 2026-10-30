@@ -1,3 +1,4 @@
+import type { StackReminder } from './stack-reminders.js';
 import type {
   CardInstanceId,
   InspectionId,
@@ -13,7 +14,6 @@ import type {
   PlaySlot,
   QuarterTurns,
   SpecialCondition,
-  StackReminder,
   MatchState,
 } from './model.js';
 import type {
