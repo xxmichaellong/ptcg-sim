@@ -31,6 +31,7 @@ const tournament = {
   date: '2026-10-21T19:00:00.000Z',
   players: 67,
   format: 'STANDARD',
+  kind: 'online',
 };
 const finish = {
   tournament,
@@ -60,6 +61,45 @@ describe('tournament deck search', () => {
     const [url, init] = fetch.mock.calls[0]!;
     expect(url).toBe('/v2/decks/search?q=Dragapult&format=STANDARD');
     expect(init).toMatchObject({ credentials: 'omit', redirect: 'error' });
+    // Majors alone (ADR-037 §9), as the tournaments list asks for them.
+    await fetchDeckSearch('Dragapult', {
+      fetch,
+      format: 'EXPANDED',
+      majors: true,
+    });
+    expect(fetch.mock.calls[1]![0]).toBe(
+      '/v2/decks/search?q=Dragapult&format=EXPANDED&kind=major'
+    );
+    const finishes = respond({ archetype, finishes: [], nextCursor: null });
+    await fetchArchetypeFinishes('dragapult-dusknoir', {
+      fetch: finishes,
+      majors: true,
+    });
+    expect(finishes.mock.calls[0]![0]).toBe(
+      '/v2/decks/archetype/dragapult-dusknoir?kind=major'
+    );
+  });
+
+  it('reads which kind of event each finish was at, online from an older server', () => {
+    const { kind: _kind, ...older } = tournament;
+    const decoded = decodeDeckSearch({
+      ...search,
+      results: [
+        {
+          archetype,
+          lists: 2,
+          top8s: 1,
+          best: [
+            { ...finish, tournament: { ...tournament, kind: 'regional' } },
+            { ...finish, tournament: older },
+          ],
+        },
+      ],
+    });
+    expect(
+      decoded.available &&
+        decoded.results[0]!.best.map((row) => row.tournament.kind)
+    ).toEqual(['regional', 'online']);
   });
 
   it('says so while the server has nothing yet', () => {

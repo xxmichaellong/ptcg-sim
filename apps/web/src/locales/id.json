@@ -3277,6 +3277,13 @@
     ],
     "translation": "Untuk kabar dan rencana ke depan, ikuti saya di X: <0>{TWITTER_HANDLE}</0>"
   },
+  "kI1qVD": {
+    "message": "Format",
+    "comments": [
+      "Which deck format tournament data is shown for"
+    ],
+    "translation": ""
+  },
   "pniSGu": {
     "message": "Format",
     "context": "deck format",
@@ -4025,13 +4032,6 @@
     "message": "Lower {label}",
     "translation": "Turunkan {label}"
   },
-  "xX-rmn": {
-    "message": "Majors",
-    "comments": [
-      "Shows only official major tournaments (Regionals, Internationals, Worlds)"
-    ],
-    "translation": "Major"
-  },
   "Q0rQkA": {
     "message": "Make a custom card",
     "translation": "Buat kartu kustom"
@@ -4444,6 +4444,13 @@
     "message": "No lists",
     "translation": "Tidak ada daftar"
   },
+  "BD_G9X": {
+    "message": "No majors in {formatName}",
+    "comments": [
+      "Official major tournaments (Regionals and up) are all Standard; formatName is the format picked"
+    ],
+    "translation": ""
+  },
   "mNXjQA": {
     "message": "No match",
     "translation": "Tidak ada yang cocok"
@@ -4617,6 +4624,13 @@
     "message": "One more",
     "context": "card count",
     "translation": "Tambah satu"
+  },
+  "Du4Avj": {
+    "message": "Online events",
+    "comments": [
+      "Also shows Limitless's online tournaments, besides official majors (Regionals and up)"
+    ],
+    "translation": ""
   },
   "-EDLvw": {
     "message": "Only {formatLabel}-legal",
@@ -5960,6 +5974,10 @@
   "FBwNsr": {
     "message": "Show one per card",
     "translation": "Tampilkan satu per kartu"
+  },
+  "jIzADR": {
+    "message": "Show online events",
+    "translation": ""
   },
   "ifu0mt": {
     "message": "Show opponent's hand",

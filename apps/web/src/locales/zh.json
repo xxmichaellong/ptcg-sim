@@ -3277,6 +3277,13 @@
     ],
     "translation": "想了解动态和后续更新，请在 X 上关注我：<0>{TWITTER_HANDLE}</0>"
   },
+  "kI1qVD": {
+    "message": "Format",
+    "comments": [
+      "Which deck format tournament data is shown for"
+    ],
+    "translation": ""
+  },
   "pniSGu": {
     "message": "Format",
     "context": "deck format",
@@ -4025,13 +4032,6 @@
     "message": "Lower {label}",
     "translation": "降低{label}"
   },
-  "xX-rmn": {
-    "message": "Majors",
-    "comments": [
-      "Shows only official major tournaments (Regionals, Internationals, Worlds)"
-    ],
-    "translation": "大型赛事"
-  },
   "Q0rQkA": {
     "message": "Make a custom card",
     "translation": "制作自定义卡牌"
@@ -4444,6 +4444,13 @@
     "message": "No lists",
     "translation": "无卡组列表"
   },
+  "BD_G9X": {
+    "message": "No majors in {formatName}",
+    "comments": [
+      "Official major tournaments (Regionals and up) are all Standard; formatName is the format picked"
+    ],
+    "translation": ""
+  },
   "mNXjQA": {
     "message": "No match",
     "translation": "无匹配项"
@@ -4617,6 +4624,13 @@
     "message": "One more",
     "context": "card count",
     "translation": "多一张"
+  },
+  "Du4Avj": {
+    "message": "Online events",
+    "comments": [
+      "Also shows Limitless's online tournaments, besides official majors (Regionals and up)"
+    ],
+    "translation": ""
   },
   "-EDLvw": {
     "message": "Only {formatLabel}-legal",
@@ -5960,6 +5974,10 @@
   "FBwNsr": {
     "message": "Show one per card",
     "translation": "每张卡只显示一张"
+  },
+  "jIzADR": {
+    "message": "Show online events",
+    "translation": ""
   },
   "ifu0mt": {
     "message": "Show opponent's hand",

@@ -1293,6 +1293,7 @@ describe('searching by deck', () => {
         date: new Date(START - 3 * DAY).toISOString(),
         players: 16,
         format: 'STANDARD',
+        kind: 'online',
       },
       player: { id: 'b1', name: 'B1', country: 'US' },
       placing: 1,

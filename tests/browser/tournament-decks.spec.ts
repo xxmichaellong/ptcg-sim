@@ -135,8 +135,9 @@ test("a deck's name finds its tournament finishes, and a finish's list goes on t
   await page.locator('#deckPasteInput').fill('dragapult');
   const results = page.getByRole('region', { name: 'Tournament decks' });
   await expect(results.getByText('Dragapult Dusknoir')).toBeVisible();
-  // Typing rests before it asks: one request for the whole word.
-  expect(asked).toEqual(['?q=dragapult']);
+  // Typing rests before it asks: one request for the whole word, majors
+  // alone in Standard until online events are asked for (ADR-037 §9).
+  expect(asked).toEqual(['?q=dragapult&format=STANDARD&kind=major']);
   await expect(
     results.getByRole('link', { name: 'Limitless TCG' })
   ).toHaveAttribute('target', '_blank');
@@ -199,7 +200,7 @@ test("a tournament opens to its standings, and any player's list goes on the sea
   await expect(page.locator('#deckPasteInput')).toBeVisible();
 });
 
-test("Majors lists official majors alone, and a major's list goes on the seat", async ({
+test("majors come alone until online events are asked for, and a major's list goes on the seat", async ({
   page,
 }) => {
   test.setTimeout(60_000);
@@ -255,15 +256,31 @@ test("Majors lists official majors alone, and a major's list goes on the seat", 
   await openDeckScreen(page);
   await page.locator('#deckTournamentsTitle').scrollIntoViewIfNeeded();
   const events = page.getByRole('list', { name: 'Tournaments' });
-  await expect(events.getByRole('listitem')).toHaveCount(2);
-  await expect(events.getByRole('listitem').nth(1)).toContainText(
+  // Regionals and up, in Standard, at first.
+  await expect(events.getByRole('listitem')).toHaveCount(1);
+  await expect(events.getByRole('listitem').first()).toContainText(
     'Regional · Standard · 2,336 players'
   );
-  const majors = page.locator('#deckMajorsToggle');
-  await majors.click();
-  await expect(majors).toHaveAttribute('aria-pressed', 'true');
+  expect(asked.at(-1)).toBe('format=STANDARD&minPlayers=16&kind=major');
+  const online = page.locator('#deckEventsOnlineToggle');
+  await expect(online).toHaveAttribute('aria-pressed', 'false');
+  await online.click();
+  await expect(online).toHaveAttribute('aria-pressed', 'true');
+  await expect(events.getByRole('listitem')).toHaveCount(2);
+  expect(asked.at(-1)).toBe('format=STANDARD&minPlayers=16');
+  // Majors alone in Expanded: there are none, said plainly, with the way
+  // to the online events that have it.
+  await online.click();
+  await page.locator('#deckEventsFormat-EXPANDED').check();
+  const none = page.locator('.deck-events [data-no-majors]');
+  await expect(none).toContainText('No majors in Expanded');
+  await none.getByRole('button', { name: 'Show online events' }).click();
+  await expect(online).toHaveAttribute('aria-pressed', 'true');
+  await expect.poll(() => asked.at(-1)).toBe('format=EXPANDED&minPlayers=16');
+  // Back to majors in Standard, for the next visit too.
+  await page.locator('#deckEventsFormat-STANDARD').check();
+  await online.click();
   await expect(events.getByRole('listitem')).toHaveCount(1);
-  expect(asked.at(-1)).toContain('kind=major');
   await events.getByRole('button', { name: /Regional Nice/u }).click();
   await expect(
     page.getByRole('link', { name: /Limitless/u }).first()
@@ -522,7 +539,7 @@ test("a deck's name pasted onto the screen is looked up", async ({ page }) => {
       .getByRole('region', { name: 'Tournament decks' })
       .getByText('Dragapult Dusknoir')
   ).toBeVisible();
-  expect(asked).toEqual(['?q=Dragapult']);
+  expect(asked).toEqual(['?q=Dragapult&format=STANDARD&kind=major']);
 });
 
 test.describe('on a phone', () => {

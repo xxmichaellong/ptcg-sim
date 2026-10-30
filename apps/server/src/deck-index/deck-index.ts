@@ -222,6 +222,8 @@ export interface FinishSummary {
     readonly date: string;
     readonly players: number;
     readonly format: string;
+    /** An online event, or the kind of major. */
+    readonly kind: 'online' | MajorKind;
   };
   readonly player: FinishRow['player'];
   readonly placing: number;
@@ -278,7 +280,11 @@ export const tournamentSummary = (row: TournamentRow): TournamentSummary => ({
 });
 
 const finishSummary = (row: FinishRow): FinishSummary => ({
-  tournament: { ...row.tournament, date: iso(row.tournament.date) },
+  tournament: {
+    ...row.tournament,
+    date: iso(row.tournament.date),
+    kind: row.tournament.kind ?? 'online',
+  },
   player: row.player,
   placing: row.placing,
   record: row.record,
@@ -1403,7 +1409,13 @@ export class DeckIndex {
     return { kind: 'ok', tournament: current };
   }
 
-  search(query: string, format: IndexedFormat, limit: number): SearchAnswer {
+  /** Decks matching a name; `majors` counts and shows majors alone. */
+  search(
+    query: string,
+    format: IndexedFormat,
+    limit: number,
+    options: { readonly majors?: boolean } = {}
+  ): SearchAnswer {
     if (!this.store.hasLists()) return { available: false };
     const now = this.deps.now();
     const updatedAt = this.store.updatedAt();
@@ -1411,7 +1423,14 @@ export class DeckIndex {
       available: true,
       updatedAt: updatedAt === null ? null : iso(updatedAt),
       results: this.store
-        .searchArchetypes(searchTerms(query), query, format, limit, now)
+        .searchArchetypes(
+          searchTerms(query),
+          query,
+          format,
+          limit,
+          now,
+          options
+        )
         .map((result) => ({
           archetype: result.archetype,
           lists: result.lists,
@@ -1426,7 +1445,9 @@ export class DeckIndex {
     format: IndexedFormat,
     sinceDays: number,
     after: FinishKey | null,
-    pageSize: number
+    pageSize: number,
+    /** Majors alone. */
+    options: { readonly majors?: boolean } = {}
   ):
     | {
         readonly kind: 'ok';
@@ -1443,7 +1464,8 @@ export class DeckIndex {
       format,
       this.deps.now() - sinceDays * 24 * HOUR_MS,
       after,
-      pageSize + 1
+      pageSize + 1,
+      options
     );
     const page = rows.slice(0, pageSize);
     const last = page.at(-1);

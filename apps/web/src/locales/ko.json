@@ -3277,6 +3277,13 @@
     ],
     "translation": "소식과 앞으로의 계획은 X에서 확인하세요: <0>{TWITTER_HANDLE}</0>"
   },
+  "kI1qVD": {
+    "message": "Format",
+    "comments": [
+      "Which deck format tournament data is shown for"
+    ],
+    "translation": ""
+  },
   "pniSGu": {
     "message": "Format",
     "context": "deck format",
@@ -4025,13 +4032,6 @@
     "message": "Lower {label}",
     "translation": "{label} 낮추기"
   },
-  "xX-rmn": {
-    "message": "Majors",
-    "comments": [
-      "Shows only official major tournaments (Regionals, Internationals, Worlds)"
-    ],
-    "translation": "메이저 대회"
-  },
   "Q0rQkA": {
     "message": "Make a custom card",
     "translation": "커스텀 카드 만들기"
@@ -4444,6 +4444,13 @@
     "message": "No lists",
     "translation": "리스트 없음"
   },
+  "BD_G9X": {
+    "message": "No majors in {formatName}",
+    "comments": [
+      "Official major tournaments (Regionals and up) are all Standard; formatName is the format picked"
+    ],
+    "translation": ""
+  },
   "mNXjQA": {
     "message": "No match",
     "translation": "일치하는 항목 없음"
@@ -4617,6 +4624,13 @@
     "message": "One more",
     "context": "card count",
     "translation": "한 장 더"
+  },
+  "Du4Avj": {
+    "message": "Online events",
+    "comments": [
+      "Also shows Limitless's online tournaments, besides official majors (Regionals and up)"
+    ],
+    "translation": ""
   },
   "-EDLvw": {
     "message": "Only {formatLabel}-legal",
@@ -5960,6 +5974,10 @@
   "FBwNsr": {
     "message": "Show one per card",
     "translation": "카드당 하나씩 보기"
+  },
+  "jIzADR": {
+    "message": "Show online events",
+    "translation": ""
   },
   "ifu0mt": {
     "message": "Show opponent's hand",

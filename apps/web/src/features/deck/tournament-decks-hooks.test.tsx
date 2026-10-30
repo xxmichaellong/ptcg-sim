@@ -93,6 +93,40 @@ describe('useDeckSearch', () => {
     expect(signals[0]!.aborted).toBe(true);
   });
 
+  it('asks in the format and scope given, and again when either changes', async () => {
+    const search = vi.fn<typeof fetchDeckSearch>((text) =>
+      Promise.resolve(answer(text))
+    );
+    const Probe = ({
+      scope,
+    }: {
+      readonly scope: Parameters<typeof useDeckSearch>[4];
+    }) => {
+      useDeckSearch('dragapult', true, search, 0, scope);
+      return null;
+    };
+    root = createRoot(host);
+    act(() =>
+      root!.render(<Probe scope={{ format: 'STANDARD', majors: true }} />)
+    );
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(DECK_SEARCH_DEBOUNCE_MS);
+    });
+    expect(search.mock.calls[0]![1]).toMatchObject({
+      format: 'STANDARD',
+      majors: true,
+    });
+    act(() =>
+      root!.render(<Probe scope={{ format: 'EXPANDED', majors: false }} />)
+    );
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(DECK_SEARCH_DEBOUNCE_MS);
+    });
+    expect(search).toHaveBeenCalledTimes(2);
+    expect(search.mock.calls[1]![1]).toMatchObject({ format: 'EXPANDED' });
+    expect(search.mock.calls[1]![1]).not.toHaveProperty('majors');
+  });
+
   it('says when the index is empty, and when search is offline', async () => {
     const search = vi
       .fn<typeof fetchDeckSearch>()

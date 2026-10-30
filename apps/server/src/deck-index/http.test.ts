@@ -24,6 +24,7 @@ const finish = {
     date: '2026-10-21T19:00:00.000Z',
     players: 67,
     format: 'STANDARD',
+    kind: 'online' as const,
   },
   player: { id: 'redthegoat', name: 'REDTHEGOAT', country: 'FR' },
   placing: 1,
@@ -46,6 +47,7 @@ const reader = (overrides: Partial<DeckIndexReader> = {}): DeckIndexReader => ({
     archetype,
     finishes: [finish],
     next: {
+      major: true,
       placing: 1,
       players: 64,
       date: Date.parse('2026-10-01T00:00:00.000Z'),
@@ -129,14 +131,19 @@ describe('deck index routes', () => {
     expect(response.status).toBe(200);
     expect(response.headers.get('Cache-Control')).toBe('public, max-age=300');
     expect(response.headers.get('X-Content-Type-Options')).toBe('nosniff');
-    expect(index.search).toHaveBeenCalledWith('Dragapult', 'EXPANDED', 3);
+    expect(index.search).toHaveBeenCalledWith('Dragapult', 'EXPANDED', 3, {});
     expect(await response.json()).toEqual({
       available: true,
       updatedAt: '2026-10-22T06:00:00.000Z',
       results: [{ archetype, lists: 12, top8s: 3, best: [finish] }],
     });
     await get('/v2/decks/search?q=x', index);
-    expect(index.search).toHaveBeenLastCalledWith('x', 'STANDARD', 8);
+    expect(index.search).toHaveBeenLastCalledWith('x', 'STANDARD', 8, {});
+    // Majors alone, as the tournaments list asks for them.
+    await get('/v2/decks/search?q=x&kind=major', index);
+    expect(index.search).toHaveBeenLastCalledWith('x', 'STANDARD', 8, {
+      majors: true,
+    });
   });
 
   it('says the index is empty without caching that', async () => {
@@ -162,6 +169,10 @@ describe('deck index routes', () => {
       '/v2/decks/search?q=x&limit=1.5',
       '/v2/decks/search?q=x&q=y',
       '/v2/decks/search?q=x&page=2',
+      '/v2/decks/search?q=x&kind=online',
+      '/v2/decks/archetype/x?kind=majors',
+      // A cursor from before majors came first (no `m`): refused.
+      '/v2/decks/archetype/x?cursor=eyJwIjoxLCJuIjo2NCwiZCI6MSwidCI6ImFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYSIsInUiOiJwIn0',
       '/v2/decks/archetype/x?since=0',
       '/v2/decks/archetype/x?cursor=%%%',
       '/v2/decks/archetype/x?cursor=eyJvIjotMX0',
@@ -194,7 +205,8 @@ describe('deck index routes', () => {
       'dragapult-dusknoir',
       'STANDARD',
       30,
-      null
+      null,
+      {}
     );
     const body = (await first.json()) as { nextCursor: string };
     expect(body).toEqual({
@@ -211,12 +223,25 @@ describe('deck index routes', () => {
       'STANDARD',
       90,
       {
+        major: true,
         placing: 1,
         players: 64,
         date: Date.parse('2026-10-01T00:00:00.000Z'),
         tournamentId: id,
         playerId: 'p',
-      }
+      },
+      {}
+    );
+    await get(
+      '/v2/decks/archetype/dragapult-dusknoir?kind=major&format=expanded',
+      index
+    );
+    expect(index.archetype).toHaveBeenLastCalledWith(
+      'dragapult-dusknoir',
+      'EXPANDED',
+      90,
+      null,
+      { majors: true }
     );
     const missing = await get(
       '/v2/decks/archetype/nope',

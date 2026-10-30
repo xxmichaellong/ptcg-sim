@@ -3277,6 +3277,13 @@
     ],
     "translation": "Volg me op X voor nieuws en wat er aankomt: <0>{TWITTER_HANDLE}</0>"
   },
+  "kI1qVD": {
+    "message": "Format",
+    "comments": [
+      "Which deck format tournament data is shown for"
+    ],
+    "translation": ""
+  },
   "pniSGu": {
     "message": "Format",
     "context": "deck format",
@@ -4025,13 +4032,6 @@
     "message": "Lower {label}",
     "translation": "{label} verlagen"
   },
-  "xX-rmn": {
-    "message": "Majors",
-    "comments": [
-      "Shows only official major tournaments (Regionals, Internationals, Worlds)"
-    ],
-    "translation": "Majors"
-  },
   "Q0rQkA": {
     "message": "Make a custom card",
     "translation": "Eigen kaart maken"
@@ -4444,6 +4444,13 @@
     "message": "No lists",
     "translation": "Geen lijsten"
   },
+  "BD_G9X": {
+    "message": "No majors in {formatName}",
+    "comments": [
+      "Official major tournaments (Regionals and up) are all Standard; formatName is the format picked"
+    ],
+    "translation": ""
+  },
   "mNXjQA": {
     "message": "No match",
     "translation": "Geen resultaat"
@@ -4617,6 +4624,13 @@
     "message": "One more",
     "context": "card count",
     "translation": "Eén meer"
+  },
+  "Du4Avj": {
+    "message": "Online events",
+    "comments": [
+      "Also shows Limitless's online tournaments, besides official majors (Regionals and up)"
+    ],
+    "translation": ""
   },
   "-EDLvw": {
     "message": "Only {formatLabel}-legal",
@@ -5960,6 +5974,10 @@
   "FBwNsr": {
     "message": "Show one per card",
     "translation": "Eén per kaart tonen"
+  },
+  "jIzADR": {
+    "message": "Show online events",
+    "translation": ""
   },
   "ifu0mt": {
     "message": "Show opponent's hand",

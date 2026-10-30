@@ -1,7 +1,9 @@
 # ADR-037: tournament deck search, from Limitless's online events and majors
 
 - Status: **ACCEPTED**
-- Decision date: 2026-10-22
+- Decision date: 2026-10-22; amended 2026-10-28 (majors from Limitless
+  Labs, §8) and 2026-10-30 (majors first, online events opt-in, a format to
+  pick, §9)
 - Scope: the Worker's tournament deck index and the routes the deck screen
   reads it through
 - Builds on: ADR-029 (current decks from Limitless)
@@ -202,6 +204,39 @@ owner confirmed Limitless's permission to read Labs.
    - **Not covered.** Majors before September 2024 (only Day 2 lists on
      limitlesstcg.com), League Cups, and Japanese and Korean events, which
      Labs doesn't list.
+9. **Majors first; online events when asked; a format picked** (2026-10-30,
+   the owner: "we should only support tournaments that are sanctioned at
+   the regional level or higher, not these random online tournaments. or at
+   least that should be what's most important. being able to sort by format
+   would also be incredibly important").
+   - **The deck screen shows majors alone by default.** Deck search, the
+     Tournaments shelf and a deck's All lists ask for `kind=major` until
+     the player turns on **Online events**; the choice, and the format, are
+     one preference (`ptcgsim.tournaments.v1`) shared by the three and kept
+     between visits.
+   - **Format.** A Standard / Expanded control beside it (the formats whose
+     lists the index keeps; GLC, Standard JP and the others are skipped when
+     listed). Every event row and every finish names its format and, for a
+     major, its kind ("Regional · Standard · 2,336 players"). Every major
+     on Labs is Standard: Expanded with majors alone asks nothing and says
+     "No majors in Expanded", with Show online events beside it.
+   - **Routes.** `kind=major` on `/v2/decks/search` and
+     `/v2/decks/archetype/<id>` too: a deck's counts, ranking and finishes
+     from majors alone. Without it, as before, every event counts, but
+     majors come first:
+     1. **Ranking.** After an exact name, decks are ordered by their major
+        results (a top 32 at a major, each worth log₂ of its size and half
+        as much every 90 days back), then by their online top 8s, weighed
+        alike, then by name: a deck with a major result ranks above one with
+        online results alone. A top 32, not a top 8: a Regional's thousands
+        of players would leave most decks without a top 8 there.
+     2. **Finishes.** A deck's best finishes and its All lists put majors
+        first, then placing, the bigger event and the newer. Its cursor
+        carries which of the two it had reached (`m`); one from before has
+        none and is refused, so the list starts over from its first page.
+   - **Finishes name their kind.** `kind` (`online`, `regional`, `special`,
+     `international`, `worlds`) on each finish's tournament; the page reads
+     one without it as online.
 
 ## Consequences
 

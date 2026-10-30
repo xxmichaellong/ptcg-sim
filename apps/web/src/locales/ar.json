@@ -3277,6 +3277,13 @@
     ],
     "translation": "للاطلاع على الأخبار والقادم، تابعني على X: <0>{TWITTER_HANDLE}</0>"
   },
+  "kI1qVD": {
+    "message": "Format",
+    "comments": [
+      "Which deck format tournament data is shown for"
+    ],
+    "translation": ""
+  },
   "pniSGu": {
     "message": "Format",
     "context": "deck format",
@@ -4025,13 +4032,6 @@
     "message": "Lower {label}",
     "translation": "خفض {label}"
   },
-  "xX-rmn": {
-    "message": "Majors",
-    "comments": [
-      "Shows only official major tournaments (Regionals, Internationals, Worlds)"
-    ],
-    "translation": "البطولات الكبرى"
-  },
   "Q0rQkA": {
     "message": "Make a custom card",
     "translation": "إنشاء بطاقة مخصصة"
@@ -4444,6 +4444,13 @@
     "message": "No lists",
     "translation": "لا توجد قوائم"
   },
+  "BD_G9X": {
+    "message": "No majors in {formatName}",
+    "comments": [
+      "Official major tournaments (Regionals and up) are all Standard; formatName is the format picked"
+    ],
+    "translation": ""
+  },
   "mNXjQA": {
     "message": "No match",
     "translation": "لا توجد نتيجة مطابقة"
@@ -4617,6 +4624,13 @@
     "message": "One more",
     "context": "card count",
     "translation": "أكثر بواحدة"
+  },
+  "Du4Avj": {
+    "message": "Online events",
+    "comments": [
+      "Also shows Limitless's online tournaments, besides official majors (Regionals and up)"
+    ],
+    "translation": ""
   },
   "-EDLvw": {
     "message": "Only {formatLabel}-legal",
@@ -5960,6 +5974,10 @@
   "FBwNsr": {
     "message": "Show one per card",
     "translation": "عرض نسخة واحدة لكل بطاقة"
+  },
+  "jIzADR": {
+    "message": "Show online events",
+    "translation": ""
   },
   "ifu0mt": {
     "message": "Show opponent's hand",

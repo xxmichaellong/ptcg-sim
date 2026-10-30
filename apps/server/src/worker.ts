@@ -1375,17 +1375,19 @@ export class PtcgDeckIndex extends DurableObject<Env> {
   async search(
     query: string,
     format: IndexedFormat,
-    limit: number
+    limit: number,
+    options: { readonly majors?: boolean } = {}
   ): Promise<SearchAnswer> {
     await this.crawl();
-    return this.index.search(query, format, limit);
+    return this.index.search(query, format, limit, options);
   }
 
   async archetype(
     id: string,
     format: IndexedFormat,
     sinceDays: number,
-    after: FinishKey | null
+    after: FinishKey | null,
+    options: { readonly majors?: boolean } = {}
   ): Promise<ReturnType<DeckIndex['archetype']>> {
     await this.crawl();
     return this.index.archetype(
@@ -1393,7 +1395,8 @@ export class PtcgDeckIndex extends DurableObject<Env> {
       format,
       sinceDays,
       after,
-      DECK_INDEX_PAGE_SIZE
+      DECK_INDEX_PAGE_SIZE,
+      options
     );
   }
 

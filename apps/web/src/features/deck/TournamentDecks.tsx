@@ -16,6 +16,8 @@ import {
   type RefObject,
 } from 'react';
 
+import { preferences } from '../../preferences/preference-store.js';
+import { usePreference } from '../../preferences/usePreference.js';
 import { Tooltip } from '../../ui/Tooltip.js';
 import {
   archetypeIconUrl,
@@ -24,12 +26,18 @@ import {
   fetchTournaments,
   searchText,
   TOURNAMENT_DATA_SOURCE,
+  TOURNAMENT_FORMATS,
   type DeckSearchResult,
   type TournamentArchetype,
   type TournamentFinish,
+  type TournamentFormat,
   type TournamentStanding,
   type TournamentSummary,
 } from './tournament-decks-client.js';
+import {
+  majorsPlayIn,
+  TOURNAMENT_PREFERENCES,
+} from './tournament-preferences.js';
 import { wordName } from './deck-home-covers.js';
 import { usePaged, useRemote, type Remote } from './tournament-decks-hooks.js';
 import { isInputMethodKey } from '../../ui/input-method.js';
@@ -226,9 +234,14 @@ const FinishRow = ({
         <span className="deck-finish__event">
           <span className="deck-finish__event-name">{eventName}</span>
           <span className="deck-finish__event-meta">
-            {t`${plural(players, { one: '# player', other: '# players' })}`}
-            {' · '}
-            {shortDate(finish.tournament.date)}
+            {[
+              kindLabel(finish.tournament.kind),
+              formatLabel(finish.tournament.format),
+              t`${plural(players, { one: '# player', other: '# players' })}`,
+              shortDate(finish.tournament.date),
+            ]
+              .filter(Boolean)
+              .join(' · ')}
           </span>
         </span>
         <span className="deck-finish__player">{playerName}</span>
@@ -300,25 +313,114 @@ const MoreFailed = ({
 );
 
 /**
+ * What tournament data shows (ADR-037 §9): one format, and official majors
+ * (Regionals and up) alone unless online events are asked for too. One
+ * choice, kept between visits, for deck search, the tournaments list and a
+ * deck's lists; `idPrefix` keeps two on one page apart.
+ */
+export const TournamentScope = ({
+  idPrefix,
+}: {
+  readonly idPrefix: string;
+}) => {
+  const { t } = useLingui();
+  const { format, online } = usePreference(TOURNAMENT_PREFERENCES);
+  return (
+    <div className="deck-scope" data-tournament-scope={idPrefix}>
+      <div
+        className="ptcgsim-segmented-control deck-scope__format"
+        role="radiogroup"
+        aria-label={t({
+          message: 'Format',
+          comment: 'Which deck format tournament data is shown for',
+        })}
+      >
+        {TOURNAMENT_FORMATS.map((value) => (
+          <span key={value} className="ptcgsim-segmented-control__option">
+            <input
+              type="radio"
+              id={`${idPrefix}Format-${value}`}
+              name={`${idPrefix}Format`}
+              value={value}
+              checked={format === value}
+              onChange={() =>
+                preferences().patch(TOURNAMENT_PREFERENCES, { format: value })
+              }
+            />
+            <label htmlFor={`${idPrefix}Format-${value}`}>
+              {formatLabel(value)}
+            </label>
+          </span>
+        ))}
+      </div>
+      <button
+        id={`${idPrefix}OnlineToggle`}
+        type="button"
+        className="ds-button ds-button--ghost deck-online"
+        aria-pressed={online}
+        onClick={() =>
+          preferences().patch(TOURNAMENT_PREFERENCES, { online: !online })
+        }
+      >
+        <Trans comment="Also shows Limitless's online tournaments, besides official majors (Regionals and up)">
+          Online events
+        </Trans>
+      </button>
+    </div>
+  );
+};
+
+/**
+ * Majors alone in a format with none (every major is Standard): said
+ * plainly, with the way to the online events that have it.
+ */
+const NoMajorsIn = ({ format }: { readonly format: TournamentFormat }) => {
+  const { t } = useLingui();
+  const formatName = formatLabel(format);
+  return (
+    <p className="deck-results__status" role="status" data-no-majors="true">
+      {t({
+        message: `No majors in ${formatName}`,
+        comment:
+          'Official major tournaments (Regionals and up) are all Standard; formatName is the format picked',
+      })}{' '}
+      <button
+        type="button"
+        className="ds-link"
+        onClick={() =>
+          preferences().patch(TOURNAMENT_PREFERENCES, { online: true })
+        }
+      >
+        <Trans>Show online events</Trans>
+      </button>
+    </p>
+  );
+};
+
+/**
  * What a typed name finds: each matching deck, how it has done, and its
  * best finishes, each a list to load.
  */
 export const DeckSearchResults = ({
   query,
   state,
+  searchable = true,
   pending,
   onLoad,
   onAllLists,
 }: {
   readonly query: string;
   readonly state: Remote<readonly DeckSearchResult[]>;
+  /** False: majors alone, in a format with none; nothing was asked. */
+  readonly searchable?: boolean;
   readonly pending: string | undefined;
   readonly onLoad: LoadTournamentList;
   readonly onAllLists: (archetype: TournamentArchetype) => void;
 }) => {
   const { t } = useLingui();
+  const { format } = usePreference(TOURNAMENT_PREFERENCES);
   const results =
-    state.status === 'ready' || state.status === 'loading'
+    searchable && (state.status === 'ready' || state.status === 'loading')
       ? (state.value ?? [])
       : [];
   const line =
@@ -338,7 +440,10 @@ export const DeckSearchResults = ({
       aria-label={t`Tournament decks`}
       aria-busy={state.status === 'loading'}
     >
-      {line ? (
+      <TournamentScope idPrefix="deckSearch" />
+      {!searchable ? (
+        <NoMajorsIn format={format} />
+      ) : line ? (
         <p className="deck-results__status" role="status">
           {state.status === 'loading' ? (
             <CircleNotchIcon
@@ -406,8 +511,8 @@ export const DeckSearchResults = ({
 };
 
 /**
- * The recent tournaments, online and official majors, newest first, a name
- * filter and a Majors-only toggle above.
+ * The recent tournaments, newest first: official majors, or online events
+ * too, in one format (TournamentScope), a name filter above.
  */
 export const TournamentsShelf = ({
   open,
@@ -419,7 +524,10 @@ export const TournamentsShelf = ({
   const { t } = useLingui();
   const [filter, setFilter] = useState('');
   const [query, setQuery] = useState('');
-  const [majors, setMajors] = useState(false);
+  // Majors (Regionals and up) unless online events are asked for too, in
+  // one format (ADR-037 §9).
+  const { format, online } = usePreference(TOURNAMENT_PREFERENCES);
+  const listable = online || majorsPlayIn(format);
   useEffect(() => {
     const timer = setTimeout(() => setQuery(searchText(filter)), 250);
     return () => clearTimeout(timer);
@@ -447,13 +555,16 @@ export const TournamentsShelf = ({
   // Once asked for, kept while the screen is put away: it opens again as
   // it was left, the pages More brought included.
   const paged = usePaged(
-    near ? `events:${majors ? 'majors' : 'all'}:${query}` : undefined,
+    near && listable
+      ? `events:${online ? 'all' : 'majors'}:${format}:${query}`
+      : undefined,
     (cursor, options) =>
       fetchTournaments({
         ...options,
         ...(query ? { q: query } : {}),
+        format,
         minPlayers: 16,
-        ...(majors ? { majors: true } : {}),
+        ...(online ? {} : { majors: true }),
         ...(cursor ? { cursor } : {}),
       }).then((page) => ({
         items: page.tournaments,
@@ -532,21 +643,13 @@ export const TournamentsShelf = ({
               }}
             />
           </label>
-          <button
-            id="deckMajorsToggle"
-            type="button"
-            className="ds-button ds-button--ghost deck-majors"
-            aria-pressed={majors}
-            onClick={() => setMajors((shown) => !shown)}
-          >
-            <Trans comment="Shows only official major tournaments (Regionals, Internationals, Worlds)">
-              Majors
-            </Trans>
-          </button>
+          <TournamentScope idPrefix="deckEvents" />
         </div>
       </div>
       <div className="deck-paper deck-events">
-        {paged.state.status === 'ready' && events.length > 0 ? (
+        {!listable ? (
+          <NoMajorsIn format={format} />
+        ) : paged.state.status === 'ready' && events.length > 0 ? (
           <ul className="deck-events__list" aria-label={t`Tournaments`}>
             {events.map((event) => (
               <li key={event.id}>
@@ -916,30 +1019,44 @@ export const ArchetypeView = ({
   readonly onLoad: LoadTournamentList;
 }) => {
   const { t } = useLingui();
+  // In one format, majors alone unless online events are asked for too
+  // (ADR-037 §9): majors first either way.
+  const { format, online } = usePreference(TOURNAMENT_PREFERENCES);
+  const listable = online || majorsPlayIn(format);
+  const scope = `${archetype.id}:${format}:${online ? 'all' : 'majors'}`;
   // Recent finishes first; a deck with none recent (which search shows from
   // all time) lists all its finishes, as its search result did. Its older
   // ones (the search result counts every list) are a press away.
   const allTimeFor = useRef<string | null>(null);
   const [fellBack, setFellBack] = useState(false);
   const [older, setOlder] = useState(false);
+  // Another format or scope starts from its recent finishes again.
+  const [shownScope, setShownScope] = useState(scope);
+  if (shownScope !== scope) {
+    setShownScope(scope);
+    setFellBack(false);
+    setOlder(false);
+  }
   const allTime = older || fellBack;
   const paged = usePaged(
-    older ? `${archetype.id}:all` : archetype.id,
+    listable ? (older ? `${scope}:all` : scope) : undefined,
     async (cursor, options) => {
       const read = (wide: boolean) =>
         fetchArchetypeFinishes(archetype.id, {
           ...options,
+          format,
+          ...(online ? {} : { majors: true }),
           ...(cursor ? { cursor } : {}),
           ...(wide ? { since: ALL_TIME_DAYS } : {}),
         });
-      let page = await read(older || allTimeFor.current === archetype.id);
+      let page = await read(older || allTimeFor.current === scope);
       if (
         !cursor &&
         !older &&
         page.finishes.length === 0 &&
-        allTimeFor.current !== archetype.id
+        allTimeFor.current !== scope
       ) {
-        allTimeFor.current = archetype.id;
+        allTimeFor.current = scope;
         setFellBack(true);
         page = await read(true);
       }
@@ -973,8 +1090,11 @@ export const ArchetypeView = ({
   return (
     <div ref={view} className="deck-subview" data-subview="archetype">
       <SubHead onBack={onBack} title={archetype.name} icons={archetype.icons} />
+      <TournamentScope idPrefix="deckArchetype" />
       <div className="deck-paper deck-standings">
-        {paged.state.status === 'ready' ? (
+        {!listable ? (
+          <NoMajorsIn format={format} />
+        ) : paged.state.status === 'ready' ? (
           <>
             <ul
               className="deck-result__finishes"

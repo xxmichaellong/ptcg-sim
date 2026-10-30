@@ -1,10 +1,13 @@
 /**
  * The tournament deck index over HTTP (ADR-037). Every route is a plain GET
  * whose parameters are checked strictly; an unknown parameter is refused.
+ * `kind=major` keeps any of the first three to official majors alone;
+ * without it majors still come first (ADR-037 §9).
  *
- *   GET /v2/decks/search?q=&format=&limit=        archetypes matching a name,
+ *   GET /v2/decks/search?q=&format=&kind=major&limit=
+ *                                                 archetypes matching a name,
  *                                                 with their best recent lists
- *   GET /v2/decks/archetype/<id>?format=&since=&cursor=
+ *   GET /v2/decks/archetype/<id>?format=&kind=major&since=&cursor=
  *                                                 an archetype's finishes
  *   GET /v2/tournaments?q=&format=&minPlayers=&kind=major&cursor=
  *                                                 tournaments, newest first
@@ -100,13 +103,15 @@ export interface DeckIndexReader {
   search(
     query: string,
     format: IndexedFormat,
-    limit: number
+    limit: number,
+    options?: { readonly majors?: boolean }
   ): Promise<SearchAnswer>;
   archetype(
     id: string,
     format: IndexedFormat,
     sinceDays: number,
-    after: FinishKey | null
+    after: FinishKey | null,
+    options?: { readonly majors?: boolean }
   ): Promise<
     | {
         readonly kind: 'ok';
@@ -195,6 +200,10 @@ const readFormat = (
   return isIndexedFormat(upper) ? upper : 'invalid';
 };
 
+/** `kind=major` (majors alone), absent (every event), or refused. */
+const readMajors = (value: string | undefined): boolean | 'invalid' =>
+  value === undefined ? false : value === 'major' ? true : 'invalid';
+
 const readInteger = (
   value: string | undefined,
   fallback: number,
@@ -242,14 +251,25 @@ const readFinishCursor = (
 ): FinishKey | null | 'invalid' => {
   if (value === undefined) return null;
   const decoded = decodeCursor(value) as
-    | { p?: unknown; n?: unknown; d?: unknown; t?: unknown; u?: unknown }
+    | {
+        m?: unknown;
+        p?: unknown;
+        n?: unknown;
+        d?: unknown;
+        t?: unknown;
+        u?: unknown;
+      }
     | undefined;
+  // A cursor from before majors came first has no `m`: refused, the list
+  // starts over from its first page.
+  const major = decoded?.m;
   const placing = decoded?.p;
   const players = decoded?.n;
   const date = decoded?.d;
   const tournamentId = decoded?.t;
   const playerId = decoded?.u;
-  return isCount(placing) &&
+  return (major === 0 || major === 1) &&
+    isCount(placing) &&
     isCount(players) &&
     Number.isSafeInteger(date) &&
     typeof tournamentId === 'string' &&
@@ -257,6 +277,7 @@ const readFinishCursor = (
     typeof playerId === 'string' &&
     PLAYER_ID.test(playerId)
     ? {
+        major: major === 1,
         placing,
         players,
         date: date as number,
@@ -268,6 +289,7 @@ const readFinishCursor = (
 
 const finishCursor = (key: FinishKey): string =>
   encodeCursor({
+    m: key.major ? 1 : 0,
     p: key.placing,
     n: key.players,
     d: key.date,
@@ -314,28 +336,46 @@ export const handleDeckIndexRequest = async (
   const url = new URL(request.url);
   switch (route.kind) {
     case 'search': {
-      const parameters = readParameters(url, ['q', 'format', 'limit']);
+      const parameters = readParameters(url, ['q', 'format', 'kind', 'limit']);
       if (!parameters) return invalid();
       const query = readQuery(parameters.get('q'), true);
       const format = readFormat(parameters.get('format'), 'STANDARD');
+      const majors = readMajors(parameters.get('kind'));
       const limit = readInteger(
         parameters.get('limit'),
         DECK_INDEX_LIMITS.defaultSearchResults,
         1,
         DECK_INDEX_LIMITS.searchResults
       );
-      if (query === null || format === 'invalid' || !format || limit === null) {
+      if (
+        query === null ||
+        format === 'invalid' ||
+        !format ||
+        majors === 'invalid' ||
+        limit === null
+      ) {
         return invalid();
       }
-      const answer = await index.search(query, format, limit);
+      const answer = await index.search(
+        query,
+        format,
+        limit,
+        majors ? { majors: true } : {}
+      );
       // None read yet is the index's state, not a failure of the server.
       if (!answer.available) return json({ available: false }, 200);
       return cached(answer, FIVE_MINUTES);
     }
     case 'archetype': {
-      const parameters = readParameters(url, ['format', 'since', 'cursor']);
+      const parameters = readParameters(url, [
+        'format',
+        'kind',
+        'since',
+        'cursor',
+      ]);
       if (!parameters) return invalid();
       const format = readFormat(parameters.get('format'), 'STANDARD');
+      const majors = readMajors(parameters.get('kind'));
       const since = readInteger(
         parameters.get('since'),
         DECK_INDEX_LIMITS.defaultSinceDays,
@@ -346,12 +386,19 @@ export const handleDeckIndexRequest = async (
       if (
         format === 'invalid' ||
         !format ||
+        majors === 'invalid' ||
         since === null ||
         after === 'invalid'
       ) {
         return invalid();
       }
-      const answer = await index.archetype(route.id, format, since, after);
+      const answer = await index.archetype(
+        route.id,
+        format,
+        since,
+        after,
+        majors ? { majors: true } : {}
+      );
       if (answer.kind === 'not_found') return notFound();
       return cached(
         {
@@ -371,8 +418,8 @@ export const handleDeckIndexRequest = async (
         'cursor',
       ]);
       if (!parameters) return invalid();
-      const kind = parameters.get('kind');
-      if (kind !== undefined && kind !== 'major') return invalid();
+      const majors = readMajors(parameters.get('kind'));
+      if (majors === 'invalid') return invalid();
       const query = readQuery(parameters.get('q'), false);
       const format = readFormat(parameters.get('format'), null);
       const minimumPlayers = readInteger(
@@ -395,7 +442,7 @@ export const handleDeckIndexRequest = async (
         format,
         minimumPlayers,
         before,
-        ...(kind === 'major' ? { majors: true } : {}),
+        ...(majors ? { majors: true } : {}),
       });
       return cached(
         {

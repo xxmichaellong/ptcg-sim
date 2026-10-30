@@ -183,6 +183,12 @@ export const STORE_POLICY = Object.freeze({
   /** Archetypes a search considers before ranking. */
   searchCandidates: 200,
   /**
+   * At a major, a finish this high counts toward a deck's ranking (a top 8
+   * online): a Regional's thousands of players make its top 32 a result
+   * worth weighing, where a top 8 alone would leave most decks without one.
+   */
+  majorRankingPlacing: 32,
+  /**
    * A major is checked again daily this long after it starts (it runs two
    * or three days): Limitless re-categorises decks and adds late lists.
    */
@@ -212,6 +218,8 @@ export interface TournamentRow {
  * missing between pages.
  */
 export interface FinishKey {
+  /** A major's finish: majors come before online events (ADR-037 §9). */
+  readonly major: boolean;
   readonly placing: number;
   readonly players: number;
   readonly date: number;
@@ -220,6 +228,7 @@ export interface FinishKey {
 }
 
 export const finishKeyOf = (finish: FinishRow): FinishKey => ({
+  major: finish.tournament.kind !== null,
   placing: finish.placing,
   players: finish.tournament.players,
   date: finish.tournament.date,
@@ -234,6 +243,8 @@ export interface FinishRow {
     readonly date: number;
     readonly players: number;
     readonly format: string;
+    /** The kind of major, null for an online event. */
+    readonly kind: MajorKind | null;
   };
   readonly player: {
     readonly id: string;
@@ -316,8 +327,8 @@ const tournamentSearchText = (name: string, kind: MajorKind | null): string =>
     : `${normalizeName(name)} ${majorSearchWords(kind)}`;
 
 const FINISH_COLUMNS = `t.id AS t_id, t.name AS t_name, t.date AS t_date,
-  t.players AS t_players, t.format AS t_format, e.player_id, e.name AS p_name,
-  e.country, e.placing, e.wins, e.losses, e.ties`;
+  t.players AS t_players, t.format AS t_format, t.kind AS t_kind, e.player_id,
+  e.name AS p_name, e.country, e.placing, e.wins, e.losses, e.ties`;
 
 const finishRow = (row: Row): FinishRow => ({
   tournament: {
@@ -326,6 +337,7 @@ const finishRow = (row: Row): FinishRow => ({
     date: number(row.t_date),
     players: number(row.t_players),
     format: text(row.t_format),
+    kind: isMajorKind(row.t_kind) ? row.t_kind : null,
   },
   player: {
     id: text(row.player_id),
@@ -915,18 +927,21 @@ export class DeckIndexStore {
 
   /**
    * Archetypes matching a search, best first: an exact name before the
-   * rest, then by recent top-8 finishes (each worth more the bigger the
-   * event, half as much every 90 days back), then by name. Only archetypes
+   * rest, then by their finishes at majors (a top 32 there, each worth more
+   * the bigger the event, half as much every 90 days back), then by their
+   * top 8s online, weighed alike, then by name: a deck with a major result
+   * ranks above one with online results alone (ADR-037 §9). Only archetypes
    * with a placed finish with a list in the format are returned, and their
    * counts are of those finishes: a list a player dropped with is not
-   * offered.
+   * offered. `majors` keeps to majors alone, in the counts too.
    */
   searchArchetypes(
     terms: readonly string[],
     query: string,
     format: IndexedFormat,
     limit: number,
-    now: number
+    now: number,
+    options: { readonly majors?: boolean } = {}
   ): ArchetypeResult[] {
     const match = ftsQuery(terms);
     if (!match) return [];
@@ -944,32 +959,42 @@ export class DeckIndexStore {
       icons: readIcons(row.icons),
     }));
     const wanted = coreName(query);
+    const majorsOnly = options.majors === true;
+    const scope = majorsOnly ? 'AND t.kind IS NOT NULL' : '';
     const scored = candidates.map((archetype) => {
-      let score = 0;
+      let major = 0;
+      let online = 0;
+      // One read for both: a top 32 at a major, a top 8 anywhere.
       for (const finish of this.rows(
-        `SELECT t.date, t.players FROM entries e
+        `SELECT t.date, t.players, t.kind FROM entries e
          JOIN tournaments t ON t.id = e.tournament_id
-         WHERE e.archetype_id = ? AND e.placing <= 8 AND t.format = ? AND t.date >= ?
-           AND t.state = 'indexed'`,
+         WHERE e.archetype_id = ? AND t.format = ? AND t.date >= ?
+           AND t.state = 'indexed' ${scope}
+           AND (e.placing <= 8 OR (t.kind IS NOT NULL AND e.placing <= ?))`,
         archetype.id,
         format,
-        now - STORE_POLICY.rankingWindowMs
+        now - STORE_POLICY.rankingWindowMs,
+        STORE_POLICY.majorRankingPlacing
       )) {
         const age = Math.max(0, now - number(finish.date));
-        score +=
+        const weight =
           Math.pow(0.5, age / STORE_POLICY.halfLifeMs) *
           Math.log2(Math.max(8, number(finish.players)));
+        if (finish.kind === null) online += weight;
+        else major += weight;
       }
       return {
         archetype,
         exact: wanted !== '' && coreName(archetype.name) === wanted,
-        score,
+        major,
+        online,
       };
     });
     scored.sort(
       (left, right) =>
         Number(right.exact) - Number(left.exact) ||
-        right.score - left.score ||
+        right.major - left.major ||
+        right.online - left.online ||
         left.archetype.name.localeCompare(right.archetype.name)
     );
     const results: ArchetypeResult[] = [];
@@ -979,7 +1004,7 @@ export class DeckIndexStore {
         `SELECT COUNT(*) AS lists, SUM(CASE WHEN e.placing <= 8 THEN 1 ELSE 0 END) AS top8s
          FROM entries e JOIN tournaments t ON t.id = e.tournament_id
          WHERE e.archetype_id = ? AND t.format = ? AND e.list_hash IS NOT NULL
-           AND e.placing IS NOT NULL AND t.state = 'indexed'`,
+           AND e.placing IS NOT NULL AND t.state = 'indexed' ${scope}`,
         archetype.id,
         format
       );
@@ -989,7 +1014,7 @@ export class DeckIndexStore {
         archetype,
         lists,
         top8s: number(counts?.top8s),
-        best: this.bestFinishes(archetype.id, format, now),
+        best: this.bestFinishes(archetype.id, format, now, majorsOnly),
       });
     }
     return results;
@@ -998,14 +1023,17 @@ export class DeckIndexStore {
   private bestFinishes(
     archetypeId: string,
     format: IndexedFormat,
-    now: number
+    now: number,
+    majors: boolean
   ): FinishRow[] {
+    const options = majors ? { majors: true } : {};
     const recent = this.archetypeFinishes(
       archetypeId,
       format,
       now - STORE_POLICY.bestWindowMs,
       null,
-      STORE_POLICY.bestPerArchetype
+      STORE_POLICY.bestPerArchetype,
+      options
     );
     return recent.length > 0
       ? recent
@@ -1014,7 +1042,8 @@ export class DeckIndexStore {
           format,
           null,
           null,
-          STORE_POLICY.bestPerArchetype
+          STORE_POLICY.bestPerArchetype,
+          options
         );
   }
 
@@ -1029,23 +1058,28 @@ export class DeckIndexStore {
   }
 
   /**
-   * An archetype's finishes with a list, best first: placing, then the
-   * bigger event, then the newer one.
+   * An archetype's finishes with a list, best first: majors before online
+   * events (ADR-037 §9), then placing, then the bigger event, then the newer
+   * one. `majors` keeps to majors alone.
    */
   archetypeFinishes(
     archetypeId: string,
     format: IndexedFormat,
     since: number | null,
     after: FinishKey | null,
-    limit: number
+    limit: number,
+    options: { readonly majors?: boolean } = {}
   ): FinishRow[] {
-    // After `after` in the list's own order (placing up, players down, date
-    // down, then the ids up).
+    // After `after` in the list's own order (majors first, then placing up,
+    // players down, date down, then the ids up). `t.kind IS NULL` is 0 for
+    // a major, 1 for an online event.
     const past = after
-      ? `AND (e.placing > ? OR (e.placing = ? AND (t.players < ? OR (t.players = ? AND (t.date < ? OR (t.date = ? AND (t.id > ? OR (t.id = ? AND e.player_id > ?))))))))`
+      ? `AND ((t.kind IS NULL) > ? OR ((t.kind IS NULL) = ? AND (e.placing > ? OR (e.placing = ? AND (t.players < ? OR (t.players = ? AND (t.date < ? OR (t.date = ? AND (t.id > ? OR (t.id = ? AND e.player_id > ?))))))))))`
       : '';
     const pastBindings: SqlValue[] = after
       ? [
+          after.major ? 0 : 1,
+          after.major ? 0 : 1,
           after.placing,
           after.placing,
           after.players,
@@ -1065,8 +1099,9 @@ export class DeckIndexStore {
        CROSS JOIN tournaments t ON t.id = e.tournament_id
        WHERE e.archetype_id = ? AND t.format = ? AND e.list_hash IS NOT NULL
          AND e.placing IS NOT NULL AND t.date >= ? AND t.state = 'indexed'
+         ${options.majors ? 'AND t.kind IS NOT NULL' : ''}
          ${past}
-       ORDER BY e.placing ASC, t.players DESC, t.date DESC, t.id ASC, e.player_id ASC
+       ORDER BY (t.kind IS NULL) ASC, e.placing ASC, t.players DESC, t.date DESC, t.id ASC, e.player_id ASC
        LIMIT ?`,
       archetypeId,
       format,

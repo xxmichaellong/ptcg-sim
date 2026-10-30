@@ -36,6 +36,10 @@ import {
 import { flushSync } from 'react-dom';
 
 import { usePreference } from '../../preferences/usePreference.js';
+import {
+  majorsPlayIn,
+  TOURNAMENT_PREFERENCES,
+} from './tournament-preferences.js';
 import { ActionMenu } from '../../ui/ActionMenu.js';
 import { toast } from '../../ui/toast.js';
 import { Tooltip } from '../../ui/Tooltip.js';
@@ -708,11 +712,17 @@ export const DeckHome = ({
   // Kept while the screen is put away, so it opens again as it was left
   // -- asked again if it had failed, or the index wasn't ready.
   const [searchAgain, setSearchAgain] = useState(0);
+  // Majors (Regionals and up) unless online events are asked for too, in
+  // one format (ADR-037 §9); majors alone in a format with none, nothing
+  // to ask.
+  const tournaments = usePreference(TOURNAMENT_PREFERENCES);
+  const searchable = tournaments.online || majorsPlayIn(tournaments.format);
   const search = useDeckSearch(
     paste,
-    mode === 'search',
+    mode === 'search' && searchable,
     undefined,
-    searchAgain
+    searchAgain,
+    { format: tournaments.format, majors: !tournaments.online }
   );
   const wasOpen = useRef(open);
   useEffect(() => {
@@ -940,6 +950,7 @@ export const DeckHome = ({
           <DeckSearchResults
             query={searchText(paste)}
             state={search}
+            searchable={searchable}
             pending={pendingList}
             onLoad={onLoadTournamentList}
             onAllLists={onOpenArchetype}

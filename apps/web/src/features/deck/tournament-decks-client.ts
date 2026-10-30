@@ -16,7 +16,9 @@ export const TOURNAMENT_DATA_SOURCE = Object.freeze({
   url: 'https://play.limitlesstcg.com/tournaments/completed?game=PTCG',
 });
 
-export type TournamentFormat = 'STANDARD' | 'EXPANDED';
+/** The formats whose lists the index keeps (ADR-037): 60-card decks. */
+export const TOURNAMENT_FORMATS = ['STANDARD', 'EXPANDED'] as const;
+export type TournamentFormat = (typeof TOURNAMENT_FORMATS)[number];
 
 /** An online event, or which kind of official major. */
 export type TournamentKind =
@@ -43,6 +45,8 @@ export interface TournamentRef {
   readonly date: string;
   readonly players: number;
   readonly format: string;
+  /** An online event, or which kind of major. */
+  readonly kind: TournamentKind;
 }
 
 export interface TournamentPlayer {
@@ -273,6 +277,7 @@ const decodeTournamentRef = (value: unknown): TournamentRef => {
     date: isoDate(value.date, 'tournament date'),
     players: count(value.players, 'players'),
     format: text(value.format, 40, 'format'),
+    kind: decodeKind(value.kind),
   };
 };
 
@@ -520,6 +525,8 @@ export const fetchDeckSearch = async (
   text: string,
   options: TournamentRequestOptions & {
     readonly format?: TournamentFormat;
+    /** Finishes at official majors alone. */
+    readonly majors?: boolean;
     readonly limit?: number;
   } = {}
 ): Promise<DeckSearchResponse> =>
@@ -528,6 +535,7 @@ export const fetchDeckSearch = async (
       `${DECK_SEARCH_PATH}${query({
         q: searchText(text),
         format: options.format,
+        kind: options.majors ? 'major' : undefined,
         limit: options.limit,
       })}`,
       options
@@ -538,6 +546,8 @@ export const fetchArchetypeFinishes = async (
   archetypeId: string,
   options: TournamentRequestOptions & {
     readonly format?: TournamentFormat;
+    /** Finishes at official majors alone. */
+    readonly majors?: boolean;
     readonly cursor?: string;
     /** How many days back; the server's default is 90. */
     readonly since?: number;
@@ -548,6 +558,7 @@ export const fetchArchetypeFinishes = async (
     await getJson(
       `${ARCHETYPE_PATH}/${archetypeId}${query({
         format: options.format,
+        kind: options.majors ? 'major' : undefined,
         since: options.since,
         cursor: options.cursor,
       })}`,

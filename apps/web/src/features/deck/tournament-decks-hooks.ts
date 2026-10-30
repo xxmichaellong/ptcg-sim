@@ -6,6 +6,7 @@ import {
   TournamentDataBusyError,
   TournamentDataRefusedError,
   type DeckSearchResult,
+  type TournamentFormat,
   type TournamentRequestOptions,
 } from './tournament-decks-client.js';
 
@@ -38,8 +39,15 @@ export const useDeckSearch = (
   enabled: boolean,
   search: typeof fetchDeckSearch = fetchDeckSearch,
   /** Changed, the same text is asked again. */
-  again = 0
+  again = 0,
+  /**
+   * What is searched (ADR-037 §9): a format, and majors alone or online
+   * events too. The server's own defaults (Standard, every event) without.
+   */
+  scope?: { readonly format: TournamentFormat; readonly majors: boolean }
 ): Remote<readonly DeckSearchResult[]> => {
+  const format = scope?.format;
+  const majors = scope?.majors === true;
   const [state, setState] = useState<Remote<readonly DeckSearchResult[]>>({
     status: 'idle',
   });
@@ -59,7 +67,11 @@ export const useDeckSearch = (
     );
     const controller = new AbortController();
     const timer = setTimeout(() => {
-      search(query, { signal: controller.signal }).then(
+      search(query, {
+        signal: controller.signal,
+        ...(format ? { format } : {}),
+        ...(majors ? { majors: true } : {}),
+      }).then(
         (answer) => {
           if (controller.signal.aborted) return;
           setState(
@@ -78,7 +90,7 @@ export const useDeckSearch = (
       clearTimeout(timer);
       controller.abort();
     };
-  }, [active, query, search, again]);
+  }, [active, query, search, again, format, majors]);
   return active ? state : { status: 'idle' };
 };
 
