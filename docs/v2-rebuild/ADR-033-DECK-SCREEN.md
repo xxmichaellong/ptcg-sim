@@ -1,7 +1,8 @@
 # ADR-033: the deck screen — saved decks, one-step import, real rules
 
 - Status: **ACCEPTED**
-- Decision date: 2026-10-15
+- Decision date: 2026-10-15; amended 2026-10-30 (whose deck the screen
+  works on, §14)
 - Scope: the deck screen (`apps/web/src/features/deck/`), the deck model and
   rules in `@ptcgsim/deck-core`, and how decks reach the table. The card
   data behind it is ADR-032.
@@ -247,6 +248,28 @@ specifically without blocking, and go from deck to table in one click.
     - **Fewer words.** Section headings name what is there ("Winning now",
       "Classics"); the import box's heading and hints are gone; "Edit a
       copy" now opens the copy it saves.
+14. **Whose deck it is** (2026-10-30). The owner: "it's not obvious enough
+    which deck i'm operating on - this outline is not nearly enough". The
+    active tray's outline (§13) gives way to a tab and its folder:
+    - **The chosen tray** is pulled out of the rack toward the player
+      (2px), filled in its seat's colour (P1 blue, you; P2 red), raised
+      rather than sunk, with a neck in that colour running down to the
+      rack's foot.
+    - **The band.** The neck meets a 3px band of the seat's colour across
+      the top of the screen below, with that colour's glow fading down the
+      desk: whatever shows there (the shelves, an event, the editor) is
+      that seat's. The colour is a registered property
+      (`--deck-seat-color`), so switching seats cross-fades it; the tray's
+      pull and fill ease over the same time (no pull under reduced motion).
+    - **The other tray** waits, quieter (dimmed, desaturated), until
+      pointed at or focused; its tooltip says "Switch to P2". The chosen
+      one's says "P1's deck (you)".
+    - **The editor** names the seat: a deck on the chosen seat has the
+      seat's chip before its name, at every size (it replaces "✓ On P1" at
+      the head's far end, which phones hid), and its sheet is edged in the
+      seat's colour. A deck not on it keeps "Use on P1".
+    - Ids, keys and focus are unchanged; online, the one tray (your deck)
+      is always the chosen one.
 
 ## Consequences
 

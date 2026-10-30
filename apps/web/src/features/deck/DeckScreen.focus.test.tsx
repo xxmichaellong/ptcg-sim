@@ -155,6 +155,42 @@ const escapeLeaves = async (): Promise<void> => {
   expect(closed).toHaveBeenCalledTimes(1);
 };
 
+describe('whose deck the screen works on', () => {
+  it("pulls out the chosen seat's tray, colours the screen its seat's, and lets the other wait", async () => {
+    await render(libraryOf('Abra'));
+    const screen = host.querySelector<HTMLElement>('.deck-screen')!;
+    const tray = (id: string) => button(id).closest<HTMLElement>('.deck-tray')!;
+    expect(screen.dataset['seat']).toBe('self');
+    expect(tray('#nativeDeckBuilderTargetMain').dataset['active']).toBe('true');
+    expect(
+      tray('#nativeDeckBuilderTargetAlt').dataset['active']
+    ).toBeUndefined();
+    await press(button('#nativeDeckBuilderTargetAlt'));
+    expect(screen.dataset['seat']).toBe('opponent');
+    expect(tray('#nativeDeckBuilderTargetAlt').dataset['active']).toBe('true');
+    expect(
+      tray('#nativeDeckBuilderTargetMain').dataset['active']
+    ).toBeUndefined();
+  });
+
+  it("names the seat by the deck's name in the editor once the deck is on it", async () => {
+    await render(libraryOf('Abra'));
+    await press(button('button[aria-label="Edit Abra"]'));
+    const editor = host.querySelector<HTMLElement>('.deck-editor')!;
+    // Not on P1 yet: no seat by its name, and Use on P1 offered.
+    expect(editor.dataset['onSeat']).toBeUndefined();
+    expect(editor.querySelector('.deck-editor__seat')).toBeNull();
+    await press(button('#deckUseOnSeatButton'));
+    const chip = editor.querySelector<HTMLElement>('.deck-editor__seat')!;
+    expect(editor.dataset['onSeat']).toBe('self');
+    expect(chip.dataset['seat']).toBe('self');
+    expect(chip.textContent).toBe('P1On P1');
+    expect(chip.closest('.deck-editor__name')).not.toBeNull();
+    // The chip says it: the old words at the head's far end are gone.
+    expect(editor.querySelector('.deck-editor__on-seat')).toBeNull();
+  });
+});
+
 describe('the deck screen keeps the focus on the screen', () => {
   it('opens the editor on itself, and closes it back to the deck’s tile, one Esc away from leaving', async () => {
     const library = libraryOf('Abra', 'Bulbasaur');

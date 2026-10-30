@@ -416,6 +416,11 @@ export const DeckEditor = ({
       ref={editor}
       className="deck-editor"
       data-tab={tab}
+      // The deck on the seat being worked on wears its colour (its chip by
+      // the name, its sheet's edge): whose deck this is, at a glance.
+      data-on-seat={
+        onSeat ? (target === 'main' ? 'self' : 'opponent') : undefined
+      }
       // Where the deck screen puts the focus as the editor opens: a control
       // there would show its tooltip, and the first Esc would only close it.
       role="region"
@@ -444,6 +449,19 @@ export const DeckEditor = ({
           </button>
         </Tooltip>
         <label className="deck-editor__name">
+          {onSeat ? (
+            <span
+              className="deck-editor__seat"
+              data-seat={target === 'main' ? 'self' : 'opponent'}
+            >
+              <span aria-hidden="true">{seat}</span>
+              <span className="ds-visually-hidden">
+                <Trans comment="The deck being edited is on this seat (P1, P2)">
+                  On {seat}
+                </Trans>
+              </span>
+            </span>
+          ) : null}
           <span className="ds-visually-hidden">
             <Trans>Deck name</Trans>
           </span>
@@ -597,17 +615,7 @@ export const DeckEditor = ({
               },
             ]}
           />
-          {onSeat ? (
-            <span
-              className="deck-editor__on-seat"
-              data-seat={target === 'main' ? 'self' : 'opponent'}
-            >
-              <CheckIcon {...decorative} weight="bold" />{' '}
-              <Trans comment="The deck is on this seat (P1, P2)">
-                On {seat}
-              </Trans>
-            </span>
-          ) : (
+          {onSeat ? null : (
             <button
               id="deckUseOnSeatButton"
               type="button"

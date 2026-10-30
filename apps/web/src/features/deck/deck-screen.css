@@ -9,7 +9,16 @@
  * itself, so the hover zoom's fixed position stays fixed to the window.
  */
 
+/* The seat being worked on: its colour, cross-faded as it changes (the
+   screen's data-seat), from its tray down into the band over the screen. */
+@property --deck-seat-color {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: transparent;
+}
+
 .deck-screen {
+  --deck-seat-color: var(--color-you);
   --deck-gutter: var(--space-4);
   --energy-grass: #4a9e45;
   --energy-fire: #d9532c;
@@ -40,6 +49,11 @@
   min-height: 0;
   color: var(--color-text);
   font-family: var(--font-ui);
+  transition: --deck-seat-color var(--duration-normal) var(--ease-out);
+}
+
+.deck-screen[data-seat='opponent'] {
+  --deck-seat-color: var(--color-opponent);
 }
 
 /* ---- Header: back, the seats' trays, Play --------------------------------- */
@@ -78,6 +92,7 @@
 .deck-tray {
   --seat-color: var(--color-you);
 
+  position: relative;
   display: flex;
   flex: 0 1 340px;
   align-items: center;
@@ -87,18 +102,72 @@
   border-radius: 14px;
   background: var(--color-surface-sunken);
   box-shadow: var(--deck-tray-inset);
-  transition: box-shadow var(--duration-fast) var(--ease-out);
+  transition:
+    box-shadow var(--duration-normal) var(--ease-out),
+    background-color var(--duration-normal) var(--ease-out),
+    opacity var(--duration-normal) var(--ease-out),
+    filter var(--duration-normal) var(--ease-out),
+    translate var(--duration-normal) var(--ease-out);
 }
 
 .deck-tray[data-seat='opponent'] {
   --seat-color: var(--color-opponent);
 }
 
+/* The seat being worked on: its tray pulled out of the rack toward you and
+   filled in its colour, its neck running down into the band that marks the
+   screen below as its own -- a tab and its folder. */
 .deck-tray[data-active='true'] {
+  background-color: color-mix(
+    in oklab,
+    var(--seat-color) 40%,
+    var(--color-surface-2)
+  );
   box-shadow:
-    var(--deck-tray-inset),
     0 0 0 1.5px var(--seat-color),
-    0 0 16px color-mix(in oklab, var(--seat-color) 32%, transparent);
+    0 6px 14px var(--deck-desk-shadow),
+    inset 0 1px 0 rgb(255 255 255 / 0.14);
+  translate: 0 2px;
+}
+
+.deck-tray[data-active='true']::after {
+  content: '';
+  position: absolute;
+  inset-inline: 22px;
+  top: calc(100% - 2px);
+  /* Down to the rack's foot (its padding, less the tray's pull). */
+  height: calc(var(--space-2) + 2px);
+  border-radius: 0 0 3px 3px;
+  background: var(--seat-color);
+  pointer-events: none;
+}
+
+/* The other seat waits in the rack, quieter, until it is pointed at. */
+.deck-tray:not([data-active='true']) {
+  opacity: 0.62;
+  filter: saturate(0.5);
+}
+
+.deck-tray:not([data-active='true']):focus-within {
+  opacity: 1;
+  filter: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .deck-tray:not([data-active='true']):hover {
+    opacity: 0.92;
+    filter: none;
+  }
+}
+
+:root[data-motion='reduced'] .deck-tray[data-active='true'] {
+  translate: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .deck-tray[data-active='true'] {
+    translate: none;
+  }
 }
 
 .deck-screen__seat {
@@ -286,6 +355,34 @@
   flex: 1;
   min-height: 0;
   overflow: hidden;
+  isolation: isolate;
+}
+
+/* The band the chosen tray's neck runs into, and its colour's glow down
+   the desk: whatever the screen shows below (the shelves, an event, the
+   editor) is that seat's. */
+.deck-screen__body::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: -1;
+  height: 140px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--deck-seat-color) 16%, transparent),
+    transparent
+  );
+  pointer-events: none;
+}
+
+.deck-screen__body::after {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 3;
+  height: 3px;
+  background: var(--deck-seat-color);
+  pointer-events: none;
 }
 
 .deck-screen__drop {
@@ -1223,12 +1320,40 @@ div.deck-tile__choose {
 }
 
 .deck-editor__name {
+  display: flex;
   flex: 1 1 220px;
+  align-items: center;
+  gap: var(--space-2);
   min-width: 160px;
   max-width: 420px;
 }
 
+/* The seat the deck is on, before its name: whose deck this is. */
+.deck-editor__seat {
+  flex: none;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--color-you);
+  box-shadow: 0 1px 3px rgb(10 6 2 / 0.3);
+  color: #fff;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.04em;
+}
+
+.deck-editor__seat[data-seat='opponent'] {
+  background: var(--color-opponent);
+}
+
+/* Its sheet edged in the seat's colour, seen wherever the list is
+   scrolled. */
+.deck-editor[data-on-seat] .deck-editor__pane--deck {
+  border-top: 3px solid var(--deck-seat-color);
+}
+
 .deck-editor__name .ds-input {
+  flex: 1;
+  min-width: 0;
   width: 100%;
   font-family: var(--font-display);
   font-size: var(--text-lg);
@@ -1263,20 +1388,6 @@ div.deck-tile__choose {
 
 .deck-editor__tools .ds-button {
   gap: var(--space-1-5);
-}
-
-.deck-editor__on-seat {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  padding: 0 var(--space-2);
-  color: var(--color-you);
-  font-size: var(--text-sm);
-  font-weight: var(--weight-semibold);
-}
-
-.deck-editor__on-seat[data-seat='opponent'] {
-  color: var(--color-opponent);
 }
 
 .deck-editor__tabs {
@@ -3248,8 +3359,7 @@ button.deck-check__issue {
 
   .deck-editor__back-label,
   .deck-editor__export-label,
-  .deck-editor__saved:not([data-unsaved='true']),
-  .deck-editor__on-seat {
+  .deck-editor__saved:not([data-unsaved='true']) {
     display: none;
   }
 

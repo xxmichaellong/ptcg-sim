@@ -1123,11 +1123,25 @@ export const DeckScreen = ({
               >
                 <Tooltip
                   content={
-                    seats.alternateEnabled
-                      ? slotTarget === 'main'
-                        ? t`Choose the deck for ${slotSeat} (you)`
-                        : t`Choose the deck for ${slotSeat}`
-                      : t`Your deck`
+                    !seats.alternateEnabled
+                      ? t`Your deck`
+                      : selected
+                        ? slotTarget === 'main'
+                          ? t({
+                              message: `${slotSeat}'s deck (you)`,
+                              comment:
+                                'The seat whose deck the deck screen works on (P1)',
+                            })
+                          : t({
+                              message: `${slotSeat}'s deck`,
+                              comment:
+                                'The seat whose deck the deck screen works on (P2)',
+                            })
+                        : t({
+                            message: `Switch to ${slotSeat}`,
+                            comment:
+                              "Work on the other seat's deck (P1, P2) on the deck screen",
+                          })
                   }
                   side="bottom"
                 >

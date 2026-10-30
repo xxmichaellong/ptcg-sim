@@ -1238,6 +1238,20 @@
     ],
     "translation": "{slotSeat}: {name}, {total, plural, one {# Karte} other {# Karten}}"
   },
+  "Xl3FPc": {
+    "message": "{slotSeat}'s deck",
+    "comments": [
+      "The seat whose deck the deck screen works on (P2)"
+    ],
+    "translation": ""
+  },
+  "7XuIFQ": {
+    "message": "{slotSeat}'s deck (you)",
+    "comments": [
+      "The seat whose deck the deck screen works on (P1)"
+    ],
+    "translation": ""
+  },
   "w6530e": {
     "message": "{speaker}: {text}",
     "comments": [
@@ -2252,14 +2266,6 @@
   "kT6WGB": {
     "message": "Choose a picture: {label}",
     "translation": "Bild auswählen: {label}"
-  },
-  "TvEJEL": {
-    "message": "Choose the deck for {slotSeat}",
-    "translation": "Wähle das Deck für {slotSeat}"
-  },
-  "-sQCd4": {
-    "message": "Choose the deck for {slotSeat} (you)",
-    "translation": "Wähle das Deck für {slotSeat} (du)"
   },
   "5rfWim": {
     "message": "Classics",
@@ -4592,7 +4598,7 @@
     "comments": [
       "A badge on a deck: the seat it is on (P1, P2)",
       "A badge on a deck: the seat it is on (P1, P2)",
-      "The deck is on this seat (P1, P2)"
+      "The deck being edited is on this seat (P1, P2)"
     ],
     "translation": "Auf {seat}"
   },
@@ -6401,6 +6407,13 @@
   "W2pBH8": {
     "message": "Switch special condition",
     "translation": "Speziellen Zustand wechseln"
+  },
+  "Aev_Co": {
+    "message": "Switch to {slotSeat}",
+    "comments": [
+      "Work on the other seat's deck (P1, P2) on the deck screen"
+    ],
+    "translation": ""
   },
   "Q1BDRW": {
     "message": "Switch with top of deck",
