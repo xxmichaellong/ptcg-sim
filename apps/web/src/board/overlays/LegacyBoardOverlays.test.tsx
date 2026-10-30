@@ -248,6 +248,7 @@ describe('legacy board overlays', () => {
       'toggleAbility',
       'setDamage',
       'setSpecialCondition',
+      'setReminder',
       'moveCard',
       'revealCard',
       'changeCardType',

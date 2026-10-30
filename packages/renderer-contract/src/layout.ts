@@ -1479,6 +1479,37 @@ export const layoutLegacyActiveQ0Markers = (
 };
 
 /**
+ * The reminder chips on a Pokémon's top card: a row across its lower part
+ * (its upper part, mirrored, on the far side), clear of the damage counter,
+ * the Special Condition and the Ability tab; centred, and smaller as more
+ * share the row.
+ */
+export const layoutReminderMarkers = (
+  cardBounds: Rect,
+  side: BoardSide,
+  count: number
+): readonly Rect[] => {
+  if (count <= 0) return [];
+  const size = Math.min(
+    cardBounds.width / 4.2,
+    cardBounds.width / (count + 0.6)
+  );
+  const gap = size * 0.12;
+  const row = count * size + (count - 1) * gap;
+  const left = cardBounds.x + (cardBounds.width - row) / 2;
+  const y =
+    side === 'local'
+      ? cardBounds.y + cardBounds.height * 0.72
+      : cardBounds.y + cardBounds.height * 0.28 - size;
+  return Array.from({ length: count }, (_, index) => ({
+    x: left + index * (size + gap),
+    y,
+    width: size,
+    height: size,
+  }));
+};
+
+/**
  * Exact physical marker boxes for the narrowly characterized sole-bench q0
  * card. Canonical bench state permits damage and ability-used markers but not
  * special conditions. Relative q0 placement matches the active helper; the

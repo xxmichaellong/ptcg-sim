@@ -4,8 +4,10 @@ import { isCardPresentation } from './card-presentation.js';
 import { playersHaveMutualCoachingConsent } from './coaching-consent.js';
 import { findCardLocations } from './location.js';
 import {
+  isStackReminder,
   MATCH_STATE_SCHEMA_VERSION,
   MAX_IMAGE_URL_CODE_UNITS,
+  STACK_REMINDERS,
   type MatchState,
 } from './model.js';
 
@@ -327,6 +329,19 @@ export const collectInvariantProblems = (
     }
     if (![0, 1, 2, 3].includes(stack.rotationQuarterTurns)) {
       problems.push(`stack ${stack.id} has invalid rotation`);
+    }
+    // Reminders, when any: known ones, each once, in their own order.
+    if (
+      stack.reminders !== undefined &&
+      (!Array.isArray(stack.reminders) ||
+        stack.reminders.length === 0 ||
+        !stack.reminders.every(isStackReminder) ||
+        stack.reminders.join() !==
+          STACK_REMINDERS.filter((reminder) =>
+            stack.reminders!.includes(reminder)
+          ).join())
+    ) {
+      problems.push(`stack ${stack.id} has invalid reminders`);
     }
   }
 

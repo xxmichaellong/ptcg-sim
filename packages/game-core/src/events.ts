@@ -13,6 +13,7 @@ import type {
   PlaySlot,
   QuarterTurns,
   SpecialCondition,
+  StackReminder,
   MatchState,
 } from './model.js';
 import type {
@@ -397,6 +398,12 @@ export type DomainEvent =
       readonly type: 'StackAbilitySet';
       readonly stackId: StackId;
       readonly used: boolean;
+    }
+  | {
+      readonly type: 'StackReminderSet';
+      readonly stackId: StackId;
+      readonly reminder: StackReminder;
+      readonly on: boolean;
     }
   | {
       readonly type: 'StackRotationSet';

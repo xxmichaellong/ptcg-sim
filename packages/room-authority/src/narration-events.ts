@@ -27,7 +27,8 @@ type Narration = Extract<
       | 'CardsResolved'
       | 'HandReplaced'
       | 'CardCategoryChanged'
-      | 'AbilityUsed';
+      | 'AbilityUsed'
+      | 'ReminderSet';
   }
 >;
 
@@ -740,6 +741,24 @@ const narrate = (
           playerId: stack.boardPlayerId,
           source: stack.slot,
           ...(cardName ? { cardName } : {}),
+        },
+      ];
+    }
+    case 'StackReminderSet': {
+      const stack =
+        state.stacks[event.stackId] ?? previousState.stacks[event.stackId];
+      const top = stack?.evolutionCardIds.at(-1);
+      if (!stack || !top) return [];
+      const cardName = publicName(state, previousState, top);
+      return [
+        {
+          type: 'ReminderSet',
+          revision,
+          playerId: stack.boardPlayerId,
+          source: stack.slot,
+          ...(cardName ? { cardName } : {}),
+          reminder: event.reminder,
+          on: event.on,
         },
       ];
     }

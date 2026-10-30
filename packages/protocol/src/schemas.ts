@@ -344,6 +344,22 @@ const SetAbilityUsedCommandSchema = v.object({
   used: v.boolean(),
 });
 
+/** The reminders a player can put on a Pokémon (game-core STACK_REMINDERS). */
+const StackReminderSchema = v.picklist([
+  'cantAttack',
+  'cantRetreat',
+  'takesLess',
+  'hitsHarder',
+  'noAbilities',
+] as const);
+
+const SetStackReminderCommandSchema = v.object({
+  type: v.literal('SetStackReminder'),
+  stackId: IdentifierSchema,
+  reminder: StackReminderSchema,
+  on: v.boolean(),
+});
+
 const SetCardAbilityUsedCommandSchema = v.object({
   type: v.literal('SetCardAbilityUsed'),
   cardId: IdentifierSchema,
@@ -416,6 +432,7 @@ export const WireCardStepSchema = v.variant('type', [
   SetDamageCommandSchema,
   SetSpecialConditionCommandSchema,
   SetAbilityUsedCommandSchema,
+  SetStackReminderCommandSchema,
   SetCardAbilityUsedCommandSchema,
   SetPublicRevealCommandSchema,
   RotateStackCommandSchema,
@@ -664,6 +681,7 @@ export const WireGameCommandSchema = v.variant('type', [
   SetDamageCommandSchema,
   SetSpecialConditionCommandSchema,
   SetAbilityUsedCommandSchema,
+  SetStackReminderCommandSchema,
   RotateStackCommandSchema,
   SetCardOrientationCommandSchema,
   SetCardAbilityUsedCommandSchema,
@@ -911,6 +929,8 @@ const StackViewSchema = v.object({
   damage: v.nullable(v.pipe(NonNegativeIntegerSchema, v.maxValue(9_990))),
   specialCondition: v.nullable(boundedString(16, 0)),
   abilityUsed: v.boolean(),
+  // Absent from a view made before reminders (a stored replay).
+  reminders: v.optional(v.pipe(v.array(StackReminderSchema), v.maxLength(5))),
 });
 
 const WorkAreaViewSchema = v.object({
@@ -1123,7 +1143,19 @@ const AbilityUsedPresentationEventSchema = v.object({
   cardName: v.optional(boundedString(256)),
 });
 
+/** A player put a reminder on a Pokémon in play, or took it off. */
+const ReminderSetPresentationEventSchema = v.object({
+  type: v.literal('ReminderSet'),
+  revision: RevisionSchema,
+  playerId: IdentifierSchema,
+  source: v.picklist(['active', 'bench'] as const),
+  cardName: v.optional(boundedString(256)),
+  reminder: StackReminderSchema,
+  on: v.boolean(),
+});
+
 export const PresentationEventSchema = v.variant('type', [
+  ReminderSetPresentationEventSchema,
   CardMovedPresentationEventSchema,
   CardsDrawnPresentationEventSchema,
   ZoneShuffledPresentationEventSchema,

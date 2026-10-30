@@ -30,6 +30,18 @@ const contrast = (
 };
 
 describe('marker presentation', () => {
+  it('shows a reminder as a slate chip of its own, named in its tooltip', () => {
+    const face = markerFace({ kind: 'reminder', value: 'cantAttack' });
+    expect(face).toMatchObject({ face: 'reminder', label: '' });
+    expect(contrast(face.ink, face.fill)).toBeGreaterThanOrEqual(4.5);
+    expect(markerHint({ kind: 'reminder', value: 'cantAttack' })).toBe(
+      "Reminder: Can't attack"
+    );
+    expect(markerHint({ kind: 'reminder', value: 'noAbilities' })).toBe(
+      'Reminder: No Abilities'
+    );
+  });
+
   it('puts a damage total on the biggest physical counter it reaches', () => {
     expect(
       ['10', '40', '49', '50', '90', '99', '100', '130', '9990'].map(

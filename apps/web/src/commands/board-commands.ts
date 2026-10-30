@@ -10,14 +10,20 @@ import { FolderOpenIcon } from '@phosphor-icons/react/dist/csr/FolderOpen';
 import { HandIcon } from '@phosphor-icons/react/dist/csr/Hand';
 import { HeartBreakIcon } from '@phosphor-icons/react/dist/csr/HeartBreak';
 import { MagnifyingGlassIcon } from '@phosphor-icons/react/dist/csr/MagnifyingGlass';
+import { PushPinIcon } from '@phosphor-icons/react/dist/csr/PushPin';
 import { ShuffleIcon } from '@phosphor-icons/react/dist/csr/Shuffle';
 import { SparkleIcon } from '@phosphor-icons/react/dist/csr/Sparkle';
 import { StackIcon } from '@phosphor-icons/react/dist/csr/Stack';
 import { TrashIcon } from '@phosphor-icons/react/dist/csr/Trash';
 import type { Icon } from '@phosphor-icons/react';
-import { MAX_COIN_FLIP_COUNT, type ViewCardId } from '@ptcgsim/game-core';
+import {
+  MAX_COIN_FLIP_COUNT,
+  STACK_REMINDERS,
+  type ViewCardId,
+} from '@ptcgsim/game-core';
 import {
   markerHint,
+  reminderName,
   selectedCardIdOf,
   type BoardIntent,
   type CardSceneNode,
@@ -46,6 +52,7 @@ import {
 import {
   CONDITION_CODES,
   CONDITIONS,
+  REMINDER_ICONS,
 } from '../board/overlays/MarkerControls.js';
 import type {
   LegacyBoardContextActionId,
@@ -442,6 +449,43 @@ export const boardCommands = (
               }),
             },
           ],
+        }),
+      });
+    }
+    if (menu.has('setReminder')) {
+      // Each reminder, said as it would change: put on, or taken off.
+      const on = view.stacks[card.parentId]?.reminders ?? [];
+      commands.push({
+        id: `${prefix}.reminder`,
+        title: t({
+          message: 'Reminder…',
+          comment:
+            "Command palette: put a reminder of a lasting effect on the selected Pokémon, or take one off (can't attack, takes less damage…).",
+        }),
+        section,
+        detail,
+        icon: PushPinIcon,
+        keywords: ['reminder', 'effect', 'attack', 'retreat', 'damage'],
+        submenu: () => ({
+          breadcrumb: t`Reminder`,
+          commands: STACK_REMINDERS.map((reminder): PaletteCommand => ({
+            id: `${prefix}.reminder.${reminder}`,
+            title: on.includes(reminder)
+              ? t({
+                  message: `Take off: ${reminderName(reminder)}`,
+                  comment:
+                    'Command palette: takes a reminder off the selected Pokémon. The reminder follows, e.g. "Take off: Can\'t attack".',
+                })
+              : reminderName(reminder),
+            section,
+            icon: REMINDER_ICONS[reminder],
+            run: overlay({
+              kind: 'context',
+              action: 'setReminder',
+              cardId: card.id,
+              reminder,
+            }),
+          })),
         }),
       });
     }

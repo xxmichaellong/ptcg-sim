@@ -40,7 +40,11 @@ import {
   analyzePlayerReset,
   resetReturnCapacityIsValid,
 } from './lifecycle-reset.js';
-import { MAX_DECK_CARDS, MAX_IMAGE_URL_CODE_UNITS } from './model.js';
+import {
+  isStackReminder,
+  MAX_DECK_CARDS,
+  MAX_IMAGE_URL_CODE_UNITS,
+} from './model.js';
 import type {
   CardDefinition,
   CardInstance,
@@ -2840,6 +2844,26 @@ export const decideCommand = (
         type: 'StackAbilitySet',
         stackId: command.stackId,
         used: command.used,
+      });
+    }
+    case 'SetStackReminder': {
+      const stack = state.stacks[command.stackId];
+      if (!stack)
+        return reject('not_found', `Stack ${command.stackId} does not exist`);
+      if (!isStackReminder(command.reminder)) {
+        return reject('invalid_command', 'Unknown reminder');
+      }
+      if ((stack.reminders ?? []).includes(command.reminder) === command.on) {
+        return reject(
+          'invalid_command',
+          command.on ? 'Reminder is already on' : 'Reminder is not on'
+        );
+      }
+      return accept({
+        type: 'StackReminderSet',
+        stackId: command.stackId,
+        reminder: command.reminder,
+        on: command.on,
       });
     }
     case 'RotateStack': {

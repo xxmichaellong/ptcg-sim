@@ -600,6 +600,23 @@ export const MODEL_COMMAND_GENERATORS = {
       ? { type: 'SetAbilityUsed', stackId: stack.id, used: !stack.abilityUsed }
       : undefined;
   },
+  SetStackReminder: (context) => {
+    const stack = context.random.pick(actorStacks(context));
+    if (!stack) return undefined;
+    const reminder = context.random.pick([
+      'cantAttack',
+      'cantRetreat',
+      'takesLess',
+      'hitsHarder',
+      'noAbilities',
+    ] as const)!;
+    return {
+      type: 'SetStackReminder',
+      stackId: stack.id,
+      reminder,
+      on: !(stack.reminders ?? []).includes(reminder),
+    };
+  },
   RotateStack: (context) => {
     const stack = context.random.pick(actorStacks(context));
     return stack

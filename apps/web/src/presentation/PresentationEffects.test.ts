@@ -618,6 +618,26 @@ describe('presentationEffectsForEvent', () => {
         cardName: 'Path to the Peak',
       })
     ).toBe('player:Blue used Path to the Peak');
+    expect(
+      line({
+        type: 'ReminderSet',
+        ...at,
+        source: 'active',
+        cardName: 'Pikachu',
+        reminder: 'cantAttack',
+        on: true,
+      })
+    ).toBe("player:Blue put a reminder on Pikachu: can't attack");
+    expect(
+      line({
+        type: 'ReminderSet',
+        ...at,
+        source: 'bench',
+        cardName: 'Pikachu',
+        reminder: 'noAbilities',
+        on: false,
+      })
+    ).toBe('player:Blue took the reminder off Pikachu: no Abilities');
   });
 
   it("names a group's cards after its line, counting the ones it hides (ADR-042 §6)", () => {

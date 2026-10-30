@@ -14,6 +14,7 @@ import type {
   PlaySlot,
   QuarterTurns,
   SpecialCondition,
+  StackReminder,
   MatchState,
 } from './model.js';
 
@@ -293,6 +294,13 @@ export type BaseGameCommand =
       readonly used: boolean;
     }
   | {
+      /** Puts a reminder on a Pokémon in play (`on`), or takes it off. */
+      readonly type: 'SetStackReminder';
+      readonly stackId: StackId;
+      readonly reminder: StackReminder;
+      readonly on: boolean;
+    }
+  | {
       readonly type: 'RotateStack';
       readonly stackId: StackId;
       readonly rotationQuarterTurns: QuarterTurns;
@@ -439,6 +447,7 @@ export const CARD_STEP_TYPES = [
   'SetDamage',
   'SetSpecialCondition',
   'SetAbilityUsed',
+  'SetStackReminder',
   'SetCardAbilityUsed',
   'SetPublicReveal',
   'RotateStack',

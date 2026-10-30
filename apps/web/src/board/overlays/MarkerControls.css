@@ -148,6 +148,25 @@
   }
 }
 
+/* A reminder on the Pokémon is filled in the chip's slate and ringed in its
+   navy (MarkerNode's reminder chip); one off is a plain button. */
+.ptcgsim-marker-controls__button.is-reminder {
+  width: 32px;
+  padding: 0;
+}
+
+.ptcgsim-marker-controls__button.is-reminder[aria-pressed='true'] {
+  background: rgb(228 234 244);
+  box-shadow: inset 0 0 0 2px rgb(58 80 122);
+  color: rgb(22 38 70);
+}
+
+@media (pointer: coarse) {
+  .ptcgsim-marker-controls__button.is-reminder {
+    width: 40px;
+  }
+}
+
 /* The damage, typed into: it reads as the number until it has the focus. */
 .ptcgsim-marker-controls__value {
   box-sizing: content-box;

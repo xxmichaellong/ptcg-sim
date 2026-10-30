@@ -13,6 +13,7 @@ import type {
   CardInstance,
   MatchState,
   QuarterTurns,
+  StackReminder,
 } from './model.js';
 
 export type ViewerRole =
@@ -123,6 +124,11 @@ export interface MatchViewState {
         readonly damage: number | null;
         readonly specialCondition: string | null;
         readonly abilityUsed: boolean;
+        /**
+         * The reminders on it (STACK_REMINDERS order). Projection always
+         * sends the list; a view from before reminders has none.
+         */
+        readonly reminders?: readonly StackReminder[];
       }
     >
   >;
@@ -376,6 +382,7 @@ export const projectMatch = (
           damage: stack.damage,
           specialCondition: stack.specialCondition,
           abilityUsed: stack.abilityUsed,
+          reminders: [...(stack.reminders ?? [])],
         },
       ])
     ),

@@ -812,6 +812,41 @@ export const presentationEffectsForEvent = (
             })
       );
     }
+    case 'ReminderSet': {
+      const name = playerName(view, event.playerId);
+      const card = narratedCardName(event.cardName);
+      const reminder = event.reminder;
+      return playerEffects(
+        event,
+        event.playerId,
+        event.on
+          ? msg({
+              message: `${name} put a reminder on ${card}: ${select(reminder, {
+                cantAttack: "can't attack",
+                cantRetreat: "can't retreat",
+                takesLess: 'takes less damage',
+                hitsHarder: 'attacks do more',
+                other: 'no Abilities',
+              })}`,
+              comment:
+                "Log line: a player put a reminder of a lasting effect on a Pokémon. {name} is a player's name, {card} the Pokémon's name; {reminder} is what the reminder says.",
+            })
+          : msg({
+              message: `${name} took the reminder off ${card}: ${select(
+                reminder,
+                {
+                  cantAttack: "can't attack",
+                  cantRetreat: "can't retreat",
+                  takesLess: 'takes less damage',
+                  hitsHarder: 'attacks do more',
+                  other: 'no Abilities',
+                }
+              )}`,
+              comment:
+                "Log line: a player took the reminder of a lasting effect off a Pokémon. {name} is a player's name, {card} the Pokémon's name; {reminder} is what the reminder said.",
+            })
+      );
+    }
     case 'CoinFlipped': {
       const name = playerName(view, event.playerId);
       const result = event.result;

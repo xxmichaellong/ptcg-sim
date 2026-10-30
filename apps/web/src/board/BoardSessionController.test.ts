@@ -1979,6 +1979,106 @@ describe('headless board session controller', () => {
     expect(cleared.overlays.marker ?? null).toBeNull();
   });
 
+  it("opens a Pokémon's reminders from its menu with none on, and they stay open as each goes on and off", () => {
+    let state = install();
+    const activeStack = state.view!.stacks['stack:blue:active']!;
+    const cardId = activeStack.evolutionCards.at(-1)!.id;
+    state = apply(state, {
+      kind: 'RendererIntent',
+      intent: { kind: 'CardContextRequested', cardId },
+    }).state;
+    // Nothing goes on as they open: the player picks which.
+    const opened = apply(state, {
+      kind: 'LegacyOverlayActionRequested',
+      request: { kind: 'context', action: 'setReminder', cardId },
+    });
+    expect(
+      opened.effects.filter((effect) => effect.kind === 'SubmitCommand')
+    ).toEqual([]);
+    expect(opened.state.overlays.marker).toEqual({
+      cardId,
+      kind: 'reminder',
+      takesFocus: true,
+    });
+    const put = apply(opened.state, {
+      kind: 'LegacyOverlayActionRequested',
+      request: {
+        kind: 'context',
+        action: 'setReminder',
+        cardId,
+        reminder: 'cantRetreat',
+      },
+    });
+    expect(put.effects).toEqual([
+      {
+        kind: 'SubmitCommand',
+        command: {
+          type: 'SetStackReminder',
+          stackId: activeStack.id,
+          reminder: 'cantRetreat',
+          on: true,
+        },
+      },
+    ]);
+    // On: the room publishes its chip; the controls stay for the next.
+    const withChip = apply(put.state, {
+      kind: 'FrameReceived',
+      frame: liveFrame(
+        2,
+        withRevision(
+          {
+            ...put.state.view!,
+            stacks: {
+              ...put.state.view!.stacks,
+              [activeStack.id]: { ...activeStack, reminders: ['cantRetreat'] },
+            },
+          },
+          put.state.view!.revision + 1
+        )
+      ),
+    }).state;
+    expect(withChip.overlays.marker).toMatchObject({
+      cardId,
+      kind: 'reminder',
+    });
+    const chip = withChip.scene!.markers.find(
+      (marker) => marker.kind === 'reminder' && marker.parentCardId === cardId
+    )!;
+    expect(chip.value).toBe('cantRetreat');
+    const off = apply(withChip, {
+      kind: 'LegacyOverlayActionRequested',
+      request: {
+        kind: 'context',
+        action: 'setReminder',
+        cardId,
+        reminder: 'cantRetreat',
+      },
+    });
+    expect(off.effects).toEqual([
+      {
+        kind: 'SubmitCommand',
+        command: {
+          type: 'SetStackReminder',
+          stackId: activeStack.id,
+          reminder: 'cantRetreat',
+          on: false,
+        },
+      },
+    ]);
+    // A press on its chip puts them away; another opens them again.
+    const closed = apply(withChip, {
+      kind: 'RendererIntent',
+      intent: { kind: 'MarkerPressed', markerId: chip.id },
+    }).state;
+    expect(closed.overlays.marker ?? null).toBeNull();
+    expect(
+      apply(closed, {
+        kind: 'RendererIntent',
+        intent: { kind: 'MarkerPressed', markerId: chip.id },
+      }).state.overlays.marker
+    ).toEqual({ cardId, kind: 'reminder' });
+  });
+
   it('opens the Special Condition chips beside its marker, putting Poisoned on when there was none', () => {
     let state = install();
     const activeStack = state.view!.stacks['stack:blue:active']!;

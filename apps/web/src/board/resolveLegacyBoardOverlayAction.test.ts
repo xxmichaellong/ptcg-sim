@@ -39,6 +39,7 @@ describe('legacy board overlay action resolver', () => {
       toggleAbility: 'command',
       setDamage: 'input',
       setSpecialCondition: 'input',
+      setReminder: 'input',
       shufflePrizes: 'command',
       togglePrizes: 'command',
       revealPrizes: 'command',

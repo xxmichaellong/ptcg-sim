@@ -129,6 +129,59 @@ describe('stack-state authority resolution', () => {
     ).toEqual({ accepted: false, code: 'unauthorized' });
   });
 
+  it('puts a reminder on a Pokémon for its owner, and for the opponent where the policy allows', () => {
+    const state = stateWithStack();
+    const stackId = state.boards[p1]!.activeStackId!;
+    const identities = emptyProjectionIdentityState();
+    const wire = {
+      type: 'SetStackReminder',
+      stackId,
+      reminder: 'cantAttack',
+      on: true,
+    } as const;
+    expect(
+      resolveWireCommand(
+        state,
+        identities,
+        playerSession(p1),
+        wire,
+        DEFAULT_AUTHORITY_POLICY
+      )
+    ).toEqual({
+      accepted: true,
+      command: {
+        type: 'SetStackReminder',
+        stackId,
+        reminder: 'cantAttack',
+        on: true,
+      },
+    });
+    expect(
+      resolveWireCommand(
+        state,
+        identities,
+        playerSession(p2),
+        wire,
+        DEFAULT_AUTHORITY_POLICY
+      ).accepted
+    ).toBe(true);
+    expect(
+      resolveWireCommand(state, identities, playerSession(p2), wire, {
+        ...DEFAULT_AUTHORITY_POLICY,
+        allowOpponentPublicInteraction: false,
+      })
+    ).toEqual({ accepted: false, code: 'unauthorized' });
+    expect(
+      resolveWireCommand(
+        state,
+        identities,
+        playerSession(p1),
+        { ...wire, stackId: 'no-such-stack' },
+        DEFAULT_AUTHORITY_POLICY
+      )
+    ).toEqual({ accepted: false, code: 'stale_reference' });
+  });
+
   it('resolves card annotations through recipient aliases and exact sources', () => {
     const state = stateWithStack();
     const stackId = state.boards[p1]!.activeStackId!;

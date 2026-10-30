@@ -93,6 +93,60 @@ const CONDITION_ART: Readonly<Record<string, ReactNode>> = {
   ),
 };
 
+const glyph = {
+  fill: 'none',
+  stroke: 'currentColor',
+  strokeWidth: 9,
+  strokeLinecap: 'round',
+  strokeLinejoin: 'round',
+} as const;
+
+/**
+ * A reminder chip's glyph, by the reminder (game-core STACK_REMINDERS), in
+ * the chip's ink: a struck-out sword (can't attack), an anchor (can't
+ * retreat), a shield (takes less damage), an upward arrow (attacks do more)
+ * and a prohibition sign (no Abilities). The tooltip names each.
+ */
+const REMINDER_ART: Readonly<Record<string, ReactNode>> = {
+  cantAttack: (
+    <svg {...artProps}>
+      <g {...glyph}>
+        <path d="M30 70 66 34M66 34l6-12-12 6M24 56l20 20M30 70l-9 9" />
+        <path strokeWidth="7" d="M20 22 80 82" />
+      </g>
+    </svg>
+  ),
+  cantRetreat: (
+    <svg {...artProps}>
+      <g {...glyph}>
+        <circle cx="50" cy="22" r="8" />
+        <path d="M50 30v52M36 44h28M22 62c4 14 16 20 28 20s24-6 28-20" />
+      </g>
+    </svg>
+  ),
+  takesLess: (
+    <svg {...artProps}>
+      <path
+        {...glyph}
+        d="M50 16 78 27v22c0 18-12 30-28 36-16-6-28-18-28-36V27Z"
+      />
+    </svg>
+  ),
+  hitsHarder: (
+    <svg {...artProps}>
+      <path fill="currentColor" d="M50 14 82 50H63v34H37V50H18Z" />
+    </svg>
+  ),
+  noAbilities: (
+    <svg {...artProps}>
+      <g {...glyph}>
+        <circle cx="50" cy="50" r="30" />
+        <path d="M29 29 71 71" />
+      </g>
+    </svg>
+  ),
+};
+
 const CheckGlyph = () => (
   <svg
     className="ptcgsim-marker__check"
@@ -130,7 +184,8 @@ const MarkerToken = ({
 }) => {
   const diameter =
     Math.min(marker.bounds.width, marker.bounds.height) * face.scale;
-  const art = CONDITION_ART[face.face];
+  const reminder = marker.kind === 'reminder';
+  const art = reminder ? REMINDER_ART[marker.value] : CONDITION_ART[face.face];
   return (
     <span
       className="ptcgsim-marker__token"
@@ -146,7 +201,7 @@ const MarkerToken = ({
       }
     >
       {art ?? null}
-      {art ? <span className="ptcgsim-marker__picture" /> : null}
+      {art && !reminder ? <span className="ptcgsim-marker__picture" /> : null}
       {face.label === '' ? null : (
         <span
           className="ptcgsim-marker__label"

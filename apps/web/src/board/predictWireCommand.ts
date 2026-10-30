@@ -2,6 +2,7 @@ import {
   activeWentAway,
   layOutPlayStackAcrossBoards,
   loneBenchedPromotions,
+  STACK_REMINDERS,
 } from '@ptcgsim/game-core';
 import type {
   ConcealedViewCard,
@@ -387,9 +388,11 @@ const attachTo = (stack: Stack, card: ViewCard): Stack => {
   };
 };
 
+/** Evolved, a Pokémon's reminders come off, as the room takes them off. */
 const evolveWith = (stack: Stack, card: ViewCard): Stack => ({
   ...stack,
   evolutionCards: [...stack.evolutionCards, card],
+  ...(stack.reminders?.length ? { reminders: [] } : {}),
 });
 
 /** Puts a new stack on a board the way the room lays it out. */
@@ -429,8 +432,9 @@ const placeNewStack = (
 
 /**
  * Boards laid out again with Pokémon moved between them (game-core's
- * PlayStacksRehomed): each one placed takes its board and slot, and a
- * benched one loses its Special Condition.
+ * PlayStacksRehomed): each one placed takes its board and slot, a benched
+ * one loses its Special Condition, and one leaving the Active Spot for the
+ * Bench its reminders.
  */
 const withBoardsRehomed = (
   view: MatchViewState,
@@ -455,6 +459,12 @@ const withBoardsRehomed = (
           boardPlayerId: playerId,
           slot,
           ...(slot === 'bench' ? { specialCondition: null } : {}),
+          // Its reminders come off going from the Active Spot to the Bench.
+          ...(slot === 'bench' &&
+          placed.slot === 'active' &&
+          placed.reminders?.length
+            ? { reminders: [] }
+            : {}),
         });
     }
   }
@@ -1273,6 +1283,20 @@ const predict = (
         ...stack,
         abilityUsed: command.used,
       }));
+    case 'SetStackReminder':
+      return updateStack(view, command.stackId, (stack) => {
+        const reminders = stack.reminders ?? [];
+        if (reminders.includes(command.reminder) === command.on) return stack;
+        const next = command.on
+          ? [...reminders, command.reminder]
+          : reminders.filter((reminder) => reminder !== command.reminder);
+        return {
+          ...stack,
+          reminders: STACK_REMINDERS.filter((reminder) =>
+            next.includes(reminder)
+          ),
+        };
+      });
     case 'RotateStack':
       return updateStack(view, command.stackId, (stack) => ({
         ...stack,

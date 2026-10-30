@@ -1144,6 +1144,64 @@ describe('renderer-neutral board scene', () => {
     }
   });
 
+  it("lays a Pokémon's reminders in a row on its card, clear of its other markers, on both sides", () => {
+    const layout = createBoardLayoutSnapshot(characterizedEvolutionLayoutState);
+    const base = createPristineActiveMarkerView();
+    const reminders = ['cantAttack', 'takesLess', 'noAbilities'] as const;
+    const view: MatchViewState = {
+      ...base,
+      stacks: Object.fromEntries(
+        Object.entries(base.stacks).map(([id, stack]) => [
+          id,
+          { ...stack, reminders },
+        ])
+      ),
+    };
+    const scene = createBoardScene(view, layout);
+    for (const playerId of [p1, p2]) {
+      const stack = view.stacks[`stack:${playerId}:active-markers`]!;
+      const cardId = stack.evolutionCards[0]!.id;
+      const card = scene.cards.find((candidate) => candidate.id === cardId)!;
+      const markers = scene.markers.filter(
+        (marker) => marker.parentCardId === cardId
+      );
+      // In the row, left to right, in their own order.
+      const chips = markers
+        .filter((marker) => marker.kind === 'reminder')
+        .sort((left, right) => left.bounds.x - right.bounds.x);
+      expect(chips.map((chip) => [chip.id, chip.value])).toEqual(
+        reminders.map((reminder) => [
+          `${cardId}:reminder:${reminder}`,
+          reminder,
+        ])
+      );
+      const inside = (rect: Rect) =>
+        rect.x >= card.bounds.x - 0.01 &&
+        rect.y >= card.bounds.y - 0.01 &&
+        rect.x + rect.width <= card.bounds.x + card.bounds.width + 0.01 &&
+        rect.y + rect.height <= card.bounds.y + card.bounds.height + 0.01;
+      const overlaps = (a: Rect, b: Rect) =>
+        a.x < b.x + b.width &&
+        b.x < a.x + a.width &&
+        a.y < b.y + b.height &&
+        b.y < a.y + a.height;
+      for (const chip of chips) {
+        expect(inside(chip.bounds)).toBe(true);
+        for (const other of markers.filter(
+          (marker) => marker.kind !== 'reminder'
+        ))
+          expect(overlaps(chip.bounds, other.bounds), other.kind).toBe(false);
+      }
+      // One row, left to right, none on another.
+      for (let index = 1; index < chips.length; index += 1) {
+        expect(chips[index]!.bounds.y).toBeCloseTo(chips[0]!.bounds.y);
+        expect(overlaps(chips[index]!.bounds, chips[index - 1]!.bounds)).toBe(
+          false
+        );
+      }
+    }
+  });
+
   it('uses exact play-slot card and pristine-q0 marker geometry on both sides', () => {
     const layout = createBoardLayoutSnapshot(characterizedEvolutionLayoutState);
     const markerCases = [

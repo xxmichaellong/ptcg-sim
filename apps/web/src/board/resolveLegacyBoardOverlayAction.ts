@@ -3,6 +3,7 @@ import { msg } from '@lingui/core/macro';
 import type {
   MatchViewState,
   PlayerId,
+  StackReminder,
   ViewCard,
   ViewCardId,
   WorkAreaCardsDestination,
@@ -35,6 +36,7 @@ export type LegacyBoardContextActionId =
   | 'toggleAbility'
   | 'setDamage'
   | 'setSpecialCondition'
+  | 'setReminder'
   | 'shufflePrizes'
   | 'togglePrizes'
   | 'revealPrizes'
@@ -103,6 +105,7 @@ type LegacyBoardContextActionWithoutInput = Exclude<
   LegacyBoardContextActionId,
   | 'setDamage'
   | 'setSpecialCondition'
+  | 'setReminder'
   | 'moveCard'
   | 'changeCardType'
   | LegacyBoardCountActionId
@@ -134,6 +137,13 @@ export type LegacyBoardOverlayActionRequest =
       readonly cardId: ViewCardId;
       /** Missing opens the editor; present submits its bounded text draft. */
       readonly value?: string;
+    }
+  | {
+      readonly kind: 'context';
+      readonly action: 'setReminder';
+      readonly cardId: ViewCardId;
+      /** Missing opens the controls; present puts it on, or takes it off. */
+      readonly reminder?: StackReminder;
     }
   | {
       readonly kind: 'context';
@@ -219,6 +229,7 @@ export const LEGACY_BOARD_CONTEXT_ACTION_REQUIREMENTS = {
   toggleAbility: 'command',
   setDamage: 'input',
   setSpecialCondition: 'input',
+  setReminder: 'input',
   shufflePrizes: 'command',
   togglePrizes: 'command',
   revealPrizes: 'command',
@@ -295,8 +306,17 @@ export interface LegacyBoardSpecialConditionEditor {
   readonly initialValue: string;
 }
 
+/** A Pokémon's reminders, put on and off with their controls. */
+export interface LegacyBoardReminderEditor {
+  readonly kind: 'reminder';
+  readonly cardId: ViewCardId;
+  readonly initialValue: string;
+}
+
 export type LegacyBoardMarkerEditor =
-  LegacyBoardDamageEditor | LegacyBoardSpecialConditionEditor;
+  | LegacyBoardDamageEditor
+  | LegacyBoardSpecialConditionEditor
+  | LegacyBoardReminderEditor;
 
 export type LegacyBoardOverlayInput =
   LegacyBoardMarkerEditor | LegacyBoardCountPrompt;
@@ -538,6 +558,23 @@ const resolveContextAction = (
           ? command(resolution.command)
           : rejected(resolution.reason);
       }
+    case 'setReminder': {
+      // On any Pokémon in play, Benched ones too: whichever of its cards.
+      const stack = located.stack;
+      if (!stack) return rejected('unsupported_target');
+      if (request.reminder === undefined) {
+        return {
+          ok: true,
+          input: { kind: 'reminder', cardId: request.cardId, initialValue: '' },
+        };
+      }
+      return command({
+        type: 'SetStackReminder',
+        stackId: stack.id,
+        reminder: request.reminder,
+        on: !(stack.reminders ?? []).includes(request.reminder),
+      });
+    }
     case 'shufflePrizes':
       return zone?.ownerId === viewerId
         ? commandForShuffle(view, zone, 'prizes', viewerId)

@@ -1003,6 +1003,13 @@
     ],
     "translation": "Prize của {name}"
   },
+  "3xOj4K": {
+    "message": "{name} put a reminder on {card}: {reminder, select, cantAttack {can't attack} cantRetreat {can't retreat} takesLess {takes less damage} hitsHarder {attacks do more} other {no Abilities}}",
+    "comments": [
+      "Log line: a player put a reminder of a lasting effect on a Pokémon. {name} is a player's name, {card} the Pokémon's name; {reminder} is what the reminder says."
+    ],
+    "translation": ""
+  },
   "g7DH0W": {
     "message": "{name} reconnected",
     "comments": [
@@ -1044,6 +1051,13 @@
       "Read aloud by screen readers. {name} is a player's name, {turn} the turn number."
     ],
     "translation": "{name} bắt đầu lượt {turn}"
+  },
+  "o0uSnf": {
+    "message": "{name} took the reminder off {card}: {reminder, select, cantAttack {can't attack} cantRetreat {can't retreat} takesLess {takes less damage} hitsHarder {attacks do more} other {no Abilities}}",
+    "comments": [
+      "Log line: a player took the reminder of a lasting effect off a Pokémon. {name} is a player's name, {card} the Pokémon's name; {reminder} is what the reminder said."
+    ],
+    "translation": ""
   },
   "I_6aBo": {
     "message": "{name} used {card}",
@@ -1797,6 +1811,13 @@
     "message": "Attack payable with",
     "translation": "Chiêu thức trả được bằng"
   },
+  "mh0djA": {
+    "message": "Attacks do more",
+    "comments": [
+      "A reminder on a Pokémon: an effect raises its attacks' damage."
+    ],
+    "translation": ""
+  },
   "cBTHD8": {
     "message": "Auto",
     "context": "table depth setting",
@@ -2031,6 +2052,13 @@
     "message": "Busy for a moment — try again shortly",
     "translation": "Đang bận một lúc, hãy thử lại sau"
   },
+  "lH0EQo": {
+    "message": "Can't attack",
+    "comments": [
+      "A reminder on a Pokémon: an effect stops it attacking."
+    ],
+    "translation": ""
+  },
   "2lorx9": {
     "message": "Can't be changed",
     "translation": "Không thể thay đổi"
@@ -2042,6 +2070,13 @@
   "Sq35G-": {
     "message": "Can't read the clipboard",
     "translation": "Không đọc được bộ nhớ tạm"
+  },
+  "JRqWr0": {
+    "message": "Can't retreat",
+    "comments": [
+      "A reminder on a Pokémon: an effect stops it retreating."
+    ],
+    "translation": ""
   },
   "dEgA5A": {
     "message": "Cancel",
@@ -4325,6 +4360,13 @@
     "context": "filter",
     "translation": "Không"
   },
+  "qZPn9i": {
+    "message": "No Abilities",
+    "comments": [
+      "A reminder on a Pokémon: an effect stops its Abilities."
+    ],
+    "translation": ""
+  },
   "we3XEV": {
     "message": "No actions available",
     "translation": "Không có hành động nào"
@@ -5223,6 +5265,34 @@
     "message": "Relaxed",
     "context": "animation speed",
     "translation": "Thong thả"
+  },
+  "_kpR4w": {
+    "message": "Reminder",
+    "comments": [
+      "Card menu: opens the reminders a player can put on a Pokémon for an effect that lasts (can't attack, takes less damage…)."
+    ],
+    "translation": ""
+  },
+  "7I9AYm": {
+    "message": "Reminder: {name}",
+    "comments": [
+      "Tooltip of a reminder chip on a Pokémon, e.g. \"Reminder: Can't attack\". {name} is what it reminds of."
+    ],
+    "translation": ""
+  },
+  "J6vBFG": {
+    "message": "Reminder…",
+    "comments": [
+      "Command palette: put a reminder of a lasting effect on the selected Pokémon, or take one off (can't attack, takes less damage…)."
+    ],
+    "translation": ""
+  },
+  "crwali": {
+    "message": "Reminders",
+    "comments": [
+      "The controls for the reminders on a Pokémon (can't attack, takes less damage…)."
+    ],
+    "translation": ""
   },
   "HLazKQ": {
     "message": "Remove {name}",
@@ -6381,6 +6451,20 @@
   "rQdoKU": {
     "message": "Take off damage…",
     "translation": "Gỡ sát thương…"
+  },
+  "FhC_zf": {
+    "message": "Take off: {0}",
+    "comments": [
+      "Command palette: takes a reminder off the selected Pokémon. The reminder follows, e.g. \"Take off: Can't attack\"."
+    ],
+    "translation": ""
+  },
+  "ACKCfc": {
+    "message": "Takes less damage",
+    "comments": [
+      "A reminder on a Pokémon: an effect reduces the damage it takes."
+    ],
+    "translation": ""
   },
   "O3tcf1": {
     "message": "Tap <0>{0}</0> in your hand, then <1>{1}</1>.",

@@ -72,6 +72,7 @@ describe('MarkerControls', () => {
       submitDamageInput: vi.fn(),
       submitSpecialConditionInput: vi.fn(),
       invokeContextAction: vi.fn(),
+      submitReminder: vi.fn(),
     };
   });
 
@@ -293,6 +294,41 @@ describe('MarkerControls', () => {
     expect(actions.submitSpecialConditionInput.mock.calls).toEqual([
       [cardId, 'B'],
       [cardId, ''],
+    ]);
+  });
+
+  it('puts each reminder on or takes it off, pressed while it is on', () => {
+    const state = {
+      ...stateWith(marker('reminder', 'cantAttack')),
+      view: {
+        stacks: {
+          'stack:active': {
+            evolutionCards: [{ id: cardId }],
+            reminders: ['cantAttack'],
+          },
+        },
+      },
+    } as unknown as BoardSessionControllerState;
+    act(() =>
+      root.render(
+        <MarkerControls
+          state={state}
+          actions={actions as unknown as MarkerControlsActions}
+        />
+      )
+    );
+    expect(
+      host.querySelector('.ptcgsim-marker-controls')?.getAttribute('aria-label')
+    ).toBe('Reminders');
+    expect(button("Can't attack").getAttribute('aria-pressed')).toBe('true');
+    expect(button('Takes less damage').getAttribute('aria-pressed')).toBe(
+      'false'
+    );
+    act(() => button('Takes less damage').click());
+    act(() => button("Can't attack").click());
+    expect(actions.submitReminder.mock.calls).toEqual([
+      [cardId, 'takesLess'],
+      [cardId, 'cantAttack'],
     ]);
   });
 

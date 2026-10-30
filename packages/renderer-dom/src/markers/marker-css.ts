@@ -62,6 +62,19 @@ export const BOARD_MARKER_CSS = `
   border-radius: 50%;
   background: none center / cover no-repeat;
 }
+/* A reminder a player put on: a rounded square, set apart from the round
+   condition chips, its glyph inset from the rim. */
+.ptcgsim-marker__token[data-marker-face='reminder'] {
+  border-radius: 26%;
+  outline: max(1px, calc(var(--ptcgsim-marker-d, 20px) * 0.07)) solid
+    var(--ptcgsim-marker-rim);
+  outline-offset: calc(var(--ptcgsim-marker-d, 20px) * -0.07);
+}
+.ptcgsim-marker__token[data-marker-face='reminder'] .ptcgsim-marker__art {
+  inset: 18%;
+  width: 64%;
+  height: 64%;
+}
 .ptcgsim-marker__token[data-marker-face='poisoned'] .ptcgsim-marker__picture {
   background-image: var(--ptcgsim-condition-poisoned, none);
 }

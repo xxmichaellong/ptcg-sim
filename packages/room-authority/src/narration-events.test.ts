@@ -533,6 +533,58 @@ describe('battle-log narration', () => {
     expect(unrecorded[0]!.playerId).toBe(p1);
   });
 
+  it('tells a reminder put on a Pokémon and taken off, naming it and what it says', () => {
+    const { state, context } = table();
+    const hand = state.zones[playerZoneId(p1, 'hand')]!;
+    const cardId = hand.cardIds.find(
+      (id) =>
+        state.definitions[state.cards[id]!.definitionId]!.category === 'Pokémon'
+    )!;
+    const name = state.definitions[state.cards[cardId]!.definitionId]!.name;
+    const played = step(
+      state,
+      {
+        type: 'MoveCardToPlay',
+        cardId,
+        expectedSourceZoneId: hand.id,
+        boardPlayerId: p1,
+        slot: 'active',
+      },
+      context
+    );
+    const stackId = played.state.boards[p1]!.activeStackId!;
+    const on = step(
+      played.state,
+      { type: 'SetStackReminder', stackId, reminder: 'cantAttack', on: true },
+      context
+    );
+    expect(on.narration).toEqual([
+      {
+        type: 'ReminderSet',
+        revision: on.state.revision,
+        playerId: p1,
+        source: 'active',
+        cardName: name,
+        reminder: 'cantAttack',
+        on: true,
+      },
+    ]);
+    const off = step(
+      on.state,
+      { type: 'SetStackReminder', stackId, reminder: 'cantAttack', on: false },
+      context
+    );
+    expect(off.narration).toEqual([
+      expect.objectContaining({ type: 'ReminderSet', on: false }),
+    ]);
+    // Published as part of the batch's log, as any line is.
+    expect(
+      presentationEventsForBatch(off.batch, off.state, on.state).map(
+        (event) => event.type
+      )
+    ).toContain('ReminderSet');
+  });
+
   it('leaves the turn draw to "drew for turn"', () => {
     const { state, context } = table();
     const turn = step(state, { type: 'StartTurn', playerId: p1 }, context);

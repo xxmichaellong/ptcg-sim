@@ -26,11 +26,13 @@ import {
   createBoardLayoutSnapshot,
   findBoardLayoutRegion,
   LEGACY_BOARD_RESIZER_V1,
+  LEGACY_BOARD_Z_ORDER_V1,
   layoutLegacyActiveQ0Markers,
   layoutLegacyContainedCard,
   layoutLegacyPlayRow,
   layoutLegacyWorkAreaCards,
   layoutLegacyWorkAreaPanel,
+  layoutReminderMarkers,
   legacyPileTopIndex,
   type BoardLayoutRegion,
   type BoardLayoutSnapshot,
@@ -767,7 +769,10 @@ const addMarkers = (
     painted,
     topCard.side === 'opponent' ? 'opponent' : 'local'
   );
-  const marker = (kind: MarkerSceneNode['kind'], value: string) => {
+  const marker = (
+    kind: Exclude<MarkerSceneNode['kind'], 'reminder'>,
+    value: string
+  ) => {
     const item = layout[kind];
     markers.push({
       // Marker identity follows the visible host card. This keeps ordinary
@@ -789,6 +794,26 @@ const addMarkers = (
   if (stack.specialCondition !== null)
     marker('specialCondition', stack.specialCondition);
   if (stack.abilityUsed) marker('abilityUsed', 'used');
+  // Its reminders, each a chip of its own in a row.
+  const reminders = stack.reminders ?? [];
+  const chips = layoutReminderMarkers(
+    painted,
+    topCard.side === 'opponent' ? 'opponent' : 'local',
+    reminders.length
+  );
+  reminders.forEach((reminder, index) => {
+    markers.push({
+      id: `${topCard.id}:reminder:${reminder}`,
+      parentCardId: topCard.id,
+      side: topCard.side,
+      kind: 'reminder',
+      presentation,
+      value: reminder,
+      bounds: copyRect(chips[index]!),
+      zIndex: topCard.zIndex + LEGACY_BOARD_Z_ORDER_V1.marker,
+      label: `reminder: ${reminder}`,
+    });
+  });
 };
 
 const addCardAbilityMarker = (
@@ -825,6 +850,7 @@ const MARKER_PAINT_ORDER: Readonly<Record<MarkerSceneNode['kind'], number>> = {
   damage: 0,
   specialCondition: 1,
   abilityUsed: 2,
+  reminder: 3,
 };
 
 const MARKER_PRESENTATION_ORDER: Readonly<

@@ -1099,6 +1099,14 @@ export const RemoteSessionBoard = ({
           value,
         });
       },
+      submitReminder: (cardId, reminder) => {
+        runtimeRef.current?.emitLegacyOverlayAction({
+          kind: 'context',
+          action: 'setReminder',
+          cardId,
+          reminder,
+        });
+      },
       submitCountInput: (action, cardId, value) => {
         runtimeRef.current?.emitLegacyOverlayAction({
           kind: 'context',

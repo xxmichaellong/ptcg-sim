@@ -45,7 +45,8 @@ export type MarkerFaceKind =
   | 'damage-100'
   | SpecialConditionKind
   | 'condition-note'
-  | 'ability-used';
+  | 'ability-used'
+  | 'reminder';
 
 export interface MarkerFace {
   readonly face: MarkerFaceKind;
@@ -172,6 +173,54 @@ const ABILITY_FACE: Omit<MarkerFace, 'label'> = {
 };
 
 /**
+ * A reminder a player put on a Pokémon (game-core STACK_REMINDERS): a slate
+ * chip with a navy rim, its glyph (MarkerNode) in navy ink, 11:1 on the
+ * fill -- set apart from the official condition chips' gold rims.
+ */
+const REMINDER_FACE: Omit<MarkerFace, 'label'> = {
+  face: 'reminder',
+  fill: rgb(228, 234, 244),
+  rim: rgb(58, 80, 122),
+  ink: rgb(22, 38, 70),
+  scale: 1,
+};
+
+/** What a reminder says, by its key (game-core STACK_REMINDERS). */
+export const reminderName = (reminder: string): string => {
+  switch (reminder) {
+    case 'cantAttack':
+      return t({
+        message: "Can't attack",
+        comment: 'A reminder on a Pokémon: an effect stops it attacking.',
+      });
+    case 'cantRetreat':
+      return t({
+        message: "Can't retreat",
+        comment: 'A reminder on a Pokémon: an effect stops it retreating.',
+      });
+    case 'takesLess':
+      return t({
+        message: 'Takes less damage',
+        comment:
+          'A reminder on a Pokémon: an effect reduces the damage it takes.',
+      });
+    case 'hitsHarder':
+      return t({
+        message: 'Attacks do more',
+        comment:
+          "A reminder on a Pokémon: an effect raises its attacks' damage.",
+      });
+    case 'noAbilities':
+      return t({
+        message: 'No Abilities',
+        comment: 'A reminder on a Pokémon: an effect stops its Abilities.',
+      });
+    default:
+      return reminder;
+  }
+};
+
+/**
  * The counter a damage total is painted on: the biggest physical counter it
  * reaches. A value that is not a number keeps the smallest counter.
  */
@@ -223,6 +272,7 @@ export const markerFace = (
       ? { ...CONDITION_FACES[kind], label: '' }
       : { ...CONDITION_FACES['condition-note'], label: marker.value.trim() };
   }
+  if (marker.kind === 'reminder') return { ...REMINDER_FACE, label: '' };
   return {
     ...ABILITY_FACE,
     label: t({
@@ -234,7 +284,8 @@ export const markerFace = (
 
 /**
  * What a marker's tooltip says: the damage on the Pokémon, the condition by
- * name (or the note a player typed), or that its Ability was used.
+ * name (or the note a player typed), that its Ability was used, or what a
+ * reminder reminds of.
  */
 export const markerHint = (
   marker: Pick<MarkerSceneNode, 'kind' | 'value'>
@@ -249,6 +300,14 @@ export const markerHint = (
     return t({
       message: 'Ability used',
       comment: 'Tooltip of the marker on a Pokémon whose Ability was used.',
+    });
+  }
+  if (marker.kind === 'reminder') {
+    const name = reminderName(marker.value);
+    return t({
+      message: `Reminder: ${name}`,
+      comment:
+        'Tooltip of a reminder chip on a Pokémon, e.g. "Reminder: Can\'t attack". {name} is what it reminds of.',
     });
   }
   switch (specialConditionKind(marker.value)) {

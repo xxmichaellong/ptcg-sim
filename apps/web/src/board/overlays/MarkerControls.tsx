@@ -1,10 +1,18 @@
 import { useLingui } from '@lingui/react/macro';
+import { AnchorIcon } from '@phosphor-icons/react/dist/csr/Anchor';
+import { BoxingGloveIcon } from '@phosphor-icons/react/dist/csr/BoxingGlove';
 import { MinusIcon } from '@phosphor-icons/react/dist/csr/Minus';
 import { PlusIcon } from '@phosphor-icons/react/dist/csr/Plus';
+import { ProhibitIcon } from '@phosphor-icons/react/dist/csr/Prohibit';
+import { ShieldIcon } from '@phosphor-icons/react/dist/csr/Shield';
+import { SwordIcon } from '@phosphor-icons/react/dist/csr/Sword';
 import { TrashIcon } from '@phosphor-icons/react/dist/csr/Trash';
+import type { Icon } from '@phosphor-icons/react';
 import {
   layoutLegacyActiveQ0Markers,
+  layoutReminderMarkers,
   markerHint,
+  reminderName,
   specialConditionKind,
   type BoardDepthProjection,
   type MarkerSceneNode,
@@ -18,7 +26,11 @@ import {
   type ReactNode,
 } from 'react';
 
-import type { ViewCardId } from '@ptcgsim/game-core';
+import {
+  STACK_REMINDERS,
+  type StackReminder,
+  type ViewCardId,
+} from '@ptcgsim/game-core';
 
 import { TOUCH_ONLY_QUERY, useMediaQuery } from '../../ui/breakpoints.js';
 import { Tooltip } from '../../ui/Tooltip.js';
@@ -41,7 +53,21 @@ export interface MarkerControlsActions {
     action: 'toggleAbility',
     cardId: ViewCardId
   ) => void;
+  /** Puts a reminder on the Pokémon, or takes it off when it is on. */
+  readonly submitReminder: (
+    cardId: ViewCardId,
+    reminder: StackReminder
+  ) => void;
 }
+
+/** Each reminder's icon in its controls, as its chip draws it (MarkerNode). */
+export const REMINDER_ICONS: Readonly<Record<StackReminder, Icon>> = {
+  cantAttack: SwordIcon,
+  cantRetreat: AnchorIcon,
+  takesLess: ShieldIcon,
+  hitsHarder: BoxingGloveIcon,
+  noAbilities: ProhibitIcon,
+};
 
 /** The most damage a Pokémon can carry (the room's limit). */
 const DAMAGE_MAXIMUM = 9_990;
@@ -145,7 +171,11 @@ export const markerControlsMarker = (
       marker.parentCardId === controls.cardId && marker.kind === controls.kind
   );
   if (lying) return lying;
-  if (controls.kind !== 'damage' || !state.view) return null;
+  if (
+    (controls.kind !== 'damage' && controls.kind !== 'reminder') ||
+    !state.view
+  )
+    return null;
   const stack = Object.values(state.view.stacks).find(
     (candidate) => candidate.evolutionCards.at(-1)?.id === controls.cardId
   );
@@ -162,6 +192,22 @@ export const markerControlsMarker = (
           width: card.bounds.height,
           height: card.bounds.width,
         };
+  if (controls.kind === 'reminder') {
+    // No reminder on it yet: where the first chip will go.
+    const [first] = layoutReminderMarkers(painted, card.side, 1);
+    return {
+      id: `${card.id}:reminder-controls`,
+      parentCardId: card.id,
+      side: card.side,
+      kind: 'reminder',
+      presentation:
+        stack.slot === 'active' ? 'legacyActiveQ0' : 'legacyBenchQ0',
+      value: '',
+      bounds: first!,
+      zIndex: card.zIndex + 100,
+      label: '',
+    };
+  }
   const item = layoutLegacyActiveQ0Markers(painted, card.side).damage;
   return {
     id: `${card.id}:damage-controls`,
@@ -512,6 +558,31 @@ export const MarkerControls = ({
         </ControlButton>
       </>
     );
+  } else if (marker.kind === 'reminder') {
+    // Every reminder, pressed while it is on: a press puts it on or takes
+    // it off.
+    const on =
+      Object.values(state.view?.stacks ?? {}).find(
+        (stack) => stack.evolutionCards.at(-1)?.id === cardId
+      )?.reminders ?? [];
+    controls = (
+      <>
+        {STACK_REMINDERS.map((reminder) => {
+          const ReminderIcon = REMINDER_ICONS[reminder];
+          return (
+            <ControlButton
+              key={reminder}
+              label={reminderName(reminder)}
+              className="is-reminder"
+              pressed={on.includes(reminder)}
+              onPress={() => actions.submitReminder(cardId, reminder)}
+            >
+              <ReminderIcon weight="bold" aria-hidden="true" />
+            </ControlButton>
+          );
+        })}
+      </>
+    );
   } else {
     controls = (
       <>
@@ -550,7 +621,15 @@ export const MarkerControls = ({
       data-marker-controls-for={marker.id}
       data-marker-controls-card={marker.parentCardId}
       role="group"
-      aria-label={markerHint(marker)}
+      aria-label={
+        marker.kind === 'reminder'
+          ? t({
+              message: 'Reminders',
+              comment:
+                "The controls for the reminders on a Pokémon (can't attack, takes less damage…).",
+            })
+          : markerHint(marker)
+      }
       data-side={side}
       style={{
         left,

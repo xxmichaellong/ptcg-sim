@@ -115,6 +115,7 @@ export type ReactDomProtectedOverlayAction =
       readonly value?: string;
       readonly category?: LegacyBoardCategoryChoice;
       readonly destination?: LegacyBoardMoveChoice;
+      readonly reminder?: string;
     }
   | {
       readonly kind: 'zone';
@@ -627,6 +628,20 @@ export const mountReactDomProtectedInputHarness = async (
         action: 'setSpecialCondition',
         cardId,
         value,
+      });
+    },
+    submitReminder: (cardId, reminder) => {
+      overlayActions.push({
+        kind: 'context',
+        action: 'setReminder',
+        cardId: String(cardId),
+        reminder,
+      });
+      runtime.emitLegacyOverlayAction({
+        kind: 'context',
+        action: 'setReminder',
+        cardId,
+        reminder,
       });
     },
     submitCountInput: (action, cardId, value) => {

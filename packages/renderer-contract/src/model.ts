@@ -254,7 +254,11 @@ export interface MarkerSceneNode {
   readonly id: string;
   readonly parentCardId: ViewCardId;
   readonly side: BoardSide | 'shared';
-  readonly kind: 'damage' | 'specialCondition' | 'abilityUsed';
+  /**
+   * `reminder`: a lasting effect a player marked on the Pokémon; `value`
+   * is which (game-core STACK_REMINDERS), one marker each.
+   */
+  readonly kind: 'damage' | 'specialCondition' | 'abilityUsed' | 'reminder';
   readonly presentation: 'generic' | 'legacyActiveQ0' | 'legacyBenchQ0';
   readonly value: string;
   readonly bounds: Rect;

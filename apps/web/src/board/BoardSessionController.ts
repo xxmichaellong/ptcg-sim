@@ -653,8 +653,9 @@ const openMarker = (
 
 /**
  * Whether a marker's controls stay open: while the marker lies on its card;
- * a Pokémon's damage controls, while it is in play with or without a counter
- * (they put the first one on, and stepping down to none leaves them open).
+ * a Pokémon's damage and reminder controls, while it is in play with or
+ * without one (damage's put the first counter on, and stepping down to none
+ * leaves them open; reminders' open before any and stay as the last goes).
  */
 const markerControlsStayOpen = (
   view: MatchViewState,
@@ -662,7 +663,7 @@ const markerControlsStayOpen = (
   controls: BoardMarkerControlsState | null | undefined
 ): boolean =>
   openMarker(scene, controls) !== null ||
-  (controls?.kind === 'damage' &&
+  ((controls?.kind === 'damage' || controls?.kind === 'reminder') &&
     hasCard(scene, controls.cardId) &&
     Object.values(view.stacks).some(
       (stack) => stack.evolutionCards.at(-1)?.id === controls.cardId
@@ -2142,8 +2143,14 @@ const handleIntent = (
         return rejectIntent(state, intent, 'stale_card');
       if (view.viewer.kind === 'spectator' || !state.canSubmitCommands)
         return rejectIntent(state, intent, 'read_only');
-      // A second press on the same marker puts its controls away.
+      // A second press on the same marker puts its controls away; on a
+      // Pokémon's reminders, a press on any of its chips.
       const open = openMarker(scene, state.overlays.marker);
+      const again =
+        open?.id === marker.id ||
+        (marker.kind === 'reminder' &&
+          state.overlays.marker?.kind === 'reminder' &&
+          state.overlays.marker.cardId === marker.parentCardId);
       return installPresentation(
         state,
         { ...state.presentation, drag: null },
@@ -2152,9 +2159,7 @@ const handleIntent = (
           preview: null,
           input: null,
           ...markerOverlay(
-            open?.id === marker.id
-              ? null
-              : { cardId: marker.parentCardId, kind: marker.kind }
+            again ? null : { cardId: marker.parentCardId, kind: marker.kind }
           ),
         }
       );
@@ -2733,7 +2738,9 @@ const handleOverlayAction = (
       ? request.action === 'setDamage' && 'value' in request
       : state.overlays.marker.kind === 'specialCondition'
         ? request.action === 'setSpecialCondition' && 'value' in request
-        : request.action === 'toggleAbility');
+        : state.overlays.marker.kind === 'reminder'
+          ? request.action === 'setReminder' && 'reminder' in request
+          : request.action === 'toggleAbility');
   if (
     request.kind === 'context' &&
     ((!fromMarkerControls &&
@@ -2812,7 +2819,9 @@ const handleOverlayAction = (
     // lower Stage) the menu was opened on.
     const input = resolution.input;
     const controlsFor =
-      input.kind === 'specialCondition' || input.kind === 'damage'
+      input.kind === 'specialCondition' ||
+      input.kind === 'damage' ||
+      input.kind === 'reminder'
         ? {
             cardId: topCardOfStackHolding(view, input.cardId) ?? input.cardId,
             kind: input.kind,

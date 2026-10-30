@@ -13,7 +13,12 @@ import {
 import { RevealedHandBadges } from './RevealedHandBadges.js';
 import { visualCardBounds } from './card-bounds.js';
 import { OverlayCardActions } from './OverlayCardActions.js';
-import type { MatchViewState, ViewCardId, PlayerId } from '@ptcgsim/game-core';
+import type {
+  MatchViewState,
+  PlayerId,
+  StackReminder,
+  ViewCardId,
+} from '@ptcgsim/game-core';
 import {
   composeCardArtwork,
   fitCardComposition,
@@ -33,6 +38,7 @@ import type { MessageDescriptor } from '@lingui/core';
 import { msg, plural, t } from '@lingui/core/macro';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { ArrowCounterClockwiseIcon } from '@phosphor-icons/react/dist/csr/ArrowCounterClockwise';
+import { PushPinIcon } from '@phosphor-icons/react/dist/csr/PushPin';
 import { ArrowFatLinesDownIcon } from '@phosphor-icons/react/dist/csr/ArrowFatLinesDown';
 import { ArrowLineDownIcon } from '@phosphor-icons/react/dist/csr/ArrowLineDown';
 import { SortAscendingIcon } from '@phosphor-icons/react/dist/csr/SortAscending';
@@ -229,6 +235,11 @@ export interface LegacyBoardOverlayActions {
   readonly submitSpecialConditionInput: (
     cardId: ViewCardId,
     value: string
+  ) => void;
+  /** Puts a reminder on the Pokémon, or takes it off (MarkerControls). */
+  readonly submitReminder: (
+    cardId: ViewCardId,
+    reminder: StackReminder
   ) => void;
   readonly submitCountInput: (
     action: LegacyBoardCountActionId,
@@ -447,6 +458,19 @@ export const selectLegacyContextEntries = (
   if (location.kind === 'active') {
     entries.push(action('setSpecialCondition', t`Special condition`));
   }
+  // A lasting effect's reminder (can't attack next turn, and the like).
+  if (location.kind === 'active' || location.kind === 'bench') {
+    entries.push(
+      action(
+        'setReminder',
+        t({
+          message: 'Reminder',
+          comment:
+            "Card menu: opens the reminders a player can put on a Pokémon for an effect that lasts (can't attack, takes less damage…).",
+        })
+      )
+    );
+  }
   if (location.kind === 'prizes') {
     entries.push(header('prizes', t({ message: 'Prizes', context: 'zone' })));
     if (own) entries.push(action('shufflePrizes', t`Shuffle prizes`));
@@ -528,6 +552,7 @@ const CONTEXT_ACTION_DECOR: Readonly<
   },
   setDamage: { icon: HeartBreakIcon },
   setSpecialCondition: { icon: FlaskIcon },
+  setReminder: { icon: PushPinIcon },
   shufflePrizes: { icon: ShuffleIcon },
   togglePrizes: { icon: BinocularsIcon },
   revealPrizes: { icon: EyeIcon },

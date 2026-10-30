@@ -34,7 +34,9 @@ import type {
   MatchState,
   PlaySlot,
   PlayStack,
+  StackReminder,
 } from './model.js';
+import { STACK_REMINDERS } from './model.js';
 import {
   cardSourceSnapshot,
   publicVisibilityFace,
@@ -60,6 +62,25 @@ const incrementVisibility = (card: CardInstance): CardInstance => ({
   ...card,
   visibilityGeneration: card.visibilityGeneration + 1,
 });
+
+/** A Pokémon's reminders, in STACK_REMINDERS order: none is no key at all. */
+const withReminders = (
+  stack: PlayStack,
+  reminders: readonly StackReminder[]
+): PlayStack => {
+  const { reminders: _previous, ...rest } = stack;
+  const ordered = STACK_REMINDERS.filter((reminder) =>
+    reminders.includes(reminder)
+  );
+  return ordered.length === 0 ? rest : { ...rest, reminders: ordered };
+};
+
+/**
+ * Its reminders come off where a Special Condition does: as the Pokémon
+ * evolves, or goes from the Active Spot to the Bench.
+ */
+const withoutReminders = (stack: PlayStack): PlayStack =>
+  stack.reminders === undefined ? stack : withReminders(stack, []);
 
 const normalizeCardForZone = (
   card: CardInstance,
@@ -1466,7 +1487,7 @@ const applyEventInternal = (
             const stacks = {
               ...state.stacks,
               [priorStack.id]: {
-                ...priorStack,
+                ...withoutReminders(priorStack),
                 slot: 'bench' as const,
                 specialCondition: null,
               },
@@ -1555,7 +1576,7 @@ const applyEventInternal = (
         stacks: {
           ...state.stacks,
           [stack.id]: {
-            ...stack,
+            ...(event.mode === 'evolution' ? withoutReminders(stack) : stack),
             evolutionCardIds:
               event.mode === 'evolution'
                 ? [...stack.evolutionCardIds, event.cardId]
@@ -1827,7 +1848,7 @@ const applyEventInternal = (
       }
 
       const nextTarget: PlayStack = {
-        ...target,
+        ...(derivedMode === 'evolution' ? withoutReminders(target) : target),
         evolutionCardIds: [...event.evolutionCardIds],
         attachmentCardIds: [...event.attachmentCardIds],
         ...(derivedMode === 'evolution'
@@ -2116,7 +2137,7 @@ const applyEventInternal = (
           throw new Error(`Stack ${stackId} belongs to another board`);
         }
         stacks[stackId] = {
-          ...stack,
+          ...(stack.slot === 'active' ? withoutReminders(stack) : stack),
           slot: 'bench',
           specialCondition: null,
         };
@@ -2195,7 +2216,9 @@ const applyEventInternal = (
               rehomedCardIds.add(cardId);
           }
           stacks[stackId] = {
-            ...stack,
+            ...(slot === 'bench' && stack.slot === 'active'
+              ? withoutReminders(stack)
+              : stack),
             boardPlayerId: layout.boardPlayerId,
             slot,
             ...(slot === 'bench' ? { specialCondition: null } : {}),
@@ -2810,7 +2833,7 @@ const applyEventInternal = (
             throw new Error('Previous active stack belongs to another board');
           }
           stacks[previousActive.id] = {
-            ...previousActive,
+            ...withoutReminders(previousActive),
             slot: 'bench',
             specialCondition: null,
           };
@@ -3256,6 +3279,27 @@ const applyEventInternal = (
         stacks: {
           ...state.stacks,
           [stack.id]: { ...stack, abilityUsed: event.used },
+        },
+      };
+    }
+    case 'StackReminderSet': {
+      const stack = requireStack(state, event.stackId);
+      const reminders = stack.reminders ?? [];
+      if (reminders.includes(event.reminder) === event.on) {
+        throw new Error(
+          event.on ? 'Reminder is already on' : 'Reminder is not on'
+        );
+      }
+      return {
+        ...state,
+        stacks: {
+          ...state.stacks,
+          [stack.id]: withReminders(
+            stack,
+            event.on
+              ? [...reminders, event.reminder]
+              : reminders.filter((reminder) => reminder !== event.reminder)
+          ),
         },
       };
     }
