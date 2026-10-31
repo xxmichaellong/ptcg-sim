@@ -35,3 +35,10 @@ auditConfig:
     # configured watch patterns and never an untrusted one. Replacing nodemon
     # would change how ptcgsim.online starts, so it stays until v1 retires.
     - GHSA-vfj7-8cjw-p6xm
+    # minimatch is patched only in 11, a rewrite (no makeRe or AST) that none of
+    # its dependents accept yet. It reaches the tree through development tools
+    # (eslint, typescript-eslint, nodemon), which match the repository's own
+    # configured patterns, and through ejs -> jake, which only ejs's command
+    # line uses; v1's server renders with ejs and never loads it. Drop this
+    # once eslint and typescript-eslint take minimatch 11.
+    - GHSA-g3hv-75wg-m249
