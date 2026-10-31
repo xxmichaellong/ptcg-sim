@@ -98,14 +98,20 @@ const containsCard = (
  */
 const ARRANGED_ZONE_KINDS = new Set(['hand', 'board', 'prizes']);
 
-/** The place asked for, where the destination keeps an order a player sets. */
+/**
+ * The place asked for, where the destination keeps an order a player sets.
+ * A card put on a deck goes on top, the next draw, as v1's drop on the deck
+ * and the ↑ key put it.
+ */
 const placeIn = (
   kind: string,
   index: number | undefined
 ): { readonly destinationIndex?: number } =>
-  index !== undefined && ARRANGED_ZONE_KINDS.has(kind)
-    ? { destinationIndex: index }
-    : {};
+  kind === 'deck'
+    ? { destinationIndex: 0 }
+    : index !== undefined && ARRANGED_ZONE_KINDS.has(kind)
+      ? { destinationIndex: index }
+      : {};
 
 type ViewStack = BoardDropView['stacks'][string];
 
@@ -291,11 +297,12 @@ export const resolveBoardDrop = (
     if (sourceZone) {
       if (destinationZone.id === sourceZone.id) {
         // Rearranged within its zone: a new place in an order the player
-        // sets, or nothing to do.
+        // sets, or nothing to do (a deck's own card goes up by its keys).
         const at = sourceZone.cards.findIndex(
           (card) => card.id === intent.cardId
         );
         if (
+          !ARRANGED_ZONE_KINDS.has(destinationZone.kind) ||
           place.destinationIndex === undefined ||
           place.destinationIndex === at
         ) {

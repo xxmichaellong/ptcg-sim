@@ -158,6 +158,39 @@ describe('board drop command resolution', () => {
     });
   });
 
+  it('puts a card dropped on a deck on top, the next draw, as v1 does', () => {
+    const input = fixture();
+    const deck = input.view.zones['zone:spike-blue:deck']!;
+    expect(deck.cards.length).toBeGreaterThan(1);
+    const drop = (cardId: string) =>
+      resolveBoardDrop(input.view, input.scene, {
+        kind: 'CardDropRequested',
+        cardId,
+        targetId: deck.id,
+        x: 0,
+        y: 0,
+      });
+    const card = localHandCard(input);
+    expect(drop(card.id)).toEqual({
+      ok: true,
+      command: {
+        type: 'MoveCard',
+        cardId: card.id,
+        expectedSourceZoneId: 'zone:spike-blue:hand',
+        destinationZoneId: deck.id,
+        destinationIndex: 0,
+      },
+    });
+    // A whole Pokémon goes on top too; a deck's own card stays where it is.
+    expect(
+      drop(input.view.stacks['stack:blue:active']!.evolutionCards.at(-1)!.id)
+    ).toMatchObject({
+      ok: true,
+      command: { type: 'MovePlayStackToZone', destinationIndex: 0 },
+    });
+    expect(drop(deck.cards.at(-1)!.id)).toEqual({ ok: false, reason: 'no_op' });
+  });
+
   it('puts a card at a place in a hand, on the bench, or on the loose board (PX-041)', () => {
     const input = fixture();
     const hand = input.view.zones['zone:spike-blue:hand']!;

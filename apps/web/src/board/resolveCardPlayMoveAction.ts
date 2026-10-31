@@ -51,12 +51,13 @@ export const resolveCardPlayMoveAction = (
       containsCard(stack.evolutionCards, cardId) ||
       containsCard(stack.attachmentCards, cardId)
   );
-  const sourceInspection = Object.values(view.workAreas)
-    .map((workArea) => workArea.inspection)
-    .find(
-      (inspection) =>
-        inspection !== null && containsCard(inspection.cards, cardId)
-    );
+  const inspectionEntry = Object.entries(view.workAreas).find(
+    ([, workArea]) =>
+      workArea.inspection !== null &&
+      containsCard(workArea.inspection.cards, cardId)
+  );
+  const sourceInspection = inspectionEntry?.[1].inspection ?? null;
+  const sourceInspectionPlayerId = inspectionEntry?.[0];
   const stagedEntry = Object.entries(view.workAreas).find(([, workArea]) => {
     const staged = workArea.attachmentResolution;
     return Boolean(
@@ -71,7 +72,28 @@ export const resolveCardPlayMoveAction = (
     return rejected('stale_card');
   }
 
-  if (sourceInspection) return rejected('unsupported_source');
+  // v1's card viewer: a card being looked at goes straight into play on
+  // its owner's side, as dragging it there does.
+  if (sourceInspection) {
+    if (
+      sourceInspectionPlayerId !== view.viewer.playerId &&
+      sourceInspectionPlayerId !== actingPlayerId
+    ) {
+      return rejected('unsupported_source');
+    }
+    const card = sourceInspection.cards.find((entry) => entry.id === cardId)!;
+    if (!view.boards[card.ownerId]) return rejected('unsupported_target');
+    return {
+      ok: true,
+      command: {
+        type: 'MoveInspectedCardToPlay',
+        cardId,
+        expectedWorkAreaId: sourceInspection.id,
+        boardPlayerId: card.ownerId,
+        slot: destinationSlot,
+      },
+    };
+  }
   if (sourceStaged) {
     if (
       !sourceStagedPlayerId ||

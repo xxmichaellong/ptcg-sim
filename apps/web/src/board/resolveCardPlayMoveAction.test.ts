@@ -242,12 +242,48 @@ describe('selected-card play placement', () => {
         },
       },
     };
-    expect(resolveCardPlayMoveAction(inspected, first.id, 'active')).toEqual({
-      ok: false,
-      reason: 'unsupported_source',
+    // A card in the player's own window plays as dragging it there does.
+    expect(resolveCardPlayMoveAction(inspected, first.id, 'bench')).toEqual({
+      ok: true,
+      command: {
+        type: 'MoveInspectedCardToPlay',
+        cardId: first.id,
+        expectedWorkAreaId: 'play-move-inspection',
+        boardPlayerId: first.ownerId,
+        slot: 'bench',
+      },
     });
 
     const foreignPlayerId = view.playerOrder[1]!;
+    // Not one in the other seat's window, unless the player works it.
+    const foreignInspected: MatchViewState = {
+      ...withoutFirst,
+      workAreas: {
+        ...view.workAreas,
+        [foreignPlayerId]: {
+          ...view.workAreas[foreignPlayerId]!,
+          inspection: {
+            id: 'foreign-play-move-inspection',
+            sourceZoneId: hand.id,
+            cards: [first],
+          },
+        },
+      },
+    };
+    expect(
+      resolveCardPlayMoveAction(foreignInspected, first.id, 'active')
+    ).toEqual({ ok: false, reason: 'unsupported_source' });
+    expect(
+      resolveCardPlayMoveAction(
+        foreignInspected,
+        first.id,
+        'active',
+        foreignPlayerId
+      )
+    ).toMatchObject({
+      ok: true,
+      command: { type: 'MoveInspectedCardToPlay', slot: 'active' },
+    });
     const foreignStaged: MatchViewState = {
       ...withoutFirst,
       workAreas: {

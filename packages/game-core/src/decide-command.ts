@@ -1523,7 +1523,10 @@ export const decideCommand = (
       );
       const concealIdentity = isConcealedZone(destination);
       // Attached cards first, then the Pokémon from its bottom card up, so it
-      // lies in the pile as it lay in play, its top card on top.
+      // lies in the pile as it lay in play, its top card on top. A deck is
+      // drawn from its start: there each goes in at the same place, over the
+      // one before, so the Pokémon's top card is the first drawn of them.
+      const topFirst = destination.kind === 'deck';
       const carried = [
         ...stack.attachmentCardIds.map((cardId) => ({
           cardId,
@@ -1541,7 +1544,7 @@ export const decideCommand = (
           expectedStackId: stack.id,
           source,
           destinationZoneId: destination.id,
-          destinationIndex: base + index,
+          destinationIndex: topFirst ? base : base + index,
           concealIdentity,
           withStack: true,
         })),
@@ -1553,7 +1556,7 @@ export const decideCommand = (
           expectedEvolutionCardIds: [top],
           expectedAttachmentCardIds: [],
           destinationZoneId: destination.id,
-          destinationIndex: base + carried.length,
+          destinationIndex: topFirst ? base : base + carried.length,
           concealIdentity,
           attachmentResolution: null,
         }

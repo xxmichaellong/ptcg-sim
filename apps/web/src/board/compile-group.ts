@@ -516,28 +516,14 @@ const compilePlay = (
   items: readonly ViewCardId[],
   slot: 'active' | 'bench'
 ): Refusal | null => {
-  // Into play as each goes alone; a card being looked at in a window goes
-  // as a drag puts it there (`MoveInspectedCardToPlay`), which the keys'
-  // own resolver doesn't take.
+  // Into play as each goes alone, one being looked at in a window too.
   const played = (cardId: ViewCardId): Resolution => {
     const view = steps.view();
-    const located = locateViewCardActionSource(view, cardId);
-    if (located?.sourceKind !== 'inspection')
-      return resolveCardPlayMoveAction(
-        view,
-        cardId,
-        slot,
-        actingFor(context, view, cardId)
-      );
-    const place = context.scene.zones.find(
-      (zone) => zone.kind === slot && zone.playerId === located.card.ownerId
-    );
-    if (!place) return { ok: false, reason: 'unsupported_target' };
-    return resolveBoardDrop(
+    return resolveCardPlayMoveAction(
       view,
-      context.scene,
-      { kind: 'CardDropRequested', cardId, targetId: place.id, x: 0, y: 0 },
-      { eitherSeatsWindows: context.controlsEverySeat === true }
+      cardId,
+      slot,
+      actingFor(context, view, cardId)
     );
   };
   const units = playUnits(context.view, items);

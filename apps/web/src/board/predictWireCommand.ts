@@ -941,9 +941,14 @@ const predict = (
         return null;
       }
       // As the room does it: attached cards, then the Pokémon from its
-      // bottom card up, the last taking the emptied stack off the board.
+      // bottom card up, the last taking the emptied stack off the board. On
+      // a deck each goes in at the same place, its top card drawn first.
       let next: MatchViewState | null = view;
-      let index = command.destinationIndex;
+      const topFirst = zoneKindOf(view, command.destinationZoneId) === 'deck';
+      let index =
+        topFirst && command.destinationIndex === undefined
+          ? view.zones[command.destinationZoneId]?.cards.length
+          : command.destinationIndex;
       for (const card of [...stack.attachmentCards, ...stack.evolutionCards]) {
         const taken = takeFromStack(next, stack.id, card.id);
         if (!taken) return null;
@@ -955,7 +960,7 @@ const predict = (
           index
         );
         if (!next) return null;
-        if (index !== undefined) index += 1;
+        if (index !== undefined && !topFirst) index += 1;
       }
       return next;
     }

@@ -383,6 +383,25 @@ describe('predictWireCommand', () => {
     expect(knockedOut.stacks[lone!]!.slot).toBe('active');
   });
 
+  it('puts a whole Pokémon on a deck with its top card drawn first, as the room does', () => {
+    const evolution = active.evolutionCards.map((card) => card.id);
+    const attached = active.attachmentCards.map((card) => card.id);
+    const send = (destinationIndex?: number) =>
+      predictWireCommand(view, {
+        type: 'MovePlayStackToZone',
+        stackId: active.id,
+        expectedEvolutionCardIds: evolution,
+        expectedAttachmentCardIds: attached,
+        destinationZoneId: deck.id,
+        ...(destinationIndex === undefined ? {} : { destinationIndex }),
+      })!.zones[deck.id]!.cards.map((card) => card.id);
+    const turnedOver = [...evolution].reverse().concat([...attached].reverse());
+    const rest = deck.cards.map((card) => card.id);
+    expect(turnedOver.length).toBeGreaterThan(1);
+    expect(send(0)).toEqual([...turnedOver, ...rest]);
+    expect(send()).toEqual([...rest, ...turnedOver]);
+  });
+
   it('moves a card between zones and refuses when the card is not where the command says', () => {
     const card = hand.cards[0]!;
     const predicted = predictWireCommand(view, {

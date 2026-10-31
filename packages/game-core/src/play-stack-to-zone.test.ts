@@ -206,6 +206,59 @@ describe('a whole Pokémon moved into a pile', () => {
     assertMatchInvariants(after);
   });
 
+  it('lies on a deck with its top card drawn first, on top or at the bottom', () => {
+    const {
+      state,
+      commandContext,
+      stackId,
+      basic,
+      stage1,
+      energy,
+      tool,
+      spare,
+    } = evolvedActive();
+    const deckId = playerZoneId(p1, 'deck');
+    expect(state.zones[deckId]!.cardIds).toEqual([spare]);
+    const send = (destinationIndex?: number) =>
+      run(
+        state,
+        {
+          type: 'MovePlayStackToZone',
+          stackId,
+          expectedEvolutionCardIds: [basic, stage1],
+          expectedAttachmentCardIds: [energy, tool],
+          destinationZoneId: deckId,
+          ...(destinationIndex === undefined ? {} : { destinationIndex }),
+        },
+        commandContext
+      );
+    // A deck is drawn from its start: the pile's order, turned over.
+    const onTop = send(0);
+    expect(onTop.zones[deckId]!.cardIds).toEqual([
+      stage1,
+      basic,
+      tool,
+      energy,
+      spare,
+    ]);
+    assertMatchInvariants(onTop);
+    const drawn = run(
+      onTop,
+      { type: 'DrawCards', playerId: p1, count: 1 },
+      commandContext
+    );
+    expect(drawn.zones[playerZoneId(p1, 'hand')]!.cardIds).toEqual([stage1]);
+    const atBottom = send();
+    expect(atBottom.zones[deckId]!.cardIds).toEqual([
+      spare,
+      stage1,
+      basic,
+      tool,
+      energy,
+    ]);
+    assertMatchInvariants(atBottom);
+  });
+
   it('refuses a Pokémon that changed, and the Stadium', () => {
     const { state, commandContext, stackId, basic, stage1, energy, tool } =
       evolvedActive();
