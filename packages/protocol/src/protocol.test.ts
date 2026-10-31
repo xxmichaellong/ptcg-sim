@@ -41,7 +41,7 @@ import {
   serializeRoomInvitationHandoffText,
   serializeRoomInvitationLinkFragment,
 } from './invitation-handoff.js';
-import { PresentationEventSchema } from './schemas.js';
+import { PresentationEventSchema, ViewCardSchema } from './schemas.js';
 
 describe('cross-package wire limits', () => {
   it('keeps the aggregate deck cap aligned with the game reducer', () => {
@@ -50,6 +50,30 @@ describe('cross-package wire limits', () => {
 
   it('keeps image-reference bounds aligned with the game reducer', () => {
     expect(MAX_IMAGE_URL_CODE_UNITS).toBe(GAME_CORE_MAX_IMAGE_URL_CODE_UNITS);
+  });
+});
+
+describe('view card schemas', () => {
+  it('carries how a face-down card on the table is turned, and only a quarter turn', () => {
+    const hidden = {
+      kind: 'concealed',
+      id: 'view-card-1',
+      ownerId: 'player-1',
+      cardBackUrl: '/back.png',
+      publiclyRevealed: false,
+    };
+    const turned = v.safeParse(ViewCardSchema, {
+      ...hidden,
+      orientationQuarterTurns: 1,
+    });
+    expect(turned.success && turned.output).toMatchObject({
+      orientationQuarterTurns: 1,
+    });
+    expect(v.safeParse(ViewCardSchema, hidden).success).toBe(true);
+    expect(
+      v.safeParse(ViewCardSchema, { ...hidden, orientationQuarterTurns: 4 })
+        .success
+    ).toBe(false);
   });
 });
 

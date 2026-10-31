@@ -105,7 +105,8 @@ const settledIn = (
   card: ViewCard
 ): ViewCard => {
   if (card.kind !== 'known') return card;
-  if (zone.kind === 'board') return { ...card, face: 'up', abilityUsed: false };
+  if (zone.kind === 'board')
+    return { ...card, face: 'up' as const, abilityUsed: false };
   return {
     ...card,
     category: view.definitions[card.definitionId]?.category ?? card.category,
@@ -747,7 +748,7 @@ const clearAbilityMarkers = (view: MatchViewState): MatchViewState => {
 const revealKnownInPlay = (view: MatchViewState): MatchViewState => {
   const reveal = (card: ViewCard): ViewCard =>
     card.kind === 'known' && card.face === 'down'
-      ? { ...card, face: 'up' }
+      ? { ...card, face: 'up' as const }
       : card;
   const stacks = Object.fromEntries(
     Object.entries(view.stacks).map(([stackId, stack]) => [

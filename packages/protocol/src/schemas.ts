@@ -881,6 +881,8 @@ const ConcealedViewCardSchema = v.object({
   ownerId: IdentifierSchema,
   cardBackUrl: UrlSchema,
   publiclyRevealed: v.literal(false),
+  // A face-down card on the table, turned: everyone sees how it lies.
+  orientationQuarterTurns: v.optional(QuarterTurnsSchema),
 });
 
 export const ViewCardSchema = v.variant('kind', [

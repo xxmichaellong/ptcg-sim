@@ -59,6 +59,12 @@ export interface ConcealedViewCard {
   readonly ownerId: PlayerId;
   readonly cardBackUrl: string;
   readonly publiclyRevealed: false;
+  /**
+   * How a face-down card on the table (in play or the Stadium) is turned,
+   * which everyone at the table sees; absent when it isn't, and anywhere
+   * else, where it would only help follow a card no one may read.
+   */
+  readonly orientationQuarterTurns?: QuarterTurns;
 }
 
 export type ViewCard = KnownViewCard | ConcealedViewCard;
@@ -284,7 +290,7 @@ export const projectMatch = (
       ? decklistRankOf(card)
       : sharedRanks.get(sharedKey(card));
 
-  const projectCard = (cardId: CardInstanceId): ViewCard => {
+  const projectCard = (cardId: CardInstanceId, onTable: boolean): ViewCard => {
     const card = state.cards[cardId];
     if (!card) throw new Error(`Projection references missing card ${cardId}`);
     const known = isCardKnownToViewer(state, viewer, card);
@@ -301,6 +307,9 @@ export const projectMatch = (
         ownerId: card.ownerId,
         cardBackUrl: state.players[card.ownerId]?.cardBackUrl ?? '',
         publiclyRevealed: false,
+        ...(onTable && card.orientationQuarterTurns !== 0
+          ? { orientationQuarterTurns: card.orientationQuarterTurns }
+          : {}),
       };
     }
     const definition = state.definitions[card.definitionId];
@@ -330,6 +339,9 @@ export const projectMatch = (
       ...(decklistRank === undefined ? {} : { decklistRank }),
     };
   };
+  /** A card in a work area: in no one's play. */
+  const offTable = (cardId: CardInstanceId): ViewCard =>
+    projectCard(cardId, false);
 
   return {
     matchId: state.matchId,
@@ -357,7 +369,9 @@ export const projectMatch = (
           id: zone.id,
           kind: zone.kind,
           ownerId: zone.ownerId,
-          cards: zone.cardIds.map(projectCard),
+          cards: zone.cardIds.map((cardId) =>
+            projectCard(cardId, zone.kind === 'stadium')
+          ),
         },
       ])
     ),
@@ -377,8 +391,12 @@ export const projectMatch = (
           id: stack.id,
           boardPlayerId: stack.boardPlayerId,
           slot: stack.slot,
-          evolutionCards: stack.evolutionCardIds.map(projectCard),
-          attachmentCards: stack.attachmentCardIds.map(projectCard),
+          evolutionCards: stack.evolutionCardIds.map((cardId) =>
+            projectCard(cardId, true)
+          ),
+          attachmentCards: stack.attachmentCardIds.map((cardId) =>
+            projectCard(cardId, true)
+          ),
           rotationQuarterTurns: stack.rotationQuarterTurns,
           damage: stack.damage,
           specialCondition: stack.specialCondition,
@@ -395,18 +413,18 @@ export const projectMatch = (
             ? {
                 id: areas.inspection.id,
                 sourceZoneId: areas.inspection.sourceZoneId,
-                cards: areas.inspection.cardIds.map(projectCard),
+                cards: areas.inspection.cardIds.map(offTable),
               }
             : null,
           attachmentResolution: areas.attachmentResolution
             ? {
                 id: areas.attachmentResolution.id,
                 sourceStackId: areas.attachmentResolution.sourceStackId,
-                cards: areas.attachmentResolution.cardIds.map(projectCard),
+                cards: areas.attachmentResolution.cardIds.map(offTable),
                 evolutionCards:
-                  areas.attachmentResolution.evolutionCardIds.map(projectCard),
+                  areas.attachmentResolution.evolutionCardIds.map(offTable),
                 attachmentCards:
-                  areas.attachmentResolution.attachmentCardIds.map(projectCard),
+                  areas.attachmentResolution.attachmentCardIds.map(offTable),
                 suggestedSlot: areas.attachmentResolution.suggestedSlot,
               }
             : null,
@@ -421,7 +439,9 @@ export const projectMatch = (
               id: grant.inspectionId,
               sourcePlayerId: grant.sourcePlayerId,
               sourceId: grant.sourceId,
-              cardIds: grant.cardIds.map((cardId) => projectCard(cardId).id),
+              cardIds: grant.cardIds.map(
+                (cardId) => projectCard(cardId, false).id
+              ),
             }))
         : [],
     turn: { ...state.turn },

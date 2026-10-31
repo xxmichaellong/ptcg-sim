@@ -720,8 +720,7 @@ const makeCardNode = (
   }
 ): CardSceneNode => {
   const baseRotation =
-    input.rotationQuarterTurns ??
-    (card.kind === 'known' ? card.orientationQuarterTurns : 0);
+    input.rotationQuarterTurns ?? card.orientationQuarterTurns ?? 0;
   const rotationQuarterTurns = ((baseRotation +
     (input.side === 'opponent' ? 2 : 0)) %
     4) as QuarterTurns;
@@ -1157,7 +1156,7 @@ export const createBoardScene = (
         zone.kind === 'deck' ? 100 + zone.cards.length - index : 100 + index;
       const stadiumRotation =
         zone.kind === 'stadium'
-          ? ((card.kind === 'known' ? card.orientationQuarterTurns : 0) +
+          ? ((card.orientationQuarterTurns ?? 0) +
               (card.ownerId === layout.bottomPlayerId ? 0 : 2)) %
             4
           : undefined;
@@ -1204,9 +1203,7 @@ export const createBoardScene = (
             : {
                 rotationQuarterTurns: (assembled
                   ? (assembled.rotationQuarterTurns +
-                      (card.kind === 'known'
-                        ? card.orientationQuarterTurns
-                        : 0)) %
+                      (card.orientationQuarterTurns ?? 0)) %
                     4
                   : stadiumRotation) as QuarterTurns,
               }),
@@ -1281,11 +1278,11 @@ export const createBoardScene = (
                     view.definitions[card.definitionId] ?? {}
                   )
                 : undefined,
-            rotation: card.kind === 'known' ? card.orientationQuarterTurns : 0,
+            rotation: card.orientationQuarterTurns ?? 0,
           })),
           attachmentIds: stack.attachmentCards.map((card) => card.id),
-          attachmentRotations: stack.attachmentCards.map((card) =>
-            card.kind === 'known' ? card.orientationQuarterTurns : 0
+          attachmentRotations: stack.attachmentCards.map(
+            (card) => card.orientationQuarterTurns ?? 0
           ),
           attachments: stack.attachmentCards.map((card) =>
             card.kind === 'known' && card.category === 'Trainer'
@@ -1337,7 +1334,7 @@ export const createBoardScene = (
                   (side === 'opponent' ? 2 : 0)) %
                   4) as QuarterTurns)
               : (((stack.rotationQuarterTurns +
-                  (card.kind === 'known' ? card.orientationQuarterTurns : 0)) %
+                  (card.orientationQuarterTurns ?? 0)) %
                   4) as QuarterTurns),
             interactive: true,
           });
@@ -1368,9 +1365,7 @@ export const createBoardScene = (
                 ? (((placed.rotationQuarterTurns +
                     (side === 'opponent' ? 2 : 0)) %
                     4) as QuarterTurns)
-                : ((((card.kind === 'known'
-                    ? card.orientationQuarterTurns
-                    : 0) +
+                : ((((card.orientationQuarterTurns ?? 0) +
                     cardLayout.rotationQuarterTurns) %
                     4) as QuarterTurns),
               interactive: true,

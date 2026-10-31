@@ -14,10 +14,13 @@ import {
   asMatchId,
   asPlayerId,
   asStackId,
+  asViewCardId,
+  asViewDefinitionId,
   asWorkAreaId,
 } from './ids.js';
 import { assertMatchInvariants } from './invariants.js';
 import type { MatchState } from './model.js';
+import { projectMatch, type ProjectionIdentityAdapter } from './projection.js';
 
 const p1 = asPlayerId('annotation-player-one');
 const p2 = asPlayerId('annotation-player-two');
@@ -128,6 +131,86 @@ describe('canonical card-annotation commands', () => {
       orientationQuarterTurns: 0,
       abilityUsed: false,
     });
+    assertMatchInvariants(state);
+  });
+
+  it('shows everyone how a face-down card on the table is turned, and nothing of it elsewhere', () => {
+    const input = fixture();
+    const deckId = playerZoneId(p1, 'deck');
+    const [cardId, attachedId, basicId] = input.state.zones[deckId]!.cardIds;
+    const identities: ProjectionIdentityAdapter = {
+      viewCardId: ({ viewerKey, cardId: id, known, visibilityGeneration }) =>
+        asViewCardId(
+          `turned:${viewerKey}:${known ? 'known' : 'hidden'}:${visibilityGeneration}:${id}`
+        ),
+      viewDefinitionId: ({ viewerKey, definitionId }) =>
+        asViewDefinitionId(`turned-definition:${viewerKey}:${definitionId}`),
+    };
+    let state = input.state;
+    for (const command of [
+      {
+        type: 'MoveCard',
+        cardId: cardId!,
+        expectedSourceZoneId: deckId,
+        destinationZoneId: stadiumZoneId(),
+      },
+      { type: 'SetCardFace', cardId: cardId!, face: 'down' },
+      {
+        type: 'SetCardOrientation',
+        cardId: cardId!,
+        orientationQuarterTurns: 1,
+      },
+      {
+        type: 'MoveCardToPlay',
+        cardId: basicId!,
+        expectedSourceZoneId: deckId,
+        boardPlayerId: p1,
+        slot: 'active',
+      },
+    ] as const satisfies readonly GameCommand[])
+      state = accepted(state, command, input.context);
+    const stackId = state.boards[p1]!.activeStackId!;
+    for (const command of [
+      {
+        type: 'MoveCardToPlay',
+        cardId: attachedId!,
+        expectedSourceZoneId: deckId,
+        boardPlayerId: p1,
+        slot: 'active',
+        targetStackId: stackId,
+      },
+      { type: 'SetCardFace', cardId: attachedId!, face: 'down' },
+      {
+        type: 'SetCardOrientation',
+        cardId: attachedId!,
+        orientationQuarterTurns: 2,
+      },
+    ] as const satisfies readonly GameCommand[])
+      state = accepted(state, command, input.context);
+    for (const viewer of [
+      { kind: 'player', playerId: p2 },
+      { kind: 'spectator' },
+    ] as const) {
+      const view = projectMatch(state, viewer, identities);
+      expect(view.zones[stadiumZoneId()]!.cards).toEqual([
+        expect.objectContaining({
+          kind: 'concealed',
+          orientationQuarterTurns: 1,
+        }),
+      ]);
+      expect(view.stacks[stackId]!.attachmentCards).toEqual([
+        expect.objectContaining({
+          kind: 'concealed',
+          orientationQuarterTurns: 2,
+        }),
+      ]);
+      // A deck's cards say nothing of how anything was turned.
+      expect(
+        view.zones[deckId]!.cards.every(
+          (card) => !('orientationQuarterTurns' in card)
+        )
+      ).toBe(true);
+    }
     assertMatchInvariants(state);
   });
 

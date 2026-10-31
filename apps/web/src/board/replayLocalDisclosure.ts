@@ -160,7 +160,7 @@ export const applyReplayLocalDisclosure = (
         if (!mode) return card;
         if (mode === 'hidden') return concealedCard(view, card);
         if (card.kind === 'known') {
-          return card.face === 'up' ? card : { ...card, face: 'up' };
+          return card.face === 'up' ? card : { ...card, face: 'up' as const };
         }
         const disclosed = localCards.get(card.id);
         if (!disclosed) return card;

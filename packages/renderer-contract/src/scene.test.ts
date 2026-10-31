@@ -997,6 +997,51 @@ describe('renderer-neutral board scene', () => {
     expect(JSON.stringify(hidden)).not.toContain('full-secret');
   });
 
+  it('turns a face-down Stadium and a face-down attached card as the room says', () => {
+    const base = createRendererSpikeView();
+    const stadium = base.zones['zone:shared:stadium']!;
+    const stadiumCard = stadium.cards[0]!;
+    const stack = base.stacks['stack:blue:active']!;
+    const attachment = stack.attachmentCards[0]!;
+    const hidden = (card: typeof stadiumCard, turns: 1 | 2) => ({
+      kind: 'concealed' as const,
+      id: card.id,
+      ownerId: card.ownerId,
+      cardBackUrl: '/back.png',
+      publiclyRevealed: false as const,
+      orientationQuarterTurns: turns,
+    });
+    const view: MatchViewState = {
+      ...base,
+      zones: {
+        ...base.zones,
+        [stadium.id]: { ...stadium, cards: [hidden(stadiumCard, 1)] },
+      },
+      stacks: {
+        ...base.stacks,
+        [stack.id]: {
+          ...stack,
+          attachmentCards: [
+            hidden(attachment, 2),
+            ...stack.attachmentCards.slice(1),
+          ],
+        },
+      },
+    };
+    const scene = createBoardSceneForViewport(view, {
+      ...options,
+      bottomPlayerId: view.playerOrder[0]!,
+    });
+    expect(
+      scene.cards.find((card) => card.id === stadiumCard.id)
+        ?.rotationQuarterTurns
+    ).toBe(1);
+    expect(
+      scene.cards.find((card) => card.id === attachment.id)
+        ?.rotationQuarterTurns
+    ).toBe(2);
+  });
+
   it('composes BREAK offsets with group rotation and projects per-card ability markers', () => {
     const base = createRendererSpikeView();
     const stadium = base.zones['zone:shared:stadium']!;
