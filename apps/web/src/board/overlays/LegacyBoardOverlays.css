@@ -1,0 +1,1765 @@
+/*
+ * Board overlays: the card menu, previews, zone browser, work areas and
+ * marker editors. Every visual constant comes from the design tokens
+ * (design/tokens.css). Every overlay animates in on insertion; exits are
+ * played by inert ghosts (see overlayMotion.ts), so the real overlay leaves
+ * the DOM at once. Opacity fades on its own even curve (--ease-fade) while
+ * the travel and scale keep the spring (ADR-027, decision 7).
+ */
+.ptcgsim-legacy-board-overlays {
+  --overlay-enter-duration: var(--surface-enter-duration, 200ms);
+  --overlay-exit-duration: var(--surface-exit-duration, 140ms);
+  --overlay-slow-duration: calc(
+    var(--duration-slow, 320ms) * var(--motion-scale, 1)
+  );
+  --overlay-menu-from-scale: 0.96;
+  --overlay-submenu-from-x: -4px;
+  --overlay-panel-from-y: 8px;
+  --overlay-preview-from-scale: 0.92;
+
+  position: absolute;
+  inset: 0;
+  z-index: var(--table-layer-viewers);
+  overflow: hidden;
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  font-size: var(--text-md);
+  line-height: var(--leading-tight);
+  pointer-events: none;
+}
+
+/* Reduced motion: opacity only, and quick (the surface tokens' times). */
+:root[data-motion='reduced'] .ptcgsim-legacy-board-overlays {
+  --overlay-slow-duration: var(--surface-enter-duration, 150ms);
+  --overlay-menu-from-scale: 1;
+  --overlay-submenu-from-x: 0px;
+  --overlay-panel-from-y: 0px;
+  --overlay-preview-from-scale: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion='full']) .ptcgsim-legacy-board-overlays {
+    --overlay-slow-duration: var(--surface-enter-duration, 150ms);
+    --overlay-menu-from-scale: 1;
+    --overlay-submenu-from-x: 0px;
+    --overlay-panel-from-y: 0px;
+    --overlay-preview-from-scale: 1;
+  }
+}
+
+/* Entrances: the travel or growth alone, on the spring; each overlay fades
+   in alongside with ptcgsim-overlay-fade-in on --ease-fade. */
+@keyframes ptcgsim-overlay-menu-in {
+  from {
+    scale: var(--overlay-menu-from-scale);
+  }
+}
+
+@keyframes ptcgsim-overlay-menu-out {
+  to {
+    opacity: 0;
+    scale: var(--overlay-menu-from-scale);
+  }
+}
+
+@keyframes ptcgsim-overlay-panel-in {
+  from {
+    translate: 0 var(--overlay-panel-from-y);
+  }
+}
+
+@keyframes ptcgsim-overlay-panel-out {
+  to {
+    opacity: 0;
+    translate: 0 var(--overlay-panel-from-y);
+  }
+}
+
+@keyframes ptcgsim-overlay-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes ptcgsim-overlay-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes ptcgsim-overlay-preview-in {
+  from {
+    scale: var(--overlay-preview-from-scale);
+  }
+}
+
+@keyframes ptcgsim-overlay-preview-out {
+  to {
+    opacity: 0;
+    scale: var(--overlay-preview-from-scale);
+  }
+}
+
+/* ---- Exit ghosts ------------------------------------------------------ */
+.ptcgsim-legacy-board-overlays .ptcgsim-overlay-ghost {
+  pointer-events: none;
+  transition: none;
+  animation-duration: var(--overlay-exit-duration);
+  animation-fill-mode: forwards;
+  animation-timing-function: var(--ease-fade);
+}
+
+.ptcgsim-legacy-board-overlays .ptcgsim-overlay-ghost * {
+  animation: none !important;
+  transition: none !important;
+}
+
+.ptcgsim-legacy-board-overlays .ptcgsim-overlay-ghost.is-exit-menu {
+  animation-name: ptcgsim-overlay-menu-out;
+}
+
+.ptcgsim-legacy-board-overlays .ptcgsim-overlay-ghost.is-exit-panel {
+  animation-name: ptcgsim-overlay-panel-out;
+}
+
+.ptcgsim-legacy-board-overlays .ptcgsim-overlay-ghost.is-exit-scrim,
+.ptcgsim-legacy-board-overlays .ptcgsim-overlay-ghost.is-exit-preview {
+  animation-name: ptcgsim-overlay-fade-out;
+}
+
+/* ---- Card context menu ------------------------------------------------ */
+.ptcgsim-legacy-card-context-menu,
+.ptcgsim-legacy-card-context-menu .ptcgsim-legacy-card-sub-menu {
+  box-sizing: border-box;
+  width: max-content;
+  min-width: 232px;
+  max-width: 340px;
+  padding: var(--space-1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-2);
+  box-shadow: var(--shadow-4), var(--highlight-top);
+  color: var(--color-text);
+}
+
+.ptcgsim-legacy-card-context-menu {
+  position: absolute;
+  /* Over any viewer or preview it opens from (tokens.css, Layers). */
+  z-index: var(--viewer-layer-menu);
+  isolation: isolate;
+  pointer-events: auto;
+  animation:
+    ptcgsim-overlay-fade-in var(--overlay-enter-duration) var(--ease-fade)
+      backwards,
+    ptcgsim-overlay-menu-in var(--overlay-enter-duration) var(--ease-snappy)
+      backwards;
+}
+
+.ptcgsim-legacy-card-context-menu:focus-visible {
+  outline: none;
+}
+
+.ptcgsim-legacy-card-context-menu ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ptcgsim-legacy-card-context-menu li {
+  position: relative;
+  margin: 0;
+  padding: 0;
+}
+
+.ptcgsim-legacy-card-context-menu .ptcgsim-legacy-context-header {
+  padding: var(--space-2) var(--space-3) var(--space-1);
+  color: var(--color-text-faint);
+  cursor: default;
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
+}
+
+.ptcgsim-legacy-card-context-menu .ptcgsim-legacy-context-empty {
+  padding: var(--space-2) var(--space-3);
+  color: var(--color-text-muted);
+  cursor: default;
+}
+
+/* A section separator, inset from the panel's edges. */
+.ptcgsim-legacy-card-context-menu li.is-boundary {
+  margin-top: var(--space-2);
+}
+
+.ptcgsim-legacy-card-context-menu li.is-boundary::before {
+  position: absolute;
+  top: calc(var(--space-1) * -1);
+  right: var(--space-1-5);
+  left: var(--space-1-5);
+  height: 1px;
+  background: var(--color-border);
+  content: '';
+  pointer-events: none;
+}
+
+.ptcgsim-menu-item {
+  display: flex;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 32px;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding-block: var(--space-1);
+  padding-inline: var(--space-2) var(--space-3);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--text-md);
+  text-align: start;
+  white-space: nowrap;
+  transition: background-color var(--duration-instant, 90ms) ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ptcgsim-menu-item:hover {
+    outline: none;
+    background: var(--color-surface-hover);
+  }
+}
+.ptcgsim-menu-item:focus-visible,
+.has-submenu[data-submenu-open='true'] > .ptcgsim-menu-item {
+  outline: none;
+  background: var(--color-surface-hover);
+}
+
+.ptcgsim-menu-item:active {
+  background: var(--color-surface-pressed);
+}
+
+.ptcgsim-menu-item:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--ptcgsim-focus-ring, var(--color-accent));
+}
+
+.ptcgsim-menu-item.is-danger {
+  color: var(--color-danger);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ptcgsim-menu-item.is-danger:hover {
+    background: var(--color-danger-soft);
+  }
+}
+.ptcgsim-menu-item.is-danger:focus-visible {
+  background: var(--color-danger-soft);
+}
+
+.ptcgsim-menu-icon {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  color: var(--color-text-muted);
+}
+
+.ptcgsim-menu-item.is-danger .ptcgsim-menu-icon {
+  color: currentColor;
+}
+
+.ptcgsim-menu-label {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* The keyboard hint, read from the shortcut catalogue. It is decoration:
+   the alternative text keeps it out of the item's accessible name. */
+.ptcgsim-menu-item[data-menu-hint]::after {
+  flex: none;
+  /* Keys read left to right in every language (Alt + N, 1-9). */
+  direction: ltr;
+  unicode-bidi: isolate;
+  padding-inline-start: var(--space-4);
+  color: var(--color-text-faint);
+  content: attr(data-menu-hint);
+  content: attr(data-menu-hint) / '';
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+/* A finger: rows big enough to hit, and no keys to hint at. */
+@media (pointer: coarse) {
+  .ptcgsim-menu-item {
+    min-height: 44px;
+  }
+  .ptcgsim-menu-item[data-menu-hint]::after {
+    content: none;
+  }
+}
+
+.ptcgsim-menu-chevron {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  margin-inline-start: var(--space-3);
+  color: var(--color-text-faint);
+}
+
+/* It points the way the submenu opens, which is the way the language reads. */
+.ptcgsim-menu-chevron:dir(rtl) {
+  scale: -1 1;
+}
+
+/* ---- Submenus: slide in from their side ------------------------------- */
+.ptcgsim-legacy-card-context-menu .ptcgsim-legacy-card-sub-menu {
+  position: absolute;
+  top: -5px;
+  left: calc(100% + 7px);
+  z-index: 1;
+  display: none;
+  min-width: 200px;
+  margin: 0;
+  list-style: none;
+  opacity: 0;
+  translate: var(--overlay-submenu-from-x) 0;
+  pointer-events: none;
+  transition-behavior: allow-discrete;
+  transition-duration: var(--overlay-exit-duration);
+  transition-property: opacity, translate, display;
+  transition-timing-function: var(--ease-fade), var(--ease-in), linear;
+}
+
+.ptcgsim-legacy-card-context-menu
+  li.has-submenu.opens-left
+  > .ptcgsim-legacy-card-sub-menu {
+  --overlay-submenu-from-x: 4px;
+
+  right: calc(100% + 7px);
+  left: auto;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ptcgsim-legacy-card-context-menu
+    li.has-submenu:hover
+    > .ptcgsim-legacy-card-sub-menu {
+    display: block;
+    opacity: 1;
+    translate: 0 0;
+    pointer-events: auto;
+    transition-duration: var(--overlay-enter-duration);
+    transition-timing-function: var(--ease-fade), var(--ease-snappy), linear;
+  }
+}
+.ptcgsim-legacy-card-context-menu
+  li.has-submenu[data-submenu-open='true']
+  > .ptcgsim-legacy-card-sub-menu {
+  display: block;
+  opacity: 1;
+  translate: 0 0;
+  pointer-events: auto;
+  transition-duration: var(--overlay-enter-duration);
+  transition-timing-function: var(--ease-fade), var(--ease-snappy), linear;
+}
+
+@starting-style {
+  @media (hover: hover) and (pointer: fine) {
+    .ptcgsim-legacy-card-context-menu
+      li.has-submenu:hover
+      > .ptcgsim-legacy-card-sub-menu {
+      opacity: 0;
+      translate: var(--overlay-submenu-from-x) 0;
+    }
+  }
+  .ptcgsim-legacy-card-context-menu
+    li.has-submenu[data-submenu-open='true']
+    > .ptcgsim-legacy-card-sub-menu {
+    opacity: 0;
+    translate: var(--overlay-submenu-from-x) 0;
+  }
+}
+
+/* A bridge over the gap, so the pointer can cross into an open submenu. */
+.ptcgsim-legacy-card-context-menu
+  li.has-submenu[data-submenu-open='true']::after {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  left: 100%;
+  width: 12px;
+  content: '';
+}
+
+.ptcgsim-legacy-card-context-menu
+  li.has-submenu.opens-left[data-submenu-open='true']::after {
+  right: 100%;
+  left: auto;
+}
+
+/* A menu with no room beside it for a submenu (a phone), or whose rows
+   don't fit the board's height (a phone on its side, a short window), is
+   compact: a submenu opens in place, under its row, and the menu scrolls
+   (its height is set where it is placed). */
+.ptcgsim-legacy-card-context-menu[data-menu-compact='true'] {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.ptcgsim-legacy-card-context-menu[data-menu-compact='true']
+  .ptcgsim-legacy-card-sub-menu,
+.ptcgsim-legacy-card-context-menu[data-menu-compact='true']
+  li.has-submenu.opens-left
+  > .ptcgsim-legacy-card-sub-menu {
+  position: static;
+  width: auto;
+  min-width: 0;
+  max-width: none;
+  margin: 2px 0 4px var(--space-4);
+  border-color: transparent;
+  background: var(--color-surface-sunken);
+  box-shadow: none;
+  translate: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .ptcgsim-legacy-card-context-menu[data-menu-compact='true']
+    li.has-submenu:hover:not([data-submenu-open='true'])
+    > .ptcgsim-legacy-card-sub-menu {
+    display: none;
+  }
+}
+.ptcgsim-legacy-card-context-menu[data-menu-compact='true']
+  li.has-submenu[data-submenu-open='true']
+  > .ptcgsim-legacy-card-sub-menu {
+  display: block;
+}
+.ptcgsim-legacy-card-context-menu[data-menu-compact='true']
+  li.has-submenu[data-submenu-open='true']::after {
+  content: none;
+}
+
+/* ---- Overlay card images ---------------------------------------------- */
+/* A card face: the generic card radius, the blank card colour until the
+   image arrives, then the image fading in over it. The picture is fitted
+   to the card exactly (a scan runs a little wider than a card): neither a
+   strip of the blank nor a sliver of its border is lost, and once it is in
+   the blank goes, so the scan's own rounded corners are the card's. */
+.ptcgsim-legacy-overlay-card-image {
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  overflow: hidden;
+  aspect-ratio: 5 / 7;
+  border-radius: var(--ptcgsim-card-radius, 4.8% / 3.4%);
+  background: var(--ptcgsim-card-blank, var(--neutral-600));
+  transition: background-color var(--duration-fast, 140ms) ease;
+}
+
+.ptcgsim-legacy-overlay-card-image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  opacity: 0;
+}
+
+.ptcgsim-legacy-overlay-card-image[data-overlay-image-state='ready'] {
+  background-color: transparent;
+}
+
+.ptcgsim-legacy-overlay-card-image[data-overlay-image-state='ready'] img {
+  opacity: 1;
+}
+
+/* A card in a pile or work area fills the button it sits in. */
+.ptcgsim-legacy-overlay-card-image.is-zone {
+  width: 100%;
+  height: 100%;
+}
+
+.ptcgsim-legacy-overlay-card-image.is-zone img {
+  position: absolute;
+  inset: 0;
+  transition: opacity var(--duration-fast, 140ms) ease;
+}
+
+/* ---- Card preview ----------------------------------------------------- */
+/* The card as large as the board allows, with a separate control row so its
+   name and HP stay visible on narrow tables. It zooms out of its source
+   (overlayMotion.ts) and tilts toward the pointer under a glare that follows
+   it; under reduced motion it only fades, and holds still. */
+.ptcgsim-legacy-card-preview {
+  --ptcgsim-preview-height: min(
+    calc(var(--ptcgsim-overlay-board-height, 100vh) * 0.92),
+    calc(var(--ptcgsim-overlay-board-height, 100vh) - 80px),
+    calc((var(--ptcgsim-overlay-board-width, 100vw) - 64px) * 88 / 63)
+  );
+
+  position: absolute;
+  inset: 0;
+  /* Over the viewers it is read from; their own layers stay inside them. */
+  z-index: var(--viewer-layer-preview);
+  isolation: isolate;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  padding: 64px 32px 16px;
+  background: var(--color-scrim);
+  cursor: zoom-out;
+  pointer-events: auto;
+  animation: ptcgsim-overlay-fade-in var(--overlay-enter-duration)
+    var(--ease-fade) backwards;
+  /* Back after a card dragged out of it lands (data-preview-dragging-card). */
+  transition: opacity var(--overlay-enter-duration) var(--ease-fade);
+}
+
+.ptcgsim-legacy-card-preview:focus-visible {
+  outline: none;
+}
+
+.ptcgsim-card-preview-stage {
+  display: block;
+  animation: ptcgsim-overlay-preview-in var(--overlay-slow-duration)
+    var(--ease-snappy) backwards;
+}
+
+.ptcgsim-card-preview-tilt {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  width: calc(var(--ptcgsim-preview-height) * 63 / 88);
+  height: var(--ptcgsim-preview-height);
+  border-radius: var(--ptcgsim-card-radius, 4.8% / 3.4%);
+  box-shadow: var(--shadow-5);
+  transform: perspective(900px) rotateX(var(--ptcgsim-tilt-x, 0deg))
+    rotateY(var(--ptcgsim-tilt-y, 0deg));
+  transition: transform var(--duration-slow, 320ms) var(--ease-out);
+}
+
+.ptcgsim-legacy-card-preview[data-landscape='true'] {
+  --ptcgsim-preview-height: min(
+    calc(var(--ptcgsim-overlay-board-height, 100vh) - 96px),
+    calc((var(--ptcgsim-overlay-board-width, 100vw) - 64px) * 63 / 88)
+  );
+}
+.ptcgsim-legacy-card-preview[data-landscape='true'] .ptcgsim-card-preview-tilt {
+  width: calc(var(--ptcgsim-preview-height) * 88 / 63);
+}
+.ptcgsim-composition-artwork {
+  position: relative;
+  align-self: center;
+  filter: drop-shadow(0 14px 28px rgb(0 0 0 / 0.3));
+}
+.ptcgsim-composition-piece .ptcgsim-legacy-overlay-card-image {
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+  background: transparent;
+}
+.ptcgsim-composition-piece img {
+  object-fit: fill;
+}
+.ptcgsim-composition-caption {
+  position: absolute;
+  bottom: 16px;
+  inset-inline: 24px;
+  margin: 0;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+/* An assembled card taken apart (stackCardsLayout): a window over the
+   board, its title bar on top, the pieces on the first rows and what is
+   attached to them below. */
+.ptcgsim-legacy-stack-preview.is-piece-list {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-content: stretch;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 0;
+  padding: 0;
+  overflow: hidden auto;
+  overscroll-behavior: contain;
+  transform-origin: center;
+}
+.ptcgsim-legacy-stack-preview.is-piece-list .ptcgsim-overlay-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  flex: none;
+  background: var(--color-surface-2);
+}
+.ptcgsim-stack-cards {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* Groups sit a gap further apart than rows (overlayLayout.ts). */
+  gap: 24px;
+  margin: auto 0;
+  padding: 16px;
+}
+.ptcgsim-stack-cards-group {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  max-width: calc(
+    var(--ptcgsim-stack-card-height, 200px) * 63 / 88 *
+      var(--ptcgsim-stack-columns, 4) + (var(--ptcgsim-stack-columns, 4) - 1) *
+      12px
+  );
+}
+
+.ptcgsim-preview-controls {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ptcgsim-preview-controls .ptcgsim-overlay-button {
+  background: var(--color-surface-2);
+  box-shadow: var(--shadow-3);
+}
+
+.ptcgsim-preview-controls kbd {
+  color: var(--color-text-faint);
+  font: 11px var(--font-ui);
+}
+
+.ptcgsim-legacy-overlay-card-image.is-preview {
+  width: 100%;
+  height: 100%;
+}
+
+.ptcgsim-legacy-overlay-card-image.is-preview img {
+  position: absolute;
+  inset: 0;
+  transition: opacity var(--duration-fast, 140ms) ease;
+}
+
+:root[data-motion='reduced'] .ptcgsim-card-preview-tilt,
+:root[data-motion-speed='instant'] .ptcgsim-card-preview-tilt {
+  transform: none;
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion='full']) .ptcgsim-card-preview-tilt {
+    transform: none;
+    transition: none;
+  }
+}
+
+/* Leaving, the card sinks back a little as the scrim fades. */
+.ptcgsim-legacy-board-overlays
+  .ptcgsim-overlay-ghost.is-exit-preview
+  .ptcgsim-card-preview-stage {
+  animation: ptcgsim-overlay-preview-out var(--overlay-exit-duration)
+    var(--ease-in) forwards !important;
+}
+
+/* ---- Stack view ------------------------------------------------------- */
+/* The stack's cards upright over their player's half, as large as the board
+   allows (overlayLayout.ts); it grows out of the stack on the table. */
+.ptcgsim-legacy-stack-preview {
+  position: absolute;
+  z-index: var(--viewer-layer-preview);
+  isolation: isolate;
+  display: flex;
+  box-sizing: border-box;
+  flex-wrap: wrap;
+  align-content: center;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-2);
+  box-shadow: var(--shadow-5), var(--highlight-top);
+  pointer-events: auto;
+  animation:
+    ptcgsim-overlay-fade-in var(--overlay-enter-duration) var(--ease-fade)
+      backwards,
+    ptcgsim-overlay-menu-in var(--overlay-enter-duration) var(--ease-snappy)
+      backwards;
+}
+
+.ptcgsim-legacy-stack-preview:focus-visible {
+  outline: none;
+}
+
+/* Each card in the stack view opens on its own. */
+.ptcgsim-legacy-stack-preview-card {
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  width: calc(var(--ptcgsim-stack-card-height, 200px) * 63 / 88);
+  height: var(--ptcgsim-stack-card-height, 200px);
+  flex: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--ptcgsim-card-radius, 4.8% / 3.4%);
+  background: transparent;
+  box-shadow: var(--shadow-2);
+  cursor: zoom-in;
+  transition:
+    translate var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ptcgsim-legacy-stack-preview-card:hover {
+    box-shadow: var(--shadow-3);
+    translate: 0 -4px;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  :root[data-motion='reduced'] .ptcgsim-legacy-stack-preview-card:hover {
+    translate: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @media (hover: hover) and (pointer: fine) {
+    :root:not([data-motion='full']) .ptcgsim-legacy-stack-preview-card:hover {
+      translate: none;
+    }
+  }
+}
+
+.ptcgsim-legacy-overlay-card-image.is-stack {
+  width: 100%;
+  height: 100%;
+}
+
+.ptcgsim-legacy-overlay-card-image.is-stack img {
+  position: absolute;
+  inset: 0;
+  transition: opacity var(--duration-fast, 140ms) ease;
+}
+
+/* ---- Panels: shared chrome -------------------------------------------- */
+.ptcgsim-overlay-scrim {
+  position: absolute;
+  inset: 0;
+  /* The pile viewer's, under it (it comes first) and over any window. */
+  z-index: var(--viewer-layer-browser);
+  background: var(--color-scrim);
+  pointer-events: none;
+  animation: ptcgsim-overlay-fade-in var(--overlay-enter-duration)
+    var(--ease-fade) backwards;
+  /* Back as the panel comes back (a dragged card landed, Show board
+     ended): the entrance's time. A transition takes its time from the
+     style it goes to. */
+  transition: opacity var(--overlay-enter-duration) var(--ease-fade);
+}
+
+.ptcgsim-overlay-scrim.is-hidden {
+  opacity: 0;
+  transition-duration: var(--overlay-exit-duration);
+}
+
+/* A panel's title bar: name, count and owner on the left, actions on the
+   right. 56px, as overlayLayout.ts budgets for. */
+.ptcgsim-overlay-header {
+  display: flex;
+  box-sizing: border-box;
+  height: 56px;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 0 var(--space-3) 0 var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  transition:
+    background-color var(--duration-fast) ease,
+    border-color var(--duration-fast) ease;
+}
+
+.ptcgsim-overlay-heading {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--space-2);
+  transition: opacity var(--duration-fast) ease;
+}
+
+.ptcgsim-overlay-title {
+  overflow: hidden;
+  margin: 0;
+  color: var(--color-text);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ptcgsim-overlay-count {
+  flex: none;
+  padding: var(--space-0-5) var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-3);
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+}
+
+.ptcgsim-overlay-seat {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-1-5);
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+}
+
+.ptcgsim-overlay-seat::before {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--color-you);
+  content: '';
+}
+
+.ptcgsim-overlay-seat.is-opponent::before {
+  background: var(--color-opponent);
+}
+
+.ptcgsim-overlay-actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ptcgsim-overlay-actions > * {
+  transition: opacity var(--duration-fast) ease;
+}
+
+.ptcgsim-overlay-empty {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: var(--space-8) var(--space-4);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+/* Buttons share the control tokens; `is-primary` is the accent fill and
+   `is-quiet` has no fill until hovered. Pressing sinks them a little. */
+.ptcgsim-overlay-button {
+  display: inline-flex;
+  box-sizing: border-box;
+  height: var(--control-height);
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1-5);
+  margin: 0;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface-3);
+  background-image: none;
+  box-shadow: var(--shadow-1), var(--highlight-top);
+  color: var(--color-text);
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: var(--text-md);
+  font-weight: var(--weight-medium);
+  line-height: 1;
+  white-space: nowrap;
+  transition:
+    background-color var(--duration-instant, 90ms) ease,
+    border-color var(--duration-instant, 90ms) ease,
+    scale var(--control-press-timing);
+}
+
+.ptcgsim-overlay-button:disabled {
+  opacity: 0.45;
+  cursor: default;
+  box-shadow: none;
+}
+
+.ptcgsim-overlay-button svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ptcgsim-overlay-button:hover:not(:disabled) {
+    background-image: linear-gradient(
+      var(--color-surface-hover),
+      var(--color-surface-hover)
+    );
+  }
+}
+
+.ptcgsim-overlay-button:active:not(:disabled) {
+  background-image: linear-gradient(
+    var(--color-surface-pressed),
+    var(--color-surface-pressed)
+  );
+  scale: var(--control-press-scale);
+}
+
+.ptcgsim-overlay-button:focus-visible {
+  outline: 2px solid var(--ptcgsim-focus-ring, var(--color-accent));
+  outline-offset: 2px;
+}
+
+.ptcgsim-overlay-button.is-primary {
+  border-color: transparent;
+  background-color: var(--color-accent-fill);
+  color: var(--color-text-on-accent);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ptcgsim-overlay-button.is-primary:hover:not(:disabled) {
+    background-color: var(--color-accent-fill-hover);
+    background-image: none;
+  }
+}
+
+.ptcgsim-overlay-button.is-primary:active:not(:disabled) {
+  background-color: var(--color-accent-fill-pressed);
+  background-image: none;
+}
+
+.ptcgsim-overlay-button.is-quiet {
+  border-color: transparent;
+  background-color: transparent;
+  box-shadow: none;
+  color: var(--color-text-muted);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ptcgsim-overlay-button.is-quiet:hover {
+    color: var(--color-text);
+  }
+}
+.ptcgsim-overlay-button.is-quiet[aria-pressed='true'] {
+  color: var(--color-text);
+}
+
+/* A work-area popup's Undo: the icon alone, square, as the close is. */
+.ptcgsim-overlay-button.ptcgsim-overlay-undo {
+  width: var(--control-height);
+  padding: 0;
+}
+
+:root[data-motion='reduced'] .ptcgsim-overlay-button:active:not(:disabled) {
+  scale: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion='full'])
+    .ptcgsim-overlay-button:active:not(:disabled) {
+    scale: none;
+  }
+}
+
+/* The Sort toggle: a button-sized chip that is on or off, latched in while
+   on. The checkbox inside keeps its role, name and keys, out of sight. */
+.ptcgsim-overlay-toggle {
+  display: inline-flex;
+  box-sizing: border-box;
+  height: 34px;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  /* A <button> toggle (Stack) looks like the <label> one (Sort) when off. */
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--text-md);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+  transition: background-color var(--duration-instant, 90ms) ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ptcgsim-overlay-toggle:hover {
+    background: var(--color-surface-hover);
+  }
+}
+
+.ptcgsim-overlay-toggle:has(input:checked),
+.ptcgsim-overlay-toggle[aria-pressed='true'] {
+  border-color: var(--color-accent);
+  background: var(--color-accent-soft);
+  box-shadow: inset 0 2px 3px oklch(0 0 0 / 0.3);
+  color: var(--ds-accent-text, var(--color-accent));
+}
+
+.ptcgsim-overlay-toggle svg {
+  width: 16px;
+  height: 16px;
+}
+
+.ptcgsim-overlay-toggle:has(input:focus-visible),
+button.ptcgsim-overlay-toggle:focus-visible {
+  outline: 2px solid var(--ptcgsim-focus-ring, var(--color-accent));
+  outline-offset: 2px;
+}
+
+.ptcgsim-overlay-toggle {
+  position: relative;
+}
+
+.ptcgsim-overlay-toggle input {
+  /* Unseen, over the whole chip: a press anywhere on it is the checkbox's. */
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.ptcgsim-overlay-toggle input:focus-visible {
+  outline: none;
+}
+
+/* ---- Zone browser ----------------------------------------------------- */
+/* Registered so a change of card size eases instead of jumping. */
+@property --ptcgsim-zone-card-height {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 200px;
+}
+
+/* A modal panel over most of the board; overlayLayout.ts places it and sizes
+   its cards (--ptcgsim-zone-card-height) from the board area. */
+.ptcgsim-legacy-zone-browser {
+  /* iOS: holding a card drags it, rather than offering Save Image. */
+  -webkit-touch-callout: none;
+  --ptcgsim-zone-card-width: calc(
+    var(--ptcgsim-zone-card-height, 200px) * 63 / 88
+  );
+
+  position: absolute;
+  /* Its header, tools and badges are layered inside it, never over a
+     preview or menu opened on top. */
+  z-index: var(--viewer-layer-browser);
+  isolation: isolate;
+  box-sizing: border-box;
+  overflow: hidden auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-surface-2);
+  box-shadow: var(--shadow-5), var(--highlight-top);
+  color: var(--color-text);
+  pointer-events: auto;
+  scrollbar-color: var(--color-border-strong) transparent;
+  scrollbar-width: thin;
+  animation:
+    ptcgsim-overlay-fade-in var(--overlay-enter-duration) var(--ease-fade)
+      backwards,
+    ptcgsim-overlay-panel-in var(--overlay-enter-duration) var(--ease-snappy)
+      backwards;
+  /* Back once a card dragged out of it has landed: as it first came in. */
+  transition:
+    opacity var(--overlay-enter-duration) var(--ease-fade),
+    translate var(--overlay-enter-duration) var(--ease-snappy),
+    background-color var(--duration-fast) ease,
+    border-color var(--duration-fast) ease,
+    box-shadow var(--duration-fast) ease,
+    --ptcgsim-zone-card-height
+      calc(var(--duration-normal) * var(--motion-scale, 1)) var(--ease-out);
+}
+
+.ptcgsim-legacy-zone-browser:focus-visible {
+  outline: none;
+}
+
+/* Dragging a card out: the panel gets out of the way of the drop, fading
+   and sinking a little as it goes. */
+.ptcgsim-legacy-zone-browser[data-zone-dragging-card] {
+  z-index: -2;
+  opacity: 0;
+  translate: 0 var(--overlay-panel-from-y);
+  transition:
+    opacity var(--overlay-exit-duration) var(--ease-fade),
+    translate var(--overlay-exit-duration) var(--ease-in),
+    background-color var(--duration-fast) ease,
+    border-color var(--duration-fast) ease,
+    box-shadow var(--duration-fast) ease,
+    --ptcgsim-zone-card-height
+      calc(var(--duration-normal) * var(--motion-scale, 1)) var(--ease-out);
+}
+
+.ptcgsim-zone-card,
+.ptcgsim-legacy-work-area-card {
+  user-select: none;
+  -webkit-user-select: none;
+}
+.ptcgsim-zone-card {
+  touch-action: pan-y;
+}
+.ptcgsim-legacy-work-area-card {
+  touch-action: pan-x;
+}
+/* A finger held on a card has picked it up (useOverlayCardDrag). */
+.ptcgsim-zone-card[data-armed],
+.ptcgsim-legacy-work-area-card[data-armed],
+.ptcgsim-legacy-stack-preview-card[data-armed],
+.ptcgsim-card-preview-stage[data-armed] {
+  scale: 1.04;
+  outline: 3px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* The preview steps aside while a card shown in it is dragged to the table:
+   it fades out, and back in once the card has landed. */
+.ptcgsim-legacy-card-preview[data-preview-dragging-card] {
+  opacity: 0;
+  pointer-events: none;
+  transition-duration: var(--overlay-exit-duration);
+}
+
+.ptcgsim-card-actions {
+  position: sticky;
+  bottom: 0;
+  /* A bar the cards scroll under: over their badges and handles. */
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-height: 58px;
+  padding: 8px 16px;
+  box-sizing: border-box;
+  background: var(--color-surface-2);
+  border-top: 1px solid var(--color-border);
+}
+.ptcgsim-overlay-button.ptcgsim-card-order {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+}
+.ptcgsim-card-actions-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
+@media (max-width: 600px) {
+  .ptcgsim-card-actions {
+    gap: 6px;
+    padding-inline: 8px;
+  }
+  .ptcgsim-card-actions .ptcgsim-overlay-button {
+    min-height: 40px;
+  }
+  .ptcgsim-card-actions-label {
+    display: none;
+  }
+  .ptcgsim-card-actions {
+    justify-content: flex-end;
+  }
+}
+.is-showing-board .ptcgsim-card-actions {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* A phone's panel has no room for the header buttons' words: their icons
+   stay, and the words still name them. The way back from Show board keeps
+   its words, as the one thing left on the screen. */
+@media (max-width: 600px) {
+  .ptcgsim-legacy-zone-toolbar .ptcgsim-overlay-actions {
+    gap: var(--space-1);
+  }
+  .ptcgsim-legacy-zone-toolbar .ptcgsim-overlay-button,
+  .ptcgsim-legacy-zone-toolbar .ptcgsim-overlay-toggle {
+    gap: 0;
+    padding: 0 var(--space-2);
+    font-size: 0;
+  }
+  /* Whose pile it is stays as the seat's dot; the title keeps the room. */
+  .ptcgsim-legacy-zone-toolbar .ptcgsim-overlay-seat {
+    gap: 0;
+    font-size: 0;
+  }
+  .is-showing-board .ptcgsim-legacy-zone-toolbar .ptcgsim-show-board-button {
+    gap: var(--space-1-5);
+    padding: 0 var(--space-3);
+    font-size: var(--text-md);
+  }
+}
+
+.ptcgsim-legacy-zone-browser .ptcgsim-overlay-header {
+  position: sticky;
+  top: 0;
+  /* A bar the cards scroll under: over their badges and handles. */
+  z-index: 5;
+  background: var(--color-surface-2);
+}
+
+/* On a phone the pile's buttons leave its name little room: the count (the
+   pile on the table shows it too) gives way, so "Deck" isn't cut to "D". */
+.ptcgsim-legacy-zone-toolbar {
+  container-type: inline-size;
+}
+
+@container (max-width: 400px) {
+  .ptcgsim-legacy-zone-toolbar .ptcgsim-overlay-count {
+    display: none;
+  }
+
+  .ptcgsim-legacy-zone-toolbar .ptcgsim-overlay-actions {
+    gap: var(--space-1);
+  }
+}
+
+/* "Show board": the panel steps aside; only its way back stays. */
+.ptcgsim-legacy-zone-browser.is-showing-board {
+  border-color: transparent;
+  background-color: transparent;
+  box-shadow: none;
+  pointer-events: none;
+}
+
+.ptcgsim-legacy-zone-browser.is-showing-board .ptcgsim-overlay-header {
+  border-color: transparent;
+  background: transparent;
+}
+
+.ptcgsim-legacy-zone-browser.is-showing-board .ptcgsim-legacy-zone-cards,
+.ptcgsim-legacy-zone-browser.is-showing-board .ptcgsim-browser-tools,
+.ptcgsim-legacy-zone-browser.is-showing-board .ptcgsim-overlay-heading,
+.ptcgsim-legacy-zone-browser.is-showing-board
+  .ptcgsim-overlay-actions
+  > :not(.ptcgsim-show-board-button) {
+  opacity: 0;
+}
+
+.ptcgsim-show-board-button {
+  pointer-events: auto;
+}
+
+/* The way back: lifted off the table so it reads as the panel's handle. */
+.is-showing-board .ptcgsim-show-board-button {
+  box-shadow: var(--shadow-4), var(--highlight-top);
+  animation: ptcgsim-show-board-return
+    calc(var(--duration-normal) * var(--motion-scale, 1)) var(--ease-snappy);
+}
+
+@keyframes ptcgsim-show-board-return {
+  from {
+    opacity: 0;
+    translate: 0 -4px;
+  }
+}
+
+.ptcgsim-browser-tools {
+  position: sticky;
+  top: 56px;
+  /* A bar the cards scroll under: over their badges and handles. */
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  box-sizing: border-box;
+  height: 48px;
+  padding: 0 var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  transition: opacity var(--duration-fast) var(--ease-out);
+}
+
+/* Card size: a linear zoom, stepped by the buttons or slid. */
+.ptcgsim-browser-zoom {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex: none;
+}
+
+.ptcgsim-browser-zoom-step,
+.ptcgsim-browser-zoom-value {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--control-height-compact);
+  min-width: var(--control-height-compact);
+  padding: 0 var(--space-1);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.ptcgsim-browser-zoom-value {
+  min-width: 4.5ch;
+  color: var(--color-text);
+}
+
+.ptcgsim-browser-zoom-step svg {
+  width: 16px;
+  height: 16px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ptcgsim-browser-zoom-step:hover:not(:disabled),
+  .ptcgsim-browser-zoom-value:hover {
+    background: var(--color-surface-3);
+    color: var(--color-text);
+  }
+}
+
+.ptcgsim-browser-zoom-step:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.ptcgsim-browser-zoom-step:focus-visible,
+.ptcgsim-browser-zoom-value:focus-visible,
+.ptcgsim-browser-zoom-slider:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.ptcgsim-browser-zoom-slider {
+  width: 104px;
+  /* The track is thin; the place a finger can take it is not. */
+  height: 32px;
+  margin: 0;
+  accent-color: var(--color-accent);
+  cursor: pointer;
+}
+
+@media (max-width: 600px) {
+  .ptcgsim-browser-zoom-slider {
+    display: none;
+  }
+}
+
+.ptcgsim-legacy-zone-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, var(--ptcgsim-zone-card-width));
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  transition: opacity var(--duration-fast) ease;
+}
+
+.ptcgsim-zone-card {
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  width: var(--ptcgsim-zone-card-width);
+  height: var(--ptcgsim-zone-card-height, 200px);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--ptcgsim-card-radius, 4.8% / 3.4%);
+  background: transparent;
+  box-shadow: var(--shadow-2);
+  cursor: pointer;
+  transition:
+    translate var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ptcgsim-zone-card:hover {
+    box-shadow: var(--shadow-3);
+    translate: 0 -4px;
+  }
+}
+
+.ptcgsim-zone-card:focus-visible {
+  outline: 3px solid var(--ptcgsim-focus-ring, var(--color-accent));
+  outline-offset: 3px;
+}
+
+/* The selected card wears the table's selection ring. */
+.ptcgsim-zone-card[aria-pressed='true'] {
+  box-shadow:
+    0 0 0 var(--ptcgsim-ring-width, 3px)
+      var(--ptcgsim-ring-selected, var(--color-gold)),
+    var(--shadow-3);
+}
+
+/* Copies stacked on one tile: the edges of the cards beneath show. */
+.ptcgsim-zone-card[data-copy-stack] {
+  --ptcgsim-copy-edge: var(--color-surface-3, #3a3029);
+  --ptcgsim-copy-rim: var(--color-border-strong, #00000066);
+  box-shadow:
+    3px 3px 0 -1px var(--ptcgsim-copy-edge),
+    3px 3px 0 0 var(--ptcgsim-copy-rim),
+    6px 6px 0 -1px var(--ptcgsim-copy-edge),
+    6px 6px 0 0 var(--ptcgsim-copy-rim),
+    var(--shadow-2);
+}
+.ptcgsim-zone-card[data-copy-stack][aria-pressed='true'] {
+  box-shadow:
+    0 0 0 var(--ptcgsim-ring-width, 3px)
+      var(--ptcgsim-ring-selected, var(--color-gold)),
+    3px 3px 0 -1px var(--ptcgsim-copy-edge),
+    3px 3px 0 0 var(--ptcgsim-copy-rim),
+    6px 6px 0 -1px var(--ptcgsim-copy-edge),
+    6px 6px 0 0 var(--ptcgsim-copy-rim),
+    var(--shadow-3);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  :root[data-motion='reduced'] .ptcgsim-zone-card:hover {
+    translate: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @media (hover: hover) and (pointer: fine) {
+    :root:not([data-motion='full']) .ptcgsim-zone-card:hover {
+      translate: none;
+    }
+  }
+}
+
+.ptcgsim-zone-copy-badge {
+  position: absolute;
+  top: var(--space-1-5);
+  right: var(--space-1-5);
+  z-index: 2;
+  display: inline-flex;
+  box-sizing: border-box;
+  min-width: 26px;
+  height: 22px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--space-1-5);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-1);
+  box-shadow: var(--shadow-2);
+  color: var(--color-text);
+  font-family: var(--font-display);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--weight-bold);
+  line-height: 1;
+  pointer-events: none;
+}
+
+/* A tile in a selection of several (ADR-042): its place in the order, or
+   how many of its stacked copies are taken ("2/5"), in the selected ring's
+   gold, across from the copy count. */
+.ptcgsim-zone-select-badge {
+  position: absolute;
+  top: var(--space-1-5);
+  inset-inline-start: var(--space-1-5);
+  z-index: 2;
+  display: inline-flex;
+  box-sizing: border-box;
+  min-width: 22px;
+  height: 22px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--space-1-5);
+  border-radius: var(--radius-pill);
+  background: var(--ptcgsim-ring-selected, var(--color-gold));
+  box-shadow: var(--shadow-2);
+  /* Dark on the gold in either theme (the gold is the same in both). */
+  color: #2a2008;
+  font-family: var(--font-display);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--weight-bold);
+  line-height: 1;
+  pointer-events: none;
+  animation: ptcgsim-overlay-fade-in var(--duration-fast, 120ms)
+    var(--ease-fade) backwards;
+}
+
+/* ---- The group menu (GroupMenu.tsx) ----------------------------------- */
+/* A row's second line, where the order matters: "3 ends on top". */
+.ptcgsim-menu-label--with-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  line-height: 1.25;
+}
+
+.ptcgsim-menu-detail {
+  color: var(--color-text-faint);
+  font-size: var(--text-xs);
+}
+
+.ptcgsim-menu-item.is-danger .ptcgsim-menu-detail {
+  color: inherit;
+  opacity: 0.8;
+}
+
+/* "Attach to…" with no Pokémon to go on. */
+.ptcgsim-group-menu .ptcgsim-menu-item[aria-disabled='true'] {
+  cursor: default;
+  opacity: 0.5;
+}
+
+/* An ability used from the discard: a band across the card, in the owner's
+   seat colour. */
+.ptcgsim-legacy-zone-ability-marker {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  left: 0;
+  z-index: 1;
+  display: block;
+  height: 14%;
+  background: var(--color-you);
+  opacity: 0.72;
+  pointer-events: none;
+}
+
+.ptcgsim-legacy-zone-browser.is-opponent .ptcgsim-legacy-zone-ability-marker {
+  background: var(--color-opponent);
+  opacity: 0.5;
+}
+
+/* ---- Work areas ("Looking at cards...", "Move attached cards") -------- */
+/* A panel over the player's half: one scrolling row of large cards and the
+   bulk buttons. overlayLayout.ts places it over the box where the scene
+   paints its own copies of the cards, and sizes the cards. */
+.ptcgsim-legacy-work-area {
+  --ptcgsim-work-card-width: calc(
+    var(--ptcgsim-work-card-height, 200px) * 63 / 88
+  );
+
+  position: absolute;
+  /* Its sticky action bar and card handles are layered inside it, never
+     over a preview or menu opened on top. */
+  z-index: var(--viewer-layer-window);
+  isolation: isolate;
+  display: flex;
+  box-sizing: border-box;
+  flex-direction: column;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-surface-2);
+  box-shadow: var(--shadow-5), var(--highlight-top);
+  color: var(--color-text);
+  pointer-events: auto;
+  animation:
+    ptcgsim-overlay-fade-in var(--overlay-enter-duration) var(--ease-fade)
+      backwards,
+    ptcgsim-overlay-panel-in var(--overlay-enter-duration) var(--ease-snappy)
+      backwards;
+  /* Back once a card dragged out of it has landed: as it first came in. */
+  transition:
+    opacity var(--overlay-enter-duration) var(--ease-fade),
+    translate var(--overlay-enter-duration) var(--ease-snappy),
+    background-color var(--duration-fast) ease,
+    border-color var(--duration-fast) ease,
+    box-shadow var(--duration-fast) ease;
+}
+
+/* Dragging a card out: the panel gets out of the way of the drop, fading
+   and sinking a little as it goes. */
+.ptcgsim-legacy-work-area[data-work-area-dragging-card] {
+  z-index: -2;
+  opacity: 0;
+  translate: 0 var(--overlay-panel-from-y);
+  transition:
+    opacity var(--overlay-exit-duration) var(--ease-fade),
+    translate var(--overlay-exit-duration) var(--ease-in),
+    background-color var(--duration-fast) ease,
+    border-color var(--duration-fast) ease,
+    box-shadow var(--duration-fast) ease;
+}
+
+/* The player whose cards these are, by seat colour. */
+.ptcgsim-legacy-work-area .ptcgsim-overlay-header {
+  flex: none;
+  box-shadow: inset 3px 0 0 var(--color-you);
+  border-top-left-radius: var(--radius-lg);
+}
+
+.ptcgsim-legacy-work-area.is-opponent .ptcgsim-overlay-header {
+  box-shadow: inset 3px 0 0 var(--color-opponent);
+}
+
+.ptcgsim-overlay-hint {
+  overflow: hidden;
+  min-width: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ptcgsim-legacy-work-area-cards {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: safe center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  overflow: auto hidden;
+  overscroll-behavior: contain;
+  scroll-snap-type: x proximity;
+  scrollbar-color: var(--color-border-strong) transparent;
+  scrollbar-width: thin;
+  transition: opacity var(--duration-fast) ease;
+}
+
+.ptcgsim-legacy-work-area-card {
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  width: var(--ptcgsim-work-card-width);
+  height: var(--ptcgsim-work-card-height, 200px);
+  flex: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--ptcgsim-card-radius, 4.8% / 3.4%);
+  background: transparent;
+  box-shadow: var(--shadow-2);
+  cursor: pointer;
+  scroll-snap-align: center;
+  transition:
+    translate var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ptcgsim-legacy-work-area-card:not(:disabled):hover {
+    box-shadow: var(--shadow-3);
+    translate: 0 -4px;
+  }
+}
+
+.ptcgsim-legacy-work-area-card:disabled {
+  cursor: default;
+}
+
+.ptcgsim-legacy-work-area-card:focus-visible {
+  outline: 3px solid var(--ptcgsim-focus-ring, var(--color-accent));
+  outline-offset: 3px;
+}
+
+.ptcgsim-legacy-work-area-card[aria-pressed='true'] {
+  box-shadow:
+    0 0 0 var(--ptcgsim-ring-width, 3px)
+      var(--ptcgsim-ring-selected, var(--color-gold)),
+    var(--shadow-3);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  :root[data-motion='reduced'] .ptcgsim-legacy-work-area-card:hover {
+    translate: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @media (hover: hover) and (pointer: fine) {
+    :root:not([data-motion='full']) .ptcgsim-legacy-work-area-card:hover {
+      translate: none;
+    }
+  }
+}
+
+/* 58px with its padding, as overlayLayout.ts budgets for. */
+.ptcgsim-legacy-work-area-buttons {
+  display: flex;
+  box-sizing: border-box;
+  height: 58px;
+  flex: none;
+  align-items: flex-start;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4) var(--space-4);
+  transition: opacity var(--duration-fast) ease;
+}
+
+.ptcgsim-legacy-work-area-buttons .ptcgsim-overlay-button {
+  min-width: 0;
+  max-width: 190px;
+  flex: 1 1 0;
+}
+
+/* Each label keeps to its own button; too narrow a row for words (a phone)
+   shows the icons alone, named by their tooltips. */
+.ptcgsim-legacy-work-area-buttons {
+  container-type: inline-size;
+}
+
+.ptcgsim-work-area-button-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@container (max-width: 620px) {
+  .ptcgsim-work-area-button-label {
+    display: none;
+  }
+}
+
+/* "Show board": the panel steps aside; only its way back stays. */
+.ptcgsim-legacy-work-area.is-showing-board {
+  border-color: transparent;
+  background-color: transparent;
+  box-shadow: none;
+  pointer-events: none;
+}
+
+.ptcgsim-legacy-work-area.is-showing-board .ptcgsim-overlay-header {
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.ptcgsim-legacy-work-area.is-showing-board .ptcgsim-legacy-work-area-cards,
+.ptcgsim-legacy-work-area.is-showing-board .ptcgsim-legacy-work-area-buttons,
+.ptcgsim-legacy-work-area.is-showing-board .ptcgsim-overlay-heading {
+  opacity: 0;
+}
+
+/* An overlay's close: an X, in the red a close button usually is, filled
+   when pointed at or focused. */
+.ptcgsim-overlay-button.ptcgsim-overlay-close {
+  width: var(--control-height);
+  padding: 0;
+  border-color: transparent;
+  background-color: var(--color-danger-soft);
+  color: var(--color-danger);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ptcgsim-overlay-button.ptcgsim-overlay-close:hover:not(:disabled) {
+    background-color: var(--color-danger-fill);
+    background-image: none;
+    color: var(--color-text-on-accent);
+  }
+}
+.ptcgsim-overlay-button.ptcgsim-overlay-close:focus-visible:not(:disabled) {
+  background-color: var(--color-danger-fill);
+  background-image: none;
+  color: var(--color-text-on-accent);
+}

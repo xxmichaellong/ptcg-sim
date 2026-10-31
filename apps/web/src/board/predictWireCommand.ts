@@ -1,0 +1,1780 @@
+import {
+  activeWentAway,
+  layOutPlayStackAcrossBoards,
+  loneBenchedPromotions,
+  STACK_REMINDERS,
+} from '@ptcgsim/game-core';
+import type {
+  ConcealedViewCard,
+  MatchViewState,
+  PlayerId,
+  ViewCard,
+} from '@ptcgsim/game-core';
+import {
+  cardStepMakesPokemon,
+  type WireCardStep,
+  type WireGameCommand,
+} from '@ptcgsim/protocol';
+
+import { locateViewCardActionSource } from './locateViewCardActionSource.js';
+
+/**
+ * Optimistic prediction of a wire command on the recipient-safe view.
+ *
+ * The room stays authoritative: nothing here is sent anywhere, and the
+ * authoritative publication always replaces the prediction. What this buys
+ * is that the table shows the outcome of a command the instant it is
+ * submitted rather than one round trip later. Predictions are applied on top
+ * of every authoritative view until the command leaves the session's queue,
+ * so a prediction is rebased when another publication lands first.
+ *
+ * Every predictor is strict about its preconditions and returns null when
+ * the view is not in the shape the command expects -- including when the
+ * authoritative view already contains the command's effect, which is what a
+ * rebase on the publication that carried it looks like. A null prediction is
+ * simply not shown; it never fails a command.
+ *
+ * Predictions work only with what the view discloses. A card moving into a
+ * zone the viewer cannot read is shown as its back, matching the alias the
+ * room will publish; work areas and new play stacks get predicted ids that
+ * the publication replaces.
+ */
+export const predictWireCommand = (
+  view: MatchViewState,
+  command: WireGameCommand,
+  options: PredictionOptions = {}
+): MatchViewState | null => {
+  if (view.viewer.kind !== 'player') return null;
+  // A group's steps, folded one by one; it brings a lone Benched Pokémon
+  // up once, after the last, as the room does.
+  if (command.type === 'ApplyCardSteps') {
+    return predictCardSteps(view, command.steps, options);
+  }
+  const viewerId: Reader = {
+    id: view.viewer.playerId,
+    readsEveryHand: options.readsEveryHand === true,
+  };
+  try {
+    const next = predict(view, command, viewerId);
+    return next && command.type !== 'ApplySoloUndo'
+      ? withLoneBenchedPromoted(view, next)
+      : next;
+  } catch {
+    return null;
+  }
+};
+
+export interface PredictionOptions {
+  /**
+   * The viewer reads every seat's hand and deck, as Solo's one player does
+   * (the room shows them the other seat's too): a card going there is
+   * predicted face up, as the room will show it, not as a back that then
+   * turns over.
+   */
+  readonly readsEveryHand?: boolean;
+}
+
+/** Whom a prediction is for, and what of the other seat they can read. */
+interface Reader {
+  readonly id: PlayerId;
+  readonly readsEveryHand: boolean;
+}
+
+type Zone = MatchViewState['zones'][string];
+type Stack = MatchViewState['stacks'][string];
+type WorkAreas = MatchViewState['workAreas'][string];
+
+const zoneKindOf = (view: MatchViewState, zoneId: string) =>
+  view.zones[zoneId]?.kind;
+
+const hiddenFromViewer = (zone: Zone, viewerId: Reader): boolean =>
+  zone.kind === 'prizes' ||
+  ((zone.kind === 'hand' || zone.kind === 'deck') &&
+    zone.ownerId !== viewerId.id &&
+    !viewerId.readsEveryHand);
+
+/**
+ * A card as the room settles it in a zone (game-core's normalizeCardForZone):
+ * on the loose board face up with its ability unused; anywhere else back to
+ * its own category and upright too, so a card retyped in play is itself
+ * again in the hand.
+ */
+const settledIn = (
+  view: MatchViewState,
+  zone: Zone,
+  card: ViewCard
+): ViewCard => {
+  if (card.kind !== 'known') return card;
+  if (zone.kind === 'board')
+    return { ...card, face: 'up' as const, abilityUsed: false };
+  return {
+    ...card,
+    category: view.definitions[card.definitionId]?.category ?? card.category,
+    face: 'up',
+    orientationQuarterTurns: 0,
+    abilityUsed: false,
+  };
+};
+
+/** A card entering a zone the viewer cannot read is shown as its back. */
+const asPlacedIn = (
+  view: MatchViewState,
+  viewerId: Reader,
+  zone: Zone,
+  placed: ViewCard
+): ViewCard => {
+  const card = settledIn(view, zone, placed);
+  if (!hiddenFromViewer(zone, viewerId) || card.kind === 'concealed') {
+    return card;
+  }
+  const concealed: ConcealedViewCard = {
+    kind: 'concealed',
+    id: card.id,
+    ownerId: card.ownerId,
+    cardBackUrl: view.players[card.ownerId]?.cardBackUrl ?? '',
+    publiclyRevealed: false,
+  };
+  return concealed;
+};
+
+/**
+ * A card that moves stops being publicly revealed: the room retires every
+ * moved card's public visibility as it leaves its container.
+ */
+const departed = (card: ViewCard): ViewCard =>
+  card.kind === 'known' && card.publiclyRevealed
+    ? { ...card, publiclyRevealed: false }
+    : card;
+
+const withZone = (view: MatchViewState, zone: Zone): MatchViewState => ({
+  ...view,
+  zones: { ...view.zones, [zone.id]: zone },
+});
+
+const withStack = (view: MatchViewState, stack: Stack): MatchViewState => ({
+  ...view,
+  stacks: { ...view.stacks, [stack.id]: stack },
+});
+
+const withoutStack = (
+  view: MatchViewState,
+  stackId: string
+): MatchViewState => {
+  const stacks = { ...view.stacks };
+  delete stacks[stackId];
+  return { ...view, stacks };
+};
+
+const withBoard = (
+  view: MatchViewState,
+  playerId: PlayerId,
+  board: MatchViewState['boards'][string]
+): MatchViewState => ({
+  ...view,
+  boards: { ...view.boards, [playerId]: board },
+});
+
+const withWorkAreas = (
+  view: MatchViewState,
+  playerId: PlayerId,
+  areas: WorkAreas
+): MatchViewState => ({
+  ...view,
+  workAreas: { ...view.workAreas, [playerId]: areas },
+});
+
+const takeFromZone = (
+  view: MatchViewState,
+  zoneId: string,
+  cardId: string
+): { readonly view: MatchViewState; readonly card: ViewCard } | null => {
+  const zone = view.zones[zoneId];
+  if (!zone) return null;
+  const index = zone.cards.findIndex((card) => card.id === cardId);
+  if (index < 0) return null;
+  const card = departed(zone.cards[index]!);
+  return {
+    view: withZone(view, {
+      ...zone,
+      cards: zone.cards.filter((_, position) => position !== index),
+    }),
+    card,
+  };
+};
+
+const placeInZone = (
+  view: MatchViewState,
+  viewerId: Reader,
+  zoneId: string,
+  card: ViewCard,
+  index?: number
+): MatchViewState | null => {
+  const zone = view.zones[zoneId];
+  if (!zone) return null;
+  const at = Math.max(
+    0,
+    Math.min(index ?? zone.cards.length, zone.cards.length)
+  );
+  const cards = [...zone.cards];
+  cards.splice(at, 0, asPlacedIn(view, viewerId, zone, card));
+  return withZone(view, { ...zone, cards });
+};
+
+/** Removes a stack from its board, whichever slot holds it. */
+const detachStackFromBoard = (
+  view: MatchViewState,
+  stack: Stack
+): MatchViewState => {
+  const board = view.boards[stack.boardPlayerId];
+  if (!board) return view;
+  return withBoard(view, stack.boardPlayerId, {
+    activeStackId:
+      board.activeStackId === stack.id ? null : board.activeStackId,
+    benchStackIds: board.benchStackIds.filter((id) => id !== stack.id),
+  });
+};
+
+/**
+ * Takes a card out of a play stack. Taking the top Pokémon departs the whole
+ * stack: its remaining cards go to the owner's attached-card work area (or
+ * the stack simply disappears when nothing remains), as the room does.
+ */
+const takeFromStack = (
+  view: MatchViewState,
+  stackId: string,
+  cardId: string
+): { readonly view: MatchViewState; readonly card: ViewCard } | null => {
+  const stack = view.stacks[stackId];
+  if (!stack) return null;
+  const attachmentIndex = stack.attachmentCards.findIndex(
+    (card) => card.id === cardId
+  );
+  if (attachmentIndex >= 0) {
+    return {
+      view: withStack(view, {
+        ...stack,
+        attachmentCards: stack.attachmentCards.filter(
+          (_, position) => position !== attachmentIndex
+        ),
+      }),
+      card: departed(stack.attachmentCards[attachmentIndex]!),
+    };
+  }
+  const evolutionIndex = stack.evolutionCards.findIndex(
+    (card) => card.id === cardId
+  );
+  if (evolutionIndex < 0) return null;
+  const card = departed(stack.evolutionCards[evolutionIndex]!);
+  if (evolutionIndex < stack.evolutionCards.length - 1) {
+    return {
+      view: withStack(view, {
+        ...stack,
+        evolutionCards: stack.evolutionCards.filter(
+          (_, position) => position !== evolutionIndex
+        ),
+      }),
+      card,
+    };
+  }
+  const evolutionCards = stack.evolutionCards.slice(0, -1);
+  const attachmentCards = stack.attachmentCards;
+  let next = withoutStack(detachStackFromBoard(view, stack), stack.id);
+  if (evolutionCards.length + attachmentCards.length > 0) {
+    const areas = next.workAreas[stack.boardPlayerId];
+    if (!areas || areas.attachmentResolution) return null;
+    next = withWorkAreas(next, stack.boardPlayerId, {
+      ...areas,
+      attachmentResolution: {
+        id: `predicted-work-area:${stack.id}`,
+        sourceStackId: stack.id,
+        cards: [...[...evolutionCards].reverse(), ...attachmentCards],
+        evolutionCards,
+        attachmentCards,
+        suggestedSlot: stack.slot,
+      },
+    });
+  }
+  return { view: next, card };
+};
+
+const takeFromWorkArea = (
+  view: MatchViewState,
+  workAreaId: string,
+  cardId: string
+): { readonly view: MatchViewState; readonly card: ViewCard } | null => {
+  for (const [playerId, areas] of Object.entries(view.workAreas)) {
+    const inspection = areas.inspection;
+    if (inspection?.id === workAreaId) {
+      const found = inspection.cards.find(
+        (candidate) => candidate.id === cardId
+      );
+      if (!found) return null;
+      const card = departed(found);
+      return {
+        view: withWorkAreas(view, playerId as PlayerId, {
+          ...areas,
+          inspection: {
+            ...inspection,
+            cards: inspection.cards.filter((candidate) => candidate !== found),
+          },
+        }),
+        card,
+      };
+    }
+    const staged = areas.attachmentResolution;
+    if (staged?.id === workAreaId) {
+      const found = staged.cards.find((candidate) => candidate.id === cardId);
+      if (!found) return null;
+      const card = departed(found);
+      const remaining = {
+        ...staged,
+        cards: staged.cards.filter((candidate) => candidate !== found),
+        evolutionCards: staged.evolutionCards.filter(
+          (candidate) => candidate.id !== cardId
+        ),
+        attachmentCards: staged.attachmentCards.filter(
+          (candidate) => candidate.id !== cardId
+        ),
+      };
+      return {
+        view: withWorkAreas(view, playerId as PlayerId, {
+          ...areas,
+          attachmentResolution: remaining.cards.length === 0 ? null : remaining,
+        }),
+        card,
+      };
+    }
+  }
+  return null;
+};
+
+/** Takes a card from a zone, a play stack, or a work area by source id. */
+const takeFromSource = (
+  view: MatchViewState,
+  sourceId: string,
+  cardId: string
+) =>
+  takeFromZone(view, sourceId, cardId) ??
+  takeFromStack(view, sourceId, cardId) ??
+  takeFromWorkArea(view, sourceId, cardId);
+
+/** Mirrors game-core's normalizeAttachmentCardIdsV1; unknown order stays put. */
+const normalizeAttachments = (
+  cards: readonly ViewCard[]
+): readonly ViewCard[] =>
+  cards.every(
+    (card) =>
+      card.kind === 'known' &&
+      (card.category === 'Energy' || card.category === 'Trainer')
+  )
+    ? [
+        ...cards.filter(
+          (card) => card.kind === 'known' && card.category === 'Energy'
+        ),
+        ...cards.filter(
+          (card) => card.kind === 'known' && card.category === 'Trainer'
+        ),
+      ]
+    : cards;
+
+/** v1 orders attachments energies first, then trainers (attachment-order.ts). */
+const attachTo = (stack: Stack, card: ViewCard): Stack => {
+  const cards = [...stack.attachmentCards, card];
+  return {
+    ...stack,
+    attachmentCards:
+      card.kind === 'known' && card.category === 'Energy'
+        ? normalizeAttachments(cards)
+        : cards,
+  };
+};
+
+/** Evolved, a Pokémon's reminders come off, as the room takes them off. */
+const evolveWith = (stack: Stack, card: ViewCard): Stack => ({
+  ...stack,
+  evolutionCards: [...stack.evolutionCards, card],
+  ...(stack.reminders?.length ? { reminders: [] } : {}),
+});
+
+/**
+ * A Pokémon put in a slot as the room puts it (game-core apply-events):
+ * benched, it loses its Special Condition, and from the Active Spot its
+ * reminders too.
+ */
+const inSlot = (placed: Stack, slot: 'active' | 'bench'): Stack =>
+  slot === 'active'
+    ? { ...placed, slot }
+    : {
+        ...placed,
+        slot,
+        specialCondition: null,
+        ...(placed.slot === 'active' && placed.reminders?.length
+          ? { reminders: [] }
+          : {}),
+      };
+
+/** Puts a new stack on a board the way the room lays it out. */
+const placeNewStack = (
+  view: MatchViewState,
+  stack: Stack,
+  slot: 'active' | 'bench',
+  benchIndex: number | undefined
+): MatchViewState | null => {
+  const board = view.boards[stack.boardPlayerId];
+  if (!board) return null;
+  let next = withStack(view, { ...stack, slot });
+  if (slot === 'active') {
+    const benchStackIds = [...board.benchStackIds];
+    if (board.activeStackId) {
+      const prior = next.stacks[board.activeStackId];
+      if (!prior) return null;
+      benchStackIds.push(board.activeStackId);
+      next = withStack(next, inSlot(prior, 'bench'));
+    }
+    return withBoard(next, stack.boardPlayerId, {
+      activeStackId: stack.id,
+      benchStackIds,
+    });
+  }
+  const benchStackIds = [...board.benchStackIds];
+  const at = Math.max(
+    0,
+    Math.min(benchIndex ?? benchStackIds.length, benchStackIds.length)
+  );
+  benchStackIds.splice(at, 0, stack.id);
+  return withBoard(next, stack.boardPlayerId, {
+    activeStackId: board.activeStackId,
+    benchStackIds,
+  });
+};
+
+/**
+ * Boards laid out again with Pokémon moved between them (game-core's
+ * PlayStacksRehomed): each one placed takes its board and slot, a benched
+ * one loses its Special Condition, and one leaving the Active Spot for the
+ * Bench its reminders.
+ */
+const withBoardsRehomed = (
+  view: MatchViewState,
+  boards: readonly {
+    readonly playerId: PlayerId;
+    readonly board: MatchViewState['boards'][string];
+  }[]
+): MatchViewState | null => {
+  let next = view;
+  for (const { playerId, board } of boards) {
+    next = withBoard(next, playerId, board);
+    for (const id of [
+      ...(board.activeStackId ? [board.activeStackId] : []),
+      ...board.benchStackIds,
+    ]) {
+      const placed = next.stacks[id];
+      if (!placed) return null;
+      const slot = board.activeStackId === id ? 'active' : 'bench';
+      if (placed.slot !== slot || placed.boardPlayerId !== playerId)
+        next = withStack(next, {
+          ...inSlot(placed, slot),
+          boardPlayerId: playerId,
+        });
+    }
+  }
+  return next;
+};
+
+/**
+ * A lone Benched Pokémon up in an Active Spot the command emptied, as the
+ * room brings it up in the same batch (game-core's loneBenchedPromotions).
+ */
+const withLoneBenchedPromoted = (
+  view: MatchViewState,
+  next: MatchViewState
+): MatchViewState | null => {
+  let promoted: MatchViewState | null = next;
+  for (const { boardPlayerId, stackId } of loneBenchedPromotions(
+    view.boards,
+    next.boards,
+    (playerId) => {
+      const activeStackId = view.boards[playerId]?.activeStackId ?? null;
+      const active = activeStackId ? view.stacks[activeStackId] : undefined;
+      const window = (areas: WorkAreas | undefined) => {
+        const area = areas?.attachmentResolution;
+        return area
+          ? { ...area, cardIds: area.cards.map((card) => card.id) }
+          : null;
+      };
+      return activeWentAway(
+        {
+          activeStackId,
+          activeCardIds: active
+            ? [...active.evolutionCards, ...active.attachmentCards].map(
+                (card) => card.id
+              )
+            : [],
+          window: window(view.workAreas[playerId]),
+        },
+        { window: window(next.workAreas[playerId]) }
+      );
+    }
+  )) {
+    promoted = withBoardsRehomed(promoted, [
+      {
+        playerId: boardPlayerId as PlayerId,
+        board: { activeStackId: stackId, benchStackIds: [] },
+      },
+    ]);
+    if (!promoted) return null;
+  }
+  return promoted;
+};
+
+const emptyStack = (
+  id: string,
+  boardPlayerId: PlayerId,
+  slot: 'active' | 'bench',
+  evolutionCards: readonly ViewCard[],
+  attachmentCards: readonly ViewCard[]
+): Stack => ({
+  id,
+  boardPlayerId,
+  slot,
+  evolutionCards,
+  attachmentCards,
+  rotationQuarterTurns: 0,
+  damage: null,
+  specialCondition: null,
+  abilityUsed: false,
+});
+
+const updateCard = (
+  view: MatchViewState,
+  cardId: string,
+  update: (card: ViewCard) => ViewCard
+): MatchViewState | null => {
+  for (const zone of Object.values(view.zones)) {
+    if (zone.cards.some((card) => card.id === cardId)) {
+      return withZone(view, {
+        ...zone,
+        cards: zone.cards.map((card) =>
+          card.id === cardId ? update(card) : card
+        ),
+      });
+    }
+  }
+  for (const stack of Object.values(view.stacks)) {
+    if (
+      stack.evolutionCards.some((card) => card.id === cardId) ||
+      stack.attachmentCards.some((card) => card.id === cardId)
+    ) {
+      return withStack(view, {
+        ...stack,
+        evolutionCards: stack.evolutionCards.map((card) =>
+          card.id === cardId ? update(card) : card
+        ),
+        attachmentCards: stack.attachmentCards.map((card) =>
+          card.id === cardId ? update(card) : card
+        ),
+      });
+    }
+  }
+  // A card in a window of cards: looked at, or come off a Pokémon.
+  const each = (cards: readonly ViewCard[]) =>
+    cards.map((card) => (card.id === cardId ? update(card) : card));
+  const holds = (cards: readonly ViewCard[]) =>
+    cards.some((card) => card.id === cardId);
+  for (const [playerId, areas] of Object.entries(view.workAreas)) {
+    const { inspection, attachmentResolution: staged } = areas;
+    if (inspection && holds(inspection.cards))
+      return withWorkAreas(view, playerId as PlayerId, {
+        ...areas,
+        inspection: { ...inspection, cards: each(inspection.cards) },
+      });
+    if (
+      staged &&
+      (holds(staged.cards) ||
+        holds(staged.evolutionCards) ||
+        holds(staged.attachmentCards))
+    )
+      return withWorkAreas(view, playerId as PlayerId, {
+        ...areas,
+        attachmentResolution: {
+          ...staged,
+          cards: each(staged.cards),
+          evolutionCards: each(staged.evolutionCards),
+          attachmentCards: each(staged.attachmentCards),
+        },
+      });
+  }
+  return null;
+};
+
+/** A card attached as another kind (a Pokémon as an Energy) while it stays. */
+const attachedAs = (card: ViewCard, category: 'Energy'): ViewCard =>
+  card.kind === 'known' ? { ...card, category } : card;
+
+const updateStack = (
+  view: MatchViewState,
+  stackId: string,
+  update: (stack: Stack) => Stack
+): MatchViewState | null => {
+  const stack = view.stacks[stackId];
+  return stack ? withStack(view, update(stack)) : null;
+};
+
+const ownZone = (
+  view: MatchViewState,
+  playerId: PlayerId,
+  kind: Zone['kind']
+): Zone | undefined =>
+  Object.values(view.zones).find(
+    (zone) => zone.ownerId === playerId && zone.kind === kind
+  );
+
+/** Moves every card of one zone to the end of another. */
+const moveZoneContents = (
+  view: MatchViewState,
+  viewerId: Reader,
+  sourceId: string,
+  destinationId: string,
+  index?: number
+): MatchViewState | null => {
+  const source = view.zones[sourceId];
+  const destination = view.zones[destinationId];
+  if (!source || !destination || source.cards.length === 0) return null;
+  const cards = [...destination.cards];
+  const at = Math.max(0, Math.min(index ?? cards.length, cards.length));
+  cards.splice(
+    at,
+    0,
+    ...source.cards.map((card) =>
+      asPlacedIn(view, viewerId, destination, departed(card))
+    )
+  );
+  return withZone(withZone(view, { ...source, cards: [] }), {
+    ...destination,
+    cards,
+  });
+};
+
+/** The zone or stack that currently holds a card, by id. */
+const containerOfCard = (
+  view: MatchViewState,
+  cardId: string
+): string | null => {
+  for (const zone of Object.values(view.zones)) {
+    if (zone.cards.some((card) => card.id === cardId)) return zone.id;
+  }
+  for (const stack of Object.values(view.stacks)) {
+    if (
+      stack.evolutionCards.some((card) => card.id === cardId) ||
+      stack.attachmentCards.some((card) => card.id === cardId)
+    ) {
+      return stack.id;
+    }
+  }
+  return null;
+};
+
+/** A card entering a work area leaves play: v1 restores its resting look. */
+const asOutOfPlay = (card: ViewCard): ViewCard =>
+  card.kind === 'known'
+    ? { ...card, face: 'up', orientationQuarterTurns: 0, abilityUsed: false }
+    : card;
+
+/** The seat a command acts for: the viewer unless it names another player. */
+const targetSeat = (
+  view: MatchViewState,
+  viewerId: Reader,
+  targetPlayerId: string | undefined
+): PlayerId | null => {
+  if (targetPlayerId === undefined) return viewerId.id;
+  return view.players[targetPlayerId] ? (targetPlayerId as PlayerId) : null;
+};
+
+/** Draws from the top of a seat's deck into its hand. */
+const drawFor = (
+  view: MatchViewState,
+  viewerId: Reader,
+  playerId: PlayerId,
+  count: number
+): MatchViewState | null => {
+  const deck = ownZone(view, playerId, 'deck');
+  const hand = ownZone(view, playerId, 'hand');
+  if (!deck || !hand) return null;
+  const drawn = deck.cards.slice(0, count);
+  if (drawn.length === 0) return view;
+  return withZone(
+    withZone(view, { ...deck, cards: deck.cards.slice(drawn.length) }),
+    {
+      ...hand,
+      cards: [
+        ...hand.cards,
+        ...drawn.map((card) => asPlacedIn(view, viewerId, hand, card)),
+      ],
+    }
+  );
+};
+
+/** v1's table actions clear every ability marker on the table first. */
+const clearAbilityMarkers = (view: MatchViewState): MatchViewState => {
+  const clearCard = (card: ViewCard): ViewCard =>
+    card.kind === 'known' && card.abilityUsed
+      ? { ...card, abilityUsed: false }
+      : card;
+  const zones = Object.fromEntries(
+    Object.entries(view.zones).map(([zoneId, zone]) => [
+      zoneId,
+      { ...zone, cards: zone.cards.map(clearCard) },
+    ])
+  );
+  const stacks = Object.fromEntries(
+    Object.entries(view.stacks).map(([stackId, stack]) => [
+      stackId,
+      {
+        ...stack,
+        abilityUsed: false,
+        evolutionCards: stack.evolutionCards.map(clearCard),
+        attachmentCards: stack.attachmentCards.map(clearCard),
+      },
+    ])
+  );
+  return { ...view, zones, stacks };
+};
+
+/**
+ * A started turn turns every face-down card in play face up. Only the cards
+ * the viewer can already read are flipped here; the room's publication
+ * brings the faces of the rest.
+ */
+const revealKnownInPlay = (view: MatchViewState): MatchViewState => {
+  const reveal = (card: ViewCard): ViewCard =>
+    card.kind === 'known' && card.face === 'down'
+      ? { ...card, face: 'up' as const }
+      : card;
+  const stacks = Object.fromEntries(
+    Object.entries(view.stacks).map(([stackId, stack]) => [
+      stackId,
+      {
+        ...stack,
+        evolutionCards: stack.evolutionCards.map(reveal),
+        attachmentCards: stack.attachmentCards.map(reveal),
+      },
+    ])
+  );
+  return { ...view, stacks };
+};
+
+/** Discards one seat's loose board, which every table action does. */
+const discardLooseBoard = (
+  view: MatchViewState,
+  viewerId: Reader,
+  playerId: PlayerId
+): MatchViewState => {
+  const board = ownZone(view, playerId, 'board');
+  const discard = ownZone(view, playerId, 'discard');
+  if (!board || !discard || board.cards.length === 0) return view;
+  return moveZoneContents(view, viewerId, board.id, discard.id) ?? view;
+};
+
+const predict = (
+  view: MatchViewState,
+  command: WireGameCommand,
+  viewerId: Reader
+): MatchViewState | null => {
+  switch (command.type) {
+    case 'MoveCard': {
+      const source = view.zones[command.expectedSourceZoneId];
+      if (
+        source &&
+        source.id === command.destinationZoneId &&
+        (source.kind === 'discard' ||
+          source.kind === 'lostZone' ||
+          ((source.kind === 'hand' || source.kind === 'board') &&
+            command.destinationIndex !== undefined))
+      ) {
+        const from = source.cards.findIndex(
+          (card) => card.id === command.cardId
+        );
+        if (
+          from < 0 ||
+          (command.destinationIndex !== undefined &&
+            (!Number.isSafeInteger(command.destinationIndex) ||
+              command.destinationIndex < 0))
+        )
+          return null;
+        const cards = source.cards.filter((_, index) => index !== from);
+        const at = Math.min(
+          command.destinationIndex ?? cards.length,
+          cards.length
+        );
+        if (at === from) return null;
+        // Reordering never leaves its zone: the disclosed identity, face,
+        // annotations and category stay exactly as the room showed them.
+        cards.splice(at, 0, source.cards[from]!);
+        return withZone(view, { ...source, cards });
+      }
+      const taken = takeFromZone(
+        view,
+        command.expectedSourceZoneId,
+        command.cardId
+      );
+      if (!taken) return null;
+      const destinationKind = zoneKindOf(view, command.destinationZoneId);
+      if (destinationKind === 'stadium') return null;
+      return placeInZone(
+        taken.view,
+        viewerId,
+        command.destinationZoneId,
+        taken.card,
+        command.destinationIndex
+      );
+    }
+    case 'MoveCardToPlay': {
+      const taken = takeFromZone(
+        view,
+        command.expectedSourceZoneId,
+        command.cardId
+      );
+      if (!taken) return null;
+      const card = taken.card;
+      if (command.targetStackId) {
+        const target = taken.view.stacks[command.targetStackId];
+        if (!target) return null;
+        // Attached as an Energy, a Pokémon is one where it lies.
+        if (command.asCategory)
+          return withStack(
+            taken.view,
+            attachTo(target, attachedAs(card, command.asCategory))
+          );
+        const isPokemon = card.kind === 'known' && card.category === 'Pokémon';
+        return withStack(
+          taken.view,
+          isPokemon ? evolveWith(target, card) : attachTo(target, card)
+        );
+      }
+      return placeNewStack(
+        taken.view,
+        emptyStack(
+          `predicted-stack:${card.id}`,
+          command.boardPlayerId as PlayerId,
+          command.slot,
+          [card],
+          []
+        ),
+        command.slot,
+        command.benchIndex
+      );
+    }
+    case 'MoveInspectedCardToPlay': {
+      const taken = takeFromWorkArea(
+        view,
+        command.expectedWorkAreaId,
+        command.cardId
+      );
+      if (!taken) return null;
+      return placeNewStack(
+        taken.view,
+        emptyStack(
+          `predicted-stack:${taken.card.id}`,
+          command.boardPlayerId as PlayerId,
+          command.slot,
+          [taken.card],
+          []
+        ),
+        command.slot,
+        command.benchIndex
+      );
+    }
+    case 'PlaceCardOnPlayStack': {
+      const target = view.stacks[command.targetStackId];
+      if (
+        !target ||
+        target.evolutionCards.at(-1)?.id !== command.expectedTargetTopCardId
+      ) {
+        return null;
+      }
+      const taken = takeFromSource(
+        view,
+        command.expectedSourceId,
+        command.cardId
+      );
+      if (!taken) return null;
+      const refreshed = taken.view.stacks[command.targetStackId];
+      if (!refreshed) return null;
+      return withStack(
+        taken.view,
+        command.mode === 'evolution'
+          ? evolveWith(refreshed, taken.card)
+          : attachTo(
+              refreshed,
+              command.asCategory
+                ? attachedAs(taken.card, command.asCategory)
+                : taken.card
+            )
+      );
+    }
+    case 'MoveCardFromStack': {
+      const taken = takeFromStack(
+        view,
+        command.expectedStackId,
+        command.cardId
+      );
+      if (!taken) return null;
+      if (zoneKindOf(view, command.destinationZoneId) === 'stadium')
+        return null;
+      return placeInZone(
+        taken.view,
+        viewerId,
+        command.destinationZoneId,
+        taken.card,
+        command.destinationIndex
+      );
+    }
+    case 'MovePlayStackToZone': {
+      const stack = view.stacks[command.stackId];
+      if (
+        !stack ||
+        zoneKindOf(view, command.destinationZoneId) === 'stadium' ||
+        stack.evolutionCards.map((card) => card.id).join('\u0000') !==
+          command.expectedEvolutionCardIds.join('\u0000') ||
+        stack.attachmentCards.map((card) => card.id).join('\u0000') !==
+          command.expectedAttachmentCardIds.join('\u0000')
+      ) {
+        return null;
+      }
+      // As the room does it: attached cards, then the Pokémon from its
+      // bottom card up, the last taking the emptied stack off the board. On
+      // a deck each goes in at the same place, its top card drawn first.
+      let next: MatchViewState | null = view;
+      const topFirst = zoneKindOf(view, command.destinationZoneId) === 'deck';
+      let index =
+        topFirst && command.destinationIndex === undefined
+          ? view.zones[command.destinationZoneId]?.cards.length
+          : command.destinationIndex;
+      for (const card of [...stack.attachmentCards, ...stack.evolutionCards]) {
+        const taken = takeFromStack(next, stack.id, card.id);
+        if (!taken) return null;
+        next = placeInZone(
+          taken.view,
+          viewerId,
+          command.destinationZoneId,
+          taken.card,
+          index
+        );
+        if (!next) return null;
+        if (index !== undefined && !topFirst) index += 1;
+      }
+      return next;
+    }
+    case 'MovePlayStack': {
+      const stack = view.stacks[command.stackId];
+      if (
+        !stack ||
+        stack.slot !== command.expectedSourceSlot ||
+        (command.expectedSourceBoardPlayerId !== undefined &&
+          stack.boardPlayerId !== command.expectedSourceBoardPlayerId)
+      )
+        return null;
+      const board = view.boards[stack.boardPlayerId];
+      if (
+        !board ||
+        board.activeStackId !== command.expectedActiveStackId ||
+        board.benchStackIds.join('\u0000') !==
+          command.expectedBenchStackIds.join('\u0000')
+      ) {
+        return null;
+      }
+      const target = command.targetStackId
+        ? view.stacks[command.targetStackId]
+        : undefined;
+      if (command.targetStackId && !target) return null;
+      const across = command.destinationBoard;
+      if (across && across.boardPlayerId !== stack.boardPlayerId) {
+        const destinationPlayerId = across.boardPlayerId as PlayerId;
+        const destination = view.boards[destinationPlayerId];
+        if (
+          !destination ||
+          destination.activeStackId !== across.expectedActiveStackId ||
+          destination.benchStackIds.join('\u0000') !==
+            across.expectedBenchStackIds.join('\u0000')
+        ) {
+          return null;
+        }
+        const layout = layOutPlayStackAcrossBoards({
+          stackId: stack.id,
+          source: board,
+          destination,
+          destinationSlot: command.destinationSlot,
+          ...(target ? { targetStackId: target.id } : {}),
+          ...(command.benchIndex === undefined
+            ? {}
+            : { benchIndex: command.benchIndex }),
+        });
+        return layout
+          ? withBoardsRehomed(view, [
+              { playerId: stack.boardPlayerId, board: layout.source },
+              { playerId: destinationPlayerId, board: layout.destination },
+            ])
+          : null;
+      }
+      let activeStackId = board.activeStackId;
+      const benchStackIds = [...board.benchStackIds];
+      const sourceBenchIndex = benchStackIds.indexOf(stack.id);
+      if (target) {
+        if (stack.slot === 'active') {
+          const targetIndex = benchStackIds.indexOf(target.id);
+          if (targetIndex < 0) return null;
+          activeStackId = target.id;
+          benchStackIds[targetIndex] = stack.id;
+        } else if (target.slot === 'active') {
+          activeStackId = stack.id;
+          benchStackIds[sourceBenchIndex] = target.id;
+        } else {
+          const targetIndex = benchStackIds.indexOf(target.id);
+          if (targetIndex < 0) return null;
+          benchStackIds[sourceBenchIndex] = target.id;
+          benchStackIds[targetIndex] = stack.id;
+        }
+      } else if (command.destinationSlot === 'active') {
+        if (stack.slot === 'active') return null;
+        benchStackIds.splice(sourceBenchIndex, 1);
+        if (activeStackId) benchStackIds.push(activeStackId);
+        activeStackId = stack.id;
+      } else {
+        // Benched among the others at the place asked for (game-core's
+        // MovePlayStack), at the end if none.
+        if (stack.slot === 'active') activeStackId = null;
+        else benchStackIds.splice(sourceBenchIndex, 1);
+        benchStackIds.splice(
+          Math.max(
+            0,
+            Math.min(
+              command.benchIndex ?? benchStackIds.length,
+              benchStackIds.length
+            )
+          ),
+          0,
+          stack.id
+        );
+        if (stack.slot === 'active' && benchStackIds.length === 2) {
+          const promoted = benchStackIds.find((id) => id !== stack.id)!;
+          benchStackIds.splice(benchStackIds.indexOf(promoted), 1);
+          activeStackId = promoted;
+        }
+      }
+      let next = withBoard(view, stack.boardPlayerId, {
+        activeStackId,
+        benchStackIds,
+      });
+      // Every Pokémon whose place changed says so -- the one moved, the one
+      // it swapped with, and one promoted to the Active when the Active
+      // went to a bench of one -- or a move made on it next names the old.
+      for (const id of [
+        ...(activeStackId ? [activeStackId] : []),
+        ...benchStackIds,
+      ]) {
+        const placed = next.stacks[id];
+        if (!placed) return null;
+        const slot = activeStackId === id ? 'active' : 'bench';
+        if (placed.slot !== slot) next = withStack(next, inSlot(placed, slot));
+      }
+      return next;
+    }
+    case 'MoveCardToWorkArea': {
+      const areas = view.workAreas[viewerId.id];
+      if (!areas) return null;
+      const target =
+        areas.inspection?.id === command.expectedWorkAreaId
+          ? 'inspection'
+          : areas.attachmentResolution?.id === command.expectedWorkAreaId
+            ? 'attachmentResolution'
+            : null;
+      if (!target) return null;
+      const sourceId = containerOfCard(view, command.cardId);
+      if (!sourceId) return null;
+      const taken = takeFromSource(view, sourceId, command.cardId);
+      if (!taken) return null;
+      const nextAreas = taken.view.workAreas[viewerId.id];
+      const card = asOutOfPlay(taken.card);
+      if (target === 'inspection') {
+        const inspection = nextAreas?.inspection;
+        if (!inspection) return null;
+        return withWorkAreas(taken.view, viewerId.id, {
+          ...nextAreas,
+          inspection: { ...inspection, cards: [...inspection.cards, card] },
+        });
+      }
+      const staged = nextAreas?.attachmentResolution;
+      if (!staged) return null;
+      // The staged window files an arrival the way the room does: a Pokemon
+      // joins the evolution column, anything else the attachments.
+      const evolution = card.kind === 'known' && card.category === 'Pokémon';
+      return withWorkAreas(taken.view, viewerId.id, {
+        ...nextAreas,
+        attachmentResolution: {
+          ...staged,
+          cards: [...staged.cards, card],
+          evolutionCards: evolution
+            ? [...staged.evolutionCards, card]
+            : staged.evolutionCards,
+          attachmentCards: evolution
+            ? staged.attachmentCards
+            : [...staged.attachmentCards, card],
+        },
+      });
+    }
+    case 'MoveInspectedCard':
+    case 'MoveStagedCard': {
+      const taken = takeFromWorkArea(
+        view,
+        command.expectedWorkAreaId,
+        command.cardId
+      );
+      if (!taken) return null;
+      if (zoneKindOf(view, command.destinationZoneId) === 'stadium')
+        return null;
+      return placeInZone(
+        taken.view,
+        viewerId,
+        command.destinationZoneId,
+        taken.card,
+        command.destinationIndex
+      );
+    }
+    case 'RestoreStagedStack': {
+      const entry = Object.entries(view.workAreas).find(
+        ([, areas]) =>
+          areas.attachmentResolution?.id === command.expectedWorkAreaId
+      );
+      if (!entry) return null;
+      const [playerId, areas] = entry;
+      const staged = areas.attachmentResolution!;
+      const destinationPlayerId = (command.destinationBoardPlayerId ??
+        playerId) as PlayerId;
+      const board = view.boards[destinationPlayerId];
+      if (
+        !board ||
+        staged.evolutionCards.length === 0 ||
+        board.activeStackId !== command.expectedActiveStackId ||
+        board.benchStackIds.join('\u0000') !==
+          command.expectedBenchStackIds.join('\u0000')
+      ) {
+        return null;
+      }
+      const cleared = withWorkAreas(view, playerId as PlayerId, {
+        ...areas,
+        attachmentResolution: null,
+      });
+      // Onto either board. The room puts it back together on its own Bench
+      // and moves it across; it lands where a new Pokémon played there does.
+      return placeNewStack(
+        cleared,
+        emptyStack(
+          `predicted-stack:${staged.evolutionCards[0]!.id}`,
+          destinationPlayerId,
+          command.destinationSlot,
+          staged.evolutionCards,
+          normalizeAttachments(staged.attachmentCards)
+        ),
+        command.destinationSlot,
+        command.benchIndex
+      );
+    }
+    case 'MoveCardToDeckTop':
+    case 'MoveCardToDeckBottom':
+    case 'ShuffleCardIntoDeck': {
+      // The room puts it in the deck of the seat it is taken from (another
+      // player's Tool on your Pokémon goes into yours), not its owner's.
+      const seat = locateViewCardActionSource(
+        view,
+        command.cardId
+      )?.sourcePlayerId;
+      const taken = takeFromSource(
+        view,
+        command.expectedSourceId,
+        command.cardId
+      );
+      if (!taken || !seat) return null;
+      const deck = ownZone(taken.view, seat as PlayerId, 'deck');
+      if (!deck) return null;
+      return placeInZone(
+        taken.view,
+        viewerId,
+        deck.id,
+        taken.card,
+        command.type === 'MoveCardToDeckTop' ? 0 : undefined
+      );
+    }
+    case 'StartTurn':
+    case 'PassTurn':
+    case 'DeclareAttack': {
+      // v1 clears the ability markers and the loose board immediately, and a
+      // started turn draws and advances the counter. The coin is the one
+      // table control that cannot be predicted: only the room rolls it.
+      const playerId = targetSeat(view, viewerId, command.targetPlayerId);
+      if (!playerId) return null;
+      let next = clearAbilityMarkers(view);
+      const seats =
+        command.type === 'StartTurn' ? view.playerOrder : [playerId];
+      for (const seat of seats) next = discardLooseBoard(next, viewerId, seat);
+      if (command.type !== 'StartTurn') return next;
+      const deck = ownZone(next, playerId, 'deck');
+      // v1's empty deck commits the cleanup and stops: no draw, no new turn.
+      if (!deck || deck.cards.length === 0) return next;
+      const drawn = drawFor(revealKnownInPlay(next), viewerId, playerId, 1);
+      if (!drawn) return null;
+      return {
+        ...drawn,
+        turn: { number: view.turn.number + 1, currentPlayerId: playerId },
+      };
+    }
+    case 'DrawCards': {
+      // A flipped solo board draws for the seat at the bottom; that seat's
+      // deck is readable in solo, and the card is shown as a back otherwise.
+      const target = targetSeat(view, viewerId, command.targetPlayerId);
+      return target ? drawFor(view, viewerId, target, command.count) : null;
+    }
+    case 'DiscardHandAndDraw': {
+      const target = targetSeat(view, viewerId, command.targetPlayerId);
+      if (!target) return null;
+      const hand = ownZone(view, target, 'hand');
+      const discard = ownZone(view, target, 'discard');
+      if (!hand || !discard) return null;
+      const emptied =
+        hand.cards.length === 0
+          ? view
+          : moveZoneContents(view, viewerId, hand.id, discard.id);
+      return emptied ? drawFor(emptied, viewerId, target, command.count) : null;
+    }
+    case 'ShuffleHandIntoDeckAndDraw':
+    case 'ShuffleHandToDeckBottomAndDraw': {
+      // The deck is reshuffled by the room, so which cards come back cannot
+      // be known here; only the hand leaving is shown.
+      const target = targetSeat(view, viewerId, command.targetPlayerId);
+      if (!target) return null;
+      const hand = ownZone(view, target, 'hand');
+      const deck = ownZone(view, target, 'deck');
+      if (!hand || !deck || hand.cards.length === 0) return null;
+      return moveZoneContents(view, viewerId, hand.id, deck.id);
+    }
+    case 'MoveZoneContents':
+      return moveZoneContents(
+        view,
+        viewerId,
+        command.sourceZoneId,
+        command.destinationZoneId
+      );
+    case 'ShuffleZoneIntoDeck':
+    case 'ShuffleZoneToDeckBottom': {
+      const source = view.zones[command.sourceZoneId];
+      const deck = source?.ownerId
+        ? ownZone(view, source.ownerId, 'deck')
+        : undefined;
+      if (!source || !deck) return null;
+      return moveZoneContents(view, viewerId, source.id, deck.id);
+    }
+    case 'MovePrizesToDeckBottom': {
+      const target = targetSeat(view, viewerId, command.targetPlayerId);
+      if (!target) return null;
+      const prizes = ownZone(view, target, 'prizes');
+      const deck = ownZone(view, target, 'deck');
+      if (!prizes || !deck) return null;
+      return moveZoneContents(view, viewerId, prizes.id, deck.id);
+    }
+    case 'ResolveLooseBoardCards': {
+      const owner = command.targetPlayerId as PlayerId;
+      const board = ownZone(view, owner, 'board');
+      if (
+        !board ||
+        board.cards.map((card) => card.id).join('\u0000') !==
+          command.expectedBoardCardIds.join('\u0000')
+      ) {
+        return null;
+      }
+      const destination = ownZone(
+        view,
+        owner,
+        command.destination === 'shuffleIntoDeck' ? 'deck' : command.destination
+      );
+      if (!destination) return null;
+      return moveZoneContents(view, viewerId, board.id, destination.id);
+    }
+    case 'SetDamage':
+      return updateStack(view, command.stackId, (stack) => ({
+        ...stack,
+        damage: command.damage,
+      }));
+    case 'SetSpecialCondition':
+      return updateStack(view, command.stackId, (stack) => ({
+        ...stack,
+        specialCondition: command.condition,
+      }));
+    case 'SetAbilityUsed':
+      return updateStack(view, command.stackId, (stack) => ({
+        ...stack,
+        abilityUsed: command.used,
+      }));
+    case 'SetStackReminder':
+      return updateStack(view, command.stackId, (stack) => {
+        const reminders = stack.reminders ?? [];
+        if (reminders.includes(command.reminder) === command.on) return stack;
+        const next = command.on
+          ? [...reminders, command.reminder]
+          : reminders.filter((reminder) => reminder !== command.reminder);
+        return {
+          ...stack,
+          reminders: STACK_REMINDERS.filter((reminder) =>
+            next.includes(reminder)
+          ),
+        };
+      });
+    case 'RotateStack':
+      return updateStack(view, command.stackId, (stack) => ({
+        ...stack,
+        rotationQuarterTurns: command.rotationQuarterTurns,
+      }));
+    case 'SetCardOrientation':
+      return updateCard(view, command.cardId, (card) =>
+        card.kind === 'known'
+          ? {
+              ...card,
+              orientationQuarterTurns: command.orientationQuarterTurns,
+            }
+          : card
+      );
+    case 'SetCardAbilityUsed':
+      return updateCard(view, command.cardId, (card) =>
+        card.kind === 'known' ? { ...card, abilityUsed: command.used } : card
+      );
+    case 'ChangeCardCategory': {
+      // The room moves the card to the end of the loose board of the seat
+      // it is taken from -- out of whatever held it, as any departure does
+      // (a Pokémon's cards under it staged) -- then names its category and
+      // sets it upright. A move made on it next names it there.
+      const seat = locateViewCardActionSource(
+        view,
+        command.cardId
+      )?.sourcePlayerId;
+      const board = seat ? ownZone(view, seat as PlayerId, 'board') : undefined;
+      if (!board) return null;
+      const taken = takeFromSource(
+        view,
+        command.expectedSourceId,
+        command.cardId
+      );
+      if (!taken) return null;
+      const card: ViewCard =
+        taken.card.kind === 'known'
+          ? {
+              ...taken.card,
+              category: command.category,
+              orientationQuarterTurns: 0,
+            }
+          : taken.card;
+      return placeInZone(taken.view, viewerId, board.id, card);
+    }
+    case 'SetCardFace':
+      return updateCard(view, command.cardId, (card) =>
+        card.kind === 'known' ? { ...card, face: command.face } : card
+      );
+    case 'SetOncePerGameMarker': {
+      const playerId = command.targetPlayerId as PlayerId;
+      const player = view.players[playerId];
+      if (!player) return null;
+      return {
+        ...view,
+        players: {
+          ...view.players,
+          [playerId]: {
+            ...player,
+            oncePerGame: {
+              ...player.oncePerGame,
+              [command.marker === 'gx' ? 'gxUsed' : 'vstarUsed']: command.used,
+            },
+          },
+        },
+      };
+    }
+    case 'MoveCardToStadium': {
+      // A card leaving a zone (normally the hand) or a look at cards (the
+      // inspection window, which only loses it); leaving a stack or the
+      // attached cards' window takes the room's departure rules and waits
+      // for it.
+      const stadium = Object.values(view.zones).find(
+        (zone) => zone.kind === 'stadium'
+      );
+      if (!stadium) return null;
+      const incumbent = stadium.cards[0] ?? null;
+      if (
+        (command.expectedStadiumCardIds
+          ? stadium.cards.length !== command.expectedStadiumCardIds.length ||
+            stadium.cards.some(
+              (card, index) =>
+                card.id !== command.expectedStadiumCardIds![index]
+            )
+          : stadium.cards.length > 1 || command.placement === 'add') ||
+        (incumbent?.id ?? null) !== command.expectedStadiumCardId
+      ) {
+        return null;
+      }
+      const looking = Object.values(view.workAreas).some(
+        (areas) => areas.inspection?.id === command.expectedSourceId
+      );
+      const taken = looking
+        ? takeFromWorkArea(view, command.expectedSourceId, command.cardId)
+        : takeFromZone(view, command.expectedSourceId, command.cardId);
+      if (!taken) return null;
+      let next = taken.view;
+      if (command.placement === 'add' && stadium.cards.length >= 4) return null;
+      for (const incumbent of command.placement === 'add'
+        ? []
+        : stadium.cards) {
+        // The room sends the stadium it replaces to its owner's discard.
+        const cleared = takeFromZone(next, stadium.id, incumbent.id);
+        const discard = ownZone(next, incumbent.ownerId, 'discard');
+        if (!cleared || !discard) return null;
+        const placed = placeInZone(
+          cleared.view,
+          viewerId,
+          discard.id,
+          incumbent
+        );
+        if (!placed) return null;
+        next = placed;
+      }
+      return placeInZone(
+        next,
+        viewerId,
+        stadium.id,
+        taken.card,
+        command.placement === 'add' ? stadium.cards.length : 0
+      );
+    }
+    case 'SwapCardWithDeckTop': {
+      // The zone case only: the card goes on top of the deck of the seat it
+      // is taken from, as the room has it, and the old top card takes its
+      // exact place.
+      const source = view.zones[command.expectedSourceId];
+      if (!source || source.kind === 'deck') return null;
+      const index = source.cards.findIndex(
+        (card) => card.id === command.cardId
+      );
+      if (index < 0) return null;
+      const card = source.cards[index]!;
+      const deck = ownZone(view, source.ownerId ?? card.ownerId, 'deck');
+      const top = deck?.cards[0];
+      if (!deck || !top) return null;
+      // A top card the viewer cannot read would land face-up in a zone it
+      // can; only the room knows that face, so it waits for the publication.
+      if (top.kind === 'concealed' && !hiddenFromViewer(source, viewerId)) {
+        return null;
+      }
+      const withTopOut = withZone(view, {
+        ...deck,
+        cards: deck.cards.slice(1),
+      });
+      const swappedSource = withZone(withTopOut, {
+        ...source,
+        cards: source.cards.map((candidate, position) =>
+          position === index
+            ? asPlacedIn(withTopOut, viewerId, source, departed(top))
+            : candidate
+        ),
+      });
+      return placeInZone(swappedSource, viewerId, deck.id, departed(card), 0);
+    }
+    case 'SetPublicReveal':
+      return updateCard(view, command.cardId, (card) =>
+        card.kind === 'known'
+          ? { ...card, publiclyRevealed: command.revealed }
+          : card
+      );
+    case 'SetZonePublicReveal': {
+      const zone = view.zones[command.zoneId];
+      if (!zone) return null;
+      const expected = new Set(command.expectedCardIds);
+      return withZone(view, {
+        ...zone,
+        cards: zone.cards.map((card) =>
+          expected.has(card.id) && card.kind === 'known'
+            ? { ...card, publiclyRevealed: command.revealed }
+            : card
+        ),
+      });
+    }
+    case 'ExtractDeckCardsForInspection': {
+      // Opening "look at the top/bottom N" when no look is already open. The
+      // owner can read their own deck, so the cards are known; a deck the
+      // viewer cannot read waits for the room to show its faces.
+      const owner = command.ownerPlayerId as PlayerId;
+      const areas = view.workAreas[owner];
+      const deck = ownZone(view, owner, 'deck');
+      if (!areas || areas.inspection || !deck) return null;
+      const count = Math.min(command.count, deck.cards.length);
+      if (count === 0) return null;
+      // The room lists a bottom look from the bottom card up.
+      const cards =
+        command.edge === 'top'
+          ? deck.cards.slice(0, count)
+          : deck.cards.slice(deck.cards.length - count).reverse();
+      if (cards.some((card) => card.kind !== 'known')) return null;
+      const remaining =
+        command.edge === 'top'
+          ? deck.cards.slice(count)
+          : deck.cards.slice(0, deck.cards.length - count);
+      return withWorkAreas(
+        withZone(view, { ...deck, cards: remaining }),
+        owner,
+        {
+          ...areas,
+          inspection: {
+            id: `predicted-inspection:${owner}`,
+            cards,
+            sourceZoneId: deck.id,
+          },
+        }
+      );
+    }
+    case 'CloseInspection': {
+      const found = inspectionById(view, command.expectedWorkAreaId);
+      if (!found) return null;
+      const source = view.zones[found.inspection.sourceZoneId];
+      if (!source) return null;
+      const returned = found.inspection.cards.map((card) =>
+        asPlacedIn(view, viewerId, source, departed(card))
+      );
+      return withWorkAreas(
+        withZone(view, {
+          ...source,
+          cards:
+            command.returnTo === 'top'
+              ? [...returned, ...source.cards]
+              : [...source.cards, ...returned],
+        }),
+        found.playerId,
+        { ...found.areas, inspection: null }
+      );
+    }
+    case 'ResolveInspectionCards': {
+      const found = inspectionById(view, command.expectedWorkAreaId);
+      if (!found) return null;
+      return resolveWorkAreaCards(
+        withWorkAreas(view, found.playerId, {
+          ...found.areas,
+          inspection: null,
+        }),
+        viewerId,
+        found.playerId,
+        found.inspection.cards,
+        command.destination
+      );
+    }
+    case 'ResolveStagedCards': {
+      for (const [playerId, areas] of Object.entries(view.workAreas)) {
+        const staged = areas.attachmentResolution;
+        if (staged?.id !== command.expectedWorkAreaId) continue;
+        let next: MatchViewState | null = withWorkAreas(
+          view,
+          playerId as PlayerId,
+          { ...areas, attachmentResolution: null }
+        );
+        for (const owner of view.playerOrder) {
+          const cards = staged.cards.filter((card) => card.ownerId === owner);
+          if (cards.length && next)
+            next = resolveWorkAreaCards(
+              next,
+              viewerId,
+              owner,
+              cards,
+              command.destination
+            );
+        }
+        return next;
+      }
+      return null;
+    }
+    case 'ApplyCardSteps':
+      // Folded step by step in predictWireCommand (predictCardSteps).
+      return null;
+    default:
+      return null;
+  }
+};
+
+const inspectionById = (view: MatchViewState, workAreaId: string) => {
+  for (const [playerId, areas] of Object.entries(view.workAreas)) {
+    if (areas.inspection?.id === workAreaId) {
+      return {
+        playerId: playerId as PlayerId,
+        areas,
+        inspection: areas.inspection,
+      };
+    }
+  }
+  return null;
+};
+
+/**
+ * Sends a work area's cards to one of the owner's zones. A shuffle only
+ * reorders the deck, which the table does not show, so the cards join it and
+ * the room's publication brings the order.
+ */
+const resolveWorkAreaCards = (
+  view: MatchViewState,
+  viewerId: Reader,
+  owner: PlayerId,
+  cards: readonly ViewCard[],
+  destination:
+    'discard' | 'lostZone' | 'hand' | 'shuffleIntoDeck' | 'shuffleToDeckBottom'
+): MatchViewState | null => {
+  const zone = ownZone(
+    view,
+    owner,
+    destination === 'shuffleIntoDeck' || destination === 'shuffleToDeckBottom'
+      ? 'deck'
+      : destination
+  );
+  if (!zone) return null;
+  const placed = cards.map((card) =>
+    asPlacedIn(view, viewerId, zone, departed(asOutOfPlay(card)))
+  );
+  return withZone(view, {
+    ...zone,
+    cards:
+      destination === 'shuffleIntoDeck'
+        ? [...placed, ...zone.cards]
+        : [...zone.cards, ...placed],
+  });
+};
+
+/**
+ * Whether the room decides part of a command's outcome by chance (a deck
+ * shuffled, a card picked at random, prizes shuffled on their way under the
+ * deck): what the commands queued after it would do can't be known until
+ * its result is published.
+ */
+export const isRandomizingCommand = (command: WireGameCommand): boolean => {
+  switch (command.type) {
+    case 'ShuffleZone':
+    case 'ShuffleCardIntoDeck':
+    case 'ShuffleZoneIntoDeck':
+    case 'ShuffleZoneToDeckBottom':
+    case 'ShuffleHandIntoDeckAndDraw':
+    case 'ShuffleHandToDeckBottomAndDraw':
+    case 'PlayRandomCardFaceDown':
+    case 'SetupPlayer':
+    case 'MovePrizesToDeckBottom':
+      return true;
+    case 'ResolveStagedCards':
+    case 'ResolveInspectionCards':
+    case 'ResolveLooseBoardCards':
+      return (
+        command.destination === 'shuffleIntoDeck' ||
+        command.destination === 'shuffleToDeckBottom'
+      );
+    case 'ApplyCardSteps':
+      // A group shuffled into the deck ends with the shuffle.
+      return command.steps.some((step) => step.type === 'ShuffleZone');
+    default:
+      return false;
+  }
+};
+
+/**
+ * The view with a queue of commands predicted on it, in order. A command
+ * whose publication has landed is skipped (a draw would be shown twice); a
+ * prediction that no longer applies is not shown; and nothing after a
+ * command the room decides by chance is predicted, since it would be
+ * predicted against the order before the shuffle -- the wrong card drawn,
+ * shown as playable.
+ */
+export const predictQueue = (
+  view: MatchViewState,
+  queue: readonly {
+    readonly command: WireGameCommand;
+    readonly published?: boolean;
+  }[],
+  options: PredictionOptions = {}
+): MatchViewState => {
+  let current = view;
+  for (const pending of queue) {
+    if (pending.published) continue;
+    current = predictWireCommand(current, pending.command, options) ?? current;
+    if (isRandomizingCommand(pending.command)) break;
+  }
+  return current;
+};
+
+/** The id a predicted play gives the Pokémon it makes, until the room's. */
+export const predictedStackIdOf = (cardId: string): string =>
+  `predicted-stack:${cardId}`;
+
+/**
+ * One step of a group's move (ApplyCardSteps) predicted on the view the
+ * steps before it left, as the room decides each step on the table the
+ * ones before it left. A step that names a Pokémon an earlier step made
+ * (`targetStackRef`) names it by the id that step's prediction gave it:
+ * `made[k]` is the Pokémon step k made, if any. A lone Benched Pokémon is
+ * not brought up between steps: the room does that once, after the last
+ * (predictCardSteps). Null when the step can't be shown.
+ */
+export const predictCardStep = (
+  view: MatchViewState,
+  step: WireCardStep,
+  made: readonly (string | undefined)[],
+  options: PredictionOptions = {}
+): { readonly view: MatchViewState; readonly made?: string } | null => {
+  if (view.viewer.kind !== 'player') return null;
+  let command: WireGameCommand;
+  if (step.type === 'MoveCardToPlay' || step.type === 'PlaceCardOnPlayStack') {
+    const { targetStackRef, targetStackId, ...rest } = step;
+    const target =
+      targetStackRef === undefined ? targetStackId : made[targetStackRef];
+    if (step.type === 'PlaceCardOnPlayStack') {
+      if (target === undefined) return null;
+      command = {
+        ...(rest as Omit<typeof step, 'targetStackId' | 'targetStackRef'>),
+        targetStackId: target,
+      };
+    } else {
+      command = {
+        ...(rest as Omit<typeof step, 'targetStackId' | 'targetStackRef'>),
+        ...(target === undefined ? {} : { targetStackId: target }),
+      };
+    }
+  } else {
+    command = step;
+  }
+  try {
+    const next = predict(view, command, {
+      id: view.viewer.playerId,
+      readsEveryHand: options.readsEveryHand === true,
+    });
+    if (!next) return null;
+    return cardStepMakesPokemon(step)
+      ? { view: next, made: predictedStackIdOf(step.cardId) }
+      : { view: next };
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * A group's whole move predicted, step by step, then any lone Benched
+ * Pokémon brought up once into an Active Spot the steps left empty, as
+ * the room does. Null when any step can't be shown.
+ */
+export const predictCardSteps = (
+  view: MatchViewState,
+  steps: readonly WireCardStep[],
+  options: PredictionOptions = {}
+): MatchViewState | null => {
+  let current = view;
+  const made: (string | undefined)[] = [];
+  for (const step of steps) {
+    const next = predictCardStep(current, step, made, options);
+    if (!next) return null;
+    current = next.view;
+    made.push(next.made);
+  }
+  return withLoneBenchedPromoted(view, current);
+};

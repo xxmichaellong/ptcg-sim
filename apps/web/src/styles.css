@@ -1,0 +1,239 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+body,
+button,
+input,
+select {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.app-shell {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at center, #f0f0f7, #c9cad4);
+}
+
+.board-column {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: 75.5%;
+  height: 100%;
+}
+
+.board-spike-host {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+/* A fixed table must not become a scroll container when focus returns to a
+   card during its travel animation. Piles own their separate scrolling. */
+.board-spike-host[data-geometry='2'] {
+  overflow: clip;
+}
+
+.renderer-surface-host {
+  position: absolute;
+  inset: 0;
+}
+
+.renderer-status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.legacy-sidebar {
+  position: fixed;
+  right: 0;
+  top: 0;
+  width: 24%;
+  height: 100%;
+  border-left: 2px solid rgb(145 145 145);
+  background: rgb(231 228 228);
+}
+
+.legacy-tabs {
+  display: flex;
+  align-items: end;
+  width: 100%;
+  height: 5vh;
+  background: rgb(145 145 145);
+}
+
+.legacy-tabs button {
+  width: 25%;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+}
+
+.legacy-tabs .selected-page {
+  border-radius: 10px 10px 0 0;
+  /* v1's `.selected-page` also declares a 1px border, but
+   * `#topButtonContainer button { border: none }` outranks it, so the tab
+   * v1 actually paints has none -- only the shadow. */
+  background: linear-gradient(to bottom, rgb(250 250 250), rgb(230 230 230));
+  box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
+  color: #000;
+}
+
+.spike-controls {
+  margin: 0.5rem;
+  padding: 1rem;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.spike-controls h1 {
+  margin-top: 0;
+  font-size: 1.1rem;
+}
+
+.spike-controls label {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.spike-controls select,
+.spike-controls output {
+  width: 100%;
+  padding: 0.45rem;
+}
+
+.spike-controls output {
+  display: block;
+  overflow-wrap: anywhere;
+  border-radius: 4px;
+  background: #ececf1;
+}
+
+.legacy-presentation-surface {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.legacy-room-sidebar {
+  border-left: 0;
+}
+
+.legacy-room-tabs {
+  position: relative;
+  z-index: 1400;
+  overflow: hidden;
+  border-left: 2px solid rgb(145 145 145);
+  border-top-left-radius: 5px;
+  box-sizing: border-box;
+}
+
+.legacy-room-tabs button {
+  width: 30%;
+  /* v1 sizes each tab to its padding and text and bottom-aligns it in the
+   * 5vh bar, leaving a strip of the grey bar above it. */
+  height: auto;
+  padding: 1vh;
+  font-size: 1.75vh;
+}
+
+.legacy-room-sidebox {
+  position: relative;
+  /* Above the deck-builder workspace (900), as v1's sidebox is at 1300. The
+   * closed workspace parks underneath the sidebar with an 8px toggle peeking
+   * out; without this it shows through the panel instead. */
+  z-index: 1300;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  height: 95vh;
+  min-height: 0;
+  /* v1's `padding: 0.5%` is on a fixed box, so it resolves against the
+   * viewport; here the percentage would resolve against the sidebar. */
+  padding: 0.5vw;
+  border-left: 2px solid rgb(145 145 145);
+  background: rgb(231 228 228);
+}
+
+.legacy-room-sidebox[hidden] {
+  display: none;
+}
+
+/*
+ * v1 paints its wallpaper on <body> under a 75% white wash
+ * (global-variables.js) and then lays #cover, an 85% white sheet, over the
+ * whole page; a custom background replaces the wallpaper and keeps the
+ * cover. The cover is a pseudo-element here so the route's own
+ * background-image stays exactly the selected image.
+ */
+.remote-room-route {
+  background-color: #fff;
+  background-position: 0 0;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+}
+
+.remote-room-route[data-room-background='default'] {
+  background-image:
+    linear-gradient(rgb(255 255 255 / 75%), rgb(255 255 255 / 75%)),
+    url('https://wallpapercave.com/wp/wp10484598.jpg');
+}
+
+.remote-room-route::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: rgb(255 255 255 / 85%);
+  pointer-events: none;
+}
+
+.remote-room-route--dark {
+  /* v1 .dark-mode-1 recolours <body> and leaves its wallpaper in place. */
+  background-color: rgb(8 18 18);
+  color: #fff;
+}
+
+.remote-room-route--dark::before {
+  background: rgb(0 0 0 / 90%);
+}
+
+.remote-room-route--dark .legacy-room-sidebar,
+.remote-room-route--dark .legacy-room-sidebox,
+.remote-room-route--dark .legacy-tabs .selected-page {
+  background: #000;
+  color: #fff;
+}
+
+.presentation-live-region {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

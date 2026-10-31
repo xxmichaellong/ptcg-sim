@@ -1,0 +1,930 @@
+import { describe, expect, it, vi } from 'vitest';
+import {
+  parseRoomInvitationHandoffText,
+  parseRoomInvitationText,
+} from '@ptcgsim/protocol';
+
+import {
+  bootstrapRemoteRoomInvitation,
+  createRemoteRoom,
+  RemoteRoomCreationError,
+  RemoteRoomInvitationCustody,
+} from './RemoteRoomCreation.js';
+import type { RemoteRoomRuntime } from './RemoteRoomRuntime.js';
+
+const credentials = {
+  playerOneSeatCapability: 'player-one-capability-kept-in-memory-0000000001',
+  playerTwoSeatCapability: 'player-two-capability-kept-in-memory-0000000002',
+  spectatorCapability: 'spectator-capability-kept-in-memory-000000003',
+};
+const admissionTicket = 'socket-ticket-kept-in-session-memory-00000001';
+const resumeToken = 'resume-token-kept-in-session-memory-000000000001';
+const playerInvitation = 'player-invitation-share-token-000000000000001';
+const spectatorInvitation = 'spectator-invitation-share-token-0000000001';
+const input = {
+  buildId: 'client-build',
+  displayName: '  Blue  ',
+  mode: 'multiplayer' as const,
+};
+
+const capturingClipboard = () => {
+  const values: string[] = [];
+  return {
+    values,
+    writer: {
+      writeText: async (text: Promise<string>) => {
+        values.push(await text);
+      },
+    },
+  };
+};
+
+/**
+ * A fetch whose answer stalls -- before its headers, or partway through its
+ * body -- until the request's signal gives it up, as a browser's does.
+ */
+const stalledFetch =
+  (stall: 'headers' | 'body'): typeof fetch =>
+  async (_request, init) => {
+    const signal = init?.signal;
+    if (!signal) return new Promise<never>(() => undefined);
+    if (stall === 'headers') {
+      return new Promise<never>((_, reject) =>
+        signal.addEventListener('abort', () => reject(signal.reason), {
+          once: true,
+        })
+      );
+    }
+    return new Response(
+      new ReadableStream({
+        start(controller) {
+          controller.enqueue(new TextEncoder().encode('{"admission'));
+          signal.addEventListener(
+            'abort',
+            () => controller.error(signal.reason),
+            { once: true }
+          );
+        },
+      }),
+      { status: 201, headers: { 'Content-Type': 'application/json' } }
+    );
+  };
+
+describe('remote room creation bootstrap', () => {
+  it(
+    'gives up a room creation whose answer stalls',
+    { timeout: 2_000 },
+    async () => {
+      for (const [stall, code] of [
+        ['headers', 'creation_failed'],
+        ['body', 'invalid_response'],
+      ] as const) {
+        const bootstrap = vi.fn();
+        await expect(
+          createRemoteRoom(input, {
+            fetch: stalledFetch(stall),
+            origin: 'https://play.example',
+            requestTimeoutMs: 20,
+            bootstrap,
+          })
+        ).rejects.toMatchObject({ code });
+        expect(bootstrap).not.toHaveBeenCalled();
+      }
+    }
+  );
+
+  it(
+    'gives up an invitation whose answer stalls',
+    { timeout: 2_000 },
+    async () => {
+      const custody = new RemoteRoomInvitationCustody({
+        roomCode: 'ABCDEFGH2345',
+        playerCapability: credentials.playerTwoSeatCapability,
+        fetch: stalledFetch('headers'),
+        origin: new URL('https://play.example'),
+        requestTimeoutMs: 20,
+      });
+      const clipboard = capturingClipboard();
+      await expect(
+        custody.copyPlayerInvitation(clipboard.writer)
+      ).rejects.toMatchObject({ code: 'issue_failed' });
+      expect(clipboard.values).toEqual([]);
+    }
+  );
+
+  it('creates and bootstraps the owner without putting capabilities in URLs or the result graph', async () => {
+    const fetchImplementation = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        Response.json(
+          { mode: 'multiplayer', roomCode: 'ABCDEFGH2345', credentials },
+          { status: 201 }
+        )
+      )
+      .mockResolvedValueOnce(
+        Response.json(
+          { admissionTicket, resumeToken, expiresAt: 40_000 },
+          { status: 201 }
+        )
+      )
+      .mockResolvedValueOnce(
+        Response.json(
+          {
+            invitation: playerInvitation,
+            requestedRole: 'player',
+            expiresAt: 910_000,
+          },
+          { status: 201 }
+        )
+      )
+      .mockResolvedValueOnce(
+        Response.json(
+          {
+            invitation: spectatorInvitation,
+            requestedRole: 'spectator',
+            expiresAt: 910_000,
+          },
+          { status: 201 }
+        )
+      );
+    const runtime = { dispose: vi.fn() } as unknown as RemoteRoomRuntime;
+    const createRuntime = vi.fn(() => runtime);
+
+    const result = await createRemoteRoom(input, {
+      fetch: fetchImplementation,
+      origin: 'https://play.example',
+      bootstrapDependencies: { now: () => 10_000, createRuntime },
+    });
+
+    expect(fetchImplementation).toHaveBeenCalledTimes(2);
+    const [creationUrl, creationInit] = fetchImplementation.mock.calls[0]!;
+    expect(String(creationUrl)).toBe('https://play.example/v2/rooms');
+    expect(creationInit).toMatchObject({
+      method: 'POST',
+      body: '{"mode":"multiplayer"}',
+      cache: 'no-store',
+      credentials: 'omit',
+      redirect: 'error',
+      referrerPolicy: 'no-referrer',
+    });
+    const [ticketUrl, ticketInit] = fetchImplementation.mock.calls[1]!;
+    expect(String(ticketUrl)).toBe(
+      'https://play.example/v2/rooms/ABCDEFGH2345/admission-tickets'
+    );
+    expect(String(ticketUrl)).not.toContain(
+      credentials.playerOneSeatCapability
+    );
+    expect(JSON.parse(String(ticketInit?.body))).toMatchObject({
+      capability: credentials.playerOneSeatCapability,
+      displayName: 'Blue',
+      requestedRole: 'player',
+    });
+    expect(result.route).toEqual({
+      kind: 'remote-room',
+      runtime,
+    });
+    expect(result.mode).toBe('multiplayer');
+    expect(JSON.stringify(result)).not.toContain('capability-kept-in-memory');
+
+    const playerClipboard = capturingClipboard();
+    const player = await result.invitations.copyPlayerInvitation(
+      playerClipboard.writer
+    );
+    expect(player).toEqual({
+      roomCode: 'ABCDEFGH2345',
+      requestedRole: 'player',
+      expiresAt: 910_000,
+    });
+    expect(parseRoomInvitationHandoffText(playerClipboard.values[0])).toEqual({
+      ok: true,
+      value: {
+        roomCode: 'ABCDEFGH2345',
+        requestedRole: 'player',
+        invitation: playerInvitation,
+        expiresAt: 910_000,
+      },
+    });
+    const [playerUrl, playerInit] = fetchImplementation.mock.calls[2]!;
+    expect(String(playerUrl)).toBe(
+      'https://play.example/v2/rooms/ABCDEFGH2345/invitations'
+    );
+    expect(String(playerUrl)).not.toContain(
+      credentials.playerTwoSeatCapability
+    );
+    expect(JSON.parse(String(playerInit?.body))).toEqual({
+      capability: credentials.playerTwoSeatCapability,
+      requestedRole: 'player',
+    });
+
+    const spectatorClipboard = capturingClipboard();
+    const spectator = await result.invitations.copySpectatorInvitation(
+      spectatorClipboard.writer
+    );
+    expect(spectator).toEqual({
+      roomCode: 'ABCDEFGH2345',
+      requestedRole: 'spectator',
+      expiresAt: 910_000,
+    });
+    expect(spectatorClipboard.values[0]).toContain(spectatorInvitation);
+    expect(
+      JSON.parse(String(fetchImplementation.mock.calls[3]?.[1]?.body))
+    ).toEqual({
+      capability: credentials.spectatorCapability,
+      requestedRole: 'spectator',
+    });
+    result.dispose();
+    result.dispose();
+    expect(runtime.dispose).toHaveBeenCalledOnce();
+    await expect(
+      result.invitations.copyPlayerInvitation(capturingClipboard().writer)
+    ).rejects.toMatchObject({ code: 'disposed' });
+  });
+
+  it('validates lobby input before creating an orphaned room', async () => {
+    const fetchImplementation = vi.fn<typeof fetch>();
+    for (const invalid of [
+      { ...input, buildId: '' },
+      { ...input, displayName: '   ' },
+      { ...input, displayName: 'x'.repeat(65) },
+      { ...input, mode: 'coaching' as 'multiplayer' },
+    ]) {
+      await expect(
+        createRemoteRoom(invalid, {
+          fetch: fetchImplementation,
+          origin: 'https://play.example',
+        })
+      ).rejects.toMatchObject({ code: 'invalid_input' });
+    }
+    expect(fetchImplementation).not.toHaveBeenCalled();
+  });
+
+  it('fails closed on request failures and malformed or duplicated credentials', async () => {
+    const cases = [
+      {
+        fetch: async () => {
+          throw new Error(credentials.playerOneSeatCapability);
+        },
+        expected: 'creation_failed',
+      },
+      {
+        fetch: async () => Response.json({ error: 'busy' }, { status: 503 }),
+        expected: 'creation_failed',
+      },
+      {
+        fetch: async () =>
+          Response.json(
+            {
+              mode: 'multiplayer',
+              roomCode: 'ABCDEFGH2345',
+              credentials: {
+                ...credentials,
+                playerTwoSeatCapability: credentials.playerOneSeatCapability,
+              },
+            },
+            { status: 201 }
+          ),
+        expected: 'invalid_response',
+      },
+      {
+        fetch: async () =>
+          new Response(JSON.stringify({ padding: 'x'.repeat(4_096) }), {
+            status: 201,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        expected: 'invalid_response',
+      },
+      {
+        fetch: async () =>
+          new Response(JSON.stringify({ roomCode: 'ABCDEFGH2345' }), {
+            status: 201,
+            headers: { 'Content-Type': 'text/html' },
+          }),
+        expected: 'invalid_response',
+      },
+    ];
+
+    for (const entry of cases) {
+      const bootstrap = vi.fn();
+      await expect(
+        createRemoteRoom(input, {
+          fetch: entry.fetch as typeof fetch,
+          origin: 'https://play.example',
+          bootstrap,
+        })
+      ).rejects.toMatchObject({ code: entry.expected });
+      expect(bootstrap).not.toHaveBeenCalled();
+    }
+  });
+
+  it('sends a room creation lost in passing once more, and only that', async () => {
+    const created = () =>
+      Response.json(
+        {
+          mode: 'solo',
+          roomCode: 'ABCDEFGH2345',
+          credentials: {
+            playerOneSeatCapability: credentials.playerOneSeatCapability,
+          },
+        },
+        { status: 201 }
+      );
+    // A dropped connection, then a server or proxy failing in passing: the
+    // second try makes the room.
+    for (const first of [
+      async () => {
+        throw new TypeError('Failed to fetch');
+      },
+      async () => Response.json({ error: 'lost' }, { status: 502 }),
+      async () => Response.json({ error: 'busy' }, { status: 503 }),
+    ]) {
+      const fetchImplementation = vi
+        .fn<typeof fetch>()
+        .mockImplementationOnce(first)
+        .mockImplementationOnce(async () => created());
+      const bootstrap = vi.fn(async () => ({}) as never);
+      await createRemoteRoom(
+        { ...input, mode: 'solo' },
+        {
+          fetch: fetchImplementation,
+          origin: 'https://play.example',
+          bootstrap,
+        }
+      ).catch(() => undefined);
+      expect(fetchImplementation).toHaveBeenCalledTimes(2);
+      expect(bootstrap).toHaveBeenCalledOnce();
+    }
+    // A refusal is not tried again, nor is a creation the player cancelled.
+    const refused = vi.fn<typeof fetch>(async () =>
+      Response.json({ error: 'rate_limited' }, { status: 429 })
+    );
+    await expect(
+      createRemoteRoom(input, {
+        fetch: refused,
+        origin: 'https://play.example',
+      })
+    ).rejects.toMatchObject({ code: 'creation_failed' });
+    expect(refused).toHaveBeenCalledOnce();
+    const controller = new AbortController();
+    const cancelled = vi.fn<typeof fetch>(async () => {
+      controller.abort();
+      throw new DOMException('Aborted', 'AbortError');
+    });
+    await expect(
+      createRemoteRoom(
+        { ...input, signal: controller.signal },
+        { fetch: cancelled, origin: 'https://play.example' }
+      )
+    ).rejects.toMatchObject({ code: 'creation_failed' });
+    expect(cancelled).toHaveBeenCalledOnce();
+  });
+
+  it('clears untaken invitations and redacts a failed owner bootstrap', async () => {
+    const fetchImplementation = vi.fn(async () =>
+      Response.json(
+        { mode: 'multiplayer', roomCode: 'ABCDEFGH2345', credentials },
+        { status: 201 }
+      )
+    );
+    let error: unknown;
+    try {
+      await createRemoteRoom(input, {
+        fetch: fetchImplementation,
+        origin: 'https://play.example',
+        bootstrap: async () => {
+          throw new Error(credentials.playerOneSeatCapability);
+        },
+      });
+    } catch (caught) {
+      error = caught;
+    }
+    expect(error).toBeInstanceOf(RemoteRoomCreationError);
+    expect(error).toMatchObject({ code: 'bootstrap_failed' });
+    expect(String(error)).not.toContain(credentials.playerOneSeatCapability);
+  });
+
+  it('creates a solo room without retaining or issuing a second-player bearer', async () => {
+    const soloCredentials = {
+      playerOneSeatCapability: credentials.playerOneSeatCapability,
+      spectatorCapability: credentials.spectatorCapability,
+    };
+    const fetchImplementation = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        Response.json(
+          {
+            mode: 'solo',
+            roomCode: 'ABCDEFGH2345',
+            credentials: soloCredentials,
+          },
+          { status: 201 }
+        )
+      )
+      .mockResolvedValueOnce(
+        Response.json(
+          {
+            invitation: spectatorInvitation,
+            requestedRole: 'spectator',
+            expiresAt: 910_000,
+          },
+          { status: 201 }
+        )
+      );
+    const runtime = { dispose: vi.fn() } as unknown as RemoteRoomRuntime;
+    const bootstrap = vi.fn(async () => ({
+      runtime,
+      route: {
+        kind: 'remote-room' as const,
+        runtime,
+      },
+    }));
+
+    const result = await createRemoteRoom(
+      { ...input, mode: 'solo' },
+      {
+        fetch: fetchImplementation,
+        origin: 'https://play.example',
+        bootstrap,
+        now: () => 10_000,
+      }
+    );
+
+    expect(result.mode).toBe('solo');
+    expect(fetchImplementation.mock.calls[0]?.[1]?.body).toBe(
+      '{"mode":"solo"}'
+    );
+    await expect(
+      result.invitations.copyPlayerInvitation(capturingClipboard().writer)
+    ).rejects.toMatchObject({ code: 'invalid_input' });
+    expect(fetchImplementation).toHaveBeenCalledOnce();
+    await expect(
+      result.invitations.copySpectatorInvitation(capturingClipboard().writer)
+    ).resolves.toMatchObject({ requestedRole: 'spectator' });
+    expect(fetchImplementation).toHaveBeenCalledTimes(2);
+    expect(JSON.stringify(result)).not.toContain(
+      credentials.playerTwoSeatCapability
+    );
+    result.dispose();
+  });
+
+  it('rejects a creation response whose mode differs from the request', async () => {
+    const bootstrap = vi.fn();
+    await expect(
+      createRemoteRoom(
+        { ...input, mode: 'solo' },
+        {
+          fetch: vi.fn(async () =>
+            Response.json(
+              {
+                mode: 'multiplayer',
+                roomCode: 'ABCDEFGH2345',
+                credentials,
+              },
+              { status: 201 }
+            )
+          ),
+          origin: 'https://play.example',
+          bootstrap,
+        }
+      )
+    ).rejects.toMatchObject({ code: 'invalid_response' });
+    expect(bootstrap).not.toHaveBeenCalled();
+  });
+});
+
+describe('remote room invitation custody', () => {
+  it('invokes a retained browser fetch without rebinding its receiver', async () => {
+    const receivers: unknown[] = [];
+    const fetchImplementation = vi.fn(function (this: unknown) {
+      receivers.push(this);
+      return Promise.resolve(
+        Response.json(
+          {
+            invitation: playerInvitation,
+            requestedRole: 'player',
+            expiresAt: 910_000,
+          },
+          { status: 201 }
+        )
+      );
+    });
+    const custody = new RemoteRoomInvitationCustody({
+      roomCode: 'ABCDEFGH2345',
+      playerCapability: credentials.playerTwoSeatCapability,
+      fetch: fetchImplementation,
+      origin: new URL('https://play.example'),
+    });
+
+    await custody.copyPlayerInvitation(capturingClipboard().writer);
+    expect(receivers).toEqual([undefined]);
+  });
+
+  it('passes an invitation on as a link that opens the game into its room, begun inside the press', async () => {
+    const fetchImplementation = vi.fn(async () =>
+      Response.json(
+        {
+          invitation: spectatorInvitation,
+          requestedRole: 'spectator',
+          expiresAt: 910_000,
+        },
+        { status: 201 }
+      )
+    );
+    const custody = new RemoteRoomInvitationCustody({
+      roomCode: 'ABCDEFGH2345',
+      playerCapability: credentials.playerTwoSeatCapability,
+      spectatorCapability: credentials.spectatorCapability,
+      fetch: fetchImplementation,
+      origin: new URL('https://play.example'),
+      linkBase: 'https://play.example/',
+    });
+    const links: Promise<string>[] = [];
+    const receipt = custody.invite('spectator', (link) => {
+      links.push(link);
+      return link.then(() => 'shared' as const);
+    });
+    // Handed the link still being minted, at once: a copy can begin while
+    // the press still counts.
+    expect(links).toHaveLength(1);
+    await expect(receipt).resolves.toEqual({
+      roomCode: 'ABCDEFGH2345',
+      requestedRole: 'spectator',
+      expiresAt: 910_000,
+      outcome: 'shared',
+    });
+    const link = await links[0]!;
+    expect(link).toMatch(/^https:\/\/play\.example\/#invite=[A-Za-z0-9_-]+$/u);
+    // The link carries exactly the invitation the room minted.
+    expect(parseRoomInvitationText(link)).toEqual({
+      ok: true,
+      value: {
+        roomCode: 'ABCDEFGH2345',
+        invitation: spectatorInvitation,
+        requestedRole: 'spectator',
+        expiresAt: 910_000,
+      },
+    });
+    expect(JSON.stringify(receipt)).not.toContain(spectatorInvitation);
+  });
+
+  it('answers an opponent invite with the room’s word that the seat is taken, passing nothing on', async () => {
+    const custody = new RemoteRoomInvitationCustody({
+      roomCode: 'ABCDEFGH2345',
+      playerCapability: credentials.playerTwoSeatCapability,
+      spectatorCapability: credentials.spectatorCapability,
+      fetch: vi.fn(async () =>
+        Response.json({ error: 'seat_unavailable' }, { status: 409 })
+      ),
+      origin: new URL('https://play.example'),
+    });
+    let delivered = false;
+    await expect(
+      custody.invite('player', async (link) => {
+        await link;
+        delivered = true;
+        return 'copied';
+      })
+    ).rejects.toMatchObject({ code: 'seat_unavailable' });
+    expect(delivered).toBe(false);
+    await expect(custody.invite('player', undefined)).rejects.toMatchObject({
+      code: 'clipboard_unavailable',
+    });
+  });
+
+  it('does not serialize secrets and clears every master credential on dispose', async () => {
+    const custody = new RemoteRoomInvitationCustody({
+      roomCode: 'ABCDEFGH2345',
+      playerCapability: credentials.playerTwoSeatCapability,
+      spectatorCapability: credentials.spectatorCapability,
+      fetch: vi.fn<typeof fetch>(),
+      origin: new URL('https://play.example'),
+    });
+    expect(custody.roomCode).toBe('ABCDEFGH2345');
+    expect(JSON.stringify(custody)).toBe('{}');
+    custody.dispose();
+    await expect(
+      custody.copyPlayerInvitation(capturingClipboard().writer)
+    ).rejects.toMatchObject({ code: 'disposed' });
+    await expect(
+      custody.copySpectatorInvitation(capturingClipboard().writer)
+    ).rejects.toMatchObject({ code: 'disposed' });
+    custody.dispose();
+  });
+
+  it('fails closed without clipboard access or when the foreground write is denied', async () => {
+    const fetchImplementation = vi.fn(async () =>
+      Response.json(
+        {
+          invitation: playerInvitation,
+          requestedRole: 'player',
+          expiresAt: 910_000,
+        },
+        { status: 201 }
+      )
+    );
+    const custody = new RemoteRoomInvitationCustody({
+      roomCode: 'ABCDEFGH2345',
+      playerCapability: credentials.playerTwoSeatCapability,
+      fetch: fetchImplementation,
+      origin: new URL('https://play.example'),
+    });
+
+    await expect(custody.copyPlayerInvitation()).rejects.toMatchObject({
+      code: 'clipboard_unavailable',
+    });
+    expect(fetchImplementation).not.toHaveBeenCalled();
+
+    let error: unknown;
+    try {
+      await custody.copyPlayerInvitation({
+        writeText: async () => {
+          throw new Error(playerInvitation);
+        },
+      });
+    } catch (caught) {
+      error = caught;
+    }
+    expect(error).toMatchObject({ code: 'clipboard_failed' });
+    expect(String(error)).not.toContain(playerInvitation);
+    expect(fetchImplementation).toHaveBeenCalledOnce();
+  });
+
+  it('fails closed on missing custody and invalid issue responses', async () => {
+    const withoutSpectator = new RemoteRoomInvitationCustody({
+      roomCode: 'ABCDEFGH2345',
+      playerCapability: credentials.playerTwoSeatCapability,
+      fetch: vi.fn<typeof fetch>(),
+      origin: new URL('https://play.example'),
+    });
+    await expect(
+      withoutSpectator.copySpectatorInvitation(capturingClipboard().writer)
+    ).rejects.toMatchObject({ code: 'invalid_input' });
+
+    for (const [response, code] of [
+      [Response.json({ error: 'busy' }, { status: 503 }), 'issue_failed'],
+      [
+        Response.json({ error: 'seat_unavailable' }, { status: 409 }),
+        'seat_unavailable',
+      ],
+      [
+        Response.json({ error: 'room_not_ready' }, { status: 409 }),
+        'issue_failed',
+      ],
+      [
+        Response.json(
+          {
+            invitation: 'short',
+            requestedRole: 'player',
+            expiresAt: 910_000,
+          },
+          { status: 201 }
+        ),
+        'invalid_response',
+      ],
+      [
+        Response.json(
+          {
+            invitation: playerInvitation,
+            requestedRole: 'spectator',
+            expiresAt: 910_000,
+          },
+          { status: 201 }
+        ),
+        'invalid_response',
+      ],
+    ] as const) {
+      const custody = new RemoteRoomInvitationCustody({
+        roomCode: 'ABCDEFGH2345',
+        playerCapability: credentials.playerTwoSeatCapability,
+        fetch: vi.fn(async () => response.clone()),
+        origin: new URL('https://play.example'),
+      });
+      await expect(
+        custody.copyPlayerInvitation(capturingClipboard().writer)
+      ).rejects.toMatchObject({ code });
+    }
+  });
+
+  it('keeps one invitation in flight even when the clipboard fails first', async () => {
+    let finish: ((response: Response) => void) | undefined;
+    const fetchImplementation = vi.fn<typeof fetch>(
+      async () =>
+        new Promise<Response>((resolve) => {
+          finish = resolve;
+        })
+    );
+    const custody = new RemoteRoomInvitationCustody({
+      roomCode: 'ABCDEFGH2345',
+      playerCapability: credentials.playerTwoSeatCapability,
+      fetch: fetchImplementation,
+      origin: new URL('https://play.example'),
+    });
+    let refused = false;
+    const failed = custody
+      .copyPlayerInvitation({
+        writeText: async () => {
+          throw new Error('denied');
+        },
+      })
+      .catch((error: unknown) => {
+        refused = true;
+        throw error;
+      });
+    await Promise.resolve();
+    await Promise.resolve();
+    // The clipboard said no, but the room is still issuing: a retry now
+    // would issue another, and one would revoke the other.
+    await expect(
+      custody.copyPlayerInvitation(capturingClipboard().writer)
+    ).rejects.toMatchObject({ code: 'copy_in_progress' });
+    expect(refused).toBe(false);
+    finish?.(
+      Response.json(
+        {
+          invitation: playerInvitation,
+          requestedRole: 'player',
+          expiresAt: 910_000,
+        },
+        { status: 201 }
+      )
+    );
+    await expect(failed).rejects.toMatchObject({ code: 'clipboard_failed' });
+    const clipboard = capturingClipboard();
+    fetchImplementation.mockResolvedValueOnce(
+      Response.json(
+        {
+          invitation: playerInvitation,
+          requestedRole: 'player',
+          expiresAt: 910_000,
+        },
+        { status: 201 }
+      )
+    );
+    await custody.copyPlayerInvitation(clipboard.writer);
+    expect(clipboard.values).toHaveLength(1);
+    expect(fetchImplementation).toHaveBeenCalledTimes(2);
+  });
+
+  it('aborts an in-flight invitation issue when its owner is disposed', async () => {
+    let finish: ((response: Response) => void) | undefined;
+    const fetchImplementation = vi.fn<typeof fetch>(
+      async (_input, init) =>
+        new Promise<Response>((resolve) => {
+          expect(init?.signal?.aborted).toBe(false);
+          finish = resolve;
+        })
+    );
+    const custody = new RemoteRoomInvitationCustody({
+      roomCode: 'ABCDEFGH2345',
+      playerCapability: credentials.playerTwoSeatCapability,
+      fetch: fetchImplementation,
+      origin: new URL('https://play.example'),
+    });
+    const pending = custody.copyPlayerInvitation(capturingClipboard().writer);
+    await expect(
+      custody.copyPlayerInvitation(capturingClipboard().writer)
+    ).rejects.toMatchObject({ code: 'copy_in_progress' });
+    expect(fetchImplementation).toHaveBeenCalledOnce();
+    custody.dispose();
+    finish?.(
+      Response.json(
+        {
+          invitation: playerInvitation,
+          requestedRole: 'player',
+          expiresAt: 910_000,
+        },
+        { status: 201 }
+      )
+    );
+
+    await expect(pending).rejects.toMatchObject({ code: 'disposed' });
+  });
+});
+
+describe('invited remote room bootstrap', () => {
+  it('validates a handoff then exchanges only its one-time invitation', async () => {
+    const fetchImplementation = vi.fn(async () =>
+      Response.json(
+        { admissionTicket, resumeToken, expiresAt: 40_000 },
+        { status: 201 }
+      )
+    );
+    const runtime = { dispose: vi.fn() } as unknown as RemoteRoomRuntime;
+    const createRuntime = vi.fn(() => runtime);
+    const result = await bootstrapRemoteRoomInvitation(
+      {
+        buildId: 'client-build',
+        displayName: 'Red',
+        invitation: {
+          roomCode: 'ABCDEFGH2345',
+          requestedRole: 'player',
+          invitation: playerInvitation,
+          expiresAt: 910_000,
+        },
+      },
+      {
+        fetch: fetchImplementation,
+        origin: 'https://play.example',
+        now: () => 10_000,
+        createRuntime,
+      }
+    );
+
+    const [url, init] = fetchImplementation.mock.calls[0]!;
+    expect(String(url)).toBe(
+      'https://play.example/v2/rooms/ABCDEFGH2345/admission-tickets'
+    );
+    expect(String(url)).not.toContain(playerInvitation);
+    expect(JSON.parse(String(init?.body))).toEqual({
+      capability: playerInvitation,
+      displayName: 'Red',
+      requestedRole: 'player',
+    });
+    expect(result.runtime).toBe(runtime);
+  });
+
+  it('rejects a malformed handoff before network access', async () => {
+    const fetchImplementation = vi.fn<typeof fetch>();
+    await expect(
+      bootstrapRemoteRoomInvitation(
+        {
+          buildId: 'client-build',
+          displayName: 'Red',
+          invitation: { roomCode: 'bad', invitation: playerInvitation },
+        },
+        { fetch: fetchImplementation, origin: 'https://play.example' }
+      )
+    ).rejects.toBeInstanceOf(Error);
+    expect(fetchImplementation).not.toHaveBeenCalled();
+  });
+
+  it("leaves an invitation's expiry to the room, and says so when it refuses one", async () => {
+    const invitation = {
+      roomCode: 'ABCDEFGH2345',
+      requestedRole: 'player' as const,
+      invitation: playerInvitation,
+      expiresAt: 10_000,
+    };
+    const join = (now: number) => {
+      const fetchImplementation = vi.fn<typeof fetch>(async () =>
+        Response.json({ error: 'invalid_capability' }, { status: 403 })
+      );
+      return {
+        fetchImplementation,
+        joined: bootstrapRemoteRoomInvitation(
+          {
+            buildId: 'client-build',
+            displayName: 'Red',
+            invitation,
+          },
+          {
+            fetch: fetchImplementation,
+            origin: 'https://play.example',
+            now: () => now,
+          }
+        ),
+      };
+    };
+    // Past its time by this browser's clock: the room is asked anyway (the
+    // clock may be fast), and its refusal is reported as an expiry.
+    const late = join(20_000);
+    await expect(late.joined).rejects.toMatchObject({
+      code: 'expired_invitation',
+    });
+    expect(late.fetchImplementation).toHaveBeenCalledTimes(1);
+    // Within it, a refusal is just a refusal.
+    await expect(join(5_000).joined).rejects.toMatchObject({
+      code: 'exchange_failed',
+    });
+  });
+
+  it('says why the room refused an invitation, where it said: used up, or its seat taken', async () => {
+    const invitation = {
+      roomCode: 'ABCDEFGH2345',
+      requestedRole: 'player' as const,
+      invitation: playerInvitation,
+      expiresAt: 900_000,
+    };
+    const joinAgainst = (response: Response) =>
+      bootstrapRemoteRoomInvitation(
+        { buildId: 'client-build', displayName: 'Red', invitation },
+        {
+          fetch: vi.fn<typeof fetch>(async () => response),
+          origin: 'https://play.example',
+          now: () => 1_000,
+        }
+      );
+    // A link opened a second time: the room has spent its claim.
+    await expect(
+      joinAgainst(
+        Response.json({ error: 'admission_rejected' }, { status: 403 })
+      )
+    ).rejects.toMatchObject({ code: 'invitation_refused' });
+    await expect(
+      joinAgainst(Response.json({ error: 'seat_unavailable' }, { status: 409 }))
+    ).rejects.toMatchObject({ code: 'seat_unavailable' });
+    // Busy, or a reason it didn't give: a failure to retry.
+    await expect(
+      joinAgainst(Response.json({ error: 'rate_limited' }, { status: 429 }))
+    ).rejects.toMatchObject({ code: 'exchange_failed' });
+  });
+});

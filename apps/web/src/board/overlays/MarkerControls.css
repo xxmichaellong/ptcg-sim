@@ -1,0 +1,247 @@
+/*
+ * A marker's controls (MarkerControls.tsx): a small bar beside the card
+ * whose counter or chip was pressed, level with it. Buttons answer a press at once and
+ * spring back when let go; a mouse's hover only lightens them, and a finger
+ * gets a larger target.
+ */
+.ptcgsim-marker-controls {
+  position: absolute;
+  z-index: var(--viewer-layer-editor);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  box-sizing: border-box;
+  padding: 4px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill, 999px);
+  background: var(--color-surface-2);
+  box-shadow: var(--shadow-3), var(--highlight-top);
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  pointer-events: auto;
+  user-select: none;
+  white-space: nowrap;
+  animation:
+    ptcgsim-marker-controls-fade var(--surface-enter-duration, 200ms)
+      var(--ease-fade) backwards,
+    ptcgsim-marker-controls-in var(--surface-enter-duration, 200ms)
+      var(--ease-snappy) backwards;
+}
+
+@keyframes ptcgsim-marker-controls-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+/* It comes out of the card's side (the fade beside it keeps its own
+   curve); closed, it fades back in (overlayMotion.ts's menu exit). */
+@keyframes ptcgsim-marker-controls-in {
+  from {
+    translate: var(--marker-controls-from, 0 4px);
+    scale: 0.96;
+  }
+}
+
+.ptcgsim-marker-controls[data-side='right'] {
+  --marker-controls-from: -6px 0;
+}
+
+.ptcgsim-marker-controls[data-side='left'] {
+  --marker-controls-from: 6px 0;
+}
+
+.ptcgsim-marker-controls[data-side='below'] {
+  --marker-controls-from: 0 -4px;
+}
+
+.ptcgsim-marker-controls__button {
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  min-width: 32px;
+  height: 32px;
+  margin: 0;
+  padding: 0 6px;
+  border: 0;
+  border-radius: var(--radius-pill, 999px);
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold, 600);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition:
+    background-color 80ms ease-out,
+    scale var(--control-press-timing);
+}
+
+.ptcgsim-marker-controls__button > svg {
+  width: 16px;
+  height: 16px;
+}
+
+.ptcgsim-marker-controls__button:active {
+  scale: 0.9;
+}
+
+.ptcgsim-marker-controls__button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ptcgsim-marker-controls__button:hover {
+    background: var(--color-surface-hover);
+  }
+}
+
+/* A finger needs more to aim at. */
+@media (pointer: coarse) {
+  .ptcgsim-marker-controls__button {
+    min-width: 40px;
+    height: 40px;
+  }
+}
+
+.ptcgsim-marker-controls__button.is-remove {
+  color: var(--color-text-muted);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ptcgsim-marker-controls__button.is-remove:hover {
+    color: var(--color-danger);
+  }
+}
+
+.ptcgsim-marker-controls__button.is-text {
+  padding: 0 12px;
+}
+
+/* A condition is its own chip; the one on the Pokémon is ringed. */
+.ptcgsim-marker-controls__button.is-condition {
+  padding: 0;
+  width: 32px;
+}
+
+.ptcgsim-marker-controls__button.is-condition > img {
+  display: block;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.3);
+}
+
+.ptcgsim-marker-controls__button.is-condition[aria-pressed='true'] {
+  box-shadow: inset 0 0 0 2px var(--color-gold, rgb(240 200 90));
+}
+
+@media (pointer: coarse) {
+  .ptcgsim-marker-controls__button.is-condition {
+    width: 40px;
+  }
+  .ptcgsim-marker-controls__button.is-condition > img {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+/* A reminder on the Pokémon is filled in the chip's slate and ringed in its
+   navy (MarkerNode's reminder chip); one off is a plain button. */
+.ptcgsim-marker-controls__button.is-reminder {
+  width: 32px;
+  padding: 0;
+}
+
+.ptcgsim-marker-controls__button.is-reminder[aria-pressed='true'] {
+  background: rgb(228 234 244);
+  box-shadow: inset 0 0 0 2px rgb(58 80 122);
+  color: rgb(22 38 70);
+}
+
+@media (pointer: coarse) {
+  .ptcgsim-marker-controls__button.is-reminder {
+    width: 40px;
+  }
+}
+
+/* The damage, typed into: it reads as the number until it has the focus. */
+.ptcgsim-marker-controls__value {
+  box-sizing: content-box;
+  width: 4ch;
+  height: 28px;
+  margin: 0;
+  padding: 0 4px;
+  border: 0;
+  border-radius: var(--radius-sm, 6px);
+  background: transparent;
+  color: inherit;
+  font-family: var(--font-display, var(--font-ui));
+  font-size: var(--text-lg, 18px);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  user-select: text;
+}
+
+.ptcgsim-marker-controls__value::placeholder {
+  color: var(--color-text-muted);
+}
+
+.ptcgsim-marker-controls__value:focus {
+  outline: none;
+  background: var(--color-surface-1, var(--color-surface));
+  box-shadow: inset 0 0 0 2px var(--color-accent);
+}
+
+.ptcgsim-marker-controls__value[aria-invalid='true'] {
+  box-shadow: inset 0 0 0 2px var(--color-danger);
+}
+
+/* What the number takes, once something else was typed. */
+.ptcgsim-marker-controls__hint {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  padding: var(--space-1, 4px) var(--space-2, 8px);
+  border: 1px solid var(--color-danger);
+  border-radius: var(--radius-sm, 6px);
+  background: var(--color-surface-2);
+  box-shadow: var(--shadow-3);
+  color: var(--color-text);
+  font-size: var(--text-xs);
+  pointer-events: none;
+  translate: -50% 0;
+}
+
+.ptcgsim-marker-controls__caption {
+  padding: 0 4px 0 10px;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.ptcgsim-marker-controls__divider {
+  align-self: stretch;
+  width: 1px;
+  margin: 6px 2px;
+  background: var(--color-border);
+}
+
+/* Reduced motion: a brief fade, no travel (its exit is the overlays'). */
+:root[data-motion='reduced']
+  .ptcgsim-marker-controls:not(.ptcgsim-overlay-ghost) {
+  animation: ptcgsim-marker-controls-fade var(--surface-enter-duration, 150ms)
+    var(--ease-fade) backwards;
+}
+
+:root[data-motion='reduced'] .ptcgsim-marker-controls__button,
+:root[data-motion-speed='instant'] .ptcgsim-marker-controls__button {
+  transition: background-color 80ms ease-out;
+}
+
+:root[data-motion='reduced'] .ptcgsim-marker-controls__button:active,
+:root[data-motion-speed='instant'] .ptcgsim-marker-controls__button:active {
+  scale: none;
+}

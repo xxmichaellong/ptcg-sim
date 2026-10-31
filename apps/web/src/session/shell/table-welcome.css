@@ -1,0 +1,239 @@
+/* The empty table's welcome card (TableWelcome.tsx): a card on the felt. */
+
+.table-welcome {
+  position: relative;
+  box-sizing: border-box;
+  display: grid;
+  gap: var(--space-3);
+  width: min(420px, calc(100vw - 2 * var(--space-4)));
+  padding: var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background: var(--color-surface-2);
+  box-shadow: var(--shadow-5), var(--highlight-top);
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  pointer-events: auto;
+  animation:
+    table-welcome-fade var(--surface-enter-duration, 200ms) var(--ease-fade)
+      both,
+    table-welcome-in calc(var(--duration-slow) * var(--motion-scale, 1))
+      var(--ease-snappy) both;
+}
+
+@keyframes table-welcome-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+/* The travel alone: the fade beside it keeps its own curve. */
+@keyframes table-welcome-in {
+  from {
+    translate: 0 8px;
+    scale: 0.98;
+  }
+}
+
+.table-welcome__dismiss {
+  position: absolute;
+  top: var(--space-2);
+  inset-inline-end: var(--space-2);
+}
+
+.table-welcome__hero {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.table-welcome__hero h2 {
+  margin: 0 0 var(--space-1);
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+}
+
+.table-welcome__logo {
+  flex: none;
+  border-radius: var(--radius-pill);
+}
+
+.table-welcome__lead {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.table-welcome__steps {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.table-welcome__steps li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.table-welcome__steps svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  color: var(--color-you);
+}
+
+.table-welcome__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.table-welcome__actions .ds-button {
+  flex: 1 1 140px;
+}
+
+/* Loading a deck leads, across the card; the tutorial and playing online
+   share the row under it. */
+.table-welcome__actions .ds-button--primary {
+  flex-basis: 100%;
+}
+
+.table-welcome__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-border);
+}
+
+.table-welcome__links .ds-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--text-xs);
+  cursor: pointer;
+}
+
+@media (pointer: coarse) {
+  .table-welcome__links .ds-link {
+    min-height: 40px;
+  }
+}
+
+@media (max-width: 599px), (max-height: 499px) {
+  .table-welcome {
+    padding: var(--space-4);
+    gap: var(--space-2);
+  }
+  .table-welcome__lead {
+    display: none;
+  }
+}
+
+/* A phone held sideways: the name and the two ways in, nothing more. */
+@media (max-height: 499px) {
+  .table-welcome {
+    padding: var(--space-3) var(--space-4);
+  }
+  .table-welcome__steps,
+  .table-welcome__links {
+    display: none;
+  }
+  .table-welcome__logo {
+    width: 32px;
+    height: 32px;
+  }
+  .table-welcome__hero h2 {
+    font-size: var(--text-lg);
+  }
+}
+
+/* The release (v1.6), a link to its notes. */
+.table-welcome .welcome-version {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  height: 24px;
+  padding: 0 var(--space-2);
+  border: 1px solid color-mix(in oklch, var(--color-accent) 40%, transparent);
+  border-radius: var(--radius-pill);
+  background: var(--color-accent-soft);
+  color: var(--ds-accent-text, var(--color-accent));
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    scale var(--control-press-timing);
+}
+
+.table-welcome .welcome-version svg {
+  width: 13px;
+  height: 13px;
+  color: var(--color-gold);
+}
+
+@media (hover: hover) {
+  .table-welcome .welcome-version:hover {
+    background: color-mix(in oklch, var(--color-accent) 28%, transparent);
+  }
+}
+
+.table-welcome .welcome-version:active {
+  scale: var(--control-press-scale);
+}
+
+.table-welcome .welcome-version:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.table-welcome .welcome-version-label {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--weight-bold);
+}
+
+/* "shortcuts" in the tip opens the keyboard shortcuts list. */
+.table-welcome .welcome-shortcuts-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-accent);
+  font: inherit;
+  font-weight: var(--weight-semibold);
+  text-decoration: underline;
+  text-decoration-color: color-mix(
+    in oklch,
+    var(--color-accent),
+    transparent 55%
+  );
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.table-welcome .welcome-shortcuts-link:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* A room's invite card (TableInvite): under a finger its buttons are 44px
+   tall. */
+@media (pointer: coarse) {
+  .table-welcome--invite {
+    --ds-control-height: 44px;
+  }
+}

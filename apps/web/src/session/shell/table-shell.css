@@ -1,0 +1,238 @@
+/*
+ * The page around the table (TableShell.tsx, ADR-030). The table fills the
+ * window; a docked activity log takes the right-hand column (the left-hand
+ * one in a right-to-left language) and the table lays itself out beside it.
+ * Banners and the welcome sit over the table.
+ */
+
+/* What a window or banner at the top keeps clear for the app bar in the
+   top-right corner: its inset, its height (APP_BAR_PAD_PX round a 36px
+   button, 44px under a finger) and a gap. */
+:root {
+  --app-bar-clearance: calc(2 * var(--space-2) + 42px);
+}
+
+@media (pointer: coarse) {
+  :root {
+    --app-bar-clearance: calc(2 * var(--space-2) + 50px);
+  }
+}
+
+/* ---- A banner the table keeps until it is resolved -------------------- */
+
+/* Below the app bar: on a phone a banner is as wide as the bar's row. */
+.ptcgsim-table-banner {
+  position: fixed;
+  top: max(var(--app-bar-clearance), env(safe-area-inset-top));
+  /* Centred by its margins, as wide as its words up to the window's width
+     less a gutter (a left half-way across would hold it to half of it). */
+  inset-inline: var(--space-4);
+  z-index: var(--layer-chrome);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  box-sizing: border-box;
+  width: fit-content;
+  margin-inline: auto;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--color-border);
+  /* A pill on one line (its button 28px tall, 8px either side); wrapped
+     onto more, a rounded box its words keep clear of. */
+  border-radius: 22px;
+  background: var(--color-surface-2);
+  box-shadow: var(--shadow-4), var(--highlight-top);
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+
+/* Its words keep a readable measure: where the button beside them would
+   squeeze them narrower, it goes under them. */
+.ptcgsim-table-banner__text {
+  flex: 1 1 12em;
+}
+
+.ptcgsim-table-banner[data-tone='danger'] {
+  border-color: color-mix(in oklab, var(--color-danger) 55%, transparent);
+  background: color-mix(
+    in oklab,
+    var(--color-danger) 16%,
+    var(--color-surface-2)
+  );
+}
+
+/* ---- Over the middle of the table --------------------------------------- */
+
+.ptcgsim-table-centre {
+  position: fixed;
+  inset: 0;
+  /* Clear of a docked log, as far as it has slid in (TableShell.tsx): at
+     the right, or the left in a right-to-left language. */
+  inset-inline-end: calc(var(--rail-width) * var(--activity-reveal, 0));
+  z-index: var(--layer-chrome);
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+  pointer-events: none;
+}
+
+/* Put away, its last frame fades and sinks a little (exit-ghost.ts). */
+.ptcgsim-table-centre.is-leaving {
+  pointer-events: none;
+}
+
+.ptcgsim-table-centre.is-leaving > * {
+  pointer-events: none;
+  animation: ptcgsim-table-centre-out var(--surface-exit-duration, 140ms)
+    var(--ease-fade) forwards;
+}
+
+.ptcgsim-table-centre.is-leaving > * * {
+  animation: none !important;
+  transition: none !important;
+}
+
+@keyframes ptcgsim-table-centre-out {
+  to {
+    opacity: 0;
+    translate: 0 6px;
+    scale: 0.98;
+  }
+}
+
+@keyframes ptcgsim-table-centre-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+/* Reduced motion: a brief fade, no travel. */
+:root[data-motion='reduced'] .ptcgsim-table-centre.is-leaving > * {
+  animation-name: ptcgsim-table-centre-fade-out;
+}
+
+/* Above the seam, clear of the rail: the empty table's far half. */
+.ptcgsim-table-centre[data-area='upper'] {
+  bottom: calc((1 - var(--table-seam, 0.5)) * 100% + 24px);
+  align-items: end;
+  overflow: hidden;
+}
+
+.ptcgsim-table-centre > * {
+  pointer-events: auto;
+}
+
+/* ---- The app bar, in the table's top-right corner (AppMenu.tsx) --------- */
+
+/* Where the layout keeps a corner clear (`appBarPx`, APP_BAR_INSET_PX in
+   from the play area's top right). */
+.ptcgsim-app-bar-slot {
+  position: absolute;
+  z-index: var(--table-layer-rail);
+  pointer-events: none;
+}
+
+/* One pill of smoked glass over the desk, apart from the game: the deck and
+   where to play, then the palette, the log and Settings, then the menu, a
+   hairline between the groups. Its box is the one the layout keeps clear:
+   APP_BAR_PAD_PX (3px, border included) round buttons APP_BAR_GAP_PX (4px)
+   apart. */
+.ptcgsim-app-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  box-sizing: border-box;
+  padding: 2px;
+  border: 1px solid oklch(1 0 0 / 0.1);
+  border-radius: calc(var(--radius-control) + 3px);
+  background: oklch(0.2 0.012 50 / 0.58);
+  box-shadow:
+    0 1px 0 oklch(1 0 0 / 0.08) inset,
+    0 6px 18px oklch(0 0 0 / 0.28),
+    0 1px 3px oklch(0 0 0 / 0.3);
+  -webkit-backdrop-filter: blur(12px) saturate(1.1);
+  backdrop-filter: blur(12px) saturate(1.1);
+  pointer-events: auto;
+}
+
+.ptcgsim-app-bar__group {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* A hairline in the gap between groups. */
+.ptcgsim-app-bar__group + .ptcgsim-app-bar__group::before {
+  content: '';
+  position: absolute;
+  top: 22%;
+  bottom: 22%;
+  inset-inline-start: -2.5px;
+  width: 1px;
+  background: oklch(1 0 0 / 0.14);
+}
+
+.ptcgsim-app-bar .ptcgsim-rail-button {
+  width: var(--app-bar-button, 36px);
+  min-width: 0;
+  height: var(--app-bar-button, 36px);
+  padding: 0;
+  border-color: transparent;
+  border-radius: var(--radius-control);
+  background: transparent;
+  box-shadow: none;
+  color: oklch(0.95 0.01 80);
+  font-size: calc(var(--app-bar-button, 36px) * 0.42);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ptcgsim-app-bar .ptcgsim-rail-button:hover {
+    background-color: oklch(1 0 0 / 0.12);
+    box-shadow: none;
+  }
+}
+
+/* The glass is dark in either theme: the keyboard's ring is in the bar's
+   own ink, not the theme's accent (navy by day, lost on the glass). */
+.ptcgsim-app-bar .ptcgsim-rail-button:focus-visible {
+  outline-color: oklch(0.95 0.01 80);
+}
+
+.ptcgsim-app-bar .ptcgsim-rail-button[aria-expanded='true'] {
+  border-color: transparent;
+  background-color: oklch(1 0 0 / 0.16);
+}
+
+.ptcgsim-app-bar .ptcgsim-rail-button__badge {
+  top: -3px;
+  right: -3px;
+}
+
+/* The log's newest lines drop below the bar, at its right edge. */
+.ptcgsim-app-bar .ptcgsim-activity-ticker {
+  top: calc(100% + var(--space-2) + 3px);
+  bottom: auto;
+}
+
+/* ---- The app menu's heading: where you are ------------------------------ */
+
+.ptcgsim-app-menu-heading {
+  max-width: 260px;
+  overflow: hidden;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ptcgsim-table-banner .ds-button {
+  height: 28px;
+  min-height: 0;
+  padding: 0 var(--space-3);
+  font-size: var(--text-sm);
+}

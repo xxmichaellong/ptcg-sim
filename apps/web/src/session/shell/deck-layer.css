@@ -1,0 +1,72 @@
+/*
+ * The deck screen's layer (DeckLayer.tsx): the whole window, fading in and
+ * out over the table. It is the same desk the table lies on (shell.css),
+ * in the chosen artwork's wood and grain, under the same lamp up and to the
+ * left (ADR-033 §13). Nothing here may transform or filter, so the screen's
+ * fixed parts (the card zoom) stay fixed to the window.
+ */
+
+.ptcgsim-deck-layer {
+  position: fixed;
+  inset: 0;
+  z-index: var(--layer-deck-screen);
+  background-color: var(--color-desk);
+  background-image:
+    radial-gradient(
+      ellipse 60% 55% at 36% 28%,
+      var(--color-lamp),
+      transparent 72%
+    ),
+    radial-gradient(
+      ellipse 90% 85% at 50% 45%,
+      transparent 48%,
+      var(--color-desk-vignette, rgb(10 6 2 / 0.42)) 100%
+    ),
+    var(--desk-grain), linear-gradient(var(--color-desk-hi), var(--color-desk));
+  background-size:
+    auto,
+    auto,
+    640px 360px,
+    auto;
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  outline: none;
+  opacity: 1;
+  transition:
+    opacity var(--surface-enter-duration, 200ms) var(--ease-fade),
+    visibility 0s;
+}
+
+/* Its first opening fades in too: it is put on the page already open. */
+@starting-style {
+  .ptcgsim-deck-layer[data-open='true'] {
+    opacity: 0;
+  }
+}
+
+.ptcgsim-deck-layer[data-open='false'] {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity var(--surface-exit-duration, 140ms) var(--ease-fade),
+    visibility 0s linear var(--surface-exit-duration, 140ms);
+}
+
+/* While the deck screen's script arrives, and if it can't. */
+.ptcgsim-deck-layer__loading,
+.ptcgsim-deck-layer__unavailable {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+}
+
+.ptcgsim-deck-layer__loading p {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: var(--space-8) auto;
+  color: var(--color-desk-ink);
+}

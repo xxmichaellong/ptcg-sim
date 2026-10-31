@@ -1,0 +1,77 @@
+/* Settings' own rows (SettingsSheet.tsx); the shared ones are in
+   form-controls.css. */
+
+/* A label, its key and a button that opens something: the keys' Edit…. */
+.ptcgsim-settings-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 30px;
+}
+
+.ptcgsim-settings-row__label {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--text-sm);
+}
+
+.ptcgsim-settings-row__key {
+  min-width: 1.6em;
+  padding: 1px var(--space-1-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  text-align: center;
+}
+
+/* The release, the community and the sponsors, quiet at the foot. */
+.ptcgsim-settings-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1) var(--space-2);
+  margin: var(--space-2) 0 var(--space-1);
+  color: var(--color-text-faint);
+  font-size: var(--text-xs);
+}
+
+.ptcgsim-settings-footer__link {
+  padding: var(--space-1);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.ptcgsim-settings-footer__link:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ptcgsim-settings-footer__link:hover {
+    color: var(--color-accent);
+    text-decoration: underline;
+  }
+}
+
+/* Reset sits at the end of the Table section, on its own. */
+.ptcgsim-settings-reset {
+  justify-self: start;
+}
+
+@media (pointer: coarse) {
+  .ptcgsim-settings-row {
+    min-height: 44px;
+  }
+  .ptcgsim-settings-footer__link {
+    min-height: 44px;
+    padding-inline: var(--space-2);
+  }
+}

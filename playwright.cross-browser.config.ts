@@ -1,0 +1,112 @@
+import { defineConfig } from '@playwright/test';
+
+const sharedSpecs = [
+  'remote-room-solo-full-stack.spec.ts',
+  'experience-refinement.spec.ts',
+  'special-card-formats.spec.ts',
+  'table-depth-live.spec.ts',
+  'table-depth-lab.spec.ts',
+  'optimistic-feedback.spec.ts',
+  'depth-recovery.spec.ts',
+  'public-pile-ordering.spec.ts',
+  'arrangement-visibility.spec.ts',
+  'visibility-queue.spec.ts',
+  'show-board-keyboard.spec.ts',
+  'deck-hover-zoom.spec.ts',
+  'deck-dialog-focus.spec.ts',
+  'multi-select-modifiers.spec.ts',
+];
+
+export default defineConfig({
+  // Maps Lingui's macros to English stand-ins for the app code specs load
+  // in Node (tests/browser/support/lingui-macro.ts, ADR-034).
+  tsconfig: './tsconfig.playwright.json',
+  testDir: './tests/browser',
+  testMatch: sharedSpecs,
+  fullyParallel: false,
+  forbidOnly: Boolean(process.env['CI']),
+  // As in playwright.config.ts: one retry on CI, reported when used.
+  retries: process.env['CI'] ? 1 : 0,
+  workers: 1,
+  timeout: 60_000,
+  expect: { timeout: 10_000 },
+  outputDir: 'test-results/cross-browser',
+  reporter: process.env['CI']
+    ? [
+        ['github'],
+        [
+          'html',
+          {
+            open: 'never',
+            outputFolder: 'playwright-report/cross-browser',
+          },
+        ],
+        ['json', { outputFile: 'test-results/cross-browser/results.json' }],
+      ]
+    : [
+        ['list'],
+        [
+          'html',
+          {
+            open: 'never',
+            outputFolder: 'playwright-report/cross-browser',
+          },
+        ],
+      ],
+  use: {
+    baseURL: 'http://127.0.0.1:4173',
+    viewport: { width: 1280, height: 720 },
+    deviceScaleFactor: 1,
+    trace: 'retain-on-failure',
+    screenshot: 'only-on-failure',
+  },
+  projects: [
+    {
+      name: 'firefox',
+      use: {
+        browserName: 'firefox',
+        launchOptions: {
+          executablePath: process.env['PTCGSIM_FIREFOX_PATH'],
+        },
+      },
+    },
+    {
+      name: 'webkit',
+      // WebKit supports the phone contexts' touch and mobile emulation.
+      testMatch: [
+        ...sharedSpecs,
+        'public-pile-ordering-mobile.spec.ts',
+        'custom-card-dialog.spec.ts',
+        'deck-landscape.spec.ts',
+        'tutorial-coach-layout.spec.ts',
+        'tutorial-palette-resize.spec.ts',
+      ],
+      use: {
+        browserName: 'webkit',
+        launchOptions: {
+          executablePath: process.env['PTCGSIM_WEBKIT_PATH'],
+        },
+      },
+    },
+  ],
+  webServer: [
+    {
+      command:
+        'corepack pnpm --filter @ptcgsim/web run build && corepack pnpm --filter @ptcgsim/server-v2 dev --ip 127.0.0.1 --port 8787 --var CARD_CATALOG_SOURCE:off --var DECK_INDEX_SOURCE:off',
+      url: 'http://127.0.0.1:8787/v2/health',
+      reuseExistingServer: !process.env['CI'],
+      timeout: 60_000,
+      stdout: 'ignore',
+      stderr: 'pipe',
+    },
+    {
+      command:
+        'corepack pnpm --filter @ptcgsim/web dev --host 127.0.0.1 --port 4173',
+      url: 'http://127.0.0.1:4173',
+      reuseExistingServer: !process.env['CI'],
+      timeout: 30_000,
+      stdout: 'ignore',
+      stderr: 'pipe',
+    },
+  ],
+});

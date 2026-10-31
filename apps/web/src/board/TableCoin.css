@@ -1,0 +1,241 @@
+/* Each player's coin, lying on the felt beside their Active (PX-051). */
+.table-coins {
+  position: absolute;
+  inset: 0;
+  z-index: var(--table-layer-affordances);
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+}
+
+/*
+ * The coin's square on the table: flat, or laid on the tilted table by the
+ * same projection as the cards. Its perspective turns the coin in its own
+ * space before the table's projection lays the result on the felt.
+ */
+.table-coin {
+  --coin-thickness: calc(var(--coin-size) * 0.075);
+  position: absolute;
+  perspective: calc(var(--coin-size) * 9);
+  pointer-events: none;
+}
+
+/* Its shadow on the felt: close under it at rest, wide and pale in the air. */
+.table-coin__shadow {
+  position: absolute;
+  inset: 8% 2% -6% 8%;
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    rgb(0 0 0 / 0.6),
+    rgb(0 0 0 / 0.28) 62%,
+    rgb(0 0 0 / 0)
+  );
+  opacity: 0.5;
+  transition:
+    translate var(--duration-fast, 120ms) var(--ease-out, ease-out),
+    scale var(--duration-fast, 120ms) var(--ease-out, ease-out),
+    opacity var(--duration-fast, 120ms) var(--ease-out, ease-out);
+}
+
+.table-coin__button {
+  position: absolute;
+  inset: 0;
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: inherit;
+  transform-style: preserve-3d;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    translate var(--duration-fast, 120ms) var(--ease-out, ease-out),
+    scale var(--control-press-timing);
+}
+
+button.table-coin__button {
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+/* A finger gets a little more than the coin to aim at. */
+button.table-coin__button::before {
+  position: absolute;
+  inset: calc(-1 * clamp(0px, (44px - var(--coin-size)) / 2, 8px));
+  border-radius: 50%;
+  content: '';
+}
+
+button.table-coin__button:focus-visible {
+  outline: 2px solid var(--color-felt-focus, var(--color-accent));
+  outline-offset: 3px;
+  box-shadow: 0 0 0 3px var(--color-felt-focus-halo, transparent);
+}
+
+/* In the air it answers no second press, so it stops offering one. */
+.table-coin[data-coin-in-air] button.table-coin__button {
+  cursor: default;
+}
+
+/* Under an open pile viewer it stays on the felt, out of reach. */
+.table-coin[data-covered] button.table-coin__button {
+  cursor: default;
+  pointer-events: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .table-coin:not([data-coin-in-air]) button.table-coin__button:hover {
+    translate: 0 -3%;
+  }
+
+  .table-coin:not([data-coin-in-air]):has(button.table-coin__button:hover)
+    .table-coin__shadow {
+    translate: 2% 4%;
+    scale: 1.06;
+    opacity: 0.38;
+  }
+
+  .table-coin:not([data-coin-in-air])
+    button.table-coin__button:hover
+    .table-coin__face::after {
+    background-position: 0% 0%;
+    opacity: 1;
+  }
+}
+
+.table-coin:not([data-coin-in-air]) button.table-coin__button:active {
+  scale: 0.95;
+}
+
+.table-coin__toss,
+.table-coin__coin {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+
+.table-coin__face {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 50%;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+.table-coin__face--heads {
+  transform: translateZ(calc(var(--coin-thickness) / 2));
+}
+
+.table-coin__face--tails {
+  transform: rotateX(180deg) translateZ(calc(var(--coin-thickness) / 2));
+}
+
+.table-coin__face > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* The far player's coin faces them, as their cards do. */
+.table-coin[data-coin-turned] .table-coin__face > img {
+  rotate: 180deg;
+}
+
+/* A glint across the metal that the pointer catches. */
+.table-coin__face::after {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: linear-gradient(
+      125deg,
+      rgb(255 248 220 / 0) 35%,
+      rgb(255 248 220 / 0.55) 48%,
+      rgb(255 248 220 / 0) 60%
+    )
+    100% 100% / 250% 250%;
+  content: '';
+  opacity: 0;
+  mix-blend-mode: soft-light;
+  pointer-events: none;
+  transition:
+    background-position var(--duration-slow, 320ms) var(--ease-out, ease-out),
+    opacity var(--duration-fast, 120ms) var(--ease-out, ease-out);
+}
+
+/* Seen edge-on mid-turn, the coin is a milled silver band, not nothing. */
+.table-coin__edge {
+  position: absolute;
+  top: 50%;
+  left: 2%;
+  width: 96%;
+  height: var(--coin-thickness);
+  margin-top: calc(var(--coin-thickness) / -2);
+  border-radius: 2px;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgb(0 0 0 / 0.16) 0 1px,
+      rgb(0 0 0 / 0) 1px 3px
+    ),
+    linear-gradient(90deg, #8e949c, #f2f4f7 30%, #9aa1aa 62%, #d8dce2);
+  transform: rotateX(90deg);
+  /*
+   * Only seen, never pressed (the coin's button is): stood exactly on edge,
+   * WebKit can hit-test it far from where it is drawn, over the card a
+   * player meant to click (seen on the opponent's Active).
+   */
+  pointer-events: none;
+}
+
+/* The result, read at a glance below the coin, then gone. */
+.table-coin__result {
+  position: absolute;
+  translate: -50% var(--space-2, 8px);
+  padding: var(--space-1, 4px) var(--space-3, 12px);
+  border: 1px solid var(--color-gold, rgb(240 200 90));
+  border-radius: var(--radius-pill, 999px);
+  background: var(--color-surface-2, rgb(38 42 52 / 0.94));
+  box-shadow:
+    var(--shadow-3, 0 8px 20px rgb(0 0 0 / 0.42)),
+    var(--highlight-top, inset 0 1px 0 rgb(255 255 255 / 0.07));
+  color: var(--color-text, #f4f6fa);
+  font-family: var(--font-display, 'Jost Variable', 'Jost', sans-serif);
+  font-size: var(--text-lg, 16px);
+  font-weight: var(--weight-bold, 700);
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  white-space: nowrap;
+  pointer-events: none;
+  transition: opacity var(--duration-normal, 200ms) var(--ease-out, ease-out);
+  animation: table-coin-result-in var(--duration-bouncy, 620ms)
+    var(--ease-bouncy, ease-out) both;
+}
+
+/* Above the far coin: below it, toward the seam, the rail would hide it. */
+.table-coin__result[data-chip-above='true'] {
+  translate: -50% calc(-100% - var(--space-2, 8px));
+}
+
+.table-coin__result[data-coin-phase='fading'] {
+  opacity: 0;
+}
+
+@keyframes table-coin-result-in {
+  from {
+    opacity: 0;
+    scale: 0.7;
+  }
+}
+
+:root[data-motion='reduced'] .table-coin__shadow,
+:root[data-motion='reduced'] .table-coin__button,
+:root[data-motion='reduced'] .table-coin__face::after,
+:root[data-motion='reduced'] .table-coin__result {
+  transition: none;
+  animation: none;
+}

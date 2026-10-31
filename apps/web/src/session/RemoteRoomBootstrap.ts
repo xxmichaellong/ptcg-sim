@@ -1,0 +1,188 @@
+import {
+  parseRoomAdmissionTicketRequest,
+  parseRoomAdmissionTicketResponse,
+  type RoomAdmissionTicketRequest,
+  V2_ROOM_CODE_PATTERN,
+} from '@ptcgsim/protocol';
+
+import {
+  RemoteRoomRuntime,
+  type RemoteRoomRuntimeOptions,
+} from './RemoteRoomRuntime.js';
+import {
+  currentBrowserOrigin,
+  normalizeHttpOrigin,
+  readBoundedJsonResponse,
+  withRequestDeadline,
+} from './browser-json.js';
+
+const MAX_RESPONSE_BYTES = 2_048;
+
+export type RemoteRoomBootstrapFailureCode =
+  'invalid_input' | 'exchange_failed' | 'invalid_response';
+
+/**
+ * Why the room refused an exchange, where it said: the claim is spent,
+ * expired or unknown, or the seat it offers is taken.
+ */
+export type RemoteRoomExchangeRefusal =
+  'admission_rejected' | 'seat_unavailable';
+
+export class RemoteRoomBootstrapError extends Error {
+  constructor(
+    readonly code: RemoteRoomBootstrapFailureCode,
+    readonly refusal?: RemoteRoomExchangeRefusal
+  ) {
+    super(`Remote room bootstrap failed: ${code}`);
+    this.name = 'RemoteRoomBootstrapError';
+  }
+}
+
+/** The room's stated reason for refusing an exchange, if it gave one. */
+const exchangeRefusal = async (
+  response: Response
+): Promise<RemoteRoomExchangeRefusal | undefined> => {
+  if (response.status !== 403 && response.status !== 409) return undefined;
+  try {
+    const body = await readBoundedJsonResponse(response, MAX_RESPONSE_BYTES);
+    const error =
+      body.ok && typeof body.value === 'object' && body.value !== null
+        ? (body.value as { readonly error?: unknown }).error
+        : undefined;
+    return error === 'admission_rejected' || error === 'seat_unavailable'
+      ? error
+      : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+export interface RemoteRoomBootstrapInput {
+  readonly buildId: string;
+  readonly roomCode: string;
+  readonly displayName: string;
+  readonly requestedRole: 'player' | 'spectator';
+  /** Seat/spectator master or one-use invitation. Release after exchange. */
+  readonly capability: string;
+  readonly signal?: AbortSignal;
+}
+
+export interface RemoteRoomBootstrapDependencies {
+  readonly fetch?: typeof globalThis.fetch;
+  readonly origin?: string;
+  readonly now?: () => number;
+  /** How long the ticket exchange may take (ROOM_REQUEST_TIMEOUT_MS). */
+  readonly requestTimeoutMs?: number;
+  readonly createRuntime?: (
+    options: RemoteRoomRuntimeOptions
+  ) => RemoteRoomRuntime;
+  readonly runtime?: Omit<RemoteRoomRuntimeOptions, 'connection'>;
+}
+
+export interface RemoteRoomBootstrapResult {
+  readonly runtime: RemoteRoomRuntime;
+  readonly route: {
+    readonly kind: 'remote-room';
+    readonly runtime: RemoteRoomRuntime;
+  };
+}
+
+/**
+ * Exchanges an in-memory master capability or guest invitation through a
+ * same-origin POST, then gives only the short-lived ticket to the externally
+ * owned room runtime.
+ */
+export const bootstrapRemoteRoom = async (
+  input: RemoteRoomBootstrapInput,
+  dependencies: RemoteRoomBootstrapDependencies = {}
+): Promise<RemoteRoomBootstrapResult> => {
+  const roomCode = input.roomCode.trim().toUpperCase();
+  const displayName = input.displayName.trim();
+  const requestBody: RoomAdmissionTicketRequest = {
+    capability: input.capability,
+    displayName,
+    requestedRole: input.requestedRole,
+  };
+  if (
+    !V2_ROOM_CODE_PATTERN.test(roomCode) ||
+    input.buildId.length < 1 ||
+    input.buildId.length > 128 ||
+    !parseRoomAdmissionTicketRequest(requestBody).ok
+  ) {
+    throw new RemoteRoomBootstrapError('invalid_input');
+  }
+
+  const origin = normalizeHttpOrigin(
+    dependencies.origin ?? currentBrowserOrigin() ?? ''
+  );
+  if (!origin) throw new RemoteRoomBootstrapError('invalid_input');
+  const endpoint = new URL(
+    `/v2/rooms/${encodeURIComponent(roomCode)}/admission-tickets`,
+    origin
+  );
+  const socketUrl = new URL(
+    `/v2/rooms/${encodeURIComponent(roomCode)}/connect`,
+    origin
+  );
+  socketUrl.protocol = origin.protocol === 'https:' ? 'wss:' : 'ws:';
+  const fetchImplementation = dependencies.fetch ?? globalThis.fetch;
+  if (!fetchImplementation) {
+    throw new RemoteRoomBootstrapError('invalid_input');
+  }
+
+  let response: Response;
+  try {
+    response = await fetchImplementation(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestBody),
+      cache: 'no-store',
+      credentials: 'omit',
+      redirect: 'error',
+      referrerPolicy: 'no-referrer',
+      signal: withRequestDeadline(input.signal, dependencies.requestTimeoutMs),
+    });
+  } catch {
+    throw new RemoteRoomBootstrapError('exchange_failed');
+  }
+  if (response.status !== 201) {
+    throw new RemoteRoomBootstrapError(
+      'exchange_failed',
+      await exchangeRefusal(response)
+    );
+  }
+  const responseBody = await readBoundedJsonResponse(
+    response,
+    MAX_RESPONSE_BYTES
+  );
+  if (!responseBody.ok) {
+    throw new RemoteRoomBootstrapError('invalid_response');
+  }
+  const parsed = parseRoomAdmissionTicketResponse(responseBody.value);
+  if (!parsed.ok) {
+    throw new RemoteRoomBootstrapError('invalid_response');
+  }
+  // The ticket's expiry is the server's clock, and the server holds it to
+  // that when the socket is admitted. This browser's clock may be minutes
+  // off, against a ticket that lasts seconds, so it doesn't judge.
+
+  const createRuntime =
+    dependencies.createRuntime ??
+    ((options: RemoteRoomRuntimeOptions) => new RemoteRoomRuntime(options));
+  const runtime = createRuntime({
+    ...dependencies.runtime,
+    connection: {
+      url: socketUrl.href,
+      buildId: input.buildId,
+      roomCode,
+      displayName,
+      requestedRole: input.requestedRole,
+      admissionTicket: parsed.value.admissionTicket,
+      resumeToken: parsed.value.resumeToken,
+    },
+  });
+  return {
+    runtime,
+    route: { kind: 'remote-room', runtime },
+  };
+};

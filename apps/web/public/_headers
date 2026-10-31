@@ -1,0 +1,10 @@
+# Vite's built files are named by their content (`assets/name-<hash>.js`): a
+# changed file gets a new name, so a cached one never needs asking about.
+# This lets the deck screen's script, fetched ahead, be imported from the
+# cache with no request that could fail (ADR-033 §12).
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# The shipped card backs are named by their content too (ADR-041).
+/v2/assets/backs/*
+  Cache-Control: public, max-age=31536000, immutable

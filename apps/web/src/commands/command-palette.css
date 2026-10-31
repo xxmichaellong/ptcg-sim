@@ -1,0 +1,442 @@
+/*
+ * The command palette (ADR-035): a panel high over the page, a search field
+ * with the open screens as breadcrumbs, and the actions in sections. On a
+ * phone it spans the width under the top edge, rows sized for a finger.
+ */
+.ptcgsim-command-palette-layer {
+  position: fixed;
+  inset: 0;
+  z-index: var(--layer-dialog);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: min(96px, 12vh) 16px 16px;
+  font-family: var(--font-ui);
+}
+
+.ptcgsim-command-palette__scrim {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in oklch, var(--color-scrim) 70%, transparent);
+  animation: ptcgsim-command-fade var(--surface-enter-duration, 200ms)
+    var(--ease-fade) backwards;
+}
+
+.ptcgsim-command-palette {
+  position: relative;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  width: min(640px, 100%);
+  max-height: min(560px, calc(100dvh - 2 * min(96px, 12vh)));
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg, 18px);
+  background: var(--color-surface-2);
+  box-shadow: var(--shadow-4, var(--shadow-3)), var(--highlight-top);
+  color: var(--color-text);
+  animation:
+    ptcgsim-command-fade var(--surface-enter-duration, 200ms) var(--ease-fade)
+      backwards,
+    ptcgsim-command-in var(--surface-enter-duration, 200ms) var(--ease-snappy)
+      backwards;
+}
+
+@keyframes ptcgsim-command-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+/* The travel alone: the fade beside it keeps its own curve. */
+@keyframes ptcgsim-command-in {
+  from {
+    translate: 0 -6px;
+    scale: 0.98;
+  }
+}
+
+@keyframes ptcgsim-command-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes ptcgsim-command-out {
+  to {
+    opacity: 0;
+    translate: 0 -4px;
+    scale: 0.98;
+  }
+}
+
+/* Closed, its last frame fades (exit-ghost.ts), never taking a press. */
+.ptcgsim-command-palette-layer.is-leaving {
+  pointer-events: none;
+}
+
+.ptcgsim-command-palette-layer.is-leaving > * * {
+  animation: none !important;
+  transition: none !important;
+}
+
+.ptcgsim-command-palette-layer.is-leaving .ptcgsim-command-palette__scrim {
+  animation: ptcgsim-command-fade-out var(--surface-exit-duration, 140ms)
+    var(--ease-fade) forwards;
+}
+
+.ptcgsim-command-palette-layer.is-leaving .ptcgsim-command-palette {
+  animation: ptcgsim-command-out var(--surface-exit-duration, 140ms)
+    var(--ease-fade) forwards;
+}
+
+/* Reduced motion: a brief fade, no travel. */
+:root[data-motion='reduced'] .ptcgsim-command-palette {
+  animation: ptcgsim-command-fade var(--surface-enter-duration, 150ms)
+    var(--ease-fade) backwards;
+}
+
+:root[data-motion='reduced']
+  .ptcgsim-command-palette-layer.is-leaving
+  .ptcgsim-command-palette {
+  animation: ptcgsim-command-fade-out var(--surface-exit-duration, 100ms)
+    var(--ease-fade) forwards;
+}
+
+/* ---- Search field and breadcrumbs ------------------------------------- */
+
+.ptcgsim-command-palette__search {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  min-height: 56px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.ptcgsim-command-palette__glass {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  color: var(--color-text-muted);
+}
+
+.ptcgsim-command-palette__crumb {
+  flex: 0 1 auto;
+  min-width: 3ch;
+  max-width: 40%;
+  overflow: hidden;
+  margin: 0;
+  padding: 3px 10px;
+  border: 0;
+  border-radius: var(--radius-pill, 999px);
+  background: var(--color-accent-soft);
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold, 600);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.ptcgsim-command-palette__field {
+  /* Whatever the breadcrumbs, the field keeps room to read and tap. */
+  flex: 1 0 7rem;
+  min-width: 7rem;
+  height: 44px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--text-lg, 18px);
+}
+
+.ptcgsim-command-palette__submit {
+  flex: none;
+  min-height: 32px;
+  margin: 0;
+  padding: 0 14px;
+  border: 0;
+  border-radius: var(--radius-pill, 999px);
+  background: var(--color-accent-fill);
+  color: var(--color-text-on-accent);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold, 600);
+  cursor: pointer;
+}
+
+.ptcgsim-command-palette__field::placeholder {
+  color: var(--color-text-muted);
+}
+
+.ptcgsim-command-palette__field[aria-invalid='true'] {
+  color: var(--color-danger);
+}
+
+/* ---- The list ----------------------------------------------------------- */
+
+.ptcgsim-command-palette__list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 6px;
+  scroll-padding: 34px 0 6px;
+}
+
+.ptcgsim-command-palette__heading {
+  padding: 10px 10px 4px;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold, 600);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.ptcgsim-command {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 0 10px;
+  border-radius: var(--radius-md, 12px);
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ptcgsim-command[aria-selected='true'] {
+  background: var(
+    --color-surface-hover,
+    color-mix(in oklch, var(--color-text) 8%, transparent)
+  );
+}
+
+.ptcgsim-command__icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm, 8px);
+  background: color-mix(in oklch, var(--color-text) 7%, transparent);
+  color: var(--color-text-muted);
+}
+
+.ptcgsim-command__icon > svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* A card's own face, small enough to sit in a row. */
+.ptcgsim-command__icon--card {
+  background: none;
+}
+
+.ptcgsim-command__icon--card > img {
+  width: 20px;
+  height: 28px;
+  border-radius: 2px;
+  object-fit: cover;
+  box-shadow: 0 0 0 1px var(--color-border);
+}
+
+.ptcgsim-command[aria-selected='true'] .ptcgsim-command__icon {
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+
+.ptcgsim-command__text {
+  display: flex;
+  flex: 1;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* A row too long for its width gives up the path first, then the title's
+   end: the detail (the seat, the card) stays whole up to two fifths of the
+   row, so "Shuffle hand to bottom of deck and draw…" still says whose. */
+.ptcgsim-command__path {
+  flex: 0 100 auto;
+  min-width: 2ch;
+  overflow: hidden;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  text-overflow: ellipsis;
+}
+
+.ptcgsim-command__title {
+  flex: 0 1 auto;
+  min-width: 4ch;
+  overflow: hidden;
+  font-size: var(--text-md, 15px);
+  text-overflow: ellipsis;
+}
+
+.ptcgsim-command__detail {
+  flex: 0 0 auto;
+  max-width: 40%;
+  overflow: hidden;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  text-overflow: ellipsis;
+}
+
+.ptcgsim-command__trail {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.ptcgsim-command__key,
+.ptcgsim-command-palette__footer kbd {
+  display: inline-block;
+  min-width: 1.6em;
+  padding: 1px 6px;
+  border: 1px solid var(--color-border);
+  border-bottom-width: 2px;
+  border-radius: 6px;
+  background: var(--color-surface-1, var(--color-surface));
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold, 600);
+  text-align: center;
+}
+
+.ptcgsim-command__status {
+  max-width: 22ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ptcgsim-command__check {
+  width: 16px;
+  height: 16px;
+  color: var(--color-accent);
+}
+
+.ptcgsim-command__more {
+  width: 14px;
+  height: 14px;
+}
+
+/* A dangerous command, armed: one more Enter runs it. */
+.ptcgsim-command[data-armed] {
+  background: var(--color-danger-soft);
+}
+
+.ptcgsim-command[data-armed] .ptcgsim-command__icon {
+  background: var(--color-danger);
+  color: white;
+}
+
+.ptcgsim-command__confirm {
+  color: var(--color-danger);
+  font-weight: var(--weight-semibold, 600);
+}
+
+/* A step that keeps the palette open says it ran. */
+.ptcgsim-command[data-ran] .ptcgsim-command__icon {
+  animation: ptcgsim-command-ran calc(420ms * var(--motion-scale, 1))
+    var(--ease-out, ease-out);
+}
+
+@keyframes ptcgsim-command-ran {
+  30% {
+    background: var(--color-success, var(--color-accent));
+    color: white;
+    scale: 1.12;
+  }
+}
+
+.ptcgsim-command-palette__empty,
+.ptcgsim-command-palette__asking {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 20px 16px;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  text-align: center;
+}
+
+.ptcgsim-command-palette__empty strong {
+  color: var(--color-text);
+  font-size: var(--text-md, 15px);
+}
+
+/* Still there, empty, to announce a problem when one comes; the field and
+   its placeholder are then all there is (Say…). */
+.ptcgsim-command-palette__asking:empty {
+  padding: 0;
+}
+
+.ptcgsim-command-palette__list:has(> .ptcgsim-command-palette__asking:empty) {
+  padding: 0;
+}
+
+.ptcgsim-command-palette:has(.ptcgsim-command-palette__asking:empty)
+  .ptcgsim-command-palette__search {
+  border-bottom-color: transparent;
+}
+
+.ptcgsim-command-palette__asking[data-problem] {
+  color: var(--color-danger);
+}
+
+.ptcgsim-command-palette__footer {
+  display: flex;
+  flex: none;
+  gap: 16px;
+  padding: 8px 16px;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+
+.ptcgsim-command-palette__footer kbd + kbd {
+  margin-inline-start: 2px;
+}
+
+/* A phone: the width under the top edge, rows a finger can hit. */
+@media (max-width: 599px) {
+  .ptcgsim-command-palette-layer {
+    padding: max(8px, env(safe-area-inset-top)) 8px 8px;
+  }
+
+  .ptcgsim-command-palette {
+    max-height: calc(100dvh - 16px);
+    border-radius: var(--radius-md, 12px);
+  }
+
+  .ptcgsim-command {
+    min-height: 48px;
+  }
+
+  .ptcgsim-command__path {
+    display: none;
+  }
+
+  /* Only the screen that is open; the ones above it are a tap back. */
+  .ptcgsim-command-palette__crumb:has(+ .ptcgsim-command-palette__crumb) {
+    display: none;
+  }
+
+  .ptcgsim-command-palette__submit {
+    min-height: 40px;
+  }
+}

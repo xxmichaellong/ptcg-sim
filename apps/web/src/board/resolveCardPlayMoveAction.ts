@@ -1,0 +1,161 @@
+import type { MatchViewState, ViewCardId } from '@ptcgsim/game-core';
+import type { WireGameCommand } from '@ptcgsim/protocol';
+
+export const CARD_PLAY_MOVE_DESTINATIONS = ['active', 'bench'] as const;
+
+export type CardPlayMoveDestination =
+  (typeof CARD_PLAY_MOVE_DESTINATIONS)[number];
+
+export const isCardPlayMoveDestination = (
+  value: unknown
+): value is CardPlayMoveDestination =>
+  typeof value === 'string' &&
+  (CARD_PLAY_MOVE_DESTINATIONS as readonly string[]).includes(value);
+
+export type CardPlayMoveResolution =
+  | { readonly ok: true; readonly command: WireGameCommand }
+  | {
+      readonly ok: false;
+      readonly reason:
+        | 'not_player'
+        | 'stale_card'
+        | 'unsupported_source'
+        | 'unsupported_target'
+        | 'no_op';
+    };
+
+const containsCard = (
+  cards: readonly { readonly id: string }[],
+  cardId: string
+): boolean => cards.some((card) => card.id === cardId);
+
+const rejected = (
+  reason: Exclude<CardPlayMoveResolution, { ok: true }>['reason']
+): CardPlayMoveResolution => ({ ok: false, reason });
+
+/** Resolves one selected card or whole play stack onto its current board side. */
+export const resolveCardPlayMoveAction = (
+  view: MatchViewState,
+  cardId: ViewCardId,
+  destinationSlot: CardPlayMoveDestination,
+  /** The seat at the bottom (a flipped Solo board): its window is worked too. */
+  actingPlayerId?: string
+): CardPlayMoveResolution => {
+  if (view.viewer.kind !== 'player') return rejected('not_player');
+
+  const sourceZone = Object.values(view.zones).find((zone) =>
+    containsCard(zone.cards, cardId)
+  );
+  const sourceStack = Object.values(view.stacks).find(
+    (stack) =>
+      containsCard(stack.evolutionCards, cardId) ||
+      containsCard(stack.attachmentCards, cardId)
+  );
+  const inspectionEntry = Object.entries(view.workAreas).find(
+    ([, workArea]) =>
+      workArea.inspection !== null &&
+      containsCard(workArea.inspection.cards, cardId)
+  );
+  const sourceInspection = inspectionEntry?.[1].inspection ?? null;
+  const sourceInspectionPlayerId = inspectionEntry?.[0];
+  const stagedEntry = Object.entries(view.workAreas).find(([, workArea]) => {
+    const staged = workArea.attachmentResolution;
+    return Boolean(
+      staged &&
+      (containsCard(staged.evolutionCards, cardId) ||
+        containsCard(staged.attachmentCards, cardId))
+    );
+  });
+  const sourceStaged = stagedEntry?.[1].attachmentResolution ?? null;
+  const sourceStagedPlayerId = stagedEntry?.[0];
+  if (!sourceZone && !sourceStack && !sourceInspection && !sourceStaged) {
+    return rejected('stale_card');
+  }
+
+  // v1's card viewer: a card being looked at goes straight into play on
+  // its owner's side, as dragging it there does.
+  if (sourceInspection) {
+    if (
+      sourceInspectionPlayerId !== view.viewer.playerId &&
+      sourceInspectionPlayerId !== actingPlayerId
+    ) {
+      return rejected('unsupported_source');
+    }
+    const card = sourceInspection.cards.find((entry) => entry.id === cardId)!;
+    if (!view.boards[card.ownerId]) return rejected('unsupported_target');
+    return {
+      ok: true,
+      command: {
+        type: 'MoveInspectedCardToPlay',
+        cardId,
+        expectedWorkAreaId: sourceInspection.id,
+        boardPlayerId: card.ownerId,
+        slot: destinationSlot,
+      },
+    };
+  }
+  if (sourceStaged) {
+    if (
+      !sourceStagedPlayerId ||
+      (sourceStagedPlayerId !== view.viewer.playerId &&
+        sourceStagedPlayerId !== actingPlayerId) ||
+      sourceStaged.evolutionCards.at(-1)?.id !== cardId
+    ) {
+      return rejected('unsupported_source');
+    }
+    const board = view.boards[sourceStagedPlayerId];
+    if (!board) return rejected('unsupported_target');
+    return {
+      ok: true,
+      command: {
+        type: 'RestoreStagedStack',
+        ...(sourceStagedPlayerId === view.viewer.playerId
+          ? {}
+          : { targetPlayerId: sourceStagedPlayerId }),
+        expectedWorkAreaId: sourceStaged.id,
+        expectedActiveStackId: board.activeStackId,
+        expectedBenchStackIds: [...board.benchStackIds],
+        destinationSlot,
+      },
+    };
+  }
+
+  if (sourceStack) {
+    if (sourceStack.evolutionCards.at(-1)?.id !== cardId) {
+      return rejected('unsupported_source');
+    }
+    const board = view.boards[sourceStack.boardPlayerId];
+    if (!board) return rejected('unsupported_target');
+    // Already where it is sent: the Active to the Active, a Benched
+    // Pokémon to its own Bench. v1 put the latter back at the Bench's end;
+    // the room refuses it, and the player is told where it already is.
+    if (sourceStack.slot === destinationSlot) return rejected('no_op');
+    return {
+      ok: true,
+      command: {
+        type: 'MovePlayStack',
+        stackId: sourceStack.id,
+        expectedSourceBoardPlayerId: sourceStack.boardPlayerId,
+        expectedSourceSlot: sourceStack.slot,
+        expectedActiveStackId: board.activeStackId,
+        expectedBenchStackIds: [...board.benchStackIds],
+        destinationSlot,
+      },
+    };
+  }
+
+  if (!sourceZone) return rejected('unsupported_source');
+  const sourceCard = sourceZone.cards.find((card) => card.id === cardId)!;
+  const boardPlayerId = sourceZone.ownerId ?? sourceCard.ownerId;
+  if (!view.boards[boardPlayerId]) return rejected('unsupported_target');
+  return {
+    ok: true,
+    command: {
+      type: 'MoveCardToPlay',
+      cardId,
+      expectedSourceZoneId: sourceZone.id,
+      boardPlayerId,
+      slot: destinationSlot,
+    },
+  };
+};

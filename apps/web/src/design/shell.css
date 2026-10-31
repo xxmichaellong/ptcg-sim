@@ -1,0 +1,398 @@
+/*
+ * The room on the redesigned table (ADR-027, ADR-030): the felt the board
+ * sits on, the page's base type, the reveal notice and the board chrome's
+ * geometry-v2 placement. The shell around the table (rail, menu, sheets,
+ * activity log, deck screen) styles itself beside its components. Loaded
+ * after styles.css, whose v1 rules it supersedes.
+ */
+
+:root {
+  /* The docked activity log and the deck screen's decklist column. Mirrors
+     tableRailWidth() in renderer-contract/src/layout-table.ts. */
+  --rail-width: clamp(300px, 23vw, 380px);
+}
+
+html,
+body {
+  background: var(--color-room);
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  font-weight: var(--weight-regular);
+  line-height: var(--leading-normal);
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: 'cv11', 'ss01';
+}
+
+/* The root keeps the browser's 16px, so rem tokens mean what they say. */
+body {
+  font-size: var(--text-md);
+}
+
+body,
+button,
+input,
+select,
+textarea {
+  font-family: var(--font-ui);
+}
+
+/* ---- The room ------------------------------------------------------ */
+/* While the lobby or the room is still loading, the page is the room's,
+   never v1's grey (the loading screen is over it in any case). */
+.app-shell[data-app-route$='-loading'] {
+  background: var(--color-room);
+}
+.remote-room-route,
+.remote-room-route--dark {
+  background-color: var(--color-room);
+  background-image: none;
+  color: var(--color-text);
+}
+.remote-room-route::before,
+.remote-room-route--dark::before {
+  display: none;
+}
+
+/* The desk the mat lies on, in the chosen artwork's wood and grain
+   (table-art.css), under one lamp up and to the left, darkening toward the
+   window's edges. It fills the
+   window (ADR-030); a docked log sits over its right edge while the table
+   lays itself out beside it (in a right-to-left language the log docks at
+   the left and the whole column moves over, TableShell.tsx). The mat
+   itself is the board's (BoardSurface's depth mat).
+
+   The grain and the lamp light are painted on a layer of their own
+   (::before) that never changes size. Painted on the column itself, every
+   frame of the table resizing beside a sliding log repainted them behind
+   the board: more raster work than a frame has, and the desk flashed
+   through. */
+.remote-room-route .board-column {
+  inset: 0;
+  width: 100%;
+  background-color: var(--color-desk);
+}
+.remote-room-route .board-column::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  will-change: transform;
+  background:
+    radial-gradient(
+      ellipse 55% 50% at 42% 40%,
+      var(--color-lamp),
+      transparent 72%
+    ),
+    radial-gradient(
+      ellipse 85% 80% at 47% 47%,
+      transparent 45%,
+      var(--color-desk-vignette, rgb(10 6 2 / 0.42)) 100%
+    ),
+    var(--desk-grain), linear-gradient(var(--color-desk-hi), var(--color-desk));
+  background-size:
+    auto,
+    auto,
+    640px 360px,
+    auto;
+  background-color: var(--color-desk);
+}
+/* A chosen background becomes the play mat, dimmed so cards stay legible. */
+.remote-room-route[data-room-background='image'] .board-column,
+.remote-room-route[data-room-background='color'] .board-column {
+  background: none;
+}
+.remote-room-route[data-room-background='image'] .board-column::before,
+.remote-room-route[data-room-background='color'] .board-column::before {
+  background: linear-gradient(oklch(0 0 0 / 0.38), oklch(0 0 0 / 0.38));
+}
+
+/* None: the desk's own colour, plain, without its grain or lamp. */
+.remote-room-route[data-room-background='blank'] .board-column::before {
+  background: none;
+}
+
+/* Nothing a rule here shows may outrank the hidden attribute. */
+.remote-room-route [hidden],
+.remote-room-route[hidden] {
+  display: none !important;
+}
+
+/* ---- Board chrome on the play-mat table (geometry v2) ------------------
+ * Each player's chrome box is their half, turned with it, so these offsets
+ * are in that player's own frame: bottom is their screen edge. A hand's
+ * Sort sits in the corner beside the hand where the table has no pill for
+ * that hand (the markers lie beside the prizes, TableZoneAffordances); the
+ * table keeps no room there, as every table route shows the pills.
+ */
+.board-spike-host[data-geometry='2'] .legacy-once-per-game-controls {
+  top: auto;
+  right: auto;
+  left: 12px;
+  bottom: 10px;
+  width: 76px;
+  min-width: 0;
+  height: auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+.board-spike-host[data-geometry='2'] .legacy-once-per-game-button {
+  height: 30px !important;
+  max-height: none;
+  font-size: var(--text-xs) !important;
+}
+/* A half too short to stack them (a phone held sideways): the markers
+   side by side at the bottom of the corner. */
+.board-spike-host[data-geometry='2']
+  .legacy-player-frame-chrome[data-corner='compact']
+  .legacy-once-per-game-controls {
+  left: 6px;
+  bottom: 6px;
+  width: auto;
+  flex-direction: row;
+  justify-content: flex-start;
+  gap: 4px;
+}
+.board-spike-host[data-geometry='2']
+  .legacy-player-frame-chrome[data-corner='compact']
+  .legacy-once-per-game-button {
+  height: 24px !important;
+}
+
+/* A hand's count and its Sort, one pill where the table counts the hand
+   (LegacyBoardChrome's TableHandPill). It replaces the board's own badge. */
+.board-spike-host:has(.table-hand-pill)
+  .ptcgsim-zone-count--badge.ptcgsim-zone-count-hand {
+  visibility: hidden;
+}
+.board-spike-host[data-geometry='2'] .table-hand-pill {
+  --table-hand-tint: var(--color-you);
+
+  display: flex;
+  align-items: stretch;
+  height: 26px;
+  box-sizing: border-box;
+  border: 1px solid color-mix(in oklab, var(--table-hand-tint) 70%, transparent);
+  border-radius: 999px;
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  box-shadow: var(--shadow-2);
+  pointer-events: auto;
+  z-index: var(--table-layer-rail);
+}
+.board-spike-host[data-geometry='2'] .table-hand-pill__count {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* The number alone (PX-046), centred in the pill's rounded end and as
+     wide as the Sort end beside it, so the two halves balance. */
+  min-width: 30px;
+  box-sizing: border-box;
+  padding: 0 7px 0 9px;
+  font: 700 13px/1 var(--font-display, sans-serif);
+  font-variant-numeric: tabular-nums;
+}
+/* Sort is the pill's end, latched in when on (the toggle rules below). */
+.board-spike-host[data-geometry='2']
+  .table-hand-pill
+  .legacy-hand-sort--toggle.table-hand-pill__sort {
+  width: 30px;
+  height: auto;
+  border: 0;
+  border-left: 1px solid var(--color-border);
+  border-radius: 0 999px 999px 0;
+}
+.board-spike-host[data-geometry='2']
+  .table-hand-pill
+  .legacy-hand-sort--toggle.table-hand-pill__sort:not(:has(:checked)) {
+  background: transparent;
+  box-shadow: none;
+}
+.board-spike-host[data-geometry='2']
+  .table-hand-pill
+  .legacy-hand-sort--toggle.table-hand-pill__sort
+  svg {
+  width: 14px;
+  height: 14px;
+}
+.board-spike-host[data-geometry='2']
+  .table-hand-pill
+  .legacy-hand-sort--toggle.table-hand-pill__sort:has(:checked)::after {
+  bottom: 2px;
+  width: 10px;
+  height: 2px;
+}
+/* For a finger, the checkbox reaches past the thin end it fills, above,
+   below and outward (never over the count): a tap a little off still
+   sorts, and the pill looks the same. */
+@media (pointer: coarse) {
+  .board-spike-host[data-geometry='2']
+    .table-hand-pill
+    .legacy-hand-sort--toggle.table-hand-pill__sort
+    input {
+    inset-block: -6px;
+    inset-inline: 0 -6px;
+    width: auto;
+    height: auto;
+  }
+}
+.board-spike-host[data-geometry='2'] .table-hand-pill--opponent {
+  --table-hand-tint: var(--color-opponent);
+}
+/* Solo's far hand: an eye between the count and Sort covers it, latched in
+   (as Sort is) while the hand is hidden. */
+.board-spike-host[data-geometry='2']
+  .table-hand-pill
+  .legacy-hand-sort--toggle.table-hand-pill__cover {
+  width: 30px;
+  height: auto;
+  border: 0;
+  border-left: 1px solid var(--color-border);
+  border-radius: 0;
+}
+.board-spike-host[data-geometry='2']
+  .table-hand-pill
+  .legacy-hand-sort--toggle.table-hand-pill__cover:last-child {
+  border-radius: 0 999px 999px 0;
+}
+.board-spike-host[data-geometry='2']
+  .table-hand-pill
+  .legacy-hand-sort--toggle.table-hand-pill__cover:not(:has(:checked)) {
+  background: transparent;
+  box-shadow: none;
+}
+.board-spike-host[data-geometry='2']
+  .table-hand-pill
+  .legacy-hand-sort--toggle.table-hand-pill__cover
+  svg {
+  width: 14px;
+  height: 14px;
+}
+.board-spike-host[data-geometry='2']
+  .table-hand-pill
+  .legacy-hand-sort--toggle.table-hand-pill__cover:has(input:focus-visible) {
+  outline-color: var(--color-text);
+  outline-offset: -2px;
+  box-shadow: none;
+}
+@media (pointer: coarse) {
+  .board-spike-host[data-geometry='2']
+    .table-hand-pill
+    .legacy-hand-sort--toggle.table-hand-pill__cover
+    input {
+    inset-block: -6px;
+    width: auto;
+    height: auto;
+  }
+}
+
+/* Sort hand: an icon toggle at the head of the corner's markers. On, it is
+   latched in: sunk into its socket in the seat's colour, with a bar under
+   the icon. The checkbox inside keeps its role, name and keys. */
+.board-spike-host[data-geometry='2'] .legacy-hand-sort--toggle {
+  position: relative;
+  inset: auto;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  box-sizing: border-box;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: color-mix(in oklab, var(--color-surface-2) 82%, transparent);
+  box-shadow:
+    var(--highlight-top),
+    0 1px 0 oklch(0 0 0 / 0.35);
+  color: var(--color-text-muted);
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out),
+    translate var(--duration-instant) var(--ease-out);
+}
+.board-spike-host[data-geometry='2'] .legacy-hand-sort--toggle svg {
+  width: 16px;
+  height: 16px;
+}
+.board-spike-host[data-geometry='2'] .legacy-hand-sort--toggle input {
+  /* Unseen, over the whole button: a press anywhere on it is the
+     checkbox's. */
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.board-spike-host[data-geometry='2']
+  .legacy-hand-sort--toggle:has(input:focus-visible) {
+  outline: 2px solid var(--color-desk-focus, var(--color-accent));
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--color-desk-focus-halo, transparent);
+}
+/* The pill's Sort end rings inside itself, in the pill's ink: out past its
+   edge the ring would run over the count beside it as well as the desk, and
+   no one colour stands out from both. The ink stands out from the pill and
+   from the seat-tinted socket a sorted Sort sinks into. */
+.board-spike-host[data-geometry='2']
+  .table-hand-pill
+  .legacy-hand-sort--toggle.table-hand-pill__sort:has(input:focus-visible) {
+  outline-color: var(--color-text);
+  outline-offset: -2px;
+  /* Sorted, its socket's inner shadow would darken the ring's edge. */
+  box-shadow: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .board-spike-host[data-geometry='2'] .legacy-hand-sort--toggle:hover {
+    background-color: color-mix(
+      in oklab,
+      var(--color-surface-3) 90%,
+      transparent
+    );
+    color: var(--color-text);
+  }
+}
+.board-spike-host[data-geometry='2'] .legacy-hand-sort--toggle:active {
+  translate: 0 1px;
+}
+.board-spike-host[data-geometry='2'] .legacy-hand-sort--toggle:has(:checked) {
+  --sort-seat: var(--color-you);
+
+  border-color: color-mix(in oklab, var(--sort-seat) 50%, transparent);
+  background: color-mix(in oklab, var(--sort-seat) 24%, var(--color-surface-1));
+  box-shadow: inset 0 2px 3px oklch(0 0 0 / 0.35);
+  color: color-mix(in oklab, var(--sort-seat) 70%, white);
+}
+.board-spike-host[data-geometry='2']
+  .legacy-hand-sort--opponent.legacy-hand-sort--toggle:has(:checked) {
+  --sort-seat: var(--color-opponent);
+}
+.board-spike-host[data-geometry='2']
+  .legacy-hand-sort--toggle:has(:checked)::after {
+  content: '';
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  width: 12px;
+  height: 3px;
+  border-radius: 1.5px;
+  background: var(--sort-seat);
+  translate: -50% 0;
+}
+.board-spike-host[data-geometry='2']
+  .legacy-player-frame-chrome[data-corner='compact']
+  .legacy-hand-sort--toggle {
+  width: 24px;
+  height: 24px;
+}
+/* Keep the markers readable on the rotated half, including after a flip.
+   Rotate the button so the tile's independent face-down animation still works. */
+.board-spike-host[data-geometry='2']
+  .legacy-player-frame-chrome[data-player-layout-side='opponent']
+  .legacy-once-per-game-button {
+  transform: rotate(180deg);
+}

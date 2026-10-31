@@ -1,0 +1,303 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "ptcgsim-v2",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-08-31",
+  "compatibility_flags": ["nodejs_compat"],
+  "vars": {
+    "BUILD_ID": "local-development",
+    // The tournament deck index stays off until the account is on Workers
+    // Paid: its crawl writes more rows than the Free plan's 100k a day,
+    // which every Durable Object in the account shares (ADR-037). "on"
+    // turns it on; a deploy's own --var still wins.
+    "DECK_INDEX_SOURCE": "off",
+  },
+  "assets": {
+    "directory": "../web/dist",
+    // A missing file is a 404 the Worker answers, never the app's page: a
+    // new build's script asked of an edge that hasn't it yet would come back
+    // as HTML, kept a year under its hashed name (_headers) and never run.
+    // The app is one page (/, everything else in the query string).
+    "not_found_handling": "none",
+    "run_worker_first": [
+      "/v2/*",
+      "!/v2/assets/cardback.png",
+      "!/v2/assets/favicon.ico",
+      "!/v2/assets/blank-logo.png",
+      "!/v2/assets/background1.jpg",
+      "!/v2/assets/background2.webp",
+      "!/v2/assets/table/*",
+      "!/v2/assets/backs/*",
+    ],
+  },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "PTCG_ROOM",
+        "class_name": "PtcgRoom",
+      },
+      {
+        "name": "PTCG_CONTINUATION",
+        "class_name": "PtcgContinuation",
+      },
+      {
+        "name": "PTCG_CONTINUATION_QUOTA",
+        "class_name": "PtcgContinuationQuota",
+      },
+      {
+        "name": "PTCG_DECK_FEED",
+        "class_name": "PtcgDeckFeed",
+      },
+      {
+        "name": "PTCG_CARD_CATALOG",
+        "class_name": "PtcgCardCatalog",
+      },
+      {
+        "name": "PTCG_DECK_INDEX",
+        "class_name": "PtcgDeckIndex",
+      },
+      {
+        "name": "PTCG_IMAGE_STORE",
+        "class_name": "PtcgImageStore",
+      },
+    ],
+  },
+  "ratelimits": [
+    {
+      "name": "ROOM_CREATION_RATE_LIMITER",
+      "namespace_id": "260903001",
+      "simple": {
+        "limit": 12,
+        "period": 60,
+      },
+    },
+    {
+      "name": "ROOM_INGRESS_RATE_LIMITER",
+      "namespace_id": "260903005",
+      "simple": {
+        "limit": 20,
+        "period": 60,
+      },
+    },
+    {
+      "name": "CONTINUATION_CREATION_RATE_LIMITER",
+      "namespace_id": "260903002",
+      "simple": {
+        "limit": 30,
+        "period": 60,
+      },
+    },
+    {
+      "name": "CONTINUATION_RESTORE_RATE_LIMITER",
+      "namespace_id": "260903003",
+      "simple": {
+        "limit": 30,
+        "period": 60,
+      },
+    },
+    {
+      "name": "CONTINUATION_REVOCATION_RATE_LIMITER",
+      "namespace_id": "260903004",
+      "simple": {
+        "limit": 30,
+        "period": 60,
+      },
+    },
+    // Card-back pictures uploaded and outside pictures fetched for import
+    // (ADR-041), per address.
+    {
+      "name": "IMAGE_UPLOAD_RATE_LIMITER",
+      "namespace_id": "260903006",
+      "simple": {
+        "limit": 20,
+        "period": 60,
+      },
+    },
+    {
+      "name": "IMAGE_IMPORT_RATE_LIMITER",
+      "namespace_id": "260903007",
+      "simple": {
+        "limit": 10,
+        "period": 60,
+      },
+    },
+  ],
+  "exports": {
+    "PtcgContinuation": {
+      "type": "durable-object",
+      "storage": "sqlite",
+    },
+    "PtcgContinuationQuota": {
+      "type": "durable-object",
+      "storage": "sqlite",
+    },
+    "PtcgDeckFeed": {
+      "type": "durable-object",
+      "storage": "sqlite",
+    },
+    "PtcgCardCatalog": {
+      "type": "durable-object",
+      "storage": "sqlite",
+    },
+    "PtcgDeckIndex": {
+      "type": "durable-object",
+      "storage": "sqlite",
+    },
+    "PtcgImageStore": {
+      "type": "durable-object",
+      "storage": "sqlite",
+    },
+    "PtcgRoom": {
+      "type": "durable-object",
+      "storage": "sqlite",
+    },
+  },
+  // Once a day: refreshes the deck picker's current lists from Limitless,
+  // the deck builder's card catalog from TCGdex, and starts the tournament
+  // deck index's discovery (its own alarms keep it crawling).
+  "triggers": {
+    "crons": ["17 6 * * *"],
+  },
+  "observability": {
+    "enabled": true,
+  },
+  // The top level is production. A preview deploy must never replace it or
+  // share its Durable Object storage, even inside the same Cloudflare
+  // account, so it selects this environment, a Worker of its own. Bindings,
+  // vars and exports are not inherited by an environment and are restated;
+  // the rate namespaces are distinct so preview traffic never spends
+  // production's budgets.
+  "env": {
+    "preview": {
+      "name": "ptcgsim-v2-preview",
+      "vars": {
+        "BUILD_ID": "local-development",
+        // Off until Workers Paid, as in production (ADR-037).
+        "DECK_INDEX_SOURCE": "off",
+      },
+      "durable_objects": {
+        "bindings": [
+          {
+            "name": "PTCG_ROOM",
+            "class_name": "PtcgRoom",
+          },
+          {
+            "name": "PTCG_CONTINUATION",
+            "class_name": "PtcgContinuation",
+          },
+          {
+            "name": "PTCG_CONTINUATION_QUOTA",
+            "class_name": "PtcgContinuationQuota",
+          },
+          {
+            "name": "PTCG_DECK_FEED",
+            "class_name": "PtcgDeckFeed",
+          },
+          {
+            "name": "PTCG_CARD_CATALOG",
+            "class_name": "PtcgCardCatalog",
+          },
+          {
+            "name": "PTCG_DECK_INDEX",
+            "class_name": "PtcgDeckIndex",
+          },
+          {
+            "name": "PTCG_IMAGE_STORE",
+            "class_name": "PtcgImageStore",
+          },
+        ],
+      },
+      "ratelimits": [
+        {
+          "name": "ROOM_CREATION_RATE_LIMITER",
+          "namespace_id": "260903101",
+          "simple": {
+            "limit": 12,
+            "period": 60,
+          },
+        },
+        {
+          "name": "ROOM_INGRESS_RATE_LIMITER",
+          "namespace_id": "260903105",
+          "simple": {
+            "limit": 20,
+            "period": 60,
+          },
+        },
+        {
+          "name": "CONTINUATION_CREATION_RATE_LIMITER",
+          "namespace_id": "260903102",
+          "simple": {
+            "limit": 30,
+            "period": 60,
+          },
+        },
+        {
+          "name": "CONTINUATION_RESTORE_RATE_LIMITER",
+          "namespace_id": "260903103",
+          "simple": {
+            "limit": 30,
+            "period": 60,
+          },
+        },
+        {
+          "name": "CONTINUATION_REVOCATION_RATE_LIMITER",
+          "namespace_id": "260903104",
+          "simple": {
+            "limit": 30,
+            "period": 60,
+          },
+        },
+        {
+          "name": "IMAGE_UPLOAD_RATE_LIMITER",
+          "namespace_id": "260903106",
+          "simple": {
+            "limit": 20,
+            "period": 60,
+          },
+        },
+        {
+          "name": "IMAGE_IMPORT_RATE_LIMITER",
+          "namespace_id": "260903107",
+          "simple": {
+            "limit": 10,
+            "period": 60,
+          },
+        },
+      ],
+      "exports": {
+        "PtcgContinuation": {
+          "type": "durable-object",
+          "storage": "sqlite",
+        },
+        "PtcgContinuationQuota": {
+          "type": "durable-object",
+          "storage": "sqlite",
+        },
+        "PtcgDeckFeed": {
+          "type": "durable-object",
+          "storage": "sqlite",
+        },
+        "PtcgCardCatalog": {
+          "type": "durable-object",
+          "storage": "sqlite",
+        },
+        "PtcgDeckIndex": {
+          "type": "durable-object",
+          "storage": "sqlite",
+        },
+        "PtcgImageStore": {
+          "type": "durable-object",
+          "storage": "sqlite",
+        },
+        "PtcgRoom": {
+          "type": "durable-object",
+          "storage": "sqlite",
+        },
+      },
+      "triggers": {
+        "crons": ["17 6 * * *"],
+      },
+    },
+  },
+}

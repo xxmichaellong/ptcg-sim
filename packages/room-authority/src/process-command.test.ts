@@ -1,0 +1,3329 @@
+import {
+  asCardDefinitionId,
+  asCardInstanceId,
+  asInspectionId,
+  asMatchId,
+  asPlayerId,
+  asStackId,
+  asWorkAreaId,
+  createEmptyMatch,
+  executeCommand,
+  MAX_UNTIL_TAILS_FLIPS,
+  playerZoneId,
+  type CommandContext,
+} from '@ptcgsim/game-core';
+import {
+  MAX_SERVER_FRAME_CODE_UNITS,
+  parseServerFrame,
+  PROTOCOL_VERSION,
+  serializeMatchViewState,
+  type ClientMessage,
+} from '@ptcgsim/protocol';
+import { describe, expect, it } from 'vitest';
+
+import { createRoomAdmissionState } from './admission.js';
+import {
+  emptyProjectionIdentityState,
+  projectRecipient,
+} from './identity-registry.js';
+import {
+  authoritySnapshotCommandValidationMatches,
+  authoritySnapshotValidationMatches,
+  authoritySnapshotValidationFor,
+  assertAuthoritySnapshotInvariants,
+  prepareValidatedReplayHistoryTransition,
+  validateAuthoritySnapshot,
+  validateAuthorityCommandCandidate,
+  type ReplayHistoryTransitionValidation,
+} from './invariants.js';
+import { createReplayHistory } from './replay-history.js';
+import {
+  AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
+  DEFAULT_AUTHORITY_POLICY,
+  type AuthorityDependencies,
+  type AuthorityPersistence,
+  type AuthoritySnapshotValidation,
+  type PersistedAuthorityTransaction,
+  type PersistedCommandOutcome,
+  type RoomAuthoritySnapshot,
+} from './model.js';
+import { processAuthorityCommand } from './process-command.js';
+import { buildProjectedReplay } from './projected-replay.js';
+import { undoCheckpointFor } from './undo-history.js';
+
+const p1 = asPlayerId('player-one');
+const p2 = asPlayerId('player-two');
+type CommandEnvelope = Extract<ClientMessage, { type: 'Command' }>;
+
+const createSnapshot = (): RoomAuthoritySnapshot => {
+  const state = createEmptyMatch(asMatchId('authority-test-match'), [
+    {
+      playerId: p1,
+      displayName: 'Blue',
+      cardBackUrl: '/cardback-blue.png',
+    },
+    {
+      playerId: p2,
+      displayName: 'Red',
+      cardBackUrl: '/cardback-red.png',
+    },
+  ]);
+  const admission = createRoomAdmissionState({
+    playerSeatLimit: 2,
+    playerIds: [p1, p2],
+    seatCapabilityDigests: {
+      [p1]: 'a'.repeat(32),
+      [p2]: 'b'.repeat(32),
+    },
+    spectatorCapabilityDigest: 'c'.repeat(32),
+  });
+  return {
+    schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
+    authorityVersion: 0,
+    mode: 'multiplayer',
+    state,
+    replayHistory: createReplayHistory(state),
+    identities: emptyProjectionIdentityState(),
+    admission: {
+      ...admission,
+      seats: {
+        ...admission.seats,
+        [p1]: {
+          ...admission.seats[p1]!,
+          claimedSessionId: 'session-player-one',
+        },
+        [p2]: {
+          ...admission.seats[p2]!,
+          claimedSessionId: 'session-player-two',
+        },
+      },
+    },
+    sessions: {
+      'session-player-one': {
+        id: 'session-player-one',
+        viewer: { kind: 'player', playerId: p1 },
+        active: true,
+        nextClientSequence: 1,
+        recentOutcomes: [],
+      },
+      'session-player-two': {
+        id: 'session-player-two',
+        viewer: { kind: 'player', playerId: p2 },
+        active: true,
+        nextClientSequence: 1,
+        recentOutcomes: [],
+      },
+      'session-spectator': {
+        id: 'session-spectator',
+        viewer: { kind: 'spectator' },
+        active: true,
+        nextClientSequence: 1,
+        recentOutcomes: [],
+      },
+    },
+  };
+};
+
+const createSoloSnapshot = (): RoomAuthoritySnapshot => {
+  const current = createSnapshot();
+  return {
+    ...current,
+    mode: 'solo',
+    sessions: {
+      'session-player-one': current.sessions['session-player-one']!,
+      'session-spectator': current.sessions['session-spectator']!,
+    },
+    admission: {
+      ...current.admission!,
+      playerSeatLimit: 1,
+      seats: {
+        ...current.admission!.seats,
+        [p2]: {
+          ...current.admission!.seats[p2]!,
+          claimedSessionId: null,
+        },
+      },
+    },
+  };
+};
+
+const createContext = (): CommandContext => {
+  let card = 0;
+  let stack = 0;
+  let inspection = 0;
+  let workArea = 0;
+  return {
+    nextCardId: () => asCardInstanceId(`canonical-card-${++card}`),
+    nextStackId: () => asStackId(`canonical-stack-${++stack}`),
+    nextInspectionId: () => asInspectionId(`inspection-${++inspection}`),
+    nextWorkAreaId: () => asWorkAreaId(`work-area-${++workArea}`),
+    shuffle: (values) => [...values].reverse(),
+    randomInt: () => 0,
+  };
+};
+
+interface RecordingPersistence extends AuthorityPersistence {
+  readonly transactions: PersistedAuthorityTransaction[];
+}
+
+const createPersistence = (): RecordingPersistence => {
+  const transactions: PersistedAuthorityTransaction[] = [];
+  return {
+    transactions,
+    commit: async (transaction) => {
+      transactions.push(transaction);
+    },
+  };
+};
+
+const createDependencies = (
+  persistence: AuthorityPersistence
+): AuthorityDependencies => {
+  let opaqueId = 0;
+  return {
+    commandContext: createContext(),
+    opaqueIds: {
+      nextOpaqueId: (kind) =>
+        `opaque-${kind}-${String(++opaqueId).padStart(12, '0')}`,
+    },
+    persistence,
+    policy: DEFAULT_AUTHORITY_POLICY,
+  };
+};
+
+const command = (
+  sessionId: string,
+  clientSequence: number,
+  commandId: string,
+  gameCommand: CommandEnvelope['command'],
+  revision = 0
+): CommandEnvelope => ({
+  type: 'Command',
+  protocolVersion: PROTOCOL_VERSION,
+  sessionId,
+  clientSequence,
+  commandId,
+  lastSeenRevision: revision,
+  command: gameCommand,
+});
+
+/** The command an undo by the solo controller would take back next. */
+const nextUndo = (snapshot: RoomAuthoritySnapshot): string | undefined =>
+  undoCheckpointFor(snapshot.replayHistory, snapshot.mode, p1)
+    ?.revertedCommandId;
+
+const loadDeck = (sessionId = 'session-player-one'): CommandEnvelope =>
+  command(sessionId, 1, 'load-deck-command', {
+    type: 'LoadDeck',
+    entries: Array.from({ length: 14 }, (_, index) => ({
+      definition: {
+        id: `secret-definition-${index}`,
+        name: `Secret card ${index}`,
+        category: index % 2 === 0 ? 'Pokémon' : 'Trainer',
+        imageUrl: `https://cards.invalid/secret-${index}.png`,
+      },
+      count: 1,
+    })),
+  });
+
+describe('authoritative room command transaction', () => {
+  it('publishes and resolves the opposing hand only for the Solo controller', async () => {
+    const persistence = createPersistence();
+    const dependencies = createDependencies(persistence);
+    const entries = Array.from({ length: 14 }, (_, index) => ({
+      definition: {
+        id: `solo-opponent-definition-${index}`,
+        name: `Solo opponent card ${index}`,
+        category: 'Trainer' as const,
+        imageUrl: `https://solo-cards.example/${index}.png`,
+      },
+      count: 1,
+    }));
+    const loaded = await processAuthorityCommand(
+      createSoloSnapshot(),
+      command('session-player-one', 1, 'load-solo-opponent', {
+        type: 'LoadDeck',
+        targetPlayerId: p2,
+        entries,
+      }),
+      dependencies
+    );
+    const setup = await processAuthorityCommand(
+      loaded.snapshot,
+      command(
+        'session-player-one',
+        2,
+        'setup-solo-opponent',
+        { type: 'SetupPlayer', targetPlayerId: p2 },
+        loaded.snapshot.state.revision
+      ),
+      dependencies
+    );
+    const playerPublication = setup.deliveries.find(
+      (delivery) =>
+        delivery.sessionId === 'session-player-one' &&
+        delivery.message.type === 'StatePublication'
+    )?.message;
+    const spectatorPublication = setup.deliveries.find(
+      (delivery) =>
+        delivery.sessionId === 'session-spectator' &&
+        delivery.message.type === 'StatePublication'
+    )?.message;
+    if (
+      playerPublication?.type !== 'StatePublication' ||
+      spectatorPublication?.type !== 'StatePublication'
+    ) {
+      throw new Error('Solo setup omitted a recipient publication');
+    }
+    const handId = playerZoneId(p2, 'hand');
+    const playerHand = playerPublication.snapshot.zones[handId]!.cards;
+    const spectatorHand = spectatorPublication.snapshot.zones[handId]!.cards;
+    expect(playerHand).toHaveLength(7);
+    expect(
+      playerHand.every(
+        (card) =>
+          card.kind === 'known' && card.face === 'up' && !card.publiclyRevealed
+      )
+    ).toBe(true);
+    expect(spectatorHand.every((card) => card.kind === 'concealed')).toBe(true);
+    expect(
+      Object.keys(playerPublication.snapshot.definitions).some((id) =>
+        id.startsWith('solo-opponent-definition-')
+      )
+    ).toBe(false);
+
+    const moved = await processAuthorityCommand(
+      setup.snapshot,
+      command(
+        'session-player-one',
+        3,
+        'move-solo-opponent-hand',
+        {
+          type: 'MoveCard',
+          cardId: playerHand[0]!.id,
+          expectedSourceZoneId: handId,
+          destinationZoneId: playerZoneId(p2, 'discard'),
+        },
+        setup.snapshot.state.revision
+      ),
+      dependencies
+    );
+    expect(moved.committed).toBe(true);
+    expect(
+      moved.deliveries.find(
+        (delivery) => delivery.message.type === 'CommandResult'
+      )?.message
+    ).toMatchObject({ accepted: true });
+    expect(moved.snapshot.state.zones[handId]!.cardIds).toHaveLength(6);
+  });
+
+  it('counts a card back twice for a card listed twice in an attached-card window', async () => {
+    const context = createContext();
+    let state = createSnapshot().state;
+    const run = (command: Parameters<typeof executeCommand>[1]) => {
+      const executed = executeCommand(state, command, context);
+      if (!executed.accepted) throw new Error(executed.message);
+      state = executed.state;
+    };
+    run({
+      type: 'LoadDeck',
+      playerId: p1,
+      entries: [
+        {
+          definition: {
+            id: asCardDefinitionId('window-mon'),
+            name: 'Window Mon',
+            category: 'Pokémon',
+            imageUrl: 'https://cards.example/mon.png',
+          },
+          count: 1,
+        },
+        {
+          definition: {
+            id: asCardDefinitionId('window-energy'),
+            name: 'Window Energy',
+            category: 'Energy',
+            imageUrl: 'https://cards.example/energy.png',
+          },
+          count: 64,
+        },
+      ],
+    });
+    const deck = playerZoneId(p1, 'deck');
+    const hand = playerZoneId(p1, 'hand');
+    const mon = state.zones[deck]!.cardIds.find(
+      (cardId) => state.cards[cardId]!.currentCategory === 'Pokémon'
+    )!;
+    for (const cardId of [...state.zones[deck]!.cardIds])
+      run({
+        type: 'MoveCard',
+        cardId,
+        expectedSourceZoneId: deck,
+        destinationZoneId: hand,
+      });
+    run({
+      type: 'MoveCardToPlay',
+      cardId: mon,
+      expectedSourceZoneId: hand,
+      boardPlayerId: p1,
+      slot: 'active',
+    });
+    const stackId = state.boards[p1]!.activeStackId!;
+    for (const cardId of [...state.zones[hand]!.cardIds])
+      run({
+        type: 'MoveCardToPlay',
+        cardId,
+        expectedSourceZoneId: hand,
+        boardPlayerId: p1,
+        slot: 'active',
+        targetStackId: stackId,
+      });
+    // The Pokémon leaves: its 64 Energy wait in the window, each listed in
+    // its flat order and again among its attachments.
+    run({
+      type: 'MoveCardFromStack',
+      cardId: mon,
+      expectedStackId: stackId,
+      destinationZoneId: hand,
+    });
+    expect(
+      state.workAreas[p1]?.attachmentResolution?.attachmentCardIds
+    ).toHaveLength(64);
+    const current = {
+      ...createSnapshot(),
+      state,
+      replayHistory: createReplayHistory(state),
+    };
+    const result = await processAuthorityCommand(
+      current,
+      command(
+        'session-player-one',
+        1,
+        'long-back',
+        {
+          type: 'SetCardBack',
+          cardBackUrl: `https://backs.example/${'b'.repeat(4_030 - 26)}.png`,
+        },
+        state.revision
+      ),
+      createDependencies(createPersistence())
+    );
+    expect(
+      result.deliveries.find(
+        (delivery) => delivery.message.type === 'CommandResult'
+      )?.message
+    ).toMatchObject({ accepted: false, code: 'precondition_failed' });
+  });
+
+  it('refuses a command whose publication a recipient frame could not carry', async () => {
+    // 200 cards, each its own, with long image URLs: the owner's view lists
+    // every definition in their deck.
+    const longDeck = (length: number) =>
+      Array.from({ length: 200 }, (_, index) => ({
+        definition: {
+          id: `long-${String(index)}`,
+          name: `Long ${String(index)}`,
+          category: 'Trainer' as const,
+          imageUrl: `https://cards.example/${String(index)}/${'x'.repeat(length)}.png`,
+        },
+        count: 1,
+      }));
+    const resultOf = (
+      result: Awaited<ReturnType<typeof processAuthorityCommand>>
+    ) =>
+      result.deliveries.find(
+        (delivery) => delivery.message.type === 'CommandResult'
+      )?.message;
+    const empty = createSnapshot();
+    const tooBig = await processAuthorityCommand(
+      empty,
+      command('session-player-one', 1, 'load-too-big', {
+        type: 'LoadDeck',
+        entries: longDeck(2_700),
+      }),
+      createDependencies(createPersistence())
+    );
+    expect(resultOf(tooBig)).toMatchObject({
+      accepted: false,
+      code: 'precondition_failed',
+    });
+    expect(
+      tooBig.deliveries.some(
+        (delivery) => delivery.message.type === 'StatePublication'
+      )
+    ).toBe(false);
+    expect(tooBig.snapshot.state).toBe(empty.state);
+    const fits = await processAuthorityCommand(
+      empty,
+      command('session-player-one', 1, 'load-fits', {
+        type: 'LoadDeck',
+        entries: longDeck(1_000),
+      }),
+      createDependencies(createPersistence())
+    );
+    expect(resultOf(fits)).toMatchObject({ accepted: true });
+
+    // A room already past the limit (stored before this check) may shrink,
+    // but not grow.
+    const loaded = executeCommand(
+      empty.state,
+      { type: 'LoadDeck', playerId: p1, entries: longDeck(2_700) as never },
+      createContext()
+    );
+    if (!loaded.accepted) throw new Error(loaded.message);
+    const past = {
+      ...empty,
+      state: loaded.state,
+      replayHistory: createReplayHistory(loaded.state),
+    };
+    const longerBack = await processAuthorityCommand(
+      past,
+      command(
+        'session-player-one',
+        1,
+        'longer-back',
+        {
+          type: 'SetCardBack',
+          cardBackUrl: `https://backs.example/${'b'.repeat(300)}.png`,
+        },
+        loaded.state.revision
+      ),
+      createDependencies(createPersistence())
+    );
+    expect(resultOf(longerBack)).toMatchObject({
+      accepted: false,
+      code: 'precondition_failed',
+    });
+    const reset = await processAuthorityCommand(
+      past,
+      command(
+        'session-player-one',
+        1,
+        'reset',
+        { type: 'ResetPlayer' },
+        loaded.state.revision
+      ),
+      createDependencies(createPersistence())
+    );
+    expect(resultOf(reset)).toMatchObject({ accepted: true });
+  });
+
+  it("keeps each player's card definitions apart, so a deck load cannot probe the other's concealed cards", async () => {
+    const dependencies = createDependencies(createPersistence());
+    const definition = {
+      id: 'catalog-shared-definition',
+      name: 'Charizard ex',
+      category: 'Pokémon' as const,
+      imageUrl: 'https://cards.example/charizard.png',
+    };
+    const blue = await processAuthorityCommand(
+      createSnapshot(),
+      command('session-player-one', 1, 'blue-deck', {
+        type: 'LoadDeck',
+        entries: [{ definition, count: 4 }],
+      }),
+      dependencies
+    );
+    expect(blue.committed).toBe(true);
+    // Red guesses Blue's catalog ID under another name: once refused as a
+    // clash with Blue's concealed cards, which told Red what Blue held.
+    const probe = await processAuthorityCommand(
+      blue.snapshot,
+      command(
+        'session-player-two',
+        1,
+        'red-probe',
+        {
+          type: 'LoadDeck',
+          entries: [{ definition: { ...definition, name: 'Probe' }, count: 1 }],
+        },
+        blue.snapshot.state.revision
+      ),
+      dependencies
+    );
+    expect(
+      probe.deliveries.find(
+        (delivery) => delivery.message.type === 'CommandResult'
+      )?.message
+    ).toMatchObject({ accepted: true });
+    const names = Object.values(probe.snapshot.state.cards).map((card) => [
+      card.ownerId,
+      probe.snapshot.state.definitions[card.definitionId]?.name,
+    ]);
+    expect(new Set(names.map((entry) => entry.join(' ')))).toEqual(
+      new Set([`${p1} Charizard ex`, `${p2} Probe`])
+    );
+  });
+
+  it('refuses a card back so long that the table would no longer fit in one frame', async () => {
+    const dependencies = createDependencies(createPersistence());
+    let current = createSnapshot();
+    const sequences = { 'session-player-one': 1, 'session-player-two': 1 };
+    const submit = async (
+      sessionId: keyof typeof sequences,
+      gameCommand: CommandEnvelope['command']
+    ) => {
+      const result = await processAuthorityCommand(
+        current,
+        command(
+          sessionId,
+          sequences[sessionId]++,
+          `${sessionId}-${sequences[sessionId]}`,
+          gameCommand,
+          current.state.revision
+        ),
+        dependencies
+      );
+      current = result.snapshot;
+      return result.deliveries.find(
+        (delivery) => delivery.message.type === 'CommandResult'
+      )?.message;
+    };
+    // Two full decks: every card concealed from a spectator.
+    for (const sessionId of [
+      'session-player-one',
+      'session-player-two',
+    ] as const) {
+      await expect(
+        submit(sessionId, {
+          type: 'LoadDeck',
+          entries: [
+            {
+              definition: {
+                id: 'full-deck-card',
+                name: 'Full deck card',
+                category: 'Trainer',
+                imageUrl: 'https://cards.example/full.png',
+              },
+              count: 200,
+            },
+          ],
+        })
+      ).resolves.toMatchObject({ accepted: true });
+    }
+    const back = (length: number) =>
+      `https://backs.example/${'b'.repeat(length - 26)}.png`;
+    await expect(
+      submit('session-player-one', {
+        type: 'SetCardBack',
+        cardBackUrl: back(4_096),
+      })
+    ).resolves.toMatchObject({ accepted: false, code: 'precondition_failed' });
+    await expect(
+      submit('session-player-one', {
+        type: 'SetCardBack',
+        cardBackUrl: back(600),
+      })
+    ).resolves.toMatchObject({ accepted: true });
+    // Measured as written on the wire: a quote is two characters there.
+    await expect(
+      submit('session-player-two', {
+        type: 'SetCardBack',
+        cardBackUrl: `https://backs.example/${'"'.repeat(600)}.png`,
+      })
+    ).resolves.toMatchObject({ accepted: false, code: 'precondition_failed' });
+    await expect(
+      submit('session-player-two', {
+        type: 'SetCardBack',
+        cardBackUrl: back(600),
+      })
+    ).resolves.toMatchObject({ accepted: true });
+    // What is kept still fits: the widest view, a spectator's, in one frame.
+    const spectator = projectRecipient(
+      current.state,
+      { kind: 'spectator' },
+      current.identities,
+      dependencies.opaqueIds,
+      current.mode
+    );
+    expect(
+      JSON.stringify({
+        type: 'StatePublication',
+        snapshot: serializeMatchViewState(spectator.snapshot),
+      }).length
+    ).toBeLessThan(MAX_SERVER_FRAME_CODE_UNITS);
+  });
+
+  it('draws, flips and empties the hand for the seat a flipped Solo board names', async () => {
+    // v1's flipped board acts for the bottom seat; the wire commands carry
+    // that seat and the same gate as SetupPlayer decides who may do so.
+    const persistence = createPersistence();
+    const dependencies = createDependencies(persistence);
+    const entries = Array.from({ length: 14 }, (_, index) => ({
+      definition: {
+        id: `flipped-seat-definition-${index}`,
+        name: `Flipped seat card ${index}`,
+        category: 'Trainer' as const,
+        imageUrl: `https://flipped-cards.example/${index}.png`,
+      },
+      count: 1,
+    }));
+    const loaded = await processAuthorityCommand(
+      createSoloSnapshot(),
+      command('session-player-one', 1, 'load-flipped-seat', {
+        type: 'LoadDeck',
+        targetPlayerId: p2,
+        entries,
+      }),
+      dependencies
+    );
+    const drew = await processAuthorityCommand(
+      loaded.snapshot,
+      command(
+        'session-player-one',
+        2,
+        'draw-for-flipped-seat',
+        { type: 'DrawCards', count: 3, targetPlayerId: p2 },
+        loaded.snapshot.state.revision
+      ),
+      dependencies
+    );
+    expect(drew.committed).toBe(true);
+    expect(
+      drew.snapshot.state.zones[playerZoneId(p2, 'hand')]!.cardIds
+    ).toHaveLength(3);
+    // v1 narrates the initiator, the seat at the bottom: "Red drew 3 cards".
+    const drawPublication = drew.deliveries.find(
+      (delivery) =>
+        delivery.sessionId === 'session-player-one' &&
+        delivery.message.type === 'StatePublication'
+    )?.message;
+    if (drawPublication?.type !== 'StatePublication') {
+      throw new Error('Draw omitted the player publication');
+    }
+    expect(drawPublication.presentationEvents).toEqual([
+      expect.objectContaining({
+        type: 'CardsDrawn',
+        playerId: p2,
+        cardCount: 3,
+      }),
+    ]);
+    expect(
+      drew.snapshot.state.zones[playerZoneId(p1, 'hand')]!.cardIds
+    ).toHaveLength(0);
+
+    const flipped = await processAuthorityCommand(
+      drew.snapshot,
+      command(
+        'session-player-one',
+        3,
+        'coin-for-flipped-seat',
+        { type: 'FlipCoin', targetPlayerId: p2 },
+        drew.snapshot.state.revision
+      ),
+      dependencies
+    );
+    expect(flipped.committed).toBe(true);
+    const coinPublication = flipped.deliveries.find(
+      (delivery) =>
+        delivery.sessionId === 'session-player-one' &&
+        delivery.message.type === 'StatePublication'
+    )?.message;
+    if (coinPublication?.type !== 'StatePublication') {
+      throw new Error('Coin flip omitted the player publication');
+    }
+    expect(coinPublication.presentationEvents).toEqual([
+      expect.objectContaining({ type: 'CoinFlipped', playerId: p2 }),
+    ]);
+
+    const discarded = await processAuthorityCommand(
+      flipped.snapshot,
+      command(
+        'session-player-one',
+        4,
+        'discard-hand-for-flipped-seat',
+        { type: 'DiscardHandAndDraw', count: 1, targetPlayerId: p2 },
+        flipped.snapshot.state.revision
+      ),
+      dependencies
+    );
+    expect(discarded.committed).toBe(true);
+    expect(
+      discarded.snapshot.state.zones[playerZoneId(p2, 'discard')]!.cardIds
+    ).toHaveLength(3);
+    expect(
+      discarded.snapshot.state.zones[playerZoneId(p2, 'hand')]!.cardIds
+    ).toHaveLength(1);
+
+    const forged = await processAuthorityCommand(
+      discarded.snapshot,
+      command(
+        'session-player-one',
+        5,
+        'draw-for-nobody',
+        { type: 'DrawCards', count: 1, targetPlayerId: 'not-a-seat' },
+        discarded.snapshot.state.revision
+      ),
+      dependencies
+    );
+    expect(
+      forged.deliveries.find(
+        (delivery) => delivery.message.type === 'CommandResult'
+      )?.message
+    ).toMatchObject({ accepted: false, code: 'stale_reference' });
+    expect(forged.snapshot.state.revision).toBe(
+      discarded.snapshot.state.revision
+    );
+
+    // Its deck shortcuts shuffle and look at that seat's deck, and say so.
+    const shuffled = await processAuthorityCommand(
+      forged.snapshot,
+      command(
+        'session-player-one',
+        6,
+        'shuffle-for-flipped-seat',
+        { type: 'ShuffleZone', zoneId: playerZoneId(p2, 'deck') },
+        forged.snapshot.state.revision
+      ),
+      dependencies
+    );
+    const looked = await processAuthorityCommand(
+      shuffled.snapshot,
+      command(
+        'session-player-one',
+        7,
+        'look-for-flipped-seat',
+        {
+          type: 'ExtractDeckCardsForInspection',
+          ownerPlayerId: p2,
+          count: 2,
+          edge: 'top',
+          visibility: 'private',
+        },
+        shuffled.snapshot.state.revision
+      ),
+      dependencies
+    );
+    const narrated = [shuffled, looked].flatMap((result) => {
+      const publication = result.deliveries.find(
+        (delivery) =>
+          delivery.sessionId === 'session-player-one' &&
+          delivery.message.type === 'StatePublication'
+      )?.message;
+      return publication?.type === 'StatePublication'
+        ? (publication.presentationEvents ?? [])
+        : [];
+    });
+    expect(narrated).toEqual([
+      expect.objectContaining({ type: 'ZoneShuffled', playerId: p2 }),
+      expect.objectContaining({
+        type: 'DeckCardsLooked',
+        playerId: p2,
+        cardCount: 2,
+      }),
+    ]);
+  });
+
+  it('commits the event, new state, frontier, and outcome before ordered delivery', async () => {
+    const persistence = createPersistence();
+    const current = createSnapshot();
+    const result = await processAuthorityCommand(
+      current,
+      loadDeck(),
+      createDependencies(persistence)
+    );
+
+    expect(result.committed).toBe(true);
+    expect(current.state.revision).toBe(0);
+    expect(result.snapshot.state.revision).toBe(1);
+    expect(result.snapshot.replayHistory).toMatchObject({
+      baseState: { revision: 0 },
+      entries: [{ batch: { revision: 1 } }],
+    });
+    expect(result.snapshot.admission).toEqual(current.admission);
+    expect(persistence.transactions).toHaveLength(1);
+    expect(persistence.transactions[0]?.snapshotValidation).toBe(
+      result.snapshotValidation
+    );
+    expect(
+      authoritySnapshotValidationMatches(
+        result.snapshotValidation,
+        result.snapshot
+      )
+    ).toBe(true);
+    expect(persistence.transactions[0]?.eventBatch?.revision).toBe(1);
+    expect(persistence.transactions[0]?.eventBatch).toBe(
+      result.snapshot.replayHistory.entries.at(-1)?.batch
+    );
+    expect(Object.isFrozen(persistence.transactions[0]?.eventBatch)).toBe(true);
+    expect(
+      authoritySnapshotCommandValidationMatches(
+        result.snapshotValidation,
+        result.snapshot,
+        current,
+        persistence.transactions[0]!.expectedAuthorityVersion,
+        persistence.transactions[0]!.expectedRevision,
+        'session-player-one',
+        persistence.transactions[0]!.outcome,
+        persistence.transactions[0]!.eventBatch
+      )
+    ).toBe(true);
+    expect(persistence.transactions[0]?.outcome).toMatchObject({
+      accepted: true,
+      revision: 1,
+      commandId: 'load-deck-command',
+    });
+    expect(
+      persistence.transactions[0]?.snapshot.sessions['session-player-one']
+        ?.nextClientSequence
+    ).toBe(2);
+
+    expect(result.deliveries.map((delivery) => delivery.message.type)).toEqual([
+      'StatePublication',
+      'StatePublication',
+      'StatePublication',
+      'CommandResult',
+    ]);
+    expect(result.deliveries.at(-1)?.sessionId).toBe('session-player-one');
+  });
+
+  it('flips several coins as one move, each result in what every seat reads', async () => {
+    const three = await processAuthorityCommand(
+      createSnapshot(),
+      command('session-player-one', 1, 'three-coins', {
+        type: 'FlipCoin',
+        series: { kind: 'count', count: 3 },
+      }),
+      createDependencies(createPersistence())
+    );
+    expect(three.committed).toBe(true);
+    expect(three.snapshot.replayHistory.entries).toHaveLength(1);
+    // The context always rolls 0: until tails runs to its cap.
+    const until = await processAuthorityCommand(
+      three.snapshot,
+      command(
+        'session-player-one',
+        2,
+        'until-tails',
+        { type: 'FlipCoin', series: { kind: 'untilTails' } },
+        three.snapshot.state.revision
+      ),
+      createDependencies(createPersistence())
+    );
+    expect(until.committed).toBe(true);
+    for (const [result, expected] of [
+      [three, { results: ['heads', 'heads', 'heads'] }],
+      [
+        until,
+        {
+          results: Array<string>(MAX_UNTIL_TAILS_FLIPS).fill('heads'),
+          untilTails: true,
+        },
+      ],
+    ] as const) {
+      const publications = result.deliveries.filter(
+        (delivery) => delivery.message.type === 'StatePublication'
+      );
+      expect(publications.length).toBeGreaterThan(1);
+      for (const { message } of publications) {
+        if (message.type !== 'StatePublication') continue;
+        expect(message.presentationEvents).toEqual([
+          {
+            type: 'CoinFlipped',
+            revision: result.snapshot.state.revision,
+            playerId: p1,
+            result: 'heads',
+            ...expected,
+          },
+        ]);
+        expect(parseServerFrame(JSON.stringify(message)).ok).toBe(true);
+      }
+    }
+  });
+
+  it('reports isolated authority, projection, and persistence phases without affecting the transaction', async () => {
+    const persistence = createPersistence();
+    const marks = [0, 0, 10, 10, 30, 30, 60, 60, 80, 80, 90, 90, 120, 120];
+    const result = await processAuthorityCommand(createSnapshot(), loadDeck(), {
+      ...createDependencies(persistence),
+      monotonicNow: () => marks.shift()!,
+    });
+
+    expect(result.committed).toBe(true);
+    expect(result.timing).toEqual({
+      authorityProcessingMs: 70,
+      projectionMs: 20,
+      persistenceMs: 30,
+      breakdown: {
+        inputValidationMs: 10,
+        resolutionAndExecutionMs: 20,
+        historyAndCandidateMs: 30,
+        candidateValidationMs: 10,
+        snapshotValidationMs: 0,
+        predecessorValidationMs: 0,
+        frontierFastPathHit: 0,
+        transactionMs: 0,
+      },
+    });
+    expect(marks).toEqual([]);
+
+    const clockFailure = await processAuthorityCommand(
+      createSnapshot(),
+      loadDeck(),
+      {
+        ...createDependencies(createPersistence()),
+        monotonicNow: () => {
+          throw new Error('observation clock failed');
+        },
+      }
+    );
+    expect(clockFailure.committed).toBe(true);
+    expect(clockFailure.timing).toEqual({
+      authorityProcessingMs: 0,
+      projectionMs: 0,
+      persistenceMs: 0,
+      breakdown: {
+        inputValidationMs: 0,
+        resolutionAndExecutionMs: 0,
+        historyAndCandidateMs: 0,
+        candidateValidationMs: 0,
+        snapshotValidationMs: 0,
+        predecessorValidationMs: 0,
+        frontierFastPathHit: 0,
+        transactionMs: 0,
+      },
+    });
+  });
+
+  it('rejects forged and stale validation proofs', async () => {
+    const forgedCurrent = { ...createSnapshot(), authorityVersion: -1 };
+    await expect(
+      processAuthorityCommand(forgedCurrent, loadDeck(), {
+        ...createDependencies(createPersistence()),
+        currentSnapshotValidation: {} as AuthoritySnapshotValidation,
+      })
+    ).rejects.toThrow('authority version must be a non-negative safe integer');
+
+    const original = createSnapshot();
+    const staleValidation = validateAuthoritySnapshot(original);
+    const differentSnapshot = { ...original, authorityVersion: -1 };
+    await expect(
+      processAuthorityCommand(differentSnapshot, loadDeck(), {
+        ...createDependencies(createPersistence()),
+        currentSnapshotValidation: staleValidation,
+      })
+    ).rejects.toThrow('authority version must be a non-negative safe integer');
+  });
+
+  it('does not mint a validation proof from assertion alone', () => {
+    const snapshot = createSnapshot();
+
+    assertAuthoritySnapshotInvariants(snapshot);
+
+    expect(authoritySnapshotValidationFor(snapshot)).toBeUndefined();
+    expect(Object.isFrozen(snapshot)).toBe(false);
+  });
+
+  it('recursively freezes proof-bound snapshots against top-level and deep mutation', () => {
+    const snapshot = createSnapshot();
+    const validation = validateAuthoritySnapshot(snapshot);
+
+    expect(Object.isFrozen(snapshot)).toBe(true);
+    expect(Object.isFrozen(snapshot.state)).toBe(true);
+    expect(Object.isFrozen(snapshot.replayHistory)).toBe(true);
+    expect(() => {
+      (snapshot as unknown as { schemaVersion: number }).schemaVersion = 999;
+    }).toThrow(TypeError);
+    expect(() => {
+      (snapshot as unknown as { mode: string }).mode = 'corrupt';
+    }).toThrow(TypeError);
+    expect(() => {
+      (
+        snapshot.replayHistory as unknown as { baseStateHash: string }
+      ).baseStateHash = 'corrupt';
+    }).toThrow(TypeError);
+    expect(authoritySnapshotValidationMatches(validation, snapshot)).toBe(true);
+  });
+
+  it('validates current alias integrity for active viewers while allowing inactive retention', () => {
+    const initial = createSnapshot();
+    const loaded = executeCommand(
+      initial.state,
+      {
+        type: 'LoadDeck',
+        playerId: p1,
+        entries: [
+          {
+            definition: {
+              id: asCardDefinitionId('alias-integrity-definition'),
+              name: 'Alias integrity',
+              category: 'Trainer',
+              imageUrl: '/alias-integrity.png',
+            },
+            count: 1,
+          },
+        ],
+      },
+      createContext()
+    );
+    if (!loaded.accepted) throw new Error(loaded.message);
+    const projected = projectRecipient(
+      loaded.state,
+      { kind: 'player', playerId: p1 },
+      emptyProjectionIdentityState(),
+      {
+        // The owner's projection now names the deck card's definition too,
+        // so the source must hand out distinct ids.
+        nextOpaqueId: (() => {
+          let next = 0;
+          return () =>
+            `alias-integrity-opaque-id-${String(++next).padStart(4, '0')}`;
+        })(),
+      }
+    );
+    const snapshot: RoomAuthoritySnapshot = {
+      ...initial,
+      state: loaded.state,
+      replayHistory: createReplayHistory(loaded.state),
+      identities: projected.identities,
+    };
+    assertAuthoritySnapshotInvariants(snapshot);
+    const alias = snapshot.identities.cardAliases[0]!;
+    const forgedKnown: RoomAuthoritySnapshot = {
+      ...snapshot,
+      identities: {
+        ...snapshot.identities,
+        cardAliases: [{ ...alias, known: !alias.known }],
+      },
+    };
+    expect(() => assertAuthoritySnapshotInvariants(forgedKnown)).toThrow(
+      'active projection alias is stale or has invalid visibility'
+    );
+    expect(() =>
+      assertAuthoritySnapshotInvariants({
+        ...snapshot,
+        identities: {
+          ...snapshot.identities,
+          cardAliases: [
+            {
+              ...alias,
+              visibilityGeneration: alias.visibilityGeneration + 1,
+            },
+          ],
+        },
+      })
+    ).toThrow('active projection alias is stale or has invalid visibility');
+
+    expect(() =>
+      assertAuthoritySnapshotInvariants({
+        ...forgedKnown,
+        sessions: {
+          ...forgedKnown.sessions,
+          'session-player-one': {
+            ...forgedKnown.sessions['session-player-one']!,
+            active: false,
+          },
+        },
+      })
+    ).not.toThrow();
+  });
+
+  it('purges missing-card and missing-definition aliases while retaining another viewer', () => {
+    const initial = createSnapshot();
+    const loaded = executeCommand(
+      initial.state,
+      {
+        type: 'LoadDeck',
+        playerId: p1,
+        entries: [
+          {
+            definition: {
+              id: asCardDefinitionId('alias-old-definition'),
+              name: 'Old alias card',
+              category: 'Trainer',
+              imageUrl: '/old-alias.png',
+            },
+            count: 1,
+          },
+        ],
+      },
+      createContext()
+    );
+    if (!loaded.accepted) throw new Error(loaded.message);
+    const oldCardId = loaded.state.zones[playerZoneId(p1, 'deck')]!.cardIds[0]!;
+    const moved = executeCommand(
+      loaded.state,
+      {
+        type: 'MoveCard',
+        cardId: oldCardId,
+        expectedSourceZoneId: playerZoneId(p1, 'deck'),
+        destinationZoneId: playerZoneId(p1, 'discard'),
+      },
+      createContext()
+    );
+    if (!moved.accepted) throw new Error(moved.message);
+    const oldProjection = projectRecipient(
+      moved.state,
+      { kind: 'player', playerId: p1 },
+      emptyProjectionIdentityState(),
+      {
+        nextOpaqueId: (kind) => `old-${kind}-alias-opaque-000001`,
+      }
+    );
+    expect(oldProjection.identities.cardAliases).toHaveLength(1);
+    expect(oldProjection.identities.definitionAliases).toHaveLength(1);
+
+    const replacement = executeCommand(
+      moved.state,
+      {
+        type: 'LoadDeck',
+        playerId: p1,
+        entries: [
+          {
+            definition: {
+              id: asCardDefinitionId('alias-new-definition'),
+              name: 'New alias card',
+              category: 'Energy',
+              imageUrl: '/new-alias.png',
+            },
+            count: 1,
+          },
+        ],
+      },
+      {
+        ...createContext(),
+        nextCardId: () => asCardInstanceId('replacement-canonical-card'),
+      }
+    );
+    if (!replacement.accepted) throw new Error(replacement.message);
+    const retainedOtherViewer = projectRecipient(
+      replacement.state,
+      { kind: 'player', playerId: p2 },
+      oldProjection.identities,
+      {
+        nextOpaqueId: (kind) => `new-${kind}-alias-opaque-000001`,
+      }
+    );
+
+    expect(
+      retainedOtherViewer.identities.cardAliases.some(
+        (entry) => entry.cardId === oldCardId
+      )
+    ).toBe(false);
+    expect(
+      retainedOtherViewer.identities.definitionAliases.some(
+        (entry) => entry.definitionId === 'alias-old-definition'
+      )
+    ).toBe(false);
+    expect(
+      retainedOtherViewer.identities.cardAliases.every((entry) =>
+        Boolean(replacement.state.cards[entry.cardId])
+      )
+    ).toBe(true);
+    expect(
+      retainedOtherViewer.identities.definitionAliases.every((entry) =>
+        Boolean(replacement.state.definitions[entry.definitionId])
+      )
+    ).toBe(true);
+  });
+
+  it('commits an active player deck replacement while purging dangling aliases retained for an inactive viewer', async () => {
+    const initial = createSnapshot();
+    const context = createContext();
+    const first = executeCommand(
+      initial.state,
+      {
+        type: 'LoadDeck',
+        playerId: p1,
+        entries: [
+          {
+            definition: {
+              id: asCardDefinitionId('retained-owner-definition'),
+              name: 'Retained owner card',
+              category: 'Trainer',
+              imageUrl: '/retained-owner.png',
+            },
+            count: 1,
+          },
+        ],
+      },
+      context
+    );
+    if (!first.accepted) throw new Error(first.message);
+    const second = executeCommand(
+      first.state,
+      {
+        type: 'LoadDeck',
+        playerId: p2,
+        entries: [
+          {
+            definition: {
+              id: asCardDefinitionId('replaced-opponent-definition'),
+              name: 'Replaced opponent card',
+              category: 'Energy',
+              imageUrl: '/replaced-opponent.png',
+            },
+            count: 1,
+          },
+        ],
+      },
+      context
+    );
+    if (!second.accepted) throw new Error(second.message);
+    let retainedOpaqueId = 0;
+    const projected = projectRecipient(
+      second.state,
+      { kind: 'player', playerId: p1 },
+      emptyProjectionIdentityState(),
+      {
+        nextOpaqueId: (kind) =>
+          `retained-${kind}-opaque-id-${++retainedOpaqueId}`,
+      }
+    );
+    const p1Card = second.state.zones[playerZoneId(p1, 'deck')]!.cardIds[0]!;
+    const oldP2Card = second.state.zones[playerZoneId(p2, 'deck')]!.cardIds[0]!;
+    const retainedAlias = projected.identities.cardAliases.find(
+      (entry) => entry.cardId === p1Card
+    )!;
+    const danglingAlias = projected.identities.cardAliases.find(
+      (entry) => entry.cardId === oldP2Card
+    )!;
+    const current: RoomAuthoritySnapshot = {
+      ...initial,
+      state: second.state,
+      replayHistory: createReplayHistory(second.state),
+      identities: projected.identities,
+      sessions: {
+        ...initial.sessions,
+        'session-player-one': {
+          ...initial.sessions['session-player-one']!,
+          active: false,
+        },
+        'session-spectator': {
+          ...initial.sessions['session-spectator']!,
+          active: false,
+        },
+      },
+    };
+    const dependencies = createDependencies(createPersistence());
+    const result = await processAuthorityCommand(
+      current,
+      command(
+        'session-player-two',
+        1,
+        'replace-active-player-deck',
+        {
+          type: 'LoadDeck',
+          entries: [
+            {
+              definition: {
+                id: 'replacement-opponent-definition',
+                name: 'Replacement opponent card',
+                category: 'Pokémon',
+                imageUrl: '/replacement-opponent.png',
+              },
+              count: 1,
+            },
+          ],
+        },
+        second.state.revision
+      ),
+      {
+        ...dependencies,
+        commandContext: {
+          ...dependencies.commandContext,
+          nextCardId: () => asCardInstanceId('active-player-replacement-card'),
+        },
+      }
+    );
+
+    expect(result.committed).toBe(true);
+    expect(
+      result.snapshot.sessions['session-player-two']!.recentOutcomes.at(-1)
+    ).toMatchObject({ accepted: true });
+    expect(
+      result.snapshot.identities.cardAliases.some(
+        (entry) => entry.alias === retainedAlias.alias
+      )
+    ).toBe(true);
+    expect(
+      result.snapshot.identities.cardAliases.some(
+        (entry) => entry.alias === danglingAlias.alias
+      )
+    ).toBe(false);
+    expect(
+      result.snapshot.identities.cardAliases.every((entry) =>
+        Boolean(result.snapshot.state.cards[entry.cardId])
+      )
+    ).toBe(true);
+    assertAuthoritySnapshotInvariants(structuredClone(result.snapshot));
+  });
+
+  it('fails closed for forged replay evidence and consumes valid evidence once', () => {
+    const current = createSnapshot();
+    const currentValidation = validateAuthoritySnapshot(current);
+    const execution = executeCommand(
+      current.state,
+      { type: 'FlipCoin', playerId: p1 },
+      createContext()
+    );
+    if (!execution.accepted) throw new Error(execution.message);
+    const transition = prepareValidatedReplayHistoryTransition(
+      current,
+      currentValidation,
+      execution.batch,
+      execution.state,
+      DEFAULT_AUTHORITY_POLICY.maximumReplayEventBatches,
+      DEFAULT_AUTHORITY_POLICY.maximumReplayEventBytes
+    );
+    const outcome = {
+      commandId: 'incremental-command',
+      clientSequence: 1,
+      accepted: true,
+      revision: 1,
+    } as const;
+    const candidate = {
+      ...current,
+      authorityVersion: 1,
+      state: transition.resultingState,
+      replayHistory: transition.replayHistory,
+      sessions: {
+        ...current.sessions,
+        'session-player-one': {
+          ...current.sessions['session-player-one']!,
+          nextClientSequence: 2,
+          recentOutcomes: [outcome],
+        },
+      },
+    };
+
+    const wrongLimitValidation = validateAuthorityCommandCandidate(
+      current,
+      currentValidation,
+      candidate,
+      'session-player-one',
+      outcome,
+      DEFAULT_AUTHORITY_POLICY.maximumRecentOutcomesPerSession,
+      DEFAULT_AUTHORITY_POLICY.maximumReplayEventBatches - 1,
+      DEFAULT_AUTHORITY_POLICY.maximumReplayEventBytes,
+      transition.validation
+    );
+    expect(
+      authoritySnapshotCommandValidationMatches(
+        wrongLimitValidation,
+        candidate,
+        current,
+        current.authorityVersion,
+        current.state.revision,
+        'session-player-one',
+        outcome,
+        transition.eventBatch
+      )
+    ).toBe(false);
+
+    const validation = validateAuthorityCommandCandidate(
+      current,
+      currentValidation,
+      candidate,
+      'session-player-one',
+      outcome,
+      DEFAULT_AUTHORITY_POLICY.maximumRecentOutcomesPerSession,
+      DEFAULT_AUTHORITY_POLICY.maximumReplayEventBatches,
+      DEFAULT_AUTHORITY_POLICY.maximumReplayEventBytes,
+      transition.validation
+    );
+    expect(authoritySnapshotValidationMatches(validation, candidate)).toBe(
+      true
+    );
+    expect(
+      authoritySnapshotCommandValidationMatches(
+        validation,
+        candidate,
+        current,
+        current.authorityVersion,
+        current.state.revision,
+        'session-player-one',
+        outcome,
+        transition.eventBatch
+      )
+    ).toBe(true);
+    const structurallyEquivalentCurrent = structuredClone(current);
+    validateAuthoritySnapshot(structurallyEquivalentCurrent);
+    expect(
+      authoritySnapshotCommandValidationMatches(
+        validation,
+        candidate,
+        structurallyEquivalentCurrent,
+        current.authorityVersion,
+        current.state.revision,
+        'session-player-one',
+        outcome,
+        transition.eventBatch
+      )
+    ).toBe(false);
+    expect(
+      authoritySnapshotCommandValidationMatches(
+        validation,
+        candidate,
+        current,
+        current.authorityVersion + 1,
+        current.state.revision,
+        'session-player-one',
+        outcome,
+        transition.eventBatch
+      )
+    ).toBe(false);
+    expect(
+      authoritySnapshotCommandValidationMatches(
+        validation,
+        candidate,
+        current,
+        current.authorityVersion,
+        current.state.revision + 1,
+        'session-player-one',
+        outcome,
+        transition.eventBatch
+      )
+    ).toBe(false);
+
+    const replayedCandidate = structuredClone(candidate);
+    const replayedValidation = validateAuthorityCommandCandidate(
+      current,
+      currentValidation,
+      replayedCandidate,
+      'session-player-one',
+      replayedCandidate.sessions['session-player-one']!.recentOutcomes[0]!,
+      DEFAULT_AUTHORITY_POLICY.maximumRecentOutcomesPerSession,
+      DEFAULT_AUTHORITY_POLICY.maximumReplayEventBatches,
+      DEFAULT_AUTHORITY_POLICY.maximumReplayEventBytes,
+      transition.validation
+    );
+    expect(
+      authoritySnapshotCommandValidationMatches(
+        replayedValidation,
+        replayedCandidate,
+        current,
+        current.authorityVersion,
+        current.state.revision,
+        'session-player-one',
+        replayedCandidate.sessions['session-player-one']!.recentOutcomes[0]!,
+        replayedCandidate.replayHistory.entries.at(-1)?.batch
+      )
+    ).toBe(false);
+
+    const corrupt = structuredClone(candidate);
+    corrupt.replayHistory.entries[0]!.resultingStateHash = 'corrupt';
+    expect(() =>
+      validateAuthorityCommandCandidate(
+        current,
+        currentValidation,
+        corrupt,
+        'session-player-one',
+        corrupt.sessions['session-player-one']!.recentOutcomes[0]!,
+        DEFAULT_AUTHORITY_POLICY.maximumRecentOutcomesPerSession,
+        DEFAULT_AUTHORITY_POLICY.maximumReplayEventBatches,
+        DEFAULT_AUTHORITY_POLICY.maximumReplayEventBytes,
+        {} as ReplayHistoryTransitionValidation
+      )
+    ).toThrow('replay history is malformed or cannot be replayed');
+  });
+
+  it('never mints command proof for malformed command outcome metadata', () => {
+    const acceptedCurrent = createSnapshot();
+    const acceptedCurrentValidation =
+      validateAuthoritySnapshot(acceptedCurrent);
+    const execution = executeCommand(
+      acceptedCurrent.state,
+      { type: 'FlipCoin', playerId: p1 },
+      createContext()
+    );
+    if (!execution.accepted) throw new Error(execution.message);
+    const transition = prepareValidatedReplayHistoryTransition(
+      acceptedCurrent,
+      acceptedCurrentValidation,
+      execution.batch,
+      execution.state,
+      DEFAULT_AUTHORITY_POLICY.maximumReplayEventBatches,
+      DEFAULT_AUTHORITY_POLICY.maximumReplayEventBytes
+    );
+    const acceptedWithCode = {
+      commandId: 'accepted-with-code',
+      clientSequence: 1,
+      accepted: true,
+      revision: 1,
+      code: 'precondition_failed',
+    } as const;
+    const acceptedCandidate: RoomAuthoritySnapshot = {
+      ...acceptedCurrent,
+      authorityVersion: 1,
+      state: transition.resultingState,
+      replayHistory: transition.replayHistory,
+      sessions: {
+        ...acceptedCurrent.sessions,
+        'session-player-one': {
+          ...acceptedCurrent.sessions['session-player-one']!,
+          nextClientSequence: 2,
+          recentOutcomes: [acceptedWithCode],
+        },
+      },
+    };
+    expect(() =>
+      validateAuthorityCommandCandidate(
+        acceptedCurrent,
+        acceptedCurrentValidation,
+        acceptedCandidate,
+        'session-player-one',
+        acceptedWithCode,
+        DEFAULT_AUTHORITY_POLICY.maximumRecentOutcomesPerSession,
+        DEFAULT_AUTHORITY_POLICY.maximumReplayEventBatches,
+        DEFAULT_AUTHORITY_POLICY.maximumReplayEventBytes,
+        transition.validation
+      )
+    ).toThrow('accepted command outcome cannot contain a rejection code');
+
+    const invalidRejectedOutcomes = [
+      {
+        commandId: 'missing-code',
+        clientSequence: 1,
+        accepted: false,
+        revision: 0,
+      },
+      {
+        commandId: 'invalid-code',
+        clientSequence: 1,
+        accepted: false,
+        revision: 0,
+        code: 'not-a-rejection-code',
+      },
+      {
+        commandId: '',
+        clientSequence: 1,
+        accepted: false,
+        revision: 0,
+        code: 'precondition_failed',
+      },
+      {
+        commandId: 'x'.repeat(129),
+        clientSequence: 1,
+        accepted: false,
+        revision: 0,
+        code: 'precondition_failed',
+      },
+    ] as unknown as readonly PersistedCommandOutcome[];
+    for (const outcome of invalidRejectedOutcomes) {
+      const current = createSnapshot();
+      const currentValidation = validateAuthoritySnapshot(current);
+      const candidate: RoomAuthoritySnapshot = {
+        ...current,
+        authorityVersion: 1,
+        sessions: {
+          ...current.sessions,
+          'session-player-one': {
+            ...current.sessions['session-player-one']!,
+            nextClientSequence: 2,
+            recentOutcomes: [outcome],
+          },
+        },
+      };
+      expect(() =>
+        validateAuthorityCommandCandidate(
+          current,
+          currentValidation,
+          candidate,
+          'session-player-one',
+          outcome,
+          DEFAULT_AUTHORITY_POLICY.maximumRecentOutcomesPerSession,
+          DEFAULT_AUTHORITY_POLICY.maximumReplayEventBatches,
+          DEFAULT_AUTHORITY_POLICY.maximumReplayEventBytes
+        )
+      ).toThrow(
+        outcome.commandId.length < 1 || outcome.commandId.length > 128
+          ? 'command outcome metadata is malformed'
+          : 'rejected command outcome has an invalid rejection code'
+      );
+    }
+
+    const validRejection = {
+      commandId: 'empty-session-id',
+      clientSequence: 1,
+      accepted: false,
+      revision: 0,
+      code: 'precondition_failed',
+    } as const;
+    const current = createSnapshot();
+    const currentValidation = validateAuthoritySnapshot(current);
+    const candidate: RoomAuthoritySnapshot = {
+      ...current,
+      authorityVersion: 1,
+      sessions: {
+        ...current.sessions,
+        'session-player-one': {
+          ...current.sessions['session-player-one']!,
+          nextClientSequence: 2,
+          recentOutcomes: [validRejection],
+        },
+      },
+    };
+    expect(() =>
+      validateAuthorityCommandCandidate(
+        current,
+        currentValidation,
+        candidate,
+        '',
+        validRejection,
+        DEFAULT_AUTHORITY_POLICY.maximumRecentOutcomesPerSession,
+        DEFAULT_AUTHORITY_POLICY.maximumReplayEventBatches,
+        DEFAULT_AUTHORITY_POLICY.maximumReplayEventBytes
+      )
+    ).toThrow('command session ID is malformed');
+  });
+
+  it('does not install or acknowledge a mutation when persistence fails before commit', async () => {
+    const current = createSnapshot();
+    const dependencies = createDependencies({
+      commit: async () => {
+        throw new Error('storage unavailable');
+      },
+    });
+
+    await expect(
+      processAuthorityCommand(current, loadDeck(), dependencies)
+    ).rejects.toThrow('storage unavailable');
+    expect(current.state.revision).toBe(0);
+    expect(current.sessions['session-player-one']?.nextClientSequence).toBe(1);
+  });
+
+  it('recovers exactly once when storage committed but the reply path crashed', async () => {
+    const current = createSnapshot();
+    let durable = current;
+    let commits = 0;
+    const crashAfterCommit: AuthorityPersistence = {
+      commit: async (transaction) => {
+        commits += 1;
+        durable = transaction.snapshot;
+        throw new Error('process terminated after durable commit');
+      },
+    };
+    const dependencies = createDependencies(crashAfterCommit);
+
+    await expect(
+      processAuthorityCommand(current, loadDeck(), dependencies)
+    ).rejects.toThrow('process terminated after durable commit');
+    expect(durable.state.revision).toBe(1);
+
+    const recoveredPersistence = createPersistence();
+    const retried = await processAuthorityCommand(durable, loadDeck(), {
+      ...dependencies,
+      persistence: recoveredPersistence,
+    });
+    expect(retried.snapshot.state.revision).toBe(1);
+    expect(retried.committed).toBe(false);
+    expect(recoveredPersistence.transactions).toHaveLength(0);
+    // Nobody was told of the commit, so every session hears of it now.
+    const active = Object.values(durable.sessions)
+      .filter((session) => session.active)
+      .map((session) => session.id);
+    expect(retried.deliveries).toHaveLength(active.length + 1);
+    expect(
+      retried.deliveries
+        .filter((delivery) => delivery.message.type === 'StatePublication')
+        .map((delivery) => delivery.sessionId)
+        .sort()
+    ).toEqual([...active].sort());
+    expect(
+      retried.deliveries.find(
+        (delivery) => delivery.sessionId === 'session-player-one'
+      )?.message
+    ).toMatchObject({
+      type: 'StatePublication',
+      coveringCommandId: 'load-deck-command',
+      executedClientSequence: 1,
+    });
+    expect(retried.deliveries.at(-1)?.message).toMatchObject({
+      type: 'CommandResult',
+      accepted: true,
+      revision: 1,
+    });
+    expect(commits).toBe(1);
+  });
+
+  it('persists spectator rejection and sequence consumption without mutating state', async () => {
+    const persistence = createPersistence();
+    const current = createSnapshot();
+    const result = await processAuthorityCommand(
+      current,
+      loadDeck('session-spectator'),
+      createDependencies(persistence)
+    );
+
+    expect(result.committed).toBe(true);
+    expect(result.snapshot.state.revision).toBe(0);
+    expect(
+      result.snapshot.sessions['session-spectator']?.nextClientSequence
+    ).toBe(2);
+    expect(result.deliveries).toHaveLength(1);
+    expect(result.deliveries[0]?.message).toMatchObject({
+      type: 'CommandResult',
+      accepted: false,
+      code: 'unauthorized',
+    });
+    expect(persistence.transactions[0]?.eventBatch).toBeUndefined();
+    expect(result.snapshot.state).toBe(current.state);
+    expect(result.snapshot.replayHistory).toBe(current.replayHistory);
+    expect(result.snapshot.identities).toBe(current.identities);
+    expect(result.snapshot.admission).toBe(current.admission);
+    expect(result.snapshot.sessions['session-player-one']).toBe(
+      current.sessions['session-player-one']
+    );
+    expect(result.snapshot.sessions['session-player-two']).toBe(
+      current.sessions['session-player-two']
+    );
+    expect(result.snapshot.sessions['session-spectator']).not.toBe(
+      current.sessions['session-spectator']
+    );
+    expect(
+      authoritySnapshotCommandValidationMatches(
+        result.snapshotValidation,
+        result.snapshot,
+        current,
+        persistence.transactions[0]!.expectedAuthorityVersion,
+        persistence.transactions[0]!.expectedRevision,
+        'session-spectator',
+        persistence.transactions[0]!.outcome,
+        undefined
+      )
+    ).toBe(true);
+  });
+
+  it('retains the canonical frozen batch when the new replay entry is immediately compacted', async () => {
+    const persistence = createPersistence();
+    const current = createSnapshot();
+    const result = await processAuthorityCommand(current, loadDeck(), {
+      ...createDependencies(persistence),
+      policy: {
+        ...DEFAULT_AUTHORITY_POLICY,
+        maximumReplayEventBytes: 2,
+      },
+    });
+
+    expect(result.snapshot.replayHistory.entries).toEqual([]);
+    expect(result.snapshot.replayHistory.baseState).toBe(result.snapshot.state);
+    expect(persistence.transactions[0]?.eventBatch).toBeDefined();
+    expect(Object.isFrozen(persistence.transactions[0]?.eventBatch)).toBe(true);
+    expect(
+      authoritySnapshotCommandValidationMatches(
+        result.snapshotValidation,
+        result.snapshot,
+        current,
+        persistence.transactions[0]!.expectedAuthorityVersion,
+        persistence.transactions[0]!.expectedRevision,
+        'session-player-one',
+        persistence.transactions[0]!.outcome,
+        persistence.transactions[0]!.eventBatch
+      )
+    ).toBe(true);
+    expect(() =>
+      assertAuthoritySnapshotInvariants(structuredClone(result.snapshot))
+    ).not.toThrow();
+  });
+
+  it('matches full replay validation across a long compacting command chain', async () => {
+    const persistence = createPersistence();
+    const dependencies = {
+      ...createDependencies(persistence),
+      policy: {
+        ...DEFAULT_AUTHORITY_POLICY,
+        maximumReplayEventBatches: 3,
+      },
+    };
+    let current = createSnapshot();
+
+    for (let sequence = 1; sequence <= 48; sequence += 1) {
+      const result = await processAuthorityCommand(
+        current,
+        command(
+          'session-player-one',
+          sequence,
+          `long-chain-${sequence}`,
+          { type: 'FlipCoin' },
+          current.state.revision
+        ),
+        dependencies
+      );
+      expect(result.committed).toBe(true);
+      expect(result.snapshot.replayHistory.entries.length).toBeLessThanOrEqual(
+        3
+      );
+      expect(() =>
+        assertAuthoritySnapshotInvariants(structuredClone(result.snapshot))
+      ).not.toThrow();
+      current = result.snapshot;
+    }
+
+    expect(current.state.revision).toBe(48);
+    expect(current.replayHistory.baseState.revision).toBe(45);
+    expect(persistence.transactions).toHaveLength(48);
+  });
+
+  it("resends a coin's face when its committed flip is retried", async () => {
+    const dependencies = createDependencies(createPersistence());
+    const flipped = await processAuthorityCommand(
+      createSnapshot(),
+      command('session-player-one', 1, 'flip', { type: 'FlipCoin' }),
+      dependencies
+    );
+    const coin = (
+      deliveries: Awaited<
+        ReturnType<typeof processAuthorityCommand>
+      >['deliveries']
+    ) =>
+      deliveries.flatMap((delivery) =>
+        delivery.message.type === 'StatePublication'
+          ? (delivery.message.presentationEvents ?? []).filter(
+              (event) => event.type === 'CoinFlipped'
+            )
+          : []
+      );
+    expect(coin(flipped.deliveries)).toHaveLength(3);
+    // Committed, but its publications never went out: the issuer retries.
+    const retried = await processAuthorityCommand(
+      flipped.snapshot,
+      command('session-player-one', 1, 'flip', { type: 'FlipCoin' }),
+      dependencies
+    );
+    expect(retried.committed).toBe(false);
+    expect(coin(retried.deliveries)).toEqual(coin(flipped.deliveries));
+  });
+
+  it('publishes typed table signals, again on a retry of the latest revision, and persists stale broad-action rejection', async () => {
+    const persistence = createPersistence();
+    const dependencies = createDependencies(persistence);
+    const started = await processAuthorityCommand(
+      createSnapshot(),
+      command('session-player-one', 1, 'start-empty-turn', {
+        type: 'StartTurn',
+        targetPlayerId: p1,
+      }),
+      dependencies
+    );
+    expect(started.snapshot.state.revision).toBe(1);
+    expect(persistence.transactions[0]?.eventBatch?.events.at(-1)).toEqual({
+      type: 'TableActionDeclared',
+      action: 'startTurn',
+      playerId: p1,
+      outcome: 'emptyDeck',
+      turnNumber: 0,
+    });
+    const publications = started.deliveries.filter(
+      (delivery) => delivery.message.type === 'StatePublication'
+    );
+    expect(publications).toHaveLength(3);
+    for (const delivery of publications) {
+      if (delivery.message.type !== 'StatePublication') continue;
+      expect(delivery.message.presentationEvents).toEqual([
+        {
+          type: 'TurnStartFailedNoDeck',
+          revision: 1,
+          playerId: p1,
+          turnNumber: 0,
+        },
+      ]);
+    }
+
+    const duplicate = await processAuthorityCommand(
+      started.snapshot,
+      command('session-player-one', 1, 'start-empty-turn', {
+        type: 'StartTurn',
+        targetPlayerId: p1,
+      }),
+      dependencies
+    );
+    expect(duplicate.committed).toBe(false);
+    expect(duplicate.deliveries[0]?.message).toMatchObject({
+      type: 'StatePublication',
+    });
+    // A retry of the latest revision may be all a session ever gets of it
+    // (the commit held, its publication didn't), so the signals go again;
+    // a client that has the revision already ignores them.
+    if (duplicate.deliveries[0]?.message.type === 'StatePublication') {
+      expect(duplicate.deliveries[0].message.presentationEvents).toEqual([
+        {
+          type: 'TurnStartFailedNoDeck',
+          revision: 1,
+          playerId: p1,
+          turnNumber: 0,
+        },
+      ]);
+    }
+
+    const stale = await processAuthorityCommand(
+      started.snapshot,
+      command(
+        'session-player-one',
+        2,
+        'stale-pass',
+        { type: 'PassTurn', targetPlayerId: p1 },
+        0
+      ),
+      dependencies
+    );
+    expect(stale.committed).toBe(true);
+    expect(stale.snapshot.state.revision).toBe(1);
+    expect(stale.deliveries[0]?.message).toMatchObject({
+      type: 'CommandResult',
+      accepted: false,
+      code: 'stale_reference',
+    });
+    expect(persistence.transactions.at(-1)?.eventBatch).toBeUndefined();
+  });
+
+  it('publishes setup and reset lifecycle facts with their durable batches', async () => {
+    const persistence = createPersistence();
+    const dependencies = createDependencies(persistence);
+    const loaded = await processAuthorityCommand(
+      createSnapshot(),
+      loadDeck(),
+      dependencies
+    );
+    for (const delivery of loaded.deliveries) {
+      if (delivery.message.type !== 'StatePublication') continue;
+      expect(delivery.message.presentationEvents).toEqual([
+        {
+          type: 'DeckLoaded',
+          revision: 1,
+          playerId: p1,
+          cardCount: 14,
+        },
+      ]);
+    }
+    const setup = await processAuthorityCommand(
+      loaded.snapshot,
+      command(
+        'session-player-one',
+        2,
+        'setup-player-command',
+        { type: 'SetupPlayer', targetPlayerId: p1 },
+        1
+      ),
+      dependencies
+    );
+    expect(setup.snapshot.state.revision).toBe(2);
+    expect(persistence.transactions[1]?.eventBatch?.events).toEqual([
+      expect.objectContaining({
+        type: 'PlayerSetup',
+        playerId: p1,
+        handOrder: expect.any(Array),
+        prizeOrder: expect.any(Array),
+      }),
+    ]);
+    for (const delivery of setup.deliveries) {
+      if (delivery.message.type !== 'StatePublication') continue;
+      expect(delivery.message.presentationEvents).toEqual([
+        {
+          type: 'PlayerSetup',
+          revision: 2,
+          playerId: p1,
+          handCount: 7,
+          prizeCount: 6,
+        },
+      ]);
+    }
+
+    const reset = await processAuthorityCommand(
+      setup.snapshot,
+      command(
+        'session-player-one',
+        3,
+        'reset-player-command',
+        { type: 'ResetPlayer', targetPlayerId: p1 },
+        2
+      ),
+      dependencies
+    );
+    expect(reset.snapshot.state.revision).toBe(3);
+    expect(reset.snapshot.state.turn).toEqual({
+      number: 0,
+      currentPlayerId: null,
+    });
+    expect(persistence.transactions[2]?.eventBatch?.events).toEqual([
+      expect.objectContaining({ type: 'PlayerReset', playerId: p1 }),
+    ]);
+    for (const delivery of reset.deliveries) {
+      if (delivery.message.type !== 'StatePublication') continue;
+      expect(delivery.message.presentationEvents).toEqual([
+        { type: 'PlayerReset', revision: 3, playerId: p1 },
+      ]);
+    }
+  });
+
+  it('publishes privacy-safe public visibility facts with the atomic batch', async () => {
+    const persistence = createPersistence();
+    const dependencies = createDependencies(persistence);
+    const loaded = await processAuthorityCommand(
+      createSnapshot(),
+      loadDeck(),
+      dependencies
+    );
+    const setup = await processAuthorityCommand(
+      loaded.snapshot,
+      command(
+        'session-player-one',
+        2,
+        'visibility-setup',
+        { type: 'SetupPlayer', targetPlayerId: p1 },
+        1
+      ),
+      dependencies
+    );
+    const ownerPublication = setup.deliveries.find(
+      (delivery) =>
+        delivery.sessionId === 'session-player-one' &&
+        delivery.message.type === 'StatePublication'
+    );
+    if (ownerPublication?.message.type !== 'StatePublication') {
+      throw new Error('missing owner setup publication');
+    }
+    const prizeId = playerZoneId(p1, 'prizes');
+    const aliases = ownerPublication.message.snapshot.zones[prizeId]!.cards.map(
+      (card) => card.id
+    );
+    const revealed = await processAuthorityCommand(
+      setup.snapshot,
+      command(
+        'session-player-one',
+        3,
+        'reveal-prizes',
+        {
+          type: 'SetZonePublicReveal',
+          targetPlayerId: p1,
+          zoneId: prizeId,
+          expectedCardIds: aliases,
+          revealed: true,
+        },
+        2
+      ),
+      dependencies
+    );
+    expect(persistence.transactions[2]?.eventBatch?.events).toEqual([
+      expect.objectContaining({
+        type: 'PublicRevealSet',
+        playerId: p1,
+        cardIds: expect.arrayContaining([
+          expect.stringMatching(/^canonical-card-/),
+        ]),
+        revealed: true,
+      }),
+    ]);
+    for (const delivery of revealed.deliveries) {
+      if (delivery.message.type !== 'StatePublication') continue;
+      expect(delivery.message.presentationEvents).toEqual([
+        {
+          type: 'PublicCardsRevealed',
+          revision: 3,
+          actorPlayerId: p1,
+          playerId: p1,
+          scope: 'zone',
+          source: 'prizes',
+          cardCount: 6,
+        },
+      ]);
+      expect(JSON.stringify(delivery.message.presentationEvents)).not.toContain(
+        'canonical-card-'
+      );
+      expect(
+        delivery.message.snapshot.zones[prizeId]!.cards.every(
+          (card) => card.kind === 'known' && card.publiclyRevealed
+        )
+      ).toBe(true);
+    }
+  });
+
+  it('publishes private inspections only to their viewer with privacy-safe facts', async () => {
+    const persistence = createPersistence();
+    const dependencies = createDependencies(persistence);
+    const loaded = await processAuthorityCommand(
+      createSnapshot(),
+      loadDeck(),
+      dependencies
+    );
+    const setup = await processAuthorityCommand(
+      loaded.snapshot,
+      command(
+        'session-player-one',
+        2,
+        'private-inspection-setup',
+        { type: 'SetupPlayer', targetPlayerId: p1 },
+        1
+      ),
+      dependencies
+    );
+    const ownerSetupPublication = setup.deliveries.find(
+      (delivery) =>
+        delivery.sessionId === 'session-player-one' &&
+        delivery.message.type === 'StatePublication'
+    );
+    if (ownerSetupPublication?.message.type !== 'StatePublication') {
+      throw new Error('missing private-inspection owner setup publication');
+    }
+    const prizeId = playerZoneId(p1, 'prizes');
+    const concealedAliases = ownerSetupPublication.message.snapshot.zones[
+      prizeId
+    ]!.cards.map((card) => card.id);
+    const opened = await processAuthorityCommand(
+      setup.snapshot,
+      command(
+        'session-player-one',
+        3,
+        'open-private-inspection',
+        {
+          type: 'BeginZoneInspection',
+          targetPlayerId: p1,
+          zoneId: prizeId,
+          expectedCardIds: concealedAliases,
+        },
+        2
+      ),
+      dependencies
+    );
+    expect(persistence.transactions[2]?.eventBatch?.events).toEqual([
+      expect.objectContaining({
+        type: 'InspectionGrantOpened',
+        sourcePlayerId: p1,
+        sourceId: prizeId,
+        cardIds: expect.arrayContaining([
+          expect.stringMatching(/^canonical-card-/),
+        ]),
+        viewerIds: [p1],
+      }),
+    ]);
+
+    const publications = opened.deliveries.filter(
+      (delivery) => delivery.message.type === 'StatePublication'
+    );
+    expect(publications).toHaveLength(3);
+    for (const delivery of publications) {
+      if (delivery.message.type !== 'StatePublication') continue;
+      expect(delivery.message.presentationEvents).toEqual([
+        {
+          type: 'PrivateInspectionStarted',
+          revision: 3,
+          sourcePlayerId: p1,
+          viewerPlayerId: p1,
+          scope: 'zone',
+          source: 'prizes',
+          cardCount: 6,
+        },
+      ]);
+      expect(JSON.stringify(delivery.message.presentationEvents)).not.toContain(
+        'canonical-card-'
+      );
+    }
+
+    const ownerPublication = publications.find(
+      (delivery) => delivery.sessionId === 'session-player-one'
+    );
+    const opponentPublication = publications.find(
+      (delivery) => delivery.sessionId === 'session-player-two'
+    );
+    const spectatorPublication = publications.find(
+      (delivery) => delivery.sessionId === 'session-spectator'
+    );
+    if (
+      ownerPublication?.message.type !== 'StatePublication' ||
+      opponentPublication?.message.type !== 'StatePublication' ||
+      spectatorPublication?.message.type !== 'StatePublication'
+    ) {
+      throw new Error('missing private-inspection publication');
+    }
+    const ownerPrize = ownerPublication.message.snapshot.zones[prizeId]!;
+    expect(ownerPrize.cards.every((card) => card.kind === 'known')).toBe(true);
+    expect(ownerPublication.message.snapshot.privateInspections).toEqual([
+      {
+        id: 'inspection-1',
+        sourcePlayerId: p1,
+        sourceId: prizeId,
+        cardIds: ownerPrize.cards.map((card) => card.id),
+      },
+    ]);
+    for (const privatePublication of [
+      opponentPublication,
+      spectatorPublication,
+    ]) {
+      expect(
+        privatePublication.message.snapshot.zones[prizeId]!.cards.every(
+          (card) => card.kind === 'concealed'
+        )
+      ).toBe(true);
+      expect(privatePublication.message.snapshot.privateInspections).toEqual(
+        []
+      );
+      expect(JSON.stringify(privatePublication.message.snapshot)).not.toContain(
+        'inspection-1'
+      );
+      expect(JSON.stringify(privatePublication.message.snapshot)).not.toContain(
+        'secret-definition-'
+      );
+    }
+
+    const closed = await processAuthorityCommand(
+      opened.snapshot,
+      command(
+        'session-player-one',
+        4,
+        'close-private-inspection',
+        {
+          type: 'EndPrivateInspection',
+          inspectionId: 'inspection-1',
+        },
+        3
+      ),
+      dependencies
+    );
+    expect(persistence.transactions[3]?.eventBatch?.events).toEqual([
+      expect.objectContaining({
+        type: 'InspectionGrantClosed',
+        sourcePlayerId: p1,
+        sourceId: prizeId,
+        viewerId: p1,
+      }),
+    ]);
+    const ownerClosedPublication = closed.deliveries.find(
+      (delivery) =>
+        delivery.sessionId === 'session-player-one' &&
+        delivery.message.type === 'StatePublication'
+    );
+    if (ownerClosedPublication?.message.type !== 'StatePublication') {
+      throw new Error('missing closed private-inspection publication');
+    }
+    expect(ownerClosedPublication.message.presentationEvents).toEqual([
+      {
+        type: 'PrivateInspectionEnded',
+        revision: 4,
+        sourcePlayerId: p1,
+        viewerPlayerId: p1,
+        scope: 'zone',
+        source: 'prizes',
+        cardCount: 6,
+      },
+    ]);
+    expect(
+      ownerClosedPublication.message.snapshot.zones[prizeId]!.cards.every(
+        (card) => card.kind === 'concealed'
+      )
+    ).toBe(true);
+    expect(
+      ownerClosedPublication.message.snapshot.zones[prizeId]!.cards.map(
+        (card) => card.id
+      )
+    ).not.toEqual(concealedAliases);
+    expect(ownerClosedPublication.message.snapshot.privateInspections).toEqual(
+      []
+    );
+  });
+
+  it('publishes an authority-random face-down play without leaking the selection', async () => {
+    const persistence = createPersistence();
+    const dependencies = createDependencies(persistence);
+    const loaded = await processAuthorityCommand(
+      createSnapshot(),
+      loadDeck(),
+      dependencies
+    );
+    const setup = await processAuthorityCommand(
+      loaded.snapshot,
+      command(
+        'session-player-one',
+        2,
+        'random-face-down-setup',
+        { type: 'SetupPlayer', targetPlayerId: p1 },
+        1
+      ),
+      dependencies
+    );
+    const opponentSetupPublication = setup.deliveries.find(
+      (delivery) =>
+        delivery.sessionId === 'session-player-two' &&
+        delivery.message.type === 'StatePublication'
+    );
+    if (opponentSetupPublication?.message.type !== 'StatePublication') {
+      throw new Error('missing random-play opponent setup publication');
+    }
+    const handId = playerZoneId(p1, 'hand');
+    const boardId = playerZoneId(p1, 'board');
+    const oldOpponentAliases = opponentSetupPublication.message.snapshot.zones[
+      handId
+    ]!.cards.map((card) => card.id);
+
+    const played = await processAuthorityCommand(
+      setup.snapshot,
+      command(
+        'session-player-two',
+        1,
+        'play-random-face-down',
+        { type: 'PlayRandomCardFaceDown', targetPlayerId: p1 },
+        2
+      ),
+      dependencies
+    );
+    expect(persistence.transactions[2]?.eventBatch?.events).toEqual([
+      expect.objectContaining({
+        type: 'RandomHandCardPlayedFaceDown',
+        actorPlayerId: p2,
+        targetPlayerId: p1,
+        cardId: expect.stringMatching(/^canonical-card-/),
+      }),
+    ]);
+    const publications = played.deliveries.filter(
+      (delivery) => delivery.message.type === 'StatePublication'
+    );
+    expect(publications).toHaveLength(3);
+    for (const delivery of publications) {
+      if (delivery.message.type !== 'StatePublication') continue;
+      expect(delivery.message.presentationEvents).toEqual([
+        {
+          type: 'RandomCardPlayedFaceDown',
+          revision: 3,
+          actorPlayerId: p2,
+          targetPlayerId: p1,
+        },
+      ]);
+      expect(JSON.stringify(delivery.message.presentationEvents)).not.toContain(
+        'canonical-card-'
+      );
+      expect(JSON.stringify(delivery.message.presentationEvents)).not.toContain(
+        'secret-definition-'
+      );
+    }
+
+    const ownerPublication = publications.find(
+      (delivery) => delivery.sessionId === 'session-player-one'
+    );
+    const opponentPublication = publications.find(
+      (delivery) => delivery.sessionId === 'session-player-two'
+    );
+    const spectatorPublication = publications.find(
+      (delivery) => delivery.sessionId === 'session-spectator'
+    );
+    if (
+      ownerPublication?.message.type !== 'StatePublication' ||
+      opponentPublication?.message.type !== 'StatePublication' ||
+      spectatorPublication?.message.type !== 'StatePublication'
+    ) {
+      throw new Error('missing random-play recipient publication');
+    }
+    expect(ownerPublication.message.snapshot.zones[handId]!.cards).toHaveLength(
+      6
+    );
+    expect(ownerPublication.message.snapshot.zones[boardId]!.cards).toEqual([
+      expect.objectContaining({ kind: 'known', face: 'down' }),
+    ]);
+    const opponentBoardCard =
+      opponentPublication.message.snapshot.zones[boardId]!.cards[0]!;
+    expect(opponentBoardCard.kind).toBe('concealed');
+    expect(oldOpponentAliases).not.toContain(opponentBoardCard.id);
+    for (const privatePublication of [
+      opponentPublication,
+      spectatorPublication,
+    ]) {
+      expect(
+        privatePublication.message.snapshot.zones[handId]!.cards
+      ).toHaveLength(6);
+      expect(
+        privatePublication.message.snapshot.zones[boardId]!.cards[0]?.kind
+      ).toBe('concealed');
+      expect(JSON.stringify(privatePublication.message.snapshot)).not.toContain(
+        'canonical-card-'
+      );
+      expect(JSON.stringify(privatePublication.message.snapshot)).not.toContain(
+        'secret-definition-'
+      );
+      expect(JSON.stringify(privatePublication.message.snapshot)).not.toContain(
+        'Secret card'
+      );
+    }
+  });
+
+  it('never publishes canonical hidden IDs and invalidates concealed handles on shuffle', async () => {
+    const persistence = createPersistence();
+    const dependencies = createDependencies(persistence);
+    const loaded = await processAuthorityCommand(
+      createSnapshot(),
+      loadDeck(),
+      dependencies
+    );
+    const opponentPublication = loaded.deliveries.find(
+      (delivery) =>
+        delivery.sessionId === 'session-player-two' &&
+        delivery.message.type === 'StatePublication'
+    );
+    if (opponentPublication?.message.type !== 'StatePublication') {
+      throw new Error('missing opponent publication');
+    }
+    const serialized = JSON.stringify(opponentPublication.message);
+    expect(serialized).not.toContain('canonical-card-');
+    expect(serialized).not.toContain('secret-definition-');
+    expect(serialized).not.toContain('Secret card');
+    const deckId = playerZoneId(p1, 'deck');
+    const oldAlias =
+      opponentPublication.message.snapshot.zones[deckId]?.cards[0]?.id;
+    expect(oldAlias).toMatch(/^opaque-card-/);
+
+    const shuffled = await processAuthorityCommand(
+      loaded.snapshot,
+      command(
+        'session-player-one',
+        2,
+        'shuffle-command',
+        { type: 'ShuffleZone', zoneId: deckId },
+        1
+      ),
+      dependencies
+    );
+    const staleAttempt = await processAuthorityCommand(
+      shuffled.snapshot,
+      command(
+        'session-player-two',
+        1,
+        'stale-reveal-command',
+        {
+          type: 'SetPublicReveal',
+          cardId: oldAlias!,
+          expectedSourceId: deckId,
+          revealed: true,
+        },
+        2
+      ),
+      dependencies
+    );
+
+    expect(staleAttempt.snapshot.state.revision).toBe(2);
+    expect(staleAttempt.deliveries[0]?.message).toMatchObject({
+      type: 'CommandResult',
+      accepted: false,
+      code: 'stale_reference',
+    });
+  });
+
+  it('applies bounded stackable solo checkpoints without replaying randomness', async () => {
+    const persistence = createPersistence();
+    const dependencies = createDependencies(persistence);
+    const solo = createSoloSnapshot();
+    const loaded = await processAuthorityCommand(
+      solo,
+      loadDeck(),
+      dependencies
+    );
+    // Loading a deck replaces every card identity: nothing before it can be
+    // taken back.
+    expect(nextUndo(loaded.snapshot)).toBeUndefined();
+
+    const setup = await processAuthorityCommand(
+      loaded.snapshot,
+      command(
+        'session-player-one',
+        2,
+        'setup-for-undo',
+        { type: 'SetupPlayer' },
+        1
+      ),
+      dependencies
+    );
+    expect(nextUndo(setup.snapshot)).toBe('setup-for-undo');
+    const setupState = setup.snapshot.state;
+    const handId = playerZoneId(p1, 'hand');
+    const setupSpectatorPublication = setup.deliveries.find(
+      (delivery) =>
+        delivery.sessionId === 'session-spectator' &&
+        delivery.message.type === 'StatePublication'
+    );
+    if (setupSpectatorPublication?.message.type !== 'StatePublication') {
+      throw new Error('missing pre-undo spectator publication');
+    }
+    const setupAliases = setupSpectatorPublication.message.snapshot.zones[
+      handId
+    ]!.cards.map((card) => card.id);
+
+    const played = await processAuthorityCommand(
+      setup.snapshot,
+      command(
+        'session-player-one',
+        3,
+        'random-command-to-undo',
+        { type: 'PlayRandomCardFaceDown', targetPlayerId: p1 },
+        2
+      ),
+      dependencies
+    );
+    expect(nextUndo(played.snapshot)).toBe('random-command-to-undo');
+
+    const undone = await processAuthorityCommand(
+      played.snapshot,
+      command(
+        'session-player-one',
+        4,
+        'first-undo-command',
+        { type: 'ApplySoloUndo', targetPlayerId: p1 },
+        3
+      ),
+      dependencies
+    );
+    expect(undone.snapshot.state).toEqual({ ...setupState, revision: 4 });
+    expect(nextUndo(undone.snapshot)).toBe('setup-for-undo');
+    expect(persistence.transactions.at(-1)?.eventBatch?.events).toEqual([
+      expect.objectContaining({
+        type: 'UndoApplied',
+        actorPlayerId: p1,
+        targetPlayerId: p1,
+        revertedCommandId: 'random-command-to-undo',
+        revertedRevision: 3,
+        fromRevision: 3,
+        checkpointRevision: 2,
+      }),
+    ]);
+    const undoPublications = undone.deliveries.filter(
+      (delivery) => delivery.message.type === 'StatePublication'
+    );
+    expect(undoPublications).toHaveLength(2);
+    for (const delivery of undoPublications) {
+      if (delivery.message.type !== 'StatePublication') continue;
+      expect(delivery.message.presentationEvents).toEqual([
+        {
+          type: 'UndoApplied',
+          revision: 4,
+          actorPlayerId: p1,
+          targetPlayerId: p1,
+          revertedRevision: 3,
+        },
+      ]);
+      expect(JSON.stringify(delivery.message)).not.toContain('canonical-card-');
+      expect(JSON.stringify(delivery.message)).not.toContain(
+        'secret-definition-'
+      );
+    }
+    const undoSpectatorPublication = undoPublications.find(
+      (delivery) => delivery.sessionId === 'session-spectator'
+    );
+    if (undoSpectatorPublication?.message.type !== 'StatePublication') {
+      throw new Error('missing post-undo spectator publication');
+    }
+    const undoAliases = undoSpectatorPublication.message.snapshot.zones[
+      handId
+    ]!.cards.map((card) => card.id);
+    expect(undoAliases).toHaveLength(7);
+    // The six cards the random play left in the hand never crossed a
+    // concealment boundary, so they keep their aliases and stay still. The
+    // card it played face down comes back under an alias neither branch
+    // ever showed.
+    const playedSpectatorPublication = played.deliveries.find(
+      (delivery) =>
+        delivery.sessionId === 'session-spectator' &&
+        delivery.message.type === 'StatePublication'
+    );
+    if (playedSpectatorPublication?.message.type !== 'StatePublication') {
+      throw new Error('missing discarded-branch spectator publication');
+    }
+    const discardedBranchAliases = Object.values(
+      playedSpectatorPublication.message.snapshot.zones
+    ).flatMap((zone) => zone.cards.map((card) => card.id));
+    expect(undoAliases.filter((alias) => setupAliases.includes(alias))).toEqual(
+      setupAliases.filter((alias) => discardedBranchAliases.includes(alias))
+    );
+    const returned = undoAliases.filter(
+      (alias) => !setupAliases.includes(alias)
+    );
+    expect(returned).toHaveLength(1);
+    expect(discardedBranchAliases).not.toContain(returned[0]);
+
+    const branched = await processAuthorityCommand(
+      undone.snapshot,
+      command(
+        'session-player-one',
+        5,
+        'branched-marker-command',
+        {
+          type: 'SetOncePerGameMarker',
+          targetPlayerId: p1,
+          marker: 'gx',
+          used: true,
+        },
+        4
+      ),
+      dependencies
+    );
+    expect(branched.snapshot.state.players[p1]?.oncePerGame.gxUsed).toBe(true);
+    expect(nextUndo(branched.snapshot)).toBe('branched-marker-command');
+
+    const branchUndo = await processAuthorityCommand(
+      branched.snapshot,
+      command(
+        'session-player-one',
+        6,
+        'branch-undo-command',
+        { type: 'ApplySoloUndo', targetPlayerId: p1 },
+        5
+      ),
+      dependencies
+    );
+    expect(branchUndo.snapshot.state.players[p1]?.oncePerGame.gxUsed).toBe(
+      false
+    );
+    expect(nextUndo(branchUndo.snapshot)).toBe('setup-for-undo');
+
+    const secondUndo = await processAuthorityCommand(
+      branchUndo.snapshot,
+      command(
+        'session-player-one',
+        7,
+        'second-undo-command',
+        { type: 'ApplySoloUndo', targetPlayerId: p2 },
+        6
+      ),
+      dependencies
+    );
+    expect(secondUndo.snapshot.state.revision).toBe(7);
+    expect(nextUndo(secondUndo.snapshot)).toBeUndefined();
+    expect(secondUndo.snapshot.state.zones[handId]?.cardIds).toEqual([]);
+
+    const emptyUndo = await processAuthorityCommand(
+      secondUndo.snapshot,
+      command(
+        'session-player-one',
+        8,
+        'empty-undo-command',
+        { type: 'ApplySoloUndo', targetPlayerId: p1 },
+        7
+      ),
+      dependencies
+    );
+    expect(emptyUndo.snapshot.state.revision).toBe(7);
+    expect(emptyUndo.deliveries.at(-1)?.message).toMatchObject({
+      type: 'CommandResult',
+      accepted: false,
+      code: 'precondition_failed',
+    });
+  });
+
+  it('lets a multiplayer player take back only their own newest move', async () => {
+    const persistence = createPersistence();
+    const dependencies = createDependencies(persistence);
+    let current = createSnapshot();
+    const sequences: Record<string, number> = {};
+    const send = async (
+      sessionId: string,
+      commandId: string,
+      gameCommand: CommandEnvelope['command']
+    ) => {
+      sequences[sessionId] = (sequences[sessionId] ?? 0) + 1;
+      const result = await processAuthorityCommand(
+        current,
+        command(
+          sessionId,
+          sequences[sessionId]!,
+          commandId,
+          gameCommand,
+          current.state.revision
+        ),
+        dependencies
+      );
+      current = result.snapshot;
+      return result.deliveries.find(
+        (delivery) =>
+          delivery.sessionId === sessionId &&
+          delivery.message.type === 'CommandResult'
+      )?.message;
+    };
+    const marker = (targetPlayerId: string, marker: 'gx' | 'vstar') => ({
+      type: 'SetOncePerGameMarker' as const,
+      targetPlayerId,
+      marker,
+      used: true,
+    });
+    const blue = 'session-player-one';
+    const red = 'session-player-two';
+    const undo = { type: 'ApplySoloUndo' as const, targetPlayerId: p1 };
+
+    await send(blue, 'blue-gx', marker(p1, 'gx'));
+    await send(blue, 'blue-vstar', marker(p1, 'vstar'));
+    await send(red, 'red-gx', marker(p2, 'gx'));
+    expect(current.state.revision).toBe(3);
+
+    // Red's move is the newest: Blue's moves under it are locked in.
+    expect(await send(blue, 'blue-undo-locked', undo)).toMatchObject({
+      accepted: false,
+      code: 'precondition_failed',
+    });
+    // Nobody undoes for the other seat, and spectators undo nothing.
+    expect(
+      await send(red, 'red-undo-for-blue', {
+        type: 'ApplySoloUndo',
+        targetPlayerId: p1,
+      })
+    ).toMatchObject({ accepted: false, code: 'unauthorized' });
+    expect(
+      await send('session-spectator', 'spectator-undo', undo)
+    ).toMatchObject({ accepted: false, code: 'unauthorized' });
+
+    // Red takes back their own move, which hands the newest one back to Blue.
+    const redUndo = await send(red, 'red-undo', {
+      type: 'ApplySoloUndo',
+      targetPlayerId: p2,
+    });
+    expect(redUndo).toMatchObject({ accepted: true });
+    expect(current.state.players[p2]?.oncePerGame.gxUsed).toBe(false);
+    expect(persistence.transactions.at(-1)?.eventBatch).toMatchObject({
+      issuer: { playerId: p2, commandId: 'red-undo' },
+      events: [
+        expect.objectContaining({
+          type: 'UndoApplied',
+          actorPlayerId: p2,
+          targetPlayerId: p2,
+          revertedCommandId: 'red-gx',
+        }),
+      ],
+    });
+
+    // Blue steps back through their own consecutive moves.
+    expect(await send(blue, 'blue-undo-1', undo)).toMatchObject({
+      accepted: true,
+    });
+    expect(current.state.players[p1]?.oncePerGame).toEqual({
+      gxUsed: true,
+      vstarUsed: false,
+    });
+    expect(await send(blue, 'blue-undo-2', undo)).toMatchObject({
+      accepted: true,
+    });
+    expect(current.state.players[p1]?.oncePerGame.gxUsed).toBe(false);
+    expect(await send(blue, 'blue-undo-3', undo)).toMatchObject({
+      accepted: false,
+      code: 'precondition_failed',
+    });
+    // Every multiplayer step went through the incremental validator.
+    expect(current.mode).toBe('multiplayer');
+    assertAuthoritySnapshotInvariants(current);
+  });
+
+  it('takes back only moves still inside the bounded replay history', async () => {
+    const persistence = createPersistence();
+    const base = createDependencies(persistence);
+    const dependencies = {
+      ...base,
+      policy: { ...base.policy, maximumReplayEventBatches: 2 },
+    };
+    let current = createSoloSnapshot();
+    const markerCommands = [
+      {
+        type: 'SetOncePerGameMarker' as const,
+        targetPlayerId: p1,
+        marker: 'gx' as const,
+        used: true,
+      },
+      {
+        type: 'SetOncePerGameMarker' as const,
+        targetPlayerId: p2,
+        marker: 'gx' as const,
+        used: true,
+      },
+      {
+        type: 'SetOncePerGameMarker' as const,
+        targetPlayerId: p1,
+        marker: 'vstar' as const,
+        used: true,
+      },
+    ];
+    for (let sequence = 1; sequence <= markerCommands.length; sequence += 1) {
+      const result = await processAuthorityCommand(
+        current,
+        command(
+          'session-player-one',
+          sequence,
+          `bounded-command-${sequence}`,
+          markerCommands[sequence - 1]!,
+          sequence - 1
+        ),
+        dependencies
+      );
+      current = result.snapshot;
+    }
+    // The first move was compacted into the history's base, so its
+    // checkpoint is gone; the two after it remain.
+    expect(current.replayHistory.baseState.revision).toBe(1);
+    expect(nextUndo(current)).toBe('bounded-command-3');
+
+    const firstUndo = await processAuthorityCommand(
+      current,
+      command(
+        'session-player-one',
+        4,
+        'bounded-undo-1',
+        { type: 'ApplySoloUndo', targetPlayerId: p1 },
+        3
+      ),
+      dependencies
+    );
+    expect(firstUndo.snapshot.state.players[p1]?.oncePerGame).toEqual({
+      gxUsed: true,
+      vstarUsed: false,
+    });
+    expect(firstUndo.snapshot.state.players[p2]?.oncePerGame.gxUsed).toBe(true);
+
+    // The undo is itself a history entry, so it pushed the second move's
+    // checkpoint out of the two-entry window: nothing older can come back.
+    expect(nextUndo(firstUndo.snapshot)).toBeUndefined();
+    const secondUndo = await processAuthorityCommand(
+      firstUndo.snapshot,
+      command(
+        'session-player-one',
+        5,
+        'bounded-undo-2',
+        { type: 'ApplySoloUndo', targetPlayerId: p2 },
+        4
+      ),
+      dependencies
+    );
+    expect(secondUndo.deliveries.at(-1)?.message).toMatchObject({
+      type: 'CommandResult',
+      accepted: false,
+      code: 'precondition_failed',
+    });
+    expect(secondUndo.snapshot.state.players[p2]?.oncePerGame.gxUsed).toBe(
+      true
+    );
+  });
+
+  it('rejects gaps and command-id reuse without consuming sequence', async () => {
+    const persistence = createPersistence();
+    const dependencies = createDependencies(persistence);
+    const current = createSnapshot();
+    const gap = await processAuthorityCommand(
+      current,
+      command('session-player-one', 3, 'gap', { type: 'FlipCoin' }),
+      dependencies
+    );
+    expect(gap.committed).toBe(false);
+    expect(gap.deliveries[0]?.message).toMatchObject({
+      accepted: false,
+      code: 'invalid_sequence',
+    });
+
+    const loaded = await processAuthorityCommand(
+      current,
+      loadDeck(),
+      dependencies
+    );
+    const reused = await processAuthorityCommand(
+      loaded.snapshot,
+      command('session-player-one', 2, 'load-deck-command', {
+        type: 'FlipCoin',
+      }),
+      dependencies
+    );
+    expect(reused.committed).toBe(false);
+    expect(
+      reused.snapshot.sessions['session-player-one']?.nextClientSequence
+    ).toBe(2);
+    expect(reused.deliveries[0]?.message).toMatchObject({
+      accepted: false,
+      code: 'invalid_sequence',
+    });
+  });
+});
+
+describe('a group move (ApplyCardSteps) in the room', () => {
+  type View = ReturnType<typeof serializeMatchViewState>;
+  type LoadDeckCommand = Extract<
+    CommandEnvelope['command'],
+    { type: 'LoadDeck' }
+  >;
+  /**
+   * A room whose seats loaded `entries` (each player their own, Solo's one
+   * player both) and, when `setUp`, drew their hands. `send` posts a
+   * command as a session would; `seen` is what each session was last shown.
+   */
+  const room = async (
+    mode: 'multiplayer' | 'solo' = 'multiplayer',
+    entries: LoadDeckCommand['entries'] = (
+      loadDeck().command as LoadDeckCommand
+    ).entries,
+    setUp = true
+  ) => {
+    const persistence = createPersistence();
+    const dependencies = createDependencies(persistence);
+    let current = mode === 'solo' ? createSoloSnapshot() : createSnapshot();
+    const sequences: Record<string, number> = {};
+    const seen: Record<
+      string,
+      { readonly view: View; readonly lines: readonly unknown[] }
+    > = {};
+    const send = async (
+      sessionId: string,
+      commandId: string,
+      gameCommand: CommandEnvelope['command']
+    ) => {
+      sequences[sessionId] = (sequences[sessionId] ?? 0) + 1;
+      const result = await processAuthorityCommand(
+        current,
+        command(
+          sessionId,
+          sequences[sessionId]!,
+          commandId,
+          gameCommand,
+          current.state.revision
+        ),
+        dependencies
+      );
+      current = result.snapshot;
+      for (const delivery of result.deliveries) {
+        if (delivery.message.type !== 'StatePublication') continue;
+        seen[delivery.sessionId] = {
+          view: delivery.message.snapshot,
+          lines: delivery.message.presentationEvents ?? [],
+        };
+      }
+      return result.deliveries.find(
+        (delivery) =>
+          delivery.sessionId === sessionId &&
+          delivery.message.type === 'CommandResult'
+      )?.message;
+    };
+    const blue = 'session-player-one';
+    const red = mode === 'solo' ? blue : 'session-player-two';
+    for (const [sessionId, playerId] of [
+      [blue, p1],
+      [red, p2],
+    ] as const) {
+      const target = mode === 'solo' ? { targetPlayerId: playerId } : {};
+      // Red's cards are named apart, so a name says whose card it is.
+      await send(sessionId, `${playerId}-deck`, {
+        type: 'LoadDeck',
+        ...target,
+        entries:
+          playerId === p1
+            ? entries
+            : entries.map((entry) => ({
+                ...entry,
+                definition: {
+                  ...entry.definition,
+                  name: `Red's ${entry.definition.name}`,
+                },
+              })),
+      });
+      if (setUp) {
+        await send(sessionId, `${playerId}-setup`, {
+          type: 'SetupPlayer',
+          ...target,
+        });
+      }
+    }
+    return {
+      send,
+      seen,
+      blue,
+      red,
+      dependencies,
+      state: () => current,
+      /** A zone's cards as a session sees them. */
+      cards: (sessionId: string, zoneId: string) =>
+        seen[sessionId]!.view.zones[zoneId]!.cards,
+      nameOf: (sessionId: string, card: View['zones'][string]['cards'][0]) =>
+        card.kind === 'known'
+          ? seen[sessionId]!.view.definitions[card.definitionId]!.name
+          : undefined,
+    };
+  };
+  const moveTo = (
+    cardId: string,
+    from: 'hand' | 'discard',
+    to: 'discard' | 'lostZone',
+    owner: string = p1
+  ) => ({
+    type: 'MoveCard' as const,
+    cardId,
+    expectedSourceZoneId: playerZoneId(asPlayerId(owner), from),
+    destinationZoneId: playerZoneId(asPlayerId(owner), to),
+  });
+
+  it('moves cards from the hand in one move, one line naming them, one undo', async () => {
+    const table = await room();
+    const hand = table.cards(table.blue, playerZoneId(p1, 'hand'));
+    const before = table.state().state;
+    const moved = hand.slice(0, 3);
+    expect(
+      await table.send(table.blue, 'blue-group', {
+        type: 'ApplyCardSteps',
+        steps: moved.map((card) => moveTo(card.id, 'hand', 'discard')),
+      })
+    ).toMatchObject({ accepted: true });
+    expect(table.state().state.revision).toBe(before.revision + 1);
+    const names = moved.map((card) => table.nameOf(table.blue, card));
+    for (const sessionId of [table.red, 'session-spectator']) {
+      expect(table.seen[sessionId]!.lines).toEqual([
+        {
+          type: 'CardsResolved',
+          revision: before.revision + 1,
+          playerId: p1,
+          verb: 'moved',
+          cardCount: 3,
+          source: 'hand',
+          destination: 'discard',
+          cardNames: names,
+        },
+      ]);
+    }
+    expect(
+      await table.send(table.blue, 'blue-undo', {
+        type: 'ApplySoloUndo',
+        targetPlayerId: p1,
+      })
+    ).toMatchObject({ accepted: true });
+    expect(table.state().state.zones).toEqual(before.zones);
+    expect(table.state().state.cards).toEqual(before.cards);
+  });
+
+  it("changes nothing when one step is stale, and answers with that step's code", async () => {
+    const table = await room();
+    const hand = table.cards(table.blue, playerZoneId(p1, 'hand'));
+    const before = table.state().state;
+    expect(
+      await table.send(table.blue, 'blue-stale-group', {
+        type: 'ApplyCardSteps',
+        steps: [
+          moveTo(hand[0]!.id, 'hand', 'discard'),
+          // Still in the hand, not the discard pile.
+          moveTo(hand[1]!.id, 'discard', 'lostZone'),
+        ],
+      })
+    ).toMatchObject({ accepted: false, code: 'stale_reference' });
+    expect(table.state().state).toEqual(before);
+  });
+
+  it('refuses a card moved twice in one move', async () => {
+    const table = await room();
+    const [card] = table.cards(table.blue, playerZoneId(p1, 'hand'));
+    expect(
+      await table.send(table.blue, 'blue-twice', {
+        type: 'ApplyCardSteps',
+        steps: [
+          moveTo(card!.id, 'hand', 'discard'),
+          moveTo(card!.id, 'discard', 'lostZone'),
+        ],
+      })
+    ).toMatchObject({ accepted: false, code: 'precondition_failed' });
+  });
+
+  it("asks leave for each step as alone: not the other player's hidden card, but their Pokémon's damage", async () => {
+    const table = await room();
+    const playPokemon = async (sessionId: string, owner: typeof p1) => {
+      const view = table.seen[sessionId]!.view;
+      const pokemon = view.zones[playerZoneId(owner, 'hand')]!.cards.find(
+        (card) =>
+          card.kind === 'known' &&
+          view.definitions[card.definitionId]!.category === 'Pokémon'
+      )!;
+      expect(
+        await table.send(sessionId, `${sessionId}-active`, {
+          type: 'MoveCardToPlay',
+          cardId: pokemon.id,
+          expectedSourceZoneId: playerZoneId(owner, 'hand'),
+          boardPlayerId: owner,
+          slot: 'active',
+        })
+      ).toMatchObject({ accepted: true });
+    };
+    await playPokemon(table.blue, p1);
+    await playPokemon(table.red, p2);
+    const [own] = table.cards(table.blue, playerZoneId(p1, 'hand'));
+    const [hidden] = table.cards(table.blue, playerZoneId(p2, 'hand'));
+    expect(hidden?.kind).toBe('concealed');
+    expect(
+      await table.send(table.blue, 'blue-takes-red', {
+        type: 'ApplyCardSteps',
+        steps: [
+          moveTo(own!.id, 'hand', 'discard'),
+          moveTo(hidden!.id, 'hand', 'discard', p2),
+        ],
+      })
+    ).toMatchObject({ accepted: false, code: 'unauthorized' });
+    const boards = table.state().state.boards;
+    const redActive = boards[p2]!.activeStackId!;
+    expect(
+      await table.send(table.blue, 'blue-spread', {
+        type: 'ApplyCardSteps',
+        steps: [
+          {
+            type: 'SetDamage',
+            stackId: boards[p1]!.activeStackId!,
+            damage: 10,
+          },
+          { type: 'SetDamage', stackId: redActive, damage: 10 },
+        ],
+      })
+    ).toMatchObject({ accepted: true });
+    expect(table.state().state.stacks[redActive]!.damage).toBe(10);
+  });
+
+  it("shuffles the other player's public cards into their deck as a group, as each alone, but not their deck by itself", async () => {
+    const table = await room();
+    // Two of Red's cards in Red's discard pile, for all to see.
+    const theirs = table.cards(table.red, playerZoneId(p2, 'hand')).slice(0, 2);
+    for (const [index, card] of theirs.entries())
+      expect(
+        await table.send(
+          table.red,
+          `red-discards-${String(index)}`,
+          moveTo(card.id, 'hand', 'discard', p2)
+        )
+      ).toMatchObject({ accepted: true });
+    const shown = table.cards(table.blue, playerZoneId(p2, 'discard'));
+    expect(shown).toHaveLength(2);
+    const redDeck = playerZoneId(p2, 'deck');
+    const deckSize = table.state().state.zones[redDeck]!.cardIds.length;
+    expect(
+      await table.send(table.blue, 'blue-shuffles-red-in', {
+        type: 'ApplyCardSteps',
+        steps: [
+          ...shown.map((card) => ({
+            type: 'MoveCardToDeckTop' as const,
+            cardId: card.id,
+            expectedSourceId: playerZoneId(p2, 'discard'),
+          })),
+          { type: 'ShuffleZone' as const, zoneId: redDeck },
+        ],
+      })
+    ).toMatchObject({ accepted: true });
+    expect(table.state().state.zones[redDeck]!.cardIds).toHaveLength(
+      deckSize + 2
+    );
+    // A group that puts nothing in it may not shuffle it.
+    const [own] = table.cards(table.blue, playerZoneId(p1, 'hand'));
+    expect(
+      await table.send(table.blue, 'blue-shuffles-red', {
+        type: 'ApplyCardSteps',
+        steps: [
+          moveTo(own!.id, 'hand', 'discard'),
+          { type: 'ShuffleZone' as const, zoneId: redDeck },
+        ],
+      })
+    ).toMatchObject({ accepted: false, code: 'unauthorized' });
+  });
+
+  it('names no hidden card to the other seat, a spectator, or their replays', async () => {
+    const table = await room();
+    const hand = table.cards(table.blue, playerZoneId(p1, 'hand'));
+    const hidden = hand
+      .slice(0, 2)
+      .map((card) => `"${table.nameOf(table.blue, card)!}"`);
+    expect(
+      await table.send(table.blue, 'blue-bottom', {
+        type: 'ApplyCardSteps',
+        steps: hand.slice(0, 2).map((card) => ({
+          type: 'MoveCardToDeckBottom' as const,
+          cardId: card.id,
+          expectedSourceId: playerZoneId(p1, 'hand'),
+        })),
+      })
+    ).toMatchObject({ accepted: true });
+    for (const sessionId of [table.red, 'session-spectator']) {
+      expect(table.seen[sessionId]!.lines).toEqual([
+        expect.objectContaining({
+          type: 'CardsResolved',
+          cardCount: 2,
+          source: 'hand',
+          destination: 'deck',
+          cardNames: [null, null],
+        }),
+      ]);
+    }
+    for (const viewer of [
+      { kind: 'player' as const, playerId: p2 },
+      { kind: 'spectator' as const },
+    ]) {
+      const replay = buildProjectedReplay(
+        table.state().replayHistory,
+        viewer,
+        table.dependencies.opaqueIds,
+        'multiplayer'
+      );
+      const told = JSON.stringify(replay);
+      for (const name of hidden) expect(told).not.toContain(name);
+      // The replay tells the move as the room did.
+      expect(JSON.stringify(replay.frames.at(-1))).toContain('"cardNames"');
+    }
+  });
+
+  it("refuses to take back a player's group once the other has moved", async () => {
+    const table = await room();
+    const [first, second] = table.cards(table.blue, playerZoneId(p1, 'hand'));
+    expect(
+      await table.send(table.blue, 'blue-group', {
+        type: 'ApplyCardSteps',
+        steps: [
+          moveTo(first!.id, 'hand', 'discard'),
+          moveTo(second!.id, 'hand', 'discard'),
+        ],
+      })
+    ).toMatchObject({ accepted: true });
+    const [redCard] = table.cards(table.red, playerZoneId(p2, 'hand'));
+    expect(
+      await table.send(
+        table.red,
+        'red-move',
+        moveTo(redCard!.id, 'hand', 'discard', p2)
+      )
+    ).toMatchObject({ accepted: true });
+    expect(
+      await table.send(table.blue, 'blue-undo-late', {
+        type: 'ApplySoloUndo',
+        targetPlayerId: p1,
+      })
+    ).toMatchObject({ accepted: false, code: 'precondition_failed' });
+  });
+
+  it('plays the pieces of one card as one Pokémon, told as the card going in', async () => {
+    const piece = (index: number) => ({
+      definition: {
+        id: `union-piece-${index}`,
+        name: 'Mewtwo V-UNION',
+        category: 'Pokémon' as const,
+        imageUrl: `https://cards.invalid/union-${index}.png`,
+      },
+      count: 1,
+    });
+    const table = await room('solo', [piece(1), piece(2)], false);
+    const deck = table.cards(table.blue, playerZoneId(p1, 'deck'));
+    const before = table.state().state;
+    expect(
+      await table.send(table.blue, 'blue-pieces', {
+        type: 'ApplyCardSteps',
+        steps: [
+          {
+            type: 'MoveCardToPlay',
+            cardId: deck[0]!.id,
+            expectedSourceZoneId: playerZoneId(p1, 'deck'),
+            boardPlayerId: p1,
+            slot: 'bench',
+          },
+          {
+            type: 'PlaceCardOnPlayStack',
+            cardId: deck[1]!.id,
+            expectedSourceId: playerZoneId(p1, 'deck'),
+            targetStackRef: 0,
+            expectedTargetTopCardId: deck[0]!.id,
+            mode: 'evolution',
+          },
+        ],
+      })
+    ).toMatchObject({ accepted: true });
+    const state = table.state().state;
+    const made = state.boards[p1]!.benchStackIds.at(-1)!;
+    expect(state.stacks[made]!.evolutionCardIds).toHaveLength(2);
+    expect(table.seen['session-spectator']!.lines).toEqual([
+      expect.objectContaining({
+        type: 'CardMoved',
+        verb: 'moved',
+        source: 'deck',
+        cardName: 'Mewtwo V-UNION',
+      }),
+    ]);
+    // One undo takes the whole move back, at a Solo table too.
+    expect(
+      await table.send(table.blue, 'blue-undo-pieces', {
+        type: 'ApplySoloUndo',
+        targetPlayerId: p1,
+      })
+    ).toMatchObject({ accepted: true });
+    expect(table.state().state.boards).toEqual(before.boards);
+    expect(table.state().state.zones).toEqual(before.zones);
+    expect(table.state().state.stacks).toEqual(before.stacks);
+  });
+});

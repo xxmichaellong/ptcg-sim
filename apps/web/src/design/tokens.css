@@ -1,0 +1,490 @@
+/*
+ * PTCG Sim design tokens. Every visual constant in the app comes from here;
+ * the board renderer reads the `--ptcgsim-*` tokens through `var()` with
+ * fallbacks. Colours are oklch. Two tables: Night (default) and Day, chosen
+ * by `data-theme` on the root element.
+ *
+ * Layers: primitives (raw scales) -> semantic (what a colour is for) ->
+ * components read only semantic tokens.
+ */
+
+@import '@fontsource-variable/inter';
+@import '@fontsource-variable/jost';
+
+:root {
+  /* ---- Primitives ------------------------------------------------- */
+  --hue-table: 263;
+  --hue-you: 268;
+  --hue-opponent: 18;
+  --hue-gold: 84;
+  --hue-mint: 158;
+
+  --neutral-0: oklch(0.99 0.004 250);
+  --neutral-50: oklch(0.965 0.006 250);
+  --neutral-100: oklch(0.93 0.008 250);
+  --neutral-200: oklch(0.86 0.01 250);
+  --neutral-300: oklch(0.76 0.012 250);
+  --neutral-400: oklch(0.64 0.014 250);
+  --neutral-500: oklch(0.52 0.016 250);
+  --neutral-600: oklch(0.42 0.018 250);
+  --neutral-700: oklch(0.33 0.02 252);
+  --neutral-800: oklch(0.255 0.022 254);
+  --neutral-850: oklch(0.215 0.022 255);
+  --neutral-900: oklch(0.18 0.02 256);
+  --neutral-950: oklch(0.14 0.018 258);
+
+  /* ---- Type ------------------------------------------------------- */
+  --font-ui:
+    'Inter Variable', 'Inter', ui-sans-serif, system-ui, -apple-system,
+    'Segoe UI', Roboto, sans-serif;
+  --font-display:
+    'Jost Variable', 'Jost', 'Futura', 'Century Gothic', ui-sans-serif,
+    sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', 'Cascadia Code', Menlo, monospace;
+
+  --text-2xs: 0.6875rem; /* 11px */
+  --text-xs: 0.75rem; /* 12px */
+  --text-sm: 0.8125rem; /* 13px */
+  --text-md: 0.875rem; /* 14px */
+  --text-lg: 1rem; /* 16px */
+  --text-xl: 1.25rem; /* 20px */
+  --text-2xl: 1.5rem; /* 24px */
+  --text-3xl: 2rem; /* 32px */
+
+  --leading-tight: 1.2;
+  --leading-normal: 1.5;
+  --weight-regular: 430;
+  --weight-medium: 520;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --tracking-caps: 0.08em;
+
+  /* ---- Space, radii ----------------------------------------------- */
+  --space-0-5: 2px;
+  --space-1: 4px;
+  --space-1-5: 6px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --radius-pill: 999px;
+  /* Buttons on the table: rounded rectangles, as on a real control. */
+  --radius-control: 10px;
+
+  /* Shared interaction geometry, used by dialogs, panels and board chrome. */
+  --control-height: 36px;
+  --control-height-compact: 32px;
+  /* A control under a press (after magiccircle's buttons): it gives at once
+     and, let go, springs back a little past its size. The timing follows the
+     press itself (see the :active rule below). */
+  --control-press-scale: 0.95;
+  --control-press-in: 70ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  --control-press-out: 260ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  --control-press-timing: var(--control-press-out);
+  --control-hover-rise: -1px;
+  --surface-blur: 20px;
+
+  /* ---- Motion ----------------------------------------------------- */
+  /* Baked from SPRING_PRESETS (renderer-contract/src/spring.ts). */
+  --ease-snappy: linear(
+    0,
+    0.0318,
+    0.1095,
+    0.212,
+    0.3243,
+    0.4362,
+    0.5413,
+    0.6357,
+    0.7178,
+    0.7871,
+    0.844,
+    0.8897,
+    0.9255,
+    0.9529,
+    0.9732,
+    0.9878,
+    0.9978,
+    1.0044,
+    1.0084,
+    1.0104,
+    1.0111,
+    1.0109,
+    1.0101,
+    1.009,
+    1.0078,
+    1.0065,
+    1.0053,
+    1.0042,
+    1.0033,
+    1.0025,
+    1.0018,
+    1.0013,
+    1
+  );
+  --duration-snappy: 390ms;
+  --ease-gentle: linear(
+    0,
+    0.0322,
+    0.1101,
+    0.2119,
+    0.3224,
+    0.4318,
+    0.5339,
+    0.6255,
+    0.7049,
+    0.7721,
+    0.8276,
+    0.8725,
+    0.9081,
+    0.9358,
+    0.9569,
+    0.9726,
+    0.9841,
+    0.9922,
+    0.9977,
+    1.0013,
+    1.0034,
+    1.0045,
+    1.005,
+    1.005,
+    1.0046,
+    1.0042,
+    1.0036,
+    1.0031,
+    1.0025,
+    1.0021,
+    1.0016,
+    1.0013,
+    1
+  );
+  --duration-gentle: 590ms;
+  --ease-bouncy: linear(
+    0,
+    0.0449,
+    0.1554,
+    0.3008,
+    0.4573,
+    0.6082,
+    0.7425,
+    0.8544,
+    0.9418,
+    1.0055,
+    1.0478,
+    1.0722,
+    1.0825,
+    1.0825,
+    1.0755,
+    1.0645,
+    1.0516,
+    1.0387,
+    1.0267,
+    1.0164,
+    1.0081,
+    1.0019,
+    0.9975,
+    0.9948,
+    0.9934,
+    0.993,
+    0.9934,
+    0.9941,
+    0.9952,
+    0.9963,
+    0.9973,
+    0.9982,
+    1
+  );
+  --duration-bouncy: 620ms;
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-in: cubic-bezier(0.5, 0, 0.75, 0);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  /* Opacity's own curve, coming and going: an even fade the eye can follow.
+     The springs above suit travel and scale; on opacity they all but pop. */
+  --ease-fade: cubic-bezier(0.4, 0, 0.2, 1);
+  --duration-instant: 90ms;
+  --duration-fast: 140ms;
+  --duration-normal: 200ms;
+  --duration-slow: 320ms;
+  /* Set from the motion settings: 0 when motion is reduced. */
+  --motion-scale: 1;
+  /* Every window, sheet, menu and popup comes and goes in these times
+     (ADR-027, decision 7): scaled by the animation speed, and under reduced
+     motion a brief fade rather than none. */
+  --surface-enter-duration: calc(
+    var(--duration-normal) * var(--motion-scale, 1)
+  );
+  --surface-exit-duration: calc(var(--duration-fast) * var(--motion-scale, 1));
+
+  /* ---- Layers ----------------------------------------------------- */
+  /* One order for everything that stacks, lowest first. Use these, never a
+     bare number, so a new layer has to find its place in the list.
+
+     The window:
+       table        the board column. It is its own stacking context, so
+                    nothing painted on the table (cards, viewers, previews,
+                    the card menu) can rise over a layer below this list.
+       chrome       the table's banners
+       panel        the activity log docked beside the table
+       deck-screen  the full-window deck screen
+       sheet        sheets and drawers: Settings, Play online, the log on a
+                    phone; above the deck screen, which can open them
+       dialog       dialogs, which a sheet or the deck screen can open
+       popover      menus, selects and popovers: always above whatever opened
+                    them, a sheet or a dialog included
+       curtain      the loading screen over a table being set up or traded
+                    (index.html, table-curtain.ts); paint only, never input
+       toast        notices, above everything they could be about; they never
+                    take input outside their own box
+       tooltip      tooltips, over the menus and toasts they describe
+       drag         anything carried over the whole window, over all (a
+                    card held on the table rises over its own viewers on
+                    --table-layer-drag instead)
+
+     On the table (inside the board column's context), lowest first:
+       affordances  what the table offers on its felt (+, markers)
+       rail         the seam rail: the toolbar and the turn's actions
+       touch-bar    the Read / Actions bar beside a tapped card
+       inspector    the hover read view docked beside the table
+       banner       the turn banner
+       viewers      the board overlays: pile viewers, the "Looking at cards"
+                    and attached-cards windows, the card menu and the
+                    preview (ordered among themselves by --viewer-layer-*,
+                    each in its own context so its insides stay inside)
+       drag         the card in the hand, carried over a window open on the
+                    table: the board's lift layer shows it above the
+                    viewers (renderer-dom held-card-lift.ts) */
+  --layer-table: 0;
+  --layer-chrome: 100;
+  --layer-panel: 200;
+  --layer-deck-screen: 1500;
+  --layer-sheet: 2000;
+  --layer-dialog: 2100;
+  --layer-popover: 2200;
+  --layer-curtain: 2500;
+  --layer-toast: 3000;
+  --layer-tooltip: 4000;
+  --layer-drag: 5000;
+
+  --table-layer-affordances: 2;
+  --table-layer-rail: 3;
+  --table-layer-touch-bar: 4;
+  --table-layer-inspector: 5;
+  --table-layer-banner: 6;
+  --table-layer-viewers: 7;
+  --table-layer-drag: 8;
+
+  /* Within the viewers: a window, then the pile viewer (modal, over its
+     scrim), the card preview opened from either, the card menu (which can
+     open over a preview), and the marker editor typing into a counter. */
+  --viewer-layer-window: 1;
+  --viewer-layer-browser: 2;
+  --viewer-layer-preview: 3;
+  --viewer-layer-menu: 4;
+  --viewer-layer-editor: 5;
+
+  /* The earlier names, for code that still reads them. */
+  --z-board: var(--layer-table);
+  --z-chrome: var(--layer-chrome);
+  --z-rail: var(--layer-panel);
+  --z-popover: var(--layer-popover);
+  --z-dialog: var(--layer-dialog);
+  --z-toast: var(--layer-toast);
+  --z-tooltip: var(--layer-tooltip);
+
+  color-scheme: dark;
+}
+
+/* Inter and Jost have no Arabic letters: name faces drawn for them before
+   the system's own fallback, which can be a calligraphic one. */
+:root:lang(ar) {
+  --font-ui:
+    'Inter Variable', 'Inter', 'Segoe UI', 'Geeza Pro', 'Noto Sans Arabic',
+    Tahoma, ui-sans-serif, system-ui, sans-serif;
+  --font-display:
+    'Jost Variable', 'Jost', 'Segoe UI', 'Geeza Pro', 'Noto Sans Arabic',
+    Tahoma, ui-sans-serif, sans-serif;
+}
+
+/* ---- Night table (default) ---------------------------------------- */
+/* The table under a warm lamp; the page's panels are warm paper-dark, the
+   ink cream. One blue for the player's own actions; seats in blue and red.
+   Shadows are the desk's dark, never black. The desk and the playmat are
+   the chosen artwork's (table-art.css); the theme only lights them. */
+:root,
+:root[data-theme='night'] {
+  --color-room: #241911;
+  --color-felt-glow: rgb(255 214 160 / 0.13);
+  --color-lamp: rgb(255 214 160 / 0.16);
+
+  --color-surface-1: #2a221c;
+  --color-rail: #241d18;
+  --color-surface-2: #30271f;
+  --color-surface-3: #3d3128;
+  --color-surface-sunken: #1f1813;
+  --color-surface-hover: rgb(255 240 220 / 0.06);
+  --color-surface-pressed: rgb(255 240 220 / 0.1);
+  --color-scrim: rgb(16 10 6 / 0.6);
+
+  --color-border: rgb(232 214 190 / 0.14);
+  --color-border-strong: rgb(232 214 190 / 0.28);
+
+  --color-text: #f3ebdc;
+  --color-text-muted: #c9bba6;
+  --color-text-faint: #a3937f;
+  --color-text-on-accent: #ffffff;
+
+  --color-accent: #6ea4e6;
+  --color-accent-hover: #86b4ec;
+  --color-accent-pressed: #5b94d8;
+  --color-accent-soft: rgb(110 164 230 / 0.2);
+  /* Solid controls with --color-text-on-accent labels: at least 4.5:1. The
+     brighter --color-accent stays for icons, rings and borders on the
+     dark surfaces, where it needs 3:1 against them instead. */
+  --color-accent-fill: #3672b5;
+  --color-accent-fill-hover: #3f7dc2;
+  --color-accent-fill-pressed: #2f659f;
+
+  --color-you: #5b9be0;
+  --color-you-soft: rgb(91 155 224 / 0.2);
+  --color-opponent: #e0675a;
+  --color-opponent-soft: rgb(224 103 90 / 0.2);
+  --color-gold: #ffd04d;
+  --color-mint: oklch(0.82 0.14 var(--hue-mint));
+  --color-sky: oklch(0.78 0.11 232);
+  --color-danger: oklch(0.66 0.19 28);
+  --color-danger-soft: oklch(0.66 0.19 28 / 0.18);
+  --color-danger-fill: oklch(0.55 0.19 28);
+  --color-warning: oklch(0.8 0.16 75);
+  --color-success: oklch(0.76 0.15 155);
+
+  --shadow-1: 0 1px 2px rgb(14 8 4 / 0.4);
+  --shadow-2: 0 2px 6px rgb(14 8 4 / 0.42), 0 1px 2px rgb(14 8 4 / 0.32);
+  --shadow-3: 0 8px 20px rgb(14 8 4 / 0.45), 0 2px 6px rgb(14 8 4 / 0.32);
+  --shadow-4: 0 16px 40px rgb(14 8 4 / 0.52), 0 4px 12px rgb(14 8 4 / 0.34);
+  --shadow-5: 0 28px 64px rgb(14 8 4 / 0.56), 0 8px 20px rgb(14 8 4 / 0.36);
+  --highlight-top: inset 0 1px 0 rgb(255 240 220 / 0.07);
+
+  color-scheme: dark;
+}
+
+/* ---- Day table ------------------------------------------------------ */
+/* The same table by daylight; paper-white panels. */
+:root[data-theme='day'] {
+  --color-room: #b8956a;
+  --color-felt-glow: rgb(255 248 232 / 0.12);
+  --color-lamp: rgb(255 248 232 / 0.14);
+
+  --color-surface-1: #f7f1e6;
+  --color-rail: #f3ecdf;
+  --color-surface-2: #fffcf6;
+  --color-surface-3: #efe6d6;
+  --color-surface-sunken: #ece3d3;
+  --color-surface-hover: rgb(60 40 20 / 0.05);
+  --color-surface-pressed: rgb(60 40 20 / 0.09);
+  --color-scrim: rgb(40 28 16 / 0.36);
+
+  --color-border: rgb(60 40 20 / 0.14);
+  --color-border-strong: rgb(60 40 20 / 0.26);
+
+  --color-text: #2a241f;
+  --color-text-muted: #5f554a;
+  --color-text-faint: #7d7264;
+  --color-text-on-accent: #ffffff;
+
+  --color-accent: #2c5f99;
+  --color-accent-hover: #244f82;
+  --color-accent-pressed: #1f466f;
+  --color-accent-soft: rgb(44 95 153 / 0.14);
+  --color-accent-fill: var(--color-accent);
+  --color-accent-fill-hover: var(--color-accent-hover);
+  --color-accent-fill-pressed: var(--color-accent-pressed);
+
+  --color-you: #2c64b0;
+  --color-you-soft: rgb(44 100 176 / 0.16);
+  --color-opponent: #b8402f;
+  --color-opponent-soft: rgb(184 64 47 / 0.16);
+  --color-gold: #ffd04d;
+  --color-mint: oklch(0.62 0.15 var(--hue-mint));
+  --color-sky: oklch(0.58 0.13 236);
+  --color-danger: oklch(0.55 0.2 28);
+  --color-danger-soft: oklch(0.55 0.2 28 / 0.14);
+  --color-danger-fill: var(--color-danger);
+  --color-warning: oklch(0.66 0.16 70);
+  --color-success: oklch(0.58 0.15 155);
+
+  --shadow-1: 0 1px 2px rgb(60 36 14 / 0.2);
+  --shadow-2: 0 2px 6px rgb(60 36 14 / 0.2), 0 1px 2px rgb(60 36 14 / 0.16);
+  --shadow-3: 0 8px 20px rgb(60 36 14 / 0.22), 0 2px 6px rgb(60 36 14 / 0.16);
+  --shadow-4: 0 16px 40px rgb(60 36 14 / 0.26), 0 4px 12px rgb(60 36 14 / 0.18);
+  --shadow-5: 0 28px 64px rgb(60 36 14 / 0.3), 0 8px 20px rgb(60 36 14 / 0.2);
+  --highlight-top: inset 0 1px 0 rgb(255 255 255 / 0.6);
+
+  color-scheme: light;
+}
+
+/* ---- Board tokens the renderer reads ---------------------------------- */
+:root {
+  --ptcgsim-card-radius: 4.8% / 3.4%;
+  --ptcgsim-card-blank: var(--neutral-600);
+  --ptcgsim-card-shadow: rgb(14 8 4 / 0.45);
+  --ptcgsim-ring-width: 3px;
+  --ptcgsim-ring-selected: var(--color-gold);
+  --ptcgsim-ring-target: var(--color-mint);
+  --ptcgsim-focus-ring: var(--color-accent);
+  --ptcgsim-hover-scale: 1.04;
+  --ptcgsim-lift-scale: 1.07;
+  /* Scaled by the animation speed (0 at "instant" and under reduced motion). */
+  --ptcgsim-motion-hover-duration: calc(
+    var(--duration-normal) * var(--motion-scale, 1)
+  );
+  --ptcgsim-motion-hover-easing: var(--ease-snappy);
+  /* The physical damage counters: yellow 10, orange 50, red 100. */
+  --ptcgsim-counter-10: #ffe100;
+  --ptcgsim-counter-50: #ef7a00;
+  --ptcgsim-counter-100: #e70012;
+}
+
+/* Pressed, a control gives at once; let go, it springs back. A transition
+   takes its timing from the style it changes to, so the press and the
+   release each get their own. */
+/* Only on the control itself: on :root (which a press makes :active too)
+   the change would restyle the whole page twice a click. */
+:where(button, [role='button'], [role='menuitem'], label):active {
+  --control-press-timing: var(--control-press-in);
+}
+
+:root[data-motion='reduced'],
+:root[data-motion-speed='instant'] {
+  --control-press-scale: 1;
+  --control-hover-rise: 0px;
+}
+
+/* The system's preference applies unless the player chose full motion. */
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion='full']) {
+    --ptcgsim-motion-hover-duration: 0ms;
+    --control-press-scale: 1;
+    --control-hover-rise: 0px;
+  }
+}
+
+/* Reduced motion: windows and popups still fade, briefly, without travel. */
+:root[data-motion='reduced'] {
+  --surface-enter-duration: 150ms;
+  --surface-exit-duration: 100ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion='full']) {
+    --surface-enter-duration: 150ms;
+    --surface-exit-duration: 100ms;
+  }
+}
