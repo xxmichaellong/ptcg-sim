@@ -130,6 +130,13 @@ export const handleImageUploadRequest = async (
 };
 
 /**
+ * The one query a stored picture takes: a card image's retry marker
+ * (renderer-dom's card-image-retry), which asks again for a picture that
+ * failed to load rather than reuse the failure.
+ */
+const RETRY_QUERY = /^\?ptcgsim-retry=\d{1,6}$/u;
+
+/**
  * Serves a stored picture from its store, every time: no copy is kept at the
  * edge, so a banned picture stops at once for every browser that hasn't it
  * yet (browsers keep what they have, a year, as its name never changes).
@@ -143,7 +150,8 @@ export const handleImageServeRequest = async (
   if (request.method !== 'GET' && request.method !== 'HEAD') {
     return json({ error: 'method_not_allowed' }, 405, { Allow: 'GET, HEAD' });
   }
-  if (new URL(request.url).search) {
+  const { search } = new URL(request.url);
+  if (search && !RETRY_QUERY.test(search)) {
     return json({ error: 'invalid_request' }, 400);
   }
   const image = await read(sha256);

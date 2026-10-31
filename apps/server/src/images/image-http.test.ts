@@ -128,6 +128,27 @@ describe('image serving', () => {
     ]);
   });
 
+  it("serves a card image's retry, and refuses any other query", async () => {
+    const serve = (query: string) =>
+      handleImageServeRequest(
+        new Request(`${ORIGIN}/v2/images/${sha}${query}`),
+        sha,
+        async () => ({
+          type: 'image/webp' as const,
+          bytes: webpLossless(10, 10),
+        })
+      );
+    expect((await serve('?ptcgsim-retry=3')).status).toBe(200);
+    for (const query of [
+      '?v=1',
+      '?ptcgsim-retry=x',
+      '?ptcgsim-retry=3&v=1',
+      '?ptcgsim-retry=1234567',
+    ]) {
+      expect((await serve(query)).status, query).toBe(400);
+    }
+  });
+
   it('answers 404 for a picture it has not got, or has banned', async () => {
     const response = await handleImageServeRequest(
       new Request(`${ORIGIN}/v2/images/${sha}`),
