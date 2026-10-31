@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { deckCardFromCatalog, withCatalogFacts } from './catalog-deck.js';
 import { decodeCatalog } from './catalog-wire.js';
+import { sameDeckList } from './deck-list.js';
 
 /** Cards printed to be played as another kind, as the server builds them. */
 const catalog = decodeCatalog({
@@ -112,5 +113,8 @@ describe('cards played as another kind, from the catalog', () => {
     // Up to date: the same list back.
     const again = [{ card: upgraded[0]!.card, count: 2 }];
     expect(withCatalogFacts(again, catalog)).toBe(again);
+    // And no longer the deck a seat holds without it: the seat takes the
+    // upgrade to the table.
+    expect(sameDeckList(list, upgraded)).toBe(false);
   });
 });

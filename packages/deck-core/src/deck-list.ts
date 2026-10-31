@@ -141,7 +141,8 @@ export const setCardCount = (
 
 /**
  * The same deck on the table: the same cards, counts and order, alike in
- * everything the table shows (name, kind, images, layout). What a seat
+ * everything the table has of them (name, kind, images, layout, the kind
+ * a card plays as besides its own). What a seat
  * compares before calling a deck changed -- a deck read back from storage
  * is a new object, and a card that gains catalog facts looks no different
  * on the table.
@@ -161,6 +162,7 @@ export const sameDeckList = (left: DeckList, right: DeckList): boolean =>
             a.category === b.category &&
             a.image === b.image &&
             a.imageSmall === b.imageSmall &&
+            a.playsAs === b.playsAs &&
             JSON.stringify(a.presentation) === JSON.stringify(b.presentation)))
       );
     }));

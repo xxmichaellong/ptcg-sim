@@ -395,6 +395,23 @@ const evolveWith = (stack: Stack, card: ViewCard): Stack => ({
   ...(stack.reminders?.length ? { reminders: [] } : {}),
 });
 
+/**
+ * A Pokémon put in a slot as the room puts it (game-core apply-events):
+ * benched, it loses its Special Condition, and from the Active Spot its
+ * reminders too.
+ */
+const inSlot = (placed: Stack, slot: 'active' | 'bench'): Stack =>
+  slot === 'active'
+    ? { ...placed, slot }
+    : {
+        ...placed,
+        slot,
+        specialCondition: null,
+        ...(placed.slot === 'active' && placed.reminders?.length
+          ? { reminders: [] }
+          : {}),
+      };
+
 /** Puts a new stack on a board the way the room lays it out. */
 const placeNewStack = (
   view: MatchViewState,
@@ -411,7 +428,7 @@ const placeNewStack = (
       const prior = next.stacks[board.activeStackId];
       if (!prior) return null;
       benchStackIds.push(board.activeStackId);
-      next = withStack(next, { ...prior, slot: 'bench' });
+      next = withStack(next, inSlot(prior, 'bench'));
     }
     return withBoard(next, stack.boardPlayerId, {
       activeStackId: stack.id,
@@ -455,16 +472,8 @@ const withBoardsRehomed = (
       const slot = board.activeStackId === id ? 'active' : 'bench';
       if (placed.slot !== slot || placed.boardPlayerId !== playerId)
         next = withStack(next, {
-          ...placed,
+          ...inSlot(placed, slot),
           boardPlayerId: playerId,
-          slot,
-          ...(slot === 'bench' ? { specialCondition: null } : {}),
-          // Its reminders come off going from the Active Spot to the Bench.
-          ...(slot === 'bench' &&
-          placed.slot === 'active' &&
-          placed.reminders?.length
-            ? { reminders: [] }
-            : {}),
         });
     }
   }
@@ -1060,7 +1069,7 @@ const predict = (
         const placed = next.stacks[id];
         if (!placed) return null;
         const slot = activeStackId === id ? 'active' : 'bench';
-        if (placed.slot !== slot) next = withStack(next, { ...placed, slot });
+        if (placed.slot !== slot) next = withStack(next, inSlot(placed, slot));
       }
       return next;
     }

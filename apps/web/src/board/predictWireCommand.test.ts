@@ -464,6 +464,49 @@ describe('predictWireCommand', () => {
     expect(benched.boards[blue]!.activeStackId).toBe(active.id);
   });
 
+  it('takes a benched Active’s Special Condition and reminders off, by a move or a new Active, as the room does', () => {
+    const marked: MatchViewState = {
+      ...view,
+      stacks: {
+        ...view.stacks,
+        [active.id]: {
+          ...active,
+          specialCondition: 'Asleep',
+          reminders: ['cantAttack', 'takesLess'],
+        },
+      },
+    };
+    const board = marked.boards[blue]!;
+    const moved = predictWireCommand(marked, {
+      type: 'MovePlayStack',
+      stackId: active.id,
+      expectedSourceSlot: 'active',
+      expectedActiveStackId: active.id,
+      expectedBenchStackIds: [...board.benchStackIds],
+      destinationSlot: 'bench',
+    })!;
+    expect(moved.stacks[active.id]).toMatchObject({
+      slot: 'bench',
+      specialCondition: null,
+      reminders: [],
+    });
+    const pokemon = hand.cards.find(
+      (card) => card.kind === 'known' && card.category === 'Pokémon'
+    )!;
+    const displaced = predictWireCommand(marked, {
+      type: 'MoveCardToPlay',
+      cardId: pokemon.id,
+      expectedSourceZoneId: hand.id,
+      boardPlayerId: blue,
+      slot: 'active',
+    })!;
+    expect(displaced.stacks[active.id]).toMatchObject({
+      slot: 'bench',
+      specialCondition: null,
+      reminders: [],
+    });
+  });
+
   it('attaches energies before trainers and evolves onto the top card', () => {
     const energy = hand.cards.find(
       (card) => card.kind === 'known' && card.category === 'Energy'
