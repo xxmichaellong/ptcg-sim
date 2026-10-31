@@ -324,9 +324,21 @@ const zoneCounts = (scene: BoardScene): Map<string, number> =>
  * Stable key for a marker that survives its host being evolved (the marker id
  * follows the top card, the stack does not change).
  */
+/**
+ * What a marker is compared with in the scene before: a Pokémon's by its
+ * Pokémon (so its counter keeps its place as it evolves, its top card
+ * new), each of its reminders a slot of its own; a card's own mark (a card
+ * in a zone, its Ability used) by the card. Two in one slot would each be
+ * taken for the other, and pulse though unchanged.
+ */
 const markerSlot = (scene: BoardScene, marker: MarkerSceneNode): string => {
   const host = scene.cards.find((card) => card.id === marker.parentCardId);
-  return `${host?.parentId ?? String(marker.parentCardId)}:${marker.kind}`;
+  const loose =
+    host === undefined || scene.zones.some((zone) => zone.id === host.parentId);
+  const owner = loose ? String(marker.parentCardId) : host.parentId;
+  return marker.kind === 'reminder'
+    ? `${owner}:${marker.kind}:${marker.value}`
+    : `${owner}:${marker.kind}`;
 };
 
 export const planBoardMotion = (

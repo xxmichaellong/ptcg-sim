@@ -463,6 +463,46 @@ describe('planBoardMotion', () => {
     expect(planBoardMotion(before, after, 'advance').pulses).toEqual([]);
   });
 
+  it('compares each reminder and each marked card with its own, so nothing unchanged pulses', () => {
+    const stackId = 'stack:blue:active';
+    const hand = zoneId(blue, 'hand');
+    const marked = (revision: number): MatchViewState => ({
+      ...base,
+      revision,
+      stacks: {
+        ...base.stacks,
+        [stackId]: {
+          ...base.stacks[stackId]!,
+          reminders: ['cantAttack', 'cantRetreat'],
+        },
+      },
+      zones: {
+        ...base.zones,
+        [hand]: {
+          ...base.zones[hand]!,
+          cards: cardsOf(base, hand).map((card, index) =>
+            index < 2 && card.kind === 'known'
+              ? { ...card, abilityUsed: true }
+              : card
+          ),
+        },
+      },
+    });
+    const before = sceneOf(marked(base.revision));
+    const after = sceneOf(marked(base.revision + 1));
+    expect(
+      after.markers.filter((marker) => marker.kind === 'reminder')
+    ).toHaveLength(2);
+    expect(
+      after.markers.filter(
+        (marker) =>
+          marker.kind === 'abilityUsed' &&
+          cardsOf(base, hand).some((card) => card.id === marker.parentCardId)
+      )
+    ).toHaveLength(2);
+    expect(planBoardMotion(before, after, 'advance').pulses).toEqual([]);
+  });
+
   it('has a Pokémon answer a card that joined it, and only that', () => {
     const stackId = 'stack:blue:active';
     const hand = zoneId(blue, 'hand');

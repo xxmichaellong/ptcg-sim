@@ -153,6 +153,12 @@ const MENU_SERIES: readonly CoinFlipSeries[] = [
 
 /** A tap that ends a long press opened the menu: it flips nothing. */
 const LONG_PRESS_CLICK_MS = 800;
+/**
+ * After the finger that held the coin lifts, how long a press "outside"
+ * the menu is still that finger: the mouse events a browser sends after a
+ * touch land on the menu's backdrop at once.
+ */
+const TOUCH_RELEASE_MS = 600;
 
 /**
  * The result under the coin: its face, or several coins' tally ("2 of 3
@@ -291,6 +297,21 @@ const TableCoin = ({
   const tally = useCoinTally();
   const container = useContext(OverlayContainerContext);
   const menuOpenedAt = useRef(0);
+  // The finger on the coin, held or just lifted: the long press that opens
+  // the menu, whose lifting is no choice to close it.
+  const touch = useRef({ down: false, liftedAt: 0 });
+  useEffect(() => {
+    const lift = (event: PointerEvent): void => {
+      if (event.pointerType !== 'touch' || !touch.current.down) return;
+      touch.current = { down: false, liftedAt: Date.now() };
+    };
+    window.addEventListener('pointerup', lift, true);
+    window.addEventListener('pointercancel', lift, true);
+    return () => {
+      window.removeEventListener('pointerup', lift, true);
+      window.removeEventListener('pointercancel', lift, true);
+    };
+  }, []);
   const coinRef = useRef<HTMLSpanElement>(null);
   const tossRef = useRef<HTMLSpanElement>(null);
   const shadowRef = useRef<HTMLSpanElement>(null);
@@ -482,8 +503,17 @@ const TableCoin = ({
           // menu key offers several at once.
           <ContextMenu.Root
             disabled={covered || inAir}
-            onOpenChange={(open) => {
-              if (open) menuOpenedAt.current = Date.now();
+            onOpenChange={(open, details) => {
+              if (open) {
+                menuOpenedAt.current = Date.now();
+                return;
+              }
+              const finger = touch.current;
+              if (
+                details.reason === 'outside-press' &&
+                (finger.down || Date.now() - finger.liftedAt < TOUCH_RELEASE_MS)
+              )
+                details.cancel();
             }}
           >
             <Tooltip content={withKeyHint(label, hint)} side="top">
@@ -499,6 +529,10 @@ const TableCoin = ({
                     // Under an open pile viewer it stays on the felt, out of
                     // reach.
                     disabled={covered}
+                    onPointerDown={(event) => {
+                      if (event.pointerType === 'touch')
+                        touch.current = { down: true, liftedAt: 0 };
+                    }}
                     onClick={() => {
                       // The tap that ends a long press opened the menu.
                       if (

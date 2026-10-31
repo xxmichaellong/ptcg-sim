@@ -283,43 +283,46 @@ for (const table of ['tilted', 'flat'] as const)
     await expect(log().getByText(/flipped 4 coins: /u)).toHaveCount(1);
   });
 
-test('a long press on a phone opens the coin’s menu, and flips nothing by itself', async ({
-  browser,
-}) => {
-  test.setTimeout(90_000);
-  const context = await browser.newContext({
-    viewport: { width: 390, height: 844 },
-    hasTouch: true,
-    isMobile: true,
+for (const hold of [700, 2000] as const)
+  test(`a long press on a phone (${hold} ms) opens the coin’s menu, and flips nothing by itself`, async ({
+    browser,
+  }) => {
+    test.setTimeout(90_000);
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+      hasTouch: true,
+      isMobile: true,
+    });
+    const page = await context.newPage();
+    await openSolo(page);
+    const own = coin(page, 'local');
+    const box = (await own.boundingBox())!;
+    const at = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+    const cdp = await context.newCDPSession(page);
+    await cdp.send('Input.dispatchTouchEvent', {
+      type: 'touchStart',
+      touchPoints: [at],
+    });
+    // Held past the press that opens it, as a finger often is: its lifting
+    // (and the mouse events a browser sends after it) closes nothing.
+    await page.waitForTimeout(hold);
+    await cdp.send('Input.dispatchTouchEvent', {
+      type: 'touchEnd',
+      touchPoints: [],
+    });
+    const menu = page.locator('[data-coin-menu="local"]');
+    await expect(menu).toBeVisible();
+    // The finger lifting is no tap on the coin.
+    await page.waitForTimeout(600);
+    await expect(own).toHaveAttribute('data-coin-phase', 'resting');
+    await menu.locator('[data-coin-series="2"]').tap();
+    await expect(
+      page.locator(
+        `[data-coin-result-chip][data-coin-player-id="${await own.getAttribute('data-coin-player-id')}"]`
+      )
+    ).toHaveText(/^[0-2] of 2 heads$/u, { timeout: 10_000 });
+    await context.close();
   });
-  const page = await context.newPage();
-  await openSolo(page);
-  const own = coin(page, 'local');
-  const box = (await own.boundingBox())!;
-  const at = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
-  const cdp = await context.newCDPSession(page);
-  await cdp.send('Input.dispatchTouchEvent', {
-    type: 'touchStart',
-    touchPoints: [at],
-  });
-  await page.waitForTimeout(700);
-  await cdp.send('Input.dispatchTouchEvent', {
-    type: 'touchEnd',
-    touchPoints: [],
-  });
-  const menu = page.locator('[data-coin-menu="local"]');
-  await expect(menu).toBeVisible();
-  // The finger lifting is no tap on the coin.
-  await page.waitForTimeout(600);
-  await expect(own).toHaveAttribute('data-coin-phase', 'resting');
-  await menu.locator('[data-coin-series="2"]').tap();
-  await expect(
-    page.locator(
-      `[data-coin-result-chip][data-coin-player-id="${await own.getAttribute('data-coin-player-id')}"]`
-    )
-  ).toHaveText(/^[0-2] of 2 heads$/u, { timeout: 10_000 });
-  await context.close();
-});
 
 test('a phone keeps both coins on the table and a tap flips', async ({
   page,
