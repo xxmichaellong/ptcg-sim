@@ -273,7 +273,7 @@ for (const table of ['tilted', 'flat'] as const)
     ).toContainText('Flip until tails');
     await page.keyboard.press('Enter');
     await expect(chip).toHaveText(
-      /^(Tails first|\d+ heads, then tails|\d+ heads, no tails)$/u,
+      /^(Tails first|\d+ heads?, then tails|\d+ heads?, no tails)$/u,
       { timeout: 10_000 }
     );
     await openActivity(page);
