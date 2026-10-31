@@ -1045,7 +1045,15 @@ export const RemoteSessionBoard = ({
         });
       },
       playCardAsPokemon: (cardId) => {
-        runtimeRef.current?.emitLegacyShortcutAction({
+        const runtime = runtimeRef.current;
+        if (!runtime) return;
+        // Its menu put the selection down: the card is picked again, as a
+        // key on it would find it, then played.
+        const opened = runtime.getBoardSnapshot()?.presentation.openedZoneId;
+        if (opened)
+          runtime.emitOpenedZoneCardIntent({ kind: 'CardSelected', cardId });
+        else runtime.emitIntent({ kind: 'CardSelected', cardId });
+        runtime.emitLegacyShortcutAction({
           action: 'moveCardToPlay',
           cardId,
           slot: 'bench',

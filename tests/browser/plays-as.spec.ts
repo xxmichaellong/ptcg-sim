@@ -183,6 +183,21 @@ test('a Fossil goes on the Bench as a Pokémon, and a Holon’s Pokémon onto a 
   const ralts = await handCardNamed(page, 'Ralts');
   await dragTo(page, ralts, `[data-zone-id="${active}"]`);
 
+  // The Fossil from its menu: Play as a Pokémon puts it on the Bench.
+  const menuFossil = await handCardNamed(page, 'Unidentified Fossil');
+  await page
+    .locator(`.ptcgsim-board-surface [data-card-id="${menuFossil}"]`)
+    .click({ button: 'right' });
+  await page.locator('[data-context-action="playAsPokemon"]').click();
+  await expect.poll(() => roleOf(page, menuFossil)).toBe('stackEvolution');
+  // Taken back, to drop it this time.
+  await page.locator('.ptcgsim-board-surface').focus();
+  await page.keyboard.press('u');
+  await expect
+    .poll(() => handCardNamed(page, 'Unidentified Fossil').catch(() => null))
+    .not.toBeNull();
+  await idle(page);
+
   // The Fossil, dropped on the Bench: a Pokémon there.
   const fossil = await handCardNamed(page, 'Unidentified Fossil');
   await dragTo(page, fossil, `[data-zone-id="${bench}"]`);
