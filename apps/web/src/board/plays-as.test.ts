@@ -2,8 +2,12 @@ import type { MatchViewState, ViewCardId } from '@ptcgsim/game-core';
 import { describe, expect, it } from 'vitest';
 
 import { compileGroup } from './compile-group.js';
-import { BLUE, groupTable } from './group-table.test-support.js';
-import { attachesAsEnergy, playsAsPokemon } from './plays-as.js';
+import { BLUE, groupTable, RED } from './group-table.test-support.js';
+import {
+  attachesAsEnergy,
+  canAttachAsEnergy,
+  playsAsPokemon,
+} from './plays-as.js';
 import { predictWireCommand } from './predictWireCommand.js';
 import {
   resolveAttachEvolveTarget,
@@ -168,6 +172,16 @@ describe('a card played as another kind', () => {
         asCategory: 'Energy',
       }),
     });
+  });
+
+  it('offers "Attach as an Energy" with a Pokémon on only the other board', () => {
+    const table = groupTable();
+    const [castform] = table.put(BLUE, 'hand', holon) as [ViewCardId];
+    expect(canAttachAsEnergy(table.view, castform)).toBe(false);
+    table.pokemon(RED, 'active', [{}]);
+    // Evolving keeps to its own board, so that targeting finds nothing.
+    expect(resolveAttachEvolveTargeting(table.view, castform).ok).toBe(false);
+    expect(canAttachAsEnergy(table.view, castform)).toBe(true);
   });
 
   it('takes a Holon’s Pokémon in a group going onto a Pokémon, as an Energy', () => {

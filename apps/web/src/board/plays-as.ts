@@ -5,6 +5,7 @@ import type {
 } from '@ptcgsim/game-core';
 
 import { locateViewCardActionSource } from './locateViewCardActionSource.js';
+import { resolveAttachEvolveTargeting } from './resolveAttachEvolveTargeting.js';
 
 /**
  * The other kind a card's print lets it be played as (game-core
@@ -65,3 +66,15 @@ export const playsAsPokemon = (
     view.definitions[card.definitionId]?.playsAs === 'Pokémon'
   );
 };
+
+/**
+ * "Attach as an Energy…" offered: such a card, with a Pokémon on either
+ * board to attach it to (Energy targeting reaches both, where evolving
+ * keeps to the card's own).
+ */
+export const canAttachAsEnergy = (
+  view: MatchViewState,
+  cardId: ViewCardId
+): boolean =>
+  attachesAsEnergy(view, cardId) &&
+  resolveAttachEvolveTargeting(view, cardId, { asCategory: 'Energy' }).ok;

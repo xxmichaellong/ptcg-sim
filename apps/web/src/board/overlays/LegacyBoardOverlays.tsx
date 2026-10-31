@@ -90,7 +90,7 @@ import { resolveAttachEvolveTargeting } from '../resolveAttachEvolveTargeting.js
 import type { GroupAction } from '../compile-group.js';
 import { groupMenuOf, playAsOneSelection } from '../group-menu-entries.js';
 import { visiblePieceSetOf } from '../piece-sets.js';
-import { attachesAsEnergy, playsAsPokemon } from '../plays-as.js';
+import { canAttachAsEnergy, playsAsPokemon } from '../plays-as.js';
 import {
   contextActionOutcome,
   type ContextActionLocalState,
@@ -1107,9 +1107,10 @@ const ContextMenu = ({
   // A card printed to be played as another kind offers that too: a Holon's
   // Pokémon attached as an Energy, a Fossil played as a Pokémon.
   const asEnergy =
-    placement !== null &&
+    state.canSubmitCommands &&
+    actions.beginCardAssembly !== undefined &&
     state.view !== undefined &&
-    attachesAsEnergy(state.view, card.id);
+    canAttachAsEnergy(state.view, card.id);
   const asPokemon =
     state.canSubmitCommands &&
     actions.playCardAsPokemon !== undefined &&

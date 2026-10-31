@@ -101,7 +101,7 @@ import {
   selectionContextOf,
 } from '../board/overlays/group-context.js';
 import { visiblePieceSetOf } from '../board/piece-sets.js';
-import { attachesAsEnergy, playsAsPokemon } from '../board/plays-as.js';
+import { canAttachAsEnergy, playsAsPokemon } from '../board/plays-as.js';
 import { SelectionAnnouncer } from '../board/SelectionAnnouncer.js';
 import type { CoinFlipSnapshot } from '../presentation/CoinFlipController.js';
 import type { PresentationStateSource } from '../presentation/PresentationRuntime.js';
@@ -1680,7 +1680,7 @@ export const RemoteSessionBoard = ({
     // A Holon's Pokémon attached as an Energy, a Fossil played as a Pokémon.
     const playsAs =
       context && view && !pieces
-        ? attachesAsEnergy(view, single)
+        ? canAttachAsEnergy(view, single)
           ? 'Energy'
           : playsAsPokemon(view, single)
             ? 'Pokémon'

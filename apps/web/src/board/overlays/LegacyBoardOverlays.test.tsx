@@ -591,13 +591,14 @@ describe('legacy board overlays', () => {
       beginCardAssembly: vi.fn(),
       playCardAsPokemon: vi.fn(),
     };
+    let renderView = playsAs;
     const open = async (cardId: string) => {
       await act(async () => {
         root.render(
           createElement(LegacyBoardOverlays, {
             state: state({
-              view: playsAs,
-              scene: createBoardSceneForViewport(playsAs, {
+              view: renderView,
+              scene: createBoardSceneForViewport(renderView, {
                 geometryVersion: 1,
                 viewport: { width: 1280, height: 720, devicePixelRatio: 1 },
                 bottomPlayerId: firstPlayer,
@@ -628,6 +629,21 @@ describe('legacy board overlays', () => {
     expect(callbacks.beginCardAssembly).toHaveBeenCalledWith(pokemon.id, {
       asCategory: 'Energy',
     });
+
+    // With a Pokémon on only the other board, still offered: an Energy
+    // attaches to either side's.
+    const ownBoard = playsAs.boards[firstPlayer]!;
+    const otherSideOnly: MatchViewState = {
+      ...playsAs,
+      boards: {
+        ...playsAs.boards,
+        [firstPlayer]: { ...ownBoard, activeStackId: null, benchStackIds: [] },
+      },
+    };
+    renderView = otherSideOnly;
+    const otherSideMenu = await open(pokemon.id);
+    expect(otherSideMenu('attachAsEnergy')).not.toBeNull();
+    renderView = playsAs;
 
     const trainerMenu = await open(trainer.id);
     expect(trainerMenu('playAsPokemon')?.textContent?.trim()).toBe(
