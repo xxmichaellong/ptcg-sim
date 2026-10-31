@@ -412,6 +412,22 @@ export const MarkerControls = ({
   } | null>(null);
   const markerId = marker?.id ?? null;
   const kind = marker?.kind ?? null;
+  // The tokens a press on which is the table's to answer (it toggles the
+  // controls), not a press outside: the marker's, and for a Pokémon's
+  // reminders every one of its chips.
+  const ownTokens = (
+    marker?.kind === 'reminder'
+      ? (state.scene?.markers ?? [])
+          .filter(
+            (other) =>
+              other.kind === 'reminder' &&
+              other.parentCardId === marker.parentCardId
+          )
+          .map((other) => other.id)
+      : markerId
+        ? [markerId]
+        : []
+  ).join('\n');
   useLayoutEffect(() => {
     const element = panel.current;
     if (!element) return;
@@ -476,18 +492,19 @@ export const MarkerControls = ({
     const press = (event: PointerEvent) => {
       if (event.target instanceof Node && panel.current?.contains(event.target))
         return;
-      const token = document.querySelector(
-        `[data-marker-hint-id="${CSS.escape(markerId)}"]`
-      );
-      const rect = token?.getBoundingClientRect();
-      if (
-        rect &&
-        event.clientX >= rect.left &&
-        event.clientX <= rect.right &&
-        event.clientY >= rect.top &&
-        event.clientY <= rect.bottom
-      )
-        return;
+      const onToken = ownTokens.split('\n').some((id) => {
+        const rect = document
+          .querySelector(`[data-marker-hint-id="${CSS.escape(id)}"]`)
+          ?.getBoundingClientRect();
+        return (
+          rect !== undefined &&
+          event.clientX >= rect.left &&
+          event.clientX <= rect.right &&
+          event.clientY >= rect.top &&
+          event.clientY <= rect.bottom
+        );
+      });
+      if (onToken) return;
       commitTyped.current?.();
       actions.dismiss('marker');
     };
@@ -497,7 +514,7 @@ export const MarkerControls = ({
       document.removeEventListener('keydown', key, true);
       document.removeEventListener('pointerdown', press, true);
     };
-  }, [markerId, actions]);
+  }, [markerId, ownTokens, actions]);
   if (!marker || !state.scene) return null;
   const card = state.scene.cards.find(
     (candidate) => candidate.id === marker.parentCardId

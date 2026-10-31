@@ -297,6 +297,58 @@ describe('MarkerControls', () => {
     ]);
   });
 
+  it('leaves a press on any of the Pokémon’s reminder chips to the table, not as one outside', () => {
+    const chip = (reminder: string, x: number): MarkerSceneNode => ({
+      ...marker('reminder', reminder),
+      id: `${String(cardId)}:reminder:${reminder}`,
+      bounds: { x, y: 380, width: 16, height: 16 },
+    });
+    const first = chip('cantAttack', 400);
+    const second = chip('takesLess', 420);
+    const base = stateWith(first);
+    const state = {
+      ...base,
+      scene: { ...base.scene!, markers: [first, second] },
+    } as unknown as BoardSessionControllerState;
+    // The chips as the table paints them, where a press lands.
+    const tokens = [first, second].map((node) => {
+      const token = document.createElement('span');
+      token.setAttribute('data-marker-hint-id', node.id);
+      token.getBoundingClientRect = () =>
+        DOMRect.fromRect({
+          x: node.bounds.x,
+          y: node.bounds.y,
+          width: node.bounds.width,
+          height: node.bounds.height,
+        });
+      document.body.append(token);
+      return token;
+    });
+    act(() =>
+      root.render(
+        <MarkerControls
+          state={state}
+          actions={actions as unknown as MarkerControlsActions}
+        />
+      )
+    );
+    const pressAt = (x: number, y: number) =>
+      act(() => {
+        document.body.dispatchEvent(
+          new PointerEvent('pointerdown', {
+            bubbles: true,
+            clientX: x,
+            clientY: y,
+          })
+        );
+      });
+    pressAt(428, 388);
+    expect(actions.dismiss).not.toHaveBeenCalled();
+    pressAt(10, 10);
+    expect(actions.dismiss).toHaveBeenCalledWith('marker');
+    for (const token of tokens) token.remove();
+  });
+
   it('puts each reminder on or takes it off, pressed while it is on', () => {
     const state = {
       ...stateWith(marker('reminder', 'cantAttack')),
