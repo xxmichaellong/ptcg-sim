@@ -341,6 +341,8 @@ test('cards go from the deck viewer onto the bench and onto a Pokémon there, an
         'data-preview-dragging-card',
         sparkId
       );
+      // It steps aside, as the pile viewers do.
+      await expect(stackView).toHaveCSS('opacity', '0');
     }
   );
   await expect

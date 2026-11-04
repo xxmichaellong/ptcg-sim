@@ -686,6 +686,10 @@
       backwards,
     ptcgsim-overlay-menu-in var(--overlay-enter-duration) var(--ease-snappy)
       backwards;
+  /* Back when a card dragged out of it is not put anywhere. */
+  transition:
+    opacity var(--overlay-enter-duration) var(--ease-fade),
+    translate var(--overlay-enter-duration) var(--ease-snappy);
 }
 
 .ptcgsim-legacy-stack-preview:focus-visible {
@@ -1130,6 +1134,18 @@ button.ptcgsim-overlay-toggle:focus-visible {
   opacity: 0;
   pointer-events: none;
   transition-duration: var(--overlay-exit-duration);
+}
+
+/* The stack view gets out of the way of the drop as the pile viewers do,
+   fading and sinking a little; the drop closes it. */
+.ptcgsim-legacy-stack-preview[data-preview-dragging-card] {
+  z-index: -2;
+  opacity: 0;
+  pointer-events: none;
+  translate: 0 var(--overlay-panel-from-y);
+  transition:
+    opacity var(--overlay-exit-duration) var(--ease-fade),
+    translate var(--overlay-exit-duration) var(--ease-in);
 }
 
 .ptcgsim-card-actions {
