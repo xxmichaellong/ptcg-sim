@@ -508,6 +508,9 @@ export const CardDetails = ({
             {draft && category ? (
               <form
                 className="deck-card-details__editor"
+                // The form bounds what is written itself; the browser's
+                // checks (an HP not a step of 10) would only hold it up.
+                noValidate
                 aria-label={t({
                   message: `${name}'s text`,
                   comment:

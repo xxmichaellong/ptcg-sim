@@ -217,4 +217,26 @@ describe('a card’s own text in the sheet (ADR-043)', () => {
     expect(shown.textContent).toContain('House rule.');
     expect(shown.textContent).toContain('Edited');
   });
+
+  it('saves a hand-made card’s text whatever its HP, a step of 10 or not', async () => {
+    const homebrew: DeckCard = {
+      id: 'custom:homebrew',
+      name: 'Homebrew',
+      category: 'Pokémon',
+      image: '/v2/images/homebrew',
+      text: { hp: 125 },
+    };
+    const onEditText = await render(homebrew);
+    await act(async () =>
+      document
+        .querySelector<HTMLButtonElement>('[data-card-text-edit]')!
+        .click()
+    );
+    await act(async () =>
+      document
+        .querySelector<HTMLFormElement>('.deck-card-details__editor')!
+        .requestSubmit()
+    );
+    expect(onEditText).toHaveBeenCalledWith(['custom:homebrew'], { hp: 125 });
+  });
 });

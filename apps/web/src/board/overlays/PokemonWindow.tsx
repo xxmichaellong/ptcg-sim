@@ -616,18 +616,30 @@ export const PokemonWindow = ({
   );
   const own = known[0]?.text;
   const inherited = breakOver ? known[1]?.text : undefined;
+  // A BREAK plays with its Stage below's Weakness, Resistance and Retreat:
+  // its printed card has none (the catalog says Retreat 0). A BREAK given
+  // text of its own keeps what that says, the Stage's filling the rest.
+  const statsOf = (from: CardText | undefined) => ({
+    weakness: from?.weakness,
+    weaknessValue: from?.weaknessValue,
+    resistance: from?.resistance,
+    resistanceValue: from?.resistanceValue,
+    retreat: from?.retreat,
+  });
+  const breakStats =
+    own && inherited
+      ? known[0]?.resolved.status === 'own'
+        ? Object.fromEntries(
+            Object.entries(statsOf(own)).map(([key, value]) => [
+              key,
+              value ??
+                statsOf(inherited)[key as keyof ReturnType<typeof statsOf>],
+            ])
+          )
+        : statsOf(inherited)
+      : {};
   const text: CardText | undefined = own
-    ? {
-        ...inherited,
-        ...own,
-        // A BREAK's own Weakness and the rest are its Stage's.
-        ...(inherited && own.weakness === undefined
-          ? {
-              weakness: inherited.weakness,
-              weaknessValue: inherited.weaknessValue,
-            }
-          : {}),
-      }
+    ? { ...inherited, ...own, ...breakStats }
     : undefined;
   // Each move once: the pieces of a card often each say the whole card.
   const seenMoves = new Set<string>();
