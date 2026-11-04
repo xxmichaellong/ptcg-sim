@@ -1964,8 +1964,10 @@ const Preview = ({
     if (container.current) {
       trapModalTab(event, container.current, '[data-preview-tabbable]');
     }
-    // A V typed into the window's damage is a V, not the key that shuts it.
+    // A V typed into the window's damage is a V, not the key that shuts it;
+    // an Esc that ends an input method's composing there drops a candidate.
     if (event.key === 'v' && isTextEntry(event.target as Element)) return;
+    if (isInputMethodKey(event.nativeEvent)) return;
     if (
       event.key === 'Escape' ||
       (!event.altKey && !event.ctrlKey && !event.metaKey && event.key === 'v')

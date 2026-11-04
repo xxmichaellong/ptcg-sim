@@ -23,7 +23,13 @@ export const catalogCardText = (card: CatalogCard): DeckCardText => {
     text.resistance = card.resistance;
     if (card.resistanceValue) text.resistanceValue = card.resistanceValue;
   }
-  if (card.retreat !== undefined && card.category === 'Pokémon')
+  // A BREAK's printed card has no Retreat (it plays with its Stage's):
+  // the catalog's 0 for it is no cost of its own.
+  if (
+    card.retreat !== undefined &&
+    card.category === 'Pokémon' &&
+    card.stage !== 'BREAK'
+  )
     text.retreat = card.retreat;
   if (card.text) text.rules = card.text;
   return text as DeckCardText;

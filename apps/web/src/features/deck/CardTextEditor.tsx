@@ -98,7 +98,9 @@ export const tidyCardText = (text: DeckCardText): DeckCardText | undefined => {
     tidy.resistance = text.resistance;
     if (text.resistanceValue) tidy.resistanceValue = text.resistanceValue;
   }
-  if (text.retreat !== undefined && text.retreat > 0)
+  // 0 is a Retreat said (a BREAK's own text overrides its Stage's with
+  // it); none is none.
+  if (text.retreat !== undefined && text.retreat >= 0)
     tidy.retreat = text.retreat;
   if (words(text.rules)) tidy.rules = words(text.rules);
   return Object.keys(tidy).length > 0 ? (tidy as DeckCardText) : undefined;
@@ -610,11 +612,17 @@ export const CardTextEditor = ({
               <span>{t`Retreat`}</span>
               <select
                 className="ds-select"
-                value={value.retreat ?? 0}
+                value={value.retreat ?? ''}
                 onChange={(event) =>
-                  set({ retreat: Number(event.target.value) || undefined })
+                  set({
+                    retreat:
+                      event.target.value === ''
+                        ? undefined
+                        : Number(event.target.value),
+                  })
                 }
               >
+                <option value="">—</option>
                 {Array.from({ length: MAX_RETREAT + 1 }, (_, count) => (
                   <option key={count} value={count}>
                     {count}

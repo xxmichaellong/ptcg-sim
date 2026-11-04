@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 
-import { decodeCatalog } from '@ptcgsim/deck-core';
+import { catalogCardText, decodeCatalog } from '@ptcgsim/deck-core';
 import type { MatchViewState } from '@ptcgsim/game-core';
 import {
   createBoardSceneForViewport,
@@ -76,92 +76,118 @@ vi.mock('../../features/deck/LazyDeckBuilderSession.js', () => ({
 const { LegacyBoardOverlays } = await import('./LegacyBoardOverlays.js');
 
 describe('a BREAK in its window', () => {
-  it('shows the Stage below’s Retreat and Weakness, and its moves too', async () => {
-    const base = createRendererSpikeView();
-    const blue = base.playerOrder[0]!;
-    const stackId = base.boards[blue]!.activeStackId!;
-    const stack = base.stacks[stackId]!;
-    const [lower, top] = [
-      stack.evolutionCards.at(-2),
-      stack.evolutionCards.at(-1),
-    ];
-    if (lower?.kind !== 'known' || top?.kind !== 'known') return;
-    const definitions = { ...base.definitions };
-    const image = (number: string) =>
-      `https://assets.tcgdex.net/en/xy/xy8/${number}/high.webp`;
-    definitions[lower.definitionId] = {
-      ...definitions[lower.definitionId]!,
-      name: 'Florges',
-      imageUrl: image('103'),
-      print: 'BKT 103',
-    };
-    definitions[top.definitionId] = {
-      ...definitions[top.definitionId]!,
-      name: 'Florges BREAK',
-      imageUrl: image('104'),
-      print: 'BKT 104',
-    };
-    const view: MatchViewState = { ...base, definitions };
-    const scene = createBoardSceneForViewport(view, {
-      geometryVersion: 1,
-      viewport: { width: 1280, height: 720, devicePixelRatio: 1 },
-      bottomPlayerId: blue,
-      splitRatio: 0.5,
-    });
-    const host = document.createElement('div');
-    document.body.replaceChildren(host);
-    const root = createRoot(host);
-    await act(async () =>
-      root.render(
-        createElement(LegacyBoardOverlays, {
-          state: {
-            ...createInitialBoardSessionControllerState(),
-            generation: 1,
-            sessionPhase: 'ready',
-            source: { kind: 'live' },
-            view,
-            scene,
-            canSubmitCommands: true,
-            overlays: {
-              contextMenuCardId: null,
-              preview: { kind: 'stack', stackId, focusCardId: top.id },
-              input: null,
-            },
-          },
-          darkMode: false,
-          actions: {
-            emitOpenedZoneCardIntent: vi.fn(),
-            dismiss: vi.fn(),
-            invokeContextAction: vi.fn(),
-            invokeZoneAction: vi.fn(),
-            submitDamageInput: vi.fn(),
-            submitSpecialConditionInput: vi.fn(),
-            submitCountInput: vi.fn(),
-            submitShortcutCountInput: vi.fn(),
-            submitCategoryChoice: vi.fn(),
-            submitMoveChoice: vi.fn(),
-          },
-        })
-      )
+  it('says no Retreat of its own when an edit starts from its print', () => {
+    expect(catalogCardText(catalog.byId.get('BKT 104')!)).not.toHaveProperty(
+      'retreat'
     );
-    let window = host.querySelector<HTMLElement>('[data-pokemon-window]');
-    if (!window) {
-      // A BREAK is shown laid over its Stage first; Details opens it.
-      const details = [...host.querySelectorAll('button')].find(
-        (button) => button.textContent === 'Details'
-      )!;
-      await act(async () => details.click());
-      window = host.querySelector<HTMLElement>('[data-pokemon-window]')!;
-    }
-    const stats = window.querySelector('.pokemon-window__stats')!;
-    const retreat = stats.querySelectorAll('div')[2]!;
-    expect(retreat.querySelectorAll('.energy-symbol')).toHaveLength(1);
-    expect(stats.querySelectorAll('div')[0]!.textContent).toContain('×2');
-    expect(window.textContent).toContain('Bright Garden');
-    expect(window.textContent).toContain('Wonder Shine');
-    expect(
-      window.querySelector('.pokemon-window__hp-value')?.textContent
-    ).toMatch(/\/160$/u);
-    await act(async () => root.unmount());
+    expect(catalogCardText(catalog.byId.get('BKT 103')!).retreat).toBe(1);
   });
+
+  it.each([
+    ['from the catalog', undefined, 1],
+    ['given its own Retreat of 0', { retreat: 0 }, 0],
+  ] as const)(
+    'shows the Stage below’s Retreat and Weakness, and its moves too (%s)',
+    async (_, ownText, retreatCost) => {
+      const base = createRendererSpikeView();
+      const blue = base.playerOrder[0]!;
+      const stackId = base.boards[blue]!.activeStackId!;
+      const stack = base.stacks[stackId]!;
+      const [lower, top] = [
+        stack.evolutionCards.at(-2),
+        stack.evolutionCards.at(-1),
+      ];
+      if (lower?.kind !== 'known' || top?.kind !== 'known') return;
+      const definitions = { ...base.definitions };
+      const image = (number: string) =>
+        `https://assets.tcgdex.net/en/xy/xy8/${number}/high.webp`;
+      definitions[lower.definitionId] = {
+        ...definitions[lower.definitionId]!,
+        name: 'Florges',
+        imageUrl: image('103'),
+        print: 'BKT 103',
+      };
+      definitions[top.definitionId] = {
+        ...definitions[top.definitionId]!,
+        name: 'Florges BREAK',
+        imageUrl: image('104'),
+        print: 'BKT 104',
+        ...(ownText
+          ? {
+              text: {
+                hp: 160,
+                ...ownText,
+                attacks: [
+                  { name: 'Bright Garden', cost: ['Fairy'], damage: '' },
+                ],
+              },
+            }
+          : {}),
+      };
+      const view: MatchViewState = { ...base, definitions };
+      const scene = createBoardSceneForViewport(view, {
+        geometryVersion: 1,
+        viewport: { width: 1280, height: 720, devicePixelRatio: 1 },
+        bottomPlayerId: blue,
+        splitRatio: 0.5,
+      });
+      const host = document.createElement('div');
+      document.body.replaceChildren(host);
+      const root = createRoot(host);
+      await act(async () =>
+        root.render(
+          createElement(LegacyBoardOverlays, {
+            state: {
+              ...createInitialBoardSessionControllerState(),
+              generation: 1,
+              sessionPhase: 'ready',
+              source: { kind: 'live' },
+              view,
+              scene,
+              canSubmitCommands: true,
+              overlays: {
+                contextMenuCardId: null,
+                preview: { kind: 'stack', stackId, focusCardId: top.id },
+                input: null,
+              },
+            },
+            darkMode: false,
+            actions: {
+              emitOpenedZoneCardIntent: vi.fn(),
+              dismiss: vi.fn(),
+              invokeContextAction: vi.fn(),
+              invokeZoneAction: vi.fn(),
+              submitDamageInput: vi.fn(),
+              submitSpecialConditionInput: vi.fn(),
+              submitCountInput: vi.fn(),
+              submitShortcutCountInput: vi.fn(),
+              submitCategoryChoice: vi.fn(),
+              submitMoveChoice: vi.fn(),
+            },
+          })
+        )
+      );
+      let window = host.querySelector<HTMLElement>('[data-pokemon-window]');
+      if (!window) {
+        // A BREAK is shown laid over its Stage first; Details opens it.
+        const details = [...host.querySelectorAll('button')].find(
+          (button) => button.textContent === 'Details'
+        )!;
+        await act(async () => details.click());
+        window = host.querySelector<HTMLElement>('[data-pokemon-window]')!;
+      }
+      const stats = window.querySelector('.pokemon-window__stats')!;
+      const retreat = stats.querySelectorAll('div')[2]!;
+      expect(retreat.querySelectorAll('.energy-symbol')).toHaveLength(
+        retreatCost
+      );
+      expect(stats.querySelectorAll('div')[0]!.textContent).toContain('×2');
+      expect(window.textContent).toContain('Bright Garden');
+      expect(window.textContent).toContain('Wonder Shine');
+      expect(
+        window.querySelector('.pokemon-window__hp-value')?.textContent
+      ).toMatch(/\/160$/u);
+      await act(async () => root.unmount());
+    }
+  );
 });

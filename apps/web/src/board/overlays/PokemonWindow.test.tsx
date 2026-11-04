@@ -399,4 +399,34 @@ describe('the Pokémon window', () => {
     expect(document.activeElement).toBe(opener);
     opener.remove();
   });
+
+  it('keeps the window open for an Esc that ends an input method’s composing', async () => {
+    const callbacks = actions();
+    const window = await render(stateFor(blue), callbacks);
+    const input = window.querySelector<HTMLInputElement>(
+      '.pokemon-window__damage-input'
+    )!;
+    input.focus();
+    await act(async () =>
+      input.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'Escape',
+          isComposing: true,
+          bubbles: true,
+          cancelable: true,
+        })
+      )
+    );
+    expect(callbacks.dismiss).not.toHaveBeenCalled();
+    await act(async () =>
+      input.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'Escape',
+          bubbles: true,
+          cancelable: true,
+        })
+      )
+    );
+    expect(callbacks.dismiss).toHaveBeenCalledWith('preview');
+  });
 });

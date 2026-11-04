@@ -40,6 +40,8 @@ describe('a card’s own text', () => {
       stage: 'Basic',
     });
     expect(tidyCardText({})).toBeUndefined();
+    // A Retreat of 0 is said, and kept (a BREAK's own overrides its Stage's).
+    expect(tidyCardText({ retreat: 0 })).toEqual({ retreat: 0 });
     expect(tidyCardText({ hp: 0, rules: '  ' })).toBeUndefined();
   });
 
