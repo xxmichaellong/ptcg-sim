@@ -3637,3 +3637,243 @@ button.deck-check__issue {
   object-fit: cover;
   box-shadow: var(--shadow-1);
 }
+
+/* ---- A card's own text (ADR-043): its form, and where it is shown -------- */
+
+/* The card sheet's word that the deck changed what the card says. */
+.deck-card-details__edited {
+  display: inline-flex;
+  margin-inline-start: var(--space-2);
+  align-items: center;
+  gap: var(--space-1);
+  padding: 1px var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--color-accent-soft);
+  color: var(--ds-accent-text, var(--color-accent));
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  vertical-align: 1px;
+}
+
+.deck-card-details__kind .energy-symbol {
+  margin-inline-start: var(--space-1);
+  vertical-align: -3px;
+}
+
+.deck-card-details__stats .energy-symbol {
+  margin-inline-end: 3px;
+  vertical-align: -4px;
+}
+
+/* The sheet's text, being written: the form, then its buttons. */
+.deck-card-details__editor {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.deck-card-details__editor-error {
+  min-height: 1lh;
+  margin: 0;
+  color: var(--color-danger);
+  font-size: var(--text-sm);
+}
+
+.deck-card-details__editor-error:empty {
+  min-height: 0;
+}
+
+.deck-card-details__editor-actions {
+  position: sticky;
+  bottom: calc(-1 * var(--space-4));
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-inline: calc(-1 * var(--space-2));
+  padding: var(--space-3) var(--space-2);
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface-1, var(--color-surface-2));
+}
+
+.deck-card-details__editor-spacer {
+  flex: 1;
+}
+
+/* The custom card dialog's text: a section of its own, the window wider
+   while it is open. */
+.native-custom-card-text {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--space-3);
+}
+
+.native-custom-card-text summary {
+  cursor: pointer;
+  padding-block: var(--space-2);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+.native-deck-builder-modal-box[data-text-open] {
+  width: min(760px, calc(100% - 2 * var(--space-4)));
+}
+
+.card-text-editor {
+  --card-text-ability: oklch(0.6 0.19 27);
+
+  display: grid;
+  gap: var(--space-3);
+  padding-top: var(--space-1);
+}
+
+.card-text-editor__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--space-2) var(--space-3);
+}
+
+.card-text-editor__field {
+  display: grid;
+  min-width: 0;
+  flex: 1 1 120px;
+  gap: var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+}
+
+.card-text-editor__field.is-narrow {
+  flex: 0 0 84px;
+}
+
+.card-text-editor__field.is-wide {
+  flex: 2 1 180px;
+}
+
+.card-text-editor__field.is-full {
+  flex-basis: 100%;
+}
+
+.card-text-editor__pair {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.card-text-editor__pair .ds-select {
+  min-width: 0;
+}
+
+.card-text-editor__modifier {
+  flex: 0 0 76px;
+}
+
+.card-text-editor__moves {
+  display: grid;
+  gap: var(--space-2);
+}
+
+/* One Ability or attack: its head (kind or cost, name, damage, remove),
+   then what it does. An Ability's edge is the card's red. */
+.card-text-editor__move {
+  display: grid;
+  min-width: 0;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+}
+
+.card-text-editor__move.is-ability {
+  border-inline-start: 3px solid var(--card-text-ability);
+}
+
+.card-text-editor__move-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.card-text-editor__kind {
+  flex: 0 0 auto;
+  width: auto;
+}
+
+.card-text-editor__name {
+  flex: 1 1 140px;
+}
+
+.card-text-editor__damage {
+  flex: 0 0 68px;
+  text-align: center;
+}
+
+.card-text-editor__text {
+  width: 100%;
+  min-height: 3lh;
+  max-height: 14lh;
+  resize: vertical;
+  /* As tall as what is written, where the browser can (Chromium). */
+  field-sizing: content;
+  font-size: var(--text-sm);
+}
+
+/* An attack's cost: its symbols, each a press that takes it off, then a
+   list that adds one. */
+.card-text-editor__cost {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+}
+
+.card-text-editor__cost-symbol {
+  display: inline-grid;
+  place-items: center;
+  margin: 0;
+  padding: 1px;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+  transition: scale var(--control-press-timing);
+}
+
+.card-text-editor__cost-symbol .energy-symbol {
+  --energy-size: 22px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .card-text-editor__cost-symbol:hover {
+    box-shadow: 0 0 0 2px var(--color-danger);
+  }
+}
+
+.card-text-editor__cost-symbol:focus-visible {
+  outline: 2px solid var(--ptcgsim-focus-ring, var(--color-accent));
+  outline-offset: 1px;
+}
+
+.card-text-editor__cost-add {
+  width: auto;
+  min-width: 52px;
+  padding-inline: var(--space-2) var(--space-6);
+}
+
+.card-text-editor__add {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.card-text-editor__hint {
+  order: 1;
+  margin: 0;
+  color: var(--color-text-faint);
+  font-size: var(--text-xs);
+}

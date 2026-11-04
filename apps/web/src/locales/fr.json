@@ -1166,6 +1166,13 @@
     "message": "{name}: try it",
     "translation": "{name} : essayer"
   },
+  "LDV8pO": {
+    "message": "{name}'s text",
+    "comments": [
+      "The form a card's text is written in. {name} is the card."
+    ],
+    "translation": "Texte de {name}"
+  },
   "cgmx3-": {
     "message": "{name}'s turn",
     "comments": [
@@ -1549,6 +1556,20 @@
     "context": "shortcut key caption",
     "translation": "Talent"
   },
+  "v6QHdW": {
+    "message": "Ability {0}",
+    "comments": [
+      "One of the Abilities in the card text form."
+    ],
+    "translation": "Talent {0}"
+  },
+  "9lk9kt": {
+    "message": "Ability name",
+    "comments": [
+      "An Ability's name in the card text form."
+    ],
+    "translation": "Nom du talent"
+  },
   "uFV0XA": {
     "message": "Ability used",
     "comments": [
@@ -1630,6 +1651,13 @@
     "message": "Add a picture.",
     "translation": "Ajoutez une image."
   },
+  "510vGF": {
+    "message": "Add an Energy to the cost",
+    "comments": [
+      "A list of the eleven types; choosing one adds it."
+    ],
+    "translation": "Ajouter une Énergie au coût"
+  },
   "6ZbKYu": {
     "message": "Add another stadium piece",
     "translation": "Ajouter une autre pièce de Stade"
@@ -1665,6 +1693,13 @@
   "JTbT6L": {
     "message": "Add special condition",
     "translation": "Ajouter un État Spécial"
+  },
+  "MwcOtB": {
+    "message": "Add text",
+    "comments": [
+      "Opens a form to write what a hand-made card says."
+    ],
+    "translation": "Ajouter du texte"
   },
   "ZVI875": {
     "message": "Add to deck",
@@ -1885,10 +1920,29 @@
     "message": "Attached to {0}",
     "translation": "Attaché à {0}"
   },
+  "0Peb5J": {
+    "message": "Attack",
+    "context": "add an attack",
+    "translation": "Attaque"
+  },
   "Hdi9Gs": {
     "message": "Attack",
     "context": "declare an attack",
     "translation": "Attaque"
+  },
+  "WQBwsg": {
+    "message": "Attack {0}",
+    "comments": [
+      "One of the attacks in the card text form."
+    ],
+    "translation": "Attaque {0}"
+  },
+  "Aq_LKG": {
+    "message": "Attack name",
+    "comments": [
+      "An attack's name in the card text form."
+    ],
+    "translation": "Nom de l'attaque"
   },
   "jY18IQ": {
     "message": "Attack payable with",
@@ -2237,6 +2291,13 @@
   "kLlRKH": {
     "message": "Card stack preview",
     "translation": "Aperçu de la pile de cartes"
+  },
+  "RkSdQl": {
+    "message": "Card text (optional)",
+    "comments": [
+      "Opens the form for what a hand-made card says: its HP, Abilities, attacks…"
+    ],
+    "translation": "Texte de la carte (facultatif)"
   },
   "Ccpbzh": {
     "message": "Cards",
@@ -2661,6 +2722,9 @@
   },
   "3Vkuiz": {
     "message": "Damage",
+    "comments": [
+      "An attack's damage as printed in the card text form (\"30+\", \"120\")."
+    ],
     "translation": "Dégâts"
   },
   "UxNmvS": {
@@ -3079,10 +3143,31 @@
     "message": "Edit deck",
     "translation": "Modifier le deck"
   },
+  "T7vd8-": {
+    "message": "Edit text",
+    "comments": [
+      "Opens a form to change what a card in the deck says."
+    ],
+    "translation": "Modifier le texte"
+  },
   "CMMU03": {
     "message": "Edit…",
     "context": "change the keyboard shortcuts",
     "translation": "Modifier…"
+  },
+  "MRZxAn": {
+    "message": "Edited",
+    "comments": [
+      "A card whose text this deck has changed."
+    ],
+    "translation": "Modifiée"
+  },
+  "awKkB_": {
+    "message": "Effect",
+    "comments": [
+      "A Trainer's or Energy's text in the card text form."
+    ],
+    "translation": "Effet"
   },
   "eAabzD": {
     "message": "Emblem",
@@ -3117,6 +3202,13 @@
   "04Gro-": {
     "message": "Energy cards",
     "translation": "Cartes Énergie"
+  },
+  "Rh6VjL": {
+    "message": "Energy cost",
+    "comments": [
+      "An attack's Energy cost in the card text form."
+    ],
+    "translation": "Coût en Énergie"
   },
   "i07JvD": {
     "message": "Energy, evolutions, Trainers and the Bench",
@@ -3872,6 +3964,10 @@
     "message": "Keys and commands",
     "translation": "Touches et commandes"
   },
+  "KSCnVQ": {
+    "message": "Kind",
+    "translation": "Type de carte"
+  },
   "_rugva": {
     "message": "Knock Out",
     "translation": "Mettre K.O."
@@ -4447,6 +4543,10 @@
   "erpnaP": {
     "message": "Name contains the words",
     "translation": "Le nom contient les mots"
+  },
+  "VJISiI": {
+    "message": "Name every Ability and attack.",
+    "translation": "Nommez chaque talent et chaque attaque."
   },
   "4jBgrs": {
     "message": "Name: up to {max} characters.",
@@ -5501,6 +5601,13 @@
     "message": "Remove {name} from {seat}",
     "translation": "Retirer {name} de {seat}"
   },
+  "-RrJRY": {
+    "message": "Remove {typeName}",
+    "comments": [
+      "Takes one Energy symbol off an attack's cost. {typeName} is a type (\"Fire\")."
+    ],
+    "translation": "Retirer {typeName}"
+  },
   "-cND-P": {
     "message": "Remove all damage",
     "translation": "Retirer tous les dégâts"
@@ -5536,6 +5643,20 @@
   "-WTtkb": {
     "message": "Remove the picture",
     "translation": "Retirer l'image"
+  },
+  "Rk2OJ2": {
+    "message": "Remove this Ability",
+    "comments": [
+      "Takes an Ability out of the card text form."
+    ],
+    "translation": "Retirer ce talent"
+  },
+  "2yyId8": {
+    "message": "Remove this attack",
+    "comments": [
+      "Takes an attack out of the card text form."
+    ],
+    "translation": "Retirer cette attaque"
   },
   "jionWu": {
     "message": "Rename",
@@ -5622,9 +5743,12 @@
     "message": "Resistance",
     "translation": "Résistance"
   },
-  "q53LG2": {
-    "message": "Resistance {resistance}",
-    "translation": "Résistance {resistance}"
+  "16u0Db": {
+    "message": "Resistance amount",
+    "comments": [
+      "-30, -20…"
+    ],
+    "translation": "Valeur de Résistance"
   },
   "253h9G": {
     "message": "Restart",
@@ -5816,6 +5940,13 @@
     "message": "Rule Box",
     "translation": "Encadré Règle"
   },
+  "4EZrJN": {
+    "message": "Rules",
+    "comments": [
+      "A Pokémon's rule box text (ex, V…) in the card text form."
+    ],
+    "translation": "Règles"
+  },
   "3JjdaA": {
     "message": "Run",
     "comments": [
@@ -5845,6 +5976,11 @@
   },
   "tfDRzk": {
     "message": "Save",
+    "translation": "Enregistrer"
+  },
+  "5MVcjl": {
+    "message": "Save",
+    "context": "save a card's text",
     "translation": "Enregistrer"
   },
   "A7uAwg": {
@@ -6339,6 +6475,10 @@
     "message": "Solo table",
     "translation": "Table solo"
   },
+  "gzI0hU": {
+    "message": "Some of it is too long.",
+    "translation": "Une partie est trop longue."
+  },
   "5n8ONW": {
     "message": "Sort",
     "context": "sort the cards in a pile",
@@ -6483,6 +6623,11 @@
     "message": "Stadiums",
     "context": "Trainer cards by kind",
     "translation": "Stades"
+  },
+  "tZd3OX": {
+    "message": "Stage",
+    "context": "Pokémon stage",
+    "translation": "Niveau"
   },
   "0dnJ9h": {
     "message": "Stage 1",
@@ -7241,6 +7386,11 @@
     "message": "Type",
     "translation": "Type"
   },
+  "APQglZ": {
+    "message": "Type",
+    "context": "a Pokémon's type",
+    "translation": "Type"
+  },
   "vnRpA8": {
     "message": "Type",
     "context": "Pokémon type",
@@ -7338,6 +7488,13 @@
     "message": "Use on {seat}",
     "translation": "Utiliser sur {seat}"
   },
+  "4yqCjo": {
+    "message": "Use the printed text",
+    "comments": [
+      "Puts back a card's text as its print has it."
+    ],
+    "translation": "Utiliser le texte imprimé"
+  },
   "yoAGc6": {
     "message": "Use this back",
     "translation": "Utiliser ce dos"
@@ -7421,13 +7578,26 @@
     "message": "Weakness",
     "translation": "Faiblesse"
   },
-  "aI6OYa": {
-    "message": "Weakness {weakness}",
-    "translation": "Faiblesse {weakness}"
+  "XcRlur": {
+    "message": "Weakness amount",
+    "comments": [
+      "×2, +20…"
+    ],
+    "translation": "Valeur de Faiblesse"
   },
   "PuBnEO": {
     "message": "Welcome to PTCG-sim",
     "translation": "Bienvenue sur PTCG-sim"
+  },
+  "FW2Y8K": {
+    "message": "What it does",
+    "comments": [
+      "An Ability's or attack's text in the card text form.",
+      "An Ability's or attack's text in the card text form.",
+      "An Ability's or attack's text in the card text form.",
+      "An Ability's or attack's text in the card text form."
+    ],
+    "translation": "Effet"
   },
   "3ePd3I": {
     "message": "What's new",
@@ -7459,6 +7629,13 @@
       "The Pokémon World Championships"
     ],
     "translation": "Championnats du monde"
+  },
+  "B2e0jn": {
+    "message": "Write {0}, {1}, {2}… for Energy symbols.",
+    "comments": [
+      "A hint under the card text form. {0}, {1} and {2} are the codes \"{R}\", \"{W}\" and \"{C}\", drawn as the Fire, Water and Colorless Energy symbols."
+    ],
+    "translation": "Écrivez {0}, {1}, {2}… pour les symboles Énergie."
   },
   "n1kezF": {
     "message": "Yes",

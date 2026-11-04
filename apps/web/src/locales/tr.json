@@ -1166,6 +1166,13 @@
     "message": "{name}: try it",
     "translation": "{name}: dene"
   },
+  "LDV8pO": {
+    "message": "{name}'s text",
+    "comments": [
+      "The form a card's text is written in. {name} is the card."
+    ],
+    "translation": "{name} kartının metni"
+  },
   "cgmx3-": {
     "message": "{name}'s turn",
     "comments": [
@@ -1549,6 +1556,20 @@
     "context": "shortcut key caption",
     "translation": "Yetenek"
   },
+  "v6QHdW": {
+    "message": "Ability {0}",
+    "comments": [
+      "One of the Abilities in the card text form."
+    ],
+    "translation": "Yetenek {0}"
+  },
+  "9lk9kt": {
+    "message": "Ability name",
+    "comments": [
+      "An Ability's name in the card text form."
+    ],
+    "translation": "Yetenek adı"
+  },
   "uFV0XA": {
     "message": "Ability used",
     "comments": [
@@ -1630,6 +1651,13 @@
     "message": "Add a picture.",
     "translation": "Resim ekle."
   },
+  "510vGF": {
+    "message": "Add an Energy to the cost",
+    "comments": [
+      "A list of the eleven types; choosing one adds it."
+    ],
+    "translation": "Maliyete Enerji ekle"
+  },
   "6ZbKYu": {
     "message": "Add another stadium piece",
     "translation": "Başka bir stadyum parçası ekle"
@@ -1665,6 +1693,13 @@
   "JTbT6L": {
     "message": "Add special condition",
     "translation": "Özel durum ekle"
+  },
+  "MwcOtB": {
+    "message": "Add text",
+    "comments": [
+      "Opens a form to write what a hand-made card says."
+    ],
+    "translation": "Metin ekle"
   },
   "ZVI875": {
     "message": "Add to deck",
@@ -1885,10 +1920,29 @@
     "message": "Attached to {0}",
     "translation": "{0} Pokémon'una bağlı"
   },
+  "0Peb5J": {
+    "message": "Attack",
+    "context": "add an attack",
+    "translation": "Saldırı"
+  },
   "Hdi9Gs": {
     "message": "Attack",
     "context": "declare an attack",
     "translation": "Saldır"
+  },
+  "WQBwsg": {
+    "message": "Attack {0}",
+    "comments": [
+      "One of the attacks in the card text form."
+    ],
+    "translation": "Saldırı {0}"
+  },
+  "Aq_LKG": {
+    "message": "Attack name",
+    "comments": [
+      "An attack's name in the card text form."
+    ],
+    "translation": "Saldırı adı"
   },
   "jY18IQ": {
     "message": "Attack payable with",
@@ -2237,6 +2291,13 @@
   "kLlRKH": {
     "message": "Card stack preview",
     "translation": "Kart yığını önizlemesi"
+  },
+  "RkSdQl": {
+    "message": "Card text (optional)",
+    "comments": [
+      "Opens the form for what a hand-made card says: its HP, Abilities, attacks…"
+    ],
+    "translation": "Kart metni (isteğe bağlı)"
   },
   "Ccpbzh": {
     "message": "Cards",
@@ -2661,6 +2722,9 @@
   },
   "3Vkuiz": {
     "message": "Damage",
+    "comments": [
+      "An attack's damage as printed in the card text form (\"30+\", \"120\")."
+    ],
     "translation": "Hasar"
   },
   "UxNmvS": {
@@ -3079,10 +3143,31 @@
     "message": "Edit deck",
     "translation": "Desteyi düzenle"
   },
+  "T7vd8-": {
+    "message": "Edit text",
+    "comments": [
+      "Opens a form to change what a card in the deck says."
+    ],
+    "translation": "Metni düzenle"
+  },
   "CMMU03": {
     "message": "Edit…",
     "context": "change the keyboard shortcuts",
     "translation": "Düzenle…"
+  },
+  "MRZxAn": {
+    "message": "Edited",
+    "comments": [
+      "A card whose text this deck has changed."
+    ],
+    "translation": "Düzenlendi"
+  },
+  "awKkB_": {
+    "message": "Effect",
+    "comments": [
+      "A Trainer's or Energy's text in the card text form."
+    ],
+    "translation": "Etki"
   },
   "eAabzD": {
     "message": "Emblem",
@@ -3117,6 +3202,13 @@
   "04Gro-": {
     "message": "Energy cards",
     "translation": "Enerji kartları"
+  },
+  "Rh6VjL": {
+    "message": "Energy cost",
+    "comments": [
+      "An attack's Energy cost in the card text form."
+    ],
+    "translation": "Enerji maliyeti"
   },
   "i07JvD": {
     "message": "Energy, evolutions, Trainers and the Bench",
@@ -3872,6 +3964,10 @@
     "message": "Keys and commands",
     "translation": "Tuşlar ve komutlar"
   },
+  "KSCnVQ": {
+    "message": "Kind",
+    "translation": "Tür"
+  },
   "_rugva": {
     "message": "Knock Out",
     "translation": "Nakavt"
@@ -4447,6 +4543,10 @@
   "erpnaP": {
     "message": "Name contains the words",
     "translation": "Adda şu kelimeler geçiyor"
+  },
+  "VJISiI": {
+    "message": "Name every Ability and attack.",
+    "translation": "Her Yeteneğe ve saldırıya ad ver."
   },
   "4jBgrs": {
     "message": "Name: up to {max} characters.",
@@ -5501,6 +5601,13 @@
     "message": "Remove {name} from {seat}",
     "translation": "{name} destesini {seat} koltuğundan kaldır"
   },
+  "-RrJRY": {
+    "message": "Remove {typeName}",
+    "comments": [
+      "Takes one Energy symbol off an attack's cost. {typeName} is a type (\"Fire\")."
+    ],
+    "translation": "{typeName} türünü kaldır"
+  },
   "-cND-P": {
     "message": "Remove all damage",
     "translation": "Tüm hasarı kaldır"
@@ -5536,6 +5643,20 @@
   "-WTtkb": {
     "message": "Remove the picture",
     "translation": "Resmi kaldır"
+  },
+  "Rk2OJ2": {
+    "message": "Remove this Ability",
+    "comments": [
+      "Takes an Ability out of the card text form."
+    ],
+    "translation": "Bu Yeteneği kaldır"
+  },
+  "2yyId8": {
+    "message": "Remove this attack",
+    "comments": [
+      "Takes an attack out of the card text form."
+    ],
+    "translation": "Bu saldırıyı kaldır"
   },
   "jionWu": {
     "message": "Rename",
@@ -5622,9 +5743,12 @@
     "message": "Resistance",
     "translation": "Direnç"
   },
-  "q53LG2": {
-    "message": "Resistance {resistance}",
-    "translation": "Direnç {resistance}"
+  "16u0Db": {
+    "message": "Resistance amount",
+    "comments": [
+      "-30, -20…"
+    ],
+    "translation": "Direnç miktarı"
   },
   "253h9G": {
     "message": "Restart",
@@ -5816,6 +5940,13 @@
     "message": "Rule Box",
     "translation": "Kural Kutusu"
   },
+  "4EZrJN": {
+    "message": "Rules",
+    "comments": [
+      "A Pokémon's rule box text (ex, V…) in the card text form."
+    ],
+    "translation": "Kurallar"
+  },
   "3JjdaA": {
     "message": "Run",
     "comments": [
@@ -5845,6 +5976,11 @@
   },
   "tfDRzk": {
     "message": "Save",
+    "translation": "Kaydet"
+  },
+  "5MVcjl": {
+    "message": "Save",
+    "context": "save a card's text",
     "translation": "Kaydet"
   },
   "A7uAwg": {
@@ -6339,6 +6475,10 @@
     "message": "Solo table",
     "translation": "Solo masa"
   },
+  "gzI0hU": {
+    "message": "Some of it is too long.",
+    "translation": "Bir kısmı çok uzun."
+  },
   "5n8ONW": {
     "message": "Sort",
     "context": "sort the cards in a pile",
@@ -6483,6 +6623,11 @@
     "message": "Stadiums",
     "context": "Trainer cards by kind",
     "translation": "Stadyumlar"
+  },
+  "tZd3OX": {
+    "message": "Stage",
+    "context": "Pokémon stage",
+    "translation": "Aşama"
   },
   "0dnJ9h": {
     "message": "Stage 1",
@@ -7241,6 +7386,11 @@
     "message": "Type",
     "translation": "Tür"
   },
+  "APQglZ": {
+    "message": "Type",
+    "context": "a Pokémon's type",
+    "translation": "Tip"
+  },
   "vnRpA8": {
     "message": "Type",
     "context": "Pokémon type",
@@ -7338,6 +7488,13 @@
     "message": "Use on {seat}",
     "translation": "{seat} için kullan"
   },
+  "4yqCjo": {
+    "message": "Use the printed text",
+    "comments": [
+      "Puts back a card's text as its print has it."
+    ],
+    "translation": "Basılı metni kullan"
+  },
   "yoAGc6": {
     "message": "Use this back",
     "translation": "Bu arka yüzü kullan"
@@ -7421,13 +7578,26 @@
     "message": "Weakness",
     "translation": "Zayıflık"
   },
-  "aI6OYa": {
-    "message": "Weakness {weakness}",
-    "translation": "Zayıflık {weakness}"
+  "XcRlur": {
+    "message": "Weakness amount",
+    "comments": [
+      "×2, +20…"
+    ],
+    "translation": "Zayıflık miktarı"
   },
   "PuBnEO": {
     "message": "Welcome to PTCG-sim",
     "translation": "PTCG-sim'e hoş geldin"
+  },
+  "FW2Y8K": {
+    "message": "What it does",
+    "comments": [
+      "An Ability's or attack's text in the card text form.",
+      "An Ability's or attack's text in the card text form.",
+      "An Ability's or attack's text in the card text form.",
+      "An Ability's or attack's text in the card text form."
+    ],
+    "translation": "Ne yapar"
   },
   "3ePd3I": {
     "message": "What's new",
@@ -7459,6 +7629,13 @@
       "The Pokémon World Championships"
     ],
     "translation": "Dünya Şampiyonası"
+  },
+  "B2e0jn": {
+    "message": "Write {0}, {1}, {2}… for Energy symbols.",
+    "comments": [
+      "A hint under the card text form. {0}, {1} and {2} are the codes \"{R}\", \"{W}\" and \"{C}\", drawn as the Fire, Water and Colorless Energy symbols."
+    ],
+    "translation": "Enerji sembolleri için {0}, {1}, {2}… yaz."
   },
   "n1kezF": {
     "message": "Yes",

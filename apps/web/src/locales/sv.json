@@ -1166,6 +1166,13 @@
     "message": "{name}: try it",
     "translation": "{name}: prova"
   },
+  "LDV8pO": {
+    "message": "{name}'s text",
+    "comments": [
+      "The form a card's text is written in. {name} is the card."
+    ],
+    "translation": "Text för {name}"
+  },
   "cgmx3-": {
     "message": "{name}'s turn",
     "comments": [
@@ -1549,6 +1556,20 @@
     "context": "shortcut key caption",
     "translation": "Förmåga"
   },
+  "v6QHdW": {
+    "message": "Ability {0}",
+    "comments": [
+      "One of the Abilities in the card text form."
+    ],
+    "translation": "Förmåga {0}"
+  },
+  "9lk9kt": {
+    "message": "Ability name",
+    "comments": [
+      "An Ability's name in the card text form."
+    ],
+    "translation": "Förmågans namn"
+  },
   "uFV0XA": {
     "message": "Ability used",
     "comments": [
@@ -1630,6 +1651,13 @@
     "message": "Add a picture.",
     "translation": "Lägg till en bild."
   },
+  "510vGF": {
+    "message": "Add an Energy to the cost",
+    "comments": [
+      "A list of the eleven types; choosing one adds it."
+    ],
+    "translation": "Lägg till en energi i kostnaden"
+  },
   "6ZbKYu": {
     "message": "Add another stadium piece",
     "translation": "Lägg till en stadiondel till"
@@ -1665,6 +1693,13 @@
   "JTbT6L": {
     "message": "Add special condition",
     "translation": "Lägg till specialtillstånd"
+  },
+  "MwcOtB": {
+    "message": "Add text",
+    "comments": [
+      "Opens a form to write what a hand-made card says."
+    ],
+    "translation": "Lägg till text"
   },
   "ZVI875": {
     "message": "Add to deck",
@@ -1885,10 +1920,29 @@
     "message": "Attached to {0}",
     "translation": "Fäst vid {0}"
   },
+  "0Peb5J": {
+    "message": "Attack",
+    "context": "add an attack",
+    "translation": "Attack"
+  },
   "Hdi9Gs": {
     "message": "Attack",
     "context": "declare an attack",
     "translation": "Attackera"
+  },
+  "WQBwsg": {
+    "message": "Attack {0}",
+    "comments": [
+      "One of the attacks in the card text form."
+    ],
+    "translation": "Attack {0}"
+  },
+  "Aq_LKG": {
+    "message": "Attack name",
+    "comments": [
+      "An attack's name in the card text form."
+    ],
+    "translation": "Attackens namn"
   },
   "jY18IQ": {
     "message": "Attack payable with",
@@ -2237,6 +2291,13 @@
   "kLlRKH": {
     "message": "Card stack preview",
     "translation": "Förhandsvisning av korthög"
+  },
+  "RkSdQl": {
+    "message": "Card text (optional)",
+    "comments": [
+      "Opens the form for what a hand-made card says: its HP, Abilities, attacks…"
+    ],
+    "translation": "Kortets text (valfritt)"
   },
   "Ccpbzh": {
     "message": "Cards",
@@ -2661,6 +2722,9 @@
   },
   "3Vkuiz": {
     "message": "Damage",
+    "comments": [
+      "An attack's damage as printed in the card text form (\"30+\", \"120\")."
+    ],
     "translation": "Skada"
   },
   "UxNmvS": {
@@ -3079,10 +3143,31 @@
     "message": "Edit deck",
     "translation": "Redigera lek"
   },
+  "T7vd8-": {
+    "message": "Edit text",
+    "comments": [
+      "Opens a form to change what a card in the deck says."
+    ],
+    "translation": "Redigera text"
+  },
   "CMMU03": {
     "message": "Edit…",
     "context": "change the keyboard shortcuts",
     "translation": "Redigera…"
+  },
+  "MRZxAn": {
+    "message": "Edited",
+    "comments": [
+      "A card whose text this deck has changed."
+    ],
+    "translation": "Redigerad"
+  },
+  "awKkB_": {
+    "message": "Effect",
+    "comments": [
+      "A Trainer's or Energy's text in the card text form."
+    ],
+    "translation": "Effekt"
   },
   "eAabzD": {
     "message": "Emblem",
@@ -3117,6 +3202,13 @@
   "04Gro-": {
     "message": "Energy cards",
     "translation": "Energikort"
+  },
+  "Rh6VjL": {
+    "message": "Energy cost",
+    "comments": [
+      "An attack's Energy cost in the card text form."
+    ],
+    "translation": "Energikostnad"
   },
   "i07JvD": {
     "message": "Energy, evolutions, Trainers and the Bench",
@@ -3872,6 +3964,10 @@
     "message": "Keys and commands",
     "translation": "Tangenter och kommandon"
   },
+  "KSCnVQ": {
+    "message": "Kind",
+    "translation": "Sort"
+  },
   "_rugva": {
     "message": "Knock Out",
     "translation": "Knocka ut"
@@ -4447,6 +4543,10 @@
   "erpnaP": {
     "message": "Name contains the words",
     "translation": "Namnet innehåller orden"
+  },
+  "VJISiI": {
+    "message": "Name every Ability and attack.",
+    "translation": "Ge alla förmågor och attacker ett namn."
   },
   "4jBgrs": {
     "message": "Name: up to {max} characters.",
@@ -5501,6 +5601,13 @@
     "message": "Remove {name} from {seat}",
     "translation": "Ta bort {name} från {seat}"
   },
+  "-RrJRY": {
+    "message": "Remove {typeName}",
+    "comments": [
+      "Takes one Energy symbol off an attack's cost. {typeName} is a type (\"Fire\")."
+    ],
+    "translation": "Ta bort {typeName}"
+  },
   "-cND-P": {
     "message": "Remove all damage",
     "translation": "Ta bort all skada"
@@ -5536,6 +5643,20 @@
   "-WTtkb": {
     "message": "Remove the picture",
     "translation": "Ta bort bilden"
+  },
+  "Rk2OJ2": {
+    "message": "Remove this Ability",
+    "comments": [
+      "Takes an Ability out of the card text form."
+    ],
+    "translation": "Ta bort den här förmågan"
+  },
+  "2yyId8": {
+    "message": "Remove this attack",
+    "comments": [
+      "Takes an attack out of the card text form."
+    ],
+    "translation": "Ta bort den här attacken"
   },
   "jionWu": {
     "message": "Rename",
@@ -5622,9 +5743,12 @@
     "message": "Resistance",
     "translation": "Resistens"
   },
-  "q53LG2": {
-    "message": "Resistance {resistance}",
-    "translation": "Resistens {resistance}"
+  "16u0Db": {
+    "message": "Resistance amount",
+    "comments": [
+      "-30, -20…"
+    ],
+    "translation": "Resistensens storlek"
   },
   "253h9G": {
     "message": "Restart",
@@ -5816,6 +5940,13 @@
     "message": "Rule Box",
     "translation": "Regelruta"
   },
+  "4EZrJN": {
+    "message": "Rules",
+    "comments": [
+      "A Pokémon's rule box text (ex, V…) in the card text form."
+    ],
+    "translation": "Regler"
+  },
   "3JjdaA": {
     "message": "Run",
     "comments": [
@@ -5845,6 +5976,11 @@
   },
   "tfDRzk": {
     "message": "Save",
+    "translation": "Spara"
+  },
+  "5MVcjl": {
+    "message": "Save",
+    "context": "save a card's text",
     "translation": "Spara"
   },
   "A7uAwg": {
@@ -6339,6 +6475,10 @@
     "message": "Solo table",
     "translation": "Solobord"
   },
+  "gzI0hU": {
+    "message": "Some of it is too long.",
+    "translation": "Något av det är för långt."
+  },
   "5n8ONW": {
     "message": "Sort",
     "context": "sort the cards in a pile",
@@ -6483,6 +6623,11 @@
     "message": "Stadiums",
     "context": "Trainer cards by kind",
     "translation": "Stadioner"
+  },
+  "tZd3OX": {
+    "message": "Stage",
+    "context": "Pokémon stage",
+    "translation": "Stage"
   },
   "0dnJ9h": {
     "message": "Stage 1",
@@ -7241,6 +7386,11 @@
     "message": "Type",
     "translation": "Typ"
   },
+  "APQglZ": {
+    "message": "Type",
+    "context": "a Pokémon's type",
+    "translation": "Typ"
+  },
   "vnRpA8": {
     "message": "Type",
     "context": "Pokémon type",
@@ -7338,6 +7488,13 @@
     "message": "Use on {seat}",
     "translation": "Använd på {seat}"
   },
+  "4yqCjo": {
+    "message": "Use the printed text",
+    "comments": [
+      "Puts back a card's text as its print has it."
+    ],
+    "translation": "Använd den tryckta texten"
+  },
   "yoAGc6": {
     "message": "Use this back",
     "translation": "Använd den här baksidan"
@@ -7421,13 +7578,26 @@
     "message": "Weakness",
     "translation": "Svaghet"
   },
-  "aI6OYa": {
-    "message": "Weakness {weakness}",
-    "translation": "Svaghet {weakness}"
+  "XcRlur": {
+    "message": "Weakness amount",
+    "comments": [
+      "×2, +20…"
+    ],
+    "translation": "Svaghetens storlek"
   },
   "PuBnEO": {
     "message": "Welcome to PTCG-sim",
     "translation": "Välkommen till PTCG-sim"
+  },
+  "FW2Y8K": {
+    "message": "What it does",
+    "comments": [
+      "An Ability's or attack's text in the card text form.",
+      "An Ability's or attack's text in the card text form.",
+      "An Ability's or attack's text in the card text form.",
+      "An Ability's or attack's text in the card text form."
+    ],
+    "translation": "Vad den gör"
   },
   "3ePd3I": {
     "message": "What's new",
@@ -7459,6 +7629,13 @@
       "The Pokémon World Championships"
     ],
     "translation": "Worlds"
+  },
+  "B2e0jn": {
+    "message": "Write {0}, {1}, {2}… for Energy symbols.",
+    "comments": [
+      "A hint under the card text form. {0}, {1} and {2} are the codes \"{R}\", \"{W}\" and \"{C}\", drawn as the Fire, Water and Colorless Energy symbols."
+    ],
+    "translation": "Skriv {0}, {1}, {2}… för energisymboler."
   },
   "n1kezF": {
     "message": "Yes",

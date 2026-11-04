@@ -19,6 +19,7 @@ import {
   formatDecklistText,
   removeCard,
   replacePrinting,
+  setCardText,
   ruleName,
   type CatalogCard,
   type DeckCard,
@@ -701,7 +702,13 @@ export const DeckEditor = ({
         onAdd={add}
         onRemove={remove}
         onSwapPrint={(fromIds, to) => {
-          const replacement = toDeckCard(to);
+          // The deck's own text for the card (ADR-043) goes with it to
+          // the print it is swapped for.
+          const text = current().find(
+            (entry) => fromIds.includes(entry.card.id) && entry.card.text
+          )?.card.text;
+          const printed = toDeckCard(to);
+          const replacement = text ? { ...printed, text } : printed;
           commit(
             fromIds.reduce(
               (list, fromId) => replacePrinting(list, fromId, replacement),
@@ -716,6 +723,9 @@ export const DeckEditor = ({
           });
           flashSaved();
         }}
+        onEditText={(cardIds, text) =>
+          commit(setCardText(current(), cardIds, text))
+        }
       />
       <CustomCardDialog
         open={customOpen}

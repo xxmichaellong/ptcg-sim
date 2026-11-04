@@ -228,3 +228,76 @@ describe('custom card pictures', () => {
     expect(cards[0]!.image).toBe('/v2/images/top.png');
   });
 });
+
+describe('a hand-made card’s text (ADR-043)', () => {
+  it('goes with the card, and makes it another card than the same picture without it', async () => {
+    await fill('#nativeCustomCardName', 'Homebrew');
+    await act(async () => {
+      const file = new File(['x'], 'homebrew.png', { type: 'image/png' });
+      const input = $<HTMLInputElement>('#nativeCustomCardImageFile-0');
+      Object.defineProperty(input, 'files', {
+        value: [file],
+        configurable: true,
+      });
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    await act(async () => {
+      const details = $<HTMLDetailsElement>('.native-custom-card-text');
+      details.open = true;
+      details.dispatchEvent(new Event('toggle'));
+    });
+    await act(async () =>
+      [
+        ...host.querySelectorAll<HTMLButtonElement>(
+          '.card-text-editor__add button'
+        ),
+      ]
+        .find((button) => button.textContent?.includes('Attack'))!
+        .click()
+    );
+    await fill('.card-text-editor__name', 'Splash');
+    await act(async () =>
+      $<HTMLButtonElement>('#nativeCustomCardSubmit').click()
+    );
+    expect(onAdd).toHaveBeenCalledOnce();
+    const [[card]] = onAdd.mock.calls[0]!;
+    expect(card!.text).toEqual({
+      attacks: [{ name: 'Splash', cost: [], damage: '' }],
+    });
+  });
+
+  it('refuses an attack written with no name', async () => {
+    await fill('#nativeCustomCardName', 'Homebrew');
+    await act(async () => {
+      const file = new File(['x'], 'homebrew.png', { type: 'image/png' });
+      const input = $<HTMLInputElement>('#nativeCustomCardImageFile-0');
+      Object.defineProperty(input, 'files', {
+        value: [file],
+        configurable: true,
+      });
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    await act(async () => {
+      const details = $<HTMLDetailsElement>('.native-custom-card-text');
+      details.open = true;
+      details.dispatchEvent(new Event('toggle'));
+    });
+    await act(async () =>
+      [
+        ...host.querySelectorAll<HTMLButtonElement>(
+          '.card-text-editor__add button'
+        ),
+      ]
+        .find((button) => button.textContent?.includes('Attack'))!
+        .click()
+    );
+    await fill('.card-text-editor__damage', '30');
+    await act(async () =>
+      $<HTMLButtonElement>('#nativeCustomCardSubmit').click()
+    );
+    expect(onAdd).not.toHaveBeenCalled();
+    expect($('#nativeCustomCardError').textContent).toBe(
+      'Name every Ability and attack.'
+    );
+  });
+});

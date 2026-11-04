@@ -15,6 +15,7 @@ export {
   ruleName,
   sameDeckList,
   setCardCount,
+  setCardText,
   sortDeckList,
 } from './deck-list.js';
 export type {

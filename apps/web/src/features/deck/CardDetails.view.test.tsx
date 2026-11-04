@@ -124,3 +124,97 @@ describe('card details controls', () => {
     expect(onSwapPrint).toHaveBeenCalledWith(['custom:EN', 'custom:DE'], other);
   });
 });
+
+describe('a card’s own text in the sheet (ADR-043)', () => {
+  const charizard = catalog.byId.get('OBF 125')!;
+  const deckCard: DeckCard = {
+    id: 'OBF 125',
+    name: 'Charizard ex',
+    category: 'Pokémon',
+    image: charizard.image,
+    set: 'OBF',
+    number: '125',
+  };
+
+  const render = async (card: DeckCard, onEditText = vi.fn()) => {
+    const deck = deckListOf([{ card, count: 2 }]);
+    const inspected = { kind: 'deck', card } as const;
+    const host = document.createElement('div');
+    document.body.append(host);
+    root = createRoot(host);
+    await act(async () =>
+      root!.render(
+        <CardDetails
+          inspected={inspected}
+          facts={cardDetailsFacts(catalog, inspected, deck)}
+          deck={deck}
+          coverId={undefined}
+          onClose={vi.fn()}
+          onShow={vi.fn()}
+          onAdd={vi.fn()}
+          onRemove={vi.fn()}
+          onSwapPrint={vi.fn()}
+          onSetCover={vi.fn()}
+          onEditText={onEditText}
+        />
+      )
+    );
+    return onEditText;
+  };
+  const setValue = async (input: HTMLInputElement, value: string) =>
+    act(async () => {
+      Object.getOwnPropertyDescriptor(
+        HTMLInputElement.prototype,
+        'value'
+      )!.set!.call(input, value);
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+
+  it('edits the printed text into the deck’s own, and saves it for every copy', async () => {
+    const onEditText = await render(deckCard);
+    await act(async () =>
+      document
+        .querySelector<HTMLButtonElement>('[data-card-text-edit]')!
+        .click()
+    );
+    const hp = document.querySelector<HTMLInputElement>(
+      '.card-text-editor input[type="number"]'
+    )!;
+    expect(hp.value).toBe('330');
+    await setValue(hp, '340');
+    await act(async () =>
+      document
+        .querySelector<HTMLFormElement>('.deck-card-details__editor')!
+        .requestSubmit()
+    );
+    expect(onEditText).toHaveBeenCalledWith(
+      ['OBF 125'],
+      expect.objectContaining({
+        hp: 340,
+        abilities: [expect.objectContaining({ name: 'Infernal Reign' })],
+      })
+    );
+  });
+
+  it('saves text written back to the print’s as none, and shows a card’s own as edited', async () => {
+    const onEditText = await render(deckCard);
+    await act(async () =>
+      document
+        .querySelector<HTMLButtonElement>('[data-card-text-edit]')!
+        .click()
+    );
+    await act(async () =>
+      document
+        .querySelector<HTMLFormElement>('.deck-card-details__editor')!
+        .requestSubmit()
+    );
+    expect(onEditText).toHaveBeenCalledWith(['OBF 125'], undefined);
+    await act(async () => root?.unmount());
+    document.body.innerHTML = '';
+    await render({ ...deckCard, text: { hp: 340, rules: 'House rule.' } });
+    const shown = document.querySelector('.deck-card-details__text')!;
+    expect(shown.textContent).toContain('340 HP');
+    expect(shown.textContent).toContain('House rule.');
+    expect(shown.textContent).toContain('Edited');
+  });
+});

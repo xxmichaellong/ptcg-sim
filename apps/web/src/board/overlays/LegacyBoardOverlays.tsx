@@ -2286,6 +2286,8 @@ const Preview = ({
       <div
         ref={container}
         className={`pokemon-window is-${cards[0]?.side ?? 'local'}`}
+        // Its words read in the page's direction; the table's don't.
+        dir={direction}
         data-legacy-card-preview="true"
         data-preview-kind="stack"
         data-preview-dragging-card={draggingCardId}

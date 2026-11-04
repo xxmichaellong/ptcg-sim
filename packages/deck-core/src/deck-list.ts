@@ -172,6 +172,30 @@ export const customCardId = (parts: readonly unknown[]): string => {
   return `custom:${(first >>> 0).toString(36)}${(second >>> 0).toString(36)}`;
 };
 
+/**
+ * Gives the cards with these ids their own text (ADR-043), or none to say
+ * their print's again: every copy of each, where they are in the list.
+ */
+export const setCardText = (
+  list: DeckList,
+  cardIds: readonly string[],
+  text: DeckCardText | undefined
+): DeckList => {
+  const ids = new Set(cardIds);
+  let changed = false;
+  const next = list.map((entry) => {
+    if (!ids.has(entry.card.id)) return entry;
+    const { text: _old, ...card } = entry.card;
+    if (text === undefined && entry.card.text === undefined) return entry;
+    changed = true;
+    return freezeEntry(
+      Object.freeze(text === undefined ? card : { ...card, text }),
+      entry.count
+    );
+  });
+  return changed ? Object.freeze(next) : list;
+};
+
 /** Sets how many copies of `card` the list holds; zero removes it. */
 export const setCardCount = (
   list: DeckList,

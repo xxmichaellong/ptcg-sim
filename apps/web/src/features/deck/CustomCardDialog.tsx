@@ -7,6 +7,7 @@ import {
   customCardId,
   type CardCategory,
   type DeckCard,
+  type DeckCardText,
 } from '@ptcgsim/deck-core';
 import {
   resolveCardPresentation,
@@ -22,6 +23,12 @@ import {
 
 import { trapFocus } from '../../ui/focus.js';
 import { isInputMethodKey } from '../../ui/input-method.js';
+import {
+  CardTextEditor,
+  hasUnnamedMoves,
+  isWritableCardText,
+  tidyCardText,
+} from './CardTextEditor.js';
 import { uploadCardImage, type CardImageFailure } from './custom-card-image.js';
 import { categoryName } from './deck-labels.js';
 import { isTextEntry } from '../../ui/text-entry.js';
@@ -273,6 +280,9 @@ export const CustomCardDialog = ({
   const [finish, setFinish] = useState('auto');
   const [foilRegion, setFoilRegion] = useState('auto');
   const [slots, setSlots] = useState<readonly Slot[]>([EMPTY]);
+  // What the card says (ADR-043): written here, it plays on the table.
+  const [text, setText] = useState<DeckCardText>({});
+  const [textOpen, setTextOpen] = useState(false);
   const [error, setError] = useState('');
   const nameRef = useRef<HTMLInputElement>(null);
   /** Each slot's upload under way, to drop when it is replaced. */
@@ -295,6 +305,8 @@ export const CustomCardDialog = ({
     setFinish('auto');
     setFoilRegion('auto');
     setSlots([EMPTY]);
+    setText({});
+    setTextOpen(false);
     setError('');
     nameRef.current?.focus();
     return cancelUploads;
@@ -398,6 +410,17 @@ export const CustomCardDialog = ({
       setError(t`Still uploading…`);
       return;
     }
+    if (hasUnnamedMoves(text)) {
+      setTextOpen(true);
+      setError(t`Name every Ability and attack.`);
+      return;
+    }
+    const ownText = tidyCardText(text);
+    if (!isWritableCardText(ownText)) {
+      setTextOpen(true);
+      setError(t`Some of it is too long.`);
+      return;
+    }
     const ready = slots.flatMap((slot) =>
       slot.status === 'ready' ? [slot] : []
     );
@@ -425,11 +448,14 @@ export const CustomCardDialog = ({
           category,
           image,
           presentation ?? null,
+          // The same picture saying something else is another card.
+          ...(ownText ? [ownText] : []),
         ]),
         name: normalizedName,
         category,
         image,
         ...(presentation ? { presentation } : {}),
+        ...(ownText ? { text: ownText } : {}),
       });
     let cards: DeckCard[];
     if (multi) {
@@ -516,7 +542,11 @@ export const CustomCardDialog = ({
         }
       }}
     >
-      <div className="native-deck-builder-modal-box" data-multi={multi}>
+      <div
+        className="native-deck-builder-modal-box"
+        data-multi={multi}
+        data-text-open={textOpen ? 'true' : undefined}
+      >
         <div
           id="nativeCustomCardTitle"
           className="native-deck-builder-modal-title"
@@ -669,6 +699,27 @@ export const CustomCardDialog = ({
             ))}
           </div>
         </div>
+        <details
+          className="native-custom-card-text"
+          open={textOpen}
+          onToggle={(event) => setTextOpen(event.currentTarget.open)}
+        >
+          <summary id="nativeCustomCardTextToggle">
+            <Trans comment="Opens the form for what a hand-made card says: its HP, Abilities, attacks…">
+              Card text (optional)
+            </Trans>
+          </summary>
+          {textOpen ? (
+            <CardTextEditor
+              category={category}
+              value={text}
+              onChange={(next) => {
+                setText(next);
+                setError('');
+              }}
+            />
+          ) : null}
+        </details>
         <div
           id="nativeCustomCardError"
           className="native-deck-builder-modal-error"

@@ -7,8 +7,8 @@
   … so I can basically create a card in any way that I want, or edit
   existing cards to behave differently").
 - Decision date: 2026-11-04
-- Number: 043; its parity exception is PX-083 (the window and named
-  moves).
+- Number: 043; its parity exceptions are PX-083 (the window and named
+  moves) and PX-084 (a card's own text, written in the deck screen).
 - Amends: ADR-032 (the catalog's text reaches the table), ADR-001 (still
   manual: nothing reads the text to enforce a rule).
 
@@ -83,6 +83,22 @@ card itself. Using an Ability was the card menu's "ability used" marker
 7. **The window's presses need no menu open.** They are overlay actions
    with the `window` origin (as the palette's are direct), and they leave
    the window open.
+
+8. **A player writes a card's text in the deck screen**
+   (`CardTextEditor.tsx`): HP, type, stage and what it evolves from; up
+   to four Abilities (kind, name, text) and four attacks (an Energy cost
+   built symbol by symbol, name, damage, text); Weakness and Resistance
+   with their amounts; Retreat; and the rules (a Trainer's or Energy's
+   effect, a Pokémon's rule box). `{R}`-style codes are drawn as Energy
+   symbols. The custom card dialog has it as Card text (optional), so a
+   card made by hand plays with its moves; the same picture with other
+   text is another card. A card in the deck has Edit text (Add text for
+   one with none) in its sheet, which writes the deck's own text for every
+   copy of it, starting from what it says now. Use the printed text takes
+   it off, and text saved back to the print's own is none. The sheet then
+   shows the card's own text, marked Edited. Esc while writing puts the
+   writing away, not the card. A card's own text survives the catalog's
+   upgrades of the deck's facts and a swap to another print.
 
 ## Consequences
 

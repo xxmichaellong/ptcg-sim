@@ -618,6 +618,10 @@
               "kind": "value"
             },
             {
+              "name": "setCardText",
+              "kind": "value"
+            },
+            {
               "name": "SIM_CSV_HEADER",
               "kind": "value"
             },

@@ -118,3 +118,16 @@ describe('cards played as another kind, from the catalog', () => {
     expect(sameDeckList(list, upgraded)).toBe(false);
   });
 });
+
+describe('a card’s own text, through the catalog’s facts (ADR-043)', () => {
+  it('keeps the deck’s own text when a card is brought up to the catalog', () => {
+    const { facts: _facts, ...bare } = deckCardFromCatalog(print('FLI 118'));
+    const text = { hp: 999, rules: 'House rule.' };
+    const upgraded = withCatalogFacts(
+      [{ card: { ...bare, text }, count: 1 }],
+      catalog
+    );
+    expect(upgraded[0]!.card.facts).toBeDefined();
+    expect(upgraded[0]!.card.text).toEqual(text);
+  });
+});

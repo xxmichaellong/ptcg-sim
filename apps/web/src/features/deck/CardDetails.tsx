@@ -1,25 +1,41 @@
+import { ArrowCounterClockwiseIcon } from '@phosphor-icons/react/dist/csr/ArrowCounterClockwise';
 import { CheckIcon } from '@phosphor-icons/react/dist/csr/Check';
 import { MinusIcon } from '@phosphor-icons/react/dist/csr/Minus';
+import { PencilSimpleIcon } from '@phosphor-icons/react/dist/csr/PencilSimple';
 import { PlusIcon } from '@phosphor-icons/react/dist/csr/Plus';
 import { StarIcon } from '@phosphor-icons/react/dist/csr/Star';
 import { XIcon } from '@phosphor-icons/react/dist/csr/X';
 import { plural } from '@lingui/core/macro';
 import { Trans, useLingui } from '@lingui/react/macro';
 import {
+  catalogCardText,
   countOf,
   findCatalogPrint,
   printsOf,
   type CatalogCard,
   type DeckCard,
+  type DeckCardText,
   type DeckList,
+  type EnergyType,
   type LoadedCatalog,
 } from '@ptcgsim/deck-core';
-import { resolveCardPresentation } from '@ptcgsim/game-core';
+import {
+  resolveCardPresentation,
+  sameCardText,
+  type CardText,
+} from '@ptcgsim/game-core';
+import { useEffect, useState } from 'react';
 
 import { readingImageStyle } from '../../ui/card-artwork.js';
 import { Sheet } from '../../ui/Sheet.js';
 import { Tooltip } from '../../ui/Tooltip.js';
 import { CardImage, limitlessScanOf } from './CardImage.js';
+import {
+  CardTextEditor,
+  hasUnnamedMoves,
+  isWritableCardText,
+  tidyCardText,
+} from './CardTextEditor.js';
 import { EnergySymbol, RulesText } from './energy-symbol.js';
 import {
   categoryName,
@@ -100,6 +116,14 @@ export interface CardDetailsProps {
   /** Swaps the deck's copies of one printing (its entries) for another. */
   readonly onSwapPrint: (fromIds: readonly string[], to: CatalogCard) => void;
   readonly onSetCover: (cardId: string) => void;
+  /**
+   * Gives the deck's entries of the card its own text, or none for its
+   * print's again (ADR-043). Without it, the text can't be edited here.
+   */
+  readonly onEditText?: (
+    cardIds: readonly string[],
+    text: DeckCardText | undefined
+  ) => void;
 }
 
 const Legality = ({ card }: { readonly card: CatalogCard }) => {
@@ -126,29 +150,70 @@ const Legality = ({ card }: { readonly card: CatalogCard }) => {
   );
 };
 
-const CardText = ({ card }: { readonly card: CatalogCard }) => {
+/** A Weakness or Resistance: its type's symbol and name, and its amount. */
+const Modifier = ({
+  type,
+  value,
+}: {
+  readonly type: EnergyType | undefined;
+  readonly value: string | undefined;
+}) =>
+  type ? (
+    <>
+      <EnergySymbol type={type} />
+      {energyTypeName(type)}
+      {value ? ` ${value}` : ''}
+    </>
+  ) : (
+    <>—</>
+  );
+
+/**
+ * What a card says: the catalog's, or the deck's own for it (ADR-043),
+ * with the print's set, rarity and the rest when the catalog knows it.
+ */
+const CardText = ({
+  card,
+  text,
+  category,
+  edited,
+}: {
+  readonly card: CatalogCard | undefined;
+  readonly text: DeckCardText;
+  readonly category: CatalogCard['category'];
+  /** The deck gives it its own text. */
+  readonly edited: boolean;
+}) => {
   const { t } = useLingui();
-  const hp = card.hp;
-  const evolvesFrom = card.evolvesFrom;
-  const weakness = card.weakness ? energyTypeName(card.weakness) : '—';
-  const resistance = card.resistance ? energyTypeName(card.resistance) : '—';
-  const retreat = card.retreat ?? 0;
-  const mark = card.regulationMark;
-  const illustrator = card.illustrator;
+  const hp = text.hp;
+  const evolvesFrom = text.evolvesFrom;
+  const retreat = text.retreat ?? 0;
+  const mark = card?.regulationMark;
+  const illustrator = card?.illustrator;
+  const kind = [
+    categoryName(category),
+    text.stage ? stageName(text.stage) : undefined,
+    card?.trainerType ? trainerTypeName(card.trainerType) : undefined,
+    card?.energyType ? energyCardName(card.energyType) : undefined,
+    ...(card?.tags ?? []).filter((tag) => tag !== text.stage).map(tagName),
+  ].filter(Boolean);
   return (
     <div className="deck-card-details__text">
       <p className="deck-card-details__kind">
-        {[
-          categoryName(card.category),
-          card.stage ? stageName(card.stage) : undefined,
-          card.trainerType ? trainerTypeName(card.trainerType) : undefined,
-          card.energyType ? energyCardName(card.energyType) : undefined,
-          ...card.tags.filter((tag) => tag !== card.stage).map(tagName),
-        ]
-          .filter(Boolean)
-          .join(' · ')}
+        {kind.join(' · ')}
         {hp ? (
           <span className="deck-card-details__hp"> · {t`${hp} HP`}</span>
+        ) : null}
+        {text.types?.map((type) => (
+          <EnergySymbol key={type} type={type} />
+        ))}
+        {edited ? (
+          <span className="deck-card-details__edited">
+            <PencilSimpleIcon {...decorative} weight="bold" />
+            <Trans comment="A card whose text this deck has changed.">
+              Edited
+            </Trans>
+          </span>
         ) : null}
       </p>
       {evolvesFrom ? (
@@ -156,26 +221,31 @@ const CardText = ({ card }: { readonly card: CatalogCard }) => {
           <Trans>Evolves from {evolvesFrom}</Trans>
         </p>
       ) : null}
-      {card.abilities.map((ability) => (
-        <div key={ability.name} className="deck-card-details__move">
+      {(text.abilities ?? []).map((ability, index) => (
+        <div
+          key={`${ability.name}-${String(index)}`}
+          className="deck-card-details__move"
+        >
           <p>
             <span className="deck-card-details__ability">{ability.kind}</span>{' '}
             <strong>{ability.name}</strong>
           </p>
-          <p>
-            <RulesText text={ability.text} />
-          </p>
+          {ability.text ? (
+            <p>
+              <RulesText text={ability.text} />
+            </p>
+          ) : null}
         </div>
       ))}
-      {card.attacks.map((attack) => (
+      {(text.attacks ?? []).map((attack, index) => (
         <div
-          key={`${attack.name}-${attack.damage}`}
+          key={`${attack.name}-${attack.damage}-${String(index)}`}
           className="deck-card-details__move"
         >
           <p className="deck-card-details__attack">
             <span className="deck-card-details__cost">
-              {attack.cost.map((type, index) => (
-                <EnergySymbol key={`${type}-${index}`} type={type} />
+              {attack.cost.map((type, at) => (
+                <EnergySymbol key={`${type}-${String(at)}`} type={type} />
               ))}
             </span>
             <strong>{attack.name}</strong>
@@ -192,34 +262,39 @@ const CardText = ({ card }: { readonly card: CatalogCard }) => {
           ) : null}
         </div>
       ))}
-      {card.text ? (
+      {text.rules ? (
         <p className="deck-card-details__effect">
-          <RulesText text={card.text} />
+          <RulesText text={text.rules} />
         </p>
       ) : null}
-      {card.category === 'Pokémon' ? (
+      {category === 'Pokémon' &&
+      (text.weakness || text.resistance || text.retreat !== undefined) ? (
         <p className="deck-card-details__stats">
           <span>
-            <Trans>Weakness {weakness}</Trans>
+            {t`Weakness`}{' '}
+            <Modifier type={text.weakness} value={text.weaknessValue} />
           </span>
           <span>
-            <Trans>Resistance {resistance}</Trans>
+            {t`Resistance`}{' '}
+            <Modifier type={text.resistance} value={text.resistanceValue} />
           </span>
           <span>
             <Trans>Retreat {retreat}</Trans>
           </span>
         </p>
       ) : null}
-      <p className="deck-card-details__muted">
-        {card.set.name} · {card.set.code ?? card.set.id} {card.number}
-        {card.rarity ? ` · ${card.rarity}` : ''}
-        {mark
-          ? ` · ${t({ message: `Mark ${mark}`, comment: "A card's regulation mark" })}`
-          : ''}
-        {illustrator
-          ? ` · ${t({ message: `Illus. ${illustrator}`, comment: "The card's illustrator, abbreviated" })}`
-          : ''}
-      </p>
+      {card ? (
+        <p className="deck-card-details__muted">
+          {card.set.name} · {card.set.code ?? card.set.id} {card.number}
+          {card.rarity ? ` · ${card.rarity}` : ''}
+          {mark
+            ? ` · ${t({ message: `Mark ${mark}`, comment: "A card's regulation mark" })}`
+            : ''}
+          {illustrator
+            ? ` · ${t({ message: `Illus. ${illustrator}`, comment: "The card's illustrator, abbreviated" })}`
+            : ''}
+        </p>
+      ) : null}
     </div>
   );
 };
@@ -235,6 +310,7 @@ export const CardDetails = ({
   onRemove,
   onSwapPrint,
   onSetCover,
+  onEditText,
 }: CardDetailsProps) => {
   const { t } = useLingui();
   const catalogCard = facts?.card;
@@ -262,6 +338,48 @@ export const CardDetails = ({
       ? inspected.card.image
       : (catalogCard?.image ?? inspected?.card.image ?? '');
   const name = inspected?.card.name ?? '';
+  // The deck's entries of the card shown: its own (a deck card), or every
+  // one of its print (a catalog card in the deck). Its text is theirs.
+  const ownIds: readonly string[] =
+    inspected?.kind === 'deck'
+      ? countOf(deck, inspected.card.id) > 0
+        ? [inspected.card.id]
+        : []
+      : catalogCard
+        ? entriesOf(catalogCard.id)
+        : [];
+  const ownText = deck.find(
+    (entry) => ownIds.includes(entry.card.id) && entry.card.text
+  )?.card.text;
+  const printedText = catalogCard ? catalogCardText(catalogCard) : undefined;
+  const category = catalogCard?.category ?? inspected?.card.category;
+  // The text being written, while it is: what the card says now to start.
+  const [draft, setDraft] = useState<DeckCardText | null>(null);
+  const [draftError, setDraftError] = useState('');
+  useEffect(() => {
+    setDraft(null);
+    setDraftError('');
+  }, [shownId, inspected?.kind]);
+  const saveDraft = (): void => {
+    if (!draft || !onEditText) return;
+    if (hasUnnamedMoves(draft)) {
+      setDraftError(t`Name every Ability and attack.`);
+      return;
+    }
+    const tidy = tidyCardText(draft);
+    if (!isWritableCardText(tidy)) {
+      setDraftError(t`Some of it is too long.`);
+      return;
+    }
+    // Written back to the print's own text: the print's it is again.
+    const same =
+      tidy !== undefined &&
+      printedText !== undefined &&
+      sameCardText(tidy as CardText, tidyCardText(printedText) as CardText);
+    onEditText(ownIds, same ? undefined : tidy);
+    setDraft(null);
+    setDraftError('');
+  };
   const turns =
     resolveCardPresentation({
       name,
@@ -275,7 +393,15 @@ export const CardDetails = ({
     <Sheet
       open={inspected !== undefined}
       onOpenChange={(open) => {
-        if (!open) onClose();
+        if (open) return;
+        // Esc (or a press beside it) while its text is being written puts
+        // the writing away first; the card stays open.
+        if (draft) {
+          setDraft(null);
+          setDraftError('');
+          return;
+        }
+        onClose();
       }}
       title={name}
       size="lg"
@@ -359,18 +485,108 @@ export const CardDetails = ({
                   </button>
                 </Tooltip>
               ) : null}
+              {onEditText && ownIds.length > 0 && category && !draft ? (
+                <button
+                  type="button"
+                  className="ds-button ds-button--ghost"
+                  data-card-text-edit=""
+                  onClick={() => setDraft(ownText ?? printedText ?? {})}
+                >
+                  <PencilSimpleIcon {...decorative} weight="bold" />
+                  {ownText || printedText ? (
+                    <Trans comment="Opens a form to change what a card in the deck says.">
+                      Edit text
+                    </Trans>
+                  ) : (
+                    <Trans comment="Opens a form to write what a hand-made card says.">
+                      Add text
+                    </Trans>
+                  )}
+                </button>
+              ) : null}
             </div>
-            {catalogCard ? (
-              <>
-                <Legality card={catalogCard} />
-                <CardText card={catalogCard} />
-              </>
+            {draft && category ? (
+              <form
+                className="deck-card-details__editor"
+                aria-label={t({
+                  message: `${name}'s text`,
+                  comment:
+                    "The form a card's text is written in. {name} is the card.",
+                })}
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  saveDraft();
+                }}
+              >
+                <CardTextEditor
+                  category={category}
+                  value={draft}
+                  onChange={(next) => {
+                    setDraft(next);
+                    setDraftError('');
+                  }}
+                />
+                <p className="deck-card-details__editor-error" role="alert">
+                  {draftError}
+                </p>
+                <div className="deck-card-details__editor-actions">
+                  {printedText && ownText ? (
+                    <button
+                      type="button"
+                      className="ds-button ds-button--ghost"
+                      onClick={() => {
+                        onEditText?.(ownIds, undefined);
+                        setDraft(null);
+                      }}
+                    >
+                      <ArrowCounterClockwiseIcon
+                        {...decorative}
+                        weight="bold"
+                      />
+                      <Trans comment="Puts back a card's text as its print has it.">
+                        Use the printed text
+                      </Trans>
+                    </button>
+                  ) : null}
+                  <span className="deck-card-details__editor-spacer" />
+                  <button
+                    type="button"
+                    className="ds-button ds-button--secondary"
+                    onClick={() => {
+                      setDraft(null);
+                      setDraftError('');
+                    }}
+                  >
+                    <Trans>Cancel</Trans>
+                  </button>
+                  <button
+                    type="submit"
+                    className="ds-button ds-button--primary"
+                  >
+                    <Trans context="save a card's text">Save</Trans>
+                  </button>
+                </div>
+              </form>
             ) : (
-              <p className="deck-card-details__muted">
-                <Trans>Added by hand · legality not checked</Trans>
-              </p>
+              <>
+                {catalogCard ? (
+                  <Legality card={catalogCard} />
+                ) : (
+                  <p className="deck-card-details__muted">
+                    <Trans>Added by hand · legality not checked</Trans>
+                  </p>
+                )}
+                {category && (ownText ?? printedText) ? (
+                  <CardText
+                    card={catalogCard}
+                    text={(ownText ?? printedText)!}
+                    category={category}
+                    edited={ownText !== undefined && printedText !== undefined}
+                  />
+                ) : null}
+              </>
             )}
-            {prints.length > 1 ? (
+            {prints.length > 1 && !draft ? (
               <div className="deck-card-details__prints">
                 <h3>
                   {deckPrint && catalogCard && deckPrint.id !== catalogCard.id
