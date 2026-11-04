@@ -213,7 +213,11 @@ const importCsv = (
       return {
         card: {
           ...found,
-          ...(own || scans.get(print.id)!.size === 1 ? {} : { id: card.id }),
+          // The file's own id where it tells this row from another of the
+          // print: another scan, or the deck's own text for it (ADR-043).
+          ...((own || scans.get(print.id)!.size === 1) && !card.text
+            ? {}
+            : { id: card.id }),
           image: card.image,
           ...(small ? { imageSmall: small } : {}),
           // The file's own text for it stays the deck's.

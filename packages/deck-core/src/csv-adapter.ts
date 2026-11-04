@@ -29,8 +29,11 @@ export const MAX_DECK_TOTAL_CARDS = 100_000;
 export const MAX_DECK_CARD_NAME_CODE_UNITS = 256;
 export const MAX_DECK_CARD_TYPE_CODE_UNITS = 64;
 export const MAX_DECK_IMAGE_URL_CODE_UNITS = 4_096;
-/** A card's own text, as JSON: far past what the table takes (ADR-043). */
-export const MAX_DECK_CARD_TEXT_CODE_UNITS = 8_000;
+/**
+ * A card's own text, as JSON (ADR-043): past the most the table takes
+ * (about 6,500 code units) however JSON escapes it, six for one at worst.
+ */
+export const MAX_DECK_CARD_TEXT_CODE_UNITS = 48_000;
 
 const escapeCsvCell = (value: string | number): string => {
   const text = String(value);

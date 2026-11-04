@@ -436,4 +436,26 @@ describe('a deck file’s own card text (ADR-043)', () => {
     expect(byName.get('Homebrew')?.text).toEqual({ hp: 90 });
     expect(byName.get('Broken')).not.toHaveProperty('text');
   });
+
+  it('keeps two rows of one print apart when each has text of its own', async () => {
+    // A scan of the print (a file's own), which the catalog knows by its
+    // address.
+    const scan =
+      'https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/TWM/TWM_128_R_EN.png';
+    const row = (hp: number) =>
+      `1,Dreepy,Pokémon,${scan},,"${JSON.stringify({ hp }).replaceAll('"', '""')}"`;
+    const result = await importDeckText(
+      ['QTY,Name,Type,URL,Presentation,Text', row(100), row(200)].join('\n'),
+      { catalog }
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.cards.map((entry) => entry.card.text?.hp)).toEqual([
+      100, 200,
+    ]);
+    // Each is still the catalog's print, for its facts and its text.
+    expect(result.cards.every((entry) => entry.card.number === '128')).toBe(
+      true
+    );
+  });
 });

@@ -21,7 +21,7 @@ import {
   specialConditionKind,
   type CardSceneNode,
 } from '@ptcgsim/renderer-contract';
-import { useId, useState, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 
 import { energyTypeName, stageName } from '../../features/deck/deck-labels.js';
 import { EnergySymbol, RulesText } from '../../ui/EnergySymbol.js';
@@ -288,11 +288,24 @@ const Vitals = ({
   const left = hp === undefined ? undefined : Math.max(0, hp - damage);
   const share = hp ? Math.max(0, Math.min(1, (left ?? 0) / hp)) : 0;
   const tone = share > 0.5 ? 'high' : share > 0.25 ? 'mid' : 'low';
+  // The damage last asked for: a step taken before the table has it (a
+  // number typed, then a press of +) goes on from it, not from the damage
+  // the table showed before. The table's answer replaces it.
+  const asked = useRef(damage);
+  useEffect(() => {
+    asked.current = damage;
+  }, [damage]);
   const set = (value: number): void => {
     setDraft(null);
     setInvalid(false);
     const next = Math.max(0, Math.min(DAMAGE_MAXIMUM, value));
-    if (next !== damage) onDamage(next);
+    if (next !== asked.current) onDamage(next);
+    asked.current = next;
+  };
+  /** A step from what is typed (0 included), else from what was asked. */
+  const step = (by: number): void => {
+    const typed = draft === null ? undefined : parseLegacyDamageInput(draft);
+    set((typed === undefined ? asked.current : (typed ?? 0)) + by);
   };
   const commit = (): void => {
     if (draft === null) return;
@@ -347,7 +360,7 @@ const Vitals = ({
               className="pokemon-window__icon-button"
               aria-label={t`10 less damage`}
               disabled={damage === 0 && draft === null}
-              onClick={() => set(damage - DAMAGE_STEP)}
+              onClick={() => step(-DAMAGE_STEP)}
               {...tabbable}
             >
               <MinusIcon weight="bold" aria-hidden="true" />
@@ -376,14 +389,7 @@ const Vitals = ({
                 commit();
               } else if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
                 event.preventDefault();
-                // From what is typed (0 included); from the damage when
-                // nothing readable is.
-                const typed =
-                  draft === null ? undefined : parseLegacyDamageInput(draft);
-                set(
-                  (typed === undefined ? damage : (typed ?? 0)) +
-                    (event.key === 'ArrowUp' ? DAMAGE_STEP : -DAMAGE_STEP)
-                );
+                step(event.key === 'ArrowUp' ? DAMAGE_STEP : -DAMAGE_STEP);
               }
             }}
             {...tabbable}
@@ -393,7 +399,7 @@ const Vitals = ({
               type="button"
               className="pokemon-window__icon-button"
               aria-label={t`10 more damage`}
-              onClick={() => set(damage + DAMAGE_STEP)}
+              onClick={() => step(DAMAGE_STEP)}
               {...tabbable}
             >
               <PlusIcon weight="bold" aria-hidden="true" />
@@ -574,10 +580,22 @@ export const PokemonWindow = ({
   const definitionOf = (card: ViewCard | undefined) =>
     card?.kind === 'known' ? definitions[card.definitionId] : undefined;
   const topDefinition = definitionOf(topCard);
+  // A card printed in pieces (V-UNION, LEGEND) is one Pokémon: its moves
+  // are on any of its pieces.
+  const joinKeyOf = (card: ViewCard): string | undefined =>
+    byId.get(card.id)?.presentation?.join?.key;
+  const topJoin = topCard ? joinKeyOf(topCard) : undefined;
+  const joined =
+    topJoin !== undefined &&
+    lowerCards.length > 0 &&
+    lowerCards.every((card) => joinKeyOf(card) === topJoin);
   // A BREAK reads its Stage below's text too.
-  const moveCards =
-    topCard && isBreak(topDefinition?.name) && lowerCards[0]
-      ? [topCard, lowerCards[0]]
+  const breakOver =
+    !joined && topCard && isBreak(topDefinition?.name) && lowerCards[0];
+  const moveCards = joined
+    ? pokemonCards
+    : topCard && breakOver
+      ? [topCard, lowerCards[0]!]
       : topCard
         ? [topCard]
         : [];
@@ -597,7 +615,7 @@ export const PokemonWindow = ({
       : []
   );
   const own = known[0]?.text;
-  const inherited = known[1]?.text;
+  const inherited = breakOver ? known[1]?.text : undefined;
   const text: CardText | undefined = own
     ? {
         ...inherited,
@@ -611,13 +629,21 @@ export const PokemonWindow = ({
           : {}),
       }
     : undefined;
+  // Each move once: the pieces of a card often each say the whole card.
+  const seenMoves = new Set<string>();
   const moves: WindowMove[] = known.flatMap((entry, index) => {
-    const from = index > 0 ? entry.name : undefined;
+    const from = index > 0 && breakOver ? entry.name : undefined;
     const base = { cardId: entry.card.id, ...(from ? { from } : {}) };
-    return [
+    const own: WindowMove[] = [
       ...(entry.text.abilities ?? []).map((ability) => ({ ...base, ability })),
       ...(entry.text.attacks ?? []).map((attack) => ({ ...base, attack })),
     ];
+    return own.filter((move) => {
+      const key = JSON.stringify(move.ability ?? move.attack);
+      if (seenMoves.has(key)) return false;
+      seenMoves.add(key);
+      return true;
+    });
   });
   const topId = topCard?.id;
   const active = stack.slot === 'active';
@@ -688,9 +714,15 @@ export const PokemonWindow = ({
           {lowerCards.length > 0 ? (
             <div className="pokemon-window__stages">
               <h3 className="pokemon-window__label">
-                <Trans comment="Over the Stages a Pokémon evolved from, under it.">
-                  Evolved from
-                </Trans>
+                {joined ? (
+                  <Trans comment="Over the other pieces of a Pokémon printed in pieces (a V-UNION).">
+                    Pieces
+                  </Trans>
+                ) : (
+                  <Trans comment="Over the Stages a Pokémon evolved from, under it.">
+                    Evolved from
+                  </Trans>
+                )}
               </h3>
               <div className="pokemon-window__stage-cards">
                 {lowerCards

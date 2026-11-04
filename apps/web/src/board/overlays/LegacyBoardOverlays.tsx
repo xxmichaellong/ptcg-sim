@@ -1875,7 +1875,8 @@ const Preview = ({
   useFocusBoundary(
     container,
     '[data-preview-focus]',
-    `${identity}:${showPieces}:${individualCardId ?? ''}`
+    // Each view it shows (Details and Back included) takes the focus in.
+    `${identity}:${showPieces}:${showDetails}:${individualCardId ?? ''}`
   );
   useOutsideDismiss(container, dismiss);
   useOverlayExit(container, 'preview');

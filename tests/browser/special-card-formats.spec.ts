@@ -500,6 +500,8 @@ for (const mode of ['flat', 'table'] as const)
       const window = page.locator('[data-pokemon-window]');
       await expect(window).toBeVisible();
       await expect(window).toHaveAccessibleName('Greninja BREAK');
+      // The focus goes into it, as into any window.
+      await expect(window).toBeFocused();
       await expect(
         window.locator('.pokemon-window__stages [data-stack-preview-card-id]')
       ).toHaveCount(1);

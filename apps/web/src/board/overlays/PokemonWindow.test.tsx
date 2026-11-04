@@ -285,4 +285,91 @@ describe('the Pokémon window', () => {
       host.querySelector('.pokemon-window.ptcgsim-overlay-ghost')
     ).not.toBeNull();
   });
+
+  it('steps damage from a number just typed, before the table has it', async () => {
+    const callbacks = actions();
+    const window = await render(stateFor(blue), callbacks);
+    const stack = view.stacks[view.boards[blue]!.activeStackId!]!;
+    const input = window.querySelector<HTMLInputElement>(
+      '.pokemon-window__damage-input'
+    )!;
+    await act(async () => {
+      input.focus();
+      Object.getOwnPropertyDescriptor(
+        HTMLInputElement.prototype,
+        'value'
+      )!.set!.call(input, '80');
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    const more = window.querySelector<HTMLButtonElement>(
+      '[aria-label="10 more damage"]'
+    )!;
+    // Pressing + takes the focus from the number (which sets it), then
+    // steps on from it; the table still shows the old damage.
+    await act(async () => {
+      input.blur();
+      more.click();
+    });
+    const sent = callbacks.invokeWindowAction.mock.calls.map(
+      ([request]) => (request as { value?: string }).value
+    );
+    expect(sent).toEqual(['80', '90']);
+    expect(stack.damage ?? 0).not.toBe(80);
+  });
+
+  it('reads a card printed in pieces whole: each move once, the others as its pieces', async () => {
+    const stackId = base.boards[blue]!.activeStackId!;
+    const stack = base.stacks[stackId]!;
+    const known = stack.evolutionCards.filter((card) => card.kind === 'known');
+    if (known.length < 2) return;
+    const definitions = { ...base.definitions };
+    const shared = { name: 'Thunderbolt', cost: [], damage: '90' } as const;
+    known.forEach((card, part) => {
+      if (card.kind !== 'known') return;
+      definitions[card.definitionId] = {
+        ...definitions[card.definitionId]!,
+        presentation: {
+          readingQuarterTurns: 0,
+          join: {
+            key: 'union',
+            columns: 2,
+            rows: 2,
+            part: part as 0 | 1 | 2 | 3,
+          },
+        },
+        text:
+          part === 0
+            ? { attacks: [shared] }
+            : {
+                abilities: [{ name: 'Piece Power', kind: 'Ability', text: '' }],
+                attacks: [shared],
+              },
+      };
+    });
+    const pieced = { ...base, definitions };
+    const piecedScene = createBoardSceneForViewport(pieced, {
+      geometryVersion: 1,
+      viewport: { width: 1280, height: 720, devicePixelRatio: 1 },
+      bottomPlayerId: blue,
+      splitRatio: 0.5,
+    });
+    await render(
+      stateFor(blue, { view: pieced, scene: piecedScene }),
+      actions()
+    );
+    // Shown whole first; Details opens its window.
+    const details = [...host.querySelectorAll('button')].find(
+      (button) => button.textContent === 'Details'
+    )!;
+    await act(async () => details.click());
+    const window = host.querySelector<HTMLElement>('[data-pokemon-window]')!;
+    expect(
+      window.querySelectorAll('.pokemon-window__move.is-attack')
+    ).toHaveLength(1);
+    expect(window.textContent).toContain('Piece Power');
+    expect(
+      window.querySelector('.pokemon-window__stages .pokemon-window__label')
+        ?.textContent
+    ).toBe('Pieces');
+  });
 });

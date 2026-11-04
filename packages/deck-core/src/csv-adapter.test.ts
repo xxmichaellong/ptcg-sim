@@ -200,6 +200,33 @@ describe('simulator CSV files', () => {
       undefined,
     ]);
     expect(formatSimCsv(restored.cards)).toBe(csv);
+    // The most text the table takes, however JSON escapes it, comes back.
+    const quoted = '"'.repeat(600);
+    const most = {
+      abilities: Array.from({ length: 4 }, () => ({
+        name: 'n',
+        kind: 'Ability',
+        text: quoted,
+      })),
+      attacks: Array.from({ length: 4 }, () => ({
+        name: 'n',
+        cost: [],
+        damage: '',
+        text: quoted,
+      })),
+      rules: '"'.repeat(1_000),
+    };
+    const heavy = parseSimCsvResult(
+      formatSimCsv(
+        deckListOf([
+          {
+            card: card({ id: 'custom:most', name: 'Most', text: most }),
+            count: 1,
+          },
+        ])
+      )
+    );
+    expect(heavy.ok).toBe(true);
     // Text that is no JSON object refuses the row.
     const broken = parseSimCsvResult(
       'QTY,Name,Type,URL,Presentation,Text\n1,Homebrew,Pokémon,/a.png,,[1]'
