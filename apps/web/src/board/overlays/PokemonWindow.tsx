@@ -298,37 +298,35 @@ const Vitals = ({
   // The damage last asked for: a step taken before the table has it (a
   // number typed, then a press of +) goes on from it, not from the damage
   // the table showed before. It stands until the table shows it, or for a
-  // while if it never does (refused); an answer to an earlier step in
-  // between doesn't replace it.
-  const asked = useRef(damage);
+  // while if it never does (refused, or overtaken by another's change),
+  // read as each press comes; an answer to an earlier step in between
+  // doesn't replace it.
   const pending = useRef<{ readonly value: number; readonly at: number }>(
     undefined
   );
-  useEffect(() => {
+  const asked = (): number => {
     const waiting = pending.current;
     if (
       waiting &&
       waiting.value !== damage &&
       performance.now() - waiting.at < PENDING_DAMAGE_MS
     )
-      return;
+      return waiting.value;
     pending.current = undefined;
-    asked.current = damage;
-  }, [damage]);
+    return damage;
+  };
   const set = (value: number): void => {
     setDraft(null);
     setInvalid(false);
     const next = Math.max(0, Math.min(DAMAGE_MAXIMUM, value));
-    if (next !== asked.current) {
-      onDamage(next);
-      pending.current = { value: next, at: performance.now() };
-    }
-    asked.current = next;
+    if (next === asked()) return;
+    onDamage(next);
+    pending.current = { value: next, at: performance.now() };
   };
   /** A step from what is typed (0 included), else from what was asked. */
   const step = (by: number): void => {
     const typed = draft === null ? undefined : parseLegacyDamageInput(draft);
-    set((typed === undefined ? asked.current : (typed ?? 0)) + by);
+    set((typed === undefined ? asked() : (typed ?? 0)) + by);
   };
   const commit = (): void => {
     if (draft === null) return;

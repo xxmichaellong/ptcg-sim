@@ -482,4 +482,32 @@ describe('the Pokémon window', () => {
     expect(callbacks.dismiss).toHaveBeenCalledWith('preview');
     outside.remove();
   });
+
+  it('lets a step that never shows go after a while, and steps from the damage shown', async () => {
+    const now = vi.spyOn(performance, 'now').mockReturnValue(1_000);
+    const callbacks = actions();
+    await render(stateFor(blue), callbacks);
+    const stackId = view.boards[blue]!.activeStackId!;
+    const start = view.stacks[stackId]!.damage ?? 0;
+    const more = () =>
+      host.querySelector<HTMLButtonElement>('[aria-label="10 more damage"]')!;
+    await act(async () => more().click());
+    // Refused, and someone else sets 170 meanwhile.
+    const elsewhere: MatchViewState = {
+      ...view,
+      stacks: {
+        ...view.stacks,
+        [stackId]: { ...view.stacks[stackId]!, damage: 170 },
+      },
+    };
+    await render(stateFor(blue, { view: elsewhere }), callbacks);
+    now.mockReturnValue(10_000);
+    await act(async () => more().click());
+    expect(
+      callbacks.invokeWindowAction.mock.calls.map(
+        ([request]) => (request as { value?: string }).value
+      )
+    ).toEqual([String(start + 10), '180']);
+    now.mockRestore();
+  });
 });
