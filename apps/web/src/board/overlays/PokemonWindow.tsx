@@ -304,6 +304,11 @@ const Vitals = ({
   const pending = useRef<{ readonly value: number; readonly at: number }>(
     undefined
   );
+  // The table showing it answers it: from then on, its damage is the base
+  // (a change by someone else straight after included).
+  useEffect(() => {
+    if (pending.current?.value === damage) pending.current = undefined;
+  }, [damage]);
   const asked = (): number => {
     const waiting = pending.current;
     if (

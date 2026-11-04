@@ -1871,10 +1871,11 @@ const Preview = ({
   const composition = composeCardArtwork(artworkCards);
   useEffect(() => () => tilt.dispose(), [tilt]);
   const dismiss = useCallback(() => actions.dismiss('preview'), [actions]);
-  // A damage typed in the Pokémon window is set by a press outside it,
-  // which puts the window away before the number would be left.
+  // A damage typed in the Pokémon window is set whenever the window goes
+  // (a press outside, a card dragged out, a move used, a card read large),
+  // as leaving the number would set it; only Esc drops it.
   const windowCommit = useRef<(() => void) | null>(null);
-  const dismissFromOutside = useCallback(() => {
+  const commitAndDismiss = useCallback(() => {
     windowCommit.current?.();
     dismiss();
   }, [dismiss]);
@@ -1885,7 +1886,7 @@ const Preview = ({
     // Each view it shows (Details and Back included) takes the focus in.
     `${identity}:${showPieces}:${showDetails}:${individualCardId ?? ''}`
   );
-  useOutsideDismiss(container, dismissFromOutside);
+  useOutsideDismiss(container, commitAndDismiss);
   useOverlayExit(container, 'preview');
   // The Pokémon window's scrim, under it: it leaves with it.
   const windowScrim = useRef<HTMLDivElement>(null);
@@ -1932,7 +1933,7 @@ const Preview = ({
       if (openedZoneId !== null && card?.parentId === openedZoneId)
         actions.emitOpenedZoneCardIntent(intent);
       else actions.emitCardIntent?.(intent);
-      dismiss();
+      commitAndDismiss();
     },
     ...(actions.updateDrag ? { updateDrag: actions.updateDrag } : {}),
   });
@@ -2122,6 +2123,7 @@ const Preview = ({
           event.stopPropagation();
           if (drag.consumeClick(card.id) && event.detail > 0) return;
           if (composition || pokemonWindow) {
+            windowCommit.current?.();
             setZoomedFromWindow(size !== undefined);
             setIndividualCardId(card.id);
           } else actions.previewCard?.(card.id);
@@ -2334,7 +2336,7 @@ const Preview = ({
             />
           }
           act={(request) => actions.invokeWindowAction?.(request)}
-          onUsed={dismiss}
+          onUsed={commitAndDismiss}
           commitRef={windowCommit}
         />
       </div>

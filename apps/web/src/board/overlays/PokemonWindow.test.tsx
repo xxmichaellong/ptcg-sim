@@ -510,4 +510,54 @@ describe('the Pokémon window', () => {
     ).toEqual([String(start + 10), '180']);
     now.mockRestore();
   });
+
+  it('lets a step go once the table shows it: a change straight after is the base', async () => {
+    const callbacks = actions();
+    await render(stateFor(blue), callbacks);
+    const stackId = view.boards[blue]!.activeStackId!;
+    const start = view.stacks[stackId]!.damage ?? 0;
+    const at = (damage: number): MatchViewState => ({
+      ...view,
+      stacks: {
+        ...view.stacks,
+        [stackId]: { ...view.stacks[stackId]!, damage },
+      },
+    });
+    const more = () =>
+      host.querySelector<HTMLButtonElement>('[aria-label="10 more damage"]')!;
+    await act(async () => more().click());
+    await render(stateFor(blue, { view: at(start + 10) }), callbacks);
+    await render(stateFor(blue, { view: at(170) }), callbacks);
+    await act(async () => more().click());
+    expect(callbacks.invokeWindowAction).toHaveBeenLastCalledWith(
+      expect.objectContaining({ action: 'setDamage', value: '180' })
+    );
+  });
+
+  it('sets a damage typed before a card is read large from the window', async () => {
+    const callbacks = actions();
+    const window = await render(stateFor(blue), callbacks);
+    const input = window.querySelector<HTMLInputElement>(
+      '.pokemon-window__damage-input'
+    )!;
+    await act(async () => {
+      input.focus();
+      Object.getOwnPropertyDescriptor(
+        HTMLInputElement.prototype,
+        'value'
+      )!.set!.call(input, '80');
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await act(async () =>
+      window
+        .querySelector<HTMLButtonElement>(
+          '.pokemon-window__hero [data-stack-preview-card-id]'
+        )!
+        .click()
+    );
+    expect(callbacks.invokeWindowAction).toHaveBeenLastCalledWith(
+      expect.objectContaining({ action: 'setDamage', value: '80' })
+    );
+    expect(host.querySelector('[data-preview-kind="card"]')).not.toBeNull();
+  });
 });
