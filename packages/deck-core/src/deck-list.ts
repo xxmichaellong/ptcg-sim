@@ -173,8 +173,39 @@ export const customCardId = (parts: readonly unknown[]): string => {
 };
 
 /**
+ * A hand-made card's id from what it is -- its name, kind, picture, layout
+ * and its own text (ADR-043) -- as the card dialog and a deck file make it:
+ * the same card made twice merges, and other text is another card.
+ */
+export const customCardIdOf = (
+  card: Pick<DeckCard, 'name' | 'category' | 'image' | 'presentation' | 'text'>
+): string =>
+  customCardId([
+    card.name,
+    card.category,
+    card.image,
+    card.presentation ?? null,
+    ...(card.text ? [card.text] : []),
+  ]);
+
+/**
+ * The id a card has once given this text: a catalogued print keeps its
+ * own, a hand-made card's follows what it now is (`customCardIdOf`).
+ */
+export const textedCardId = (
+  card: DeckCard,
+  text: DeckCardText | undefined
+): string => {
+  if (!card.id.startsWith('custom:')) return card.id;
+  const { text: _old, ...bare } = card;
+  return customCardIdOf(text ? { ...bare, text } : bare);
+};
+
+/**
  * Gives the cards with these ids their own text (ADR-043), or none to say
- * their print's again: every copy of each, where they are in the list.
+ * their print's again: every copy of each, where they are in the list. A
+ * hand-made card takes the id its new text gives it (`textedCardId`), and
+ * joins a card already in the list that is now the same.
  */
 export const setCardText = (
   list: DeckList,
@@ -183,17 +214,20 @@ export const setCardText = (
 ): DeckList => {
   const ids = new Set(cardIds);
   let changed = false;
+  let rekeyed = false;
   const next = list.map((entry) => {
     if (!ids.has(entry.card.id)) return entry;
     const { text: _old, ...card } = entry.card;
     if (text === undefined && entry.card.text === undefined) return entry;
     changed = true;
-    return freezeEntry(
-      Object.freeze(text === undefined ? card : { ...card, text }),
-      entry.count
-    );
+    const texted = text === undefined ? card : { ...card, text };
+    const id = textedCardId(entry.card, text);
+    rekeyed ||= id !== entry.card.id;
+    return freezeEntry(Object.freeze({ ...texted, id }), entry.count);
   });
-  return changed ? Object.freeze(next) : list;
+  if (!changed) return list;
+  // A card that is now another card may be one the list already holds.
+  return rekeyed ? deckListOf(next) : Object.freeze(next);
 };
 
 /**

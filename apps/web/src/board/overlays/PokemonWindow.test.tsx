@@ -372,4 +372,31 @@ describe('the Pokémon window', () => {
         ?.textContent
     ).toBe('Pieces');
   });
+
+  it('gives the focus back to what opened it, after a card read large and Back', async () => {
+    const opener = document.createElement('button');
+    document.body.append(opener);
+    opener.focus();
+    const callbacks = actions();
+    const window = await render(stateFor(blue), callbacks);
+    await act(async () =>
+      window
+        .querySelector<HTMLButtonElement>(
+          '.pokemon-window__hero [data-stack-preview-card-id]'
+        )!
+        .click()
+    );
+    await act(async () =>
+      host.querySelector<HTMLButtonElement>('[data-preview-back]')!.click()
+    );
+    await render(
+      stateFor(blue, {
+        overlays: { contextMenuCardId: null, preview: null, input: null },
+      }),
+      callbacks
+    );
+    await act(async () => Promise.resolve());
+    expect(document.activeElement).toBe(opener);
+    opener.remove();
+  });
 });

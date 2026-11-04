@@ -36,7 +36,16 @@ export const useFocusBoundary = (
     // immediately replays layout effects while focus is already inside the
     // overlay; replacing the opener in that replay would leave us trying to
     // restore focus to a button that disappears with the overlay.
-    if (active instanceof HTMLElement && !element.contains(active)) {
+    // Nor the page itself: an overlay that shows itself in a new element
+    // (the Pokémon window, a card read large from it, and back) finds the
+    // focus on the page once the old element has gone, and still returns
+    // it to what opened it first.
+    if (
+      active instanceof HTMLElement &&
+      active.isConnected &&
+      active !== element.ownerDocument.body &&
+      !element.contains(active)
+    ) {
       opener.current = active;
     }
     const first = element.querySelector<HTMLElement>(focusSelector) ?? element;

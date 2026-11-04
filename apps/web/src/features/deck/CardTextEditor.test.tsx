@@ -1,4 +1,6 @@
 import {
+  addCard,
+  customCardIdOf,
   deckListOf,
   sameDeckList,
   setCardText,
@@ -115,5 +117,31 @@ describe('a card’s own text', () => {
       card('OBF 215')
     );
     expect(fresh).toEqual([{ card: card('OBF 215', text), count: 2 }]);
+  });
+
+  it('makes a hand-made card another card once it says something else', () => {
+    const made = (hp: number): DeckCard => {
+      const card = {
+        name: 'Homebrew',
+        category: 'Pokémon' as const,
+        image: '/v2/images/homebrew',
+        text: { hp },
+      };
+      return { ...card, id: customCardIdOf(card) };
+    };
+    const list = deckListOf([{ card: made(100), count: 1 }]);
+    const edited = setCardText(list, [made(100).id], { hp: 200 });
+    expect(edited[0]?.card.id).toBe(made(200).id);
+    // The 100-HP card made again is its own card, not a copy of the edit.
+    const again = addCard(edited, made(100));
+    expect(again.map((entry) => [entry.card.text?.hp, entry.count])).toEqual([
+      [200, 1],
+      [100, 1],
+    ]);
+    // Edited to say what another already does, it joins that one.
+    const joined = setCardText(again, [made(100).id], { hp: 200 });
+    expect(joined.map((entry) => [entry.card.text?.hp, entry.count])).toEqual([
+      [200, 2],
+    ]);
   });
 });

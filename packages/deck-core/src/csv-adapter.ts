@@ -1,7 +1,7 @@
 import { t } from '@lingui/core/macro';
 
 import {
-  customCardId,
+  customCardIdOf,
   deckListOf,
   type CardCategory,
   type DeckCard,
@@ -388,13 +388,13 @@ export const parseSimCsvResult = (csvData: string = ''): ParseSimCsvResult => {
       card: Object.freeze({
         // A card's own text makes it another card than the same picture
         // without it, as the card dialog makes it.
-        id: customCardId([
+        id: customCardIdOf({
           name,
           category,
           image,
           presentation,
-          ...(text ? [text] : []),
-        ]),
+          ...(text ? { text: text as DeckCard['text'] } : {}),
+        }),
         name,
         category,
         image,

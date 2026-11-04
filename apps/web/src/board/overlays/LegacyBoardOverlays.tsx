@@ -2281,12 +2281,17 @@ const Preview = ({
     </div>
   ) : pokemonWindow ? (
     <>
+      {/* Keyed, so that neither reuses the element a view before it was
+          drawn in (a card read large, focused): React would make it the
+          scrim, focus and all. */}
       <div
+        key="pokemon-window-scrim"
         ref={windowScrim}
         className={`ptcgsim-overlay-scrim pokemon-window-scrim${draggingCardId ? ' is-hidden' : ''}`}
         aria-hidden="true"
       />
       <div
+        key="pokemon-window"
         ref={container}
         className={`pokemon-window is-${cards[0]?.side ?? 'local'}`}
         // Its words read in the page's direction; the table's don't.

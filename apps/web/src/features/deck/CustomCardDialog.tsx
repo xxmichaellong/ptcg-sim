@@ -4,7 +4,7 @@ import { SquaresFourIcon } from '@phosphor-icons/react/dist/csr/SquaresFour';
 import { XIcon } from '@phosphor-icons/react/dist/csr/X';
 import { Trans, useLingui } from '@lingui/react/macro';
 import {
-  customCardId,
+  customCardIdOf,
   type CardCategory,
   type DeckCard,
   type DeckCardText,
@@ -443,14 +443,14 @@ export const CustomCardDialog = ({
       presentation: CardPresentation | undefined
     ): DeckCard =>
       Object.freeze({
-        id: customCardId([
-          normalizedName,
+        // The same picture saying something else is another card.
+        id: customCardIdOf({
+          name: normalizedName,
           category,
           image,
-          presentation ?? null,
-          // The same picture saying something else is another card.
-          ...(ownText ? [ownText] : []),
-        ]),
+          presentation,
+          ...(ownText ? { text: ownText } : {}),
+        }),
         name: normalizedName,
         category,
         image,

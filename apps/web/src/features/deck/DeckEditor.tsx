@@ -20,6 +20,7 @@ import {
   removeCard,
   setCardText,
   swapPrinting,
+  textedCardId,
   ruleName,
   type CatalogCard,
   type DeckCard,
@@ -713,9 +714,29 @@ export const DeckEditor = ({
           });
           flashSaved();
         }}
-        onEditText={(cardIds, text) =>
-          commit(setCardText(current(), cardIds, text))
-        }
+        onEditText={(cardIds, text) => {
+          const before = current();
+          const next = setCardText(before, cardIds, text);
+          commit(next);
+          // A hand-made card is another card once it says something else
+          // (ADR-043): the sheet and the deck's cover follow it.
+          const movedTo = (id: string): string => {
+            const card = before.find((entry) => entry.card.id === id)?.card;
+            return card ? textedCardId(card, text) : id;
+          };
+          if (
+            inspected?.kind === 'deck' &&
+            cardIds.includes(inspected.card.id)
+          ) {
+            const to = movedTo(inspected.card.id);
+            const card = next.find((entry) => entry.card.id === to)?.card;
+            if (card) setInspected({ kind: 'deck', card });
+          }
+          if (deck.coverId && cardIds.includes(deck.coverId)) {
+            const to = movedTo(deck.coverId);
+            if (to !== deck.coverId) library.update(deck.id, { coverId: to });
+          }
+        }}
       />
       <CustomCardDialog
         open={customOpen}

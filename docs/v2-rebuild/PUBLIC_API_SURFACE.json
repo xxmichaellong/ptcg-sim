@@ -298,6 +298,10 @@
               "kind": "value"
             },
             {
+              "name": "customCardIdOf",
+              "kind": "value"
+            },
+            {
               "name": "DECK_FACTS_VERSION",
               "kind": "value"
             },
@@ -635,6 +639,10 @@
             },
             {
               "name": "swapPrinting",
+              "kind": "value"
+            },
+            {
+              "name": "textedCardId",
               "kind": "value"
             },
             {

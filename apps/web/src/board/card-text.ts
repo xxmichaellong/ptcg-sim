@@ -91,7 +91,11 @@ export const useTableCardCatalog = (wanted: boolean): CardCatalogState => {
     source?.getSnapshot ?? (() => IDLE)
   );
   useEffect(() => {
-    if (wanted) source?.load();
+    if (!wanted || !source) return;
+    // A load that failed (the connection dropped) is tried again by the
+    // next window that wants it: it isn't taken for a card with no text.
+    if (source.getSnapshot().status === 'failed') source.retry();
+    else source.load();
   }, [source, wanted]);
   if (!wanted) return state;
   if (!source) return unreachable ? FAILED : LOADING;

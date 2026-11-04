@@ -7,6 +7,7 @@ export {
   coverCardOf,
   hasRuleBox,
   customCardId,
+  customCardIdOf,
   deckListOf,
   deckTotals,
   printId,
@@ -17,6 +18,7 @@ export {
   setCardCount,
   setCardText,
   swapPrinting,
+  textedCardId,
   sortDeckList,
 } from './deck-list.js';
 export type {
