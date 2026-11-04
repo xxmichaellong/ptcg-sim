@@ -1871,6 +1871,13 @@ const Preview = ({
   const composition = composeCardArtwork(artworkCards);
   useEffect(() => () => tilt.dispose(), [tilt]);
   const dismiss = useCallback(() => actions.dismiss('preview'), [actions]);
+  // A damage typed in the Pokémon window is set by a press outside it,
+  // which puts the window away before the number would be left.
+  const windowCommit = useRef<(() => void) | null>(null);
+  const dismissFromOutside = useCallback(() => {
+    windowCommit.current?.();
+    dismiss();
+  }, [dismiss]);
   const identity = cards.map((card) => card.id).join(':');
   useFocusBoundary(
     container,
@@ -1878,7 +1885,7 @@ const Preview = ({
     // Each view it shows (Details and Back included) takes the focus in.
     `${identity}:${showPieces}:${showDetails}:${individualCardId ?? ''}`
   );
-  useOutsideDismiss(container, dismiss);
+  useOutsideDismiss(container, dismissFromOutside);
   useOverlayExit(container, 'preview');
   // The Pokémon window's scrim, under it: it leaves with it.
   const windowScrim = useRef<HTMLDivElement>(null);
@@ -2328,6 +2335,7 @@ const Preview = ({
           }
           act={(request) => actions.invokeWindowAction?.(request)}
           onUsed={dismiss}
+          commitRef={windowCommit}
         />
       </div>
     </>

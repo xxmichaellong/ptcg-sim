@@ -50,6 +50,8 @@ const tabbable = { 'data-preview-tabbable': 'true' } as const;
 /** The most damage a Pokémon can carry (the room's limit). */
 const DAMAGE_MAXIMUM = 9_990;
 const DAMAGE_STEP = 10;
+/** How long a damage asked for stands before the table's shown takes over. */
+const PENDING_DAMAGE_MS = 4_000;
 
 const BASIC_ENERGY_TYPES: Readonly<Record<string, CardTextEnergyType>> = {
   grass: 'Grass',
@@ -96,6 +98,8 @@ export interface PokemonWindowProps {
   readonly act: (request: LegacyBoardOverlayActionRequest) => void;
   /** After a move is used: the window has done its job. */
   readonly onUsed: () => void;
+  /** Where it puts the way to set a damage typed, before it is put away. */
+  readonly commitRef?: { current: (() => void) | null };
 }
 
 /** The type and how many of each: an Energy's text, or a Basic's name. */
@@ -276,11 +280,14 @@ const Vitals = ({
   damage,
   canMark,
   onDamage,
+  commitRef,
 }: {
   readonly hp: number | undefined;
   readonly damage: number;
   readonly canMark: boolean;
   readonly onDamage: (value: number) => void;
+  /** Where it puts the way to set what is typed, for a press outside. */
+  readonly commitRef?: { current: (() => void) | null };
 }) => {
   const { t } = useLingui();
   const [draft, setDraft] = useState<string | null>(null);
@@ -290,16 +297,32 @@ const Vitals = ({
   const tone = share > 0.5 ? 'high' : share > 0.25 ? 'mid' : 'low';
   // The damage last asked for: a step taken before the table has it (a
   // number typed, then a press of +) goes on from it, not from the damage
-  // the table showed before. The table's answer replaces it.
+  // the table showed before. It stands until the table shows it, or for a
+  // while if it never does (refused); an answer to an earlier step in
+  // between doesn't replace it.
   const asked = useRef(damage);
+  const pending = useRef<{ readonly value: number; readonly at: number }>(
+    undefined
+  );
   useEffect(() => {
+    const waiting = pending.current;
+    if (
+      waiting &&
+      waiting.value !== damage &&
+      performance.now() - waiting.at < PENDING_DAMAGE_MS
+    )
+      return;
+    pending.current = undefined;
     asked.current = damage;
   }, [damage]);
   const set = (value: number): void => {
     setDraft(null);
     setInvalid(false);
     const next = Math.max(0, Math.min(DAMAGE_MAXIMUM, value));
-    if (next !== asked.current) onDamage(next);
+    if (next !== asked.current) {
+      onDamage(next);
+      pending.current = { value: next, at: performance.now() };
+    }
     asked.current = next;
   };
   /** A step from what is typed (0 included), else from what was asked. */
@@ -316,6 +339,16 @@ const Vitals = ({
     }
     set(parsed ?? 0);
   };
+  // A press outside the window puts it away before the number is left
+  // (an element taken away is never blurred): it sets what was typed
+  // first, as the marker controls do.
+  useEffect(() => {
+    if (!commitRef) return;
+    commitRef.current = commit;
+    return () => {
+      if (commitRef.current === commit) commitRef.current = null;
+    };
+  });
   return (
     <div className="pokemon-window__vitals" data-hp-tone={tone}>
       <div className="pokemon-window__hp">
@@ -558,6 +591,7 @@ export const PokemonWindow = ({
   tone,
   act,
   onUsed,
+  commitRef,
 }: PokemonWindowProps) => {
   const { t } = useLingui();
   const titleId = useId();
@@ -812,6 +846,7 @@ export const PokemonWindow = ({
                 hp={text?.hp}
                 damage={damage}
                 canMark={canMark}
+                {...(commitRef ? { commitRef } : {})}
                 onDamage={(value) =>
                   topId &&
                   act({

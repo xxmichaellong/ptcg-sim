@@ -429,4 +429,57 @@ describe('the Pokémon window', () => {
     );
     expect(callbacks.dismiss).toHaveBeenCalledWith('preview');
   });
+
+  it('keeps a step asked for when the answer to an earlier one comes first', async () => {
+    const callbacks = actions();
+    const window = await render(stateFor(blue), callbacks);
+    const stackId = view.boards[blue]!.activeStackId!;
+    const start = view.stacks[stackId]!.damage ?? 0;
+    const more = () =>
+      host.querySelector<HTMLButtonElement>('[aria-label="10 more damage"]')!;
+    await act(async () => more().click());
+    await act(async () => more().click());
+    // The table answers the first step only.
+    const answered: MatchViewState = {
+      ...view,
+      stacks: {
+        ...view.stacks,
+        [stackId]: { ...view.stacks[stackId]!, damage: start + 10 },
+      },
+    };
+    await render(stateFor(blue, { view: answered }), callbacks);
+    await act(async () => more().click());
+    expect(
+      callbacks.invokeWindowAction.mock.calls.map(
+        ([request]) => (request as { value?: string }).value
+      )
+    ).toEqual([String(start + 10), String(start + 20), String(start + 30)]);
+    expect(window).not.toBeNull();
+  });
+
+  it('sets a damage typed before a press outside puts the window away', async () => {
+    const callbacks = actions();
+    const window = await render(stateFor(blue), callbacks);
+    const input = window.querySelector<HTMLInputElement>(
+      '.pokemon-window__damage-input'
+    )!;
+    await act(async () => {
+      input.focus();
+      Object.getOwnPropertyDescriptor(
+        HTMLInputElement.prototype,
+        'value'
+      )!.set!.call(input, '80');
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    const outside = document.createElement('div');
+    document.body.append(outside);
+    await act(async () =>
+      outside.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))
+    );
+    expect(callbacks.invokeWindowAction).toHaveBeenLastCalledWith(
+      expect.objectContaining({ action: 'setDamage', value: '80' })
+    );
+    expect(callbacks.dismiss).toHaveBeenCalledWith('preview');
+    outside.remove();
+  });
 });
