@@ -11,8 +11,11 @@ import {
 /**
  * The simulator's own deck file, kept from v1 so existing files still open:
  *
- *   QTY,Name,Type,URL[,Presentation]
+ *   QTY,Name,Type,URL[,Presentation[,Text]]
  *   4,Dreepy,Pokémon,https://…/TWM_128_R_EN.png
+ *
+ * Text is a card's own text (ADR-043) as JSON, checked as the table checks
+ * it where the deck is imported.
  *
  * Parsing is transactional: a file with any bad row gives no deck at all,
  * only the issues, so a half-read deck never replaces a good one.
@@ -26,6 +29,8 @@ export const MAX_DECK_TOTAL_CARDS = 100_000;
 export const MAX_DECK_CARD_NAME_CODE_UNITS = 256;
 export const MAX_DECK_CARD_TYPE_CODE_UNITS = 64;
 export const MAX_DECK_IMAGE_URL_CODE_UNITS = 4_096;
+/** A card's own text, as JSON: far past what the table takes (ADR-043). */
+export const MAX_DECK_CARD_TEXT_CODE_UNITS = 8_000;
 
 const escapeCsvCell = (value: string | number): string => {
   const text = String(value);
@@ -33,9 +38,10 @@ const escapeCsvCell = (value: string | number): string => {
 };
 
 export const formatSimCsv = (list: DeckList): string => {
-  const hasPresentation = list.some(
-    (entry) => entry.card.presentation !== undefined
-  );
+  const hasText = list.some((entry) => entry.card.text !== undefined);
+  // Text comes after Presentation: a file with text has both.
+  const hasPresentation =
+    hasText || list.some((entry) => entry.card.presentation !== undefined);
   const rows = list.map(({ card, count }) =>
     [
       count,
@@ -49,11 +55,14 @@ export const formatSimCsv = (list: DeckList): string => {
               : JSON.stringify(card.presentation),
           ]
         : []),
+      ...(hasText
+        ? [card.text === undefined ? '' : JSON.stringify(card.text)]
+        : []),
     ]
       .map(escapeCsvCell)
       .join(',')
   );
-  return `${SIM_CSV_HEADER}${hasPresentation ? ',Presentation' : ''}\n${rows.join('\n')}`;
+  return `${SIM_CSV_HEADER}${hasPresentation ? ',Presentation' : ''}${hasText ? ',Text' : ''}\n${rows.join('\n')}`;
 };
 
 /** A card type as v1 files and decklists spell it. */
@@ -73,6 +82,7 @@ export type DeckCsvIssueCode =
   | 'invalid_header'
   | 'invalid_column_count'
   | 'invalid_presentation'
+  | 'invalid_text'
   | 'invalid_quantity'
   | 'deck_too_large'
   | 'missing_name'
@@ -208,9 +218,11 @@ export const parseSimCsvResult = (csvData: string = ''): ParseSimCsvResult => {
         ...header.slice(1),
       ]
     : [];
+  const headerText = normalizedHeader.join(',');
+  const hasText = headerText === `${SIM_CSV_HEADER},Presentation,Text`;
   const hasPresentation =
-    normalizedHeader.join(',') === `${SIM_CSV_HEADER},Presentation`;
-  if (!hasPresentation && normalizedHeader.join(',') !== SIM_CSV_HEADER) {
+    hasText || headerText === `${SIM_CSV_HEADER},Presentation`;
+  if (!hasPresentation && headerText !== SIM_CSV_HEADER) {
     issues.push({
       code: 'invalid_header',
       row: 1,
@@ -228,15 +240,35 @@ export const parseSimCsvResult = (csvData: string = ''): ParseSimCsvResult => {
     const row = rows[index];
     if (!row) continue;
     const rowNumber = index + 1;
-    if (row.length !== (hasPresentation ? 5 : 4)) {
+    if (row.length !== (hasText ? 6 : hasPresentation ? 5 : 4)) {
       issues.push({
         code: 'invalid_column_count',
         row: rowNumber,
-        message: hasPresentation
-          ? t`Row ${rowNumber}: needs exactly five columns.`
-          : t`Row ${rowNumber}: needs exactly four columns.`,
+        message: hasText
+          ? t`Row ${rowNumber}: needs exactly six columns.`
+          : hasPresentation
+            ? t`Row ${rowNumber}: needs exactly five columns.`
+            : t`Row ${rowNumber}: needs exactly four columns.`,
       });
       continue;
+    }
+
+    let text: unknown;
+    if (hasText && row[5]?.trim()) {
+      try {
+        if (row[5].length > MAX_DECK_CARD_TEXT_CODE_UNITS)
+          throw new Error('too large');
+        text = JSON.parse(row[5]);
+        if (!text || typeof text !== 'object' || Array.isArray(text))
+          throw new Error('not an object');
+      } catch {
+        issues.push({
+          code: 'invalid_text',
+          row: rowNumber,
+          message: t`Row ${rowNumber}: invalid card text JSON.`,
+        });
+        continue;
+      }
     }
 
     let presentation: unknown;
@@ -351,11 +383,21 @@ export const parseSimCsvResult = (csvData: string = ''): ParseSimCsvResult => {
     const category = cardCategoryOf(supertype)!;
     entries.push({
       card: Object.freeze({
-        id: customCardId([name, category, image, presentation]),
+        // A card's own text makes it another card than the same picture
+        // without it, as the card dialog makes it.
+        id: customCardId([
+          name,
+          category,
+          image,
+          presentation,
+          ...(text ? [text] : []),
+        ]),
         name,
         category,
         image,
         ...(presentation ? { presentation } : {}),
+        // Checked as the table checks it where the deck is imported.
+        ...(text ? { text: text as DeckCard['text'] } : {}),
       }),
       count: quantity,
     });

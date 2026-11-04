@@ -245,7 +245,15 @@ describe('legacy board overlay action resolver', () => {
         attack: { stackId: active.id, name: 'Burning Darkness' },
       },
     });
-    expect(move('useAttack', top.id, 'Two\nlines')).toEqual({
+    // A name on two lines, or longer than the room takes, is told folded
+    // and cut; one with nothing in it is refused.
+    expect(move('useAttack', top.id, 'Two\nlines')).toMatchObject({
+      command: { attack: { name: 'Two lines' } },
+    });
+    expect(move('useAttack', top.id, 'x'.repeat(80))).toMatchObject({
+      command: { attack: { name: 'x'.repeat(64) } },
+    });
+    expect(move('useAttack', top.id, '  ')).toEqual({
       ok: false,
       reason: 'invalid_value',
     });

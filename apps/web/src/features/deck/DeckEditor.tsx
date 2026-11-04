@@ -18,8 +18,8 @@ import {
   deckTotals,
   formatDecklistText,
   removeCard,
-  replacePrinting,
   setCardText,
+  swapPrinting,
   ruleName,
   type CatalogCard,
   type DeckCard,
@@ -704,17 +704,7 @@ export const DeckEditor = ({
         onSwapPrint={(fromIds, to) => {
           // The deck's own text for the card (ADR-043) goes with it to
           // the print it is swapped for.
-          const text = current().find(
-            (entry) => fromIds.includes(entry.card.id) && entry.card.text
-          )?.card.text;
-          const printed = toDeckCard(to);
-          const replacement = text ? { ...printed, text } : printed;
-          commit(
-            fromIds.reduce(
-              (list, fromId) => replacePrinting(list, fromId, replacement),
-              current()
-            )
-          );
+          commit(swapPrinting(current(), fromIds, toDeckCard(to)));
           setInspected({ kind: 'catalog', card: to });
         }}
         onSetCover={(cardId) => {

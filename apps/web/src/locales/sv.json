@@ -5903,6 +5903,10 @@
     "message": "Row {rowNumber}: image URL too long.",
     "translation": "Rad {rowNumber}: bild-URL:en är för lång."
   },
+  "LLRVyR": {
+    "message": "Row {rowNumber}: invalid card text JSON.",
+    "translation": "Rad {rowNumber}: ogiltig JSON för korttext."
+  },
   "DCuDdI": {
     "message": "Row {rowNumber}: invalid presentation JSON.",
     "translation": "Rad {rowNumber}: ogiltig presentations-JSON."
@@ -5914,6 +5918,10 @@
   "GTr4h_": {
     "message": "Row {rowNumber}: needs exactly four columns.",
     "translation": "Rad {rowNumber}: måste ha exakt fyra kolumner."
+  },
+  "SMeSbq": {
+    "message": "Row {rowNumber}: needs exactly six columns.",
+    "translation": "Rad {rowNumber}: måste ha exakt sex kolumner."
   },
   "uC4XeA": {
     "message": "Row {rowNumber}: no card name.",

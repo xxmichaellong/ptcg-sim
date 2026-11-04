@@ -20,6 +20,7 @@ import {
   type PastedDecklistLanguage,
   type PastedDecklistRow,
 } from '@ptcgsim/deck-core';
+import { isCardText } from '@ptcgsim/game-core';
 import { MAX_IMAGE_URL_CODE_UNITS } from '@ptcgsim/protocol';
 
 import type { ImportPastedDecklistOptions } from './limitless-decklist-contract.js';
@@ -176,7 +177,10 @@ const importCsv = (
   // facts back, so the rules can check it. The file's picture stays, its
   // thumbnail too: a German scan isn't shown small in English. A row typed
   // otherwise than the catalog's card is played as the file says.
-  const rows = parsed.cards.map(({ card, count }) => {
+  const rows = parsed.cards.map(({ card: read, count }) => {
+    // A card's own text the table can't take is left out (ADR-043).
+    const { text, ...bare } = read;
+    const card: DeckCard = text === undefined || isCardText(text) ? read : bare;
     const print =
       options.catalog && !card.presentation
         ? findCatalogPrint(options.catalog, card)
@@ -212,6 +216,8 @@ const importCsv = (
           ...(own || scans.get(print.id)!.size === 1 ? {} : { id: card.id }),
           image: card.image,
           ...(small ? { imageSmall: small } : {}),
+          // The file's own text for it stays the deck's.
+          ...(card.text ? { text: card.text } : {}),
         },
         count,
       };

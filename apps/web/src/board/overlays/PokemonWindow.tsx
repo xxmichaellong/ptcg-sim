@@ -376,10 +376,12 @@ const Vitals = ({
                 commit();
               } else if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
                 event.preventDefault();
+                // From what is typed (0 included); from the damage when
+                // nothing readable is.
+                const typed =
+                  draft === null ? undefined : parseLegacyDamageInput(draft);
                 set(
-                  (draft === null
-                    ? damage
-                    : (parseLegacyDamageInput(draft) ?? 0) || damage) +
+                  (typed === undefined ? damage : (typed ?? 0)) +
                     (event.key === 'ArrowUp' ? DAMAGE_STEP : -DAMAGE_STEP)
                 );
               }

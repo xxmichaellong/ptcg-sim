@@ -151,7 +151,9 @@ const sameDefinition = (
   left.imageUrl === right.imageUrl &&
   left.imageUrlSmall === right.imageUrlSmall &&
   left.playsAs === right.playsAs &&
-  left.print === right.print &&
+  // Not its print: two prints that look the same are one definition (the
+  // deck's id leaves the print out), and the first one's print stands for
+  // both. Its own text is part of it.
   sameCardText(left.text, right.text) &&
   // The command side compares presentation too; an applied event must not
   // quietly re-present a definition the other seat still uses.
@@ -876,12 +878,26 @@ const applyEventInternal = (
       const referencedDefinitionIds = new Set<string>(
         Object.values(cards).map((card) => card.definitionId)
       );
+      // A definition the other seat's cards use stays as it is: the deck's
+      // may name another print of the same card (ADR-043), which is no
+      // reason to re-present theirs.
+      const othersUse = new Set<string>(
+        Object.values(cards)
+          .filter((card) => card.ownerId !== event.playerId)
+          .map((card) => card.definitionId)
+      );
       const definitions = Object.fromEntries([
         ...Object.entries(reset.definitions).filter(([definitionId]) =>
           referencedDefinitionIds.has(definitionId)
         ),
         ...event.definitions.map(
-          (definition) => [definition.id, definition] as const
+          (definition) =>
+            [
+              definition.id,
+              (othersUse.has(definition.id)
+                ? reset.definitions[definition.id]
+                : undefined) ?? definition,
+            ] as const
         ),
       ]) as MatchState['definitions'];
       const deckId = playerZoneId(event.playerId, 'deck');

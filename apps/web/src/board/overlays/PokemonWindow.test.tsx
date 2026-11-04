@@ -222,4 +222,67 @@ describe('the Pokémon window', () => {
       window.querySelector('.pokemon-window__toggle[aria-pressed]')
     ).toBeNull();
   });
+
+  it('steps damage from a typed 0, not from the damage it had', async () => {
+    const callbacks = actions();
+    const window = await render(stateFor(blue), callbacks);
+    const stack = view.stacks[view.boards[blue]!.activeStackId!]!;
+    const input = window.querySelector<HTMLInputElement>(
+      '.pokemon-window__damage-input'
+    )!;
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(
+        HTMLInputElement.prototype,
+        'value'
+      )!.set!.call(input, '0');
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await act(async () =>
+      input.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true })
+      )
+    );
+    expect(callbacks.invokeWindowAction).toHaveBeenLastCalledWith({
+      kind: 'context',
+      action: 'setDamage',
+      cardId: stack.evolutionCards.at(-1)!.id,
+      value: '10',
+    });
+  });
+
+  it('answers presses after a card read large from it and back, and leaves as itself', async () => {
+    const callbacks = actions();
+    const window = await render(stateFor(blue), callbacks);
+    const hero = window.querySelector<HTMLButtonElement>(
+      '.pokemon-window__hero [data-stack-preview-card-id]'
+    )!;
+    await act(async () => hero.click());
+    const back = host.querySelector<HTMLButtonElement>('[data-preview-back]')!;
+    expect(back).not.toBeNull();
+    await act(async () => {
+      back.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+      back.click();
+    });
+    expect(callbacks.dismiss).not.toHaveBeenCalled();
+    const again = host.querySelector<HTMLElement>('[data-pokemon-window]')!;
+    expect(again).not.toBeNull();
+    // A press inside the window it came back to is no press outside.
+    await act(async () =>
+      again
+        .querySelector('.pokemon-window__status')!
+        .dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))
+    );
+    expect(callbacks.dismiss).not.toHaveBeenCalled();
+    // Put away, the window it shows now fades out.
+    await render(
+      stateFor(blue, {
+        overlays: { contextMenuCardId: null, preview: null, input: null },
+      }),
+      callbacks
+    );
+    await act(async () => Promise.resolve());
+    expect(
+      host.querySelector('.pokemon-window.ptcgsim-overlay-ghost')
+    ).not.toBeNull();
+  });
 });

@@ -5903,6 +5903,10 @@
     "message": "Row {rowNumber}: image URL too long.",
     "translation": "الصف {rowNumber}: رابط الصورة طويل جدًا."
   },
+  "LLRVyR": {
+    "message": "Row {rowNumber}: invalid card text JSON.",
+    "translation": "الصف {rowNumber}: نص البطاقة بصيغة JSON غير صالح."
+  },
   "DCuDdI": {
     "message": "Row {rowNumber}: invalid presentation JSON.",
     "translation": "الصف {rowNumber}: JSON العرض غير صالح."
@@ -5914,6 +5918,10 @@
   "GTr4h_": {
     "message": "Row {rowNumber}: needs exactly four columns.",
     "translation": "الصف {rowNumber}: يجب أن يحتوي على أربعة أعمدة بالضبط."
+  },
+  "SMeSbq": {
+    "message": "Row {rowNumber}: needs exactly six columns.",
+    "translation": "الصف {rowNumber}: يلزم وجود ستة أعمدة بالضبط."
   },
   "uC4XeA": {
     "message": "Row {rowNumber}: no card name.",

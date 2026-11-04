@@ -415,3 +415,25 @@ describe('the Limitless fallback', () => {
     expect(fetchRequest).not.toHaveBeenCalled();
   });
 });
+
+describe('a deck file’s own card text (ADR-043)', () => {
+  it('keeps text the table takes, and leaves out text it doesn’t', async () => {
+    const good = JSON.stringify({ hp: 90 });
+    const bad = JSON.stringify({ hp: -5 });
+    const result = await importDeckText(
+      [
+        'QTY,Name,Type,URL,Presentation,Text',
+        `1,Homebrew,Pokémon,/a.png,,"${good.replaceAll('"', '""')}"`,
+        `1,Broken,Pokémon,/b.png,,"${bad.replaceAll('"', '""')}"`,
+      ].join('\n'),
+      {}
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const byName = new Map(
+      result.cards.map((entry) => [entry.card.name, entry.card])
+    );
+    expect(byName.get('Homebrew')?.text).toEqual({ hp: 90 });
+    expect(byName.get('Broken')).not.toHaveProperty('text');
+  });
+});

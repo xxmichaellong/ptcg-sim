@@ -369,4 +369,60 @@ describe('a card’s print and text on the table (ADR-043)', () => {
     if (plain.accepted)
       expect(plain.batch.events.at(-1)).not.toHaveProperty('attack');
   });
+
+  it('takes a deck whose card looks the same as one on the table but names another print, or none', () => {
+    const { state, commandContext } = fixture();
+    // The same definition id (the deck's id leaves the print out), another
+    // print: the definition already there stands, and the deck loads.
+    const again = executeCommand(
+      state,
+      {
+        type: 'LoadDeck',
+        playerId: red,
+        entries: entries('blue').map((entry) => ({
+          ...entry,
+          definition: {
+            ...entry.definition,
+            ...(entry.definition.print ? { print: 'PAF 54' } : {}),
+          },
+        })),
+      },
+      commandContext
+    );
+    expect(again.accepted).toBe(true);
+    if (again.accepted)
+      expect(again.state.definitions['blue-charizard']?.print).toBe('OBF 125');
+    const { print: _print, ...printless } = entries('blue')[0]!.definition;
+    expect(
+      executeCommand(
+        state,
+        {
+          type: 'LoadDeck',
+          playerId: red,
+          entries: [{ definition: printless, count: 1 }],
+        },
+        commandContext
+      ).accepted
+    ).toBe(true);
+    // Other text is another card: the same id with it is refused.
+    expect(
+      executeCommand(
+        state,
+        {
+          type: 'LoadDeck',
+          playerId: red,
+          entries: [
+            {
+              definition: {
+                ...entries('blue')[1]!.definition,
+                text: { hp: 1 },
+              },
+              count: 1,
+            },
+          ],
+        },
+        commandContext
+      ).accepted
+    ).toBe(false);
+  });
 });

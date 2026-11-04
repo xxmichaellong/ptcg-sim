@@ -5903,6 +5903,10 @@
     "message": "Row {rowNumber}: image URL too long.",
     "translation": "Fila {rowNumber}: la URL de la imagen es demasiado larga."
   },
+  "LLRVyR": {
+    "message": "Row {rowNumber}: invalid card text JSON.",
+    "translation": "Fila {rowNumber}: JSON de texto de carta no válido."
+  },
   "DCuDdI": {
     "message": "Row {rowNumber}: invalid presentation JSON.",
     "translation": "Fila {rowNumber}: JSON de presentación no válido."
@@ -5914,6 +5918,10 @@
   "GTr4h_": {
     "message": "Row {rowNumber}: needs exactly four columns.",
     "translation": "Fila {rowNumber}: debe tener exactamente cuatro columnas."
+  },
+  "SMeSbq": {
+    "message": "Row {rowNumber}: needs exactly six columns.",
+    "translation": "Fila {rowNumber}: se necesitan exactamente seis columnas."
   },
   "uC4XeA": {
     "message": "Row {rowNumber}: no card name.",

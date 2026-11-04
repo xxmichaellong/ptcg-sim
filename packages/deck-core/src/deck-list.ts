@@ -196,6 +196,28 @@ export const setCardText = (
   return changed ? Object.freeze(next) : list;
 };
 
+/**
+ * Swaps the copies of these entries for another print (`replacePrinting`
+ * each), keeping the deck's own text for the card (ADR-043): the first
+ * one's, given to the print they become, whether it was in the deck
+ * already or not.
+ */
+export const swapPrinting = (
+  list: DeckList,
+  fromIds: readonly string[],
+  card: DeckCard
+): DeckList => {
+  const text = list.find(
+    (entry) => fromIds.includes(entry.card.id) && entry.card.text
+  )?.card.text;
+  const swapped = fromIds.reduce(
+    (current, fromId) =>
+      replacePrinting(current, fromId, text ? { ...card, text } : card),
+    list
+  );
+  return text ? setCardText(swapped, [card.id], text) : swapped;
+};
+
 /** Sets how many copies of `card` the list holds; zero removes it. */
 export const setCardCount = (
   list: DeckList,
@@ -244,7 +266,9 @@ export const sameDeckList = (left: DeckList, right: DeckList): boolean =>
             a.image === b.image &&
             a.imageSmall === b.imageSmall &&
             a.playsAs === b.playsAs &&
-            JSON.stringify(a.presentation) === JSON.stringify(b.presentation)))
+            JSON.stringify(a.presentation) === JSON.stringify(b.presentation) &&
+            // Its own text plays on the table too (ADR-043).
+            JSON.stringify(a.text) === JSON.stringify(b.text)))
       );
     }));
 

@@ -492,6 +492,26 @@ for (const mode of ['flat', 'table'] as const)
         .locator('.ptcgsim-card-preview-tilt')
         .boundingBox();
       expect(image!.width / image!.height).toBeCloseTo(88 / 63, 2);
+      // Shown whole first, it opens its Pokémon window from Details
+      // (ADR-043): the BREAK over the Stage it evolved from.
+      await page.keyboard.press('Escape');
+      await page.locator(`[data-card-id="${breakId}"]`).dblclick();
+      await page.getByRole('button', { name: 'Details' }).click();
+      const window = page.locator('[data-pokemon-window]');
+      await expect(window).toBeVisible();
+      await expect(window).toHaveAccessibleName('Greninja BREAK');
+      await expect(
+        window.locator('.pokemon-window__stages [data-stack-preview-card-id]')
+      ).toHaveCount(1);
+      // A card read large from it goes back to it.
+      await window
+        .locator('.pokemon-window__hero [data-stack-preview-card-id]')
+        .click();
+      await expect(page.locator('[data-preview-kind="card"]')).toBeVisible();
+      await page.keyboard.press('Escape');
+      await expect(window).toBeVisible();
+      await page.keyboard.press('Escape');
+      await expect(window).toHaveCount(0);
     });
 
     test('paired Stadium parts coexist and replacement clears the entire old Stadium', async ({

@@ -5903,6 +5903,10 @@
     "message": "Row {rowNumber}: image URL too long.",
     "translation": "第 {rowNumber} 行：图片 URL 过长。"
   },
+  "LLRVyR": {
+    "message": "Row {rowNumber}: invalid card text JSON.",
+    "translation": "第 {rowNumber} 行：卡牌文本 JSON 无效。"
+  },
   "DCuDdI": {
     "message": "Row {rowNumber}: invalid presentation JSON.",
     "translation": "第 {rowNumber} 行：展示用 JSON 无效。"
@@ -5914,6 +5918,10 @@
   "GTr4h_": {
     "message": "Row {rowNumber}: needs exactly four columns.",
     "translation": "第 {rowNumber} 行：必须正好有四列。"
+  },
+  "SMeSbq": {
+    "message": "Row {rowNumber}: needs exactly six columns.",
+    "translation": "第 {rowNumber} 行：必须正好有六列。"
   },
   "uC4XeA": {
     "message": "Row {rowNumber}: no card name.",

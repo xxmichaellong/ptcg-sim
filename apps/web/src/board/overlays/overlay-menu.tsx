@@ -102,10 +102,15 @@ export const useOutsideDismiss = (
   const letThroughRef = useRef(letThrough);
   letThroughRef.current = letThrough;
   useEffect(() => {
-    const element = container.current;
-    const document = element?.ownerDocument;
-    if (!element || !document) return;
+    const document = container.current?.ownerDocument;
+    if (!document) return;
     const onPointerDown = (event: PointerEvent): void => {
+      // The element as it is now: one overlay may show itself in another
+      // element than it opened in (the Pokémon window, a card read large
+      // from it, and back), and a press in the one shown is no press
+      // outside.
+      const element = container.current;
+      if (!element) return;
       const target = event.target;
       if (element.contains(target as Node)) return;
       // A press inside a dialog raised over the table (a confirmation, a

@@ -5903,6 +5903,10 @@
     "message": "Row {rowNumber}: image URL too long.",
     "translation": "Строка {rowNumber}: слишком длинный URL изображения."
   },
+  "LLRVyR": {
+    "message": "Row {rowNumber}: invalid card text JSON.",
+    "translation": "Строка {rowNumber}: недопустимый JSON текста карты."
+  },
   "DCuDdI": {
     "message": "Row {rowNumber}: invalid presentation JSON.",
     "translation": "Строка {rowNumber}: некорректный JSON представления."
@@ -5914,6 +5918,10 @@
   "GTr4h_": {
     "message": "Row {rowNumber}: needs exactly four columns.",
     "translation": "Строка {rowNumber}: нужно ровно четыре столбца."
+  },
+  "SMeSbq": {
+    "message": "Row {rowNumber}: needs exactly six columns.",
+    "translation": "Строка {rowNumber}: нужно ровно шесть столбцов."
   },
   "uC4XeA": {
     "message": "Row {rowNumber}: no card name.",

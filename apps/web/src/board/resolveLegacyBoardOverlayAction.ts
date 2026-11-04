@@ -1,6 +1,7 @@
 import { i18n, type MessageDescriptor } from '@lingui/core';
 import { msg } from '@lingui/core/macro';
 import {
+  CARD_TEXT_LIMITS,
   isMoveName,
   type MatchViewState,
   type PlayerId,
@@ -522,7 +523,13 @@ const resolveContextAction = (
       )
         return rejected('unsupported_target');
       if (view.viewer.kind !== 'player') return rejected('not_player');
-      const name = request.name.trim();
+      // One line, as long as the room takes: a printed name that runs on
+      // is told cut, not refused.
+      const name = request.name
+        .replace(/\s+/gu, ' ')
+        .trim()
+        .slice(0, CARD_TEXT_LIMITS.name)
+        .trim();
       if (!isMoveName(name)) return rejected('invalid_value');
       return request.action === 'useAbility'
         ? command({

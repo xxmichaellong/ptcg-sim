@@ -1,6 +1,8 @@
 import {
   deckListOf,
+  sameDeckList,
   setCardText,
+  swapPrinting,
   type DeckCard,
   type DeckCardText,
 } from '@ptcgsim/deck-core';
@@ -71,5 +73,47 @@ describe('a card’s own text', () => {
     expect(printed[0]?.card).not.toHaveProperty('text');
     // Nothing to take off: the same list back.
     expect(setCardText(list, ['PAF 7'], undefined)).toBe(list);
+  });
+
+  it('is part of what a seat compares: an edit reaches the table', () => {
+    const card: DeckCard = {
+      id: 'OBF 125',
+      name: 'Charizard ex',
+      category: 'Pokémon',
+      image: '/c.png',
+    };
+    const plain = deckListOf([{ card, count: 1 }]);
+    const edited = setCardText(plain, ['OBF 125'], { hp: 340 });
+    expect(sameDeckList(plain, edited)).toBe(false);
+    expect(
+      sameDeckList(edited, setCardText(plain, ['OBF 125'], { hp: 340 }))
+    ).toBe(true);
+  });
+
+  it('goes with its copies to another print, one already in the deck too', () => {
+    const card = (id: string, text?: DeckCardText): DeckCard => ({
+      id,
+      name: 'Charizard ex',
+      category: 'Pokémon',
+      image: `/${id}.png`,
+      ...(text ? { text } : {}),
+    });
+    const text: DeckCardText = { hp: 340 };
+    const into = swapPrinting(
+      deckListOf([
+        { card: card('OBF 125', text), count: 2 },
+        { card: card('PAF 54'), count: 1 },
+      ]),
+      ['OBF 125'],
+      card('PAF 54')
+    );
+    expect(into).toEqual([{ card: card('PAF 54', text), count: 3 }]);
+    // A print not in the deck yet takes it as it goes in.
+    const fresh = swapPrinting(
+      deckListOf([{ card: card('OBF 125', text), count: 2 }]),
+      ['OBF 125'],
+      card('OBF 215')
+    );
+    expect(fresh).toEqual([{ card: card('OBF 215', text), count: 2 }]);
   });
 });

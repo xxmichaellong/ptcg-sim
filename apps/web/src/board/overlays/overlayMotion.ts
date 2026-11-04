@@ -1,5 +1,6 @@
 import {
   useLayoutEffect,
+  useRef,
   type PointerEvent as ReactPointerEvent,
   type RefObject,
 } from 'react';
@@ -71,10 +72,18 @@ export const useOverlayExit = (
   ref: RefObject<HTMLElement | null>,
   variant: OverlayExitVariant
 ): void => {
+  // The element as it was last drawn: an overlay may show itself in
+  // another element than it opened in (the Pokémon window, a card read
+  // large from it, and back), and the one that leaves is the last one.
+  const shown = useRef<HTMLElement | null>(null);
   useLayoutEffect(() => {
-    const element = ref.current;
-    if (!element) return;
+    shown.current = ref.current;
+  });
+  useLayoutEffect(() => {
+    if (!ref.current) return;
     return () => {
+      const element = shown.current ?? ref.current;
+      if (!element) return;
       const parent = element.parentElement;
       if (!parent) return;
       // Nothing to see leave: a panel a drag has hidden (its drag-state

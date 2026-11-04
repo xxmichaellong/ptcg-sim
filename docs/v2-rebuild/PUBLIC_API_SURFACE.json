@@ -634,6 +634,10 @@
               "kind": "value"
             },
             {
+              "name": "swapPrinting",
+              "kind": "value"
+            },
+            {
               "name": "WireCatalog",
               "kind": "type"
             },

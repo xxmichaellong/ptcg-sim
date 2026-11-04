@@ -16,6 +16,7 @@ export {
   sameDeckList,
   setCardCount,
   setCardText,
+  swapPrinting,
   sortDeckList,
 } from './deck-list.js';
 export type {

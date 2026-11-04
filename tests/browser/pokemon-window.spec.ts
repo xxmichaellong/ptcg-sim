@@ -183,6 +183,15 @@ test('a Pokémon opens in its window: its cards, its status and its moves, each 
     contentType: 'image/png',
   });
 
+  // A card read large from it, and back: the window answers as before.
+  await window
+    .locator('.pokemon-window__stages [data-stack-preview-card-id]')
+    .first()
+    .click();
+  await expect(page.locator('[data-preview-kind="card"]')).toBeVisible();
+  await page.getByRole('button', { name: 'Back' }).click();
+  await expect(window).toBeVisible();
+
   // Damage, stepped here: the window stays open and the HP goes down.
   await window.getByRole('button', { name: '10 more damage' }).click();
   await window.getByRole('button', { name: '10 more damage' }).click();

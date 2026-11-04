@@ -5903,6 +5903,10 @@
     "message": "Row {rowNumber}: image URL too long.",
     "translation": "{rowNumber}행: 이미지 URL이 너무 깁니다."
   },
+  "LLRVyR": {
+    "message": "Row {rowNumber}: invalid card text JSON.",
+    "translation": "{rowNumber}행: 카드 텍스트 JSON이 올바르지 않습니다."
+  },
   "DCuDdI": {
     "message": "Row {rowNumber}: invalid presentation JSON.",
     "translation": "{rowNumber}행: 프레젠테이션 JSON이 올바르지 않습니다."
@@ -5914,6 +5918,10 @@
   "GTr4h_": {
     "message": "Row {rowNumber}: needs exactly four columns.",
     "translation": "{rowNumber}행: 열이 정확히 4개여야 합니다."
+  },
+  "SMeSbq": {
+    "message": "Row {rowNumber}: needs exactly six columns.",
+    "translation": "{rowNumber}행: 열이 정확히 6개여야 합니다."
   },
   "uC4XeA": {
     "message": "Row {rowNumber}: no card name.",

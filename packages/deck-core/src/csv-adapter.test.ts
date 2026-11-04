@@ -181,6 +181,33 @@ describe('simulator CSV files', () => {
     expect(formatSimCsv(restored.cards)).toBe(csv);
   });
 
+  it('writes and reads back a card’s own text (ADR-043)', () => {
+    const text = {
+      hp: 90,
+      attacks: [{ name: 'Splash', cost: ['Water' as const], damage: '30' }],
+    };
+    const original = deckListOf([
+      { card: card({ id: 'custom:own', name: 'Homebrew', text }), count: 2 },
+      { card: card({ id: 'custom:plain', name: 'Plain' }), count: 1 },
+    ]);
+    const csv = formatSimCsv(original);
+    expect(csv.split('\n')[0]).toBe('QTY,Name,Type,URL,Presentation,Text');
+    const restored = parseSimCsvResult(csv);
+    expect(restored.ok).toBe(true);
+    if (!restored.ok) return;
+    expect(restored.cards.map((entry) => entry.card.text)).toEqual([
+      text,
+      undefined,
+    ]);
+    expect(formatSimCsv(restored.cards)).toBe(csv);
+    // Text that is no JSON object refuses the row.
+    const broken = parseSimCsvResult(
+      'QTY,Name,Type,URL,Presentation,Text\n1,Homebrew,Pokémon,/a.png,,[1]'
+    );
+    expect(broken.ok).toBe(false);
+    if (!broken.ok) expect(broken.issues[0]?.code).toBe('invalid_text');
+  });
+
   it('reads card types as v1 and decklists spell them', () => {
     expect(cardCategoryOf('Pokemon')).toBe('Pokémon');
     expect(cardCategoryOf(' trainer ')).toBe('Trainer');

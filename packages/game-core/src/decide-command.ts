@@ -203,7 +203,9 @@ const sameDefinition = (left: CardDefinition, right: CardDefinition): boolean =>
   left.imageUrl === right.imageUrl &&
   left.imageUrlSmall === right.imageUrlSmall &&
   left.playsAs === right.playsAs &&
-  left.print === right.print &&
+  // Not its print: two prints that look the same are one definition (the
+  // deck's id leaves the print out), and the first one's print stands for
+  // both. Its own text is part of it.
   sameCardText(left.text, right.text) &&
   sameCardPresentation(left.presentation, right.presentation);
 

@@ -5903,6 +5903,10 @@
     "message": "Row {rowNumber}: image URL too long.",
     "translation": "Hàng {rowNumber}: URL ảnh quá dài."
   },
+  "LLRVyR": {
+    "message": "Row {rowNumber}: invalid card text JSON.",
+    "translation": "Hàng {rowNumber}: JSON văn bản lá bài không hợp lệ."
+  },
   "DCuDdI": {
     "message": "Row {rowNumber}: invalid presentation JSON.",
     "translation": "Hàng {rowNumber}: JSON hiển thị không hợp lệ."
@@ -5914,6 +5918,10 @@
   "GTr4h_": {
     "message": "Row {rowNumber}: needs exactly four columns.",
     "translation": "Hàng {rowNumber}: cần đúng bốn cột."
+  },
+  "SMeSbq": {
+    "message": "Row {rowNumber}: needs exactly six columns.",
+    "translation": "Hàng {rowNumber}: cần đúng sáu cột."
   },
   "uC4XeA": {
     "message": "Row {rowNumber}: no card name.",
