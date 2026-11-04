@@ -1899,8 +1899,10 @@ const Preview = ({
     if (!pokemonWindow) return;
     const onKey = (event: KeyboardEvent): void => {
       if (event.key !== 'Escape' || isInputMethodKey(event)) return;
+      // Only a key pressed in it: the table's own Esc hears the rest.
       const element = container.current;
-      if (!element?.contains(element.ownerDocument.activeElement)) return;
+      if (!(event.target instanceof Node) || !element?.contains(event.target))
+        return;
       event.preventDefault();
       event.stopPropagation();
       if (readingFromWindow.current) setIndividualCardId(null);
