@@ -4660,6 +4660,11 @@
     "context": "card count",
     "translation": "多一张"
   },
+  "Ycz7VO": {
+    "message": "Online",
+    "context": "playing against someone",
+    "translation": "在线"
+  },
   "Du4Avj": {
     "message": "Online events",
     "comments": [
@@ -6184,6 +6189,11 @@
     "context": "sleeve colour",
     "translation": "雪白"
   },
+  "qyGQ0X": {
+    "message": "Solo",
+    "context": "playing alone at this table",
+    "translation": "单人"
+  },
   "6N0DKq": {
     "message": "Solo table",
     "translation": "单人牌桌"
@@ -7221,6 +7231,11 @@
   "sFWtjQ": {
     "message": "Watch replay…",
     "translation": "观看回放…"
+  },
+  "tKJuEd": {
+    "message": "Watching",
+    "context": "spectating a room",
+    "translation": "观战中"
   },
   "2kl5Uf": {
     "message": "Water",

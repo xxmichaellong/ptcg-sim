@@ -148,7 +148,29 @@ corner, on tables at least 560px tall) cost the hand about a quarter of its
 width on a desktop and were declined; the app bar's buttons keep the
 control look.
 
-### 4. Every zone's hover name is centred
+### 4. The bar names where the table is played
+
+Added 2026-11-04: a Solo table and an online room looked the same, and only
+the menu's heading told them apart. The bar now leads with the table's
+mode, a name rather than a button: **Solo**, **Online**, **Watching** (a
+spectator), **Replay** or **Tutorial** (`AppMenuModel.mode`, `TableMode`).
+Online and Watching lead with a light, green while the room is connected
+and amber until it is (also while reconnecting); hovering or tapping it
+shows the room ("Room K7PQ2M"). The other modes lead with an icon.
+
+The label is at most `APP_BAR_MODE_PX` (120px, the longest of the 20
+languages' names) and the corner the table keeps counts it at that width.
+On a phone held upright (under 480px wide) the opponent's hand beside the
+bar has no room to give (app-bar.spec holds it at 128px or more), so there
+the mode takes none: online, the light alone sits in the bar's corner, and
+a Solo table shows nothing. The name stays for screen readers.
+
+It shows only what the client knows for sure: the room's connection. The
+opponent's presence is not shown, because the room sends presence only as
+it changes (`Presence` joined/left), so a player who joins second never
+hears that the other is there.
+
+### 5. Every zone's hover name is centred
 
 A zone's name (shown faintly on an empty spot under a mouse) sits in the
 middle of the spot, piles included. Only an empty deck showing the `+` that
@@ -167,4 +189,6 @@ loads one moves its name under the `+` (the board marks such decks:
   Settings row), `#boardButtonContainer` and the turn's actions.
   `#shortcutsButton` is a palette command only; Settings' Keys opens the
   list (`#editShortcutsButton`). The bar is five buttons at most (202px by
-  mouse), so the corner the table keeps is about 40px narrower.
+  mouse), so the corner the table keeps is about 40px narrower. Since the
+  mode's label (§4), 326px by mouse; on an upright phone still three
+  buttons (146px by touch).

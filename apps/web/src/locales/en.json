@@ -4660,6 +4660,11 @@
     "context": "card count",
     "translation": "One more"
   },
+  "Ycz7VO": {
+    "message": "Online",
+    "context": "playing against someone",
+    "translation": "Online"
+  },
   "Du4Avj": {
     "message": "Online events",
     "comments": [
@@ -6184,6 +6189,11 @@
     "context": "sleeve colour",
     "translation": "Snow"
   },
+  "qyGQ0X": {
+    "message": "Solo",
+    "context": "playing alone at this table",
+    "translation": "Solo"
+  },
   "6N0DKq": {
     "message": "Solo table",
     "translation": "Solo table"
@@ -7221,6 +7231,11 @@
   "sFWtjQ": {
     "message": "Watch replay…",
     "translation": "Watch replay…"
+  },
+  "tKJuEd": {
+    "message": "Watching",
+    "context": "spectating a room",
+    "translation": "Watching"
   },
   "2kl5Uf": {
     "message": "Water",

@@ -123,10 +123,12 @@ test('the app bar keeps the top-right corner, clear of every card, and the turn 
     'appMenuButton',
   ]);
   const barBox = await box(bar);
-  // 8px in from the corner, and no wider than the corner the table keeps.
+  // 8px in from the corner, and no wider than the corner the table keeps:
+  // the mode's label (120px) and five 36px buttons, 4px apart, in 3px.
   expect(Math.round(barBox.y)).toBe(8);
   expect(Math.round(1440 - barBox.x - barBox.width)).toBe(8);
-  expect(barBox.width).toBeLessThanOrEqual(202.5);
+  expect(barBox.width).toBeLessThanOrEqual(120 + 5 * 36 + 5 * 4 + 6 + 0.5);
+  await expect(bar.locator('[data-table-mode="solo"]')).toHaveText('Solo');
 
   await setUpBoth(page);
   for (const rect of await tableBoxes(page)) {

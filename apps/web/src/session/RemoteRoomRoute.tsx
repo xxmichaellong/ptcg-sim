@@ -702,6 +702,22 @@ export const RemoteRoomRoute = ({
 
         const menu: AppMenuModel = {
           heading: tutorial ? t`Tutorial` : roomName,
+          mode: tutorial
+            ? { kind: 'tutorial' }
+            : replaying
+              ? { kind: 'replay' }
+              : solo
+                ? { kind: 'solo' }
+                : {
+                    kind:
+                      state.view?.viewer.kind === 'spectator'
+                        ? 'watching'
+                        : 'online',
+                    detail: roomName,
+                    ...(state.sessionPhase === 'ready'
+                      ? {}
+                      : { connecting: true }),
+                  },
           // The tutorial is for a Solo table: a room's other player would be
           // left waiting.
           ...(tutorial

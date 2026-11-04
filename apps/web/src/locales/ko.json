@@ -4660,6 +4660,11 @@
     "context": "card count",
     "translation": "한 장 더"
   },
+  "Ycz7VO": {
+    "message": "Online",
+    "context": "playing against someone",
+    "translation": "온라인"
+  },
   "Du4Avj": {
     "message": "Online events",
     "comments": [
@@ -6184,6 +6189,11 @@
     "context": "sleeve colour",
     "translation": "흰색"
   },
+  "qyGQ0X": {
+    "message": "Solo",
+    "context": "playing alone at this table",
+    "translation": "혼자"
+  },
   "6N0DKq": {
     "message": "Solo table",
     "translation": "솔로 테이블"
@@ -7221,6 +7231,11 @@
   "sFWtjQ": {
     "message": "Watch replay…",
     "translation": "리플레이 보기…"
+  },
+  "tKJuEd": {
+    "message": "Watching",
+    "context": "spectating a room",
+    "translation": "관전 중"
   },
   "2kl5Uf": {
     "message": "Water",

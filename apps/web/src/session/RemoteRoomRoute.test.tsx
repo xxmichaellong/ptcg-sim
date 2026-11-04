@@ -640,6 +640,8 @@ describe('RemoteRoomRoute', () => {
       'activityButton',
       'appMenuButton',
     ]);
+    // The bar says so first.
+    expect(get('.ptcgsim-app-bar__mode').dataset.tableMode).toBe('solo');
     await openMenu();
     expect(get('.ptcgsim-app-menu-heading').textContent).toBe('Solo table');
     expect(menuIds()[0]).toBe('settingsButton');
@@ -879,6 +881,7 @@ describe('RemoteRoomRoute', () => {
     expect(railIds()).toEqual(['flipBoardButton']);
     expect(moreIds()).toEqual([]);
     expect(boardHarness.props?.loadDeck).toBeUndefined();
+    expect(get('.ptcgsim-app-bar__mode').dataset.tableMode).toBe('watching');
     await openMenu();
     expect(menuIds()).toContain('leaveRoomButton');
     expect(menuIds()).not.toContain('saveOnlineGame');
@@ -934,6 +937,9 @@ describe('RemoteRoomRoute', () => {
       expect(document.body.textContent).not.toContain(admissionTicket);
       // Nothing to press before the room seats us.
       expect(railIds()).toEqual([]);
+      // The bar says the table is online, and not connected yet.
+      expect(get('.ptcgsim-app-bar__mode').dataset.tableMode).toBe('online');
+      expect(get('.ptcgsim-app-bar__mode').dataset.connecting).toBe('true');
 
       // The log opens beside or over the table; its chat waits for the room.
       await openActivity();
@@ -957,6 +963,9 @@ describe('RemoteRoomRoute', () => {
       expect(socket.sent).toHaveLength(1);
       expect(get('#room-board').textContent).toBe('1');
       expect(main.dataset.sessionPhase).toBe('ready');
+      expect(
+        get('.ptcgsim-app-bar__mode').hasAttribute('data-connecting')
+      ).toBe(false);
       await openActivity();
       expect(get('#activitySheet').textContent).toContain('Room ABCDEFGH2345');
       expect(get<HTMLInputElement>('#p2MessageInput').disabled).toBe(false);

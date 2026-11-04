@@ -1577,6 +1577,8 @@ export const RemoteRoomLobby = ({
   };
   const menu: AppMenuModel = {
     heading: activePanel === 'lobby' ? t`Play online` : t`Solo table`,
+    // The table behind Play online is still the player's Solo table.
+    ...(parkedSolo || activePanel === 'solo' ? { mode: { kind: 'solo' } } : {}),
     ...(activePanel === 'lobby' && !busy
       ? { onPlaySolo: () => void handleSolo() }
       : {}),

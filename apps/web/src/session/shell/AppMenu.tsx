@@ -48,10 +48,24 @@ import type { RoomInviteRole } from '../room-invites.js';
 import { DISCORD_URL, openHelpPage, RELEASE_NAME } from './help-pages.js';
 import './app-menu.css';
 
+/**
+ * Where this table is played, named at the start of the bar: alone (Solo),
+ * against someone (Online), watching a room, a replay or the tutorial.
+ */
+export interface TableMode {
+  readonly kind: 'solo' | 'online' | 'watching' | 'replay' | 'tutorial';
+  /** Online or watching: not (or no longer) connected to the room. */
+  readonly connecting?: boolean;
+  /** Shown on hover or a tap: the room ("Room K7PQ2M"), or "Connecting…". */
+  readonly detail?: string;
+}
+
 /** What the app menu can do in the current room and mode. */
 export interface AppMenuModel {
   /** The room in a line, at the top of the menu. */
   readonly heading?: ReactNode;
+  /** The bar's label: Solo, Online and so on. */
+  readonly mode?: TableMode;
   /** Back to the Solo table, from the lobby. */
   readonly onPlaySolo?: () => void;
   readonly onPlayOnline?: () => void;
@@ -343,6 +357,16 @@ export const restEntries = (
 export const APP_BAR_GAP_PX = 4;
 export const APP_BAR_PAD_PX = 3;
 const appBarButtonPx = (coarse: boolean): number => (coarse ? 44 : 36);
+/**
+ * The mode's label at the start of the bar is at most this wide (a longer
+ * name is cut short); the corner kept for the bar counts it at this width.
+ */
+export const APP_BAR_MODE_PX = 120;
+/**
+ * A phone held upright, where the opponent's hand needs every pixel beside
+ * the bar: the mode takes no room, only a light in the bar's corner online.
+ */
+export const NARROW_BAR_QUERY = '(max-width: 479px)';
 
 /**
  * The most buttons the bar shows: on a phone the palette, the log and the
@@ -350,14 +374,16 @@ const appBarButtonPx = (coarse: boolean): number => (coarse ? 44 : 36);
  */
 export const APP_BAR_SLOTS = { full: 5, compact: 3 } as const;
 
-/** The bar's box for that many buttons. */
+/** The bar's box for that many buttons, after the mode's label if any. */
 export const appBarSize = (
   slots: number,
-  coarse: boolean
+  coarse: boolean,
+  modeLabel = true
 ): { readonly width: number; readonly height: number } => {
   const button = appBarButtonPx(coarse);
   return {
     width:
+      (modeLabel ? APP_BAR_MODE_PX + APP_BAR_GAP_PX : 0) +
       slots * button +
       Math.max(0, slots - 1) * APP_BAR_GAP_PX +
       2 * APP_BAR_PAD_PX,
@@ -375,10 +401,15 @@ export const useAppBarReserve = (): {
 } => {
   const coarse = useMediaQuery(COARSE_POINTER_QUERY);
   const compact = useCompactLayout();
+  const narrow = useMediaQuery(NARROW_BAR_QUERY);
   return useMemo(
     () =>
-      appBarSize(compact ? APP_BAR_SLOTS.compact : APP_BAR_SLOTS.full, coarse),
-    [compact, coarse]
+      appBarSize(
+        compact ? APP_BAR_SLOTS.compact : APP_BAR_SLOTS.full,
+        coarse,
+        !narrow
+      ),
+    [compact, coarse, narrow]
   );
 };
 
@@ -395,9 +426,70 @@ const BarButton = ({ entry }: { readonly entry: ToolbarEntry }) => (
   </Tooltip>
 );
 
+const MODE_ICONS: Partial<Record<TableMode['kind'], Icon>> = {
+  solo: UserIcon,
+  watching: EyeIcon,
+  replay: FilmReelIcon,
+  tutorial: GraduationCapIcon,
+};
+
+/**
+ * Where this table is played, at the start of the bar: a name, not a
+ * button. Online it leads with a light, green while the room is connected
+ * and amber until it is. On a phone held upright only that light shows, in
+ * the bar's corner, and the name is left to assistive technology.
+ */
+const ModeLabel = ({
+  mode,
+  lightOnly,
+}: {
+  readonly mode: TableMode;
+  readonly lightOnly: boolean;
+}) => {
+  const { t } = useLingui();
+  const name = {
+    solo: t({ message: 'Solo', context: 'playing alone at this table' }),
+    online: t({ message: 'Online', context: 'playing against someone' }),
+    watching: t({ message: 'Watching', context: 'spectating a room' }),
+    replay: t({ message: 'Replay', context: 'the table is showing a replay' }),
+    tutorial: t`Tutorial`,
+  }[mode.kind];
+  const ModeIcon = MODE_ICONS[mode.kind];
+  const lit = mode.connecting || !ModeIcon;
+  const label = (
+    <span
+      className="ptcgsim-app-bar__mode"
+      data-table-mode={mode.kind}
+      data-connecting={mode.connecting ? 'true' : undefined}
+      data-light-only={lightOnly ? 'true' : undefined}
+    >
+      {lit ? (
+        <span className="ptcgsim-app-bar__mode-light" aria-hidden="true" />
+      ) : lightOnly ? null : (
+        <ModeIcon aria-hidden="true" weight="bold" />
+      )}
+      <span
+        className={
+          lightOnly ? 'ds-visually-hidden' : 'ptcgsim-app-bar__mode-name'
+        }
+      >
+        {name}
+      </span>
+    </span>
+  );
+  return mode.detail && !lightOnly ? (
+    <Tooltip content={mode.detail} side="bottom" tapToShow>
+      {label}
+    </Tooltip>
+  ) : (
+    label
+  );
+};
+
 /**
  * The app bar (ADR-036), in the table's top-right corner, clear of the
- * play: the deck and where to play, then the command palette and the log,
+ * play: where this table is played (Solo, Online…), the deck and where to
+ * play, then the command palette and the log,
  * then the menu (☰) with what else can be done here -- Settings, full
  * screen, saves and replays, invites, leaving. On a phone the bar keeps
  * the palette, the log and the menu, and the menu leads with the rest. The
@@ -416,6 +508,7 @@ export const AppBar = ({
   const touchOnly = useMediaQuery(TOUCH_ONLY_QUERY);
   const coarse = useMediaQuery(COARSE_POINTER_QUERY);
   const compact = useCompactLayout();
+  const narrow = useMediaQuery(NARROW_BAR_QUERY);
   const fullscreen = useBrowserFullscreen();
   const primary = primaryEntries(model, hint('table.commands'));
   // A phone's bar keeps only the palette of these.
@@ -449,9 +542,17 @@ export const AppBar = ({
       style={
         {
           '--app-bar-button': `${String(appBarButtonPx(coarse))}px`,
+          '--app-bar-mode': `${String(APP_BAR_MODE_PX)}px`,
         } as CSSProperties
       }
     >
+      {model.mode && narrow ? (
+        <ModeLabel mode={model.mode} lightOnly />
+      ) : model.mode ? (
+        <div className="ptcgsim-app-bar__group">
+          <ModeLabel mode={model.mode} lightOnly={false} />
+        </div>
+      ) : null}
       {places.length > 0 ? (
         <div className="ptcgsim-app-bar__group">
           {places.map((entry) => (

@@ -28,6 +28,7 @@ import type { RemoteRoomRuntime } from './RemoteRoomRuntime.js';
 import type { BoardRailModel } from './RemoteSessionBoard.js';
 import type { RoomBackground } from './browser-room-background.js';
 import type { RoomInvitations } from './room-invites.js';
+import { APP_BAR_SLOTS, appBarSize } from './shell/AppMenu.js';
 import { boardViewSettings } from '../board/view/board-view-settings.js';
 import { serializeRoomInvitationHandoffText } from '@ptcgsim/protocol';
 import {
@@ -672,7 +673,7 @@ describe('remote room lobby wiring', () => {
     expect(lobbyBoardHarness.table).toEqual({
       lowerShare: TABLE_SPLIT.defaultLowerShare,
       seamBandPx: 42,
-      appBarPx: { width: 202, height: 42 },
+      appBarPx: appBarSize(APP_BAR_SLOTS.full, false),
       hideEmptyLostZone: true,
     });
     expect(present('[data-testid="parked-solo-board"]')).toBe(false);

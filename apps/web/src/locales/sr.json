@@ -4660,6 +4660,11 @@
     "context": "card count",
     "translation": "Једна више"
   },
+  "Ycz7VO": {
+    "message": "Online",
+    "context": "playing against someone",
+    "translation": "Онлајн"
+  },
   "Du4Avj": {
     "message": "Online events",
     "comments": [
@@ -6184,6 +6189,11 @@
     "context": "sleeve colour",
     "translation": "Снежна"
   },
+  "qyGQ0X": {
+    "message": "Solo",
+    "context": "playing alone at this table",
+    "translation": "Соло"
+  },
   "6N0DKq": {
     "message": "Solo table",
     "translation": "Соло сто"
@@ -7221,6 +7231,11 @@
   "sFWtjQ": {
     "message": "Watch replay…",
     "translation": "Гледај снимак…"
+  },
+  "tKJuEd": {
+    "message": "Watching",
+    "context": "spectating a room",
+    "translation": "Гледање"
   },
   "2kl5Uf": {
     "message": "Water",

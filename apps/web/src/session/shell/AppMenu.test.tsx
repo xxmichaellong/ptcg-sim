@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { preferences } from '../../preferences/preference-store.js';
 import {
   APP_BAR_GAP_PX,
+  APP_BAR_MODE_PX,
   APP_BAR_PAD_PX,
   APP_BAR_SLOTS,
   AppBar,
@@ -322,12 +323,75 @@ describe('AppBar', () => {
   });
 
   it('is as wide as the corner the table keeps for it', () => {
-    // Five 36px buttons 4px apart in 3px of padding and border a side.
+    // The mode's label and five 36px buttons 4px apart in 3px of padding
+    // and border a side.
     expect(appBarSize(APP_BAR_SLOTS.full, false)).toEqual({
-      width: 5 * 36 + 4 * APP_BAR_GAP_PX + 2 * APP_BAR_PAD_PX,
+      width: APP_BAR_MODE_PX + 5 * 36 + 5 * APP_BAR_GAP_PX + 2 * APP_BAR_PAD_PX,
       height: 36 + 2 * APP_BAR_PAD_PX,
     });
     expect(appBarSize(APP_BAR_SLOTS.compact, true)).toEqual({
+      width: APP_BAR_MODE_PX + 3 * 44 + 3 * APP_BAR_GAP_PX + 2 * APP_BAR_PAD_PX,
+      height: 44 + 2 * APP_BAR_PAD_PX,
+    });
+  });
+
+  it('names where the table is played first, online with its room and whether it is connected', async () => {
+    const label = () =>
+      document.querySelector<HTMLElement>('.ptcgsim-app-bar__mode');
+    await render(model({ mode: { kind: 'solo' } }));
+    expect(label()?.dataset.tableMode).toBe('solo');
+    expect(label()?.textContent).toBe('Solo');
+    // First in the bar, and not a button: the arrow keys skip it.
+    expect(
+      document.querySelector('.ptcgsim-app-bar__group')?.firstElementChild
+    ).toBe(label());
+    expect(barIds()[0]).toBe('deckImportButton');
+
+    await render(
+      model({
+        onPlayOnline: undefined,
+        mode: { kind: 'online', detail: 'Room K7PQ2M', connecting: true },
+      })
+    );
+    expect(label()?.textContent).toBe('Online');
+    expect(label()?.dataset.connecting).toBe('true');
+    expect(label()?.querySelector('.ptcgsim-app-bar__mode-light')).not.toBe(
+      null
+    );
+    await render(
+      model({
+        onPlayOnline: undefined,
+        mode: { kind: 'online', detail: 'Room K7PQ2M' },
+      })
+    );
+    expect(label()?.hasAttribute('data-connecting')).toBe(false);
+
+    await render(model({ mode: { kind: 'watching', detail: 'Room K7PQ2M' } }));
+    expect(label()?.textContent).toBe('Watching');
+    await render(model({ mode: { kind: 'replay' } }));
+    expect(label()?.textContent).toBe('Replay');
+
+    // No mode, no label (the lobby joining a room).
+    await render(model());
+    expect(label()).toBe(null);
+
+    // A phone held upright has no room for the name: online, a light in
+    // the bar's corner, the name left to screen readers; at a Solo table
+    // nothing to see. The bar is no wider than its buttons.
+    compact = true;
+    await render(model({ mode: { kind: 'online', detail: 'Room K7PQ2M' } }));
+    expect(label()?.dataset.lightOnly).toBe('true');
+    expect(label()?.querySelector('.ptcgsim-app-bar__mode-light')).not.toBe(
+      null
+    );
+    expect(label()?.querySelector('.ds-visually-hidden')?.textContent).toBe(
+      'Online'
+    );
+    await render(model({ mode: { kind: 'solo' } }));
+    expect(label()?.querySelector('svg, .ptcgsim-app-bar__mode-light')).toBe(
+      null
+    );
+    expect(appBarSize(APP_BAR_SLOTS.compact, true, false)).toEqual({
       width: 3 * 44 + 2 * APP_BAR_GAP_PX + 2 * APP_BAR_PAD_PX,
       height: 44 + 2 * APP_BAR_PAD_PX,
     });
