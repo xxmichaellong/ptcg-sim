@@ -41,6 +41,7 @@ import {
   publicVisibilityFace,
 } from './public-visibility.js';
 import { sameCardPresentation } from './card-presentation.js';
+import { sameCardText } from './card-text.js';
 import { isConcealedZone } from './concealed-zone.js';
 import { isCardKnownToViewer } from './projection.js';
 import { soloUndoCheckpointProblem } from './solo-undo.js';
@@ -150,6 +151,8 @@ const sameDefinition = (
   left.imageUrl === right.imageUrl &&
   left.imageUrlSmall === right.imageUrlSmall &&
   left.playsAs === right.playsAs &&
+  left.print === right.print &&
+  sameCardText(left.text, right.text) &&
   // The command side compares presentation too; an applied event must not
   // quietly re-present a definition the other seat still uses.
   sameCardPresentation(left.presentation, right.presentation);

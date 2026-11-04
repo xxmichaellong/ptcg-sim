@@ -1,4 +1,5 @@
 import { CARD_PLAYS_AS } from './card-plays-as.js';
+import { isCardPrint, isCardText } from './card-text.js';
 import { isStackReminder, STACK_REMINDERS } from './stack-reminders.js';
 import type { CardInstanceId, StackId } from './ids.js';
 import { isCardBackValue } from './card-back.js';
@@ -176,6 +177,12 @@ export const collectInvariantProblems = (
       !CARD_PLAYS_AS.includes(definition.playsAs)
     ) {
       problems.push(`definition ${definition.id} has invalid plays-as kind`);
+    }
+    if (definition.print !== undefined && !isCardPrint(definition.print)) {
+      problems.push(`definition ${definition.id} has invalid print`);
+    }
+    if (definition.text !== undefined && !isCardText(definition.text)) {
+      problems.push(`definition ${definition.id} has invalid card text`);
     }
   }
 

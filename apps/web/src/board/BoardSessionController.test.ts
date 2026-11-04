@@ -1782,6 +1782,61 @@ describe('headless board session controller', () => {
     );
   });
 
+  it('takes a Pokémon window’s presses with no menu open, and leaves the window open (ADR-043)', () => {
+    let state = install();
+    const activeStack = state.view!.stacks['stack:blue:active']!;
+    const cardId = activeStack.evolutionCards.at(-1)!.id;
+    state = apply(state, {
+      kind: 'RendererIntent',
+      intent: { kind: 'CardPreviewRequested', cardId },
+    }).state;
+    expect(state.overlays.preview).toMatchObject({ kind: 'stack' });
+    const request = {
+      kind: 'context' as const,
+      action: 'setDamage' as const,
+      cardId,
+      value: '130',
+    };
+    // Not from a menu, and not from the window: refused.
+    expect(
+      apply(state, { kind: 'LegacyOverlayActionRequested', request }).effects
+    ).toEqual([
+      { kind: 'OverlayActionRejected', request, reason: 'stale_card' },
+    ]);
+    const fromWindow = apply(state, {
+      kind: 'LegacyOverlayActionRequested',
+      request,
+      origin: 'window',
+    });
+    expect(fromWindow.effects).toEqual([
+      {
+        kind: 'SubmitCommand',
+        command: { type: 'SetDamage', stackId: activeStack.id, damage: 130 },
+      },
+    ]);
+    expect(fromWindow.state.overlays.preview).toEqual(state.overlays.preview);
+    const attack = apply(state, {
+      kind: 'LegacyOverlayActionRequested',
+      request: {
+        kind: 'context',
+        action: 'useAttack',
+        cardId,
+        name: 'Thunderbolt',
+      },
+      origin: 'window',
+    });
+    expect(attack.effects).toEqual([
+      {
+        kind: 'SubmitCommand',
+        command: {
+          type: 'DeclareAttack',
+          targetPlayerId: activeStack.boardPlayerId,
+          attack: { stackId: activeStack.id, name: 'Thunderbolt' },
+        },
+      },
+    ]);
+  });
+
   it("opens a marker's controls on a press and keeps them open for that marker's changes", () => {
     let state = install();
     const activeStack = state.view!.stacks['stack:blue:active']!;
@@ -3196,7 +3251,7 @@ describe('headless board session controller', () => {
     );
   });
 
-  it('opens a lone Pokémon straight into the card preview, not the stack view', () => {
+  it('opens a lone Pokémon in its window, as any Pokémon in play (ADR-043)', () => {
     const base = createRendererSpikeView();
     const stack = base.stacks['stack:blue:active']!;
     const top = stack.evolutionCards.at(-1)!;
@@ -3212,7 +3267,11 @@ describe('headless board session controller', () => {
       kind: 'RendererIntent',
       intent: { kind: 'CardPreviewRequested', cardId: top.id },
     }).state;
-    expect(state.overlays.preview).toEqual({ kind: 'card', cardId: top.id });
+    expect(state.overlays.preview).toEqual({
+      kind: 'stack',
+      stackId: stack.id,
+      focusCardId: top.id,
+    });
   });
 
   it('closes stack preview when its focus card moves out of that stack', () => {

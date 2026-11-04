@@ -11,6 +11,7 @@ import {
   selectionContextOf,
 } from './group-context.js';
 import { RevealedHandBadges } from './RevealedHandBadges.js';
+import { PokemonWindow, type PokemonWindowCardSize } from './PokemonWindow.js';
 import { visualCardBounds } from './card-bounds.js';
 import { OverlayCardActions } from './OverlayCardActions.js';
 import type {
@@ -40,6 +41,7 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import { ArrowCounterClockwiseIcon } from '@phosphor-icons/react/dist/csr/ArrowCounterClockwise';
 import { PushPinIcon } from '@phosphor-icons/react/dist/csr/PushPin';
 import { ArrowFatLinesDownIcon } from '@phosphor-icons/react/dist/csr/ArrowFatLinesDown';
+import { ArrowLeftIcon } from '@phosphor-icons/react/dist/csr/ArrowLeft';
 import { ArrowLineDownIcon } from '@phosphor-icons/react/dist/csr/ArrowLineDown';
 import { SortAscendingIcon } from '@phosphor-icons/react/dist/csr/SortAscending';
 import { ArrowLineUpIcon } from '@phosphor-icons/react/dist/csr/ArrowLineUp';
@@ -108,6 +110,7 @@ import type {
   LegacyBoardCategoryChoice,
   LegacyBoardContextActionId,
   LegacyBoardMoveChoice,
+  LegacyBoardOverlayActionRequest,
   LegacyBoardZoneActionId,
 } from '../resolveLegacyBoardOverlayAction.js';
 import {
@@ -132,6 +135,8 @@ import { useKeymap } from '../../hotkeys/hotkey-preferences.js';
 import type { Keymap } from '../../hotkeys/keymap.js';
 import { pickCount, type CountOptions } from '../../ui/dialog-requests.js';
 import { toast } from '../../ui/toast.js';
+import { isTextEntry } from '../../ui/text-entry.js';
+import { isInputMethodKey } from '../../ui/input-method.js';
 import {
   stackCardsLayout,
   stackPreviewLayout,
@@ -196,6 +201,14 @@ export interface LegacyBoardOverlayActions {
   readonly emitCardIntent?: (intent: OpenedZoneCardIntent) => void;
   /** Opens one card's full preview from inside the stack view. */
   readonly previewCard?: (cardId: ViewCardId) => void;
+  /**
+   * A press in a window that names its card itself (the Pokémon window's
+   * damage, conditions, reminders and moves, ADR-043): no menu need be
+   * open, and the window stays open.
+   */
+  readonly invokeWindowAction?: (
+    request: LegacyBoardOverlayActionRequest
+  ) => void;
   /**
    * Picks the Pokémon a card goes on: attached as an Energy whatever its
    * kind with `asCategory` (a Holon's Pokémon).
@@ -1720,6 +1733,28 @@ export const stackPreviewOrder = (
   return [...ordered, ...cards.filter((card) => !listed.has(card.id))];
 };
 
+/** What the Pokémon window needs to know of the stack it shows. */
+interface PokemonWindowFacts {
+  readonly stack: MatchViewState['stacks'][string];
+  readonly definitions: MatchViewState['definitions'];
+  /** Its top card's name, when the viewer can read it. */
+  readonly name: string;
+  readonly owner: string | undefined;
+  readonly tone: string;
+  readonly canMark: boolean;
+  readonly canUseMoves: boolean;
+}
+
+const pokemonNameOf = (
+  stack: MatchViewState['stacks'][string],
+  definitions: MatchViewState['definitions']
+): string => {
+  const top = stack.evolutionCards.at(-1);
+  return top?.kind === 'known'
+    ? (definitions[top.definitionId]?.name ?? '')
+    : '';
+};
+
 /** Where the card about to be previewed was clicked, in client space. */
 interface PreviewSource {
   readonly cardId: string;
@@ -1794,10 +1829,16 @@ const Preview = ({
   scene,
   depth,
   openedZoneId = null,
+  pokemon,
 }: {
   readonly cards: readonly CardSceneNode[];
   readonly kind: 'card' | 'stack';
   readonly canModify: boolean;
+  /**
+   * A Pokémon in play's facts, for its window (ADR-043); absent for a
+   * card's preview, or a stack the view no longer has.
+   */
+  readonly pokemon?: PokemonWindowFacts;
   /** The table, for dragging a shown card onto it. */
   readonly scene?: BoardScene;
   readonly depth?: BoardDepthProjection;
@@ -1818,6 +1859,9 @@ const Preview = ({
   const tiltTarget = useRef<HTMLSpanElement>(null);
   const tilt = useMemo(() => createTiltHandlers(tiltTarget), []);
   const [showPieces, setShowPieces] = useState(false);
+  // A card in pieces in play is shown whole first; Details opens its
+  // Pokémon window.
+  const [showDetails, setShowDetails] = useState(false);
   const [individualCardId, setIndividualCardId] = useState<string | null>(null);
   const readingCard =
     cards.find((card) => card.id === individualCardId) ?? cards[0];
@@ -1835,6 +1879,36 @@ const Preview = ({
   );
   useOutsideDismiss(container, dismiss);
   useOverlayExit(container, 'preview');
+  // The Pokémon window's scrim, under it: it leaves with it.
+  const windowScrim = useRef<HTMLDivElement>(null);
+  useOverlayExit(windowScrim, 'scrim');
+  // The Pokémon window (ADR-043) shows a stack; a card opened from it is
+  // read large, and Back (or Esc, or a press beside it) returns to it.
+  const pokemonWindow = kind === 'stack' && pokemon !== undefined;
+  // A card read large from the window itself (not from a card in pieces'
+  // list) goes back to the window.
+  const [zoomedFromWindow, setZoomedFromWindow] = useState(false);
+  const backToWindow =
+    pokemonWindow && individualCardId !== null && zoomedFromWindow;
+  const readingFromWindow = useRef(false);
+  readingFromWindow.current = backToWindow;
+  // One Esc puts it away (or goes back to it from a card read large), even
+  // with a control's tooltip showing, which would take the first one: it is
+  // heard before the tooltip does, as the marker controls hear theirs.
+  useEffect(() => {
+    if (!pokemonWindow) return;
+    const onKey = (event: KeyboardEvent): void => {
+      if (event.key !== 'Escape' || isInputMethodKey(event)) return;
+      const element = container.current;
+      if (!element?.contains(element.ownerDocument.activeElement)) return;
+      event.preventDefault();
+      event.stopPropagation();
+      if (readingFromWindow.current) setIndividualCardId(null);
+      else dismiss();
+    };
+    document.addEventListener('keydown', onKey, true);
+    return () => document.removeEventListener('keydown', onKey, true);
+  }, [pokemonWindow, dismiss]);
   // Any card shown here can be picked up and put on the table, exactly as
   // from the table itself; the preview steps aside while it is held and has
   // done its job once the card is dropped somewhere.
@@ -1887,16 +1961,28 @@ const Preview = ({
     if (container.current) {
       trapModalTab(event, container.current, '[data-preview-tabbable]');
     }
+    // A V typed into the window's damage is a V, not the key that shuts it.
+    if (event.key === 'v' && isTextEntry(event.target as Element)) return;
     if (
       event.key === 'Escape' ||
       (!event.altKey && !event.ctrlKey && !event.metaKey && event.key === 'v')
     ) {
       event.preventDefault();
+      if (backToWindow) {
+        setIndividualCardId(null);
+        return;
+      }
       dismiss();
     }
   };
 
-  if (composition && cards.length > 1 && !showPieces && !individualCardId) {
+  if (
+    composition &&
+    cards.length > 1 &&
+    !showPieces &&
+    !individualCardId &&
+    !(pokemonWindow && showDetails)
+  ) {
     const compositionName = cards[0]?.label;
     const shownPieces = artworkCards.length;
     const join = artworkCards[0]?.presentation?.join;
@@ -1938,6 +2024,18 @@ const Preview = ({
           >
             <SquaresFourIcon aria-hidden="true" /> <Trans>View each card</Trans>
           </button>
+          {pokemonWindow ? (
+            <button
+              type="button"
+              className="ptcgsim-overlay-button"
+              data-preview-tabbable="true"
+              onClick={() => setShowDetails(true)}
+            >
+              <Trans comment="Opens a Pokémon's window: its cards, damage, Abilities and attacks.">
+                Details
+              </Trans>
+            </button>
+          ) : null}
         </div>
         <div
           className="ptcgsim-composition-artwork"
@@ -1982,13 +2080,13 @@ const Preview = ({
       </div>
     );
   }
-  const stackCard = (card: CardSceneNode) => {
+  const stackCard = (card: CardSceneNode, size?: PokemonWindowCardSize) => {
     const cardName = card.label;
     return (
       <button
         key={card.id}
         type="button"
-        className="ptcgsim-legacy-stack-preview-card"
+        className={`ptcgsim-legacy-stack-preview-card${size ? ` is-${size}` : ''}`}
         data-stack-preview-card-id={card.id}
         data-motion-origin={card.id}
         aria-label={t({
@@ -1997,9 +2095,12 @@ const Preview = ({
         })}
         // Keep focus on the stack view itself (its keyboard boundary and
         // Escape handling live there, and v1's stack view has no tab stops);
-        // a click still opens the card.
-        tabIndex={composition ? 0 : -1}
-        data-preview-tabbable={composition ? 'true' : undefined}
+        // a click still opens the card. The Pokémon window's cards are
+        // reached by Tab, as its other controls are.
+        tabIndex={composition || pokemonWindow ? 0 : -1}
+        data-preview-tabbable={
+          composition || pokemonWindow ? 'true' : undefined
+        }
         data-armed={drag.armedCardId === card.id ? 'true' : undefined}
         draggable={false}
         onDragStart={drag.onDragStart}
@@ -2008,11 +2109,18 @@ const Preview = ({
         onClick={(event) => {
           event.stopPropagation();
           if (drag.consumeClick(card.id) && event.detail > 0) return;
-          if (composition) setIndividualCardId(card.id);
-          else actions.previewCard?.(card.id);
+          if (composition || pokemonWindow) {
+            setZoomedFromWindow(size !== undefined);
+            setIndividualCardId(card.id);
+          } else actions.previewCard?.(card.id);
         }}
       >
         <OverlayCardImage card={card} variant="stack" />
+        {size ? (
+          <span className="pokemon-window__card-name" aria-hidden="true">
+            {cardName}
+          </span>
+        ) : null}
       </button>
     );
   };
@@ -2071,7 +2179,7 @@ const Preview = ({
               key={group === pokemon ? 'pokemon' : 'attached'}
               className="ptcgsim-stack-cards-group"
             >
-              {group.map(stackCard)}
+              {group.map((card) => stackCard(card))}
             </div>
           ))}
         </div>
@@ -2096,7 +2204,7 @@ const Preview = ({
           ? 'true'
           : undefined
       }
-      onClick={dismiss}
+      onClick={backToWindow ? () => setIndividualCardId(null) : dismiss}
       onKeyDown={onKeyDown}
     >
       <div
@@ -2128,12 +2236,20 @@ const Preview = ({
             type="button"
             className="ptcgsim-overlay-button"
             data-preview-tabbable="true"
+            data-preview-back="true"
             onClick={() => {
               setIndividualCardId(null);
               setShowPieces(false);
             }}
           >
-            <Trans>View whole card</Trans>
+            {backToWindow ? (
+              <>
+                <ArrowLeftIcon aria-hidden="true" className="ds-mirror-rtl" />
+                <Trans context="back to the Pokémon's window">Back</Trans>
+              </>
+            ) : (
+              <Trans>View whole card</Trans>
+            )}
           </button>
         ) : null}
       </div>
@@ -2160,6 +2276,49 @@ const Preview = ({
         </span>
       ) : null}
     </div>
+  ) : pokemonWindow ? (
+    <>
+      <div
+        ref={windowScrim}
+        className={`ptcgsim-overlay-scrim pokemon-window-scrim${draggingCardId ? ' is-hidden' : ''}`}
+        aria-hidden="true"
+      />
+      <div
+        ref={container}
+        className={`pokemon-window is-${cards[0]?.side ?? 'local'}`}
+        data-legacy-card-preview="true"
+        data-preview-kind="stack"
+        data-preview-dragging-card={draggingCardId}
+        data-pokemon-window="true"
+        role="dialog"
+        aria-modal="true"
+        aria-label={pokemon.name || t`Card stack preview`}
+        data-overlay-side={cards[0]?.side}
+        tabIndex={-1}
+        data-preview-focus="true"
+        onKeyDown={onKeyDown}
+      >
+        <PokemonWindow
+          stack={pokemon.stack}
+          cards={cards}
+          definitions={pokemon.definitions}
+          owner={pokemon.owner}
+          tone={pokemon.tone}
+          canMark={canModify && pokemon.canMark}
+          canUseMoves={canModify && pokemon.canUseMoves}
+          renderCard={stackCard}
+          closeButton={
+            <OverlayCloseButton
+              data-preview-tabbable="true"
+              data-pokemon-window-close="true"
+              onClick={dismiss}
+            />
+          }
+          act={(request) => actions.invokeWindowAction?.(request)}
+          onUsed={dismiss}
+        />
+      </div>
+    </>
   ) : (
     <div
       ref={container}
@@ -2187,7 +2346,7 @@ const Preview = ({
       }
       onKeyDown={onKeyDown}
     >
-      {cards.map(stackCard)}
+      {cards.map((card) => stackCard(card))}
     </div>
   );
 };
@@ -3655,6 +3814,31 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
   // The card on the table a preview grows out of: the previewed card, or the
   // top of the stack shown.
   const previewSourceCard = previewCards[0];
+  // A Pokémon in play opens in its window (ADR-043): whose it is, and what
+  // the viewer may do with it. Anyone at the table may mark either side's
+  // Pokémon (the room's policy, as the card menu does); only its player
+  // uses its moves -- at a Solo table, either seat's.
+  const shownStack =
+    preview?.kind === 'stack' ? state.view?.stacks[preview.stackId] : undefined;
+  const viewerId =
+    state.view?.viewer.kind === 'player' ? state.view.viewer.playerId : null;
+  const pokemonFacts: PokemonWindowFacts | undefined =
+    shownStack && state.view
+      ? {
+          stack: shownStack,
+          definitions: state.view.definitions,
+          name: pokemonNameOf(shownStack, state.view.definitions),
+          owner: state.view.players[shownStack.boardPlayerId]?.displayName,
+          tone:
+            seatToneOf(state.view, shownStack.boardPlayerId) ??
+            previewCards[0]?.side ??
+            'local',
+          canMark: viewerId !== null,
+          canUseMoves:
+            viewerId !== null &&
+            (shownStack.boardPlayerId === viewerId || allowOpponentResolution),
+        }
+      : undefined;
 
   const workAreaZones = scene.zones.filter(
     (zone) => zone.kind === 'inspection' || zone.kind === 'attachmentResolution'
@@ -3798,6 +3982,7 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
           cards={previewCards}
           canModify={state.canSubmitCommands}
           kind={preview.kind}
+          {...(pokemonFacts ? { pokemon: pokemonFacts } : {})}
           frame={previewFrame}
           board={scene.viewport}
           viewport={scene.viewport}

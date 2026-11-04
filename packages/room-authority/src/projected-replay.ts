@@ -228,6 +228,8 @@ export const buildProjectedReplay = (
                   ...(definition.playsAs
                     ? { playsAs: definition.playsAs }
                     : {}),
+                  ...(definition.print ? { print: definition.print } : {}),
+                  ...(definition.text ? { text: definition.text } : {}),
                 });
               }
               cards.push({

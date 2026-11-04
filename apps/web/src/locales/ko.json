@@ -667,6 +667,13 @@
     "message": "{cured, plural, one {Remove Special Condition} other {Remove Special Conditions on #}}",
     "translation": "{cured, plural, one {특수 상태 해제} other {#장의 특수 상태 해제}}"
   },
+  "soVRMU": {
+    "message": "{damage} damage",
+    "comments": [
+      "Damage on a Pokémon, e.g. \"60 damage\"."
+    ],
+    "translation": "데미지 {damage}"
+  },
   "3W5Y-K": {
     "message": "{damaged, plural, one {Add 10 damage} other {Add 10 damage to each of #}}",
     "translation": "{damaged, plural, one {데미지 10 추가} other {#장 각각에 데미지 10 추가}}"
@@ -840,6 +847,13 @@
       "Log line. {name} is a player's name."
     ],
     "translation": "{name}님이 기술을 사용했습니다"
+  },
+  "fVGdf8": {
+    "message": "{name} attacked with {card}'s {attack}",
+    "comments": [
+      "Log line: a player picked an attack from their Pokémon's text. {name} is a player's name, {card} the Pokémon's name, {attack} the attack's name as printed."
+    ],
+    "translation": "{name}님이 {card}의 {attack} 기술을 사용했습니다"
   },
   "4rAxe5": {
     "message": "{name} bench",
@@ -1086,6 +1100,13 @@
       "Log line: a player used a Stadium card's effect. {name} is a player's name, {card} the Stadium's name."
     ],
     "translation": "{name}님이 {card}을(를) 사용했습니다"
+  },
+  "3-TZY_": {
+    "message": "{name} used {card}'s {ability}",
+    "comments": [
+      "Log line: a player used a Pokémon's Ability, picked from its text. {name} is a player's name, {card} the Pokémon's name, {ability} the Ability's name as printed."
+    ],
+    "translation": "{name}님이 {card}의 {ability} 특성을 사용했습니다"
   },
   "1X7zxc": {
     "message": "{name} used {card}'s ability",
@@ -1392,6 +1413,13 @@
     "context": "shortcut key caption",
     "translation": "+ 스타디움"
   },
+  "-yPtgv": {
+    "message": "+{0} special",
+    "comments": [
+      "Special Energy attached besides the Basic Energy drawn as symbols, e.g. \"+1 special\"."
+    ],
+    "translation": "특수 +{0}"
+  },
   "T_K7zW": {
     "message": "×{pokemon}",
     "comments": [
@@ -1562,6 +1590,11 @@
   "xT5yGw": {
     "message": "Active",
     "context": "shortcut key caption",
+    "translation": "배틀필드"
+  },
+  "bgdYBG": {
+    "message": "Active",
+    "context": "the Active Spot",
     "translation": "배틀필드"
   },
   "2MuTS2": {
@@ -1837,6 +1870,13 @@
     "message": "Attach to a Pokémon…",
     "translation": "포켓몬에 붙이기…"
   },
+  "zSzD6O": {
+    "message": "Attached",
+    "comments": [
+      "Over the cards attached to a Pokémon."
+    ],
+    "translation": "붙어 있는 카드"
+  },
   "E9l6HC": {
     "message": "Attached cards being moved",
     "translation": "이동 중인 붙은 카드"
@@ -1853,6 +1893,11 @@
   "jY18IQ": {
     "message": "Attack payable with",
     "translation": "기술 사용 가능 에너지"
+  },
+  "uyTV5V": {
+    "message": "Attack:",
+    "context": "declare an attack",
+    "translation": "기술:"
   },
   "mh0djA": {
     "message": "Attacks do more",
@@ -1885,6 +1930,11 @@
     "comments": [
       "Command palette footer: Escape key."
     ],
+    "translation": "뒤로"
+  },
+  "ltRMUn": {
+    "message": "Back",
+    "context": "back to the Pokémon's window",
     "translation": "뒤로"
   },
   "0J6DxY": {
@@ -1971,6 +2021,11 @@
   "4Iwoxh": {
     "message": "Because of {cardName}.",
     "translation": "{cardName} 때문입니다."
+  },
+  "sA_k3P": {
+    "message": "Bench",
+    "context": "on the Bench",
+    "translation": "벤치"
   },
   "dkk7vA": {
     "message": "Bench",
@@ -2186,7 +2241,8 @@
   "Ccpbzh": {
     "message": "Cards",
     "comments": [
-      "Command palette section: find a card on the table."
+      "Command palette section: find a card on the table.",
+      "The section of a Pokémon's window with its cards."
     ],
     "translation": "카드"
   },
@@ -2438,6 +2494,13 @@
     "message": "Copy list (Pokémon TCG Live)",
     "translation": "목록 복사 (Pokémon TCG Live)"
   },
+  "snAD_N": {
+    "message": "Cost: {names}",
+    "comments": [
+      "The Energy an attack needs, read out. {names} lists the types, e.g. \"Fire, Fire, Colorless\"."
+    ],
+    "translation": "필요 에너지: {names}"
+  },
   "7WsLH4": {
     "message": "Couldn't check that. Try again.",
     "translation": "확인하지 못했습니다. 다시 시도하세요."
@@ -2595,6 +2658,10 @@
   "qlHGJK": {
     "message": "Custom image…",
     "translation": "사용자 지정 이미지…"
+  },
+  "3Vkuiz": {
+    "message": "Damage",
+    "translation": "데미지"
   },
   "UxNmvS": {
     "message": "Damage and conditions",
@@ -2770,6 +2837,13 @@
     "message": "Desk",
     "context": "the default background",
     "translation": "책상"
+  },
+  "URmyfc": {
+    "message": "Details",
+    "comments": [
+      "Opens a Pokémon's window: its cards, damage, Abilities and attacks."
+    ],
+    "translation": "상세"
   },
   "zhmNG6": {
     "message": "Diamonds",
@@ -3025,6 +3099,11 @@
     "context": "replay: go to the end",
     "translation": "끝으로"
   },
+  "eYoJKg": {
+    "message": "Energy",
+    "context": "attached Energy cards",
+    "translation": "에너지"
+  },
   "0UuYtf": {
     "message": "Energy",
     "context": "card kind",
@@ -3095,6 +3174,13 @@
   "vb1XQU": {
     "message": "Evolve it: drag <0>{0}</0> onto {1}.",
     "translation": "진화시키기: <0>{0}</0>을(를) {1}에 끌어다 놓으세요."
+  },
+  "R_MOLb": {
+    "message": "Evolved from",
+    "comments": [
+      "Over the Stages a Pokémon evolved from, under it."
+    ],
+    "translation": "진화 전"
   },
   "GjFqb-": {
     "message": "Evolves from",
@@ -3323,6 +3409,13 @@
     "message": "Format",
     "context": "deck format",
     "translation": "포맷"
+  },
+  "hGDVDa": {
+    "message": "From {0}",
+    "comments": [
+      "Over the moves a BREAK Pokémon keeps from the Stage under it. {from} is that card's name."
+    ],
+    "translation": "{0}에서"
   },
   "ToYRS-": {
     "message": "From a link",
@@ -3580,6 +3673,11 @@
     "message": "HP",
     "translation": "HP"
   },
+  "N7Z9te": {
+    "message": "HP",
+    "context": "hit points",
+    "translation": "HP"
+  },
   "oT-Cnl": {
     "message": "HP",
     "context": "sort cards by",
@@ -3588,6 +3686,13 @@
   "36NKhF": {
     "message": "HP and retreat",
     "translation": "HP와 후퇴"
+  },
+  "fdmYlD": {
+    "message": "HP left",
+    "comments": [
+      "A Pokémon's HP less its damage."
+    ],
+    "translation": "남은 HP"
   },
   "hlQWeh": {
     "message": "I publicly launched the sim on Christmas, and it has already grown an incredible community of players and developers. There's a lot more to do, and I could use as much help as I can get!",
@@ -3702,6 +3807,10 @@
   "Rw42Cd": {
     "message": "Its cards couldn't be read.",
     "translation": "카드를 읽을 수 없습니다."
+  },
+  "bAGcam": {
+    "message": "Its cards' own text is too long for the table.",
+    "translation": "카드 텍스트가 너무 길어 보드에 표시할 수 없습니다."
   },
   "h0iD6U": {
     "message": "Jade",
@@ -4402,6 +4511,10 @@
     ],
     "translation": "특성 사용 불가"
   },
+  "PrcIKK": {
+    "message": "No Abilities or attacks",
+    "translation": "특성이나 기술 없음"
+  },
   "we3XEV": {
     "message": "No actions available",
     "translation": "사용할 수 있는 동작이 없습니다"
@@ -4420,6 +4533,10 @@
       "Keep the example line \"4 Iono PAL 185\" as it is."
     ],
     "translation": "카드 줄을 찾지 못했습니다. \"4 Iono PAL 185\" 같은 형식으로 입력해 보세요."
+  },
+  "cUFrku": {
+    "message": "No card text",
+    "translation": "카드 텍스트 없음"
   },
   "7Kn8aC": {
     "message": "No cards here",
@@ -4440,6 +4557,13 @@
   "bYysi5": {
     "message": "No cards yet. Paste a list anywhere here.",
     "translation": "아직 카드가 없습니다. 여기에 목록을 붙여넣으세요."
+  },
+  "tsvYTC": {
+    "message": "No cost",
+    "comments": [
+      "An attack that needs no Energy."
+    ],
+    "translation": "필요 에너지 없음"
   },
   "-Qx8U8": {
     "message": "No deck",
@@ -4570,6 +4694,10 @@
   "W8zlv3": {
     "message": "Not yours to do",
     "translation": "할 수 없는 동작입니다"
+  },
+  "jutghQ": {
+    "message": "Nothing attached",
+    "translation": "붙어 있는 카드 없음"
   },
   "4QPb_7": {
     "message": "Nothing is selected",
@@ -4810,6 +4938,11 @@
   "l2I52S": {
     "message": "or drop or paste one here",
     "translation": "또는 여기에 끌어다 놓거나 붙여넣으세요"
+  },
+  "UsG6nn": {
+    "message": "Other",
+    "context": "other attached cards",
+    "translation": "기타"
   },
   "eH_2Pb": {
     "message": "Other",
@@ -5266,6 +5399,10 @@
     "message": "Read a card, and open its actions",
     "translation": "카드를 읽고 동작 열기"
   },
+  "iWnbNJ": {
+    "message": "Reading the card…",
+    "translation": "카드를 읽는 중…"
+  },
   "LAbKv2": {
     "message": "Ready for {format}",
     "comments": [
@@ -5506,6 +5643,10 @@
   "CBOI8H": {
     "message": "Resume saved game…",
     "translation": "저장된 게임 이어하기…"
+  },
+  "ELWET5": {
+    "message": "Retreat",
+    "translation": "후퇴"
   },
   "X1Npk-": {
     "message": "Retreat {retreat}",
@@ -6405,6 +6546,13 @@
     "context": "shortcut key caption",
     "translation": "상태"
   },
+  "6Xn__m": {
+    "message": "Status and moves",
+    "comments": [
+      "The section of a Pokémon's window with its damage, conditions, Abilities and attacks."
+    ],
+    "translation": "상태와 기술"
+  },
   "iFt0Ce": {
     "message": "Still uploading…",
     "translation": "아직 업로드 중입니다…"
@@ -6949,6 +7097,11 @@
     "context": "Trainer card kind: Pokémon Tool",
     "translation": "도구"
   },
+  "4EIByI": {
+    "message": "Tools",
+    "context": "Trainer cards attached to a Pokémon",
+    "translation": "도구"
+  },
   "MddZln": {
     "message": "Tools",
     "context": "Trainer cards by kind",
@@ -7156,6 +7309,18 @@
     "message": "Uploading…",
     "translation": "업로드 중…"
   },
+  "GQx0Zx": {
+    "message": "Use",
+    "context": "use an Ability",
+    "translation": "사용"
+  },
+  "qZ6hkc": {
+    "message": "Use {name}",
+    "comments": [
+      "{name} is an Ability printed on a Pokémon."
+    ],
+    "translation": "{name} 사용"
+  },
   "aS5ttr": {
     "message": "Use background",
     "translation": "배경 사용"
@@ -7184,6 +7349,11 @@
   "9c8BhN": {
     "message": "Use VSTAR Power",
     "translation": "VSTAR 파워 사용"
+  },
+  "-OiYWO": {
+    "message": "Used",
+    "context": "an Ability, this turn",
+    "translation": "사용함"
   },
   "ZpWtmQ": {
     "message": "Uses Limitless TCG's search syntax.",

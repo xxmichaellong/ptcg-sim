@@ -441,7 +441,21 @@ const declarationEventsForBatch = (
       turnNumber: event.turnNumber,
     };
     if (event.action === 'attack') {
-      return [{ type: 'AttackDeclared', ...common }];
+      // An attack picked from a Pokémon's text is named with the Pokémon,
+      // when everyone can see it: a face-down one's text is its owner's.
+      const top = event.attack
+        ? state.stacks[event.attack.stackId]?.evolutionCardIds.at(-1)
+        : undefined;
+      const cardName = top ? publiclyKnownCardName(state, top) : undefined;
+      return [
+        {
+          type: 'AttackDeclared',
+          ...common,
+          ...(event.attack && cardName
+            ? { attackName: event.attack.name, cardName }
+            : {}),
+        },
+      ];
     }
     if (event.action === 'pass') {
       return [{ type: 'PassDeclared', ...common }];

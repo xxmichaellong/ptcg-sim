@@ -858,20 +858,27 @@ export const presentationEffectsForEvent = (
     case 'AbilityUsed': {
       const name = playerName(view, event.playerId);
       const card = narratedCardName(event.cardName);
+      const ability = event.abilityName;
       return playerEffects(
         event,
         event.playerId,
-        event.source === 'stadium'
+        ability !== undefined && event.source !== 'stadium'
           ? msg({
-              message: `${name} used ${card}`,
+              message: `${name} used ${card}'s ${ability}`,
               comment:
-                "Log line: a player used a Stadium card's effect. {name} is a player's name, {card} the Stadium's name.",
+                "Log line: a player used a Pokémon's Ability, picked from its text. {name} is a player's name, {card} the Pokémon's name, {ability} the Ability's name as printed.",
             })
-          : msg({
-              message: `${name} used ${card}'s ability`,
-              comment:
-                "Log line: a player used a Pokémon's Ability. {name} is a player's name, {card} the Pokémon's name.",
-            })
+          : event.source === 'stadium'
+            ? msg({
+                message: `${name} used ${card}`,
+                comment:
+                  "Log line: a player used a Stadium card's effect. {name} is a player's name, {card} the Stadium's name.",
+              })
+            : msg({
+                message: `${name} used ${card}'s ability`,
+                comment:
+                  "Log line: a player used a Pokémon's Ability. {name} is a player's name, {card} the Pokémon's name.",
+              })
       );
     }
     case 'ReminderSet': {
@@ -1048,10 +1055,19 @@ export const presentationEffectsForEvent = (
     }
     case 'AttackDeclared': {
       const name = playerName(view, event.playerId);
-      const message = msg({
-        message: `${name} attacked`,
-        comment: "Log line. {name} is a player's name.",
-      });
+      const card = event.cardName;
+      const attack = event.attackName;
+      const message =
+        card !== undefined && attack !== undefined
+          ? msg({
+              message: `${name} attacked with ${card}'s ${attack}`,
+              comment:
+                "Log line: a player picked an attack from their Pokémon's text. {name} is a player's name, {card} the Pokémon's name, {attack} the attack's name as printed.",
+            })
+          : msg({
+              message: `${name} attacked`,
+              comment: "Log line. {name} is a player's name.",
+            });
       return [
         activity(event, 'player', message, event.playerId),
         accessibility(event, message),

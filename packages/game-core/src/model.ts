@@ -40,6 +40,17 @@ export interface CardDefinition {
    * the table to offer, never a rule it enforces.
    */
   readonly playsAs?: CardPlaysAs;
+  /**
+   * The catalog's print it is ("PAL 185"), whose text the table shows
+   * (ADR-043); absent for a card made by hand.
+   */
+  readonly print?: string;
+  /**
+   * What the card says, when its deck gives its own: a card made by hand,
+   * or a catalogued one edited to play differently. It wins over the
+   * print's.
+   */
+  readonly text?: import('./card-text.js').CardText;
 }
 
 export interface CardInstance {

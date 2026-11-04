@@ -837,6 +837,33 @@ describe('the deck library', () => {
     expect(reloaded.get('huge')?.cards).toHaveLength(401);
   });
 
+  it('keeps a card’s own text whole, and drops text it can’t take (ADR-043)', () => {
+    const text = {
+      hp: 120,
+      attacks: [{ name: 'Ember', cost: ['Fire'], damage: '30' }],
+    };
+    const record = (cardText: unknown) => ({
+      id: 'own-text',
+      name: 'Own text',
+      format: 'unlimited',
+      createdAt: 1,
+      updatedAt: 1,
+      cards: [
+        {
+          card: { ...card, id: 'custom:ember', text: cardText },
+          count: 1,
+        },
+      ],
+    });
+    expect(decodeSavedDeck(record(text))?.cards[0]?.card.text).toEqual(text);
+    expect(
+      decodeSavedDeck(record({ hp: -5 }))?.cards[0]?.card
+    ).not.toHaveProperty('text');
+    expect(
+      decodeSavedDeck(record({ hp: 120, unknown: 'field' }))?.cards[0]?.card
+    ).not.toHaveProperty('text');
+  });
+
   it('keeps working for the visit when storage fails', async () => {
     const backend: DeckLibraryBackend = {
       readAll: async () => {

@@ -66,6 +66,63 @@ export interface DeckCard {
    * `CardDefinition.playsAs`).
    */
   readonly playsAs?: 'Pokémon' | 'Energy';
+  /**
+   * What the card says, when the deck gives it its own text: a card made
+   * by hand, or a catalogued card edited to play differently. It wins over
+   * the catalog's on the table (ADR-043).
+   */
+  readonly text?: DeckCardText;
+}
+
+/** An Energy type as card text writes it (the catalog's `EnergyType`). */
+type DeckCardEnergyType =
+  | 'Grass'
+  | 'Fire'
+  | 'Water'
+  | 'Lightning'
+  | 'Psychic'
+  | 'Fighting'
+  | 'Darkness'
+  | 'Metal'
+  | 'Fairy'
+  | 'Dragon'
+  | 'Colorless';
+
+/**
+ * What a card says, as a deck keeps it for a card it gives its own text:
+ * one made by hand, or a catalogued card edited to play differently. The
+ * table shows it in place of the print's (game-core's `CardText`, which
+ * bounds every field; ADR-043). Its moves are the catalog's shapes
+ * (`CatalogAbility`, `CatalogAttack`).
+ */
+export interface DeckCardText {
+  readonly hp?: number;
+  readonly types?: readonly DeckCardEnergyType[];
+  /** "Basic", "Stage 1", "Stage 2", "VMAX", … */
+  readonly stage?: string;
+  readonly evolvesFrom?: string;
+  readonly abilities?: readonly {
+    readonly name: string;
+    /** "Ability", "Poké-Power", "Poké-Body", "Ancient Trait", … */
+    readonly kind: string;
+    readonly text: string;
+  }[];
+  readonly attacks?: readonly {
+    readonly name: string;
+    readonly cost: readonly DeckCardEnergyType[];
+    /** As printed: "120", "30+", "60×", or "" for none. */
+    readonly damage: string;
+    readonly text?: string;
+  }[];
+  readonly weakness?: DeckCardEnergyType;
+  /** As printed: "×2", "+20". */
+  readonly weaknessValue?: string;
+  readonly resistance?: DeckCardEnergyType;
+  /** As printed: "-30". */
+  readonly resistanceValue?: string;
+  readonly retreat?: number;
+  /** A Trainer's or Special Energy's effect, and any rule box lines. */
+  readonly rules?: string;
 }
 
 export interface DeckEntry {

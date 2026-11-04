@@ -131,6 +131,8 @@ export type DomainEvent =
       readonly playerId: PlayerId;
       readonly outcome: 'drawn' | 'emptyDeck' | 'declared';
       readonly turnNumber: number;
+      /** The attack named, and the Pokémon it is from (ADR-043). */
+      readonly attack?: { readonly stackId: StackId; readonly name: string };
     }
   | {
       readonly type: 'ZoneShuffled';
@@ -402,6 +404,8 @@ export type DomainEvent =
       readonly type: 'StackAbilitySet';
       readonly stackId: StackId;
       readonly used: boolean;
+      /** The Ability named (ADR-043). */
+      readonly ability?: string;
     }
   | {
       readonly type: 'StackReminderSet';

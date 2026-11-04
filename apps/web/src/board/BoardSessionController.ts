@@ -135,7 +135,12 @@ export type BoardPreviewState =
  * pile open, or a prompt open, as a press or a key does. Everything else --
  * the card on the table, the seat, the value -- is checked as usual.
  */
-export type BoardActionOrigin = 'palette';
+/**
+ * Where a direct action comes from: the command palette, or a window that
+ * names its card itself (the Pokémon window, ADR-043). Neither needs the
+ * card's menu open; a window's leaves the window open.
+ */
+export type BoardActionOrigin = 'palette' | 'window';
 
 /** A counter or chip on a card whose controls are open (MarkerControls). */
 export interface BoardMarkerControlsState {
@@ -1984,13 +1989,11 @@ const handleIntent = (
             : hasPresentableCard(candidate.id))
       );
       if (!card) return rejectIntent(state, intent, 'stale_card');
-      // A stack of one card has nothing more to show: open the card itself.
+      // A Pokémon in play opens in its window (ADR-043), a lone Basic too:
+      // its status and moves are there, whatever lies with it.
       const stack = view.stacks[card.parentId];
-      const stackCardCount = stack
-        ? stack.evolutionCards.length + stack.attachmentCards.length
-        : 0;
       const preview: BoardPreviewState =
-        stack && !intent.single && stackCardCount > 1
+        stack && !intent.single
           ? {
               kind: 'stack',
               stackId: card.parentId,
@@ -2698,7 +2701,8 @@ const handleOverlayAction = (
   state: BoardSessionControllerState,
   request: LegacyBoardOverlayActionRequest,
   dependencies: BoardSessionControllerDependencies,
-  direct = false
+  direct = false,
+  fromWindow = false
 ): BoardSessionControllerReduction => {
   const view = state.view;
   const scene = state.scene;
@@ -2852,7 +2856,9 @@ const handleOverlayAction = (
       command,
     })
   );
-  if (fromMarkerControls) return accepted(state, submissions);
+  // From the marker's controls, or a window that stays open for the next
+  // press (the Pokémon window's damage, conditions and reminders).
+  if (fromMarkerControls || fromWindow) return accepted(state, submissions);
   if (request.kind === 'zone') {
     const local = clearLocalPresentation(state);
     const next = nextState(state, local);
@@ -3202,7 +3208,8 @@ const reduceAction = (
         state,
         action.request,
         dependencies,
-        action.origin === 'palette'
+        action.origin !== undefined,
+        action.origin === 'window'
       );
     case 'LegacyShortcutActionRequested':
       return handleShortcutAction(

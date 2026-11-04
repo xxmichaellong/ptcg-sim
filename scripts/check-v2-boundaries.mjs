@@ -37,6 +37,10 @@ const WEB_ALLOWED_GAME_CORE_SOURCES = new Set([
   'packages/game-core/src/stack-reminders.ts',
   'packages/game-core/src/card-plays-as.ts',
   'packages/game-core/src/coin-flips.ts',
+  // What a card says (ADR-043): its shape, bounds and a type guard the room
+  // and the client both check a deck's own card text with. It imports
+  // nothing at runtime.
+  'packages/game-core/src/card-text.ts',
 ]);
 
 const SOURCE_FREE_WEB_RUNTIME_DIGESTS = new Set([

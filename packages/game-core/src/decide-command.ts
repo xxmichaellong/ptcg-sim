@@ -23,6 +23,7 @@ import { playerZoneId, stadiumZoneId } from './create-match.js';
 import { applyEvent, applyEventBatch } from './apply-events.js';
 import { isCardBackValue } from './card-back.js';
 import { sameCardPresentation } from './card-presentation.js';
+import { isMoveName, sameCardText } from './card-text.js';
 import type { DomainEvent, WorkAreaArrivalSource } from './events.js';
 import {
   asWorkAreaId,
@@ -202,6 +203,8 @@ const sameDefinition = (left: CardDefinition, right: CardDefinition): boolean =>
   left.imageUrl === right.imageUrl &&
   left.imageUrlSmall === right.imageUrlSmall &&
   left.playsAs === right.playsAs &&
+  left.print === right.print &&
+  sameCardText(left.text, right.text) &&
   sameCardPresentation(left.presentation, right.presentation);
 
 type DeckRelativeCommand = Extract<
@@ -1059,6 +1062,20 @@ const decideTableAction = (
 ): CommandDecision => {
   const playerError = requirePlayer(state, command.playerId);
   if (playerError) return playerError;
+  const attack = command.type === 'DeclareAttack' ? command.attack : undefined;
+  if (attack) {
+    // An attack picked from a Pokémon's text: one of the attacker's own
+    // Pokémon in play, and a name that fits on a line of the log.
+    const attacker = state.stacks[attack.stackId];
+    if (!attacker)
+      return reject('not_found', `Stack ${attack.stackId} does not exist`);
+    if (attacker.boardPlayerId !== command.playerId) {
+      return reject('invalid_command', 'Attacking Pokémon is not the player’s');
+    }
+    if (!isMoveName(attack.name)) {
+      return reject('invalid_command', 'Attack name is invalid');
+    }
+  }
 
   const events: DomainEvent[] = [];
   const stackIds = Object.values(state.stacks)
@@ -1165,6 +1182,9 @@ const decideTableAction = (
     playerId: command.playerId,
     outcome: 'declared',
     turnNumber: state.turn.number,
+    ...(attack
+      ? { attack: { stackId: attack.stackId, name: attack.name } }
+      : {}),
   });
   return accept(...events);
 };
@@ -2865,6 +2885,19 @@ export const decideCommand = (
       const stack = state.stacks[command.stackId];
       if (!stack)
         return reject('not_found', `Stack ${command.stackId} does not exist`);
+      if (command.ability !== undefined) {
+        // An Ability picked from the Pokémon's text: it is used, and told,
+        // whether or not the marker was already on.
+        if (!command.used || !isMoveName(command.ability)) {
+          return reject('invalid_command', 'Ability name is invalid');
+        }
+        return accept({
+          type: 'StackAbilitySet',
+          stackId: command.stackId,
+          used: true,
+          ability: command.ability,
+        });
+      }
       if (stack.abilityUsed === command.used) {
         return reject('invalid_command', 'Stack ability marker is already set');
       }

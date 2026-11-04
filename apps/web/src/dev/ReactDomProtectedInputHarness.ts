@@ -594,6 +594,9 @@ export const mountReactDomProtectedInputHarness = async (
     dismiss: (scope) => {
       runtime.dismissLocalPresentation(scope);
     },
+    invokeWindowAction: (request) => {
+      runtime.emitLegacyOverlayAction(request, 'window');
+    },
     invokeContextAction: (action, cardId) => {
       overlayActions.push({ kind: 'context', action, cardId: String(cardId) });
       runtime.emitLegacyOverlayAction({ kind: 'context', action, cardId });

@@ -12,6 +12,7 @@ import { ArrowLeftIcon } from '@phosphor-icons/react/dist/csr/ArrowLeft';
 import { CircleNotchIcon } from '@phosphor-icons/react/dist/csr/CircleNotch';
 import { Trans } from '@lingui/react/macro';
 
+import type { CardCatalogSource } from './card-catalog-contract.js';
 import type { DeckBuilderSession } from './DeckBuilderSession.js';
 
 type DeckBuilderModule = typeof import('./DeckBuilderSession.js');
@@ -102,6 +103,33 @@ const preloadDeckScreen = (): Promise<void> => {
     });
   return warming;
 };
+
+let catalogLoading: Promise<CardCatalogSource | undefined> | undefined;
+
+/**
+ * The card catalog, for the table's Pokémon window to read a card's text
+ * (ADR-043): it comes with the deck screen's script. That script is
+ * imported only once its files have all arrived (as the warm-up does), so
+ * a dropped connection can't leave it unloadable; undefined until then.
+ */
+export const tableCardCatalog = (): Promise<CardCatalogSource | undefined> => {
+  if (loaded) return Promise.resolve(loaded.cardCatalog());
+  catalogLoading ??= deckScreenFilesArrived()
+    .then((arrived) => (arrived ? loadDeckBuilder() : undefined))
+    .then(
+      (module) => module?.cardCatalog(),
+      () => undefined
+    )
+    .then((source) => {
+      if (!source) catalogLoading = undefined;
+      return source;
+    });
+  return catalogLoading;
+};
+
+/** The catalog, if the deck screen's script is already here. */
+export const loadedTableCardCatalog = (): CardCatalogSource | undefined =>
+  loaded?.cardCatalog();
 
 /** A connection the player asked to spare, or too slow to spend ahead. */
 const sparesData = (): boolean => {

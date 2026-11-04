@@ -12,7 +12,6 @@ import {
   type CatalogCard,
   type DeckCard,
   type DeckList,
-  type EnergyType,
   type LoadedCatalog,
 } from '@ptcgsim/deck-core';
 import { resolveCardPresentation } from '@ptcgsim/game-core';
@@ -21,7 +20,7 @@ import { readingImageStyle } from '../../ui/card-artwork.js';
 import { Sheet } from '../../ui/Sheet.js';
 import { Tooltip } from '../../ui/Tooltip.js';
 import { CardImage, limitlessScanOf } from './CardImage.js';
-import { EnergySymbol } from './energy-symbol.js';
+import { EnergySymbol, RulesText } from './energy-symbol.js';
 import {
   categoryName,
   energyCardName,
@@ -102,34 +101,6 @@ export interface CardDetailsProps {
   readonly onSwapPrint: (fromIds: readonly string[], to: CatalogCard) => void;
   readonly onSetCover: (cardId: string) => void;
 }
-
-const SYMBOL_TYPES: Readonly<Record<string, EnergyType>> = {
-  G: 'Grass',
-  R: 'Fire',
-  W: 'Water',
-  L: 'Lightning',
-  P: 'Psychic',
-  F: 'Fighting',
-  D: 'Darkness',
-  M: 'Metal',
-  Y: 'Fairy',
-  N: 'Dragon',
-  C: 'Colorless',
-};
-
-/** Rules text with its {R}-style Energy symbols drawn as symbols. */
-const RulesText = ({ text }: { readonly text: string }) => (
-  <>
-    {text.split(/(\{[GRWLPFDMYNC]\})/u).map((part, index) => {
-      const type = /^\{([GRWLPFDMYNC])\}$/u.exec(part)?.[1];
-      return type ? (
-        <EnergySymbol key={index} type={SYMBOL_TYPES[type]!} />
-      ) : (
-        <span key={index}>{part}</span>
-      );
-    })}
-  </>
-);
 
 const Legality = ({ card }: { readonly card: CatalogCard }) => {
   const { t } = useLingui();

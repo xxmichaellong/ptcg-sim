@@ -21,6 +21,7 @@ export type {
   CardCategory,
   CardRuleFacts,
   DeckCard,
+  DeckCardText,
   DeckEntry,
   DeckList,
   DeckTotals,
@@ -44,6 +45,7 @@ export type {
   DeckFormatRules,
   DeckIssue,
 } from './deck-rules.js';
+export { catalogCardText, deckCardPrint, splitPrint } from './card-text.js';
 export { CATALOG_SORTS, ENERGY_TYPES } from './catalog.js';
 export type {
   CatalogAbility,

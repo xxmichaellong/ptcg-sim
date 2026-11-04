@@ -1132,6 +1132,24 @@ const resolveSingleCommand = (
       ) {
         return rejected('unauthorized');
       }
+      if (wire.type === 'DeclareAttack' && wire.attack) {
+        // An attack picked from a Pokémon's text: the attacker's own.
+        const attacker = ownEntry(state.stacks, wire.attack.stackId);
+        if (!attacker) return rejected('stale_reference');
+        if (attacker.boardPlayerId !== targetPlayerId)
+          return rejected('unauthorized');
+        return {
+          accepted: true,
+          command: {
+            type: 'DeclareAttack',
+            playerId: targetPlayerId,
+            attack: {
+              stackId: asStackId(wire.attack.stackId),
+              name: wire.attack.name,
+            },
+          },
+        };
+      }
       return {
         accepted: true,
         command:
@@ -1285,6 +1303,7 @@ const resolveSingleCommand = (
             type: 'SetAbilityUsed',
             stackId: asStackId(wire.stackId),
             used: wire.used,
+            ...(wire.ability === undefined ? {} : { ability: wire.ability }),
           },
         };
       }

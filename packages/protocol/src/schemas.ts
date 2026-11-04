@@ -2,6 +2,9 @@ import {
   isCardBackValue,
   MAX_COIN_FLIP_COUNT,
   MAX_UNTIL_TAILS_FLIPS,
+  isCardPrint,
+  isCardText,
+  type CardText,
 } from '@ptcgsim/game-core';
 import * as v from 'valibot';
 import {
@@ -210,6 +213,12 @@ const CardPresentationSchema = v.pipe(
   )
 );
 
+/** A catalog print id ("PAL 185"), game-core's `isCardPrint`. */
+const CardPrintSchema = v.custom<string>(isCardPrint, 'Invalid card print');
+
+/** What a card says, bounded (game-core's `isCardText`). */
+const CardTextSchema = v.custom<CardText>(isCardText, 'Invalid card text');
+
 export const SerializedCardDefinitionSchema = v.object({
   id: IdentifierSchema,
   name: boundedString(256),
@@ -219,6 +228,10 @@ export const SerializedCardDefinitionSchema = v.object({
   presentation: v.optional(CardPresentationSchema),
   /** The other kind its print lets it be played as (game-core's). */
   playsAs: v.optional(v.picklist(['Pokémon', 'Energy'] as const)),
+  /** The catalog's print, whose text the table shows (ADR-043). */
+  print: v.optional(CardPrintSchema),
+  /** The deck's own text for the card (ADR-043). */
+  text: v.optional(CardTextSchema),
 });
 
 const WireDeckEntrySchema = v.object({
@@ -344,10 +357,18 @@ const SetSpecialConditionCommandSchema = v.object({
   condition: v.nullable(boundedString(16, 0)),
 });
 
+/** A move's name as an announcement carries it (game-core isMoveName). */
+const MoveNameSchema = v.pipe(
+  boundedString(64),
+  v.check((name) => name.trim().length > 0 && !/[\r\n]/u.test(name))
+);
+
 const SetAbilityUsedCommandSchema = v.object({
   type: v.literal('SetAbilityUsed'),
   stackId: IdentifierSchema,
   used: v.boolean(),
+  /** The Ability picked from the Pokémon's text (ADR-043). */
+  ability: v.optional(MoveNameSchema),
 });
 
 /** The reminders a player can put on a Pokémon (game-core STACK_REMINDERS). */
@@ -636,6 +657,10 @@ export const WireGameCommandSchema = v.variant('type', [
   v.object({
     type: v.literal('DeclareAttack'),
     targetPlayerId: IdentifierSchema,
+    /** The attack picked from a Pokémon's text (ADR-043). */
+    attack: v.optional(
+      v.object({ stackId: IdentifierSchema, name: MoveNameSchema })
+    ),
   }),
   v.object({
     type: v.literal('PassTurn'),
@@ -898,6 +923,8 @@ const ViewDefinitionSchema = v.object({
   imageUrlSmall: v.optional(UrlSchema),
   presentation: v.optional(CardPresentationSchema),
   playsAs: v.optional(v.picklist(['Pokémon', 'Energy'] as const)),
+  print: v.optional(CardPrintSchema),
+  text: v.optional(CardTextSchema),
 });
 
 const PlayerViewSchema = v.object({
@@ -1155,6 +1182,8 @@ const AbilityUsedPresentationEventSchema = v.object({
   playerId: IdentifierSchema,
   source: PresentationCardSourceSchema,
   cardName: v.optional(boundedString(256)),
+  /** The Ability named, when one was picked from the card's text. */
+  abilityName: v.optional(MoveNameSchema),
 });
 
 /** A player put a reminder on a Pokémon in play, or took it off. */
@@ -1235,6 +1264,10 @@ export const PresentationEventSchema = v.variant('type', [
     revision: RevisionSchema,
     playerId: IdentifierSchema,
     turnNumber: NonNegativeIntegerSchema,
+    /** The attack named, when one was picked from a Pokémon's text. */
+    attackName: v.optional(MoveNameSchema),
+    /** The Pokémon it is from, when everyone can see it. */
+    cardName: v.optional(boundedString(256)),
   }),
   v.object({
     type: v.literal('PassDeclared'),

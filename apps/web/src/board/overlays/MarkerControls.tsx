@@ -151,7 +151,8 @@ export const CONDITION_CODES: Readonly<Record<SpecialConditionKind, string>> = {
   poisoned: 'P',
 };
 
-const conditionArt = (kind: SpecialConditionKind): string =>
+/** A condition's chip art, as the table draws it. */
+export const conditionArt = (kind: SpecialConditionKind): string =>
   `/v2/assets/table/condition-${kind}.png`;
 
 /**

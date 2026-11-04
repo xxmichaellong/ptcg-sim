@@ -751,6 +751,9 @@ const narrate = (
           playerId: stack.boardPlayerId,
           source: stack.slot,
           ...(cardName ? { cardName } : {}),
+          // An Ability is named only with its Pokémon: a face-down one's
+          // text is no one else's to read.
+          ...(cardName && event.ability ? { abilityName: event.ability } : {}),
         },
       ];
     }

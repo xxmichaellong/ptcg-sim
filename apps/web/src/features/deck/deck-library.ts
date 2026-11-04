@@ -10,6 +10,7 @@ import {
   type DeckList,
 } from '@ptcgsim/deck-core';
 import { MAX_IMAGE_URL_CODE_UNITS } from '@ptcgsim/protocol';
+import { isCardText } from '@ptcgsim/game-core';
 
 /**
  * The player's saved decks, kept on this device.
@@ -207,6 +208,9 @@ const decodeCard = (value: unknown): DeckCard | undefined => {
     ...(value.playsAs === 'Pokémon' || value.playsAs === 'Energy'
       ? { playsAs: value.playsAs }
       : {}),
+    // Its own text (ADR-043), kept only whole and in bounds: the table
+    // takes no less.
+    ...(isCardText(value.text) ? { text: value.text } : {}),
   });
 };
 

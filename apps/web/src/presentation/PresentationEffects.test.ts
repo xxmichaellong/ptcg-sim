@@ -638,6 +638,28 @@ describe('presentationEffectsForEvent', () => {
         cardName: 'Pikachu',
       })
     ).toBe("player:Blue used Pikachu's ability");
+    // An Ability or attack picked from the card's text is named (ADR-043).
+    expect(
+      line({
+        type: 'AbilityUsed',
+        ...at,
+        source: 'bench',
+        cardName: 'Charizard ex',
+        abilityName: 'Infernal Reign',
+      })
+    ).toBe("player:Blue used Charizard ex's Infernal Reign");
+    expect(
+      line({
+        type: 'AttackDeclared',
+        ...at,
+        turnNumber: 3,
+        cardName: 'Charizard ex',
+        attackName: 'Burning Darkness',
+      })
+    ).toBe("player:Blue attacked with Charizard ex's Burning Darkness");
+    expect(line({ type: 'AttackDeclared', ...at, turnNumber: 3 })).toBe(
+      'player:Blue attacked'
+    );
     expect(
       line({
         type: 'AbilityUsed',

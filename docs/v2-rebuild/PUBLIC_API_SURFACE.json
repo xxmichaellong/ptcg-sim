@@ -246,6 +246,10 @@
               "kind": "type"
             },
             {
+              "name": "catalogCardText",
+              "kind": "value"
+            },
+            {
               "name": "catalogIndex",
               "kind": "value"
             },
@@ -315,6 +319,14 @@
             },
             {
               "name": "DeckCardOptions",
+              "kind": "type"
+            },
+            {
+              "name": "deckCardPrint",
+              "kind": "value"
+            },
+            {
+              "name": "DeckCardText",
               "kind": "type"
             },
             {
@@ -614,6 +626,10 @@
               "kind": "value"
             },
             {
+              "name": "splitPrint",
+              "kind": "value"
+            },
+            {
               "name": "WireCatalog",
               "kind": "type"
             },
@@ -734,6 +750,10 @@
               "kind": "type"
             },
             {
+              "name": "canonicalCardText",
+              "kind": "value"
+            },
+            {
               "name": "CARD_BACK_COLOURS",
               "kind": "value"
             },
@@ -759,6 +779,14 @@
             },
             {
               "name": "CARD_STEP_TYPES",
+              "kind": "value"
+            },
+            {
+              "name": "CARD_TEXT_ENERGY_TYPES",
+              "kind": "value"
+            },
+            {
+              "name": "CARD_TEXT_LIMITS",
               "kind": "value"
             },
             {
@@ -843,6 +871,22 @@
             },
             {
               "name": "CardStepType",
+              "kind": "type"
+            },
+            {
+              "name": "CardText",
+              "kind": "type"
+            },
+            {
+              "name": "CardTextAbility",
+              "kind": "type"
+            },
+            {
+              "name": "CardTextAttack",
+              "kind": "type"
+            },
+            {
+              "name": "CardTextEnergyType",
               "kind": "type"
             },
             {
@@ -975,6 +1019,18 @@
             },
             {
               "name": "isCardPresentation",
+              "kind": "value"
+            },
+            {
+              "name": "isCardPrint",
+              "kind": "value"
+            },
+            {
+              "name": "isCardText",
+              "kind": "value"
+            },
+            {
+              "name": "isMoveName",
               "kind": "value"
             },
             {
@@ -1135,6 +1191,10 @@
             },
             {
               "name": "sameCardPresentation",
+              "kind": "value"
+            },
+            {
+              "name": "sameCardText",
               "kind": "value"
             },
             {

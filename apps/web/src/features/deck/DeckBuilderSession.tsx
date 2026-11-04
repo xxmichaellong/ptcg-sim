@@ -63,6 +63,8 @@ import {
 } from './popular-decklists.js';
 
 export { warmDeckScreen } from './deck-screen-warmup.js';
+/** The page's catalog, for the table's Pokémon window (ADR-043). */
+export { cardCatalog } from './card-catalog-client.js';
 
 /**
  * The tables each set of seats has been brought to, and how: kept (a game

@@ -5,13 +5,16 @@ import {
   type RemoteGameSession,
   type SubmitCommandResult,
 } from '@ptcgsim/client-session';
-import type { DeckList } from '@ptcgsim/deck-core';
+import { deckCardPrint, type DeckList } from '@ptcgsim/deck-core';
 import {
   CARD_PLAYS_AS,
+  canonicalCardText,
   isCardPresentation,
+  isCardText,
   resolveCardPresentation,
   type CardPlaysAs,
   type CardPresentation,
+  type CardText,
   type MatchViewState,
 } from '@ptcgsim/game-core';
 import {
@@ -32,6 +35,12 @@ import {
 } from './deck-builder-store.js';
 
 const MAX_CARD_NAME_CODE_UNITS = 256;
+/**
+ * The most text a deck's own cards may carry to the table, all together
+ * (ADR-043): with the rest of a large deck it keeps the deck's message
+ * under the room's 64 KiB frame. Catalogued cards carry only their print.
+ */
+export const MAX_DECK_TEXT_CODE_UNITS = 32_000;
 const SHA_256_HEX_PATTERN = /^[a-f0-9]{64}$/u;
 
 export type DeckInstallAdapterErrorCode =
@@ -46,7 +55,8 @@ export type DeckInstallAdapterErrorCode =
   | 'too_many_cards'
   | 'too_many_entries'
   | 'url_too_long'
-  | 'name_too_long';
+  | 'name_too_long'
+  | 'text_too_long';
 
 export class DeckInstallAdapterError extends Error {
   constructor(readonly code: DeckInstallAdapterErrorCode) {
@@ -94,6 +104,8 @@ interface DefinitionCandidate {
   readonly imageUrlSmall?: string;
   readonly presentation?: CardPresentation;
   readonly playsAs?: CardPlaysAs;
+  readonly print?: string;
+  readonly text?: CardText;
   count: number;
 }
 
@@ -121,6 +133,7 @@ export const deckToLoadDeckEntries = async (
   if (!Array.isArray(deck)) fail('invalid_deck');
   const candidates = new Map<string, DefinitionCandidate>();
   let totalCards = 0;
+  let textCodeUnits = 0;
 
   for (const entry of deck as readonly unknown[]) {
     if (dependencies.signal?.aborted) fail('aborted');
@@ -168,6 +181,18 @@ export const deckToLoadDeckEntries = async (
         : undefined;
     // What its print lets it be played as: only a known kind is kept.
     const playsAs = CARD_PLAYS_AS.find((kind) => kind === card.playsAs);
+    // Which print it is, for the table to show its text; and the deck's
+    // own text for it, which wins (ADR-043).
+    const print =
+      typeof card.id === 'string'
+        ? deckCardPrint({
+            id: card.id,
+            ...(typeof card.set === 'string' ? { set: card.set } : {}),
+            ...(typeof card.number === 'string' ? { number: card.number } : {}),
+          })
+        : undefined;
+    if (card.text !== undefined && !isCardText(card.text)) fail('invalid_deck');
+    const text = card.text as CardText | undefined;
     const identity = JSON.stringify([
       name,
       category,
@@ -175,10 +200,18 @@ export const deckToLoadDeckEntries = async (
       imageUrlSmall ?? null,
       ...(presentation ? [presentation] : []),
       ...(playsAs ? [{ playsAs }] : []),
+      // Not its print: two prints that look the same on the table are one
+      // card there (the first one's print stands for both; their text is
+      // the same). Its own text is part of it.
+      ...(text ? [{ text: canonicalCardText(text) }] : []),
     ]);
     const existing = candidates.get(identity);
     if (existing) existing.count += count as number;
     else {
+      if (text) {
+        textCodeUnits += canonicalCardText(text).length;
+        if (textCodeUnits > MAX_DECK_TEXT_CODE_UNITS) fail('text_too_long');
+      }
       candidates.set(identity, {
         identity,
         name,
@@ -186,6 +219,8 @@ export const deckToLoadDeckEntries = async (
         imageUrl,
         ...(presentation ? { presentation } : {}),
         ...(playsAs ? { playsAs } : {}),
+        ...(print ? { print } : {}),
+        ...(text ? { text } : {}),
         ...(imageUrlSmall === undefined ? {} : { imageUrlSmall }),
         count: count as number,
       });
@@ -219,6 +254,8 @@ export const deckToLoadDeckEntries = async (
           ? { presentation: candidate.presentation }
           : {}),
         ...(candidate.playsAs ? { playsAs: candidate.playsAs } : {}),
+        ...(candidate.print ? { print: candidate.print } : {}),
+        ...(candidate.text ? { text: candidate.text } : {}),
         ...(candidate.imageUrlSmall === undefined
           ? {}
           : { imageUrlSmall: candidate.imageUrlSmall }),
@@ -547,6 +584,8 @@ export const deckInstallFailureNotice = (
           return t`A card's picture address is too long.`;
         case 'name_too_long':
           return t`A card's name is too long.`;
+        case 'text_too_long':
+          return t`Its cards' own text is too long for the table.`;
         default:
           return t`Its cards couldn't be read.`;
       }

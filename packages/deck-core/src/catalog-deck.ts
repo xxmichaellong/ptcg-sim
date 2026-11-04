@@ -511,6 +511,8 @@ export const withCatalogFacts = (
               name: card.name,
               image: card.image,
               ...(card.imageSmall ? { imageSmall: card.imageSmall } : {}),
+              // Its own text (ADR-043) is the deck's, not the catalog's.
+              ...(card.text ? { text: card.text } : {}),
             }
       ),
     });

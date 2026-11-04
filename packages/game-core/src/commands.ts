@@ -248,7 +248,15 @@ export type BaseGameCommand =
       readonly targetPlayerId: PlayerId;
     }
   | { readonly type: 'StartTurn'; readonly playerId: PlayerId }
-  | { readonly type: 'DeclareAttack'; readonly playerId: PlayerId }
+  | {
+      readonly type: 'DeclareAttack';
+      readonly playerId: PlayerId;
+      /**
+       * The attack picked from a Pokémon's text, to name in the log
+       * (ADR-043); absent for the turn's plain Attack.
+       */
+      readonly attack?: { readonly stackId: StackId; readonly name: string };
+    }
   | { readonly type: 'PassTurn'; readonly playerId: PlayerId }
   | {
       readonly type: 'MoveZoneContents';
@@ -300,6 +308,12 @@ export type BaseGameCommand =
       readonly type: 'SetAbilityUsed';
       readonly stackId: StackId;
       readonly used: boolean;
+      /**
+       * The Ability picked from the Pokémon's text, to name in the log
+       * (ADR-043). It marks the Pokémon used and is told even when it
+       * already was: some Abilities are used more than once a turn.
+       */
+      readonly ability?: string;
     }
   | {
       /** Puts a reminder on a Pokémon in play (`on`), or takes it off. */

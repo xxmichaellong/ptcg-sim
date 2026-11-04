@@ -6,7 +6,10 @@ import type {
 } from '@ptcgsim/game-core';
 import type { ReadyReplayPlaybackState } from '@ptcgsim/client-session';
 
-import type { LegacyBoardContextActionId } from './resolveLegacyBoardOverlayAction.js';
+import type {
+  LegacyBoardContextActionId,
+  LegacyBoardMoveActionId,
+} from './resolveLegacyBoardOverlayAction.js';
 
 type ReplayLocalDisclosureState = NonNullable<
   ReadyReplayPlaybackState['localDisclosure']
@@ -25,7 +28,7 @@ export interface ReplayLocalDisplayState {
 }
 
 export const isReplayLocalDisclosureAction = (
-  action: LegacyBoardContextActionId
+  action: LegacyBoardContextActionId | LegacyBoardMoveActionId
 ): action is
   'revealPrizes' | 'togglePrizes' | 'toggleOpponentHand' | 'revealCard' =>
   action === 'revealPrizes' ||

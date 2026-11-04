@@ -229,6 +229,78 @@ describe('deckToLoadDeckEntries', () => {
     expect(Object.isFrozen(first[0]?.definition)).toBe(true);
   });
 
+  it('sends a catalogued card’s print, and a card’s own text, to the table (ADR-043)', async () => {
+    const text = {
+      hp: 120,
+      attacks: [{ name: 'Ember', cost: ['Fire' as const], damage: '30' }],
+    };
+    const [printed, own] = await deckToLoadDeckEntries(
+      deckListOf([
+        {
+          card: card('Charizard ex', 'charizard', {
+            id: 'OBF 125',
+            set: 'OBF',
+            number: '125',
+          }),
+          count: 1,
+        },
+        { card: card('Homebrew', 'homebrew', { text }), count: 1 },
+      ]),
+      { digest: deterministicDigest }
+    );
+    expect(printed?.definition).toMatchObject({ print: 'OBF 125' });
+    expect(printed?.definition).not.toHaveProperty('text');
+    expect(own?.definition).toMatchObject({ text });
+    expect(own?.definition).not.toHaveProperty('print');
+    // The same card with other text is another card on the table.
+    const twice = await deckToLoadDeckEntries(
+      deckListOf([
+        { card: card('Homebrew', 'homebrew', { text }), count: 1 },
+        {
+          card: card('Homebrew', 'homebrew', {
+            id: 'custom:edited',
+            text: { ...text, hp: 130 },
+          }),
+          count: 1,
+        },
+      ]),
+      { digest: deterministicDigest }
+    );
+    expect(twice).toHaveLength(2);
+  });
+
+  it('refuses text it can’t take, and more text than the table’s message holds', async () => {
+    await expect(
+      deckToLoadDeckEntries(
+        raw([
+          {
+            card: card('Broken', 'broken', { text: { hp: -1 } as never }),
+            count: 1,
+          },
+        ]),
+        { digest: deterministicDigest }
+      )
+    ).rejects.toMatchObject({ code: 'invalid_deck' });
+    const long = 'x'.repeat(600);
+    const heavy = Array.from({ length: 20 }, (_, index) => ({
+      card: card(`Heavy ${String(index)}`, `heavy-${String(index)}`, {
+        text: {
+          abilities: [{ name: 'Long', kind: 'Ability', text: long }],
+          attacks: Array.from({ length: 4 }, () => ({
+            name: 'Long',
+            cost: [],
+            damage: '',
+            text: long,
+          })),
+        },
+      }),
+      count: 1,
+    }));
+    await expect(
+      deckToLoadDeckEntries(deckListOf(heavy), { digest: deterministicDigest })
+    ).rejects.toMatchObject({ code: 'text_too_long' });
+  });
+
   it('keeps each card kind, and sends a small image only when it differs', async () => {
     const entries = await deckToLoadDeckEntries(
       deckListOf([

@@ -1,12 +1,13 @@
 import { i18n, type MessageDescriptor } from '@lingui/core';
 import { msg } from '@lingui/core/macro';
-import type {
-  MatchViewState,
-  PlayerId,
-  StackReminder,
-  ViewCard,
-  ViewCardId,
-  WorkAreaCardsDestination,
+import {
+  isMoveName,
+  type MatchViewState,
+  type PlayerId,
+  type StackReminder,
+  type ViewCard,
+  type ViewCardId,
+  type WorkAreaCardsDestination,
 } from '@ptcgsim/game-core';
 import type { WireGameCommand } from '@ptcgsim/protocol';
 
@@ -57,6 +58,12 @@ export type LegacyBoardContextActionId =
   | 'moveCard'
   | 'revealCard'
   | 'changeCardType';
+
+/**
+ * An Ability or attack picked from a Pokémon's text (the Pokémon window,
+ * ADR-043): no menu entry, so no context action of the menu's.
+ */
+export type LegacyBoardMoveActionId = 'useAbility' | 'useAttack';
 
 export type LegacyBoardZoneActionId =
   'shuffleDeck' | 'shuffleDiscardToDeck' | 'sortZone';
@@ -158,6 +165,16 @@ export type LegacyBoardOverlayActionRequest =
       readonly cardId: ViewCardId;
       /** Missing identifies the submenu parent; present submits its choice. */
       readonly category?: LegacyBoardCategoryChoice;
+    }
+  | {
+      /**
+       * An Ability or attack picked from the text of a Pokémon's card (the
+       * Pokémon window, ADR-043): the card it is printed on, and its name.
+       */
+      readonly kind: 'context';
+      readonly action: LegacyBoardMoveActionId;
+      readonly cardId: ViewCardId;
+      readonly name: string;
     }
   | {
       readonly kind: 'zone';
@@ -494,6 +511,32 @@ const resolveContextAction = (
       return resolveCardAnnotationAction(view, request.cardId, {
         type: 'toggleAbilityUsed',
       });
+    case 'useAbility':
+    case 'useAttack': {
+      // Printed on one of the Pokémon's own cards (a BREAK keeps its lower
+      // Stage's), and told in the log by name: one line, as the room takes.
+      const stack = located.stack;
+      if (
+        !stack ||
+        !stack.evolutionCards.some((card) => card.id === request.cardId)
+      )
+        return rejected('unsupported_target');
+      if (view.viewer.kind !== 'player') return rejected('not_player');
+      const name = request.name.trim();
+      if (!isMoveName(name)) return rejected('invalid_value');
+      return request.action === 'useAbility'
+        ? command({
+            type: 'SetAbilityUsed',
+            stackId: stack.id,
+            used: true,
+            ability: name,
+          })
+        : command({
+            type: 'DeclareAttack',
+            targetPlayerId: stack.boardPlayerId,
+            attack: { stackId: stack.id, name },
+          });
+    }
     case 'setDamage':
       if (!located.stack) return rejected('unsupported_target');
       if (request.value === undefined) {

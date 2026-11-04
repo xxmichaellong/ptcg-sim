@@ -158,6 +158,13 @@ const surfacePaint = async (
   const imageLocators = surface.locator('img');
   for (let index = 0; index < (await imageLocators.count()); index += 1) {
     const image = imageLocators.nth(index);
+    if (
+      await image.evaluate(
+        (element, art) => element.closest(art) !== null,
+        CONTROL_ART
+      )
+    )
+      continue;
     const imageBounds = await image.boundingBox();
     if (!imageBounds) throw new Error('Overlay image has no physical bounds');
     images.push(
@@ -244,15 +251,23 @@ const mountCandidate = async (
   });
 };
 
+/**
+ * The cards' pictures in a surface: not the Pokémon window's condition
+ * chips (ADR-043), which are its controls' art.
+ */
+const CONTROL_ART = '.pokemon-window__toggle';
+
 const assetsFor = (surface: Locator): Promise<Asset[]> =>
-  surface.locator('img').evaluateAll((images) =>
-    images.map((image) => {
-      const alt = (image as HTMLImageElement).alt;
-      return {
-        src: image.getAttribute('src') ?? '',
-        label: alt || image.parentElement?.getAttribute('aria-label') || '',
-      };
-    })
+  surface.locator('img').evaluateAll((all) =>
+    all
+      .filter((image) => image.closest('.pokemon-window__toggle') === null)
+      .map((image) => {
+        const alt = (image as HTMLImageElement).alt;
+        return {
+          src: image.getAttribute('src') ?? '',
+          label: alt || image.parentElement?.getAttribute('aria-label') || '',
+        };
+      })
   );
 
 const readScrollEvidence = (surface: Locator): Promise<ScrollEvidence> =>
@@ -563,7 +578,13 @@ const expectSurfaceDesign = (
   source: SurfacePaint,
   description: string,
   /** Zone browsers are solid panels; the stack view sits on a scrim. */
-  panel: boolean
+  panel: boolean,
+  /**
+   * The Pokémon window (ADR-043) shows v1's stack cards, grouped its own
+   * way: the Pokémon first and largest, then its Stages, then what is
+   * attached, each smaller than v1 drew it.
+   */
+  pokemonWindow = false
 ): void => {
   const bounds = candidate.surface.bounds;
   expect(bounds.x, `${description} left`).toBeGreaterThanOrEqual(-0.5);
@@ -587,6 +608,25 @@ const expectSurfaceDesign = (
       parseFloat(candidate.surface.borderRadius),
       `${description} radius`
     ).toBeGreaterThan(0);
+  }
+  if (pokemonWindow) {
+    const cards = (paint: SurfacePaint) =>
+      paint.images.map((image) => `${image.src} ${image.label}`).sort();
+    expect(cards(candidate), `${description} cards`).toEqual(cards(source));
+    const hero = candidate.images[0]!;
+    expect(hero.src, `${description} its Pokémon first`).toBe(
+      source.images[0]!.src
+    );
+    expect(
+      hero.bounds.height,
+      `${description} its Pokémon`
+    ).toBeGreaterThanOrEqual(source.images[0]!.bounds.height - 0.5);
+    for (const [index, image] of candidate.images.entries()) {
+      expect(image.transform, `${description} image ${index} upright`).toMatch(
+        /^(none|matrix\(1, 0, 0, 1, [^)]*\))$/u
+      );
+    }
+    return;
   }
   expect(
     candidate.images.map((image) => [image.src, image.label]),
@@ -646,17 +686,22 @@ test('transformed stack and zone overlays keep real-v1 content and protected sem
   await expect(preview).toBeVisible();
   await expect(preview).toHaveAttribute('role', 'dialog');
   await expect(preview).toHaveAttribute('aria-modal', 'true');
-  await expect(preview).toHaveAccessibleName('Card stack preview');
+  // The Pokémon window (ADR-043) is named for its Pokémon.
+  await expect(preview).toHaveAccessibleName(/\S/u);
   await expect(preview).toBeFocused();
   const localStackAssets = await assetsFor(preview);
   expect(localStackAssets.every((asset) => asset.label.length > 0)).toBe(true);
   await settlePaint(page);
   const candidateLocalStack = await surfacePaint(preview, 'candidate');
   const candidateLocalStackImage = await screenshot();
+  // Tab goes round its controls, never out of it.
+  const focusInside = () =>
+    preview.evaluate((element) => element.contains(document.activeElement));
   await page.keyboard.press('Tab');
-  await expect(preview).toBeFocused();
+  expect(await focusInside()).toBe(true);
   await page.keyboard.press('Shift+Tab');
-  await expect(preview).toBeFocused();
+  await page.keyboard.press('Shift+Tab');
+  expect(await focusInside()).toBe(true);
   await page.keyboard.press('Escape');
   await expect(localStackCard).toBeFocused();
 
@@ -847,13 +892,15 @@ test('transformed stack and zone overlays keep real-v1 content and protected sem
     candidateLocalStack,
     source.localStack,
     'local stack preview',
-    false
+    true,
+    true
   );
   expectSurfaceDesign(
     candidateOpponentStack,
     source.opponentStack,
     'opponent stack preview',
-    false
+    true,
+    true
   );
   expectSurfaceDesign(
     candidateLocalZone,

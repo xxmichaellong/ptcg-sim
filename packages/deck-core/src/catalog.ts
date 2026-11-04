@@ -76,7 +76,11 @@ export interface CatalogCard {
   readonly abilities: readonly CatalogAbility[];
   readonly attacks: readonly CatalogAttack[];
   readonly weakness?: EnergyType;
+  /** As printed: "×2", "+20". */
+  readonly weaknessValue?: string;
   readonly resistance?: EnergyType;
+  /** As printed: "-30". */
+  readonly resistanceValue?: string;
   readonly retreat?: number;
   /** "Item", "Supporter", "Stadium", "Tool", "Technical Machine". */
   readonly trainerType?: string;

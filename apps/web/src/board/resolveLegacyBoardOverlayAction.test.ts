@@ -210,6 +210,58 @@ describe('legacy board overlay action resolver', () => {
     });
   });
 
+  it('uses an Ability or attack picked from a Pokémon’s text, by name (ADR-043)', () => {
+    const view = createRendererSpikeView();
+    const localId = view.viewer.kind === 'player' ? view.viewer.playerId : '';
+    const active = view.stacks[view.boards[localId]!.activeStackId!]!;
+    const top = active.evolutionCards.at(-1)!;
+    const lower = active.evolutionCards[0]!;
+    const move = (
+      action: 'useAbility' | 'useAttack',
+      cardId: ViewCardId,
+      name: string
+    ) =>
+      resolveLegacyBoardOverlayAction(view, {
+        kind: 'context',
+        action,
+        cardId,
+        name,
+      });
+    expect(move('useAbility', top.id, ' Infernal Reign ')).toEqual({
+      ok: true,
+      command: {
+        type: 'SetAbilityUsed',
+        stackId: active.id,
+        used: true,
+        ability: 'Infernal Reign',
+      },
+    });
+    // A BREAK's lower Stage's move is its Pokémon's too.
+    expect(move('useAttack', lower.id, 'Burning Darkness')).toEqual({
+      ok: true,
+      command: {
+        type: 'DeclareAttack',
+        targetPlayerId: active.boardPlayerId,
+        attack: { stackId: active.id, name: 'Burning Darkness' },
+      },
+    });
+    expect(move('useAttack', top.id, 'Two\nlines')).toEqual({
+      ok: false,
+      reason: 'invalid_value',
+    });
+    const attached = active.attachmentCards[0];
+    if (attached)
+      expect(move('useAbility', attached.id, 'Not its own')).toEqual({
+        ok: false,
+        reason: 'unsupported_target',
+      });
+    const hand = zoneIn(view, localId, 'hand');
+    expect(move('useAbility', hand.cards[0]!.id, 'From the hand')).toEqual({
+      ok: false,
+      reason: 'unsupported_target',
+    });
+  });
+
   it('reuses stale-safe annotation, visibility, inspection, and random resolvers', () => {
     const view = createRendererSpikeView();
     const localId = view.viewer.kind === 'player' ? view.viewer.playerId : '';

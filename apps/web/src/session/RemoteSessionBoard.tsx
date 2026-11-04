@@ -1082,6 +1082,9 @@ export const RemoteSessionBoard = ({
       dismiss: (scope) => {
         runtimeRef.current?.dismissLocalPresentation(scope);
       },
+      invokeWindowAction: (request) => {
+        runtimeRef.current?.emitLegacyOverlayAction(request, 'window');
+      },
       invokeContextAction: (action, cardId) => {
         if (action === 'toggleOpponentHand' && liveSoloRef.current) {
           boardViewStore.update({

@@ -645,7 +645,9 @@ const decodeCard = (
   assign(card, 'hp', hp);
   assign(card, 'evolvesFrom', text(value.ef, LIMITS.name));
   assign(card, 'weakness', weakness);
+  assign(card, 'weaknessValue', weakness ? weaknessValue : undefined);
   assign(card, 'resistance', resistance);
+  assign(card, 'resistanceValue', resistance ? modifier(value.rv) : undefined);
   assign(card, 'retreat', retreat);
   assign(card, 'trainerType', trainerType);
   assign(card, 'energyType', energyType);

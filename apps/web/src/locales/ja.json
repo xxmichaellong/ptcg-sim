@@ -667,6 +667,13 @@
     "message": "{cured, plural, one {Remove Special Condition} other {Remove Special Conditions on #}}",
     "translation": "{cured, plural, other {#匹の特殊状態を取り除く}}"
   },
+  "soVRMU": {
+    "message": "{damage} damage",
+    "comments": [
+      "Damage on a Pokémon, e.g. \"60 damage\"."
+    ],
+    "translation": "{damage}ダメージ"
+  },
   "3W5Y-K": {
     "message": "{damaged, plural, one {Add 10 damage} other {Add 10 damage to each of #}}",
     "translation": "{damaged, plural, other {#匹それぞれにダメージ10を追加}}"
@@ -840,6 +847,13 @@
       "Log line. {name} is a player's name."
     ],
     "translation": "{name}がワザを使いました"
+  },
+  "fVGdf8": {
+    "message": "{name} attacked with {card}'s {attack}",
+    "comments": [
+      "Log line: a player picked an attack from their Pokémon's text. {name} is a player's name, {card} the Pokémon's name, {attack} the attack's name as printed."
+    ],
+    "translation": "{name}は{card}の{attack}を使った"
   },
   "4rAxe5": {
     "message": "{name} bench",
@@ -1086,6 +1100,13 @@
       "Log line: a player used a Stadium card's effect. {name} is a player's name, {card} the Stadium's name."
     ],
     "translation": "{name}は{card}を使いました"
+  },
+  "3-TZY_": {
+    "message": "{name} used {card}'s {ability}",
+    "comments": [
+      "Log line: a player used a Pokémon's Ability, picked from its text. {name} is a player's name, {card} the Pokémon's name, {ability} the Ability's name as printed."
+    ],
+    "translation": "{name}は{card}の{ability}を使った"
   },
   "1X7zxc": {
     "message": "{name} used {card}'s ability",
@@ -1392,6 +1413,13 @@
     "context": "shortcut key caption",
     "translation": "+ スタジアム"
   },
+  "-yPtgv": {
+    "message": "+{0} special",
+    "comments": [
+      "Special Energy attached besides the Basic Energy drawn as symbols, e.g. \"+1 special\"."
+    ],
+    "translation": "+特殊{0}"
+  },
   "T_K7zW": {
     "message": "×{pokemon}",
     "comments": [
@@ -1562,6 +1590,11 @@
   "xT5yGw": {
     "message": "Active",
     "context": "shortcut key caption",
+    "translation": "バトル場"
+  },
+  "bgdYBG": {
+    "message": "Active",
+    "context": "the Active Spot",
     "translation": "バトル場"
   },
   "2MuTS2": {
@@ -1837,6 +1870,13 @@
     "message": "Attach to a Pokémon…",
     "translation": "ポケモンにつける…"
   },
+  "zSzD6O": {
+    "message": "Attached",
+    "comments": [
+      "Over the cards attached to a Pokémon."
+    ],
+    "translation": "ついているカード"
+  },
   "E9l6HC": {
     "message": "Attached cards being moved",
     "translation": "移動中のついているカード"
@@ -1853,6 +1893,11 @@
   "jY18IQ": {
     "message": "Attack payable with",
     "translation": "ワザに必要なエネルギー"
+  },
+  "uyTV5V": {
+    "message": "Attack:",
+    "context": "declare an attack",
+    "translation": "ワザ:"
   },
   "mh0djA": {
     "message": "Attacks do more",
@@ -1885,6 +1930,11 @@
     "comments": [
       "Command palette footer: Escape key."
     ],
+    "translation": "戻る"
+  },
+  "ltRMUn": {
+    "message": "Back",
+    "context": "back to the Pokémon's window",
     "translation": "戻る"
   },
   "0J6DxY": {
@@ -1971,6 +2021,11 @@
   "4Iwoxh": {
     "message": "Because of {cardName}.",
     "translation": "{cardName}の効果によります。"
+  },
+  "sA_k3P": {
+    "message": "Bench",
+    "context": "on the Bench",
+    "translation": "ベンチ"
   },
   "dkk7vA": {
     "message": "Bench",
@@ -2186,7 +2241,8 @@
   "Ccpbzh": {
     "message": "Cards",
     "comments": [
-      "Command palette section: find a card on the table."
+      "Command palette section: find a card on the table.",
+      "The section of a Pokémon's window with its cards."
     ],
     "translation": "カード"
   },
@@ -2438,6 +2494,13 @@
     "message": "Copy list (Pokémon TCG Live)",
     "translation": "リストをコピー(Pokémon TCG Live)"
   },
+  "snAD_N": {
+    "message": "Cost: {names}",
+    "comments": [
+      "The Energy an attack needs, read out. {names} lists the types, e.g. \"Fire, Fire, Colorless\"."
+    ],
+    "translation": "必要エネルギー: {names}"
+  },
   "7WsLH4": {
     "message": "Couldn't check that. Try again.",
     "translation": "確認できませんでした。もう一度お試しください。"
@@ -2595,6 +2658,10 @@
   "qlHGJK": {
     "message": "Custom image…",
     "translation": "カスタム画像…"
+  },
+  "3Vkuiz": {
+    "message": "Damage",
+    "translation": "ダメージ"
   },
   "UxNmvS": {
     "message": "Damage and conditions",
@@ -2770,6 +2837,13 @@
     "message": "Desk",
     "context": "the default background",
     "translation": "デスク"
+  },
+  "URmyfc": {
+    "message": "Details",
+    "comments": [
+      "Opens a Pokémon's window: its cards, damage, Abilities and attacks."
+    ],
+    "translation": "詳細"
   },
   "zhmNG6": {
     "message": "Diamonds",
@@ -3025,6 +3099,11 @@
     "context": "replay: go to the end",
     "translation": "最後へ"
   },
+  "eYoJKg": {
+    "message": "Energy",
+    "context": "attached Energy cards",
+    "translation": "エネルギー"
+  },
   "0UuYtf": {
     "message": "Energy",
     "context": "card kind",
@@ -3095,6 +3174,13 @@
   "vb1XQU": {
     "message": "Evolve it: drag <0>{0}</0> onto {1}.",
     "translation": "進化させます:<0>{0}</0>を{1}にドラッグします。"
+  },
+  "R_MOLb": {
+    "message": "Evolved from",
+    "comments": [
+      "Over the Stages a Pokémon evolved from, under it."
+    ],
+    "translation": "進化元"
   },
   "GjFqb-": {
     "message": "Evolves from",
@@ -3323,6 +3409,13 @@
     "message": "Format",
     "context": "deck format",
     "translation": "フォーマット"
+  },
+  "hGDVDa": {
+    "message": "From {0}",
+    "comments": [
+      "Over the moves a BREAK Pokémon keeps from the Stage under it. {from} is that card's name."
+    ],
+    "translation": "{0}から"
   },
   "ToYRS-": {
     "message": "From a link",
@@ -3580,6 +3673,11 @@
     "message": "HP",
     "translation": "HP"
   },
+  "N7Z9te": {
+    "message": "HP",
+    "context": "hit points",
+    "translation": "HP"
+  },
   "oT-Cnl": {
     "message": "HP",
     "context": "sort cards by",
@@ -3588,6 +3686,13 @@
   "36NKhF": {
     "message": "HP and retreat",
     "translation": "HPとにげる"
+  },
+  "fdmYlD": {
+    "message": "HP left",
+    "comments": [
+      "A Pokémon's HP less its damage."
+    ],
+    "translation": "残りHP"
   },
   "hlQWeh": {
     "message": "I publicly launched the sim on Christmas, and it has already grown an incredible community of players and developers. There's a lot more to do, and I could use as much help as I can get!",
@@ -3702,6 +3807,10 @@
   "Rw42Cd": {
     "message": "Its cards couldn't be read.",
     "translation": "カードを読み取れませんでした。"
+  },
+  "bAGcam": {
+    "message": "Its cards' own text is too long for the table.",
+    "translation": "カードのテキストが長すぎて盤面に表示できません。"
   },
   "h0iD6U": {
     "message": "Jade",
@@ -4402,6 +4511,10 @@
     ],
     "translation": "特性なし"
   },
+  "PrcIKK": {
+    "message": "No Abilities or attacks",
+    "translation": "特性もワザもありません"
+  },
   "we3XEV": {
     "message": "No actions available",
     "translation": "使える操作はありません"
@@ -4420,6 +4533,10 @@
       "Keep the example line \"4 Iono PAL 185\" as it is."
     ],
     "translation": "カードの行が見つかりません。「4 Iono PAL 185」のような行を試してください。"
+  },
+  "cUFrku": {
+    "message": "No card text",
+    "translation": "カードのテキストがありません"
   },
   "7Kn8aC": {
     "message": "No cards here",
@@ -4440,6 +4557,13 @@
   "bYysi5": {
     "message": "No cards yet. Paste a list anywhere here.",
     "translation": "カードがまだありません。ここにリストを貼り付けてください。"
+  },
+  "tsvYTC": {
+    "message": "No cost",
+    "comments": [
+      "An attack that needs no Energy."
+    ],
+    "translation": "エネルギー不要"
   },
   "-Qx8U8": {
     "message": "No deck",
@@ -4570,6 +4694,10 @@
   "W8zlv3": {
     "message": "Not yours to do",
     "translation": "あなたは操作できません"
+  },
+  "jutghQ": {
+    "message": "Nothing attached",
+    "translation": "ついているカードはありません"
   },
   "4QPb_7": {
     "message": "Nothing is selected",
@@ -4810,6 +4938,11 @@
   "l2I52S": {
     "message": "or drop or paste one here",
     "translation": "または、ここにドロップかペースト"
+  },
+  "UsG6nn": {
+    "message": "Other",
+    "context": "other attached cards",
+    "translation": "その他"
   },
   "eH_2Pb": {
     "message": "Other",
@@ -5266,6 +5399,10 @@
     "message": "Read a card, and open its actions",
     "translation": "カードを読んで、操作を開く"
   },
+  "iWnbNJ": {
+    "message": "Reading the card…",
+    "translation": "カードを読み込み中…"
+  },
   "LAbKv2": {
     "message": "Ready for {format}",
     "comments": [
@@ -5506,6 +5643,10 @@
   "CBOI8H": {
     "message": "Resume saved game…",
     "translation": "セーブした対戦を再開…"
+  },
+  "ELWET5": {
+    "message": "Retreat",
+    "translation": "にげる"
   },
   "X1Npk-": {
     "message": "Retreat {retreat}",
@@ -6405,6 +6546,13 @@
     "context": "shortcut key caption",
     "translation": "状態"
   },
+  "6Xn__m": {
+    "message": "Status and moves",
+    "comments": [
+      "The section of a Pokémon's window with its damage, conditions, Abilities and attacks."
+    ],
+    "translation": "状態とワザ"
+  },
   "iFt0Ce": {
     "message": "Still uploading…",
     "translation": "アップロード中です…"
@@ -6949,6 +7097,11 @@
     "context": "Trainer card kind: Pokémon Tool",
     "translation": "ポケモンのどうぐ"
   },
+  "4EIByI": {
+    "message": "Tools",
+    "context": "Trainer cards attached to a Pokémon",
+    "translation": "どうぐ"
+  },
   "MddZln": {
     "message": "Tools",
     "context": "Trainer cards by kind",
@@ -7156,6 +7309,18 @@
     "message": "Uploading…",
     "translation": "アップロード中…"
   },
+  "GQx0Zx": {
+    "message": "Use",
+    "context": "use an Ability",
+    "translation": "使う"
+  },
+  "qZ6hkc": {
+    "message": "Use {name}",
+    "comments": [
+      "{name} is an Ability printed on a Pokémon."
+    ],
+    "translation": "{name}を使う"
+  },
   "aS5ttr": {
     "message": "Use background",
     "translation": "背景を使用"
@@ -7184,6 +7349,11 @@
   "9c8BhN": {
     "message": "Use VSTAR Power",
     "translation": "VSTARパワーを使う"
+  },
+  "-OiYWO": {
+    "message": "Used",
+    "context": "an Ability, this turn",
+    "translation": "使用済み"
   },
   "ZpWtmQ": {
     "message": "Uses Limitless TCG's search syntax.",
