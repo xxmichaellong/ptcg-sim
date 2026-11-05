@@ -148,6 +148,19 @@ const SeatBadges = ({
 };
 
 /**
+ * What a press on a deck's tile does, shown over its cover as it is
+ * pointed at or reached: puts it on the seat being worked on. Its button
+ * already says so to a reader.
+ */
+const UseOnSeat = ({ seat }: { readonly seat: string }) => (
+  <span className="deck-tile__use" aria-hidden="true">
+    <span className="deck-tile__use-label">
+      <Trans>Use on {seat}</Trans>
+    </span>
+  </span>
+);
+
+/**
  * A deck's name edited over its tile: Enter or leaving the field keeps it,
  * Escape keeps the old one; an empty name is no name.
  */
@@ -313,6 +326,7 @@ const SavedDeckTile = ({
           tone={tone}
           invalid={!check.valid}
         />
+        {current ? null : <UseOnSeat seat={seat} />}
         <span className="deck-tile__text">
           <span
             ref={nameText}
@@ -526,10 +540,13 @@ const ListDeckTile = ({
   cover,
   cards,
   current,
+  seat,
   onTry,
   onEdit,
 }: {
   readonly name: string;
+  /** The seat being worked on (P1, P2), where a press puts it. */
+  readonly seat: string;
   /** Its main Pokémon, once the catalog is here to find it. */
   readonly cover: DeckCard | undefined;
   /** Its cards, once the catalog is here to find them. */
@@ -569,6 +586,7 @@ const ListDeckTile = ({
           tone={tone}
           sticker={finish ? wordPlace(finish) : undefined}
         />
+        {current ? null : <UseOnSeat seat={seat} />}
         <span className="deck-tile__text">
           <span className="deck-tile__name">{title}</span>
           {finish ? (
@@ -1125,6 +1143,7 @@ export const DeckHome = ({
                   cover={covers.get(deck.decklist)?.cover}
                   cards={covers.get(deck.decklist)?.cards}
                   current={seatListName === deck.name}
+                  seat={SEAT_NAMES[target]}
                   onTry={() => void onTryList(deck.name, deck.decklist, 'meta')}
                   onEdit={() =>
                     void onEditList(deck.name, deck.decklist, 'meta')
@@ -1202,6 +1221,7 @@ export const DeckHome = ({
                 cover={covers.get(deck.decklist)?.cover}
                 cards={covers.get(deck.decklist)?.cards}
                 current={seatListName === deck.name}
+                seat={SEAT_NAMES[target]}
                 onTry={() =>
                   void onTryList(deck.name, deck.decklist, 'classic')
                 }

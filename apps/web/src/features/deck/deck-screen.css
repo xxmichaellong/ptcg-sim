@@ -1188,6 +1188,61 @@ div.deck-tile__choose {
   color: var(--color-gold);
 }
 
+/* What a press does, over the cover as it is pointed at or reached. */
+.deck-tile__use {
+  position: absolute;
+  top: 0;
+  inset-inline: 0;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 16 / 10;
+  background: rgb(10 6 2 / 0.42);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--duration-fast) var(--ease-out);
+}
+
+.deck-tile__use-label {
+  padding: 7px 16px;
+  border-radius: var(--radius-pill);
+  background: var(--seat-color);
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.4);
+  color: #fff;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  translate: 0 4px;
+  transition: translate var(--duration-fast) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .deck-tile__choose:hover .deck-tile__use {
+    opacity: 1;
+  }
+
+  .deck-tile__choose:hover .deck-tile__use-label {
+    translate: 0 0;
+  }
+}
+
+.deck-tile__choose:focus-visible .deck-tile__use {
+  opacity: 1;
+}
+
+.deck-tile__choose:focus-visible .deck-tile__use-label {
+  translate: 0 0;
+}
+
+:root[data-motion='reduced'] .deck-tile__use-label {
+  translate: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .deck-tile__use-label {
+    translate: none;
+  }
+}
+
 /* The seats a deck is on: badges on its cover's corner. */
 .deck-tile__seats {
   position: absolute;
@@ -1372,6 +1427,20 @@ div.deck-tile__choose {
 
 .deck-editor__tools .ds-button {
   gap: var(--space-1-5);
+}
+
+/* A deck not on the seat being worked on: putting it there is in the
+   seat's colour. */
+.deck-editor__use {
+  border-color: var(--deck-seat-color);
+  background: color-mix(in oklab, var(--deck-seat-color) 16%, transparent);
+  color: var(--color-text);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .deck-editor__use:hover {
+    background: color-mix(in oklab, var(--deck-seat-color) 28%, transparent);
+  }
 }
 
 .deck-editor__tabs {
@@ -3626,17 +3695,17 @@ button.deck-check__issue {
   }
 
   /* With "Use on" the tools take a row of their own under the name. */
-  .deck-editor__head:has(#deckUseOnSeatButton) {
+  .deck-editor__head:has(.deck-editor__use) {
     grid-template-columns: auto minmax(0, 1fr);
   }
 
-  .deck-editor__head:has(#deckUseOnSeatButton) .deck-editor__tools {
+  .deck-editor__head:has(.deck-editor__use) .deck-editor__tools {
     grid-row: 3;
     grid-column: 1 / -1;
     justify-content: flex-end;
   }
 
-  .deck-editor__head:has(#deckUseOnSeatButton)
+  .deck-editor__head:has(.deck-editor__use)
     .deck-editor__saved[data-unsaved='true'] {
     grid-row: 4;
   }

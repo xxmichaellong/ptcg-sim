@@ -737,7 +737,7 @@ export const DeckEditor = ({
             <button
               id="deckUseOnSeatButton"
               type="button"
-              className="ds-button ds-button--secondary"
+              className="ds-button ds-button--secondary deck-editor__use"
               onClick={onUseOnSeat}
             >
               <Trans>Use on {seat}</Trans>
