@@ -683,7 +683,7 @@ describe('remote room lobby wiring', () => {
     // the app bar's corner kept clear.
     expect(lobbyBoardHarness.table).toEqual({
       lowerShare: TABLE_SPLIT.defaultLowerShare,
-      seamBandPx: 42,
+      seamBandPx: 46,
       appBarPx: appBarSize(APP_BAR_SLOTS.full, false),
       hideEmptyLostZone: true,
     });

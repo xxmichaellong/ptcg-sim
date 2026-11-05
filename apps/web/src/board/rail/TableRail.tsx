@@ -15,6 +15,7 @@ import {
 } from 'react';
 
 import { ActionMenu, type ActionMenuEntry } from '../../ui/ActionMenu.js';
+import { COARSE_POINTER_QUERY, useMediaQuery } from '../../ui/breakpoints.js';
 import { Tooltip, withKeyHint } from '../../ui/Tooltip.js';
 import './TableRail.css';
 
@@ -212,21 +213,27 @@ export interface TableRailProps {
 
 const EDGE_PX = 8;
 /** The gap between the dock's buttons (TableRail.css's `gap`). */
-const GAP_PX = 4;
+const GAP_PX = 2;
 /**
  * The dock's padding round its buttons (TableRail.css), each side: the
  * dock is their own panel, set apart from the mat (ADR-036).
  */
-const DOCK_PAD_PX = 3;
+const DOCK_PAD_PX = 2;
 /**
- * The room kept clear above and below the buttons in the seam, so they
- * don't crowd the markers, coin and outlines beside it -- where the seam
- * has room for it: a button is never made smaller than MIN_BUTTON_PX for
- * it. Under a finger the seam is made taller to keep 44px targets
- * (table-seam.ts).
+ * The room kept clear above and below the buttons in the seam -- the
+ * dock's padding and a strip of felt -- so the dock doesn't crowd the
+ * zones, markers and coin beside it, where the seam has room for it: a
+ * button is never made smaller than MIN_BUTTON_PX for it. Under a finger
+ * the seam is taller and each button's target reaches 44px
+ * (table-seam.ts, TableRail.css).
  */
-const BREATHE_PX = 4;
-const MIN_BUTTON_PX = 28;
+const BREATHE_PX = 8;
+const MIN_BUTTON_PX = 24;
+/**
+ * Under a finger each button is at least this wide, and its target this
+ * tall (TableRail.css): a slim dock, still a finger's targets.
+ */
+export const RAIL_TOUCH_TARGET_PX = 44;
 
 /** How tall the rail's buttons are in a seam `band` tall. */
 export const railButtonPx = (band: number): number =>
@@ -240,13 +247,14 @@ export const railButtonPx = (band: number): number =>
  */
 const RIGHT_END_MIN_BUTTONS = 4;
 /**
- * The most buttons a turn's rail holds: Turn, Attack, Pass, Coin, Undo,
- * Switch side and More, without Coin where the coin lies on the table and
- * without Switch side where the table can't be turned. The side is chosen
- * for them, not for what the stage shows now, so the actions stay put as
- * the game moves on (set-up, play, a reconnect).
+ * The most buttons a turn's rail holds: Turn, Pass, Coin, Undo, Switch
+ * side and More, without Coin where the coin lies on the table and without
+ * Switch side where the table can't be turned. (Attacks are declared from
+ * a Pokémon's window, or the palette.) The side is chosen for them, not
+ * for what the stage shows now, so the actions stay put as the game moves
+ * on (set-up, play, a reconnect).
  */
-const FULL_RAIL_BUTTONS = 7;
+const FULL_RAIL_BUTTONS = 6;
 
 /** How many buttons fit in a dock `room` wide. */
 const slotsIn = (room: number, buttonPx: number): number =>
@@ -367,6 +375,7 @@ export const placeRailActions = ({
   side,
   actions,
   more,
+  targetPx = 0,
 }: Pick<
   TableRailProps,
   | 'anchor'
@@ -381,6 +390,8 @@ export const placeRailActions = ({
 > & {
   /** The side to keep (`true` past the Stadium) instead of choosing one. */
   readonly side?: boolean;
+  /** The least width of a button: a finger's target (RAIL_TOUCH_TARGET_PX). */
+  readonly targetPx?: number;
 }): {
   readonly atRight: boolean;
   readonly start: number;
@@ -400,7 +411,8 @@ export const placeRailActions = ({
   const leftEnd = straddles ? avoid.x - EDGE_PX : rightEnd;
   const rightWidth = Math.max(0, rightEnd - rightStart);
   const leftWidth = Math.max(0, leftEnd - leftStart);
-  const buttonPx = railButtonPx(anchor.height);
+  // Each button's width: as tall as the seam leaves it, a finger's at least.
+  const buttonPx = Math.max(railButtonPx(anchor.height), targetPx);
   const rightSlots = slotsIn(rightWidth, buttonPx);
   const fullRail =
     FULL_RAIL_BUTTONS - (coinOnTable ? 1 : 0) - (canSwitchSide ? 0 : 1);
@@ -457,6 +469,7 @@ export const TableRail = memo(function TableRail({
   const drawn = useRef<{ atRight: boolean; moved: boolean } | undefined>(
     undefined
   );
+  const coarse = useMediaQuery(COARSE_POINTER_QUERY);
   const choice = {
     anchor,
     width,
@@ -467,6 +480,7 @@ export const TableRail = memo(function TableRail({
     canSwitchSide,
     actions,
     more,
+    ...(coarse ? { targetPx: RAIL_TOUCH_TARGET_PX } : {}),
   };
   const chosen = placeRailActions(choice);
   const before = holdSide ? drawn.current : undefined;

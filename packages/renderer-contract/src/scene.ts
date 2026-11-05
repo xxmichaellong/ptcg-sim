@@ -245,6 +245,9 @@ const projectPlayerFrame = (
   rotationQuarterTurns: player.rotationQuarterTurns,
   bounds: copyRect(player.frameBounds),
   ...(player.hidden ? { hidden: true as const } : {}),
+  ...(player.handCardHeight === undefined
+    ? {}
+    : { handCardHeight: player.handCardHeight }),
 });
 
 const projectResizeHandle = (
@@ -1049,7 +1052,8 @@ export const createBoardScene = (
                       contentBounds,
                       playerLayout(zone.ownerId).side,
                       zone.cards.length,
-                      layout.playAreaBounds.x + layout.playAreaBounds.width / 2
+                      layout.playAreaBounds.x + layout.playAreaBounds.width / 2,
+                      playerLayout(zone.ownerId).handCardHeight
                     )
                   : layoutTableRow(
                       contentBounds,

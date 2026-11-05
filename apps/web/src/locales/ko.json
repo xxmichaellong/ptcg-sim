@@ -5382,13 +5382,6 @@
     ],
     "translation": "{keys} 키를 누르면 <0>단축키</0>를 볼 수 있습니다."
   },
-  "joGQW4": {
-    "message": "Press <0>{0}</0> to attack and end your turn, or <1>{1}</1> to end it without attacking.",
-    "comments": [
-      "{0} is the Attack button's label, {1} the Pass button's"
-    ],
-    "translation": "<0>{0}</0>을(를) 눌러 기술을 사용하고 차례를 마치거나, <1>{1}</1>을(를) 눌러 기술 없이 차례를 마치세요."
-  },
   "LchprM": {
     "message": "Press <0>{0}</0> to turn back to your side.",
     "comments": [
@@ -7236,6 +7229,20 @@
   "dPBKWL": {
     "message": "To active",
     "translation": "배틀필드로"
+  },
+  "PJBvHV": {
+    "message": "To attack, double-click <0>{0}</0> and press <1>{1}</1>. <2>{2}</2> ends your turn without attacking.",
+    "comments": [
+      "{0} is the Pokémon's name, {1} the Attack button's label, {2} the Pass button's"
+    ],
+    "translation": "기술을 사용하려면 <0>{0}</0>을(를) 더블 클릭하고 <1>{1}</1>을(를) 누르세요. <2>{2}</2>은(는) 기술을 사용하지 않고 차례를 끝냅니다."
+  },
+  "Iah5rZ": {
+    "message": "To attack, tap <0>{0}</0>, <1>{1}</1>, then <2>{2}</2>. <3>{3}</3> ends your turn without attacking.",
+    "comments": [
+      "{0} is the Pokémon's name, {1} the Read button's label, {2} the Attack button's, {3} the Pass button's"
+    ],
+    "translation": "기술을 사용하려면 <0>{0}</0>을(를) 탭하고 <1>{1}</1>, <2>{2}</2> 순서로 누르세요. <3>{3}</3>은(는) 기술을 사용하지 않고 차례를 끝냅니다."
   },
   "9P13ox": {
     "message": "To bench",

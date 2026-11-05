@@ -37,7 +37,14 @@ a raised mat at about 40°, and the CABT viewer a gentle 8° CSS tilt.
    the room below its near edge (2026-10-16; it was centred in the window,
    which left the far side's band of mat and hand looking empty). The fit
    depends on the layout alone, so the table never moves when a pile grows
-   or shrinks.
+   or shrinks. Since 2026-11-05 (PX-047) the far hand is a peek that stays
+   as laid out, flat at the window's top edge, and the mat lies just under
+   it (its margin and a strip of desk, `FAR_HAND_GAP_PX`); the height the
+   window has to spare goes to the near side, where the player's own hand
+   grows toward the mat from the window's edge, at most 1.3 times, its
+   share off the window unchanged -- it never leaves the edge to float. The
+   tilted mat is as wide as the window allows, so a taller window leaves
+   desk between the mat and that hand rather than larger hands.
 3. **The mat** is a cloth playmat under a lamp: a woven texture that
    foreshortens with the tilt, light falling off from just above the
    middle, a rubber rim and the mat's thickness along its near edge. The

@@ -437,6 +437,24 @@
   color-scheme: light;
 }
 
+/* ---- The table's chrome: the app bar and the rail's dock ------------- */
+/* Smoked glass over the desk and the mat, apart from the game, the same
+   in either theme (the glass is dark by Day too); its ink and its states
+   are fixed with it. The app bar (table-shell.css) and the rail's dock
+   (TableRail.css) wear it alike. */
+:root {
+  --chrome-glass: oklch(0.2 0.012 50 / 0.58);
+  --chrome-glass-edge: oklch(1 0 0 / 0.1);
+  --chrome-glass-shadow:
+    0 1px 0 oklch(1 0 0 / 0.08) inset, 0 6px 18px oklch(0 0 0 / 0.28),
+    0 1px 3px oklch(0 0 0 / 0.3);
+  --chrome-glass-blur: blur(12px) saturate(1.1);
+  --chrome-ink: oklch(0.95 0.01 80);
+  --chrome-hover: oklch(1 0 0 / 0.12);
+  --chrome-pressed: oklch(1 0 0 / 0.16);
+  --chrome-hairline: oklch(1 0 0 / 0.14);
+}
+
 /* ---- Board tokens the renderer reads ---------------------------------- */
 :root {
   --ptcgsim-card-radius: 4.8% / 3.4%;

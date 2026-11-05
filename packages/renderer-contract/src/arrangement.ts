@@ -367,7 +367,10 @@ export const arrangementOffsets = (
             zone.contentBounds,
             side,
             count,
-            play.x + play.width / 2
+            play.x + play.width / 2,
+            scene.layout.players.find(
+              (player) => player.playerId === zone.playerId
+            )?.handCardHeight
           )
         : layoutTableRow(zone.contentBounds, side, count);
     items.forEach((item, position) => {

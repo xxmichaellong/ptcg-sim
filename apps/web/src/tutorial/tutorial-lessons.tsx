@@ -956,15 +956,28 @@ const turns: TutorialLesson = {
       done: (world) => happened(world, 'CoinFlipped'),
     },
     {
+      // An attack is declared from the Pokémon's own window, by its name
+      // (ADR-043); the rail keeps Pass.
       id: 'attack',
-      text: () => (
-        <Trans comment="{0} is the Attack button's label, {1} the Pass button's">
-          Press <strong>{controlLabel('attack')}</strong> to attack and end your
-          turn, or <strong>{controlLabel('pass')}</strong> to end it without
-          attacking.
-        </Trans>
-      ),
-      targets: () => [railAction('attackButton'), railAction('passButton')],
+      text: (world) =>
+        world.mode === 'touch' ? (
+          <Trans comment="{0} is the Pokémon's name, {1} the Read button's label, {2} the Attack button's, {3} the Pass button's">
+            To attack, tap <strong>{name('charmander')}</strong>,{' '}
+            <strong>{controlLabel('read')}</strong>, then{' '}
+            <strong>{controlLabel('attack')}</strong>.{' '}
+            <strong>{controlLabel('pass')}</strong> ends your turn without
+            attacking.
+          </Trans>
+        ) : (
+          <Trans comment="{0} is the Pokémon's name, {1} the Attack button's label, {2} the Pass button's">
+            To attack, double-click <strong>{name('charmander')}</strong> and
+            press <strong>{controlLabel('attack')}</strong>.{' '}
+            <strong>{controlLabel('pass')}</strong> ends your turn without
+            attacking.
+          </Trans>
+        ),
+      targets: (world) =>
+        present([activeTopTarget(world, world.you), railAction('passButton')]),
       done: (world) =>
         happened(world, 'AttackDeclared') || happened(world, 'PassDeclared'),
     },

@@ -179,17 +179,17 @@ const layoutFor = (
 
 /**
  * Which rail actions keep their place on a short rail (a phone): what the
- * table is waiting for, then the turn, the coin and undo; the
- * announcements and Flip go into More first.
+ * table is waiting for, then the turn, the coin and undo; Pass and Flip go
+ * into More first. (An attack is declared from the Pokémon's window, or
+ * the palette: it has no button on the rail.)
  */
 export const RAIL_PRIORITY = {
   lead: 0,
   turn: 1,
   coin: 2,
   undo: 3,
-  attack: 4,
-  pass: 5,
-  switchSide: 6,
+  pass: 4,
+  switchSide: 5,
 } as const;
 
 /** The table actions the board itself owns, for a route to place. */

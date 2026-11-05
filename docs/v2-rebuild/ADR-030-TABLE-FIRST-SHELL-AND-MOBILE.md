@@ -65,7 +65,7 @@ actions**, stopping short of the Stadium, which straddles the seam:
 | ---------------------------------- | ---------------------------------------- |
 | No cards yet                       | **Load a deck** (primary), Coin, Flip    |
 | A deck not yet set up              | **Set up** (primary), Coin, Undo, Flip   |
-| Playing                            | Turn, Attack, Pass, Coin, Undo, Flip     |
+| Playing                            | Turn, Pass, Coin, Undo, Flip             |
 | Replay                             | Restart, Back, **Next**, End, Flip, Exit |
 
 The rarer actions sit behind **More**: Set up again, Reset, and in Solo
@@ -77,7 +77,22 @@ and for assistive tech, with the key that does the same. The board owns
 Turn, Coin (which waits on the room's answer), Flip and Mulligan; the
 route orders them among its own (`BoardRailModel.compose`). v1's control ids
 are kept where they still name the same control (`#setupButton`,
-`#p2AttackButton`, `#turnButton`, `#flipCoinButton`, `#flipBoardButton`).
+`#p2PassButton`, `#turnButton`, `#flipCoinButton`, `#flipBoardButton`).
+
+**2026-11-05: Attack leaves the rail; the dock is slimmer, in the app bar's
+glass** (the owner: "we can hide the attack button, it's not that necessary
+after our change"; the dock "feels really cramped between the rest of the
+zones … make it a little slimmer and also give it some more space"; "the
+coloring is a little bit dark"). An attack is declared from the Active
+Pokémon's window by name (ADR-043); one without a name is the palette's
+Attack (`unlisted`, PX-088). The dock wears the app bar's smoked glass and
+light ink (`--chrome-*` in tokens.css, shared by both), lighter on the mat
+than the opaque panel it was, with its keyboard ring inside each button, on
+the glass in every look. Its buttons are 28px for a mouse on a 46px seam
+and 36px under a finger on a 54px one, each a 44px target there; the dock
+(buttons and 2px padding) leaves 7px or more of felt clear above and below
+it (`railButtonPx`, `table-seam.ts`). A full turn's rail is five actions
+and More.
 
 ### 3. The app toolbar
 

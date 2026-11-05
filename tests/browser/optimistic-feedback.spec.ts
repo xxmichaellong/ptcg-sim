@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 
-import { closeSheet, openDeck } from './support/table-shell.js';
+import { closeSheet, declareAttack, openDeck } from './support/table-shell.js';
 
 /**
  * The table answers a player's action before the room does. Every message
@@ -171,10 +171,10 @@ for (const mode of ['flat', 'table'] as const)
         .poll(() => zoneCount(page, 'board', 'local'), instant)
         .toBe(1);
 
-      // The rail's Attack button submits outside the board; it clears the
-      // loose board into the discard all the same.
+      // An Attack from the palette submits outside the board; it clears
+      // the loose board into the discard all the same.
       const discardBefore = await zoneCount(page, 'discard', 'local');
-      await page.locator('#attackButton').click();
+      await declareAttack(page);
       await expect
         .poll(() => zoneCount(page, 'board', 'local'), instant)
         .toBe(0);

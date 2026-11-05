@@ -1,6 +1,10 @@
 import { expect, test, type Page } from '@playwright/test';
 
-import { chooseMoreAction, openDeck } from './support/table-shell.js';
+import {
+  chooseMoreAction,
+  declareAttack,
+  openDeck,
+} from './support/table-shell.js';
 
 /**
  * Every table control answers its press (PX-052): Attack and Pass, which
@@ -82,14 +86,14 @@ test('Attack and Pass answer over the table, and both-sides actions wait for a d
     String(before + 2)
   );
   await chooseMoreAction(page, 'setupBothButton');
-  await expect(page.locator('#attackButton')).toBeVisible();
+  await expect(page.locator('#passButton')).toBeVisible();
 
   // The activity log is closed, so the line over the table is the answer.
   await expect(page.locator('#activityButton')).toHaveAttribute(
     'aria-expanded',
     'false'
   );
-  await page.locator('#attackButton').click();
+  await declareAttack(page);
   await expect(ticker(page).filter({ hasText: /attacked$/u })).toHaveCount(1);
   await page.locator('#passButton').click();
   await expect(ticker(page).filter({ hasText: /passed$/u })).toHaveCount(1);
@@ -146,7 +150,7 @@ test('a control the room refuses says why, without speaking of a card', async ({
   await openSoloTable(page);
   await loadAndSetUp(page);
 
-  await page.locator('#attackButton').click();
+  await declareAttack(page);
   const notice = page.locator('.ptcgsim-ui-toast[data-tone="warning"]');
   await expect(notice).toContainText("Didn't go through");
   await expect(notice).toContainText('The table changed');

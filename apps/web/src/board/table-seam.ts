@@ -1,7 +1,7 @@
 /**
  * How tall the clear band at the table's centre line is, where the rail's
- * buttons sit with room above and below them (TableRail's railButtonPx):
- * 32px buttons for a mouse, 44px targets under a finger.
+ * dock sits with room above and below it (TableRail's railButtonPx): 28px
+ * buttons for a mouse, 36px ones under a finger, each a 44px target.
  */
-export const POINTER_SEAM_BAND_PX = 42;
+export const POINTER_SEAM_BAND_PX = 46;
 export const TOUCH_SEAM_BAND_PX = 54;

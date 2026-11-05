@@ -627,23 +627,14 @@ export const RemoteRoomRoute = ({
             actions.push({ ...setup, primary: true });
           } else {
             if (own.turn) actions.push(own.turn);
-            actions.push(
-              {
-                id: ids.attack,
-                label: t({ message: 'Attack', context: 'declare an attack' }),
-                icon: SwordIcon,
-                priority: RAIL_PRIORITY.attack,
-                onSelect: () => live.submitTable('attack'),
-              },
-              {
-                id: ids.pass,
-                label: t({ message: 'Pass', context: 'end the turn' }),
-                title: t`Pass the turn`,
-                icon: FlagIcon,
-                priority: RAIL_PRIORITY.pass,
-                onSelect: () => live.submitTable('pass'),
-              }
-            );
+            actions.push({
+              id: ids.pass,
+              label: t({ message: 'Pass', context: 'end the turn' }),
+              title: t`Pass the turn`,
+              icon: FlagIcon,
+              priority: RAIL_PRIORITY.pass,
+              onSelect: () => live.submitTable('pass'),
+            });
           }
           if (own.coin) actions.push(own.coin);
           if (stage !== 'empty') {
@@ -661,11 +652,22 @@ export const RemoteRoomRoute = ({
 
           const more: ActionMenuEntry[] = [];
           // Announcing a mulligan is rare enough to live in the palette and
-          // on M alone, not in More.
+          // on M alone, not in More. An attack is declared from the
+          // Pokémon's window, which names it ("attacked with …"); one
+          // declared without a name (a Pokémon whose text the table doesn't
+          // know) is the palette's too.
           const unlisted: ActionMenuEntry[] = [];
           if (stage === 'playing') {
             more.push({ ...setup, label: t`Set up again` });
             if (own.mulligan) unlisted.push(own.mulligan);
+          }
+          if (stage !== 'empty' && stage !== 'loaded') {
+            unlisted.push({
+              id: ids.attack,
+              label: t({ message: 'Attack', context: 'declare an attack' }),
+              icon: SwordIcon,
+              onSelect: () => live.submitTable('attack'),
+            });
           }
           if (stage !== 'empty') {
             more.push({

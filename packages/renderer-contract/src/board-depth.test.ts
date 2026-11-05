@@ -97,7 +97,7 @@ describe('live board depth', () => {
     expect(moved).toBeGreaterThan(0);
   });
 
-  it('brings each flat hand in to meet the tilted mat, and leaves a flat table alone', () => {
+  it("grows the player's own hand toward the tilted mat from the window's edge, keeps the far hand's peek, and leaves a flat table alone", () => {
     const scene = fixture();
     const table = new BoardDepthProjection(scene, preferences);
     const flat = new BoardDepthProjection(scene, {
@@ -105,6 +105,7 @@ describe('live board depth', () => {
       depth: { ...preferences.depth!, mode: 'flat' },
     });
     const centre = scene.viewport.height / 2;
+    const bottom = scene.viewport.height;
     let checked = 0;
     for (const zone of scene.zones.filter((zone) => zone.kind === 'hand')) {
       const cards = scene.cards.filter(
@@ -114,38 +115,71 @@ describe('live board depth', () => {
       checked += 1;
       const strip = zone.bounds;
       const near = strip.y + strip.height / 2 >= centre;
-      const inner = near ? strip.y : strip.y + strip.height;
+      for (const card of cards) {
+        expect(flat.pose(card).bounds).toEqual(card.bounds);
+      }
+      if (!near) {
+        // Across the table the hand peeks in from the top edge as laid
+        // out, and does not grow.
+        for (const card of cards) {
+          expect(table.pose(card).bounds).toEqual(card.bounds);
+        }
+        continue;
+      }
+      const inner = strip.y;
       const edge = projectTablePoint(table.camera, {
         x: strip.x + strip.width / 2,
         y: inner,
         z: 0,
       }).y;
-      const reach = Math.abs(inner - edge) - 6;
+      const reach = inner - edge - 6;
       expect(reach).toBeGreaterThan(10);
-      const poses = cards.map((card) => table.pose(card).bounds);
-      // Its cards reach in to the mat's edge, a hair short of it...
-      const reached = near
-        ? Math.min(...poses.map((pose) => pose.y))
-        : Math.max(...poses.map((pose) => pose.y + pose.height));
-      const laid = near
-        ? Math.min(...cards.map((card) => card.bounds.y))
-        : Math.max(...cards.map((card) => card.bounds.y + card.bounds.height));
-      expect(Math.abs(reached - laid)).toBeGreaterThan(reach * 0.9);
-      cards.forEach((card, index) => {
-        const pose = poses[index]!;
-        // ...grown by the strip's share, still in their strip across.
-        expect(pose.height / card.bounds.height).toBeCloseTo(
-          Math.min(1.4, (strip.height + reach) / strip.height),
+      const grow = Math.min(1.3, (strip.height + reach) / strip.height);
+      cards.forEach((card) => {
+        const pose = table.pose(card).bounds;
+        // Grown by the strip's share, no further than the mat's edge...
+        expect(pose.height / card.bounds.height).toBeCloseTo(grow, 6);
+        expect(pose.y).toBeGreaterThanOrEqual(edge + 5.5);
+        // ...from the window's edge: as much of it runs off as before.
+        expect((pose.y + pose.height - bottom) / pose.height).toBeCloseTo(
+          (card.bounds.y + card.bounds.height - bottom) / card.bounds.height,
           6
         );
         expect(pose.x).toBeGreaterThanOrEqual(strip.x - 0.5);
         expect(pose.x + pose.width).toBeLessThanOrEqual(
           strip.x + strip.width + 0.5
         );
-        expect(flat.pose(card).bounds).toEqual(card.bounds);
       });
     }
-    expect(checked).toBeGreaterThan(0);
+    expect(checked).toBe(2);
+  });
+
+  it('lays the tilted mat just under the far hand, the height to spare going to the near side', () => {
+    const scene = fixture();
+    const table = new BoardDepthProjection(scene, preferences);
+    const centre = scene.viewport.height / 2;
+    const hands = scene.zones.filter((zone) => zone.kind === 'hand');
+    const far = hands.find(
+      (zone) => zone.bounds.y + zone.bounds.height / 2 < centre
+    )!.bounds;
+    const near = hands.find(
+      (zone) => zone.bounds.y + zone.bounds.height / 2 >= centre
+    )!.bounds;
+    const spots = scene.zones.filter((zone) => zone.kind !== 'hand');
+    const project = (y: number) =>
+      projectTablePoint(table.camera, {
+        x: scene.viewport.width / 2,
+        y,
+        z: 0,
+      }).y;
+    const top = project(Math.min(...spots.map((zone) => zone.bounds.y)));
+    const end = project(
+      Math.max(...spots.map((zone) => zone.bounds.y + zone.bounds.height))
+    );
+    // The mat's own margin and a strip of desk under the far hand...
+    expect(top - (far.y + far.height)).toBeCloseTo(26, 0);
+    // ...and the rest of the room between the mat and the near hand.
+    expect(near.y - end).toBeGreaterThan(top - (far.y + far.height));
   });
 
   it("grows a tilted hand about its own middle, the table's centre, though its strip runs from the mat's edge to its pill", () => {

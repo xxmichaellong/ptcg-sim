@@ -316,21 +316,22 @@ export const BOARD_SURFACE_CSS = `
 @media (hover: hover) and (pointer: fine) {
   /* On the table the hand runs off the screen edge: a hovered card rises
      fully into view, above its neighbours (in its own frame, so the
-     opponent's turned hand rises toward the centre). Not while a card just
-     dropped is settling under a pointer that has not moved since, nor a
-     card a finger peeks at on a screen that also has a mouse (its rules
-     below rise it higher). */
+     opponent's turned hand rises toward the centre), by as much of it as
+     ran off (--ptcgsim-hand-hidden: a fifth of the near hand's, most of
+     the far hand's peek). Not while a card just dropped is settling under
+     a pointer that has not moved since, nor a card a finger peeks at on a
+     screen that also has a mouse (its rules below rise it higher). */
   :is(.ptcgsim-board-surface, .ptcgsim-board-lift)[data-geometry='2'][data-dragging='false']:not([data-hover-rest]) .ptcgsim-card[data-in-hand]:not([data-held]):not([data-peek]):enabled:hover {
     z-index: 8500 !important;
   }
   :is(.ptcgsim-board-surface, .ptcgsim-board-lift)[data-geometry='2'][data-dragging='false']:not([data-hover-rest]) .ptcgsim-card[data-in-hand]:not([data-held]):not([data-peek]):enabled:hover > .ptcgsim-card__body {
-    translate: 0 -22%;
+    translate: 0 calc(-100% * (var(--ptcgsim-hand-hidden, 0.2) + 0.02));
     scale: 1.06;
   }
   /* Turned to read upright for the viewer, the far hand rises down toward
      the table's centre instead. */
   :is(.ptcgsim-board-surface, .ptcgsim-board-lift)[data-geometry='2'][data-dragging='false'][data-far-upright]:not([data-hover-rest]) .ptcgsim-card[data-in-hand][data-card-side='opponent']:not([data-held]):not([data-peek]):enabled:hover > .ptcgsim-card__body {
-    translate: 0 22%;
+    translate: 0 calc(100% * (var(--ptcgsim-hand-hidden, 0.2) + 0.02));
   }
   :is(.ptcgsim-board-surface, .ptcgsim-board-lift)[data-dragging='false']:not([data-hover-rest]) .ptcgsim-card:not([data-peek]):enabled:hover > .ptcgsim-card__body {
     scale: var(--ptcgsim-hover-scale, 1.035);

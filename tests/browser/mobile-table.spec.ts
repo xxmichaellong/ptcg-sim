@@ -210,8 +210,10 @@ test.describe('an upright phone', () => {
       { square: [true, true, true], count: false },
     ]);
 
-    // The rail: 44px targets inside the window, clear of the Stadium and
-    // of the log's button; what does not fit waits in More.
+    // The rail: 44px targets inside the window -- a slim dock whose
+    // buttons are 44px wide, their targets 44px tall into the felt round
+    // it -- clear of the Stadium and of the log's button; what does not
+    // fit waits in More.
     const viewport = page.viewportSize()!;
     const placed = await localZones(page);
     const activity = (await page.locator('#activityButton').boundingBox())!;
@@ -221,9 +223,20 @@ test.describe('an upright phone', () => {
     const count = await buttons.count();
     expect(count).toBeGreaterThan(1);
     for (let index = 0; index < count; index += 1) {
-      const box = (await buttons.nth(index).boundingBox())!;
+      const button = buttons.nth(index);
+      const box = (await button.boundingBox())!;
       expect(box.width).toBeGreaterThanOrEqual(43.5);
-      expect(box.height).toBeGreaterThanOrEqual(43.5);
+      const middle = box.y + box.height / 2;
+      const reached = await button.evaluate(
+        (element, ys) =>
+          ys.map((y) => {
+            const rect = element.getBoundingClientRect();
+            const hit = document.elementFromPoint(rect.x + rect.width / 2, y);
+            return hit !== null && element.contains(hit);
+          }),
+        [middle - 21.5, middle + 21.5]
+      );
+      expect(reached).toEqual([true, true]);
       expect(box.x).toBeGreaterThanOrEqual(0);
       expect(box.x + box.width).toBeLessThanOrEqual(viewport.width);
       expect(overlaps(box, placed.stadium!)).toBe(false);
@@ -245,7 +258,8 @@ test.describe('an upright phone', () => {
       .evaluateAll((elements) =>
         elements.map((element) => element.textContent?.trim() ?? '')
       );
-    for (const action of ['Attack', 'Pass the turn']) {
+    // (An attack is declared from the Pokémon's window, PX-088.)
+    for (const action of ['Pass the turn']) {
       expect(
         [...onRail, ...inMore].some((label) => label.startsWith(action)),
         action

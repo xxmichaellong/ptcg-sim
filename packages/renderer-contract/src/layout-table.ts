@@ -50,19 +50,32 @@ export const tableRailWidth = (viewportWidth: number): number =>
   );
 
 /**
- * How much of a near hand's strip the far hand's keeps. The far hand is the
- * one across the table -- usually the opponent's, which a player reads far
- * less than their own -- so its cards show smaller and the room goes to both
- * boards.
+ * The far hand is the one across the table -- usually the opponent's,
+ * which a player reads far less than their own -- so it only peeks in from
+ * the window's top edge: a strip of each card shows, TABLE_FAR_HAND_REVEAL
+ * of it, and a card pointed at (or peeked at by a finger) comes down whole.
+ * Its cards are this much of a near hand's of the same height; the room
+ * the peek saves goes to both boards.
  */
-export const TABLE_FAR_HAND_SCALE = 0.6;
+export const TABLE_FAR_HAND_SCALE = 0.87;
+/** The share of each far hand card its strip shows (TABLE_FAR_HAND_SCALE). */
+export const TABLE_FAR_HAND_REVEAL = 0.55;
+/**
+ * Where the far hand's strip is deeper than its peek (the app bar's corner
+ * on a short window, `minHandStripPx`), its cards grow to keep showing at
+ * most this share -- up to FAR_HAND_CARD_MOST of their half's height, past
+ * which they keep the near hand's share (TABLE_HAND_VISIBLE_SHARE).
+ */
+const FAR_HAND_REVEAL_MOST = 0.62;
+const FAR_HAND_CARD_MOST = 0.4;
 
 /**
  * The near half's default share of the table: the whole percentage that
  * gives both halves card rows of about the same size (the near ones a hair
- * larger) once the far hand's strip is the smaller one.
+ * larger) once the far hand's strip is the smaller one -- a peek since
+ * 2026-11-05 (0.54 before).
  */
-const DEFAULT_LOWER_SHARE = 0.54;
+const DEFAULT_LOWER_SHARE = 0.53;
 /** An even split, where both hands were the same size. */
 const EVEN_SPLIT_SHARE = 0.5;
 const MINIMUM_HALF_SHARE = 0.34;
@@ -114,7 +127,7 @@ interface HalfProportions {
 }
 
 const HALF_PROPORTIONS: HalfProportions = {
-  handStrip: 0.27,
+  handStrip: 0.23,
   margin: 0.045,
   rowGap: 0.025,
   activeShare: 0.54,
@@ -160,6 +173,15 @@ const HAND_PILL_PILE_CLEARANCE_PX = 12;
  */
 const JUDGED_HAND_CORNER_PX = 96;
 const JUDGED_HAND_SLOT_PX = 44;
+/**
+ * The hand strips a mat is judged by (HalfOptions.judged), as they were
+ * before 2026-11-05: a landscape half's near hand this share of its height,
+ * the far hand's JUDGED_FAR_HAND_SCALE of that, a portrait half's this
+ * share of its bench card.
+ */
+const JUDGED_HAND_STRIP = 0.27;
+const JUDGED_FAR_HAND_SCALE = 0.6;
+const JUDGED_PORTRAIT_HAND_STRIP = 0.85;
 
 /**
  * The least a far hand keeps past the app bar: a layout that leaves it less
@@ -194,6 +216,11 @@ interface LocalRegion {
 
 interface HalfGeometry {
   readonly regions: readonly LocalRegion[];
+  /**
+   * How tall its hand's cards are: its strip shows TABLE_HAND_VISIBLE_SHARE
+   * of them, or across the table a peek (`handPeek`).
+   */
+  readonly handCard: number;
   /** The width its hand is judged by when the mat is chosen (JUDGED_HAND_*). */
   readonly handRoom: number;
   /**
@@ -247,8 +274,19 @@ interface HalfOptions {
   readonly lostZonePlace?: LostZonePlace;
   /** How many once-per-game markers sit beside the prizes, 0 to 2. */
   readonly markerCount?: number;
-  /** The hand strip's size against a near hand's: smaller across the table. */
-  readonly handScale?: number;
+  /**
+   * Across the table: the hand peeks in from the window's edge, a strip of
+   * each card (TABLE_FAR_HAND_REVEAL), its cards TABLE_FAR_HAND_SCALE of a
+   * near hand's.
+   */
+  readonly handPeek?: boolean;
+  /**
+   * Laid out to choose its mat by (`bestOf`, `jointMat`): with the hand
+   * strips the mats were judged by before the hands grew smaller and the
+   * far hand began to peek (JUDGED_HAND_STRIP), so every window keeps the
+   * mat the layout probes and the device QA settled for it.
+   */
+  readonly judged?: boolean;
   /**
    * Room kept clear at the hand strip's start (its left in the half's own
    * frame): across the table that is the window's top-right corner, where
@@ -289,6 +327,44 @@ interface HalfOptions {
 
 /** The mat (columns down the sides) or the portrait mat (rows down the middle). */
 type Mat = 'landscape' | 'portrait';
+
+/**
+ * A hand's strip as it would be, from the cards a near hand of this half
+ * would hold (`nearCard` tall): it shows TABLE_HAND_VISIBLE_SHARE of them,
+ * or across the table a peek of cards TABLE_FAR_HAND_SCALE their size.
+ */
+const naturalHandStrip = (nearCard: number, options: HalfOptions): number =>
+  options.handPeek
+    ? options.judged
+      ? nearCard * TABLE_HAND_VISIBLE_SHARE * JUDGED_FAR_HAND_SCALE
+      : nearCard * TABLE_FAR_HAND_SCALE * TABLE_FAR_HAND_REVEAL
+    : nearCard * TABLE_HAND_VISIBLE_SHARE;
+
+/**
+ * How tall a hand's cards are for its strip, `strip` deep in a half
+ * `height` tall whose near hand would hold cards `nearCard` tall. A near
+ * hand's strip shows TABLE_HAND_VISIBLE_SHARE of them. A peek's cards are
+ * TABLE_FAR_HAND_SCALE of a near hand's; a strip made deeper than their
+ * peek (the app bar's corner) has them grow to show at most
+ * FAR_HAND_REVEAL_MOST, as far as FAR_HAND_CARD_MOST of the half allows,
+ * and never show more than a near hand's share.
+ */
+const handCardFor = (
+  strip: number,
+  nearCard: number,
+  height: number,
+  options: HalfOptions
+): number => {
+  const least = strip / TABLE_HAND_VISIBLE_SHARE;
+  if (!options.handPeek) return least;
+  return Math.max(
+    least,
+    Math.min(
+      Math.max(nearCard * TABLE_FAR_HAND_SCALE, strip / FAR_HAND_REVEAL_MOST),
+      height * FAR_HAND_CARD_MOST
+    )
+  );
+};
 
 /**
  * The clear band between a half's cards and the centre line. It doubles as
@@ -745,7 +821,7 @@ const largest = (rooms: readonly LostZoneRoom[]): LostZoneRoom =>
   rooms.reduce((best, room) => (room.pile > best.pile + 0.01 ? room : best));
 
 /** Lay out one half in its own frame, centre line at the top. */
-const layoutHalf = (
+const layoutHalfAs = (
   width: number,
   height: number,
   options: HalfOptions = {}
@@ -757,7 +833,10 @@ const layoutHalf = (
   const gap = Math.max(6, height * proportions.rowGap);
   // Across the table on a short screen the strip is at least as deep as
   // the app bar's corner, so nothing else lies under the bar.
-  const natural = height * proportions.handStrip * (options.handScale ?? 1);
+  const nearCard =
+    (height * (options.judged ? JUDGED_HAND_STRIP : proportions.handStrip)) /
+    TABLE_HAND_VISIBLE_SHARE;
+  const natural = naturalHandStrip(nearCard, options);
   // Never so deep that the board keeps no rows to speak of: on the
   // smallest tables the bar's corner gives way first.
   const roomForStrip = Math.max(
@@ -768,6 +847,7 @@ const layoutHalf = (
     height,
     Math.max(natural, Math.min(options.minHandStripPx ?? 0, roomForStrip))
   );
+  const handCard = handCardFor(handStrip, nearCard, height, options);
   const rows = Math.max(0, height - handStrip - margin - 2 * gap);
   const active = rows * proportions.activeShare;
   const bench = rows - active;
@@ -1011,6 +1091,7 @@ const layoutHalf = (
       0,
       width - judgedEdge - Math.max(judgedEdge, options.handStartReservePx ?? 0)
     ),
+    handCard,
     regions: [
       { kind: 'hand', rect: handRect, countAnchor: 'hand' },
       { kind: 'board', rect: boardRect },
@@ -1043,7 +1124,7 @@ const layoutHalf = (
 const PORTRAIT_PROPORTIONS = {
   active: 1.15,
   pile: 0.9,
-  handStrip: 0.85,
+  handStrip: 0.78,
 } as const;
 
 /** Piles side by side keep this much between them for their count badges. */
@@ -1060,7 +1141,7 @@ const PORTRAIT_PILE_GAP_PX = 12;
  * The rows sit at the player's edge; any height left over widens the clear
  * band at the centre line.
  */
-const layoutHalfPortrait = (
+const layoutHalfPortraitAs = (
   width: number,
   height: number,
   options: HalfOptions = {}
@@ -1072,6 +1153,15 @@ const layoutHalfPortrait = (
   const gap = Math.max(6, Math.min(12, height * 0.02));
   const rowsShare = proportions.active + 1 + proportions.pile;
   const free = Math.max(0, height - margin - 3 * gap);
+  // A near hand's cards, per bench card's height. The rows are sized for a
+  // near hand's strip; across the table the hand only peeks, and the room
+  // that saves widens the clear band at the centre line, where the
+  // Stadium and the rail lie (a portrait mat's band is narrow).
+  const handShare = options.judged
+    ? JUDGED_PORTRAIT_HAND_STRIP
+    : proportions.handStrip;
+  const nearCardShare = handShare / TABLE_HAND_VISIBLE_SHARE;
+  const stripShare = handShare;
   // A portrait hand strip is at least as deep as v1's corner controls side
   // by side, and across the table as the app bar's corner.
   const wantedStrip = Math.max(
@@ -1083,12 +1173,12 @@ const layoutHalfPortrait = (
   const minStrip = Math.min(
     wantedStrip,
     Math.max(
-      (free * proportions.handStrip) / (rowsShare + proportions.handStrip),
+      (free * stripShare) / (rowsShare + stripShare),
       free - (rowsShare * MIN_BOARD_ROW_PX) / proportions.active
     )
   );
-  let bench = free / (rowsShare + proportions.handStrip);
-  if (bench * proportions.handStrip < minStrip) {
+  let bench = free / (rowsShare + stripShare);
+  if (bench * stripShare < minStrip) {
     bench = Math.max(0, free - minStrip) / rowsShare;
   }
   bench = Math.min(
@@ -1098,7 +1188,19 @@ const layoutHalfPortrait = (
   const active = bench * proportions.active;
   const handStrip = Math.min(
     height,
-    Math.max(bench * proportions.handStrip, minStrip)
+    Math.max(
+      bench *
+        (options.judged
+          ? stripShare
+          : naturalHandStrip(nearCardShare, options)),
+      minStrip
+    )
+  );
+  const handCard = handCardFor(
+    handStrip,
+    bench * nearCardShare,
+    height,
+    options
   );
 
   // The pile row: prizes three across and two down at the outer left, the
@@ -1239,6 +1341,7 @@ const layoutHalfPortrait = (
         JUDGED_HAND_SLOT_PX -
         Math.max(JUDGED_HAND_CORNER_PX, options.handStartReservePx ?? 0)
     ),
+    handCard,
     regions: [
       { kind: 'hand', rect: handRect, countAnchor: 'hand' },
       { kind: 'board', rect: boardRect },
@@ -1263,6 +1366,36 @@ const layoutHalfPortrait = (
   };
 };
 
+/**
+ * A half laid out with its hands as they are now -- the near hand smaller
+ * than before 2026-11-05, the far one a peek -- where the taller rows that
+ * leaves make its board larger. On a window too narrow for them (the mat
+ * set by its width, whose prizes and piles widen with the rows) they would
+ * shrink its bench or crowd its pieces: there it keeps the strips it was
+ * judged by (JUDGED_HAND_STRIP), and the hands their former depth.
+ */
+const withSmallerHands =
+  (
+    layout: (
+      width: number,
+      height: number,
+      options?: HalfOptions
+    ) => HalfGeometry
+  ) =>
+  (width: number, height: number, options: HalfOptions = {}): HalfGeometry => {
+    const laidOut = layout(width, height, options);
+    if (options.judged) return laidOut;
+    const before = layout(width, height, { ...options, judged: true });
+    const clear = piecesClear(laidOut, true);
+    if (clear !== piecesClear(before, true)) return clear ? laidOut : before;
+    return benchCardHeightOf(before) > benchCardHeightOf(laidOut) + 0.5
+      ? before
+      : laidOut;
+  };
+
+const layoutHalf = withSmallerHands(layoutHalfAs);
+const layoutHalfPortrait = withSmallerHands(layoutHalfPortraitAs);
+
 /** The bench card a half actually shows: five and a half must fit across. */
 const benchCardHeightOf = (geometry: HalfGeometry): number =>
   Math.min(
@@ -1284,6 +1417,9 @@ const handCrampedIn = (geometry: HalfGeometry): boolean =>
 const handShortIn = (geometry: HalfGeometry): boolean => {
   const hand = geometry.regions.find((region) => region.kind === 'hand');
   if (!hand || hand.rect.height <= 0) return false;
+  // Judged by its strip, as a near hand's cards: a peek's larger cards lie
+  // mostly off the window, and judged by them a far hand would have the
+  // board shrink for cards it barely shows.
   const card =
     (hand.rect.height / TABLE_HAND_VISIBLE_SHARE) * CARD_ASPECT_RATIO;
   return (
@@ -1337,6 +1473,7 @@ const atPlayerEdge = (geometry: HalfGeometry, band: number): HalfGeometry => {
   const lowered = (rect: Rect): Rect => ({ ...rect, y: rect.y + band });
   return {
     handRoom: geometry.handRoom,
+    handCard: geometry.handCard,
     regions: geometry.regions.map((region) => ({
       ...region,
       rect: lowered(region.rect),
@@ -1371,7 +1508,7 @@ const withoutLostZone = (options: HalfOptions): HalfOptions => {
 
 /** A half's own choice of mat, at the frame's full height. */
 const matOf = (width: number, height: number, options: HalfOptions): Mat => {
-  const chosenBy = withoutLostZone(options);
+  const chosenBy: HalfOptions = { ...withoutLostZone(options), judged: true };
   const portrait = layoutHalfPortrait(width, height, chosenBy);
   return bestOf(layoutHalf(width, height, chosenBy), portrait) === portrait
     ? 'portrait'
@@ -1415,10 +1552,13 @@ const piecesClear = (geometry: HalfGeometry, own: boolean): boolean => {
  * neither does, each half keeps its own.
  */
 const jointMat = (near: HalfFrame, far: HalfFrame): Mat | undefined => {
-  const laidOut = [near, far].map(({ width, height, options }) => ({
-    landscape: layoutHalf(width, height, withoutLostZone(options)),
-    portrait: layoutHalfPortrait(width, height, withoutLostZone(options)),
-  }));
+  const laidOut = [near, far].map(({ width, height, options }) => {
+    const judged: HalfOptions = { ...withoutLostZone(options), judged: true };
+    return {
+      landscape: layoutHalf(width, height, judged),
+      portrait: layoutHalfPortrait(width, height, judged),
+    };
+  });
   const [nearOwn, farOwn] = laidOut.map(({ landscape, portrait }) =>
     bestOf(landscape, portrait) === portrait ? 'portrait' : 'landscape'
   );
@@ -1513,7 +1653,7 @@ const layoutSoloHalf = (
     ) + (options.topReservePx ?? 0);
   // Tall, the portrait mat takes the whole height: its rows sit at the
   // player's edge and the rest of the height is the band already.
-  const portrait = layoutHalfPortrait(width, height, {
+  const portraitOptions: HalfOptions = {
     seamBandPx: 2 * soloBand,
     stadiumBeside: true,
     ...(options.markerCount ? { markerCount: options.markerCount } : {}),
@@ -1526,41 +1666,49 @@ const layoutSoloHalf = (
     ...(options.minHandStripPx
       ? { minHandStripPx: options.minHandStripPx }
       : {}),
-  });
-  // Its height is found as without the Lost Zone (`withoutLostZone`).
-  const chosenBy = withoutLostZone(options);
-  const fits = (candidate: number): boolean => {
-    const geometry = layoutHalf(width, candidate, chosenBy);
-    return (
-      BENCH_FIT_CARDS * geometry.cardHeights.bench * CARD_ASPECT_RATIO <=
-      geometry.middle.right - geometry.middle.left
-    );
   };
+  const portrait = layoutHalfPortrait(width, height, portraitOptions);
   const available = Math.max(0, height - soloBand);
-  let fitted = available;
-  if (!fits(available)) {
-    // Taller only ever means bigger cards and a narrower middle.
-    let low = 0;
-    let high = available;
-    for (let step = 0; step < 24; step += 1) {
-      const middle = (low + high) / 2;
-      if (fits(middle)) low = middle;
-      else high = middle;
+  /** The tallest landscape layout whose bench still fits, at the edge. */
+  const landscapeWith = (laidOut: HalfOptions): HalfGeometry => {
+    // Its height is found as without the Lost Zone (`withoutLostZone`).
+    const chosenBy = withoutLostZone(laidOut);
+    const fits = (candidate: number): boolean => {
+      const geometry = layoutHalf(width, candidate, chosenBy);
+      return (
+        BENCH_FIT_CARDS * geometry.cardHeights.bench * CARD_ASPECT_RATIO <=
+        geometry.middle.right - geometry.middle.left
+      );
+    };
+    let fitted = available;
+    if (!fits(available)) {
+      // Taller only ever means bigger cards and a narrower middle.
+      let low = 0;
+      let high = available;
+      for (let step = 0; step < 24; step += 1) {
+        const middle = (low + high) / 2;
+        if (fits(middle)) low = middle;
+        else high = middle;
+      }
+      fitted = Math.max(low, height * EVEN_SPLIT_SHARE);
     }
-    fitted = Math.max(low, height * EVEN_SPLIT_SHARE);
-  }
-  const landscape = atPlayerEdge(
-    layoutHalf(width, fitted, options),
-    height - fitted
+    return atPlayerEdge(layoutHalf(width, fitted, laidOut), height - fitted);
+  };
+  const landscape = landscapeWith(options);
+  // Chosen as judged (`judged`) and without the Lost Zone.
+  const judged = (laidOut: HalfOptions): HalfOptions => ({
+    ...withoutLostZone(laidOut),
+    judged: true,
+  });
+  const judgedPortrait = layoutHalfPortrait(
+    width,
+    height,
+    judged(portraitOptions)
   );
-  // Chosen as without the Lost Zone (`withoutLostZone`).
-  const chooser = options.lostZoneBeside
-    ? atPlayerEdge(
-        layoutHalf(width, fitted, withoutLostZone(options)),
-        height - fitted
-      )
+  return bestOf(landscapeWith(judged(options)), judgedPortrait) ===
+    judgedPortrait
+    ? portrait
     : landscape;
-  return bestOf(chooser, portrait) === portrait ? portrait : landscape;
 };
 
 /** A rect in a half's own frame placed in the window. */
@@ -1963,7 +2111,7 @@ export const createTableLayoutSnapshot = (
   // Across the table, the hand is the smaller one, and ends short of the
   // app bar in the window's top-right corner.
   const farReserve: HalfOptions = {
-    ...(hidden === undefined ? { handScale: TABLE_FAR_HAND_SCALE } : {}),
+    ...(hidden === undefined ? { handPeek: true } : {}),
     ...(appBarPx
       ? {
           handStartReservePx: barReserve.handStartReservePx,
@@ -1980,7 +2128,7 @@ export const createTableLayoutSnapshot = (
           { ...frames.lower, options: sharedOptions },
           {
             ...frames.upper,
-            options: { ...sharedOptions, handScale: TABLE_FAR_HAND_SCALE },
+            options: { ...sharedOptions, handPeek: true },
           }
         )
       : undefined;
@@ -2048,6 +2196,7 @@ export const createTableLayoutSnapshot = (
         frameBounds,
         regions,
         ...(hidden === template.physicalSide ? { hidden: true as const } : {}),
+        handCardHeight: geometry.handCard,
         extras: {
           ...(geometry.extras.markers
             ? {
@@ -2173,7 +2322,7 @@ export const createTableLayoutSnapshot = (
     // laid out with the bar once, at the scale found.
     const farWithoutBar: HalfOptions = {
       ...halfOptions,
-      ...(farOptions.handScale ? { handScale: farOptions.handScale } : {}),
+      ...(farOptions.handPeek ? { handPeek: true } : {}),
     };
     // `farScale`: the far half refitted on its own, portrait mat too. The
     // search lays the halves out with their Lost Zone: where a row made
@@ -2600,9 +2749,16 @@ export const layoutTableHand = (
   content: Rect,
   side: BoardSide,
   count: number,
-  centre?: number
+  centre?: number,
+  /** Its cards' height (BoardPlayerLayout.handCardHeight); else a near hand's. */
+  cardHeightPx?: number
 ): Rect[] => {
-  const cardHeight = content.height / TABLE_HAND_VISIBLE_SHARE;
+  const cardHeight =
+    cardHeightPx !== undefined &&
+    Number.isFinite(cardHeightPx) &&
+    cardHeightPx >= content.height
+      ? cardHeightPx
+      : content.height / TABLE_HAND_VISIBLE_SHARE;
   const cardWidth = cardHeight * CARD_ASPECT_RATIO;
   const y =
     side === 'local' ? content.y : content.y + content.height - cardHeight;

@@ -40,13 +40,14 @@ const ids = (entries: readonly ActionMenuEntry[]): (string | undefined)[] =>
 
 describe("the rail's room in the seam", () => {
   it('keeps clear room above and below its buttons where the seam has it', () => {
-    // A mouse's seam (40px): 32px buttons, 4px clear either side.
-    expect(railButtonPx(40)).toBe(32);
-    // A finger's (52px): the 44px targets, with the same room.
-    expect(railButtonPx(52)).toBe(44);
-    // A tight seam gives up the room before the buttons go below 28px.
-    expect(railButtonPx(32)).toBe(28);
-    expect(railButtonPx(24)).toBe(24);
+    // A mouse's seam (44px): 28px buttons, 8px clear either side -- the
+    // dock's padding and a strip of felt.
+    expect(railButtonPx(44)).toBe(28);
+    // A finger's (52px): 36px buttons, each a 44px target (TableRail.css).
+    expect(railButtonPx(52)).toBe(36);
+    // A tight seam gives up the room before the buttons go below 24px.
+    expect(railButtonPx(32)).toBe(24);
+    expect(railButtonPx(20)).toBe(20);
   });
 });
 
@@ -182,7 +183,8 @@ describe("the stage's lead action", () => {
 });
 
 describe('placing the rail', () => {
-  const playing = [1, 2, 3, 4, 5, 6].map((n) => action(`a${String(n)}`, n));
+  // A full turn's: Turn, Pass, Coin, Undo and Switch side.
+  const playing = [1, 2, 3, 4, 5].map((n) => action(`a${String(n)}`, n));
   const rarer: ActionMenuEntry[] = ['x', 'y', 'z'].map((id) => ({
     id,
     label: id,
@@ -205,31 +207,36 @@ describe('placing the rail', () => {
   it('goes past the Stadium when every action fits there', () => {
     const markup = render({ width: 1400 });
     expect(markup).toContain('data-align="end"');
-    // Six actions and More.
-    expect(shown(markup)).toBe(7);
+    // Five actions and More.
+    expect(shown(markup)).toBe(6);
   });
 
+  // On this 36px seam the dock's buttons are 24px, 2px apart in 2px of
+  // padding: N buttons need 26N + 2px. Past the Stadium the seam starts at
+  // 708px, before it it runs from 8px to 492px (eighteen buttons).
+  const pastStadiumFor = (buttons: number): number => 708 + 26 * buttons + 10;
+
   it('stays before the Stadium where past it would hide actions that fit before it', () => {
-    // Room past the Stadium for five buttons, before it for eleven.
-    const markup = render({ end: 920 });
+    // Room past the Stadium for five buttons, before it for eighteen.
+    const markup = render({ end: pastStadiumFor(5) });
     expect(markup).toContain('data-align="start"');
-    expect(shown(markup)).toBe(7);
+    expect(shown(markup)).toBe(6);
   });
 
   it('keeps its side as the game moves on, whatever the stage shows', () => {
-    // Room past the Stadium for five buttons, before it for eleven: set-up's
-    // one action would fit past it, but a turn's would not.
+    // Room past the Stadium for five buttons, before it for eighteen:
+    // set-up's one action would fit past it, but a turn's would not.
     const setUp = render({
-      end: 920,
+      end: pastStadiumFor(5),
       actions: [action('setup')],
       more: [{ id: 'reset', label: 'reset', onSelect: vi.fn() }],
     });
     expect(setUp).toContain('data-align="start"');
-    expect(render({ end: 920 })).toContain('data-align="start"');
+    expect(render({ end: pastStadiumFor(5) })).toContain('data-align="start"');
   });
 
   it('starts before the Stadium past what sits at the seam’s left', () => {
-    const markup = render({ end: 920, start: 120 });
+    const markup = render({ end: pastStadiumFor(5), start: 120 });
     expect(markup).toContain('data-align="start"');
     expect(markup).toMatch(/left:\s*120px/u);
   });
@@ -246,14 +253,17 @@ describe('placing the rail', () => {
   });
 
   it('goes past the Stadium in a room whose table can’t be turned, where its turn fits there', () => {
-    // Room past the Stadium for five buttons in the dock: Turn, Attack,
-    // Pass, Undo and More, the coin on the table; Solo's Switch side would
-    // be a sixth.
-    const turn = { end: 888, coinOnTable: true, actions: playing.slice(0, 4) };
+    // Room past the Stadium for four buttons in the dock: Turn, Pass, Undo
+    // and More, the coin on the table; Solo's Switch side would be a fifth.
+    const turn = {
+      end: pastStadiumFor(4),
+      coinOnTable: true,
+      actions: playing.slice(0, 3),
+    };
     expect(render(turn)).toContain('data-align="start"');
     const room = render({ ...turn, canSwitchSide: false });
     expect(room).toContain('data-align="end"');
-    expect(shown(room)).toBe(5);
+    expect(shown(room)).toBe(4);
   });
 
   it('crosses the Stadium at most once while the table slides, where more of it shows, and chooses again once there', async () => {
@@ -285,17 +295,17 @@ describe('placing the rail', () => {
     // Set-up's buttons all show past the Stadium mid-slide: they stay.
     await draw(setUp);
     expect(align()).toBe('end');
-    await draw({ ...setUp, end: 920, holdSide: true });
+    await draw({ ...setUp, end: pastStadiumFor(5), holdSide: true });
     expect(align()).toBe('end');
     await draw({});
     expect(align()).toBe('end');
     // A turn's would go behind More there: it moves, once.
-    await draw({ end: 920, holdSide: true });
+    await draw({ end: pastStadiumFor(5), holdSide: true });
     expect(align()).toBe('start');
-    expect(shown(rail().outerHTML)).toBe(7);
+    expect(shown(rail().outerHTML)).toBe(6);
     await draw({ holdSide: true });
     expect(align()).toBe('start');
-    await draw({ end: 920, holdSide: true });
+    await draw({ end: pastStadiumFor(5), holdSide: true });
     expect(align()).toBe('start');
     // Settled, it chooses again.
     await draw({});

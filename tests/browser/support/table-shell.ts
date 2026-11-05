@@ -186,6 +186,21 @@ export const chooseMoreAction = async (
   await page.locator(`#${id}`).click();
 };
 
+/**
+ * The turn's Attack, declared without naming one: no longer on the rail
+ * (attacks are declared from a Pokémon's window, by name), so from the
+ * command palette.
+ */
+export const declareAttack = async (page: Page): Promise<void> => {
+  await page.keyboard.press('Backquote');
+  await page.keyboard.type('attack');
+  await expect(
+    page.locator('[data-command-palette] [role="option"][aria-selected="true"]')
+  ).toContainText(/^Attack/u);
+  await page.keyboard.press('Enter');
+  await expect(page.locator('[data-command-palette]')).toHaveCount(0);
+};
+
 /** Puts away the empty table's welcome card, if it is showing. */
 export const dismissWelcome = async (page: Page): Promise<void> => {
   const dismiss = page.locator('.table-welcome__dismiss');

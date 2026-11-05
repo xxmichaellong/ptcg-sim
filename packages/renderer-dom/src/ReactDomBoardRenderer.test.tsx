@@ -3082,7 +3082,7 @@ describe('selecting several cards (ADR-042)', () => {
     pointer(surface, 'pointerdown', 385, 600, { shiftKey: true });
     pointer(surface, 'pointermove', 5, 150, { shiftKey: true });
     const sweep = host.querySelector<HTMLElement>('.ptcgsim-board-sweep')!;
-    expect(parseFloat(sweep.style.top)).toBeCloseTo(388.24, 1);
+    expect(parseFloat(sweep.style.top)).toBeCloseTo(396.68, 1);
     pointer(surface, 'pointerup', 5, 150, { shiftKey: true });
     // Shift keeps the selection: no press on the felt, and it adds.
     expect(intents).toEqual([

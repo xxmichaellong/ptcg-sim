@@ -11,6 +11,7 @@ import {
   chooseMoreAction,
   closeDeck,
   closeSheet,
+  declareAttack,
   openActivity,
   openAppMenu,
   openDeck,
@@ -437,8 +438,11 @@ test('the Solo table owns one authority and keeps it across the menu and sheets'
     liveRevisionBeforeReplayImport ?? ''
   );
 
-  // With a game under way the rail carries the turn's announcements.
-  await page.locator('#attackButton').click();
+  // With a game under way the turn's announcements are made: an attack
+  // from the palette (a Pokémon's window names one), and the rail's Pass.
+  await expect(page.locator('#boardButtonContainer #passButton')).toBeVisible();
+  await expect(page.locator('#attackButton')).toHaveCount(0);
+  await declareAttack(page);
   await expect(
     page.locator('#chatbox [data-event-type="AttackDeclared"]')
   ).toHaveText('Blue attacked');

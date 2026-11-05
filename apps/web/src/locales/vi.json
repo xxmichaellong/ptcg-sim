@@ -5382,13 +5382,6 @@
     ],
     "translation": "Nhấn {keys} để xem <0>phím tắt</0>."
   },
-  "joGQW4": {
-    "message": "Press <0>{0}</0> to attack and end your turn, or <1>{1}</1> to end it without attacking.",
-    "comments": [
-      "{0} is the Attack button's label, {1} the Pass button's"
-    ],
-    "translation": "Nhấn <0>{0}</0> để tấn công và kết thúc lượt, hoặc <1>{1}</1> để kết thúc lượt mà không tấn công."
-  },
   "LchprM": {
     "message": "Press <0>{0}</0> to turn back to your side.",
     "comments": [
@@ -7236,6 +7229,20 @@
   "dPBKWL": {
     "message": "To active",
     "translation": "Vào vị trí Active"
+  },
+  "PJBvHV": {
+    "message": "To attack, double-click <0>{0}</0> and press <1>{1}</1>. <2>{2}</2> ends your turn without attacking.",
+    "comments": [
+      "{0} is the Pokémon's name, {1} the Attack button's label, {2} the Pass button's"
+    ],
+    "translation": "Để tấn công, nhấp đúp <0>{0}</0> và bấm <1>{1}</1>. <2>{2}</2> kết thúc lượt của bạn mà không tấn công."
+  },
+  "Iah5rZ": {
+    "message": "To attack, tap <0>{0}</0>, <1>{1}</1>, then <2>{2}</2>. <3>{3}</3> ends your turn without attacking.",
+    "comments": [
+      "{0} is the Pokémon's name, {1} the Read button's label, {2} the Attack button's, {3} the Pass button's"
+    ],
+    "translation": "Để tấn công, chạm vào <0>{0}</0>, <1>{1}</1>, rồi <2>{2}</2>. <3>{3}</3> kết thúc lượt của bạn mà không tấn công."
   },
   "9P13ox": {
     "message": "To bench",

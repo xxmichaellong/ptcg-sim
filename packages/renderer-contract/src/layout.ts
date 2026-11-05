@@ -291,6 +291,13 @@ export interface BoardPlayerLayout {
    * optional pieces (the Lost Zone and the markers).
    */
   readonly extras?: BoardPlayerExtrasLayout;
+  /**
+   * Geometry v2 only: how tall this player's hand cards are. Its strip
+   * (the hand region) shows only part of each, the rest running off the
+   * window's edge until a card is pointed at: most of a near hand's, a
+   * peek of the hand across the table (`layoutTableHand`).
+   */
+  readonly handCardHeight?: number;
 }
 
 export interface BoardPlayerExtrasLayout {

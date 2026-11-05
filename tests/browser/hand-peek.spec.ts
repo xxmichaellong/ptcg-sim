@@ -295,14 +295,14 @@ test.describe('an upright phone', () => {
 test.describe('a phone on its side', () => {
   test.use({ ...phone, viewport: { width: 844, height: 390 } });
 
-  // Its wide hand shows half of each of twenty cards: thirty crowd it.
+  // Its wide hand shows half of each of thirty cards: forty crowd it.
   test('peeks at, plays and taps cards of a big hand', async ({ page }) => {
     test.setTimeout(120_000);
     const errors: string[] = [];
     page.on('pageerror', (error) => errors.push(error.message));
     await openSoloTable(page, 'auto');
-    await dealBigHand(page, 30);
-    await peekAndPlay(page, 30);
+    await dealBigHand(page, 40);
+    await peekAndPlay(page, 40);
     expect(errors).toEqual([]);
   });
 });

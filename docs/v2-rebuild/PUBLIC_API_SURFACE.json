@@ -2750,6 +2750,10 @@
               "kind": "value"
             },
             {
+              "name": "TABLE_FAR_HAND_REVEAL",
+              "kind": "value"
+            },
+            {
               "name": "TABLE_FAR_HAND_SCALE",
               "kind": "value"
             },

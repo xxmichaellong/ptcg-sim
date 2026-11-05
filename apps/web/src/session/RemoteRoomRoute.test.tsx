@@ -712,16 +712,11 @@ describe('RemoteRoomRoute', () => {
         name: 'multiplayer, playing',
         roomMode: 'multiplayer',
         snapshot: view,
-        rail: [
-          'turnButton',
-          'p2AttackButton',
-          'p2PassButton',
-          'flipCoinButton',
-          'p2UndoButton',
-        ],
+        // An attack is declared from a Pokémon's window, or the palette.
+        rail: ['turnButton', 'p2PassButton', 'flipCoinButton', 'p2UndoButton'],
         primary: undefined,
         more: ['p2SetupButton', 'p2ResetButton'],
-        unlisted: ['mulliganButton'],
+        unlisted: ['mulliganButton', 'p2AttackButton'],
       },
       {
         name: 'Solo, playing',
@@ -730,7 +725,6 @@ describe('RemoteRoomRoute', () => {
         switchSide: true,
         rail: [
           'turnButton',
-          'attackButton',
           'passButton',
           'flipCoinButton',
           'undoButton',
@@ -743,7 +737,7 @@ describe('RemoteRoomRoute', () => {
           'setupBothButton',
           'resetBothButton',
         ],
-        unlisted: ['mulliganButton'],
+        unlisted: ['mulliganButton', 'attackButton'],
       },
       {
         name: 'Solo, no deck yet',
@@ -1379,7 +1373,8 @@ describe('RemoteRoomRoute', () => {
 
     await click('#exitReplay');
     expect(runtime.replay.getSnapshot().mode).toBe('live');
-    expect(railIds()).toContain('attackButton');
+    expect(railIds()).toContain('passButton');
+    expect(unlistedIds()).toContain('attackButton');
 
     await act(async () => root.unmount());
     runtime.dispose();

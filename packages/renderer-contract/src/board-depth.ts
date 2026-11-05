@@ -77,8 +77,20 @@ const FLAT_TURN_DISTANCE = 3;
 
 /** The felt left showing between a tilted mat's near edge and a hand. */
 const HAND_EDGE_GAP_PX = 6;
-/** The most a hand grows to meet a tilted mat. */
-const HAND_GROWTH_MAXIMUM = 1.4;
+/**
+ * The most the player's own hand grows to meet a tilted mat; it stays at
+ * the window's edge, so past that the desk shows between them.
+ */
+const HAND_GROWTH_MAXIMUM = 1.3;
+/**
+ * Across the table the hand only peeks in from the window's top edge
+ * (TABLE_FAR_HAND_REVEAL) and does not grow: the tilted mat comes up to
+ * lie this far under it where the window has height to spare -- the
+ * mat's own margin round its spots (renderer-dom's MAT_MARGIN_PX, 16px)
+ * and a strip of desk -- and the rest of that height goes to the near
+ * side, where the player's own hand grows into it.
+ */
+const FAR_HAND_GAP_PX = 16 + 10;
 /** A tilted hand keeps at least this share of its flat fan. */
 const MIN_HAND_FAN = 0.5;
 
@@ -440,22 +452,62 @@ export class BoardDepthProjection {
         .map((zone) => zone.bounds.width)
     );
     const fullDeck = tablePileHeight(60, deckWidth, this.settings.strength);
-    this.camera = createTableCamera({
-      ...scene.viewport,
-      mode: this.settings.mode,
-      tiltDegrees: this.settings.tilt,
-      maximumElevation: fullDeck,
-      ...(fitBounds
-        ? { fitBounds, centreBand: { top: fitTop, bottom: fitBottom } }
-        : {}),
-      margin: this.enabled ? 8 : 0,
-      ...(this.settings.parallax &&
-      !preferences.reducedMotion &&
-      preferences.animationSpeed !== 0 &&
-      preferences.viewpoint
-        ? { viewpoint: preferences.viewpoint }
-        : {}),
-    });
+    const cameraFor = (shift: number): TableCamera =>
+      createTableCamera({
+        ...scene.viewport,
+        mode: this.settings.mode,
+        tiltDegrees: this.settings.tilt,
+        maximumElevation: fullDeck,
+        ...(fitBounds
+          ? {
+              fitBounds,
+              centreBand: { top: fitTop - shift, bottom: fitBottom - shift },
+            }
+          : {}),
+        margin: this.enabled ? 8 : 0,
+        ...(this.settings.parallax &&
+        !preferences.reducedMotion &&
+        preferences.animationSpeed !== 0 &&
+        preferences.viewpoint
+          ? { viewpoint: preferences.viewpoint }
+          : {}),
+      });
+    this.camera = cameraFor(0);
+    // Both hands shown: the far one is a peek held at the window's edge,
+    // and on a window wider than tall, short of height, the mat comes up
+    // to lie just under it (FAR_HAND_GAP_PX). An upright window has height
+    // to spare; its mat stays centred between the hands.
+    const peeking =
+      handStrips.some(
+        (zone) => zone.bounds.y + zone.bounds.height / 2 >= centre
+      ) &&
+      handStrips.some(
+        (zone) => zone.bounds.y + zone.bounds.height / 2 < centre
+      );
+    if (
+      this.enabled &&
+      this.settings.mode === 'table' &&
+      peeking &&
+      fitBounds &&
+      scene.viewport.width > scene.viewport.height
+    ) {
+      const spots = scene.zones.filter(
+        (zone) =>
+          zone.kind !== 'hand' &&
+          zone.bounds.width > 0 &&
+          zone.bounds.height > 0
+      );
+      if (spots.length > 0) {
+        const top = Math.min(...spots.map((zone) => zone.bounds.y));
+        const matTop = projectTablePoint(this.camera, {
+          x: scene.viewport.width / 2,
+          y: top,
+          z: 0,
+        }).y;
+        const spare = matTop - (fitTop + FAR_HAND_GAP_PX);
+        if (spare > 0.5) this.camera = cameraFor(spare);
+      }
+    }
     // A held card rises about half its width, enough to read as picked up.
     // With reduced motion it is still raised, only without moving there.
     this.liftRatio =
@@ -471,6 +523,9 @@ export class BoardDepthProjection {
         const strip = zone.bounds;
         if (strip.height <= 0) continue;
         const near = strip.y + strip.height / 2 >= centre;
+        // Across the table, beside the player's own, the hand peeks and
+        // stays as laid out.
+        if (!near && peeking) continue;
         const inner = near ? strip.y : strip.y + strip.height;
         const cards = scene.cards.filter((card) => card.parentId === zone.id);
         // The fan's own middle: a hand that fits keeps to the table's
@@ -513,7 +568,11 @@ export class BoardDepthProjection {
             ? Math.max(1, (2 * room - 2 * spread * MIN_HAND_FAN) / widest)
             : Infinity
         );
-        const reached = near ? inner - reach : inner + reach;
+        // It grows from the window's edge, its share off the window the
+        // same as before: grown less than the reach asks (its cap, its
+        // fan), it ends short of the mat rather than leaving the edge.
+        const rise = strip.height * (grow - 1);
+        const reached = near ? inner - rise : inner + rise;
         // A hand that already fills its strip draws in a little, so its
         // outer cards, grown, still end where the strip does (across the
         // table, short of the app bar).

@@ -301,6 +301,11 @@ export interface BoardScenePlayerFrame {
   readonly bounds: Rect;
   /** Hidden by the viewer: none of this half's zones or cards are in the scene. */
   readonly hidden?: true;
+  /**
+   * How tall its hand's cards are (BoardPlayerLayout.handCardHeight): its
+   * strip shows only part of each.
+   */
+  readonly handCardHeight?: number;
 }
 
 export interface BoardSceneResizeHandle {

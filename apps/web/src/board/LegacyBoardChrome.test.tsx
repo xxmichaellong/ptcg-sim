@@ -28,6 +28,7 @@ import {
   type TableHandCount,
 } from './LegacyBoardChrome.js';
 import { oncePerGameTooltip } from './OncePerGameTile.js';
+import { railButtonPx } from './rail/TableRail.js';
 import { tableCoinSpots } from './table-coin.js';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
@@ -354,8 +355,9 @@ describe('LegacyBoardChrome', () => {
     const strip = host.querySelector<HTMLElement>('[data-table-rail]')!;
     expect(px(strip.style.top)).toBeCloseTo(anchor.y, 3);
     expect(px(strip.style.height)).toBeCloseTo(anchor.height, 3);
+    // Its buttons as tall as the seam leaves them, room clear round them.
     expect(strip.style.getPropertyValue('--rail-height')).toBe(
-      `${anchor.height}px`
+      `${railButtonPx(anchor.height)}px`
     );
     const actions = host.querySelector<HTMLElement>('#boardButtonContainer')!;
     expect(actions.getAttribute('role')).toBe('toolbar');

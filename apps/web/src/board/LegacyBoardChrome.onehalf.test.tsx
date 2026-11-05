@@ -67,7 +67,6 @@ const railWith = async (
         rail={{
           actions: [
             'turnButton',
-            'attackButton',
             'passButton',
             'flipCoinButton',
             'undoButton',

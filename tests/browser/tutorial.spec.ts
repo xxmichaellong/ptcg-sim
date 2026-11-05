@@ -312,7 +312,9 @@ test('walks every lesson with a mouse, each step done by the table', async ({
   await atStep(page, 'turns:coin');
   await page.locator('[data-table-coin="local"] button').first().click();
   await atStep(page, 'turns:attack');
-  await page.locator('#boardButtonContainer #attackButton').click();
+  // The attack step lights the Active (its window holds its attacks) and
+  // Pass; Pass ends the turn too.
+  await page.locator('#boardButtonContainer #passButton').click();
 
   // 8. Both sides: the table turned round, their turn, back again.
   await nextLesson(page, 'both-sides:flip');

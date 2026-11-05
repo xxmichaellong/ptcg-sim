@@ -12,6 +12,7 @@ import {
   APP_BAR_INSET_PX,
   DEFAULT_TABLE_VERTICAL_LAYOUT,
   TABLE_COIN_MIN_PX,
+  TABLE_FAR_HAND_REVEAL,
   TABLE_FAR_HAND_SCALE,
   TABLE_LAYOUT_GEOMETRY_VERSION,
   TABLE_SPLIT,
@@ -755,7 +756,7 @@ describe('table layout (geometry v2)', () => {
     }
   });
 
-  it('gives the far hand the smaller strip, and both halves cards of one size', () => {
+  it('has the far hand peek in, and gives both halves cards of one size', () => {
     for (const [width, height, shellMode] of [
       [1440, 900, 'fullscreen'],
       [1440, 900, 'sidebar'],
@@ -767,9 +768,20 @@ describe('table layout (geometry v2)', () => {
       );
       const strip = (side: 'local' | 'opponent') =>
         region(snapshot, side, 'hand').physicalDeclaredBounds.height;
+      const card = (side: 'local' | 'opponent') =>
+        snapshot.players.find((player) => player.side === side)!
+          .handCardHeight!;
       const label = `${width}x${height} ${shellMode}`;
-      expect(strip('opponent'), label).toBeLessThan(
-        strip('local') * (TABLE_FAR_HAND_SCALE + 0.05)
+      // The near hand shows most of each card; the far one a peek, of
+      // cards a little smaller than the near hand's.
+      expect(strip('local') / card('local'), label).toBeCloseTo(0.8, 6);
+      expect(strip('opponent') / card('opponent'), label).toBeGreaterThan(
+        TABLE_FAR_HAND_REVEAL - 0.01
+      );
+      expect(strip('opponent') / card('opponent'), label).toBeLessThan(0.63);
+      expect(card('opponent'), label).toBeLessThan(card('local'));
+      expect(card('opponent'), label).toBeGreaterThan(
+        card('local') * TABLE_FAR_HAND_SCALE * 0.8
       );
       const bench = (side: 'local' | 'opponent') =>
         region(snapshot, side, 'bench').physicalDeclaredBounds.height;
@@ -792,6 +804,52 @@ describe('table layout (geometry v2)', () => {
     ).toBeGreaterThan(
       region(even, 'local', 'bench').physicalDeclaredBounds.height
     );
+  });
+
+  it("lays the far hand's cards out as a peek off the window's top edge, the near hand's mostly in view", () => {
+    const view = createRendererSpikeView();
+    for (const [width, height] of [
+      [1440, 900],
+      [1280, 720],
+      [390, 844],
+    ] as const) {
+      const snapshot = createTableLayoutSnapshot(
+        stateAt(width, height, {
+          shellMode: 'fullscreen',
+          appBarPx: { width: 202, height: 42 },
+        })
+      );
+      const scene = createBoardScene(view, snapshot);
+      const at = `${width}x${height}`;
+      for (const side of ['local', 'opponent'] as const) {
+        const strip = region(snapshot, side, 'hand').physicalDeclaredBounds;
+        const tall = snapshot.players.find(
+          (player) => player.side === side
+        )!.handCardHeight!;
+        const cards = scene.cards.filter(
+          (card) =>
+            card.parentId ===
+            scene.zones.find(
+              (zone) => zone.kind === 'hand' && zone.side === side
+            )!.id
+        );
+        expect(cards.length, at).toBeGreaterThan(0);
+        for (const card of cards) {
+          expect(card.bounds.height, at).toBeCloseTo(tall, 6);
+          if (side === 'local') {
+            // From the strip's top, a fifth off the bottom edge.
+            expect(card.bounds.y, at).toBeCloseTo(strip.y, 6);
+          } else {
+            // Ending with the strip, most of it off the top edge.
+            expect(card.bounds.y + card.bounds.height, at).toBeCloseTo(
+              strip.y + strip.height,
+              6
+            );
+            expect(-card.bounds.y / tall, at).toBeGreaterThan(0.37);
+          }
+        }
+      }
+    }
   });
 
   it('keeps the Stadium clear of both halves on a split table', () => {
@@ -1369,9 +1427,9 @@ describe('table layout (geometry v2)', () => {
 
   it('makes the cards readable at common desktop sizes', () => {
     for (const [width, height, minimum] of [
-      [1440, 900, { active: 150, bench: 130, hand: 150 }],
-      [1920, 1080, { active: 180, bench: 155, hand: 180 }],
-      [1280, 720, { active: 120, bench: 100, hand: 120 }],
+      [1440, 900, { active: 150, bench: 130, hand: 135 }],
+      [1920, 1080, { active: 180, bench: 155, hand: 160 }],
+      [1280, 720, { active: 120, bench: 100, hand: 105 }],
     ] as const) {
       const snapshot = createTableLayoutSnapshot(stateAt(width, height));
       const active = region(snapshot, 'local', 'active').physicalDeclaredBounds;

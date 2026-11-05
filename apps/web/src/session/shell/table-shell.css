@@ -146,15 +146,12 @@
   gap: 4px;
   box-sizing: border-box;
   padding: 2px;
-  border: 1px solid oklch(1 0 0 / 0.1);
+  border: 1px solid var(--chrome-glass-edge);
   border-radius: calc(var(--radius-control) + 3px);
-  background: oklch(0.2 0.012 50 / 0.58);
-  box-shadow:
-    0 1px 0 oklch(1 0 0 / 0.08) inset,
-    0 6px 18px oklch(0 0 0 / 0.28),
-    0 1px 3px oklch(0 0 0 / 0.3);
-  -webkit-backdrop-filter: blur(12px) saturate(1.1);
-  backdrop-filter: blur(12px) saturate(1.1);
+  background: var(--chrome-glass);
+  box-shadow: var(--chrome-glass-shadow);
+  -webkit-backdrop-filter: var(--chrome-glass-blur);
+  backdrop-filter: var(--chrome-glass-blur);
   pointer-events: auto;
   /* Holds the mode's light on a phone held upright. */
   position: relative;

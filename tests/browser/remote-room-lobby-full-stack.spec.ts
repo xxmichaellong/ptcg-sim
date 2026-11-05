@@ -14,6 +14,7 @@ import {
   chooseMenuItem,
   closeDeck,
   closeSheet,
+  declareAttack,
   openActivity,
   openDeck,
   openPlayOnline,
@@ -447,10 +448,11 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     await expect(playerTwo.page.locator('#p2MessageInput')).toHaveValue('');
 
     // Red's deck is loaded, so the rail asks for Set up first; then the
-    // turn's actions are there.
-    await expect(playerTwo.page.locator('#p2AttackButton')).toHaveCount(0);
+    // turn's actions are there (an attack from the palette, PX-088).
+    await expect(playerTwo.page.locator('#p2PassButton')).toHaveCount(0);
     await playerTwo.page.locator('#p2SetupButton').click();
-    await playerTwo.page.locator('#p2AttackButton').click();
+    await expect(playerTwo.page.locator('#p2PassButton')).toBeVisible();
+    await declareAttack(playerTwo.page);
     for (const page of [creator.page, playerTwo.page, spectator.page]) {
       await expect(
         page.locator('#p2Chatbox').getByText('Red attacked', { exact: true })

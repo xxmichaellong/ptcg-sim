@@ -689,6 +689,7 @@ const CardNode = memo(
     pose,
     asideX = 0,
     asideY = 0,
+    surfaceHeight,
   }: {
     /** The page's language; only compared, so a change repaints the words. */
     readonly locale?: string;
@@ -737,6 +738,11 @@ const CardNode = memo(
     /** Moved aside on the flat table, making room for a card held near it. */
     readonly asideX?: number;
     readonly asideY?: number;
+    /**
+     * The surface's height: a hand card runs off its top or bottom edge,
+     * and pointed at rises by as much of itself as runs off.
+     */
+    readonly surfaceHeight?: number;
   }) {
     const imageRef = useRef<HTMLImageElement>(null);
     const renderKey = card.renderKey ?? '';
@@ -775,6 +781,22 @@ const CardNode = memo(
       );
       return `inset(${local.map((inset) => `${String(inset)}px`).join(' ')})`;
     })();
+    // How much of a hand card runs off the surface's edge -- a near hand's
+    // fifth, most of a far hand's peek -- which it rises by when pointed at.
+    const inHand = card.role === 'zone' && card.parentId.endsWith(':hand');
+    const drawn = camera && pose ? pose.bounds : bounds;
+    const handHidden =
+      inHand && surfaceHeight !== undefined && drawn.height > 0
+        ? Math.max(
+            0,
+            Math.min(
+              0.95,
+              (card.side === 'local'
+                ? drawn.y + drawn.height - surfaceHeight
+                : -drawn.y) / drawn.height
+            )
+          )
+        : undefined;
     // Selection, targets and drop targets are rings drawn with box-shadow on
     // the face, never with a border, so the art keeps its full size.
     const ring = targetable
@@ -849,11 +871,7 @@ const CardNode = memo(
         data-ring={ring}
         data-select-order={order}
         data-held={drag ? 'drag' : settle ? 'settle' : undefined}
-        data-in-hand={
-          card.role === 'zone' && card.parentId.endsWith(':hand')
-            ? 'true'
-            : undefined
-        }
+        data-in-hand={inHand ? 'true' : undefined}
         aria-label={
           order === undefined
             ? name
@@ -904,6 +922,9 @@ const CardNode = memo(
               : {}),
             '--ptcgsim-shadow-x': String(shadowX),
             '--ptcgsim-shadow-y': String(shadowY),
+            ...(handHidden === undefined
+              ? {}
+              : { '--ptcgsim-hand-hidden': handHidden.toFixed(3) }),
           } as CSSProperties
         }
         disabled={!card.interactive}
@@ -1050,7 +1071,8 @@ const CardNode = memo(
       before.settle === after.settle &&
       before.emitIntent === after.emitIntent &&
       before.consumeSuppressedClick === after.consumeSuppressedClick &&
-      before.registerElement === after.registerElement
+      before.registerElement === after.registerElement &&
+      before.surfaceHeight === after.surfaceHeight
     );
   }
 );
@@ -3074,6 +3096,7 @@ export const BoardSurface = ({
               emitIntent={adapters.emitIntent}
               consumeSuppressedClick={consumeSuppressedClick}
               registerElement={registerElement}
+              surfaceHeight={scene.viewport.height}
               {...(depth
                 ? {
                     camera: depth.camera,

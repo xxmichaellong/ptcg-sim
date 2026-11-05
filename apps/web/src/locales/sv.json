@@ -5382,13 +5382,6 @@
     ],
     "translation": "Tryck på {keys} för <0>kortkommandon</0>."
   },
-  "joGQW4": {
-    "message": "Press <0>{0}</0> to attack and end your turn, or <1>{1}</1> to end it without attacking.",
-    "comments": [
-      "{0} is the Attack button's label, {1} the Pass button's"
-    ],
-    "translation": "Tryck på <0>{0}</0> för att attackera och avsluta din tur, eller på <1>{1}</1> för att avsluta den utan att attackera."
-  },
   "LchprM": {
     "message": "Press <0>{0}</0> to turn back to your side.",
     "comments": [
@@ -7236,6 +7229,20 @@
   "dPBKWL": {
     "message": "To active",
     "translation": "Till aktiv"
+  },
+  "PJBvHV": {
+    "message": "To attack, double-click <0>{0}</0> and press <1>{1}</1>. <2>{2}</2> ends your turn without attacking.",
+    "comments": [
+      "{0} is the Pokémon's name, {1} the Attack button's label, {2} the Pass button's"
+    ],
+    "translation": "För att attackera, dubbelklicka på <0>{0}</0> och tryck på <1>{1}</1>. <2>{2}</2> avslutar din tur utan att attackera."
+  },
+  "Iah5rZ": {
+    "message": "To attack, tap <0>{0}</0>, <1>{1}</1>, then <2>{2}</2>. <3>{3}</3> ends your turn without attacking.",
+    "comments": [
+      "{0} is the Pokémon's name, {1} the Read button's label, {2} the Attack button's, {3} the Pass button's"
+    ],
+    "translation": "För att attackera, tryck på <0>{0}</0>, <1>{1}</1> och sedan <2>{2}</2>. <3>{3}</3> avslutar din tur utan att attackera."
   },
   "9P13ox": {
     "message": "To bench",

@@ -5382,13 +5382,6 @@
     ],
     "translation": "Pressione {keys} para ver os <0>atalhos</0>."
   },
-  "joGQW4": {
-    "message": "Press <0>{0}</0> to attack and end your turn, or <1>{1}</1> to end it without attacking.",
-    "comments": [
-      "{0} is the Attack button's label, {1} the Pass button's"
-    ],
-    "translation": "Pressione <0>{0}</0> para atacar e encerrar seu turno, ou <1>{1}</1> para encerrá-lo sem atacar."
-  },
   "LchprM": {
     "message": "Press <0>{0}</0> to turn back to your side.",
     "comments": [
@@ -7236,6 +7229,20 @@
   "dPBKWL": {
     "message": "To active",
     "translation": "Para o Ativo"
+  },
+  "PJBvHV": {
+    "message": "To attack, double-click <0>{0}</0> and press <1>{1}</1>. <2>{2}</2> ends your turn without attacking.",
+    "comments": [
+      "{0} is the Pokémon's name, {1} the Attack button's label, {2} the Pass button's"
+    ],
+    "translation": "Para atacar, clique duas vezes em <0>{0}</0> e pressione <1>{1}</1>. <2>{2}</2> termina seu turno sem atacar."
+  },
+  "Iah5rZ": {
+    "message": "To attack, tap <0>{0}</0>, <1>{1}</1>, then <2>{2}</2>. <3>{3}</3> ends your turn without attacking.",
+    "comments": [
+      "{0} is the Pokémon's name, {1} the Read button's label, {2} the Attack button's, {3} the Pass button's"
+    ],
+    "translation": "Para atacar, toque em <0>{0}</0>, <1>{1}</1> e depois em <2>{2}</2>. <3>{3}</3> termina seu turno sem atacar."
   },
   "9P13ox": {
     "message": "To bench",
