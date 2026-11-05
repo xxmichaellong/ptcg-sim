@@ -165,6 +165,15 @@ export interface BoardLayoutState {
    */
   readonly farCardsUpright?: boolean;
   /**
+   * Geometry v2 only: the table is drawn tilted (ADR-031). On a window wider
+   * than tall with both halves shown, the board is projected into the band
+   * between the hands, which lie flat at the window's edges: so the board
+   * is laid out over the whole of each half, and each hand's strip just
+   * outside the window, where the projection takes it back to its edge
+   * (BoardDepthProjection). Its strip and cards keep their size.
+   */
+  readonly tiltedTable?: boolean;
+  /**
    * Geometry v2 only: the least height of the clear band at the centre line,
    * where the table controls sit. A touch device asks for room for 44px
    * targets; without it the band follows the table's size.
@@ -363,6 +372,12 @@ export interface BoardLayoutSnapshot {
   readonly hideLostZone?: boolean;
   /** Carried from the layout state: the far player's cards face the viewer. */
   readonly farCardsUpright?: boolean;
+  /**
+   * The table was laid out tilted (BoardLayoutState.tiltedTable, on a window
+   * wider than tall with both halves shown): its hands' strips lie past the
+   * window's edges, for the projection to draw back there.
+   */
+  readonly tiltedTable?: boolean;
 }
 
 export interface BoardPlayStackCardHitRegion {

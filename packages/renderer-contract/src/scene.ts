@@ -291,6 +291,7 @@ export const createBoardSceneLayout = (
     boardControlsAnchor: { ...snapshot.shared.boardControlsAnchor },
   },
   ...(snapshot.farCardsUpright ? { farCardsUpright: true as const } : {}),
+  ...(snapshot.tiltedTable ? { tiltedTable: true as const } : {}),
 });
 
 /**

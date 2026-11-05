@@ -22,7 +22,7 @@ import {
   DEFAULT_BOARD_PREFERENCES,
   DEFAULT_BOARD_PRESENTATION,
 } from './defaults.js';
-import { BoardDragController } from './drag.js';
+import { BoardDragController, zoneDropTargetAt } from './drag.js';
 import type { BoardIntent, BoardScene, CardSceneNode } from './model.js';
 
 const fixture = () => {
@@ -854,5 +854,148 @@ describe('physical pose timing', () => {
     motion.set('card', target, 100, 180);
     motion.sampleAll(181);
     expect(motion.active).toBe(false);
+  });
+});
+
+describe('a board laid out tilted (tiltedTable)', () => {
+  const sceneAt = (width: number, height: number, tiltedTable: boolean) => {
+    const view = createRendererSpikeView();
+    return createBoardScene(
+      view,
+      createTableLayoutSnapshot({
+        viewport: { width, height, devicePixelRatio: 1 },
+        playerIds: [view.playerOrder[0]!, view.playerOrder[1]!],
+        bottomPlayerId: view.playerOrder[0]!,
+        shellMode: 'fullscreen',
+        geometryVersion: 2,
+        vertical: DEFAULT_TABLE_VERTICAL_LAYOUT,
+        seamBandPx: 46,
+        appBarPx: { width: 334, height: 42 },
+        ...(tiltedTable ? { tiltedTable: true } : {}),
+      })
+    );
+  };
+  const hands = (scene: BoardScene, height: number) => {
+    const all = scene.zones.filter((zone) => zone.kind === 'hand');
+    return {
+      near: all.find((zone) => zone.bounds.y > height / 2)!,
+      far: all.find((zone) => zone.bounds.y < height / 2)!,
+    };
+  };
+
+  it('draws each hand back at its edge, as large as laid out, and the board in the band between them, larger', () => {
+    for (const [width, height] of [
+      [1440, 900],
+      [1280, 720],
+      [1920, 1080],
+      [1024, 768],
+    ] as const) {
+      const scene = sceneAt(width, height, true);
+      const depth = new BoardDepthProjection(scene, preferences);
+      const { near, far } = hands(scene, height);
+      const nearDrawn = depth.handBounds(near);
+      const farDrawn = depth.handBounds(far);
+      expect(nearDrawn.y + nearDrawn.height).toBeCloseTo(height, 6);
+      expect(farDrawn.y).toBeCloseTo(0, 6);
+      // Its cards keep their size and run off the window's edge as before.
+      for (const card of scene.cards.filter((c) => c.parentId === near.id)) {
+        const pose = depth.pose(card);
+        expect(pose.bounds.height).toBeCloseTo(card.bounds.height, 6);
+        expect(pose.bounds.y).toBeCloseTo(nearDrawn.y, 0);
+        expect(pose.bounds.y + pose.bounds.height).toBeGreaterThan(height);
+      }
+      // The board fills the band: its spots end the mat's margin and a
+      // strip of desk short of either hand, at most.
+      const spots = scene.zones.filter(
+        (zone) =>
+          zone.kind !== 'hand' &&
+          zone.bounds.width > 0 &&
+          zone.bounds.height > 0
+      );
+      const projected = spots.flatMap((zone) =>
+        tablePoseQuad(depth.camera, {
+          bounds: zone.bounds,
+          turns: 0,
+          elevation: 0,
+          thickness: 0,
+          plane: 1,
+        })
+      );
+      const top = Math.min(...projected.map((point) => point.y));
+      const bottom = Math.max(...projected.map((point) => point.y));
+      const left = Math.min(...projected.map((point) => point.x));
+      const right = Math.max(...projected.map((point) => point.x));
+      expect(top).toBeGreaterThanOrEqual(farDrawn.y + farDrawn.height + 25.5);
+      expect(bottom).toBeLessThanOrEqual(nearDrawn.y - 23.5);
+      expect(left).toBeGreaterThan(8);
+      expect(right).toBeLessThan(width - 8);
+      // As tall as the band, or as wide as the window, whichever is less.
+      const band = nearDrawn.y - 24 - (farDrawn.y + farDrawn.height + 26);
+      expect(Math.abs(bottom - top - band) < 2 || left < 8 + 16 + 2).toBe(true);
+      // Its Active larger than the board laid out with the hands inside.
+      const before = sceneAt(width, height, false);
+      const beforeDepth = new BoardDepthProjection(before, preferences);
+      const activeHeight = (s: BoardScene, d: BoardDepthProjection) => {
+        const active = s.zones
+          .filter((zone) => zone.kind === 'active')
+          .sort((a, b) => b.bounds.y - a.bounds.y)[0]!;
+        const quad = tablePoseQuad(d.camera, {
+          bounds: active.bounds,
+          turns: 0,
+          elevation: 0,
+          thickness: 0,
+          plane: 1,
+        });
+        return (
+          Math.max(...quad.map((point) => point.y)) -
+          Math.min(...quad.map((point) => point.y))
+        );
+      };
+      expect(activeHeight(scene, depth)).toBeGreaterThan(
+        activeHeight(before, beforeDepth) * 1.1
+      );
+    }
+  });
+
+  it('takes a point on a drawn hand to that hand, and one on the board to the board', () => {
+    const [width, height] = [1440, 900];
+    const scene = sceneAt(width, height, true);
+    const depth = new BoardDepthProjection(scene, preferences);
+    const { near, far } = hands(scene, height);
+    for (const hand of [near, far]) {
+      const drawn = depth.handBounds(hand);
+      const on = depth.boardPoint({
+        x: drawn.x + drawn.width / 2,
+        y: drawn.y + drawn.height / 2,
+      });
+      expect(zoneDropTargetAt(scene, on.x, on.y)).toBe(hand.id);
+      // Its count is drawn where the hand is.
+      const count = scene.counts.find((node) => node.zoneId === hand.id);
+      if (count) {
+        const at = depth.point(count.anchor, 0, true);
+        expect(at.y).toBeGreaterThanOrEqual(-1);
+        expect(at.y).toBeLessThanOrEqual(height + 1);
+      }
+    }
+    // The near bench's foot, where the board was laid out under the hand's
+    // strip before, is the bench.
+    const bench = scene.zones
+      .filter((zone) => zone.kind === 'bench')
+      .sort((a, b) => b.bounds.y - a.bounds.y)[0]!;
+    const foot = projectTablePoint(depth.camera, {
+      x: bench.bounds.x + bench.bounds.width / 2,
+      y: bench.bounds.y + bench.bounds.height - 4,
+      z: 0,
+    });
+    const back = depth.boardPoint(foot);
+    expect(zoneDropTargetAt(scene, back.x, back.y)).toBe(bench.id);
+  });
+
+  it('leaves a board laid out with the hands inside as it was', () => {
+    const scene = sceneAt(1440, 900, false);
+    const depth = new BoardDepthProjection(scene, preferences);
+    const { near } = hands(scene, 900);
+    expect(depth.handBounds(near)).toEqual(near.bounds);
+    expect(depth.point({ x: 10, y: 850 }, 0, true)).toEqual({ x: 10, y: 850 });
   });
 });

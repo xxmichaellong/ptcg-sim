@@ -192,3 +192,49 @@ describe('pile height', () => {
     expect(tablePileHeight(NaN, 100)).toBe(0);
   });
 });
+
+describe('table camera: a band to fill', () => {
+  it('draws the surface as large as the band and the width allow, its middle at the band middle', () => {
+    for (const fitBounds of [
+      // Taller than the band allows at the window's width.
+      { x: 0, y: 24, width: 1440, height: 852 },
+      // Wider: the window's width decides.
+      { x: -16, y: 300, width: 1472, height: 300 },
+    ]) {
+      const band = { top: 84, bottom: 766 };
+      const camera = createTableCamera({
+        width: 1440,
+        height: 900,
+        mode: 'table',
+        tiltDegrees: 22,
+        maximumElevation: 40,
+        margin: 8,
+        fitBounds,
+        fitBand: band,
+      });
+      const corners = [
+        { x: fitBounds.x, y: fitBounds.y },
+        { x: fitBounds.x + fitBounds.width, y: fitBounds.y },
+        { x: fitBounds.x, y: fitBounds.y + fitBounds.height },
+        {
+          x: fitBounds.x + fitBounds.width,
+          y: fitBounds.y + fitBounds.height,
+        },
+      ].map((point) => projectTablePoint(camera, { ...point, z: 0 }));
+      const top = Math.min(...corners.map((point) => point.y));
+      const bottom = Math.max(...corners.map((point) => point.y));
+      const left = Math.min(...corners.map((point) => point.x));
+      const right = Math.max(...corners.map((point) => point.x));
+      expect(top).toBeGreaterThanOrEqual(band.top - 0.5);
+      expect(bottom).toBeLessThanOrEqual(band.bottom + 0.5);
+      expect((top + bottom) / 2).toBeCloseTo((band.top + band.bottom) / 2, 0);
+      expect(left).toBeGreaterThanOrEqual(0);
+      expect(right).toBeLessThanOrEqual(1440);
+      // One of the two is filled: the band, or the width (where the
+      // corners raised by a standing deck take the margin).
+      expect(
+        Math.abs(bottom - top - (band.bottom - band.top)) < 1 || left < 20
+      ).toBe(true);
+    }
+  });
+});

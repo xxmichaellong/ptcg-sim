@@ -146,7 +146,8 @@ const layoutFor = (
   boardView: BoardViewSettings,
   sidePanel: number,
   seamBandPx: number | undefined,
-  appBarPx: BoardLayoutState['appBarPx']
+  appBarPx: BoardLayoutState['appBarPx'],
+  tiltedTable: boolean
 ): BoardLayoutState => {
   const firstPlayerId = view.playerOrder[0];
   const secondPlayerId = view.playerOrder[1];
@@ -174,6 +175,8 @@ const layoutFor = (
       ? { oncePerGameMarkers: oncePerGameMarkerCount(boardView) }
       : {}),
     ...(boardView.opponentCardsUpright ? { farCardsUpright: true } : {}),
+    // Tilted, the board is laid out to fill the band between the hands.
+    ...(tiltedTable ? { tiltedTable: true } : {}),
   };
 };
 
@@ -501,6 +504,9 @@ export const RemoteSessionBoard = ({
     sortedHandPlayerIds,
   };
   preferencesRef.current = preferences;
+  // The table drawn tilted lays its board out to fill the band between the
+  // hands (BoardLayoutState.tiltedTable).
+  const tilted = preferences.depth?.mode === 'table';
   onIntentRef.current = onIntent;
   onSubmissionRef.current = onSubmission;
   onPerspectiveChangeRef.current = onPerspectiveChange;
@@ -786,7 +792,8 @@ export const RemoteSessionBoard = ({
           boardViewRef.current,
           sidePanelRef.current(),
           seamBandRef.current,
-          appBarRef.current
+          appBarRef.current,
+          preferencesRef.current.depth?.mode === 'table'
         );
         // Back from the tutorial with the table turned: drawn turned from
         // its first scene. Turned after mount, the table would spin round
@@ -987,6 +994,7 @@ export const RemoteSessionBoard = ({
       ...(appBarPx ? { appBarPx } : {}),
       oncePerGameMarkers: markerCount,
       farCardsUpright: boardView.opponentCardsUpright,
+      tiltedTable: tilted,
     });
   }, [
     boardView.split,
@@ -996,6 +1004,7 @@ export const RemoteSessionBoard = ({
     markerCount,
     seamBandPx,
     appBarPx,
+    tilted,
   ]);
 
   const overlayActions = useMemo<LegacyBoardOverlayActions>(
@@ -1602,6 +1611,8 @@ export const RemoteSessionBoard = ({
 
   // Each hand's count, where the table shows it: the chrome draws it as a
   // pill with that hand's Sort.
+  // Tilted, a hand laid out past the window's edge has its count where the
+  // hand is drawn (the projection's flat point).
   const handCounts = useMemo(() => {
     const scene = boardState?.scene;
     if (!scene) return undefined;
@@ -1610,9 +1621,21 @@ export const RemoteSessionBoard = ({
       const playerId = scene.zones.find(
         (zone) => zone.id === node.zoneId
       )?.playerId;
-      return playerId ? [{ node, playerId }] : [];
+      if (!playerId) return [];
+      const anchor = depthProjection
+        ? depthProjection.point(node.anchor, 0, true)
+        : node.anchor;
+      return [
+        {
+          node:
+            anchor.x === node.anchor.x && anchor.y === node.anchor.y
+              ? node
+              : { ...node, anchor },
+          playerId,
+        },
+      ];
     });
-  }, [boardState?.scene]);
+  }, [boardState?.scene, depthProjection]);
   // At a live Solo table the far hand's pill covers it (an eye): the hand
   // of the seat not played from, at the top.
   const farHandPlayerId =

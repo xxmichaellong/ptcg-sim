@@ -2330,3 +2330,92 @@ describe('table layout (geometry v2)', () => {
     );
   });
 });
+
+describe('table layout: tilted (tiltedTable)', () => {
+  const tilted = (width: number, height: number, extra = {}) =>
+    createTableLayoutSnapshot(
+      stateAt(width, height, {
+        shellMode: 'fullscreen',
+        seamBandPx: 46,
+        appBarPx: { width: 334, height: 42 },
+        tiltedTable: true,
+        ...extra,
+      })
+    );
+  const flat = (width: number, height: number, extra = {}) =>
+    createTableLayoutSnapshot(
+      stateAt(width, height, {
+        shellMode: 'fullscreen',
+        seamBandPx: 46,
+        appBarPx: { width: 334, height: 42 },
+        ...extra,
+      })
+    );
+
+  it("lays the board over each half whole and each hand past the window's edge, as large as it was", () => {
+    for (const [width, height] of [
+      [1440, 900],
+      [1280, 720],
+      [1920, 1080],
+      [1024, 768],
+    ] as const) {
+      const laid = tilted(width, height);
+      const before = flat(width, height);
+      expect(laid.tiltedTable).toBe(true);
+      const window = { x: 0, y: 0, width, height };
+      for (const side of ['local', 'opponent'] as const) {
+        const hand = region(laid, side, 'hand').physicalDeclaredBounds;
+        const was = region(before, side, 'hand').physicalDeclaredBounds;
+        // Past its edge by more than a drop reaches past a zone (56px).
+        if (side === 'local') expect(hand.y).toBeGreaterThan(height + 56);
+        else expect(hand.y + hand.height).toBeLessThan(-56);
+        // Its strip and cards keep their size.
+        expect(hand.height).toBeCloseTo(was.height, 6);
+        const player = laid.players.find((frame) => frame.side === side)!;
+        const wasPlayer = before.players.find((frame) => frame.side === side)!;
+        expect(player.handCardHeight).toBeCloseTo(wasPlayer.handCardHeight!, 6);
+        // The board fills the half, inside the window with room for the
+        // mat's margin, and its cards are larger.
+        for (const zone of player.regions) {
+          if (zone.kind === 'hand') continue;
+          const box = zone.physicalDeclaredBounds;
+          if (box.width <= 0 || box.height <= 0) continue;
+          expect(inside(box, window), `${width}x${height} ${zone.kind}`).toBe(
+            true
+          );
+          expect(box.y).toBeGreaterThanOrEqual(16);
+          expect(box.y + box.height).toBeLessThanOrEqual(height - 16);
+        }
+        expect(
+          region(laid, side, 'active').physicalDeclaredBounds.height
+        ).toBeGreaterThan(
+          region(before, side, 'active').physicalDeclaredBounds.height
+        );
+        // The same mat: the prizes still a column down the side.
+        const prizes = region(laid, side, 'prizes').physicalDeclaredBounds;
+        expect(prizes.height).toBeGreaterThan(prizes.width);
+      }
+      // Nothing laid out over anything else.
+      const boxes = laid.players.flatMap((player) =>
+        player.regions
+          .filter((zone) => zone.kind !== 'hand' && zone.kind !== 'board')
+          .map((zone) => zone.physicalDeclaredBounds)
+      );
+      for (const [index, box] of boxes.entries())
+        for (const other of boxes.slice(index + 1))
+          expect(overlaps(box, other)).toBe(false);
+    }
+  });
+
+  it('leaves an upright window and a half shown alone as they were', () => {
+    for (const [width, height, extra] of [
+      [900, 1440, {}],
+      [390, 844, {}],
+      [1440, 900, { hiddenPhysicalSide: 'upper' as const }],
+    ] as const) {
+      const laid = tilted(width, height, extra);
+      expect(laid.tiltedTable).toBeUndefined();
+      expect(laid.players).toEqual(flat(width, height, extra).players);
+    }
+  });
+});

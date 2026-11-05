@@ -204,6 +204,18 @@ const MIN_HAND_TRADE_BENCH_PX = 40;
 const MIN_BOARD_ROW_PX = 12;
 /** The least clear space between a pile and the screen edge. */
 const PILE_EDGE_MARGIN_PX = 12;
+/**
+ * Tilted (`handsOutside`), how far short of the player's edge the board's
+ * rows and piles end: room for the mat's own margin round its spots
+ * (renderer-dom's MAT_MARGIN_PX, 16px) inside the window, and a hair.
+ */
+const TILTED_EDGE_PX = 24;
+/**
+ * Tilted, how far past the frame's edge a hand's strip lies: further than
+ * a drop reaches past a zone (dropReachFor, at most 56px), so nothing
+ * dropped on the board's own edge ever lands in the hand.
+ */
+const HANDS_OUTSIDE_GAP_PX = 96;
 
 const ZERO_EDGES: BoxEdgesPx = { top: 0, right: 0, bottom: 0, left: 0 };
 
@@ -293,6 +305,16 @@ interface HalfOptions {
    * the app bar sits.
    */
   readonly handStartReservePx?: number;
+  /**
+   * The table is tilted (BoardLayoutState.tiltedTable): the board is laid
+   * out over the whole half, short of the player's edge by
+   * TILTED_EDGE_PX, and the hand's strip lies just outside the frame
+   * (HANDS_OUTSIDE_GAP_PX past its edge), its strip and cards their usual
+   * size. The projection draws the hand back at the window's edge and the
+   * board in the band between the hands. Not for the mats a half is judged
+   * by (`judged`), so the mat chosen never changes.
+   */
+  readonly handsOutside?: boolean;
   /** The least depth of the hand strip: across the table, the bar's corner. */
   readonly minHandStripPx?: number;
   /**
@@ -848,12 +870,17 @@ const layoutHalfAs = (
     Math.max(natural, Math.min(options.minHandStripPx ?? 0, roomForStrip))
   );
   const handCard = handCardFor(handStrip, nearCard, height, options);
-  const rows = Math.max(0, height - handStrip - margin - 2 * gap);
+  // Tilted, the board takes the whole half and the hand lies past its edge.
+  const outside = options.handsOutside === true && options.judged !== true;
+  const rows = Math.max(
+    0,
+    height - (outside ? TILTED_EDGE_PX : handStrip) - margin - 2 * gap
+  );
   const active = rows * proportions.activeShare;
   const bench = rows - active;
   const activeTop = margin;
   const benchTop = activeTop + active + gap;
-  const handTop = height - handStrip;
+  const handTop = outside ? height + HANDS_OUTSIDE_GAP_PX : height - handStrip;
 
   // Prizes: 2 x 3 grid down the outer left, spanning both card rows.
   const prizeGap = Math.max(4, gap * 0.5);
@@ -873,7 +900,10 @@ const layoutHalfAs = (
     0,
     Math.min(
       bench,
-      (height - margin - Math.max(PILE_EDGE_MARGIN_PX, margin / 2) - 2 * gap) /
+      (height -
+        margin -
+        Math.max(outside ? TILTED_EDGE_PX : PILE_EDGE_MARGIN_PX, margin / 2) -
+        2 * gap) /
         3
     )
   );
@@ -1069,11 +1099,12 @@ const layoutHalfAs = (
   // fit (layoutTableHand), so the strip need not be.
   const lostZoneRect = lostZone ?? columnAt(2);
   const handStart = Math.max(side, options.handStartReservePx ?? 0);
-  const handEnd = handEndFor(width, handTop, [
-    deck,
-    discard,
-    ...(lostZone ? [] : [lostZoneRect]),
-  ]);
+  // Tilted, the piles are drawn in the band above the hand, never beside it.
+  const handEnd = handEndFor(
+    width,
+    handTop,
+    outside ? [] : [deck, discard, ...(lostZone ? [] : [lostZoneRect])]
+  );
   const handRect: Rect = {
     x: handStart,
     y: handTop,
@@ -2033,6 +2064,7 @@ export const createTableLayoutSnapshot = (
     appBarPx,
     sidePanelReveal,
     oncePerGameMarkers,
+    tiltedTable,
     ...semanticState
   } = state;
   if (
@@ -2132,9 +2164,17 @@ export const createTableLayoutSnapshot = (
           }
         )
       : undefined;
-  const halfOptions: HalfOptions = mat
-    ? { ...sharedOptions, mat }
-    : sharedOptions;
+  // Tilted on a window wider than tall with both halves shown, the board
+  // takes each half whole and the hands lie past its edges (`handsOutside`).
+  const tilted =
+    tiltedTable === true &&
+    hidden === undefined &&
+    state.viewport.width > state.viewport.height;
+  const halfOptions: HalfOptions = {
+    ...sharedOptions,
+    ...(mat ? { mat } : {}),
+    ...(tilted ? { handsOutside: true } : {}),
+  };
   const buildPlayer = (
     template: BoardPlayerLayout,
     frameBounds: Rect,
@@ -2665,6 +2705,7 @@ export const createTableLayoutSnapshot = (
     ...(state.hideEmptyLostZone ? { hideEmptyLostZone: true as const } : {}),
     ...(state.hideLostZone ? { hideLostZone: true as const } : {}),
     ...(state.farCardsUpright ? { farCardsUpright: true as const } : {}),
+    ...(tilted ? { tiltedTable: true as const } : {}),
   };
 };
 

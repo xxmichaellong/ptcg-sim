@@ -562,7 +562,11 @@ const ZoneNode = memo(function ZoneNode({
       role={zone.interactive ? 'button' : undefined}
       tabIndex={zone.interactive ? 0 : undefined}
       style={{
-        ...absoluteRect(zone.bounds, zone.zIndex),
+        // A hand laid out past the window's edge (tilted) is drawn back there.
+        ...absoluteRect(
+          depth && zone.kind === 'hand' ? depth.handBounds(zone) : zone.bounds,
+          zone.zIndex
+        ),
         ...(depth &&
         zone.kind !== 'hand' &&
         zone.kind !== 'inspection' &&

@@ -42,9 +42,26 @@ a raised mat at about 40°, and the CABT viewer a gentle 8° CSS tilt.
    it (its margin and a strip of desk, `FAR_HAND_GAP_PX`); the height the
    window has to spare goes to the near side, where the player's own hand
    grows toward the mat from the window's edge, at most 1.3 times, its
-   share off the window unchanged -- it never leaves the edge to float. The
-   tilted mat is as wide as the window allows, so a taller window leaves
-   desk between the mat and that hand rather than larger hands.
+   share off the window unchanged -- it never leaves the edge to float.
+   Since 2026-11-05 later (the owner: "the board should just be bigger and
+   take up that space") the board, not the hand, takes that height. On a
+   window wider than tall with both halves shown, the layout is told the
+   table is tilted (`tiltedTable`): the board is laid out over each half
+   whole (its rows and piles 24px short of the player's edge, room for the
+   mat's margin), and each hand's strip just outside the window, 96px past
+   its edge (further than a drop reaches past a zone), its strip and cards
+   their usual size. The projection draws each hand back at its edge, flat
+   and as large as laid out (no growth), and fits the board into the band
+   between the hands -- its spots 26px under the far hand's peek and 24px
+   above the near hand (the mat's margin and a strip of desk) -- as large as
+   that band and the window's width allow, the mat's sides inside the
+   window (`fitBand`). A press on a drawn hand is taken to the hand where
+   it was laid out; the hands' counts and pills are drawn where the hands
+   are. At 1440x900 the near Active is drawn 185px tall (151px), and the
+   desk between the mat and the near hand goes from 71px to the strip of
+   24px; the board is height-bound, so a little more desk shows at its
+   sides. An upright window, a half shown alone and the flat table are laid
+   out as before, and the mat chosen never changes (it is judged as before).
 3. **The mat** is a cloth playmat under a lamp: a woven texture that
    foreshortens with the tilt, light falling off from just above the
    middle, a rubber rim and the mat's thickness along its near edge. The

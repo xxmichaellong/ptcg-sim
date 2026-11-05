@@ -1031,6 +1031,19 @@ describe('opt-in React DOM board session runtime', () => {
       runtime.setTableView({ lowerShare: 0.5, hideEmptyLostZone: true })
     );
     expect(runtime.getLayoutState().lostZoneInUse).toBe(true);
+    // Drawn tilted, the table is laid out for it; flat again, as before.
+    act(() =>
+      runtime.setTableView({
+        lowerShare: 0.5,
+        hideEmptyLostZone: true,
+        tiltedTable: true,
+      })
+    );
+    expect(runtime.getLayoutState().tiltedTable).toBe(true);
+    act(() =>
+      runtime.setTableView({ lowerShare: 0.5, hideEmptyLostZone: true })
+    );
+    expect(runtime.getLayoutState().tiltedTable).toBeUndefined();
 
     // The last card leaves: back off the table.
     const emptied = readyState(withEmptyLostZones(atRevision(3)));

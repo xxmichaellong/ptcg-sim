@@ -346,6 +346,12 @@ export interface BoardSceneLayout {
    * side rises toward the table's centre the other way.
    */
   readonly farCardsUpright?: true;
+  /**
+   * Laid out tilted (BoardLayoutState.tiltedTable): the hands' strips lie
+   * past the window's edges and the board fills each half, for the
+   * projection to draw the hands back at the edges and the board between.
+   */
+  readonly tiltedTable?: true;
 }
 
 export interface BoardScene {

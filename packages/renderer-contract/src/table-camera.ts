@@ -60,6 +60,13 @@ export const createTableCamera = (options: {
    * window when absent.
    */
   readonly centreBand?: { readonly top: number; readonly bottom: number };
+  /**
+   * The band `fitBounds` must lie in once tilted, on the table's surface:
+   * it is drawn as large as fits both the window's width and the band's
+   * height, its middle at the band's. Taken over `centreBand`, and over
+   * the window's own height for the size.
+   */
+  readonly fitBand?: { readonly top: number; readonly bottom: number };
   /** The eye's distance as a multiple of the window's diagonal. */
   readonly lens?: number;
 }): TableCamera => {
@@ -131,23 +138,30 @@ export const createTableCamera = (options: {
     0,
     Math.min(width, height) * 0.1
   );
-  const scale = Math.min(
-    1,
-    (width - 2 * margin) / (maxX - minX),
-    (height - 2 * margin) / (maxY - minY)
-  );
-  const band =
-    options.centreBand &&
-    Number.isFinite(options.centreBand.top) &&
-    Number.isFinite(options.centreBand.bottom) &&
-    options.centreBand.bottom > options.centreBand.top
-      ? options.centreBand
-      : { top: 0, bottom: height };
+  const validBand = (
+    candidate: { readonly top: number; readonly bottom: number } | undefined
+  ) =>
+    candidate &&
+    Number.isFinite(candidate.top) &&
+    Number.isFinite(candidate.bottom) &&
+    candidate.bottom > candidate.top
+      ? candidate
+      : undefined;
+  const fitBand = validBand(options.fitBand);
   // The mat itself is centred (a deck standing on its far edge only has
   // to fit), and never so far that anything leaves the window.
   const surface = points.slice(0, 4);
   const surfaceTop = Math.min(...surface.map((point) => point.y));
   const surfaceBottom = Math.max(...surface.map((point) => point.y));
+  const scale = Math.min(
+    1,
+    (width - 2 * margin) / (maxX - minX),
+    fitBand
+      ? (fitBand.bottom - fitBand.top) / Math.max(1, surfaceBottom - surfaceTop)
+      : (height - 2 * margin) / (maxY - minY)
+  );
+  const band = fitBand ??
+    validBand(options.centreBand) ?? { top: 0, bottom: height };
   const fromCentre = (y: number): number => scale * (y - (minY + maxY) / 2);
   const centreY = bounded(
     (band.top + band.bottom) / 2 -

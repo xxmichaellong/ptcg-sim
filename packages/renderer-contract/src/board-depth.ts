@@ -20,6 +20,7 @@ import type {
   CardSceneNode,
   MarkerSceneNode,
   Rect,
+  ZoneSceneNode,
 } from './model.js';
 import {
   createTableCamera,
@@ -93,6 +94,14 @@ const HAND_GROWTH_MAXIMUM = 1.3;
 const FAR_HAND_GAP_PX = 16 + 10;
 /** A tilted hand keeps at least this share of its flat fan. */
 const MIN_HAND_FAN = 0.5;
+/**
+ * Laid out tilted (BoardSceneLayout.tiltedTable), the mat's near edge comes
+ * this far short of the player's own hand: the mat's margin round its spots
+ * (MAT_MARGIN_PX, 16px) and a strip of desk.
+ */
+const NEAR_HAND_GAP_PX = 16 + 8;
+/** The mat's own margin round its spots, either side (renderer-dom). */
+const MAT_SIDE_MARGIN_PX = 16;
 
 /** A number in [0, 1) that a key always gives, for a card's resting lie. */
 const keyedUnit = (key: string, salt: number): number => {
@@ -408,7 +417,16 @@ export class BoardDepthProjection {
   readonly pileCounts = new Map<ViewCardId, number>();
   /** How high a held card rises, as a share of its width (0 when off). */
   readonly liftRatio: number;
-  private readonly hands: readonly Rect[];
+  /**
+   * Laid out tilted, how far each hand is drawn from where it was laid out
+   * (past the window's edge): back at the edge (by zone id).
+   */
+  private readonly handShifts: ReadonlyMap<string, number>;
+  /** Each hand where it is drawn, and how far that is from its layout. */
+  private readonly handReachRects: readonly {
+    readonly rect: Rect;
+    readonly dy: number;
+  }[];
   private readonly painted: readonly CardSceneNode[];
 
   constructor(
@@ -424,20 +442,71 @@ export class BoardDepthProjection {
     // whole table and stop every card in flight.
     const centre = scene.viewport.height / 2;
     const handStrips = scene.zones.filter((zone) => zone.kind === 'hand');
+    // Laid out tilted (the layout's `tiltedTable`), each hand's strip lies
+    // past the window's edge, the board filling the halves: the hand is
+    // drawn back at its edge, flat, as large as laid out, and the board in
+    // the band between them (`banded`).
+    const shifts = new Map<string, number>();
+    if (
+      this.enabled &&
+      this.settings.mode === 'table' &&
+      scene.layout.tiltedTable === true
+    ) {
+      for (const zone of handStrips) {
+        const near = zone.bounds.y + zone.bounds.height / 2 >= centre;
+        const at = near ? scene.viewport.height - zone.bounds.height : 0;
+        const dy = at - zone.bounds.y;
+        if (Math.abs(dy) > 0.5) shifts.set(zone.id, dy);
+      }
+    }
+    this.handShifts = shifts;
+    const drawnStrip = (zone: ZoneSceneNode): Rect => ({
+      ...zone.bounds,
+      y: zone.bounds.y + (shifts.get(zone.id) ?? 0),
+    });
     const fitTop = Math.max(
       0,
       ...handStrips
         .filter((zone) => zone.bounds.y + zone.bounds.height / 2 < centre)
-        .map((zone) => zone.bounds.y + zone.bounds.height)
+        .map((zone) => drawnStrip(zone).y + zone.bounds.height)
     );
     const fitBottom = Math.min(
       scene.viewport.height,
       ...handStrips
         .filter((zone) => zone.bounds.y + zone.bounds.height / 2 >= centre)
-        .map((zone) => zone.bounds.y)
+        .map((zone) => drawnStrip(zone).y)
     );
-    const fitBounds =
-      fitBottom > fitTop
+    const spots = scene.zones.filter(
+      (zone) =>
+        zone.kind !== 'hand' && zone.bounds.width > 0 && zone.bounds.height > 0
+    );
+    const banded =
+      shifts.size > 0 &&
+      spots.length > 0 &&
+      handStrips.some(
+        (zone) => zone.bounds.y + zone.bounds.height / 2 >= centre
+      ) &&
+      handStrips.some(
+        (zone) => zone.bounds.y + zone.bounds.height / 2 < centre
+      );
+    const spotsLeft = Math.min(...spots.map((zone) => zone.bounds.x));
+    const spotsTop = Math.min(...spots.map((zone) => zone.bounds.y));
+    const spotsRight = Math.max(
+      ...spots.map((zone) => zone.bounds.x + zone.bounds.width)
+    );
+    const spotsBottom = Math.max(
+      ...spots.map((zone) => zone.bounds.y + zone.bounds.height)
+    );
+    const fitBounds = banded
+      ? {
+          // The mat round the spots stays inside the window's width; its
+          // spots lie in the band between the hands (`fitBand`).
+          x: spotsLeft - MAT_SIDE_MARGIN_PX,
+          y: spotsTop,
+          width: spotsRight - spotsLeft + 2 * MAT_SIDE_MARGIN_PX,
+          height: spotsBottom - spotsTop,
+        }
+      : fitBottom > fitTop
         ? {
             x: 0,
             y: fitTop,
@@ -458,12 +527,23 @@ export class BoardDepthProjection {
         mode: this.settings.mode,
         tiltDegrees: this.settings.tilt,
         maximumElevation: fullDeck,
-        ...(fitBounds
+        ...(fitBounds && banded
           ? {
               fitBounds,
-              centreBand: { top: fitTop - shift, bottom: fitBottom - shift },
+              fitBand: {
+                top: fitTop + FAR_HAND_GAP_PX,
+                bottom: fitBottom - NEAR_HAND_GAP_PX,
+              },
             }
-          : {}),
+          : fitBounds
+            ? {
+                fitBounds,
+                centreBand: {
+                  top: fitTop - shift,
+                  bottom: fitBottom - shift,
+                },
+              }
+            : {}),
         margin: this.enabled ? 8 : 0,
         ...(this.settings.parallax &&
         !preferences.reducedMotion &&
@@ -487,6 +567,7 @@ export class BoardDepthProjection {
     if (
       this.enabled &&
       this.settings.mode === 'table' &&
+      !banded &&
       peeking &&
       fitBounds &&
       scene.viewport.width > scene.viewport.height
@@ -518,7 +599,15 @@ export class BoardDepthProjection {
     // screen's edge as before; its cards spread no wider than their strip.
     const handFits = new Map<string, (rect: Rect) => Rect>();
     const handReach = new Map<string, Rect>();
-    if (this.enabled && this.settings.mode === 'table') {
+    // Banded, each hand is drawn back at its edge, as large as laid out: the
+    // board comes to meet it, so it does not grow.
+    for (const [zoneId, dy] of shifts) {
+      const zone = handStrips.find((candidate) => candidate.id === zoneId);
+      if (!zone) continue;
+      handFits.set(zoneId, (rect) => ({ ...rect, y: rect.y + dy }));
+      handReach.set(zoneId, drawnStrip(zone));
+    }
+    if (this.enabled && this.settings.mode === 'table' && !banded) {
       for (const zone of handStrips) {
         const strip = zone.bounds;
         if (strip.height <= 0) continue;
@@ -603,9 +692,10 @@ export class BoardDepthProjection {
         });
       }
     }
-    this.hands = handStrips.map(
-      (zone) => handReach.get(zone.id) ?? zone.bounds
-    );
+    this.handReachRects = handStrips.map((zone) => ({
+      rect: handReach.get(zone.id) ?? zone.bounds,
+      dy: shifts.get(zone.id) ?? 0,
+    }));
     this.painted = scene.cards
       .filter((card) => card.renderKey !== null)
       .sort((a, b) => b.zIndex - a.zIndex);
@@ -758,18 +848,62 @@ export class BoardDepthProjection {
     return this.liftRatio * cardWidth;
   }
 
+  /**
+   * Where a point of the table is drawn: tilted, through the camera; flat
+   * (a hand's), where it lies -- for a hand laid out past the window's edge
+   * (tilted), where that hand is drawn.
+   */
   point(point: TablePoint, elevation = 0, flat = false): TablePoint {
-    return flat || !this.enabled
+    if (flat) {
+      const dy = this.handShiftAt(point);
+      return dy === 0 ? point : { x: point.x, y: point.y + dy };
+    }
+    return !this.enabled
       ? point
       : projectTablePoint(this.camera, { ...point, z: elevation });
   }
 
+  /** Where a hand's strip is drawn: its edge of the window, tilted. */
+  handBounds(zone: ZoneSceneNode): Rect {
+    const dy = this.handShifts.get(zone.id) ?? 0;
+    return dy === 0 ? zone.bounds : { ...zone.bounds, y: zone.bounds.y + dy };
+  }
+
+  /**
+   * How far the hand laid out about `point` is drawn from it: a hand laid
+   * out past the window's edge, by the depth of its strip around it (a
+   * count's anchor sits on its edge).
+   */
+  private handShiftAt(point: TablePoint): number {
+    if (this.handShifts.size === 0) return 0;
+    for (const zone of this.scene.zones) {
+      const dy = this.handShifts.get(zone.id);
+      if (dy === undefined) continue;
+      const reach = zone.bounds.height;
+      if (
+        containsPoint(
+          {
+            x: zone.bounds.x - reach,
+            y: zone.bounds.y - reach,
+            width: zone.bounds.width + 2 * reach,
+            height: zone.bounds.height + 2 * reach,
+          },
+          point.x,
+          point.y
+        )
+      )
+        return dy;
+    }
+    return 0;
+  }
+
   boardPoint(point: TablePoint): TablePoint {
-    if (
-      !this.enabled ||
-      this.hands.some((bounds) => containsPoint(bounds, point.x, point.y))
-    )
-      return point;
+    if (!this.enabled) return point;
+    // On a hand: where it was laid out (past the window's edge, tilted).
+    const hand = this.handReachRects.find(({ rect }) =>
+      containsPoint(rect, point.x, point.y)
+    );
+    if (hand) return { x: point.x, y: point.y - hand.dy };
     return unprojectTablePoint(this.camera, point, 0) ?? point;
   }
 

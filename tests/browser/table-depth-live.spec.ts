@@ -368,9 +368,12 @@ test('lifting a deck card leaves the pile and releases continuously into the han
     (zone) => zone.kind === 'hand' && zone.side === 'local'
   )!;
   const from = await centre(page, deck.id);
+  // Where the hand is drawn: tilted, its strip is laid out past the
+  // window's edge and drawn back at it (BoardDepthProjection.handBounds).
+  const drawn = new BoardDepthProjection(current, preferences).handBounds(hand);
   const to = await screen(page, {
-    x: hand.bounds.x + hand.bounds.width / 2,
-    y: hand.bounds.y + hand.bounds.height / 2,
+    x: drawn.x + drawn.width / 2,
+    y: drawn.y + drawn.height / 2,
   });
   await page.mouse.move(from.x, from.y);
   await page.mouse.down();
