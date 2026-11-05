@@ -294,6 +294,11 @@ test('a card’s own text plays on the table: a Pokémon made by hand, and a pri
   const sheet = page.locator('.deck-card-details');
   await expect(sheet).toContainText('Inferno Overdrive');
   await expect(sheet).toContainText('Edited');
+  // Taken out and put back from the sheet, it keeps its edit.
+  await sheet.getByRole('button', { name: 'Remove one Charizard ex' }).click();
+  await sheet.getByRole('button', { name: 'Add one Charizard ex' }).click();
+  await expect(sheet.locator('[aria-label="1 in deck"]')).toBeVisible();
+  await expect(sheet).toContainText('Inferno Overdrive');
   await page.keyboard.press('Escape');
   await expect(sheet).toBeHidden();
 

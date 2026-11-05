@@ -626,9 +626,14 @@ export const PokemonWindow = ({
     topJoin !== undefined &&
     lowerCards.length > 0 &&
     lowerCards.every((card) => joinKeyOf(card) === topJoin);
-  // A BREAK reads its Stage below's text too.
-  const breakOver =
-    !joined && topCard && isBreak(topDefinition?.name) && lowerCards[0];
+  // A BREAK reads its Stage below's text too: a print by its name, a card
+  // made by hand by its stage or its BREAK layout, whatever its name.
+  const topIsBreak =
+    isBreak(topDefinition?.name) ||
+    topDefinition?.text?.stage === 'BREAK' ||
+    (topCard ? byId.get(topCard.id)?.presentation?.overlay : undefined) ===
+      'upper-half';
+  const breakOver = !joined && topCard && topIsBreak && lowerCards[0];
   const moveCards = joined
     ? pokemonCards
     : topCard && breakOver

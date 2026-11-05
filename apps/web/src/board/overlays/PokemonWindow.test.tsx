@@ -560,4 +560,58 @@ describe('the Pokémon window', () => {
     );
     expect(host.querySelector('[data-preview-kind="card"]')).not.toBeNull();
   });
+
+  it('reads a BREAK made by hand by its layout and stage, whatever its name', async () => {
+    const stackId = base.boards[blue]!.activeStackId!;
+    const stack = base.stacks[stackId]!;
+    const [lower, top] = [
+      stack.evolutionCards.at(-2),
+      stack.evolutionCards.at(-1),
+    ];
+    if (lower?.kind !== 'known' || top?.kind !== 'known') return;
+    const definitions = { ...base.definitions };
+    definitions[lower.definitionId] = {
+      ...definitions[lower.definitionId]!,
+      text: {
+        attacks: [{ name: 'Base Move', cost: [], damage: '10' }],
+        retreat: 2,
+      },
+    };
+    definitions[top.definitionId] = {
+      ...definitions[top.definitionId]!,
+      name: 'Homebrew',
+      presentation: { readingQuarterTurns: 1, overlay: 'upper-half' },
+      text: {
+        hp: 160,
+        stage: 'BREAK',
+        attacks: [{ name: 'Broken Move', cost: [], damage: '90' }],
+      },
+    };
+    const broken = { ...base, definitions };
+    const brokenScene = createBoardSceneForViewport(broken, {
+      geometryVersion: 1,
+      viewport: { width: 1280, height: 720, devicePixelRatio: 1 },
+      bottomPlayerId: blue,
+      splitRatio: 0.5,
+    });
+    await render(
+      stateFor(blue, { view: broken, scene: brokenScene }),
+      actions()
+    );
+    let window = host.querySelector<HTMLElement>('[data-pokemon-window]');
+    if (!window) {
+      const details = [...host.querySelectorAll('button')].find(
+        (button) => button.textContent === 'Details'
+      )!;
+      await act(async () => details.click());
+      window = host.querySelector<HTMLElement>('[data-pokemon-window]')!;
+    }
+    expect(window.textContent).toContain('Broken Move');
+    expect(window.textContent).toContain('Base Move');
+    expect(
+      window
+        .querySelectorAll('.pokemon-window__stats div')[2]!
+        .querySelectorAll('.energy-symbol')
+    ).toHaveLength(2);
+  });
 });

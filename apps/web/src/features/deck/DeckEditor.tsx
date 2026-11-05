@@ -224,6 +224,15 @@ export const DeckEditor = ({
   // way: an edit, its Undo, its Redo.
   const inspectedRef = useRef(inspected);
   inspectedRef.current = inspected;
+  // And the sheet shows a card as the deck has it now: one edited under its
+  // own id (a catalogued print) too, so its − and + are that card's.
+  useEffect(() => {
+    if (inspected?.kind !== 'deck') return;
+    const card = cards.find(
+      (entry) => entry.card.id === inspected.card.id
+    )?.card;
+    if (card && card !== inspected.card) setInspected({ kind: 'deck', card });
+  }, [cards, inspected]);
   const follow = useCallback(
     (renames: ReadonlyMap<string, string>, list: DeckList) => {
       if (renames.size === 0) return;
