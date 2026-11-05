@@ -6,6 +6,7 @@ import { CardsIcon } from '@phosphor-icons/react/dist/csr/Cards';
 import { CaretLeftIcon } from '@phosphor-icons/react/dist/csr/CaretLeft';
 import { ClipboardTextIcon } from '@phosphor-icons/react/dist/csr/ClipboardText';
 import { DiscordLogoIcon } from '@phosphor-icons/react/dist/csr/DiscordLogo';
+import { FilmReelIcon } from '@phosphor-icons/react/dist/csr/FilmReel';
 import { GithubLogoIcon } from '@phosphor-icons/react/dist/csr/GithubLogo';
 import { HeartIcon } from '@phosphor-icons/react/dist/csr/Heart';
 import { InfoIcon } from '@phosphor-icons/react/dist/csr/Info';
@@ -41,7 +42,6 @@ import {
   settingsSheetCommands,
 } from '../../commands/settings-commands.js';
 import { useCommandSource } from '../../commands/registry.js';
-import { useHotkeyHints } from '../../hotkeys/hotkey-preferences.js';
 import { openShortcutsDialog } from '../../hotkeys/shortcuts-dialog-state.js';
 import {
   CARD_IMAGE_LANGUAGE_NAMES,
@@ -213,9 +213,10 @@ const ActionRow = ({
 
 /**
  * The first page: what the bar has no room for (on a phone), the room's
- * invites and board flip, the game's saves and replays, then the pages --
- * the table, the cards, motion, the language -- and the keys, help and
- * About, with the way out at the foot.
+ * invites and board flip, then the pages -- the table, the cards, motion,
+ * the language -- and the keys, the game's saves and replays (a page of
+ * their own), the tutorial with help and About, and the ways out at the
+ * foot.
  */
 const HomePage = ({
   context,
@@ -230,10 +231,11 @@ const HomePage = ({
   const { navigate, leave, touchOnly } = context;
   const placement = useAppBarPlacement(menu ?? { onSettings: () => undefined });
   const places: readonly ToolbarEntry[] = menu ? placement.inSettings : [];
-  const actions = menu ? menuActions(menu) : { room: [], game: [], leave: [] };
+  const actions = menu
+    ? menuActions(menu)
+    : { room: [], saves: [], tutorial: [], leave: [] };
   const language = useLanguageName();
   const tableArt = useTableArtName();
-  const shortcutsKey = useHotkeyHints()('table.shortcuts');
   const pageRow = (
     page: SettingsPage,
     id: string,
@@ -287,13 +289,6 @@ const HomePage = ({
           ) : null}
         </SettingsGroup>
       ) : null}
-      {actions.game.length > 0 ? (
-        <SettingsGroup>
-          {actions.game.map((action) => (
-            <ActionRow key={action.id} action={action} leave={leave} />
-          ))}
-        </SettingsGroup>
-      ) : null}
       <SettingsGroup>
         {pageRow('table', 'settingsTableRow', PaletteIcon, 'green', {
           text: tableArt,
@@ -310,7 +305,6 @@ const HomePage = ({
             icon={KeyboardIcon}
             tone="slate"
             label={t`Keyboard shortcuts`}
-            {...(shortcutsKey ? { value: shortcutsKey } : {})}
             onClick={() => {
               leave();
               openShortcutsDialog();
@@ -318,7 +312,15 @@ const HomePage = ({
           />
         )}
       </SettingsGroup>
+      {actions.saves.length > 0 ? (
+        <SettingsGroup>
+          {pageRow('saves', 'settingsSavesRow', FilmReelIcon, 'purple')}
+        </SettingsGroup>
+      ) : null}
       <SettingsGroup>
+        {actions.tutorial.map((action) => (
+          <ActionRow key={action.id} action={action} leave={leave} />
+        ))}
         {pageRow('reportBug', 'settingsReportBugRow', BugIcon, 'red')}
         {pageRow('about', 'settingsAboutRow', InfoIcon, 'pink')}
       </SettingsGroup>
@@ -347,6 +349,28 @@ const HomePage = ({
         </SettingsFooter>
       ) : null}
     </>
+  );
+};
+
+/**
+ * The game's saves and replays: watching one, saving the game online and
+ * resuming it, and downloading what has been played. Each gives way as it
+ * acts.
+ */
+const SavesPage = ({
+  menu,
+  context,
+}: {
+  readonly menu: AppMenuModel | undefined;
+  readonly context: PageContext;
+}) => {
+  const saves = menu ? menuActions(menu).saves : [];
+  return (
+    <SettingsGroup>
+      {saves.map((action) => (
+        <ActionRow key={action.id} action={action} leave={context.leave} />
+      ))}
+    </SettingsGroup>
   );
 };
 
@@ -1031,6 +1055,8 @@ export const SettingsSheet = ({
     >
       {top === 'home' ? (
         <HomePage context={context} menu={menu} boardFlip={boardFlip} />
+      ) : top === 'saves' ? (
+        <SavesPage menu={menu} context={context} />
       ) : top === 'table' ? (
         <TablePage
           background={background}

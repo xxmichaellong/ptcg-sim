@@ -43,15 +43,19 @@ first page.
      where to play;
    - in a room, under its name: Invite opponent ("Seat taken" once it is),
      Invite spectator, Allow board flip;
-   - the game: Exit replay, Tutorial, Watch replay…, Save game, Resume saved
-     game…, Download replay, as each applies;
    - **Table** (its look's name), **Cards**, **Motion**, **Language** (the
-     language, named in itself), **Keyboard shortcuts** (its key; not on a
-     touch screen, which has none);
-   - **Report a bug**, **About**;
-   - at the foot, the way out: Leave room (red), or Leave tutorial.
+     language, named in itself), **Keyboard shortcuts** (not on a touch
+     screen, which has none; no key beside it, a lone "?" reading as a help
+     mark);
+   - **Saves & replays**, where the game has any (the owner, the same day:
+     "this stuff can go into its own tab");
+   - Tutorial (at a Solo table), **Report a bug**, **About**;
+   - at the foot, the ways out: Exit replay, Leave tutorial, Leave room
+     (red).
 
    Its pages:
+   - **Saves & replays**: Watch replay…, Save game, Resume saved game…,
+     Download replay, as each applies.
    - **Table**: Look (Style, Background, Dark mode), View (Depth with its
      Angle and Thickness, Halves with its Split, Zone outlines), Reset
      table.
@@ -97,8 +101,8 @@ first page.
 - Settings is one press from anywhere, and the language two.
 - Rows keep the ids the menu's had (`#inviteOpponentMenuItem`,
   `#exportState`, `#leaveRoomButton`…), so specs reach them the same way
-  (`chooseMenuItem`, `openSettings(page, 'cards')` in
-  `tests/browser/support/table-shell.ts`).
+  (`chooseMenuItem`, which looks on the Saves & replays page too, and
+  `openSettings(page, 'cards')` in `tests/browser/support/table-shell.ts`).
 - The tutorial's "Around the table" lesson points at Settings instead of
   the menu.
 

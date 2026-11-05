@@ -7,6 +7,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
  */
 export const SETTINGS_PAGE_PARENTS = {
   home: null,
+  saves: 'home',
   table: 'home',
   cards: 'home',
   cardImages: 'cards',
@@ -30,6 +31,7 @@ export const SETTINGS_PALETTE_PAGES = [
 /** Each page's element id in the drawer. */
 export const SETTINGS_PAGE_IDS: Readonly<Record<SettingsPage, string>> = {
   home: 'settingsHome',
+  saves: 'settingsSaves',
   table: 'settingsTable',
   cards: 'settingsCards',
   cardImages: 'settingsCardImages',

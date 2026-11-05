@@ -43,7 +43,8 @@ export const openAppMenu = async (page: Page): Promise<void> => {
 
 /**
  * Chooses an app entry by its id (`exportState`, `deckImportButton`): a
- * button on the app bar directly, anything else from Settings' first page.
+ * button on the app bar directly, anything else from Settings' first page
+ * or its Saves & replays page.
  */
 export const chooseMenuItem = async (page: Page, id: string): Promise<void> => {
   await expect(page.locator('#settingsButton')).toBeVisible();
@@ -53,6 +54,13 @@ export const chooseMenuItem = async (page: Page, id: string): Promise<void> => {
     return;
   }
   await openAppMenu(page);
+  const saves = page.locator('#settings #settingsSavesRow');
+  if (
+    (await page.locator(`#settings #${id}`).count()) === 0 &&
+    (await saves.isVisible())
+  ) {
+    await saves.click();
+  }
   await page.locator(`#settings #${id}`).click();
 };
 
@@ -84,11 +92,12 @@ export const tableSettled = (page: Page): Promise<void> =>
 
 /** Settings' pages past the first (ADR-045), by the rows that open them. */
 export type SettingsPageName =
-  'table' | 'cards' | 'motion' | 'language' | 'reportBug' | 'about';
+  'saves' | 'table' | 'cards' | 'motion' | 'language' | 'reportBug' | 'about';
 
 const SETTINGS_PAGE_ROWS: Readonly<
   Record<SettingsPageName, readonly [row: string, page: string]>
 > = {
+  saves: ['settingsSavesRow', 'settingsSaves'],
   table: ['settingsTableRow', 'settingsTable'],
   cards: ['settingsCardsRow', 'settingsCards'],
   motion: ['settingsMotionRow', 'settingsMotion'],

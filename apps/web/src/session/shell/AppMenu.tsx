@@ -206,14 +206,15 @@ export interface SettingsAction {
 
 /**
  * What the room lets the player do, grouped as Settings shows it: the
- * room's invites, the game's saves and replays (the tutorial among them at
- * a Solo table), and the way out, at the foot.
+ * room's invites, the game's saves and replays (a page of their own), the
+ * tutorial (with the help), and the ways out, at the foot.
  */
 export const menuActions = (
   model: AppMenuModel
 ): {
   readonly room: readonly SettingsAction[];
-  readonly game: readonly SettingsAction[];
+  readonly saves: readonly SettingsAction[];
+  readonly tutorial: readonly SettingsAction[];
   readonly leave: readonly SettingsAction[];
 } => {
   const game = model.game;
@@ -240,26 +241,19 @@ export const menuActions = (
       onSelect: () => invites.onInvite('spectator'),
     });
   }
+  const tutorial: SettingsAction[] =
+    model.onTutorial && !model.onExitTutorial
+      ? [
+          {
+            id: 'tutorialButton',
+            label: t`Tutorial`,
+            icon: GraduationCapIcon,
+            tone: 'orange',
+            onSelect: model.onTutorial,
+          },
+        ]
+      : [];
   const saves: SettingsAction[] = [];
-  if (game?.onExitReplay) {
-    saves.push({
-      // The rail's Exit keeps v1's `#exitReplay`.
-      id: 'exitReplayMenuItem',
-      label: t`Exit replay`,
-      icon: XCircleIcon,
-      tone: 'red',
-      onSelect: game.onExitReplay,
-    });
-  }
-  if (model.onTutorial && !model.onExitTutorial) {
-    saves.push({
-      id: 'tutorialButton',
-      label: t`Tutorial`,
-      icon: GraduationCapIcon,
-      tone: 'orange',
-      onSelect: model.onTutorial,
-    });
-  }
   if (game?.onImportReplay) {
     saves.push({
       id: 'importReplay',
@@ -300,6 +294,16 @@ export const menuActions = (
     });
   }
   const leave: SettingsAction[] = [];
+  if (game?.onExitReplay) {
+    leave.push({
+      // The rail's Exit keeps v1's `#exitReplay`.
+      id: 'exitReplayMenuItem',
+      label: t`Exit replay`,
+      icon: XCircleIcon,
+      tone: 'red',
+      onSelect: game.onExitReplay,
+    });
+  }
   if (model.onExitTutorial) {
     leave.push({
       id: 'leaveTutorialButton',
@@ -320,7 +324,7 @@ export const menuActions = (
       onSelect: model.onLeave,
     });
   }
-  return { room, game: saves, leave };
+  return { room, saves, tutorial, leave };
 };
 
 /**
@@ -328,7 +332,7 @@ export const menuActions = (
  * do, as the palette offers them: `menu.<id>` commands (ADR-035).
  */
 export const restEntries = (model: AppMenuModel): ActionMenuEntry[] => {
-  const { room, game, leave } = menuActions(model);
+  const { room, saves, tutorial, leave } = menuActions(model);
   return [
     {
       id: 'settingsButton',
@@ -336,15 +340,17 @@ export const restEntries = (model: AppMenuModel): ActionMenuEntry[] => {
       icon: GearSixIcon,
       onSelect: model.onSettings,
     },
-    ...[...room, ...game, ...leave].map((action): ActionMenuEntry => ({
-      id: action.id,
-      label: action.label,
-      icon: action.icon,
-      ...(action.disabled ? { disabled: true } : {}),
-      ...(action.danger ? { danger: true } : {}),
-      ...(action.mirrored ? { mirrored: true } : {}),
-      onSelect: action.onSelect,
-    })),
+    ...[...room, ...saves, ...tutorial, ...leave].map(
+      (action): ActionMenuEntry => ({
+        id: action.id,
+        label: action.label,
+        icon: action.icon,
+        ...(action.disabled ? { disabled: true } : {}),
+        ...(action.danger ? { danger: true } : {}),
+        ...(action.mirrored ? { mirrored: true } : {}),
+        onSelect: action.onSelect,
+      })
+    ),
   ];
 };
 

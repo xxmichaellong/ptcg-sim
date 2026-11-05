@@ -6108,6 +6108,10 @@
     "message": "Saved for this visit only",
     "translation": "이번 방문에만 저장됨"
   },
+  "br8YKa": {
+    "message": "Saves & replays",
+    "translation": "저장 및 리플레이"
+  },
   "K_F6pa": {
     "message": "Saving…",
     "translation": "저장 중…"

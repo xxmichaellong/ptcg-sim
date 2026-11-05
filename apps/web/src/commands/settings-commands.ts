@@ -128,6 +128,8 @@ export const settingsPageName = (page: SettingsPage): string => {
   switch (page) {
     case 'home':
       return t`Settings`;
+    case 'saves':
+      return t`Saves & replays`;
     case 'table':
       return t({ message: 'Table', context: 'settings page' });
     case 'cards':

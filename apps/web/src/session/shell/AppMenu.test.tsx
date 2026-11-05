@@ -103,10 +103,11 @@ const press = async (selector: string): Promise<void> => {
 
 /** The ids of what the room lets the player do, as Settings groups them. */
 const actionIds = (menu: AppMenuModel) => {
-  const { room, game, leave } = menuActions(menu);
+  const { room, saves, tutorial, leave } = menuActions(menu);
   return {
     room: room.map((action) => action.id),
-    game: game.map((action) => action.id),
+    saves: saves.map((action) => action.id),
+    tutorial: tutorial.map((action) => action.id),
     leave: leave.map((action) => action.id),
   };
 };
@@ -175,7 +176,7 @@ describe('AppBar', () => {
     ).toBe('settings');
   });
 
-  it("groups a Solo table's tutorial and replays, a room's invites and saves, and a replay's way out first", () => {
+  it("groups the saves and replays, the tutorial, a room's invites, and the ways out", () => {
     const game = {
       onImportReplay: vi.fn(),
       onResumeSaved: vi.fn(),
@@ -183,16 +184,12 @@ describe('AppBar', () => {
     };
     expect(actionIds(model({ game }))).toEqual({
       room: [],
-      game: [
-        'tutorialButton',
-        'importReplay',
-        'resumeSavedGame',
-        'exportState',
-      ],
+      saves: ['importReplay', 'resumeSavedGame', 'exportState'],
+      tutorial: ['tutorialButton'],
       leave: [],
     });
     expect(
-      menuActions(model({ game })).game.find(
+      menuActions(model({ game })).saves.find(
         (action) => action.id === 'importReplay'
       )?.label
     ).toBe('Watch replay…');
@@ -211,7 +208,8 @@ describe('AppBar', () => {
     };
     expect(actionIds(room)).toEqual({
       room: ['inviteOpponentMenuItem', 'inviteSpectatorMenuItem'],
-      game: ['saveOnlineGame', 'exportState'],
+      saves: ['saveOnlineGame', 'exportState'],
+      tutorial: [],
       leave: ['leaveRoomButton'],
     });
     // The palette offers the same, Settings itself first.
@@ -226,11 +224,12 @@ describe('AppBar', () => {
       'leaveRoomButton',
     ]);
 
-    expect(
-      actionIds(
-        model({ game: { onExitReplay: vi.fn(), onExportState: vi.fn() } })
-      ).game[0]
-    ).toBe('exitReplayMenuItem');
+    // A replay's way out is at the foot, with the others.
+    const replay = actionIds(
+      model({ game: { onExitReplay: vi.fn(), onExportState: vi.fn() } })
+    );
+    expect(replay.leave).toEqual(['exitReplayMenuItem']);
+    expect(replay.saves).toEqual(['exportState']);
   });
 
   it('moves between its buttons on the arrow keys, which the table never sees', async () => {
@@ -273,7 +272,7 @@ describe('AppBar', () => {
   });
 
   it('turns only the way out round in a right-to-left language', () => {
-    const { room, game, leave } = menuActions(
+    const { room, saves, leave } = menuActions(
       model({
         onLeave: vi.fn(),
         invites: {
@@ -287,7 +286,7 @@ describe('AppBar', () => {
     // Leaving points the way the line reads; an invite or a save has no
     // direction.
     expect(
-      [...room, ...game, ...leave]
+      [...room, ...saves, ...leave]
         .filter((action) => action.mirrored)
         .map((action) => action.id)
     ).toEqual(['leaveRoomButton']);
@@ -433,7 +432,7 @@ describe('AppBar', () => {
 
   it('opens the tutorial, or leaves it on the practice table, and has none where it is not offered', () => {
     const onTutorial = vi.fn();
-    const tutorial = menuActions(model({ onTutorial })).game.find(
+    const tutorial = menuActions(model({ onTutorial })).tutorial.find(
       (action) => action.id === 'tutorialButton'
     )!;
     expect(tutorial.label).toBe('Tutorial');
@@ -444,7 +443,8 @@ describe('AppBar', () => {
     // On the practice table: its way out, at the foot; no second tutorial.
     expect(actionIds(model({ onExitTutorial }))).toEqual({
       room: [],
-      game: [],
+      saves: [],
+      tutorial: [],
       leave: ['leaveTutorialButton'],
     });
     const leave = menuActions(model({ onExitTutorial })).leave[0]!;
@@ -453,9 +453,7 @@ describe('AppBar', () => {
     expect(onExitTutorial).toHaveBeenCalledOnce();
 
     // A room: no tutorial, the other player would be left waiting.
-    expect(actionIds({ onSettings: vi.fn() }).game).not.toContain(
-      'tutorialButton'
-    );
+    expect(actionIds({ onSettings: vi.fn() }).tutorial).toEqual([]);
   });
 
   it('keeps the keys and the help for the palette, the community outside the table', async () => {

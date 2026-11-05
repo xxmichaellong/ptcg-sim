@@ -16,6 +16,7 @@ import {
   openAppMenu,
   openDeck,
   openPlayOnline,
+  openSettings,
   useFlatTable,
 } from './support/table-shell.js';
 
@@ -364,7 +365,7 @@ test('the Solo table owns one authority and keeps it across the menu and sheets'
   const liveRevisionBeforeReplayImport = await page
     .locator('.ptcgsim-board-surface')
     .getAttribute('data-revision');
-  await openAppMenu(page);
+  await openSettings(page, 'saves');
   await expect(page.locator('#importReplay')).toHaveText('Watch replay…');
   await closeSheet(page);
   const [perspectiveReplay] = await Promise.all([
@@ -401,8 +402,14 @@ test('the Solo table owns one authority and keeps it across the menu and sheets'
   await expect(exitReplayAction).toBeVisible();
   await expect(page.locator('#activitySheet')).toContainText('Replay');
   await expect(page.locator('#turnButton')).toHaveCount(0);
-  await openAppMenu(page);
+  // A replay can't watch another; its way out is at Settings' foot.
+  await openSettings(page, 'saves');
   await expect(page.locator('#importReplay')).toHaveCount(0);
+  await expect(page.locator('#settings #exportState')).toBeVisible();
+  await page.locator('#settingsBackButton').click();
+  await expect(
+    page.locator('#settings .settings-footer #exitReplayMenuItem')
+  ).toBeVisible();
   await closeSheet(page);
   // Replay's transport takes the rail: this one is fast-forward.
   await page.locator('#boardButtonContainer #resetBothButton').click();

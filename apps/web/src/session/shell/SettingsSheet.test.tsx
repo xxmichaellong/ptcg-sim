@@ -302,15 +302,17 @@ describe('SettingsSheet', () => {
     )!;
     expect(opponent.disabled).toBe(true);
     expect(opponent.textContent).toContain('Seat taken');
-    // The saves next.
-    expect(
-      [...groups[1]!.querySelectorAll('.settings-row[id]')].map((row) => row.id)
-    ).toEqual(['saveOnlineGame', 'exportState']);
-    await press('saveOnlineGame');
-    expect(onOpenChange).toHaveBeenCalledWith(false);
-    expect(onSaveOnline).toHaveBeenCalledOnce();
     await press('inviteSpectatorMenuItem');
+    expect(onOpenChange).toHaveBeenCalledWith(false);
     expect(onInvite).toHaveBeenCalledWith('spectator');
+    // The saves and replays are a page of their own.
+    expect(sheet.querySelector('#saveOnlineGame')).toBeNull();
+    await press('settingsSavesRow');
+    expect(page()).toBe('settingsSaves');
+    expect(ids('.settings-row[id]')).toEqual(['saveOnlineGame', 'exportState']);
+    await press('saveOnlineGame');
+    expect(onSaveOnline).toHaveBeenCalledOnce();
+    await press('settingsBackButton');
     // The way out, at the foot, in red, turned round in a right-to-left
     // language.
     const leave = sheet.querySelector<HTMLElement>(
@@ -320,6 +322,62 @@ describe('SettingsSheet', () => {
     expect(leave.querySelector('svg.ds-mirror-rtl')).not.toBeNull();
     await press('leaveRoomButton');
     expect(onLeave).toHaveBeenCalledOnce();
+  });
+
+  it("keeps a Solo table's replays on a page of their own, the tutorial with the help, and a replay's way out at the foot", async () => {
+    const onImportReplay = vi.fn();
+    const onTutorial = vi.fn();
+    const { onOpenChange } = await render({
+      menu: {
+        mode: { kind: 'solo' },
+        onSettings: vi.fn(),
+        onTutorial,
+        game: { onImportReplay, onExportState: vi.fn() },
+      },
+    });
+    expect(ids('.settings-row[id]')).toEqual([
+      'settingsTableRow',
+      'settingsCardsRow',
+      'settingsMotionRow',
+      'settingsLanguageRow',
+      'editShortcutsButton',
+      'settingsSavesRow',
+      'tutorialButton',
+      'settingsReportBugRow',
+      'settingsAboutRow',
+    ]);
+    expect(
+      document.querySelector('#settingsSavesRow .settings-row__label')
+        ?.textContent
+    ).toBe('Saves & replays');
+    await press('settingsSavesRow');
+    expect(ids('.settings-row[id]')).toEqual(['importReplay', 'exportState']);
+    await press('importReplay');
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(onImportReplay).toHaveBeenCalledOnce();
+    await press('settingsBackButton');
+    await press('tutorialButton');
+    expect(onTutorial).toHaveBeenCalledOnce();
+
+    // A replay: Exit replay at the foot, the download on the page.
+    await render({
+      menu: {
+        mode: { kind: 'replay' },
+        onSettings: vi.fn(),
+        game: { onExitReplay: vi.fn(), onExportState: vi.fn() },
+      },
+      request: { page: 'home', serial: 9 },
+    });
+    expect(
+      document.querySelector('.settings-footer #exitReplayMenuItem')
+    ).not.toBeNull();
+    expect(document.querySelector('#settingsSavesRow')).not.toBeNull();
+    // With nothing to save or replay, no row for it.
+    await render({
+      menu: { mode: { kind: 'tutorial' }, onSettings: vi.fn(), game: {} },
+      request: { page: 'home', serial: 10 },
+    });
+    expect(document.querySelector('#settingsSavesRow')).toBeNull();
   });
 
   it('leads with what the app bar has no room for on a phone', async () => {
@@ -475,10 +533,10 @@ describe('SettingsSheet', () => {
 
   it('gives way to the keyboard shortcuts, and has no keys on a touch screen', async () => {
     const { onOpenChange } = await render();
+    // No key beside it: a lone "?" read as a help mark.
     expect(
       document.querySelector('#editShortcutsButton .settings-row__value')
-        ?.textContent
-    ).toBe('?');
+    ).toBeNull();
     await press('editShortcutsButton');
     expect(onOpenChange).toHaveBeenCalledWith(false);
     expect(shortcutsDialogState().open).toBe(true);

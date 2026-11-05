@@ -498,17 +498,33 @@ const openMenu = async (): Promise<void> => {
   expect(find('#settings')).not.toBeNull();
 };
 
+/** Puts Settings away from its close button, from whichever page. */
 const closeMenu = async (): Promise<void> => {
-  const settings = find('#settings');
-  if (settings) await pressEscape(settings);
+  const close = find('#settings .ptcgsim-sheet__close');
+  if (close) await click('#settings .ptcgsim-sheet__close');
+};
+
+/** The rows Settings' first page offers, and its Saves & replays page's. */
+const allMenuIds = async (): Promise<string[]> => {
+  const home = menuIds();
+  if (!find('#settingsSavesRow')) return home;
+  await click('#settingsSavesRow');
+  const saves = menuIds();
+  await click('#settingsBackButton');
+  return [...home, ...saves];
 };
 
 /**
  * Chooses an app entry by its id: a button on the app bar directly,
- * anything else from Settings' first page.
+ * anything else from Settings' first page or its Saves & replays page.
  */
 const chooseMenuItem = async (id: string): Promise<void> => {
-  if (!find(`.ptcgsim-app-bar #${id}`)) await openMenu();
+  if (!find(`.ptcgsim-app-bar #${id}`)) {
+    await openMenu();
+    if (!find(`#settings #${id}`) && find('#settingsSavesRow')) {
+      await click('#settingsSavesRow');
+    }
+  }
   await click(`#${id}`);
   await settle();
 };
@@ -648,7 +664,7 @@ describe('RemoteRoomRoute', () => {
     expect(get('.ptcgsim-app-bar__switch').dataset.current).toBe('solo');
     await openMenu();
     expect(find('#settings .settings-group__heading')).toBeNull();
-    expect(menuIds()).toEqual(
+    expect(await allMenuIds()).toEqual(
       expect.arrayContaining([
         'settingsTableRow',
         'settingsCardsRow',
@@ -658,10 +674,10 @@ describe('RemoteRoomRoute', () => {
         'settingsAboutRow',
       ])
     );
-    expect(menuIds()).toEqual(
+    expect(await allMenuIds()).toEqual(
       expect.arrayContaining(['importReplay', 'exportState'])
     );
-    expect(menuIds()).not.toContain('fullscreenButton');
+    expect(await allMenuIds()).not.toContain('fullscreenButton');
     // Solo has no room to leave and nothing to save online.
     for (const id of [
       'leaveRoomButton',
@@ -670,7 +686,7 @@ describe('RemoteRoomRoute', () => {
       'resumeSavedGame',
       'exitReplayMenuItem',
     ]) {
-      expect(menuIds(), id).not.toContain(id);
+      expect(await allMenuIds(), id).not.toContain(id);
     }
     await closeMenu();
     await click('#p2Button');
@@ -890,9 +906,9 @@ describe('RemoteRoomRoute', () => {
       'Watching'
     );
     await openMenu();
-    expect(menuIds()).toContain('leaveRoomButton');
-    expect(menuIds()).not.toContain('saveOnlineGame');
-    expect(menuIds()).not.toContain('resumeSavedGame');
+    expect(await allMenuIds()).toContain('leaveRoomButton');
+    expect(await allMenuIds()).not.toContain('saveOnlineGame');
+    expect(await allMenuIds()).not.toContain('resumeSavedGame');
     await closeMenu();
     await openActivity();
     expect(find('#p2MessageInput')).not.toBeNull();
@@ -998,19 +1014,20 @@ describe('RemoteRoomRoute', () => {
       expect(get('#settings .settings-group__heading').textContent).toBe(
         'Room ABCDEFGH2345'
       );
-      expect(menuIds()).not.toContain('saveOnlineGame');
-      expect(menuIds()).not.toContain('resumeSavedGame');
-      expect(menuIds()).not.toContain('importReplay');
+      expect(await allMenuIds()).not.toContain('saveOnlineGame');
+      expect(await allMenuIds()).not.toContain('resumeSavedGame');
+      expect(await allMenuIds()).not.toContain('importReplay');
       // Play online is where a Solo table goes; a room is already online.
-      expect(menuIds()).not.toContain('p2Button');
-      expect(menuIds()).toContain('inviteOpponentMenuItem');
-      expect(menuIds()).toContain('inviteSpectatorMenuItem');
+      expect(await allMenuIds()).not.toContain('p2Button');
+      expect(await allMenuIds()).toContain('inviteOpponentMenuItem');
+      expect(await allMenuIds()).toContain('inviteSpectatorMenuItem');
       await click('#inviteOpponentMenuItem');
       expect(invite).toHaveBeenCalledTimes(3);
       expect(invite).toHaveBeenLastCalledWith('player');
       await settle();
       await act(async () => root.render(route(true)));
       await openMenu();
+      await click('#settingsSavesRow');
       expect(get('#saveOnlineGame').textContent).toBe('Save game');
       expect(get('#resumeSavedGame').textContent).toBe('Resume saved game…');
       await closeMenu();
@@ -1231,7 +1248,7 @@ describe('RemoteRoomRoute', () => {
       expect(announcements.pendingCount).toBe(0);
       expect(get('#activitySheet').textContent).toContain('Replay');
       await openMenu();
-      expect(menuIds()).toContain('exitReplayMenuItem');
+      expect(await allMenuIds()).toContain('exitReplayMenuItem');
       for (const id of [
         'deckImportButton',
         'p2Button',
@@ -1239,7 +1256,7 @@ describe('RemoteRoomRoute', () => {
         'inviteOpponentMenuItem',
         'saveOnlineGame',
       ]) {
-        expect(menuIds(), id).not.toContain(id);
+        expect(await allMenuIds(), id).not.toContain(id);
       }
       await closeMenu();
 
@@ -1333,6 +1350,7 @@ describe('RemoteRoomRoute', () => {
     );
     const socket = await connect(socketFactory);
     await openMenu();
+    await click('#settingsSavesRow');
     expect(get('#importReplay').textContent).toBe('Watch replay…');
     await closeMenu();
 
@@ -1369,7 +1387,7 @@ describe('RemoteRoomRoute', () => {
     expect(get('.ptcgsim-app-bar__mode').dataset.tableMode).toBe('replay');
     await openMenu();
     expect(find('#settings .settings-group__heading')).toBeNull();
-    expect(menuIds()).not.toContain('importReplay');
+    expect(await allMenuIds()).not.toContain('importReplay');
     await closeMenu();
     expect(socket.sent).toHaveLength(sentBeforeImport);
 
