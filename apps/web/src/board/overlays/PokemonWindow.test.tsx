@@ -323,6 +323,45 @@ describe('the Pokémon window', () => {
     });
   });
 
+  it('attacks unnamed where the table knows none of the Pokémon’s attacks, and only there', async () => {
+    const callbacks = actions();
+    // Text with no attacks written (a card made by hand, say): the window
+    // says so, and still offers an Attack.
+    const definitions = { ...view.definitions };
+    for (const stack of Object.values(view.stacks)) {
+      const top = stack.evolutionCards.at(-1);
+      if (top?.kind !== 'known') continue;
+      definitions[top.definitionId] = {
+        ...definitions[top.definitionId]!,
+        text: { hp: 60, stage: 'Basic' },
+      };
+    }
+    const untold = { ...view, definitions };
+    const window = await render({ ...stateFor(blue), view: untold }, callbacks);
+    expect(window.textContent).toContain('No Abilities or attacks');
+    const plain = window.querySelector<HTMLButtonElement>(
+      '.pokemon-window__plain-attack [data-pokemon-window-move="attack"]'
+    )!;
+    expect(plain.textContent).toBe('Attack');
+    plain.click();
+    const top =
+      untold.stacks[untold.boards[blue]!.activeStackId!]!.evolutionCards.at(
+        -1
+      )!;
+    expect(callbacks.invokeWindowAction).toHaveBeenCalledWith({
+      kind: 'context',
+      action: 'declareAttack',
+      cardId: top.id,
+    });
+    expect(callbacks.dismiss).toHaveBeenCalledWith('preview');
+    // With its attacks known, each has its own button and no plain one.
+    const known = await render(stateFor(blue), actions());
+    expect(known.querySelector('.pokemon-window__plain-attack')).toBeNull();
+    // Across the table, where this player doesn't play it, none.
+    const theirs = await render({ ...stateFor(red), view: untold }, actions());
+    expect(theirs.querySelector('.pokemon-window__plain-attack')).toBeNull();
+  });
+
   it('reads the other player’s moves without using them, at a table where they don’t play', async () => {
     const callbacks = actions();
     const window = await render(stateFor(red), callbacks);

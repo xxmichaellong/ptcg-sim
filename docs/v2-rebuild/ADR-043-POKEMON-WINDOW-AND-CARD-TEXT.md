@@ -77,7 +77,10 @@ card itself. Using an Ability was the card menu's "ability used" marker
    named only with a Pokémon everyone can see. Each move is pressed by its
    own button (Use, Attack), in one column on the moves' end, or under the
    move's text where they are narrow; the text is only read, so a tap to
-   read it uses nothing.
+   read it uses nothing. A Pokémon whose attacks the table doesn't know (no
+   card text, or none written) has a plain Attack there instead, its
+   `DeclareAttack` naming none (2026-11-05, since the rail has no Attack,
+   PX-088).
 6. **Who may press what.** Damage, conditions, reminders and the marker
    are anyone's at the table, as the card menu's are (the room's policy);
    a spectator or a replay presses nothing. Moves are their Pokémon's

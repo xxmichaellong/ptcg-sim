@@ -1133,6 +1133,34 @@ export const PokemonWindow = ({
                 <Trans>No Abilities or attacks</Trans>
               </p>
             ) : null}
+            {/* The table knows none of its attacks (no card text, or none
+                written): it can still attack, unnamed, as the rail's Attack
+                did (PX-088). */}
+            {!pending &&
+            canUseMoves &&
+            active &&
+            topId &&
+            !moves.some((move) => move.attack !== undefined) ? (
+              <div className="pokemon-window__plain-attack">
+                <button
+                  type="button"
+                  className="ptcgsim-overlay-button is-primary pokemon-window__use"
+                  data-pokemon-window-move="attack"
+                  data-move-card-id={topId}
+                  onClick={() => {
+                    act({
+                      kind: 'context',
+                      action: 'declareAttack',
+                      cardId: topId,
+                    });
+                    onUsed();
+                  }}
+                  {...tabbable}
+                >
+                  {t({ message: 'Attack', context: 'declare an attack' })}
+                </button>
+              </div>
+            ) : null}
             {text?.rules ? (
               <p className="pokemon-window__rules">
                 <RulesText text={text.rules} size={15} />

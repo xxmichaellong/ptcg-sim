@@ -270,6 +270,39 @@ describe('legacy board overlay action resolver', () => {
     });
   });
 
+  it('declares an attack unnamed for a Pokémon whose attacks the table doesn’t know', () => {
+    const view = createRendererSpikeView();
+    const localId = view.viewer.kind === 'player' ? view.viewer.playerId : '';
+    const active = view.stacks[view.boards[localId]!.activeStackId!]!;
+    const declare = (cardId: ViewCardId) =>
+      resolveLegacyBoardOverlayAction(view, {
+        kind: 'context',
+        action: 'declareAttack',
+        cardId,
+      });
+    // As the turn's own Attack was: no attack named.
+    expect(declare(active.evolutionCards.at(-1)!.id)).toEqual({
+      ok: true,
+      command: { type: 'DeclareAttack', targetPlayerId: active.boardPlayerId },
+    });
+    const hand = zoneIn(view, localId, 'hand');
+    expect(declare(hand.cards[0]!.id)).toEqual({
+      ok: false,
+      reason: 'unsupported_target',
+    });
+    // A spectator declares nothing.
+    expect(
+      resolveLegacyBoardOverlayAction(
+        { ...view, viewer: { kind: 'spectator' } } as typeof view,
+        {
+          kind: 'context',
+          action: 'declareAttack',
+          cardId: active.evolutionCards.at(-1)!.id,
+        }
+      )
+    ).toMatchObject({ ok: false });
+  });
+
   it('reuses stale-safe annotation, visibility, inspection, and random resolvers', () => {
     const view = createRendererSpikeView();
     const localId = view.viewer.kind === 'player' ? view.viewer.playerId : '';

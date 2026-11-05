@@ -192,6 +192,16 @@ export type LegacyBoardOverlayActionRequest =
       readonly name: string;
     }
   | {
+      /**
+       * The Pokémon window's plain Attack, where the table knows none of
+       * the Pokémon's attacks: declared without a name, as the rail's
+       * Attack was (PX-088).
+       */
+      readonly kind: 'context';
+      readonly action: 'declareAttack';
+      readonly cardId: ViewCardId;
+    }
+  | {
       readonly kind: 'zone';
       readonly action: LegacyBoardZoneActionId;
       readonly zoneId: string;
@@ -526,6 +536,21 @@ const resolveContextAction = (
       return resolveCardAnnotationAction(view, request.cardId, {
         type: 'toggleAbilityUsed',
       });
+    case 'declareAttack': {
+      // One of the Pokémon's own cards; no attack named, one line in the
+      // log as the turn's own Attack.
+      const stack = located.stack;
+      if (
+        !stack ||
+        !stack.evolutionCards.some((card) => card.id === request.cardId)
+      )
+        return rejected('unsupported_target');
+      if (view.viewer.kind !== 'player') return rejected('not_player');
+      return command({
+        type: 'DeclareAttack',
+        targetPlayerId: stack.boardPlayerId,
+      });
+    }
     case 'useAbility':
     case 'unmarkAbility':
     case 'useAttack': {

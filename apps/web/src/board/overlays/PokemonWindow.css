@@ -323,6 +323,13 @@
   z-index: 1;
 }
 
+/* A Pokémon whose attacks the table doesn't know still attacks, unnamed:
+   its button at the end of the line, under what the window could say. */
+.pokemon-window__plain-attack {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .pokemon-window__empty {
   margin: 0;
   padding: var(--space-4);
