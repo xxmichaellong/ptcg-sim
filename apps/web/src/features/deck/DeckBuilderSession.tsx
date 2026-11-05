@@ -771,10 +771,11 @@ export const DeckBuilderSession = ({
         .getSnapshot()
         .decks.flatMap((deck) => (deck.cardBack ? [deck.cardBack] : []));
       const current = cardBacks[target];
-      // A back deleted in the chooser leaves the saved decks that wear it,
-      // and the seats whose own back it was, which wear Standard again (said
-      // so: a deck with no back of its own would take the seat's); its Undo
-      // puts it back on those still in Standard.
+      // A back deleted in the chooser comes off everything wearing it: the
+      // saved decks, the seats whose own back it was (said so: a deck with
+      // no back of its own would take the seat's), and the seats wearing it
+      // now, on the table at once. All wear Standard again; its Undo puts
+      // it back on those still in Standard.
       const forgetWorn = (back: string): (() => void) => {
         const wearing = library
           .getSnapshot()
@@ -783,12 +784,24 @@ export const DeckBuilderSession = ({
         const seats = DECK_TARGETS.filter(
           (seat) => cardBackStore.seatCardBack(seat) === back
         );
+        const { slots } = cardBackStore.getSnapshot();
+        const worn = DECK_TARGETS.filter(
+          (seat) =>
+            slots[seat].url === back ||
+            roomCardBackOf(session ?? shownSession, seat) === back
+        );
+        const putOn = (each: readonly DeckBuilderTarget[], url: string) => {
+          let changed = false;
+          for (const seat of each) changed = putCardBack(seat, url) || changed;
+          if (changed) cardBackCoordinator.current?.flush();
+        };
         for (const id of wearing) {
           library.update(id, { cardBack: STANDARD_CARD_BACK });
         }
         for (const seat of seats) {
           cardBackStore.chooseSeatCardBack(seat, STANDARD_CARD_BACK);
         }
+        putOn(worn, STANDARD_CARD_BACK);
         return () => {
           for (const id of wearing) {
             if (library.get(id)?.cardBack === STANDARD_CARD_BACK) {
@@ -800,6 +813,11 @@ export const DeckBuilderSession = ({
               cardBackStore.chooseSeatCardBack(seat, back);
             }
           }
+          const { slots: now } = cardBackStore.getSnapshot();
+          putOn(
+            worn.filter((seat) => now[seat].url === STANDARD_CARD_BACK),
+            back
+          );
         };
       };
       chooseCardBack(target, {
@@ -808,7 +826,15 @@ export const DeckBuilderSession = ({
         forgetWorn,
       });
     },
-    [cardBackStore, cardBacks, chooseCardBack, library]
+    [
+      cardBackStore,
+      cardBacks,
+      chooseCardBack,
+      library,
+      putCardBack,
+      session,
+      shownSession,
+    ]
   );
 
   return (

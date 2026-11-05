@@ -183,10 +183,12 @@ complete and has a lot of options"; and there was no way to delete a design.
   later. The names are a lazily loaded JSON beside the module.
 - **Deleting:** each of the player's own backs in Yours has a delete
   button. It goes at once, with Undo in the chooser (a notice under the
-  modal dialog could not be reached): off the recent backs and off the
-  saved decks that wear it, which wear Standard again. An uploaded image
-  stays in the store (it is shared by reference and may be worn in rooms
-  and saves); only this player's ties to it go.
+  modal dialog could not be reached): off the recent backs, the saved decks
+  that wear it, the seats whose own back it was, and the seats wearing it
+  now (on the table at once). All say Standard outright, so no fallback
+  brings it back; Undo puts it back on those still in Standard. An uploaded
+  image stays in the store (it is shared by reference and may be worn in
+  rooms and saves); only this player's ties to it go.
 
 ## Consequences
 

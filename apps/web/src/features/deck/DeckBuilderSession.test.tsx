@@ -1363,6 +1363,56 @@ describe('DeckBuilderSession', () => {
       expect(cardBackStore.seatCardBack('main')).toBe(DESIGN);
     });
 
+    it('takes a deleted back off the seats wearing it, on the table at once, and puts it back with its Undo', async () => {
+      const DESIGN = 'design:1.navy.stripes.gold.star';
+      const session = new FakeSession();
+      const store = new DeckBuilderStore();
+      const cardBackStore = new CardBackCustodyStore();
+      const charizard = save('Charizard');
+      library.update(charizard.id, { cardBack: DESIGN });
+      const requests: BrowserCardBackRequestOptions[] = [];
+      const requestCardBack: BrowserCardBackRequest = async (options) => {
+        if (options) requests.push(options);
+        return undefined;
+      };
+      await renderSession({
+        session,
+        store,
+        cardBackStore,
+        open: true,
+        requestCardBack,
+      });
+      // Both seats wear it, on the table.
+      await click('button[aria-label="Charizard: put on P1"]');
+      await click('#nativeDeckBuilderTargetAlt');
+      await click('button[aria-label="Charizard: put on P2"]');
+      expect(cardBackStore.getSnapshot().slots.main.url).toBe(DESIGN);
+      expect(cardBackStore.getSnapshot().slots.alternate.url).toBe(DESIGN);
+      await click('#changeCardBackButton');
+      let undo: (() => void) | undefined;
+      act(() => {
+        undo = requests.at(-1)?.forgetWorn?.(DESIGN);
+      });
+      for (const seat of ['main', 'alternate'] as const) {
+        expect(cardBackStore.getSnapshot().slots[seat].url).toBe(
+          STANDARD_CARD_BACK
+        );
+      }
+      expect(sleeve('self')).toBe(STANDARD_CARD_BACK_IMAGE);
+      expect(sleeve('opponent')).toBe(STANDARD_CARD_BACK_IMAGE);
+      // Sent at once, not left for the screen to close.
+      expect(session.commands).toContainEqual({
+        type: 'SetCardBack',
+        cardBackUrl: STANDARD_CARD_BACK,
+      });
+      act(() => session.completeLatest(true));
+      act(() => undo?.());
+      for (const seat of ['main', 'alternate'] as const) {
+        expect(cardBackStore.getSnapshot().slots[seat].url).toBe(DESIGN);
+      }
+      expect(library.get(charizard.id)?.cardBack).toBe(DESIGN);
+    });
+
     it('keeps a back chosen on a saved deck with it, and puts it on with that deck', async () => {
       const session = new FakeSession();
       const store = new DeckBuilderStore();
