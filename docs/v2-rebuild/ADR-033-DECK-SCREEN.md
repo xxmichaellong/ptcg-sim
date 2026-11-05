@@ -322,6 +322,27 @@ specifically without blocking, and go from deck to table in one click.
       press that gives; plain when there is nothing to play.
     - A list on the Classics or Winning now shelves is the seat's only
       when the seat holds its very cards: names repeat across seasons.
+17. **A plain header** (2026-11-05, later still; supersedes §16's switch
+    and Play). The owner: "the outline plus the outline on the deck
+    selection feels a bit off. also the play button looks vibe coded;
+    please make it look more standard and in line with the rest of our
+    UI."
+    - **The seats' switch is one segmented control**, as the app's other
+      two-way choices are: a sunken track with no border, a segment per
+      seat. The chosen segment is raised (the app's raised-control shadow)
+      and tinted 30% in its seat's colour, and its seat ("P1") sits on a
+      chip of that colour; the other segment lies flat in the track, its
+      seat named in its colour, nothing dimmed. No ring, no border round a
+      tab, and no line under the bar: the seat's colour still washes down
+      the top of the page below.
+    - An empty seat shows a blank card (a soft fill), not a dashed outline.
+    - **Play is the app's primary button** (`ds-button--primary`): the
+      accent fill, its radius and press, a Play icon and the word; dimmed
+      as every disabled button is when no seat has a deck. Back and Play
+      are 40px (44px under a finger), a header's buttons.
+    - The deck screen's focus rings are drawn again: they were written as
+      a colour alone (`outline: var(--ptcgsim-focus-ring)`), which draws
+      none; they are 2px solid in that colour.
 
 ## Consequences
 

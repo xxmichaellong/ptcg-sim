@@ -6,11 +6,12 @@ import { ownRoomBudget } from './support/room-budget.js';
 import { dismissWelcome, openDeck } from './support/table-shell.js';
 
 /**
- * Whose deck the deck screen works on (ADR-033 §13): the chosen seat's tab
- * tinted and ringed in its colour, a line of that colour over the screen
- * below; the other tab plain; each tab's seat named in its own colour; the
- * editor naming the seat by the deck's name and edging its deck in the
- * colour.
+ * Whose deck the deck screen works on (ADR-033 §13, §17): the seats are one
+ * segmented control, the chosen seat's segment raised and tinted in its
+ * colour with its seat on a chip of that colour, and no ring or line; that
+ * colour washes down the page below; the other segment flat, its seat named
+ * in its colour; the editor naming the seat by the deck's name and edging
+ * its deck in the colour.
  */
 
 const openDeckScreen = async (page: Page, width: number, height: number) => {
@@ -48,16 +49,21 @@ const seatPaint = (page: Page) =>
       return value;
     };
     const body = document.querySelector('.deck-screen__body')!;
-    const band = getComputedStyle(body, '::after');
-    // A seat's colour as its chosen tab is tinted with it.
-    const tint = (token: string): string => {
+    const wash = getComputedStyle(body, '::before');
+    const line = getComputedStyle(body, '::after');
+    // A seat's colour as its chosen segment is tinted with it, and as the
+    // page under the bar is washed with it.
+    const mix = (token: string, share: number, base: string): string => {
       const probe = document.createElement('span');
-      probe.style.backgroundColor = `color-mix(in oklab, var(${token}) 16%, var(--color-surface-1))`;
+      probe.style.backgroundColor = `color-mix(in oklab, var(${token}) ${String(share)}%, ${base})`;
       screen.append(probe);
       const value = getComputedStyle(probe).backgroundColor;
       probe.remove();
       return value;
     };
+    const tint = (token: string): string =>
+      mix(token, 30, 'var(--color-surface-3)');
+    const washOf = (token: string): string => mix(token, 12, 'transparent');
     // A seat's colour as words: toward the theme's ink.
     const ink = (token: string): string => {
       const probe = document.createElement('span');
@@ -67,27 +73,37 @@ const seatPaint = (page: Page) =>
       probe.remove();
       return value;
     };
+    // Nothing painted, whatever colour a fade left it at.
+    const clear = (value: string): string =>
+      /^rgba\([^)]*,\s*0\)$/u.test(value) ? 'transparent' : value;
     const tray = (id: string) => {
       const node = document.getElementById(id)!.closest('.deck-tray')!;
       const style = getComputedStyle(node);
-      const tag = node.querySelector('.deck-screen__seat-tag')!;
+      const tag = getComputedStyle(
+        node.querySelector('.deck-screen__seat-tag')!
+      );
       return {
         active: node.getAttribute('data-active') === 'true',
         opacity: Number(style.opacity),
-        background: style.backgroundColor,
-        ring: style.borderTopColor,
-        tag: getComputedStyle(tag).color,
+        background: clear(style.backgroundColor),
+        border: style.borderTopWidth,
+        shadow: style.boxShadow,
+        tag: tag.color,
+        chip: clear(tag.backgroundColor),
       };
     };
     return {
       you: colour('--color-you'),
       opponent: colour('--color-opponent'),
+      chipInk: colour('--deck-seat-chip-ink'),
       youTint: tint('--color-you'),
       opponentTint: tint('--color-opponent'),
+      youWash: washOf('--color-you'),
+      opponentWash: washOf('--color-opponent'),
       youInk: ink('--color-you'),
       opponentInk: ink('--color-opponent'),
-      band: band.backgroundColor,
-      bandHeight: band.height,
+      wash: wash.backgroundColor,
+      line: line.content,
       main: tray('nativeDeckBuilderTargetMain'),
       alt: tray('nativeDeckBuilderTargetAlt'),
     };
@@ -103,32 +119,37 @@ for (const [name, width, height] of [
     test.setTimeout(120_000);
     await openDeckScreen(page, width, height);
 
-    // P1 chosen: its tab tinted and ringed in its colour, that colour along
-    // the top of the screen; P2's plain. Each names its seat in its colour.
+    // P1 chosen: its segment raised and tinted in its colour, its seat on
+    // a chip of that colour, the page washed with it below; P2's flat, its
+    // seat named in its colour. No ring, no border, no line under the bar.
     await expect
       .poll(async () => {
         const paint = await seatPaint(page);
         return (
-          paint.band === paint.you &&
+          paint.wash === paint.youWash &&
           paint.main.background === paint.youTint &&
-          paint.main.ring === paint.you
+          paint.main.chip === paint.you
         );
       })
       .toBe(true);
     let paint = await seatPaint(page);
-    expect(paint.bandHeight).toBe('3px');
+    expect(paint.line).toBe('none');
     expect(paint.main).toMatchObject({
       active: true,
       opacity: 1,
-      tag: paint.youInk,
+      border: '0px',
+      tag: paint.chipInk,
     });
+    expect(paint.main.shadow).not.toContain(paint.you);
     expect(paint.alt).toMatchObject({
       active: false,
       opacity: 1,
-      background: 'rgba(0, 0, 0, 0)',
+      border: '0px',
+      shadow: 'none',
+      background: 'transparent',
+      chip: 'transparent',
       tag: paint.opponentInk,
     });
-    expect(paint.alt.ring).not.toBe(paint.opponent);
 
     // Switched to P2: all of it follows, once each part has eased there
     // (the line and the tabs ease apart, and may land a frame apart).
@@ -137,15 +158,16 @@ for (const [name, width, height] of [
       .poll(async () => {
         const next = await seatPaint(page);
         return (
-          next.band === next.opponent &&
+          next.wash === next.opponentWash &&
           next.alt.background === next.opponentTint &&
-          next.alt.ring === next.opponent &&
-          next.main.background === 'rgba(0, 0, 0, 0)'
+          next.alt.chip === next.opponent &&
+          next.main.background === 'transparent' &&
+          next.main.chip === 'transparent'
         );
       })
       .toBe(true);
     paint = await seatPaint(page);
-    expect(paint.alt).toMatchObject({ active: true, tag: paint.opponentInk });
+    expect(paint.alt).toMatchObject({ active: true, tag: paint.chipInk });
     expect(paint.main).toMatchObject({ active: false, tag: paint.youInk });
 
     // Back on P1, its deck in the editor: the seat by the name, the sheet
