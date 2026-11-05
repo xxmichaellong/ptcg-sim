@@ -17,6 +17,7 @@ import {
   Tooltip,
 } from './index.js';
 import { ActionMenu } from './ActionMenu.js';
+import { DIALOG_EXIT_GRACE_MS } from './Dialog.js';
 import { withKeyHint } from './Tooltip.js';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
@@ -311,6 +312,43 @@ describe('confirmAction', () => {
     await click(button('confirm'));
     await settle();
     expect(second.value).toBe(true);
+  });
+
+  it('leaves once answered even when its exit never reports finished, so the next question opens', async () => {
+    // A browser that has stopped painting: the exit animation never ends.
+    const stalled = {
+      finished: new Promise<Animation>(() => undefined),
+      pending: false,
+      playState: 'running',
+    } as unknown as Animation;
+    HTMLElement.prototype.getAnimations = () => [stalled];
+    try {
+      await mountHost();
+      const first = await ask(() => confirmAction({ title: 'First?' }));
+      const second = await ask(() => confirmAction({ title: 'Second?' }));
+      await settle();
+      await click(button('cancel'));
+      await settle();
+      expect(first.value).toBe(false);
+      // Animating out still: the next question waits for it.
+      expect(dialog()?.textContent).toContain('First?');
+
+      await act(async () => {
+        await new Promise((resolve) =>
+          setTimeout(resolve, DIALOG_EXIT_GRACE_MS)
+        );
+      });
+      await settle();
+      expect(
+        document.querySelectorAll('[data-ptcgsim-overlay="alert"]')
+      ).toHaveLength(1);
+      expect(dialog()?.textContent).toContain('Second?');
+      await click(button('confirm'));
+      await settle();
+      expect(second.value).toBe(true);
+    } finally {
+      delete (HTMLElement.prototype as Partial<HTMLElement>).getAnimations;
+    }
   });
 
   it('waits for a host, and only the newest host paints it', async () => {

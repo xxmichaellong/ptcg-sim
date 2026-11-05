@@ -55,6 +55,16 @@ const hasContent = (node: ReactNode): boolean =>
   node !== undefined && node !== null && node !== false && node !== '';
 
 /**
+ * How long an answered dialog may take to animate out before it leaves
+ * anyway. Base UI keeps a closed dialog until the browser says its exit
+ * animation has finished, which needs painted frames; a browser that stops
+ * painting for a while (WebKit has, in CI) would keep it in the page, and
+ * the dialog queue waits on it, so no other dialog could open. The slowest
+ * exit (the "slow" speed) is under 200 ms.
+ */
+export const DIALOG_EXIT_GRACE_MS = 1000;
+
+/**
  * The shared frame: scrim, centring viewport and the glass panel, with the
  * title and description wired up as the dialog's accessible name and
  * description. Alert and plain dialogs share every part but the root.
@@ -108,6 +118,24 @@ const DialogSurface = ({
     else active.blur();
     // Only the transition to closed matters; the target is read then.
   }, [open]);
+  // Answered, it leaves within the grace even if its exit never reports
+  // finished: Base UI's own unmount, which tells the asker it has closed.
+  const actions = useRef<BaseDialog.Root.Actions | null>(null);
+  const exited = useRef(true);
+  useLayoutEffect(() => {
+    if (open) exited.current = false;
+  }, [open]);
+  useEffect(() => {
+    if (open) return;
+    const timer = window.setTimeout(() => {
+      if (!exited.current) actions.current?.unmount();
+    }, DIALOG_EXIT_GRACE_MS);
+    return () => window.clearTimeout(timer);
+  }, [open]);
+  const handleOpenChangeComplete = (next: boolean): void => {
+    if (!next) exited.current = true;
+    onOpenChangeComplete?.(next);
+  };
   const content = (
     <>
       <BaseDialog.Title className="ptcgsim-ui-dialog__title">
@@ -174,7 +202,8 @@ const DialogSurface = ({
     <AlertDialog.Root
       open={open}
       onOpenChange={handleOpenChange}
-      {...(onOpenChangeComplete ? { onOpenChangeComplete } : {})}
+      onOpenChangeComplete={handleOpenChangeComplete}
+      actionsRef={actions}
     >
       {parts}
     </AlertDialog.Root>
@@ -183,7 +212,8 @@ const DialogSurface = ({
       open={open}
       onOpenChange={handleOpenChange}
       disablePointerDismissal={!dismissible}
-      {...(onOpenChangeComplete ? { onOpenChangeComplete } : {})}
+      onOpenChangeComplete={handleOpenChangeComplete}
+      actionsRef={actions}
     >
       {parts}
     </BaseDialog.Root>

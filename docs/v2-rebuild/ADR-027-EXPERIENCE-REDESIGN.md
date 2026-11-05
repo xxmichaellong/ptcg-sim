@@ -83,6 +83,11 @@ summarised in `EXPERIENCE_DESIGN.md`.
      styles, or an inert, unfindable copy of the last frame that plays the
      exit and removes itself (`useOverlayExit`, `useExitGhost`; the copy
      keeps the place it was drawn at, its placing attributes stripped).
+     An answered dialog leaves within a second even if the browser never
+     says its exit has finished (`DIALOG_EXIT_GRACE_MS`, Base UI's own
+     unmount): its ending waits on painted frames, a browser that stops
+     painting would keep it, and the dialog queue opens the next one only
+     after it.
    - A window that steps aside for a drag (pile viewer, work areas, the
      preview) fades and sinks out of the way, and comes back once the card
      has landed with its entrance's fade and rise, not a snap.
