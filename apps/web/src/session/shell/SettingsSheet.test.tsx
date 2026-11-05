@@ -218,6 +218,34 @@ describe('SettingsSheet', () => {
     expect(input('coachingModeCheckbox').checked).toBe(true);
   });
 
+  it("sits in the log's column beside the table when docked: Esc and its close put it away", async () => {
+    const onOpenChange = vi.fn();
+    await render({ docked: true, onOpenChange });
+    const panel = document.querySelector<HTMLElement>('aside#settings')!;
+    expect(panel).not.toBeNull();
+    // Not a window over the table: no dialog, nothing made inert.
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
+    expect(panel.querySelector('#darkModeCheckbox')).not.toBeNull();
+    expect(panel.querySelector('#settingsDockTitle')?.textContent).toBe(
+      'Settings'
+    );
+    // It takes the focus as it opens.
+    expect(panel.contains(document.activeElement)).toBe(true);
+    await act(async () => {
+      panel.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })
+      );
+    });
+    expect(onOpenChange).toHaveBeenLastCalledWith(false);
+    await act(async () =>
+      panel.querySelector<HTMLButtonElement>('.ptcgsim-sheet__close')!.click()
+    );
+    expect(onOpenChange).toHaveBeenCalledTimes(2);
+    // Closed, it is gone.
+    await render({ docked: true, open: false });
+    expect(document.querySelector('#settings')).toBeNull();
+  });
+
   it('is not on the page while closed', async () => {
     await render({ open: false });
     expect(document.querySelector('#settings')).toBeNull();

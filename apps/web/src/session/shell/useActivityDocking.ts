@@ -17,10 +17,12 @@ export const ACTIVITY_DOCK_QUERY =
  * Whether the activity log is open, and whether it docks (ADR-030). On a
  * wide screen the log docks beside the table and stays as the player left
  * it, across visits; on a smaller one it opens over the table and starts
- * closed each time. `slide` carries the docked log in and out, and the
- * table with it.
+ * closed each time. `slide` carries the docked column in and out, and the
+ * table with it; `settingsOpen` keeps the column in while Settings has it.
  */
-export const useActivityDocking = (): {
+export const useActivityDocking = (
+  settingsOpen = false
+): {
   readonly docked: boolean;
   readonly open: boolean;
   readonly setOpen: (open: boolean) => void;
@@ -38,7 +40,7 @@ export const useActivityDocking = (): {
   const open = docked
     ? shell.activityDocked || (crossing && overlayOpen)
     : !crossing && overlayOpen;
-  const beside = docked && open;
+  const beside = docked && (open || settingsOpen);
   const [slide] = useState(() => createDockSlide(beside ? 1 : 0));
   // A window that grows or shrinks past the dock's width puts the log
   // straight in its new place; opening and closing slide.

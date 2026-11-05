@@ -274,8 +274,12 @@ test('Settings holds the table view, keeps its keys, and gives focus back', asyn
   await expect(page.locator('#settings')).toHaveCount(0);
   // Focus goes back to the menu that opened it, not lost on the page.
   await expect(menuButton).toBeFocused();
-  // A press outside puts Settings away too.
+  // Beside the table on a wide screen: a press on the table leaves it open,
+  // the table in play; its close button puts it away.
   await openSettings(page);
+  await expect(page.locator('aside#settings')).toBeVisible();
   await page.mouse.click(400, 450);
+  await expect(page.locator('#settings')).toBeVisible();
+  await page.locator('#settings .ptcgsim-sheet__close').click();
   await expect(page.locator('#settings')).toHaveCount(0);
 });

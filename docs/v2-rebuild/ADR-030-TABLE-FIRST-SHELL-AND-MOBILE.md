@@ -167,6 +167,21 @@ outlines, opponent's hand in Solo, hover preview, reset), **Appearance**
 (ADR-028), applied live and kept on this device. The Board view panel and its
 table button are gone; their controls are the Table section.
 
+**Settings beside the table** (2026-11-05, the owner: "i don't like how the
+settings drawer overlays the entire board … make settings use the same kind of
+architecture as the chat, basically just actually take up space"). Where the
+log docks (§4), Settings takes the same column instead of a sheet: an aside
+(`SettingsDock`) that slides in with the column's spring, the table making room
+and staying in play while it is open, its changes in view. One column, one
+occupant: Settings opened over a docked log hides the log (kept mounted, its
+feed, scroll and unsent message intact) and gives the column back as it
+closes; the log asked for meanwhile takes the column back. It takes the focus
+as it opens and returns it to what opened it (the menu's button) as it
+closes; Esc in it closes it, and a press on the table leaves it open.
+Narrower, it is still a sheet (§5). Its rows read as Magic Garden's
+settings do: each section a card, a hairline between rows, each row's words
+first and its switch at the end, the section names in small capitals.
+
 ### 7. The table asks for what is missing
 
 - **An empty deck shows `+`.** Before a seat has any cards its deck pile

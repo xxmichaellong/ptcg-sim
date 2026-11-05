@@ -301,7 +301,19 @@ export const RemoteRoomRoute = ({
   // lesson's deal: the coach says when it has nothing of theirs to take.
   const [lessonUndoBlocked, setLessonUndoBlocked] = useState(true);
   const undoBlocked = tutorial !== undefined && lessonUndoBlocked;
-  const activity = useActivityDocking();
+  // Settings takes the log's column while open where there is room for one
+  // (ADR-030 §Settings): the table keeps its room and stays in play.
+  const settingsOpen = sheet === 'settings';
+  const activity = useActivityDocking(settingsOpen);
+  const settingsDocked = activity.docked && settingsOpen;
+  const columnOpen = activity.docked && (activity.open || settingsOpen);
+  // The log as the player sees it: behind Settings while that is docked,
+  // and asked for, it takes the column back.
+  const logOpen = activity.open && !settingsDocked;
+  const setLogOpen = (next: boolean): void => {
+    if (next && settingsDocked) setSheet(undefined);
+    activity.setOpen(next);
+  };
   const [perspective, setPerspective] = useState<{
     readonly flipped: boolean;
     readonly actingPlayerId: string | undefined;
@@ -771,8 +783,8 @@ export const RemoteRoomRoute = ({
                 <ActivityLauncher
                   presentation={runtime.presentation}
                   {...(state.view ? { perspective: state.view } : {})}
-                  open={activity.open}
-                  onToggle={() => activity.setOpen(!activity.open)}
+                  open={logOpen}
+                  onToggle={() => setLogOpen(!logOpen)}
                   ownSeat={live.ownSeat}
                 />
               }
@@ -818,7 +830,7 @@ export const RemoteRoomRoute = ({
               ? { background: backgroundSelection.background }
               : {})}
             sessionPhase={state.sessionPhase}
-            docked={activity.docked && activity.open}
+            docked={columnOpen}
             dockSlide={activity.slide}
             board={
               <RemoteSessionBoard
@@ -833,7 +845,7 @@ export const RemoteRoomRoute = ({
                 coinFlip={runtime.presentation.coinFlip}
                 rail={rail}
                 commandsRef={boardCommands}
-                sidePanel={activity.docked && activity.open}
+                sidePanel={columnOpen}
                 sidePanelSlide={activity.slide}
                 keysSuspended={deckOpen}
                 undoBlocked={undoBlocked}
@@ -957,8 +969,8 @@ export const RemoteRoomRoute = ({
                   menu,
                   shortcutsHint: hint('table.shortcuts'),
                   log: {
-                    open: activity.open,
-                    setOpen: activity.setOpen,
+                    open: logOpen,
+                    setOpen: setLogOpen,
                     download: replaying ? exportBattleLog : live.exportLog,
                     ...(replaying ? {} : { clear: live.clearLog }),
                   },
@@ -981,8 +993,9 @@ export const RemoteRoomRoute = ({
             />
             <ActivityPanel
               open={activity.open}
-              onOpenChange={activity.setOpen}
+              onOpenChange={setLogOpen}
               docked={activity.docked}
+              hidden={settingsDocked}
               slide={activity.slide}
               presentation={runtime.presentation}
               {...(state.view ? { perspective: state.view } : {})}
@@ -1018,8 +1031,10 @@ export const RemoteRoomRoute = ({
                   })}
             />
             <SettingsSheet
-              open={sheet === 'settings'}
+              open={settingsOpen}
               onOpenChange={(open) => setSheet(open ? 'settings' : undefined)}
+              docked={activity.docked}
+              slide={activity.slide}
               {...(settingsHost.section
                 ? { section: settingsHost.section }
                 : {})}

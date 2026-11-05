@@ -47,6 +47,11 @@ export interface ActivityPanelProps {
    * while play goes on, as the old sidebar did, and the table makes room.
    */
   readonly docked: boolean;
+  /**
+   * Docked, kept but out of sight while Settings has the column: its feed,
+   * its scroll and an unsent message are there when it comes back.
+   */
+  readonly hidden?: boolean;
   /** Carries the docked log in and out (useActivityDocking). */
   readonly slide?: DockSlide;
   readonly presentation: ActivityRuntime;
@@ -137,9 +142,11 @@ const ActivityBody = ({
 /** The log in its column beside the table, sliding in and out. */
 const ActivityDock = ({
   slide,
+  hidden,
   children,
 }: {
   readonly slide: DockSlide | undefined;
+  readonly hidden: boolean;
   readonly children: ReactNode;
 }) => {
   const ref = useRef<HTMLElement>(null);
@@ -150,6 +157,7 @@ const ActivityDock = ({
       id="activitySheet"
       className="ptcgsim-activity-dock"
       aria-labelledby="activityDockTitle"
+      hidden={hidden}
       {...{ [OVERLAY_SURFACE_ATTRIBUTE]: 'panel' }}
     >
       {children}
@@ -167,6 +175,7 @@ export const ActivityPanel = ({
   open,
   onOpenChange,
   docked,
+  hidden = false,
   slide,
   status,
   headerActions: extraActions,
@@ -186,7 +195,7 @@ export const ActivityPanel = ({
   );
   if (docked) {
     return open ? (
-      <ActivityDock slide={slide}>
+      <ActivityDock slide={slide} hidden={hidden}>
         <header className="ptcgsim-sheet__header">
           <div className="ptcgsim-sheet__heading">
             <h2 id="activityDockTitle" className="ptcgsim-sheet__title">

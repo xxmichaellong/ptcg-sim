@@ -631,13 +631,19 @@ test('steps aside for the deck screen and sheets, and comes back after', async (
   await coach(page).getByRole('button', { name: 'Done' }).click();
   const done = page.locator('[data-tutorial-done]');
   await expect(done).toBeVisible();
-  // The lesson's done card leaves the deck screen and Settings usable.
+  // The lesson's done card leaves the deck screen usable.
   await openDeck(page);
   await expect(done).toHaveCount(0);
   await closeDeck(page);
   await expect(done).toBeVisible();
+  // Settings sits beside the table on a wide screen: the card stays, and
+  // both are in reach.
   await openSettings(page);
-  await expect(done).toHaveCount(0);
+  await expect(page.locator('aside#settings')).toBeVisible();
+  await expect(done).toBeVisible();
+  await page.locator('#zoneOutlinesCheckbox').uncheck();
+  await page.locator('#zoneOutlinesCheckbox').check();
   await closeSheet(page);
+  await expect(page.locator('#settings')).toHaveCount(0);
   await expect(done).toBeVisible();
 });

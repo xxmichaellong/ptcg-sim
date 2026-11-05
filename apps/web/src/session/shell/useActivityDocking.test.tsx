@@ -27,13 +27,16 @@ let host: HTMLDivElement;
 let root: Root;
 let docking: ReturnType<typeof useActivityDocking>;
 
+let settingsOpen = false;
+
 const Probe = () => {
-  docking = useActivityDocking();
+  docking = useActivityDocking(settingsOpen);
   return null;
 };
 
 beforeEach(async () => {
   wide = true;
+  settingsOpen = false;
   vi.stubGlobal('matchMedia', (query: string) => ({
     matches: query === ACTIVITY_DOCK_QUERY ? wide : false,
     media: query,
@@ -62,6 +65,21 @@ describe('useActivityDocking', () => {
     expect(ACTIVITY_DOCK_QUERY).toBe(
       '(min-width: 1025px) and (min-height: 500px)'
     );
+  });
+
+  it('keeps the column in while Settings has it, the log closed or not', async () => {
+    expect(docking.slide.target()).toBe(0);
+    settingsOpen = true;
+    await act(async () => root.render(<Probe />));
+    expect(docking.open).toBe(false);
+    expect(docking.slide.target()).toBe(1);
+    // The log opened behind it keeps the column when Settings goes.
+    await act(async () => docking.setOpen(true));
+    settingsOpen = false;
+    await act(async () => root.render(<Probe />));
+    expect(docking.slide.target()).toBe(1);
+    await act(async () => docking.setOpen(false));
+    expect(docking.slide.target()).toBe(0);
   });
 
   it('docks on a wide screen and keeps the log as the player left it', async () => {

@@ -54,14 +54,42 @@ export const chooseMenuItem = async (page: Page, id: string): Promise<void> => {
   await page.locator(`#${id}`).click();
 };
 
+/**
+ * Until the table has stopped making room for the column beside it (or
+ * taking it back): Settings docks there on a wide screen, as the log does.
+ */
+export const tableSettled = (page: Page): Promise<void> =>
+  page.evaluate(
+    () =>
+      new Promise<void>((resolve) => {
+        const surface = document.querySelector('.ptcgsim-board-surface');
+        if (!surface) {
+          resolve();
+          return;
+        }
+        let last = Number.NaN;
+        let still = 0;
+        const tick = (): void => {
+          const width = surface.getBoundingClientRect().width;
+          still = width === last ? still + 1 : 0;
+          last = width;
+          if (still >= 4) resolve();
+          else requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      })
+  );
+
 export const openSettings = async (page: Page): Promise<void> => {
   await chooseMenuItem(page, 'settingsButton');
   await expect(page.locator('#settings')).toBeVisible();
+  await tableSettled(page);
 };
 
 /** Puts away whichever sheet is open (Settings, Play online, a help page). */
 export const closeSheet = async (page: Page): Promise<void> => {
   await page.keyboard.press('Escape');
+  await tableSettled(page);
 };
 
 /** The deck screen, from the menu. */

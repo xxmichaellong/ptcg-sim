@@ -2523,6 +2523,10 @@
     "message": "Close popups",
     "translation": "Zamknij okienka"
   },
+  "QBOwbf": {
+    "message": "Close settings",
+    "translation": "Zamknij ustawienia"
+  },
   "c6pkO-": {
     "message": "Coin",
     "context": "flip a coin",

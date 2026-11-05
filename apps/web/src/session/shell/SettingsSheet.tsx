@@ -1,6 +1,13 @@
 import { Trans, useLingui } from '@lingui/react/macro';
+import { XIcon } from '@phosphor-icons/react/dist/csr/X';
 import { CARD_IMAGE_LANGUAGES, isCardImageLanguage } from '@ptcgsim/deck-core';
-import { useEffect, useSyncExternalStore } from 'react';
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useSyncExternalStore,
+  type ReactNode,
+} from 'react';
 
 import { TableArtControls } from '../../board/view/TableArtControls.js';
 import {
@@ -37,6 +44,9 @@ import {
   type SegmentedChoice,
 } from '../../ui/FormControls.js';
 import { Sheet } from '../../ui/Sheet.js';
+import { Tooltip } from '../../ui/Tooltip.js';
+import { OVERLAY_SURFACE_ATTRIBUTE } from '../../ui/overlay-surface.js';
+import { isInputMethodKey } from '../../ui/input-method.js';
 import { usePreference } from '../../preferences/usePreference.js';
 import { preferences } from '../../preferences/preference-store.js';
 import { useHotkeyHints } from '../../hotkeys/hotkey-preferences.js';
@@ -46,6 +56,7 @@ import {
   BackgroundChooser,
   type BackgroundChoice,
 } from './BackgroundChooser.js';
+import { useDockSlide, type DockSlide } from './dock-slide.js';
 import { DISCORD_URL, openHelpPage, RELEASE_NAME } from './help-pages.js';
 import './settings-sheet.css';
 import {
@@ -252,6 +263,13 @@ const KeysControl = ({ onEdit }: { readonly onEdit: () => void }) => {
 export interface SettingsSheetProps {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
+  /**
+   * Beside the table, in the log's column, rather than over it: the table
+   * makes room and stays in play while Settings is open.
+   */
+  readonly docked?: boolean;
+  /** Carries the column in and out (useActivityDocking). */
+  readonly slide?: DockSlide;
   /** Where to scroll it to as it opens ("Settings: Cards"). */
   readonly section?: SettingsSectionRequest;
   readonly darkMode: boolean;
@@ -301,16 +319,110 @@ const SettingsFooter = ({ onLeave }: { readonly onLeave: () => void }) => {
 };
 
 /**
- * Settings (ADR-030), one sheet in sections: the room (in one), the table,
- * the cards, motion, the keys (where there are keys) and the language,
- * with the release and the community at its foot. Every choice applies
- * live and is kept on this device. Beside the table where there is room,
- * so the table changes in view; from the bottom on a phone. The palette
- * finds each row by the same name, and each section ("Settings: Cards").
+ * Settings in the log's column (ADR-030): an aside like the docked log,
+ * sliding in with the column, not a window over the table. It takes the
+ * focus as it opens and gives it back as it closes; Esc in it closes it.
+ */
+const SettingsDock = ({
+  slide,
+  onClose,
+  children,
+}: {
+  readonly slide: DockSlide | undefined;
+  readonly onClose: () => void;
+  readonly children: ReactNode;
+}) => {
+  const { t } = useLingui();
+  const ref = useRef<HTMLElement>(null);
+  useDockSlide(ref, slide);
+  useLayoutEffect(() => {
+    const panel = ref.current;
+    const active =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    // Opened from a menu: the focus goes back to the button that opens it,
+    // the menu itself being gone by then.
+    // A menu is labelled by the button that opens it.
+    const menu = active?.closest<HTMLElement>('[role="menu"]');
+    const opener = menu?.getAttribute('aria-labelledby');
+    const before =
+      (opener ? document.getElementById(opener) : null) ??
+      (menu ? null : active);
+    // After the menu that opened it has let go of the focus.
+    const frame = requestAnimationFrame(() => {
+      const active = document.activeElement;
+      if (panel && !panel.contains(active)) {
+        panel.focus({ preventScroll: true });
+      }
+    });
+    return () => {
+      cancelAnimationFrame(frame);
+      const active = document.activeElement;
+      const lost =
+        active === null || active === document.body || panel?.contains(active);
+      if (lost && before?.isConnected && !panel?.contains(before)) {
+        before.focus({ preventScroll: true });
+      }
+    };
+  }, []);
+  return (
+    <aside
+      ref={ref}
+      id="settings"
+      className="ptcgsim-activity-dock ptcgsim-settings-dock"
+      aria-labelledby="settingsDockTitle"
+      tabIndex={-1}
+      onKeyDown={(event) => {
+        if (
+          event.key !== 'Escape' ||
+          event.defaultPrevented ||
+          isInputMethodKey(event.nativeEvent)
+        ) {
+          return;
+        }
+        event.preventDefault();
+        event.stopPropagation();
+        onClose();
+      }}
+      {...{ [OVERLAY_SURFACE_ATTRIBUTE]: 'panel' }}
+    >
+      <header className="ptcgsim-sheet__header">
+        <div className="ptcgsim-sheet__heading">
+          <h2 id="settingsDockTitle" className="ptcgsim-sheet__title">
+            {t`Settings`}
+          </h2>
+        </div>
+        <Tooltip content={t`Close settings`} side="bottom">
+          <button
+            type="button"
+            className="ptcgsim-sheet__close"
+            aria-label={t`Close settings`}
+            onClick={onClose}
+          >
+            <XIcon aria-hidden="true" />
+          </button>
+        </Tooltip>
+      </header>
+      <div className="ptcgsim-settings-dock__body">{children}</div>
+    </aside>
+  );
+};
+
+/**
+ * Settings (ADR-030), in sections: the room (in one), the table, the
+ * cards, motion, the keys (where there are keys) and the language, with
+ * the release and the community at its foot. Every choice applies live
+ * and is kept on this device. In the log's column where there is room, so
+ * the table changes in view and stays in play; over the table on a
+ * smaller screen, from the bottom on a phone. The palette finds each row
+ * by the same name, and each section ("Settings: Cards").
  */
 export const SettingsSheet = ({
   open,
   onOpenChange,
+  docked = false,
+  slide,
   section,
   darkMode,
   onDarkModeChange,
@@ -347,16 +459,8 @@ export const SettingsSheet = ({
   );
   // One window at a time: Settings gives way to what it opens.
   const leave = (): void => onOpenChange(false);
-  return (
-    <Sheet
-      open={open}
-      onOpenChange={onOpenChange}
-      title={t`Settings`}
-      placement="side"
-      size="sm"
-      id="settings"
-      className="ptcgsim-settings-sheet"
-    >
+  const body = (
+    <>
       {boardFlip ? (
         <SettingsSection title={t`Room`} id="settingsRoom">
           <SwitchRow
@@ -407,6 +511,26 @@ export const SettingsSheet = ({
         <CardImageLanguageControl />
       </SettingsSection>
       <SettingsFooter onLeave={leave} />
+    </>
+  );
+  if (docked) {
+    return open ? (
+      <SettingsDock slide={slide} onClose={leave}>
+        {body}
+      </SettingsDock>
+    ) : null;
+  }
+  return (
+    <Sheet
+      open={open}
+      onOpenChange={onOpenChange}
+      title={t`Settings`}
+      placement="side"
+      size="sm"
+      id="settings"
+      className="ptcgsim-settings-sheet"
+    >
+      {body}
     </Sheet>
   );
 };
