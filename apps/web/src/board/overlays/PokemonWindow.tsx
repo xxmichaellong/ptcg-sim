@@ -646,16 +646,25 @@ export const PokemonWindow = ({
     resolved: resolveCardText(definitionOf(card), catalog),
   }));
   const pending = texts.some((entry) => entry.resolved.status === 'pending');
-  const known = texts.flatMap((entry) =>
-    entry.resolved.status === 'own' || entry.resolved.status === 'catalog'
-      ? [{ ...entry, text: entry.resolved.text }]
-      : []
-  );
-  const own = known[0]?.text;
-  const inherited = breakOver ? known[1]?.text : undefined;
+  // Each card's text in its own place: the top card's first, then (a
+  // BREAK) the Stage's under it, or (a card in pieces) the other pieces'.
+  const textOf = (index: number): CardText | undefined => {
+    const resolved = texts[index]?.resolved;
+    return resolved?.status === 'own' || resolved?.status === 'catalog'
+      ? resolved.text
+      : undefined;
+  };
+  // The pieces of a card are one card: any of them says it.
+  const ownIndex = joined
+    ? texts.findIndex((_, index) => textOf(index) !== undefined)
+    : 0;
+  const own = ownIndex >= 0 ? textOf(ownIndex) : undefined;
+  const inherited = breakOver ? textOf(1) : undefined;
   // A BREAK plays with its Stage below's Weakness, Resistance and Retreat:
   // its printed card has none (the catalog says Retreat 0). A BREAK given
   // text of its own keeps what that says, the Stage's filling the rest.
+  // One whose text no one knows has only those of its Stage's, never its
+  // HP or its stage.
   const statsOf = (from: CardText | undefined) => ({
     weakness: from?.weakness,
     weaknessValue: from?.weaknessValue,
@@ -665,7 +674,7 @@ export const PokemonWindow = ({
   });
   const breakStats =
     own && inherited
-      ? known[0]?.resolved.status === 'own'
+      ? texts[0]?.resolved.status === 'own'
         ? Object.fromEntries(
             Object.entries(statsOf(own)).map(([key, value]) => [
               key,
@@ -677,15 +686,23 @@ export const PokemonWindow = ({
       : {};
   const text: CardText | undefined = own
     ? { ...inherited, ...own, ...breakStats }
-    : undefined;
+    : inherited
+      ? (Object.fromEntries(
+          Object.entries(statsOf(inherited)).filter(
+            ([, value]) => value !== undefined
+          )
+        ) as CardText)
+      : undefined;
   // Each move once: the pieces of a card often each say the whole card.
   const seenMoves = new Set<string>();
-  const moves: WindowMove[] = known.flatMap((entry, index) => {
+  const moves: WindowMove[] = texts.flatMap((entry, index) => {
+    const said = textOf(index);
+    if (!said) return [];
     const from = index > 0 && breakOver ? entry.name : undefined;
     const base = { cardId: entry.card.id, ...(from ? { from } : {}) };
     const own: WindowMove[] = [
-      ...(entry.text.abilities ?? []).map((ability) => ({ ...base, ability })),
-      ...(entry.text.attacks ?? []).map((attack) => ({ ...base, attack })),
+      ...(said.abilities ?? []).map((ability) => ({ ...base, ability })),
+      ...(said.attacks ?? []).map((attack) => ({ ...base, attack })),
     ];
     return own.filter((move) => {
       const key = JSON.stringify(move.ability ?? move.attack);

@@ -190,4 +190,91 @@ describe('a BREAK in its window', () => {
       await act(async () => root.unmount());
     }
   );
+
+  it('shows nothing of its Stage as its own when its own print is unknown', async () => {
+    const base = createRendererSpikeView();
+    const blue = base.playerOrder[0]!;
+    const stackId = base.boards[blue]!.activeStackId!;
+    const stack = base.stacks[stackId]!;
+    const [lower, top] = [
+      stack.evolutionCards.at(-2),
+      stack.evolutionCards.at(-1),
+    ];
+    if (lower?.kind !== 'known' || top?.kind !== 'known') return;
+    const definitions = { ...base.definitions };
+    definitions[lower.definitionId] = {
+      ...definitions[lower.definitionId]!,
+      name: 'Florges',
+      imageUrl: 'https://assets.tcgdex.net/en/xy/xy8/103/high.webp',
+      print: 'BKT 103',
+    };
+    definitions[top.definitionId] = {
+      ...definitions[top.definitionId]!,
+      name: 'Florges BREAK',
+      imageUrl: '/unknown-break.png',
+    };
+    const view: MatchViewState = { ...base, definitions };
+    const scene = createBoardSceneForViewport(view, {
+      geometryVersion: 1,
+      viewport: { width: 1280, height: 720, devicePixelRatio: 1 },
+      bottomPlayerId: blue,
+      splitRatio: 0.5,
+    });
+    const host = document.createElement('div');
+    document.body.replaceChildren(host);
+    const root = createRoot(host);
+    await act(async () =>
+      root.render(
+        createElement(LegacyBoardOverlays, {
+          state: {
+            ...createInitialBoardSessionControllerState(),
+            generation: 1,
+            sessionPhase: 'ready',
+            source: { kind: 'live' },
+            view,
+            scene,
+            canSubmitCommands: true,
+            overlays: {
+              contextMenuCardId: null,
+              preview: { kind: 'stack', stackId, focusCardId: top.id },
+              input: null,
+            },
+          },
+          darkMode: false,
+          actions: {
+            emitOpenedZoneCardIntent: vi.fn(),
+            dismiss: vi.fn(),
+            invokeContextAction: vi.fn(),
+            invokeZoneAction: vi.fn(),
+            submitDamageInput: vi.fn(),
+            submitSpecialConditionInput: vi.fn(),
+            submitCountInput: vi.fn(),
+            submitShortcutCountInput: vi.fn(),
+            submitCategoryChoice: vi.fn(),
+            submitMoveChoice: vi.fn(),
+          },
+        })
+      )
+    );
+    let window = host.querySelector<HTMLElement>('[data-pokemon-window]');
+    if (!window) {
+      const details = [...host.querySelectorAll('button')].find(
+        (button) => button.textContent === 'Details'
+      )!;
+      await act(async () => details.click());
+      window = host.querySelector<HTMLElement>('[data-pokemon-window]')!;
+    }
+    // Not Florges's 130 HP, nor its Stage 2: its moves and its Retreat.
+    expect(window.querySelector('.pokemon-window__hp-value')).toBeNull();
+    expect(
+      window.querySelector('.pokemon-window__eyebrow')?.textContent
+    ).not.toContain('Stage 2');
+    expect(window.textContent).toContain('Wonder Shine');
+    expect(
+      window
+        .querySelectorAll('.pokemon-window__stats div')[2]!
+        .querySelectorAll('.energy-symbol')
+    ).toHaveLength(1);
+    await act(async () => root.unmount());
+  });
 });

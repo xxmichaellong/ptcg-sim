@@ -234,6 +234,41 @@ export const DeckEditor = ({
     flashSaved();
   }, [cards, deck.id, flashSaved, library]);
 
+  // A hand-made card is another card once its text changes (ADR-043), and
+  // Undo or Redo brings back the one it was: the sheet and the cover go
+  // with it, to the one card in the deck it now is.
+  const previousCards = useRef(cards);
+  useEffect(() => {
+    const before = previousCards.current;
+    previousCards.current = cards;
+    if (before === cards) return;
+    const counterpart = (
+      id: string,
+      known?: DeckCard
+    ): DeckCard | undefined => {
+      if (cards.some((entry) => entry.card.id === id)) return undefined;
+      const was = before.find((entry) => entry.card.id === id)?.card ?? known;
+      if (!was?.id.startsWith('custom:')) return undefined;
+      const same = cards.filter(
+        ({ card }) =>
+          card.id.startsWith('custom:') &&
+          card.name === was.name &&
+          card.category === was.category &&
+          card.image === was.image &&
+          JSON.stringify(card.presentation) === JSON.stringify(was.presentation)
+      );
+      return same.length === 1 ? same[0]!.card : undefined;
+    };
+    if (inspected?.kind === 'deck') {
+      const card = counterpart(inspected.card.id, inspected.card);
+      if (card) setInspected({ kind: 'deck', card });
+    }
+    if (deck.coverId) {
+      const card = counterpart(deck.coverId);
+      if (card) library.update(deck.id, { coverId: card.id });
+    }
+  }, [cards, inspected, deck.coverId, deck.id, library]);
+
   /** The deck as stored now: newer than `cards` between renders. */
   const current = useCallback(
     (): DeckList => library.get(deck.id)?.cards ?? cards,
@@ -318,8 +353,13 @@ export const DeckEditor = ({
       | 'keyCode'
       | 'target'
       | 'preventDefault'
+      | 'defaultPrevented'
     >
   ): void => {
+    // A key already answered isn't answered twice: one from a window drawn
+    // elsewhere (a card's details) reaches this handler twice through
+    // React's portal, and its Ctrl+Z undid two steps.
+    if (event.defaultPrevented) return;
     // A window of the editor's own open over it (a custom card's) keeps
     // its keys. One drawn elsewhere (a card's details, whose + and prints
     // change the deck) keeps only `/`: undo and redo still reach the deck.

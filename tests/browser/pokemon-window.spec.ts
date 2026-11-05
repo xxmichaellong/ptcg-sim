@@ -320,6 +320,20 @@ test('a card’s own text plays on the table: a Pokémon made by hand, and a pri
   await page.locator('#nativeCustomCardSubmit').click();
   await expect(dialog).toBeHidden();
 
+  // Its text edited, then the edit undone: the sheet stays on the card
+  // (another card while it said other things, the same one back).
+  await page.locator('.deck-row__card[aria-label*="Homebrew"]').click();
+  await page.locator('[data-card-text-edit]').click();
+  await page.getByRole('spinbutton', { name: 'HP' }).fill('100');
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(sheet).toContainText('100 HP');
+  await page.keyboard.press('Control+z');
+  await expect(sheet).toContainText('90 HP');
+  await expect(sheet.locator('[aria-label="1 in deck"]')).toBeVisible();
+  await expect(sheet.locator('[data-card-text-edit]')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(sheet).toBeHidden();
+
   // On the table: each opens in its window with its own text.
   await page.locator('#nativeDeckBuilderPlayButton').click();
   await expect(
