@@ -228,9 +228,10 @@ describe('placing the rail', () => {
   });
 
   it('goes past the Stadium in a room whose table can’t be turned, where its turn fits there', () => {
-    // Room past the Stadium for five buttons: Turn, Attack, Pass, Undo and
-    // More, the coin on the table; Solo's Switch side would be a sixth.
-    const turn = { end: 920, coinOnTable: true, actions: playing.slice(0, 4) };
+    // Room past the Stadium for five buttons in the dock: Turn, Attack,
+    // Pass, Undo and More, the coin on the table; Solo's Switch side would
+    // be a sixth.
+    const turn = { end: 888, coinOnTable: true, actions: playing.slice(0, 4) };
     expect(render(turn)).toContain('data-align="start"');
     const room = render({ ...turn, canSwitchSide: false });
     expect(room).toContain('data-align="end"');

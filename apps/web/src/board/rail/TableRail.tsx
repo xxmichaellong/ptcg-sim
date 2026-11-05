@@ -142,7 +142,7 @@ export const moveAlongToolbar = (event: ReactKeyboardEvent<HTMLElement>) => {
   if (event.target.dataset.focusVisible === 'false') return;
   const buttons = Array.from(
     event.currentTarget.querySelectorAll<HTMLButtonElement>(
-      'button.ptcgsim-rail-button'
+      'button.ptcgsim-rail-button, button.ptcgsim-app-bar__switch-option'
     )
   );
   const index = buttons.indexOf(event.target as HTMLButtonElement);
@@ -211,8 +211,13 @@ export interface TableRailProps {
 }
 
 const EDGE_PX = 8;
-/** The gap between rail buttons (TableRail.css's `gap`). */
-const GAP_PX = 10;
+/** The gap between the dock's buttons (TableRail.css's `gap`). */
+const GAP_PX = 4;
+/**
+ * The dock's padding round its buttons (TableRail.css), each side: the
+ * dock is their own panel, set apart from the mat (ADR-036).
+ */
+const DOCK_PAD_PX = 3;
 /**
  * The room kept clear above and below the buttons in the seam, so they
  * don't crowd the markers, coin and outlines beside it -- where the seam
@@ -243,9 +248,12 @@ const RIGHT_END_MIN_BUTTONS = 4;
  */
 const FULL_RAIL_BUTTONS = 7;
 
-/** How many buttons fit in `room`. */
+/** How many buttons fit in a dock `room` wide. */
 const slotsIn = (room: number, buttonPx: number): number =>
-  Math.max(0, Math.floor((room + GAP_PX) / (buttonPx + GAP_PX)));
+  Math.max(
+    0,
+    Math.floor((room - 2 * DOCK_PAD_PX + GAP_PX) / (buttonPx + GAP_PX))
+  );
 
 /** A menu is worth opening for three choices or more; fewer sit out. */
 const MENU_MINIMUM = 3;
@@ -499,42 +507,44 @@ export const TableRail = memo(function TableRail({
         onKeyDown={moveAlongToolbar}
         style={{ left: actionsStart, width: actionsWidth }}
       >
-        {fitted.shown.map((action) => (
-          <Tooltip
-            key={action.id}
-            content={withKeyHint(action.title ?? action.label, action.hint)}
-            side="top"
-          >
-            <RailButton
-              id={action.id}
-              icon={action.icon}
-              label={action.label}
-              {...(action.title ? { 'aria-label': action.title } : {})}
-              primary={action.primary === true}
-              pending={action.pending === true}
-              {...(action.disabled
-                ? { 'aria-disabled': true }
-                : { onClick: action.onSelect })}
-            />
-          </Tooltip>
-        ))}
-        {fitted.more.length > 0 ? (
-          <ActionMenu
-            label={t`More game actions`}
-            entries={fitted.more}
-            side="top"
-            align="start"
-            tooltip={t`More game actions`}
-            trigger={
+        <div className="ptcgsim-table-rail__dock" data-seat={seat}>
+          {fitted.shown.map((action) => (
+            <Tooltip
+              key={action.id}
+              content={withKeyHint(action.title ?? action.label, action.hint)}
+              side="top"
+            >
               <RailButton
-                id="moreActionsButton"
-                icon={DotsThreeIcon}
-                label={t({ message: 'More', context: 'more actions' })}
-                iconOnly
+                id={action.id}
+                icon={action.icon}
+                label={action.label}
+                {...(action.title ? { 'aria-label': action.title } : {})}
+                primary={action.primary === true}
+                pending={action.pending === true}
+                {...(action.disabled
+                  ? { 'aria-disabled': true }
+                  : { onClick: action.onSelect })}
               />
-            }
-          />
-        ) : null}
+            </Tooltip>
+          ))}
+          {fitted.more.length > 0 ? (
+            <ActionMenu
+              label={t`More game actions`}
+              entries={fitted.more}
+              side="top"
+              align="start"
+              tooltip={t`More game actions`}
+              trigger={
+                <RailButton
+                  id="moreActionsButton"
+                  icon={DotsThreeIcon}
+                  label={t({ message: 'More', context: 'more actions' })}
+                  iconOnly
+                />
+              }
+            />
+          ) : null}
+        </div>
       </div>
       {taken ? (
         <div

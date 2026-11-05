@@ -1,6 +1,6 @@
 /*
- * The table rail (TableRail.tsx): the game's actions printed into the mat
- * along the seam (see "Printed into the mat" below). A button is as tall as
+ * The table rail (TableRail.tsx): the game's actions in a dock of their
+ * own along the seam (see "The dock" below). A button is as tall as
  * the seam allows; under a finger the layout gives the seam room for 44px
  * targets. Labels give way to icons when the actions run short of room
  * before the Stadium. `.ptcgsim-rail-button` alone is the app bar's and the
@@ -31,8 +31,7 @@
   bottom: 0;
   display: flex;
   align-items: center;
-  /* GAP_PX in TableRail.tsx: room between the printed buttons. */
-  gap: 10px;
+  gap: 0;
 }
 
 .ptcgsim-table-rail__actions {
@@ -149,15 +148,6 @@
     var(--highlight-top);
 }
 
-/* Past the mat's edge the rail lies on the desk, and rings in its tones. */
-.ptcgsim-table-rail[data-over-desk='true'] .ptcgsim-rail-button:focus-visible {
-  outline-color: var(--color-desk-focus, var(--color-accent));
-  box-shadow:
-    0 0 0 2px var(--color-desk-focus-halo, transparent),
-    var(--shadow-2),
-    var(--highlight-top);
-}
-
 .ptcgsim-rail-button[aria-expanded='true'],
 .ptcgsim-rail-button[aria-pressed='true'] {
   background-color: var(--color-surface-3);
@@ -235,138 +225,83 @@
   }
 }
 
-/* ---- Printed into the mat ------------------------------------------- */
+/* ---- The dock ------------------------------------------------------- */
 
-/* The actions are part of the playmat's print, in its ink, like the zone
-   outlines and the ring under each Active (table-art.css): debossed
-   rounded squares with the icon struck in, no glass and no shadow over the
-   felt. Every look inks them in its own tokens, by Night and by Day; the
-   stage's main action is printed in the accent, an acting seat's in its
-   colour. Tilted, they lie on the table's plane with the mat
+/* The game's actions are meta actions, not part of the game on the mat:
+   they sit together in a dock of their own, raised off the table, which
+   covers the seam's line under it. Its buttons are plain controls in the
+   panels' colours, so they read the same on every mat, by Night and by
+   Day; the stage's main action is filled in the accent, an acting seat's
+   in its colour. Tilted, the dock lies on the table's plane with the mat
    (LegacyBoardChrome's rail plane). */
+.ptcgsim-table-rail__dock {
+  --dock-fill: var(--color-accent-fill);
+  --dock-fill-hover: var(--color-accent-fill-hover);
+
+  display: flex;
+  flex: none;
+  align-items: center;
+  /* GAP_PX and DOCK_PAD_PX in TableRail.tsx. */
+  gap: 4px;
+  padding: 3px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: calc(var(--radius-control) + 4px);
+  background: color-mix(in oklab, var(--color-surface-2) 96%, transparent);
+  box-shadow: var(--shadow-3), var(--highlight-top);
+  pointer-events: auto;
+}
+
+/* Acting for the other seat (a turned-around table): the dock is ringed
+   in its colour, and its main action filled in it. */
+.ptcgsim-table-rail__dock[data-seat='opponent'] {
+  --dock-fill: color-mix(in oklab, var(--color-opponent) 82%, black);
+  --dock-fill-hover: color-mix(in oklab, var(--color-opponent) 72%, black);
+
+  border-color: color-mix(in oklab, var(--color-opponent) 65%, transparent);
+}
+
 .ptcgsim-table-rail .ptcgsim-rail-button {
-  --rail-ink: var(--color-felt-label);
-  --rail-line: var(--color-felt-line-strong);
-  --rail-fill: var(--color-felt-mark);
-  --rail-press: color-mix(in oklab, var(--color-felt-rim) 42%, transparent);
-  --rail-lip: color-mix(in oklab, var(--color-felt-thread-hi) 60%, transparent);
-  /* The cloth under the print, solid: printed ink covers the centre line
-     and the zone outlines it crosses, so none shows through a button. */
-  --rail-ground: var(--color-felt);
-  --rail-wash: transparent;
-  border: 1.5px solid var(--rail-line);
-  background-color: var(--rail-ground);
-  background-image:
-    linear-gradient(var(--rail-wash), var(--rail-wash)),
-    linear-gradient(var(--rail-fill), var(--rail-fill)),
-    linear-gradient(
-      180deg,
-      color-mix(in oklab, var(--color-felt-deep) 60%, transparent),
-      transparent 60%
-    );
-  box-shadow:
-    inset 0 1.5px 2px var(--rail-press),
-    inset 0 -1px 0 var(--rail-lip),
-    0 1px 0 var(--rail-lip);
-  color: var(--rail-ink);
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  box-shadow: none;
+  color: var(--color-text);
 }
 
 .ptcgsim-table-rail .ptcgsim-rail-button[data-tone='primary'] {
-  --rail-ink: color-mix(
-    in oklab,
-    var(--color-accent) 72%,
-    var(--color-desk-ink)
-  );
-  --rail-line: color-mix(in oklab, var(--color-accent) 70%, transparent);
-  --rail-fill: color-mix(in oklab, var(--color-accent) 16%, transparent);
-}
-
-/* Acting for the other seat (a turned-around table): printed in its
-   colour. */
-.ptcgsim-table-rail__actions[data-seat='opponent'] .ptcgsim-rail-button {
-  --rail-ink: color-mix(
-    in oklab,
-    var(--color-opponent) 72%,
-    var(--color-desk-ink)
-  );
-  --rail-line: color-mix(in oklab, var(--color-opponent) 55%, transparent);
-}
-
-.ptcgsim-table-rail__actions[data-seat='opponent']
-  .ptcgsim-rail-button[data-tone='primary'] {
-  --rail-line: color-mix(in oklab, var(--color-opponent) 70%, transparent);
-  --rail-fill: color-mix(in oklab, var(--color-opponent) 18%, transparent);
-}
-
-/* Past the mat's edge (one half shown on a wide table) the row lies on the
-   desk: struck into the wood, in the desk's ink. */
-.ptcgsim-table-rail[data-over-desk='true'] .ptcgsim-rail-button {
-  --rail-ink: var(--color-desk-ink);
-  --rail-line: color-mix(in oklab, var(--color-desk-ink) 34%, transparent);
-  --rail-fill: color-mix(in oklab, var(--color-desk-ink) 7%, transparent);
-  --rail-press: var(--color-desk-vignette);
-  --rail-lip: color-mix(in oklab, var(--color-desk-hi) 60%, transparent);
-  --rail-ground: var(--color-desk);
+  background: var(--dock-fill);
+  color: var(--color-text-on-accent);
 }
 
 @media (hover: hover) and (pointer: fine) {
   .ptcgsim-table-rail .ptcgsim-rail-button:hover {
-    --rail-wash: var(--color-felt-hover);
-    box-shadow:
-      inset 0 2px 3px var(--rail-press),
-      inset 0 -1px 0 var(--rail-lip);
+    background-color: var(--color-surface-3);
+    box-shadow: none;
+    color: var(--color-text);
   }
-  .ptcgsim-table-rail .ptcgsim-rail-button[data-tone='primary']:hover {
-    --rail-wash: color-mix(in oklab, var(--rail-line) 22%, transparent);
-  }
-  .ptcgsim-table-rail .ptcgsim-rail-button[aria-disabled='true']:hover {
-    --rail-wash: transparent;
-    box-shadow:
-      inset 0 1.5px 2px var(--rail-press),
-      inset 0 -1px 0 var(--rail-lip);
-  }
-}
 
-/* Pressed into the cloth, not scaled off it. */
-.ptcgsim-table-rail .ptcgsim-rail-button:active {
-  scale: none;
-  box-shadow:
-    inset 0 3px 4px var(--rail-press),
-    inset 0 -1px 0 var(--rail-lip);
+  .ptcgsim-table-rail .ptcgsim-rail-button[data-tone='primary']:hover {
+    background-color: var(--dock-fill-hover);
+    color: var(--color-text-on-accent);
+  }
+
+  .ptcgsim-table-rail .ptcgsim-rail-button[aria-disabled='true']:hover {
+    background-color: transparent;
+  }
 }
 
 .ptcgsim-table-rail .ptcgsim-rail-button[aria-expanded='true'],
 .ptcgsim-table-rail .ptcgsim-rail-button[aria-pressed='true'] {
-  --rail-wash: var(--color-felt-hover);
-  border-color: var(--rail-line);
-  box-shadow:
-    inset 0 2.5px 3px var(--rail-press),
-    inset 0 -1px 0 var(--rail-lip);
+  background-color: var(--color-surface-3);
 }
 
 .ptcgsim-table-rail .ptcgsim-rail-button:focus-visible {
-  box-shadow:
-    0 0 0 2px var(--color-felt-focus-halo, transparent),
-    inset 0 1.5px 2px var(--rail-press);
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+  box-shadow: none;
 }
 
-.ptcgsim-table-rail[data-over-desk='true'] .ptcgsim-rail-button:focus-visible {
-  box-shadow:
-    0 0 0 2px var(--color-desk-focus-halo, transparent),
-    inset 0 1.5px 2px var(--rail-press);
-}
-
-/* Nothing to do now: its print faded, still in its place. The ink fades,
-   not the button, which keeps covering the lines under it. */
+/* Nothing to do now: faded, still in its place. */
 .ptcgsim-table-rail .ptcgsim-rail-button[aria-disabled='true'] {
-  --rail-ink: color-mix(in oklab, var(--color-felt-label) 45%, transparent);
-  --rail-line: color-mix(
-    in oklab,
-    var(--color-felt-line-strong) 50%,
-    transparent
-  );
-  opacity: 1;
-  box-shadow:
-    inset 0 1.5px 2px var(--rail-press),
-    inset 0 -1px 0 var(--rail-lip);
+  opacity: 0.4;
 }
