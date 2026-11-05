@@ -232,7 +232,11 @@ test('React DOM contains external card asset failures and recovers the stable ca
   await expect(card).toBeEnabled();
   await card.click();
   await expect(page.locator('output')).toContainText('CardSelected');
-  expect(requestedUrls).toEqual([
+  // A missing picture asks again by itself (ADR-030 §8), whenever its
+  // timer comes round: that retry, and only that one, may be among them.
+  const retried = requestedUrls.filter((url) => url.includes('ptcgsim-retry='));
+  expect(retried.every((url) => url.startsWith(`${missingUrl}?`))).toBe(true);
+  expect(requestedUrls.filter((url) => !retried.includes(url))).toEqual([
     missingUrl,
     corruptUrl,
     directUrl,
@@ -243,8 +247,11 @@ test('React DOM contains external card asset failures and recovers the stable ca
   ]);
   expect(requestResourceTypes).toEqual(requestedUrls.map(() => 'image'));
   expect(runtimeErrors.errors).toEqual([]);
-  expect(runtimeErrors.expectedResourceErrors).toHaveLength(1);
-  expect(runtimeErrors.expectedResourceErrors[0]).toContain('404');
+  // The missing picture's 404, and its retry's if it came.
+  expect(runtimeErrors.expectedResourceErrors).toHaveLength(1 + retried.length);
+  for (const error of runtimeErrors.expectedResourceErrors) {
+    expect(error).toContain('404');
+  }
 
   await testInfo.attach('external-card-asset-evidence.json', {
     body: Buffer.from(

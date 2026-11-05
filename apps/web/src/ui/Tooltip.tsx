@@ -118,16 +118,14 @@ export const Tooltip = ({
     <BaseTooltip.Root
       disabled={disabled}
       disableHoverablePopup
-      {...(tapToShow
-        ? {
-            open: hovered || tapped,
-            // Base UI's own opening and closing is the mouse's and the
-            // keyboard's; a tap's stays until the next tap, a press
-            // elsewhere or Escape (above) -- the finger lifting reads to it
-            // as the pointer leaving.
-            onOpenChange: (open: boolean) => setHovered(open),
-          }
-        : {})}
+      // Always held here, so a tooltip whose `tapToShow` changes (the bar's
+      // Online, an action in Solo and a status online) never switches Base
+      // UI between its own state and this. Base UI's opening and closing is
+      // the mouse's and the keyboard's; a tap's stays until the next tap, a
+      // press elsewhere or Escape (above) -- the finger lifting reads to it
+      // as the pointer leaving.
+      open={hovered || (tapToShow && tapped)}
+      onOpenChange={(open: boolean) => setHovered(open)}
     >
       <BaseTooltip.Trigger
         ref={setTrigger}
