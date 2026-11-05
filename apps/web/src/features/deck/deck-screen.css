@@ -502,6 +502,7 @@
   color: var(--color-text);
 }
 
+/* A field that narrows a list on the page (Tournaments' events). */
 .deck-filter {
   display: inline-flex;
   align-items: center;
@@ -526,17 +527,29 @@
   color: var(--color-text);
 }
 
-/* The finder: one field for a deck's name or a whole list. */
+/* The finder: one field for a deck's name or a whole list, on the shelf's
+   own row beside New deck; a list pasted in takes a line of its own. */
+.deck-shelf__head .deck-section-title {
+  flex: 1 1 auto;
+}
+
 .deck-finder {
   position: relative;
+  flex: 0 1 420px;
+  min-width: 240px;
+}
+
+.deck-finder[data-mode='list'] {
+  flex-basis: 100%;
+  order: 3;
 }
 
 .deck-paste {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start;
-  gap: var(--space-2);
-  padding: var(--space-1-5) var(--space-2);
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-1);
   border: 1px solid var(--color-border-strong);
   border-radius: var(--deck-panel-radius);
   background: var(--deck-panel);
@@ -553,33 +566,36 @@
     var(--shadow-1);
 }
 
-.deck-finder[data-mode='search'] .deck-paste {
-  border-end-start-radius: 0;
-  border-end-end-radius: 0;
+.deck-finder[data-mode='list'] .deck-paste {
+  align-items: flex-start;
+  padding: var(--space-1-5) var(--space-2);
 }
 
 .deck-paste__icon {
   flex: none;
-  width: 20px;
-  height: 20px;
-  margin-block: 12px 0;
+  width: 18px;
+  height: 18px;
   margin-inline: var(--space-2) 0;
   color: var(--color-text-faint);
 }
 
+.deck-finder[data-mode='list'] .deck-paste__icon {
+  margin-block-start: 11px;
+}
+
 .deck-paste__input {
   /* Beside the icon down to the narrowest phone (320 px). */
-  flex: 1 1 160px;
+  flex: 1 1 120px;
   min-width: 0;
-  min-height: 44px;
+  min-height: 38px;
   max-height: 40vh;
   box-sizing: border-box;
-  padding: 11px var(--space-2);
+  padding: 8px var(--space-1-5);
   border: 0;
   background: transparent;
   color: var(--color-text);
   font: inherit;
-  font-size: var(--text-lg);
+  font-size: var(--text-md);
   line-height: 22px;
   resize: none;
 }
@@ -603,26 +619,26 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-2);
-  min-height: 44px;
+  gap: 2px;
+  min-height: 38px;
 }
 
 .deck-paste__actions .ds-button {
   gap: var(--space-1-5);
 }
 
-/* What a typed name finds, on the paper under the field. */
+/* What a typed name finds in the tournaments, on a paper under the
+   shelf's row, above your own decks that match. */
 .deck-results {
   max-height: min(62vh, 680px);
   overflow-y: auto;
   overscroll-behavior: contain;
+  margin-bottom: var(--space-4);
   padding: var(--space-1) var(--space-3) var(--space-2);
   border: 1px solid var(--color-border);
-  border-top: 0;
-  border-end-start-radius: var(--deck-panel-radius);
-  border-end-end-radius: var(--deck-panel-radius);
+  border-radius: var(--deck-panel-radius);
   background: var(--deck-panel);
-  box-shadow: var(--shadow-3);
+  box-shadow: var(--shadow-2);
 }
 
 .deck-results__status {
@@ -3599,12 +3615,18 @@ button.deck-check__issue {
 }
 
 @media (max-width: 599px) {
-  /* The field across; its buttons share the row under it. */
-  .deck-paste__actions {
+  /* The finder across under the shelf's name and New deck; a list's
+     buttons share the row under it. */
+  .deck-shelf__head .deck-finder {
+    flex-basis: 100%;
+    order: 3;
+  }
+
+  .deck-finder[data-mode='list'] .deck-paste__actions {
     flex-basis: 100%;
   }
 
-  .deck-paste__actions .ds-button {
+  .deck-finder[data-mode='list'] .deck-paste__actions .ds-button {
     flex: 1;
   }
 

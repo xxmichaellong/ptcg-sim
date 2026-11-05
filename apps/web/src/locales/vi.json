@@ -1544,10 +1544,6 @@
     "message": "3 pieces in a row",
     "translation": "3 mảnh liên tiếp"
   },
-  "9bANS5": {
-    "message": "A .txt or .csv deck file",
-    "translation": "Tệp bộ bài .txt hoặc .csv"
-  },
   "gY2kkN": {
     "message": "A card in it has no picture.",
     "translation": "Có một lá bài trong đó chưa có hình."
@@ -3449,10 +3445,6 @@
     "message": "Find it",
     "translation": "Tìm ngay"
   },
-  "VFJLIA": {
-    "message": "Find one of your decks",
-    "translation": "Tìm một trong các bộ bài của bạn"
-  },
   "XGVxYp": {
     "message": "Finish",
     "context": "card surface",
@@ -5009,9 +5001,9 @@
     "message": "Open a deck file",
     "translation": "Mở tệp bộ bài"
   },
-  "9npOH9": {
-    "message": "Open file",
-    "translation": "Mở tệp"
+  "BpB3jt": {
+    "message": "Open a deck file (.txt or .csv)",
+    "translation": "Mở tệp bộ bài (.txt hoặc .csv)"
   },
   "E9wRDu": {
     "message": "Open log",
@@ -5166,11 +5158,6 @@
   "kJtjKm": {
     "message": "Pass the turn",
     "translation": "Qua lượt"
-  },
-  "sihBmP": {
-    "message": "Paste",
-    "context": "paste a list from the clipboard",
-    "translation": "Dán"
   },
   "L3kYdG": {
     "message": "Paste",

@@ -655,13 +655,11 @@ export interface DeckHomeProps {
   readonly finderText: string;
   readonly onFinderTextChange: (text: string) => void;
   /**
-   * Kept out of sight under a tournament or a deck's lists, so the shelf's
-   * filter and pages and the results are as they were on the way back.
+   * Kept out of sight under a tournament or a deck's lists, so the finder,
+   * the shelf's pages and the results are as they were on the way back.
    */
   readonly hidden?: boolean;
 }
-
-const LIBRARY_FILTER_AT = 9;
 
 export const DeckHome = ({
   library,
@@ -698,7 +696,6 @@ export const DeckHome = ({
     catalogState.status === 'ready' ? catalogState.catalog : undefined;
   const paste = finderText;
   const setPaste = onFinderTextChange;
-  const [filter, setFilter] = useState('');
   // Lists already loaded (the screen warmed up ahead, or opened before)
   // draw with the screen's first frame.
   const [collection, setCollection] = useState<
@@ -764,15 +761,11 @@ export const DeckHome = ({
       libraryState.decks.some((deck) => deck.id === slot.label?.deckId);
     return !savedHere && deckTotals(slot.deck).total > 0;
   });
-  // The filter applies only while its field shows: below the count that
-  // shows it (a deck deleted meanwhile), nothing would undo it.
-  const filtering = libraryState.decks.length >= LIBRARY_FILTER_AT;
-  // Gone with its field, so it never comes back with a ninth deck.
-  useEffect(() => {
-    if (!filtering) setFilter('');
-  }, [filtering]);
+  // A name typed in the finder finds your own decks too: the tournaments'
+  // show above them.
+  const libraryQuery = mode === 'search' ? searchText(paste) : '';
   const shownDecks = useMemo(() => {
-    const query = filtering ? filter.trim().toLowerCase() : '';
+    const query = libraryQuery.toLowerCase();
     // As stored, or as shown (its finish in the page's language).
     return query
       ? libraryState.decks.filter(
@@ -782,7 +775,7 @@ export const DeckHome = ({
         )
       : libraryState.decks;
     // `t` changes with the language, and with it the names shown.
-  }, [filter, filtering, libraryState.decks, t]);
+  }, [libraryQuery, libraryState.decks, t]);
 
   const { meta, classicGroups, classic } = homeGroups(collection, season);
   const metaSource = meta?.source;
@@ -862,95 +855,118 @@ export const DeckHome = ({
   return (
     <div className="deck-home" hidden={hidden}>
       <section
-        className="deck-finder"
-        aria-label={t`Find a deck`}
-        data-mode={mode}
+        className="deck-home__section deck-shelf"
+        aria-labelledby="deckLibraryTitle"
       >
-        <div
-          className="deck-paste"
-          data-filled={paste.trim() ? 'true' : undefined}
-        >
-          <MagnifyingGlassIcon
-            {...decorative}
-            weight="bold"
-            className="deck-paste__icon"
-          />
-          <textarea
-            ref={pasteRef}
-            id="deckPasteInput"
-            className="deck-paste__input"
-            aria-label={t`Search decks or paste a list`}
-            spellCheck={false}
-            autoComplete="off"
-            rows={mode === 'list' ? 6 : 1}
-            placeholder={t`Search decks or paste a list`}
-            value={paste}
-            onChange={(event) => setPaste(event.target.value)}
-            onKeyDown={onPasteKeyDown}
-          />
-          <div className="deck-paste__actions">
-            {mode === 'list' ? (
-              <button
-                id="deckPasteImportButton"
-                type="button"
-                className="ds-button ds-button--primary"
-                disabled={importing}
-                onClick={() => void submitPaste()}
-              >
-                {importing ? (
-                  <CircleNotchIcon
-                    {...decorative}
-                    weight="bold"
-                    className="ds-spin"
-                  />
+        <div className="deck-section-head deck-shelf__head">
+          <h2 id="deckLibraryTitle" className="deck-section-title">
+            <Trans>Your decks</Trans>
+            {libraryState.decks.length > 0 ? (
+              <span className="deck-section-count ds-number">
+                {libraryState.decks.length}
+              </span>
+            ) : null}
+          </h2>
+          {/* One field for a deck's name -- your own, and the tournaments'
+              -- or a whole list pasted in. */}
+          <div
+            className="deck-finder"
+            role="search"
+            aria-label={t`Find a deck`}
+            data-mode={mode}
+          >
+            <div
+              className="deck-paste"
+              data-filled={paste.trim() ? 'true' : undefined}
+            >
+              <MagnifyingGlassIcon
+                {...decorative}
+                weight="bold"
+                className="deck-paste__icon"
+              />
+              <textarea
+                ref={pasteRef}
+                id="deckPasteInput"
+                className="deck-paste__input"
+                aria-label={t`Search decks or paste a list`}
+                spellCheck={false}
+                autoComplete="off"
+                rows={mode === 'list' ? 6 : 1}
+                placeholder={t`Search decks or paste a list`}
+                value={paste}
+                onChange={(event) => setPaste(event.target.value)}
+                onKeyDown={onPasteKeyDown}
+              />
+              <div className="deck-paste__actions">
+                {mode === 'list' ? (
+                  <button
+                    id="deckPasteImportButton"
+                    type="button"
+                    className="ds-button ds-button--primary"
+                    disabled={importing}
+                    onClick={() => void submitPaste()}
+                  >
+                    {importing ? (
+                      <CircleNotchIcon
+                        {...decorative}
+                        weight="bold"
+                        className="ds-spin"
+                      />
+                    ) : null}
+                    <Trans context="button">Import</Trans>
+                  </button>
                 ) : null}
-                <Trans context="button">Import</Trans>
-              </button>
-            ) : null}
-            {mode !== 'empty' ? (
-              <Tooltip content={t`Clear`}>
-                <button
-                  type="button"
-                  className="deck-icon-button"
-                  aria-label={t`Clear`}
-                  onClick={() => {
-                    setPaste('');
-                    pasteRef.current?.focus();
-                  }}
-                >
-                  <XIcon {...decorative} weight="bold" />
-                </button>
-              </Tooltip>
-            ) : null}
-            <Tooltip content={t`Paste a list from the clipboard`}>
-              <button
-                id="deckClipboardButton"
-                type="button"
-                className="ds-button ds-button--secondary"
-                disabled={importing}
-                onClick={() => void onImportClipboard()}
-              >
-                <ClipboardTextIcon {...decorative} weight="bold" />
-                <span className="deck-paste__label">
-                  <Trans context="paste a list from the clipboard">Paste</Trans>
-                </span>
-              </button>
-            </Tooltip>
-            <Tooltip content={t`A .txt or .csv deck file`}>
-              <button
-                id="nativeDeckBuilderImportCsvLabel"
-                type="button"
-                className="ds-button ds-button--secondary"
-                disabled={importing}
-                onClick={onOpenFile}
-              >
-                <FileArrowUpIcon {...decorative} weight="bold" />
-                <span className="deck-paste__label">
-                  <Trans>Open file</Trans>
-                </span>
-              </button>
-            </Tooltip>
+                {mode !== 'empty' ? (
+                  <Tooltip content={t`Clear`}>
+                    <button
+                      type="button"
+                      className="deck-icon-button"
+                      aria-label={t`Clear`}
+                      onClick={() => {
+                        setPaste('');
+                        pasteRef.current?.focus();
+                      }}
+                    >
+                      <XIcon {...decorative} weight="bold" />
+                    </button>
+                  </Tooltip>
+                ) : null}
+                <Tooltip content={t`Paste a list from the clipboard`}>
+                  <button
+                    id="deckClipboardButton"
+                    type="button"
+                    className="deck-icon-button"
+                    aria-label={t`Paste a list from the clipboard`}
+                    disabled={importing}
+                    onClick={() => void onImportClipboard()}
+                  >
+                    <ClipboardTextIcon {...decorative} weight="bold" />
+                  </button>
+                </Tooltip>
+                <Tooltip content={t`Open a deck file (.txt or .csv)`}>
+                  <button
+                    id="nativeDeckBuilderImportCsvLabel"
+                    type="button"
+                    className="deck-icon-button"
+                    aria-label={t`Open a deck file`}
+                    disabled={importing}
+                    onClick={onOpenFile}
+                  >
+                    <FileArrowUpIcon {...decorative} weight="bold" />
+                  </button>
+                </Tooltip>
+              </div>
+            </div>
           </div>
+          <button
+            id="deckNewButton"
+            type="button"
+            className="ds-button ds-button--secondary"
+            onClick={onNewDeck}
+          >
+            <PlusIcon {...decorative} weight="bold" />
+            <Trans>New deck</Trans>
+          </button>
         </div>
         {mode === 'search' ? (
           <DeckSearchResults
@@ -962,55 +978,6 @@ export const DeckHome = ({
             onAllLists={onOpenArchetype}
           />
         ) : null}
-      </section>
-
-      <section
-        className="deck-home__section deck-shelf"
-        aria-labelledby="deckLibraryTitle"
-      >
-        <div className="deck-section-head">
-          <h2 id="deckLibraryTitle" className="deck-section-title">
-            <Trans>Your decks</Trans>
-            {libraryState.decks.length > 0 ? (
-              <span className="deck-section-count ds-number">
-                {libraryState.decks.length}
-              </span>
-            ) : null}
-          </h2>
-          <div className="deck-section-tools">
-            {filtering ? (
-              <label className="deck-filter">
-                <MagnifyingGlassIcon {...decorative} weight="bold" />
-                <input
-                  type="search"
-                  className="ds-input"
-                  placeholder={t`Find a deck`}
-                  aria-label={t`Find one of your decks`}
-                  value={filter}
-                  onChange={(event) => setFilter(event.target.value)}
-                  onKeyDown={(event) => {
-                    // Esc clears what was typed before it leaves the screen
-                    // (not an input method's Esc, which drops a candidate).
-                    if (isInputMethodKey(event.nativeEvent)) return;
-                    if (event.key === 'Escape' && filter !== '') {
-                      event.preventDefault();
-                      setFilter('');
-                    }
-                  }}
-                />
-              </label>
-            ) : null}
-            <button
-              id="deckNewButton"
-              type="button"
-              className="ds-button ds-button--secondary"
-              onClick={onNewDeck}
-            >
-              <PlusIcon {...decorative} weight="bold" />
-              <Trans>New deck</Trans>
-            </button>
-          </div>
-        </div>
         {libraryState.status === 'memory' ? (
           <p className="deck-notice" role="status">
             <WarningCircleIcon {...decorative} weight="bold" />

@@ -1544,10 +1544,6 @@
     "message": "3 pieces in a row",
     "translation": "3 части подряд"
   },
-  "9bANS5": {
-    "message": "A .txt or .csv deck file",
-    "translation": "Файл колоды .txt или .csv"
-  },
   "gY2kkN": {
     "message": "A card in it has no picture.",
     "translation": "У одной из карт нет изображения."
@@ -3449,10 +3445,6 @@
     "message": "Find it",
     "translation": "Найти"
   },
-  "VFJLIA": {
-    "message": "Find one of your decks",
-    "translation": "Найти одну из своих колод"
-  },
   "XGVxYp": {
     "message": "Finish",
     "context": "card surface",
@@ -5009,9 +5001,9 @@
     "message": "Open a deck file",
     "translation": "Открыть файл колоды"
   },
-  "9npOH9": {
-    "message": "Open file",
-    "translation": "Открыть файл"
+  "BpB3jt": {
+    "message": "Open a deck file (.txt or .csv)",
+    "translation": "Открыть файл колоды (.txt или .csv)"
   },
   "E9wRDu": {
     "message": "Open log",
@@ -5166,11 +5158,6 @@
   "kJtjKm": {
     "message": "Pass the turn",
     "translation": "Пас: передать ход"
-  },
-  "sihBmP": {
-    "message": "Paste",
-    "context": "paste a list from the clipboard",
-    "translation": "Вставить"
   },
   "L3kYdG": {
     "message": "Paste",

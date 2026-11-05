@@ -1027,7 +1027,7 @@ describe('the deck screen from the keyboard', () => {
     ]);
   });
 
-  it('clears what was typed in Find a deck on Esc before it leaves', async () => {
+  it('clears a name typed in the finder on Esc before it leaves', async () => {
     const library = new DeckLibrary({ backend: null });
     for (let n = 0; n < 9; n += 1) {
       library.create({
@@ -1038,13 +1038,11 @@ describe('the deck screen from the keyboard', () => {
       });
     }
     const onClose = await render(vi.fn(), library);
-    const filter = host.querySelector<HTMLInputElement>(
-      'input[type="search"][placeholder="Find a deck"]'
-    )!;
+    const filter = host.querySelector<HTMLTextAreaElement>('#deckPasteInput')!;
     filter.focus();
     await act(async () => {
       const setValue = Object.getOwnPropertyDescriptor(
-        HTMLInputElement.prototype,
+        HTMLTextAreaElement.prototype,
         'value'
       )!.set!;
       setValue.call(filter, 'Deck 3');
@@ -1079,53 +1077,43 @@ describe('the deck screen from the keyboard', () => {
     expect(onClose).not.toHaveBeenCalled();
   });
 
-  it('lets go of what was typed in Find a deck once too few decks show it', async () => {
+  it('finds your own decks by a name typed in the finder, however few', async () => {
     const library = new DeckLibrary({ backend: null });
-    const decks = Array.from({ length: 9 }, (_, n) =>
+    for (const name of ['Dragapult', 'Gardevoir']) {
       library.create({
-        name: `Deck ${String(n)}`,
-        format: 'standard',
-        cards: [],
-        source: { kind: 'new' },
-      })
-    );
-    await render(vi.fn(), library);
-    const filter = host.querySelector<HTMLInputElement>(
-      'input[type="search"][placeholder="Find a deck"]'
-    )!;
-    await act(async () => {
-      Object.getOwnPropertyDescriptor(
-        HTMLInputElement.prototype,
-        'value'
-      )!.set!.call(filter, 'Deck 3');
-      filter.dispatchEvent(new Event('input', { bubbles: true }));
-    });
-    const names = () =>
-      [...host.querySelectorAll('.deck-tile__name')].map(
-        (tile) => tile.textContent
-      );
-    expect(names()).toEqual(['Deck 3']);
-    // A deck goes (another tab, its menu): the field with it, and the
-    // filter, which nothing left on screen could clear.
-    await act(async () => {
-      library.remove(decks[0]!.id);
-    });
-    expect(host.querySelector('input[placeholder="Find a deck"]')).toBeNull();
-    expect(names()).toHaveLength(8);
-    // A ninth again: the field is back empty, every deck shown.
-    await act(async () => {
-      library.create({
-        name: 'Deck 9',
+        name,
         format: 'standard',
         cards: [],
         source: { kind: 'new' },
       });
+    }
+    await render(vi.fn(), library);
+    const names = () =>
+      [...host.querySelectorAll('.deck-tile__name')].map(
+        (tile) => tile.textContent
+      );
+    expect(names()).toHaveLength(2);
+    const finder = host.querySelector<HTMLTextAreaElement>('#deckPasteInput')!;
+    // On the shelf's own row, beside New deck: no second field.
+    expect(finder.closest('.deck-shelf__head')).not.toBeNull();
+    expect(host.querySelector('input[placeholder="Find a deck"]')).toBeNull();
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(
+        HTMLTextAreaElement.prototype,
+        'value'
+      )!.set!.call(finder, 'garde');
+      finder.dispatchEvent(new Event('input', { bubbles: true }));
     });
-    expect(
-      host.querySelector<HTMLInputElement>('input[placeholder="Find a deck"]')
-        ?.value
-    ).toBe('');
-    expect(names()).toHaveLength(9);
+    expect(names()).toEqual(['Gardevoir']);
+    // A list pasted in is no name: every deck shows again.
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(
+        HTMLTextAreaElement.prototype,
+        'value'
+      )!.set!.call(finder, '4 Pikachu SVI 1\n4 Iono PAL 185');
+      finder.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    expect(names()).toHaveLength(2);
   });
 
   it('says a saved deck’s finish in the page’s language', async () => {
@@ -1160,12 +1148,11 @@ describe('the deck screen from the keyboard', () => {
         );
       expect(shown()).toContain('Dragapult — 1. von 67');
       // Found by what the tile shows, too.
-      const filter = host.querySelector<HTMLInputElement>(
-        'input[type="search"][placeholder="Find a deck"]'
-      )!;
+      const filter =
+        host.querySelector<HTMLTextAreaElement>('#deckPasteInput')!;
       await act(async () => {
         Object.getOwnPropertyDescriptor(
-          HTMLInputElement.prototype,
+          HTMLTextAreaElement.prototype,
           'value'
         )!.set!.call(filter, '1. von');
         filter.dispatchEvent(new Event('input', { bubbles: true }));

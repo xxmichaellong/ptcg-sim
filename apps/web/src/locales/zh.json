@@ -1544,10 +1544,6 @@
     "message": "3 pieces in a row",
     "translation": "3 张横排"
   },
-  "9bANS5": {
-    "message": "A .txt or .csv deck file",
-    "translation": ".txt 或 .csv 卡组文件"
-  },
   "gY2kkN": {
     "message": "A card in it has no picture.",
     "translation": "其中有卡牌没有图片。"
@@ -3449,10 +3445,6 @@
     "message": "Find it",
     "translation": "查找"
   },
-  "VFJLIA": {
-    "message": "Find one of your decks",
-    "translation": "查找你的卡组"
-  },
   "XGVxYp": {
     "message": "Finish",
     "context": "card surface",
@@ -5009,9 +5001,9 @@
     "message": "Open a deck file",
     "translation": "打开卡组文件"
   },
-  "9npOH9": {
-    "message": "Open file",
-    "translation": "打开文件"
+  "BpB3jt": {
+    "message": "Open a deck file (.txt or .csv)",
+    "translation": "打开卡组文件（.txt 或 .csv）"
   },
   "E9wRDu": {
     "message": "Open log",
@@ -5166,11 +5158,6 @@
   "kJtjKm": {
     "message": "Pass the turn",
     "translation": "结束回合"
-  },
-  "sihBmP": {
-    "message": "Paste",
-    "context": "paste a list from the clipboard",
-    "translation": "粘贴"
   },
   "L3kYdG": {
     "message": "Paste",

@@ -1544,10 +1544,6 @@
     "message": "3 pieces in a row",
     "translation": "3조각 연속"
   },
-  "9bANS5": {
-    "message": "A .txt or .csv deck file",
-    "translation": ".txt 또는 .csv 덱 파일"
-  },
   "gY2kkN": {
     "message": "A card in it has no picture.",
     "translation": "이미지가 없는 카드가 있습니다."
@@ -3449,10 +3445,6 @@
     "message": "Find it",
     "translation": "찾기"
   },
-  "VFJLIA": {
-    "message": "Find one of your decks",
-    "translation": "내 덱 중에서 찾기"
-  },
   "XGVxYp": {
     "message": "Finish",
     "context": "card surface",
@@ -5009,9 +5001,9 @@
     "message": "Open a deck file",
     "translation": "덱 파일 열기"
   },
-  "9npOH9": {
-    "message": "Open file",
-    "translation": "파일 열기"
+  "BpB3jt": {
+    "message": "Open a deck file (.txt or .csv)",
+    "translation": "덱 파일 열기 (.txt 또는 .csv)"
   },
   "E9wRDu": {
     "message": "Open log",
@@ -5166,11 +5158,6 @@
   "kJtjKm": {
     "message": "Pass the turn",
     "translation": "패스: 차례 넘기기"
-  },
-  "sihBmP": {
-    "message": "Paste",
-    "context": "paste a list from the clipboard",
-    "translation": "붙여넣기"
   },
   "L3kYdG": {
     "message": "Paste",

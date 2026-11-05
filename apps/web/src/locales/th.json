@@ -1544,10 +1544,6 @@
     "message": "3 pieces in a row",
     "translation": "3 ชิ้นเรียงกัน"
   },
-  "9bANS5": {
-    "message": "A .txt or .csv deck file",
-    "translation": "ไฟล์เด็ค .txt หรือ .csv"
-  },
   "gY2kkN": {
     "message": "A card in it has no picture.",
     "translation": "มีการ์ดในนั้นที่ไม่มีรูป"
@@ -3449,10 +3445,6 @@
     "message": "Find it",
     "translation": "ค้นหา"
   },
-  "VFJLIA": {
-    "message": "Find one of your decks",
-    "translation": "ค้นหาเด็คของคุณ"
-  },
   "XGVxYp": {
     "message": "Finish",
     "context": "card surface",
@@ -5009,9 +5001,9 @@
     "message": "Open a deck file",
     "translation": "เปิดไฟล์เด็ค"
   },
-  "9npOH9": {
-    "message": "Open file",
-    "translation": "เปิดไฟล์"
+  "BpB3jt": {
+    "message": "Open a deck file (.txt or .csv)",
+    "translation": "เปิดไฟล์เด็ค (.txt หรือ .csv)"
   },
   "E9wRDu": {
     "message": "Open log",
@@ -5166,11 +5158,6 @@
   "kJtjKm": {
     "message": "Pass the turn",
     "translation": "จบเทิร์น"
-  },
-  "sihBmP": {
-    "message": "Paste",
-    "context": "paste a list from the clipboard",
-    "translation": "วาง"
   },
   "L3kYdG": {
     "message": "Paste",

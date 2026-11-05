@@ -1544,10 +1544,6 @@
     "message": "3 pieces in a row",
     "translation": "3 bagian berderet"
   },
-  "9bANS5": {
-    "message": "A .txt or .csv deck file",
-    "translation": "File deck .txt atau .csv"
-  },
   "gY2kkN": {
     "message": "A card in it has no picture.",
     "translation": "Ada kartu di dalamnya yang tidak punya gambar."
@@ -3449,10 +3445,6 @@
     "message": "Find it",
     "translation": "Temukan"
   },
-  "VFJLIA": {
-    "message": "Find one of your decks",
-    "translation": "Cari salah satu deck-mu"
-  },
   "XGVxYp": {
     "message": "Finish",
     "context": "card surface",
@@ -5009,9 +5001,9 @@
     "message": "Open a deck file",
     "translation": "Buka file deck"
   },
-  "9npOH9": {
-    "message": "Open file",
-    "translation": "Buka file"
+  "BpB3jt": {
+    "message": "Open a deck file (.txt or .csv)",
+    "translation": "Buka file deck (.txt atau .csv)"
   },
   "E9wRDu": {
     "message": "Open log",
@@ -5166,11 +5158,6 @@
   "kJtjKm": {
     "message": "Pass the turn",
     "translation": "Lewati giliran"
-  },
-  "sihBmP": {
-    "message": "Paste",
-    "context": "paste a list from the clipboard",
-    "translation": "Tempel"
   },
   "L3kYdG": {
     "message": "Paste",

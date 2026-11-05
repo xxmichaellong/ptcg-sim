@@ -1544,10 +1544,6 @@
     "message": "3 pieces in a row",
     "translation": "3 peças em sequência"
   },
-  "9bANS5": {
-    "message": "A .txt or .csv deck file",
-    "translation": "Um arquivo de baralho .txt ou .csv"
-  },
   "gY2kkN": {
     "message": "A card in it has no picture.",
     "translation": "Uma carta nele não tem imagem."
@@ -3449,10 +3445,6 @@
     "message": "Find it",
     "translation": "Encontrar"
   },
-  "VFJLIA": {
-    "message": "Find one of your decks",
-    "translation": "Encontrar um dos seus baralhos"
-  },
   "XGVxYp": {
     "message": "Finish",
     "context": "card surface",
@@ -5009,9 +5001,9 @@
     "message": "Open a deck file",
     "translation": "Abrir um arquivo de baralho"
   },
-  "9npOH9": {
-    "message": "Open file",
-    "translation": "Abrir arquivo"
+  "BpB3jt": {
+    "message": "Open a deck file (.txt or .csv)",
+    "translation": "Abrir um arquivo de baralho (.txt ou .csv)"
   },
   "E9wRDu": {
     "message": "Open log",
@@ -5166,11 +5158,6 @@
   "kJtjKm": {
     "message": "Pass the turn",
     "translation": "Passar o turno"
-  },
-  "sihBmP": {
-    "message": "Paste",
-    "context": "paste a list from the clipboard",
-    "translation": "Colar"
   },
   "L3kYdG": {
     "message": "Paste",

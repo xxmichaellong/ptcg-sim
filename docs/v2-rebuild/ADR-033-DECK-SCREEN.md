@@ -353,6 +353,17 @@ specifically without blocking, and go from deck to table in one click.
       the pile (the table lets it open and it holds cards) and not while
       the pile is open; a replay's and a spectator's menus are unchanged.
 
+18. **The finder on the shelf's row** (2026-11-05, the owner: "such an
+    unnecessarily long search bar and it takes up a whole row"). The one
+    field for a deck's name or a pasted list sits on "Your decks"' own row,
+    between its name and New deck, at most 420px; Paste and Open file are
+    icons at its end. A name typed there finds your own decks (the shelf
+    shows those that match) and the tournaments' (their results on a paper
+    under the row); a list pasted in takes a line of its own under the row,
+    with Import. The shelf's separate "Find a deck" field, shown from nine
+    decks, is gone: the finder is it. On a phone the finder runs across
+    under the row's name and New deck.
+
 ## Consequences
 
 - One paste and one click (Play) take a list to the table, and every deck
