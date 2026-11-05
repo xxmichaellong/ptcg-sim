@@ -153,3 +153,16 @@ export const holdSoloRoom = (
   });
   return taken;
 };
+
+/** Forgets a room as the Solo table, in this tab and as the latest. */
+export const forgetSoloSeat = (roomCode: string): void => {
+  for (const kind of ['session', 'local'] as const) {
+    const storage = storageOf(kind);
+    if (read(storage)?.roomCode !== roomCode) continue;
+    try {
+      storage?.removeItem(KEY);
+    } catch {
+      // Refused: the next load finds the room is no Solo table and moves on.
+    }
+  }
+};

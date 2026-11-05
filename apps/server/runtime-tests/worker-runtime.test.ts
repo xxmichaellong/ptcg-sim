@@ -23,6 +23,7 @@ import {
   createRoom,
   flipCommandFrame,
   helloFrame,
+  issueAdmissionTicket,
   issuePlayerTicket,
   nextServerFrames,
   nextServerMessage,
@@ -185,6 +186,57 @@ describe('Cloudflare Worker runtime', () => {
     expect(Object.values(afterAdmission.snapshot?.sessions ?? {})).toHaveLength(
       1
     );
+  });
+
+  it('opens a seated Solo room to an opponent in place, once, with a claim for its second seat', async () => {
+    const created = await createRoom('solo');
+    const ticket = await issuePlayerTicket(created, 'one', 'Blue');
+    const socket = await connect(created);
+    const welcomePromise = nextServerMessage(socket);
+    socket.send(helloFrame(created, ticket, 'Blue'));
+    expect((await welcomePromise).type).toBe('Welcome');
+
+    const open = (capability: string) =>
+      exports.default.fetch(
+        new Request(`${ORIGIN}/v2/rooms/${created.roomCode}/open`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Origin: ORIGIN },
+          body: JSON.stringify({ capability, displayName: 'Ash' }),
+        })
+      );
+    // Only the Solo player's own claim opens it.
+    expect(
+      (await open('another-claim-entirely-capability-000000001')).status
+    ).toBe(403);
+    // The seated player is shown the table under a room's rules.
+    const refreshPromise = nextServerMessage(socket);
+    const response = await open(created.credentials.playerOneSeatCapability);
+    expect(response.status).toBe(201);
+    const answer = (await response.json()) as {
+      readonly mode: string;
+      readonly credentials: {
+        readonly playerTwoSeatCapability: string;
+        readonly spectatorCapability: string;
+      };
+    };
+    expect(answer.mode).toBe('multiplayer');
+    expect((await refreshPromise).type).toBe('ProjectionRefresh');
+    const evidence = await runtimeEvidence(created);
+    expect(evidence.snapshot).toMatchObject({
+      mode: 'multiplayer',
+      admission: { playerSeatLimit: 2 },
+    });
+    // Once a room, it opens no more.
+    expect(
+      (await open(created.credentials.playerOneSeatCapability)).status
+    ).toBe(409);
+    // The second seat takes its new claim.
+    const seatTwo = await issueAdmissionTicket(
+      created,
+      answer.credentials.playerTwoSeatCapability,
+      { displayName: 'Misty', requestedRole: 'player' }
+    );
+    expect(seatTwo.admissionTicket).toBeTypeOf('string');
   });
 
   it('reschedules an early alarm and deletes an expired unclaimed room', async () => {

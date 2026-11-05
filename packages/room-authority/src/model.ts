@@ -246,6 +246,12 @@ export type PersistedAdmissionTransaction =
       readonly kind: 'sessions_expired';
       readonly sessionIds: readonly string[];
       readonly expiredAt: number;
+    }
+  | {
+      readonly expectedAuthorityVersion: number;
+      readonly snapshot: RoomAuthoritySnapshot;
+      /** A Solo room opened to an opponent in place (openSoloRoom). */
+      readonly kind: 'room_opened';
     };
 
 export interface AdmissionPersistence {

@@ -25,6 +25,7 @@ import {
   type RoomAuthoritySnapshot,
 } from './model.js';
 import {
+  createReplayHistory,
   replayHistoryByteFacts,
   replayHistoryEntryBytes,
   replayHistoryEventBytes,
@@ -768,6 +769,130 @@ const sameRecordKeys = (
   structurallyEqual(Object.keys(left).sort(), Object.keys(right).sort());
 
 /**
+ * What a Solo room opened to an opponent may change, and nothing else
+ * (admission.ts `openSoloRoom`): Solo becomes multiplayer with two seats;
+ * the open seat's claim and the spectators' are new; the host's name and
+ * the open seat's default name are set and both board-flip consents are
+ * withdrawn; the replay history starts again at that state; sessions keep
+ * everything but the host's name; invitations and tickets are untouched.
+ */
+const roomOpeningProblems = (
+  current: RoomAuthoritySnapshot,
+  candidate: RoomAuthoritySnapshot
+): string[] => {
+  const problems: string[] = [];
+  if (current.mode !== 'solo' || candidate.mode !== 'multiplayer') {
+    problems.push('room opening must turn a Solo room into a multiplayer one');
+  }
+  const before = current.admission;
+  const after = candidate.admission;
+  if (!before || !after) return problems;
+  if (before.playerSeatLimit !== 1 || after.playerSeatLimit !== 2) {
+    problems.push('room opening must raise the player-seat limit to two');
+  }
+  if (
+    after.spectatorCapabilityDigest === null ||
+    after.spectatorCapabilityDigest === before.spectatorCapabilityDigest
+  ) {
+    problems.push('room opening must give spectators a new capability');
+  }
+  if (
+    !structurallyEqual(after.invitations, before.invitations) ||
+    !structurallyEqual(after.tickets, before.tickets)
+  ) {
+    problems.push('room opening changed invitations or tickets');
+  }
+  const seatIds = Object.keys(before.seats).sort();
+  if (!structurallyEqual(Object.keys(after.seats).sort(), seatIds)) {
+    problems.push('room opening changed the seats');
+    return problems;
+  }
+  const claimed = seatIds.filter(
+    (playerId) => before.seats[playerId]!.claimedSessionId !== null
+  );
+  const open = seatIds.filter(
+    (playerId) => before.seats[playerId]!.claimedSessionId === null
+  );
+  for (const playerId of seatIds) {
+    const was = before.seats[playerId]!;
+    const now = after.seats[playerId]!;
+    if (
+      now.playerId !== was.playerId ||
+      now.claimedSessionId !== was.claimedSessionId
+    ) {
+      problems.push('room opening changed a seat claim');
+    }
+  }
+  // The host's seat keeps its claim; one open seat gets a new one.
+  const changed = seatIds.filter(
+    (playerId) =>
+      after.seats[playerId]!.claimCapabilityDigest !==
+      before.seats[playerId]!.claimCapabilityDigest
+  );
+  if (
+    changed.length !== 1 ||
+    !open.includes(changed[0]!) ||
+    claimed.some((playerId) => changed.includes(playerId))
+  ) {
+    problems.push('room opening must renew exactly the open seat claim');
+  }
+  const digests = [
+    ...seatIds.map((playerId) => after.seats[playerId]!.claimCapabilityDigest),
+    after.spectatorCapabilityDigest,
+  ];
+  if (new Set(digests).size !== digests.length) {
+    problems.push('room opening reused a capability');
+  }
+  // The match itself is as it was, but for the names and consents.
+  const normalized = (snapshot: RoomAuthoritySnapshot) => ({
+    ...snapshot.state,
+    players: Object.fromEntries(
+      Object.entries(snapshot.state.players).map(([playerId, player]) => [
+        playerId,
+        { ...player, displayName: '', coachingConsent: false },
+      ])
+    ),
+  });
+  if (!structurallyEqual(normalized(candidate), normalized(current))) {
+    problems.push('room opening changed the match');
+  }
+  for (const player of Object.values(candidate.state.players)) {
+    if (player.coachingConsent) {
+      problems.push('room opening kept a board-flip consent');
+    }
+  }
+  if (
+    !structurallyEqual(
+      candidate.replayHistory,
+      createReplayHistory(candidate.state)
+    )
+  ) {
+    problems.push('room opening did not start the replay history again');
+  }
+  if (
+    !structurallyEqual(
+      Object.keys(candidate.sessions).sort(),
+      Object.keys(current.sessions).sort()
+    )
+  ) {
+    problems.push('room opening changed the session registry');
+  }
+  for (const [sessionId, session] of Object.entries(current.sessions)) {
+    const next = candidate.sessions[sessionId];
+    if (
+      !next ||
+      !structurallyEqual(
+        { ...next, displayName: '' },
+        { ...session, displayName: '' }
+      )
+    ) {
+      problems.push('room opening changed a session');
+    }
+  }
+  return problems;
+};
+
+/**
  * Validates a proofless admission transaction against its durable predecessor.
  * Snapshot validation alone cannot prove which admission operation produced it.
  */
@@ -785,7 +910,9 @@ export const assertAdmissionTransactionTransition = (
   if (candidate.schemaVersion !== current.schemaVersion) {
     problems.push('admission transaction changed authority schema');
   }
-  if (candidate.mode !== current.mode) {
+  // Only a Solo room opened to an opponent changes what kind of room it is.
+  const opening = transaction.kind === 'room_opened';
+  if (!opening && candidate.mode !== current.mode) {
     problems.push('admission transaction changed authority mode');
   }
   if (candidate.authorityVersion !== current.authorityVersion + 1) {
@@ -798,7 +925,7 @@ export const assertAdmissionTransactionTransition = (
   const candidateAdmission = candidate.admission;
   if (!currentAdmission || !candidateAdmission) {
     problems.push('admission transaction requires durable admission state');
-  } else {
+  } else if (!opening) {
     if (
       candidateAdmission.playerSeatLimit !== currentAdmission.playerSeatLimit
     ) {
@@ -892,6 +1019,8 @@ export const assertAdmissionTransactionTransition = (
         }
       }
     }
+  } else if (transaction.kind === 'room_opened') {
+    problems.push(...roomOpeningProblems(current, candidate));
   } else if (transaction.kind === 'sessions_expired') {
     unchangedAuthorityData('session expiry');
     if (!structurallyEqual(candidate.identities, current.identities)) {

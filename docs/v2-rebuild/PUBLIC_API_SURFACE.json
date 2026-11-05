@@ -1626,6 +1626,14 @@
               "kind": "value"
             },
             {
+              "name": "parseRoomOpenRequest",
+              "kind": "value"
+            },
+            {
+              "name": "parseRoomOpenResponse",
+              "kind": "value"
+            },
+            {
               "name": "parseServerFrame",
               "kind": "value"
             },
@@ -1707,6 +1715,22 @@
             },
             {
               "name": "RoomInvitationIssueResponseSchema",
+              "kind": "value"
+            },
+            {
+              "name": "RoomOpenRequest",
+              "kind": "type"
+            },
+            {
+              "name": "RoomOpenRequestSchema",
+              "kind": "value"
+            },
+            {
+              "name": "RoomOpenResponse",
+              "kind": "type"
+            },
+            {
+              "name": "RoomOpenResponseSchema",
               "kind": "value"
             },
             {
@@ -3110,6 +3134,14 @@
               "kind": "type"
             },
             {
+              "name": "OPENED_ROOM_SEAT_NAME",
+              "kind": "value"
+            },
+            {
+              "name": "openSoloRoom",
+              "kind": "value"
+            },
+            {
               "name": "PersistedAdmissionTransaction",
               "kind": "type"
             },
@@ -3238,6 +3270,18 @@
               "kind": "type"
             },
             {
+              "name": "RoomOpeningCrypto",
+              "kind": "type"
+            },
+            {
+              "name": "RoomOpeningDependencies",
+              "kind": "type"
+            },
+            {
+              "name": "RoomOpeningResult",
+              "kind": "type"
+            },
+            {
               "name": "sessionPlayerId",
               "kind": "value"
             },
@@ -3303,6 +3347,10 @@
             },
             {
               "name": "BoundedRoomInvitationIssueResult",
+              "kind": "type"
+            },
+            {
+              "name": "BoundedRoomOpeningResult",
               "kind": "type"
             },
             {

@@ -126,6 +126,7 @@ import {
 } from './request-rate-limit.js';
 import { handleRoomCreationRequest } from './room-creation-http.js';
 import { handleRoomInvitationRequest } from './room-invitation-http.js';
+import { handleRoomOpenRequest } from './room-open-http.js';
 import { DurableRoomRateLimiter } from './room-rate-limit.js';
 import { handleServerHealthRequest } from './server-health.js';
 import { activeSocketCountExcluding } from './socket-telemetry.js';
@@ -272,6 +273,11 @@ const invitationRoomCodeFromPath = (pathname: string): string | undefined => {
   const match = /^\/v2\/rooms\/([A-HJ-NP-Z2-9]{12})\/invitations$/u.exec(
     pathname
   );
+  return match?.[1];
+};
+
+const openRoomCodeFromPath = (pathname: string): string | undefined => {
+  const match = /^\/v2\/rooms\/([A-HJ-NP-Z2-9]{12})\/open$/u.exec(pathname);
   return match?.[1];
 };
 
@@ -658,6 +664,16 @@ export class PtcgRoom extends DurableObject<Env> {
           return new Response('Room not initialized', { status: 404 });
         return handleRoomInvitationRequest(request, (input) =>
           runtime.hub.issueInvitation(input)
+        );
+      });
+    }
+    if (openRoomCodeFromPath(requestUrl.pathname)) {
+      return observeHttp(this.telemetry, 'room_open', async () => {
+        const runtime = await this.runtimePromise;
+        if (!runtime)
+          return new Response('Room not initialized', { status: 404 });
+        return handleRoomOpenRequest(request, (input) =>
+          runtime.hub.openSoloRoom(input)
         );
       });
     }
@@ -1678,6 +1694,10 @@ const worker: ExportedHandler<Env> = {
     const invitationCode = invitationRoomCodeFromPath(url.pathname);
     if (invitationCode) {
       return forwardToRoom(invitationCode, 'invitation', 'room_invitation');
+    }
+    const openCode = openRoomCodeFromPath(url.pathname);
+    if (openCode) {
+      return forwardToRoom(openCode, 'invitation', 'room_open');
     }
     // Reached by any file the assets don't have (wrangler.jsonc). An
     // address typed or kept for a page is the app's one page; anything

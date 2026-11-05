@@ -49,7 +49,11 @@ import {
   type RemoteRoomCreationResult,
   type RemoteRoomInvitationShareReceipt,
 } from './RemoteRoomCreation.js';
-import { openRemoteSoloRoom, type SoloRoomInput } from './RemoteSoloRoom.js';
+import {
+  openRemoteSoloRoom,
+  type OpenedSoloRoom,
+  type SoloRoomInput,
+} from './RemoteSoloRoom.js';
 import { waitForAdmission } from './wait-for-admission.js';
 import {
   RemoteRoomInvitationJoinCustody,
@@ -178,7 +182,10 @@ interface LobbyOwner {
     readonly abort: AbortController;
   };
   creator?: {
-    readonly result: RemoteRoomCreationResult;
+    readonly result: RemoteRoomCreationResult & {
+      /** A Solo room's way into a multiplayer one, in place (ADR-044). */
+      readonly goOnline?: OpenedSoloRoom['goOnline'];
+    };
     readonly displayName: string;
   };
   guestRuntime?: RemoteRoomRuntime;
@@ -195,9 +202,12 @@ export interface RemoteRoomLobbyDependencies {
    * The Solo table: the room this page sat at last, else a new one
    * (ADR-044). Without it, Solo makes a new room each time.
    */
-  readonly openSoloRoom?: (
-    input: SoloRoomInput
-  ) => Promise<RemoteRoomCreationResult & { readonly keep?: () => void }>;
+  readonly openSoloRoom?: (input: SoloRoomInput) => Promise<
+    RemoteRoomCreationResult & {
+      readonly keep?: () => void;
+      readonly goOnline?: OpenedSoloRoom['goOnline'];
+    }
+  >;
   readonly createInvitationJoinCustody: () => InvitationJoinCustody;
   readonly fallbackDisplayName: () => string;
   readonly requestBackground?: BrowserRoomBackgroundRequest;
@@ -667,6 +677,21 @@ export const RemoteRoomLobby = ({
    * Create room: makes a multiplayer room and takes its host straight into
    * it, where the room offers its invites (ADR-020, 2026-10-29).
    */
+  /**
+   * The Solo table this page sits at, open or parked, as a room it can turn
+   * into in place (ADR-044); undefined where there is none.
+   */
+  const soloAtHand = (owner: LobbyOwner) => {
+    const solo = owner.creator?.result;
+    const table = connected?.mode === 'solo' ? connected : parkedSolo;
+    return solo?.mode === 'solo' &&
+      solo.goOnline &&
+      table &&
+      solo.runtime === table.runtime
+      ? solo.goOnline
+      : undefined;
+  };
+
   const handleCreate = async (): Promise<void> => {
     const active = beginOperation('create');
     if (!active) return;
@@ -674,6 +699,40 @@ export const RemoteRoomLobby = ({
       name,
       dependencies.fallbackDisplayName
     );
+    // A Solo table at hand becomes the room, its game and all: nobody
+    // leaves it to join another (ADR-044).
+    const goOnline = soloAtHand(active.owner);
+    if (goOnline) {
+      try {
+        const room = await goOnline({
+          displayName,
+          signal: active.abort.signal,
+        });
+        const owner = active.owner;
+        const settle = (): boolean => {
+          if (owner.disposed || ownerRef.current !== owner) return false;
+          owner.creator = { result: room, displayName };
+          owner.invitation.clear();
+          setParkedSolo(undefined);
+          setName(displayName);
+          rememberName();
+          setRoomCode('');
+          setReceipt(undefined);
+          setStatus(undefined);
+          setConnected({ runtime: room.runtime, mode: 'multiplayer' });
+          return true;
+        };
+        if (connected?.runtime === room.runtime) settle();
+        else await handOffTable(settle);
+      } catch (error) {
+        if (!active.owner.disposed) {
+          setStatus(safeFailureMessage('create', error));
+        }
+      } finally {
+        endOperation(active.owner);
+      }
+      return;
+    }
     try {
       const result = await dependencies.createRoom({
         buildId,
@@ -751,6 +810,7 @@ export const RemoteRoomLobby = ({
       const input = { buildId, displayName, signal: active.abort.signal };
       const result: RemoteRoomCreationResult & {
         readonly keep?: () => void;
+        readonly goOnline?: OpenedSoloRoom['goOnline'];
       } = await (dependencies.openSoloRoom
         ? dependencies.openSoloRoom(input)
         : dependencies.createRoom({ ...input, mode: 'solo' }));

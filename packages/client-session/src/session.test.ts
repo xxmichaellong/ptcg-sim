@@ -353,6 +353,35 @@ describe('RemoteGameSession', () => {
     });
   });
 
+  it('takes a room opened from Solo as a new view of the same revision, and only that', () => {
+    const test = setup();
+    const socket = test.admit();
+    // A Solo room opened to an opponent (ADR-044): what this viewer may see
+    // changed at the same revision, more than names.
+    const opened = {
+      ...view(0, 'Ash'),
+      turn: { number: 2, currentPlayerId: 'blue' },
+    };
+    socket.serverMessage({
+      type: 'ProjectionRefresh',
+      protocolVersion: PROTOCOL_VERSION,
+      cause: 'room_opened',
+      snapshot: opened,
+    });
+    expect(test.session.getSnapshot()).toMatchObject({
+      phase: 'ready',
+      view: { revision: 0, players: { blue: { displayName: 'Ash' } } },
+    });
+    // Not a way back in time.
+    socket.serverMessage({
+      type: 'ProjectionRefresh',
+      protocolVersion: PROTOCOL_VERSION,
+      cause: 'room_opened',
+      snapshot: { ...view(0, 'Ash'), revision: -1 },
+    });
+    expect(test.session.getSnapshot().phase).not.toBe('ready');
+  });
+
   it('rejects an unrecognized projection-refresh cause at the wire boundary', () => {
     const test = setup();
     const socket = test.admit();

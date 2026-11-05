@@ -1066,6 +1066,15 @@ export class RemoteGameSession {
       return;
     }
     const candidate = hydrateMatchViewState(message.snapshot);
+    // The room itself changed what this viewer may see (a Solo room opened
+    // to an opponent, ADR-044): the same revision, shown anew.
+    if (
+      message.cause === 'room_opened' &&
+      candidate.revision === current.revision
+    ) {
+      this.updateState({ view: candidate });
+      return;
+    }
     const sameProjection =
       candidate.revision === current.revision &&
       stableSerialize(candidate) === stableSerialize(current);

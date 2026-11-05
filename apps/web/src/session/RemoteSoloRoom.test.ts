@@ -1,9 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import type { RemoteRoomCreationResult } from './RemoteRoomCreation.js';
+import {
+  RemoteRoomInvitationCustody,
+  type RemoteRoomCreationResult,
+} from './RemoteRoomCreation.js';
 import type { RemoteRoomRuntime } from './RemoteRoomRuntime.js';
 import {
   openRemoteSoloRoom,
+  SoloRoomOpenError,
   type SoloRoomDependencies,
 } from './RemoteSoloRoom.js';
 import {
@@ -272,5 +276,114 @@ describe('opening the Solo table', () => {
       openRemoteSoloRoom({ ...input, signal: controller.signal }, dependencies)
     ).rejects.toThrow();
     expect(dependencies.createRoom).not.toHaveBeenCalled();
+  });
+});
+
+describe('opening the Solo table to an opponent', () => {
+  const opened = {
+    mode: 'multiplayer',
+    credentials: {
+      playerTwoSeatCapability: 'player-two-seat-capability-new-0000001',
+      spectatorCapability: 'spectator-capability-new-000000000002',
+    },
+  };
+
+  it('asks its room to open with its own claim, and hands back the same table as a room', async () => {
+    const own = { ...OWN, thisTab: true };
+    const forget = vi.fn();
+    const fetch = vi.fn<typeof globalThis.fetch>(async () =>
+      Response.json(opened, { status: 201 })
+    );
+    const dependencies = deps([own], {
+      forget,
+      fetch,
+      origin: 'https://play.example',
+    });
+    const solo = await openRemoteSoloRoom(input, dependencies);
+    const room = await solo.goOnline({ displayName: '  Ash ' });
+    const [url, init] = fetch.mock.calls[0]!;
+    expect(String(url)).toBe(
+      `https://play.example/v2/rooms/${OWN.roomCode}/open`
+    );
+    expect(init).toMatchObject({
+      method: 'POST',
+      credentials: 'omit',
+      redirect: 'error',
+      cache: 'no-store',
+    });
+    expect(JSON.parse(String(init?.body))).toEqual({
+      capability: OWN.capability,
+      displayName: 'Ash',
+    });
+    // The same table, now a room whose invitations can be minted.
+    expect(room.mode).toBe('multiplayer');
+    expect(room.runtime).toBe(solo.runtime);
+    expect(room.invitations).toBeInstanceOf(RemoteRoomInvitationCustody);
+    expect(room.invitations.roomCode).toBe(OWN.roomCode);
+    // And no longer the page's Solo table.
+    expect(forget).toHaveBeenCalledExactlyOnceWith(OWN.roomCode);
+    room.dispose();
+    expect(solo.runtime.dispose).toHaveBeenCalledOnce();
+    // Opened once only.
+    await expect(solo.goOnline({ displayName: 'Ash' })).rejects.toBeInstanceOf(
+      SoloRoomOpenError
+    );
+  });
+
+  it('opens a table made just now with the claim the room handed over', async () => {
+    const fetch = vi.fn<typeof globalThis.fetch>(async () =>
+      Response.json(opened, { status: 201 })
+    );
+    const dependencies = deps([], { fetch, origin: 'https://play.example' });
+    const solo = await openRemoteSoloRoom(input, dependencies);
+    await solo.goOnline({ displayName: 'Ash' });
+    expect(JSON.parse(String(fetch.mock.calls[0]![1]?.body))).toEqual({
+      capability: MADE.capability,
+      displayName: 'Ash',
+    });
+    expect(String(fetch.mock.calls[0]![0])).toContain(
+      `/v2/rooms/${MADE.roomCode}/open`
+    );
+  });
+
+  it('says why a room would not open, and stays the Solo table', async () => {
+    for (const [status, code] of [
+      [409, 'not_solo'],
+      [403, 'refused'],
+      [503, 'failed'],
+    ] as const) {
+      const forget = vi.fn();
+      const dependencies = deps([{ ...OWN, thisTab: true }], {
+        forget,
+        fetch: vi.fn(async () => Response.json({ error: code }, { status })),
+        origin: 'https://play.example',
+      });
+      const solo = await openRemoteSoloRoom(input, dependencies);
+      await expect(solo.goOnline({ displayName: 'Ash' })).rejects.toMatchObject(
+        { code }
+      );
+      expect(forget).not.toHaveBeenCalled();
+      expect(solo.mode).toBe('solo');
+    }
+    // An answer that hands the same claim out twice is no answer.
+    const dependencies = deps([{ ...OWN, thisTab: true }], {
+      fetch: vi.fn(async () =>
+        Response.json(
+          {
+            mode: 'multiplayer',
+            credentials: {
+              playerTwoSeatCapability: opened.credentials.spectatorCapability,
+              spectatorCapability: opened.credentials.spectatorCapability,
+            },
+          },
+          { status: 201 }
+        )
+      ),
+      origin: 'https://play.example',
+    });
+    const solo = await openRemoteSoloRoom(input, dependencies);
+    await expect(solo.goOnline({ displayName: 'Ash' })).rejects.toMatchObject({
+      code: 'invalid_response',
+    });
   });
 });

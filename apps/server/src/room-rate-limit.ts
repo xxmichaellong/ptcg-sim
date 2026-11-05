@@ -2,6 +2,7 @@ import type {
   AdmissionTicketIssueResult,
   RoomAuthoritySnapshot,
   RoomInvitationIssueResult,
+  RoomOpeningResult,
 } from '@ptcgsim/room-authority';
 
 import {
@@ -80,6 +81,8 @@ export type BoundedAdmissionTicketIssueResult =
 
 export type BoundedRoomInvitationIssueResult =
   RoomInvitationIssueResult | RoomOperationRateLimitRejection;
+export type BoundedRoomOpeningResult =
+  RoomOpeningResult | RoomOperationRateLimitRejection;
 
 const safeNonNegativeInteger = (value: unknown): value is number =>
   typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;

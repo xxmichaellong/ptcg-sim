@@ -17,6 +17,8 @@ import {
   RoomInvitationIssueRequestSchema,
   RoomInvitationIssueResponseSchema,
   RoomInvitationHandoffSchema,
+  RoomOpenRequestSchema,
+  RoomOpenResponseSchema,
   RoomAdmissionTicketRequestSchema,
   RoomAdmissionTicketResponseSchema,
   ServerMessageSchema,
@@ -31,6 +33,8 @@ import {
   type RoomInvitationIssueRequest,
   type RoomInvitationIssueResponse,
   type RoomInvitationHandoff,
+  type RoomOpenRequest,
+  type RoomOpenResponse,
   type RoomAdmissionTicketRequest,
   type RoomAdmissionTicketResponse,
   type SerializedMatchViewState,
@@ -128,6 +132,16 @@ export const parseRoomCreationResponse = (
   value: unknown
 ): SchemaParseResult<RoomCreationResponse> =>
   parseSchema(value, RoomCreationResponseSchema);
+
+export const parseRoomOpenRequest = (
+  value: unknown
+): SchemaParseResult<RoomOpenRequest> =>
+  parseSchema(value, RoomOpenRequestSchema);
+
+export const parseRoomOpenResponse = (
+  value: unknown
+): SchemaParseResult<RoomOpenResponse> =>
+  parseSchema(value, RoomOpenResponseSchema);
 
 export const parseRoomInvitationIssueRequest = (
   value: unknown

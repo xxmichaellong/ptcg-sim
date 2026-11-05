@@ -1055,6 +1055,40 @@ describe('remote room lobby wiring', () => {
     await act(async () => root.unmount());
   });
 
+  it('turns the parked Solo table into the room on Create room, game and all', async () => {
+    const solo = creationResult(runtime({ label: 'solo' }), 'solo');
+    const room = creationResult(solo.roomRuntime, 'multiplayer');
+    const goOnline = vi.fn(async () => room.value);
+    const createRoom = vi.fn();
+    const openSoloRoom = vi.fn(async () => ({ ...solo.value, goOnline }));
+    const { root } = await mount({
+      ...lobbyDependencies(custody(), createRoom),
+      openSoloRoom:
+        openSoloRoom as unknown as RemoteRoomLobbyDependencies['openSoloRoom'],
+    });
+    await settle();
+    await chooseMenuItem('p1Button');
+    expect(roomRouteHarness.roomMode).toBe('solo');
+    await click('#testOpenMultiplayer');
+    expect(playOnlineOpen()).toBe(true);
+    await act(async () => {
+      inputValue(element('#nameInput'), 'Ash');
+      element<HTMLButtonElement>('#generateIdButton').click();
+      await flush();
+    });
+    await settle();
+    // No new room: the table at hand opened, under the name given.
+    expect(createRoom).not.toHaveBeenCalled();
+    expect(goOnline).toHaveBeenCalledOnce();
+    expect(goOnline.mock.calls[0]?.[0]).toMatchObject({ displayName: 'Ash' });
+    expect(present('[data-app-route="test-remote-room"]')).toBe(true);
+    expect(roomRouteHarness.roomMode).toBe('multiplayer');
+    // The same game: the Solo table was not put away.
+    expect(solo.dispose).not.toHaveBeenCalled();
+    await act(async () => root.unmount());
+    expect(room.dispose).toHaveBeenCalledOnce();
+  });
+
   it("puts a card back chosen on Play online's deck screen on the parked Solo table at once", async () => {
     const created = creationResult(runtime({ label: 'solo' }), 'solo');
     const createRoom = vi.fn(async () => created.value);

@@ -416,15 +416,16 @@ export const RemoteRoomRoute = ({
   // new room brings it back.
   const [inviteDismissed, setInviteDismissed] = useState(false);
   // A new room on this route (Create room from Play online over a Solo
-  // table): its card comes back, and the Play online sheet it was made
-  // from is done.
-  const shownRuntime = useRef(runtime);
+  // table), or this Solo table opened as one in place (ADR-044): its card
+  // comes back, and the Play online sheet it was made from is done.
+  const shownRoom = useRef({ runtime, solo });
   useEffect(() => {
-    if (shownRuntime.current === runtime) return;
-    shownRuntime.current = runtime;
+    const shown = shownRoom.current;
+    if (shown.runtime === runtime && shown.solo === solo) return;
+    shownRoom.current = { runtime, solo };
     setInviteDismissed(false);
     setSheet((current) => (current === 'online' ? undefined : current));
-  }, [runtime]);
+  }, [runtime, solo]);
   const hint = useHotkeyHints();
   const shellPreferences = usePreference(SHELL_PREFERENCES);
   const exportBattleLog = (): void => {

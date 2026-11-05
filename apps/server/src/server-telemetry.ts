@@ -36,6 +36,7 @@ export type ServerHttpRoute =
   | 'continuation_restore'
   | 'continuation_revocation'
   | 'room_invitation'
+  | 'room_open'
   | 'admission_ticket'
   | 'socket_upgrade'
   | 'not_found';
@@ -55,6 +56,7 @@ export type ContinuationLifecycleOutcome =
   | 'corrupt_removed'
   | 'failed';
 export type RoomAdmissionOperation =
+  | 'room_open'
   | 'invitation_issue'
   | 'ticket_issue'
   | 'hello_ticket'
@@ -76,6 +78,7 @@ export type ServerFailureSubsystem =
   | 'room_initialization'
   | 'room_restoration'
   | 'room_alarm'
+  | 'room_open'
   | 'invitation_issue'
   | 'ticket_issue'
   | 'session_admission'
@@ -104,6 +107,7 @@ export type TelemetryReason =
   | 'invitation_capacity'
   | 'invalid_admission'
   | 'admission_required'
+  | 'not_solo'
   | 'unknown';
 
 interface ServerTelemetryBase {
@@ -262,6 +266,7 @@ const TELEMETRY_REASONS = new Set<TelemetryReason>([
   'invitation_capacity',
   'invalid_admission',
   'admission_required',
+  'not_solo',
   'unknown',
 ]);
 

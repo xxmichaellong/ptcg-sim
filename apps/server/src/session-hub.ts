@@ -10,9 +10,11 @@ import {
   issueRoomAdmissionTicket,
   issueRoomInvitation,
   leaveRoomSession,
+  openSoloRoom,
   RoomAuthorityCoordinator,
   type RoomInvitationDependencies,
   type RoomInvitationIssueRequest,
+  type RoomOpeningDependencies,
   expireDisconnectedRoomSessions,
 } from '@ptcgsim/room-authority';
 import {
@@ -22,6 +24,7 @@ import {
   parseClientFrame,
   serializeMatchViewState,
   type ClientMessage,
+  type RoomOpenRequest,
   type ServerMessage,
 } from '@ptcgsim/protocol';
 
@@ -39,6 +42,7 @@ import {
 import type {
   BoundedAdmissionTicketIssueResult,
   BoundedRoomInvitationIssueResult,
+  BoundedRoomOpeningResult,
   RoomRateLimitDecision,
   RoomRateLimitPort,
 } from './room-rate-limit.js';
@@ -65,6 +69,8 @@ export interface RuntimeConnection {
 export interface SessionHubDependencies {
   readonly admission: RoomInvitationDependencies & {
     readonly now: () => number;
+    readonly crypto: RoomInvitationDependencies['crypto'] &
+      RoomOpeningDependencies['crypto'];
   };
   readonly rateLimits: RoomRateLimitPort;
   readonly store: AuthoritySnapshotStore;
@@ -336,6 +342,95 @@ export class RoomSessionHub {
         });
         this.dependencies.telemetry.failure({
           subsystem: 'invitation_issue',
+          retryable: true,
+        });
+        throw error;
+      }
+    });
+    this.tail = run.then(
+      () => undefined,
+      () => undefined
+    );
+    return run;
+  }
+
+  /**
+   * Opens this Solo room to an opponent in place (ADR-044): committed like
+   * any admission change, then each connected session is shown the table
+   * under a room's rules.
+   */
+  openSoloRoom(request: RoomOpenRequest): Promise<BoundedRoomOpeningResult> {
+    const startedAt = this.dependencies.monotonicNow();
+    const run = this.tail.then(async () => {
+      try {
+        const now = this.dependencies.admission.now();
+        const rateLimit = await this.dependencies.rateLimits.attempt(
+          'invitation',
+          now
+        );
+        this.dependencies.telemetry.roomRateLimit({
+          operation: 'invitation',
+          allowed: rateLimit.allowed,
+          ...(!rateLimit.allowed
+            ? { retryAfterSeconds: rateLimit.retryAfterSeconds }
+            : {}),
+        });
+        if (!rateLimit.allowed) {
+          this.dependencies.telemetry.roomAdmission({
+            operation: 'room_open',
+            requestedRole: 'player',
+            outcome: 'rate_limited',
+            reason: 'rate_limited',
+            authorityVersion:
+              this.coordinator.currentSnapshot().authorityVersion,
+            durationMs: this.dependencies.monotonicNow() - startedAt,
+          });
+          return {
+            accepted: false,
+            code: 'rate_limited',
+            retryAfterSeconds: rateLimit.retryAfterSeconds,
+            snapshot: this.coordinator.currentSnapshot(),
+          } as const;
+        }
+        const result = await openSoloRoom(
+          this.coordinator.currentSnapshot(),
+          request,
+          this.dependencies.admission
+        );
+        if (result.accepted) {
+          this.coordinator.installCommittedSnapshot(result.snapshot);
+          for (const refresh of result.refreshes) {
+            const connectionId = this.sessionConnections.get(
+              refresh.sessionId
+            );
+            const connection = connectionId
+              ? this.connections.get(connectionId)
+              : undefined;
+            if (connection) this.send(connection, refresh.message);
+          }
+        }
+        this.dependencies.telemetry.roomAdmission({
+          operation: 'room_open',
+          requestedRole: 'player',
+          outcome: result.accepted ? 'accepted' : 'rejected',
+          ...(!result.accepted ? { reason: result.code } : {}),
+          authorityVersion: result.snapshot.authorityVersion,
+          durationMs: this.dependencies.monotonicNow() - startedAt,
+        });
+        return result;
+      } catch (error) {
+        const durable = await this.dependencies.store.load();
+        if (durable) this.coordinator.installCommittedSnapshot(durable);
+        this.dependencies.telemetry.roomAdmission({
+          operation: 'room_open',
+          requestedRole: 'player',
+          outcome: 'failed',
+          reason: 'internal_retryable',
+          authorityVersion: this.coordinator.currentSnapshot().authorityVersion,
+          durationMs: this.dependencies.monotonicNow() - startedAt,
+        });
+        this.dependencies.telemetry.failure({
+          subsystem: 'room_open',
           retryable: true,
         });
         throw error;

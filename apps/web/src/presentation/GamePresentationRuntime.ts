@@ -16,8 +16,12 @@ export interface GamePresentationRuntimeOptions {
   readonly replay: ReplayPresentationSource;
   readonly policy?: Partial<PresentationRuntimePolicy>;
   readonly reportFailure?: GamePresentationFailureReporter;
-  /** v1's solo table announces no arrivals or departures; multiplayer does. */
-  readonly announcePresence?: boolean;
+  /**
+   * v1's solo table announces no arrivals or departures; multiplayer does.
+   * Asked as each one comes, so a Solo room opened to an opponent starts
+   * announcing them (ADR-044).
+   */
+  readonly announcePresence?: boolean | (() => boolean);
   /** Optional renderer-facing consumers owned at the same lifecycle boundary. */
   readonly consumers?: PresentationConsumerRuntimeOptions;
 }

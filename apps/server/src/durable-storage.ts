@@ -1276,7 +1276,9 @@ export class DurableRoomSnapshotStore
                     sessionIds: transaction.sessionIds,
                     expiredAt: transaction.expiredAt,
                   }
-                : {
+                : transaction.kind === 'room_opened'
+                  ? {}
+                  : {
                     sessionId: transaction.sessionId,
                     ...(transaction.kind === 'session_disconnected'
                       ? {

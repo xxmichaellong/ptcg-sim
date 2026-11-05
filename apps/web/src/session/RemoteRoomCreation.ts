@@ -585,8 +585,12 @@ export const createRemoteRoom = async (
           ...dependencies.bootstrapDependencies?.runtime,
           presentation: {
             ...dependencies.bootstrapDependencies?.runtime?.presentation,
-            // v1's solo table never announced its lone player arriving.
-            announcePresence: parsed.value.mode !== 'solo',
+            // v1's solo table never announced its lone player arriving
+            // (unless the caller asks as each comes: a Solo room that may
+            // be opened to an opponent, ADR-044).
+            announcePresence:
+              dependencies.bootstrapDependencies?.runtime?.presentation
+                ?.announcePresence ?? parsed.value.mode !== 'solo',
           },
         },
         fetch: fetchImplementation,

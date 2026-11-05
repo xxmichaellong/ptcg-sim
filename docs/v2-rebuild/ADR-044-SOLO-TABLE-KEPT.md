@@ -1,8 +1,10 @@
-# ADR-044: the Solo table is kept across reloads
+# ADR-044: the Solo table is a room: kept across reloads, opened in place
 
 - Status: **ACCEPTED** (2026-11-05, the owner's request: "can we remember
   the state when you reload the game?", and "aren't solo rooms technically
-  still a room? … that allows us to persist state across reloads").
+  still a room? … that allows us to persist state across reloads. that also
+  means that solo rooms could just be turned into multiplayer rooms without
+  the player actually needing to leave and join a new room").
 - Decision date: 2026-11-05
 - Number: 044; its parity exception is PX-085.
 - Amends: ADR-018 (a seat capability may now outlive the page that was
@@ -45,8 +47,28 @@ free again and the claim takes it with a new session.
    tab's is not waited for. The hold is page-wide, so StrictMode's replayed
    lobby shares it rather than racing itself. Without Web Locks (an insecure
    origin), tabs are trusted not to share.
-4. **Nothing else changes.** The room, its admission rules and its protocol
-   are untouched; the rejoin is an ordinary exchange and Hello.
+4. **Rejoining needs no new protocol.** The rejoin is an ordinary exchange
+   and Hello.
+5. **A Solo room opens to an opponent in place.** Play online's Create room,
+   with a Solo table at hand (open or parked behind the sheet), opens that
+   table instead of making a room: `POST /v2/rooms/:code/open` with the Solo
+   player's own seat claim and the name they now play under
+   (`RoomOpenRequest`). The authority (`openSoloRoom`, admission kind
+   `room_opened`) turns the room multiplayer with two seats, gives the second
+   seat and the spectators new claims (the second seat's claim made with the
+   room was never handed out) and answers with them (`RoomOpenResponse`),
+   for the page's invitation custody alone. The host plays under their name;
+   the second seat waits as "Player 2" until someone takes it. Solo's
+   board-flip consent, given for both seats, is withdrawn from both: in a
+   room each player gives their own, and a consent left on the new player's
+   seat would let the host act for it. The replay history, and with it undo,
+   starts again from that state. Each session is sent its view under the
+   room's rules (`ProjectionRefresh` with cause `room_opened`, which the
+   client takes at the same revision). Only the first seat's claim asks;
+   it is checked before the mode, and a room opens once. The transition's
+   invariant (`roomOpeningProblems`) allows exactly these changes. The page
+   forgets the room as its Solo table (a reload makes a new one) and starts
+   announcing arrivals.
 
 ## Consequences
 
@@ -57,12 +79,24 @@ free again and the claim takes it with a new session.
   is the player's own practice game. Script that could read it could already
   act in the room through the live page.
 - Clearing site data, or a private window closing, starts a new table.
-- Going online from Solo (the switch) still parks the Solo table and makes
-  a multiplayer room; turning the Solo room itself into a multiplayer room
-  needs an authority transition of its own (mode, seat limit, disclosure)
-  and is not part of this decision.
+- Nobody leaves or joins another room to play a friend: the table, its
+  decks and its game become the room's. The board stays as it stood, so
+  the new player takes over a side whose hidden cards the host has seen
+  (they played both); a fair game starts with Reset or Set up again.
+- Joining another room by its link still parks the Solo table, as before.
 
 ## Verification
+
+Opening in place: `room-opening.test.ts` (the transition, the new claim
+taken and the old refused, the claims and modes that may not open it, and
+the invariant refusing a kept consent, a renewed host claim or a changed
+match), `room-open-http.test.ts`, `worker-runtime.test.ts` (opened once
+through the Worker, the seated player refreshed, the second seat claimed),
+`session.test.ts` (the `room_opened` refresh), `RemoteSoloRoom.test.ts`,
+`RemoteRoomLobby.test.tsx` and `solo-room-opens.spec.ts` (a Solo game opened,
+invited into and joined by a second browser, the same game on both).
+
+Reloading:
 
 `RemoteSoloRoom.test.ts` (recall order, damaged storage, the page-wide
 hold, rejoin, fallback on refusal or silence, another tab's room, cancel),

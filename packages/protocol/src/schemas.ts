@@ -109,6 +109,24 @@ export const RoomInvitationHandoffSchema = v.strictObject({
   expiresAt: NonNegativeIntegerSchema,
 });
 
+/**
+ * A Solo room opened to an opponent in place (ADR-044): its player's own
+ * seat claim, and the name they play under now that someone else will see
+ * it. The answer holds the second seat's claim and the spectators', new.
+ */
+export const RoomOpenRequestSchema = v.strictObject({
+  capability: CapabilitySchema,
+  displayName: boundedString(64),
+});
+
+export const RoomOpenResponseSchema = v.strictObject({
+  mode: v.literal('multiplayer'),
+  credentials: v.strictObject({
+    playerTwoSeatCapability: CapabilitySchema,
+    spectatorCapability: CapabilitySchema,
+  }),
+});
+
 export const RoomAdmissionTicketRequestSchema = v.strictObject({
   capability: CapabilitySchema,
   displayName: boundedString(64),
@@ -1389,7 +1407,11 @@ const StatePublicationSchema = v.object({
 const ProjectionRefreshSchema = v.object({
   type: v.literal('ProjectionRefresh'),
   protocolVersion: v.literal(PROTOCOL_VERSION),
-  cause: v.literal('authority_reconciled'),
+  /**
+   * `room_opened`: a Solo room became a multiplayer one in place (ADR-044),
+   * so what this viewer may see changed at the same revision.
+   */
+  cause: v.picklist(['authority_reconciled', 'room_opened'] as const),
   snapshot: MatchViewStateSchema,
 });
 
@@ -1563,6 +1585,8 @@ export type RoomInvitationIssueResponse = v.InferOutput<
 export type RoomInvitationHandoff = v.InferOutput<
   typeof RoomInvitationHandoffSchema
 >;
+export type RoomOpenRequest = v.InferOutput<typeof RoomOpenRequestSchema>;
+export type RoomOpenResponse = v.InferOutput<typeof RoomOpenResponseSchema>;
 export type RoomAdmissionTicketRequest = v.InferOutput<
   typeof RoomAdmissionTicketRequestSchema
 >;

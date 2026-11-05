@@ -1380,3 +1380,212 @@ export const admitRoomSession = async (
     dependencies
   );
 };
+
+export interface RoomOpeningCrypto extends AdmissionCrypto {
+  readonly nextSeatCapability: () => string;
+  readonly nextSpectatorCapability: () => string;
+}
+
+export interface RoomOpeningDependencies extends Omit<
+  AdmissionDependencies,
+  'crypto'
+> {
+  readonly crypto: RoomOpeningCrypto;
+}
+
+export type RoomOpeningResult =
+  | {
+      readonly accepted: true;
+      readonly committed: true;
+      readonly snapshot: RoomAuthoritySnapshot;
+      /** The second seat's claim, new: the host's custody mints its invites. */
+      readonly playerTwoSeatCapability: string;
+      /** The spectators' claim, new: any the room had before is retired. */
+      readonly spectatorCapability: string;
+      /** Each session's view under the room's new rules. */
+      readonly refreshes: readonly AuthorityDelivery[];
+    }
+  | {
+      readonly accepted: false;
+      readonly code:
+        | 'invalid_request'
+        | 'invalid_capability'
+        | 'room_not_ready'
+        | 'not_solo';
+      readonly snapshot: RoomAuthoritySnapshot;
+    };
+
+/** Where a Solo room's second seat starts once someone else may take it. */
+export const OPENED_ROOM_SEAT_NAME = 'Player 2';
+
+/**
+ * Opens a Solo room to an opponent, in place (ADR-044): the same room, its
+ * game as it stands, becomes a multiplayer room. Only the Solo player's own
+ * seat claim may ask. Its second seat gets a new claim (the one made with
+ * the room was never handed out) and the spectators a new one; the host
+ * plays under the name given, and the second seat waits as "Player 2" for
+ * whoever takes it. Both seats' board-flip consent, given in Solo, is
+ * withdrawn: in a room each player gives their own. The replay history
+ * starts again from here, so undo cannot reach back into the Solo game, and
+ * every session is shown the table under the room's rules.
+ */
+export const openSoloRoom = async (
+  current: RoomAuthoritySnapshot,
+  request: { readonly capability: string; readonly displayName: string },
+  dependencies: RoomOpeningDependencies
+): Promise<RoomOpeningResult> => {
+  assertAuthoritySnapshotInvariants(current);
+  const reject = (
+    code: Exclude<RoomOpeningResult, { accepted: true }>['code']
+  ): RoomOpeningResult => ({ accepted: false, code, snapshot: current });
+  const admission = current.admission;
+  if (!admission) return reject('room_not_ready');
+  if (
+    !validBoundedCapability(request.capability) ||
+    !validDisplayName(request.displayName)
+  ) {
+    return reject('invalid_request');
+  }
+  const { crypto } = dependencies;
+  const supplied = await crypto.digestCapability(request.capability);
+  // The Solo player sits in the first seat; the second seat's claim, made
+  // with the room, was never handed out.
+  const hostId = current.state.playerOrder[0];
+  const hostSeat = hostId ? admission.seats[hostId] : undefined;
+  // The claim is checked before the mode, so nobody without it learns
+  // anything about the room.
+  if (
+    !hostSeat ||
+    !crypto.equalDigest(hostSeat.claimCapabilityDigest, supplied)
+  ) {
+    return reject('invalid_capability');
+  }
+  if (current.mode !== 'solo') return reject('not_solo');
+  const openSeat = Object.values(admission.seats).find(
+    (seat) => seat.playerId !== hostSeat.playerId
+  );
+  if (!openSeat || openSeat.claimedSessionId !== null) {
+    throw new Error('A Solo room has one open second seat');
+  }
+
+  // New claims, distinct from each other and from every claim in use.
+  const inUse = new Set([
+    ...Object.values(admission.seats).map((seat) => seat.claimCapabilityDigest),
+    ...(admission.spectatorCapabilityDigest
+      ? [admission.spectatorCapabilityDigest]
+      : []),
+  ]);
+  let claims:
+    | {
+        readonly seat: string;
+        readonly seatDigest: string;
+        readonly spectator: string;
+        readonly spectatorDigest: string;
+      }
+    | undefined;
+  for (let attempt = 0; attempt < 32 && !claims; attempt += 1) {
+    const seat = crypto.nextSeatCapability();
+    const spectator = crypto.nextSpectatorCapability();
+    if (
+      !validBoundedCapability(seat) ||
+      !validBoundedCapability(spectator) ||
+      seat === spectator
+    ) {
+      continue;
+    }
+    const [seatDigest, spectatorDigest] = await Promise.all([
+      crypto.digestCapability(seat),
+      crypto.digestCapability(spectator),
+    ]);
+    if (
+      seatDigest !== spectatorDigest &&
+      !inUse.has(seatDigest) &&
+      !inUse.has(spectatorDigest)
+    ) {
+      claims = { seat, seatDigest, spectator, spectatorDigest };
+    }
+  }
+  if (!claims) throw new Error('Capability source repeated its claims');
+
+  const hostName = request.displayName.trim();
+  const state = {
+    ...current.state,
+    players: Object.fromEntries(
+      Object.entries(current.state.players).map(([playerId, player]) => [
+        playerId,
+        {
+          ...player,
+          coachingConsent: false,
+          displayName:
+            playerId === hostSeat.playerId ? hostName : OPENED_ROOM_SEAT_NAME,
+        },
+      ])
+    ),
+  } as typeof current.state;
+  const sessions = Object.fromEntries(
+    Object.entries(current.sessions).map(([id, session]) => [
+      id,
+      session.viewer.kind === 'player' &&
+      session.viewer.playerId === hostSeat.playerId
+        ? { ...session, displayName: hostName }
+        : session,
+    ])
+  );
+  const opened: RoomAuthoritySnapshot = {
+    ...current,
+    authorityVersion: current.authorityVersion + 1,
+    mode: 'multiplayer',
+    state,
+    replayHistory: createReplayHistory(state),
+    sessions,
+    admission: {
+      ...admission,
+      playerSeatLimit: 2,
+      spectatorCapabilityDigest: claims.spectatorDigest,
+      seats: {
+        ...admission.seats,
+        [openSeat.playerId]: {
+          ...openSeat,
+          claimCapabilityDigest: claims.seatDigest,
+        },
+      },
+    },
+  };
+  let identities = opened.identities;
+  const refreshes: AuthorityDelivery[] = [];
+  for (const session of Object.values(sessions)) {
+    if (!session.active) continue;
+    const projected = projectRecipient(
+      state,
+      session.viewer,
+      identities,
+      dependencies.opaqueIds,
+      opened.mode
+    );
+    identities = projected.identities;
+    refreshes.push({
+      sessionId: session.id,
+      message: {
+        type: 'ProjectionRefresh',
+        protocolVersion: PROTOCOL_VERSION,
+        cause: 'room_opened',
+        snapshot: serializeMatchViewState(projected.snapshot),
+      },
+    });
+  }
+  const candidate: RoomAuthoritySnapshot = { ...opened, identities };
+  assertAuthoritySnapshotInvariants(candidate);
+  await dependencies.persistence.commitAdmission({
+    expectedAuthorityVersion: current.authorityVersion,
+    snapshot: candidate,
+    kind: 'room_opened',
+  });
+  return {
+    accepted: true,
+    committed: true,
+    snapshot: candidate,
+    playerTwoSeatCapability: claims.seat,
+    spectatorCapability: claims.spectator,
+    refreshes,
+  };
+};

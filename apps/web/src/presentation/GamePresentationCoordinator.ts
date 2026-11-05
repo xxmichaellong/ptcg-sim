@@ -70,8 +70,12 @@ export interface GamePresentationCoordinatorOptions {
   readonly clearTransientEffects?: () => void;
   /** Clears local data when the authoritative room/viewer identity changes. */
   readonly bindPresentationIdentity?: (identity?: string) => void;
-  /** v1's solo table announces no arrivals or departures; multiplayer does. */
-  readonly announcePresence?: boolean;
+  /**
+   * v1's solo table announces no arrivals or departures; multiplayer does.
+   * Asked as each one comes, so a Solo room opened to an opponent starts
+   * announcing them (ADR-044).
+   */
+  readonly announcePresence?: boolean | (() => boolean);
   readonly reportFailure?: GamePresentationFailureReporter;
 }
 
@@ -289,7 +293,10 @@ export class GamePresentationCoordinator {
       () => live.getSnapshot().view?.revision ?? 0,
       adapters,
       reportPresenceEffectFailure,
-      () => announcePresence && replay.getSnapshot().mode === 'live'
+      () =>
+        (typeof announcePresence === 'function'
+          ? announcePresence()
+          : announcePresence) && replay.getSnapshot().mode === 'live'
     );
     const replayEffectSink = createPresentationEffectSink(
       () => replay.getSnapshot().view,
