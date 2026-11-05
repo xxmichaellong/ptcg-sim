@@ -1,5 +1,5 @@
 import { sameDeckList } from '@ptcgsim/deck-core';
-import { parseCardBack } from '@ptcgsim/game-core';
+import { parseCardBack, STANDARD_CARD_BACK } from '@ptcgsim/game-core';
 import {
   useCallback,
   useEffect,
@@ -772,15 +772,34 @@ export const DeckBuilderSession = ({
         .decks.flatMap((deck) => (deck.cardBack ? [deck.cardBack] : []));
       const current = cardBacks[target];
       // A back deleted in the chooser leaves the saved decks that wear it,
-      // which wear Standard again; its Undo puts it back on them.
+      // and the seats whose own back it was, which wear Standard again (said
+      // so: a deck with no back of its own would take the seat's); its Undo
+      // puts it back on those still in Standard.
       const forgetWorn = (back: string): (() => void) => {
         const wearing = library
           .getSnapshot()
           .decks.filter((deck) => deck.cardBack === back)
           .map((deck) => deck.id);
-        for (const id of wearing) library.update(id, { cardBack: undefined });
+        const seats = DECK_TARGETS.filter(
+          (seat) => cardBackStore.seatCardBack(seat) === back
+        );
+        for (const id of wearing) {
+          library.update(id, { cardBack: STANDARD_CARD_BACK });
+        }
+        for (const seat of seats) {
+          cardBackStore.chooseSeatCardBack(seat, STANDARD_CARD_BACK);
+        }
         return () => {
-          for (const id of wearing) library.update(id, { cardBack: back });
+          for (const id of wearing) {
+            if (library.get(id)?.cardBack === STANDARD_CARD_BACK) {
+              library.update(id, { cardBack: back });
+            }
+          }
+          for (const seat of seats) {
+            if (cardBackStore.seatCardBack(seat) === STANDARD_CARD_BACK) {
+              cardBackStore.chooseSeatCardBack(seat, back);
+            }
+          }
         };
       };
       chooseCardBack(target, {
@@ -789,7 +808,7 @@ export const DeckBuilderSession = ({
         forgetWorn,
       });
     },
-    [cardBacks, chooseCardBack, library]
+    [cardBackStore, cardBacks, chooseCardBack, library]
   );
 
   return (

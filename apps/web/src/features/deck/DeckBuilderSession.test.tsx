@@ -6,7 +6,7 @@ import type {
   SubmitCommandResult,
 } from '@ptcgsim/client-session';
 import { deckListOf, deckTotals, type DeckCard } from '@ptcgsim/deck-core';
-import type { MatchViewState } from '@ptcgsim/game-core';
+import { STANDARD_CARD_BACK, type MatchViewState } from '@ptcgsim/game-core';
 import type { WireGameCommand } from '@ptcgsim/protocol';
 import { createRendererSpikeView } from '@ptcgsim/renderer-contract';
 import { STANDARD_CARD_BACK_IMAGE } from '../../card-backs/card-back-presets.js';
@@ -1320,6 +1320,47 @@ describe('DeckBuilderSession', () => {
       );
       // Cancelled, nothing changes.
       expect(library.get(charizard.id)?.cardBack).toBe(DESIGN);
+    });
+
+    it('puts a deleted back off the decks and the seat that wore it, Standard in its place, and back on with its Undo', async () => {
+      const DESIGN = 'design:1.navy.stripes.gold.star';
+      const session = new FakeSession();
+      const store = new DeckBuilderStore();
+      const cardBackStore = new CardBackCustodyStore();
+      // The seat's own back, and a saved deck's.
+      cardBackStore.chooseSeatCardBack('main', DESIGN);
+      const charizard = save('Charizard');
+      library.update(charizard.id, { cardBack: DESIGN });
+      save('Mew');
+      const requests: BrowserCardBackRequestOptions[] = [];
+      const requestCardBack: BrowserCardBackRequest = async (options) => {
+        if (options) requests.push(options);
+        return undefined;
+      };
+      await renderSession({
+        session,
+        store,
+        cardBackStore,
+        open: true,
+        requestCardBack,
+      });
+      await click('#changeCardBackButton');
+      let undo: (() => void) | undefined;
+      act(() => {
+        undo = requests[0]?.forgetWorn?.(DESIGN);
+      });
+      expect(library.get(charizard.id)?.cardBack).toBe(STANDARD_CARD_BACK);
+      expect(cardBackStore.seatCardBack('main')).toBe(STANDARD_CARD_BACK);
+      // Neither the deck nor a deck with no back of its own wears it again.
+      for (const name of ['Charizard', 'Mew']) {
+        await click(`button[aria-label="${name}: put on P1"]`);
+        expect(cardBackStore.getSnapshot().slots.main.url).toBe(
+          STANDARD_CARD_BACK
+        );
+      }
+      act(() => undo?.());
+      expect(library.get(charizard.id)?.cardBack).toBe(DESIGN);
+      expect(cardBackStore.seatCardBack('main')).toBe(DESIGN);
     });
 
     it('keeps a back chosen on a saved deck with it, and puts it on with that deck', async () => {
