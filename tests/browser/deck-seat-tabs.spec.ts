@@ -94,12 +94,13 @@ for (const [name, width, height] of [
     expect(paint.alt.opacity).toBeLessThan(0.8);
     expect(paint.main.background).not.toBe(paint.alt.background);
 
-    // Switched to P2: all of it follows.
+    // Switched to P2: all of it follows, once each part has eased there
+    // (the band and the tray ease apart, and may land a frame apart).
     await page.locator('#nativeDeckBuilderTargetAlt').click();
     await expect
       .poll(async () => {
         const next = await seatPaint(page);
-        return next.band === next.opponent;
+        return next.band === next.opponent && next.alt.opacity === 1;
       })
       .toBe(true);
     paint = await seatPaint(page);
@@ -122,9 +123,13 @@ for (const [name, width, height] of [
       'self'
     );
     if (name === 'desktop') {
-      const sheet = await page
-        .locator('.deck-editor__pane--deck')
-        .evaluate((node) => getComputedStyle(node).borderTopColor);
-      expect(sheet).toBe((await seatPaint(page)).you);
+      const you = (await seatPaint(page)).you;
+      await expect
+        .poll(() =>
+          page
+            .locator('.deck-editor__pane--deck')
+            .evaluate((node) => getComputedStyle(node).borderTopColor)
+        )
+        .toBe(you);
     }
   });
