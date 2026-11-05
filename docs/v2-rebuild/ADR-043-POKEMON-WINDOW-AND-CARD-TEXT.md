@@ -74,7 +74,10 @@ card itself. Using an Ability was the card menu's "ability used" marker
    attacked with Charizard ex's Burning Darkness". No damage is dealt and
    no cost is checked (ADR-001). The window closes after either. The room
    resolves an attack only from the attacker's own Pokémon; a move is
-   named only with a Pokémon everyone can see.
+   named only with a Pokémon everyone can see. Each move is pressed by its
+   own button (Use, Attack), in one column on the moves' end, or under the
+   move's text where they are narrow; the text is only read, so a tap to
+   read it uses nothing.
 6. **Who may press what.** Damage, conditions, reminders and the marker
    are anyone's at the table, as the card menu's are (the room's policy);
    a spectator or a replay presses nothing. Moves are their Pokémon's

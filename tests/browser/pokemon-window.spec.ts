@@ -176,8 +176,10 @@ test('a Pokémon opens in its window: its cards, its status and its moves, each 
   await expect(ability).toHaveAccessibleName('Use Infernal Reign');
   const attack = window.locator('[data-pokemon-window-move="attack"]');
   await expect(attack).toHaveCount(1);
-  await expect(attack).toContainText('Burning Darkness');
-  await expect(attack).toContainText('180+');
+  await expect(attack).toHaveAccessibleName('Attack with Burning Darkness');
+  const attackRow = window.locator('.pokemon-window__move.is-attack');
+  await expect(attackRow).toContainText('Burning Darkness');
+  await expect(attackRow).toContainText('180+');
   await testInfo.attach('pokemon-window.png', {
     body: await page.screenshot(),
     contentType: 'image/png',
@@ -221,7 +223,12 @@ test('a Pokémon opens in its window: its cards, its status and its moves, each 
   await expect(
     window.getByRole('button', { name: 'Ability used' })
   ).toHaveAttribute('aria-pressed', 'true');
-  await window.locator('[data-pokemon-window-move="attack"]').click();
+  // Its text pressed, to read it: nothing is declared.
+  await attackRow.locator('.pokemon-window__move-text').click();
+  await attackRow.locator('.pokemon-window__move-name').click();
+  await expect(window).toBeVisible();
+  expect((await logLines(page)).join('\n')).not.toContain('attacked');
+  await attack.click();
   await expect(window).toHaveCount(0);
   await expect
     .poll(async () => (await logLines(page)).join('\n'))
@@ -454,7 +461,7 @@ test('a card’s own text plays on the table: a Pokémon made by hand, and a pri
   await page.locator(onCard(charizard!)).dblclick();
   await expect(window).toBeVisible();
   const attack = window.locator('[data-pokemon-window-move="attack"]');
-  await expect(attack).toContainText('Inferno Overdrive');
+  await expect(attack).toHaveAccessibleName('Attack with Inferno Overdrive');
   await attack.click();
   await expect
     .poll(async () => (await logLines(page)).join('\n'))

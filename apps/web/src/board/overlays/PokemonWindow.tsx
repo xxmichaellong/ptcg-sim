@@ -193,33 +193,37 @@ const AbilityRow = ({
             </span>
           ) : null}
         </h3>
-        {canUse ? (
-          <button
-            type="button"
-            className="ptcgsim-overlay-button is-primary pokemon-window__use"
-            data-pokemon-window-move="ability"
-            data-move-card-id={move.cardId}
-            aria-label={t({
-              message: `Use ${name}`,
-              comment: '{name} is an Ability printed on a Pokémon.',
-            })}
-            onClick={onUse}
-            {...tabbable}
-          >
-            <Trans context="use an Ability">Use</Trans>
-          </button>
-        ) : null}
       </header>
       {ability.text ? (
         <p className="pokemon-window__move-text">
           <RulesText text={ability.text} size={15} />
         </p>
       ) : null}
+      {canUse ? (
+        <button
+          type="button"
+          className="ptcgsim-overlay-button is-primary pokemon-window__use"
+          data-pokemon-window-move="ability"
+          data-move-card-id={move.cardId}
+          aria-label={t({
+            message: `Use ${name}`,
+            comment: '{name} is an Ability printed on a Pokémon.',
+          })}
+          onClick={onUse}
+          {...tabbable}
+        >
+          <Trans context="use an Ability">Use</Trans>
+        </button>
+      ) : null}
     </article>
   );
 };
 
-/** An attack: a press declares it, for the Active Pokémon's player. */
+/**
+ * An attack: its cost, name, damage and text, read; and Attack, which
+ * declares it, for the Active Pokémon's player. Only the button declares it,
+ * so a tap to read the text does nothing.
+ */
 const AttackRow = ({
   attack,
   canUse,
@@ -231,44 +235,41 @@ const AttackRow = ({
   readonly onUse: () => void;
   readonly cardId: ViewCardId;
 }) => {
-  const body = (
-    <>
-      <span className="pokemon-window__move-head">
-        {canUse ? (
-          <span className="ds-visually-hidden">
-            <Trans context="declare an attack">Attack:</Trans>{' '}
-          </span>
-        ) : null}
+  const { t } = useLingui();
+  const name = attack.name;
+  return (
+    <article className="pokemon-window__move is-attack">
+      <header className="pokemon-window__move-head">
         <Cost cost={attack.cost} size={20} />
-        <span className="pokemon-window__move-name">{attack.name}</span>
+        <h3 className="pokemon-window__move-name">{name}</h3>
         {attack.damage ? (
           <span className="pokemon-window__damage ds-number">
             {attack.damage}
           </span>
         ) : null}
-      </span>
+      </header>
       {attack.text ? (
-        <span className="pokemon-window__move-text">
+        <p className="pokemon-window__move-text">
           <RulesText text={attack.text} size={15} />
-        </span>
+        </p>
       ) : null}
-    </>
-  );
-  return canUse ? (
-    <button
-      type="button"
-      className="pokemon-window__move is-attack"
-      data-pokemon-window-move="attack"
-      data-move-card-id={cardId}
-      onClick={onUse}
-      {...tabbable}
-    >
-      {body}
-    </button>
-  ) : (
-    <div className="pokemon-window__move is-attack" data-readonly="true">
-      {body}
-    </div>
+      {canUse ? (
+        <button
+          type="button"
+          className="ptcgsim-overlay-button is-primary pokemon-window__use"
+          data-pokemon-window-move="attack"
+          data-move-card-id={cardId}
+          aria-label={t({
+            message: `Attack with ${name}`,
+            comment: '{name} is an attack printed on a Pokémon.',
+          })}
+          onClick={onUse}
+          {...tabbable}
+        >
+          {t({ message: 'Attack', context: 'declare an attack' })}
+        </button>
+      ) : null}
+    </article>
   );
 };
 
@@ -962,6 +963,12 @@ export const PokemonWindow = ({
           <div
             className="pokemon-window__moves"
             aria-busy={pending ? 'true' : undefined}
+            data-actions={
+              canUseMoves &&
+              moves.some((move) => move.ability !== undefined || active)
+                ? 'true'
+                : undefined
+            }
           >
             {moves.map((move, index) => {
               const caption =

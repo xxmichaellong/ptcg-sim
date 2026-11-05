@@ -613,12 +613,18 @@ button.pokemon-window__toggle:active {
 /* ---- Abilities and attacks ---------------------------------------------- */
 
 /* One grid for every move, so the names line up after the costs and the
-   damage lines up on the far side, as on the card. */
+   damage lines up on the far side, as on the card; then, where a move can be
+   used, a column of its buttons (Use, Attack) on the very end. */
 .pokemon-window__moves {
   display: grid;
   align-content: start;
   grid-template-columns: auto minmax(0, 1fr) auto;
   gap: var(--space-2-5, 10px) var(--space-3);
+  container: pokemon-window-moves / inline-size;
+}
+
+.pokemon-window__moves[data-actions='true'] {
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
 }
 
 .pokemon-window__moves > :not(.pokemon-window__move-slot) {
@@ -661,7 +667,7 @@ button.pokemon-window__toggle:active {
   display: grid;
   min-height: 30px;
   align-items: center;
-  grid-column: 1 / -1;
+  grid-column: 1 / span 3;
   grid-template-columns: subgrid;
 }
 
@@ -730,48 +736,30 @@ button.pokemon-window__toggle:active {
   white-space: nowrap;
 }
 
+/* A move's button (Use, Attack): on the end of its first line, the same
+   width as the others. Only it uses the move, so a tap on the text to read
+   it does nothing. */
 .pokemon-window__use {
-  justify-self: end;
+  grid-row: 1;
+  grid-column: -2 / -1;
+  align-self: center;
+  justify-self: stretch;
   height: 32px;
   padding-inline: var(--space-4);
 }
 
-/* An attack its player can declare: the whole row is the button. */
-button.pokemon-window__move.is-attack {
-  cursor: pointer;
-  transition:
-    background-color var(--duration-instant) ease,
-    border-color var(--duration-instant) ease,
-    box-shadow var(--duration-fast) ease,
-    translate var(--duration-fast) var(--ease-out),
-    scale var(--control-press-timing);
-}
-
-@media (hover: hover) and (pointer: fine) {
-  button.pokemon-window__move.is-attack:hover {
-    border-color: color-mix(in oklab, var(--color-accent) 60%, transparent);
-    background: color-mix(
-      in oklab,
-      var(--color-accent) 10%,
-      var(--color-surface-3)
-    );
-    box-shadow: var(--shadow-2);
-    translate: 0 var(--control-hover-rise);
+/* Where the moves are narrow: the button under the move's text instead. */
+@container pokemon-window-moves (max-width: 440px) {
+  .pokemon-window__moves[data-actions='true'] {
+    grid-template-columns: auto minmax(0, 1fr) auto;
   }
-}
 
-button.pokemon-window__move.is-attack:active {
-  scale: 0.985;
-}
-
-button.pokemon-window__move.is-attack:focus-visible {
-  outline: 2px solid var(--ptcgsim-focus-ring, var(--color-accent));
-  outline-offset: 2px;
-}
-
-/* The other player's, or a Benched Pokémon's: read, not pressed. */
-.pokemon-window__move[data-readonly='true'] {
-  background: color-mix(in oklab, var(--color-surface-3) 60%, transparent);
+  .pokemon-window__use {
+    grid-row: auto;
+    grid-column: 1 / -1;
+    justify-self: end;
+    margin-block-start: var(--space-1);
+  }
 }
 
 .pokemon-window__rules {
@@ -892,17 +880,6 @@ button.pokemon-window__move.is-attack:focus-visible {
 /* The Pokémon window's scrim: the pile viewer's, under the window. */
 .pokemon-window-scrim {
   z-index: var(--viewer-layer-browser);
-}
-
-/* Reduced motion: no lift on hover. */
-:root[data-motion='reduced'] button.pokemon-window__move.is-attack:hover {
-  translate: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  :root:not([data-motion='full']) button.pokemon-window__move.is-attack:hover {
-    translate: none;
-  }
 }
 
 /* Where a card's picture won't load: its name, so it still reads. */

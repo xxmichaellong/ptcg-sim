@@ -174,9 +174,21 @@ describe('the Pokémon window', () => {
       name: 'Static Shock',
     });
     expect(callbacks.dismiss).toHaveBeenCalledWith('preview');
-    window
-      .querySelector<HTMLButtonElement>('[data-pokemon-window-move="attack"]')!
-      .click();
+    // A press on the attack's name or text, to read it, declares nothing:
+    // only its Attack button does.
+    const attackRow = window.querySelector<HTMLElement>(
+      '.pokemon-window__move.is-attack'
+    )!;
+    attackRow.querySelector<HTMLElement>('.pokemon-window__move-name')!.click();
+    attackRow.click();
+    expect(callbacks.invokeWindowAction).not.toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'useAttack' })
+    );
+    const attack = attackRow.querySelector<HTMLButtonElement>(
+      '[data-pokemon-window-move="attack"]'
+    )!;
+    expect(attack.getAttribute('aria-label')).toBe('Attack with Thunderbolt');
+    attack.click();
     expect(callbacks.invokeWindowAction).toHaveBeenCalledWith({
       kind: 'context',
       action: 'useAttack',

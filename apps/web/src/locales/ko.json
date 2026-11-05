@@ -1948,10 +1948,12 @@
     "message": "Attack payable with",
     "translation": "기술 사용 가능 에너지"
   },
-  "uyTV5V": {
-    "message": "Attack:",
-    "context": "declare an attack",
-    "translation": "기술:"
+  "aHa8mr": {
+    "message": "Attack with {name}",
+    "comments": [
+      "{name} is an attack printed on a Pokémon."
+    ],
+    "translation": "{name} 기술 사용"
   },
   "mh0djA": {
     "message": "Attacks do more",

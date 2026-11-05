@@ -1948,10 +1948,12 @@
     "message": "Attack payable with",
     "translation": "Attacke bezahlbar mit"
   },
-  "uyTV5V": {
-    "message": "Attack:",
-    "context": "declare an attack",
-    "translation": "Attacke:"
+  "aHa8mr": {
+    "message": "Attack with {name}",
+    "comments": [
+      "{name} is an attack printed on a Pokémon."
+    ],
+    "translation": "Mit {name} angreifen"
   },
   "mh0djA": {
     "message": "Attacks do more",
