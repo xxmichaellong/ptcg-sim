@@ -119,7 +119,53 @@ interface Shuffle {
   duration: number;
   side: number;
   index: number;
+  /** Where the spread gathers: the middle of all its cards. */
+  centre: { readonly x: number; readonly y: number };
 }
+
+/** A spread pile shuffled where it lies (the prizes): gather, mix, deal. */
+const SPREAD_SHUFFLE_MS = 1150;
+/** Each card of it deals back this much after the one before. */
+const SPREAD_DEAL_STAGGER_MS = 45;
+const easeInOutCubic = (t: number): number =>
+  t < 0.5 ? 4 * t ** 3 : 1 - (-2 * t + 2) ** 3 / 2;
+
+/**
+ * Where a card of a shuffled spread is `t` (0..1) through it: gathered into
+ * one pile at the spread's middle, split and swung out to either side and
+ * back twice (the halves passing over and under each other), squared, then
+ * dealt back to its place.
+ */
+export const spreadShufflePose = (
+  shuffle: Pick<Shuffle, 'base' | 'side' | 'index' | 'centre'>,
+  t: number
+): TableCardPose => {
+  const { base, side, index } = shuffle;
+  const { width, height } = base.bounds;
+  const toX = shuffle.centre.x - (base.bounds.x + width / 2);
+  const toY = shuffle.centre.y - (base.bounds.y + height / 2);
+  const reach = width * (0.5 + 0.12 * (index % 3));
+  let gathered = 1;
+  let swing = 0;
+  if (t < 0.24) {
+    gathered = easeInOutCubic(t / 0.24);
+  } else if (t < 0.7) {
+    swing = Math.sin(((t - 0.24) / 0.46) * Math.PI * 2);
+  } else {
+    gathered = 1 - easeInOutCubic((t - 0.7) / 0.3);
+  }
+  return {
+    ...base,
+    bounds: {
+      ...base.bounds,
+      x: base.bounds.x + toX * gathered + side * reach * swing,
+      y: base.bounds.y + toY * gathered - 8 * Math.abs(swing),
+    },
+    // Lifted off the mat while it is shuffled; the halves cross by height.
+    elevation: base.elevation + 14 * gathered + side * 6 * swing,
+    turns: base.turns + side * 0.07 * swing,
+  };
+};
 
 /**
  * A pile being riffled: split in two halves that lift apart and tip in,
@@ -801,21 +847,39 @@ export class TableDepthDirector {
       }
       for (const shuffle of plan.shuffles) {
         if (shuffle.spread) {
-          for (const [index, part] of shuffle.spread.entries()) {
-            const base = this.motion.target(part.renderKey);
-            if (
-              base &&
-              this.elements.get(part.renderKey)?.dataset.held === undefined
-            )
-              this.shuffles.set(part.renderKey, {
-                key: part.renderKey,
-                base,
-                start: at,
-                duration: 600 * this.durationScale,
-                side: index % 2 ? 1 : -1,
-                index,
-              });
-          }
+          const parts = shuffle.spread
+            .map((part, index) => ({
+              part,
+              index,
+              base: this.motion.target(part.renderKey),
+            }))
+            .filter(
+              (entry): entry is typeof entry & { base: TableCardPose } =>
+                entry.base !== undefined &&
+                this.elements.get(entry.part.renderKey)?.dataset.held ===
+                  undefined
+            );
+          const centre = parts.reduce(
+            (point, { base }) => ({
+              x:
+                point.x +
+                (base.bounds.x + base.bounds.width / 2) / parts.length,
+              y:
+                point.y +
+                (base.bounds.y + base.bounds.height / 2) / parts.length,
+            }),
+            { x: 0, y: 0 }
+          );
+          for (const { part, index, base } of parts)
+            this.shuffles.set(part.renderKey, {
+              key: part.renderKey,
+              base,
+              start: at + index * SPREAD_DEAL_STAGGER_MS * this.durationScale,
+              duration: SPREAD_SHUFFLE_MS * this.durationScale,
+              side: index % 2 ? 1 : -1,
+              index,
+              centre,
+            });
         } else {
           this.riffle(
             shuffle.rect,
@@ -1454,23 +1518,7 @@ export class TableDepthDirector {
         this.paint(key, shuffle.base, at);
         continue;
       }
-      const fan = Math.sin(t * Math.PI) ** 2;
-      this.paint(
-        key,
-        {
-          ...shuffle.base,
-          bounds: {
-            ...shuffle.base.bounds,
-            x:
-              shuffle.base.bounds.x +
-              shuffle.side * shuffle.base.bounds.width * 0.48 * fan,
-            y: shuffle.base.bounds.y - 3 * fan,
-          },
-          elevation: shuffle.base.elevation + 9 * fan,
-          turns: shuffle.base.turns + shuffle.side * 0.055 * fan,
-        },
-        at
-      );
+      this.paint(key, spreadShufflePose(shuffle, t), at);
     }
     for (const [key, riffle] of this.riffles)
       if (this.paintRiffle(riffle, at)) this.riffles.delete(key);

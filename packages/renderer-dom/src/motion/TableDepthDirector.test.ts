@@ -22,7 +22,7 @@ import {
   type ViewCard,
 } from '@ptcgsim/game-core';
 import { fallBackCardImage } from '../card-image-retry.js';
-import { TableDepthDirector } from './TableDepthDirector.js';
+import { spreadShufflePose, TableDepthDirector } from './TableDepthDirector.js';
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -119,7 +119,9 @@ it('interrupts a prize shuffle when a newer command moves the card', () => {
     1
   );
   expect(director.current(card.renderKey!)).toEqual(releasedPose);
-  advance(1000);
+  // Past the rest of the spread's shuffle (gather, mix, deal: 1150ms, the
+  // last card dealt five staggers after the first).
+  advance(1600);
   expect(director.current(card.renderKey!)).toEqual(
     target.pose(moved.cards.find((node) => node.id === card.id)!)
   );
@@ -1712,4 +1714,38 @@ it('carries a turn still waiting for its face over to the new node, never from I
   nodes.d.image.dispatchEvent(new Event('error'));
   expect(internals.flips.get('d')!.start).toBe(now);
   director.destroy();
+});
+
+it('shuffles a spread so it shows: gathered in the middle, swung well apart, crossing by height, then dealt home', () => {
+  const pose = (x: number) => ({
+    bounds: { x, y: 100, width: 60, height: 84 },
+    elevation: 0,
+    turns: 0,
+  });
+  const centre = { x: 160, y: 142 };
+  const left = { base: pose(0), side: -1, index: 0, centre } as const;
+  const right = { base: pose(260), side: 1, index: 1, centre } as const;
+  const middle = (shuffle: typeof left | typeof right, t: number) => {
+    const bounds = spreadShufflePose(
+      shuffle as Parameters<typeof spreadShufflePose>[0],
+      t
+    ).bounds;
+    return bounds.x + bounds.width / 2;
+  };
+  // Gathered: both in the spread's middle.
+  expect(middle(left, 0.24)).toBeCloseTo(centre.x);
+  expect(middle(right, 0.24)).toBeCloseTo(centre.x);
+  // Mixing: swung out to either side by half a card or more, the halves at
+  // different heights so they pass over each other.
+  const out = 0.24 + 0.46 / 4;
+  expect(centre.x - middle(left, out)).toBeGreaterThanOrEqual(30);
+  expect(middle(right, out) - centre.x).toBeGreaterThanOrEqual(30);
+  const lifted = (shuffle: typeof left | typeof right) =>
+    spreadShufflePose(shuffle as Parameters<typeof spreadShufflePose>[0], out)
+      .elevation;
+  expect(Math.abs(lifted(left) - lifted(right))).toBeGreaterThan(8);
+  // Dealt home.
+  expect(
+    spreadShufflePose(left as Parameters<typeof spreadShufflePose>[0], 1)
+  ).toEqual(pose(0));
 });

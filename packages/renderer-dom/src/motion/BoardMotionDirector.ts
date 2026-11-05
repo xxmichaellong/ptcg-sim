@@ -102,6 +102,10 @@ const LANDING_SPRING = springFromPerceptual({
 /** How long after it is let go a card still lands rather than travels. */
 const LANDING_WINDOW_MS = 2500;
 /** How long a Pokémon's answer to a card joining it lasts. */
+/** A spread pile shuffled where it lies (the prizes): gather, mix, deal. */
+const SPREAD_SHUFFLE_MS = 1150;
+/** Each card of it deals back this much after the one before. */
+const SPREAD_DEAL_STAGGER_MS = 45;
 const ACKNOWLEDGE_MS = 420;
 
 const springFor = (
@@ -1064,6 +1068,9 @@ export class BoardMotionDirector {
       }),
       { x: 0, y: 0 }
     );
+    // Gathered into one pile, split and swung out to either side and back
+    // twice (the halves passing over each other), squared, then dealt back
+    // to their places one after another: a shuffle that reads as one.
     members.forEach((card, index) => {
       if (held.has(card.renderKey)) return;
       const element = this.elements.get(card.renderKey);
@@ -1072,23 +1079,51 @@ export class BoardMotionDirector {
       this.stopCardExtras(card.renderKey);
       const x = centre.x - card.rect.x - card.rect.width / 2;
       const y = centre.y - card.rect.y - card.rect.height / 2;
-      const fan = (index % 2 === 0 ? -1 : 1) * card.rect.width * 0.22;
+      const side = index % 2 === 0 ? -1 : 1;
+      const reach = card.rect.width * (0.5 + 0.12 * (index % 3));
+      const tilt = side * (9 + 3 * (index % 3));
+      const at = (dx: number, dy: number) => `${x + dx}px ${y + dy}px`;
       this.track(
         element.animate(
           [
-            { translate: '0px 0px', rotate: '0deg', offset: 0 },
-            { translate: `${x}px ${y}px`, rotate: '0deg', offset: 0.3 },
+            { translate: '0px 0px', rotate: '0deg', scale: '1', offset: 0 },
             {
-              translate: `${x + fan}px ${y - 6}px`,
-              rotate: `${index % 2 === 0 ? -5 : 5}deg`,
-              offset: 0.48,
+              translate: at(0, 0),
+              rotate: `${side * 3}deg`,
+              scale: '1.05',
+              offset: 0.24,
             },
-            { translate: `${x}px ${y}px`, rotate: '0deg', offset: 0.64 },
-            { translate: '0px 0px', rotate: '0deg', offset: 1 },
+            {
+              translate: at(side * reach, -10),
+              rotate: `${tilt}deg`,
+              scale: '1.07',
+              offset: 0.36,
+            },
+            {
+              translate: at(0, 0),
+              rotate: '0deg',
+              scale: '1.04',
+              offset: 0.47,
+            },
+            {
+              translate: at(-side * reach * 0.85, -8),
+              rotate: `${-tilt * 0.8}deg`,
+              scale: '1.07',
+              offset: 0.58,
+            },
+            {
+              translate: at(0, 0),
+              rotate: `${side * 2}deg`,
+              scale: '1.04',
+              offset: 0.7,
+            },
+            { translate: '0px 0px', rotate: '0deg', scale: '1', offset: 1 },
           ],
           {
-            duration: (520 + index * 24) * this.settings.durationScale,
-            easing: 'cubic-bezier(0.2, 0.75, 0.25, 1)',
+            duration: SPREAD_SHUFFLE_MS * this.settings.durationScale,
+            delay: index * SPREAD_DEAL_STAGGER_MS * this.settings.durationScale,
+            easing: 'cubic-bezier(0.45, 0, 0.25, 1)',
+            fill: 'backwards',
           }
         ),
         card.renderKey
