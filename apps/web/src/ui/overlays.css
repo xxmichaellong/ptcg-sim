@@ -540,11 +540,11 @@ html:has([role='menu']) .ptcgsim-ui-toast-viewport {
 }
 
 .ptcgsim-ui-toast[data-tone='success'] .ptcgsim-ui-toast__icon {
-  color: var(--color-success);
+  color: var(--color-success-ink);
 }
 
 .ptcgsim-ui-toast[data-tone='warning'] .ptcgsim-ui-toast__icon {
-  color: var(--color-warning);
+  color: var(--color-warning-ink);
 }
 
 .ptcgsim-ui-toast[data-tone='danger'] .ptcgsim-ui-toast__icon {

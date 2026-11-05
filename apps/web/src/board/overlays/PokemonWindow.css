@@ -380,7 +380,7 @@
   padding: 1px 7px;
   border-radius: var(--radius-pill);
   background: color-mix(in oklab, var(--color-success) 18%, transparent);
-  color: var(--color-success);
+  color: var(--color-success-ink);
   font-size: var(--text-xs);
   font-weight: var(--weight-bold);
 }
@@ -936,7 +936,7 @@ button.pokemon-window__toggle:active {
   align-items: center;
   gap: var(--space-1);
   vertical-align: 1px;
-  color: var(--color-success);
+  color: var(--color-success-ink);
   font-size: var(--text-xs);
   font-weight: var(--weight-semibold);
   white-space: nowrap;

@@ -367,7 +367,7 @@
   width: 22px;
   height: 22px;
   margin-top: 0.05em;
-  color: var(--color-success);
+  color: var(--color-success-ink);
   animation: tutorial-tick calc(var(--duration-normal) * var(--motion-scale, 1))
     var(--ease-snappy);
 }
@@ -465,7 +465,7 @@
   flex: none;
   width: 24px;
   height: 24px;
-  color: var(--color-success);
+  color: var(--color-success-ink);
 }
 
 /* ---- What a step points at -------------------------------------------------- */

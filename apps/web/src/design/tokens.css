@@ -364,6 +364,9 @@
   --color-danger-fill: oklch(0.55 0.19 28);
   --color-warning: oklch(0.8 0.16 75);
   --color-success: oklch(0.76 0.15 155);
+  /* Warning and success as words on the panels: at least 4.5:1. */
+  --color-warning-ink: var(--color-warning);
+  --color-success-ink: var(--color-success);
 
   --shadow-1: 0 1px 2px rgb(14 8 4 / 0.4);
   --shadow-2: 0 2px 6px rgb(14 8 4 / 0.42), 0 1px 2px rgb(14 8 4 / 0.32);
@@ -396,7 +399,8 @@
 
   --color-text: #2a241f;
   --color-text-muted: #5f554a;
-  --color-text-faint: #7d7264;
+  /* At least 4.5:1 on every day surface, the fields' too. */
+  --color-text-faint: #685d51;
   --color-text-on-accent: #ffffff;
 
   --color-accent: #2c5f99;
@@ -419,6 +423,9 @@
   --color-danger-fill: var(--color-danger);
   --color-warning: oklch(0.66 0.16 70);
   --color-success: oklch(0.58 0.15 155);
+  /* By day the bright ones read too light as words; these are darker. */
+  --color-warning-ink: oklch(0.48 0.115 65);
+  --color-success-ink: oklch(0.46 0.11 155);
 
   --shadow-1: 0 1px 2px rgb(60 36 14 / 0.2);
   --shadow-2: 0 2px 6px rgb(60 36 14 / 0.2), 0 1px 2px rgb(60 36 14 / 0.16);

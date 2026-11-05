@@ -693,7 +693,7 @@
   align-items: flex-start;
   gap: var(--space-1-5);
   margin: 0;
-  color: color-mix(in oklab, var(--color-warning), var(--color-text) 30%);
+  color: var(--color-warning-ink);
   font-size: var(--text-xs);
 }
 
@@ -701,7 +701,7 @@
 .ptcgsim-shortcut-conflict p svg {
   flex: none;
   margin-top: 2px;
-  color: var(--color-warning);
+  color: var(--color-warning-ink);
 }
 
 .ptcgsim-shortcut-conflict {
