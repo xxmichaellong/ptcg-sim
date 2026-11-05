@@ -9,14 +9,11 @@
  * itself, so the hover zoom's fixed position stays fixed to the window.
  */
 
-/* The seat being worked on: its colour, cross-faded as it changes (the
-   screen's data-seat), from its tray down into the band over the screen. */
-@property --deck-seat-color {
-  syntax: '<color>';
-  inherits: true;
-  initial-value: transparent;
-}
-
+/* The seat being worked on (the screen's data-seat) colours the band over
+   the screen and the editor's sheet; each of those eases its own colour as
+   it changes. The colour itself is never eased: an inherited one eased
+   restyles the whole screen every frame, and WebKit stopped painting while
+   it did. */
 .deck-screen {
   --deck-seat-color: var(--color-you);
   --deck-gutter: var(--space-4);
@@ -38,7 +35,6 @@
   min-height: 0;
   color: var(--color-text);
   font-family: var(--font-ui);
-  transition: --deck-seat-color var(--duration-normal) var(--ease-out);
 }
 
 .deck-screen[data-seat='opponent'] {
@@ -356,12 +352,15 @@
   inset: 0 0 auto;
   z-index: -1;
   height: 140px;
-  background: linear-gradient(
-    180deg,
-    color-mix(in oklab, var(--deck-seat-color) 16%, transparent),
+  /* The colour fades down the desk by its mask, so the colour alone eases. */
+  background-color: color-mix(
+    in oklab,
+    var(--deck-seat-color) 16%,
     transparent
   );
+  mask-image: linear-gradient(180deg, #000, transparent);
   pointer-events: none;
+  transition: background-color var(--duration-normal) var(--ease-out);
 }
 
 .deck-screen__body::after {
@@ -370,8 +369,9 @@
   inset: 0 0 auto;
   z-index: 3;
   height: 3px;
-  background: var(--deck-seat-color);
+  background-color: var(--deck-seat-color);
   pointer-events: none;
+  transition: background-color var(--duration-normal) var(--ease-out);
 }
 
 .deck-screen__drop {
@@ -1338,6 +1338,7 @@ div.deck-tile__choose {
    scrolled. */
 .deck-editor[data-on-seat] .deck-editor__pane--deck {
   border-top: 3px solid var(--deck-seat-color);
+  transition: border-top-color var(--duration-normal) var(--ease-out);
 }
 
 .deck-editor__name .ds-input {
