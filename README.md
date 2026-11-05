@@ -46,13 +46,12 @@ ownership details.
 
 Run these commands from the repository root:
 
-- `corepack pnpm run check:ci` — formatting, lint, translations, architecture,
-  types, legacy/unit/runtime tests, and builds.
-- `corepack pnpm run check:browser` — Chromium regression and built-Worker
-  browser lanes.
-- `corepack pnpm run check:cross-browser` — focused Firefox and WebKit journeys.
+- `corepack pnpm run check:ci` — everything CI's Quality job runs: formatting,
+  lint, translations, architecture, types, unit and runtime tests, and builds.
+- `corepack pnpm run test:browser` — the Chromium suite;
+  `test:browser:built` the built-Worker lanes.
+- `corepack pnpm run test:cross-browser` — focused Firefox and WebKit journeys.
 - `corepack pnpm run audit:dependencies` — lockfile advisory check.
-- `corepack pnpm run check:full` — all of the above.
 
 Browser checks need the corresponding Playwright browsers. Local browser runs
 must use a checkout that is not being edited while Vite serves it. See

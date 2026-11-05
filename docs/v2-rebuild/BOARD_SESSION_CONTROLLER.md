@@ -544,7 +544,7 @@ corepack pnpm exec vitest run \
   packages/renderer-contract/src/drag.test.ts \
   packages/renderer-dom/src/ReactDomBoardRenderer.test.tsx
 corepack pnpm --filter @ptcgsim/web run typecheck
-corepack pnpm run check:v2
+corepack pnpm run check:ci
 ```
 
 The adapter tests use real `RemoteGameSession`, `ReplaySessionCoordinator`, and

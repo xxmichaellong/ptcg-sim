@@ -100,7 +100,7 @@ hibernated socket, authenticated post-eviction chat without durable text,
 attachment reconstruction, concurrent admission/command
 traffic, pre-commit and ambiguous post-commit persistence failures, exact
 retries, payload/resource envelopes, and post-wake idempotency. The
-repository-level `check:v2` gate runs this suite after the fast unit tests.
+repository-level `check:ci` gate runs this suite after the fast unit tests.
 
 Server-held multiplayer continuation now has strict create/restore/revoke HTTP
 contracts and a private client custodian. One exact secret value enables the
@@ -136,7 +136,7 @@ adapter. Its compile-time registry covers all 51 public `WireGameCommand`
 variants: 45 projection-driven generators and six named hard-precondition
 scenarios. Adding a public command without classifying and implementing its
 coverage fails the dedicated model-test typecheck, which is part of the root
-`typecheck:v2` and `check:v2` gates.
+`typecheck:v2` and `check:ci` gates.
 
 The default deterministic run is 100 seeds by 50 transitions:
 

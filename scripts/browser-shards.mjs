@@ -1,45 +1,29 @@
-import { readFileSync } from 'node:fs';
-import { dirname, join, relative, resolve } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { spawnSync } from 'node:child_process';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { join, relative, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 /**
- * Splits the Chromium browser suite across CI runners by how long each spec
- * file takes. Playwright's own `--shard` counts tests, and this suite's
- * ~150 quick legacy oracle tests sort before its slow live-table specs, so
- * count-based shards run anywhere from 1 to 10 minutes. Here each file goes,
- * slowest first, to the shard with the least time so far; a file with no
- * recorded time counts as the median one.
+ * Runs one CI shard of the Chromium browser suite, split by how long each
+ * spec file took last (tests/browser/durations.json) rather than by test
+ * count, which Playwright's own `--shard` uses. Each file goes, slowest
+ * first, to the shard with the least time so far; a file with no recorded
+ * time counts as the median one.
  *
- *   playwright test --list --project=chromium --reporter=json \
- *     | node scripts/browser-shards.mjs 2/4
+ *   node scripts/browser-shards.mjs 2/8
  *
- * prints shard 2's spec files, one per line. The recorded times
- * (tests/browser/durations.json) only steer the balance: every file the
- * listing has runs on exactly one shard.
+ * Refresh the times from a CI run's shard artifacts (`gh run download`)
+ * with
  *
- * The evidence specs (EVIDENCE_SPECS: the Solo churn soak and the renderer
- * comparison, a third of the suite's time) are left out of the shards and
- * run in their own CI job, only when board code changed;
- *
- *   playwright test --list --project=chromium --reporter=json \
- *     | node scripts/browser-shards.mjs evidence
- *
- * prints them.
+ *   node scripts/browser-shards.mjs record playwright-*\/test-results/results.json
  */
 
 export const DURATIONS = 'tests/browser/durations.json';
 
-/** Long evidence runs, kept off the per-push shards (see the CI workflow). */
-export const EVIDENCE_SPECS = Object.freeze([
-  'remote-room-solo-renderer-churn.spec.ts',
-  'renderer-spike.spec.ts',
-]);
+const pnpm = (args, options) =>
+  spawnSync('corepack', ['pnpm', ...args], options);
 
-/** Whether a listed spec file is one of the evidence specs. */
-export const isEvidenceSpec = (file) =>
-  EVIDENCE_SPECS.includes(file.split('/').at(-1));
-
-/** Each shard's files (sorted) and their recorded seconds, slowest first in. */
+/** Each shard's files (sorted) and their recorded seconds. */
 export const planShards = (files, count, seconds) => {
   if (!Number.isInteger(count) || count < 1)
     throw new Error(`Shard count must be a positive integer, not ${count}`);
@@ -90,23 +74,74 @@ export const listedFiles = (report) => {
   };
 };
 
-/** Prints this run's shard (`2/8`) of the non-evidence spec files. */
-const printShard = (testDir, files, which) => {
-  const { index, count } = parseShard(which);
-  const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-  const { seconds } = JSON.parse(
-    readFileSync(join(repoRoot, DURATIONS), 'utf8')
+/** Seconds per spec file in Playwright JSON reports, each test's last try. */
+export const recordedSeconds = (reports) => {
+  const seconds = {};
+  const walk = (suite) => {
+    for (const spec of suite.specs ?? [])
+      for (const test of spec.tests ?? []) {
+        const last = test.results?.at(-1);
+        if (last)
+          seconds[spec.file] = (seconds[spec.file] ?? 0) + last.duration / 1000;
+      }
+    for (const child of suite.suites ?? []) walk(child);
+  };
+  for (const report of reports)
+    for (const suite of report.suites ?? []) walk(suite);
+  return Object.fromEntries(
+    Object.entries(seconds)
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([file, value]) => [file, Math.round(value)])
   );
-  const shard = planShards(
-    files.filter((file) => !isEvidenceSpec(file)),
-    count,
-    seconds
-  )[index];
+};
+
+const runShard = (which) => {
+  const { index, count } = parseShard(which);
+  const listing = pnpm(
+    [
+      'exec',
+      'playwright',
+      'test',
+      '--list',
+      '--project=chromium',
+      '--reporter=json',
+    ],
+    { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }
+  );
+  if (listing.status !== 0) {
+    process.stderr.write(listing.stderr);
+    throw new Error('Listing the browser suite failed');
+  }
+  const { testDir, files } = listedFiles(JSON.parse(listing.stdout));
+  const { seconds } = JSON.parse(readFileSync(DURATIONS, 'utf8'));
+  const shard = planShards(files, count, seconds)[index];
   process.stderr.write(
     `Shard ${index + 1}/${count}: ${shard.files.length} files, about ${Math.round(shard.seconds / 60)} min\n`
   );
-  for (const file of shard.files)
-    process.stdout.write(`${relative(process.cwd(), join(testDir, file))}\n`);
+  const run = pnpm(
+    [
+      'exec',
+      'playwright',
+      'test',
+      '--project=chromium',
+      ...shard.files.map((file) =>
+        relative(process.cwd(), join(testDir, file))
+      ),
+    ],
+    { stdio: 'inherit' }
+  );
+  process.exitCode = run.status ?? 1;
+};
+
+const record = (paths) => {
+  const reports = paths.map((path) => JSON.parse(readFileSync(path, 'utf8')));
+  const seconds = Object.fromEntries(
+    Object.entries(recordedSeconds(reports)).filter(([file]) =>
+      existsSync(join('tests/browser', file))
+    )
+  );
+  writeFileSync(DURATIONS, `${JSON.stringify({ seconds }, null, 2)}\n`);
+  process.stderr.write(`${Object.keys(seconds).length} files recorded\n`);
 };
 
 const isMain =
@@ -115,15 +150,9 @@ const isMain =
 
 if (isMain) {
   try {
-    const { testDir, files } = listedFiles(JSON.parse(readFileSync(0, 'utf8')));
-    if (process.argv[2] === 'evidence') {
-      for (const file of files.filter(isEvidenceSpec))
-        process.stdout.write(
-          `${relative(process.cwd(), join(testDir, file))}\n`
-        );
-    } else {
-      printShard(testDir, files, process.argv[2]);
-    }
+    const [command, ...rest] = process.argv.slice(2);
+    if (command === 'record') record(rest);
+    else runShard(command);
   } catch (error) {
     process.stderr.write(`${error instanceof Error ? error.message : error}\n`);
     process.exitCode = 1;

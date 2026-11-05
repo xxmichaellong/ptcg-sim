@@ -60,14 +60,8 @@ jobs:
           esac
       - name: Check out repository
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-      - name: Install Node.js
-        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
-        with:
-          node-version: 24.19.0
-      - name: Enable Corepack
-        run: corepack enable
-      - name: Install dependencies
-        run: corepack pnpm install --frozen-lockfile
+      - name: Set up the workspace
+        uses: ./.github/actions/setup
       - name: Audit dependencies
         run: corepack pnpm run audit:dependencies
       # The same gate CI runs. A deploy must not ship a commit CI would have
@@ -149,14 +143,8 @@ jobs:
           esac
       - name: Check out repository
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-      - name: Install Node.js
-        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
-        with:
-          node-version: 24.19.0
-      - name: Enable Corepack
-        run: corepack enable
-      - name: Install dependencies
-        run: corepack pnpm install --frozen-lockfile
+      - name: Set up the workspace
+        uses: ./.github/actions/setup
       # Cloudflare keeps every uploaded version; rolling back re-points the
       # Worker at one of them without touching Durable Object storage, which
       # is what OPERATIONS.md requires -- canonical state is never downgraded.

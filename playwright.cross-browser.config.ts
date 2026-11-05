@@ -1,5 +1,12 @@
 import { defineConfig } from '@playwright/test';
 
+import {
+  CI,
+  devServers,
+  lane,
+  reporter,
+} from './tests/browser/support/playwright-config.js';
+
 const sharedSpecs = [
   'remote-room-solo-full-stack.spec.ts',
   'experience-refinement.spec.ts',
@@ -17,42 +24,15 @@ const sharedSpecs = [
   'multi-select-modifiers.spec.ts',
 ];
 
+/** A cross-section of the suite in Firefox and WebKit. */
 export default defineConfig({
-  // Maps Lingui's macros to English stand-ins for the app code specs load
-  // in Node (tests/browser/support/lingui-macro.ts, ADR-034).
-  tsconfig: './tsconfig.playwright.json',
-  testDir: './tests/browser',
+  ...lane,
   testMatch: sharedSpecs,
-  fullyParallel: false,
-  forbidOnly: Boolean(process.env['CI']),
-  // As in playwright.config.ts: one retry on CI, reported when used.
-  retries: process.env['CI'] ? 1 : 0,
-  workers: 1,
+  retries: CI ? 1 : 0,
   timeout: 60_000,
   expect: { timeout: 10_000 },
   outputDir: 'test-results/cross-browser',
-  reporter: process.env['CI']
-    ? [
-        ['github'],
-        [
-          'html',
-          {
-            open: 'never',
-            outputFolder: 'playwright-report/cross-browser',
-          },
-        ],
-        ['json', { outputFile: 'test-results/cross-browser/results.json' }],
-      ]
-    : [
-        ['list'],
-        [
-          'html',
-          {
-            open: 'never',
-            outputFolder: 'playwright-report/cross-browser',
-          },
-        ],
-      ],
+  reporter: reporter('playwright-report/cross-browser'),
   use: {
     baseURL: 'http://127.0.0.1:4173',
     viewport: { width: 1280, height: 720 },
@@ -65,9 +45,7 @@ export default defineConfig({
       name: 'firefox',
       use: {
         browserName: 'firefox',
-        launchOptions: {
-          executablePath: process.env['PTCGSIM_FIREFOX_PATH'],
-        },
+        launchOptions: { executablePath: process.env['PTCGSIM_FIREFOX_PATH'] },
       },
     },
     {
@@ -83,30 +61,9 @@ export default defineConfig({
       ],
       use: {
         browserName: 'webkit',
-        launchOptions: {
-          executablePath: process.env['PTCGSIM_WEBKIT_PATH'],
-        },
+        launchOptions: { executablePath: process.env['PTCGSIM_WEBKIT_PATH'] },
       },
     },
   ],
-  webServer: [
-    {
-      command:
-        'corepack pnpm --filter @ptcgsim/web run build && corepack pnpm --filter @ptcgsim/server-v2 dev --ip 127.0.0.1 --port 8787 --var CARD_CATALOG_SOURCE:off --var DECK_INDEX_SOURCE:off',
-      url: 'http://127.0.0.1:8787/v2/health',
-      reuseExistingServer: !process.env['CI'],
-      timeout: 60_000,
-      stdout: 'ignore',
-      stderr: 'pipe',
-    },
-    {
-      command:
-        'corepack pnpm --filter @ptcgsim/web dev --host 127.0.0.1 --port 4173',
-      url: 'http://127.0.0.1:4173',
-      reuseExistingServer: !process.env['CI'],
-      timeout: 30_000,
-      stdout: 'ignore',
-      stderr: 'pipe',
-    },
-  ],
+  webServer: devServers,
 });

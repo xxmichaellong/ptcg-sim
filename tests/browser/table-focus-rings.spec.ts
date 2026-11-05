@@ -7,16 +7,21 @@ import {
   openTable,
 } from './support/focus-rings.js';
 
-// The table's focus rings by night, as support/focus-rings.ts says they
-// must show; by day in table-focus-rings-day.spec.ts. Two files, so CI's
-// shards run them side by side: the pixel checks take about a minute a
-// test there.
-const darkMode = true;
+// The table's focus rings, as support/focus-rings.ts says they must show:
+// every look by night, and by day the classic look, the only one whose
+// colours change by day (table-art.css), and the parchment desk, the
+// nearest to 3:1 under the day lamp.
+const NIGHT = true;
+const DAY = false;
+const when = (darkMode: boolean) => (darkMode ? 'night' : 'day');
 
 // A test a look, each in a room of its own: a pass over every look in one
 // test outlasts any sensible timeout on a slow runner.
-for (const art of LOOKS) {
-  test(`rings the keyboard’s place on the ${art} table by night at 3:1`, async ({
+for (const [art, darkMode] of [
+  ...LOOKS.map((look) => [look, NIGHT] as const),
+  ['classic', DAY] as const,
+]) {
+  test(`rings the keyboard’s place on the ${art} table by ${when(darkMode)} at 3:1`, async ({
     page,
   }) => {
     test.setTimeout(120_000);
@@ -37,8 +42,15 @@ for (const art of LOOKS) {
 
 // One half on the tilted table: the rail sits past the mat's edge, over the
 // desk.
-for (const art of ['classic', 'parchment', 'cream', 'charcoal'] as const) {
-  test(`rings the keyboard’s place past the mat’s edge, one half on the tilted ${art} table by night`, async ({
+for (const [art, darkMode] of [
+  ['classic', NIGHT],
+  ['parchment', NIGHT],
+  ['cream', NIGHT],
+  ['charcoal', NIGHT],
+  ['classic', DAY],
+  ['parchment', DAY],
+] as const) {
+  test(`rings the keyboard’s place past the mat’s edge, one half on the tilted ${art} table by ${when(darkMode)}`, async ({
     page,
   }) => {
     test.setTimeout(120_000);

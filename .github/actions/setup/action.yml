@@ -1,0 +1,11 @@
+name: Set up the workspace
+description: Node.js, Corepack and the locked dependencies.
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+      with:
+        node-version: 24.19.0
+    - shell: bash
+      run: corepack enable && corepack pnpm install --frozen-lockfile

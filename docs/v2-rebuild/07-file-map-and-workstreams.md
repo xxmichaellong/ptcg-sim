@@ -41,8 +41,8 @@ legacy unit suite, scoped formatting and linting, source/workspace boundaries,
 reviewed compiler-resolved public exports, cycle detection without generated
 output, strict production/model/runtime/browser type checks, tooling self-tests,
 v2 unit/runtime tests, both production builds, source-map provenance,
-fixture-leak detection, and canonical card-back integrity. `check:browser` owns
-the sequential Chromium lane. The exact contract and residual limitations are
+fixture-leak detection, and canonical card-back integrity. `test:browser` runs
+the Chromium suite. The exact contract and residual limitations are
 in [`QUALITY_GATES.md`](./QUALITY_GATES.md).
 
 ## Client composition and state

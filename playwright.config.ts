@@ -1,69 +1,41 @@
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
+import {
+  CI,
+  chromium,
+  devServers,
+  lane,
+  reporter,
+} from './tests/browser/support/playwright-config.js';
+
+/** The Chromium suite: every spec the other configs don't own. */
 export default defineConfig({
-  // Maps Lingui's macros to English stand-ins for the app code specs load
-  // in Node (tests/browser/support/lingui-macro.ts, ADR-034).
-  tsconfig: './tsconfig.playwright.json',
-  testDir: './tests/browser',
+  ...lane,
   testIgnore: [
     'continuation-full-stack.spec.ts',
     'continuation-drain.spec.ts',
     'continuation-rotation.spec.ts',
     'production-topology.spec.ts',
   ],
-  fullyParallel: false,
-  forbidOnly: Boolean(process.env['CI']),
-  // On CI a failed test runs once more; one that then passes is reported as
-  // flaky (scripts/report-flaky.mjs) instead of turning the run red.
-  retries: process.env['CI'] ? 1 : 0,
-  workers: 1,
+  // Timings taken by playwright.performance.config.ts.
+  grepInvert: /@measure/u,
+  // On CI a failed test runs once more, and one that then passes is
+  // annotated as flaky. The JSON report refreshes the shard times
+  // (scripts/browser-shards.mjs record).
+  retries: CI ? 1 : 0,
   timeout: 45_000,
   expect: { timeout: 10_000 },
-  reporter: process.env['CI']
-    ? [
-        ['github'],
-        ['html', { open: 'never' }],
-        ['json', { outputFile: 'test-results/results.json' }],
-      ]
-    : [['list'], ['html', { open: 'never' }]],
+  reporter: reporter(
+    'playwright-report',
+    ...(CI
+      ? [['json', { outputFile: 'test-results/results.json' }] as const]
+      : [])
+  ),
   use: {
-    ...devices['Desktop Chrome'],
     baseURL: 'http://127.0.0.1:4173',
-    viewport: { width: 1280, height: 720 },
-    deviceScaleFactor: 1,
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },
-  projects: [
-    {
-      name: 'chromium',
-      use: {
-        browserName: 'chromium',
-        launchOptions: {
-          executablePath: process.env['PTCGSIM_CHROMIUM_PATH'],
-          args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
-        },
-      },
-    },
-  ],
-  webServer: [
-    {
-      command:
-        'corepack pnpm --filter @ptcgsim/web run build && corepack pnpm --filter @ptcgsim/server-v2 dev --ip 127.0.0.1 --port 8787 --var CARD_CATALOG_SOURCE:off --var DECK_INDEX_SOURCE:off',
-      url: 'http://127.0.0.1:8787/v2/health',
-      reuseExistingServer: !process.env['CI'],
-      timeout: 60_000,
-      stdout: 'ignore',
-      stderr: 'pipe',
-    },
-    {
-      command:
-        'corepack pnpm --filter @ptcgsim/web dev --host 127.0.0.1 --port 4173',
-      url: 'http://127.0.0.1:4173',
-      reuseExistingServer: !process.env['CI'],
-      timeout: 30_000,
-      stdout: 'ignore',
-      stderr: 'pipe',
-    },
-  ],
+  projects: [chromium],
+  webServer: devServers,
 });

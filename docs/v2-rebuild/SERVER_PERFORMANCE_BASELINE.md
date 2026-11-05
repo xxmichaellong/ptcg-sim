@@ -44,7 +44,7 @@ session, command, card, capability, or digest values.
 
 ## CI regression envelopes
 
-`runtime-payload-budget.test.ts` runs as part of `test:v2:runtime`. For the
+`runtime-payload-budget.test.ts` runs as part of `test:runtime`. For the
 six-command fixture it enforces:
 
 | Resource                                              | CI envelope | Named observation |

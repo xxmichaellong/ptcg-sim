@@ -99,11 +99,12 @@ checks. The build emits `apps/web/dist`, which Wrangler serves alongside the
 Worker. Hidden source maps remain available for local provenance checks and are
 excluded from public assets by `.assetsignore`.
 
-`corepack pnpm run check:browser` covers the Chromium regression suite plus the
-built-Worker and continuation configurations. For focused Firefox/WebKit
-journeys, run `corepack pnpm run check:cross-browser`. The standalone built-Worker
-topology lane is `corepack pnpm run test:preview:browser`; it starts
-local Wrangler unless an external preview URL is explicitly supplied. These
+`corepack pnpm run test:browser` runs the Chromium suite and
+`corepack pnpm run test:browser:built` the built-Worker topology and
+continuation lanes; for focused Firefox/WebKit journeys, run
+`corepack pnpm run test:cross-browser`. The topology lane alone is
+`corepack pnpm run test:preview:browser`; it starts local Wrangler unless an
+external preview URL is explicitly supplied. These
 checks validate their configured browser environments; physical-device and
 production rollout acceptance are separate work.
 

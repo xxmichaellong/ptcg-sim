@@ -1,9 +1,8 @@
-node_modules/
-packages/*/lib/
-apps/*/lib/
-apps/*/dist/
-apps/server/worker-configuration.d.ts
-client/src/assets/
+# What .gitignore lists is ignored too.
+# The v1 app is not formatted.
+client/
+server/
+pnpm-lock.yaml
 # Written by lingui extract and scripts/translate.ts in their own shape;
 # `lingui check sync` (check:i18n:v2) compares them byte for byte.
 apps/web/src/locales/

@@ -459,7 +459,7 @@ commands past it, forces repeated hibernating eviction, and commits once after
 wake. The current authority-frontier run took 8.766 seconds for the measured
 scenario and 12.12 seconds for the complete Vitest invocation; fixture setup was
 664 ms. It remains outside the fast CI gate; the smaller deterministic payload
-envelope stays in `test:v2:runtime`.
+envelope stays in `test:runtime`.
 
 The Durable Object keeps only the 32 latest accepted-command observations in
 memory so the harness can collect the same numeric durations without parsing

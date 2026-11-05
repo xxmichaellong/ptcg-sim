@@ -1,5 +1,7 @@
 import { defineConfig } from '@playwright/test';
 
+import { builtApp, lane } from './tests/browser/support/playwright-config.js';
+
 const chromeExecutable = process.env['PTCGSIM_CHROME_PATH'];
 const diagnosticHeadless = process.env['PTCGSIM_PERFORMANCE_HEADLESS'] === '1';
 
@@ -17,17 +19,12 @@ const stableChrome = {
  * the harness and produces diagnostic, never release, evidence.
  */
 export default defineConfig({
-  // Maps Lingui's macros to English stand-ins for the app code specs load
-  // in Node (tests/browser/support/lingui-macro.ts, ADR-034).
-  tsconfig: './tsconfig.playwright.json',
-  testDir: './tests/browser',
+  ...lane,
   testMatch: 'renderer-spike.spec.ts',
-  grep: /records controlled 120-card reconciliation and idle evidence/u,
-  fullyParallel: false,
+  grep: /@measure/u,
   forbidOnly: true,
   retries: 0,
   repeatEach: 3,
-  workers: 1,
   timeout: 120_000,
   expect: { timeout: 10_000 },
   outputDir: 'artifacts/performance/renderer-results',
@@ -76,13 +73,5 @@ export default defineConfig({
       },
     },
   ],
-  webServer: {
-    command:
-      'corepack pnpm --filter @ptcgsim/web run build && corepack pnpm --filter @ptcgsim/server-v2 dev --ip 127.0.0.1 --port 4175 --var CARD_CATALOG_SOURCE:off --var DECK_INDEX_SOURCE:off',
-    url: 'http://127.0.0.1:4175/v2/health',
-    reuseExistingServer: false,
-    timeout: 90_000,
-    stdout: 'ignore',
-    stderr: 'pipe',
-  },
+  webServer: builtApp(4175),
 });

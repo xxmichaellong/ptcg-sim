@@ -1,7 +1,12 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { listedFiles, parseShard, planShards } from './browser-shards.mjs';
+import {
+  listedFiles,
+  parseShard,
+  planShards,
+  recordedSeconds,
+} from './browser-shards.mjs';
 
 test('balances shards by recorded time, slowest file first, onto shard 1', () => {
   const seconds = { 'soak.spec.ts': 540, 'a.spec.ts': 200, 'b.spec.ts': 180 };
@@ -43,5 +48,34 @@ test('reads a shard and the files of a Playwright listing', () => {
       suites: [{ file: 'b.spec.ts' }, { file: 'a.spec.ts' }],
     }),
     { testDir: '/repo/tests/browser', files: ['a.spec.ts', 'b.spec.ts'] }
+  );
+});
+
+test('records each file’s seconds from its tests’ last tries', () => {
+  const result = (seconds) => ({ duration: seconds * 1000 });
+  assert.deepEqual(
+    recordedSeconds([
+      {
+        suites: [
+          {
+            specs: [
+              { file: 'b.spec.ts', tests: [{ results: [result(9.6)] }] },
+              {
+                file: 'a.spec.ts',
+                tests: [{ results: [result(30), result(12)] }],
+              },
+            ],
+            suites: [
+              {
+                specs: [
+                  { file: 'a.spec.ts', tests: [{ results: [result(3.2)] }] },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ]),
+    { 'a.spec.ts': 15, 'b.spec.ts': 10 }
   );
 });
