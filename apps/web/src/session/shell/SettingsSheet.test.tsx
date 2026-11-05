@@ -13,6 +13,10 @@ import {
   DEFAULT_MOTION_SETTINGS,
   motionSettings,
 } from '../../motion/motion-settings.js';
+import { CARD_IMAGE_PREFERENCES } from '../../i18n/card-image-language.js';
+import { LANGUAGE_PREFERENCES } from '../../i18n/language-preference.js';
+import { preferences } from '../../preferences/preference-store.js';
+import type { AppMenuModel } from './AppMenu.js';
 import { closeHelpPage, HelpSheetHost, RELEASE_NAME } from './help-pages.js';
 import { BackgroundChooser } from './BackgroundChooser.js';
 import type { RoomBackground } from '../browser-room-background.js';
@@ -60,15 +64,53 @@ const render = async (props: Partial<SettingsSheetProps> = {}) => {
 const input = (id: string): HTMLInputElement =>
   document.querySelector<HTMLInputElement>(`#${id}`)!;
 
+const press = async (id: string): Promise<void> => {
+  await act(async () => document.querySelector<HTMLElement>(`#${id}`)!.click());
+  await settle(1);
+};
+
+/** The page Settings shows, by its element id. */
+const page = (): string | undefined =>
+  document.querySelector('#settings .settings-page')?.id;
+
+/** The rows and controls on the page shown, by id. */
+const ids = (
+  selector = '.settings-row[id], [id] > input[id], input[id], button[id]'
+): string[] => [
+  ...new Set(
+    [
+      ...document.querySelectorAll(`#settings .settings-page :is(${selector})`),
+    ].map((element) => element.id)
+  ),
+];
+
+const pressEscape = async (target: Element): Promise<void> => {
+  await act(async () => {
+    target.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: 'Escape',
+        bubbles: true,
+        cancelable: true,
+      })
+    );
+  });
+  await settle(1);
+};
+
+let media: (query: string) => boolean = () => false;
+
 beforeEach(() => {
+  media = () => false;
   vi.stubGlobal('matchMedia', (query: string) => ({
-    matches: false,
+    matches: media(query),
     media: query,
     addEventListener: () => undefined,
     removeEventListener: () => undefined,
   }));
   boardViewSettings().reset();
   motionSettings().update(DEFAULT_MOTION_SETTINGS);
+  preferences().reset(LANGUAGE_PREFERENCES);
+  preferences().reset(CARD_IMAGE_PREFERENCES);
   host = document.createElement('div');
   document.body.append(host);
   root = createRoot(host);
@@ -83,27 +125,43 @@ afterEach(async () => {
   document.body.replaceChildren();
   boardViewSettings().reset();
   motionSettings().update(DEFAULT_MOTION_SETTINGS);
+  preferences().reset(LANGUAGE_PREFERENCES);
+  preferences().reset(CARD_IMAGE_PREFERENCES);
   vi.unstubAllGlobals();
 });
 
 describe('SettingsSheet', () => {
-  it('holds settings only, in sections: the table, cards, motion, keys, language', async () => {
+  it('opens on its first page: the pages, the keys, help and About; each page holds its own', async () => {
     await render();
     const sheet = document.querySelector<HTMLElement>('#settings')!;
     expect(sheet.dataset.variant).toBe('side');
-    expect(sheet.textContent).not.toContain('this device');
+    expect(page()).toBe('settingsHome');
+    expect(sheet.querySelector('.ptcgsim-sheet__title')?.textContent).toBe(
+      'Settings'
+    );
+    // No way back from the first page.
+    expect(sheet.querySelector('#settingsBackButton')).toBeNull();
+    expect(ids('.settings-row[id]')).toEqual([
+      'settingsTableRow',
+      'settingsCardsRow',
+      'settingsMotionRow',
+      'settingsLanguageRow',
+      'editShortcutsButton',
+      'settingsReportBugRow',
+      'settingsAboutRow',
+    ]);
+    // Each page row says what it is set to where that is a name.
     expect(
-      [...sheet.querySelectorAll('.ptcgsim-settings-section__title')].map(
-        (title) => title.textContent
-      )
-    ).toEqual(['Table', 'Cards', 'Motion', 'Keys', 'Language']);
-    const rows = (section: string) =>
-      [
-        ...sheet.querySelectorAll(
-          `#${section} input[id], #${section} select[id], #${section} button[id]`
-        ),
-      ].map((control) => control.id);
-    expect(rows('settingsTable')).toEqual(
+      sheet.querySelector('#settingsTableRow .settings-row__value')?.textContent
+    ).toBe('Cream');
+    expect(
+      sheet.querySelector('#settingsLanguageRow .settings-row__value')
+        ?.textContent
+    ).toBe('English');
+
+    await press('settingsTableRow');
+    expect(page()).toBe('settingsTable');
+    expect(ids()).toEqual(
       expect.arrayContaining([
         'tableArt-cream',
         'changeBackgroundButton',
@@ -117,13 +175,22 @@ describe('SettingsSheet', () => {
         'boardViewResetButton',
       ])
     );
-    expect(rows('settingsCards')).toEqual([
+    await press('settingsBackButton');
+
+    await press('settingsCardsRow');
+    expect(page()).toBe('settingsCards');
+    expect(ids('input[id], .settings-row[id]')).toEqual([
       'opponentUprightCheckbox',
       'hoverPreviewCheckbox',
       'tableScatterCheckbox',
       'opponentCardBacksCheckbox',
+      'cardImageLanguageRow',
     ]);
-    expect(rows('motionSettings')).toEqual(
+    await press('settingsBackButton');
+
+    await press('settingsMotionRow');
+    expect(page()).toBe('settingsMotion');
+    expect(ids('input[id]')).toEqual(
       expect.arrayContaining([
         'reduceMotionSystem',
         'animationSpeedNormal',
@@ -132,69 +199,256 @@ describe('SettingsSheet', () => {
         'tableParallaxCheckbox',
       ])
     );
-    expect(rows('languageSettings')).toEqual([
-      'languageSelect',
-      'cardImageLanguageSelect',
-    ]);
+    await press('settingsBackButton');
+
     // The table's pieces live on the mat's + and the palette; the Solo
-    // cover on the far hand's pill.
-    for (const id of [
-      'lostZoneCheckbox',
-      'vstarMarkerCheckbox',
-      'gxMarkerCheckbox',
-      'hideHandCheckbox',
+    // cover on the far hand's pill; nowhere here.
+    for (const pageRow of [
+      'settingsTableRow',
+      'settingsCardsRow',
+      'settingsMotionRow',
     ]) {
-      expect(sheet.querySelector(`#${id}`), id).toBeNull();
+      await press(pageRow);
+      for (const id of [
+        'lostZoneCheckbox',
+        'vstarMarkerCheckbox',
+        'gxMarkerCheckbox',
+        'hideHandCheckbox',
+      ]) {
+        expect(sheet.querySelector(`#${id}`), id).toBeNull();
+      }
+      await press('settingsBackButton');
     }
   });
 
-  it('closes for the release notes and the sponsors at its foot, and opens Discord outside', async () => {
+  it('goes into a page and back to the row it came from, Esc going back first, and opens at a page asked for', async () => {
+    const { onOpenChange } = await render();
+    const sheet = document.querySelector<HTMLElement>('#settings')!;
+    await press('settingsCardsRow');
+    expect(sheet.querySelector('.ptcgsim-sheet__title')?.textContent).toBe(
+      'Cards'
+    );
+    // The page's title takes the focus, to be read out.
+    expect(document.activeElement?.closest('.ptcgsim-sheet__title')).not.toBe(
+      null
+    );
+    expect(
+      sheet.querySelector('.settings-page')?.getAttribute('data-enter')
+    ).toBe('push');
+    // A page within a page.
+    await press('cardImageLanguageRow');
+    expect(page()).toBe('settingsCardImages');
+    await press('settingsBackButton');
+    expect(page()).toBe('settingsCards');
+    expect(document.activeElement?.id).toBe('cardImageLanguageRow');
+    expect(
+      sheet.querySelector('.settings-page')?.getAttribute('data-enter')
+    ).toBe('pop');
+    // Esc goes back a page, to the row it came from; on the first page it
+    // puts Settings away.
+    await pressEscape(document.activeElement!);
+    expect(page()).toBe('settingsHome');
+    expect(document.activeElement?.id).toBe('settingsCardsRow');
+    expect(onOpenChange).not.toHaveBeenCalled();
+    await pressEscape(document.activeElement!);
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+
+    // Asked for a page (the palette's "Settings: Motion"): there, with the
+    // way back to the first.
+    await render({ request: { page: 'motion', serial: 1 } });
+    expect(page()).toBe('settingsMotion');
+    expect(document.querySelector('#settingsBackButton')).not.toBeNull();
+    // Asked again, again.
+    await press('settingsBackButton');
+    await render({ request: { page: 'language', serial: 2 } });
+    expect(page()).toBe('settingsLanguage');
+  });
+
+  it('lists what the room lets the player do, gives way as each is done, and leaves from its foot', async () => {
+    const onInvite = vi.fn();
+    const onSaveOnline = vi.fn();
+    const onLeave = vi.fn();
+    const menu: AppMenuModel = {
+      heading: 'Room K7PQ2M',
+      onSettings: vi.fn(),
+      invites: { roles: ['player', 'spectator'], seatTaken: true, onInvite },
+      game: { onSaveOnline, onExportState: vi.fn() },
+      onLeave,
+    };
+    const { onOpenChange } = await render({
+      menu,
+      boardFlip: { allowed: false, onChange: vi.fn() },
+    });
+    const sheet = document.querySelector<HTMLElement>('#settings')!;
+    // The room first, under its name, its board flip with its invites.
+    const groups = [...sheet.querySelectorAll('.settings-group')];
+    expect(
+      groups[0]?.querySelector('.settings-group__heading')?.textContent
+    ).toBe('Room K7PQ2M');
+    expect(
+      [...groups[0]!.querySelectorAll('[id]')]
+        .map((row) => row.id)
+        .filter((id) => !id.startsWith('«'))
+    ).toEqual(
+      expect.arrayContaining([
+        'inviteOpponentMenuItem',
+        'inviteSpectatorMenuItem',
+        'coachingModeCheckbox',
+      ])
+    );
+    // A taken seat can't be offered again, and says why.
+    const opponent = sheet.querySelector<HTMLButtonElement>(
+      '#inviteOpponentMenuItem'
+    )!;
+    expect(opponent.disabled).toBe(true);
+    expect(opponent.textContent).toContain('Seat taken');
+    // The saves next.
+    expect(
+      [...groups[1]!.querySelectorAll('.settings-row[id]')].map((row) => row.id)
+    ).toEqual(['saveOnlineGame', 'exportState']);
+    await press('saveOnlineGame');
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(onSaveOnline).toHaveBeenCalledOnce();
+    await press('inviteSpectatorMenuItem');
+    expect(onInvite).toHaveBeenCalledWith('spectator');
+    // The way out, at the foot, in red, turned round in a right-to-left
+    // language.
+    const leave = sheet.querySelector<HTMLElement>(
+      '.settings-footer #leaveRoomButton'
+    )!;
+    expect(leave.dataset.danger).toBe('true');
+    expect(leave.querySelector('svg.ds-mirror-rtl')).not.toBeNull();
+    await press('leaveRoomButton');
+    expect(onLeave).toHaveBeenCalledOnce();
+  });
+
+  it('leads with what the app bar has no room for on a phone', async () => {
+    const onDeck = vi.fn();
+    const onPlayOnline = vi.fn();
+    media = (query) => query.includes('max-width');
+    const { onOpenChange } = await render({
+      menu: {
+        mode: { kind: 'solo' },
+        onDeck,
+        onPlayOnline,
+        onSettings: vi.fn(),
+      },
+    });
+    const first = document.querySelector('#settings .settings-group')!;
+    expect(
+      [...first.querySelectorAll('.settings-row[id]')].map((row) => row.id)
+    ).toEqual(['deckImportButton', 'p2Button']);
+    await press('deckImportButton');
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(onDeck).toHaveBeenCalledOnce();
+    // With room on the bar, Settings doesn't list them again.
+    media = () => false;
+    await act(async () => root.unmount());
+    root = createRoot(host);
+    await render({
+      menu: {
+        mode: { kind: 'solo' },
+        onDeck,
+        onPlayOnline,
+        onSettings: vi.fn(),
+      },
+    });
+    expect(document.querySelector('#settings #deckImportButton')).toBeNull();
+  });
+
+  it('has About: the release notes and the sponsors give way, Discord and the source open outside', async () => {
     const open = vi.fn();
     vi.stubGlobal('open', open);
     const { onOpenChange } = await render();
-    const footer = document.querySelector('.ptcgsim-settings-footer')!;
+    await press('settingsAboutRow');
+    expect(page()).toBe('settingsAbout');
+    expect(ids('.settings-row[id]')).toEqual([
+      'changelogButton',
+      'donationsButton',
+      'discordButton',
+      'sourceCodeButton',
+    ]);
     expect(
-      [...footer.querySelectorAll('button')].map((button) => button.id)
-    ).toEqual(['changelogButton', 'discordButton', 'donationsButton']);
-    expect(footer.querySelector('#changelogButton')?.textContent).toBe(
-      RELEASE_NAME
-    );
-    await act(async () =>
-      footer.querySelector<HTMLButtonElement>('#discordButton')!.click()
-    );
+      document.querySelector('#changelogButton .settings-row__value')
+        ?.textContent
+    ).toBe(RELEASE_NAME);
+    await press('discordButton');
     expect(open).toHaveBeenCalledWith(
       expect.stringContaining('discord.gg'),
       '_blank',
       'noopener,noreferrer'
     );
-    expect(onOpenChange).not.toHaveBeenCalled();
-    await act(async () =>
-      footer.querySelector<HTMLButtonElement>('#changelogButton')!.click()
+    await press('sourceCodeButton');
+    expect(open).toHaveBeenLastCalledWith(
+      expect.stringContaining('github.com'),
+      '_blank',
+      'noopener,noreferrer'
     );
+    expect(onOpenChange).not.toHaveBeenCalled();
+    await press('changelogButton');
     await settle();
     expect(onOpenChange).toHaveBeenCalledWith(false);
     expect(document.querySelector('#changelog')).not.toBeNull();
   });
 
+  it('reports a bug on Discord with details to paste, and nothing private in them', async () => {
+    const open = vi.fn();
+    const writeText = vi.fn(async () => undefined);
+    vi.stubGlobal('open', open);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => Response.json({ buildId: 'preview-abc123' }))
+    );
+    Object.defineProperty(globalThis.navigator, 'clipboard', {
+      value: { writeText },
+      configurable: true,
+    });
+    window.history.replaceState(null, '', '/#invite=secret-token');
+    await render({
+      menu: {
+        mode: { kind: 'online', detail: 'Room K7PQ2M' },
+        heading: 'Room K7PQ2M',
+        onSettings: vi.fn(),
+      },
+    });
+    await press('settingsReportBugRow');
+    expect(page()).toBe('settingsReportBug');
+    await press('reportOnDiscordButton');
+    expect(open).toHaveBeenCalledWith(
+      expect.stringContaining('discord.gg'),
+      '_blank',
+      'noopener,noreferrer'
+    );
+    await press('copyDiagnosticsButton');
+    await settle();
+    expect(writeText).toHaveBeenCalledOnce();
+    const text = writeText.mock.calls[0]![0] as unknown as string;
+    expect(text).toContain(RELEASE_NAME);
+    expect(text).toContain('preview-abc123');
+    expect(text).toContain('Room K7PQ2M');
+    expect(text).not.toContain('secret-token');
+    expect(
+      document.querySelector('#copyDiagnosticsButton .settings-row__value')
+        ?.textContent
+    ).toBe('Copied');
+    window.history.replaceState(null, '', '/');
+  });
+
   it('gives way to the keyboard shortcuts, and has no keys on a touch screen', async () => {
     const { onOpenChange } = await render();
-    expect(document.querySelector('#settingsKeys kbd')?.textContent).toBe('?');
-    await act(async () =>
-      document.querySelector<HTMLButtonElement>('#editShortcutsButton')!.click()
-    );
+    expect(
+      document.querySelector('#editShortcutsButton .settings-row__value')
+        ?.textContent
+    ).toBe('?');
+    await press('editShortcutsButton');
     expect(onOpenChange).toHaveBeenCalledWith(false);
     expect(shortcutsDialogState().open).toBe(true);
 
-    vi.stubGlobal('matchMedia', (query: string) => ({
-      matches: query === '(pointer: coarse) and (hover: none)',
-      media: query,
-      addEventListener: () => undefined,
-      removeEventListener: () => undefined,
-    }));
+    media = (query) => query === '(pointer: coarse) and (hover: none)';
     await act(async () => root.unmount());
     root = createRoot(host);
     await render();
-    expect(document.querySelector('#settingsKeys')).toBeNull();
+    expect(document.querySelector('#editShortcutsButton')).toBeNull();
   });
 
   it('lets a player in a room allow board flip at any time, and only there', async () => {
@@ -203,13 +457,9 @@ describe('SettingsSheet', () => {
     expect(input('coachingModeCheckbox')).toBeNull();
     const onChange = vi.fn();
     await render({ boardFlip: { allowed: false, onChange } });
-    // The room's own switch leads.
-    expect(
-      document.querySelector('.ptcgsim-settings-section__title')?.textContent
-    ).toBe('Room');
     const allow = input('coachingModeCheckbox');
     expect(allow.checked).toBe(false);
-    expect(document.querySelector('#settingsRoom')?.textContent).toContain(
+    expect(allow.closest('.settings-row')?.textContent).toContain(
       'Both players must allow it.'
     );
     await act(async () => allow.click());
@@ -218,24 +468,27 @@ describe('SettingsSheet', () => {
     expect(input('coachingModeCheckbox').checked).toBe(true);
   });
 
-  it("sits in the log's column beside the table when docked: Esc and its close put it away", async () => {
+  it("sits in the log's column beside the table when docked: Esc goes back, then it and its close put it away", async () => {
     const onOpenChange = vi.fn();
     await render({ docked: true, onOpenChange });
     const panel = document.querySelector<HTMLElement>('aside#settings')!;
     expect(panel).not.toBeNull();
     // Not a window over the table: no dialog, nothing made inert.
     expect(document.querySelector('[role="dialog"]')).toBeNull();
-    expect(panel.querySelector('#darkModeCheckbox')).not.toBeNull();
     expect(panel.querySelector('#settingsDockTitle')?.textContent).toBe(
       'Settings'
     );
     // It takes the focus as it opens.
     expect(panel.contains(document.activeElement)).toBe(true);
-    await act(async () => {
-      panel.dispatchEvent(
-        new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })
-      );
-    });
+    await press('settingsTableRow');
+    expect(panel.querySelector('#darkModeCheckbox')).not.toBeNull();
+    expect(panel.querySelector('#settingsDockTitle')?.textContent).toBe(
+      'Table'
+    );
+    await pressEscape(panel);
+    expect(page()).toBe('settingsHome');
+    expect(onOpenChange).not.toHaveBeenCalled();
+    await pressEscape(panel);
     expect(onOpenChange).toHaveBeenLastCalledWith(false);
     await act(async () =>
       panel.querySelector<HTMLButtonElement>('.ptcgsim-sheet__close')!.click()
@@ -253,23 +506,47 @@ describe('SettingsSheet', () => {
 
   it('applies how the table shows as each choice is made', async () => {
     await render();
+    await press('settingsTableRow');
     await act(async () => input('zoneOutlinesCheckbox').click());
     expect(boardViewSettings().getSnapshot().zoneOutlines).toBe(false);
+    await press('settingsBackButton');
+    await press('settingsCardsRow');
     await act(async () => input('opponentUprightCheckbox').click());
     expect(boardViewSettings().getSnapshot().opponentCardsUpright).toBe(true);
   });
 
-  it('scrolls to the section the palette asked for', async () => {
-    const scrolled: string[] = [];
-    const scroll = vi
-      .spyOn(HTMLElement.prototype, 'scrollIntoView')
-      .mockImplementation(function (this: HTMLElement) {
-        scrolled.push(this.id);
-      });
-    await render({ section: { section: 'motion', serial: 1 } });
-    await settle();
-    expect(scrolled).toEqual(['motionSettings']);
-    scroll.mockRestore();
+  it('chooses the language and the card images by name, each named in itself', async () => {
+    await render();
+    await press('settingsLanguageRow');
+    expect(input('language-auto').checked).toBe(true);
+    expect(
+      input('language-auto').closest('.settings-row')?.textContent
+    ).toContain('English');
+    expect(
+      document
+        .querySelector('#language-de')
+        ?.closest('.settings-row')
+        ?.querySelector('[lang="de"]')?.textContent
+    ).toBe('Deutsch');
+    await act(async () => input('language-de').click());
+    expect(preferences().get(LANGUAGE_PREFERENCES).language).toBe('de');
+    await act(async () => input('language-auto').click());
+    expect(preferences().get(LANGUAGE_PREFERENCES).language).toBe('auto');
+    await press('settingsBackButton');
+
+    await press('settingsCardsRow');
+    await press('cardImageLanguageRow');
+    expect(input('cardImageLanguage-app').checked).toBe(true);
+    expect(document.querySelector('#settings')?.textContent).toContain(
+      'Only you see this.'
+    );
+    await act(async () => input('cardImageLanguage-fr').click());
+    expect(preferences().get(CARD_IMAGE_PREFERENCES).cardImages).toBe('fr');
+    await press('settingsBackButton');
+    expect(
+      document.querySelector('#cardImageLanguageRow .settings-row__value')
+        ?.textContent
+    ).toBe('Français');
   });
 
   it('changes the theme and the background through the room, by tiles, with no words to type', async () => {
@@ -280,6 +557,7 @@ describe('SettingsSheet', () => {
       onDarkModeChange,
       background: { current: undefined, onChange, onRequestLink },
     });
+    await press('settingsTableRow');
     expect(input('darkModeCheckbox').checked).toBe(true);
     await act(async () => input('darkModeCheckbox').click());
     expect(onDarkModeChange).toHaveBeenCalledWith(false);
@@ -490,6 +768,7 @@ describe('SettingsSheet', () => {
 
   it('keeps motion choices with the player', async () => {
     await render();
+    await press('settingsMotionRow');
     expect(input('reduceMotionSystem').checked).toBe(true);
     expect(input('animationSpeedNormal').checked).toBe(true);
     await act(async () => input('animationSpeedFast').click());

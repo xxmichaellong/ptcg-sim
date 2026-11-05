@@ -17,7 +17,7 @@ afterEach(() => {
 });
 
 describe('the palette’s settings', () => {
-  it('names each row as Settings does, under its section', () => {
+  it('names each row as Settings does, under its page', () => {
     const commands = appSettingCommands();
     expect(commands.map((command) => [command.title, command.detail])).toEqual([
       ['Style…', 'Table'],
@@ -38,7 +38,7 @@ describe('the palette’s settings', () => {
       ['Animate stacks', 'Motion'],
       ['Parallax', 'Motion'],
       ['Language…', 'Language'],
-      ['Card images…', 'Language'],
+      ['Card images…', 'Cards'],
     ]);
     expect(new Set(commands.map((command) => command.section))).toEqual(
       new Set(['settings'])
@@ -69,13 +69,11 @@ describe('the palette’s settings', () => {
     }
   });
 
-  it('opens Settings, or at one of its sections, and turns dark mode', () => {
+  it('opens Settings, or at one of its pages, and turns dark mode', () => {
     const open = vi.fn();
     const onDarkModeChange = vi.fn();
     const commands = settingsSheetCommands({
-      sections: ['table', 'cards', 'motion', 'language'],
       open,
-      hint: ',',
       darkMode: true,
       onDarkModeChange,
       background: {
@@ -90,10 +88,14 @@ describe('the palette’s settings', () => {
       'Settings: Cards',
       'Settings: Motion',
       'Settings: Language',
+      'Settings: About',
       'Background…',
       'Dark mode',
     ]);
-    expect(commands[0]!.hint).toBe(',');
+    // Settings has no key of its own: it is the app bar's last button.
+    expect(commands[0]!.hint).toBeUndefined();
+    commands[0]!.run!({});
+    expect(open).toHaveBeenCalledWith();
     commands[2]!.run!({});
     expect(open).toHaveBeenCalledWith('cards');
     commands.at(-1)!.run!({});
@@ -105,7 +107,6 @@ describe('the palette’s settings', () => {
     const onChange = vi.fn();
     const onRequestLink = vi.fn();
     const background = settingsSheetCommands({
-      sections: [],
       open,
       darkMode: false,
       onDarkModeChange: vi.fn(),
@@ -131,7 +132,7 @@ describe('the palette’s settings', () => {
     expect(onChange).toHaveBeenLastCalledWith(undefined);
     choices[1]!.run!({});
     expect(onChange).toHaveBeenLastCalledWith({ kind: 'blank' });
-    // A picture is picked or dropped in Settings, at the table's section.
+    // A picture is picked or dropped in Settings, on the Table page.
     choices[4]!.run!({});
     expect(open).toHaveBeenCalledWith('table');
     choices[5]!.run!({});

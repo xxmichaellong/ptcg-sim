@@ -507,34 +507,36 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
       'true'
     );
     await openSettings(playerTwo.page);
-    // How the table is shown is Settings' Table section; covering the
+    // Settings leads with the room, under its name: its board flip, each
+    // player's to allow at any time.
+    await expect(
+      playerTwo.page.locator('#settings .settings-group__heading').first()
+    ).toHaveText(/^Room /u);
+    const allowFlip = playerTwo.page.locator(
+      '#settingsHome #coachingModeCheckbox'
+    );
+    await expect(allowFlip).not.toBeChecked();
+    await allowFlip.check();
+    await expect(allowFlip).toBeChecked();
+    // The keys are on the first page; the community links in About.
+    await expect(
+      playerTwo.page.locator('#settingsHome #editShortcutsButton')
+    ).toBeVisible();
+    await expect(
+      playerTwo.page.locator('#settingsHome #settingsAboutRow')
+    ).toBeVisible();
+    await openSettings(playerTwo.page, 'about');
+    await expect(
+      playerTwo.page.locator('#settingsAbout #discordButton')
+    ).toBeVisible();
+    // How the table is shown is Settings' Table page; covering the
     // opponent's hand is a Solo choice, so a multiplayer room never offers it.
+    await openSettings(playerTwo.page, 'table');
     await expect(playerTwo.page.locator('#showZonesCheckbox')).toHaveCount(0);
     await expect(playerTwo.page.locator('#hideHandCheckbox')).toHaveCount(0);
     await expect(
       playerTwo.page.locator('#settingsTable #zoneOutlinesCheckbox')
     ).toBeAttached();
-    // Board flip is each player's to allow in the room, at any time.
-    const allowFlip = playerTwo.page.locator(
-      '#settingsRoom #coachingModeCheckbox'
-    );
-    await expect(allowFlip).not.toBeChecked();
-    await allowFlip.check();
-    await expect(allowFlip).toBeChecked();
-    // The room's switch leads; the keys and the community links are in
-    // Settings too, the menu holding what can be done in the room.
-    await expect(
-      playerTwo.page.locator('.ptcgsim-settings-section__title').first()
-    ).toHaveText('Room');
-    await expect(
-      playerTwo.page.locator('#settingsKeys #editShortcutsButton')
-    ).toBeVisible();
-    await expect(
-      playerTwo.page.locator('.ptcgsim-settings-footer #discordButton')
-    ).toBeAttached();
-    await expect(
-      playerTwo.page.locator('.ptcgsim-app-bar #appMenuButton')
-    ).toBeVisible();
     const roomRoute = playerTwo.page.locator('[data-app-route="remote-room"]');
     let customBackgroundRequests = 0;
     await playerTwo.page.route(CUSTOM_BACKGROUND_URL, async (route) => {
@@ -588,11 +590,16 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
       'data-show-zone-outlines',
       'false'
     );
+    // Esc goes back a page, then puts Settings away.
+    await playerTwo.page.keyboard.press('Escape');
+    await expect(
+      playerTwo.page.locator('#settings #settingsTableRow')
+    ).toBeFocused();
     await playerTwo.page.keyboard.press('Escape');
     await expect(playerTwo.page.locator('#settings')).toHaveCount(0);
-    // Focus goes back to the menu (☰), which Settings opened from.
+    // Focus goes back to Settings' button, which it opened from.
     await expect(
-      playerTwo.page.locator('.ptcgsim-app-bar #appMenuButton')
+      playerTwo.page.locator('.ptcgsim-app-bar #settingsButton')
     ).toBeFocused();
     const hiddenZone = playerTwo.page.locator('[data-zone-id]').first();
     await expect(hiddenZone).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
@@ -715,7 +722,7 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
         '[data-app-route="remote-room"][data-session-phase="ready"]'
       )
     ).toBeVisible();
-    await openSettings(playerTwo.page);
+    await openSettings(playerTwo.page, 'table');
     await expect(playerTwo.page.locator('#darkModeCheckbox')).toBeChecked();
     await closeSheet(playerTwo.page);
     await openDeck(playerTwo.page);

@@ -195,9 +195,9 @@ const railAction = (id: string): TutorialTarget => ({
   selectors: [`#boardButtonContainer #${id}`, '#moreActionsButton'],
 });
 
-/** An app bar button, or the menu that holds it on a phone. */
+/** An app bar button, or Settings, which holds it on a phone. */
 const barButton = (id: string): TutorialTarget => ({
-  selectors: [`.ptcgsim-app-bar #${id}`, '#appMenuButton'],
+  selectors: [`.ptcgsim-app-bar #${id}`, '#settingsButton'],
 });
 
 /**
@@ -1192,11 +1192,11 @@ const around: TutorialLesson = {
       id: 'menu',
       text: () => (
         <Trans>
-          <strong>{controlLabel('menu')}</strong>: Settings, saves and replays,
-          and this tutorial whenever you want it.
+          <strong>{controlLabel('settings')}</strong>: saves and replays, how
+          the table looks, and this tutorial whenever you want it.
         </Trans>
       ),
-      targets: () => [{ selectors: ['#appMenuButton'] }],
+      targets: () => [{ selectors: ['#settingsButton'] }],
     },
   ],
 };

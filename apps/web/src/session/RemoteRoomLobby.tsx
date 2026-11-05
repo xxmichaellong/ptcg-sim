@@ -1691,7 +1691,9 @@ export const RemoteRoomLobby = ({
       ? {}
       : { onPlayOnline: () => setActivePanel('lobby') }),
     onDeck: openDeck,
-    onSettings: () => settingsHost.open(),
+    onSettings: () =>
+      overlay === 'settings' ? setOverlay(undefined) : settingsHost.open(),
+    settingsOpen: overlay === 'settings',
     onTutorial: () => startTutorial(),
   };
   const appBar = <AppBar model={menu} />;
@@ -1783,7 +1785,8 @@ export const RemoteRoomLobby = ({
       <SettingsSheet
         open={overlay === 'settings'}
         onOpenChange={(open) => setOverlay(open ? 'settings' : undefined)}
-        {...(settingsHost.section ? { section: settingsHost.section } : {})}
+        request={settingsHost.request}
+        menu={menu}
         darkMode={effectivePreferences.darkMode}
         onDarkModeChange={setDarkMode}
         background={{

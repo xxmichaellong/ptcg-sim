@@ -73,10 +73,10 @@ test('the Solo table owns one authority and keeps it across the menu and sheets'
     page.locator('[data-app-route="remote-room"][data-session-phase="ready"]')
   ).toBeVisible();
   expect(creationBodies).toEqual([{ mode: 'solo' }]);
-  // The table has the window: no sidebar, the menu and the log on the app
+  // The table has the window: no sidebar, Settings and the log on the app
   // bar in its corner.
   await expect(page.locator('.legacy-room-sidebar')).toHaveCount(0);
-  await expect(page.locator('#appMenuButton')).toBeVisible();
+  await expect(page.locator('#settingsButton')).toBeVisible();
   await openActivity(page);
   await expect(page.locator('#messageInput')).toBeEnabled();
   await expect(page.locator('#chatbox')).toBeVisible();
@@ -102,7 +102,7 @@ test('the Solo table owns one authority and keeps it across the menu and sheets'
   await expect(page.locator('#resetBothButton')).toHaveCount(0);
   await openAppMenu(page);
   await expect(page.locator('#leaveRoomButton')).toHaveCount(0);
-  await page.keyboard.press('Escape');
+  await closeSheet(page);
 
   await openDeck(page);
   await expect(page.locator('#deckPasteInput')).toBeVisible();
@@ -365,7 +365,7 @@ test('the Solo table owns one authority and keeps it across the menu and sheets'
     .getAttribute('data-revision');
   await openAppMenu(page);
   await expect(page.locator('#importReplay')).toHaveText('Watch replay…');
-  await page.keyboard.press('Escape');
+  await closeSheet(page);
   const [perspectiveReplay] = await Promise.all([
     page.waitForEvent('download'),
     chooseMenuItem(page, 'exportState'),
@@ -402,7 +402,7 @@ test('the Solo table owns one authority and keeps it across the menu and sheets'
   await expect(page.locator('#turnButton')).toHaveCount(0);
   await openAppMenu(page);
   await expect(page.locator('#importReplay')).toHaveCount(0);
-  await page.keyboard.press('Escape');
+  await closeSheet(page);
   // Replay's transport takes the rail: this one is fast-forward.
   await page.locator('#boardButtonContainer #resetBothButton').click();
   await expect(localGx).toHaveAttribute('aria-pressed', 'true');

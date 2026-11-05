@@ -1,57 +1,103 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-/** Settings' headed sections, in the sheet's order. */
-export const SETTINGS_SECTIONS = [
-  'room',
+/**
+ * Settings' pages (ADR-045), each under the one it is reached from: the
+ * first page lists what can be done here and leads to the rest, as Magic
+ * Garden's system menu does.
+ */
+export const SETTINGS_PAGE_PARENTS = {
+  home: null,
+  table: 'home',
+  cards: 'home',
+  cardImages: 'cards',
+  motion: 'home',
+  language: 'home',
+  reportBug: 'home',
+  about: 'home',
+} as const;
+
+export type SettingsPage = keyof typeof SETTINGS_PAGE_PARENTS;
+
+/** The pages the palette opens Settings at ("Settings: Cards"). */
+export const SETTINGS_PALETTE_PAGES = [
   'table',
   'cards',
   'motion',
-  'keys',
   'language',
-] as const;
-export type SettingsSectionId = (typeof SETTINGS_SECTIONS)[number];
+  'about',
+] as const satisfies readonly SettingsPage[];
 
-/** Each section's element id in the sheet. */
-export const SETTINGS_SECTION_IDS: Readonly<Record<SettingsSectionId, string>> =
-  {
-    room: 'settingsRoom',
-    table: 'settingsTable',
-    cards: 'settingsCards',
-    motion: 'motionSettings',
-    keys: 'settingsKeys',
-    language: 'languageSettings',
-  };
+/** Each page's element id in the drawer. */
+export const SETTINGS_PAGE_IDS: Readonly<Record<SettingsPage, string>> = {
+  home: 'settingsHome',
+  table: 'settingsTable',
+  cards: 'settingsCards',
+  cardImages: 'settingsCardImages',
+  motion: 'settingsMotion',
+  language: 'settingsLanguage',
+  reportBug: 'settingsReportBug',
+  about: 'settingsAbout',
+};
 
-type Opener = (section?: SettingsSectionId) => void;
+/** The way to a page from the first: `['home', 'cards', 'cardImages']`. */
+export const settingsPageStack = (page: SettingsPage): SettingsPage[] => {
+  const stack: SettingsPage[] = [];
+  let next: SettingsPage | null = page;
+  while (next !== null) {
+    stack.unshift(next);
+    next = SETTINGS_PAGE_PARENTS[next];
+  }
+  return stack;
+};
+
+/**
+ * How the drawer moves from one stack to the next: in (a page opened from
+ * this one), back out, or across (anything else, which slides no way).
+ */
+export const settingsNavigation = (
+  current: readonly SettingsPage[],
+  next: readonly SettingsPage[]
+): 'push' | 'pop' | 'replace' => {
+  const shared = Math.min(current.length, next.length);
+  if (!current.slice(0, shared).every((page, i) => page === next[i])) {
+    return 'replace';
+  }
+  return next.length > current.length
+    ? 'push'
+    : next.length < current.length
+      ? 'pop'
+      : 'replace';
+};
+
+type Opener = (page?: SettingsPage) => void;
 
 /*
- * Settings is one sheet, drawn by the screen holding the table (the room,
- * or the lobby before one). Its key and the palette open it from anywhere
- * through the screen mounted last, as the shortcuts dialog's hosts do.
+ * Settings is one drawer, drawn by the screen holding the table (the room,
+ * or the lobby before one). The palette opens it from anywhere through the
+ * screen mounted last, as the shortcuts dialog's hosts do.
  */
 const openers: Opener[] = [];
 
 /**
- * Opens Settings, scrolled to `section` if given. False where no screen
- * draws it.
+ * Opens Settings, at `page` if given. False where no screen draws it.
  */
-export const openSettingsSheet = (section?: SettingsSectionId): boolean => {
+export const openSettingsSheet = (page?: SettingsPage): boolean => {
   const opener = openers.at(-1);
   if (!opener) return false;
-  opener(section);
+  opener(page);
   return true;
 };
 
 /** Whether a screen draws Settings now. */
 export const canOpenSettingsSheet = (): boolean => openers.length > 0;
 
-/** Makes this screen's sheet the one `openSettingsSheet` opens. */
+/** Makes this screen's drawer the one `openSettingsSheet` opens. */
 const useSettingsSheetOpener = (open: Opener, enabled: boolean): void => {
   const latest = useRef(open);
   latest.current = open;
   useEffect(() => {
     if (!enabled) return;
-    const opener: Opener = (section) => latest.current(section);
+    const opener: Opener = (page) => latest.current(page);
     openers.push(opener);
     return () => {
       openers.splice(openers.indexOf(opener), 1);
@@ -59,34 +105,37 @@ const useSettingsSheetOpener = (open: Opener, enabled: boolean): void => {
   }, [enabled]);
 };
 
-/** A section Settings was asked to open at; each ask scrolls again. */
-export interface SettingsSectionRequest {
-  readonly section: SettingsSectionId;
+/** A page Settings was asked to open at; each ask opens it again. */
+export interface SettingsPageRequest {
+  readonly page: SettingsPage;
   readonly serial: number;
 }
 
 let serial = 0;
 
 /**
- * A screen's Settings, opened from its menu, the key or the palette:
- * `show` opens the screen's sheet, and `section` is where to scroll it.
- * Not `enabled` while another screen holds the table (the lobby's room).
+ * A screen's Settings, opened from the app bar or the palette: `show`
+ * opens the screen's drawer, and `request` is the page to show. Not
+ * `enabled` while another screen holds the table (the lobby's room).
  */
 export const useSettingsSheetHost = (
   show: () => void,
   enabled = true
 ): {
-  readonly open: (section?: SettingsSectionId) => void;
-  readonly section: SettingsSectionRequest | undefined;
+  readonly open: (page?: SettingsPage) => void;
+  readonly request: SettingsPageRequest;
 } => {
-  const [section, setSection] = useState<SettingsSectionRequest>();
+  const [request, setRequest] = useState<SettingsPageRequest>(() => ({
+    page: 'home',
+    serial: 0,
+  }));
   const latest = useRef(show);
   latest.current = show;
-  const open = useCallback((at?: SettingsSectionId) => {
+  const open = useCallback((page?: SettingsPage) => {
     serial += 1;
-    setSection(at ? { section: at, serial } : undefined);
+    setRequest({ page: page ?? 'home', serial });
     latest.current();
   }, []);
   useSettingsSheetOpener(open, enabled);
-  return { open, section };
+  return { open, request };
 };

@@ -105,7 +105,7 @@ const reads = async (page: Page, cardId: string) => {
 };
 
 const setUpright = async (page: Page, on: boolean) => {
-  await openSettings(page);
+  await openSettings(page, 'cards');
   const toggle = page.locator('#opponentUprightCheckbox');
   if (on) await toggle.check();
   else await toggle.uncheck();

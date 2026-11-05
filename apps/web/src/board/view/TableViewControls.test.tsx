@@ -135,10 +135,9 @@ describe('TableViewControls', () => {
       'tableParallaxCheckbox',
     ]) {
       expect(input(id).disabled, id).toBe(true);
-      expect(
-        input(id).closest('.ptcgsim-switch-row')?.textContent,
-        id
-      ).toContain('Needs depth');
+      expect(input(id).closest('.settings-row')?.textContent, id).toContain(
+        'Needs depth'
+      );
     }
 
     await render(true);

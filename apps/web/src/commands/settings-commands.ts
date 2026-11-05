@@ -50,8 +50,8 @@ import {
   type RoomBackground,
 } from '../session/browser-room-background.js';
 import {
-  SETTINGS_SECTIONS,
-  type SettingsSectionId,
+  SETTINGS_PALETTE_PAGES,
+  type SettingsPage,
 } from '../session/shell/settings-sheet-state.js';
 import { TABLE_ARTS } from '../session/table-art.js';
 import { TABLE_PREFERENCES } from '../session/table-preferences.js';
@@ -123,21 +123,25 @@ export const toggle = (options: {
   run: () => options.set(!options.on),
 });
 
-/** Settings' section headings, as the sheet shows them. */
-export const settingsSectionName = (section: SettingsSectionId): string => {
-  switch (section) {
-    case 'room':
-      return t`Room`;
+/** Settings' pages, as their titles and the rows that open them say. */
+export const settingsPageName = (page: SettingsPage): string => {
+  switch (page) {
+    case 'home':
+      return t`Settings`;
     case 'table':
-      return t`Table`;
+      return t({ message: 'Table', context: 'settings page' });
     case 'cards':
-      return t`Cards`;
+      return t({ message: 'Cards', context: 'settings page' });
+    case 'cardImages':
+      return t`Card images`;
     case 'motion':
-      return t`Motion`;
-    case 'keys':
-      return t`Keys`;
+      return t({ message: 'Motion', context: 'settings page' });
     case 'language':
       return t`Language`;
+    case 'reportBug':
+      return t`Report a bug`;
+    case 'about':
+      return t({ message: 'About', context: 'settings page' });
   }
 };
 
@@ -146,14 +150,11 @@ const touchOnly = (): boolean =>
   globalThis.matchMedia(TOUCH_ONLY_QUERY).matches;
 
 /**
- * Settings itself, and each of its sections ("Settings: Cards"), for the
- * screen whose sheet it is.
+ * Settings itself, and its pages ("Settings: Cards"), for the screen whose
+ * drawer it is.
  */
 export const settingsSheetCommands = (options: {
-  readonly sections: readonly SettingsSectionId[];
-  readonly open: (section?: SettingsSectionId) => void;
-  /** Settings' own key (`,`). */
-  readonly hint?: string | undefined;
+  readonly open: (page?: SettingsPage) => void;
   readonly darkMode: boolean;
   readonly onDarkModeChange: (enabled: boolean) => void;
   readonly background: BackgroundChoice;
@@ -163,31 +164,28 @@ export const settingsSheetCommands = (options: {
     title: t`Settings`,
     section: 'settings',
     icon: GearSixIcon,
-    ...(options.hint ? { hint: options.hint } : {}),
-    keywords: ['settings', 'options', 'preferences'],
+    keywords: ['settings', 'options', 'preferences', 'menu'],
     promoted: true,
     run: () => options.open(),
   },
-  ...SETTINGS_SECTIONS.filter((section) =>
-    options.sections.includes(section)
-  ).map((section): PaletteCommand => ({
-    id: `settings.section.${section}`,
+  ...SETTINGS_PALETTE_PAGES.map((page): PaletteCommand => ({
+    id: `settings.page.${page}`,
     title: t({
-      message: `Settings: ${settingsSectionName(section)}`,
-      comment: 'Opens Settings at that section',
+      message: `Settings: ${settingsPageName(page)}`,
+      comment: 'Opens Settings at that page',
     }),
     section: 'settings',
     icon: GearSixIcon,
-    keywords: ['settings', section],
+    keywords: ['settings', page],
     demoted: true,
-    run: () => options.open(section),
+    run: () => options.open(page),
   })),
   backgroundCommand(options.background, () => options.open('table')),
   toggle({
     id: 'settings.darkMode',
     title: t`Dark mode`,
     section: 'settings',
-    detail: settingsSectionName('table'),
+    detail: settingsPageName('table'),
     keywords: ['dark', 'night', 'day', 'theme', 'light'],
     on: options.darkMode,
     set: options.onDarkModeChange,
@@ -241,7 +239,7 @@ const backgroundCommand = (
     id: 'settings.background',
     title: t`Background…`,
     section: 'settings',
-    detail: settingsSectionName('table'),
+    detail: settingsPageName('table'),
     icon: ImageSquareIcon,
     keywords: ['background', 'wallpaper', 'desk', 'picture', 'image'],
     status: named(selected),
@@ -304,10 +302,10 @@ export const appSettingCommands = (): PaletteCommand[] => {
     <Key extends keyof BoardViewSettings>(key: Key) =>
     (value: BoardViewSettings[Key]) =>
       viewStore.update({ [key]: value } as Partial<BoardViewSettings>);
-  const table = settingsSectionName('table');
-  const cards = settingsSectionName('cards');
-  const motionName = settingsSectionName('motion');
-  const languageName = settingsSectionName('language');
+  const table = settingsPageName('table');
+  const cards = settingsPageName('cards');
+  const motionName = settingsPageName('motion');
+  const languageName = settingsPageName('language');
   const touch = touchOnly();
   const lower = Math.round(view.split * 100);
   const commands: PaletteCommand[] = [
@@ -612,7 +610,7 @@ export const appSettingCommands = (): PaletteCommand[] => {
       title: t`Card images…`,
       breadcrumb: t`Card images`,
       section: 'settings',
-      detail: languageName,
+      detail: cards,
       icon: ImageIcon,
       keywords: ['card images', 'scans', 'language'],
       current: cardImages,

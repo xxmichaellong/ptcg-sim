@@ -532,39 +532,41 @@ const click = async (selector: string): Promise<void> => {
   await settle();
 };
 
-/** Opens the app menu: the app bar's last button. */
-const openMenu = async (): Promise<void> => {
-  await click('#appMenuButton');
-  expect(present('[role="menu"][aria-label="Menu"]')).toBe(true);
+/** Opens Settings: the app bar's last button (ADR-045). */
+const openSettingsHome = async (): Promise<void> => {
+  await click('#settingsButton');
+  expect(present('#settings')).toBe(true);
 };
 
 /**
  * Chooses an app entry by its id: a button on the app bar directly,
- * anything else from its menu.
+ * anything else from Settings' first page.
  */
 const chooseMenuItem = async (id: string): Promise<void> => {
-  if (!present(`.ptcgsim-app-bar #${id}`)) await openMenu();
+  if (!present(`.ptcgsim-app-bar #${id}`)) await openSettingsHome();
   await click(`#${id}`);
 };
 
 /**
- * The ids the app bar and its menu offer right now; the menu is closed
- * again after.
+ * The ids the app bar and Settings' first page offer right now; Settings
+ * is put away again after.
  */
 const menuEntryIds = async (): Promise<string[]> => {
   const bar = [...document.querySelectorAll('.ptcgsim-app-bar button[id]')].map(
     (entry) => entry.id
   );
-  await openMenu();
+  await openSettingsHome();
   const ids = [
-    ...bar.filter((id) => id !== 'appMenuButton'),
+    ...bar,
     ...[
-      ...document.querySelectorAll('[role="menu"][aria-label="Menu"] [id]'),
+      ...document.querySelectorAll(
+        '#settings :is(.settings-row, .settings-footer__action)[id]'
+      ),
     ].map((entry) => entry.id),
   ];
-  // Closed from its own button: an Escape would also reach the sheet below.
-  await click('#appMenuButton');
-  expect(present('[role="menu"][aria-label="Menu"]')).toBe(false);
+  // Put away from its own button: an Escape would also reach the sheet below.
+  await click('#settingsButton');
+  expect(present('#settings')).toBe(false);
   return ids;
 };
 
@@ -585,9 +587,11 @@ const closeDeck = async (): Promise<void> => {
   );
 };
 
+/** Settings' Table page: the look, the background, dark mode. */
 const openSettings = async (): Promise<void> => {
-  await chooseMenuItem('settingsButton');
-  expect(present('#settings')).toBe(true);
+  await openSettingsHome();
+  await click('#settingsTableRow');
+  expect(present('#settingsTable')).toBe(true);
 };
 
 /** Closes a sheet from its own close button. */
@@ -717,7 +721,7 @@ describe('remote room lobby wiring', () => {
 
     // The menu sits on the empty table's rail. On Play online the bar's
     // switch has Online pressed and Solo as the way back.
-    expect(present('[data-testid="lobby-board"] #appMenuButton')).toBe(true);
+    expect(present('[data-testid="lobby-board"] #settingsButton')).toBe(true);
     const entries = await menuEntryIds();
     expect(entries).toEqual(
       expect.arrayContaining(['p1Button', 'deckImportButton', 'settingsButton'])
@@ -743,8 +747,11 @@ describe('remote room lobby wiring', () => {
     );
     expect(playOnlineOpen()).toBe(true);
 
-    await openSettings();
+    await openSettingsHome();
     expect(playOnlineOpen()).toBe(false);
+    // The keys open from Settings' first page, in their own dialog.
+    expect(present('#settings #editShortcutsButton')).toBe(true);
+    await click('#settingsTableRow');
     await act(async () =>
       element<HTMLInputElement>('#darkModeCheckbox').click()
     );
@@ -763,8 +770,6 @@ describe('remote room lobby wiring', () => {
     expect(present('#hideHandCheckbox')).toBe(false);
     await act(async () => boardViewSettings().update({ zoneOutlines: false }));
     expect(lobbyBoardHarness.preferences?.showZoneOutlines).toBe(false);
-    // The keys open from Settings in their own dialog.
-    expect(present('#settings #editShortcutsButton')).toBe(true);
     // The background is chosen by tiles; a link is asked for only on
     // From a link….
     expect(element('#changeBackgroundButton').textContent).toBe('From a link…');
@@ -1208,7 +1213,7 @@ describe('remote room lobby wiring', () => {
       created.roomRuntime.value.session
     );
     expect(lobbyBoardHarness.parkedRoomMode).toBe('solo');
-    expect(present('[data-testid="parked-solo-board"] #appMenuButton')).toBe(
+    expect(present('[data-testid="parked-solo-board"] #settingsButton')).toBe(
       true
     );
     const turn = { id: 'turnButton' } as never;

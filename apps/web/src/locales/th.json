@@ -1484,9 +1484,9 @@
     "message": "<0>{0}</0>: every move, and the chat.",
     "translation": "<0>{0}</0>: ทุกการเล่นและแชท"
   },
-  "ifsvhW": {
-    "message": "<0>{0}</0>: Settings, saves and replays, and this tutorial whenever you want it.",
-    "translation": "<0>{0}</0>: การตั้งค่า เซฟและรีเพลย์ รวมถึงบทสอนเล่นนี้ เปิดดูได้ทุกเมื่อ"
+  "EQcWQL": {
+    "message": "<0>{0}</0>: saves and replays, how the table looks, and this tutorial whenever you want it.",
+    "translation": "<0>{0}</0>: ที่บันทึกและรีเพลย์ รูปลักษณ์ของโต๊ะ และบทเรียนนี้ เปิดดูได้ทุกเมื่อ"
   },
   "C0rMdv": {
     "message": "− Damage",
@@ -1605,6 +1605,11 @@
       "Tooltip of the marker on a Pokémon whose Ability was used."
     ],
     "translation": "ใช้ความสามารถแล้ว"
+  },
+  "aXrlbe": {
+    "message": "About",
+    "context": "settings page",
+    "translation": "เกี่ยวกับ"
   },
   "v0rlF7": {
     "message": "Accent",
@@ -2027,6 +2032,11 @@
     "context": "replay: one step back",
     "translation": "ย้อนกลับ"
   },
+  "_8WPEl": {
+    "message": "Back",
+    "context": "to the settings page before",
+    "translation": "กลับ"
+  },
   "PF2mzE": {
     "message": "Back to {panelName}",
     "comments": [
@@ -2215,6 +2225,10 @@
     "context": "shortcut key caption",
     "translation": "BREAK"
   },
+  "9c-ADL": {
+    "message": "Browser language",
+    "translation": "ภาษาของเบราว์เซอร์"
+  },
   "FE2YBZ": {
     "message": "Browser language ({browser})",
     "translation": "ภาษาของเบราว์เซอร์ ({browser})"
@@ -2336,6 +2350,11 @@
       "Command palette section: find a card on the table.",
       "The section of a Pokémon's window with its cards."
     ],
+    "translation": "การ์ด"
+  },
+  "yA-F7T": {
+    "message": "Cards",
+    "context": "settings page",
     "translation": "การ์ด"
   },
   "CZ3VjP": {
@@ -2578,9 +2597,18 @@
     "message": "Connection lost.",
     "translation": "การเชื่อมต่อขาดหาย"
   },
+  "_IjcZC": {
+    "message": "Copied",
+    "context": "copied to the clipboard",
+    "translation": "คัดลอกแล้ว"
+  },
   "he3ygx": {
     "message": "Copy",
     "translation": "คัดลอก"
+  },
+  "tlcVbQ": {
+    "message": "Copy details",
+    "translation": "คัดลอกรายละเอียด"
   },
   "PSlXm_": {
     "message": "Copy list",
@@ -2600,6 +2628,10 @@
   "7WsLH4": {
     "message": "Couldn't check that. Try again.",
     "translation": "ตรวจสอบไม่สำเร็จ ลองอีกครั้ง"
+  },
+  "yciUn6": {
+    "message": "Couldn't copy",
+    "translation": "คัดลอกไม่สำเร็จ"
   },
   "8T-Jx-": {
     "message": "Couldn't create a room. Try again.",
@@ -3184,11 +3216,6 @@
       "Opens a form to change what a card in the deck says."
     ],
     "translation": "แก้ไขข้อความ"
-  },
-  "CMMU03": {
-    "message": "Edit…",
-    "context": "change the keyboard shortcuts",
-    "translation": "แก้ไข…"
   },
   "MRZxAn": {
     "message": "Edited",
@@ -3981,10 +4008,6 @@
     "message": "Keyboard shortcuts",
     "translation": "แป้นพิมพ์ลัด"
   },
-  "WQg61I": {
-    "message": "Keys",
-    "translation": "ปุ่มลัด"
-  },
   "vFjc7h": {
     "message": "Keys",
     "context": "the keyboard map with no modifier held",
@@ -4191,6 +4214,11 @@
     "context": "shortcut key caption",
     "translation": "ดู"
   },
+  "IDxD7j": {
+    "message": "Look",
+    "context": "the table's look",
+    "translation": "รูปลักษณ์"
+  },
   "QW7fGB": {
     "message": "Look at bottom cards",
     "translation": "ดูการ์ดใต้สำรับ"
@@ -4382,11 +4410,6 @@
     "context": "Pokémon stage",
     "translation": "เมก้า"
   },
-  "co2yxV": {
-    "message": "Menu",
-    "context": "the app menu",
-    "translation": "เมนู"
-  },
   "59OmyH": {
     "message": "Message",
     "context": "chat",
@@ -4463,8 +4486,9 @@
     "message": "More game actions",
     "translation": "การกระทำในเกมเพิ่มเติม"
   },
-  "itfxKl": {
+  "1eQCso": {
     "message": "Motion",
+    "context": "settings page",
     "translation": "การเคลื่อนไหว"
   },
   "CFLOVi": {
@@ -5105,6 +5129,10 @@
     "context": "keyboard key",
     "translation": "Page Down"
   },
+  "zQGwlC": {
+    "message": "Page language",
+    "translation": "ภาษาของหน้า"
+  },
   "EfIP2O": {
     "message": "Page language ({following})",
     "translation": "ภาษาของหน้า ({following})"
@@ -5164,6 +5192,10 @@
   "7hnHtA": {
     "message": "Paste or drop the link you were sent.",
     "translation": "วางหรือดรอปลิงก์ที่คุณได้รับ"
+  },
+  "5L0PsY": {
+    "message": "Paste the details into your report: they help find the problem.",
+    "translation": "วางรายละเอียดลงในรายงานของคุณ เพื่อช่วยค้นหาปัญหา"
   },
   "erh83Q": {
     "message": "Paste the invitation link you were sent.",
@@ -5728,6 +5760,14 @@
     "message": "Replays aren't available right now.",
     "translation": "ตอนนี้ยังไม่สามารถใช้รีเพลย์ได้"
   },
+  "cd5EXh": {
+    "message": "Report a bug",
+    "translation": "รายงานบั๊ก"
+  },
+  "732i9s": {
+    "message": "Report on Discord",
+    "translation": "รายงานบน Discord"
+  },
   "OfhWJH": {
     "message": "Reset",
     "translation": "รีเซ็ต"
@@ -6286,15 +6326,10 @@
     ],
     "translation": "การตั้งค่า"
   },
-  "y4__tG": {
-    "message": "Settings",
-    "context": "shortcut key caption",
-    "translation": "การตั้งค่า"
-  },
   "8OT456": {
     "message": "Settings: {0}",
     "comments": [
-      "Opens Settings at that section"
+      "Opens Settings at that page"
     ],
     "translation": "การตั้งค่า: {0}"
   },
@@ -6539,6 +6574,10 @@
     "message": "Some of it is too long.",
     "translation": "บางส่วนยาวเกินไป"
   },
+  "ORinFI": {
+    "message": "Something not working? Tell us and we'll take a look.",
+    "translation": "มีอะไรใช้งานไม่ได้ไหม บอกเรา แล้วเราจะตรวจสอบ"
+  },
   "5n8ONW": {
     "message": "Sort",
     "context": "sort the cards in a pile",
@@ -6576,6 +6615,10 @@
   "b2twVe": {
     "message": "Sort your hand",
     "translation": "เรียงการ์ดบนมือของคุณ"
+  },
+  "joolK7": {
+    "message": "Source code",
+    "translation": "ซอร์สโค้ด"
   },
   "rAziAv": {
     "message": "Space",
@@ -6843,6 +6886,11 @@
   "gpkQgy": {
     "message": "Table",
     "context": "go back to the table",
+    "translation": "โต๊ะ"
+  },
+  "yfjdBO": {
+    "message": "Table",
+    "context": "settings page",
     "translation": "โต๊ะ"
   },
   "YgZ6hP": {
@@ -7579,6 +7627,11 @@
   "uCehvK": {
     "message": "V-UNION · 4 pieces",
     "translation": "V-UNION · 4 ชิ้น"
+  },
+  "-lImrL": {
+    "message": "View",
+    "context": "how the table is shown",
+    "translation": "มุมมอง"
   },
   "W-3MjD": {
     "message": "View",

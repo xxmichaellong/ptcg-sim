@@ -10,7 +10,7 @@ import {
   openBoardView,
   tableViewChoice,
 } from './support/board-view.js';
-import { closeSheet, openDeck } from './support/table-shell.js';
+import { closeSheet, openDeck, openSettings } from './support/table-shell.js';
 
 const browserErrors = new WeakMap<Page, Promise<string>[]>();
 test.beforeEach(({ page }) => {
@@ -251,8 +251,7 @@ test('off-center grips stay exact; Escape, blur and resize cancel cleanly; idle 
   await idle(page);
   await openBoardView(page);
   await page.locator('#tableTiltRange').fill('18');
-  await page.keyboard.press('Escape');
-  await expect(page.locator('#settings')).toHaveCount(0);
+  await closeBoardView(page);
   const hand = await cardIn(page, 'hand');
   await page.locator(`[data-card-id="${hand.id}"]`).click();
   await page.keyboard.press('a');
@@ -699,7 +698,7 @@ test('optional parallax settles without an idle clock and freezes the camera dur
   page,
 }) => {
   await start(page);
-  await openBoardView(page);
+  await openSettings(page, 'motion');
   await page.locator('#tableParallaxCheckbox').check();
   await closeBoardView(page);
   await idle(page);

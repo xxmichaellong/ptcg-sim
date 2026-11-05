@@ -13,6 +13,9 @@ import {
   AppBar,
   appBarSize,
   helpEntries,
+  menuActions,
+  restEntries,
+  useAppBarPlacement,
   type AppMenuModel,
 } from './AppMenu.js';
 import { closeHelpPage, HelpSheetHost, RELEASE_NAME } from './help-pages.js';
@@ -98,23 +101,29 @@ const press = async (selector: string): Promise<void> => {
   await settle();
 };
 
-/** Opens a menu from its button and lists its entries. */
-const openMenu = async (selector: string): Promise<string[]> => {
-  await press(selector);
-  return [
-    ...document.querySelectorAll('[role="menu"] [role="menuitem"][id]'),
-  ].map((item) => item.id);
+/** The ids of what the room lets the player do, as Settings groups them. */
+const actionIds = (menu: AppMenuModel) => {
+  const { room, game, leave } = menuActions(menu);
+  return {
+    room: room.map((action) => action.id),
+    game: game.map((action) => action.id),
+    leave: leave.map((action) => action.id),
+  };
 };
 
-const choose = async (id: string): Promise<void> => {
-  await act(async () =>
-    document.querySelector<HTMLElement>(`[role="menu"] #${id}`)!.click()
-  );
-  await settle();
+/** What the bar leaves to Settings, as a component sees it. */
+const inSettingsIds = async (menu: AppMenuModel): Promise<string[]> => {
+  let ids: string[] = [];
+  const Probe = () => {
+    ids = useAppBarPlacement(menu).inSettings.map((entry) => entry.id);
+    return null;
+  };
+  await act(async () => root.render(<Probe />));
+  return ids;
 };
 
 describe('AppBar', () => {
-  it('shows where the table is played as a switch, the deck, Commands, the log and the menu, in groups', async () => {
+  it('shows where the table is played as a switch, the deck, Commands, the log and Settings, in groups', async () => {
     const menu = model();
     await render(menu);
     expect(barIds()).toEqual([
@@ -123,7 +132,7 @@ describe('AppBar', () => {
       'deckImportButton',
       'commandsButton',
       'activityButton',
-      'appMenuButton',
+      'settingsButton',
     ]);
     expect(
       [...document.querySelectorAll('.ptcgsim-app-bar__group')].map(
@@ -146,42 +155,49 @@ describe('AppBar', () => {
       document.querySelector('#deckImportButton')?.getAttribute('aria-label')
     ).toBe('Deck');
 
-    // The menu: Settings first, with its key, and nothing offered twice.
-    // The keys and the help links are in Settings, not here.
-    const rest = await openMenu('#appMenuButton');
-    expect(rest).toEqual(['settingsButton', 'tutorialButton']);
-    expect(
-      document.querySelector('[role="menu"] #settingsButton kbd')?.textContent
-    ).toBe(',');
-    await choose('settingsButton');
+    // No menu: the last button is Settings itself, which holds the rest,
+    // with no key of its own.
+    expect(document.querySelector('#appMenuButton')).toBeNull();
+    expect(document.querySelector('[aria-haspopup="menu"]')).toBeNull();
+    const settings = document.querySelector('#settingsButton')!;
+    expect(settings.getAttribute('aria-label')).toBe('Settings');
+    expect(settings.getAttribute('aria-expanded')).toBe('false');
+    expect(settings.querySelector('kbd')).toBeNull();
+    await press('#settingsButton');
     expect(menu.onSettings).toHaveBeenCalledOnce();
+    // Open, it shows pressed, and names what it opened.
+    await render(model({ settingsOpen: true }));
+    expect(
+      document.querySelector('#settingsButton')?.getAttribute('aria-expanded')
+    ).toBe('true');
+    expect(
+      document.querySelector('#settingsButton')?.getAttribute('aria-controls')
+    ).toBe('settings');
   });
 
-  it("lists a Solo table's replays after Settings, a room's invites and saves before it, and a replay's way out first", async () => {
+  it("groups a Solo table's tutorial and replays, a room's invites and saves, and a replay's way out first", () => {
     const game = {
       onImportReplay: vi.fn(),
       onResumeSaved: vi.fn(),
       onExportState: vi.fn(),
     };
-    await render(model({ game }));
-    expect(await openMenu('#appMenuButton')).toEqual([
-      'settingsButton',
-      'tutorialButton',
-      'importReplay',
-      'resumeSavedGame',
-      'exportState',
-    ]);
-    expect(
-      document.querySelector('[role="menu"] #importReplay')?.textContent
-    ).toBe('Watch replay…');
-    await act(async () => {
-      document.body.dispatchEvent(
-        new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })
-      );
+    expect(actionIds(model({ game }))).toEqual({
+      room: [],
+      game: [
+        'tutorialButton',
+        'importReplay',
+        'resumeSavedGame',
+        'exportState',
+      ],
+      leave: [],
     });
-    await settle();
+    expect(
+      menuActions(model({ game })).game.find(
+        (action) => action.id === 'importReplay'
+      )?.label
+    ).toBe('Watch replay…');
 
-    await render({
+    const room: AppMenuModel = {
       heading: 'Room K7PQ2M',
       onDeck: vi.fn(),
       onSettings: vi.fn(),
@@ -192,26 +208,29 @@ describe('AppBar', () => {
       },
       game: { onSaveOnline: vi.fn(), onExportState: vi.fn() },
       onLeave: vi.fn(),
+    };
+    expect(actionIds(room)).toEqual({
+      room: ['inviteOpponentMenuItem', 'inviteSpectatorMenuItem'],
+      game: ['saveOnlineGame', 'exportState'],
+      leave: ['leaveRoomButton'],
     });
-    expect(await openMenu('#appMenuButton')).toEqual([
+    // The palette offers the same, Settings itself first.
+    expect(
+      restEntries(room).map((entry) => ('id' in entry ? entry.id : undefined))
+    ).toEqual([
+      'settingsButton',
       'inviteOpponentMenuItem',
       'inviteSpectatorMenuItem',
       'saveOnlineGame',
       'exportState',
-      'settingsButton',
       'leaveRoomButton',
     ]);
-    await act(async () => {
-      document.body.dispatchEvent(
-        new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })
-      );
-    });
-    await settle();
 
-    await render(
-      model({ game: { onExitReplay: vi.fn(), onExportState: vi.fn() } })
-    );
-    expect((await openMenu('#appMenuButton'))[0]).toBe('exitReplayMenuItem');
+    expect(
+      actionIds(
+        model({ game: { onExitReplay: vi.fn(), onExportState: vi.fn() } })
+      ).game[0]
+    ).toBe('exitReplayMenuItem');
   });
 
   it('moves between its buttons on the arrow keys, which the table never sees', async () => {
@@ -239,7 +258,7 @@ describe('AppBar', () => {
     await arrow('ArrowLeft');
     await arrow('ArrowLeft');
     // Round from the first to the last.
-    expect(document.activeElement?.id).toBe('appMenuButton');
+    expect(document.activeElement?.id).toBe('settingsButton');
     // Left focused by a click, a button hands the arrows on (to the table):
     // not keyboard focus as it arrives, whatever the browser says at the
     // keypress.
@@ -253,8 +272,8 @@ describe('AppBar', () => {
     expect(document.activeElement).toBe(commands);
   });
 
-  it('turns the way out round in a right-to-left language, and nothing else', async () => {
-    await render(
+  it('turns only the way out round in a right-to-left language', () => {
+    const { room, game, leave } = menuActions(
       model({
         onLeave: vi.fn(),
         invites: {
@@ -262,71 +281,57 @@ describe('AppBar', () => {
           seatTaken: false,
           onInvite: vi.fn(),
         },
+        game: { onExportState: vi.fn() },
       })
     );
-    await openMenu('#appMenuButton');
-    // Leaving points the way the line reads (ds-mirror-rtl: it turns round
-    // only under dir="rtl"); an invite, a screen or a heart has no
+    // Leaving points the way the line reads; an invite or a save has no
     // direction.
-    const mirrored = [
-      ...document.querySelectorAll('[role="menu"] [role="menuitem"][id]'),
-    ]
-      .filter((item) => item.querySelector('svg.ds-mirror-rtl'))
-      .map((item) => item.id);
-    expect(mirrored).toEqual(['leaveRoomButton']);
+    expect(
+      [...room, ...game, ...leave]
+        .filter((action) => action.mirrored)
+        .map((action) => action.id)
+    ).toEqual(['leaveRoomButton']);
+    expect(leave[0]?.danger).toBe(true);
   });
 
-  it("offers both invites, and says why the opponent's is off once their seat is taken", async () => {
+  it("offers both invites, and says why the opponent's is off once their seat is taken", () => {
     const onInvite = vi.fn();
-    await render(
+    const open = menuActions(
       model({
         invites: { roles: ['player', 'spectator'], seatTaken: false, onInvite },
       })
-    );
-    expect(await openMenu('#appMenuButton')).toEqual(
-      expect.arrayContaining([
-        'inviteOpponentMenuItem',
-        'inviteSpectatorMenuItem',
-      ])
-    );
-    await act(async () => {
-      document.querySelector<HTMLElement>('#inviteSpectatorMenuItem')!.click();
-    });
+    ).room;
+    expect(open.map((action) => action.id)).toEqual([
+      'inviteOpponentMenuItem',
+      'inviteSpectatorMenuItem',
+    ]);
+    open[1]!.onSelect();
     expect(onInvite).toHaveBeenCalledWith('spectator');
-    await settle();
-
-    await render(
+    const taken = menuActions(
       model({
         invites: { roles: ['player', 'spectator'], seatTaken: true, onInvite },
       })
-    );
-    await openMenu('#appMenuButton');
-    const opponent = document.querySelector<HTMLElement>(
-      '#inviteOpponentMenuItem'
-    )!;
-    expect(opponent.getAttribute('aria-disabled')).toBe('true');
-    expect(opponent.textContent).toContain('Seat taken');
+    ).room[0]!;
+    expect(taken.disabled).toBe(true);
+    expect(taken.detail).toBe('Seat taken');
   });
 
-  it('keeps the palette, the log and the menu on a phone; the menu leads with the rest', async () => {
+  it('keeps the palette, the log and Settings on a phone; Settings leads with the rest', async () => {
     compact = true;
     touchOnly = true;
     await render(model());
     expect(barIds()).toEqual([
       'commandsButton',
       'activityButton',
-      'appMenuButton',
+      'settingsButton',
     ]);
-    expect(await openMenu('#appMenuButton')).toEqual([
+    expect(await inSettingsIds(model())).toEqual([
       'deckImportButton',
       'p2Button',
-      'settingsButton',
-      'tutorialButton',
     ]);
-    // No keys under a finger, so no key beside Settings.
-    expect(
-      document.querySelector('[role="menu"] #settingsButton kbd')
-    ).toBeNull();
+    compact = false;
+    // With room for them, none.
+    expect(await inSettingsIds(model())).toEqual([]);
   });
 
   it('is as wide as the corner the table keeps for it', () => {
@@ -426,32 +431,31 @@ describe('AppBar', () => {
     });
   });
 
-  it('opens the tutorial, or leaves it on the practice table, and has none where it is not offered', async () => {
+  it('opens the tutorial, or leaves it on the practice table, and has none where it is not offered', () => {
     const onTutorial = vi.fn();
-    await render(model({ onTutorial }));
-    await openMenu('#appMenuButton');
-    expect(
-      document.querySelector('[role="menu"] #tutorialButton')?.textContent
-    ).toBe('Tutorial');
-    await choose('tutorialButton');
+    const tutorial = menuActions(model({ onTutorial })).game.find(
+      (action) => action.id === 'tutorialButton'
+    )!;
+    expect(tutorial.label).toBe('Tutorial');
+    tutorial.onSelect();
     expect(onTutorial).toHaveBeenCalledOnce();
 
     const onExitTutorial = vi.fn();
-    await render(model({ onExitTutorial }));
-    // Last, after Settings; no second tutorial to open.
-    expect(await openMenu('#appMenuButton')).toEqual([
-      'settingsButton',
-      'leaveTutorialButton',
-    ]);
-    expect(
-      document.querySelector('[role="menu"] #leaveTutorialButton')?.textContent
-    ).toBe('Leave tutorial');
-    await choose('leaveTutorialButton');
+    // On the practice table: its way out, at the foot; no second tutorial.
+    expect(actionIds(model({ onExitTutorial }))).toEqual({
+      room: [],
+      game: [],
+      leave: ['leaveTutorialButton'],
+    });
+    const leave = menuActions(model({ onExitTutorial })).leave[0]!;
+    expect(leave.label).toBe('Leave tutorial');
+    leave.onSelect();
     expect(onExitTutorial).toHaveBeenCalledOnce();
 
-    // A room's menu: no tutorial, the other player would be left waiting.
-    await render({ onSettings: vi.fn() });
-    expect(await openMenu('#appMenuButton')).not.toContain('tutorialButton');
+    // A room: no tutorial, the other player would be left waiting.
+    expect(actionIds({ onSettings: vi.fn() }).game).not.toContain(
+      'tutorialButton'
+    );
   });
 
   it('keeps the keys and the help for the palette, the community outside the table', async () => {

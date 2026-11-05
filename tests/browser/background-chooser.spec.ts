@@ -41,7 +41,7 @@ test('a wallpaper, nothing, then a picture of the player’s own, kept across a 
   await openTable(page);
   const room = page.locator('[data-app-route="remote-room"]');
   await expect(room).toHaveAttribute('data-room-background', 'default');
-  await openSettings(page);
+  await openSettings(page, 'table');
   const desk = page.locator('#background-desk');
   await expect(desk).toBeChecked();
   // No Custom tile until there is a picture.
@@ -71,7 +71,7 @@ test('a wallpaper, nothing, then a picture of the player’s own, kept across a 
   await page.reload();
   await openTable(page);
   await expect(room).toHaveCSS('background-image', /^url\("blob:/u);
-  await openSettings(page);
+  await openSettings(page, 'table');
   await expect(page.locator('#background-custom')).toBeChecked();
   await page.locator('#background-desk').click();
   await expect(room).toHaveAttribute('data-room-background', 'default');
@@ -83,7 +83,7 @@ test('a picture dropped on the chooser is taken', async ({ page }) => {
   test.setTimeout(120_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   await openTable(page);
-  await openSettings(page);
+  await openSettings(page, 'table');
   const bytes = [...(await pictureBytes(page))];
   const transfer = await page.evaluateHandle((data) => {
     const transfer = new DataTransfer();

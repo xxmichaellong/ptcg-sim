@@ -483,27 +483,29 @@ const pressEscape = async (target: Element): Promise<void> => {
   await settle();
 };
 
-/** The app menu's entries by id, while it is open. */
+/** Settings' first page's rows by id, while it is open. */
 const menuIds = (): string[] =>
-  [...document.querySelectorAll('[role="menu"] [role="menuitem"][id]')].map(
-    (item) => item.id
-  );
+  [
+    ...document.querySelectorAll(
+      '#settings :is(.settings-row, .settings-footer__action)[id]'
+    ),
+  ].map((item) => item.id);
 
-/** Opens the app menu: the app bar's last button. */
+/** Opens Settings (ADR-045): the app bar's last button. */
 const openMenu = async (): Promise<void> => {
-  await click('#appMenuButton');
+  await click('#settingsButton');
   await settle();
-  expect(find('[role="menu"][aria-label="Menu"]')).not.toBeNull();
+  expect(find('#settings')).not.toBeNull();
 };
 
 const closeMenu = async (): Promise<void> => {
-  const menu = find('[role="menu"][aria-label="Menu"]');
-  if (menu) await pressEscape(menu);
+  const settings = find('#settings');
+  if (settings) await pressEscape(settings);
 };
 
 /**
  * Chooses an app entry by its id: a button on the app bar directly,
- * anything else from its menu.
+ * anything else from Settings' first page.
  */
 const chooseMenuItem = async (id: string): Promise<void> => {
   if (!find(`.ptcgsim-app-bar #${id}`)) await openMenu();
@@ -616,7 +618,7 @@ describe('RemoteRoomRoute', () => {
     expect(find('.legacy-room-sidebar')).toBeNull();
     expect(find('#topButtonContainer')).toBeNull();
     expect(find('#roomHeader')).toBeNull();
-    expect(find('#appMenuButton')).not.toBeNull();
+    expect(find('#settingsButton')).not.toBeNull();
     expect(find('#activityButton')).not.toBeNull();
     // Not yet seated: only the board's own Flip.
     expect(railIds()).toEqual(['flipBoardButton']);
@@ -628,8 +630,8 @@ describe('RemoteRoomRoute', () => {
     expect(boardHarness.props?.keysSuspended).toBe(false);
 
     // The app bar holds where the table is played (Solo | Online), the
-    // deck, the palette and the log; the rest is behind its last button,
-    // the menu, Settings first.
+    // deck, the palette and the log; the rest is in Settings, its last
+    // button.
     expect(
       [...document.querySelectorAll('.ptcgsim-app-bar button[id]')].map(
         (button) => button.id
@@ -640,13 +642,22 @@ describe('RemoteRoomRoute', () => {
       'deckImportButton',
       'commandsButton',
       'activityButton',
-      'appMenuButton',
+      'settingsButton',
     ]);
-    // The switch says so first; the menu doesn't say it again.
+    // The switch says so first; Settings doesn't say it again.
     expect(get('.ptcgsim-app-bar__switch').dataset.current).toBe('solo');
     await openMenu();
-    expect(find('.ptcgsim-app-menu-heading')).toBeNull();
-    expect(menuIds()[0]).toBe('settingsButton');
+    expect(find('#settings .settings-group__heading')).toBeNull();
+    expect(menuIds()).toEqual(
+      expect.arrayContaining([
+        'settingsTableRow',
+        'settingsCardsRow',
+        'settingsMotionRow',
+        'settingsLanguageRow',
+        'settingsReportBugRow',
+        'settingsAboutRow',
+      ])
+    );
     expect(menuIds()).toEqual(
       expect.arrayContaining(['importReplay', 'exportState'])
     );
@@ -988,7 +999,7 @@ describe('RemoteRoomRoute', () => {
       // Online save and resume are default-off on the Worker; until it
       // reports them enabled there is nothing to press.
       await openMenu();
-      expect(get('.ptcgsim-app-menu-heading').textContent).toBe(
+      expect(get('#settings .settings-group__heading').textContent).toBe(
         'Room ABCDEFGH2345'
       );
       expect(menuIds()).not.toContain('saveOnlineGame');
@@ -1068,14 +1079,16 @@ describe('RemoteRoomRoute', () => {
       const sentBeforeSettings = socket.sent.length;
       await chooseMenuItem('settingsButton');
       expect(find('#settings')).not.toBeNull();
+      // The keys are on Settings' first page, their list in a dialog of
+      // its own.
+      expect(find('#settings #editShortcutsButton')).not.toBeNull();
+      await click('#settingsTableRow');
       expect(find('#darkModeCheckbox')).not.toBeNull();
       // How the table is shown is part of Settings now.
       expect(find('#boardShowBoth')).not.toBeNull();
       // Only Solo covers the opponent's hand (on its pill, not here).
       expect(find('#hideHandCheckbox')).toBeNull();
       expect(get('#changeBackgroundButton').textContent).toBe('From a link…');
-      // The keys are in Settings, their list in a dialog of its own.
-      expect(find('#settingsKeys #editShortcutsButton')).not.toBeNull();
 
       await click('#changeBackgroundButton');
       await act(async () => flushConsumers());
@@ -1117,6 +1130,10 @@ describe('RemoteRoomRoute', () => {
       expect(boardHarness.props?.preferences).toBe(preferencesBeforeHideHand);
       expect(socket.sent).toHaveLength(sentBeforeSettings);
       expect(onSubmission).not.toHaveBeenCalled();
+      // Esc goes back a page, then puts Settings away.
+      await pressEscape(get('#settings'));
+      expect(find('#settingsHome')).not.toBeNull();
+      expect(document.activeElement?.id).toBe('settingsTableRow');
       await pressEscape(get('#settings'));
       expect(find('#settings')).toBeNull();
 
@@ -1355,7 +1372,7 @@ describe('RemoteRoomRoute', () => {
     // The bar names the replay (no switch over it); the menu doesn't again.
     expect(get('.ptcgsim-app-bar__mode').dataset.tableMode).toBe('replay');
     await openMenu();
-    expect(find('.ptcgsim-app-menu-heading')).toBeNull();
+    expect(find('#settings .settings-group__heading')).toBeNull();
     expect(menuIds()).not.toContain('importReplay');
     await closeMenu();
     expect(socket.sent).toHaveLength(sentBeforeImport);

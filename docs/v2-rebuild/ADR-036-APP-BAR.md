@@ -41,9 +41,11 @@ groups, with a hairline between them:
 1. The deck and where to play: **Deck**, **Play online** (from a Solo table)
    or **Solo table** (from Play online).
 2. **Commands** (the palette) and the **Log** (with its unread count).
-3. **Menu** (☰): what can be done here, Settings among it.
+3. **Settings** (a gear): everything else, in pages (ADR-045, 2026-11-05,
+   which replaced the menu (☰) and Settings' key `,`; what follows on the
+   menu is its history).
 
-The menu, by where the player is:
+The menu, by where the player was (until 2026-11-05):
 
 - a Solo table: Settings (`,`), Full screen, Tutorial | Watch replay…,
   Resume saved game…, Download replay;
@@ -182,13 +184,14 @@ loads one moves its name under the `+` (the board marks such decks:
 - `BoardRailModel` and the chrome take one `bar` instead of `start`/`end`;
   `useRailWidth` and `ptcgsim.shell.v1`'s `toolbarCollapsed` are gone.
 - Specs reach the bar through `tests/browser/support/table-shell.ts`
-  (`chooseMenuItem` presses a bar button or opens ☰). `#appMoreButton` is
-  gone; `#appMenuButton` opens the menu.
+  (`chooseMenuItem` presses a bar button or a row on Settings' first
+  page). `#appMoreButton` and `#appMenuButton` are gone; `#settingsButton`
+  is the bar's last button (ADR-045).
 - The control ids are kept: `#deckImportButton`, `#p2Button`, `#p1Button`,
-  `#commandsButton`, `#activityButton`, `#settingsButton` (the menu's
-  Settings row), `#boardButtonContainer` and the turn's actions.
-  `#shortcutsButton` is a palette command only; Settings' Keys opens the
-  list (`#editShortcutsButton`). The bar is five buttons at most (202px by
+  `#commandsButton`, `#activityButton`, `#settingsButton`,
+  `#boardButtonContainer` and the turn's actions. `#shortcutsButton` is a
+  palette command only; Settings' Keyboard shortcuts row opens the list
+  (`#editShortcutsButton`). The bar is five buttons at most (202px by
   mouse), so the corner the table keeps is about 40px narrower. Since the
   mode's label (§4), 326px by mouse; on an upright phone still three
   buttons (146px by touch).

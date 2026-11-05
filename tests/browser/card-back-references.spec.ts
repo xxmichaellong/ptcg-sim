@@ -196,7 +196,7 @@ test('an opponent never loads an outside card back, sees an uploaded one from ou
       .toBe(true);
 
     // The guest chooses to see opponents' custom backs as the standard one.
-    await openSettings(guest!);
+    await openSettings(guest!, 'cards');
     await guest!.locator('#opponentCardBacksCheckbox').uncheck();
     await expect
       .poll(async () => (await hostBacks(guest!, hostId))[0] ?? '')

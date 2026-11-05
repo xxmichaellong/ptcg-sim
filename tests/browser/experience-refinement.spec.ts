@@ -70,10 +70,10 @@ test('card browsing preserves order, offers readable density, and keeps keyboard
   // stays a menu away.
   await expect(page.locator('[data-table-welcome]')).toHaveCount(0);
   await openAppMenu(page);
-  await expect(
-    page.getByRole('menuitem', { name: 'Tutorial', exact: true })
-  ).toBeVisible();
-  await page.keyboard.press('Escape');
+  await expect(page.locator('#settings #tutorialButton')).toHaveText(
+    'Tutorial'
+  );
+  await closeSheet(page);
 
   const deck = await cardIn(page, 'deck');
   const order = await page.evaluate(() =>
@@ -255,7 +255,7 @@ test('prize shuffle and a card grip remain interruptible, including instant moti
     .poll(() => card.locator('.ptcgsim-card__body').getAttribute('data-swing'))
     .toBeNull();
 
-  await openSettings(page);
+  await openSettings(page, 'motion');
   await page.locator('#animationSpeedInstant').check();
   await closeSheet(page);
   const next = await cardIn(page, 'hand');
@@ -271,38 +271,37 @@ test('prize shuffle and a card grip remain interruptible, including instant moti
     .toBe('idle');
 });
 
-test('the app menu and the custom-card form support keyboard navigation and focus return', async ({
+test('Settings and the custom-card form support keyboard navigation and focus return', async ({
   page,
 }) => {
   await startTable(page);
-  // The room's options are the app menu now (ADR-030), behind the open
-  // toolbar's More.
+  // The room's options are Settings now (ADR-045), the app bar's last
+  // button: in, a page in and back, and out again by the keys alone.
   const options = await appMenuOpener(page);
   await options.focus();
   await page.keyboard.press('Enter');
-  const menu = appMenu(page);
-  const items = menu.getByRole('menuitem');
-  await expect(items.first()).toBeFocused();
-  await page.keyboard.press('End');
-  await expect(items.last()).toBeFocused();
-  await page.keyboard.press('ArrowDown');
-  await expect(items.first()).toBeFocused();
+  const settings = page.locator('#settings');
+  await expect(appMenu(page)).toBeVisible();
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          document
+            .querySelector('#settings')
+            ?.contains(document.activeElement) ?? false
+      )
+    )
+    .toBe(true);
+  const cards = settings.locator('#settingsCardsRow');
+  await cards.focus();
+  await page.keyboard.press('Enter');
+  await expect(settings.locator('#settingsCards')).toBeVisible();
   await page.keyboard.press('Escape');
-  await expect(menu).toBeHidden();
+  await expect(appMenu(page)).toBeVisible();
+  await expect(cards).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(settings).toBeHidden();
   await expect(options).toBeFocused();
-  await openAppMenu(page);
-  await page.keyboard.press('Tab');
-  await expect(menu).toBeHidden();
-  expect(
-    await page.evaluate(() => {
-      const active = document.activeElement;
-      return (
-        active instanceof HTMLElement &&
-        !active.closest('[hidden]') &&
-        active.getBoundingClientRect().width > 0
-      );
-    })
-  ).toBe(true);
 
   await openDeck(page);
   await page.locator('#deckNewButton').click();

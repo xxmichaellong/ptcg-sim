@@ -1484,9 +1484,9 @@
     "message": "<0>{0}</0>: every move, and the chat.",
     "translation": "<0>{0}</0>: 모든 동작과 채팅을 확인합니다."
   },
-  "ifsvhW": {
-    "message": "<0>{0}</0>: Settings, saves and replays, and this tutorial whenever you want it.",
-    "translation": "<0>{0}</0>: 설정, 저장 및 리플레이, 그리고 원할 때 언제든 이 튜토리얼을 볼 수 있습니다."
+  "EQcWQL": {
+    "message": "<0>{0}</0>: saves and replays, how the table looks, and this tutorial whenever you want it.",
+    "translation": "<0>{0}</0>: 저장 및 리플레이, 테이블 모양, 그리고 원할 때 언제든 볼 수 있는 이 튜토리얼이 있습니다."
   },
   "C0rMdv": {
     "message": "− Damage",
@@ -1605,6 +1605,11 @@
       "Tooltip of the marker on a Pokémon whose Ability was used."
     ],
     "translation": "특성 사용함"
+  },
+  "aXrlbe": {
+    "message": "About",
+    "context": "settings page",
+    "translation": "정보"
   },
   "v0rlF7": {
     "message": "Accent",
@@ -2027,6 +2032,11 @@
     "context": "replay: one step back",
     "translation": "뒤로"
   },
+  "_8WPEl": {
+    "message": "Back",
+    "context": "to the settings page before",
+    "translation": "뒤로"
+  },
   "PF2mzE": {
     "message": "Back to {panelName}",
     "comments": [
@@ -2215,6 +2225,10 @@
     "context": "shortcut key caption",
     "translation": "BREAK"
   },
+  "9c-ADL": {
+    "message": "Browser language",
+    "translation": "브라우저 언어"
+  },
   "FE2YBZ": {
     "message": "Browser language ({browser})",
     "translation": "브라우저 언어 ({browser})"
@@ -2336,6 +2350,11 @@
       "Command palette section: find a card on the table.",
       "The section of a Pokémon's window with its cards."
     ],
+    "translation": "카드"
+  },
+  "yA-F7T": {
+    "message": "Cards",
+    "context": "settings page",
     "translation": "카드"
   },
   "CZ3VjP": {
@@ -2578,9 +2597,18 @@
     "message": "Connection lost.",
     "translation": "연결이 끊어졌습니다."
   },
+  "_IjcZC": {
+    "message": "Copied",
+    "context": "copied to the clipboard",
+    "translation": "복사됨"
+  },
   "he3ygx": {
     "message": "Copy",
     "translation": "복사"
+  },
+  "tlcVbQ": {
+    "message": "Copy details",
+    "translation": "상세 정보 복사"
   },
   "PSlXm_": {
     "message": "Copy list",
@@ -2600,6 +2628,10 @@
   "7WsLH4": {
     "message": "Couldn't check that. Try again.",
     "translation": "확인하지 못했습니다. 다시 시도하세요."
+  },
+  "yciUn6": {
+    "message": "Couldn't copy",
+    "translation": "복사할 수 없습니다"
   },
   "8T-Jx-": {
     "message": "Couldn't create a room. Try again.",
@@ -3184,11 +3216,6 @@
       "Opens a form to change what a card in the deck says."
     ],
     "translation": "텍스트 편집"
-  },
-  "CMMU03": {
-    "message": "Edit…",
-    "context": "change the keyboard shortcuts",
-    "translation": "편집…"
   },
   "MRZxAn": {
     "message": "Edited",
@@ -3981,10 +4008,6 @@
     "message": "Keyboard shortcuts",
     "translation": "키보드 단축키"
   },
-  "WQg61I": {
-    "message": "Keys",
-    "translation": "키"
-  },
   "vFjc7h": {
     "message": "Keys",
     "context": "the keyboard map with no modifier held",
@@ -4191,6 +4214,11 @@
     "context": "shortcut key caption",
     "translation": "보기"
   },
+  "IDxD7j": {
+    "message": "Look",
+    "context": "the table's look",
+    "translation": "모양"
+  },
   "QW7fGB": {
     "message": "Look at bottom cards",
     "translation": "아래 카드 보기"
@@ -4382,11 +4410,6 @@
     "context": "Pokémon stage",
     "translation": "M진화"
   },
-  "co2yxV": {
-    "message": "Menu",
-    "context": "the app menu",
-    "translation": "메뉴"
-  },
   "59OmyH": {
     "message": "Message",
     "context": "chat",
@@ -4463,8 +4486,9 @@
     "message": "More game actions",
     "translation": "게임 동작 더보기"
   },
-  "itfxKl": {
+  "1eQCso": {
     "message": "Motion",
+    "context": "settings page",
     "translation": "모션"
   },
   "CFLOVi": {
@@ -5105,6 +5129,10 @@
     "context": "keyboard key",
     "translation": "Page Down"
   },
+  "zQGwlC": {
+    "message": "Page language",
+    "translation": "페이지 언어"
+  },
   "EfIP2O": {
     "message": "Page language ({following})",
     "translation": "페이지 언어 ({following})"
@@ -5164,6 +5192,10 @@
   "7hnHtA": {
     "message": "Paste or drop the link you were sent.",
     "translation": "받은 링크를 붙여넣거나 놓으세요."
+  },
+  "5L0PsY": {
+    "message": "Paste the details into your report: they help find the problem.",
+    "translation": "상세 정보를 신고 내용에 붙여넣으세요. 문제를 찾는 데 도움이 됩니다."
   },
   "erh83Q": {
     "message": "Paste the invitation link you were sent.",
@@ -5728,6 +5760,14 @@
     "message": "Replays aren't available right now.",
     "translation": "지금은 리플레이를 사용할 수 없습니다."
   },
+  "cd5EXh": {
+    "message": "Report a bug",
+    "translation": "버그 신고"
+  },
+  "732i9s": {
+    "message": "Report on Discord",
+    "translation": "Discord에서 신고"
+  },
   "OfhWJH": {
     "message": "Reset",
     "translation": "초기화"
@@ -6286,15 +6326,10 @@
     ],
     "translation": "설정"
   },
-  "y4__tG": {
-    "message": "Settings",
-    "context": "shortcut key caption",
-    "translation": "설정"
-  },
   "8OT456": {
     "message": "Settings: {0}",
     "comments": [
-      "Opens Settings at that section"
+      "Opens Settings at that page"
     ],
     "translation": "설정: {0}"
   },
@@ -6539,6 +6574,10 @@
     "message": "Some of it is too long.",
     "translation": "너무 긴 항목이 있습니다."
   },
+  "ORinFI": {
+    "message": "Something not working? Tell us and we'll take a look.",
+    "translation": "작동하지 않는 부분이 있나요? 알려 주시면 확인하겠습니다."
+  },
   "5n8ONW": {
     "message": "Sort",
     "context": "sort the cards in a pile",
@@ -6576,6 +6615,10 @@
   "b2twVe": {
     "message": "Sort your hand",
     "translation": "내 패 정렬"
+  },
+  "joolK7": {
+    "message": "Source code",
+    "translation": "소스 코드"
   },
   "rAziAv": {
     "message": "Space",
@@ -6843,6 +6886,11 @@
   "gpkQgy": {
     "message": "Table",
     "context": "go back to the table",
+    "translation": "테이블"
+  },
+  "yfjdBO": {
+    "message": "Table",
+    "context": "settings page",
     "translation": "테이블"
   },
   "YgZ6hP": {
@@ -7579,6 +7627,11 @@
   "uCehvK": {
     "message": "V-UNION · 4 pieces",
     "translation": "V-UNION · 4조각"
+  },
+  "-lImrL": {
+    "message": "View",
+    "context": "how the table is shown",
+    "translation": "보기"
   },
   "W-3MjD": {
     "message": "View",

@@ -4,6 +4,7 @@ import { ownRoomBudget } from './support/room-budget.js';
 import {
   appMenu,
   appMenuOpener,
+  closeSheet,
   chooseMenuItem,
 } from './support/table-shell.js';
 
@@ -291,15 +292,21 @@ test.describe('a tablet held sideways', () => {
     await expectNoSideScroll(page);
     const viewport = page.viewportSize()!;
 
-    // The app menu fits the window.
+    // Settings fits the window.
     await (await appMenuOpener(page)).tap();
-    const menu = appMenu(page);
-    await expect(menu).toBeVisible();
+    await expect(appMenu(page)).toBeVisible();
+    const menu = page.locator('#settings');
+    // Once it has slid all the way in.
+    await expect
+      .poll(async () => {
+        const box = (await menu.boundingBox())!;
+        return box.x + box.width;
+      })
+      .toBeLessThanOrEqual(viewport.width);
     const menuBox = (await menu.boundingBox())!;
     expect(menuBox.y).toBeGreaterThanOrEqual(0);
     expect(menuBox.y + menuBox.height).toBeLessThanOrEqual(viewport.height);
-    expect(menuBox.x + menuBox.width).toBeLessThanOrEqual(viewport.width);
-    await page.keyboard.press('Escape');
+    await closeSheet(page);
 
     // The deck screen opens on the decks, ready for a paste.
     const plus = page.locator(

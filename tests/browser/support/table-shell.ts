@@ -1,11 +1,12 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 
 /**
- * The room's shell (ADR-030, ADR-036): the table fills the window; the app
- * bar in its top-right corner holds the deck, Play online, the palette, the
- * log, Settings and the menu; Settings, Play online and the deck screen open
- * over the table. Specs reach every one of them through these helpers, so a
- * change to the shell changes one file.
+ * The room's shell (ADR-030, ADR-036, ADR-045): the table fills the
+ * window; the app bar in its top-right corner holds the deck, Play online,
+ * the palette, the log and Settings, which holds the rest; Settings, Play
+ * online and the deck screen open over or beside the table. Specs reach
+ * every one of them through these helpers, so a change to the shell
+ * changes one file.
  */
 
 /**
@@ -16,42 +17,43 @@ export const openToolbar = async (page: Page): Promise<void> => {
   await expect(page.locator('.ptcgsim-app-bar')).toBeVisible();
 };
 
-/** The button that opens the app menu: the bar's last, ☰. */
+/** The bar's last button: Settings (ADR-045), which holds the rest. */
 export const appMenuOpener = async (page: Page): Promise<Locator> => {
-  const menu = page.locator('#appMenuButton');
-  await expect(menu).toBeVisible();
-  return menu;
+  const settings = page.locator('#settingsButton');
+  await expect(settings).toBeVisible();
+  return settings;
 };
 
-/**
- * The open app menu, found by the button that opened it. Not by its name:
- * the rail's own More menu, still fading out after a game action, has a
- * name of its own too.
- */
+/** Settings' first page, while it is shown. */
 export const appMenu = (page: Page): Locator =>
-  page.locator(
-    '[role="menu"][aria-labelledby="appMenuButton"]:not([data-ending-style])'
-  );
+  page.locator('#settings #settingsHome');
 
-/** Opens the app menu and waits for it. */
+/** Opens Settings at its first page and waits for it. */
 export const openAppMenu = async (page: Page): Promise<void> => {
-  await (await appMenuOpener(page)).click();
+  if (!(await page.locator('#settings').isVisible())) {
+    await (await appMenuOpener(page)).click();
+  }
+  await expect(page.locator('#settings')).toBeVisible();
+  // Back to the first page, if another was left open.
+  const back = page.locator('#settingsBackButton');
+  while (await back.isVisible()) await back.click();
   await expect(appMenu(page)).toBeVisible();
+  await tableSettled(page);
 };
 
 /**
- * Chooses an app entry by its id (`settingsButton`, `exportState`): a
- * button on the app bar directly, anything else from the menu (☰).
+ * Chooses an app entry by its id (`exportState`, `deckImportButton`): a
+ * button on the app bar directly, anything else from Settings' first page.
  */
 export const chooseMenuItem = async (page: Page, id: string): Promise<void> => {
-  await expect(page.locator('#appMenuButton')).toBeVisible();
+  await expect(page.locator('#settingsButton')).toBeVisible();
   const onToolbar = page.locator(`.ptcgsim-app-bar #${id}`);
   if (await onToolbar.isVisible()) {
     await onToolbar.click();
     return;
   }
   await openAppMenu(page);
-  await page.locator(`#${id}`).click();
+  await page.locator(`#settings #${id}`).click();
 };
 
 /**
@@ -80,15 +82,46 @@ export const tableSettled = (page: Page): Promise<void> =>
       })
   );
 
-export const openSettings = async (page: Page): Promise<void> => {
-  await chooseMenuItem(page, 'settingsButton');
-  await expect(page.locator('#settings')).toBeVisible();
-  await tableSettled(page);
+/** Settings' pages past the first (ADR-045), by the rows that open them. */
+export type SettingsPageName =
+  'table' | 'cards' | 'motion' | 'language' | 'reportBug' | 'about';
+
+const SETTINGS_PAGE_ROWS: Readonly<
+  Record<SettingsPageName, readonly [row: string, page: string]>
+> = {
+  table: ['settingsTableRow', 'settingsTable'],
+  cards: ['settingsCardsRow', 'settingsCards'],
+  motion: ['settingsMotionRow', 'settingsMotion'],
+  language: ['settingsLanguageRow', 'settingsLanguage'],
+  reportBug: ['settingsReportBugRow', 'settingsReportBug'],
+  about: ['settingsAboutRow', 'settingsAbout'],
 };
 
-/** Puts away whichever sheet is open (Settings, Play online, a help page). */
+/** Opens Settings, at one of its pages if named. */
+export const openSettings = async (
+  page: Page,
+  at?: SettingsPageName
+): Promise<void> => {
+  await openAppMenu(page);
+  if (!at) return;
+  const [row, shown] = SETTINGS_PAGE_ROWS[at];
+  await page.locator(`#settings #${row}`).click();
+  await expect(page.locator(`#settings #${shown}`)).toBeVisible();
+};
+
+/**
+ * Puts away whichever sheet is open (Settings, Play online, a help page).
+ * Settings goes back a page on each Esc, so it is put away from its close
+ * button.
+ */
 export const closeSheet = async (page: Page): Promise<void> => {
-  await page.keyboard.press('Escape');
+  const settings = page.locator('#settings');
+  if (await settings.isVisible()) {
+    await settings.locator('.ptcgsim-sheet__close').first().click();
+    await expect(settings).toBeHidden();
+  } else {
+    await page.keyboard.press('Escape');
+  }
   await tableSettled(page);
 };
 

@@ -1484,9 +1484,9 @@
     "message": "<0>{0}</0>: every move, and the chat.",
     "translation": "<0>{0}</0>: semua langkah dan obrolan."
   },
-  "ifsvhW": {
-    "message": "<0>{0}</0>: Settings, saves and replays, and this tutorial whenever you want it.",
-    "translation": "<0>{0}</0>: Pengaturan, simpanan dan replay, serta tutorial ini kapan pun kamu mau."
+  "EQcWQL": {
+    "message": "<0>{0}</0>: saves and replays, how the table looks, and this tutorial whenever you want it.",
+    "translation": "<0>{0}</0>: simpanan dan replay, tampilan meja, dan tutorial ini kapan pun kamu mau."
   },
   "C0rMdv": {
     "message": "− Damage",
@@ -1605,6 +1605,11 @@
       "Tooltip of the marker on a Pokémon whose Ability was used."
     ],
     "translation": "Ability sudah dipakai"
+  },
+  "aXrlbe": {
+    "message": "About",
+    "context": "settings page",
+    "translation": "Tentang"
   },
   "v0rlF7": {
     "message": "Accent",
@@ -2027,6 +2032,11 @@
     "context": "replay: one step back",
     "translation": "Kembali"
   },
+  "_8WPEl": {
+    "message": "Back",
+    "context": "to the settings page before",
+    "translation": "Kembali"
+  },
   "PF2mzE": {
     "message": "Back to {panelName}",
     "comments": [
@@ -2215,6 +2225,10 @@
     "context": "shortcut key caption",
     "translation": "BREAK"
   },
+  "9c-ADL": {
+    "message": "Browser language",
+    "translation": "Bahasa browser"
+  },
   "FE2YBZ": {
     "message": "Browser language ({browser})",
     "translation": "Bahasa browser ({browser})"
@@ -2336,6 +2350,11 @@
       "Command palette section: find a card on the table.",
       "The section of a Pokémon's window with its cards."
     ],
+    "translation": "Kartu"
+  },
+  "yA-F7T": {
+    "message": "Cards",
+    "context": "settings page",
     "translation": "Kartu"
   },
   "CZ3VjP": {
@@ -2578,9 +2597,18 @@
     "message": "Connection lost.",
     "translation": "Koneksi terputus."
   },
+  "_IjcZC": {
+    "message": "Copied",
+    "context": "copied to the clipboard",
+    "translation": "Tersalin"
+  },
   "he3ygx": {
     "message": "Copy",
     "translation": "Salin"
+  },
+  "tlcVbQ": {
+    "message": "Copy details",
+    "translation": "Salin detail"
   },
   "PSlXm_": {
     "message": "Copy list",
@@ -2600,6 +2628,10 @@
   "7WsLH4": {
     "message": "Couldn't check that. Try again.",
     "translation": "Tidak bisa memeriksanya. Coba lagi."
+  },
+  "yciUn6": {
+    "message": "Couldn't copy",
+    "translation": "Gagal menyalin"
   },
   "8T-Jx-": {
     "message": "Couldn't create a room. Try again.",
@@ -3184,11 +3216,6 @@
       "Opens a form to change what a card in the deck says."
     ],
     "translation": "Ubah teks"
-  },
-  "CMMU03": {
-    "message": "Edit…",
-    "context": "change the keyboard shortcuts",
-    "translation": "Ubah…"
   },
   "MRZxAn": {
     "message": "Edited",
@@ -3981,10 +4008,6 @@
     "message": "Keyboard shortcuts",
     "translation": "Pintasan keyboard"
   },
-  "WQg61I": {
-    "message": "Keys",
-    "translation": "Tombol"
-  },
   "vFjc7h": {
     "message": "Keys",
     "context": "the keyboard map with no modifier held",
@@ -4191,6 +4214,11 @@
     "context": "shortcut key caption",
     "translation": "Lihat"
   },
+  "IDxD7j": {
+    "message": "Look",
+    "context": "the table's look",
+    "translation": "Tampilan"
+  },
   "QW7fGB": {
     "message": "Look at bottom cards",
     "translation": "Lihat kartu terbawah"
@@ -4382,11 +4410,6 @@
     "context": "Pokémon stage",
     "translation": "Mega"
   },
-  "co2yxV": {
-    "message": "Menu",
-    "context": "the app menu",
-    "translation": "Menu"
-  },
   "59OmyH": {
     "message": "Message",
     "context": "chat",
@@ -4463,8 +4486,9 @@
     "message": "More game actions",
     "translation": "Aksi permainan lainnya"
   },
-  "itfxKl": {
+  "1eQCso": {
     "message": "Motion",
+    "context": "settings page",
     "translation": "Gerakan"
   },
   "CFLOVi": {
@@ -5105,6 +5129,10 @@
     "context": "keyboard key",
     "translation": "Page Down"
   },
+  "zQGwlC": {
+    "message": "Page language",
+    "translation": "Bahasa halaman"
+  },
   "EfIP2O": {
     "message": "Page language ({following})",
     "translation": "Bahasa halaman ({following})"
@@ -5164,6 +5192,10 @@
   "7hnHtA": {
     "message": "Paste or drop the link you were sent.",
     "translation": "Tempel atau lepas tautan yang dikirim kepadamu."
+  },
+  "5L0PsY": {
+    "message": "Paste the details into your report: they help find the problem.",
+    "translation": "Tempel detail ke laporanmu: ini membantu menemukan masalahnya."
   },
   "erh83Q": {
     "message": "Paste the invitation link you were sent.",
@@ -5728,6 +5760,14 @@
     "message": "Replays aren't available right now.",
     "translation": "Replay tidak tersedia saat ini."
   },
+  "cd5EXh": {
+    "message": "Report a bug",
+    "translation": "Laporkan bug"
+  },
+  "732i9s": {
+    "message": "Report on Discord",
+    "translation": "Laporkan di Discord"
+  },
   "OfhWJH": {
     "message": "Reset",
     "translation": "Reset"
@@ -6286,15 +6326,10 @@
     ],
     "translation": "Pengaturan"
   },
-  "y4__tG": {
-    "message": "Settings",
-    "context": "shortcut key caption",
-    "translation": "Pengaturan"
-  },
   "8OT456": {
     "message": "Settings: {0}",
     "comments": [
-      "Opens Settings at that section"
+      "Opens Settings at that page"
     ],
     "translation": "Pengaturan: {0}"
   },
@@ -6539,6 +6574,10 @@
     "message": "Some of it is too long.",
     "translation": "Sebagian terlalu panjang."
   },
+  "ORinFI": {
+    "message": "Something not working? Tell us and we'll take a look.",
+    "translation": "Ada yang tidak berfungsi? Beri tahu kami dan kami akan memeriksanya."
+  },
   "5n8ONW": {
     "message": "Sort",
     "context": "sort the cards in a pile",
@@ -6576,6 +6615,10 @@
   "b2twVe": {
     "message": "Sort your hand",
     "translation": "Urutkan Kartu Peganganmu"
+  },
+  "joolK7": {
+    "message": "Source code",
+    "translation": "Kode sumber"
   },
   "rAziAv": {
     "message": "Space",
@@ -6843,6 +6886,11 @@
   "gpkQgy": {
     "message": "Table",
     "context": "go back to the table",
+    "translation": "Meja"
+  },
+  "yfjdBO": {
+    "message": "Table",
+    "context": "settings page",
     "translation": "Meja"
   },
   "YgZ6hP": {
@@ -7579,6 +7627,11 @@
   "uCehvK": {
     "message": "V-UNION · 4 pieces",
     "translation": "V-UNION · 4 bagian"
+  },
+  "-lImrL": {
+    "message": "View",
+    "context": "how the table is shown",
+    "translation": "Tampilan"
   },
   "W-3MjD": {
     "message": "View",

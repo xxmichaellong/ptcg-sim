@@ -1484,9 +1484,9 @@
     "message": "<0>{0}</0>: every move, and the chat.",
     "translation": "<0>{0}</0>:すべての操作とチャットです。"
   },
-  "ifsvhW": {
-    "message": "<0>{0}</0>: Settings, saves and replays, and this tutorial whenever you want it.",
-    "translation": "<0>{0}</0>:設定、セーブとリプレイ、必要なときに開けるこのチュートリアルがあります。"
+  "EQcWQL": {
+    "message": "<0>{0}</0>: saves and replays, how the table looks, and this tutorial whenever you want it.",
+    "translation": "<0>{0}</0>:セーブとリプレイ、テーブルの見た目、そしてお好きなときに見られるこのチュートリアル。"
   },
   "C0rMdv": {
     "message": "− Damage",
@@ -1605,6 +1605,11 @@
       "Tooltip of the marker on a Pokémon whose Ability was used."
     ],
     "translation": "特性使用済み"
+  },
+  "aXrlbe": {
+    "message": "About",
+    "context": "settings page",
+    "translation": "情報"
   },
   "v0rlF7": {
     "message": "Accent",
@@ -2027,6 +2032,11 @@
     "context": "replay: one step back",
     "translation": "戻る"
   },
+  "_8WPEl": {
+    "message": "Back",
+    "context": "to the settings page before",
+    "translation": "戻る"
+  },
   "PF2mzE": {
     "message": "Back to {panelName}",
     "comments": [
@@ -2215,6 +2225,10 @@
     "context": "shortcut key caption",
     "translation": "BREAK"
   },
+  "9c-ADL": {
+    "message": "Browser language",
+    "translation": "ブラウザの言語"
+  },
   "FE2YBZ": {
     "message": "Browser language ({browser})",
     "translation": "ブラウザの言語({browser})"
@@ -2336,6 +2350,11 @@
       "Command palette section: find a card on the table.",
       "The section of a Pokémon's window with its cards."
     ],
+    "translation": "カード"
+  },
+  "yA-F7T": {
+    "message": "Cards",
+    "context": "settings page",
     "translation": "カード"
   },
   "CZ3VjP": {
@@ -2578,9 +2597,18 @@
     "message": "Connection lost.",
     "translation": "接続が切れました。"
   },
+  "_IjcZC": {
+    "message": "Copied",
+    "context": "copied to the clipboard",
+    "translation": "コピーしました"
+  },
   "he3ygx": {
     "message": "Copy",
     "translation": "コピー"
+  },
+  "tlcVbQ": {
+    "message": "Copy details",
+    "translation": "詳細をコピー"
   },
   "PSlXm_": {
     "message": "Copy list",
@@ -2600,6 +2628,10 @@
   "7WsLH4": {
     "message": "Couldn't check that. Try again.",
     "translation": "確認できませんでした。もう一度お試しください。"
+  },
+  "yciUn6": {
+    "message": "Couldn't copy",
+    "translation": "コピーできませんでした"
   },
   "8T-Jx-": {
     "message": "Couldn't create a room. Try again.",
@@ -3184,11 +3216,6 @@
       "Opens a form to change what a card in the deck says."
     ],
     "translation": "テキストを編集"
-  },
-  "CMMU03": {
-    "message": "Edit…",
-    "context": "change the keyboard shortcuts",
-    "translation": "編集…"
   },
   "MRZxAn": {
     "message": "Edited",
@@ -3981,10 +4008,6 @@
     "message": "Keyboard shortcuts",
     "translation": "キーボードショートカット"
   },
-  "WQg61I": {
-    "message": "Keys",
-    "translation": "キー"
-  },
   "vFjc7h": {
     "message": "Keys",
     "context": "the keyboard map with no modifier held",
@@ -4191,6 +4214,11 @@
     "context": "shortcut key caption",
     "translation": "見る"
   },
+  "IDxD7j": {
+    "message": "Look",
+    "context": "the table's look",
+    "translation": "見た目"
+  },
   "QW7fGB": {
     "message": "Look at bottom cards",
     "translation": "山札の下を見る"
@@ -4382,11 +4410,6 @@
     "context": "Pokémon stage",
     "translation": "メガシンカ"
   },
-  "co2yxV": {
-    "message": "Menu",
-    "context": "the app menu",
-    "translation": "メニュー"
-  },
   "59OmyH": {
     "message": "Message",
     "context": "chat",
@@ -4463,8 +4486,9 @@
     "message": "More game actions",
     "translation": "その他のゲーム操作"
   },
-  "itfxKl": {
+  "1eQCso": {
     "message": "Motion",
+    "context": "settings page",
     "translation": "モーション"
   },
   "CFLOVi": {
@@ -5105,6 +5129,10 @@
     "context": "keyboard key",
     "translation": "Page Down"
   },
+  "zQGwlC": {
+    "message": "Page language",
+    "translation": "ページの言語"
+  },
   "EfIP2O": {
     "message": "Page language ({following})",
     "translation": "ページの言語({following})"
@@ -5164,6 +5192,10 @@
   "7hnHtA": {
     "message": "Paste or drop the link you were sent.",
     "translation": "届いたリンクを貼り付けるかドロップしてください。"
+  },
+  "5L0PsY": {
+    "message": "Paste the details into your report: they help find the problem.",
+    "translation": "詳細を報告に貼り付けてください。問題の特定に役立ちます。"
   },
   "erh83Q": {
     "message": "Paste the invitation link you were sent.",
@@ -5728,6 +5760,14 @@
     "message": "Replays aren't available right now.",
     "translation": "現在リプレイは利用できません。"
   },
+  "cd5EXh": {
+    "message": "Report a bug",
+    "translation": "不具合を報告"
+  },
+  "732i9s": {
+    "message": "Report on Discord",
+    "translation": "Discordで報告"
+  },
   "OfhWJH": {
     "message": "Reset",
     "translation": "リセット"
@@ -6286,15 +6326,10 @@
     ],
     "translation": "設定"
   },
-  "y4__tG": {
-    "message": "Settings",
-    "context": "shortcut key caption",
-    "translation": "設定"
-  },
   "8OT456": {
     "message": "Settings: {0}",
     "comments": [
-      "Opens Settings at that section"
+      "Opens Settings at that page"
     ],
     "translation": "設定: {0}"
   },
@@ -6539,6 +6574,10 @@
     "message": "Some of it is too long.",
     "translation": "長すぎる箇所があります。"
   },
+  "ORinFI": {
+    "message": "Something not working? Tell us and we'll take a look.",
+    "translation": "うまく動かない点はありますか?お知らせいただければ確認します。"
+  },
   "5n8ONW": {
     "message": "Sort",
     "context": "sort the cards in a pile",
@@ -6576,6 +6615,10 @@
   "b2twVe": {
     "message": "Sort your hand",
     "translation": "自分の手札を並べ替える"
+  },
+  "joolK7": {
+    "message": "Source code",
+    "translation": "ソースコード"
   },
   "rAziAv": {
     "message": "Space",
@@ -6843,6 +6886,11 @@
   "gpkQgy": {
     "message": "Table",
     "context": "go back to the table",
+    "translation": "テーブル"
+  },
+  "yfjdBO": {
+    "message": "Table",
+    "context": "settings page",
     "translation": "テーブル"
   },
   "YgZ6hP": {
@@ -7579,6 +7627,11 @@
   "uCehvK": {
     "message": "V-UNION · 4 pieces",
     "translation": "V-UNION・4ピース"
+  },
+  "-lImrL": {
+    "message": "View",
+    "context": "how the table is shown",
+    "translation": "表示"
   },
   "W-3MjD": {
     "message": "View",

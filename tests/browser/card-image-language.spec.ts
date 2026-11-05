@@ -143,9 +143,11 @@ test("the table shows cards in the player's language, falling back to the deck's
   expect(asked).not.toContain(NEW_EN);
 
   // English, chosen in Settings, applies at once.
-  await openSettings(page);
-  await expect(page.locator('#cardImageLanguageSelect')).toHaveValue('fr');
-  await page.locator('#cardImageLanguageSelect').selectOption('en');
+  await openSettings(page, 'cards');
+  await page.locator('#cardImageLanguageRow').click();
+  await expect(page.locator('#cardImageLanguage-fr')).toBeChecked();
+  await page.locator('#settings label[for="cardImageLanguage-en"]').click();
+  await expect(page.locator('#cardImageLanguage-en')).toBeChecked();
   await closeSheet(page);
   await expect
     .poll(async () =>

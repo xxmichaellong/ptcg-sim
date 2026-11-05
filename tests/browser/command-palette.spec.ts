@@ -212,7 +212,7 @@ test('a setting is chosen from its choices, and Escape steps back one at a time'
   ).toHaveCount(1);
 });
 
-test('opens Settings at the section asked for', async ({ page }) => {
+test('opens Settings at the page asked for', async ({ page }) => {
   test.setTimeout(120_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   await openSoloTable(page, false);
@@ -222,8 +222,13 @@ test('opens Settings at the section asked for', async ({ page }) => {
   await page.keyboard.press('Enter');
   await expect(palette(page)).toHaveCount(0);
   await expect(page.locator('#settings')).toBeVisible();
-  await expect(page.locator('#languageSettings')).toBeInViewport();
-  await expect(page.locator('#languageSelect')).toBeInViewport();
+  await expect(page.locator('#settings #settingsLanguage')).toBeInViewport();
+  await expect(
+    page.locator('#settings label[for="language-auto"]')
+  ).toBeInViewport();
+  // Its way back leads to Settings' first page.
+  await page.locator('#settingsBackButton').click();
+  await expect(page.locator('#settings #settingsHome')).toBeVisible();
 });
 
 test('a dangerous command asks for a second Enter', async ({ page }) => {

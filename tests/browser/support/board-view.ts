@@ -3,13 +3,14 @@ import { expect, type Page } from '@playwright/test';
 import { closeSheet, openSettings } from './table-shell.js';
 
 /**
- * How the table is shown (halves, split, depth, Lost Zone, outlines, hover
- * preview) is the Table section of Settings (ADR-030; first a Board view
- * panel). It opens from the app menu and closes on Escape.
+ * How the table is shown (halves, split, depth, outlines) is Settings'
+ * Table page (ADR-045; first a Board view panel). It opens from the app
+ * bar's Settings.
  */
 export const openBoardView = async (page: Page): Promise<void> => {
-  const settings = page.locator('#settings');
-  if (!(await settings.isVisible())) await openSettings(page);
+  if (!(await page.locator('#settings #settingsTable').isVisible())) {
+    await openSettings(page, 'table');
+  }
   await expect(page.locator('#boardShowBoth')).toBeAttached();
 };
 

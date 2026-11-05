@@ -31,6 +31,13 @@ export interface SheetProps {
   readonly modal?: boolean;
   /** Controls beside the title, before the close button. */
   readonly headerActions?: ReactNode;
+  /** Before the title: a way back to the page before (Settings). */
+  readonly headerLeading?: ReactNode;
+  /**
+   * Esc, before it closes the sheet: true if it was taken (Settings goes
+   * back a page), and the sheet stays open.
+   */
+  readonly onEscape?: () => boolean;
   readonly initialFocus?: RefObject<HTMLElement | null>;
   readonly className?: string;
   /** Marks the popup for tests and for scoped styles. */
@@ -53,6 +60,8 @@ export const Sheet = ({
   size = 'md',
   modal = true,
   headerActions,
+  headerLeading,
+  onEscape,
   initialFocus,
   className,
   id,
@@ -69,7 +78,13 @@ export const Sheet = ({
   return (
     <Drawer.Root
       open={open}
-      onOpenChange={(next) => onOpenChange(next)}
+      onOpenChange={(next, details) => {
+        if (!next && details.reason === 'escape-key' && onEscape?.()) {
+          details.cancel();
+          return;
+        }
+        onOpenChange(next);
+      }}
       swipeDirection={variant === 'side' ? sideEdge : 'down'}
       modal={isModal}
       {...(isModal ? {} : { disablePointerDismissal: true })}
@@ -100,6 +115,7 @@ export const Sheet = ({
               <div className="ptcgsim-sheet__handle" aria-hidden="true" />
             ) : null}
             <header className="ptcgsim-sheet__header">
+              {headerLeading}
               <div className="ptcgsim-sheet__heading">
                 <Drawer.Title className="ptcgsim-sheet__title">
                   {title}

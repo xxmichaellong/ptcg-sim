@@ -109,8 +109,8 @@ test('the app bar keeps the top-right corner, clear of every card, and the turn 
   await openTable(page);
   const bar = page.locator('.ptcgsim-app-bar');
   await expect(bar).toBeVisible();
-  // Where to play (Solo | Online), the deck, the palette and the log, the
-  // menu.
+  // Where to play (Solo | Online), the deck, the palette and the log, then
+  // Settings.
   await expect(bar.locator('button[id]')).toHaveCount(6);
   expect(
     await bar
@@ -122,7 +122,7 @@ test('the app bar keeps the top-right corner, clear of every card, and the turn 
     'deckImportButton',
     'commandsButton',
     'activityButton',
-    'appMenuButton',
+    'settingsButton',
   ]);
   const barBox = await box(bar);
   // 8px in from the corner, and no wider than the corner the table keeps:
@@ -157,20 +157,16 @@ test('the app bar keeps the top-right corner, clear of every card, and the turn 
   );
   expect(lastButton.x + lastButton.width).toBeLessThanOrEqual(deck.x);
 
-  // Settings leads the menu, with its key; the keys are in Settings.
-  await page.locator('#appMenuButton').click();
-  const menu = page.locator('[role="menu"][aria-labelledby="appMenuButton"]');
-  await expect(menu.locator('[role="menuitem"]').first()).toHaveAttribute(
-    'id',
-    'settingsButton'
-  );
-  await expect(menu.locator('#settingsButton kbd')).toHaveText(',');
-  await expect(menu.locator('#shortcutsButton')).toHaveCount(0);
-  await page.keyboard.press('Escape');
-  await expect(menu).toHaveCount(0);
-  // The key opens it from the table.
+  // No menu: Settings is the bar's last button, and has no key of its
+  // own (`,` is free).
+  await expect(page.locator('[role="menu"]')).toHaveCount(0);
   await page.keyboard.press(',');
+  await expect(page.locator('#settings')).toHaveCount(0);
+  const settingsButton = bar.locator('#settingsButton');
+  await expect(settingsButton).toHaveAttribute('aria-expanded', 'false');
+  await settingsButton.click();
   await expect(page.locator('#settings')).toBeVisible();
+  await expect(settingsButton).toHaveAttribute('aria-expanded', 'true');
   // Escape is the sheet's once it has the focus: on a slow runner a key
   // pressed in the frame it first shows in comes before that.
   await expect
@@ -184,6 +180,11 @@ test('the app bar keeps the top-right corner, clear of every card, and the turn 
     )
     .toBe(true);
   await page.keyboard.press('Escape');
+  await expect(page.locator('#settings')).toHaveCount(0);
+  // Its own button puts it away too.
+  await settingsButton.click();
+  await expect(page.locator('#settings')).toBeVisible();
+  await settingsButton.click();
   await expect(page.locator('#settings')).toHaveCount(0);
 });
 
@@ -235,7 +236,7 @@ test('a toolbar button a click left focused hands the arrow keys on to the table
   await page.keyboard.press('Tab');
   expect(await focused()).toBe('activityButton');
   await page.keyboard.press('ArrowRight');
-  expect(await focused()).toBe('appMenuButton');
+  expect(await focused()).toBe('settingsButton');
 });
 
 test('the bar shows which button the keyboard is on by day as by night', async ({
@@ -302,7 +303,7 @@ test('the log, opened over the table on a tablet, leaves the bar in reach', asyn
 test.describe('on a phone', () => {
   test.use({ hasTouch: true, isMobile: true });
 
-  test('keeps the palette, the log and the menu in the corner, clear of every card', async ({
+  test('keeps the palette, the log and Settings in the corner, clear of every card', async ({
     page,
   }) => {
     test.setTimeout(120_000);
@@ -313,21 +314,23 @@ test.describe('on a phone', () => {
       await bar
         .locator('button[id]')
         .evaluateAll((nodes) => nodes.map((node) => node.id))
-    ).toEqual(['commandsButton', 'activityButton', 'appMenuButton']);
+    ).toEqual(['commandsButton', 'activityButton', 'settingsButton']);
     await setUpBoth(page);
     const barBox = await box(bar);
     for (const rect of await tableBoxes(page)) {
       expect(overlaps(rect, barBox), rect.what).toBe(false);
     }
-    // The deck and Play online lead the menu, Settings next.
-    await page.locator('#appMenuButton').tap();
-    const menu = page.locator('[role="menu"][aria-labelledby="appMenuButton"]');
-    await expect(menu.locator('#deckImportButton')).toBeVisible();
+    // The deck and Play online lead Settings.
+    await page.locator('#settingsButton').tap();
+    const settings = page.locator('#settings');
+    await expect(settings.locator('#deckImportButton')).toBeVisible();
     expect(
-      await menu
-        .locator('[role="menuitem"][id]')
-        .evaluateAll((nodes) => nodes.slice(0, 3).map((node) => node.id))
-    ).toEqual(['deckImportButton', 'p2Button', 'settingsButton']);
+      await settings
+        .locator('.settings-row[id]')
+        .evaluateAll((nodes) => nodes.slice(0, 2).map((node) => node.id))
+    ).toEqual(['deckImportButton', 'p2Button']);
+    // Under a finger, no keys to list.
+    await expect(settings.locator('#editShortcutsButton')).toHaveCount(0);
   });
 
   for (const [width, height] of [
@@ -352,11 +355,9 @@ test.describe('on a phone', () => {
           await box(page.locator('.ptcgsim-app-bar'))
         )
       ).toBe(false);
-      // The menu answers its own button, not the card's close.
-      await page.locator('#appMenuButton').tap();
-      await expect(
-        page.locator('[role="menu"][aria-labelledby="appMenuButton"]')
-      ).toBeVisible();
+      // Settings answers its own button, not the card's close.
+      await page.locator('#settingsButton').tap();
+      await expect(page.locator('#settings')).toBeVisible();
     });
   }
 });
@@ -661,8 +662,8 @@ test('in Arabic the empty table keeps the bar the same way round', async ({
       x: node.getBoundingClientRect().x,
     }))
   );
-  // Left to right as in English, the menu at the end.
-  expect(buttons.at(-1)?.id).toBe('appMenuButton');
+  // Left to right as in English, Settings at the end.
+  expect(buttons.at(-1)?.id).toBe('settingsButton');
   const xs = buttons.map((button) => button.x);
   expect(xs).toEqual([...xs].sort((left, right) => left - right));
   // Each group's hairline at its start, in the gap before it.

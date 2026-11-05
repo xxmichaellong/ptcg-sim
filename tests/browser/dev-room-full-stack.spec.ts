@@ -9,6 +9,7 @@ import {
 import { openBoardView } from './support/board-view.js';
 import {
   closeActivity,
+  closeSheet,
   openActivity,
   openAppMenu,
 } from './support/table-shell.js';
@@ -275,10 +276,13 @@ test('development route reaches and resumes a real durable room through the same
   await expect
     .poll(async () => (await seam.boundingBox())?.y ?? 0)
     .toBeLessThan(seamBefore.y - 20);
+  // Esc goes back a page, then puts Settings away.
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#settings #settingsTableRow')).toBeFocused();
   await page.keyboard.press('Escape');
   await expect(page.locator('#settings')).toHaveCount(0);
-  // Focus goes back to the menu (☰), which Settings opened from.
-  await expect(page.locator('.ptcgsim-app-bar #appMenuButton')).toBeFocused();
+  // Focus goes back to Settings' button, which it opened from.
+  await expect(page.locator('.ptcgsim-app-bar #settingsButton')).toBeFocused();
 
   // The table has the window (ADR-030); the docked log takes the right
   // column while it is open, and gives it back when it closes.
@@ -744,11 +748,11 @@ test('solo creation serves one-player authority and locally disclosed replay wit
   await expect(page.locator('#turnButton')).toHaveCount(0);
   await expect(page.locator('#flipCoinButton')).toHaveCount(0);
   await expect(page.locator('#flipBoardButton')).toBeVisible();
-  // Replay's transport takes the rail; Settings stays in the menu.
+  // Replay's transport takes the rail; Settings stays on the bar.
   await expect(page.locator('#boardButtonContainer #exitReplay')).toBeVisible();
   await openAppMenu(page);
-  await expect(page.locator('#settingsButton')).toBeVisible();
-  await page.keyboard.press('Escape');
+  await expect(page.locator('#settings #settingsTableRow')).toBeVisible();
+  await closeSheet(page);
 
   const replayBottomBeforeFlip = await page.evaluate(
     () => window.__PTCG_RENDERER_SPIKE__?.scene.bottomPlayerId

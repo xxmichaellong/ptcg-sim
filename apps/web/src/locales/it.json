@@ -1484,9 +1484,9 @@
     "message": "<0>{0}</0>: every move, and the chat.",
     "translation": "<0>{0}</0>: ogni mossa e la chat."
   },
-  "ifsvhW": {
-    "message": "<0>{0}</0>: Settings, saves and replays, and this tutorial whenever you want it.",
-    "translation": "<0>{0}</0>: impostazioni, salvataggi e replay, e questo tutorial quando vuoi."
+  "EQcWQL": {
+    "message": "<0>{0}</0>: saves and replays, how the table looks, and this tutorial whenever you want it.",
+    "translation": "<0>{0}</0>: salvataggi e replay, aspetto del tavolo e questo tutorial quando vuoi."
   },
   "C0rMdv": {
     "message": "− Damage",
@@ -1605,6 +1605,11 @@
       "Tooltip of the marker on a Pokémon whose Ability was used."
     ],
     "translation": "Abilità usata"
+  },
+  "aXrlbe": {
+    "message": "About",
+    "context": "settings page",
+    "translation": "Info"
   },
   "v0rlF7": {
     "message": "Accent",
@@ -2027,6 +2032,11 @@
     "context": "replay: one step back",
     "translation": "Indietro"
   },
+  "_8WPEl": {
+    "message": "Back",
+    "context": "to the settings page before",
+    "translation": "Indietro"
+  },
   "PF2mzE": {
     "message": "Back to {panelName}",
     "comments": [
@@ -2215,6 +2225,10 @@
     "context": "shortcut key caption",
     "translation": "TURBO"
   },
+  "9c-ADL": {
+    "message": "Browser language",
+    "translation": "Lingua del browser"
+  },
   "FE2YBZ": {
     "message": "Browser language ({browser})",
     "translation": "Lingua del browser ({browser})"
@@ -2336,6 +2350,11 @@
       "Command palette section: find a card on the table.",
       "The section of a Pokémon's window with its cards."
     ],
+    "translation": "Carte"
+  },
+  "yA-F7T": {
+    "message": "Cards",
+    "context": "settings page",
     "translation": "Carte"
   },
   "CZ3VjP": {
@@ -2578,9 +2597,18 @@
     "message": "Connection lost.",
     "translation": "Connessione persa."
   },
+  "_IjcZC": {
+    "message": "Copied",
+    "context": "copied to the clipboard",
+    "translation": "Copiato"
+  },
   "he3ygx": {
     "message": "Copy",
     "translation": "Copia"
+  },
+  "tlcVbQ": {
+    "message": "Copy details",
+    "translation": "Copia dettagli"
   },
   "PSlXm_": {
     "message": "Copy list",
@@ -2600,6 +2628,10 @@
   "7WsLH4": {
     "message": "Couldn't check that. Try again.",
     "translation": "Impossibile verificare. Riprova."
+  },
+  "yciUn6": {
+    "message": "Couldn't copy",
+    "translation": "Copia non riuscita"
   },
   "8T-Jx-": {
     "message": "Couldn't create a room. Try again.",
@@ -3184,11 +3216,6 @@
       "Opens a form to change what a card in the deck says."
     ],
     "translation": "Modifica testo"
-  },
-  "CMMU03": {
-    "message": "Edit…",
-    "context": "change the keyboard shortcuts",
-    "translation": "Modifica…"
   },
   "MRZxAn": {
     "message": "Edited",
@@ -3981,10 +4008,6 @@
     "message": "Keyboard shortcuts",
     "translation": "Scorciatoie da tastiera"
   },
-  "WQg61I": {
-    "message": "Keys",
-    "translation": "Tasti"
-  },
   "vFjc7h": {
     "message": "Keys",
     "context": "the keyboard map with no modifier held",
@@ -4191,6 +4214,11 @@
     "context": "shortcut key caption",
     "translation": "Guarda"
   },
+  "IDxD7j": {
+    "message": "Look",
+    "context": "the table's look",
+    "translation": "Aspetto"
+  },
   "QW7fGB": {
     "message": "Look at bottom cards",
     "translation": "Guarda le carte in fondo"
@@ -4382,11 +4410,6 @@
     "context": "Pokémon stage",
     "translation": "Mega"
   },
-  "co2yxV": {
-    "message": "Menu",
-    "context": "the app menu",
-    "translation": "Menu"
-  },
   "59OmyH": {
     "message": "Message",
     "context": "chat",
@@ -4463,8 +4486,9 @@
     "message": "More game actions",
     "translation": "Altro: altre azioni di gioco"
   },
-  "itfxKl": {
+  "1eQCso": {
     "message": "Motion",
+    "context": "settings page",
     "translation": "Movimento"
   },
   "CFLOVi": {
@@ -5105,6 +5129,10 @@
     "context": "keyboard key",
     "translation": "Pag giù"
   },
+  "zQGwlC": {
+    "message": "Page language",
+    "translation": "Lingua della pagina"
+  },
   "EfIP2O": {
     "message": "Page language ({following})",
     "translation": "Lingua della pagina ({following})"
@@ -5164,6 +5192,10 @@
   "7hnHtA": {
     "message": "Paste or drop the link you were sent.",
     "translation": "Incolla o rilascia il link che ti hanno inviato."
+  },
+  "5L0PsY": {
+    "message": "Paste the details into your report: they help find the problem.",
+    "translation": "Incolla i dettagli nella tua segnalazione: aiutano a trovare il problema."
   },
   "erh83Q": {
     "message": "Paste the invitation link you were sent.",
@@ -5728,6 +5760,14 @@
     "message": "Replays aren't available right now.",
     "translation": "I replay non sono disponibili al momento."
   },
+  "cd5EXh": {
+    "message": "Report a bug",
+    "translation": "Segnala un bug"
+  },
+  "732i9s": {
+    "message": "Report on Discord",
+    "translation": "Segnala su Discord"
+  },
   "OfhWJH": {
     "message": "Reset",
     "translation": "Reimposta"
@@ -6286,15 +6326,10 @@
     ],
     "translation": "Impostazioni"
   },
-  "y4__tG": {
-    "message": "Settings",
-    "context": "shortcut key caption",
-    "translation": "Impostazioni"
-  },
   "8OT456": {
     "message": "Settings: {0}",
     "comments": [
-      "Opens Settings at that section"
+      "Opens Settings at that page"
     ],
     "translation": "Impostazioni: {0}"
   },
@@ -6539,6 +6574,10 @@
     "message": "Some of it is too long.",
     "translation": "Una parte è troppo lunga."
   },
+  "ORinFI": {
+    "message": "Something not working? Tell us and we'll take a look.",
+    "translation": "Qualcosa non funziona? Dicci cosa e daremo un'occhiata."
+  },
   "5n8ONW": {
     "message": "Sort",
     "context": "sort the cards in a pile",
@@ -6576,6 +6615,10 @@
   "b2twVe": {
     "message": "Sort your hand",
     "translation": "Ordina la tua mano"
+  },
+  "joolK7": {
+    "message": "Source code",
+    "translation": "Codice sorgente"
   },
   "rAziAv": {
     "message": "Space",
@@ -6843,6 +6886,11 @@
   "gpkQgy": {
     "message": "Table",
     "context": "go back to the table",
+    "translation": "Tavolo"
+  },
+  "yfjdBO": {
+    "message": "Table",
+    "context": "settings page",
     "translation": "Tavolo"
   },
   "YgZ6hP": {
@@ -7579,6 +7627,11 @@
   "uCehvK": {
     "message": "V-UNION · 4 pieces",
     "translation": "V UNIONE · 4 pezzi"
+  },
+  "-lImrL": {
+    "message": "View",
+    "context": "how the table is shown",
+    "translation": "Vista"
   },
   "W-3MjD": {
     "message": "View",

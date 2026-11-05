@@ -63,7 +63,7 @@ const openTable = async (page: Page): Promise<void> => {
 
 /** The table, read off the screen: these never move with the language. */
 const tableSides = async (page: Page) => ({
-  menu: await centreX(page.locator('#appMenuButton')),
+  menu: await centreX(page.locator('#settingsButton')),
   log: await centreX(page.locator('#activityButton')),
 });
 
@@ -111,17 +111,23 @@ test('Arabic mirrors the chrome around the table, and English puts it back', asy
   await closeActivity(page);
   expect(await settledSides(page)).toEqual(english);
 
-  await openSettings(page);
+  await openSettings(page, 'language');
   // English: the heading at the left, the way out at the right.
   expect(await settingsTitleLeftOfClose(page)).toBe(true);
-  await page.locator('#languageSelect').selectOption('ar');
+  await settings(page).locator('label[for="language-ar"]').click();
   await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
   await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
 
   // The sheet's heading mirrors, and the sheet opens at the left now, where
-  // the log docks.
+  // the log docks; the way back points right, the way the page came in.
   await expect.poll(() => settingsTitleLeftOfClose(page)).toBe(false);
   await expect.poll(async () => (await box(settings(page))).x).toBeLessThan(40);
+  const back = settings(page).locator('#settingsBackButton');
+  expect(await centreX(back)).toBeGreaterThan(
+    await centreX(settings(page).locator('.ptcgsim-sheet__title'))
+  );
+  await back.click();
+  await settings(page).locator('#settingsCardsRow').click();
   // A switch is on towards the end of the line: the left, now.
   const firstSwitch = settings(page).locator('.ds-switch').first();
   expect(
@@ -233,8 +239,8 @@ test('Arabic mirrors the chrome around the table, and English puts it back', asy
   expect(benched).toBe(1);
 
   // Back to English: everything left to right again.
-  await openSettings(page);
-  await page.locator('#languageSelect').selectOption('en');
+  await openSettings(page, 'language');
+  await settings(page).locator('label[for="language-en"]').click();
   await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');
   await expect.poll(() => settingsTitleLeftOfClose(page)).toBe(true);
 });

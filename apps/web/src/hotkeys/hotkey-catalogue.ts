@@ -490,13 +490,6 @@ export const HOTKEY_ACTIONS = [
     scope: 'any',
     defaultChord: '`',
   }),
-  action('table.settings', {
-    group: 'table',
-    label: msg`Settings`,
-    short: msg({ message: 'Settings', context: 'shortcut key caption' }),
-    scope: 'any',
-    defaultChord: ',',
-  }),
 ] as const;
 
 export type HotkeyActionEntry = (typeof HOTKEY_ACTIONS)[number];

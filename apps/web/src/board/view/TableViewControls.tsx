@@ -10,19 +10,19 @@ import {
 import {
   RangeRow,
   SegmentedControl,
-  SwitchRow,
   type SegmentedChoice,
 } from '../../ui/FormControls.js';
+import { SettingsLinkRow, SettingsSwitchRow } from '../../ui/SettingsList.js';
 import {
   boardViewSettings,
   type BoardShowChoice,
 } from './board-view-settings.js';
 
 /*
- * How the table is shown to this player, as Settings groups it (ADR-030):
- * the Table section's depth, halves, outlines and reset; the Cards
- * section's switches; and the Motion section's depth effects. Each change
- * applies live and stays on this device.
+ * How the table is shown to this player, as Settings groups it (ADR-045):
+ * the Table page's depth, halves, outlines and reset; the Cards page's
+ * switches; and the Motion page's depth effects. Each change applies live
+ * and stays on this device.
  */
 
 const useBoardView = () => {
@@ -171,7 +171,7 @@ export const ZoneOutlinesControl = () => {
   const { t } = useLingui();
   const [view, store] = useBoardView();
   return (
-    <SwitchRow
+    <SettingsSwitchRow
       id="zoneOutlinesCheckbox"
       label={t`Zone outlines`}
       checked={view.zoneOutlines}
@@ -186,15 +186,15 @@ export const resetTableView = (): void => {
   depthSettings().update(DEFAULT_TABLE_DEPTH);
 };
 
+/** Settings' Reset table: an action row, on its own at the page's foot. */
 export const ResetTableButton = () => (
-  <button
+  <SettingsLinkRow
     id="boardViewResetButton"
-    type="button"
-    className="ds-button ds-button--secondary ptcgsim-settings-reset"
+    label={<Trans context="put the table's settings back">Reset table</Trans>}
+    trailing="none"
+    accent
     onClick={resetTableView}
-  >
-    <Trans context="put the table's settings back">Reset table</Trans>
-  </button>
+  />
 );
 
 /** What needs the table's depth says so while the table is flat. */
@@ -220,7 +220,7 @@ export const CardViewControls = ({
   const needsDepth = useNeedsDepth();
   return (
     <>
-      <SwitchRow
+      <SettingsSwitchRow
         id="opponentUprightCheckbox"
         label={t`Opponent's cards face me`}
         checked={view.opponentCardsUpright}
@@ -229,19 +229,19 @@ export const CardViewControls = ({
         }
       />
       {touchOnly ? null : (
-        <SwitchRow
+        <SettingsSwitchRow
           id="hoverPreviewCheckbox"
           label={t`Preview on hover`}
           checked={view.hoverPreview}
           onChange={(hoverPreview) => viewStore.update({ hoverPreview })}
         />
       )}
-      <SwitchRow
+      <SettingsSwitchRow
         id="tableScatterCheckbox"
         label={t`Natural placement`}
         checked={depth.scatter !== false}
         disabled={needsDepth !== undefined}
-        {...(needsDepth ? { hint: needsDepth } : {})}
+        {...(needsDepth ? { subtitle: needsDepth } : {})}
         onChange={(scatter) => depthStore.update({ scatter })}
       />
     </>
@@ -262,10 +262,10 @@ export const DepthMotionControls = ({
   const [depth, store] = useDepth();
   const needsDepth = useNeedsDepth();
   const flat = needsDepth !== undefined;
-  const hint = needsDepth ? { hint: needsDepth } : {};
+  const hint = needsDepth ? { subtitle: needsDepth } : {};
   return (
     <>
-      <SwitchRow
+      <SettingsSwitchRow
         id="tableLiftCheckbox"
         label={t`Lift while dragging`}
         checked={depth.lift}
@@ -273,7 +273,7 @@ export const DepthMotionControls = ({
         {...hint}
         onChange={(lift) => store.update({ lift })}
       />
-      <SwitchRow
+      <SettingsSwitchRow
         id="tableHeightMotionCheckbox"
         label={t`Animate stacks`}
         checked={depth.animate}
@@ -282,7 +282,7 @@ export const DepthMotionControls = ({
         onChange={(animate) => store.update({ animate })}
       />
       {touchOnly ? null : (
-        <SwitchRow
+        <SettingsSwitchRow
           id="tableParallaxCheckbox"
           label={t`Parallax`}
           checked={depth.parallax === true}

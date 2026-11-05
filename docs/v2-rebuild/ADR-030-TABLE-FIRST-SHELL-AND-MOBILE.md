@@ -160,6 +160,11 @@ Esc, or the builder's Play, and the table takes no keys while it is open.
 
 ### 6. Settings has an order
 
+Since 2026-11-05 Settings is pages of grouped rows, reached from the app
+bar's last button, holding the room's actions too (ADR-045); the sections
+below are its history. The surfaces (docked beside the table, a side sheet,
+a bottom sheet) stand.
+
 Sections, in order of use: **Table** (halves, split, depth, Lost Zone, zone
 outlines, opponent's hand in Solo, hover preview, reset), **Appearance**
 (theme, background), **Motion**, **Controls** (keyboard shortcuts), **About**
@@ -176,8 +181,9 @@ and staying in play while it is open, its changes in view. One column, one
 occupant: Settings opened over a docked log hides the log (kept mounted, its
 feed, scroll and unsent message intact) and gives the column back as it
 closes; the log asked for meanwhile takes the column back. It takes the focus
-as it opens and returns it to what opened it (the menu's button) as it
-closes; Esc in it closes it, and a press on the table leaves it open.
+as it opens and returns it to what opened it (Settings' button) as it
+closes; Esc in it goes back a page, and on the first page closes it
+(ADR-045); a press on the table leaves it open.
 Narrower, it is still a sheet (§5). Its rows read as Magic Garden's
 settings do: each section a card, a hairline between rows, each row's words
 first and its switch at the end, the section names in small capitals.

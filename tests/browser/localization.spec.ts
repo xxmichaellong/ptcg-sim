@@ -63,10 +63,12 @@ test('the table speaks the language chosen in Settings, at once and after a relo
 
   await openSettings(page);
   await expect(settingsTitle(page)).toHaveText('Settings');
-  await page.locator('#languageSelect').selectOption('de');
+  await page.locator('#settingsLanguageRow').click();
+  await page.locator('#settings label[for="language-de"]').click();
 
   // What is already on screen changes: the sheet, and the table's names.
   await expect(page.locator('html')).toHaveAttribute('lang', 'de');
+  await page.locator('#settingsBackButton').click();
   await expect(settingsTitle(page)).toHaveText(word('de', 'Settings'));
   await expect.poll(() => deckZoneName(page)).not.toBe(englishDeck);
   await closeSheet(page);
@@ -78,8 +80,10 @@ test('the table speaks the language chosen in Settings, at once and after a relo
   await expect(settingsTitle(page)).toHaveText(word('de', 'Settings'));
 
   // Back to the browser's language (English here).
-  await page.locator('#languageSelect').selectOption('auto');
+  await page.locator('#settingsLanguageRow').click();
+  await page.locator('#settings label[for="language-auto"]').click();
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  await page.locator('#settingsBackButton').click();
   await expect(settingsTitle(page)).toHaveText('Settings');
   await expect.poll(() => deckZoneName(page)).toBe(englishDeck);
 });
@@ -92,7 +96,8 @@ test.describe('a browser set to Japanese', () => {
     await expect(page.locator('html')).toHaveAttribute('lang', 'ja');
     await openSettings(page);
     await expect(settingsTitle(page)).toHaveText(word('ja', 'Settings'));
-    await expect(page.locator('#languageSelect')).toHaveValue('auto');
+    await page.locator('#settingsLanguageRow').click();
+    await expect(page.locator('#language-auto')).toBeChecked();
   });
 });
 
@@ -118,8 +123,11 @@ for (const locale of ['ar', 'ru']) {
         )
       ).toBeVisible({ timeout: 30_000 });
       await expect(page.locator('html')).toHaveAttribute('lang', locale);
-      await openSettings(page);
-      for (const group of ['tableView', 'animationSpeed']) {
+      for (const [group, at] of [
+        ['tableView', 'table'],
+        ['animationSpeed', 'motion'],
+      ] as const) {
+        await openSettings(page, at);
         const edges = await page
           .locator(`#settings input[name="${group}"]`)
           .evaluateAll((inputs) =>

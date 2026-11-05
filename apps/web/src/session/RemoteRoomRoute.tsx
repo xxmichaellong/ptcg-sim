@@ -735,7 +735,9 @@ export const RemoteRoomRoute = ({
           ...(chrome.visibility.deckImport
             ? { onDeck: () => openDeck(actingTarget) }
             : {}),
-          onSettings: () => settingsHost.open(),
+          // The bar's Settings opens it, and puts it away while it is open.
+          onSettings: () => (settingsOpen ? closeSheet() : settingsHost.open()),
+          settingsOpen,
           ...(canInvite
             ? {
                 invites: {
@@ -1036,9 +1038,8 @@ export const RemoteRoomRoute = ({
               onOpenChange={(open) => setSheet(open ? 'settings' : undefined)}
               docked={activity.docked}
               slide={activity.slide}
-              {...(settingsHost.section
-                ? { section: settingsHost.section }
-                : {})}
+              request={settingsHost.request}
+              menu={menu}
               darkMode={effectivePreferences.darkMode}
               onDarkModeChange={setDarkMode}
               background={{

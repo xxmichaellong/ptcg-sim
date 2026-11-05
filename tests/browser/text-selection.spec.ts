@@ -1,7 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
 
 import { ownRoomBudget } from './support/room-budget.js';
-import { dismissWelcome, openSettings } from './support/table-shell.js';
+import {
+  closeSheet,
+  dismissWelcome,
+  openSettings,
+} from './support/table-shell.js';
 
 /**
  * A game, not a page: a double tap or a double click on the table's
@@ -29,7 +33,7 @@ test('a double click on the bar or a panel selects no words; a field still does'
   await page.locator('.ptcgsim-app-bar #p1Button').dblclick();
   expect(await selected(page)).toBe('');
 
-  await openSettings(page);
+  await openSettings(page, 'table');
   const heading = page.locator('#settings h2, #settings h3').first();
   await heading.dblclick();
   expect(await selected(page)).toBe('');
@@ -38,7 +42,7 @@ test('a double click on the bar or a panel selects no words; a field still does'
   });
   await label.click({ clickCount: 3 });
   expect(await selected(page)).toBe('');
-  await page.keyboard.press('Escape');
+  await closeSheet(page);
   await expect(page.locator('#settings')).toHaveCount(0);
 
   // The palette's field: what is typed selects as ever.

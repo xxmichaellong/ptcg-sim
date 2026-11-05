@@ -1484,9 +1484,9 @@
     "message": "<0>{0}</0>: every move, and the chat.",
     "translation": "<0>{0}</0>: сваки потез и ћаскање."
   },
-  "ifsvhW": {
-    "message": "<0>{0}</0>: Settings, saves and replays, and this tutorial whenever you want it.",
-    "translation": "<0>{0}</0>: подешавања, сачуване партије и снимци, као и овај водич кад год ти устреба."
+  "EQcWQL": {
+    "message": "<0>{0}</0>: saves and replays, how the table looks, and this tutorial whenever you want it.",
+    "translation": "<0>{0}</0>: снимци и сачуване партије, изглед табле и овај туторијал кад год ти затреба."
   },
   "C0rMdv": {
     "message": "− Damage",
@@ -1605,6 +1605,11 @@
       "Tooltip of the marker on a Pokémon whose Ability was used."
     ],
     "translation": "Способност искоришћена"
+  },
+  "aXrlbe": {
+    "message": "About",
+    "context": "settings page",
+    "translation": "О апликацији"
   },
   "v0rlF7": {
     "message": "Accent",
@@ -2027,6 +2032,11 @@
     "context": "replay: one step back",
     "translation": "Назад"
   },
+  "_8WPEl": {
+    "message": "Back",
+    "context": "to the settings page before",
+    "translation": "Назад"
+  },
   "PF2mzE": {
     "message": "Back to {panelName}",
     "comments": [
@@ -2215,6 +2225,10 @@
     "context": "shortcut key caption",
     "translation": "BREAK"
   },
+  "9c-ADL": {
+    "message": "Browser language",
+    "translation": "Језик прегледача"
+  },
   "FE2YBZ": {
     "message": "Browser language ({browser})",
     "translation": "Језик прегледача ({browser})"
@@ -2336,6 +2350,11 @@
       "Command palette section: find a card on the table.",
       "The section of a Pokémon's window with its cards."
     ],
+    "translation": "Карте"
+  },
+  "yA-F7T": {
+    "message": "Cards",
+    "context": "settings page",
     "translation": "Карте"
   },
   "CZ3VjP": {
@@ -2578,9 +2597,18 @@
     "message": "Connection lost.",
     "translation": "Веза је прекинута."
   },
+  "_IjcZC": {
+    "message": "Copied",
+    "context": "copied to the clipboard",
+    "translation": "Копирано"
+  },
   "he3ygx": {
     "message": "Copy",
     "translation": "Копирај"
+  },
+  "tlcVbQ": {
+    "message": "Copy details",
+    "translation": "Копирај детаље"
   },
   "PSlXm_": {
     "message": "Copy list",
@@ -2600,6 +2628,10 @@
   "7WsLH4": {
     "message": "Couldn't check that. Try again.",
     "translation": "Провера није успела. Пробај поново."
+  },
+  "yciUn6": {
+    "message": "Couldn't copy",
+    "translation": "Копирање није успело"
   },
   "8T-Jx-": {
     "message": "Couldn't create a room. Try again.",
@@ -3184,11 +3216,6 @@
       "Opens a form to change what a card in the deck says."
     ],
     "translation": "Измени текст"
-  },
-  "CMMU03": {
-    "message": "Edit…",
-    "context": "change the keyboard shortcuts",
-    "translation": "Уреди…"
   },
   "MRZxAn": {
     "message": "Edited",
@@ -3981,10 +4008,6 @@
     "message": "Keyboard shortcuts",
     "translation": "Пречице на тастатури"
   },
-  "WQg61I": {
-    "message": "Keys",
-    "translation": "Тастери"
-  },
   "vFjc7h": {
     "message": "Keys",
     "context": "the keyboard map with no modifier held",
@@ -4191,6 +4214,11 @@
     "context": "shortcut key caption",
     "translation": "Погледај"
   },
+  "IDxD7j": {
+    "message": "Look",
+    "context": "the table's look",
+    "translation": "Изглед"
+  },
   "QW7fGB": {
     "message": "Look at bottom cards",
     "translation": "Погледај доње карте"
@@ -4382,11 +4410,6 @@
     "context": "Pokémon stage",
     "translation": "Мега"
   },
-  "co2yxV": {
-    "message": "Menu",
-    "context": "the app menu",
-    "translation": "Мени"
-  },
   "59OmyH": {
     "message": "Message",
     "context": "chat",
@@ -4463,8 +4486,9 @@
     "message": "More game actions",
     "translation": "Још радњи у игри"
   },
-  "itfxKl": {
+  "1eQCso": {
     "message": "Motion",
+    "context": "settings page",
     "translation": "Кретање"
   },
   "CFLOVi": {
@@ -5105,6 +5129,10 @@
     "context": "keyboard key",
     "translation": "Page Down"
   },
+  "zQGwlC": {
+    "message": "Page language",
+    "translation": "Језик странице"
+  },
   "EfIP2O": {
     "message": "Page language ({following})",
     "translation": "Језик странице ({following})"
@@ -5164,6 +5192,10 @@
   "7hnHtA": {
     "message": "Paste or drop the link you were sent.",
     "translation": "Налепи или спусти везу коју си добио."
+  },
+  "5L0PsY": {
+    "message": "Paste the details into your report: they help find the problem.",
+    "translation": "Налепи детаље у свој извештај: помажу при проналажењу проблема."
   },
   "erh83Q": {
     "message": "Paste the invitation link you were sent.",
@@ -5728,6 +5760,14 @@
     "message": "Replays aren't available right now.",
     "translation": "Снимци тренутно нису доступни."
   },
+  "cd5EXh": {
+    "message": "Report a bug",
+    "translation": "Пријави грешку"
+  },
+  "732i9s": {
+    "message": "Report on Discord",
+    "translation": "Пријави на Discord-у"
+  },
   "OfhWJH": {
     "message": "Reset",
     "translation": "Ресетуј"
@@ -6286,15 +6326,10 @@
     ],
     "translation": "Подешавања"
   },
-  "y4__tG": {
-    "message": "Settings",
-    "context": "shortcut key caption",
-    "translation": "Подешавања"
-  },
   "8OT456": {
     "message": "Settings: {0}",
     "comments": [
-      "Opens Settings at that section"
+      "Opens Settings at that page"
     ],
     "translation": "Подешавања: {0}"
   },
@@ -6539,6 +6574,10 @@
     "message": "Some of it is too long.",
     "translation": "Неки део је предугачак."
   },
+  "ORinFI": {
+    "message": "Something not working? Tell us and we'll take a look.",
+    "translation": "Нешто не ради? Јави нам и погледаћемо."
+  },
   "5n8ONW": {
     "message": "Sort",
     "context": "sort the cards in a pile",
@@ -6576,6 +6615,10 @@
   "b2twVe": {
     "message": "Sort your hand",
     "translation": "Сортирај своју руку"
+  },
+  "joolK7": {
+    "message": "Source code",
+    "translation": "Изворни код"
   },
   "rAziAv": {
     "message": "Space",
@@ -6844,6 +6887,11 @@
     "message": "Table",
     "context": "go back to the table",
     "translation": "Сто"
+  },
+  "yfjdBO": {
+    "message": "Table",
+    "context": "settings page",
+    "translation": "Табла"
   },
   "YgZ6hP": {
     "message": "Table",
@@ -7579,6 +7627,11 @@
   "uCehvK": {
     "message": "V-UNION · 4 pieces",
     "translation": "V-UNION · 4 дела"
+  },
+  "-lImrL": {
+    "message": "View",
+    "context": "how the table is shown",
+    "translation": "Приказ"
   },
   "W-3MjD": {
     "message": "View",

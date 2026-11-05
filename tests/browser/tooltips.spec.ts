@@ -82,18 +82,14 @@ test('icon controls name themselves, with their keys, on hover', async ({
   expect(logBox!.y).toBeGreaterThanOrEqual(logButton!.y + logButton!.height);
   expect(logBox!.y).toBeGreaterThanOrEqual(commands!.y + commands!.height);
 
-  // A menu's button: named while closed, quiet while its menu is open.
-  const menu = await hover(page, '#appMenuButton');
-  await expect(menu).toHaveText('Menu');
-  await page.locator('#appMenuButton').click();
-  await expect(
-    page.locator('[role="menu"][aria-labelledby="appMenuButton"]')
-  ).toBeVisible();
+  // Settings' button: named while closed, quiet once pressed.
+  const settings = await hover(page, '#settingsButton');
+  await expect(settings).toHaveText('Settings');
+  await page.locator('#settingsButton').click();
+  await expect(page.locator('#settings')).toBeVisible();
   await expect(tooltip(page)).toHaveCount(0);
-  await page.keyboard.press('Escape');
-  await expect(
-    page.locator('[role="menu"][aria-labelledby="appMenuButton"]')
-  ).toHaveCount(0);
+  await page.locator('#settingsButton').click();
+  await expect(page.locator('#settings')).toHaveCount(0);
 
   // The table's own `+` for the optional pieces.
   await expect(await hover(page, '#tableExtrasButton')).toHaveText(

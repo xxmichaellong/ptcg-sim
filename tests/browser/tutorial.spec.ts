@@ -638,7 +638,7 @@ test('steps aside for the deck screen and sheets, and comes back after', async (
   await expect(done).toBeVisible();
   // Settings sits beside the table on a wide screen: the card stays, and
   // both are in reach.
-  await openSettings(page);
+  await openSettings(page, 'table');
   await expect(page.locator('aside#settings')).toBeVisible();
   await expect(done).toBeVisible();
   await page.locator('#zoneOutlinesCheckbox').uncheck();

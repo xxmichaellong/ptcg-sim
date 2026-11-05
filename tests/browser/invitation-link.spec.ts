@@ -1,7 +1,11 @@
 import { expect, test, type BrowserContext, type Page } from '@playwright/test';
 
 import { ownRoomBudget } from './support/room-budget.js';
-import { chooseMenuItem, openAppMenu } from './support/table-shell.js';
+import {
+  chooseMenuItem,
+  closeSheet,
+  openAppMenu,
+} from './support/table-shell.js';
 
 /**
  * Invitation links (ADR-020, 2026-10-29): the room's Invite opponent puts a
@@ -79,14 +83,11 @@ test('a link opens the game straight into its room, once, and leaves the address
     // The guest has the opponent's seat: the host's room stops offering it.
     await expect(host.locator('[data-table-invite]')).toHaveCount(0);
     await openAppMenu(host);
-    await expect(host.locator('#inviteOpponentMenuItem')).toHaveAttribute(
-      'aria-disabled',
-      'true'
-    );
+    await expect(host.locator('#inviteOpponentMenuItem')).toBeDisabled();
     await expect(host.locator('#inviteOpponentMenuItem')).toContainText(
       'Seat taken'
     );
-    await host.keyboard.press('Escape');
+    await closeSheet(host);
 
     // The same link again, in a third browser: its claim is spent.
     const late = await lateContext.newPage();

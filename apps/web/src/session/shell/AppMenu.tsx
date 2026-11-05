@@ -12,7 +12,6 @@ import { GraduationCapIcon } from '@phosphor-icons/react/dist/csr/GraduationCap'
 import { GearSixIcon } from '@phosphor-icons/react/dist/csr/GearSix';
 import { HeartIcon } from '@phosphor-icons/react/dist/csr/Heart';
 import { KeyboardIcon } from '@phosphor-icons/react/dist/csr/Keyboard';
-import { ListIcon } from '@phosphor-icons/react/dist/csr/List';
 import { SignOutIcon } from '@phosphor-icons/react/dist/csr/SignOut';
 import { SparkleIcon } from '@phosphor-icons/react/dist/csr/Sparkle';
 import { UserIcon } from '@phosphor-icons/react/dist/csr/User';
@@ -29,18 +28,17 @@ import {
 import { useHotkeyHints } from '../../hotkeys/hotkey-preferences.js';
 import { openCommandPalette } from '../../commands/palette-state.js';
 import { openShortcutsDialog } from '../../hotkeys/shortcuts-dialog-state.js';
-import { ActionMenu, type ActionMenuEntry } from '../../ui/ActionMenu.js';
+import type { ActionMenuEntry } from '../../ui/ActionMenu.js';
 import { DeckIcon } from '../../ui/DeckIcon.js';
 import {
   COARSE_POINTER_QUERY,
-  TOUCH_ONLY_QUERY,
   useCompactLayout,
   useMediaQuery,
 } from '../../ui/breakpoints.js';
+import type { SettingsTone } from '../../ui/SettingsList.js';
 import { Tooltip, withKeyHint } from '../../ui/Tooltip.js';
 import type { RoomInviteRole } from '../room-invites.js';
 import { DISCORD_URL, openHelpPage, RELEASE_NAME } from './help-pages.js';
-import './app-menu.css';
 
 /**
  * Where this table is played, named at the start of the bar: alone (Solo),
@@ -54,17 +52,23 @@ export interface TableMode {
   readonly detail?: string;
 }
 
-/** What the app menu can do in the current room and mode. */
+/**
+ * What can be done in the current room and mode: the app bar's buttons,
+ * and the rest in Settings (ADR-045), which the bar's last button opens.
+ */
 export interface AppMenuModel {
-  /** The room in a line, at the top of the menu. */
-  readonly heading?: ReactNode;
+  /** The room in a line: Settings heads the room's invites with it. */
+  readonly heading?: string;
   /** The bar's label: Solo, Online and so on. */
   readonly mode?: TableMode;
   /** Back to the Solo table, from the lobby. */
   readonly onPlaySolo?: () => void;
   readonly onPlayOnline?: () => void;
   readonly onDeck?: () => void;
+  /** Opens Settings, or puts it away while it is open. */
   readonly onSettings: () => void;
+  /** Settings is open: its button shows it pressed. */
+  readonly settingsOpen?: boolean;
   /**
    * The room's invites (ADR-020): a link for the opponent's seat, off once
    * it is taken, and one for a spectator, where the room can mint them.
@@ -91,8 +95,8 @@ export interface AppMenuModel {
   readonly onExitTutorial?: () => void;
 }
 
-/** A toolbar button, and the same row in the narrow rail's menu. */
-interface ToolbarEntry {
+/** A toolbar button, and the same row in Settings on a phone. */
+export interface ToolbarEntry {
   readonly id: string;
   readonly label: string;
   readonly icon: Icon;
@@ -182,126 +186,126 @@ export const helpEntries = (shortcutsHint?: string): ToolbarEntry[] => [
   },
 ];
 
-/** The groups that have entries, a separator between each two. */
-const grouped = (
-  ...groups: readonly (readonly ActionMenuEntry[])[]
-): ActionMenuEntry[] =>
-  groups
-    .filter((group) => group.length > 0)
-    .flatMap((group, index) =>
-      index === 0 ? [...group] : [{ kind: 'separator' as const }, ...group]
-    );
+/**
+ * One thing the room lets the player do, as Settings lists it (ADR-045):
+ * its row's icon on a tile of this colour, and the palette's command.
+ */
+export interface SettingsAction {
+  readonly id: string;
+  readonly label: string;
+  /** Under the label: why it can't be done ("Seat taken"). */
+  readonly detail?: string;
+  readonly icon: Icon;
+  readonly tone: SettingsTone;
+  readonly disabled?: boolean;
+  readonly danger?: boolean;
+  /** The icon points the way the line reads (leaving): it turns round RTL. */
+  readonly mirrored?: boolean;
+  readonly onSelect: () => void;
+}
 
 /**
- * The menu (☰): what can be done here, Settings among it. In a room the
- * invites, the game's saves, Settings and the way out; at a Solo table
- * Settings first, then the replays. A replay's way out leads; the
- * tutorial's comes last.
+ * What the room lets the player do, grouped as Settings shows it: the
+ * room's invites, the game's saves and replays (the tutorial among them at
+ * a Solo table), and the way out, at the foot.
  */
-export const restEntries = (
-  model: AppMenuModel,
-  settingsHint?: string
-): ActionMenuEntry[] => {
+export const menuActions = (
+  model: AppMenuModel
+): {
+  readonly room: readonly SettingsAction[];
+  readonly game: readonly SettingsAction[];
+  readonly leave: readonly SettingsAction[];
+} => {
   const game = model.game;
-  const exit: ActionMenuEntry[] = [];
-  if (game?.onExitReplay) {
-    exit.push({
-      // The rail's Exit keeps v1's `#exitReplay`.
-      id: 'exitReplayMenuItem',
-      label: t`Exit replay`,
-      icon: XCircleIcon,
-      onSelect: game.onExitReplay,
-    });
-  }
-  const gameEntries: ActionMenuEntry[] = [];
-  if (game?.onImportReplay) {
-    gameEntries.push({
-      id: 'importReplay',
-      label: t`Watch replay…`,
-      icon: FilmReelIcon,
-      disabled: game.busy === true,
-      onSelect: game.onImportReplay,
-    });
-  }
-  if (game?.onSaveOnline) {
-    gameEntries.push({
-      id: 'saveOnlineGame',
-      label: t`Save game`,
-      icon: CloudArrowUpIcon,
-      disabled: game.busy === true,
-      onSelect: game.onSaveOnline,
-    });
-  }
-  if (game?.onResumeSaved) {
-    gameEntries.push({
-      id: 'resumeSavedGame',
-      label: t`Resume saved game…`,
-      icon: FolderOpenIcon,
-      disabled: game.busy === true,
-      onSelect: game.onResumeSaved,
-    });
-  }
-  if (game?.onExportState) {
-    gameEntries.push({
-      id: 'exportState',
-      label: t`Download replay`,
-      icon: DownloadSimpleIcon,
-      onSelect: game.onExportState,
-    });
-  }
-
-  const page: ActionMenuEntry[] = [
-    {
-      id: 'settingsButton',
-      label: t`Settings`,
-      icon: GearSixIcon,
-      hint: settingsHint,
-      onSelect: model.onSettings,
-    },
-  ];
-  if (model.onTutorial && !model.onExitTutorial) {
-    page.push({
-      id: 'tutorialButton',
-      label: t`Tutorial`,
-      icon: GraduationCapIcon,
-      onSelect: model.onTutorial,
-    });
-  }
-
+  const room: SettingsAction[] = [];
   const invites = model.invites;
-  const inviteEntries: ActionMenuEntry[] = [];
   if (invites?.roles.includes('player')) {
-    inviteEntries.push({
+    room.push({
       id: 'inviteOpponentMenuItem',
+      label: t`Invite opponent`,
       // Taken, the seat can't be offered again: the row says why.
-      label: invites.seatTaken ? (
-        <>
-          {t`Invite opponent`}{' '}
-          <span className="app-menu-detail">{t`Seat taken`}</span>
-        </>
-      ) : (
-        t`Invite opponent`
-      ),
+      ...(invites.seatTaken ? { detail: t`Seat taken` } : {}),
       icon: UserPlusIcon,
+      tone: 'blue',
       disabled: invites.seatTaken,
       onSelect: () => invites.onInvite('player'),
     });
   }
   if (invites?.roles.includes('spectator')) {
-    inviteEntries.push({
+    room.push({
       id: 'inviteSpectatorMenuItem',
       label: t`Invite spectator`,
       icon: EyeIcon,
+      tone: 'indigo',
       onSelect: () => invites.onInvite('spectator'),
     });
   }
-
-  const leave: ActionMenuEntry[] = [];
+  const saves: SettingsAction[] = [];
+  if (game?.onExitReplay) {
+    saves.push({
+      // The rail's Exit keeps v1's `#exitReplay`.
+      id: 'exitReplayMenuItem',
+      label: t`Exit replay`,
+      icon: XCircleIcon,
+      tone: 'red',
+      onSelect: game.onExitReplay,
+    });
+  }
+  if (model.onTutorial && !model.onExitTutorial) {
+    saves.push({
+      id: 'tutorialButton',
+      label: t`Tutorial`,
+      icon: GraduationCapIcon,
+      tone: 'orange',
+      onSelect: model.onTutorial,
+    });
+  }
+  if (game?.onImportReplay) {
+    saves.push({
+      id: 'importReplay',
+      label: t`Watch replay…`,
+      icon: FilmReelIcon,
+      tone: 'purple',
+      disabled: game.busy === true,
+      onSelect: game.onImportReplay,
+    });
+  }
+  if (game?.onSaveOnline) {
+    saves.push({
+      id: 'saveOnlineGame',
+      label: t`Save game`,
+      icon: CloudArrowUpIcon,
+      tone: 'cyan',
+      disabled: game.busy === true,
+      onSelect: game.onSaveOnline,
+    });
+  }
+  if (game?.onResumeSaved) {
+    saves.push({
+      id: 'resumeSavedGame',
+      label: t`Resume saved game…`,
+      icon: FolderOpenIcon,
+      tone: 'brown',
+      disabled: game.busy === true,
+      onSelect: game.onResumeSaved,
+    });
+  }
+  if (game?.onExportState) {
+    saves.push({
+      id: 'exportState',
+      label: t`Download replay`,
+      icon: DownloadSimpleIcon,
+      tone: 'slate',
+      onSelect: game.onExportState,
+    });
+  }
+  const leave: SettingsAction[] = [];
   if (model.onExitTutorial) {
     leave.push({
       id: 'leaveTutorialButton',
       label: t`Leave tutorial`,
       icon: GraduationCapIcon,
+      tone: 'orange',
       onSelect: model.onExitTutorial,
     });
   }
@@ -310,15 +314,38 @@ export const restEntries = (
       id: 'leaveRoomButton',
       label: t`Leave room`,
       icon: SignOutIcon,
+      tone: 'red',
       mirrored: true,
       danger: true,
       onSelect: model.onLeave,
     });
   }
+  return { room, game: saves, leave };
+};
 
-  return inviteEntries.length > 0 || model.onLeave
-    ? grouped(exit, inviteEntries, gameEntries, page, leave)
-    : grouped(exit, page, gameEntries, leave);
+/**
+ * Settings' own entry, and what it lists that the room lets the player
+ * do, as the palette offers them: `menu.<id>` commands (ADR-035).
+ */
+export const restEntries = (model: AppMenuModel): ActionMenuEntry[] => {
+  const { room, game, leave } = menuActions(model);
+  return [
+    {
+      id: 'settingsButton',
+      label: t`Settings`,
+      icon: GearSixIcon,
+      onSelect: model.onSettings,
+    },
+    ...[...room, ...game, ...leave].map((action): ActionMenuEntry => ({
+      id: action.id,
+      label: action.label,
+      icon: action.icon,
+      ...(action.disabled ? { disabled: true } : {}),
+      ...(action.danger ? { danger: true } : {}),
+      ...(action.mirrored ? { mirrored: true } : {}),
+      onSelect: action.onSelect,
+    })),
+  ];
 };
 
 /**
@@ -345,7 +372,7 @@ export const NARROW_BAR_QUERY = '(max-width: 479px)';
 
 /**
  * The most buttons the bar shows after the mode: on a phone the palette,
- * the log and the menu; elsewhere also the deck. Where to play is the
+ * the log and Settings; elsewhere also the deck. Where to play is the
  * mode's switch.
  */
 export const APP_BAR_SLOTS = { full: 4, compact: 3 } as const;
@@ -574,13 +601,51 @@ const ModeLabel = ({
 };
 
 /**
+ * What the bar shows of `model`, and what it leaves to Settings: on a
+ * phone the bar keeps the palette, the log and Settings, so the deck (and,
+ * held upright, where to play) are Settings' first rows.
+ */
+export const useAppBarPlacement = (
+  model: AppMenuModel
+): {
+  readonly modeSwitch: ModeSwitchModel | undefined;
+  readonly places: readonly ToolbarEntry[];
+  readonly commands: ToolbarEntry | undefined;
+  readonly inSettings: readonly ToolbarEntry[];
+  readonly narrow: boolean;
+} => {
+  const hint = useHotkeyHints();
+  const compact = useCompactLayout();
+  const narrow = useMediaQuery(NARROW_BAR_QUERY);
+  // Solo or Online, as a switch where the bar has room for it; a phone held
+  // upright keeps only the light, and where to play leads Settings.
+  const modeSwitch = narrow ? undefined : modeSwitchOf(model);
+  const primary = primaryEntries(model, hint('table.commands')).filter(
+    (entry) =>
+      !modeSwitch || (entry.id !== 'p1Button' && entry.id !== 'p2Button')
+  );
+  // A phone's bar keeps only the palette of these.
+  const onBar = (entry: ToolbarEntry): boolean =>
+    !compact || entry.id === 'commandsButton';
+  return {
+    modeSwitch,
+    places: primary.filter(
+      (entry) => onBar(entry) && entry.id !== 'commandsButton'
+    ),
+    commands: primary.find((entry) => entry.id === 'commandsButton'),
+    inSettings: primary.filter((entry) => !onBar(entry)),
+    narrow,
+  };
+};
+
+/**
  * The app bar (ADR-036), in the table's top-right corner, clear of the
- * play: where this table is played (Solo, Online…), the deck and where to
- * play, then the command palette and the log,
- * then the menu (☰) with what else can be done here -- Settings, full
- * screen, saves and replays, invites, leaving. On a phone the bar keeps
- * the palette, the log and the menu, and the menu leads with the rest. The
- * game's own actions are not here: they lie on the table, along the seam.
+ * play: where this table is played (Solo, Online…), the deck, the command
+ * palette and the log, then Settings (ADR-045), which holds everything
+ * else -- invites, saves and replays, the tutorial, how the table looks,
+ * help, leaving. On a phone the bar keeps the palette, the log and
+ * Settings. The game's own actions are not here: they lie on the table,
+ * along the seam.
  */
 export const AppBar = ({
   model,
@@ -591,37 +656,10 @@ export const AppBar = ({
   readonly log?: ReactNode;
 }) => {
   const { t } = useLingui();
-  const hint = useHotkeyHints();
-  const touchOnly = useMediaQuery(TOUCH_ONLY_QUERY);
   const coarse = useMediaQuery(COARSE_POINTER_QUERY);
   const compact = useCompactLayout();
-  const narrow = useMediaQuery(NARROW_BAR_QUERY);
-  // Solo or Online, as a switch where the bar has room for it; a phone held
-  // upright keeps only the light, and where to play leads its menu.
-  const modeSwitch = narrow ? undefined : modeSwitchOf(model);
-  const primary = primaryEntries(model, hint('table.commands')).filter(
-    (entry) =>
-      !modeSwitch || (entry.id !== 'p1Button' && entry.id !== 'p2Button')
-  );
-  // A phone's bar keeps only the palette of these.
-  const onBar = (entry: ToolbarEntry): boolean =>
-    !compact || entry.id === 'commandsButton';
-  const places = primary.filter(
-    (entry) => onBar(entry) && entry.id !== 'commandsButton'
-  );
-  const commands = primary.find((entry) => entry.id === 'commandsButton');
-  const inMenu = primary.filter((entry) => !onBar(entry));
-  // A touch screen has no keys to hint at.
-  const rest = restEntries(
-    model,
-    touchOnly ? undefined : hint('table.settings')
-  );
-  const entries: ActionMenuEntry[] =
-    inMenu.length > 0 ? [...inMenu, { kind: 'separator' }, ...rest] : rest;
-  const header = model.heading ? (
-    <div className="ptcgsim-app-menu-heading">{model.heading}</div>
-  ) : undefined;
-  const menuLabel = t({ message: 'Menu', context: 'the app menu' });
+  const { modeSwitch, places, commands, narrow } = useAppBarPlacement(model);
+  const settingsLabel = t`Settings`;
   return (
     <div
       className="ptcgsim-app-bar"
@@ -662,22 +700,17 @@ export const AppBar = ({
         </div>
       ) : null}
       <div className="ptcgsim-app-bar__group">
-        <ActionMenu
-          label={menuLabel}
-          side="bottom"
-          align="end"
-          entries={entries}
-          {...(header ? { header } : {})}
-          tooltip={menuLabel}
-          trigger={
-            <RailButton
-              id="appMenuButton"
-              icon={ListIcon}
-              label={menuLabel}
-              iconOnly
-            />
-          }
-        />
+        <Tooltip content={settingsLabel} side="bottom">
+          <RailButton
+            id="settingsButton"
+            icon={GearSixIcon}
+            label={settingsLabel}
+            iconOnly
+            aria-expanded={model.settingsOpen === true}
+            aria-controls={model.settingsOpen ? 'settings' : undefined}
+            onClick={() => model.onSettings()}
+          />
+        </Tooltip>
       </div>
     </div>
   );

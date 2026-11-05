@@ -241,7 +241,7 @@ test('the large hover preview is off until it is chosen', async ({ page }) => {
   await page.waitForTimeout(400);
   await expect(page.locator('[data-card-inspector]')).toHaveCount(0);
 
-  await openBoardView(page);
+  await openSettings(page, 'cards');
   await page.locator('#hoverPreviewCheckbox').check();
   await closeBoardView(page);
   await page.mouse.move(10, 10);
@@ -256,9 +256,9 @@ test('Settings holds the table view, keeps its keys, and gives focus back', asyn
 }) => {
   test.setTimeout(120_000);
   await openSoloTable(page);
-  // Settings is in the menu (☰).
-  const menuButton = page.locator('.ptcgsim-app-bar #appMenuButton');
-  await openSettings(page);
+  // Settings is the app bar's last button (ADR-045).
+  const menuButton = page.locator('.ptcgsim-app-bar #settingsButton');
+  await openSettings(page, 'table');
   await expect(page.locator('#settingsTable #boardShowBoth')).toBeAttached();
   await page.locator('#boardShowMine').focus();
   // Keys typed in Settings stay there: '2' would otherwise draw two cards.
@@ -270,9 +270,13 @@ test('Settings holds the table view, keeps its keys, and gives focus back', asyn
     'data-revision',
     revision!
   );
+  // Esc goes back a page, to the row that opened it, then puts Settings
+  // away.
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#settings #settingsTableRow')).toBeFocused();
   await page.keyboard.press('Escape');
   await expect(page.locator('#settings')).toHaveCount(0);
-  // Focus goes back to the menu that opened it, not lost on the page.
+  // Focus goes back to the button that opened it, not lost on the page.
   await expect(menuButton).toBeFocused();
   // Beside the table on a wide screen: a press on the table leaves it open,
   // the table in play; its close button puts it away.
