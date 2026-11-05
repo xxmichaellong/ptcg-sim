@@ -1212,13 +1212,6 @@
     "message": "{over, plural, one {# card too many ({count}/{required}).} other {# cards too many ({count}/{required}).}}",
     "translation": "{over, plural, one {# kart fazla ({count}/{required}).} other {# kart fazla ({count}/{required}).}}"
   },
-  "foaSz6": {
-    "message": "{place, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}",
-    "comments": [
-      "A tournament placing on a deck box sticker, as 1st"
-    ],
-    "translation": "{place, selectordinal, one {#.} other {#.}}"
-  },
   "2dJX8c": {
     "message": "{place, selectordinal, one {#st} two {#nd} few {#rd} other {#th}} of {players}",
     "comments": [
@@ -6127,9 +6120,9 @@
     "message": "Searching…",
     "translation": "Aranıyor…"
   },
-  "xcUq3U": {
-    "message": "Season",
-    "translation": "Sezon"
+  "AUeSIS": {
+    "message": "Season or format",
+    "translation": "Sezon veya format"
   },
   "wRfrN3": {
     "message": "Seat taken",

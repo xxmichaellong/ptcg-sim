@@ -179,11 +179,14 @@ const captureBoardControlsGeometry = (
     };
     const container = document.getElementById('boardButtonContainer');
     if (!container) throw new Error('Missing #boardButtonContainer');
+    // v2's buttons sit in the rail's dock; v1's straight in the container.
+    const row =
+      container.querySelector('.ptcgsim-table-rail__dock') ?? container;
     return {
       selfResizer: rect(document.getElementById('selfResizer')),
       oppResizer: rect(document.getElementById('oppResizer')),
       container: rect(container),
-      controls: [...container.children]
+      controls: [...row.children]
         .filter(
           (child) =>
             getComputedStyle(child).display !== 'none' &&

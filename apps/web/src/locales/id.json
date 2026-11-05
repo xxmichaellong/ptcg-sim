@@ -1212,13 +1212,6 @@
     "message": "{over, plural, one {# card too many ({count}/{required}).} other {# cards too many ({count}/{required}).}}",
     "translation": "{over, plural, other {Kelebihan # kartu ({count}/{required}).}}"
   },
-  "foaSz6": {
-    "message": "{place, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}",
-    "comments": [
-      "A tournament placing on a deck box sticker, as 1st"
-    ],
-    "translation": "{place, selectordinal, other {ke-#}}"
-  },
   "2dJX8c": {
     "message": "{place, selectordinal, one {#st} two {#nd} few {#rd} other {#th}} of {players}",
     "comments": [
@@ -6127,9 +6120,9 @@
     "message": "Searching…",
     "translation": "Mencari…"
   },
-  "xcUq3U": {
-    "message": "Season",
-    "translation": "Musim"
+  "AUeSIS": {
+    "message": "Season or format",
+    "translation": "Musim atau format"
   },
   "wRfrN3": {
     "message": "Seat taken",

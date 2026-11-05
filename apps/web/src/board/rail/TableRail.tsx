@@ -258,6 +258,13 @@ const slotsIn = (room: number, buttonPx: number): number =>
 /** A menu is worth opening for three choices or more; fewer sit out. */
 const MENU_MINIMUM = 3;
 
+/**
+ * The room the stage's lead action takes to show its name beside its icon
+ * ("Load a deck", "Set up"), in buttons: named only where all the rest
+ * still fit as well.
+ */
+const LABEL_SLOTS = 3;
+
 type MenuItem = Extract<ActionMenuEntry, { readonly onSelect: () => void }>;
 
 const isMenuItem = (entry: ActionMenuEntry): entry is MenuItem =>
@@ -277,6 +284,8 @@ export const fitRailActions = (
 ): {
   readonly shown: readonly RailAction[];
   readonly more: readonly ActionMenuEntry[];
+  /** The lead (primary) action shows its name. */
+  readonly labelled: boolean;
 } => {
   const items = (more ?? []).filter(isMenuItem);
   const promotable =
@@ -306,7 +315,15 @@ export const fitRailActions = (
   const extra = promotable ? [] : (more ?? []);
   const slots = slotsIn(room, buttonPx);
   const needed = all.length + (extra.length > 0 ? 1 : 0);
-  if (needed <= slots) return { shown: all, more: extra };
+  if (needed <= slots) {
+    return {
+      shown: all,
+      more: extra,
+      labelled:
+        all.some((action) => action.primary === true) &&
+        needed + LABEL_SLOTS <= slots,
+    };
+  }
   const keep = Math.max(0, slots - 1);
   const kept = new Set(
     all
@@ -329,6 +346,7 @@ export const fitRailActions = (
     shown: all.filter((action) => kept.has(action)),
     more:
       extra.length > 0 ? [...moved, { kind: 'separator' }, ...extra] : moved,
+    labelled: false,
   };
 };
 
@@ -519,6 +537,9 @@ export const TableRail = memo(function TableRail({
                 icon={action.icon}
                 label={action.label}
                 {...(action.title ? { 'aria-label': action.title } : {})}
+                {...(fitted.labelled && action.primary === true
+                  ? { 'data-labelled': 'true' }
+                  : {})}
                 primary={action.primary === true}
                 pending={action.pending === true}
                 {...(action.disabled

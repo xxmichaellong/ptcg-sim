@@ -96,7 +96,6 @@ export const DeckBox = ({
   name,
   tone,
   size = 'shelf',
-  sticker,
   invalid = false,
   style,
 }: {
@@ -105,8 +104,6 @@ export const DeckBox = ({
   readonly tone?: DeckBoxTone | undefined;
   /** A box on a shelf, or the small one in a seat's tray. */
   readonly size?: 'shelf' | 'tray';
-  /** A placing sticker on its front ("1st"). */
-  readonly sticker?: string | undefined;
   /** Not playable as it stands (size or legality): a red tab on the lid. */
   readonly invalid?: boolean;
   readonly style?: CSSProperties;
@@ -144,7 +141,6 @@ export const DeckBox = ({
         <span className="deck-box__gloss" />
       </span>
       {invalid ? <span className="deck-box__tab" /> : null}
-      {sticker ? <span className="deck-box__sticker">{sticker}</span> : null}
     </span>
   </span>
 );

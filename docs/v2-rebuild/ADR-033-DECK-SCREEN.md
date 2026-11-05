@@ -298,6 +298,30 @@ specifically without blocking, and go from deck to table in one click.
       cards / Deck become a bar along the foot. The kinds and Energy types
       slide sideways rather than wrap. On its side the bar is one row and
       the editor scrolls, its tab bar kept along the foot.
+16. **Quieter, smaller decks; a Play worth pressing** (2026-11-05, later).
+    The owner: the decks' pictures were "a little bit big and
+    overwhelming… it just only zooms in on the image of the card", the
+    bar "a little bit tacky and the play button is a bit underwhelming".
+    - **A deck is a small card on its stack.** `DeckBox` draws the cover
+      card whole (63:88), 40px wide on a tile and 30px in the switch, with
+      the edges of two cards under it in the deck's colour; never a crop
+      of its art. The flight to a seat keeps working, the shapes being the
+      same.
+    - **Compact tiles.** A deck is a bordered row: its card, then its name
+      over its format, count and the seats it is on ("On P1", a tag in the
+      seat's colour), its tools (Edit, More) quiet at the end, always
+      shown. Pointed at, "Use on P1" appears in the seat's colour under
+      the name. Several to a row on a wide page, one to a row on a phone.
+      A placing is the trophy line ("1st of 203"); the medal is gone.
+    - **The seats' switch** is a tab per seat: the chosen one tinted and
+      ringed in its colour (not filled), the seat named in small capitals
+      in its colour over the deck's name, the count plain in its state's
+      colour, the sleeve at the end. The 3px line under the bar stays.
+    - **Play** is the one call to action: a glossy gold pill, neither
+      seat's colour, lit from above, with a glint as it is pointed at and a
+      press that gives; plain when there is nothing to play.
+    - A list on the Classics or Winning now shelves is the seat's only
+      when the seat holds its very cards: names repeat across seasons.
 
 ## Consequences
 

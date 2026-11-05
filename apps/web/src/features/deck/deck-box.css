@@ -1,47 +1,52 @@
 /*
- * A deck's cover (DeckBox.tsx): its cover card's artwork in a rounded
- * frame, as deck sites show a deck. Wide on a deck's tile, small in a
- * seat's switch; both 16:10, so a deck put on a seat flies from one to the
- * other without changing shape (deck-box-flight.ts). A deck with no cover
- * shows its initial on its colour (the basic Energy it plays most of).
+ * A deck (DeckBox.tsx): its cover card, whole and small, on the edges of
+ * the cards under it in the deck's colour, as a deck lies on a table. On a
+ * deck's tile and in a seat's switch alike, the same card shape, so a deck
+ * put on a seat flies from one to the other without changing shape
+ * (deck-box-flight.ts). A deck with no cover shows its initial on its
+ * colour (the basic Energy it plays most of).
  *
- *   --box-color   the colour behind a missing cover, and its initial
+ *   --box-color   the deck's colour: the cards under the cover, and the
+ *                 face of a missing one
+ *   --box-width   the cover's width
  */
 
 .deck-box {
-  --box-color: #4a3f37;
-  /* The heart of the card's artwork (about 12-46% of its height, above an
-     ex's Ability box) filling a 16:10 frame: the card drawn at 130% of the
-     frame's width, its top 34% of the frame's height above it. */
-  --box-art-width: 130%;
-  --box-art-left: -15%;
-  --box-art-top: -34%;
+  --box-color: #5a4c41;
+  --box-under: color-mix(in oklab, var(--box-color) 82%, black);
 
   position: relative;
   display: block;
   flex: none;
-  width: 100%;
-  aspect-ratio: 16 / 10;
-  overflow: hidden;
-  border-radius: var(--box-radius, 10px);
+  width: var(--box-width, 46px);
+  aspect-ratio: 63 / 88;
+  border-radius: var(--box-radius, 4px);
   background:
     radial-gradient(
-      ellipse 90% 80% at 30% 20%,
+      ellipse 90% 70% at 30% 20%,
       color-mix(in oklab, var(--box-color) 70%, white),
       transparent 70%
     ),
     var(--box-color);
+  /* The two cards under the cover, their edges showing below and beside. */
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 0.35),
+    2px 2px 0 -0.5px var(--box-under),
+    2px 2px 0 0 rgb(0 0 0 / 0.25),
+    4px 4px 0 -1px color-mix(in oklab, var(--box-under) 80%, black),
+    4px 4px 1px -0.5px rgb(0 0 0 / 0.3);
   pointer-events: none;
   isolation: isolate;
 }
 
 .deck-box[data-size='tray'] {
-  --box-radius: 7px;
+  --box-width: 30px;
+  --box-radius: 3px;
 
-  width: 56px;
   box-shadow:
-    0 1px 2px rgb(0 0 0 / 0.3),
-    0 0 0 1px rgb(255 255 255 / 0.08);
+    0 1px 2px rgb(0 0 0 / 0.35),
+    1.5px 1.5px 0 -0.5px var(--box-under),
+    3px 3px 0 -1px color-mix(in oklab, var(--box-under) 80%, black);
 }
 
 .deck-box[data-tone='Grass'] {
@@ -79,6 +84,11 @@
   position: absolute;
   inset: 0;
   display: block;
+  border-radius: inherit;
+}
+
+.deck-box__window {
+  overflow: hidden;
 }
 
 .deck-box__side,
@@ -88,96 +98,43 @@
   display: none;
 }
 
+/* The whole card, never a crop of its art. */
 .deck-box__window img {
   position: absolute;
-  top: var(--box-art-top);
-  left: var(--box-art-left);
-  width: var(--box-art-width);
-  height: auto;
-  max-width: none;
-}
-
-/* Rule-box prints are full art, their Pokémon lower than a plain card's
-   and a Tera's rule over its head: closer in, between that and the
-   Ability (about 15.5-46% of the card). */
-.deck-box__window[data-full-art] img {
-  --box-art-width: 145%;
-  --box-art-left: -22.5%;
-  --box-art-top: -50%;
-}
-
-/* A soft shade along the foot, so whatever lies over the art reads. */
-.deck-box__front::after {
-  content: '';
-  position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, transparent 55%, rgb(0 0 0 / 0.28) 100%);
-  pointer-events: none;
-}
-
-.deck-box[data-size='tray'] .deck-box__front::after {
-  display: none;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .deck-box__initial {
   display: grid;
   place-items: center;
   height: 100%;
-  color: rgb(255 255 255 / 0.7);
+  color: rgb(255 255 255 / 0.75);
   font-family: var(--font-display);
-  font-size: 2.5rem;
+  font-size: calc(var(--box-width, 46px) * 0.42);
   font-weight: var(--weight-bold);
 }
 
-.deck-box[data-size='tray'] .deck-box__initial {
-  font-size: var(--text-lg);
-}
-
-/* A deck that can't be played as it stands: a warning dot in its corner. */
+/* A deck that can't be played as it stands: a warning dot on its corner. */
 .deck-box__tab {
   position: absolute;
-  top: 6px;
-  inset-inline-end: 6px;
+  top: -3px;
+  inset-inline-end: -3px;
   z-index: 1;
   width: 10px;
   height: 10px;
   border-radius: 50%;
   background: var(--color-warning);
   box-shadow:
-    0 0 0 2px rgb(0 0 0 / 0.45),
+    0 0 0 2px var(--color-surface-1),
     0 1px 3px rgb(0 0 0 / 0.4);
 }
 
 .deck-box[data-size='tray'] .deck-box__tab {
-  top: 3px;
-  inset-inline-end: 3px;
   width: 8px;
   height: 8px;
-  box-shadow: 0 0 0 1.5px rgb(0 0 0 / 0.5);
-}
-
-/* A placing: a gold medal on the art's corner. */
-.deck-box__sticker {
-  position: absolute;
-  top: var(--space-2);
-  inset-inline-start: var(--space-2);
-  z-index: 1;
-  display: grid;
-  place-items: center;
-  min-width: 36px;
-  height: 36px;
-  padding-inline: 3px;
-  box-sizing: border-box;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #ffe99a, #f2c641 52%, #c99418);
-  box-shadow:
-    0 2px 6px rgb(30 18 4 / 0.45),
-    inset 0 -1px 2px rgb(120 70 0 / 0.35);
-  color: #4a2d00;
-  font-family: var(--font-display);
-  font-size: 12px;
-  font-weight: var(--weight-bold);
-  letter-spacing: -0.01em;
 }
 
 /* A cover on its way to a seat (deck-box-flight.ts): lifted, shadowed. */

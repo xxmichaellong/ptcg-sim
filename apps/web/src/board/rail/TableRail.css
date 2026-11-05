@@ -203,6 +203,27 @@
   padding: 0;
 }
 
+/* Save the stage's lead action ("Load a deck", "Set up"), which says its
+   name where the dock has the room (fitRailActions). */
+.ptcgsim-table-rail__actions[data-labels='none']
+  .ptcgsim-rail-button[data-labelled='true'] {
+  width: auto;
+  gap: 6px;
+  padding-inline: 9px 12px;
+}
+
+.ptcgsim-table-rail__actions[data-labels='none']
+  .ptcgsim-rail-button[data-labelled='true']
+  .ptcgsim-rail-button__label {
+  display: inline;
+  max-width: calc(3 * (var(--rail-height, 32px) + 4px));
+  overflow: hidden;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* An action that joins the rail (the next stage's) fades and grows in
    rather than popping. */
 :root:not([data-motion='reduced'])

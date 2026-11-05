@@ -1212,13 +1212,6 @@
     "message": "{over, plural, one {# card too many ({count}/{required}).} other {# cards too many ({count}/{required}).}}",
     "translation": "{over, plural, one {# kort för mycket ({count}/{required}).} other {# kort för mycket ({count}/{required}).}}"
   },
-  "foaSz6": {
-    "message": "{place, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}",
-    "comments": [
-      "A tournament placing on a deck box sticker, as 1st"
-    ],
-    "translation": "{place, selectordinal, one {#:a} other {#:e}}"
-  },
   "2dJX8c": {
     "message": "{place, selectordinal, one {#st} two {#nd} few {#rd} other {#th}} of {players}",
     "comments": [
@@ -6127,9 +6120,9 @@
     "message": "Searching…",
     "translation": "Söker…"
   },
-  "xcUq3U": {
-    "message": "Season",
-    "translation": "Säsong"
+  "AUeSIS": {
+    "message": "Season or format",
+    "translation": "Säsong eller format"
   },
   "wRfrN3": {
     "message": "Seat taken",

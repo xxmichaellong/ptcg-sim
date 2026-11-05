@@ -14,7 +14,7 @@ import { TrophyIcon } from '@phosphor-icons/react/dist/csr/Trophy';
 import { WarningCircleIcon } from '@phosphor-icons/react/dist/csr/WarningCircle';
 import { XIcon } from '@phosphor-icons/react/dist/csr/X';
 import { i18n } from '@lingui/core';
-import { plural, selectOrdinal, t as translate } from '@lingui/core/macro';
+import { plural } from '@lingui/core/macro';
 import { Trans, useLingui } from '@lingui/react/macro';
 import {
   checkDeck,
@@ -46,6 +46,7 @@ import { Tooltip } from '../../ui/Tooltip.js';
 import { skipDialogReturnTooltip } from '../../ui/tooltip-focus.js';
 import type { CardCatalogSource } from './card-catalog-contract.js';
 import { DeckBox, deckBoxToneOf } from './DeckBox.js';
+import { sameCards } from './same-cards.js';
 import {
   deckImagesOf,
   homeGroups,
@@ -98,22 +99,6 @@ const decorative = { 'aria-hidden': true, focusable: 'false' } as const;
 // The deck screen's name helpers live with splitFinish (no import cycle).
 export { wordFinish, wordName };
 
-/** The place alone, for a deck box's sticker ("1st"). */
-const wordPlace = (finish: string): string | undefined => {
-  const placed = /^(\d+)(?:st|nd|rd|th) of \d+/u.exec(finish);
-  if (!placed) return undefined;
-  const place = Number(placed[1]);
-  return translate({
-    comment: 'A tournament placing on a deck box sticker, as 1st',
-    message: `${selectOrdinal(place, {
-      one: '#st',
-      two: '#nd',
-      few: '#rd',
-      other: '#th',
-    })}`,
-  });
-};
-
 const SeatBadges = ({
   seats,
   deckId,
@@ -148,15 +133,13 @@ const SeatBadges = ({
 };
 
 /**
- * What a press on a deck's tile does, shown over its cover as it is
+ * What a press on a deck's tile does, shown under its name as it is
  * pointed at or reached: puts it on the seat being worked on. Its button
  * already says so to a reader.
  */
 const UseOnSeat = ({ seat }: { readonly seat: string }) => (
   <span className="deck-tile__use" aria-hidden="true">
-    <span className="deck-tile__use-label">
-      <Trans>Use on {seat}</Trans>
-    </span>
+    <Trans>Use on {seat}</Trans>
   </span>
 );
 
@@ -326,7 +309,6 @@ const SavedDeckTile = ({
           tone={tone}
           invalid={!check.valid}
         />
-        {current ? null : <UseOnSeat seat={seat} />}
         <span className="deck-tile__text">
           <span
             ref={nameText}
@@ -358,6 +340,8 @@ const SavedDeckTile = ({
                 </span>
               )}
             </span>
+            <SeatBadges seats={seats} deckId={deck.id} />
+            {current ? null : <UseOnSeat seat={seat} />}
           </span>
           {lastUsed ? (
             <span className="deck-tile__note">
@@ -367,7 +351,6 @@ const SavedDeckTile = ({
             </span>
           ) : null}
         </span>
-        <SeatBadges seats={seats} deckId={deck.id} />
       </button>
       {renaming ? (
         <DeckTileRename
@@ -486,16 +469,16 @@ const UnsavedSeatTile = ({
             <span className="deck-tile__count ds-number">
               {t`${plural(total, { one: '# card', other: '# cards' })}`}
             </span>
-          </span>
-        </span>
-        <span className="deck-tile__seats">
-          <span
-            className="deck-tile__seat"
-            data-seat={target === 'main' ? 'self' : 'opponent'}
-          >
-            <Trans comment="A badge on a deck: the seat it is on (P1, P2)">
-              On {seat}
-            </Trans>
+            <span className="deck-tile__seats">
+              <span
+                className="deck-tile__seat"
+                data-seat={target === 'main' ? 'self' : 'opponent'}
+              >
+                <Trans comment="A badge on a deck: the seat it is on (P1, P2)">
+                  On {seat}
+                </Trans>
+              </span>
+            </span>
           </span>
         </span>
       </div>
@@ -580,25 +563,22 @@ const ListDeckTile = ({
         aria-label={t`${name}: try it`}
         onClick={onTry}
       >
-        <DeckBox
-          cover={cover}
-          name={title}
-          tone={tone}
-          sticker={finish ? wordPlace(finish) : undefined}
-        />
-        {current ? null : <UseOnSeat seat={seat} />}
+        <DeckBox cover={cover} name={title} tone={tone} />
         <span className="deck-tile__text">
           <span className="deck-tile__name">{title}</span>
-          {finish ? (
-            <span className="deck-tile__meta">
-              <TrophyIcon
-                {...decorative}
-                weight="fill"
-                className="deck-tile__trophy"
-              />
-              {wordFinish(finish)}
-            </span>
-          ) : null}
+          <span className="deck-tile__meta">
+            {finish ? (
+              <span className="deck-tile__finish">
+                <TrophyIcon
+                  {...decorative}
+                  weight="fill"
+                  className="deck-tile__trophy"
+                />
+                {wordFinish(finish)}
+              </span>
+            ) : null}
+            {current ? null : <UseOnSeat seat={seat} />}
+          </span>
         </span>
       </button>
       <div className="deck-tile__actions">
@@ -822,6 +802,10 @@ export const DeckHome = ({
   const seatListName = seats.slots[target].label?.deckId
     ? undefined
     : seats.slots[target].label?.name;
+  const seatDeck = seats.slots[target].deck;
+  /** The seat holds this list: its name and, once read, its very cards. */
+  const onSeat = (name: string, cards: DeckList | undefined): boolean =>
+    seatListName === name && (!cards || sameCards(seatDeck, cards));
   // Each shown list's cover, found once per catalog. (The catalog itself is
   // never a prop: React's development tools walk props.)
   const shownLists = useMemo(
@@ -1142,7 +1126,7 @@ export const DeckHome = ({
                   name={deck.name}
                   cover={covers.get(deck.decklist)?.cover}
                   cards={covers.get(deck.decklist)?.cards}
-                  current={seatListName === deck.name}
+                  current={onSeat(deck.name, covers.get(deck.decklist)?.cards)}
                   seat={SEAT_NAMES[target]}
                   onTry={() => void onTryList(deck.name, deck.decklist, 'meta')}
                   onEdit={() =>
@@ -1193,7 +1177,7 @@ export const DeckHome = ({
             <div className="deck-section-tools">
               <label className="deck-select">
                 <span className="ds-visually-hidden">
-                  <Trans>Season</Trans>
+                  <Trans>Season or format</Trans>
                 </span>
                 <select
                   id="deckClassicSeason"
@@ -1220,7 +1204,7 @@ export const DeckHome = ({
                 name={deck.name}
                 cover={covers.get(deck.decklist)?.cover}
                 cards={covers.get(deck.decklist)?.cards}
-                current={seatListName === deck.name}
+                current={onSeat(deck.name, covers.get(deck.decklist)?.cards)}
                 seat={SEAT_NAMES[target]}
                 onTry={() =>
                   void onTryList(deck.name, deck.decklist, 'classic')

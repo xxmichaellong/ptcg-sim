@@ -59,23 +59,22 @@
   gap: var(--space-1-5);
 }
 
-/* The seats' switch: one segment each, the chosen one filled in its seat's
-   colour, as a segmented control is. */
+/* The seats' switch: a tab for each seat. The chosen one is tinted and
+   ringed in its seat's colour, and that colour runs on along the top of
+   the page below; the other sits back, plain. */
 .deck-screen__seats {
   display: flex;
-  flex: 0 1 760px;
+  flex: 0 1 720px;
   min-width: 0;
-  gap: var(--space-1);
-  padding: var(--space-1);
-  border: 1px solid var(--color-border);
-  border-radius: 16px;
-  background: var(--color-surface-sunken);
+  gap: var(--space-2);
 }
 
-/* A seat's segment: its deck (cover, seat, name, size), then its sleeve. */
+/* A seat's tab: its deck (cover, seat, name, size), then its sleeve. */
 .deck-tray {
   --seat-color: var(--color-you);
-  --seat-fill: color-mix(in oklab, var(--seat-color) 86%, black);
+  /* The seat's colour as words on the panels: toward the theme's ink, so
+     it reads by night and by day. */
+  --seat-ink: color-mix(in oklab, var(--seat-color) 74%, var(--color-text));
 
   position: relative;
   display: flex;
@@ -83,11 +82,14 @@
   align-items: center;
   gap: var(--space-1);
   min-width: 0;
-  padding: var(--space-1);
-  border-radius: 12px;
+  padding: 3px;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background-color: transparent;
   color: var(--color-text-muted);
   transition:
     background-color var(--duration-normal) var(--ease-out),
+    border-color var(--duration-normal) var(--ease-out),
     box-shadow var(--duration-normal) var(--ease-out),
     color var(--duration-normal) var(--ease-out);
 }
@@ -97,26 +99,35 @@
 }
 
 .deck-tray[data-active='true'] {
-  background-color: var(--seat-fill);
+  border-color: var(--seat-color);
+  background-color: color-mix(
+    in oklab,
+    var(--seat-color) 16%,
+    var(--color-surface-1)
+  );
   box-shadow:
-    0 4px 14px color-mix(in oklab, var(--seat-color) 40%, transparent),
-    inset 0 1px 0 rgb(255 255 255 / 0.16);
-  color: #fff;
+    0 0 0 1px var(--seat-color),
+    0 8px 20px -10px color-mix(in oklab, var(--seat-color) 80%, transparent);
+  color: var(--color-text);
 }
 
+/* Its deck: the cover's card, the seat and what the deck placed over its
+   name, and its size. */
 .deck-screen__seat {
-  --seat-color: var(--color-you);
-
-  display: flex;
+  display: grid;
   flex: 1;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    'art tag finish count'
+    'art name name count';
   align-items: center;
-  gap: var(--space-2-5, 10px);
+  column-gap: var(--space-2);
+  row-gap: 1px;
   min-width: 0;
   min-height: 52px;
-  padding-block: 2px;
-  padding-inline: 4px var(--space-2);
+  padding: 3px var(--space-2) 3px 6px;
   border: 0;
-  border-radius: 10px;
+  border-radius: 11px;
   background: transparent;
   color: inherit;
   font: inherit;
@@ -126,8 +137,14 @@
   transition: background-color var(--duration-fast) var(--ease-out);
 }
 
-.deck-screen__seat[data-seat='opponent'] {
-  --seat-color: var(--color-opponent);
+.deck-tray__text,
+.deck-tray__line {
+  display: contents;
+}
+
+.deck-screen__seat > .deck-box,
+.deck-screen__seat > .deck-tray__empty {
+  grid-area: art;
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -142,110 +159,80 @@
   outline-offset: 1px;
 }
 
-.deck-tray[data-active='true'] .deck-screen__seat:focus-visible {
-  outline-color: #fff;
-}
-
-/* An empty seat: the outline where its deck's cover would be. */
+/* An empty seat: the outline of the card its deck would show. */
 .deck-tray__empty {
   flex: none;
-  width: 56px;
-  aspect-ratio: 16 / 10;
+  width: 30px;
+  aspect-ratio: 63 / 88;
   box-sizing: border-box;
   border: 1.5px dashed currentColor;
-  border-radius: 7px;
-  opacity: 0.5;
+  border-radius: 4px;
+  opacity: 0.45;
 }
 
-.deck-tray__text {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 3px;
-  min-width: 0;
-}
-
-/* The seat's name: in its colour, or white on its colour once chosen. */
+/* The seat's name, in its colour: small capitals over the deck's name. */
 .deck-screen__seat-tag {
-  flex: none;
-  padding: 1px 7px;
-  border-radius: var(--radius-pill);
-  background: var(--seat-color);
-  color: #fff;
+  grid-area: tag;
+  color: var(--seat-ink);
   font-size: var(--text-2xs);
   font-weight: var(--weight-bold);
-  letter-spacing: 0.04em;
-  transition:
-    background-color var(--duration-normal) var(--ease-out),
-    color var(--duration-normal) var(--ease-out);
-}
-
-.deck-tray[data-active='true'] .deck-screen__seat-tag {
-  background: #fff;
-  color: var(--seat-fill);
-}
-
-.deck-tray__line {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1-5);
-  max-width: 100%;
-  min-width: 0;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  transition: color var(--duration-normal) var(--ease-out);
 }
 
 .deck-screen__seat-name {
+  grid-area: name;
   max-width: 100%;
   overflow: hidden;
   font-size: var(--text-md);
   font-weight: var(--weight-semibold);
+  line-height: 1.25;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .deck-tray__finish {
-  max-width: 100%;
+  grid-area: finish;
+  min-width: 0;
   overflow: hidden;
-  font-size: var(--text-xs);
-  opacity: 0.75;
+  color: var(--color-text-muted);
+  font-size: var(--text-2xs);
+  line-height: 1.2;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+/* Its size: in the warning's colour short of a deck, the success's at it. */
 .deck-screen__seat-count {
-  flex: none;
-  padding: 2px 8px;
-  border-radius: var(--radius-pill);
-  background: color-mix(in oklab, var(--color-warning) 18%, transparent);
-  color: var(--color-warning);
-  font-size: var(--text-xs);
+  --count-color: var(--color-warning);
+
+  grid-area: count;
+  align-self: center;
+  color: color-mix(in oklab, var(--count-color) 72%, var(--color-text));
+  font-size: var(--text-sm);
   font-weight: var(--weight-bold);
 }
 
 .deck-screen__seat-count[data-complete] {
-  background: color-mix(in oklab, var(--color-success) 18%, transparent);
-  color: var(--color-success);
+  --count-color: var(--color-success);
 }
 
-.deck-tray[data-active='true'] .deck-screen__seat-count {
-  background: rgb(255 255 255 / 0.2);
-  color: #fff;
-}
-
-/* The seat's sleeve: its card back, at the end of its segment. */
+/* The seat's sleeve: its card back, at the end of its tab. */
 .deck-tray__sleeve {
   flex: none;
-  width: 30px;
-  height: 42px;
-  margin-inline-end: 2px;
+  width: 28px;
+  height: 39px;
+  margin-inline-end: 5px;
   padding: 0;
   overflow: hidden;
   border: 0;
-  border-radius: 4px;
+  border-radius: 3px;
   background: var(--color-surface-3);
   box-shadow:
-    0 1px 3px rgb(0 0 0 / 0.35),
-    0 0 0 1px rgb(255 255 255 / 0.1);
+    0 1px 3px rgb(0 0 0 / 0.3),
+    0 0 0 1px var(--color-border-strong);
   cursor: pointer;
   transition:
     translate var(--duration-fast) var(--ease-out),
@@ -263,18 +250,14 @@
   .deck-tray__sleeve:hover {
     translate: 0 -2px;
     box-shadow:
-      0 4px 8px rgb(0 0 0 / 0.4),
-      0 0 0 1px rgb(255 255 255 / 0.16);
+      0 4px 8px rgb(0 0 0 / 0.35),
+      0 0 0 1px var(--color-border-strong);
   }
 }
 
 .deck-tray__sleeve:focus-visible {
   outline: var(--ptcgsim-focus-ring);
   outline-offset: 2px;
-}
-
-.deck-tray[data-active='true'] .deck-tray__sleeve:focus-visible {
-  outline-color: #fff;
 }
 
 .deck-screen__bar-actions {
@@ -292,17 +275,124 @@
   padding: 4px var(--space-2);
   border-radius: var(--radius-pill);
   background: color-mix(in oklab, var(--color-warning) 14%, transparent);
-  color: var(--color-warning);
+  color: color-mix(in oklab, var(--color-warning) 72%, var(--color-text));
   font-size: var(--text-xs);
   font-weight: var(--weight-semibold);
   white-space: nowrap;
 }
 
+/* Play: the screen's one call to action, a glossy gold that is neither
+   seat's colour, lit from above, with a glint across it as it is pointed
+   at and a press that gives. */
 .deck-screen__play {
-  min-width: 120px;
-  min-height: 44px;
-  gap: var(--space-1-5);
+  --play-ink: #3d2700;
+
+  position: relative;
+  min-width: 128px;
+  min-height: 46px;
+  gap: var(--space-2);
+  padding-inline: var(--space-4) var(--space-5);
+  overflow: hidden;
+  border: 1px solid #c98a12;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(180deg, #ffe48a 0%, #ffcd3c 48%, #f5ae1c 100%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.7),
+    inset 0 -2px 0 rgb(150 90 0 / 0.28),
+    0 6px 18px -6px rgb(245 170 30 / 0.75),
+    0 1px 2px rgb(60 30 0 / 0.3);
+  color: var(--play-ink);
   font-size: var(--text-md);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.01em;
+  text-shadow: 0 1px 0 rgb(255 255 255 / 0.45);
+  transition:
+    translate var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out),
+    filter var(--duration-fast) var(--ease-out);
+}
+
+.deck-screen__play svg {
+  width: 18px;
+  height: 18px;
+  filter: drop-shadow(0 1px 0 rgb(255 255 255 / 0.45));
+}
+
+.deck-screen__play::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    rgb(255 255 255 / 0.6) 48%,
+    transparent 64%
+  );
+  opacity: 0;
+  translate: -110% 0;
+  pointer-events: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .deck-screen__play:hover:not(:disabled) {
+    background: linear-gradient(180deg, #ffe99c 0%, #ffd34f 48%, #f7b42a 100%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.75),
+      inset 0 -2px 0 rgb(150 90 0 / 0.28),
+      0 10px 24px -6px rgb(245 170 30 / 0.85),
+      0 1px 2px rgb(60 30 0 / 0.3);
+    translate: 0 -1px;
+  }
+
+  .deck-screen__play:hover:not(:disabled)::after {
+    opacity: 1;
+    translate: 110% 0;
+    transition:
+      translate 700ms var(--ease-out),
+      opacity 120ms linear;
+  }
+}
+
+.deck-screen__play:active:not(:disabled) {
+  box-shadow:
+    inset 0 2px 4px rgb(150 90 0 / 0.35),
+    0 2px 6px -2px rgb(245 170 30 / 0.6);
+  translate: 0 1px;
+}
+
+.deck-screen__play:focus-visible {
+  outline: var(--ptcgsim-focus-ring);
+  outline-offset: 3px;
+}
+
+.deck-screen__play:disabled {
+  border-color: var(--color-border);
+  background: var(--color-surface-3);
+  box-shadow: none;
+  color: var(--color-text-faint);
+  text-shadow: none;
+}
+
+.deck-screen__play:disabled svg {
+  filter: none;
+}
+
+:root[data-motion='reduced'] .deck-screen__play {
+  translate: none;
+}
+
+:root[data-motion='reduced'] .deck-screen__play::after {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .deck-screen__play {
+    translate: none;
+  }
+
+  .deck-screen__play::after {
+    display: none;
+  }
 }
 
 /* The page under the bar: flat, the chosen seat's colour along its top. */
@@ -1020,33 +1110,35 @@
   font-size: var(--text-xs);
 }
 
-/* ---- Decks as cards of their cover ---------------------------------------- */
+/* ---- Decks as compact cards ---------------------------------------------- */
 
 .deck-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(184px, 1fr));
-  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fill, minmax(256px, 1fr));
+  gap: var(--space-2-5, 10px);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-/* A deck: its cover's art over its name, its format and size. */
+/* A deck: its cover card on its stack, its name over its format and size,
+   its own tools at the end. Bordered and quiet; the deck on the seat being
+   worked on is tinted and ringed in the seat's colour. */
 .deck-tile {
   --seat-color: var(--color-you);
+  --seat-ink: color-mix(in oklab, var(--seat-color) 74%, var(--color-text));
 
   position: relative;
   display: flex;
-  flex-direction: column;
+  align-items: center;
   min-width: 0;
   border: 1px solid var(--color-border);
-  border-radius: var(--deck-panel-radius);
-  background: var(--deck-panel);
-  box-shadow: var(--shadow-1);
+  border-radius: 12px;
+  background-color: var(--deck-panel);
   transition:
-    translate var(--duration-fast) var(--ease-out),
-    box-shadow var(--duration-fast) var(--ease-out),
-    border-color var(--duration-fast) var(--ease-out);
+    background-color var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
 }
 
 .deck-screen[data-seat='opponent'] .deck-tile {
@@ -1056,38 +1148,31 @@
 @media (hover: hover) and (pointer: fine) {
   .deck-tile:hover {
     border-color: var(--color-border-strong);
-    box-shadow: var(--shadow-3);
-    translate: 0 -2px;
+    background-color: var(--color-surface-2);
+    box-shadow: var(--shadow-2);
   }
 }
 
-/* The deck on the seat being worked on: ringed in the seat's colour. */
 .deck-tile[data-current='true'] {
   border-color: var(--seat-color);
-  box-shadow:
-    0 0 0 1.5px var(--seat-color),
-    0 8px 22px color-mix(in oklab, var(--seat-color) 28%, transparent);
-}
-
-:root[data-motion='reduced'] .deck-tile:hover {
-  translate: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .deck-tile:hover {
-    translate: none;
-  }
+  background-color: color-mix(
+    in oklab,
+    var(--seat-color) 12%,
+    var(--deck-panel)
+  );
+  box-shadow: 0 0 0 1px var(--seat-color);
 }
 
 .deck-tile__choose {
   position: relative;
   display: flex;
   flex: 1;
-  flex-direction: column;
-  align-items: stretch;
+  align-items: center;
+  gap: var(--space-3);
   min-width: 0;
-  padding: 0;
-  overflow: hidden;
+  min-height: 78px;
+  padding: var(--space-2-5, 10px) var(--space-2) var(--space-2-5, 10px)
+    var(--space-3);
   border: 0;
   border-radius: inherit;
   background: transparent;
@@ -1107,9 +1192,9 @@ div.deck-tile__choose {
 }
 
 .deck-tile__choose > .deck-box {
-  --box-radius: 0;
+  --box-width: 40px;
 
-  border-bottom: 1px solid var(--color-border);
+  margin-inline-end: 4px;
 }
 
 .deck-tile__text {
@@ -1117,17 +1202,18 @@ div.deck-tile__choose {
   flex: 1;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--space-1);
+  gap: 3px;
   min-width: 0;
-  padding: var(--space-2-5, 10px) var(--space-3) var(--space-3);
 }
 
 /* Renamed in place: the field lies over the name, which steps aside. */
 .deck-tile__rename {
   position: absolute;
+  top: 50%;
+  inset-inline: 66px 76px;
   z-index: 2;
-  max-width: calc(100% - var(--space-2));
   height: 32px;
+  translate: 0 -50%;
   padding-inline: var(--space-2);
   font-size: var(--text-md);
   font-weight: var(--weight-semibold);
@@ -1141,7 +1227,7 @@ div.deck-tile__choose {
   display: -webkit-box;
   max-width: 100%;
   overflow: hidden;
-  font-size: var(--text-lg);
+  font-size: var(--text-md);
   font-weight: var(--weight-semibold);
   line-height: 1.3;
   text-wrap: pretty;
@@ -1154,7 +1240,7 @@ div.deck-tile__choose {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 2px var(--space-2);
+  gap: 3px var(--space-2);
   color: var(--color-text-muted);
   font-size: var(--text-xs);
 }
@@ -1163,7 +1249,8 @@ div.deck-tile__choose {
   font-weight: var(--weight-medium);
 }
 
-.deck-tile__count {
+.deck-tile__count,
+.deck-tile__finish {
   display: inline-flex;
   align-items: center;
   gap: 3px;
@@ -1171,11 +1258,11 @@ div.deck-tile__choose {
 }
 
 .deck-tile__count[data-valid='true'] svg {
-  color: var(--color-success);
+  color: color-mix(in oklab, var(--color-success) 80%, var(--color-text));
 }
 
 .deck-tile__count[data-valid='false'] {
-  color: var(--color-warning);
+  color: color-mix(in oklab, var(--color-warning) 72%, var(--color-text));
 }
 
 .deck-tile__note {
@@ -1185,43 +1272,20 @@ div.deck-tile__choose {
 }
 
 .deck-tile__trophy {
-  color: var(--color-gold);
+  color: color-mix(in oklab, var(--color-gold) 70%, var(--color-warning));
 }
 
-/* What a press does, over the cover as it is pointed at or reached. */
+/* What a press does, in the seat's colour, as it is pointed at or reached. */
 .deck-tile__use {
-  position: absolute;
-  top: 0;
-  inset-inline: 0;
-  z-index: 1;
-  display: grid;
-  place-items: center;
-  aspect-ratio: 16 / 10;
-  background: rgb(10 6 2 / 0.42);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity var(--duration-fast) var(--ease-out);
-}
-
-.deck-tile__use-label {
-  padding: 7px 16px;
-  border-radius: var(--radius-pill);
-  background: var(--seat-color);
-  box-shadow: 0 4px 14px rgb(0 0 0 / 0.4);
-  color: #fff;
-  font-size: var(--text-sm);
+  color: var(--seat-ink);
   font-weight: var(--weight-bold);
-  translate: 0 4px;
-  transition: translate var(--duration-fast) var(--ease-out);
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease-out);
 }
 
 @media (hover: hover) and (pointer: fine) {
   .deck-tile__choose:hover .deck-tile__use {
     opacity: 1;
-  }
-
-  .deck-tile__choose:hover .deck-tile__use-label {
-    translate: 0 0;
   }
 }
 
@@ -1229,85 +1293,59 @@ div.deck-tile__choose {
   opacity: 1;
 }
 
-.deck-tile__choose:focus-visible .deck-tile__use-label {
-  translate: 0 0;
-}
-
-:root[data-motion='reduced'] .deck-tile__use-label {
-  translate: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .deck-tile__use-label {
-    translate: none;
+@media (hover: none) {
+  .deck-tile__use {
+    display: none;
   }
 }
 
-/* The seats a deck is on: badges on its cover's corner. */
+/* The seats a deck is on: small tags in their colours. */
 .deck-tile__seats {
-  position: absolute;
-  top: var(--space-2);
-  inset-inline-start: var(--space-2);
-  z-index: 1;
-  display: flex;
+  display: inline-flex;
   gap: var(--space-1);
 }
 
 .deck-tile__seat {
-  padding: 3px 9px;
+  --tag-color: var(--color-you);
+
+  padding: 1px 7px;
   border-radius: var(--radius-pill);
-  background: var(--color-you);
-  color: #fff;
+  background: color-mix(in oklab, var(--tag-color) 20%, transparent);
+  color: color-mix(in oklab, var(--tag-color) 70%, var(--color-text));
   font-size: var(--text-2xs);
   font-weight: var(--weight-bold);
   letter-spacing: 0.02em;
-  box-shadow: 0 2px 6px rgb(0 0 0 / 0.35);
 }
 
 .deck-tile__seat[data-seat='opponent'] {
-  background: var(--color-opponent);
+  --tag-color: var(--color-opponent);
 }
 
-/* The deck's own tools: on its cover's other corner, as it is pointed at. */
+/* The deck's own tools, at its end: quiet until pointed at. */
 .deck-tile__actions {
-  position: absolute;
-  top: var(--space-2);
-  inset-inline-end: var(--space-2);
-  z-index: 2;
   display: flex;
-  gap: var(--space-1);
-  opacity: 0;
-  transition: opacity var(--duration-fast) var(--ease-out);
+  flex: none;
+  align-self: stretch;
+  align-items: center;
+  gap: 2px;
+  padding-inline-end: var(--space-2);
 }
 
 .deck-tile .deck-icon-button {
-  width: 32px;
-  height: 32px;
-  border-radius: var(--radius-pill);
-  background: rgb(18 12 8 / 0.62);
-  color: #fff;
-  box-shadow: 0 1px 4px rgb(0 0 0 / 0.35);
-  backdrop-filter: blur(6px);
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  color: var(--color-text-faint);
 }
 
 @media (hover: hover) and (pointer: fine) {
   .deck-tile .deck-icon-button:hover {
-    background: rgb(18 12 8 / 0.82);
-    color: #fff;
+    background: var(--color-surface-pressed);
+    color: var(--color-text);
   }
 
-  .deck-tile:hover .deck-tile__actions {
-    opacity: 1;
-  }
-}
-
-.deck-tile:focus-within .deck-tile__actions {
-  opacity: 1;
-}
-
-@media (hover: none) {
-  .deck-tile__actions {
-    opacity: 1;
+  .deck-tile:hover .deck-icon-button {
+    color: var(--color-text-muted);
   }
 }
 
@@ -3252,43 +3290,17 @@ button.deck-check__issue {
     flex: 1 1 100%;
   }
 
-  /* A seat's segment: its seat and size over its deck's name. */
+  /* A seat's tab: its seat and size over its deck's name. */
   .deck-screen__seat {
-    display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto;
     grid-template-areas:
       'art tag count'
       'art name name';
-    align-items: center;
-    column-gap: var(--space-2);
-    row-gap: 2px;
-    min-height: 48px;
-  }
-
-  .deck-tray__text,
-  .deck-tray__line {
-    display: contents;
-  }
-
-  .deck-screen__seat > .deck-box,
-  .deck-screen__seat > .deck-tray__empty {
-    grid-area: art;
-    width: 48px;
-  }
-
-  .deck-screen__seat-tag {
-    grid-area: tag;
-    justify-self: start;
+    min-height: 46px;
   }
 
   .deck-screen__seat-name {
-    grid-area: name;
     font-size: var(--text-sm);
-  }
-
-  .deck-screen__seat-count {
-    grid-area: count;
-    padding: 1px 7px;
   }
 
   .deck-tray__finish {
@@ -3306,8 +3318,8 @@ button.deck-check__issue {
   }
 
   .deck-grid {
-    grid-template-columns: repeat(auto-fill, minmax(156px, 1fr));
-    gap: var(--space-3);
+    grid-template-columns: repeat(auto-fill, minmax(232px, 1fr));
+    gap: var(--space-2);
   }
 
   /* A finish: its place and event, the player under the event. */
@@ -3738,17 +3750,19 @@ button.deck-check__issue {
     display: block;
   }
 
+  /* One deck to a row: a list. */
   .deck-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--space-2-5, 10px);
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-2);
   }
 
-  .deck-tile__text {
-    padding: var(--space-2) var(--space-2-5, 10px) var(--space-2-5, 10px);
+  .deck-tile__choose {
+    min-height: 68px;
+    padding-block: var(--space-2);
   }
 
-  .deck-tile__name {
-    font-size: var(--text-md);
+  .deck-tile__choose > .deck-box {
+    --box-width: 36px;
   }
 }
 

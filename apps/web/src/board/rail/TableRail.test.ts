@@ -163,6 +163,24 @@ describe('fitting the rail', () => {
   });
 });
 
+describe("the stage's lead action", () => {
+  it('says its name where the dock has the room for it beside the rest', () => {
+    const lead = action('loadDeckButton', 0, { primary: true });
+    const actions = [lead, action('switch', 6)];
+    // Two buttons and three for the name: named.
+    expect(fitRailActions(actions, undefined, 300, 46).labelled).toBe(true);
+    // Room for the buttons alone: icons.
+    expect(fitRailActions(actions, undefined, 2 * 46 + 10, 46).labelled).toBe(
+      false
+    );
+    // No lead action: nothing to name.
+    expect(
+      fitRailActions([action('coin'), action('undo')], undefined, 600, 46)
+        .labelled
+    ).toBe(false);
+  });
+});
+
 describe('placing the rail', () => {
   const playing = [1, 2, 3, 4, 5, 6].map((n) => action(`a${String(n)}`, n));
   const rarer: ActionMenuEntry[] = ['x', 'y', 'z'].map((id) => ({

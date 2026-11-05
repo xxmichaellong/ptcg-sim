@@ -6,11 +6,11 @@ import { ownRoomBudget } from './support/room-budget.js';
 import { dismissWelcome, openDeck } from './support/table-shell.js';
 
 /**
- * Whose deck the deck screen works on (ADR-033 §13): the chosen seat's
- * segment of the seats' switch filled in its colour, its tag white on it,
- * a line of that colour over the screen below; the other segment unfilled,
- * its tag in its own colour; the editor naming the seat by the deck's name
- * and edging its deck in the colour.
+ * Whose deck the deck screen works on (ADR-033 §13): the chosen seat's tab
+ * tinted and ringed in its colour, a line of that colour over the screen
+ * below; the other tab plain; each tab's seat named in its own colour; the
+ * editor naming the seat by the deck's name and edging its deck in the
+ * colour.
  */
 
 const openDeckScreen = async (page: Page, width: number, height: number) => {
@@ -49,12 +49,21 @@ const seatPaint = (page: Page) =>
     };
     const body = document.querySelector('.deck-screen__body')!;
     const band = getComputedStyle(body, '::after');
-    // A seat's colour as its chosen segment is filled with it.
-    const fill = (token: string): string => {
+    // A seat's colour as its chosen tab is tinted with it.
+    const tint = (token: string): string => {
       const probe = document.createElement('span');
-      probe.style.backgroundColor = `color-mix(in oklab, var(${token}) 86%, black)`;
+      probe.style.backgroundColor = `color-mix(in oklab, var(${token}) 16%, var(--color-surface-1))`;
       screen.append(probe);
       const value = getComputedStyle(probe).backgroundColor;
+      probe.remove();
+      return value;
+    };
+    // A seat's colour as words: toward the theme's ink.
+    const ink = (token: string): string => {
+      const probe = document.createElement('span');
+      probe.style.color = `color-mix(in oklab, var(${token}) 74%, var(--color-text))`;
+      screen.append(probe);
+      const value = getComputedStyle(probe).color;
       probe.remove();
       return value;
     };
@@ -66,14 +75,17 @@ const seatPaint = (page: Page) =>
         active: node.getAttribute('data-active') === 'true',
         opacity: Number(style.opacity),
         background: style.backgroundColor,
-        tag: getComputedStyle(tag).backgroundColor,
+        ring: style.borderTopColor,
+        tag: getComputedStyle(tag).color,
       };
     };
     return {
       you: colour('--color-you'),
       opponent: colour('--color-opponent'),
-      youFill: fill('--color-you'),
-      opponentFill: fill('--color-opponent'),
+      youTint: tint('--color-you'),
+      opponentTint: tint('--color-opponent'),
+      youInk: ink('--color-you'),
+      opponentInk: ink('--color-opponent'),
       band: band.backgroundColor,
       bandHeight: band.height,
       main: tray('nativeDeckBuilderTargetMain'),
@@ -91,13 +103,15 @@ for (const [name, width, height] of [
     test.setTimeout(120_000);
     await openDeckScreen(page, width, height);
 
-    // P1 chosen: its segment filled in its colour, its tag white on it, its
-    // colour along the top of the screen; P2's unfilled, its tag red.
+    // P1 chosen: its tab tinted and ringed in its colour, that colour along
+    // the top of the screen; P2's plain. Each names its seat in its colour.
     await expect
       .poll(async () => {
         const paint = await seatPaint(page);
         return (
-          paint.band === paint.you && paint.main.background === paint.youFill
+          paint.band === paint.you &&
+          paint.main.background === paint.youTint &&
+          paint.main.ring === paint.you
         );
       })
       .toBe(true);
@@ -106,35 +120,33 @@ for (const [name, width, height] of [
     expect(paint.main).toMatchObject({
       active: true,
       opacity: 1,
-      tag: 'rgb(255, 255, 255)',
+      tag: paint.youInk,
     });
     expect(paint.alt).toMatchObject({
       active: false,
       opacity: 1,
       background: 'rgba(0, 0, 0, 0)',
-      tag: paint.opponent,
+      tag: paint.opponentInk,
     });
+    expect(paint.alt.ring).not.toBe(paint.opponent);
 
     // Switched to P2: all of it follows, once each part has eased there
-    // (the line and the segments ease apart, and may land a frame apart).
+    // (the line and the tabs ease apart, and may land a frame apart).
     await page.locator('#nativeDeckBuilderTargetAlt').click();
     await expect
       .poll(async () => {
         const next = await seatPaint(page);
         return (
           next.band === next.opponent &&
-          next.alt.background === next.opponentFill &&
-          next.main.background === 'rgba(0, 0, 0, 0)' &&
-          next.main.tag === next.you
+          next.alt.background === next.opponentTint &&
+          next.alt.ring === next.opponent &&
+          next.main.background === 'rgba(0, 0, 0, 0)'
         );
       })
       .toBe(true);
     paint = await seatPaint(page);
-    expect(paint.alt).toMatchObject({
-      active: true,
-      tag: 'rgb(255, 255, 255)',
-    });
-    expect(paint.main.active).toBe(false);
+    expect(paint.alt).toMatchObject({ active: true, tag: paint.opponentInk });
+    expect(paint.main).toMatchObject({ active: false, tag: paint.youInk });
 
     // Back on P1, its deck in the editor: the seat by the name, the sheet
     // edged in its colour.

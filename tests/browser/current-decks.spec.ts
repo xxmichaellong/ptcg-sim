@@ -63,7 +63,7 @@ test('the deck screen leads with current tournament lists and credits Limitless'
   expect(feedRequests).toBe(1);
   const first = meta.getByRole('listitem').first();
   await expect(first.locator('.deck-tile__name')).toHaveText('Dragapult');
-  await expect(first.locator('.deck-tile__meta')).toHaveText('1st of 285');
+  await expect(first.locator('.deck-tile__finish')).toHaveText('1st of 285');
   const credit = page.locator('.deck-section-note a');
   await expect(credit).toHaveText('Limitless');
   await expect(credit).toHaveAttribute('target', '_blank');
