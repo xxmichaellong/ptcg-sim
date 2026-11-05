@@ -250,6 +250,23 @@ describe('simulator CSV files', () => {
     expect(read.cards.map((entry) => entry.count)).toEqual([3]);
   });
 
+  it('reads text of any shape as the row’s, for the importer to check', () => {
+    const cell = (text: string) => `"${text.replaceAll('"', '""')}"`;
+    for (const text of [
+      '{"attacks":"bad"}',
+      '{"abilities":[null]}',
+      '{"attacks":[1,[2]],"hp":{"a":1}}',
+    ]) {
+      const read = parseSimCsvResult(
+        [
+          'QTY,Name,Type,URL,Presentation,Text',
+          `1,Homebrew,Pokémon,/a.png,,${cell(text)}`,
+        ].join('\n')
+      );
+      expect(read.ok).toBe(true);
+    }
+  });
+
   it('reads card types as v1 and decklists spell them', () => {
     expect(cardCategoryOf('Pokemon')).toBe('Pokémon');
     expect(cardCategoryOf(' trainer ')).toBe('Trainer');

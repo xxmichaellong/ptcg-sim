@@ -438,11 +438,14 @@ describe('a deck file’s own card text (ADR-043)', () => {
   });
 
   it('makes a card whose text is left out the card it is without it', async () => {
-    const bad = JSON.stringify({ hp: -5 });
+    const cell = (text: string) => `"${text.replaceAll('"', '""')}"`;
     const result = await importDeckText(
       [
         'QTY,Name,Type,URL,Presentation,Text',
-        `1,Broken,Pokémon,/b.png,,"${bad.replaceAll('"', '""')}"`,
+        `1,Broken,Pokémon,/b.png,,${cell(JSON.stringify({ hp: -5 }))}`,
+        // Text of any shape is left out, not read.
+        `1,Broken,Pokémon,/b.png,,${cell('{"attacks":"bad"}')}`,
+        `1,Broken,Pokémon,/b.png,,${cell('{"abilities":[null]}')}`,
         '2,Broken,Pokémon,/b.png,,',
       ].join('\n'),
       {}
@@ -450,7 +453,7 @@ describe('a deck file’s own card text (ADR-043)', () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.cards).toHaveLength(1);
-    expect(result.cards[0]?.count).toBe(3);
+    expect(result.cards[0]?.count).toBe(5);
     expect(result.cards[0]?.card).not.toHaveProperty('text');
   });
 

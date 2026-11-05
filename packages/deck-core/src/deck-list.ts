@@ -189,16 +189,27 @@ const TEXT_ORDER = [
 const ABILITY_ORDER = ['name', 'kind', 'text'] as const;
 const ATTACK_ORDER = ['name', 'cost', 'damage', 'text'] as const;
 
-const inOrder = (
-  value: object,
-  keys: readonly string[]
-): Record<string, unknown> => {
-  const fields = value as Record<string, unknown>;
+const isFields = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+/**
+ * A value's fields in this order, any others after them by name; a value
+ * with no fields as it is. Text read from a file is put in order before
+ * it is checked, so any shape is taken.
+ */
+const inOrder = (value: unknown, keys: readonly string[]): unknown => {
+  if (!isFields(value)) return value;
   const ordered: Record<string, unknown> = {};
-  for (const key of keys)
-    if (fields[key] !== undefined) ordered[key] = fields[key];
+  const others = Object.keys(value)
+    .filter((key) => !keys.includes(key))
+    .sort();
+  for (const key of [...keys, ...others])
+    if (value[key] !== undefined) ordered[key] = value[key];
   return ordered;
 };
+
+const movesInOrder = (moves: unknown, keys: readonly string[]): unknown =>
+  Array.isArray(moves) ? moves.map((move) => inOrder(move, keys)) : moves;
 
 /**
  * Card text with its fields in one fixed order, so the same text read
@@ -207,14 +218,11 @@ const inOrder = (
  */
 export const canonicalDeckCardText = (text: DeckCardText): DeckCardText => {
   const ordered = inOrder(text, TEXT_ORDER);
-  if (text.abilities)
-    ordered.abilities = text.abilities.map((ability) =>
-      inOrder(ability, ABILITY_ORDER)
-    );
-  if (text.attacks)
-    ordered.attacks = text.attacks.map((attack) =>
-      inOrder(attack, ATTACK_ORDER)
-    );
+  if (!isFields(ordered)) return text;
+  if (ordered.abilities !== undefined)
+    ordered.abilities = movesInOrder(ordered.abilities, ABILITY_ORDER);
+  if (ordered.attacks !== undefined)
+    ordered.attacks = movesInOrder(ordered.attacks, ATTACK_ORDER);
   return ordered as DeckCardText;
 };
 
