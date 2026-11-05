@@ -424,6 +424,41 @@ describe('a card’s print and text on the table (ADR-043)', () => {
     expect(again.stacks[blueStack]!.abilitiesUsed).toEqual(['Second Wind']);
   });
 
+  it('names a face-down Pokémon’s used Abilities to no one who cannot read it', () => {
+    const { state, commandContext, blueStack } = fixture();
+    const marked = run(
+      state,
+      {
+        type: 'SetAbilityUsed',
+        stackId: blueStack,
+        used: true,
+        ability: 'Infernal Reign',
+      },
+      commandContext
+    );
+    const topId = marked.stacks[blueStack]!.evolutionCardIds.at(-1)!;
+    const down = run(
+      marked,
+      { type: 'SetCardFace', cardId: topId, face: 'down' },
+      commandContext
+    );
+    const viewedBy = (playerId: typeof red) =>
+      projectMatch(
+        down,
+        { kind: 'player', playerId },
+        {
+          viewCardId: ({ cardId }) => cardId as never,
+          viewDefinitionId: ({ definitionId }) => definitionId as never,
+        }
+      ).stacks[blueStack]!;
+    // The other player sees a marker on a card they cannot read: no name.
+    expect(viewedBy(red).evolutionCards.at(-1)?.kind).toBe('concealed');
+    expect(viewedBy(red)).toMatchObject({ abilityUsed: true });
+    expect(viewedBy(red).abilitiesUsed).toBeUndefined();
+    // Its own player still reads it, and the name.
+    expect(viewedBy(blue).abilitiesUsed).toEqual(['Infernal Reign']);
+  });
+
   it('changes what an effect adds to a Pokémon’s HP, in tens, and refuses the rest', () => {
     const { state, commandContext, blueStack } = fixture();
     const set = (from: MatchState, modifier: number) =>

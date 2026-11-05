@@ -391,30 +391,37 @@ export const projectMatch = (
       ])
     ),
     stacks: Object.fromEntries(
-      Object.entries(state.stacks).map(([id, stack]) => [
-        id,
-        {
-          id: stack.id,
-          boardPlayerId: stack.boardPlayerId,
-          slot: stack.slot,
-          evolutionCards: stack.evolutionCardIds.map((cardId) =>
-            projectCard(cardId, true)
-          ),
-          attachmentCards: stack.attachmentCardIds.map((cardId) =>
-            projectCard(cardId, true)
-          ),
-          rotationQuarterTurns: stack.rotationQuarterTurns,
-          damage: stack.damage,
-          specialCondition: stack.specialCondition,
-          abilityUsed: stack.abilityUsed,
-          reminders: [...(stack.reminders ?? [])],
-          // The names count only while the marker is on (PlayStack).
-          ...(stack.abilityUsed && (stack.abilitiesUsed ?? []).length > 0
-            ? { abilitiesUsed: [...stack.abilitiesUsed!] }
-            : {}),
-          ...(stack.hpModifier ? { hpModifier: stack.hpModifier } : {}),
-        },
-      ])
+      Object.entries(state.stacks).map(([id, stack]) => {
+        const evolutionCards = stack.evolutionCardIds.map((cardId) =>
+          projectCard(cardId, true)
+        );
+        // The names count only while the marker is on (PlayStack), and
+        // only for a viewer who can read the Pokémon: an Ability's name is
+        // a face-down one's to keep, as the log keeps it.
+        const named =
+          stack.abilityUsed &&
+          (stack.abilitiesUsed ?? []).length > 0 &&
+          evolutionCards.at(-1)?.kind === 'known';
+        return [
+          id,
+          {
+            id: stack.id,
+            boardPlayerId: stack.boardPlayerId,
+            slot: stack.slot,
+            evolutionCards,
+            attachmentCards: stack.attachmentCardIds.map((cardId) =>
+              projectCard(cardId, true)
+            ),
+            rotationQuarterTurns: stack.rotationQuarterTurns,
+            damage: stack.damage,
+            specialCondition: stack.specialCondition,
+            abilityUsed: stack.abilityUsed,
+            reminders: [...(stack.reminders ?? [])],
+            ...(named ? { abilitiesUsed: [...stack.abilitiesUsed!] } : {}),
+            ...(stack.hpModifier ? { hpModifier: stack.hpModifier } : {}),
+          },
+        ];
+      })
     ),
     workAreas: Object.fromEntries(
       Object.entries(state.workAreas).map(([id, areas]) => [
