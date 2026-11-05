@@ -1,36 +1,47 @@
 /*
- * A deck box on the desk (DeckBox.tsx). Drawn in an oblique view, the way a
- * box on a desk under the table's lamp (up and to the left) is seen: the
- * front square on, so the cover card in its window reads undistorted, the
- * lid's top and the right side receding up and to the right. The box is
- * plastic in the deck's colour; it casts a soft shadow down and to the
- * right, as the cards on the table do.
+ * A deck's cover (DeckBox.tsx): its cover card's artwork in a rounded
+ * frame, as deck sites show a deck. Wide on a deck's tile, small in a
+ * seat's switch; both 16:10, so a deck put on a seat flies from one to the
+ * other without changing shape (deck-box-flight.ts). A deck with no cover
+ * shows its initial on its colour (the basic Energy it plays most of).
  *
- *   --box-w / --box-h   the front face
- *   --box-d             how deep the box is drawn (the oblique offset)
- *   --box-color         the plastic
+ *   --box-color   the colour behind a missing cover, and its initial
  */
 
 .deck-box {
-  --box-w: 104px;
-  --box-h: 140px;
-  --box-d: 14px;
-  --box-radius: 7px;
-  --box-color: #3b3431;
+  --box-color: #4a3f37;
+  /* The heart of the card's artwork (about 12-46% of its height, above an
+     ex's Ability box) filling a 16:10 frame: the card drawn at 130% of the
+     frame's width, its top 34% of the frame's height above it. */
+  --box-art-width: 130%;
+  --box-art-left: -15%;
+  --box-art-top: -34%;
 
   position: relative;
   display: block;
   flex: none;
-  width: calc(var(--box-w) + var(--box-d));
-  height: calc(var(--box-h) + var(--box-d));
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border-radius: var(--box-radius, 10px);
+  background:
+    radial-gradient(
+      ellipse 90% 80% at 30% 20%,
+      color-mix(in oklab, var(--box-color) 70%, white),
+      transparent 70%
+    ),
+    var(--box-color);
   pointer-events: none;
+  isolation: isolate;
 }
 
 .deck-box[data-size='tray'] {
-  --box-w: 30px;
-  --box-h: 40px;
-  --box-d: 5px;
-  --box-radius: 3px;
+  --box-radius: 7px;
+
+  width: 56px;
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 0.3),
+    0 0 0 1px rgb(255 255 255 / 0.08);
 }
 
 .deck-box[data-tone='Grass'] {
@@ -61,230 +72,117 @@
   --box-color: #b35b86;
 }
 
-/* The shadow it casts on the desk, away from the lamp. */
-.deck-box::after {
-  content: '';
-  position: absolute;
-  inset-inline-start: 6%;
-  bottom: -6px;
-  width: 100%;
-  height: 22px;
-  border-radius: 50%;
-  background: radial-gradient(
-    closest-side,
-    rgb(20 10 4 / 0.42),
-    rgb(20 10 4 / 0.16) 60%,
-    transparent
-  );
-  filter: blur(3px);
-  transform: translateX(6px);
-  transition:
-    transform calc(var(--duration-normal) * var(--motion-scale, 1))
-      var(--ease-out),
-    opacity calc(var(--duration-normal) * var(--motion-scale, 1))
-      var(--ease-out);
-}
-
-.deck-box[data-size='tray']::after {
-  bottom: -3px;
-  height: 8px;
-  filter: blur(1.5px);
-  transform: translateX(2px);
-}
-
-.deck-box__body {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: var(--box-w);
-  height: var(--box-h);
-  transition: translate calc(var(--duration-normal) * var(--motion-scale, 1))
-    var(--ease-snappy);
-}
-
-/* The lid's top, receding up and to the right. */
-.deck-box__top {
-  position: absolute;
-  top: calc(-1 * var(--box-d));
-  left: 0;
-  width: var(--box-w);
-  height: var(--box-d);
-  border-radius: var(--box-radius) var(--box-radius) 0 0;
-  background: linear-gradient(
-    90deg,
-    color-mix(in oklab, var(--box-color) 62%, white),
-    color-mix(in oklab, var(--box-color) 80%, white)
-  );
-  transform: skewX(-45deg);
-  transform-origin: bottom left;
-}
-
-/* The right side, in the lamp's shade. */
-.deck-box__side {
-  position: absolute;
-  top: 0;
-  left: var(--box-w);
-  width: var(--box-d);
-  height: var(--box-h);
-  border-radius: 0 var(--box-radius) var(--box-radius) 0;
-  background:
-    linear-gradient(
-      transparent calc(28% - 1px),
-      rgb(0 0 0 / 0.28) calc(28% - 1px) 28%,
-      transparent 28%
-    ),
-    linear-gradient(
-      90deg,
-      color-mix(in oklab, var(--box-color) 66%, black),
-      color-mix(in oklab, var(--box-color) 52%, black)
-    );
-  transform: skewY(-45deg);
-  transform-origin: top left;
-}
-
-.deck-box__front {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  border-radius: var(--box-radius) 2px var(--box-radius) var(--box-radius);
-  background: linear-gradient(
-    172deg,
-    color-mix(in oklab, var(--box-color) 82%, white) 0%,
-    var(--box-color) 34%,
-    color-mix(in oklab, var(--box-color) 86%, black) 100%
-  );
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.22),
-    inset 1px 0 0 rgb(255 255 255 / 0.1),
-    inset 0 -2px 3px rgb(0 0 0 / 0.22);
-}
-
-/* Where the lid meets the box: a fine groove, the lid's lip catching light. */
-.deck-box__lid {
-  position: absolute;
-  inset-inline: 0;
-  top: 0;
-  height: 28%;
-  border-bottom: 1px solid rgb(0 0 0 / 0.34);
-  box-shadow:
-    0 1px 0 rgb(255 255 255 / 0.12),
-    inset 0 -3px 4px rgb(0 0 0 / 0.08);
-}
-
-.deck-box[data-size='tray'] .deck-box__lid {
-  height: 24%;
-}
-
-/* The window onto the cover card: recessed into the front. */
+/* The parts the box once drew: only the window onto its cover is left. */
+.deck-box__body,
+.deck-box__front,
 .deck-box__window {
   position: absolute;
-  top: 34%;
-  bottom: 7%;
-  left: 8%;
-  right: 8%;
-  overflow: hidden;
-  border-radius: calc(var(--box-radius) * 0.6);
-  background: #1b1612;
-  box-shadow:
-    inset 0 2px 4px rgb(0 0 0 / 0.55),
-    0 1px 0 rgb(255 255 255 / 0.16);
+  inset: 0;
+  display: block;
 }
 
-.deck-box[data-size='tray'] .deck-box__window {
-  top: 30%;
-  bottom: 8%;
-  left: 10%;
-  right: 10%;
+.deck-box__side,
+.deck-box__top,
+.deck-box__lid,
+.deck-box__gloss {
+  display: none;
 }
 
 .deck-box__window img {
-  /* The card's artwork band (about 10-47% of its height), as a deck's
-     cover shows it (deck-screen.css .deck-cover). */
   position: absolute;
-  top: -27%;
-  left: -46.5%;
-  width: 193%;
+  top: var(--box-art-top);
+  left: var(--box-art-left);
+  width: var(--box-art-width);
   height: auto;
+  max-width: none;
 }
 
+/* Rule-box prints are full art, their Pokémon lower than a plain card's
+   and a Tera's rule over its head: closer in, between that and the
+   Ability (about 15.5-46% of the card). */
 .deck-box__window[data-full-art] img {
-  top: -40%;
+  --box-art-width: 145%;
+  --box-art-left: -22.5%;
+  --box-art-top: -50%;
+}
+
+/* A soft shade along the foot, so whatever lies over the art reads. */
+.deck-box__front::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 55%, rgb(0 0 0 / 0.28) 100%);
+  pointer-events: none;
+}
+
+.deck-box[data-size='tray'] .deck-box__front::after {
+  display: none;
 }
 
 .deck-box__initial {
   display: grid;
   place-items: center;
   height: 100%;
-  color: rgb(255 255 255 / 0.55);
+  color: rgb(255 255 255 / 0.7);
   font-family: var(--font-display);
-  font-size: calc(var(--box-h) * 0.22);
+  font-size: 2.5rem;
   font-weight: var(--weight-bold);
 }
 
-/* The window's clear plastic: a soft sheen from the lamp. */
-.deck-box__gloss {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    120deg,
-    rgb(255 255 255 / 0.16) 0%,
-    rgb(255 255 255 / 0.04) 26%,
-    transparent 46%
-  );
-  pointer-events: none;
+.deck-box[data-size='tray'] .deck-box__initial {
+  font-size: var(--text-lg);
 }
 
-/* A deck that can't be played as it stands: a red index tab on the lid. */
+/* A deck that can't be played as it stands: a warning dot in its corner. */
 .deck-box__tab {
   position: absolute;
-  top: calc(-1 * var(--box-d) - 9px);
-  inset-inline-start: 18%;
-  width: 22%;
-  height: 14px;
-  border-radius: 3px 3px 0 0;
-  background: linear-gradient(
-    color-mix(in oklab, var(--color-danger) 86%, white),
-    var(--color-danger)
-  );
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.3);
+  top: 6px;
+  inset-inline-end: 6px;
+  z-index: 1;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-warning);
+  box-shadow:
+    0 0 0 2px rgb(0 0 0 / 0.45),
+    0 1px 3px rgb(0 0 0 / 0.4);
 }
 
 .deck-box[data-size='tray'] .deck-box__tab {
-  top: calc(-1 * var(--box-d) - 4px);
-  height: 6px;
-  border-radius: 1px 1px 0 0;
+  top: 3px;
+  inset-inline-end: 3px;
+  width: 8px;
+  height: 8px;
+  box-shadow: 0 0 0 1.5px rgb(0 0 0 / 0.5);
 }
 
-/* A placing sticker: gold, round, stuck on the lid's corner (the far one
-   from the box's tools). */
+/* A placing: a gold medal on the art's corner. */
 .deck-box__sticker {
   position: absolute;
-  top: 7%;
-  inset-inline-start: -8px;
+  top: var(--space-2);
+  inset-inline-start: var(--space-2);
+  z-index: 1;
   display: grid;
   place-items: center;
-  min-width: 34px;
-  height: 34px;
+  min-width: 36px;
+  height: 36px;
   padding-inline: 3px;
   box-sizing: border-box;
   border-radius: 50%;
   background: radial-gradient(circle at 35% 30%, #ffe99a, #f2c641 52%, #c99418);
   box-shadow:
-    0 2px 3px rgb(30 18 4 / 0.38),
+    0 2px 6px rgb(30 18 4 / 0.45),
     inset 0 -1px 2px rgb(120 70 0 / 0.35);
   color: #4a2d00;
   font-family: var(--font-display);
   font-size: 12px;
   font-weight: var(--weight-bold);
   letter-spacing: -0.01em;
-  transform: rotate(-8deg);
 }
 
-/* A box picked up: it rises off the desk, its shadow spreading. */
-.deck-box[data-lifted='true'] .deck-box__body {
-  translate: 0 -5px;
-}
-.deck-box[data-lifted='true']::after {
-  opacity: 0.7;
-  transform: translateX(9px) scale(1.06, 1.25);
+/* A cover on its way to a seat (deck-box-flight.ts): lifted, shadowed. */
+.deck-box[data-lifted='true'] {
+  box-shadow:
+    0 18px 36px rgb(0 0 0 / 0.45),
+    0 4px 10px rgb(0 0 0 / 0.3);
 }

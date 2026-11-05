@@ -270,6 +270,34 @@ specifically without blocking, and go from deck to table in one click.
       seat's colour. A deck not on it keeps "Use on P1".
     - Ids, keys and focus are unchanged; online, the one tray (your deck)
       is always the chosen one.
+15. **Like a deck site** (2026-11-05). The owner: "i don't like the
+    current design, make it more similar to other deck building sites",
+    and the seat being worked on was still too subtle. The desk, the boxes
+    and the trays (§13, §14) give way to the look of Limitless, Archidekt
+    and Moxfield; every feature, id and key stays:
+    - **A flat page.** No wood or lamp: the page is the sunken surface,
+      the bar and every panel the raised one, in both themes.
+    - **The seats' switch.** The trays become one segmented control: a
+      segment per seat with its deck's cover, its seat tag, name and
+      count, and its sleeve. The chosen one is filled solid in its seat's
+      colour (its tag white on it); the other is unfilled, not dimmed, its
+      tag in its own colour. A 3px line of the chosen colour runs under
+      the bar, its glow fading down the page.
+    - **Decks as cards.** A deck is a card of its cover's art (16:10, the
+      card's artwork band; rule-box prints closer in, clear of a Tera's
+      rule and the Ability) over its name, format and count. The deck on
+      the chosen seat is ringed in its colour; "On P1"/"On P2" badges sit
+      on the cover, its tools on the other corner. `DeckBox` draws the
+      cover, the same 16:10 small in the switch, so a deck put on a seat
+      still flies there.
+    - **The editor** has a bar of its own (back, the seat's chip and the
+      name as a title, the format, the tools) over two flat panels, the
+      deck's edged in the seat's colour.
+    - **Phones.** The switch takes a row, each segment its seat and count
+      over the name (no cover); the editor's bar takes two rows and Find
+      cards / Deck become a bar along the foot. The kinds and Energy types
+      slide sideways rather than wrap. On its side the bar is one row and
+      the editor scrolls, its tab bar kept along the foot.
 
 ## Consequences
 

@@ -1,33 +1,15 @@
 /*
  * The deck screen's layer (DeckLayer.tsx): the whole window, fading in and
- * out over the table. It is the same desk the table lies on (shell.css),
- * in the chosen artwork's wood and grain, under the same lamp up and to the
- * left (ADR-033 §13). Nothing here may transform or filter, so the screen's
- * fixed parts (the card zoom) stay fixed to the window.
+ * out over the table. A page of its own, flat as deck sites are (ADR-033
+ * §13). Nothing here may transform or filter, so the screen's fixed parts
+ * (the card zoom) stay fixed to the window.
  */
 
 .ptcgsim-deck-layer {
   position: fixed;
   inset: 0;
   z-index: var(--layer-deck-screen);
-  background-color: var(--color-desk);
-  background-image:
-    radial-gradient(
-      ellipse 60% 55% at 36% 28%,
-      var(--color-lamp),
-      transparent 72%
-    ),
-    radial-gradient(
-      ellipse 90% 85% at 50% 45%,
-      transparent 48%,
-      var(--color-desk-vignette, rgb(10 6 2 / 0.42)) 100%
-    ),
-    var(--desk-grain), linear-gradient(var(--color-desk-hi), var(--color-desk));
-  background-size:
-    auto,
-    auto,
-    640px 360px,
-    auto;
+  background-color: var(--color-surface-sunken);
   color: var(--color-text);
   font-family: var(--font-ui);
   outline: none;

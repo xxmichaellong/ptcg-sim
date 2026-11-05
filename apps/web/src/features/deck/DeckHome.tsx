@@ -120,15 +120,16 @@ const SeatBadges = ({
 }: {
   readonly seats: DeckBuilderSnapshot;
   readonly deckId: string;
-}) => (
-  <>
-    {(['main', 'alternate'] as const)
-      .filter(
-        (target) =>
-          (target === 'main' || seats.alternateEnabled) &&
-          seats.slots[target].label?.deckId === deckId
-      )
-      .map((target) => {
+}) => {
+  const on = (['main', 'alternate'] as const).filter(
+    (target) =>
+      (target === 'main' || seats.alternateEnabled) &&
+      seats.slots[target].label?.deckId === deckId
+  );
+  if (on.length === 0) return null;
+  return (
+    <span className="deck-tile__seats">
+      {on.map((target) => {
         const seat = SEAT_NAMES[target];
         return (
           <span
@@ -142,8 +143,9 @@ const SeatBadges = ({
           </span>
         );
       })}
-  </>
-);
+    </span>
+  );
+};
 
 /**
  * A deck's name edited over its tile: Enter or leaving the field keeps it,
@@ -472,13 +474,15 @@ const UnsavedSeatTile = ({
             </span>
           </span>
         </span>
-        <span
-          className="deck-tile__seat"
-          data-seat={target === 'main' ? 'self' : 'opponent'}
-        >
-          <Trans comment="A badge on a deck: the seat it is on (P1, P2)">
-            On {seat}
-          </Trans>
+        <span className="deck-tile__seats">
+          <span
+            className="deck-tile__seat"
+            data-seat={target === 'main' ? 'self' : 'opponent'}
+          >
+            <Trans comment="A badge on a deck: the seat it is on (P1, P2)">
+              On {seat}
+            </Trans>
+          </span>
         </span>
       </div>
       <div className="deck-tile__actions">

@@ -1,11 +1,13 @@
 import { ArrowArcLeftIcon } from '@phosphor-icons/react/dist/csr/ArrowArcLeft';
 import { ArrowArcRightIcon } from '@phosphor-icons/react/dist/csr/ArrowArcRight';
+import { CardsIcon } from '@phosphor-icons/react/dist/csr/Cards';
 import { CaretLeftIcon } from '@phosphor-icons/react/dist/csr/CaretLeft';
 import { CheckIcon } from '@phosphor-icons/react/dist/csr/Check';
 import { ClipboardTextIcon } from '@phosphor-icons/react/dist/csr/ClipboardText';
 import { CopyIcon } from '@phosphor-icons/react/dist/csr/Copy';
 import { DownloadSimpleIcon } from '@phosphor-icons/react/dist/csr/DownloadSimple';
 import { ExportIcon } from '@phosphor-icons/react/dist/csr/Export';
+import { MagnifyingGlassIcon } from '@phosphor-icons/react/dist/csr/MagnifyingGlass';
 import { TrashIcon } from '@phosphor-icons/react/dist/csr/Trash';
 import { WarningCircleIcon } from '@phosphor-icons/react/dist/csr/WarningCircle';
 import { Trans, useLingui } from '@lingui/react/macro';
@@ -754,6 +756,10 @@ export const DeckEditor = ({
           aria-selected={tab === 'search'}
           onClick={() => setTab('search')}
         >
+          <MagnifyingGlassIcon
+            {...decorative}
+            weight={tab === 'search' ? 'bold' : 'regular'}
+          />
           <Trans>Find cards</Trans>
         </button>
         <button
@@ -762,6 +768,10 @@ export const DeckEditor = ({
           aria-selected={tab === 'deck'}
           onClick={() => setTab('deck')}
         >
+          <CardsIcon
+            {...decorative}
+            weight={tab === 'deck' ? 'fill' : 'regular'}
+          />
           <Trans context="the deck being built">Deck</Trans>{' '}
           <span className="ds-number">{total}</span>
         </button>

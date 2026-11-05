@@ -1089,7 +1089,9 @@ export const DeckScreen = ({
             weight="bold"
             className="ds-mirror-rtl"
           />
-          <Trans context="go back to the table">Table</Trans>
+          <span className="deck-screen__back-label">
+            <Trans context="go back to the table">Table</Trans>
+          </span>
         </button>
         <div
           className="deck-screen__seats"

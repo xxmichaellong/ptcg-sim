@@ -1,19 +1,19 @@
 import { motionSettings } from '../../motion/motion-settings.js';
 
-/** How long the box takes to cross the screen, at normal speed. */
+/** How long the cover takes to cross the screen, at normal speed. */
 const FLIGHT_MS = 520;
-const BOX_VARIABLES = ['--box-w', '--box-h', '--box-d', '--box-radius'];
 
 /** The flight each tray waits for: the last one sent to it. */
 const landing = new WeakMap<HTMLElement, Animation>();
 
 /**
- * A deck box picked off a shelf settles into its seat's tray (ADR-033 §13):
- * a copy of the box rises, crosses to the tray and lands at the tray box's
- * size, while the tray's own box waits hidden underneath. Measured first and
- * last, then only transform and opacity move (FLIP). Nothing moves under
- * reduced motion or at "instant" speed, and nothing is left behind if the
- * flight is cut short.
+ * A deck put on a seat flies to it (ADR-033 §13): a copy of its tile's
+ * cover rises, crosses to the seat's switch and lands at the size of the
+ * cover there (both 16:10), its corners rounded as that one's, while the
+ * seat's own cover waits hidden underneath. Measured first and last, then
+ * only transform and opacity move (FLIP). Nothing moves under reduced
+ * motion or at "instant" speed, and nothing is left behind if the flight
+ * is cut short.
  */
 export const flyDeckBox = (box: HTMLElement, tray: HTMLElement): void => {
   const motion = motionSettings().getSnapshot();
@@ -24,10 +24,10 @@ export const flyDeckBox = (box: HTMLElement, tray: HTMLElement): void => {
   if (from.width <= 0 || to.width <= 0) return;
 
   const ghost = box.cloneNode(true) as HTMLElement;
-  const computed = getComputedStyle(box);
-  for (const variable of BOX_VARIABLES) {
-    ghost.style.setProperty(variable, computed.getPropertyValue(variable));
-  }
+  ghost.style.setProperty(
+    '--box-radius',
+    getComputedStyle(tray).getPropertyValue('--box-radius')
+  );
   Object.assign(ghost.style, {
     position: 'fixed',
     left: `${String(from.left)}px`,
