@@ -247,6 +247,60 @@ test('a Pokémon opens in its window: its cards, its status and its moves, each 
   await expect(window).toHaveCount(0);
 });
 
+test('damage stepped before the room answers lands as stepped, a step back included', async ({
+  page,
+  context,
+}) => {
+  test.setTimeout(150_000);
+  await ownRoomBudget(context);
+  // The room's answers wait while `hold` is on, as on a slow line.
+  let hold = false;
+  const held: (() => void)[] = [];
+  await page.routeWebSocket(/\/v2\/rooms\/[^/]+\/connect/u, (socket) => {
+    const server = socket.connectToServer();
+    socket.onMessage((message) => server.send(message));
+    server.onMessage((message) => {
+      if (hold) held.push(() => socket.send(message));
+      else socket.send(message);
+    });
+  });
+  const { pidgey } = await setUp(page);
+  await page.locator(onCard(pidgey)).dblclick();
+  const window = page.locator('[data-pokemon-window]');
+  await expect(window).toBeVisible();
+  const hp = window.locator('.pokemon-window__hp-value');
+  const full = (await hp.textContent())!;
+  const total = Number(full.split('/')[1]);
+  const more = window.getByRole('button', { name: '10 more damage' });
+  const less = window.getByRole('button', { name: '10 less damage' });
+
+  // Up and straight back, then up twice and back once, all unanswered.
+  const before = await revision(page);
+  hold = true;
+  await more.click();
+  await expect(hp).toHaveText(`${total - 10}/${total}`);
+  await less.click();
+  await expect(hp).toHaveText(full);
+  await more.click();
+  await more.click();
+  await less.click();
+  await expect(hp).toHaveText(`${total - 10}/${total}`);
+  // None was answered yet: the window went on from its own steps.
+  expect(held.length).toBeGreaterThan(0);
+  expect(await revision(page)).toBe(before);
+  hold = false;
+  for (const send of held.splice(0)) send();
+  // Each of the five is the room's.
+  await expect.poll(() => revision(page)).toBe(before + 5);
+  await expect(hp).toHaveText(`${total - 10}/${total}`);
+  // The room's own: the window opened again reads it so.
+  await page.keyboard.press('Escape');
+  await expect(window).toHaveCount(0);
+  await idle(page);
+  await page.locator(onCard(pidgey)).dblclick();
+  await expect(hp).toHaveText(`${total - 10}/${total}`);
+});
+
 const PICTURE = readFileSync(
   fileURLToPath(
     new URL('../../apps/web/public/v2/assets/cardback.png', import.meta.url)

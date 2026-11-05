@@ -6,7 +6,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { DeckCard } from '@ptcgsim/deck-core';
+import { customCardIdOf, type DeckCard } from '@ptcgsim/deck-core';
 
 import { DeckLayer } from '../../session/shell/DeckLayer.js';
 import {
@@ -569,6 +569,109 @@ describe('the deck screen from the keyboard', () => {
     expect(pidgeys()).toBe(1);
     await key({ key: '/', code: 'Slash' });
     expect(document.activeElement).toBe(add);
+  });
+
+  describe('a hand-made card edited, and the edit undone and redone', () => {
+    const made = (hp: number): DeckCard => {
+      const card = {
+        name: 'Homebrew',
+        category: 'Pokémon' as const,
+        image: 'https://example.test/homebrew.png',
+        text: { hp },
+      };
+      return { ...card, id: customCardIdOf(card) };
+    };
+    /** A deck of a 90 HP and a 100 HP card, the first given `to` HP. */
+    const edit = async (coverHp: number, to: number) => {
+      const edited = made(90);
+      const other = made(100);
+      const library = new DeckLibrary({ backend: null });
+      const deck = library.create({
+        name: 'Homebrew',
+        format: 'standard',
+        cards: [
+          { card: edited, count: 1 },
+          { card: other, count: 1 },
+        ],
+        coverId: made(coverHp).id,
+      });
+      await render(vi.fn(), library);
+      await act(async () =>
+        host
+          .querySelector<HTMLButtonElement>(
+            'button[aria-label="Edit Homebrew"]'
+          )!
+          .click()
+      );
+      await act(async () =>
+        host
+          .querySelector<HTMLButtonElement>(
+            `[data-deck-card="${edited.id}"] button.deck-row__card`
+          )!
+          .click()
+      );
+      await act(async () =>
+        document
+          .querySelector<HTMLButtonElement>('[data-card-text-edit]')!
+          .click()
+      );
+      const hp = document.querySelector<HTMLInputElement>(
+        '.card-text-editor input[type="number"]'
+      )!;
+      await act(async () => {
+        Object.getOwnPropertyDescriptor(
+          HTMLInputElement.prototype,
+          'value'
+        )!.set!.call(hp, String(to));
+        hp.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+      await act(async () =>
+        document
+          .querySelector<HTMLFormElement>('.deck-card-details__editor')!
+          .requestSubmit()
+      );
+      const key = (key: string) =>
+        act(async () => {
+          document.activeElement?.dispatchEvent(
+            new KeyboardEvent('keydown', {
+              key,
+              code: `Key${key.toUpperCase()}`,
+              ctrlKey: true,
+              bubbles: true,
+              cancelable: true,
+            })
+          );
+        });
+      return {
+        ids: () => library.get(deck.id)!.cards.map((entry) => entry.card.id),
+        cover: () => library.get(deck.id)!.coverId,
+        undo: () => key('z'),
+        redo: () => key('y'),
+      };
+    };
+
+    it('leaves the cover where it was when a card merged into it is undone', async () => {
+      const cover = made(100).id;
+      const deck = await edit(100, 100);
+      // Now the cover's card: one entry.
+      expect(deck.ids()).toEqual([cover]);
+      expect(deck.cover()).toBe(cover);
+      await deck.undo();
+      expect(deck.ids()).toEqual([made(90).id, cover]);
+      expect(deck.cover()).toBe(cover);
+      await deck.redo();
+      expect(deck.ids()).toEqual([cover]);
+      expect(deck.cover()).toBe(cover);
+    });
+
+    it('takes the cover with the edited card, and back with its Undo', async () => {
+      const deck = await edit(90, 120);
+      expect(deck.cover()).toBe(made(120).id);
+      await deck.undo();
+      expect(deck.cover()).toBe(made(90).id);
+      await deck.redo();
+      expect(deck.cover()).toBe(made(120).id);
+    });
   });
 
   it('closes a custom card’s window on Esc after a click on its blank parts, the deck screen staying', async () => {

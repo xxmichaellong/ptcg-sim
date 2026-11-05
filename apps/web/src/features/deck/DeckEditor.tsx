@@ -121,10 +121,22 @@ const isLetter = (
  * saved as it is made and undoable, the format's rules checked live.
  */
 /** A deck the editor can go back or forward to (see `history`). */
+/** A move of the deck's cover by an edit, from one card's id to another's. */
+interface CoverMove {
+  readonly from: string;
+  readonly to: string;
+}
+
 interface HistoryStep {
   readonly cards: DeckList;
   /** Ids that change on the way to it: from the deck now to it. */
   readonly renames: ReadonlyMap<string, string>;
+  /**
+   * The cover's move on the way to it, when the edit moved it: only the
+   * move that edit made is taken back (a card it merged into the cover
+   * leaves the cover where it is).
+   */
+  readonly cover?: CoverMove;
 }
 
 const NO_RENAMES: ReadonlyMap<string, string> = new Map();
@@ -220,8 +232,8 @@ export const DeckEditor = ({
   }, []);
 
   /** Every change to the cards goes through here: saved, and undoable. */
-  // The sheet and the cover go with a card whose id changes, whichever
-  // way: an edit, its Undo, its Redo.
+  // The sheet goes with a card whose id changes, whichever way: an edit,
+  // its Undo, its Redo. The cover does too, by the move each step records.
   const inspectedRef = useRef(inspected);
   inspectedRef.current = inspected;
   // And the sheet shows a card as the deck has it now: one edited under its
@@ -244,9 +256,21 @@ export const DeckEditor = ({
           : undefined;
         if (card) setInspected({ kind: 'deck', card });
       }
-      const coverId = library.get(deck.id)?.coverId;
-      const cover = coverId ? renames.get(coverId) : undefined;
-      if (cover) library.update(deck.id, { coverId: cover });
+    },
+    []
+  );
+  /**
+   * Puts the cards and moves the cover as a step says, the cover only if
+   * it is still where the step's edit left it; the move back, if made.
+   */
+  const apply = useCallback(
+    (cards: DeckList, move: CoverMove | undefined): CoverMove | undefined => {
+      const moves = move && library.get(deck.id)?.coverId === move.from;
+      library.update(deck.id, {
+        cards,
+        ...(moves ? { coverId: move.to } : {}),
+      });
+      return moves ? { from: move.to, to: move.from } : undefined;
     },
     [deck.id, library]
   );
@@ -256,17 +280,27 @@ export const DeckEditor = ({
       const current = library.get(deck.id)?.cards ?? cards;
       if (next === current) return;
       const stack = history.current;
+      // The cover goes with a card whose id changes.
+      const coverId = library.get(deck.id)?.coverId;
+      const coverTo = coverId ? renames.get(coverId) : undefined;
+      const back = apply(
+        next,
+        coverId && coverTo ? { from: coverId, to: coverTo } : undefined
+      );
       stack.undo = [
         ...stack.undo,
-        { cards: current, renames: invert(renames) },
+        {
+          cards: current,
+          renames: invert(renames),
+          ...(back ? { cover: back } : {}),
+        },
       ].slice(-HISTORY_LIMIT);
       stack.redo = [];
       setHistoryVersion((version) => version + 1);
-      library.update(deck.id, { cards: next });
       follow(renames, next);
       flashSaved();
     },
-    [cards, deck.id, flashSaved, follow, library]
+    [apply, cards, deck.id, flashSaved, follow, library]
   );
 
   const undo = useCallback(() => {
@@ -274,36 +308,40 @@ export const DeckEditor = ({
     const previous = stack.undo.at(-1);
     if (!previous) return;
     stack.undo = stack.undo.slice(0, -1);
+    const now = library.get(deck.id)?.cards ?? cards;
+    const back = apply(previous.cards, previous.cover);
     stack.redo = [
       ...stack.redo,
       {
-        cards: library.get(deck.id)?.cards ?? cards,
+        cards: now,
         renames: invert(previous.renames),
+        ...(back ? { cover: back } : {}),
       },
     ];
     setHistoryVersion((version) => version + 1);
-    library.update(deck.id, { cards: previous.cards });
     follow(previous.renames, previous.cards);
     flashSaved();
-  }, [cards, deck.id, flashSaved, follow, library]);
+  }, [apply, cards, deck.id, flashSaved, follow, library]);
 
   const redo = useCallback(() => {
     const stack = history.current;
     const next = stack.redo.at(-1);
     if (!next) return;
     stack.redo = stack.redo.slice(0, -1);
+    const now = library.get(deck.id)?.cards ?? cards;
+    const back = apply(next.cards, next.cover);
     stack.undo = [
       ...stack.undo,
       {
-        cards: library.get(deck.id)?.cards ?? cards,
+        cards: now,
         renames: invert(next.renames),
+        ...(back ? { cover: back } : {}),
       },
     ];
     setHistoryVersion((version) => version + 1);
-    library.update(deck.id, { cards: next.cards });
     follow(next.renames, next.cards);
     flashSaved();
-  }, [cards, deck.id, flashSaved, follow, library]);
+  }, [apply, cards, deck.id, flashSaved, follow, library]);
 
   /** The deck as stored now: newer than `cards` between renders. */
   const current = useCallback(
