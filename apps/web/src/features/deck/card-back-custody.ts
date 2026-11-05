@@ -166,6 +166,30 @@ export class CardBackCustodyStore {
     return true;
   }
 
+  /**
+   * Puts `url` in place of a seat's kept back without sending it: the table
+   * keeps the back it shows (a choice an Undo has moved past, or a seat out
+   * of play), and the next table is given `url`. A back on its way is
+   * replaced as a new choice instead, to follow it to the table.
+   */
+  retain(target: DeckBuilderTarget, url: string): boolean {
+    if (!validUrl(url)) return false;
+    const current = this.#state.slots[target];
+    if (current.url === url) return false;
+    this.#replaceSlot(
+      target,
+      current.installingRevision === undefined
+        ? createSlot(url, current.revision, current.installedRevision)
+        : createSlot(
+            url,
+            nextRevision(current.revision),
+            current.installedRevision,
+            current.installingRevision
+          )
+    );
+    return true;
+  }
+
   setAlternateEnabled(enabled: boolean): boolean {
     if (enabled === this.#alternateEnabled) return false;
     let alternate = this.#state.slots.alternate;

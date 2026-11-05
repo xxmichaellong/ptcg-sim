@@ -1363,6 +1363,78 @@ describe('DeckBuilderSession', () => {
       expect(cardBackStore.seatCardBack('main')).toBe(DESIGN);
     });
 
+    it('leaves the table its back when a deleted one is only kept: a choice an Undo moved past, or P2 out of play', async () => {
+      const DESIGN = 'design:1.navy.stripes.gold.star';
+      const OTHER = 'https://example.test/undone.png';
+      const installed = (
+        store: CardBackCustodyStore,
+        seat: 'main' | 'alternate'
+      ) => {
+        store.replace(seat, DESIGN);
+        const receipt = store.beginNextDirtyInstall()!;
+        store.settleInstall(receipt, 'installed');
+      };
+      const requests: BrowserCardBackRequestOptions[] = [];
+      const requestCardBack: BrowserCardBackRequest = async (options) => {
+        if (options) requests.push(options);
+        return undefined;
+      };
+      const forget = async () => {
+        await click('#changeCardBackButton');
+        let undo: (() => void) | undefined;
+        act(() => {
+          undo = requests.at(-1)?.forgetWorn?.(DESIGN);
+        });
+        return undo;
+      };
+      {
+        // Chosen and put on; the game's Undo put another back since.
+        const cardBackStore = new CardBackCustodyStore();
+        installed(cardBackStore, 'main');
+        const session = new FakeSession();
+        session.showCardBack(ownPlayerId, OTHER);
+        await renderSession({
+          session,
+          cardBackStore,
+          open: true,
+          requestCardBack,
+        });
+        expect(sleeve()).toBe(OTHER);
+        const undo = await forget();
+        // The table keeps its back; the next table gets Standard.
+        expect(session.commands).toEqual([]);
+        expect(sleeve()).toBe(OTHER);
+        expect(cardBackStore.getSnapshot().slots.main).toMatchObject({
+          url: STANDARD_CARD_BACK,
+          dirty: false,
+        });
+        act(() => undo?.());
+        expect(cardBackStore.getSnapshot().slots.main.url).toBe(DESIGN);
+        expect(session.commands).toEqual([]);
+      }
+      {
+        // P2's back, kept while Play online leaves P2 out of play.
+        const cardBackStore = new CardBackCustodyStore();
+        installed(cardBackStore, 'alternate');
+        const session = new FakeSession();
+        await renderSession({
+          session,
+          cardBackStore,
+          open: true,
+          alternateEnabled: false,
+          requestCardBack,
+        });
+        expect(cardBackStore.getSnapshot().alternateEnabled).toBe(false);
+        const undo = await forget();
+        expect(session.commands).toEqual([]);
+        expect(cardBackStore.getSnapshot().slots.alternate.url).toBe(
+          STANDARD_CARD_BACK
+        );
+        act(() => undo?.());
+        expect(cardBackStore.getSnapshot().slots.alternate.url).toBe(DESIGN);
+      }
+    });
+
     it('takes a deleted back off the seats wearing it, on the table at once, and puts it back with its Undo', async () => {
       const DESIGN = 'design:1.navy.stripes.gold.star';
       const session = new FakeSession();

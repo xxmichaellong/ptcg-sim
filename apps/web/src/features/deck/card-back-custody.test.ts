@@ -151,6 +151,40 @@ describe('CardBackCustodyStore', () => {
     expect(store.getSnapshot().slots.alternate.url).toBeUndefined();
   });
 
+  it('swaps a kept back in place without sending it, and follows one on its way', () => {
+    const store = new CardBackCustodyStore();
+    store.replace('main', '/deleted.png');
+    store.settleInstall(store.beginNextDirtyInstall()!, 'installed');
+    const before = store.getSnapshot().slots.main;
+    expect(store.retain('main', '/standard.png')).toBe(true);
+    expect(store.retain('main', '/standard.png')).toBe(false);
+    expect(store.retain('main', '')).toBe(false);
+    // Nothing to send; the next table is given it.
+    expect(store.getSnapshot().slots.main).toMatchObject({
+      url: '/standard.png',
+      revision: before.revision,
+      dirty: false,
+    });
+    expect(store.prepareForNewSession()).toBe(true);
+    expect(store.getSnapshot().slots.main).toMatchObject({
+      url: '/standard.png',
+      dirty: true,
+    });
+    // On its way: a new choice, sent after it.
+    const receipt = store.beginNextDirtyInstall()!;
+    expect(store.retain('main', '/other.png')).toBe(true);
+    store.settleInstall(receipt, 'installed');
+    expect(store.getSnapshot().slots.main).toMatchObject({
+      url: '/other.png',
+      dirty: true,
+    });
+    // P2 out of play still has its kept back swapped.
+    store.replace('alternate', '/deleted.png');
+    store.setAlternateEnabled(false);
+    expect(store.retain('alternate', '/standard.png')).toBe(true);
+    expect(store.getSnapshot().slots.alternate.url).toBe('/standard.png');
+  });
+
   it('revokes alternate installs without deleting their retained selection', () => {
     const store = new CardBackCustodyStore();
     store.replace('alternate', '/alternate.png');

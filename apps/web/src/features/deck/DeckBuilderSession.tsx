@@ -737,20 +737,23 @@ export const DeckBuilderSession = ({
     },
     [cardBackStore, session, shownSession]
   );
-  const readCardBacks = useCallback(() => {
-    const { slots } = cardBackStore.getSnapshot();
-    const shown = (seat: DeckBuilderTarget): string => {
-      const slot = slots[seat];
+  /** The back a seat shows: a choice on its way, else the table's. */
+  const shownCardBack = useCallback(
+    (seat: DeckBuilderTarget): string | undefined => {
+      const slot = cardBackStore.getSnapshot().slots[seat];
       const pending = slot.dirty || slot.installingRevision !== undefined;
       return (
         (pending ? slot.url : undefined) ??
         roomCardBackOf(session ?? shownSession, seat) ??
-        slot.url ??
-        ''
+        slot.url
       );
-    };
-    return `${shown('main')}\n${shown('alternate')}`;
-  }, [cardBackStore, session, shownSession]);
+    },
+    [cardBackStore, session, shownSession]
+  );
+  const readCardBacks = useCallback(
+    () => `${shownCardBack('main') ?? ''}\n${shownCardBack('alternate') ?? ''}`,
+    [shownCardBack]
+  );
   const cardBackKey = useSyncExternalStore(
     subscribeCardBacks,
     readCardBacks,
@@ -773,9 +776,10 @@ export const DeckBuilderSession = ({
       const current = cardBacks[target];
       // A back deleted in the chooser comes off everything wearing it: the
       // saved decks, the seats whose own back it was (said so: a deck with
-      // no back of its own would take the seat's), and the seats wearing it
-      // now, on the table at once. All wear Standard again; its Undo puts
-      // it back on those still in Standard.
+      // no back of its own would take the seat's), the seats showing it
+      // (on the table at once), and any seat keeping it unshown (a choice
+      // an Undo moved past, P2 out of play), for the next table. All wear
+      // Standard again; its Undo puts it back on those still in Standard.
       const forgetWorn = (back: string): (() => void) => {
         const wearing = library
           .getSnapshot()
@@ -784,24 +788,31 @@ export const DeckBuilderSession = ({
         const seats = DECK_TARGETS.filter(
           (seat) => cardBackStore.seatCardBack(seat) === back
         );
-        const { slots } = cardBackStore.getSnapshot();
-        const worn = DECK_TARGETS.filter(
+        const inPlay = (seat: DeckBuilderTarget) =>
+          seat === 'main' || cardBackStore.getSnapshot().alternateEnabled;
+        const shown = DECK_TARGETS.filter(
+          (seat) => inPlay(seat) && shownCardBack(seat) === back
+        );
+        const kept = DECK_TARGETS.filter(
           (seat) =>
-            slots[seat].url === back ||
-            roomCardBackOf(session ?? shownSession, seat) === back
+            !shown.includes(seat) &&
+            cardBackStore.getSnapshot().slots[seat].url === back
         );
         const putOn = (each: readonly DeckBuilderTarget[], url: string) => {
           let changed = false;
           for (const seat of each) changed = putCardBack(seat, url) || changed;
           if (changed) cardBackCoordinator.current?.flush();
         };
+        const stillStandard = (seat: DeckBuilderTarget) =>
+          cardBackStore.getSnapshot().slots[seat].url === STANDARD_CARD_BACK;
         for (const id of wearing) {
           library.update(id, { cardBack: STANDARD_CARD_BACK });
         }
         for (const seat of seats) {
           cardBackStore.chooseSeatCardBack(seat, STANDARD_CARD_BACK);
         }
-        putOn(worn, STANDARD_CARD_BACK);
+        for (const seat of kept) cardBackStore.retain(seat, STANDARD_CARD_BACK);
+        putOn(shown, STANDARD_CARD_BACK);
         return () => {
           for (const id of wearing) {
             if (library.get(id)?.cardBack === STANDARD_CARD_BACK) {
@@ -813,11 +824,10 @@ export const DeckBuilderSession = ({
               cardBackStore.chooseSeatCardBack(seat, back);
             }
           }
-          const { slots: now } = cardBackStore.getSnapshot();
-          putOn(
-            worn.filter((seat) => now[seat].url === STANDARD_CARD_BACK),
-            back
-          );
+          for (const seat of kept.filter(stillStandard)) {
+            cardBackStore.retain(seat, back);
+          }
+          putOn(shown.filter(stillStandard), back);
         };
       };
       chooseCardBack(target, {
@@ -832,8 +842,7 @@ export const DeckBuilderSession = ({
       chooseCardBack,
       library,
       putCardBack,
-      session,
-      shownSession,
+      shownCardBack,
     ]
   );
 

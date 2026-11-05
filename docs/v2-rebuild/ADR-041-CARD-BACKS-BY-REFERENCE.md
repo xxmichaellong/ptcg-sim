@@ -184,9 +184,11 @@ complete and has a lot of options"; and there was no way to delete a design.
 - **Deleting:** each of the player's own backs in Yours has a delete
   button. It goes at once, with Undo in the chooser (a notice under the
   modal dialog could not be reached): off the recent backs, the saved decks
-  that wear it, the seats whose own back it was, and the seats wearing it
-  now (on the table at once). All say Standard outright, so no fallback
-  brings it back; Undo puts it back on those still in Standard. An uploaded
+  that wear it, the seats whose own back it was, the seats showing it (on
+  the table at once), and any seat keeping it unshown (a choice a game's
+  Undo moved past, P2 out of play: swapped in place, nothing sent, so the
+  table keeps its back). All say Standard outright, so no fallback brings
+  it back; Undo puts it back on those still in Standard. An uploaded
   image stays in the store (it is shared by reference and may be worn in
   rooms and saves); only this player's ties to it go.
 
