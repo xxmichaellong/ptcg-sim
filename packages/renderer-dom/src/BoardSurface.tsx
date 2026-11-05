@@ -2382,9 +2382,22 @@ export const BoardSurface = ({
         )
       );
       element.style.setProperty('--ptcgsim-peek-scale', String(scale));
+      // The shift is in the card's own pixels: as wide as it is laid out,
+      // which the tilted table's near hand is at the size it is drawn.
+      const laidOut =
+        element.querySelector<HTMLElement>('.ptcgsim-card__body')
+          ?.offsetWidth ?? 0;
       element.style.setProperty(
         '--ptcgsim-peek-shift',
-        `${String(peekShift(card, painted, scale, scene.viewport.width))}px`
+        `${String(
+          peekShift(
+            card,
+            painted,
+            scale,
+            scene.viewport.width,
+            laidOut > 0 ? laidOut : card.bounds.width
+          )
+        )}px`
       );
       element.setAttribute('data-peek', '');
     }

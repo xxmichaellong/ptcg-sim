@@ -31,6 +31,14 @@ describe('peekShift', () => {
     ).toBeCloseTo((31 * 60) / 90);
   });
 
+  it('moves a card laid out at the size it is drawn by that measure', () => {
+    // The tilted table's near hand lays a 60px scene card out 90px wide:
+    // 31px on screen is 31 of its own, not 31 * 60 / 90.
+    expect(
+      peekShift(card(60), { x: 0, y: 0, width: 90, height: 126 }, 1.6, 390, 90)
+    ).toBeCloseTo(31);
+  });
+
   it('centres a card drawn wider than the screen', () => {
     expect(
       peekShift(card(300), { x: 20, y: 0, width: 300, height: 420 }, 1.6, 390)
