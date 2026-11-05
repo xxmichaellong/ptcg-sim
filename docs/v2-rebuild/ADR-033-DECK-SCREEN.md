@@ -330,7 +330,9 @@ specifically without blocking, and go from deck to table in one click.
     - **The seats' switch is one segmented control**, as the app's other
       two-way choices are: a sunken track with no border, a segment per
       seat. The chosen segment is raised (the app's raised-control shadow)
-      and tinted 30% in its seat's colour, and its seat ("P1") sits on a
+      and tinted 30% in its seat's colour (46% by night, where the warm
+      surface greyed P1's blue; its count drawn nearer the ink there to keep
+      4.5:1), and its seat ("P1") sits on a
       chip of that colour; the other segment lies flat in the track, its
       seat named in its colour, nothing dimmed. No ring, no border round a
       tab, and no line under the bar: the seat's colour still washes down

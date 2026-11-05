@@ -119,11 +119,17 @@
 .deck-tray[data-active='true'] {
   background-color: color-mix(
     in oklab,
-    var(--seat-color) 30%,
+    var(--seat-color) var(--seat-tint, 30%),
     var(--color-surface-3)
   );
   box-shadow: var(--highlight-top), var(--shadow-1);
   color: var(--color-text);
+}
+
+/* By night the warm surface greys a third of the seat's colour (P1's blue
+   read grey-blue): more of it, still under the light ink at 4.5:1. */
+:root[data-theme='night'] .deck-tray[data-active='true'] {
+  --seat-tint: 46%;
 }
 
 /* Its deck: the cover's card, the seat and what the deck placed over its
@@ -243,9 +249,18 @@
   --count-color: var(--color-success-ink);
 }
 
-/* On the chosen segment's tint, toward the ink so it still reads at 4.5:1. */
+/* On the chosen segment's tint, toward the ink so it still reads at 4.5:1
+   (further by night, on the stronger tint). */
 .deck-tray[data-active='true'] .deck-screen__seat-count {
-  color: color-mix(in oklab, var(--count-color) 55%, var(--color-text));
+  color: color-mix(
+    in oklab,
+    var(--count-color) var(--seat-count-share, 55%),
+    var(--color-text)
+  );
+}
+
+:root[data-theme='night'] .deck-tray[data-active='true'] {
+  --seat-count-share: 25%;
 }
 
 /* The seat's sleeve: its card back, at the end of its tab. */

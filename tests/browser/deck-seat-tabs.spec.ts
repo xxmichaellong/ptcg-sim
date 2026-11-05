@@ -61,8 +61,11 @@ const seatPaint = (page: Page) =>
       probe.remove();
       return value;
     };
+    // By night a larger share: the warm surface greys a third of it.
+    const tintShare =
+      document.documentElement.dataset.theme === 'night' ? 46 : 30;
     const tint = (token: string): string =>
-      mix(token, 30, 'var(--color-surface-3)');
+      mix(token, tintShare, 'var(--color-surface-3)');
     const washOf = (token: string): string => mix(token, 12, 'transparent');
     // A seat's colour as words: toward the theme's ink.
     const ink = (token: string): string => {
