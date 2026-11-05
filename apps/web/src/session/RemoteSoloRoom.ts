@@ -15,10 +15,13 @@ import {
   readBoundedJsonResponse,
   withRequestDeadline,
 } from './browser-json.js';
+import type { RemoteRoomRuntime } from './RemoteRoomRuntime.js';
 import {
   forgetSoloSeat,
   holdSoloRoom,
+  recallSoloLog,
   recallSoloSeats,
+  rememberSoloLog,
   rememberSoloSeat,
   type SoloSeat,
 } from './solo-room-memory.js';
@@ -28,7 +31,11 @@ import { waitForAdmission } from './wait-for-admission.js';
 const OWN_ROOM_WAIT_MS = 2_000;
 /** How long sitting back down may take before a new table is made. */
 const REJOIN_MS = 12_000;
+/** How long a table shown may take to admit its player and be kept. */
+const KEEP_WAIT_MS = 60_000;
 const MAX_OPEN_RESPONSE_BYTES = 2_048;
+/** How soon a changed log is written down. */
+const LOG_WRITE_MS = 250;
 
 export interface SoloRoomInput {
   readonly buildId: string;
@@ -48,7 +55,11 @@ export class SoloRoomOpenError extends Error {
 
 /** A Solo room, and how to keep it, or open it to an opponent. */
 export interface OpenedSoloRoom extends RemoteRoomCreationResult {
-  /** Remembers it, so a reload sits back down at it. */
+  /**
+   * Remembers it, so a reload sits back down at it: once the room has
+   * admitted its player, so a table that never got going never replaces
+   * one that did.
+   */
   readonly keep: () => void;
   /**
    * Opens this table to an opponent, in place (ADR-044): the same room and
@@ -71,7 +82,50 @@ export interface SoloRoomDependencies {
   readonly admitted?: typeof waitForAdmission;
   readonly fetch?: typeof globalThis.fetch;
   readonly origin?: string;
+  /** Puts a kept log back on a table sat back down at. */
+  readonly restoreLog?: (runtime: RemoteRoomRuntime, roomCode: string) => void;
+  /** Keeps a table's log as it changes; returns how to stop. */
+  readonly keepLog?: (
+    runtime: RemoteRoomRuntime,
+    roomCode: string
+  ) => () => void;
 }
+
+/**
+ * The room sends a table, not the lines that told it: the log kept on this
+ * device goes back up (after the room has bound the table's identity, which
+ * clears it).
+ */
+const restoreKeptLog = (runtime: RemoteRoomRuntime, roomCode: string): void => {
+  const lines = recallSoloLog(roomCode);
+  if (lines.length > 0) runtime.presentation.game.replaceActivity(lines);
+};
+
+const keepLogWritten = (
+  runtime: RemoteRoomRuntime,
+  roomCode: string
+): (() => void) => {
+  const activity = runtime.presentation.game.activity;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const write = (): void => {
+    timer = undefined;
+    rememberSoloLog(
+      roomCode,
+      activity.getSnapshot().entries.map((entry) => entry.effect)
+    );
+  };
+  write();
+  const unsubscribe = activity.subscribe(() => {
+    timer ??= setTimeout(write, LOG_WRITE_MS);
+  });
+  return () => {
+    unsubscribe();
+    if (timer !== undefined) {
+      clearTimeout(timer);
+      write();
+    }
+  };
+};
 
 /**
  * The page's Solo table: the room it sat at last, if it is still there and
@@ -121,6 +175,14 @@ export const openRemoteSoloRoom = async (
       // Gone, refused or out of reach: a new table, which replaces it.
       continue;
     }
+    try {
+      (dependencies.restoreLog ?? restoreKeptLog)(
+        joined.runtime,
+        seat.roomCode
+      );
+    } catch {
+      // The game is back without its old lines: no reason to lose it.
+    }
     // A Solo room invites nobody; its custody holds no claim to pass on.
     const room = joined;
     const none = invitationCustody(seat.roomCode, {}, dependencies);
@@ -134,6 +196,7 @@ export const openRemoteSoloRoom = async (
       seat: () => seat,
       keep: () => remember(seat),
       announce,
+      admitted,
       dependencies,
     });
   }
@@ -162,6 +225,7 @@ export const openRemoteSoloRoom = async (
       remember(seat);
     },
     announce,
+    admitted,
     dependencies,
   });
 };
@@ -191,6 +255,7 @@ const soloRoom = ({
   seat,
   keep,
   announce,
+  admitted,
   dependencies,
 }: {
   readonly base: RemoteRoomBootstrapResult;
@@ -199,13 +264,17 @@ const soloRoom = ({
   readonly seat: () => SoloSeat | undefined;
   readonly keep: () => void;
   readonly announce: { on: boolean };
+  readonly admitted: typeof waitForAdmission;
   readonly dependencies: SoloRoomDependencies;
 }): OpenedSoloRoom => {
   let opened: RemoteRoomInvitationCustody | undefined;
   let disposed = false;
+  let keeping = false;
+  let stopLog: (() => void) | undefined;
   const dispose = (): void => {
     if (disposed) return;
     disposed = true;
+    stopLog?.();
     opened?.dispose();
     disposeSolo();
   };
@@ -214,7 +283,28 @@ const soloRoom = ({
     route: base.route,
     mode: 'solo',
     invitations: soloInvitations,
-    keep,
+    keep: () => {
+      if (keeping) return;
+      keeping = true;
+      void admitted(
+        base.runtime,
+        AbortSignal.timeout(KEEP_WAIT_MS),
+        'player'
+      ).then(
+        () => {
+          if (disposed || opened) return;
+          keep();
+          const claim = seat();
+          if (claim) {
+            stopLog = (dependencies.keepLog ?? keepLogWritten)(
+              base.runtime,
+              claim.roomCode
+            );
+          }
+        },
+        () => undefined
+      );
+    },
     dispose,
     goOnline: async ({ displayName, signal }) => {
       const claim = seat();
@@ -237,6 +327,9 @@ const soloRoom = ({
         dependencies
       );
       announce.on = true;
+      // A room's log is not kept as the Solo table's.
+      stopLog?.();
+      stopLog = undefined;
       (dependencies.forget ?? forgetSoloSeat)(claim.roomCode);
       return {
         runtime: base.runtime,

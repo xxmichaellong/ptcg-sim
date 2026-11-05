@@ -1,5 +1,7 @@
 import { V2_ROOM_CODE_PATTERN } from '@ptcgsim/protocol';
 
+import type { ActivityPresentationEffect } from '../presentation/PresentationEffects.js';
+
 /**
  * The page's own Solo table is a room like any other, kept by the Worker
  * once claimed. This browser remembers its room code and the seat claim
@@ -18,6 +20,7 @@ export interface SoloSeat {
 }
 
 const KEY = 'ptcgsim.solo-room.v1';
+const LOG_KEY = 'ptcgsim.solo-log.v1';
 const FORMAT = 'ptcgsim-solo-room-v1';
 const LOCK_PREFIX = 'ptcgsim.solo-room:';
 
@@ -161,8 +164,99 @@ export const forgetSoloSeat = (roomCode: string): void => {
     if (read(storage)?.roomCode !== roomCode) continue;
     try {
       storage?.removeItem(KEY);
+      storage?.removeItem(LOG_KEY);
     } catch {
       // Refused: the next load finds the room is no Solo table and moves on.
     }
   }
+};
+
+const LOG_FORMAT = 'ptcgsim-solo-log-v1';
+const LOG_CATEGORIES = new Set([
+  'player',
+  'announcement',
+  'message',
+  'spectator',
+]);
+
+const isMessage = (value: unknown, depth = 0): boolean => {
+  if (typeof value !== 'object' || value === null || depth > 4) return false;
+  const { id, values } = value as Record<string, unknown>;
+  if (typeof id !== 'string') return false;
+  if (values === undefined) return true;
+  if (typeof values !== 'object' || values === null) return false;
+  return Object.values(values).every(
+    (entry) =>
+      typeof entry === 'string' ||
+      typeof entry === 'number' ||
+      isMessage(entry, depth + 1)
+  );
+};
+
+/** A line of the log as the presentation keeps it, checked as read back. */
+const isLogLine = (value: unknown): value is ActivityPresentationEffect => {
+  if (typeof value !== 'object' || value === null) return false;
+  const line = value as Record<string, unknown>;
+  return (
+    line['kind'] === 'activity' &&
+    typeof line['category'] === 'string' &&
+    LOG_CATEGORIES.has(line['category']) &&
+    typeof line['revision'] === 'number' &&
+    typeof line['eventType'] === 'string' &&
+    (line['playerId'] === undefined || typeof line['playerId'] === 'string') &&
+    isMessage(line['message'])
+  );
+};
+
+/**
+ * The Solo table's log, kept beside its seat (in the same storages, while
+ * they hold that room), so a reload shows it again: the room sends a table,
+ * not the lines that told it.
+ */
+export const rememberSoloLog = (
+  roomCode: string,
+  lines: readonly ActivityPresentationEffect[]
+): void => {
+  const value = JSON.stringify({ format: LOG_FORMAT, roomCode, lines });
+  for (const kind of ['session', 'local'] as const) {
+    const storage = storageOf(kind);
+    if (read(storage)?.roomCode !== roomCode) continue;
+    try {
+      storage?.setItem(LOG_KEY, value);
+    } catch {
+      // Storage full or refused: the log is simply not kept.
+    }
+  }
+};
+
+/** The log kept for a room, this tab's first; none if none or damaged. */
+export const recallSoloLog = (
+  roomCode: string
+): readonly ActivityPresentationEffect[] => {
+  for (const kind of ['session', 'local'] as const) {
+    let raw: string | null | undefined;
+    try {
+      raw = storageOf(kind)?.getItem(LOG_KEY);
+    } catch {
+      continue;
+    }
+    if (!raw) continue;
+    try {
+      const value: unknown = JSON.parse(raw);
+      if (typeof value !== 'object' || value === null) continue;
+      const kept = value as Record<string, unknown>;
+      const lines = kept['lines'];
+      if (
+        kept['format'] === LOG_FORMAT &&
+        kept['roomCode'] === roomCode &&
+        Array.isArray(lines) &&
+        lines.every(isLogLine)
+      ) {
+        return lines;
+      }
+    } catch {
+      // A damaged log is no log.
+    }
+  }
+  return [];
 };

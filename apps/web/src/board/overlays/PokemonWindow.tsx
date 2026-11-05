@@ -27,6 +27,7 @@ import { isInputMethodKey } from '../../ui/input-method.js';
 import { Tooltip } from '../../ui/Tooltip.js';
 import { resolveCardText, useTableCardCatalog } from '../card-text.js';
 import {
+  moveNameOf,
   parseLegacyDamageInput,
   type LegacyBoardOverlayActionRequest,
 } from '../resolveLegacyBoardOverlayAction.js';
@@ -827,9 +828,12 @@ export const PokemonWindow = ({
   const hpModifier = stack.hpModifier ?? 0;
   // The Abilities marked used: by name, or all of them where the Pokémon's
   // marker is on with none named (set from the card's menu).
+  // Names read as the room keeps them (a written card's spacing aside).
   const named = stack.abilityUsed ? (stack.abilitiesUsed ?? []) : [];
+  const markedByName = (name: string): boolean =>
+    named.includes(moveNameOf(name));
   const abilityMarked = (name: string): boolean =>
-    stack.abilityUsed && (named.length === 0 || named.includes(name));
+    stack.abilityUsed && (named.length === 0 || markedByName(name));
   const showStatus =
     canMark || damage > 0 || condition !== null || text?.hp !== undefined;
 
@@ -1072,7 +1076,7 @@ export const PokemonWindow = ({
                         onUsed();
                       }}
                       onClear={() =>
-                        named.includes(ability.name)
+                        markedByName(ability.name)
                           ? act({
                               kind: 'context',
                               action: 'unmarkAbility',

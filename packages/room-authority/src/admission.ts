@@ -1427,7 +1427,9 @@ export const OPENED_ROOM_SEAT_NAME = 'Player 2';
  * whoever takes it. Both seats' board-flip consent, given in Solo, is
  * withdrawn: in a room each player gives their own. The replay history
  * starts again from here, so undo cannot reach back into the Solo game, and
- * every session is shown the table under the room's rules.
+ * every session is shown the table under the room's rules. Asked again once
+ * opened (its answer lost on the way), it renews the claims while the
+ * second seat is free, and refuses once someone has taken it.
  */
 export const openSoloRoom = async (
   current: RoomAuthoritySnapshot,
@@ -1460,11 +1462,19 @@ export const openSoloRoom = async (
   ) {
     return reject('invalid_capability');
   }
-  if (current.mode !== 'solo') return reject('not_solo');
   const openSeat = Object.values(admission.seats).find(
     (seat) => seat.playerId !== hostSeat.playerId
   );
-  if (!openSeat || openSeat.claimedSessionId !== null) {
+  if (!openSeat) throw new Error('A room has a second seat');
+  // Opened already, its answer lost on the way (a gateway's error): the
+  // host asks again. While nobody has taken the second seat, its claim and
+  // the spectators' are renewed and handed over again, nothing else
+  // changed; taken, the room is someone's game.
+  const reopening = current.mode !== 'solo';
+  if (reopening && openSeat.claimedSessionId !== null) {
+    return reject('not_solo');
+  }
+  if (openSeat.claimedSessionId !== null) {
     throw new Error('A Solo room has one open second seat');
   }
 
@@ -1507,6 +1517,40 @@ export const openSoloRoom = async (
   }
   if (!claims) throw new Error('Capability source repeated its claims');
 
+  const renewedAdmission = {
+    ...admission,
+    spectatorCapabilityDigest: claims.spectatorDigest,
+    seats: {
+      ...admission.seats,
+      [openSeat.playerId]: {
+        ...openSeat,
+        claimCapabilityDigest: claims.seatDigest,
+      },
+    },
+  };
+  if (reopening) {
+    const renewed: RoomAuthoritySnapshot = {
+      ...current,
+      authorityVersion: current.authorityVersion + 1,
+      admission: renewedAdmission,
+    };
+    assertAuthoritySnapshotInvariants(renewed);
+    await dependencies.persistence.commitAdmission({
+      expectedAuthorityVersion: current.authorityVersion,
+      snapshot: renewed,
+      kind: 'room_reopened',
+    });
+    return {
+      accepted: true,
+      committed: true,
+      snapshot: renewed,
+      playerTwoSeatCapability: claims.seat,
+      spectatorCapability: claims.spectator,
+      // Nobody's view changes.
+      refreshes: [],
+    };
+  }
+
   const hostName = request.displayName.trim();
   const state = {
     ...current.state,
@@ -1538,18 +1582,7 @@ export const openSoloRoom = async (
     state,
     replayHistory: createReplayHistory(state),
     sessions,
-    admission: {
-      ...admission,
-      playerSeatLimit: 2,
-      spectatorCapabilityDigest: claims.spectatorDigest,
-      seats: {
-        ...admission.seats,
-        [openSeat.playerId]: {
-          ...openSeat,
-          claimCapabilityDigest: claims.seatDigest,
-        },
-      },
-    },
+    admission: { ...renewedAdmission, playerSeatLimit: 2 },
   };
   let identities = opened.identities;
   const refreshes: AuthorityDelivery[] = [];

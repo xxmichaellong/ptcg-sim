@@ -29,11 +29,15 @@ free again and the claim takes it with a new session.
 
 ## Decision
 
-1. **The page remembers its Solo room.** When a Solo room's table is shown,
-   its room code and seat claim are written to session storage (this tab's
-   room) and local storage (the browser's latest), as
-   `ptcgsim.solo-room.v1` (`solo-room-memory.ts`). A tutorial's practice
-   room is never remembered.
+1. **The page remembers its Solo room.** When a Solo room's table is shown
+   and its room has admitted the player (a table that never got going never
+   replaces one that did), its room code and seat claim are written to
+   session storage (this tab's room) and local storage (the browser's
+   latest), as `ptcgsim.solo-room.v1` (`solo-room-memory.ts`), and its log
+   beside them as it changes (`ptcgsim.solo-log.v1`): the room sends a table
+   on rejoining, not the lines that told it. A log read back is checked line
+   by line and dropped whole if any is damaged. A tutorial's practice room
+   is never remembered.
 2. **Landing on Solo sits back down first.** `openRemoteSoloRoom` tries this
    tab's room, then the browser's latest: it exchanges the claim, connects,
    and waits for admission (12 s at most). A room that refuses, has gone, or
@@ -53,7 +57,10 @@ free again and the claim takes it with a new session.
    with a Solo table at hand (open or parked behind the sheet), opens that
    table instead of making a room: `POST /v2/rooms/:code/open` with the Solo
    player's own seat claim and the name they now play under
-   (`RoomOpenRequest`). The authority (`openSoloRoom`, admission kind
+   (`RoomOpenRequest`). Asked again once opened (its answer lost on the way:
+   a gateway's error), it renews the second seat's and spectators' claims
+   and answers again, nothing else changed (`room_reopened`), while the
+   second seat is free; once someone has taken it, it refuses. The authority (`openSoloRoom`, admission kind
    `room_opened`) turns the room multiplayer with two seats, gives the second
    seat and the spectators new claims (the second seat's claim made with the
    room was never handed out) and answers with them (`RoomOpenResponse`),

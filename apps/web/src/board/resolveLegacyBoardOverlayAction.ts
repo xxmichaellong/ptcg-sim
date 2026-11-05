@@ -538,13 +538,7 @@ const resolveContextAction = (
       )
         return rejected('unsupported_target');
       if (view.viewer.kind !== 'player') return rejected('not_player');
-      // One line, as long as the room takes: a printed name that runs on
-      // is told cut, not refused.
-      const name = request.name
-        .replace(/\s+/gu, ' ')
-        .trim()
-        .slice(0, CARD_TEXT_LIMITS.name)
-        .trim();
+      const name = moveNameOf(request.name);
       if (!isMoveName(name)) return rejected('invalid_value');
       if (request.action === 'unmarkAbility') {
         // Only a mark that is on.
@@ -821,6 +815,14 @@ const resolveZoneAction = (
  * Resolves complete overlay workflows and returns explicit local input/choice
  * outcomes when a request is incomplete; no guessed value becomes a command.
  */
+/**
+ * An Ability's or attack's name as the room keeps it: one line, as long as
+ * the room takes (a printed name that runs on is told cut, not refused).
+ * The window finds a name's Used mark by the same reading.
+ */
+export const moveNameOf = (raw: string): string =>
+  raw.replace(/\s+/gu, ' ').trim().slice(0, CARD_TEXT_LIMITS.name).trim();
+
 export const resolveLegacyBoardOverlayAction = (
   view: MatchViewState,
   request: LegacyBoardOverlayActionRequest,

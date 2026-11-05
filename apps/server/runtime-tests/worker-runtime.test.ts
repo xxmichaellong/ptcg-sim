@@ -188,7 +188,7 @@ describe('Cloudflare Worker runtime', () => {
     );
   });
 
-  it('opens a seated Solo room to an opponent in place, once, with a claim for its second seat', async () => {
+  it('opens a seated Solo room to an opponent in place, with a claim for its second seat, renewed if asked again', async () => {
     const created = await createRoom('solo');
     const ticket = await issuePlayerTicket(created, 'one', 'Blue');
     const socket = await connect(created);
@@ -226,14 +226,23 @@ describe('Cloudflare Worker runtime', () => {
       mode: 'multiplayer',
       admission: { playerSeatLimit: 2 },
     });
-    // Once a room, it opens no more.
-    expect(
-      (await open(created.credentials.playerOneSeatCapability)).status
-    ).toBe(409);
-    // The second seat takes its new claim.
+    // Asked again (its answer lost on the way), it renews the claims while
+    // the second seat is free: the lost one is spent, the new one works.
+    const again = await open(created.credentials.playerOneSeatCapability);
+    expect(again.status).toBe(201);
+    const renewed = (await again.json()) as typeof answer;
+    expect(renewed.credentials.playerTwoSeatCapability).not.toBe(
+      answer.credentials.playerTwoSeatCapability
+    );
+    await expect(
+      issueAdmissionTicket(created, answer.credentials.playerTwoSeatCapability, {
+        displayName: 'Misty',
+        requestedRole: 'player',
+      })
+    ).rejects.toThrow();
     const seatTwo = await issueAdmissionTicket(
       created,
-      answer.credentials.playerTwoSeatCapability,
+      renewed.credentials.playerTwoSeatCapability,
       { displayName: 'Misty', requestedRole: 'player' }
     );
     expect(seatTwo.admissionTicket).toBeTypeOf('string');

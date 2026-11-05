@@ -252,6 +252,15 @@ export type PersistedAdmissionTransaction =
       readonly snapshot: RoomAuthoritySnapshot;
       /** A Solo room opened to an opponent in place (openSoloRoom). */
       readonly kind: 'room_opened';
+    }
+  | {
+      readonly expectedAuthorityVersion: number;
+      readonly snapshot: RoomAuthoritySnapshot;
+      /**
+       * An opened room's second-seat and spectator claims renewed, for a
+       * host whose answer was lost (openSoloRoom asked again).
+       */
+      readonly kind: 'room_reopened';
     };
 
 export interface AdmissionPersistence {

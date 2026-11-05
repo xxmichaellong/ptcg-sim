@@ -893,6 +893,80 @@ const roomOpeningProblems = (
 };
 
 /**
+ * What renewing an opened room's claims may change (a host whose answer
+ * was lost asks again, `openSoloRoom`): the free second seat's claim and
+ * the spectators', both new and distinct; nothing else at all.
+ */
+const roomReopeningProblems = (
+  current: RoomAuthoritySnapshot,
+  candidate: RoomAuthoritySnapshot
+): string[] => {
+  const problems: string[] = [];
+  const before = current.admission;
+  const after = candidate.admission;
+  if (current.mode !== 'multiplayer' || candidate.mode !== 'multiplayer') {
+    problems.push('claim renewal is for a room already opened');
+  }
+  if (!before || !after) return problems;
+  const seatIds = Object.keys(before.seats).sort();
+  if (!structurallyEqual(Object.keys(after.seats).sort(), seatIds)) {
+    problems.push('claim renewal changed the seats');
+    return problems;
+  }
+  const changed = seatIds.filter(
+    (playerId) =>
+      after.seats[playerId]!.claimCapabilityDigest !==
+      before.seats[playerId]!.claimCapabilityDigest
+  );
+  const renewed = changed[0];
+  if (
+    changed.length !== 1 ||
+    renewed === undefined ||
+    before.seats[renewed]!.claimedSessionId !== null ||
+    !structurallyEqual(
+      { ...after.seats[renewed]!, claimCapabilityDigest: '' },
+      { ...before.seats[renewed]!, claimCapabilityDigest: '' }
+    )
+  ) {
+    problems.push('claim renewal must renew exactly the free seat claim');
+  }
+  for (const playerId of seatIds) {
+    if (
+      playerId !== renewed &&
+      !structurallyEqual(after.seats[playerId], before.seats[playerId])
+    ) {
+      problems.push('claim renewal changed another seat');
+    }
+  }
+  if (
+    after.spectatorCapabilityDigest === null ||
+    after.spectatorCapabilityDigest === before.spectatorCapabilityDigest
+  ) {
+    problems.push('claim renewal must give spectators a new capability');
+  }
+  const digests = [
+    ...seatIds.map((playerId) => after.seats[playerId]!.claimCapabilityDigest),
+    after.spectatorCapabilityDigest,
+  ];
+  if (new Set(digests).size !== digests.length) {
+    problems.push('claim renewal reused a capability');
+  }
+  if (
+    !structurallyEqual(
+      { ...after, seats: {}, spectatorCapabilityDigest: null },
+      { ...before, seats: {}, spectatorCapabilityDigest: null }
+    ) ||
+    !structurallyEqual(candidate.state, current.state) ||
+    !structurallyEqual(candidate.replayHistory, current.replayHistory) ||
+    !structurallyEqual(candidate.identities, current.identities) ||
+    !structurallyEqual(candidate.sessions, current.sessions)
+  ) {
+    problems.push('claim renewal changed more than its claims');
+  }
+  return problems;
+};
+
+/**
  * Validates a proofless admission transaction against its durable predecessor.
  * Snapshot validation alone cannot prove which admission operation produced it.
  */
@@ -912,6 +986,7 @@ export const assertAdmissionTransactionTransition = (
   }
   // Only a Solo room opened to an opponent changes what kind of room it is.
   const opening = transaction.kind === 'room_opened';
+  const reopening = transaction.kind === 'room_reopened';
   if (!opening && candidate.mode !== current.mode) {
     problems.push('admission transaction changed authority mode');
   }
@@ -932,8 +1007,9 @@ export const assertAdmissionTransactionTransition = (
       problems.push('admission transaction changed the player-seat limit');
     }
     if (
+      !reopening &&
       candidateAdmission.spectatorCapabilityDigest !==
-      currentAdmission.spectatorCapabilityDigest
+        currentAdmission.spectatorCapabilityDigest
     ) {
       problems.push('admission transaction changed the spectator capability');
     }
@@ -1021,6 +1097,8 @@ export const assertAdmissionTransactionTransition = (
     }
   } else if (transaction.kind === 'room_opened') {
     problems.push(...roomOpeningProblems(current, candidate));
+  } else if (transaction.kind === 'room_reopened') {
+    problems.push(...roomReopeningProblems(current, candidate));
   } else if (transaction.kind === 'sessions_expired') {
     unchangedAuthorityData('session expiry');
     if (!structurallyEqual(candidate.identities, current.identities)) {

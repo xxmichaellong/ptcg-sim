@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 
-import { idle, zoneCount } from './support/multi-select.js';
+import { idle, logLines, zoneCount } from './support/multi-select.js';
 import { ownRoomBudget } from './support/room-budget.js';
 import { dismissWelcome, openDeck } from './support/table-shell.js';
 
@@ -60,6 +60,10 @@ test('a reload sits back down at the same Solo game; another tab gets its own', 
   expect(room).toMatch(/^[A-Z0-9]{12}$/u);
   const prizes = await zoneCount(page, 'local', 'prizes');
   expect(prizes).toBe(6);
+  const told = await logLines(page);
+  expect(told.length).toBeGreaterThan(0);
+  // Kept as it changes, a moment later.
+  await page.waitForTimeout(600);
 
   await page.reload();
   await ready(page);
@@ -68,6 +72,8 @@ test('a reload sits back down at the same Solo game; another tab gets its own', 
   await expect.poll(() => zoneCount(page, 'local', 'hand')).toBe(7);
   expect(await zoneCount(page, 'local', 'prizes')).toBe(6);
   expect(await zoneCount(page, 'local', 'deck')).toBe(47);
+  // And its log, as it was.
+  await expect.poll(() => logLines(page)).toEqual(told);
 
   // A second tab, while this one sits at the room, makes a table of its own.
   const other = await context.newPage();

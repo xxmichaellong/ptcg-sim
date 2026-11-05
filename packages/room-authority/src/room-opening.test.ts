@@ -255,14 +255,6 @@ describe('opening a Solo room to an opponent', () => {
       deps
     );
     if (!opened.accepted) throw new Error('not opened');
-    // Once a room, it is opened no more.
-    expect(
-      await openSoloRoom(
-        opened.snapshot,
-        { capability: hostClaim, displayName: 'Ash' },
-        deps
-      )
-    ).toMatchObject({ accepted: false, code: 'not_solo' });
     expect(transactions.length).toBe(committed + 1);
   });
 
@@ -326,6 +318,99 @@ describe('opening a Solo room to an opponent', () => {
         kind: 'ticket_issued',
         ticketDigest: 'x'.repeat(64),
       })
+    ).toThrow();
+  });
+
+  it('renews the claims for a host whose answer was lost, while the second seat is free, and no longer once taken', async () => {
+    const { deps, transactions } = harness();
+    const seated = await seatedSoloRoom(deps);
+    const opened = await openSoloRoom(
+      seated.snapshot,
+      { capability: hostClaim, displayName: 'Ash' },
+      deps
+    );
+    if (!opened.accepted) throw new Error('not opened');
+    // The answer never arrived; the host asks again.
+    const again = await openSoloRoom(
+      opened.snapshot,
+      { capability: hostClaim, displayName: 'Ash' },
+      deps
+    );
+    expect(again.accepted).toBe(true);
+    if (!again.accepted) return;
+    expect(transactions.at(-1)).toMatchObject({ kind: 'room_reopened' });
+    expect(() =>
+      assertAdmissionTransactionTransition(
+        opened.snapshot,
+        transactions.at(-1)!
+      )
+    ).not.toThrow();
+    expect(again.playerTwoSeatCapability).not.toBe(
+      opened.playerTwoSeatCapability
+    );
+    expect(again.spectatorCapability).not.toBe(opened.spectatorCapability);
+    // Nothing else of the room changed, and nobody's view.
+    expect(again.snapshot.state).toEqual(opened.snapshot.state);
+    expect(again.snapshot.replayHistory).toEqual(opened.snapshot.replayHistory);
+    expect(again.snapshot.sessions).toEqual(opened.snapshot.sessions);
+    expect(again.refreshes).toEqual([]);
+    // The lost claim is spent; the renewed one takes the seat.
+    expect(
+      (
+        await issueRoomAdmissionTicket(
+          again.snapshot,
+          {
+            capability: opened.playerTwoSeatCapability,
+            displayName: 'Misty',
+            requestedRole: 'player',
+          },
+          1_000,
+          deps
+        )
+      ).accepted
+    ).toBe(false);
+    const ticket = await issueRoomAdmissionTicket(
+      again.snapshot,
+      {
+        capability: again.playerTwoSeatCapability,
+        displayName: 'Misty',
+        requestedRole: 'player',
+      },
+      1_000,
+      deps
+    );
+    if (!ticket.accepted) throw new Error('no ticket');
+    const joined = await redeemRoomAdmissionTicket(
+      ticket.snapshot,
+      {
+        admissionTicket: ticket.admissionTicket,
+        displayName: 'Misty',
+        requestedRole: 'player',
+        resumeCapability: ticket.resumeCapability,
+      },
+      1_000,
+      deps
+    );
+    if (!joined.accepted) throw new Error('not joined');
+    // Taken, the room is someone's game: its claims stay as they are.
+    const count = transactions.length;
+    expect(
+      await openSoloRoom(
+        joined.snapshot,
+        { capability: hostClaim, displayName: 'Ash' },
+        deps
+      )
+    ).toMatchObject({ accepted: false, code: 'not_solo' });
+    expect(transactions.length).toBe(count);
+    // And a renewal that touches the game is refused.
+    expect(() =>
+      assertAdmissionTransactionTransition(opened.snapshot, {
+        ...transactions.find((entry) => entry.kind === 'room_reopened')!,
+        snapshot: {
+          ...again.snapshot,
+          state: { ...again.snapshot.state, revision: 7 },
+        },
+      } as PersistedAdmissionTransaction)
     ).toThrow();
   });
 });

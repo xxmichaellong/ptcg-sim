@@ -12,7 +12,9 @@ import {
 } from './RemoteSoloRoom.js';
 import {
   holdSoloRoom,
+  recallSoloLog,
   recallSoloSeats,
+  rememberSoloLog,
   rememberSoloSeat,
   type RecalledSoloSeat,
 } from './solo-room-memory.js';
@@ -76,6 +78,11 @@ const made = (room = runtime()) =>
 
 const input = { buildId: 'client-build', displayName: 'Blue' };
 
+/** Lets a kept table's admission be seen. */
+const settled = async () => {
+  for (let index = 0; index < 3; index += 1) await Promise.resolve();
+};
+
 /** Dependencies with every room free, admitting, and recorded. */
 const deps = (
   seats: readonly RecalledSoloSeat[],
@@ -94,6 +101,9 @@ const deps = (
       return made();
     }
   );
+  const restoreLog = vi.fn();
+  const stopLog = vi.fn();
+  const keepLog = vi.fn(() => stopLog);
   return {
     recall: () => seats,
     remember,
@@ -101,6 +111,9 @@ const deps = (
     bootstrap,
     admitted,
     createRoom,
+    restoreLog,
+    keepLog,
+    stopLog,
     ...overrides,
   };
 };
@@ -195,6 +208,7 @@ describe('opening the Solo table', () => {
     // Remembered once shown, not before.
     expect(dependencies.remember).not.toHaveBeenCalled();
     result.keep();
+    await settled();
     expect(dependencies.remember).toHaveBeenCalledExactlyOnceWith(own);
     result.dispose();
     expect(result.runtime.dispose).toHaveBeenCalledOnce();
@@ -213,6 +227,7 @@ describe('opening the Solo table', () => {
       mode: 'solo',
     });
     result.keep();
+    await settled();
     expect(dependencies.hold).toHaveBeenLastCalledWith(MADE.roomCode, 0);
     expect(dependencies.remember).toHaveBeenCalledExactlyOnceWith(MADE);
   });
@@ -226,6 +241,7 @@ describe('opening the Solo table', () => {
     const first = await openRemoteSoloRoom(input, refusing);
     expect(refusing.createRoom).toHaveBeenCalledOnce();
     first.keep();
+    await settled();
     expect(refusing.remember).toHaveBeenCalledExactlyOnceWith(MADE);
 
     const stale = runtime();
@@ -238,6 +254,44 @@ describe('opening the Solo table', () => {
     await openRemoteSoloRoom(input, silent);
     expect(stale.dispose).toHaveBeenCalledOnce();
     expect(silent.createRoom).toHaveBeenCalledOnce();
+  });
+
+  it('keeps a table only once its room has admitted the player', async () => {
+    let admit: (() => void) | undefined;
+    let refuse: ((error: Error) => void) | undefined;
+    const waiting = deps([], {
+      admitted: vi.fn(
+        () =>
+          new Promise<void>((resolve, reject) => {
+            admit = resolve;
+            refuse = reject;
+          })
+      ),
+    });
+    const fresh = await openRemoteSoloRoom(input, waiting);
+    fresh.keep();
+    await settled();
+    // Still connecting: what was remembered stays.
+    expect(waiting.remember).not.toHaveBeenCalled();
+    admit?.();
+    await settled();
+    expect(waiting.remember).toHaveBeenCalledExactlyOnceWith(MADE);
+
+    const failing = deps([], {
+      admitted: vi.fn(
+        () =>
+          new Promise<void>((_resolve, reject) => {
+            refuse = reject;
+          })
+      ),
+    });
+    const broken = await openRemoteSoloRoom(input, failing);
+    broken.keep();
+    refuse?.(new Error('The room did not admit this session'));
+    await settled();
+    // A table that never got going never replaces one that did.
+    expect(failing.remember).not.toHaveBeenCalled();
+    expect(failing.hold).not.toHaveBeenCalled();
   });
 
   it('tries the browser’s latest room after this tab’s own', async () => {
@@ -258,6 +312,7 @@ describe('opening the Solo table', () => {
     expect(result.runtime).toBe(latestRoom);
     expect(dependencies.createRoom).not.toHaveBeenCalled();
     result.keep();
+    await settled();
     expect(dependencies.remember).toHaveBeenCalledExactlyOnceWith({
       ...LATEST,
       thisTab: false,
@@ -385,5 +440,89 @@ describe('opening the Solo table to an opponent', () => {
     await expect(solo.goOnline({ displayName: 'Ash' })).rejects.toMatchObject({
       code: 'invalid_response',
     });
+  });
+});
+
+describe('the Solo table’s log', () => {
+  it('comes back on the table sat back down at, and is kept while the table is', async () => {
+    const own = { ...OWN, thisTab: true };
+    const dependencies = deps([own]);
+    const solo = await openRemoteSoloRoom(input, dependencies);
+    expect(dependencies.restoreLog).toHaveBeenCalledExactlyOnceWith(
+      solo.runtime,
+      OWN.roomCode
+    );
+    expect(dependencies.keepLog).not.toHaveBeenCalled();
+    solo.keep();
+    await settled();
+    expect(dependencies.keepLog).toHaveBeenCalledExactlyOnceWith(
+      solo.runtime,
+      OWN.roomCode
+    );
+    solo.dispose();
+    expect(dependencies.stopLog).toHaveBeenCalledOnce();
+  });
+
+  it('stops being kept as the Solo table’s once the table is a room', async () => {
+    const dependencies = deps([{ ...OWN, thisTab: true }], {
+      fetch: vi.fn(async () =>
+        Response.json(
+          {
+            mode: 'multiplayer',
+            credentials: {
+              playerTwoSeatCapability: 'player-two-seat-capability-new-0000001',
+              spectatorCapability: 'spectator-capability-new-000000000002',
+            },
+          },
+          { status: 201 }
+        )
+      ),
+      forget: vi.fn(),
+      origin: 'https://play.example',
+    });
+    const solo = await openRemoteSoloRoom(input, dependencies);
+    solo.keep();
+    await settled();
+    await solo.goOnline({ displayName: 'Ash' });
+    expect(dependencies.stopLog).toHaveBeenCalledOnce();
+  });
+
+  it('costs the game nothing when it cannot be put back', async () => {
+    const dependencies = deps([{ ...OWN, thisTab: true }], {
+      restoreLog: vi.fn(() => {
+        throw new Error('damaged');
+      }),
+    });
+    const solo = await openRemoteSoloRoom(input, dependencies);
+    expect(dependencies.createRoom).not.toHaveBeenCalled();
+    expect(solo.mode).toBe('solo');
+  });
+
+  it('is read back only whole, and only for its own room', () => {
+    stubStorages();
+    rememberSoloSeat(OWN);
+    const line = {
+      kind: 'activity',
+      category: 'player',
+      revision: 3,
+      eventType: 'CardsDrawn',
+      playerId: 'blue',
+      message: { id: 'abc', values: { name: 'Blue', count: 7 } },
+    } as const;
+    rememberSoloLog(OWN.roomCode, [line as never]);
+    expect(recallSoloLog(OWN.roomCode)).toEqual([line]);
+    expect(recallSoloLog(LATEST.roomCode)).toEqual([]);
+    // Not this tab's or the browser's Solo room: nothing is written.
+    rememberSoloLog(LATEST.roomCode, [line as never]);
+    expect(recallSoloLog(LATEST.roomCode)).toEqual([]);
+    // A damaged line spoils the whole log rather than the table.
+    const damaged = JSON.stringify({
+      format: 'ptcgsim-solo-log-v1',
+      roomCode: OWN.roomCode,
+      lines: [line, { kind: 'activity', category: 'player' }],
+    });
+    localStorage.setItem('ptcgsim.solo-log.v1', damaged);
+    sessionStorage.setItem('ptcgsim.solo-log.v1', damaged);
+    expect(recallSoloLog(OWN.roomCode)).toEqual([]);
   });
 });

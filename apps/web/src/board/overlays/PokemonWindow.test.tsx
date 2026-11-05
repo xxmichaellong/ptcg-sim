@@ -146,6 +146,8 @@ describe('the Pokémon window', () => {
       abilities: [
         { name: 'Static Shock', kind: 'Ability', text: 'Zap.' },
         { name: 'Power Surge', kind: 'Poké-Power', text: 'Surge.' },
+        // Written by hand, its spacing loose: kept by the room as one line.
+        { name: ' Calm  Mind ', kind: 'Poké-Body', text: 'Calm.' },
       ],
     };
     const stackId = view.boards[blue]!.activeStackId!;
@@ -169,7 +171,7 @@ describe('the Pokémon window', () => {
           ...view.stacks[stackId]!,
           damage: 20,
           abilityUsed: true,
-          abilitiesUsed: ['Power Surge'],
+          abilitiesUsed: ['Power Surge', 'Calm Mind'],
           hpModifier: 30,
         },
       },
@@ -196,6 +198,18 @@ describe('the Pokémon window', () => {
     expect(
       window.querySelector('[data-pokemon-window-used="Static Shock"]')
     ).toBeNull();
+    // The hand-written one is found by the name the room kept.
+    const calm = window.querySelector<HTMLButtonElement>(
+      '[data-pokemon-window-used=" Calm  Mind "]'
+    );
+    expect(calm).not.toBeNull();
+    await act(async () => calm!.click());
+    expect(callbacks.invokeWindowAction).toHaveBeenCalledWith({
+      kind: 'context',
+      action: 'unmarkAbility',
+      cardId: top.id,
+      name: ' Calm  Mind ',
+    });
     // Pressed, the mark comes off that Power alone.
     await act(async () => used!.click());
     expect(callbacks.invokeWindowAction).toHaveBeenCalledWith({
