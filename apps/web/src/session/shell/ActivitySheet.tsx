@@ -308,7 +308,14 @@ export const ActivityLauncher = ({
       .filter((item) => worthTicking(item, ownSeat))
       .map((item) => ({ item, until: now + TICKER_LINE_MS }));
     if (shown.length === 0) return;
-    setTicker((current) => [...current, ...shown].slice(-TICKER_LINES));
+    // A line the log has since replaced (a Pokémon's damage changed again)
+    // goes from over the table with it.
+    const kept = new Set(feed.items.map((item) => item.id));
+    setTicker((current) =>
+      [...current.filter((line) => kept.has(line.item.id)), ...shown].slice(
+        -TICKER_LINES
+      )
+    );
   }, [feed, open, ownSeat]);
   // Opened, or cleared (the Log's Clear; the tutorial dealing a lesson),
   // the lines over the table go too.

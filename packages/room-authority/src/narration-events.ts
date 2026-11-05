@@ -29,7 +29,9 @@ type Narration = Extract<
       | 'CardCategoryChanged'
       | 'AbilityUsed'
       | 'ReminderSet'
-      | 'HpModifierSet';
+      | 'HpModifierSet'
+      | 'DamageSet'
+      | 'ConditionSet';
   }
 >;
 
@@ -366,6 +368,66 @@ const moved = (
     ...(fields.asCategory ? { asCategory: fields.asCategory } : {}),
   }) satisfies Narration;
 
+/** Which Pokémon is in a board's Active Spot and which on its Bench. */
+interface BoardSlots {
+  readonly active: StackId | null;
+  readonly bench: readonly StackId[];
+}
+
+/**
+ * The places that changed on one board, its Pokémon staying on it: one
+ * brought up from the Bench ("moved X from bench to active"), the Active
+ * one sent to the Bench, or both at once ("switched active X with benched
+ * Y"), as one line. Whoever owns the Pokémon is the line's player (the
+ * batch's actor replaces it where the ledger has one).
+ */
+const slotChanges = (
+  revision: number,
+  state: MatchState,
+  previousState: MatchState,
+  { before, after }: { readonly before: BoardSlots; readonly after: BoardSlots }
+): readonly Narration[] => {
+  const topOf = (stackId: StackId): CardInstanceId | undefined =>
+    (
+      state.stacks[stackId] ?? previousState.stacks[stackId]
+    )?.evolutionCardIds.at(-1);
+  const benched =
+    before.active !== null &&
+    before.active !== after.active &&
+    after.bench.includes(before.active)
+      ? before.active
+      : undefined;
+  const brought =
+    after.active !== null &&
+    after.active !== before.active &&
+    before.bench.includes(after.active)
+      ? after.active
+      : undefined;
+  const benchedTop = benched ? topOf(benched) : undefined;
+  const broughtTop = brought ? topOf(brought) : undefined;
+  if (benchedTop && broughtTop) {
+    const playerId = ownerOf(state, previousState, benchedTop);
+    if (!playerId) return [];
+    return [
+      moved(revision, playerId, 'switched', 'active', {
+        destination: 'bench',
+        cardName: publicName(state, previousState, benchedTop),
+        targetCardName: publicName(state, previousState, broughtTop),
+      }),
+    ];
+  }
+  const alone = broughtTop ?? benchedTop;
+  if (!alone) return [];
+  const playerId = ownerOf(state, previousState, alone);
+  if (!playerId) return [];
+  return [
+    moved(revision, playerId, 'moved', broughtTop ? 'bench' : 'active', {
+      destination: broughtTop ? 'active' : 'bench',
+      cardName: publicName(state, previousState, alone),
+    }),
+  ];
+};
+
 const narrate = (
   event: DomainEvent,
   revision: number,
@@ -513,11 +575,23 @@ const narrate = (
         }),
       ];
     }
+    case 'PlayStackLayoutSet':
+      // Within one board: a Pokémon brought up from the Bench, sent back to
+      // it, or the two switched. A Bench put in another order is not news.
+      return slotChanges(revision, state, previousState, {
+        before: {
+          active: event.expectedActiveStackId,
+          bench: event.expectedBenchStackIds,
+        },
+        after: { active: event.activeStackId, bench: event.benchStackIds },
+      });
     case 'PlayStacksRehomed':
       // A Pokémon that changed boards, one line each, naming whose board
-      // it went to; one only shuffled about its own board is not news.
-      return event.boards.flatMap((layout) =>
-        [
+      // it went to; then, on each board, one that changed places on it (a
+      // lone Benched Pokémon brought up in its place). One only shuffled
+      // about its own Bench is not news.
+      return event.boards.flatMap((layout) => [
+        ...[
           ...(layout.activeStackId ? [layout.activeStackId] : []),
           ...layout.benchStackIds,
         ].flatMap((stackId) => {
@@ -540,8 +614,15 @@ const narrate = (
               cardName: publicName(state, previousState, top),
             }),
           ];
-        })
-      );
+        }),
+        ...slotChanges(revision, state, previousState, {
+          before: {
+            active: layout.expectedActiveStackId,
+            bench: layout.expectedBenchStackIds,
+          },
+          after: { active: layout.activeStackId, bench: layout.benchStackIds },
+        }),
+      ]);
     case 'CardMovedToWorkArea': {
       // v1 logs the arrival with the same grammar as any other move; its
       // popups are named "deck" and "attached cards" in the battle log.
@@ -772,6 +853,40 @@ const narrate = (
           source: stack.slot,
           ...(cardName ? { cardName } : {}),
           modifier: event.modifier,
+        },
+      ];
+    }
+    case 'StackDamageSet': {
+      const stack =
+        state.stacks[event.stackId] ?? previousState.stacks[event.stackId];
+      const top = stack?.evolutionCardIds.at(-1);
+      if (!stack || !top) return [];
+      const cardName = publicName(state, previousState, top);
+      return [
+        {
+          type: 'DamageSet',
+          revision,
+          playerId: stack.boardPlayerId,
+          source: stack.slot,
+          ...(cardName ? { cardName } : {}),
+          damage: event.damage ?? 0,
+        },
+      ];
+    }
+    case 'StackConditionSet': {
+      const stack =
+        state.stacks[event.stackId] ?? previousState.stacks[event.stackId];
+      const top = stack?.evolutionCardIds.at(-1);
+      if (!stack || !top) return [];
+      const cardName = publicName(state, previousState, top);
+      return [
+        {
+          type: 'ConditionSet',
+          revision,
+          playerId: stack.boardPlayerId,
+          source: stack.slot,
+          ...(cardName ? { cardName } : {}),
+          ...(event.condition ? { condition: event.condition } : {}),
         },
       ];
     }

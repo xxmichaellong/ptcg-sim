@@ -351,6 +351,13 @@
     ],
     "translation": "{actor} 将 {card} 从{source, select, hand {手牌} prizes {奖赏卡} discard {弃牌区} board {场地} stadium {竞技场} active {战斗场} bench {备战区} lostZone {放逐区} attachmentResolution {附着的卡牌} other {牌库}}与牌库顶的卡牌互换了"
   },
+  "aFDLKy": {
+    "message": "{actor} switched active {card} with benched {other}",
+    "comments": [
+      "Log line: a player's Active Pokémon and one of their Benched Pokémon changed places. {actor} is a player's name; {card} is the Pokémon that went to the Bench, {other} the one that came up to the Active Spot."
+    ],
+    "translation": "{actor} 将战斗中的 {card} 与备战的 {other} 互换了位置"
+  },
   "QOz626": {
     "message": "{actor} took back {target}'s last move",
     "comments": [
@@ -1013,6 +1020,20 @@
     ],
     "translation": "{name}的放逐区"
   },
+  "cgX3uC": {
+    "message": "{name} made {card} {kind, select, asleep {Asleep} burned {Burned} confused {Confused} paralyzed {Paralyzed} other {Poisoned}}",
+    "comments": [
+      "Log line: a player gave the Active Pokémon a Special Condition. {name} is a player's name, {card} the Pokémon's name; {kind} is the condition (Asleep, Burned, Confused, Paralyzed or Poisoned)."
+    ],
+    "translation": "{name} 使 {card} 陷入{kind, select, asleep {睡眠} burned {灼伤} confused {混乱} paralyzed {麻痹} other {中毒}}状态"
+  },
+  "CfDjqa": {
+    "message": "{name} marked {card} {condition}",
+    "comments": [
+      "Log line: a player put a marker they typed on the Active Pokémon. {name} is a player's name, {card} the Pokémon's name, {condition} the marker as typed."
+    ],
+    "translation": "{name} 给 {card} 标记了 {condition}"
+  },
   "219rTA": {
     "message": "{name} mulligans",
     "comments": [
@@ -1094,6 +1115,13 @@
     ],
     "translation": "{name} 将 {card} 设为 −{amount} HP"
   },
+  "Q3xch4": {
+    "message": "{name} set {card}'s damage to {damage}",
+    "comments": [
+      "Log line: a player changed a Pokémon's damage; {damage} is what it has in all now (a multiple of 10). {name} is a player's name, {card} the Pokémon's name."
+    ],
+    "translation": "{name} 将 {card} 的伤害设为 {damage}"
+  },
   "ywLLuj": {
     "message": "{name} shuffled {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}}",
     "comments": [
@@ -1108,12 +1136,26 @@
     ],
     "translation": "{name}开始了第{turn}回合"
   },
+  "qFW4ar": {
+    "message": "{name} took the damage off {card}",
+    "comments": [
+      "Log line: a player took every damage counter off a Pokémon. {name} is a player's name, {card} the Pokémon's name."
+    ],
+    "translation": "{name} 移除了 {card} 的所有伤害"
+  },
   "o0uSnf": {
     "message": "{name} took the reminder off {card}: {reminder, select, cantAttack {can't attack} cantRetreat {can't retreat} takesLess {takes less damage} hitsHarder {attacks do more} other {no Abilities}}",
     "comments": [
       "Log line: a player took the reminder of a lasting effect off a Pokémon. {name} is a player's name, {card} the Pokémon's name; {reminder} is what the reminder said."
     ],
     "translation": "{name} 移除了 {card} 上的提示：{reminder, select, cantAttack {无法使用招式} cantRetreat {无法撤退} takesLess {受到的伤害减少} hitsHarder {招式伤害增加} other {没有特性}}"
+  },
+  "BwwUaz": {
+    "message": "{name} took the Special Condition off {card}",
+    "comments": [
+      "Log line: a player cleared the Active Pokémon's Special Condition. {name} is a player's name, {card} the Pokémon's name."
+    ],
+    "translation": "{name} 移除了 {card} 的特殊状态"
   },
   "cV1aTX": {
     "message": "{name} used",

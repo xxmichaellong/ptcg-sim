@@ -8,6 +8,7 @@ import {
   createChatPresentationEffectSink,
   createPresencePresentationEffectSink,
   createPresentationEffectSink,
+  foldSupersededActivity,
   presentationEffectsForChatMessage,
   presentationEffectsForEvent,
   presentationEffectsForPresence,
@@ -700,6 +701,111 @@ describe('presentationEffectsForEvent', () => {
     expect(hp(30)).toBe('player:Blue set Pikachu to +30 HP');
     expect(hp(-20)).toBe('player:Blue set Pikachu to −20 HP');
     expect(hp(0)).toBe("player:Blue put Pikachu's HP back to what is printed");
+    // Places changed on a board: the Active one and a Benched one switched,
+    // or one moved between them.
+    expect(
+      line({
+        type: 'CardMoved',
+        ...at,
+        verb: 'switched',
+        source: 'active',
+        destination: 'bench',
+        cardName: 'Pikachu',
+        targetCardName: 'Charizard ex',
+      })
+    ).toBe('player:Blue switched active Pikachu with benched Charizard ex');
+    expect(
+      line({
+        type: 'CardMoved',
+        ...at,
+        verb: 'moved',
+        source: 'bench',
+        destination: 'active',
+        cardName: 'Charizard ex',
+      })
+    ).toBe('player:Blue moved Charizard ex from bench to active');
+    // A Pokémon's damage and Special Condition, as they now stand.
+    const damage = (value: number, cardName?: string) =>
+      line({
+        type: 'DamageSet',
+        ...at,
+        source: 'active',
+        ...(cardName ? { cardName } : {}),
+        damage: value,
+      });
+    expect(damage(60, 'Pikachu')).toBe(
+      "player:Blue set Pikachu's damage to 60"
+    );
+    expect(damage(0, 'Pikachu')).toBe(
+      'player:Blue took the damage off Pikachu'
+    );
+    // A face-down Pokémon is not named.
+    expect(damage(10)).not.toContain('Pikachu');
+    const condition = (value?: string) =>
+      line({
+        type: 'ConditionSet',
+        ...at,
+        source: 'active',
+        cardName: 'Pikachu',
+        ...(value === undefined ? {} : { condition: value }),
+      });
+    expect(condition('P')).toBe('player:Blue made Pikachu Poisoned');
+    expect(condition('Pa')).toBe('player:Blue made Pikachu Paralyzed');
+    expect(condition('A')).toBe('player:Blue made Pikachu Asleep');
+    expect(condition('B')).toBe('player:Blue made Pikachu Burned');
+    expect(condition('C')).toBe('player:Blue made Pikachu Confused');
+    expect(condition('Stuck')).toBe('player:Blue marked Pikachu Stuck');
+    expect(condition()).toBe(
+      'player:Blue took the Special Condition off Pikachu'
+    );
+  });
+
+  it('keeps the last of a run of damage changes to one Pokémon, in the log and on rebuilding it', () => {
+    const view = createRendererSpikeView();
+    const damage = (
+      revision: number,
+      value: number,
+      cardName = 'Pikachu'
+    ): PresentationEvent => ({
+      type: 'DamageSet',
+      revision,
+      playerId: 'spike-blue',
+      source: 'active',
+      cardName,
+      damage: value,
+    });
+    const effects = activityPresentationEffectsForEvents(
+      [
+        damage(1, 10),
+        damage(2, 20),
+        damage(3, 30),
+        damage(4, 10, 'Charizard ex'),
+        damage(5, 40),
+      ],
+      view
+    );
+    expect(effects.map((effect) => presentationText(effect.message))).toEqual([
+      "Blue set Pikachu's damage to 30",
+      "Blue set Charizard ex's damage to 10",
+      "Blue set Pikachu's damage to 40",
+    ]);
+    expect(
+      foldSupersededActivity([
+        ...activityPresentationEffectsForEvents([damage(1, 10)], view),
+        ...activityPresentationEffectsForEvents(
+          [
+            {
+              type: 'PassDeclared',
+              revision: 2,
+              playerId: 'spike-blue',
+              turnNumber: 1,
+            },
+          ],
+          view
+        ),
+        ...activityPresentationEffectsForEvents([damage(3, 20)], view),
+      ])
+    ).toHaveLength(3);
   });
 
   it("names a group's cards after its line, counting the ones it hides (ADR-042 §6)", () => {

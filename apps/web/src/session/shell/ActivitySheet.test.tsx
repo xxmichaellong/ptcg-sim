@@ -52,6 +52,12 @@ const feedSource = (initial: readonly ActivityFeedItem[] = []) => {
       snapshot = { items: next, newestItemId: next.at(-1)!.id };
       for (const listener of listeners) listener();
     },
+    /** A line saying where something stands now replacing the last. */
+    replaceLast: (replacement: ActivityFeedItem) => {
+      const next = [...snapshot.items.slice(0, -1), replacement];
+      snapshot = { items: next, newestItemId: replacement.id };
+      for (const listener of listeners) listener();
+    },
     /** The Log's Clear (or the tutorial dealing a lesson). */
     clear: () => {
       snapshot = { items: [], newestItemId: snapshot.newestItemId };
@@ -285,6 +291,31 @@ describe('ActivityLauncher', () => {
     expect(tickerLines()).toEqual(['Red loaded deck']);
     await act(async () => source.clear());
     expect(tickerLines()).toEqual([]);
+  });
+
+  it('takes a line the log replaced away from over the table with it', async () => {
+    const source = feedSource();
+    await renderLauncher(source);
+    await act(async () =>
+      source.push(
+        move(OTHER, 'Red passed'),
+        item('DamageSet', 'player', "Blue set Pikachu's damage to 10", OWN)
+      )
+    );
+    expect(tickerLines()).toEqual([
+      'Red passed',
+      "Blue set Pikachu's damage to 10",
+    ]);
+    // Damage changed again: the log keeps the last, and so does the table.
+    await act(async () =>
+      source.replaceLast(
+        item('DamageSet', 'player', "Blue set Pikachu's damage to 20", OWN)
+      )
+    );
+    expect(tickerLines()).toEqual([
+      'Red passed',
+      "Blue set Pikachu's damage to 20",
+    ]);
   });
 
   it("says the player's own moves over the table, Attack and Pass among them", async () => {

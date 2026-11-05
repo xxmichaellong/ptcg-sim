@@ -351,6 +351,13 @@
     ],
     "translation": "{actor} cambió {card} desde {source, select, hand {la mano} prizes {las cartas de Premio} discard {la pila de descartes} board {el tablero} stadium {el Estadio} active {el Puesto Activo} bench {la Banca} lostZone {la Zona Perdida} attachmentResolution {las cartas unidas} other {la baraja}} por la primera carta de la baraja"
   },
+  "aFDLKy": {
+    "message": "{actor} switched active {card} with benched {other}",
+    "comments": [
+      "Log line: a player's Active Pokémon and one of their Benched Pokémon changed places. {actor} is a player's name; {card} is the Pokémon that went to the Bench, {other} the one that came up to the Active Spot."
+    ],
+    "translation": "{actor} cambió el Pokémon Activo {card} por el Pokémon en Banca {other}"
+  },
   "QOz626": {
     "message": "{actor} took back {target}'s last move",
     "comments": [
@@ -1013,6 +1020,20 @@
     ],
     "translation": "Zona Perdida de {name}"
   },
+  "cgX3uC": {
+    "message": "{name} made {card} {kind, select, asleep {Asleep} burned {Burned} confused {Confused} paralyzed {Paralyzed} other {Poisoned}}",
+    "comments": [
+      "Log line: a player gave the Active Pokémon a Special Condition. {name} is a player's name, {card} the Pokémon's name; {kind} is the condition (Asleep, Burned, Confused, Paralyzed or Poisoned)."
+    ],
+    "translation": "{name} dejó a {card} {kind, select, asleep {Dormido} burned {Quemado} confused {Confundido} paralyzed {Paralizado} other {Envenenado}}"
+  },
+  "CfDjqa": {
+    "message": "{name} marked {card} {condition}",
+    "comments": [
+      "Log line: a player put a marker they typed on the Active Pokémon. {name} is a player's name, {card} the Pokémon's name, {condition} the marker as typed."
+    ],
+    "translation": "{name} marcó a {card} como {condition}"
+  },
   "219rTA": {
     "message": "{name} mulligans",
     "comments": [
@@ -1094,6 +1115,13 @@
     ],
     "translation": "{name} fijó {card} en −{amount} PS"
   },
+  "Q3xch4": {
+    "message": "{name} set {card}'s damage to {damage}",
+    "comments": [
+      "Log line: a player changed a Pokémon's damage; {damage} is what it has in all now (a multiple of 10). {name} is a player's name, {card} the Pokémon's name."
+    ],
+    "translation": "{name} fijó el daño de {card} en {damage}"
+  },
   "ywLLuj": {
     "message": "{name} shuffled {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}}",
     "comments": [
@@ -1108,12 +1136,26 @@
     ],
     "translation": "{name} empezó el turno {turn}"
   },
+  "qFW4ar": {
+    "message": "{name} took the damage off {card}",
+    "comments": [
+      "Log line: a player took every damage counter off a Pokémon. {name} is a player's name, {card} the Pokémon's name."
+    ],
+    "translation": "{name} quitó el daño de {card}"
+  },
   "o0uSnf": {
     "message": "{name} took the reminder off {card}: {reminder, select, cantAttack {can't attack} cantRetreat {can't retreat} takesLess {takes less damage} hitsHarder {attacks do more} other {no Abilities}}",
     "comments": [
       "Log line: a player took the reminder of a lasting effect off a Pokémon. {name} is a player's name, {card} the Pokémon's name; {reminder} is what the reminder said."
     ],
     "translation": "{name} quitó el recordatorio de {card}: {reminder, select, cantAttack {no puede atacar} cantRetreat {no puede retirarse} takesLess {recibe menos daño} hitsHarder {sus ataques hacen más daño} other {sin habilidades}}"
+  },
+  "BwwUaz": {
+    "message": "{name} took the Special Condition off {card}",
+    "comments": [
+      "Log line: a player cleared the Active Pokémon's Special Condition. {name} is a player's name, {card} the Pokémon's name."
+    ],
+    "translation": "{name} quitó la Condición Especial de {card}"
   },
   "cV1aTX": {
     "message": "{name} used",

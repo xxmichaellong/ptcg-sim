@@ -1133,6 +1133,9 @@ const CardMovedPresentationEventSchema = v.object({
     'movedToDeckTop',
     'movedToDeckBottom',
     'switchedWithDeckTop',
+    // An Active Pokémon and a Benched one changed places: `cardName` left
+    // the Active Spot, `targetCardName` came up from the Bench.
+    'switched',
   ] as const),
   source: PresentationCardSourceSchema,
   destination: v.optional(PresentationCardSourceSchema),
@@ -1241,6 +1244,32 @@ const HpModifierSetPresentationEventSchema = v.object({
   modifier: HpModifierSchema,
 });
 
+/**
+ * A player set a Pokémon's damage: what it has in all now (0: none), so
+ * a run of changes reads as its last.
+ */
+const DamageSetPresentationEventSchema = v.object({
+  type: v.literal('DamageSet'),
+  revision: RevisionSchema,
+  playerId: IdentifierSchema,
+  source: v.picklist(['active', 'bench'] as const),
+  cardName: v.optional(boundedString(256)),
+  damage: v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(9990)),
+});
+
+/**
+ * A player gave the Active Pokémon a Special Condition (v1's marker: a
+ * letter, or a word typed), or took it off (`condition` absent).
+ */
+const ConditionSetPresentationEventSchema = v.object({
+  type: v.literal('ConditionSet'),
+  revision: RevisionSchema,
+  playerId: IdentifierSchema,
+  source: v.picklist(['active', 'bench'] as const),
+  cardName: v.optional(boundedString(256)),
+  condition: v.optional(boundedString(16)),
+});
+
 /** A player put a reminder on a Pokémon in play, or took it off. */
 const ReminderSetPresentationEventSchema = v.object({
   type: v.literal('ReminderSet'),
@@ -1253,6 +1282,8 @@ const ReminderSetPresentationEventSchema = v.object({
 });
 
 export const PresentationEventSchema = v.variant('type', [
+  DamageSetPresentationEventSchema,
+  ConditionSetPresentationEventSchema,
   ReminderSetPresentationEventSchema,
   HpModifierSetPresentationEventSchema,
   CardMovedPresentationEventSchema,

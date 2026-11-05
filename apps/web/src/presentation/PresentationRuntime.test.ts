@@ -101,6 +101,28 @@ describe('PresentationRuntime', () => {
     expect(animationChanged).toHaveBeenCalledTimes(2);
   });
 
+  it('replaces the line just before one that supersedes it, and only that one', () => {
+    const runtime = new PresentationRuntime();
+    const damage = (revision: number, key = 'damage:blue:active:Pikachu') => ({
+      ...activity(revision, `damage ${revision}`),
+      supersedes: key,
+    });
+    runtime.adapters.appendActivity?.(damage(1));
+    runtime.adapters.appendActivity?.(damage(2));
+    const [first] = runtime.activity.getSnapshot().entries;
+    runtime.adapters.appendActivity?.(damage(3));
+    // Another Pokémon's damage, then another line: each stays.
+    runtime.adapters.appendActivity?.(
+      damage(4, 'damage:blue:bench:Charizard ex')
+    );
+    runtime.adapters.appendActivity?.(activity(5));
+    runtime.adapters.appendActivity?.(damage(6));
+    const entries = runtime.activity.getSnapshot().entries;
+    expect(entries.map((entry) => entry.effect.revision)).toEqual([3, 4, 5, 6]);
+    // The replacing line is a new line (it is news again).
+    expect(entries[0]!.id).not.toBe(first!.id);
+  });
+
   it('acknowledges transient work in FIFO order and clears both queues atomically', () => {
     const runtime = new PresentationRuntime();
     runtime.adapters.announceAccessibility?.(accessibility(1));

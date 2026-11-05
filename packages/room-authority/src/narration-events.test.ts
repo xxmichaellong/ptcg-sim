@@ -135,14 +135,17 @@ describe('battle-log narration', () => {
     expect(JSON.stringify(hidden.narration)).not.toContain('Secret');
   });
 
-  it('says whose board a Pokémon moved onto, and nothing for one moved about its own', () => {
+  it('says whose board a Pokémon moved onto, and each change of place on a board, but not a Bench reordered', () => {
     const { state, context } = table();
     const hand = state.zones[playerZoneId(p1, 'hand')]!;
     const pokemon = hand.cardIds.filter(
       (cardId) => state.cards[cardId]!.currentCategory === 'Pokémon'
     );
+    expect(pokemon.length).toBeGreaterThanOrEqual(3);
+    const nameOf = (cardId: string): string =>
+      state.definitions[state.cards[cardId]!.definitionId]!.name;
     let current = state;
-    for (const [index, cardId] of pokemon.slice(0, 2).entries())
+    for (const [index, cardId] of pokemon.slice(0, 3).entries())
       current = step(
         current,
         {
@@ -156,30 +159,113 @@ describe('battle-log narration', () => {
       ).state;
     const board = current.boards[p1]!;
     const active = board.activeStackId!;
-    const name =
-      current.definitions[current.cards[pokemon[0]!]!.definitionId]!.name;
+    const [first, second] = board.benchStackIds as [string, string];
+    const layout = {
+      expectedActiveStackId: active,
+      expectedBenchStackIds: [...board.benchStackIds],
+    };
+    const line = (
+      revision: number,
+      fields: Record<string, unknown>
+    ): Record<string, unknown> => ({
+      type: 'CardMoved',
+      revision,
+      playerId: p1,
+      ...fields,
+    });
+
+    // The Active one and a Benched one changed places: one line.
     const swapped = step(
       current,
       {
         type: 'MovePlayStack',
         stackId: active,
         expectedSourceSlot: 'active',
-        expectedActiveStackId: active,
-        expectedBenchStackIds: [...board.benchStackIds],
+        ...layout,
         destinationSlot: 'bench',
-        targetStackId: board.benchStackIds[0]!,
+        targetStackId: first,
       },
       context
     );
-    expect(swapped.narration).toEqual([]);
-    const moved = step(
+    expect(swapped.narration).toEqual([
+      line(swapped.state.revision, {
+        verb: 'switched',
+        source: 'active',
+        destination: 'bench',
+        cardName: nameOf(pokemon[0]!),
+        targetCardName: nameOf(pokemon[1]!),
+      }),
+    ]);
+
+    // Sent to the Bench with two others there: it goes alone.
+    const retreated = step(
       current,
       {
         type: 'MovePlayStack',
         stackId: active,
         expectedSourceSlot: 'active',
-        expectedActiveStackId: active,
-        expectedBenchStackIds: [...board.benchStackIds],
+        ...layout,
+        destinationSlot: 'bench',
+      },
+      context
+    );
+    expect(retreated.narration).toEqual([
+      line(retreated.state.revision, {
+        verb: 'moved',
+        source: 'active',
+        destination: 'bench',
+        cardName: nameOf(pokemon[0]!),
+      }),
+    ]);
+
+    // Brought up from the Bench to the empty Active Spot.
+    const promoted = step(
+      retreated.state,
+      {
+        type: 'MovePlayStack',
+        stackId: second,
+        expectedSourceSlot: 'bench',
+        expectedActiveStackId: null,
+        expectedBenchStackIds: [...retreated.state.boards[p1]!.benchStackIds],
+        destinationSlot: 'active',
+      },
+      context
+    );
+    expect(promoted.narration).toEqual([
+      line(promoted.state.revision, {
+        verb: 'moved',
+        source: 'bench',
+        destination: 'active',
+        cardName: nameOf(pokemon[2]!),
+      }),
+    ]);
+
+    // A Bench put in another order is not news.
+    const reordered = step(
+      current,
+      {
+        type: 'MovePlayStack',
+        stackId: second,
+        expectedSourceSlot: 'bench',
+        ...layout,
+        destinationSlot: 'bench',
+        targetStackId: first,
+      },
+      context
+    );
+    expect(reordered.state.boards[p1]!.benchStackIds).toEqual([second, first]);
+    expect(reordered.narration).toEqual([]);
+
+    // Onto the other board, whose name it says; the lone Benched Pokémon
+    // left behind comes up in its place, and says so.
+    const across = step(
+      promoted.state,
+      {
+        type: 'MovePlayStack',
+        stackId: second,
+        expectedSourceSlot: 'active',
+        expectedActiveStackId: second,
+        expectedBenchStackIds: [...promoted.state.boards[p1]!.benchStackIds],
         destinationSlot: 'bench',
         destinationBoard: {
           boardPlayerId: p2,
@@ -189,15 +275,135 @@ describe('battle-log narration', () => {
       },
       context
     );
-    expect(moved.narration).toEqual([
+    // With one Pokémon on the Bench, the Active one sent back brings it up
+    // (v1): the two switched, one line.
+    let pair = state;
+    for (const [index, cardId] of pokemon.slice(0, 2).entries())
+      pair = step(
+        pair,
+        {
+          type: 'MoveCardToPlay',
+          cardId,
+          expectedSourceZoneId: hand.id,
+          boardPlayerId: p1,
+          slot: index === 0 ? 'active' : 'bench',
+        },
+        context
+      ).state;
+    const pairBoard = pair.boards[p1]!;
+    const sentBack = step(
+      pair,
       {
-        type: 'CardMoved',
-        revision: moved.state.revision,
-        playerId: p1,
+        type: 'MovePlayStack',
+        stackId: pairBoard.activeStackId!,
+        expectedSourceSlot: 'active',
+        expectedActiveStackId: pairBoard.activeStackId,
+        expectedBenchStackIds: [...pairBoard.benchStackIds],
+        destinationSlot: 'bench',
+      },
+      context
+    );
+    expect(sentBack.state.boards[p1]!.activeStackId).toBe(
+      pairBoard.benchStackIds[0]
+    );
+    expect(sentBack.narration).toEqual([
+      line(sentBack.state.revision, {
+        verb: 'switched',
+        source: 'active',
+        destination: 'bench',
+        cardName: nameOf(pokemon[0]!),
+        targetCardName: nameOf(pokemon[1]!),
+      }),
+    ]);
+
+    // Its own board's Active Spot is left empty: nothing more to say.
+    expect(across.state.boards[p1]!.activeStackId).toBeNull();
+    expect(across.narration).toEqual([
+      line(across.state.revision, {
         verb: 'moved',
         source: 'active',
         destination: 'bench',
         destinationPlayerId: p2,
+        cardName: nameOf(pokemon[2]!),
+      }),
+    ]);
+  });
+
+  it('tells a Pokémon’s damage and Special Condition as they now stand', () => {
+    const { state, context } = table();
+    const hand = state.zones[playerZoneId(p1, 'hand')]!;
+    const cardId = hand.cardIds.find(
+      (candidate) => state.cards[candidate]!.currentCategory === 'Pokémon'
+    )!;
+    const name = state.definitions[state.cards[cardId]!.definitionId]!.name;
+    const played = step(
+      state,
+      {
+        type: 'MoveCardToPlay',
+        cardId,
+        expectedSourceZoneId: hand.id,
+        boardPlayerId: p1,
+        slot: 'active',
+      },
+      context
+    ).state;
+    const stackId = played.boards[p1]!.activeStackId!;
+    const damaged = step(
+      played,
+      { type: 'SetDamage', stackId, damage: 30 },
+      context
+    );
+    expect(damaged.narration).toEqual([
+      {
+        type: 'DamageSet',
+        revision: damaged.state.revision,
+        playerId: p1,
+        source: 'active',
+        cardName: name,
+        damage: 30,
+      },
+    ]);
+    const healed = step(
+      damaged.state,
+      { type: 'SetDamage', stackId, damage: null },
+      context
+    );
+    expect(healed.narration).toEqual([
+      {
+        type: 'DamageSet',
+        revision: healed.state.revision,
+        playerId: p1,
+        source: 'active',
+        cardName: name,
+        damage: 0,
+      },
+    ]);
+    const poisoned = step(
+      played,
+      { type: 'SetSpecialCondition', stackId, condition: 'P' },
+      context
+    );
+    expect(poisoned.narration).toEqual([
+      {
+        type: 'ConditionSet',
+        revision: poisoned.state.revision,
+        playerId: p1,
+        source: 'active',
+        cardName: name,
+        condition: 'P',
+      },
+    ]);
+    const cleared = step(
+      poisoned.state,
+      { type: 'SetSpecialCondition', stackId, condition: null },
+      context
+    );
+    expect(cleared.narration).toEqual([
+      {
+        type: 'ConditionSet',
+        revision: cleared.state.revision,
+        playerId: p1,
+        source: 'active',
         cardName: name,
       },
     ]);

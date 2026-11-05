@@ -115,7 +115,8 @@ const sameActivityEffect = (
   left.eventType === right.eventType &&
   left.category === right.category &&
   samePresentationMessage(left.message, right.message) &&
-  left.playerId === right.playerId;
+  left.playerId === right.playerId &&
+  left.supersedes === right.supersedes;
 
 const sameActivityTimeline = (
   entries: readonly ActivityPresentationEntry[],
@@ -313,9 +314,17 @@ export class PresentationRuntime {
     )
       return;
     const current = this.activityChannel.getSnapshot();
+    // A line saying where something stands now replaces the one just
+    // before it that said where it stood (foldSupersededActivity).
+    const last = current.entries.at(-1);
+    const entries =
+      effect.supersedes !== undefined &&
+      last?.effect.supersedes === effect.supersedes
+        ? current.entries.slice(0, -1)
+        : current.entries;
     this.activityChannel.set({
       entries: appendBounded(
-        current.entries,
+        entries,
         this.createEntry(effect),
         this.policy.maximumActivityEntries
       ),

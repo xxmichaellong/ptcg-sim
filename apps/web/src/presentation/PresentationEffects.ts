@@ -26,7 +26,35 @@ export interface ActivityPresentationEffect extends PresentationEffectBase {
   readonly message: PresentationMessage;
   /** Used only for existing blue/red visual treatment, never message content. */
   readonly playerId?: string;
+  /**
+   * A line that says where something stands now (a Pokémon's damage, its
+   * Special Condition): one with the same key directly before it in the
+   * log is replaced by it, so a run of taps reads as its last.
+   */
+  readonly supersedes?: string;
 }
+
+/**
+ * The log as the lines say it: a line that supersedes (the same key)
+ * the one directly before it takes its place.
+ */
+export const foldSupersededActivity = (
+  effects: readonly ActivityPresentationEffect[]
+): ActivityPresentationEffect[] => {
+  const folded: ActivityPresentationEffect[] = [];
+  for (const effect of effects) {
+    const last = folded.at(-1);
+    if (
+      effect.supersedes !== undefined &&
+      last?.supersedes === effect.supersedes
+    ) {
+      folded[folded.length - 1] = effect;
+    } else {
+      folded.push(effect);
+    }
+  }
+  return folded;
+};
 
 export interface AccessibilityPresentationEffect extends PresentationEffectBase {
   readonly kind: 'accessibility';
@@ -244,6 +272,55 @@ const categoryKey = (
       : category === 'Trainer'
         ? 'trainer'
         : 'unknown';
+
+/**
+ * Lines that say where something stands now (damage, a condition): the
+ * log keeps only the last of a run of them for one Pokémon.
+ */
+const superseding = (
+  effects: readonly PresentationEffect[],
+  key: string
+): readonly PresentationEffect[] =>
+  effects.map((effect) =>
+    effect.kind === 'activity' ? { ...effect, supersedes: key } : effect
+  );
+
+/**
+ * A Special Condition marker by name: v1's letters (and the words, as
+ * typed), anything else as written; absent, none.
+ */
+const conditionKind = (
+  condition: string | undefined
+):
+  | 'none'
+  | 'asleep'
+  | 'burned'
+  | 'confused'
+  | 'paralyzed'
+  | 'poisoned'
+  | 'other' => {
+  if (!condition) return 'none';
+  const code = condition.trim().toLowerCase();
+  switch (code) {
+    case 'a':
+    case 'asleep':
+      return 'asleep';
+    case 'b':
+    case 'burned':
+      return 'burned';
+    case 'c':
+    case 'confused':
+      return 'confused';
+    case 'pa':
+    case 'paralyzed':
+      return 'paralyzed';
+    case 'p':
+    case 'poisoned':
+      return 'poisoned';
+    default:
+      return 'other';
+  }
+};
 
 const playerEffects = (
   event: PresentationEvent,
@@ -569,6 +646,14 @@ const cardMovedMessage = (
         comment:
           "Log line. {actor} is a player's name, {card} a card's name; {source} is the zone the card left, and the top card of the deck took its place.",
       });
+    case 'switched': {
+      const other = narratedCardName(event.targetCardName);
+      return msg({
+        message: `${actor} switched active ${card} with benched ${other}`,
+        comment:
+          "Log line: a player's Active Pokémon and one of their Benched Pokémon changed places. {actor} is a player's name; {card} is the Pokémon that went to the Bench, {other} the one that came up to the Active Spot.",
+      });
+    }
   }
 };
 
@@ -940,6 +1025,65 @@ export const presentationEffectsForEvent = (
                 comment:
                   "Log line: a player set what effects take from a Pokémon's HP, in all. {name} is a player's name, {card} the Pokémon's name, {amount} the HP taken in all.",
               })
+      );
+    }
+    case 'DamageSet': {
+      const name = playerName(view, event.playerId);
+      const card = narratedCardName(event.cardName);
+      const damage = event.damage;
+      return superseding(
+        playerEffects(
+          event,
+          event.playerId,
+          damage === 0
+            ? msg({
+                message: `${name} took the damage off ${card}`,
+                comment:
+                  "Log line: a player took every damage counter off a Pokémon. {name} is a player's name, {card} the Pokémon's name.",
+              })
+            : msg({
+                message: `${name} set ${card}'s damage to ${damage}`,
+                comment:
+                  "Log line: a player changed a Pokémon's damage; {damage} is what it has in all now (a multiple of 10). {name} is a player's name, {card} the Pokémon's name.",
+              })
+        ),
+        `damage:${event.playerId}:${event.source}:${event.cardName ?? ''}`
+      );
+    }
+    case 'ConditionSet': {
+      const name = playerName(view, event.playerId);
+      const card = narratedCardName(event.cardName);
+      const kind = conditionKind(event.condition);
+      const condition = event.condition ?? '';
+      return superseding(
+        playerEffects(
+          event,
+          event.playerId,
+          kind === 'none'
+            ? msg({
+                message: `${name} took the Special Condition off ${card}`,
+                comment:
+                  "Log line: a player cleared the Active Pokémon's Special Condition. {name} is a player's name, {card} the Pokémon's name.",
+              })
+            : kind === 'other'
+              ? msg({
+                  message: `${name} marked ${card} ${condition}`,
+                  comment:
+                    "Log line: a player put a marker they typed on the Active Pokémon. {name} is a player's name, {card} the Pokémon's name, {condition} the marker as typed.",
+                })
+              : msg({
+                  message: `${name} made ${card} ${select(kind, {
+                    asleep: 'Asleep',
+                    burned: 'Burned',
+                    confused: 'Confused',
+                    paralyzed: 'Paralyzed',
+                    other: 'Poisoned',
+                  })}`,
+                  comment:
+                    "Log line: a player gave the Active Pokémon a Special Condition. {name} is a player's name, {card} the Pokémon's name; {kind} is the condition (Asleep, Burned, Confused, Paralyzed or Poisoned).",
+                })
+        ),
+        `condition:${event.playerId}:${event.source}:${event.cardName ?? ''}`
       );
     }
     case 'CoinFlipped': {
@@ -1422,10 +1566,12 @@ export const activityPresentationEffectsForEvents = (
   events: readonly PresentationEvent[],
   view?: PresentationView
 ): readonly ActivityPresentationEffect[] =>
-  events.flatMap((event) =>
-    presentationEffectsForEvent(event, view).filter(
-      (effect): effect is ActivityPresentationEffect =>
-        effect.kind === 'activity'
+  foldSupersededActivity(
+    events.flatMap((event) =>
+      presentationEffectsForEvent(event, view).filter(
+        (effect): effect is ActivityPresentationEffect =>
+          effect.kind === 'activity'
+      )
     )
   );
 

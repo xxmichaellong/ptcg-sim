@@ -1680,6 +1680,41 @@ replacement, and backward seek cancel stale transient queues; forward movement
 keeps valid queued work. The replay-only activity adapter is removed to prevent
 duplicate append after timeline replacement.
 
+#### What the log tells (2026-11-05)
+
+The owner: "make sure we cover all logs that change the important state of a
+game, i.e. not rearranging cards in a zone, but actually relocating". Every
+move that changes where a card or a Pokémon is, and every change to a
+Pokémon's state in play, is one line (room-authority `narration-events.ts`
+and `presentation-events.ts`; worded in `PresentationEffects.ts`). A card's
+name is given only where it is public before or after (spectator-safe).
+
+| What happened                                                                                                                                                                    | Line                                                                                     |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| A card from one zone to another (hand, deck, discard, Lost Zone, Prizes, the loose board, Stadium, viewers)                                                                      | "moved X from hand to discard" (v1's grammar; to the deck's top or bottom said so)       |
+| Played to the Active Spot or Bench, as itself or as another kind                                                                                                                 | "moved X from hand to bench", "… as a Pokémon"                                           |
+| Attached, evolved, a piece joining its card                                                                                                                                      | "attached X from hand to Y", "evolved Y into X" (a piece joining says nothing more)      |
+| A whole Pokémon to a zone; a card off a Pokémon                                                                                                                                  | "moved X from active to discard" (what went with it understood)                          |
+| A Pokémon onto the other player's board                                                                                                                                          | "moved X from bench to Red's active"                                                     |
+| **Brought up from the Bench, or sent back to it (new)**                                                                                                                          | "moved X from bench to active" / "… from active to bench"                                |
+| **The Active and a Benched Pokémon switched, by hand or v1's lone Benched Pokémon brought up (new)**                                                                             | "switched active X with benched Y" (one line)                                            |
+| **Damage (new)**                                                                                                                                                                 | "set X's damage to 60", "took the damage off X"                                          |
+| **A Special Condition (new)**                                                                                                                                                    | "made X Poisoned", "marked X Stuck" (a typed marker), "took the Special Condition off X" |
+| HP from effects, reminders, Abilities used, VSTAR/GX, card type                                                                                                                  | as before                                                                                |
+| Draws, shuffles, looks, reveals, hand replaced, group moves (one line per source and destination), coin flips, turn, attack, pass, mulligan, deck view, load, setup, reset, undo | as before                                                                                |
+
+Left silent, as in v1: a zone put in another order (a hand sorted, a card
+moved within its zone, a Bench reordered), a Pokémon or card turned
+(RotateStack, SetCardOrientation: the table's own presentation), a card
+back changed, a viewer closed, and the turn's own reveal of face-down
+Pokémon (told by "drew for turn").
+
+Damage and a Special Condition are told as they now stand, and a line of
+the same kind for the same Pokémon directly after another replaces it
+(`supersedes`, `foldSupersededActivity`), live and on rebuilding a
+replay's log, so a run of taps reads as its last; the ticker over the table
+drops a line the log replaced. PX-091.
+
 ### Replay playback state
 
 Replay does not replace or rewind the live session store. The client-session
