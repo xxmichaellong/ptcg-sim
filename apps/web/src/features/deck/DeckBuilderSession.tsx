@@ -33,6 +33,7 @@ import {
 } from './deck-browser-io.js';
 import {
   DeckBuilderStore,
+  sameLabel,
   type DeckBuilderTarget,
 } from './deck-builder-store.js';
 import {
@@ -193,13 +194,30 @@ export const useSeatDeckMemory = (
           before.installingRevision !== undefined &&
           slot.installingRevision === undefined &&
           slot.installedRevision === before.installingRevision;
-        // Edited since, the deck on the table is not the one shown: the
-        // next install keeps that one.
-        if (!taken || slot.dirty) continue;
-        rememberSeatDeck(roomCode, target, {
-          deck: slot.deck,
-          ...(slot.label ? { label: slot.label } : {}),
-        });
+        const keep = () =>
+          rememberSeatDeck(roomCode, target, {
+            deck: slot.deck,
+            ...(slot.label ? { label: slot.label } : {}),
+          });
+        if (taken) {
+          // Edited since, the deck on the table is not the one shown: the
+          // next install keeps that one.
+          if (!slot.dirty) keep();
+          continue;
+        }
+        // Saved or renamed with the same cards on the table (no install):
+        // the kept deck's name and saved deck follow, so a reload still
+        // opens the saved one. Only over the deck kept, the one the room
+        // took.
+        if (
+          slot.dirty ||
+          slot.installingRevision !== undefined ||
+          sameLabel(slot.label, before.label)
+        ) {
+          continue;
+        }
+        const seat = recallSeatDecks(roomCode)[target];
+        if (seat && sameDeckList(seat.deck, slot.deck)) keep();
       }
       previous = slots;
     });

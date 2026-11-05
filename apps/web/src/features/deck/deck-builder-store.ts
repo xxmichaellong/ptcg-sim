@@ -52,7 +52,7 @@ export interface DeckBuilderStoreOptions {
 
 type Listener = () => void;
 
-const sameLabel = (
+export const sameLabel = (
   left: DeckSlotLabel | undefined,
   right: DeckSlotLabel | undefined
 ): boolean =>
