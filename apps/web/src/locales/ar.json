@@ -1544,17 +1544,17 @@
     "message": "3 pieces in a row",
     "translation": "3 قطع متتالية"
   },
-  "gY2kkN": {
-    "message": "A card in it has no picture.",
-    "translation": "إحدى بطاقاتها بلا صورة."
+  "GeqQnM": {
+    "message": "A card in it has no image.",
+    "translation": "إحدى البطاقات فيه بلا صورة."
+  },
+  "LQ6T7m": {
+    "message": "A card's image address is too long.",
+    "translation": "عنوان صورة إحدى البطاقات طويل جدًا."
   },
   "L-vNWm": {
     "message": "A card's name is too long.",
     "translation": "اسم إحدى البطاقات طويل جدًا."
-  },
-  "CZWQLJ": {
-    "message": "A card's picture address is too long.",
-    "translation": "عنوان صورة إحدى البطاقات طويل جدًا."
   },
   "fbfxt7": {
     "message": "A Pokémon in play can't join a group going to the Bench",
@@ -1673,20 +1673,20 @@
     "message": "Add a multi-piece card",
     "translation": "إضافة بطاقة متعددة القطع"
   },
-  "ZJwR0U": {
-    "message": "Add a picture for each piece.",
-    "translation": "أضف صورة لكل قطعة."
-  },
-  "J8elq3": {
-    "message": "Add a picture.",
-    "translation": "أضف صورة."
-  },
   "510vGF": {
     "message": "Add an Energy to the cost",
     "comments": [
       "A list of the eleven types; choosing one adds it."
     ],
     "translation": "إضافة طاقة إلى الكلفة"
+  },
+  "OvKp_u": {
+    "message": "Add an image for each piece.",
+    "translation": "أضف صورة لكل قطعة."
+  },
+  "E6dCw3": {
+    "message": "Add an image.",
+    "translation": "أضف صورة."
   },
   "6ZbKYu": {
     "message": "Add another stadium piece",
@@ -2377,8 +2377,8 @@
     "message": "Change card type",
     "translation": "تغيير نوع البطاقة"
   },
-  "9CyHQP": {
-    "message": "Change the picture",
+  "UOwYQT": {
+    "message": "Change the image",
     "translation": "تغيير الصورة"
   },
   "nVhPBD": {
@@ -2455,8 +2455,12 @@
     "message": "Choose a picture",
     "translation": "اختيار صورة"
   },
-  "kT6WGB": {
-    "message": "Choose a picture: {label}",
+  "BOOryO": {
+    "message": "Choose an image",
+    "translation": "اختيار صورة"
+  },
+  "OBBxzx": {
+    "message": "Choose an image: {label}",
     "translation": "اختيار صورة: {label}"
   },
   "5rfWim": {
@@ -2693,8 +2697,8 @@
     "message": "Couldn't start the tutorial. Try again.",
     "translation": "تعذّر بدء الدليل التعليمي. حاول مجددًا."
   },
-  "vN1y3D": {
-    "message": "Couldn't use that picture.",
+  "OcR9wV": {
+    "message": "Couldn't use that image.",
     "translation": "تعذّر استخدام هذه الصورة."
   },
   "U9OFiD": {
@@ -3857,14 +3861,26 @@
     "message": "Illustrator",
     "translation": "الرسام"
   },
+  "hG89Ed": {
+    "message": "Image",
+    "translation": "الصورة"
+  },
   "T7x7bT": {
     "message": "Image link",
     "translation": "رابط الصورة"
+  },
+  "-I1J9q": {
+    "message": "Image link: {label}",
+    "translation": "رابط الصورة: {label}"
   },
   "EUsCHg": {
     "message": "Images",
     "context": "show the deck as",
     "translation": "صور"
+  },
+  "O_-DcR": {
+    "message": "Images up to 25 MB.",
+    "translation": "الصور حتى 25 MB."
   },
   "Sa9jIT": {
     "message": "Import",
@@ -4808,8 +4824,8 @@
     "context": "animation speed",
     "translation": "عادي"
   },
-  "0iGojz": {
-    "message": "Not a picture.",
+  "-nUJOQ": {
+    "message": "Not an image.",
     "translation": "هذا ليس صورة."
   },
   "S33tz3": {
@@ -5089,8 +5105,8 @@
     "message": "or a link",
     "translation": "أو رابط"
   },
-  "IyUrJ9": {
-    "message": "Or drop or paste a picture.",
+  "P9Ulsj": {
+    "message": "Or drop or paste an image.",
     "translation": "أو أفلت صورة أو الصقها."
   },
   "l2I52S": {
@@ -5213,26 +5229,10 @@
     "message": "Pick random card",
     "translation": "اختيار بطاقة عشوائية"
   },
-  "N0-GsR": {
-    "message": "Picture",
-    "translation": "صورة"
-  },
   "KBXd3D": {
     "message": "Picture",
     "context": "a card back from a picture",
     "translation": "صورة"
-  },
-  "9uDKal": {
-    "message": "Picture link",
-    "translation": "رابط الصورة"
-  },
-  "eLNVFN": {
-    "message": "Picture link: {label}",
-    "translation": "رابط الصورة: {label}"
-  },
-  "Oo42E3": {
-    "message": "Pictures up to 25 MB.",
-    "translation": "الصور حتى 25 MB."
   },
   "BX1rQx": {
     "message": "Pieces",
@@ -5358,9 +5358,9 @@
     "message": "Pokémon cards",
     "translation": "بطاقات Pokémon"
   },
-  "abE-Jj": {
-    "message": "Preparing picture…",
-    "translation": "جارٍ تحضير الصورة…"
+  "UCQ2JV": {
+    "message": "Preparing image…",
+    "translation": "جارٍ تجهيز الصورة…"
   },
   "_0G332": {
     "message": "Press {keys} for <0>shortcuts</0>.",
@@ -5704,8 +5704,8 @@
     "message": "Remove special condition",
     "translation": "إزالة الحالة الخاصة"
   },
-  "-WTtkb": {
-    "message": "Remove the picture",
+  "8rwKix": {
+    "message": "Remove the image",
     "translation": "إزالة الصورة"
   },
   "Rk2OJ2": {
@@ -7000,6 +7000,10 @@
     "message": "That file isn't a picture.",
     "translation": "هذا الملف ليس صورة."
   },
+  "ZMr878": {
+    "message": "That image didn't load.",
+    "translation": "لم يتم تحميل هذه الصورة."
+  },
   "B4ZAXF": {
     "message": "That one was skipped.",
     "translation": "تم تخطي هذه الحركة."
@@ -7007,10 +7011,6 @@
   "qqEjGU": {
     "message": "That picture can't be read.",
     "translation": "تعذّرت قراءة هذه الصورة."
-  },
-  "F9MU8-": {
-    "message": "That picture didn't load.",
-    "translation": "تعذّر تحميل الصورة."
   },
   "HnGmBe": {
     "message": "That picture is over 20 MB.",

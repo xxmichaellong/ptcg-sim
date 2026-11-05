@@ -126,10 +126,10 @@ describe('custom card pictures', () => {
         })
       );
     });
-    expect(host.textContent).toContain("That picture didn't load.");
+    expect(host.textContent).toContain("That image didn't load.");
     await click('#nativeCustomCardSubmit');
     expect(onAdd).not.toHaveBeenCalled();
-    expect($('#nativeCustomCardError').textContent).toBe('Add a picture.');
+    expect($('#nativeCustomCardError').textContent).toBe('Add an image.');
 
     // A picture pasted anywhere in the window goes into the slot.
     await pasteFile($('#nativeCustomCardName'), picture('wide.png'));
@@ -182,7 +182,7 @@ describe('custom card pictures', () => {
     await click('#nativeCustomCardSubmit');
     expect(onAdd).not.toHaveBeenCalled();
     expect($('#nativeCustomCardError').textContent).toBe(
-      'Add a picture for each piece.'
+      'Add an image for each piece.'
     );
     // Pasted onto the last piece, the picture goes there.
     await pasteFile(

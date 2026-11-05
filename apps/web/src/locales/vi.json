@@ -1544,17 +1544,17 @@
     "message": "3 pieces in a row",
     "translation": "3 mảnh liên tiếp"
   },
-  "gY2kkN": {
-    "message": "A card in it has no picture.",
-    "translation": "Có một lá bài trong đó chưa có hình."
+  "GeqQnM": {
+    "message": "A card in it has no image.",
+    "translation": "Có một lá bài trong đó chưa có hình ảnh."
+  },
+  "LQ6T7m": {
+    "message": "A card's image address is too long.",
+    "translation": "Địa chỉ hình ảnh của một lá bài quá dài."
   },
   "L-vNWm": {
     "message": "A card's name is too long.",
     "translation": "Tên của một lá bài quá dài."
-  },
-  "CZWQLJ": {
-    "message": "A card's picture address is too long.",
-    "translation": "Địa chỉ hình của một lá bài quá dài."
   },
   "fbfxt7": {
     "message": "A Pokémon in play can't join a group going to the Bench",
@@ -1673,20 +1673,20 @@
     "message": "Add a multi-piece card",
     "translation": "Thêm lá bài nhiều phần"
   },
-  "ZJwR0U": {
-    "message": "Add a picture for each piece.",
-    "translation": "Thêm ảnh cho từng phần."
-  },
-  "J8elq3": {
-    "message": "Add a picture.",
-    "translation": "Thêm ảnh."
-  },
   "510vGF": {
     "message": "Add an Energy to the cost",
     "comments": [
       "A list of the eleven types; choosing one adds it."
     ],
     "translation": "Thêm một Năng lượng vào chi phí"
+  },
+  "OvKp_u": {
+    "message": "Add an image for each piece.",
+    "translation": "Thêm hình ảnh cho từng phần."
+  },
+  "E6dCw3": {
+    "message": "Add an image.",
+    "translation": "Thêm hình ảnh."
   },
   "6ZbKYu": {
     "message": "Add another stadium piece",
@@ -2377,9 +2377,9 @@
     "message": "Change card type",
     "translation": "Đổi loại lá bài"
   },
-  "9CyHQP": {
-    "message": "Change the picture",
-    "translation": "Đổi ảnh"
+  "UOwYQT": {
+    "message": "Change the image",
+    "translation": "Đổi hình ảnh"
   },
   "nVhPBD": {
     "message": "Change type to Energy",
@@ -2455,9 +2455,13 @@
     "message": "Choose a picture",
     "translation": "Chọn một ảnh"
   },
-  "kT6WGB": {
-    "message": "Choose a picture: {label}",
-    "translation": "Chọn ảnh: {label}"
+  "BOOryO": {
+    "message": "Choose an image",
+    "translation": "Chọn hình ảnh"
+  },
+  "OBBxzx": {
+    "message": "Choose an image: {label}",
+    "translation": "Chọn hình ảnh: {label}"
   },
   "5rfWim": {
     "message": "Classics",
@@ -2693,9 +2697,9 @@
     "message": "Couldn't start the tutorial. Try again.",
     "translation": "Không thể bắt đầu hướng dẫn. Hãy thử lại."
   },
-  "vN1y3D": {
-    "message": "Couldn't use that picture.",
-    "translation": "Không dùng được ảnh này."
+  "OcR9wV": {
+    "message": "Couldn't use that image.",
+    "translation": "Không dùng được hình ảnh này."
   },
   "U9OFiD": {
     "message": "cover",
@@ -3857,14 +3861,26 @@
     "message": "Illustrator",
     "translation": "Họa sĩ"
   },
+  "hG89Ed": {
+    "message": "Image",
+    "translation": "Hình ảnh"
+  },
   "T7x7bT": {
     "message": "Image link",
     "translation": "Liên kết ảnh"
+  },
+  "-I1J9q": {
+    "message": "Image link: {label}",
+    "translation": "Liên kết hình ảnh: {label}"
   },
   "EUsCHg": {
     "message": "Images",
     "context": "show the deck as",
     "translation": "Hình ảnh"
+  },
+  "O_-DcR": {
+    "message": "Images up to 25 MB.",
+    "translation": "Hình ảnh tối đa 25 MB."
   },
   "Sa9jIT": {
     "message": "Import",
@@ -4808,9 +4824,9 @@
     "context": "animation speed",
     "translation": "Bình thường"
   },
-  "0iGojz": {
-    "message": "Not a picture.",
-    "translation": "Không phải ảnh."
+  "-nUJOQ": {
+    "message": "Not an image.",
+    "translation": "Không phải hình ảnh."
   },
   "S33tz3": {
     "message": "Not connected",
@@ -5089,9 +5105,9 @@
     "message": "or a link",
     "translation": "hoặc dùng liên kết"
   },
-  "IyUrJ9": {
-    "message": "Or drop or paste a picture.",
-    "translation": "Hoặc kéo thả hay dán một ảnh."
+  "P9Ulsj": {
+    "message": "Or drop or paste an image.",
+    "translation": "Hoặc kéo thả hay dán hình ảnh."
   },
   "l2I52S": {
     "message": "or drop or paste one here",
@@ -5213,26 +5229,10 @@
     "message": "Pick random card",
     "translation": "Chọn lá bài ngẫu nhiên"
   },
-  "N0-GsR": {
-    "message": "Picture",
-    "translation": "Ảnh"
-  },
   "KBXd3D": {
     "message": "Picture",
     "context": "a card back from a picture",
     "translation": "Ảnh"
-  },
-  "9uDKal": {
-    "message": "Picture link",
-    "translation": "Liên kết ảnh"
-  },
-  "eLNVFN": {
-    "message": "Picture link: {label}",
-    "translation": "Liên kết ảnh: {label}"
-  },
-  "Oo42E3": {
-    "message": "Pictures up to 25 MB.",
-    "translation": "Ảnh tối đa 25 MB."
   },
   "BX1rQx": {
     "message": "Pieces",
@@ -5358,9 +5358,9 @@
     "message": "Pokémon cards",
     "translation": "Bài Pokémon"
   },
-  "abE-Jj": {
-    "message": "Preparing picture…",
-    "translation": "Đang chuẩn bị ảnh…"
+  "UCQ2JV": {
+    "message": "Preparing image…",
+    "translation": "Đang chuẩn bị hình ảnh…"
   },
   "_0G332": {
     "message": "Press {keys} for <0>shortcuts</0>.",
@@ -5704,9 +5704,9 @@
     "message": "Remove special condition",
     "translation": "Gỡ trạng thái đặc biệt"
   },
-  "-WTtkb": {
-    "message": "Remove the picture",
-    "translation": "Xóa ảnh"
+  "8rwKix": {
+    "message": "Remove the image",
+    "translation": "Xóa hình ảnh"
   },
   "Rk2OJ2": {
     "message": "Remove this Ability",
@@ -7000,6 +7000,10 @@
     "message": "That file isn't a picture.",
     "translation": "Tệp đó không phải là hình ảnh."
   },
+  "ZMr878": {
+    "message": "That image didn't load.",
+    "translation": "Không tải được hình ảnh này."
+  },
   "B4ZAXF": {
     "message": "That one was skipped.",
     "translation": "Thao tác vừa rồi đã bị bỏ qua."
@@ -7007,10 +7011,6 @@
   "qqEjGU": {
     "message": "That picture can't be read.",
     "translation": "Không thể đọc hình ảnh đó."
-  },
-  "F9MU8-": {
-    "message": "That picture didn't load.",
-    "translation": "Không tải được ảnh này."
   },
   "HnGmBe": {
     "message": "That picture is over 20 MB.",

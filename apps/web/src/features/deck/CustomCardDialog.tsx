@@ -126,10 +126,10 @@ const ImageSlot = ({
     slot.status !== 'failed'
       ? ''
       : slot.failure === 'not_a_picture'
-        ? t`Not a picture.`
+        ? t`Not an image.`
         : slot.failure === 'too_long'
           ? t`Link too long.`
-          : t`That picture didn't load.`;
+          : t`That image didn't load.`;
   const onDrop = (event: DragEvent<HTMLElement>): void => {
     event.preventDefault();
     setOver(false);
@@ -145,7 +145,7 @@ const ImageSlot = ({
       data-slot={index}
       data-status={slot.status}
       role="group"
-      aria-label={label ?? t`Picture`}
+      aria-label={label ?? t`Image`}
     >
       <button
         type="button"
@@ -153,10 +153,10 @@ const ImageSlot = ({
         data-over={over ? 'true' : undefined}
         aria-label={
           preview
-            ? t`Change the picture`
+            ? t`Change the image`
             : label
-              ? t`Choose a picture: ${label}`
-              : t`Choose a picture`
+              ? t`Choose an image: ${label}`
+              : t`Choose an image`
         }
         onClick={() => file.current?.click()}
         onDragOver={(event) => {
@@ -200,7 +200,7 @@ const ImageSlot = ({
         <button
           type="button"
           className="ds-icon-button custom-card-slot__clear"
-          aria-label={t`Remove the picture`}
+          aria-label={t`Remove the image`}
           onClick={() => onPicture(null)}
         >
           <XIcon {...decorative} weight="bold" />
@@ -227,7 +227,7 @@ const ImageSlot = ({
         className="ds-input custom-card-slot__link"
         type="url"
         inputMode="url"
-        aria-label={label ? t`Picture link: ${label}` : t`Picture link`}
+        aria-label={label ? t`Image link: ${label}` : t`Image link`}
         placeholder={t`or a link`}
         value={link}
         onChange={(event) => {
@@ -429,7 +429,7 @@ export const CustomCardDialog = ({
       slot.status === 'ready' ? [slot] : []
     );
     if (ready.length < pieces) {
-      setError(multi ? t`Add a picture for each piece.` : t`Add a picture.`);
+      setError(multi ? t`Add an image for each piece.` : t`Add an image.`);
       return;
     }
     const surface = {

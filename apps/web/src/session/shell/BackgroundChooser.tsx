@@ -271,13 +271,13 @@ export const BackgroundChooser = ({
       <div className="background-chooser__footer">
         <span className="ptcgsim-form-hint" role="status">
           {status === 'busy' ? (
-            <Trans>Preparing picture…</Trans>
+            <Trans>Preparing image…</Trans>
           ) : status === 'failed' ? (
-            <Trans>Couldn't use that picture.</Trans>
+            <Trans>Couldn't use that image.</Trans>
           ) : status === 'large' ? (
-            <Trans>Pictures up to 25 MB.</Trans>
+            <Trans>Images up to 25 MB.</Trans>
           ) : touchOnly ? null : (
-            <Trans>Or drop or paste a picture.</Trans>
+            <Trans>Or drop or paste an image.</Trans>
           )}
         </span>
         <button

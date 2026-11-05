@@ -1544,17 +1544,17 @@
     "message": "3 pieces in a row",
     "translation": "3 piraso nang magkakasunod"
   },
-  "gY2kkN": {
-    "message": "A card in it has no picture.",
-    "translation": "May card dito na walang larawan."
+  "GeqQnM": {
+    "message": "A card in it has no image.",
+    "translation": "May card dito na walang image."
+  },
+  "LQ6T7m": {
+    "message": "A card's image address is too long.",
+    "translation": "Masyadong mahaba ang address ng image ng isang card."
   },
   "L-vNWm": {
     "message": "A card's name is too long.",
     "translation": "Masyadong mahaba ang pangalan ng isang card."
-  },
-  "CZWQLJ": {
-    "message": "A card's picture address is too long.",
-    "translation": "Masyadong mahaba ang address ng larawan ng isang card."
   },
   "fbfxt7": {
     "message": "A Pokémon in play can't join a group going to the Bench",
@@ -1673,20 +1673,20 @@
     "message": "Add a multi-piece card",
     "translation": "Magdagdag ng multi-piece card"
   },
-  "ZJwR0U": {
-    "message": "Add a picture for each piece.",
-    "translation": "Magdagdag ng larawan para sa bawat piece."
-  },
-  "J8elq3": {
-    "message": "Add a picture.",
-    "translation": "Magdagdag ng larawan."
-  },
   "510vGF": {
     "message": "Add an Energy to the cost",
     "comments": [
       "A list of the eleven types; choosing one adds it."
     ],
     "translation": "Magdagdag ng Energy sa cost"
+  },
+  "OvKp_u": {
+    "message": "Add an image for each piece.",
+    "translation": "Magdagdag ng image para sa bawat piece."
+  },
+  "E6dCw3": {
+    "message": "Add an image.",
+    "translation": "Magdagdag ng image."
   },
   "6ZbKYu": {
     "message": "Add another stadium piece",
@@ -2377,9 +2377,9 @@
     "message": "Change card type",
     "translation": "Palitan ang card type"
   },
-  "9CyHQP": {
-    "message": "Change the picture",
-    "translation": "Palitan ang larawan"
+  "UOwYQT": {
+    "message": "Change the image",
+    "translation": "Palitan ang image"
   },
   "nVhPBD": {
     "message": "Change type to Energy",
@@ -2455,9 +2455,13 @@
     "message": "Choose a picture",
     "translation": "Pumili ng larawan"
   },
-  "kT6WGB": {
-    "message": "Choose a picture: {label}",
-    "translation": "Pumili ng larawan: {label}"
+  "BOOryO": {
+    "message": "Choose an image",
+    "translation": "Pumili ng image"
+  },
+  "OBBxzx": {
+    "message": "Choose an image: {label}",
+    "translation": "Pumili ng image: {label}"
   },
   "5rfWim": {
     "message": "Classics",
@@ -2693,9 +2697,9 @@
     "message": "Couldn't start the tutorial. Try again.",
     "translation": "Hindi masimulan ang tutorial. Subukan ulit."
   },
-  "vN1y3D": {
-    "message": "Couldn't use that picture.",
-    "translation": "Hindi magamit ang larawang iyon."
+  "OcR9wV": {
+    "message": "Couldn't use that image.",
+    "translation": "Hindi magamit ang image na iyon."
   },
   "U9OFiD": {
     "message": "cover",
@@ -3857,14 +3861,26 @@
     "message": "Illustrator",
     "translation": "Illustrator"
   },
+  "hG89Ed": {
+    "message": "Image",
+    "translation": "Image"
+  },
   "T7x7bT": {
     "message": "Image link",
     "translation": "Link ng larawan"
+  },
+  "-I1J9q": {
+    "message": "Image link: {label}",
+    "translation": "Link ng image: {label}"
   },
   "EUsCHg": {
     "message": "Images",
     "context": "show the deck as",
     "translation": "Mga larawan"
+  },
+  "O_-DcR": {
+    "message": "Images up to 25 MB.",
+    "translation": "Hanggang 25 MB ang image."
   },
   "Sa9jIT": {
     "message": "Import",
@@ -4808,9 +4824,9 @@
     "context": "animation speed",
     "translation": "Normal"
   },
-  "0iGojz": {
-    "message": "Not a picture.",
-    "translation": "Hindi ito larawan."
+  "-nUJOQ": {
+    "message": "Not an image.",
+    "translation": "Hindi ito image."
   },
   "S33tz3": {
     "message": "Not connected",
@@ -5089,9 +5105,9 @@
     "message": "or a link",
     "translation": "o isang link"
   },
-  "IyUrJ9": {
-    "message": "Or drop or paste a picture.",
-    "translation": "O i-drop o i-paste ang larawan."
+  "P9Ulsj": {
+    "message": "Or drop or paste an image.",
+    "translation": "O i-drop o i-paste ang image."
   },
   "l2I52S": {
     "message": "or drop or paste one here",
@@ -5213,26 +5229,10 @@
     "message": "Pick random card",
     "translation": "Pumili ng random na card"
   },
-  "N0-GsR": {
-    "message": "Picture",
-    "translation": "Larawan"
-  },
   "KBXd3D": {
     "message": "Picture",
     "context": "a card back from a picture",
     "translation": "Larawan"
-  },
-  "9uDKal": {
-    "message": "Picture link",
-    "translation": "Link ng larawan"
-  },
-  "eLNVFN": {
-    "message": "Picture link: {label}",
-    "translation": "Link ng larawan: {label}"
-  },
-  "Oo42E3": {
-    "message": "Pictures up to 25 MB.",
-    "translation": "Hanggang 25 MB ang larawan."
   },
   "BX1rQx": {
     "message": "Pieces",
@@ -5358,9 +5358,9 @@
     "message": "Pokémon cards",
     "translation": "Mga Pokémon card"
   },
-  "abE-Jj": {
-    "message": "Preparing picture…",
-    "translation": "Inihahanda ang larawan…"
+  "UCQ2JV": {
+    "message": "Preparing image…",
+    "translation": "Inihahanda ang image…"
   },
   "_0G332": {
     "message": "Press {keys} for <0>shortcuts</0>.",
@@ -5704,9 +5704,9 @@
     "message": "Remove special condition",
     "translation": "Alisin ang special condition"
   },
-  "-WTtkb": {
-    "message": "Remove the picture",
-    "translation": "Alisin ang larawan"
+  "8rwKix": {
+    "message": "Remove the image",
+    "translation": "Alisin ang image"
   },
   "Rk2OJ2": {
     "message": "Remove this Ability",
@@ -7000,6 +7000,10 @@
     "message": "That file isn't a picture.",
     "translation": "Hindi larawan ang file na iyon."
   },
+  "ZMr878": {
+    "message": "That image didn't load.",
+    "translation": "Hindi na-load ang image na iyon."
+  },
   "B4ZAXF": {
     "message": "That one was skipped.",
     "translation": "Nilaktawan ang isang iyon."
@@ -7007,10 +7011,6 @@
   "qqEjGU": {
     "message": "That picture can't be read.",
     "translation": "Hindi mabasa ang larawang iyon."
-  },
-  "F9MU8-": {
-    "message": "That picture didn't load.",
-    "translation": "Hindi na-load ang larawang iyon."
   },
   "HnGmBe": {
     "message": "That picture is over 20 MB.",

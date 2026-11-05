@@ -1544,17 +1544,17 @@
     "message": "3 pieces in a row",
     "translation": "Arka arkaya 3 parça"
   },
-  "gY2kkN": {
-    "message": "A card in it has no picture.",
+  "GeqQnM": {
+    "message": "A card in it has no image.",
     "translation": "İçindeki bir kartın görseli yok."
+  },
+  "LQ6T7m": {
+    "message": "A card's image address is too long.",
+    "translation": "Bir kartın görsel adresi çok uzun."
   },
   "L-vNWm": {
     "message": "A card's name is too long.",
     "translation": "Bir kartın adı çok uzun."
-  },
-  "CZWQLJ": {
-    "message": "A card's picture address is too long.",
-    "translation": "Bir kartın görsel adresi çok uzun."
   },
   "fbfxt7": {
     "message": "A Pokémon in play can't join a group going to the Bench",
@@ -1673,20 +1673,20 @@
     "message": "Add a multi-piece card",
     "translation": "Çok parçalı kart ekle"
   },
-  "ZJwR0U": {
-    "message": "Add a picture for each piece.",
-    "translation": "Her parça için bir resim ekle."
-  },
-  "J8elq3": {
-    "message": "Add a picture.",
-    "translation": "Resim ekle."
-  },
   "510vGF": {
     "message": "Add an Energy to the cost",
     "comments": [
       "A list of the eleven types; choosing one adds it."
     ],
     "translation": "Maliyete Enerji ekle"
+  },
+  "OvKp_u": {
+    "message": "Add an image for each piece.",
+    "translation": "Her parça için bir görsel ekle."
+  },
+  "E6dCw3": {
+    "message": "Add an image.",
+    "translation": "Görsel ekle."
   },
   "6ZbKYu": {
     "message": "Add another stadium piece",
@@ -2377,9 +2377,9 @@
     "message": "Change card type",
     "translation": "Kart türünü değiştir"
   },
-  "9CyHQP": {
-    "message": "Change the picture",
-    "translation": "Resmi değiştir"
+  "UOwYQT": {
+    "message": "Change the image",
+    "translation": "Görseli değiştir"
   },
   "nVhPBD": {
     "message": "Change type to Energy",
@@ -2455,9 +2455,13 @@
     "message": "Choose a picture",
     "translation": "Resim seç"
   },
-  "kT6WGB": {
-    "message": "Choose a picture: {label}",
-    "translation": "Resim seç: {label}"
+  "BOOryO": {
+    "message": "Choose an image",
+    "translation": "Görsel seç"
+  },
+  "OBBxzx": {
+    "message": "Choose an image: {label}",
+    "translation": "Görsel seç: {label}"
   },
   "5rfWim": {
     "message": "Classics",
@@ -2693,9 +2697,9 @@
     "message": "Couldn't start the tutorial. Try again.",
     "translation": "Eğitim başlatılamadı. Tekrar dene."
   },
-  "vN1y3D": {
-    "message": "Couldn't use that picture.",
-    "translation": "Bu resim kullanılamadı."
+  "OcR9wV": {
+    "message": "Couldn't use that image.",
+    "translation": "Bu görsel kullanılamadı."
   },
   "U9OFiD": {
     "message": "cover",
@@ -3857,14 +3861,26 @@
     "message": "Illustrator",
     "translation": "İllüstratör"
   },
+  "hG89Ed": {
+    "message": "Image",
+    "translation": "Görsel"
+  },
   "T7x7bT": {
     "message": "Image link",
     "translation": "Resim bağlantısı"
+  },
+  "-I1J9q": {
+    "message": "Image link: {label}",
+    "translation": "Görsel bağlantısı: {label}"
   },
   "EUsCHg": {
     "message": "Images",
     "context": "show the deck as",
     "translation": "Görseller"
+  },
+  "O_-DcR": {
+    "message": "Images up to 25 MB.",
+    "translation": "25 MB'a kadar görseller."
   },
   "Sa9jIT": {
     "message": "Import",
@@ -4808,9 +4824,9 @@
     "context": "animation speed",
     "translation": "Normal"
   },
-  "0iGojz": {
-    "message": "Not a picture.",
-    "translation": "Bu bir resim değil."
+  "-nUJOQ": {
+    "message": "Not an image.",
+    "translation": "Bu bir görsel değil."
   },
   "S33tz3": {
     "message": "Not connected",
@@ -5089,9 +5105,9 @@
     "message": "or a link",
     "translation": "veya bir bağlantı"
   },
-  "IyUrJ9": {
-    "message": "Or drop or paste a picture.",
-    "translation": "Ya da bir resim sürükleyip bırak veya yapıştır."
+  "P9Ulsj": {
+    "message": "Or drop or paste an image.",
+    "translation": "Ya da bir görsel sürükleyip bırak veya yapıştır."
   },
   "l2I52S": {
     "message": "or drop or paste one here",
@@ -5213,26 +5229,10 @@
     "message": "Pick random card",
     "translation": "Rastgele kart seç"
   },
-  "N0-GsR": {
-    "message": "Picture",
-    "translation": "Resim"
-  },
   "KBXd3D": {
     "message": "Picture",
     "context": "a card back from a picture",
     "translation": "Resim"
-  },
-  "9uDKal": {
-    "message": "Picture link",
-    "translation": "Resim bağlantısı"
-  },
-  "eLNVFN": {
-    "message": "Picture link: {label}",
-    "translation": "Resim bağlantısı: {label}"
-  },
-  "Oo42E3": {
-    "message": "Pictures up to 25 MB.",
-    "translation": "25 MB'a kadar resimler."
   },
   "BX1rQx": {
     "message": "Pieces",
@@ -5358,9 +5358,9 @@
     "message": "Pokémon cards",
     "translation": "Pokémon kartları"
   },
-  "abE-Jj": {
-    "message": "Preparing picture…",
-    "translation": "Resim hazırlanıyor…"
+  "UCQ2JV": {
+    "message": "Preparing image…",
+    "translation": "Görsel hazırlanıyor…"
   },
   "_0G332": {
     "message": "Press {keys} for <0>shortcuts</0>.",
@@ -5704,9 +5704,9 @@
     "message": "Remove special condition",
     "translation": "Özel durumu kaldır"
   },
-  "-WTtkb": {
-    "message": "Remove the picture",
-    "translation": "Resmi kaldır"
+  "8rwKix": {
+    "message": "Remove the image",
+    "translation": "Görseli kaldır"
   },
   "Rk2OJ2": {
     "message": "Remove this Ability",
@@ -7000,6 +7000,10 @@
     "message": "That file isn't a picture.",
     "translation": "Bu dosya bir resim değil."
   },
+  "ZMr878": {
+    "message": "That image didn't load.",
+    "translation": "Bu görsel yüklenmedi."
+  },
   "B4ZAXF": {
     "message": "That one was skipped.",
     "translation": "Bu atlandı."
@@ -7007,10 +7011,6 @@
   "qqEjGU": {
     "message": "That picture can't be read.",
     "translation": "Bu resim okunamıyor."
-  },
-  "F9MU8-": {
-    "message": "That picture didn't load.",
-    "translation": "Bu resim yüklenemedi."
   },
   "HnGmBe": {
     "message": "That picture is over 20 MB.",

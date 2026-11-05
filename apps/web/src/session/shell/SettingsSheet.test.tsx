@@ -754,7 +754,7 @@ describe('SettingsSheet', () => {
     expect(onChange).not.toHaveBeenCalled();
     expect(
       document.querySelector('.background-chooser')?.textContent
-    ).toContain("Couldn't use that picture.");
+    ).toContain("Couldn't use that image.");
   });
 
   it('lets a tile or a link chosen while a picture is prepared stand, and takes a picture pasted on a tile', async () => {
@@ -805,7 +805,7 @@ describe('SettingsSheet', () => {
     expect(onChange).toHaveBeenLastCalledWith(wallpaper);
     expect(
       document.querySelector('.background-chooser')?.textContent
-    ).not.toContain('Preparing picture…');
+    ).not.toContain('Preparing image…');
 
     // A link chosen meanwhile (the choice changes from outside) too.
     onChange.mockClear();

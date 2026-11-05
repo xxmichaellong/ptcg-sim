@@ -579,9 +579,9 @@ export const deckInstallFailureNotice = (
         case 'too_many_entries':
           return t`The table takes at most ${{ max: MAX_DECK_ENTRIES }} different cards.`;
         case 'missing_image':
-          return t`A card in it has no picture.`;
+          return t`A card in it has no image.`;
         case 'url_too_long':
-          return t`A card's picture address is too long.`;
+          return t`A card's image address is too long.`;
         case 'name_too_long':
           return t`A card's name is too long.`;
         case 'text_too_long':

@@ -1544,17 +1544,17 @@
     "message": "3 pieces in a row",
     "translation": "3 pieces in a row"
   },
-  "gY2kkN": {
-    "message": "A card in it has no picture.",
-    "translation": "A card in it has no picture."
+  "GeqQnM": {
+    "message": "A card in it has no image.",
+    "translation": "A card in it has no image."
+  },
+  "LQ6T7m": {
+    "message": "A card's image address is too long.",
+    "translation": "A card's image address is too long."
   },
   "L-vNWm": {
     "message": "A card's name is too long.",
     "translation": "A card's name is too long."
-  },
-  "CZWQLJ": {
-    "message": "A card's picture address is too long.",
-    "translation": "A card's picture address is too long."
   },
   "fbfxt7": {
     "message": "A Pokémon in play can't join a group going to the Bench",
@@ -1673,20 +1673,20 @@
     "message": "Add a multi-piece card",
     "translation": "Add a multi-piece card"
   },
-  "ZJwR0U": {
-    "message": "Add a picture for each piece.",
-    "translation": "Add a picture for each piece."
-  },
-  "J8elq3": {
-    "message": "Add a picture.",
-    "translation": "Add a picture."
-  },
   "510vGF": {
     "message": "Add an Energy to the cost",
     "comments": [
       "A list of the eleven types; choosing one adds it."
     ],
     "translation": "Add an Energy to the cost"
+  },
+  "OvKp_u": {
+    "message": "Add an image for each piece.",
+    "translation": "Add an image for each piece."
+  },
+  "E6dCw3": {
+    "message": "Add an image.",
+    "translation": "Add an image."
   },
   "6ZbKYu": {
     "message": "Add another stadium piece",
@@ -2377,9 +2377,9 @@
     "message": "Change card type",
     "translation": "Change card type"
   },
-  "9CyHQP": {
-    "message": "Change the picture",
-    "translation": "Change the picture"
+  "UOwYQT": {
+    "message": "Change the image",
+    "translation": "Change the image"
   },
   "nVhPBD": {
     "message": "Change type to Energy",
@@ -2455,9 +2455,13 @@
     "message": "Choose a picture",
     "translation": "Choose a picture"
   },
-  "kT6WGB": {
-    "message": "Choose a picture: {label}",
-    "translation": "Choose a picture: {label}"
+  "BOOryO": {
+    "message": "Choose an image",
+    "translation": "Choose an image"
+  },
+  "OBBxzx": {
+    "message": "Choose an image: {label}",
+    "translation": "Choose an image: {label}"
   },
   "5rfWim": {
     "message": "Classics",
@@ -2693,9 +2697,9 @@
     "message": "Couldn't start the tutorial. Try again.",
     "translation": "Couldn't start the tutorial. Try again."
   },
-  "vN1y3D": {
-    "message": "Couldn't use that picture.",
-    "translation": "Couldn't use that picture."
+  "OcR9wV": {
+    "message": "Couldn't use that image.",
+    "translation": "Couldn't use that image."
   },
   "U9OFiD": {
     "message": "cover",
@@ -3857,14 +3861,26 @@
     "message": "Illustrator",
     "translation": "Illustrator"
   },
+  "hG89Ed": {
+    "message": "Image",
+    "translation": "Image"
+  },
   "T7x7bT": {
     "message": "Image link",
     "translation": "Image link"
+  },
+  "-I1J9q": {
+    "message": "Image link: {label}",
+    "translation": "Image link: {label}"
   },
   "EUsCHg": {
     "message": "Images",
     "context": "show the deck as",
     "translation": "Images"
+  },
+  "O_-DcR": {
+    "message": "Images up to 25 MB.",
+    "translation": "Images up to 25 MB."
   },
   "Sa9jIT": {
     "message": "Import",
@@ -4808,9 +4824,9 @@
     "context": "animation speed",
     "translation": "Normal"
   },
-  "0iGojz": {
-    "message": "Not a picture.",
-    "translation": "Not a picture."
+  "-nUJOQ": {
+    "message": "Not an image.",
+    "translation": "Not an image."
   },
   "S33tz3": {
     "message": "Not connected",
@@ -5089,9 +5105,9 @@
     "message": "or a link",
     "translation": "or a link"
   },
-  "IyUrJ9": {
-    "message": "Or drop or paste a picture.",
-    "translation": "Or drop or paste a picture."
+  "P9Ulsj": {
+    "message": "Or drop or paste an image.",
+    "translation": "Or drop or paste an image."
   },
   "l2I52S": {
     "message": "or drop or paste one here",
@@ -5213,26 +5229,10 @@
     "message": "Pick random card",
     "translation": "Pick random card"
   },
-  "N0-GsR": {
-    "message": "Picture",
-    "translation": "Picture"
-  },
   "KBXd3D": {
     "message": "Picture",
     "context": "a card back from a picture",
     "translation": "Picture"
-  },
-  "9uDKal": {
-    "message": "Picture link",
-    "translation": "Picture link"
-  },
-  "eLNVFN": {
-    "message": "Picture link: {label}",
-    "translation": "Picture link: {label}"
-  },
-  "Oo42E3": {
-    "message": "Pictures up to 25 MB.",
-    "translation": "Pictures up to 25 MB."
   },
   "BX1rQx": {
     "message": "Pieces",
@@ -5358,9 +5358,9 @@
     "message": "Pokémon cards",
     "translation": "Pokémon cards"
   },
-  "abE-Jj": {
-    "message": "Preparing picture…",
-    "translation": "Preparing picture…"
+  "UCQ2JV": {
+    "message": "Preparing image…",
+    "translation": "Preparing image…"
   },
   "_0G332": {
     "message": "Press {keys} for <0>shortcuts</0>.",
@@ -5704,9 +5704,9 @@
     "message": "Remove special condition",
     "translation": "Remove special condition"
   },
-  "-WTtkb": {
-    "message": "Remove the picture",
-    "translation": "Remove the picture"
+  "8rwKix": {
+    "message": "Remove the image",
+    "translation": "Remove the image"
   },
   "Rk2OJ2": {
     "message": "Remove this Ability",
@@ -7000,6 +7000,10 @@
     "message": "That file isn't a picture.",
     "translation": "That file isn't a picture."
   },
+  "ZMr878": {
+    "message": "That image didn't load.",
+    "translation": "That image didn't load."
+  },
   "B4ZAXF": {
     "message": "That one was skipped.",
     "translation": "That one was skipped."
@@ -7007,10 +7011,6 @@
   "qqEjGU": {
     "message": "That picture can't be read.",
     "translation": "That picture can't be read."
-  },
-  "F9MU8-": {
-    "message": "That picture didn't load.",
-    "translation": "That picture didn't load."
   },
   "HnGmBe": {
     "message": "That picture is over 20 MB.",

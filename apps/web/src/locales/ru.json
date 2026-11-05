@@ -1544,17 +1544,17 @@
     "message": "3 pieces in a row",
     "translation": "3 части подряд"
   },
-  "gY2kkN": {
-    "message": "A card in it has no picture.",
+  "GeqQnM": {
+    "message": "A card in it has no image.",
     "translation": "У одной из карт нет изображения."
+  },
+  "LQ6T7m": {
+    "message": "A card's image address is too long.",
+    "translation": "Адрес изображения карты слишком длинный."
   },
   "L-vNWm": {
     "message": "A card's name is too long.",
     "translation": "Название карты слишком длинное."
-  },
-  "CZWQLJ": {
-    "message": "A card's picture address is too long.",
-    "translation": "Адрес изображения карты слишком длинный."
   },
   "fbfxt7": {
     "message": "A Pokémon in play can't join a group going to the Bench",
@@ -1673,20 +1673,20 @@
     "message": "Add a multi-piece card",
     "translation": "Добавить карту из нескольких частей"
   },
-  "ZJwR0U": {
-    "message": "Add a picture for each piece.",
-    "translation": "Добавь картинку для каждой части."
-  },
-  "J8elq3": {
-    "message": "Add a picture.",
-    "translation": "Добавь картинку."
-  },
   "510vGF": {
     "message": "Add an Energy to the cost",
     "comments": [
       "A list of the eleven types; choosing one adds it."
     ],
     "translation": "Добавить Энергию в стоимость"
+  },
+  "OvKp_u": {
+    "message": "Add an image for each piece.",
+    "translation": "Добавь изображение для каждой части."
+  },
+  "E6dCw3": {
+    "message": "Add an image.",
+    "translation": "Добавь изображение."
   },
   "6ZbKYu": {
     "message": "Add another stadium piece",
@@ -2377,9 +2377,9 @@
     "message": "Change card type",
     "translation": "Сменить тип карты"
   },
-  "9CyHQP": {
-    "message": "Change the picture",
-    "translation": "Изменить картинку"
+  "UOwYQT": {
+    "message": "Change the image",
+    "translation": "Изменить изображение"
   },
   "nVhPBD": {
     "message": "Change type to Energy",
@@ -2455,9 +2455,13 @@
     "message": "Choose a picture",
     "translation": "Выбрать картинку"
   },
-  "kT6WGB": {
-    "message": "Choose a picture: {label}",
-    "translation": "Выбрать картинку: {label}"
+  "BOOryO": {
+    "message": "Choose an image",
+    "translation": "Выбрать изображение"
+  },
+  "OBBxzx": {
+    "message": "Choose an image: {label}",
+    "translation": "Выбрать изображение: {label}"
   },
   "5rfWim": {
     "message": "Classics",
@@ -2693,9 +2697,9 @@
     "message": "Couldn't start the tutorial. Try again.",
     "translation": "Не удалось запустить обучение. Попробуй ещё раз."
   },
-  "vN1y3D": {
-    "message": "Couldn't use that picture.",
-    "translation": "Не удалось использовать эту картинку."
+  "OcR9wV": {
+    "message": "Couldn't use that image.",
+    "translation": "Не удалось использовать это изображение."
   },
   "U9OFiD": {
     "message": "cover",
@@ -3857,14 +3861,26 @@
     "message": "Illustrator",
     "translation": "Иллюстратор"
   },
+  "hG89Ed": {
+    "message": "Image",
+    "translation": "Изображение"
+  },
   "T7x7bT": {
     "message": "Image link",
     "translation": "Ссылка на картинку"
+  },
+  "-I1J9q": {
+    "message": "Image link: {label}",
+    "translation": "Ссылка на изображение: {label}"
   },
   "EUsCHg": {
     "message": "Images",
     "context": "show the deck as",
     "translation": "Картинки"
+  },
+  "O_-DcR": {
+    "message": "Images up to 25 MB.",
+    "translation": "Изображения до 25 МБ."
   },
   "Sa9jIT": {
     "message": "Import",
@@ -4808,9 +4824,9 @@
     "context": "animation speed",
     "translation": "Обычная"
   },
-  "0iGojz": {
-    "message": "Not a picture.",
-    "translation": "Это не картинка."
+  "-nUJOQ": {
+    "message": "Not an image.",
+    "translation": "Это не изображение."
   },
   "S33tz3": {
     "message": "Not connected",
@@ -5089,9 +5105,9 @@
     "message": "or a link",
     "translation": "или ссылка"
   },
-  "IyUrJ9": {
-    "message": "Or drop or paste a picture.",
-    "translation": "Или перетащи либо вставь картинку."
+  "P9Ulsj": {
+    "message": "Or drop or paste an image.",
+    "translation": "Или перетащи или вставь изображение."
   },
   "l2I52S": {
     "message": "or drop or paste one here",
@@ -5213,26 +5229,10 @@
     "message": "Pick random card",
     "translation": "Выбрать случайную карту"
   },
-  "N0-GsR": {
-    "message": "Picture",
-    "translation": "Картинка"
-  },
   "KBXd3D": {
     "message": "Picture",
     "context": "a card back from a picture",
     "translation": "Картинка"
-  },
-  "9uDKal": {
-    "message": "Picture link",
-    "translation": "Ссылка на картинку"
-  },
-  "eLNVFN": {
-    "message": "Picture link: {label}",
-    "translation": "Ссылка на картинку: {label}"
-  },
-  "Oo42E3": {
-    "message": "Pictures up to 25 MB.",
-    "translation": "Картинки до 25 МБ."
   },
   "BX1rQx": {
     "message": "Pieces",
@@ -5358,9 +5358,9 @@
     "message": "Pokémon cards",
     "translation": "Карты покемонов"
   },
-  "abE-Jj": {
-    "message": "Preparing picture…",
-    "translation": "Подготовка картинки…"
+  "UCQ2JV": {
+    "message": "Preparing image…",
+    "translation": "Подготовка изображения…"
   },
   "_0G332": {
     "message": "Press {keys} for <0>shortcuts</0>.",
@@ -5704,9 +5704,9 @@
     "message": "Remove special condition",
     "translation": "Убрать особое состояние"
   },
-  "-WTtkb": {
-    "message": "Remove the picture",
-    "translation": "Удалить картинку"
+  "8rwKix": {
+    "message": "Remove the image",
+    "translation": "Удалить изображение"
   },
   "Rk2OJ2": {
     "message": "Remove this Ability",
@@ -7000,6 +7000,10 @@
     "message": "That file isn't a picture.",
     "translation": "Этот файл не является изображением."
   },
+  "ZMr878": {
+    "message": "That image didn't load.",
+    "translation": "Это изображение не загрузилось."
+  },
   "B4ZAXF": {
     "message": "That one was skipped.",
     "translation": "Это действие пропущено."
@@ -7007,10 +7011,6 @@
   "qqEjGU": {
     "message": "That picture can't be read.",
     "translation": "Не удаётся прочитать это изображение."
-  },
-  "F9MU8-": {
-    "message": "That picture didn't load.",
-    "translation": "Картинка не загрузилась."
   },
   "HnGmBe": {
     "message": "That picture is over 20 MB.",
