@@ -840,6 +840,46 @@ describe('remote room lobby wiring', () => {
     expect(created.dispose).toHaveBeenCalledOnce();
   });
 
+  it('keeps the Solo room it shows for a reload, and only that one, under StrictMode', async () => {
+    const shown = creationResult(runtime({ label: 'solo' }), 'solo');
+    const keepShown = vi.fn();
+    const keepDropped = vi.fn();
+    const createRoom = vi.fn();
+    const openSoloRoom = vi.fn(
+      async (input: { readonly signal?: AbortSignal }) => {
+        await Promise.resolve();
+        // The replaced owner's opening was cancelled with it.
+        return input.signal?.aborted
+          ? {
+              ...creationResult(runtime({ label: 'dropped' }), 'solo').value,
+              keep: keepDropped,
+            }
+          : { ...shown.value, keep: keepShown };
+      }
+    );
+    const { root } = await mount(
+      {
+        ...lobbyDependencies(custody(), createRoom),
+        openSoloRoom:
+          openSoloRoom as unknown as RemoteRoomLobbyDependencies['openSoloRoom'],
+      },
+      true,
+      'solo'
+    );
+    await settle();
+
+    expect(openSoloRoom).toHaveBeenCalledTimes(2);
+    expect(openSoloRoom.mock.calls[1]?.[0]).toMatchObject({
+      buildId: 'test-build',
+      displayName: 'Blue',
+    });
+    expect(createRoom).not.toHaveBeenCalled();
+    expect(roomRouteHarness.roomMode).toBe('solo');
+    expect(keepShown).toHaveBeenCalledOnce();
+    expect(keepDropped).not.toHaveBeenCalled();
+    await act(async () => root.unmount());
+  });
+
   it('says when the Solo table could not be made, and tries again on request', async () => {
     const created = creationResult(runtime({ label: 'solo' }), 'solo');
     const createRoom = vi

@@ -49,6 +49,7 @@ import {
   type RemoteRoomCreationResult,
   type RemoteRoomInvitationShareReceipt,
 } from './RemoteRoomCreation.js';
+import { openRemoteSoloRoom, type SoloRoomInput } from './RemoteSoloRoom.js';
 import { waitForAdmission } from './wait-for-admission.js';
 import {
   RemoteRoomInvitationJoinCustody,
@@ -190,6 +191,13 @@ interface LobbyOwner {
 
 export interface RemoteRoomLobbyDependencies {
   readonly createRoom: typeof createRemoteRoom;
+  /**
+   * The Solo table: the room this page sat at last, else a new one
+   * (ADR-044). Without it, Solo makes a new room each time.
+   */
+  readonly openSoloRoom?: (
+    input: SoloRoomInput
+  ) => Promise<RemoteRoomCreationResult & { readonly keep?: () => void }>;
   readonly createInvitationJoinCustody: () => InvitationJoinCustody;
   readonly fallbackDisplayName: () => string;
   readonly requestBackground?: BrowserRoomBackgroundRequest;
@@ -207,6 +215,7 @@ export interface RemoteRoomLobbyDependencies {
 
 const defaultDependencies: RemoteRoomLobbyDependencies = {
   createRoom: createRemoteRoom,
+  openSoloRoom: (input) => openRemoteSoloRoom(input),
   continuationAvailability: probeContinuationAvailability,
   createInvitationJoinCustody: () => new RemoteRoomInvitationJoinCustody(),
   fallbackDisplayName: () => {
@@ -739,12 +748,12 @@ export const RemoteRoomLobby = ({
     // Name box says.
     const displayName = 'Blue';
     try {
-      const result = await dependencies.createRoom({
-        buildId,
-        displayName,
-        mode: 'solo',
-        signal: active.abort.signal,
-      });
+      const input = { buildId, displayName, signal: active.abort.signal };
+      const result: RemoteRoomCreationResult & {
+        readonly keep?: () => void;
+      } = await (dependencies.openSoloRoom
+        ? dependencies.openSoloRoom(input)
+        : dependencies.createRoom({ ...input, mode: 'solo' }));
       // A room or table this replaces stays until Solo has admitted its
       // player: a handshake that fails after the room was made must not
       // cost them. (With nothing to replace, the table shows it connecting.)
@@ -774,6 +783,8 @@ export const RemoteRoomLobby = ({
         owner.held?.dispose();
         delete owner.held;
         owner.invitation.clear();
+        // The table shown is the one a reload comes back to.
+        result.keep?.();
         // Solo's fixed name is never written back into the Multiplayer Name
         // box, which v1 leaves for the visitor to fill in themselves.
         setRoomCode('');

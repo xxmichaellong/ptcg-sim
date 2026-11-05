@@ -359,6 +359,14 @@ export interface RemoteRoomCreationDependencies {
     RemoteRoomBootstrapDependencies,
     'fetch' | 'origin'
   >;
+  /**
+   * Given a Solo room's own seat claim, once the room has taken it, for
+   * the page to sit back down at it later (solo-room-memory.ts).
+   */
+  readonly onSoloSeat?: (seat: {
+    readonly roomCode: string;
+    readonly capability: string;
+  }) => void;
 }
 
 export interface RemoteRoomCreationResult extends RemoteRoomBootstrapResult {
@@ -588,6 +596,12 @@ export const createRemoteRoom = async (
           : {}),
       }
     );
+    if (parsed.value.mode === 'solo') {
+      dependencies.onSoloSeat?.({
+        roomCode,
+        capability: credentials.playerOneSeatCapability,
+      });
+    }
     let disposed = false;
     return {
       ...result,

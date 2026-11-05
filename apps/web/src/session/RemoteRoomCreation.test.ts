@@ -438,6 +438,7 @@ describe('remote room creation bootstrap', () => {
       },
     }));
 
+    const onSoloSeat = vi.fn();
     const result = await createRemoteRoom(
       { ...input, mode: 'solo' },
       {
@@ -445,10 +446,16 @@ describe('remote room creation bootstrap', () => {
         origin: 'https://play.example',
         bootstrap,
         now: () => 10_000,
+        onSoloSeat,
       }
     );
 
     expect(result.mode).toBe('solo');
+    // Its own seat's claim goes to the page, to sit back down at it later.
+    expect(onSoloSeat).toHaveBeenCalledExactlyOnceWith({
+      roomCode: 'ABCDEFGH2345',
+      capability: credentials.playerOneSeatCapability,
+    });
     expect(fetchImplementation.mock.calls[0]?.[1]?.body).toBe(
       '{"mode":"solo"}'
     );
@@ -464,6 +471,52 @@ describe('remote room creation bootstrap', () => {
       credentials.playerTwoSeatCapability
     );
     result.dispose();
+  });
+
+  it('keeps no Solo seat for a room whose claim was refused, or a multiplayer room', async () => {
+    const onSoloSeat = vi.fn();
+    const made = (mode: 'solo' | 'multiplayer') =>
+      vi.fn(async () =>
+        Response.json(
+          {
+            mode,
+            roomCode: 'ABCDEFGH2345',
+            credentials:
+              mode === 'solo'
+                ? {
+                    playerOneSeatCapability:
+                      credentials.playerOneSeatCapability,
+                  }
+                : credentials,
+          },
+          { status: 201 }
+        )
+      );
+    await expect(
+      createRemoteRoom(
+        { ...input, mode: 'solo' },
+        {
+          fetch: made('solo'),
+          origin: 'https://play.example',
+          bootstrap: async () => {
+            throw new Error('refused');
+          },
+          onSoloSeat,
+        }
+      )
+    ).rejects.toMatchObject({ code: 'bootstrap_failed' });
+    const runtime = { dispose: vi.fn() } as unknown as RemoteRoomRuntime;
+    const result = await createRemoteRoom(input, {
+      fetch: made('multiplayer'),
+      origin: 'https://play.example',
+      bootstrap: async () => ({
+        runtime,
+        route: { kind: 'remote-room' as const, runtime },
+      }),
+      onSoloSeat,
+    });
+    result.dispose();
+    expect(onSoloSeat).not.toHaveBeenCalled();
   });
 
   it('rejects a creation response whose mode differs from the request', async () => {
