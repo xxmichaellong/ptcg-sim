@@ -11,6 +11,7 @@ import {
 } from './card-text.js';
 import type { CommandContext, DeckEntry, GameCommand } from './commands.js';
 import { createEmptyMatch, playerZoneId } from './create-match.js';
+import { applyEvent } from './apply-events.js';
 import { executeCommand } from './execute-command.js';
 import {
   asCardDefinitionId,
@@ -252,6 +253,22 @@ describe('a card’s print and text on the table (ADR-043)', () => {
     );
   });
 
+  it('replays a named Ability event from before marks were by name as it was: the marker alone', () => {
+    const { state, blueStack } = fixture();
+    // Kept in a room's history from before 2026-11-05: no `named`.
+    const legacy = applyEvent(state, {
+      type: 'StackAbilitySet',
+      stackId: blueStack,
+      used: true,
+      ability: 'Infernal Reign',
+    });
+    // Exactly what that history's hash was taken over.
+    expect(legacy.stacks[blueStack]).toEqual({
+      ...state.stacks[blueStack]!,
+      abilityUsed: true,
+    });
+  });
+
   it('tells an Ability by name, and marks the Pokémon used, already marked or not', () => {
     const { state, commandContext, blueStack } = fixture();
     const first = executeCommand(
@@ -272,9 +289,13 @@ describe('a card’s print and text on the table (ADR-043)', () => {
         stackId: blueStack,
         used: true,
         ability: 'Infernal Reign',
+        named: true,
       },
     ]);
     expect(first.state.stacks[blueStack]!.abilityUsed).toBe(true);
+    expect(first.state.stacks[blueStack]!.abilitiesUsed).toEqual([
+      'Infernal Reign',
+    ]);
     // Some Abilities are used more than once a turn: told again.
     const again = executeCommand(
       first.state,

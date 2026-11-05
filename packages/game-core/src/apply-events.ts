@@ -3310,6 +3310,17 @@ const applyEventInternal = (
     }
     case 'StackAbilitySet': {
       const stack = requireStack(state, event.stackId);
+      // From before marks went on Abilities by name: the name was the log's
+      // alone, and the marker all it set.
+      if (event.ability !== undefined && event.named !== true) {
+        return {
+          ...state,
+          stacks: {
+            ...state.stacks,
+            [stack.id]: { ...stack, abilityUsed: event.used },
+          },
+        };
+      }
       // The names count only while the marker is on: a marker that went off
       // (a new turn, an evolution) left none behind.
       const named = stack.abilityUsed ? (stack.abilitiesUsed ?? []) : [];

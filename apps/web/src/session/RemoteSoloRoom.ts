@@ -89,6 +89,10 @@ export interface SoloRoomDependencies {
     runtime: RemoteRoomRuntime,
     roomCode: string
   ) => () => void;
+  /** The kind of room the admitted table is in, as the room said. */
+  readonly roomModeOf?: (
+    runtime: RemoteRoomRuntime
+  ) => 'solo' | 'multiplayer' | undefined;
 }
 
 /**
@@ -183,6 +187,14 @@ export const openRemoteSoloRoom = async (
     } catch {
       // The game is back without its old lines: no reason to lose it.
     }
+    const mode = (
+      dependencies.roomModeOf ??
+      ((runtime) => runtime.session.getSnapshot().roomMode)
+    )(joined.runtime);
+    if (mode === 'multiplayer') {
+      announce.on = true;
+      return alreadyOpened(joined, seat, input.displayName, dependencies);
+    }
     // A Solo room invites nobody; its custody holds no claim to pass on.
     const room = joined;
     const none = invitationCustody(seat.roomCode, {}, dependencies);
@@ -228,6 +240,56 @@ export const openRemoteSoloRoom = async (
     admitted,
     dependencies,
   });
+};
+
+/**
+ * A table sat back down at whose room was opened to an opponent meanwhile
+ * (its answer lost before this page heard it): no longer the Solo table,
+ * it comes back as the room it is, its invitations renewed (ADR-044). If
+ * someone has taken the second seat, the game goes on, with nobody to
+ * invite.
+ */
+const alreadyOpened = async (
+  joined: RemoteRoomBootstrapResult,
+  seat: SoloSeat,
+  displayName: string,
+  dependencies: SoloRoomDependencies
+): Promise<OpenedSoloRoom> => {
+  (dependencies.forget ?? forgetSoloSeat)(seat.roomCode);
+  let invitations: RemoteRoomInvitationCustody;
+  try {
+    const credentials = await requestRoomOpen(
+      seat,
+      displayName,
+      undefined,
+      dependencies
+    );
+    invitations = invitationCustody(
+      seat.roomCode,
+      {
+        playerCapability: credentials.playerTwoSeatCapability,
+        spectatorCapability: credentials.spectatorCapability,
+      },
+      dependencies
+    );
+  } catch {
+    invitations = invitationCustody(seat.roomCode, {}, dependencies);
+  }
+  let disposed = false;
+  return {
+    runtime: joined.runtime,
+    route: joined.route,
+    mode: 'multiplayer',
+    invitations,
+    keep: () => undefined,
+    goOnline: () => Promise.reject(new SoloRoomOpenError('not_solo')),
+    dispose: () => {
+      if (disposed) return;
+      disposed = true;
+      invitations.dispose();
+      joined.runtime.dispose();
+    },
+  };
 };
 
 const invitationCustody = (

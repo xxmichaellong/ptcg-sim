@@ -918,6 +918,14 @@
               "kind": "value"
             },
             {
+              "name": "CoachingConsentRevocation",
+              "kind": "type"
+            },
+            {
+              "name": "coachingConsentRevocations",
+              "kind": "value"
+            },
+            {
               "name": "CoinFlipSeries",
               "kind": "type"
             },
@@ -1158,6 +1166,10 @@
               "kind": "type"
             },
             {
+              "name": "playersHaveMutualCoachingConsent",
+              "kind": "value"
+            },
+            {
               "name": "PlayerState",
               "kind": "type"
             },
@@ -1219,6 +1231,10 @@
             },
             {
               "name": "sameCardText",
+              "kind": "value"
+            },
+            {
+              "name": "sameCoachingConsentRevocations",
               "kind": "value"
             },
             {

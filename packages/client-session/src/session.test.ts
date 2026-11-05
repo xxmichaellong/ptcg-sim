@@ -353,6 +353,13 @@ describe('RemoteGameSession', () => {
     });
   });
 
+  it('keeps the kind of room the room says it is on admitting the session', () => {
+    const test = setup();
+    const socket = test.connect();
+    socket.serverMessage({ ...welcome(), roomMode: 'solo' });
+    expect(test.session.getSnapshot().roomMode).toBe('solo');
+  });
+
   it('takes a room opened from Solo as a new view of the same revision, and only that', () => {
     const test = setup();
     const socket = test.admit();
@@ -371,6 +378,7 @@ describe('RemoteGameSession', () => {
     expect(test.session.getSnapshot()).toMatchObject({
       phase: 'ready',
       view: { revision: 0, players: { blue: { displayName: 'Ash' } } },
+      roomMode: 'multiplayer',
     });
     // Not a way back in time.
     socket.serverMessage({

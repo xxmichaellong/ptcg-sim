@@ -123,6 +123,7 @@ export const establishSession = async (
       resumeToken: result.resumeCapability,
       nextClientSequence: result.session.nextClientSequence,
       snapshot: serializeMatchViewState(result.view),
+      roomMode: result.snapshot.mode,
     },
   };
 };

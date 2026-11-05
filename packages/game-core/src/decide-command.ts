@@ -2903,6 +2903,7 @@ export const decideCommand = (
             stackId: command.stackId,
             used: true,
             ability: command.ability,
+            named: true,
           });
         }
         // Its mark taken off: only one that is on.
@@ -2917,6 +2918,7 @@ export const decideCommand = (
           stackId: command.stackId,
           used: false,
           ability: command.ability,
+          named: true,
         });
       }
       if (stack.abilityUsed === command.used) {

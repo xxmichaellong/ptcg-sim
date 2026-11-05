@@ -1,4 +1,18 @@
-import { asMatchId, asPlayerId, createEmptyMatch } from '@ptcgsim/game-core';
+import {
+  asCardDefinitionId,
+  asCardInstanceId,
+  asInspectionId,
+  asMatchId,
+  asPlayerId,
+  asStackId,
+  asWorkAreaId,
+  createEmptyMatch,
+  executeCommand,
+  playerZoneId,
+  type CommandContext,
+  type GameCommand,
+  type MatchState,
+} from '@ptcgsim/game-core';
 import { describe, expect, it, vi } from 'vitest';
 
 import {
@@ -35,13 +49,60 @@ const digest = (capability: string): string => {
   return value.toString(16).padStart(8, '0').repeat(8);
 };
 
+/**
+ * The Solo player has set up the other seat's deck and is looking at its
+ * Prizes, as Solo lets them (both seats consent).
+ */
+const lookingAcross = (state: MatchState): MatchState => {
+  let card = 0;
+  const context: CommandContext = {
+    nextCardId: () => asCardInstanceId(`opening-card-${String(++card)}`),
+    nextStackId: () => asStackId('opening-stack'),
+    nextInspectionId: () => asInspectionId('opening-look'),
+    nextWorkAreaId: () => asWorkAreaId('opening-work-area'),
+    shuffle: (values) => [...values].reverse(),
+    randomInt: () => 0,
+  };
+  const run = (current: MatchState, command: GameCommand) => {
+    const result = executeCommand(current, command, context);
+    if (!result.accepted) throw new Error(result.message);
+    return result.state;
+  };
+  let next = run(state, {
+    type: 'LoadDeck',
+    playerId: red,
+    entries: [
+      {
+        definition: {
+          id: asCardDefinitionId('opening-definition'),
+          name: 'Opening card',
+          category: 'Pokémon',
+          imageUrl: '/opening.png',
+        },
+        count: 14,
+      },
+    ],
+  });
+  next = run(next, { type: 'SetupPlayer', playerId: red });
+  const prizes = playerZoneId(red, 'prizes');
+  return run(next, {
+    type: 'BeginZoneInspection',
+    sourcePlayerId: red,
+    viewerPlayerId: blue,
+    sourceZoneId: prizes,
+    expectedCardIds: [...next.zones[prizes]!.cardIds],
+  });
+};
+
 /** A Solo room as created: both seats consent to flips, one may be taken. */
-const soloRoom = (): RoomAuthoritySnapshot => {
+const soloRoom = (
+  prepare: (state: MatchState) => MatchState = (state) => state
+): RoomAuthoritySnapshot => {
   const created = createEmptyMatch(asMatchId('solo-match'), [
     { playerId: blue, displayName: 'Blue', cardBackUrl: '/blue.png' },
     { playerId: red, displayName: 'Red', cardBackUrl: '/red.png' },
   ]);
-  const state = {
+  const state = prepare({
     ...created,
     players: Object.fromEntries(
       Object.entries(created.players).map(([id, player]) => [
@@ -49,7 +110,7 @@ const soloRoom = (): RoomAuthoritySnapshot => {
         { ...player, coachingConsent: true },
       ])
     ),
-  } as typeof created;
+  } as typeof created);
   return {
     schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
     authorityVersion: 0,
@@ -108,9 +169,12 @@ const harness = () => {
 };
 
 /** The Solo room with its player sat at it. */
-const seatedSoloRoom = async (deps: ReturnType<typeof harness>['deps']) => {
+const seatedSoloRoom = async (
+  deps: ReturnType<typeof harness>['deps'],
+  prepare?: (state: MatchState) => MatchState
+) => {
   const seated = await admitRoomSession(
-    soloRoom(),
+    soloRoom(prepare),
     { type: 'ClaimSeat', seatCapability: hostClaim, displayName: 'Blue' },
     deps
   );
@@ -349,11 +413,18 @@ describe('opening a Solo room to an opponent', () => {
       opened.playerTwoSeatCapability
     );
     expect(again.spectatorCapability).not.toBe(opened.spectatorCapability);
-    // Nothing else of the room changed, and nobody's view.
+    // Nothing else of the room changed; each session is shown the room once
+    // more, in case the opening's own views never reached them.
     expect(again.snapshot.state).toEqual(opened.snapshot.state);
     expect(again.snapshot.replayHistory).toEqual(opened.snapshot.replayHistory);
     expect(again.snapshot.sessions).toEqual(opened.snapshot.sessions);
-    expect(again.refreshes).toEqual([]);
+    expect(again.refreshes.map((refresh) => refresh.sessionId)).toEqual([
+      seated.session.id,
+    ]);
+    expect(again.refreshes[0]?.message).toMatchObject({
+      type: 'ProjectionRefresh',
+      cause: 'room_opened',
+    });
     // The lost claim is spent; the renewed one takes the seat.
     expect(
       (
@@ -412,5 +483,29 @@ describe('opening a Solo room to an opponent', () => {
         },
       } as PersistedAdmissionTransaction)
     ).toThrow();
+  });
+
+  it('takes back the looks across seats that Solo’s consent allowed', async () => {
+    const { deps, transactions } = harness();
+    const seated = await seatedSoloRoom(deps, lookingAcross);
+    expect(
+      Object.keys(seated.snapshot.state.visibility.inspectionGrants)
+    ).toHaveLength(1);
+    const opened = await openSoloRoom(
+      seated.snapshot,
+      { capability: hostClaim, displayName: 'Ash' },
+      deps
+    );
+    expect(opened.accepted).toBe(true);
+    if (!opened.accepted) return;
+    // The host no longer looks at what is now someone else's Prizes.
+    expect(opened.snapshot.state.visibility.inspectionGrants).toEqual({});
+    expect(collectAuthoritySnapshotProblems(opened.snapshot)).toEqual([]);
+    expect(() =>
+      assertAdmissionTransactionTransition(
+        seated.snapshot,
+        transactions.at(-1)!
+      )
+    ).not.toThrow();
   });
 });

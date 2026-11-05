@@ -89,6 +89,11 @@ export interface ClientSessionState {
   readonly phase: ClientSessionPhase;
   readonly role?: 'player' | 'spectator';
   readonly playerId?: string;
+  /**
+   * The kind of room, as the room said on admitting this session, and
+   * multiplayer once the room says it was opened (ADR-044).
+   */
+  readonly roomMode?: 'solo' | 'multiplayer';
   readonly view?: MatchViewState;
   readonly nextClientSequence: number;
   readonly pendingCommands: readonly PendingCommandSummary[];

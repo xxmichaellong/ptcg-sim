@@ -59,16 +59,21 @@ free again and the claim takes it with a new session.
    player's own seat claim and the name they now play under
    (`RoomOpenRequest`). Asked again once opened (its answer lost on the way:
    a gateway's error), it renews the second seat's and spectators' claims
-   and answers again, nothing else changed (`room_reopened`), while the
-   second seat is free; once someone has taken it, it refuses. The authority (`openSoloRoom`, admission kind
+   and answers again, sending each session the room's view once more,
+   nothing else changed (`room_reopened`), while the second seat is free;
+   once someone has taken it, it refuses. The Welcome says the kind of
+   room (`roomMode`), so a page sitting back down at a remembered Solo
+   table whose room was opened meanwhile comes back as that room, its
+   invitations renewed, and stops remembering it as Solo. The authority (`openSoloRoom`, admission kind
    `room_opened`) turns the room multiplayer with two seats, gives the second
    seat and the spectators new claims (the second seat's claim made with the
    room was never handed out) and answers with them (`RoomOpenResponse`),
    for the page's invitation custody alone. The host plays under their name;
    the second seat waits as "Player 2" until someone takes it. Solo's
-   board-flip consent, given for both seats, is withdrawn from both: in a
-   room each player gives their own, and a consent left on the new player's
-   seat would let the host act for it. The replay history, and with it undo,
+   board-flip consent, given for both seats, is withdrawn from both as each
+   player's own withdrawal would (`CoachingConsentSet`), with the looks
+   across seats it allowed: in a room each player gives their own, and a
+   consent left on the new player's seat would let the host act for it. The replay history, and with it undo,
    starts again from that state. Each session is sent its view under the
    room's rules (`ProjectionRefresh` with cause `room_opened`, which the
    client takes at the same revision). Only the first seat's claim asks;

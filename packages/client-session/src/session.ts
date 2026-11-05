@@ -944,6 +944,7 @@ export class RemoteGameSession {
       phase: 'ready',
       role: message.role,
       ...(message.playerId ? { playerId: message.playerId } : {}),
+      ...(message.roomMode ? { roomMode: message.roomMode } : {}),
       nextClientSequence: Math.max(
         locallyAllocated,
         message.nextClientSequence
@@ -1072,7 +1073,7 @@ export class RemoteGameSession {
       message.cause === 'room_opened' &&
       candidate.revision === current.revision
     ) {
-      this.updateState({ view: candidate });
+      this.updateState({ view: candidate, roomMode: 'multiplayer' });
       return;
     }
     const sameProjection =

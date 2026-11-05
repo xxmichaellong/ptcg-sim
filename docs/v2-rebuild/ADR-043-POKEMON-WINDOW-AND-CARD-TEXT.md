@@ -158,6 +158,11 @@ card itself. Using an Ability was the card menu's "ability used" marker
       the Active's Special Conditions; reminders stay on the card's menu
       and the marker controls. An attack's row is its cost, name and text.
 
+    Events that mark an Ability by name carry `named: true`; a named
+    `StackAbilitySet` from before (the name for the log only) replays as it
+    did, setting the Pokémon's marker alone, so a room's kept history
+    still hashes as it was.
+
 ## Consequences
 
 - The opponent sees which print each card in play is (its picture already

@@ -406,6 +406,13 @@ export type DomainEvent =
       readonly used: boolean;
       /** The Ability named (ADR-043). */
       readonly ability?: string;
+      /**
+       * The mark is on (or off) that Ability itself (ADR-043 §13, from
+       * 2026-11-05). An event from before names it for the log only and
+       * sets the Pokémon's marker alone, and replays so: a room's kept
+       * history still hashes as it was.
+       */
+      readonly named?: true;
     }
   | {
       readonly type: 'StackReminderSet';

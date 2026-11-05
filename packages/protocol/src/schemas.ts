@@ -1072,6 +1072,12 @@ const WelcomeSchema = v.object({
   resumeToken: CapabilitySchema,
   nextClientSequence: PositiveIntegerSchema,
   snapshot: MatchViewStateSchema,
+  /**
+   * The kind of room: a page sitting back down at its Solo table learns
+   * that it was opened to an opponent meanwhile (ADR-044). Absent from
+   * rooms of builds before it.
+   */
+  roomMode: v.optional(RoomModeSchema),
 });
 
 const PresentationCardSourceSchema = v.picklist([

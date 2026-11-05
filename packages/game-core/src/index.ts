@@ -3,6 +3,7 @@ export * from './card-back.js';
 export * from './card-presentation.js';
 export * from './card-text.js';
 export * from './clone.js';
+export * from './coaching-consent.js';
 export * from './coin-flips.js';
 export * from './commands.js';
 export * from './create-match.js';

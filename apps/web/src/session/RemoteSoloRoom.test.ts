@@ -114,6 +114,7 @@ const deps = (
     restoreLog,
     keepLog,
     stopLog,
+    roomModeOf: (() => 'solo') as SoloRoomDependencies['roomModeOf'],
     ...overrides,
   };
 };
@@ -524,5 +525,57 @@ describe('the Solo table’s log', () => {
     localStorage.setItem('ptcgsim.solo-log.v1', damaged);
     sessionStorage.setItem('ptcgsim.solo-log.v1', damaged);
     expect(recallSoloLog(OWN.roomCode)).toEqual([]);
+  });
+});
+
+describe('a remembered table whose room was opened meanwhile', () => {
+  const renewed = {
+    mode: 'multiplayer',
+    credentials: {
+      playerTwoSeatCapability: 'player-two-seat-capability-new-0000001',
+      spectatorCapability: 'spectator-capability-new-000000000002',
+    },
+  };
+
+  it('comes back as the room it is, its invitations renewed, no longer the Solo table', async () => {
+    const forget = vi.fn();
+    const fetch = vi.fn<typeof globalThis.fetch>(async () =>
+      Response.json(renewed, { status: 201 })
+    );
+    const dependencies = deps([{ ...OWN, thisTab: true }], {
+      roomModeOf: () => 'multiplayer',
+      forget,
+      fetch,
+      origin: 'https://play.example',
+    });
+    const room = await openRemoteSoloRoom(input, dependencies);
+    expect(room.mode).toBe('multiplayer');
+    expect(dependencies.createRoom).not.toHaveBeenCalled();
+    expect(forget).toHaveBeenCalledExactlyOnceWith(OWN.roomCode);
+    expect(String(fetch.mock.calls[0]![0])).toContain(
+      `/v2/rooms/${OWN.roomCode}/open`
+    );
+    expect(room.invitations).toBeInstanceOf(RemoteRoomInvitationCustody);
+    // Kept as a Solo table no more, and opened no more.
+    room.keep();
+    await settled();
+    expect(dependencies.remember).not.toHaveBeenCalled();
+    await expect(room.goOnline({ displayName: 'Ash' })).rejects.toMatchObject({
+      code: 'not_solo',
+    });
+  });
+
+  it('goes on as the game it is when someone has taken the second seat', async () => {
+    const dependencies = deps([{ ...OWN, thisTab: true }], {
+      roomModeOf: () => 'multiplayer',
+      forget: vi.fn(),
+      fetch: vi.fn(async () =>
+        Response.json({ error: 'not_solo' }, { status: 409 })
+      ),
+      origin: 'https://play.example',
+    });
+    const room = await openRemoteSoloRoom(input, dependencies);
+    expect(room.mode).toBe('multiplayer');
+    expect(dependencies.createRoom).not.toHaveBeenCalled();
   });
 });

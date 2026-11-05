@@ -9,6 +9,7 @@ import {
 import { SESSION_RECONNECT_GRACE_MS } from '@ptcgsim/protocol';
 
 import { resolveViewCard, viewerIdentityKey } from './identity-registry.js';
+import { withdrawSoloConsents } from './room-opening.js';
 import { MAX_ROOM_SPECTATOR_SESSIONS } from './limits.js';
 import {
   AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
@@ -844,16 +845,28 @@ const roomOpeningProblems = (
     problems.push('room opening reused a capability');
   }
   // The match itself is as it was, but for the names and consents.
-  const normalized = (snapshot: RoomAuthoritySnapshot) => ({
-    ...snapshot.state,
+  // The match is as it was, its consents withdrawn as a player's own
+  // withdrawal would (with the looks across seats they allowed), but for
+  // the names.
+  const unnamed = (state: RoomAuthoritySnapshot['state']) => ({
+    ...state,
     players: Object.fromEntries(
-      Object.entries(snapshot.state.players).map(([playerId, player]) => [
+      Object.entries(state.players).map(([playerId, player]) => [
         playerId,
-        { ...player, displayName: '', coachingConsent: false },
+        { ...player, displayName: '' },
       ])
     ),
   });
-  if (!structurallyEqual(normalized(candidate), normalized(current))) {
+  let expected: RoomAuthoritySnapshot['state'] | undefined;
+  try {
+    expected = withdrawSoloConsents(current.state);
+  } catch {
+    problems.push('room opening could not withdraw the Solo consents');
+  }
+  if (
+    expected &&
+    !structurallyEqual(unnamed(candidate.state), unnamed(expected))
+  ) {
     problems.push('room opening changed the match');
   }
   for (const player of Object.values(candidate.state.players)) {
@@ -895,7 +908,8 @@ const roomOpeningProblems = (
 /**
  * What renewing an opened room's claims may change (a host whose answer
  * was lost asks again, `openSoloRoom`): the free second seat's claim and
- * the spectators', both new and distinct; nothing else at all.
+ * the spectators', both new and distinct, and the identities each session's
+ * fresh view adds; nothing else.
  */
 const roomReopeningProblems = (
   current: RoomAuthoritySnapshot,
@@ -958,9 +972,9 @@ const roomReopeningProblems = (
     ) ||
     !structurallyEqual(candidate.state, current.state) ||
     !structurallyEqual(candidate.replayHistory, current.replayHistory) ||
-    !structurallyEqual(candidate.identities, current.identities) ||
     !structurallyEqual(candidate.sessions, current.sessions)
   ) {
+    // Identities may grow: each session is shown the room once more.
     problems.push('claim renewal changed more than its claims');
   }
   return problems;

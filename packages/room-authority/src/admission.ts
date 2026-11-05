@@ -20,6 +20,7 @@ import {
   type RoomAuthoritySnapshot,
 } from './model.js';
 import { createReplayHistory } from './replay-history.js';
+import { withdrawSoloConsents } from './room-opening.js';
 
 export type AdmissionRequest =
   | {
@@ -1431,6 +1432,39 @@ export const OPENED_ROOM_SEAT_NAME = 'Player 2';
  * opened (its answer lost on the way), it renews the claims while the
  * second seat is free, and refuses once someone has taken it.
  */
+/** Each active session's view of an opened room, sent as `room_opened`. */
+const openedRoomViews = (
+  snapshot: RoomAuthoritySnapshot,
+  opaqueIds: OpaqueIdSource
+): {
+  readonly identities: RoomAuthoritySnapshot['identities'];
+  readonly refreshes: readonly AuthorityDelivery[];
+} => {
+  let identities = snapshot.identities;
+  const refreshes: AuthorityDelivery[] = [];
+  for (const session of Object.values(snapshot.sessions)) {
+    if (!session.active) continue;
+    const projected = projectRecipient(
+      snapshot.state,
+      session.viewer,
+      identities,
+      opaqueIds,
+      snapshot.mode
+    );
+    identities = projected.identities;
+    refreshes.push({
+      sessionId: session.id,
+      message: {
+        type: 'ProjectionRefresh',
+        protocolVersion: PROTOCOL_VERSION,
+        cause: 'room_opened',
+        snapshot: serializeMatchViewState(projected.snapshot),
+      },
+    });
+  }
+  return { identities, refreshes };
+};
+
 export const openSoloRoom = async (
   current: RoomAuthoritySnapshot,
   request: { readonly capability: string; readonly displayName: string },
@@ -1529,11 +1563,18 @@ export const openSoloRoom = async (
     },
   };
   if (reopening) {
-    const renewed: RoomAuthoritySnapshot = {
+    const claimsRenewed: RoomAuthoritySnapshot = {
       ...current,
       authorityVersion: current.authorityVersion + 1,
       admission: renewedAdmission,
     };
+    // Each session is shown the room once more: the opening's own views may
+    // never have reached them (its commit failed after writing).
+    const { identities, refreshes } = openedRoomViews(
+      claimsRenewed,
+      dependencies.opaqueIds
+    );
+    const renewed: RoomAuthoritySnapshot = { ...claimsRenewed, identities };
     assertAuthoritySnapshotInvariants(renewed);
     await dependencies.persistence.commitAdmission({
       expectedAuthorityVersion: current.authorityVersion,
@@ -1546,20 +1587,21 @@ export const openSoloRoom = async (
       snapshot: renewed,
       playerTwoSeatCapability: claims.seat,
       spectatorCapability: claims.spectator,
-      // Nobody's view changes.
-      refreshes: [],
+      refreshes,
     };
   }
 
   const hostName = request.displayName.trim();
+  // Consents withdrawn as a player's own withdrawal would, the looks
+  // across seats they allowed revoked with them.
+  const withdrawn = withdrawSoloConsents(current.state);
   const state = {
-    ...current.state,
+    ...withdrawn,
     players: Object.fromEntries(
-      Object.entries(current.state.players).map(([playerId, player]) => [
+      Object.entries(withdrawn.players).map(([playerId, player]) => [
         playerId,
         {
           ...player,
-          coachingConsent: false,
           displayName:
             playerId === hostSeat.playerId ? hostName : OPENED_ROOM_SEAT_NAME,
         },
@@ -1584,28 +1626,10 @@ export const openSoloRoom = async (
     sessions,
     admission: { ...renewedAdmission, playerSeatLimit: 2 },
   };
-  let identities = opened.identities;
-  const refreshes: AuthorityDelivery[] = [];
-  for (const session of Object.values(sessions)) {
-    if (!session.active) continue;
-    const projected = projectRecipient(
-      state,
-      session.viewer,
-      identities,
-      dependencies.opaqueIds,
-      opened.mode
-    );
-    identities = projected.identities;
-    refreshes.push({
-      sessionId: session.id,
-      message: {
-        type: 'ProjectionRefresh',
-        protocolVersion: PROTOCOL_VERSION,
-        cause: 'room_opened',
-        snapshot: serializeMatchViewState(projected.snapshot),
-      },
-    });
-  }
+  const { identities, refreshes } = openedRoomViews(
+    opened,
+    dependencies.opaqueIds
+  );
   const candidate: RoomAuthoritySnapshot = { ...opened, identities };
   assertAuthoritySnapshotInvariants(candidate);
   await dependencies.persistence.commitAdmission({
