@@ -1,5 +1,5 @@
 import { CARD_PLAYS_AS } from './card-plays-as.js';
-import { isCardPrint, isCardText } from './card-text.js';
+import { isCardPrint, isCardText, isMoveName } from './card-text.js';
 import { isStackReminder, STACK_REMINDERS } from './stack-reminders.js';
 import type { CardInstanceId, StackId } from './ids.js';
 import { isCardBackValue } from './card-back.js';
@@ -7,6 +7,8 @@ import { isCardPresentation } from './card-presentation.js';
 import { playersHaveMutualCoachingConsent } from './coaching-consent.js';
 import { findCardLocations } from './location.js';
 import {
+  ABILITIES_USED_LIMIT,
+  HP_MODIFIER_LIMIT,
   MATCH_STATE_SCHEMA_VERSION,
   MAX_IMAGE_URL_CODE_UNITS,
   type MatchState,
@@ -310,6 +312,25 @@ export const collectInvariantProblems = (
     }
     if (typeof stack.abilityUsed !== 'boolean') {
       problems.push(`stack ${stack.id} has invalid ability marker`);
+    }
+    if (
+      stack.abilitiesUsed !== undefined &&
+      (!Array.isArray(stack.abilitiesUsed) ||
+        stack.abilitiesUsed.length === 0 ||
+        stack.abilitiesUsed.length > ABILITIES_USED_LIMIT ||
+        hasDuplicates(stack.abilitiesUsed) ||
+        !stack.abilitiesUsed.every((name) => isMoveName(name)))
+    ) {
+      problems.push(`stack ${stack.id} has invalid Abilities marked used`);
+    }
+    if (
+      stack.hpModifier !== undefined &&
+      (!Number.isSafeInteger(stack.hpModifier) ||
+        stack.hpModifier === 0 ||
+        stack.hpModifier % 10 !== 0 ||
+        Math.abs(stack.hpModifier) > HP_MODIFIER_LIMIT)
+    ) {
+      problems.push(`stack ${stack.id} has an invalid HP modifier`);
     }
     if (!placedStackIds.has(stack.id))
       problems.push(`stack ${stack.id} is not on a board`);

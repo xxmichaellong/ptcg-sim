@@ -688,6 +688,18 @@ describe('presentationEffectsForEvent', () => {
         on: false,
       })
     ).toBe('player:Blue took the reminder off Pikachu: no Abilities');
+    // What effects add to a Pokémon's HP, in all.
+    const hp = (modifier: number) =>
+      line({
+        type: 'HpModifierSet',
+        ...at,
+        source: 'active',
+        cardName: 'Pikachu',
+        modifier,
+      });
+    expect(hp(30)).toBe('player:Blue set Pikachu to +30 HP');
+    expect(hp(-20)).toBe('player:Blue set Pikachu to −20 HP');
+    expect(hp(0)).toBe("player:Blue put Pikachu's HP back to what is printed");
   });
 
   it("names a group's cards after its line, counting the ones it hides (ADR-042 §6)", () => {

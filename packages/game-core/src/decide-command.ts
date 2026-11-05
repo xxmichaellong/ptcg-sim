@@ -41,7 +41,11 @@ import {
   analyzePlayerReset,
   resetReturnCapacityIsValid,
 } from './lifecycle-reset.js';
-import { MAX_DECK_CARDS, MAX_IMAGE_URL_CODE_UNITS } from './model.js';
+import {
+  HP_MODIFIER_LIMIT,
+  MAX_DECK_CARDS,
+  MAX_IMAGE_URL_CODE_UNITS,
+} from './model.js';
 import type {
   CardDefinition,
   CardInstance,
@@ -2888,15 +2892,30 @@ export const decideCommand = (
       if (!stack)
         return reject('not_found', `Stack ${command.stackId} does not exist`);
       if (command.ability !== undefined) {
-        // An Ability picked from the Pokémon's text: it is used, and told,
-        // whether or not the marker was already on.
-        if (!command.used || !isMoveName(command.ability)) {
+        if (!isMoveName(command.ability)) {
           return reject('invalid_command', 'Ability name is invalid');
+        }
+        // An Ability picked from the Pokémon's text: it is used, and told,
+        // whether or not it was already marked.
+        if (command.used) {
+          return accept({
+            type: 'StackAbilitySet',
+            stackId: command.stackId,
+            used: true,
+            ability: command.ability,
+          });
+        }
+        // Its mark taken off: only one that is on.
+        if (
+          !stack.abilityUsed ||
+          !(stack.abilitiesUsed ?? []).includes(command.ability)
+        ) {
+          return reject('invalid_command', 'That Ability is not marked used');
         }
         return accept({
           type: 'StackAbilitySet',
           stackId: command.stackId,
-          used: true,
+          used: false,
           ability: command.ability,
         });
       }
@@ -2907,6 +2926,31 @@ export const decideCommand = (
         type: 'StackAbilitySet',
         stackId: command.stackId,
         used: command.used,
+      });
+    }
+    case 'SetHpModifier': {
+      const stack = state.stacks[command.stackId];
+      if (!stack)
+        return reject('not_found', `Stack ${command.stackId} does not exist`);
+      if (
+        !Number.isSafeInteger(command.modifier) ||
+        command.modifier % 10 !== 0 ||
+        Math.abs(command.modifier) > HP_MODIFIER_LIMIT
+      ) {
+        return reject(
+          'invalid_command',
+          `HP modifier must be a multiple of 10 up to ${String(HP_MODIFIER_LIMIT)} either way`
+        );
+      }
+      // -0 is 0.
+      const modifier = command.modifier === 0 ? 0 : command.modifier;
+      if ((stack.hpModifier ?? 0) === modifier) {
+        return reject('invalid_command', 'HP modifier is already set');
+      }
+      return accept({
+        type: 'StackHpModifierSet',
+        stackId: command.stackId,
+        modifier,
       });
     }
     case 'SetStackReminder': {

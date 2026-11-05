@@ -650,6 +650,59 @@ describe('battle-log narration', () => {
     ).toContain('ReminderSet');
   });
 
+  it('tells what an effect adds to a Pokémon’s HP, naming it, and nothing for an Ability’s mark taken off', () => {
+    const { state, context } = table();
+    const hand = state.zones[playerZoneId(p1, 'hand')]!;
+    const cardId = hand.cardIds.find(
+      (id) =>
+        state.definitions[state.cards[id]!.definitionId]!.category === 'Pokémon'
+    )!;
+    const name = state.definitions[state.cards[cardId]!.definitionId]!.name;
+    const played = step(
+      state,
+      {
+        type: 'MoveCardToPlay',
+        cardId,
+        expectedSourceZoneId: hand.id,
+        boardPlayerId: p1,
+        slot: 'active',
+      },
+      context
+    );
+    const stackId = played.state.boards[p1]!.activeStackId!;
+    const hp = step(
+      played.state,
+      { type: 'SetHpModifier', stackId, modifier: 30 },
+      context
+    );
+    expect(hp.narration).toEqual([
+      {
+        type: 'HpModifierSet',
+        revision: hp.state.revision,
+        playerId: p1,
+        source: 'active',
+        cardName: name,
+        modifier: 30,
+      },
+    ]);
+    expect(
+      presentationEventsForBatch(hp.batch, hp.state, played.state).map(
+        (event) => event.type
+      )
+    ).toContain('HpModifierSet');
+    const used = step(
+      hp.state,
+      { type: 'SetAbilityUsed', stackId, used: true, ability: 'Static' },
+      context
+    );
+    const cleared = step(
+      used.state,
+      { type: 'SetAbilityUsed', stackId, used: false, ability: 'Static' },
+      context
+    );
+    expect(cleared.narration).toEqual([]);
+  });
+
   it('leaves the turn draw to "drew for turn"', () => {
     const { state, context } = table();
     const turn = step(state, { type: 'StartTurn', playerId: p1 }, context);

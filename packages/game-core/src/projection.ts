@@ -138,6 +138,10 @@ export interface MatchViewState {
          * sends the list; a view from before reminders has none.
          */
         readonly reminders?: readonly StackReminder[];
+        /** The Abilities marked used, while the marker is on; absent when none. */
+        readonly abilitiesUsed?: readonly string[];
+        /** What an effect adds to its printed HP; absent when none. */
+        readonly hpModifier?: number;
       }
     >
   >;
@@ -404,6 +408,11 @@ export const projectMatch = (
           specialCondition: stack.specialCondition,
           abilityUsed: stack.abilityUsed,
           reminders: [...(stack.reminders ?? [])],
+          // The names count only while the marker is on (PlayStack).
+          ...(stack.abilityUsed && (stack.abilitiesUsed ?? []).length > 0
+            ? { abilitiesUsed: [...stack.abilitiesUsed!] }
+            : {}),
+          ...(stack.hpModifier ? { hpModifier: stack.hpModifier } : {}),
         },
       ])
     ),

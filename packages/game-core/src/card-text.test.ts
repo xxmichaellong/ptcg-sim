@@ -318,6 +318,169 @@ describe('a card’s print and text on the table (ADR-043)', () => {
     ).toBe(false);
   });
 
+  it('marks each Ability used apart, takes one mark off on its own, and forgets the names once the marker goes off', () => {
+    const { state, commandContext, blueStack } = fixture();
+    const use = (from: MatchState, ability: string, used = true) =>
+      executeCommand(
+        from,
+        { type: 'SetAbilityUsed', stackId: blueStack, used, ability },
+        commandContext
+      );
+    const viewed = (from: MatchState) =>
+      projectMatch(
+        from,
+        { kind: 'player', playerId: red },
+        {
+          viewCardId: ({ cardId }) => cardId as never,
+          viewDefinitionId: ({ definitionId }) => definitionId as never,
+        }
+      ).stacks[blueStack]!;
+    // Two Abilities (a Poké-Power and a Poké-Body, say): each its own mark.
+    let next = run(
+      state,
+      {
+        type: 'SetAbilityUsed',
+        stackId: blueStack,
+        used: true,
+        ability: 'Infernal Reign',
+      },
+      commandContext
+    );
+    next = run(
+      next,
+      {
+        type: 'SetAbilityUsed',
+        stackId: blueStack,
+        used: true,
+        ability: 'Second Wind',
+      },
+      commandContext
+    );
+    assertMatchInvariants(next);
+    expect(next.stacks[blueStack]).toMatchObject({
+      abilityUsed: true,
+      abilitiesUsed: ['Infernal Reign', 'Second Wind'],
+    });
+    expect(viewed(next).abilitiesUsed).toEqual([
+      'Infernal Reign',
+      'Second Wind',
+    ]);
+    // One taken off: the other stays, and the Pokémon is still marked.
+    const off = use(next, 'Infernal Reign', false);
+    expect(off.accepted).toBe(true);
+    if (!off.accepted) return;
+    expect(off.state.stacks[blueStack]).toMatchObject({
+      abilityUsed: true,
+      abilitiesUsed: ['Second Wind'],
+    });
+    // Only a mark that is on comes off.
+    expect(use(off.state, 'Infernal Reign', false).accepted).toBe(false);
+    // The last one off: the Pokémon's marker too.
+    const none = use(off.state, 'Second Wind', false);
+    expect(none.accepted).toBe(true);
+    if (!none.accepted) return;
+    expect(none.state.stacks[blueStack]!.abilityUsed).toBe(false);
+    expect(none.state.stacks[blueStack]!.abilitiesUsed).toBeUndefined();
+    expect(viewed(none.state).abilitiesUsed).toBeUndefined();
+    // The marker turned off by anything else forgets the names: marked
+    // again, only the new one is used.
+    const cleared = run(
+      next,
+      { type: 'SetAbilityUsed', stackId: blueStack, used: false },
+      commandContext
+    );
+    expect(viewed(cleared).abilitiesUsed).toBeUndefined();
+    const again = run(
+      cleared,
+      {
+        type: 'SetAbilityUsed',
+        stackId: blueStack,
+        used: true,
+        ability: 'Second Wind',
+      },
+      commandContext
+    );
+    expect(again.stacks[blueStack]!.abilitiesUsed).toEqual(['Second Wind']);
+  });
+
+  it('changes what an effect adds to a Pokémon’s HP, in tens, and refuses the rest', () => {
+    const { state, commandContext, blueStack } = fixture();
+    const set = (from: MatchState, modifier: number) =>
+      executeCommand(
+        from,
+        { type: 'SetHpModifier', stackId: blueStack, modifier },
+        commandContext
+      );
+    const up = set(state, 30);
+    expect(up.accepted).toBe(true);
+    if (!up.accepted) return;
+    expect(up.batch.events).toEqual([
+      { type: 'StackHpModifierSet', stackId: blueStack, modifier: 30 },
+    ]);
+    assertMatchInvariants(up.state);
+    expect(up.state.stacks[blueStack]!.hpModifier).toBe(30);
+    expect(
+      projectMatch(
+        up.state,
+        { kind: 'player', playerId: red },
+        {
+          viewCardId: ({ cardId }) => cardId as never,
+          viewDefinitionId: ({ definitionId }) => definitionId as never,
+        }
+      ).stacks[blueStack]!.hpModifier
+    ).toBe(30);
+    const down = set(up.state, -50);
+    expect(down.accepted && down.state.stacks[blueStack]!.hpModifier).toBe(-50);
+    // Back to none: the field goes.
+    const back = set(up.state, 0);
+    expect(back.accepted).toBe(true);
+    if (!back.accepted) return;
+    expect('hpModifier' in back.state.stacks[blueStack]!).toBe(false);
+    // Not in tens, past the limit, or no change: refused.
+    for (const modifier of [35, 1000, -1000, Number.NaN]) {
+      expect(set(state, modifier).accepted).toBe(false);
+    }
+    expect(set(up.state, 30).accepted).toBe(false);
+    expect(set(state, 0).accepted).toBe(false);
+    expect(
+      executeCommand(
+        state,
+        {
+          type: 'SetHpModifier',
+          stackId: asStackId('no-such-stack'),
+          modifier: 10,
+        },
+        commandContext
+      ).accepted
+    ).toBe(false);
+  });
+
+  it('refuses a Pokémon whose Abilities marked used or HP from effects are out of bounds', () => {
+    const { state, blueStack } = fixture();
+    const broken = (patch: object): MatchState => ({
+      ...state,
+      stacks: {
+        ...state.stacks,
+        [blueStack]: { ...state.stacks[blueStack]!, ...patch },
+      },
+    });
+    for (const patch of [
+      { abilitiesUsed: [] },
+      { abilitiesUsed: ['A', 'A'] },
+      { abilitiesUsed: ['Two\nlines'] },
+      { abilitiesUsed: Array.from({ length: 9 }, (_, i) => `A${String(i)}`) },
+    ]) {
+      expect(collectInvariantProblems(broken(patch))).toContain(
+        `stack ${blueStack} has invalid Abilities marked used`
+      );
+    }
+    for (const hpModifier of [0, 15, 1000]) {
+      expect(collectInvariantProblems(broken({ hpModifier }))).toContain(
+        `stack ${blueStack} has an invalid HP modifier`
+      );
+    }
+  });
+
   it('declares an attack by name from the attacker’s own Pokémon only', () => {
     const { state, commandContext, blueStack, redStack } = fixture();
     const declared = executeCommand(

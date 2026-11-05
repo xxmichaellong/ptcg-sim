@@ -138,6 +138,109 @@ describe('the Pokémon window', () => {
     return host.querySelector<HTMLElement>('[data-pokemon-window]')!;
   };
 
+  it('marks each Ability used on itself, takes a mark off from it, and changes the HP an effect adds', async () => {
+    // A Pokémon with an Ability and a Poké-Power; only the Poké-Power used,
+    // +30 HP from an effect (a Tool's).
+    const text: CardText = {
+      ...TEXT,
+      abilities: [
+        { name: 'Static Shock', kind: 'Ability', text: 'Zap.' },
+        { name: 'Power Surge', kind: 'Poké-Power', text: 'Surge.' },
+      ],
+    };
+    const stackId = view.boards[blue]!.activeStackId!;
+    const top = view.stacks[stackId]!.evolutionCards.at(-1)!;
+    const marked: MatchViewState = {
+      ...view,
+      definitions: {
+        ...view.definitions,
+        ...(top.kind === 'known'
+          ? {
+              [top.definitionId]: {
+                ...view.definitions[top.definitionId]!,
+                text,
+              },
+            }
+          : {}),
+      },
+      stacks: {
+        ...view.stacks,
+        [stackId]: {
+          ...view.stacks[stackId]!,
+          damage: 20,
+          abilityUsed: true,
+          abilitiesUsed: ['Power Surge'],
+          hpModifier: 30,
+        },
+      },
+    };
+    const callbacks = actions();
+    const window = await render(
+      {
+        ...stateFor(blue),
+        view: marked,
+        scene: createBoardSceneForViewport(marked, {
+          geometryVersion: 1,
+          viewport: { width: 1280, height: 720, devicePixelRatio: 1 },
+          bottomPlayerId: blue,
+          splitRatio: 0.5,
+        }),
+      },
+      callbacks
+    );
+    // The Poké-Power wears its own Used mark; the Ability, none.
+    const used = window.querySelector<HTMLButtonElement>(
+      '[data-pokemon-window-used="Power Surge"]'
+    );
+    expect(used).not.toBeNull();
+    expect(
+      window.querySelector('[data-pokemon-window-used="Static Shock"]')
+    ).toBeNull();
+    // Pressed, the mark comes off that Power alone.
+    await act(async () => used!.click());
+    expect(callbacks.invokeWindowAction).toHaveBeenCalledWith({
+      kind: 'context',
+      action: 'unmarkAbility',
+      cardId: top.id,
+      name: 'Power Surge',
+    });
+    // Its HP: the printed 120 and the effect's 30, less 20 damage.
+    expect(window.querySelector('.pokemon-window__hp-value')?.textContent).toBe(
+      '130/150'
+    );
+    expect(
+      window.querySelector('.pokemon-window__hp-modifier')?.textContent
+    ).toBe('+30');
+    await act(async () =>
+      window
+        .querySelector<HTMLButtonElement>('[aria-label="10 more HP"]')!
+        .click()
+    );
+    expect(callbacks.invokeWindowAction).toHaveBeenCalledWith({
+      kind: 'context',
+      action: 'setHpModifier',
+      cardId: top.id,
+      value: 40,
+    });
+    await act(async () =>
+      window
+        .querySelector<HTMLButtonElement>('[aria-label="10 less HP"]')!
+        .click()
+    );
+    expect(callbacks.invokeWindowAction).toHaveBeenCalledWith({
+      kind: 'context',
+      action: 'setHpModifier',
+      cardId: top.id,
+      value: 20,
+    });
+    // No attack's damage (effects change it), and no reminders to toggle:
+    // only the Active's Special Conditions.
+    const attack = window.querySelector('.pokemon-window__move.is-attack')!;
+    expect(attack.textContent).toContain('Thunderbolt');
+    expect(attack.textContent).not.toContain('90');
+    expect(window.querySelectorAll('.pokemon-window__toggle')).toHaveLength(5);
+  });
+
   it('lays out the Pokémon’s cards, status and moves, and uses a move by name', async () => {
     const callbacks = actions();
     const window = await render(stateFor(blue), callbacks);

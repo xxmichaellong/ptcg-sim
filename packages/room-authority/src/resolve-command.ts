@@ -1267,6 +1267,7 @@ const resolveSingleCommand = (
     case 'SetSpecialCondition':
     case 'SetAbilityUsed':
     case 'SetStackReminder':
+    case 'SetHpModifier':
     case 'RotateStack': {
       const stack = ownEntry(state.stacks, wire.stackId);
       if (!stack) return rejected('stale_reference');
@@ -1315,6 +1316,16 @@ const resolveSingleCommand = (
             stackId: asStackId(wire.stackId),
             reminder: wire.reminder,
             on: wire.on,
+          },
+        };
+      }
+      if (wire.type === 'SetHpModifier') {
+        return {
+          accepted: true,
+          command: {
+            type: 'SetHpModifier',
+            stackId: asStackId(wire.stackId),
+            modifier: wire.modifier,
           },
         };
       }

@@ -28,7 +28,7 @@ export interface ReplayLocalDisplayState {
 }
 
 export const isReplayLocalDisclosureAction = (
-  action: LegacyBoardContextActionId | LegacyBoardMoveActionId
+  action: LegacyBoardContextActionId | LegacyBoardMoveActionId | 'setHpModifier'
 ): action is
   'revealPrizes' | 'togglePrizes' | 'toggleOpponentHand' | 'revealCard' =>
   action === 'revealPrizes' ||

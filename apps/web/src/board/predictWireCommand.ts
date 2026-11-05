@@ -2,6 +2,7 @@ import {
   activeWentAway,
   layOutPlayStackAcrossBoards,
   loneBenchedPromotions,
+  ABILITIES_USED_LIMIT,
   STACK_REMINDERS,
 } from '@ptcgsim/game-core';
 import type {
@@ -1309,10 +1310,38 @@ const predict = (
         specialCondition: command.condition,
       }));
     case 'SetAbilityUsed':
-      return updateStack(view, command.stackId, (stack) => ({
-        ...stack,
-        abilityUsed: command.used,
-      }));
+      // As the room keeps it (game-core StackAbilitySet): the names count
+      // only while the marker is on.
+      return updateStack(view, command.stackId, (stack) => {
+        const named = stack.abilityUsed ? (stack.abilitiesUsed ?? []) : [];
+        let used: boolean;
+        let abilitiesUsed: readonly string[];
+        if (command.ability === undefined) {
+          used = command.used;
+          abilitiesUsed = command.used ? named : [];
+        } else if (command.used) {
+          used = true;
+          abilitiesUsed = named.includes(command.ability)
+            ? named
+            : [...named, command.ability].slice(-ABILITIES_USED_LIMIT);
+        } else {
+          abilitiesUsed = named.filter((name) => name !== command.ability);
+          used = abilitiesUsed.length > 0;
+        }
+        const { abilitiesUsed: _named, ...rest } = stack;
+        return {
+          ...rest,
+          abilityUsed: used,
+          ...(abilitiesUsed.length > 0 ? { abilitiesUsed } : {}),
+        };
+      });
+    case 'SetHpModifier':
+      return updateStack(view, command.stackId, (stack) => {
+        const { hpModifier: _previous, ...rest } = stack;
+        return command.modifier === 0
+          ? rest
+          : { ...rest, hpModifier: command.modifier };
+      });
     case 'SetStackReminder':
       return updateStack(view, command.stackId, (stack) => {
         const reminders = stack.reminders ?? [];

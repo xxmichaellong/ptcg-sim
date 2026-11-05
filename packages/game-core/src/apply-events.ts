@@ -36,6 +36,7 @@ import type {
   PlaySlot,
   PlayStack,
 } from './model.js';
+import { ABILITIES_USED_LIMIT } from './model.js';
 import {
   cardSourceSnapshot,
   publicVisibilityFace,
@@ -3309,11 +3310,47 @@ const applyEventInternal = (
     }
     case 'StackAbilitySet': {
       const stack = requireStack(state, event.stackId);
+      // The names count only while the marker is on: a marker that went off
+      // (a new turn, an evolution) left none behind.
+      const named = stack.abilityUsed ? (stack.abilitiesUsed ?? []) : [];
+      let used: boolean;
+      let abilitiesUsed: readonly string[];
+      if (event.ability === undefined) {
+        used = event.used;
+        abilitiesUsed = event.used ? named : [];
+      } else if (event.used) {
+        used = true;
+        abilitiesUsed = named.includes(event.ability)
+          ? named
+          : [...named, event.ability].slice(-ABILITIES_USED_LIMIT);
+      } else {
+        abilitiesUsed = named.filter((name) => name !== event.ability);
+        used = abilitiesUsed.length > 0;
+      }
+      const { abilitiesUsed: _named, ...rest } = stack;
       return {
         ...state,
         stacks: {
           ...state.stacks,
-          [stack.id]: { ...stack, abilityUsed: event.used },
+          [stack.id]: {
+            ...rest,
+            abilityUsed: used,
+            ...(abilitiesUsed.length > 0 ? { abilitiesUsed } : {}),
+          },
+        },
+      };
+    }
+    case 'StackHpModifierSet': {
+      const stack = requireStack(state, event.stackId);
+      const { hpModifier: _previous, ...rest } = stack;
+      return {
+        ...state,
+        stacks: {
+          ...state.stacks,
+          [stack.id]:
+            event.modifier === 0
+              ? rest
+              : { ...rest, hpModifier: event.modifier },
         },
       };
     }

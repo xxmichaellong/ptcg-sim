@@ -124,6 +124,7 @@ export const MODEL_COMMAND_REGISTRY = {
   },
   SetAbilityUsed: { coverage: 'generated', family: 'markers-annotations' },
   SetStackReminder: { coverage: 'generated', family: 'markers-annotations' },
+  SetHpModifier: { coverage: 'generated', family: 'markers-annotations' },
   RotateStack: { coverage: 'generated', family: 'markers-annotations' },
   SetCardOrientation: {
     coverage: 'generated',

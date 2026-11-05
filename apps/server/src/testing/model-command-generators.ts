@@ -617,6 +617,14 @@ export const MODEL_COMMAND_GENERATORS = {
       on: !(stack.reminders ?? []).includes(reminder),
     };
   },
+  SetHpModifier: (context) => {
+    const stack = context.random.pick(actorStacks(context));
+    if (!stack) return undefined;
+    const modifier = context.random.pick([-30, 0, 30, 100, 990] as const)!;
+    return (stack.hpModifier ?? 0) === modifier
+      ? undefined
+      : { type: 'SetHpModifier', stackId: stack.id, modifier };
+  },
   RotateStack: (context) => {
     const stack = context.random.pick(actorStacks(context));
     return stack

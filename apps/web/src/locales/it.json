@@ -939,6 +939,20 @@
     ],
     "translation": "{name} ha lanciato finché non è uscita croce: {faces} ({heads, plural, one {# testa} other {# teste}})"
   },
+  "FpPgbw": {
+    "message": "{name} gave {card} +{amount} HP",
+    "comments": [
+      "Log line: a player marked an effect adding to a Pokémon's HP (a Tool's +HP). {name} is a player's name, {card} the Pokémon's name, {amount} the HP added."
+    ],
+    "translation": ""
+  },
+  "0i1Lon": {
+    "message": "{name} gave {card} −{amount} HP",
+    "comments": [
+      "Log line: a player marked an effect taking from a Pokémon's HP. {name} is a player's name, {card} the Pokémon's name, {amount} the HP taken."
+    ],
+    "translation": ""
+  },
   "Bqr3lz": {
     "message": "{name} hand",
     "comments": [
@@ -1038,6 +1052,13 @@
     ],
     "translation": "Carte Premio di {name}"
   },
+  "xsMgtJ": {
+    "message": "{name} put {card}'s HP back to what is printed",
+    "comments": [
+      "Log line: a player took off an effect's change to a Pokémon's HP. {name} is a player's name, {card} the Pokémon's name."
+    ],
+    "translation": ""
+  },
   "3xOj4K": {
     "message": "{name} put a reminder on {card}: {reminder, select, cantAttack {can't attack} cantRetreat {can't retreat} takesLess {takes less damage} hitsHarder {attacks do more} other {no Abilities}}",
     "comments": [
@@ -1093,6 +1114,13 @@
       "Log line: a player took the reminder of a lasting effect off a Pokémon. {name} is a player's name, {card} the Pokémon's name; {reminder} is what the reminder said."
     ],
     "translation": "{name} ha tolto il promemoria da {card}: {reminder, select, cantAttack {non può attaccare} cantRetreat {non può ritirarsi} takesLess {subisce meno danni} hitsHarder {gli attacchi fanno più danni} other {nessuna abilità}}"
+  },
+  "cV1aTX": {
+    "message": "{name} used",
+    "comments": [
+      "{name} is an Ability, marked used this turn; a press takes the mark off."
+    ],
+    "translation": ""
   },
   "I_6aBo": {
     "message": "{name} used {card}",
@@ -1496,6 +1524,10 @@
     "message": "10 less damage on each",
     "translation": "10 danni in meno su ciascuno"
   },
+  "MeliNG": {
+    "message": "10 less HP",
+    "translation": ""
+  },
   "AHfGsB": {
     "message": "10 more damage",
     "translation": "10 danni in più"
@@ -1503,6 +1535,10 @@
   "07KhVj": {
     "message": "10 more damage on each",
     "translation": "10 danni in più su ciascuno"
+  },
+  "7P7DG-": {
+    "message": "10 more HP",
+    "translation": ""
   },
   "c224Tl": {
     "message": "3 draws three",
@@ -3769,6 +3805,13 @@
     "message": "HP and retreat",
     "translation": "PS e ritirata"
   },
+  "TUnKzm": {
+    "message": "HP from effects",
+    "comments": [
+      "Controls for what an effect (a Tool's +HP) adds to a Pokémon's HP."
+    ],
+    "translation": ""
+  },
   "fdmYlD": {
     "message": "HP left",
     "comments": [
@@ -4283,6 +4326,13 @@
       "name is GX or VSTAR, the once-per-game marker."
     ],
     "translation": "Segna {name} come usato"
+  },
+  "cDk2Dj": {
+    "message": "Mark as not used",
+    "comments": [
+      "Takes an Ability's Used mark off, this turn."
+    ],
+    "translation": ""
   },
   "386rEt": {
     "message": "Mark as unused",
@@ -5371,6 +5421,13 @@
   "Lxdrcy": {
     "message": "Previous replay action",
     "translation": "Azione precedente del replay"
+  },
+  "JQvvvQ": {
+    "message": "Printed HP {0}",
+    "comments": [
+      "Over a Pokémon's HP changed by an effect: the HP printed on its card."
+    ],
+    "translation": ""
   },
   "groO0o": {
     "message": "Prism Star",

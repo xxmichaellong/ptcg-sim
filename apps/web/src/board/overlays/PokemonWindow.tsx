@@ -1,12 +1,11 @@
 import { Trans, useLingui } from '@lingui/react/macro';
 import { CheckIcon } from '@phosphor-icons/react/dist/csr/Check';
-import { CheckCircleIcon } from '@phosphor-icons/react/dist/csr/CheckCircle';
 import { MinusIcon } from '@phosphor-icons/react/dist/csr/Minus';
 import { PlusIcon } from '@phosphor-icons/react/dist/csr/Plus';
 import { TrashIcon } from '@phosphor-icons/react/dist/csr/Trash';
 import { basicEnergyTypeOf } from '@ptcgsim/deck-core';
 import {
-  STACK_REMINDERS,
+  HP_MODIFIER_LIMIT,
   type CardText,
   type CardTextAbility,
   type CardTextAttack,
@@ -17,7 +16,6 @@ import {
 } from '@ptcgsim/game-core';
 import {
   markerHint,
-  reminderName,
   specialConditionKind,
   type CardSceneNode,
 } from '@ptcgsim/renderer-contract';
@@ -32,12 +30,7 @@ import {
   parseLegacyDamageInput,
   type LegacyBoardOverlayActionRequest,
 } from '../resolveLegacyBoardOverlayAction.js';
-import {
-  CONDITION_CODES,
-  CONDITIONS,
-  conditionArt,
-  REMINDER_ICONS,
-} from './MarkerControls.js';
+import { CONDITION_CODES, CONDITIONS, conditionArt } from './MarkerControls.js';
 import './PokemonWindow.css';
 
 type ViewStack = MatchViewState['stacks'][string];
@@ -51,6 +44,8 @@ const tabbable = { 'data-preview-tabbable': 'true' } as const;
 /** The most damage a Pokémon can carry (the room's limit). */
 const DAMAGE_MAXIMUM = 9_990;
 const DAMAGE_STEP = 10;
+/** An effect's HP goes up and down by 10 (a Tool's +HP is a multiple). */
+const HP_STEP = 10;
 /** How long a damage asked for stands before the table's shown takes over. */
 const PENDING_DAMAGE_MS = 4_000;
 
@@ -162,20 +157,28 @@ const Cost = ({
   );
 };
 
-/** An Ability: its kind, name and text, and Use for its Pokémon's player. */
+/**
+ * An Ability: its kind, name and text, Use for its Pokémon's player, and,
+ * once used, its own Used mark, which a press at the table takes off.
+ */
 const AbilityRow = ({
   move,
   ability,
   canUse,
+  canMark,
   used,
   onUse,
+  onClear,
 }: {
   readonly move: WindowMove;
   readonly ability: CardTextAbility;
   readonly canUse: boolean;
-  /** The Pokémon's Ability marker is on. */
+  /** Its mark may be taken off: anyone's at the table, as the marker is. */
+  readonly canMark: boolean;
+  /** This Ability is marked used. */
   readonly used: boolean;
   readonly onUse: () => void;
+  readonly onClear: () => void;
 }) => {
   const { t } = useLingui();
   const name = ability.name;
@@ -185,7 +188,31 @@ const AbilityRow = ({
         <span className="pokemon-window__ability-kind">{ability.kind}</span>
         <h3 className="pokemon-window__move-name">
           {name}
-          {used ? (
+          {used && canMark ? (
+            <Tooltip
+              content={t({
+                message: 'Mark as not used',
+                comment: "Takes an Ability's Used mark off, this turn.",
+              })}
+            >
+              <button
+                type="button"
+                className="pokemon-window__used"
+                data-pokemon-window-used={ability.name}
+                aria-pressed="true"
+                aria-label={t({
+                  message: `${name} used`,
+                  comment:
+                    '{name} is an Ability, marked used this turn; a press takes the mark off.',
+                })}
+                onClick={onClear}
+                {...tabbable}
+              >
+                <CheckIcon weight="bold" aria-hidden="true" />
+                <Trans context="an Ability, this turn">Used</Trans>
+              </button>
+            </Tooltip>
+          ) : used ? (
             <span className="pokemon-window__used">
               {' '}
               <CheckIcon weight="bold" aria-hidden="true" />
@@ -242,11 +269,6 @@ const AttackRow = ({
       <header className="pokemon-window__move-head">
         <Cost cost={attack.cost} size={20} />
         <h3 className="pokemon-window__move-name">{name}</h3>
-        {attack.damage ? (
-          <span className="pokemon-window__damage ds-number">
-            {attack.damage}
-          </span>
-        ) : null}
       </header>
       {attack.text ? (
         <p className="pokemon-window__move-text">
@@ -278,22 +300,30 @@ const AttackRow = ({
  * taken off; with its HP when the card says it, as what is left of it.
  */
 const Vitals = ({
-  hp,
+  printedHp,
+  hpModifier,
   damage,
   canMark,
   onDamage,
+  onHpModifier,
   commitRef,
 }: {
-  readonly hp: number | undefined;
+  readonly printedHp: number | undefined;
+  /** What an effect adds to the printed HP (a Tool's +HP); 0 for none. */
+  readonly hpModifier: number;
   readonly damage: number;
   readonly canMark: boolean;
   readonly onDamage: (value: number) => void;
+  readonly onHpModifier: (value: number) => void;
   /** Where it puts the way to set what is typed, for a press outside. */
   readonly commitRef?: { current: (() => void) | null };
 }) => {
   const { t } = useLingui();
   const [draft, setDraft] = useState<string | null>(null);
   const [invalid, setInvalid] = useState(false);
+  // Its HP as it stands: what is printed, and what effects add or take.
+  const hp =
+    printedHp === undefined ? undefined : Math.max(10, printedHp + hpModifier);
   const left = hp === undefined ? undefined : Math.max(0, hp - damage);
   const share = hp ? Math.max(0, Math.min(1, (left ?? 0) / hp)) : 0;
   const tone = share > 0.5 ? 'high' : share > 0.25 ? 'mid' : 'low';
@@ -366,6 +396,71 @@ const Vitals = ({
               <span className="pokemon-window__hp-left">{left}</span>
               <span className="pokemon-window__hp-total">/{hp}</span>
             </span>
+            {hpModifier !== 0 ? (
+              <Tooltip
+                content={t({
+                  message: `Printed HP ${String(printedHp)}`,
+                  comment:
+                    "Over a Pokémon's HP changed by an effect: the HP printed on its card.",
+                })}
+              >
+                <span
+                  className="pokemon-window__hp-modifier ds-number"
+                  data-direction={hpModifier > 0 ? 'up' : 'down'}
+                  tabIndex={0}
+                >
+                  {hpModifier > 0 ? '+' : '−'}
+                  {Math.abs(hpModifier)}
+                </span>
+              </Tooltip>
+            ) : null}
+            {canMark ? (
+              <span
+                className="pokemon-window__hp-steps"
+                role="group"
+                aria-label={t({
+                  message: 'HP from effects',
+                  comment:
+                    "Controls for what an effect (a Tool's +HP) adds to a Pokémon's HP.",
+                })}
+              >
+                <Tooltip content={t`10 less HP`}>
+                  <button
+                    type="button"
+                    className="pokemon-window__icon-button is-small"
+                    aria-label={t`10 less HP`}
+                    disabled={
+                      hpModifier <= -HP_MODIFIER_LIMIT ||
+                      (hp !== undefined && hp <= 10)
+                    }
+                    onClick={() =>
+                      onHpModifier(
+                        Math.max(-HP_MODIFIER_LIMIT, hpModifier - HP_STEP)
+                      )
+                    }
+                    {...tabbable}
+                  >
+                    <MinusIcon weight="bold" aria-hidden="true" />
+                  </button>
+                </Tooltip>
+                <Tooltip content={t`10 more HP`}>
+                  <button
+                    type="button"
+                    className="pokemon-window__icon-button is-small"
+                    aria-label={t`10 more HP`}
+                    disabled={hpModifier >= HP_MODIFIER_LIMIT}
+                    onClick={() =>
+                      onHpModifier(
+                        Math.min(HP_MODIFIER_LIMIT, hpModifier + HP_STEP)
+                      )
+                    }
+                    {...tabbable}
+                  >
+                    <PlusIcon weight="bold" aria-hidden="true" />
+                  </button>
+                </Tooltip>
+              </span>
+            ) : null}
             <span
               className="pokemon-window__hp-bar"
               role="meter"
@@ -727,16 +822,16 @@ export const PokemonWindow = ({
   const condition = stack.specialCondition
     ? specialConditionKind(stack.specialCondition)
     : null;
-  const reminders = stack.reminders ?? [];
   const summary = energySummary(energy, definitions);
   const attachedCount = attached.length;
+  const hpModifier = stack.hpModifier ?? 0;
+  // The Abilities marked used: by name, or all of them where the Pokémon's
+  // marker is on with none named (set from the card's menu).
+  const named = stack.abilityUsed ? (stack.abilitiesUsed ?? []) : [];
+  const abilityMarked = (name: string): boolean =>
+    stack.abilityUsed && (named.length === 0 || named.includes(name));
   const showStatus =
-    canMark ||
-    damage > 0 ||
-    condition !== null ||
-    reminders.length > 0 ||
-    stack.abilityUsed ||
-    text?.hp !== undefined;
+    canMark || damage > 0 || condition !== null || text?.hp !== undefined;
 
   const groups = [
     {
@@ -873,7 +968,8 @@ export const PokemonWindow = ({
           {showStatus ? (
             <div className="pokemon-window__status">
               <Vitals
-                hp={text?.hp}
+                printedHp={text?.hp}
+                hpModifier={hpModifier}
                 damage={damage}
                 canMark={canMark}
                 {...(commitRef ? { commitRef } : {})}
@@ -886,78 +982,50 @@ export const PokemonWindow = ({
                     value: value > 0 ? String(value) : '',
                   })
                 }
+                onHpModifier={(value) =>
+                  topId &&
+                  act({
+                    kind: 'context',
+                    action: 'setHpModifier',
+                    cardId: topId,
+                    value,
+                  })
+                }
               />
-              <div className="pokemon-window__markers">
-                {active
-                  ? CONDITIONS.map((kind) => (
-                      <Toggle
-                        key={kind}
-                        kind="condition"
-                        label={markerHint({
-                          kind: 'specialCondition',
-                          value: kind,
-                        })}
-                        pressed={condition === kind}
-                        enabled={canMark}
-                        onPress={() =>
-                          topId &&
-                          act({
-                            kind: 'context',
-                            action: 'setSpecialCondition',
-                            cardId: topId,
-                            value:
-                              condition === kind ? '' : CONDITION_CODES[kind],
-                          })
-                        }
-                      >
-                        <img
-                          src={conditionArt(kind)}
-                          alt=""
-                          draggable={false}
-                        />
-                      </Toggle>
-                    ))
-                  : null}
-                {STACK_REMINDERS.map((reminder) => {
-                  const ReminderIcon = REMINDER_ICONS[reminder];
-                  return (
-                    <Toggle
-                      key={reminder}
-                      kind="reminder"
-                      label={reminderName(reminder)}
-                      pressed={reminders.includes(reminder)}
-                      enabled={canMark}
-                      onPress={() =>
-                        topId &&
-                        act({
-                          kind: 'context',
-                          action: 'setReminder',
-                          cardId: topId,
-                          reminder,
-                        })
-                      }
-                    >
-                      <ReminderIcon weight="bold" aria-hidden="true" />
-                    </Toggle>
-                  );
-                })}
-                <Toggle
-                  kind="ability"
-                  label={markerHint({ kind: 'abilityUsed', value: '' })}
-                  pressed={stack.abilityUsed}
-                  enabled={canMark}
-                  onPress={() =>
-                    topId &&
-                    act({
-                      kind: 'context',
-                      action: 'toggleAbility',
-                      cardId: topId,
-                    })
-                  }
-                >
-                  <CheckCircleIcon weight="bold" aria-hidden="true" />
-                </Toggle>
-              </div>
+              {active ? (
+                <div className="pokemon-window__markers">
+                  {active
+                    ? CONDITIONS.map((kind) => (
+                        <Toggle
+                          key={kind}
+                          kind="condition"
+                          label={markerHint({
+                            kind: 'specialCondition',
+                            value: kind,
+                          })}
+                          pressed={condition === kind}
+                          enabled={canMark}
+                          onPress={() =>
+                            topId &&
+                            act({
+                              kind: 'context',
+                              action: 'setSpecialCondition',
+                              cardId: topId,
+                              value:
+                                condition === kind ? '' : CONDITION_CODES[kind],
+                            })
+                          }
+                        >
+                          <img
+                            src={conditionArt(kind)}
+                            alt=""
+                            draggable={false}
+                          />
+                        </Toggle>
+                      ))
+                    : null}
+                </div>
+              ) : null}
             </div>
           ) : null}
           <div
@@ -991,8 +1059,9 @@ export const PokemonWindow = ({
                     <AbilityRow
                       move={move}
                       ability={ability}
-                      used={stack.abilityUsed}
+                      used={abilityMarked(ability.name)}
                       canUse={canUseMoves}
+                      canMark={canMark}
                       onUse={() => {
                         act({
                           kind: 'context',
@@ -1002,6 +1071,22 @@ export const PokemonWindow = ({
                         });
                         onUsed();
                       }}
+                      onClear={() =>
+                        named.includes(ability.name)
+                          ? act({
+                              kind: 'context',
+                              action: 'unmarkAbility',
+                              cardId: move.cardId,
+                              name: ability.name,
+                            })
+                          : // The Pokémon's marker, set with no Ability named.
+                            topId &&
+                            act({
+                              kind: 'context',
+                              action: 'toggleAbility',
+                              cardId: topId,
+                            })
+                      }
                     />
                   </div>
                 );

@@ -916,6 +916,32 @@ export const presentationEffectsForEvent = (
             })
       );
     }
+    case 'HpModifierSet': {
+      const name = playerName(view, event.playerId);
+      const card = narratedCardName(event.cardName);
+      const amount = Math.abs(event.modifier);
+      return playerEffects(
+        event,
+        event.playerId,
+        event.modifier === 0
+          ? msg({
+              message: `${name} put ${card}'s HP back to what is printed`,
+              comment:
+                "Log line: a player took off an effect's change to a Pokémon's HP. {name} is a player's name, {card} the Pokémon's name.",
+            })
+          : event.modifier > 0
+            ? msg({
+                message: `${name} set ${card} to +${amount} HP`,
+                comment:
+                  "Log line: a player set what effects add to a Pokémon's HP (a Tool's +HP), in all. {name} is a player's name, {card} the Pokémon's name, {amount} the HP added in all.",
+              })
+            : msg({
+                message: `${name} set ${card} to −${amount} HP`,
+                comment:
+                  "Log line: a player set what effects take from a Pokémon's HP, in all. {name} is a player's name, {card} the Pokémon's name, {amount} the HP taken in all.",
+              })
+      );
+    }
     case 'CoinFlipped': {
       const name = playerName(view, event.playerId);
       const result = event.result;

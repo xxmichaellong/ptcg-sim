@@ -310,10 +310,21 @@ export type BaseGameCommand =
       readonly used: boolean;
       /**
        * The Ability picked from the Pokémon's text, to name in the log
-       * (ADR-043). It marks the Pokémon used and is told even when it
-       * already was: some Abilities are used more than once a turn.
+       * (ADR-043). Used, it marks that Ability (and the Pokémon) used and is
+       * told even when it already was: some Abilities are used more than
+       * once a turn. Not used, it takes that Ability's mark off, the
+       * Pokémon's with it once none is left.
        */
       readonly ability?: string;
+    }
+  | {
+      /**
+       * What an effect adds to the Pokémon's printed HP (or takes from it):
+       * a multiple of 10 up to HP_MODIFIER_LIMIT either way; 0 for none.
+       */
+      readonly type: 'SetHpModifier';
+      readonly stackId: StackId;
+      readonly modifier: number;
     }
   | {
       /** Puts a reminder on a Pokémon in play (`on`), or takes it off. */

@@ -179,7 +179,8 @@ test('a Pokémon opens in its window: its cards, its status and its moves, each 
   await expect(attack).toHaveAccessibleName('Attack with Burning Darkness');
   const attackRow = window.locator('.pokemon-window__move.is-attack');
   await expect(attackRow).toContainText('Burning Darkness');
-  await expect(attackRow).toContainText('180+');
+  // No attack's damage: effects change it.
+  await expect(attackRow).not.toContainText('180');
   await testInfo.attach('pokemon-window.png', {
     body: await page.screenshot(),
     contentType: 'image/png',
@@ -220,8 +221,9 @@ test('a Pokémon opens in its window: its cards, its status and its moves, each 
   await page.keyboard.press('Escape');
   await page.locator(onCard(charizard)).dblclick();
   await expect(window).toBeVisible();
+  // The Ability wears its own Used mark.
   await expect(
-    window.getByRole('button', { name: 'Ability used' })
+    window.locator('[data-pokemon-window-used="Infernal Reign"]')
   ).toHaveAttribute('aria-pressed', 'true');
   // Its text pressed, to read it: nothing is declared.
   await attackRow.locator('.pokemon-window__move-text').click();
@@ -475,7 +477,7 @@ test('a card’s own text plays on the table: a Pokémon made by hand, and a pri
   await expect(window.locator('.pokemon-window__move.is-attack')).toContainText(
     'Splash'
   );
-  await expect(window.locator('.pokemon-window__move.is-attack')).toContainText(
-    '30'
-  );
+  await expect(
+    window.locator('.pokemon-window__move.is-attack')
+  ).not.toContainText('30');
 });

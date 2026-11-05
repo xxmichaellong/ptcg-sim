@@ -28,7 +28,8 @@ type Narration = Extract<
       | 'HandReplaced'
       | 'CardCategoryChanged'
       | 'AbilityUsed'
-      | 'ReminderSet';
+      | 'ReminderSet'
+      | 'HpModifierSet';
   }
 >;
 
@@ -754,6 +755,23 @@ const narrate = (
           // An Ability is named only with its Pokémon: a face-down one's
           // text is no one else's to read.
           ...(cardName && event.ability ? { abilityName: event.ability } : {}),
+        },
+      ];
+    }
+    case 'StackHpModifierSet': {
+      const stack =
+        state.stacks[event.stackId] ?? previousState.stacks[event.stackId];
+      const top = stack?.evolutionCardIds.at(-1);
+      if (!stack || !top) return [];
+      const cardName = publicName(state, previousState, top);
+      return [
+        {
+          type: 'HpModifierSet',
+          revision,
+          playerId: stack.boardPlayerId,
+          source: stack.slot,
+          ...(cardName ? { cardName } : {}),
+          modifier: event.modifier,
         },
       ];
     }

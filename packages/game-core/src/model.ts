@@ -102,11 +102,28 @@ export interface PlayStack {
   readonly specialCondition: SpecialCondition | null;
   readonly abilityUsed: boolean;
   /**
+   * The Abilities named as used (ADR-043): a Pokémon with several -- two
+   * Abilities, a Poké-Power and a Poké-Body -- has each marked apart. Read
+   * only while `abilityUsed` is on (whatever turns that off forgets them);
+   * absent when none.
+   */
+  readonly abilitiesUsed?: readonly string[];
+  /**
+   * Added to (or taken from) the Pokémon's printed HP by an effect -- a
+   * Tool's +HP, an Ability's: a multiple of 10, never 0; absent when none.
+   */
+  readonly hpModifier?: number;
+  /**
    * The reminders on it, in STACK_REMINDERS order; absent when none (state
    * saved before reminders existed has none).
    */
   readonly reminders?: readonly StackReminder[];
 }
+
+/** The most HP an effect adds to or takes from a Pokémon. */
+export const HP_MODIFIER_LIMIT = 990;
+/** The most Abilities one Pokémon has marked used at once. */
+export const ABILITIES_USED_LIMIT = 8;
 
 export interface PlayerBoard {
   readonly activeStackId: StackId | null;

@@ -380,6 +380,21 @@ const StackReminderSchema = v.picklist([
   'noAbilities',
 ] as const);
 
+/** game-core HP_MODIFIER_LIMIT: an effect's HP, a multiple of 10. */
+const HpModifierSchema = v.pipe(
+  v.number(),
+  v.integer(),
+  v.minValue(-990),
+  v.maxValue(990),
+  v.check((modifier) => modifier % 10 === 0)
+);
+
+const SetHpModifierCommandSchema = v.object({
+  type: v.literal('SetHpModifier'),
+  stackId: IdentifierSchema,
+  modifier: HpModifierSchema,
+});
+
 const SetStackReminderCommandSchema = v.object({
   type: v.literal('SetStackReminder'),
   stackId: IdentifierSchema,
@@ -713,6 +728,7 @@ export const WireGameCommandSchema = v.variant('type', [
   SetSpecialConditionCommandSchema,
   SetAbilityUsedCommandSchema,
   SetStackReminderCommandSchema,
+  SetHpModifierCommandSchema,
   RotateStackCommandSchema,
   SetCardOrientationCommandSchema,
   SetCardAbilityUsedCommandSchema,
@@ -967,6 +983,11 @@ const StackViewSchema = v.object({
   abilityUsed: v.boolean(),
   // Absent from a view made before reminders (a stored replay).
   reminders: v.optional(v.pipe(v.array(StackReminderSchema), v.maxLength(5))),
+  // The Abilities marked used (game-core ABILITIES_USED_LIMIT); absent when
+  // none, and from a view made before them.
+  abilitiesUsed: v.optional(v.pipe(v.array(MoveNameSchema), v.maxLength(8))),
+  // An effect's HP; absent when none.
+  hpModifier: v.optional(HpModifierSchema),
 });
 
 const WorkAreaViewSchema = v.object({
@@ -1186,6 +1207,16 @@ const AbilityUsedPresentationEventSchema = v.object({
   abilityName: v.optional(MoveNameSchema),
 });
 
+/** A player changed what an effect adds to a Pokémon's HP. */
+const HpModifierSetPresentationEventSchema = v.object({
+  type: v.literal('HpModifierSet'),
+  revision: RevisionSchema,
+  playerId: IdentifierSchema,
+  source: v.picklist(['active', 'bench'] as const),
+  cardName: v.optional(boundedString(256)),
+  modifier: HpModifierSchema,
+});
+
 /** A player put a reminder on a Pokémon in play, or took it off. */
 const ReminderSetPresentationEventSchema = v.object({
   type: v.literal('ReminderSet'),
@@ -1199,6 +1230,7 @@ const ReminderSetPresentationEventSchema = v.object({
 
 export const PresentationEventSchema = v.variant('type', [
   ReminderSetPresentationEventSchema,
+  HpModifierSetPresentationEventSchema,
   CardMovedPresentationEventSchema,
   CardsDrawnPresentationEventSchema,
   ZoneShuffledPresentationEventSchema,

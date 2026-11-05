@@ -674,6 +674,10 @@
           "source": "packages/game-core/src/index.ts",
           "symbols": [
             {
+              "name": "ABILITIES_USED_LIMIT",
+              "kind": "value"
+            },
+            {
               "name": "activeWentAway",
               "kind": "value"
             },
@@ -1016,6 +1020,10 @@
             {
               "name": "GameCommand",
               "kind": "type"
+            },
+            {
+              "name": "HP_MODIFIER_LIMIT",
+              "kind": "value"
             },
             {
               "name": "InspectionId",

@@ -414,6 +414,12 @@ export type DomainEvent =
       readonly on: boolean;
     }
   | {
+      readonly type: 'StackHpModifierSet';
+      readonly stackId: StackId;
+      /** 0: none. */
+      readonly modifier: number;
+    }
+  | {
       readonly type: 'StackRotationSet';
       readonly stackId: StackId;
       readonly rotationQuarterTurns: QuarterTurns;

@@ -131,6 +131,32 @@ card itself. Using an Ability was the card menu's "ability used" marker
     the card's own text as JSON, which an import checks as the table does
     (`isCardText`) and keeps through the catalog's facts. A row's own text
     makes it another card than the same print without it.
+13. **Each Ability marked on itself, HP from effects, no attack damage**
+    (2026-11-05). The owner: the window's reminders aren't needed, "just
+    the ability used is the main one ... we should be able to mark that on
+    the ability itself", for cards with more than one (Abilities,
+    Poké-Powers, Poké-Bodies); a Pokémon's HP must go above what is
+    printed ("a lot of cards ... can modify damage"), and so "refrain from
+    rendering even the damage associated with an attack".
+    - **Ability marks.** A Pokémon in play keeps the names of the
+      Abilities marked used (`PlayStack.abilitiesUsed`, at most 8), read
+      only while its marker (`abilityUsed`) is on: whatever turns the
+      marker off (a new turn, an attack, an evolution) forgets them.
+      `SetAbilityUsed` with a name marks that one (and the marker);
+      not used, it takes that one's mark off, the marker with the last.
+      Each Ability's row wears its own Used mark, a press of which (anyone
+      at the table, as the marker) takes it off; the marker set from the
+      card's menu, with no name, marks them all. Use is still the
+      player's, and still told each time.
+    - **HP from effects.** `SetHpModifier` sets what effects add to (or
+      take from) a Pokémon's printed HP (`PlayStack.hpModifier`): a
+      multiple of 10 up to 990 either way, kept through evolution as
+      damage is. The window shows the HP as it stands, the change beside
+      it ("+30", the printed HP its tooltip), with − and + by 10; the log
+      reads "Blue set Pikachu to +30 HP".
+    - **No reminders, no attack damage in the window.** Its markers are
+      the Active's Special Conditions; reminders stay on the card's menu
+      and the marker controls. An attack's row is its cost, name and text.
 
 ## Consequences
 

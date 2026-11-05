@@ -2,6 +2,7 @@ import { i18n, type MessageDescriptor } from '@lingui/core';
 import { msg } from '@lingui/core/macro';
 import {
   CARD_TEXT_LIMITS,
+  HP_MODIFIER_LIMIT,
   isMoveName,
   type MatchViewState,
   type PlayerId,
@@ -62,9 +63,11 @@ export type LegacyBoardContextActionId =
 
 /**
  * An Ability or attack picked from a Pokémon's text (the Pokémon window,
- * ADR-043): no menu entry, so no context action of the menu's.
+ * ADR-043): no menu entry, so no context action of the menu's. An Ability
+ * used is marked on itself, and its mark taken off on its own.
  */
-export type LegacyBoardMoveActionId = 'useAbility' | 'useAttack';
+export type LegacyBoardMoveActionId =
+  'useAbility' | 'unmarkAbility' | 'useAttack';
 
 export type LegacyBoardZoneActionId =
   'shuffleDeck' | 'shuffleDiscardToDeck' | 'sortZone';
@@ -152,6 +155,17 @@ export type LegacyBoardOverlayActionRequest =
       readonly cardId: ViewCardId;
       /** Missing opens the controls; present puts it on, or takes it off. */
       readonly reminder?: StackReminder;
+    }
+  | {
+      /**
+       * What an effect adds to the printed HP (the Pokémon window): no menu
+       * entry, so no context action of the menu's.
+       */
+      readonly kind: 'context';
+      readonly action: 'setHpModifier';
+      readonly cardId: ViewCardId;
+      /** A multiple of 10, up to HP_MODIFIER_LIMIT either way; 0 for none. */
+      readonly value: number;
     }
   | {
       readonly kind: 'context';
@@ -513,6 +527,7 @@ const resolveContextAction = (
         type: 'toggleAbilityUsed',
       });
     case 'useAbility':
+    case 'unmarkAbility':
     case 'useAttack': {
       // Printed on one of the Pokémon's own cards (a BREAK keeps its lower
       // Stage's), and told in the log by name: one line, as the room takes.
@@ -531,6 +546,17 @@ const resolveContextAction = (
         .slice(0, CARD_TEXT_LIMITS.name)
         .trim();
       if (!isMoveName(name)) return rejected('invalid_value');
+      if (request.action === 'unmarkAbility') {
+        // Only a mark that is on.
+        return stack.abilityUsed && (stack.abilitiesUsed ?? []).includes(name)
+          ? command({
+              type: 'SetAbilityUsed',
+              stackId: stack.id,
+              used: false,
+              ability: name,
+            })
+          : rejected('invalid_value');
+      }
       return request.action === 'useAbility'
         ? command({
             type: 'SetAbilityUsed',
@@ -608,6 +634,24 @@ const resolveContextAction = (
           ? command(resolution.command)
           : rejected(resolution.reason);
       }
+    case 'setHpModifier': {
+      const stack = located.stack;
+      if (!stack) return rejected('unsupported_target');
+      const value = request.value === 0 ? 0 : request.value;
+      if (
+        !Number.isSafeInteger(value) ||
+        value % 10 !== 0 ||
+        Math.abs(value) > HP_MODIFIER_LIMIT ||
+        (stack.hpModifier ?? 0) === value
+      ) {
+        return rejected('invalid_value');
+      }
+      return command({
+        type: 'SetHpModifier',
+        stackId: stack.id,
+        modifier: value,
+      });
+    }
     case 'setReminder': {
       // On any Pokémon in play, Benched ones too: whichever of its cards.
       const stack = located.stack;
