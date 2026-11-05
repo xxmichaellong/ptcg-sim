@@ -25,6 +25,7 @@ import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 
 import { energyTypeName, stageName } from '../../features/deck/deck-labels.js';
 import { EnergySymbol, RulesText } from '../../ui/EnergySymbol.js';
+import { isInputMethodKey } from '../../ui/input-method.js';
 import { Tooltip } from '../../ui/Tooltip.js';
 import { resolveCardText, useTableCardCatalog } from '../card-text.js';
 import {
@@ -420,6 +421,9 @@ const Vitals = ({
             }}
             onBlur={commit}
             onKeyDown={(event) => {
+              // An input method's keys (its Enter takes a candidate, its
+              // arrows move between them) are its own.
+              if (isInputMethodKey(event.nativeEvent)) return;
               if (event.key === 'Enter') {
                 event.preventDefault();
                 commit();

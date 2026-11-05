@@ -614,4 +614,47 @@ describe('the Pokémon window', () => {
         .querySelectorAll('.energy-symbol')
     ).toHaveLength(2);
   });
+
+  it('leaves an input method’s Enter and arrows in the damage field to it', async () => {
+    const callbacks = actions();
+    const window = await render(stateFor(blue), callbacks);
+    const input = window.querySelector<HTMLInputElement>(
+      '.pokemon-window__damage-input'
+    )!;
+    await act(async () => {
+      input.focus();
+      Object.getOwnPropertyDescriptor(
+        HTMLInputElement.prototype,
+        'value'
+      )!.set!.call(input, '80');
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    for (const init of [
+      { key: 'Enter', isComposing: true },
+      { key: 'ArrowUp', isComposing: true },
+      { key: 'Enter', keyCode: 229 },
+    ])
+      await act(async () =>
+        input.dispatchEvent(
+          new KeyboardEvent('keydown', {
+            ...init,
+            bubbles: true,
+            cancelable: true,
+          })
+        )
+      );
+    expect(callbacks.invokeWindowAction).not.toHaveBeenCalled();
+    await act(async () =>
+      input.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'Enter',
+          bubbles: true,
+          cancelable: true,
+        })
+      )
+    );
+    expect(callbacks.invokeWindowAction).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'setDamage', value: '80' })
+    );
+  });
 });
