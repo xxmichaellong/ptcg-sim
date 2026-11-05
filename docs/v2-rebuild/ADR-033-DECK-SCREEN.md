@@ -358,7 +358,8 @@ specifically without blocking, and go from deck to table in one click.
     field for a deck's name or a pasted list sits on "Your decks"' own row,
     between its name and New deck, at most 420px; Paste and Open file are
     icons at its end. A name typed there finds your own decks (the shelf
-    shows those that match) and the tournaments' (their results on a paper
+    shows those that match; any one line, though it reads like a list's,
+    as "2024 Charizard") and the tournaments' (their results on a paper
     under the row); a list pasted in takes a line of its own under the row,
     with Import. The shelf's separate "Find a deck" field, shown from nine
     decks, is gone: the finder is it. On a phone the finder runs across

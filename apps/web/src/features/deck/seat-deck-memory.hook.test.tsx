@@ -89,6 +89,30 @@ describe('the Solo room’s seats, kept with it', () => {
     await act(async () => root.unmount());
   });
 
+  it('keeps the deck the room takes after the screen has gone, and nothing after it', async () => {
+    const store = new DeckBuilderStore({ alternateEnabled: true });
+    const root = await mount(store);
+    store.replaceDeck('main', deck('Ember'), { name: 'Ember ex' });
+    const sent = store.beginNextDirtyInstall()!;
+    // The tutorial opens while the room has yet to answer.
+    await act(async () => root.unmount());
+    store.settleInstall(sent, 'installed');
+    expect(recallSeatDecks(ROOM).main?.label?.name).toBe('Ember ex');
+    // The practice table's decks are not this room's.
+    store.replaceDeck('main', deck('Practice'), { name: 'Practice' });
+    store.settleInstall(store.beginNextDirtyInstall()!, 'installed');
+    store.replaceDeck('alternate', deck('Practice'), { name: 'Practice' });
+    store.settleInstall(store.beginNextDirtyInstall()!, 'installed');
+    expect(recallSeatDecks(ROOM).main?.label?.name).toBe('Ember ex');
+    expect(recallSeatDecks(ROOM).alternate).toBeUndefined();
+    // Nothing on its way when the screen goes: nothing is kept after.
+    const again = await mount(store);
+    await act(async () => again.unmount());
+    store.replaceDeck('alternate', deck('Later'), { name: 'Later' });
+    store.settleInstall(store.beginNextDirtyInstall()!, 'installed');
+    expect(recallSeatDecks(ROOM).alternate).toBeUndefined();
+  });
+
   it('keeps a new name for the deck on the table, saved or renamed, but not for another deck', async () => {
     const store = new DeckBuilderStore({ alternateEnabled: true });
     const root = await mount(store);

@@ -761,9 +761,11 @@ export const DeckHome = ({
       libraryState.decks.some((deck) => deck.id === slot.label?.deckId);
     return !savedHere && deckTotals(slot.deck).total > 0;
   });
-  // A name typed in the finder finds your own decks too: the tournaments'
-  // show above them.
-  const libraryQuery = mode === 'search' ? searchText(paste) : '';
+  // A name typed in the finder finds your own decks too (the tournaments'
+  // show above them), whatever it looks like: "2024 Charizard" reads as a
+  // list's line but is a fine name. Only a list pasted in, lines of it, is
+  // no name.
+  const libraryQuery = paste.trim().includes('\n') ? '' : searchText(paste);
   const shownDecks = useMemo(() => {
     const query = libraryQuery.toLowerCase();
     // As stored, or as shown (its finish in the page's language).

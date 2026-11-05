@@ -193,9 +193,14 @@ export const useSeatDeckMemory = (
         Pick<DeckBuilderSlotSnapshot, 'revision' | 'deck' | 'label'>
       >
     > = {};
-    return store.subscribe(() => {
+    // Once the screen has gone (the tutorial opened, Solo left), only the
+    // seats whose decks were still on their way: the room's answer settles
+    // them all the same, and the deck it took is kept. Nothing after.
+    let leaving: Set<DeckBuilderTarget> | undefined;
+    const unsubscribe = store.subscribe(() => {
       const { slots } = store.getSnapshot();
       for (const target of DECK_TARGETS) {
+        if (leaving && !leaving.has(target)) continue;
         const slot = slots[target];
         const before = previous[target];
         const keep = ({
@@ -218,6 +223,7 @@ export const useSeatDeckMemory = (
         if (settled) {
           const deck = sent[target];
           delete sent[target];
+          leaving?.delete(target);
           if (slot.installedRevision !== before.installingRevision) continue;
           // The deck shown is the one on the table, with any name it has
           // taken since; edited since, the one that went, as it went.
@@ -230,6 +236,7 @@ export const useSeatDeckMemory = (
         // opens the saved one. Only over the deck kept, the one the room
         // took.
         if (
+          leaving ||
           slot.dirty ||
           slot.installingRevision !== undefined ||
           sameLabel(slot.label, before.label)
@@ -240,7 +247,17 @@ export const useSeatDeckMemory = (
         if (seat && sameDeckList(seat.deck, slot.deck)) keep(slot);
       }
       previous = slots;
+      if (leaving?.size === 0) unsubscribe();
     });
+    return () => {
+      const { slots } = store.getSnapshot();
+      leaving = new Set(
+        DECK_TARGETS.filter(
+          (target) => slots[target].installingRevision !== undefined
+        )
+      );
+      if (leaving.size === 0) unsubscribe();
+    };
   }, [roomCode, store]);
 };
 

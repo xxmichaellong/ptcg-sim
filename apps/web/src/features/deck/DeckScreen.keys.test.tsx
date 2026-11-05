@@ -1079,7 +1079,12 @@ describe('the deck screen from the keyboard', () => {
 
   it('finds your own decks by a name typed in the finder, however few', async () => {
     const library = new DeckLibrary({ backend: null });
-    for (const name of ['Dragapult', 'Gardevoir']) {
+    for (const name of [
+      'Dragapult',
+      'Gardevoir',
+      '2024 Charizard',
+      'Energy: Lightning',
+    ]) {
       library.create({
         name,
         format: 'standard',
@@ -1092,28 +1097,29 @@ describe('the deck screen from the keyboard', () => {
       [...host.querySelectorAll('.deck-tile__name')].map(
         (tile) => tile.textContent
       );
-    expect(names()).toHaveLength(2);
+    expect(names()).toHaveLength(4);
     const finder = host.querySelector<HTMLTextAreaElement>('#deckPasteInput')!;
+    const type = (text: string) =>
+      act(async () => {
+        Object.getOwnPropertyDescriptor(
+          HTMLTextAreaElement.prototype,
+          'value'
+        )!.set!.call(finder, text);
+        finder.dispatchEvent(new Event('input', { bubbles: true }));
+      });
     // On the shelf's own row, beside New deck: no second field.
     expect(finder.closest('.deck-shelf__head')).not.toBeNull();
     expect(host.querySelector('input[placeholder="Find a deck"]')).toBeNull();
-    await act(async () => {
-      Object.getOwnPropertyDescriptor(
-        HTMLTextAreaElement.prototype,
-        'value'
-      )!.set!.call(finder, 'garde');
-      finder.dispatchEvent(new Event('input', { bubbles: true }));
-    });
+    await type('garde');
     expect(names()).toEqual(['Gardevoir']);
+    // Names that read like a list's line are still names.
+    await type('2024 Char');
+    expect(names()).toEqual(['2024 Charizard']);
+    await type('Energy: L');
+    expect(names()).toEqual(['Energy: Lightning']);
     // A list pasted in is no name: every deck shows again.
-    await act(async () => {
-      Object.getOwnPropertyDescriptor(
-        HTMLTextAreaElement.prototype,
-        'value'
-      )!.set!.call(finder, '4 Pikachu SVI 1\n4 Iono PAL 185');
-      finder.dispatchEvent(new Event('input', { bubbles: true }));
-    });
-    expect(names()).toHaveLength(2);
+    await type('4 Pikachu SVI 1\n4 Iono PAL 185');
+    expect(names()).toHaveLength(4);
   });
 
   it('says a saved deck’s finish in the page’s language', async () => {
