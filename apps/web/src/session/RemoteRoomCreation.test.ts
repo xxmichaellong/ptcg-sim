@@ -9,6 +9,7 @@ import {
   createRemoteRoom,
   RemoteRoomCreationError,
   RemoteRoomInvitationCustody,
+  RemoteRoomInvitationError,
 } from './RemoteRoomCreation.js';
 import type { RemoteRoomRuntime } from './RemoteRoomRuntime.js';
 
@@ -517,6 +518,52 @@ describe('remote room creation bootstrap', () => {
     });
     result.dispose();
     expect(onSoloSeat).not.toHaveBeenCalled();
+  });
+
+  it('fetches the claims it has none of with the first invitation, and again after a failure', async () => {
+    const renew = vi
+      .fn()
+      .mockRejectedValueOnce(new RemoteRoomInvitationError('issue_failed'))
+      .mockResolvedValue({
+        playerCapability: credentials.playerTwoSeatCapability,
+        spectatorCapability: credentials.spectatorCapability,
+      });
+    const fetchImplementation = vi.fn<typeof fetch>(async () =>
+      Response.json(
+        {
+          invitation: playerInvitation,
+          requestedRole: 'player',
+          expiresAt: 40_000,
+        },
+        { status: 201 }
+      )
+    );
+    const custody = new RemoteRoomInvitationCustody({
+      roomCode: 'ABCDEFGH2345',
+      fetch: fetchImplementation,
+      origin: new URL('https://play.example'),
+      renew,
+    });
+    const deliver = async (text: Promise<string>) => {
+      await text;
+      return 'copied' as const;
+    };
+    // The room out of reach: told, and nothing issued.
+    await expect(custody.invite('player', deliver)).rejects.toMatchObject({
+      code: 'issue_failed',
+    });
+    expect(fetchImplementation).not.toHaveBeenCalled();
+    // Asked again: the claims come, then the invitation, with them.
+    await expect(custody.invite('player', deliver)).resolves.toMatchObject({
+      requestedRole: 'player',
+    });
+    expect(
+      JSON.parse(String(fetchImplementation.mock.calls[0]![1]?.body))
+    ).toMatchObject({ capability: credentials.playerTwoSeatCapability });
+    // Fetched once: the next invitation uses them as they are.
+    await custody.invite('player', deliver);
+    expect(renew).toHaveBeenCalledTimes(2);
+    custody.dispose();
   });
 
   it('rejects a creation response whose mode differs from the request', async () => {

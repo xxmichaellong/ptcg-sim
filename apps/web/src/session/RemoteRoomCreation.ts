@@ -85,6 +85,15 @@ export interface RemoteRoomInvitationCustodyOptions {
   readonly requestTimeoutMs?: number;
   /** Where an invitation link opens the game: this page, by default. */
   readonly linkBase?: string;
+  /**
+   * Fetches the claims this custody has none of, when first needed: a room
+   * opened from Solo whose answer was lost (ADR-044). Throws a
+   * RemoteRoomInvitationError the caller is told.
+   */
+  readonly renew?: (signal?: AbortSignal) => Promise<{
+    readonly playerCapability: string;
+    readonly spectatorCapability: string;
+  }>;
 }
 
 /**
@@ -101,12 +110,14 @@ export class RemoteRoomInvitationCustody {
   readonly #abort = new AbortController();
   #playerCapability: string | undefined;
   #spectatorCapability: string | undefined;
+  #renew: RemoteRoomInvitationCustodyOptions['renew'];
   #copying = false;
 
   constructor(options: RemoteRoomInvitationCustodyOptions) {
     this.#roomCode = options.roomCode;
     this.#playerCapability = options.playerCapability;
     this.#spectatorCapability = options.spectatorCapability;
+    this.#renew = options.renew;
     this.#fetch = options.fetch;
     this.#origin = options.origin;
     this.#linkBase =
@@ -159,6 +170,7 @@ export class RemoteRoomInvitationCustody {
     this.#abort.abort();
     this.#playerCapability = undefined;
     this.#spectatorCapability = undefined;
+    this.#renew = undefined;
   }
 
   private async copy(
@@ -252,6 +264,16 @@ export class RemoteRoomInvitationCustody {
   ): Promise<RemoteRoomInvitation> {
     if (this.#abort.signal.aborted) {
       throw new RemoteRoomInvitationError('disposed');
+    }
+    const renew = this.#renew;
+    if (renew && !this.#playerCapability && !this.#spectatorCapability) {
+      const claims = await renew(signal);
+      if (this.#abort.signal.aborted) {
+        throw new RemoteRoomInvitationError('disposed');
+      }
+      this.#playerCapability = claims.playerCapability;
+      this.#spectatorCapability = claims.spectatorCapability;
+      this.#renew = undefined;
     }
     const capability =
       requestedRole === 'player'

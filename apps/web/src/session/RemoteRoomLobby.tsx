@@ -185,6 +185,7 @@ interface LobbyOwner {
     readonly result: RemoteRoomCreationResult & {
       /** A Solo room's way into a multiplayer one, in place (ADR-044). */
       readonly goOnline?: OpenedSoloRoom['goOnline'];
+      readonly asOpened?: OpenedSoloRoom['asOpened'];
     };
     readonly displayName: string;
   };
@@ -206,6 +207,7 @@ export interface RemoteRoomLobbyDependencies {
     RemoteRoomCreationResult & {
       readonly keep?: () => void;
       readonly goOnline?: OpenedSoloRoom['goOnline'];
+      readonly asOpened?: OpenedSoloRoom['asOpened'];
     }
   >;
   readonly createInvitationJoinCustody: () => InvitationJoinCustody;
@@ -692,6 +694,39 @@ export const RemoteRoomLobby = ({
       : undefined;
   };
 
+  // A Solo table whose room says it was opened, its answer never heard
+  // (ADR-044): the table is the room's now. Not while an operation runs,
+  // which settles that itself; looked at again once it ends.
+  useEffect(() => {
+    const owner = ownerRef.current;
+    const solo = owner?.creator?.result;
+    if (
+      !owner ||
+      connected?.mode !== 'solo' ||
+      !solo?.asOpened ||
+      solo.runtime !== connected.runtime
+    ) {
+      return;
+    }
+    const runtime = connected.runtime;
+    const adopt = solo.asOpened;
+    const inspect = (): void => {
+      if (runtime.session.getSnapshot().roomMode !== 'multiplayer') return;
+      if (owner.disposed || ownerRef.current !== owner || owner.operation) {
+        return;
+      }
+      const room = adopt();
+      owner.creator = {
+        result: room,
+        displayName: owner.creator?.displayName ?? 'Blue',
+      };
+      setConnected({ runtime: room.runtime, mode: 'multiplayer' });
+    };
+    const unsubscribe = runtime.session.subscribe(inspect);
+    inspect();
+    return unsubscribe;
+  }, [connected, operation]);
+
   const handleCreate = async (): Promise<void> => {
     const active = beginOperation('create');
     if (!active) return;
@@ -811,6 +846,7 @@ export const RemoteRoomLobby = ({
       const result: RemoteRoomCreationResult & {
         readonly keep?: () => void;
         readonly goOnline?: OpenedSoloRoom['goOnline'];
+        readonly asOpened?: OpenedSoloRoom['asOpened'];
       } = await (dependencies.openSoloRoom
         ? dependencies.openSoloRoom(input)
         : dependencies.createRoom({ ...input, mode: 'solo' }));

@@ -6,6 +6,7 @@ import {
 } from './RemoteRoomBootstrap.js';
 import {
   RemoteRoomInvitationCustody,
+  RemoteRoomInvitationError,
   createRemoteRoom,
   type RemoteRoomCreationResult,
 } from './RemoteRoomCreation.js';
@@ -70,6 +71,11 @@ export interface OpenedSoloRoom extends RemoteRoomCreationResult {
     readonly displayName: string;
     readonly signal?: AbortSignal;
   }) => Promise<RemoteRoomCreationResult>;
+  /**
+   * The table as the room it became when the room says it was opened but
+   * its answer never came: its invitations fetched as first needed.
+   */
+  readonly asOpened: () => RemoteRoomCreationResult;
 }
 
 export interface SoloRoomDependencies {
@@ -93,7 +99,36 @@ export interface SoloRoomDependencies {
   readonly roomModeOf?: (
     runtime: RemoteRoomRuntime
   ) => 'solo' | 'multiplayer' | undefined;
+  /** Every move sent answered, before the room opens (its rules change). */
+  readonly settled?: (
+    runtime: RemoteRoomRuntime,
+    signal?: AbortSignal
+  ) => Promise<void>;
+  /** Whether the room says, within `ms`, that it was opened. */
+  readonly saysOpened?: (
+    runtime: RemoteRoomRuntime,
+    ms: number
+  ) => Promise<boolean>;
 }
+
+/** How long a failed opening waits for the room to say it opened anyway. */
+const OPENED_WORD_MS = 3_000;
+
+const roomSaysOpened = (runtime: RemoteRoomRuntime, ms: number) =>
+  new Promise<boolean>((resolve) => {
+    let unsubscribe = (): void => undefined;
+    const done = (opened: boolean): void => {
+      clearTimeout(timer);
+      unsubscribe();
+      resolve(opened);
+    };
+    const timer = setTimeout(() => done(false), ms);
+    const inspect = (): void => {
+      if (runtime.session.getSnapshot().roomMode === 'multiplayer') done(true);
+    };
+    unsubscribe = runtime.session.subscribe(inspect);
+    inspect();
+  });
 
 /**
  * The room sends a table, not the lines that told it: the log kept on this
@@ -247,7 +282,8 @@ export const openRemoteSoloRoom = async (
  * (its answer lost before this page heard it): no longer the Solo table,
  * it comes back as the room it is, its invitations renewed (ADR-044). If
  * someone has taken the second seat, the game goes on, with nobody to
- * invite.
+ * invite; if the renewal fails on the way, it is asked again with the
+ * first invitation, and the claim stays remembered until it is answered.
  */
 const alreadyOpened = async (
   joined: RemoteRoomBootstrapResult,
@@ -255,7 +291,6 @@ const alreadyOpened = async (
   displayName: string,
   dependencies: SoloRoomDependencies
 ): Promise<OpenedSoloRoom> => {
-  (dependencies.forget ?? forgetSoloSeat)(seat.roomCode);
   let invitations: RemoteRoomInvitationCustody;
   try {
     const credentials = await requestRoomOpen(
@@ -264,25 +299,21 @@ const alreadyOpened = async (
       undefined,
       dependencies
     );
-    invitations = invitationCustody(
-      seat.roomCode,
-      {
-        playerCapability: credentials.playerTwoSeatCapability,
-        spectatorCapability: credentials.spectatorCapability,
-      },
-      dependencies
-    );
-  } catch {
-    invitations = invitationCustody(seat.roomCode, {}, dependencies);
+    invitations = openedCustody(seat, credentials, displayName, dependencies);
+  } catch (error) {
+    if (error instanceof SoloRoomOpenError && error.code === 'not_solo') {
+      (dependencies.forget ?? forgetSoloSeat)(seat.roomCode);
+      invitations = invitationCustody(seat.roomCode, {}, dependencies);
+    } else {
+      invitations = openedCustody(seat, undefined, displayName, dependencies);
+    }
   }
   let disposed = false;
-  return {
+  const room: RemoteRoomCreationResult = {
     runtime: joined.runtime,
     route: joined.route,
     mode: 'multiplayer',
     invitations,
-    keep: () => undefined,
-    goOnline: () => Promise.reject(new SoloRoomOpenError('not_solo')),
     dispose: () => {
       if (disposed) return;
       disposed = true;
@@ -290,6 +321,63 @@ const alreadyOpened = async (
       joined.runtime.dispose();
     },
   };
+  return {
+    ...room,
+    keep: () => undefined,
+    goOnline: () => Promise.resolve(room),
+    asOpened: () => room,
+  };
+};
+
+/**
+ * An opened room's invitations: from the claims its answer brought, the
+ * room then forgotten as the Solo table; or, its answer lost, fetched from
+ * the room as the first invitation needs them, forgotten as Solo then.
+ */
+const openedCustody = (
+  seat: SoloSeat,
+  credentials:
+    | {
+        readonly playerTwoSeatCapability: string;
+        readonly spectatorCapability: string;
+      }
+    | undefined,
+  displayName: string,
+  dependencies: SoloRoomDependencies
+): RemoteRoomInvitationCustody => {
+  const forget = dependencies.forget ?? forgetSoloSeat;
+  if (credentials) {
+    forget(seat.roomCode);
+    return invitationCustody(
+      seat.roomCode,
+      {
+        playerCapability: credentials.playerTwoSeatCapability,
+        spectatorCapability: credentials.spectatorCapability,
+      },
+      dependencies
+    );
+  }
+  return invitationCustody(seat.roomCode, {}, dependencies, async (signal) => {
+    try {
+      const renewed = await requestRoomOpen(
+        seat,
+        displayName,
+        signal,
+        dependencies
+      );
+      forget(seat.roomCode);
+      return {
+        playerCapability: renewed.playerTwoSeatCapability,
+        spectatorCapability: renewed.spectatorCapability,
+      };
+    } catch (error) {
+      if (error instanceof SoloRoomOpenError && error.code === 'not_solo') {
+        forget(seat.roomCode);
+        throw new RemoteRoomInvitationError('seat_unavailable');
+      }
+      throw new RemoteRoomInvitationError('issue_failed');
+    }
+  });
 };
 
 const invitationCustody = (
@@ -298,11 +386,13 @@ const invitationCustody = (
     readonly playerCapability?: string;
     readonly spectatorCapability?: string;
   },
-  dependencies: SoloRoomDependencies
+  dependencies: SoloRoomDependencies,
+  renew?: ConstructorParameters<typeof RemoteRoomInvitationCustody>[0]['renew']
 ): RemoteRoomInvitationCustody =>
   new RemoteRoomInvitationCustody({
     roomCode,
     ...capabilities,
+    ...(renew ? { renew } : {}),
     fetch: dependencies.fetch ?? globalThis.fetch,
     origin:
       normalizeHttpOrigin(
@@ -330,15 +420,39 @@ const soloRoom = ({
   readonly dependencies: SoloRoomDependencies;
 }): OpenedSoloRoom => {
   let opened: RemoteRoomInvitationCustody | undefined;
+  let becameRoom: RemoteRoomCreationResult | undefined;
   let disposed = false;
   let keeping = false;
   let stopLog: (() => void) | undefined;
+  // The name the host plays under in the room, for a renewal's asking.
+  let name = 'Player 1';
   const dispose = (): void => {
     if (disposed) return;
     disposed = true;
     stopLog?.();
     opened?.dispose();
     disposeSolo();
+  };
+  /** The table, now the room's: arrivals told, its log no longer kept. */
+  const become = (
+    custody: RemoteRoomInvitationCustody
+  ): RemoteRoomCreationResult => {
+    if (becameRoom) {
+      custody.dispose();
+      return becameRoom;
+    }
+    opened = custody;
+    announce.on = true;
+    stopLog?.();
+    stopLog = undefined;
+    becameRoom = {
+      runtime: base.runtime,
+      route: base.route,
+      mode: 'multiplayer',
+      invitations: custody,
+      dispose,
+    };
+    return becameRoom;
   };
   return {
     runtime: base.runtime,
@@ -369,37 +483,56 @@ const soloRoom = ({
     },
     dispose,
     goOnline: async ({ displayName, signal }) => {
+      if (becameRoom) return becameRoom;
       const claim = seat();
-      if (!claim || disposed || opened) {
-        throw new SoloRoomOpenError('disposed');
+      if (!claim || disposed) throw new SoloRoomOpenError('disposed');
+      name = displayName;
+      // Every move sent answered first: the room's rules change as it
+      // opens, and a Solo move overtaken by it would be refused.
+      try {
+        await (
+          dependencies.settled ??
+          ((runtime, abort) => runtime.commandsSettled(abort))
+        )(base.runtime, signal);
+      } catch {
+        throw new SoloRoomOpenError('failed');
       }
-      const credentials = await requestRoomOpen(
-        claim,
-        displayName,
-        signal,
-        dependencies
+      try {
+        const credentials = await requestRoomOpen(
+          claim,
+          displayName,
+          signal,
+          dependencies
+        );
+        if (disposed) throw new SoloRoomOpenError('disposed');
+        return become(
+          openedCustody(claim, credentials, displayName, dependencies)
+        );
+      } catch (error) {
+        // Opened all the same, its answer lost on the way: the room says
+        // so to the table; the invitations are fetched as first needed.
+        if (
+          !disposed &&
+          (await (dependencies.saysOpened ?? roomSaysOpened)(
+            base.runtime,
+            OPENED_WORD_MS
+          ))
+        ) {
+          return become(
+            openedCustody(claim, undefined, displayName, dependencies)
+          );
+        }
+        throw error;
+      }
+    },
+    asOpened: () => {
+      if (becameRoom) return becameRoom;
+      const claim = seat();
+      return become(
+        claim
+          ? openedCustody(claim, undefined, name, dependencies)
+          : invitationCustody(base.runtime.roomCode, {}, dependencies)
       );
-      if (disposed) throw new SoloRoomOpenError('disposed');
-      opened = invitationCustody(
-        claim.roomCode,
-        {
-          playerCapability: credentials.playerTwoSeatCapability,
-          spectatorCapability: credentials.spectatorCapability,
-        },
-        dependencies
-      );
-      announce.on = true;
-      // A room's log is not kept as the Solo table's.
-      stopLog?.();
-      stopLog = undefined;
-      (dependencies.forget ?? forgetSoloSeat)(claim.roomCode);
-      return {
-        runtime: base.runtime,
-        route: base.route,
-        mode: 'multiplayer',
-        invitations: opened,
-        dispose,
-      };
     },
   };
 };

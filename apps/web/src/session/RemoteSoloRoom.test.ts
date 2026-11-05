@@ -7,7 +7,6 @@ import {
 import type { RemoteRoomRuntime } from './RemoteRoomRuntime.js';
 import {
   openRemoteSoloRoom,
-  SoloRoomOpenError,
   type SoloRoomDependencies,
 } from './RemoteSoloRoom.js';
 import {
@@ -115,6 +114,8 @@ const deps = (
     keepLog,
     stopLog,
     roomModeOf: (() => 'solo') as SoloRoomDependencies['roomModeOf'],
+    settled: vi.fn(async () => undefined),
+    saysOpened: vi.fn(async () => false),
     ...overrides,
   };
 };
@@ -380,10 +381,9 @@ describe('opening the Solo table to an opponent', () => {
     expect(forget).toHaveBeenCalledExactlyOnceWith(OWN.roomCode);
     room.dispose();
     expect(solo.runtime.dispose).toHaveBeenCalledOnce();
-    // Opened once only.
-    await expect(solo.goOnline({ displayName: 'Ash' })).rejects.toBeInstanceOf(
-      SoloRoomOpenError
-    );
+    // Opened once: asked again, it is the same room, and nothing is sent.
+    expect(await solo.goOnline({ displayName: 'Ash' })).toBe(room);
+    expect(fetch).toHaveBeenCalledOnce();
   });
 
   it('opens a table made just now with the claim the room handed over', async () => {
@@ -556,13 +556,14 @@ describe('a remembered table whose room was opened meanwhile', () => {
       `/v2/rooms/${OWN.roomCode}/open`
     );
     expect(room.invitations).toBeInstanceOf(RemoteRoomInvitationCustody);
-    // Kept as a Solo table no more, and opened no more.
+    // Kept as a Solo table no more, and opened no more: the same room.
     room.keep();
     await settled();
     expect(dependencies.remember).not.toHaveBeenCalled();
-    await expect(room.goOnline({ displayName: 'Ash' })).rejects.toMatchObject({
-      code: 'not_solo',
-    });
+    expect((await room.goOnline({ displayName: 'Ash' })).runtime).toBe(
+      room.runtime
+    );
+    expect(fetch).toHaveBeenCalledOnce();
   });
 
   it('goes on as the game it is when someone has taken the second seat', async () => {
@@ -577,5 +578,128 @@ describe('a remembered table whose room was opened meanwhile', () => {
     const room = await openRemoteSoloRoom(input, dependencies);
     expect(room.mode).toBe('multiplayer');
     expect(dependencies.createRoom).not.toHaveBeenCalled();
+  });
+});
+
+describe('opening the Solo table, when the way is rough', () => {
+  const answer = (playerTwo: string) =>
+    Response.json(
+      {
+        mode: 'multiplayer',
+        credentials: {
+          playerTwoSeatCapability: playerTwo,
+          spectatorCapability: 'spectator-capability-new-000000000002',
+        },
+      },
+      { status: 201 }
+    );
+
+  it('waits for every move sent to be answered before the room opens', async () => {
+    let settle: (() => void) | undefined;
+    const fetch = vi.fn<typeof globalThis.fetch>(async () =>
+      answer('player-two-seat-capability-new-0000001')
+    );
+    const dependencies = deps([{ ...OWN, thisTab: true }], {
+      settled: vi.fn(
+        () =>
+          new Promise<void>((resolve) => {
+            settle = resolve;
+          })
+      ),
+      fetch,
+      forget: vi.fn(),
+      origin: 'https://play.example',
+    });
+    const solo = await openRemoteSoloRoom(input, dependencies);
+    const going = solo.goOnline({ displayName: 'Ash' });
+    await settled();
+    expect(fetch).not.toHaveBeenCalled();
+    settle?.();
+    expect((await going).mode).toBe('multiplayer');
+    expect(fetch).toHaveBeenCalledOnce();
+  });
+
+  it('becomes the room when the room says it opened though its answer was lost, and fetches the invitations then', async () => {
+    const forget = vi.fn();
+    const fetch = vi
+      .fn<typeof globalThis.fetch>()
+      .mockResolvedValueOnce(Response.json({ error: 'x' }, { status: 502 }))
+      .mockResolvedValueOnce(answer('player-two-seat-capability-new-0000001'))
+      .mockResolvedValueOnce(
+        Response.json(
+          {
+            invitation: 'player-invitation-share-token-000000000000001',
+            requestedRole: 'player',
+            expiresAt: 40_000,
+          },
+          { status: 201 }
+        )
+      );
+    const dependencies = deps([{ ...OWN, thisTab: true }], {
+      saysOpened: vi.fn(async () => true),
+      fetch,
+      forget,
+      origin: 'https://play.example',
+    });
+    const solo = await openRemoteSoloRoom(input, dependencies);
+    const room = await solo.goOnline({ displayName: 'Ash' });
+    expect(room.mode).toBe('multiplayer');
+    expect(room.runtime).toBe(solo.runtime);
+    // Remembered still, until the room answers with its claims.
+    expect(forget).not.toHaveBeenCalled();
+    const sent = await room.invitations.invite('player', async (text) => {
+      await text;
+      return 'copied';
+    });
+    expect(sent).toMatchObject({ requestedRole: 'player' });
+    expect(String(fetch.mock.calls[1]![0])).toContain('/open');
+    expect(forget).toHaveBeenCalledExactlyOnceWith(OWN.roomCode);
+    // Asked again, it is the same room.
+    expect(await solo.goOnline({ displayName: 'Ash' })).toBe(room);
+  });
+
+  it('stays the Solo table when the room does not say it opened', async () => {
+    const dependencies = deps([{ ...OWN, thisTab: true }], {
+      fetch: vi.fn(async () => Response.json({ error: 'x' }, { status: 502 })),
+      forget: vi.fn(),
+      origin: 'https://play.example',
+    });
+    const solo = await openRemoteSoloRoom(input, dependencies);
+    await expect(solo.goOnline({ displayName: 'Ash' })).rejects.toMatchObject({
+      code: 'failed',
+    });
+    expect(solo.mode).toBe('solo');
+  });
+
+  it('keeps a reopened room’s claim, and asks again, when renewing fails on the way', async () => {
+    const forget = vi.fn();
+    const fetch = vi
+      .fn<typeof globalThis.fetch>()
+      .mockResolvedValueOnce(Response.json({ error: 'x' }, { status: 503 }))
+      .mockResolvedValueOnce(answer('player-two-seat-capability-new-0000003'))
+      .mockResolvedValueOnce(
+        Response.json(
+          {
+            invitation: 'spectator-invitation-share-token-0000000001',
+            requestedRole: 'spectator',
+            expiresAt: 40_000,
+          },
+          { status: 201 }
+        )
+      );
+    const dependencies = deps([{ ...OWN, thisTab: true }], {
+      roomModeOf: () => 'multiplayer',
+      forget,
+      fetch,
+      origin: 'https://play.example',
+    });
+    const room = await openRemoteSoloRoom(input, dependencies);
+    expect(room.mode).toBe('multiplayer');
+    expect(forget).not.toHaveBeenCalled();
+    await room.invitations.invite('spectator', async (text) => {
+      await text;
+      return 'copied';
+    });
+    expect(forget).toHaveBeenCalledExactlyOnceWith(OWN.roomCode);
   });
 });

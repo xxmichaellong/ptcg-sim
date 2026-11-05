@@ -389,6 +389,8 @@ const runtime = (
   }));
   const listeners = new Set<() => void>();
   const dispose = vi.fn();
+  // The kind of room the room says it is (ADR-044), changed by a test.
+  let roomMode: 'solo' | 'multiplayer' | undefined;
   const value = {
     label: options.label,
     roomCode: ROOM_CODE,
@@ -398,6 +400,7 @@ const runtime = (
         view: projected,
         pendingCommands: [],
         completedCommands: [],
+        ...(roomMode ? { roomMode } : {}),
       }),
       subscribe: (listener: () => void) => {
         listeners.add(listener);
@@ -407,7 +410,11 @@ const runtime = (
     },
     dispose,
   } as unknown as RemoteRoomRuntime;
-  return { value, submit, dispose, listeners };
+  const sayRoomMode = (mode: 'solo' | 'multiplayer') => {
+    roomMode = mode;
+    for (const listener of [...listeners]) listener();
+  };
+  return { value, submit, dispose, listeners, sayRoomMode };
 };
 
 const creationResult = (
@@ -1087,6 +1094,31 @@ describe('remote room lobby wiring', () => {
     expect(solo.dispose).not.toHaveBeenCalled();
     await act(async () => root.unmount());
     expect(room.dispose).toHaveBeenCalledOnce();
+  });
+
+  it('becomes the room its Solo table says it was opened into, its answer never heard', async () => {
+    const solo = creationResult(runtime({ label: 'solo' }), 'solo');
+    const room = creationResult(solo.roomRuntime, 'multiplayer');
+    const asOpened = vi.fn(() => room.value);
+    const openSoloRoom = vi.fn(async () => ({ ...solo.value, asOpened }));
+    const { root } = await mount({
+      ...lobbyDependencies(custody(), vi.fn()),
+      openSoloRoom:
+        openSoloRoom as unknown as RemoteRoomLobbyDependencies['openSoloRoom'],
+    });
+    await settle();
+    await chooseMenuItem('p1Button');
+    expect(roomRouteHarness.roomMode).toBe('solo');
+    expect(asOpened).not.toHaveBeenCalled();
+    // The room says it was opened (a refresh that outran a lost answer).
+    await act(async () => {
+      solo.roomRuntime.sayRoomMode('multiplayer');
+      await flush();
+    });
+    expect(asOpened).toHaveBeenCalledOnce();
+    expect(roomRouteHarness.roomMode).toBe('multiplayer');
+    expect(solo.dispose).not.toHaveBeenCalled();
+    await act(async () => root.unmount());
   });
 
   it("puts a card back chosen on Play online's deck screen on the parked Solo table at once", async () => {

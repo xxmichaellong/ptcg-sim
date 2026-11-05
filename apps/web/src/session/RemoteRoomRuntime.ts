@@ -207,7 +207,7 @@ export class RemoteRoomRuntime {
   }
 
   /** Resolves once every move sent has been answered by the room. */
-  private commandsSettled(signal?: AbortSignal): Promise<void> {
+  commandsSettled(signal?: AbortSignal): Promise<void> {
     return new Promise<void>((resolve, reject) => {
       let unsubscribe = (): void => undefined;
       let settled = false;

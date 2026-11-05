@@ -64,7 +64,14 @@ free again and the claim takes it with a new session.
    once someone has taken it, it refuses. The Welcome says the kind of
    room (`roomMode`), so a page sitting back down at a remembered Solo
    table whose room was opened meanwhile comes back as that room, its
-   invitations renewed, and stops remembering it as Solo. The authority (`openSoloRoom`, admission kind
+   invitations renewed, and stops remembering it as Solo. Opening waits
+   until every move sent has been answered (the room's rules change as it
+   opens). An opening whose answer is lost but whose room says it opened
+   (the session's `roomMode`) still makes the table the room's, here and in
+   the lobby whenever the room says so; its invitation custody then fetches
+   the claims with the first invitation (`renew`), and the claim stays
+   remembered until they come, so neither a gateway's error nor a reload
+   strands the room without invitations. The authority (`openSoloRoom`, admission kind
    `room_opened`) turns the room multiplayer with two seats, gives the second
    seat and the spectators new claims (the second seat's claim made with the
    room was never handed out) and answers with them (`RoomOpenResponse`),
