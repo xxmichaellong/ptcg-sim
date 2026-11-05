@@ -237,42 +237,25 @@ const TICKER_LINE_MS = 5_000;
 const TICKER_LINES = 3;
 
 /**
- * What the player would not otherwise know: what the other side does and
- * says, and the room's announcements. A player's own moves are already in
- * front of them.
+ * What is worth a word over the table while the log is closed: every line
+ * the log gains -- each move, the player's own and a Solo table's too, the
+ * other side's words and the room's announcements -- but the player's own
+ * chat, which they have just typed.
  */
-const newsToPlayer = (
-  item: ActivityFeedItem,
-  ownSeat: string | undefined,
-  solo: boolean
-): boolean => {
-  if (item.category === 'announcement') return true;
-  if (solo) return false;
-  return item.playerId === undefined || item.playerId !== ownSeat;
-};
-
-/**
- * Attack and Pass change nothing on the table (v1 only wrote them in its
- * always-open log), so the line is the button's only answer: it is said
- * over the table even when it is the player's own.
- */
-const DECLARATIONS: ReadonlySet<ActivityFeedItem['eventType']> = new Set([
-  'AttackDeclared',
-  'PassDeclared',
-]);
-
-/** What is worth a word over the table while the log is closed. */
 const worthTicking = (
   item: ActivityFeedItem,
-  ownSeat: string | undefined,
-  solo: boolean
+  ownSeat: string | undefined
 ): boolean =>
-  newsToPlayer(item, ownSeat, solo) || DECLARATIONS.has(item.eventType);
+  !(
+    item.category === 'message' &&
+    ownSeat !== undefined &&
+    item.playerId === ownSeat
+  );
 
 /**
  * The rail's Log button: a count of every line the log gained since it was
- * last open, the player's own moves too, and, while it is closed, the
- * other side's newest lines over the table for a few seconds.
+ * last open, the player's own moves too, and, while it is closed, its
+ * newest lines over the table for a few seconds (`worthTicking`).
  */
 export const ActivityLauncher = ({
   presentation,
@@ -280,14 +263,12 @@ export const ActivityLauncher = ({
   open,
   onToggle,
   ownSeat,
-  solo,
 }: {
   readonly presentation: Pick<LegacyGamePresentationRuntime, 'activityFeed'>;
   readonly perspective?: LegacyActivityPerspective;
   readonly open: boolean;
   readonly onToggle: () => void;
   readonly ownSeat: string | undefined;
-  readonly solo: boolean;
 }) => {
   const { t, i18n } = useLingui();
   const direction = usePageDirection();
@@ -315,11 +296,11 @@ export const ActivityLauncher = ({
     if (open || fresh.length === 0) return;
     const now = Date.now();
     const shown = fresh
-      .filter((item) => worthTicking(item, ownSeat, solo))
+      .filter((item) => worthTicking(item, ownSeat))
       .map((item) => ({ item, until: now + TICKER_LINE_MS }));
     if (shown.length === 0) return;
     setTicker((current) => [...current, ...shown].slice(-TICKER_LINES));
-  }, [feed, open, ownSeat, solo]);
+  }, [feed, open, ownSeat]);
   // Opened, or cleared (the Log's Clear; the tutorial dealing a lesson),
   // the lines over the table go too.
   const cleared = feed.items.length === 0;

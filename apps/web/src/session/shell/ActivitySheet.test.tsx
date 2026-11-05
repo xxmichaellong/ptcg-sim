@@ -141,7 +141,7 @@ const tickerLines = (): string[] =>
 describe('ActivityLauncher', () => {
   const renderLauncher = async (
     source: ReturnType<typeof feedSource>,
-    options: { open?: boolean; solo?: boolean; onToggle?: () => void } = {}
+    options: { open?: boolean; onToggle?: () => void } = {}
   ) =>
     act(async () =>
       root.render(
@@ -151,7 +151,6 @@ describe('ActivityLauncher', () => {
           open={options.open ?? false}
           onToggle={options.onToggle ?? (() => undefined)}
           ownSeat={OWN}
-          solo={options.solo ?? false}
         />
       )
     );
@@ -207,19 +206,22 @@ describe('ActivityLauncher', () => {
     expect(badge()).toBe('5');
   });
 
-  it("flashes the other side's lines over the table while the log is closed", async () => {
+  it("flashes every line over the table while the log is closed, but the player's own chat", async () => {
     vi.useFakeTimers();
     const source = feedSource();
     await renderLauncher(source);
     await act(async () =>
       source.push(
         move(OWN, 'Blue drew a card'),
-        move(OTHER, 'Red played Boss'),
-        chat(OTHER, 'gg'),
-        presence('Red reconnected')
+        chat(OWN, 'good luck'),
+        move(OTHER, 'Red played Boss')
       )
     );
-    // The player's own moves are already in front of them.
+    // The player's own moves too; their own words they have just typed.
+    expect(tickerLines()).toEqual(['Blue drew a card', 'Red played Boss']);
+    await act(async () =>
+      source.push(chat(OTHER, 'gg'), presence('Red reconnected'))
+    );
     expect(tickerLines()).toEqual(['Red played Boss', 'gg', 'Red reconnected']);
     const ticker = host.querySelector('.ptcgsim-activity-ticker')!;
     expect(ticker.getAttribute('aria-hidden')).toBe('true');
@@ -276,7 +278,7 @@ describe('ActivityLauncher', () => {
 
   it('takes the lines over the table away when the log is cleared', async () => {
     const source = feedSource();
-    await renderLauncher(source, { solo: true });
+    await renderLauncher(source);
     await act(async () =>
       source.push(item('DeckLoaded', 'announcement', 'Red loaded deck'))
     );
@@ -285,34 +287,22 @@ describe('ActivityLauncher', () => {
     expect(tickerLines()).toEqual([]);
   });
 
-  it('flashes only announcements at a Solo table', async () => {
+  it("says the player's own moves over the table, Attack and Pass among them", async () => {
     const source = feedSource();
-    await renderLauncher(source, { solo: true });
+    await renderLauncher(source);
     await act(async () =>
       source.push(
-        move(OTHER, 'Red drew a card'),
-        item('DeckLoaded', 'announcement', 'Blue loaded deck')
+        move(OWN, 'Blue drew a card'),
+        item('AttackDeclared', 'player', 'Blue attacked', OWN),
+        item('PassDeclared', 'player', 'Blue passed', OWN)
       )
     );
-    expect(tickerLines()).toEqual(['Blue loaded deck']);
-  });
-
-  it("says the player's own Attack and Pass over the table, the buttons' only answer", async () => {
-    for (const solo of [true, false]) {
-      await act(async () => root.unmount());
-      root = createRoot(host);
-      const source = feedSource();
-      await renderLauncher(source, { solo });
-      await act(async () =>
-        source.push(
-          move(OWN, 'Blue drew a card'),
-          item('AttackDeclared', 'player', 'Blue attacked', OWN),
-          item('PassDeclared', 'player', 'Blue passed', OWN)
-        )
-      );
-      expect(tickerLines()).toEqual(['Blue attacked', 'Blue passed']);
-      expect(badge()).toBe('3');
-    }
+    expect(tickerLines()).toEqual([
+      'Blue drew a card',
+      'Blue attacked',
+      'Blue passed',
+    ]);
+    expect(badge()).toBe('3');
   });
 });
 

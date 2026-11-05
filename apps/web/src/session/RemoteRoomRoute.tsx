@@ -774,7 +774,6 @@ export const RemoteRoomRoute = ({
                   open={activity.open}
                   onToggle={() => activity.setOpen(!activity.open)}
                   ownSeat={live.ownSeat}
-                  solo={solo}
                 />
               }
             />
