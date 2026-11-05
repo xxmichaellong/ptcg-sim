@@ -120,6 +120,22 @@ const isLetter = (
  * One saved deck being built: card search beside the deck, every change
  * saved as it is made and undoable, the format's rules checked live.
  */
+/** A deck the editor can go back or forward to (see `history`). */
+interface HistoryStep {
+  readonly cards: DeckList;
+  /** Ids that change on the way to it: from the deck now to it. */
+  readonly renames: ReadonlyMap<string, string>;
+}
+
+const NO_RENAMES: ReadonlyMap<string, string> = new Map();
+
+const invert = (
+  renames: ReadonlyMap<string, string>
+): ReadonlyMap<string, string> =>
+  renames.size === 0
+    ? NO_RENAMES
+    : new Map([...renames].map(([from, to]) => [to, from]));
+
 export const DeckEditor = ({
   deck,
   library,
@@ -146,7 +162,13 @@ export const DeckEditor = ({
   const [inspected, setInspected] = useState<InspectedCard>();
   const [customOpen, setCustomOpen] = useState(false);
   const [saved, setSaved] = useState(false);
-  const history = useRef<{ undo: DeckList[]; redo: DeckList[] }>({
+  // Each step back or forward is a deck, and the ids that change on the way
+  // to it: a hand-made card is another card once its text changes
+  // (ADR-043), and Undo brings back the one it was.
+  const history = useRef<{
+    undo: HistoryStep[];
+    redo: HistoryStep[];
+  }>({
     undo: [],
     redo: [],
   });
@@ -198,18 +220,44 @@ export const DeckEditor = ({
   }, []);
 
   /** Every change to the cards goes through here: saved, and undoable. */
+  // The sheet and the cover go with a card whose id changes, whichever
+  // way: an edit, its Undo, its Redo.
+  const inspectedRef = useRef(inspected);
+  inspectedRef.current = inspected;
+  const follow = useCallback(
+    (renames: ReadonlyMap<string, string>, list: DeckList) => {
+      if (renames.size === 0) return;
+      const shown = inspectedRef.current;
+      if (shown?.kind === 'deck') {
+        const to = renames.get(shown.card.id);
+        const card = to
+          ? list.find((entry) => entry.card.id === to)?.card
+          : undefined;
+        if (card) setInspected({ kind: 'deck', card });
+      }
+      const coverId = library.get(deck.id)?.coverId;
+      const cover = coverId ? renames.get(coverId) : undefined;
+      if (cover) library.update(deck.id, { coverId: cover });
+    },
+    [deck.id, library]
+  );
+
   const commit = useCallback(
-    (next: DeckList) => {
+    (next: DeckList, renames: ReadonlyMap<string, string> = NO_RENAMES) => {
       const current = library.get(deck.id)?.cards ?? cards;
       if (next === current) return;
       const stack = history.current;
-      stack.undo = [...stack.undo, current].slice(-HISTORY_LIMIT);
+      stack.undo = [
+        ...stack.undo,
+        { cards: current, renames: invert(renames) },
+      ].slice(-HISTORY_LIMIT);
       stack.redo = [];
       setHistoryVersion((version) => version + 1);
       library.update(deck.id, { cards: next });
+      follow(renames, next);
       flashSaved();
     },
-    [cards, deck.id, flashSaved, library]
+    [cards, deck.id, flashSaved, follow, library]
   );
 
   const undo = useCallback(() => {
@@ -217,57 +265,36 @@ export const DeckEditor = ({
     const previous = stack.undo.at(-1);
     if (!previous) return;
     stack.undo = stack.undo.slice(0, -1);
-    stack.redo = [...stack.redo, library.get(deck.id)?.cards ?? cards];
+    stack.redo = [
+      ...stack.redo,
+      {
+        cards: library.get(deck.id)?.cards ?? cards,
+        renames: invert(previous.renames),
+      },
+    ];
     setHistoryVersion((version) => version + 1);
-    library.update(deck.id, { cards: previous });
+    library.update(deck.id, { cards: previous.cards });
+    follow(previous.renames, previous.cards);
     flashSaved();
-  }, [cards, deck.id, flashSaved, library]);
+  }, [cards, deck.id, flashSaved, follow, library]);
 
   const redo = useCallback(() => {
     const stack = history.current;
     const next = stack.redo.at(-1);
     if (!next) return;
     stack.redo = stack.redo.slice(0, -1);
-    stack.undo = [...stack.undo, library.get(deck.id)?.cards ?? cards];
+    stack.undo = [
+      ...stack.undo,
+      {
+        cards: library.get(deck.id)?.cards ?? cards,
+        renames: invert(next.renames),
+      },
+    ];
     setHistoryVersion((version) => version + 1);
-    library.update(deck.id, { cards: next });
+    library.update(deck.id, { cards: next.cards });
+    follow(next.renames, next.cards);
     flashSaved();
-  }, [cards, deck.id, flashSaved, library]);
-
-  // A hand-made card is another card once its text changes (ADR-043), and
-  // Undo or Redo brings back the one it was: the sheet and the cover go
-  // with it, to the one card in the deck it now is.
-  const previousCards = useRef(cards);
-  useEffect(() => {
-    const before = previousCards.current;
-    previousCards.current = cards;
-    if (before === cards) return;
-    const counterpart = (
-      id: string,
-      known?: DeckCard
-    ): DeckCard | undefined => {
-      if (cards.some((entry) => entry.card.id === id)) return undefined;
-      const was = before.find((entry) => entry.card.id === id)?.card ?? known;
-      if (!was?.id.startsWith('custom:')) return undefined;
-      const same = cards.filter(
-        ({ card }) =>
-          card.id.startsWith('custom:') &&
-          card.name === was.name &&
-          card.category === was.category &&
-          card.image === was.image &&
-          JSON.stringify(card.presentation) === JSON.stringify(was.presentation)
-      );
-      return same.length === 1 ? same[0]!.card : undefined;
-    };
-    if (inspected?.kind === 'deck') {
-      const card = counterpart(inspected.card.id, inspected.card);
-      if (card) setInspected({ kind: 'deck', card });
-    }
-    if (deck.coverId) {
-      const card = counterpart(deck.coverId);
-      if (card) library.update(deck.id, { coverId: card.id });
-    }
-  }, [cards, inspected, deck.coverId, deck.id, library]);
+  }, [cards, deck.id, flashSaved, follow, library]);
 
   /** The deck as stored now: newer than `cards` between renders. */
   const current = useCallback(
@@ -756,26 +783,15 @@ export const DeckEditor = ({
         }}
         onEditText={(cardIds, text) => {
           const before = current();
-          const next = setCardText(before, cardIds, text);
-          commit(next);
           // A hand-made card is another card once it says something else
-          // (ADR-043): the sheet and the deck's cover follow it.
-          const movedTo = (id: string): string => {
+          // (ADR-043): its id changes, and the sheet and cover follow it.
+          const renames = new Map<string, string>();
+          for (const id of cardIds) {
             const card = before.find((entry) => entry.card.id === id)?.card;
-            return card ? textedCardId(card, text) : id;
-          };
-          if (
-            inspected?.kind === 'deck' &&
-            cardIds.includes(inspected.card.id)
-          ) {
-            const to = movedTo(inspected.card.id);
-            const card = next.find((entry) => entry.card.id === to)?.card;
-            if (card) setInspected({ kind: 'deck', card });
+            const to = card ? textedCardId(card, text) : id;
+            if (to !== id) renames.set(id, to);
           }
-          if (deck.coverId && cardIds.includes(deck.coverId)) {
-            const to = movedTo(deck.coverId);
-            if (to !== deck.coverId) library.update(deck.id, { coverId: to });
-          }
+          commit(setCardText(before, cardIds, text), renames);
         }}
       />
       <CustomCardDialog

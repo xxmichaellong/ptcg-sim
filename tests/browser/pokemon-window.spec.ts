@@ -299,6 +299,8 @@ test('a card’s own text plays on the table: a Pokémon made by hand, and a pri
 
   // A Pokémon made by hand, its attack written in the card dialog.
   await page.locator('#nativeDeckBuilderAddCustomCard').click();
+  // Opened, it starts empty, then takes the name.
+  await expect(page.locator('#nativeCustomCardName')).toBeFocused();
   await page.locator('#nativeCustomCardName').fill('Homebrew');
   await page.locator('#nativeCustomCardImageFile-0').setInputFiles({
     name: 'homebrew.png',
@@ -320,18 +322,55 @@ test('a card’s own text plays on the table: a Pokémon made by hand, and a pri
   await page.locator('#nativeCustomCardSubmit').click();
   await expect(dialog).toBeHidden();
 
-  // Its text edited, then the edit undone: the sheet stays on the card
-  // (another card while it said other things, the same one back).
-  await page.locator('.deck-row__card[aria-label*="Homebrew"]').click();
+  // Another card with the same picture and other text: two cards.
+  await page.locator('#nativeDeckBuilderAddCustomCard').click();
+  // Opened, it starts empty, then takes the name.
+  await expect(page.locator('#nativeCustomCardName')).toBeFocused();
+  await page.locator('#nativeCustomCardName').fill('Homebrew');
+  await page.locator('#nativeCustomCardImageFile-0').setInputFiles({
+    name: 'homebrew.png',
+    mimeType: 'image/png',
+    buffer: PICTURE,
+  });
+  await expect(
+    page.locator('.custom-card-slot[data-status="ready"]')
+  ).toHaveCount(1, { timeout: 20_000 });
+  await page.locator('#nativeCustomCardTextToggle').click();
+  await dialog.getByRole('spinbutton', { name: 'HP' }).fill('110');
+  await page.locator('#nativeCustomCardSubmit').click();
+  await expect(dialog).toBeHidden();
+  const homebrews = page.locator('.deck-row__card[aria-label*="Homebrew"]');
+  await expect(homebrews).toHaveCount(2);
+
+  // One's text edited, then the edit undone: the sheet stays on the card
+  // (another card while it said other things, the same one back), though
+  // another has its picture.
+  await homebrews.first().click();
+  const hp = await sheet.locator('.deck-card-details__hp').textContent();
   await page.locator('[data-card-text-edit]').click();
   await page.getByRole('spinbutton', { name: 'HP' }).fill('100');
   await page.getByRole('button', { name: 'Save', exact: true }).click();
   await expect(sheet).toContainText('100 HP');
   await page.keyboard.press('Control+z');
-  await expect(sheet).toContainText('90 HP');
+  await expect(sheet.locator('.deck-card-details__hp')).toHaveText(hp!);
   await expect(sheet.locator('[aria-label="1 in deck"]')).toBeVisible();
   await expect(sheet.locator('[data-card-text-edit]')).toBeVisible();
   await page.keyboard.press('Escape');
+  await expect(sheet).toBeHidden();
+  // The 110 HP one goes again, for the table.
+  for (const index of [0, 1]) {
+    await homebrews.nth(index).click();
+    if (((await sheet.textContent()) ?? '').includes('110 HP')) {
+      await sheet.getByRole('button', { name: 'Remove one Homebrew' }).click();
+      break;
+    }
+    await page.keyboard.press('Escape');
+    await expect(sheet).toBeHidden();
+  }
+  await expect(homebrews).toHaveCount(1);
+  // Its last copy gone, its Remove is disabled and the focus has left the
+  // sheet: closed by its button (Esc would leave the deck screen).
+  await sheet.getByRole('button', { name: 'Close', exact: true }).click();
   await expect(sheet).toBeHidden();
 
   // On the table: each opens in its window with its own text.
