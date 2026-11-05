@@ -1,3 +1,4 @@
+import { sameDeckList } from '@ptcgsim/deck-core';
 import { parseCardBack } from '@ptcgsim/game-core';
 import {
   useCallback,
@@ -25,6 +26,7 @@ import { cardCatalog } from './card-catalog-client.js';
 import type { CardCatalogSource } from './card-catalog-contract.js';
 import { deckLibrary, type DeckLibrary } from './deck-library.js';
 import { DeckScreen } from './DeckScreen.js';
+import { recallSeatDecks, rememberSeatDeck } from './seat-deck-memory.js';
 import {
   type DeckBeforeUnloadTarget,
   installDeckBeforeUnloadGuard,
@@ -138,12 +140,70 @@ export interface DeckBuilderSessionProps {
   readonly digest?: DeckDefinitionDigest;
   readonly onInstallFailure?: (failure: DeckInstallCoordinatorFailure) => void;
   readonly onCardBackInstallFailure?: (failure: CardBackInstallFailure) => void;
+  /**
+   * The Solo room whose seats these are (ADR-044): each seat's deck is kept
+   * with it as it goes on the table, and put back on the seat when the
+   * page sits down at the same room again (a reload).
+   */
+  readonly rememberAs?: string;
 }
 
 export interface DeckBuilderCustody {
   readonly store: DeckBuilderStore;
   readonly cardBackStore: CardBackCustodyStore;
 }
+
+/**
+ * A Solo room's seats kept with it (seat-deck-memory.ts): on sitting down
+ * at the room, a seat not being edited takes the deck its table has (the
+ * room sends a table, not the lists that made it); each deck that then goes
+ * on the table is kept for the next time. Before the room decides what to
+ * install, so the kept decks count as on the table already.
+ */
+const useSeatDeckMemory = (
+  store: DeckBuilderStore,
+  roomCode: string | undefined
+): void => {
+  useLayoutEffect(() => {
+    if (!roomCode) return;
+    const kept = recallSeatDecks(roomCode);
+    for (const target of DECK_TARGETS) {
+      const seat = kept[target];
+      const slot = store.getSnapshot().slots[target];
+      if (!seat || slot.dirty) continue;
+      if (
+        sameDeckList(slot.deck, seat.deck) &&
+        slot.label?.name === seat.label?.name &&
+        slot.label?.deckId === seat.label?.deckId
+      ) {
+        continue;
+      }
+      store.synchronizeDeck(target, seat.deck, seat.label);
+    }
+    const { slots } = store.getSnapshot();
+    const installed = {
+      main: slots.main.installedRevision,
+      alternate: slots.alternate.installedRevision,
+    };
+    return store.subscribe(() => {
+      const { slots } = store.getSnapshot();
+      for (const target of DECK_TARGETS) {
+        const slot = slots[target];
+        if (slot.installedRevision === installed[target]) continue;
+        installed[target] = slot.installedRevision;
+        // Edited since, the deck on the table is not the one shown: the
+        // next install keeps that one.
+        if (slot.dirty) continue;
+        rememberSeatDeck(roomCode, target, {
+          deck: slot.deck,
+          ...(slot.label ? { label: slot.label } : {}),
+        });
+      }
+    });
+  }, [roomCode, store]);
+};
+
+const DECK_TARGETS = ['main', 'alternate'] as const;
 
 /**
  * Route-neutral owner for the deck screen. Route navigation supplies only
@@ -175,6 +235,7 @@ export const DeckBuilderSession = ({
   digest,
   onInstallFailure,
   onCardBackInstallFailure,
+  rememberAs,
 }: DeckBuilderSessionProps) => {
   const [ownedStore] = useState(
     () => suppliedStore ?? new DeckBuilderStore({ alternateEnabled })
@@ -226,6 +287,8 @@ export const DeckBuilderSession = ({
     store.setAlternateEnabled(alternateEnabled);
     cardBackStore.setAlternateEnabled(alternateEnabled);
   }, [alternateEnabled, cardBackStore, store]);
+
+  useSeatDeckMemory(store, rememberAs);
 
   // The latest screen mounted over these card backs sends them on.
   useEffect(() => {

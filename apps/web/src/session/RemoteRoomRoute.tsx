@@ -1066,6 +1066,12 @@ export const RemoteRoomRoute = ({
                   open={deckOpen}
                   {...(deckTarget ? { openTarget: deckTarget } : {})}
                   alternateEnabled={solo}
+                  // The page's own Solo table keeps its seats' decks with
+                  // its room, as it keeps the room (ADR-044); a practice
+                  // table keeps nothing.
+                  {...(solo && !tutorial
+                    ? { rememberAs: runtime.roomCode }
+                    : {})}
                   installOnSessionAttach={installDeckOnSessionAttach}
                   prepareForNewSessionOnAttach={!deckSessionPrepared}
                   onSessionAttach={onDeckSessionAttach}

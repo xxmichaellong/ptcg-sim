@@ -214,24 +214,18 @@ const decodeCard = (value: unknown): DeckCard | undefined => {
   });
 };
 
-/** Reads one stored record back into a deck, or undefined if it isn't one. */
-export const decodeSavedDeck = (value: unknown): SavedDeck | undefined => {
-  if (!isRecord(value)) return undefined;
-  const id = boundedString(value.id, 64);
-  const name = boundedString(value.name, MAX_DECK_NAME_LENGTH);
-  if (
-    !id ||
-    name === undefined ||
-    !isDeckFormatId(value.format) ||
-    !Array.isArray(value.cards) ||
-    value.cards.length > MAX_DECK_ENTRIES ||
-    typeof value.createdAt !== 'number' ||
-    typeof value.updatedAt !== 'number'
-  ) {
+/**
+ * Reads a stored deck's cards back, or undefined if any entry isn't one
+ * (a seat's deck kept with its Solo room, as a saved deck's).
+ */
+export const decodeDeckList = (
+  value: unknown
+): { card: DeckCard; count: number }[] | undefined => {
+  if (!Array.isArray(value) || value.length > MAX_DECK_ENTRIES) {
     return undefined;
   }
   const entries: { card: DeckCard; count: number }[] = [];
-  for (const entry of value.cards) {
+  for (const entry of value) {
     if (!isRecord(entry)) return undefined;
     const card = decodeCard(entry.card);
     const count = entry.count;
@@ -246,6 +240,25 @@ export const decodeSavedDeck = (value: unknown): SavedDeck | undefined => {
     }
     entries.push({ card, count });
   }
+  return entries;
+};
+
+/** Reads one stored record back into a deck, or undefined if it isn't one. */
+export const decodeSavedDeck = (value: unknown): SavedDeck | undefined => {
+  if (!isRecord(value)) return undefined;
+  const id = boundedString(value.id, 64);
+  const name = boundedString(value.name, MAX_DECK_NAME_LENGTH);
+  if (
+    !id ||
+    name === undefined ||
+    !isDeckFormatId(value.format) ||
+    typeof value.createdAt !== 'number' ||
+    typeof value.updatedAt !== 'number'
+  ) {
+    return undefined;
+  }
+  const entries = decodeDeckList(value.cards);
+  if (!entries) return undefined;
   const source =
     isRecord(value.source) &&
     ['new', 'paste', 'file', 'meta', 'classic', 'copy'].includes(

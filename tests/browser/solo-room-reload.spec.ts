@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 import { idle, logLines, zoneCount } from './support/multi-select.js';
 import { ownRoomBudget } from './support/room-budget.js';
-import { dismissWelcome, openDeck } from './support/table-shell.js';
+import { closeDeck, dismissWelcome, openDeck } from './support/table-shell.js';
 
 /**
  * The Solo table is a room (ADR-044): a reload sits back down at the same
@@ -39,6 +39,25 @@ const setUpTable = async (page: Page) => {
     'data-card-count',
     '60'
   );
+  // P2's own deck too.
+  await page.locator('#nativeDeckBuilderTargetAlt').click();
+  await page.locator('#nativeDeckBuilderCsvImport').setInputFiles({
+    name: 'other.csv',
+    mimeType: 'text/csv',
+    buffer: Buffer.from(
+      [
+        'QTY,Name,Type,URL',
+        '30,Frost ex,Pokémon,/v2/assets/cardback.png?frost',
+        '20,Iono,Trainer,/v2/assets/cardback.png?iono',
+        '10,Water Energy,Energy,/v2/assets/cardback.png?water',
+      ].join('\n')
+    ),
+  });
+  await expect(page.locator('#nativeDeckBuilderSummaryPanel')).toHaveAttribute(
+    'data-card-count',
+    '60'
+  );
+  await page.locator('#nativeDeckBuilderTargetMain').click();
   await page.locator('#nativeDeckBuilderPlayButton').click();
   await page.locator('#setupButton').click();
   await expect.poll(() => zoneCount(page, 'local', 'hand')).toBe(7);
@@ -74,6 +93,15 @@ test('a reload sits back down at the same Solo game; another tab gets its own', 
   expect(await zoneCount(page, 'local', 'deck')).toBe(47);
   // And its log, as it was.
   await expect.poll(() => logLines(page)).toEqual(told);
+  // The deck screen's seats still hold the decks on the table.
+  await openDeck(page);
+  await expect(page.locator('#nativeDeckBuilderTargetMain')).toContainText(
+    'Ember ex'
+  );
+  await expect(page.locator('#nativeDeckBuilderTargetAlt')).toContainText(
+    'Frost ex'
+  );
+  await closeDeck(page);
 
   // A second tab, while this one sits at the room, makes a table of its own.
   const other = await context.newPage();
