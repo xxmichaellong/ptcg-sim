@@ -1,3 +1,8 @@
+/**
+ * v1's sample.decklists.js, which the corpus began as: its 168 lists in 22
+ * seasons. The corpus has more since -- lists in every season, 2024-2026,
+ * GLC and Legacy -- and fixes some of v1's lines (◇ for ♢, wrong prints).
+ */
 export const LEGACY_POPULAR_DECKLIST_SOURCE_SHA256 =
   '88cfc37dc8d9251f31dedc2217376c46dca53a4978753e8c7328f1f2144fb526';
 

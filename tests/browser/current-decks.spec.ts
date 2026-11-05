@@ -97,7 +97,7 @@ test('the deck screen keeps its classic decks when current lists are unavailable
   await openDeckScreen(page);
   await expect(page.getByText('No tournament decks right now.')).toBeVisible();
   const seasons = page.locator('#deckClassicSeason option');
-  await expect(seasons).toHaveCount(22);
-  await expect(seasons.first()).toHaveText('2023-2024 S&V');
+  await expect(seasons).toHaveCount(26);
+  await expect(seasons.first()).toHaveText('2025-2026 ME');
   await expect(page.locator('.deck-section-note')).toHaveCount(0);
 });

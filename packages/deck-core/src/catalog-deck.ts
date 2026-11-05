@@ -263,10 +263,15 @@ const isOrdinary = (card: CatalogCard): boolean =>
 /**
  * The symbols in a name that make it another card, which a search's folding
  * drops: Nidoran♂ is not Nidoran♀, nor Celebi ☆ (or ★) Celebi, nor
- * Shaymin ◇ Shaymin.
+ * Shaymin ◇ Shaymin. Old lists write the Prism Star ◇ as ♢.
  */
 const nameMarks = (name: string): string =>
-  [...name.replaceAll('★', '☆').matchAll(/[♂♀☆◇]/gu)]
+  [
+    ...name
+      .replaceAll('★', '☆')
+      .replaceAll('♢', '◇')
+      .matchAll(/[♂♀☆◇]/gu),
+  ]
     .map(([mark]) => mark)
     .sort()
     .join('');

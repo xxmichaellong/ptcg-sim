@@ -244,6 +244,27 @@ describe('finding the printing a decklist line means', () => {
     );
   });
 
+  it('reads the ♢ of old lists as the Prism Star ◇', () => {
+    const UPR = set('sm5', 'UPR', '2018-02-02', 156);
+    const cards = [card(UPR, '61', 'Lunala'), card(UPR, '62', 'Lunala ◇')];
+    const prism: LoadedCatalog = {
+      ...catalog,
+      cards,
+      sets: [UPR],
+      byId: new Map(cards.map((entry) => [entry.id, entry])),
+    };
+    const prismIndex = catalogIndex(prism);
+    expect(
+      resolveDecklistRow(prismIndex, row('1 Lunala ♢ UPR 62'))
+    ).toMatchObject({ match: 'print', card: { id: 'UPR 62' } });
+    expect(resolveDecklistRow(prismIndex, row('1 Lunala ♢')).card?.id).toBe(
+      'UPR 62'
+    );
+    expect(resolveDecklistRow(prismIndex, row('1 Lunala')).card?.id).toBe(
+      'UPR 61'
+    );
+  });
+
   it('keeps a TCG Pocket line in Pocket, and other lines out of it', () => {
     const PA = { ...set('pa', 'P-A', '2024-10-30', 100), pocket: true };
     const research = card(PA, '7', "Professor's Research", {
