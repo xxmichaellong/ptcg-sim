@@ -12,6 +12,7 @@ import {
   parseSimCsvResult,
   resolveDecklistRow,
   SIM_CSV_HEADER,
+  textedCardId,
   type DeckCard,
   type DeckEntry,
   type DeckFormatId,
@@ -178,9 +179,13 @@ const importCsv = (
   // thumbnail too: a German scan isn't shown small in English. A row typed
   // otherwise than the catalog's card is played as the file says.
   const rows = parsed.cards.map(({ card: read, count }) => {
-    // A card's own text the table can't take is left out (ADR-043).
+    // A card's own text the table can't take is left out (ADR-043), and
+    // the card is the one it is without it.
     const { text, ...bare } = read;
-    const card: DeckCard = text === undefined || isCardText(text) ? read : bare;
+    const card: DeckCard =
+      text === undefined || isCardText(text)
+        ? read
+        : { ...bare, id: textedCardId(read, undefined) };
     const print =
       options.catalog && !card.presentation
         ? findCatalogPrint(options.catalog, card)

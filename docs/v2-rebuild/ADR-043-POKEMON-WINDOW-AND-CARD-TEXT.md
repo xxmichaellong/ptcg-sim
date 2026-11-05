@@ -116,8 +116,8 @@ card itself. Using an Ability was the card menu's "ability used" marker
     typed, else from the last one asked for, until the table shows it or
     four seconds pass.
 11. **A hand-made card's id says what it is** (`customCardIdOf`: name,
-    kind, picture, layout and its own text), as the card dialog and a
-    deck file make it. Edited, it is another card: its id follows
+    kind, picture, layout and its own text, its fields in one order), as
+    the card dialog and a deck file make it. Edited, it is another card: its id follows
     (`textedCardId`), and it joins a card already in the deck that is now
     the same. The editor's history records each step's change of ids, so
     the sheet and the deck's cover follow the card through Undo and Redo.

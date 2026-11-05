@@ -437,6 +437,23 @@ describe('a deck file’s own card text (ADR-043)', () => {
     expect(byName.get('Broken')).not.toHaveProperty('text');
   });
 
+  it('makes a card whose text is left out the card it is without it', async () => {
+    const bad = JSON.stringify({ hp: -5 });
+    const result = await importDeckText(
+      [
+        'QTY,Name,Type,URL,Presentation,Text',
+        `1,Broken,Pokémon,/b.png,,"${bad.replaceAll('"', '""')}"`,
+        '2,Broken,Pokémon,/b.png,,',
+      ].join('\n'),
+      {}
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.cards).toHaveLength(1);
+    expect(result.cards[0]?.count).toBe(3);
+    expect(result.cards[0]?.card).not.toHaveProperty('text');
+  });
+
   it('keeps two rows of one print apart when each has text of its own', async () => {
     // A scan of the print (a file's own), which the catalog knows by its
     // address.

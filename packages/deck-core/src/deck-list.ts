@@ -172,6 +172,63 @@ export const customCardId = (parts: readonly unknown[]): string => {
   return `custom:${(first >>> 0).toString(36)}${(second >>> 0).toString(36)}`;
 };
 
+const TEXT_ORDER = [
+  'hp',
+  'types',
+  'stage',
+  'evolvesFrom',
+  'abilities',
+  'attacks',
+  'weakness',
+  'weaknessValue',
+  'resistance',
+  'resistanceValue',
+  'retreat',
+  'rules',
+] as const;
+const ABILITY_ORDER = ['name', 'kind', 'text'] as const;
+const ATTACK_ORDER = ['name', 'cost', 'damage', 'text'] as const;
+
+const inOrder = (
+  value: object,
+  keys: readonly string[]
+): Record<string, unknown> => {
+  const fields = value as Record<string, unknown>;
+  const ordered: Record<string, unknown> = {};
+  for (const key of keys)
+    if (fields[key] !== undefined) ordered[key] = fields[key];
+  return ordered;
+};
+
+/**
+ * Card text with its fields in one fixed order, so the same text read
+ * from a file in another order, or saved again by the editor, is the
+ * same card (game-core's `canonicalCardText`).
+ */
+export const canonicalDeckCardText = (text: DeckCardText): DeckCardText => {
+  const ordered = inOrder(text, TEXT_ORDER);
+  if (text.abilities)
+    ordered.abilities = text.abilities.map((ability) =>
+      inOrder(ability, ABILITY_ORDER)
+    );
+  if (text.attacks)
+    ordered.attacks = text.attacks.map((attack) =>
+      inOrder(attack, ATTACK_ORDER)
+    );
+  return ordered as DeckCardText;
+};
+
+/** Whether two cards say the same, whatever order their fields are in. */
+export const sameDeckCardText = (
+  left: DeckCardText | undefined,
+  right: DeckCardText | undefined
+): boolean =>
+  left === right ||
+  (left !== undefined &&
+    right !== undefined &&
+    JSON.stringify(canonicalDeckCardText(left)) ===
+      JSON.stringify(canonicalDeckCardText(right)));
+
 /**
  * A hand-made card's id from what it is -- its name, kind, picture, layout
  * and its own text (ADR-043) -- as the card dialog and a deck file make it:
@@ -185,7 +242,7 @@ export const customCardIdOf = (
     card.category,
     card.image,
     card.presentation ?? null,
-    ...(card.text ? [card.text] : []),
+    ...(card.text ? [canonicalDeckCardText(card.text)] : []),
   ]);
 
 /**
@@ -218,7 +275,8 @@ export const setCardText = (
   const next = list.map((entry) => {
     if (!ids.has(entry.card.id)) return entry;
     const { text: _old, ...card } = entry.card;
-    if (text === undefined && entry.card.text === undefined) return entry;
+    // Saying what it says already is no change.
+    if (sameDeckCardText(entry.card.text, text)) return entry;
     changed = true;
     const texted = text === undefined ? card : { ...card, text };
     const id = textedCardId(entry.card, text);
@@ -302,7 +360,7 @@ export const sameDeckList = (left: DeckList, right: DeckList): boolean =>
             a.playsAs === b.playsAs &&
             JSON.stringify(a.presentation) === JSON.stringify(b.presentation) &&
             // Its own text plays on the table too (ADR-043).
-            JSON.stringify(a.text) === JSON.stringify(b.text)))
+            sameDeckCardText(a.text, b.text)))
       );
     }));
 

@@ -235,6 +235,21 @@ describe('simulator CSV files', () => {
     if (!broken.ok) expect(broken.issues[0]?.code).toBe('invalid_text');
   });
 
+  it('merges rows of one hand-made card whose text lists its fields in another order', () => {
+    const cell = (text: object) =>
+      `"${JSON.stringify(text).replaceAll('"', '""')}"`;
+    const read = parseSimCsvResult(
+      [
+        'QTY,Name,Type,URL,Presentation,Text',
+        `1,Homebrew,Pokémon,/a.png,,${cell({ hp: 120, retreat: 1 })}`,
+        `2,Homebrew,Pokémon,/a.png,,${cell({ retreat: 1, hp: 120 })}`,
+      ].join('\n')
+    );
+    expect(read.ok).toBe(true);
+    if (!read.ok) return;
+    expect(read.cards.map((entry) => entry.count)).toEqual([3]);
+  });
+
   it('reads card types as v1 and decklists spell them', () => {
     expect(cardCategoryOf('Pokemon')).toBe('Pokémon');
     expect(cardCategoryOf(' trainer ')).toBe('Trainer');
