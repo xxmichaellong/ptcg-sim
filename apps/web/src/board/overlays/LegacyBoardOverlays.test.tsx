@@ -1084,6 +1084,120 @@ describe('legacy board overlays', () => {
     expect(callbacks.dismiss).not.toHaveBeenCalled();
   });
 
+  it('offers View on a pile, opening it as a double-click on it does', async () => {
+    const opponent = view.playerOrder[1]!;
+    const kinds = (card: CardSceneNode, at = state()) =>
+      selectLegacyContextEntries(at, card).map((entry) => [
+        entry.kind,
+        entry.id,
+        entry.label,
+      ]);
+    const deck = cardIn(`:${firstPlayer}:deck`);
+    // First in the Deck section, before its moves.
+    expect(kinds(deck).slice(0, 3)).toEqual([
+      ['header', 'deck', 'Deck'],
+      ['openPile', 'openPile', 'View'],
+      ['action', 'shuffleDeck', 'Shuffle deck'],
+    ]);
+    // The discard pile and the Lost Zone, under their own names.
+    expect(kinds(cardIn(`:${firstPlayer}:discard`))).toEqual(
+      expect.arrayContaining([
+        ['header', 'discard', 'Discard pile'],
+        ['openPile', 'openPile', 'View'],
+      ])
+    );
+    expect(kinds(cardIn(`:${firstPlayer}:lostZone`)).slice(0, 2)).toEqual([
+      ['header', 'lostZone', 'Lost Zone'],
+      ['openPile', 'openPile', 'View'],
+    ]);
+    // The opponent's deck, where the table lets it open.
+    const opponentDeck = cardIn(`:${opponent}:deck`);
+    const opponentDeckZone = scene.zones.find(
+      (zone) => zone.id === opponentDeck.parentId
+    )!;
+    expect(kinds(opponentDeck).some(([kind]) => kind === 'openPile')).toBe(
+      opponentDeckZone.interactive && opponentDeckZone.count > 0
+    );
+    // Not where a double-click would open nothing: a pile the table keeps
+    // closed, or the pile already open.
+    const closed = {
+      ...scene,
+      zones: scene.zones.map((zone) =>
+        zone.id === deck.parentId ? { ...zone, interactive: false } : zone
+      ),
+    };
+    expect(
+      kinds(deck, state({ scene: closed })).some(
+        ([kind]) => kind === 'openPile'
+      )
+    ).toBe(false);
+    const open = state({
+      presentation: {
+        ...state().presentation,
+        openedZoneId: deck.parentId,
+      },
+    });
+    expect(kinds(deck, open).some(([kind]) => kind === 'openPile')).toBe(false);
+    // Nor on a hand, a Pokémon in play, or a replay's table.
+    for (const card of [
+      cardIn(`:${firstPlayer}:hand`),
+      cardIn('stack:blue:active'),
+    ]) {
+      expect(kinds(card).some(([kind]) => kind === 'openPile')).toBe(false);
+    }
+    expect(
+      selectLegacyContextEntries(
+        state({ source: { kind: 'replay' }, canSubmitCommands: false }),
+        deck
+      )
+    ).toEqual([]);
+
+    // Chosen: the menu closes and the pile opens.
+    const chosen = actions();
+    const openZone = vi.fn();
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardOverlays, {
+          state: state({
+            overlays: {
+              contextMenuCardId: deck.id,
+              preview: null,
+              input: null,
+            },
+          }),
+          darkMode: false,
+          actions: { ...chosen, openZone },
+        })
+      );
+    });
+    const item = host.querySelector<HTMLButtonElement>(
+      '[data-context-action="openPile"]'
+    );
+    expect(item?.textContent).toBe('View');
+    expect(item?.querySelector('svg')).not.toBeNull();
+    await act(async () => item?.click());
+    expect(chosen.dismiss).toHaveBeenCalledWith('context');
+    expect(openZone).toHaveBeenCalledWith(deck.parentId);
+
+    // A table that can't open piles from its menu shows no View row.
+    await act(async () => {
+      root.render(
+        createElement(LegacyBoardOverlays, {
+          state: state({
+            overlays: {
+              contextMenuCardId: deck.id,
+              preview: null,
+              input: null,
+            },
+          }),
+          darkMode: false,
+          actions: actions(),
+        })
+      );
+    });
+    expect(host.querySelector('[data-context-action="openPile"]')).toBeNull();
+  });
+
   it('reads keyboard hints from the shortcut catalogue without changing item text', async () => {
     const opponent = view.playerOrder[1]!;
     const renderMenu = async (card: CardSceneNode) => {

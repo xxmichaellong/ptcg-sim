@@ -343,6 +343,13 @@ specifically without blocking, and go from deck to table in one click.
     - The deck screen's focus rings are drawn again: they were written as
       a colour alone (`outline: var(--ptcgsim-focus-ring)`), which draws
       none; they are 2px solid in that colour.
+    - **"View" on a pile's menu.** The table's menu on a pile -- the deck,
+      the discard pile, the Lost Zone -- leads that pile's section with
+      View (an eye), which opens the pile in the pile viewer as a click,
+      a double-click or a tap on it does; the owner found the gesture
+      hard to discover. It is offered only where that gesture would open
+      the pile (the table lets it open and it holds cards) and not while
+      the pile is open; a replay's and a spectator's menus are unchanged.
 
 ## Consequences
 

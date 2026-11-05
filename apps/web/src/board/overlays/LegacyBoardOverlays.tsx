@@ -202,6 +202,11 @@ export interface LegacyBoardOverlayActions {
   /** Opens one card's full preview from inside the stack view. */
   readonly previewCard?: (cardId: ViewCardId) => void;
   /**
+   * Opens a pile in the pile viewer ("View" on its menu), as a double-click
+   * or double-tap on it does.
+   */
+  readonly openZone?: (zoneId: string) => void;
+  /**
    * A press in a window that names its card itself (the Pokémon window's
    * damage, conditions, reminders and moves, ADR-043): no menu need be
    * open, and the window stays open.
@@ -332,6 +337,16 @@ export type ContextEntry =
   | {
       readonly kind: 'playAsOne';
       readonly id: 'playAsOne';
+      readonly label: string;
+    }
+  /**
+   * "View" on a pile (the deck, the discard pile, the Lost Zone): opens it
+   * in the pile viewer, as a double-click or double-tap on it does.
+   */
+  | {
+      readonly kind: 'openPile';
+      readonly id: 'openPile';
+      readonly zoneId: string;
       readonly label: string;
     };
 
@@ -520,9 +535,47 @@ export const selectLegacyContextEntries = (
       );
     }
   }
+  // "View" on a pile, where a double-click or double-tap on it would open
+  // it, and it isn't open already.
+  const pileZone =
+    location.kind === 'deck' ||
+    location.kind === 'discard' ||
+    location.kind === 'lostZone'
+      ? state.scene?.zones.find((zone) => zone.id === location.id)
+      : undefined;
+  const viewPile: ContextEntry[] =
+    pileZone?.interactive &&
+    pileZone.count > 0 &&
+    state.presentation.openedZoneId !== pileZone.id
+      ? [
+          {
+            kind: 'openPile',
+            id: 'openPile',
+            zoneId: pileZone.id,
+            label: t({
+              message: 'View',
+              comment:
+                'Card menu, on a pile (deck, discard pile, Lost Zone): opens the whole pile to look through, as a double-click or double-tap on it does.',
+            }),
+          },
+        ]
+      : [];
+  if (location.kind === 'discard' && viewPile.length > 0) {
+    entries.push(
+      header('discard', t({ message: 'Discard pile', context: 'zone' })),
+      ...viewPile
+    );
+  }
+  if (location.kind === 'lostZone' && viewPile.length > 0) {
+    entries.push(
+      header('lostZone', t({ message: 'Lost Zone', context: 'zone' })),
+      ...viewPile
+    );
+  }
   if (location.kind === 'deck') {
     entries.push(
       header('deck', t({ message: 'Deck', context: 'zone' })),
+      ...viewPile,
       action('shuffleDeck', t`Shuffle deck`)
     );
     if (own) entries.push(action('drawCards', t`Draw cards…`));
@@ -1378,6 +1431,23 @@ const ContextMenu = ({
               >
                 {entry.label}
               </li>
+            ) : entry.kind === 'openPile' ? (
+              actions.openZone ? (
+                <li key={entry.id} role="none">
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="ptcgsim-menu-item"
+                    data-context-action="openPile"
+                    onClick={() => {
+                      dismiss();
+                      actions.openZone?.(entry.zoneId);
+                    }}
+                  >
+                    <MenuItemContent icon={EyeIcon} label={entry.label} />
+                  </button>
+                </li>
+              ) : null
             ) : entry.kind === 'playAsOne' ? (
               onPlayAsOne ? (
                 <li key={entry.id} role="none">

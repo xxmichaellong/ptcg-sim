@@ -1079,6 +1079,9 @@ export const RemoteSessionBoard = ({
           single: true,
         });
       },
+      openZone: (zoneId) => {
+        runtimeRef.current?.emitIntent({ kind: 'ZoneOpened', zoneId });
+      },
       dismiss: (scope) => {
         runtimeRef.current?.dismissLocalPresentation(scope);
       },

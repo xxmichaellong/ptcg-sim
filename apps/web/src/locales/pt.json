@@ -7628,6 +7628,13 @@
     "message": "V-UNION · 4 pieces",
     "translation": "V-UNIÃO · 4 peças"
   },
+  "jpctdh": {
+    "message": "View",
+    "comments": [
+      "Card menu, on a pile (deck, discard pile, Lost Zone): opens the whole pile to look through, as a double-click or double-tap on it does."
+    ],
+    "translation": "Ver"
+  },
   "-lImrL": {
     "message": "View",
     "context": "how the table is shown",
