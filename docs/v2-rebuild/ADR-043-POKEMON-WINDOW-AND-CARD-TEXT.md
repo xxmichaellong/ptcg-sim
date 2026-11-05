@@ -120,7 +120,10 @@ card itself. Using an Ability was the card menu's "ability used" marker
     press outside, a card dragged out, a move used, a card read large.
     Only Esc drops it. Steps (+, −, the arrow keys) go on from the number
     typed, else from the last one asked for, until the table shows it or
-    four seconds pass.
+    four seconds pass. The number sits on a damage counter, in the table's
+    counters' colors (yellow, orange from 50, red from 100, as the physical
+    ones), an empty dashed slot at 0 (2026-11-05, the owner: the bare number
+    was "really confusing").
 11. **A hand-made card's id says what it is** (`customCardIdOf`: name,
     kind, picture, layout and its own text, its fields in one order), as
     the card dialog and a deck file make it. Edited, it is another card: its id follows

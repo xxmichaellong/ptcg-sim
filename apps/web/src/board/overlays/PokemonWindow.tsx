@@ -15,6 +15,7 @@ import {
   type ViewCardId,
 } from '@ptcgsim/game-core';
 import {
+  damageCounterBand,
   markerHint,
   specialConditionKind,
   type CardSceneNode,
@@ -296,6 +297,14 @@ const AttackRow = ({
   );
 };
 
+/** Which damage counter a number is drawn on: none at 0 (or not a number). */
+const counterBandOf = (value: string): 'none' | '10' | '50' | '100' => {
+  const damage = Number.parseInt(value, 10);
+  return Number.isFinite(damage) && damage > 0
+    ? (String(damageCounterBand(String(damage))) as '10' | '50' | '100')
+    : 'none';
+};
+
 /**
  * A Pokémon's damage: stepped by 10, typed (Enter or leaving sets it), or
  * taken off; with its HP when the card says it, as what is left of it.
@@ -500,37 +509,50 @@ const Vitals = ({
               <MinusIcon weight="bold" aria-hidden="true" />
             </button>
           </Tooltip>
-          <input
-            className="pokemon-window__damage-input ds-number"
-            type="text"
-            inputMode="numeric"
-            autoComplete="off"
-            spellCheck={false}
-            maxLength={16}
-            placeholder="0"
-            aria-label={t`Damage counter`}
-            aria-invalid={invalid}
-            value={draft ?? (damage > 0 ? String(damage) : '')}
-            onFocus={(event) => event.currentTarget.select()}
-            onChange={(event) => {
-              setDraft(event.currentTarget.value);
-              setInvalid(false);
-            }}
-            onBlur={commit}
-            onKeyDown={(event) => {
-              // An input method's keys (its Enter takes a candidate, its
-              // arrows move between them) are its own.
-              if (isInputMethodKey(event.nativeEvent)) return;
-              if (event.key === 'Enter') {
-                event.preventDefault();
-                commit();
-              } else if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
-                event.preventDefault();
-                step(event.key === 'ArrowUp' ? DAMAGE_STEP : -DAMAGE_STEP);
-              }
-            }}
-            {...tabbable}
-          />
+          {/* In a damage counter's own colors, as the table's are: yellow,
+              orange from 50, red from 100; an empty slot at 0. */}
+          <span
+            className="pokemon-window__counter"
+            data-band={counterBandOf(draft ?? String(damage))}
+            data-long={
+              (draft ?? String(damage)).trim().length > 3 ? 'true' : undefined
+            }
+          >
+            <input
+              className="pokemon-window__damage-input ds-number"
+              type="text"
+              inputMode="numeric"
+              autoComplete="off"
+              spellCheck={false}
+              maxLength={16}
+              placeholder="0"
+              aria-label={t`Damage counter`}
+              aria-invalid={invalid}
+              value={draft ?? (damage > 0 ? String(damage) : '')}
+              onFocus={(event) => event.currentTarget.select()}
+              onChange={(event) => {
+                setDraft(event.currentTarget.value);
+                setInvalid(false);
+              }}
+              onBlur={commit}
+              onKeyDown={(event) => {
+                // An input method's keys (its Enter takes a candidate, its
+                // arrows move between them) are its own.
+                if (isInputMethodKey(event.nativeEvent)) return;
+                if (event.key === 'Enter') {
+                  event.preventDefault();
+                  commit();
+                } else if (
+                  event.key === 'ArrowUp' ||
+                  event.key === 'ArrowDown'
+                ) {
+                  event.preventDefault();
+                  step(event.key === 'ArrowUp' ? DAMAGE_STEP : -DAMAGE_STEP);
+                }
+              }}
+              {...tabbable}
+            />
+          </span>
           <Tooltip content={t`10 more damage`}>
             <button
               type="button"
@@ -556,11 +578,17 @@ const Vitals = ({
           </Tooltip>
         </div>
       ) : (
-        <span className="pokemon-window__damage-readout ds-number">
-          {t({
+        <span
+          className="pokemon-window__counter is-readout ds-number"
+          data-band={counterBandOf(String(damage))}
+          data-long={String(damage).length > 3 ? 'true' : undefined}
+          role="img"
+          aria-label={t({
             message: `${damage} damage`,
             comment: 'Damage on a Pokémon, e.g. "60 damage".',
           })}
+        >
+          {damage}
         </span>
       )}
       {invalid ? (
