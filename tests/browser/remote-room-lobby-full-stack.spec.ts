@@ -660,26 +660,6 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     expect(battleLogText).toContain(': Red: lobby chat\n\n');
     expect(battleLogText).toContain(': Red attacked\n\n');
 
-    await playerTwo.page.evaluate(() => {
-      Object.defineProperty(
-        globalThis.document.documentElement,
-        'requestFullscreen',
-        {
-          configurable: true,
-          value: () => {
-            globalThis.document.documentElement.dataset.testFullscreen =
-              'requested';
-            return Promise.resolve();
-          },
-        }
-      );
-    });
-    await chooseMenuItem(playerTwo.page, 'fullscreenButton');
-    await expect(playerTwo.page.locator('html')).toHaveAttribute(
-      'data-test-fullscreen',
-      'requested'
-    );
-
     await chooseLogAction(playerTwo.page, 'clearLog');
     await expect(playerTwo.page.locator('#p2Chatbox')).toBeEmpty();
 

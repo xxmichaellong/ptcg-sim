@@ -632,17 +632,15 @@ describe('useLiveRoomControls', () => {
     await act(async () => root.unmount());
   });
 
-  it('downloads and clears the battle log and asks for full screen without commands', async () => {
+  it('downloads and clears the battle log without commands', async () => {
     const session = new FakeLiveSession();
     const presentation = livePresentation(['  Blue attacked  ', 'Red: hi']);
     const downloadTextFile = vi.fn(() => true);
-    const requestFullscreen = vi.fn(() => true);
     const onExportState = vi.fn();
     const { root } = await mount(session, {
       presentation: presentation.value,
       onExportState,
       downloadTextFile,
-      requestFullscreen,
     });
     expect(controls().exportState).toBe(onExportState);
 
@@ -650,7 +648,6 @@ describe('useLiveRoomControls', () => {
       live.exportState?.();
       live.exportLog();
       live.clearLog();
-      live.fullscreen();
     });
     expect(onExportState).toHaveBeenCalledOnce();
     expect(downloadTextFile).toHaveBeenCalledWith(
@@ -658,7 +655,6 @@ describe('useLiveRoomControls', () => {
       '1: Blue attacked\n\n2: Red: hi\n\n'
     );
     expect(presentation.clearActivity).toHaveBeenCalledOnce();
-    expect(requestFullscreen).toHaveBeenCalledOnce();
     expect(session.submit).not.toHaveBeenCalled();
     expect(session.sendChat).not.toHaveBeenCalled();
 

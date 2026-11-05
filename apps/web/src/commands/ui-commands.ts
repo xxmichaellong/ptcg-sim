@@ -211,10 +211,6 @@ const MENU_MEANINGS: Readonly<Record<string, () => Meaning>> = {
     section: 'room',
     keywords: ['replay', 'download', 'export'],
   }),
-  fullscreen: () => ({
-    section: 'table',
-    keywords: ['fullscreen', 'full screen'],
-  }),
   tutorial: () => ({
     section: 'help',
     keywords: ['help', 'tutorial', 'learn', 'lessons'],

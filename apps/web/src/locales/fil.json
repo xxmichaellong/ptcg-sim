@@ -3301,10 +3301,6 @@
     "context": "leave the replay",
     "translation": "Lumabas"
   },
-  "IkOhTI": {
-    "message": "Exit full screen",
-    "translation": "Lumabas sa full screen"
-  },
   "O6_hpe": {
     "message": "Exit replay",
     "translation": "Lumabas sa replay"
@@ -3529,14 +3525,6 @@
   "TZN8p-": {
     "message": "Full card",
     "translation": "Buong card"
-  },
-  "OwIqiD": {
-    "message": "Full screen",
-    "translation": "Full screen"
-  },
-  "xosAFi": {
-    "message": "Full screen isn't available here",
-    "translation": "Hindi available ang full screen dito"
   },
   "ULwemj": {
     "message": "Fusion Strike",
@@ -4386,6 +4374,11 @@
     "message": "Mine",
     "context": "my half of the table",
     "translation": "Akin"
+  },
+  "w2xVe_": {
+    "message": "Mode",
+    "context": "solo or online play",
+    "translation": ""
   },
   "5jDsb9": {
     "message": "Moon",

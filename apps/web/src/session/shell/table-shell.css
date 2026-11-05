@@ -245,6 +245,92 @@
   box-shadow: 0 0 0 3px oklch(0.83 0.15 75 / 0.22);
 }
 
+/* Solo | Online: where this table is played, and the way to the other.
+   The side in play is lit; the other is a plain choice. At most
+   --app-bar-mode wide (APP_BAR_MODE_PX). Fixed colours: the glass is dark
+   in either theme. */
+.ptcgsim-app-bar__switch {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  box-sizing: border-box;
+  max-width: var(--app-bar-mode, 168px);
+  height: var(--app-bar-button, 36px);
+  padding: 2px;
+  border-radius: var(--radius-control);
+  background: oklch(0 0 0 / 0.28);
+}
+
+.ptcgsim-app-bar__switch-option {
+  display: inline-flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  height: 100%;
+  padding-inline: 10px 12px;
+  border: 0;
+  border-radius: calc(var(--radius-control) - 2px);
+  background: transparent;
+  color: oklch(0.86 0.012 80);
+  font: inherit;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
+}
+
+.ptcgsim-app-bar__switch-option > svg {
+  flex: none;
+  font-size: 14px;
+}
+
+.ptcgsim-app-bar__switch-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ptcgsim-app-bar__switch-option[aria-pressed='true'] {
+  background: oklch(0.96 0.01 80);
+  box-shadow: 0 1px 3px oklch(0 0 0 / 0.35);
+  color: oklch(0.22 0.015 50);
+  cursor: default;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ptcgsim-app-bar__switch-option[aria-pressed='false']:not(
+      [aria-disabled='true']
+    ):hover {
+    background: oklch(1 0 0 / 0.14);
+    color: oklch(0.98 0.005 80);
+  }
+}
+
+.ptcgsim-app-bar__switch-option[aria-disabled='true'] {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.ptcgsim-app-bar__switch-option:focus-visible {
+  outline: 2px solid oklch(0.95 0.01 80);
+  outline-offset: 1px;
+}
+
+/* Online's light sits where Solo's icon does. */
+.ptcgsim-app-bar__switch-option .ptcgsim-app-bar__mode-light {
+  margin-inline: 2px;
+}
+
+.ptcgsim-app-bar__switch-option[data-connecting] .ptcgsim-app-bar__mode-light {
+  background: oklch(0.83 0.15 75);
+  box-shadow: 0 0 0 3px oklch(0.83 0.15 75 / 0.22);
+}
+
 .ptcgsim-app-bar .ptcgsim-rail-button {
   width: var(--app-bar-button, 36px);
   min-width: 0;

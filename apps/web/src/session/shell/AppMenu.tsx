@@ -5,8 +5,6 @@ import { CloudArrowUpIcon } from '@phosphor-icons/react/dist/csr/CloudArrowUp';
 import { DiscordLogoIcon } from '@phosphor-icons/react/dist/csr/DiscordLogo';
 import { EyeIcon } from '@phosphor-icons/react/dist/csr/Eye';
 import type { Icon } from '@phosphor-icons/react';
-import { CornersInIcon } from '@phosphor-icons/react/dist/csr/CornersIn';
-import { CornersOutIcon } from '@phosphor-icons/react/dist/csr/CornersOut';
 import { DownloadSimpleIcon } from '@phosphor-icons/react/dist/csr/DownloadSimple';
 import { FilmReelIcon } from '@phosphor-icons/react/dist/csr/FilmReel';
 import { FolderOpenIcon } from '@phosphor-icons/react/dist/csr/FolderOpen';
@@ -39,10 +37,6 @@ import {
   useCompactLayout,
   useMediaQuery,
 } from '../../ui/breakpoints.js';
-import {
-  exitBrowserFullscreen,
-  useBrowserFullscreen,
-} from '../browser-room-options.js';
 import { Tooltip, withKeyHint } from '../../ui/Tooltip.js';
 import type { RoomInviteRole } from '../room-invites.js';
 import { DISCORD_URL, openHelpPage, RELEASE_NAME } from './help-pages.js';
@@ -80,7 +74,6 @@ export interface AppMenuModel {
     readonly seatTaken: boolean;
     readonly onInvite: (role: RoomInviteRole) => void;
   };
-  readonly onFullscreen?: () => void;
   /** Saves and replays; each present only where it applies. */
   readonly game?: {
     readonly onImportReplay?: () => void;
@@ -207,7 +200,6 @@ const grouped = (
  */
 export const restEntries = (
   model: AppMenuModel,
-  fullscreen: boolean,
   settingsHint?: string
 ): ActionMenuEntry[] => {
   const game = model.game;
@@ -267,24 +259,6 @@ export const restEntries = (
       onSelect: model.onSettings,
     },
   ];
-  if (model.onFullscreen) {
-    // Full screen already: the same entry takes the page back out.
-    page.push(
-      fullscreen
-        ? {
-            id: 'fullscreenButton',
-            label: t`Exit full screen`,
-            icon: CornersInIcon,
-            onSelect: () => exitBrowserFullscreen(),
-          }
-        : {
-            id: 'fullscreenButton',
-            label: t`Full screen`,
-            icon: CornersOutIcon,
-            onSelect: model.onFullscreen,
-          }
-    );
-  }
   if (model.onTutorial && !model.onExitTutorial) {
     page.push({
       id: 'tutorialButton',
@@ -358,10 +332,11 @@ export const APP_BAR_GAP_PX = 4;
 export const APP_BAR_PAD_PX = 3;
 const appBarButtonPx = (coarse: boolean): number => (coarse ? 44 : 36);
 /**
- * The mode's label at the start of the bar is at most this wide (a longer
- * name is cut short); the corner kept for the bar counts it at this width.
+ * The mode at the start of the bar -- the Solo | Online switch, or a
+ * replay's or the tutorial's name -- is at most this wide (a longer name
+ * is cut short); the corner kept for the bar counts it at this width.
  */
-export const APP_BAR_MODE_PX = 120;
+export const APP_BAR_MODE_PX = 168;
 /**
  * A phone held upright, where the opponent's hand needs every pixel beside
  * the bar: the mode takes no room, only a light in the bar's corner online.
@@ -369,10 +344,11 @@ export const APP_BAR_MODE_PX = 120;
 export const NARROW_BAR_QUERY = '(max-width: 479px)';
 
 /**
- * The most buttons the bar shows: on a phone the palette, the log and the
- * menu; elsewhere also the deck and where to play.
+ * The most buttons the bar shows after the mode: on a phone the palette,
+ * the log and the menu; elsewhere also the deck. Where to play is the
+ * mode's switch.
  */
-export const APP_BAR_SLOTS = { full: 5, compact: 3 } as const;
+export const APP_BAR_SLOTS = { full: 4, compact: 3 } as const;
 
 /** The bar's box for that many buttons, after the mode's label if any. */
 export const appBarSize = (
@@ -425,6 +401,117 @@ const BarButton = ({ entry }: { readonly entry: ToolbarEntry }) => (
     />
   </Tooltip>
 );
+
+/** What the Solo | Online switch shows and does, where the bar has one. */
+export interface ModeSwitchModel {
+  readonly current: 'solo' | 'online';
+  /** Back to the Solo table, or out of the room (which asks first). */
+  readonly onSolo?: () => void;
+  /** Play online: create or join a room. */
+  readonly onOnline?: () => void;
+  readonly watching?: boolean;
+  readonly connecting?: boolean;
+  /** The room ("Room K7PQ2M"), on the online side's tooltip. */
+  readonly detail?: string;
+}
+
+/**
+ * The switch for this table, if it has one: a Solo table, a room, or Play
+ * online's page (whose way back is the Solo side). A replay and the
+ * tutorial keep their names.
+ */
+export const modeSwitchOf = (
+  model: AppMenuModel
+): ModeSwitchModel | undefined => {
+  const kind = model.mode?.kind;
+  if (kind === 'replay' || kind === 'tutorial') return undefined;
+  if (model.onPlaySolo) return { current: 'online', onSolo: model.onPlaySolo };
+  if (kind === 'solo') {
+    return {
+      current: 'solo',
+      ...(model.onPlayOnline ? { onOnline: model.onPlayOnline } : {}),
+    };
+  }
+  if (kind === 'online' || kind === 'watching') {
+    return {
+      current: 'online',
+      ...(model.onLeave ? { onSolo: model.onLeave } : {}),
+      ...(kind === 'watching' ? { watching: true } : {}),
+      ...(model.mode?.connecting ? { connecting: true } : {}),
+      ...(model.mode?.detail ? { detail: model.mode.detail } : {}),
+    };
+  }
+  return undefined;
+};
+
+/**
+ * Where this table is played, as a switch at the start of the bar: Solo
+ * or Online, the one in play pressed. The other side goes there -- Play
+ * online's page from a Solo table, the Solo table from that page, and out
+ * of a room (asked first). Online, a light says whether the room is
+ * connected.
+ */
+const ModeSwitch = ({ mode }: { readonly mode: ModeSwitchModel }) => {
+  const { t } = useLingui();
+  const soloName = t({
+    message: 'Solo',
+    context: 'playing alone at this table',
+  });
+  const onlineName = mode.watching
+    ? t({ message: 'Watching', context: 'spectating a room' })
+    : t({ message: 'Online', context: 'playing against someone' });
+  const solo = mode.current === 'solo';
+  const soloTip = solo
+    ? soloName
+    : mode.onSolo && mode.current === 'online' && mode.detail !== undefined
+      ? t`Leave room`
+      : t`Solo table`;
+  const onlineTip = solo ? t`Play online` : (mode.detail ?? onlineName);
+  return (
+    <div
+      className="ptcgsim-app-bar__switch"
+      role="group"
+      aria-label={t({ message: 'Mode', context: 'solo or online play' })}
+      data-current={mode.current}
+    >
+      <Tooltip content={soloTip} side="bottom">
+        <button
+          id="p1Button"
+          type="button"
+          className="ptcgsim-app-bar__switch-option"
+          aria-pressed={solo}
+          aria-disabled={!solo && !mode.onSolo ? true : undefined}
+          onClick={() => {
+            if (!solo) mode.onSolo?.();
+          }}
+        >
+          <UserIcon aria-hidden="true" weight="bold" />
+          <span className="ptcgsim-app-bar__switch-name">{soloName}</span>
+        </button>
+      </Tooltip>
+      <Tooltip content={onlineTip} side="bottom" tapToShow={!solo}>
+        <button
+          id="p2Button"
+          type="button"
+          className="ptcgsim-app-bar__switch-option"
+          aria-pressed={!solo}
+          aria-disabled={solo && !mode.onOnline ? true : undefined}
+          data-connecting={mode.connecting ? 'true' : undefined}
+          onClick={() => {
+            if (solo) mode.onOnline?.();
+          }}
+        >
+          {solo ? (
+            <UsersThreeIcon aria-hidden="true" weight="bold" />
+          ) : (
+            <span className="ptcgsim-app-bar__mode-light" aria-hidden="true" />
+          )}
+          <span className="ptcgsim-app-bar__switch-name">{onlineName}</span>
+        </button>
+      </Tooltip>
+    </div>
+  );
+};
 
 const MODE_ICONS: Partial<Record<TableMode['kind'], Icon>> = {
   solo: UserIcon,
@@ -509,8 +596,13 @@ export const AppBar = ({
   const coarse = useMediaQuery(COARSE_POINTER_QUERY);
   const compact = useCompactLayout();
   const narrow = useMediaQuery(NARROW_BAR_QUERY);
-  const fullscreen = useBrowserFullscreen();
-  const primary = primaryEntries(model, hint('table.commands'));
+  // Solo or Online, as a switch where the bar has room for it; a phone held
+  // upright keeps only the light, and where to play leads its menu.
+  const modeSwitch = narrow ? undefined : modeSwitchOf(model);
+  const primary = primaryEntries(model, hint('table.commands')).filter(
+    (entry) =>
+      !modeSwitch || (entry.id !== 'p1Button' && entry.id !== 'p2Button')
+  );
   // A phone's bar keeps only the palette of these.
   const onBar = (entry: ToolbarEntry): boolean =>
     !compact || entry.id === 'commandsButton';
@@ -522,7 +614,6 @@ export const AppBar = ({
   // A touch screen has no keys to hint at.
   const rest = restEntries(
     model,
-    fullscreen,
     touchOnly ? undefined : hint('table.settings')
   );
   const entries: ActionMenuEntry[] =
@@ -546,7 +637,11 @@ export const AppBar = ({
         } as CSSProperties
       }
     >
-      {model.mode && narrow ? (
+      {modeSwitch ? (
+        <div className="ptcgsim-app-bar__group">
+          <ModeSwitch mode={modeSwitch} />
+        </div>
+      ) : model.mode && narrow ? (
         <ModeLabel mode={model.mode} lightOnly />
       ) : model.mode ? (
         <div className="ptcgsim-app-bar__group">

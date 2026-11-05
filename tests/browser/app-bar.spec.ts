@@ -109,26 +109,32 @@ test('the app bar keeps the top-right corner, clear of every card, and the turn 
   await openTable(page);
   const bar = page.locator('.ptcgsim-app-bar');
   await expect(bar).toBeVisible();
-  // The deck and where to play, the palette and the log, the menu.
-  await expect(bar.locator('button[id]')).toHaveCount(5);
+  // Where to play (Solo | Online), the deck, the palette and the log, the
+  // menu.
+  await expect(bar.locator('button[id]')).toHaveCount(6);
   expect(
     await bar
       .locator('button[id]')
       .evaluateAll((nodes) => nodes.map((node) => node.id))
   ).toEqual([
-    'deckImportButton',
+    'p1Button',
     'p2Button',
+    'deckImportButton',
     'commandsButton',
     'activityButton',
     'appMenuButton',
   ]);
   const barBox = await box(bar);
   // 8px in from the corner, and no wider than the corner the table keeps:
-  // the mode's label (120px) and five 36px buttons, 4px apart, in 3px.
+  // the mode's switch (168px) and four 36px buttons, 4px apart, in 3px.
   expect(Math.round(barBox.y)).toBe(8);
   expect(Math.round(1440 - barBox.x - barBox.width)).toBe(8);
-  expect(barBox.width).toBeLessThanOrEqual(120 + 5 * 36 + 5 * 4 + 6 + 0.5);
-  await expect(bar.locator('[data-table-mode="solo"]')).toHaveText('Solo');
+  expect(barBox.width).toBeLessThanOrEqual(168 + 4 * 36 + 4 * 4 + 6 + 0.5);
+  await expect(bar.locator('#p1Button')).toHaveAttribute(
+    'aria-pressed',
+    'true'
+  );
+  await expect(bar.locator('#p1Button')).toHaveText('Solo');
 
   await setUpBoth(page);
   for (const rect of await tableBoxes(page)) {
@@ -147,7 +153,7 @@ test('the app bar keeps the top-right corner, clear of every card, and the turn 
   );
   expect(turn.x).toBeGreaterThan(stadium.x + stadium.width);
   const lastButton = await box(
-    page.locator('#boardButtonContainer > button').last()
+    page.locator('#boardButtonContainer button').last()
   );
   expect(lastButton.x + lastButton.width).toBeLessThanOrEqual(deck.x);
 

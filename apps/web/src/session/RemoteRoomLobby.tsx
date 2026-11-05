@@ -76,7 +76,6 @@ import type { RemoteRoomRuntime } from './RemoteRoomRuntime.js';
 import type { BrowserRoomBackgroundRequest } from './browser-room-background.js';
 import type { BrowserCardBackRequest } from './browser-card-back.js';
 import { probeContinuationAvailability } from './browser-continuation-availability.js';
-import { requestBrowserFullscreen } from './browser-room-options.js';
 import { useBoardLook } from './useBoardLook.js';
 import {
   POINTER_SEAM_BAND_PX,
@@ -1576,7 +1575,6 @@ export const RemoteRoomLobby = ({
     setOverlay('deck');
   };
   const menu: AppMenuModel = {
-    heading: activePanel === 'lobby' ? t`Play online` : t`Solo table`,
     // The table behind Play online is still the player's Solo table.
     ...(parkedSolo || activePanel === 'solo' ? { mode: { kind: 'solo' } } : {}),
     ...(activePanel === 'lobby' && !busy
@@ -1587,9 +1585,6 @@ export const RemoteRoomLobby = ({
       : { onPlayOnline: () => setActivePanel('lobby') }),
     onDeck: openDeck,
     onSettings: () => settingsHost.open(),
-    onFullscreen: () => {
-      requestBrowserFullscreen();
-    },
     onTutorial: () => startTutorial(),
   };
   const appBar = <AppBar model={menu} />;

@@ -69,9 +69,6 @@ import type {
 import type { BrowserCardBackRequest } from './browser-card-back.js';
 import {
   downloadBrowserTextFile,
-  fullscreenRefusedNotice,
-  onFullscreenRefused,
-  requestBrowserFullscreen,
   serializeBattleLog,
 } from './browser-room-options.js';
 import { useRoomBackground } from './useRoomBackground.js';
@@ -99,7 +96,6 @@ import { TableBanner, TableCentre, TableShell } from './shell/TableShell.js';
 import { useActivityDocking } from './shell/useActivityDocking.js';
 import type { ActionMenuEntry } from '../ui/ActionMenu.js';
 import { DeckIcon } from '../ui/DeckIcon.js';
-import { toast } from '../ui/toast.js';
 import { Tooltip } from '../ui/Tooltip.js';
 import { CommandSourceRegistration } from '../commands/registry.js';
 import { roomCommands } from '../commands/room-commands.js';
@@ -197,7 +193,6 @@ export interface RemoteRoomRouteProps {
   readonly onBackgroundReset?: () => void;
   readonly requestBackground?: BrowserRoomBackgroundRequest;
   readonly downloadTextFile?: (filename: string, contents: string) => boolean;
-  readonly requestFullscreen?: () => boolean;
 }
 
 type RouteSheet = 'deck' | 'settings' | 'online';
@@ -283,7 +278,6 @@ export const RemoteRoomRoute = ({
   onBackgroundReset,
   requestBackground,
   downloadTextFile = downloadBrowserTextFile,
-  requestFullscreen = requestBrowserFullscreen,
 }: RemoteRoomRouteProps) => {
   const { t, i18n } = useLingui();
   const solo = roomMode === 'solo';
@@ -400,7 +394,6 @@ export const RemoteRoomRoute = ({
         }
       : {}),
     downloadTextFile,
-    requestFullscreen,
   });
   const invites = useRoomInvites({
     invitations,
@@ -421,12 +414,6 @@ export const RemoteRoomRoute = ({
     setSheet((current) => (current === 'online' ? undefined : current));
   }, [runtime]);
   const hint = useHotkeyHints();
-  // A browser that takes the request and then declines it says so only
-  // with an event; the player hears it too.
-  useEffect(
-    () => onFullscreenRefused(() => toast(fullscreenRefusedNotice())),
-    []
-  );
   const shellPreferences = usePreference(SHELL_PREFERENCES);
   const exportBattleLog = (): void => {
     downloadTextFile(
@@ -701,7 +688,8 @@ export const RemoteRoomRoute = ({
         };
 
         const menu: AppMenuModel = {
-          heading: tutorial ? t`Tutorial` : roomName,
+          // The menu names a room it is in; the bar's switch says Solo.
+          ...(solo || tutorial || replaying ? {} : { heading: roomName }),
           mode: tutorial
             ? { kind: 'tutorial' }
             : replaying
@@ -735,9 +723,6 @@ export const RemoteRoomRoute = ({
             ? { onDeck: () => openDeck(actingTarget) }
             : {}),
           onSettings: () => settingsHost.open(),
-          onFullscreen: () => {
-            if (!requestFullscreen()) toast(fullscreenRefusedNotice());
-          },
           ...(canInvite
             ? {
                 invites: {

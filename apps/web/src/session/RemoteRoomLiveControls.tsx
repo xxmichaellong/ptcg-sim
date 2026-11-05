@@ -21,8 +21,6 @@ import { resolveTableAction } from '../board/resolveTableAction.js';
 import type { LegacyGamePresentationRuntime } from '../presentation/LegacyGamePresentationRuntime.js';
 import {
   downloadBrowserTextFile,
-  fullscreenRefusedNotice,
-  requestBrowserFullscreen,
   serializeBattleLog,
 } from './browser-room-options.js';
 import {
@@ -130,7 +128,6 @@ export const useLiveRoomControls = ({
   onResumeSavedGame,
   confirmLeave = confirmLiveRoomLeave,
   downloadTextFile = downloadBrowserTextFile,
-  requestFullscreen = requestBrowserFullscreen,
   readReplayFile = readBrowserReplayFileBytes,
   readContinuationFile = readBrowserContinuationFileText,
   reportReplayImportFailure = reportInvalidReplayFile,
@@ -158,7 +155,6 @@ export const useLiveRoomControls = ({
   ) => Promise<void>;
   readonly confirmLeave?: LiveRoomLeaveConfirmation;
   readonly downloadTextFile?: (filename: string, contents: string) => boolean;
-  readonly requestFullscreen?: () => boolean;
   readonly readReplayFile?: BrowserReplayFileReader;
   readonly readContinuationFile?: BrowserContinuationFileReader;
   readonly reportReplayImportFailure?: () => void;
@@ -461,9 +457,6 @@ export const useLiveRoomControls = ({
   const clearLog = (): void => {
     presentation.clearActivity();
   };
-  const fullscreen = (): void => {
-    if (!requestFullscreen()) toast(fullscreenRefusedNotice());
-  };
 
   /** The hidden file pickers behind "Enter replay mode" and "Resume". */
   const fileInputs = (
@@ -523,7 +516,6 @@ export const useLiveRoomControls = ({
       canResumeSaved || canImportReplay ? openDroppedFile : undefined,
     exportLog,
     clearLog,
-    fullscreen,
     fileInputs,
   };
 };

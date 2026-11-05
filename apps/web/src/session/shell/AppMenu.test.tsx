@@ -62,11 +62,10 @@ afterEach(async () => {
 });
 
 const model = (overrides: Partial<AppMenuModel> = {}): AppMenuModel => ({
-  heading: 'Solo table',
+  mode: { kind: 'solo' },
   onPlayOnline: vi.fn(),
   onDeck: vi.fn(),
   onSettings: vi.fn(),
-  onFullscreen: vi.fn(),
   onTutorial: vi.fn(),
   ...overrides,
 });
@@ -115,12 +114,13 @@ const choose = async (id: string): Promise<void> => {
 };
 
 describe('AppBar', () => {
-  it('shows the deck, where to play, Commands, the log and the menu, in groups', async () => {
+  it('shows where the table is played as a switch, the deck, Commands, the log and the menu, in groups', async () => {
     const menu = model();
     await render(menu);
     expect(barIds()).toEqual([
-      'deckImportButton',
+      'p1Button',
       'p2Button',
+      'deckImportButton',
       'commandsButton',
       'activityButton',
       'appMenuButton',
@@ -129,7 +129,18 @@ describe('AppBar', () => {
       [...document.querySelectorAll('.ptcgsim-app-bar__group')].map(
         (group) => group.querySelectorAll('button[id]').length
       )
-    ).toEqual([2, 2, 1]);
+    ).toEqual([2, 1, 2, 1]);
+    // Solo is pressed; Online is the way to Play online.
+    expect(
+      document.querySelector('#p1Button')?.getAttribute('aria-pressed')
+    ).toBe('true');
+    expect(
+      document.querySelector('#p2Button')?.getAttribute('aria-pressed')
+    ).toBe('false');
+    await press('#p1Button');
+    expect(menu.onPlayOnline).not.toHaveBeenCalled();
+    await press('#p2Button');
+    expect(menu.onPlayOnline).toHaveBeenCalledOnce();
     // Icons only; their names are the buttons' labels.
     expect(
       document.querySelector('#deckImportButton')?.getAttribute('aria-label')
@@ -138,11 +149,7 @@ describe('AppBar', () => {
     // The menu: Settings first, with its key, and nothing offered twice.
     // The keys and the help links are in Settings, not here.
     const rest = await openMenu('#appMenuButton');
-    expect(rest).toEqual([
-      'settingsButton',
-      'fullscreenButton',
-      'tutorialButton',
-    ]);
+    expect(rest).toEqual(['settingsButton', 'tutorialButton']);
     expect(
       document.querySelector('[role="menu"] #settingsButton kbd')?.textContent
     ).toBe(',');
@@ -159,7 +166,6 @@ describe('AppBar', () => {
     await render(model({ game }));
     expect(await openMenu('#appMenuButton')).toEqual([
       'settingsButton',
-      'fullscreenButton',
       'tutorialButton',
       'importReplay',
       'resumeSavedGame',
@@ -179,7 +185,6 @@ describe('AppBar', () => {
       heading: 'Room K7PQ2M',
       onDeck: vi.fn(),
       onSettings: vi.fn(),
-      onFullscreen: vi.fn(),
       invites: {
         roles: ['player', 'spectator'],
         seatTaken: false,
@@ -194,7 +199,6 @@ describe('AppBar', () => {
       'saveOnlineGame',
       'exportState',
       'settingsButton',
-      'fullscreenButton',
       'leaveRoomButton',
     ]);
     await act(async () => {
@@ -227,6 +231,10 @@ describe('AppBar', () => {
       return event;
     };
     expect((await arrow('ArrowRight')).defaultPrevented).toBe(true);
+    expect(document.activeElement?.id).toBe('commandsButton');
+    await arrow('ArrowLeft');
+    await arrow('ArrowLeft');
+    // The mode's switch is on the way too.
     expect(document.activeElement?.id).toBe('p2Button');
     await arrow('ArrowLeft');
     await arrow('ArrowLeft');
@@ -313,7 +321,6 @@ describe('AppBar', () => {
       'deckImportButton',
       'p2Button',
       'settingsButton',
-      'fullscreenButton',
       'tutorialButton',
     ]);
     // No keys under a finger, so no key beside Settings.
@@ -323,10 +330,10 @@ describe('AppBar', () => {
   });
 
   it('is as wide as the corner the table keeps for it', () => {
-    // The mode's label and five 36px buttons 4px apart in 3px of padding
+    // The mode's switch and four 36px buttons 4px apart in 3px of padding
     // and border a side.
     expect(appBarSize(APP_BAR_SLOTS.full, false)).toEqual({
-      width: APP_BAR_MODE_PX + 5 * 36 + 5 * APP_BAR_GAP_PX + 2 * APP_BAR_PAD_PX,
+      width: APP_BAR_MODE_PX + 4 * 36 + 4 * APP_BAR_GAP_PX + 2 * APP_BAR_PAD_PX,
       height: 36 + 2 * APP_BAR_PAD_PX,
     });
     expect(appBarSize(APP_BAR_SLOTS.compact, true)).toEqual({
@@ -335,49 +342,71 @@ describe('AppBar', () => {
     });
   });
 
-  it('names where the table is played first, online with its room and whether it is connected', async () => {
+  it('switches between Solo and Online where the table is played, online with its room and whether it is connected', async () => {
+    const option = (id: string) =>
+      document.querySelector<HTMLElement>(`.ptcgsim-app-bar__switch #${id}`);
     const label = () =>
       document.querySelector<HTMLElement>('.ptcgsim-app-bar__mode');
-    await render(model({ mode: { kind: 'solo' } }));
-    expect(label()?.dataset.tableMode).toBe('solo');
-    expect(label()?.textContent).toBe('Solo');
-    // First in the bar, and not a button: the arrow keys skip it.
+    await render(model());
+    // First in the bar.
     expect(
       document.querySelector('.ptcgsim-app-bar__group')?.firstElementChild
-    ).toBe(label());
-    expect(barIds()[0]).toBe('deckImportButton');
+    ).toBe(document.querySelector('.ptcgsim-app-bar__switch'));
+    expect(option('p1Button')?.textContent).toBe('Solo');
+    expect(option('p2Button')?.textContent).toBe('Online');
 
+    // In a room: Online pressed and lit, amber until connected; Solo is the
+    // way out of it (which asks first).
+    const onLeave = vi.fn();
     await render(
       model({
         onPlayOnline: undefined,
+        onLeave,
         mode: { kind: 'online', detail: 'Room K7PQ2M', connecting: true },
       })
     );
-    expect(label()?.textContent).toBe('Online');
-    expect(label()?.dataset.connecting).toBe('true');
-    expect(label()?.querySelector('.ptcgsim-app-bar__mode-light')).not.toBe(
-      null
-    );
+    expect(option('p2Button')?.getAttribute('aria-pressed')).toBe('true');
+    expect(option('p2Button')?.dataset.connecting).toBe('true');
+    expect(
+      option('p2Button')?.querySelector('.ptcgsim-app-bar__mode-light')
+    ).not.toBe(null);
+    await press('#p1Button');
+    expect(onLeave).toHaveBeenCalledOnce();
     await render(
       model({
         onPlayOnline: undefined,
         mode: { kind: 'online', detail: 'Room K7PQ2M' },
       })
     );
-    expect(label()?.hasAttribute('data-connecting')).toBe(false);
+    expect(option('p2Button')?.hasAttribute('data-connecting')).toBe(false);
+    // With no way out, Solo takes no press.
+    expect(option('p1Button')?.getAttribute('aria-disabled')).toBe('true');
 
     await render(model({ mode: { kind: 'watching', detail: 'Room K7PQ2M' } }));
-    expect(label()?.textContent).toBe('Watching');
+    expect(option('p2Button')?.textContent).toBe('Watching');
+    // A replay keeps its name, not a switch.
     await render(model({ mode: { kind: 'replay' } }));
     expect(label()?.textContent).toBe('Replay');
+    expect(document.querySelector('.ptcgsim-app-bar__switch')).toBe(null);
 
-    // No mode, no label (the lobby joining a room).
-    await render(model());
+    // Play online's page: Online pressed, Solo the way back.
+    const onPlaySolo = vi.fn();
+    await render(
+      model({ mode: undefined, onPlayOnline: undefined, onPlaySolo })
+    );
+    expect(option('p2Button')?.getAttribute('aria-pressed')).toBe('true');
+    await press('#p1Button');
+    expect(onPlaySolo).toHaveBeenCalledOnce();
+
+    // No mode and no way to play (the lobby joining a room): nothing.
+    await render(model({ mode: undefined, onPlayOnline: undefined }));
+    expect(document.querySelector('.ptcgsim-app-bar__switch')).toBe(null);
     expect(label()).toBe(null);
 
-    // A phone held upright has no room for the name: online, a light in
+    // A phone held upright has no room for the switch: online, a light in
     // the bar's corner, the name left to screen readers; at a Solo table
-    // nothing to see. The bar is no wider than its buttons.
+    // nothing to see (where to play leads the menu). The bar is no wider
+    // than its buttons.
     compact = true;
     await render(model({ mode: { kind: 'online', detail: 'Room K7PQ2M' } }));
     expect(label()?.dataset.lightOnly).toBe('true');
@@ -412,7 +441,6 @@ describe('AppBar', () => {
     // Last, after Settings; no second tutorial to open.
     expect(await openMenu('#appMenuButton')).toEqual([
       'settingsButton',
-      'fullscreenButton',
       'leaveTutorialButton',
     ]);
     expect(

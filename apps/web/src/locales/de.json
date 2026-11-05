@@ -3301,10 +3301,6 @@
     "context": "leave the replay",
     "translation": "Verlassen"
   },
-  "IkOhTI": {
-    "message": "Exit full screen",
-    "translation": "Vollbild beenden"
-  },
   "O6_hpe": {
     "message": "Exit replay",
     "translation": "Replay beenden"
@@ -3529,14 +3525,6 @@
   "TZN8p-": {
     "message": "Full card",
     "translation": "Ganze Karte"
-  },
-  "OwIqiD": {
-    "message": "Full screen",
-    "translation": "Vollbild"
-  },
-  "xosAFi": {
-    "message": "Full screen isn't available here",
-    "translation": "Vollbild ist hier nicht verfügbar"
   },
   "ULwemj": {
     "message": "Fusion Strike",
@@ -4386,6 +4374,11 @@
     "message": "Mine",
     "context": "my half of the table",
     "translation": "Meine"
+  },
+  "w2xVe_": {
+    "message": "Mode",
+    "context": "solo or online play",
+    "translation": ""
   },
   "5jDsb9": {
     "message": "Moon",

@@ -708,19 +708,17 @@ describe('remote room lobby wiring', () => {
     expect(createRoom).not.toHaveBeenCalled();
     expect(document.body.innerHTML).not.toContain('PTCGSIM2-INVITE:');
 
-    // The menu sits on the empty table's rail. From Play online it offers
-    // the Solo table; it never offers Play online itself.
+    // The menu sits on the empty table's rail. On Play online the bar's
+    // switch has Online pressed and Solo as the way back.
     expect(present('[data-testid="lobby-board"] #appMenuButton')).toBe(true);
     const entries = await menuEntryIds();
     expect(entries).toEqual(
-      expect.arrayContaining([
-        'p1Button',
-        'deckImportButton',
-        'settingsButton',
-        'fullscreenButton',
-      ])
+      expect.arrayContaining(['p1Button', 'deckImportButton', 'settingsButton'])
     );
-    expect(entries).not.toContain('p2Button');
+    expect(entries).not.toContain('fullscreenButton');
+    expect(
+      element('.ptcgsim-app-bar__switch #p2Button').getAttribute('aria-pressed')
+    ).toBe('true');
     // The keys are in Settings, and Settings is not on the Play online sheet.
     expect(entries).not.toContain('shortcutsButton');
     expect(present('#onlineSettingsButton')).toBe(false);
@@ -813,7 +811,10 @@ describe('remote room lobby wiring', () => {
     expect(present('#roomHeader')).toBe(false);
     const entries = await menuEntryIds();
     expect(entries).toContain('p2Button');
-    expect(entries).not.toContain('p1Button');
+    // Solo is the switch's side in play, Online the way to Play online.
+    expect(
+      element('.ptcgsim-app-bar__switch #p1Button').getAttribute('aria-pressed')
+    ).toBe('true');
     await act(async () => {
       releaseCreation?.();
       await flush();

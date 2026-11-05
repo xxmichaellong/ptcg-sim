@@ -744,10 +744,10 @@ test('solo creation serves one-player authority and locally disclosed replay wit
   await expect(page.locator('#turnButton')).toHaveCount(0);
   await expect(page.locator('#flipCoinButton')).toHaveCount(0);
   await expect(page.locator('#flipBoardButton')).toBeVisible();
-  // Replay's transport takes the rail; view controls stay in the menu.
+  // Replay's transport takes the rail; Settings stays in the menu.
   await expect(page.locator('#boardButtonContainer #exitReplay')).toBeVisible();
   await openAppMenu(page);
-  await expect(page.locator('#fullscreenButton')).toBeVisible();
+  await expect(page.locator('#settingsButton')).toBeVisible();
   await page.keyboard.press('Escape');
 
   const replayBottomBeforeFlip = await page.evaluate(

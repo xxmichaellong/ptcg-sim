@@ -3301,10 +3301,6 @@
     "context": "leave the replay",
     "translation": "ออก"
   },
-  "IkOhTI": {
-    "message": "Exit full screen",
-    "translation": "ออกจากโหมดเต็มหน้าจอ"
-  },
   "O6_hpe": {
     "message": "Exit replay",
     "translation": "ออกจากรีเพลย์"
@@ -3529,14 +3525,6 @@
   "TZN8p-": {
     "message": "Full card",
     "translation": "การ์ดเต็มใบ"
-  },
-  "OwIqiD": {
-    "message": "Full screen",
-    "translation": "เต็มหน้าจอ"
-  },
-  "xosAFi": {
-    "message": "Full screen isn't available here",
-    "translation": "ใช้โหมดเต็มหน้าจอที่นี่ไม่ได้"
   },
   "ULwemj": {
     "message": "Fusion Strike",
@@ -4386,6 +4374,11 @@
     "message": "Mine",
     "context": "my half of the table",
     "translation": "ของฉัน"
+  },
+  "w2xVe_": {
+    "message": "Mode",
+    "context": "solo or online play",
+    "translation": ""
   },
   "5jDsb9": {
     "message": "Moon",

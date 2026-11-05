@@ -627,31 +627,30 @@ describe('RemoteRoomRoute', () => {
     expect(boardHarness.props?.sidePanel).toBe(false);
     expect(boardHarness.props?.keysSuspended).toBe(false);
 
-    // The app bar holds the deck, where to play, the palette and the log;
-    // the rest is behind its last button, the menu, Settings first.
+    // The app bar holds where the table is played (Solo | Online), the
+    // deck, the palette and the log; the rest is behind its last button,
+    // the menu, Settings first.
     expect(
       [...document.querySelectorAll('.ptcgsim-app-bar button[id]')].map(
         (button) => button.id
       )
     ).toEqual([
-      'deckImportButton',
+      'p1Button',
       'p2Button',
+      'deckImportButton',
       'commandsButton',
       'activityButton',
       'appMenuButton',
     ]);
-    // The bar says so first.
-    expect(get('.ptcgsim-app-bar__mode').dataset.tableMode).toBe('solo');
+    // The switch says so first; the menu doesn't say it again.
+    expect(get('.ptcgsim-app-bar__switch').dataset.current).toBe('solo');
     await openMenu();
-    expect(get('.ptcgsim-app-menu-heading').textContent).toBe('Solo table');
+    expect(find('.ptcgsim-app-menu-heading')).toBeNull();
     expect(menuIds()[0]).toBe('settingsButton');
     expect(menuIds()).toEqual(
-      expect.arrayContaining([
-        'importReplay',
-        'exportState',
-        'fullscreenButton',
-      ])
+      expect.arrayContaining(['importReplay', 'exportState'])
     );
+    expect(menuIds()).not.toContain('fullscreenButton');
     // Solo has no room to leave and nothing to save online.
     for (const id of [
       'leaveRoomButton',
@@ -881,7 +880,10 @@ describe('RemoteRoomRoute', () => {
     expect(railIds()).toEqual(['flipBoardButton']);
     expect(moreIds()).toEqual([]);
     expect(boardHarness.props?.loadDeck).toBeUndefined();
-    expect(get('.ptcgsim-app-bar__mode').dataset.tableMode).toBe('watching');
+    expect(get('.ptcgsim-app-bar__switch').dataset.current).toBe('online');
+    expect(get('.ptcgsim-app-bar__switch #p2Button').textContent).toBe(
+      'Watching'
+    );
     await openMenu();
     expect(menuIds()).toContain('leaveRoomButton');
     expect(menuIds()).not.toContain('saveOnlineGame');
@@ -905,7 +907,6 @@ describe('RemoteRoomRoute', () => {
     const downloadTextFile = vi.fn(
       (_filename: string, _contents: string) => true
     );
-    const requestFullscreen = vi.fn(() => true);
     const requestBackground = vi.fn(async () => ({
       kind: 'image' as const,
       url: 'https://images.example.test/table.png',
@@ -924,7 +925,6 @@ describe('RemoteRoomRoute', () => {
         onResumeSavedGame={onResumeSavedGame}
         continuationAvailable={continuationAvailable}
         downloadTextFile={downloadTextFile}
-        requestFullscreen={requestFullscreen}
         requestBackground={requestBackground}
       />
     );
@@ -938,8 +938,10 @@ describe('RemoteRoomRoute', () => {
       // Nothing to press before the room seats us.
       expect(railIds()).toEqual([]);
       // The bar says the table is online, and not connected yet.
-      expect(get('.ptcgsim-app-bar__mode').dataset.tableMode).toBe('online');
-      expect(get('.ptcgsim-app-bar__mode').dataset.connecting).toBe('true');
+      expect(get('.ptcgsim-app-bar__switch').dataset.current).toBe('online');
+      expect(get('.ptcgsim-app-bar__switch #p2Button').dataset.connecting).toBe(
+        'true'
+      );
 
       // The log opens beside or over the table; its chat waits for the room.
       await openActivity();
@@ -964,7 +966,9 @@ describe('RemoteRoomRoute', () => {
       expect(get('#room-board').textContent).toBe('1');
       expect(main.dataset.sessionPhase).toBe('ready');
       expect(
-        get('.ptcgsim-app-bar__mode').hasAttribute('data-connecting')
+        get('.ptcgsim-app-bar__switch #p2Button').hasAttribute(
+          'data-connecting'
+        )
       ).toBe(false);
       await openActivity();
       expect(get('#activitySheet').textContent).toContain('Room ABCDEFGH2345');
@@ -1286,33 +1290,6 @@ describe('RemoteRoomRoute', () => {
         '1: Blue flipped heads\n\n'
       );
 
-      await chooseMenuItem('fullscreenButton');
-      expect(requestFullscreen).toHaveBeenCalledOnce();
-      // Once full screen, the same entry takes the page back out.
-      const exitFullscreen = vi.fn();
-      Object.defineProperty(document, 'fullscreenElement', {
-        configurable: true,
-        value: document.documentElement,
-      });
-      Object.defineProperty(document, 'exitFullscreen', {
-        configurable: true,
-        value: exitFullscreen,
-      });
-      await act(async () => {
-        document.dispatchEvent(new Event('fullscreenchange'));
-      });
-      await openMenu();
-      expect(get('#fullscreenButton').textContent).toBe('Exit full screen');
-      await click('#fullscreenButton');
-      await settle();
-      expect(exitFullscreen).toHaveBeenCalledOnce();
-      expect(requestFullscreen).toHaveBeenCalledOnce();
-      Reflect.deleteProperty(document, 'fullscreenElement');
-      Reflect.deleteProperty(document, 'exitFullscreen');
-      await act(async () => {
-        document.dispatchEvent(new Event('fullscreenchange'));
-      });
-
       await click('#exitReplay');
       expect(boardHarness.replaying).toBe(false);
       await openActivity();
@@ -1375,8 +1352,10 @@ describe('RemoteRoomRoute', () => {
     });
     expect(railIds()).toContain('exitReplay');
     expect(find('#jsonReplay')).not.toBeNull();
+    // The bar names the replay (no switch over it); the menu doesn't again.
+    expect(get('.ptcgsim-app-bar__mode').dataset.tableMode).toBe('replay');
     await openMenu();
-    expect(get('.ptcgsim-app-menu-heading').textContent).toBe('Replay');
+    expect(find('.ptcgsim-app-menu-heading')).toBeNull();
     expect(menuIds()).not.toContain('importReplay');
     await closeMenu();
     expect(socket.sent).toHaveLength(sentBeforeImport);

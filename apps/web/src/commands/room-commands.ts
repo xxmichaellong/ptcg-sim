@@ -35,12 +35,10 @@ export interface RoomCommandContext {
  * chat, and the way back from the deck screen.
  */
 export const roomCommands = (context: RoomCommandContext): PaletteCommand[] => {
-  const fullscreen =
-    typeof document !== 'undefined' && document.fullscreenElement !== null;
   const commands = menuCommands([
     ...primaryEntries(context.menu),
     // Settings lists itself and its sections (SettingsSheet).
-    ...restEntries(context.menu, fullscreen).filter(
+    ...restEntries(context.menu).filter(
       (entry) => !('id' in entry) || entry.id !== 'settingsButton'
     ),
     ...helpEntries(context.shortcutsHint),
