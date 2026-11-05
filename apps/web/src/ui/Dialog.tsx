@@ -57,10 +57,11 @@ const hasContent = (node: ReactNode): boolean =>
 /**
  * How long an answered dialog may take to animate out before it leaves
  * anyway. Base UI keeps a closed dialog until the browser says its exit
- * animation has finished, which needs painted frames; a browser that stops
- * painting for a while (WebKit has, in CI) would keep it in the page, and
- * the dialog queue waits on it, so no other dialog could open. The slowest
- * exit (the "slow" speed) is under 200 ms.
+ * animation has finished, which needs painted frames; a tab that stops
+ * painting (backgrounded mid-exit, say) while its timers still run would
+ * keep it in the page, and the dialog queue waits on it, so no other
+ * dialog could open. (WebKit in CI once stopped timers too; this can't
+ * help there.) The slowest exit (the "slow" speed) is under 200 ms.
  */
 export const DIALOG_EXIT_GRACE_MS = 1000;
 
