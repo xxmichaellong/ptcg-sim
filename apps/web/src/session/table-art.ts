@@ -41,7 +41,7 @@ const look = (id: TableArtId, name: MessageDescriptor): TableArt => ({
 });
 
 export const TABLE_ARTS: readonly TableArt[] = [
-  look('cream', msg({ message: 'Cream', comment: 'A table look: the colour' })),
+  look('cream', msg({ message: 'Cream', comment: 'A table look: the color' })),
   look('frost', msg({ message: 'Frost', comment: 'A table look' })),
   look(
     'sakura',
@@ -49,25 +49,25 @@ export const TABLE_ARTS: readonly TableArt[] = [
   ),
   look(
     'parchment',
-    msg({ message: 'Parchment', comment: 'A table look: the colour' })
+    msg({ message: 'Parchment', comment: 'A table look: the color' })
   ),
   look(
     'classic',
     msg({ message: 'Green felt', comment: 'A table look: a green cloth mat' })
   ),
-  look('ocean', msg({ message: 'Ocean', comment: 'A table look: the colour' })),
-  look('slate', msg({ message: 'Slate', comment: 'A table look: the colour' })),
+  look('ocean', msg({ message: 'Ocean', comment: 'A table look: the color' })),
+  look('slate', msg({ message: 'Slate', comment: 'A table look: the color' })),
   look(
     'midnight',
     msg({ message: 'Midnight', comment: 'A table look: midnight blue' })
   ),
   look(
     'burgundy',
-    msg({ message: 'Burgundy', comment: 'A table look: the colour' })
+    msg({ message: 'Burgundy', comment: 'A table look: the color' })
   ),
   look(
     'charcoal',
-    msg({ message: 'Charcoal', comment: 'A table look: the colour' })
+    msg({ message: 'Charcoal', comment: 'A table look: the color' })
   ),
 ];
 
