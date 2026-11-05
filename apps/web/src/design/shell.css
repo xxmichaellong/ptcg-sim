@@ -28,6 +28,25 @@ body {
   font-size: var(--text-md);
 }
 
+/* A game, not a page: a double tap or a drag over the table, a menu or a
+   panel never selects their words (a double tap once selected a whole
+   menu's items). What a player types, and what they may want to copy --
+   the chat's lines (activity.css), the help pages -- selects again. */
+body {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+:is(
+  input,
+  textarea,
+  [contenteditable]:not([contenteditable='false']),
+  .ptcgsim-help-article
+) {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
 body,
 button,
 input,
