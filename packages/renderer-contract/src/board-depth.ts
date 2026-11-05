@@ -409,6 +409,22 @@ export const tableShadowStyle = (
 };
 
 /** Shared between renderers and overlays; it only reads recipient-safe scenes. */
+/**
+ * The board's own spots, which the tilted table is fitted to: not the
+ * hands, nor the flat windows a look or an attachment opens over it, which
+ * come and go without the board changing (fitted to them, the table would
+ * shrink and move as they open).
+ */
+const boardSpots = (scene: BoardScene): ZoneSceneNode[] =>
+  scene.zones.filter(
+    (zone) =>
+      zone.kind !== 'hand' &&
+      zone.kind !== 'inspection' &&
+      zone.kind !== 'attachmentResolution' &&
+      zone.bounds.width > 0 &&
+      zone.bounds.height > 0
+  );
+
 export class BoardDepthProjection {
   readonly settings: BoardDepthPreferences;
   readonly camera: TableCamera;
@@ -476,10 +492,7 @@ export class BoardDepthProjection {
         .filter((zone) => zone.bounds.y + zone.bounds.height / 2 >= centre)
         .map((zone) => drawnStrip(zone).y)
     );
-    const spots = scene.zones.filter(
-      (zone) =>
-        zone.kind !== 'hand' && zone.bounds.width > 0 && zone.bounds.height > 0
-    );
+    const spots = boardSpots(scene);
     const banded =
       shifts.size > 0 &&
       spots.length > 0 &&
@@ -572,12 +585,7 @@ export class BoardDepthProjection {
       fitBounds &&
       scene.viewport.width > scene.viewport.height
     ) {
-      const spots = scene.zones.filter(
-        (zone) =>
-          zone.kind !== 'hand' &&
-          zone.bounds.width > 0 &&
-          zone.bounds.height > 0
-      );
+      const spots = boardSpots(scene);
       if (spots.length > 0) {
         const top = Math.min(...spots.map((zone) => zone.bounds.y));
         const matTop = projectTablePoint(this.camera, {

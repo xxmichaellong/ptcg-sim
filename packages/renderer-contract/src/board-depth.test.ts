@@ -991,6 +991,47 @@ describe('a board laid out tilted (tiltedTable)', () => {
     expect(zoneDropTargetAt(scene, back.x, back.y)).toBe(bench.id);
   });
 
+  it('keeps the board where it is as a look or an attachment opens a window over it', () => {
+    for (const [width, height, tilted] of [
+      [667, 375, true],
+      [1440, 900, true],
+      [1440, 900, false],
+      [844, 390, false],
+    ] as const) {
+      const scene = sceneAt(width, height, tilted);
+      const before = new BoardDepthProjection(scene, preferences).camera;
+      const near = hands(scene, height).near;
+      // Flat windows, laid over the near side and the far edge: past where
+      // the board's own spots reach.
+      const opened: BoardScene = {
+        ...scene,
+        zones: [
+          ...scene.zones,
+          {
+            ...near,
+            id: 'inspection:test',
+            kind: 'inspection',
+            bounds: {
+              x: 4,
+              y: height * 0.3,
+              width: width - 8,
+              height: height * 0.68,
+            },
+          },
+          {
+            ...near,
+            id: 'attachment:test',
+            kind: 'attachmentResolution',
+            bounds: { x: 2, y: 2, width: width - 4, height: height * 0.4 },
+          },
+        ],
+      };
+      expect(new BoardDepthProjection(opened, preferences).camera).toEqual(
+        before
+      );
+    }
+  });
+
   it('leaves a board laid out with the hands inside as it was', () => {
     const scene = sceneAt(1440, 900, false);
     const depth = new BoardDepthProjection(scene, preferences);

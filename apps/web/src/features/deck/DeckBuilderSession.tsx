@@ -160,7 +160,7 @@ export interface DeckBuilderCustody {
  * on the table is kept for the next time. Before the room decides what to
  * install, so the kept decks count as on the table already.
  */
-const useSeatDeckMemory = (
+export const useSeatDeckMemory = (
   store: DeckBuilderStore,
   roomCode: string | undefined
 ): void => {
@@ -180,25 +180,28 @@ const useSeatDeckMemory = (
       }
       store.synchronizeDeck(target, seat.deck, seat.label);
     }
-    const { slots } = store.getSnapshot();
-    const installed = {
-      main: slots.main.installedRevision,
-      alternate: slots.alternate.installedRevision,
-    };
+    // Only an install the room took is kept: a seat whose edit a kept
+    // table sets aside (forgetInstalls) counts as installed without
+    // anything having gone on the table.
+    let previous = store.getSnapshot().slots;
     return store.subscribe(() => {
       const { slots } = store.getSnapshot();
       for (const target of DECK_TARGETS) {
         const slot = slots[target];
-        if (slot.installedRevision === installed[target]) continue;
-        installed[target] = slot.installedRevision;
+        const before = previous[target];
+        const taken =
+          before.installingRevision !== undefined &&
+          slot.installingRevision === undefined &&
+          slot.installedRevision === before.installingRevision;
         // Edited since, the deck on the table is not the one shown: the
         // next install keeps that one.
-        if (slot.dirty) continue;
+        if (!taken || slot.dirty) continue;
         rememberSeatDeck(roomCode, target, {
           deck: slot.deck,
           ...(slot.label ? { label: slot.label } : {}),
         });
       }
+      previous = slots;
     });
   }, [roomCode, store]);
 };

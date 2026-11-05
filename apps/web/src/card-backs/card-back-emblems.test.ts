@@ -11,10 +11,9 @@ import {
   emblemsVersion,
   pokemonNames,
   resetEmblemsForTests,
+  settleEmblemsForTests as settle,
   subscribeEmblems,
 } from './card-back-emblems.js';
-
-const settle = () => new Promise((resolve) => setTimeout(resolve, 10));
 
 afterEach(() => {
   resetEmblemsForTests();

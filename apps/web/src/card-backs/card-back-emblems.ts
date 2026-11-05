@@ -72,7 +72,7 @@ export const emblemFile = (emblem: CardBackEmblem): string | undefined => {
 // ---- The emblems a design shows, kept as data URLs ----------------------
 
 const loaded = new Map<string, string>();
-const loading = new Set<string>();
+const loading = new Map<string, Promise<void>>();
 /** When each emblem last failed to load: asked again a minute after. */
 const failed = new Map<string, number>();
 const listeners = new Set<() => void>();
@@ -94,8 +94,9 @@ const load = (file: string): void => {
   if (loading.has(file) || typeof globalThis.fetch !== 'function') return;
   const last = failed.get(file);
   if (last !== undefined && Date.now() - last < RETRY_MS) return;
-  loading.add(file);
-  void (async () => {
+  // Kept as on its way before it starts, so a fetch that fails at once
+  // still clears it.
+  const fetchEmblem = async (): Promise<void> => {
     try {
       const response = await globalThis.fetch(file);
       if (!response.ok) throw new Error(`emblem ${String(response.status)}`);
@@ -108,7 +109,8 @@ const load = (file: string): void => {
     } finally {
       loading.delete(file);
     }
-  })();
+  };
+  loading.set(file, Promise.resolve().then(fetchEmblem));
 };
 
 /**
@@ -133,6 +135,11 @@ export const subscribeEmblems = (listener: () => void): (() => void) => {
 
 /** Counts the emblems come so far: a snapshot for useSyncExternalStore. */
 export const emblemsVersion = (): number => version;
+
+/** Tests: waits for every emblem on its way to come or fail. */
+export const settleEmblemsForTests = async (): Promise<void> => {
+  await Promise.all(loading.values());
+};
 
 /** Tests: forgets every emblem kept, and every listener. */
 export const resetEmblemsForTests = (): void => {
