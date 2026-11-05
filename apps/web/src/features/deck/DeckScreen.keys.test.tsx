@@ -674,6 +674,49 @@ describe('the deck screen from the keyboard', () => {
     });
   });
 
+  it('closes a card’s sheet on an Esc pressed before the focus is in it, the deck screen staying', async () => {
+    const library = new DeckLibrary({ backend: null });
+    library.create({
+      name: 'Pidgey',
+      format: 'standard',
+      cards: [
+        {
+          card: {
+            id: 'mew-16',
+            name: 'Pidgey',
+            category: 'Pokémon',
+            image: 'https://example.test/mew-16.png',
+          },
+          count: 1,
+        },
+      ],
+    });
+    const onClose = await render(vi.fn(), library);
+    await act(async () =>
+      host
+        .querySelector<HTMLButtonElement>('button[aria-label="Edit Pidgey"]')!
+        .click()
+    );
+    const row = host.querySelector<HTMLButtonElement>('button.deck-row__card')!;
+    // The press on its row, and Esc on the row straight after, before the
+    // focus has gone into the sheet.
+    await act(async () => row.click());
+    await act(async () => {
+      row.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'Escape',
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    });
+    await frames();
+    expect(onClose).not.toHaveBeenCalled();
+    expect(
+      document.querySelector('#nativeDeckBuilderCardPreviewScrim[data-open]')
+    ).toBeNull();
+  });
+
   it('closes a custom card’s window on Esc after a click on its blank parts, the deck screen staying', async () => {
     const onClose = await render();
     await act(async () =>

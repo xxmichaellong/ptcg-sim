@@ -3,6 +3,7 @@ import { useEffect, useRef, type KeyboardEvent, type ReactNode } from 'react';
 
 import { dialogRequestsSnapshot } from '../../ui/dialog-requests.js';
 import {
+  isModalWindowOpen,
   isOverlaySurfaceTarget,
   OVERLAY_SURFACE_ATTRIBUTE,
 } from '../../ui/overlay-surface.js';
@@ -95,7 +96,8 @@ export const DeckLayer = ({
       ) {
         layer.current?.focus({ preventScroll: true });
       }
-      if (event.key === 'Escape') {
+      // A sheet open over the screen closes on it first.
+      if (event.key === 'Escape' && !isModalWindowOpen()) {
         event.preventDefault();
         close.current();
       }
@@ -170,7 +172,10 @@ export const DeckLayer = ({
       // An input method's Esc drops its candidate.
       isInputMethodKey(event.nativeEvent) ||
       (event.target instanceof Element &&
-        event.target.closest(OWNS_ESCAPE) !== null)
+        event.target.closest(OWNS_ESCAPE) !== null) ||
+      // A sheet just opened over it (a card's, from its row) has Esc
+      // before the focus is in it.
+      isModalWindowOpen()
     ) {
       return;
     }

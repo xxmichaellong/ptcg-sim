@@ -27,3 +27,14 @@ export const isOverlayKeyTarget = (target: EventTarget | null): boolean => {
   );
   return dialog === null || !dialog.hasAttribute('data-closed');
 };
+
+/**
+ * Whether a modal sheet or dialog is open. It hears Esc on the page (Base
+ * UI), the focus in it or not yet (a card's sheet just opened from its
+ * row), so a screen under it leaves Esc to it.
+ */
+export const isModalWindowOpen = (): boolean =>
+  typeof document !== 'undefined' &&
+  document.querySelector(
+    '.ptcgsim-sheet-viewport[data-modal="true"] .ptcgsim-sheet[data-open], .ptcgsim-ui-dialog[data-open]'
+  ) !== null;

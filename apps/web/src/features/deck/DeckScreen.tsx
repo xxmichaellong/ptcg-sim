@@ -26,6 +26,7 @@ import { preferences } from '../../preferences/preference-store.js';
 import { cardBackImage } from '../../card-backs/card-back-image.js';
 import { STANDARD_CARD_BACK_IMAGE } from '../../card-backs/card-back-presets.js';
 import { dialogRequestsSnapshot } from '../../ui/dialog-requests.js';
+import { isModalWindowOpen } from '../../ui/overlay-surface.js';
 import { useKeyboardInset } from '../../ui/keyboard-inset.js';
 import { useSearchTyping } from '../../ui/search-typing.js';
 import { toast } from '../../ui/toast.js';
@@ -820,8 +821,10 @@ export const DeckScreen = ({
         event.defaultPrevented ||
         // An input method's Esc drops its candidate.
         isInputMethodKey(event) ||
-        // A confirmation or prompt open over the screen closes on it.
+        // A confirmation or prompt open over the screen closes on it, and
+        // so does a sheet, the focus in it or not yet.
         dialogRequestsSnapshot().length > 0 ||
+        isModalWindowOpen() ||
         !(target instanceof Element) ||
         // Focus lost to the page (the button pressed went away) counts as
         // on the screen, which covers the page.
