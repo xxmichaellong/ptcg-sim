@@ -630,6 +630,8 @@ describe('BoardMotionDirector', () => {
     const node = document.createElement('div');
     node.dataset.markerId = marker.id;
     Object.assign(node.style, { left: '100px', top: '120px', width: '32px' });
+    // Painted where its style puts it, on a flat table.
+    node.getBoundingClientRect = () => new DOMRect(100, 120, 32, 32);
     test.surface.append(node);
     test.director.commit(null, before, undefined, paintedOf(before), new Set());
     test.director.commit(
@@ -653,6 +655,59 @@ describe('BoardMotionDirector', () => {
     test.director.setSettings({ reduced: true, durationScale: 1 });
     expect(feedback.isConnected).toBe(false);
     expect(test.director.active).toBe(false);
+  });
+
+  it('pops a counter on a tilted table where it shows, round its own centre, not from the corner', () => {
+    const test = setup();
+    const stackId = 'stack:blue:active';
+    const damaged = (damage: number): MatchViewState => ({
+      ...base,
+      revision: base.revision + damage,
+      stacks: {
+        ...base.stacks,
+        [stackId]: { ...base.stacks[stackId]!, damage },
+      },
+    });
+    const before = sceneOf(damaged(30));
+    const after = sceneOf(damaged(40));
+    const marker = after.markers.find(
+      (candidate) => candidate.kind === 'damage'
+    )!;
+    // A tilted table's marker: its box at the table's corner, placed on its
+    // card by a matrix3d from there; it shows at (300, 200).
+    const node = document.createElement('div');
+    node.dataset.markerId = marker.id;
+    Object.assign(node.style, {
+      left: '0px',
+      top: '0px',
+      width: '32px',
+      transformOrigin: '0 0',
+      transform: 'matrix3d(1,0,0,0,0,0.8,0,0,0,0,1,0,300,200,0,1)',
+    });
+    const token = document.createElement('span');
+    token.className = 'ptcgsim-marker__token';
+    node.append(token);
+    node.getBoundingClientRect = () => new DOMRect(300, 200, 32, 26);
+    test.surface.append(node);
+    test.director.commit(null, before, undefined, paintedOf(before), new Set());
+    test.director.commit(
+      before,
+      after,
+      { cause: 'advance' },
+      paintedOf(after),
+      new Set()
+    );
+    // The counter bounces in place: its token scales, not the placed box.
+    expect(recorded.some((entry) => entry.element === token)).toBe(true);
+    expect(recorded.some((entry) => entry.element === node)).toBe(false);
+    // Its +10 over it, not in the table's corner.
+    const feedback = test.ghostLayer.querySelector<HTMLElement>(
+      '.ptcgsim-damage-change'
+    )!;
+    expect(feedback.textContent).toBe('+10');
+    expect(feedback.style.left).toBe('316px');
+    expect(feedback.style.top).toBe('192px');
+    test.director.cancelAll();
   });
 
   it('hands a prize back to the pointer during a gather, and cancels the rest on relayout', () => {

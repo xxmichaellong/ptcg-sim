@@ -912,9 +912,17 @@ export class BoardMotionDirector {
     );
     if (!marker || !canAnimate(marker)) return;
     this.damageChange(marker, pulse);
+    // The counter itself bounces where it lies, round its own centre. On a
+    // tilted table the marker's box is placed by a matrix3d from the
+    // table's corner (transform-origin 0 0): scaling it would throw the
+    // counter out toward that corner and spring it back.
+    const token =
+      marker.querySelector<HTMLElement>(
+        '.ptcgsim-marker__token, .ptcgsim-marker__tab'
+      ) ?? marker;
     if (this.settings.reduced) {
       this.track(
-        marker.animate([{ opacity: 0.35 }, { opacity: 1 }], { duration: 200 })
+        token.animate([{ opacity: 0.35 }, { opacity: 1 }], { duration: 200 })
       );
       return;
     }
@@ -929,7 +937,7 @@ export class BoardMotionDirector {
       frames.push({ scale: String(1 + 0.32 * offset) });
     }
     this.track(
-      marker.animate(frames, {
+      token.animate(frames, {
         duration: settle * 1000 * this.settings.durationScale,
         easing: 'linear',
       })
@@ -989,6 +997,15 @@ export class BoardMotionDirector {
       previous.remove();
       this.ghosts.delete(previous);
     }
+    // Over the counter as it is painted: on a tilted table its box sits at
+    // the table's corner, placed by a matrix3d, so its style says nothing
+    // of where it shows. Measured on screen, in the layer's own units.
+    const box = marker.getBoundingClientRect();
+    if (box.width <= 0 && box.height <= 0) return;
+    const frame = layer.getBoundingClientRect();
+    const scaleX = layer.offsetWidth > 0 ? frame.width / layer.offsetWidth : 1;
+    const scaleY =
+      layer.offsetHeight > 0 ? frame.height / layer.offsetHeight : 1;
     const label = document.createElement('span');
     label.className = 'ptcgsim-damage-change';
     label.dataset.feedbackFor = pulse.markerId;
@@ -996,8 +1013,8 @@ export class BoardMotionDirector {
     label.setAttribute('aria-hidden', 'true');
     label.textContent = `${delta > 0 ? '+' : '−'}${Math.abs(delta)}`;
     Object.assign(label.style, {
-      left: `${Number.parseFloat(marker.style.left) + Number.parseFloat(marker.style.width) / 2}px`,
-      top: `${Math.max(12, Number.parseFloat(marker.style.top) - 8)}px`,
+      left: `${(box.left + box.width / 2 - frame.left) / scaleX}px`,
+      top: `${Math.max(12, (box.top - frame.top) / scaleY - 8)}px`,
     });
     layer.append(label);
     this.ghosts.add(label);
