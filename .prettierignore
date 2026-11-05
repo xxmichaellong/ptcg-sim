@@ -6,3 +6,5 @@ pnpm-lock.yaml
 # Written by lingui extract and scripts/translate.ts in their own shape;
 # `lingui check sync` (check:i18n:v2) compares them byte for byte.
 apps/web/src/locales/
+# Agents' worktrees and local settings (excluded from git locally).
+.claude/

@@ -25,6 +25,8 @@ export default [
       '**/*.tsbuildinfo',
       'apps/server/worker-configuration.d.ts',
       'artifacts/**',
+      // Agents' worktrees and local settings (excluded from git locally).
+      '.claude/**',
       'client/**',
       // Wrangler writes generated bundles here whenever `wrangler dev` runs,
       // which the browser gate now does. They are git-ignored build output.
