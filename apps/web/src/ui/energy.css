@@ -1,7 +1,9 @@
 /*
- * The Energy symbols: a type's letter on its colour, as Limitless writes
- * them ({R}). The deck screen and the table's Pokémon window both draw
- * them (EnergySymbol.tsx).
+ * The Energy symbols, as the cards print them: one sprite of the eleven
+ * types (from PokéWiki's TCG symbols, 72px WebP), named by its content so
+ * it is cached for good. The deck screen and the table's Pokémon window
+ * both draw them (EnergySymbol.tsx). The colours stay for what is tinted
+ * by a type (the window's band).
  */
 :root {
   --energy-grass: #4a9e45;
@@ -18,65 +20,17 @@
 }
 
 .energy-symbol {
-  --energy: var(--energy-colorless);
   --energy-size: 18px;
+  --energy-index: 10;
 
-  display: inline-grid;
+  display: inline-block;
   flex: none;
-  place-items: center;
   width: var(--energy-size);
   height: var(--energy-size);
   border-radius: 50%;
-  background:
-    radial-gradient(
-      circle at 35% 30%,
-      rgb(255 255 255 / 0.28),
-      transparent 60%
-    ),
-    var(--energy);
-  color: #fff;
-  font-family: var(--font-display);
-  font-size: calc(var(--energy-size) * 0.56);
-  font-weight: var(--weight-bold);
-  line-height: 1;
-  box-shadow:
-    inset 0 -1px 0 rgb(0 0 0 / 0.25),
-    0 0 0 1px rgb(0 0 0 / 0.12);
+  /* Eleven 72px symbols side by side; the type's index picks its own. */
+  background: url('/v2/assets/energy/types.eb5656aeac.webp') no-repeat
+    calc(var(--energy-index) * 10%) 0 / 1100% 100%;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.14);
   vertical-align: middle;
-}
-
-.energy-symbol[data-type='Grass'] {
-  --energy: var(--energy-grass);
-}
-.energy-symbol[data-type='Fire'] {
-  --energy: var(--energy-fire);
-}
-.energy-symbol[data-type='Water'] {
-  --energy: var(--energy-water);
-}
-.energy-symbol[data-type='Lightning'] {
-  --energy: var(--energy-lightning);
-  color: #3a2c00;
-}
-.energy-symbol[data-type='Psychic'] {
-  --energy: var(--energy-psychic);
-}
-.energy-symbol[data-type='Fighting'] {
-  --energy: var(--energy-fighting);
-}
-.energy-symbol[data-type='Darkness'] {
-  --energy: var(--energy-darkness);
-}
-.energy-symbol[data-type='Metal'] {
-  --energy: var(--energy-metal);
-}
-.energy-symbol[data-type='Fairy'] {
-  --energy: var(--energy-fairy);
-}
-.energy-symbol[data-type='Dragon'] {
-  --energy: var(--energy-dragon);
-}
-.energy-symbol[data-type='Colorless'] {
-  --energy: var(--energy-colorless);
-  color: #3b372f;
 }

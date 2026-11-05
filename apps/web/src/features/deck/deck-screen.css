@@ -3753,10 +3753,9 @@ button.deck-check__issue {
 }
 
 .deck-card-details__text p .energy-symbol {
-  width: 16px;
-  height: 16px;
+  --energy-size: 16px;
+
   margin-inline: 1px;
-  font-size: 9px;
   vertical-align: -3px;
 }
 

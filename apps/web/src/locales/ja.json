@@ -939,20 +939,6 @@
     ],
     "translation": "{name}がウラが出るまでコインを投げました: {faces}(オモテ{heads, plural, other {#回}})"
   },
-  "FpPgbw": {
-    "message": "{name} gave {card} +{amount} HP",
-    "comments": [
-      "Log line: a player marked an effect adding to a Pokémon's HP (a Tool's +HP). {name} is a player's name, {card} the Pokémon's name, {amount} the HP added."
-    ],
-    "translation": ""
-  },
-  "0i1Lon": {
-    "message": "{name} gave {card} −{amount} HP",
-    "comments": [
-      "Log line: a player marked an effect taking from a Pokémon's HP. {name} is a player's name, {card} the Pokémon's name, {amount} the HP taken."
-    ],
-    "translation": ""
-  },
   "Bqr3lz": {
     "message": "{name} hand",
     "comments": [
@@ -1057,7 +1043,7 @@
     "comments": [
       "Log line: a player took off an effect's change to a Pokémon's HP. {name} is a player's name, {card} the Pokémon's name."
     ],
-    "translation": ""
+    "translation": "{name}が{card}のHPを印刷どおりに戻しました"
   },
   "3xOj4K": {
     "message": "{name} put a reminder on {card}: {reminder, select, cantAttack {can't attack} cantRetreat {can't retreat} takesLess {takes less damage} hitsHarder {attacks do more} other {no Abilities}}",
@@ -1094,6 +1080,20 @@
     ],
     "translation": "{name}は{marker}をリセットしました"
   },
+  "DKZFxs": {
+    "message": "{name} set {card} to +{amount} HP",
+    "comments": [
+      "Log line: a player set what effects add to a Pokémon's HP (a Tool's +HP), in all. {name} is a player's name, {card} the Pokémon's name, {amount} the HP added in all."
+    ],
+    "translation": "{name}が{card}を+{amount} HPにしました"
+  },
+  "ANcoWo": {
+    "message": "{name} set {card} to −{amount} HP",
+    "comments": [
+      "Log line: a player set what effects take from a Pokémon's HP, in all. {name} is a player's name, {card} the Pokémon's name, {amount} the HP taken in all."
+    ],
+    "translation": "{name}が{card}を−{amount} HPにしました"
+  },
   "ywLLuj": {
     "message": "{name} shuffled {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}}",
     "comments": [
@@ -1120,7 +1120,7 @@
     "comments": [
       "{name} is an Ability, marked used this turn; a press takes the mark off."
     ],
-    "translation": ""
+    "translation": "{name}は使用済み"
   },
   "I_6aBo": {
     "message": "{name} used {card}",
@@ -1526,7 +1526,7 @@
   },
   "MeliNG": {
     "message": "10 less HP",
-    "translation": ""
+    "translation": "HPを10減らす"
   },
   "AHfGsB": {
     "message": "10 more damage",
@@ -1538,7 +1538,7 @@
   },
   "7P7DG-": {
     "message": "10 more HP",
-    "translation": ""
+    "translation": "HPを10増やす"
   },
   "c224Tl": {
     "message": "3 draws three",
@@ -3810,7 +3810,7 @@
     "comments": [
       "Controls for what an effect (a Tool's +HP) adds to a Pokémon's HP."
     ],
-    "translation": ""
+    "translation": "効果によるHP"
   },
   "fdmYlD": {
     "message": "HP left",
@@ -4332,7 +4332,7 @@
     "comments": [
       "Takes an Ability's Used mark off, this turn."
     ],
-    "translation": ""
+    "translation": "未使用にする"
   },
   "386rEt": {
     "message": "Mark as unused",
@@ -4428,7 +4428,7 @@
   "w2xVe_": {
     "message": "Mode",
     "context": "solo or online play",
-    "translation": ""
+    "translation": "モード"
   },
   "5jDsb9": {
     "message": "Moon",
@@ -5427,7 +5427,7 @@
     "comments": [
       "Over a Pokémon's HP changed by an effect: the HP printed on its card."
     ],
-    "translation": ""
+    "translation": "印刷HP {0}"
   },
   "groO0o": {
     "message": "Prism Star",

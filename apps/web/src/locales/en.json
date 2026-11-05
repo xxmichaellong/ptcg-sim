@@ -939,20 +939,6 @@
     ],
     "translation": "{name} flipped until tails: {faces} ({heads, plural, one {# head} other {# heads}})"
   },
-  "FpPgbw": {
-    "message": "{name} gave {card} +{amount} HP",
-    "comments": [
-      "Log line: a player marked an effect adding to a Pokémon's HP (a Tool's +HP). {name} is a player's name, {card} the Pokémon's name, {amount} the HP added."
-    ],
-    "translation": "{name} gave {card} +{amount} HP"
-  },
-  "0i1Lon": {
-    "message": "{name} gave {card} −{amount} HP",
-    "comments": [
-      "Log line: a player marked an effect taking from a Pokémon's HP. {name} is a player's name, {card} the Pokémon's name, {amount} the HP taken."
-    ],
-    "translation": "{name} gave {card} −{amount} HP"
-  },
   "Bqr3lz": {
     "message": "{name} hand",
     "comments": [
@@ -1093,6 +1079,20 @@
       "Log line: a player turned their once-per-game marker back to unused. {name} is a player's name; {marker} is GX or VSTAR (keep as is)."
     ],
     "translation": "{name} reset their {marker}"
+  },
+  "DKZFxs": {
+    "message": "{name} set {card} to +{amount} HP",
+    "comments": [
+      "Log line: a player set what effects add to a Pokémon's HP (a Tool's +HP), in all. {name} is a player's name, {card} the Pokémon's name, {amount} the HP added in all."
+    ],
+    "translation": "{name} set {card} to +{amount} HP"
+  },
+  "ANcoWo": {
+    "message": "{name} set {card} to −{amount} HP",
+    "comments": [
+      "Log line: a player set what effects take from a Pokémon's HP, in all. {name} is a player's name, {card} the Pokémon's name, {amount} the HP taken in all."
+    ],
+    "translation": "{name} set {card} to −{amount} HP"
   },
   "ywLLuj": {
     "message": "{name} shuffled {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}}",

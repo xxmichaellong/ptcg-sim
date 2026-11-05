@@ -864,6 +864,8 @@ const commandVariant = (command: WireGameCommand): string => {
       return `${command.type}:${command.marker}:${command.used}`;
     case 'SetStackReminder':
       return `${command.type}:${command.reminder}:${command.on}`;
+    case 'SetHpModifier':
+      return `${command.type}:${command.modifier === 0 ? 'printed' : command.modifier > 0 ? 'more' : 'less'}`;
     case 'ApplyCardSteps':
       return `${command.type}:steps=${command.steps.length}`;
     default: {

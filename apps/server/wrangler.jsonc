@@ -28,6 +28,7 @@
       "!/v2/assets/background2.webp",
       "!/v2/assets/table/*",
       "!/v2/assets/backs/*",
+      "!/v2/assets/energy/*",
     ],
   },
   "durable_objects": {
