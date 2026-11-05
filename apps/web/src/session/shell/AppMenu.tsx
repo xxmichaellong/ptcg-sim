@@ -706,7 +706,13 @@ export const AppBar = ({
         </div>
       ) : null}
       <div className="ptcgsim-app-bar__group">
-        <Tooltip content={settingsLabel} side="bottom">
+        {/* Quiet while Settings is open, as a menu's button is: the bar
+            may move under a resting pointer as the drawer docks. */}
+        <Tooltip
+          content={settingsLabel}
+          side="bottom"
+          disabled={model.settingsOpen === true}
+        >
           <RailButton
             id="settingsButton"
             icon={GearSixIcon}
