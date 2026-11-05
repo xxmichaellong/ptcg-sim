@@ -34,6 +34,7 @@ import {
 import {
   DeckBuilderStore,
   sameLabel,
+  type DeckBuilderSlotSnapshot,
   type DeckBuilderTarget,
 } from './deck-builder-store.js';
 import {
@@ -185,24 +186,43 @@ export const useSeatDeckMemory = (
     // table sets aside (forgetInstalls) counts as installed without
     // anything having gone on the table.
     let previous = store.getSnapshot().slots;
+    // Each seat's deck as it went to the room, kept if the room takes it.
+    const sent: Partial<
+      Record<
+        DeckBuilderTarget,
+        Pick<DeckBuilderSlotSnapshot, 'revision' | 'deck' | 'label'>
+      >
+    > = {};
     return store.subscribe(() => {
       const { slots } = store.getSnapshot();
       for (const target of DECK_TARGETS) {
         const slot = slots[target];
         const before = previous[target];
-        const taken =
-          before.installingRevision !== undefined &&
-          slot.installingRevision === undefined &&
-          slot.installedRevision === before.installingRevision;
-        const keep = () =>
+        const keep = ({
+          deck,
+          label,
+        }: Pick<DeckBuilderSlotSnapshot, 'deck' | 'label'>) =>
           rememberSeatDeck(roomCode, target, {
-            deck: slot.deck,
-            ...(slot.label ? { label: slot.label } : {}),
+            deck,
+            ...(label ? { label } : {}),
           });
-        if (taken) {
-          // Edited since, the deck on the table is not the one shown: the
-          // next install keeps that one.
-          if (!slot.dirty) keep();
+        if (
+          slot.installingRevision !== undefined &&
+          slot.installingRevision !== before.installingRevision
+        ) {
+          sent[target] = slot;
+        }
+        const settled =
+          before.installingRevision !== undefined &&
+          slot.installingRevision === undefined;
+        if (settled) {
+          const deck = sent[target];
+          delete sent[target];
+          if (slot.installedRevision !== before.installingRevision) continue;
+          // The deck shown is the one on the table, with any name it has
+          // taken since; edited since, the one that went, as it went.
+          if (!slot.dirty) keep(slot);
+          else if (deck?.revision === slot.installedRevision) keep(deck);
           continue;
         }
         // Saved or renamed with the same cards on the table (no install):
@@ -217,7 +237,7 @@ export const useSeatDeckMemory = (
           continue;
         }
         const seat = recallSeatDecks(roomCode)[target];
-        if (seat && sameDeckList(seat.deck, slot.deck)) keep();
+        if (seat && sameDeckList(seat.deck, slot.deck)) keep(slot);
       }
       previous = slots;
     });

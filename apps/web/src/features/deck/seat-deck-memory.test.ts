@@ -7,6 +7,7 @@ import { recallSeatDecks, rememberSeatDeck } from './seat-deck-memory.js';
 
 const ROOM = 'ABCDEFGH2345';
 const OTHER = 'ZZZZZZZZ2345';
+const KEY = 'ptcgsim.solo-decks.v2';
 
 const card = (name: string): DeckCard => ({
   id: 'TWM 130',
@@ -48,6 +49,28 @@ describe('seat deck memory', () => {
     expect(recallSeatDecks(OTHER)).toEqual({});
   });
 
+  it('keeps each room’s seats apart, so an older tab never writes over the latest room’s', () => {
+    // Room B opened in a second tab after A: A's tab goes on writing.
+    rememberSeatDeck(OTHER, 'main', { deck: deck('Frost') });
+    rememberSeatDeck(ROOM, 'main', { deck: deck('Ember') });
+    sessionStorage.clear();
+    expect(recallSeatDecks(OTHER).main?.deck[0]?.card.name).toBe('Frost');
+    expect(recallSeatDecks(ROOM).main?.deck[0]?.card.name).toBe('Ember');
+    // The last few rooms are kept, the oldest dropped.
+    const rooms = [
+      'AAAAAAAA2345',
+      'BBBBBBBB2345',
+      'CCCCCCCC2345',
+      'DDDDDDDD2345',
+    ];
+    for (const code of rooms)
+      rememberSeatDeck(code, 'main', { deck: deck(code) });
+    expect(recallSeatDecks(OTHER)).toEqual({});
+    for (const code of rooms) {
+      expect(recallSeatDecks(code).main?.deck[0]?.card.name).toBe(code);
+    }
+  });
+
   it('reads this tab’s first, then the browser’s latest', () => {
     rememberSeatDeck(ROOM, 'main', { deck: deck('Ember') });
     // A new tab: nothing in its session, the browser's latest still there.
@@ -58,15 +81,15 @@ describe('seat deck memory', () => {
   it('drops what is damaged, seat by seat, and keeps no empty deck', () => {
     rememberSeatDeck(ROOM, 'main', { deck: deck('Ember') });
     rememberSeatDeck(ROOM, 'alternate', { deck: deck('Frost') });
-    const stored = JSON.parse(sessionStorage.getItem('ptcgsim.solo-decks.v1')!);
-    stored.seats.alternate.deck = [{ card: { nope: true }, count: 4 }];
-    sessionStorage.setItem('ptcgsim.solo-decks.v1', JSON.stringify(stored));
-    localStorage.setItem('ptcgsim.solo-decks.v1', JSON.stringify(stored));
+    const stored = JSON.parse(sessionStorage.getItem(KEY)!);
+    stored.rooms[0].seats.alternate.deck = [{ card: { nope: true }, count: 4 }];
+    sessionStorage.setItem(KEY, JSON.stringify(stored));
+    localStorage.setItem(KEY, JSON.stringify(stored));
     const kept = recallSeatDecks(ROOM);
     expect(kept.main?.deck[0]?.card.name).toBe('Ember');
     expect(kept.alternate).toBeUndefined();
-    sessionStorage.setItem('ptcgsim.solo-decks.v1', '{not json');
-    localStorage.setItem('ptcgsim.solo-decks.v1', '{not json');
+    sessionStorage.setItem(KEY, '{not json');
+    localStorage.setItem(KEY, '{not json');
     expect(recallSeatDecks(ROOM)).toEqual({});
     rememberSeatDeck(ROOM, 'main', { deck: deckListOf([]) });
     expect(recallSeatDecks(ROOM)).toEqual({});

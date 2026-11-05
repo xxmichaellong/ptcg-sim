@@ -37,10 +37,13 @@ free again and the claim takes it with a new session.
    beside them as it changes (`ptcgsim.solo-log.v1`): the room sends a table
    on rejoining, not the lines that told it. A log read back is checked line
    by line and dropped whole if any is damaged. The deck screen's seats are
-   kept with it too (`ptcgsim.solo-decks.v1`, `seat-deck-memory.ts`): each
-   seat's deck and label as it goes on the table, put back on a seat not
-   being edited when the page sits down at the same room (2026-11-05: a
-   reload had left both seats "No deck yet" over a game in play). A
+   kept with it too (`ptcgsim.solo-decks.v2`, `seat-deck-memory.ts`): each
+   seat's deck and label once the room takes it (the deck as it was sent,
+   though the seat was edited since; a save or rename of that deck follows),
+   put back on a seat not being edited when the page sits down at the same
+   room (2026-11-05: a reload had left both seats "No deck yet" over a game
+   in play). Each storage keeps the last four rooms' seats by room code, so
+   a tab still at an older room never writes over the latest room's. A
    tutorial's practice room is never remembered.
 2. **Landing on Solo sits back down first.** `openRemoteSoloRoom` tries this
    tab's room, then the browser's latest: it exchanges the claim, connects,

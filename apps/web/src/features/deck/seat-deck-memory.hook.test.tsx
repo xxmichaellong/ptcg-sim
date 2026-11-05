@@ -67,6 +67,28 @@ describe('the Solo room’s seats, kept with it', () => {
     await act(async () => root.unmount());
   });
 
+  it('keeps the deck that went once the room takes it, though the seat was edited since', async () => {
+    const store = new DeckBuilderStore({ alternateEnabled: true });
+    const root = await mount(store);
+    store.replaceDeck('main', deck('Ember'), { name: 'Ember ex' });
+    const sent = store.beginNextDirtyInstall()!;
+    // Edited while it is on its way.
+    store.replaceDeck('main', deck('Frost'), { name: 'Frost ex' });
+    await act(async () => store.settleInstall(sent, 'installed'));
+    expect(store.getSnapshot().slots.main.dirty).toBe(true);
+    expect(recallSeatDecks(ROOM).main?.label?.name).toBe('Ember ex');
+    expect(recallSeatDecks(ROOM).main?.deck[0]?.card.name).toBe('Ember');
+    // The edit refused: the table still plays the deck kept.
+    const refused = store.beginNextDirtyInstall()!;
+    await act(async () => store.settleInstall(refused, 'failed'));
+    expect(recallSeatDecks(ROOM).main?.label?.name).toBe('Ember ex');
+    // Taken: kept.
+    const again = store.beginNextDirtyInstall()!;
+    await act(async () => store.settleInstall(again, 'installed'));
+    expect(recallSeatDecks(ROOM).main?.label?.name).toBe('Frost ex');
+    await act(async () => root.unmount());
+  });
+
   it('keeps a new name for the deck on the table, saved or renamed, but not for another deck', async () => {
     const store = new DeckBuilderStore({ alternateEnabled: true });
     const root = await mount(store);

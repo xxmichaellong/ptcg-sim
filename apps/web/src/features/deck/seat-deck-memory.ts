@@ -11,8 +11,9 @@ import { decodeDeckList, MAX_DECK_NAME_LENGTH } from './deck-library.js';
  * deck is written as it goes on the table and read back when the page sits
  * down at the same room again.
  *
- * As the room itself is: this tab's in session storage, the browser's latest
- * in local storage.
+ * As the room itself is: this tab's in session storage, the browser's in
+ * local storage. Each keeps the last few rooms' seats by room code, so a tab
+ * still at an older room never writes over the latest room's.
  */
 
 export interface SeatDeck {
@@ -22,9 +23,16 @@ export interface SeatDeck {
 
 export type SeatDecks = Partial<Record<DeckBuilderTarget, SeatDeck>>;
 
-const KEY = 'ptcgsim.solo-decks.v1';
-const FORMAT = 'ptcgsim-solo-decks-v1';
+const KEY = 'ptcgsim.solo-decks.v2';
+const FORMAT = 'ptcgsim-solo-decks-v2';
 const TARGETS = ['main', 'alternate'] as const;
+/** Rooms kept in each storage, the latest written first. */
+const MAX_ROOMS = 4;
+
+interface KeptRoom {
+  readonly roomCode: string;
+  readonly seats: SeatDecks;
+}
 
 const storages = (): Storage[] => {
   const found: Storage[] = [];
@@ -72,35 +80,47 @@ const decodeSeat = (value: unknown): SeatDeck | undefined => {
   return { deck: deckListOf(entries), ...(label ? { label } : {}) };
 };
 
-const readFrom = (
-  storage: Storage,
-  roomCode: string
-): SeatDecks | undefined => {
+const decodeRoom = (value: unknown): KeptRoom | undefined => {
+  if (
+    !isRecord(value) ||
+    typeof value.roomCode !== 'string' ||
+    !V2_ROOM_CODE_PATTERN.test(value.roomCode) ||
+    !isRecord(value.seats)
+  ) {
+    return undefined;
+  }
+  const seats: SeatDecks = {};
+  for (const target of TARGETS) {
+    const seat = decodeSeat(value.seats[target]);
+    if (seat) seats[target] = seat;
+  }
+  return { roomCode: value.roomCode, seats };
+};
+
+/** The rooms kept in `storage`; anything damaged left out, room by room. */
+const readFrom = (storage: Storage): KeptRoom[] => {
   let raw: string | null;
   try {
     raw = storage.getItem(KEY);
   } catch {
-    return undefined;
+    return [];
   }
-  if (!raw) return undefined;
+  if (!raw) return [];
   try {
     const value: unknown = JSON.parse(raw);
     if (
       !isRecord(value) ||
       value.format !== FORMAT ||
-      value.roomCode !== roomCode ||
-      !isRecord(value.seats)
+      !Array.isArray(value.rooms)
     ) {
-      return undefined;
+      return [];
     }
-    const seats: SeatDecks = {};
-    for (const target of TARGETS) {
-      const seat = decodeSeat(value.seats[target]);
-      if (seat) seats[target] = seat;
-    }
-    return seats;
+    return value.rooms.flatMap((room) => {
+      const kept = decodeRoom(room);
+      return kept ? [kept] : [];
+    });
   } catch {
-    return undefined;
+    return [];
   }
 };
 
@@ -111,16 +131,17 @@ const readFrom = (
 export const recallSeatDecks = (roomCode: string): SeatDecks => {
   if (!V2_ROOM_CODE_PATTERN.test(roomCode)) return {};
   for (const storage of storages()) {
-    const seats = readFrom(storage, roomCode);
-    if (seats) return seats;
+    const kept = readFrom(storage).find((room) => room.roomCode === roomCode);
+    if (kept) return kept.seats;
   }
   return {};
 };
 
 /**
  * Keeps `seat`'s deck as the one on `roomCode`'s table, beside the other
- * seat's (kept as it was, for the same room). An empty deck (the seat
- * cleared) forgets the seat's, so a reload doesn't bring it back.
+ * seat's (kept as it was, for the same room), and other rooms' as they
+ * were. An empty deck (the seat cleared) forgets the seat's, so a reload
+ * doesn't bring it back.
  */
 export const rememberSeatDeck = (
   roomCode: string,
@@ -131,10 +152,13 @@ export const rememberSeatDeck = (
   const { [target]: _previous, ...others } = recallSeatDecks(roomCode);
   const seats: SeatDecks =
     seat.deck.length === 0 ? others : { ...others, [target]: seat };
-  const text = JSON.stringify({ format: FORMAT, roomCode, seats });
   for (const storage of storages()) {
+    const rooms = [
+      { roomCode, seats },
+      ...readFrom(storage).filter((room) => room.roomCode !== roomCode),
+    ].slice(0, MAX_ROOMS);
     try {
-      storage.setItem(KEY, text);
+      storage.setItem(KEY, JSON.stringify({ format: FORMAT, rooms }));
     } catch {
       // Storage full or refused: the seats are simply not kept.
     }
