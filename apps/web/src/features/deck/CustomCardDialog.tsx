@@ -15,6 +15,7 @@ import {
 } from '@ptcgsim/game-core';
 import {
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type ClipboardEvent,
@@ -295,7 +296,10 @@ export const CustomCardDialog = ({
     uploads.current.clear();
   };
 
-  useEffect(() => {
+  // Opened again, it starts empty: before it is drawn, so nothing typed or
+  // pasted the moment it opens is wiped by the reset (a passive effect
+  // could run after the first keys).
+  useLayoutEffect(() => {
     if (!open) return;
     setQuantity('1');
     setName('');

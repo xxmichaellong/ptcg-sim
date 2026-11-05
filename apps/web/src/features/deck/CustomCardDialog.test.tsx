@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 
 import type { DeckCard } from '@ptcgsim/deck-core';
-import { act } from 'react';
+import { act, useEffect } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -226,6 +226,47 @@ describe('custom card pictures', () => {
       }),
     ]);
     expect(cards[0]!.image).toBe('/v2/images/top.png');
+  });
+});
+
+describe('opened again', () => {
+  it('keeps a name typed the moment it is shown: it is emptied before it is drawn', async () => {
+    await fill('#nativeCustomCardName', 'Homebrew');
+    await act(async () =>
+      root.render(
+        <CustomCardDialog open={false} onClose={onClose} onAdd={onAdd} />
+      )
+    );
+    // Keys that reach the name as it is shown, ahead of the dialog's own
+    // effects (CI caught a fill wiped by the reset that came after it).
+    let typed = false;
+    const TypesAtOnce = () => {
+      useEffect(() => {
+        if (typed) return;
+        typed = true;
+        const input = host.querySelector<HTMLInputElement>(
+          '#nativeCustomCardName'
+        )!;
+        Object.getOwnPropertyDescriptor(
+          HTMLInputElement.prototype,
+          'value'
+        )!.set!.call(input, 'Splashmon');
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+      return null;
+    };
+    await act(async () =>
+      root.render(
+        <>
+          <TypesAtOnce />
+          <CustomCardDialog open onClose={onClose} onAdd={onAdd} />
+        </>
+      )
+    );
+    expect(typed).toBe(true);
+    expect($<HTMLInputElement>('#nativeCustomCardName').value).toBe(
+      'Splashmon'
+    );
   });
 });
 
