@@ -100,6 +100,35 @@ card itself. Using an Ability was the card menu's "ability used" marker
    writing away, not the card. A card's own text survives the catalog's
    upgrades of the deck's facts and a swap to another print.
 
+9. **What a card is, as the table reads it.** A BREAK is known by its
+   name, or (one made by hand) by its stage or its BREAK layout. Its
+   window adds the Stage below's moves, and takes that Stage's Weakness,
+   Resistance and Retreat: the printed BREAK has none, and the catalog's
+   Retreat 0 for it is no cost of its own. A BREAK given text of its own
+   keeps what that says, the Stage filling the rest. One whose own text
+   no one knows shows nothing of its Stage as its own (no HP, no
+   stage). A card printed in pieces (V-UNION, LEGEND) is one Pokémon, and
+   its window reads every piece's moves, each once.
+10. **The window's damage is a field like any other.** A number typed is
+    set when it is left, and also when the window goes another way: a
+    press outside, a card dragged out, a move used, a card read large.
+    Only Esc drops it. Steps (+, −, the arrow keys) go on from the number
+    typed, else from the last one asked for, until the table shows it or
+    four seconds pass.
+11. **A hand-made card's id says what it is** (`customCardIdOf`: name,
+    kind, picture, layout and its own text), as the card dialog and a
+    deck file make it. Edited, it is another card: its id follows
+    (`textedCardId`), and it joins a card already in the deck that is now
+    the same. The editor's history records each step's change of ids, so
+    the sheet and the deck's cover follow the card through Undo and Redo.
+    A catalogued print keeps its id; the sheet shows it as the deck now
+    has it.
+12. **A deck file keeps a card's text.** The simulator CSV gains a Text
+    column after Presentation (`QTY,Name,Type,URL,Presentation,Text`),
+    the card's own text as JSON, which an import checks as the table does
+    (`isCardText`) and keeps through the catalog's facts. A row's own text
+    makes it another card than the same print without it.
+
 ## Consequences
 
 - The opponent sees which print each card in play is (its picture already
