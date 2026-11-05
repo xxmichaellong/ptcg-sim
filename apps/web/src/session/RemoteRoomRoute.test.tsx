@@ -900,6 +900,8 @@ describe('RemoteRoomRoute', () => {
     runtime.dispose();
   });
 
+  // The longest walk in the file (a room, its Settings pages, a replay and
+  // leaving): more than the default 5 s on a loaded machine.
   it('composes a multiplayer room: menu, activity, settings, replay and leaving', async () => {
     const unmountOverlays = await mountOverlayHost();
     const socketFactory = new FakeSocketFactory();
@@ -1321,7 +1323,7 @@ describe('RemoteRoomRoute', () => {
     } finally {
       await unmountOverlays();
     }
-  });
+  }, 20_000);
 
   it('imports a replay into a Solo table and leaves it again from the rail', async () => {
     const socketFactory = new FakeSocketFactory();
