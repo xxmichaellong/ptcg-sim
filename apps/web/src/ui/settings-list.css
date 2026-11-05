@@ -92,6 +92,34 @@
   cursor: auto;
 }
 
+/* A segmented choice fits its card, however narrow the column and long
+   the language's words: its choices share the width while they fit and
+   wrap onto another line when they don't. */
+.settings-row[data-kind='block'] .ptcgsim-segmented-control {
+  display: flex;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.settings-row[data-kind='block'] .ptcgsim-segmented-control__option {
+  flex: 1 1 0;
+  min-width: min(100%, max-content);
+}
+
+.settings-row[data-kind='block'] .ptcgsim-segmented-control__option label {
+  height: auto;
+  min-height: 30px;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  text-align: center;
+}
+
+@media (pointer: coarse) {
+  .settings-row[data-kind='block'] .ptcgsim-segmented-control__option label {
+    min-height: 40px;
+  }
+}
+
 @media (hover: hover) and (pointer: fine) {
   .settings-row:is(
       [data-kind='link'],

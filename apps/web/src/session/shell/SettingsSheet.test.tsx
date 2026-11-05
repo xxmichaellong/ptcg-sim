@@ -434,6 +434,45 @@ describe('SettingsSheet', () => {
     window.history.replaceState(null, '', '/');
   });
 
+  it('starts copying the details within the press, before the build is known', async () => {
+    let answer: (response: Response) => void = () => undefined;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        () =>
+          new Promise<Response>((resolve) => {
+            answer = resolve;
+          })
+      )
+    );
+    const written: Promise<Blob>[] = [];
+    const write = vi.fn(async (items: { blob: Promise<Blob> }[]) => {
+      written.push(items[0]!.blob);
+    });
+    vi.stubGlobal(
+      'ClipboardItem',
+      class {
+        readonly blob: Promise<Blob>;
+        constructor(parts: Record<string, Promise<Blob>>) {
+          this.blob = parts['text/plain']!;
+        }
+      }
+    );
+    Object.defineProperty(globalThis.navigator, 'clipboard', {
+      value: { write, writeText: vi.fn() },
+      configurable: true,
+    });
+    await render();
+    await press('settingsReportBugRow');
+    await act(async () =>
+      document.querySelector<HTMLElement>('#copyDiagnosticsButton')!.click()
+    );
+    // Asked for in the press itself, though the build is still on its way.
+    expect(write).toHaveBeenCalledOnce();
+    answer(Response.json({ buildId: 'preview-late' }));
+    expect(await (await written[0]!).text()).toContain('preview-late');
+  });
+
   it('gives way to the keyboard shortcuts, and has no keys on a touch screen', async () => {
     const { onOpenChange } = await render();
     expect(

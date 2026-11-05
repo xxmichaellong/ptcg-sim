@@ -101,6 +101,48 @@ test.describe('a browser set to Japanese', () => {
   });
 });
 
+test.describe('Russian, with Settings beside the table', () => {
+  test.use({ locale: 'ru-RU' });
+
+  test('fits every segmented choice inside its card in the docked column', async ({
+    page,
+    context,
+  }) => {
+    test.setTimeout(90_000);
+    await ownRoomBudget(context);
+    await openTable(page);
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
+    for (const at of ['table', 'motion'] as const) {
+      await openSettings(page, at);
+      await expect(page.locator('aside#settings')).toBeVisible();
+      // Russian's longer words wrap onto another line rather than run past
+      // the card (which clips them) in the narrow column.
+      const outside = await page
+        .locator('#settings .settings-group__card')
+        .evaluateAll((cards) =>
+          cards.flatMap((card) => {
+            const box = card.getBoundingClientRect();
+            return [
+              ...card.querySelectorAll(
+                '.ptcgsim-segmented-control__option label'
+              ),
+            ]
+              .filter((label) => {
+                const rect = label.getBoundingClientRect();
+                return (
+                  rect.right > box.right + 0.5 ||
+                  rect.left < box.left - 0.5 ||
+                  label.scrollWidth > label.clientWidth + 1
+                );
+              })
+              .map((label) => label.textContent ?? '');
+          })
+        );
+      expect(outside, at).toEqual([]);
+    }
+  });
+});
+
 for (const locale of ['ar', 'ru']) {
   test.describe(`a narrow phone in ${locale}`, () => {
     test.use({

@@ -84,6 +84,7 @@ import {
 } from '../../ui/SettingsList.js';
 import { Sheet } from '../../ui/Sheet.js';
 import { Tooltip } from '../../ui/Tooltip.js';
+import { currentBrowserInvitationClipboard } from '../browser-invitation-clipboard.js';
 import { TABLE_ARTS } from '../table-art.js';
 import { TABLE_PREFERENCES } from '../table-preferences.js';
 import {
@@ -687,12 +688,18 @@ const ReportBugPage = ({
           }
           trailing="none"
           onClick={() => {
-            void diagnostics(menu)
-              .then((text) => globalThis.navigator.clipboard.writeText(text))
-              .then(
-                () => setCopied('copied'),
-                () => setCopied('failed')
-              );
+            // The write starts within the press, the details to follow: a
+            // browser that asks for the press (Safari) would refuse it after
+            // the build is fetched.
+            const clipboard = currentBrowserInvitationClipboard();
+            if (!clipboard) {
+              setCopied('failed');
+              return;
+            }
+            void clipboard.writeText(diagnostics(menu)).then(
+              () => setCopied('copied'),
+              () => setCopied('failed')
+            );
           }}
         />
       </SettingsGroup>
