@@ -770,7 +770,15 @@
               "kind": "type"
             },
             {
+              "name": "canonicalCardBackEmblem",
+              "kind": "value"
+            },
+            {
               "name": "canonicalCardText",
+              "kind": "value"
+            },
+            {
+              "name": "CARD_BACK_BALLS",
               "kind": "value"
             },
             {
@@ -778,11 +786,19 @@
               "kind": "value"
             },
             {
-              "name": "CARD_BACK_EMBLEMS",
+              "name": "CARD_BACK_ENERGY",
+              "kind": "value"
+            },
+            {
+              "name": "CARD_BACK_LEGACY_EMBLEMS",
               "kind": "value"
             },
             {
               "name": "CARD_BACK_PATTERNS",
+              "kind": "value"
+            },
+            {
+              "name": "CARD_BACK_POKEMON_COUNT",
               "kind": "value"
             },
             {
@@ -1040,6 +1056,10 @@
             {
               "name": "InspectionWorkArea",
               "kind": "type"
+            },
+            {
+              "name": "isCardBackEmblem",
+              "kind": "value"
             },
             {
               "name": "isCardBackValue",

@@ -6,8 +6,11 @@
   Cache-Control: public, max-age=31536000, immutable
 
 # The shipped card backs are named by their content too (ADR-041), and so
-# is the Energy symbols' sprite.
+# are the Energy symbols' sprite and the sleeve emblems' folder.
 /v2/assets/backs/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/v2/assets/emblems/*
   Cache-Control: public, max-age=31536000, immutable
 
 /v2/assets/energy/*

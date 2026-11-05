@@ -184,6 +184,58 @@
   outline-offset: 2px;
 }
 
+/* One of the player's own: its tile, and a delete button on its corner,
+   shown on hover or when the tile has the keyboard (always under a finger). */
+.card-back-tile__own {
+  position: relative;
+  display: grid;
+}
+
+.card-back-tile__delete {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-2);
+  box-shadow: var(--shadow-1);
+  color: var(--color-text-muted);
+  font-size: 14px;
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out),
+    background-color var(--duration-fast) var(--ease-out);
+}
+
+.card-back-tile__own:hover .card-back-tile__delete,
+.card-back-tile__own:focus-within .card-back-tile__delete {
+  opacity: 1;
+}
+
+.card-back-tile__delete:hover {
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+}
+
+.card-back-tile__delete:focus-visible {
+  opacity: 1;
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+@media (hover: none) {
+  .card-back-tile__delete {
+    opacity: 1;
+  }
+}
+
 /* ---- Design -------------------------------------------------------- */
 
 .card-back-design {
@@ -256,7 +308,119 @@
   outline-offset: 2px;
 }
 
-/* ---- Picture ------------------------------------------------------- */
+/* The emblem: a shelf at a time (Pokémon, Poké Balls, Energy), Pokémon
+   searched by name or number, each the real artwork. */
+.card-back-emblems__shelves {
+  align-self: stretch;
+}
+
+.card-back-emblems__search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.card-back-emblems__search > svg {
+  position: absolute;
+  left: var(--space-2);
+  color: var(--color-text-faint);
+  pointer-events: none;
+}
+
+.card-back-emblems__search input {
+  width: 100%;
+  padding-left: calc(var(--space-2) + 20px);
+}
+
+.card-back-emblems__grid {
+  --emblem-thumb: 44px;
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(calc(var(--emblem-thumb) + 8px), 1fr)
+  );
+  gap: var(--space-1);
+  max-height: 228px;
+  margin: -3px;
+  padding: 3px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.card-back-emblem {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: calc(var(--emblem-thumb) + 8px);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  content-visibility: auto;
+  contain-intrinsic-size: calc(var(--emblem-thumb) + 8px);
+}
+
+.card-back-emblem input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.card-back-emblem__thumb,
+.card-back-emblem__image,
+.card-back-emblem__none {
+  width: var(--emblem-thumb);
+  height: var(--emblem-thumb);
+  pointer-events: none;
+}
+
+.card-back-emblem__thumb {
+  background-repeat: no-repeat;
+}
+
+.card-back-emblem__image {
+  object-fit: contain;
+}
+
+/* None: an empty ring with a slash. */
+.card-back-emblem__none {
+  border: 2px solid var(--color-text-faint);
+  border-radius: 50%;
+  background: linear-gradient(
+    45deg,
+    transparent calc(50% - 1px),
+    var(--color-text-faint) calc(50% - 1px) calc(50% + 1px),
+    transparent calc(50% + 1px)
+  );
+  transform: scale(0.6);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .card-back-emblem:hover {
+    background: var(--color-surface-hover);
+  }
+}
+
+.card-back-emblem:has(input:checked) {
+  background: var(--color-accent-soft);
+  box-shadow: 0 0 0 2px var(--color-accent);
+}
+
+.card-back-emblem:has(input:focus-visible) {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.card-back-emblems__empty {
+  grid-column: 1 / -1;
+  margin: var(--space-2) 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+/* ---- Image --------------------------------------------------------- */
 
 .card-back-picture {
   display: flex;
@@ -313,10 +477,39 @@
   margin: 0;
 }
 
+/* A back of the player's own just deleted, with the way to put it back. */
+.card-back-chooser__deleted {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-muted);
+}
+
+.card-back-chooser__undo {
+  min-height: 28px;
+  padding: 0 var(--space-2);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-accent);
+  font: inherit;
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+}
+
+.card-back-chooser__undo:hover {
+  background: var(--color-accent-soft);
+}
+
+.card-back-chooser__undo:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
 /* ---- Touch and phones ---------------------------------------------- */
 
 @media (hover: none) {
-  /* Nothing to drop a picture from. */
+  /* Nothing to drop an image from. */
   .card-back-picture__or {
     display: none;
   }
@@ -330,6 +523,15 @@
 
   .card-back-picture__link-row .ptcgsim-ui-field__input {
     height: 44px;
+  }
+
+  .card-back-tile__delete {
+    width: 36px;
+    height: 36px;
+  }
+
+  .card-back-chooser__undo {
+    min-height: 44px;
   }
 }
 

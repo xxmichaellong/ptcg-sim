@@ -31,13 +31,13 @@ export type BrowserTextPrompt = (
   options: PromptOptions
 ) => Promise<string | null>;
 
-/** An outside picture fetched through the app, or null. */
+/** An outside image fetched through the app, or null. */
 export type CardBackPictureFetch = (
   url: string,
   signal: AbortSignal
 ) => Promise<Blob | null>;
 
-/** A picture made a back of our own: its `img:` reference, or null. */
+/** An image made a back of our own: its `img:` reference, or null. */
 export type CardBackPictureSave = (
   picture: Blob,
   focus: CardBackCropFocus,
@@ -50,6 +50,11 @@ export interface BrowserCardBackRequestOptions {
   readonly current?: string;
   /** Backs the player's saved decks wear, offered again. */
   readonly worn?: readonly string[];
+  /**
+   * Takes a back the player deleted off the saved decks that wear it
+   * (they wear Standard again); answers how to put it back on them.
+   */
+  readonly forgetWorn?: (back: string) => () => void;
   /** Opens the chooser: the overlay panel by default. */
   readonly open?: (options: PanelOptions) => Promise<string | null>;
   readonly fetchPicture?: CardBackPictureFetch;
@@ -80,10 +85,11 @@ const saveAsOwn: CardBackPictureSave = async (picture, focus, signal) => {
 
 /**
  * Opens the card-back chooser (ADR-041 stage 2) and answers with the back
- * picked: a preset, a design, or a picture already stored as our own --
+ * picked: a preset, a design, or an image already stored as our own --
  * an outside link is fetched through the app and saved before it is
  * offered, so no opponent ever loads its host. Cancel or an aborted
- * request changes nothing. A design or picture chosen is kept to hand.
+ * request changes nothing. A design or image chosen is kept to hand; one
+ * deleted in the chooser leaves the recent backs and the saved decks.
  */
 export const requestBrowserCardBack: BrowserCardBackRequest = async (
   options = {}
@@ -92,6 +98,17 @@ export const requestBrowserCardBack: BrowserCardBackRequest = async (
   const open = options.open ?? openPanel;
   const store = options.preferences ?? preferences();
   const recent = store.get(RECENT_CARD_BACK_PREFERENCES).backs;
+  const forget = (back: string): (() => void) => {
+    const before = store.get(RECENT_CARD_BACK_PREFERENCES).backs;
+    store.set(RECENT_CARD_BACK_PREFERENCES, {
+      backs: before.filter((each) => each !== back),
+    });
+    const putBack = options.forgetWorn?.(back);
+    return () => {
+      store.set(RECENT_CARD_BACK_PREFERENCES, { backs: before });
+      putBack?.();
+    };
+  };
 
   let answer: string | null;
   try {
@@ -105,6 +122,7 @@ export const requestBrowserCardBack: BrowserCardBackRequest = async (
           recent,
           onChoose: settle,
           onCancel: () => settle(null),
+          onForget: forget,
           fetchPicture: options.fetchPicture ?? fetchThroughApp,
           savePicture: options.savePicture ?? saveAsOwn,
         }),

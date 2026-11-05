@@ -5,9 +5,10 @@
  * and replays keep loading; a value with none of the prefixes below is a
  * legacy URL (ADR-013), read as `url:`.
  *
- * - `preset:<id>`: a back shipped with the app (`standard`, its recolours).
+ * - `preset:<id>`: a back shipped with the app (`standard`, `black`, its
+ *   recolors).
  * - `design:1.<base>.<pattern>.<accent>.<emblem>`: a sleeve drawn from four
- *   values, each from a fixed list (no free text).
+ *   values, each from a fixed list or range (no free text).
  * - `img:<sha256>`: an image in the app's own store.
  * - `url:<https URL>`: a legacy URL, which no viewer loads on the table.
  */
@@ -27,47 +28,131 @@ export const LEGACY_DEFAULT_CARD_BACK_URL = '/v2/assets/cardback.png';
 
 export const CARD_BACK_COLOURS = [
   'ink',
+  'charcoal',
   'slate',
+  'stone',
   'navy',
+  'denim',
   'royal',
   'sky',
+  'ocean',
   'teal',
+  'mint',
   'jade',
+  'forest',
+  'sage',
+  'olive',
   'lime',
   'gold',
   'amber',
+  'peach',
+  'rust',
+  'coral',
   'crimson',
+  'wine',
   'rose',
+  'mauve',
   'violet',
+  'lavender',
   'plum',
-  'snow',
+  'cocoa',
   'sand',
+  'cream',
+  'snow',
 ] as const;
 export type CardBackColour = (typeof CARD_BACK_COLOURS)[number];
 
 export const CARD_BACK_PATTERNS = [
   'plain',
   'stripes',
+  'pinstripes',
   'checks',
+  'grid',
+  'plaid',
   'dots',
+  'halftone',
   'waves',
+  'swirl',
   'rays',
   'diamonds',
+  'chevrons',
+  'hexagons',
   'scales',
+  'crosshatch',
 ] as const;
 export type CardBackPattern = (typeof CARD_BACK_PATTERNS)[number];
 
-export const CARD_BACK_EMBLEMS = [
-  'none',
-  'ball',
-  'star',
-  'bolt',
-  'leaf',
-  'flame',
-  'drop',
-  'moon',
+/**
+ * The emblem at a sleeve's middle is real Pokémon iconography (ADR-041 §6):
+ * a Pokémon by its National Pokédex number (`pokemon-25`), a Poké Ball
+ * (`ball-great`), an Energy type (`energy-fire`), or none.
+ */
+export const CARD_BACK_POKEMON_COUNT = 1025;
+export const CARD_BACK_BALLS = [
+  'poke',
+  'great',
+  'ultra',
+  'master',
+  'premier',
+  'luxury',
+  'dusk',
+  'heal',
+  'quick',
+  'timer',
+  'repeat',
+  'nest',
+  'net',
+  'dive',
+  'safari',
 ] as const;
-export type CardBackEmblem = (typeof CARD_BACK_EMBLEMS)[number];
+export const CARD_BACK_ENERGY = [
+  'grass',
+  'fire',
+  'water',
+  'lightning',
+  'psychic',
+  'fighting',
+  'darkness',
+  'metal',
+  'fairy',
+  'dragon',
+  'colorless',
+] as const;
+/**
+ * The first designer's drawn emblems, kept in designs already made: each
+ * now draws as the real one it stood for.
+ */
+export const CARD_BACK_LEGACY_EMBLEMS: Readonly<Record<string, string>> =
+  Object.freeze({
+    ball: 'ball-poke',
+    star: 'energy-colorless',
+    bolt: 'energy-lightning',
+    leaf: 'energy-grass',
+    flame: 'energy-fire',
+    drop: 'energy-water',
+    moon: 'energy-darkness',
+  });
+/** A design's emblem: `none`, or one of the lists above. */
+export type CardBackEmblem = string;
+
+const POKEMON_EMBLEM = /^pokemon-([1-9][0-9]{0,3})$/u;
+
+/** Whether a value names an emblem a design may carry. */
+export const isCardBackEmblem = (value: string): boolean => {
+  if (value === 'none' || Object.hasOwn(CARD_BACK_LEGACY_EMBLEMS, value))
+    return true;
+  const pokemon = POKEMON_EMBLEM.exec(value);
+  if (pokemon) return Number(pokemon[1]) <= CARD_BACK_POKEMON_COUNT;
+  if (value.startsWith('ball-'))
+    return (CARD_BACK_BALLS as readonly string[]).includes(value.slice(5));
+  if (value.startsWith('energy-'))
+    return (CARD_BACK_ENERGY as readonly string[]).includes(value.slice(7));
+  return false;
+};
+
+/** An emblem as it draws: a first-designer emblem as the real one it meant. */
+export const canonicalCardBackEmblem = (emblem: CardBackEmblem): string =>
+  CARD_BACK_LEGACY_EMBLEMS[emblem] ?? emblem;
 
 /** The sleeve designer's four values. */
 export interface CardBackDesign {
@@ -102,7 +187,8 @@ const parseDesign = (params: string): CardBackDesign | null => {
     base: oneOf(CARD_BACK_COLOURS, base),
     pattern: oneOf(CARD_BACK_PATTERNS, pattern),
     accent: oneOf(CARD_BACK_COLOURS, accent),
-    emblem: oneOf(CARD_BACK_EMBLEMS, emblem),
+    emblem:
+      emblem !== undefined && isCardBackEmblem(emblem) ? emblem : undefined,
   };
   return design.base && design.pattern && design.accent && design.emblem
     ? (design as CardBackDesign)

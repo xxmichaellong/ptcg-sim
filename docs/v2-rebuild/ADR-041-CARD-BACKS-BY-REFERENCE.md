@@ -36,12 +36,12 @@ The field keeps its name, `cardBackUrl`, in commands, events, state,
 projections, saves and replays (stored rooms and files keep loading), but
 it now holds a **card-back reference** (`@ptcgsim/game-core` `card-back.ts`):
 
-| Reference                                     | Meaning                                                                                 |
-| --------------------------------------------- | --------------------------------------------------------------------------------------- |
-| `preset:<id>`                                 | A back shipped with the app (`[a-z0-9-]{1,32}`): `standard` and its recoloured presets. |
-| `design:1.<base>.<pattern>.<accent>.<emblem>` | A sleeve drawn by each viewer from four values, each from a fixed list (no free text).  |
-| `img:<sha256>`                                | An image in our store, named by the SHA-256 of its bytes.                               |
-| `url:<https URL>`                             | A legacy URL; also any older value without a prefix.                                    |
+| Reference                                     | Meaning                                                                                     |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `preset:<id>`                                 | A back shipped with the app (`[a-z0-9-]{1,32}`): `standard`, `black` and recolored presets. |
+| `design:1.<base>.<pattern>.<accent>.<emblem>` | A sleeve drawn by each viewer from four values, each from a fixed list or range (§6).       |
+| `img:<sha256>`                                | An image in our store, named by the SHA-256 of its bytes.                                   |
+| `url:<https URL>`                             | A legacy URL; also any older value without a prefix.                                        |
 
 Every reference but `url:` fits in 128 characters. The old default path
 `/v2/assets/cardback.png` reads as `preset:standard`. A value with one of the
@@ -85,7 +85,8 @@ scene, and on the deck screen:
 
 - `preset:` resolves to a WebP under `/v2/assets/backs/`, named by its
   content and cached `immutable`.
-- `design:` resolves to an SVG drawn locally from its four values.
+- `design:` resolves to an SVG drawn locally from its four values, carrying
+  its emblem's image once that has come (§6).
 - `img:` resolves to `/v2/images/<sha256>`.
 - `url:` resolves to the **standard back** for everyone, except on its owner's
   own deck screen, which imports it.
@@ -121,24 +122,71 @@ and nothing in it is typed but a link.
 - **The back, large,** beside the choices (above them on a phone): the one
   chosen so far, drawn as the table draws it.
 - **Backs:** a grid of native radios (arrow keys move through it; every
-  tile is 44px or more). The **Standard back** tile comes first
+  tile is 44px or more). The **Standard** tile comes first
   (`preset:standard`), then the other presets, then **Yours**: the player's
-  recent designs and pictures (the last 8, kept on this device) and the
+  recent designs and images (the last 8, kept on this device) and the
   backs their saved decks wear, each once.
-- **Design:** colour, pattern, accent and emblem, each a row of radios from
+- **Design:** color, pattern, accent and emblem, each a row of radios from
   the fixed lists, previewed with the same SVG module the table uses. It
   answers a `design:` reference.
-- **Picture:** a file (Choose a picture), a drop anywhere on the dialog, a
+- **Image:** a file (Choose an image), a drop anywhere on the dialog, a
   pasted image, or a link (Get), fetched through the import endpoint and
-  shown before anything is saved. The picture is shown in a card's shape,
+  shown before anything is saved. The image is shown in a card's shape,
   centred; a drag or the arrow keys move it within the card, and the crop
   encoded is exactly the one shown. Use this back re-encodes it (a canvas
   in memory, never the GPU's), uploads it and answers its `img:` reference.
   A fetch or upload that fails or takes over 30 s says so in plain words
-  and leaves the dialog open; files that aren't pictures or are over 20 MB
+  and leaves the dialog open; files that aren't images or are over 20 MB
   are turned away before anything is sent.
 
 Cancel, Escape or a superseded request change nothing.
+
+### 6. Natural colors, real emblems, deleting (2026-11-05)
+
+The owner: the presets "look tacky and don't really look good on the
+current background color of our board"; the standard back "looks a little
+bit too dark on the board ... have the black be another option" and need
+not say "Standard back"; the designer should have "even more options and
+for the emblems please use actual pokemon icons ... make sure that it is
+complete and has a lot of options"; and there was no way to delete a design.
+
+- **Presets** are duotones of the shipped back's artwork: each pixel's
+  lightness picks a color between a dark field and a light swirl, so the
+  texture stays and nothing is neon. **Standard** is a card back's deep
+  blue (`#1b3566` to `#a9c0e6`), which reads on every mat look by day and
+  night where the black one sat on the light mats as a hole; **Black** is
+  the artwork as it was. The others keep their ids, so saved decks keep
+  their backs, under natural names: Steel (`azure`), Teal, Forest (`jade`),
+  Ochre (`amber`), Wine (`crimson`), Dusk (`violet`), Slate.
+- **Design** has 32 muted colors and 16 patterns (both lists only grow:
+  every earlier value still parses). Its **emblem** is real Pokémon
+  iconography, in three shelves:
+  - every Pokémon, `pokemon-1` to `pokemon-1025` (National Pokédex
+    number), their official artwork (PokeAPI), searched by name in the
+    page's language where PokeAPI has it (English, French, German, Spanish,
+    Italian, Japanese, Korean, Chinese) or by number;
+  - 15 Poké Balls, `ball-<name>`, their Dream World art (PokeAPI);
+  - the 11 Energy types, `energy-<type>`, the TCG's symbols.
+    The first designer's drawn emblems (`ball`, `star`, `bolt`, `leaf`,
+    `flame`, `drop`, `moon`) still parse and draw as the real ones they
+    stood for (Poké Ball; Colorless, Lightning, Grass, Fire, Water and
+    Darkness Energy). The emblem lies on a medallion of the field's color,
+    ringed in the accent.
+- **Emblem files** are WebP under `/v2/assets/emblems/<set>/`, the folder
+  named by its contents and cached `immutable` (11 MB in 1,052 files; each
+  emblem about 11 KB; a 1.4 MB sheet of every Pokémon's thumbnail for the
+  picker, loaded only by the designer). A design's SVG is drawn as an
+  image, which loads nothing of its own, so each viewer fetches an emblem
+  once (`card-back-emblems.ts`) and carries it in the SVG as a data URL; the
+  table, the deck screen and the chooser draw again as it comes, and the
+  medallion waits empty until then. A failed fetch is asked again a minute
+  later. The names are a lazily loaded JSON beside the module.
+- **Deleting:** each of the player's own backs in Yours has a delete
+  button. It goes at once, with Undo in the chooser (a notice under the
+  modal dialog could not be reached): off the recent backs and off the
+  saved decks that wear it, which wear Standard again. An uploaded image
+  stays in the store (it is shared by reference and may be worn in rooms
+  and saves); only this player's ties to it go.
 
 ## Consequences
 

@@ -24,6 +24,7 @@ import {
 } from '@ptcgsim/renderer-contract';
 
 import { resolveSceneCardBacks } from '../card-backs/card-back-image.js';
+import { subscribeEmblems } from '../card-backs/card-back-emblems.js';
 import { CARD_BACK_VIEW_PREFERENCES } from '../card-backs/card-back-preferences.js';
 import {
   CARD_IMAGE_PREFERENCES,
@@ -282,6 +283,8 @@ export class BoardSessionRuntime {
         CARD_BACK_VIEW_PREFERENCES,
         rebuild
       );
+      // A designed back's emblem draws once it has come.
+      const stopEmblems = subscribeEmblems(rebuild);
       const stopPageLanguage = preferences().subscribe(
         LANGUAGE_PREFERENCES,
         rebuild
@@ -290,6 +293,7 @@ export class BoardSessionRuntime {
         stopWording();
         stopCardImages();
         stopCardBacks();
+        stopEmblems();
         stopPageLanguage();
       };
       await this.whenSettled();

@@ -730,7 +730,23 @@ export const DeckBuilderSession = ({
         .getSnapshot()
         .decks.flatMap((deck) => (deck.cardBack ? [deck.cardBack] : []));
       const current = cardBacks[target];
-      chooseCardBack(target, { ...(current ? { current } : {}), worn });
+      // A back deleted in the chooser leaves the saved decks that wear it,
+      // which wear Standard again; its Undo puts it back on them.
+      const forgetWorn = (back: string): (() => void) => {
+        const wearing = library
+          .getSnapshot()
+          .decks.filter((deck) => deck.cardBack === back)
+          .map((deck) => deck.id);
+        for (const id of wearing) library.update(id, { cardBack: undefined });
+        return () => {
+          for (const id of wearing) library.update(id, { cardBack: back });
+        };
+      };
+      chooseCardBack(target, {
+        ...(current ? { current } : {}),
+        worn,
+        forgetWorn,
+      });
     },
     [cardBacks, chooseCardBack, library]
   );

@@ -3,7 +3,9 @@ import { describe, expect, it } from 'vitest';
 import {
   CARD_BACK_REFERENCE_MAX,
   CARD_BACK_VALUE_MAX,
+  canonicalCardBackEmblem,
   cardBackReference,
+  isCardBackEmblem,
   isCardBackValue,
   isStandardCardBack,
   LEGACY_DEFAULT_CARD_BACK_URL,
@@ -96,8 +98,56 @@ describe('card-back references', () => {
     expect(CARD_BACK_VALUE_MAX).toBe(MAX_IMAGE_URL_CODE_UNITS);
   });
 
+  it("takes a real Pokémon, Poké Ball or Energy as a design's emblem, and the first designer's emblems as the real ones they meant", () => {
+    for (const emblem of [
+      'none',
+      'pokemon-1',
+      'pokemon-25',
+      'pokemon-1025',
+      'ball-poke',
+      'ball-master',
+      'energy-fire',
+      'energy-colorless',
+      'ball',
+      'moon',
+    ]) {
+      expect(isCardBackEmblem(emblem), emblem).toBe(true);
+      expect(
+        parseCardBack(`design:1.navy.swirl.cream.${emblem}`),
+        emblem
+      ).toMatchObject({ kind: 'design', design: { emblem } });
+    }
+    for (const emblem of [
+      'pokemon-0',
+      'pokemon-025',
+      'pokemon-1026',
+      'pokemon-',
+      'pokemon-1e3',
+      'ball-',
+      'ball-poké',
+      'ball-cherish',
+      'energy-rainbow',
+      'skull',
+      'Pokemon-25',
+    ]) {
+      expect(isCardBackEmblem(emblem), emblem).toBe(false);
+      expect(
+        parseCardBack(`design:1.navy.plain.cream.${emblem}`),
+        emblem
+      ).toBeNull();
+    }
+    expect(canonicalCardBackEmblem('ball')).toBe('ball-poke');
+    expect(canonicalCardBackEmblem('star')).toBe('energy-colorless');
+    expect(canonicalCardBackEmblem('moon')).toBe('energy-darkness');
+    expect(canonicalCardBackEmblem('pokemon-25')).toBe('pokemon-25');
+    // A design is written back as it was read.
+    expect(
+      cardBackReference(parseCardBack('design:1.wine.plaid.sand.pokemon-150')!)
+    ).toBe('design:1.wine.plaid.sand.pokemon-150');
+  });
+
   it('keeps every reference but a legacy URL short', () => {
-    const longest = 'design:1.crimson.diamonds.crimson.flame';
+    const longest = 'design:1.lavender.crosshatch.lavender.pokemon-1025';
     expect(longest.length).toBeLessThanOrEqual(CARD_BACK_REFERENCE_MAX);
     expect(`img:${sha}`.length).toBeLessThanOrEqual(CARD_BACK_REFERENCE_MAX);
     expect(`preset:${'a'.repeat(32)}`.length).toBeLessThanOrEqual(

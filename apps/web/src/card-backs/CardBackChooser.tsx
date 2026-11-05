@@ -1,15 +1,15 @@
 import { useLingui } from '@lingui/react/macro';
+import { TrashIcon } from '@phosphor-icons/react/dist/csr/Trash';
 import {
   CARD_BACK_COLOURS,
-  CARD_BACK_EMBLEMS,
   CARD_BACK_PATTERNS,
   STANDARD_CARD_BACK,
+  canonicalCardBackEmblem,
   cardBackReference,
   isStandardCardBack,
   parseCardBack,
   type CardBackColour,
   type CardBackDesign,
-  type CardBackEmblem,
   type CardBackPattern,
 } from '@ptcgsim/game-core';
 import {
@@ -18,6 +18,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
   type ClipboardEvent,
   type DragEvent,
   type KeyboardEvent,
@@ -31,6 +32,13 @@ import {
   CARD_BACK_COLOUR_HEX,
   cardBackDesignImage,
 } from './card-back-design.js';
+import {
+  emblemCategory,
+  emblemsVersion,
+  subscribeEmblems,
+  type EmblemCategory,
+} from './card-back-emblems.js';
+import { EmblemPicker } from './EmblemPicker.js';
 import { cardBackImage } from './card-back-image.js';
 import {
   CENTRED_CROP,
@@ -43,22 +51,23 @@ import { isTextEntry } from '../ui/text-entry.js';
 import './card-back-chooser.css';
 
 /**
- * The card-back chooser (ADR-041 stage 2): the back as it is now, a grid of
- * backs to pick from (the standard back first, the other presets, the
- * player's own designs and pictures), a sleeve designer, and a picture of
- * the player's own -- a file, a drop, a paste or a link -- placed in a
- * card's shape before it is saved. Nothing is typed but a link.
+ * The card-back chooser (ADR-041 stage 2, §6): the back as it is now, a
+ * grid of backs to pick from (Standard first, the other presets, the
+ * player's own designs and images, each of which can be deleted), a sleeve
+ * designer, and an image of the player's own -- a file, a drop, a paste or
+ * a link -- placed in a card's shape before it is saved. Nothing is typed
+ * but a link, and a Pokémon's name in the emblem search.
  */
 
-/** The largest picture taken in; the store keeps a card-sized copy. */
+/** The largest image taken in; the store keeps a card-sized copy. */
 export const CARD_BACK_PICTURE_BYTES = 20 * 1024 * 1024;
 
 /** A sleeve designed from nothing in particular. */
 const FIRST_DESIGN: CardBackDesign = Object.freeze({
-  base: 'royal',
+  base: 'navy',
   pattern: 'plain',
-  accent: 'snow',
-  emblem: 'ball',
+  accent: 'cream',
+  emblem: 'ball-poke',
 });
 
 /** How far an arrow key moves a picture in its card. */
@@ -73,6 +82,12 @@ export interface CardBackChooserProps {
   readonly recent: readonly string[];
   readonly onChoose: (back: string) => void;
   readonly onCancel: () => void;
+  /**
+   * Deletes one of the player's own backs: off their recent backs and off
+   * the saved decks that wear it (which wear Standard again). Answers how
+   * to put it all back (the chooser's Undo).
+   */
+  readonly onForget?: (back: string) => () => void;
   /** An outside picture fetched through the app (never by the page). */
   readonly fetchPicture: (
     url: string,
@@ -153,11 +168,20 @@ export const CardBackChooser = ({
   recent,
   onChoose,
   onCancel,
+  onForget,
   fetchPicture,
   savePicture,
 }: CardBackChooserProps) => {
   const { t } = useLingui();
   const ids = useId();
+  // A design's emblem draws once it has come (card-back-emblems.ts).
+  useSyncExternalStore(subscribeEmblems, emblemsVersion, emblemsVersion);
+  // The player's own backs deleted here, and how to put the last back.
+  const [deleted, setDeleted] = useState<ReadonlySet<string>>(new Set());
+  const [lastDeleted, setLastDeleted] = useState<{
+    readonly back: string;
+    readonly undo: () => void;
+  } | null>(null);
   const presetBacks = useMemo(
     () => CARD_BACK_PRESETS.map((preset) => `preset:${preset.id}`),
     []
@@ -168,10 +192,12 @@ export const CardBackChooser = ({
     () =>
       [
         ...new Set(
-          [...recent, ...worn, ...(current ? [current] : [])].filter(ownMade)
+          [...recent, ...worn, ...(current ? [current] : [])].filter(
+            (back) => ownMade(back) && !deleted.has(back)
+          )
         ),
       ].slice(0, 12),
-    [current, recent, worn]
+    [current, deleted, recent, worn]
   );
   const currentDesign = useMemo(() => {
     const parsed = current ? parseCardBack(current) : null;
@@ -186,6 +212,9 @@ export const CardBackChooser = ({
     return parsed && parsed.kind !== 'url' ? current : STANDARD_CARD_BACK;
   });
   const [design, setDesign] = useState<CardBackDesign>(currentDesign);
+  const [emblemShelf, setEmblemShelf] = useState<EmblemCategory>(() =>
+    emblemCategory(currentDesign.emblem)
+  );
   const [shown, setShown] = useState<Picture | null>(null);
   const [focus, setFocus] = useState<CardBackCropFocus>(CENTRED_CROP);
   const [status, setStatus] = useState<Status>(IDLE);
@@ -231,13 +260,13 @@ export const CardBackChooser = ({
     signal: AbortSignal = startWork()
   ): Promise<void> => {
     if (!blob.type.startsWith('image/')) {
-      setStatus({ kind: 'error', message: t`That file isn't a picture.` });
+      setStatus({ kind: 'error', message: t`That file isn't an image.` });
       return;
     }
     if (blob.size > CARD_BACK_PICTURE_BYTES) {
       setStatus({
         kind: 'error',
-        message: t`That picture is over 20 MB.`,
+        message: t`That image is over 20 MB.`,
       });
       return;
     }
@@ -250,7 +279,7 @@ export const CardBackChooser = ({
     if (!read) {
       setStatus({
         kind: 'error',
-        message: t`That picture can't be read.`,
+        message: t`That image can't be read.`,
       });
       return;
     }
@@ -263,7 +292,7 @@ export const CardBackChooser = ({
   const getLink = async (url: string): Promise<void> => {
     const address = linkIn(url);
     if (!address) {
-      setStatus({ kind: 'error', message: t`Paste a link to a picture.` });
+      setStatus({ kind: 'error', message: t`Paste a link to an image.` });
       return;
     }
     const signal = startWork();
@@ -274,7 +303,7 @@ export const CardBackChooser = ({
     if (!blob) {
       setStatus({
         kind: 'error',
-        message: t`Couldn't get a picture from that link.`,
+        message: t`Couldn't get an image from that link.`,
       });
       return;
     }
@@ -303,7 +332,7 @@ export const CardBackChooser = ({
     if (!saved) {
       setStatus({
         kind: 'error',
-        message: t`Couldn't save that picture. Try again.`,
+        message: t`Couldn't save that image. Try again.`,
       });
       return;
     }
@@ -316,7 +345,9 @@ export const CardBackChooser = ({
       event.key !== 'Enter' ||
       !(event.target instanceof HTMLInputElement) ||
       event.target.type !== 'radio' ||
-      event.target.closest('.card-back-chooser__modes')
+      event.target.closest(
+        '.card-back-chooser__modes, .card-back-emblems__shelves'
+      )
     )
       return;
     event.preventDefault();
@@ -426,65 +457,84 @@ export const CardBackChooser = ({
     switch (id) {
       case 'standard':
         return t({ message: 'Standard', context: 'card back' });
-      case 'crimson':
-        return t({ message: 'Crimson', context: 'card back' });
+      case 'black':
+        return t({ message: 'Black', context: 'card back' });
       case 'azure':
-        return t({ message: 'Azure', context: 'card back' });
+        return t({ message: 'Steel', context: 'card back' });
+      case 'teal':
+        return t({ message: 'Teal', context: 'card back' });
       case 'jade':
-        return t({ message: 'Jade', context: 'card back' });
+        return t({ message: 'Forest', context: 'card back' });
       case 'amber':
-        return t({ message: 'Amber', context: 'card back' });
+        return t({ message: 'Ochre', context: 'card back' });
+      case 'crimson':
+        return t({ message: 'Wine', context: 'card back' });
       case 'violet':
-        return t({ message: 'Violet', context: 'card back' });
+        return t({ message: 'Dusk', context: 'card back' });
+      case 'slate':
+        return t({ message: 'Slate', context: 'card back' });
       default:
         return id;
     }
   };
   const colourName = (colour: CardBackColour): string =>
     ({
-      ink: t({ message: 'Ink', context: 'sleeve colour' }),
-      slate: t({ message: 'Slate', context: 'sleeve colour' }),
-      navy: t({ message: 'Navy', context: 'sleeve colour' }),
-      royal: t({ message: 'Royal blue', context: 'sleeve colour' }),
-      sky: t({ message: 'Sky', context: 'sleeve colour' }),
-      teal: t({ message: 'Teal', context: 'sleeve colour' }),
-      jade: t({ message: 'Jade', context: 'sleeve colour' }),
-      lime: t({ message: 'Lime', context: 'sleeve colour' }),
-      gold: t({ message: 'Gold', context: 'sleeve colour' }),
-      amber: t({ message: 'Amber', context: 'sleeve colour' }),
-      crimson: t({ message: 'Crimson', context: 'sleeve colour' }),
-      rose: t({ message: 'Rose', context: 'sleeve colour' }),
-      violet: t({ message: 'Violet', context: 'sleeve colour' }),
-      plum: t({ message: 'Plum', context: 'sleeve colour' }),
-      snow: t({ message: 'Snow', context: 'sleeve colour' }),
-      sand: t({ message: 'Sand', context: 'sleeve colour' }),
+      ink: t({ message: 'Ink', context: 'sleeve color' }),
+      charcoal: t({ message: 'Charcoal', context: 'sleeve color' }),
+      slate: t({ message: 'Slate', context: 'sleeve color' }),
+      stone: t({ message: 'Stone', context: 'sleeve color' }),
+      navy: t({ message: 'Navy', context: 'sleeve color' }),
+      denim: t({ message: 'Denim', context: 'sleeve color' }),
+      royal: t({ message: 'Royal blue', context: 'sleeve color' }),
+      sky: t({ message: 'Sky', context: 'sleeve color' }),
+      ocean: t({ message: 'Ocean', context: 'sleeve color' }),
+      teal: t({ message: 'Teal', context: 'sleeve color' }),
+      mint: t({ message: 'Mint', context: 'sleeve color' }),
+      jade: t({ message: 'Jade', context: 'sleeve color' }),
+      forest: t({ message: 'Forest', context: 'sleeve color' }),
+      sage: t({ message: 'Sage', context: 'sleeve color' }),
+      olive: t({ message: 'Olive', context: 'sleeve color' }),
+      lime: t({ message: 'Lime', context: 'sleeve color' }),
+      gold: t({ message: 'Gold', context: 'sleeve color' }),
+      amber: t({ message: 'Amber', context: 'sleeve color' }),
+      peach: t({ message: 'Peach', context: 'sleeve color' }),
+      rust: t({ message: 'Rust', context: 'sleeve color' }),
+      coral: t({ message: 'Coral', context: 'sleeve color' }),
+      crimson: t({ message: 'Crimson', context: 'sleeve color' }),
+      wine: t({ message: 'Wine', context: 'sleeve color' }),
+      rose: t({ message: 'Rose', context: 'sleeve color' }),
+      mauve: t({ message: 'Mauve', context: 'sleeve color' }),
+      violet: t({ message: 'Violet', context: 'sleeve color' }),
+      lavender: t({ message: 'Lavender', context: 'sleeve color' }),
+      plum: t({ message: 'Plum', context: 'sleeve color' }),
+      cocoa: t({ message: 'Cocoa', context: 'sleeve color' }),
+      sand: t({ message: 'Sand', context: 'sleeve color' }),
+      cream: t({ message: 'Cream', context: 'sleeve color' }),
+      snow: t({ message: 'Snow', context: 'sleeve color' }),
     })[colour];
   const patternName = (pattern: CardBackPattern): string =>
     ({
       plain: t({ message: 'Plain', context: 'sleeve pattern' }),
       stripes: t({ message: 'Stripes', context: 'sleeve pattern' }),
+      pinstripes: t({ message: 'Pinstripes', context: 'sleeve pattern' }),
       checks: t({ message: 'Checks', context: 'sleeve pattern' }),
+      grid: t({ message: 'Grid', context: 'sleeve pattern' }),
+      plaid: t({ message: 'Plaid', context: 'sleeve pattern' }),
       dots: t({ message: 'Dots', context: 'sleeve pattern' }),
+      halftone: t({ message: 'Halftone', context: 'sleeve pattern' }),
       waves: t({ message: 'Waves', context: 'sleeve pattern' }),
+      swirl: t({ message: 'Swirl', context: 'sleeve pattern' }),
       rays: t({ message: 'Rays', context: 'sleeve pattern' }),
       diamonds: t({ message: 'Diamonds', context: 'sleeve pattern' }),
+      chevrons: t({ message: 'Chevrons', context: 'sleeve pattern' }),
+      hexagons: t({ message: 'Hexagons', context: 'sleeve pattern' }),
       scales: t({ message: 'Scales', context: 'sleeve pattern' }),
+      crosshatch: t({ message: 'Crosshatch', context: 'sleeve pattern' }),
     })[pattern];
-  const emblemName = (emblem: CardBackEmblem): string =>
-    ({
-      none: t({ message: 'None', context: 'sleeve emblem' }),
-      ball: t({ message: 'Ball', context: 'sleeve emblem' }),
-      star: t({ message: 'Star', context: 'sleeve emblem' }),
-      bolt: t({ message: 'Bolt', context: 'sleeve emblem' }),
-      leaf: t({ message: 'Leaf', context: 'sleeve emblem' }),
-      flame: t({ message: 'Flame', context: 'sleeve emblem' }),
-      drop: t({ message: 'Drop', context: 'sleeve emblem' }),
-      moon: t({ message: 'Moon', context: 'sleeve emblem' }),
-    })[emblem];
   const yourName = (back: string): string =>
     parseCardBack(back)?.kind === 'design'
       ? t({ message: 'Design', context: 'a card back the player designed' })
-      : t({ message: 'Picture', context: 'a card back from a picture' });
+      : t({ message: 'Image', context: 'a card back from an image' });
 
   const tile = (
     name: string,
@@ -511,6 +561,51 @@ export const CardBackChooser = ({
       <span className="card-back-tile__name">{label}</span>
     </label>
   );
+
+  // One of the player's own, deleted at once with Undo in the chooser: off
+  // their recent backs and off the saved decks that wear it.
+  const forget = (back: string): void => {
+    if (!onForget) return;
+    const undo = onForget(back);
+    setDeleted((was) => new Set([...was, back]));
+    setLastDeleted({ back, undo });
+    if (selected === back) setSelected(STANDARD_CARD_BACK);
+  };
+  const restoreDeleted = (): void => {
+    if (!lastDeleted) return;
+    lastDeleted.undo();
+    const back = lastDeleted.back;
+    setDeleted((was) => {
+      const next = new Set(was);
+      next.delete(back);
+      return next;
+    });
+    setLastDeleted(null);
+  };
+  const yourTile = (back: string, index: number): ReactNode => {
+    const label = yourName(back);
+    const number = String(index + 1);
+    return (
+      <div key={back} className="card-back-tile__own">
+        {tile(`${ids}-back`, back, label, picture(back))}
+        {onForget ? (
+          <button
+            type="button"
+            className="card-back-tile__delete"
+            data-delete-card-back={back}
+            aria-label={t({
+              message: `Delete ${label} ${number}`,
+              comment:
+                "Deletes one of the player's own card backs. {label} is Design or Image; {number} tells them apart.",
+            })}
+            onClick={() => forget(back)}
+          >
+            <TrashIcon aria-hidden="true" weight="bold" />
+          </button>
+        ) : null}
+      </div>
+    );
+  };
 
   const designGroup = <Value extends string>(
     legend: string,
@@ -558,7 +653,7 @@ export const CardBackChooser = ({
     },
     {
       value: 'picture',
-      label: t({ message: 'Picture', context: 'a card back from a picture' }),
+      label: t({ message: 'Image', context: 'a card back from an image' }),
     },
   ];
 
@@ -580,7 +675,7 @@ export const CardBackChooser = ({
               className="card-back-crop"
               data-movable={movable ? '' : undefined}
               role="img"
-              aria-label={t`Your picture`}
+              aria-label={t`Your image`}
               tabIndex={movable ? 0 : -1}
               onPointerDown={onCropPointerDown}
               onPointerMove={onCropPointerMove}
@@ -656,7 +751,7 @@ export const CardBackChooser = ({
               {tile(
                 `${ids}-back`,
                 STANDARD_CARD_BACK,
-                t`Standard back`,
+                t({ message: 'Standard', context: 'card back' }),
                 picture(STANDARD_CARD_BACK),
                 {
                   id: 'standardCardBackChoice',
@@ -681,16 +776,14 @@ export const CardBackChooser = ({
                   })}
                 </p>
               ) : null}
-              {yours.map((back) =>
-                tile(`${ids}-back`, back, yourName(back), picture(back))
-              )}
+              {yours.map((back, index) => yourTile(back, index))}
             </div>
           ) : null}
 
           {mode === 'design' ? (
             <div className="card-back-design">
               {designGroup(
-                t({ message: 'Colour', context: 'sleeve' }),
+                t({ message: 'Color', context: 'sleeve' }),
                 'base',
                 CARD_BACK_COLOURS,
                 colourName,
@@ -730,23 +823,13 @@ export const CardBackChooser = ({
                   />
                 )
               )}
-              {designGroup(
-                t({ message: 'Emblem', context: 'sleeve' }),
-                'emblem',
-                CARD_BACK_EMBLEMS,
-                emblemName,
-                (emblem) => (
-                  <img
-                    className="card-back-design__sample"
-                    src={cardBackDesignImage({
-                      ...design,
-                      pattern: 'plain',
-                      emblem,
-                    })}
-                    alt=""
-                  />
-                )
-              )}
+              <EmblemPicker
+                name={`${ids}-emblem`}
+                value={canonicalCardBackEmblem(design.emblem)}
+                shelf={emblemShelf}
+                onShelf={setEmblemShelf}
+                onChange={(emblem) => setDesign({ ...design, emblem })}
+              />
             </div>
           ) : null}
 
@@ -758,7 +841,7 @@ export const CardBackChooser = ({
                   disabled={busy}
                   onClick={() => fileInput.current?.click()}
                 >
-                  {t`Choose a picture`}
+                  {t`Choose an image`}
                 </UiButton>
                 <span className="card-back-picture__or">
                   {t`or drop or paste one here`}
@@ -819,6 +902,20 @@ export const CardBackChooser = ({
           <div className="card-back-chooser__status">
             {status.kind === 'error' ? (
               <p role="alert">{status.message}</p>
+            ) : lastDeleted ? (
+              <p className="card-back-chooser__deleted" role="status">
+                {parseCardBack(lastDeleted.back)?.kind === 'design'
+                  ? t`Design deleted`
+                  : t`Image deleted`}
+                <button
+                  type="button"
+                  id="undoCardBackDeleteButton"
+                  className="card-back-chooser__undo"
+                  onClick={restoreDeleted}
+                >
+                  {t`Undo`}
+                </button>
+              </p>
             ) : null}
           </div>
         </div>

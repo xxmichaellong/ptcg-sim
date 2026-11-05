@@ -1820,15 +1820,10 @@
     "context": "keyboard key",
     "translation": "Alt"
   },
-  "Cpqhqr": {
+  "TNnd1S": {
     "message": "Amber",
-    "context": "card back",
+    "context": "sleeve color",
     "translation": "アンバー"
-  },
-  "2XejlY": {
-    "message": "Amber",
-    "context": "sleeve colour",
-    "translation": "琥珀"
   },
   "Uu-7-8": {
     "message": "An <0>open-source</0> Pokémon TCG table.",
@@ -2001,11 +1996,6 @@
     "message": "Automatic",
     "translation": "自動"
   },
-  "pr_nRt": {
-    "message": "Azure",
-    "context": "card back",
-    "translation": "アジュール"
-  },
   "USi6Js": {
     "message": "Baby",
     "context": "Pokémon stage",
@@ -2086,11 +2076,6 @@
     "context": "keyboard key",
     "translation": "Backspace"
   },
-  "DA4ED5": {
-    "message": "Ball",
-    "context": "sleeve emblem",
-    "translation": "ボール"
-  },
   "hrit5V": {
     "message": "Basic",
     "context": "Energy card kind",
@@ -2141,6 +2126,11 @@
     "message": "Bench <0>{0}</0> too.",
     "translation": "<0>{0}</0>もベンチに出しましょう。"
   },
+  "xO2u-7": {
+    "message": "Black",
+    "context": "card back",
+    "translation": "ブラック"
+  },
   "O2HdKg": {
     "message": "Board",
     "context": "see the table behind a window",
@@ -2167,11 +2157,6 @@
       "In \"Back to board cards\": the cards on the board."
     ],
     "translation": "盤面のカード"
-  },
-  "f4EnAz": {
-    "message": "Bolt",
-    "context": "sleeve emblem",
-    "translation": "稲妻"
   },
   "LAq-1T": {
     "message": "Both",
@@ -2408,6 +2393,11 @@
     ],
     "translation": "チャコール"
   },
+  "xZzi2B": {
+    "message": "Charcoal",
+    "context": "sleeve color",
+    "translation": "チャコール"
+  },
   "TEzuJ6": {
     "message": "Chat message",
     "translation": "チャットメッセージ"
@@ -2428,6 +2418,11 @@
     "message": "Checks",
     "context": "sleeve pattern",
     "translation": "チェック"
+  },
+  "O2boXf": {
+    "message": "Chevrons",
+    "context": "sleeve pattern",
+    "translation": "シェブロン"
   },
   "mQr73T": {
     "message": "Choose",
@@ -2450,10 +2445,6 @@
   "Trhamk": {
     "message": "Choose a deck to play",
     "translation": "使用するデッキを選択"
-  },
-  "Qzm71e": {
-    "message": "Choose a picture",
-    "translation": "画像を選ぶ"
   },
   "BOOryO": {
     "message": "Choose an image",
@@ -2546,6 +2537,11 @@
     "message": "Close settings",
     "translation": "設定を閉じる"
   },
+  "dzYUKD": {
+    "message": "Cocoa",
+    "context": "sleeve color",
+    "translation": "ココア"
+  },
   "c6pkO-": {
     "message": "Coin",
     "context": "flip a coin",
@@ -2556,15 +2552,15 @@
     "context": "shortcut key caption",
     "translation": "コイン"
   },
+  "vR8UIp": {
+    "message": "Color",
+    "context": "sleeve",
+    "translation": "カラー"
+  },
   "OXqULL": {
     "message": "Colorless",
     "context": "Pokémon type",
     "translation": "無色"
-  },
-  "I3ktYd": {
-    "message": "Colour",
-    "context": "sleeve",
-    "translation": "色"
   },
   "45MZFs": {
     "message": "Commands",
@@ -2618,6 +2614,11 @@
     "message": "Copy list (Pokémon TCG Live)",
     "translation": "リストをコピー(Pokémon TCG Live)"
   },
+  "gK_NxX": {
+    "message": "Coral",
+    "context": "sleeve color",
+    "translation": "コーラル"
+  },
   "snAD_N": {
     "message": "Cost: {names}",
     "comments": [
@@ -2637,8 +2638,8 @@
     "message": "Couldn't create a room. Try again.",
     "translation": "ルームを作成できませんでした。もう一度お試しください。"
   },
-  "d9B72Y": {
-    "message": "Couldn't get a picture from that link.",
+  "2TYlNr": {
+    "message": "Couldn't get an image from that link.",
     "translation": "そのリンクから画像を取得できませんでした。"
   },
   "Glz9_Y": {
@@ -2677,8 +2678,8 @@
     "message": "Couldn't resume the game",
     "translation": "ゲームを再開できませんでした"
   },
-  "au8LN1": {
-    "message": "Couldn't save that picture. Try again.",
+  "KzKuD0": {
+    "message": "Couldn't save that image. Try again.",
     "translation": "画像を保存できませんでした。もう一度お試しください。"
   },
   "ETE6Wl": {
@@ -2737,6 +2738,11 @@
     ],
     "translation": "クリーム"
   },
+  "gnT7cu": {
+    "message": "Cream",
+    "context": "sleeve color",
+    "translation": "クリーム"
+  },
   "E6-4ez": {
     "message": "Create a room, or join one with a link.",
     "translation": "ルームを作成するか、リンクで参加してください。"
@@ -2751,15 +2757,15 @@
     "context": "a room",
     "translation": "作成中…"
   },
-  "6vtp4B": {
+  "PB8ZF3": {
     "message": "Crimson",
-    "context": "card back",
+    "context": "sleeve color",
     "translation": "クリムゾン"
   },
-  "w8Rl7X": {
-    "message": "Crimson",
-    "context": "sleeve colour",
-    "translation": "深紅"
+  "hR3aKj": {
+    "message": "Crosshatch",
+    "context": "sleeve pattern",
+    "translation": "クロスハッチ"
   },
   "ETt3ev": {
     "message": "Ctrl",
@@ -2929,9 +2935,21 @@
     "context": "menu item",
     "translation": "削除"
   },
+  "oC8v9i": {
+    "message": "Delete {label} {number}",
+    "comments": [
+      "Deletes one of the player's own card backs. {label} is Design or Image; {number} tells them apart."
+    ],
+    "translation": "{label}{number}を削除"
+  },
   "j8-EnI": {
     "message": "Delete deck",
     "translation": "デッキを削除"
+  },
+  "Y6OAuj": {
+    "message": "Denim",
+    "context": "sleeve color",
+    "translation": "デニム"
   },
   "MlCgQy": {
     "message": "Depth",
@@ -2963,6 +2981,10 @@
     "message": "Design",
     "context": "design a card back",
     "translation": "デザインする"
+  },
+  "Bn0QS6": {
+    "message": "Design deleted",
+    "translation": "デザインを削除しました"
   },
   "Cn91gu": {
     "message": "Desk",
@@ -3056,6 +3078,11 @@
   "dj2xTE": {
     "message": "Dismiss notification",
     "translation": "通知を閉じる"
+  },
+  "vR0afd": {
+    "message": "Dive Ball",
+    "context": "item",
+    "translation": "ダイブボール"
   },
   "DPfwMq": {
     "message": "Done",
@@ -3157,11 +3184,6 @@
     "message": "Draw, search and shuffle",
     "translation": "引く、サーチする、切る"
   },
-  "oMUr3k": {
-    "message": "Drop",
-    "context": "sleeve emblem",
-    "translation": "しずく"
-  },
   "IsvGW6": {
     "message": "Drop to import",
     "translation": "ドロップしてインポート"
@@ -3189,6 +3211,16 @@
   "L0dfTV": {
     "message": "Duplicate deck",
     "translation": "デッキを複製"
+  },
+  "2PqJdK": {
+    "message": "Dusk",
+    "context": "card back",
+    "translation": "ダスク"
+  },
+  "XXgWrU": {
+    "message": "Dusk Ball",
+    "context": "item",
+    "translation": "ダスクボール"
   },
   "mjNeGh": {
     "message": "e.g. Charizard",
@@ -3236,6 +3268,11 @@
     "context": "sleeve",
     "translation": "エンブレム"
   },
+  "aRPSBK": {
+    "message": "Emblems",
+    "context": "sleeve",
+    "translation": "エンブレム"
+  },
   "1PBKgv": {
     "message": "End",
     "context": "keyboard key",
@@ -3259,6 +3296,11 @@
   "knsSR8": {
     "message": "Energy",
     "context": "shortcut key caption",
+    "translation": "エネルギー"
+  },
+  "OKg9ZI": {
+    "message": "Energy",
+    "context": "sleeve emblems",
     "translation": "エネルギー"
   },
   "04Gro-": {
@@ -3421,6 +3463,10 @@
     "message": "Find a deck",
     "translation": "デッキを探す"
   },
+  "kwpuCr": {
+    "message": "Find a Pokémon",
+    "translation": "ポケモンを探す"
+  },
   "CHNPgf": {
     "message": "Find a shortcut",
     "translation": "ショートカットを探す"
@@ -3466,11 +3512,6 @@
   "RCEX87": {
     "message": "Fire type, Basic",
     "translation": "炎タイプ、たねポケモン"
-  },
-  "OE9EAy": {
-    "message": "Flame",
-    "context": "sleeve emblem",
-    "translation": "炎"
   },
   "gQp6L7": {
     "message": "Flat",
@@ -3543,6 +3584,16 @@
       "TWITTER_HANDLE is the developer's X (Twitter) handle, @xxmichaellong"
     ],
     "translation": "最新情報や今後の予定は、Xでフォローしてください:<0>{TWITTER_HANDLE}</0>"
+  },
+  "3gRUI-": {
+    "message": "Forest",
+    "context": "card back",
+    "translation": "フォレスト"
+  },
+  "RMPKcE": {
+    "message": "Forest",
+    "context": "sleeve color",
+    "translation": "フォレスト"
   },
   "kI1qVD": {
     "message": "Format",
@@ -3624,15 +3675,20 @@
     "message": "Go to the Solo table",
     "translation": "ソロテーブルへ移動"
   },
-  "R6itFF": {
+  "sSvoZ4": {
     "message": "Gold",
-    "context": "sleeve colour",
-    "translation": "金"
+    "context": "sleeve color",
+    "translation": "ゴールド"
   },
   "iN8jqp": {
     "message": "Grass",
     "context": "Pokémon type",
     "translation": "草"
+  },
+  "pgULnS": {
+    "message": "Great Ball",
+    "context": "item",
+    "translation": "スーパーボール"
   },
   "lySEU9": {
     "message": "Green felt",
@@ -3641,9 +3697,19 @@
     ],
     "translation": "グリーンフェルト"
   },
+  "WmT7NN": {
+    "message": "Grid",
+    "context": "sleeve pattern",
+    "translation": "グリッド"
+  },
   "TALrFf": {
     "message": "GX marker",
     "translation": "GXマーカー"
+  },
+  "gxoQkX": {
+    "message": "Halftone",
+    "context": "sleeve pattern",
+    "translation": "ハーフトーン"
   },
   "hLFd9M": {
     "message": "Halves",
@@ -3702,12 +3768,22 @@
     "context": "coin flip",
     "translation": "オモテ"
   },
+  "Lnv3Lr": {
+    "message": "Heal Ball",
+    "context": "item",
+    "translation": "ヒールボール"
+  },
   "c3XJ18": {
     "message": "Help",
     "comments": [
       "Command palette section."
     ],
     "translation": "ヘルプ"
+  },
+  "9MxuIb": {
+    "message": "Hexagons",
+    "context": "sleeve pattern",
+    "translation": "ヘキサゴン"
   },
   "h94f_B": {
     "message": "Hi everyone! I'm Michael/Xiao Xiao Long. I'm a 21-year-old from Guelph, Canada, who started programming in the fall of 2023. I've been playing the Pokémon TCG for over 8 years, and I spent the last 3 months building PTCG-sim, a free tool for the community to use to test and play our favorite card game.",
@@ -3865,6 +3941,15 @@
     "message": "Image",
     "translation": "画像"
   },
+  "1j-OwK": {
+    "message": "Image",
+    "context": "a card back from an image",
+    "translation": "画像"
+  },
+  "1Ijbe9": {
+    "message": "Image deleted",
+    "translation": "画像を削除しました"
+  },
   "T7x7bT": {
     "message": "Image link",
     "translation": "画像のリンク"
@@ -3898,10 +3983,10 @@
     ],
     "translation": "デッキ内"
   },
-  "QphUbA": {
+  "WYBZ5W": {
     "message": "Ink",
-    "context": "sleeve colour",
-    "translation": "墨"
+    "context": "sleeve color",
+    "translation": "インク"
   },
   "fZsAhg": {
     "message": "Insert",
@@ -3969,15 +4054,10 @@
     "message": "Its cards' own text is too long for the table.",
     "translation": "カードのテキストが長すぎて盤面に表示できません。"
   },
-  "h0iD6U": {
+  "-DBWn9": {
     "message": "Jade",
-    "context": "card back",
+    "context": "sleeve color",
     "translation": "ジェイド"
-  },
-  "i49U_n": {
-    "message": "Jade",
-    "context": "sleeve colour",
-    "translation": "翡翠"
   },
   "Fz2DU1": {
     "message": "Join a room",
@@ -4049,6 +4129,11 @@
     "message": "Larger cards",
     "translation": "カードを大きく"
   },
+  "0Wyf2w": {
+    "message": "Lavender",
+    "context": "sleeve color",
+    "translation": "ラベンダー"
+  },
   "c-P9d9": {
     "message": "Layout",
     "context": "card layout",
@@ -4057,11 +4142,6 @@
   "iZqrTt": {
     "message": "Layout (optional)",
     "translation": "レイアウト(任意)"
-  },
-  "YGg_TP": {
-    "message": "Leaf",
-    "context": "sleeve emblem",
-    "translation": "葉"
   },
   "1ng4Ht": {
     "message": "Leave in play",
@@ -4118,9 +4198,9 @@
     "context": "Pokémon type",
     "translation": "雷"
   },
-  "7QxCqs": {
+  "KR8ZKA": {
     "message": "Lime",
-    "context": "sleeve colour",
+    "context": "sleeve color",
     "translation": "ライム"
   },
   "JL_ceN": {
@@ -4338,6 +4418,11 @@
     "message": "Lower {label}",
     "translation": "{label}を下げる"
   },
+  "5FyVhK": {
+    "message": "Luxury Ball",
+    "context": "item",
+    "translation": "ゴージャスボール"
+  },
   "Q0rQkA": {
     "message": "Make a custom card",
     "translation": "カスタムカードを作成"
@@ -4392,6 +4477,11 @@
     "message": "Mark VSTAR Power unused",
     "translation": "VSTARパワーを未使用にする"
   },
+  "QIOgiN": {
+    "message": "Master Ball",
+    "context": "item",
+    "translation": "マスターボール"
+  },
   "42K-4o": {
     "message": "Match finish",
     "translation": "仕上げに合わせる"
@@ -4399,6 +4489,11 @@
   "5EeU5m": {
     "message": "Matte",
     "translation": "マット"
+  },
+  "yrjroQ": {
+    "message": "Mauve",
+    "context": "sleeve color",
+    "translation": "モーヴ"
   },
   "CK1KXz": {
     "message": "Max",
@@ -4453,15 +4548,15 @@
     "context": "my half of the table",
     "translation": "自分"
   },
+  "PfFopR": {
+    "message": "Mint",
+    "context": "sleeve color",
+    "translation": "ミント"
+  },
   "w2xVe_": {
     "message": "Mode",
     "context": "solo or online play",
     "translation": "モード"
-  },
-  "5jDsb9": {
-    "message": "Moon",
-    "context": "sleeve emblem",
-    "translation": "月"
   },
   "2FYpfJ": {
     "message": "More",
@@ -4622,6 +4717,10 @@
     "message": "Name every Ability and attack.",
     "translation": "特性とワザにはすべて名前をつけてください。"
   },
+  "nkyXf5": {
+    "message": "Name or number",
+    "translation": "名前または番号"
+  },
   "4jBgrs": {
     "message": "Name: up to {max} characters.",
     "translation": "名前:{max}文字までです。"
@@ -4630,9 +4729,9 @@
     "message": "Natural placement",
     "translation": "自然な配置"
   },
-  "hmYrgt": {
+  "FT-ZlX": {
     "message": "Navy",
-    "context": "sleeve colour",
+    "context": "sleeve color",
     "translation": "ネイビー"
   },
   "rf9azy": {
@@ -4642,6 +4741,16 @@
   "Ek_k_Q": {
     "message": "Needs depth",
     "translation": "奥行きが必要です"
+  },
+  "DZk356": {
+    "message": "Nest Ball",
+    "context": "item",
+    "translation": "ネストボール"
+  },
+  "VplnQi": {
+    "message": "Net Ball",
+    "context": "item",
+    "translation": "ネットボール"
   },
   "W_gspM": {
     "message": "New deck",
@@ -4788,6 +4897,10 @@
     "message": "No match",
     "translation": "一致なし"
   },
+  "v5Ta3F": {
+    "message": "No Pokémon by that name",
+    "translation": "その名前のポケモンはいません"
+  },
   "FQDz2b": {
     "message": "No Pokémon can take all of these",
     "translation": "これらをすべて受け取れるポケモンはいません"
@@ -4905,6 +5018,16 @@
     ],
     "translation": "オーシャン"
   },
+  "stQI-P": {
+    "message": "Ocean",
+    "context": "sleeve color",
+    "translation": "オーシャン"
+  },
+  "mTW2K0": {
+    "message": "Ochre",
+    "context": "card back",
+    "translation": "オーカー"
+  },
   "gEGSTP": {
     "message": "Off",
     "context": "setting",
@@ -4918,6 +5041,11 @@
     "message": "Oldest",
     "context": "sort cards by",
     "translation": "古い順"
+  },
+  "IIt01h": {
+    "message": "Olive",
+    "context": "sleeve color",
+    "translation": "オリーブ"
   },
   "TjCu_Q": {
     "message": "On",
@@ -5184,8 +5312,8 @@
     "message": "Paste a decklist first.",
     "translation": "先にデッキリストを貼り付けてください。"
   },
-  "lrOsQc": {
-    "message": "Paste a link to a picture.",
+  "wOqa81": {
+    "message": "Paste a link to an image.",
     "translation": "画像のリンクを貼り付けてください。"
   },
   "aGL2ob": {
@@ -5221,6 +5349,11 @@
     "message": "Paypal Donation Link",
     "translation": "PayPal寄付リンク"
   },
+  "hx6FGW": {
+    "message": "Peach",
+    "context": "sleeve color",
+    "translation": "ピーチ"
+  },
   "2EfntA": {
     "message": "Pick a random card from their hand",
     "translation": "相手の手札からランダムに1枚選ぶ"
@@ -5228,11 +5361,6 @@
   "QRjV7C": {
     "message": "Pick random card",
     "translation": "ランダムにカードを選ぶ"
-  },
-  "KBXd3D": {
-    "message": "Picture",
-    "context": "a card back from a picture",
-    "translation": "画像"
   },
   "BX1rQx": {
     "message": "Pieces",
@@ -5247,6 +5375,16 @@
       "Command palette section: deck, discard, prizes…"
     ],
     "translation": "山札・トラッシュなど"
+  },
+  "k-4bTt": {
+    "message": "Pinstripes",
+    "context": "sleeve pattern",
+    "translation": "ピンストライプ"
+  },
+  "EDjGlr": {
+    "message": "Plaid",
+    "context": "sleeve pattern",
+    "translation": "チェック"
   },
   "K1IcaP": {
     "message": "Plain",
@@ -5322,9 +5460,9 @@
     "context": "unnamed seat",
     "translation": "プレイヤー"
   },
-  "zFLJEh": {
+  "2H5TkX": {
     "message": "Plum",
-    "context": "sleeve colour",
+    "context": "sleeve color",
     "translation": "プラム"
   },
   "KO7h6x": {
@@ -5335,6 +5473,16 @@
     "message": "Poisoned",
     "context": "special condition",
     "translation": "どく"
+  },
+  "1Kq5zo": {
+    "message": "Poké Ball",
+    "context": "item",
+    "translation": "モンスターボール"
+  },
+  "iB4slx": {
+    "message": "Poké Balls",
+    "context": "sleeve emblems",
+    "translation": "モンスターボール"
   },
   "eqRr09": {
     "message": "Pokémon",
@@ -5350,6 +5498,11 @@
     "context": "shortcut key caption",
     "translation": "ポケモン"
   },
+  "qMteLN": {
+    "message": "Pokémon",
+    "context": "sleeve emblems",
+    "translation": "ポケモン"
+  },
   "CA11_N": {
     "message": "Pokémon added by hand",
     "translation": "手動で追加したポケモン"
@@ -5357,6 +5510,11 @@
   "RNaprm": {
     "message": "Pokémon cards",
     "translation": "ポケモンカード"
+  },
+  "PqWQZ5": {
+    "message": "Premier Ball",
+    "context": "item",
+    "translation": "プレミアボール"
   },
   "UCQ2JV": {
     "message": "Preparing image…",
@@ -5516,6 +5674,11 @@
   "8cBiju": {
     "message": "Quantity: 1 to {max}.",
     "translation": "枚数:1~{max}"
+  },
+  "Piavbq": {
+    "message": "Quick Ball",
+    "context": "item",
+    "translation": "クイックボール"
   },
   "P7jzR_": {
     "message": "Quick picks",
@@ -5727,6 +5890,11 @@
     "context": "menu item",
     "translation": "名前を変更"
   },
+  "ftWMve": {
+    "message": "Repeat Ball",
+    "context": "item",
+    "translation": "リピートボール"
+  },
   "cDnZvG": {
     "message": "Replay",
     "context": "the table is showing a replay",
@@ -5926,9 +6094,9 @@
     "message": "Room ready",
     "translation": "ルーム準備完了"
   },
-  "2Rrohw": {
+  "b0GQxq": {
     "message": "Rose",
-    "context": "sleeve colour",
+    "context": "sleeve color",
     "translation": "ローズ"
   },
   "BulyBf": {
@@ -6011,9 +6179,9 @@
     "message": "Row {rowNumber}: quantity must be 1 to {max}.",
     "translation": "{rowNumber}行目: 枚数は1〜{max}にしてください。"
   },
-  "0NRnTQ": {
+  "bEcIHW": {
     "message": "Royal blue",
-    "context": "sleeve colour",
+    "context": "sleeve color",
     "translation": "ロイヤルブルー"
   },
   "duDNyy": {
@@ -6034,6 +6202,21 @@
     ],
     "translation": "実行"
   },
+  "JfEcGs": {
+    "message": "Rust",
+    "context": "sleeve color",
+    "translation": "ラスト"
+  },
+  "53P7O2": {
+    "message": "Safari Ball",
+    "context": "item",
+    "translation": "サファリボール"
+  },
+  "zpd18n": {
+    "message": "Sage",
+    "context": "sleeve color",
+    "translation": "セージ"
+  },
   "_laYdJ": {
     "message": "Sakura",
     "comments": [
@@ -6049,9 +6232,9 @@
     "message": "Sample Prizes",
     "translation": "サンプルサイド"
   },
-  "0jhHGF": {
+  "CXbLno": {
     "message": "Sand",
-    "context": "sleeve colour",
+    "context": "sleeve color",
     "translation": "サンド"
   },
   "tfDRzk": {
@@ -6515,9 +6698,9 @@
     "message": "Skip",
     "translation": "スキップ"
   },
-  "8Qf85O": {
+  "Y_alM3": {
     "message": "Sky",
-    "context": "sleeve colour",
+    "context": "sleeve color",
     "translation": "スカイ"
   },
   "QIIV0m": {
@@ -6527,9 +6710,14 @@
     ],
     "translation": "スレート"
   },
-  "OZCs0k": {
+  "lrWCQt": {
     "message": "Slate",
-    "context": "sleeve colour",
+    "context": "card back",
+    "translation": "スレート"
+  },
+  "Y3WzjD": {
+    "message": "Slate",
+    "context": "sleeve color",
     "translation": "スレート"
   },
   "Se3Re8": {
@@ -6540,9 +6728,9 @@
     "message": "Smaller cards",
     "translation": "カードを小さく"
   },
-  "Vy1bgl": {
+  "8bylZu": {
     "message": "Snow",
-    "context": "sleeve colour",
+    "context": "sleeve color",
     "translation": "スノー"
   },
   "qyGQ0X": {
@@ -6736,10 +6924,6 @@
     "context": "deck format",
     "translation": "スタンダード"
   },
-  "hr1qOs": {
-    "message": "Standard back",
-    "translation": "標準の裏面"
-  },
   "Tg13WJ": {
     "message": "Standard card",
     "translation": "通常のカード"
@@ -6747,11 +6931,6 @@
   "kGkZLk": {
     "message": "Standings",
     "translation": "順位"
-  },
-  "Hgg1rW": {
-    "message": "Star",
-    "context": "sleeve emblem",
-    "translation": "星"
   },
   "WrLzY2": {
     "message": "Start a game",
@@ -6785,9 +6964,19 @@
     ],
     "translation": "状態とワザ"
   },
+  "__h_pd": {
+    "message": "Steel",
+    "context": "card back",
+    "translation": "スチール"
+  },
   "iFt0Ce": {
     "message": "Still uploading…",
     "translation": "アップロード中です…"
+  },
+  "2QfzE2": {
+    "message": "Stone",
+    "context": "sleeve color",
+    "translation": "ストーン"
   },
   "B2cOHf": {
     "message": "Stop sorting hand",
@@ -6825,6 +7014,11 @@
   "61Tmyj": {
     "message": "Swap keys",
     "translation": "キーを入れ替え"
+  },
+  "deIoHK": {
+    "message": "Swirl",
+    "context": "sleeve pattern",
+    "translation": "うず巻き"
   },
   "AKGGtj": {
     "message": "Switch",
@@ -6973,9 +7167,14 @@
     ],
     "translation": "TCG Pocket"
   },
-  "0D9HyG": {
+  "eFoxqp": {
     "message": "Teal",
-    "context": "sleeve colour",
+    "context": "card back",
+    "translation": "ティール"
+  },
+  "0ckijJ": {
+    "message": "Teal",
+    "context": "sleeve color",
     "translation": "ティール"
   },
   "z5r9Ja": {
@@ -6996,25 +7195,25 @@
     "message": "That file can't be opened here.",
     "translation": "このファイルはここでは開けません。"
   },
-  "KQLVDi": {
-    "message": "That file isn't a picture.",
+  "AOBUOV": {
+    "message": "That file isn't an image.",
     "translation": "このファイルは画像ではありません。"
+  },
+  "o_KMvO": {
+    "message": "That image can't be read.",
+    "translation": "この画像は読み込めません。"
   },
   "ZMr878": {
     "message": "That image didn't load.",
     "translation": "その画像を読み込めませんでした。"
   },
+  "cjZJMT": {
+    "message": "That image is over 20 MB.",
+    "translation": "この画像は20 MBを超えています。"
+  },
   "B4ZAXF": {
     "message": "That one was skipped.",
     "translation": "スキップされました。"
-  },
-  "qqEjGU": {
-    "message": "That picture can't be read.",
-    "translation": "この画像は読み込めません。"
-  },
-  "HnGmBe": {
-    "message": "That picture is over 20 MB.",
-    "translation": "この画像は20 MBを超えています。"
   },
   "nWbyfh": {
     "message": "That replay file couldn't be opened.",
@@ -7216,6 +7415,11 @@
   "YcMvP7": {
     "message": "Tilted on wide screens, flat on phones.",
     "translation": "広い画面では傾け、スマートフォンでは平らに表示します。"
+  },
+  "oI4bSE": {
+    "message": "Timer Ball",
+    "context": "item",
+    "translation": "タイマーボール"
   },
   "dPBKWL": {
     "message": "To active",
@@ -7519,6 +7723,11 @@
     "message": "Type something first",
     "translation": "先に何か入力してください"
   },
+  "2p6jZB": {
+    "message": "Ultra Ball",
+    "context": "item",
+    "translation": "ハイパーボール"
+  },
   "9uI_rE": {
     "message": "Undo",
     "translation": "元に戻す"
@@ -7655,14 +7864,9 @@
     "message": "View whole card",
     "translation": "カード全体を表示"
   },
-  "WUyPia": {
+  "mzGdWh": {
     "message": "Violet",
-    "context": "card back",
-    "translation": "バイオレット"
-  },
-  "-Uf5mz": {
-    "message": "Violet",
-    "context": "sleeve colour",
+    "context": "sleeve color",
     "translation": "バイオレット"
   },
   "RVlHmr": {
@@ -7732,6 +7936,16 @@
     "message": "Win",
     "context": "keyboard key (the Windows key)",
     "translation": "Win"
+  },
+  "4b_L2y": {
+    "message": "Wine",
+    "context": "card back",
+    "translation": "ワイン"
+  },
+  "qwXkyu": {
+    "message": "Wine",
+    "context": "sleeve color",
+    "translation": "ワイン"
   },
   "NWGsaA": {
     "message": "Winning now",
@@ -7810,13 +8024,13 @@
     "message": "Your hand, and your 6 <0>Prize cards</0>, face down.",
     "translation": "手札と、裏向きの6枚の<0>サイド</0>です。"
   },
+  "pj2yYK": {
+    "message": "Your image",
+    "translation": "自分の画像"
+  },
   "BHcJOF": {
     "message": "Your Lost Zone",
     "translation": "自分のロストゾーン"
-  },
-  "1PoiFH": {
-    "message": "Your picture",
-    "translation": "自分の画像"
   },
   "Oi-Qz3": {
     "message": "Your playboard",

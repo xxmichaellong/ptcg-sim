@@ -9,7 +9,7 @@ import {
 /** What the chooser shows for a target: its back now, the decks' backs. */
 export type CardBackChoiceContext = Pick<
   BrowserCardBackRequestOptions,
-  'current' | 'worn'
+  'current' | 'worn' | 'forgetWorn'
 >;
 
 export interface CardBackSelectionOptions<Target = string> {

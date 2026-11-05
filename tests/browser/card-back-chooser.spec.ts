@@ -16,6 +16,7 @@ const WIDE_PNG = Buffer.from(
 const LINK = 'https://images.example.test/linked-sleeves.png';
 const STANDARD_BACK = /^\/v2\/assets\/backs\/standard\.[0-9a-f]{10}\.webp$/u;
 const CRIMSON_BACK = /^\/v2\/assets\/backs\/crimson\.[0-9a-f]{10}\.webp$/u;
+const BLACK_BACK = /^\/v2\/assets\/backs\/black\.[0-9a-f]{10}\.webp$/u;
 
 const sleeve = (page: Page): Locator =>
   page.locator('.deck-tray[data-seat="self"] .deck-tray__sleeve img');
@@ -60,51 +61,66 @@ test('chooses a back by keyboard, designs one, and goes back to the standard bac
   await expect(dialog.locator('#cardBackMode-backs')).toBeFocused();
   const standard = dialog.locator('#standardCardBackChoice');
   await expect(standard).toBeChecked();
-  await expect(standard.locator('xpath=..')).toContainText('Standard back');
-  // Arrow keys move through the grid; the large preview follows.
+  // Named plainly: Standard.
+  await expect(standard.locator('xpath=..')).toHaveText('Standard');
+  // Arrow keys move through the grid; the large preview follows. Black,
+  // the standard back until 2026-11-05, is the next.
   await tabTo(page, standard);
   await page.keyboard.press('ArrowRight');
-  await expect(dialog.locator('input[value="preset:crimson"]')).toBeChecked();
+  await expect(dialog.locator('input[value="preset:black"]')).toBeChecked();
   await expect(dialog.locator('.card-back-chooser__card')).toHaveAttribute(
     'src',
-    CRIMSON_BACK
+    BLACK_BACK
   );
   // Enter on a back uses it.
   await page.keyboard.press('Enter');
   await expect(dialog).toHaveCount(0);
-  await expect(sleeve(page)).toHaveAttribute('src', CRIMSON_BACK);
+  await expect(sleeve(page)).toHaveAttribute('src', BLACK_BACK);
 
   // A sleeve designed from the lists, drawn as the table draws it.
   await openCardBackChooser(page);
   await dialog.locator('#cardBackMode-design').check();
   await dialog
     .locator('.card-back-design__group')
-    .filter({ hasText: 'Colour' })
+    .filter({ has: page.locator('legend', { hasText: /^Color$/u }) })
     .getByRole('radio', { name: 'Crimson' })
     .check();
   await dialog.getByRole('radio', { name: 'Dots' }).check();
-  await dialog.getByRole('radio', { name: 'Star' }).check();
-  const designed = (await dialog
-    .locator('.card-back-chooser__card')
-    .getAttribute('src'))!;
+  // The emblem: a real Pokémon, found by name, its artwork on the sleeve.
+  await dialog.getByRole('radio', { name: 'Pokémon', exact: true }).check();
+  await dialog.locator('#cardBackEmblemSearch').fill('Pikachu');
+  await dialog.getByRole('radio', { name: 'Pikachu', exact: true }).check();
+  const preview = dialog.locator('.card-back-chooser__card');
+  await expect
+    .poll(async () => (await preview.getAttribute('src')) ?? '')
+    .toContain(encodeURIComponent('<image href="data:image/webp;base64,'));
+  const designed = (await preview.getAttribute('src'))!;
   expect(designed).toMatch(/^data:image\/svg\+xml,/u);
   await dialog.locator('#useCardBackButton').click();
   await expect(dialog).toHaveCount(0);
   await expect(sleeve(page)).toHaveAttribute('src', designed);
 
-  // The design is kept to hand under Yours; the standard back is one tap.
+  // The design is kept to hand under Yours, and can be deleted (with
+  // Undo); the standard back is one tap.
   await openCardBackChooser(page);
   await dialog.locator('#cardBackMode-backs').check();
-  await expect(
-    dialog.locator('.card-back-grid input[value^="design:1.crimson.dots."]')
-  ).toHaveCount(1);
+  const kept = dialog.locator(
+    '.card-back-grid input[value^="design:1.crimson.dots."][value$=".pokemon-25"]'
+  );
+  await expect(kept).toHaveCount(1);
+  const keptBack = (await kept.getAttribute('value'))!;
+  await dialog.locator(`[data-delete-card-back="${keptBack}"]`).click();
+  await expect(kept).toHaveCount(0);
+  await expect(dialog.getByRole('status')).toContainText('Design deleted');
+  await dialog.locator('#undoCardBackDeleteButton').click();
+  await expect(kept).toHaveCount(1);
   await dialog.locator('#standardCardBackChoice').check();
   await dialog.locator('#useCardBackButton').click();
   await expect(dialog).toHaveCount(0);
   await expect(sleeve(page)).toHaveAttribute('src', STANDARD_BACK);
 });
 
-test('makes a back of an uploaded picture placed in the card, and of a link fetched through the app', async ({
+test('makes a back of an uploaded image placed in the card, and of a link fetched through the app', async ({
   page,
 }) => {
   test.setTimeout(90_000);
@@ -120,7 +136,7 @@ test('makes a back of an uploaded picture placed in the card, and of a link fetc
   });
   await openDeckScreen(page);
 
-  // Not a picture: said plainly, nothing to use.
+  // Not an image: said plainly, nothing to use.
   const dialog = await openCardBackChooser(page);
   await dialog.locator('#cardBackMode-picture').check();
   const use = dialog.locator('#useCardBackButton');
@@ -131,7 +147,7 @@ test('makes a back of an uploaded picture placed in the card, and of a link fetc
     buffer: Buffer.from('not a picture'),
   });
   await expect(dialog.getByRole('alert')).toHaveText(
-    "That file isn't a picture."
+    "That file isn't an image."
   );
   await expect(use).toBeDisabled();
 

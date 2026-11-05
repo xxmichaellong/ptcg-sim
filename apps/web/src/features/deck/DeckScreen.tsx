@@ -24,6 +24,10 @@ import {
 
 import { preferences } from '../../preferences/preference-store.js';
 import { cardBackImage } from '../../card-backs/card-back-image.js';
+import {
+  emblemsVersion,
+  subscribeEmblems,
+} from '../../card-backs/card-back-emblems.js';
 import { STANDARD_CARD_BACK_IMAGE } from '../../card-backs/card-back-presets.js';
 import { dialogRequestsSnapshot } from '../../ui/dialog-requests.js';
 import { isModalWindowOpen } from '../../ui/overlay-surface.js';
@@ -172,6 +176,8 @@ export const DeckScreen = ({
     library.getSnapshot,
     library.getSnapshot
   );
+  // A designed back's emblem draws once it has come (card-back-emblems.ts).
+  useSyncExternalStore(subscribeEmblems, emblemsVersion, emblemsVersion);
   const [view, setView] = useState<DeckScreenView>({ kind: 'home' });
   const [finderText, setFinderText] = useState('');
   /** The box last picked off a shelf, to fly into its seat's tray. */

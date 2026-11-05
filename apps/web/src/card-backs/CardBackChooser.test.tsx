@@ -72,7 +72,8 @@ describe('card-back chooser', () => {
     )!;
     expect(standard.value).toBe(STANDARD_CARD_BACK);
     expect(standard.checked).toBe(true);
-    expect(standard.closest('label')?.textContent).toContain('Standard back');
+    // Named plainly: Standard.
+    expect(standard.closest('label')?.textContent).toBe('Standard');
     await act(async () => use(host).click());
     expect(onChoose).toHaveBeenCalledWith(STANDARD_CARD_BACK);
   });
@@ -96,11 +97,14 @@ describe('card-back chooser', () => {
     ].map((input) => input.value);
     expect(values).toEqual([
       STANDARD_CARD_BACK,
-      'preset:crimson',
+      'preset:black',
       'preset:azure',
+      'preset:teal',
       'preset:jade',
       'preset:amber',
+      'preset:crimson',
       'preset:violet',
+      'preset:slate',
       DESIGN,
       STORED,
     ]);
@@ -114,12 +118,99 @@ describe('card-back chooser', () => {
       host.querySelector('.card-back-chooser')?.getAttribute('data-mode')
     ).toBe('design');
     await act(async () => radio(host, 'dots').click());
-    await act(async () => radio(host, 'moon').click());
+    // The first designer's star is the Colorless Energy it stood for: its
+    // shelf opens on it.
+    expect(radio(host, 'energy-colorless').checked).toBe(true);
+    await act(async () => radio(host, 'energy-darkness').click());
     await act(async () => use(host).click());
-    expect(onChoose).toHaveBeenCalledWith('design:1.navy.dots.gold.moon');
+    expect(onChoose).toHaveBeenLastCalledWith(
+      'design:1.navy.dots.gold.energy-darkness'
+    );
   });
 
-  it('says plainly when a link gives no picture, and has nothing to use', async () => {
+  it('finds a Pokémon for the emblem by name or number', async () => {
+    const { host, onChoose } = await mount({ current: DESIGN });
+    await act(async () => radio(host, 'pokemon').click());
+    // Every Pokémon is offered.
+    expect(
+      host.querySelectorAll('.card-back-emblems__grid input[value^="pokemon-"]')
+        .length
+    ).toBe(1025);
+    const search = host.querySelector<HTMLInputElement>(
+      '#cardBackEmblemSearch'
+    )!;
+    const type = async (text: string) =>
+      act(async () => {
+        Object.getOwnPropertyDescriptor(
+          HTMLInputElement.prototype,
+          'value'
+        )!.set!.call(search, text);
+        search.dispatchEvent(new Event('input', { bubbles: true }));
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      });
+    await type('Pikachu');
+    const found = [
+      ...host.querySelectorAll<HTMLInputElement>(
+        '.card-back-emblems__grid input[value^="pokemon-"]'
+      ),
+    ];
+    expect(found.map((input) => input.value)).toEqual(['pokemon-25']);
+    expect(found[0]!.getAttribute('aria-label')).toBe('Pikachu');
+    await type('#150');
+    expect(radio(host, 'pokemon-150').getAttribute('aria-label')).toBe(
+      'Mewtwo'
+    );
+    await act(async () => radio(host, 'pokemon-150').click());
+    await act(async () => use(host).click());
+    expect(onChoose).toHaveBeenCalledWith(
+      'design:1.navy.stripes.gold.pokemon-150'
+    );
+  });
+
+  it("deletes one of the player's own backs at once, with Undo in the chooser", async () => {
+    const undo = vi.fn();
+    const onForget = vi.fn(() => undo);
+    const { host, onChoose } = await mount({
+      current: DESIGN,
+      recent: [DESIGN, STORED],
+      onForget,
+    });
+    await act(async () => radio(host, 'backs').click());
+    const owned = () =>
+      [...host.querySelectorAll<HTMLInputElement>('.card-back-grid input')]
+        .map((input) => input.value)
+        .filter((value) => !value.startsWith('preset:'));
+    expect(owned()).toEqual([DESIGN, STORED]);
+    // Presets can't be deleted; each of the player's own has its button.
+    expect(
+      host.querySelectorAll('.card-back-grid [data-delete-card-back]').length
+    ).toBe(2);
+    await act(async () =>
+      host
+        .querySelector<HTMLButtonElement>(
+          `[data-delete-card-back="${DESIGN}"]`
+        )!
+        .click()
+    );
+    expect(onForget).toHaveBeenCalledWith(DESIGN);
+    expect(owned()).toEqual([STORED]);
+    // It was the one chosen: Standard is, now.
+    expect(radio(host, STANDARD_CARD_BACK).checked).toBe(true);
+    expect(host.querySelector('[role="status"]')?.textContent).toContain(
+      'Design deleted'
+    );
+    await act(async () =>
+      host
+        .querySelector<HTMLButtonElement>('#undoCardBackDeleteButton')!
+        .click()
+    );
+    expect(undo).toHaveBeenCalledOnce();
+    expect(owned()).toEqual([DESIGN, STORED]);
+    await act(async () => use(host).click());
+    expect(onChoose).toHaveBeenCalledWith(STANDARD_CARD_BACK);
+  });
+
+  it('says plainly when a link gives no image, and has nothing to use', async () => {
     const { host, fetchPicture, onChoose } = await mount();
     await act(async () =>
       host.querySelector<HTMLInputElement>('#cardBackMode-picture')!.click()
@@ -144,7 +235,7 @@ describe('card-back chooser', () => {
       expect.any(AbortSignal)
     );
     expect(host.querySelector('[role="alert"]')?.textContent).toBe(
-      "Couldn't get a picture from that link."
+      "Couldn't get an image from that link."
     );
     expect(use(host).disabled).toBe(true);
     expect(onChoose).not.toHaveBeenCalled();
@@ -322,7 +413,7 @@ describe('card-back chooser', () => {
       input.dispatchEvent(new Event('change', { bubbles: true }))
     );
     expect(host.querySelector('[role="alert"]')?.textContent).toBe(
-      "That file isn't a picture."
+      "That file isn't an image."
     );
   });
 

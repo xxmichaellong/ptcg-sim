@@ -14,7 +14,7 @@ describe('cardBackImage', () => {
   it('draws presets for everyone, the old default path as the standard back', () => {
     for (const viewer of [mine, theirs, theirsHidden]) {
       expect(cardBackImage('preset:azure', viewer)).toBe(
-        '/v2/assets/backs/azure.4d574c3c97.webp'
+        '/v2/assets/backs/azure.618b7440ba.webp'
       );
       expect(cardBackImage('/v2/assets/cardback.png', viewer)).toBe(
         STANDARD_CARD_BACK_IMAGE
