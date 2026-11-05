@@ -70,6 +70,13 @@ describe('seat deck memory', () => {
     expect(recallSeatDecks(ROOM)).toEqual({});
     rememberSeatDeck(ROOM, 'main', { deck: deckListOf([]) });
     expect(recallSeatDecks(ROOM)).toEqual({});
+    // A seat cleared forgets its deck; the other seat's stays.
+    rememberSeatDeck(ROOM, 'main', { deck: deck('Ember') });
+    rememberSeatDeck(ROOM, 'alternate', { deck: deck('Frost') });
+    rememberSeatDeck(ROOM, 'main', { deck: deckListOf([]) });
+    const left = recallSeatDecks(ROOM);
+    expect(left.main).toBeUndefined();
+    expect(left.alternate?.deck[0]?.card.name).toBe('Frost');
     // Not a room code at all: nothing written or read.
     rememberSeatDeck('not a room', 'main', { deck: deck('Ember') });
     expect(recallSeatDecks('not a room')).toEqual({});

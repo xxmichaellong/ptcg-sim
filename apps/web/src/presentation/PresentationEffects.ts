@@ -1047,7 +1047,11 @@ export const presentationEffectsForEvent = (
                   "Log line: a player changed a Pokémon's damage; {damage} is what it has in all now (a multiple of 10). {name} is a player's name, {card} the Pokémon's name.",
               })
         ),
-        `damage:${event.playerId}:${event.source}:${event.cardName ?? ''}`
+        // The Pokémon itself; two of one name stay apart. (An event from
+        // before stacks were named falls back to its name.)
+        event.stackId
+          ? `damage:${event.stackId}`
+          : `damage:${event.playerId}:${event.source}:${event.cardName ?? ''}`
       );
     }
     case 'ConditionSet': {
@@ -1083,7 +1087,9 @@ export const presentationEffectsForEvent = (
                     "Log line: a player gave the Active Pokémon a Special Condition. {name} is a player's name, {card} the Pokémon's name; {kind} is the condition (Asleep, Burned, Confused, Paralyzed or Poisoned).",
                 })
         ),
-        `condition:${event.playerId}:${event.source}:${event.cardName ?? ''}`
+        event.stackId
+          ? `condition:${event.stackId}`
+          : `condition:${event.playerId}:${event.source}:${event.cardName ?? ''}`
       );
     }
     case 'CoinFlipped': {

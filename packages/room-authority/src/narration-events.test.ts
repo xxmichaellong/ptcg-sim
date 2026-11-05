@@ -356,6 +356,7 @@ describe('battle-log narration', () => {
     expect(damaged.narration).toEqual([
       {
         type: 'DamageSet',
+        stackId,
         revision: damaged.state.revision,
         playerId: p1,
         source: 'active',
@@ -371,6 +372,7 @@ describe('battle-log narration', () => {
     expect(healed.narration).toEqual([
       {
         type: 'DamageSet',
+        stackId,
         revision: healed.state.revision,
         playerId: p1,
         source: 'active',
@@ -386,6 +388,7 @@ describe('battle-log narration', () => {
     expect(poisoned.narration).toEqual([
       {
         type: 'ConditionSet',
+        stackId,
         revision: poisoned.state.revision,
         playerId: p1,
         source: 'active',
@@ -401,6 +404,7 @@ describe('battle-log narration', () => {
     expect(cleared.narration).toEqual([
       {
         type: 'ConditionSet',
+        stackId,
         revision: cleared.state.revision,
         playerId: p1,
         source: 'active',

@@ -760,6 +760,47 @@ describe('presentationEffectsForEvent', () => {
     );
   });
 
+  it('keeps two Pokémon of one name apart: only repeated changes to the same one collapse', () => {
+    const view = createRendererSpikeView();
+    const damage = (
+      revision: number,
+      value: number,
+      stackId: string
+    ): PresentationEvent => ({
+      type: 'DamageSet',
+      revision,
+      playerId: 'spike-blue',
+      stackId,
+      source: 'bench',
+      cardName: 'Pikachu',
+      damage: value,
+    });
+    const lines = (events: readonly PresentationEvent[]) =>
+      activityPresentationEffectsForEvents(events, view).map((effect) =>
+        presentationText(effect.message)
+      );
+    // One after the other, two of one name are two lines...
+    expect(lines([damage(1, 10, 'stack-a'), damage(2, 20, 'stack-b')])).toEqual(
+      ["Blue set Pikachu's damage to 10", "Blue set Pikachu's damage to 20"]
+    );
+    // ...and the same one twice reads as its last.
+    expect(lines([damage(1, 10, 'stack-a'), damage(2, 30, 'stack-a')])).toEqual(
+      ["Blue set Pikachu's damage to 30"]
+    );
+    // On rebuilding the log, the same.
+    expect(
+      foldSupersededActivity(
+        activityPresentationEffectsForEvents(
+          [damage(1, 10, 'stack-a'), damage(2, 20, 'stack-b')],
+          view
+        )
+      ).map((effect) => presentationText(effect.message))
+    ).toEqual([
+      "Blue set Pikachu's damage to 10",
+      "Blue set Pikachu's damage to 20",
+    ]);
+  });
+
   it('keeps the last of a run of damage changes to one Pokémon, in the log and on rebuilding it', () => {
     const view = createRendererSpikeView();
     const damage = (

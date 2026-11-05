@@ -1252,6 +1252,11 @@ const DamageSetPresentationEventSchema = v.object({
   type: v.literal('DamageSet'),
   revision: RevisionSchema,
   playerId: IdentifierSchema,
+  /**
+   * The Pokémon (its stack, as every view names it): a run of changes to
+   * it reads as its last, another of the same name's apart.
+   */
+  stackId: v.optional(IdentifierSchema),
   source: v.picklist(['active', 'bench'] as const),
   cardName: v.optional(boundedString(256)),
   damage: v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(9990)),
@@ -1265,6 +1270,8 @@ const ConditionSetPresentationEventSchema = v.object({
   type: v.literal('ConditionSet'),
   revision: RevisionSchema,
   playerId: IdentifierSchema,
+  /** The Pokémon, as DamageSet's. */
+  stackId: v.optional(IdentifierSchema),
   source: v.picklist(['active', 'bench'] as const),
   cardName: v.optional(boundedString(256)),
   condition: v.optional(boundedString(16)),

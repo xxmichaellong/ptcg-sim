@@ -119,15 +119,18 @@ export const recallSeatDecks = (roomCode: string): SeatDecks => {
 
 /**
  * Keeps `seat`'s deck as the one on `roomCode`'s table, beside the other
- * seat's (kept as it was, for the same room).
+ * seat's (kept as it was, for the same room). An empty deck (the seat
+ * cleared) forgets the seat's, so a reload doesn't bring it back.
  */
 export const rememberSeatDeck = (
   roomCode: string,
   target: DeckBuilderTarget,
   seat: SeatDeck
 ): void => {
-  if (!V2_ROOM_CODE_PATTERN.test(roomCode) || seat.deck.length === 0) return;
-  const seats: SeatDecks = { ...recallSeatDecks(roomCode), [target]: seat };
+  if (!V2_ROOM_CODE_PATTERN.test(roomCode)) return;
+  const { [target]: _previous, ...others } = recallSeatDecks(roomCode);
+  const seats: SeatDecks =
+    seat.deck.length === 0 ? others : { ...others, [target]: seat };
   const text = JSON.stringify({ format: FORMAT, roomCode, seats });
   for (const storage of storages()) {
     try {
