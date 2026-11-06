@@ -98,3 +98,10 @@
   justify-self: start;
   color: var(--color-danger);
 }
+
+/* Under a finger its buttons and field are 44px tall. */
+@media (pointer: coarse) {
+  .room-sheet {
+    --ds-control-height: 44px;
+  }
+}

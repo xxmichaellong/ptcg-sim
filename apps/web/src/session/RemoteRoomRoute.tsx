@@ -762,8 +762,16 @@ export const RemoteRoomRoute = ({
                 },
               }
             : {}),
-          // The bar's room code opens the room.
-          ...(!solo && !tutorial ? { onRoom: () => setSheet('room') } : {}),
+          // The bar's room code opens the room, asked again for its code
+          // (its host may have changed it).
+          ...(!solo && !tutorial
+            ? {
+                onRoom: () => {
+                  setSheet('room');
+                  void runtime.roomCodes.refresh();
+                },
+              }
+            : {}),
           ...(live.leaveRoom && !replaying ? { onLeave: live.leaveRoom } : {}),
           // The practice table keeps no saves or replays of its own.
           game: tutorial

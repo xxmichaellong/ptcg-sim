@@ -86,15 +86,25 @@ test('Create room opens the Solo table at hand to an opponent, its game and all'
       await host.evaluate(() => sessionStorage.getItem('ptcgsim.solo-room.v1'))
     ).toBeNull();
 
-    // Its invitation takes another browser into that same game.
+    // Its invite link (the room's code, ADR-047) takes another browser into
+    // that same game.
     const before = await readClipboard(host).catch(() => '');
     await host.locator('#inviteOpponentButton').click();
     await expect.poll(() => readClipboard(host)).not.toBe(before);
     const link = await readClipboard(host);
-    expect(link).toMatch(/#invite=[A-Za-z0-9_-]+$/u);
+    expect(link).toMatch(/\?room=[A-HJ-NP-Z2-9]{4,12}$/u);
+    const code = new URL(link).searchParams.get('room')!;
     const guest = await guestContext.newPage();
     await guest.setViewportSize({ width: 1280, height: 800 });
     await guest.goto(link);
+    await expect(guest.locator('#roomIdInput')).toHaveValue(code, {
+      timeout: 30_000,
+    });
+    await guest.locator('#nameInput').fill('Misty');
+    await guest.locator('#joinRoomButton').click();
+    await expect(
+      guest.locator('.ptcgsim-app-bar__switch #p2Button')
+    ).toHaveAttribute('data-room-code', code, { timeout: 30_000 });
     await expect(readyRoom(guest)).toBeVisible({ timeout: 30_000 });
     // The host's hand and prizes, as the opponent sees them.
     await expect.poll(() => zoneCount(guest, 'opponent', 'hand')).toBe(7);

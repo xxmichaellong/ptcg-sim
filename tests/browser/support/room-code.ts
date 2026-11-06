@@ -29,13 +29,11 @@ export const joinByCode = async (
 ): Promise<void> => {
   await page.locator('#nameInput').fill(name);
   await page.locator('#roomIdInput').fill(code);
+  // Each choice's radio lies over its label, as the segmented control has
+  // it.
   await page
-    .locator(
-      role === 'spectator'
-        ? 'label[for="spectatorModeCheckbox"]'
-        : 'label[for="joinAsPlayer"]'
-    )
-    .click();
+    .locator(role === 'spectator' ? '#spectatorModeCheckbox' : '#joinAsPlayer')
+    .check();
   await page.locator('#joinRoomButton').click();
   await expect(
     page.locator('[data-app-route="remote-room"][data-session-phase="ready"]')

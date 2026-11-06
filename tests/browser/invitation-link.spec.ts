@@ -1,18 +1,15 @@
 import { expect, test, type BrowserContext, type Page } from '@playwright/test';
 
 import { ownRoomBudget } from './support/room-budget.js';
-import {
-  chooseMenuItem,
-  closeSheet,
-  openAppMenu,
-} from './support/table-shell.js';
+import { joinByCode, roomCodeOf } from './support/room-code.js';
+import { chooseMenuItem } from './support/table-shell.js';
 
 /**
- * Invitation links (ADR-020, 2026-10-29): the room's Invite opponent puts a
- * link on the clipboard; opening it takes another browser straight into the
- * room, its claim carried in the fragment, which the page takes off the
- * address before anything else runs. A link already used is refused, with
- * a way back to Play online.
+ * Invite links (ADR-047, which replaces ADR-020's one-use links): the
+ * room's Copy invite link puts a link carrying the room's code on the
+ * clipboard. Opening it opens Play online with the code filled in, and the
+ * page takes the code off the address. The link works for anyone who has
+ * it: the first to join plays, and once the seat is taken they watch.
  */
 
 const readClipboard = (page: Page): Promise<string> =>
@@ -27,21 +24,28 @@ const recordErrors = (page: Page): string[] => {
   return errors;
 };
 
-test('a link opens the game straight into its room, once, and leaves the address clean', async ({
+/** What the next press puts on the clipboard (it outlives a test's pages). */
+const copied = async (page: Page, press: () => Promise<void>) => {
+  await page.evaluate(() => globalThis.navigator.clipboard.writeText(''));
+  await press();
+  await expect.poll(() => readClipboard(page)).not.toBe('');
+  return readClipboard(page);
+};
+
+test('a link opens Play online with its code, for anyone who has it, and leaves the address clean', async ({
   browser,
 }, testInfo) => {
-  test.setTimeout(120_000);
+  test.setTimeout(150_000);
   const baseURL = testInfo.project.use.baseURL ?? 'http://127.0.0.1:4173';
   const options = {
     baseURL,
     permissions: ['clipboard-read', 'clipboard-write'],
   };
   const contexts: BrowserContext[] = await Promise.all(
-    [0, 1, 2, 3].map(() => browser.newContext(options))
+    [0, 1, 2].map(() => browser.newContext(options))
   );
   for (const context of contexts) await ownRoomBudget(context);
-  const [hostContext, guestContext, lateContext, watcherContext] = contexts as [
-    BrowserContext,
+  const [hostContext, guestContext, watcherContext] = contexts as [
     BrowserContext,
     BrowserContext,
     BrowserContext,
@@ -53,119 +57,88 @@ test('a link opens the game straight into its room, once, and leaves the address
     await host.locator('#nameInput').fill('Blue');
     await host.locator('#generateIdButton').click();
     await expect(readyRoom(host)).toBeVisible({ timeout: 30_000 });
-    const before = await readClipboard(host).catch(() => '');
-    await host.locator('#inviteOpponentButton').click();
-    await expect.poll(() => readClipboard(host)).not.toBe(before);
-    const link = await readClipboard(host);
-    expect(link).toMatch(/#invite=[A-Za-z0-9_-]+$/u);
-    expect(new URL(link).origin).toBe(new URL(baseURL).origin);
-    const payload = link.split('#invite=')[1]!;
+    const code = await roomCodeOf(host);
+    const link = await copied(host, () =>
+      host.locator('#inviteOpponentButton').click()
+    );
+    expect(link).toBe(`${new URL(baseURL).origin}/?room=${code}`);
 
-    // Opened in another browser: straight into the room, no Solo table on
-    // the way, the claim gone from the address before the app ran.
+    // Opened in another browser: Play online, the code in, the address
+    // without it (a reload doesn't offer it again).
     const guest = await guestContext.newPage();
     const guestErrors = recordErrors(guest);
-    const sent: string[] = [];
-    guest.on('request', (request) => sent.push(request.url()));
     await guest.goto(link);
-    await expect(readyRoom(guest)).toBeVisible({ timeout: 30_000 });
+    await expect(guest.locator('#playOnlineSheet')).toBeVisible({
+      timeout: 30_000,
+    });
+    await expect(guest.locator('#roomIdInput')).toHaveValue(code);
+    expect(new URL(guest.url()).search).toBe('');
     expect(await guest.evaluate(() => globalThis.location.href)).not.toContain(
-      'invite='
+      'room='
     );
-    expect(guest.url()).not.toContain('invite=');
-    for (const url of sent) expect(url).not.toContain(payload);
-    const exposed = await guest.evaluate(() => ({
-      html: globalThis.document.documentElement.outerHTML,
-      storage: JSON.stringify({ ...globalThis.localStorage }),
-      session: JSON.stringify({ ...globalThis.sessionStorage }),
-    }));
-    expect(JSON.stringify(exposed)).not.toContain(payload);
-    // The guest has the opponent's seat: the host's room stops offering it.
+    await joinByCode(guest, code, { name: 'Red' });
+    // The guest has the opponent's seat: the room stops offering it, and
+    // its menu's link still invites (whoever comes next watches).
     await expect(host.locator('[data-table-invite]')).toHaveCount(0);
-    await openAppMenu(host);
-    await expect(host.locator('#inviteOpponentMenuItem')).toBeDisabled();
-    await expect(host.locator('#inviteOpponentMenuItem')).toContainText(
-      'Seat taken'
+    const menuLink = await copied(host, () =>
+      chooseMenuItem(host, 'inviteMenuItem')
     );
-    await closeSheet(host);
+    expect(menuLink).toBe(link);
 
-    // The same link again, in a third browser: its claim is spent.
-    const late = await lateContext.newPage();
-    const lateErrors = recordErrors(late);
-    await late.goto(link);
-    await expect(late.locator('.lobby-status')).toHaveText(
-      'This invitation was used or has expired. Ask for a new one.',
-      { timeout: 30_000 }
-    );
-    expect(late.url()).not.toContain('invite=');
-    // Play online is the way on.
-    await expect(late.locator('#playOnlineSheet')).toBeVisible();
-    await expect(late.locator('#generateIdButton')).toBeEnabled();
-    await expect(readyRoom(late)).toHaveCount(0);
-
-    // A spectator's link, from the room's menu: it watches.
-    await chooseMenuItem(host, 'inviteSpectatorMenuItem');
-    await expect.poll(() => readClipboard(host)).not.toBe(link);
-    const watcherLink = await readClipboard(host);
-    expect(watcherLink).toContain('#invite=');
+    // The same link in a third browser: the seats are taken, so it
+    // watches.
     const watcher = await watcherContext.newPage();
     const watcherErrors = recordErrors(watcher);
-    await watcher.goto(watcherLink);
-    await expect(readyRoom(watcher)).toBeVisible({ timeout: 30_000 });
+    await watcher.goto(link);
+    await expect(watcher.locator('#roomIdInput')).toHaveValue(code, {
+      timeout: 30_000,
+    });
+    await joinByCode(watcher, code, { name: 'Grey', role: 'spectator' });
+    await expect(
+      watcher.locator('.ptcgsim-app-bar__switch #p2Button')
+    ).toHaveAttribute('data-watching', 'true');
     await expect(watcher.locator('#p2SetupButton')).toHaveCount(0);
     await expect(watcher.locator('#inviteOpponentButton')).toHaveCount(0);
 
     expect(hostErrors).toEqual([]);
     expect(guestErrors).toEqual([]);
-    expect(lateErrors).toEqual([]);
     expect(watcherErrors).toEqual([]);
   } finally {
     await Promise.all(contexts.map((context) => context.close()));
   }
 });
 
-test('a link opened while the page is up joins from the lobby', async ({
-  browser,
-}, testInfo) => {
+test('the room copies its code and its link', async ({ browser }, testInfo) => {
   test.setTimeout(90_000);
   const baseURL = testInfo.project.use.baseURL ?? 'http://127.0.0.1:4173';
-  const options = {
+  const context = await browser.newContext({
     baseURL,
     permissions: ['clipboard-read', 'clipboard-write'],
-  };
-  const hostContext = await browser.newContext(options);
-  const guestContext = await browser.newContext(options);
-  await ownRoomBudget(hostContext);
-  await ownRoomBudget(guestContext);
+  });
+  await ownRoomBudget(context);
   try {
-    const host = await hostContext.newPage();
+    const host = await context.newPage();
     await host.goto('/?room-lobby=1');
     await host.locator('#generateIdButton').click();
     await expect(readyRoom(host)).toBeVisible({ timeout: 30_000 });
-    // The browser's clipboard outlives a test's contexts: wait for this
-    // press's link, not one left from before.
-    const before = await readClipboard(host).catch(() => '');
-    await host.locator('#inviteOpponentButton').click();
-    await expect.poll(() => readClipboard(host)).not.toBe(before);
-    const link = await readClipboard(host);
-    expect(link).toContain('#invite=');
+    const code = await roomCodeOf(host);
+    // The table's invite card copies the code on its own.
+    expect(
+      await copied(host, () => host.locator('#tableCopyCodeButton').click())
+    ).toBe(code);
 
-    // The guest's page is already up on Play online; the link is pasted
-    // into its address bar (same page: only the fragment changes).
-    const guest = await guestContext.newPage();
-    await guest.goto('/?room-lobby=1');
-    await expect(guest.locator('#playOnlineSheet')).toBeVisible();
-    await guest.evaluate(
-      (fragment) => {
-        globalThis.location.hash = fragment;
-      },
-      `#invite=${link.split('#invite=')[1]!}`
-    );
-    await expect(readyRoom(guest)).toBeVisible({ timeout: 30_000 });
-    expect(await guest.evaluate(() => globalThis.location.hash)).toBe('');
+    // The bar's code opens the room: Copy, and Copy invite link.
+    await host.locator('.ptcgsim-app-bar__switch #p2Button').click();
+    const room = host.locator('#roomSheet');
+    await expect(room.locator('#roomCodeValue')).toHaveText(code);
+    expect(
+      await copied(host, () => room.locator('#copyInviteLinkButton').click())
+    ).toBe(`${new URL(baseURL).origin}/?room=${code}`);
+    expect(
+      await copied(host, () => room.locator('#copyRoomCodeButton').click())
+    ).toBe(code);
   } finally {
-    await hostContext.close();
-    await guestContext.close();
+    await context.close();
   }
 });
 
@@ -176,7 +149,7 @@ test.describe('on a phone', () => {
     isMobile: true,
   });
 
-  test('Play online and the room’s invites are 44px under a finger', async ({
+  test('Play online, the invite card and the room are 44px under a finger', async ({
     page,
     context,
   }) => {
@@ -196,8 +169,11 @@ test.describe('on a phone', () => {
       );
     for (const height of await heights([
       '#nameInput',
+      '#roomCodeCustomInput',
       '#generateIdButton',
       '#roomIdInput',
+      '#pasteInvitationButton',
+      '#joinAsPlayer',
       '#joinRoomButton',
     ])) {
       expect(height).toBeGreaterThanOrEqual(44);
@@ -208,9 +184,23 @@ test.describe('on a phone', () => {
     await expect
       .poll(async () =>
         Math.min(
+          ...(await heights(['#inviteOpponentButton', '#tableCopyCodeButton']))
+        )
+      )
+      .toBeGreaterThanOrEqual(44);
+    // An upright phone's bar has no room for the code: Settings' Room row
+    // opens the room.
+    await chooseMenuItem(page, 'roomMenuItem');
+    await expect(page.locator('#roomSheet')).toBeVisible();
+    await expect
+      .poll(async () =>
+        Math.min(
           ...(await heights([
-            '#inviteOpponentButton',
-            '#inviteSpectatorButton',
+            '#copyRoomCodeButton',
+            '#copyInviteLinkButton',
+            '#roomCodeEditInput',
+            '#saveRoomCodeButton',
+            '#roomSheetLeaveButton',
           ]))
         )
       )

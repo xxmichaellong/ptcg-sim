@@ -1,9 +1,6 @@
 import { resolve } from 'node:path';
 
-import {
-  parseContinuationHandoffText,
-  parseRoomInvitationText,
-} from '../../packages/protocol/src/index.js';
+import { parseContinuationHandoffText } from '../../packages/protocol/src/index.js';
 import {
   prepareContinuationRotationArtifactDirectory,
   readContinuationRotationArtifact,
@@ -30,6 +27,7 @@ import {
   openLobby,
   pasteInvitation,
   roomCode,
+  roomIdOf,
   type OpenedLobby,
 } from './continuation-browser-helpers.js';
 import { chooseMenuItem, openActivity } from './support/table-shell.js';
@@ -43,8 +41,10 @@ const outputDirectory =
 interface ReadyPair {
   readonly owner: OpenedLobby;
   readonly opponent: OpenedLobby;
+  /** The room's code, as people see it (ADR-047). */
   readonly roomCode: string;
-  readonly invitation: string;
+  /** The room's own id, as its endpoints name it. */
+  readonly roomId: string;
 }
 
 interface CreatedSave {
@@ -88,7 +88,9 @@ const createReadyPair = async (
   await joinReadyRoom(opponent.page);
   const createdRoomCode = await roomCode(owner.page);
   expect(await roomCode(opponent.page)).toBe(createdRoomCode);
-  return { owner, opponent, roomCode: createdRoomCode, invitation };
+  const roomId = roomIdOf(owner);
+  expect(roomIdOf(opponent)).toBe(roomId);
+  return { owner, opponent, roomCode: createdRoomCode, roomId };
 };
 
 const createSave = async (pair: ReadyPair): Promise<CreatedSave> => {
@@ -96,7 +98,7 @@ const createSave = async (pair: ReadyPair): Promise<CreatedSave> => {
     const url = new URL(response.url());
     return (
       response.request().method() === 'POST' &&
-      url.pathname === `/v2/rooms/${pair.roomCode}/continuations`
+      url.pathname === `/v2/rooms/${pair.roomId}/continuations`
     );
   });
   const [download, response] = await Promise.all([
@@ -224,8 +226,9 @@ const capture = async (
       handoffText: save.handoffText,
       checkpoint,
     });
+    // A room's code is public by design (ADR-047); the save's bearers are
+    // not.
     await assertBearerIsolation(pages, requestUrls, [
-      pair.invitation,
       save.handoffText,
       save.capability,
     ]);
@@ -263,19 +266,19 @@ const transition = async (
     expect(restoredRoomCode).not.toBe(stagingPair.roomCode);
     expect(await boardIdentity(owner.page)).toEqual(input.manifest.checkpoint);
 
-    const parsedInvitation = parseRoomInvitationText(restoredInvitation);
-    expect(parsedInvitation.ok).toBe(true);
-    if (!parsedInvitation.ok) {
-      throw new Error('Restored rotation invitation is invalid');
-    }
-    expect(parsedInvitation.value.roomCode).toBe(restoredRoomCode);
-    expect(parsedInvitation.value.requestedRole).toBe('player');
+    const restoredRoomId = roomIdOf(owner);
+    expect(restoredRoomId).not.toBe(stagingPair.roomId);
+    // The restored room's invite link carries its own code (ADR-047).
+    expect(new URL(restoredInvitation).searchParams.get('room')).toBe(
+      restoredRoomCode
+    );
     await pasteInvitation(
       restoredOpponent.page,
       restoredInvitation,
       'Restored Opponent'
     );
     await joinReadyRoom(restoredOpponent.page);
+    expect(roomIdOf(restoredOpponent)).toBe(restoredRoomId);
     expect(await boardIdentity(restoredOpponent.page)).toEqual(
       input.manifest.checkpoint
     );
@@ -295,22 +298,19 @@ const transition = async (
     expect(Number(advancedCheckpoint.revision)).toBeGreaterThan(
       Number(input.manifest.checkpoint.revision)
     );
-    expect(await boardIdentity(restoredOpponent.page)).toEqual(
-      advancedCheckpoint
-    );
+    // Each socket receives publication independently: the coin's sender
+    // may see its revision after the owner does.
+    await expect
+      .poll(() => boardIdentity(restoredOpponent.page))
+      .toEqual(advancedCheckpoint);
 
-    const bearerValues = [
-      input.handoffText,
-      restoredInvitation,
-      parsedInvitation.value.invitation,
-      stagingPair.invitation,
-    ];
+    const bearerValues = [input.handoffText];
     if (preparedOutput) {
       const outputSave = await createSave({
         owner,
         opponent: restoredOpponent,
         roomCode: restoredRoomCode,
-        invitation: restoredInvitation,
+        roomId: restoredRoomId,
       });
       await writeContinuationRotationArtifact({
         directory: preparedOutput,

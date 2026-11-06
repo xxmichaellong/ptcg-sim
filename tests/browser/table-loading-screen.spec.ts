@@ -314,7 +314,7 @@ test('joining a room trades tables under the curtain, never over a bare desk', a
     await host.locator('#inviteOpponentButton').click();
     await expect
       .poll(() => host.evaluate(() => navigator.clipboard.readText()))
-      .toMatch(/#invite=[A-Za-z0-9_-]+$/u);
+      .toMatch(/\?room=[A-HJ-NP-Z2-9]{4,12}$/u);
     const invitation = await host.evaluate(() =>
       navigator.clipboard.readText()
     );
@@ -331,8 +331,9 @@ test('joining a room trades tables under the curtain, never over a bare desk', a
     );
     await guest.locator('#roomIdInput').focus();
     await guest.keyboard.press('Control+V');
+    // The link is read for the room's code (ADR-047).
     await expect(guest.locator('#roomIdInput')).toHaveValue(
-      /^[A-HJ-NP-Z2-9]{12}$/u
+      /^[A-HJ-NP-Z2-9]{4,12}$/u
     );
     const joinedAt = await guest.evaluate(() => performance.now());
     await guest.locator('#joinRoomButton').click();

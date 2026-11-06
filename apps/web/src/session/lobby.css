@@ -79,6 +79,14 @@
   align-self: center;
 }
 
+/* Each choice takes presses across the control's padding too, so under a
+   finger Play and Watch are 44px tall without the control growing. */
+.legacy-lobby-sidebox .lobby-role .ptcgsim-segmented-control__option input {
+  inset: -3px -1px;
+  width: auto;
+  height: auto;
+}
+
 .legacy-lobby-sidebox .lobby-or {
   display: flex;
   align-items: center;

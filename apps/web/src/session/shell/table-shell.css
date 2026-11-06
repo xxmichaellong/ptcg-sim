@@ -292,6 +292,12 @@
   text-overflow: ellipsis;
 }
 
+/* In a room, Online's name is the room's code (ADR-047). */
+.ptcgsim-app-bar__switch-name[data-code] {
+  font-family: var(--font-mono);
+  letter-spacing: 0.08em;
+}
+
 .ptcgsim-app-bar__switch-option[aria-pressed='true'] {
   background: oklch(0.96 0.01 80);
   box-shadow: 0 1px 3px oklch(0 0 0 / 0.35);

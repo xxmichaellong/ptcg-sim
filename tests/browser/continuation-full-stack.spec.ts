@@ -2,10 +2,7 @@ import {
   assembleSavedPrint,
   expectSavedPrint,
 } from './support/assembled-save.js';
-import {
-  parseContinuationHandoffText,
-  parseRoomInvitationText,
-} from '../../packages/protocol/src/index.js';
+import { parseContinuationHandoffText } from '../../packages/protocol/src/index.js';
 import { expect, test } from '@playwright/test';
 
 import {
@@ -21,6 +18,7 @@ import {
   openLobby,
   pasteInvitation,
   roomCode,
+  roomIdOf,
   roomStatus,
   type OpenedLobby,
 } from './continuation-browser-helpers.js';
@@ -92,6 +90,8 @@ test('online save downloads, restores, rotates both players, and revokes its bea
     await joinReadyRoom(sourceOpponent.page);
     const sourceRoomCode = await roomCode(creator.page);
     expect(await roomCode(sourceOpponent.page)).toBe(sourceRoomCode);
+    const sourceRoomId = roomIdOf(creator);
+    expect(roomIdOf(sourceOpponent)).toBe(sourceRoomId);
 
     // Red has no deck yet, so the rail offers Coin (and no Attack) before
     // a game (ADR-030): the coin is Red's action that reaches both tables.
@@ -119,7 +119,7 @@ test('online save downloads, restores, rotates both players, and revokes its bea
       const url = new URL(response.url());
       return (
         response.request().method() === 'POST' &&
-        url.pathname === `/v2/rooms/${sourceRoomCode}/continuations`
+        url.pathname === `/v2/rooms/${sourceRoomId}/continuations`
       );
     });
     const [download, createResponse] = await Promise.all([
@@ -181,17 +181,16 @@ test('online save downloads, restores, rotates both players, and revokes its bea
     await expectReadyRoom(creator.page);
     const targetRoomCode = await roomCode(creator.page);
     expect(targetRoomCode).not.toBe(sourceRoomCode);
+    const targetRoomId = roomIdOf(creator);
+    expect(targetRoomId).not.toBe(sourceRoomId);
     expect(await boardIdentity(creator.page)).toEqual(sourceCheckpoint);
 
     await expectSavedPrint(creator.page);
+    // The restored room's invite link carries its own code (ADR-047).
     const targetInvitation = await inviteOpponent(creator.page);
-    const parsedInvitation = parseRoomInvitationText(targetInvitation);
-    expect(parsedInvitation.ok).toBe(true);
-    if (!parsedInvitation.ok) {
-      throw new Error('Restored opponent invitation is invalid');
-    }
-    expect(parsedInvitation.value.roomCode).toBe(targetRoomCode);
-    expect(parsedInvitation.value.requestedRole).toBe('player');
+    expect(new URL(targetInvitation).searchParams.get('room')).toBe(
+      targetRoomCode
+    );
 
     await pasteInvitation(
       restoredOpponent.page,
@@ -201,6 +200,7 @@ test('online save downloads, restores, rotates both players, and revokes its bea
     await joinReadyRoom(restoredOpponent.page);
     await expectSavedPrint(restoredOpponent.page);
     expect(await roomCode(restoredOpponent.page)).toBe(targetRoomCode);
+    expect(roomIdOf(restoredOpponent)).toBe(targetRoomId);
     expect(await boardIdentity(restoredOpponent.page)).toEqual(
       sourceCheckpoint
     );
@@ -253,12 +253,9 @@ test('online save downloads, restores, rotates both players, and revokes its bea
       body: { error: 'continuation_unavailable' },
     });
 
-    const bearerValues = [
-      saveText,
-      parsedSave.value.capability,
-      targetInvitation,
-      parsedInvitation.value.invitation,
-    ];
+    // A room's code is public by design (ADR-047); the save's bearers are
+    // not.
+    const bearerValues = [saveText, parsedSave.value.capability];
     for (const requestUrl of requestUrls) {
       const url = new URL(requestUrl);
       // The room's and the save's own endpoints carry nothing in their

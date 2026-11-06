@@ -7,7 +7,8 @@ import {
 
 import { openActivity } from './support/table-shell.js';
 
-export const ROOM_CODE = /^[A-HJ-NP-Z2-9]{12}$/u;
+/** The short code a room is joined by (ADR-047). */
+export const ROOM_CODE = /^[A-HJ-NP-Z2-9]{4,12}$/u;
 export const CONTINUATION_RESTORE_SUCCESS_TITLE = 'Game resumed';
 export const EXPECTED_REVOKED_CONSOLE_ERROR =
   'console: Failed to load resource: the server responded with a status of 404 (Not Found)';
@@ -15,6 +16,8 @@ export const EXPECTED_REVOKED_CONSOLE_ERROR =
 export interface OpenedLobby {
   readonly page: Page;
   readonly errors: string[];
+  /** The rooms this page's sockets went to, by their ids, oldest first. */
+  readonly rooms: string[];
 }
 
 export interface BoardIdentity {
@@ -27,7 +30,14 @@ export const openLobby = async (
 ): Promise<OpenedLobby> => {
   const page = await context.newPage();
   const errors: string[] = [];
+  const rooms: string[] = [];
   page.on('pageerror', (error) => errors.push(`pageerror: ${error.message}`));
+  page.on('websocket', (socket) => {
+    const room = /^\/v2\/rooms\/([A-HJ-NP-Z2-9]{12})\/connect$/u.exec(
+      new URL(socket.url()).pathname
+    )?.[1];
+    if (room) rooms.push(room);
+  });
   page.on('console', (message) => {
     if (message.type() === 'error') errors.push(`console: ${message.text()}`);
   });
@@ -35,22 +45,32 @@ export const openLobby = async (
   await expect(
     page.locator('[data-app-route="remote-room-lobby"]')
   ).toBeVisible();
-  return { page, errors };
+  return { page, errors, rooms };
+};
+
+/**
+ * The room the page is in by its own id, as the room's endpoints name it
+ * (the page's last socket went there); its code is what people see.
+ */
+export const roomIdOf = (lobby: OpenedLobby): string => {
+  const room = lobby.rooms.at(-1);
+  if (!room) throw new Error('The page has opened no room');
+  return room;
 };
 
 export const readClipboard = (page: Page): Promise<string> =>
   page.evaluate(() => globalThis.navigator.clipboard.readText());
 
 /**
- * The room's Invite opponent (its Room ready card): a link to the room, on
- * the clipboard as a mouse's press copies it (ADR-020).
+ * The room's Copy invite link (its Room ready card): a link that carries
+ * the room's code (ADR-047), on the clipboard as a mouse's press copies it.
  */
 export const inviteOpponent = async (page: Page): Promise<string> => {
   const before = await readClipboard(page).catch(() => '');
   await page.locator('#inviteOpponentButton').click();
   await expect.poll(() => readClipboard(page)).not.toBe(before);
   const link = await readClipboard(page);
-  expect(link).toContain('#invite=');
+  expect(link).toMatch(/\?room=[A-HJ-NP-Z2-9]{4,12}$/u);
   return link;
 };
 
@@ -79,8 +99,8 @@ export const pasteInvitation = async (
   await roomInput.focus();
   await page.keyboard.press('Control+V');
   await expect(roomInput).toHaveValue(ROOM_CODE);
-  // A pasted invitation to play leaves the spectator choice to its holder
-  // and, as in v1, announces nothing.
+  // A pasted invite link fills in its code, leaves Play or Watch to its
+  // holder and, as in v1, announces nothing.
   await expect(page.locator('#spectatorModeCheckbox')).toBeEnabled();
   await expect(page.locator('.lobby-status')).toHaveCount(0);
 };
@@ -102,7 +122,8 @@ export const joinReadyRoom = async (page: Page): Promise<void> => {
 
 /**
  * The room's code, as the activity log's header names it once the room is
- * ready ("Room ABC…", ADR-030; v1's sidebar header said "id: ABC…").
+ * ready ("Room K7PQ", ADR-030 and ADR-047; v1's sidebar header said
+ * "id: ABC…").
  */
 export const roomStatus = async (page: Page) => {
   await openActivity(page);
@@ -126,8 +147,8 @@ export const roomCode = async (page: Page): Promise<string> => {
       },
       { timeout: 15_000, message: 'the room names its code' }
     )
-    .toMatch(/^Room [A-HJ-NP-Z2-9]{12}$/u);
-  const match = /^Room ([A-HJ-NP-Z2-9]{12})$/u.exec(text);
+    .toMatch(/^Room [A-HJ-NP-Z2-9]{4,12}$/u);
+  const match = /^Room ([A-HJ-NP-Z2-9]{4,12})$/u.exec(text);
   if (!match?.[1]) throw new Error(`Unexpected room status: ${text}`);
   return match[1];
 };

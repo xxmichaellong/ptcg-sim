@@ -382,7 +382,9 @@ export const RemoteRoomLobby = ({
   // The invitation field shows the room an accepted invitation names,
   // never the invitation itself (ADR-020).
   // The code to join by: typed, pasted, or from an invite link (ADR-047).
-  const [roomCode, setRoomCode] = useState(() => pendingRoomCodeLink() ?? '');
+  const [roomCode, setRoomCode] = useState(() =>
+    roomCodeFieldValue(pendingRoomCodeLink() ?? '')
+  );
   const [spectator, setSpectator] = useState(false);
   // The host's own choice of code for the room they create, if any.
   const [customCode, setCustomCode] = useState('');
@@ -610,10 +612,13 @@ export const RemoteRoomLobby = ({
   // online opens over the Solo table once that is up.
   const linkedCodeShown = useRef(false);
   useEffect(() => {
-    if (linkedCodeShown.current || !pendingRoomCodeLink()) return;
+    const linked = pendingRoomCodeLink();
+    if (linkedCodeShown.current || !linked) return;
     if (connected?.mode !== 'solo') return;
     linkedCodeShown.current = true;
     waitingRoomCodeLink = undefined;
+    // Filled in now: landing on the Solo table clears the field.
+    setRoomCode(roomCodeFieldValue(linked));
     setOnlineRequest((request) => request + 1);
   }, [connected]);
 

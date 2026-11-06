@@ -11,6 +11,16 @@ import { dismissWelcome, openPlayOnline } from './support/table-shell.js';
  * carries the code; the host may change it.
  */
 
+/** A code no earlier run holds (the local Worker keeps its rooms). */
+const freshCode = (prefix: string): string => {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = prefix;
+  while (code.length < 8) {
+    code += alphabet[Math.floor(Math.random() * alphabet.length)];
+  }
+  return code;
+};
+
 const ready = (page: Page) =>
   expect(
     page.locator('[data-app-route="remote-room"][data-session-phase="ready"]')
@@ -63,6 +73,7 @@ test('hosts a room by its code, joins it to play or to watch, and changes the co
     // The link opens the game with Play online open and the code in.
     const guest = await visitor(browser, new URL(link).search);
     opened.push(guest.context);
+
     await expect(guest.page.locator('#playOnlineSheet')).toBeVisible({
       timeout: 30_000,
     });
@@ -96,20 +107,23 @@ test('hosts a room by its code, joins it to play or to watch, and changes the co
     await expect(room.locator('#roomCodeValue')).toHaveText(code);
     await expect(room).toContainText('Red');
     await expect(room).toContainText('1 watching');
-    await room.locator('#roomCodeEditInput').fill('ash-park');
-    await expect(room.locator('#roomCodeEditInput')).toHaveValue('ASHPARK');
+    const chosen = freshCode('ASH');
+    await room
+      .locator('#roomCodeEditInput')
+      .fill(`${chosen.slice(0, 4)}-${chosen.slice(4)}`.toLowerCase());
+    await expect(room.locator('#roomCodeEditInput')).toHaveValue(chosen);
     await room.locator('#saveRoomCodeButton').click();
     await expect(room.locator('#roomCodeEditStatus')).toHaveText(
       'Code changed'
     );
-    await expect(room.locator('#roomCodeValue')).toHaveText('ASHPARK');
+    await expect(room.locator('#roomCodeValue')).toHaveText(chosen);
     await expect(
       host.page.locator('.ptcgsim-app-bar__switch #p2Button')
-    ).toHaveAttribute('data-room-code', 'ASHPARK');
+    ).toHaveAttribute('data-room-code', chosen);
     // The guest isn't the host: no choice of code for them.
     await guest.page.locator('.ptcgsim-app-bar__switch #p2Button').click();
     await expect(guest.page.locator('#roomSheet #roomCodeValue')).toHaveText(
-      'ASHPARK'
+      chosen
     );
     await expect(guest.page.locator('#roomCodeEditInput')).toHaveCount(0);
 
@@ -137,11 +151,7 @@ test('creates a room under a code its host chooses', async ({ browser }) => {
     await ready(host.page);
     await dismissWelcome(host.page);
     await openPlayOnline(host.page);
-    const chosen = `PK${Math.random()
-      .toString(36)
-      .slice(2, 8)
-      .toUpperCase()
-      .replace(/[^A-HJ-NP-Z2-9]/gu, 'Q')}`;
+    const chosen = freshCode('PK');
     await host.page.locator('#roomCodeCustomInput').fill(chosen);
     await host.page.locator('#generateIdButton').click();
     await ready(host.page);

@@ -39,8 +39,9 @@ works once, one kind per role, and nothing to read out loud.
 2. **Reading and renewing** (`POST /v2/rooms/:room/code`, the session's own
    resume bearer): any session in the room reads the code; a player's ask
    makes one when the room has none (or its lease lapsed and another room
-   took it). The client asks on every connection and every 30 minutes
-   while the room is up, which renews the lease, so a room in use keeps its
+   took it). The client asks on every connection, every 30 minutes
+   while the room is up and whenever Room opens (a guest learns a changed
+   code there), which renews the lease, so a room in use keeps its
    code and a room left alone gives it back. Only the **host** (the first
    seat's session) may choose another; the old code is released at once.
 3. **Joining by code** (`POST /v2/join`, `{code, requestedRole,
@@ -75,6 +76,9 @@ displayName}`): the Worker resolves the code, and the room mints an
    - The room-ready card on the table shows the code, Copy invite link and
      Copy code; the log's header and Settings have Copy invite link. There
      are no separate player and spectator invites.
+   - Under a finger, Play online's, the room-ready card's and Room's
+     controls are 44px tall (Play and Watch take presses across their
+     control's padding).
 
 ## Consequences
 

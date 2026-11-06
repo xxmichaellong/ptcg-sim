@@ -129,18 +129,11 @@ test('built SPA and room authority share one production-like Worker origin', asy
         .filter((url) => url.includes('/DeckBuilderSession-'))
     );
   expect(await loadedDeckResources()).toEqual([]);
-  // The lobby opens on Play online, a sheet over the table (ADR-030), with
-  // the Deck in its header: the builder's chunk loads only when it opens,
-  // and it asks the authority for nothing.
+  // The lobby opens on Play online, a sheet over the table (ADR-030), and
+  // the deck builder's chunk waits for the deck screen (checked at the end,
+  // from the bar: ADR-047 took the Deck out of Play online).
   await expect(page.locator('#playOnlineSheet #p2Box')).toBeVisible();
   expect(await loadedDeckResources()).toEqual([]);
-  await page.locator('#onlineDeckButton').click();
-  await expect(page.locator('#deckPasteInput')).toBeVisible();
-  await expect
-    .poll(async () => (await loadedDeckResources()).length)
-    .toBeGreaterThan(0);
-  await page.locator('#deckBackButton').click();
-  await expect(page.locator('#playOnlineSheet #p2Box')).toBeVisible();
   expect(authorityRequests).toEqual([]);
 
   const entryModuleUrl = await page
@@ -385,4 +378,24 @@ test('built SPA and room authority share one production-like Worker origin', asy
   expect(errors).toEqual(
     Array.from({ length: 3 }, () => EXPECTED_DEFAULT_OFF_CONSOLE_ERROR)
   );
+
+  // The deck screen, from the Solo table's bar once Play online is put
+  // away: its builder's chunk loads only when it opens, and it asks the
+  // authority for nothing.
+  await page.goto('/?room-lobby=1');
+  await expect(page.locator('#playOnlineSheet #p2Box')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(
+    page.locator('[data-app-route="remote-room"][data-session-phase="ready"]')
+  ).toBeVisible({ timeout: TABLE_TIMEOUT_MS });
+  expect(await loadedDeckResources()).toEqual([]);
+  const beforeDeck = authorityRequests.length;
+  await page.locator('.ptcgsim-app-bar #deckImportButton').click();
+  await expect(page.locator('#deckPasteInput')).toBeVisible();
+  await expect
+    .poll(async () => (await loadedDeckResources()).length)
+    .toBeGreaterThan(0);
+  await page.locator('#deckBackButton').click();
+  expect(authorityRequests.slice(beforeDeck)).toEqual([]);
+  expect(errors).toHaveLength(3);
 });

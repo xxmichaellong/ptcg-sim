@@ -9,6 +9,7 @@ import {
   routeCardBackImport,
   STORED_CARD_BACK,
 } from './support/card-back-import.js';
+import { roomCodeOf } from './support/room-code.js';
 import {
   chooseLogAction,
   chooseMenuItem,
@@ -21,9 +22,9 @@ import {
   openSettings,
 } from './support/table-shell.js';
 
-const ROOM_CODE = /^[A-HJ-NP-Z2-9]{12}$/u;
-const EXPECTED_ROTATION_CONSOLE_ERROR =
-  'console: Failed to load resource: the server responded with a status of 403 (Forbidden)';
+const ROOM_CODE = /^[A-HJ-NP-Z2-9]{4,12}$/u;
+const EXPECTED_UNKNOWN_CODE_CONSOLE_ERROR =
+  'console: Failed to load resource: the server responded with a status of 404 (Not Found)';
 const CUSTOM_BACKGROUND_URL =
   'https://images.example.test/player-two-background.png';
 const CUSTOM_CARD_BACK_URL =
@@ -58,53 +59,74 @@ const readClipboard = (page: Page): Promise<string> =>
   page.evaluate(() => globalThis.navigator.clipboard.readText());
 
 /**
- * Invites from inside the room (its Room ready card): a fresh link on the
- * clipboard, as a mouse's press copies it.
+ * The room's Copy invite link (its Room ready card): a link carrying the
+ * room's code (ADR-047), on the clipboard as a mouse's press copies it.
  */
-const inviteFresh = async (
-  page: Page,
-  role: 'player' | 'spectator',
-  previous = ''
-): Promise<string> => {
-  await page
-    .locator(
-      role === 'player' ? '#inviteOpponentButton' : '#inviteSpectatorButton'
-    )
-    .click();
+const copyInviteLink = async (page: Page): Promise<string> => {
+  const previous = await readClipboard(page).catch(() => '');
+  await page.locator('#inviteOpponentButton').click();
   await expect.poll(() => readClipboard(page)).not.toBe(previous);
   return readClipboard(page);
 };
 
-/** The invitation envelope a link carries in its fragment. */
-const envelopeOf = (link: string): string =>
-  Buffer.from(link.split('#invite=')[1] ?? '', 'base64url').toString('utf8');
+/** A code no room holds (generated codes are four characters). */
+const unknownCode = (): string => {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = 'ZZ';
+  while (code.length < 12) {
+    code += alphabet[Math.floor(Math.random() * alphabet.length)];
+  }
+  return code;
+};
+
+/**
+ * What the room answers a join by code with: its socket ticket and the
+ * seat's resume token, both private to the page that joined.
+ */
+const recordJoinBearers = async (
+  page: Page,
+  bearers: string[]
+): Promise<void> => {
+  await page.route('**/v2/join', async (route) => {
+    const response = await route.fetch();
+    const text = await response.text();
+    if (response.ok()) {
+      const body = JSON.parse(text) as {
+        readonly admissionTicket?: string;
+        readonly resumeToken?: string;
+      };
+      for (const value of [body.admissionTicket, body.resumeToken]) {
+        if (value) bearers.push(value);
+      }
+    }
+    await route.fulfill({ response, body: text });
+  });
+};
 
 const pasteInvitation = async (
   page: Page,
-  handoff: string,
+  link: string,
   displayName: string,
   role: 'player' | 'spectator'
 ): Promise<void> => {
   await page.locator('#nameInput').fill(displayName);
   await page.evaluate(
     (text) => globalThis.navigator.clipboard.writeText(text),
-    handoff
+    link
   );
   const roomInput = page.locator('#roomIdInput');
   await roomInput.focus();
   await page.keyboard.press('Control+V');
+  // A pasted link is read for its code (ADR-047): whoever holds it chooses
+  // to play or to watch.
+  await expect(roomInput).toHaveValue(new URL(link).searchParams.get('room')!);
   await expect(roomInput).toHaveValue(ROOM_CODE);
-  const spectator = page.locator('#spectatorModeCheckbox');
-  if (role === 'spectator') {
-    // A spectator invitation only ever watches: no choice is offered.
-    await expect(page.locator('#invitationReceipt')).toContainText('to watch');
-    await expect(spectator).toHaveCount(0);
-  } else {
-    // A player invitation leaves the choice to its holder, as v1's key did.
-    await expect(page.locator('#invitationReceipt')).toContainText('to play');
-    await expect(spectator).not.toBeChecked();
-    await expect(spectator).toBeEnabled();
-  }
+  await expect(page.locator('#invitationReceipt')).toHaveCount(0);
+  const choice = page.locator(
+    role === 'spectator' ? '#spectatorModeCheckbox' : '#joinAsPlayer'
+  );
+  await expect(choice).toBeEnabled();
+  await choice.check();
   await expect(page.locator('.lobby-status')).toHaveCount(0);
 };
 
@@ -119,7 +141,7 @@ const joinReadyRoom = async (page: Page): Promise<void> => {
   ).toBeAttached();
 };
 
-test('visible v2 lobby creates, copies, pastes, and joins through private invitation custody', async ({
+test('visible v2 lobby creates, copies, pastes, and joins by the room code', async ({
   browser,
 }) => {
   // Four pages on one table: CI's software renderer takes 40-60 s of it.
@@ -136,11 +158,12 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     browser.newContext(options),
   ]);
   const requestUrls: string[] = [];
+  const bearerValues: string[] = [];
   try {
-    const [creator, rotatedGuest, playerTwo, spectator] = (await Promise.all(
+    const [creator, stranger, playerTwo, spectator] = (await Promise.all(
       contexts.map(openLobby)
     )) as [OpenedLobby, OpenedLobby, OpenedLobby, OpenedLobby];
-    const lobbies = [creator, rotatedGuest, playerTwo, spectator];
+    const lobbies = [creator, stranger, playerTwo, spectator];
     const importedCardBacks = await routeCardBackImport(playerTwo.page);
     const customCardBackRequests = new Map<Page, number>();
     const privateFaceRequests = new Map<Page, number>();
@@ -174,6 +197,7 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
         const url = new URL(socket.url());
         if (url.pathname.startsWith('/v2/')) requestUrls.push(url.href);
       });
+      await recordJoinBearers(page, bearerValues);
     }
 
     const initialChrome = await creator.page.evaluate(() => {
@@ -223,14 +247,15 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
       'Play online'
     );
     expect(initialChrome.hasRemoteCopyImage).toBe(false);
-    // Copying waits for a room, board flip is the room's to allow, and the
-    // choice to watch comes with an invitation to play.
+    // Copying waits for a room and board flip is the room's to allow; a
+    // room is joined by its code, to play or to watch (ADR-047).
     await expect(creator.page.locator('#copyButton')).toHaveCount(0);
     await expect(creator.page.locator('#coachingModeLabel')).toHaveCount(0);
-    await expect(creator.page.locator('#spectatorModeLabel')).toHaveCount(0);
-    await expect(creator.page.locator('label[for="roomIdInput"]')).toHaveText(
-      'Invitation'
+    await expect(creator.page.locator('#roomIdInput')).toHaveAccessibleName(
+      'Room code'
     );
+    await expect(creator.page.locator('#joinAsPlayer')).toBeChecked();
+    await expect(creator.page.locator('#joinRoomButton')).toBeDisabled();
 
     // Play online is a sheet over the table; the deck is reached from the
     // Solo table's menu, and the deck is kept when a room opens.
@@ -274,7 +299,7 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
 
     await creator.page.locator('#nameInput').fill('Blue');
     await expect(creator.page.locator('#generateIdButton')).toHaveText(
-      'Create room'
+      'Create'
     );
     await creator.page.locator('#generateIdButton').click();
     // Straight into the room, which says how to invite.
@@ -287,52 +312,30 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
       'Room ready'
     );
 
-    const rotatedPlayer = await inviteFresh(creator.page, 'player');
-    const activePlayer = await inviteFresh(
-      creator.page,
-      'player',
-      rotatedPlayer
+    // One link for everyone, carrying the room's code.
+    const code = await roomCodeOf(creator.page);
+    const link = await copyInviteLink(creator.page);
+    expect(link).toMatch(
+      /^http:\/\/127\.0\.0\.1:\d+\/\?room=[A-HJ-NP-Z2-9]{4}$/u
     );
-    const spectatorInvitation = await inviteFresh(
-      creator.page,
-      'spectator',
-      activePlayer
-    );
-    for (const link of [rotatedPlayer, activePlayer, spectatorInvitation]) {
-      expect(link).toMatch(
-        /^http:\/\/127\.0\.0\.1:\d+\/#invite=[A-Za-z0-9_-]+$/u
-      );
-      expect(envelopeOf(link)).toContain('PTCGSIM2-INVITE:');
-    }
-    expect(envelopeOf(activePlayer)).toContain('"requestedRole":"player"');
-    expect(envelopeOf(spectatorInvitation)).toContain(
-      '"requestedRole":"spectator"'
-    );
+    expect(new URL(link).searchParams.get('room')).toBe(code);
 
-    await pasteInvitation(
-      rotatedGuest.page,
-      rotatedPlayer,
-      'Rotated',
-      'player'
-    );
-    await rotatedGuest.page.locator('#joinRoomButton').click();
-    // A newer invitation to play revoked it: the room says so.
-    await expect(rotatedGuest.page.locator('.lobby-status')).toHaveText(
-      'This invitation was used or has expired. Ask for a new one.'
+    // A code no room holds: the lobby says so, and stays.
+    await stranger.page.locator('#nameInput').fill('Stranger');
+    await stranger.page.locator('#roomIdInput').fill(unknownCode());
+    await stranger.page.locator('#joinRoomButton').click();
+    await expect(stranger.page.locator('.lobby-status')).toHaveText(
+      'No room has that code.'
     );
     await expect(
-      rotatedGuest.page.locator('[data-app-route="remote-room-lobby"]')
+      stranger.page.locator('[data-app-route="remote-room-lobby"]')
     ).toBeVisible();
 
-    await pasteInvitation(playerTwo.page, activePlayer, 'Red', 'player');
+    await pasteInvitation(playerTwo.page, link, 'Red', 'player');
     await joinReadyRoom(playerTwo.page);
 
-    await pasteInvitation(
-      spectator.page,
-      spectatorInvitation,
-      'Watcher',
-      'spectator'
-    );
+    // The same link, to watch.
+    await pasteInvitation(spectator.page, link, 'Watcher', 'spectator');
     await joinReadyRoom(spectator.page);
     // The opponent has their seat: the room stops offering it.
     await expect(creator.page.locator('[data-table-invite]')).toHaveCount(0);
@@ -399,14 +402,9 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
       connectedChrome.panel.left
     );
 
-    const links = [rotatedPlayer, activePlayer, spectatorInvitation];
-    const bearerValues = links.flatMap((link) => {
-      const envelope = envelopeOf(link);
-      const parsed = JSON.parse(envelope.slice('PTCGSIM2-INVITE:'.length)) as {
-        readonly invitation: string;
-      };
-      return [link.split('#')[1]!, envelope, parsed.invitation];
-    });
+    // A room's code is public by design (ADR-047); what the room answered
+    // the two joins with stays private to the pages that joined.
+    expect(bearerValues).toHaveLength(4);
     for (const url of requestUrls) {
       // The room's own endpoints carry nothing in their address (others,
       // such as the deck screen's tournament list, may have a query).
@@ -747,7 +745,7 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     expect(creator.errors).toEqual([]);
     expect(playerTwo.errors).toEqual([]);
     expect(spectator.errors).toEqual([]);
-    expect(rotatedGuest.errors).toEqual([EXPECTED_ROTATION_CONSOLE_ERROR]);
+    expect(stranger.errors).toEqual([EXPECTED_UNKNOWN_CODE_CONSOLE_ERROR]);
   } finally {
     await Promise.all(contexts.map((context) => context.close()));
   }
