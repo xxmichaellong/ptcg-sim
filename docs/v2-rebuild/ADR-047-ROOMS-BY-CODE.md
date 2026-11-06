@@ -94,6 +94,10 @@ displayName}`): the Worker resolves the code, and the room mints an
    - The room's Welcome lists who is already here, so a guest sees the host
      at once (the invite card, the open-seat check and Room's "here" read
      it, kept current by Presence).
+   - A room admits only by its code as it is now: a join by a code it
+     changed from answers `room_not_found`, even where that code's record
+     outlived the change (its release failed), and the record is given
+     back then (`RoomAliasCustody.holds`, after any change under way).
 
 ## Consequences
 

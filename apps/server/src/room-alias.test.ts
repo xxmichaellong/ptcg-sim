@@ -190,9 +190,13 @@ describe('room codes (ADR-047)', () => {
     } as const;
     let now = 10;
     await directory('KEPT').claim(ROOM, now);
+    const asked: unknown[] = [];
     const join = joinRoomByAlias({
       directory,
-      join: async () => admitted,
+      join: async (_room, request) => {
+        asked.push(request);
+        return admitted;
+      },
       now: () => now,
     });
     // In use: a join late in the lease keeps the code the room's.
@@ -200,6 +204,10 @@ describe('room codes (ADR-047)', () => {
     expect(
       await join({ code: 'KEPT', requestedRole: 'player', displayName: 'Red' })
     ).toEqual({ found: true, roomCode: ROOM, result: admitted });
+    // The room is told which code the join came by, to admit only by its own.
+    expect(asked).toEqual([
+      { code: 'KEPT', requestedRole: 'player', displayName: 'Red' },
+    ]);
     expect(await directory('KEPT').resolve(ROOM_ALIAS_LEASE_MS + 20)).toBe(
       ROOM
     );
@@ -371,6 +379,29 @@ describe('room codes (ADR-047)', () => {
     expect(await directory('PKMNCLUB').resolve(11)).toBe(ROOM);
     // The old code is free again.
     expect(await directory('LDCD').resolve(11)).toBeNull();
+    // A release that fails leaves the old record behind; the change is
+    // asked again and answers as made. The old code still names the room
+    // in the directory, but the room no longer admits by it, and gives it
+    // back when a join comes by it (Codex review, batch 12 r9).
+    const failing = directory('ASHPARK');
+    await failing.claim(ROOM, 10);
+    stored = 'ASHPARK';
+    const release = failing.release.bind(failing);
+    let failures = 1;
+    failing.release = async (roomCode) => {
+      if (failures-- > 0) throw new Error('transient');
+      return release(roomCode);
+    };
+    await expect(
+      custody.respond({ resumeToken: host, code: 'MSTYGYM' })
+    ).rejects.toThrow('transient');
+    expect(
+      await custody.respond({ resumeToken: host, code: 'MSTYGYM' })
+    ).toEqual({ ok: true, code: 'MSTYGYM', canChange: true });
+    expect(await directory('ASHPARK').resolve(11)).toBe(ROOM);
+    expect(await custody.holds('ASHPARK')).toBe(false);
+    expect(await directory('ASHPARK').resolve(11)).toBeNull();
+    expect(await custody.holds('MSTYGYM')).toBe(true);
   });
 
   it('makes whoever restored a saved game its host: theirs to change the code, not the first seat’s', async () => {

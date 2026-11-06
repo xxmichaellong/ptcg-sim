@@ -719,16 +719,22 @@ export class PtcgRoom extends DurableObject<Env> {
    * Worker once the code was looked up.
    */
   async joinByCode(request: {
+    readonly code: string;
     readonly requestedRole: 'player' | 'spectator';
     readonly displayName: string;
   }): Promise<BoundedRoomCodeAdmissionResult> {
     const runtime = await this.runtimePromise;
     if (!runtime) return { accepted: false, code: 'room_not_ready' };
+    // Only by the room's code now: one it changed from answers as unknown.
+    const { code, ...admission } = request;
+    if (!(await this.aliasCustody.holds(code))) {
+      return { accepted: false, code: 'room_not_ready' };
+    }
     const restoredBy = await this.ctx.storage.get<string>(
       ROOM_RESTORED_BY_STORAGE_KEY
     );
     return runtime.hub.admitByCode({
-      ...request,
+      ...admission,
       ...(restoredBy ? { hostPlayerId: restoredBy } : {}),
     });
   }

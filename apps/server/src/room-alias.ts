@@ -240,6 +240,26 @@ export class RoomAliasCustody {
     return { ok: true, code: made, canChange: asker.host };
   }
 
+  /**
+   * Whether a join by `code` comes by the room's code as it is now (after
+   * any change under way). A code the room has changed from is never a way
+   * in, even where its record outlived the change (a release that failed);
+   * that record is given back here (Codex review, batch 12 r9).
+   */
+  holds(code: string): Promise<boolean> {
+    const run = this.tail.then(async () => {
+      const deps = this.dependencies;
+      if ((await deps.stored.get()) === code) return true;
+      await deps
+        .directory(code)
+        .release(deps.roomCode)
+        .catch(() => undefined);
+      return false;
+    });
+    this.tail = run.catch(() => undefined);
+    return run;
+  }
+
   private async allocate(now: number): Promise<string> {
     const deps = this.dependencies;
     const random = deps.randomAlias ?? ((length) => randomRoomAlias(length));
@@ -338,9 +358,10 @@ export interface RoomCodeJoinDependencies {
     readonly resolve: (now: number) => Promise<string | null>;
     readonly renew: (roomCode: string, now: number) => Promise<boolean>;
   };
+  /** The room admits by `code` only while the code is its own. */
   readonly join: (
     roomCode: string,
-    request: Pick<RoomCodeJoinRequest, 'requestedRole' | 'displayName'>
+    request: Pick<RoomCodeJoinRequest, 'code' | 'requestedRole' | 'displayName'>
   ) => Promise<BoundedRoomCodeAdmissionResult>;
   readonly now: () => number;
 }
@@ -358,6 +379,7 @@ export const joinRoomByAlias =
     const roomCode = await record.resolve(now);
     if (!roomCode) return { found: false };
     const result = await dependencies.join(roomCode, {
+      code,
       requestedRole,
       displayName,
     });

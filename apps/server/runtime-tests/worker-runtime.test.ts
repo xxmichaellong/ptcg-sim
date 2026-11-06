@@ -1,4 +1,4 @@
-import { exports } from 'cloudflare:workers';
+import { env, exports } from 'cloudflare:workers';
 import {
   PROTOCOL_VERSION,
   SESSION_RECONNECT_GRACE_MS,
@@ -341,6 +341,19 @@ describe('Cloudflare Worker runtime', () => {
       code: 'MSTY',
     });
     expect(asGuest.status).toBe(403);
+    // A code the room changed from whose record outlived the change (its
+    // release failed) finds the room no more, and is given back on the
+    // way (Codex review, batch 12 r9).
+    const stale = env.PTCG_ROOM_CODE.getByName('GYMPARK');
+    expect(await stale.claim(created.roomCode, Date.now())).toBe(true);
+    expect((await join('GYMPARK', 'spectator', '198.51.100.9')).status).toBe(
+      404
+    );
+    expect(await stale.resolve(Date.now())).toBeNull();
+    // The room's own code still admits.
+    expect((await join('ASHPARK', 'spectator', '198.51.100.9')).status).toBe(
+      201
+    );
   });
 
   it('seats the first of two who joined by the code before either connected, and tells the other the seat is taken (ADR-047)', async () => {
