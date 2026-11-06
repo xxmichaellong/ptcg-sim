@@ -1,6 +1,6 @@
 import { useLayoutEffect, type RefObject } from 'react';
 
-import { stripGhost } from '../../board/overlays/overlayMotion.js';
+import { noExitPlays, stripGhost } from '../../board/overlays/overlayMotion.js';
 
 /** A ghost outlives the start of its exit by at most this long. */
 const GHOST_LIFETIME_MS = 600;
@@ -89,6 +89,12 @@ export const useExitGhost = (
           nextSibling?.parentNode === parent ? nextSibling : null
         );
         const remove = (): void => ghost.remove();
+        // Nothing to play -- no exit styled, or nothing drawn where it
+        // landed: gone at once.
+        if (noExitPlays(ghost, [ghost, ...ghost.children])) {
+          remove();
+          return;
+        }
         ghost.addEventListener('animationend', (event) => {
           if (
             (event.target === ghost ||

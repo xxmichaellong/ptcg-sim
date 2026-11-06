@@ -66,6 +66,28 @@ export const stripGhost = (ghost: Element): void => {
 };
 
 /**
+ * Whether no exit plays on a ghost just put in (`parts`: the ghost, or it
+ * and the children its exit runs on): none styled, or it landed where
+ * nothing is drawn (a table being reset), where it would wait unseen for
+ * its timers. Only where its stylesheet is read at all (a test page without
+ * one names no animation), so a copy is never dropped for want of CSS.
+ */
+export const noExitPlays = (
+  ghost: HTMLElement,
+  parts: readonly Element[]
+): boolean => {
+  const view = ghost.ownerDocument.defaultView;
+  if (!view) return false;
+  const names = parts.map((part) => view.getComputedStyle(part).animationName);
+  if (names.every((name) => name === '' || name === undefined)) return false;
+  if (names.every((name) => name === 'none')) return true;
+  return (
+    typeof ghost.getAnimations === 'function' &&
+    parts.every((part) => part.getAnimations().length === 0)
+  );
+};
+
+/**
  * Leaves an exit ghost behind when the overlay holding `ref` unmounts. React
  * StrictMode's effect replay keeps the element connected, so a ghost is only
  * made once the element has really left the document.
@@ -155,8 +177,9 @@ export const useOverlayExit = (
         }
         const remove = (): void => ghost.remove();
         const view = ghost.ownerDocument.defaultView;
-        // Nothing to play (no exit styled where it landed): gone at once.
-        if (view?.getComputedStyle(ghost).animationName === 'none') {
+        // Nothing to play -- no exit styled where it landed, or it landed
+        // where nothing is drawn (a table being reset): gone at once.
+        if (noExitPlays(ghost, [ghost])) {
           remove();
           return;
         }
