@@ -4,6 +4,16 @@ export const MAX_SERVER_FRAME_CODE_UNITS = 512 * 1024;
 export const MAX_CHAT_CODE_UNITS = 1_000;
 /** Presentation events one publication or replay frame carries at most. */
 export const MAX_PRESENTATION_EVENTS = 100;
+/**
+ * The presentation events this client reads, sent in its Hello. A tab still
+ * running an earlier build across a deploy sends none (level 0), and the
+ * room leaves out what its schema would refuse -- a frame it can't read
+ * ends its session. Raise it with each new event or verb, and say in
+ * `presentationEventsForLevel` what the level before it can't read.
+ *
+ * 1 (2026-11-05): DamageSet, ConditionSet, and CardMoved's `switched`.
+ */
+export const PRESENTATION_LEVEL = 1;
 export const MAX_ROOM_CODE_LENGTH = 64;
 /** Generated v2 room discovery codes omit ambiguous I/O/0/1 characters. */
 export const V2_ROOM_CODE_PATTERN = /^[A-HJ-NP-Z2-9]{12}$/u;

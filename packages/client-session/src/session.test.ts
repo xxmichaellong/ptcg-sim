@@ -1,5 +1,6 @@
 import {
   MAX_SERVER_FRAME_CODE_UNITS,
+  PRESENTATION_LEVEL,
   PROTOCOL_VERSION,
   SESSION_RECONNECT_GRACE_MS,
   type ClientMessage,
@@ -271,6 +272,8 @@ describe('RemoteGameSession', () => {
       type: 'Hello',
       admissionTicket: capability,
       resumeToken: resumeCapability,
+      // The events it reads, so the room sends none it would refuse.
+      presentationLevel: PRESENTATION_LEVEL,
     });
     expect(JSON.stringify(test.session.getSnapshot())).not.toContain(
       capability

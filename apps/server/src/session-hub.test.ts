@@ -1,4 +1,16 @@
-import { asMatchId, asPlayerId, createEmptyMatch } from '@ptcgsim/game-core';
+import {
+  asCardDefinitionId,
+  asCardInstanceId,
+  asInspectionId,
+  asMatchId,
+  asPlayerId,
+  asStackId,
+  asWorkAreaId,
+  createEmptyMatch,
+  executeCommand,
+  playerZoneId,
+  type MatchState,
+} from '@ptcgsim/game-core';
 import {
   AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
   DEFAULT_AUTHORITY_POLICY,
@@ -13,6 +25,7 @@ import {
 } from '@ptcgsim/room-authority';
 import {
   MAX_CLIENT_FRAME_CODE_UNITS,
+  PRESENTATION_LEVEL,
   PROTOCOL_VERSION,
   type ServerMessage,
 } from '@ptcgsim/protocol';
@@ -76,15 +89,20 @@ const connection = (id: string) => {
   return { value, messages, close };
 };
 
-const fixture = async (mode: 'multiplayer' | 'solo' = 'multiplayer') => {
+const fixture = async (
+  mode: 'multiplayer' | 'solo' = 'multiplayer',
+  prepare: (state: MatchState) => MatchState = (state) => state
+) => {
   const crypto = new WebCryptoAuthoritySource();
   const seatToken = crypto.nextSeatCapability();
   const otherSeatToken = crypto.nextSeatCapability();
   const spectatorToken = crypto.nextSeatCapability();
-  const state = createEmptyMatch(asMatchId('hub-room'), [
-    { playerId: p1, displayName: 'Player 1', cardBackUrl: '/blue.png' },
-    { playerId: p2, displayName: 'Player 2', cardBackUrl: '/red.png' },
-  ]);
+  const state = prepare(
+    createEmptyMatch(asMatchId('hub-room'), [
+      { playerId: p1, displayName: 'Player 1', cardBackUrl: '/blue.png' },
+      { playerId: p2, displayName: 'Player 2', cardBackUrl: '/red.png' },
+    ])
+  );
   const initial: RoomAuthoritySnapshot = {
     schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
     authorityVersion: 0,
@@ -172,6 +190,48 @@ const fixture = async (mode: 'multiplayer' | 'solo' = 'multiplayer') => {
         hubDependencies
       ),
   };
+};
+
+/** Blue's Active Pokémon in play, its deck behind it. */
+const withActivePokemon = (empty: MatchState): MatchState => {
+  let serial = 0;
+  const context = {
+    nextCardId: () => asCardInstanceId(`hub-card-${++serial}`),
+    nextStackId: () => asStackId(`hub-stack-${++serial}`),
+    nextInspectionId: () => asInspectionId(`hub-inspection-${++serial}`),
+    nextWorkAreaId: () => asWorkAreaId(`hub-work-${++serial}`),
+    shuffle: <T,>(values: readonly T[]) => [...values],
+    randomInt: () => 0,
+  };
+  let state = empty;
+  const run = (command: Parameters<typeof executeCommand>[1]) => {
+    const result = executeCommand(state, command, context);
+    if (!result.accepted) throw new Error(result.message);
+    state = result.state;
+  };
+  run({
+    type: 'LoadDeck',
+    playerId: p1,
+    entries: Array.from({ length: 8 }, (_, index) => ({
+      definition: {
+        id: asCardDefinitionId(`hub-definition-${index}`),
+        name: `Pokémon ${index}`,
+        category: 'Pokémon' as const,
+        imageUrl: `/hub-${index}.png`,
+      },
+      count: 1,
+    })),
+  });
+  run({ type: 'SetupPlayer', playerId: p1 });
+  const hand = state.zones[playerZoneId(p1, 'hand')]!;
+  run({
+    type: 'MoveCardToPlay',
+    cardId: hand.cardIds[0]!,
+    expectedSourceZoneId: hand.id,
+    boardPlayerId: p1,
+    slot: 'active',
+  });
+  return state;
 };
 
 const helloFrame = (input: {
@@ -1137,6 +1197,101 @@ describe('serialized room session hub', () => {
         .filter((message) => message.type === 'Presence')
         .map((message) => message.status)
     ).toEqual(['left']);
+  });
+
+  it('keeps what each connection’s client reads from its Hello, across a restore', async () => {
+    const setup = await fixture();
+    const before = connection('before-levels');
+    await setup.hub.handleFrame(
+      before.value,
+      helloFrame({
+        admissionTicket: setup.admissionTicket,
+        resumeToken: setup.resumeToken,
+      })
+    );
+    expect(before.messages[0]?.type).toBe('Welcome');
+    // A build from before levels reads level 0.
+    expect(setup.hub.bindingForConnection(before.value.id)).toMatchObject({
+      presentationLevel: 0,
+    });
+    const current = connection('current-build');
+    await setup.hub.handleFrame(
+      current.value,
+      JSON.stringify({
+        ...JSON.parse(helloFrame({ requestedRole: 'spectator' })),
+        presentationLevel: PRESENTATION_LEVEL,
+      })
+    );
+    expect(setup.hub.bindingForConnection(current.value.id)).toMatchObject({
+      presentationLevel: PRESENTATION_LEVEL,
+    });
+    // Woken from hibernation, a socket brings it back from its attachment.
+    const restored = setup.restoreHub();
+    const woken = connection('current-build');
+    restored.restoreBinding(woken.value, undefined, PRESENTATION_LEVEL);
+    expect(restored.bindingForConnection(woken.value.id)).toMatchObject({
+      presentationLevel: PRESENTATION_LEVEL,
+    });
+    // Gone, it is forgotten.
+    await setup.hub.disconnect(before.value.id);
+    expect(
+      setup.hub.bindingForConnection(before.value.id)
+    ).not.toHaveProperty('presentationLevel');
+  });
+
+  it('sends a damage line only to a client that reads it, the rest of the frame to both', async () => {
+    const damageSeen = async (level: number | undefined) => {
+      const setup = await fixture('multiplayer', withActivePokemon);
+      const client = connection(`level-${String(level)}`);
+      await setup.hub.handleFrame(
+        client.value,
+        JSON.stringify({
+          ...JSON.parse(
+            helloFrame({
+              admissionTicket: setup.admissionTicket,
+              resumeToken: setup.resumeToken,
+            })
+          ),
+          ...(level === undefined ? {} : { presentationLevel: level }),
+        })
+      );
+      const welcome = client.messages[0];
+      if (welcome?.type !== 'Welcome') throw new Error('missing welcome');
+      const boards = welcome.snapshot.boards as Record<
+        string,
+        { readonly activeStackId?: string }
+      >;
+      const stackId = Object.values(boards).find(
+        (board) => board.activeStackId
+      )?.activeStackId;
+      if (!stackId) throw new Error('no Active Pokémon');
+      await setup.hub.handleFrame(
+        client.value,
+        JSON.stringify({
+          type: 'Command',
+          protocolVersion: PROTOCOL_VERSION,
+          sessionId: welcome.sessionId,
+          clientSequence: 1,
+          commandId: 'damage-command',
+          lastSeenRevision: welcome.snapshot.revision,
+          command: { type: 'SetDamage', stackId, damage: 30 },
+        })
+      );
+      const published = client.messages.filter(
+        (message) => message.type === 'StatePublication'
+      );
+      expect(published).toHaveLength(1);
+      expect(client.messages.at(-1)).toMatchObject({
+        type: 'CommandResult',
+        accepted: true,
+      });
+      return published[0]!.type === 'StatePublication'
+        ? (published[0]!.presentationEvents ?? []).map((event) => event.type)
+        : [];
+    };
+    // A tab still on a build from before levels: no line it would refuse.
+    expect(await damageSeen(undefined)).toEqual([]);
+    expect(await damageSeen(PRESENTATION_LEVEL)).toEqual(['DamageSet']);
   });
 
   it('routes an accepted command publication before its result', async () => {

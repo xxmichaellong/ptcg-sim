@@ -1674,11 +1674,19 @@
               "kind": "value"
             },
             {
+              "name": "PRESENTATION_LEVEL",
+              "kind": "value"
+            },
+            {
               "name": "PresentationEvent",
               "kind": "type"
             },
             {
               "name": "PresentationEventSchema",
+              "kind": "value"
+            },
+            {
+              "name": "presentationEventsForLevel",
               "kind": "value"
             },
             {

@@ -28,6 +28,7 @@ import {
   type ServerMessage,
 } from '@ptcgsim/protocol';
 
+import { readableBy } from './presentation-level.js';
 import { establishSession } from './session-handshake.js';
 import { RoomChatService } from './room-chat.js';
 import {
@@ -141,6 +142,11 @@ export class RoomSessionHub {
   private tail: Promise<void> = Promise.resolve();
   private readonly connections = new Map<string, RuntimeConnection>();
   private readonly connectionSessions = new Map<string, string>();
+  /**
+   * The presentation events each connection's client reads, from its Hello
+   * (PRESENTATION_LEVEL); absent, 0: a build from before levels.
+   */
+  private readonly connectionPresentationLevels = new Map<string, number>();
   private readonly sessionConnections = new Map<string, string>();
   private readonly pendingDisconnects = new Map<string, boolean>();
   private readonly pendingClientFrames = new Map<string, number>();
@@ -483,6 +489,7 @@ export class RoomSessionHub {
     this.chat.releaseConnection(connectionId);
     const sessionId = this.connectionSessions.get(connectionId);
     this.connectionSessions.delete(connectionId);
+    this.connectionPresentationLevels.delete(connectionId);
     if (sessionId && this.sessionConnections.get(sessionId) === connectionId) {
       this.sessionConnections.delete(sessionId);
       return sessionId;
@@ -588,11 +595,18 @@ export class RoomSessionHub {
     }
   }
 
-  restoreBinding(connection: RuntimeConnection, sessionId?: string): void {
+  restoreBinding(
+    connection: RuntimeConnection,
+    sessionId?: string,
+    presentationLevel?: number
+  ): void {
     this.ingressBlockedConnections.delete(connection.id);
     this.pendingClientFrames.delete(connection.id);
     this.clientFrameWindows.delete(connection.id);
     this.connections.set(connection.id, connection);
+    if (presentationLevel !== undefined) {
+      this.connectionPresentationLevels.set(connection.id, presentationLevel);
+    }
     if (!sessionId) return;
     const session = this.coordinator.currentSnapshot().sessions[sessionId];
     if (!session?.active || session.reconnectExpiresAt !== undefined) return;
@@ -619,11 +633,15 @@ export class RoomSessionHub {
   bindingForConnection(connectionId: string): {
     readonly sessionId?: string;
     readonly authorityVersion: number;
+    readonly presentationLevel?: number;
   } {
     const sessionId = this.connectionSessions.get(connectionId);
+    const presentationLevel =
+      this.connectionPresentationLevels.get(connectionId);
     return {
       ...(sessionId ? { sessionId } : {}),
       authorityVersion: this.coordinator.currentSnapshot().authorityVersion,
+      ...(presentationLevel === undefined ? {} : { presentationLevel }),
     };
   }
 
@@ -641,7 +659,14 @@ export class RoomSessionHub {
     publishDisconnect = true
   ): boolean {
     try {
-      connection.send(JSON.stringify(message));
+      connection.send(
+        JSON.stringify(
+          readableBy(
+            message,
+            this.connectionPresentationLevels.get(connection.id) ?? 0
+          )
+        )
+      );
       return true;
     } catch {
       const sessionId = this.disconnectNow(connection.id);
@@ -912,6 +937,11 @@ export class RoomSessionHub {
     const boundSessionId = this.connectionSessions.get(connection.id);
 
     if (message.type === 'Hello') {
+      // What it reads is the client's own, whatever comes of its Hello.
+      this.connectionPresentationLevels.set(
+        connection.id,
+        message.presentationLevel ?? 0
+      );
       if (boundSessionId) {
         this.dependencies.telemetry.roomAdmission({
           operation: message.resumeToken ? 'hello_resume' : 'hello_ticket',

@@ -191,6 +191,8 @@ interface SocketAttachment {
   readonly authorityVersion: number;
   /** Absolute wall-clock deadline for an upgraded socket to complete Hello. */
   readonly admissionExpiresAt?: number;
+  /** The presentation events its client reads (from its Hello). */
+  readonly presentationLevel?: number;
 }
 
 type InitializedRoom = RoomCreationResponse;
@@ -804,6 +806,9 @@ export class PtcgRoom extends DurableObject<Env> {
         : ({
             ...attachment,
             authorityVersion: binding.authorityVersion,
+            ...(binding.presentationLevel === undefined
+              ? {}
+              : { presentationLevel: binding.presentationLevel }),
           } satisfies SocketAttachment)
     );
     if (binding.sessionId) {
@@ -1077,7 +1082,8 @@ export class PtcgRoom extends DurableObject<Env> {
       }
       runtime.hub.restoreBinding(
         this.connection(socket, attachment.connectionId),
-        attachment.sessionId
+        attachment.sessionId,
+        attachment.presentationLevel
       );
       restoredSockets.push({ socket, attachment });
     }

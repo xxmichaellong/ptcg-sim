@@ -9,6 +9,7 @@ import {
   hydrateMatchViewState,
   MAX_CHAT_CODE_UNITS,
   MAX_CLIENT_FRAME_CODE_UNITS,
+  PRESENTATION_LEVEL,
   PROTOCOL_VERSION,
   SESSION_RECONNECT_GRACE_MS,
   parseServerFrame,
@@ -547,6 +548,7 @@ export class RemoteGameSession {
             roomCode: options.roomCode,
             displayName: options.displayName,
             requestedRole: options.requestedRole,
+            presentationLevel: PRESENTATION_LEVEL,
             resumeToken: this.resumeToken,
             ...(this.admissionTicket
               ? { admissionTicket: this.admissionTicket }

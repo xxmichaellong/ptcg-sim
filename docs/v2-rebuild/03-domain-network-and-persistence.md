@@ -621,6 +621,18 @@ are deduplicated and cached separately. Patch/delta transport is a later
 optimization only if measured payloads exceed the budget; any patch design must
 retain periodic/full-snapshot recovery.
 
+Presentation events grow faster than the protocol version: a new event or verb
+is not a new protocol, but a tab still running the previous build across a
+deploy parses frames with its own strict schema, and a frame it can't read ends
+its session. So each `Hello` says which events its client reads
+(`presentationLevel`, the build's `PRESENTATION_LEVEL`; absent on builds from
+before levels, read as 0), the hub keeps it per connection (and in the socket's
+hibernation attachment), and every `StatePublication` and `ReplayFrame` it
+sends leaves out what that level can't read (`presentationEventsForLevel`).
+The older tab's log only misses those lines. Adding an event or verb raises the
+level and says there what the level below it can't read (2026-11-06: level 1
+is `DamageSet`, `ConditionSet` and `CardMoved`'s `switched`).
+
 Reveal/hide and private-inspection presentation facts carry the trusted actor or
 viewer, target/source player, card-versus-zone scope, and a fixed semantic
 source (`hand`, `prizes`, `deck`, stack slot, or work-area kind). A single-card

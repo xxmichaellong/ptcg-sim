@@ -848,6 +848,10 @@ const HelloSchema = v.object({
   displayName: boundedString(64),
   requestedRole: v.picklist(['player', 'spectator'] as const),
   admissionTicket: v.optional(boundedString(512)),
+  /** The presentation events it reads (`PRESENTATION_LEVEL`); none: 0. */
+  presentationLevel: v.optional(
+    v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(1_000))
+  ),
   /**
    * A ticket-bound resume bearer is sent alongside a new admission ticket.
    * Retrying that exact pair is safe whether ticket redemption did not run or
@@ -1656,6 +1660,23 @@ export type ContinuationRestoreResponse = v.InferOutput<
   typeof ContinuationRestoreResponseSchema
 >;
 export type PresentationEvent = v.InferOutput<typeof PresentationEventSchema>;
+
+/**
+ * The events a client at `level` reads (`PRESENTATION_LEVEL`): what its
+ * schema would refuse is left out, so its log only misses those lines.
+ */
+export const presentationEventsForLevel = (
+  events: readonly PresentationEvent[],
+  level: number
+): readonly PresentationEvent[] =>
+  level >= 1
+    ? events
+    : events.filter(
+        (event) =>
+          event.type !== 'DamageSet' &&
+          event.type !== 'ConditionSet' &&
+          !(event.type === 'CardMoved' && event.verb === 'switched')
+      );
 export type ClientMessage = v.InferOutput<typeof ClientMessageSchema>;
 export type ServerMessage = v.InferOutput<typeof ServerMessageSchema>;
 export type SerializedMatchViewState = v.InferOutput<
