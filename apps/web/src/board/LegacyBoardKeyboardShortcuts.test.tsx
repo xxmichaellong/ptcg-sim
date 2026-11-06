@@ -130,49 +130,40 @@ describe('legacy board keyboard shortcut bridge', () => {
       );
     });
 
-    const discard = new KeyboardEvent('keydown', {
-      key: 'Enter',
-      code: 'Enter',
-      bubbles: true,
-      cancelable: true,
-    });
-    expect(document.dispatchEvent(discard)).toBe(true);
-    document.dispatchEvent(
-      new KeyboardEvent('keydown', {
-        key: 'Enter',
-        code: 'Enter',
-        altKey: true,
-        bubbles: true,
-      })
-    );
-    document.dispatchEvent(
-      new KeyboardEvent('keydown', {
-        key: '/',
-        code: 'Slash',
-        bubbles: true,
-      })
-    );
+    const key = (init: KeyboardEventInit, target: EventTarget = document) =>
+      target.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          bubbles: true,
+          cancelable: true,
+          ...init,
+        })
+      );
+    // Shift+D discards all, Shift+H takes all to the hand (v1's Enter and
+    // Alt+Enter, which the focused control kept taking), / shuffles in.
+    expect(key({ key: 'D', code: 'KeyD', shiftKey: true })).toBe(false);
+    key({ key: 'H', code: 'KeyH', shiftKey: true });
+    key({ key: '/', code: 'Slash' });
     expect(onRequest.mock.calls.map(([request]) => request)).toEqual([
       { action: 'resolveOwnLooseBoard', destination: 'discard' },
       { action: 'resolveOwnLooseBoard', destination: 'hand' },
       { action: 'resolveOwnLooseBoard', destination: 'shuffleIntoDeck' },
     ]);
 
-    // Enter on a focused button (a rail action, a menu row) is that
-    // button's own press: it never also discards the loose board.
+    // Enter is the focused control's again: the table leaves it alone.
     onRequest.mockClear();
+    expect(key({ key: 'Enter', code: 'Enter' })).toBe(true);
+    expect(key({ key: 'Enter', code: 'Enter', altKey: true })).toBe(true);
     const button = document.createElement('button');
     button.id = 'flipCoinButton';
     document.body.append(button);
-    button.dispatchEvent(
-      new KeyboardEvent('keydown', {
-        key: 'Enter',
-        code: 'Enter',
-        bubbles: true,
-        cancelable: true,
-      })
-    );
+    expect(key({ key: 'Enter', code: 'Enter' }, button)).toBe(true);
     expect(onRequest).not.toHaveBeenCalled();
+    // And Shift+D works with a button focused, as Enter could not.
+    key({ key: 'D', code: 'KeyD', shiftKey: true }, button);
+    expect(onRequest).toHaveBeenCalledExactlyOnceWith({
+      action: 'resolveOwnLooseBoard',
+      destination: 'discard',
+    });
     button.remove();
   });
 
@@ -1246,10 +1237,10 @@ describe('legacy board keyboard shortcut bridge', () => {
         })
       );
     await render('selected-card');
-    // v1's D (with or without Ctrl or Shift) no longer discards.
+    // v1's D (with or without Ctrl) no longer discards. (Shift+D is
+    // Discard all's own key.)
     expect(press({ key: 'd', code: 'KeyD' })).toBe(true);
     expect(press({ key: 'd', code: 'KeyD', ctrlKey: true })).toBe(true);
-    expect(press({ key: 'D', code: 'KeyD', shiftKey: true })).toBe(true);
     expect(onRequest).not.toHaveBeenCalled();
     // K does, and the browser keeps out of it.
     expect(press({ key: 'k', code: 'KeyK' })).toBe(false);

@@ -109,8 +109,8 @@ describe('the keys with several cards selected (ADR-042)', () => {
       // Shift held after picking cards with it means nothing here.
       [{ key: 'G', code: 'KeyG', shiftKey: true }, { kind: 'stadium' }],
       [
-        { key: 'D', code: 'KeyD', shiftKey: true },
-        { kind: 'send', to: 'discard' },
+        { key: 'L', code: 'KeyL', shiftKey: true },
+        { kind: 'send', to: 'lostZone' },
       ],
       [
         { key: '3', code: 'Digit3' },

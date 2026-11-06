@@ -65,8 +65,13 @@ export interface HotkeyAction {
   readonly short: MessageDescriptor;
   readonly detail?: MessageDescriptor;
   readonly scope: HotkeyScope;
-  /** v1's key, as canonical chord text. */
+  /** The key it is on until the player moves it, as canonical chord text. */
   readonly defaultChord: string;
+  /**
+   * v1's key, where the default has moved off it: what the table's key
+   * handling (v1's) is given for this shortcut. Absent, it is the default.
+   */
+  readonly legacyChord?: string;
   /**
    * Number keys that carry a count (1–9 draws that many). These, and Esc,
    * stay where v1 put them: they cannot be moved, and no other shortcut may
@@ -401,14 +406,20 @@ export const HOTKEY_ACTIONS = [
     label: msg`Discard all`,
     short: msg({ message: 'Discard all', context: 'shortcut key caption' }),
     scope: 'any',
-    defaultChord: 'enter',
+    // v1's Enter, but Enter is the focused control's own key (a card, a
+    // button, a menu row) and kept being taken by it: Shift+D, beside D
+    // for one card to the discard (2026-11-06, the owner).
+    defaultChord: 'shift+d',
+    legacyChord: 'enter',
   }),
   action('board.moveAllToHand', {
     group: 'board',
     label: msg`Move all to hand`,
     short: msg({ message: 'All to hand', context: 'shortcut key caption' }),
     scope: 'any',
-    defaultChord: 'alt+enter',
+    // v1's Alt+Enter: Shift+H, beside H for one card to the hand.
+    defaultChord: 'shift+h',
+    legacyChord: 'alt+enter',
   }),
   action('board.shuffleAllIntoDeck', {
     group: 'board',

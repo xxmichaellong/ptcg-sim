@@ -118,6 +118,15 @@ way back to the defaults.
    (2026-10-29, PX-068): `b` on a Benched Pokémon, `a` on the Active, `d`
    in the discard pile say "Already on the Bench" and the like, a calm
    notice, not a refusal; menus and the palette don't offer them.
+8. **Discard all and Move all to hand are Shift+D and Shift+H** (2026-11-06,
+   PX-092; the owner: "we use enter as a hotkey but it gets consumed a lot
+   by whatever is currently being selected"). v1's Enter is the focused
+   control's own key -- a card keeps the focus after it is dragged, a rail
+   button after it is pressed -- so it seldom reached the table. A shortcut
+   may now default to another key than v1's (`legacyChord` in the
+   catalogue): the keymap hands the table's v1 handling the v1 key for it,
+   and the v1 key itself is free (Enter, Alt+Enter do nothing on the
+   table). Moved back to Enter by a player, it is v1's Enter as it was.
 
 ## Consequences
 

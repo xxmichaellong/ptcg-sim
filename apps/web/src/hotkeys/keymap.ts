@@ -153,6 +153,12 @@ const withoutLooseModifiers = (chord: KeyChord): KeyChord => ({
   meta: false,
 });
 
+/** The key v1's handling knows a shortcut by. */
+const legacyChordOf = (entry: {
+  readonly defaultChord: string;
+  readonly legacyChord?: string;
+}): string => entry.legacyChord ?? entry.defaultChord;
+
 export class Keymap {
   /** Whether anything differs from v1's keys. */
   readonly customized: boolean;
@@ -164,7 +170,11 @@ export class Keymap {
   private readonly freed: Readonly<Record<HotkeyMode, ReadonlySet<string>>>;
 
   constructor(readonly overrides: HotkeyOverrides = NO_HOTKEY_OVERRIDES) {
-    this.customized = Object.keys(overrides).length > 0;
+    this.customized =
+      Object.keys(overrides).length > 0 ||
+      HOTKEY_ACTIONS.some(
+        (entry) => legacyChordOf(entry) !== entry.defaultChord
+      );
     for (const entry of HOTKEY_ACTIONS) {
       const override = overrides[entry.id];
       this.chords.set(
@@ -192,9 +202,9 @@ export class Keymap {
       new Set(
         HOTKEY_ACTIONS.filter(
           (entry) =>
-            scopeIncludes(entry.scope, mode) && !this.isDefault(entry.id)
+            scopeIncludes(entry.scope, mode) && !this.atLegacyKey(entry.id)
         )
-          .map((entry) => entry.defaultChord)
+          .map(legacyChordOf)
           .filter((text) => !this.byMode[mode].has(text))
       );
     this.freed = { card: freed('card'), table: freed('table') };
@@ -207,6 +217,16 @@ export class Keymap {
 
   isDefault(id: HotkeyActionId): boolean {
     return this.overrides[id] === undefined;
+  }
+
+  /** Whether a shortcut is on the key v1's handling knows it by. */
+  private atLegacyKey(id: HotkeyActionId): boolean {
+    const chord = this.chords.get(id);
+    return (
+      chord !== null &&
+      chord !== undefined &&
+      chordText(chord) === legacyChordOf(hotkeyAction(id))
+    );
   }
 
   /** The shortcut on exactly this chord while a card is or is not selected. */
@@ -243,13 +263,13 @@ export class Keymap {
         : { kind: 'default' };
     }
     const entry = hotkeyAction(resolution.action);
-    if ('fixed' in entry || this.isDefault(entry.id)) {
+    if ('fixed' in entry || this.atLegacyKey(entry.id)) {
       return { kind: 'default' };
     }
     return {
       kind: 'moved',
       action: entry.id,
-      input: inputForChord(parseChord(entry.defaultChord)!),
+      input: inputForChord(parseChord(legacyChordOf(entry))!),
     };
   }
 

@@ -61,8 +61,16 @@ describe('the keymap', () => {
       'card.toDiscard'
     );
     expect(
+      DEFAULT_KEYMAP.resolve(press('X', 'KeyX', { shiftKey: true }), 'card')
+    ).toBe(DEFAULT_KEYMAP.resolve(press('x', 'KeyX'), 'card'));
+    // Shift+D and Shift+H are their own: everything on the board to the
+    // discard or the hand.
+    expect(
       DEFAULT_KEYMAP.resolve(press('D', 'KeyD', { shiftKey: true }), 'card')
-    ).toBe('card.toDiscard');
+    ).toBe('board.discardAll');
+    expect(
+      DEFAULT_KEYMAP.resolve(press('H', 'KeyH', { shiftKey: true }), 'table')
+    ).toBe('board.moveAllToHand');
     expect(
       DEFAULT_KEYMAP.resolve(press('G', 'KeyG', { shiftKey: true }), 'card')
     ).toBe('card.addStadiumPiece');
@@ -94,6 +102,34 @@ describe('the keymap', () => {
         kind: 'default',
       });
     }
+  });
+
+  it("hands v1's handling its own key for a shortcut whose default moved off it, and leaves that key alone", () => {
+    expect(
+      DEFAULT_KEYMAP.translate(press('D', 'KeyD', { shiftKey: true }), 'card')
+    ).toMatchObject({
+      kind: 'moved',
+      action: 'board.discardAll',
+      input: { key: 'Enter', code: 'Enter', altKey: false },
+    });
+    expect(
+      DEFAULT_KEYMAP.translate(press('H', 'KeyH', { shiftKey: true }), 'table')
+    ).toMatchObject({
+      kind: 'moved',
+      action: 'board.moveAllToHand',
+      input: { key: 'Enter', altKey: true },
+    });
+    // Enter is no shortcut's: the focused control has it.
+    expect(
+      DEFAULT_KEYMAP.translate(press('Enter', 'Enter'), 'table').kind
+    ).toBe('freed');
+    // Put back on Enter by the player, it is v1's Enter as it was.
+    const back = keymapFor(
+      parseHotkeyOverrides({ 'board.discardAll': 'enter' })
+    );
+    expect(back.translate(press('Enter', 'Enter'), 'table')).toEqual({
+      kind: 'default',
+    });
   });
 
   it('turns a moved shortcut into its default key, and its old key into nothing', () => {

@@ -139,9 +139,62 @@ test.describe('Russian, with Settings beside the table', () => {
           })
         );
       expect(outside, at).toEqual([]);
+      expect(await brokenWords(page), at).toEqual([]);
     }
   });
 });
+
+/**
+ * The segmented choices' words split across lines ("Relax-ed"): a choice is
+ * never narrower than its longest word; the choices wrap onto another line
+ * first.
+ */
+const brokenWords = (page: Page): Promise<string[]> =>
+  page
+    .locator('#settings .ptcgsim-segmented-control__option label')
+    .evaluateAll((labels) =>
+      labels.flatMap((label) => {
+        const text = label.firstChild;
+        if (!(text instanceof Text)) return [];
+        const value = text.data;
+        const broken: string[] = [];
+        for (const match of value.matchAll(/\S+/gu)) {
+          const range = document.createRange();
+          range.setStart(text, match.index);
+          range.setEnd(text, match.index + match[0].length);
+          const lines = new Set(
+            [...range.getClientRects()].map((rect) => Math.round(rect.top))
+          );
+          if (lines.size > 1) broken.push(match[0]);
+        }
+        return broken;
+      })
+    );
+
+for (const locale of ['en-US', 'de-DE', 'ru-RU']) {
+  for (const [label, viewport] of [
+    ['the docked column', { width: 1440, height: 900 }],
+    ['a phone', { width: 390, height: 844 }],
+  ] as const) {
+    test.describe(`Settings in ${locale}, in ${label}`, () => {
+      test.use({ locale, viewport });
+
+      test('never breaks a segmented choice inside a word', async ({
+        page,
+        context,
+      }) => {
+        test.setTimeout(90_000);
+        await ownRoomBudget(context);
+        await openTable(page);
+        for (const at of ['table', 'cards', 'motion'] as const) {
+          await openSettings(page, at);
+          await expect(page.locator('#settings')).toBeVisible();
+          expect(await brokenWords(page), at).toEqual([]);
+        }
+      });
+    });
+  }
+}
 
 for (const locale of ['ar', 'ru']) {
   test.describe(`a narrow phone in ${locale}`, () => {
