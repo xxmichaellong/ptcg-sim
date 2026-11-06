@@ -2168,11 +2168,6 @@
     "message": "Bench <0>{0}</0> too.",
     "translation": "Pon también a <0>{0}</0> en la Banca."
   },
-  "xO2u-7": {
-    "message": "Black",
-    "context": "card back",
-    "translation": "Negro"
-  },
   "O2HdKg": {
     "message": "Board",
     "context": "see the table behind a window",
@@ -3254,11 +3249,6 @@
     "message": "Duplicate deck",
     "translation": "Duplicar baraja"
   },
-  "2PqJdK": {
-    "message": "Dusk",
-    "context": "card back",
-    "translation": "Crepúsculo"
-  },
   "XXgWrU": {
     "message": "Dusk Ball",
     "context": "item",
@@ -3627,11 +3617,6 @@
     ],
     "translation": "Para novedades y próximas funciones, sígueme en X: <0>{TWITTER_HANDLE}</0>"
   },
-  "3gRUI-": {
-    "message": "Forest",
-    "context": "card back",
-    "translation": "Bosque"
-  },
   "RMPKcE": {
     "message": "Forest",
     "context": "sleeve color",
@@ -3727,10 +3712,18 @@
     "context": "Pokémon type",
     "translation": "Planta"
   },
+  "sfMw5l": {
+    "message": "Great Ball",
+    "context": "card back",
+    "comments": [
+      "A card back showing a Great Ball: its official name in the language."
+    ],
+    "translation": "Super Ball"
+  },
   "pgULnS": {
     "message": "Great Ball",
     "context": "item",
-    "translation": "Great Ball"
+    "translation": "Super Ball"
   },
   "lySEU9": {
     "message": "Green felt",
@@ -4497,17 +4490,14 @@
   "386rEt": {
     "message": "Mark as unused",
     "comments": [
-      "Takes the \"Ability used\" marker off a Pokémon.",
-      "Takes the \"Ability used\" marker off a Pokémon.",
-      "Takes the \"Ability used\" marker off a Pokémon."
+      "Takes the \"used\" marker off a card that is not a Pokémon in play."
     ],
     "translation": "Marcar como no usada"
   },
   "WTIxhp": {
     "message": "Mark as used",
     "comments": [
-      "Puts the \"Ability used\" marker on a card: its Ability or effect was used this turn.",
-      "Puts the \"Ability used\" marker on a card: its Ability or effect was used this turn."
+      "Puts the \"used\" marker on a card that is not a Pokémon in play (a Stadium, a card in the discard): its effect was used this turn."
     ],
     "translation": "Marcar como usada"
   },
@@ -4518,6 +4508,14 @@
   "IQ2DXR": {
     "message": "Mark VSTAR Power unused",
     "translation": "Marcar Poder V-ASTRO como no usado"
+  },
+  "ZertXi": {
+    "message": "Master Ball",
+    "context": "card back",
+    "comments": [
+      "A card back showing a Master Ball: its official name in the language."
+    ],
+    "translation": "Master Ball"
   },
   "QIOgiN": {
     "message": "Master Ball",
@@ -4789,10 +4787,18 @@
     "context": "item",
     "translation": "Nido Ball"
   },
+  "RvkeSw": {
+    "message": "Net Ball",
+    "context": "card back",
+    "comments": [
+      "A card back showing a Net Ball: its official name in the language."
+    ],
+    "translation": "Malla Ball"
+  },
   "VplnQi": {
     "message": "Net Ball",
     "context": "item",
-    "translation": "Red Ball"
+    "translation": "Malla Ball"
   },
   "W_gspM": {
     "message": "New deck",
@@ -5064,11 +5070,6 @@
     "message": "Ocean",
     "context": "sleeve color",
     "translation": "Océano"
-  },
-  "mTW2K0": {
-    "message": "Ochre",
-    "context": "card back",
-    "translation": "Ocre"
   },
   "gEGSTP": {
     "message": "Off",
@@ -5516,6 +5517,14 @@
     "context": "special condition",
     "translation": "Envenenado"
   },
+  "RpCQN3": {
+    "message": "Poké Ball",
+    "context": "card back",
+    "comments": [
+      "A card back showing a Poké Ball: its official name in the language."
+    ],
+    "translation": "Poké Ball"
+  },
   "1Kq5zo": {
     "message": "Poké Ball",
     "context": "item",
@@ -5552,6 +5561,14 @@
   "RNaprm": {
     "message": "Pokémon cards",
     "translation": "Cartas de Pokémon"
+  },
+  "IzanLa": {
+    "message": "Premier Ball",
+    "context": "card back",
+    "comments": [
+      "A card back showing a Premier Ball: its official name in the language."
+    ],
+    "translation": "Honor Ball"
   },
   "PqWQZ5": {
     "message": "Premier Ball",
@@ -6249,6 +6266,14 @@
     "context": "sleeve color",
     "translation": "Óxido"
   },
+  "WI7xdg": {
+    "message": "Safari Ball",
+    "context": "card back",
+    "comments": [
+      "A card back showing a Safari Ball: its official name in the language."
+    ],
+    "translation": "Safari Ball"
+  },
   "53P7O2": {
     "message": "Safari Ball",
     "context": "item",
@@ -6752,11 +6777,6 @@
     ],
     "translation": "Pizarra"
   },
-  "lrWCQt": {
-    "message": "Slate",
-    "context": "card back",
-    "translation": "Pizarra"
-  },
   "Y3WzjD": {
     "message": "Slate",
     "context": "sleeve color",
@@ -7006,11 +7026,6 @@
     ],
     "translation": "Estado y movimientos"
   },
-  "__h_pd": {
-    "message": "Steel",
-    "context": "card back",
-    "translation": "Acero"
-  },
   "iFt0Ce": {
     "message": "Still uploading…",
     "translation": "Aún se está subiendo…"
@@ -7208,11 +7223,6 @@
       "The Pokémon TCG Pocket app; keep its official name."
     ],
     "translation": "TCG Pocket"
-  },
-  "eFoxqp": {
-    "message": "Teal",
-    "context": "card back",
-    "translation": "Verde azulado"
   },
   "0ckijJ": {
     "message": "Teal",
@@ -7765,6 +7775,14 @@
     "message": "Type something first",
     "translation": "Escribe algo primero"
   },
+  "SytqSQ": {
+    "message": "Ultra Ball",
+    "context": "card back",
+    "comments": [
+      "A card back showing an Ultra Ball: its official name in the language."
+    ],
+    "translation": "Ultra Ball"
+  },
   "2p6jZB": {
     "message": "Ultra Ball",
     "context": "item",
@@ -7808,6 +7826,13 @@
     "message": "Untitled deck",
     "translation": "Baraja sin título"
   },
+  "vWiS8U": {
+    "message": "Unuse Ability",
+    "comments": [
+      "Takes the \"Ability used\" marker off a Pokémon, so its Ability reads as not used this turn. Short, for a menu."
+    ],
+    "translation": "Anular habilidad"
+  },
   "k4TQ-Z": {
     "message": "Up to 60 cards can be selected",
     "translation": "Se pueden seleccionar hasta 60 cartas"
@@ -7827,6 +7852,13 @@
       "{name} is an Ability printed on a Pokémon."
     ],
     "translation": "Usar {name}"
+  },
+  "_Qidaq": {
+    "message": "Use Ability",
+    "comments": [
+      "Puts the \"Ability used\" marker on a Pokémon: its Ability was used this turn. Short, for a menu."
+    ],
+    "translation": "Usar habilidad"
   },
   "aS5ttr": {
     "message": "Use background",
@@ -7978,11 +8010,6 @@
     "message": "Win",
     "context": "keyboard key (the Windows key)",
     "translation": "Win"
-  },
-  "4b_L2y": {
-    "message": "Wine",
-    "context": "card back",
-    "translation": "Vino"
   },
   "qwXkyu": {
     "message": "Wine",

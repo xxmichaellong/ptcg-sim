@@ -40,6 +40,7 @@ import { parseLegacyDamageInput } from '../resolveLegacyBoardOverlayAction.js';
 import { visualCardBounds } from './card-bounds.js';
 import { useOverlayExit } from './overlayMotion.js';
 import './MarkerControls.css';
+import { abilityMarkerLabel } from '../ability-marker-label.js';
 
 /** What the controls do: the overlays' own actions (LegacyBoardOverlays). */
 export interface MarkerControlsActions {
@@ -612,10 +613,12 @@ export const MarkerControls = ({
           className="ptcgsim-marker-controls__button is-text"
           onClick={() => actions.invokeContextAction('toggleAbility', cardId)}
         >
-          {t({
-            message: 'Mark as unused',
-            comment: 'Takes the "Ability used" marker off a Pokémon.',
-          })}
+          {abilityMarkerLabel(
+            'markUnused',
+            Object.values(state.view?.stacks ?? {}).some((stack) =>
+              stack.evolutionCards.some((card) => card.id === cardId)
+            )
+          )}
         </button>
       </>
     );

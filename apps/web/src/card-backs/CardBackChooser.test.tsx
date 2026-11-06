@@ -97,18 +97,37 @@ describe('card-back chooser', () => {
     ].map((input) => input.value);
     expect(values).toEqual([
       STANDARD_CARD_BACK,
-      'preset:black',
+      'preset:crimson',
       'preset:azure',
+      'preset:amber',
+      'preset:violet',
       'preset:teal',
       'preset:jade',
-      'preset:amber',
-      'preset:crimson',
-      'preset:violet',
       'preset:slate',
       DESIGN,
       STORED,
     ]);
     expect(radio(host, STORED).checked).toBe(true);
+  });
+
+  it('names each back for the ball it shows, and takes the old Black as Standard', async () => {
+    const { host } = await mount({ current: 'preset:black' });
+    // Black is Standard again: chosen, never offered apart.
+    expect(radio(host, STANDARD_CARD_BACK).checked).toBe(true);
+    expect(host.querySelector('input[value="preset:black"]')).toBeNull();
+    const names = [
+      ...host.querySelectorAll<HTMLInputElement>('.card-back-grid input'),
+    ].map((input) => input.closest('label')?.textContent?.trim());
+    expect(names).toEqual([
+      'Standard',
+      'Poké Ball',
+      'Great Ball',
+      'Ultra Ball',
+      'Master Ball',
+      'Net Ball',
+      'Safari Ball',
+      'Premier Ball',
+    ]);
   });
 
   it('designs a sleeve from the lists and uses its reference', async () => {

@@ -1,31 +1,44 @@
 import { STANDARD_CARD_BACK_ID } from '@ptcgsim/game-core';
 
 /**
- * The backs shipped with the app (ADR-041 §6): the shipped back's artwork
- * recolored as duotones -- each pixel's lightness picks a color between a
- * dark field and a light swirl, so the texture stays and nothing is neon --
+ * The backs shipped with the app (ADR-041 §6). Standard is the shipped
+ * artwork as it is, black and silver. Each other is drawn from it part by
+ * part, not tinted: its own frame with a keyline, a deep field lit behind
+ * the ball with the brush strokes kept, bright swirls with a soft glow, and
+ * a shaded Poké Ball that names it -- the classic, Great, Ultra, Master,
+ * Net, Safari and Premier Balls, their markings following the ball's curve.
  * WebP at card size, named by their content so they are cached for a year
- * (`public/_headers`). Standard is a card back's deep blue, which reads on
- * every mat by day and by night; Black is the artwork as it was (the
- * standard back until 2026-11-05). Exactly a card's shape (504x704, 63:88),
- * as the table draws every card.
+ * (`public/_headers`); exactly a card's shape (504x704, 63:88), as the
+ * table draws every card.
  */
 export interface CardBackPreset {
   readonly id: string;
   readonly file: string;
 }
 
+/** In the order the chooser shows them. Ids are stored in decks: keep them. */
 export const CARD_BACK_PRESETS: readonly CardBackPreset[] = [
-  { id: STANDARD_CARD_BACK_ID, file: 'standard.a3f807b541.webp' },
-  { id: 'black', file: 'black.6261f7f137.webp' },
-  { id: 'azure', file: 'azure.618b7440ba.webp' },
-  { id: 'teal', file: 'teal.10dff3b302.webp' },
-  { id: 'jade', file: 'jade.94c82cf8a1.webp' },
-  { id: 'amber', file: 'amber.b0a6cae968.webp' },
-  { id: 'crimson', file: 'crimson.935d160a6d.webp' },
-  { id: 'violet', file: 'violet.933001c8df.webp' },
-  { id: 'slate', file: 'slate.694165cf99.webp' },
+  { id: STANDARD_CARD_BACK_ID, file: 'standard.6261f7f137.webp' },
+  { id: 'crimson', file: 'crimson.0ac8c0a6a7.webp' },
+  { id: 'azure', file: 'azure.8a14a42035.webp' },
+  { id: 'amber', file: 'amber.201a633b7d.webp' },
+  { id: 'violet', file: 'violet.82d2ec0d4e.webp' },
+  { id: 'teal', file: 'teal.3d4d52bdf4.webp' },
+  { id: 'jade', file: 'jade.8cde16498c.webp' },
+  { id: 'slate', file: 'slate.fe041c3d7b.webp' },
 ];
+
+/**
+ * Presets that are another now: Black was the shipped artwork beside a blue
+ * Standard (2026-11-05), and is Standard again since 2026-11-06.
+ */
+const PRESET_ALIASES: Readonly<Record<string, string>> = {
+  black: STANDARD_CARD_BACK_ID,
+};
+
+/** The preset an id stands for now (an alias's, else its own). */
+export const canonicalPresetId = (id: string): string =>
+  PRESET_ALIASES[id] ?? id;
 
 const BACKS_PATH = '/v2/assets/backs/';
 
@@ -35,7 +48,7 @@ const presetFiles = new Map(
 
 /** A preset's image; an unknown one (a newer client's) is the standard. */
 export const presetCardBackImage = (id: string): string =>
-  `${BACKS_PATH}${presetFiles.get(id) ?? presetFiles.get(STANDARD_CARD_BACK_ID)!}`;
+  `${BACKS_PATH}${presetFiles.get(canonicalPresetId(id)) ?? presetFiles.get(STANDARD_CARD_BACK_ID)!}`;
 
 /** The standard back, which any back falls back to. */
 export const STANDARD_CARD_BACK_IMAGE = presetCardBackImage(

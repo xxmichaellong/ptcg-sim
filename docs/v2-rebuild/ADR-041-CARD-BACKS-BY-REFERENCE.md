@@ -150,14 +150,8 @@ not say "Standard back"; the designer should have "even more options and
 for the emblems please use actual pokemon icons ... make sure that it is
 complete and has a lot of options"; and there was no way to delete a design.
 
-- **Presets** are duotones of the shipped back's artwork: each pixel's
-  lightness picks a color between a dark field and a light swirl, so the
-  texture stays and nothing is neon. **Standard** is a card back's deep
-  blue (`#1b3566` to `#a9c0e6`), which reads on every mat look by day and
-  night where the black one sat on the light mats as a hole; **Black** is
-  the artwork as it was. The others keep their ids, so saved decks keep
-  their backs, under natural names: Steel (`azure`), Teal, Forest (`jade`),
-  Ochre (`amber`), Wine (`crimson`), Dusk (`violet`), Slate.
+- **Presets** (superseded 2026-11-06, §7) were duotones of the shipped
+  back's artwork; Standard was a deep blue and Black the artwork as it was.
 - **Design** has 32 muted colors and 16 patterns (both lists only grow:
   every earlier value still parses). Its **emblem** is real Pokémon
   iconography, in three shelves:
@@ -191,6 +185,36 @@ complete and has a lot of options"; and there was no way to delete a design.
   it back; Undo puts it back on those still in Standard. An uploaded
   image stays in the store (it is shared by reference and may be worn in
   rooms and saves); only this player's ties to it go.
+
+### 7. Presets drawn part by part; Standard is the black back (2026-11-06)
+
+The owner: "i really dislike the standard card back you designed - in fact
+all of them look kind of washed-out, please redesign all of them. i don't
+think you can just slap a color on it, it needs to be more thoughtful and
+emphasize certain parts etc. please make the standard the black again but
+make all of the other ones look much better."
+
+- **Standard** is the shipped artwork again, black and silver
+  (`standard.<hash>.webp`). `preset:black`, saved while Black stood beside a
+  blue Standard, is an alias of it (`canonicalPresetId`): drawn as Standard
+  and chosen as Standard in the chooser; it is no longer offered apart.
+- **Every other preset is drawn from the artwork region by region**, not
+  tinted (the duotone painted the frame, the swirl and the ball one pale
+  color): the frame in its own color with a light sheen and a 2px keyline
+  on its inner edge; a deep field lit behind the ball, its brush strokes
+  kept and shaded into the frame; the swirl strokes bright, over a soft
+  glow; and the Poké Ball as the focus -- two-tone, lit from the upper
+  left, a soft shadow under it. Each preset shows a different ball, its
+  markings following the ball's curve (the band, fitted as the equator,
+  gives its tilt): Poké Ball (`crimson`), Great Ball (`azure`), Ultra Ball
+  (`amber`), Master Ball (`violet`), Net Ball (`teal`), Safari Ball
+  (`jade`), Premier Ball (`slate`). Ids are unchanged, so saved decks keep
+  their backs; the chooser names each by its ball, as the games do in each
+  language.
+- The images are rendered once from the artwork by a script (regions found
+  by lightness and geometry: the frame, the ball's circle, its two halves
+  and button found as connected light areas) and shipped as WebP; nothing
+  is drawn at runtime.
 
 ## Consequences
 

@@ -180,6 +180,7 @@ import { usePreference } from '../../preferences/usePreference.js';
 import { readingImageStyle } from '../../ui/card-artwork.js';
 import { trapFocus as trapModalTab } from '../../ui/focus.js';
 import { Tooltip, withKeyHint } from '../../ui/Tooltip.js';
+import { abilityMarkerLabel } from '../ability-marker-label.js';
 
 export type {
   LegacyBoardCategoryChoice,
@@ -399,7 +400,8 @@ const zoneForCard = (
  */
 const twoWayLabel = (
   action: TwoWayContextAction,
-  outcome: ContextActionOutcome
+  outcome: ContextActionOutcome,
+  onPokemon: boolean
 ): string => {
   switch (action) {
     case 'revealCard':
@@ -411,16 +413,10 @@ const twoWayLabel = (
     case 'toggleOpponentHand':
       return outcome === 'cover' ? t`Cover hand` : t`Look at hand`;
     case 'toggleAbility':
-      return outcome === 'markUnused'
-        ? t({
-            message: 'Mark as unused',
-            comment: 'Takes the "Ability used" marker off a Pokémon.',
-          })
-        : t({
-            message: 'Mark as used',
-            comment:
-              'Puts the "Ability used" marker on a card: its Ability or effect was used this turn.',
-          });
+      return abilityMarkerLabel(
+        outcome === 'markUnused' ? 'markUnused' : 'markUsed',
+        onPokemon
+      );
   }
 };
 
@@ -436,7 +432,18 @@ export const selectLegacyContextEntries = (
   const twoWay = (actionId: TwoWayContextAction): ContextEntry[] => {
     const outcome = contextActionOutcome(state, card.id, actionId, local);
     return outcome
-      ? [action(actionId, twoWayLabel(actionId, outcome), false, outcome)]
+      ? [
+          action(
+            actionId,
+            twoWayLabel(
+              actionId,
+              outcome,
+              location?.kind === 'active' || location?.kind === 'bench'
+            ),
+            false,
+            outcome
+          ),
+        ]
       : [];
   };
   const location = zoneForCard(state, card);

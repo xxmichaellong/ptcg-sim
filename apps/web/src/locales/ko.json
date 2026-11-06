@@ -2168,11 +2168,6 @@
     "message": "Bench <0>{0}</0> too.",
     "translation": "<0>{0}</0>도 벤치로 내보내세요."
   },
-  "xO2u-7": {
-    "message": "Black",
-    "context": "card back",
-    "translation": "검정"
-  },
   "O2HdKg": {
     "message": "Board",
     "context": "see the table behind a window",
@@ -3254,11 +3249,6 @@
     "message": "Duplicate deck",
     "translation": "덱 복제"
   },
-  "2PqJdK": {
-    "message": "Dusk",
-    "context": "card back",
-    "translation": "황혼"
-  },
   "XXgWrU": {
     "message": "Dusk Ball",
     "context": "item",
@@ -3627,11 +3617,6 @@
     ],
     "translation": "소식과 앞으로의 계획은 X에서 확인하세요: <0>{TWITTER_HANDLE}</0>"
   },
-  "3gRUI-": {
-    "message": "Forest",
-    "context": "card back",
-    "translation": "숲"
-  },
   "RMPKcE": {
     "message": "Forest",
     "context": "sleeve color",
@@ -3726,6 +3711,14 @@
     "message": "Grass",
     "context": "Pokémon type",
     "translation": "풀"
+  },
+  "sfMw5l": {
+    "message": "Great Ball",
+    "context": "card back",
+    "comments": [
+      "A card back showing a Great Ball: its official name in the language."
+    ],
+    "translation": "수퍼볼"
   },
   "pgULnS": {
     "message": "Great Ball",
@@ -4497,17 +4490,14 @@
   "386rEt": {
     "message": "Mark as unused",
     "comments": [
-      "Takes the \"Ability used\" marker off a Pokémon.",
-      "Takes the \"Ability used\" marker off a Pokémon.",
-      "Takes the \"Ability used\" marker off a Pokémon."
+      "Takes the \"used\" marker off a card that is not a Pokémon in play."
     ],
     "translation": "미사용으로 표시"
   },
   "WTIxhp": {
     "message": "Mark as used",
     "comments": [
-      "Puts the \"Ability used\" marker on a card: its Ability or effect was used this turn.",
-      "Puts the \"Ability used\" marker on a card: its Ability or effect was used this turn."
+      "Puts the \"used\" marker on a card that is not a Pokémon in play (a Stadium, a card in the discard): its effect was used this turn."
     ],
     "translation": "사용함으로 표시"
   },
@@ -4518,6 +4508,14 @@
   "IQ2DXR": {
     "message": "Mark VSTAR Power unused",
     "translation": "VSTAR 파워 미사용으로 표시"
+  },
+  "ZertXi": {
+    "message": "Master Ball",
+    "context": "card back",
+    "comments": [
+      "A card back showing a Master Ball: its official name in the language."
+    ],
+    "translation": "마스터볼"
   },
   "QIOgiN": {
     "message": "Master Ball",
@@ -4788,6 +4786,14 @@
     "message": "Nest Ball",
     "context": "item",
     "translation": "네스트볼"
+  },
+  "RvkeSw": {
+    "message": "Net Ball",
+    "context": "card back",
+    "comments": [
+      "A card back showing a Net Ball: its official name in the language."
+    ],
+    "translation": "넷트볼"
   },
   "VplnQi": {
     "message": "Net Ball",
@@ -5064,11 +5070,6 @@
     "message": "Ocean",
     "context": "sleeve color",
     "translation": "오션"
-  },
-  "mTW2K0": {
-    "message": "Ochre",
-    "context": "card back",
-    "translation": "황토색"
   },
   "gEGSTP": {
     "message": "Off",
@@ -5516,6 +5517,14 @@
     "context": "special condition",
     "translation": "독"
   },
+  "RpCQN3": {
+    "message": "Poké Ball",
+    "context": "card back",
+    "comments": [
+      "A card back showing a Poké Ball: its official name in the language."
+    ],
+    "translation": "몬스터볼"
+  },
   "1Kq5zo": {
     "message": "Poké Ball",
     "context": "item",
@@ -5552,6 +5561,14 @@
   "RNaprm": {
     "message": "Pokémon cards",
     "translation": "포켓몬 카드"
+  },
+  "IzanLa": {
+    "message": "Premier Ball",
+    "context": "card back",
+    "comments": [
+      "A card back showing a Premier Ball: its official name in the language."
+    ],
+    "translation": "프레미어볼"
   },
   "PqWQZ5": {
     "message": "Premier Ball",
@@ -6249,6 +6266,14 @@
     "context": "sleeve color",
     "translation": "러스트"
   },
+  "WI7xdg": {
+    "message": "Safari Ball",
+    "context": "card back",
+    "comments": [
+      "A card back showing a Safari Ball: its official name in the language."
+    ],
+    "translation": "사파리볼"
+  },
   "53P7O2": {
     "message": "Safari Ball",
     "context": "item",
@@ -6752,11 +6777,6 @@
     ],
     "translation": "슬레이트"
   },
-  "lrWCQt": {
-    "message": "Slate",
-    "context": "card back",
-    "translation": "슬레이트"
-  },
   "Y3WzjD": {
     "message": "Slate",
     "context": "sleeve color",
@@ -7006,11 +7026,6 @@
     ],
     "translation": "상태와 기술"
   },
-  "__h_pd": {
-    "message": "Steel",
-    "context": "card back",
-    "translation": "스틸"
-  },
   "iFt0Ce": {
     "message": "Still uploading…",
     "translation": "아직 업로드 중입니다…"
@@ -7208,11 +7223,6 @@
       "The Pokémon TCG Pocket app; keep its official name."
     ],
     "translation": "TCG Pocket"
-  },
-  "eFoxqp": {
-    "message": "Teal",
-    "context": "card back",
-    "translation": "틸"
   },
   "0ckijJ": {
     "message": "Teal",
@@ -7765,6 +7775,14 @@
     "message": "Type something first",
     "translation": "먼저 내용을 입력하세요"
   },
+  "SytqSQ": {
+    "message": "Ultra Ball",
+    "context": "card back",
+    "comments": [
+      "A card back showing an Ultra Ball: its official name in the language."
+    ],
+    "translation": "하이퍼볼"
+  },
   "2p6jZB": {
     "message": "Ultra Ball",
     "context": "item",
@@ -7808,6 +7826,13 @@
     "message": "Untitled deck",
     "translation": "제목 없는 덱"
   },
+  "vWiS8U": {
+    "message": "Unuse Ability",
+    "comments": [
+      "Takes the \"Ability used\" marker off a Pokémon, so its Ability reads as not used this turn. Short, for a menu."
+    ],
+    "translation": "특성 사용 해제"
+  },
   "k4TQ-Z": {
     "message": "Up to 60 cards can be selected",
     "translation": "최대 60장까지 선택할 수 있습니다"
@@ -7827,6 +7852,13 @@
       "{name} is an Ability printed on a Pokémon."
     ],
     "translation": "{name} 사용"
+  },
+  "_Qidaq": {
+    "message": "Use Ability",
+    "comments": [
+      "Puts the \"Ability used\" marker on a Pokémon: its Ability was used this turn. Short, for a menu."
+    ],
+    "translation": "특성 사용"
   },
   "aS5ttr": {
     "message": "Use background",
@@ -7978,11 +8010,6 @@
     "message": "Win",
     "context": "keyboard key (the Windows key)",
     "translation": "Win"
-  },
-  "4b_L2y": {
-    "message": "Wine",
-    "context": "card back",
-    "translation": "와인"
   },
   "qwXkyu": {
     "message": "Wine",

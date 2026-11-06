@@ -46,7 +46,7 @@ import {
   CARD_BACK_IMAGE_WIDTH,
   type CardBackCropFocus,
 } from './card-back-import.js';
-import { CARD_BACK_PRESETS } from './card-back-presets.js';
+import { CARD_BACK_PRESETS, canonicalPresetId } from './card-back-presets.js';
 import { isTextEntry } from '../ui/text-entry.js';
 import './card-back-chooser.css';
 
@@ -209,6 +209,10 @@ export const CardBackChooser = ({
   const [selected, setSelected] = useState<string>(() => {
     if (!current || isStandardCardBack(current)) return STANDARD_CARD_BACK;
     const parsed = parseCardBack(current);
+    // An old preset that is another now (Black is Standard again).
+    if (parsed?.kind === 'preset') {
+      return `preset:${canonicalPresetId(parsed.id)}`;
+    }
     return parsed && parsed.kind !== 'url' ? current : STANDARD_CARD_BACK;
   });
   const [design, setDesign] = useState<CardBackDesign>(currentDesign);
@@ -453,26 +457,60 @@ export const CardBackChooser = ({
     place({ x: focus.x + step.x, y: focus.y + step.y });
   };
 
+  // Each preset is named for the ball it shows, as the games name it.
   const presetName = (id: string): string => {
-    switch (id) {
+    switch (canonicalPresetId(id)) {
       case 'standard':
         return t({ message: 'Standard', context: 'card back' });
-      case 'black':
-        return t({ message: 'Black', context: 'card back' });
-      case 'azure':
-        return t({ message: 'Steel', context: 'card back' });
-      case 'teal':
-        return t({ message: 'Teal', context: 'card back' });
-      case 'jade':
-        return t({ message: 'Forest', context: 'card back' });
-      case 'amber':
-        return t({ message: 'Ochre', context: 'card back' });
       case 'crimson':
-        return t({ message: 'Wine', context: 'card back' });
+        return t({
+          message: 'Poké Ball',
+          context: 'card back',
+          comment:
+            'A card back showing a Poké Ball: its official name in the language.',
+        });
+      case 'azure':
+        return t({
+          message: 'Great Ball',
+          context: 'card back',
+          comment:
+            'A card back showing a Great Ball: its official name in the language.',
+        });
+      case 'amber':
+        return t({
+          message: 'Ultra Ball',
+          context: 'card back',
+          comment:
+            'A card back showing an Ultra Ball: its official name in the language.',
+        });
       case 'violet':
-        return t({ message: 'Dusk', context: 'card back' });
+        return t({
+          message: 'Master Ball',
+          context: 'card back',
+          comment:
+            'A card back showing a Master Ball: its official name in the language.',
+        });
+      case 'teal':
+        return t({
+          message: 'Net Ball',
+          context: 'card back',
+          comment:
+            'A card back showing a Net Ball: its official name in the language.',
+        });
+      case 'jade':
+        return t({
+          message: 'Safari Ball',
+          context: 'card back',
+          comment:
+            'A card back showing a Safari Ball: its official name in the language.',
+        });
       case 'slate':
-        return t({ message: 'Slate', context: 'card back' });
+        return t({
+          message: 'Premier Ball',
+          context: 'card back',
+          comment:
+            'A card back showing a Premier Ball: its official name in the language.',
+        });
       default:
         return id;
     }

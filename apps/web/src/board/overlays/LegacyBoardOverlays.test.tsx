@@ -402,8 +402,9 @@ describe('legacy board overlays', () => {
       'Move card...',
       'Reveal card',
     ]);
-    // Its Ability is marked used.
-    expect(labels(cardIn('stack:blue:active'))[0]).toBe('Mark as unused');
+    // Its Ability is marked used: named by its Ability on a Pokémon in
+    // play, as a plain mark on a card in the discard.
+    expect(labels(cardIn('stack:blue:active'))[0]).toBe('Unuse Ability');
     expect(labels(cardIn(`:${firstPlayer}:discard`))[0]).toBe('Mark as used');
     const opponent = view.playerOrder[1]!;
     expect(labels(cardIn(`:${opponent}:hand`))[0]).toBe('Look at hand');

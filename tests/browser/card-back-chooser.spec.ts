@@ -16,7 +16,6 @@ const WIDE_PNG = Buffer.from(
 const LINK = 'https://images.example.test/linked-sleeves.png';
 const STANDARD_BACK = /^\/v2\/assets\/backs\/standard\.[0-9a-f]{10}\.webp$/u;
 const CRIMSON_BACK = /^\/v2\/assets\/backs\/crimson\.[0-9a-f]{10}\.webp$/u;
-const BLACK_BACK = /^\/v2\/assets\/backs\/black\.[0-9a-f]{10}\.webp$/u;
 
 const sleeve = (page: Page): Locator =>
   page.locator('.deck-tray[data-seat="self"] .deck-tray__sleeve img');
@@ -63,19 +62,21 @@ test('chooses a back by keyboard, designs one, and goes back to the standard bac
   await expect(standard).toBeChecked();
   // Named plainly: Standard.
   await expect(standard.locator('xpath=..')).toHaveText('Standard');
-  // Arrow keys move through the grid; the large preview follows. Black,
-  // the standard back until 2026-11-05, is the next.
+  // Arrow keys move through the grid; the large preview follows. The
+  // classic Poké Ball is the next, named for its ball.
   await tabTo(page, standard);
   await page.keyboard.press('ArrowRight');
-  await expect(dialog.locator('input[value="preset:black"]')).toBeChecked();
+  const classic = dialog.locator('input[value="preset:crimson"]');
+  await expect(classic).toBeChecked();
+  await expect(classic.locator('xpath=..')).toHaveText('Poké Ball');
   await expect(dialog.locator('.card-back-chooser__card')).toHaveAttribute(
     'src',
-    BLACK_BACK
+    CRIMSON_BACK
   );
   // Enter on a back uses it.
   await page.keyboard.press('Enter');
   await expect(dialog).toHaveCount(0);
-  await expect(sleeve(page)).toHaveAttribute('src', BLACK_BACK);
+  await expect(sleeve(page)).toHaveAttribute('src', CRIMSON_BACK);
 
   // A sleeve designed from the lists, drawn as the table draws it.
   await openCardBackChooser(page);

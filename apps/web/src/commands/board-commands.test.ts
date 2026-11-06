@@ -551,7 +551,7 @@ describe('two-way commands', () => {
     });
     // Its Ability is marked used, and it is Poisoned.
     expect(find(commands, 'selected.toggleAbility').title).toBe(
-      'Mark as unused'
+      'Unuse Ability'
     );
     expect(find(commands, 'selected.addCondition').title).toBe(
       'Switch special condition'

@@ -70,6 +70,7 @@ import {
 } from '../hotkeys/hotkey-catalogue.js';
 import { inputForChord } from '../hotkeys/keymap.js';
 import type { CommandSection, PaletteCommand } from './types.js';
+import { abilityMarkerLabel } from '../board/ability-marker-label.js';
 
 /** What the table's commands need of its runtime. */
 export interface BoardCommandRuntime {
@@ -220,16 +221,12 @@ export const boardCommands = (
     }
     switch (outcomeOfCommand(command)) {
       case 'markUsed':
-        return t({
-          message: 'Mark as used',
-          comment:
-            'Puts the "Ability used" marker on a card: its Ability or effect was used this turn.',
-        });
       case 'markUnused':
-        return t({
-          message: 'Mark as unused',
-          comment: 'Takes the "Ability used" marker off a Pokémon.',
-        });
+        // A Pokémon in play's by its Ability; a loose card's as a mark.
+        return abilityMarkerLabel(
+          outcomeOfCommand(command) === 'markUsed' ? 'markUsed' : 'markUnused',
+          command.type === 'SetAbilityUsed'
+        );
       case 'look':
         return t`Look at card (only you)`;
       case 'cover':
