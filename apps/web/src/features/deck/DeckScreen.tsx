@@ -454,8 +454,9 @@ export const DeckScreen = ({
     async (
       draft: DeckDraft,
       savedId?: string,
-      signal?: AbortSignal
-    ): Promise<void> => {
+      signal?: AbortSignal,
+      missing: readonly DeckImportLine[] = []
+    ): Promise<'edit' | 'use' | null> => {
       previewAbort.current?.abort();
       const controller = new AbortController();
       previewAbort.current = controller;
@@ -469,18 +470,20 @@ export const DeckScreen = ({
         content: (onAnswer) => (
           <DeckQuickView
             deck={draft}
+            missing={missing}
             catalog={catalog}
             target={target}
             onAnswer={onAnswer}
           />
         ),
       });
-      if (combined.aborted) return;
+      if (combined.aborted) return null;
       if (answer === 'edit') {
         const deck = savedId
           ? library.get(savedId)
           : library.create(draft, { deferSave: true });
-        if (deck) editDeck(deck.id);
+        if (deck) editDeck(deck.id, missing);
+        return 'edit';
       } else if (answer === 'use') {
         endImportFor(target);
         placeOnSeat(
@@ -492,7 +495,9 @@ export const DeckScreen = ({
           },
           target
         );
+        return 'use';
       }
+      return null;
     },
     [catalog, editDeck, endImportFor, library, placeOnSeat, target]
   );
@@ -559,7 +564,7 @@ export const DeckScreen = ({
         const total = deckTotals(result.cards).total;
         if (options.view) {
           setImporting(false);
-          await previewDeck(
+          const answer = await previewDeck(
             {
               name: stored,
               format: result.format,
@@ -567,11 +572,11 @@ export const DeckScreen = ({
               source,
             },
             undefined,
-            controller.signal
+            controller.signal,
+            result.missing
           );
-          return true;
-        }
-        if (options.edit) {
+          if (answer !== 'use') return true;
+        } else if (options.edit) {
           const draft = library.create(
             {
               name: stored,
@@ -583,8 +588,7 @@ export const DeckScreen = ({
           );
           editDeck(draft.id, result.missing);
           return true;
-        }
-        if (options.save) {
+        } else if (options.save) {
           const saved = library.create({
             name: stored,
             format: result.format,

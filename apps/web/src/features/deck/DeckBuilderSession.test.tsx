@@ -23,6 +23,7 @@ import {
   DeckBuilderSession,
   type DeckBuilderCustody,
 } from './DeckBuilderSession.js';
+import * as toastApi from '../../ui/toast.js';
 import type { CardCatalogSource } from './card-catalog-contract.js';
 import { DeckLibrary } from './deck-library.js';
 import {
@@ -592,6 +593,65 @@ describe('DeckBuilderSession', () => {
       'Chosen deck',
     ]);
   });
+
+  it.each(['edit', 'use'] as const)(
+    'keeps unresolved lines when a partial quick view is chosen for %s',
+    async (answer) => {
+      vi.spyOn(samples, 'load').mockResolvedValue({
+        groups: [
+          {
+            name: 'Partial lists',
+            decks: [
+              {
+                name: 'Partial deck',
+                decklist: '4 Dreepy TWM 128\n2 Nothing At All',
+              },
+            ],
+          },
+        ],
+        deckCount: 1,
+        totalDecklistCodeUnits: 50,
+      });
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+        new Response(JSON.stringify({ cards: [] }), {
+          headers: { 'content-type': 'application/json' },
+        })
+      );
+      const notice = vi.spyOn(toastApi, 'toast').mockReturnValue('test-notice');
+      const store = new DeckBuilderStore();
+      await renderSession({ store, open: true });
+      await vi.waitFor(() =>
+        expect(host.querySelector('[data-view-deck]')).not.toBeNull()
+      );
+      await click('[data-view-deck]');
+      await vi.waitFor(
+        () => expect(dialogRequestsSnapshot().at(-1)?.kind).toBe('panel'),
+        { timeout: 4000 }
+      );
+      const request = dialogRequestsSnapshot().at(-1)!;
+      await act(async () => {
+        settleDialogRequest(request.id, answer);
+      });
+      if (answer === 'edit') {
+        expect(host.querySelector('.deck-missing')?.textContent).toContain(
+          'Nothing At All'
+        );
+        expect(host.querySelector('.deck-missing')?.textContent).toContain(
+          '1 line not found'
+        );
+        expect(store.getSnapshot().slots.main.deck).toHaveLength(0);
+      } else {
+        expect(deckTotals(store.getSnapshot().slots.main.deck).total).toBe(4);
+        expect(notice).toHaveBeenCalledWith(
+          expect.objectContaining({
+            tone: 'warning',
+            body: '4 cards · 1 line not found',
+          })
+        );
+      }
+      expect(library.getSnapshot().decks).toHaveLength(0);
+    }
+  );
 
   it('frees the import controls when an import that took over fails', async () => {
     await renderSession({

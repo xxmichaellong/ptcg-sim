@@ -108,3 +108,80 @@ for (const viewport of [
     ).toHaveCount(1);
   });
 }
+
+for (const viewport of [
+  { width: 1440, height: 900 },
+  { width: 390, height: 844 },
+]) {
+  test(`partial quick views keep missing lines through Edit and Use (${viewport.width}px)`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(viewport);
+    await ownRoomBudget(page.context());
+    await routeCardCatalog(page);
+    await page.route('https://limitlesstcg.com/api/dm/import', (route) =>
+      route.fulfill({ json: { cards: [] } })
+    );
+    await page.route('**/v2/decks/current', (route) =>
+      route.fulfill({
+        json: {
+          ...FEED,
+          groups: {
+            'Current Standard': {
+              'Partial deck': '4 Dreepy TWM 128\n2 Nothing At All',
+            },
+          },
+        },
+      })
+    );
+    await page.goto('/');
+    await expect(page.locator('[data-session-phase="ready"]')).toBeVisible({
+      timeout: 30_000,
+    });
+    await openDeck(page);
+    const eye = page
+      .getByRole('list', { name: 'Current Standard' })
+      .locator('[data-view-deck]')
+      .first();
+    const preview = page.getByRole('dialog', {
+      name: 'Partial deck',
+      exact: true,
+    });
+    await eye.click();
+    await expect(preview.locator('.deck-missing')).toContainText(
+      '1 line not found'
+    );
+    await expect(preview.locator('.deck-missing')).toContainText(
+      '2 Nothing At All'
+    );
+    await preview
+      .getByRole('button', { name: 'Edit deck', exact: true })
+      .click();
+    await expect(preview).toHaveCount(0);
+    await expect(page.locator('.deck-editor .deck-missing')).toContainText(
+      'Nothing At All'
+    );
+    await page.locator('#deckEditorBackButton').click();
+    await expect(
+      page.getByRole('list', { name: 'Your decks', exact: true })
+    ).toHaveCount(0);
+    await eye.click();
+    await preview
+      .getByRole('button', { name: 'Use on P1', exact: true })
+      .click();
+    await expect(preview).toHaveCount(0);
+    await expect(
+      page.locator('#nativeDeckBuilderSummaryPanel')
+    ).toHaveAttribute('data-card-count', '4');
+    await expect(
+      page.locator('.ptcgsim-ui-toast').filter({ hasText: '1 line not found' })
+    ).toContainText('4 cards · 1 line not found');
+    const yours = page.getByRole('list', { name: 'Your decks', exact: true });
+    await expect(yours.getByRole('listitem')).toHaveCount(1);
+    await expect(yours.getByRole('listitem')).toHaveAttribute(
+      'data-unsaved',
+      'true'
+    );
+    await expect(yours).toContainText('Not saved');
+  });
+}

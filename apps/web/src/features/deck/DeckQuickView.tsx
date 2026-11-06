@@ -1,3 +1,4 @@
+import { plural } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react/macro';
 import { checkDeck, deckTotals, type DeckCard } from '@ptcgsim/deck-core';
 import { useMemo, useState } from 'react';
@@ -8,6 +9,7 @@ import {
   type InspectedCard,
 } from './CardDetails.js';
 import type { CardCatalogSource } from './card-catalog-contract.js';
+import type { DeckImportLine } from './deck-import.js';
 import type { DeckDraft } from './deck-library.js';
 import { categoryName, formatName } from './deck-labels.js';
 import { SEAT_NAMES } from './deck-screen-shared.js';
@@ -17,11 +19,13 @@ import { useCardCatalog } from './useCardCatalog.js';
 /** A complete deck, with the same card inspector, without changing a seat. */
 export const DeckQuickView = ({
   deck,
+  missing = [],
   catalog,
   target,
   onAnswer,
 }: {
   readonly deck: DeckDraft;
+  readonly missing?: readonly DeckImportLine[];
   readonly catalog: CardCatalogSource;
   readonly target: DeckBuilderTarget;
   readonly onAnswer: (answer: string | null) => void;
@@ -38,6 +42,7 @@ export const DeckQuickView = ({
       ),
     [state, inspected, deck.cards]
   );
+  const missingLines = missing.length;
   const total = deckTotals(deck.cards).total;
   const check = checkDeck(deck.cards, deck.format);
   const seat = SEAT_NAMES[target];
@@ -49,6 +54,21 @@ export const DeckQuickView = ({
         {formatName(deck.format)} · {total}/{check.format.deckSize}
       </p>
       <div className="deck-quick-view__list">
+        {missingLines > 0 ? (
+          <div className="deck-missing" role="status">
+            <strong>{t`${plural(missingLines, { one: '# line not found', other: '# lines not found' })}`}</strong>
+            <ul>
+              {missing.map((line, index) => (
+                <li key={`${line.name}-${index}`}>
+                  <span className="ds-number">{line.quantity}</span> {line.name}
+                  {line.print ? (
+                    <span className="deck-missing__print"> {line.print}</span>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
         {(['Pokémon', 'Trainer', 'Energy', 'Unknown'] as const).map(
           (category) => {
             const entries = deck.cards.filter(
