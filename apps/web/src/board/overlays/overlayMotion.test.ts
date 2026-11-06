@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   createTiltHandlers,
+  listenForGhostExit,
   readOverlayMotion,
   sceneRectToClient,
   zoomFromRect,
@@ -185,5 +186,28 @@ describe('overlay motion', () => {
       target.current.style.getPropertyValue('--ptcgsim-glare-opacity')
     ).toBe('0');
     expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('waits for every exit event when a busy frame has already finished both animations', () => {
+    const ghost = document.createElement('div');
+    const scrim = document.createElement('div');
+    const panel = document.createElement('div');
+    scrim.style.animationName = 'scrim-out';
+    panel.style.animationName = 'panel-out';
+    ghost.append(scrim, panel);
+    document.body.append(ghost);
+    listenForGhostExit(ghost, [ghost, scrim, panel], () => ghost.remove());
+    const finish = (element: Element, name: string, type = 'animationend') => {
+      const event = new Event(type, { bubbles: true });
+      Object.defineProperty(event, 'animationName', { value: name });
+      element.dispatchEvent(event);
+    };
+    finish(scrim, 'scrim-out');
+    expect(ghost.isConnected).toBe(true);
+    // An old entrance cancellation is not the panel's exit.
+    finish(panel, 'panel-in', 'animationcancel');
+    expect(ghost.isConnected).toBe(true);
+    finish(panel, 'panel-out', 'animationcancel');
+    expect(ghost.isConnected).toBe(false);
   });
 });

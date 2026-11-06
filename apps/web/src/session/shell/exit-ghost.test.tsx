@@ -60,19 +60,22 @@ describe('useExitGhost', () => {
     expect(ghost!.style.alignItems).toBe('end');
   });
 
-  it('goes once its own exit (or a child of it) has ended, not a deeper part', async () => {
-    const ghost = (await close())!;
-    act(() => {
-      ghost
-        .querySelector('.spinner')!
-        .dispatchEvent(new Event('animationend', { bubbles: true }));
-    });
-    expect(ghost.isConnected).toBe(true);
-    act(() => {
-      ghost
-        .querySelector('.card')!
-        .dispatchEvent(new Event('animationend', { bubbles: true }));
-    });
-    expect(ghost.isConnected).toBe(false);
-  });
+  it.each(['animationend', 'animationcancel'])(
+    'goes once its own exit (or a child of it) signals %s, not a deeper part',
+    async (eventType) => {
+      const ghost = (await close())!;
+      act(() => {
+        ghost
+          .querySelector('.spinner')!
+          .dispatchEvent(new Event(eventType, { bubbles: true }));
+      });
+      expect(ghost.isConnected).toBe(true);
+      act(() => {
+        ghost
+          .querySelector('.card')!
+          .dispatchEvent(new Event(eventType, { bubbles: true }));
+      });
+      expect(ghost.isConnected).toBe(false);
+    }
+  );
 });

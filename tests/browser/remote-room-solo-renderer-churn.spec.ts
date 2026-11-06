@@ -988,18 +988,26 @@ test('animated Solo setup/reset and pile browsing leave nothing moving or behind
       };
     });
   /**
-   * Exit copies of closed overlays live at most 450ms, so ghosts are counted
-   * at 600ms. A short fade still finishing on a slow runner (the rail and
-   * the + coming back from dim after a viewer closes, which CI's soak
-   * runner, busy for eleven minutes, has been seen to take past 2s over)
-   * is not residue: running animations get up to 5s more to end, and any
-   * still running then is named. An animation that never ends, or keeps
-   * restarting, still fails.
+   * Card motion is idle before this check, and must leave no residue at
+   * 600ms. Overlay exits have a separate deadline: their first painted
+   * frame may be delayed on a busy browser, with a 1.5s absolute fallback.
+   * Allow that bound plus scheduling headroom, polling only while copies
+   * remain. A copy that leaks still fails. Other short fades get up to 5s
+   * to finish, and any still running then is named.
    */
   const settledResidue = async () => {
     await page.waitForTimeout(600);
-    const atGhostDeadline = await residue();
-    let settled = atGhostDeadline;
+    const atCardDeadline = await residue();
+    let atOverlayDeadline = atCardDeadline;
+    for (
+      let waited = 0;
+      atOverlayDeadline.overlayGhosts > 0 && waited < 1_000;
+      waited += 100
+    ) {
+      await page.waitForTimeout(100);
+      atOverlayDeadline = await residue();
+    }
+    let settled = atOverlayDeadline;
     for (
       let waited = 0;
       settled.animations > 0 && waited < 5_000;
@@ -1010,9 +1018,9 @@ test('animated Solo setup/reset and pile browsing leave nothing moving or behind
     }
     return {
       ...settled,
-      cardGhosts: atGhostDeadline.cardGhosts,
-      overlayGhosts: atGhostDeadline.overlayGhosts,
-      flying: atGhostDeadline.flying,
+      cardGhosts: atCardDeadline.cardGhosts,
+      overlayGhosts: atOverlayDeadline.overlayGhosts,
+      flying: atCardDeadline.flying,
     };
   };
   const NONE = { cardGhosts: 0, overlayGhosts: 0, flying: 0, animations: 0 };

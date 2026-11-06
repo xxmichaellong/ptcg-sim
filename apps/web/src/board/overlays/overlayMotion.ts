@@ -88,6 +88,56 @@ export const noExitPlays = (
 };
 
 /**
+ * A busy frame may finish several animations before delivering their events.
+ * Wait for each part's own exit event: querying playState alone can remove a
+ * scrim and panel after the scrim ends but before the panel's start/end events
+ * have been delivered. Canceled exits complete too; old entrances do not.
+ */
+export const listenForGhostExit = (
+  ghost: HTMLElement,
+  parts: readonly Element[],
+  remove: () => void
+): void => {
+  const view = ghost.ownerDocument.defaultView;
+  const pending = new Map(
+    parts.map((part) => [
+      part,
+      new Set(
+        (view?.getComputedStyle(part).animationName ?? '')
+          .split(',')
+          .map((name) => name.trim())
+          .filter((name) => name && name !== 'none')
+      ),
+    ])
+  );
+  const onFinish = (event: Event): void => {
+    const names = pending.get(event.target as Element);
+    if (!names) return;
+    const name: unknown = Reflect.get(event, 'animationName');
+    if (typeof name === 'string') {
+      if (names.size > 0 && !names.delete(name)) return;
+    } else {
+      // Event-only hosts (without CSS animation support) still clean up.
+      names.clear();
+    }
+    if ([...pending.values()].some((remaining) => remaining.size > 0)) return;
+    if (
+      parts.some(
+        (part) =>
+          typeof part.getAnimations === 'function' &&
+          part
+            .getAnimations()
+            .some((animation) => animation.playState === 'running')
+      )
+    )
+      return;
+    remove();
+  };
+  ghost.addEventListener('animationend', onFinish);
+  ghost.addEventListener('animationcancel', onFinish);
+};
+
+/**
  * Leaves an exit ghost behind when the overlay holding `ref` unmounts. React
  * StrictMode's effect replay keeps the element connected, so a ghost is only
  * made once the element has really left the document.
@@ -175,17 +225,23 @@ export const useOverlayExit = (
             copy.scrollLeft = left;
           }
         }
-        const remove = (): void => ghost.remove();
         const view = ghost.ownerDocument.defaultView;
+        let lifetime: number | undefined;
+        let maximumLifetime: number | undefined;
+        const remove = (): void => {
+          view?.clearTimeout(lifetime);
+          view?.clearTimeout(maximumLifetime);
+          lifetime = undefined;
+          maximumLifetime = undefined;
+          ghost.remove();
+        };
         // Nothing to play -- no exit styled where it landed, or it landed
         // where nothing is drawn (a table being reset): gone at once.
         if (noExitPlays(ghost, [ghost])) {
           remove();
           return;
         }
-        ghost.addEventListener('animationend', (event) => {
-          if (event.target === ghost) remove();
-        });
+        listenForGhostExit(ghost, [ghost], remove);
         // Its exit's own length past when it starts, not when it was
         // made: a busy page's first frame can come late, and the copy
         // would go before it ever faded. Gone in any case before long.
@@ -193,11 +249,11 @@ export const useOverlayExit = (
           'animationstart',
           (event) => {
             if (event.target === ghost)
-              view?.setTimeout(remove, GHOST_LIFETIME_MS);
+              lifetime = view?.setTimeout(remove, GHOST_LIFETIME_MS);
           },
           { once: true }
         );
-        view?.setTimeout(remove, GHOST_MAX_LIFETIME_MS);
+        maximumLifetime = view?.setTimeout(remove, GHOST_MAX_LIFETIME_MS);
       });
     };
   }, [ref, variant]);

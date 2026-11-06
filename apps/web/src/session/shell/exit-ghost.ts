@@ -1,6 +1,10 @@
 import { useLayoutEffect, type RefObject } from 'react';
 
-import { noExitPlays, stripGhost } from '../../board/overlays/overlayMotion.js';
+import {
+  listenForGhostExit,
+  noExitPlays,
+  stripGhost,
+} from '../../board/overlays/overlayMotion.js';
 
 /** A ghost outlives the start of its exit by at most this long. */
 const GHOST_LIFETIME_MS = 600;
@@ -47,16 +51,6 @@ export const freezeGhostPlacement = (
 };
 
 /**
- * Whether an exit is still playing on the ghost or a child of it (a scrim
- * and its panel leave together but end apart).
- */
-const stillLeaving = (ghost: HTMLElement): boolean =>
-  typeof ghost.getAnimations === 'function' &&
-  [ghost, ...ghost.children].some((node) =>
-    node.getAnimations().some((animation) => animation.playState === 'running')
-  );
-
-/**
  * When the element holding `ref` leaves the page, an inert copy of its last
  * frame (class `is-leaving`, and `leavingClass` if given) plays the exit its
  * stylesheet gives it and removes itself once that exit -- on the copy or a
@@ -88,27 +82,26 @@ export const useExitGhost = (
           ghost,
           nextSibling?.parentNode === parent ? nextSibling : null
         );
-        const remove = (): void => ghost.remove();
+        const view = ghost.ownerDocument.defaultView;
+        let lifetime: number | undefined;
+        let maximumLifetime: number | undefined;
+        const remove = (): void => {
+          view?.clearTimeout(lifetime);
+          view?.clearTimeout(maximumLifetime);
+          lifetime = undefined;
+          maximumLifetime = undefined;
+          ghost.remove();
+        };
         // Nothing to play -- no exit styled, or nothing drawn where it
         // landed: gone at once.
         if (noExitPlays(ghost, [ghost, ...ghost.children])) {
           remove();
           return;
         }
-        ghost.addEventListener('animationend', (event) => {
-          if (
-            (event.target === ghost ||
-              (event.target instanceof Element &&
-                event.target.parentElement === ghost)) &&
-            !stillLeaving(ghost)
-          ) {
-            remove();
-          }
-        });
+        listenForGhostExit(ghost, [ghost, ...ghost.children], remove);
         // Timed from when its exit starts, not when it was made: a busy
         // page's first frame can come late, and the copy would go before it
         // ever played. Gone in any case before long.
-        const view = ghost.ownerDocument.defaultView;
         const onStart = (event: AnimationEvent): void => {
           if (
             event.target === ghost ||
@@ -116,11 +109,11 @@ export const useExitGhost = (
               event.target.parentElement === ghost)
           ) {
             ghost.removeEventListener('animationstart', onStart);
-            view?.setTimeout(remove, GHOST_LIFETIME_MS);
+            lifetime = view?.setTimeout(remove, GHOST_LIFETIME_MS);
           }
         };
         ghost.addEventListener('animationstart', onStart);
-        view?.setTimeout(remove, GHOST_MAX_LIFETIME_MS);
+        maximumLifetime = view?.setTimeout(remove, GHOST_MAX_LIFETIME_MS);
       });
     };
   }, [ref, leavingClass]);

@@ -1274,62 +1274,67 @@ describe('legacy board overlays', () => {
     ).toEqual(['Alt+E', 'Alt+T', 'Alt+P']);
   });
 
-  it('plays a closed menu out as an inert ghost that no selector can find', async () => {
-    const card = cardIn(`:${firstPlayer}:hand`);
-    const renderMenu = async (
-      contextMenuCardId: CardSceneNode['id'] | null
-    ) => {
+  it.each(['animationend', 'animationcancel'])(
+    'removes a closed menu after its own %s, leaving an inert exit until then',
+    async (eventType) => {
+      const card = cardIn(`:${firstPlayer}:hand`);
+      const renderMenu = async (
+        contextMenuCardId: CardSceneNode['id'] | null
+      ) => {
+        await act(async () => {
+          root.render(
+            createElement(
+              StrictMode,
+              null,
+              createElement(LegacyBoardOverlays, {
+                state: state({
+                  overlays: { contextMenuCardId, preview: null, input: null },
+                }),
+                darkMode: false,
+                actions: actions(),
+              })
+            )
+          );
+          await Promise.resolve();
+        });
+      };
+
+      await renderMenu(card.id);
+      // StrictMode's effect replay leaves the open menu alone.
+      expect(host.querySelectorAll('.ptcgsim-overlay-ghost')).toHaveLength(0);
+
+      await renderMenu(null);
+      expect(host.querySelector('[data-legacy-card-context-menu]')).toBeNull();
+      expect(host.querySelector('[role="menu"]')).toBeNull();
+      expect(host.querySelector('[role="menuitem"]')).toBeNull();
+      const ghosts = host.querySelectorAll<HTMLElement>(
+        '.ptcgsim-overlay-ghost'
+      );
+      expect(ghosts).toHaveLength(1);
+      const ghost = ghosts[0]!;
+      expect(ghost.classList).toContain('is-exit-menu');
+      expect(ghost.getAttribute('aria-hidden')).toBe('true');
+      expect(ghost.hasAttribute('inert')).toBe(true);
+      const attributes = [ghost, ...ghost.querySelectorAll('*')].flatMap(
+        (element) => element.getAttributeNames()
+      );
+      expect(
+        attributes.filter(
+          (name) =>
+            (name.startsWith('data-') && name !== 'data-menu-hint') ||
+            name === 'role' ||
+            name === 'tabindex' ||
+            name === 'id'
+        )
+      ).toEqual([]);
+      expect(ghost.textContent).toContain('Discard hand');
+
       await act(async () => {
-        root.render(
-          createElement(
-            StrictMode,
-            null,
-            createElement(LegacyBoardOverlays, {
-              state: state({
-                overlays: { contextMenuCardId, preview: null, input: null },
-              }),
-              darkMode: false,
-              actions: actions(),
-            })
-          )
-        );
-        await Promise.resolve();
+        ghost.dispatchEvent(new Event(eventType));
       });
-    };
-
-    await renderMenu(card.id);
-    // StrictMode's effect replay leaves the open menu alone.
-    expect(host.querySelectorAll('.ptcgsim-overlay-ghost')).toHaveLength(0);
-
-    await renderMenu(null);
-    expect(host.querySelector('[data-legacy-card-context-menu]')).toBeNull();
-    expect(host.querySelector('[role="menu"]')).toBeNull();
-    expect(host.querySelector('[role="menuitem"]')).toBeNull();
-    const ghosts = host.querySelectorAll<HTMLElement>('.ptcgsim-overlay-ghost');
-    expect(ghosts).toHaveLength(1);
-    const ghost = ghosts[0]!;
-    expect(ghost.classList).toContain('is-exit-menu');
-    expect(ghost.getAttribute('aria-hidden')).toBe('true');
-    expect(ghost.hasAttribute('inert')).toBe(true);
-    const attributes = [ghost, ...ghost.querySelectorAll('*')].flatMap(
-      (element) => element.getAttributeNames()
-    );
-    expect(
-      attributes.filter(
-        (name) =>
-          (name.startsWith('data-') && name !== 'data-menu-hint') ||
-          name === 'role' ||
-          name === 'tabindex' ||
-          name === 'id'
-      )
-    ).toEqual([]);
-    expect(ghost.textContent).toContain('Discard hand');
-
-    await act(async () => {
-      ghost.dispatchEvent(new Event('animationend'));
-    });
-    expect(host.querySelectorAll('.ptcgsim-overlay-ghost')).toHaveLength(0);
-  });
+      expect(host.querySelectorAll('.ptcgsim-overlay-ghost')).toHaveLength(0);
+    }
+  );
 
   it('leaves no ghost for an overlay that was hidden when it closed', async () => {
     const card = cardIn(`:${firstPlayer}:hand`);
