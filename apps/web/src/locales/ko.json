@@ -6711,10 +6711,6 @@
     "message": "Share",
     "translation": "공유"
   },
-  "zzxcno": {
-    "message": "Share the code to play.",
-    "translation": "코드를 공유하여 플레이하세요."
-  },
   "2D-NYE": {
     "message": "Shift",
     "context": "keyboard key",

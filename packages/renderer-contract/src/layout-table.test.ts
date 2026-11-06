@@ -113,9 +113,10 @@ describe('table layout: the app bar corner (ADR-036)', () => {
     }
   });
 
-  it('leaves the near half where it was', () => {
+  it('leaves the near half where it was, its piles matched to the far ones', () => {
     // The table's split is found as without the bar, so the bar never
-    // reaches the near half: docked log or not, markers or none.
+    // reaches the near half but for its piles: docked log or not, markers
+    // or none.
     for (const [width, height, sidebar, markers, lowerShare] of [
       [1440, 900, false, 0, undefined],
       [1193, 800, true, 0, undefined],
@@ -139,19 +140,28 @@ describe('table layout: the app bar corner (ADR-036)', () => {
       const withBar = createTableLayoutSnapshot(
         stateAt(width, height, { ...state, appBarPx: BAR })
       );
-      for (const kind of [
-        'hand',
-        'active',
-        'bench',
-        'prizes',
-        'deck',
-        'lostZone',
-      ]) {
+      const label = `${String(width)}x${String(height)}`;
+      for (const kind of ['hand', 'active', 'prizes']) {
         expect(
           region(withBar, 'local', kind).physicalDeclaredBounds,
-          `${String(width)}x${String(height)} ${kind}`
+          `${label} ${kind}`
         ).toEqual(region(without, 'local', kind).physicalDeclaredBounds);
       }
+      // Its piles alone may come down, to the far piles' size where the
+      // bar made those smaller, so both halves' piles are one size; the
+      // Bench still starts where it did (2026-11-09).
+      const deck = (snapshot: typeof without, side: 'local' | 'opponent') =>
+        region(snapshot, side, 'deck').physicalDeclaredBounds;
+      expect(deck(withBar, 'local').height, label).toBeLessThanOrEqual(
+        deck(without, 'local').height + 0.01
+      );
+      expect(deck(withBar, 'local').height, label).toBeCloseTo(
+        deck(withBar, 'opponent').height,
+        6
+      );
+      expect(region(withBar, 'local', 'bench').physicalDeclaredBounds.x).toBe(
+        region(without, 'local', 'bench').physicalDeclaredBounds.x
+      );
     }
   });
 
@@ -1458,15 +1468,30 @@ describe('table layout (geometry v2)', () => {
         expect(toPiles, label).toBeGreaterThan(0);
         expect(toPiles, label).toBeLessThanOrEqual(toPrizes + 0.5);
         // With the Lost Zone beside the prizes, the deck and discard fill
-        // both card rows of their column.
+        // both card rows of their column -- on the half whose piles are the
+        // smaller; the other's are the same size (2026-11-09).
         const span = (boxes: readonly Rect[]) =>
           Math.max(...boxes.map((box) => box.y + box.height)) -
           Math.min(...boxes.map((box) => box.y));
-        expect(span([deck, discard]), label).toBeCloseTo(
-          span([active, bench]),
-          0
+        expect(span([deck, discard]), label).toBeLessThanOrEqual(
+          span([active, bench]) + 0.5
         );
       }
+      const pile = (side: 'local' | 'opponent') =>
+        region(snapshot, side, 'deck').physicalDeclaredBounds;
+      expect(pile('local').height, `${width}x${height}`).toBeCloseTo(
+        pile('opponent').height,
+        6
+      );
+      const fills = snapshot.players.some((player) => {
+        const rect = (kind: string) =>
+          region(snapshot, player.side, kind).physicalDeclaredBounds;
+        const rows = rect('bench').y + rect('bench').height - rect('active').y;
+        const column =
+          rect('discard').y + rect('discard').height - rect('deck').y;
+        return Math.abs(Math.abs(column) - Math.abs(rows)) < 1;
+      });
+      expect(fills, `${width}x${height}`).toBe(true);
     }
   });
 
@@ -2728,6 +2753,34 @@ describe('table layout: even boards and lined-up rows (2026-11-06)', () => {
         laid.players[1].frameBounds.height,
         6
       );
+    }
+  });
+
+  it("lays both halves' piles one size on the flat table, the far ones clear of the app bar", () => {
+    // The owner, 2026-11-09: "it shouldn't literally feel like my cards are
+    // just bigger than theirs".
+    for (const [width, height] of [
+      [1440, 900],
+      [1280, 720],
+      [1366, 768],
+      [1920, 1080],
+      [1024, 768],
+    ] as const) {
+      for (const hideEmptyLostZone of [true, false]) {
+        for (const mirroredFarSide of [true, false]) {
+          const laid = at(width, height, {
+            mirroredFarSide,
+            ...(hideEmptyLostZone ? { hideEmptyLostZone } : {}),
+          });
+          const label = `${width}x${height} lost=${String(!hideEmptyLostZone)} m=${String(mirroredFarSide)}`;
+          for (const kind of ['deck', 'discard']) {
+            const near = region(laid, 'local', kind).physicalDeclaredBounds;
+            const far = region(laid, 'opponent', kind).physicalDeclaredBounds;
+            expect(near.width, `${label} ${kind}`).toBeCloseTo(far.width, 6);
+            expect(near.height, `${label} ${kind}`).toBeCloseTo(far.height, 6);
+          }
+        }
+      }
     }
   });
 

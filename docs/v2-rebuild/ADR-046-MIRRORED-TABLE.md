@@ -161,6 +161,14 @@ aligned"; and the Bench "vertically aligned" with the Active.
   move.
 - A mat whose shown Lost Zone would keep no pile at all is laid out
   smaller until it keeps one, as one too narrow for the Stadium is.
+- **Both halves' piles are one size** (2026-11-09, the owner: the far side
+  may be smaller, but "it shouldn't literally feel like my cards are just
+  bigger than theirs"). Flat, the far half gives way to the app bar and
+  its deck, discard and Lost Zone came out up to a seventh smaller; the
+  near half's piles now come down to theirs (`HalfOptions.pileCapPx`),
+  its Bench running on to meet them. This is the one way the bar reaches
+  the near half (ADR-036). The Actives and prizes may still differ by a
+  few percent there; on a phone held sideways, flat by default, by more.
 - The bar's Solo | Online switch puts the side in play first, on the
   left; its two sides slide past each other when it changes (a new bar,
   after the page changed, slides from the last), and fade in place under

@@ -13,6 +13,10 @@ const decorative = { 'aria-hidden': true, focusable: false } as const;
  * the welcome card sits at a Solo table, to read out or copy, and the link
  * that carries it. Whoever joins chooses to play or to watch. It goes once
  * the opponent takes their seat; the bar's room code keeps the rest.
+ *
+ * Two lines (2026-11-09): the title, then the code beside its copy
+ * buttons, so it fits above the seam over the empty far half and never
+ * lies on the player's own side of the table.
  */
 export const TableInvite = ({
   code,
@@ -42,44 +46,41 @@ export const TableInvite = ({
           <XIcon {...decorative} weight="bold" />
         </button>
       </Tooltip>
-      <header className="table-welcome__hero">
-        <div>
-          <h2 id="tableInviteTitle">
-            <Trans>Room ready</Trans>
-          </h2>
+      <h2 id="tableInviteTitle" className="table-invite__title">
+        <Trans>Room ready</Trans>
+      </h2>
+      <div className="table-invite__row">
+        <output
+          id="tableInviteCode"
+          className="table-welcome__code"
+          aria-live="polite"
+        >
+          {code ?? '····'}
+        </output>
+        <div className="table-invite__actions">
+          <button
+            id="inviteOpponentButton"
+            type="button"
+            className="ds-button ds-button--primary"
+            disabled={!code}
+            onClick={onInvite}
+          >
+            <LinkIcon {...decorative} weight="bold" />
+            <Trans>Copy invite link</Trans>
+          </button>
+          <Tooltip content={t`Copy code`} side="bottom">
+            <button
+              id="tableCopyCodeButton"
+              type="button"
+              className="ds-button ds-button--secondary table-invite__copy"
+              aria-label={t`Copy code`}
+              disabled={!code}
+              onClick={onCopyCode}
+            >
+              <CopyIcon {...decorative} weight="bold" />
+            </button>
+          </Tooltip>
         </div>
-      </header>
-      <p className="table-welcome__lead">
-        <Trans>Share the code to play.</Trans>
-      </p>
-      <output
-        id="tableInviteCode"
-        className="table-welcome__code"
-        aria-live="polite"
-      >
-        {code ?? '····'}
-      </output>
-      <div className="table-welcome__actions">
-        <button
-          id="inviteOpponentButton"
-          type="button"
-          className="ds-button ds-button--primary"
-          disabled={!code}
-          onClick={onInvite}
-        >
-          <LinkIcon {...decorative} weight="bold" />
-          <Trans>Copy invite link</Trans>
-        </button>
-        <button
-          id="tableCopyCodeButton"
-          type="button"
-          className="ds-button ds-button--secondary"
-          disabled={!code}
-          onClick={onCopyCode}
-        >
-          <CopyIcon {...decorative} weight="bold" />
-          <Trans>Copy code</Trans>
-        </button>
       </div>
     </section>
   );

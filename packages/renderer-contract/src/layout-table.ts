@@ -372,6 +372,12 @@ interface HalfOptions {
    * other (2026-11-06). A turned far half's end is the window's left.
    */
   readonly handPillAtStart?: boolean;
+  /**
+   * The tallest the deck, discard and Lost Zone piles may be: the other
+   * half's, where that half's are smaller (the far half's give way to the
+   * app bar), so both halves' piles are one size (2026-11-09).
+   */
+  readonly pileCapPx?: number;
 
   /**
    * The table is tilted (BoardLayoutState.tiltedTable): the board is laid
@@ -1027,6 +1033,7 @@ const layoutHalfAs = (
     0,
     Math.min(
       bench,
+      options.pileCapPx ?? Number.POSITIVE_INFINITY,
       (height -
         margin -
         Math.max(outside ? TILTED_EDGE_PX : PILE_EDGE_MARGIN_PX, margin / 2) -
@@ -1162,7 +1169,10 @@ const layoutHalfAs = (
   // outer column to themselves: they grow to fill both card rows, never
   // past the Active's size. Otherwise the column keeps a slot for it.
   const columnPile = lostZoneBeside
-    ? Math.max(pileHeight, Math.min(active, (active + bench) / 2))
+    ? Math.min(
+        options.pileCapPx ?? Number.POSITIVE_INFINITY,
+        Math.max(pileHeight, Math.min(active, (active + bench) / 2))
+      )
     : pileHeight;
   const columnWidth = columnPile * CARD_ASPECT_RATIO;
   const columnAt = (index: number): Rect => ({
@@ -2524,18 +2534,26 @@ export const createTableLayoutSnapshot = (
     // `farScale`: the far half refitted on its own, portrait mat too. The
     // search lays the halves out with their Lost Zone: where a row made
     // room for it, the Stadium finds its spot anew.
-    const splitAt = (scale: number, withBar = false, farScale?: number) => {
+    const splitAt = (
+      scale: number,
+      withBar = false,
+      farScale?: number,
+      pileCapPx?: number
+    ) => {
       const fit = (frame: Rect, share: number): HalfOptions =>
         share < 1 ? { fitHeight: frame.height * share } : {};
+      const capped: HalfOptions = pileCapPx === undefined ? {} : { pileCapPx };
       const nearFit: HalfOptions = {
         ...halfOptions,
         ...fit(frames.lower, scale),
+        ...capped,
       };
       let farFit: HalfOptions = {
         ...(withBar ? farOptions : farWithoutBar),
         ...(farScale === undefined
           ? fit(frames.upper, scale)
           : { ...fit(frames.upper, farScale), fitPortrait: true }),
+        ...capped,
       };
       let near = buildPlayer(semantics.players[0], frames.lower, nearFit);
       let far = buildPlayer(semantics.players[1], frames.upper, farFit);
@@ -2724,6 +2742,7 @@ export const createTableLayoutSnapshot = (
       scale = low;
     }
     let split = splitAt(scale, true);
+    let farScaleChosen: number | undefined;
     if (appBarPx) {
       // The bar can change the far half -- its hand strip deeper, its rows
       // shorter -- so that the Stadium lies over more of it than it would
@@ -2741,6 +2760,7 @@ export const createTableLayoutSnapshot = (
           Math.min(scale, EVEN_SPLIT_SHARE / DEFAULT_LOWER_SHARE) *
           FAR_REFIT_FLOOR;
         let fallback = split;
+        let fallbackScale: number | undefined;
         let above = scale;
         let found: number | undefined;
         // Finely just below the fit found, where a clear window can be
@@ -2768,11 +2788,13 @@ export const createTableLayoutSnapshot = (
             candidate.covered < fallback.covered - STADIUM_OVERLAP_SLACK_PX2
           ) {
             fallback = candidate;
+            fallbackScale = farScale;
           }
           above = farScale;
         }
         if (found === undefined) {
           split = fallback;
+          farScaleChosen = fallbackScale;
         } else {
           let low = found;
           let high = above;
@@ -2782,8 +2804,19 @@ export const createTableLayoutSnapshot = (
             else high = middle;
           }
           split = splitAt(scale, true, low);
+          farScaleChosen = low;
         }
       }
+    }
+    // One pile size on both halves: where one half's piles are smaller (the
+    // far half's give way to the app bar), the other's come down to them,
+    // so neither side's cards read as the bigger (2026-11-09).
+    const pileOf = (built: typeof split.near): number =>
+      regionOf(built.player, 'deck')?.height ?? 0;
+    const nearPile = pileOf(split.near);
+    const farPile = pileOf(split.far);
+    if (Math.abs(nearPile - farPile) > 0.01) {
+      split = splitAt(scale, true, farScaleChosen, Math.min(nearPile, farPile));
     }
     lower = split.near;
     upper = split.far;

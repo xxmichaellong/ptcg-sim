@@ -75,7 +75,10 @@ displayName}`): the Worker resolves the code, and the room mints an
      On a phone held upright Settings' room rows lead there.
    - The room-ready card on the table shows the code, Copy invite link and
      Copy code; the log's header and Settings have Copy invite link. There
-     are no separate player and spectator invites.
+     are no separate player and spectator invites. Since 2026-11-09 it is
+     two lines (Room ready; the code beside Copy invite link and an icon
+     Copy code), small enough to sit above the seam over the empty far
+     half rather than over the player's own side (the coin lay under it).
    - Under a finger, Play online's, the room-ready card's and Room's
      controls are 44px tall (Play and Watch take presses across their
      control's padding).

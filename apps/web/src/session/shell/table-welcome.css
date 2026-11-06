@@ -242,8 +242,47 @@
   border-radius: 2px;
 }
 
-/* A room's invite card (TableInvite): under a finger its buttons are 44px
-   tall. */
+/* A room's invite card (TableInvite): two lines, small enough to sit above
+   the seam over the empty far half (2026-11-09). */
+.table-welcome--invite {
+  width: min(380px, calc(100vw - 2 * var(--space-4)));
+  gap: var(--space-2);
+  padding: var(--space-4);
+}
+
+.table-invite__title {
+  margin: 0;
+  padding-inline-end: var(--space-8);
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+}
+
+.table-invite__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-3);
+}
+
+.table-welcome--invite .table-welcome__code {
+  font-size: var(--text-2xl);
+}
+
+.table-invite__actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+/* Copy code: the icon alone, square, its name in the tooltip. */
+.table-invite__copy {
+  width: var(--ds-control-height);
+  padding: 0;
+}
+
+/* Under a finger its buttons are 44px tall. */
 @media (pointer: coarse) {
   .table-welcome--invite {
     --ds-control-height: 44px;
