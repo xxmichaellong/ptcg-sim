@@ -79,6 +79,17 @@ displayName}`): the Worker resolves the code, and the room mints an
    - Under a finger, Play online's, the room-ready card's and Room's
      controls are 44px tall (Play and Watch take presses across their
      control's padding).
+8. **Restored games and who is here** (2026-11-06, from review):
+   - The host is whoever restored a saved game (`room-restored-by:v1`), not
+     always the first seat: a game the second player restores offers its
+     first seat by code, and the restorer changes the code.
+   - A join renews a code only while the room still holds it; one the host
+     has just changed is never brought back by a join under way.
+   - Watching by code works in every multiplayer room, a restored one
+     included (it has no spectators' master credential to check).
+   - The room's Welcome lists who is already here, so a guest sees the host
+     at once (the invite card, the open-seat check and Room's "here" read
+     it, kept current by Presence).
 
 ## Consequences
 
