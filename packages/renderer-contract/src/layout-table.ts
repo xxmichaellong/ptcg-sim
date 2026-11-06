@@ -1807,7 +1807,8 @@ const layoutSoloHalf = (
     ...(options.handEndReservePx
       ? { handEndReservePx: options.handEndReservePx }
       : {}),
-
+    // The pill before the strip keeps its room alone too (Codex review r7).
+    ...(options.handPillAtStart ? { handPillAtStart: true } : {}),
     ...(options.minHandStripPx
       ? { minHandStripPx: options.minHandStripPx }
       : {}),

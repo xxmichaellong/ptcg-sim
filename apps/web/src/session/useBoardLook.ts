@@ -37,9 +37,15 @@ export const useBoardLook = (stored: BoardPreferences): BoardPreferences => {
     [depthChoice, wideLandscape]
   );
   return useMemo((): BoardPreferences => {
-    // Motion always comes from the player's motion settings, whatever an
-    // earlier publish may have carried along.
-    const { animationSpeed: _stored, depth: _depth, ...rest } = stored;
+    // Motion and the outlines always come from the player's settings,
+    // whatever an earlier publish may have carried along (Night/Day stores
+    // the look as worn; Codex review r7).
+    const {
+      animationSpeed: _stored,
+      depth: _depth,
+      outlineFilledZones: _outlines,
+      ...rest
+    } = stored;
     return {
       ...rest,
       showZoneOutlines: boardView.zoneOutlines !== 'never',

@@ -362,9 +362,11 @@ export const RemoteRoomRoute = ({
     if (onPreferencesChange) onPreferencesChange(next);
     else setLocalPreferences(next);
   };
+  // What is stored, not the look as worn: the outlines, motion and depth
+  // are the player's settings, read anew each time (useBoardLook).
   const setDarkMode = (enabled: boolean): void => {
     publishPreferences({
-      ...effectivePreferences,
+      ...storedPreferences,
       darkMode: enabled,
     });
   };

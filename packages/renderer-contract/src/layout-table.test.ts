@@ -2763,6 +2763,46 @@ describe('table layout: even boards and lined-up rows (2026-11-06)', () => {
     );
   });
 
+  it('keeps every hand clear of its pill, a half shown alone included', () => {
+    // Codex review round 7: one half alone on an upright phone laid its
+    // hand from the edge, under its pill.
+    for (const [width, height] of [
+      [390, 844],
+      [412, 915],
+      [768, 1024],
+      [1440, 900],
+      [844, 390],
+    ] as const) {
+      for (const hiddenPhysicalSide of [undefined, 'upper', 'lower'] as const) {
+        for (const mirroredFarSide of [true, false]) {
+          for (const tiltedTable of [true, false]) {
+            const laid = at(width, height, {
+              ...(hiddenPhysicalSide ? { hiddenPhysicalSide } : {}),
+              mirroredFarSide,
+              ...(tiltedTable ? { tiltedTable } : {}),
+            });
+            for (const player of laid.players) {
+              const hand = player.regions.find(
+                (region) => region.kind === 'hand'
+              );
+              const pill = hand?.countLabel;
+              if (!hand || !pill || hand.physicalDeclaredBounds.width <= 0) {
+                continue;
+              }
+              const label = `${width}x${height} hide=${String(hiddenPhysicalSide)} m=${String(mirroredFarSide)} t=${String(tiltedTable)} ${player.side}`;
+              expect(pill.horizontalAlign, label).toBe('left');
+              expect(pill.anchor.x, label).toBeGreaterThanOrEqual(0);
+              expect(
+                hand.physicalDeclaredBounds.x,
+                label
+              ).toBeGreaterThanOrEqual(pill.anchor.x + 72 - 0.01);
+            }
+          }
+        }
+      }
+    }
+  });
+
   it('drops the board split once the seam is dragged', () => {
     const state = stateAt(1440, 900, {
       shellMode: 'fullscreen',
