@@ -373,9 +373,10 @@ interface HalfOptions {
    */
   readonly handPillAtStart?: boolean;
   /**
-   * The tallest the deck, discard and Lost Zone piles may be: the other
-   * half's, where that half's are smaller (the far half's give way to the
-   * app bar), so both halves' piles are one size (2026-11-09).
+   * The tallest the near half's deck, discard and Lost Zone piles may be:
+   * the far half's share of its bench card, where the far piles are
+   * smaller for their cards (they give way to the app bar), so neither
+   * side's piles read as the bigger (2026-11-09).
    */
   readonly pileCapPx?: number;
 
@@ -2538,22 +2539,20 @@ export const createTableLayoutSnapshot = (
       scale: number,
       withBar = false,
       farScale?: number,
-      pileCapPx?: number
+      nearPileCapPx?: number
     ) => {
       const fit = (frame: Rect, share: number): HalfOptions =>
         share < 1 ? { fitHeight: frame.height * share } : {};
-      const capped: HalfOptions = pileCapPx === undefined ? {} : { pileCapPx };
       const nearFit: HalfOptions = {
         ...halfOptions,
         ...fit(frames.lower, scale),
-        ...capped,
+        ...(nearPileCapPx === undefined ? {} : { pileCapPx: nearPileCapPx }),
       };
       let farFit: HalfOptions = {
         ...(withBar ? farOptions : farWithoutBar),
         ...(farScale === undefined
           ? fit(frames.upper, scale)
           : { ...fit(frames.upper, farScale), fitPortrait: true }),
-        ...capped,
       };
       let near = buildPlayer(semantics.players[0], frames.lower, nearFit);
       let far = buildPlayer(semantics.players[1], frames.upper, farFit);
@@ -2808,16 +2807,45 @@ export const createTableLayoutSnapshot = (
         }
       }
     }
-    // One pile size on both halves: where one half's piles are smaller (the
-    // far half's give way to the app bar), the other's come down to them,
-    // so neither side's cards read as the bigger (2026-11-09).
-    const pileOf = (built: typeof split.near): number =>
-      regionOf(built.player, 'deck')?.height ?? 0;
-    const nearPile = pileOf(split.near);
-    const farPile = pileOf(split.far);
-    if (Math.abs(nearPile - farPile) > 0.01) {
-      split = splitAt(scale, true, farScaleChosen, Math.min(nearPile, farPile));
+    // The near piles never larger beside their cards than the far ones:
+    // where the far half's are smaller for its cards (they give way to the
+    // app bar), the near half's come down to the same share of its own
+    // bench card. Even halves get one pile size; a far half smaller all
+    // round (a phone on its side) leaves the near piles as they are, and
+    // the far piles are never made smaller (2026-11-09).
+    const rowOf = (
+      built: typeof split.near,
+      kind: BoardLayoutRegionKind
+    ): number => regionOf(built.player, kind)?.height ?? 0;
+    const share = (built: typeof split.near): number => {
+      const bench = rowOf(built, 'bench');
+      return bench > 0 ? rowOf(built, 'deck') / bench : 0;
+    };
+    const farShare = share(split.far);
+    // Smaller piles can let the near half take its taller rows, so the cap
+    // is found again against the Bench it gives, a pass or two; where that
+    // swings between the two, the layout kept is the one whose piles are
+    // the largest without outgrowing the far ones beside their cards.
+    const fitsFar = (built: typeof split.near): boolean =>
+      share(built) <= farShare + 0.001;
+    let best = fitsFar(split.near) ? split : undefined;
+    let pileCap: number | undefined;
+    for (let pass = 0; pass < 3; pass += 1) {
+      const want = farShare * rowOf(split.near, 'bench');
+      const deck = rowOf(split.near, 'deck');
+      const held = pileCap !== undefined && deck >= pileCap - 0.01;
+      if (deck <= want + 0.01 && (!held || deck >= want - 0.5)) break;
+      pileCap = want;
+      split = splitAt(scale, true, farScaleChosen, pileCap);
+      if (
+        fitsFar(split.near) &&
+        (best === undefined ||
+          rowOf(split.near, 'deck') > rowOf(best.near, 'deck'))
+      ) {
+        best = split;
+      }
     }
+    if (best && !fitsFar(split.near)) split = best;
     lower = split.near;
     upper = split.far;
     stadium = split.stadium;
