@@ -1,10 +1,14 @@
-import type { CDPSession, Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
 
 /**
- * Every CSS animation and transition the page starts, as the browser's own
- * animation inspector reports it: what it is, how long it runs and the
- * element it runs on. Read from DevTools rather than by sampling frames,
- * so a busy runner (whose frames come late) cannot hide or fake one.
+ * Every CSS animation and transition the page starts: what it is, how long
+ * it runs and the element it runs on. Recorded in the page as each one
+ * starts (`animationstart`, `transitionstart`), with the element's classes
+ * read at that moment, rather than by sampling frames, so a busy runner
+ * (whose frames come late) cannot hide or fake one. DevTools' Animation
+ * domain was read before, but it names the element only when asked
+ * afterwards, and a short exit's copy was often gone by then on a loaded
+ * runner, so its exit read as never played.
  */
 export interface StartedAnimation {
   readonly type: string;
@@ -20,43 +24,74 @@ export interface AnimationWatch {
   readonly take: () => Promise<StartedAnimation[]>;
 }
 
+interface AnimationWatchWindow {
+  __surfaceAnimations?: StartedAnimation[];
+}
+
 export const watchAnimations = async (page: Page): Promise<AnimationWatch> => {
-  const cdp: CDPSession = await page.context().newCDPSession(page);
-  await cdp.send('DOM.enable');
-  await cdp.send('DOM.getDocument', { depth: 0 });
-  await cdp.send('Animation.enable');
-  let started: Promise<StartedAnimation>[] = [];
-  cdp.on('Animation.animationStarted', ({ animation }) => {
-    const backendNodeId = animation.source?.backendNodeId;
-    // Described at once: a ghost is gone once its exit has played.
-    started.push(
-      (backendNodeId
-        ? cdp
-            .send('DOM.describeNode', { backendNodeId })
-            .then(({ node }) => {
-              const attributes = node.attributes ?? [];
-              const at = attributes.indexOf('class');
-              return at >= 0 ? (attributes[at + 1] ?? '') : node.nodeName;
-            })
-            .catch(() => '')
-        : Promise.resolve('')
-      ).then((node) => ({
-        type: animation.type,
-        name: animation.name,
-        duration: animation.source?.duration ?? 0,
-        node,
-      }))
+  await page.evaluate(() => {
+    const target = window as AnimationWatchWindow;
+    if (target.__surfaceAnimations) return;
+    target.__surfaceAnimations = [];
+    /** "0.15s, 120ms" → [150, 120]. */
+    const times = (value: string): number[] =>
+      value.split(',').map((part) => {
+        const text = part.trim();
+        const number = Number.parseFloat(text);
+        return text.endsWith('ms') ? number : number * 1000;
+      });
+    const list = (value: string): string[] =>
+      value.split(',').map((part) => part.trim());
+    const classOf = (element: Element): string =>
+      element.getAttribute('class') ?? element.nodeName;
+    document.addEventListener(
+      'animationstart',
+      (event) => {
+        const element = event.target;
+        if (!(element instanceof Element)) return;
+        const style = getComputedStyle(element);
+        const names = list(style.animationName);
+        const durations = times(style.animationDuration);
+        const index = Math.max(0, names.indexOf(event.animationName));
+        target.__surfaceAnimations!.push({
+          type: 'CSSAnimation',
+          name: event.animationName,
+          duration: Math.round(durations[index % durations.length] ?? 0),
+          node: classOf(element),
+        });
+      },
+      true
+    );
+    document.addEventListener(
+      'transitionstart',
+      (event) => {
+        const element = event.target;
+        if (!(element instanceof Element)) return;
+        const style = getComputedStyle(element);
+        const properties = list(style.transitionProperty);
+        const durations = times(style.transitionDuration);
+        let index = properties.indexOf(event.propertyName);
+        if (index < 0) index = Math.max(0, properties.indexOf('all'));
+        target.__surfaceAnimations!.push({
+          type: 'CSSTransition',
+          name: event.propertyName,
+          duration: Math.round(durations[index % durations.length] ?? 0),
+          node: classOf(element),
+        });
+      },
+      true
     );
   });
   return {
-    take: async () => {
-      const taken = started;
-      started = [];
-      return Promise.all(taken);
-    },
+    take: () =>
+      page.evaluate(() => {
+        const target = window as AnimationWatchWindow;
+        const taken = target.__surfaceAnimations ?? [];
+        target.__surfaceAnimations = [];
+        return taken;
+      }),
   };
 };
-
 /** Those on an element whose class list holds every one of `classes`. */
 export const on = (
   animations: readonly StartedAnimation[],

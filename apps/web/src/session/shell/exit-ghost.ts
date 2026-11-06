@@ -2,8 +2,10 @@ import { useLayoutEffect, type RefObject } from 'react';
 
 import { stripGhost } from '../../board/overlays/overlayMotion.js';
 
-/** A ghost outlives its animation by at most this long. */
+/** A ghost outlives the start of its exit by at most this long. */
 const GHOST_LIFETIME_MS = 600;
+/** However late its exit starts, a ghost is gone by then. */
+const GHOST_MAX_LIFETIME_MS = 1500;
 
 /**
  * Where an element is drawn, as its own style says: what a ghost keeps in
@@ -97,7 +99,22 @@ export const useExitGhost = (
             remove();
           }
         });
-        ghost.ownerDocument.defaultView?.setTimeout(remove, GHOST_LIFETIME_MS);
+        // Timed from when its exit starts, not when it was made: a busy
+        // page's first frame can come late, and the copy would go before it
+        // ever played. Gone in any case before long.
+        const view = ghost.ownerDocument.defaultView;
+        const onStart = (event: AnimationEvent): void => {
+          if (
+            event.target === ghost ||
+            (event.target instanceof Element &&
+              event.target.parentElement === ghost)
+          ) {
+            ghost.removeEventListener('animationstart', onStart);
+            view?.setTimeout(remove, GHOST_LIFETIME_MS);
+          }
+        };
+        ghost.addEventListener('animationstart', onStart);
+        view?.setTimeout(remove, GHOST_MAX_LIFETIME_MS);
       });
     };
   }, [ref, leavingClass]);

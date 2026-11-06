@@ -1393,6 +1393,32 @@ describe('legacy board overlays', () => {
       ghosts.map((ghost) => ghost.classList.contains('is-exit-scrim'))
     ).toEqual([true, false]);
     expect(ghosts[1]!.classList).toContain('is-exit-panel');
+    for (const ghost of ghosts) ghost.remove();
+
+    // Closed part-way through fading back in (a card landed): it still
+    // leaves, from where it was, never first jumping to full.
+    await render(discard.id);
+    host.querySelector<HTMLElement>(
+      '[data-legacy-zone-browser]'
+    )!.style.opacity = '0.3';
+    await render(null);
+    const panel = host.querySelector<HTMLElement>(
+      '.ptcgsim-overlay-ghost.is-exit-panel'
+    );
+    expect(panel?.style.opacity).toBe('0.3');
+    for (const ghost of host.querySelectorAll('.ptcgsim-overlay-ghost')) {
+      ghost.remove();
+    }
+
+    // Hidden by a drag out of it: nothing leaves.
+    await render(discard.id);
+    host
+      .querySelector<HTMLElement>('[data-legacy-zone-browser]')!
+      .setAttribute('data-zone-dragging-card', 'card');
+    await render(null);
+    expect(
+      host.querySelector('.ptcgsim-overlay-ghost.is-exit-panel')
+    ).toBeNull();
   });
 
   it('asks each controller count descriptor in one StrictMode-safe count picker', async () => {

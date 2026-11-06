@@ -39,8 +39,10 @@ const GHOST_STRIPPED_ATTRIBUTES = new Set([
   'autofocus',
   'inert',
 ]);
-/** A ghost outlives its animation by at most this long. */
+/** A ghost outlives the start of its animation by at most this long. */
 const GHOST_LIFETIME_MS = 450;
+/** However late its animation starts, a ghost is gone by then. */
+const GHOST_MAX_LIFETIME_MS = 1500;
 
 /**
  * Makes a copy of an overlay's last frame inert and unfindable: no id, role,
@@ -87,17 +89,24 @@ export const useOverlayExit = (
       const parent = element.parentElement;
       if (!parent) return;
       // Nothing to see leave: a panel a drag has hidden (its drag-state
-      // attributes would be stripped from the copy, bringing it back).
+      // attributes would be stripped from the copy, bringing it back), or
+      // one not drawn at all. A panel caught part-way through a fade (back
+      // in once a card lands, say) still leaves, from where it was.
       const style =
         element.ownerDocument.defaultView?.getComputedStyle(element);
+      const hiddenByDrag = [...element.attributes].some((attribute) =>
+        attribute.name.endsWith('-dragging-card')
+      );
       if (
-        style &&
-        (style.visibility === 'hidden' ||
-          style.display === 'none' ||
-          Number.parseFloat(style.opacity) < 0.5)
+        hiddenByDrag ||
+        (style &&
+          (style.visibility === 'hidden' ||
+            style.display === 'none' ||
+            Number.parseFloat(style.opacity) === 0))
       ) {
         return;
       }
+      const opacity = style ? Number.parseFloat(style.opacity) : 1;
       const previousSibling = element.previousSibling;
       const nextSibling = element.nextSibling;
       const ghost = element.cloneNode(true) as HTMLElement;
@@ -119,6 +128,9 @@ export const useOverlayExit = (
           ghost.style.width = `${String(width)}px`;
           ghost.style.height = `${String(height)}px`;
         }
+        // Its exit runs to nothing from the panel's last opacity, never
+        // first jumping to full.
+        if (opacity < 1) ghost.style.opacity = String(opacity);
         // Keep the original paint order: siblings that closed with it (a
         // scrim and its panel) are gone, so anchor on whichever neighbour
         // is still there, or the start if it was first.
@@ -142,10 +154,27 @@ export const useOverlayExit = (
           }
         }
         const remove = (): void => ghost.remove();
+        const view = ghost.ownerDocument.defaultView;
+        // Nothing to play (no exit styled where it landed): gone at once.
+        if (view?.getComputedStyle(ghost).animationName === 'none') {
+          remove();
+          return;
+        }
         ghost.addEventListener('animationend', (event) => {
           if (event.target === ghost) remove();
         });
-        ghost.ownerDocument.defaultView?.setTimeout(remove, GHOST_LIFETIME_MS);
+        // Its exit's own length past when it starts, not when it was
+        // made: a busy page's first frame can come late, and the copy
+        // would go before it ever faded. Gone in any case before long.
+        ghost.addEventListener(
+          'animationstart',
+          (event) => {
+            if (event.target === ghost)
+              view?.setTimeout(remove, GHOST_LIFETIME_MS);
+          },
+          { once: true }
+        );
+        view?.setTimeout(remove, GHOST_MAX_LIFETIME_MS);
       });
     };
   }, [ref, variant]);
