@@ -3,6 +3,7 @@ import { LEGACY_DEFAULT_CARD_BACK_URL } from '@ptcgsim/game-core';
 import { createElement } from 'react';
 
 import { CardBackChooser } from '../card-backs/CardBackChooser.js';
+import { RECENT_COIN_PREFERENCES } from '../card-backs/coin-preferences.js';
 import {
   encodeCardBackImage,
   fetchImportedPicture,
@@ -45,6 +46,7 @@ export type CardBackPictureSave = (
 ) => Promise<string | null>;
 
 export interface BrowserCardBackRequestOptions {
+  readonly shape?: 'card' | 'coin';
   readonly signal?: AbortSignal;
   /** The back the seat wears now, shown first. */
   readonly current?: string;
@@ -77,11 +79,13 @@ const patient = (signal: AbortSignal): AbortSignal =>
 const fetchThroughApp: CardBackPictureFetch = (url, signal) =>
   fetchImportedPicture(url, { signal: patient(signal) });
 
-const saveAsOwn: CardBackPictureSave = async (picture, focus, signal) => {
-  const encoded = await encodeCardBackImage(picture, focus);
-  if (!encoded || signal.aborted) return null;
-  return await uploadCardBackImage(encoded, { signal: patient(signal) });
-};
+const saveAsOwn =
+  (shape: 'card' | 'coin'): CardBackPictureSave =>
+  async (picture, focus, signal) => {
+    const encoded = await encodeCardBackImage(picture, focus, shape);
+    if (!encoded || signal.aborted) return null;
+    return await uploadCardBackImage(encoded, { signal: patient(signal) });
+  };
 
 /**
  * Opens the card-back chooser (ADR-041 stage 2) and answers with the back
@@ -97,15 +101,19 @@ export const requestBrowserCardBack: BrowserCardBackRequest = async (
   if (options.signal?.aborted) return undefined;
   const open = options.open ?? openPanel;
   const store = options.preferences ?? preferences();
-  const recent = store.get(RECENT_CARD_BACK_PREFERENCES).backs;
+  const recentPreference =
+    options.shape === 'coin'
+      ? RECENT_COIN_PREFERENCES
+      : RECENT_CARD_BACK_PREFERENCES;
+  const recent = store.get(recentPreference).backs;
   const forget = (back: string): (() => void) => {
-    const before = store.get(RECENT_CARD_BACK_PREFERENCES).backs;
-    store.set(RECENT_CARD_BACK_PREFERENCES, {
+    const before = store.get(recentPreference).backs;
+    store.set(recentPreference, {
       backs: before.filter((each) => each !== back),
     });
     const putBack = options.forgetWorn?.(back);
     return () => {
-      store.set(RECENT_CARD_BACK_PREFERENCES, { backs: before });
+      store.set(recentPreference, { backs: before });
       putBack?.();
     };
   };
@@ -113,10 +121,11 @@ export const requestBrowserCardBack: BrowserCardBackRequest = async (
   let answer: string | null;
   try {
     answer = await open({
-      title: t`Card back`,
+      title: options.shape === 'coin' ? t`Coin` : t`Card back`,
       className: 'card-back-chooser-dialog',
       content: (settle) =>
         createElement(CardBackChooser, {
+          ...(options.shape ? { shape: options.shape } : {}),
           ...(options.current ? { current: options.current } : {}),
           worn: options.worn ?? [],
           recent,
@@ -124,7 +133,8 @@ export const requestBrowserCardBack: BrowserCardBackRequest = async (
           onCancel: () => settle(null),
           onForget: forget,
           fetchPicture: options.fetchPicture ?? fetchThroughApp,
-          savePicture: options.savePicture ?? saveAsOwn,
+          savePicture:
+            options.savePicture ?? saveAsOwn(options.shape ?? 'card'),
         }),
       ...(options.signal ? { signal: options.signal } : {}),
     });
@@ -132,11 +142,8 @@ export const requestBrowserCardBack: BrowserCardBackRequest = async (
     return undefined;
   }
   if (!answer || options.signal?.aborted) return undefined;
-  store.set(RECENT_CARD_BACK_PREFERENCES, {
-    backs: withRecentCardBack(
-      store.get(RECENT_CARD_BACK_PREFERENCES).backs,
-      answer
-    ),
+  store.set(recentPreference, {
+    backs: withRecentCardBack(store.get(recentPreference).backs, answer),
   });
   return answer;
 };

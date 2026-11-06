@@ -117,7 +117,8 @@ const patternTile = (pattern: CardBackPattern, accent: string): string => {
  */
 export const cardBackDesignSvg = (
   design: CardBackDesign,
-  emblem?: string
+  emblem?: string,
+  shape: 'card' | 'coin' = 'card'
 ): string => {
   const base = CARD_BACK_COLOUR_HEX[design.base];
   const accent = CARD_BACK_COLOUR_HEX[design.accent];
@@ -132,6 +133,24 @@ export const cardBackDesignSvg = (
   const cx = WIDTH / 2;
   const cy = HEIGHT / 2;
   const art = MEDALLION * 1.5;
+  if (shape === 'coin') {
+    return [
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 125 630 630">',
+      `<defs>${tile}<clipPath id="coin"><circle cx="315" cy="440" r="287"/></clipPath><radialGradient id="metal" cx="30%" cy="20%"><stop stop-color="#fff" stop-opacity=".5"/><stop offset=".6" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".35"/></radialGradient></defs>`,
+      `<circle cx="315" cy="440" r="313" fill="${accent}"/>`,
+      `<circle cx="315" cy="440" r="287" fill="${base}"/>`,
+      tile ? '<circle cx="315" cy="440" r="287" fill="url(#p)"/>' : '',
+      withEmblem
+        ? `<circle cx="315" cy="440" r="168" fill="${base}" stroke="${accent}" stroke-width="10"/>`
+        : '',
+      withEmblem && emblem
+        ? `<image href="${emblem}" x="189" y="314" width="252" height="252" preserveAspectRatio="xMidYMid meet"/>`
+        : '',
+      '<circle cx="315" cy="440" r="313" fill="url(#metal)"/>',
+      `<circle cx="315" cy="440" r="300" fill="none" stroke="${base}" stroke-opacity=".5" stroke-width="5" stroke-dasharray="3 9"/>`,
+      '</svg>',
+    ].join('');
+  }
   return [
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${String(WIDTH)} ${String(HEIGHT)}">`,
     tile ? `<defs>${tile}</defs>` : '',
@@ -156,7 +175,10 @@ export const cardBackDesignSvg = (
  * The sleeve as an image source, drawn in the viewer's browser: with its
  * emblem once that has come (card-back-emblems.ts), before then without.
  */
-export const cardBackDesignImage = (design: CardBackDesign): string =>
+export const cardBackDesignImage = (
+  design: CardBackDesign,
+  shape: 'card' | 'coin' = 'card'
+): string =>
   `data:image/svg+xml,${encodeURIComponent(
-    cardBackDesignSvg(design, emblemImage(design.emblem))
+    cardBackDesignSvg(design, emblemImage(design.emblem), shape)
   )}`;

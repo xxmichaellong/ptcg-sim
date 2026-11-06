@@ -30,6 +30,15 @@ import { Tooltip, withKeyHint } from '../ui/Tooltip.js';
 import { tableCoinSpots } from './table-coin.js';
 import '../ui/action-menu.css';
 import './TableCoin.css';
+import {
+  emblemsVersion,
+  subscribeEmblems,
+} from '../card-backs/card-back-emblems.js';
+import {
+  coinImage,
+  STANDARD_COIN_HEADS,
+  STANDARD_COIN_TAILS,
+} from '../card-backs/coin-image.js';
 
 /** A coin that was waiting for the room stays up this long after it answers. */
 export const COIN_PENDING_GRACE_MS = 300;
@@ -80,14 +89,34 @@ const tossAngleOf = (animation: Animation | null, from: number): number => {
  * The coin is Pokémon TCG Pocket's starting Poké Ball coin: the red and
  * white ball for heads, the same ball struck in silver for tails.
  */
-const COIN_FACE_URLS: Readonly<Record<Face, string>> = {
-  heads: '/v2/assets/table/coin-heads.webp',
-  tails: '/v2/assets/table/coin-tails.webp',
+const CoinFace = ({
+  side,
+  value,
+}: {
+  readonly side: Face;
+  readonly value: string | undefined;
+}) => {
+  const heads = coinImage(value);
+  const custom = heads !== STANDARD_COIN_HEADS;
+  return (
+    <img
+      src={side === 'tails' && !custom ? STANDARD_COIN_TAILS : heads}
+      alt=""
+      draggable={false}
+      decoding="async"
+      referrerPolicy="no-referrer"
+      data-custom-coin={custom ? '' : undefined}
+      onError={(event) => {
+        const fallback =
+          side === 'heads' ? STANDARD_COIN_HEADS : STANDARD_COIN_TAILS;
+        if (event.currentTarget.getAttribute('src') !== fallback) {
+          event.currentTarget.src = fallback;
+          delete event.currentTarget.dataset.customCoin;
+        }
+      }}
+    />
+  );
 };
-
-const CoinFace = ({ side }: { readonly side: Face }) => (
-  <img src={COIN_FACE_URLS[side]} alt="" draggable={false} decoding="async" />
-);
 
 /** What one coin is doing: lying still, up in the air, or a room's flip. */
 type CoinMotion =
@@ -258,6 +287,8 @@ const CoinResultChip = ({
 };
 
 interface TableCoinProps {
+  readonly value: string | undefined;
+  readonly onEdit: (() => void) | undefined;
   readonly playerId: string;
   readonly own: boolean;
   readonly rect: Rect;
@@ -280,6 +311,8 @@ interface TableCoinProps {
 }
 
 const TableCoin = ({
+  value,
+  onEdit,
   playerId,
   own,
   rect,
@@ -468,10 +501,10 @@ const TableCoin = ({
       <span className="table-coin__coin" ref={coinRef}>
         <span className="table-coin__edge" />
         <span className="table-coin__face table-coin__face--heads">
-          <CoinFace side="heads" />
+          <CoinFace side="heads" value={value} />
         </span>
         <span className="table-coin__face table-coin__face--tails">
-          <CoinFace side="tails" />
+          <CoinFace side="tails" value={value} />
         </span>
       </span>
     </span>
@@ -606,6 +639,16 @@ const TableCoin = ({
                       </span>
                     </ContextMenu.Item>
                   ))}
+                  {onEdit ? (
+                    <ContextMenu.Item
+                      className="ptcgsim-action-menu__item"
+                      data-edit-coin="true"
+                      onClick={onEdit}
+                    >
+                      <span className="ptcgsim-action-menu__icon" />
+                      <span className="ptcgsim-action-menu__text">{t`Edit coin`}</span>
+                    </ContextMenu.Item>
+                  ) : null}
                 </ContextMenu.Popup>
               </ContextMenu.Positioner>
             </ContextMenu.Portal>
@@ -633,6 +676,10 @@ const TableCoin = ({
 };
 
 export interface TableCoinsProps {
+  readonly editablePlayerIds?: readonly PlayerId[];
+  readonly coins?:
+    Readonly<Record<string, { readonly coin?: string }>> | undefined;
+  readonly onEdit?: (playerId: PlayerId) => void;
   /** The presentation runtime's coin flips, paced for the table. */
   readonly source?: PresentationStateSource<CoinFlipSnapshot>;
   readonly layout: BoardLayoutSnapshot;
@@ -668,6 +715,9 @@ export interface TableCoinsProps {
  * it.
  */
 export const TableCoins = ({
+  coins,
+  onEdit,
+  editablePlayerIds,
   source = NO_SOURCE,
   layout,
   depth,
@@ -678,6 +728,7 @@ export const TableCoins = ({
   covered = false,
 }: TableCoinsProps) => {
   const { t } = useLingui();
+  useSyncExternalStore(subscribeEmblems, emblemsVersion, emblemsVersion);
   const { flip } = useSyncExternalStore(
     source.subscribe,
     source.getSnapshot,
@@ -763,6 +814,13 @@ export const TableCoins = ({
         const name = names?.[spot.playerId];
         return (
           <TableCoin
+            value={coins?.[spot.playerId]?.coin}
+            onEdit={
+              (editablePlayerIds ?? [...canFlip]).includes(spot.playerId) &&
+              onEdit
+                ? () => onEdit(spot.playerId)
+                : undefined
+            }
             key={spot.playerId}
             playerId={spot.playerId}
             own={spot.own}

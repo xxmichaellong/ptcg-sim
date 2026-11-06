@@ -26,6 +26,7 @@ import {
 import { playerZoneId, stadiumZoneId } from './create-match.js';
 import { applyEvent, applyEventBatch } from './apply-events.js';
 import { isCardBackValue } from './card-back.js';
+import { isCoinValue } from './coin.js';
 import { sameCardPresentation } from './card-presentation.js';
 import { isMoveName, sameCardText } from './card-text.js';
 import type { DomainEvent, WorkAreaArrivalSource } from './events.js';
@@ -1221,6 +1222,17 @@ export const decideCommand = (
         type: 'PlayerCardBackSet',
         playerId: command.playerId,
         cardBackUrl: command.cardBackUrl,
+      });
+    }
+    case 'SetCoin': {
+      const playerError = requirePlayer(state, command.playerId);
+      if (playerError) return playerError;
+      if (!isCoinValue(command.coin))
+        return reject('invalid_command', 'Invalid coin');
+      return accept({
+        type: 'PlayerCoinSet',
+        playerId: command.playerId,
+        coin: command.coin,
       });
     }
     case 'ResetPlayer': {

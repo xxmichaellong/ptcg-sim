@@ -14,6 +14,8 @@ export type SheetPlacement = 'center' | 'side';
 export type SheetSize = 'sm' | 'md' | 'lg' | 'xl';
 
 export interface SheetProps {
+  /** An inspector opened inside a modal dialog stays above its parent. */
+  readonly aboveDialog?: boolean;
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
   readonly title: ReactNode;
@@ -52,6 +54,7 @@ export interface SheetProps {
  * its keys never reach the table.
  */
 export const Sheet = ({
+  aboveDialog = false,
   open,
   onOpenChange,
   title,
@@ -94,9 +97,13 @@ export const Sheet = ({
         {...{ [OVERLAY_SURFACE_ATTRIBUTE]: 'portal' }}
       >
         {isModal ? (
-          <Drawer.Backdrop className="ptcgsim-sheet-backdrop" />
+          <Drawer.Backdrop
+            className="ptcgsim-sheet-backdrop"
+            data-above-dialog={aboveDialog ? '' : undefined}
+          />
         ) : null}
         <Drawer.Viewport
+          data-above-dialog={aboveDialog ? '' : undefined}
           className="ptcgsim-sheet-viewport"
           data-variant={variant}
           data-modal={isModal ? 'true' : 'false'}

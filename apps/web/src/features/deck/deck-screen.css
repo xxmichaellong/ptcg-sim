@@ -17,6 +17,10 @@
    inherited one eased restyles the whole screen every frame, and WebKit
    stopped painting while it did. */
 .deck-screen {
+  --deck-header: #17273d;
+  --deck-header-ink: #f2f6ff;
+  --deck-header-muted: #b8c9df;
+  --deck-seat-bed: #122138;
   --deck-seat-color: var(--color-you);
   --deck-gutter: var(--space-4);
   --deck-panel: var(--color-surface-1);
@@ -42,12 +46,18 @@
 }
 
 :root[data-theme='day'] .deck-screen {
+  --deck-header: #e1ecfa;
+  --deck-header-ink: #182b47;
+  --deck-header-muted: #4a607e;
+  --deck-seat-bed: #f7faff;
   --deck-seat-chip-ink: #ffffff;
 }
 
 /* ---- Header: back, the seats' switch, Play -------------------------------- */
 
 .deck-screen__bar {
+  --color-text: var(--deck-header-ink);
+  --color-text-muted: var(--deck-header-muted);
   position: relative;
   z-index: 2;
   display: flex;
@@ -58,8 +68,10 @@
   padding: max(var(--space-2), env(safe-area-inset-top)) var(--deck-gutter)
     var(--space-2);
   box-sizing: border-box;
-  border-bottom: 1px solid var(--color-border);
-  background: var(--color-surface-1);
+  border-bottom: 1px solid color-mix(in oklab, #709acc 55%, var(--deck-header));
+  background: var(--deck-header);
+  color: var(--deck-header-ink);
+  box-shadow: 0 5px 22px rgb(5 15 35 / 0.22);
   /* Back and Play: the app's buttons, at a header's height. */
   --ds-control-height: 40px;
 }
@@ -105,7 +117,13 @@
   min-width: 0;
   max-width: 340px;
   border-radius: 12px;
-  background-color: transparent;
+  border: 1px solid
+    color-mix(in oklab, var(--seat-color) 48%, var(--deck-seat-bed));
+  background-color: color-mix(
+    in oklab,
+    var(--seat-color) 18%,
+    var(--deck-seat-bed)
+  );
   color: var(--color-text-muted);
   transition:
     background-color var(--duration-normal) var(--ease-out),
@@ -134,13 +152,24 @@
 }
 
 .deck-tray[data-active='true'] {
-  background-color: var(--color-surface-3);
-  box-shadow: var(--highlight-top), var(--shadow-1);
+  border-color: var(--seat-color);
+  background-color: color-mix(
+    in oklab,
+    var(--seat-color) 32%,
+    var(--deck-seat-bed)
+  );
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.14),
+    0 3px 12px rgb(5 15 35 / 0.25);
   color: var(--color-text);
 }
 
 :root[data-theme='day'] .deck-tray[data-active='true'] {
-  background-color: var(--color-surface-2);
+  background-color: color-mix(
+    in oklab,
+    var(--seat-color) 20%,
+    var(--deck-seat-bed)
+  );
   box-shadow:
     0 0 0 1px var(--color-border),
     var(--shadow-1);
@@ -195,7 +224,11 @@
 
 @media (hover: hover) and (pointer: fine) {
   .deck-tray:not([data-active='true']):hover {
-    background-color: var(--color-surface-hover);
+    background-color: color-mix(
+      in oklab,
+      var(--seat-color) 25%,
+      var(--deck-seat-bed)
+    );
     color: var(--color-text);
   }
 
@@ -4100,4 +4133,89 @@ button.deck-check__issue {
   margin: 0;
   color: var(--color-text-faint);
   font-size: var(--text-xs);
+}
+
+/* A deck's quick view keeps the whole list together, with cards to inspect. */
+.ptcgsim-ui-dialog.deck-quick-view-dialog {
+  width: min(1040px, 100%);
+}
+
+.deck-quick-view {
+  min-width: 0;
+}
+
+.deck-quick-view__summary {
+  margin: 0 0 var(--space-3);
+  color: var(--color-text-muted);
+}
+
+.deck-quick-view__list {
+  max-height: 62dvh;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.deck-quick-view__list h3 {
+  display: flex;
+  gap: var(--space-2);
+  margin: var(--space-3) 0 var(--space-2);
+  color: var(--color-text);
+  font-size: var(--text-md);
+}
+
+.deck-quick-view__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0 var(--space-1) var(--space-2) 0;
+  list-style: none;
+}
+
+.deck-quick-view__grid button {
+  position: relative;
+  display: grid;
+  gap: var(--space-1);
+  width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.deck-quick-view__grid button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+.deck-quick-view__grid img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 63 / 88;
+  border-radius: 5%;
+  object-fit: contain;
+}
+
+.deck-quick-view__count {
+  position: absolute;
+  top: var(--space-1);
+  right: var(--space-1);
+  min-width: 24px;
+  padding: 2px 6px;
+  border: 1px solid rgb(255 255 255 / 0.4);
+  border-radius: var(--radius-pill);
+  background: #17273d;
+  color: #fff;
+  font-weight: var(--weight-bold);
+  text-align: center;
+}
+
+.deck-quick-view__name {
+  font-size: var(--text-xs);
+  line-height: 1.25;
 }

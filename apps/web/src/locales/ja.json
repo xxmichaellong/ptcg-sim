@@ -96,6 +96,10 @@
     ],
     "translation": "{0}枚選択中"
   },
+  "THa0qf": {
+    "message": "{0}, {count} in deck",
+    "translation": "{0}、デッキに{count}枚"
+  },
   "3amk2q": {
     "message": "{actor} attached {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} as an Energy",
     "comments": [
@@ -2641,6 +2645,10 @@
     "message": "Code changed",
     "translation": "コードを変更しました"
   },
+  "DHN3TU": {
+    "message": "Coin",
+    "translation": "コイン"
+  },
   "c6pkO-": {
     "message": "Coin",
     "context": "flip a coin",
@@ -2650,6 +2658,10 @@
     "message": "Coin",
     "context": "shortcut key caption",
     "translation": "コイン"
+  },
+  "-M86nE": {
+    "message": "Coins",
+    "translation": "コイン一覧"
   },
   "vR8UIp": {
     "message": "Color",
@@ -3344,6 +3356,10 @@
     "message": "e.g. Charizard",
     "translation": "例: Charizard"
   },
+  "N6j2JH": {
+    "message": "Edit {0}",
+    "translation": "{0}を編集"
+  },
   "ryuxTz": {
     "message": "Edit {deckName}",
     "translation": "{deckName}を編集"
@@ -3355,6 +3371,10 @@
   "rFL-yb": {
     "message": "Edit a copy",
     "translation": "コピーを編集"
+  },
+  "asZoU0": {
+    "message": "Edit coin",
+    "translation": "コインを編集"
   },
   "Bd1_Eb": {
     "message": "Edit deck",
@@ -5416,6 +5436,10 @@
     "context": "Trainer card kind",
     "translation": "その他"
   },
+  "CbVMHJ": {
+    "message": "Other cards",
+    "translation": "その他のカード"
+  },
   "bXnhJI": {
     "message": "Other Trainers",
     "context": "Trainer cards by kind",
@@ -5858,6 +5882,10 @@
     "message": "Quick picks",
     "context": "card count",
     "translation": "クイック選択"
+  },
+  "vmSW5t": {
+    "message": "Quick view",
+    "translation": "クイックビュー"
   },
   "KgxgFc": {
     "message": "Radiant",
@@ -6471,14 +6499,6 @@
   "A7uAwg": {
     "message": "Save {name}",
     "translation": "{name}を保存"
-  },
-  "3zdJQY": {
-    "message": "Save and edit {0}",
-    "translation": "{0}を保存して編集"
-  },
-  "Z-7fcR": {
-    "message": "Save and edit {title}",
-    "translation": "{title}を保存して編集"
   },
   "4XBjuA": {
     "message": "Save game",
@@ -8043,6 +8063,10 @@
     "message": "Use this back",
     "translation": "この裏面を使う"
   },
+  "vS8WGc": {
+    "message": "Use this coin",
+    "translation": "このコインを使う"
+  },
   "8ZgYGP": {
     "message": "Use this print for the {deckCopies} in the deck",
     "translation": "デッキの{deckCopies}枚をこの版にする"
@@ -8080,6 +8104,10 @@
     "message": "View",
     "context": "shortcut key caption",
     "translation": "見る"
+  },
+  "9_euHO": {
+    "message": "View {name}",
+    "translation": "{name}を見る"
   },
   "9AKt60": {
     "message": "View card",

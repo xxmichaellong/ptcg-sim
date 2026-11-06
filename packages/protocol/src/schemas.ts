@@ -1,5 +1,6 @@
 import {
   isCardBackValue,
+  isCoinValue,
   MAX_COIN_FLIP_COUNT,
   MAX_UNTIL_TAILS_FLIPS,
   isCardPrint,
@@ -33,6 +34,10 @@ const UrlSchema = boundedString(MAX_IMAGE_URL_CODE_UNITS);
 const CardBackSchema = v.pipe(
   UrlSchema,
   v.check((value: string) => isCardBackValue(value), 'Invalid card back')
+);
+const CoinSchema = v.pipe(
+  boundedString(128),
+  v.check((value: string) => isCoinValue(value), 'Invalid coin')
 );
 const SafeIntegerSchema = v.pipe(v.number(), v.safeInteger());
 const NonNegativeIntegerSchema = v.pipe(SafeIntegerSchema, v.minValue(0));
@@ -612,6 +617,11 @@ export const WireGameCommandSchema = v.variant('type', [
     cardBackUrl: CardBackSchema,
   }),
   v.object({
+    type: v.literal('SetCoin'),
+    targetPlayerId: v.optional(IdentifierSchema),
+    coin: CoinSchema,
+  }),
+  v.object({
     type: v.literal('ResetPlayer'),
     targetPlayerId: v.optional(IdentifierSchema),
   }),
@@ -1006,6 +1016,7 @@ const PlayerViewSchema = v.object({
   id: IdentifierSchema,
   displayName: boundedString(64),
   cardBackUrl: UrlSchema,
+  coin: v.optional(CoinSchema),
   coachingConsent: v.boolean(),
   oncePerGame: v.object({ gxUsed: v.boolean(), vstarUsed: v.boolean() }),
 });

@@ -30,7 +30,8 @@ export const CENTRED_CROP: CardBackCropFocus = Object.freeze({
 
 export type CardBackEncoder = (
   picture: Blob,
-  focus?: CardBackCropFocus
+  focus?: CardBackCropFocus,
+  shape?: 'card' | 'coin'
 ) => Promise<Blob | null>;
 
 export interface CardBackImportOptions {
@@ -49,8 +50,13 @@ const canvasBlob = (
 const decodePicture = async (
   picture: Blob
 ): Promise<CanvasImageSource & { width: number; height: number }> => {
-  if (typeof createImageBitmap === 'function')
-    return await createImageBitmap(picture);
+  if (typeof createImageBitmap === 'function') {
+    try {
+      return await createImageBitmap(picture);
+    } catch {
+      // Some browsers decode SVGs as images but not as ImageBitmaps.
+    }
+  }
   const url = URL.createObjectURL(picture);
   try {
     const image = new Image();
@@ -73,7 +79,8 @@ const unit = (value: number): number =>
  */
 export const encodeCardBackImage: CardBackEncoder = async (
   picture,
-  focus = CENTRED_CROP
+  focus = CENTRED_CROP,
+  shape = 'card'
 ) => {
   let source: CanvasImageSource & { width: number; height: number };
   try {
@@ -83,13 +90,14 @@ export const encodeCardBackImage: CardBackEncoder = async (
   }
   const canvas = document.createElement('canvas');
   canvas.width = CARD_BACK_IMAGE_WIDTH;
-  canvas.height = CARD_BACK_IMAGE_HEIGHT;
+  canvas.height =
+    shape === 'coin' ? CARD_BACK_IMAGE_WIDTH : CARD_BACK_IMAGE_HEIGHT;
   // A canvas in memory, never the GPU's: encoding reads it back whole, and
   // where the GPU is emulated (a machine without one) a GPU canvas stalled
   // the page for seconds before its first picture (CI run 40848329715).
   const context = canvas.getContext('2d', { willReadFrequently: true });
   if (!context || source.width < 1 || source.height < 1) return null;
-  const target = CARD_BACK_IMAGE_WIDTH / CARD_BACK_IMAGE_HEIGHT;
+  const target = canvas.width / canvas.height;
   const width = Math.min(source.width, source.height * target);
   const height = width / target;
   context.imageSmoothingQuality = 'high';
@@ -102,7 +110,7 @@ export const encodeCardBackImage: CardBackEncoder = async (
     0,
     0,
     CARD_BACK_IMAGE_WIDTH,
-    CARD_BACK_IMAGE_HEIGHT
+    canvas.height
   );
   for (const type of ['image/webp', 'image/jpeg'] as const) {
     for (const quality of QUALITIES) {

@@ -46,6 +46,7 @@ import { Tooltip } from '../../ui/Tooltip.js';
 import { skipDialogReturnTooltip } from '../../ui/tooltip-focus.js';
 import type { CardCatalogSource } from './card-catalog-contract.js';
 import { DeckBox, deckBoxToneOf } from './DeckBox.js';
+import { DeckViewButton } from './DeckViewButton.js';
 import { sameCards } from './same-cards.js';
 import {
   deckImagesOf,
@@ -68,6 +69,7 @@ import {
   type DeckLibraryActions,
   type DeckLibrarySnapshot,
   type SavedDeck,
+  type DeckDraft,
 } from './deck-library.js';
 import { formatName } from './deck-labels.js';
 import {
@@ -209,6 +211,7 @@ const SavedDeckTile = ({
   lastUsed,
   onChoose,
   onEdit,
+  onView,
   library,
 }: {
   readonly deck: SavedDeck;
@@ -218,6 +221,7 @@ const SavedDeckTile = ({
   readonly lastUsed: boolean;
   readonly onChoose: () => void;
   readonly onEdit: () => void;
+  readonly onView: () => void;
   readonly library: DeckLibraryActions;
 }) => {
   const { t } = useLingui();
@@ -362,6 +366,7 @@ const SavedDeckTile = ({
         />
       ) : null}
       <div className="deck-tile__actions">
+        <DeckViewButton name={deckName} onClick={onView} />
         <Tooltip content={t`Edit deck`}>
           <button
             type="button"
@@ -436,12 +441,14 @@ const UnsavedSeatTile = ({
   seats,
   onSave,
   onEdit,
+  onView,
   onClear,
 }: {
   readonly target: DeckBuilderTarget;
   readonly seats: DeckBuilderSnapshot;
   readonly onSave: () => void;
   readonly onEdit: () => void;
+  readonly onView: () => void;
   readonly onClear: () => void;
 }) => {
   const { t } = useLingui();
@@ -501,6 +508,7 @@ const UnsavedSeatTile = ({
         </span>
       </div>
       <div className="deck-tile__actions">
+        <DeckViewButton name={name} onClick={onView} />
         <Tooltip content={t`Save`}>
           <button
             type="button"
@@ -544,6 +552,7 @@ const ListDeckTile = ({
   seat,
   onTry,
   onEdit,
+  onView,
 }: {
   readonly name: string;
   /** The seat being worked on (P1, P2), where a press puts it. */
@@ -555,6 +564,7 @@ const ListDeckTile = ({
   readonly current: boolean;
   readonly onTry: () => void;
   readonly onEdit: () => void;
+  readonly onView: () => void;
 }) => {
   const { t } = useLingui();
   // Spoken with its finish in the page's language.
@@ -611,11 +621,12 @@ const ListDeckTile = ({
         </span>
       </button>
       <div className="deck-tile__actions">
+        <DeckViewButton name={name} onClick={onView} />
         <Tooltip content={t`Edit a copy`}>
           <button
             type="button"
             className="deck-icon-button"
-            aria-label={t`Save and edit ${title}`}
+            aria-label={t`Edit ${name}`}
             onClick={onEdit}
           >
             <PencilSimpleIcon {...decorative} weight="bold" />
@@ -655,6 +666,12 @@ export interface DeckHomeProps {
   readonly open: boolean;
   readonly onChoose: (deck: SavedDeck) => void;
   readonly onEdit: (deck: SavedDeck) => void;
+  readonly onViewDeck?: (deck: DeckDraft, savedId?: string) => void;
+  readonly onViewList?: (
+    name: string,
+    text: string,
+    kind: 'meta' | 'classic'
+  ) => Promise<boolean>;
   readonly onNewDeck: () => void;
   readonly onImportText: (text: string) => Promise<boolean>;
   readonly onImportClipboard: () => Promise<void>;
@@ -700,6 +717,8 @@ export const DeckHome = ({
   open,
   onChoose,
   onEdit,
+  onViewDeck,
+  onViewList,
   onNewDeck,
   onImportText,
   onImportClipboard,
@@ -1039,6 +1058,14 @@ export const DeckHome = ({
                 seats={seats}
                 onSave={() => onSaveSeatDeck(slotTarget)}
                 onEdit={() => onEditSeatDeck(slotTarget)}
+                onView={() => {
+                  const slot = seats.slots[slotTarget];
+                  onViewDeck?.({
+                    name: slot.label?.name ?? t`Unsaved deck`,
+                    format: slot.label?.format ?? 'standard',
+                    cards: slot.deck,
+                  });
+                }}
                 onClear={() => onClearSeat(slotTarget)}
               />
             ))}
@@ -1052,6 +1079,7 @@ export const DeckHome = ({
                 library={library}
                 onChoose={() => onChoose(deck)}
                 onEdit={() => onEdit(deck)}
+                onView={() => onViewDeck?.(deck, deck.id)}
               />
             ))}
           </ul>
@@ -1127,6 +1155,9 @@ export const DeckHome = ({
                   current={onSeat(deck.name, covers.get(deck.decklist)?.cards)}
                   seat={SEAT_NAMES[target]}
                   onTry={() => void onTryList(deck.name, deck.decklist, 'meta')}
+                  onView={() =>
+                    void onViewList?.(deck.name, deck.decklist, 'meta')
+                  }
                   onEdit={() =>
                     void onEditList(deck.name, deck.decklist, 'meta')
                   }
@@ -1206,6 +1237,9 @@ export const DeckHome = ({
                 seat={SEAT_NAMES[target]}
                 onTry={() =>
                   void onTryList(deck.name, deck.decklist, 'classic')
+                }
+                onView={() =>
+                  void onViewList?.(deck.name, deck.decklist, 'classic')
                 }
                 onEdit={() =>
                   void onEditList(deck.name, deck.decklist, 'classic')

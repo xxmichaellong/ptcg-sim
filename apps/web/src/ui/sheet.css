@@ -34,6 +34,11 @@
   pointer-events: none;
 }
 
+.ptcgsim-sheet-backdrop[data-above-dialog],
+.ptcgsim-sheet-viewport[data-above-dialog] {
+  z-index: calc(var(--layer-dialog) + 1);
+}
+
 .ptcgsim-sheet-viewport[data-variant='center'] {
   align-items: center;
   justify-content: center;

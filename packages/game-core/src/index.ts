@@ -1,5 +1,6 @@
 export * from './apply-events.js';
 export * from './card-back.js';
+export * from './coin.js';
 export * from './card-presentation.js';
 export * from './card-text.js';
 export * from './clone.js';

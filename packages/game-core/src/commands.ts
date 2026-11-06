@@ -48,6 +48,11 @@ export type BaseGameCommand =
       readonly playerId: PlayerId;
       readonly cardBackUrl: string;
     }
+  | {
+      readonly type: 'SetCoin';
+      readonly playerId: PlayerId;
+      readonly coin: string;
+    }
   | { readonly type: 'ResetPlayer'; readonly playerId: PlayerId }
   | { readonly type: 'SetupPlayer'; readonly playerId: PlayerId }
   | {

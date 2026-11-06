@@ -104,6 +104,8 @@ export const cardDetailsFacts = (
 };
 
 export interface CardDetailsProps {
+  readonly aboveDialog?: boolean;
+  readonly readOnly?: boolean;
   readonly inspected: InspectedCard | undefined;
   /** From `cardDetailsFacts` (the catalog itself is never a prop). */
   readonly facts: CardDetailsFacts | undefined;
@@ -300,6 +302,8 @@ const CardText = ({
 };
 
 export const CardDetails = ({
+  aboveDialog = false,
+  readOnly = false,
   inspected,
   facts,
   deck,
@@ -391,6 +395,7 @@ export const CardDetails = ({
 
   return (
     <Sheet
+      aboveDialog={aboveDialog}
       open={inspected !== undefined}
       onOpenChange={(open) => {
         if (open) return;
@@ -436,40 +441,44 @@ export const CardDetails = ({
           <div className="deck-card-details__side">
             <div className="deck-card-details__actions">
               <span className="deck-row__stepper deck-card-details__stepper">
-                <Tooltip content={t`Remove one`}>
-                  <button
-                    type="button"
-                    className="deck-row__step"
-                    aria-label={t`Remove one ${name}`}
-                    disabled={count === 0}
-                    onClick={() => onRemove(target)}
-                  >
-                    <MinusIcon {...decorative} weight="bold" />
-                  </button>
-                </Tooltip>
+                {!readOnly ? (
+                  <Tooltip content={t`Remove one`}>
+                    <button
+                      type="button"
+                      className="deck-row__step"
+                      aria-label={t`Remove one ${name}`}
+                      disabled={count === 0}
+                      onClick={() => onRemove(target)}
+                    >
+                      <MinusIcon {...decorative} weight="bold" />
+                    </button>
+                  </Tooltip>
+                ) : null}
                 <span
                   className="deck-row__count ds-number"
                   aria-label={t`${count} in deck`}
                 >
                   {count}
                 </span>
-                <Tooltip content={t`Add one`}>
-                  <button
-                    type="button"
-                    className="deck-row__step"
-                    aria-label={t`Add one ${name}`}
-                    onClick={() => onAdd(target)}
-                  >
-                    <PlusIcon {...decorative} weight="bold" />
-                  </button>
-                </Tooltip>
+                {!readOnly ? (
+                  <Tooltip content={t`Add one`}>
+                    <button
+                      type="button"
+                      className="deck-row__step"
+                      aria-label={t`Add one ${name}`}
+                      onClick={() => onAdd(target)}
+                    >
+                      <PlusIcon {...decorative} weight="bold" />
+                    </button>
+                  </Tooltip>
+                ) : null}
               </span>
               <span className="deck-card-details__in-deck">
                 <Trans comment="After the number of copies in the deck">
                   in deck
                 </Trans>
               </span>
-              {count > 0 && shownId ? (
+              {!readOnly && count > 0 && shownId ? (
                 <Tooltip content={t`Show this card on the deck`}>
                   <button
                     type="button"
@@ -641,7 +650,10 @@ export const CardDetails = ({
                     );
                   })}
                 </ul>
-                {deckPrint && catalogCard && deckPrint.id !== catalogCard.id ? (
+                {!readOnly &&
+                deckPrint &&
+                catalogCard &&
+                deckPrint.id !== catalogCard.id ? (
                   <button
                     type="button"
                     className="ds-button ds-button--secondary"

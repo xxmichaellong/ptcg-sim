@@ -137,8 +137,13 @@ button.table-coin__button:focus-visible {
   display: block;
   width: 100%;
   height: 100%;
+  object-fit: cover;
   user-select: none;
   -webkit-user-drag: none;
+}
+
+.table-coin__face--tails > img[data-custom-coin] {
+  filter: grayscale(1) brightness(1.15);
 }
 
 /* The far player's coin faces them, as their cards do. */

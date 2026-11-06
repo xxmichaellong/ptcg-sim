@@ -946,6 +946,10 @@
               "kind": "value"
             },
             {
+              "name": "COIN_PRESETS",
+              "kind": "value"
+            },
+            {
               "name": "CoinFlipSeries",
               "kind": "type"
             },
@@ -1083,6 +1087,10 @@
             },
             {
               "name": "isCardText",
+              "kind": "value"
+            },
+            {
+              "name": "isCoinValue",
               "kind": "value"
             },
             {
@@ -1335,6 +1343,10 @@
             },
             {
               "name": "STANDARD_CARD_BACK_ID",
+              "kind": "value"
+            },
+            {
+              "name": "STANDARD_COIN",
               "kind": "value"
             },
             {

@@ -21,6 +21,8 @@ const sharedSpecs = [
   'show-board-keyboard.spec.ts',
   'deck-hover-zoom.spec.ts',
   'deck-dialog-focus.spec.ts',
+  'deck-quick-view.spec.ts',
+  'coin-customization.spec.ts',
   'multi-select-modifiers.spec.ts',
 ];
 

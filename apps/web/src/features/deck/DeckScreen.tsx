@@ -29,7 +29,7 @@ import {
   subscribeEmblems,
 } from '../../card-backs/card-back-emblems.js';
 import { STANDARD_CARD_BACK_IMAGE } from '../../card-backs/card-back-presets.js';
-import { dialogRequestsSnapshot } from '../../ui/dialog-requests.js';
+import { dialogRequestsSnapshot, openPanel } from '../../ui/dialog-requests.js';
 import { isModalWindowOpen } from '../../ui/overlay-surface.js';
 import { useKeyboardInset } from '../../ui/keyboard-inset.js';
 import { useSearchTyping } from '../../ui/search-typing.js';
@@ -48,12 +48,14 @@ import type {
   DeckSlotLabel,
 } from './deck-builder-store.js';
 import { DeckEditor } from './DeckEditor.js';
+import { DeckQuickView } from './DeckQuickView.js';
 import { DeckHome, finderMode } from './DeckHome.js';
 import { importDeckText, type DeckImportLine } from './deck-import.js';
 import type {
   DeckLibrary,
   DeckLibraryActions,
   SavedDeck,
+  DeckDraft,
 } from './deck-library.js';
 import { SEAT_NAMES } from './deck-screen-shared.js';
 import { DECK_SCREEN_PREFERENCES } from './deck-screen-preferences.js';
@@ -230,8 +232,16 @@ export const DeckScreen = ({
   useEffect(() => {
     if (catalogState.status !== 'ready' || libraryState.status === 'loading')
       return;
-    bringDeckFactsUpToDate(library, libraryState.decks, catalogState.catalog);
-  }, [catalogState, library, libraryState]);
+    const draft =
+      view.kind === 'edit' && library.isDraft(view.deckId)
+        ? library.get(view.deckId)
+        : undefined;
+    bringDeckFactsUpToDate(
+      library,
+      [...libraryState.decks, ...(draft ? [draft] : [])],
+      catalogState.catalog
+    );
+  }, [catalogState, library, libraryState, view]);
 
   /**
    * A seat holding a saved deck follows a change the player makes to it
@@ -435,6 +445,57 @@ export const DeckScreen = ({
     []
   );
 
+  const previewAbort = useRef<AbortController | undefined>(undefined);
+  useEffect(() => {
+    if (!open) previewAbort.current?.abort();
+    return () => previewAbort.current?.abort();
+  }, [open]);
+  const previewDeck = useCallback(
+    async (
+      draft: DeckDraft,
+      savedId?: string,
+      signal?: AbortSignal
+    ): Promise<void> => {
+      previewAbort.current?.abort();
+      const controller = new AbortController();
+      previewAbort.current = controller;
+      const combined = signal
+        ? AbortSignal.any([signal, controller.signal])
+        : controller.signal;
+      const answer = await openPanel({
+        title: wordName(draft.name),
+        className: 'deck-quick-view-dialog',
+        signal: combined,
+        content: (onAnswer) => (
+          <DeckQuickView
+            deck={draft}
+            catalog={catalog}
+            target={target}
+            onAnswer={onAnswer}
+          />
+        ),
+      });
+      if (combined.aborted) return;
+      if (answer === 'edit') {
+        const deck = savedId
+          ? library.get(savedId)
+          : library.create(draft, { deferSave: true });
+        if (deck) editDeck(deck.id);
+      } else if (answer === 'use') {
+        placeOnSeat(
+          draft.cards,
+          {
+            name: draft.name,
+            format: draft.format,
+            ...(savedId && library.get(savedId) ? { deckId: savedId } : {}),
+          },
+          target
+        );
+      }
+    },
+    [catalog, editDeck, library, placeOnSeat, target]
+  );
+
   const runImport = useCallback(
     async (
       text: string,
@@ -445,8 +506,9 @@ export const DeckScreen = ({
       options: {
         readonly save: boolean;
         readonly name?: string;
-        /** Saved, then opened in the editor. */
+        /** Opened as a draft; its first player edit saves it. */
         readonly edit?: boolean;
+        readonly view?: boolean;
       } = {
         save: true,
       },
@@ -494,6 +556,33 @@ export const DeckScreen = ({
         // Said with its finish in the page's language; kept as it came.
         const name = wordName(stored);
         const total = deckTotals(result.cards).total;
+        if (options.view) {
+          setImporting(false);
+          await previewDeck(
+            {
+              name: stored,
+              format: result.format,
+              cards: result.cards,
+              source,
+            },
+            undefined,
+            controller.signal
+          );
+          return true;
+        }
+        if (options.edit) {
+          const draft = library.create(
+            {
+              name: stored,
+              format: result.format,
+              cards: result.cards,
+              source,
+            },
+            { deferSave: true }
+          );
+          editDeck(draft.id, result.missing);
+          return true;
+        }
         if (options.save) {
           const saved = library.create({
             name: stored,
@@ -530,7 +619,17 @@ export const DeckScreen = ({
         endImport(controller);
       }
     },
-    [beginImport, catalog, editDeck, endImport, library, placeOnSeat, t, target]
+    [
+      beginImport,
+      catalog,
+      editDeck,
+      endImport,
+      library,
+      placeOnSeat,
+      previewDeck,
+      t,
+      target,
+    ]
   );
 
   const importFile = useCallback(
@@ -629,9 +728,11 @@ export const DeckScreen = ({
           await runImport(
             list.text,
             { kind: 'meta', label: request.name },
-            mode === 'edit'
-              ? { save: true, name: request.name, edit: true }
-              : { save: false, name: request.name },
+            mode === 'view'
+              ? { save: false, name: request.name, view: true }
+              : mode === 'edit'
+                ? { save: true, name: request.name, edit: true }
+                : { save: false, name: request.name },
             controller
           );
         })
@@ -868,19 +969,26 @@ export const DeckScreen = ({
     [editDeck, library, t]
   );
 
-  /** Saves the seat's unsaved deck (a list picked to try) and edits it. */
+  /** Saves a tried list explicitly, or opens an unsaved draft to edit. */
   const saveSeatDeck = useCallback(
     (slotTarget: DeckBuilderTarget, edit: boolean) => {
       const slot = store.getSnapshot().slots[slotTarget];
-      const saved = library.create({
-        name: slot.label?.name ?? t`My deck`,
-        format: slot.label?.format ?? 'standard',
-        cards: slot.deck,
-        source: {
-          kind: 'copy',
-          ...(slot.label ? { label: slot.label.name } : {}),
+      const saved = library.create(
+        {
+          name: slot.label?.name ?? t`My deck`,
+          format: slot.label?.format ?? 'standard',
+          cards: slot.deck,
+          source: {
+            kind: 'copy',
+            ...(slot.label ? { label: slot.label.name } : {}),
+          },
         },
-      });
+        { deferSave: edit }
+      );
+      if (edit) {
+        editDeck(saved.id);
+        return saved;
+      }
       // The seat's own deck, now saved: a new name, not a new deck.
       placeOnSeat(
         saved.cards,
@@ -888,7 +996,6 @@ export const DeckScreen = ({
         slotTarget,
         false
       );
-      if (edit) editDeck(saved.id);
       return saved;
     },
     [editDeck, library, placeOnSeat, store, t]
@@ -904,9 +1011,10 @@ export const DeckScreen = ({
       const deck = library.get(deckId);
       if (
         deck &&
-        deck.cards.length === 0 &&
-        deck.source?.kind === 'new' &&
-        deck.name === (madeNames.current.get(deck.id) ?? t`Untitled deck`)
+        (library.isDraft(deckId) ||
+          (deck.cards.length === 0 &&
+            deck.source?.kind === 'new' &&
+            deck.name === (madeNames.current.get(deck.id) ?? t`Untitled deck`)))
       ) {
         decks.remove(deck.id);
       }
@@ -1389,6 +1497,14 @@ export const DeckScreen = ({
               open={open}
               onChoose={chooseSaved}
               onEdit={(deck) => editDeck(deck.id)}
+              onViewDeck={(draft, savedId) => void previewDeck(draft, savedId)}
+              onViewList={(name, text, kind) =>
+                runImport(
+                  text,
+                  { kind, label: name },
+                  { save: false, name, view: true }
+                )
+              }
               onNewDeck={() => newDeck()}
               onImportText={(text) => runImport(text, { kind: 'paste' })}
               onImportClipboard={importClipboard}

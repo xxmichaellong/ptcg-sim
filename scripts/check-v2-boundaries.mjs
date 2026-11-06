@@ -30,6 +30,8 @@ const WEB_ALLOWED_GAME_CORE_SOURCES = new Set([
   // shared by the room's validation and each viewer's drawing of a back. It
   // imports nothing at runtime.
   'packages/game-core/src/card-back.ts',
+  // Coins reuse that bounded reference grammar; no rules or state.
+  'packages/game-core/src/coin.ts',
   // Fixed lists and bounds the client offers and the room checks: the
   // reminders a Pokémon may carry (PX-081), the kinds a card may be played
   // as (PX-082) and how many coins one flip throws (PX-080). Constants and

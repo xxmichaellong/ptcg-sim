@@ -60,6 +60,50 @@ afterEach(() => {
 });
 
 describe('the deck library', () => {
+  it('keeps an opened list out of storage and Your decks until a real player edit', async () => {
+    const { backend, writes, records } = memoryBackend();
+    const library = new DeckLibrary({ backend });
+    await settle();
+    const draft = library.create(
+      {
+        name: 'A list',
+        format: 'standard',
+        cards,
+        coverId: card.id,
+        cardBack: 'preset:violet',
+      },
+      { deferSave: true }
+    );
+    expect(library.get(draft.id)).toBe(draft);
+    expect(library.getSnapshot().decks).toEqual([]);
+    library.update(draft.id, { name: draft.name });
+    library.update(draft.id, { factsFrom: 'automatic' }, { touch: false });
+    await library.flush();
+    expect(writes).toEqual([]);
+    expect(library.getSnapshot().decks).toEqual([]);
+    library.update(draft.id, { name: 'My version' });
+    await library.flush();
+    expect(library.getSnapshot().decks).toHaveLength(1);
+    expect(records.get(draft.id)).toMatchObject({ name: 'My version' });
+    expect(library.isDraft(draft.id)).toBe(false);
+    library.dispose();
+  });
+  it('forgets an untouched editor draft without writing or deleting a saved record', async () => {
+    const { backend, writes, records } = memoryBackend();
+    const remove = vi.spyOn(backend, 'remove');
+    const library = new DeckLibrary({ backend });
+    await settle();
+    const draft = library.create(
+      { name: 'Just looking', format: 'standard', cards },
+      { deferSave: true }
+    );
+    library.remove(draft.id);
+    await library.flush();
+    expect(writes).toEqual([]);
+    expect(remove).not.toHaveBeenCalled();
+    expect(records.size).toBe(0);
+    library.dispose();
+  });
   describe('automatic facts writes with delayed cross-tab messages', () => {
     const sharedDeck: SavedDeck = {
       id: 'shared',

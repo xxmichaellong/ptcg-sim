@@ -160,6 +160,7 @@ const resolveSingleCommand = (
       wire.type === 'ResetPlayer' ||
       wire.type === 'LoadDeck' ||
       wire.type === 'SetCardBack' ||
+      wire.type === 'SetCoin' ||
       wire.type === 'ApplySoloUndo' ||
       wire.type === 'SetPublicReveal' ||
       wire.type === 'SetZonePublicReveal' ||
@@ -220,6 +221,18 @@ const resolveSingleCommand = (
           playerId: targetPlayerId,
           cardBackUrl: wire.cardBackUrl,
         },
+      };
+    }
+    case 'SetCoin': {
+      const targetPlayerId = wire.targetPlayerId
+        ? asPlayerId(wire.targetPlayerId)
+        : actorId;
+      if (!ownEntry(state.players, targetPlayerId))
+        return rejected('stale_reference');
+      if (!controlsSeat(targetPlayerId)) return rejected('unauthorized');
+      return {
+        accepted: true,
+        command: { type: 'SetCoin', playerId: targetPlayerId, coin: wire.coin },
       };
     }
     case 'ResetPlayer':

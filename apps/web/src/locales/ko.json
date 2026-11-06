@@ -96,6 +96,10 @@
     ],
     "translation": "{0}장 선택됨"
   },
+  "THa0qf": {
+    "message": "{0}, {count} in deck",
+    "translation": "{0}, 덱에 {count}장"
+  },
   "3amk2q": {
     "message": "{actor} attached {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} as an Energy",
     "comments": [
@@ -2641,6 +2645,10 @@
     "message": "Code changed",
     "translation": "코드가 변경되었습니다"
   },
+  "DHN3TU": {
+    "message": "Coin",
+    "translation": "동전"
+  },
   "c6pkO-": {
     "message": "Coin",
     "context": "flip a coin",
@@ -2650,6 +2658,10 @@
     "message": "Coin",
     "context": "shortcut key caption",
     "translation": "동전"
+  },
+  "-M86nE": {
+    "message": "Coins",
+    "translation": "동전 목록"
   },
   "vR8UIp": {
     "message": "Color",
@@ -3344,6 +3356,10 @@
     "message": "e.g. Charizard",
     "translation": "예: Charizard"
   },
+  "N6j2JH": {
+    "message": "Edit {0}",
+    "translation": "{0} 편집"
+  },
   "ryuxTz": {
     "message": "Edit {deckName}",
     "translation": "{deckName} 편집"
@@ -3355,6 +3371,10 @@
   "rFL-yb": {
     "message": "Edit a copy",
     "translation": "사본 편집"
+  },
+  "asZoU0": {
+    "message": "Edit coin",
+    "translation": "동전 편집"
   },
   "Bd1_Eb": {
     "message": "Edit deck",
@@ -5416,6 +5436,10 @@
     "context": "Trainer card kind",
     "translation": "기타"
   },
+  "CbVMHJ": {
+    "message": "Other cards",
+    "translation": "기타 카드"
+  },
   "bXnhJI": {
     "message": "Other Trainers",
     "context": "Trainer cards by kind",
@@ -5858,6 +5882,10 @@
     "message": "Quick picks",
     "context": "card count",
     "translation": "빠른 선택"
+  },
+  "vmSW5t": {
+    "message": "Quick view",
+    "translation": "빠른 보기"
   },
   "KgxgFc": {
     "message": "Radiant",
@@ -6471,14 +6499,6 @@
   "A7uAwg": {
     "message": "Save {name}",
     "translation": "{name} 저장"
-  },
-  "3zdJQY": {
-    "message": "Save and edit {0}",
-    "translation": "{0} 저장 후 편집"
-  },
-  "Z-7fcR": {
-    "message": "Save and edit {title}",
-    "translation": "{title} 저장 후 편집"
   },
   "4XBjuA": {
     "message": "Save game",
@@ -8043,6 +8063,10 @@
     "message": "Use this back",
     "translation": "이 뒷면 사용"
   },
+  "vS8WGc": {
+    "message": "Use this coin",
+    "translation": "이 동전 사용"
+  },
   "8ZgYGP": {
     "message": "Use this print for the {deckCopies} in the deck",
     "translation": "덱에 있는 {deckCopies}장에 이 프린트 사용"
@@ -8080,6 +8104,10 @@
     "message": "View",
     "context": "shortcut key caption",
     "translation": "보기"
+  },
+  "9_euHO": {
+    "message": "View {name}",
+    "translation": "{name} 보기"
   },
   "9AKt60": {
     "message": "View card",

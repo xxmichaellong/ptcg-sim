@@ -49,6 +49,11 @@ import {
 import { CARD_BACK_PRESETS, canonicalPresetId } from './card-back-presets.js';
 import { isTextEntry } from '../ui/text-entry.js';
 import './card-back-chooser.css';
+import {
+  coinImage,
+  STANDARD_COIN_HEADS,
+  STANDARD_COIN_TAILS,
+} from './coin-image.js';
 
 /**
  * The card-back chooser (ADR-041 stage 2, §6): the back as it is now, a
@@ -74,6 +79,7 @@ const FIRST_DESIGN: CardBackDesign = Object.freeze({
 const NUDGE = 0.05;
 
 export interface CardBackChooserProps {
+  readonly shape?: 'card' | 'coin';
   /** The back the seat wears now. */
   readonly current?: string;
   /** Backs the player's saved decks wear. */
@@ -125,10 +131,6 @@ const ownMade = (back: string): boolean => {
   return kind === 'design' || kind === 'image';
 };
 
-/** How the chooser draws a back: as its owner sees it on the deck screen. */
-const picture = (back: string): string =>
-  cardBackImage(back, { own: true, opponentCustomBacks: true });
-
 /** Held within 0 and 1, to a thousandth (the preview and the crop agree). */
 const unit = (value: number): number =>
   Math.round(Math.min(1, Math.max(0, value)) * 1000) / 1000;
@@ -163,6 +165,7 @@ const readPicture = async (blob: Blob): Promise<Picture | null> => {
 };
 
 export const CardBackChooser = ({
+  shape = 'card',
   current,
   worn,
   recent,
@@ -173,6 +176,11 @@ export const CardBackChooser = ({
   savePicture,
 }: CardBackChooserProps) => {
   const { t } = useLingui();
+  const picture =
+    shape === 'coin'
+      ? coinImage
+      : (back: string) =>
+          cardBackImage(back, { own: true, opponentCustomBacks: true });
   const ids = useId();
   // A design's emblem draws once it has come (card-back-emblems.ts).
   useSyncExternalStore(subscribeEmblems, emblemsVersion, emblemsVersion);
@@ -407,7 +415,8 @@ export const CardBackChooser = ({
   };
 
   // The picture's slack in a card's shape: where it can move, and which way.
-  const targetRatio = CARD_BACK_IMAGE_WIDTH / CARD_BACK_IMAGE_HEIGHT;
+  const targetRatio =
+    shape === 'coin' ? 1 : CARD_BACK_IMAGE_WIDTH / CARD_BACK_IMAGE_HEIGHT;
   const pictureRatio = shown ? shown.width / shown.height : targetRatio;
   const movesSideways = pictureRatio > targetRatio + 0.01;
   const movesUpDown = pictureRatio < targetRatio - 0.01;
@@ -680,11 +689,17 @@ export const CardBackChooser = ({
     mode === 'backs'
       ? picture(selected)
       : mode === 'design'
-        ? cardBackDesignImage(design)
+        ? cardBackDesignImage(design, shape)
         : undefined;
 
   const modes: readonly { readonly value: Mode; readonly label: string }[] = [
-    { value: 'backs', label: t({ message: 'Backs', context: 'card backs' }) },
+    {
+      value: 'backs',
+      label:
+        shape === 'coin'
+          ? t`Coins`
+          : t({ message: 'Backs', context: 'card backs' }),
+    },
     {
       value: 'design',
       label: t({ message: 'Design', context: 'design a card back' }),
@@ -698,6 +713,7 @@ export const CardBackChooser = ({
   return (
     <div
       className="card-back-chooser"
+      data-shape={shape}
       data-dropping={dropping ? '' : undefined}
       data-mode={mode}
       onKeyDown={onKeyDown}
@@ -743,6 +759,29 @@ export const CardBackChooser = ({
           {mode === 'picture' && shown && movable ? (
             <p className="card-back-chooser__hint">{t`Drag to place it`}</p>
           ) : null}
+          {shape === 'coin' && (preview || shown) ? (
+            <div className="coin-chooser__reverse">
+              <img
+                src={
+                  mode === 'picture' && shown
+                    ? shown.url
+                    : preview === STANDARD_COIN_HEADS
+                      ? STANDARD_COIN_TAILS
+                      : preview
+                }
+                alt={t({ message: 'Tails', context: 'coin flip' })}
+                draggable={false}
+                style={
+                  mode === 'picture'
+                    ? {
+                        objectPosition: `${String(focus.x * 100)}% ${String(focus.y * 100)}%`,
+                      }
+                    : undefined
+                }
+              />
+              <span>{t({ message: 'Tails', context: 'coin flip' })}</span>
+            </div>
+          ) : null}
         </div>
 
         <div className="card-back-chooser__choices">
@@ -784,7 +823,11 @@ export const CardBackChooser = ({
             <div
               className="card-back-grid"
               role="radiogroup"
-              aria-label={t({ message: 'Backs', context: 'card backs' })}
+              aria-label={
+                shape === 'coin'
+                  ? t`Coins`
+                  : t({ message: 'Backs', context: 'card backs' })
+              }
             >
               {tile(
                 `${ids}-back`,
@@ -978,7 +1021,11 @@ export const CardBackChooser = ({
           aria-busy={status.kind === 'saving' ? true : undefined}
           onClick={() => void accept()}
         >
-          {status.kind === 'saving' ? t`Saving…` : t`Use this back`}
+          {status.kind === 'saving'
+            ? t`Saving…`
+            : shape === 'coin'
+              ? t`Use this coin`
+              : t`Use this back`}
         </UiButton>
       </div>
     </div>

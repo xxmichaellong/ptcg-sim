@@ -3,6 +3,7 @@ import { isCardPrint, isCardText, isMoveName } from './card-text.js';
 import { isStackReminder, STACK_REMINDERS } from './stack-reminders.js';
 import type { CardInstanceId, StackId } from './ids.js';
 import { isCardBackValue } from './card-back.js';
+import { isCoinValue } from './coin.js';
 import { isCardPresentation } from './card-presentation.js';
 import { playersHaveMutualCoachingConsent } from './coaching-consent.js';
 import { findCardLocations } from './location.js';
@@ -110,6 +111,9 @@ export const collectInvariantProblems = (
     else {
       if (!isCardBackValue(player.cardBackUrl)) {
         problems.push(`player ${playerId} has invalid card back`);
+      }
+      if (player.coin !== undefined && !isCoinValue(player.coin)) {
+        problems.push(`player ${playerId} has invalid coin`);
       }
       if (typeof player.coachingConsent !== 'boolean') {
         problems.push(`player ${playerId} has invalid coaching consent`);

@@ -94,6 +94,7 @@ export interface MatchViewState {
         readonly id: PlayerId;
         readonly displayName: string;
         readonly cardBackUrl: string;
+        readonly coin?: string;
         readonly coachingConsent: boolean;
         readonly oncePerGame: MatchState['players'][string]['oncePerGame'];
       }
@@ -362,6 +363,7 @@ export const projectMatch = (
           id: player.id,
           displayName: player.displayName,
           cardBackUrl: player.cardBackUrl,
+          ...(player.coin === undefined ? {} : { coin: player.coin }),
           coachingConsent: player.coachingConsent,
           oncePerGame: { ...player.oncePerGame },
         },

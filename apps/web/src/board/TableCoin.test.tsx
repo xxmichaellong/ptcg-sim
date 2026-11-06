@@ -141,6 +141,25 @@ describe('TableCoins', () => {
         call.element.closest(`[data-table-coin="${side}"]`)
     );
 
+  it('shows each player’s chosen coin and falls back if an uploaded image fails', async () => {
+    await render({
+      coins: {
+        [blue]: { coin: `img:${'ab'.repeat(32)}` },
+        [red]: { coin: 'design:1.gold.rays.ink.ball-poke' },
+      },
+    });
+    const heads = coin('local')!.querySelector<HTMLImageElement>(
+      '.table-coin__face--heads img'
+    )!;
+    expect(heads.getAttribute('src')).toBe(`/v2/images/${'ab'.repeat(32)}`);
+    expect(coin('opponent')!.querySelector('img')?.getAttribute('src')).toMatch(
+      /^data:image\/svg/u
+    );
+    await act(async () => heads.dispatchEvent(new Event('error')));
+    expect(heads.getAttribute('src')).toBe('/v2/assets/table/coin-heads.webp');
+    expect(heads.hasAttribute('data-custom-coin')).toBe(false);
+  });
+
   it('lays both players’ coins on the table, heads up, where the layout has room', async () => {
     await render();
     const spots = tableCoinSpots(layout);

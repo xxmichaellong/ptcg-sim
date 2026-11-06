@@ -19,6 +19,29 @@
   transition: outline-color var(--duration-fast) var(--ease-out);
 }
 
+.card-back-chooser[data-shape='coin']
+  :is(.card-back-chooser__card, .card-back-crop, .card-back-tile > img) {
+  aspect-ratio: 1;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.coin-chooser__reverse {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+
+.coin-chooser__reverse img {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  filter: grayscale(1) brightness(1.15);
+}
+
 .card-back-chooser[data-dropping] {
   outline-color: var(--color-accent);
 }

@@ -38,6 +38,7 @@ import {
   ZoneOutlinesControl,
 } from '../../board/view/TableViewControls.js';
 import { CARD_BACK_VIEW_PREFERENCES } from '../../card-backs/card-back-preferences.js';
+import { editBrowserCoin } from '../browser-coin.js';
 import {
   settingsPageName,
   settingsSheetCommands,
@@ -448,6 +449,11 @@ const CardsPage = ({ context }: { readonly context: PageContext }) => {
   return (
     <>
       <SettingsGroup>
+        <SettingsLinkRow
+          id="editCoinButton"
+          label={t`Coin`}
+          onClick={() => void editBrowserCoin()}
+        />
         <CardViewControls touchOnly={context.touchOnly} />
         {/* Other players' uploaded and designed backs as they chose them,
             or as the standard back (ADR-041). Presets always show. */}

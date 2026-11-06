@@ -96,6 +96,10 @@
     ],
     "translation": "Выбрано: {0}"
   },
+  "THa0qf": {
+    "message": "{0}, {count} in deck",
+    "translation": "{0}, {count} в колоде"
+  },
   "3amk2q": {
     "message": "{actor} attached {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} as an Energy",
     "comments": [
@@ -2641,6 +2645,10 @@
     "message": "Code changed",
     "translation": "Код изменён"
   },
+  "DHN3TU": {
+    "message": "Coin",
+    "translation": "Монетка"
+  },
   "c6pkO-": {
     "message": "Coin",
     "context": "flip a coin",
@@ -2650,6 +2658,10 @@
     "message": "Coin",
     "context": "shortcut key caption",
     "translation": "Монетка"
+  },
+  "-M86nE": {
+    "message": "Coins",
+    "translation": "Монетки"
   },
   "vR8UIp": {
     "message": "Color",
@@ -3344,6 +3356,10 @@
     "message": "e.g. Charizard",
     "translation": "напр. Charizard"
   },
+  "N6j2JH": {
+    "message": "Edit {0}",
+    "translation": "Изменить {0}"
+  },
   "ryuxTz": {
     "message": "Edit {deckName}",
     "translation": "Изменить {deckName}"
@@ -3355,6 +3371,10 @@
   "rFL-yb": {
     "message": "Edit a copy",
     "translation": "Изменить копию"
+  },
+  "asZoU0": {
+    "message": "Edit coin",
+    "translation": "Изменить монетку"
   },
   "Bd1_Eb": {
     "message": "Edit deck",
@@ -5416,6 +5436,10 @@
     "context": "Trainer card kind",
     "translation": "Другое"
   },
+  "CbVMHJ": {
+    "message": "Other cards",
+    "translation": "Другие карты"
+  },
   "bXnhJI": {
     "message": "Other Trainers",
     "context": "Trainer cards by kind",
@@ -5858,6 +5882,10 @@
     "message": "Quick picks",
     "context": "card count",
     "translation": "Быстрый выбор"
+  },
+  "vmSW5t": {
+    "message": "Quick view",
+    "translation": "Быстрый просмотр"
   },
   "KgxgFc": {
     "message": "Radiant",
@@ -6471,14 +6499,6 @@
   "A7uAwg": {
     "message": "Save {name}",
     "translation": "Сохранить {name}"
-  },
-  "3zdJQY": {
-    "message": "Save and edit {0}",
-    "translation": "Сохранить и изменить {0}"
-  },
-  "Z-7fcR": {
-    "message": "Save and edit {title}",
-    "translation": "Сохранить и изменить {title}"
   },
   "4XBjuA": {
     "message": "Save game",
@@ -8043,6 +8063,10 @@
     "message": "Use this back",
     "translation": "Использовать эту рубашку"
   },
+  "vS8WGc": {
+    "message": "Use this coin",
+    "translation": "Использовать эту монетку"
+  },
   "8ZgYGP": {
     "message": "Use this print for the {deckCopies} in the deck",
     "translation": "Использовать этот вариант для {deckCopies} в колоде"
@@ -8080,6 +8104,10 @@
     "message": "View",
     "context": "shortcut key caption",
     "translation": "Просмотр"
+  },
+  "9_euHO": {
+    "message": "View {name}",
+    "translation": "Посмотреть {name}"
   },
   "9AKt60": {
     "message": "View card",

@@ -96,6 +96,10 @@
     ],
     "translation": "已选择 {0} 张"
   },
+  "THa0qf": {
+    "message": "{0}, {count} in deck",
+    "translation": "{0}，卡组中{count}张"
+  },
   "3amk2q": {
     "message": "{actor} attached {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} as an Energy",
     "comments": [
@@ -2641,6 +2645,10 @@
     "message": "Code changed",
     "translation": "房间码已更改"
   },
+  "DHN3TU": {
+    "message": "Coin",
+    "translation": "硬币"
+  },
   "c6pkO-": {
     "message": "Coin",
     "context": "flip a coin",
@@ -2649,6 +2657,10 @@
   "9Lgp3c": {
     "message": "Coin",
     "context": "shortcut key caption",
+    "translation": "硬币"
+  },
+  "-M86nE": {
+    "message": "Coins",
     "translation": "硬币"
   },
   "vR8UIp": {
@@ -3344,6 +3356,10 @@
     "message": "e.g. Charizard",
     "translation": "例如 Charizard"
   },
+  "N6j2JH": {
+    "message": "Edit {0}",
+    "translation": "编辑 {0}"
+  },
   "ryuxTz": {
     "message": "Edit {deckName}",
     "translation": "编辑 {deckName}"
@@ -3355,6 +3371,10 @@
   "rFL-yb": {
     "message": "Edit a copy",
     "translation": "编辑副本"
+  },
+  "asZoU0": {
+    "message": "Edit coin",
+    "translation": "编辑硬币"
   },
   "Bd1_Eb": {
     "message": "Edit deck",
@@ -5416,6 +5436,10 @@
     "context": "Trainer card kind",
     "translation": "其他"
   },
+  "CbVMHJ": {
+    "message": "Other cards",
+    "translation": "其他卡牌"
+  },
   "bXnhJI": {
     "message": "Other Trainers",
     "context": "Trainer cards by kind",
@@ -5858,6 +5882,10 @@
     "message": "Quick picks",
     "context": "card count",
     "translation": "快速选择"
+  },
+  "vmSW5t": {
+    "message": "Quick view",
+    "translation": "快速预览"
   },
   "KgxgFc": {
     "message": "Radiant",
@@ -6471,14 +6499,6 @@
   "A7uAwg": {
     "message": "Save {name}",
     "translation": "保存 {name}"
-  },
-  "3zdJQY": {
-    "message": "Save and edit {0}",
-    "translation": "保存并编辑{0}"
-  },
-  "Z-7fcR": {
-    "message": "Save and edit {title}",
-    "translation": "保存并编辑 {title}"
   },
   "4XBjuA": {
     "message": "Save game",
@@ -8043,6 +8063,10 @@
     "message": "Use this back",
     "translation": "使用此卡背"
   },
+  "vS8WGc": {
+    "message": "Use this coin",
+    "translation": "使用此硬币"
+  },
   "8ZgYGP": {
     "message": "Use this print for the {deckCopies} in the deck",
     "translation": "将此版本用于卡组中的{deckCopies}张"
@@ -8080,6 +8104,10 @@
     "message": "View",
     "context": "shortcut key caption",
     "translation": "查看"
+  },
+  "9_euHO": {
+    "message": "View {name}",
+    "translation": "查看{name}"
   },
   "9AKt60": {
     "message": "View card",

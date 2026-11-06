@@ -1,5 +1,6 @@
 import { STACK_REMINDERS, type StackReminder } from './stack-reminders.js';
 import { isCardBackValue } from './card-back.js';
+import { isCoinValue } from './coin.js';
 import { playerZoneId } from './create-match.js';
 import { cloneMatchState } from './clone.js';
 import {
@@ -820,6 +821,18 @@ const applyEventInternal = (
         players: {
           ...state.players,
           [event.playerId]: { ...player, cardBackUrl: event.cardBackUrl },
+        },
+      };
+    }
+    case 'PlayerCoinSet': {
+      const player = state.players[event.playerId];
+      if (!player || !isCoinValue(event.coin))
+        throw new Error('Player coin event is malformed');
+      return {
+        ...state,
+        players: {
+          ...state.players,
+          [event.playerId]: { ...player, coin: event.coin },
         },
       };
     }

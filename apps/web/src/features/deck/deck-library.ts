@@ -3,6 +3,7 @@ import {
   CARD_CATEGORIES,
   deckListOf,
   isDeckFormatId,
+  sameDeckList,
   MAX_ENTRY_COUNT,
   type CardRuleFacts,
   type DeckCard,
@@ -390,6 +391,8 @@ export class DeckLibrary {
   readonly #writeDelayMs: number;
   readonly #listeners = new Set<Listener>();
   readonly #decks = new Map<string, SavedDeck>();
+  /** An editor opened on an outside list: kept only after a player edit. */
+  readonly #drafts = new Set<string>();
   readonly #pending = new Set<string>();
   /** Snapshots still waiting for their storage transaction's outcome. */
   readonly #writing = new Set<readonly SavedDeck[]>();
@@ -459,7 +462,10 @@ export class DeckLibrary {
     return this.#decks.get(id);
   }
 
-  create(draft: DeckDraft): SavedDeck {
+  create(
+    draft: DeckDraft,
+    options: { readonly deferSave?: boolean } = {}
+  ): SavedDeck {
     const now = this.#now();
     const deck = Object.freeze({
       id: this.#createId(),
@@ -473,8 +479,13 @@ export class DeckLibrary {
       createdAt: now,
       updatedAt: now,
     });
+    if (options.deferSave) this.#drafts.add(deck.id);
     this.#put(deck, true);
     return deck;
+  }
+
+  isDraft(id: string): boolean {
+    return this.#drafts.has(id);
   }
 
   /**
@@ -523,6 +534,17 @@ export class DeckLibrary {
       ...(factsFrom ? { factsFrom } : {}),
       updatedAt: options.touch === false ? current.updatedAt : this.#now(),
     });
+    if (this.#drafts.has(id) && options.touch !== false) {
+      const edited =
+        next.name !== current.name ||
+        next.format !== current.format ||
+        !sameDeckList(next.cards, current.cards) ||
+        next.coverId !== current.coverId ||
+        next.cardBack !== current.cardBack ||
+        next.notes !== current.notes;
+      if (!edited) return current;
+      this.#drafts.delete(id);
+    }
     const automatic =
       options.touch === false &&
       !this.#held.has(id) &&
@@ -556,11 +578,12 @@ export class DeckLibrary {
     const current = this.#decks.get(id);
     if (!current) return undefined;
     this.#decks.delete(id);
+    const draft = this.#drafts.delete(id);
     this.#pending.delete(id);
     this.#automatic.delete(id);
     this.#edited(id);
     this.#publish();
-    if (this.#backend) {
+    if (this.#backend && !draft) {
       this.#removals.add(id);
       void this.flush();
     }
@@ -705,6 +728,7 @@ export class DeckLibrary {
     this.#automatic.delete(deck.id);
     this.#edited(deck.id);
     this.#publish();
+    if (this.#drafts.has(deck.id)) return;
     if (!this.#backend) return;
     this.#pending.add(deck.id);
     if (now) {
@@ -801,7 +825,9 @@ export class DeckLibrary {
   #publish(): void {
     this.#snapshot = Object.freeze({
       status: this.#status(),
-      decks: newestFirst(this.#decks.values()),
+      decks: newestFirst(
+        [...this.#decks.values()].filter((deck) => !this.#drafts.has(deck.id))
+      ),
     });
     this.#notify();
   }

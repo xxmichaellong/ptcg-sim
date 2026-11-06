@@ -180,6 +180,7 @@ describe('SettingsSheet', () => {
     await press('settingsCardsRow');
     expect(page()).toBe('settingsCards');
     expect(ids('input[id], .settings-row[id]')).toEqual([
+      'editCoinButton',
       'opponentUprightCheckbox',
       'hoverPreviewCheckbox',
       'tableScatterCheckbox',

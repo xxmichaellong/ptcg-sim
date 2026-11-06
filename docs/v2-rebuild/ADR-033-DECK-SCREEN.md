@@ -407,6 +407,21 @@ specifically without blocking, and go from deck to table in one click.
     - The seat's colour down the page is a glow (7%, 140px), no longer a
       wash.
 
+20. **Look before saving; a clearer header** (2026-11-06). Every deck with
+    an Edit action also has an eye button. It opens the complete list in
+    a modal, grouped by card kind with copy counts. Cards open the existing
+    inspector, including their text and other printings, without changing
+    the list. Close, Edit deck and Use on P1/P2 are available there; viewing
+    or using an outside list does not save a copy.
+    - Editing a current, classic or tournament list opens an in-memory
+      draft without changing either seat. The first actual player edit
+      promotes it into Your decks and storage. Opening it, unchanged name
+      commits and automatic catalog facts do not. Closing an untouched
+      draft drops it. Saved decks continue to edit in place.
+    - The header has a cool blue surface in both themes, separate from the
+      brown deck shelf. Both seat containers have their own blue/red tint
+      and border; the chosen seat has the stronger tint and underline.
+
 ## Consequences
 
 - One paste and one click (Play) take a list to the table, and every deck

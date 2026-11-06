@@ -125,6 +125,8 @@ import { useCommandSource } from '../commands/registry.js';
 import type { PaletteCommand } from '../commands/types.js';
 import { boardViewCommands } from '../commands/settings-commands.js';
 import { railCommands } from '../commands/ui-commands.js';
+import { editBrowserCoin } from './browser-coin.js';
+import { useCoinCustomization } from './useCoinCustomization.js';
 
 export type RemoteBoardSubmissionResult = SubmitCommandResult;
 
@@ -403,6 +405,9 @@ export const RemoteSessionBoard = ({
   readonly onSettledChange?: (settled: boolean) => void;
 }) => {
   const { t } = useLingui();
+  useCoinCustomization(session);
+  const coinEditor = useRef<AbortController | undefined>(undefined);
+  useEffect(() => () => coinEditor.current?.abort(), [session]);
   const replayState = useReplaySession(replay);
   const identity = viewIdentity(replayState.view);
   // The live game's own view, never a replay's frame: what the players
@@ -1901,6 +1906,57 @@ export const RemoteSessionBoard = ({
                   }
                 : {})}
               names={playerNames}
+              coins={views?.players}
+              {...(playerActions
+                ? {
+                    onEdit: (playerId: PlayerId) => {
+                      const view = session.getSnapshot().view;
+                      if (
+                        view?.viewer.kind !== 'player' ||
+                        (roomMode !== 'solo' &&
+                          view.viewer.playerId !== playerId)
+                      )
+                        return;
+                      coinEditor.current?.abort();
+                      const controller = new AbortController();
+                      coinEditor.current = controller;
+                      void editBrowserCoin(
+                        view.players[playerId]?.coin,
+                        controller.signal,
+                        playerId === view.viewer.playerId
+                      ).then((coin) => {
+                        if (!coin || controller.signal.aborted) return;
+                        const state = session.getSnapshot();
+                        const latest = state.view;
+                        if (
+                          latest?.matchId !== view.matchId ||
+                          latest.players[playerId]?.coin === coin ||
+                          state.pendingCommands.some(
+                            ({ command }) =>
+                              command.type === 'SetCoin' &&
+                              (command.targetPlayerId ??
+                                (latest.viewer.kind === 'player'
+                                  ? latest.viewer.playerId
+                                  : undefined)) === playerId &&
+                              command.coin === coin
+                          )
+                        )
+                          return;
+                        session.submit({
+                          type: 'SetCoin',
+                          targetPlayerId: playerId,
+                          coin,
+                        });
+                      });
+                    },
+                    editablePlayerIds:
+                      roomMode === 'solo'
+                        ? (views?.playerOrder ?? [])
+                        : views?.viewer.kind === 'player'
+                          ? [views.viewer.playerId]
+                          : [],
+                  }
+                : {})}
               covered={coveredByPopup}
             />
           ) : null}

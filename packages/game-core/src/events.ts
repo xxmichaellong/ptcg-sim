@@ -70,6 +70,11 @@ export type DomainEvent =
       readonly cardBackUrl: string;
     }
   | {
+      readonly type: 'PlayerCoinSet';
+      readonly playerId: PlayerId;
+      readonly coin: string;
+    }
+  | {
       readonly type: 'PlayerReset';
       readonly playerId: PlayerId;
       readonly deckOrder: readonly CardInstanceId[];

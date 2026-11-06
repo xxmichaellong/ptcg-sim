@@ -1,3 +1,4 @@
+import { DeckViewButton } from './DeckViewButton.js';
 import { ArrowSquareOutIcon } from '@phosphor-icons/react/dist/csr/ArrowSquareOut';
 import { CaretLeftIcon } from '@phosphor-icons/react/dist/csr/CaretLeft';
 import { CaretRightIcon } from '@phosphor-icons/react/dist/csr/CaretRight';
@@ -54,7 +55,7 @@ export interface TournamentListRequest {
 
 export type LoadTournamentList = (
   request: TournamentListRequest,
-  mode: 'try' | 'edit'
+  mode: 'try' | 'edit' | 'view'
 ) => void;
 
 const englishOrdinal = (place: number): string => {
@@ -256,11 +257,15 @@ const FinishRow = ({
           />
         ) : null}
       </button>
+      <DeckViewButton
+        name={wordName(request.name)}
+        onClick={() => onLoad(request, 'view')}
+      />
       <Tooltip content={t`Edit a copy`}>
         <button
           type="button"
           className="deck-icon-button"
-          aria-label={t`Save and edit ${wordName(request.name)}`}
+          aria-label={t`Edit ${wordName(request.name)}`}
           onClick={() => onLoad(request, 'edit')}
         >
           <PencilSimpleIcon {...decorative} weight="bold" />
@@ -982,11 +987,15 @@ const StandingRow = ({
               ) : null}
               <Trans context="put a tournament list on the seat">Load</Trans>
             </button>
+            <DeckViewButton
+              name={wordName(request.name)}
+              onClick={() => onLoad(request, 'view')}
+            />
             <Tooltip content={t`Edit a copy`}>
               <button
                 type="button"
                 className="deck-icon-button"
-                aria-label={t`Save and edit ${wordName(request.name)}`}
+                aria-label={t`Edit ${wordName(request.name)}`}
                 onClick={() => onLoad(request, 'edit')}
               >
                 <PencilSimpleIcon {...decorative} weight="bold" />

@@ -96,6 +96,10 @@
     ],
     "translation": "{0} seçili"
   },
+  "THa0qf": {
+    "message": "{0}, {count} in deck",
+    "translation": "{0}, destede {count}"
+  },
   "3amk2q": {
     "message": "{actor} attached {card} from {source, select, hand {hand} prizes {prizes} discard {discard} board {board} stadium {stadium} active {active} bench {bench} lostZone {lost zone} attachmentResolution {attached cards} other {deck}} as an Energy",
     "comments": [
@@ -2641,6 +2645,10 @@
     "message": "Code changed",
     "translation": "Kod değiştirildi"
   },
+  "DHN3TU": {
+    "message": "Coin",
+    "translation": "Yazı tura"
+  },
   "c6pkO-": {
     "message": "Coin",
     "context": "flip a coin",
@@ -2650,6 +2658,10 @@
     "message": "Coin",
     "context": "shortcut key caption",
     "translation": "Yazı tura"
+  },
+  "-M86nE": {
+    "message": "Coins",
+    "translation": "Paralar"
   },
   "vR8UIp": {
     "message": "Color",
@@ -3344,6 +3356,10 @@
     "message": "e.g. Charizard",
     "translation": "örn. Charizard"
   },
+  "N6j2JH": {
+    "message": "Edit {0}",
+    "translation": "{0} destesini düzenle"
+  },
   "ryuxTz": {
     "message": "Edit {deckName}",
     "translation": "{deckName} destesini düzenle"
@@ -3355,6 +3371,10 @@
   "rFL-yb": {
     "message": "Edit a copy",
     "translation": "Kopyasını düzenle"
+  },
+  "asZoU0": {
+    "message": "Edit coin",
+    "translation": "Parayı düzenle"
   },
   "Bd1_Eb": {
     "message": "Edit deck",
@@ -5416,6 +5436,10 @@
     "context": "Trainer card kind",
     "translation": "Diğer"
   },
+  "CbVMHJ": {
+    "message": "Other cards",
+    "translation": "Diğer kartlar"
+  },
   "bXnhJI": {
     "message": "Other Trainers",
     "context": "Trainer cards by kind",
@@ -5858,6 +5882,10 @@
     "message": "Quick picks",
     "context": "card count",
     "translation": "Hızlı seçimler"
+  },
+  "vmSW5t": {
+    "message": "Quick view",
+    "translation": "Hızlı görünüm"
   },
   "KgxgFc": {
     "message": "Radiant",
@@ -6471,14 +6499,6 @@
   "A7uAwg": {
     "message": "Save {name}",
     "translation": "{name} destesini kaydet"
-  },
-  "3zdJQY": {
-    "message": "Save and edit {0}",
-    "translation": "{0} destesini kaydet ve düzenle"
-  },
-  "Z-7fcR": {
-    "message": "Save and edit {title}",
-    "translation": "{title} destesini kaydet ve düzenle"
   },
   "4XBjuA": {
     "message": "Save game",
@@ -8043,6 +8063,10 @@
     "message": "Use this back",
     "translation": "Bu arka yüzü kullan"
   },
+  "vS8WGc": {
+    "message": "Use this coin",
+    "translation": "Bu parayı kullan"
+  },
   "8ZgYGP": {
     "message": "Use this print for the {deckCopies} in the deck",
     "translation": "Bu baskıyı destedeki {deckCopies} için kullan"
@@ -8080,6 +8104,10 @@
     "message": "View",
     "context": "shortcut key caption",
     "translation": "Bak"
+  },
+  "9_euHO": {
+    "message": "View {name}",
+    "translation": "{name} destesini görüntüle"
   },
   "9AKt60": {
     "message": "View card",

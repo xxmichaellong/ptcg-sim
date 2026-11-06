@@ -65,6 +65,21 @@ afterEach(async () => {
 });
 
 describe('card-back chooser', () => {
+  it('previews a coin as a circle with its silver reverse, using the same design choices', async () => {
+    const { host, onChoose } = await mount({ shape: 'coin', current: DESIGN });
+    expect(
+      host.querySelector('.card-back-chooser')?.getAttribute('data-shape')
+    ).toBe('coin');
+    const src = host.querySelector<HTMLImageElement>(
+      '.card-back-chooser__card'
+    )!.src;
+    expect(decodeURIComponent(src)).toContain('viewBox="0 125 630 630"');
+    expect(
+      host.querySelector('.coin-chooser__reverse img')?.getAttribute('alt')
+    ).toBe('Tails');
+    await act(async () => use(host).click());
+    expect(onChoose).toHaveBeenCalledWith(DESIGN);
+  });
   it('opens on the standard back, a tile of its own, and uses it as it is', async () => {
     const { host, onChoose } = await mount();
     const standard = host.querySelector<HTMLInputElement>(
