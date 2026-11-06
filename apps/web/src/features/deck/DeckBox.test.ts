@@ -187,7 +187,7 @@ describe("a seat's card back on its tray", () => {
 
   it('draws a reference as its image (ADR-041)', () => {
     expect(cardBackSource('preset:crimson')).toBe(
-      '/v2/assets/backs/crimson.0ac8c0a6a7.webp'
+      '/v2/assets/backs/crimson.c73bf91458.webp'
     );
     expect(cardBackSource(`img:${'e'.repeat(64)}`)).toBe(
       `/v2/images/${'e'.repeat(64)}`

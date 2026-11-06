@@ -19,13 +19,13 @@ export interface CardBackPreset {
 /** In the order the chooser shows them. Ids are stored in decks: keep them. */
 export const CARD_BACK_PRESETS: readonly CardBackPreset[] = [
   { id: STANDARD_CARD_BACK_ID, file: 'standard.6261f7f137.webp' },
-  { id: 'crimson', file: 'crimson.0ac8c0a6a7.webp' },
-  { id: 'azure', file: 'azure.8a14a42035.webp' },
-  { id: 'amber', file: 'amber.201a633b7d.webp' },
-  { id: 'violet', file: 'violet.82d2ec0d4e.webp' },
-  { id: 'teal', file: 'teal.3d4d52bdf4.webp' },
-  { id: 'jade', file: 'jade.8cde16498c.webp' },
-  { id: 'slate', file: 'slate.fe041c3d7b.webp' },
+  { id: 'crimson', file: 'crimson.c73bf91458.webp' },
+  { id: 'azure', file: 'azure.c6655e424c.webp' },
+  { id: 'amber', file: 'amber.0d71401966.webp' },
+  { id: 'violet', file: 'violet.4bf6a9c20f.webp' },
+  { id: 'teal', file: 'teal.b82e9b2ad7.webp' },
+  { id: 'jade', file: 'jade.08cc105263.webp' },
+  { id: 'slate', file: 'slate.ccaedb994f.webp' },
 ];
 
 /**

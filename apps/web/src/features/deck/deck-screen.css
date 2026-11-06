@@ -629,6 +629,14 @@
   outline: none;
 }
 
+/* Empty, its hint stays on its one line (cut short on the narrowest
+   phone) instead of wrapping under the field's edge. */
+.deck-paste__input:placeholder-shown {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
 .deck-paste__input::placeholder {
   color: var(--color-text-faint);
 }
@@ -1087,6 +1095,8 @@
   --seat-color: var(--color-you);
   --seat-ink: color-mix(in oklab, var(--seat-color) 74%, var(--color-text));
 
+  /* Its width places the seat badges at the art's foot (cqi). */
+  container-type: inline-size;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -1304,13 +1314,19 @@ div.deck-tile__choose {
   }
 }
 
-/* The seats a deck is on: badges in their colours over the art's corner. */
+/* The seats a deck is on: badges in their colors over the art's lower
+   corner, clear of the tools across its top however narrow the tile (a
+   deck on both seats on a 320px phone ran its second badge under them).
+   The art is the tile's whole width at 16:10, so its foot is 62.5% of
+   the tile's width down, whichever part of the tile holds the badges. */
 .deck-tile__seats {
   position: absolute;
-  top: var(--space-2);
+  top: 62.5cqi;
+  translate: 0 calc(-100% - var(--space-2));
   inset-inline-start: var(--space-2);
   z-index: 1;
   display: inline-flex;
+  flex-wrap: wrap;
   gap: var(--space-1);
 }
 

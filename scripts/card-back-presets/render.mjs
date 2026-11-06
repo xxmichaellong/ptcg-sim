@@ -213,12 +213,19 @@ for (let y = 0; y < H; y++) {
       field && !inCircle(x, y) ? Math.round(255 * smooth(100, 160, lum[k])) : 0;
   }
 }
-const glow = await sharp(swirlMask, {
+// One byte a pixel: sharp would hand back sRGB's three otherwise.
+const { data: glow, info: glowInfo } = await sharp(swirlMask, {
   raw: { width: W, height: H, channels: 1 },
 })
   .blur(7)
+  .toColourspace('b-w')
   .raw()
-  .toBuffer();
+  .toBuffer({ resolveWithObject: true });
+if (glowInfo.channels !== 1 || glow.length !== W * H) {
+  throw new Error(
+    `The swirl's glow came back with ${glowInfo.channels} channels`
+  );
+}
 
 // Light from the upper left, for the ball's roundness.
 const LIGHT = [-0.42, -0.55, 0.72];
