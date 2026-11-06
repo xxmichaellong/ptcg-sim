@@ -87,7 +87,9 @@ test('icon controls name themselves, with their keys, on hover', async ({
   await expect(settings).toHaveText('Settings');
   await page.locator('#settingsButton').click();
   await expect(page.locator('#settings')).toBeVisible();
-  await expect(tooltip(page)).toHaveCount(0);
+  // Its own goes; the drawer's close button may come up under the resting
+  // pointer where the bar's corner was, and name itself as any would.
+  await expect(tooltip(page).filter({ hasText: /^Settings$/u })).toHaveCount(0);
   await page.locator('#settingsButton').click();
   await expect(page.locator('#settings')).toHaveCount(0);
 

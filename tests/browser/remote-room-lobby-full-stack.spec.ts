@@ -518,7 +518,9 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
       '#settingsHome #coachingModeCheckbox'
     );
     await expect(allowFlip).not.toBeChecked();
-    await allowFlip.check();
+    // The room's to say: on a slow runner it answers after the click, the
+    // Undo just above still settling, so the switch is waited for.
+    await allowFlip.click();
     await expect(allowFlip).toBeChecked();
     // The keys are on the first page; the community links in About.
     await expect(
