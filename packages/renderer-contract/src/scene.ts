@@ -1352,6 +1352,9 @@ export const createBoardScene = (
         side,
         ...(player.mirrored ? { mirrored: true as const } : {}),
         kind: 'bench',
+        ...(slotRegions.bench.rowCentreX !== undefined
+          ? { rowCentreX: slotRegions.bench.rowCentreX }
+          : {}),
         bounds: copyRect(slotRegions.bench.physicalBorderBoxBounds),
         contentBounds: copyRect(slotRegions.bench.physicalContentBoxBounds),
         surface: slotRegions.bench.surface,

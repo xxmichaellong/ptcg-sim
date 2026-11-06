@@ -121,21 +121,33 @@ export const tableHandsOutside = (
 export const tableVerticalLayoutForBoards = (
   boardShare: number,
   handsOutside: boolean
-): BoardVerticalLayoutState =>
-  tableVerticalLayout(
-    handsOutside ? boardShare : boardShare + HANDS_INSIDE_SHARE
-  );
+): BoardVerticalLayoutState => {
+  // The boards are held to the Split's range; the frames then lean past
+  // it by the deeper strip, so every Split gives its own boards (Codex
+  // review, batch 12 r11).
+  const boards = Number.isFinite(boardShare)
+    ? clampShare(boardShare)
+    : EVEN_SPLIT_SHARE;
+  return framesAt(handsOutside ? boards : boards + HANDS_INSIDE_SHARE);
+};
 
 /** The vertical state for a table whose lower half takes `lowerShare`. */
 export const tableVerticalLayout = (
   lowerShare: number
-): BoardVerticalLayoutState => {
-  const lower = Number.isFinite(lowerShare)
-    ? Math.min(
-        TABLE_SPLIT.maximumLowerShare,
-        Math.max(TABLE_SPLIT.minimumLowerShare, lowerShare)
-      )
-    : DEFAULT_LOWER_SHARE;
+): BoardVerticalLayoutState =>
+  framesAt(
+    Number.isFinite(lowerShare) ? clampShare(lowerShare) : DEFAULT_LOWER_SHARE
+  );
+
+/** A share held to the range either half may take. */
+const clampShare = (share: number): number =>
+  Math.min(
+    TABLE_SPLIT.maximumLowerShare,
+    Math.max(TABLE_SPLIT.minimumLowerShare, share)
+  );
+
+/** The frames for a lower share, as given. */
+const framesAt = (lower: number): BoardVerticalLayoutState => {
   return {
     lowerFrame: { bottomRatio: 0, heightRatio: lower },
     upperFrame: { bottomRatio: lower, heightRatio: 1 - lower },

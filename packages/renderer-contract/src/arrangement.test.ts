@@ -258,6 +258,23 @@ describe('free arrangement', () => {
     );
   });
 
+  it('leaves the bench where it lies when a Pokémon is lifted over its own place', () => {
+    // The Bench centres under the Active (ADR-046 §6); its preview must
+    // too, or the others slide aside and back (Codex review, batch 12 r11).
+    const scene = sceneOf(withBench());
+    const bench = zoneOf(scene, 'bench');
+    const tops = benchTops(scene);
+    const lifted = tops.at(-1)!;
+    const offsets = arrangementOffsets(scene, {
+      cardId: lifted.id,
+      targetId: bench.id,
+      index: tops.length - 1,
+    });
+    for (const card of tops.slice(0, -1)) {
+      expect(offsets.get(card.id)!.x, card.id).toBeCloseTo(0, 1);
+    }
+  });
+
   it('keeps the gap while a card put down settles, on the scene it was dropped on', () => {
     const scene = sceneOf(base);
     const card = inZone(scene, handId)[0]!;

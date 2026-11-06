@@ -137,7 +137,9 @@ aligned"; and the Bench "vertically aligned" with the Active.
   (`tableHandsOutside`), where the hands lie past the board's edges, the
   frames are the boards, so both are one size; flat or upright, the near
   frame also holds the deeper hand strip, 3 points more (0.53 at 50/50, as
-  before). Dragging the seam sets the frames and drops the board split.
+  before; the board share is held to the Split's range first, so the
+  frames may lean past theirs and every Split gives its own boards).
+  Dragging the seam sets the frames and drops the board split.
   Settings store only what differs from the defaults, so a player who
   never moved the Split gets 50/50; a Split they chose keeps its number,
   now the boards'. The welcome and invite cards centre above the seam
@@ -154,7 +156,9 @@ aligned"; and the Bench "vertically aligned" with the Active.
 - **The Bench centres under the Active** (`BoardLayoutRegion.rowCentreX`):
   its cards, not its stacks' outer margins, are centred on the Active's
   centre line while the row fits there, and held to the bench's edges
-  past that.
+  past that. A carried card's gap is opened about the same line
+  (`ZoneSceneNode.rowCentreX`), so the others stay put until they must
+  move.
 - A mat whose shown Lost Zone would keep no pile at all is laid out
   smaller until it keeps one, as one too narrow for the Stadium is.
 - The bar's Solo | Online switch puts the side in play first, on the
@@ -171,5 +175,6 @@ aligned"; and the Bench "vertically aligned" with the Active.
   `BoardLayoutRegion.mirrored`, `ZoneSceneNode.mirrored` and
   `BoardPreferences.outlineFilledZones` join the renderer contract;
   `BoardLayoutState.boardSplit`, `BoardLayoutRegion.rowCentreX`,
+  `ZoneSceneNode.rowCentreX`,
   `tableHandsOutside`, `tableVerticalLayoutForBoards`, `rowStartX` and
   `BoardDepthProjection.countAnchor` with §6.

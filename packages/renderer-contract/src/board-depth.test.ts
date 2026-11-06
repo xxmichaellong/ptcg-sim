@@ -468,12 +468,13 @@ describe('live board depth', () => {
     const bench = table.zones.find(
       (zone) => zone.kind === 'bench' && zone.side === 'local'
     )!;
-    // Three Pokémon on the bench, centred and spaced as the table lays
-    // them out.
+    // Three Pokémon on the bench, centred (under the Active) and spaced
+    // as the table lays them out.
     const template = table.cards.find(
       (card) => card.renderKey !== null && card.role === 'stackEvolution'
     )!;
-    const middle = bench.contentBounds.x + bench.contentBounds.width / 2;
+    const middle =
+      bench.rowCentreX ?? bench.contentBounds.x + bench.contentBounds.width / 2;
     const width = bench.contentBounds.height * 0.716;
     const benched = [0, 1, 2].map((index) => ({
       ...template,

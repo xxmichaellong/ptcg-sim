@@ -555,6 +555,13 @@ test('development route reaches and resumes a real durable room through the same
     expect(resumedUrl.password).toBe('');
   }
 
+  // Waiting for an opponent, the room-ready card lies over the table where
+  // it can't fit above the seam (the split is 60% here): put it away
+  // first, as a player would, so the coin is not under it.
+  const invite = page.locator('[data-table-invite]');
+  await expect(invite).toBeVisible();
+  await invite.getByRole('button', { name: 'Hide' }).click();
+  await expect(invite).toHaveCount(0);
   await page.locator('#flipCoinButton').click();
   await expect
     .poll(() =>

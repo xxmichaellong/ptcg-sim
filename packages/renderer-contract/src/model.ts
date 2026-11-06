@@ -173,6 +173,11 @@ export interface ZoneSceneNode {
    */
   readonly mirrored?: true;
   readonly kind: BoardZoneKind;
+  /**
+   * A play row's centre line while its stacks fit there: the Bench's,
+   * under its Active (BoardLayoutRegion.rowCentreX, ADR-046 §6).
+   */
+  readonly rowCentreX?: number;
   /** Physical legacy border box used for paint, input, and drop targeting. */
   readonly bounds: Rect;
   /** Physical content box used by child/card packing. */

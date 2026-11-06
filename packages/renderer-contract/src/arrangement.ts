@@ -411,7 +411,18 @@ export const arrangementOffsets = (
       ? Math.max(0, (zone.contentBounds.width - widest) / (count - 1))
       : 0
   );
-  const middle = zone.contentBounds.x + zone.contentBounds.width / 2;
+  // Centred where the row is laid out: under the Active while it fits
+  // there (`rowCentreX`, ADR-046 §6), else in the bench.
+  const bounds = zone.contentBounds;
+  const centreLine = zone.rowCentreX;
+  const extent = (count - 1) * pitch + widest;
+  const middle =
+    centreLine !== undefined && extent <= bounds.width
+      ? Math.min(
+          bounds.x + bounds.width - extent / 2,
+          Math.max(bounds.x + extent / 2, centreLine)
+        )
+      : bounds.x + bounds.width / 2;
   items.forEach((item, position) => {
     const slot = slotOf(position);
     const target = middle + forward * (slot - (count - 1) / 2) * pitch;

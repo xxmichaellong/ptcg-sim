@@ -2803,6 +2803,54 @@ describe('table layout: even boards and lined-up rows (2026-11-06)', () => {
     }
   });
 
+  it('gives every Split the slider offers its own boards, the hands inside the halves too', () => {
+    // Codex review, batch 12 r11: 63% to 66% all met the frames' own limit.
+    const shares = [0.34, 0.35, 0.5, 0.62, 0.63, 0.64, 0.65, 0.66];
+    for (const tiltedTable of [false, true]) {
+      for (const [width, height] of [
+        [1440, 900],
+        [390, 844],
+      ] as const) {
+        const laid = shares.map((boardSplit) =>
+          at(width, height, {
+            boardSplit,
+            ...(tiltedTable ? { tiltedTable } : {}),
+          })
+        );
+        const label = `${width}x${height} t=${String(tiltedTable)}`;
+        const nearFrame = laid.map(
+          (snapshot) =>
+            snapshot.players.find((player) => player.side === 'local')!
+              .frameBounds.height
+        );
+        // On a wide window the near cards grow with it; an upright phone's
+        // are sized by its width.
+        const nearActive = laid.map(
+          (snapshot) =>
+            region(snapshot, 'local', 'active').physicalDeclaredBounds.height
+        );
+        for (let index = 1; index < shares.length; index += 1) {
+          const where = `${label} ${String(shares[index]!)}`;
+          expect(nearFrame[index]!, where).toBeGreaterThan(
+            nearFrame[index - 1]!
+          );
+          if (width > height) {
+            expect(nearActive[index]!, where).toBeGreaterThan(
+              nearActive[index - 1]!
+            );
+          }
+        }
+      }
+    }
+    // Past the slider's range the boards stay at its ends.
+    expect(tableVerticalLayoutForBoards(0.9, false)).toEqual(
+      tableVerticalLayoutForBoards(TABLE_SPLIT.maximumLowerShare, false)
+    );
+    expect(tableVerticalLayoutForBoards(0.1, true)).toEqual(
+      tableVerticalLayoutForBoards(TABLE_SPLIT.minimumLowerShare, true)
+    );
+  });
+
   it('drops the board split once the seam is dragged', () => {
     const state = stateAt(1440, 900, {
       shellMode: 'fullscreen',
