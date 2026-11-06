@@ -160,6 +160,48 @@ describe('TableCoins', () => {
     expect(heads.hasAttribute('data-custom-coin')).toBe(false);
   });
 
+  it.each(['local', 'opponent'] as const)(
+    'restores distinct faces when a failed %s upload is replaced',
+    async (side) => {
+      const playerId = side === 'local' ? blue : red;
+      const show = (value: string) =>
+        render({ coins: { [playerId]: { coin: value } } });
+      const images = () => [
+        ...coin(side)!.querySelectorAll<HTMLImageElement>(
+          '.table-coin__face img'
+        ),
+      ];
+      await show(`img:${'ab'.repeat(32)}`);
+      await act(async () => {
+        for (const image of images()) image.dispatchEvent(new Event('error'));
+      });
+      expect(images().map((image) => image.getAttribute('src'))).toEqual([
+        '/v2/assets/table/coin-heads.webp',
+        '/v2/assets/table/coin-tails.webp',
+      ]);
+      expect(
+        images().every((image) => !image.hasAttribute('data-custom-coin'))
+      ).toBe(true);
+      for (const value of ['preset:crimson', `img:${'cd'.repeat(32)}`]) {
+        await show(value);
+        expect(
+          images().every((image) => image.hasAttribute('data-custom-coin'))
+        ).toBe(true);
+        expect(images()[0]!.getAttribute('src')).toBe(
+          images()[1]!.getAttribute('src')
+        );
+      }
+      await show('standard');
+      expect(images().map((image) => image.getAttribute('src'))).toEqual([
+        '/v2/assets/table/coin-heads.webp',
+        '/v2/assets/table/coin-tails.webp',
+      ]);
+      expect(
+        images().every((image) => !image.hasAttribute('data-custom-coin'))
+      ).toBe(true);
+    }
+  );
+
   it('lays both players’ coins on the table, heads up, where the layout has room', async () => {
     await render();
     const spots = tableCoinSpots(layout);

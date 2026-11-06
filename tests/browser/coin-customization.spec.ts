@@ -347,3 +347,44 @@ test('a coin update retries after a real stale-revision refusal', async ({
     await guest.close();
   }
 });
+
+test('a failed coin upload can be replaced without losing the silver tails face', async ({
+  page,
+}) => {
+  await ownRoomBudget(page.context());
+  const hash = 'ab'.repeat(32);
+  await page.route(`**/v2/images/${hash}`, (route) =>
+    route.fulfill({ status: 404 })
+  );
+  await page.addInitScript(
+    (coin) => localStorage.setItem('ptcgsim.coin.v1', JSON.stringify({ coin })),
+    `img:${hash}`
+  );
+  await page.goto('/');
+  await expect(page.locator('[data-session-phase="ready"]')).toBeVisible({
+    timeout: 30_000,
+  });
+  await dismissWelcome(page);
+  const tails = page.locator(
+    '[data-table-coin="local"] .table-coin__face--tails img'
+  );
+  await expect(tails).toHaveAttribute(
+    'src',
+    '/v2/assets/table/coin-tails.webp'
+  );
+  await expect(tails).not.toHaveAttribute('data-custom-coin');
+  await page.locator('#flipCoinButton').click({ button: 'right' });
+  await page.locator('[data-edit-coin]').click();
+  const editor = page.getByRole('dialog', { name: 'Coin', exact: true });
+  await editor.locator('input[value="preset:azure"]').check();
+  await editor
+    .getByRole('button', { name: 'Use this coin', exact: true })
+    .click();
+  await expect(editor).toHaveCount(0);
+  await expect(tails).toHaveAttribute('src', /^data:image\/svg/u);
+  await expect(tails).toHaveAttribute('data-custom-coin', '');
+  await expect(tails).toHaveCSS('filter', 'grayscale(1) brightness(1.15)');
+  await expect(
+    page.locator('[data-table-coin="local"] .table-coin__face--heads img')
+  ).toHaveCSS('filter', 'none');
+});

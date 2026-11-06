@@ -100,6 +100,8 @@ const CoinFace = ({
   const custom = heads !== STANDARD_COIN_HEADS;
   return (
     <img
+      // Fallback changes the image and its marker; new art starts with both.
+      key={heads}
       src={side === 'tails' && !custom ? STANDARD_COIN_TAILS : heads}
       alt=""
       draggable={false}
