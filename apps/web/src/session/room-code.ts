@@ -110,6 +110,8 @@ export class RoomCodeCustody {
   private state: RoomCodeState = NO_CODE;
   private readonly listeners = new Set<() => void>();
   private disposed = false;
+  /** The ask now out, which another ask meanwhile shares. */
+  private asking: Promise<void> | undefined;
 
   constructor(private readonly options: RoomCodeCustodyOptions) {}
 
@@ -122,11 +124,22 @@ export class RoomCodeCustody {
     };
   };
 
-  /** Asks the room for its code (made for a player if it has none). */
-  async refresh(): Promise<void> {
-    const answer = await this.request(undefined);
-    if (answer.ok)
-      this.publish({ code: answer.code, canChange: answer.canChange });
+  /**
+   * Asks the room for its code (made for a player if it has none). One ask
+   * at a time: asked again before the room answers (a connection and Room
+   * opening together, or React mounting twice in development), the same
+   * answer is waited for.
+   */
+  refresh(): Promise<void> {
+    this.asking ??= this.request(undefined)
+      .then((answer) => {
+        if (answer.ok)
+          this.publish({ code: answer.code, canChange: answer.canChange });
+      })
+      .finally(() => {
+        this.asking = undefined;
+      });
+    return this.asking;
   }
 
   /** The host's choice of code. */

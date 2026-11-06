@@ -1065,15 +1065,30 @@ const mintRoomInvitation = async (
   };
 };
 
+/** What someone who knows a room's public code asks of it (ADR-047). */
+export interface RoomCodeInvitationRequest {
+  readonly requestedRole: 'player' | 'spectator';
+  /**
+   * The room's host, whose seat a code never offers: the player who
+   * restored a saved game, else the first seat (a created or opened room).
+   */
+  readonly hostPlayerId?: string;
+}
+
 /**
  * An invitation minted for someone who knows the room's public code
  * (ADR-047), not a credential: the guest seat while no one has claimed it
  * (never the host's, the first player's), or to watch. A seat someone holds
  * stays theirs; with it taken, a code only lets them watch.
+ *
+ * The host is the first player unless someone else restored the game from
+ * a save (`hostPlayerId`): then the first seat may be the free one. A room
+ * restored from a save has no spectators' credential, and watching by its
+ * code needs none.
  */
 export const issueRoomCodeInvitation = async (
   current: RoomAuthoritySnapshot,
-  requestedRole: 'player' | 'spectator',
+  request: RoomCodeInvitationRequest,
   now: number,
   dependencies: RoomInvitationDependencies,
   policy: RoomInvitationPolicy = DEFAULT_ROOM_INVITATION_POLICY
@@ -1087,8 +1102,12 @@ export const issueRoomCodeInvitation = async (
     return invitationRejection(current, 'invalid_request');
   }
   let grant: RoomInvitationGrant;
-  if (requestedRole === 'player') {
-    const host = current.state.playerOrder[0];
+  if (request.requestedRole === 'player') {
+    const host = current.state.playerOrder.some(
+      (playerId) => playerId === request.hostPlayerId
+    )
+      ? request.hostPlayerId
+      : current.state.playerOrder[0];
     const seat = current.state.playerOrder
       .filter((playerId) => playerId !== host)
       .map((playerId) => admission.seats[playerId])
@@ -1105,16 +1124,13 @@ export const issueRoomCodeInvitation = async (
       expiresAt: now + policy.lifetimeMs,
     };
   } else {
-    if (admission.spectatorCapabilityDigest === null) {
-      return invitationRejection(current, 'room_not_ready');
-    }
     grant = { role: 'spectator', expiresAt: now + policy.lifetimeMs };
   }
   return mintRoomInvitation(
     current,
     admission,
     grant,
-    requestedRole,
+    request.requestedRole,
     now,
     dependencies,
     policy

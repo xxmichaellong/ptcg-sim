@@ -929,6 +929,54 @@ describe('RemoteRoomRoute', () => {
     runtime.dispose();
   });
 
+  it('shows a player who joins second the host already there, and no seat left to offer (ADR-047)', async () => {
+    const socketFactory = new FakeSocketFactory();
+    const runtime = createRuntime(socketFactory);
+    const otherPlayer = view.playerOrder.find(
+      (candidate) => candidate !== bluePlayer
+    )!;
+    const { root } = await mountRoute(
+      <RemoteRoomRoute runtime={runtime} onLeave={vi.fn()} />
+    );
+    const socket = socketFactory.socket!;
+    // The host came first: the room says so as it welcomes us, and no
+    // Presence of theirs ever reaches this session.
+    await act(async () => {
+      socket.serverOpen();
+      socket.serverMessage({
+        ...welcome(),
+        occupants: [
+          {
+            playerId: otherPlayer,
+            displayName: view.players[otherPlayer]!.displayName,
+            connected: true,
+          },
+          { displayName: 'Grey', connected: true },
+        ],
+      } as ServerMessage);
+    });
+    await settle();
+    // Both seats are taken: no room-ready invite on the table.
+    expect(find('[data-table-invite]')).toBeNull();
+    await act(async () => {
+      get('.ptcgsim-app-bar__switch #p2Button').click();
+    });
+    await settle();
+    const here = [
+      ...document.querySelectorAll<HTMLElement>(
+        '#roomSheet .room-sheet__people-list li'
+      ),
+    ].map((item) => `${item.textContent} ${item.dataset.here}`);
+    expect(here).toEqual([
+      `${view.players[view.playerOrder[0]!]!.displayName} true`,
+      `${view.players[view.playerOrder[1]!]!.displayName} true`,
+      '1 watching true',
+    ]);
+    expect(find('#roomSheet .room-sheet__open-seat')).toBeNull();
+    await act(async () => root.unmount());
+    runtime.dispose();
+  });
+
   // The longest walk in the file (a room, its Settings pages, a replay and
   // leaving): more than the default 5 s on a loaded machine.
   it('composes a multiplayer room: menu, activity, settings, replay and leaving', async () => {

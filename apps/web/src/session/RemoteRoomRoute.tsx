@@ -473,14 +473,9 @@ export const RemoteRoomRoute = ({
         const headerInvite =
           canInvite && !invites.seatTaken ? t`Copy invite link` : undefined;
         // Who is here, for the room: each seat's player (the opponent's
-        // only once seen), and how many watch.
-        const latestPresence = new Map<string, string>();
-        for (const entry of runtime.session.getSnapshot().presence) {
-          latestPresence.set(
-            entry.playerId ?? `watching:${entry.displayName}`,
-            entry.status
-          );
-        }
+        // only once seen), and how many watch, from who the room said was
+        // here and who has come and gone since (ADR-047).
+        const occupants = runtime.session.getSnapshot().occupants ?? [];
         const roomPeople: RoomPeople = {
           players: (state.view?.playerOrder ?? []).flatMap((playerId) => {
             const own = playerId === live.ownSeat;
@@ -489,19 +484,20 @@ export const RemoteRoomRoute = ({
             if (live.ownSeat !== undefined && !own && !invites.seatTaken) {
               return [];
             }
-            const status = latestPresence.get(playerId);
             return [
               {
                 name: state.view?.players[playerId]?.displayName ?? '',
-                here: own || (status !== 'disconnected' && status !== 'left'),
+                here:
+                  own ||
+                  occupants.some(
+                    (occupant) =>
+                      occupant.playerId === playerId && occupant.connected
+                  ),
               },
             ];
           }),
-          watching: [...latestPresence].filter(
-            ([key, status]) =>
-              key.startsWith('watching:') &&
-              status !== 'left' &&
-              status !== 'disconnected'
+          watching: occupants.filter(
+            (occupant) => occupant.playerId === undefined && occupant.connected
           ).length,
         };
         // A room waiting for its opponent says how to invite them, where a

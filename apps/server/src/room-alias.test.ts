@@ -14,6 +14,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   handleRoomCodeJoinRequest,
+  joinRoomByAlias,
   ROOM_ALIAS_LEASE_MS,
   randomRoomAlias,
   RoomAliasCustody,
@@ -83,7 +84,12 @@ const seatedRoom = async () => {
   };
   let snapshot = baseSnapshot();
   const admit = async (role: 'player' | 'spectator', name: string) => {
-    const invited = await issueRoomCodeInvitation(snapshot, role, 1, deps);
+    const invited = await issueRoomCodeInvitation(
+      snapshot,
+      { requestedRole: role },
+      1,
+      deps
+    );
     if (!invited.accepted) throw new Error(invited.code);
     const ticket = await issueRoomAdmissionTicket(
       invited.snapshot,
@@ -150,6 +156,82 @@ describe('room codes (ADR-047)', () => {
     );
     await record.release('ZZZZZZZZZZZZ');
     expect(await record.resolve(3 * ROOM_ALIAS_LEASE_MS + 2)).toBeNull();
+  });
+
+  it('renews only a code its room still holds, never one given back', async () => {
+    const record = memoryRecord();
+    expect(await record.renew(ROOM, 1)).toBe(false);
+    expect(await record.resolve(2)).toBeNull();
+    await record.claim(ROOM, 10);
+    expect(await record.renew(ROOM, ROOM_ALIAS_LEASE_MS)).toBe(true);
+    expect(await record.resolve(ROOM_ALIAS_LEASE_MS + 11)).toBe(ROOM);
+    expect(await record.renew('ZZZZZZZZZZZZ', ROOM_ALIAS_LEASE_MS)).toBe(false);
+    await record.release(ROOM);
+    expect(await record.renew(ROOM, ROOM_ALIAS_LEASE_MS + 1)).toBe(false);
+    expect(await record.resolve(ROOM_ALIAS_LEASE_MS + 2)).toBeNull();
+  });
+
+  it('renews a code on a join, but not one its host changed while the join was under way', async () => {
+    const records = new Map<string, ReturnType<typeof memoryRecord>>();
+    const directory = (alias: string) => {
+      let record = records.get(alias);
+      if (!record) {
+        record = memoryRecord();
+        records.set(alias, record);
+      }
+      return record;
+    };
+    const admitted = {
+      accepted: true,
+      requestedRole: 'player',
+      admissionTicket: 'ticket-capability-000000000000000001',
+      resumeCapability: 'resume-capability-000000000000000002',
+      expiresAt: 99,
+    } as const;
+    let now = 10;
+    await directory('KEPT').claim(ROOM, now);
+    const join = joinRoomByAlias({
+      directory,
+      join: async () => admitted,
+      now: () => now,
+    });
+    // In use: a join late in the lease keeps the code the room's.
+    now = ROOM_ALIAS_LEASE_MS;
+    expect(
+      await join({ code: 'KEPT', requestedRole: 'player', displayName: 'Red' })
+    ).toEqual({ found: true, roomCode: ROOM, result: admitted });
+    expect(await directory('KEPT').resolve(ROOM_ALIAS_LEASE_MS + 20)).toBe(
+      ROOM
+    );
+    // The host changes the code while a join is under way: the old code is
+    // given back, and the join doesn't take it again.
+    await directory('GONE').claim(ROOM, now);
+    const raced = joinRoomByAlias({
+      directory,
+      join: async () => {
+        await directory('GONE').release(ROOM);
+        return admitted;
+      },
+      now: () => now,
+    });
+    expect(
+      await raced({ code: 'GONE', requestedRole: 'player', displayName: 'Red' })
+    ).toEqual({ found: true, roomCode: ROOM, result: admitted });
+    expect(await directory('GONE').resolve(now + 1)).toBeNull();
+    // A code no room holds is not found, and nothing is joined.
+    let joined = false;
+    const unknown = joinRoomByAlias({
+      directory,
+      join: async () => {
+        joined = true;
+        return admitted;
+      },
+      now: () => now,
+    });
+    expect(
+      await unknown({ code: 'NONE', requestedRole: 'player', displayName: 'X' })
+    ).toEqual({ found: false });
+    expect(joined).toBe(false);
   });
 
   it('makes codes of four from the alphabet without I, O, 0 or 1', () => {
@@ -289,6 +371,92 @@ describe('room codes (ADR-047)', () => {
     expect(await directory('PKMNCLUB').resolve(11)).toBe(ROOM);
     // The old code is free again.
     expect(await directory('LDCD').resolve(11)).toBeNull();
+  });
+
+  it('makes whoever restored a saved game its host: theirs to change the code, not the first seat’s', async () => {
+    const crypto = createCrypto();
+    const deps = {
+      crypto,
+      persistence: { commitAdmission: async () => undefined },
+      opaqueIds: { nextOpaqueId: (kind: 'card' | 'definition') => `o-${kind}` },
+    };
+    const seat = async (
+      snapshot: RoomAuthoritySnapshot,
+      capability: string,
+      name: string
+    ) => {
+      const ticket = await issueRoomAdmissionTicket(
+        snapshot,
+        { capability, displayName: name, requestedRole: 'player' },
+        1,
+        deps
+      );
+      if (!ticket.accepted) throw new Error(ticket.code);
+      const seated = await redeemRoomAdmissionTicket(
+        ticket.snapshot,
+        {
+          admissionTicket: ticket.admissionTicket,
+          resumeCapability: ticket.resumeCapability,
+          displayName: name,
+          requestedRole: 'player',
+        },
+        2,
+        deps
+      );
+      if (!seated.accepted) throw new Error(seated.code);
+      return { snapshot: seated.snapshot, resume: ticket.resumeCapability };
+    };
+    // The second player restored the game: their seat first, then the
+    // first seat by the code.
+    const restorer = await seat(
+      baseSnapshot(),
+      'guest-seat-capability-0000000000002',
+      'Red'
+    );
+    const invited = await issueRoomCodeInvitation(
+      restorer.snapshot,
+      { requestedRole: 'player', hostPlayerId: p2 },
+      3,
+      deps
+    );
+    if (!invited.accepted) throw new Error(invited.code);
+    const opponent = await seat(invited.snapshot, invited.invitation, 'Blue');
+    let stored: string | undefined = 'OLDC';
+    const records = new Map<string, ReturnType<typeof memoryRecord>>();
+    const directory = (alias: string) => {
+      let record = records.get(alias);
+      if (!record) {
+        record = memoryRecord();
+        records.set(alias, record);
+      }
+      return record;
+    };
+    await directory('OLDC').claim(ROOM, 5);
+    const custody = new RoomAliasCustody({
+      roomCode: ROOM,
+      snapshot: () => opponent.snapshot,
+      authentication: crypto,
+      stored: {
+        get: async () => stored,
+        put: async (alias) => {
+          stored = alias;
+        },
+      },
+      directory,
+      now: () => 10,
+      restoredBy: async () => p2,
+    });
+    expect(await custody.respond({ resumeToken: restorer.resume })).toEqual({
+      ok: true,
+      code: 'OLDC',
+      canChange: true,
+    });
+    expect(
+      await custody.respond({ resumeToken: opponent.resume, code: 'BLUE' })
+    ).toEqual({ ok: false, error: 'not_host' });
+    expect(
+      await custody.respond({ resumeToken: restorer.resume, code: 'REDS' })
+    ).toEqual({ ok: true, code: 'REDS', canChange: true });
   });
 
   it('answers a join by code: spent first, then the room, the code unknown, or the seat taken', async () => {

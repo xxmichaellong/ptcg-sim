@@ -12,6 +12,8 @@ import {
   type ServerMessage,
 } from '@ptcgsim/protocol';
 
+import { sessionPresentationIdentity } from './session-presentation-identity.js';
+
 type HelloMessage = Extract<ClientMessage, { type: 'Hello' }>;
 
 export interface SessionHandshakeDependencies extends AdmissionDependencies {
@@ -107,6 +109,15 @@ export const establishSession = async (
     result.session.viewer.kind === 'player'
       ? result.session.viewer.playerId
       : undefined;
+  // Who else is here: Presence tells this session only of what happens
+  // after it is welcomed (ADR-047).
+  const occupants = Object.values(result.snapshot.sessions).flatMap(
+    (session) => {
+      if (session.id === result.session.id) return [];
+      const identity = sessionPresentationIdentity(result.snapshot, session.id);
+      return identity ? [{ ...identity, connected: session.active }] : [];
+    }
+  );
   return {
     accepted: true,
     snapshot: result.snapshot,
@@ -124,6 +135,7 @@ export const establishSession = async (
       nextClientSequence: result.session.nextClientSequence,
       snapshot: serializeMatchViewState(result.view),
       roomMode: result.snapshot.mode,
+      occupants,
     },
   };
 };

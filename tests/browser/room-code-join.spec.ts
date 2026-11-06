@@ -83,6 +83,20 @@ test('hosts a room by its code, joins it to play or to watch, and changes the co
     await joinByCode(guest.page, code, { name: 'Red' });
     // The opponent has their seat: the room stops offering it.
     await expect(host.page.locator('[data-table-invite]')).toHaveCount(0);
+    // The guest came second, and knows the host is here (ADR-047): no seat
+    // to offer, and Room lists them both.
+    await expect(guest.page.locator('[data-table-invite]')).toHaveCount(0);
+    await guest.page.locator('.ptcgsim-app-bar__switch #p2Button').click();
+    await expect(
+      guest.page.locator(
+        '#roomSheet .room-sheet__people-list li[data-here="true"]'
+      )
+    ).toHaveText(['Blue', 'Red']);
+    await expect(
+      guest.page.locator('#roomSheet .room-sheet__open-seat')
+    ).toHaveCount(0);
+    await guest.page.keyboard.press('Escape');
+    await expect(guest.page.locator('#roomSheet')).toHaveCount(0);
 
     // Someone else with the code: the seats are taken, so they watch.
     const late = await visitor(browser);

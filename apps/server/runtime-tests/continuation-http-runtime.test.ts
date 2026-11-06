@@ -240,6 +240,113 @@ describe('activated continuation HTTP runtime', () => {
     });
   });
 
+  it('lets anyone with the code back into a game its second player restored, to play the free first seat or to watch (ADR-047)', async () => {
+    const source = await createRoom();
+    const welcomes: { readonly playerId?: string }[] = [];
+    const red = await issuePlayerTicket(source, 'two', 'Red');
+    const blue = await issuePlayerTicket(source, 'one', 'Blue');
+    for (const [ticket, name] of [
+      [blue, 'Blue'],
+      [red, 'Red'],
+    ] as const) {
+      const socket = await connect(source);
+      openSockets.add(socket);
+      const welcome = nextServerMessage(socket);
+      socket.send(helloFrame(source, ticket, name));
+      const message = (await welcome) as {
+        readonly type: string;
+        readonly playerId?: string;
+      };
+      expect(message.type).toBe('Welcome');
+      welcomes.push(message);
+    }
+    // The second player saves the game and restores it.
+    const createdResponse = await postJson(
+      `/v2/rooms/${source.roomCode}/continuations`,
+      { resumeToken: red.resumeToken, operationId: 'N'.repeat(43) },
+      '198.51.100.61'
+    );
+    const created = parseContinuationCreationResponse(
+      await createdResponse.json()
+    );
+    if (!created.ok) throw new Error('expected continuation creation');
+    const restoredResponse = await postJson(
+      `/v2/continuations/${created.value.saveId}/restore`,
+      { capability: created.value.capability, operationId: 'O'.repeat(43) },
+      '198.51.100.62'
+    );
+    const restored = parseContinuationRestoreResponse(
+      await restoredResponse.json()
+    );
+    if (!restored.ok) throw new Error('expected continuation restore');
+    const target = { ...source, roomCode: restored.value.targetRoomCode };
+    const restorer = await exchangePlayerCapability(
+      target.roomCode,
+      restored.value.requesterSeatCapability,
+      'Red restored'
+    );
+    if (!restorer.ok) throw new Error('expected the restorer admitted');
+    const socket = await connect(target);
+    openSockets.add(socket);
+    const welcome = nextServerMessage(socket);
+    socket.send(helloFrame(target, restorer.value, 'Red restored'));
+    const restorerWelcome = (await welcome) as {
+      readonly type: string;
+      readonly playerId?: string;
+    };
+    expect(restorerWelcome).toMatchObject({
+      type: 'Welcome',
+      playerId: welcomes[1]!.playerId,
+    });
+
+    // Its restorer is the room's host: the code is theirs to change.
+    const codeResponse = await postJson(
+      `/v2/rooms/${target.roomCode}/code`,
+      { resumeToken: restorer.value.resumeToken },
+      '198.51.100.63'
+    );
+    expect(codeResponse.status).toBe(200);
+    const room = (await codeResponse.json()) as {
+      readonly code: string;
+      readonly canChange: boolean;
+    };
+    expect(room.canChange).toBe(true);
+
+    // The code takes the free first seat, and lets someone watch.
+    const join = (requestedRole: string, address: string) =>
+      postJson(
+        '/v2/join',
+        { code: room.code, requestedRole, displayName: 'Blue again' },
+        address
+      );
+    const seated = await join('player', '198.51.100.64');
+    expect(seated.status).toBe(201);
+    const seatedBody = (await seated.json()) as {
+      readonly admissionTicket: string;
+      readonly resumeToken: string;
+    };
+    const guest = await connect(target);
+    openSockets.add(guest);
+    const guestWelcome = nextServerMessage(guest);
+    guest.send(
+      helloFrame(
+        target,
+        { ...seatedBody, expiresAt: 0 },
+        'Blue again'
+      )
+    );
+    expect(await guestWelcome).toMatchObject({
+      type: 'Welcome',
+      playerId: welcomes[0]!.playerId,
+    });
+    const watching = await join('spectator', '198.51.100.65');
+    expect(watching.status).toBe(201);
+    expect(await watching.json()).toMatchObject({
+      roomCode: target.roomCode,
+      requestedRole: 'spectator',
+    });
+  });
+
   it('enforces independent real edge budgets before source and save work', async () => {
     const creationResponses = await Promise.all(
       Array.from({ length: 31 }, (_, index) =>

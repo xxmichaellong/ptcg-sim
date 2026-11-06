@@ -42,11 +42,14 @@ afterEach(async () => {
 });
 
 /** A session as the room tells it, changeable by the test. */
-const fakeSession = () => {
+const fakeSession = (
+  occupants: readonly { playerId?: string; connected: boolean }[] = []
+) => {
   let state = {
     phase: 'ready',
     roomMode: 'multiplayer',
     presence: [] as { playerId?: string; status: string }[],
+    occupants,
   };
   const listeners = new Set<() => void>();
   return {
@@ -152,6 +155,21 @@ describe('the room’s code and invite (ADR-047)', () => {
       )
     );
     expect(latest.seatTaken).toBe(false);
+  });
+
+  it('knows the seat is taken by a host who was there before this player came (ADR-047)', async () => {
+    // Joined second: the room said the host was here, and no Presence of
+    // theirs ever reaches this session.
+    const joined = fakeSession([
+      { playerId: 'p1', displayName: 'Blue', connected: true },
+    ] as never);
+    const { codes } = fakeCodes('K7PQ');
+    await act(async () =>
+      root.render(
+        <Probe codes={codes} session={joined.session} ownSeat="p2" enabled />
+      )
+    );
+    expect(latest.seatTaken).toBe(true);
   });
 
   it('keeps the seat free through a reconnect, while this seat is not yet known', async () => {

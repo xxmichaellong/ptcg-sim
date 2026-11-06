@@ -106,6 +106,14 @@ export interface ClientSessionState {
     { type: 'ChatMessage' }
   >[];
   readonly presence: readonly Extract<ServerMessage, { type: 'Presence' }>[];
+  /**
+   * Who else is in the room (ADR-047): as Welcome said, then as Presence
+   * tells, so someone who arrives after another still knows they are
+   * there. Absent until a room has welcomed this session.
+   */
+  readonly occupants?: readonly NonNullable<
+    Extract<ServerMessage, { type: 'Welcome' }>['occupants']
+  >[number][];
   readonly notices: readonly Extract<ServerMessage, { type: 'ServerNotice' }>[];
   readonly replayLoading: boolean;
   readonly replayArtifact?: ProjectedReplayArtifact;

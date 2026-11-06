@@ -64,6 +64,18 @@ export class RoomAliasDirectoryRecord {
     return true;
   }
 
+  /**
+   * Extends the lease of a code `roomCode` still holds: false, and nothing
+   * written, once it was given back or lapsed. A join renews this way, so a
+   * code its host changed meanwhile is never made the room's again.
+   */
+  async renew(roomCode: string, now: number): Promise<boolean> {
+    const held = liveRecord(await this.storage.get(), now);
+    if (held?.roomCode !== roomCode) return false;
+    await this.storage.put({ roomCode, leaseUntil: now + ROOM_ALIAS_LEASE_MS });
+    return true;
+  }
+
   /** The room the code stands for now, if any. */
   async resolve(now: number): Promise<string | null> {
     return liveRecord(await this.storage.get(), now)?.roomCode ?? null;
@@ -91,11 +103,25 @@ export interface RoomSessionAuthenticationSource {
   readonly equalDigest: (left: string, right: string) => boolean;
 }
 
+/**
+ * The room's host: the player who restored a saved game (the room keeps
+ * who), else the first seat, whose player created the room or opened it.
+ */
+export const roomHostPlayerId = (
+  snapshot: RoomAuthoritySnapshot,
+  restoredBy: string | undefined
+): string | undefined =>
+  restoredBy !== undefined &&
+  snapshot.state.playerOrder.some((playerId) => playerId === restoredBy)
+    ? restoredBy
+    : snapshot.state.playerOrder[0];
+
 /** Who a resume bearer belongs to in this room, if anyone live. */
 export const authenticateRoomSession = async (
   snapshot: RoomAuthoritySnapshot,
   resumeCapability: string,
-  source: RoomSessionAuthenticationSource
+  source: RoomSessionAuthenticationSource,
+  restoredBy?: string
 ): Promise<
   | {
       readonly sessionId: string;
@@ -120,7 +146,7 @@ export const authenticateRoomSession = async (
     player,
     host:
       session.viewer.kind === 'player' &&
-      session.viewer.playerId === snapshot.state.playerOrder[0],
+      session.viewer.playerId === roomHostPlayerId(snapshot, restoredBy),
   };
 };
 
@@ -141,6 +167,8 @@ export interface RoomAliasCustodyDependencies {
   };
   readonly now: () => number;
   readonly randomAlias?: (length: number) => string;
+  /** Who restored the room's game, if it was restored from a save. */
+  readonly restoredBy?: () => Promise<string | undefined>;
 }
 
 export type RoomAliasCustodyResult =
@@ -186,7 +214,8 @@ export class RoomAliasCustody {
     const asker = await authenticateRoomSession(
       snapshot,
       request.resumeToken,
-      deps.authentication
+      deps.authentication,
+      await deps.restoredBy?.()
     );
     if (!asker) return { ok: false, error: 'not_in_room' };
     const now = deps.now();
@@ -302,6 +331,39 @@ export type RoomCodeJoiner = (request: RoomCodeJoinRequest) => Promise<
       readonly result: BoundedRoomCodeAdmissionResult;
     }
 >;
+
+/** What a join by code needs of the directory and the room. */
+export interface RoomCodeJoinDependencies {
+  readonly directory: (code: string) => {
+    readonly resolve: (now: number) => Promise<string | null>;
+    readonly renew: (roomCode: string, now: number) => Promise<boolean>;
+  };
+  readonly join: (
+    roomCode: string,
+    request: Pick<RoomCodeJoinRequest, 'requestedRole' | 'displayName'>
+  ) => Promise<BoundedRoomCodeAdmissionResult>;
+  readonly now: () => number;
+}
+
+/**
+ * Looks the code up and admits by it in the room it names; a join renews
+ * the code's lease (in use, it stays the room's), but only while the room
+ * still holds it: a host who changed the code meanwhile gave it back.
+ */
+export const joinRoomByAlias =
+  (dependencies: RoomCodeJoinDependencies): RoomCodeJoiner =>
+  async ({ code, requestedRole, displayName }) => {
+    const now = dependencies.now();
+    const record = dependencies.directory(code);
+    const roomCode = await record.resolve(now);
+    if (!roomCode) return { found: false };
+    const result = await dependencies.join(roomCode, {
+      requestedRole,
+      displayName,
+    });
+    if (result.accepted) await record.renew(roomCode, now);
+    return { found: true, roomCode, result };
+  };
 
 /** POST /v2/join: a room by its public code, to play or to watch. */
 export const handleRoomCodeJoinRequest = async (

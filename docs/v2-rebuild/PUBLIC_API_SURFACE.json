@@ -3414,6 +3414,10 @@
               "kind": "type"
             },
             {
+              "name": "RoomCodeInvitationRequest",
+              "kind": "type"
+            },
+            {
               "name": "RoomInvitationCrypto",
               "kind": "type"
             },

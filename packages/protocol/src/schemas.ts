@@ -1103,6 +1103,16 @@ export const MatchViewStateSchema = v.object({
   }),
 });
 
+/**
+ * Someone else in the room when a session is welcomed: a player by their
+ * seat, someone watching by name, and whether they are connected now.
+ */
+const RoomOccupantSchema = v.object({
+  playerId: v.optional(IdentifierSchema),
+  displayName: boundedString(64),
+  connected: v.boolean(),
+});
+
 const WelcomeSchema = v.object({
   type: v.literal('Welcome'),
   protocolVersion: v.literal(PROTOCOL_VERSION),
@@ -1119,6 +1129,12 @@ const WelcomeSchema = v.object({
    * rooms of builds before it.
    */
   roomMode: v.optional(RoomModeSchema),
+  /**
+   * Who else is in the room as this session is welcomed: Presence tells of
+   * arrivals after it, never before (ADR-047). Absent from rooms of builds
+   * before it; a page of such a build ignores it.
+   */
+  occupants: v.optional(v.pipe(v.array(RoomOccupantSchema), v.maxLength(64))),
 });
 
 const PresentationCardSourceSchema = v.picklist([

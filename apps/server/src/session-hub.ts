@@ -395,6 +395,8 @@ export class RoomSessionHub {
   admitByCode(request: {
     readonly requestedRole: 'player' | 'spectator';
     readonly displayName: string;
+    /** Who restored the room's game, whose seat a code never offers. */
+    readonly hostPlayerId?: string;
   }): Promise<BoundedRoomCodeAdmissionResult> {
     const startedAt = this.dependencies.monotonicNow();
     const run = this.tail.then(async () => {
@@ -420,7 +422,12 @@ export class RoomSessionHub {
         }
         const invited = await issueRoomCodeInvitation(
           this.coordinator.currentSnapshot(),
-          request.requestedRole,
+          {
+            requestedRole: request.requestedRole,
+            ...(request.hostPlayerId
+              ? { hostPlayerId: request.hostPlayerId }
+              : {}),
+          },
           now,
           this.dependencies.admission
         );

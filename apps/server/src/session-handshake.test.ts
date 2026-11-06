@@ -46,6 +46,7 @@ const fixture = async () => {
   return {
     snapshot,
     seatToken,
+    otherSeatToken,
     crypto,
     transactions,
     dependencies: {
@@ -109,6 +110,44 @@ describe('session handshake', () => {
     });
     expect(result.message.resumeToken).not.toBe(setup.seatToken);
     expect(result.snapshot.admission?.tickets).toEqual({});
+  });
+
+  it('tells a session who is already in the room as it is welcomed (ADR-047)', async () => {
+    const setup = await fixture();
+    const seat = async (
+      snapshot: RoomAuthoritySnapshot,
+      capability: string,
+      displayName: string
+    ) => {
+      const issued = await issueRoomAdmissionTicket(
+        snapshot,
+        { capability, displayName, requestedRole: 'player' },
+        10_000,
+        setup.dependencies
+      );
+      if (!issued.accepted) throw new Error(issued.code);
+      const result = await establishSession(
+        issued.snapshot,
+        hello({
+          displayName,
+          admissionTicket: issued.admissionTicket,
+          resumeToken: issued.resumeCapability,
+        }),
+        'server-build',
+        setup.dependencies
+      );
+      if (!result.accepted) throw new Error('expected a welcome');
+      return result;
+    };
+    const host = await seat(setup.snapshot, setup.seatToken, 'Blue');
+    // The first in finds nobody else.
+    expect(host.message.occupants).toEqual([]);
+    // The second finds the host there, though the host's arrival came
+    // before theirs.
+    const guest = await seat(host.snapshot, setup.otherSeatToken, 'Red');
+    expect(guest.message.occupants).toEqual([
+      { playerId: p1, displayName: 'Blue', connected: true },
+    ]);
   });
 
   it('rejects an invalid recovery pair or missing credentials without persistence', async () => {

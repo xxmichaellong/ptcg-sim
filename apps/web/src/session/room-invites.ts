@@ -40,19 +40,19 @@ interface PresenceSource {
 }
 
 /**
- * Someone other than this seat has been seen in a player's seat. Only once
+ * Someone other than this seat has been seen in a player's seat: here when
+ * the room welcomed this session (ADR-047), or arrived since. Only once
  * this seat is known: while it reconnects the room's controls have none,
  * and the presence kept from before still holds this seat's own arrival,
  * which is no opponent.
  */
 const opponentSeen = (
-  state: Pick<ClientSessionState, 'presence'>,
+  state: Pick<ClientSessionState, 'presence' | 'occupants'>,
   ownSeat: string | undefined
 ): boolean =>
   ownSeat !== undefined &&
-  state.presence.some(
-    (presence) =>
-      presence.playerId !== undefined && presence.playerId !== ownSeat
+  [...(state.occupants ?? []), ...state.presence].some(
+    (seen) => seen.playerId !== undefined && seen.playerId !== ownSeat
   );
 
 /** How often a room in use renews its code's lease. */

@@ -277,7 +277,7 @@ describe('room capability admission', () => {
     const deps = dependencies(crypto, storage);
     const issued = await issueRoomCodeInvitation(
       createSnapshot(),
-      'player',
+      { requestedRole: 'player' },
       10_000,
       deps
     );
@@ -315,11 +315,16 @@ describe('room capability admission', () => {
     expect(admitted.session.viewer).toEqual({ kind: 'player', playerId: p2 });
     // Taken: another code holder may only watch.
     await expect(
-      issueRoomCodeInvitation(admitted.snapshot, 'player', 10_003, deps)
+      issueRoomCodeInvitation(
+        admitted.snapshot,
+        { requestedRole: 'player' },
+        10_003,
+        deps
+      )
     ).resolves.toMatchObject({ accepted: false, code: 'seat_unavailable' });
     const watching = await issueRoomCodeInvitation(
       admitted.snapshot,
-      'spectator',
+      { requestedRole: 'spectator' },
       10_004,
       deps
     );
@@ -331,11 +336,114 @@ describe('room capability admission', () => {
     await expect(
       issueRoomCodeInvitation(
         createSingleOccupancySnapshot(),
-        'spectator',
+        { requestedRole: 'spectator' },
         10_005,
         deps
       )
     ).resolves.toMatchObject({ accepted: false, code: 'room_not_ready' });
+  });
+
+  it('offers by code the first seat of a game its second player restored, never the restorer’s own', async () => {
+    const storage = persistence();
+    const crypto = createCrypto();
+    const deps = dependencies(crypto, storage);
+    // As a restore leaves it (prepareContinuationFork): the order kept, the
+    // second player seated, the first seat free.
+    const ticket = await issueRoomAdmissionTicket(
+      createSnapshot(),
+      {
+        capability: seatTwoToken,
+        displayName: 'Red',
+        requestedRole: 'player',
+      },
+      10_000,
+      deps
+    );
+    if (!ticket.accepted) throw new Error('expected a ticket');
+    const seated = await redeemRoomAdmissionTicket(
+      ticket.snapshot,
+      {
+        admissionTicket: ticket.admissionTicket,
+        resumeCapability: ticket.resumeCapability,
+        displayName: 'Red',
+        requestedRole: 'player',
+      },
+      10_001,
+      deps
+    );
+    if (!seated.accepted) throw new Error('expected the restorer seated');
+    const issued = await issueRoomCodeInvitation(
+      seated.snapshot,
+      { requestedRole: 'player', hostPlayerId: p2 },
+      10_002,
+      deps
+    );
+    expect(issued.accepted).toBe(true);
+    if (!issued.accepted) return;
+    expect(Object.values(issued.snapshot.admission!.invitations)).toEqual([
+      { role: 'player', playerId: p1, expiresAt: 910_002 },
+    ]);
+    // The restorer's own seat is never offered, even while it is free.
+    const beforeSeated = await issueRoomCodeInvitation(
+      createSnapshot(),
+      { requestedRole: 'player', hostPlayerId: p2 },
+      10_003,
+      deps
+    );
+    if (!beforeSeated.accepted) throw new Error('expected an invitation');
+    expect(Object.values(beforeSeated.snapshot.admission!.invitations)).toEqual(
+      [{ role: 'player', playerId: p1, expiresAt: 910_003 }]
+    );
+  });
+
+  it('lets a code holder watch a restored room, which has no spectators’ credential', async () => {
+    const storage = persistence();
+    const crypto = createCrypto();
+    const deps = dependencies(crypto, storage);
+    const restored: RoomAuthoritySnapshot = {
+      ...createSnapshot(),
+      admission: {
+        ...createSnapshot().admission!,
+        spectatorCapabilityDigest: null,
+      },
+    };
+    const issued = await issueRoomCodeInvitation(
+      restored,
+      { requestedRole: 'spectator' },
+      10_000,
+      deps
+    );
+    expect(issued).toMatchObject({
+      accepted: true,
+      requestedRole: 'spectator',
+    });
+    if (!issued.accepted) return;
+    const ticket = await issueRoomAdmissionTicket(
+      issued.snapshot,
+      {
+        capability: issued.invitation,
+        displayName: 'Grey',
+        requestedRole: 'spectator',
+      },
+      10_001,
+      deps
+    );
+    expect(ticket.accepted).toBe(true);
+    if (!ticket.accepted) return;
+    const watching = await redeemRoomAdmissionTicket(
+      ticket.snapshot,
+      {
+        admissionTicket: ticket.admissionTicket,
+        resumeCapability: ticket.resumeCapability,
+        displayName: 'Grey',
+        requestedRole: 'spectator',
+      },
+      10_002,
+      deps
+    );
+    expect(watching.accepted).toBe(true);
+    if (!watching.accepted) return;
+    expect(watching.session.viewer).toEqual({ kind: 'spectator' });
   });
 
   it('admits a spectator on a player invitation without claiming the seat, never the reverse', async () => {

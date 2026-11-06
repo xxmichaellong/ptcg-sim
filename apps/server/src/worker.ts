@@ -128,6 +128,7 @@ import {
 import {
   handleRoomAliasRequest,
   handleRoomCodeJoinRequest,
+  joinRoomByAlias,
   RoomAliasCustody,
   RoomAliasDirectoryRecord,
   type RoomAliasRecord,
@@ -157,6 +158,11 @@ import {
 
 /** Where a room keeps its public code (ADR-047), beside its snapshot. */
 const ROOM_ALIAS_STORAGE_KEY = 'room-alias:v1';
+/**
+ * Who restored a room's game from a save (its host, ADR-047): kept beside
+ * the snapshot, which keeps the saved seat order whoever restores it.
+ */
+const ROOM_RESTORED_BY_STORAGE_KEY = 'room-restored-by:v1';
 
 interface Env {
   readonly BUILD_ID: string;
@@ -535,6 +541,7 @@ export class PtcgRoom extends DurableObject<Env> {
       };
     },
     now: Date.now,
+    restoredBy: () => this.ctx.storage.get<string>(ROOM_RESTORED_BY_STORAGE_KEY),
   });
   /** The runtime the room's code is read against, once it is up. */
   private aliasRuntime: RoomRuntime | undefined;
@@ -619,6 +626,12 @@ export class PtcgRoom extends DurableObject<Env> {
       this.store,
       this.cryptoSource,
       validated.targetRoomCode
+    );
+    // This restore's room (made now, or by an earlier try of the same one):
+    // its restorer is its host, whichever seat they sit in.
+    await this.ctx.storage.put(
+      ROOM_RESTORED_BY_STORAGE_KEY,
+      validated.requesterPlayerId
     );
     const snapshot = await this.store.load();
     if (!snapshot) {
@@ -711,7 +724,13 @@ export class PtcgRoom extends DurableObject<Env> {
   }): Promise<BoundedRoomCodeAdmissionResult> {
     const runtime = await this.runtimePromise;
     if (!runtime) return { accepted: false, code: 'room_not_ready' };
-    return runtime.hub.admitByCode(request);
+    const restoredBy = await this.ctx.storage.get<string>(
+      ROOM_RESTORED_BY_STORAGE_KEY
+    );
+    return runtime.hub.admitByCode({
+      ...request,
+      ...(restoredBy ? { hostPlayerId: restoredBy } : {}),
+    });
   }
 
   override async fetch(request: Request): Promise<Response> {
@@ -1404,6 +1423,10 @@ export class PtcgRoomCode extends DurableObject<Env> {
     return this.record.claim(roomCode, now);
   }
 
+  async renew(roomCode: string, now: number): Promise<boolean> {
+    return this.record.renew(roomCode, now);
+  }
+
   async resolve(now: number): Promise<string | null> {
     return this.record.resolve(now);
   }
@@ -1808,19 +1831,18 @@ const worker: ExportedHandler<Env> = {
       return observeHttp(telemetry, 'room_code_join', () =>
         handleRoomCodeJoinRequest(
           request,
-          async ({ code, requestedRole, displayName }) => {
-            const now = Date.now();
-            const record = env.PTCG_ROOM_CODE.getByName(code);
-            const roomCode = await record.resolve(now);
-            if (!roomCode) return { found: false };
-            const result = await env.PTCG_ROOM.getByName(roomCode).joinByCode({
-              requestedRole,
-              displayName,
-            });
-            // In use: the code stays the room's.
-            if (result.accepted) await record.claim(roomCode, now);
-            return { found: true, roomCode, result };
-          },
+          joinRoomByAlias({
+            directory: (code) => {
+              const record = env.PTCG_ROOM_CODE.getByName(code);
+              return {
+                resolve: (now) => record.resolve(now),
+                renew: (roomCode, now) => record.renew(roomCode, now),
+              };
+            },
+            join: (roomCode, admission) =>
+              env.PTCG_ROOM.getByName(roomCode).joinByCode(admission),
+            now: Date.now,
+          }),
           () =>
             consumeRoomCodeJoinRateLimit(request, env.ROOM_CODE_RATE_LIMITER)
         )

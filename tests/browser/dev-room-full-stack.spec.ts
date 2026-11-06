@@ -306,18 +306,25 @@ test('development route reaches and resumes a real durable room through the same
   );
   await expect(page.locator('#p2Chatbox')).toBeVisible();
 
-  const postResponses = authorityResponses
-    .filter((response) => response.request().method() === 'POST')
-    .map((response) => ({
-      path: new URL(response.url()).pathname,
-      status: response.status(),
-    }));
-  expect(postResponses).toEqual([
+  const postResponses = () =>
+    authorityResponses
+      .filter((response) => response.request().method() === 'POST')
+      .map((response) => ({
+        path: new URL(response.url()).pathname,
+        status: response.status(),
+      }));
+  // A live room asks for its public code once it is in (ADR-047): once,
+  // though React mounts twice in development.
+  await expect(
+    page.locator('.ptcgsim-app-bar__switch #p2Button')
+  ).toHaveAttribute('data-room-code', /^[A-HJ-NP-Z2-9]{4,12}$/u);
+  await expect.poll(postResponses).toEqual([
     { path: '/v2/rooms', status: 201 },
     {
       path: `/v2/rooms/${connected.roomCode}/admission-tickets`,
       status: 201,
     },
+    { path: `/v2/rooms/${connected.roomCode}/code`, status: 200 },
   ]);
   for (const response of authorityResponses.filter(
     (candidate) => candidate.request().method() === 'POST'
@@ -561,11 +568,17 @@ test('development route reaches and resumes a real durable room through the same
       })
     )
     .toMatchObject({ revision: 1, completed: { accepted: true, revision: 1 } });
-  expect(
-    authorityResponses.filter(
-      (response) => response.request().method() === 'POST'
-    )
-  ).toHaveLength(2);
+  // The resumed connection asked for the code again (it renews its lease),
+  // and nothing else.
+  await expect.poll(postResponses).toEqual([
+    { path: '/v2/rooms', status: 201 },
+    {
+      path: `/v2/rooms/${connected.roomCode}/admission-tickets`,
+      status: 201,
+    },
+    { path: `/v2/rooms/${connected.roomCode}/code`, status: 200 },
+    { path: `/v2/rooms/${connected.roomCode}/code`, status: 200 },
+  ]);
 
   expect(
     await page.evaluate(() => {
@@ -903,6 +916,11 @@ test('document navigation churn releases each creator room before the next mount
     });
     expect(mounted.roomCode).toMatch(/^[A-HJ-NP-Z2-9]{12}$/u);
     roomCodes.push(mounted.roomCode);
+    // Its public code (ADR-047) has come before the page goes, so the ask
+    // is never cut off on the way.
+    await expect(
+      page.locator('.ptcgsim-app-bar__switch #p2Button')
+    ).toHaveAttribute('data-room-code', /^[A-HJ-NP-Z2-9]{4,12}$/u);
 
     await page.evaluate((navigationCycle) => {
       const globals = globalThis as BrowserDevRoomGlobals;
@@ -978,6 +996,7 @@ test('document navigation churn releases each creator room before the next mount
     roomCodes.flatMap((roomCode) => [
       { path: '/v2/rooms', status: 201 },
       { path: `/v2/rooms/${roomCode}/admission-tickets`, status: 201 },
+      { path: `/v2/rooms/${roomCode}/code`, status: 200 },
     ])
   );
   expect(errors).toEqual([]);

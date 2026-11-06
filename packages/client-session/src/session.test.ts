@@ -2039,6 +2039,51 @@ describe('RemoteGameSession', () => {
     );
   });
 
+  it('knows who was in the room before it, then keeps up with who comes and goes (ADR-047)', () => {
+    const test = setup();
+    const socket = test.connect();
+    socket.serverMessage({
+      ...welcome(),
+      occupants: [
+        { playerId: 'red', displayName: 'Red', connected: true },
+        { displayName: 'Grey', connected: true },
+      ],
+    });
+    expect(test.session.getSnapshot().occupants).toEqual([
+      { playerId: 'red', displayName: 'Red', connected: true },
+      { displayName: 'Grey', connected: true },
+    ]);
+    // Nothing was announced for those already here.
+    expect(test.session.getSnapshot().presence).toEqual([]);
+    const presence = (
+      status: 'joined' | 'disconnected' | 'reconnected' | 'left',
+      displayName: string,
+      playerId?: string
+    ) =>
+      socket.serverMessage({
+        type: 'Presence',
+        protocolVersion: PROTOCOL_VERSION,
+        ...(playerId ? { playerId } : {}),
+        displayName,
+        status,
+      });
+    presence('joined', 'Blue', 'blue');
+    presence('disconnected', 'Red', 'red');
+    presence('joined', 'Grey');
+    presence('left', 'Grey');
+    expect(test.session.getSnapshot().occupants).toEqual([
+      { playerId: 'red', displayName: 'Red', connected: false },
+      { playerId: 'blue', displayName: 'Blue', connected: true },
+      { displayName: 'Grey', connected: true },
+    ]);
+    presence('reconnected', 'Red', 'red');
+    presence('left', 'Grey');
+    expect(test.session.getSnapshot().occupants).toEqual([
+      { playerId: 'red', displayName: 'Red', connected: true },
+      { playerId: 'blue', displayName: 'Blue', connected: true },
+    ]);
+  });
+
   it('fails closed on presence outside admission or for an unknown player', () => {
     const beforeAdmission = setup();
     const connectingSocket = beforeAdmission.connect();

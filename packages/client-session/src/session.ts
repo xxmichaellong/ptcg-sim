@@ -123,6 +123,50 @@ export type SubmitCommandResult =
         | 'too_large';
     };
 
+type RoomOccupant = NonNullable<ClientSessionState['occupants']>[number];
+
+/**
+ * The room's occupants after a Presence: a player by their seat, someone
+ * watching by name (one of several of that name is enough).
+ */
+const nextOccupants = (
+  occupants: readonly RoomOccupant[],
+  presence: Extract<ServerMessage, { type: 'Presence' }>
+): readonly RoomOccupant[] => {
+  const connected =
+    presence.status === 'joined' || presence.status === 'reconnected';
+  const same = (occupant: RoomOccupant) =>
+    presence.playerId !== undefined
+      ? occupant.playerId === presence.playerId
+      : occupant.playerId === undefined &&
+        occupant.displayName === presence.displayName;
+  // A player's seat is theirs alone; among several watching under one name,
+  // the one whose state this changes.
+  const index =
+    presence.playerId !== undefined
+      ? occupants.findIndex(same)
+      : occupants.findIndex(
+          (occupant) =>
+            same(occupant) &&
+            (presence.status === 'left' || occupant.connected !== connected)
+        );
+  if (presence.status === 'left') {
+    return index < 0 ? occupants : occupants.filter((_, at) => at !== index);
+  }
+  const occupant: RoomOccupant = {
+    ...(presence.playerId !== undefined ? { playerId: presence.playerId } : {}),
+    displayName: presence.displayName,
+    connected,
+  };
+  if (
+    index < 0 ||
+    (presence.playerId === undefined && presence.status === 'joined')
+  ) {
+    return [...occupants, occupant];
+  }
+  return occupants.map((current, at) => (at === index ? occupant : current));
+};
+
 const initialState = (): ClientSessionState => ({
   phase: 'idle',
   nextClientSequence: 1,
@@ -689,6 +733,7 @@ export class RemoteGameSession {
             message,
             this.policy.maximumPresenceEvents
           ),
+          occupants: nextOccupants(this.state.occupants ?? [], message),
         });
         return;
       case 'Pong': {
@@ -947,6 +992,8 @@ export class RemoteGameSession {
       role: message.role,
       ...(message.playerId ? { playerId: message.playerId } : {}),
       ...(message.roomMode ? { roomMode: message.roomMode } : {}),
+      // Who is here now; Presence tells of changes from here on.
+      occupants: message.occupants ?? [],
       nextClientSequence: Math.max(
         locallyAllocated,
         message.nextClientSequence
