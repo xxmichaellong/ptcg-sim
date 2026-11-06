@@ -388,3 +388,69 @@ test('a failed coin upload can be replaced without losing the silver tails face'
     page.locator('[data-table-coin="local"] .table-coin__face--heads img')
   ).toHaveCSS('filter', 'none');
 });
+
+for (const reload of [false, true]) {
+  test(
+    reload
+      ? 'a resumed matching coin respects Undo'
+      : 'Settings reapplies the same remembered coin after Undo',
+    async ({ page }) => {
+      await ownRoomBudget(page.context());
+      await page.goto('/');
+      await expect(page.locator('[data-session-phase="ready"]')).toBeVisible({
+        timeout: 30_000,
+      });
+      await dismissWelcome(page);
+      await openSettings(page, 'cards');
+      await page.locator('#editCoinButton').click();
+      const editor = page.getByRole('dialog', { name: 'Coin', exact: true });
+      await editor.locator('input[value="preset:crimson"]').check();
+      await editor
+        .getByRole('button', { name: 'Use this coin', exact: true })
+        .click();
+      await expect(editor).toHaveCount(0);
+      await closeSheet(page);
+      const heads = page.locator(
+        '[data-table-coin="local"] .table-coin__face--heads img'
+      );
+      await expect(heads).toHaveAttribute('src', /^data:image\/svg/u);
+      const chosen = await heads.getAttribute('src');
+      if (reload) {
+        await page.reload();
+        await expect(page.locator('[data-session-phase="ready"]')).toBeVisible({
+          timeout: 30_000,
+        });
+        await expect(heads).toHaveAttribute('src', chosen!);
+        await dismissWelcome(page);
+      }
+      await page.keyboard.press('u');
+      await expect(heads).toHaveAttribute(
+        'src',
+        '/v2/assets/table/coin-heads.webp'
+      );
+      if (reload) {
+        await page.locator('#flipCoinButton').click();
+        await expect(page.locator('[data-table-coin="local"]')).toHaveAttribute(
+          'data-coin-phase',
+          'resting'
+        );
+        await expect(heads).toHaveAttribute(
+          'src',
+          '/v2/assets/table/coin-heads.webp'
+        );
+      } else {
+        await openSettings(page, 'cards');
+        await page.locator('#editCoinButton').click();
+        await expect(
+          editor.locator('input[value="preset:crimson"]')
+        ).toBeChecked();
+        await editor
+          .getByRole('button', { name: 'Use this coin', exact: true })
+          .click();
+        await expect(editor).toHaveCount(0);
+        await closeSheet(page);
+        await expect(heads).toHaveAttribute('src', chosen!);
+      }
+    }
+  );
+}

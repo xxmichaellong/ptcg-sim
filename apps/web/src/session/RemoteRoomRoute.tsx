@@ -75,6 +75,7 @@ import { ActivityLauncher, ActivityPanel } from './shell/ActivitySheet.js';
 import { AppBar, type AppMenuModel } from './shell/AppMenu.js';
 import { DeckLayer } from './shell/DeckLayer.js';
 import { OnlineSheet } from './shell/OnlineSheet.js';
+import { editBrowserCoin } from './browser-coin.js';
 import { SettingsSheet } from './shell/SettingsSheet.js';
 import { useSettingsSheetHost } from './shell/settings-sheet-state.js';
 import { seatStage } from '../board/seat-stage.js';
@@ -1064,6 +1065,10 @@ export const RemoteRoomRoute = ({
               menu={menu}
               darkMode={effectivePreferences.darkMode}
               onDarkModeChange={setDarkMode}
+              onEditCoin={() => {
+                if (boardCommands.current) boardCommands.current.editCoin();
+                else void editBrowserCoin();
+              }}
               background={{
                 current: backgroundSelection.background,
                 onChange: backgroundSelection.setBackground,

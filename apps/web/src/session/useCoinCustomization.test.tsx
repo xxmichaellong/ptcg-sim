@@ -152,3 +152,56 @@ it('synchronizes a newly attached ready session even if it resumes the same matc
   await mount(resumed);
   expect(resumed.commands).toHaveLength(1);
 });
+
+it.each([
+  'already present',
+  'accepted during this mount',
+  'reconnected',
+] as const)('respects Undo when the coin was %s', async (how) => {
+  const session = new Session();
+  const matching = {
+    ...base,
+    players: {
+      ...base.players,
+      [own]: { ...base.players[own]!, coin: 'preset:crimson' },
+    },
+  };
+  if (how === 'already present')
+    session.state = { ...session.state, view: matching };
+  if (how === 'reconnected')
+    session.state = { ...session.state, phase: 'reconnecting' };
+  await mount(session);
+  if (how === 'accepted during this mount') {
+    const pending = session.state.pendingCommands[0]!;
+    await act(async () =>
+      session.publish({
+        view: matching,
+        pendingCommands: [],
+        completedCommands: [
+          {
+            commandId: pending.commandId,
+            clientSequence: pending.clientSequence,
+            accepted: true,
+            revision: base.revision,
+          },
+        ],
+      })
+    );
+  } else if (how === 'reconnected') {
+    await act(async () => session.publish({ phase: 'ready', view: matching }));
+  }
+  const count = session.commands.length;
+  await act(async () =>
+    session.publish({ view: { ...base, revision: base.revision + 1 } })
+  );
+  await act(async () => vi.advanceTimersByTimeAsync(1000));
+  expect(session.commands).toHaveLength(count);
+  await act(async () =>
+    preferences().set(COIN_PREFERENCES, { coin: 'preset:azure' })
+  );
+  expect(session.commands).toHaveLength(count + 1);
+  expect(session.commands.at(-1)).toMatchObject({
+    type: 'SetCoin',
+    coin: 'preset:azure',
+  });
+});

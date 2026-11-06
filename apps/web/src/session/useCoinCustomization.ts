@@ -70,6 +70,7 @@ export const useCoinCustomization = (
       }
       if ((player.coin ?? STANDARD_COIN) === coin && !pending) {
         clearRetry();
+        attempted = { key, coin };
         delay = 500;
         return;
       }

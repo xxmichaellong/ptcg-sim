@@ -253,6 +253,8 @@ interface TouchBars {
 }
 
 export interface BoardCommands {
+  /** Settings explicitly reapplies a choice even when its preference is unchanged. */
+  readonly editCoin: () => void;
   readonly flipBoard: () => void;
   /** Whether turning the table around is allowed here. */
   readonly canFlipBoard: () => boolean;
@@ -412,6 +414,50 @@ export const RemoteSessionBoard = ({
   useCoinCustomization(session);
   const coinEditor = useRef<AbortController | undefined>(undefined);
   useEffect(() => () => coinEditor.current?.abort(), [session]);
+  const editCoin = useCallback(
+    (requestedPlayerId?: PlayerId): void => {
+      const view = session.getSnapshot().view;
+      if (
+        requestedPlayerId !== undefined &&
+        (view?.viewer.kind !== 'player' ||
+          (roomMode !== 'solo' && view.viewer.playerId !== requestedPlayerId))
+      )
+        return;
+      coinEditor.current?.abort();
+      const controller = new AbortController();
+      coinEditor.current = controller;
+      // Without a player seat, Settings still edits the personal default.
+      if (view?.viewer.kind !== 'player') {
+        void editBrowserCoin(undefined, controller.signal);
+        return;
+      }
+      const viewerId = view.viewer.playerId;
+      const playerId = requestedPlayerId ?? viewerId;
+      void editBrowserCoin(
+        requestedPlayerId === undefined
+          ? undefined
+          : (view.players[playerId]?.coin ?? STANDARD_COIN),
+        controller.signal,
+        playerId === viewerId
+      ).then((coin) => {
+        if (!coin || controller.signal.aborted) return;
+        const state = session.getSnapshot();
+        const latest = state.view;
+        const pending = pendingCoinChange(state, playerId);
+        if (
+          latest?.matchId !== view.matchId ||
+          latest.viewer.kind !== 'player' ||
+          latest.viewer.playerId !== viewerId ||
+          pending?.coin === coin ||
+          (!pending &&
+            (latest.players[playerId]?.coin ?? STANDARD_COIN) === coin)
+        )
+          return;
+        session.submit({ type: 'SetCoin', targetPlayerId: playerId, coin });
+      });
+    },
+    [roomMode, session]
+  );
   const replayState = useReplaySession(replay);
   const identity = viewIdentity(replayState.view);
   // The live game's own view, never a replay's frame: what the players
@@ -1303,9 +1349,10 @@ export const RemoteSessionBoard = ({
     commandsRef,
     (): BoardCommands => ({
       flipBoard: tableActions.flipBoard,
+      editCoin,
       canFlipBoard: () => flipAllowedRef.current,
     }),
-    [tableActions]
+    [editCoin, tableActions]
   );
   const visibleStatus =
     identity && replayState.sessionPhase === 'ready'
@@ -1913,41 +1960,7 @@ export const RemoteSessionBoard = ({
               coins={views?.players}
               {...(playerActions
                 ? {
-                    onEdit: (playerId: PlayerId) => {
-                      const view = session.getSnapshot().view;
-                      if (
-                        view?.viewer.kind !== 'player' ||
-                        (roomMode !== 'solo' &&
-                          view.viewer.playerId !== playerId)
-                      )
-                        return;
-                      coinEditor.current?.abort();
-                      const controller = new AbortController();
-                      coinEditor.current = controller;
-                      void editBrowserCoin(
-                        view.players[playerId]?.coin ?? STANDARD_COIN,
-                        controller.signal,
-                        playerId === view.viewer.playerId
-                      ).then((coin) => {
-                        if (!coin || controller.signal.aborted) return;
-                        const state = session.getSnapshot();
-                        const latest = state.view;
-                        const pending = pendingCoinChange(state, playerId);
-                        if (
-                          latest?.matchId !== view.matchId ||
-                          pending?.coin === coin ||
-                          (!pending &&
-                            (latest.players[playerId]?.coin ??
-                              STANDARD_COIN) === coin)
-                        )
-                          return;
-                        session.submit({
-                          type: 'SetCoin',
-                          targetPlayerId: playerId,
-                          coin,
-                        });
-                      });
-                    },
+                    onEdit: editCoin,
                     editablePlayerIds:
                       roomMode === 'solo'
                         ? (views?.playerOrder ?? [])

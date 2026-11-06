@@ -137,6 +137,8 @@ export interface SettingsSheetProps {
   readonly menu?: AppMenuModel;
   readonly darkMode: boolean;
   readonly onDarkModeChange: (enabled: boolean) => void;
+  /** Opens the live table coin editor, with a personal-default fallback. */
+  readonly onEditCoin?: () => void;
   /** What lies around the table, and how it changes. */
   readonly background: BackgroundChoice;
   /**
@@ -168,6 +170,7 @@ interface PageContext {
   /** Puts Settings away, for what it opens (one window at a time). */
   readonly leave: () => void;
   readonly touchOnly: boolean;
+  readonly editCoin: () => void;
 }
 
 /** The page's language, named in itself: the browser's while it is chosen. */
@@ -452,7 +455,7 @@ const CardsPage = ({ context }: { readonly context: PageContext }) => {
         <SettingsLinkRow
           id="editCoinButton"
           label={t`Coin`}
-          onClick={() => void editBrowserCoin()}
+          onClick={context.editCoin}
         />
         <CardViewControls touchOnly={context.touchOnly} />
         {/* Other players' uploaded and designed backs as they chose them,
@@ -1024,6 +1027,7 @@ export const SettingsSheet = ({
   menu,
   darkMode,
   onDarkModeChange,
+  onEditCoin,
   background,
   boardFlip,
 }: SettingsSheetProps) => {
@@ -1045,6 +1049,7 @@ export const SettingsSheet = ({
     navigate: pages.navigate,
     leave,
     touchOnly,
+    editCoin: onEditCoin ?? (() => void editBrowserCoin()),
   };
   const top = pages.top;
   const title = settingsPageName(top);
