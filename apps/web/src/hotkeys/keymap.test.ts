@@ -132,6 +132,33 @@ describe('the keymap', () => {
     });
   });
 
+  it("keeps a player's own key over a default that came to it later, and a vacated default does nothing", () => {
+    // Flip coin put on Shift+D before Shift+D became Discard all's default.
+    const theirs = keymapFor(
+      parseHotkeyOverrides({ 'table.flipCoin': 'shift+d' })
+    );
+    expect(
+      theirs.resolve(press('D', 'KeyD', { shiftKey: true }), 'table')
+    ).toBe('table.flipCoin');
+    // Discard all cleared (or moved): Shift+D does nothing, never falling
+    // back to D and discarding the selected card.
+    for (const overrides of [
+      { 'board.discardAll': null },
+      { 'board.discardAll': 'k' },
+    ]) {
+      const keymap = keymapFor(parseHotkeyOverrides(overrides));
+      const shiftD = press('D', 'KeyD', { shiftKey: true });
+      expect(keymap.resolve(shiftD, 'card')).toBeNull();
+      expect(keymap.translate(shiftD, 'card').kind).toBe('freed');
+    }
+    const handCleared = keymapFor(
+      parseHotkeyOverrides({ 'board.moveAllToHand': null })
+    );
+    expect(
+      handCleared.translate(press('H', 'KeyH', { shiftKey: true }), 'card').kind
+    ).toBe('freed');
+  });
+
   it('turns a moved shortcut into its default key, and its old key into nothing', () => {
     const keymap = keymapFor(
       parseHotkeyOverrides({ 'card.toDiscard': 'k', 'deck.shuffle': 'alt+k' })

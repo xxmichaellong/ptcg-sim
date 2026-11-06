@@ -188,7 +188,14 @@ export class Keymap {
     }
     const lookup = (mode: HotkeyMode) => {
       const map = new Map<string, HotkeyActionId>();
-      for (const entry of HOTKEY_ACTIONS) {
+      // The player's own keys first: a key they chose keeps its shortcut
+      // even where a later default lands on it (Shift+D came to Discard
+      // all after some had put another shortcut there).
+      const ordered = [
+        ...HOTKEY_ACTIONS.filter((entry) => !this.isDefault(entry.id)),
+        ...HOTKEY_ACTIONS.filter((entry) => this.isDefault(entry.id)),
+      ];
+      for (const entry of ordered) {
         const chord = this.chords.get(entry.id);
         if (!chord || !scopeIncludes(entry.scope, mode)) continue;
         const text = chordText(chord);
@@ -198,13 +205,16 @@ export class Keymap {
       return map;
     };
     this.byMode = { card: lookup('card'), table: lookup('table') };
+    // Keys nothing answers to any more: v1's key of a shortcut moved off it,
+    // and the default of one the player moved or cleared (else Shift+D,
+    // Discard all cleared, would fall back to D and discard the card).
     const freed = (mode: HotkeyMode) =>
       new Set(
-        HOTKEY_ACTIONS.filter(
-          (entry) =>
-            scopeIncludes(entry.scope, mode) && !this.atLegacyKey(entry.id)
-        )
-          .map(legacyChordOf)
+        HOTKEY_ACTIONS.filter((entry) => scopeIncludes(entry.scope, mode))
+          .flatMap((entry) => [
+            ...(this.atLegacyKey(entry.id) ? [] : [legacyChordOf(entry)]),
+            ...(this.isDefault(entry.id) ? [] : [entry.defaultChord]),
+          ])
           .filter((text) => !this.byMode[mode].has(text))
       );
     this.freed = { card: freed('card'), table: freed('table') };
