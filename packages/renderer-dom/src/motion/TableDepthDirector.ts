@@ -17,7 +17,7 @@ import {
   type Rect,
 } from '@ptcgsim/renderer-contract';
 import { depthPaintKey } from './depth-paint-key.js';
-import { shownCardImage } from '../card-image-retry.js';
+import { pictureElement as pictureFor } from './card-pictures.js';
 import { faceImageOf, isFaceReady, whenFaceReady } from './face-ready.js';
 
 const timestamp = () => performance.now();
@@ -83,10 +83,20 @@ const turnedOver = (base: TableCardPose, progress: number): TableCardPose => {
 };
 interface Ghost {
   element: HTMLElement;
+  /** What it shows: a canvas copy, or an `<img>` where none could be had. */
+  picture: HTMLElement;
+  /** The picture it shows now. */
+  shows: string;
   expires: number;
   /** Edge lines a stand-in pile shows. */
   bands?: number;
   holdFor?: string;
+  /**
+   * Holding a pile for a card turned over right on top of it (let go over
+   * it): it shows that card's own face from the moment the turn begins, so
+   * the card on its edge never shows the old top under it.
+   */
+  revealsArrival?: boolean;
   fromImage?: string;
   toImage?: string;
   start: number;
@@ -100,6 +110,8 @@ interface Ghost {
  */
 interface Flip {
   image: HTMLElement | null;
+  /** The old face shown over it while it turns, if any. */
+  readonly fromImageUrl: string | null;
   readonly face: HTMLElement;
   start: number;
   readonly duration: number;
@@ -466,6 +478,13 @@ export class TableDepthDirector {
     const flights = new Map(
       plan?.flights.map((flight) => [flight.renderKey, flight]) ?? []
     );
+    // Cards let go over a pile and turned over right on top of it.
+    const turnsOnPile = new Set<string>();
+    // The cards in hand when the table was last drawn: one now shown by
+    // another node (a pile's top taking it) was put down there by hand.
+    const wasHeld = new Set(
+      [...this.held].map((key) => String(oldCards.get(key)?.id))
+    );
     this.cards.clear();
     for (const card of next.cards)
       if (card.renderKey !== null) this.cards.set(card.renderKey, card);
@@ -756,6 +775,12 @@ export class TableDepthDirector {
       else if (this.overWindows.has(key) && !this.motion.has(key))
         this.liftOverWindows(key, false);
       if (
+        ontoPile &&
+        turnsOver &&
+        (settles || (!held && wasHeld.has(String(card.id))))
+      )
+        turnsOnPile.add(key);
+      if (
         fromImageUrl !== undefined &&
         turnsOver &&
         (duration > 0 || this.durationScale === 0)
@@ -842,7 +867,11 @@ export class TableDepthDirector {
           bands === undefined
             ? undefined
             : // It lasts until that card has landed, however late it set off.
-              { bands, lasts: this.landsIn(ghost.holdFor!) + TURN_MS }
+              {
+                bands,
+                lasts: this.landsIn(ghost.holdFor!) + TURN_MS,
+                revealsArrival: turnsOnPile.has(ghost.holdFor!),
+              }
         );
       }
       for (const shuffle of plan.shuffles) {
@@ -1114,7 +1143,11 @@ export class TableDepthDirector {
     delay: number,
     holdFor?: string,
     toImage?: string,
-    options?: { readonly bands?: number; readonly lasts?: number }
+    options?: {
+      readonly bands?: number;
+      readonly lasts?: number;
+      readonly revealsArrival?: boolean;
+    }
   ): string | null {
     if (!this.layer) return null;
     const key = `depth-ghost-${this.serial++}`;
@@ -1139,11 +1172,8 @@ export class TableDepthDirector {
     }
     const face = document.createElement('div');
     face.className = 'ptcgsim-card__face';
-    const img = document.createElement('img');
-    img.src = shownCardImage(image);
-    img.alt = '';
-    img.draggable = false;
-    face.append(img);
+    const picture = pictureFor(image);
+    face.append(picture);
     element.append(face);
     this.layer.append(element);
     Object.assign(element.style, {
@@ -1162,8 +1192,11 @@ export class TableDepthDirector {
         Math.max(duration, 720 * this.durationScale, options?.lasts ?? 0),
       start: at + delay,
       duration,
+      picture,
+      shows: image,
       ...(options?.bands !== undefined ? { bands: options.bands } : {}),
       ...(holdFor ? { holdFor } : {}),
+      ...(options?.revealsArrival ? { revealsArrival: true } : {}),
       ...(toImage ? { fromImage: image, toImage } : {}),
     });
     this.motion.set(key, holdFor ? from : to, at, duration, from, delay);
@@ -1192,15 +1225,14 @@ export class TableDepthDirector {
     element.dataset.turning = '';
     let image: HTMLElement | null = null;
     if (fromImageUrl !== null) {
-      const turn = document.createElement('img');
-      turn.className = 'ptcgsim-card__turn';
-      turn.src = shownCardImage(fromImageUrl);
-      turn.alt = '';
-      turn.draggable = false;
+      // A copy of the face it had, which paints at once: a new image would
+      // leave the card blank for a frame or two.
+      const turn = pictureFor(fromImageUrl);
+      turn.classList.add('ptcgsim-card__turn');
       face.append(turn);
       image = turn;
     }
-    const flip: Flip = { image, face, start, duration };
+    const flip: Flip = { image, fromImageUrl, face, start, duration };
     this.flips.set(key, flip);
     const own = faceImageOf(face);
     // Infinity: carried over from a node still waiting for its face, so it
@@ -1227,7 +1259,7 @@ export class TableDepthDirector {
   private carryFlip(from: string, to: string) {
     const flip = this.flips.get(from);
     if (!flip || from === to) return;
-    const fromImageUrl = flip.image?.getAttribute('src') ?? null;
+    const fromImageUrl = flip.image ? flip.fromImageUrl : null;
     this.clearFlip(from);
     this.flipFace(to, fromImageUrl, flip.start, flip.duration);
   }
@@ -1537,16 +1569,21 @@ export class TableDepthDirector {
                 )
               )
             : 1;
-        if (progress >= 0.5) {
-          // What the card shows: the deck's own scan if its translation
-          // was missing. Set once; asked again, an image loads again.
-          const img = ghost.element.querySelector('img');
-          const shown = shownCardImage(ghost.toImage);
-          if (img && img.getAttribute('src') !== shown) img.src = shown;
-        }
+        // Its faces change on its edge, to a copy that paints at once.
+        if (progress >= 0.5) this.showOnGhost(ghost, ghost.toImage);
         const base = this.motion.poses.get(key);
         if (base && progress > 0 && progress < 1)
           this.paint(key, turnedOver(base, progress), at);
+      }
+      // Under a card turned over right on top of it, the pile shows that
+      // card's face from when the turn begins, while the card still covers
+      // it: on its edge the card shows itself under it, never the old top.
+      if (ghost.revealsArrival && ghost.holdFor) {
+        const flip = this.flips.get(ghost.holdFor);
+        const arriving = flip ? faceImageOf(flip.face) : null;
+        const url = arriving?.getAttribute('src');
+        if (flip && url && Number.isFinite(flip.start) && at >= flip.start)
+          this.showOnGhost(ghost, url);
       }
       if (
         at >= ghost.expires ||
@@ -1570,6 +1607,14 @@ export class TableDepthDirector {
     this.onActivity?.();
     this.schedule();
   };
+  /** A stand-in shows `url` from now on (set once; a copy paints at once). */
+  private showOnGhost(ghost: Ghost, url: string) {
+    if (ghost.shows === url) return;
+    const next = pictureFor(url);
+    ghost.picture.replaceWith(next);
+    ghost.picture = next;
+    ghost.shows = url;
+  }
   private removeGhost(key: string) {
     this.ghosts.get(key)?.element.remove();
     this.ghosts.delete(key);

@@ -65,6 +65,21 @@ The redesign is built from a small set of primitives, each with one owner.
 - **Ghosts** are `aria-hidden`, input-transparent copies without
   `data-card-id`, for cards that leave the painted table (into a deck, under a
   pile) or that keep a pile covered while its new top flies in.
+- **A picture shown somewhere new paints at once** (2026-11-06, the owner:
+  "during the animation of the flip, it briefly flashes the card underneath
+  it"). A new `<img>`, a clone, or one given a new `src` paints nothing for a
+  frame or two even when the picture is on screen elsewhere (Chromium checks
+  it again first), which left a turning card blank or see-through and the
+  card under a pile showing through it. The old face over a turning card,
+  every ghost, and a card face whose image is still loading a picture that
+  was on screen show a canvas copy of it instead (`card-pictures.ts`):
+  drawn from an image showing it, or from a copy taken off the screen as
+  the renderer installs the scene that takes it away.
+- **A card let go over a pile turns over on top of it**: the ghost holding
+  the pile shows that card's own face from the moment its turn begins (the
+  card still covering it), so on its edge the card shows itself under it,
+  never the card it covers. A card carried in from elsewhere still finds
+  the old top until it lands.
 - **Re-keyed cards** (aliases change at every concealment boundary) are paired
   by the planner from zone deltas of the same owner -- never by identity.
 

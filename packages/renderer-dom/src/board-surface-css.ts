@@ -204,11 +204,26 @@ export const BOARD_SURFACE_CSS = `
    card's 0.716), so the picture is fitted to the card exactly: contained,
    the blank card showed through above and below it as a second, darker
    rim, thicker on some scans than others. */
-.ptcgsim-card__face > img {
+.ptcgsim-card__face > img,
+.ptcgsim-card__face > canvas {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: fill;
+}
+/* A stand-in's copied picture (card-pictures.ts) brings its own corners. */
+.ptcgsim-card-ghost .ptcgsim-card__face:has(> canvas[data-card-picture]) {
+  background: transparent;
+}
+/* A copy of the picture a card's own image is still loading: over it, in
+   its place, until it is in. */
+.ptcgsim-card__face > .ptcgsim-card__picture-copy {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.ptcgsim-card__face:has(> .ptcgsim-card__picture-copy) {
+  background: transparent;
 }
 /* Once the picture is in, its own rounded corners are the card's. */
 .ptcgsim-card__face:has(> img[data-card-image-state='ready']) {

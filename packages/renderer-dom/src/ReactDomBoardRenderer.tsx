@@ -17,6 +17,7 @@ import {
 import { Component, StrictMode, type ErrorInfo, type ReactNode } from 'react';
 import { flushSync } from 'react-dom';
 import { createRoot, type Root } from 'react-dom/client';
+import { keepPicturesLeaving } from './motion/card-pictures.js';
 import { BoardSurface } from './BoardSurface.js';
 
 /**
@@ -152,6 +153,9 @@ export class ReactDomBoardRenderer implements BoardRenderer {
         throw new Error('Presentation event revision does not match the scene');
       }
     }
+    // Before it is drawn: a copy of each picture about to leave the screen,
+    // for the moves that show it a moment longer (card-pictures.ts).
+    if (motion) keepPicturesLeaving(this.host, current, scene);
     this.scene = scene;
     // Only an explicit cause animates. Installs without one -- the parity
     // harness, tests -- keep painting final rectangles immediately.

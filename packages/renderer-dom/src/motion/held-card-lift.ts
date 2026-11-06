@@ -55,10 +55,27 @@ const follow = (from: Element, to: Element): void => {
     follow(from.children[index]!, to.children[index]!);
 };
 
+/** A cloned canvas is blank: each copy is drawn from its original. */
+const paintCanvases = (from: Element, to: Element): void => {
+  const originals = from.querySelectorAll('canvas');
+  const copies = to.querySelectorAll('canvas');
+  for (let index = 0; index < originals.length; index += 1) {
+    const original = originals[index]!;
+    const copy = copies[index];
+    if (!copy || original.width === 0 || original.height === 0) continue;
+    try {
+      copy.getContext('2d')?.drawImage(original, 0, 0);
+    } catch {
+      // Unreadable or unsupported: the copy stays as cloned.
+    }
+  }
+};
+
 const copyOf = (original: HTMLElement): HTMLElement => {
   const copy = original.cloneNode(true) as HTMLElement;
   copy.setAttribute('data-lift-copy', '');
   follow(original, copy);
+  paintCanvases(original, copy);
   return copy;
 };
 

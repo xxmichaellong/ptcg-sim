@@ -92,6 +92,7 @@ import {
 } from './selection-input.js';
 import { DragSwing } from './motion/DragSwing.js';
 import { liftHeldCards } from './motion/held-card-lift.js';
+import { showCopyWhileLoading } from './motion/card-pictures.js';
 import { depthPaintKey } from './motion/depth-paint-key.js';
 import {
   HoverTilt,
@@ -859,6 +860,10 @@ const CardNode = memo(
       }
       image.dataset.cardImageState = 'loading';
       image.style.visibility = 'hidden';
+      // A picture on screen a moment ago (the card was drawn elsewhere, or
+      // was the pile's top before): a copy of it shows at once, not a blank
+      // card for the frame or two the image takes (card-pictures.ts).
+      return showCopyWhileLoading(image);
     }, [card.tableImageUrl, card.imageUrl]);
     return (
       <button
@@ -1240,6 +1245,29 @@ const paintedCards = (
     });
   }
   return { painted, held };
+};
+
+/**
+ * The back the rest of a pile shows under its top while that is carried:
+ * the back the top showed, so a copy of it stands in at once while this
+ * image loads (card-pictures.ts) -- the pile never blank as it is picked
+ * up.
+ */
+const UnderlayBack = ({ src }: { readonly src: string }) => {
+  const ref = useRef<HTMLImageElement>(null);
+  useLayoutEffect(() => {
+    const image = ref.current;
+    return image ? showCopyWhileLoading(image) : undefined;
+  }, [src]);
+  return (
+    <img
+      ref={ref}
+      src={src}
+      alt=""
+      draggable={false}
+      referrerPolicy="no-referrer"
+    />
+  );
 };
 
 export const BoardSurface = ({
@@ -3156,11 +3184,8 @@ export const BoardSurface = ({
                   />
                   <span className="ptcgsim-card__face">
                     {paintsBack(draggedCard) ? (
-                      <img
+                      <UnderlayBack
                         src={draggedCard.tableImageUrl ?? draggedCard.imageUrl}
-                        alt=""
-                        draggable={false}
-                        referrerPolicy="no-referrer"
                       />
                     ) : null}
                   </span>

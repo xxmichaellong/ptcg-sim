@@ -968,6 +968,95 @@ it('flies a card put on a pile from where it was, as one card over the pile as i
   director.destroy();
 });
 
+it('turns a card let go over a pile right on top of it, the pile under it showing that card, never the old top', () => {
+  const { advance } = stubClock();
+  const { view, zone, cardsIn, withZones, project, elementsFor } = tableOf();
+  const deck = cardsIn(view, 'deck');
+  const discard = cardsIn(view, 'discard');
+  const face = discard.find((card) => card.kind === 'known')!;
+  // The deck's top, carried by hand and let go over the discard: it lands
+  // there face up, on the discard's top -- a card of its own.
+  const definition = view.definitions[face.definitionId]!;
+  const dealt: ViewCard = {
+    ...face,
+    id: deck[0]!.id,
+    definitionId: 'dealt' as typeof face.definitionId,
+  };
+  const dropped = {
+    ...withZones(view, { deck: deck.slice(1), discard: [...discard, dealt] }),
+    definitions: {
+      ...view.definitions,
+      dealt: { ...definition, id: dealt.definitionId, imageUrl: '/dealt.webp' },
+    },
+  };
+  const first = project(view);
+  const landing = project(dropped);
+  const elements = elementsFor(first, landing);
+  // Each face as React draws it: loaded, so a turn need not wait for it.
+  const show = (key: string, url: string) => {
+    const element = elements.get(key)!;
+    const picture =
+      element.querySelector('img') ?? document.createElement('img');
+    picture.setAttribute('src', url);
+    Object.defineProperty(picture, 'complete', {
+      value: true,
+      configurable: true,
+    });
+    element.querySelector('.ptcgsim-card__face')!.append(picture);
+  };
+  const pictureOf = (projection: BoardDepthProjection, key: string) => {
+    const card = projection.scene.cards.find((c) => c.renderKey === key)!;
+    return card.tableImageUrl ?? card.imageUrl;
+  };
+  const deckKey = `cover:${zone('deck')}`;
+  const discardKey = `cover:${zone('discard')}`;
+  const oldTop = pictureOf(first, discardKey);
+  show(deckKey, pictureOf(first, deckKey));
+  show(discardKey, oldTop);
+  const layer = document.createElement('div');
+  const director = new TableDepthDirector(elements);
+  director.attach(document.createElement('div'), layer);
+  elements.get(deckKey)!.dataset.held = 'drag';
+  director.commit(null, first, DEFAULT_BOARD_PRESENTATION, undefined, false, 1);
+  // Let go: the discard's top is now the card dealt, turning over.
+  delete elements.get(deckKey)!.dataset.held;
+  const arriving = pictureOf(landing, discardKey);
+  expect(arriving).not.toBe(oldTop);
+  show(discardKey, arriving);
+  show(deckKey, pictureOf(landing, deckKey));
+  director.commit(
+    first.scene,
+    landing,
+    DEFAULT_BOARD_PRESENTATION,
+    { cause: 'predict' },
+    false,
+    1
+  );
+  const underIt = () => {
+    const picture = layer.querySelector<HTMLElement>(
+      '.ptcgsim-card-ghost .ptcgsim-card__face > :is(img, canvas)'
+    );
+    return picture?.dataset.cardPicture ?? picture?.getAttribute('src');
+  };
+  const turning = () => elements.get(discardKey)!.dataset.turning !== undefined;
+  // Until it turns, the pile under it is the pile as it was.
+  expect(underIt()).toBe(oldTop);
+  expect(turning()).toBe(true);
+  const seen: { readonly under: string | null | undefined }[] = [];
+  for (let at = 16; at <= 1600; at += 16) {
+    advance(at);
+    const pose = director.current(discardKey);
+    // On its way over: once it has begun to turn, never the old top.
+    if (pose?.flip !== undefined && pose.flip !== 0)
+      seen.push({ under: underIt() });
+  }
+  expect(seen.length).toBeGreaterThan(0);
+  expect(seen.filter(({ under }) => under === oldTop)).toEqual([]);
+  // Landed and turned, the stand-in is gone.
+  expect(layer.childElementCount).toBe(0);
+  director.destroy();
+});
+
 it('repaints a card React has drawn in its new place, so it never flashes there before setting off', () => {
   stubClock();
   const { view, zone, project, elementsFor } = tableOf();
@@ -1649,17 +1738,29 @@ it("turns a stand-in over to the face its card shows, set once, the deck's own s
     french
   );
   stand.schedule();
-  const img = layer.querySelector<HTMLImageElement>('.ptcgsim-card-ghost img')!;
-  const set: string[] = [];
-  Object.defineProperty(img, 'src', {
-    get: () => img.getAttribute('src') ?? '',
-    set: (value: string) => {
-      set.push(value);
-      img.setAttribute('src', value);
-    },
-  });
-  for (let at = 16; at <= 1600; at += 16) advance(at);
-  expect(set).toEqual([english]);
+  // What the stand-in shows each frame, while it is there: its picture
+  // element and the picture in it (a copy where one can be had, else an
+  // image).
+  const shown: { readonly element: Element; readonly url: string }[] = [];
+  const look = () => {
+    const picture = layer.querySelector<HTMLElement>(
+      '.ptcgsim-card-ghost .ptcgsim-card__face > :is(img, canvas)'
+    );
+    if (!picture) return;
+    const url = picture.dataset.cardPicture ?? picture.getAttribute('src')!;
+    if (shown.at(-1)?.element !== picture)
+      shown.push({ element: picture, url });
+  };
+  look();
+  for (let at = 16; at <= 1600; at += 16) {
+    advance(at);
+    look();
+  }
+  // The back, then -- once, on its edge -- the English scan.
+  expect(shown.map(({ url }) => url)).toEqual([
+    '/v2/assets/cardback.png',
+    english,
+  ]);
   director.destroy();
 });
 

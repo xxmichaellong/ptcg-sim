@@ -16,7 +16,7 @@ import {
   type BoardDepthProjection,
   type BoardPresentation,
 } from '@ptcgsim/renderer-contract';
-import { shownCardImage } from '../card-image-retry.js';
+import { pictureElement as pictureFor } from './card-pictures.js';
 import { faceImageOf, isFaceReady, whenFaceReady } from './face-ready.js';
 import { TableDepthDirector } from './TableDepthDirector.js';
 
@@ -54,6 +54,8 @@ interface Flight {
    * first never drops below its Energy still in the air.
    */
   readonly group: string;
+  /** Let go of by hand where it lands: it settles the last of the way. */
+  readonly landing: boolean;
 }
 
 /**
@@ -66,7 +68,10 @@ interface Turn {
   /** The card (or ghost) turning over, kept lifted until it lies flat. */
   readonly element: HTMLElement;
   readonly face: HTMLElement;
-  readonly overlay: HTMLImageElement | null;
+  /** The old face, a copy that paints at once (else an `<img>`). */
+  readonly overlay: HTMLElement | null;
+  /** The picture `overlay` shows. */
+  readonly fromImageUrl: string | null;
   startAt: number;
   readonly duration: number;
   readonly animations: Animation[];
@@ -294,6 +299,14 @@ export class BoardMotionDirector {
     }
     const plan = planBoardMotion(previous, next, cause);
     const at = now();
+    // The cards just let go of: one now shown by another node (a pile's top
+    // taking it) was put down there by hand.
+    const letGo = new Set<string>();
+    for (const [key, release] of this.releases) {
+      if (at - release.at >= LANDING_WINDOW_MS) continue;
+      const card = previous.cards.find((each) => each.renderKey === key);
+      if (card) letGo.add(String(card.id));
+    }
     const gathering = new Set(
       plan.shuffles.flatMap(
         (shuffle) => shuffle.spread?.map((card) => card.renderKey) ?? []
@@ -307,7 +320,16 @@ export class BoardMotionDirector {
       if (gathering.has(flight.renderKey)) continue;
       this.startFlight(flight, cause, lastPainted, next, at);
     }
-    for (const ghost of plan.ghosts) this.startGhost(ghost, cause);
+    for (const ghost of plan.ghosts) {
+      const holder = ghost.holdFor
+        ? next.cards.find((card) => card.renderKey === ghost.holdFor)
+        : undefined;
+      this.startGhost(
+        ghost,
+        cause,
+        holder !== undefined && letGo.has(String(holder.id))
+      );
+    }
     for (const pulse of plan.pulses) this.pulse(pulse);
     for (const join of plan.joins) {
       const landing = this.flights.get(join.arrivingRenderKey)?.animation;
@@ -623,6 +645,7 @@ export class BoardMotionDirector {
         () => undefined
       ),
       group: target.parentId,
+      landing,
     };
     this.flights.set(planned.renderKey, flight);
     this.notify();
@@ -662,14 +685,13 @@ export class BoardMotionDirector {
     this.stopTurn(key);
     const face = element.querySelector<HTMLElement>('.ptcgsim-card__face');
     if (!face || !canAnimate(face)) return;
-    let overlay: HTMLImageElement | null = null;
+    let overlay: HTMLElement | null = null;
     if (fromImageUrl !== null) {
-      overlay = document.createElement('img');
-      overlay.className = 'ptcgsim-card__turn';
-      overlay.alt = '';
-      overlay.draggable = false;
+      // A copy of the face it had, which paints at once: a new image would
+      // leave the card blank for a frame or two.
+      overlay = pictureFor(fromImageUrl);
+      overlay.classList.add('ptcgsim-card__turn');
       overlay.setAttribute('aria-hidden', 'true');
-      overlay.src = shownCardImage(fromImageUrl);
       face.append(overlay);
     }
     let settle!: () => void;
@@ -680,6 +702,7 @@ export class BoardMotionDirector {
       element,
       face,
       overlay,
+      fromImageUrl,
       startAt,
       duration,
       animations: [],
@@ -768,8 +791,7 @@ export class BoardMotionDirector {
     const turn = this.turns.get(from);
     if (!turn || from === to) return;
     const halfway = now() >= turn.startAt + turn.duration / 2;
-    const fromImageUrl =
-      turn.overlay && !halfway ? turn.overlay.getAttribute('src') : null;
+    const fromImageUrl = turn.overlay && !halfway ? turn.fromImageUrl : null;
     this.stopTurn(from);
     this.turnOver(element, fromImageUrl, turn.startAt, turn.duration, to);
   }
@@ -793,7 +815,15 @@ export class BoardMotionDirector {
     this.notify();
   }
 
-  private startGhost(planned: CardGhost, cause: BoardSceneMotion['cause']) {
+  /**
+   * `putDown`: holding a pile for the card the player has just put down on
+   * it (let go over it), which turns over right on top of it.
+   */
+  private startGhost(
+    planned: CardGhost,
+    cause: BoardSceneMotion['cause'],
+    putDown = false
+  ) {
     const layer = this.ghostLayer;
     if (!layer || this.settings.reduced) return;
     const restRect = planned.to ?? planned.from;
@@ -811,12 +841,15 @@ export class BoardMotionDirector {
     } satisfies Partial<CSSStyleDeclaration>);
     const face = document.createElement('div');
     face.className = 'ptcgsim-card__face';
-    const image = document.createElement('img');
-    image.alt = '';
-    image.draggable = false;
-    image.src = shownCardImage(planned.imageUrl);
-    face.append(image);
+    let picture = pictureFor(planned.imageUrl);
+    face.append(picture);
     ghost.append(face);
+    /** The stand-in shows `url` from now on: a copy that paints at once. */
+    const show = (url: string) => {
+      const next = pictureFor(url);
+      picture.replaceWith(next);
+      picture = next;
+    };
     layer.append(ghost);
     this.ghosts.add(ghost);
     this.notify();
@@ -844,6 +877,11 @@ export class BoardMotionDirector {
       void flight.finished
         .then(() => this.turns.get(planned.holdFor!)?.done)
         .then(remove);
+      // Let go of right over the pile and turned over on top of it: the pile
+      // shows that card's face from when the turn begins, while the card
+      // still covers it, so on its edge it never shows the old top.
+      if (flight.landing || putDown)
+        this.revealOnTurn(planned.holdFor, ghost, show);
       return;
     }
     if (!planned.to) {
@@ -898,7 +936,7 @@ export class BoardMotionDirector {
     this.track(animation);
     if (planned.toImageUrl) {
       // Its new face first, so the turn waits for it to be ready.
-      image.src = shownCardImage(planned.toImageUrl);
+      show(planned.toImageUrl);
       this.turnOver(
         ghost,
         planned.imageUrl,
@@ -908,6 +946,29 @@ export class BoardMotionDirector {
       );
     }
     void animation.finished.then(remove, remove);
+  }
+
+  /**
+   * Once `key`'s turn has begun, `show` its own face on the stand-in under
+   * it (checked each frame until then, or until either has gone).
+   */
+  private revealOnTurn(
+    key: string,
+    ghost: HTMLElement,
+    show: (url: string) => void
+  ): void {
+    const check = () => {
+      if (!this.ghosts.has(ghost)) return;
+      const turn = this.turns.get(key);
+      if (!turn) return;
+      const url = faceImageOf(turn.face)?.getAttribute('src');
+      if (url && Number.isFinite(turn.startAt) && now() >= turn.startAt) {
+        show(url);
+        return;
+      }
+      requestAnimationFrame(check);
+    };
+    if (typeof requestAnimationFrame === 'function') check();
   }
 
   private pulse(pulse: MarkerPulse): void {
