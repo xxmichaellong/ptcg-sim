@@ -774,6 +774,14 @@
     ],
     "translation": "{key} is gereserveerd voor {action}."
   },
+  "DYnhzF": {
+    "message": "{kind, select, asleep {Asleep} burned {Burned} confused {Confused} paralyzed {Paralyzed} other {Poisoned}}",
+    "context": "a special condition in a list",
+    "comments": [
+      "One Special Condition named in a Log line listing several: Asleep, Burned, Confused, Paralyzed or Poisoned."
+    ],
+    "translation": "{kind, select, asleep {Slapend} burned {Verbrand} confused {Verward} paralyzed {Verlamd} other {Vergiftigd}}"
+  },
   "AIjjJ1": {
     "message": "{label}, {badge} new",
     "comments": [
@@ -792,6 +800,14 @@
     "message": "{last} ends on top",
     "translation": "{last} komt bovenop te liggen"
   },
+  "NtiyXp": {
+    "message": "{list} and {item}",
+    "context": "the last of a list of special conditions",
+    "comments": [
+      "Adds the last Special Condition to a list in a Log line: \"Poisoned and Burned\". {list} is the conditions so far, {item} the last."
+    ],
+    "translation": "{list} en {item}"
+  },
   "AiqpXX": {
     "message": "{list}, {item}",
     "context": "a list of card names in a Log line",
@@ -805,6 +821,14 @@
     "context": "a list of coin faces in a Log line",
     "comments": [
       "Adds one coin face to a list in a Log line: \"heads, tails\". {list} is the faces so far, {item} the next. Use the list separator of your language."
+    ],
+    "translation": "{list}, {item}"
+  },
+  "hJyAvU": {
+    "message": "{list}, {item}",
+    "context": "a list of special conditions",
+    "comments": [
+      "Adds a Special Condition to a list in a Log line: \"Poisoned, Burned\". {list} is the conditions so far, {item} the next. Use the list separator of your language."
     ],
     "translation": "{list}, {item}"
   },
@@ -1020,6 +1044,14 @@
     ],
     "translation": "Lost Zone van {name}"
   },
+  "SXz3fn": {
+    "message": "{name} made {card} {all}",
+    "context": "several special conditions",
+    "comments": [
+      "Log line: the Active Pokémon now has several Special Conditions. {name} is a player's name, {card} the Pokémon's name, {all} the conditions (\"Poisoned, Burned and Asleep\")."
+    ],
+    "translation": "{name} maakte {card} {all}"
+  },
   "cgX3uC": {
     "message": "{name} made {card} {kind, select, asleep {Asleep} burned {Burned} confused {Confused} paralyzed {Paralyzed} other {Poisoned}}",
     "comments": [
@@ -1135,6 +1167,13 @@
       "Read aloud by screen readers. {name} is a player's name, {turn} the turn number."
     ],
     "translation": "{name} begon beurt {turn}"
+  },
+  "pSQsLP": {
+    "message": "{name} took {taken} off {card}, still {still}",
+    "comments": [
+      "Log line: a player took some Special Conditions off the Active Pokémon and others stay on. {name} is a player's name, {card} the Pokémon's name; {taken} the conditions taken off and {still} those still on (\"Burned\", \"Poisoned and Asleep\")."
+    ],
+    "translation": "{name} haalde {taken} van {card} af, nog {still}"
   },
   "qFW4ar": {
     "message": "{name} took the damage off {card}",
@@ -4509,6 +4548,14 @@
     "message": "Mark VSTAR Power unused",
     "translation": "VSTAR Power als ongebruikt markeren"
   },
+  "1_UUg5": {
+    "message": "Markers",
+    "context": "Poisoned and Burned",
+    "comments": [
+      "Groups the Special Conditions shown by a marker on the card (Poisoned, Burned), each on or off."
+    ],
+    "translation": "Markers"
+  },
   "ZertXi": {
     "message": "Master Ball",
     "context": "card back",
@@ -5111,6 +5158,14 @@
       "{0} is the Flip button's label, which turns the table around"
     ],
     "translation": "Als je alleen speelt, speel je beide kanten. Druk op <0>{0}</0> om de tafel naar de andere kant te draaien."
+  },
+  "7zOgIf": {
+    "message": "One at a time",
+    "context": "Asleep, Paralyzed, Confused",
+    "comments": [
+      "Groups the Special Conditions shown by turning the card (Asleep, Paralyzed, Confused): a Pokémon has one of them at most."
+    ],
+    "translation": "Één tegelijk"
   },
   "U1CJvq": {
     "message": "One card",
@@ -5894,6 +5949,14 @@
       "Takes one Energy symbol off an attack's cost. {typeName} is a type (\"Fire\")."
     ],
     "translation": "{typeName} verwijderen"
+  },
+  "iyL83r": {
+    "message": "Remove all conditions",
+    "comments": [
+      "Button in a Pokémon's condition controls: takes every Special Condition off it.",
+      "Button in a Pokémon's condition controls: takes every Special Condition off it."
+    ],
+    "translation": "Alle condities verwijderen"
   },
   "-cND-P": {
     "message": "Remove all damage",
@@ -7173,6 +7236,13 @@
       "Command palette: takes a reminder off the selected Pokémon. The reminder follows, e.g. \"Take off: Can't attack\"."
     ],
     "translation": "Weghalen: {0}"
+  },
+  "fN2Lgp": {
+    "message": "Take off: {name}",
+    "comments": [
+      "Command palette: takes a Special Condition off the selected Pokémon. The condition follows, e.g. \"Take off: Poisoned\"."
+    ],
+    "translation": "Verwijderen: {name}"
   },
   "ACKCfc": {
     "message": "Takes less damage",

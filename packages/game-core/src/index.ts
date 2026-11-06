@@ -16,6 +16,7 @@ export * from './lifecycle-reset.js';
 export * from './location.js';
 export * from './card-plays-as.js';
 export * from './model.js';
+export * from './special-conditions.js';
 export * from './stack-reminders.js';
 export * from './play-stack-boards.js';
 export * from './projection.js';

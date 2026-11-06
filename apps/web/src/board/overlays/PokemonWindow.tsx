@@ -6,6 +6,8 @@ import { TrashIcon } from '@phosphor-icons/react/dist/csr/Trash';
 import { basicEnergyTypeOf } from '@ptcgsim/deck-core';
 import {
   HP_MODIFIER_LIMIT,
+  specialConditionKinds,
+  toggleSpecialCondition,
   type CardText,
   type CardTextAbility,
   type CardTextAttack,
@@ -17,7 +19,6 @@ import {
 import {
   damageCounterBand,
   markerHint,
-  specialConditionKind,
   type CardSceneNode,
 } from '@ptcgsim/renderer-contract';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
@@ -32,7 +33,7 @@ import {
   parseLegacyDamageInput,
   type LegacyBoardOverlayActionRequest,
 } from '../resolveLegacyBoardOverlayAction.js';
-import { CONDITION_CODES, CONDITIONS, conditionArt } from './MarkerControls.js';
+import { CONDITION_GROUPS, conditionArt } from './MarkerControls.js';
 import './PokemonWindow.css';
 
 type ViewStack = MatchViewState['stacks'][string];
@@ -848,9 +849,10 @@ export const PokemonWindow = ({
   const topId = topCard?.id;
   const active = stack.slot === 'active';
   const damage = stack.damage ?? 0;
-  const condition = stack.specialCondition
-    ? specialConditionKind(stack.specialCondition)
-    : null;
+  // Several may be on (ADR-043 §14): Poisoned and Burned beside one of the
+  // turning three.
+  const conditions = specialConditionKinds(stack.specialCondition);
+  const condition = conditions[0] ?? null;
   const summary = energySummary(energy, definitions);
   const attachedCount = attached.length;
   const hpModifier = stack.hpModifier ?? 0;
@@ -1026,8 +1028,13 @@ export const PokemonWindow = ({
               />
               {active ? (
                 <div className="pokemon-window__markers">
-                  {active
-                    ? CONDITIONS.map((kind) => (
+                  {/* Poisoned and Burned each on or off; then Asleep,
+                      Paralyzed and Confused, one at a time (each turns the
+                      card), a new one replacing the last. */}
+                  {CONDITION_GROUPS.map((group, index) => {
+                    const chips = group.map((kind) => {
+                      const on = conditions.includes(kind);
+                      return (
                         <Toggle
                           key={kind}
                           kind="condition"
@@ -1035,7 +1042,7 @@ export const PokemonWindow = ({
                             kind: 'specialCondition',
                             value: kind,
                           })}
-                          pressed={condition === kind}
+                          pressed={on}
                           enabled={canMark}
                           onPress={() =>
                             topId &&
@@ -1044,7 +1051,11 @@ export const PokemonWindow = ({
                               action: 'setSpecialCondition',
                               cardId: topId,
                               value:
-                                condition === kind ? '' : CONDITION_CODES[kind],
+                                toggleSpecialCondition(
+                                  stack.specialCondition,
+                                  kind,
+                                  !on
+                                ) ?? '',
                             })
                           }
                         >
@@ -1054,8 +1065,36 @@ export const PokemonWindow = ({
                             draggable={false}
                           />
                         </Toggle>
-                      ))
-                    : null}
+                      );
+                    });
+                    const shown = group.some(
+                      (kind) => canMark || conditions.includes(kind)
+                    );
+                    return shown ? (
+                      <div
+                        key={index}
+                        className="pokemon-window__condition-group"
+                        role="group"
+                        aria-label={
+                          index === 0
+                            ? t({
+                                message: 'Markers',
+                                context: 'Poisoned and Burned',
+                                comment:
+                                  'Groups the Special Conditions shown by a marker on the card (Poisoned, Burned), each on or off.',
+                              })
+                            : t({
+                                message: 'One at a time',
+                                context: 'Asleep, Paralyzed, Confused',
+                                comment:
+                                  'Groups the Special Conditions shown by turning the card (Asleep, Paralyzed, Confused): a Pokémon has one of them at most.',
+                              })
+                        }
+                      >
+                        {chips}
+                      </div>
+                    ) : null;
+                  })}
                 </div>
               ) : null}
             </div>

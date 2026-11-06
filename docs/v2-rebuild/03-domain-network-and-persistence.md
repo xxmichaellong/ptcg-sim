@@ -631,7 +631,11 @@ hibernation attachment), and every `StatePublication` and `ReplayFrame` it
 sends leaves out what that level can't read (`presentationEventsForLevel`).
 The older tab's log only misses those lines. Adding an event or verb raises the
 level and says there what the level below it can't read (2026-11-06: level 1
-is `DamageSet`, `ConditionSet` and `CardMoved`'s `switched`).
+is `DamageSet`, `ConditionSet` and `CardMoved`'s `switched`; level 2 is
+`ConditionSet`'s `conditions` and `off`, several Special Conditions at once,
+which a level-1 client gets as its single `condition`). A new field may also
+be stripped for an older level rather than the whole event left out, when the
+older shape still says something true.
 
 Reveal/hide and private-inspection presentation facts carry the trusted actor or
 viewer, target/source player, card-versus-zone scope, and a fixed semantic

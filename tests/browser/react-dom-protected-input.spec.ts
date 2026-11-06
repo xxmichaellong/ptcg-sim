@@ -1071,6 +1071,7 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
       chipsBox.y >= markerBox.y + markerBox.height ||
       chipsBox.y + chipsBox.height <= markerBox.y
   ).toBe(true);
+  // Paralyzed goes on beside Poisoned (the rules, ADR-043 §14).
   await chips.getByRole('button', { name: 'Paralyzed' }).click();
   await expect
     .poll(async () => (await evidence(page)).submissions)
@@ -1078,7 +1079,7 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
       {
         type: 'SetSpecialCondition',
         stackId: fixture.activeStackId,
-        condition: 'Pa',
+        condition: 'P Pa',
       },
     ]);
   const conditionEvidence = await evidence(page);
@@ -1099,7 +1100,7 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
       kind: 'context',
       action: 'setSpecialCondition',
       cardId: fixture.activeTopCardId,
-      value: 'Pa',
+      value: 'P Pa',
     },
   ]);
   expect(conditionEvidence.overlayRejections).toEqual([]);
@@ -1108,7 +1109,9 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
   // They stay open for the next choice: taking the condition off.
   await clearEvidence(page);
   await expect(chips).toBeVisible();
-  await chips.getByRole('button', { name: 'Remove condition' }).click();
+  await chips
+    .getByRole('button', { name: /^Remove (condition|all conditions)$/u })
+    .click();
   await expect
     .poll(async () => (await evidence(page)).submissions)
     .toEqual([

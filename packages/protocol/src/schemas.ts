@@ -1266,9 +1266,21 @@ const DamageSetPresentationEventSchema = v.object({
   damage: v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(9990)),
 });
 
+const SpecialConditionKindSchema = v.picklist([
+  'poisoned',
+  'burned',
+  'asleep',
+  'paralyzed',
+  'confused',
+] as const);
+
 /**
- * A player gave the Active Pokémon a Special Condition (v1's marker: a
- * letter, or a word typed), or took it off (`condition` absent).
+ * A player changed the Active Pokémon's Special Conditions (ADR-043 §14), or
+ * put a marker they typed on it, or took them all off (`condition` absent).
+ * `condition` is one marker as a client before several were kept reads it:
+ * the note typed, or the condition just put on (else one still on);
+ * `conditions` are all of them as they now stand, in checkup order, and
+ * `off` those this change took off while others stay (level 2).
  */
 const ConditionSetPresentationEventSchema = v.object({
   type: v.literal('ConditionSet'),
@@ -1279,6 +1291,12 @@ const ConditionSetPresentationEventSchema = v.object({
   source: v.picklist(['active', 'bench'] as const),
   cardName: v.optional(boundedString(256)),
   condition: v.optional(boundedString(16)),
+  conditions: v.optional(
+    v.pipe(v.array(SpecialConditionKindSchema), v.minLength(1), v.maxLength(3))
+  ),
+  off: v.optional(
+    v.pipe(v.array(SpecialConditionKindSchema), v.minLength(1), v.maxLength(3))
+  ),
 });
 
 /** A player put a reminder on a Pokémon in play, or took it off. */
@@ -1668,15 +1686,32 @@ export type PresentationEvent = v.InferOutput<typeof PresentationEventSchema>;
 export const presentationEventsForLevel = (
   events: readonly PresentationEvent[],
   level: number
-): readonly PresentationEvent[] =>
-  level >= 1
-    ? events
-    : events.filter(
-        (event) =>
-          event.type !== 'DamageSet' &&
-          event.type !== 'ConditionSet' &&
-          !(event.type === 'CardMoved' && event.verb === 'switched')
-      );
+): readonly PresentationEvent[] => {
+  if (level >= 2) return events;
+  if (level < 1) {
+    return events.filter(
+      (event) =>
+        event.type !== 'DamageSet' &&
+        event.type !== 'ConditionSet' &&
+        !(event.type === 'CardMoved' && event.verb === 'switched')
+    );
+  }
+  // Level 1 reads one Special Condition (`condition`), not the list.
+  if (
+    !events.some(
+      (event) =>
+        event.type === 'ConditionSet' &&
+        (event.conditions !== undefined || event.off !== undefined)
+    )
+  ) {
+    return events;
+  }
+  return events.map((event) => {
+    if (event.type !== 'ConditionSet') return event;
+    const { conditions: _conditions, off: _off, ...single } = event;
+    return single;
+  });
+};
 export type ClientMessage = v.InferOutput<typeof ClientMessageSchema>;
 export type ServerMessage = v.InferOutput<typeof ServerMessageSchema>;
 export type SerializedMatchViewState = v.InferOutput<

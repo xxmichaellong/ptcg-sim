@@ -770,6 +770,10 @@
               "kind": "type"
             },
             {
+              "name": "breaksSpecialConditionRules",
+              "kind": "value"
+            },
+            {
               "name": "canonicalCardBackEmblem",
               "kind": "value"
             },
@@ -1166,6 +1170,10 @@
               "kind": "value"
             },
             {
+              "name": "normalizeSpecialCondition",
+              "kind": "value"
+            },
+            {
               "name": "OncePerGameMarkers",
               "kind": "type"
             },
@@ -1246,6 +1254,10 @@
               "kind": "value"
             },
             {
+              "name": "ROTATION_CONDITIONS",
+              "kind": "value"
+            },
+            {
               "name": "sameCardPresentation",
               "kind": "value"
             },
@@ -1262,8 +1274,32 @@
               "kind": "value"
             },
             {
+              "name": "SPECIAL_CONDITION_CODES",
+              "kind": "value"
+            },
+            {
+              "name": "SPECIAL_CONDITIONS",
+              "kind": "value"
+            },
+            {
               "name": "SpecialCondition",
               "kind": "type"
+            },
+            {
+              "name": "specialConditionKind",
+              "kind": "value"
+            },
+            {
+              "name": "SpecialConditionKind",
+              "kind": "type"
+            },
+            {
+              "name": "specialConditionKinds",
+              "kind": "value"
+            },
+            {
+              "name": "specialConditionParts",
+              "kind": "value"
             },
             {
               "name": "stableHash",
@@ -1299,6 +1335,10 @@
             },
             {
               "name": "STANDARD_CARD_BACK_ID",
+              "kind": "value"
+            },
+            {
+              "name": "toggleSpecialCondition",
               "kind": "value"
             },
             {
@@ -1344,6 +1384,10 @@
             {
               "name": "WorkAreaId",
               "kind": "type"
+            },
+            {
+              "name": "writeSpecialConditions",
+              "kind": "value"
             },
             {
               "name": "ZoneId",

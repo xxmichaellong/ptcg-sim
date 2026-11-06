@@ -209,15 +209,22 @@ describe('boardCommands', () => {
       { kind: 'context', action: 'setDamage', cardId, value: '120' },
       'palette'
     );
-    const burned = find(commands, 'selected.condition')
-      .submenu!().commands.find(
+    // The fixture's Active is Poisoned: Burned goes on beside it, and
+    // Poisoned is offered to take off (ADR-043 §14).
+    const conditions = find(commands, 'selected.condition').submenu!().commands;
+    const burned = conditions.find(
       (command) => command.id === 'selected.condition.burned'
     )!;
     burned.run!({});
     expect(runtime.emitLegacyOverlayAction).toHaveBeenLastCalledWith(
-      { kind: 'context', action: 'setSpecialCondition', cardId, value: 'B' },
+      { kind: 'context', action: 'setSpecialCondition', cardId, value: 'P B' },
       'palette'
     );
+    expect(
+      conditions.find(
+        (command) => command.id === 'selected.condition.poisoned'
+      )!.title
+    ).toBe('Take off: Poisoned');
   });
 
   it('takes damage off by setting what is left, and offers it only where there is some', () => {

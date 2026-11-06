@@ -2,6 +2,7 @@ import {
   activeWentAway,
   layOutPlayStackAcrossBoards,
   loneBenchedPromotions,
+  normalizeSpecialCondition,
   ABILITIES_USED_LIMIT,
   STACK_REMINDERS,
 } from '@ptcgsim/game-core';
@@ -1305,9 +1306,13 @@ const predict = (
         damage: command.damage,
       }));
     case 'SetSpecialCondition':
+      // As the room keeps it: several in their checkup order (ADR-043 §14).
       return updateStack(view, command.stackId, (stack) => ({
         ...stack,
-        specialCondition: command.condition,
+        specialCondition:
+          command.condition === null
+            ? null
+            : normalizeSpecialCondition(command.condition),
       }));
     case 'SetAbilityUsed':
       // As the room keeps it (game-core StackAbilitySet): the names count

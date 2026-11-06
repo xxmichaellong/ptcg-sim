@@ -51,6 +51,37 @@ describe('presentation levels', () => {
     expect(presentationEventsForLevel(events, PRESENTATION_LEVEL)).toBe(events);
   });
 
+  it('gives a level-1 client one Special Condition, not the list it would not read', () => {
+    const several: PresentationEvent = {
+      type: 'ConditionSet',
+      revision: 4,
+      playerId: 'p1',
+      source: 'active',
+      cardName: 'Pikachu',
+      condition: 'B',
+      conditions: ['poisoned', 'burned'],
+    };
+    expect(v.safeParse(PresentationEventSchema, several).success).toBe(true);
+    const [single, kept] = presentationEventsForLevel([several, events[3]!], 1);
+    expect(single).toEqual({
+      type: 'ConditionSet',
+      revision: 4,
+      playerId: 'p1',
+      source: 'active',
+      cardName: 'Pikachu',
+      condition: 'B',
+    });
+    expect(kept).toBe(events[3]);
+    expect(presentationEventsForLevel([several], 2)).toEqual([several]);
+    // A list breaking the rules' bounds is no event.
+    expect(
+      v.safeParse(PresentationEventSchema, {
+        ...several,
+        conditions: ['poisoned', 'burned', 'asleep', 'confused'],
+      }).success
+    ).toBe(false);
+  });
+
   it('takes a Hello with its level, or without one (a build from before)', () => {
     const hello = {
       type: 'Hello',

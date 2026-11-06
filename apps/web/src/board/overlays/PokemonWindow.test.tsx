@@ -255,6 +255,66 @@ describe('the Pokémon window', () => {
     expect(window.querySelectorAll('.pokemon-window__toggle')).toHaveLength(5);
   });
 
+  it('puts Poisoned and Burned on beside one of Asleep, Paralyzed and Confused', async () => {
+    const stackId = view.boards[blue]!.activeStackId!;
+    const top = view.stacks[stackId]!.evolutionCards.at(-1)!;
+    const conditioned: MatchViewState = {
+      ...view,
+      stacks: {
+        ...view.stacks,
+        [stackId]: { ...view.stacks[stackId]!, specialCondition: 'P A' },
+      },
+    };
+    const callbacks = actions();
+    const window = await render(
+      {
+        ...stateFor(blue),
+        view: conditioned,
+        scene: createBoardSceneForViewport(conditioned, {
+          geometryVersion: 1,
+          viewport: { width: 1280, height: 720, devicePixelRatio: 1 },
+          bottomPlayerId: blue,
+          splitRatio: 0.5,
+        }),
+      },
+      callbacks
+    );
+    const chip = (name: string) =>
+      window.querySelector<HTMLButtonElement>(
+        `.pokemon-window__toggle[aria-label="${name}"]`
+      )!;
+    // Two groups: the markers, then the three one at a time.
+    const groups = [
+      ...window.querySelectorAll('.pokemon-window__condition-group'),
+    ].map((group) =>
+      [...group.querySelectorAll('.pokemon-window__toggle')].map((toggle) =>
+        toggle.getAttribute('aria-label')
+      )
+    );
+    expect(groups).toEqual([
+      ['Poisoned', 'Burned'],
+      ['Asleep', 'Paralyzed', 'Confused'],
+    ]);
+    expect(chip('Poisoned').getAttribute('aria-pressed')).toBe('true');
+    expect(chip('Asleep').getAttribute('aria-pressed')).toBe('true');
+    expect(chip('Burned').getAttribute('aria-pressed')).toBe('false');
+    const pressed = async (name: string) => {
+      await act(async () => chip(name).click());
+      return callbacks.invokeWindowAction.mock.calls.at(-1)![0];
+    };
+    // Burned goes on beside the two; Paralyzed replaces Asleep; Poisoned
+    // comes off alone.
+    expect(await pressed('Burned')).toEqual({
+      kind: 'context',
+      action: 'setSpecialCondition',
+      cardId: top.id,
+      value: 'P B A',
+    });
+    expect((await pressed('Paralyzed')).value).toBe('P Pa');
+    expect((await pressed('Poisoned')).value).toBe('A');
+    expect((await pressed('Asleep')).value).toBe('P');
+  });
+
   it('lays out the Pokémon’s cards, status and moves, and uses a move by name', async () => {
     const callbacks = actions();
     const window = await render(stateFor(blue), callbacks);

@@ -169,6 +169,44 @@ card itself. Using an Ability was the card menu's "ability used" marker
     did, setting the Pokémon's marker alone, so a room's kept history
     still hashes as it was.
 
+14. **Special Conditions stack as the rules say** (2026-11-06, the owner:
+    "i should be able to select multiple special conditions? ... i'm pretty
+    sure some of these conditions are stackable"). The rules (the rulebook;
+    Bulbapedia, "Special Condition (TCG)"): Asleep, Confused and Paralyzed
+    are shown by turning the card, so a Pokémon has one of them at most and
+    a new one replaces the last; Burned and Poisoned are markers, and either
+    or both can be on beside one of the three; going to the Bench, evolving
+    and devolving take them all off.
+    - **Kept in the one marker string the stack always had**
+      (`PlayStack.specialCondition`): several conditions are written as their
+      v1 letters in checkup order, space-separated ("P B Pa"; game-core
+      `special-conditions.ts`). One condition and v1's typed marker (a word,
+      or anything typed) are kept as typed. So nothing stored changes shape:
+      rooms, replays, continuation saves and the snapshot schema (8) read as
+      they were, `SetSpecialCondition` is unchanged on the wire, and a client
+      from before shows several as one typed marker.
+    - **A marker names conditions** only when every part names one and they
+      may stand together; anything else is a typed note, which stands alone:
+      putting a condition on takes a note off, and typing a note replaces the
+      conditions. The room refuses a value whose parts are all conditions but
+      break the rules ("A C", "P P"); a note stored like that before still
+      loads, read as a note.
+    - **The controls** (the window's chips, the marker controls, the
+      palette): each condition on or off, the markers (Poisoned, Burned)
+      apart from the three one at a time, a new one of those replacing the
+      last; "Remove all conditions" when several are on. The keys' cycle
+      (v1's) still steps through single conditions, from the first on.
+    - **On the card**, each condition is its own official chip (the Pokémon
+      TCG Pocket icons the table already wore), the first where v1 puts its
+      marker and the rest stepping down the card (up, on the opponent's
+      side), 86% of a chip apart.
+    - **The log** tells them as they now stand: "Blue made Pikachu Poisoned,
+      Burned and Asleep"; "Blue took Burned off Pikachu, still Poisoned".
+      `ConditionSet` carries `conditions` (all of them) and `off` (taken off
+      while others stay); `condition` stays the one marker a client from
+      before reads -- the note, or the condition just put on. Presentation
+      level 2: a level-1 client gets `condition` alone.
+
 ## Consequences
 
 - The opponent sees which print each card in play is (its picture already

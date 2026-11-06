@@ -12,8 +12,10 @@ export const MAX_PRESENTATION_EVENTS = 100;
  * `presentationEventsForLevel` what the level before it can't read.
  *
  * 1 (2026-11-05): DamageSet, ConditionSet, and CardMoved's `switched`.
+ * 2 (2026-11-06): ConditionSet's `conditions` and `off` (several Special
+ *   Conditions at once); level 1 gets its single `condition`.
  */
-export const PRESENTATION_LEVEL = 1;
+export const PRESENTATION_LEVEL = 2;
 export const MAX_ROOM_CODE_LENGTH = 64;
 /** Generated v2 room discovery codes omit ambiguous I/O/0/1 characters. */
 export const V2_ROOM_CODE_PATTERN = /^[A-HJ-NP-Z2-9]{12}$/u;

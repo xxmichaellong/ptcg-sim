@@ -643,6 +643,21 @@
   display: none;
 }
 
+/* The Special Conditions in their two sets (ADR-043 §14): Poisoned and
+   Burned, each on or off; then Asleep, Paralyzed and Confused, one at a
+   time -- set apart by a rule. */
+.pokemon-window__condition-group {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.pokemon-window__condition-group + .pokemon-window__condition-group {
+  margin-inline-start: var(--space-1);
+  padding-inline-start: var(--space-2);
+  border-inline-start: 1px solid var(--color-border);
+}
+
 /* A marker that is on or off: lit, latched in, while it is on. */
 .pokemon-window__toggle {
   display: inline-flex;

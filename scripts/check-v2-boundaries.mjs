@@ -41,6 +41,11 @@ const WEB_ALLOWED_GAME_CORE_SOURCES = new Set([
   // and the client both check a deck's own card text with. It imports
   // nothing at runtime.
   'packages/game-core/src/card-text.ts',
+  // The Special Conditions' rules (ADR-043 §14): which may stand together,
+  // read and written as the marker string. Pure string functions the room
+  // checks and the client's controls, chips and log use; it imports nothing
+  // at runtime.
+  'packages/game-core/src/special-conditions.ts',
 ]);
 
 const SOURCE_FREE_WEB_RUNTIME_DIGESTS = new Set([

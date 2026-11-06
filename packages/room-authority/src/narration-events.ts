@@ -1,6 +1,8 @@
 import {
   findCardLocation,
   isCardKnownToViewer,
+  SPECIAL_CONDITION_CODES,
+  specialConditionKinds,
   type CardInstanceId,
   type DomainEvent,
   type EventBatch,
@@ -880,6 +882,19 @@ const narrate = (
       const top = stack?.evolutionCardIds.at(-1);
       if (!stack || !top) return [];
       const cardName = publicName(state, previousState, top);
+      // Its conditions as they now stand, and what came off while others
+      // stay; a client from before reads one (`condition`): the note, the
+      // condition just put on, else one still on (ADR-043 §14).
+      const now = specialConditionKinds(event.condition);
+      const before = specialConditionKinds(
+        previousState.stacks[event.stackId]?.specialCondition
+      );
+      const added = now.filter((kind) => !before.includes(kind));
+      const off = before.filter((kind) => !now.includes(kind));
+      const single =
+        now.length === 0
+          ? (event.condition ?? undefined)
+          : SPECIAL_CONDITION_CODES[added[0] ?? now[0]!];
       return [
         {
           type: 'ConditionSet',
@@ -888,7 +903,11 @@ const narrate = (
           stackId: event.stackId,
           source: stack.slot,
           ...(cardName ? { cardName } : {}),
-          ...(event.condition ? { condition: event.condition } : {}),
+          ...(single ? { condition: single } : {}),
+          ...(now.length > 0 ? { conditions: [...now] } : {}),
+          ...(now.length > 0 && added.length === 0 && off.length > 0
+            ? { off }
+            : {}),
         },
       ];
     }

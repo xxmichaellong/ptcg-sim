@@ -1,6 +1,10 @@
 import { MAX_COIN_FLIP_COUNT, MAX_UNTIL_TAILS_FLIPS } from './coin-flips.js';
 import { isStackReminder } from './stack-reminders.js';
 import {
+  breaksSpecialConditionRules,
+  normalizeSpecialCondition,
+} from './special-conditions.js';
+import {
   CARD_STEP_TYPES,
   type ApplyCardStepsCommand,
   type BaseGameCommand,
@@ -2866,11 +2870,19 @@ export const decideCommand = (
       if (!stack) {
         return reject('not_found', `Stack ${command.stackId} does not exist`);
       }
-      const normalized = command.condition?.trim() ?? null;
+      const trimmed = command.condition?.trim() ?? null;
+      const normalized =
+        trimmed === null ? null : normalizeSpecialCondition(trimmed);
       const condition =
         normalized === '' || normalized === '0' ? null : normalized;
       if (condition !== null && condition.length > 16) {
         return reject('invalid_command', 'Condition marker is too long');
+      }
+      if (condition !== null && breaksSpecialConditionRules(condition)) {
+        return reject(
+          'invalid_command',
+          'Asleep, Confused and Paralyzed replace each other, and no condition is on twice'
+        );
       }
       if (condition !== null && stack.slot !== 'active') {
         return reject(

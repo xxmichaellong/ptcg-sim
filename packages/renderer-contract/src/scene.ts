@@ -9,6 +9,7 @@ import type {
 import {
   resolveCardPresentation,
   sameCardPresentation,
+  specialConditionParts,
 } from '@ptcgsim/game-core';
 import {
   composeCardArtwork,
@@ -794,8 +795,31 @@ const addMarkers = (
     });
   };
   if (stack.damage !== null) marker('damage', String(stack.damage));
-  if (stack.specialCondition !== null)
-    marker('specialCondition', stack.specialCondition);
+  // Each Special Condition a chip of its own (game-core: Poisoned and Burned
+  // beside one of the turning three, ADR-043 §14), the first where v1 puts
+  // its marker and the rest stepping along the card's edge toward its middle;
+  // a typed note is one chip.
+  specialConditionParts(stack.specialCondition).forEach((part, index) => {
+    const first = layout.specialCondition.bounds;
+    const step = first.height * 0.86 * index;
+    markers.push({
+      id:
+        index === 0
+          ? `${topCard.id}:specialCondition`
+          : `${topCard.id}:specialCondition:${index}`,
+      parentCardId: topCard.id,
+      side: topCard.side,
+      kind: 'specialCondition',
+      presentation,
+      value: part,
+      bounds: {
+        ...copyRect(first),
+        y: first.y + (topCard.side === 'opponent' ? -step : step),
+      },
+      zIndex: topCard.zIndex + layout.specialCondition.sourceZIndex,
+      label: `specialCondition: ${part}`,
+    });
+  });
   if (stack.abilityUsed) marker('abilityUsed', 'used');
   // Its reminders, each a chip of its own in a row.
   const reminders = stack.reminders ?? [];

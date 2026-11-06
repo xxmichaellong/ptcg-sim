@@ -286,6 +286,52 @@ const superseding = (
   );
 
 /**
+ * Special Conditions named in a Log line, in the language shown: "Burned",
+ * "Poisoned and Burned", "Poisoned, Burned and Asleep".
+ */
+const conditionList = (
+  kinds: readonly (
+    'poisoned' | 'burned' | 'asleep' | 'paralyzed' | 'confused'
+  )[]
+): PresentationValue => {
+  const names = kinds.map((kind): PresentationValue =>
+    line(
+      msg({
+        message: `${select(kind, {
+          asleep: 'Asleep',
+          burned: 'Burned',
+          confused: 'Confused',
+          paralyzed: 'Paralyzed',
+          other: 'Poisoned',
+        })}`,
+        context: 'a special condition in a list',
+        comment:
+          'One Special Condition named in a Log line listing several: Asleep, Burned, Confused, Paralyzed or Poisoned.',
+      })
+    )
+  );
+  return names.reduce((list, item, index) =>
+    index === names.length - 1
+      ? line(
+          msg({
+            message: `${list} and ${item}`,
+            context: 'the last of a list of special conditions',
+            comment:
+              'Adds the last Special Condition to a list in a Log line: "Poisoned and Burned". {list} is the conditions so far, {item} the last.',
+          })
+        )
+      : line(
+          msg({
+            message: `${list}, ${item}`,
+            context: 'a list of special conditions',
+            comment:
+              'Adds a Special Condition to a list in a Log line: "Poisoned, Burned". {list} is the conditions so far, {item} the next. Use the list separator of your language.',
+          })
+        )
+  );
+};
+
+/**
  * A Special Condition marker by name: v1's letters (and the words, as
  * typed), anything else as written; absent, none.
  */
@@ -1057,8 +1103,50 @@ export const presentationEffectsForEvent = (
     case 'ConditionSet': {
       const name = playerName(view, event.playerId);
       const card = narratedCardName(event.cardName);
-      const kind = conditionKind(event.condition);
+      // Several at once (ADR-043 §14), told as they now stand: a run of
+      // changes to one Pokémon reads as its last line.
+      const standing = event.conditions ?? [];
+      const off = event.off ?? [];
+      const kind =
+        standing.length === 1 && off.length === 0
+          ? standing[0]!
+          : conditionKind(event.condition);
       const condition = event.condition ?? '';
+      const key = event.stackId
+        ? `condition:${event.stackId}`
+        : `condition:${event.playerId}:${event.source}:${event.cardName ?? ''}`;
+      if (off.length > 0 && standing.length > 0) {
+        const taken = conditionList(off);
+        const still = conditionList(standing);
+        return superseding(
+          playerEffects(
+            event,
+            event.playerId,
+            msg({
+              message: `${name} took ${taken} off ${card}, still ${still}`,
+              comment:
+                'Log line: a player took some Special Conditions off the Active Pokémon and others stay on. {name} is a player\'s name, {card} the Pokémon\'s name; {taken} the conditions taken off and {still} those still on ("Burned", "Poisoned and Asleep").',
+            })
+          ),
+          key
+        );
+      }
+      if (standing.length > 1) {
+        const all = conditionList(standing);
+        return superseding(
+          playerEffects(
+            event,
+            event.playerId,
+            msg({
+              message: `${name} made ${card} ${all}`,
+              context: 'several special conditions',
+              comment:
+                'Log line: the Active Pokémon now has several Special Conditions. {name} is a player\'s name, {card} the Pokémon\'s name, {all} the conditions ("Poisoned, Burned and Asleep").',
+            })
+          ),
+          key
+        );
+      }
       return superseding(
         playerEffects(
           event,
@@ -1087,9 +1175,7 @@ export const presentationEffectsForEvent = (
                     "Log line: a player gave the Active Pokémon a Special Condition. {name} is a player's name, {card} the Pokémon's name; {kind} is the condition (Asleep, Burned, Confused, Paralyzed or Poisoned).",
                 })
         ),
-        event.stackId
-          ? `condition:${event.stackId}`
-          : `condition:${event.playerId}:${event.source}:${event.cardName ?? ''}`
+        key
       );
     }
     case 'CoinFlipped': {

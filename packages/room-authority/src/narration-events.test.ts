@@ -394,8 +394,57 @@ describe('battle-log narration', () => {
         source: 'active',
         cardName: name,
         condition: 'P',
+        conditions: ['poisoned'],
       },
     ]);
+    // Several at once (ADR-043 §14): all of them as they now stand, and
+    // for a client from before, the one just put on.
+    const burned = step(
+      poisoned.state,
+      { type: 'SetSpecialCondition', stackId, condition: 'P B Pa' },
+      context
+    );
+    expect(burned.narration).toEqual([
+      {
+        type: 'ConditionSet',
+        stackId,
+        revision: burned.state.revision,
+        playerId: p1,
+        source: 'active',
+        cardName: name,
+        condition: 'B',
+        conditions: ['poisoned', 'burned', 'paralyzed'],
+      },
+    ]);
+    // One taken off while others stay: what came off, and what is still on.
+    const cured = step(
+      burned.state,
+      { type: 'SetSpecialCondition', stackId, condition: 'P' },
+      context
+    );
+    expect(cured.narration).toEqual([
+      {
+        type: 'ConditionSet',
+        stackId,
+        revision: cured.state.revision,
+        playerId: p1,
+        source: 'active',
+        cardName: name,
+        condition: 'P',
+        conditions: ['poisoned'],
+        off: ['burned', 'paralyzed'],
+      },
+    ]);
+    // A typed note is told as typed.
+    const noted = step(
+      cured.state,
+      { type: 'SetSpecialCondition', stackId, condition: 'Hit by Iono' },
+      context
+    );
+    expect(noted.narration).toEqual([
+      expect.objectContaining({ condition: 'Hit by Iono' }),
+    ]);
+    expect(noted.narration[0]).not.toHaveProperty('conditions');
     const cleared = step(
       poisoned.state,
       { type: 'SetSpecialCondition', stackId, condition: null },

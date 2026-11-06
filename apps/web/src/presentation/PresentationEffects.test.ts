@@ -758,6 +758,32 @@ describe('presentationEffectsForEvent', () => {
     expect(condition()).toBe(
       'player:Blue took the Special Condition off Pikachu'
     );
+    // Several at once (ADR-043 §14), as they now stand.
+    const several = (
+      conditions: (
+        'poisoned' | 'burned' | 'asleep' | 'paralyzed' | 'confused'
+      )[],
+      off?: ('poisoned' | 'burned' | 'asleep' | 'paralyzed' | 'confused')[]
+    ) =>
+      line({
+        type: 'ConditionSet',
+        ...at,
+        source: 'active',
+        cardName: 'Pikachu',
+        condition: 'P',
+        conditions,
+        ...(off ? { off } : {}),
+      });
+    expect(several(['poisoned'])).toBe('player:Blue made Pikachu Poisoned');
+    expect(several(['poisoned', 'burned'])).toBe(
+      'player:Blue made Pikachu Poisoned and Burned'
+    );
+    expect(several(['poisoned', 'burned', 'asleep'])).toBe(
+      'player:Blue made Pikachu Poisoned, Burned and Asleep'
+    );
+    expect(several(['poisoned'], ['burned', 'paralyzed'])).toBe(
+      'player:Blue took Burned and Paralyzed off Pikachu, still Poisoned'
+    );
   });
 
   it('keeps two Pokémon of one name apart: only repeated changes to the same one collapse', () => {

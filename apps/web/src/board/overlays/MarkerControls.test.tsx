@@ -284,15 +284,31 @@ describe('MarkerControls', () => {
     ]);
   });
 
-  it('changes or removes the Special Condition, showing the current one', () => {
+  it('puts each Special Condition on or off, one of the turning three at a time, and removes them', () => {
     render(marker('specialCondition', 'P'));
     expect(button('Poisoned').getAttribute('aria-pressed')).toBe('true');
     expect(button('Burned').getAttribute('aria-pressed')).toBe('false');
+    // Burned goes on beside Poisoned (ADR-043 §14).
     act(() => button('Burned').click());
     act(() => button('Remove condition').click());
-    // Written as v1's letters, which the keys' cycle reads too.
+    // Written as v1's letters, in checkup order, which the keys' cycle
+    // reads too.
     expect(actions.submitSpecialConditionInput.mock.calls).toEqual([
-      [cardId, 'B'],
+      [cardId, 'P B'],
+      [cardId, ''],
+    ]);
+  });
+
+  it('replaces one turning condition with another and leaves the markers on', () => {
+    render(marker('specialCondition', 'P A'));
+    expect(button('Poisoned').getAttribute('aria-pressed')).toBe('true');
+    expect(button('Asleep').getAttribute('aria-pressed')).toBe('true');
+    act(() => button('Paralyzed').click());
+    act(() => button('Poisoned').click());
+    act(() => button('Remove all conditions').click());
+    expect(actions.submitSpecialConditionInput.mock.calls).toEqual([
+      [cardId, 'P Pa'],
+      [cardId, 'A'],
       [cardId, ''],
     ]);
   });

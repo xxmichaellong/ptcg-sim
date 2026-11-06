@@ -13,12 +13,12 @@ import {
   layoutReminderMarkers,
   markerHint,
   reminderName,
-  specialConditionKind,
   type BoardDepthProjection,
   type MarkerSceneNode,
   type SpecialConditionKind,
 } from '@ptcgsim/renderer-contract';
 import {
+  Fragment,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -27,7 +27,11 @@ import {
 } from 'react';
 
 import {
+  ROTATION_CONDITIONS,
+  SPECIAL_CONDITIONS,
   STACK_REMINDERS,
+  specialConditionKinds,
+  toggleSpecialCondition,
   type StackReminder,
   type ViewCardId,
 } from '@ptcgsim/game-core';
@@ -131,26 +135,15 @@ export const placeBeside = (
       };
 };
 
-/** The five Special Conditions, in the rulebook's order, with their chips. */
-export const CONDITIONS: readonly SpecialConditionKind[] = [
-  'asleep',
-  'burned',
-  'confused',
-  'paralyzed',
-  'poisoned',
-];
-
 /**
- * What a chosen condition is written as: v1's letters, as the keys' cycle
- * and the typed editor write it.
+ * The five Special Conditions as the controls offer them (ADR-043 §14): the
+ * markers, Poisoned and Burned, each on or off; then the three shown by
+ * turning the card, Asleep, Paralyzed and Confused, one at a time.
  */
-export const CONDITION_CODES: Readonly<Record<SpecialConditionKind, string>> = {
-  asleep: 'A',
-  burned: 'B',
-  confused: 'C',
-  paralyzed: 'Pa',
-  poisoned: 'P',
-};
+export const CONDITION_GROUPS: readonly (readonly SpecialConditionKind[])[] = [
+  SPECIAL_CONDITIONS.filter((kind) => !ROTATION_CONDITIONS.includes(kind)),
+  ROTATION_CONDITIONS,
+];
 
 /** A condition's chip art, as the table draws it. */
 export const conditionArt = (kind: SpecialConditionKind): string =>
@@ -174,7 +167,9 @@ export const markerControlsMarker = (
   );
   if (lying) return lying;
   if (
-    (controls.kind !== 'damage' && controls.kind !== 'reminder') ||
+    (controls.kind !== 'damage' &&
+      controls.kind !== 'reminder' &&
+      controls.kind !== 'specialCondition') ||
     !state.view
   )
     return null;
@@ -207,6 +202,26 @@ export const markerControlsMarker = (
       value: '',
       bounds: first!,
       zIndex: card.zIndex + 100,
+      label: '',
+    };
+  }
+  if (controls.kind === 'specialCondition') {
+    // Every condition just taken off: where the first chip goes, so the
+    // controls stay for the next (on the Active only).
+    if (stack.slot !== 'active') return null;
+    const item = layoutLegacyActiveQ0Markers(
+      painted,
+      card.side
+    ).specialCondition;
+    return {
+      id: `${card.id}:condition-controls`,
+      parentCardId: card.id,
+      side: card.side,
+      kind: 'specialCondition',
+      presentation: 'legacyActiveQ0',
+      value: '',
+      bounds: item.bounds,
+      zIndex: card.zIndex + item.sourceZIndex,
       label: '',
     };
   }
@@ -418,11 +433,11 @@ export const MarkerControls = ({
   // controls), not a press outside: the marker's, and for a Pokémon's
   // reminders every one of its chips.
   const ownTokens = (
-    marker?.kind === 'reminder'
+    marker?.kind === 'reminder' || marker?.kind === 'specialCondition'
       ? (state.scene?.markers ?? [])
           .filter(
             (other) =>
-              other.kind === 'reminder' &&
+              other.kind === marker.kind &&
               other.parentCardId === marker.parentCardId
           )
           .map((other) => other.id)
@@ -542,34 +557,58 @@ export const MarkerControls = ({
       />
     );
   } else if (marker.kind === 'specialCondition') {
-    const current = specialConditionKind(marker.value);
+    // Each condition on or off, Poisoned and Burned beside one of the
+    // turning three (a new one replacing the last).
+    const stack = Object.values(state.view?.stacks ?? {}).find(
+      (candidate) => candidate.evolutionCards.at(-1)?.id === cardId
+    );
+    const held = stack ? stack.specialCondition : marker.value || null;
+    const on = specialConditionKinds(held);
     controls = (
       <>
-        {CONDITIONS.map((condition) => {
-          const name = markerHint({
-            kind: 'specialCondition',
-            value: condition,
-          });
-          return (
-            <ControlButton
-              key={condition}
-              label={name}
-              className="is-condition"
-              pressed={current === condition}
-              onPress={() =>
-                actions.submitSpecialConditionInput(
-                  cardId,
-                  CONDITION_CODES[condition]
-                )
-              }
-            >
-              <img src={conditionArt(condition)} alt="" draggable={false} />
-            </ControlButton>
-          );
-        })}
+        {CONDITION_GROUPS.map((group, index) => (
+          <Fragment key={index}>
+            {index > 0 ? (
+              <span
+                className="ptcgsim-marker-controls__divider"
+                aria-hidden="true"
+              />
+            ) : null}
+            {group.map((condition) => {
+              const pressed = on.includes(condition);
+              return (
+                <ControlButton
+                  key={condition}
+                  label={markerHint({
+                    kind: 'specialCondition',
+                    value: condition,
+                  })}
+                  className="is-condition"
+                  pressed={pressed}
+                  onPress={() =>
+                    actions.submitSpecialConditionInput(
+                      cardId,
+                      toggleSpecialCondition(held, condition, !pressed) ?? ''
+                    )
+                  }
+                >
+                  <img src={conditionArt(condition)} alt="" draggable={false} />
+                </ControlButton>
+              );
+            })}
+          </Fragment>
+        ))}
         <span className="ptcgsim-marker-controls__divider" aria-hidden="true" />
         <ControlButton
-          label={t`Remove condition`}
+          label={
+            on.length > 1
+              ? t({
+                  message: 'Remove all conditions',
+                  comment:
+                    "Button in a Pokémon's condition controls: takes every Special Condition off it.",
+                })
+              : t`Remove condition`
+          }
           className="is-remove"
           onPress={() => actions.submitSpecialConditionInput(cardId, '')}
         >

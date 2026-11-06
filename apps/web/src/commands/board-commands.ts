@@ -18,7 +18,10 @@ import { TrashIcon } from '@phosphor-icons/react/dist/csr/Trash';
 import type { Icon } from '@phosphor-icons/react';
 import {
   MAX_COIN_FLIP_COUNT,
+  SPECIAL_CONDITIONS,
   STACK_REMINDERS,
+  specialConditionKinds,
+  toggleSpecialCondition,
   type ViewCardId,
 } from '@ptcgsim/game-core';
 import {
@@ -49,11 +52,7 @@ import {
   outcomeOfCommand,
   type ContextActionOutcome,
 } from '../board/contextActionOutcome.js';
-import {
-  CONDITION_CODES,
-  CONDITIONS,
-  REMINDER_ICONS,
-} from '../board/overlays/MarkerControls.js';
+import { REMINDER_ICONS } from '../board/overlays/MarkerControls.js';
 import type {
   LegacyBoardContextActionId,
   LegacyBoardOverlayActionRequest,
@@ -398,7 +397,14 @@ export const boardCommands = (
     if (menu.has('setSpecialCondition') && condition) {
       commands.push({
         id: `${prefix}.removeCondition`,
-        title: t`Remove condition`,
+        title:
+          specialConditionKinds(condition).length > 1
+            ? t({
+                message: 'Remove all conditions',
+                comment:
+                  "Button in a Pokémon's condition controls: takes every Special Condition off it.",
+              })
+            : t`Remove condition`,
         section,
         detail,
         icon: SparkleIcon,
@@ -422,18 +428,34 @@ export const boardCommands = (
         keywords: ['poisoned', 'burned', 'asleep', 'paralyzed', 'confused'],
         submenu: () => ({
           breadcrumb: t`Special Condition`,
+          // Each said as it would change: put on (Poisoned and Burned beside
+          // one of the turning three, a new one replacing the last), or
+          // taken off (ADR-043 §14).
           commands: [
-            ...CONDITIONS.map((condition): PaletteCommand => ({
-              id: `${prefix}.condition.${condition}`,
-              title: markerHint({ kind: 'specialCondition', value: condition }),
-              section,
-              run: overlay({
-                kind: 'context',
-                action: 'setSpecialCondition',
-                cardId: card.id,
-                value: CONDITION_CODES[condition],
-              }),
-            })),
+            ...SPECIAL_CONDITIONS.map((kind): PaletteCommand => {
+              const name = markerHint({
+                kind: 'specialCondition',
+                value: kind,
+              });
+              const on = specialConditionKinds(condition).includes(kind);
+              return {
+                id: `${prefix}.condition.${kind}`,
+                title: on
+                  ? t({
+                      message: `Take off: ${name}`,
+                      comment:
+                        'Command palette: takes a Special Condition off the selected Pokémon. The condition follows, e.g. "Take off: Poisoned".',
+                    })
+                  : name,
+                section,
+                run: overlay({
+                  kind: 'context',
+                  action: 'setSpecialCondition',
+                  cardId: card.id,
+                  value: toggleSpecialCondition(condition, kind, !on) ?? '',
+                }),
+              };
+            }),
             {
               id: `${prefix}.condition.none`,
               title: t`No Special Condition`,

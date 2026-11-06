@@ -1,7 +1,10 @@
 import type { MessageDescriptor } from '@lingui/core';
 import { msg } from '@lingui/core/macro';
-import type { MatchViewState, ViewCard } from '@ptcgsim/game-core';
-import { specialConditionKind } from '@ptcgsim/renderer-contract';
+import {
+  specialConditionKinds,
+  type MatchViewState,
+  type ViewCard,
+} from '@ptcgsim/game-core';
 import { Trans } from '@lingui/react/macro';
 import type { ReactNode } from 'react';
 
@@ -721,10 +724,11 @@ const damage: TutorialLesson = {
           </Trans>
         ),
       targets: (world) => present([activeTopTarget(world, world.them)]),
+      // Poisoned, whatever else is on with it (ADR-043 §14).
       done: (world) =>
-        specialConditionKind(
-          activeStack(world.view, world.them)?.specialCondition ?? ''
-        ) === 'poisoned',
+        specialConditionKinds(
+          activeStack(world.view, world.them)?.specialCondition
+        ).includes('poisoned'),
     },
   ],
 };

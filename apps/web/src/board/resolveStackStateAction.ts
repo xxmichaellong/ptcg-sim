@@ -1,6 +1,11 @@
-import type { MatchViewState } from '@ptcgsim/game-core';
+import {
+  breaksSpecialConditionRules,
+  normalizeSpecialCondition,
+  specialConditionKind,
+  specialConditionKinds,
+  type MatchViewState,
+} from '@ptcgsim/game-core';
 import type { WireGameCommand } from '@ptcgsim/protocol';
-import { specialConditionKind } from '@ptcgsim/renderer-contract';
 
 export type StackStateAction =
   | { readonly type: 'setDamage'; readonly damage: number | null }
@@ -80,7 +85,8 @@ const conditionCycle = ['P', 'B', 'Pa', 'C', 'A'] as const;
  * letters or the words (a marker's controls, or typed). -1 for a note.
  */
 const cycleIndex = (condition: string): number => {
-  const kind = specialConditionKind(condition);
+  // Several on (ADR-043 §14): the cycle goes on from the first.
+  const kind = specialConditionKinds(condition)[0] ?? null;
   return kind === null
     ? -1
     : conditionCycle.findIndex((code) => specialConditionKind(code) === kind);
@@ -101,9 +107,14 @@ const conditionTarget = (
       : conditionCycle[(currentIndex + 1) % conditionCycle.length];
   }
   if (action.condition === null) return null;
-  const normalized = action.condition.trim();
-  if (normalized === '' || normalized === '0') return null;
-  return normalized.length <= 16 ? normalized : undefined;
+  const trimmed = action.condition.trim();
+  if (trimmed === '' || trimmed === '0') return null;
+  // As the room keeps it, and never what the rules forbid (two of Asleep,
+  // Confused and Paralyzed; one twice).
+  const normalized = normalizeSpecialCondition(trimmed);
+  return normalized.length <= 16 && !breaksSpecialConditionRules(normalized)
+    ? normalized
+    : undefined;
 };
 
 /** Maps the legacy in-play marker and group-rotation controls to target values. */

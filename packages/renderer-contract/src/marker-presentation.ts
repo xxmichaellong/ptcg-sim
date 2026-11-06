@@ -1,4 +1,9 @@
 import { t } from '@lingui/core/macro';
+import {
+  specialConditionKind,
+  type SpecialConditionKind,
+} from '@ptcgsim/game-core';
+
 import type { MarkerSceneNode } from './model.js';
 
 /**
@@ -36,8 +41,7 @@ export const legacyMarkerCssColor = (color: LegacyMarkerColor): string =>
 export type DamageCounterBand = 10 | 50 | 100;
 
 /** Conditions with a chip of their own; anything else typed is shown as text. */
-export type SpecialConditionKind =
-  'poisoned' | 'burned' | 'asleep' | 'paralyzed' | 'confused';
+export type { SpecialConditionKind };
 
 export type MarkerFaceKind =
   | 'damage-10'
@@ -232,29 +236,11 @@ export const damageCounterBand = (value: string): DamageCounterBand => {
   return 10;
 };
 
-const CONDITION_ALIASES: ReadonlyMap<string, SpecialConditionKind> = new Map(
-  (
-    [
-      ['poisoned', ['p', 'psn', 'poison', 'poisoned']],
-      ['burned', ['b', 'brn', 'burn', 'burned', 'burnt']],
-      ['asleep', ['a', 's', 'z', 'zz', 'zzz', 'slp', 'sleep', 'asleep']],
-      [
-        'paralyzed',
-        ['pa', 'par', 'prz', 'para', 'paralyzed', 'paralysed', 'paralysis'],
-      ],
-      ['confused', ['c', 'cnf', 'conf', 'confused', 'confusion']],
-    ] as const
-  ).flatMap(([kind, aliases]) => aliases.map((alias) => [alias, kind] as const))
-);
-
 /**
- * Reads a typed special condition. v1's letters (P, B, A, PA, C) and the
- * words are recognised whatever their case; anything else has no chip.
+ * Reads a typed special condition (game-core's rules: v1's letters P, B, A,
+ * PA, C and the words, whatever their case); anything else has no chip.
  */
-export const specialConditionKind = (
-  value: string
-): SpecialConditionKind | null =>
-  CONDITION_ALIASES.get(value.trim().toLowerCase()) ?? null;
+export { specialConditionKind };
 
 /** Resolves the token a marker is painted as. */
 export const markerFace = (

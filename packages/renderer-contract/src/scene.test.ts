@@ -1144,6 +1144,53 @@ describe('renderer-neutral board scene', () => {
     }
   });
 
+  it('lays each Special Condition on its own chip, stepping toward the card’s middle, and a note on one', () => {
+    const several = { ...allActiveMarkers, specialCondition: 'P B Pa' };
+    const scene = createBoardScene(
+      createPristineActiveMarkerView(several, several),
+      createBoardLayoutSnapshot(characterizedEvolutionLayoutState)
+    );
+    for (const side of ['local', 'opponent'] as const) {
+      const chips = scene.markers.filter(
+        (marker) => marker.kind === 'specialCondition' && marker.side === side
+      );
+      // The first where v1 puts its one marker, keeping its id.
+      expect(chips.map((chip) => chip.value)).toEqual(['P', 'B', 'Pa']);
+      expect(chips[0]!.id).toBe(`${chips[0]!.parentCardId}:specialCondition`);
+      expect(new Set(chips.map((chip) => chip.id)).size).toBe(3);
+      const [first, second, third] = chips.map((chip) => chip.bounds);
+      expect(second!.x).toBe(first!.x);
+      // Down the card for ours, up it for theirs (turned half round).
+      const step = second!.y - first!.y;
+      expect(Math.sign(step)).toBe(side === 'local' ? 1 : -1);
+      expect(Math.abs(step)).toBeCloseTo(first!.height * 0.86, 6);
+      expect(third!.y - second!.y).toBeCloseTo(step, 6);
+      // Each stays on its card.
+      const card = scene.cards.find(
+        (node) => node.id === chips[0]!.parentCardId
+      )!;
+      for (const bounds of [first!, second!, third!]) {
+        expect(bounds.y).toBeGreaterThanOrEqual(card.bounds.y);
+        expect(bounds.y + bounds.height).toBeLessThanOrEqual(
+          card.bounds.y + card.bounds.height
+        );
+      }
+    }
+    // A typed note is one chip, as typed; two of the turning three are a
+    // note too (the rules allow one).
+    for (const note of ['Hit by Iono', 'A C']) {
+      const noted = { ...allActiveMarkers, specialCondition: note };
+      const chips = createBoardScene(
+        createPristineActiveMarkerView(noted, noted),
+        createBoardLayoutSnapshot(characterizedEvolutionLayoutState)
+      ).markers.filter(
+        (marker) =>
+          marker.kind === 'specialCondition' && marker.side === 'local'
+      );
+      expect(chips.map((chip) => chip.value)).toEqual([note]);
+    }
+  });
+
   it('flex-shrinks an overflowing play slot the way the legacy browser row does', () => {
     // A tall, narrow window makes the authored active card wider than its
     // region. The row cannot shrink a lone card below its image, so the
