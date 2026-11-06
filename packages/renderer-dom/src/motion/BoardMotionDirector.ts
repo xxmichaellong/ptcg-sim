@@ -79,6 +79,12 @@ interface Turn {
   /** Settles once it has turned (or was stopped). */
   readonly done: Promise<void>;
   readonly settle: () => void;
+  /**
+   * Called once as it begins to turn (or, at the latest, as it finishes):
+   * carried over to the node it moves to if re-aliased before then.
+   */
+  onBegin: (() => void)[];
+  begun: boolean;
 }
 
 /** A card turned over by hand, from flat to flat again. */
@@ -708,6 +714,8 @@ export class BoardMotionDirector {
       animations: [],
       done,
       settle,
+      onBegin: [],
+      begun: false,
     };
     this.turns.set(key, turn);
     element.dataset.turning = '';
@@ -760,8 +768,11 @@ export class BoardMotionDirector {
       if (at > turn.startAt)
         for (const animation of turn.animations)
           animation.currentTime = Math.min(duration, at - turn.startAt);
+      // Begun once its delay is over; at the latest, as it finishes.
+      setTimeout(() => this.beginTurn(turn), Math.max(0, turn.startAt - now()));
       void spin.finished.then(
         () => {
+          this.beginTurn(turn);
           if (this.turns.get(key) === turn) this.stopTurn(key);
         },
         () => undefined
@@ -792,8 +803,20 @@ export class BoardMotionDirector {
     if (!turn || from === to) return;
     const halfway = now() >= turn.startAt + turn.duration / 2;
     const fromImageUrl = turn.overlay && !halfway ? turn.fromImageUrl : null;
+    const waiting = turn.begun ? [] : turn.onBegin;
+    turn.onBegin = [];
     this.stopTurn(from);
     this.turnOver(element, fromImageUrl, turn.startAt, turn.duration, to);
+    this.turns.get(to)?.onBegin.push(...waiting);
+  }
+
+  /** The turn has begun: what waits for it runs, once. */
+  private beginTurn(turn: Turn): void {
+    if (turn.begun) return;
+    turn.begun = true;
+    const waiting = turn.onBegin;
+    turn.onBegin = [];
+    for (const callback of waiting) callback();
   }
 
   private stopTurn(key: string): void {
@@ -950,25 +973,21 @@ export class BoardMotionDirector {
 
   /**
    * Once `key`'s turn has begun, `show` its own face on the stand-in under
-   * it (checked each frame until then, or until either has gone).
+   * it -- as it begins, or at the latest as it ends, so before the stand-in
+   * goes (which waits for the turn to be done).
    */
   private revealOnTurn(
     key: string,
     ghost: HTMLElement,
     show: (url: string) => void
   ): void {
-    const check = () => {
+    const turn = this.turns.get(key);
+    if (!turn) return;
+    turn.onBegin.push(() => {
       if (!this.ghosts.has(ghost)) return;
-      const turn = this.turns.get(key);
-      if (!turn) return;
       const url = faceImageOf(turn.face)?.getAttribute('src');
-      if (url && Number.isFinite(turn.startAt) && now() >= turn.startAt) {
-        show(url);
-        return;
-      }
-      requestAnimationFrame(check);
-    };
-    if (typeof requestAnimationFrame === 'function') check();
+      if (url) show(url);
+    });
   }
 
   private pulse(pulse: MarkerPulse): void {

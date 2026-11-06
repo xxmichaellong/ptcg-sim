@@ -140,18 +140,55 @@ interface Frame {
   readonly width: number;
 }
 
-/** Samples the discard's top every frame until stopped. */
+/**
+ * Samples the discard's top every frame until stopped, and records every
+ * picture a stand-in is given (from the DOM's own records, so none is
+ * missed however few frames a busy page paints).
+ */
 const sample = (page: Page, discardId: string) =>
   page.evaluate((discardZoneId) => {
     const frames: Frame[] = [];
+    const under: string[] = [];
     const store = window as unknown as {
       __pileFrames: Frame[];
+      __pileUnder: string[];
       __pileStop: boolean;
     };
     store.__pileFrames = frames;
+    store.__pileUnder = under;
     store.__pileStop = false;
     const number = (url: string | null | undefined) =>
       url ? (/[?&]n=(\d+)/u.exec(url)?.[1] ?? 'other') : null;
+    const pictureNumber = (picture: Element) =>
+      number(
+        picture instanceof HTMLCanvasElement
+          ? picture.dataset['cardPicture']
+          : picture.getAttribute('src')
+      ) ?? 'other';
+    const observer = new MutationObserver((records) => {
+      if (store.__pileStop) {
+        observer.disconnect();
+        return;
+      }
+      for (const record of records)
+        for (const node of Array.from(record.addedNodes)) {
+          if (!(node instanceof Element)) continue;
+          // A stand-in laid down, or given another picture.
+          const pictures = node.matches('.ptcgsim-card-ghost')
+            ? Array.from(
+                node.querySelectorAll(
+                  ':scope > .ptcgsim-card__face > :is(img, canvas)'
+                )
+              )
+            : node.matches(':is(img, canvas)') &&
+                record.target instanceof Element &&
+                record.target.closest('.ptcgsim-card-ghost')
+              ? [node]
+              : [];
+          for (const picture of pictures) under.push(pictureNumber(picture));
+        }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
     const shows = (picture: Element | null): boolean => {
       if (!picture) return false;
       if (picture instanceof HTMLCanvasElement) return true;
@@ -207,11 +244,22 @@ const sampled = (page: Page) =>
   page.evaluate(() => {
     const store = window as unknown as {
       __pileFrames: Frame[];
+      __pileUnder: string[];
       __pileStop: boolean;
     };
     store.__pileStop = true;
-    return store.__pileFrames;
+    return { frames: store.__pileFrames, under: store.__pileUnder };
   });
+
+/** The card number the discard's top shows now. */
+const discardTop = (page: Page, discardId: string) =>
+  page.evaluate((discardZoneId) => {
+    const top = window.__PTCG_RENDERER_SPIKE__?.scene.cards.find(
+      (card) => card.renderKey === `cover:${discardZoneId}`
+    );
+    const url = top ? (top.tableImageUrl ?? top.imageUrl) : '';
+    return /[?&]n=(\d+)/u.exec(url)?.[1] ?? null;
+  }, discardId);
 
 for (const mode of ['table', 'flat'] as const) {
   test(`${mode}: a card dealt onto the discard over others never shows blank, nor the card under it as it turns`, async ({
@@ -228,31 +276,36 @@ for (const mode of ['table', 'flat'] as const) {
       await idle(page);
     }
     const discardId = await carryToDiscard(page, preferences);
+    const oldTop = await discardTop(page, discardId);
+    expect(oldTop).not.toBeNull();
     await sample(page, discardId);
     await page.mouse.up();
     await expect.poll(() => zoneCount(page, 'discard')).toBe(3);
     await page.waitForTimeout(1200);
     await idle(page);
-    const frames = (await sampled(page)).filter((frame) => !frame.held);
+    const { frames: all, under } = await sampled(page);
+    const frames = all.filter((frame) => !frame.held);
     // Let go, it ends lying face up, its own face shown.
     expect(frames.length).toBeGreaterThan(3);
     const last = frames.at(-1)!;
     expect(last.painted).toBe(true);
+    expect(last.own).not.toBe(oldTop);
     // Never blank: its back over it, or its own face, every frame.
     expect(frames.filter((frame) => !frame.painted)).toEqual([]);
-    // It did turn over on top of the pile: flat, its face turned in CSS; on
-    // the tabletop, drawn narrower than it lies...
+    // The pile under it: the card it covers while it lands, then -- as it
+    // turns over, before the stand-in goes -- the card itself. Judged on
+    // every picture the stand-in was given, not on frames a busy page may
+    // not have painted.
+    expect(under[0]).toBe(oldTop);
+    expect(under.at(-1)).toBe(last.own);
+    // And no frame that was painted mid-turn (flat: its face turned in CSS;
+    // on the tabletop, drawn narrower than it lies) showed the card it
+    // covers under it.
     const turning = frames.filter((frame) =>
       mode === 'flat'
         ? frame.spinning
         : frame.turning && frame.width < last.width * 0.97
     );
-    expect(turning.length).toBeGreaterThan(0);
-    // ...and under it the pile showed it, never the card it covers.
-    expect(
-      turning.filter(
-        (frame) => frame.under !== null && frame.under !== last.own
-      )
-    ).toEqual([]);
+    expect(turning.filter((frame) => frame.under === oldTop)).toEqual([]);
   });
 }

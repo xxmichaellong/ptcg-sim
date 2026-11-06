@@ -1529,6 +1529,18 @@ export class TableDepthDirector {
         delete element.dataset.flying;
       }
     }
+    // Under a card turned over right on top of it, the pile shows that
+    // card's face from when the turn begins, while the card still covers
+    // it: on its edge the card shows itself under it, never the old top.
+    // Before the turns are drawn, so a late frame that both begins and ends
+    // one still does.
+    for (const ghost of this.ghosts.values()) {
+      if (!ghost.revealsArrival || !ghost.holdFor) continue;
+      const flip = this.flips.get(ghost.holdFor);
+      const url = flip ? faceImageOf(flip.face)?.getAttribute('src') : null;
+      if (flip && url && Number.isFinite(flip.start) && at >= flip.start)
+        this.showOnGhost(ghost, url);
+    }
     for (const [key, flip] of this.flips) {
       const progress = turnProgress(flip, at);
       if (progress >= 0.5) {
@@ -1574,16 +1586,6 @@ export class TableDepthDirector {
         const base = this.motion.poses.get(key);
         if (base && progress > 0 && progress < 1)
           this.paint(key, turnedOver(base, progress), at);
-      }
-      // Under a card turned over right on top of it, the pile shows that
-      // card's face from when the turn begins, while the card still covers
-      // it: on its edge the card shows itself under it, never the old top.
-      if (ghost.revealsArrival && ghost.holdFor) {
-        const flip = this.flips.get(ghost.holdFor);
-        const arriving = flip ? faceImageOf(flip.face) : null;
-        const url = arriving?.getAttribute('src');
-        if (flip && url && Number.isFinite(flip.start) && at >= flip.start)
-          this.showOnGhost(ghost, url);
       }
       if (
         at >= ghost.expires ||
