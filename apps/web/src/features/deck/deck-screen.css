@@ -1315,15 +1315,17 @@ div.deck-tile__choose {
 }
 
 /* The seats a deck is on: badges in their colors over the art's lower
-   corner, clear of the tools across its top however narrow the tile (a
-   deck on both seats on a 320px phone ran its second badge under them).
-   The art is the tile's whole width at 16:10, so its foot is 62.5% of
-   the tile's width down, whichever part of the tile holds the badges. */
+   far corner, clear of the tools across its top however narrow the tile
+   (a deck on both seats on a 320px phone ran its second badge under them)
+   and of "Use on P2" at the near corner as the deck is pointed at. The
+   art is the tile's whole width at 16:10, so its foot is 62.5% of the
+   tile's width down, whichever part of the tile holds the badges. */
 .deck-tile__seats {
   position: absolute;
   top: 62.5cqi;
   translate: 0 calc(-100% - var(--space-2));
-  inset-inline-start: var(--space-2);
+  inset-inline-end: var(--space-2);
+  justify-content: flex-end;
   z-index: 1;
   display: inline-flex;
   flex-wrap: wrap;
