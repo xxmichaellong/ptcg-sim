@@ -89,6 +89,7 @@ import { startTutorial } from '../tutorial/tutorial-state.js';
 import { lessonsFor } from '../tutorial/tutorial-lessons.js';
 import { useInputMode } from '../tutorial/TutorialHost.js';
 import { TableBanner, TableCentre, TableShell } from './shell/TableShell.js';
+import { useTableSeamShare } from '../board/view/table-seam.js';
 import { useActivityDocking } from './shell/useActivityDocking.js';
 import type { ActionMenuEntry } from '../ui/ActionMenu.js';
 import { DeckIcon } from '../ui/DeckIcon.js';
@@ -346,6 +347,11 @@ export const RemoteRoomRoute = ({
   // the board preferences the route publishes upward.
   const storedPreferences = preferences ?? ROOM_DEFAULT_PREFERENCES;
   const effectivePreferences = useBoardLook(storedPreferences);
+  // Where the table's halves meet, for what the table centres above it.
+  const tableSeam = useTableSeamShare(
+    boardView.split,
+    effectivePreferences.depth?.mode === 'table'
+  );
   // The whole page wears the table's theme (Night or Day). Its motion
   // choice is published page-wide from main.tsx (installPageMotion).
   useEffect(() => {
@@ -956,9 +962,7 @@ export const RemoteRoomRoute = ({
             ) : null}
             {waitingForOpponent ? (
               <TableCentre
-                {...(boardView.show === 'both'
-                  ? { seam: 1 - boardView.split }
-                  : {})}
+                {...(boardView.show === 'both' ? { seam: tableSeam } : {})}
               >
                 <TableInvite
                   code={roomCode}
@@ -970,9 +974,7 @@ export const RemoteRoomRoute = ({
             ) : null}
             {welcome ? (
               <TableCentre
-                {...(boardView.show === 'both'
-                  ? { seam: 1 - boardView.split }
-                  : {})}
+                {...(boardView.show === 'both' ? { seam: tableSeam } : {})}
               >
                 <TableWelcome
                   {...(chrome.visibility.deckImport

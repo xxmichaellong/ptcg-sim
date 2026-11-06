@@ -219,9 +219,11 @@ test('a half can be hidden, the other fills the table, and the choice is kept', 
           ?.height ?? 0
       )
     )
+    // The boards split 60/40; tilted on a wide window (the default here)
+    // the frames are the boards (ADR-046 §6).
     .toBe(540);
   await page.locator('#boardViewResetButton').click();
-  // Back to the default split: the near half takes 53% (PX-047).
+  // Back to the default split: even boards, so even frames (PX-047).
   await expect
     .poll(async () =>
       Math.round(
@@ -229,7 +231,7 @@ test('a half can be hidden, the other fills the table, and the choice is kept', 
           ?.height ?? 0
       )
     )
-    .toBe(477);
+    .toBe(450);
   expect(errors).toEqual([]);
 });
 

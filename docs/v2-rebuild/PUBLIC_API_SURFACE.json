@@ -2790,6 +2790,10 @@
               "kind": "value"
             },
             {
+              "name": "rowStartX",
+              "kind": "value"
+            },
+            {
               "name": "sameSelection",
               "kind": "value"
             },
@@ -2938,6 +2942,10 @@
               "kind": "type"
             },
             {
+              "name": "tableHandsOutside",
+              "kind": "value"
+            },
+            {
               "name": "tablePileHeight",
               "kind": "value"
             },
@@ -2979,6 +2987,10 @@
             },
             {
               "name": "tableVerticalLayout",
+              "kind": "value"
+            },
+            {
+              "name": "tableVerticalLayoutForBoards",
               "kind": "value"
             },
             {

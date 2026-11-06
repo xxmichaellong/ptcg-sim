@@ -168,6 +168,9 @@ const layoutFor = (
     shellMode: sidePanel > 0 ? 'sidebar' : 'fullscreen',
     ...(sidePanel > 0 && sidePanel < 1 ? { sidePanelReveal: sidePanel } : {}),
     vertical: tableVerticalLayout(boardView.split),
+    // The Split is the boards' (even by default): the frames follow from it
+    // wherever the hands lie on this window.
+    boardSplit: boardView.split,
     ...(hiddenPhysicalSide ? { hiddenPhysicalSide } : {}),
     ...lostZoneLayout(boardView.lostZone),
     ...(seamBandPx ? { seamBandPx } : {}),
@@ -1637,7 +1640,7 @@ export const RemoteSessionBoard = ({
       )?.playerId;
       if (!playerId) return [];
       const anchor = depthProjection
-        ? depthProjection.point(node.anchor, 0, true)
+        ? depthProjection.countAnchor(node)
         : node.anchor;
       return [
         {

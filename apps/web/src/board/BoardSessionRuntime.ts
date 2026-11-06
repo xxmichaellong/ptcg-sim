@@ -160,6 +160,7 @@ const sameLayoutState = (
   (left.farCardsUpright ?? false) === (right.farCardsUpright ?? false) &&
   (left.tiltedTable ?? false) === (right.tiltedTable ?? false) &&
   (left.mirroredFarSide ?? false) === (right.mirroredFarSide ?? false) &&
+  left.boardSplit === right.boardSplit &&
   sameZoneScroll(left.zoneScrollPx, right.zoneScrollPx);
 
 const sameZoneScroll = (
@@ -608,8 +609,9 @@ export class BoardSessionRuntime {
   }
 
   /**
-   * The viewer's board view on the play-mat table: how the height is split
-   * between the halves, and a half they would rather not see.
+   * The viewer's board view on the play-mat table: how the boards are
+   * split between the halves (`lowerShare`, the near board's share), and a
+   * half they would rather not see.
    */
   setTableView(view: {
     readonly lowerShare: number;
@@ -635,11 +637,13 @@ export class BoardSessionRuntime {
       farCardsUpright: _upright,
       tiltedTable: _tilted,
       mirroredFarSide: _mirrored,
+      boardSplit: _split,
       ...rest
     } = this.layoutState;
     this.replaceLayoutState({
       ...rest,
       vertical: tableVerticalLayout(view.lowerShare),
+      boardSplit: view.lowerShare,
       ...(view.hiddenPhysicalSide
         ? { hiddenPhysicalSide: view.hiddenPhysicalSide }
         : {}),

@@ -122,6 +122,46 @@ The banner runs along the centre line between the halves as it is drawn
 middle, which lay below it (the near half is the taller); with one half
 shown, across that half's middle.
 
+### 6. Even boards, and rows that line up (2026-11-06)
+
+The owner, of the mirrored table: the two halves should be "exactly the
+same size" flat and at any tilt, so the decks, prizes, coins and markers
+meet; "we should set the default split to 50/50"; the near hand "a tiny
+bit bigger"; both hands' count pills "on the left side … vertically
+aligned"; and the Bench "vertically aligned" with the Active.
+
+- **The Split is the boards'.** `BoardLayoutState.boardSplit` (the
+  player's Split, 50/50 by default: `TABLE_SPLIT.defaultLowerShare` is
+  0.5) gives the frames wherever the hands lie
+  (`tableVerticalLayoutForBoards`): tilted on a window wider than tall
+  (`tableHandsOutside`), where the hands lie past the board's edges, the
+  frames are the boards, so both are one size; flat or upright, the near
+  frame also holds the deeper hand strip, 3 points more (0.53 at 50/50, as
+  before). Dragging the seam sets the frames and drops the board split.
+  Settings store only what differs from the defaults, so a player who
+  never moved the Split gets 50/50; a Split they chose keeps its number,
+  now the boards'. The welcome and invite cards centre above the seam
+  where the frames meet (`tableSeamShare`).
+- **The near hand, tilted, is 1.12 times its strip's size**: lying past
+  the board's edge it takes none of the board's room.
+- **Both hand pills lie on the window's left**, before their strips (a
+  turned far half's strip end is the window's left anyway), set against
+  the same x, one above the other; a wider pill (Solo's cover and Sort)
+  grows over the strip's empty start. Each hand's strip starts past its
+  pill and runs to the far edge, short of the app bar on the far half.
+  A pill is drawn with its own hand on the tilted table
+  (`BoardDepthProjection.countAnchor`), wherever it lies beside the strip.
+- **The Bench centres under the Active** (`BoardLayoutRegion.rowCentreX`):
+  its cards, not its stacks' outer margins, are centred on the Active's
+  centre line while the row fits there, and held to the bench's edges
+  past that.
+- A mat whose shown Lost Zone would keep no pile at all is laid out
+  smaller until it keeps one, as one too narrow for the Stadium is.
+- The bar's Solo | Online switch puts the side in play first, on the
+  left; its two sides slide past each other when it changes (a new bar,
+  after the page changed, slides from the last), and fade in place under
+  reduced motion (ADR-036).
+
 ## Consequences
 
 - A turned table stays one switch away and unchanged; specs that read the
@@ -129,4 +169,7 @@ shown, across that half's middle.
   checks both.
 - `BoardLayoutState.mirroredFarSide`, `BoardPlayerLayout.mirrored`,
   `BoardLayoutRegion.mirrored`, `ZoneSceneNode.mirrored` and
-  `BoardPreferences.outlineFilledZones` join the renderer contract.
+  `BoardPreferences.outlineFilledZones` join the renderer contract;
+  `BoardLayoutState.boardSplit`, `BoardLayoutRegion.rowCentreX`,
+  `tableHandsOutside`, `tableVerticalLayoutForBoards`, `rowStartX` and
+  `BoardDepthProjection.countAnchor` with §6.

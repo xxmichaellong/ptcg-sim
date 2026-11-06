@@ -367,6 +367,10 @@ describe('AppBar', () => {
     ).toBe(document.querySelector('.ptcgsim-app-bar__switch'));
     expect(option('p1Button')?.textContent).toBe('Solo');
     expect(option('p2Button')?.textContent).toBe('Online');
+    // The side in play first.
+    const first = () =>
+      document.querySelector('.ptcgsim-app-bar__switch-option')?.id;
+    expect(first()).toBe('p1Button');
 
     // In a room: Online pressed and lit, amber until connected; Solo is the
     // way out of it (which asks first).
@@ -379,6 +383,7 @@ describe('AppBar', () => {
       })
     );
     expect(option('p2Button')?.getAttribute('aria-pressed')).toBe('true');
+    expect(first()).toBe('p2Button');
     expect(option('p2Button')?.dataset.connecting).toBe('true');
     expect(
       option('p2Button')?.querySelector('.ptcgsim-app-bar__mode-light')

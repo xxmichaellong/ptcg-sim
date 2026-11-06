@@ -71,6 +71,7 @@ const sceneForHost = (
         bottomPlayerId,
         shellMode: 'fullscreen',
         vertical: tableVerticalLayout(table.lowerShare),
+        boardSplit: table.lowerShare,
         ...(table.seamBandPx ? { seamBandPx: table.seamBandPx } : {}),
         ...(table.appBarPx ? { appBarPx: table.appBarPx } : {}),
         ...(table.hideEmptyLostZone ? { hideEmptyLostZone: true } : {}),

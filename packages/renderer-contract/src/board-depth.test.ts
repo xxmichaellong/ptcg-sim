@@ -858,7 +858,12 @@ describe('physical pose timing', () => {
 });
 
 describe('a board laid out tilted (tiltedTable)', () => {
-  const sceneAt = (width: number, height: number, tiltedTable: boolean) => {
+  const sceneAt = (
+    width: number,
+    height: number,
+    tiltedTable: boolean,
+    mirroredFarSide = false
+  ) => {
     const view = createRendererSpikeView();
     return createBoardScene(
       view,
@@ -872,6 +877,7 @@ describe('a board laid out tilted (tiltedTable)', () => {
         seamBandPx: 46,
         appBarPx: { width: 334, height: 42 },
         ...(tiltedTable ? { tiltedTable: true } : {}),
+        ...(mirroredFarSide ? { mirroredFarSide: true } : {}),
       })
     );
   };
@@ -959,6 +965,20 @@ describe('a board laid out tilted (tiltedTable)', () => {
 
   it('takes a point on a drawn hand to that hand, and one on the board to the board', () => {
     const [width, height] = [1440, 900];
+    // Mirrored, the far hand's pill lies before its strip, past the reach
+    // of a point taken for the hand's own (2026-11-06).
+    for (const mirrored of [true, false]) {
+      const drawnScene = sceneAt(width, height, true, mirrored);
+      const drawnDepth = new BoardDepthProjection(drawnScene, preferences);
+      for (const hand of Object.values(hands(drawnScene, height))) {
+        const count = drawnScene.counts.find(
+          (node) => node.zoneId === hand.id
+        )!;
+        const at = drawnDepth.countAnchor(count);
+        expect(at.y, `${mirrored}`).toBeGreaterThanOrEqual(-1);
+        expect(at.y, `${mirrored}`).toBeLessThanOrEqual(height + 1);
+      }
+    }
     const scene = sceneAt(width, height, true);
     const depth = new BoardDepthProjection(scene, preferences);
     const { near, far } = hands(scene, height);
@@ -972,7 +992,7 @@ describe('a board laid out tilted (tiltedTable)', () => {
       // Its count is drawn where the hand is.
       const count = scene.counts.find((node) => node.zoneId === hand.id);
       if (count) {
-        const at = depth.point(count.anchor, 0, true);
+        const at = depth.countAnchor(count);
         expect(at.y).toBeGreaterThanOrEqual(-1);
         expect(at.y).toBeLessThanOrEqual(height + 1);
       }

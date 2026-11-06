@@ -9,6 +9,7 @@ import {
 } from './card-composition.js';
 import {
   layoutLegacyPlayRow,
+  rowStartX,
   type BoardLayoutRegion,
   type LegacyPlayRowStackInput,
 } from './layout.js';
@@ -142,7 +143,7 @@ export const layoutComposedPlayRow = (
   );
   const total =
     naturalWidths.reduce((a, b) => a + b * scale, 0) + gap * (raw.length - 1);
-  let cursor = bounds.x + (bounds.width - total) / 2;
+  let cursor = rowStartX(region, bounds, bounds.width - total);
   const result: (CardComposition & { readonly mainBounds: Rect })[] = [];
   const order = raw.map((_, index) => index);
   // A turned half runs right to left; a mirrored one left to right, as the

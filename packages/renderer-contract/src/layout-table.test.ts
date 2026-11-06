@@ -7,7 +7,11 @@ import { describe, expect, it } from 'vitest';
 
 import { resolveBoardDropTarget } from './drag.js';
 import { CARD_ASPECT_RATIO } from './geometry.js';
-import type { BoardLayoutState, BoardPlayerLayout } from './layout.js';
+import {
+  layoutLegacyPlayRow,
+  type BoardLayoutState,
+  type BoardPlayerLayout,
+} from './layout.js';
 import {
   APP_BAR_INSET_PX,
   DEFAULT_TABLE_VERTICAL_LAYOUT,
@@ -23,6 +27,7 @@ import {
   resizeLayoutStateFor,
   tableRailWidth,
   tableVerticalLayout,
+  tableVerticalLayoutForBoards,
 } from './layout-table.js';
 import type { Rect } from './model.js';
 import { createBoardScene } from './scene.js';
@@ -1804,7 +1809,7 @@ describe('table layout (geometry v2)', () => {
     }
   });
 
-  it("runs the hand from the mat's edge to its pill, its cards at the table's centre until they need the room", () => {
+  it("runs the hand from its pill at the window's left to the mat's edge, its cards at the table's centre until they need the room", () => {
     for (const [width, height, touch] of [
       [1440, 900, false],
       [1280, 568, false],
@@ -1823,9 +1828,17 @@ describe('table layout (geometry v2)', () => {
       const label = `${width}x${height}`;
       const hand = region(snapshot, 'local', 'hand').physicalDeclaredBounds;
       const prizes = region(snapshot, 'local', 'prizes').physicalDeclaredBounds;
-      // No corner kept beside the near hand: it starts at the mat's edge,
-      // where the prizes do.
-      expect(hand.x, label).toBeLessThanOrEqual(prizes.x + 0.01);
+      // Its pill lies on the window's left, under the prizes' column, and
+      // the hand starts just past it (2026-11-06); it runs to the mat's
+      // far edge.
+      const pill = region(snapshot, 'local', 'hand').countLabel!;
+      expect(pill.horizontalAlign, label).toBe('left');
+      expect(pill.anchor.x, label).toBeLessThanOrEqual(prizes.x + 0.01);
+      expect(hand.x, label).toBeLessThanOrEqual(pill.anchor.x + 72 + 0.01);
+      const mat = region(snapshot, 'local', 'deck').physicalDeclaredBounds;
+      expect(hand.x + hand.width, label).toBeGreaterThanOrEqual(
+        Math.min(mat.x + mat.width, width - 12) - 0.01
+      );
       const centre = snapshot.playAreaBounds.width / 2;
       const few = layoutTableHand(hand, 'local', 2, centre);
       expect(
@@ -1925,9 +1938,15 @@ describe('table layout (geometry v2)', () => {
   });
 
   it('sets the split from a share of the table, clamped so both halves stay usable', () => {
+    // Even boards by default; where the hands lie inside the halves the
+    // near frame is the deeper by its hand strip.
+    expect(TABLE_SPLIT.defaultLowerShare).toBe(0.5);
     expect(DEFAULT_TABLE_VERTICAL_LAYOUT).toEqual(
-      tableVerticalLayout(TABLE_SPLIT.defaultLowerShare)
+      tableVerticalLayoutForBoards(TABLE_SPLIT.defaultLowerShare, false)
     );
+    expect(
+      tableVerticalLayoutForBoards(TABLE_SPLIT.defaultLowerShare, true)
+    ).toEqual(tableVerticalLayout(0.5));
     const tall = tableVerticalLayout(0.6);
     expect(tall.lowerFrame).toEqual({ bottomRatio: 0, heightRatio: 0.6 });
     expect(tall.upperFrame.bottomRatio).toBeCloseTo(0.6, 5);
@@ -2409,11 +2428,16 @@ describe('table layout: tilted (tiltedTable)', () => {
         // Past its edge by more than a drop reaches past a zone (56px).
         if (side === 'local') expect(hand.y).toBeGreaterThan(height + 56);
         else expect(hand.y + hand.height).toBeLessThan(-56);
-        // Its strip and cards keep their size.
-        expect(hand.height).toBeCloseTo(was.height, 6);
+        // Its strip and cards keep their size; the player's own a little
+        // larger, taking none of the board's room (2026-11-06).
+        const grow = side === 'local' ? 1.12 : 1;
+        expect(hand.height).toBeCloseTo(was.height * grow, 6);
         const player = laid.players.find((frame) => frame.side === side)!;
         const wasPlayer = before.players.find((frame) => frame.side === side)!;
-        expect(player.handCardHeight).toBeCloseTo(wasPlayer.handCardHeight!, 6);
+        expect(player.handCardHeight).toBeCloseTo(
+          wasPlayer.handCardHeight! * grow,
+          6
+        );
         // The board fills the half, inside the window with room for the
         // mat's margin, and its cards are larger.
         for (const zone of player.regions) {
@@ -2534,7 +2558,7 @@ describe('table layout: the far half mirrored (ADR-046)', () => {
     }
   });
 
-  it("badges the far piles on their right corner, and ends the far hand's pill short of the app bar", () => {
+  it("badges the far piles on their right corner, and keeps the far hand's pill on the left, over the near one's", () => {
     for (const [width, height] of SIZES) {
       const laid = mirrored(width, height);
       const label = `${width}x${height}`;
@@ -2553,11 +2577,18 @@ describe('table layout: the far half mirrored (ADR-046)', () => {
         (candidate) => candidate.kind === 'hand'
       )!;
       const pill = hand.countLabel!;
-      // Past the strip's end, set against its slot's far end by the bar.
-      expect(pill.horizontalAlign, label).toBe('right');
-      expect(pill.anchor.x - 64, label).toBeGreaterThan(
-        hand.physicalDeclaredBounds.x + hand.physicalDeclaredBounds.width
+      // Before the strip's start, on the window's left, set against the
+      // slot's left as the near hand's pill is: one above the other
+      // (2026-11-06).
+      expect(pill.horizontalAlign, label).toBe('left');
+      expect(pill.anchor.x + 64, label).toBeLessThanOrEqual(
+        hand.physicalDeclaredBounds.x
       );
+      const nearPill = near(laid).regions.find(
+        (candidate) => candidate.kind === 'hand'
+      )!.countLabel!;
+      expect(nearPill.horizontalAlign, label).toBe('left');
+      expect(nearPill.anchor.x, label).toBeCloseTo(pill.anchor.x, 6);
       const bar = width < 600 ? { width: 160, height: 42 } : BAR;
       const barBox: Rect = {
         x: laid.playAreaBounds.width - APP_BAR_INSET_PX - bar.width,
@@ -2565,15 +2596,17 @@ describe('table layout: the far half mirrored (ADR-046)', () => {
         width: bar.width,
         height: bar.height,
       };
-      // The widest pill (the count, the cover and Sort, in Solo) grows back
-      // over the strip from there.
+      // The widest pill (the count, the cover and Sort, in Solo) grows
+      // over the strip's empty start from there, and the strip itself
+      // ends short of the bar.
       const pillBox: Rect = {
-        x: pill.anchor.x - 98,
+        x: pill.anchor.x,
         y: pill.anchor.y - 26,
         width: 98,
         height: 26,
       };
       expect(overlaps(pillBox, barBox), label).toBe(false);
+      expect(overlaps(hand.physicalDeclaredBounds, barBox), label).toBe(false);
     }
   });
 
@@ -2653,5 +2686,136 @@ describe('table layout: the far half mirrored (ADR-046)', () => {
       true
     ).map((card) => card.x);
     expect(hand).toEqual([...hand].sort((a, b) => a - b));
+  });
+});
+
+describe('table layout: even boards and lined-up rows (2026-11-06)', () => {
+  const at = (
+    width: number,
+    height: number,
+    extra: Partial<BoardLayoutState> = {}
+  ) =>
+    createTableLayoutSnapshot(
+      stateAt(width, height, {
+        shellMode: 'fullscreen',
+        seamBandPx: 46,
+        appBarPx: { width: 334, height: 42 },
+        mirroredFarSide: true,
+        boardSplit: TABLE_SPLIT.defaultLowerShare,
+        ...extra,
+      })
+    );
+
+  it('lays both boards the same size at an even split, tilted, so the halves meet', () => {
+    for (const [width, height] of [
+      [1440, 900],
+      [1280, 720],
+      [1920, 1080],
+      [1024, 768],
+      [844, 390],
+    ] as const) {
+      const laid = at(width, height, { tiltedTable: true });
+      for (const kind of ['deck', 'discard', 'prizes', 'active', 'bench']) {
+        const near = region(laid, 'local', kind).physicalDeclaredBounds;
+        const far = region(laid, 'opponent', kind).physicalDeclaredBounds;
+        const label = `${width}x${height} ${kind}`;
+        expect(near.width, label).toBeCloseTo(far.width, 6);
+        expect(near.height, label).toBeCloseTo(far.height, 6);
+        expect(near.x, label).toBeCloseTo(far.x, 6);
+      }
+      // The halves' frames are the boards: an even split of the table.
+      expect(laid.players[0].frameBounds.height).toBeCloseTo(
+        laid.players[1].frameBounds.height,
+        6
+      );
+    }
+  });
+
+  it('keeps the boards about even where the hands lie inside the halves', () => {
+    for (const [width, height] of [
+      [1440, 900],
+      [1280, 720],
+      [390, 844],
+    ] as const) {
+      const laid = at(width, height);
+      const near = region(laid, 'local', 'active').physicalDeclaredBounds;
+      const far = region(laid, 'opponent', 'active').physicalDeclaredBounds;
+      expect(far.height / near.height, `${width}x${height}`).toBeGreaterThan(
+        0.85
+      );
+      expect(far.height / near.height, `${width}x${height}`).toBeLessThan(1.15);
+    }
+    // The split given is the frames' where the hands lie inside: the
+    // same snapshot as before the board split was added.
+    expect(at(1440, 900)).toEqual(
+      createTableLayoutSnapshot(
+        stateAt(1440, 900, {
+          shellMode: 'fullscreen',
+          seamBandPx: 46,
+          appBarPx: { width: 334, height: 42 },
+          mirroredFarSide: true,
+          vertical: tableVerticalLayoutForBoards(
+            TABLE_SPLIT.defaultLowerShare,
+            false
+          ),
+        })
+      )
+    );
+  });
+
+  it('drops the board split once the seam is dragged', () => {
+    const state = stateAt(1440, 900, {
+      shellMode: 'fullscreen',
+      boardSplit: 0.5,
+      tiltedTable: true,
+    });
+    const dragged = resizeLayoutStateFor(state, 'lower', 360);
+    expect(dragged.boardSplit).toBeUndefined();
+    expect(dragged.vertical.lowerFrame.heightRatio).toBeCloseTo(0.6, 5);
+  });
+
+  it('centres the Bench under the Active, however many are benched', () => {
+    for (const [width, height] of [
+      [1440, 900],
+      [1280, 720],
+      [844, 390],
+      [390, 844],
+    ] as const) {
+      for (const tiltedTable of [true, false]) {
+        for (const mirroredFarSide of [true, false]) {
+          const laid = at(width, height, {
+            ...(tiltedTable ? { tiltedTable } : {}),
+            mirroredFarSide,
+          });
+          for (const side of ['local', 'opponent'] as const) {
+            const label = `${width}x${height} t=${tiltedTable} m=${mirroredFarSide} ${side}`;
+            const centreOf = (kind: 'active' | 'bench', count: number) => {
+              const row = layoutLegacyPlayRow(
+                region(laid, side, kind),
+                CARD_ASPECT_RATIO,
+                Array.from({ length: count }, () => ({
+                  evolutionCount: 1,
+                  attachments: [],
+                  rotationQuarterTurns: 0 as const,
+                }))
+              );
+              const cards = row.flatMap((stack) => stack.evolutionCards);
+              const left = Math.min(...cards.map((card) => card.bounds.x));
+              const right = Math.max(
+                ...cards.map((card) => card.bounds.x + card.bounds.width)
+              );
+              return (left + right) / 2;
+            };
+            const active = centreOf('active', 1);
+            for (const count of [1, 3, 5]) {
+              expect(centreOf('bench', count), `${label} ${count}`).toBeCloseTo(
+                active,
+                3
+              );
+            }
+          }
+        }
+      }
+    }
   });
 });

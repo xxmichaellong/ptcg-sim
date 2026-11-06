@@ -136,6 +136,13 @@ export interface BoardLayoutState {
   readonly shellMode: BoardShellMode;
   readonly vertical: BoardVerticalLayoutState;
   /**
+   * Geometry v2 only: the board's own split, the lower half's share of the
+   * boards (the player's Split setting). Given, the halves' frames follow
+   * from it wherever the hands lie (`tableVerticalLayoutForBoards`), in
+   * place of `vertical`'s; a seam dragged sets `vertical` and drops it.
+   */
+  readonly boardSplit?: number;
+  /**
    * Geometry v2 only: a half the viewer has chosen not to see. The other
    * half then fills the table, and the hidden half's cards leave the scene.
    */
@@ -276,6 +283,12 @@ export interface BoardLayoutRegion {
    * zones run left to right on the screen as the near half's do.
    */
   readonly mirrored?: true;
+  /**
+   * Geometry v2 only: where a play row's stacks centre while the row has
+   * room for them there (the Bench under its Active, 2026-11-06); past
+   * that they keep to the region, as v1's centred row does.
+   */
+  readonly rowCentreX?: number;
 }
 
 /**
@@ -2184,6 +2197,30 @@ const legacyPlayContainerMargins = (
 };
 
 /**
+ * Where a play row's first stack starts: centred in the region (v1), or with
+ * its cards centred on the region's own centre line (`rowCentreX`) while the
+ * row fits there, then held to the region's edges. `free` is the room the
+ * row leaves (negative where it overflows, when it stays centred); `lead`
+ * and `trail` are the row's outer margins, which hold no card.
+ */
+export const rowStartX = (
+  region: Pick<BoardLayoutRegion, 'rowCentreX'>,
+  bounds: Rect,
+  free: number,
+  lead = 0,
+  trail = 0
+): number => {
+  if (region.rowCentreX === undefined || free <= 0) {
+    return bounds.x + free / 2;
+  }
+  const painted = bounds.width - free - lead - trail;
+  return Math.min(
+    bounds.x + free,
+    Math.max(bounds.x, region.rowCentreX - painted / 2 - lead)
+  );
+};
+
+/**
  * Lays out every play-container of one active or bench row the way v1's
  * flex row does, for any stack shape: the container is an inline-block whose
  * width v1 grows by one sixth of the rounded base width per attachment; lower
@@ -2320,7 +2357,15 @@ export const layoutLegacyPlayRow = (
   const mirror = region.side !== 'local';
   const order = stacks.map((_, index) => index);
   if (mirror && region.mirrored !== true) order.reverse();
-  let cursor = bounds.x + free / 2;
+  const first = items[order[0]!]!;
+  const last = items[order[order.length - 1]!]!;
+  let cursor = rowStartX(
+    region,
+    bounds,
+    free,
+    mirror ? first.marginRight : first.marginLeft,
+    mirror ? last.marginLeft : last.marginRight
+  );
   const layouts: LegacyPlayRowStackLayout[] = [];
   for (const index of order) {
     const stack = stacks[index]!;

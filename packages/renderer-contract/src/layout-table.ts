@@ -70,26 +70,61 @@ const FAR_HAND_REVEAL_MOST = 0.62;
 const FAR_HAND_CARD_MOST = 0.4;
 
 /**
- * The near half's default share of the table: the whole percentage that
- * gives both halves card rows of about the same size (the near ones a hair
- * larger) once the far hand's strip is the smaller one -- a peek since
+ * The near half's share of the table where the hands lie inside the
+ * halves (the flat table, or a tilted one on an upright window) for boards
+ * of the same size: the far hand's strip is the smaller one, a peek since
  * 2026-11-05 (0.54 before).
  */
 const DEFAULT_LOWER_SHARE = 0.53;
-/** An even split, where both hands were the same size. */
+/** An even split: the halves' frames when they are their boards. */
 const EVEN_SPLIT_SHARE = 0.5;
+/**
+ * How far the frames lean toward the near half where the hands lie inside
+ * them, for a board split to hold (the near hand's strip being the deeper).
+ */
+const HANDS_INSIDE_SHARE = DEFAULT_LOWER_SHARE - EVEN_SPLIT_SHARE;
 const MINIMUM_HALF_SHARE = 0.34;
 const HANDLE_HEIGHT_RATIO = 0.025 as const;
 
 /**
- * How the table may be split between the halves: the lower half's share of
- * the height. Neither half may shrink below a third of the table.
+ * How the boards may be split between the halves: the lower board's share
+ * (the player's Split). Even by default, both boards the same size
+ * (2026-11-06, the owner: "we should set the default split to 50/50").
+ * Neither half may shrink below a third of the table.
  */
 export const TABLE_SPLIT = {
   minimumLowerShare: MINIMUM_HALF_SHARE,
   maximumLowerShare: 1 - MINIMUM_HALF_SHARE,
-  defaultLowerShare: DEFAULT_LOWER_SHARE,
+  defaultLowerShare: EVEN_SPLIT_SHARE,
 } as const;
+
+/**
+ * Whether the hands lie past the board's edges rather than inside the
+ * halves: tilted, on a window wider than tall, with both halves shown.
+ */
+export const tableHandsOutside = (
+  state: Pick<
+    BoardLayoutState,
+    'tiltedTable' | 'hiddenPhysicalSide' | 'viewport'
+  >
+): boolean =>
+  state.tiltedTable === true &&
+  state.hiddenPhysicalSide === undefined &&
+  state.viewport.width > state.viewport.height;
+
+/**
+ * The halves' frames for a board split: the boards themselves where the
+ * hands lie outside them; where the hands lie inside, leaning toward the
+ * near half by the depth its deeper hand strip takes, so the boards still
+ * split as asked.
+ */
+export const tableVerticalLayoutForBoards = (
+  boardShare: number,
+  handsOutside: boolean
+): BoardVerticalLayoutState =>
+  tableVerticalLayout(
+    handsOutside ? boardShare : boardShare + HANDS_INSIDE_SHARE
+  );
 
 /** The vertical state for a table whose lower half takes `lowerShare`. */
 export const tableVerticalLayout = (
@@ -135,6 +170,13 @@ const HALF_PROPORTIONS: HalfProportions = {
 
 /** The share of a hand card that shows; the rest runs off the screen. */
 export const TABLE_HAND_VISIBLE_SHARE = 0.8;
+/**
+ * Tilted, the player's own hand is this much larger than its half's strip
+ * would make it: lying past the board's edge, it takes none of the board's
+ * room, only a little of the band the board is drawn in (2026-11-06, the
+ * owner: "our hand actually looks a little bit too small").
+ */
+const TILTED_NEAR_HAND_SCALE = 1.12;
 
 /**
  * How far up from the player's edge v1's corner controls reach: its
@@ -311,6 +353,13 @@ interface HalfOptions {
    * window's top-right corner, where the app bar sits.
    */
   readonly handEndReservePx?: number;
+  /**
+   * The hand's pill lies before the strip's start (its left in the half's
+   * own frame) rather than past its end: the near half's, and a mirrored
+   * far half's, so both pills sit on the window's left, one above the
+   * other (2026-11-06). A turned far half's end is the window's left.
+   */
+  readonly handPillAtStart?: boolean;
 
   /**
    * The table is tilted (BoardLayoutState.tiltedTable): the board is laid
@@ -673,6 +722,35 @@ const handEndFor = (
 };
 
 /**
+ * A hand strip whose pill lies before its start (`handPillAtStart`): it
+ * starts past the pill's slot by the screen's edge, as a turned far
+ * strip's end does, and runs to the far edge, short of any pile reaching
+ * down into its band (a short mat's column) and of `reserve`.
+ */
+const handStripPillFirst = (
+  width: number,
+  handTop: number,
+  piles: readonly Rect[],
+  reserve = 0
+): { readonly start: number; readonly end: number } => {
+  const slot = HAND_PILL_GAP_PX + HAND_PILL_WIDTH_PX;
+  let end = width - Math.max(HAND_PILL_EDGE_PX, reserve);
+  // The same piles keep it short as kept a pill there short: those down
+  // in the band a pill would take.
+  const pillTop = handTop + HAND_PILL_DROP_PX;
+  const pillBottom = pillTop + HAND_PILL_HEIGHT_PX;
+  for (const pile of piles) {
+    if (
+      pile.y - HAND_PILL_PILE_CLEARANCE_PX < pillBottom &&
+      pile.y + pile.height + HAND_PILL_PILE_CLEARANCE_PX > pillTop
+    ) {
+      end = Math.min(end, pile.x - HAND_PILL_PILE_CLEARANCE_PX);
+    }
+  }
+  return { start: HAND_PILL_EDGE_PX + slot, end: Math.max(end, 0) };
+};
+
+/**
  * The app bar's corner a hand strip keeps clear, at whichever end it lies:
  * its start on a turned far half, its end on a mirrored one (ADR-046).
  */
@@ -886,9 +964,14 @@ const layoutHalfAs = (
   const gap = Math.max(6, height * proportions.rowGap);
   // Across the table on a short screen the strip is at least as deep as
   // the app bar's corner, so nothing else lies under the bar.
+  const ownHandOutside =
+    options.handsOutside === true &&
+    options.judged !== true &&
+    options.handPeek !== true;
   const nearCard =
-    (height * (options.judged ? JUDGED_HAND_STRIP : proportions.handStrip)) /
-    TABLE_HAND_VISIBLE_SHARE;
+    ((height * (options.judged ? JUDGED_HAND_STRIP : proportions.handStrip)) /
+      TABLE_HAND_VISIBLE_SHARE) *
+    (ownHandOutside ? TILTED_NEAR_HAND_SCALE : 1);
   const natural = naturalHandStrip(nearCard, options);
   // Never so deep that the board keeps no rows to speak of: on the
   // smallest tables the bar's corner gives way first.
@@ -1107,14 +1190,18 @@ const layoutHalfAs = (
   // down beside the hand. Its cards keep to the table's centre while they
   // fit (layoutTableHand), so the strip need not be.
   const lostZoneRect = lostZone ?? columnAt(2);
-  const handStart = Math.max(side, options.handStartReservePx ?? 0);
   // Tilted, the piles are drawn in the band above the hand, never beside it.
-  const handEnd = handEndFor(
-    width,
-    handTop,
-    outside ? [] : [deck, discard, ...(lostZone ? [] : [lostZoneRect])],
-    options.handEndReservePx
-  );
+  const besideHand = outside
+    ? []
+    : [deck, discard, ...(lostZone ? [] : [lostZoneRect])];
+  const pillFirst = options.handPillAtStart
+    ? handStripPillFirst(width, handTop, besideHand, options.handEndReservePx)
+    : undefined;
+  const handStart =
+    pillFirst?.start ?? Math.max(side, options.handStartReservePx ?? 0);
+  const handEnd =
+    pillFirst?.end ??
+    handEndFor(width, handTop, besideHand, options.handEndReservePx);
   const handRect: Rect = {
     x: handStart,
     y: handTop,
@@ -1372,13 +1459,15 @@ const layoutHalfPortraitAs = (
   });
   // The hand runs from the edge (across the table, from past the app bar)
   // to its pill; the pile row ends above the pill's band.
-  const handStart = Math.max(edge, options.handStartReservePx ?? 0);
-  const handEnd = handEndFor(
-    width,
-    handTop,
-    [pileAt(0), pileAt(1), pileAt(2)],
-    options.handEndReservePx
-  );
+  const pilesAbove = [pileAt(0), pileAt(1), pileAt(2)];
+  const pillFirst = options.handPillAtStart
+    ? handStripPillFirst(width, handTop, pilesAbove, options.handEndReservePx)
+    : undefined;
+  const handStart =
+    pillFirst?.start ?? Math.max(edge, options.handStartReservePx ?? 0);
+  const handEnd =
+    pillFirst?.end ??
+    handEndFor(width, handTop, pilesAbove, options.handEndReservePx);
   const handRect: Rect = {
     x: handStart,
     y: handTop,
@@ -1817,23 +1906,19 @@ const countLabelFor = (
       fontSizePx: 13,
     };
   }
-  // A mirrored far hand's pill is set against its slot's far end, by the
-  // app bar: a wider one (Solo's cover beside the count and Sort) grows
-  // back over the strip's end, never under the bar.
-  const againstSlotEnd = side !== 'local' && mirrored;
+  // Every hand's pill lies on the window's left, before its strip, both
+  // set against the slot's left so they line up one above the other; a
+  // wider one (Solo's cover beside the count and Sort) grows over the
+  // strip's empty start, never off the window (2026-11-06).
   return {
     anchor: {
-      x: againstSlotEnd
-        ? physical.x + physical.width + HAND_PILL_GAP_PX + HAND_PILL_WIDTH_PX
-        : right
-          ? physical.x + physical.width + HAND_PILL_GAP_PX
-          : physical.x - HAND_PILL_GAP_PX,
+      x: physical.x - HAND_PILL_GAP_PX - HAND_PILL_WIDTH_PX,
       y:
         side === 'local'
           ? physical.y + HAND_PILL_DROP_PX
           : physical.y + physical.height - HAND_PILL_DROP_PX,
     },
-    horizontalAlign: right && !againstSlotEnd ? 'left' : 'right',
+    horizontalAlign: 'left',
     verticalAlign: side === 'local' ? 'top' : 'bottom',
     fontSizePx: 13,
   };
@@ -2087,6 +2172,18 @@ export const createTableLayoutSnapshot = (
   if (hidden !== undefined && hidden !== 'lower' && hidden !== 'upper') {
     throw new Error('Unsupported hidden board side');
   }
+  // A board split given: the frames follow from it for where the hands lie
+  // on this window, as it is now.
+  if (state.boardSplit !== undefined) {
+    const { boardSplit, ...framed } = state;
+    return createTableLayoutSnapshot({
+      ...framed,
+      vertical: tableVerticalLayoutForBoards(
+        boardSplit,
+        tableHandsOutside(state)
+      ),
+    });
+  }
   // v1's validated snapshot supplies the region semantics, the player
   // pairing and every input check.
   const {
@@ -2098,7 +2195,7 @@ export const createTableLayoutSnapshot = (
     appBarPx,
     sidePanelReveal,
     oncePerGameMarkers,
-    tiltedTable,
+    tiltedTable: _tiltedTable,
     mirroredFarSide,
     ...semanticState
   } = state;
@@ -2183,6 +2280,9 @@ export const createTableLayoutSnapshot = (
   // there, its pill just short of the bar (ADR-046).
   const farReserve: HalfOptions = {
     ...(hidden === undefined ? { handPeek: true } : {}),
+    // On the window's left too: before a mirrored strip's start, past a
+    // turned one's end.
+    handPillAtStart: mirrored,
     ...(appBarPx
       ? {
           ...(mirrored
@@ -2207,14 +2307,13 @@ export const createTableLayoutSnapshot = (
       : undefined;
   // Tilted on a window wider than tall with both halves shown, the board
   // takes each half whole and the hands lie past its edges (`handsOutside`).
-  const tilted =
-    tiltedTable === true &&
-    hidden === undefined &&
-    state.viewport.width > state.viewport.height;
+  const tilted = tableHandsOutside(state);
   const halfOptions: HalfOptions = {
     ...sharedOptions,
     ...(mat ? { mat } : {}),
     ...(tilted ? { handsOutside: true } : {}),
+    // The near hand's pill on the window's left (2026-11-06).
+    handPillAtStart: true,
   };
   const buildPlayer = (
     template: BoardPlayerLayout,
@@ -2233,6 +2332,11 @@ export const createTableLayoutSnapshot = (
     const reflected = mirrored && template.side !== 'local';
     const place = (rect: Rect): Rect =>
       toPhysical(rect, frameBounds, template.side, reflected);
+    // The Bench's stacks centre under the Active while they have room.
+    const activeLocal = geometry.regions.find(
+      (region) => region.kind === 'active'
+    );
+    const activePhysical = activeLocal ? place(activeLocal.rect) : undefined;
     const regions: BoardLayoutRegion[] = geometry.regions.map((local) => {
       const source = template.regions.find(
         (region) => region.kind === local.kind
@@ -2270,6 +2374,9 @@ export const createTableLayoutSnapshot = (
           ? countLabelFor(local.countAnchor, physical, template.side, reflected)
           : null,
         ...(reflected ? { mirrored: true as const } : {}),
+        ...(local.kind === 'bench' && activePhysical
+          ? { rowCentreX: activePhysical.x + activePhysical.width / 2 }
+          : {}),
       };
     });
     return {
@@ -2399,6 +2506,7 @@ export const createTableLayoutSnapshot = (
     const farWithoutBar: HalfOptions = {
       ...halfOptions,
       ...(farOptions.handPeek ? { handPeek: true } : {}),
+      handPillAtStart: mirrored,
     };
     // `farScale`: the far half refitted on its own, portrait mat too. The
     // search lays the halves out with their Lost Zone: where a row made
@@ -2563,6 +2671,11 @@ export const createTableLayoutSnapshot = (
         }
       }
       const staged = regionOf(far.player, 'board');
+      // A Lost Zone on the table keeps a pile, however small: a mat that
+      // leaves it none is laid out smaller (2026-11-06; before, a 600px
+      // window kept a 13px one by chance).
+      const pileKept = (built: typeof near): boolean =>
+        !built.geometry.lostZoneBeside || lostZoneHeight(built.geometry) > 0;
       return {
         near,
         far,
@@ -2573,7 +2686,9 @@ export const createTableLayoutSnapshot = (
         fits:
           staged !== undefined &&
           staged.width >= placed.width + 0.5 &&
-          overlapArea(staged, placed) <= STADIUM_OVERLAP_SLACK_PX2,
+          overlapArea(staged, placed) <= STADIUM_OVERLAP_SLACK_PX2 &&
+          pileKept(near) &&
+          pileKept(far),
         covered: coveredBy(placed, [near, far]),
       };
     };
@@ -2843,8 +2958,10 @@ export const resizeTableLayoutState = (
   if (!Number.isFinite(clientY)) {
     throw new Error('Board resize pointer clientY must be finite');
   }
+  // The seam where the pointer is: frames, no longer a board split.
+  const { boardSplit: _split, ...framed } = state;
   return {
-    ...state,
+    ...framed,
     vertical: tableVerticalLayout(1 - clientY / state.viewport.height),
   };
 };

@@ -871,6 +871,20 @@ export class BoardDepthProjection {
       : projectTablePoint(this.camera, { ...point, z: elevation });
   }
 
+  /**
+   * Where a zone's count is drawn: a hand's with its hand, wherever its
+   * pill lies beside the strip (2026-11-06: on the window's left, past a
+   * turned strip's end or before a mirrored one's start).
+   */
+  countAnchor(node: {
+    readonly zoneId: string;
+    readonly anchor: TablePoint;
+  }): TablePoint {
+    const dy = this.handShifts.get(node.zoneId);
+    if (dy === undefined) return this.point(node.anchor, 0, true);
+    return dy === 0 ? node.anchor : { x: node.anchor.x, y: node.anchor.y + dy };
+  }
+
   /** Where a hand's strip is drawn: its edge of the window, tilted. */
   handBounds(zone: ZoneSceneNode): Rect {
     const dy = this.handShifts.get(zone.id) ?? 0;

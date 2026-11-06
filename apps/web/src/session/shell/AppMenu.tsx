@@ -19,7 +19,7 @@ import { UserIcon } from '@phosphor-icons/react/dist/csr/User';
 import { UserPlusIcon } from '@phosphor-icons/react/dist/csr/UserPlus';
 import { UsersThreeIcon } from '@phosphor-icons/react/dist/csr/UsersThree';
 import { XCircleIcon } from '@phosphor-icons/react/dist/csr/XCircle';
-import { useMemo, type CSSProperties, type ReactNode } from 'react';
+import { useMemo, useRef, type CSSProperties, type ReactNode } from 'react';
 
 import {
   moveAlongToolbar,
@@ -38,6 +38,7 @@ import {
 } from '../../ui/breakpoints.js';
 import type { SettingsTone } from '../../ui/SettingsList.js';
 import { Tooltip, withKeyHint } from '../../ui/Tooltip.js';
+import { useModeSwitchSlide } from './mode-switch-motion.js';
 import { DISCORD_URL, openHelpPage, RELEASE_NAME } from './help-pages.js';
 
 /**
@@ -499,7 +500,8 @@ export const modeSwitchOf = (
 
 /**
  * Where this table is played, as a switch at the start of the bar: Solo
- * or Online, the one in play pressed. The other side goes there -- Play
+ * or Online, the one in play pressed and first (they slide past each
+ * other when it changes). The other side goes there -- Play
  * online's page from a Solo table, the Solo table from that page, and out
  * of a room (asked first). Online, a light says whether the room is
  * connected.
@@ -517,6 +519,8 @@ const ModeSwitch = ({ mode }: { readonly mode: ModeSwitchModel }) => {
       ? t({ message: 'Watching', context: 'spectating a room' })
       : t({ message: 'Online', context: 'playing against someone' }));
   const solo = mode.current === 'solo';
+  const group = useRef<HTMLDivElement>(null);
+  useModeSwitchSlide(group, mode.current);
   const soloTip = solo
     ? soloName
     : mode.onSolo && mode.current === 'online' && mode.detail !== undefined
@@ -527,72 +531,78 @@ const ModeSwitch = ({ mode }: { readonly mode: ModeSwitchModel }) => {
     : mode.onRoom
       ? t({ message: 'Room', context: 'an online room' })
       : (mode.detail ?? onlineName);
+  // The side in play comes first, the other after it; they slide past
+  // each other when it changes.
+  const soloSide = (
+    <Tooltip key="solo" content={soloTip} side="bottom">
+      <button
+        id="p1Button"
+        type="button"
+        className="ptcgsim-app-bar__switch-option"
+        aria-pressed={solo}
+        aria-disabled={!solo && !mode.onSolo ? true : undefined}
+        onClick={() => {
+          if (!solo) mode.onSolo?.();
+        }}
+      >
+        <UserIcon aria-hidden="true" weight="bold" />
+        <span className="ptcgsim-app-bar__switch-name">{soloName}</span>
+      </button>
+    </Tooltip>
+  );
+  const onlineSide = (
+    <Tooltip key="online" content={onlineTip} side="bottom" tapToShow={!solo}>
+      <button
+        id="p2Button"
+        type="button"
+        className="ptcgsim-app-bar__switch-option"
+        aria-pressed={!solo}
+        aria-disabled={
+          (solo && !mode.onOnline) || (!solo && !mode.onRoom) ? true : undefined
+        }
+        data-connecting={mode.connecting ? 'true' : undefined}
+        data-room-code={mode.code}
+        data-watching={mode.watching ? 'true' : undefined}
+        {...(mode.watching && mode.code
+          ? {
+              'aria-label': t({
+                message: `Watching room ${mode.code}`,
+                comment: 'mode.code is a short room code like K7PQ',
+              }),
+            }
+          : {})}
+        onClick={() => {
+          if (solo) mode.onOnline?.();
+          else mode.onRoom?.();
+        }}
+      >
+        {solo ? (
+          <UsersThreeIcon aria-hidden="true" weight="bold" />
+        ) : (
+          <span className="ptcgsim-app-bar__mode-light" aria-hidden="true" />
+        )}
+        {/* Watching a room by its code: an eye says so. */}
+        {!solo && mode.watching && mode.code ? (
+          <EyeIcon aria-hidden="true" weight="bold" />
+        ) : null}
+        <span
+          className="ptcgsim-app-bar__switch-name"
+          data-code={mode.code ? 'true' : undefined}
+        >
+          {onlineName}
+        </span>
+      </button>
+    </Tooltip>
+  );
   return (
     <div
+      ref={group}
       className="ptcgsim-app-bar__switch"
       role="group"
       aria-label={t({ message: 'Mode', context: 'solo or online play' })}
       data-current={mode.current}
     >
-      <Tooltip content={soloTip} side="bottom">
-        <button
-          id="p1Button"
-          type="button"
-          className="ptcgsim-app-bar__switch-option"
-          aria-pressed={solo}
-          aria-disabled={!solo && !mode.onSolo ? true : undefined}
-          onClick={() => {
-            if (!solo) mode.onSolo?.();
-          }}
-        >
-          <UserIcon aria-hidden="true" weight="bold" />
-          <span className="ptcgsim-app-bar__switch-name">{soloName}</span>
-        </button>
-      </Tooltip>
-      <Tooltip content={onlineTip} side="bottom" tapToShow={!solo}>
-        <button
-          id="p2Button"
-          type="button"
-          className="ptcgsim-app-bar__switch-option"
-          aria-pressed={!solo}
-          aria-disabled={
-            (solo && !mode.onOnline) || (!solo && !mode.onRoom)
-              ? true
-              : undefined
-          }
-          data-connecting={mode.connecting ? 'true' : undefined}
-          data-room-code={mode.code}
-          data-watching={mode.watching ? 'true' : undefined}
-          {...(mode.watching && mode.code
-            ? {
-                'aria-label': t({
-                  message: `Watching room ${mode.code}`,
-                  comment: 'mode.code is a short room code like K7PQ',
-                }),
-              }
-            : {})}
-          onClick={() => {
-            if (solo) mode.onOnline?.();
-            else mode.onRoom?.();
-          }}
-        >
-          {solo ? (
-            <UsersThreeIcon aria-hidden="true" weight="bold" />
-          ) : (
-            <span className="ptcgsim-app-bar__mode-light" aria-hidden="true" />
-          )}
-          {/* Watching a room by its code: an eye says so. */}
-          {!solo && mode.watching && mode.code ? (
-            <EyeIcon aria-hidden="true" weight="bold" />
-          ) : null}
-          <span
-            className="ptcgsim-app-bar__switch-name"
-            data-code={mode.code ? 'true' : undefined}
-          >
-            {onlineName}
-          </span>
-        </button>
-      </Tooltip>
+      {solo ? [soloSide, onlineSide] : [onlineSide, soloSide]}
     </div>
   );
 };
