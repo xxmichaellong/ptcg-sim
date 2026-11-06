@@ -194,12 +194,21 @@ card itself. Using an Ability was the card menu's "ability used" marker
     - **The controls** (the window's chips, the marker controls, the
       palette): each condition on or off, the markers (Poisoned, Burned)
       apart from the three one at a time, a new one of those replacing the
-      last; "Remove all conditions" when several are on. The keys' cycle
-      (v1's) still steps through single conditions, from the first on.
+      last; "Remove all conditions" when several are on. The marker
+      controls stay open, on the Active, once the last condition comes off,
+      for the next. The keys' cycle (v1's) still steps through single
+      conditions, from the first on.
     - **On the card**, each condition is its own official chip (the Pokémon
-      TCG Pocket icons the table already wore), the first where v1 puts its
-      marker and the rest stepping down the card (up, on the opponent's
-      side), 86% of a chip apart.
+      TCG Pocket icons the table already wore), all of v1's size. The first
+      lies where v1 puts its marker; each other takes the first free place
+      that stays on the card and clear of the damage counter, the Ability
+      marker and the reminders: the middle of v1's marker row, above the
+      first (below it on the opponent's side), then the damage's place when
+      it has none. So on an upright Pokémon every marker can be read and
+      pressed whatever else is on it (`condition-chips.test.ts` tries every
+      combination). On a card turned a quarter, where v1's own row already
+      crosses the Ability marker, the chips share that row, smaller, up to
+      the damage counter.
     - **The log** tells them as they now stand: "Blue made Pikachu Poisoned,
       Burned and Asleep"; "Blue took Burned off Pikachu, still Poisoned".
       `ConditionSet` carries `conditions` (all of them) and `off` (taken off

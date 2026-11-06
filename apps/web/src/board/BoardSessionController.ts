@@ -672,6 +672,16 @@ const markerControlsStayOpen = (
     hasCard(scene, controls.cardId) &&
     Object.values(view.stacks).some(
       (stack) => stack.evolutionCards.at(-1)?.id === controls.cardId
+    )) ||
+  // A Special Condition's controls stay for the next one once the last is
+  // taken off, while the Pokémon is the Active (ADR-043 §14): only there
+  // can one go on.
+  (controls?.kind === 'specialCondition' &&
+    hasCard(scene, controls.cardId) &&
+    Object.values(view.stacks).some(
+      (stack) =>
+        stack.slot === 'active' &&
+        stack.evolutionCards.at(-1)?.id === controls.cardId
     ));
 
 const NO_GROUP_SUBMISSIONS: readonly GroupSubmission[] = Object.freeze([]);

@@ -757,6 +757,73 @@ const makeCardNode = (
   };
 };
 
+const overlaps = (a: Rect, b: Rect): boolean =>
+  a.x < b.x + b.width - 0.5 &&
+  b.x < a.x + a.width - 0.5 &&
+  a.y < b.y + b.height - 0.5 &&
+  b.y < a.y + a.height - 0.5;
+
+const inside = (rect: Rect, card: Rect): boolean =>
+  rect.x >= card.x - 0.5 &&
+  rect.y >= card.y - 0.5 &&
+  rect.x + rect.width <= card.x + card.width + 0.5 &&
+  rect.y + rect.height <= card.y + card.height + 0.5;
+
+/**
+ * Where a Pokémon's Special Condition chips lie (ADR-043 §14). The first is
+ * where v1 puts its one marker; each other takes the first free place, at
+ * the same size, that stays on the card and clear of the markers on it
+ * (`taken`: the damage counter, the Ability marker, the reminders): the
+ * middle of v1's marker row (between the condition and the damage), above
+ * the first (below it on the opponent's side, its card turned half round),
+ * then the damage's place when it has none. Where none is free (a card
+ * turned a quarter, its markers crowded), the chips share v1's row, smaller,
+ * from the condition's end up to the damage counter.
+ */
+const layoutConditionChips = (
+  count: number,
+  layout: ReturnType<typeof layoutLegacyActiveQ0Markers>,
+  card: Rect,
+  side: 'local' | 'opponent',
+  taken: readonly Rect[],
+  hasDamage: boolean
+): Rect[] => {
+  if (count === 0) return [];
+  const first = copyRect(layout.specialCondition.bounds);
+  const size = first.width;
+  // Along the row, toward the damage; and outward, away from the card's
+  // middle.
+  const along = side === 'opponent' ? -1 : 1;
+  const outward = side === 'opponent' ? 1 : -1;
+  const candidates: Rect[] = [
+    { ...first, x: first.x + along * size },
+    { ...first, y: first.y + outward * size },
+    ...(hasDamage ? [] : [{ ...first, x: first.x + along * 2 * size }]),
+  ];
+  const placed: Rect[] = [first];
+  for (const candidate of candidates) {
+    if (placed.length === count) break;
+    if (
+      inside(candidate, card) &&
+      ![...taken, ...placed].some((other) => overlaps(candidate, other))
+    ) {
+      placed.push(candidate);
+    }
+  }
+  if (placed.length === count) return placed;
+  // Crowded: the row from the condition's end to the damage counter (or the
+  // card's other edge), shared.
+  const span = hasDamage ? 2 * size : 3 * size;
+  const chip = Math.min(size, span / count);
+  const start = along === 1 ? first.x : first.x + size - chip;
+  return Array.from({ length: count }, (_, index) => ({
+    x: start + along * index * chip,
+    y: first.y + (size - chip) / 2,
+    width: chip,
+    height: chip,
+  }));
+};
+
 const addMarkers = (
   markers: MarkerSceneNode[],
   topCard: CardSceneNode,
@@ -795,13 +862,29 @@ const addMarkers = (
     });
   };
   if (stack.damage !== null) marker('damage', String(stack.damage));
+  const reminders = stack.reminders ?? [];
+  const chips = layoutReminderMarkers(
+    painted,
+    topCard.side === 'opponent' ? 'opponent' : 'local',
+    reminders.length
+  );
   // Each Special Condition a chip of its own (game-core: Poisoned and Burned
-  // beside one of the turning three, ADR-043 §14), the first where v1 puts
-  // its marker and the rest stepping along the card's edge toward its middle;
-  // a typed note is one chip.
-  specialConditionParts(stack.specialCondition).forEach((part, index) => {
-    const first = layout.specialCondition.bounds;
-    const step = first.height * 0.86 * index;
+  // beside one of the turning three, ADR-043 §14), laid clear of the other
+  // markers; a typed note is one chip.
+  const parts = specialConditionParts(stack.specialCondition);
+  layoutConditionChips(
+    parts.length,
+    layout,
+    painted,
+    topCard.side === 'opponent' ? 'opponent' : 'local',
+    [
+      ...(stack.damage !== null ? [layout.damage.bounds] : []),
+      ...(stack.abilityUsed ? [layout.abilityUsed.bounds] : []),
+      ...chips,
+    ],
+    stack.damage !== null
+  ).forEach((bounds, index) => {
+    const part = parts[index]!;
     markers.push({
       id:
         index === 0
@@ -812,22 +895,13 @@ const addMarkers = (
       kind: 'specialCondition',
       presentation,
       value: part,
-      bounds: {
-        ...copyRect(first),
-        y: first.y + (topCard.side === 'opponent' ? -step : step),
-      },
+      bounds,
       zIndex: topCard.zIndex + layout.specialCondition.sourceZIndex,
       label: `specialCondition: ${part}`,
     });
   });
   if (stack.abilityUsed) marker('abilityUsed', 'used');
   // Its reminders, each a chip of its own in a row.
-  const reminders = stack.reminders ?? [];
-  const chips = layoutReminderMarkers(
-    painted,
-    topCard.side === 'opponent' ? 'opponent' : 'local',
-    reminders.length
-  );
   reminders.forEach((reminder, index) => {
     markers.push({
       id: `${topCard.id}:reminder:${reminder}`,

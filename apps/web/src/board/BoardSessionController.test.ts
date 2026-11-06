@@ -2001,7 +2001,7 @@ describe('headless board session controller', () => {
     ]);
   });
 
-  it('closes the Special Condition chips once their chip is gone', () => {
+  it('keeps the Special Condition chips once their chip is gone, and closes them when the Pokémon leaves the Active', () => {
     const view = createRendererSpikeView();
     const activeStack = view.stacks['stack:blue:active']!;
     const cardId = activeStack.evolutionCards.at(-1)!.id;
@@ -2031,7 +2031,42 @@ describe('headless board session controller', () => {
         )
       ),
     }).state;
-    expect(cleared.overlays.marker ?? null).toBeNull();
+    // The last condition taken off: they stay for the next (ADR-043 §14).
+    expect(cleared.overlays.marker).toEqual({
+      cardId,
+      kind: 'specialCondition',
+    });
+    // Sent to the Bench, it can have none: they go.
+    const board = cleared.view!.boards[activeStack.boardPlayerId]!;
+    const benched = apply(cleared, {
+      kind: 'FrameReceived',
+      frame: liveFrame(
+        3,
+        withRevision(
+          {
+            ...cleared.view!,
+            boards: {
+              ...cleared.view!.boards,
+              [activeStack.boardPlayerId]: {
+                ...board,
+                activeStackId: null,
+                benchStackIds: [...board.benchStackIds, activeStack.id],
+              },
+            },
+            stacks: {
+              ...cleared.view!.stacks,
+              [activeStack.id]: {
+                ...activeStack,
+                slot: 'bench',
+                specialCondition: null,
+              },
+            },
+          },
+          cleared.view!.revision + 1
+        )
+      ),
+    }).state;
+    expect(benched.overlays.marker ?? null).toBeNull();
   });
 
   it("opens a Pokémon's reminders from its menu with none on, and they stay open as each goes on and off", () => {
@@ -2296,6 +2331,52 @@ describe('headless board session controller', () => {
         },
       },
     ]);
+  });
+
+  it('keeps the Special Condition chips open once the last condition is taken off the Active', () => {
+    let state = install();
+    const activeStack = state.view!.stacks['stack:blue:active']!;
+    const cardId = activeStack.evolutionCards.at(-1)!.id;
+    state = apply(state, {
+      kind: 'RendererIntent',
+      intent: { kind: 'CardContextRequested', cardId },
+    }).state;
+    const opened = apply(state, {
+      kind: 'LegacyOverlayActionRequested',
+      request: { kind: 'context', action: 'setSpecialCondition', cardId },
+    }).state;
+    expect(opened.overlays.marker).toMatchObject({
+      cardId,
+      kind: 'specialCondition',
+    });
+    // The room takes every condition off (Remove all, or the last toggled
+    // off): no chip lies on the card, and the controls stay for the next.
+    const cleared = apply(opened, {
+      kind: 'FrameReceived',
+      frame: liveFrame(
+        2,
+        withRevision(
+          {
+            ...opened.view!,
+            stacks: {
+              ...opened.view!.stacks,
+              [activeStack.id]: { ...activeStack, specialCondition: null },
+            },
+          },
+          opened.view!.revision + 1
+        )
+      ),
+    }).state;
+    expect(
+      cleared.scene!.markers.some(
+        (marker) =>
+          marker.kind === 'specialCondition' && marker.parentCardId === cardId
+      )
+    ).toBe(false);
+    expect(cleared.overlays.marker).toMatchObject({
+      cardId,
+      kind: 'specialCondition',
+    });
   });
 
   it("opens the Special Condition chips on the Pokémon's top card from any of its cards", () => {

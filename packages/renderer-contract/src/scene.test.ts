@@ -1144,7 +1144,7 @@ describe('renderer-neutral board scene', () => {
     }
   });
 
-  it('lays each Special Condition on its own chip, stepping toward the card’s middle, and a note on one', () => {
+  it('lays each Special Condition on its own chip, the first where v1 puts its marker, and a note on one', () => {
     const several = { ...allActiveMarkers, specialCondition: 'P B Pa' };
     const scene = createBoardScene(
       createPristineActiveMarkerView(several, several),
@@ -1159,12 +1159,26 @@ describe('renderer-neutral board scene', () => {
       expect(chips[0]!.id).toBe(`${chips[0]!.parentCardId}:specialCondition`);
       expect(new Set(chips.map((chip) => chip.id)).size).toBe(3);
       const [first, second, third] = chips.map((chip) => chip.bounds);
-      expect(second!.x).toBe(first!.x);
-      // Down the card for ours, up it for theirs (turned half round).
-      const step = second!.y - first!.y;
-      expect(Math.sign(step)).toBe(side === 'local' ? 1 : -1);
-      expect(Math.abs(step)).toBeCloseTo(first!.height * 0.86, 6);
-      expect(third!.y - second!.y).toBeCloseTo(step, 6);
+      // Clear of each other and of the damage and Ability markers
+      // (condition-chips.test.ts tries every combination).
+      const others = scene.markers.filter(
+        (marker) =>
+          marker.parentCardId === chips[0]!.parentCardId &&
+          marker.kind !== 'specialCondition'
+      );
+      for (const bounds of [first!, second!, third!]) {
+        for (const other of [
+          ...others.map((marker) => marker.bounds),
+          ...[first!, second!, third!].filter((rect) => rect !== bounds),
+        ]) {
+          expect(
+            bounds.x + bounds.width <= other.x + 0.5 ||
+              other.x + other.width <= bounds.x + 0.5 ||
+              bounds.y + bounds.height <= other.y + 0.5 ||
+              other.y + other.height <= bounds.y + 0.5
+          ).toBe(true);
+        }
+      }
       // Each stays on its card.
       const card = scene.cards.find(
         (node) => node.id === chips[0]!.parentCardId

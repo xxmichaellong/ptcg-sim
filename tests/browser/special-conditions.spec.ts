@@ -116,4 +116,15 @@ test('several Special Conditions at once, each a chip on the card and told as th
   await expect
     .poll(async () => (await markers(page, 'specialCondition')).length)
     .toBe(0);
+  // None left, the controls stay for the next.
+  await page.waitForTimeout(300);
+  await expect(controls).toBeVisible();
+  before = await revision(page);
+  await controls.getByRole('button', { name: 'Confused' }).click();
+  await nextRevision(page, before);
+  await expect
+    .poll(async () =>
+      (await markers(page, 'specialCondition')).map((marker) => marker.value)
+    )
+    .toEqual(['C']);
 });
