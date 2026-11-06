@@ -269,9 +269,9 @@ describe('SettingsSheet', () => {
     const onSaveOnline = vi.fn();
     const onLeave = vi.fn();
     const menu: AppMenuModel = {
-      heading: 'Room K7PQ2M',
+      heading: 'Room K7PQ',
       onSettings: vi.fn(),
-      invites: { roles: ['player', 'spectator'], seatTaken: true, onInvite },
+      invites: { code: 'K7PQ', onInvite, onCopyCode: vi.fn() },
       game: { onSaveOnline, onExportState: vi.fn() },
       onLeave,
     };
@@ -284,27 +284,25 @@ describe('SettingsSheet', () => {
     const groups = [...sheet.querySelectorAll('.settings-group')];
     expect(
       groups[0]?.querySelector('.settings-group__heading')?.textContent
-    ).toBe('Room K7PQ2M');
+    ).toBe('Room K7PQ');
     expect(
       [...groups[0]!.querySelectorAll('[id]')]
         .map((row) => row.id)
         .filter((id) => !id.startsWith('«'))
     ).toEqual(
       expect.arrayContaining([
-        'inviteOpponentMenuItem',
-        'inviteSpectatorMenuItem',
+        'roomCodeMenuItem',
+        'inviteMenuItem',
         'coachingModeCheckbox',
       ])
     );
-    // A taken seat can't be offered again, and says why.
-    const opponent = sheet.querySelector<HTMLButtonElement>(
-      '#inviteOpponentMenuItem'
-    )!;
-    expect(opponent.disabled).toBe(true);
-    expect(opponent.textContent).toContain('Seat taken');
-    await press('inviteSpectatorMenuItem');
+    // The room's code beside it; one invite link for everyone (ADR-047).
+    expect(sheet.querySelector('#roomCodeMenuItem')?.textContent).toContain(
+      'K7PQ'
+    );
+    await press('inviteMenuItem');
     expect(onOpenChange).toHaveBeenCalledWith(false);
-    expect(onInvite).toHaveBeenCalledWith('spectator');
+    expect(onInvite).toHaveBeenCalledOnce();
     // The saves and replays are a page of their own.
     expect(sheet.querySelector('#saveOnlineGame')).toBeNull();
     await press('settingsSavesRow');

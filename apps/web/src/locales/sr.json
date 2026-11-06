@@ -32,6 +32,10 @@
     "message": "{0, plural, one {# selected} other {# selected}}",
     "translation": "{0, plural, one {# изабрана} few {# изабране} other {# изабраних}}"
   },
+  "f4hwpo": {
+    "message": "{0, plural, one {# watching} other {# watching}}",
+    "translation": "{0, plural, one {# гледалац} few {# гледаоца} other {# гледалаца}}"
+  },
   "wmB_kS": {
     "message": "{0, plural, one {Revealed to your opponent} other {Revealed # cards to your opponent}}",
     "translation": "{0, plural, one {Откривена противнику} few {Откривене # карте противнику} other {Откривено # карата противнику}}"
@@ -1625,6 +1629,13 @@
     "message": "3 pieces in a row",
     "translation": "3 дела у низу"
   },
+  "Ncbs74": {
+    "message": "4–12 letters or digits, no I, O, 0 or 1",
+    "comments": [
+      "The rule for a room code"
+    ],
+    "translation": "4–12 слова или цифара, без I, O, 0 или 1"
+  },
   "GeqQnM": {
     "message": "A card in it has no image.",
     "translation": "Једна карта у њему нема слику."
@@ -2247,13 +2258,13 @@
     "message": "Both players must allow it.",
     "translation": "Оба играча морају да дозволе."
   },
-  "nqjpOW": {
-    "message": "Both seats are taken.",
-    "translation": "Оба места су заузета."
-  },
   "5XVQGs": {
     "message": "Both seats are taken. Ask for a spectator invitation.",
     "translation": "Оба места су заузета. Затражи позивницу за гледаоца."
+  },
+  "hGCCg3": {
+    "message": "Both seats are taken. Join to watch.",
+    "translation": "Оба места су заузета. Придружи се да гледаш."
   },
   "7jOTCJ": {
     "message": "Both sides",
@@ -2442,6 +2453,10 @@
     "message": "Change card type",
     "translation": "Промени врсту карте"
   },
+  "MSbiQ_": {
+    "message": "Change code",
+    "translation": "Промени код"
+  },
   "UOwYQT": {
     "message": "Change the image",
     "translation": "Промени слику"
@@ -2622,6 +2637,10 @@
     "context": "sleeve color",
     "translation": "Какао"
   },
+  "bse4E7": {
+    "message": "Code changed",
+    "translation": "Код је промењен"
+  },
   "c6pkO-": {
     "message": "Coin",
     "context": "flip a coin",
@@ -2682,9 +2701,22 @@
     "message": "Copy",
     "translation": "Копирај"
   },
+  "Bp8-R4": {
+    "message": "Copy",
+    "context": "copy to the clipboard",
+    "translation": "Копирај"
+  },
+  "NmPNJJ": {
+    "message": "Copy code",
+    "translation": "Копирај код"
+  },
   "tlcVbQ": {
     "message": "Copy details",
     "translation": "Копирај детаље"
+  },
+  "x7uIlL": {
+    "message": "Copy invite link",
+    "translation": "Копирај везу позивнице"
   },
   "PSlXm_": {
     "message": "Copy list",
@@ -2693,6 +2725,10 @@
   "zxrRZX": {
     "message": "Copy list (Pokémon TCG Live)",
     "translation": "Копирај списак (Pokémon TCG Live)"
+  },
+  "PWBNVu": {
+    "message": "Copy room code",
+    "translation": "Копирај код собе"
   },
   "gK_NxX": {
     "message": "Coral",
@@ -2705,6 +2741,10 @@
       "The Energy an attack needs, read out. {names} lists the types, e.g. \"Fire, Fire, Colorless\"."
     ],
     "translation": "Цена: {names}"
+  },
+  "Rxyn1P": {
+    "message": "Couldn't change it. Try again.",
+    "translation": "Промена није успела. Покушај поново."
   },
   "7WsLH4": {
     "message": "Couldn't check that. Try again.",
@@ -2766,10 +2806,6 @@
     "message": "Couldn't save the game",
     "translation": "Није успело чување игре"
   },
-  "TC3rNW": {
-    "message": "Couldn't share the invitation. Try again.",
-    "translation": "Позивница није подељена. Покушај поново."
-  },
   "hCQkU8": {
     "message": "Couldn't start Solo mode. Try again.",
     "translation": "Није успело покретање соло режима. Покушај поново."
@@ -2777,6 +2813,10 @@
   "eP7qeF": {
     "message": "Couldn't start the tutorial. Try again.",
     "translation": "Туторијал није покренут. Покушај поново."
+  },
+  "VDi9Wt": {
+    "message": "Couldn't use that code. Your room has another.",
+    "translation": "Тај код се не може користити. Твоја соба има други."
   },
   "OcR9wV": {
     "message": "Couldn't use that image.",
@@ -2823,14 +2863,10 @@
     "context": "sleeve color",
     "translation": "Крем"
   },
-  "E6-4ez": {
-    "message": "Create a room, or join one with a link.",
-    "translation": "Направи собу или уђи у неку преко везе."
-  },
-  "xE_hmo": {
-    "message": "Create room",
+  "kEtrRg": {
+    "message": "Create",
     "context": "a room",
-    "translation": "Направи собу"
+    "translation": "Направи"
   },
   "_LHski": {
     "message": "Creating…",
@@ -2864,6 +2900,13 @@
   "qT5p-1": {
     "message": "Custom card",
     "translation": "Прилагођена карта"
+  },
+  "E16GGw": {
+    "message": "Custom code",
+    "comments": [
+      "A code the host may choose for the room they create"
+    ],
+    "translation": "Прилагођени код"
   },
   "rlm3op": {
     "message": "Custom flair on Discord & open reign on self-nicknames.",
@@ -3406,6 +3449,10 @@
     "message": "Enter a valid image URL.",
     "translation": "Унеси исправан URL слике."
   },
+  "uHUaw6": {
+    "message": "Enter the room's code.",
+    "translation": "Унеси код собе."
+  },
   "eVVWyt": {
     "message": "Esc",
     "context": "keyboard key",
@@ -3858,6 +3905,11 @@
     ],
     "translation": "Помоћ"
   },
+  "EVBmUd": {
+    "message": "Here",
+    "context": "the people in a room",
+    "translation": "Овде"
+  },
   "9MxuIb": {
     "message": "Hexagons",
     "context": "sleeve pattern",
@@ -4083,28 +4135,13 @@
     ],
     "translation": "Међународни"
   },
-  "KhBSE_": {
-    "message": "Invitation",
-    "comments": [
-      "The link or code that lets someone join a room"
-    ],
-    "translation": "Позивница"
-  },
-  "au3LEA": {
-    "message": "Invitation link copied",
-    "translation": "Веза позивнице копирана"
-  },
   "LSVtnE": {
     "message": "Invitation link ready",
     "translation": "Линк позивнице је спреман"
   },
-  "Za0iMR": {
-    "message": "Invite opponent",
-    "translation": "Позови противника"
-  },
-  "UoRWrm": {
-    "message": "Invite spectator",
-    "translation": "Позови гледаоца"
+  "KLJ4eD": {
+    "message": "Invite link copied",
+    "translation": "Веза позивнице је копирана"
   },
   "0pN9y3": {
     "message": "It stays open for another draw. Press <0>Esc</0> twice to close it.",
@@ -4137,21 +4174,25 @@
     "context": "sleeve color",
     "translation": "Жад"
   },
+  "085CJe": {
+    "message": "Join",
+    "context": "a room",
+    "translation": "Придружи се"
+  },
   "Fz2DU1": {
     "message": "Join a room",
     "translation": "Придружи се соби"
   },
-  "G7O46F": {
-    "message": "Join as spectator",
-    "translation": "Придружи се као гледалац"
+  "aqe8Yy": {
+    "message": "Join as",
+    "comments": [
+      "To play in the room, or to watch it"
+    ],
+    "translation": "Придружи се као"
   },
   "XbqMCS": {
     "message": "Join pieces…",
     "translation": "Споји делове…"
-  },
-  "t5uRiA": {
-    "message": "Join room",
-    "translation": "Уђи у собу"
   },
   "t8Lc2X": {
     "message": "Joining…",
@@ -5008,6 +5049,10 @@
     "message": "No Pokémon can take all of these",
     "translation": "Ниједан Pokémon не може да узме све ово"
   },
+  "1vVne-": {
+    "message": "No room has that code.",
+    "translation": "Ниједна соба нема тај код."
+  },
   "ebeFtm": {
     "message": "No shortcut matches “{search}”.",
     "translation": "Ниједна пречица не одговара упиту „{search}“."
@@ -5240,6 +5285,10 @@
     "message": "Only that seat's player can.",
     "translation": "То може само играч са тог места."
   },
+  "brB603": {
+    "message": "Only the host can change it",
+    "translation": "Само домаћин може да га промени"
+  },
   "gbBPE1": {
     "message": "Only you see this. Cards without that printing keep the deck's scan.",
     "translation": "Ово видиш само ти. Карте без тог издања задржавају скен из шпила."
@@ -5259,6 +5308,10 @@
   "E9wRDu": {
     "message": "Open log",
     "translation": "Отвори дневник"
+  },
+  "HW9F4A": {
+    "message": "Open seat",
+    "translation": "Слободно место"
   },
   "F37c1s": {
     "message": "Open Settings",
@@ -5335,6 +5388,11 @@
   "xzPwKo": {
     "message": "Opponents' custom backs",
     "translation": "Прилагођене полеђине противника"
+  },
+  "_iG1gb": {
+    "message": "or",
+    "context": "host a room, or join one",
+    "translation": "или"
   },
   "ONM3W_": {
     "message": "or a link",
@@ -5427,21 +5485,9 @@
     "message": "Paste a list from the clipboard",
     "translation": "Налепи листу из привремене меморије"
   },
-  "7hnHtA": {
-    "message": "Paste or drop the link you were sent.",
-    "translation": "Налепи или спусти везу коју си добио."
-  },
   "5L0PsY": {
     "message": "Paste the details into your report: they help find the problem.",
     "translation": "Налепи детаље у свој извештај: помажу при проналажењу проблема."
-  },
-  "erh83Q": {
-    "message": "Paste the invitation link you were sent.",
-    "translation": "Налепи везу позивнице коју си добио."
-  },
-  "ax6uck": {
-    "message": "Paste the link",
-    "translation": "Налепи везу"
   },
   "MfH2NF": {
     "message": "Paste with Ctrl+V (⌘V) instead",
@@ -5497,6 +5543,11 @@
     "message": "Plain",
     "context": "sleeve pattern",
     "translation": "Једноставан"
+  },
+  "1mYAKq": {
+    "message": "Play",
+    "context": "join a room to play",
+    "translation": "Играј"
   },
   "SW-cIq": {
     "message": "Play",
@@ -6200,26 +6251,53 @@
     ],
     "translation": "Соба"
   },
+  "dt6ntk": {
+    "message": "Room",
+    "context": "an online room",
+    "translation": "Соба"
+  },
   "GzC7XU": {
     "message": "Room {0} · to play",
     "comments": [
-      "roomCode is a short code like K7PQ2M"
+      "roomCode is a short code like K7PQ"
     ],
     "translation": "Соба {0} · за игру"
   },
   "0sQWkX": {
     "message": "Room {0} · to watch",
     "comments": [
-      "roomCode is a short code like K7PQ2M"
+      "roomCode is a short code like K7PQ"
     ],
     "translation": "Соба {0} · за гледање"
   },
   "euMx3W": {
     "message": "Room {roomCode}",
     "comments": [
-      "roomCode is a short code like K7PQ2M"
+      "roomCode is a short code like K7PQ"
     ],
     "translation": "Соба {roomCode}"
+  },
+  "3Kcs5g": {
+    "message": "Room code",
+    "translation": "Код собе"
+  },
+  "B8jR1y": {
+    "message": "Room code (optional)",
+    "comments": [
+      "A code the host may choose for the room they create"
+    ],
+    "translation": "Код собе (необавезно)"
+  },
+  "kzsUbm": {
+    "message": "Room code copied",
+    "translation": "Код собе је копиран"
+  },
+  "BPm0Lm": {
+    "message": "Room code: {code}",
+    "comments": [
+      "code is a short room code like K7PQ"
+    ],
+    "translation": "Код собе: {code}"
   },
   "tFii6J": {
     "message": "Room ready",
@@ -6385,6 +6463,11 @@
     "context": "save a card's text",
     "translation": "Сачувај"
   },
+  "_bk2eq": {
+    "message": "Save",
+    "context": "save a change",
+    "translation": "Сачувај"
+  },
   "A7uAwg": {
     "message": "Save {name}",
     "translation": "Сачувај {name}"
@@ -6400,13 +6483,6 @@
   "4XBjuA": {
     "message": "Save game",
     "translation": "Сачувај партију"
-  },
-  "s7g8Y-": {
-    "message": "Save the game and resume it to get a new invitation.",
-    "comments": [
-      "Advice after an expired invitation: saving the game and resuming it issues a fresh invitation link."
-    ],
-    "translation": "Сачувај партију и настави је да добијеш нову позивницу."
   },
   "OnrVKw": {
     "message": "Saved",
@@ -6473,10 +6549,6 @@
   "AUeSIS": {
     "message": "Season or format",
     "translation": "Сезона или формат"
-  },
-  "wRfrN3": {
-    "message": "Seat taken",
-    "translation": "Место је заузето"
   },
   "rG3WVm": {
     "message": "Select",
@@ -6553,10 +6625,6 @@
   "pi1oME": {
     "message": "Send message",
     "translation": "Пошаљи поруку"
-  },
-  "QYIzdx": {
-    "message": "Send your opponent a link. Each works once.",
-    "translation": "Пошаљи противнику везу. Свака важи једном."
   },
   "Of0ksK": {
     "message": "Seriously do not think anyone will subscribe to this, but I would be immensely grateful.",
@@ -6642,6 +6710,10 @@
   "Z8lGw6": {
     "message": "Share",
     "translation": "Подели"
+  },
+  "zzxcno": {
+    "message": "Share the code to play.",
+    "translation": "Подели код да бисте играли."
   },
   "2D-NYE": {
     "message": "Shift",
@@ -7318,6 +7390,14 @@
     "context": "Trainer cards by kind",
     "translation": "Техничке машине"
   },
+  "2DW6tZ": {
+    "message": "That code is taken",
+    "translation": "Тај код је заузет"
+  },
+  "A55nM8": {
+    "message": "That code is taken. Your room has another.",
+    "translation": "Тај код је заузет. Твоја соба има други."
+  },
   "4qLtJr": {
     "message": "That Energy has left your hand.",
     "translation": "Та енергија је отишла из твоје руке."
@@ -7535,10 +7615,6 @@
     "message": "This game will be lost.",
     "translation": "Ова партија ће бити изгубљена."
   },
-  "eBiRbO": {
-    "message": "This invitation has expired.",
-    "translation": "Ова позивница је истекла."
-  },
   "5HIoIb": {
     "message": "This invitation was used or has expired. Ask for a new one.",
     "translation": "Ова позивница је искоришћена или је истекла. Затражи нову."
@@ -7672,6 +7748,10 @@
   "B3I8F_": {
     "message": "Too many moves",
     "translation": "Превише потеза"
+  },
+  "S8h63k": {
+    "message": "Too many tries. Wait a minute and try again.",
+    "translation": "Превише покушаја. Сачекај минут и покушај поново."
   },
   "Xx-Q6M": {
     "message": "Tool",
@@ -8030,6 +8110,11 @@
     "message": "Wallpaper {0}",
     "translation": "Позадина {0}"
   },
+  "vbMHW0": {
+    "message": "Watch",
+    "context": "join a room to spectate",
+    "translation": "Гледај"
+  },
   "sFWtjQ": {
     "message": "Watch replay…",
     "translation": "Гледај снимак…"
@@ -8038,6 +8123,13 @@
     "message": "Watching",
     "context": "spectating a room",
     "translation": "Гледање"
+  },
+  "3QYDLk": {
+    "message": "Watching room {0}",
+    "comments": [
+      "mode.code is a short room code like K7PQ"
+    ],
+    "translation": "Гледаш собу {0}"
   },
   "2kl5Uf": {
     "message": "Water",
@@ -8125,10 +8217,6 @@
   "aylG7j": {
     "message": "You can't move that card",
     "translation": "Ту карту не можеш преместити"
-  },
-  "1hxqre": {
-    "message": "You'll invite players from the room.",
-    "translation": "Играче ћеш позивати из собе."
   },
   "VvkF_g": {
     "message": "You're watching",

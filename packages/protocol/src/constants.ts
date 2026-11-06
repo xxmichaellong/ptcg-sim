@@ -19,6 +19,25 @@ export const PRESENTATION_LEVEL = 2;
 export const MAX_ROOM_CODE_LENGTH = 64;
 /** Generated v2 room discovery codes omit ambiguous I/O/0/1 characters. */
 export const V2_ROOM_CODE_PATTERN = /^[A-HJ-NP-Z2-9]{12}$/u;
+/**
+ * A room's public code (its alias, ADR-047): what players read out and
+ * type to join. Four characters when generated; a host may choose their
+ * own, up to twelve. The same alphabet as room codes: no I, O, 0 or 1.
+ */
+export const ROOM_ALIAS_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+export const ROOM_ALIAS_GENERATED_LENGTH = 4;
+export const ROOM_ALIAS_MIN_LENGTH = 4;
+export const ROOM_ALIAS_MAX_LENGTH = 12;
+export const ROOM_ALIAS_PATTERN = /^[A-HJ-NP-Z2-9]{4,12}$/u;
+
+/**
+ * A typed or pasted room code as the room knows it: capitals, spaces and
+ * dashes dropped; undefined unless it is one.
+ */
+export const normalizeRoomAlias = (value: string): string | undefined => {
+  const code = value.toUpperCase().replace(/[\s-]+/gu, '');
+  return ROOM_ALIAS_PATTERN.test(code) ? code : undefined;
+};
 export const MAX_DECK_ENTRIES = 200;
 /**
  * Mirrors game-core's reducer limit. Keep this local to the wire package so

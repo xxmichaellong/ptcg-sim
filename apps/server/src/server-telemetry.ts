@@ -37,6 +37,8 @@ export type ServerHttpRoute =
   | 'continuation_revocation'
   | 'room_invitation'
   | 'room_open'
+  | 'room_code'
+  | 'room_code_join'
   | 'admission_ticket'
   | 'socket_upgrade'
   | 'not_found';
@@ -57,6 +59,7 @@ export type ContinuationLifecycleOutcome =
   | 'failed';
 export type RoomAdmissionOperation =
   | 'room_open'
+  | 'code_join'
   | 'invitation_issue'
   | 'ticket_issue'
   | 'hello_ticket'
@@ -79,6 +82,7 @@ export type ServerFailureSubsystem =
   | 'room_restoration'
   | 'room_alarm'
   | 'room_open'
+  | 'code_join'
   | 'invitation_issue'
   | 'ticket_issue'
   | 'session_admission'

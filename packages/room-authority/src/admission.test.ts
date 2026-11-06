@@ -12,6 +12,7 @@ import {
   disconnectRoomSession,
   expireDisconnectedRoomSessions,
   issueRoomAdmissionTicket,
+  issueRoomCodeInvitation,
   issueRoomInvitation,
   leaveRoomSession,
   redeemRoomAdmissionTicket,
@@ -268,6 +269,73 @@ describe('room capability admission', () => {
       accepted: false,
       code: 'invalid_capability',
     });
+  });
+
+  it('mints for a room code the guest seat while it is free, never the host’s, and only watching once it is taken (ADR-047)', async () => {
+    const storage = persistence();
+    const crypto = createCrypto();
+    const deps = dependencies(crypto, storage);
+    const issued = await issueRoomCodeInvitation(
+      createSnapshot(),
+      'player',
+      10_000,
+      deps
+    );
+    expect(issued.accepted).toBe(true);
+    if (!issued.accepted) return;
+    // The second player's seat, never the host's.
+    expect(Object.values(issued.snapshot.admission!.invitations)).toEqual([
+      { role: 'player', playerId: p2, expiresAt: 910_000 },
+    ]);
+    const exchanged = await issueRoomAdmissionTicket(
+      issued.snapshot,
+      {
+        capability: issued.invitation,
+        displayName: 'Red',
+        requestedRole: 'player',
+      },
+      10_001,
+      deps
+    );
+    expect(exchanged.accepted).toBe(true);
+    if (!exchanged.accepted) return;
+    const admitted = await redeemRoomAdmissionTicket(
+      exchanged.snapshot,
+      {
+        admissionTicket: exchanged.admissionTicket,
+        resumeCapability: exchanged.resumeCapability,
+        displayName: 'Red',
+        requestedRole: 'player',
+      },
+      10_002,
+      deps
+    );
+    expect(admitted.accepted).toBe(true);
+    if (!admitted.accepted) return;
+    expect(admitted.session.viewer).toEqual({ kind: 'player', playerId: p2 });
+    // Taken: another code holder may only watch.
+    await expect(
+      issueRoomCodeInvitation(admitted.snapshot, 'player', 10_003, deps)
+    ).resolves.toMatchObject({ accepted: false, code: 'seat_unavailable' });
+    const watching = await issueRoomCodeInvitation(
+      admitted.snapshot,
+      'spectator',
+      10_004,
+      deps
+    );
+    expect(watching).toMatchObject({
+      accepted: true,
+      requestedRole: 'spectator',
+    });
+    // A Solo table has no code to join by.
+    await expect(
+      issueRoomCodeInvitation(
+        createSingleOccupancySnapshot(),
+        'spectator',
+        10_005,
+        deps
+      )
+    ).resolves.toMatchObject({ accepted: false, code: 'room_not_ready' });
   });
 
   it('admits a spectator on a player invitation without claiming the seat, never the reverse', async () => {

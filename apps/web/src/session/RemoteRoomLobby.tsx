@@ -5,7 +5,6 @@ import { CircleNotchIcon } from '@phosphor-icons/react/dist/csr/CircleNotch';
 import { ClipboardTextIcon } from '@phosphor-icons/react/dist/csr/ClipboardText';
 import { PlusIcon } from '@phosphor-icons/react/dist/csr/Plus';
 import { SignInIcon } from '@phosphor-icons/react/dist/csr/SignIn';
-import { UsersThreeIcon } from '@phosphor-icons/react/dist/csr/UsersThree';
 import { WarningCircleIcon } from '@phosphor-icons/react/dist/csr/WarningCircle';
 import {
   createEmptyBoardView,
@@ -45,9 +44,7 @@ import type { DeckBuilderCustody } from '../features/deck/DeckBuilderSession.js'
 import { LazyDeckBuilderSession } from '../features/deck/LazyDeckBuilderSession.js';
 import {
   createRemoteRoom,
-  RemoteRoomInvitationError,
   type RemoteRoomCreationResult,
-  type RemoteRoomInvitationShareReceipt,
 } from './RemoteRoomCreation.js';
 import {
   openRemoteSoloRoom,
@@ -63,16 +60,13 @@ import { RemoteRoomHeldInvitation } from './RemoteRoomHeldInvitation.js';
 import {
   onInvitationLink,
   takeInvitationLink,
+  takeRoomCodeLink,
 } from './invitation-link-capture.js';
-import { browserInvitationDelivery } from './invitation-share.js';
-import type { RoomInvitations, RoomInviteOutcome } from './room-invites.js';
+import { roomCodeFieldValue, roomCodeFromText } from './room-code.js';
+import { joinRoomByCode, RoomCodeJoinError } from './room-code-join.js';
 import { RemoteRoomRoute } from './RemoteRoomRoute.js';
 import { RemoteSessionBoard } from './RemoteSessionBoard.js';
-import {
-  COARSE_POINTER_QUERY,
-  TOUCH_ONLY_QUERY,
-  useMediaQuery,
-} from '../ui/breakpoints.js';
+import { COARSE_POINTER_QUERY, useMediaQuery } from '../ui/breakpoints.js';
 import {
   RemoteRoomRestorationCustody,
   type RemoteRoomRestorationInput,
@@ -93,6 +87,7 @@ import {
   useAppBarReserve,
 } from './shell/AppMenu.js';
 import { toast } from '../ui/toast.js';
+import { Tooltip } from '../ui/Tooltip.js';
 import {
   startTutorial,
   takeTutorialRequest,
@@ -112,6 +107,7 @@ import {
 import { TableBanner, TableShell } from './shell/TableShell.js';
 
 import '../design/panel-controls.css';
+import '../ui/form-controls.css';
 import './lobby.css';
 
 const LEGACY_FALLBACK_NAMES = Object.freeze([
@@ -215,6 +211,8 @@ export interface RemoteRoomLobbyDependencies {
     }
   >;
   readonly createInvitationJoinCustody: () => InvitationJoinCustody;
+  /** A room by its code (ADR-047). */
+  readonly joinByCode?: typeof joinRoomByCode;
   readonly fallbackDisplayName: () => string;
   readonly requestBackground?: BrowserRoomBackgroundRequest;
   readonly requestCardBack?: BrowserCardBackRequest;
@@ -234,6 +232,7 @@ const defaultDependencies: RemoteRoomLobbyDependencies = {
   openSoloRoom: (input) => openRemoteSoloRoom(input),
   continuationAvailability: probeContinuationAvailability,
   createInvitationJoinCustody: () => new RemoteRoomInvitationJoinCustody(),
+  joinByCode: joinRoomByCode,
   fallbackDisplayName: () => {
     const index = Math.floor(Math.random() * LEGACY_FALLBACK_NAMES.length);
     return LEGACY_FALLBACK_NAMES[index] ?? 'Player';
@@ -260,6 +259,16 @@ const consumeInvitationLink = (): void => {
   waitingInvitationLink = undefined;
 };
 
+/**
+ * The room code an invite link opened the page with (`?room=`, ADR-047),
+ * kept for the lobby that shows it, as the invitation link is.
+ */
+let waitingRoomCodeLink: string | undefined;
+const pendingRoomCodeLink = (): string | undefined => {
+  waitingRoomCodeLink ??= takeRoomCodeLink();
+  return waitingRoomCodeLink;
+};
+
 const normalizeDisplayName = (
   candidate: string,
   fallback: () => string
@@ -280,12 +289,6 @@ const disposeOwner = (owner: LobbyOwner): void => {
   owner.tutorial?.dispose();
 };
 
-const sanitizeRoomCodeInput = (value: string): string =>
-  value
-    .toUpperCase()
-    .replaceAll(/[^A-HJ-NP-Z2-9]/gu, '')
-    .slice(0, 12);
-
 const safeFailureMessage = (
   operation: LobbyOperation,
   error: unknown
@@ -295,8 +298,20 @@ const safeFailureMessage = (
       ? String(error.code)
       : '';
   if (operation === 'join') {
+    if (error instanceof RoomCodeJoinError) {
+      switch (error.reason) {
+        case 'room_not_found':
+          return msg`No room has that code.`;
+        case 'seat_unavailable':
+          return msg`Both seats are taken. Join to watch.`;
+        case 'rate_limited':
+          return msg`Too many tries. Wait a minute and try again.`;
+        default:
+          return msg`Couldn't join the room. Try again.`;
+      }
+    }
     if (code === 'missing_invitation' || code === 'invalid_handoff') {
-      return msg`Paste the invitation link you were sent.`;
+      return msg`Enter the room's code.`;
     }
     if (code === 'expired_invitation' || code === 'invitation_refused') {
       return msg`This invitation was used or has expired. Ask for a new one.`;
@@ -314,31 +329,6 @@ const safeFailureMessage = (
   }
   return msg`Couldn't create a room. Try again.`;
 };
-
-/** An invite press passed to the room's custody, as the room hears it. */
-const inviteOutcome = async (
-  send: () => Promise<RemoteRoomInvitationShareReceipt>
-): Promise<RoomInviteOutcome> => {
-  try {
-    return (await send()).outcome;
-  } catch (error) {
-    if (!(error instanceof RemoteRoomInvitationError)) return 'failed';
-    return error.code === 'seat_unavailable'
-      ? 'seat_unavailable'
-      : error.code === 'expired_invitation'
-        ? 'expired'
-        : 'failed';
-  }
-};
-
-/**
- * How this device passes a link on: the share sheet on a touch screen, the
- * clipboard with a mouse. Asked at each press, as the device may change.
- */
-const currentDelivery = () =>
-  browserInvitationDelivery({
-    preferShare: globalThis.matchMedia?.(TOUCH_ONLY_QUERY).matches === true,
-  });
 
 const decorative = { 'aria-hidden': true, focusable: 'false' } as const;
 
@@ -391,8 +381,11 @@ export const RemoteRoomLobby = ({
   };
   // The invitation field shows the room an accepted invitation names,
   // never the invitation itself (ADR-020).
-  const [roomCode, setRoomCode] = useState('');
+  // The code to join by: typed, pasted, or from an invite link (ADR-047).
+  const [roomCode, setRoomCode] = useState(() => pendingRoomCodeLink() ?? '');
   const [spectator, setSpectator] = useState(false);
+  // The host's own choice of code for the room they create, if any.
+  const [customCode, setCustomCode] = useState('');
   const [receipt, setReceipt] = useState<RemoteRoomInvitationHandoffReceipt>();
   const [operation, setOperation] = useState<LobbyOperation>();
   // Kept as a message, so it reads in whatever language is up when shown.
@@ -577,11 +570,13 @@ export const RemoteRoomLobby = ({
       return;
     }
     showAccepted(accepted);
-    void handleJoin(accepted.requestedRole === 'spectator').finally(() => {
-      // A join this owner saw through has used the link; one a replaced
-      // owner gave up on leaves it for the next.
-      if (!owner.disposed) consumeInvitationLink();
-    });
+    void handleJoin(accepted.requestedRole === 'spectator', true).finally(
+      () => {
+        // A join this owner saw through has used the link; one a replaced
+        // owner gave up on leaves it for the next.
+        if (!owner.disposed) consumeInvitationLink();
+      }
+    );
   };
   const joinFromLinkRef = useRef(joinFromLink);
   joinFromLinkRef.current = joinFromLink;
@@ -610,6 +605,17 @@ export const RemoteRoomLobby = ({
     owner.landedOnSolo = true;
     void handleSolo();
   });
+
+  // An invite link by code (`?room=`): its code is in the field; Play
+  // online opens over the Solo table once that is up.
+  const linkedCodeShown = useRef(false);
+  useEffect(() => {
+    if (linkedCodeShown.current || !pendingRoomCodeLink()) return;
+    if (connected?.mode !== 'solo') return;
+    linkedCodeShown.current = true;
+    waitingRoomCodeLink = undefined;
+    setOnlineRequest((request) => request + 1);
+  }, [connected]);
 
   const awaitingSoloRoom = (): boolean => {
     const owner = ownerRef.current;
@@ -739,6 +745,27 @@ export const RemoteRoomLobby = ({
     return unsubscribe;
   }, [connected, operation]);
 
+  /**
+   * The host's own choice of code, asked for once their room has admitted
+   * them; taken by another room, the room keeps the one it was given.
+   */
+  const applyCustomCode = (
+    runtime: RemoteRoomRuntime,
+    chosen: string
+  ): void => {
+    if (!chosen) return;
+    void runtime.roomCodes.change(chosen).then((outcome) => {
+      if (outcome === 'changed') return;
+      toast({
+        title:
+          outcome === 'code_taken'
+            ? t`That code is taken. Your room has another.`
+            : t`Couldn't use that code. Your room has another.`,
+        tone: 'warning',
+      });
+    });
+  };
+
   const handleCreate = async (): Promise<void> => {
     const active = beginOperation('create');
     if (!active) return;
@@ -746,6 +773,7 @@ export const RemoteRoomLobby = ({
       name,
       dependencies.fallbackDisplayName
     );
+    const chosenCode = customCode;
     // A Solo table at hand becomes the room, its game and all: nobody
     // leaves it to join another (ADR-044).
     const goOnline = soloAtHand(active.owner);
@@ -764,9 +792,11 @@ export const RemoteRoomLobby = ({
           setName(displayName);
           rememberName();
           setRoomCode('');
+          setCustomCode('');
           setReceipt(undefined);
           setStatus(undefined);
           setConnected({ runtime: room.runtime, mode: 'multiplayer' });
+          applyCustomCode(room.runtime, chosenCode);
           return true;
         };
         if (connected?.runtime === room.runtime) settle();
@@ -824,10 +854,12 @@ export const RemoteRoomLobby = ({
         setName(displayName);
         rememberName();
         setRoomCode('');
+        setCustomCode('');
         setReceipt(undefined);
         // A retry that works retires the failure it follows.
         setStatus(undefined);
         setConnected({ runtime: result.runtime, mode: 'multiplayer' });
+        applyCustomCode(result.runtime, chosenCode);
       });
     } catch (error) {
       if (!active.owner.disposed) {
@@ -1057,12 +1089,33 @@ export const RemoteRoomLobby = ({
    * (its envelope or its link): intercepted before the browser could put
    * it in a field, kept by the custody alone (ADR-020).
    */
+  /** A room's code (or an invite link carrying it) to join by. */
+  const takeCode = (code: string): void => {
+    const owner = ownerRef.current;
+    if (receipt && owner && !owner.disposed && !owner.operation) {
+      owner.invitation.clear();
+      setReceipt(undefined);
+    }
+    setRoomCode(code);
+    setStatus(undefined);
+  };
+
   const handlePaste = (event: ReactClipboardEvent<HTMLElement>): void => {
-    if (event.target instanceof HTMLElement && event.target.id === 'nameInput')
+    if (
+      event.target instanceof HTMLElement &&
+      (event.target.id === 'nameInput' ||
+        event.target.id === 'roomCodeCustomInput')
+    )
       return;
     const owner = ownerRef.current;
     if (!owner || owner.disposed || owner.operation) {
       event.preventDefault();
+      return;
+    }
+    const code = roomCodeFromText(event.clipboardData.getData('text/plain'));
+    if (code) {
+      event.preventDefault();
+      takeCode(code);
       return;
     }
     try {
@@ -1088,6 +1141,11 @@ export const RemoteRoomLobby = ({
     const text =
       event.dataTransfer.getData('text/uri-list') ||
       event.dataTransfer.getData('text/plain');
+    const code = roomCodeFromText(text);
+    if (code) {
+      takeCode(code);
+      return;
+    }
     try {
       showAccepted(owner.invitation.acceptText(text));
     } catch (error) {
@@ -1109,6 +1167,11 @@ export const RemoteRoomLobby = ({
       return;
     }
     if (owner.disposed || ownerRef.current !== owner || owner.operation) return;
+    const code = roomCodeFromText(text);
+    if (code) {
+      takeCode(code);
+      return;
+    }
     try {
       showAccepted(owner.invitation.acceptText(text));
     } catch (error) {
@@ -1122,7 +1185,7 @@ export const RemoteRoomLobby = ({
       owner.invitation.clear();
       setReceipt(undefined);
     }
-    setRoomCode(sanitizeRoomCodeInput(value));
+    setRoomCode(roomCodeFieldValue(value));
   };
 
   /**
@@ -1131,7 +1194,11 @@ export const RemoteRoomLobby = ({
    * leave both the table and the invitation where they were.
    */
   const handleJoin = async (
-    asSpectator: boolean = spectator
+    asSpectator: boolean = spectator,
+    // A pasted or linked invitation (ADR-020) the custody holds; else the
+    // field's room code (ADR-047). Said by a link's join, whose receipt
+    // isn't in state yet.
+    viaInvitation: boolean = receipt !== undefined
   ): Promise<void> => {
     const owner = ownerRef.current;
     if (!owner || owner.disposed || owner.operation) return;
@@ -1142,12 +1209,22 @@ export const RemoteRoomLobby = ({
       dependencies.fallbackDisplayName
     );
     try {
-      const result = await active.owner.invitation.bootstrap({
-        buildId,
-        displayName,
-        asSpectator,
-        signal: active.abort.signal,
-      });
+      // A pasted invitation (ADR-020) joins as it says; anything else is a
+      // room's code (ADR-047).
+      const result = viaInvitation
+        ? await active.owner.invitation.bootstrap({
+            buildId,
+            displayName,
+            asSpectator,
+            signal: active.abort.signal,
+          })
+        : await (dependencies.joinByCode ?? joinRoomByCode)({
+            buildId,
+            code: roomCode,
+            requestedRole: asSpectator ? 'spectator' : 'player',
+            displayName,
+            signal: active.abort.signal,
+          });
       if (active.owner.disposed || ownerRef.current !== active.owner) {
         result.runtime.dispose();
         return;
@@ -1318,36 +1395,6 @@ export const RemoteRoomLobby = ({
     }
   };
 
-  /**
-   * The connected room's invites (ADR-020): the creator mints links for
-   * either role; a resumed game passes on the one invitation it holds.
-   * One object per room, so the room's invite actions keep still.
-   */
-  const roomInvitations = useMemo((): RoomInvitations | undefined => {
-    const owner = ownerRef.current;
-    if (!connected || connected.mode !== 'multiplayer' || !owner) {
-      return undefined;
-    }
-    const creator = owner.creator;
-    if (creator?.result.runtime === connected.runtime) {
-      return {
-        roles: ['player', 'spectator'],
-        invite: (role) =>
-          inviteOutcome(() =>
-            creator.result.invitations.invite(role, currentDelivery())
-          ),
-      };
-    }
-    const held = owner.held;
-    if (held?.held && owner.guestRuntime === connected.runtime) {
-      return {
-        roles: ['player'],
-        invite: () => inviteOutcome(() => held.invite(currentDelivery())),
-      };
-    }
-    return undefined;
-  }, [connected]);
-
   const handleMultiplayerNavigate = (): void => {
     if (!connected || connected.mode !== 'solo') return;
     setParkedSolo(connected);
@@ -1388,59 +1435,58 @@ export const RemoteRoomLobby = ({
           }}
           onDrop={handleDrop}
         >
-          <section className="lobby-intro" aria-labelledby="lobbyTitle">
-            <header id="p2ExplanationBox" className="lobby-intro-head">
-              <span className="lobby-intro-icon">
-                <UsersThreeIcon {...decorative} weight="duotone" />
-              </span>
-              <div className="lobby-intro-copy">
-                <h2 id="lobbyTitle" className="lobby-intro-title">
-                  <Trans>Play online</Trans>
-                </h2>
-                <p className="lobby-intro-text">
-                  <Trans>Create a room, or join one with a link.</Trans>
-                </p>
-              </div>
-            </header>
-            <div className="ds-field">
-              <label className="ds-label" htmlFor="nameInput">
-                <Trans comment="The player's display name">Name</Trans>
-              </label>
+          <div className="ds-field lobby-name">
+            <label className="ds-label" htmlFor="nameInput">
+              <Trans comment="The player's display name">Name</Trans>
+            </label>
+            <input
+              id="nameInput"
+              className="ds-input"
+              type="text"
+              placeholder={t({
+                message: 'Name',
+                comment: "The player's display name",
+              })}
+              autoComplete="nickname"
+              value={name}
+              disabled={busy}
+              onChange={(event) => setName(event.target.value)}
+            />
+          </div>
+          <section className="lobby-choice" aria-labelledby="lobbyHostTitle">
+            <h3 id="lobbyHostTitle" className="lobby-choice-title">
+              <Trans>Host a room</Trans>
+            </h3>
+            <div className="lobby-choice-row">
               <input
-                id="nameInput"
-                className="ds-input"
+                id="roomCodeCustomInput"
+                className="ds-input lobby-room-input"
                 type="text"
-                placeholder={t({
-                  message: 'Name',
-                  comment: "The player's display name",
+                aria-label={t({
+                  message: 'Room code (optional)',
+                  comment:
+                    'A code the host may choose for the room they create',
                 })}
-                autoComplete="nickname"
-                value={name}
+                placeholder={t({
+                  message: 'Custom code',
+                  comment:
+                    'A code the host may choose for the room they create',
+                })}
+                autoComplete="off"
+                autoCapitalize="characters"
+                spellCheck={false}
+                maxLength={12}
+                value={customCode}
                 disabled={busy}
-                onChange={(event) => setName(event.target.value)}
+                onChange={(event) =>
+                  setCustomCode(roomCodeFieldValue(event.target.value))
+                }
               />
-            </div>
-          </section>
-          <section className="lobby-step" aria-labelledby="lobbyHostTitle">
-            <div className="lobby-step-head">
-              <span className="lobby-step-number" aria-hidden="true">
-                1
-              </span>
-              <div className="lobby-step-copy">
-                <h3 id="lobbyHostTitle" className="lobby-step-title">
-                  <Trans>Host a room</Trans>
-                </h3>
-                <p className="ds-hint">
-                  <Trans>You'll invite players from the room.</Trans>
-                </p>
-              </div>
-            </div>
-            <div className="lobby-step-actions">
               <button
                 id="generateIdButton"
                 type="button"
                 className="ds-button ds-button--primary"
-                disabled={busy}
+                disabled={busy || (customCode !== '' && customCode.length < 4)}
                 onClick={() => void handleCreate()}
               >
                 {operation === 'create' ? (
@@ -1454,113 +1500,145 @@ export const RemoteRoomLobby = ({
                 )}
                 {operation === 'create'
                   ? t({ message: 'Creating…', context: 'a room' })
-                  : t({ message: 'Create room', context: 'a room' })}
+                  : t({ message: 'Create', context: 'a room' })}
               </button>
             </div>
           </section>
-          <section className="lobby-step" aria-labelledby="lobbyJoinTitle">
-            <div className="lobby-step-head">
-              <span className="lobby-step-number" aria-hidden="true">
-                2
-              </span>
-              <div className="lobby-step-copy">
-                <h3 id="lobbyJoinTitle" className="lobby-step-title">
-                  <Trans>Join a room</Trans>
-                </h3>
-                <p className="ds-hint">
-                  <Trans>Paste or drop the link you were sent.</Trans>
-                </p>
-              </div>
-            </div>
-            <div id="roomId" className="ds-field">
-              <label className="ds-label" htmlFor="roomIdInput">
-                <Trans comment="The link or code that lets someone join a room">
-                  Invitation
-                </Trans>
-              </label>
-              <div className="lobby-invitation-row">
-                {/* Shows the room an invitation names, never the invitation:
-                    a paste is taken before it could reach the field. */}
-                <input
-                  id="roomIdInput"
-                  className="ds-input lobby-room-input"
-                  type="text"
-                  placeholder={t`Paste the link`}
-                  autoComplete="off"
-                  spellCheck={false}
-                  value={roomCode}
-                  disabled={busy}
-                  aria-describedby={receipt ? 'invitationReceipt' : undefined}
-                  onChange={(event) => handleRoomCodeChange(event.target.value)}
-                />
-                {clipboardReadable ? (
+          <div className="lobby-or" role="separator">
+            <span>
+              <Trans context="host a room, or join one">or</Trans>
+            </span>
+          </div>
+          <section
+            id="roomId"
+            className="lobby-choice"
+            aria-labelledby="lobbyJoinTitle"
+          >
+            <h3 id="lobbyJoinTitle" className="lobby-choice-title">
+              <Trans>Join a room</Trans>
+            </h3>
+            <div className="lobby-choice-row">
+              {/* A room's code; a link carrying it is read for its code. A
+                  pasted invitation is taken before it could reach the field,
+                  which shows only its room. */}
+              <input
+                id="roomIdInput"
+                className="ds-input lobby-room-input"
+                type="text"
+                aria-label={t`Room code`}
+                placeholder={t`Room code`}
+                autoComplete="off"
+                autoCapitalize="characters"
+                spellCheck={false}
+                value={roomCode}
+                disabled={busy}
+                aria-describedby={receipt ? 'invitationReceipt' : undefined}
+                onChange={(event) => handleRoomCodeChange(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' && !busy) void handleJoin();
+                }}
+              />
+              {clipboardReadable ? (
+                <Tooltip
+                  content={t({
+                    message: 'Paste',
+                    context: 'paste from the clipboard',
+                  })}
+                  side="bottom"
+                >
                   <button
                     id="pasteInvitationButton"
                     type="button"
-                    className="ds-button ds-button--secondary"
+                    className="ds-button ds-button--secondary lobby-paste"
+                    aria-label={t({
+                      message: 'Paste',
+                      context: 'paste from the clipboard',
+                    })}
                     disabled={busy}
                     onClick={() => void handlePasteButton()}
                   >
                     <ClipboardTextIcon {...decorative} weight="bold" />
-                    <Trans context="paste from the clipboard">Paste</Trans>
                   </button>
-                ) : null}
-              </div>
-              {receipt ? (
-                <p id="invitationReceipt" className="ds-hint">
-                  {receipt.requestedRole === 'player'
-                    ? t({
-                        message: `Room ${receipt.roomCode} · to play`,
-                        comment: 'roomCode is a short code like K7PQ2M',
-                      })
-                    : t({
-                        message: `Room ${receipt.roomCode} · to watch`,
-                        comment: 'roomCode is a short code like K7PQ2M',
-                      })}
-                </p>
+                </Tooltip>
               ) : null}
             </div>
-            {receipt?.requestedRole === 'player' ? (
-              // An invitation to play leaves the choice to its holder, as
-              // v1's room key did; one to watch only ever watches.
-              <div className="lobby-switches">
-                <div id="spectatorModeLabel" className="ds-switch-row">
+            {receipt ? (
+              <p id="invitationReceipt" className="ds-hint">
+                {receipt.requestedRole === 'player'
+                  ? t({
+                      message: `Room ${receipt.roomCode} · to play`,
+                      comment: 'roomCode is a short code like K7PQ',
+                    })
+                  : t({
+                      message: `Room ${receipt.roomCode} · to watch`,
+                      comment: 'roomCode is a short code like K7PQ',
+                    })}
+              </p>
+            ) : null}
+            <div className="lobby-choice-row lobby-join-row">
+              <div
+                className="ptcgsim-segmented-control lobby-role"
+                role="radiogroup"
+                aria-label={t({
+                  message: 'Join as',
+                  comment: 'To play in the room, or to watch it',
+                })}
+              >
+                <span className="ptcgsim-segmented-control__option">
                   <input
-                    type="checkbox"
+                    type="radio"
+                    id="joinAsPlayer"
+                    name="joinRole"
+                    value="player"
+                    checked={!spectator}
+                    // An invitation to watch only ever watches.
+                    disabled={busy || receipt?.requestedRole === 'spectator'}
+                    onChange={() => setSpectator(false)}
+                  />
+                  <label htmlFor="joinAsPlayer">
+                    <Trans context="join a room to play">Play</Trans>
+                  </label>
+                </span>
+                <span className="ptcgsim-segmented-control__option">
+                  <input
+                    type="radio"
                     id="spectatorModeCheckbox"
-                    className="ds-switch"
+                    name="joinRole"
+                    value="spectator"
                     checked={spectator}
                     disabled={busy}
-                    onChange={(event) => setSpectator(event.target.checked)}
-                  />{' '}
+                    onChange={() => setSpectator(true)}
+                  />
                   <label htmlFor="spectatorModeCheckbox">
-                    <Trans>Join as spectator</Trans>
+                    <Trans context="join a room to spectate">Watch</Trans>
                   </label>
-                </div>
+                </span>
               </div>
-            ) : null}
-            <button
-              id="joinRoomButton"
-              type="button"
-              className="ds-button ds-button--primary ds-button--block"
-              disabled={busy}
-              onClick={() => void handleJoin()}
-            >
-              {operation === 'join' ? (
-                <CircleNotchIcon
-                  {...decorative}
-                  weight="bold"
-                  className="ds-spin"
-                />
-              ) : (
-                <SignInIcon
-                  {...decorative}
-                  weight="bold"
-                  className="ds-mirror-rtl"
-                />
-              )}
-              {operation === 'join' ? t`Joining…` : t`Join room`}
-            </button>
+              <button
+                id="joinRoomButton"
+                type="button"
+                className="ds-button ds-button--primary"
+                disabled={busy || (!receipt && roomCode.length < 4)}
+                onClick={() => void handleJoin()}
+              >
+                {operation === 'join' ? (
+                  <CircleNotchIcon
+                    {...decorative}
+                    weight="bold"
+                    className="ds-spin"
+                  />
+                ) : (
+                  <SignInIcon
+                    {...decorative}
+                    weight="bold"
+                    className="ds-mirror-rtl"
+                  />
+                )}
+                {operation === 'join'
+                  ? t`Joining…`
+                  : t({ message: 'Join', context: 'a room' })}
+              </button>
+            </div>
           </section>
         </div>
         {status && (
@@ -1671,7 +1749,6 @@ export const RemoteRoomLobby = ({
                 onMultiplayerPanelOpen: () => setActivePanel('lobby'),
               }
             : {})}
-          {...(roomInvitations ? { invitations: roomInvitations } : {})}
           {...(preferences ? { preferences } : {})}
           onPreferencesChange={setPreferences}
           {...(backgroundSelection.background
@@ -1785,7 +1862,6 @@ export const RemoteRoomLobby = ({
       ) : null}
       <OnlineSheet
         open={activePanel === 'lobby' && overlay === undefined}
-        onDeck={openDeck}
         onOpenChange={(open) => {
           // Put away, Play online gives way to the Solo table, as v1's Solo
           // tab did; never while a room is being made or joined.

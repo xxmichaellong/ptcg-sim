@@ -18,6 +18,7 @@ import {
 } from '../src/durable-storage.js';
 import {
   RUNTIME_ORIGIN as ORIGIN,
+  admissionHelloFrame,
   type StoredLifecycle,
   connect as connectWithoutTracking,
   createRoom,
@@ -235,10 +236,14 @@ describe('Cloudflare Worker runtime', () => {
       answer.credentials.playerTwoSeatCapability
     );
     await expect(
-      issueAdmissionTicket(created, answer.credentials.playerTwoSeatCapability, {
-        displayName: 'Misty',
-        requestedRole: 'player',
-      })
+      issueAdmissionTicket(
+        created,
+        answer.credentials.playerTwoSeatCapability,
+        {
+          displayName: 'Misty',
+          requestedRole: 'player',
+        }
+      )
     ).rejects.toThrow();
     const seatTwo = await issueAdmissionTicket(
       created,
@@ -246,6 +251,86 @@ describe('Cloudflare Worker runtime', () => {
       { displayName: 'Misty', requestedRole: 'player' }
     );
     expect(seatTwo.admissionTicket).toBeTypeOf('string');
+  });
+
+  it('gives a room a short code its host may change, and admits by that code to the free seat or to watch (ADR-047)', async () => {
+    const created = await createRoom();
+    const ticket = await issuePlayerTicket(created, 'one', 'Blue');
+    const socket = await connect(created);
+    const welcomePromise = nextServerMessage(socket);
+    socket.send(helloFrame(created, ticket, 'Blue'));
+    expect((await welcomePromise).type).toBe('Welcome');
+    const post = (path: string, body: unknown, address = '198.51.100.7') =>
+      exports.default.fetch(
+        new Request(`${ORIGIN}${path}`, {
+          method: 'POST',
+          headers: {
+            'CF-Connecting-IP': address,
+            'Content-Type': 'application/json',
+            Origin: ORIGIN,
+          },
+          body: JSON.stringify(body),
+        })
+      );
+    // The host's session asks: a four-character code is made.
+    const first = await post(`/v2/rooms/${created.roomCode}/code`, {
+      resumeToken: ticket.resumeToken,
+    });
+    expect(first.status).toBe(200);
+    const made = (await first.json()) as {
+      readonly code: string;
+      readonly canChange: boolean;
+    };
+    expect(made.code).toMatch(/^[A-HJ-NP-Z2-9]{4}$/u);
+    expect(made.canChange).toBe(true);
+    // The host chooses another; the old one stops finding the room.
+    const changed = await post(`/v2/rooms/${created.roomCode}/code`, {
+      resumeToken: ticket.resumeToken,
+      code: 'ASHPARK',
+    });
+    expect(await changed.json()).toEqual({ code: 'ASHPARK', canChange: true });
+    const join = (code: string, requestedRole: string, address?: string) =>
+      post('/v2/join', { code, requestedRole, displayName: 'Misty' }, address);
+    expect((await join(made.code, 'player')).status).toBe(404);
+    const seated = await join('ASHPARK', 'player');
+    expect(seated.status).toBe(201);
+    const admitted = (await seated.json()) as {
+      readonly roomCode: string;
+      readonly requestedRole: string;
+      readonly admissionTicket: string;
+      readonly resumeToken: string;
+    };
+    expect(admitted).toMatchObject({
+      roomCode: created.roomCode,
+      requestedRole: 'player',
+    });
+    // Its ticket admits the guest to the second seat.
+    const guest = await connect(created);
+    const guestWelcome = nextServerMessage(guest);
+    guest.send(
+      admissionHelloFrame(
+        created,
+        {
+          admissionTicket: admitted.admissionTicket,
+          resumeToken: admitted.resumeToken,
+          expiresAt: 0,
+        },
+        { displayName: 'Misty', requestedRole: 'player' }
+      )
+    );
+    const welcome = await guestWelcome;
+    expect(welcome.type).toBe('Welcome');
+    // The seat is taken: another code holder may only watch.
+    expect((await join('ASHPARK', 'player', '198.51.100.8')).status).toBe(409);
+    expect((await join('ASHPARK', 'spectator', '198.51.100.8')).status).toBe(
+      201
+    );
+    // A guest reads the code but can't change it.
+    const asGuest = await post(`/v2/rooms/${created.roomCode}/code`, {
+      resumeToken: admitted.resumeToken,
+      code: 'MSTY',
+    });
+    expect(asGuest.status).toBe(403);
   });
 
   it('reschedules an early alarm and deletes an expired unclaimed room', async () => {

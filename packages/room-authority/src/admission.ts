@@ -965,11 +965,35 @@ export const issueRoomInvitation = async (
     }
     grant = { role: 'spectator', expiresAt: now + policy.lifetimeMs };
   }
+  return mintRoomInvitation(
+    current,
+    current.admission,
+    grant,
+    request.requestedRole,
+    now,
+    dependencies,
+    policy
+  );
+};
+
+/**
+ * Mints a one-use invitation for `grant`, retiring older unclaimed player
+ * invitations for the same seat, and commits it.
+ */
+const mintRoomInvitation = async (
+  current: RoomAuthoritySnapshot,
+  admission: RoomAdmissionState,
+  grant: RoomInvitationGrant,
+  requestedRole: 'player' | 'spectator',
+  now: number,
+  dependencies: RoomInvitationDependencies,
+  policy: RoomInvitationPolicy
+): Promise<RoomInvitationIssueResult> => {
   if (!Number.isSafeInteger(grant.expiresAt)) {
     return invitationRejection(current, 'invalid_request');
   }
 
-  const live = liveInvitations(current.admission.invitations, now);
+  const live = liveInvitations(admission.invitations, now);
   const retainedInvitations = Object.fromEntries(
     Object.entries(live).filter(
       ([, invitation]) =>
@@ -986,11 +1010,11 @@ export const issueRoomInvitation = async (
   }
 
   const retainedTickets = ticketsForLiveInvitations(
-    liveTickets(current.admission.tickets, now),
+    liveTickets(admission.tickets, now),
     retainedInvitations
   );
   const admissionBeforeIssue: RoomAdmissionState = {
-    ...current.admission,
+    ...admission,
     invitations: retainedInvitations,
     tickets: retainedTickets,
   };
@@ -1036,9 +1060,65 @@ export const issueRoomInvitation = async (
     committed: true,
     snapshot: candidate,
     invitation,
-    requestedRole: request.requestedRole,
+    requestedRole,
     expiresAt: grant.expiresAt,
   };
+};
+
+/**
+ * An invitation minted for someone who knows the room's public code
+ * (ADR-047), not a credential: the guest seat while no one has claimed it
+ * (never the host's, the first player's), or to watch. A seat someone holds
+ * stays theirs; with it taken, a code only lets them watch.
+ */
+export const issueRoomCodeInvitation = async (
+  current: RoomAuthoritySnapshot,
+  requestedRole: 'player' | 'spectator',
+  now: number,
+  dependencies: RoomInvitationDependencies,
+  policy: RoomInvitationPolicy = DEFAULT_ROOM_INVITATION_POLICY
+): Promise<RoomInvitationIssueResult> => {
+  assertAuthoritySnapshotInvariants(current);
+  const admission = current.admission;
+  if (!admission || current.mode !== 'multiplayer') {
+    return invitationRejection(current, 'room_not_ready');
+  }
+  if (!validNow(now) || !validInvitationPolicy(policy)) {
+    return invitationRejection(current, 'invalid_request');
+  }
+  let grant: RoomInvitationGrant;
+  if (requestedRole === 'player') {
+    const host = current.state.playerOrder[0];
+    const seat = current.state.playerOrder
+      .filter((playerId) => playerId !== host)
+      .map((playerId) => admission.seats[playerId])
+      .find(
+        (candidate) =>
+          candidate !== undefined &&
+          candidate.claimedSessionId === null &&
+          canClaimPlayerSeat(admission, candidate.playerId)
+      );
+    if (!seat) return invitationRejection(current, 'seat_unavailable');
+    grant = {
+      role: 'player',
+      playerId: seat.playerId,
+      expiresAt: now + policy.lifetimeMs,
+    };
+  } else {
+    if (admission.spectatorCapabilityDigest === null) {
+      return invitationRejection(current, 'room_not_ready');
+    }
+    grant = { role: 'spectator', expiresAt: now + policy.lifetimeMs };
+  }
+  return mintRoomInvitation(
+    current,
+    admission,
+    grant,
+    requestedRole,
+    now,
+    dependencies,
+    policy
+  );
 };
 
 export const issueRoomAdmissionTicket = async (

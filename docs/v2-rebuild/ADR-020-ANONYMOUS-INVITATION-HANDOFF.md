@@ -1,6 +1,8 @@
 # ADR-020: use a foreground clipboard handoff for anonymous invitations
 
-- Status: **ACCEPTED**
+- Status: **ACCEPTED**; its invitation transfer superseded by ADR-047
+  (2026-11-06: rooms are joined by a short code; links already sent are
+  still taken)
 - Decision date: 2026-09-10
 - Scope: anonymous player-two and spectator invitation transfer
 - Production wiring: enabled only on the isolated `?room-lobby=1` v2 route;

@@ -120,10 +120,18 @@ import {
   consumeContinuationRevocationRateLimit,
   consumeImageImportRateLimit,
   consumeImageUploadRateLimit,
+  consumeRoomCodeJoinRateLimit,
   consumeRoomCreationRateLimit,
   consumeRoomIngressRateLimit,
   type RoomIngressOperation,
 } from './request-rate-limit.js';
+import {
+  handleRoomAliasRequest,
+  handleRoomCodeJoinRequest,
+  RoomAliasCustody,
+  RoomAliasDirectoryRecord,
+  type RoomAliasRecord,
+} from './room-alias.js';
 import { handleRoomCreationRequest } from './room-creation-http.js';
 import { handleRoomInvitationRequest } from './room-invitation-http.js';
 import { handleRoomOpenRequest } from './room-open-http.js';
@@ -143,8 +151,12 @@ import {
 import {
   RoomSessionHub,
   type AcceptedCommandPerformanceObservation,
+  type BoundedRoomCodeAdmissionResult,
   type RuntimeConnection,
 } from './session-hub.js';
+
+/** Where a room keeps its public code (ADR-047), beside its snapshot. */
+const ROOM_ALIAS_STORAGE_KEY = 'room-alias:v1';
 
 interface Env {
   readonly BUILD_ID: string;
@@ -157,6 +169,8 @@ interface Env {
   readonly PTCG_CONTINUATION: DurableObjectNamespace<PtcgContinuation>;
   readonly PTCG_CONTINUATION_QUOTA: DurableObjectNamespace<PtcgContinuationQuota>;
   readonly PTCG_ROOM: DurableObjectNamespace<PtcgRoom>;
+  /** Room codes (ADR-047), one record per code. */
+  readonly PTCG_ROOM_CODE: DurableObjectNamespace<PtcgRoomCode>;
   readonly PTCG_DECK_FEED: DurableObjectNamespace<PtcgDeckFeed>;
   readonly PTCG_CARD_CATALOG: DurableObjectNamespace<PtcgCardCatalog>;
   readonly PTCG_DECK_INDEX: DurableObjectNamespace<PtcgDeckIndex>;
@@ -183,6 +197,8 @@ interface Env {
   readonly ROOM_INGRESS_RATE_LIMITER: RateLimit;
   readonly IMAGE_UPLOAD_RATE_LIMITER: RateLimit;
   readonly IMAGE_IMPORT_RATE_LIMITER: RateLimit;
+  /** Lookups and joins by room code, per address (ADR-047). */
+  readonly ROOM_CODE_RATE_LIMITER: RateLimit;
 }
 
 interface SocketAttachment {
@@ -275,6 +291,11 @@ const invitationRoomCodeFromPath = (pathname: string): string | undefined => {
   const match = /^\/v2\/rooms\/([A-HJ-NP-Z2-9]{12})\/invitations$/u.exec(
     pathname
   );
+  return match?.[1];
+};
+
+const aliasRoomCodeFromPath = (pathname: string): string | undefined => {
+  const match = /^\/v2\/rooms\/([A-HJ-NP-Z2-9]{12})\/code$/u.exec(pathname);
   return match?.[1];
 };
 
@@ -494,6 +515,29 @@ export class PtcgRoom extends DurableObject<Env> {
   private readonly telemetry: StructuredServerTelemetry;
   private socketAlarmTail: Promise<void> = Promise.resolve();
   private runtimePromise: Promise<RoomRuntime | undefined>;
+  /** The room's public code (ADR-047), kept beside its snapshot. */
+  private readonly aliasCustody = new RoomAliasCustody({
+    roomCode: this.ctx.id.name ?? '',
+    snapshot: () => this.aliasRuntime?.coordinator.currentSnapshot(),
+    authentication: {
+      digestCapability: (value) => this.cryptoSource.digestCapability(value),
+      equalDigest: (left, right) => this.cryptoSource.equalDigest(left, right),
+    },
+    stored: {
+      get: () => this.ctx.storage.get<string>(ROOM_ALIAS_STORAGE_KEY),
+      put: (alias) => this.ctx.storage.put(ROOM_ALIAS_STORAGE_KEY, alias),
+    },
+    directory: (alias) => {
+      const record = this.env.PTCG_ROOM_CODE.getByName(alias);
+      return {
+        claim: (roomCode, now) => record.claim(roomCode, now),
+        release: (roomCode) => record.release(roomCode),
+      };
+    },
+    now: Date.now,
+  });
+  /** The runtime the room's code is read against, once it is up. */
+  private aliasRuntime: RoomRuntime | undefined;
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
@@ -657,8 +701,32 @@ export class PtcgRoom extends DurableObject<Env> {
     return result;
   }
 
+  /**
+   * Admits someone who typed this room's public code (ADR-047), from the
+   * Worker once the code was looked up.
+   */
+  async joinByCode(request: {
+    readonly requestedRole: 'player' | 'spectator';
+    readonly displayName: string;
+  }): Promise<BoundedRoomCodeAdmissionResult> {
+    const runtime = await this.runtimePromise;
+    if (!runtime) return { accepted: false, code: 'room_not_ready' };
+    return runtime.hub.admitByCode(request);
+  }
+
   override async fetch(request: Request): Promise<Response> {
     const requestUrl = new URL(request.url);
+    if (aliasRoomCodeFromPath(requestUrl.pathname)) {
+      return observeHttp(this.telemetry, 'room_code', async () => {
+        const runtime = await this.runtimePromise;
+        if (!runtime)
+          return new Response('Room not initialized', { status: 404 });
+        this.aliasRuntime = runtime;
+        return handleRoomAliasRequest(request, (input) =>
+          this.aliasCustody.respond(input)
+        );
+      });
+    }
     if (invitationRoomCodeFromPath(requestUrl.pathname)) {
       return observeHttp(this.telemetry, 'room_invitation', async () => {
         const runtime = await this.runtimePromise;
@@ -1318,6 +1386,33 @@ export class PtcgCardCatalog extends DurableObject<Env> {
  * once each by the SHA-256 of their bytes and spread over sixteen stores by
  * the hash's first digit. Each store checks the bytes and their hash again.
  */
+/**
+ * One room code's record (ADR-047): which room it stands for, on a lease
+ * the room renews while it is in use. Named by the code itself, so a code
+ * is looked up, taken or given back without any shared index.
+ */
+export class PtcgRoomCode extends DurableObject<Env> {
+  private readonly record = new RoomAliasDirectoryRecord({
+    get: () => this.ctx.storage.get<RoomAliasRecord>('record'),
+    put: (record) => this.ctx.storage.put('record', record),
+    delete: async () => {
+      await this.ctx.storage.delete('record');
+    },
+  });
+
+  async claim(roomCode: string, now: number): Promise<boolean> {
+    return this.record.claim(roomCode, now);
+  }
+
+  async resolve(now: number): Promise<string | null> {
+    return this.record.resolve(now);
+  }
+
+  async release(roomCode: string): Promise<void> {
+    return this.record.release(roomCode);
+  }
+}
+
 export class PtcgImageStore extends DurableObject<Env> {
   private readonly store = new ImageStoreSql(this.ctx.storage.sql);
 
@@ -1704,6 +1799,32 @@ const worker: ExportedHandler<Env> = {
     const openCode = openRoomCodeFromPath(url.pathname);
     if (openCode) {
       return forwardToRoom(openCode, 'invitation', 'room_open');
+    }
+    const aliasCode = aliasRoomCodeFromPath(url.pathname);
+    if (aliasCode) {
+      return forwardToRoom(aliasCode, 'room_code', 'room_code');
+    }
+    if (url.pathname === '/v2/join') {
+      return observeHttp(telemetry, 'room_code_join', () =>
+        handleRoomCodeJoinRequest(
+          request,
+          async ({ code, requestedRole, displayName }) => {
+            const now = Date.now();
+            const record = env.PTCG_ROOM_CODE.getByName(code);
+            const roomCode = await record.resolve(now);
+            if (!roomCode) return { found: false };
+            const result = await env.PTCG_ROOM.getByName(roomCode).joinByCode({
+              requestedRole,
+              displayName,
+            });
+            // In use: the code stays the room's.
+            if (result.accepted) await record.claim(roomCode, now);
+            return { found: true, roomCode, result };
+          },
+          () =>
+            consumeRoomCodeJoinRateLimit(request, env.ROOM_CODE_RATE_LIMITER)
+        )
+      );
     }
     // Reached by any file the assets don't have (wrangler.jsonc). An
     // address typed or kept for a page is the app's one page; anything

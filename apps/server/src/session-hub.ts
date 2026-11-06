@@ -8,6 +8,7 @@ import {
   disconnectRoomSession,
   dueDisconnectedSessions,
   issueRoomAdmissionTicket,
+  issueRoomCodeInvitation,
   issueRoomInvitation,
   leaveRoomSession,
   openSoloRoom,
@@ -137,6 +138,31 @@ const boundedCommandBreakdown = (
   frontierFastPathHit: breakdown.frontierFastPathHit === 1 ? 1 : 0,
   transactionMs: boundedObservedDuration(breakdown.transactionMs),
 });
+
+/** What a join by room code came to (ADR-047). */
+export type BoundedRoomCodeAdmissionResult =
+  | {
+      readonly accepted: true;
+      readonly requestedRole: 'player' | 'spectator';
+      readonly admissionTicket: string;
+      readonly resumeCapability: string;
+      readonly expiresAt: number;
+    }
+  | {
+      readonly accepted: false;
+      readonly code:
+        | 'invalid_request'
+        | 'invalid_capability'
+        | 'seat_unavailable'
+        | 'room_not_ready'
+        | 'invitation_capacity'
+        | 'ticket_capacity';
+    }
+  | {
+      readonly accepted: false;
+      readonly code: 'rate_limited';
+      readonly retryAfterSeconds: number;
+    };
 
 export class RoomSessionHub {
   private tail: Promise<void> = Promise.resolve();
@@ -361,6 +387,104 @@ export class RoomSessionHub {
   }
 
   /**
+   * Admits someone who knows the room's public code (ADR-047): an
+   * invitation for the free guest seat (or to watch) minted and exchanged
+   * for a socket ticket in one turn of the room, so two people joining at
+   * once never retire each other's invitation between the two steps.
+   */
+  admitByCode(request: {
+    readonly requestedRole: 'player' | 'spectator';
+    readonly displayName: string;
+  }): Promise<BoundedRoomCodeAdmissionResult> {
+    const startedAt = this.dependencies.monotonicNow();
+    const run = this.tail.then(async () => {
+      try {
+        const now = this.dependencies.admission.now();
+        const rateLimit = await this.dependencies.rateLimits.attempt(
+          'invitation',
+          now
+        );
+        this.dependencies.telemetry.roomRateLimit({
+          operation: 'invitation',
+          allowed: rateLimit.allowed,
+          ...(!rateLimit.allowed
+            ? { retryAfterSeconds: rateLimit.retryAfterSeconds }
+            : {}),
+        });
+        if (!rateLimit.allowed) {
+          return {
+            accepted: false,
+            code: 'rate_limited',
+            retryAfterSeconds: rateLimit.retryAfterSeconds,
+          } as const;
+        }
+        const invited = await issueRoomCodeInvitation(
+          this.coordinator.currentSnapshot(),
+          request.requestedRole,
+          now,
+          this.dependencies.admission
+        );
+        if (!invited.accepted) {
+          this.dependencies.telemetry.roomAdmission({
+            operation: 'code_join',
+            requestedRole: request.requestedRole,
+            outcome: 'rejected',
+            reason: invited.code,
+            authorityVersion: invited.snapshot.authorityVersion,
+            durationMs: this.dependencies.monotonicNow() - startedAt,
+          });
+          return { accepted: false, code: invited.code } as const;
+        }
+        this.coordinator.installCommittedSnapshot(invited.snapshot);
+        const ticket = await issueRoomAdmissionTicket(
+          invited.snapshot,
+          {
+            capability: invited.invitation,
+            displayName: request.displayName,
+            requestedRole: request.requestedRole,
+          },
+          now,
+          this.dependencies.admission
+        );
+        if (ticket.accepted) {
+          this.coordinator.installCommittedSnapshot(ticket.snapshot);
+        }
+        this.dependencies.telemetry.roomAdmission({
+          operation: 'code_join',
+          requestedRole: request.requestedRole,
+          outcome: ticket.accepted ? 'accepted' : 'rejected',
+          ...(!ticket.accepted ? { reason: ticket.code } : {}),
+          authorityVersion: ticket.snapshot.authorityVersion,
+          durationMs: this.dependencies.monotonicNow() - startedAt,
+        });
+        if (!ticket.accepted) {
+          return { accepted: false, code: ticket.code } as const;
+        }
+        return {
+          accepted: true,
+          requestedRole: request.requestedRole,
+          admissionTicket: ticket.admissionTicket,
+          resumeCapability: ticket.resumeCapability,
+          expiresAt: ticket.expiresAt,
+        } as const;
+      } catch (error) {
+        const durable = await this.dependencies.store.load();
+        if (durable) this.coordinator.installCommittedSnapshot(durable);
+        this.dependencies.telemetry.failure({
+          subsystem: 'code_join',
+          retryable: true,
+        });
+        throw error;
+      }
+    });
+    this.tail = run.then(
+      () => undefined,
+      () => undefined
+    );
+    return run;
+  }
+
+  /**
    * Opens this Solo room to an opponent in place (ADR-044): committed like
    * any admission change, then each connected session is shown the table
    * under a room's rules.
@@ -406,9 +530,7 @@ export class RoomSessionHub {
         if (result.accepted) {
           this.coordinator.installCommittedSnapshot(result.snapshot);
           for (const refresh of result.refreshes) {
-            const connectionId = this.sessionConnections.get(
-              refresh.sessionId
-            );
+            const connectionId = this.sessionConnections.get(refresh.sessionId);
             const connection = connectionId
               ? this.connections.get(connectionId)
               : undefined;

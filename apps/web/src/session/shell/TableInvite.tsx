@@ -1,26 +1,28 @@
 import { Trans, useLingui } from '@lingui/react/macro';
-import { EyeIcon } from '@phosphor-icons/react/dist/csr/Eye';
-import { UserPlusIcon } from '@phosphor-icons/react/dist/csr/UserPlus';
+import { CopyIcon } from '@phosphor-icons/react/dist/csr/Copy';
+import { LinkIcon } from '@phosphor-icons/react/dist/csr/Link';
 import { XIcon } from '@phosphor-icons/react/dist/csr/X';
 
 import { Tooltip } from '../../ui/Tooltip.js';
-import type { RoomInviteRole } from '../room-invites.js';
 import './table-welcome.css';
 
 const decorative = { 'aria-hidden': true, focusable: false } as const;
 
 /**
- * A room waiting for its opponent (ADR-020): the two ways to invite, on the
- * felt where the welcome card sits at a Solo table. It goes once the
- * opponent takes their seat; the app menu keeps both invites.
+ * A room waiting for its opponent (ADR-047): its code, on the felt where
+ * the welcome card sits at a Solo table, to read out or copy, and the link
+ * that carries it. Whoever joins chooses to play or to watch. It goes once
+ * the opponent takes their seat; the bar's room code keeps the rest.
  */
 export const TableInvite = ({
-  roles,
+  code,
+  onCopyCode,
   onInvite,
   onDismiss,
 }: {
-  readonly roles: readonly RoomInviteRole[];
-  readonly onInvite: (role: RoomInviteRole) => void;
+  readonly code: string | undefined;
+  readonly onCopyCode: () => void;
+  readonly onInvite: () => void;
   readonly onDismiss: () => void;
 }) => {
   const { t } = useLingui();
@@ -48,31 +50,36 @@ export const TableInvite = ({
         </div>
       </header>
       <p className="table-welcome__lead">
-        <Trans>Send your opponent a link. Each works once.</Trans>
+        <Trans>Share the code to play.</Trans>
       </p>
+      <output
+        id="tableInviteCode"
+        className="table-welcome__code"
+        aria-live="polite"
+      >
+        {code ?? '····'}
+      </output>
       <div className="table-welcome__actions">
-        {roles.includes('player') ? (
-          <button
-            id="inviteOpponentButton"
-            type="button"
-            className="ds-button ds-button--primary"
-            onClick={() => onInvite('player')}
-          >
-            <UserPlusIcon {...decorative} weight="bold" />
-            <Trans>Invite opponent</Trans>
-          </button>
-        ) : null}
-        {roles.includes('spectator') ? (
-          <button
-            id="inviteSpectatorButton"
-            type="button"
-            className="ds-button ds-button--secondary"
-            onClick={() => onInvite('spectator')}
-          >
-            <EyeIcon {...decorative} weight="bold" />
-            <Trans>Invite spectator</Trans>
-          </button>
-        ) : null}
+        <button
+          id="inviteOpponentButton"
+          type="button"
+          className="ds-button ds-button--primary"
+          disabled={!code}
+          onClick={onInvite}
+        >
+          <LinkIcon {...decorative} weight="bold" />
+          <Trans>Copy invite link</Trans>
+        </button>
+        <button
+          id="tableCopyCodeButton"
+          type="button"
+          className="ds-button ds-button--secondary"
+          disabled={!code}
+          onClick={onCopyCode}
+        >
+          <CopyIcon {...decorative} weight="bold" />
+          <Trans>Copy code</Trans>
+        </button>
       </div>
     </section>
   );

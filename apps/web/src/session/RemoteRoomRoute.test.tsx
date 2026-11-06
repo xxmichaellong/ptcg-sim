@@ -348,11 +348,20 @@ const welcome = (snapshot: MatchViewState = view): ServerMessage => ({
   snapshot,
 });
 
+/** The room's code (ADR-047), as the room answers it here. */
+const roomCodeFetch = (async () =>
+  new Response(JSON.stringify({ code: 'K7PQ', canChange: true }), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json' },
+  })) as unknown as typeof globalThis.fetch;
+const roomCodes = { fetch: roomCodeFetch, origin: 'https://example.test' };
+
 const createRuntime = (
   socketFactory: FakeSocketFactory,
   announcements?: ControlledAnnouncementScheduler
 ): RemoteRoomRuntime =>
   new RemoteRoomRuntime({
+    roomCodes,
     connection: {
       url: 'wss://example.test/v2/rooms/ABCDEFGH2345/connect',
       buildId: 'route-screen-client',
@@ -384,6 +393,7 @@ const createLosingRuntime = (
 ): { readonly runtime: RemoteRoomRuntime; readonly runTimers: () => void } => {
   const timers: (() => void)[] = [];
   const runtime = new RemoteRoomRuntime({
+    roomCodes,
     connection: {
       url: 'wss://example.test/v2/rooms/ABCDEFGH2345/connect',
       buildId: 'route-screen-client',
@@ -902,9 +912,12 @@ describe('RemoteRoomRoute', () => {
     expect(moreIds()).toEqual([]);
     expect(boardHarness.props?.loadDeck).toBeUndefined();
     expect(get('.ptcgsim-app-bar__switch').dataset.current).toBe('online');
-    expect(get('.ptcgsim-app-bar__switch #p2Button').textContent).toBe(
-      'Watching'
-    );
+    // Watching a room by its code: the code, with an eye.
+    await settle();
+    const watching = get('.ptcgsim-app-bar__switch #p2Button');
+    expect(watching.textContent).toBe('K7PQ');
+    expect(watching.dataset.watching).toBe('true');
+    expect(watching.getAttribute('aria-label')).toBe('Watching room K7PQ');
     await openMenu();
     expect(await allMenuIds()).toContain('leaveRoomButton');
     expect(await allMenuIds()).not.toContain('saveOnlineGame');
@@ -934,17 +947,22 @@ describe('RemoteRoomRoute', () => {
       kind: 'image' as const,
       url: 'https://images.example.test/table.png',
     }));
-    const invite = vi.fn(
-      async (_role: 'player' | 'spectator') => 'copied' as const
-    );
-    const invitations = { roles: ['player', 'spectator'] as const, invite };
+    // What the invite puts on the clipboard.
+    const written: string[] = [];
+    Object.defineProperty(globalThis.navigator, 'clipboard', {
+      configurable: true,
+      value: {
+        writeText: async (text: string) => {
+          written.push(text);
+        },
+      },
+    });
     const route = (continuationAvailable: boolean) => (
       <RemoteRoomRoute
         runtime={runtime}
         onIntent={onIntent}
         onSubmission={onSubmission}
         onLeave={onLeave}
-        invitations={invitations}
         onResumeSavedGame={onResumeSavedGame}
         continuationAvailable={continuationAvailable}
         downloadTextFile={downloadTextFile}
@@ -993,37 +1011,44 @@ describe('RemoteRoomRoute', () => {
           'data-connecting'
         )
       ).toBe(false);
+      await settle();
       await openActivity();
-      expect(get('#activitySheet').textContent).toContain('Room ABCDEFGH2345');
+      // Live: the room's code (ADR-047), in the log and on the bar.
+      expect(get('#activitySheet').textContent).toContain('Room K7PQ');
+      expect(get('.ptcgsim-app-bar__switch #p2Button').dataset.roomCode).toBe(
+        'K7PQ'
+      );
       expect(get<HTMLInputElement>('#p2MessageInput').disabled).toBe(false);
-      // Live and waiting for the opponent: the room says how to invite
-      // them, and the log's header names the invite it sends.
+      // Waiting for the opponent: the room shows its code to share, and
+      // the log's header copies the link that carries it.
       expect(get('[data-table-invite]').textContent).toContain('Room ready');
+      expect(get('#tableInviteCode').textContent).toBe('K7PQ');
       await click('#roomHeaderInviteButton');
-      expect(invite).toHaveBeenLastCalledWith('player');
+      expect(written.at(-1)).toMatch(/\?room=K7PQ$/u);
       expect(toast).toHaveBeenCalledWith({
-        title: 'Invitation link copied',
+        title: 'Invite link copied',
         tone: 'success',
       });
-      await click('#inviteSpectatorButton');
-      expect(invite).toHaveBeenLastCalledWith('spectator');
+      // The bar's code opens the room: its code, who is here.
+      await click('#p2Button');
+      expect(get('#roomCodeValue').textContent).toBe('K7PQ');
+      await click('#roomSheet .ptcgsim-sheet__close');
 
       // Online save and resume are default-off on the Worker; until it
       // reports them enabled there is nothing to press.
       await openMenu();
       expect(get('#settings .settings-group__heading').textContent).toBe(
-        'Room ABCDEFGH2345'
+        'Room K7PQ'
       );
       expect(await allMenuIds()).not.toContain('saveOnlineGame');
       expect(await allMenuIds()).not.toContain('resumeSavedGame');
       expect(await allMenuIds()).not.toContain('importReplay');
       // Play online is where a Solo table goes; a room is already online.
       expect(await allMenuIds()).not.toContain('p2Button');
-      expect(await allMenuIds()).toContain('inviteOpponentMenuItem');
-      expect(await allMenuIds()).toContain('inviteSpectatorMenuItem');
-      await click('#inviteOpponentMenuItem');
-      expect(invite).toHaveBeenCalledTimes(3);
-      expect(invite).toHaveBeenLastCalledWith('player');
+      expect(await allMenuIds()).toContain('roomMenuItem');
+      expect(await allMenuIds()).toContain('inviteMenuItem');
+      await click('#inviteMenuItem');
+      expect(written.at(-1)).toMatch(/\?room=K7PQ$/u);
       await settle();
       await act(async () => root.render(route(true)));
       await openMenu();

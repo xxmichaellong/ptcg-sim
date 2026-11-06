@@ -15,7 +15,6 @@ import { ArrowCounterClockwiseIcon } from '@phosphor-icons/react/dist/csr/ArrowC
 import { ArrowsClockwiseIcon } from '@phosphor-icons/react/dist/csr/ArrowsClockwise';
 import { CaretLeftIcon } from '@phosphor-icons/react/dist/csr/CaretLeft';
 import { CaretRightIcon } from '@phosphor-icons/react/dist/csr/CaretRight';
-import { EyeIcon } from '@phosphor-icons/react/dist/csr/Eye';
 import { FastForwardIcon } from '@phosphor-icons/react/dist/csr/FastForward';
 import { FlagIcon } from '@phosphor-icons/react/dist/csr/Flag';
 import { SkipBackIcon } from '@phosphor-icons/react/dist/csr/SkipBack';
@@ -82,11 +81,8 @@ import { seatStage } from '../board/seat-stage.js';
 import { SHELL_PREFERENCES } from './shell/shell-preferences.js';
 import { TableInvite } from './shell/TableInvite.js';
 import { TableWelcome } from './shell/TableWelcome.js';
-import {
-  useRoomInvites,
-  type RoomInvitations,
-  type RoomInviteRole,
-} from './room-invites.js';
+import { useRoomInvites } from './room-invites.js';
+import { RoomSheet, type RoomPeople } from './shell/RoomSheet.js';
 import { submitCoachingConsentAction } from '../board/resolveCoachingConsentAction.js';
 import { TutorialHost } from '../tutorial/TutorialHost.js';
 import { startTutorial } from '../tutorial/tutorial-state.js';
@@ -178,11 +174,6 @@ export interface RemoteRoomRouteProps {
    */
   readonly multiplayerPanel?: (hidden: boolean) => ReactNode;
   readonly onMultiplayerPanelOpen?: () => void;
-  /**
-   * The room's invites (ADR-020): links for the opponent's seat and for
-   * spectators, from the seat that created the room or resumed a game.
-   */
-  readonly invitations?: RoomInvitations;
   /** When supplied with onPreferencesChange, ownership remains above the route. */
   readonly preferences?: BoardPreferences;
   readonly onPreferencesChange?: (preferences: BoardPreferences) => void;
@@ -195,7 +186,7 @@ export interface RemoteRoomRouteProps {
   readonly downloadTextFile?: (filename: string, contents: string) => boolean;
 }
 
-type RouteSheet = 'deck' | 'settings' | 'online';
+type RouteSheet = 'deck' | 'settings' | 'online' | 'room';
 
 /** A failure the room must show is reason enough to show the table. */
 /** What a failed session says over the table, in the player's terms. */
@@ -270,7 +261,6 @@ export const RemoteRoomRoute = ({
   onMultiplayerNavigate,
   multiplayerPanel,
   onMultiplayerPanelOpen,
-  invitations,
   preferences: ownedPreferences,
   onPreferencesChange,
   background: ownedBackground,
@@ -408,9 +398,10 @@ export const RemoteRoomRoute = ({
     downloadTextFile,
   });
   const invites = useRoomInvites({
-    invitations,
+    codes: runtime.roomCodes,
     session: runtime.session,
     ownSeat: live.ownSeat,
+    enabled: !solo && !tutorial,
   });
   // The room-ready card, put away by the player (the menu keeps both); a
   // new room brings it back.
@@ -457,48 +448,69 @@ export const RemoteRoomRoute = ({
           state.view?.playerOrder.some(
             (playerId) => seatStage(state.view, playerId) !== 'empty'
           ) ?? false;
-        const roomCode = runtime.roomCode;
+        const roomCode = invites.code;
         const roomName = replaying
           ? t({ message: 'Replay', context: 'the table is showing a replay' })
           : solo
             ? t`Solo table`
-            : state.sessionPhase === 'ready'
-              ? t({
-                  message: `Room ${roomCode}`,
-                  comment: 'roomCode is a short code like K7PQ2M',
-                })
-              : t`Connecting…`;
+            : state.sessionPhase !== 'ready'
+              ? t`Connecting…`
+              : roomCode
+                ? t({
+                    message: `Room ${roomCode}`,
+                    comment: 'roomCode is a short code like K7PQ',
+                  })
+                : t({ message: 'Room', context: 'an online room' });
+        // A room with its code invites by it (ADR-047): one link, and
+        // whoever joins chooses to play or to watch.
         const canInvite =
           !replaying &&
-          invites.roles.length > 0 &&
+          !solo &&
+          roomCode !== undefined &&
           state.sessionPhase === 'ready';
-        // The log's header holds the invite the room most needs, named for
-        // what it sends: the opponent's seat while it is free, then a
-        // spectator's.
-        const headerInviteRole: RoomInviteRole | undefined = !canInvite
-          ? undefined
-          : invites.roles.includes('player') && !invites.seatTaken
-            ? 'player'
-            : invites.roles.includes('spectator')
-              ? 'spectator'
-              : undefined;
-        const headerInvite = headerInviteRole
-          ? {
-              role: headerInviteRole,
-              label:
-                headerInviteRole === 'player'
-                  ? t`Invite opponent`
-                  : t`Invite spectator`,
+        // The log's header holds the invite while the opponent's seat is
+        // free.
+        const headerInvite =
+          canInvite && !invites.seatTaken ? t`Copy invite link` : undefined;
+        // Who is here, for the room: each seat's player (the opponent's
+        // only once seen), and how many watch.
+        const latestPresence = new Map<string, string>();
+        for (const entry of runtime.session.getSnapshot().presence) {
+          latestPresence.set(
+            entry.playerId ?? `watching:${entry.displayName}`,
+            entry.status
+          );
+        }
+        const roomPeople: RoomPeople = {
+          players: (state.view?.playerOrder ?? []).flatMap((playerId) => {
+            const own = playerId === live.ownSeat;
+            // A player sees the other seat once its player has come; someone
+            // watching sees both.
+            if (live.ownSeat !== undefined && !own && !invites.seatTaken) {
+              return [];
             }
-          : undefined;
+            const status = latestPresence.get(playerId);
+            return [
+              {
+                name: state.view?.players[playerId]?.displayName ?? '',
+                here: own || (status !== 'disconnected' && status !== 'left'),
+              },
+            ];
+          }),
+          watching: [...latestPresence].filter(
+            ([key, status]) =>
+              key.startsWith('watching:') &&
+              status !== 'left' &&
+              status !== 'disconnected'
+          ).length,
+        };
         // A room waiting for its opponent says how to invite them, where a
         // Solo table says welcome.
         const waitingForOpponent =
           canInvite &&
-          !solo &&
           !tutorial &&
           !inviteDismissed &&
-          invites.roles.includes('player') &&
+          state.view?.viewer.kind === 'player' &&
           !invites.seatTaken &&
           sheet === undefined;
         // Each player lets the board be turned to the other side's view, at
@@ -717,6 +729,7 @@ export const RemoteRoomRoute = ({
                         ? 'watching'
                         : 'online',
                     detail: roomName,
+                    ...(roomCode ? { code: roomCode } : {}),
                     ...(state.sessionPhase === 'ready'
                       ? {}
                       : { connecting: true }),
@@ -740,15 +753,17 @@ export const RemoteRoomRoute = ({
           // The bar's Settings opens it, and puts it away while it is open.
           onSettings: () => (settingsOpen ? closeSheet() : settingsHost.open()),
           settingsOpen,
-          ...(canInvite
+          ...(canInvite && roomCode
             ? {
                 invites: {
-                  roles: invites.roles,
-                  seatTaken: invites.seatTaken,
+                  code: roomCode,
                   onInvite: invites.invite,
+                  onCopyCode: invites.copyCode,
                 },
               }
             : {}),
+          // The bar's room code opens the room.
+          ...(!solo && !tutorial ? { onRoom: () => setSheet('room') } : {}),
           ...(live.leaveRoom && !replaying ? { onLeave: live.leaveRoom } : {}),
           // The practice table keeps no saves or replays of its own.
           game: tutorial
@@ -942,7 +957,8 @@ export const RemoteRoomRoute = ({
                   : {})}
               >
                 <TableInvite
-                  roles={invites.roles}
+                  code={roomCode}
+                  onCopyCode={invites.copyCode}
                   onInvite={invites.invite}
                   onDismiss={() => setInviteDismissed(true)}
                 />
@@ -1009,19 +1025,15 @@ export const RemoteRoomRoute = ({
               {...(headerInvite
                 ? {
                     headerActions: (
-                      <Tooltip content={headerInvite.label} side="bottom">
+                      <Tooltip content={headerInvite} side="bottom">
                         <button
                           id="roomHeaderInviteButton"
                           type="button"
                           className="ds-icon-button"
-                          aria-label={headerInvite.label}
-                          onClick={() => invites.invite(headerInvite.role)}
+                          aria-label={headerInvite}
+                          onClick={invites.invite}
                         >
-                          {headerInvite.role === 'player' ? (
-                            <UserPlusIcon aria-hidden="true" weight="bold" />
-                          ) : (
-                            <EyeIcon aria-hidden="true" weight="bold" />
-                          )}
+                          <UserPlusIcon aria-hidden="true" weight="bold" />
                         </button>
                       </Tooltip>
                     ),
@@ -1051,6 +1063,26 @@ export const RemoteRoomRoute = ({
               }}
               {...(boardFlip ? { boardFlip } : {})}
             />
+            {!solo && !tutorial ? (
+              <RoomSheet
+                open={sheet === 'room'}
+                onOpenChange={(open) => setSheet(open ? 'room' : undefined)}
+                code={roomCode}
+                canChange={invites.canChange}
+                people={roomPeople}
+                onCopyCode={invites.copyCode}
+                onInvite={invites.invite}
+                onChangeCode={invites.changeCode}
+                {...(live.leaveRoom && !replaying
+                  ? {
+                      onLeave: () => {
+                        setSheet(undefined);
+                        live.leaveRoom?.();
+                      },
+                    }
+                  : {})}
+              />
+            ) : null}
             {soloLive && multiplayerPanel ? (
               <OnlineSheet
                 open={sheet === 'online'}

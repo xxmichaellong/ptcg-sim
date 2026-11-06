@@ -24,6 +24,7 @@ import {
   type RemoteContinuationSourceInput,
 } from './RemoteContinuationCustody.js';
 import { createProvisionalRebinder } from '../board/rebindProvisionalReferences.js';
+import { RoomCodeCustody } from './room-code.js';
 
 export interface RemoteRoomSessionDependencies extends Omit<
   ClientSessionDependencies,
@@ -44,6 +45,11 @@ export interface RemoteRoomRuntimeOptions {
     readonly port?: RemoteContinuationPort;
     readonly createOperationId?: () => string;
   };
+  /** Where the room's code is asked for (ADR-047): the page's own origin. */
+  readonly roomCodes?: {
+    readonly fetch?: typeof globalThis.fetch;
+    readonly origin?: string;
+  };
 }
 
 export type RemoteContinuationHandoffWriter = (
@@ -61,6 +67,8 @@ export class RemoteRoomRuntime {
   readonly session: RemoteGameSession;
   readonly replay: ReplaySessionCoordinator;
   readonly presentation: LegacyGamePresentationRuntime;
+  /** The room's public code (ADR-047), as this session reads it. */
+  readonly roomCodes: RoomCodeCustody;
   private readonly continuationOptions:
     RemoteRoomRuntimeOptions['continuation'] | undefined;
   private continuationSource: RemoteContinuationSourceInput | undefined;
@@ -72,6 +80,7 @@ export class RemoteRoomRuntime {
     session: sessionDependencies = {},
     presentation: presentationOptions = {},
     continuation,
+    roomCodes,
   }: RemoteRoomRuntimeOptions) {
     const {
       socketFactory = createBrowserWebSocketFactory(),
@@ -80,6 +89,11 @@ export class RemoteRoomRuntime {
     } = sessionDependencies;
     this.roomCode = connection.roomCode;
     this.requestedRole = connection.requestedRole;
+    this.roomCodes = new RoomCodeCustody({
+      roomCode: connection.roomCode,
+      resumeToken: connection.resumeToken,
+      ...roomCodes,
+    });
     this.continuationOptions = continuation;
     this.continuationSource =
       connection.requestedRole === 'player'
@@ -255,6 +269,7 @@ export class RemoteRoomRuntime {
     if (this.disposed) return;
     this.disposed = true;
     this.continuationSource = undefined;
+    this.roomCodes.dispose();
     try {
       this.continuationCustody?.dispose();
     } finally {

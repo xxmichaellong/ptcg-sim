@@ -199,6 +199,7 @@ describe('continuation managed-preview provisioner', () => {
         // The image store's upload and import budgets (ADR-041).
         '260904106',
         '260904107',
+        '260904108',
       ]
     );
     assert.deepEqual(

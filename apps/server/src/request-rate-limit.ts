@@ -104,7 +104,28 @@ export const consumeContinuationRestoreRateLimit = async (
   };
 };
 
-export type RoomIngressOperation = 'admission_ticket' | 'invitation';
+export type RoomIngressOperation =
+  'admission_ticket' | 'invitation' | 'room_code';
+
+/** How long a refused lookup by room code waits. */
+const ROOM_CODE_JOIN_RATE_LIMIT_RETRY_SECONDS = 60;
+
+/**
+ * Lookups and joins by room code, per address (ADR-047): spent before a
+ * code is looked up, so four characters can't be guessed through quickly.
+ */
+export const consumeRoomCodeJoinRateLimit = async (
+  request: Request,
+  binding: EdgeRateLimitBinding
+): Promise<RequestRateLimitDecision> => {
+  const outcome = await binding.limit({
+    key: await anonymousRequestRateLimitKey(request, 'room_code_join'),
+  });
+  return {
+    allowed: outcome.success,
+    retryAfterSeconds: ROOM_CODE_JOIN_RATE_LIMIT_RETRY_SECONDS,
+  };
+};
 
 /**
  * A room's own budgets are shared by everyone who knows its code and are

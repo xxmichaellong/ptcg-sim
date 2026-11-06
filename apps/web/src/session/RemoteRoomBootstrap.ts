@@ -120,11 +120,6 @@ export const bootstrapRemoteRoom = async (
     `/v2/rooms/${encodeURIComponent(roomCode)}/admission-tickets`,
     origin
   );
-  const socketUrl = new URL(
-    `/v2/rooms/${encodeURIComponent(roomCode)}/connect`,
-    origin
-  );
-  socketUrl.protocol = origin.protocol === 'https:' ? 'wss:' : 'ws:';
   const fetchImplementation = dependencies.fetch ?? globalThis.fetch;
   if (!fetchImplementation) {
     throw new RemoteRoomBootstrapError('invalid_input');
@@ -162,10 +157,48 @@ export const bootstrapRemoteRoom = async (
   if (!parsed.ok) {
     throw new RemoteRoomBootstrapError('invalid_response');
   }
+  return connectRemoteRoom(
+    {
+      buildId: input.buildId,
+      roomCode,
+      displayName,
+      requestedRole: input.requestedRole,
+      admissionTicket: parsed.value.admissionTicket,
+      resumeToken: parsed.value.resumeToken,
+    },
+    { ...dependencies, origin: origin.href }
+  );
+};
+
+/**
+ * Connects to a room with a socket ticket already in hand: one exchanged
+ * above, or one a join by room code came back with (ADR-047).
+ */
+export const connectRemoteRoom = (
+  input: {
+    readonly buildId: string;
+    readonly roomCode: string;
+    readonly displayName: string;
+    readonly requestedRole: 'player' | 'spectator';
+    readonly admissionTicket: string;
+    readonly resumeToken: string;
+  },
+  dependencies: RemoteRoomBootstrapDependencies = {}
+): RemoteRoomBootstrapResult => {
+  const origin = normalizeHttpOrigin(
+    dependencies.origin ?? currentBrowserOrigin() ?? ''
+  );
+  if (!origin || !V2_ROOM_CODE_PATTERN.test(input.roomCode)) {
+    throw new RemoteRoomBootstrapError('invalid_input');
+  }
+  const socketUrl = new URL(
+    `/v2/rooms/${encodeURIComponent(input.roomCode)}/connect`,
+    origin
+  );
+  socketUrl.protocol = origin.protocol === 'https:' ? 'wss:' : 'ws:';
   // The ticket's expiry is the server's clock, and the server holds it to
   // that when the socket is admitted. This browser's clock may be minutes
   // off, against a ticket that lasts seconds, so it doesn't judge.
-
   const createRuntime =
     dependencies.createRuntime ??
     ((options: RemoteRoomRuntimeOptions) => new RemoteRoomRuntime(options));
@@ -174,11 +207,11 @@ export const bootstrapRemoteRoom = async (
     connection: {
       url: socketUrl.href,
       buildId: input.buildId,
-      roomCode,
-      displayName,
+      roomCode: input.roomCode,
+      displayName: input.displayName,
       requestedRole: input.requestedRole,
-      admissionTicket: parsed.value.admissionTicket,
-      resumeToken: parsed.value.resumeToken,
+      admissionTicket: input.admissionTicket,
+      resumeToken: input.resumeToken,
     },
   });
   return {

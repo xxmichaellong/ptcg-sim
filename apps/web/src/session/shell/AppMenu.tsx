@@ -10,6 +10,7 @@ import { FilmReelIcon } from '@phosphor-icons/react/dist/csr/FilmReel';
 import { FolderOpenIcon } from '@phosphor-icons/react/dist/csr/FolderOpen';
 import { GraduationCapIcon } from '@phosphor-icons/react/dist/csr/GraduationCap';
 import { GearSixIcon } from '@phosphor-icons/react/dist/csr/GearSix';
+import { HashIcon } from '@phosphor-icons/react/dist/csr/Hash';
 import { HeartIcon } from '@phosphor-icons/react/dist/csr/Heart';
 import { KeyboardIcon } from '@phosphor-icons/react/dist/csr/Keyboard';
 import { SignOutIcon } from '@phosphor-icons/react/dist/csr/SignOut';
@@ -37,7 +38,6 @@ import {
 } from '../../ui/breakpoints.js';
 import type { SettingsTone } from '../../ui/SettingsList.js';
 import { Tooltip, withKeyHint } from '../../ui/Tooltip.js';
-import type { RoomInviteRole } from '../room-invites.js';
 import { DISCORD_URL, openHelpPage, RELEASE_NAME } from './help-pages.js';
 
 /**
@@ -48,8 +48,10 @@ export interface TableMode {
   readonly kind: 'solo' | 'online' | 'watching' | 'replay' | 'tutorial';
   /** Online or watching: not (or no longer) connected to the room. */
   readonly connecting?: boolean;
-  /** Shown on hover or a tap: the room ("Room K7PQ2M"), or "Connecting…". */
+  /** Shown on hover or a tap: the room ("Room K7PQ"), or "Connecting…". */
   readonly detail?: string;
+  /** Online: the room's code (ADR-047), shown in place of "Online". */
+  readonly code?: string;
 }
 
 /**
@@ -70,14 +72,16 @@ export interface AppMenuModel {
   /** Settings is open: its button shows it pressed. */
   readonly settingsOpen?: boolean;
   /**
-   * The room's invites (ADR-020): a link for the opponent's seat, off once
-   * it is taken, and one for a spectator, where the room can mint them.
+   * The room's code and its invite (ADR-047): one link for everyone, who
+   * chooses to play or watch on joining.
    */
   readonly invites?: {
-    readonly roles: readonly RoomInviteRole[];
-    readonly seatTaken: boolean;
-    readonly onInvite: (role: RoomInviteRole) => void;
+    readonly code: string;
+    readonly onInvite: () => void;
+    readonly onCopyCode: () => void;
   };
+  /** In a room: the bar's room code opens the room (its code, who's here). */
+  readonly onRoom?: () => void;
   /** Saves and replays; each present only where it applies. */
   readonly game?: {
     readonly onImportReplay?: () => void;
@@ -220,26 +224,35 @@ export const menuActions = (
   const game = model.game;
   const room: SettingsAction[] = [];
   const invites = model.invites;
-  if (invites?.roles.includes('player')) {
-    room.push({
-      id: 'inviteOpponentMenuItem',
-      label: t`Invite opponent`,
-      // Taken, the seat can't be offered again: the row says why.
-      ...(invites.seatTaken ? { detail: t`Seat taken` } : {}),
-      icon: UserPlusIcon,
-      tone: 'blue',
-      disabled: invites.seatTaken,
-      onSelect: () => invites.onInvite('player'),
-    });
-  }
-  if (invites?.roles.includes('spectator')) {
-    room.push({
-      id: 'inviteSpectatorMenuItem',
-      label: t`Invite spectator`,
-      icon: EyeIcon,
-      tone: 'indigo',
-      onSelect: () => invites.onInvite('spectator'),
-    });
+  if (invites) {
+    // The room (its code, who is here, a new code) where the bar has no
+    // room for its code: a phone held upright.
+    room.push(
+      model.onRoom
+        ? {
+            id: 'roomMenuItem',
+            label: t({ message: 'Room', context: 'an online room' }),
+            detail: invites.code,
+            icon: HashIcon,
+            tone: 'indigo',
+            onSelect: model.onRoom,
+          }
+        : {
+            id: 'roomCodeMenuItem',
+            label: t`Copy room code`,
+            detail: invites.code,
+            icon: HashIcon,
+            tone: 'indigo',
+            onSelect: invites.onCopyCode,
+          },
+      {
+        id: 'inviteMenuItem',
+        label: t`Copy invite link`,
+        icon: UserPlusIcon,
+        tone: 'blue',
+        onSelect: invites.onInvite,
+      }
+    );
   }
   const tutorial: SettingsAction[] =
     model.onTutorial && !model.onExitTutorial
@@ -444,8 +457,12 @@ export interface ModeSwitchModel {
   readonly onOnline?: () => void;
   readonly watching?: boolean;
   readonly connecting?: boolean;
-  /** The room ("Room K7PQ2M"), on the online side's tooltip. */
+  /** The room ("Room K7PQ"), on the online side's tooltip. */
   readonly detail?: string;
+  /** The room's code, shown in place of "Online" (ADR-047). */
+  readonly code?: string;
+  /** In a room: opens it (its code, invite, who is here). */
+  readonly onRoom?: () => void;
 }
 
 /**
@@ -472,6 +489,8 @@ export const modeSwitchOf = (
       ...(kind === 'watching' ? { watching: true } : {}),
       ...(model.mode?.connecting ? { connecting: true } : {}),
       ...(model.mode?.detail ? { detail: model.mode.detail } : {}),
+      ...(model.mode?.code ? { code: model.mode.code } : {}),
+      ...(model.onRoom ? { onRoom: model.onRoom } : {}),
     };
   }
   return undefined;
@@ -490,16 +509,23 @@ const ModeSwitch = ({ mode }: { readonly mode: ModeSwitchModel }) => {
     message: 'Solo',
     context: 'playing alone at this table',
   });
-  const onlineName = mode.watching
-    ? t({ message: 'Watching', context: 'spectating a room' })
-    : t({ message: 'Online', context: 'playing against someone' });
+  // In a room it says the room's code, which is how others join it.
+  const onlineName =
+    mode.code ??
+    (mode.watching
+      ? t({ message: 'Watching', context: 'spectating a room' })
+      : t({ message: 'Online', context: 'playing against someone' }));
   const solo = mode.current === 'solo';
   const soloTip = solo
     ? soloName
     : mode.onSolo && mode.current === 'online' && mode.detail !== undefined
       ? t`Leave room`
       : t`Solo table`;
-  const onlineTip = solo ? t`Play online` : (mode.detail ?? onlineName);
+  const onlineTip = solo
+    ? t`Play online`
+    : mode.onRoom
+      ? t({ message: 'Room', context: 'an online room' })
+      : (mode.detail ?? onlineName);
   return (
     <div
       className="ptcgsim-app-bar__switch"
@@ -528,10 +554,25 @@ const ModeSwitch = ({ mode }: { readonly mode: ModeSwitchModel }) => {
           type="button"
           className="ptcgsim-app-bar__switch-option"
           aria-pressed={!solo}
-          aria-disabled={solo && !mode.onOnline ? true : undefined}
+          aria-disabled={
+            (solo && !mode.onOnline) || (!solo && !mode.onRoom)
+              ? true
+              : undefined
+          }
           data-connecting={mode.connecting ? 'true' : undefined}
+          data-room-code={mode.code}
+          data-watching={mode.watching ? 'true' : undefined}
+          {...(mode.watching && mode.code
+            ? {
+                'aria-label': t({
+                  message: `Watching room ${mode.code}`,
+                  comment: 'mode.code is a short room code like K7PQ',
+                }),
+              }
+            : {})}
           onClick={() => {
             if (solo) mode.onOnline?.();
+            else mode.onRoom?.();
           }}
         >
           {solo ? (
@@ -539,7 +580,16 @@ const ModeSwitch = ({ mode }: { readonly mode: ModeSwitchModel }) => {
           ) : (
             <span className="ptcgsim-app-bar__mode-light" aria-hidden="true" />
           )}
-          <span className="ptcgsim-app-bar__switch-name">{onlineName}</span>
+          {/* Watching a room by its code: an eye says so. */}
+          {!solo && mode.watching && mode.code ? (
+            <EyeIcon aria-hidden="true" weight="bold" />
+          ) : null}
+          <span
+            className="ptcgsim-app-bar__switch-name"
+            data-code={mode.code ? 'true' : undefined}
+          >
+            {onlineName}
+          </span>
         </button>
       </Tooltip>
     </div>
@@ -569,7 +619,8 @@ const ModeLabel = ({
   const { t } = useLingui();
   const name = {
     solo: t({ message: 'Solo', context: 'playing alone at this table' }),
-    online: t({ message: 'Online', context: 'playing against someone' }),
+    online:
+      mode.code ?? t({ message: 'Online', context: 'playing against someone' }),
     watching: t({ message: 'Watching', context: 'spectating a room' }),
     replay: t({ message: 'Replay', context: 'the table is showing a replay' }),
     tutorial: t`Tutorial`,

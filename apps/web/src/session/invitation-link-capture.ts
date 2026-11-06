@@ -37,6 +37,42 @@ const capture = (): boolean => {
 
 capture();
 
+/**
+ * An invite link by room code (ADR-047), `?room=CODE`: no secret, but taken
+ * off the address too, so a reload doesn't offer the same room again. The
+ * lobby fills its code in and opens Play online.
+ */
+let capturedRoomCode: string | undefined;
+const captureRoomCode = (): void => {
+  const location = globalThis.location as Location | undefined;
+  const history = globalThis.history as History | undefined;
+  if (!location || !history) return;
+  const params = new URLSearchParams(location.search);
+  const code = params.get('room');
+  if (code === null) return;
+  capturedRoomCode = code;
+  params.delete('room');
+  const search = params.toString();
+  try {
+    history.replaceState(
+      history.state,
+      '',
+      `${location.pathname}${search ? `?${search}` : ''}${location.hash}`
+    );
+  } catch {
+    // Kept on the address: the lobby still reads it once.
+  }
+};
+
+captureRoomCode();
+
+/** The room code the page was opened with (`?room=`), once. */
+export const takeRoomCodeLink = (): string | undefined => {
+  const value = capturedRoomCode;
+  capturedRoomCode = undefined;
+  return value;
+};
+
 // A link opened while the page is already up (pasted into the address
 // bar, or followed from another tab of the same page) changes only the
 // fragment: no reload, the same capture.

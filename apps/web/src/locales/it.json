@@ -32,6 +32,10 @@
     "message": "{0, plural, one {# selected} other {# selected}}",
     "translation": "{0, plural, one {# selezionata} other {# selezionate}}"
   },
+  "f4hwpo": {
+    "message": "{0, plural, one {# watching} other {# watching}}",
+    "translation": "{0, plural, one {# spettatore} other {# spettatori}}"
+  },
   "wmB_kS": {
     "message": "{0, plural, one {Revealed to your opponent} other {Revealed # cards to your opponent}}",
     "translation": "{0, plural, one {Rivelata all'avversario} other {Rivelate # carte all'avversario}}"
@@ -1625,6 +1629,13 @@
     "message": "3 pieces in a row",
     "translation": "3 pezzi in fila"
   },
+  "Ncbs74": {
+    "message": "4–12 letters or digits, no I, O, 0 or 1",
+    "comments": [
+      "The rule for a room code"
+    ],
+    "translation": "4–12 lettere o cifre, senza I, O, 0 o 1"
+  },
   "GeqQnM": {
     "message": "A card in it has no image.",
     "translation": "Una carta al suo interno non ha un'immagine."
@@ -2247,13 +2258,13 @@
     "message": "Both players must allow it.",
     "translation": "Devono consentirlo entrambi i giocatori."
   },
-  "nqjpOW": {
-    "message": "Both seats are taken.",
-    "translation": "Entrambi i posti sono occupati."
-  },
   "5XVQGs": {
     "message": "Both seats are taken. Ask for a spectator invitation.",
     "translation": "Entrambi i posti sono occupati. Chiedi un invito da spettatore."
+  },
+  "hGCCg3": {
+    "message": "Both seats are taken. Join to watch.",
+    "translation": "Entrambi i posti sono occupati. Entra per guardare."
   },
   "7jOTCJ": {
     "message": "Both sides",
@@ -2442,6 +2453,10 @@
     "message": "Change card type",
     "translation": "Cambia tipo di carta"
   },
+  "MSbiQ_": {
+    "message": "Change code",
+    "translation": "Cambia codice"
+  },
   "UOwYQT": {
     "message": "Change the image",
     "translation": "Cambia l'immagine"
@@ -2622,6 +2637,10 @@
     "context": "sleeve color",
     "translation": "Cacao"
   },
+  "bse4E7": {
+    "message": "Code changed",
+    "translation": "Codice cambiato"
+  },
   "c6pkO-": {
     "message": "Coin",
     "context": "flip a coin",
@@ -2682,9 +2701,22 @@
     "message": "Copy",
     "translation": "Copia"
   },
+  "Bp8-R4": {
+    "message": "Copy",
+    "context": "copy to the clipboard",
+    "translation": "Copia"
+  },
+  "NmPNJJ": {
+    "message": "Copy code",
+    "translation": "Copia codice"
+  },
   "tlcVbQ": {
     "message": "Copy details",
     "translation": "Copia dettagli"
+  },
+  "x7uIlL": {
+    "message": "Copy invite link",
+    "translation": "Copia link d'invito"
   },
   "PSlXm_": {
     "message": "Copy list",
@@ -2693,6 +2725,10 @@
   "zxrRZX": {
     "message": "Copy list (Pokémon TCG Live)",
     "translation": "Copia lista (Pokémon TCG Live)"
+  },
+  "PWBNVu": {
+    "message": "Copy room code",
+    "translation": "Copia codice stanza"
   },
   "gK_NxX": {
     "message": "Coral",
@@ -2705,6 +2741,10 @@
       "The Energy an attack needs, read out. {names} lists the types, e.g. \"Fire, Fire, Colorless\"."
     ],
     "translation": "Costo: {names}"
+  },
+  "Rxyn1P": {
+    "message": "Couldn't change it. Try again.",
+    "translation": "Impossibile cambiarlo. Riprova."
   },
   "7WsLH4": {
     "message": "Couldn't check that. Try again.",
@@ -2766,10 +2806,6 @@
     "message": "Couldn't save the game",
     "translation": "Impossibile salvare la partita"
   },
-  "TC3rNW": {
-    "message": "Couldn't share the invitation. Try again.",
-    "translation": "Impossibile condividere l'invito. Riprova."
-  },
   "hCQkU8": {
     "message": "Couldn't start Solo mode. Try again.",
     "translation": "Impossibile avviare la modalità Solo. Riprova."
@@ -2777,6 +2813,10 @@
   "eP7qeF": {
     "message": "Couldn't start the tutorial. Try again.",
     "translation": "Impossibile avviare il tutorial. Riprova."
+  },
+  "VDi9Wt": {
+    "message": "Couldn't use that code. Your room has another.",
+    "translation": "Impossibile usare quel codice. La tua stanza ne ha un altro."
   },
   "OcR9wV": {
     "message": "Couldn't use that image.",
@@ -2823,14 +2863,10 @@
     "context": "sleeve color",
     "translation": "Crema"
   },
-  "E6-4ez": {
-    "message": "Create a room, or join one with a link.",
-    "translation": "Crea una stanza o entra in una con un link."
-  },
-  "xE_hmo": {
-    "message": "Create room",
+  "kEtrRg": {
+    "message": "Create",
     "context": "a room",
-    "translation": "Crea stanza"
+    "translation": "Crea"
   },
   "_LHski": {
     "message": "Creating…",
@@ -2864,6 +2900,13 @@
   "qT5p-1": {
     "message": "Custom card",
     "translation": "Carta personalizzata"
+  },
+  "E16GGw": {
+    "message": "Custom code",
+    "comments": [
+      "A code the host may choose for the room they create"
+    ],
+    "translation": "Codice personalizzato"
   },
   "rlm3op": {
     "message": "Custom flair on Discord & open reign on self-nicknames.",
@@ -3406,6 +3449,10 @@
     "message": "Enter a valid image URL.",
     "translation": "Inserisci un URL immagine valido."
   },
+  "uHUaw6": {
+    "message": "Enter the room's code.",
+    "translation": "Inserisci il codice della stanza."
+  },
   "eVVWyt": {
     "message": "Esc",
     "context": "keyboard key",
@@ -3858,6 +3905,11 @@
     ],
     "translation": "Aiuto"
   },
+  "EVBmUd": {
+    "message": "Here",
+    "context": "the people in a room",
+    "translation": "Presenti"
+  },
   "9MxuIb": {
     "message": "Hexagons",
     "context": "sleeve pattern",
@@ -4083,28 +4135,13 @@
     ],
     "translation": "Internazionale"
   },
-  "KhBSE_": {
-    "message": "Invitation",
-    "comments": [
-      "The link or code that lets someone join a room"
-    ],
-    "translation": "Invito"
-  },
-  "au3LEA": {
-    "message": "Invitation link copied",
-    "translation": "Link di invito copiato"
-  },
   "LSVtnE": {
     "message": "Invitation link ready",
     "translation": "Link di invito pronto"
   },
-  "Za0iMR": {
-    "message": "Invite opponent",
-    "translation": "Invita avversario"
-  },
-  "UoRWrm": {
-    "message": "Invite spectator",
-    "translation": "Invita spettatore"
+  "KLJ4eD": {
+    "message": "Invite link copied",
+    "translation": "Link d'invito copiato"
   },
   "0pN9y3": {
     "message": "It stays open for another draw. Press <0>Esc</0> twice to close it.",
@@ -4137,21 +4174,25 @@
     "context": "sleeve color",
     "translation": "Giada"
   },
+  "085CJe": {
+    "message": "Join",
+    "context": "a room",
+    "translation": "Entra"
+  },
   "Fz2DU1": {
     "message": "Join a room",
     "translation": "Entra in una stanza"
   },
-  "G7O46F": {
-    "message": "Join as spectator",
-    "translation": "Entra come spettatore"
+  "aqe8Yy": {
+    "message": "Join as",
+    "comments": [
+      "To play in the room, or to watch it"
+    ],
+    "translation": "Entra come"
   },
   "XbqMCS": {
     "message": "Join pieces…",
     "translation": "Unisci pezzi…"
-  },
-  "t5uRiA": {
-    "message": "Join room",
-    "translation": "Entra nella stanza"
   },
   "t8Lc2X": {
     "message": "Joining…",
@@ -5008,6 +5049,10 @@
     "message": "No Pokémon can take all of these",
     "translation": "Nessun Pokémon può riceverle tutte"
   },
+  "1vVne-": {
+    "message": "No room has that code.",
+    "translation": "Nessuna stanza ha questo codice."
+  },
   "ebeFtm": {
     "message": "No shortcut matches “{search}”.",
     "translation": "Nessuna scorciatoia corrisponde a “{search}”."
@@ -5240,6 +5285,10 @@
     "message": "Only that seat's player can.",
     "translation": "Può farlo solo il giocatore di quel posto."
   },
+  "brB603": {
+    "message": "Only the host can change it",
+    "translation": "Solo l'host può cambiarlo"
+  },
   "gbBPE1": {
     "message": "Only you see this. Cards without that printing keep the deck's scan.",
     "translation": "Lo vedi solo tu. Le carte senza quella stampa mantengono la scansione del mazzo."
@@ -5259,6 +5308,10 @@
   "E9wRDu": {
     "message": "Open log",
     "translation": "Apri registro"
+  },
+  "HW9F4A": {
+    "message": "Open seat",
+    "translation": "Posto libero"
   },
   "F37c1s": {
     "message": "Open Settings",
@@ -5335,6 +5388,11 @@
   "xzPwKo": {
     "message": "Opponents' custom backs",
     "translation": "Dorsi personalizzati degli avversari"
+  },
+  "_iG1gb": {
+    "message": "or",
+    "context": "host a room, or join one",
+    "translation": "o"
   },
   "ONM3W_": {
     "message": "or a link",
@@ -5427,21 +5485,9 @@
     "message": "Paste a list from the clipboard",
     "translation": "Incolla una lista dagli appunti"
   },
-  "7hnHtA": {
-    "message": "Paste or drop the link you were sent.",
-    "translation": "Incolla o rilascia il link che ti hanno inviato."
-  },
   "5L0PsY": {
     "message": "Paste the details into your report: they help find the problem.",
     "translation": "Incolla i dettagli nella tua segnalazione: aiutano a trovare il problema."
-  },
-  "erh83Q": {
-    "message": "Paste the invitation link you were sent.",
-    "translation": "Incolla il link di invito che ti hanno inviato."
-  },
-  "ax6uck": {
-    "message": "Paste the link",
-    "translation": "Incolla il link"
   },
   "MfH2NF": {
     "message": "Paste with Ctrl+V (⌘V) instead",
@@ -5497,6 +5543,11 @@
     "message": "Plain",
     "context": "sleeve pattern",
     "translation": "Tinta unita"
+  },
+  "1mYAKq": {
+    "message": "Play",
+    "context": "join a room to play",
+    "translation": "Gioca"
   },
   "SW-cIq": {
     "message": "Play",
@@ -6200,26 +6251,53 @@
     ],
     "translation": "Stanza"
   },
+  "dt6ntk": {
+    "message": "Room",
+    "context": "an online room",
+    "translation": "Stanza"
+  },
   "GzC7XU": {
     "message": "Room {0} · to play",
     "comments": [
-      "roomCode is a short code like K7PQ2M"
+      "roomCode is a short code like K7PQ"
     ],
     "translation": "Stanza {0} · per giocare"
   },
   "0sQWkX": {
     "message": "Room {0} · to watch",
     "comments": [
-      "roomCode is a short code like K7PQ2M"
+      "roomCode is a short code like K7PQ"
     ],
     "translation": "Stanza {0} · per guardare"
   },
   "euMx3W": {
     "message": "Room {roomCode}",
     "comments": [
-      "roomCode is a short code like K7PQ2M"
+      "roomCode is a short code like K7PQ"
     ],
     "translation": "Stanza {roomCode}"
+  },
+  "3Kcs5g": {
+    "message": "Room code",
+    "translation": "Codice stanza"
+  },
+  "B8jR1y": {
+    "message": "Room code (optional)",
+    "comments": [
+      "A code the host may choose for the room they create"
+    ],
+    "translation": "Codice stanza (facoltativo)"
+  },
+  "kzsUbm": {
+    "message": "Room code copied",
+    "translation": "Codice stanza copiato"
+  },
+  "BPm0Lm": {
+    "message": "Room code: {code}",
+    "comments": [
+      "code is a short room code like K7PQ"
+    ],
+    "translation": "Codice stanza: {code}"
   },
   "tFii6J": {
     "message": "Room ready",
@@ -6385,6 +6463,11 @@
     "context": "save a card's text",
     "translation": "Salva"
   },
+  "_bk2eq": {
+    "message": "Save",
+    "context": "save a change",
+    "translation": "Salva"
+  },
   "A7uAwg": {
     "message": "Save {name}",
     "translation": "Salva {name}"
@@ -6400,13 +6483,6 @@
   "4XBjuA": {
     "message": "Save game",
     "translation": "Salva partita"
-  },
-  "s7g8Y-": {
-    "message": "Save the game and resume it to get a new invitation.",
-    "comments": [
-      "Advice after an expired invitation: saving the game and resuming it issues a fresh invitation link."
-    ],
-    "translation": "Salva la partita e riprendila per ottenere un nuovo invito."
   },
   "OnrVKw": {
     "message": "Saved",
@@ -6473,10 +6549,6 @@
   "AUeSIS": {
     "message": "Season or format",
     "translation": "Stagione o formato"
-  },
-  "wRfrN3": {
-    "message": "Seat taken",
-    "translation": "Posto occupato"
   },
   "rG3WVm": {
     "message": "Select",
@@ -6553,10 +6625,6 @@
   "pi1oME": {
     "message": "Send message",
     "translation": "Invia messaggio"
-  },
-  "QYIzdx": {
-    "message": "Send your opponent a link. Each works once.",
-    "translation": "Invia un link al tuo avversario. Ognuno funziona una sola volta."
   },
   "Of0ksK": {
     "message": "Seriously do not think anyone will subscribe to this, but I would be immensely grateful.",
@@ -6642,6 +6710,10 @@
   "Z8lGw6": {
     "message": "Share",
     "translation": "Condividi"
+  },
+  "zzxcno": {
+    "message": "Share the code to play.",
+    "translation": "Condividi il codice per giocare."
   },
   "2D-NYE": {
     "message": "Shift",
@@ -7318,6 +7390,14 @@
     "context": "Trainer cards by kind",
     "translation": "Macchinari Tecnici"
   },
+  "2DW6tZ": {
+    "message": "That code is taken",
+    "translation": "Questo codice è già in uso"
+  },
+  "A55nM8": {
+    "message": "That code is taken. Your room has another.",
+    "translation": "Questo codice è già in uso. La tua stanza ne ha un altro."
+  },
   "4qLtJr": {
     "message": "That Energy has left your hand.",
     "translation": "Quell'Energia ha lasciato la tua mano."
@@ -7535,10 +7615,6 @@
     "message": "This game will be lost.",
     "translation": "Questa partita andrà persa."
   },
-  "eBiRbO": {
-    "message": "This invitation has expired.",
-    "translation": "Questo invito è scaduto."
-  },
   "5HIoIb": {
     "message": "This invitation was used or has expired. Ask for a new one.",
     "translation": "Questo invito è stato usato o è scaduto. Chiedine uno nuovo."
@@ -7672,6 +7748,10 @@
   "B3I8F_": {
     "message": "Too many moves",
     "translation": "Troppe mosse"
+  },
+  "S8h63k": {
+    "message": "Too many tries. Wait a minute and try again.",
+    "translation": "Troppi tentativi. Aspetta un minuto e riprova."
   },
   "Xx-Q6M": {
     "message": "Tool",
@@ -8030,6 +8110,11 @@
     "message": "Wallpaper {0}",
     "translation": "Sfondo {0}"
   },
+  "vbMHW0": {
+    "message": "Watch",
+    "context": "join a room to spectate",
+    "translation": "Guarda"
+  },
   "sFWtjQ": {
     "message": "Watch replay…",
     "translation": "Guarda replay…"
@@ -8038,6 +8123,13 @@
     "message": "Watching",
     "context": "spectating a room",
     "translation": "Spettatore"
+  },
+  "3QYDLk": {
+    "message": "Watching room {0}",
+    "comments": [
+      "mode.code is a short room code like K7PQ"
+    ],
+    "translation": "Stai guardando la stanza {0}"
   },
   "2kl5Uf": {
     "message": "Water",
@@ -8125,10 +8217,6 @@
   "aylG7j": {
     "message": "You can't move that card",
     "translation": "Non puoi spostare quella carta"
-  },
-  "1hxqre": {
-    "message": "You'll invite players from the room.",
-    "translation": "Inviterai i giocatori dalla stanza."
   },
   "VvkF_g": {
     "message": "You're watching",

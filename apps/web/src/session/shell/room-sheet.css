@@ -1,0 +1,100 @@
+/* The room (RoomSheet.tsx, ADR-047): its code first, large enough to read
+   out, then who is here and the way out. */
+
+.room-sheet {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.room-sheet__label {
+  display: block;
+  margin-bottom: var(--space-1-5);
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.room-sheet__code {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-sunken);
+}
+
+.room-sheet__code .room-sheet__label {
+  margin-bottom: 0;
+}
+
+.room-sheet__code-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.room-sheet__code-value {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: var(--text-3xl);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  line-height: 1.1;
+}
+
+.room-sheet__invite {
+  justify-self: start;
+}
+
+.room-sheet__change-row {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.room-sheet__change-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.room-sheet__change .ds-hint {
+  margin-top: var(--space-1-5);
+}
+
+.room-sheet__change .ds-hint[data-outcome='code_taken'],
+.room-sheet__change .ds-hint[data-outcome='invalid'],
+.room-sheet__change .ds-hint[data-outcome='failed'] {
+  color: var(--color-danger);
+}
+
+.room-sheet__people-list {
+  display: grid;
+  gap: var(--space-1-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.room-sheet__people-list li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+}
+
+.room-sheet__people-list li[data-here='false'] {
+  color: var(--color-text-faint);
+}
+
+.room-sheet__leave {
+  justify-self: start;
+  color: var(--color-danger);
+}

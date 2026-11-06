@@ -17,6 +17,7 @@ import {
   MAX_REPLAY_FRAMES,
   MAX_ROOM_CODE_LENGTH,
   PROTOCOL_VERSION,
+  ROOM_ALIAS_PATTERN,
   V2_ROOM_CODE_PATTERN,
 } from './constants.js';
 
@@ -66,6 +67,42 @@ const RoomCodeSchema = v.pipe(
 );
 
 const RoomModeSchema = v.picklist(['solo', 'multiplayer'] as const);
+
+const RoomAliasSchema = v.pipe(
+  v.string(),
+  v.regex(ROOM_ALIAS_PATTERN, 'Invalid room alias')
+);
+
+/** Join a room by its public code, choosing to play or watch (ADR-047). */
+export const RoomCodeJoinRequestSchema = v.strictObject({
+  code: RoomAliasSchema,
+  requestedRole: v.picklist(['player', 'spectator'] as const),
+  displayName: boundedString(64),
+});
+
+/** Admitted: the room behind the code, and a ticket to connect with. */
+export const RoomCodeJoinResponseSchema = v.strictObject({
+  roomCode: RoomCodeSchema,
+  requestedRole: v.picklist(['player', 'spectator'] as const),
+  admissionTicket: CapabilitySchema,
+  resumeToken: CapabilitySchema,
+  expiresAt: NonNegativeIntegerSchema,
+});
+
+/**
+ * A room's public code, asked for by a session in it (its resume bearer):
+ * the current one, made if it has none, or `code` chosen by the host.
+ */
+export const RoomAliasRequestSchema = v.strictObject({
+  resumeToken: CapabilitySchema,
+  code: v.optional(RoomAliasSchema),
+});
+
+export const RoomAliasResponseSchema = v.strictObject({
+  code: RoomAliasSchema,
+  /** Whether the asker may choose another (the host). */
+  canChange: v.boolean(),
+});
 
 export const RoomCreationRequestSchema = v.strictObject({
   mode: v.optional(RoomModeSchema, 'multiplayer'),
@@ -1653,6 +1690,14 @@ export type RoomInvitationHandoff = v.InferOutput<
 >;
 export type RoomOpenRequest = v.InferOutput<typeof RoomOpenRequestSchema>;
 export type RoomOpenResponse = v.InferOutput<typeof RoomOpenResponseSchema>;
+export type RoomCodeJoinRequest = v.InferOutput<
+  typeof RoomCodeJoinRequestSchema
+>;
+export type RoomCodeJoinResponse = v.InferOutput<
+  typeof RoomCodeJoinResponseSchema
+>;
+export type RoomAliasRequest = v.InferOutput<typeof RoomAliasRequestSchema>;
+export type RoomAliasResponse = v.InferOutput<typeof RoomAliasResponseSchema>;
 export type RoomAdmissionTicketRequest = v.InferOutput<
   typeof RoomAdmissionTicketRequestSchema
 >;

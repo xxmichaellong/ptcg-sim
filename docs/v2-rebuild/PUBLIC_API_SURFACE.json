@@ -1638,6 +1638,10 @@
               "kind": "value"
             },
             {
+              "name": "normalizeRoomAlias",
+              "kind": "value"
+            },
+            {
               "name": "parseClientFrame",
               "kind": "value"
             },
@@ -1671,6 +1675,22 @@
             },
             {
               "name": "parseRoomAdmissionTicketResponse",
+              "kind": "value"
+            },
+            {
+              "name": "parseRoomAliasRequest",
+              "kind": "value"
+            },
+            {
+              "name": "parseRoomAliasResponse",
+              "kind": "value"
+            },
+            {
+              "name": "parseRoomCodeJoinRequest",
+              "kind": "value"
+            },
+            {
+              "name": "parseRoomCodeJoinResponse",
               "kind": "value"
             },
             {
@@ -1738,6 +1758,26 @@
               "kind": "value"
             },
             {
+              "name": "ROOM_ALIAS_ALPHABET",
+              "kind": "value"
+            },
+            {
+              "name": "ROOM_ALIAS_GENERATED_LENGTH",
+              "kind": "value"
+            },
+            {
+              "name": "ROOM_ALIAS_MAX_LENGTH",
+              "kind": "value"
+            },
+            {
+              "name": "ROOM_ALIAS_MIN_LENGTH",
+              "kind": "value"
+            },
+            {
+              "name": "ROOM_ALIAS_PATTERN",
+              "kind": "value"
+            },
+            {
               "name": "ROOM_INVITATION_HANDOFF_TEXT_PREFIX",
               "kind": "value"
             },
@@ -1759,6 +1799,38 @@
             },
             {
               "name": "RoomAdmissionTicketResponseSchema",
+              "kind": "value"
+            },
+            {
+              "name": "RoomAliasRequest",
+              "kind": "type"
+            },
+            {
+              "name": "RoomAliasRequestSchema",
+              "kind": "value"
+            },
+            {
+              "name": "RoomAliasResponse",
+              "kind": "type"
+            },
+            {
+              "name": "RoomAliasResponseSchema",
+              "kind": "value"
+            },
+            {
+              "name": "RoomCodeJoinRequest",
+              "kind": "type"
+            },
+            {
+              "name": "RoomCodeJoinRequestSchema",
+              "kind": "value"
+            },
+            {
+              "name": "RoomCodeJoinResponse",
+              "kind": "type"
+            },
+            {
+              "name": "RoomCodeJoinResponseSchema",
               "kind": "value"
             },
             {
@@ -3198,6 +3270,10 @@
               "kind": "value"
             },
             {
+              "name": "issueRoomCodeInvitation",
+              "kind": "value"
+            },
+            {
               "name": "issueRoomInvitation",
               "kind": "value"
             },
@@ -3438,6 +3514,10 @@
               "kind": "type"
             },
             {
+              "name": "BoundedRoomCodeAdmissionResult",
+              "kind": "type"
+            },
+            {
               "name": "BoundedRoomInvitationIssueResult",
               "kind": "type"
             },
@@ -3471,6 +3551,10 @@
             },
             {
               "name": "consumeImageUploadRateLimit",
+              "kind": "value"
+            },
+            {
+              "name": "consumeRoomCodeJoinRateLimit",
               "kind": "value"
             },
             {

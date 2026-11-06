@@ -195,19 +195,16 @@ describe('AppBar', () => {
     ).toBe('Watch replay…');
 
     const room: AppMenuModel = {
-      heading: 'Room K7PQ2M',
+      heading: 'Room K7PQ',
       onDeck: vi.fn(),
       onSettings: vi.fn(),
-      invites: {
-        roles: ['player', 'spectator'],
-        seatTaken: false,
-        onInvite: vi.fn(),
-      },
+      invites: { code: 'K7PQ', onInvite: vi.fn(), onCopyCode: vi.fn() },
+      onRoom: vi.fn(),
       game: { onSaveOnline: vi.fn(), onExportState: vi.fn() },
       onLeave: vi.fn(),
     };
     expect(actionIds(room)).toEqual({
-      room: ['inviteOpponentMenuItem', 'inviteSpectatorMenuItem'],
+      room: ['roomMenuItem', 'inviteMenuItem'],
       saves: ['saveOnlineGame', 'exportState'],
       tutorial: [],
       leave: ['leaveRoomButton'],
@@ -217,8 +214,8 @@ describe('AppBar', () => {
       restEntries(room).map((entry) => ('id' in entry ? entry.id : undefined))
     ).toEqual([
       'settingsButton',
-      'inviteOpponentMenuItem',
-      'inviteSpectatorMenuItem',
+      'roomMenuItem',
+      'inviteMenuItem',
       'saveOnlineGame',
       'exportState',
       'leaveRoomButton',
@@ -293,26 +290,29 @@ describe('AppBar', () => {
     expect(leave[0]?.danger).toBe(true);
   });
 
-  it("offers both invites, and says why the opponent's is off once their seat is taken", () => {
+  it('offers the room (its code beside it) and one invite link for everyone (ADR-047)', () => {
     const onInvite = vi.fn();
-    const open = menuActions(
-      model({
-        invites: { roles: ['player', 'spectator'], seatTaken: false, onInvite },
-      })
+    const onCopyCode = vi.fn();
+    const onRoom = vi.fn();
+    const room = menuActions(
+      model({ invites: { code: 'K7PQ', onInvite, onCopyCode }, onRoom })
     ).room;
-    expect(open.map((action) => action.id)).toEqual([
-      'inviteOpponentMenuItem',
-      'inviteSpectatorMenuItem',
+    expect(room.map((action) => action.id)).toEqual([
+      'roomMenuItem',
+      'inviteMenuItem',
     ]);
-    open[1]!.onSelect();
-    expect(onInvite).toHaveBeenCalledWith('spectator');
-    const taken = menuActions(
-      model({
-        invites: { roles: ['player', 'spectator'], seatTaken: true, onInvite },
-      })
+    expect(room[0]!.detail).toBe('K7PQ');
+    room[0]!.onSelect();
+    expect(onRoom).toHaveBeenCalledOnce();
+    room[1]!.onSelect();
+    expect(onInvite).toHaveBeenCalledOnce();
+    // Without the room's sheet, its row copies the code.
+    const bare = menuActions(
+      model({ invites: { code: 'K7PQ', onInvite, onCopyCode } })
     ).room[0]!;
-    expect(taken.disabled).toBe(true);
-    expect(taken.detail).toBe('Seat taken');
+    expect(bare.id).toBe('roomCodeMenuItem');
+    bare.onSelect();
+    expect(onCopyCode).toHaveBeenCalledOnce();
   });
 
   it('keeps the palette, the log and Settings on a phone; Settings leads with the rest', async () => {
