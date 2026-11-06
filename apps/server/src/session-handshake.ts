@@ -12,7 +12,10 @@ import {
   type ServerMessage,
 } from '@ptcgsim/protocol';
 
-import { sessionPresentationIdentity } from './session-presentation-identity.js';
+import {
+  roomOccupantId,
+  sessionPresentationIdentity,
+} from './session-presentation-identity.js';
 
 type HelloMessage = Extract<ClientMessage, { type: 'Hello' }>;
 
@@ -119,7 +122,9 @@ export const establishSession = async (
       // reconnect grace, but nobody is there until it comes back.
       const connected =
         session.active && session.reconnectExpiresAt === undefined;
-      return identity ? [{ ...identity, connected }] : [];
+      return identity
+        ? [{ occupantId: roomOccupantId(session.id), ...identity, connected }]
+        : [];
     }
   );
   return {

@@ -1108,6 +1108,8 @@ export const MatchViewStateSchema = v.object({
  * seat, someone watching by name, and whether they are connected now.
  */
 const RoomOccupantSchema = v.object({
+  /** Who they are to the room, the same on their Presence (opaque). */
+  occupantId: v.optional(IdentifierSchema),
   playerId: v.optional(IdentifierSchema),
   displayName: boundedString(64),
   connected: v.boolean(),
@@ -1584,6 +1586,12 @@ const DeckViewAnnouncementSchema = v.object({
 const PresenceSchema = v.object({
   type: v.literal('Presence'),
   protocolVersion: v.literal(PROTOCOL_VERSION),
+  /**
+   * Whose arrival or departure, as Welcome's occupants name them (ADR-047):
+   * opaque, and telling apart two watching under one name. Absent from
+   * rooms of builds before it; a page of such a build ignores it.
+   */
+  occupantId: v.optional(IdentifierSchema),
   playerId: v.optional(IdentifierSchema),
   displayName: boundedString(64),
   status: v.picklist([

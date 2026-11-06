@@ -86,6 +86,8 @@ export interface RoomCodeState {
   readonly code?: string;
   /** This session may choose another: it is the host's. */
   readonly canChange: boolean;
+  /** An ask for it is out: Room says it is loading. */
+  readonly asking?: boolean;
 }
 
 export type RoomCodeChangeOutcome =
@@ -143,9 +145,12 @@ export class RoomCodeCustody {
           this.publish({ code: answer.code, canChange: answer.canChange });
       })
       .finally(() => {
-        if (this.asking === asking) this.asking = undefined;
+        if (this.asking !== asking) return;
+        this.asking = undefined;
+        this.publishAsking(false);
       });
     this.asking = asking;
+    this.publishAsking(true);
     return asking;
   }
 
@@ -176,11 +181,21 @@ export class RoomCodeCustody {
     if (this.disposed) return;
     if (
       next.code === this.state.code &&
-      next.canChange === this.state.canChange
+      next.canChange === this.state.canChange &&
+      (next.asking ?? false) === (this.state.asking ?? false)
     )
       return;
     this.state = Object.freeze(next);
     for (const listener of [...this.listeners]) listener();
+  }
+
+  /** The same code, with an ask out or not. */
+  private publishAsking(asking: boolean): void {
+    this.publish({
+      ...(this.state.code !== undefined ? { code: this.state.code } : {}),
+      canChange: this.state.canChange,
+      ...(asking ? { asking: true } : {}),
+    });
   }
 
   private async request(

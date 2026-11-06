@@ -1072,6 +1072,8 @@ export const RemoteRoomRoute = ({
                 open={sheet === 'room'}
                 onOpenChange={(open) => setSheet(open ? 'room' : undefined)}
                 code={roomCode}
+                asking={invites.asking}
+                onAskAgain={invites.askAgain}
                 canChange={invites.canChange}
                 people={roomPeople}
                 onCopyCode={invites.copyCode}

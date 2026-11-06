@@ -1,4 +1,14 @@
+import { stableHash } from '@ptcgsim/game-core';
 import type { RoomAuthoritySnapshot } from '@ptcgsim/room-authority';
+
+/**
+ * Who a session is to the others in the room (ADR-047): an opaque name, the
+ * same in Welcome's occupants and on each of its Presence, that tells two
+ * watching under one name apart. Made from the session's id, which it
+ * doesn't give away, so it holds across the room's restarts.
+ */
+export const roomOccupantId = (sessionId: string): string =>
+  `occupant-${stableHash(['ptcgsim-room-occupant', sessionId]).replace(/^fnv1a32:/u, '')}`;
 
 export interface SessionPresentationIdentity {
   readonly playerId?: string;

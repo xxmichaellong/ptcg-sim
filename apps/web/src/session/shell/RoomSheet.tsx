@@ -1,5 +1,6 @@
 import { plural } from '@lingui/core/macro';
 import { Trans, useLingui } from '@lingui/react/macro';
+import { ArrowClockwiseIcon } from '@phosphor-icons/react/dist/csr/ArrowClockwise';
 import { CopyIcon } from '@phosphor-icons/react/dist/csr/Copy';
 import { EyeIcon } from '@phosphor-icons/react/dist/csr/Eye';
 import { LinkIcon } from '@phosphor-icons/react/dist/csr/Link';
@@ -35,6 +36,8 @@ export const RoomSheet = ({
   open,
   onOpenChange,
   code,
+  asking = false,
+  onAskAgain,
   canChange,
   people,
   onCopyCode,
@@ -45,6 +48,10 @@ export const RoomSheet = ({
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
   readonly code: string | undefined;
+  /** The room is being asked for its code. */
+  readonly asking?: boolean;
+  /** Asks the room for a code that hasn't come. */
+  readonly onAskAgain?: () => void;
   readonly canChange: boolean;
   readonly people: RoomPeople;
   readonly onCopyCode: () => void;
@@ -121,16 +128,33 @@ export const RoomSheet = ({
               <Trans context="copy to the clipboard">Copy</Trans>
             </button>
           </div>
-          <button
-            id="copyInviteLinkButton"
-            type="button"
-            className="ds-button ds-button--primary room-sheet__invite"
-            disabled={!code}
-            onClick={onInvite}
-          >
-            <LinkIcon {...decorative} weight="bold" />
-            <Trans>Copy invite link</Trans>
-          </button>
+          {code ? (
+            <button
+              id="copyInviteLinkButton"
+              type="button"
+              className="ds-button ds-button--primary room-sheet__invite"
+              onClick={onInvite}
+            >
+              <LinkIcon {...decorative} weight="bold" />
+              <Trans>Copy invite link</Trans>
+            </button>
+          ) : asking ? (
+            // Not here yet: the room is being asked.
+            <p id="roomCodeAsking" className="ds-hint" role="status">
+              <Trans>Loading…</Trans>
+            </p>
+          ) : onAskAgain ? (
+            // It didn't come (the room was busy, or the network): ask again.
+            <button
+              id="roomCodeAskAgainButton"
+              type="button"
+              className="ds-button ds-button--secondary room-sheet__invite"
+              onClick={onAskAgain}
+            >
+              <ArrowClockwiseIcon {...decorative} weight="bold" />
+              <Trans>Try again</Trans>
+            </button>
+          ) : null}
         </section>
 
         {canChange ? (

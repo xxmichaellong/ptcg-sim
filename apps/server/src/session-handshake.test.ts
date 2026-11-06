@@ -13,6 +13,7 @@ import { describe, expect, it } from 'vitest';
 
 import { WebCryptoAuthoritySource } from './authority-crypto.js';
 import { establishSession } from './session-handshake.js';
+import { roomOccupantId } from './session-presentation-identity.js';
 
 type Hello = Extract<ClientMessage, { type: 'Hello' }>;
 const p1 = asPlayerId('player-one');
@@ -147,7 +148,12 @@ describe('session handshake', () => {
     // before theirs.
     const guest = await seat(host.snapshot, setup.otherSeatToken, 'Red');
     expect(guest.message.occupants).toEqual([
-      { playerId: p1, displayName: 'Blue', connected: true },
+      {
+        occupantId: roomOccupantId(host.sessionId),
+        playerId: p1,
+        displayName: 'Blue',
+        connected: true,
+      },
     ]);
   });
 
@@ -200,7 +206,12 @@ describe('session handshake', () => {
     );
     if (!guest.accepted) throw new Error('expected a welcome');
     expect(guest.message.occupants).toEqual([
-      { playerId: p1, displayName: 'Blue', connected: false },
+      {
+        occupantId: roomOccupantId(host.sessionId),
+        playerId: p1,
+        displayName: 'Blue',
+        connected: false,
+      },
     ]);
   });
 

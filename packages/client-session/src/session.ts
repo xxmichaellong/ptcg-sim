@@ -126,7 +126,8 @@ export type SubmitCommandResult =
 type RoomOccupant = NonNullable<ClientSessionState['occupants']>[number];
 
 /**
- * The room's occupants after a Presence: a player by their seat, someone
+ * The room's occupants after a Presence: by the room's opaque name for each
+ * (ADR-047) when it gives one; else a player by their seat, and someone
  * watching by name (one of several of that name is enough).
  */
 const nextOccupants = (
@@ -135,32 +136,35 @@ const nextOccupants = (
 ): readonly RoomOccupant[] => {
   const connected =
     presence.status === 'joined' || presence.status === 'reconnected';
-  const same = (occupant: RoomOccupant) =>
-    presence.playerId !== undefined
-      ? occupant.playerId === presence.playerId
-      : occupant.playerId === undefined &&
-        occupant.displayName === presence.displayName;
-  // A player's seat is theirs alone; among several watching under one name,
-  // the one whose state this changes.
-  const index =
-    presence.playerId !== undefined
-      ? occupants.findIndex(same)
+  const named = presence.occupantId !== undefined;
+  // Among several watching under one name with no name of the room's for
+  // them, the one whose state this changes.
+  const index = named
+    ? occupants.findIndex(
+        (occupant) => occupant.occupantId === presence.occupantId
+      )
+    : presence.playerId !== undefined
+      ? occupants.findIndex(
+          (occupant) => occupant.playerId === presence.playerId
+        )
       : occupants.findIndex(
           (occupant) =>
-            same(occupant) &&
+            occupant.playerId === undefined &&
+            occupant.displayName === presence.displayName &&
             (presence.status === 'left' || occupant.connected !== connected)
         );
   if (presence.status === 'left') {
     return index < 0 ? occupants : occupants.filter((_, at) => at !== index);
   }
   const occupant: RoomOccupant = {
+    ...(named ? { occupantId: presence.occupantId } : {}),
     ...(presence.playerId !== undefined ? { playerId: presence.playerId } : {}),
     displayName: presence.displayName,
     connected,
   };
   if (
     index < 0 ||
-    (presence.playerId === undefined && presence.status === 'joined')
+    (!named && presence.playerId === undefined && presence.status === 'joined')
   ) {
     return [...occupants, occupant];
   }

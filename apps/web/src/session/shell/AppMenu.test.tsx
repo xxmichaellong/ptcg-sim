@@ -315,6 +315,15 @@ describe('AppBar', () => {
     expect(onCopyCode).toHaveBeenCalledOnce();
   });
 
+  it('offers the room before its code has come, to show it is loading and ask again (ADR-047)', () => {
+    const onRoom = vi.fn();
+    const room = menuActions(model({ onRoom })).room;
+    expect(room.map((action) => action.id)).toEqual(['roomMenuItem']);
+    expect(room[0]!.detail).toBeUndefined();
+    room[0]!.onSelect();
+    expect(onRoom).toHaveBeenCalledOnce();
+  });
+
   it('keeps the palette, the log and Settings on a phone; Settings leads with the rest', async () => {
     compact = true;
     touchOnly = true;

@@ -34,6 +34,7 @@ import { establishSession } from './session-handshake.js';
 import { RoomChatService } from './room-chat.js';
 import {
   actingPlayerIdForSession,
+  roomOccupantId,
   sessionPresentationIdentity,
 } from './session-presentation-identity.js';
 import {
@@ -837,6 +838,7 @@ export class RoomSessionHub {
     this.broadcastToActiveSessions(snapshot, {
       type: 'Presence',
       protocolVersion: PROTOCOL_VERSION,
+      occupantId: roomOccupantId(sessionId),
       ...identity,
       status,
     });
@@ -942,7 +944,9 @@ export class RoomSessionHub {
   ): void {
     const identities = expiredSessions.flatMap((session) => {
       const identity = sessionPresentationIdentity(before, session.id);
-      return identity ? [identity] : [];
+      return identity
+        ? [{ occupantId: roomOccupantId(session.id), ...identity }]
+        : [];
     });
     this.coordinator.installCommittedSnapshot(committed);
     for (const identity of identities) {
@@ -1663,6 +1667,7 @@ export class RoomSessionHub {
       this.broadcastToActiveSessions(committed, {
         type: 'Presence',
         protocolVersion: PROTOCOL_VERSION,
+        occupantId: roomOccupantId(sessionId),
         ...identity,
         status: 'left',
       });

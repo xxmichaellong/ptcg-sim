@@ -28,6 +28,8 @@ describe('a room’s code, as the page asks for it (ADR-047)', () => {
     const first = codes.refresh();
     const second = codes.refresh();
     expect(fetch).toHaveBeenCalledTimes(1);
+    // While it is out, Room says the code is loading.
+    expect(codes.getSnapshot()).toEqual({ canChange: false, asking: true });
     answer!();
     await Promise.all([first, second]);
     expect(codes.getSnapshot()).toEqual({ code: 'K7PQ', canChange: true });

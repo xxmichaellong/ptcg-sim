@@ -322,7 +322,13 @@ describe('Cloudflare Worker runtime', () => {
     expect(welcome.type).toBe('Welcome');
     // Welcomed knowing the host is here, whose arrival came before theirs.
     expect(welcome).toMatchObject({
-      occupants: [{ displayName: 'Blue', connected: true }],
+      occupants: [
+        {
+          occupantId: expect.stringMatching(/^occupant-[0-9a-f]{8}$/u),
+          displayName: 'Blue',
+          connected: true,
+        },
+      ],
     });
     // The seat is taken: another code holder may only watch.
     expect((await join('ASHPARK', 'player', '198.51.100.8')).status).toBe(409);

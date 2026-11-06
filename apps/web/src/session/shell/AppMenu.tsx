@@ -224,35 +224,36 @@ export const menuActions = (
   const game = model.game;
   const room: SettingsAction[] = [];
   const invites = model.invites;
+  // The room (its code, who is here, a new code) where the bar has no room
+  // for its code: a phone held upright. There before its code has come,
+  // which Room says, and asks for again.
+  if (model.onRoom) {
+    room.push({
+      id: 'roomMenuItem',
+      label: t({ message: 'Room', context: 'an online room' }),
+      ...(invites ? { detail: invites.code } : {}),
+      icon: HashIcon,
+      tone: 'indigo',
+      onSelect: model.onRoom,
+    });
+  } else if (invites) {
+    room.push({
+      id: 'roomCodeMenuItem',
+      label: t`Copy room code`,
+      detail: invites.code,
+      icon: HashIcon,
+      tone: 'indigo',
+      onSelect: invites.onCopyCode,
+    });
+  }
   if (invites) {
-    // The room (its code, who is here, a new code) where the bar has no
-    // room for its code: a phone held upright.
-    room.push(
-      model.onRoom
-        ? {
-            id: 'roomMenuItem',
-            label: t({ message: 'Room', context: 'an online room' }),
-            detail: invites.code,
-            icon: HashIcon,
-            tone: 'indigo',
-            onSelect: model.onRoom,
-          }
-        : {
-            id: 'roomCodeMenuItem',
-            label: t`Copy room code`,
-            detail: invites.code,
-            icon: HashIcon,
-            tone: 'indigo',
-            onSelect: invites.onCopyCode,
-          },
-      {
-        id: 'inviteMenuItem',
-        label: t`Copy invite link`,
-        icon: UserPlusIcon,
-        tone: 'blue',
-        onSelect: invites.onInvite,
-      }
-    );
+    room.push({
+      id: 'inviteMenuItem',
+      label: t`Copy invite link`,
+      icon: UserPlusIcon,
+      tone: 'blue',
+      onSelect: invites.onInvite,
+    });
   }
   const tutorial: SettingsAction[] =
     model.onTutorial && !model.onExitTutorial

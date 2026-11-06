@@ -929,6 +929,63 @@ describe('RemoteRoomRoute', () => {
     runtime.dispose();
   });
 
+  it('opens Room before its code has come, and asks again for one that didn’t (ADR-047)', async () => {
+    // The room is busy for the first two asks, then answers.
+    let asks = 0;
+    const flakyCodes = (async () => {
+      asks += 1;
+      return asks <= 2
+        ? new Response(JSON.stringify({ error: 'internal_retryable' }), {
+            status: 503,
+            headers: { 'Content-Type': 'application/json' },
+          })
+        : new Response(JSON.stringify({ code: 'K7PQ', canChange: true }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          });
+    }) as unknown as typeof globalThis.fetch;
+    const socketFactory = new FakeSocketFactory();
+    const runtime = new RemoteRoomRuntime({
+      roomCodes: { fetch: flakyCodes, origin: 'https://example.test' },
+      connection: {
+        url: 'wss://example.test/v2/rooms/ABCDEFGH2345/connect',
+        buildId: 'route-screen-client',
+        roomCode: 'ABCDEFGH2345',
+        displayName: 'Blue',
+        requestedRole: 'player',
+        admissionTicket,
+        resumeToken,
+      },
+      session: { socketFactory, scheduler: new FakeSessionScheduler() },
+    });
+    const { root } = await mountRoute(
+      <RemoteRoomRoute runtime={runtime} onLeave={vi.fn()} />
+    );
+    await connect(socketFactory);
+    await settle();
+    expect(asks).toBe(1);
+    // No code yet, and still a way into Room: the bar's Online side.
+    await act(async () => {
+      get('.ptcgsim-app-bar__switch #p2Button').click();
+    });
+    await settle();
+    expect(asks).toBe(2);
+    expect(get('#roomCodeValue').textContent).toBe('····');
+    expect(find('#copyInviteLinkButton')).toBeNull();
+    // That ask failed too: Room offers to ask again, and this time the
+    // room answers.
+    await act(async () => {
+      get<HTMLButtonElement>('#roomCodeAskAgainButton').click();
+    });
+    await settle();
+    expect(asks).toBe(3);
+    expect(get('#roomCodeValue').textContent).toBe('K7PQ');
+    expect(find('#copyInviteLinkButton')).not.toBeNull();
+    expect(find('#roomCodeAskAgainButton')).toBeNull();
+    await act(async () => root.unmount());
+    runtime.dispose();
+  });
+
   it('shows a player who joins second the host already there, and no seat left to offer (ADR-047)', async () => {
     const socketFactory = new FakeSocketFactory();
     const runtime = createRuntime(socketFactory);

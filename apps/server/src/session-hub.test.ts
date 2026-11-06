@@ -34,6 +34,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { WebCryptoAuthoritySource } from './authority-crypto.js';
 import { NOOP_SERVER_TELEMETRY } from './server-telemetry.js';
 import { RoomSessionHub, type RuntimeConnection } from './session-hub.js';
+import { roomOccupantId } from './session-presentation-identity.js';
 import {
   MAX_CLIENT_FRAMES_PER_WINDOW,
   MAX_PENDING_CLIENT_FRAMES,
@@ -787,6 +788,7 @@ describe('serialized room session hub', () => {
       {
         type: 'Presence',
         protocolVersion: PROTOCOL_VERSION,
+        occupantId: expect.stringMatching(/^occupant-[0-9a-f]{8}$/u),
         playerId: p1,
         displayName: 'Blue',
         status: 'joined',
@@ -813,12 +815,15 @@ describe('serialized room session hub', () => {
     if (spectatorWelcome?.type !== 'Welcome') {
       throw new Error('missing spectator welcome');
     }
+    // One opaque name for the spectator on each of their Presence (ADR-047).
     const joined = {
       type: 'Presence' as const,
       protocolVersion: PROTOCOL_VERSION,
+      occupantId: roomOccupantId(spectatorWelcome.sessionId),
       displayName: 'Persistent Watcher',
       status: 'joined' as const,
     };
+    expect(joined.occupantId).not.toContain(spectatorWelcome.sessionId);
     expect(blue.messages.at(-1)).toEqual(joined);
     expect(spectator.messages.at(-1)).toEqual(joined);
 

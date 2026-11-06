@@ -88,6 +88,10 @@ export const useRoomInvites = ({
 }): {
   readonly code: string | undefined;
   readonly canChange: boolean;
+  /** The room is being asked for its code. */
+  readonly asking: boolean;
+  /** Asks the room for its code again (one that didn't come). */
+  readonly askAgain: () => void;
   /** The opponent has a seat: whoever joins now can only watch. */
   readonly seatTaken: boolean;
   /** Copies the invite link (the code in a link). */
@@ -95,7 +99,7 @@ export const useRoomInvites = ({
   readonly copyCode: () => void;
   readonly changeCode: (value: string) => Promise<RoomCodeChangeOutcome>;
 } => {
-  const { code, canChange } = useSyncExternalStore(
+  const { code, canChange, asking } = useSyncExternalStore(
     codes.subscribe,
     codes.getSnapshot
   );
@@ -148,9 +152,14 @@ export const useRoomInvites = ({
     (value: string) => codes.change(value),
     [codes]
   );
+  const askAgain = useCallback((): void => {
+    void codes.refresh();
+  }, [codes]);
   return {
     code: enabled ? code : undefined,
     canChange: enabled && canChange,
+    asking: enabled && asking === true,
+    askAgain,
     seatTaken: seen || takenIn === codes,
     invite,
     copyCode,

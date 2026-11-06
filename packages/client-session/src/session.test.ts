@@ -2084,6 +2084,42 @@ describe('RemoteGameSession', () => {
     ]);
   });
 
+  it('tells apart two watching under one name by the room’s name for each (ADR-047)', () => {
+    const test = setup();
+    const socket = test.connect();
+    socket.serverMessage({
+      ...welcome(),
+      occupants: [
+        { occupantId: 'occupant-a', displayName: 'Grey', connected: true },
+        { occupantId: 'occupant-b', displayName: 'Grey', connected: false },
+      ],
+    });
+    // The one whose connection dropped runs out of time: only they go.
+    socket.serverMessage({
+      type: 'Presence',
+      protocolVersion: PROTOCOL_VERSION,
+      occupantId: 'occupant-b',
+      displayName: 'Grey',
+      status: 'left',
+    });
+    expect(test.session.getSnapshot().occupants).toEqual([
+      { occupantId: 'occupant-a', displayName: 'Grey', connected: true },
+    ]);
+    // Their namesake drops and comes back: still one of them, here.
+    for (const status of ['disconnected', 'reconnected'] as const) {
+      socket.serverMessage({
+        type: 'Presence',
+        protocolVersion: PROTOCOL_VERSION,
+        occupantId: 'occupant-a',
+        displayName: 'Grey',
+        status,
+      });
+    }
+    expect(test.session.getSnapshot().occupants).toEqual([
+      { occupantId: 'occupant-a', displayName: 'Grey', connected: true },
+    ]);
+  });
+
   it('fails closed on presence outside admission or for an unknown player', () => {
     const beforeAdmission = setup();
     const connectingSocket = beforeAdmission.connect();
