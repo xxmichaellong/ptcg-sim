@@ -337,6 +337,70 @@ describe('Cloudflare Worker runtime', () => {
     expect(asGuest.status).toBe(403);
   });
 
+  it('seats the first of two who joined by the code before either connected, and tells the other the seat is taken (ADR-047)', async () => {
+    const created = await createRoom();
+    const ticket = await issuePlayerTicket(created, 'one', 'Blue');
+    const host = await connect(created);
+    const hostWelcome = nextServerMessage(host);
+    host.send(helloFrame(created, ticket, 'Blue'));
+    expect((await hostWelcome).type).toBe('Welcome');
+    const post = (path: string, body: unknown, address: string) =>
+      exports.default.fetch(
+        new Request(`${ORIGIN}${path}`, {
+          method: 'POST',
+          headers: {
+            'CF-Connecting-IP': address,
+            'Content-Type': 'application/json',
+            Origin: ORIGIN,
+          },
+          body: JSON.stringify(body),
+        })
+      );
+    const code = (await (
+      await post(
+        `/v2/rooms/${created.roomCode}/code`,
+        { resumeToken: ticket.resumeToken },
+        '198.51.100.21'
+      )
+    ).json()) as { readonly code: string };
+    const join = async (displayName: string, address: string) => {
+      const response = await post(
+        '/v2/join',
+        { code: code.code, requestedRole: 'player', displayName },
+        address
+      );
+      expect(response.status).toBe(201);
+      return (await response.json()) as {
+        readonly admissionTicket: string;
+        readonly resumeToken: string;
+      };
+    };
+    // Both asked before either connected: both hold a ticket.
+    const red = await join('Red', '198.51.100.22');
+    const green = await join('Green', '198.51.100.23');
+    const connectAs = async (
+      admitted: { readonly admissionTicket: string; readonly resumeToken: string },
+      displayName: string
+    ) => {
+      const socket = await connect(created);
+      const answer = nextServerMessage(socket);
+      socket.send(
+        admissionHelloFrame(
+          created,
+          { ...admitted, expiresAt: 0 },
+          { displayName, requestedRole: 'player' }
+        )
+      );
+      return answer;
+    };
+    // Red, in first, is seated; Green is told the seat is taken.
+    expect((await connectAs(red, 'Red')).type).toBe('Welcome');
+    expect(await connectAs(green, 'Green')).toMatchObject({
+      type: 'ServerNotice',
+      code: 'seat_unavailable',
+    });
+  });
+
   it('reschedules an early alarm and deletes an expired unclaimed room', async () => {
     const created = await createRoom();
     const room = roomStub(created);

@@ -375,6 +375,8 @@ const runtime = (
     readonly coachingConsent?: boolean;
     /** Where its session has got to: admitted (`ready`) unless said. */
     readonly phase?: 'ready' | 'connecting' | 'failed';
+    /** What the room said, a refused admission's reason among them. */
+    readonly notices?: readonly { readonly code: string }[];
   } = {}
 ) => {
   const view = createRendererSpikeView();
@@ -419,6 +421,7 @@ const runtime = (
         view: projected,
         pendingCommands: [],
         completedCommands: [],
+        notices: options.notices ?? [],
         ...(roomMode ? { roomMode } : {}),
       }),
       subscribe: (listener: () => void) => {
@@ -1943,6 +1946,34 @@ describe('remote room lobby wiring', () => {
     expect(
       element('[data-app-route="test-remote-room"]').textContent
     ).toContain('guest by code');
+    codeJoins.join = undefined;
+    await act(async () => root.unmount());
+  });
+
+  it('says the seat is taken when someone who joined by the code at the same moment got there first (ADR-047)', async () => {
+    const invitation = custody();
+    // Admitted by the code, then refused at the room's door: the other
+    // joiner took the seat first.
+    const late = runtime({
+      label: 'late by code',
+      phase: 'failed',
+      notices: [{ code: 'seat_unavailable' }],
+    });
+    codeJoins.join = async () => ({
+      runtime: late.value,
+      route: { kind: 'remote-room', runtime: late.value },
+    });
+    const { root } = await mount(lobbyDependencies(invitation, vi.fn()));
+    await settle();
+    await act(async () => {
+      inputValue(element('#roomIdInput'), 'K7PQ');
+      element<HTMLButtonElement>('#joinRoomButton').click();
+      await flush();
+    });
+    expect(element('.lobby-status').textContent).toBe(
+      'Both seats are taken. Join to watch.'
+    );
+    expect(late.dispose).toHaveBeenCalledOnce();
     codeJoins.join = undefined;
     await act(async () => root.unmount());
   });

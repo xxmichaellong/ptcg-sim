@@ -285,7 +285,7 @@ describe('room capability admission', () => {
     if (!issued.accepted) return;
     // The second player's seat, never the host's.
     expect(Object.values(issued.snapshot.admission!.invitations)).toEqual([
-      { role: 'player', playerId: p2, expiresAt: 910_000 },
+      { role: 'player', playerId: p2, expiresAt: 40_000 },
     ]);
     const exchanged = await issueRoomAdmissionTicket(
       issued.snapshot,
@@ -381,7 +381,7 @@ describe('room capability admission', () => {
     expect(issued.accepted).toBe(true);
     if (!issued.accepted) return;
     expect(Object.values(issued.snapshot.admission!.invitations)).toEqual([
-      { role: 'player', playerId: p1, expiresAt: 910_002 },
+      { role: 'player', playerId: p1, expiresAt: 40_002 },
     ]);
     // The restorer's own seat is never offered, even while it is free.
     const beforeSeated = await issueRoomCodeInvitation(
@@ -392,8 +392,86 @@ describe('room capability admission', () => {
     );
     if (!beforeSeated.accepted) throw new Error('expected an invitation');
     expect(Object.values(beforeSeated.snapshot.admission!.invitations)).toEqual(
-      [{ role: 'player', playerId: p1, expiresAt: 910_003 }]
+      [{ role: 'player', playerId: p1, expiresAt: 40_003 }]
     );
+  });
+
+  it('lets two who join by code before either connects race for the seat: the first in takes it, the other is told it is taken', async () => {
+    const storage = persistence();
+    const crypto = createCrypto();
+    const deps = dependencies(crypto, storage);
+    const join = async (
+      snapshot: RoomAuthoritySnapshot,
+      name: string,
+      now: number
+    ) => {
+      const invited = await issueRoomCodeInvitation(
+        snapshot,
+        { requestedRole: 'player' },
+        now,
+        deps
+      );
+      if (!invited.accepted) throw new Error(invited.code);
+      const ticket = await issueRoomAdmissionTicket(
+        invited.snapshot,
+        {
+          capability: invited.invitation,
+          displayName: name,
+          requestedRole: 'player',
+        },
+        now,
+        deps
+      );
+      if (!ticket.accepted) throw new Error(ticket.code);
+      return ticket;
+    };
+    const redeem = (
+      snapshot: RoomAuthoritySnapshot,
+      ticket: Awaited<ReturnType<typeof join>>,
+      name: string,
+      now: number
+    ) =>
+      redeemRoomAdmissionTicket(
+        snapshot,
+        {
+          admissionTicket: ticket.admissionTicket,
+          resumeCapability: ticket.resumeCapability,
+          displayName: name,
+          requestedRole: 'player',
+        },
+        now,
+        deps
+      );
+    const red = await join(createSnapshot(), 'Red', 10_000);
+    const green = await join(red.snapshot, 'Green', 10_001);
+    // The second join kept the first one's ticket: Red, first in, is seated.
+    const seated = await redeem(green.snapshot, red, 'Red', 10_002);
+    expect(seated.accepted).toBe(true);
+    if (!seated.accepted) return;
+    expect(seated.session.viewer).toEqual({ kind: 'player', playerId: p2 });
+    // Green, after, is told the seat is taken (they may watch instead).
+    await expect(
+      redeem(seated.snapshot, green, 'Green', 10_003)
+    ).resolves.toMatchObject({ accepted: false, code: 'seat_unavailable' });
+
+    // A join never followed through holds nothing: another still gets the
+    // seat meanwhile, and its invitation is gone once its ticket lapses.
+    const abandoned = await join(createSnapshot(), 'Gone', 20_000);
+    const later = await join(abandoned.snapshot, 'Blue', 20_001);
+    const blue = await redeem(later.snapshot, later, 'Blue', 20_002);
+    expect(blue.accepted).toBe(true);
+    const lapsed = await issueRoomCodeInvitation(
+      abandoned.snapshot,
+      { requestedRole: 'spectator' },
+      50_001,
+      deps
+    );
+    if (!lapsed.accepted) throw new Error(lapsed.code);
+    expect(
+      Object.values(lapsed.snapshot.admission!.invitations).filter(
+        (invitation) => invitation.role === 'player'
+      )
+    ).toEqual([]);
   });
 
   it('lets a code holder watch a restored room, which has no spectators’ credential', async () => {

@@ -1239,8 +1239,13 @@ export const RemoteRoomLobby = ({
       try {
         await waitForAdmission(result.runtime, active.abort.signal);
       } catch (error) {
+        // Someone who joined by the code at the same moment took the seat
+        // first (ADR-047): said as a seat taken, so this one may watch.
+        const refused = result.runtime.session.getSnapshot().notices.at(-1);
         result.runtime.dispose();
-        throw error;
+        throw !viaInvitation && refused?.code === 'seat_unavailable'
+          ? new RoomCodeJoinError('seat_unavailable')
+          : error;
       }
       if (active.owner.disposed || ownerRef.current !== active.owner) {
         result.runtime.dispose();

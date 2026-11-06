@@ -3,6 +3,7 @@ import {
   AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
   createRoomAdmissionState,
   createReplayHistory,
+  disconnectRoomSession,
   emptyProjectionIdentityState,
   issueRoomAdmissionTicket,
   type RoomAuthoritySnapshot,
@@ -147,6 +148,59 @@ describe('session handshake', () => {
     const guest = await seat(host.snapshot, setup.otherSeatToken, 'Red');
     expect(guest.message.occupants).toEqual([
       { playerId: p1, displayName: 'Blue', connected: true },
+    ]);
+  });
+
+  it('tells a session that someone whose connection dropped is not here, while their seat waits for them (ADR-047)', async () => {
+    const setup = await fixture();
+    const issued = await issueRoomAdmissionTicket(
+      setup.snapshot,
+      { capability: setup.seatToken, displayName: 'Blue', requestedRole: 'player' },
+      10_000,
+      setup.dependencies
+    );
+    if (!issued.accepted) throw new Error(issued.code);
+    const host = await establishSession(
+      issued.snapshot,
+      hello({
+        admissionTicket: issued.admissionTicket,
+        resumeToken: issued.resumeCapability,
+      }),
+      'server-build',
+      setup.dependencies
+    );
+    if (!host.accepted) throw new Error('expected a welcome');
+    // The host's connection drops: their session waits out its grace.
+    const dropped = await disconnectRoomSession(
+      host.snapshot,
+      host.sessionId,
+      10_001,
+      setup.dependencies.persistence
+    );
+    const guestTicket = await issueRoomAdmissionTicket(
+      dropped.snapshot,
+      {
+        capability: setup.otherSeatToken,
+        displayName: 'Red',
+        requestedRole: 'player',
+      },
+      10_002,
+      setup.dependencies
+    );
+    if (!guestTicket.accepted) throw new Error(guestTicket.code);
+    const guest = await establishSession(
+      guestTicket.snapshot,
+      hello({
+        displayName: 'Red',
+        admissionTicket: guestTicket.admissionTicket,
+        resumeToken: guestTicket.resumeCapability,
+      }),
+      'server-build',
+      setup.dependencies
+    );
+    if (!guest.accepted) throw new Error('expected a welcome');
+    expect(guest.message.occupants).toEqual([
+      { playerId: p1, displayName: 'Blue', connected: false },
     ]);
   });
 

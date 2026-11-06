@@ -115,7 +115,11 @@ export const establishSession = async (
     (session) => {
       if (session.id === result.session.id) return [];
       const identity = sessionPresentationIdentity(result.snapshot, session.id);
-      return identity ? [{ ...identity, connected: session.active }] : [];
+      // A session whose connection dropped stays active through its
+      // reconnect grace, but nobody is there until it comes back.
+      const connected =
+        session.active && session.reconnectExpiresAt === undefined;
+      return identity ? [{ ...identity, connected }] : [];
     }
   );
   return {

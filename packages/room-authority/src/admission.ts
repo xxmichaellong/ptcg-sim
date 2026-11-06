@@ -978,7 +978,8 @@ export const issueRoomInvitation = async (
 
 /**
  * Mints a one-use invitation for `grant`, retiring older unclaimed player
- * invitations for the same seat, and commits it.
+ * invitations for the same seat (unless `keepOthers`: joins by a room's
+ * code race for the seat, and the first to arrive takes it), and commits it.
  */
 const mintRoomInvitation = async (
   current: RoomAuthoritySnapshot,
@@ -987,7 +988,8 @@ const mintRoomInvitation = async (
   requestedRole: 'player' | 'spectator',
   now: number,
   dependencies: RoomInvitationDependencies,
-  policy: RoomInvitationPolicy
+  policy: RoomInvitationPolicy,
+  keepOthers = false
 ): Promise<RoomInvitationIssueResult> => {
   if (!Number.isSafeInteger(grant.expiresAt)) {
     return invitationRejection(current, 'invalid_request');
@@ -997,6 +999,7 @@ const mintRoomInvitation = async (
   const retainedInvitations = Object.fromEntries(
     Object.entries(live).filter(
       ([, invitation]) =>
+        keepOthers ||
         grant.role !== 'player' ||
         invitation.role !== 'player' ||
         invitation.playerId !== grant.playerId
@@ -1065,6 +1068,12 @@ const mintRoomInvitation = async (
   };
 };
 
+/**
+ * How long an invitation minted for a join by code lasts: as long as the
+ * socket ticket it is exchanged for at once (DEFAULT_ADMISSION_TICKET_POLICY).
+ */
+const ROOM_CODE_INVITATION_LIFETIME_MS = 30_000;
+
 /** What someone who knows a room's public code asks of it (ADR-047). */
 export interface RoomCodeInvitationRequest {
   readonly requestedRole: 'player' | 'spectator';
@@ -1101,6 +1110,12 @@ export const issueRoomCodeInvitation = async (
   if (!validNow(now) || !validInvitationPolicy(policy)) {
     return invitationRejection(current, 'invalid_request');
   }
+  // Exchanged for a socket ticket in the same turn: it lasts no longer than
+  // that ticket, so one never used soon stops counting against the room.
+  const lifetimeMs = Math.min(
+    policy.lifetimeMs,
+    ROOM_CODE_INVITATION_LIFETIME_MS
+  );
   let grant: RoomInvitationGrant;
   if (request.requestedRole === 'player') {
     const host = current.state.playerOrder.some(
@@ -1121,11 +1136,15 @@ export const issueRoomCodeInvitation = async (
     grant = {
       role: 'player',
       playerId: seat.playerId,
-      expiresAt: now + policy.lifetimeMs,
+      expiresAt: now + lifetimeMs,
     };
   } else {
-    grant = { role: 'spectator', expiresAt: now + policy.lifetimeMs };
+    grant = { role: 'spectator', expiresAt: now + lifetimeMs };
   }
+  // Two people may join by the code before either connects: each keeps
+  // their ticket, the first to connect takes the free seat, and the other
+  // is told it is taken. Nothing is reserved, so a ticket never used holds
+  // nothing past its half a minute.
   return mintRoomInvitation(
     current,
     admission,
@@ -1133,7 +1152,8 @@ export const issueRoomCodeInvitation = async (
     request.requestedRole,
     now,
     dependencies,
-    policy
+    policy,
+    true
   );
 };
 

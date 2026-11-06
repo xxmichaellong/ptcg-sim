@@ -112,6 +112,8 @@ export class RoomCodeCustody {
   private disposed = false;
   /** The ask now out, which another ask meanwhile shares. */
   private asking: Promise<void> | undefined;
+  /** Codes the host has chosen here: an answer asked before one is old. */
+  private changes = 0;
 
   constructor(private readonly options: RoomCodeCustodyOptions) {}
 
@@ -131,15 +133,20 @@ export class RoomCodeCustody {
    * answer is waited for.
    */
   refresh(): Promise<void> {
-    this.asking ??= this.request(undefined)
+    if (this.asking) return this.asking;
+    const asked = this.changes;
+    const asking: Promise<void> = this.request(undefined)
       .then((answer) => {
-        if (answer.ok)
+        // The host chose a code while this was out: the room's answer is
+        // the code given back, and shows nothing new.
+        if (answer.ok && this.changes === asked)
           this.publish({ code: answer.code, canChange: answer.canChange });
       })
       .finally(() => {
-        this.asking = undefined;
+        if (this.asking === asking) this.asking = undefined;
       });
-    return this.asking;
+    this.asking = asking;
+    return asking;
   }
 
   /** The host's choice of code. */
@@ -148,6 +155,10 @@ export class RoomCodeCustody {
     if (!code) return 'invalid';
     const answer = await this.request(code);
     if (answer.ok) {
+      // Anything asked before this answer is older than it; an ask from
+      // here on goes to the room again.
+      this.changes += 1;
+      this.asking = undefined;
       this.publish({ code: answer.code, canChange: answer.canChange });
       return 'changed';
     }
