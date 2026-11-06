@@ -30,6 +30,7 @@
       "!/v2/assets/backs/*",
       "!/v2/assets/emblems/*",
       "!/v2/assets/energy/*",
+      "!/v2/assets/brand/*",
     ],
   },
   "durable_objects": {
