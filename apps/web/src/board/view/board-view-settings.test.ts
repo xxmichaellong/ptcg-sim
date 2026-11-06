@@ -28,16 +28,44 @@ it('starts with both halves, an even split, no hover preview and no optional pie
   expect(DEFAULT_BOARD_VIEW).toEqual({
     show: 'both',
     split: TABLE_SPLIT.defaultLowerShare,
-    zoneOutlines: true,
+    zoneOutlines: 'empty',
     hideOpponentHand: false,
     hoverPreview: false,
     lostZone: 'auto',
     vstarMarker: false,
     gxMarker: false,
     opponentCardsUpright: false,
+    mirrorOpponentSide: true,
   });
   expect(new BoardViewSettingsStore(new PreferenceStore()).getSnapshot()).toBe(
     DEFAULT_BOARD_VIEW
+  );
+});
+
+it("reads the outlines' choice, and the switch it was before: on as the new default, off kept off", () => {
+  for (const [stored, choice] of [
+    [true, 'empty'],
+    [false, 'never'],
+    ['empty', 'empty'],
+    ['always', 'always'],
+    ['never', 'never'],
+    ['sometimes', 'empty'],
+    [undefined, 'empty'],
+  ] as const) {
+    expect(
+      parseBoardView({ zoneOutlines: stored }).zoneOutlines,
+      String(stored)
+    ).toBe(choice);
+  }
+});
+
+it("mirrors the opponent's side unless the player turned it off", () => {
+  expect(parseBoardView({}).mirrorOpponentSide).toBe(true);
+  expect(parseBoardView({ mirrorOpponentSide: false }).mirrorOpponentSide).toBe(
+    false
+  );
+  expect(parseBoardView({ mirrorOpponentSide: 'no' }).mirrorOpponentSide).toBe(
+    true
   );
 });
 

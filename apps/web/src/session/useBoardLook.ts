@@ -42,7 +42,10 @@ export const useBoardLook = (stored: BoardPreferences): BoardPreferences => {
     const { animationSpeed: _stored, depth: _depth, ...rest } = stored;
     return {
       ...rest,
-      showZoneOutlines: boardView.zoneOutlines,
+      showZoneOutlines: boardView.zoneOutlines !== 'never',
+      ...(boardView.zoneOutlines === 'always'
+        ? { outlineFilledZones: true }
+        : {}),
       ...(depth.mode === 'flat' ? {} : { depth }),
       reducedMotion: motion.reduced,
       // The renderer treats an absent speed as normal.

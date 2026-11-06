@@ -445,13 +445,23 @@ export const appSettingCommands = (): PaletteCommand[] => {
       },
     },
     toggle({
-      id: 'table.zoneOutlines',
-      title: t`Zone outlines`,
+      id: 'table.mirrorOpponentSide',
+      title: t`Mirror opponent's side`,
       section: 'settings',
       detail: table,
-      keywords: ['outline', 'zones'],
-      on: view.zoneOutlines,
-      set: setView('zoneOutlines'),
+      keywords: ['mirror', 'flip', 'opponent', 'layout', 'deck', 'prizes'],
+      on: view.mirrorOpponentSide,
+      set: setView('mirrorOpponentSide'),
+    }),
+    toggle({
+      id: 'table.zoneOutlines',
+      title: t`Always show zone outlines`,
+      section: 'settings',
+      detail: table,
+      keywords: ['outline', 'zones', 'lines', 'borders'],
+      on: view.zoneOutlines === 'always',
+      set: (always: boolean) =>
+        viewStore.update({ zoneOutlines: always ? 'always' : 'empty' }),
     }),
     {
       id: 'settings.resetTable',

@@ -61,6 +61,7 @@ import {
   CardInspector,
 } from '../board/inspector/CardInspector.js';
 import { TurnBanner } from '../board/banner/TurnBanner.js';
+import { turnBannerCentreY } from '../board/banner/turn-banner-centre.js';
 import {
   TouchCardBar,
   TouchGroupBar,
@@ -177,6 +178,9 @@ const layoutFor = (
     ...(boardView.opponentCardsUpright ? { farCardsUpright: true } : {}),
     // Tilted, the board is laid out to fill the band between the hands.
     ...(tiltedTable ? { tiltedTable: true } : {}),
+    // The far half mirrors the near one unless the player turned it off
+    // (ADR-046).
+    ...(boardView.mirrorOpponentSide ? { mirroredFarSide: true } : {}),
   };
 };
 
@@ -995,12 +999,14 @@ export const RemoteSessionBoard = ({
       oncePerGameMarkers: markerCount,
       farCardsUpright: boardView.opponentCardsUpright,
       tiltedTable: tilted,
+      mirroredFarSide: boardView.mirrorOpponentSide,
     });
   }, [
     boardView.split,
     boardView.show,
     boardView.lostZone,
     boardView.opponentCardsUpright,
+    boardView.mirrorOpponentSide,
     markerCount,
     seamBandPx,
     appBarPx,
@@ -1301,6 +1307,14 @@ export const RemoteSessionBoard = ({
         ? new BoardDepthProjection(boardState.scene, preferences)
         : undefined,
     [boardState?.scene, preferences]
+  );
+  // The turn banner runs across the board's centre line as drawn.
+  const bannerCentreY = useMemo(
+    () =>
+      boardState?.scene
+        ? turnBannerCentreY(boardState.scene, depthProjection)
+        : undefined,
+    [boardState?.scene, depthProjection]
   );
   const showBoardComposition =
     boardState?.scene !== undefined &&
@@ -1983,6 +1997,7 @@ export const RemoteSessionBoard = ({
           <TurnBanner
             view={boardState.view}
             bottomPlayerId={boardState.scene.bottomPlayerId}
+            {...(bannerCentreY === undefined ? {} : { centreY: bannerCentreY })}
           />
           {boardView.hoverPreview ? (
             <CardInspector

@@ -1901,6 +1901,10 @@
     "context": "keyboard key",
     "translation": "Alt"
   },
+  "Ragkua": {
+    "message": "Always show zone outlines",
+    "translation": "Luôn hiển thị viền các khu vực"
+  },
   "TNnd1S": {
     "message": "Amber",
     "context": "sleeve color",
@@ -4639,6 +4643,10 @@
     "message": "Mint",
     "context": "sleeve color",
     "translation": "Xanh bạc hà"
+  },
+  "1Y5yBx": {
+    "message": "Mirror opponent's side",
+    "translation": "Lật đối xứng phía đối thủ"
   },
   "w2xVe_": {
     "message": "Mode",
@@ -8188,9 +8196,5 @@
     "message": "Yours",
     "context": "card backs the player made",
     "translation": "Của bạn"
-  },
-  "XQaL9V": {
-    "message": "Zone outlines",
-    "translation": "Viền khu vực"
   }
 }

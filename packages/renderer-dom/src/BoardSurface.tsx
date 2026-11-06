@@ -3091,7 +3091,14 @@ export const BoardSurface = ({
               zone={zone}
               showOutline={
                 preferences.showZoneOutlines &&
-                OUTLINED_ZONE_KINDS.has(zone.kind)
+                OUTLINED_ZONE_KINDS.has(zone.kind) &&
+                // On the table, a zone holding cards needs no line round
+                // it, unless the viewer keeps them all or a card is carried
+                // (its places light up as hit targets) (ADR-046).
+                (!table ||
+                  preferences.outlineFilledZones === true ||
+                  zone.count === 0 ||
+                  presentation.drag !== null)
               }
               handDividerEdge={divider?.edge}
               handDividerColor={divider?.color}

@@ -174,6 +174,14 @@ export interface BoardLayoutState {
    */
   readonly tiltedTable?: boolean;
   /**
+   * Geometry v2 only: the far half is the near half reflected across the
+   * centre line, not turned round it (ADR-046): both decks on the viewer's
+   * right, both prizes on their left, both Benches in the same order. Its
+   * cards still face their owner. Absent, the far half is turned, as a real
+   * table is (and v1).
+   */
+  readonly mirroredFarSide?: boolean;
+  /**
    * Geometry v2 only: the least height of the clear band at the centre line,
    * where the table controls sit. A touch device asks for room for 44px
    * targets; without it the band follows the table's size.
@@ -263,6 +271,11 @@ export interface BoardLayoutRegion {
    * regions v1 never counted.
    */
   readonly countLabel: BoardLayoutCountLabel | null;
+  /**
+   * Geometry v2 only: on a far half laid out mirrored (mirroredFarSide), its
+   * zones run left to right on the screen as the near half's do.
+   */
+  readonly mirrored?: true;
 }
 
 /**
@@ -293,6 +306,11 @@ export interface BoardPlayerLayout {
   readonly regions: readonly BoardLayoutRegion[];
   /** The viewer has hidden this half; it lies off the table and is not painted. */
   readonly hidden?: true;
+  /**
+   * Geometry v2 only: the far half reflected across the centre line rather
+   * than turned (BoardLayoutState.mirroredFarSide).
+   */
+  readonly mirrored?: true;
   /**
    * Geometry v2 only: the pieces beside this half's prizes, in physical
    * pixels -- where its VSTAR/GX markers sit when the viewer shows them, its
@@ -378,6 +396,8 @@ export interface BoardLayoutSnapshot {
    * window's edges, for the projection to draw back there.
    */
   readonly tiltedTable?: boolean;
+  /** Carried from the layout state: the far half is mirrored, not turned. */
+  readonly mirroredFarSide?: boolean;
 }
 
 export interface BoardPlayStackCardHitRegion {
@@ -2294,9 +2314,12 @@ export const layoutLegacyPlayRow = (
   // frame is the same row turned half a turn, so it is walked right-to-left
   // with its margins swapped and every card measured from the container's
   // far edge.
+  // On a far half mirrored rather than turned (ADR-046), the row runs left
+  // to right as the near one does; each stack is still turned to face its
+  // owner.
   const mirror = region.side !== 'local';
   const order = stacks.map((_, index) => index);
-  if (mirror) order.reverse();
+  if (mirror && region.mirrored !== true) order.reverse();
   let cursor = bounds.x + free / 2;
   const layouts: LegacyPlayRowStackLayout[] = [];
   for (const index of order) {

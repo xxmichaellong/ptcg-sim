@@ -589,10 +589,20 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     await expect(roomRoute).toHaveAttribute('data-dark-mode', 'true');
     await expect.poll(pageTheme).toBe('night');
     await expect(playerTwo.page.locator('#hideHandCheckbox')).toHaveCount(0);
-    await playerTwo.page.locator('#zoneOutlinesCheckbox').uncheck();
+    // Outlines on empty zones only, by default; the switch keeps them all.
+    await playerTwo.page.locator('#zoneOutlinesCheckbox').check();
+    await expect
+      .poll(() =>
+        playerTwo.page.evaluate(
+          () =>
+            JSON.parse(localStorage.getItem('ptcgsim.board-view.v1') ?? '{}')
+              .zoneOutlines
+        )
+      )
+      .toBe('always');
     await expect(boardSurface).toHaveAttribute(
       'data-show-zone-outlines',
-      'false'
+      'true'
     );
     // Esc goes back a page, then puts Settings away.
     await playerTwo.page.keyboard.press('Escape');
@@ -605,14 +615,13 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
     await expect(
       playerTwo.page.locator('.ptcgsim-app-bar #settingsButton')
     ).toBeFocused();
-    const hiddenZone = playerTwo.page.locator('[data-zone-id]').first();
-    await expect(hiddenZone).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
-    await expect(hiddenZone).toHaveCSS('box-shadow', 'none');
-    await expect(hiddenZone).toHaveAttribute('role', 'button');
+    // Every zone outlined now, and each still a control.
+    const zone = playerTwo.page.locator('[data-zone-id]').first();
+    await expect(zone).toHaveAttribute('role', 'button');
     await expect(boardSurface).toHaveAttribute('data-dark-mode', 'true');
     await expect(boardSurface).toHaveAttribute(
       'data-show-zone-outlines',
-      'false'
+      'true'
     );
     // The log still wears the Night theme after Settings closes: its feed
     // and message input paint opaque surfaces from the design tokens.
@@ -714,7 +723,7 @@ test('visible v2 lobby creates, copies, pastes, and joins through private invita
           JSON.parse(localStorage.getItem('ptcgsim.board-view.v1') ?? '{}')
         )
       )
-      .toMatchObject({ zoneOutlines: false });
+      .toMatchObject({ zoneOutlines: 'always' });
     await expect(
       playerTwo.page.locator('[data-app-route="remote-room-lobby"]')
     ).toHaveCSS('background-image', `url("${CUSTOM_BACKGROUND_URL}")`);

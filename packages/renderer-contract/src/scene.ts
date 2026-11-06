@@ -1078,12 +1078,14 @@ export const createBoardScene = (
                       playerLayout(zone.ownerId).side,
                       zone.cards.length,
                       layout.playAreaBounds.x + layout.playAreaBounds.width / 2,
-                      playerLayout(zone.ownerId).handCardHeight
+                      playerLayout(zone.ownerId).handCardHeight,
+                      playerLayout(zone.ownerId).mirrored === true
                     )
                   : layoutTableRow(
                       contentBounds,
                       playerLayout(zone.ownerId).side,
-                      zone.cards.length
+                      zone.cards.length,
+                      playerLayout(zone.ownerId).mirrored === true
                     ),
               scroll: undefined,
             }
@@ -1101,6 +1103,7 @@ export const createBoardScene = (
       id: zone.id,
       playerId: zone.ownerId,
       side,
+      ...(region?.mirrored ? { mirrored: true as const } : {}),
       kind: zone.kind,
       bounds,
       contentBounds,
@@ -1159,7 +1162,8 @@ export const createBoardScene = (
             ? layoutTablePrizes(
                 contentBounds,
                 side === 'opponent' ? 'opponent' : 'local',
-                zone.cards.length
+                zone.cards.length,
+                region?.mirrored === true
               )
             : layoutTablePile(contentBounds, zone.cards.length)
           : layoutZoneCards(
@@ -1258,6 +1262,7 @@ export const createBoardScene = (
         id: `slot:${playerId}:active`,
         playerId,
         side,
+        ...(player.mirrored ? { mirrored: true as const } : {}),
         kind: 'active',
         bounds: copyRect(slotRegions.active.physicalBorderBoxBounds),
         contentBounds: copyRect(slotRegions.active.physicalContentBoxBounds),
@@ -1271,6 +1276,7 @@ export const createBoardScene = (
         id: `slot:${playerId}:bench`,
         playerId,
         side,
+        ...(player.mirrored ? { mirrored: true as const } : {}),
         kind: 'bench',
         bounds: copyRect(slotRegions.bench.physicalBorderBoxBounds),
         contentBounds: copyRect(slotRegions.bench.physicalContentBoxBounds),

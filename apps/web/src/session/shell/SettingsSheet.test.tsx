@@ -604,8 +604,14 @@ describe('SettingsSheet', () => {
   it('applies how the table shows as each choice is made', async () => {
     await render();
     await press('settingsTableRow');
+    // Outlines on empty zones only by default; the switch keeps them all.
+    expect(input('zoneOutlinesCheckbox').checked).toBe(false);
     await act(async () => input('zoneOutlinesCheckbox').click());
-    expect(boardViewSettings().getSnapshot().zoneOutlines).toBe(false);
+    expect(boardViewSettings().getSnapshot().zoneOutlines).toBe('always');
+    // The opponent's half mirrors ours by default (ADR-046).
+    expect(input('mirrorOpponentCheckbox').checked).toBe(true);
+    await act(async () => input('mirrorOpponentCheckbox').click());
+    expect(boardViewSettings().getSnapshot().mirrorOpponentSide).toBe(false);
     await press('settingsBackButton');
     await press('settingsCardsRow');
     await act(async () => input('opponentUprightCheckbox').click());

@@ -33,6 +33,7 @@ import {
   DepthMotionControls,
   ResetTableButton,
   TableDepthControls,
+  MirrorOpponentControl,
   TableHalvesControls,
   ZoneOutlinesControl,
 } from '../../board/view/TableViewControls.js';
@@ -412,6 +413,7 @@ const TablePage = ({
         <SettingsBlock>
           <TableHalvesControls />
         </SettingsBlock>
+        <MirrorOpponentControl />
         <ZoneOutlinesControl />
       </SettingsGroup>
       <SettingsGroup>

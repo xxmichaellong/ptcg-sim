@@ -145,7 +145,9 @@ export const layoutComposedPlayRow = (
   let cursor = bounds.x + (bounds.width - total) / 2;
   const result: (CardComposition & { readonly mainBounds: Rect })[] = [];
   const order = raw.map((_, index) => index);
-  if (region.side === 'opponent') order.reverse();
+  // A turned half runs right to left; a mirrored one left to right, as the
+  // near half does (ADR-046). Each stack still faces its owner.
+  if (region.side === 'opponent' && !region.mirrored) order.reverse();
   for (const index of order) {
     const item = raw[index]!;
     const width = naturalWidths[index]! * scale;

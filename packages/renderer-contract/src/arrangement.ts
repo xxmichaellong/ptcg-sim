@@ -50,6 +50,14 @@ const unionRect = (rects: readonly Rect[]): Rect => {
 
 const centreX = (rect: Rect): number => rect.x + rect.width / 2;
 
+/**
+ * Which way a zone's places run across the screen: left to right on the
+ * near half and on a mirrored far half (ADR-046), right to left on a turned
+ * one.
+ */
+const runsForward = (zone: ZoneSceneNode): 1 | -1 =>
+  zone.side === 'local' || zone.mirrored === true ? 1 : -1;
+
 const STACK_ROLES = new Set(['stackEvolution', 'stackAttachment']);
 
 /**
@@ -164,8 +172,9 @@ const rowItems = (
             cardIds: [card.id],
             rect: card.bounds,
           }));
-  // A turned half runs the other way across the screen.
-  const forward = zone.side === 'local' ? 1 : -1;
+  // A turned half runs the other way across the screen; a mirrored one
+  // the same way as the near half (ADR-046).
+  const forward = runsForward(zone);
   return items.sort(
     (left, right) => forward * (centreX(left.rect) - centreX(right.rect))
   );
@@ -176,7 +185,8 @@ const prizeCells = (zone: ZoneSceneNode, count: number): Rect[] =>
   layoutTablePrizes(
     zone.contentBounds,
     zone.side === 'opponent' ? 'opponent' : 'local',
-    count
+    count,
+    zone.mirrored === true
   );
 
 /**
@@ -240,7 +250,7 @@ export const arrangementIndexAt = (
       point.y
     );
   }
-  const forward = zone.side === 'local' ? 1 : -1;
+  const forward = runsForward(zone);
   return items.filter((item) => forward * (centreX(item.rect) - x) < 0).length;
 };
 
@@ -370,9 +380,15 @@ export const arrangementOffsets = (
             play.x + play.width / 2,
             scene.layout.players.find(
               (player) => player.playerId === zone.playerId
-            )?.handCardHeight
+            )?.handCardHeight,
+            zone.mirrored === true
           )
-        : layoutTableRow(zone.contentBounds, side, count);
+        : layoutTableRow(
+            zone.contentBounds,
+            side,
+            count,
+            zone.mirrored === true
+          );
     items.forEach((item, position) => {
       const slot = slots[slotOf(position)];
       if (!slot) return;
@@ -382,7 +398,7 @@ export const arrangementOffsets = (
     return offsets;
   }
   // The bench: its Pokémon keep their spacing, centred, the gap among them.
-  const forward = zone.side === 'local' ? 1 : -1;
+  const forward = runsForward(zone);
   const centres = items.map((item) => centreX(item.rect));
   const widest = Math.max(0, ...items.map((item) => item.rect.width));
   const spacing =

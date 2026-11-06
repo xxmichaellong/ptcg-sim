@@ -169,20 +169,31 @@ test('the table keeps zone labels and count badges readable across themes, depth
     'LOST ZONE',
     'STADIUM',
   ].sort();
+  // A zone holding cards shows no outline by default (ADR-046): the near
+  // deck and prizes, dealt, keep theirs only while asked to.
+  const emptyLabels = expectedLabels.filter(
+    (label, index) =>
+      !(
+        (label === 'DECK' || label === 'PRIZES') &&
+        expectedLabels.indexOf(label) === index
+      )
+  );
   const initial = await paint();
-  expect(initial.labels.sort()).toEqual(expectedLabels);
+  expect(initial.labels.sort()).toEqual(emptyLabels);
   expect(initial.counts).toContain('47');
   for (const mode of ['flat', 'depth', 'table'] as const) {
     await chooseTableView(page, mode);
-    expect((await paint()).labels.sort()).toEqual(expectedLabels);
+    expect((await paint()).labels.sort()).toEqual(emptyLabels);
   }
   // Theme and table view are both in Settings.
   await page.locator('#darkModeCheckbox').uncheck();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'day');
   await expect.poll(async () => (await paint()).color).not.toBe(initial.color);
-  await page.locator('#zoneOutlinesCheckbox').uncheck();
+  await page.locator('#zoneOutlinesCheckbox').check();
   await closeBoardView(page);
-  await expect.poll(async () => (await paint()).labels).toEqual([]);
+  await expect
+    .poll(async () => (await paint()).labels.sort())
+    .toEqual(expectedLabels);
   expect((await paint()).counts).toContain('47');
   const current = await scene(page);
   const prizes = current.zones.find(
@@ -201,11 +212,13 @@ test('the table keeps zone labels and count badges readable across themes, depth
   await expect(page.locator('[data-legacy-zone-browser]')).toBeVisible();
   await page.keyboard.press('Escape');
   await openBoardView(page);
-  await page.locator('#zoneOutlinesCheckbox').check();
+  await page.locator('#zoneOutlinesCheckbox').uncheck();
   await page.locator('#darkModeCheckbox').check();
   await closeBoardView(page);
   await expect.poll(async () => (await paint()).color).toBe(initial.color);
-  expect((await paint()).labels.sort()).toEqual(expectedLabels);
+  await expect
+    .poll(async () => (await paint()).labels.sort())
+    .toEqual(emptyLabels);
 });
 
 const paintedPoint = (element: Locator, u = 0.5, v = 0.5) =>

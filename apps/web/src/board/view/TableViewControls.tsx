@@ -167,15 +167,38 @@ export const TableHalvesControls = () => {
   );
 };
 
+/**
+ * The opponent's half mirrored (ADR-046): their deck on the right and their
+ * prizes on the left, as ours are. Off, their half is turned round.
+ */
+export const MirrorOpponentControl = () => {
+  const { t } = useLingui();
+  const [view, store] = useBoardView();
+  return (
+    <SettingsSwitchRow
+      id="mirrorOpponentCheckbox"
+      label={t`Mirror opponent's side`}
+      checked={view.mirrorOpponentSide}
+      onChange={(mirrorOpponentSide) => store.update({ mirrorOpponentSide })}
+    />
+  );
+};
+
+/**
+ * Off (the default), only empty zones show their outline, and every zone
+ * while a card is carried; on, every zone does, cards or not (ADR-046).
+ */
 export const ZoneOutlinesControl = () => {
   const { t } = useLingui();
   const [view, store] = useBoardView();
   return (
     <SettingsSwitchRow
       id="zoneOutlinesCheckbox"
-      label={t`Zone outlines`}
-      checked={view.zoneOutlines}
-      onChange={(zoneOutlines) => store.update({ zoneOutlines })}
+      label={t`Always show zone outlines`}
+      checked={view.zoneOutlines === 'always'}
+      onChange={(always) =>
+        store.update({ zoneOutlines: always ? 'always' : 'empty' })
+      }
     />
   );
 };

@@ -257,7 +257,7 @@ describe('TableZoneAffordances', () => {
     expect(deckButton(red)).toBeNull();
   });
 
-  it("adds the optional pieces from a small + beside the viewer's pieces by the prizes", async () => {
+  it("adds the optional pieces from a small + at the foot of the viewer's pieces by the prizes", async () => {
     const lostZone = { choice: 'auto' as const, onChoiceChange: vi.fn() };
     const markers = {
       vstar: false,
@@ -270,8 +270,8 @@ describe('TableZoneAffordances', () => {
       { lostZone, markers },
       layoutState({ hideEmptyLostZone: true })
     );
-    // Only on the viewer's own half: in the Active's row on their left,
-    // past the coin's column by the prizes.
+    // Only on the viewer's own half: in the Active's row on their left, at
+    // the foot of the coin's column by the prizes, under the coin.
     const add = host.querySelectorAll<HTMLButtonElement>('#tableExtrasButton');
     expect(add).toHaveLength(1);
     expect(add[0]!.getAttribute('aria-label')).toBe('Add to the table');
@@ -283,10 +283,10 @@ describe('TableZoneAffordances', () => {
     const slot = add[0]!.closest<HTMLElement>('.table-zone-affordance')!;
     const left = Number.parseFloat(slot.style.left);
     const top = Number.parseFloat(slot.style.top);
-    expect(left).toBeGreaterThanOrEqual(coin.x + coin.width);
-    expect(left + Number.parseFloat(slot.style.width)).toBeLessThanOrEqual(
-      active.x
-    );
+    const width = Number.parseFloat(slot.style.width);
+    expect(left + width / 2).toBeCloseTo(coin.x + coin.width / 2, 5);
+    expect(top).toBeGreaterThanOrEqual(coin.y + coin.height);
+    expect(left + width).toBeLessThanOrEqual(active.x);
     expect(top).toBeGreaterThanOrEqual(active.y);
     expect(top + Number.parseFloat(slot.style.height)).toBeLessThanOrEqual(
       active.y + active.height

@@ -2382,6 +2382,59 @@ describe('a finger on a crowded hand', () => {
     host.remove();
   };
 
+  it('outlines an empty zone, not one holding cards, but every zone while a card is carried (ADR-046)', async () => {
+    const base = handScene(2, 60);
+    const scene: BoardScene = {
+      ...base,
+      zones: [
+        ...base.zones,
+        {
+          ...base.zones[1]!,
+          id: 'zone:p1:discard',
+          kind: 'discard',
+          bounds: { x: 300, y: 600, width: 80, height: 112 },
+          contentBounds: { x: 300, y: 600, width: 80, height: 112 },
+          surface: 'zone',
+          count: 3,
+          label: 'Blue discard',
+        },
+      ],
+    };
+    const { renderer, host } = await mountHand(scene);
+    const outlined = (id: string) =>
+      host
+        .querySelector(`[data-zone-id="${id}"]`)!
+        .getAttribute('data-zone-outline') === 'true';
+    expect(outlined('zone:p1:bench')).toBe(true);
+    expect(outlined('zone:p1:discard')).toBe(false);
+    // A card carried: every place it can go shows.
+    act(() =>
+      renderer.installPresentation({
+        ...DEFAULT_BOARD_PRESENTATION,
+        drag: { cardId: handCardId(0), x: 40, y: 790, targetId: null },
+      })
+    );
+    expect(outlined('zone:p1:discard')).toBe(true);
+    act(() => renderer.installPresentation(DEFAULT_BOARD_PRESENTATION));
+    expect(outlined('zone:p1:discard')).toBe(false);
+    // Always: every zone, cards or not; none, none.
+    act(() =>
+      renderer.setPreferences({
+        ...DEFAULT_BOARD_PREFERENCES,
+        outlineFilledZones: true,
+      })
+    );
+    expect(outlined('zone:p1:discard')).toBe(true);
+    act(() =>
+      renderer.setPreferences({
+        ...DEFAULT_BOARD_PREFERENCES,
+        showZoneOutlines: false,
+      })
+    );
+    expect(outlined('zone:p1:bench')).toBe(false);
+    await unmount(renderer, host);
+  });
+
   it('raises the card under the finger as it slides along, and taps that card when let go', async () => {
     const { renderer, host, intents, drags } = await mountHand(
       handScene(16, 12)

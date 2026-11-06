@@ -1,5 +1,4 @@
 import {
-  DEFAULT_BOARD_PREFERENCES,
   TABLE_SPLIT,
   type BoardPhysicalSide,
 } from '@ptcgsim/renderer-contract';
@@ -28,12 +27,21 @@ export type BoardShowChoice = 'both' | 'mine' | 'theirs';
  */
 export type LostZoneChoice = 'auto' | 'shown' | 'hidden';
 
+/**
+ * Which zones show their outline (ADR-046):
+ * - `empty`, the default: an empty zone, and every zone while a card is
+ *   carried (they are where it can go); a zone holding cards shows none;
+ * - `always`: every zone, cards or not (the table before 2026-11-06);
+ * - `never`: none (kept for a player who had turned the outlines off).
+ */
+export type ZoneOutlineChoice = 'empty' | 'always' | 'never';
+
 export interface BoardViewSettings {
   /** Which halves to show: "mine" is the bottom half, "theirs" the top. */
   readonly show: BoardShowChoice;
   /** The bottom half's share of the table's height when both show. */
   readonly split: number;
-  readonly zoneOutlines: boolean;
+  readonly zoneOutlines: ZoneOutlineChoice;
   /** Solo only: the opponent's hand is painted face down. */
   readonly hideOpponentHand: boolean;
   /** A large copy of the hovered card beside the table. */
@@ -51,18 +59,25 @@ export interface BoardViewSettings {
    * of facing their owner across the table. Off by default.
    */
   readonly opponentCardsUpright: boolean;
+  /**
+   * The opponent's half is ours reflected across the centre line: both decks
+   * on the right, both prizes on the left, both Benches in one order
+   * (ADR-046). On by default; off, it is turned round as on a real table.
+   */
+  readonly mirrorOpponentSide: boolean;
 }
 
 export const DEFAULT_BOARD_VIEW: BoardViewSettings = {
   show: 'both',
   split: TABLE_SPLIT.defaultLowerShare,
-  zoneOutlines: DEFAULT_BOARD_PREFERENCES.showZoneOutlines,
+  zoneOutlines: 'empty',
   hideOpponentHand: false,
   hoverPreview: false,
   lostZone: 'auto',
   vstarMarker: false,
   gxMarker: false,
   opponentCardsUpright: false,
+  mirrorOpponentSide: true,
 };
 
 const isShow = (value: unknown): value is BoardShowChoice =>
@@ -70,6 +85,17 @@ const isShow = (value: unknown): value is BoardShowChoice =>
 
 const flag = (value: unknown, fallback: boolean): boolean =>
   typeof value === 'boolean' ? value : fallback;
+
+/**
+ * The outlines' choice. A switch kept before it had three: on was the
+ * default, which is now `empty`; off stays off.
+ */
+const parseZoneOutlines = (value: unknown): ZoneOutlineChoice =>
+  value === 'empty' || value === 'always' || value === 'never'
+    ? value
+    : value === false
+      ? 'never'
+      : DEFAULT_BOARD_VIEW.zoneOutlines;
 
 /** The Lost Zone's choice; a value kept before it had three, a switch. */
 const parseLostZone = (value: unknown): LostZoneChoice =>
@@ -97,10 +123,7 @@ export const parseBoardView = (value: unknown): BoardViewSettings => {
   return {
     show: isShow(show) ? show : DEFAULT_BOARD_VIEW.show,
     split: parseSplit(Reflect.get(value, 'split')),
-    zoneOutlines: flag(
-      Reflect.get(value, 'zoneOutlines'),
-      DEFAULT_BOARD_VIEW.zoneOutlines
-    ),
+    zoneOutlines: parseZoneOutlines(Reflect.get(value, 'zoneOutlines')),
     hideOpponentHand: flag(
       Reflect.get(value, 'hideOpponentHand'),
       DEFAULT_BOARD_VIEW.hideOpponentHand
@@ -118,6 +141,10 @@ export const parseBoardView = (value: unknown): BoardViewSettings => {
     opponentCardsUpright: flag(
       Reflect.get(value, 'opponentCardsUpright'),
       DEFAULT_BOARD_VIEW.opponentCardsUpright
+    ),
+    mirrorOpponentSide: flag(
+      Reflect.get(value, 'mirrorOpponentSide'),
+      DEFAULT_BOARD_VIEW.mirrorOpponentSide
     ),
   };
 };

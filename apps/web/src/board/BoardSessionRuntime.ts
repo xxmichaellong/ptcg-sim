@@ -159,6 +159,7 @@ const sameLayoutState = (
   (left.oncePerGameMarkers ?? 0) === (right.oncePerGameMarkers ?? 0) &&
   (left.farCardsUpright ?? false) === (right.farCardsUpright ?? false) &&
   (left.tiltedTable ?? false) === (right.tiltedTable ?? false) &&
+  (left.mirroredFarSide ?? false) === (right.mirroredFarSide ?? false) &&
   sameZoneScroll(left.zoneScrollPx, right.zoneScrollPx);
 
 const sameZoneScroll = (
@@ -621,6 +622,8 @@ export class BoardSessionRuntime {
     readonly farCardsUpright?: boolean;
     /** The table is drawn tilted: its board fills the band between the hands. */
     readonly tiltedTable?: boolean;
+    /** The far half is ours reflected, not turned (ADR-046). */
+    readonly mirroredFarSide?: boolean;
   }): void {
     const {
       hiddenPhysicalSide: _previous,
@@ -631,6 +634,7 @@ export class BoardSessionRuntime {
       oncePerGameMarkers: _markers,
       farCardsUpright: _upright,
       tiltedTable: _tilted,
+      mirroredFarSide: _mirrored,
       ...rest
     } = this.layoutState;
     this.replaceLayoutState({
@@ -648,6 +652,7 @@ export class BoardSessionRuntime {
         : {}),
       ...(view.farCardsUpright ? { farCardsUpright: true } : {}),
       ...(view.tiltedTable ? { tiltedTable: true } : {}),
+      ...(view.mirroredFarSide ? { mirroredFarSide: true } : {}),
     });
   }
 

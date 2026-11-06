@@ -468,3 +468,105 @@ describe('the Prizes grid', () => {
     });
   });
 });
+
+describe('the far half mirrored (ADR-046)', () => {
+  /** Two of Red's Pokémon on its Bench, laid out turned or mirrored. */
+  const redBench = ['stack:blue:bench-1', 'stack:blue:bench-2'] as const;
+  const withRedBench = (): MatchViewState => {
+    const view = withBench();
+    return {
+      ...view,
+      boards: {
+        ...view.boards,
+        [blue]: {
+          ...view.boards[blue]!,
+          benchStackIds: ['stack:blue:bench-0'],
+        },
+        [red]: { ...view.boards[red]!, benchStackIds: [...redBench] },
+      },
+      stacks: {
+        ...view.stacks,
+        ...Object.fromEntries(
+          redBench.map((id) => [
+            id,
+            { ...view.stacks[id]!, boardPlayerId: red },
+          ])
+        ),
+      },
+    } as MatchViewState;
+  };
+  const sceneWith = (mirroredFarSide: boolean) =>
+    createBoardScene(
+      withRedBench(),
+      createTableLayoutSnapshot({
+        geometryVersion: TABLE_LAYOUT_GEOMETRY_VERSION,
+        viewport: { width: 1440, height: 900, devicePixelRatio: 1 },
+        playerIds: [blue, red],
+        bottomPlayerId: blue,
+        shellMode: 'fullscreen',
+        vertical: DEFAULT_TABLE_VERTICAL_LAYOUT,
+        ...(mirroredFarSide ? { mirroredFarSide: true } : {}),
+      })
+    );
+  const topOf = (scene: BoardScene, stackId: string) =>
+    scene.cards.find(
+      (card) => card.parentId === stackId && card.role === 'stackEvolution'
+    )!;
+  const redHand = (scene: BoardScene) => {
+    const hand = zoneOf(scene, 'hand', red);
+    return scene.cards.filter((card) => card.parentId === hand.id).map(centre);
+  };
+
+  it('runs its Bench and hand left to right, as the near half does, each card still facing its owner', () => {
+    const mirrored = sceneWith(true);
+    const turned = sceneWith(false);
+    const [first, second] = redBench;
+    expect(centre(topOf(mirrored, first))).toBeLessThan(
+      centre(topOf(mirrored, second))
+    );
+    expect(centre(topOf(turned, first))).toBeGreaterThan(
+      centre(topOf(turned, second))
+    );
+    expect(topOf(mirrored, first).rotationQuarterTurns).toBe(2);
+    const mirroredHand = redHand(mirrored);
+    expect(mirroredHand.length).toBeGreaterThan(1);
+    expect(mirroredHand).toEqual([...mirroredHand].sort((a, b) => a - b));
+    const turnedHand = redHand(turned);
+    expect(turnedHand).toEqual([...turnedHand].sort((a, b) => b - a));
+    // Its zones say so, for whatever reads places off them.
+    expect(zoneOf(mirrored, 'bench', red).mirrored).toBe(true);
+    expect(zoneOf(turned, 'bench', red).mirrored).toBeUndefined();
+    expect(zoneOf(mirrored, 'bench', blue).mirrored).toBeUndefined();
+  });
+
+  it('reads a place on its Bench from the left, as on the near Bench', () => {
+    const scene = sceneWith(true);
+    const bench = zoneOf(scene, 'bench', red);
+    const moving = topOf(scene, 'stack:blue:bench-0');
+    const y = bench.bounds.y + bench.bounds.height / 2;
+    const first = topOf(scene, redBench[0]);
+    const second = topOf(scene, redBench[1]);
+    expect(arrangementIndexAt(scene, moving.id, bench.id, 0, y)).toBe(0);
+    expect(
+      arrangementIndexAt(
+        scene,
+        moving.id,
+        bench.id,
+        (centre(first) + centre(second)) / 2,
+        y
+      )
+    ).toBe(1);
+    expect(arrangementIndexAt(scene, moving.id, bench.id, 1440, y)).toBe(2);
+    // Turned, the same point at the left is the end of Red's Bench.
+    const turned = sceneWith(false);
+    expect(
+      arrangementIndexAt(
+        turned,
+        topOf(turned, 'stack:blue:bench-0').id,
+        zoneOf(turned, 'bench', red).id,
+        0,
+        y
+      )
+    ).toBe(2);
+  });
+});

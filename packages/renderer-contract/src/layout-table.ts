@@ -306,6 +306,13 @@ interface HalfOptions {
    */
   readonly handStartReservePx?: number;
   /**
+   * Room kept clear past the hand's pill, at the strip's end (its right in
+   * the half's own frame): on a mirrored far half (ADR-046) that is the
+   * window's top-right corner, where the app bar sits.
+   */
+  readonly handEndReservePx?: number;
+
+  /**
    * The table is tilted (BoardLayoutState.tiltedTable): the board is laid
    * out over the whole half, short of the player's edge by
    * TILTED_EDGE_PX, and the hand's strip lies just outside the frame
@@ -603,34 +610,38 @@ const coinAbove = (coin: Rect, control: Rect, gap: number): Rect => {
 };
 
 /**
- * The mat's `+` for the optional pieces at `x`, past them: at the top of
- * the Active row, by the centre line and the pieces' tops (the owner,
- * 2026-10-29), where it lies clear of their column and its touch area with
- * it and short of where the Stadium straddles the centre line beside the
- * Active (`stadiumLeft`); a row too narrow for that (it would crowd the
- * Stadium, or be pulled under the column's edge), or too short to hold it,
- * keeps it at the row's foot instead, under the coin (`coinAbove`).
+ * The mat's `+` for the optional pieces: the foot of their column, centred
+ * under the coin on the Active row's bottom line (the owner, 2026-11-06, of
+ * the old place by the column's top: "it looks really random"), so the
+ * markers, the coin and the `+` that adds them read as one column. Where
+ * the column's foot holds the Lost Zone (`inColumn` false), or the coin
+ * would have to shrink below a coin's least size to leave it room
+ * (`coinAbove`), it sits just past the column (`besideX`) on that same
+ * line.
  */
-const extrasControlAt = (
-  x: number,
-  row: Pick<Rect, 'y' | 'height'>,
-  columnRight: number,
-  stadiumLeft: number,
-  gap: number
-): Rect => {
-  const reach = Math.max(gap / 2, EXTRAS_CONTROL_REACH_PX);
-  const top =
-    x - reach >= columnRight &&
-    x + EXTRAS_CONTROL_PX + STADIUM_CLEARANCE_PX <= stadiumLeft &&
-    row.height >= EXTRAS_CONTROL_PX + 2 * EXTRAS_CONTROL_INSET_PX;
-  return {
-    x,
-    y: top
-      ? row.y + EXTRAS_CONTROL_INSET_PX
-      : row.y + row.height - EXTRAS_CONTROL_INSET_PX - EXTRAS_CONTROL_PX,
+const extrasControlAtFoot = (place: {
+  readonly columnX: number;
+  readonly columnWidth: number;
+  readonly coin: Rect;
+  readonly rowBottom: number;
+  readonly besideX: number;
+  readonly inColumn: boolean;
+  readonly gap: number;
+}): Rect => {
+  const y = place.rowBottom - EXTRAS_CONTROL_INSET_PX - EXTRAS_CONTROL_PX;
+  const centred: Rect = {
+    x: place.columnX + (place.columnWidth - EXTRAS_CONTROL_PX) / 2,
+    y,
     width: EXTRAS_CONTROL_PX,
     height: EXTRAS_CONTROL_PX,
   };
+  if (place.inColumn) {
+    const coin = coinAbove(place.coin, centred, place.gap);
+    if (coin.width >= Math.min(place.coin.width, TABLE_COIN_MIN_PX)) {
+      return centred;
+    }
+  }
+  return { ...centred, x: place.besideX };
 };
 
 /**
@@ -642,12 +653,14 @@ const extrasControlAt = (
 const handEndFor = (
   width: number,
   handTop: number,
-  piles: readonly Rect[]
+  piles: readonly Rect[],
+  /** Room past the pill (`handEndReservePx`). */
+  reserve = 0
 ): number => {
   const pillTop = handTop + HAND_PILL_DROP_PX;
   const pillBottom = pillTop + HAND_PILL_HEIGHT_PX;
   const slot = HAND_PILL_GAP_PX + HAND_PILL_WIDTH_PX;
-  let end = width - HAND_PILL_EDGE_PX - slot;
+  let end = width - Math.max(HAND_PILL_EDGE_PX, reserve) - slot;
   for (const pile of piles) {
     if (
       pile.y - HAND_PILL_PILE_CLEARANCE_PX < pillBottom &&
@@ -658,6 +671,24 @@ const handEndFor = (
   }
   return end;
 };
+
+/**
+ * The app bar's corner a hand strip keeps clear, at whichever end it lies:
+ * its start on a turned far half, its end on a mirrored one (ADR-046).
+ */
+const barCornerOf = (options: HalfOptions): number =>
+  Math.max(options.handStartReservePx ?? 0, options.handEndReservePx ?? 0);
+
+/**
+ * The gap between prize cards, as a share of the prize grid's height: half
+ * what it was until 2026-11-06 (the owner: "reduce the spacing between the
+ * prize cards by about 50%"), so the six sit close, as a player sets them
+ * out. The mat's own prize gap (layoutHalf) halved with it.
+ */
+const PRIZE_GAP_SHARE = 0.0125;
+const PRIZE_GAP_LEAST_PX = 1.5;
+const prizeGridGap = (gridHeight: number): number =>
+  Math.max(PRIZE_GAP_LEAST_PX, gridHeight * PRIZE_GAP_SHARE);
 
 /** The room past a Lost Zone beside the prizes that its `+` needs. */
 const besideControlRoom = (gap: number): number =>
@@ -882,8 +913,9 @@ const layoutHalfAs = (
   const benchTop = activeTop + active + gap;
   const handTop = outside ? height + HANDS_OUTSIDE_GAP_PX : height - handStrip;
 
-  // Prizes: 2 x 3 grid down the outer left, spanning both card rows.
-  const prizeGap = Math.max(4, gap * 0.5);
+  // Prizes: 2 x 3 grid down the outer left, spanning both card rows, set
+  // close together (PRIZE_GAP_SHARE).
+  const prizeGap = Math.max(2, gap * 0.25);
   const prizeHeight = Math.max(0, (active + gap + bench - 2 * prizeGap) / 3);
   const prizeWidth = prizeHeight * CARD_ASPECT_RATIO;
   const prizes: Rect = {
@@ -974,7 +1006,6 @@ const layoutHalfAs = (
       })
     : undefined;
   const activeWidth = besideRoom?.activeWidth ?? freeActiveWidth;
-  const stadiumRoom = besideRoom?.stadiumRoom ?? fullStadiumRoom;
   const activeRect: Rect = {
     x: centre - activeWidth / 2,
     y: activeTop,
@@ -1013,47 +1044,25 @@ const layoutHalfAs = (
       piecesRight = lostZone.x + lostZone.width;
     }
   }
-  // The control that adds or removes them sits just past them, at the
-  // row's top by the centre line, short of the Active (the Stadium keeps
-  // clear of it) -- past the column at the row's top beside a Lost Zone
-  // under the coin, or, where the row gave its room to a Lost Zone past
-  // the column, at the row's foot under the pile.
-  const control =
-    lostZone && besideRoom?.place === 'under'
-      ? {
-          x: Math.min(
-            // Clear of the coin's touch area with a hair to spare
-            // (`coinAbove` keeps the coin whole only clear of it).
-            piecesRight + Math.max(gap, EXTRAS_CONTROL_REACH_PX) + 0.5,
-            activeRect.x - gap - EXTRAS_CONTROL_PX
-          ),
-          y: activeTop + EXTRAS_CONTROL_INSET_PX,
-          width: EXTRAS_CONTROL_PX,
-          height: EXTRAS_CONTROL_PX,
-        }
-      : lostZone && besideRoom?.controlUnder
-        ? {
-            x: Math.min(
-              lostZone.x + (lostZone.width - EXTRAS_CONTROL_PX) / 2,
-              activeRect.x - gap - EXTRAS_CONTROL_PX
-            ),
-            y: activeTop + active - EXTRAS_CONTROL_INSET_PX - EXTRAS_CONTROL_PX,
-            width: EXTRAS_CONTROL_PX,
-            height: EXTRAS_CONTROL_PX,
-          }
-        : extrasControlAt(
-            Math.min(
-              piecesRight +
-                (lostZone
-                  ? Math.max(gap, PILE_BADGE_REACH_PX)
-                  : Math.max(gap, EXTRAS_CONTROL_REACH_PX)),
-              activeRect.x - gap - EXTRAS_CONTROL_PX
-            ),
-            { y: activeTop, height: active },
-            middleLeft + column.width,
-            activeRect.x - stadiumRoom,
-            gap
-          );
+  // The control that adds or removes them: at the foot of the pieces'
+  // column (`extrasControlAtFoot`), or just past what the column holds
+  // (clear of a Lost Zone's count badge, or of the coin's touch area with a
+  // hair to spare), short of the Active.
+  const control = extrasControlAtFoot({
+    columnX: middleLeft,
+    columnWidth: column.width,
+    coin: column.coin,
+    rowBottom: activeTop + active,
+    besideX: Math.min(
+      piecesRight +
+        (lostZone
+          ? Math.max(gap, PILE_BADGE_REACH_PX)
+          : Math.max(gap, EXTRAS_CONTROL_REACH_PX) + 0.5),
+      activeRect.x - gap - EXTRAS_CONTROL_PX
+    ),
+    inColumn: !(lostZone && besideRoom?.place === 'under'),
+    gap,
+  });
   // With the Lost Zone beside the prizes, the deck and discard have the
   // outer column to themselves: they grow to fill both card rows, never
   // past the Active's size. Otherwise the column keeps a slot for it.
@@ -1103,7 +1112,8 @@ const layoutHalfAs = (
   const handEnd = handEndFor(
     width,
     handTop,
-    outside ? [] : [deck, discard, ...(lostZone ? [] : [lostZoneRect])]
+    outside ? [] : [deck, discard, ...(lostZone ? [] : [lostZoneRect])],
+    options.handEndReservePx
   );
   const handRect: Rect = {
     x: handStart,
@@ -1118,9 +1128,11 @@ const layoutHalfAs = (
       pileWidth + gap * 1.5 + JUDGED_HAND_SLOT_PX
     );
   return {
+    // The bar's corner counts the same at either end (`barCornerOf`), so a
+    // mirrored far half judges its mat as a turned one does.
     handRoom: Math.max(
       0,
-      width - judgedEdge - Math.max(judgedEdge, options.handStartReservePx ?? 0)
+      width - judgedEdge - Math.max(judgedEdge, barCornerOf(options))
     ),
     handCard,
     regions: [
@@ -1238,7 +1250,7 @@ const layoutHalfPortraitAs = (
   // three piles side by side at the right. Narrower than both, the row's
   // cards shrink until they fit.
   const pileGap = Math.max(gap, PORTRAIT_PILE_GAP_PX);
-  const prizeGapFor = (pile: number): number => Math.max(3, pile * 0.025);
+  const prizeGapFor = prizeGridGap;
   const rowWidthFor = (pile: number): number => {
     const prizeGap = prizeGapFor(pile);
     const prizeWidth = ((pile - prizeGap) / 2) * CARD_ASPECT_RATIO;
@@ -1312,14 +1324,18 @@ const layoutHalfPortraitAs = (
     width: activeWidth,
     height: active,
   };
-  // At the row's foot: the Stadium straddles the centre line just past the
-  // pieces on an upright phone, where the mat's `+` would sit.
-  const control: Rect = {
-    x: edge + column.width + gap,
-    y: activeTop + active - EXTRAS_CONTROL_INSET_PX - EXTRAS_CONTROL_PX,
-    width: EXTRAS_CONTROL_PX,
-    height: EXTRAS_CONTROL_PX,
-  };
+  // At the foot of the pieces' column, as on the landscape mat
+  // (`extrasControlAtFoot`); the Stadium straddles the centre line just past
+  // the pieces on an upright phone.
+  const control = extrasControlAtFoot({
+    columnX: edge,
+    columnWidth: column.width,
+    coin: column.coin,
+    rowBottom: activeTop + active,
+    besideX: edge + column.width + gap,
+    inColumn: true,
+    gap,
+  });
   // The staging area (v1's loose board) beside the Active on its right;
   // across the table it starts past the Stadium where that leaves it a
   // card wide.
@@ -1357,7 +1373,12 @@ const layoutHalfPortraitAs = (
   // The hand runs from the edge (across the table, from past the app bar)
   // to its pill; the pile row ends above the pill's band.
   const handStart = Math.max(edge, options.handStartReservePx ?? 0);
-  const handEnd = handEndFor(width, handTop, [pileAt(0), pileAt(1), pileAt(2)]);
+  const handEnd = handEndFor(
+    width,
+    handTop,
+    [pileAt(0), pileAt(1), pileAt(2)],
+    options.handEndReservePx
+  );
   const handRect: Rect = {
     x: handStart,
     y: handTop,
@@ -1370,7 +1391,7 @@ const layoutHalfPortraitAs = (
       width -
         edge -
         JUDGED_HAND_SLOT_PX -
-        Math.max(JUDGED_HAND_CORNER_PX, options.handStartReservePx ?? 0)
+        Math.max(JUDGED_HAND_CORNER_PX, barCornerOf(options))
     ),
     handCard,
     regions: [
@@ -1389,7 +1410,7 @@ const layoutHalfPortraitAs = (
     // On an upright phone the Lost Zone keeps its place in the pile row.
     extras: {
       ...(column.markers ? { markers: column.markers } : {}),
-      coin: column.coin,
+      coin: coinAbove(column.coin, control, gap),
       control,
     },
     lostZoneBeside: false,
@@ -1694,6 +1715,10 @@ const layoutSoloHalf = (
     ...(options.handStartReservePx
       ? { handStartReservePx: options.handStartReservePx }
       : {}),
+    ...(options.handEndReservePx
+      ? { handEndReservePx: options.handEndReservePx }
+      : {}),
+
     ...(options.minHandStripPx
       ? { minHandStripPx: options.minHandStripPx }
       : {}),
@@ -1742,8 +1767,18 @@ const layoutSoloHalf = (
     : landscape;
 };
 
-/** A rect in a half's own frame placed in the window. */
-const toPhysical = (rect: Rect, frame: Rect, side: BoardSide): Rect =>
+/**
+ * A rect in a half's own frame placed in the window. The opponent's mat is
+ * the same mat turned around, its centre line at the bottom of its frame;
+ * `mirrored` (ADR-046), it is the near mat reflected across the centre line
+ * instead, so its left is the window's left.
+ */
+const toPhysical = (
+  rect: Rect,
+  frame: Rect,
+  side: BoardSide,
+  mirrored = false
+): Rect =>
   side === 'local'
     ? {
         x: frame.x + rect.x,
@@ -1752,9 +1787,9 @@ const toPhysical = (rect: Rect, frame: Rect, side: BoardSide): Rect =>
         height: rect.height,
       }
     : {
-        // The opponent's mat is the same mat turned around: its centre line
-        // is at the bottom of its frame.
-        x: frame.x + frame.width - rect.x - rect.width,
+        x: mirrored
+          ? frame.x + rect.x
+          : frame.x + frame.width - rect.x - rect.width,
         y: frame.y + frame.height - rect.y - rect.height,
         width: rect.width,
         height: rect.height,
@@ -1763,48 +1798,45 @@ const toPhysical = (rect: Rect, frame: Rect, side: BoardSide): Rect =>
 const countLabelFor = (
   anchor: 'pile' | 'hand',
   physical: Rect,
-  side: BoardSide
+  side: BoardSide,
+  mirrored = false
 ): BoardLayoutCountLabel => {
   // Piles wear their count as a badge on the corner nearest the player; the
   // hand shows its count in the slot kept at the far end of its strip, level
-  // with the tops of its cards.
+  // with the tops of its cards. A mirrored far half keeps the near half's
+  // right-hand corner and end (ADR-046).
+  const right = side === 'local' || mirrored;
   if (anchor === 'pile') {
-    return side === 'local'
-      ? {
-          anchor: {
-            x: physical.x + physical.width,
-            y: physical.y + physical.height,
-          },
-          horizontalAlign: 'right',
-          verticalAlign: 'bottom',
-          fontSizePx: 13,
-        }
-      : {
-          anchor: { x: physical.x, y: physical.y },
-          horizontalAlign: 'left',
-          verticalAlign: 'top',
-          fontSizePx: 13,
-        };
+    return {
+      anchor: {
+        x: right ? physical.x + physical.width : physical.x,
+        y: side === 'local' ? physical.y + physical.height : physical.y,
+      },
+      horizontalAlign: right ? 'right' : 'left',
+      verticalAlign: side === 'local' ? 'bottom' : 'top',
+      fontSizePx: 13,
+    };
   }
-  return side === 'local'
-    ? {
-        anchor: {
-          x: physical.x + physical.width + HAND_PILL_GAP_PX,
-          y: physical.y + HAND_PILL_DROP_PX,
-        },
-        horizontalAlign: 'left',
-        verticalAlign: 'top',
-        fontSizePx: 13,
-      }
-    : {
-        anchor: {
-          x: physical.x - HAND_PILL_GAP_PX,
-          y: physical.y + physical.height - HAND_PILL_DROP_PX,
-        },
-        horizontalAlign: 'right',
-        verticalAlign: 'bottom',
-        fontSizePx: 13,
-      };
+  // A mirrored far hand's pill is set against its slot's far end, by the
+  // app bar: a wider one (Solo's cover beside the count and Sort) grows
+  // back over the strip's end, never under the bar.
+  const againstSlotEnd = side !== 'local' && mirrored;
+  return {
+    anchor: {
+      x: againstSlotEnd
+        ? physical.x + physical.width + HAND_PILL_GAP_PX + HAND_PILL_WIDTH_PX
+        : right
+          ? physical.x + physical.width + HAND_PILL_GAP_PX
+          : physical.x - HAND_PILL_GAP_PX,
+      y:
+        side === 'local'
+          ? physical.y + HAND_PILL_DROP_PX
+          : physical.y + physical.height - HAND_PILL_DROP_PX,
+    },
+    horizontalAlign: right && !againstSlotEnd ? 'left' : 'right',
+    verticalAlign: side === 'local' ? 'top' : 'bottom',
+    fontSizePx: 13,
+  };
 };
 
 const frameFor = (
@@ -1873,7 +1905,7 @@ const grown = (rect: Rect, by: number): Rect => ({
  * aimed at `top` and STADIUM_ACTIVE_GAP_SHARE of its width clear of them,
  * never past their edge. Where that would lie on or by anything on the
  * table (`obstacles`: the zones, the pieces, the app bar), or on a staging
- * area (`soft`: one that may run under its edge), it takes the nearest
+ * area (`soft`: those that may run under its edge), it takes the nearest
  * place that covers the least of them -- obstacles first -- along the row
  * before off it.
  */
@@ -1882,7 +1914,7 @@ const placeStadiumAt = (
   top: number,
   actives: readonly Rect[],
   obstacles: readonly Rect[],
-  soft: StagingRoom | undefined,
+  soft: readonly StagingRoom[],
   toLeft: boolean,
   playArea: Rect
 ): { readonly rect: Rect; readonly cover: number; readonly under: number } => {
@@ -1911,10 +1943,12 @@ const placeStadiumAt = (
       0
     );
   const aimed: Rect = { x: aimX, y: aimY, width, height };
-  const all = [...obstacles, ...(soft ? [soft.board] : [])].filter(
+  const softBoards = soft.map((room) => room.board);
+  const all = [...obstacles, ...softBoards].filter(
     (rect) => rect.width > 0 && rect.height > 0
   );
-  const underAt = (rect: Rect): number => (soft ? stagingUnder(soft, rect) : 0);
+  const underAt = (rect: Rect): number =>
+    soft.reduce((sum, room) => sum + stagingUnder(room, rect), 0);
   // What lies within a Stadium's size of where it aims.
   const near = all.filter(
     (rect) => overlapArea(grown(rect, Math.max(width, height)), aimed) > 0
@@ -1922,7 +1956,7 @@ const placeStadiumAt = (
   if (
     coverAt(
       aimed,
-      near.filter((rect) => rect !== soft?.board),
+      near.filter((rect) => !softBoards.includes(rect)),
       STADIUM_CLEARANCE_PX
     ) <= CLEAR_PX2 &&
     underAt(aimed) <= CLEAR_PX2
@@ -1983,7 +2017,7 @@ const placeStadium = (
   top: number,
   actives: readonly Rect[],
   obstacles: readonly Rect[],
-  soft: StagingRoom | undefined,
+  soft: readonly StagingRoom[],
   toLeft: boolean,
   playArea: Rect
 ): ReturnType<typeof placeStadiumAt> => {
@@ -2065,8 +2099,11 @@ export const createTableLayoutSnapshot = (
     sidePanelReveal,
     oncePerGameMarkers,
     tiltedTable,
+    mirroredFarSide,
     ...semanticState
   } = state;
+  // The far half reflected across the centre line, not turned (ADR-046).
+  const mirrored = mirroredFarSide === true;
   if (
     seamBandPx !== undefined &&
     (!Number.isFinite(seamBandPx) || seamBandPx < 0)
@@ -2142,11 +2179,15 @@ export const createTableLayoutSnapshot = (
   const frames = framesFor(state, playAreaWidth);
   // Across the table, the hand is the smaller one, and ends short of the
   // app bar in the window's top-right corner.
+  // Turned, the far hand starts at the bar's corner; mirrored, it ends
+  // there, its pill just short of the bar (ADR-046).
   const farReserve: HalfOptions = {
     ...(hidden === undefined ? { handPeek: true } : {}),
     ...(appBarPx
       ? {
-          handStartReservePx: barReserve.handStartReservePx,
+          ...(mirrored
+            ? { handEndReservePx: barReserve.handStartReservePx }
+            : { handStartReservePx: barReserve.handStartReservePx }),
           minHandStripPx: barReserve.minHandStripPx,
         }
       : {}),
@@ -2189,12 +2230,15 @@ export const createTableLayoutSnapshot = (
       frameBounds.height,
       options
     );
+    const reflected = mirrored && template.side !== 'local';
+    const place = (rect: Rect): Rect =>
+      toPhysical(rect, frameBounds, template.side, reflected);
     const regions: BoardLayoutRegion[] = geometry.regions.map((local) => {
       const source = template.regions.find(
         (region) => region.kind === local.kind
       );
       if (!source) throw new Error(`Missing ${local.kind} region semantics`);
-      const physical = toPhysical(local.rect, frameBounds, template.side);
+      const physical = place(local.rect);
       return {
         id: source.id,
         playerId: template.playerId,
@@ -2223,8 +2267,9 @@ export const createTableLayoutSnapshot = (
         affordances: source.affordances,
         childCardAffordances: source.childCardAffordances,
         countLabel: local.countAnchor
-          ? countLabelFor(local.countAnchor, physical, template.side)
+          ? countLabelFor(local.countAnchor, physical, template.side, reflected)
           : null,
+        ...(reflected ? { mirrored: true as const } : {}),
       };
     });
     return {
@@ -2236,23 +2281,14 @@ export const createTableLayoutSnapshot = (
         frameBounds,
         regions,
         ...(hidden === template.physicalSide ? { hidden: true as const } : {}),
+        ...(reflected ? { mirrored: true as const } : {}),
         handCardHeight: geometry.handCard,
         extras: {
           ...(geometry.extras.markers
-            ? {
-                markers: toPhysical(
-                  geometry.extras.markers,
-                  frameBounds,
-                  template.side
-                ),
-              }
+            ? { markers: place(geometry.extras.markers) }
             : {}),
-          coin: toPhysical(geometry.extras.coin, frameBounds, template.side),
-          control: toPhysical(
-            geometry.extras.control,
-            frameBounds,
-            template.side
-          ),
+          coin: place(geometry.extras.coin),
+          control: place(geometry.extras.control),
         },
       },
       geometry,
@@ -2416,35 +2452,115 @@ export const createTableLayoutSnapshot = (
         near.geometry.cardHeights.bench,
         far.geometry.cardHeights.bench
       );
-      const placed = placeStadium(
-        {
-          width: stadiumHeight * CARD_ASPECT_RATIO,
-          height: stadiumHeight,
-        },
-        seamY - stadiumHeight / 2,
-        [activeOf(near.player), activeOf(far.player)],
-        [
-          ...obstaclesOf(near.player, true),
-          ...obstaclesOf(far.player, false),
-          ...barBox,
-        ],
-        stagingOf(far, true),
-        true,
-        playAreaBounds
-      ).rect;
+      const stadiumSize = {
+        width: stadiumHeight * CARD_ASPECT_RATIO,
+        height: stadiumHeight,
+      };
+      const stadiumTop = seamY - stadiumHeight / 2;
+      const actives = [activeOf(near.player), activeOf(far.player)];
+      let placed: Rect;
+      let onRight = false;
+      if (!mirrored) {
+        placed = placeStadium(
+          stadiumSize,
+          stadiumTop,
+          actives,
+          [
+            ...obstaclesOf(near.player, true),
+            ...obstaclesOf(far.player, false),
+            ...barBox,
+          ],
+          // The far staging area meets it there, and makes room.
+          [stagingOf(far, true)].filter((room) => room !== undefined),
+          true,
+          playAreaBounds
+        ).rect;
+      } else {
+        // Mirrored (ADR-046), both halves keep their pieces on the left and
+        // their staging areas on the right. The Stadium lies on the left,
+        // between the two pieces' columns, wherever it has a clear place
+        // there (smaller, if need be, as everywhere); only with none does it
+        // go where the two staging areas meet at the centre line on the
+        // right, each making room for it from its Active end.
+        const left = placeStadium(
+          stadiumSize,
+          stadiumTop,
+          actives,
+          [
+            ...obstaclesOf(near.player, true),
+            ...obstaclesOf(far.player, true),
+            ...barBox,
+          ],
+          [],
+          true,
+          playAreaBounds
+        );
+        placed = left.rect;
+        const clearAt = (found: typeof left): boolean =>
+          found.cover <= CLEAR_PX2 && found.under <= CLEAR_PX2;
+        if (!clearAt(left)) {
+          const right = placeStadium(
+            stadiumSize,
+            stadiumTop,
+            actives,
+            [
+              ...obstaclesOf(near.player, false),
+              ...obstaclesOf(far.player, false),
+              ...barBox,
+            ],
+            [stagingOf(near, false), stagingOf(far, false)].filter(
+              (room) => room !== undefined
+            ),
+            false,
+            playAreaBounds
+          );
+          const better =
+            right.cover < left.cover - 0.5 ||
+            (right.cover <= left.cover + 0.5 &&
+              (right.under < left.under - 0.5 ||
+                (right.under <= left.under + 0.5 &&
+                  right.rect.width > left.rect.width + 0.5)));
+          if (better) {
+            placed = right.rect;
+            onRight = true;
+          }
+        }
+      }
       // The far half's staging area lies beside its Active on the
       // Stadium's side of the table; it starts past the Stadium instead of
       // running under it (layoutHalf keeps it whole where that would leave
       // it less than a pile wide).
       const farBoard = regionOf(far.player, 'board');
-      const reserve = farBoard
-        ? farBoard.x + farBoard.width - (placed.x - STADIUM_CLEARANCE_PX)
-        : 0;
+      const reserve =
+        farBoard && !mirrored
+          ? farBoard.x + farBoard.width - (placed.x - STADIUM_CLEARANCE_PX)
+          : 0;
       if (farBoard && reserve > 0 && overlapArea(farBoard, placed) > 0) {
         far = buildPlayer(semantics.players[1], frames.upper, {
           ...farFit,
           boardStartReservePx: reserve,
         });
+      }
+      if (onRight) {
+        // Both staging areas start past the Stadium at their Active end.
+        const past = (board: Rect | undefined): number =>
+          board && overlapArea(board, placed) > 0
+            ? placed.x + placed.width + STADIUM_CLEARANCE_PX - board.x
+            : 0;
+        const nearReserve = past(regionOf(near.player, 'board'));
+        if (nearReserve > 0) {
+          near = buildPlayer(semantics.players[0], frames.lower, {
+            ...nearFit,
+            boardStartReservePx: nearReserve,
+          });
+        }
+        const farReserve = past(regionOf(far.player, 'board'));
+        if (farReserve > 0) {
+          far = buildPlayer(semantics.players[1], frames.upper, {
+            ...farFit,
+            boardStartReservePx: farReserve,
+          });
+        }
       }
       const staged = regionOf(far.player, 'board');
       return {
@@ -2604,18 +2720,22 @@ export const createTableLayoutSnapshot = (
       height: stadiumHeight,
     };
     const top = atTop ? active.y : active.y + active.height - stadiumHeight;
+    // The far half reads right to left on the screen, unless mirrored.
+    const leftToRight = atTop || mirrored;
     /** The Stadium on the screen's left of the Active, or its right. */
     const placedOn = (toLeft: boolean) => {
       // The staging area lies on the player's own right: across the table
-      // that is the screen's left.
-      const boardSide = atTop !== toLeft;
+      // that is the screen's left (a mirrored far half's right).
+      const boardSide = leftToRight !== toLeft;
       const board = regionOf(shown.player, 'board');
       const found = placeStadium(
         size,
         top,
         [active],
         [...obstaclesOf(shown.player, !boardSide), ...barBox, controlsBand],
-        boardSide ? stagingOf(shown, toLeft) : undefined,
+        boardSide
+          ? [stagingOf(shown, toLeft)].filter((room) => room !== undefined)
+          : [],
         toLeft,
         playAreaBounds
       );
@@ -2638,11 +2758,12 @@ export const createTableLayoutSnapshot = (
             : shown,
       };
     };
-    // The player's own left: across the table, the screen's right.
-    let chosen = placedOn(atTop);
+    // The player's own left: across the table, the screen's right (a
+    // mirrored far half's left).
+    let chosen = placedOn(leftToRight);
     if (chosen.found.cover > CLEAR_PX2) {
       // No clear place there (a small table): the other side, if clearer.
-      const other = placedOn(!atTop);
+      const other = placedOn(!leftToRight);
       if (
         other.found.cover < chosen.found.cover - 0.5 ||
         (other.found.cover <= chosen.found.cover + 0.5 &&
@@ -2706,6 +2827,7 @@ export const createTableLayoutSnapshot = (
     ...(state.hideLostZone ? { hideLostZone: true as const } : {}),
     ...(state.farCardsUpright ? { farCardsUpright: true as const } : {}),
     ...(tilted ? { tiltedTable: true as const } : {}),
+    ...(mirrored ? { mirroredFarSide: true as const } : {}),
   };
 };
 
@@ -2792,7 +2914,9 @@ export const layoutTableHand = (
   count: number,
   centre?: number,
   /** Its cards' height (BoardPlayerLayout.handCardHeight); else a near hand's. */
-  cardHeightPx?: number
+  cardHeightPx?: number,
+  /** A mirrored far half (ADR-046): its hand runs left to right too. */
+  mirrored = false
 ): Rect[] => {
   const cardHeight =
     cardHeightPx !== undefined &&
@@ -2803,21 +2927,27 @@ export const layoutTableHand = (
   const cardWidth = cardHeight * CARD_ASPECT_RATIO;
   const y =
     side === 'local' ? content.y : content.y + content.height - cardHeight;
-  return spreadRow(content, count, cardWidth, side !== 'local', centre).map(
-    (x) => ({
-      x,
-      y,
-      width: cardWidth,
-      height: cardHeight,
-    })
-  );
+  return spreadRow(
+    content,
+    count,
+    cardWidth,
+    side !== 'local' && !mirrored,
+    centre
+  ).map((x) => ({
+    x,
+    y,
+    width: cardWidth,
+    height: cardHeight,
+  }));
 };
 
 /** The staging area: whole cards in a row, overlapping when crowded. */
 export const layoutTableRow = (
   content: Rect,
   side: BoardSide,
-  count: number
+  count: number,
+  /** A mirrored far half (ADR-046): its row runs left to right too. */
+  mirrored = false
 ): Rect[] => {
   const cardHeight = Math.min(
     content.height,
@@ -2825,7 +2955,12 @@ export const layoutTableRow = (
   );
   const cardWidth = cardHeight * CARD_ASPECT_RATIO;
   const y = content.y + (content.height - cardHeight) / 2;
-  return spreadRow(content, count, cardWidth, side !== 'local').map((x) => ({
+  return spreadRow(
+    content,
+    count,
+    cardWidth,
+    side !== 'local' && !mirrored
+  ).map((x) => ({
     x,
     y,
     width: cardWidth,
@@ -2842,12 +2977,17 @@ export const layoutTableRow = (
 export const layoutTablePrizes = (
   content: Rect,
   side: BoardSide,
-  count: number
+  count: number,
+  /**
+   * A mirrored far half (ADR-046): its grid reflected across the centre line,
+   * the first prize at the left by the centre line.
+   */
+  mirrored = false
 ): Rect[] => {
   if (count <= 0) return [];
   const columns = content.width > content.height ? 3 : 2;
   const rows = Math.max(6 / columns, Math.ceil(count / columns));
-  const gap = Math.max(3, content.height * 0.025);
+  const gap = prizeGridGap(content.height);
   const cardHeight = Math.max(
     0,
     Math.min(
@@ -2863,8 +3003,10 @@ export const layoutTablePrizes = (
   return Array.from({ length: count }, (_, index) => {
     const ownColumn = index % columns;
     const ownRow = Math.floor(index / columns);
-    // The opponent's view of their grid is turned half way round.
-    const column = side === 'local' ? ownColumn : columns - 1 - ownColumn;
+    // The opponent's view of their grid is turned half way round, or
+    // reflected across the centre line where their half is mirrored.
+    const column =
+      side === 'local' || mirrored ? ownColumn : columns - 1 - ownColumn;
     const row = side === 'local' ? ownRow : rows - 1 - ownRow;
     return {
       x: left + column * (cardWidth + gap),

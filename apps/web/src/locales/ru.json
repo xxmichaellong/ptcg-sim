@@ -1901,6 +1901,10 @@
     "context": "keyboard key",
     "translation": "Alt"
   },
+  "Ragkua": {
+    "message": "Always show zone outlines",
+    "translation": "Всегда показывать границы зон"
+  },
   "TNnd1S": {
     "message": "Amber",
     "context": "sleeve color",
@@ -4639,6 +4643,10 @@
     "message": "Mint",
     "context": "sleeve color",
     "translation": "Мятный"
+  },
+  "1Y5yBx": {
+    "message": "Mirror opponent's side",
+    "translation": "Зеркалить сторону противника"
   },
   "w2xVe_": {
     "message": "Mode",
@@ -8188,9 +8196,5 @@
     "message": "Yours",
     "context": "card backs the player made",
     "translation": "Твои"
-  },
-  "XQaL9V": {
-    "message": "Zone outlines",
-    "translation": "Контуры зон"
   }
 }

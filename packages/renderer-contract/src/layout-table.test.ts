@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 
 import { resolveBoardDropTarget } from './drag.js';
 import { CARD_ASPECT_RATIO } from './geometry.js';
-import type { BoardLayoutState } from './layout.js';
+import type { BoardLayoutState, BoardPlayerLayout } from './layout.js';
 import {
   APP_BAR_INSET_PX,
   DEFAULT_TABLE_VERTICAL_LAYOUT,
@@ -953,10 +953,19 @@ describe('table layout (geometry v2)', () => {
             Math.max(...column.map((box) => box.x + box.width)),
             lost.x,
             lost.x + lost.width,
-            control.x,
-            control.x + control.width,
             active.x,
           ];
+          // The `+` at the column's foot, under the coin, short of the
+          // Active.
+          const columnLeft = Math.min(...column.map((box) => box.x));
+          const columnRight = Math.max(
+            ...column.map((box) => box.x + box.width)
+          );
+          expect(control.x + control.width / 2, label).toBeCloseTo(
+            (columnLeft + columnRight) / 2,
+            5
+          );
+          expect(control.x + control.width, label).toBeLessThan(active.x);
           for (let index = 1; index < order.length; index += 1) {
             expect(order[index], `${label} ${String(index)}`).toBeGreaterThan(
               order[index - 1]! - 0.01
@@ -1041,8 +1050,9 @@ describe('table layout (geometry v2)', () => {
       const control = snapshot.players.find(
         (player) => player.side === 'local'
       )!.extras!.control;
-      // Beside the pieces, its badge toward the `+`.
-      expect(lost.x + lost.width, `${width}x${height}`).toBeLessThan(control.x);
+      // Beside the pieces; the `+` at their column's foot, clear of it and
+      // of its badge.
+      expect(overlaps(lost, control), `${width}x${height}`).toBe(false);
       const badge = {
         x: lost.x + lost.width + 9 - 26,
         y: lost.y + lost.height + 9 - 22,
@@ -1053,7 +1063,7 @@ describe('table layout (geometry v2)', () => {
     }
   });
 
-  it('puts the + at the top of the Active row by the centre line, past the pieces, on the mat', () => {
+  it("puts the + at the foot of the pieces' column, centred under the coin, on the Active row's bottom line", () => {
     for (const [width, height, touch] of [
       [1440, 900, false],
       [1280, 720, false],
@@ -1077,33 +1087,63 @@ describe('table layout (geometry v2)', () => {
             'active'
           ).physicalDeclaredBounds;
           const { control, coin } = player.extras!;
-          // The row's centre-line edge: its top near the viewer, its foot
-          // across the table.
+          // The row's foot, away from the centre line: its bottom near the
+          // viewer, its top across the table.
           if (player.side === 'local') {
-            expect(control.y, label).toBeCloseTo(active.y + 6, 5);
-          } else {
             expect(control.y + control.height, label).toBeCloseTo(
               active.y + active.height - 6,
               5
             );
+          } else {
+            expect(control.y, label).toBeCloseTo(active.y + 6, 5);
           }
-          // Beside the pieces' column, not under it.
+          // Centred under the coin in its column, clear of it -- or, where
+          // the column's foot has no room left for it beside a coin of its
+          // least size (a phone held sideways, both markers shown), just
+          // past the column on the same line.
+          const centred =
+            Math.abs(
+              control.x + control.width / 2 - (coin.x + coin.width / 2)
+            ) < 1e-5;
+          const columnRight = Math.max(
+            coin.x + coin.width,
+            ...(player.extras!.markers
+              ? [player.extras!.markers.x + player.extras!.markers.width]
+              : [])
+          );
+          const columnLeft = Math.min(
+            coin.x,
+            ...(player.extras!.markers ? [player.extras!.markers.x] : [])
+          );
+          const past =
+            player.side === 'local' || !player.mirrored
+              ? player.side === 'local'
+                ? control.x >= columnRight
+                : control.x + control.width <= columnLeft
+              : control.x >= columnRight;
+          expect(centred || (markers > 0 && past), label).toBe(true);
+          if (width >= 1280) expect(centred, label).toBe(true);
           expect(overlaps(coin, control), label).toBe(false);
         }
       }
     }
-    // An upright phone's Stadium straddles the centre line just past the
-    // pieces: there the + keeps to the row's foot.
+    // An upright phone's too: the foot of the column, under the coin.
     const phone = createTableLayoutSnapshot(
       stateAt(390, 844, { shellMode: 'fullscreen', seamBandPx: 46 })
     );
     const active = region(phone, 'local', 'active').physicalDeclaredBounds;
-    const control = phone.players.find((player) => player.side === 'local')!
-      .extras!.control;
+    const { control, coin } = phone.players.find(
+      (player) => player.side === 'local'
+    )!.extras!;
     expect(control.y + control.height).toBeCloseTo(
       active.y + active.height - 6,
       5
     );
+    expect(control.x + control.width / 2).toBeCloseTo(
+      coin.x + coin.width / 2,
+      5
+    );
+    expect(overlaps(coin, control)).toBe(false);
   });
 
   it('lays both halves out on one mat, the mat or the portrait mat', () => {
@@ -2417,5 +2457,201 @@ describe('table layout: tilted (tiltedTable)', () => {
       expect(laid.tiltedTable).toBeUndefined();
       expect(laid.players).toEqual(flat(width, height, extra).players);
     }
+  });
+});
+
+describe('table layout: the far half mirrored (ADR-046)', () => {
+  const BAR = { width: 334, height: 42 };
+  const laidOut = (
+    width: number,
+    height: number,
+    extra: Partial<BoardLayoutState> = {}
+  ) =>
+    createTableLayoutSnapshot(
+      stateAt(width, height, {
+        shellMode: 'fullscreen',
+        appBarPx: width < 600 ? { width: 160, height: 42 } : BAR,
+        ...(width < 600 ? { seamBandPx: 46 } : {}),
+        ...extra,
+      })
+    );
+  const mirrored = (
+    width: number,
+    height: number,
+    extra: Partial<BoardLayoutState> = {}
+  ) => laidOut(width, height, { mirroredFarSide: true, ...extra });
+  const centreX = (box: Rect) => box.x + box.width / 2;
+  const far = (snapshot: ReturnType<typeof createTableLayoutSnapshot>) =>
+    snapshot.players.find((player) => player.side === 'opponent')!;
+  const near = (snapshot: ReturnType<typeof createTableLayoutSnapshot>) =>
+    snapshot.players.find((player) => player.side === 'local')!;
+  const box = (player: BoardPlayerLayout, kind: string) =>
+    player.regions.find((candidate) => candidate.kind === kind)!
+      .physicalDeclaredBounds;
+  const SIZES = [
+    [1440, 900],
+    [1280, 720],
+    [1920, 1080],
+    [1024, 768],
+    [844, 390],
+    [390, 844],
+    [768, 1024],
+  ] as const;
+
+  it('puts both decks on the right and both prizes on the left, the near half as it was', () => {
+    for (const [width, height] of SIZES) {
+      for (const tiltedTable of [false, true]) {
+        const label = `${width}x${height} tilted=${String(tiltedTable)}`;
+        const laid = mirrored(width, height, { tiltedTable });
+        const turned = laidOut(width, height, { tiltedTable });
+        for (const player of [near(laid), far(laid)]) {
+          expect(
+            centreX(box(player, 'deck')),
+            `${label} ${player.side}`
+          ).toBeGreaterThan(centreX(box(player, 'active')));
+          expect(
+            centreX(box(player, 'prizes')),
+            `${label} ${player.side}`
+          ).toBeLessThan(centreX(box(player, 'active')));
+          expect(
+            centreX(box(player, 'board')),
+            `${label} ${player.side}`
+          ).toBeGreaterThan(centreX(box(player, 'active')));
+        }
+        // Turned, as before: the far deck on the left.
+        expect(centreX(box(far(turned), 'deck')), label).toBeLessThan(
+          centreX(box(far(turned), 'active'))
+        );
+        expect(far(laid).mirrored, label).toBe(true);
+        expect(near(laid).mirrored, label).toBeUndefined();
+        expect(far(turned).mirrored, label).toBeUndefined();
+        expect(laid.mirroredFarSide, label).toBe(true);
+        // The far pieces lie beside the far prizes, on the left too.
+        expect(centreX(far(laid).extras!.coin), label).toBeLessThan(
+          centreX(box(far(laid), 'active'))
+        );
+      }
+    }
+  });
+
+  it("badges the far piles on their right corner, and ends the far hand's pill short of the app bar", () => {
+    for (const [width, height] of SIZES) {
+      const laid = mirrored(width, height);
+      const label = `${width}x${height}`;
+      const deck = far(laid).regions.find(
+        (candidate) => candidate.kind === 'deck'
+      )!;
+      expect(deck.countLabel, label).toMatchObject({
+        anchor: {
+          x: deck.physicalDeclaredBounds.x + deck.physicalDeclaredBounds.width,
+          y: deck.physicalDeclaredBounds.y,
+        },
+        horizontalAlign: 'right',
+        verticalAlign: 'top',
+      });
+      const hand = far(laid).regions.find(
+        (candidate) => candidate.kind === 'hand'
+      )!;
+      const pill = hand.countLabel!;
+      // Past the strip's end, set against its slot's far end by the bar.
+      expect(pill.horizontalAlign, label).toBe('right');
+      expect(pill.anchor.x - 64, label).toBeGreaterThan(
+        hand.physicalDeclaredBounds.x + hand.physicalDeclaredBounds.width
+      );
+      const bar = width < 600 ? { width: 160, height: 42 } : BAR;
+      const barBox: Rect = {
+        x: laid.playAreaBounds.width - APP_BAR_INSET_PX - bar.width,
+        y: APP_BAR_INSET_PX,
+        width: bar.width,
+        height: bar.height,
+      };
+      // The widest pill (the count, the cover and Sort, in Solo) grows back
+      // over the strip from there.
+      const pillBox: Rect = {
+        x: pill.anchor.x - 98,
+        y: pill.anchor.y - 26,
+        width: 98,
+        height: 26,
+      };
+      expect(overlaps(pillBox, barBox), label).toBe(false);
+    }
+  });
+
+  it('keeps every far zone clear of the app bar and the Stadium clear of the pieces, at every size', () => {
+    for (let width = 360; width <= 2560; width += 200) {
+      for (let height = 380; height <= 1440; height += 150) {
+        for (const lost of [true, false]) {
+          for (const markers of [0, 2]) {
+            const label = `${width}x${height} lost=${String(lost)} m${markers}`;
+            const laid = mirrored(width, height, {
+              hideEmptyLostZone: !lost,
+              ...(markers ? { oncePerGameMarkers: markers } : {}),
+            });
+            const bar = width < 600 ? { width: 160, height: 42 } : BAR;
+            const barBox: Rect = {
+              x: laid.playAreaBounds.width - APP_BAR_INSET_PX - bar.width,
+              y: APP_BAR_INSET_PX,
+              width: bar.width,
+              height: bar.height,
+            };
+            // An empty Lost Zone put away is off the table: its slot may lie
+            // anywhere.
+            const shown = (kind: string) =>
+              kind !== 'hand' && (lost || kind !== 'lostZone');
+            const stadium = laid.shared.stadium.physicalDeclaredBounds;
+            for (const player of laid.players) {
+              for (const zone of player.regions) {
+                if (!shown(zone.kind)) continue;
+                expect(
+                  overlaps(zone.physicalDeclaredBounds, barBox),
+                  `${label} ${player.side} ${zone.kind}`
+                ).toBe(false);
+                if (zone.kind !== 'board') {
+                  expect(
+                    overlaps(zone.physicalDeclaredBounds, stadium),
+                    `${label} ${player.side} ${zone.kind}`
+                  ).toBe(false);
+                }
+              }
+              const extras = player.extras!;
+              for (const piece of [
+                ...(extras.markers ? [extras.markers] : []),
+                extras.coin,
+                extras.control,
+              ]) {
+                expect(
+                  overlaps(piece, stadium),
+                  `${label} ${player.side}`
+                ).toBe(false);
+              }
+            }
+          }
+        }
+      }
+    }
+  });
+
+  it('lays the far prizes and hand out from the left, the first prize by the centre line', () => {
+    const content: Rect = { x: 0, y: 0, width: 100, height: 210 };
+    const turned = layoutTablePrizes(content, 'opponent', 6);
+    const reflected = layoutTablePrizes(content, 'opponent', 6, true);
+    const own = layoutTablePrizes(content, 'local', 6);
+    // Mirrored: our grid reflected across the centre line -- the same
+    // columns, the rows the other way up.
+    reflected.forEach((cell, index) => {
+      expect(cell.x).toBeCloseTo(own[index]!.x, 6);
+      expect(cell.y).toBeCloseTo(own[own.length - 1 - (index ^ 1)]!.y, 6);
+    });
+    expect(reflected[0]!.x).toBeLessThan(reflected[1]!.x);
+    expect(turned[0]!.x).toBeGreaterThan(turned[1]!.x);
+    const hand = layoutTableHand(
+      { x: 0, y: 0, width: 600, height: 60 },
+      'opponent',
+      4,
+      undefined,
+      undefined,
+      true
+    ).map((card) => card.x);
+    expect(hand).toEqual([...hand].sort((a, b) => a - b));
   });
 });

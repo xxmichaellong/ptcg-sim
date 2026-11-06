@@ -18,6 +18,11 @@ export interface TurnBannerProps {
   readonly view: MatchViewState | undefined;
   /** The seat painted at the bottom: "your" side of the table. */
   readonly bottomPlayerId: string | undefined;
+  /**
+   * Where its middle lies, in the board's pixels: the centre line between
+   * the halves as drawn (`turnBannerCentreY`). Absent, the board's middle.
+   */
+  readonly centreY?: number;
 }
 
 /** How long the banner stays before it slides away. */
@@ -33,7 +38,11 @@ const FALLBACK_VISIBLE_MS = 2_500;
  * input and never waits for anything; it only marks the moment. The first
  * view and any jump backwards (undo, a replay seek) announce nothing.
  */
-export const TurnBanner = ({ view, bottomPlayerId }: TurnBannerProps) => {
+export const TurnBanner = ({
+  view,
+  bottomPlayerId,
+  centreY,
+}: TurnBannerProps) => {
   const { t } = useLingui();
   const [announcement, setAnnouncement] = useState<Announcement | null>(null);
   const lastRef = useRef<{ matchId: string; turnNumber: number } | null>(null);
@@ -88,6 +97,7 @@ export const TurnBanner = ({ view, bottomPlayerId }: TurnBannerProps) => {
       data-turn-banner=""
       data-side={announcement.side}
       aria-hidden="true"
+      {...(centreY === undefined ? {} : { style: { top: `${centreY}px` } })}
       onAnimationEnd={(event) => {
         if (event.target === event.currentTarget) setAnnouncement(null);
       }}

@@ -105,7 +105,7 @@ describe('TableViewControls', () => {
     await act(async () => input('hoverPreviewCheckbox').click());
     await act(async () => input('opponentUprightCheckbox').click());
     expect(boardViewSettings().getSnapshot()).toMatchObject({
-      zoneOutlines: false,
+      zoneOutlines: 'always',
       hoverPreview: true,
       opponentCardsUpright: true,
     });

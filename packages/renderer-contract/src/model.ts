@@ -37,6 +37,13 @@ export interface BoardPreferences {
   /** Paints the legacy translucent zone/stadium containers when enabled. */
   readonly showZoneOutlines: boolean;
   /**
+   * Geometry v2: outlines a zone that holds cards too, not only an empty
+   * one (ADR-046). Absent, a zone with cards in it shows no outline, but
+   * for while a card is carried, when every zone it may go to shows its
+   * own -- the cards say where it is.
+   */
+  readonly outlineFilledZones?: boolean;
+  /**
    * Duration multiplier for the table's own motion (1 is normal, larger is
    * slower, 0 skips travel). Absent means normal. Dragging is never scaled.
    */
@@ -159,6 +166,12 @@ export interface ZoneSceneNode {
   readonly id: string;
   readonly playerId: PlayerId | null;
   readonly side: BoardSide | 'shared';
+  /**
+   * On a far half laid out mirrored (BoardLayoutState.mirroredFarSide): its
+   * cards run left to right on the screen as the near half's do, not the
+   * other way as on a turned half.
+   */
+  readonly mirrored?: true;
   readonly kind: BoardZoneKind;
   /** Physical legacy border box used for paint, input, and drop targeting. */
   readonly bounds: Rect;
