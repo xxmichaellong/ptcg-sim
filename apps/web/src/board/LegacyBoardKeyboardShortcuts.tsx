@@ -335,6 +335,9 @@ export const LegacyBoardKeyboardShortcuts = ({
       // With a group, Shift means nothing -- unless the player bound a key
       // with it: their own Shift+key is read as they set it first.
       const own = groupSelected ? keymap.translate(event, mode) : undefined;
+      // A Shift+key the player cleared or moved away (Discard all's
+      // Shift+D) is nothing here either, not the plain key for the group.
+      if (own?.kind === 'freed') return;
       const keyInput: KeyInput =
         groupSelected && own?.kind !== 'moved' ? withoutShift(event) : event;
       const translation =

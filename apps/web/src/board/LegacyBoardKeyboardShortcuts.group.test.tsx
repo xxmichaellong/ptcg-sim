@@ -53,6 +53,29 @@ describe('the keys with several cards selected (ADR-042)', () => {
       new KeyboardEvent('keydown', { bubbles: true, cancelable: true, ...init })
     );
 
+  it('leaves the group alone on a Shift+key the player cleared or moved away', async () => {
+    for (const overrides of [
+      { 'board.discardAll': null, 'board.moveAllToHand': null },
+      { 'board.discardAll': 'k', 'board.moveAllToHand': 'j' },
+    ]) {
+      const onRequest = vi.fn();
+      await act(async () => {
+        root.render(
+          createElement(LegacyBoardKeyboardShortcuts, {
+            state: withSelection(['one', 'two']),
+            onRequest,
+            onNotice: vi.fn(),
+            keymap: keymapFor(parseHotkeyOverrides(overrides)),
+          })
+        );
+      });
+      // Not D / H for the group: nothing at all.
+      press({ key: 'D', code: 'KeyD', shiftKey: true });
+      press({ key: 'H', code: 'KeyH', shiftKey: true });
+      expect(onRequest, JSON.stringify(overrides)).not.toHaveBeenCalled();
+    }
+  });
+
   it('sends each card key as the whole group’s move or mark, Shift or not', async () => {
     const onRequest = vi.fn();
     await act(async () => {
