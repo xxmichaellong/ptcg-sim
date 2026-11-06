@@ -87,6 +87,10 @@ displayName}`): the Worker resolves the code, and the room mints an
      has just changed is never brought back by a join under way.
    - Watching by code works in every multiplayer room, a restored one
      included (it has no spectators' master credential to check).
+   - Two joining by the code at once race for the free seat: the first to
+     connect takes it, the other is told both seats are taken and offered
+     Watch. A code join's invitation lasts 30 s, so one that never connects
+     holds nothing for long.
    - The room's Welcome lists who is already here, so a guest sees the host
      at once (the invite card, the open-seat check and Room's "here" read
      it, kept current by Presence).
