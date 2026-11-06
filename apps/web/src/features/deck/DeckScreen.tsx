@@ -482,6 +482,7 @@ export const DeckScreen = ({
           : library.create(draft, { deferSave: true });
         if (deck) editDeck(deck.id);
       } else if (answer === 'use') {
+        endImportFor(target);
         placeOnSeat(
           draft.cards,
           {
@@ -493,7 +494,7 @@ export const DeckScreen = ({
         );
       }
     },
-    [catalog, editDeck, library, placeOnSeat, target]
+    [catalog, editDeck, endImportFor, library, placeOnSeat, target]
   );
 
   const runImport = useCallback(

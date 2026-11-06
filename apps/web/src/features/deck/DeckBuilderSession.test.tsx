@@ -26,6 +26,10 @@ import {
 import type { CardCatalogSource } from './card-catalog-contract.js';
 import { DeckLibrary } from './deck-library.js';
 import {
+  dialogRequestsSnapshot,
+  settleDialogRequest,
+} from '../../ui/dialog-requests.js';
+import {
   CardBackCustodyStore,
   type CardBackInstallFailure,
 } from './card-back-custody.js';
@@ -550,6 +554,42 @@ describe('DeckBuilderSession', () => {
     expect(store.getSnapshot().slots.main.label?.name).toBe('Newer deck');
     expect(library.getSnapshot().decks.map((deck) => deck.name)).toEqual([
       'Newer deck',
+    ]);
+  });
+
+  it('keeps a quick-view deck choice when an older clipboard read resolves', async () => {
+    const store = new DeckBuilderStore();
+    const chosen = library.create({
+      name: 'Chosen deck',
+      format: 'standard',
+      cards: [{ card: card('Chosen'), count: 4 }],
+      source: { kind: 'new' },
+    });
+    let finishRead: (value: string) => void = () => undefined;
+    await renderSession({
+      store,
+      open: true,
+      readClipboard: () =>
+        new Promise<string>((resolve) => {
+          finishRead = resolve;
+        }),
+    });
+    await click('#deckClipboardButton');
+    await click(`[data-view-deck]`);
+    const request = dialogRequestsSnapshot().at(-1)!;
+    await act(async () => {
+      settleDialogRequest(request.id, 'use');
+    });
+    expect(store.getSnapshot().slots.main.label?.deckId).toBe(chosen.id);
+    await act(async () => {
+      finishRead(
+        'QTY,Name,Type,URL\n4,Older,Pokémon,custom+unsafe://player-host/Older'
+      );
+    });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(store.getSnapshot().slots.main.label?.deckId).toBe(chosen.id);
+    expect(library.getSnapshot().decks.map((deck) => deck.name)).toEqual([
+      'Chosen deck',
     ]);
   });
 

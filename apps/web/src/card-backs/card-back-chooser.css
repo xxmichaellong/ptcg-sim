@@ -6,6 +6,10 @@
 
 .ptcgsim-ui-dialog.card-back-chooser-dialog {
   width: min(720px, 100%);
+  margin-top: 0;
+  max-height: calc(100dvh - 2 * var(--space-6));
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .card-back-chooser {

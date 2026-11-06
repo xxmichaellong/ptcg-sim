@@ -7,6 +7,7 @@ import type {
   RemoteGameSession,
   SubmitCommandResult,
 } from '@ptcgsim/client-session';
+import { STANDARD_COIN } from '@ptcgsim/game-core';
 import type {
   CoinFlipSeries,
   MatchViewState,
@@ -126,7 +127,10 @@ import type { PaletteCommand } from '../commands/types.js';
 import { boardViewCommands } from '../commands/settings-commands.js';
 import { railCommands } from '../commands/ui-commands.js';
 import { editBrowserCoin } from './browser-coin.js';
-import { useCoinCustomization } from './useCoinCustomization.js';
+import {
+  pendingCoinChange,
+  useCoinCustomization,
+} from './useCoinCustomization.js';
 
 export type RemoteBoardSubmissionResult = SubmitCommandResult;
 
@@ -1921,25 +1925,20 @@ export const RemoteSessionBoard = ({
                       const controller = new AbortController();
                       coinEditor.current = controller;
                       void editBrowserCoin(
-                        view.players[playerId]?.coin,
+                        view.players[playerId]?.coin ?? STANDARD_COIN,
                         controller.signal,
                         playerId === view.viewer.playerId
                       ).then((coin) => {
                         if (!coin || controller.signal.aborted) return;
                         const state = session.getSnapshot();
                         const latest = state.view;
+                        const pending = pendingCoinChange(state, playerId);
                         if (
                           latest?.matchId !== view.matchId ||
-                          latest.players[playerId]?.coin === coin ||
-                          state.pendingCommands.some(
-                            ({ command }) =>
-                              command.type === 'SetCoin' &&
-                              (command.targetPlayerId ??
-                                (latest.viewer.kind === 'player'
-                                  ? latest.viewer.playerId
-                                  : undefined)) === playerId &&
-                              command.coin === coin
-                          )
+                          pending?.coin === coin ||
+                          (!pending &&
+                            (latest.players[playerId]?.coin ??
+                              STANDARD_COIN) === coin)
                         )
                           return;
                         session.submit({
