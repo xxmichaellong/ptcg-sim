@@ -14,6 +14,11 @@ import {
  * that is already whole; and a later trade of tables (joining a room)
  * happens under it, so a bare desk is never on screen.
  *
+ * The loading screen is a real one (Magic Circle's boot screen): the site's
+ * mark and name, and a bar that moves with the load, never full until the
+ * table is there, then full just before it lifts. A trade of tables shows
+ * only a sweeping bar.
+ *
  * Each spec records, frame by frame and at every change to the page's
  * route, phase, board or curtain, what the player could see.
  */
@@ -27,6 +32,12 @@ interface Sample {
   readonly curtain: 'covering' | 'arriving' | 'leaving' | 'gone' | 'absent';
   /** How much of the page the curtain hides: 1 is all of it. */
   readonly cover: number;
+  /** A page load (`boot`) or a trade of tables (`travel`). */
+  readonly mode: string;
+  /** The bar's percent; -1 while it only sweeps. */
+  readonly progress: number;
+  /** The site's mark is painted on it. */
+  readonly mark: boolean;
 }
 
 declare global {
@@ -45,6 +56,9 @@ const recordTableSamples = (): void => {
     const rect = surface?.getBoundingClientRect();
     const curtain = document.getElementById('tableCurtain');
     const shown = curtain !== null && !curtain.hidden;
+    const bar = curtain?.querySelector('[role="progressbar"]');
+    const mark = curtain?.querySelector('img');
+    const markBox = mark?.getBoundingClientRect();
     const next: Sample = {
       t: Math.round(performance.now()),
       route: main?.getAttribute('data-app-route') ?? 'none',
@@ -56,6 +70,16 @@ const recordTableSamples = (): void => {
           ? ((curtain.dataset.state ?? 'covering') as Sample['curtain'])
           : 'gone',
       cover: shown ? Number(getComputedStyle(curtain).opacity) : 0,
+      mode: curtain?.dataset.mode ?? '-',
+      progress: Number(bar?.getAttribute('aria-valuenow') ?? -1),
+      mark:
+        shown &&
+        mark !== undefined &&
+        mark !== null &&
+        mark.complete &&
+        mark.naturalWidth > 0 &&
+        markBox !== undefined &&
+        markBox.width > 0,
     };
     const key = JSON.stringify({ ...next, t: 0 });
     if (key === last) return;
@@ -76,6 +100,8 @@ const recordTableSamples = (): void => {
       'data-session-phase',
       'data-renderer-status',
       'data-state',
+      'data-mode',
+      'aria-valuenow',
       'hidden',
     ],
   });
@@ -162,6 +188,25 @@ const openRecorded = async (
   return { page, errors };
 };
 
+/**
+ * The page load's bar: moving on and never back, short of full while the
+ * table is not there, and full as the curtain begins to lift.
+ */
+const expectLoadBar = (samples: readonly Sample[]): void => {
+  const load = samples.filter(
+    (sample) => sample.curtain !== 'absent' && sample.curtain !== 'gone'
+  );
+  expect(load[0]?.mode).toBe('boot');
+  const lifting = load.findIndex((sample) => sample.curtain === 'leaving');
+  expect(lifting, 'the curtain lifted').toBeGreaterThan(0);
+  const before = load.slice(0, lifting).map((sample) => sample.progress);
+  for (let index = 1; index < before.length; index += 1) {
+    expect(before[index]).toBeGreaterThanOrEqual(before[index - 1]!);
+  }
+  expect(Math.max(...before)).toBeLessThan(97);
+  expect(load[lifting]?.progress).toBe(100);
+};
+
 const curtainGone = (page: Page) =>
   expect(page.locator('#tableCurtain')).toBeHidden({ timeout: 30_000 });
 
@@ -185,6 +230,9 @@ test('the Solo table appears once behind one loading screen on a cold, slow load
     await attachSamples(testInfo, 'solo-load-samples.json', samples);
 
     expectTableAppearsOnce(samples);
+    // A loading screen with the site's mark on it, and a bar that kept up.
+    expect(samples.some((sample) => sample.mark)).toBe(true);
+    expectLoadBar(samples);
     // Under the curtain the empty table stood in for the room and gave way
     // to it; the player saw only the room's.
     const firstSeen = samples.find((sample) => seen(sample) === 'table');
@@ -236,6 +284,11 @@ test('under reduced motion the loading screen goes at once, and the table still 
 
     expectTableAppearsOnce(samples);
     expect(curtainStates(samples)).toEqual(['covering', 'gone']);
+    // Still, it says the load is done as it goes.
+    expect(samples.at(-1)).toMatchObject({ mode: 'travel', progress: -1 });
+    expect(
+      samples.filter((sample) => sample.curtain === 'covering').at(-1)
+    ).toMatchObject({ mode: 'boot' });
   } finally {
     await context.close();
   }
@@ -298,6 +351,13 @@ test('joining a room trades tables under the curtain, never over a bare desk', a
     // The lobby's table, covered, swapped, and the room's uncovered: at no
     // frame a page without a table that the curtain did not hide.
     expect(samples.map(seen)).not.toContain('desk');
+    // A trade, not a load: no mark, and a bar that only sweeps.
+    for (const sample of samples.filter(
+      (each) => each.curtain !== 'gone' && each.curtain !== 'absent'
+    )) {
+      expect(sample).toMatchObject({ mode: 'travel', progress: -1 });
+      expect(sample.mark).toBe(false);
+    }
     expect(curtainStates(samples)).toEqual([
       'gone',
       'arriving',

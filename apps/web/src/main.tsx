@@ -13,7 +13,7 @@ import { installLeaveGuard } from './leave-guard.js';
 import { installPageMotion } from './motion/page-motion.js';
 import { applySavedPageTheme, installTableArt } from './session/page-theme.js';
 import { HelpSheetHost } from './session/shell/help-pages.js';
-import { tableCurtain } from './session/shell/table-curtain.js';
+import { markTableLoad, tableCurtain } from './session/shell/table-curtain.js';
 import { installFocusFrom } from './ui/focus-from.js';
 import { OverlayHost } from './ui/OverlayHost.js';
 import './design/tokens.css';
@@ -80,6 +80,8 @@ installFocusFrom(document);
 watchCardImageFailures();
 // index.html opens on a loading screen that the lobby lifts once its table
 // is ready (table-curtain.ts); the developer pages have none to wait for.
+// Its bar hears that the app's own script is running.
+markTableLoad('app');
 if (depthLabRequested || devRoomRequested || !roomLobbyRoute) {
   tableCurtain().drop();
 }

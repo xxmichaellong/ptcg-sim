@@ -104,7 +104,11 @@ import { DeckLayer } from './shell/DeckLayer.js';
 import { OnlineSheet } from './shell/OnlineSheet.js';
 import { SettingsSheet } from './shell/SettingsSheet.js';
 import { useSettingsSheetHost } from './shell/settings-sheet-state.js';
-import { tableCurtain, type TableCurtain } from './shell/table-curtain.js';
+import {
+  markTableLoad,
+  tableCurtain,
+  type TableCurtain,
+} from './shell/table-curtain.js';
 import { TableBanner, TableShell } from './shell/TableShell.js';
 
 import '../design/panel-controls.css';
@@ -394,6 +398,14 @@ export const RemoteRoomLobby = ({
   // Kept as a message, so it reads in whatever language is up when shown.
   const [status, setStatus] = useState<MessageDescriptor>();
   const [connected, setConnected] = useState<ConnectedRoom>();
+  // The loading screen's bar hears each step of the page's load: the table's
+  // screen here, then a room connected (table-curtain.ts).
+  useEffect(() => {
+    markTableLoad('lobby');
+  }, []);
+  useEffect(() => {
+    if (connected) markTableLoad('room');
+  }, [connected]);
   const [parkedSolo, setParkedSolo] = useState<ConnectedRoom>();
   // The tutorial's practice table, shown in place of the player's own
   // table, which stays live behind it until they come back (ADR-038).

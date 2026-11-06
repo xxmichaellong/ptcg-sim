@@ -36,17 +36,32 @@ player's own choice: the activity log, opened on a wide screen, docks at the
 right and the table lays itself out beside it (§4).
 
 The table appears once. The page opens on a loading screen painted by
-`index.html` itself (`#tableCurtain`: the desk, and after a moment a spinner
-and "Setting up the table…"); it stays while the lobby, the board renderer
-and the Solo room load and connect, and fades away once the room's table has
-painted (`session/shell/table-curtain.ts`). The empty table the lobby shows
-while that room is made is never seen on the way to it, so the board no
-longer appears, vanishes and comes back. Trading one table for another later
-(joining or leaving a room, Play online parking a Solo game) draws the same
-screen over the old table first and lifts it from the new one, so no frame
-shows a bare desk. It is only paint, never input, and follows the motion
-settings: under reduced motion it lifts at once, and tables are traded
-without it.
+`index.html` itself (`#tableCurtain`); it stays while the lobby, the board
+renderer and the Solo room load and connect, and fades away once the room's
+table has painted (`session/shell/table-curtain.ts`). The empty table the
+lobby shows while that room is made is never seen on the way to it, so the
+board no longer appears, vanishes and comes back. Trading one table for
+another later (joining or leaving a room, Play online parking a Solo game)
+draws the same screen over the old table first and lifts it from the new
+one, so no frame shows a bare desk. It is only paint, never input, and
+follows the motion settings: under reduced motion it lifts at once, and
+tables are traded without it.
+
+Since 2026-11-06 it is a real loading screen, after Magic Circle's boot
+screen (the owner: "it has a progress bar, the name of the website, some very
+subtle animations"). On the desk of the player's artwork (its colors are in
+`index.html` too, kept equal to `table-art.css` by a test, so a dark artwork
+never opens cream): the PTCG-sim mark (`/v2/assets/brand/`, preloaded),
+easing in and then barely breathing, the name under it, and at the foot a
+thin bar over "Setting up the table…". An inline script paces the bar from
+the time since the page was asked for and the marks the app makes on the way
+(`markTableLoad`: the app's script running, the table's screen mounted, a
+room connected), as Magic Circle paces its own: toward 97% and never there
+until the table is; then it fills and the screen fades just after
+(`CURTAIN_COMPLETE_MS`). A trade of tables is travel, not a load: no mark or
+name, only the bar sweeping, and only after a moment, so a quick trade never
+shows it. Reduced motion (the saved choice is read before the first paint)
+keeps all of it still.
 
 ### 2. One rail, along the seam
 
