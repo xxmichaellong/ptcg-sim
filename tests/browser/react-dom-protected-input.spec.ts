@@ -1960,9 +1960,11 @@ test('global loose-board shortcuts stay viewer-owned and suppress editable targe
 }) => {
   const errors = collectRuntimeErrors(page);
   const fixture = await mountHarness(page);
+  // Shift+D and Shift+H (v1's Enter and Alt+Enter, which the focused
+  // control kept taking; ADR-028 §8), and /.
   const cases = [
-    { key: 'Enter', destination: 'discard' },
-    { key: 'Alt+Enter', destination: 'hand' },
+    { key: 'Shift+D', destination: 'discard' },
+    { key: 'Shift+H', destination: 'hand' },
     { key: 'Slash', destination: 'shuffleIntoDeck' },
   ] as const;
 
