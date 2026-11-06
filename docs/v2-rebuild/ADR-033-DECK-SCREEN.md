@@ -365,6 +365,48 @@ specifically without blocking, and go from deck to table in one click.
     decks, is gone: the finder is it. On a phone the finder runs across
     under the row's name and New deck.
 
+19. **Decks led by their art; seats as slots** (2026-11-06; supersedes
+    §16's and §17's tiles and switch). The owner, of the seat bar: "the
+    colors feel weird, also weird use of spacing, lots of empty horizontal
+    space, and it's also not super clear that i'm on p1 or p2"; of the
+    shelves: "a lot of empty space and i don't think it looks very
+    pleasant". The bar's tabs stretched to 720px with the count far from
+    the name, tinted grey-blue and brick by night and salmon by day; a
+    deck was a wide row of a 40px card, its name and a lone pencil at the
+    far end. Deck browsers (Moxfield's and Archidekt's grids, untapped's
+    and Hearthstone's deck tiles, Pokémon TCG Live's deck boxes) lead
+    with the deck's art and keep the rest to a line or two.
+    - **A deck is its cover's art.** `DeckBox` draws the cover card's
+      illustration in a 16:10 window: the card 1.4 times the window's
+      width, opened 11% down (a rule-box print, 1.45 times and 16%
+      down, under a Tera card's rule), so the window stays inside the art
+      box of every era's frame (measured 44-48% down) and shows neither
+      name, rule nor attacks. A tile's art is the full scan (sharp on a
+      dense screen; the screen's warm-up asks for the same), a seat's the
+      thumbnail. Both are 16:10, so the flight to a seat only scales.
+    - **Tiles.** Every shelf (your decks, Winning now, Classics) is a grid
+      of tiles, about 184px and up: six to a row on a laptop, two on a
+      phone. The art across the head, shaded at its top; the name (two
+      lines at most) and one line of what is said of it under it (its
+      format and count, its finish, "Not saved · 60 cards"). The seats
+      it is on are badges in their colours over the art's corner, its
+      tools small dark glass over the other; "Use on P1" rises over the
+      art in the seat's colour as it is pointed at. The deck on the seat
+      being worked on is ringed in the seat's colour, untinted.
+    - **The seats are slots**, side by side in the middle of the bar and
+      only as wide as their decks need (340px at most): the art, the seat
+      over the name, the sleeve. The chosen one is raised on the panel
+      (neutral, not tinted), underlined in its seat's colour as a chosen
+      tab is, its seat on a chip of that colour; the other lies back on
+      the bar, its art dimmed, its seat in its colour. A whole deck shows
+      no count (the shelf says it); one short of its size shows it
+      ("47/60") in the warning's colour; a deck's finish stands beside
+      the seat ("1st of 232"). An empty seat is a soft blank and "No deck
+      yet". On a phone the two share the row under Back and Play, without
+      art or finish.
+    - The seat's colour down the page is a glow (7%, 140px), no longer a
+      wash.
+
 ## Consequences
 
 - One paste and one click (Play) take a list to the table, and every deck

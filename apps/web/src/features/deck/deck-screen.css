@@ -2,13 +2,13 @@
  * The deck screen (DeckScreen.tsx, ADR-033 §13): a bar with the seats'
  * switch and Play, then either the decks (DeckHome), a tournament's
  * standings, or one deck being built (DeckEditor: the cards to find beside
- * the deck). Laid out as deck sites are: flat panels on the page, decks as
- * cards of their cover art, the deck as a list by kind. Whose deck is being
- * worked on is never in doubt: that seat's segment of the switch is raised
- * and tinted in its colour, its seat named on a chip of that colour, and
- * the colour washes down the top of the page below (§17). Everything reads
- * the design tokens; nothing here transforms or filters the screen itself,
- * so the hover zoom's fixed position stays fixed to the window.
+ * the deck). Laid out as deck sites are: decks as tiles led by their cover
+ * art, the deck as a list by kind. Whose deck is being worked on is never
+ * in doubt: that seat's slot in the bar is raised, underlined and labelled
+ * in its colour, the other lies back, and the decks on the page say which
+ * seat a press puts them on (§19). Everything reads the design tokens;
+ * nothing here transforms or filters the screen itself, so the hover
+ * zoom's fixed position stays fixed to the window.
  */
 
 /* The seat being worked on (the screen's data-seat) colours its switch,
@@ -75,22 +75,22 @@
   gap: var(--space-1-5);
 }
 
-/* The seats' switch: one segmented control, as the app's other two-way
-   choices are, a segment for each seat in a sunken track with no border
-   of its own. The chosen segment is raised and tinted in its seat's
-   colour, its seat named on a chip of that colour; the other lies flat in
-   the track. No ring, no line: one shape says which (§17). */
+/* The seats' switch (§19): a slot per seat, side by side in the middle of
+   the bar and only as wide as its deck needs. The seat being worked on is
+   raised on the panel, underlined in its colour and labelled on a chip of
+   that colour; the other lies back on the bar, its art dimmed, its seat in
+   its colour. Pressing either works on it. */
 .deck-screen__seats {
   display: flex;
-  flex: 0 1 720px;
+  flex: 0 1 auto;
+  justify-content: center;
+  gap: var(--space-1-5);
   min-width: 0;
-  gap: 3px;
-  padding: 3px;
-  border-radius: var(--radius-md);
-  background: var(--color-surface-sunken);
+  margin-inline: auto;
 }
 
-/* A seat's segment: its deck (cover, seat, name, size), then its sleeve. */
+/* A seat's slot: its deck (art, seat, what is said of it, name), then its
+   sleeve. */
 .deck-tray {
   --seat-color: var(--color-you);
   /* The seat's colour as words on the panels: toward the theme's ink, so
@@ -99,11 +99,12 @@
 
   position: relative;
   display: flex;
-  flex: 1 1 0;
+  flex: 0 1 auto;
   align-items: center;
   gap: var(--space-1);
   min-width: 0;
-  border-radius: calc(var(--radius-md) - 3px);
+  max-width: 340px;
+  border-radius: 12px;
   background-color: transparent;
   color: var(--color-text-muted);
   transition:
@@ -116,37 +117,48 @@
   --seat-color: var(--color-opponent);
 }
 
+/* Underlined in its colour, as a chosen tab is. */
+.deck-tray::after {
+  content: '';
+  position: absolute;
+  inset: auto 14px 0;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+  background: var(--seat-color);
+  opacity: 0;
+  scale: 0.4 1;
+  transition:
+    opacity var(--duration-normal) var(--ease-out),
+    scale var(--duration-normal) var(--ease-out);
+  pointer-events: none;
+}
+
 .deck-tray[data-active='true'] {
-  background-color: color-mix(
-    in oklab,
-    var(--seat-color) var(--seat-tint, 30%),
-    var(--color-surface-3)
-  );
+  background-color: var(--color-surface-3);
   box-shadow: var(--highlight-top), var(--shadow-1);
   color: var(--color-text);
 }
 
-/* By night the warm surface greys a third of the seat's colour (P1's blue
-   read grey-blue): more of it, still under the light ink at 4.5:1. */
-:root[data-theme='night'] .deck-tray[data-active='true'] {
-  --seat-tint: 46%;
+:root[data-theme='day'] .deck-tray[data-active='true'] {
+  background-color: var(--color-surface-2);
+  box-shadow:
+    0 0 0 1px var(--color-border),
+    var(--shadow-1);
 }
 
-/* Its deck: the cover's card, the seat and what the deck placed over its
-   name, and its size. */
+.deck-tray[data-active='true']::after {
+  opacity: 1;
+  scale: 1;
+}
+
 .deck-screen__seat {
-  display: grid;
+  display: flex;
   flex: 1;
-  grid-template-columns: auto auto minmax(0, 1fr) auto;
-  grid-template-areas:
-    'art tag finish count'
-    'art name name count';
   align-items: center;
-  column-gap: var(--space-2);
-  row-gap: 1px;
+  gap: var(--space-2-5, 10px);
   min-width: 0;
-  min-height: 48px;
-  padding: 3px var(--space-2) 3px 6px;
+  min-height: 52px;
+  padding: 6px var(--space-1) 6px 6px;
   border: 0;
   border-radius: inherit;
   background: transparent;
@@ -155,23 +167,41 @@
   font-size: var(--text-sm);
   text-align: start;
   cursor: pointer;
-  transition: background-color var(--duration-fast) var(--ease-out);
 }
 
-.deck-tray__text,
+/* The other seat's art lies back, so the chosen one leads. */
+.deck-tray:not([data-active='true']) .deck-screen__seat > .deck-box {
+  opacity: 0.55;
+  filter: saturate(0.5);
+  transition:
+    opacity var(--duration-normal) var(--ease-out),
+    filter var(--duration-normal) var(--ease-out);
+}
+
+.deck-tray__text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
 .deck-tray__line {
-  display: contents;
-}
-
-.deck-screen__seat > .deck-box,
-.deck-screen__seat > .deck-tray__empty {
-  grid-area: art;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  min-width: 0;
 }
 
 @media (hover: hover) and (pointer: fine) {
   .deck-tray:not([data-active='true']):hover {
     background-color: var(--color-surface-hover);
     color: var(--color-text);
+  }
+
+  .deck-tray:not([data-active='true']):hover .deck-screen__seat > .deck-box {
+    opacity: 0.85;
+    filter: none;
   }
 }
 
@@ -180,27 +210,26 @@
   outline-offset: 1px;
 }
 
-/* An empty seat: a blank card where its deck's cover would be. */
+/* An empty seat: where its deck's art would be, a soft blank. */
 .deck-tray__empty {
   flex: none;
-  width: 30px;
-  aspect-ratio: 63 / 88;
-  border-radius: 4px;
-  background: color-mix(in oklab, currentColor 14%, transparent);
+  width: 64px;
+  aspect-ratio: 16 / 10;
+  border-radius: 6px;
+  background: color-mix(in oklab, currentColor 12%, transparent);
 }
 
-/* The seat's name in its colour: small capitals over the deck's name, on
-   a chip of its colour where the seat is chosen. */
+/* The seat in its colour: small capitals, on a chip of its colour where the
+   seat is chosen. */
 .deck-screen__seat-tag {
-  grid-area: tag;
-  justify-self: start;
-  padding: 1px 5px;
+  flex: none;
+  padding: 1px 6px;
   border-radius: 5px;
   color: var(--seat-ink);
   font-size: var(--text-2xs);
   font-weight: var(--weight-bold);
   letter-spacing: 0.08em;
-  line-height: 1.2;
+  line-height: 1.3;
   text-transform: uppercase;
   transition:
     background-color var(--duration-normal) var(--ease-out),
@@ -213,7 +242,6 @@
 }
 
 .deck-screen__seat-name {
-  grid-area: name;
   max-width: 100%;
   overflow: hidden;
   font-size: var(--text-md);
@@ -223,52 +251,40 @@
   white-space: nowrap;
 }
 
+.deck-tray[data-empty='true'] .deck-screen__seat-name {
+  color: var(--color-text-muted);
+  font-weight: var(--weight-medium);
+}
+
 .deck-tray__finish {
-  grid-area: finish;
   min-width: 0;
   overflow: hidden;
   color: var(--color-text-muted);
-  font-size: var(--text-2xs);
+  font-size: var(--text-xs);
   line-height: 1.2;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* Its size: in the warning's colour short of a deck, the success's at it. */
+/* Its size, only while it is short of (or over) a deck: a whole deck says
+   nothing, the warning's colour says it isn't one yet. */
 .deck-screen__seat-count {
-  --count-color: var(--color-warning-ink);
-
-  grid-area: count;
-  align-self: center;
-  color: var(--count-color);
-  font-size: var(--text-sm);
+  flex: none;
+  color: var(--color-warning-ink);
+  font-size: var(--text-xs);
   font-weight: var(--weight-bold);
 }
 
 .deck-screen__seat-count[data-complete] {
-  --count-color: var(--color-success-ink);
+  display: none;
 }
 
-/* On the chosen segment's tint, toward the ink so it still reads at 4.5:1
-   (further by night, on the stronger tint). */
-.deck-tray[data-active='true'] .deck-screen__seat-count {
-  color: color-mix(
-    in oklab,
-    var(--count-color) var(--seat-count-share, 55%),
-    var(--color-text)
-  );
-}
-
-:root[data-theme='night'] .deck-tray[data-active='true'] {
-  --seat-count-share: 25%;
-}
-
-/* The seat's sleeve: its card back, at the end of its tab. */
+/* The seat's sleeve: its card back, at the end of its slot. */
 .deck-tray__sleeve {
   flex: none;
-  width: 28px;
-  height: 39px;
-  margin-inline-end: 5px;
+  width: 26px;
+  height: 36px;
+  margin-inline-end: var(--space-2);
   padding: 0;
   overflow: hidden;
   border: 0;
@@ -278,7 +294,12 @@
   cursor: pointer;
   transition:
     translate var(--duration-fast) var(--ease-out),
-    box-shadow var(--duration-fast) var(--ease-out);
+    box-shadow var(--duration-fast) var(--ease-out),
+    opacity var(--duration-normal) var(--ease-out);
+}
+
+.deck-tray:not([data-active='true']) .deck-tray__sleeve {
+  opacity: 0.7;
 }
 
 .deck-tray__sleeve img {
@@ -292,6 +313,7 @@
   .deck-tray__sleeve:hover {
     translate: 0 -2px;
     box-shadow: 0 4px 8px rgb(0 0 0 / 0.35);
+    opacity: 1;
   }
 }
 
@@ -328,7 +350,7 @@
   padding-inline: var(--space-3) var(--space-4);
 }
 
-/* The page under the bar: flat, the chosen seat's colour washing down
+/* The page under the bar: flat, the chosen seat's colour a faint glow down
    its top. */
 .deck-screen__body {
   position: relative;
@@ -345,13 +367,9 @@
   position: absolute;
   inset: 0 0 auto;
   z-index: -1;
-  height: 180px;
+  height: 140px;
   /* The colour fades down the page by its mask, so the colour alone eases. */
-  background-color: color-mix(
-    in oklab,
-    var(--deck-seat-color) 12%,
-    transparent
-  );
+  background-color: color-mix(in oklab, var(--deck-seat-color) 7%, transparent);
   mask-image: linear-gradient(180deg, #000, transparent);
   pointer-events: none;
   transition: background-color var(--duration-normal) var(--ease-out);
@@ -1049,35 +1067,40 @@
   font-size: var(--text-xs);
 }
 
-/* ---- Decks as compact cards ---------------------------------------------- */
+/* ---- Decks as tiles of their art (§19) ----------------------------------- */
 
+/* As many to a row as fit at a readable size: six on a laptop's page, two
+   on a phone. */
 .deck-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(256px, 1fr));
-  gap: var(--space-2-5, 10px);
+  grid-template-columns: repeat(auto-fill, minmax(184px, 1fr));
+  gap: var(--space-4) var(--space-3);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-/* A deck: its cover card on its stack, its name over its format and size,
-   its own tools at the end. Bordered and quiet; the deck on the seat being
-   worked on is tinted and ringed in the seat's colour. */
+/* A deck: its cover's art across its head, its name and what is said of
+   it under that, its own tools over the art's corner. The deck on the seat
+   being worked on is ringed in the seat's colour. */
 .deck-tile {
   --seat-color: var(--color-you);
   --seat-ink: color-mix(in oklab, var(--seat-color) 74%, var(--color-text));
 
   position: relative;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   min-width: 0;
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
+  overflow: hidden;
+  border-radius: 14px;
   background-color: var(--deck-panel);
+  box-shadow:
+    0 0 0 1px var(--color-border),
+    var(--shadow-1);
   transition:
-    background-color var(--duration-fast) var(--ease-out),
-    border-color var(--duration-fast) var(--ease-out),
-    box-shadow var(--duration-fast) var(--ease-out);
+    translate var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out),
+    background-color var(--duration-fast) var(--ease-out);
 }
 
 .deck-screen[data-seat='opponent'] .deck-tile {
@@ -1086,32 +1109,31 @@
 
 @media (hover: hover) and (pointer: fine) {
   .deck-tile:hover {
-    border-color: var(--color-border-strong);
+    translate: 0 -2px;
     background-color: var(--color-surface-2);
-    box-shadow: var(--shadow-2);
+    box-shadow:
+      0 0 0 1px var(--color-border-strong),
+      var(--shadow-2);
+  }
+
+  .deck-tile:hover .deck-box__window img {
+    scale: 1.04;
   }
 }
 
 .deck-tile[data-current='true'] {
-  border-color: var(--seat-color);
-  background-color: color-mix(
-    in oklab,
-    var(--seat-color) 12%,
-    var(--deck-panel)
-  );
-  box-shadow: 0 0 0 1px var(--seat-color);
+  box-shadow:
+    0 0 0 2px var(--seat-color),
+    var(--shadow-2);
 }
 
 .deck-tile__choose {
-  position: relative;
   display: flex;
   flex: 1;
-  align-items: center;
-  gap: var(--space-3);
+  flex-direction: column;
+  align-items: stretch;
   min-width: 0;
-  min-height: 78px;
-  padding: var(--space-2-5, 10px) var(--space-2) var(--space-2-5, 10px)
-    var(--space-3);
+  padding: 0;
   border: 0;
   border-radius: inherit;
   background: transparent;
@@ -1125,15 +1147,39 @@ div.deck-tile__choose {
   cursor: default;
 }
 
+/* Inside the tile, which clips its corners. */
 .deck-tile__choose:focus-visible {
   outline: 2px solid var(--ptcgsim-focus-ring);
-  outline-offset: 2px;
+  outline-offset: -3px;
 }
 
-.deck-tile__choose > .deck-box {
-  --box-width: 40px;
+/* The art, the full width of the tile; shaded at its top so the badges and
+   tools over it read on any picture. */
+.deck-tile__art {
+  position: relative;
+  display: block;
+}
 
-  margin-inline-end: 4px;
+.deck-tile__art > .deck-box {
+  --box-radius: 0;
+}
+
+.deck-tile__art::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgb(0 0 0 / 0.34),
+    transparent 44%,
+    transparent 78%,
+    rgb(0 0 0 / 0.18)
+  );
+  pointer-events: none;
+}
+
+.deck-box__window img {
+  transition: scale var(--duration-normal) var(--ease-out);
 }
 
 .deck-tile__text {
@@ -1141,18 +1187,17 @@ div.deck-tile__choose {
   flex: 1;
   flex-direction: column;
   align-items: flex-start;
-  gap: 3px;
+  gap: 4px;
   min-width: 0;
+  padding: var(--space-2-5, 10px) var(--space-3) var(--space-3);
 }
 
 /* Renamed in place: the field lies over the name, which steps aside. */
 .deck-tile__rename {
   position: absolute;
-  top: 50%;
-  inset-inline: 66px 76px;
-  z-index: 2;
+  z-index: 3;
   height: 32px;
-  translate: 0 -50%;
+  translate: -9px -6px;
   padding-inline: var(--space-2);
   font-size: var(--text-md);
   font-weight: var(--weight-semibold);
@@ -1179,13 +1224,19 @@ div.deck-tile__choose {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 3px var(--space-2);
+  gap: 2px var(--space-2);
   color: var(--color-text-muted);
   font-size: var(--text-xs);
 }
 
 .deck-tile__format {
   font-weight: var(--weight-medium);
+}
+
+.deck-tile__state {
+  display: inline-flex;
+  gap: var(--space-2);
+  white-space: nowrap;
 }
 
 .deck-tile__count,
@@ -1214,22 +1265,37 @@ div.deck-tile__choose {
   color: color-mix(in oklab, var(--color-gold) 70%, var(--color-warning));
 }
 
-/* What a press does, in the seat's colour, as it is pointed at or reached. */
+/* What a press does, over the art in the seat's colour, as it is pointed
+   at or reached: "Use on P1". */
 .deck-tile__use {
-  color: var(--seat-ink);
+  position: absolute;
+  inset-inline-start: var(--space-2);
+  bottom: var(--space-2);
+  z-index: 1;
+  padding: 3px 9px;
+  border-radius: var(--radius-pill);
+  background: var(--seat-color);
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.3);
+  color: var(--deck-seat-chip-ink);
+  font-size: var(--text-xs);
   font-weight: var(--weight-bold);
   opacity: 0;
-  transition: opacity var(--duration-fast) var(--ease-out);
+  translate: 0 4px;
+  transition:
+    opacity var(--duration-fast) var(--ease-out),
+    translate var(--duration-fast) var(--ease-out);
 }
 
 @media (hover: hover) and (pointer: fine) {
   .deck-tile__choose:hover .deck-tile__use {
     opacity: 1;
+    translate: 0 0;
   }
 }
 
 .deck-tile__choose:focus-visible .deck-tile__use {
   opacity: 1;
+  translate: 0 0;
 }
 
 @media (hover: none) {
@@ -1238,54 +1304,68 @@ div.deck-tile__choose {
   }
 }
 
-/* The seats a deck is on: small tags in their colours. */
+/* The seats a deck is on: badges in their colours over the art's corner. */
 .deck-tile__seats {
+  position: absolute;
+  top: var(--space-2);
+  inset-inline-start: var(--space-2);
+  z-index: 1;
   display: inline-flex;
   gap: var(--space-1);
 }
 
 .deck-tile__seat {
-  --tag-color: var(--color-you);
+  --tag-color: var(--seat-color);
 
-  padding: 1px 7px;
+  padding: 2px 8px;
   border-radius: var(--radius-pill);
-  background: color-mix(in oklab, var(--tag-color) 20%, transparent);
-  color: color-mix(in oklab, var(--tag-color) 70%, var(--color-text));
+  background: var(--tag-color);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.3);
+  color: var(--deck-seat-chip-ink);
   font-size: var(--text-2xs);
   font-weight: var(--weight-bold);
   letter-spacing: 0.02em;
+}
+
+.deck-tile__seat[data-seat='self'] {
+  --tag-color: var(--color-you);
 }
 
 .deck-tile__seat[data-seat='opponent'] {
   --tag-color: var(--color-opponent);
 }
 
-/* The deck's own tools, at its end: quiet until pointed at. */
+/* The deck's own tools, over the art's far corner: small dark glass, so
+   they read on any picture. */
 .deck-tile__actions {
+  position: absolute;
+  top: 6px;
+  inset-inline-end: 6px;
+  z-index: 2;
   display: flex;
-  flex: none;
-  align-self: stretch;
-  align-items: center;
-  gap: 2px;
-  padding-inline-end: var(--space-2);
+  gap: 4px;
 }
 
 .deck-tile .deck-icon-button {
   width: 30px;
   height: 30px;
-  border-radius: 8px;
-  color: var(--color-text-faint);
+  border-radius: 9px;
+  background: rgb(18 13 10 / 0.5);
+  color: rgb(255 255 255 / 0.92);
+  backdrop-filter: blur(6px);
+  transition: background-color var(--duration-fast) var(--ease-out);
 }
 
 @media (hover: hover) and (pointer: fine) {
   .deck-tile .deck-icon-button:hover {
-    background: var(--color-surface-pressed);
-    color: var(--color-text);
+    background: rgb(18 13 10 / 0.78);
+    color: #fff;
   }
+}
 
-  .deck-tile:hover .deck-icon-button {
-    color: var(--color-text-muted);
-  }
+.deck-tile .deck-icon-button:focus-visible {
+  outline-color: #fff;
+  outline-offset: 1px;
 }
 
 /* ---- Editor -------------------------------------------------------------- */
@@ -3224,31 +3304,29 @@ button.deck-check__issue {
     min-height: 0;
   }
 
+  /* The two slots share the row under Back and Play, half each. */
   .deck-screen__seats {
     order: 3;
     flex: 1 1 100%;
+    margin-inline: 0;
   }
 
-  /* A seat's tab: its seat and size over its deck's name. */
+  .deck-tray {
+    flex: 1 1 0;
+  }
+
   .deck-screen__seat {
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    grid-template-areas:
-      'art tag count'
-      'art name name';
-    min-height: 46px;
+    gap: var(--space-2);
+    min-height: 48px;
   }
 
   .deck-screen__seat-name {
     font-size: var(--text-sm);
   }
 
-  .deck-tray__finish {
-    display: none;
-  }
-
   .deck-tray__sleeve {
-    width: 26px;
-    height: 36px;
+    width: 24px;
+    height: 34px;
   }
 
   .deck-home,
@@ -3575,11 +3653,12 @@ button.deck-check__issue {
   }
 
   .deck-screen__seat {
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-areas:
-      'tag count'
-      'name name';
     min-height: 40px;
+    padding-inline-start: var(--space-2);
+  }
+
+  .deck-tray::after {
+    inset-inline: 10px;
   }
 
   .deck-screen__play {
@@ -3636,17 +3715,18 @@ button.deck-check__issue {
     white-space: normal;
   }
 
-  /* A phone's segment: no cover, the seat and size over the name. */
+  /* A phone's slot: no art, the seat over the name. */
   .deck-screen__seat {
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-areas:
-      'tag count'
-      'name name';
-    padding-inline: var(--space-2) var(--space-1);
+    padding-inline: var(--space-2-5, 10px) var(--space-1);
   }
 
   .deck-screen__seat > .deck-box,
   .deck-screen__seat > .deck-tray__empty {
+    display: none;
+  }
+
+  /* The finish steps aside for the name on a phone's half-width slot. */
+  .deck-tray__finish {
     display: none;
   }
 
@@ -3694,19 +3774,23 @@ button.deck-check__issue {
     display: block;
   }
 
-  /* One deck to a row: a list. */
+  /* Two decks to a row. */
   .deck-grid {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--space-2);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3) var(--space-2-5, 10px);
   }
 
-  .deck-tile__choose {
-    min-height: 68px;
-    padding-block: var(--space-2);
+  .deck-tile__text {
+    padding: var(--space-2) var(--space-2-5, 10px) var(--space-2-5, 10px);
   }
 
-  .deck-tile__choose > .deck-box {
-    --box-width: 36px;
+  .deck-tile__name {
+    font-size: var(--text-sm);
+  }
+
+  .deck-tile .deck-icon-button {
+    width: 28px;
+    height: 28px;
   }
 }
 

@@ -1131,6 +1131,7 @@ export const DeckScreen = ({
                 className="deck-tray"
                 data-seat={slotTarget === 'main' ? 'self' : 'opponent'}
                 data-active={selected ? 'true' : undefined}
+                data-empty={total === 0 ? 'true' : undefined}
               >
                 <Tooltip
                   content={
@@ -1195,26 +1196,31 @@ export const DeckScreen = ({
                     ) : (
                       <span className="deck-tray__empty" aria-hidden="true" />
                     )}
+                    {/* The seat, then what is said of its deck: its size
+                        while it is short of a deck, else its finish. */}
                     <span className="deck-tray__text">
                       <span className="deck-tray__line">
                         <span className="deck-screen__seat-tag">
                           {SEAT_NAMES[slotTarget]}
                         </span>
-                        <span className="deck-screen__seat-name">{title}</span>
+                        {total > 0 ? (
+                          <span
+                            className="deck-screen__seat-count ds-number"
+                            data-complete={
+                              total === DECK_FORMATS[slotFormat].deckSize ||
+                              undefined
+                            }
+                          >
+                            {total}/{DECK_FORMATS[slotFormat].deckSize}
+                          </span>
+                        ) : null}
+                        {finish ? (
+                          <span className="deck-tray__finish">
+                            {wordFinish(finish)}
+                          </span>
+                        ) : null}
                       </span>
-                      {finish ? (
-                        <span className="deck-tray__finish">
-                          {wordFinish(finish)}
-                        </span>
-                      ) : null}
-                    </span>
-                    <span
-                      className="deck-screen__seat-count ds-number"
-                      data-complete={
-                        total === DECK_FORMATS[slotFormat].deckSize || undefined
-                      }
-                    >
-                      {total}
+                      <span className="deck-screen__seat-name">{title}</span>
                     </span>
                   </button>
                 </Tooltip>

@@ -113,17 +113,18 @@ describe('warming the deck screen up', () => {
       warm,
     });
     await new Promise((resolve) => setTimeout(resolve, 0));
-    // The catalog is still loading: the saved deck's cover is already asked.
+    // The catalog is still loading: the saved deck's cover is already asked
+    // -- the full scan, which a tile's art banner draws.
     expect(catalogs.asked).toEqual(['prefetch']);
-    expect(warmed).toEqual([[card('OBF 125').imageSmall]]);
+    expect(warmed).toEqual([[card('OBF 125').image]]);
 
     catalogs.ready(catalog);
     await done;
     // The tournament list's cover, then the classic season's that shows.
     expect(warmed[1]).toEqual([
-      card('OBF 125').imageSmall,
-      card('TWM 130').imageSmall,
-      card('SVI 86').imageSmall,
+      card('OBF 125').image,
+      card('TWM 130').image,
+      card('SVI 86').image,
     ]);
     // Then what a new deck's search grid opens on.
     expect(warmed[2]!.length).toBeGreaterThan(0);
@@ -145,9 +146,6 @@ describe('warming the deck screen up', () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
     catalogs.fail();
     await done;
-    expect(warmed).toEqual([
-      [card('OBF 125').imageSmall],
-      [card('OBF 125').imageSmall],
-    ]);
+    expect(warmed).toEqual([[card('OBF 125').image], [card('OBF 125').image]]);
   });
 });

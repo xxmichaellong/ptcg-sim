@@ -1297,6 +1297,47 @@ describe('the seat trays', () => {
     );
   });
 
+  it('say a short deck’s count against its size, a whole one’s finish, and mark an empty seat', async () => {
+    const library = new DeckLibrary({ backend: null });
+    library.create({
+      name: 'Half deck',
+      format: 'standard',
+      cards: [{ card: card('mew-16', 'Pidgey'), count: 30 }],
+    });
+    library.create({
+      name: 'Dragapult — 1st of 232',
+      format: 'standard',
+      cards: [{ card: card('twm-130', 'Dragapult ex'), count: 60 }],
+    });
+    await render(vi.fn(), library);
+    const slot = () => host.querySelector('#nativeDeckBuilderTargetMain')!;
+    const tray = () => slot().closest('.deck-tray')!;
+    // Nothing on the seat yet: an empty slot, the seat chosen.
+    expect(tray().getAttribute('data-empty')).toBe('true');
+    expect(tray().getAttribute('data-active')).toBe('true');
+    expect(slot().getAttribute('aria-pressed')).toBe('true');
+    expect(slot().querySelector('.deck-screen__seat-count')).toBeNull();
+    // Short of a deck: its count against the format's size, no finish.
+    await putOn('Half deck');
+    const count = slot().querySelector('.deck-screen__seat-count')!;
+    expect(count.textContent).toBe('30/60');
+    expect(count.hasAttribute('data-complete')).toBe(false);
+    expect(tray().hasAttribute('data-empty')).toBe(false);
+    // A whole deck with a finish: the name, and the finish beside the seat.
+    await putOn('Dragapult — 1st of 232');
+    expect(
+      slot()
+        .querySelector('.deck-screen__seat-count')
+        ?.getAttribute('data-complete')
+    ).toBe('true');
+    expect(slot().querySelector('.deck-screen__seat-name')?.textContent).toBe(
+      'Dragapult'
+    );
+    expect(slot().querySelector('.deck-tray__finish')?.textContent).toBe(
+      '1st of 232'
+    );
+  });
+
   it('count a deck complete at its own format’s size', async () => {
     const library = new DeckLibrary({ backend: null });
     library.create({

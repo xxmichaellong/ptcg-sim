@@ -4,7 +4,7 @@ import { basicEnergyTypeOf, hasRuleBox } from '@ptcgsim/deck-core';
 import type { CSSProperties } from 'react';
 
 import { CardImage } from './CardImage.js';
-import { deckCardImageOf } from './deck-home-covers.js';
+import { deckCoverImageOf } from './deck-home-covers.js';
 import './deck-box.css';
 
 /** The basic Energy types a deck box can wear the colour of. */
@@ -68,11 +68,6 @@ export const deckBoxToneOf = (
 };
 
 /**
- * A deck box on the desk (ADR-033 §13): a plastic box in the deck's colour,
- * its lid closed, the cover card showing through a window in its front.
- * Only a picture -- the button around it carries the name and the action.
- */
-/**
  * The first character a reader sees, as a capital in the page's language:
  * a whole flag, family or accented letter (a grapheme), never a part of
  * one, and never an invisible mark or space before it.
@@ -91,6 +86,14 @@ const initialOf = (text: string): string => {
   return first.toLocaleUpperCase(locale);
 };
 
+/**
+ * A deck as its cover's art (ADR-033 §19): the illustration of its cover
+ * card, cropped to a 16:10 window, at the head of its tile on the shelves
+ * and small in a seat's switch -- the same shape, so a deck put on a seat
+ * flies from one to the other (deck-box-flight.ts). A deck with no cover
+ * shows its initial on its colour (the basic Energy it plays most of).
+ * Only a picture: the button around it carries the name and the action.
+ */
 export const DeckBox = ({
   cover,
   name,
@@ -102,9 +105,9 @@ export const DeckBox = ({
   readonly cover: DeckCard | undefined;
   readonly name: string;
   readonly tone?: DeckBoxTone | undefined;
-  /** A box on a shelf, or the small one in a seat's tray. */
+  /** At the head of a deck's tile, or small in a seat's switch. */
   readonly size?: 'shelf' | 'tray';
-  /** Not playable as it stands (size or legality): a red tab on the lid. */
+  /** Not playable as it stands (size or legality): a warning dot. */
   readonly invalid?: boolean;
   readonly style?: CSSProperties;
 }) => (
@@ -116,31 +119,23 @@ export const DeckBox = ({
     aria-hidden="true"
     style={style}
   >
-    <span className="deck-box__body">
-      <span className="deck-box__side" />
-      <span className="deck-box__top" />
-      <span className="deck-box__front">
-        <span className="deck-box__lid" />
-        <span
-          className="deck-box__window"
-          // Rule-box prints are full art, their Pokémon lower than a plain card's.
-          data-full-art={cover && hasRuleBox(cover) ? 'true' : undefined}
-        >
-          {cover ? (
-            <CardImage
-              {...deckCardImageOf(cover)}
-              alt=""
-              loading="lazy"
-              decoding="async"
-              draggable={false}
-            />
-          ) : (
-            <span className="deck-box__initial">{initialOf(name)}</span>
-          )}
-        </span>
-        <span className="deck-box__gloss" />
-      </span>
-      {invalid ? <span className="deck-box__tab" /> : null}
+    <span
+      className="deck-box__window"
+      // Rule-box prints are full art, their Pokémon lower than a plain card's.
+      data-full-art={cover && hasRuleBox(cover) ? 'true' : undefined}
+    >
+      {cover ? (
+        <CardImage
+          {...deckCoverImageOf(cover, size)}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          draggable={false}
+        />
+      ) : (
+        <span className="deck-box__initial">{initialOf(name)}</span>
+      )}
     </span>
+    {invalid ? <span className="deck-box__tab" /> : null}
   </span>
 );

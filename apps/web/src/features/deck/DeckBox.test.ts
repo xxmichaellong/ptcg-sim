@@ -1,6 +1,9 @@
+// @vitest-environment happy-dom
+
 import { i18n } from '@lingui/core';
 import type { DeckCard, DeckList } from '@ptcgsim/deck-core';
-import { createElement } from 'react';
+import { act, createElement } from 'react';
+import { createRoot } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 
@@ -19,6 +22,43 @@ const card = (
 ): DeckCard => ({ id, name, category, image: `/${id}.png` });
 
 describe('a deck box', () => {
+  it("draws its cover's art: the full scan on a tile, the thumbnail on a seat, a rule-box print's lower", async () => {
+    globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+    const cover: DeckCard = {
+      id: 'TWM 130',
+      name: 'Dragapult ex',
+      category: 'Pokémon',
+      image: 'https://assets.tcgdex.net/en/sv/sv06/130/high.webp',
+      imageSmall: 'https://assets.tcgdex.net/en/sv/sv06/130/low.webp',
+    };
+    const markup = async (size: 'shelf' | 'tray', card: DeckCard = cover) => {
+      const host = document.createElement('div');
+      const root = createRoot(host);
+      await act(async () =>
+        root.render(
+          createElement(DeckBox, { cover: card, name: card.name, size })
+        )
+      );
+      const html = host.innerHTML;
+      await act(async () => root.unmount());
+      return html;
+    };
+    // A tile's banner is the card shown larger than its thumbnail.
+    expect(await markup('shelf')).toContain('130/high.webp');
+    expect(await markup('tray')).toContain('130/low.webp');
+    // An ex is art from edge to edge: its window opens lower down.
+    expect(await markup('shelf')).toContain('data-full-art="true"');
+    expect(
+      await markup('shelf', { ...cover, id: 'TWM 128', name: 'Dreepy' })
+    ).not.toContain('data-full-art');
+    // No cover: the deck's initial, no picture.
+    const empty = renderToStaticMarkup(
+      createElement(DeckBox, { cover: undefined, name: 'Dragapult' })
+    );
+    expect(empty).toContain('data-empty="true"');
+    expect(empty).not.toContain('<img');
+  });
+
   it('shows a whole first character on a box with no cover, an emoji too', () => {
     const initial = (name: string) =>
       /class="deck-box__initial">([^<]*)</u.exec(

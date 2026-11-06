@@ -152,6 +152,19 @@ export const deckCardImageOf = (card: DeckCard): WarmCardImage => ({
 });
 
 /**
+ * A deck's cover as its art is drawn (DeckBox): a tile's wide banner, a
+ * crop of the card shown larger than the card's thumbnail, needs the full
+ * scan to stay sharp on a dense screen; a seat's small one, the thumbnail.
+ */
+export const deckCoverImageOf = (
+  card: DeckCard,
+  size: 'shelf' | 'tray'
+): WarmCardImage =>
+  size === 'tray'
+    ? deckCardImageOf(card)
+    : { src: card.image, fallback: limitlessScanOf(card, 'full') };
+
+/**
  * The covers the deck screen's home shows when it opens, top to bottom:
  * the saved decks, then the current lists, then the first classic season.
  */
@@ -174,5 +187,5 @@ export const homeCoverImages = ({
     ...lists.map(
       (list) => resolveListCover(catalog, list.decklist, list.name).cover
     ),
-  ].flatMap((card) => (card ? [deckCardImageOf(card)] : []));
+  ].flatMap((card) => (card ? [deckCoverImageOf(card, 'shelf')] : []));
 };

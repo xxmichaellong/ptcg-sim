@@ -1,52 +1,42 @@
 /*
- * A deck (DeckBox.tsx): its cover card, whole and small, on the edges of
- * the cards under it in the deck's colour, as a deck lies on a table. On a
- * deck's tile and in a seat's switch alike, the same card shape, so a deck
- * put on a seat flies from one to the other without changing shape
- * (deck-box-flight.ts). A deck with no cover shows its initial on its
- * colour (the basic Energy it plays most of).
+ * A deck (DeckBox.tsx, ADR-033 §19): its cover card's illustration in a
+ * 16:10 window -- the head of its tile on the shelves, small in a seat's
+ * switch. The same shape at both sizes, so a deck put on a seat flies from
+ * one to the other only growing or shrinking (deck-box-flight.ts). A deck
+ * with no cover shows its initial on its colour (the basic Energy it plays
+ * most of).
  *
- *   --box-color   the deck's colour: the cards under the cover, and the
- *                 face of a missing one
- *   --box-width   the cover's width
+ *   --box-color   the deck's colour, behind a missing cover
+ *   --box-width   the window's width (a tile's fills the tile)
+ *   --box-radius  its corners
  */
 
 .deck-box {
   --box-color: #5a4c41;
-  --box-under: color-mix(in oklab, var(--box-color) 82%, black);
 
   position: relative;
   display: block;
   flex: none;
-  width: var(--box-width, 46px);
-  aspect-ratio: 63 / 88;
-  border-radius: var(--box-radius, 4px);
+  width: var(--box-width, 100%);
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border-radius: var(--box-radius, 6px);
   background:
     radial-gradient(
-      ellipse 90% 70% at 30% 20%,
-      color-mix(in oklab, var(--box-color) 70%, white),
+      ellipse 80% 90% at 30% 15%,
+      color-mix(in oklab, var(--box-color) 62%, white),
       transparent 70%
     ),
     var(--box-color);
-  /* The two cards under the cover, their edges showing below and beside. */
-  box-shadow:
-    0 1px 2px rgb(0 0 0 / 0.35),
-    2px 2px 0 -0.5px var(--box-under),
-    2px 2px 0 0 rgb(0 0 0 / 0.25),
-    4px 4px 0 -1px color-mix(in oklab, var(--box-under) 80%, black),
-    4px 4px 1px -0.5px rgb(0 0 0 / 0.3);
   pointer-events: none;
   isolation: isolate;
 }
 
 .deck-box[data-size='tray'] {
-  --box-width: 30px;
-  --box-radius: 3px;
+  --box-width: 64px;
+  --box-radius: 6px;
 
-  box-shadow:
-    0 1px 2px rgb(0 0 0 / 0.35),
-    1.5px 1.5px 0 -0.5px var(--box-under),
-    3px 3px 0 -1px color-mix(in oklab, var(--box-under) 80%, black);
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.18);
 }
 
 .deck-box[data-tone='Grass'] {
@@ -77,64 +67,89 @@
   --box-color: #b35b86;
 }
 
-/* The parts the box once drew: only the window onto its cover is left. */
-.deck-box__body,
-.deck-box__front,
 .deck-box__window {
   position: absolute;
   inset: 0;
   display: block;
+  overflow: hidden;
   border-radius: inherit;
 }
 
-.deck-box__window {
-  overflow: hidden;
-}
-
-.deck-box__side,
-.deck-box__top,
-.deck-box__lid,
-.deck-box__gloss {
-  display: none;
-}
-
-/* The whole card, never a crop of its art. */
+/*
+ * The card's illustration: the card drawn 1.4 times the window's width, so
+ * the middle of its art box fills it, and lifted so the window opens 11%
+ * of the way down the card -- just inside the art box's top edge, under
+ * the name. 16:10 then reaches 43% of the way down, inside the art box's
+ * foot in every era's frame (measured: 44-47%), short of the line under it
+ * and the attacks.
+ */
 .deck-box__window img {
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: -20%;
+  width: 140%;
+  height: auto;
+  aspect-ratio: 63 / 88;
+  object-fit: cover;
+  translate: 0 -11%;
+}
+
+/* A rule-box print (ex, V, GX) is art from edge to edge, a Tera one with
+   its rule printed under the name (to 16% down): the window opens under
+   that, on the Pokémon, and ends at 47%, above the bar over the attacks
+   (48%). */
+.deck-box__window[data-full-art='true'] img {
+  left: -22.5%;
+  width: 145%;
+  translate: 0 -16%;
+}
+
+/* No scan to be had: the blank card's own outline, whole. */
+.deck-box__window img[data-image-missing] {
+  left: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  aspect-ratio: auto;
+  object-fit: contain;
+  translate: none;
 }
 
 .deck-box__initial {
   display: grid;
   place-items: center;
   height: 100%;
-  color: rgb(255 255 255 / 0.75);
+  color: rgb(255 255 255 / 0.8);
   font-family: var(--font-display);
-  font-size: calc(var(--box-width, 46px) * 0.42);
+  font-size: calc(var(--box-font, 2.6rem));
   font-weight: var(--weight-bold);
+  text-shadow: 0 1px 2px rgb(0 0 0 / 0.25);
+}
+
+.deck-box[data-size='tray'] .deck-box__initial {
+  --box-font: 1.1rem;
 }
 
 /* A deck that can't be played as it stands: a warning dot on its corner. */
 .deck-box__tab {
   position: absolute;
-  top: -3px;
-  inset-inline-end: -3px;
+  top: 6px;
+  inset-inline-end: 6px;
   z-index: 1;
   width: 10px;
   height: 10px;
   border-radius: 50%;
   background: var(--color-warning);
   box-shadow:
-    0 0 0 2px var(--color-surface-1),
+    0 0 0 2px rgb(0 0 0 / 0.35),
     0 1px 3px rgb(0 0 0 / 0.4);
 }
 
 .deck-box[data-size='tray'] .deck-box__tab {
-  width: 8px;
-  height: 8px;
+  top: 3px;
+  inset-inline-end: 3px;
+  width: 7px;
+  height: 7px;
+  box-shadow: 0 0 0 1.5px rgb(0 0 0 / 0.35);
 }
 
 /* A cover on its way to a seat (deck-box-flight.ts): lifted, shadowed. */

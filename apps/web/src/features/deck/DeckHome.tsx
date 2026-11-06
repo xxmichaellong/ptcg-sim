@@ -303,12 +303,15 @@ const SavedDeckTile = ({
         onClick={onChoose}
         onDoubleClick={onEdit}
       >
-        <DeckBox
-          cover={cover}
-          name={deckName}
-          tone={tone}
-          invalid={!check.valid}
-        />
+        <span className="deck-tile__art">
+          <DeckBox
+            cover={cover}
+            name={deckName}
+            tone={tone}
+            invalid={!check.valid}
+          />
+          {current ? null : <UseOnSeat seat={seat} />}
+        </span>
         <span className="deck-tile__text">
           <span
             ref={nameText}
@@ -341,7 +344,6 @@ const SavedDeckTile = ({
               )}
             </span>
             <SeatBadges seats={seats} deckId={deck.id} />
-            {current ? null : <UseOnSeat seat={seat} />}
           </span>
           {lastUsed ? (
             <span className="deck-tile__note">
@@ -447,7 +449,8 @@ const UnsavedSeatTile = ({
   const total = deckTotals(slot.deck).total;
   const name = wordName(slot.label?.name ?? t`Unsaved deck`);
   const seat = SEAT_NAMES[target];
-  const [title] = splitFinish(slot.label?.name ?? name);
+  // Its name over its finish, as the lists it came from show them.
+  const [title, finish] = splitFinish(slot.label?.name ?? name);
   return (
     <li className="deck-tile" data-current="true" data-unsaved="true">
       <div
@@ -455,19 +458,34 @@ const UnsavedSeatTile = ({
         role="group"
         aria-label={t`${name} on ${seat}`}
       >
-        <DeckBox
-          cover={coverCardOf(slot.deck, title)}
-          name={title}
-          tone={deckBoxToneOf(slot.deck)}
-        />
+        <span className="deck-tile__art">
+          <DeckBox
+            cover={coverCardOf(slot.deck, title)}
+            name={title}
+            tone={deckBoxToneOf(slot.deck)}
+          />
+        </span>
         <span className="deck-tile__text">
-          <span className="deck-tile__name">{name}</span>
+          <span className="deck-tile__name">{title}</span>
           <span className="deck-tile__meta">
-            <span className="deck-tile__format">
-              <Trans>Not saved</Trans>
-            </span>
-            <span className="deck-tile__count ds-number">
-              {t`${plural(total, { one: '# card', other: '# cards' })}`}
+            {finish ? (
+              <span className="deck-tile__finish">
+                <TrophyIcon
+                  {...decorative}
+                  weight="fill"
+                  className="deck-tile__trophy"
+                />
+                {wordFinish(finish)}
+              </span>
+            ) : null}
+            {/* Kept together on one line. */}
+            <span className="deck-tile__state">
+              <span className="deck-tile__format">
+                <Trans>Not saved</Trans>
+              </span>
+              <span className="deck-tile__count ds-number">
+                {t`${plural(total, { one: '# card', other: '# cards' })}`}
+              </span>
             </span>
             <span className="deck-tile__seats">
               <span
@@ -563,7 +581,10 @@ const ListDeckTile = ({
         aria-label={t`${name}: try it`}
         onClick={onTry}
       >
-        <DeckBox cover={cover} name={title} tone={tone} />
+        <span className="deck-tile__art">
+          <DeckBox cover={cover} name={title} tone={tone} />
+          {current ? null : <UseOnSeat seat={seat} />}
+        </span>
         <span className="deck-tile__text">
           <span className="deck-tile__name">{title}</span>
           <span className="deck-tile__meta">
@@ -577,7 +598,15 @@ const ListDeckTile = ({
                 {wordFinish(finish)}
               </span>
             ) : null}
-            {current ? null : <UseOnSeat seat={seat} />}
+            {current ? (
+              <span className="deck-tile__seats">
+                <span className="deck-tile__seat">
+                  <Trans comment="A badge on a deck: the seat it is on (P1, P2)">
+                    On {seat}
+                  </Trans>
+                </span>
+              </span>
+            ) : null}
           </span>
         </span>
       </button>
