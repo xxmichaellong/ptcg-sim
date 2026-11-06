@@ -119,6 +119,7 @@ export interface BoardProjectionFrame {
    * the frame withdraws (`rollback`).
    */
   readonly motionHint?: 'predict' | 'rollback';
+  readonly redeals?: BoardSceneMotion['redeals'];
 }
 
 export type BoardPreviewState =
@@ -1672,7 +1673,15 @@ const installFrame = (
       : installMode === 'advance' || frame.boundary === 'refresh'
         ? { cause: 'advance' }
         : { cause: 'replace' };
-  effects.push({ kind: 'InstallScene', scene, mode: installMode, motion });
+  effects.push({
+    kind: 'InstallScene',
+    scene,
+    mode: installMode,
+    motion:
+      motion.cause === 'advance' && frame.redeals?.length
+        ? { ...motion, redeals: frame.redeals }
+        : motion,
+  });
   if (!samePresentation(state.presentation, next.presentation)) {
     effects.push({
       kind: 'InstallPresentation',

@@ -1163,9 +1163,9 @@ it('lets a card flying into a deck land before the deck is riffled', () => {
   advance(250);
   expect(pile.style.opacity).not.toBe('0');
   // Landed, the deck is riffled.
-  for (let at = 266; at <= 700; at += 16) advance(at);
+  for (let at = 266; at <= 1000; at += 16) advance(at);
   expect(pile.style.opacity).toBe('0');
-  for (let at = 716; at <= 2400; at += 16) advance(at);
+  for (let at = 1016; at <= 2800; at += 16) advance(at);
   expect(pile.style.opacity).toBe('');
   expect(director.active).toBe(false);
   director.destroy();

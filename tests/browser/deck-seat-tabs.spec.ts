@@ -43,7 +43,7 @@ const seatPaint = (page: Page) =>
     const probe = (property: 'color' | 'backgroundColor', value: string) => {
       const node = document.createElement('span');
       node.style[property] = value;
-      screen.append(node);
+      screen.querySelector('.deck-screen__bar')!.append(node);
       const style = getComputedStyle(node);
       const computed =
         property === 'color' ? style.color : style.backgroundColor;
@@ -65,13 +65,6 @@ const seatPaint = (page: Page) =>
         'color',
         `color-mix(in oklab, var(${token}) 74%, var(--color-text))`
       );
-    // The chosen slot sits raised on the panel the theme's controls rise to.
-    const raised = probe(
-      'backgroundColor',
-      document.documentElement.dataset.theme === 'day'
-        ? 'var(--color-surface-2)'
-        : 'var(--color-surface-3)'
-    );
     // Nothing painted, whatever colour a fade left it at.
     const clear = (value: string): string =>
       /^rgba\([^)]*,\s*0\)$/u.test(value) ? 'transparent' : value;
@@ -87,6 +80,7 @@ const seatPaint = (page: Page) =>
         active: node.getAttribute('data-active') === 'true',
         background: clear(style.backgroundColor),
         border: style.borderTopWidth,
+        borderColour: style.borderTopColor,
         underline: Number(underline.opacity),
         underlineColour: underline.backgroundColor,
         tag: tag.color,
@@ -102,7 +96,9 @@ const seatPaint = (page: Page) =>
       opponentGlow: glowOf('--color-opponent'),
       youInk: ink('--color-you'),
       opponentInk: ink('--color-opponent'),
-      raised,
+      header: getComputedStyle(document.querySelector('.deck-screen__bar')!)
+        .backgroundColor,
+      page: getComputedStyle(screen).backgroundColor,
       glow: glow.backgroundColor,
       line: line.content,
       main: tray('nativeDeckBuilderTargetMain'),
@@ -120,15 +116,16 @@ for (const [name, width, height] of [
     test.setTimeout(120_000);
     await openDeckScreen(page, width, height);
 
-    // P1 chosen: its slot raised, underlined and its seat on a chip in its
-    // colour, the page glowing with it below; P2's flat, no line, its seat
-    // named in its colour. No border round a slot, no line under the bar.
+    // Both seats have distinct tints. The selected seat has the stronger
+    // fill, a border and underline in its colour, and a matching chip.
     await expect
       .poll(async () => {
         const paint = await seatPaint(page);
         return (
           paint.glow === paint.youGlow &&
-          paint.main.background === paint.raised &&
+          paint.main.background !== 'transparent' &&
+          paint.alt.background !== 'transparent' &&
+          paint.main.background !== paint.alt.background &&
           paint.main.underline === 1 &&
           paint.main.chip === paint.you &&
           paint.alt.underline === 0
@@ -137,16 +134,17 @@ for (const [name, width, height] of [
       .toBe(true);
     let paint = await seatPaint(page);
     expect(paint.line).toBe('none');
+    expect(paint.header).not.toBe(paint.page);
     expect(paint.main).toMatchObject({
       active: true,
-      border: '0px',
+      border: '1px',
       underlineColour: paint.you,
+      borderColour: paint.you,
       tag: paint.chipInk,
     });
     expect(paint.alt).toMatchObject({
       active: false,
-      border: '0px',
-      background: 'transparent',
+      border: '1px',
       chip: 'transparent',
       tag: paint.opponentInk,
     });
@@ -159,10 +157,10 @@ for (const [name, width, height] of [
         const next = await seatPaint(page);
         return (
           next.glow === next.opponentGlow &&
-          next.alt.background === next.raised &&
+          next.alt.background !== paint.alt.background &&
           next.alt.underline === 1 &&
           next.alt.chip === next.opponent &&
-          next.main.background === 'transparent' &&
+          next.main.background !== paint.main.background &&
           next.main.underline === 0 &&
           next.main.chip === 'transparent'
         );
@@ -173,6 +171,7 @@ for (const [name, width, height] of [
       active: true,
       tag: paint.chipInk,
       underlineColour: paint.opponent,
+      borderColour: paint.opponent,
     });
     expect(paint.main).toMatchObject({ active: false, tag: paint.youInk });
     if (name === 'desktop') {

@@ -711,3 +711,126 @@ describe('planBoardMotion', () => {
     ).toEqual([]);
   });
 });
+
+describe('collection before redistribution', () => {
+  const rekeyed = () =>
+    sceneOf(
+      withZones(
+        base,
+        Object.fromEntries(
+          Object.values(base.zones)
+            .filter((zone) => zone.ownerId === blue)
+            .map((zone) => [
+              zone.id,
+              zone.cards.map((_, index) =>
+                freshConcealed(blue, `setup-${zone.kind}-${index}`)
+              ),
+            ])
+        )
+      )
+    );
+
+  it('collects the whole old table into the deck, riffles only there, then deals fresh aliases', () => {
+    const before = sceneOf(base);
+    const after = rekeyed();
+    const deck = after.zones.find((zone) => zone.id === zoneId(blue, 'deck'))!;
+    const plan = planBoardMotion(before, after, 'advance', [
+      { playerId: blue, kind: 'setup' },
+    ]);
+    const collection = plan.ghosts.filter((ghost) =>
+      ghost.key.startsWith('collect:')
+    );
+    const outside = before.cards.filter(
+      (card) =>
+        card.ownerId === blue && card.renderKey && card.parentId !== deck.id
+    );
+    expect(collection).toHaveLength(outside.length);
+    expect(collection.length).toBeGreaterThan(7);
+    const shuffle = plan.shuffles.find((item) => item.zoneId === deck.id)!;
+    expect(
+      plan.shuffles.filter((item) => item.zoneId.startsWith(`zone:${blue}:`))
+    ).toEqual([shuffle]);
+    expect(shuffle.spread).toBeUndefined();
+    expect(shuffle.delay).toBeGreaterThan(
+      Math.max(...collection.map((ghost) => ghost.delay + ghost.duration!))
+    );
+    const arrivals = after.cards.filter(
+      (card) =>
+        card.ownerId === blue && card.renderKey && card.parentId !== deck.id
+    );
+    for (const card of arrivals) {
+      const flight = plan.flights.find(
+        (item) => item.renderKey === card.renderKey
+      )!;
+      expect(flight.from).toEqual(shuffle.rect);
+      expect(flight.fromRenderKey).toBeUndefined();
+      expect(flight.fromImageUrl).toBe(deck.cardBackImageUrl);
+      expect(flight.delay).toBeGreaterThanOrEqual(shuffle.delay + 1);
+    }
+    expect(
+      planBoardMotion(before, after, 'replace', [
+        { playerId: blue, kind: 'setup' },
+      ]).ghosts
+    ).toEqual([]);
+  });
+
+  it('uses the sleeve even with no deck cover, and does not riffle the whole deck for a bottom-hand replacement', () => {
+    const before = sceneOf(withZones(base, { [zoneId(blue, 'deck')]: [] }));
+    const after = rekeyed();
+    const emptyAfter = {
+      ...after,
+      cards: after.cards.filter(
+        (card) => card.parentId !== zoneId(blue, 'deck')
+      ),
+    };
+    const plan = planBoardMotion(before, emptyAfter, 'advance', [
+      { playerId: blue, kind: 'bottomHand' },
+    ]);
+    expect(
+      plan.shuffles.some((shuffle) => shuffle.zoneId === zoneId(blue, 'deck'))
+    ).toBe(false);
+    const hand = after.zones.find((zone) => zone.id === zoneId(blue, 'hand'))!;
+    const handKeys = after.cards
+      .filter((card) => card.parentId === hand.id)
+      .map((card) => card.renderKey);
+    expect(
+      plan.flights
+        .filter((flight) => handKeys.includes(flight.renderKey))
+        .every((flight) => flight.delay >= 0.65)
+    ).toBe(true);
+    expect(
+      plan.ghosts
+        .filter((ghost) => ghost.key.startsWith('collect:'))
+        .every(
+          (ghost) =>
+            ghost.toImageUrl ===
+            after.zones.find(
+              (zone) => zone.kind === 'deck' && zone.playerId === blue
+            )?.cardBackImageUrl
+        )
+    ).toBe(true);
+  });
+});
+
+it('lets a discarded hand leave before drawing its replacement', () => {
+  const one = freshKnown(base, blue, 'replacement-one');
+  const two = freshKnown(one.view, blue, 'replacement-two');
+  const after = sceneOf(
+    withZones(two.view, {
+      [zoneId(blue, 'hand')]: [one.card, two.card],
+      [zoneId(blue, 'deck')]: cardsOf(base, zoneId(blue, 'deck')).slice(2),
+      [zoneId(blue, 'discard')]: [
+        ...cardsOf(base, zoneId(blue, 'discard')),
+        ...cardsOf(base, zoneId(blue, 'hand')),
+      ],
+    })
+  );
+  const plan = planBoardMotion(sceneOf(base), after, 'predict');
+  const replacements = after.cards.filter(
+    (card) => card.parentId === zoneId(blue, 'hand')
+  );
+  for (const card of replacements)
+    expect(
+      plan.flights.find((flight) => flight.renderKey === card.renderKey)?.delay
+    ).toBeGreaterThanOrEqual(0.85);
+});

@@ -473,7 +473,7 @@ export class TableDepthDirector {
     const next = projection.scene;
     const plan =
       previous && previous !== next && cause && !discontinuity
-        ? planBoardMotion(previous, next, cause.cause)
+        ? planBoardMotion(previous, next, cause.cause, cause.redeals)
         : null;
     const flights = new Map(
       plan?.flights.map((flight) => [flight.renderKey, flight]) ?? []
@@ -865,7 +865,7 @@ export class TableDepthDirector {
           ghost.holdFor,
           ghost.toImageUrl,
           bands === undefined
-            ? undefined
+            ? { duration: ghost.duration }
             : // It lasts until that card has landed, however late it set off.
               {
                 bands,
@@ -1144,6 +1144,7 @@ export class TableDepthDirector {
     holdFor?: string,
     toImage?: string,
     options?: {
+      readonly duration?: number | undefined;
       readonly bands?: number;
       readonly lasts?: number;
       readonly revealsArrival?: boolean;
@@ -1183,13 +1184,12 @@ export class TableDepthDirector {
       transformOrigin: '0 0',
       pointerEvents: 'none',
     });
-    const duration = 420 * this.durationScale;
+    const duration =
+      (options?.duration === undefined ? 600 : options.duration * 1000) *
+      this.durationScale;
     this.ghosts.set(key, {
       element,
-      expires:
-        at +
-        delay +
-        Math.max(duration, 720 * this.durationScale, options?.lasts ?? 0),
+      expires: at + delay + Math.max(duration, options?.lasts ?? 0),
       start: at + delay,
       duration,
       picture,

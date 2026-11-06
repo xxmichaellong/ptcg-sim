@@ -1179,6 +1179,9 @@ export const createBoardScene = (
       side,
       ...(region?.mirrored ? { mirrored: true as const } : {}),
       kind: zone.kind,
+      ...(zone.kind === 'deck' && zone.ownerId
+        ? { cardBackImageUrl: view.players[zone.ownerId]?.cardBackUrl ?? '' }
+        : {}),
       bounds,
       contentBounds,
       surface: region?.surface ?? 'zone',

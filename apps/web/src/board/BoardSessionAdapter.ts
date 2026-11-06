@@ -10,6 +10,7 @@ import type {
   BoardIntent,
   BoardPresentationUpdate,
   BoardScene,
+  BoardSceneMotion,
 } from '@ptcgsim/renderer-contract';
 
 import type {
@@ -386,6 +387,33 @@ export class BoardSessionAdapter {
           : {};
       })(),
       ...(motionHint ? { motionHint } : {}),
+      ...(boundary === 'advance' && view
+        ? {
+            redeals: (source.kind === 'live'
+              ? liveState.presentationEvents
+              : replayReady(replayState)
+                ? replayState.playback.enteredPresentationEvents
+                : []
+            ).flatMap<NonNullable<BoardSceneMotion['redeals']>[number]>(
+              (event) => {
+                if (event.revision !== view.revision) return [];
+                if (event.type === 'PlayerSetup')
+                  return [{ playerId: event.playerId, kind: 'setup' as const }];
+                if (event.type === 'HandReplaced' && event.mode !== 'discard')
+                  return [
+                    {
+                      playerId: event.playerId,
+                      kind:
+                        event.mode === 'shuffleIntoDeck'
+                          ? ('shuffleHand' as const)
+                          : ('bottomHand' as const),
+                    },
+                  ];
+                return [];
+              }
+            ),
+          }
+        : {}),
     };
     this.lastPendingCommandIds = frame.pendingCommandIds ?? [];
     // A group's move is reported by what its steps do: a refused batch of

@@ -23,6 +23,7 @@ const sharedSpecs = [
   'deck-dialog-focus.spec.ts',
   'deck-quick-view.spec.ts',
   'coin-customization.spec.ts',
+  'redeal-motion.spec.ts',
   'multi-select-modifiers.spec.ts',
 ];
 

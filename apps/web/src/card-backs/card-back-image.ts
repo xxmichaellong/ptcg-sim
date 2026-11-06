@@ -79,5 +79,16 @@ export const resolveSceneCardBacks = (
       backFallbackUrl: STANDARD_CARD_BACK_IMAGE,
     };
   });
-  return changed ? { ...scene, cards } : scene;
+  const zones = scene.zones.map((zone) => {
+    if (zone.cardBackImageUrl === undefined || !zone.playerId) return zone;
+    changed = true;
+    return {
+      ...zone,
+      cardBackImageUrl: cardBackImage(zone.cardBackImageUrl, {
+        own: viewer.ownPlayerIds.has(zone.playerId),
+        opponentCustomBacks: viewer.opponentCustomBacks,
+      }),
+    };
+  });
+  return changed ? { ...scene, cards, zones } : scene;
 };

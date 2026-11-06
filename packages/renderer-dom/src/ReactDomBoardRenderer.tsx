@@ -40,7 +40,18 @@ const strongerMotion = (
 ): BoardSceneMotion =>
   current && MOTION_PRECEDENCE[current.cause] > MOTION_PRECEDENCE[next.cause]
     ? current
-    : next;
+    : current?.cause === 'advance' &&
+        next.cause === 'advance' &&
+        current.redeals?.length
+      ? {
+          ...next,
+          redeals: [...current.redeals, ...(next.redeals ?? [])].filter(
+            (deal, index, all) =>
+              all.findLastIndex((other) => other.playerId === deal.playerId) ===
+              index
+          ),
+        }
+      : next;
 
 class BoardRendererErrorBoundary extends Component<
   {

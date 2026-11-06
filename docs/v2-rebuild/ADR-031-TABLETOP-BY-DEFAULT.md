@@ -96,7 +96,18 @@ a raised mat at about 40°, and the CABT viewer a gentle 8° CSS tilt.
     pile between them, and squares up (900ms). Stand-ins with their own
     edges and shadows play it while the real pile is hidden; picking the
     pile up ends it at once.
-11. **Markers lie on their cards**: damage counters, conditions and the
+11. **Collection precedes redistribution** (2026-11-06). Setup and re-setup
+    gather every painted card of that player back into their deck, turn it
+    onto its sleeve, riffle there, then deal the hand and prizes from the
+    deck. Existing public `PlayerSetup` and `HandReplaced` events supply the
+    action missing from before/after scenes; they never pair concealed old
+    aliases with new ones. A returned hand lands before a shuffle and redraw;
+    a hand returned to the bottom does not riffle the untouched deck. Discard
+    and draw waits for the old hand to leave. Both renderers use a 600ms
+    collection and 900ms riffle, with staggered departures. Empty decks retain
+    their resolved sleeve for the sequence. Reduced motion settles directly;
+    discontinuities cancel the sequence, and a new action can interrupt it.
+12. **Markers lie on their cards**: damage counters, conditions and the
     other tokens are the projection of their own box a hair above the card,
     so they foreshorten with the table and travel with the card. In the
     hand they stay upright on screen.

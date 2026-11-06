@@ -1696,3 +1696,51 @@ describe('BoardSessionAdapter with real session coordinators', () => {
     test.live.disconnect();
   });
 });
+
+it('carries public setup and hand replacement into motion once, without replaying them on a refresh', () => {
+  const test = setup();
+  test.socket.serverOpen();
+  test.socket.serverMessage(welcome(viewAt(1)));
+  test.socket.serverMessage({
+    type: 'StatePublication',
+    protocolVersion: PROTOCOL_VERSION,
+    executedClientSequence: 0,
+    snapshot: viewAt(2),
+    presentationEvents: [
+      {
+        type: 'PlayerSetup',
+        revision: 2,
+        playerId: 'spike-red',
+        handCount: 7,
+        prizeCount: 6,
+      },
+    ],
+  });
+  expect(sceneEffects(test.rendererEffects).at(-1)?.motion).toEqual({
+    cause: 'advance',
+    redeals: [{ playerId: 'spike-red', kind: 'setup' }],
+  });
+  const count = test.rendererEffects.length;
+  test.adapter.synchronize();
+  expect(test.rendererEffects).toHaveLength(count);
+  test.socket.serverMessage({
+    type: 'StatePublication',
+    protocolVersion: PROTOCOL_VERSION,
+    executedClientSequence: 0,
+    snapshot: viewAt(3),
+    presentationEvents: [
+      {
+        type: 'HandReplaced',
+        revision: 3,
+        playerId: 'spike-blue',
+        mode: 'shuffleIntoDeck',
+        drawCount: 6,
+      },
+    ],
+  });
+  expect(sceneEffects(test.rendererEffects).at(-1)?.motion).toEqual({
+    cause: 'advance',
+    redeals: [{ playerId: 'spike-blue', kind: 'shuffleHand' }],
+  });
+  test.adapter.dispose();
+});

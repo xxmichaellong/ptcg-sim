@@ -4,6 +4,7 @@ import { isPileStandIn } from './held-cards.js';
 import type {
   BoardScene,
   BoardSceneMotionCause,
+  BoardSceneMotion,
   CardSceneNode,
   MarkerSceneNode,
   Rect,
@@ -11,7 +12,7 @@ import type {
 
 /**
  * How the table gets from one scene to the next. The plan is computed from the
- * two recipient-safe scenes alone, so pairing a card that vanished from one
+ * two recipient-safe scenes and public action hints, so pairing a card that vanished from one
  * place with a card that appeared in another discloses nothing the viewer
  * could not already see: the same counts changed in the same zones.
  *
@@ -53,6 +54,9 @@ export interface CardFlight {
 
 /** A card that leaves the painted table: a short-lived copy flies away. */
 export interface CardGhost {
+  readonly ownerId?: string;
+  /** Seconds for a collection flight; independent of the renderer. */
+  readonly duration?: number;
   readonly key: string;
   readonly imageUrl: string;
   readonly from: Rect;
@@ -182,7 +186,7 @@ const detectJoins = (
 const SHUFFLED_PILE_KINDS = new Set(['deck', 'prizes']);
 
 /** Roughly when a card flying into a pile has landed, after it sets off. */
-const PILE_ARRIVAL_SECONDS = 0.3;
+const PILE_ARRIVAL_SECONDS = 0.65;
 
 const centreInside = (rect: Rect, outer: Rect): boolean => {
   const x = rect.x + rect.width / 2;
@@ -344,7 +348,8 @@ const markerSlot = (scene: BoardScene, marker: MarkerSceneNode): string => {
 export const planBoardMotion = (
   previous: BoardScene | null,
   next: BoardScene,
-  cause: BoardSceneMotionCause
+  cause: BoardSceneMotionCause,
+  redeals: BoardSceneMotion['redeals'] = []
 ): MotionPlan => {
   if (
     !previous ||
@@ -398,6 +403,7 @@ export const planBoardMotion = (
     )
       return;
     ghosts.push({
+      ownerId: card.ownerId,
       key: `hold:${key}:${String(next.revision)}`,
       imageUrl: paintedImage(before),
       from: before.bounds,
@@ -484,6 +490,7 @@ export const planBoardMotion = (
           : undefined;
         const toImageUrl = deck ? paintedImage(deck) : undefined;
         ghosts.push({
+          ownerId: card.ownerId,
           key: `ghost:${card.renderKey!}:${String(next.revision)}`,
           imageUrl: paintedImage(card),
           from: card.bounds,
@@ -627,6 +634,7 @@ export const planBoardMotion = (
     );
     if (!source) continue;
     ghosts.push({
+      ownerId: source.ownerId,
       key: `ghost:${source.renderKey ?? source.containerId}:${destination.containerId}:${String(
         ghosts.length
       )}:${String(next.revision)}`,
@@ -646,6 +654,7 @@ export const planBoardMotion = (
   sources.forEach((source, index) => {
     if (usedSources.has(index) || source.renderKey === undefined) return;
     ghosts.push({
+      ownerId: source.ownerId,
       key: `ghost:${source.renderKey}:fade:${String(next.revision)}`,
       imageUrl: source.imageUrl,
       from: source.rect,
@@ -671,12 +680,169 @@ export const planBoardMotion = (
     });
   }
 
-  return {
-    cause,
-    flights,
-    ghosts,
-    pulses,
-    shuffles: detectShuffles(previous, next, flights, ghosts),
-    joins: detectJoins(previous, next),
-  };
+  return withRedeals(
+    previous,
+    next,
+    {
+      cause,
+      flights,
+      ghosts,
+      pulses,
+      shuffles: detectShuffles(previous, next, flights, ghosts),
+      joins: detectJoins(previous, next),
+    },
+    redeals
+  );
+};
+
+/**
+ * Setup and hand replacement have the same before/after zone counts as an
+ * in-place shuffle. Their existing public events supply the missing action,
+ * never a correspondence between old and newly concealed card identities.
+ */
+const withRedeals = (
+  previous: BoardScene,
+  next: BoardScene,
+  plan: MotionPlan,
+  redeals: NonNullable<BoardSceneMotion['redeals']>
+): MotionPlan => {
+  let { flights, ghosts, shuffles } = plan;
+  for (const { playerId, kind } of redeals) {
+    const deck = next.zones.find(
+      (zone) => zone.playerId === playerId && zone.kind === 'deck'
+    );
+    if (
+      !deck ||
+      ![...previous.cards, ...next.cards].some(
+        (card) => card.ownerId === playerId
+      )
+    )
+      continue;
+    const face = pileFace(next, deck.id) ?? pileFace(previous, deck.id);
+    const back = deck.cardBackImageUrl ?? (face && paintedImage(face));
+    if (back === undefined) continue;
+    const rect = face?.bounds ?? deck.contentBounds;
+    const rotation =
+      face?.rotationQuarterTurns ?? (deck.side === 'local' ? 0 : 2);
+    const hand = next.zones.find(
+      (zone) => zone.playerId === playerId && zone.kind === 'hand'
+    );
+    const collecting = previous.cards.filter(
+      (card) =>
+        card.ownerId === playerId &&
+        card.renderKey !== null &&
+        !isPileStandIn(card) &&
+        card.parentId !== deck.id &&
+        (kind === 'setup' || card.parentId === hand?.id)
+    );
+    const arriving = next.cards.filter(
+      (card) =>
+        card.ownerId === playerId &&
+        card.renderKey !== null &&
+        card.parentId !== deck.id &&
+        (kind === 'setup' || card.parentId === hand?.id)
+    );
+    const arrivalKeys = new Set(
+      next.cards
+        .filter(
+          (card) =>
+            card.ownerId === playerId &&
+            (card.parentId === deck.id || arriving.includes(card))
+        )
+        .map((card) => card.renderKey)
+    );
+    flights = flights.filter((flight) => !arrivalKeys.has(flight.renderKey));
+    ghosts = ghosts.filter(
+      (ghost) =>
+        ghost.ownerId !== playerId ||
+        (kind !== 'setup' &&
+          !collecting.some((card) => sameRect(card.bounds, ghost.from)))
+    );
+    shuffles = shuffles.filter(
+      (shuffle) =>
+        shuffle.zoneId !== deck.id &&
+        !(
+          kind === 'setup' &&
+          next.zones.some(
+            (zone) => zone.id === shuffle.zoneId && zone.playerId === playerId
+          )
+        )
+    );
+    const collection = collecting.map((card, index): CardGhost => ({
+      ownerId: playerId,
+      key: `collect:${card.renderKey!}:${next.revision}`,
+      imageUrl: paintedImage(card),
+      from: card.bounds,
+      fromRotationQuarterTurns: card.rotationQuarterTurns,
+      to: rect,
+      toRotationQuarterTurns: rotation,
+      toImageUrl: back,
+      delay: Math.min(index * 0.025, 0.2),
+      duration: 0.6,
+    }));
+    ghosts = [...ghosts, ...collection];
+    // A predicted hand return may already be travelling when authority
+    // publishes its fresh aliases. Give that collection time to land too.
+    const collectedAt = collecting.length
+      ? Math.min((collecting.length - 1) * 0.025, 0.2) + 0.65
+      : kind === 'setup'
+        ? 0
+        : 0.85;
+    const shuffle = kind !== 'bottomHand';
+    if (shuffle)
+      shuffles = [
+        ...shuffles,
+        {
+          zoneId: deck.id,
+          rect,
+          rotationQuarterTurns: rotation,
+          imageUrl: back,
+          delay: collectedAt,
+        },
+      ];
+    const dealAt = collectedAt + (shuffle ? 1 : 0.05);
+    flights = [
+      ...flights,
+      ...arriving.map((card, index): CardFlight => ({
+        renderKey: card.renderKey!,
+        from: rect,
+        fromRotationQuarterTurns: rotation,
+        fromImageUrl: back,
+        delay: dealAt + index * MOTION_STAGGER_SECONDS,
+        kind: 'enter',
+      })),
+    ];
+  }
+  // Discard-and-draw keeps identities on the discard. Its ordinary motion
+  // already has the right destinations; hold draws until the old hand lands.
+  const departingHands = previous.zones.filter(
+    (zone) =>
+      zone.kind === 'hand' &&
+      previous.cards.some(
+        (card) =>
+          card.parentId === zone.id &&
+          next.cards.some(
+            (after) =>
+              after.id === card.id &&
+              after.parentId !== zone.id &&
+              next.zones.some(
+                (target) =>
+                  target.id === after.parentId && target.kind === 'discard'
+              )
+          )
+      )
+  );
+  flights = flights.map((flight) => {
+    const target = next.cards.find(
+      (card) => card.renderKey === flight.renderKey
+    );
+    return target &&
+      departingHands.some((hand) => target.parentId === hand.id) &&
+      !previous.cards.some(
+        (card) => card.id === target.id && card.parentId === target.parentId
+      )
+      ? { ...flight, delay: Math.max(flight.delay, 0.85) }
+      : flight;
+  });
+  return { ...plan, flights, ghosts, shuffles };
 };

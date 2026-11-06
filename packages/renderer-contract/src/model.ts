@@ -182,6 +182,8 @@ export interface ZoneSceneNode {
   readonly bounds: Rect;
   /** Physical content box used by child/card packing. */
   readonly contentBounds: Rect;
+  /** Resolved sleeve for collection/dealing, even while this deck is empty. */
+  readonly cardBackImageUrl?: string;
   readonly surface: BoardZoneSurface;
   readonly count: number;
   readonly zIndex: number;
@@ -485,6 +487,11 @@ export type BoardSceneMotionCause =
 
 export interface BoardSceneMotion {
   readonly cause: BoardSceneMotionCause;
+  /** Public actions whose intermediate collection is absent from a snapshot. */
+  readonly redeals?: readonly {
+    readonly playerId: string;
+    readonly kind: 'setup' | 'shuffleHand' | 'bottomHand';
+  }[];
 }
 
 /** The motion a bare install mode implies when no cause was supplied. */

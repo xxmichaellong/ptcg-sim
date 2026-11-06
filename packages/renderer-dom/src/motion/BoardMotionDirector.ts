@@ -274,7 +274,12 @@ export class BoardMotionDirector {
         motion &&
         !['replace', 'layout', 'flip'].includes(motion.cause)
       ) {
-        const plan = planBoardMotion(previous, next, motion.cause);
+        const plan = planBoardMotion(
+          previous,
+          next,
+          motion.cause,
+          motion.redeals
+        );
         for (const pulse of plan.pulses) this.pulse(pulse);
         for (const join of plan.joins)
           this.acknowledge(join, this.depth.landsIn(join.arrivingRenderKey));
@@ -303,7 +308,7 @@ export class BoardMotionDirector {
       this.turnTable();
       return;
     }
-    const plan = planBoardMotion(previous, next, cause);
+    const plan = planBoardMotion(previous, next, cause, motion.redeals);
     const at = now();
     // The cards just let go of: one now shown by another node (a pile's top
     // taking it) was put down there by hand.
@@ -951,7 +956,7 @@ export class BoardMotionDirector {
       });
     }
     const animation = ghost.animate(frames, {
-      duration: settle * 1000 * scale,
+      duration: (planned.duration ?? 0.6) * 1000 * scale,
       delay: planned.delay * 1000 * scale,
       easing: 'linear',
       fill: 'both',
@@ -1285,7 +1290,7 @@ export class BoardMotionDirector {
             { translate: '0px 0px', rotate: '0deg', offset: 1 },
           ],
           {
-            duration: 680 * scale,
+            duration: 900 * scale,
             delay: (shuffle.delay * 1000 + index * 30) * scale,
             easing: 'cubic-bezier(0.45, 0, 0.25, 1)',
             fill: 'backwards',
