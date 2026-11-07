@@ -167,17 +167,29 @@ test.describe('on a phone', () => {
           ),
         selectors
       );
+    await expect(page.locator('#pasteInvitationButton')).toHaveCount(0);
     for (const height of await heights([
       '#nameInput',
       '#roomCodeCustomInput',
       '#generateIdButton',
+      '.lobby-flow button:first-child',
+      '.lobby-flow button:last-child',
+    ]))
+      expect(height).toBeGreaterThanOrEqual(44);
+    await page
+      .locator('.lobby-flow')
+      .getByRole('button', { name: 'Join a room', exact: true })
+      .tap();
+    for (const height of await heights([
       '#roomIdInput',
-      '#pasteInvitationButton',
       '#joinAsPlayer',
       '#joinRoomButton',
-    ])) {
+    ]))
       expect(height).toBeGreaterThanOrEqual(44);
-    }
+    await page
+      .locator('.lobby-flow')
+      .getByRole('button', { name: 'Host a room', exact: true })
+      .tap();
     await page.locator('#generateIdButton').tap();
     await expect(readyRoom(page)).toBeVisible({ timeout: 30_000 });
     // Measured once the card has risen into place (it enters from 98%).

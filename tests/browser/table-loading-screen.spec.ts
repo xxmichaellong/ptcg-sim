@@ -329,6 +329,10 @@ test('joining a room trades tables under the curtain, never over a bare desk', a
       (text) => navigator.clipboard.writeText(text),
       invitation
     );
+    await guest
+      .locator('.lobby-flow')
+      .getByRole('button', { name: 'Join a room', exact: true })
+      .click();
     await guest.locator('#roomIdInput').focus();
     await guest.keyboard.press('Control+V');
     // The link is read for the room's code (ADR-047).

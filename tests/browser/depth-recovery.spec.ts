@@ -139,6 +139,10 @@ test('two raised tables reconcile delayed and rejected play, resume after discon
     });
     await guest!.goto('/?room-lobby=1');
     await guest!.locator('#nameInput').fill('Depth guest');
+    await guest!
+      .locator('.lobby-flow')
+      .getByRole('button', { name: 'Join a room', exact: true })
+      .click();
     await guest!.locator('#roomIdInput').evaluate((input, text) => {
       const event = new Event('paste', { bubbles: true, cancelable: true });
       Object.defineProperty(event, 'clipboardData', {

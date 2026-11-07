@@ -112,6 +112,10 @@ const invitation = (page: Page, role: 'player' | 'spectator') =>
 const join = async (page: Page, text: string, name: string) => {
   await page.goto('/?room-lobby=1');
   await page.locator('#nameInput').fill(name);
+  await page
+    .locator('.lobby-flow')
+    .getByRole('button', { name: 'Join a room', exact: true })
+    .click();
   await page.locator('#roomIdInput').evaluate((input, text) => {
     const paste = new Event('paste', { bubbles: true, cancelable: true });
     Object.defineProperty(paste, 'clipboardData', {

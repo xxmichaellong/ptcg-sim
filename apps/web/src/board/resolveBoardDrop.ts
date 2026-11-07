@@ -206,30 +206,42 @@ export const resolveBoardDrop = (
     if (intent.pilePosition !== 'top' && intent.pilePosition !== 'bottom') {
       return rejected('unsupported_target');
     }
-    if (
-      !sourceZone ||
-      (sourceZone.kind !== 'discard' && sourceZone.kind !== 'lostZone')
-    ) {
-      return rejected('unsupported_source');
+    const destination = view.zones[intent.targetId];
+    if (destination?.kind === 'deck') {
+      if (
+        !scene.zones.some(
+          (zone) => zone.id === destination.id && zone.interactive
+        )
+      )
+        return rejected('stale_target');
+    } else {
+      if (
+        !sourceZone ||
+        (sourceZone.kind !== 'discard' && sourceZone.kind !== 'lostZone')
+      ) {
+        return rejected('unsupported_source');
+      }
+      if (intent.targetId !== sourceZone.id)
+        return rejected('unsupported_target');
+      if (
+        !scene.zones.some(
+          (zone) => zone.id === sourceZone.id && zone.interactive
+        )
+      ) {
+        return rejected('stale_target');
+      }
+      return {
+        ok: true,
+        command: {
+          type: 'MoveCard',
+          cardId: intent.cardId,
+          expectedSourceZoneId: sourceZone.id,
+          destinationZoneId: sourceZone.id,
+          // Top follows the pile's live end, including a peer's later discard.
+          ...(intent.pilePosition === 'bottom' ? { destinationIndex: 0 } : {}),
+        },
+      };
     }
-    if (intent.targetId !== sourceZone.id)
-      return rejected('unsupported_target');
-    if (
-      !scene.zones.some((zone) => zone.id === sourceZone.id && zone.interactive)
-    ) {
-      return rejected('stale_target');
-    }
-    return {
-      ok: true,
-      command: {
-        type: 'MoveCard',
-        cardId: intent.cardId,
-        expectedSourceZoneId: sourceZone.id,
-        destinationZoneId: sourceZone.id,
-        // Top follows the pile's live end, including a peer's later discard.
-        ...(intent.pilePosition === 'bottom' ? { destinationIndex: 0 } : {}),
-      },
-    };
   }
   const sourceStack = Object.values(view.stacks).find(
     (stack) =>
@@ -293,7 +305,10 @@ export const resolveBoardDrop = (
           ? (sourceInspectionPlayerId ?? sourceStagedPlayerId)
           : undefined
       );
-    const place = placeIn(destinationZone.kind, intent.index);
+    const place =
+      destinationZone.kind === 'deck' && intent.pilePosition === 'bottom'
+        ? {} // Omitting an index follows the live end, including a peer's later move.
+        : placeIn(destinationZone.kind, intent.index);
     if (sourceZone) {
       if (destinationZone.id === sourceZone.id) {
         // Rearranged within its zone: a new place in an order the player

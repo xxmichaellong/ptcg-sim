@@ -31,6 +31,38 @@ const localHandCard = (input: ReturnType<typeof fixture>) =>
   )!;
 
 describe('board drop command resolution', () => {
+  it.each(['hand', 'prizes', 'discard', 'board'])(
+    'moves a %s card to either deck end from direct destinations',
+    (kind) => {
+      const input = fixture();
+      const owner = input.view.playerOrder[0]!;
+      const source = input.view.zones[`zone:${owner}:${kind}`]!;
+      const cardId = source.cards[0]!.id;
+      const deck = input.view.zones[`zone:${owner}:deck`]!;
+      for (const pilePosition of ['top', 'bottom'] as const) {
+        expect(
+          resolveBoardDrop(input.view, input.scene, {
+            kind: 'CardDropRequested',
+            cardId,
+            targetId: deck.id,
+            x: 0,
+            y: 0,
+            pilePosition,
+          })
+        ).toEqual({
+          ok: true,
+          command: {
+            type: 'MoveCard',
+            cardId,
+            expectedSourceZoneId: source.id,
+            destinationZoneId: deck.id,
+            ...(pilePosition === 'top' ? { destinationIndex: 0 } : {}),
+          },
+        });
+      }
+    }
+  );
+
   it('orders a card within either public pile only when explicitly asked', () => {
     const input = fixture();
     for (const owner of input.view.playerOrder) {
@@ -75,7 +107,7 @@ describe('board drop command resolution', () => {
     }
   });
 
-  it('rejects pile-position intents outside a visible same public pile', () => {
+  it('rejects pile positions outside a visible deck or the same public pile', () => {
     const input = fixture();
     const discard = input.view.zones['zone:spike-blue:discard']!;
     const cardId = discard.cards[0]!.id;
@@ -89,7 +121,6 @@ describe('board drop command resolution', () => {
     };
     for (const targetId of [
       'zone:spike-blue:hand',
-      'zone:spike-blue:deck',
       'zone:spike-blue:lostZone',
       'stack:blue:active',
     ]) {

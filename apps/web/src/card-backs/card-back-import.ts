@@ -113,7 +113,7 @@ export const encodeCardBackImage: CardBackEncoder = async (
     height,
     0,
     0,
-    CARD_BACK_IMAGE_WIDTH,
+    canvas.width,
     canvas.height
   );
   for (const type of ['image/webp', 'image/jpeg'] as const) {

@@ -6,12 +6,48 @@ export type DeckLookField = 'coin' | 'playmat';
 import type { DeckBuilderStore } from './deck-builder-store.js';
 import type { DeckLibrary } from './deck-library.js';
 import type { DeckInstallSession } from './deck-install-adapter.js';
+interface LookMemory {
+  readonly attempted: Map<string, { value: string; commandId?: string }>;
+  readonly observed: Map<
+    string,
+    { signature: string; revision: number; deckId: string | undefined }
+  >;
+  readonly active: Set<string>;
+  readonly ownCoins: Map<string, string>;
+}
+// The table and its seats outlive an editor (for example, while a tutorial is open).
+const memories = new WeakMap<
+  DeckInstallSession,
+  WeakMap<DeckBuilderStore, LookMemory>
+>();
+const memoryFor = (
+  session: DeckInstallSession,
+  store: DeckBuilderStore
+): LookMemory => {
+  let stores = memories.get(session);
+  if (!stores) {
+    stores = new WeakMap();
+    memories.set(session, stores);
+  }
+  let memory = stores.get(store);
+  if (!memory) {
+    memory = {
+      attempted: new Map(),
+      observed: new Map(),
+      active: new Set(),
+      ownCoins: new Map(),
+    };
+    stores.set(store, memory);
+  }
+  return memory;
+};
 /** Apply a newly chosen deck's looks once; Undo and restored games remain authoritative. */
 export const useDeckLooks = (
   session: DeckInstallSession | undefined,
   store: DeckBuilderStore,
   library: DeckLibrary,
-  alternateEnabled: boolean
+  alternateEnabled: boolean,
+  installInitially: () => boolean
 ) => {
   const force = useRef<
     | ((target: DeckBuilderTarget, fields: readonly DeckLookField[]) => void)
@@ -19,9 +55,8 @@ export const useDeckLooks = (
   >(undefined);
   useEffect(() => {
     if (!session) return;
-    const attempted = new Map<string, { value: string; commandId?: string }>();
-    let ownCoinChoice: string | undefined;
-    let ownRevision: number | undefined;
+    const memory = memoryFor(session, store);
+    const { attempted } = memory;
     const retryDelays = new Map<string, number>();
     const retryTimers = new Map<string, ReturnType<typeof setTimeout>>();
     const sync = () => {
@@ -38,29 +73,63 @@ export const useDeckLooks = (
         const deck = slot.label?.deckId
           ? library.get(slot.label.deckId)
           : undefined;
+        const selectionKey = `${view.matchId}/${target}`;
+        const signature = JSON.stringify([deck?.id, deck?.coin, deck?.playmat]);
+        const previousSelection = memory.observed.get(selectionKey);
+        const replaced =
+          previousSelection !== undefined &&
+          previousSelection.revision !== slot.revision;
+        const changed =
+          previousSelection !== undefined &&
+          previousSelection.signature !== signature;
+        const choseDefaults =
+          !deck &&
+          (replaced ||
+            (changed &&
+              previousSelection?.deckId !== undefined &&
+              library.get(previousSelection.deckId) !== undefined));
+        memory.observed.set(selectionKey, {
+          signature,
+          revision: slot.revision,
+          deckId: slot.label?.deckId,
+        });
+        if (!previousSelection && !installInitially()) {
+          if (target === 'main')
+            memory.ownCoins.set(
+              selectionKey,
+              JSON.stringify([deck?.id, deck?.coin])
+            );
+          continue;
+        }
+        if (
+          (!previousSelection && deck) ||
+          ((changed || replaced) && (deck || choseDefaults))
+        )
+          memory.active.add(selectionKey);
+        else if (changed && !deck && !choseDefaults)
+          memory.active.delete(selectionKey); // Deleting a saved list keeps the live table dressed.
+        if (!memory.active.has(selectionKey)) continue;
         if (target === 'main') {
           const next = JSON.stringify([deck?.id, deck?.coin]);
-          const replaced =
-            !deck && ownRevision !== undefined && ownRevision !== slot.revision;
-          if (next !== ownCoinChoice || replaced) {
-            ownCoinChoice = next;
-            if (deck || replaced) setDeckCoinSelection(session, deck?.coin);
+          if (next !== memory.ownCoins.get(selectionKey) || choseDefaults) {
+            memory.ownCoins.set(selectionKey, next);
+            if (deck || choseDefaults)
+              setDeckCoinSelection(session, deck?.coin);
           }
-          ownRevision = slot.revision;
         }
-        if (!deck) continue;
+        const choiceId = deck?.id ?? `unsaved:${String(slot.revision)}`;
         const choices = [
           ...(target === 'alternate'
-            ? [{ type: 'SetCoin' as const, coin: deck.coin ?? STANDARD_COIN }]
+            ? [{ type: 'SetCoin' as const, coin: deck?.coin ?? STANDARD_COIN }]
             : []),
           {
             type: 'SetPlayerProfile' as const,
-            playmat: deck.playmat ?? 'style:default',
+            playmat: deck?.playmat ?? 'style:default',
           },
         ];
         for (const choice of choices) {
           const key = `${view.matchId}/${playerId}/${choice.type}`;
-          const value = JSON.stringify([deck.id, choice]);
+          const value = JSON.stringify([choiceId, choice]);
           const previous = attempted.get(key);
           if (previous?.value === value) {
             const result = state.completedCommands.find(
@@ -142,14 +211,14 @@ export const useDeckLooks = (
       const deck = slot.label?.deckId
         ? library.get(slot.label.deckId)
         : undefined;
-      if (!deck) return;
+      memory.active.add(`${view.matchId}/${target}`);
       const ownId = view.viewer.playerId;
       const playerId =
         target === 'main' ? ownId : view.playerOrder.find((id) => id !== ownId);
       if (!playerId) return;
       for (const field of fields) {
         if (target === 'main' && field === 'coin')
-          setDeckCoinSelection(session, deck.coin, true);
+          setDeckCoinSelection(session, deck?.coin, true);
         else
           attempted.delete(
             `${view.matchId}/${playerId}/${field === 'coin' ? 'SetCoin' : 'SetPlayerProfile'}`
@@ -168,7 +237,7 @@ export const useDeckLooks = (
       stops.forEach((stop) => stop());
       for (const timer of retryTimers.values()) clearTimeout(timer);
     };
-  }, [session, store, library, alternateEnabled]);
+  }, [session, store, library, alternateEnabled, installInitially]);
   return useCallback(
     (target: DeckBuilderTarget, fields: readonly DeckLookField[]) =>
       force.current?.(target, fields),

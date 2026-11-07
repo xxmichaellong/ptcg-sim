@@ -34,6 +34,10 @@ interface CoinAttempt {
   readonly coin: string;
   readonly commandId?: string;
 }
+const memories = new WeakMap<
+  object,
+  { coin: string; deckRevision: number; attempted: CoinAttempt | undefined }
+>();
 const RETRYABLE = new Set([
   'stale_reference',
   'precondition_failed',
@@ -53,7 +57,11 @@ export const useCoinCustomization = (
   );
   const coin = deckCoinSelection(session) ?? personalCoin;
   useEffect(() => {
-    let attempted: CoinAttempt | undefined;
+    const remembered = memories.get(session);
+    let attempted =
+      remembered?.coin === coin && remembered.deckRevision === deckRevision
+        ? remembered.attempted
+        : undefined;
     let retry: number | undefined;
     let delay = 500;
     const clearRetry = (): void => {
@@ -65,7 +73,6 @@ export const useCoinCustomization = (
       const view = state.view;
       if (state.phase !== 'ready' || view?.viewer.kind !== 'player') {
         clearRetry();
-        attempted = undefined;
         return;
       }
       const playerId = view.viewer.playerId;
@@ -126,6 +133,7 @@ export const useCoinCustomization = (
     return () => {
       clearRetry();
       unsubscribe();
+      memories.set(session, { coin, deckRevision, attempted });
     };
   }, [coin, session, deckRevision]);
 };

@@ -2155,7 +2155,14 @@ const CardWindowContents = ({
                       className="ptcgsim-overlay-button is-quiet"
                       data-preview-tabbable="true"
                       onClick={() =>
-                        actions.submitCategoryChoice(card.id, choice.value)
+                        actions.invokeWindowAction
+                          ? actions.invokeWindowAction({
+                              kind: 'context',
+                              action: 'changeCardType',
+                              cardId: card.id,
+                              category: choice.value,
+                            })
+                          : actions.submitCategoryChoice(card.id, choice.value)
                       }
                     >
                       {i18n._(choice.label)}

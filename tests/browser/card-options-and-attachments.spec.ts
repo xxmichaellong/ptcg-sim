@@ -228,5 +228,39 @@ for (const device of [
       await page.screenshot({
         path: `/tmp/ptcg-card-options-${device.width}.png`,
       });
+      const beforeBottom = await revision(page);
+      await page
+        .locator(
+          '[data-card-actions-window] [data-card-destination="deck-bottom"]'
+        )
+        .click();
+      await expect.poll(() => revision(page)).toBe(beforeBottom + 1);
+      current = await view(page);
+      const remainingPrize = Object.values(current.zones).find(
+        (zone) => zone.kind === 'prizes' && zone.ownerId === me
+      )!;
+      await page
+        .locator(
+          `.ptcgsim-board-surface [data-card-id="${remainingPrize.cards[0]!.id}"]`
+        )
+        .dblclick();
+      const beforeTop = await revision(page);
+      await page
+        .locator(
+          '[data-card-actions-window] [data-card-destination="deck-top"]'
+        )
+        .click();
+      await expect.poll(() => revision(page)).toBe(beforeTop + 1);
+      current = await view(page);
+      expect(
+        Object.values(current.zones).find(
+          (zone) => zone.kind === 'prizes' && zone.ownerId === me
+        )!.cards
+      ).toHaveLength(0);
+      expect(
+        Object.values(current.zones).find(
+          (zone) => zone.kind === 'deck' && zone.ownerId === me
+        )!.cards
+      ).toHaveLength(2);
     });
   });

@@ -355,9 +355,12 @@ export const DeckScreen = ({
       store.replaceDeck(slotTarget, cards, label, { chosen });
       rememberSeatDeck(slotTarget, label.deckId);
       // Saving the seat's own deck changes nothing on the table.
-      if (chosen) onSeatDeck?.(slotTarget);
+      if (chosen) {
+        onSeatDeck?.(slotTarget);
+        onSeatLook?.(slotTarget, ['coin', 'playmat']);
+      }
     },
-    [onSeatDeck, rememberSeatDeck, store, target]
+    [onSeatDeck, onSeatLook, rememberSeatDeck, store, target]
   );
 
   /**

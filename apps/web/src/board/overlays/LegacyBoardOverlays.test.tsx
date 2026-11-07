@@ -675,6 +675,44 @@ describe('legacy board overlays', () => {
     ).toBeNull();
   });
 
+  it('routes card-window categories through the named window origin', async () => {
+    const card = cardIn('stack:blue:active');
+    const callbacks = { ...actions(), invokeWindowAction: vi.fn() };
+    await act(async () =>
+      root.render(
+        createElement(LegacyBoardOverlays, {
+          state: state({
+            overlays: {
+              contextMenuCardId: null,
+              preview: { kind: 'card', cardId: card.id },
+              input: null,
+            },
+          }),
+          darkMode: false,
+          actions: callbacks,
+        })
+      )
+    );
+    const details = host.querySelector<HTMLDetailsElement>(
+      '.card-window__advanced'
+    )!;
+    await act(async () => {
+      details.open = true;
+      details.dispatchEvent(new Event('toggle'));
+    });
+    const choice = [
+      ...details.querySelectorAll<HTMLButtonElement>('button'),
+    ].find((button) => button.textContent === 'to Energy')!;
+    await act(async () => choice.click());
+    expect(callbacks.invokeWindowAction).toHaveBeenCalledWith({
+      kind: 'context',
+      action: 'changeCardType',
+      cardId: card.id,
+      category: 'Energy',
+    });
+    expect(callbacks.submitCategoryChoice).not.toHaveBeenCalled();
+  });
+
   it('recreates the ordered category submenu and delegates one typed choice', async () => {
     const activeStack = view.stacks[view.boards[firstPlayer]!.activeStackId!]!;
     const cardId = activeStack.evolutionCards.at(-1)!.id;

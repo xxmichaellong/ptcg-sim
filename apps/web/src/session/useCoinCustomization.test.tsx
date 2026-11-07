@@ -231,3 +231,32 @@ it('reapplies an unchanged deck coin explicitly after Undo, without duplicating 
   await act(async () => setDeckCoinSelection(session, 'preset:violet', true));
   expect(session.commands).toHaveLength(1);
 });
+
+it('keeps an accepted deck coin through Undo and a board remount, but honors an explicit repeat choice', async () => {
+  const session = new Session();
+  setDeckCoinSelection(session, 'preset:violet');
+  await mount(session);
+  const pending = session.state.pendingCommands.at(-1)!;
+  await act(async () =>
+    session.publish({
+      pendingCommands: [],
+      completedCommands: [
+        {
+          commandId: pending.commandId,
+          clientSequence: pending.clientSequence,
+          accepted: true,
+          revision: base.revision + 1,
+        },
+      ],
+      view: { ...base, revision: base.revision + 1 },
+    })
+  );
+  await act(async () => session.publish({ phase: 'connecting' }));
+  await act(async () => session.publish({ phase: 'ready' }));
+  expect(session.commands).toHaveLength(1);
+  await act(async () => root.render(null));
+  await mount(session);
+  expect(session.commands).toHaveLength(1);
+  await act(async () => setDeckCoinSelection(session, 'preset:violet', true));
+  expect(session.commands).toHaveLength(2);
+});

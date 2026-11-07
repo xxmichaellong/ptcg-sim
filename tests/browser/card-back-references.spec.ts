@@ -113,6 +113,10 @@ test('an opponent never loads an outside card back, sees an uploaded one from ou
     });
     await guest!.goto('/?room-lobby=1');
     await guest!.locator('#nameInput').fill('Back guest');
+    await guest!
+      .locator('.lobby-flow')
+      .getByRole('button', { name: 'Join a room', exact: true })
+      .click();
     await guest!.locator('#roomIdInput').evaluate((input, text) => {
       const paste = new Event('paste', { bubbles: true, cancelable: true });
       Object.defineProperty(paste, 'clipboardData', {

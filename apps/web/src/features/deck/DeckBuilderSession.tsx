@@ -614,11 +614,16 @@ export const DeckBuilderSession = ({
    * the deck, or at once if the screen has closed (an import that landed
    * after it).
    */
+  const installLooksInitially = useCallback(
+    () => preparedBinding.current?.session === (session ?? shownSession),
+    [session, shownSession]
+  );
   const reapplyDeckLooks = useDeckLooks(
     session ?? shownSession,
     store,
     library,
-    alternateEnabled
+    alternateEnabled,
+    installLooksInitially
   );
 
   const dressSeat = useCallback(

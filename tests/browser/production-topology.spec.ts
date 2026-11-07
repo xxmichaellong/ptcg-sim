@@ -115,8 +115,14 @@ test('built SPA and room authority share one production-like Worker origin', asy
     page.locator('[data-app-route="remote-room-lobby"]')
   ).toBeVisible();
   await expect(page.locator('#nameInput')).toBeVisible();
-  await expect(page.locator('#roomIdInput')).toBeVisible();
   await expect(page.locator('#generateIdButton')).toBeVisible();
+  await expect(page.locator('#roomIdInput')).toBeHidden();
+  await page
+    .locator('.lobby-flow')
+    .getByRole('button', { name: 'Join a room', exact: true })
+    .click();
+  await expect(page.locator('#roomIdInput')).toBeVisible();
+  await expect(page.locator('#generateIdButton')).toBeHidden();
   await expect(page.locator('#joinRoomButton')).toBeVisible();
   await expect(page.locator('[data-app-route^="dev-room"]')).toHaveCount(0);
   expect(authorityRequests).toEqual([]);

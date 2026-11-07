@@ -108,6 +108,10 @@ test('hosts a room by its code, joins it to play or to watch, and changes the co
     await dismissWelcome(late.page);
     await openPlayOnline(late.page);
     await late.page.locator('#nameInput').fill('Late');
+    await late.page
+      .locator('.lobby-flow')
+      .getByRole('button', { name: 'Join a room', exact: true })
+      .click();
     await late.page.locator('#roomIdInput').fill(code);
     await late.page.locator('#joinRoomButton').click();
     await expect(late.page.locator('.lobby-status')).toHaveText(
@@ -151,6 +155,10 @@ test('hosts a room by its code, joins it to play or to watch, and changes the co
     await dismissWelcome(stranger.page);
     await openPlayOnline(stranger.page);
     await stranger.page.locator('#nameInput').fill('Stranger');
+    await stranger.page
+      .locator('.lobby-flow')
+      .getByRole('button', { name: 'Join a room', exact: true })
+      .click();
     await stranger.page.locator('#roomIdInput').fill(code);
     await stranger.page.locator('#joinRoomButton').click();
     await expect(stranger.page.locator('.lobby-status')).toHaveText(

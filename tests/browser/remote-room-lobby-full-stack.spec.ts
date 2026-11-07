@@ -114,6 +114,10 @@ const pasteInvitation = async (
     (text) => globalThis.navigator.clipboard.writeText(text),
     link
   );
+  await page
+    .locator('.lobby-flow')
+    .getByRole('button', { name: 'Join a room', exact: true })
+    .click();
   const roomInput = page.locator('#roomIdInput');
   await roomInput.focus();
   await page.keyboard.press('Control+V');
@@ -251,11 +255,19 @@ test('visible v2 lobby creates, copies, pastes, and joins by the room code', asy
     // room is joined by its code, to play or to watch (ADR-047).
     await expect(creator.page.locator('#copyButton')).toHaveCount(0);
     await expect(creator.page.locator('#coachingModeLabel')).toHaveCount(0);
+    await creator.page
+      .locator('.lobby-flow')
+      .getByRole('button', { name: 'Join a room', exact: true })
+      .click();
     await expect(creator.page.locator('#roomIdInput')).toHaveAccessibleName(
       'Room code'
     );
     await expect(creator.page.locator('#joinAsPlayer')).toBeChecked();
     await expect(creator.page.locator('#joinRoomButton')).toBeDisabled();
+    await creator.page
+      .locator('.lobby-flow')
+      .getByRole('button', { name: 'Host a room', exact: true })
+      .click();
 
     // Play online is a sheet over the table; the deck is reached from the
     // Solo table's menu, and the deck is kept when a room opens.
@@ -322,6 +334,10 @@ test('visible v2 lobby creates, copies, pastes, and joins by the room code', asy
 
     // A code no room holds: the lobby says so, and stays.
     await stranger.page.locator('#nameInput').fill('Stranger');
+    await stranger.page
+      .locator('.lobby-flow')
+      .getByRole('button', { name: 'Join a room', exact: true })
+      .click();
     await stranger.page.locator('#roomIdInput').fill(unknownCode());
     await stranger.page.locator('#joinRoomButton').click();
     await expect(stranger.page.locator('.lobby-status')).toHaveText(

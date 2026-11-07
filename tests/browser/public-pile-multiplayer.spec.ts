@@ -227,6 +227,10 @@ test('public-pile controls converge on both peers, preserve disclosed state, and
     });
     await guest!.goto('/?room-lobby=1');
     await guest!.locator('#nameInput').fill('Pile guest');
+    await guest!
+      .locator('.lobby-flow')
+      .getByRole('button', { name: 'Join a room', exact: true })
+      .click();
     await guest!.locator('#roomIdInput').evaluate((input, text) => {
       const paste = new Event('paste', { bubbles: true, cancelable: true });
       Object.defineProperty(paste, 'clipboardData', {

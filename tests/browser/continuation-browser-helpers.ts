@@ -95,6 +95,10 @@ export const pasteInvitation = async (
     (text) => globalThis.navigator.clipboard.writeText(text),
     handoff
   );
+  await page
+    .locator('.lobby-flow')
+    .getByRole('button', { name: 'Join a room', exact: true })
+    .click();
   const roomInput = page.locator('#roomIdInput');
   await roomInput.focus();
   await page.keyboard.press('Control+V');

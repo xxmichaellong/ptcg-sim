@@ -545,6 +545,146 @@ describe('DeckBuilderSession', () => {
     expect(store.getSnapshot().slots.main.revision).toBe(0);
   });
 
+  it.each(['main', 'alternate'] as const)(
+    'keeps restored %s looks when mounting a saved deck association',
+    async (target) => {
+      const session = new FakeSession();
+      const store = new DeckBuilderStore();
+      const deck = library.create({
+        name: 'Saved theme',
+        format: 'standard',
+        cards: [{ card: card('Theme mon'), count: 1 }],
+        coin: 'preset:violet',
+        playmat: 'style:frost',
+      });
+      store.replaceDeck(target, deck.cards, {
+        deckId: deck.id,
+        name: deck.name,
+      });
+      const player = target === 'main' ? ownPlayerId : alternatePlayerId;
+      session.showTable({
+        ...view,
+        players: {
+          ...view.players,
+          [player]: {
+            ...view.players[player]!,
+            coin: 'preset:jade',
+            playmat: 'style:ocean',
+          },
+        },
+      });
+      await renderSession({
+        session,
+        store,
+        open: true,
+        alternateEnabled: true,
+      });
+      expect(
+        session.commands.filter(
+          (command) =>
+            command.type === 'SetCoin' || command.type === 'SetPlayerProfile'
+        )
+      ).toEqual([]);
+      expect(deckCoinSelection(session)).toBeUndefined();
+      await click(
+        target === 'main'
+          ? '#nativeDeckBuilderTargetMain'
+          : '#nativeDeckBuilderTargetAlt'
+      );
+      await click('button.deck-tile__choose[aria-label^="Saved theme"]');
+      expect(
+        session.commands
+          .filter((command) => command.type === 'SetPlayerProfile')
+          .at(-1)
+      ).toMatchObject({ playmat: 'style:frost' });
+    }
+  );
+
+  it.each(['main', 'alternate'] as const)(
+    'holds accepted %s looks through Undo and an editor remount',
+    async (target) => {
+      const session = new FakeSession();
+      const store = new DeckBuilderStore();
+      await renderSession({
+        session,
+        store,
+        open: true,
+        alternateEnabled: true,
+      });
+      const deck = library.create({
+        name: 'Chosen theme',
+        format: 'standard',
+        cards: [{ card: card('Theme mon'), count: 1 }],
+        coin: 'preset:violet',
+        playmat: 'style:frost',
+      });
+      await act(async () =>
+        store.replaceDeck(target, deck.cards, {
+          deckId: deck.id,
+          name: deck.name,
+        })
+      );
+      await act(async () => {
+        while (session.getSnapshot().pendingCommands.length)
+          session.completeLatest(true);
+        session.showTable(view);
+      });
+      const before = session.commands.length;
+      await act(async () => root?.render(null));
+      await renderSession({
+        session,
+        store,
+        open: true,
+        alternateEnabled: true,
+      });
+      expect(session.commands).toHaveLength(before);
+    }
+  );
+
+  it.each(['main', 'alternate'] as const)(
+    'clears a former %s theme when an unsaved deck replaces its cards',
+    async (target) => {
+      const session = new FakeSession();
+      const store = new DeckBuilderStore();
+      await renderSession({
+        session,
+        store,
+        open: true,
+        alternateEnabled: true,
+      });
+      const deck = library.create({
+        name: 'Chosen theme',
+        format: 'standard',
+        cards: [{ card: card('Theme mon'), count: 1 }],
+        coin: 'preset:violet',
+        playmat: 'style:frost',
+      });
+      await act(async () =>
+        store.replaceDeck(target, deck.cards, {
+          deckId: deck.id,
+          name: deck.name,
+        })
+      );
+      await act(async () =>
+        store.replaceDeck(target, [{ card: card('Other mon'), count: 2 }], {
+          name: 'Sample',
+        })
+      );
+      expect(
+        session.commands
+          .filter((command) => command.type === 'SetPlayerProfile')
+          .at(-1)
+      ).toMatchObject({ playmat: 'style:default' });
+      if (target === 'alternate')
+        expect(
+          session.commands
+            .filter((command) => command.type === 'SetCoin')
+            .at(-1)
+        ).toMatchObject({ coin: 'preset:standard' });
+      else expect(deckCoinSelection(session)).toBeUndefined();
+    }
+  );
+
   it('keeps the live coin when a saved deck is deleted, until a different deck replaces its cards', async () => {
     const session = new FakeSession();
     const store = new DeckBuilderStore();
@@ -559,7 +699,12 @@ describe('DeckBuilderSession', () => {
       name: deck.name,
       format: deck.format,
     });
-    await renderSession({ session, store, open: true });
+    await renderSession({
+      session,
+      store,
+      open: true,
+      installOnSessionAttach: true,
+    });
     expect(deckCoinSelection(session)).toBe('preset:violet');
     await act(async () => {
       library.remove(deck.id);
@@ -590,7 +735,12 @@ describe('DeckBuilderSession', () => {
       themes: [{ id: 'theme', name: 'Chosen theme', ...look }],
     });
     try {
-      await renderSession({ session, store, open: true });
+      await renderSession({
+        session,
+        store,
+        open: true,
+        installOnSessionAttach: true,
+      });
       await act(async () => {
         session.completeLatest(true);
         session.showTable(view);
@@ -631,7 +781,13 @@ describe('DeckBuilderSession', () => {
       name: deck.name,
       format: deck.format,
     });
-    await renderSession({ session, store, open: true, alternateEnabled: true });
+    await renderSession({
+      session,
+      store,
+      open: true,
+      installOnSessionAttach: true,
+      alternateEnabled: true,
+    });
     expect(
       session.commands.filter((command) => command.type === 'SetCoin').at(-1)
     ).toMatchObject({

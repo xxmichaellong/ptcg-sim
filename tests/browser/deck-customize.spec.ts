@@ -182,13 +182,27 @@ test('an uploaded playmat keeps its landscape crop, reaches the live seat and su
     .evaluate((element) => getComputedStyle(element).backgroundImage);
   expect(picture).toContain('/v2/images/');
   const url = picture.slice(5, -2);
-  const dimensions = await page.evaluate(async (source) => {
+  const pixels = await page.evaluate(async (source) => {
     const bitmap = await createImageBitmap(await (await fetch(source)).blob());
-    const size = { width: bitmap.width, height: bitmap.height };
+    const canvas = document.createElement('canvas');
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
+    const context = canvas.getContext('2d')!;
+    context.drawImage(bitmap, 0, 0);
+    const size = {
+      width: bitmap.width,
+      height: bitmap.height,
+      right: [...context.getImageData(950, 300, 1, 1).data],
+      center: [...context.getImageData(500, 300, 1, 1).data],
+    };
     bitmap.close();
     return size;
   }, url);
-  expect(dimensions).toEqual({ width: 1000, height: 600 });
+  expect(pixels).toMatchObject({ width: 1000, height: 600 });
+  expect(pixels.right[3]).toBe(255);
+  expect(pixels.right[2]).toBeGreaterThan(pixels.right[0]! + 70);
+  expect(pixels.center[0]).toBeGreaterThan(200);
+  expect(pixels.center[2]).toBeLessThan(120);
   await page.locator('#deckUseOnSeatButton').click();
   await page.locator('#deckEditorBackButton').click();
   await page.locator('#deckBackButton').click();

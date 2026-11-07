@@ -51,6 +51,10 @@ test('reading Play online leaves a live Solo table mounted', async ({
 
   await openPlayOnline(page);
   await expect(page.locator('[data-app-route="remote-room"]')).toBeVisible();
+  await page
+    .locator('.lobby-flow')
+    .getByRole('button', { name: 'Join a room', exact: true })
+    .click();
   await expect(page.locator('#playOnlineSheet #p2Box')).toBeVisible();
   // The table is untouched: same element, same renderer, no flash.
   expect(await marked()).toBe(1);

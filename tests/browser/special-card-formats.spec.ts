@@ -439,6 +439,9 @@ for (const mode of ['flat', 'table'] as const)
       await exitReplay.click();
       const piece = await sceneCard(page, 'union-0');
       await page.locator(`[data-card-id="${piece.id}"]`).dblclick();
+      await page
+        .getByRole('button', { name: 'View whole card', exact: true })
+        .click();
       await page.getByRole('button', { name: 'View each card' }).click();
       await page.locator(`[data-stack-preview-card-id="${piece.id}"]`).click();
       await page.getByRole('button', { name: 'Move to hand' }).click();
@@ -460,10 +463,15 @@ for (const mode of ['flat', 'table'] as const)
       let top = await fromDeck(page, 'legend-0', 'b');
       top = await join(page, 'legend-1', top);
       await page.locator(`[data-card-id="${top}"]`).dblclick();
+      await page
+        .getByRole('button', { name: 'View whole card', exact: true })
+        .click();
       await expect(
         page.locator('[data-preview-kind="composition"]')
       ).toBeVisible();
       await expect(page.locator('.ptcgsim-composition-piece')).toHaveCount(2);
+      await page.keyboard.press('Escape');
+      await expect(page.locator('[data-pokemon-window]')).toBeVisible();
       await page.keyboard.press('Escape');
       const base = await fromDeck(page, 'greninja', 'a');
       const breakId = await join(page, 'break', base);
@@ -498,8 +506,7 @@ for (const mode of ['flat', 'table'] as const)
         .locator('.ptcgsim-card-preview-tilt')
         .boundingBox();
       expect(image!.width / image!.height).toBeCloseTo(88 / 63, 2);
-      // Shown whole first, it opens its Pokémon window from Details
-      // (ADR-043): the BREAK over the Stage it evolved from.
+      // Its options show the BREAK over the Stage it evolved from.
       await page.keyboard.press('Escape');
       await page.locator(`[data-card-id="${breakId}"]`).dblclick();
       // A double-click enters the Pokémon options window first.
@@ -544,9 +551,13 @@ for (const mode of ['flat', 'table'] as const)
       const right = await sceneCard(page, 'stadium-1');
       expect(left.bounds.x + left.bounds.width).toBeCloseTo(right.bounds.x, 5);
       await page.locator(`[data-card-id="${left.id}"]`).dblclick();
+      await expect(page.locator('[data-card-actions-window]')).toBeVisible();
+      await page.locator('[data-card-window-view]').click();
       await expect(
         page.locator('[data-preview-kind="composition"]')
       ).toBeVisible();
+      await page.keyboard.press('Escape');
+      await expect(page.locator('[data-card-actions-window]')).toBeVisible();
       await page.keyboard.press('Escape');
       await fromDeck(page, 'replacement', 'g');
       await expect
