@@ -39,7 +39,7 @@ export const CardMoveButtons = ({
     .filter(
       (zone) =>
         zone.interactive &&
-        zone.id !== card.parentId &&
+        (zone.id !== card.parentId || zone.kind === 'deck') &&
         ORDER.includes(zone.kind) &&
         (zone.playerId === card.ownerId || zone.playerId === null)
     )

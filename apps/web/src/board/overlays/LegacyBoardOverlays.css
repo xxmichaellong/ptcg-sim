@@ -1912,6 +1912,20 @@ button.ptcgsim-overlay-toggle:focus-visible {
   }
 }
 
+/* A short screen needs a smaller options thumbnail so its View action fits. */
+@media (max-height: 500px) and (min-width: 601px) {
+  .card-window__body {
+    grid-template-columns: minmax(100px, 150px) minmax(0, 1fr);
+  }
+  .card-window__picture {
+    align-self: start;
+  }
+  .card-window__card {
+    max-width: min(150px, calc((100dvh - 180px) * 0.7159));
+    flex-shrink: 0;
+  }
+}
+
 /* Keep the return action visible while every other header action fades out. */
 .is-showing-board .ptcgsim-overlay-actions > :not(.ptcgsim-show-board-button) {
   opacity: 0;

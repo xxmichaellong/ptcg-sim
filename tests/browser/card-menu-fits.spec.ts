@@ -188,7 +188,50 @@ const cardMenusFit = async (page: Page): Promise<void> => {
   await closeToasts(page);
   await browser.locator('.ptcgsim-zone-card').nth(2).tap();
   await browser.locator('button', { hasText: /^Actions$/u }).tap();
-  await expectMenuFits(page);
+  const options = page.locator('[data-card-actions-window]');
+  await expect(options).toBeVisible();
+  await expect(options).toHaveCSS('opacity', '1');
+  const frame = (await options.boundingBox())!,
+    size = page.viewportSize()!;
+  expect(frame.x).toBeGreaterThanOrEqual(0);
+  expect(frame.y).toBeGreaterThanOrEqual(0);
+  expect(frame.x + frame.width).toBeLessThanOrEqual(size.width);
+  expect(frame.y + frame.height).toBeLessThanOrEqual(size.height);
+  for (const control of await options.locator('button:not(:disabled)').all()) {
+    await control.scrollIntoViewIfNeeded();
+    await expect(control).toBeInViewport({ ratio: 1 });
+    await expect
+      .poll(() =>
+        control.evaluate((node) => {
+          const box = node.getBoundingClientRect();
+          return node.contains(
+            document.elementFromPoint(
+              box.x + box.width / 2,
+              box.y + box.height / 2
+            )
+          );
+        })
+      )
+      .toBe(true);
+  }
+  await expect(
+    options.locator('[data-card-destination="deck-top"]')
+  ).toHaveCount(1);
+  const bottom = options.locator('[data-card-destination="deck-bottom"]');
+  await bottom.scrollIntoViewIfNeeded();
+  const revision = Number(
+    await page.locator('.ptcgsim-board-surface').getAttribute('data-revision')
+  );
+  await bottom.tap();
+  await expect
+    .poll(async () =>
+      Number(
+        await page
+          .locator('.ptcgsim-board-surface')
+          .getAttribute('data-revision')
+      )
+    )
+    .toBe(revision + 1);
 };
 
 test.describe('an upright phone', () => {

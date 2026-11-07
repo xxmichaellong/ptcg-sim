@@ -581,9 +581,10 @@ describe('the Pokémon window', () => {
       bottomPlayerId: blue,
       splitRatio: 0.5,
     });
+    const callbacks = actions();
     await render(
       stateFor(blue, { view: pieced, scene: piecedScene }),
-      actions()
+      callbacks
     );
     // The options window opens first, with an explicit whole-artwork action.
     expect(
@@ -600,6 +601,28 @@ describe('the Pokémon window', () => {
       window.querySelector('.pokemon-window__stages .pokemon-window__label')
         ?.textContent
     ).toBe('Pieces');
+    await act(async () =>
+      [...host.querySelectorAll('button')]
+        .find((button) => button.textContent === 'View whole card')!
+        .click()
+    );
+    await act(async () =>
+      [...host.querySelectorAll('button')]
+        .find((button) => button.textContent?.trim() === 'Details')!
+        .click()
+    );
+    const returned = host.querySelector<HTMLElement>('[data-pokemon-window]')!;
+    expect(returned).not.toBeNull();
+    await act(async () =>
+      returned.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'Escape',
+          bubbles: true,
+          cancelable: true,
+        })
+      )
+    );
+    expect(callbacks.dismiss).toHaveBeenCalledWith('preview');
   });
 
   it('gives the focus back to what opened it, after a card read large and Back', async () => {

@@ -80,6 +80,28 @@ describe('card-back chooser', () => {
     await act(async () => use(host).click());
     expect(onChoose).toHaveBeenCalledWith(DESIGN);
   });
+  it('previews saved mat designs with the same landscape artwork it applies', async () => {
+    const { host, onChoose } = await mount({
+      shape: 'mat',
+      current: DESIGN,
+      recent: [DESIGN],
+    });
+    await act(async () => radio(host, 'backs').click());
+    const previews = [
+      host.querySelector<HTMLImageElement>('.card-back-chooser__card')!,
+      radio(host, DESIGN)
+        .closest('label')!
+        .querySelector<HTMLImageElement>('img')!,
+    ];
+    for (const preview of previews) {
+      expect(decodeURIComponent(preview.src)).toContain(
+        'viewBox="0 0 1000 600"'
+      );
+    }
+    await act(async () => use(host).click());
+    expect(onChoose).toHaveBeenCalledWith(DESIGN);
+  });
+
   it('opens on the standard back, a tile of its own, and uses it as it is', async () => {
     const { host, onChoose } = await mount();
     const standard = host.querySelector<HTMLInputElement>(

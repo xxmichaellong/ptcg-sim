@@ -2230,8 +2230,7 @@ const Preview = ({
   const tilt = useMemo(() => createTiltHandlers(tiltTarget), []);
   const [showPieces, setShowPieces] = useState(false);
   const [showArtwork, setShowArtwork] = useState(artOnly);
-  // A card in pieces in play is shown whole first; Details opens its
-  // Pokémon window.
+  // Details returns from joined artwork to its Pokémon options.
   const [showDetails, setShowDetails] = useState(false);
   const [individualCardId, setIndividualCardId] = useState<string | null>(null);
   const readingCard =
@@ -2483,7 +2482,10 @@ const Preview = ({
               type="button"
               className="ptcgsim-overlay-button"
               data-preview-tabbable="true"
-              onClick={() => setShowDetails(true)}
+              onClick={() => {
+                setShowArtwork(false);
+                setShowDetails(true);
+              }}
             >
               <Trans comment="Opens a Pokémon's window: its cards, damage, Abilities and attacks.">
                 Details
@@ -3496,7 +3498,8 @@ const ZoneBrowser = ({
           emit={(intent) => {
             if (
               intent.kind === 'CardDropRequested' &&
-              intent.pilePosition !== undefined
+              intent.pilePosition !== undefined &&
+              intent.targetId === zone.id
             ) {
               setSortEnabled(false);
             }

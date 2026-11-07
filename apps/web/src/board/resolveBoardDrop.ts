@@ -1,4 +1,5 @@
 import type { MatchViewState, ViewCardId } from '@ptcgsim/game-core';
+import { resolveDeckRelativeCardAction } from './resolveDeckRelativeAction.js';
 import { attachesAsEnergy } from './plays-as.js';
 import { resolveAttachEvolveTargeting } from './resolveAttachEvolveTargeting.js';
 import { resolveCardStadiumMoveAction } from './resolveCardStadiumMoveAction.js';
@@ -214,6 +215,20 @@ export const resolveBoardDrop = (
         )
       )
         return rejected('stale_target');
+      if (sourceZone?.id === destination.id) {
+        const result = resolveDeckRelativeCardAction(
+          view,
+          intent.cardId,
+          intent.pilePosition === 'top' ? 'moveToTop' : 'moveToBottom'
+        );
+        return result.ok
+          ? result
+          : rejected(
+              result.reason === 'no_deck' || result.reason === 'empty_deck'
+                ? 'unsupported_target'
+                : result.reason
+            );
+      }
     } else {
       if (
         !sourceZone ||

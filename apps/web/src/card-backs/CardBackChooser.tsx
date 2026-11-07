@@ -180,7 +180,7 @@ export const CardBackChooser = ({
     shape === 'coin'
       ? coinImage
       : (back: string) =>
-          cardBackImage(back, { own: true, opponentCustomBacks: true });
+          cardBackImage(back, { own: true, opponentCustomBacks: true, shape });
   const ids = useId();
   // A design's emblem draws once it has come (card-back-emblems.ts).
   useSyncExternalStore(subscribeEmblems, emblemsVersion, emblemsVersion);

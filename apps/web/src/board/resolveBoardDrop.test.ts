@@ -31,6 +31,35 @@ const localHandCard = (input: ReturnType<typeof fixture>) =>
   )!;
 
 describe('board drop command resolution', () => {
+  it.each(['top', 'bottom'] as const)(
+    'puts a card already in the deck on its %s',
+    (pilePosition) => {
+      const input = fixture();
+      const deck = input.view.zones['zone:spike-blue:deck']!;
+      const cardId = deck.cards[1]!.id;
+      expect(
+        resolveBoardDrop(input.view, input.scene, {
+          kind: 'CardDropRequested',
+          cardId,
+          targetId: deck.id,
+          x: 0,
+          y: 0,
+          pilePosition,
+        })
+      ).toEqual({
+        ok: true,
+        command: {
+          type:
+            pilePosition === 'top'
+              ? 'MoveCardToDeckTop'
+              : 'MoveCardToDeckBottom',
+          cardId,
+          expectedSourceId: deck.id,
+        },
+      });
+    }
+  );
+
   it.each(['hand', 'prizes', 'discard', 'board'])(
     'moves a %s card to either deck end from direct destinations',
     (kind) => {

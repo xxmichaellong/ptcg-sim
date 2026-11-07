@@ -675,6 +675,31 @@ describe('legacy board overlays', () => {
     ).toBeNull();
   });
 
+  it('offers both deck ends for a card already in the deck', async () => {
+    const card = cardIn(`:${firstPlayer}:deck`);
+    await act(async () =>
+      root.render(
+        createElement(LegacyBoardOverlays, {
+          state: state({
+            overlays: {
+              contextMenuCardId: null,
+              preview: { kind: 'card', cardId: card.id },
+              input: null,
+            },
+          }),
+          darkMode: false,
+          actions: actions(),
+        })
+      )
+    );
+    expect(
+      host.querySelector('[data-card-destination="deck-top"]')
+    ).not.toBeNull();
+    expect(
+      host.querySelector('[data-card-destination="deck-bottom"]')
+    ).not.toBeNull();
+  });
+
   it('routes card-window categories through the named window origin', async () => {
     const card = cardIn('stack:blue:active');
     const callbacks = { ...actions(), invokeWindowAction: vi.fn() };
