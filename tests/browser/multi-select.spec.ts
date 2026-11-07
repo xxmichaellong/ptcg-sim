@@ -199,7 +199,7 @@ for (const mode of ['flat', 'table'] as const satisfies readonly TableMode[])
           `button[data-overlay-card-id="${fromPile}"][data-selection-ticked="true"]`
         )
       ).toBeVisible();
-      await expectSelection(page, [hand[2]!, hand[3]!]);
+      await expectSelection(page, [hand[2]!, hand[3]!, fromPile]);
       const names = await Promise.all(
         [hand[2]!, hand[3]!, fromPile].map((id) => cardName(page, id))
       );
@@ -248,7 +248,7 @@ for (const mode of ['flat', 'table'] as const satisfies readonly TableMode[])
           `button[data-overlay-card-id="${fromPile}"][data-selection-ticked="true"]`
         )
       ).toBeVisible();
-      await expectSelection(page, [hand[2]!]);
+      await expectSelection(page, [hand[2]!, fromPile]);
       // No key held: a press on the hand card of the group carries it all,
       // the pile's card with it.
       const deck = await zoneId(page, 'local', 'deck');

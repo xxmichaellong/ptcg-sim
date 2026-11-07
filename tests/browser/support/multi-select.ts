@@ -193,8 +193,8 @@ export const card = (page: Page, cardId: string): Locator =>
   page.locator(`.ptcgsim-board-surface [data-card-id="${cardId}"]`);
 
 /**
- * The selection as the table shows it, in its order: a group's numbers
- * (`data-select-order`), or the one card pressed when it is one alone.
+ * The selection on the table and in its open windows, in order: group
+ * numbers, or the pressed card when it is selected alone.
  */
 export const selection = (page: Page): Promise<string[]> =>
   page.evaluate(() => {
