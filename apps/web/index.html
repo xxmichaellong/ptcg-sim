@@ -1,0 +1,573 @@
+<!doctype html>
+<html lang="en" translate="no">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PTCG-sim | Pokémon TCG Tabletop Simulator</title>
+    <meta
+      name="description"
+      content="PTCG-sim is an open-source Pokémon Trading Card Game (Pokémon TCG) tabletop simulator supporting single player and online multiplayer. Simulate your favorite card game!"
+    />
+    <meta
+      name="keywords"
+      content="ptcg sim,ptcg,pokemon trading card game simulator,pokemon trading card game sim,pokemon tcg simulator,pokemon tcg sim,pokemon sim,pokemon simulator,pokemon card simulator,pokemon card sim,pokemon tabletop simulator,pokemon tabletop sim,pokemon,pokemon card,pokemonsim,pokemon game sim,ptcg os,pokemon open source"
+    />
+    <meta
+      property="og:title"
+      content="Pokémon TCG Tabletop Simulator | PTCG-sim"
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/v2/assets/blank-logo.png" />
+    <meta
+      property="og:description"
+      content="PTCG-sim is an open-source Pokémon Trading Card Game (Pokémon TCG) tabletop simulator supporting single player and online multiplayer. Simulate your favorite card game!"
+    />
+    <meta property="og:site_name" content="PTCG-sim" />
+    <link
+      rel="icon"
+      href="/v2/assets/favicon.ico"
+      type="image/x-icon"
+      sizes="any"
+    />
+    <link rel="shortcut icon" href="/v2/assets/favicon.ico" />
+    <!-- The loading screen's mark, there by its first paint. -->
+    <link
+      rel="preload"
+      as="image"
+      href="/v2/assets/brand/logo.62970f9207.webp"
+      type="image/webp"
+      fetchpriority="high"
+    />
+    <script>
+      // The saved theme (Night or Day), table artwork and motion choice are
+      // on the page before its first paint, so the loading screen below
+      // never flashes another or moves for a player who asked it not to.
+      // page-theme.ts and page-motion.ts apply the same preferences again
+      // once the app runs (an unknown artwork falls back to Cream there and
+      // in CSS).
+      (function () {
+        var root = document.documentElement;
+        try {
+          var table = JSON.parse(
+            localStorage.getItem('ptcgsim.table.v1') || 'null'
+          );
+          root.dataset.theme =
+            table && table.darkMode === false ? 'day' : 'night';
+          root.dataset.tableArt =
+            table && typeof table.art === 'string' ? table.art : 'cream';
+        } catch (error) {}
+        try {
+          var motion = JSON.parse(
+            localStorage.getItem('ptcgsim.motion.v1') || 'null'
+          );
+          var choice = motion && motion.reduceMotion;
+          var reduced =
+            choice === 'reduce' ||
+            (choice !== 'full' &&
+              typeof matchMedia === 'function' &&
+              matchMedia('(prefers-reduced-motion: reduce)').matches);
+          root.dataset.motion = reduced ? 'reduced' : 'full';
+          if (motion && typeof motion.animationSpeed === 'string') {
+            root.dataset.motionSpeed = motion.animationSpeed;
+          }
+        } catch (error) {}
+      })();
+    </script>
+    <style>
+      /*
+       * The loading screen over the table (session/shell/table-curtain.ts):
+       * the desk, the site's mark and name, and a progress bar at its foot
+       * (Magic Circle's boot screen). It is painted here, before any
+       * stylesheet or script has loaded, so it reads the design tokens with
+       * their own values as fallbacks. It is only paint: it never takes the
+       * pointer.
+       */
+      #tableCurtain {
+        /* The fallbacks are Cream's, the default artwork (table-art.css). */
+        --curtain-desk: var(--color-desk, #d3c8b5);
+        --curtain-desk-hi: var(--color-desk-hi, #e0d7c7);
+        --curtain-shade: var(--color-desk-vignette, rgb(66 52 36 / 0.24));
+        --curtain-lamp: var(--color-lamp, rgb(255 214 160 / 0.16));
+        --curtain-ink: var(--color-desk-ink, #4c4339);
+        --curtain-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+        /* The system's own, so the app's webfont arriving moves nothing. */
+        --curtain-type:
+          system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue',
+          sans-serif;
+
+        position: fixed;
+        inset: 0;
+        z-index: var(--layer-curtain, 2500);
+        display: grid;
+        place-items: center;
+        background:
+          radial-gradient(
+            ellipse 55% 50% at 42% 40%,
+            var(--curtain-lamp),
+            transparent 72%
+          ),
+          radial-gradient(
+            ellipse 85% 80% at 47% 47%,
+            transparent 45%,
+            var(--curtain-shade) 100%
+          ),
+          linear-gradient(var(--curtain-desk-hi), var(--curtain-desk));
+        background-color: var(--curtain-desk);
+        color: var(--curtain-ink);
+        opacity: 1;
+        pointer-events: none;
+        /* Lifting at the end of a load, it waits for the bar to fill. */
+        transition: opacity var(--table-curtain-fade, 0ms) var(--curtain-ease)
+          var(--table-curtain-delay, 0ms);
+      }
+      :root[data-theme='day'] #tableCurtain {
+        --curtain-lamp: var(--color-lamp, rgb(255 248 232 / 0.14));
+      }
+      /*
+       * Each artwork's desk, there before table-art.css is: a dark one
+       * doesn't open cream and turn dark mid-load. Kept equal to
+       * table-art.css (table-curtain-progress.test.ts checks).
+       */
+      :root[data-table-art='frost'] #tableCurtain {
+        --curtain-desk: var(--color-desk, #c9c6bf);
+        --curtain-desk-hi: var(--color-desk-hi, #d9d6d0);
+        --curtain-shade: var(--color-desk-vignette, rgb(36 42 52 / 0.24));
+        --curtain-ink: var(--color-desk-ink, #3f4651);
+      }
+      :root[data-table-art='sakura'] #tableCurtain {
+        --curtain-desk: var(--color-desk, #d6c2a3);
+        --curtain-desk-hi: var(--color-desk-hi, #e3d3b8);
+        --curtain-shade: var(--color-desk-vignette, rgb(70 44 36 / 0.24));
+        --curtain-ink: var(--color-desk-ink, #54423a);
+      }
+      :root[data-table-art='parchment'] #tableCurtain {
+        --curtain-desk: var(--color-desk, #b58955);
+        --curtain-desk-hi: var(--color-desk-hi, #c69c69);
+        --curtain-shade: var(--color-desk-vignette, rgb(60 36 14 / 0.32));
+        --curtain-ink: var(--color-desk-ink, #3b2a19);
+      }
+      :root[data-table-art='classic'] #tableCurtain {
+        --curtain-desk: var(--color-desk, #2f2017);
+        --curtain-desk-hi: var(--color-desk-hi, #3d2a1e);
+        --curtain-shade: var(--color-desk-vignette, rgb(10 6 2 / 0.42));
+        --curtain-ink: var(--color-desk-ink, #c9bba6);
+      }
+      :root[data-table-art='ocean'] #tableCurtain {
+        --curtain-desk: var(--color-desk, #4b4239);
+        --curtain-desk-hi: var(--color-desk-hi, #5a4f44);
+        --curtain-shade: var(--color-desk-vignette, rgb(8 8 6 / 0.4));
+        --curtain-ink: var(--color-desk-ink, #d4cabd);
+      }
+      :root[data-table-art='slate'] #tableCurtain {
+        --curtain-desk: var(--color-desk, #272422);
+        --curtain-desk-hi: var(--color-desk-hi, #34302c);
+        --curtain-shade: var(--color-desk-vignette, rgb(4 4 4 / 0.42));
+        --curtain-ink: var(--color-desk-ink, #cfc8c0);
+      }
+      :root[data-table-art='midnight'] #tableCurtain {
+        --curtain-desk: var(--color-desk, #261b15);
+        --curtain-desk-hi: var(--color-desk-hi, #32241b);
+        --curtain-shade: var(--color-desk-vignette, rgb(8 6 4 / 0.44));
+        --curtain-ink: var(--color-desk-ink, #c9bba6);
+      }
+      :root[data-table-art='burgundy'] #tableCurtain {
+        --curtain-desk: var(--color-desk, #3a2018);
+        --curtain-desk-hi: var(--color-desk-hi, #4a2b20);
+        --curtain-shade: var(--color-desk-vignette, rgb(12 4 2 / 0.44));
+        --curtain-ink: var(--color-desk-ink, #d6c4b4);
+      }
+      :root[data-table-art='charcoal'] #tableCurtain {
+        --curtain-desk: var(--color-desk, #1d1c1b);
+        --curtain-desk-hi: var(--color-desk-hi, #282624);
+        --curtain-shade: var(--color-desk-vignette, rgb(0 0 0 / 0.44));
+        --curtain-ink: var(--color-desk-ink, #cdc6be);
+      }
+      #tableCurtain[hidden] {
+        display: none;
+      }
+      /* Down, it is wholly down: a swap under it is never glimpsed. */
+      #tableCurtain[data-state='covering'] {
+        transition: none;
+      }
+      #tableCurtain[data-state='leaving'] {
+        opacity: 0;
+      }
+
+      /* The mark and the name, a little above the middle, as a title sits. */
+      .table-curtain__brand {
+        display: grid;
+        justify-items: center;
+        gap: 14px;
+        translate: 0 -3vh;
+      }
+      .table-curtain__mark {
+        display: block;
+        width: 88px;
+        height: 88px;
+        /* Eases in, then barely breathes. */
+        animation:
+          table-curtain-arrive 600ms var(--curtain-ease) 150ms both,
+          table-curtain-breathe 2.4s ease-in-out 750ms infinite;
+      }
+      .table-curtain__name {
+        font: 650 22px/1.2 var(--curtain-type);
+        letter-spacing: 0.01em;
+        animation: table-curtain-rise 600ms var(--curtain-ease) 300ms both;
+      }
+      .table-curtain__footer {
+        position: absolute;
+        right: 0;
+        bottom: max(28px, calc(env(safe-area-inset-bottom) + 16px));
+        left: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        padding: 0 16px;
+        animation: table-curtain-show 400ms ease-out 250ms both;
+      }
+      .table-curtain__bar {
+        position: relative;
+        width: clamp(180px, 48vw, 240px);
+        height: 5px;
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--curtain-ink) 16%, transparent);
+        overflow: hidden;
+        /* A layer of its own, so the moving fill is clipped to its ends. */
+        transform: translateZ(0);
+      }
+      /*
+       * Its rounded end at the progress (--table-curtain-progress, 0 to 1).
+       * The inline script below aims it where the load should be a second
+       * from now, and the transition carries it there on the compositor,
+       * through a long task.
+       */
+      .table-curtain__fill {
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        background: var(--curtain-ink);
+        opacity: 0.8;
+        translate: calc((var(--table-curtain-progress, 0) - 1) * 100%) 0;
+        transition: translate 1000ms linear;
+      }
+      #tableCurtain[data-complete] .table-curtain__fill {
+        transition: translate 360ms var(--curtain-ease);
+      }
+      .table-curtain__label {
+        font: 500 12px/1.4 var(--curtain-type);
+        letter-spacing: 0.01em;
+        opacity: 0.82;
+      }
+
+      /*
+       * Trading one table for another (handOff): no mark, the bar sweeping
+       * (it can't say how far), and only after a moment, so a quick trade
+       * never shows it.
+       */
+      #tableCurtain[data-mode='travel'] .table-curtain__brand {
+        display: none;
+      }
+      #tableCurtain[data-mode='travel'] .table-curtain__footer {
+        animation-delay: 400ms;
+      }
+      #tableCurtain[data-mode='travel'] .table-curtain__fill {
+        right: auto;
+        width: 40%;
+        translate: none;
+        transition: none;
+        animation: table-curtain-sweep 1.6s ease-in-out infinite;
+      }
+
+      @keyframes table-curtain-arrive {
+        from {
+          opacity: 0;
+          scale: 0.92;
+        }
+      }
+      @keyframes table-curtain-breathe {
+        50% {
+          opacity: 0.9;
+          scale: 0.97;
+        }
+      }
+      @keyframes table-curtain-rise {
+        from {
+          opacity: 0;
+          translate: 0 6px;
+        }
+      }
+      @keyframes table-curtain-show {
+        from {
+          opacity: 0;
+        }
+      }
+      @keyframes table-curtain-sweep {
+        from {
+          translate: -100% 0;
+        }
+        to {
+          translate: 250% 0;
+        }
+      }
+
+      /* Without motion: all of it at once, and still; the bar steps. */
+      @media (prefers-reduced-motion: reduce) {
+        :root:not([data-motion='full']) .table-curtain__mark,
+        :root:not([data-motion='full']) .table-curtain__name,
+        :root:not([data-motion='full']) .table-curtain__footer,
+        :root:not([data-motion='full']) .table-curtain__fill {
+          animation: none;
+          transition: none;
+        }
+      }
+      :root[data-motion='reduced'] .table-curtain__mark,
+      :root[data-motion='reduced'] .table-curtain__name,
+      :root[data-motion='reduced'] .table-curtain__footer,
+      :root[data-motion='reduced'] .table-curtain__fill,
+      :root[data-motion-speed='instant'] .table-curtain__mark,
+      :root[data-motion-speed='instant'] .table-curtain__name,
+      :root[data-motion-speed='instant'] .table-curtain__footer,
+      :root[data-motion-speed='instant'] .table-curtain__fill {
+        animation: none;
+        transition: none;
+      }
+    </style>
+    <script>
+      // A deploy reaches Cloudflare's machines over several seconds. In that
+      // window this page and its scripts can come from different versions;
+      // a script the other version lacks comes back as this page, which the
+      // browser refuses, and the table would stay blank. While nothing is on
+      // screen, reload instead, a few times with a growing pause.
+      (function () {
+        var key = 'ptcgsim:stale-assets';
+        var assets = location.origin + '/assets/';
+        var waiting = false;
+        var ours = function (url) {
+          return typeof url === 'string' && url.indexOf(assets) === 0;
+        };
+        var failedImport = function (message) {
+          message = String(message);
+          return (
+            (/dynamically imported module/i.test(message) &&
+              message.indexOf(assets) !== -1) ||
+            /Importing a module script failed/i.test(message)
+          );
+        };
+        var showing = function () {
+          return (
+            document.querySelector(
+              '[data-app-route]:not([data-app-route$="-loading"])'
+            ) !== null
+          );
+        };
+        var recover = function () {
+          if (waiting) return;
+          var now = Date.now();
+          var tries = 0;
+          var since = now;
+          try {
+            var saved = JSON.parse(sessionStorage.getItem(key) || 'null');
+            if (saved && now - saved.since < 300000) {
+              tries = saved.tries;
+              since = saved.since;
+            }
+          } catch (error) {}
+          if (tries >= 6) return;
+          waiting = true;
+          setTimeout(
+            function () {
+              waiting = false;
+              if (showing()) return;
+              try {
+                sessionStorage.setItem(
+                  key,
+                  JSON.stringify({ tries: tries + 1, since: since })
+                );
+              } catch (error) {}
+              location.reload();
+            },
+            500 * Math.pow(2, tries)
+          );
+        };
+        window.addEventListener('vite:preloadError', recover);
+        window.addEventListener(
+          'error',
+          function (event) {
+            var target = event.target;
+            if (target && target.tagName === 'SCRIPT') {
+              if (ours(target.src)) recover();
+            } else if (target && target.tagName === 'LINK') {
+              if (ours(target.href)) recover();
+            } else if (failedImport(event.message)) {
+              recover();
+            }
+          },
+          true
+        );
+        window.addEventListener('unhandledrejection', function (event) {
+          if (failedImport(event.reason && event.reason.message)) recover();
+        });
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <div
+      id="tableCurtain"
+      data-state="covering"
+      data-mode="boot"
+      role="status"
+      aria-live="polite"
+    >
+      <div class="table-curtain__brand" aria-hidden="true">
+        <img
+          class="table-curtain__mark"
+          src="/v2/assets/brand/logo.62970f9207.webp"
+          alt=""
+          width="88"
+          height="88"
+          decoding="sync"
+        />
+        <span class="table-curtain__name">PTCG-sim</span>
+      </div>
+      <div class="table-curtain__footer">
+        <div
+          id="tableCurtainBar"
+          class="table-curtain__bar"
+          role="progressbar"
+          aria-labelledby="tableCurtainLabel"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          aria-valuenow="0"
+        >
+          <div class="table-curtain__fill"></div>
+        </div>
+        <span id="tableCurtainLabel" class="table-curtain__label"
+          >Setting up the table…</span
+        >
+      </div>
+    </div>
+    <script id="tableCurtainProgress">
+      // The loading screen's bar (table-curtain.ts), paced as Magic Circle
+      // paces its boot bar: it moves at the speed that would bring it near
+      // full when this load is predicted to end -- the table's first paint,
+      // when table-curtain.ts sweeps it to full -- and never claims that
+      // sooner. Each mark the app makes on the way (`ptcgsim:load:*`)
+      // predicts the rest of the load from how long reaching it took, since
+      // a load slow so far tends to stay slow. A load running past its
+      // prediction slows the bar without stopping it. The numbers are
+      // lognormal guesses from local and preview loads (2026-11-06):
+      // medians, with log-space spreads wide enough that the slowest loads
+      // keep moving.
+      (function () {
+        var curtain = document.getElementById('tableCurtain');
+        var bar = document.getElementById('tableCurtainBar');
+        if (!curtain || !bar || typeof performance === 'undefined') return;
+        var TOTAL_MEDIAN_MS = 3000;
+        var TOTAL_LOG_SPREAD = 0.9;
+        // In the order a load reaches them. `restMedianRatio` is the median
+        // time from the mark to the table, as a multiple of the mark's own
+        // time since the page was asked for.
+        var MILESTONES = [
+          { mark: 'ptcgsim:load:app', restMedianRatio: 1.2, logSpread: 0.9 },
+          { mark: 'ptcgsim:load:lobby', restMedianRatio: 0.7, logSpread: 0.9 },
+          { mark: 'ptcgsim:load:room', restMedianRatio: 0.2, logSpread: 1.1 },
+        ];
+        var CEILING_PERCENT = 97;
+        // How far ahead each tick aims the bar, as long as the stylesheet's
+        // transition; also how long a mark's prediction takes to take over,
+        // and the most time a tick may count, so a page that was hidden
+        // doesn't leap forward on coming back.
+        var LOOKAHEAD_MS = 1000;
+        var progressPercent = 0;
+
+        // The median of what remains of a lognormal given it already
+        // exceeds `value` (Magic Circle's approximation of the exact form).
+        function medianRemaining(value, median, logSpread) {
+          if (value <= 0) return median;
+          var z = Math.log(value / median) / logSpread;
+          return (
+            median * Math.exp((logSpread * (z + Math.sqrt(z * z + 1.82))) / 2) -
+            value
+          );
+        }
+
+        function remainingMs(nowMs) {
+          var logRemainingMs = Math.log(
+            medianRemaining(nowMs, TOTAL_MEDIAN_MS, TOTAL_LOG_SPREAD)
+          );
+          for (var i = 0; i < MILESTONES.length; i++) {
+            var milestone = MILESTONES[i];
+            var reached = performance.getEntriesByName
+              ? performance.getEntriesByName(milestone.mark, 'mark')[0]
+              : undefined;
+            if (!reached || reached.startTime <= 0) continue;
+            var reachedMs = reached.startTime;
+            var milestoneRemainingMs =
+              reachedMs *
+              medianRemaining(
+                (nowMs - reachedMs) / reachedMs,
+                milestone.restMedianRatio,
+                milestone.logSpread
+              );
+            var takeover = Math.min(1, (nowMs - reachedMs) / LOOKAHEAD_MS);
+            logRemainingMs +=
+              takeover * (Math.log(milestoneRemainingMs) - logRemainingMs);
+          }
+          return Math.exp(logRemainingMs);
+        }
+
+        // Where progress gets after `durationMs` if the predicted remaining
+        // time holds: toward the ceiling, never reaching it.
+        function advance(percent, durationMs, predictedRemainingMs) {
+          return (
+            CEILING_PERCENT -
+            (CEILING_PERCENT - percent) *
+              Math.exp(-durationMs / predictedRemainingMs)
+          );
+        }
+
+        var timer;
+        var previousMs = 0;
+        function tick() {
+          // Lifted, completed, or trading tables: the bar is no longer this
+          // load's.
+          if (
+            curtain.hidden ||
+            curtain.hasAttribute('data-complete') ||
+            curtain.getAttribute('data-mode') !== 'boot'
+          ) {
+            clearInterval(timer);
+            return;
+          }
+          var nowMs = performance.now();
+          var predictedRemainingMs = remainingMs(nowMs);
+          progressPercent = advance(
+            progressPercent,
+            Math.min(nowMs - previousMs, LOOKAHEAD_MS),
+            predictedRemainingMs
+          );
+          previousMs = nowMs;
+          // Whole percents, rounded down: it never reads full early.
+          bar.setAttribute(
+            'aria-valuenow',
+            String(Math.floor(progressPercent))
+          );
+          var aheadPercent = advance(
+            progressPercent,
+            LOOKAHEAD_MS,
+            predictedRemainingMs
+          );
+          curtain.style.setProperty(
+            '--table-curtain-progress',
+            String(aheadPercent / 100)
+          );
+        }
+        timer = setInterval(tick, 250);
+        tick();
+      })();
+    </script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

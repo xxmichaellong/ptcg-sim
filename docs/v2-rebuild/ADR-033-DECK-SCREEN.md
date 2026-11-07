@@ -1,0 +1,436 @@
+# ADR-033: the deck screen — saved decks, one-step import, real rules
+
+- Status: **ACCEPTED**
+- Decision date: 2026-10-15; amended 2026-10-30 (whose deck the screen
+  works on, §14)
+- Scope: the deck screen (`apps/web/src/features/deck/`), the deck model and
+  rules in `@ptcgsim/deck-core`, and how decks reach the table. The card
+  data behind it is ADR-032.
+
+## Context
+
+The deck screen was v1's, reshaped: a decklist column (paste, Popular decks,
+Random, card back, language) beside a builder (name search, two sort
+controls, a deck grid). The owner asked for it to be redesigned: "you have to
+go through so many steps just to import a deck", "the UI is kind of all over
+the place", "every filter you could think of", and a way to "save decks and
+name them". They asked for the logic to be reviewed for the right
+primitives, scale, persistence and accuracy, with Limitless TCG's card search
+and deck builder as the bar.
+
+What the review found:
+
+- **Importing took four steps.** Paste, Import, a full-screen table of rows
+  with image URLs to check, Confirm, and only then Play. Two P1/P2 toggles
+  (one per column) chose the seat.
+- **Nothing was saved.** The "Saved" badge meant only that the edit was in
+  memory; a reload lost every deck.
+- **The deck model kept no identity.** A deck was `Record<name, {cards:
+[{data, count}]}>`, where `data` was whatever the source gave: a TCGdex
+  object from search, `{name, supertype, image}` from an import. A card's
+  set and number were lost on import, so a deck could not be exported in
+  Pokémon TCG Live's format or checked against a format.
+- **The rules were wrong.** Every Energy card was exempt from the copy
+  limit (four Special Energy is the limit). There was no Basic Pokémon
+  requirement, no ACE SPEC, Radiant, Prism Star or Pokémon ☆ limit, and no
+  format legality at all.
+- **Search took 3–5 seconds and only matched names** (ADR-032).
+
+Research across Limitless, Pokémon TCG Live, pokemoncard.io, the official
+card database, pkmncards, Moxfield, Archidekt, Hearthstone, MTG Arena and
+Fabrary pointed the same way: import in one gesture and never overwrite,
+save automatically, give the deck the most room, group it the way players
+read it, make filter chips and typed syntax one query, check rules live and
+specifically without blocking, and go from deck to table in one click.
+
+## Decision
+
+### The model (`@ptcgsim/deck-core`)
+
+1. **A deck is an ordered list of entries** (`DeckList`), each a
+   self-contained `DeckCard` and a count. A card's `id` names its printing
+   ("TWM 130", or `custom:…` for one made by hand); entries of the same id
+   merge, and two printings of one card are two entries. A card carries what
+   the table needs (name, kind, images, layout) and, when the catalog knows
+   it, the facts the rules check (stage, ACE SPEC/Radiant/Prism Star/☆,
+   Trainer and Energy kind, regulation mark, legality, evolution line). A
+   saved deck therefore opens, plays and validates with no catalog at hand.
+   The v1 grouped `Deck`, its deep-equality card comparison and its
+   validation are gone.
+2. **Rules are per format and return typed issues** (`checkDeck`):
+   Standard, Expanded, Unlimited and TCG Pocket. 60 cards (20 in Pocket);
+   at least one Basic Pokémon; four of a name (two in Pocket) counted across
+   printings, a Trainer's subtitle ignored ("Professor's Research
+   (Professor Turo)"), Basic Energy unlimited; one ACE SPEC, one Radiant
+   Pokémon and one Pokémon ☆ per deck; one of each Prism Star card; legality
+   from the catalog, reprints included; no Energy in Pocket; TCG and Pocket
+   cards never mixed. Each issue names the cards it is about. A card typed in
+   by hand is reported as unchecked, never guessed.
+3. **Text formats.** `formatDecklistText` writes Pokémon TCG Live's export,
+   which every deck site reads. The v1 `QTY,Name,Type,URL` CSV stays readable
+   and writable.
+4. **Matching a list line to a printing** (`resolveDecklistRow`): set and
+   number (promo codes aliased: PR-SV → SVP), or an old list's Pokémon TCG
+   API id (`hgss4-84`; a promo's `dpp-DP03` is DPP 3), then the name in that set
+   (Limitless numbers some sets differently from TCGdex), then Basic Energy
+   by name (every spelling, PTCGO's `Basic {R} Energy` included), then the
+   name alone -- but only for a line that names no printing: one naming a
+   printing the catalog lacks, by set and number or by id, is taken as
+   written (with Limitless's help),
+   never swapped for another card of its name. `withCatalogFacts` gives decks made without the catalog their
+   facts later, and keeps saved decks' facts as the catalog has them now (a
+   rotation, a ban, a legal reprint), without changing anything the table
+   shows. Facts compare by value, whatever order storage wrote their keys
+   in: a deck read back that looked changed was saved again on every load,
+   and between two tabs for good, losing edits. A deck keeps the catalog
+   build it was brought up to (`factsFrom`, gone when its cards change any
+   other way, and with how this build works facts out, `DECK_FACTS_VERSION`),
+   and only a newer catalog or way changes it again: two tabs a daily
+   rebuild apart would otherwise each undo the other. Such a change waits
+   to be written as any does, and gives way when another tab writes the
+   deck meanwhile (a hidden tab's write comes a second or more late):
+   made from older cards, it would undo the player's edit. A card typed otherwise than the catalog's print (in the card
+   dialog or a CSV) is played as typed and gets none. A CSV's two scans of
+   one printing (English and German) stay two entries.
+5. **Search** is Limitless's syntax over the catalog in memory
+   (`parseCardQuery`, `searchCatalog`): `t:`, `s:`, `is:`, `hp>=`, `ac<=cc`,
+   `text:draw_3_cards`, `w:`, `rs:`, `rc:`, `reg>=`, `f:`, `e:`, `a:`, `r:`,
+   `o:`, `u:`, comma for or, plus for and, minus for not. One tile per card,
+   its newest ordinary printing, with every print a click away.
+
+### Saved decks (`deck-library.ts`)
+
+6. **Every deck is saved, automatically**, in IndexedDB, one record per deck
+   (name, format, cards, cover, card back, source, created and changed
+   times). Edits
+   apply in memory at once and reach storage batched per deck, and whatever
+   is pending is written when the page is hidden. Another tab's change
+   arrives on a BroadcastChannel and is read back, unless this tab changed
+   that deck meanwhile. Records are decoded defensively and a bad one is
+   skipped. Where IndexedDB is blocked, or a write or removal fails
+   (storage full), the library works for the visit and says so, on the
+   deck list and in the editor, until the next write has tried it again
+   and it went through. There are no accounts; decks are this device's, and
+   leave it as text or files.
+7. **Seats hold decks; the library holds decks.** A seat (`DeckBuilderStore`)
+   holds the deck it will play and a label: the saved deck it is, or the
+   name of a list being tried. Editing a saved deck that is on a seat
+   updates the seat. A seat calls its deck changed only when the table would
+   see a difference, so a rename, a deleted saved deck, or facts arriving
+   never reload a deck mid-game. Installing to the table (the LoadDeck
+   receipts and drain) is unchanged.
+8. **A card back is its deck's** (2026-10-26, the owner's ruling, like
+   sleeves kept on a deck). One chosen on a seat holding a saved deck is
+   saved with that deck and worn by every seat it is on; a saved deck put
+   on a seat brings its back with it. A seat holding no saved deck takes
+   the choice as its own, and plays any deck without a back of its own in
+   it (the standard back until one is chosen; seats' own backs last the
+   visit). The back goes to the table with the deck, or at once when it
+   was chosen there or the screen has closed. A deck deleted while on a
+   seat stays there in its back, as its cards do. The chooser (ADR-041
+   stage 2) opens on the seat's back and offers again the backs the saved
+   decks wear.
+9. **Deleted at once, renamed in place** (2026-10-29, the owner's "much
+   better ui/ux"). Delete asks nothing: the deck goes, and a notice says so
+   with Undo, which puts it back exactly as it was (`DeckLibrary.restore`)
+   and on the seats it was on, where they still hold its cards. Rename
+   edits the name over the deck's tile, as the editor does: Enter or
+   leaving the field keeps it, Escape or an empty name keeps the old one.
+
+### The screen
+
+8. **Home first.** The deck screen opens on the player's decks: a paste box
+   (and Ctrl+V anywhere on the screen, a dropped file, From clipboard, Open
+   file), their saved decks as tiles (cover art, format, count and validity,
+   seat badges), the decks winning now (ADR-029's feed, with cover art), and
+   the classic decks by season. Choosing a tile puts it on the current seat;
+   Play takes the seats to the table.
+9. **Import is one step.** A pasted or dropped list becomes a saved deck,
+   named from a `###`/`Name:` header or its main attackers ("Dragapult ex /
+   Pidgeot ex"), put on the seat, with a toast saying how many cards. The
+   review table is gone. Lines nothing could place come back as a list to
+   look at in the editor ("Find it" searches for each); the rest still
+   imports. A tried list (a tournament deck) goes on the seat without
+   cluttering the library until it is saved or edited.
+10. **The editor** puts card search beside the deck, the deck the larger
+    side. Search has the typed syntax, filter chips (kind, then its stages,
+    mechanics or subtypes; the eleven types), a drawer for HP, retreat,
+    damage, attack cost, Weakness, Resistance, Ability, Rule Box,
+    regulation marks, set, rarity, illustrator and evolution, a sort, every
+    print on demand, and "only legal in this deck's format" on by default.
+    The drawer's controls (2026-10-29) are real ones, not typed fields: HP
+    as a min-max stepper, retreat as Any/0-4, the attack cost built from
+    Energy symbols (each counted; Backspace or right-click takes one off),
+    regulation marks as chips, set and rarity as lists to search, filled
+    from the catalog. Each control is a word of the search box's query
+    (`hp>=200`, `rc<=1`, `ac<=RRC`, `reg:H,I`, `!e:PAL`, `!r:Double_rare`):
+    a filter typed in the box shows on its control, one set on a control
+    shows in the box, and Reset or Clear filters takes those words out.
+    Results render as the grid scrolls. Click adds, Shift+click removes,
+    right-click opens the card; Enter in the search adds the first card, `/`
+    focuses it. The deck is grouped by evolution line, then Supporters,
+    Items, Tools, Stadiums, then Special and Basic Energy, as a list or as
+    images, with a live checklist whose issues point at their cards, and
+    opening-hand odds. Every change is saved and undoable (Ctrl+Z,
+    Ctrl+Shift+Z). Card details show the card's text, legality and every
+    printing, and can swap the deck's copies to another print or make the
+    card the deck's cover. Export copies the list for Pokémon TCG Live or
+    downloads it as text or a simulator file. A custom card (2026-10-29)
+    takes its picture from a file (chosen, dropped or pasted) or a link,
+    kept in the image store as card backs are (ADR-041); a card in pieces
+    (V-UNION, LEGEND, a split Stadium) is one "Add a multi-piece card" with
+    a picture per piece, added together (PX-076).
+11. **On a phone** the seats wrap under the header and the editor's search
+    and deck take turns behind two tabs.
+12. **It opens with its pictures in place** (2026-10-21). A second after the
+    table has drawn, once the page is idle, the screen warms up
+    (`deck-screen-warmup.ts`): its script, the saved decks, the tournament
+    and classic lists and the catalog load, and the covers it opens on -- then
+    the first cards a new Standard deck's search shows -- are fetched and
+    decoded in the player's card language and held (`warm-card-images.ts`),
+    so the screen's first frame draws them. Opened sooner, it starts all of
+    that with its script rather than after its first frame. Pointing at a
+    deck's tile fetches its cards for the editor; a deck put on a seat has
+    its faces fetched as the table will ask for them, before they are dealt.
+    Thumbnails that fall back to Limitless take its small scan, a tenth of
+    the full one's bytes. Not on a connection that asks to save data, nor
+    offline. The page remembers a script whose import failed and won't fetch
+    it again, so the warm-up first fetches the screen's built files (listed
+    at build time in `deck-screen-files.json`), which can fail harmlessly,
+    and imports the screen only once all have arrived; Vite's
+    content-hashed files are cached for good (`public/_headers`), so that
+    import makes no request that could fail. Otherwise the screen loads its
+    script when it opens, as before.
+13. **On the desk** (2026-10-22). The owner asked for the screen to feel
+    part of the table rather than a web page, and to be simpler to reason
+    about, keeping every feature. The realism goes on the containers, as
+    in Pokémon TCG Live, MTG Arena and Hearthstone; whatever is read stays
+    flat, high-contrast paper:
+    - **The desk.** The screen lies on the table's own desk: its wood and
+      grain and the lamp up and to the left (`deck-layer.css`). Words
+      straight on the desk wear its ink (`--color-desk-ink`); lists,
+      results and the editor's panes are paper (Day) or dark card stock
+      (Night) lifted off it.
+    - **Deck boxes.** A deck is a box (`DeckBox.tsx`): drawn in an
+      oblique view so the cover card shows undistorted through a window in
+      its front, its lid's top and right side receding, a soft shadow cast
+      away from the lamp. It is plastic in the colour of the basic Energy
+      the deck plays most of (`deckBoxToneOf`). A placing is a gold
+      sticker; a deck that can't be played as it stands has a red tab on
+      its lid; the seat a deck is on is a ribbon and a pool of that seat's
+      light under the box. Pointed at, a box lifts. The shelves are Your
+      decks, Winning now, Tournaments and Classics.
+    - **Trays.** Each seat's tray in the rack along the top replaces the
+      seat pill and the separate card-back button: it holds that seat's
+      deck box, its name (and finish), its count and its sleeve, the
+      seat's card back, which opens the card-back chooser. The active tray
+      wears its seat's colour. A box put on a seat from a shelf flies into
+      the tray (measured, then transform only; never under reduced motion
+      or at instant speed), with the deck its press put there: a list's Try
+      flies when its import lands, never with a later import that took
+      over. On a phone the bar's "P1 will reload" is an icon, which a tap
+      reads out.
+    - **The finder.** One field takes a deck's name or a whole list. A
+      line of words searches tournament decks (ADR-037): each deck that
+      matches, its top 8s and lists, and its best finishes, any of which
+      goes on the seat (or is saved and opened, to edit a copy). Several
+      lines, a line starting with a count, a simulator file or a list's
+      heading are a list, imported as before; Ctrl+V anywhere still
+      imports.
+    - **Tournaments.** The recent online events and official majors
+      (labelled by kind), a name filter, a Majors toggle and More; an
+      event opens to its standings, with every player's deck and a Load
+      for each published list. Majors come from Limitless Labs (ADR-037
+      §8; until 2026-10-28 a link opened them on Limitless). Tournament
+      data is credited to Limitless TCG wherever it shows.
+    - **The editor** is the open box: the card search a stitched binder,
+      the deck a sheet beside it, both lying on the desk.
+    - **Fewer words.** Section headings name what is there ("Winning now",
+      "Classics"); the import box's heading and hints are gone; "Edit a
+      copy" now opens the copy it saves.
+14. **Whose deck it is** (2026-10-30). The owner: "it's not obvious enough
+    which deck i'm operating on - this outline is not nearly enough". The
+    active tray's outline (§13) gives way to a tab and its folder:
+    - **The chosen tray** is pulled out of the rack toward the player
+      (2px), filled in its seat's colour (P1 blue, you; P2 red), raised
+      rather than sunk, with a neck in that colour running down to the
+      rack's foot.
+    - **The band.** The neck meets a 3px band of the seat's colour across
+      the top of the screen below, with that colour's glow fading down the
+      desk: whatever shows there (the shelves, an event, the editor) is
+      that seat's. The colour is a registered property
+      (`--deck-seat-color`), so switching seats cross-fades it; the tray's
+      pull and fill ease over the same time (no pull under reduced motion).
+    - **The other tray** waits, quieter (dimmed, desaturated), until
+      pointed at or focused; its tooltip says "Switch to P2". The chosen
+      one's says "P1's deck (you)".
+    - **The editor** names the seat: a deck on the chosen seat has the
+      seat's chip before its name, at every size (it replaces "✓ On P1" at
+      the head's far end, which phones hid), and its sheet is edged in the
+      seat's colour. A deck not on it keeps "Use on P1".
+    - Ids, keys and focus are unchanged; online, the one tray (your deck)
+      is always the chosen one.
+15. **Like a deck site** (2026-11-05). The owner: "i don't like the
+    current design, make it more similar to other deck building sites",
+    and the seat being worked on was still too subtle. The desk, the boxes
+    and the trays (§13, §14) give way to the look of Limitless, Archidekt
+    and Moxfield; every feature, id and key stays:
+    - **A flat page.** No wood or lamp: the page is the sunken surface,
+      the bar and every panel the raised one, in both themes.
+    - **The seats' switch.** The trays become one segmented control: a
+      segment per seat with its deck's cover, its seat tag, name and
+      count, and its sleeve. The chosen one is filled solid in its seat's
+      colour (its tag white on it); the other is unfilled, not dimmed, its
+      tag in its own colour. A 3px line of the chosen colour runs under
+      the bar, its glow fading down the page.
+    - **Decks as cards.** A deck is a card of its cover's art (16:10, the
+      card's artwork band; rule-box prints closer in, clear of a Tera's
+      rule and the Ability) over its name, format and count. The deck on
+      the chosen seat is ringed in its colour; "On P1"/"On P2" badges sit
+      on the cover, its tools on the other corner. `DeckBox` draws the
+      cover, the same 16:10 small in the switch, so a deck put on a seat
+      still flies there.
+    - **The editor** has a bar of its own (back, the seat's chip and the
+      name as a title, the format, the tools) over two flat panels, the
+      deck's edged in the seat's colour.
+    - **Phones.** The switch takes a row, each segment its seat and count
+      over the name (no cover); the editor's bar takes two rows and Find
+      cards / Deck become a bar along the foot. The kinds and Energy types
+      slide sideways rather than wrap. On its side the bar is one row and
+      the editor scrolls, its tab bar kept along the foot.
+16. **Quieter, smaller decks; a Play worth pressing** (2026-11-05, later).
+    The owner: the decks' pictures were "a little bit big and
+    overwhelming… it just only zooms in on the image of the card", the
+    bar "a little bit tacky and the play button is a bit underwhelming".
+    - **A deck is a small card on its stack.** `DeckBox` draws the cover
+      card whole (63:88), 40px wide on a tile and 30px in the switch, with
+      the edges of two cards under it in the deck's colour; never a crop
+      of its art. The flight to a seat keeps working, the shapes being the
+      same.
+    - **Compact tiles.** A deck is a bordered row: its card, then its name
+      over its format, count and the seats it is on ("On P1", a tag in the
+      seat's colour), its tools (Edit, More) quiet at the end, always
+      shown. Pointed at, "Use on P1" appears in the seat's colour under
+      the name. Several to a row on a wide page, one to a row on a phone.
+      A placing is the trophy line ("1st of 203"); the medal is gone.
+    - **The seats' switch** is a tab per seat: the chosen one tinted and
+      ringed in its colour (not filled), the seat named in small capitals
+      in its colour over the deck's name, the count plain in its state's
+      colour, the sleeve at the end. The 3px line under the bar stays.
+    - **Play** is the one call to action: a glossy gold pill, neither
+      seat's colour, lit from above, with a glint as it is pointed at and a
+      press that gives; plain when there is nothing to play.
+    - A list on the Classics or Winning now shelves is the seat's only
+      when the seat holds its very cards: names repeat across seasons.
+17. **A plain header** (2026-11-05, later still; supersedes §16's switch
+    and Play). The owner: "the outline plus the outline on the deck
+    selection feels a bit off. also the play button looks vibe coded;
+    please make it look more standard and in line with the rest of our
+    UI."
+    - **The seats' switch is one segmented control**, as the app's other
+      two-way choices are: a sunken track with no border, a segment per
+      seat. The chosen segment is raised (the app's raised-control shadow)
+      and tinted 30% in its seat's colour (46% by night, where the warm
+      surface greyed P1's blue; its count drawn nearer the ink there to keep
+      4.5:1), and its seat ("P1") sits on a
+      chip of that colour; the other segment lies flat in the track, its
+      seat named in its colour, nothing dimmed. No ring, no border round a
+      tab, and no line under the bar: the seat's colour still washes down
+      the top of the page below.
+    - An empty seat shows a blank card (a soft fill), not a dashed outline.
+    - **Play is the app's primary button** (`ds-button--primary`): the
+      accent fill, its radius and press, a Play icon and the word; dimmed
+      as every disabled button is when no seat has a deck. Back and Play
+      are 40px (44px under a finger), a header's buttons.
+    - The deck screen's focus rings are drawn again: they were written as
+      a colour alone (`outline: var(--ptcgsim-focus-ring)`), which draws
+      none; they are 2px solid in that colour.
+    - **"View" on a pile's menu.** The table's menu on a pile -- the deck,
+      the discard pile, the Lost Zone -- leads that pile's section with
+      View (an eye), which opens the pile in the pile viewer as a click,
+      a double-click or a tap on it does; the owner found the gesture
+      hard to discover. It is offered only where that gesture would open
+      the pile (the table lets it open and it holds cards) and not while
+      the pile is open; a replay's and a spectator's menus are unchanged.
+
+18. **The finder on the shelf's row** (2026-11-05, the owner: "such an
+    unnecessarily long search bar and it takes up a whole row"). The one
+    field for a deck's name or a pasted list sits on "Your decks"' own row,
+    between its name and New deck, at most 420px; Paste and Open file are
+    icons at its end. A name typed there finds your own decks (the shelf
+    shows those that match; any one line, though it reads like a list's,
+    as "2024 Charizard") and the tournaments' (their results on a paper
+    under the row); a list pasted in takes a line of its own under the row,
+    with Import. The shelf's separate "Find a deck" field, shown from nine
+    decks, is gone: the finder is it. On a phone the finder runs across
+    under the row's name and New deck.
+
+19. **Decks led by their art; seats as slots** (2026-11-06; supersedes
+    §16's and §17's tiles and switch). The owner, of the seat bar: "the
+    colors feel weird, also weird use of spacing, lots of empty horizontal
+    space, and it's also not super clear that i'm on p1 or p2"; of the
+    shelves: "a lot of empty space and i don't think it looks very
+    pleasant". The bar's tabs stretched to 720px with the count far from
+    the name, tinted grey-blue and brick by night and salmon by day; a
+    deck was a wide row of a 40px card, its name and a lone pencil at the
+    far end. Deck browsers (Moxfield's and Archidekt's grids, untapped's
+    and Hearthstone's deck tiles, Pokémon TCG Live's deck boxes) lead
+    with the deck's art and keep the rest to a line or two.
+    - **A deck is its cover's art.** `DeckBox` draws the cover card's
+      illustration in a 16:10 window: the card 1.4 times the window's
+      width, opened 11% down (a rule-box print, 1.45 times and 16%
+      down, under a Tera card's rule), so the window stays inside the art
+      box of every era's frame (measured 44-48% down) and shows neither
+      name, rule nor attacks. A tile's art is the full scan (sharp on a
+      dense screen; the screen's warm-up asks for the same), a seat's the
+      thumbnail. Both are 16:10, so the flight to a seat only scales.
+    - **Tiles.** Every shelf (your decks, Winning now, Classics) is a grid
+      of tiles, about 184px and up: six to a row on a laptop, two on a
+      phone. The art across the head, shaded at its top; the name (two
+      lines at most) and one line of what is said of it under it (its
+      format and count, its finish, "Not saved · 60 cards"). The seats
+      it is on are badges in their colours over the art's corner, its
+      tools small dark glass over the other; "Use on P1" rises over the
+      art in the seat's colour as it is pointed at. The deck on the seat
+      being worked on is ringed in the seat's colour, untinted.
+    - **The seats are slots**, side by side in the middle of the bar and
+      only as wide as their decks need (340px at most): the art, the seat
+      over the name, the sleeve. The chosen one is raised on the panel
+      (neutral, not tinted), underlined in its seat's colour as a chosen
+      tab is, its seat on a chip of that colour; the other lies back on
+      the bar, its art dimmed, its seat in its colour. A whole deck shows
+      no count (the shelf says it); one short of its size shows it
+      ("47/60") in the warning's colour; a deck's finish stands beside
+      the seat ("1st of 232"). An empty seat is a soft blank and "No deck
+      yet". On a phone the two share the row under Back and Play, without
+      art or finish.
+    - The seat's colour down the page is a glow (7%, 140px), no longer a
+      wash.
+
+20. **Look before saving; a clearer header** (2026-11-06). Every deck with
+    an Edit action also has an eye button. It opens the complete list in
+    a modal, grouped by card kind with copy counts. Cards open the existing
+    inspector, including their text and other printings, without changing
+    the list. Close, Edit deck and Use on P1/P2 are available there; viewing
+    or using an outside list does not save a copy.
+    - Editing a current, classic or tournament list opens an in-memory
+      draft without changing either seat. The first actual player edit
+      promotes it into Your decks and storage. Opening it, unchanged name
+      commits and automatic catalog facts do not. Closing an untouched
+      draft drops it. Saved decks continue to edit in place.
+    - The header has a cool blue surface in both themes, separate from the
+      brown deck shelf. Both seat containers have their own blue/red tint
+      and border; the chosen seat has the stronger tint and underline.
+
+## Consequences
+
+- One paste and one click (Play) take a list to the table, and every deck
+  survives a reload.
+- Decks are checked by the real rules; some v1 decks that passed (five
+  Special Energy, no Basic Pokémon) now show what to fix. The check never
+  blocks Play: the table is a manual tabletop (ADR-001).
+- Saved decks are per device. Moving them is by text or file; an account
+  sync would be a later decision.
+- The deck screen's markup is new; specs drive it through stable ids
+  (`#nativeDeckBuilderCsvImport`, seat tabs, Play, the seat summary's
+  `data-card-count`). The v1 deck-screen parity spec is retired (PX-045).

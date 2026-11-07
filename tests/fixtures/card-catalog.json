@@ -1,0 +1,1833 @@
+{
+  "v": 1,
+  "builtAt": "2026-10-15T00:00:00.000Z",
+  "source": "TCGdex",
+  "bans": {
+    "standard": [],
+    "expanded": [
+      "ASR TG2",
+      "EVS 83",
+      "EVS 185",
+      "EVS 186",
+      "SHF SV13",
+      "RCL 22",
+      "RCL 165",
+      "RCL 207",
+      "SP 22",
+      "CEC 83",
+      "CEC 194",
+      "CEC 265",
+      "HIF 58",
+      "HIF 60",
+      "HIF 68",
+      "UNM 206",
+      "UNM 206A",
+      "UNM 253",
+      "UNB 78",
+      "UNB 165",
+      "UNB 178",
+      "LOT 90",
+      "LOT 91",
+      "FLI 83",
+      "UPR 114",
+      "SLG 45",
+      "SMP 85",
+      "GEN 71",
+      "BKP 98",
+      "BKP 98A",
+      "BKP 98B",
+      "BKP 109",
+      "AOR 74",
+      "AOR 75",
+      "AOR 75A",
+      "ROS 77",
+      "ROS 77A",
+      "ROS 106",
+      "PRC 133",
+      "PRC 158",
+      "PHF 99",
+      "PHF 118",
+      "FLF 23",
+      "XY 124",
+      "PLF 101",
+      "PLF 115",
+      "DEX 62",
+      "DEX 110",
+      "NVI 67"
+    ]
+  },
+  "sets": [
+    {
+      "id": "me03",
+      "code": "POR",
+      "name": "Perfect Order",
+      "series": "Mega Evolution",
+      "released": "2026-03-27",
+      "official": 88,
+      "total": 124,
+      "logo": "https://assets.tcgdex.net/en/me/me03/logo",
+      "symbol": "https://assets.tcgdex.net/univ/me/me03/symbol",
+      "img": "https://assets.tcgdex.net/en/me/me03/",
+      "cards": [
+        {
+          "n": "076",
+          "nm": "Judge",
+          "c": "T",
+          "tt": "Supporter",
+          "tx": "Each player shuffles their hand into their deck and draws 4 cards.",
+          "rm": "J",
+          "il": "kantaro",
+          "ra": "Uncommon",
+          "lg": 3
+        }
+      ]
+    },
+    {
+      "id": "me02.5",
+      "code": "ASC",
+      "name": "Ascended Heroes",
+      "series": "Mega Evolution",
+      "released": "2026-01-30",
+      "official": 217,
+      "total": 295,
+      "logo": "https://assets.tcgdex.net/en/me/me02.5/logo",
+      "symbol": "https://assets.tcgdex.net/univ/me/me02.5/symbol",
+      "img": "https://assets.tcgdex.net/en/me/me02.5/",
+      "cards": [
+        {
+          "n": "181",
+          "nm": "Air Balloon",
+          "c": "T",
+          "tt": "Tool",
+          "tx": "The Retreat Cost of the Pokémon this card is attached to is {C}{C} less.",
+          "rm": "I",
+          "il": "Studio Bora Inc.",
+          "ra": "Uncommon",
+          "lg": 3
+        }
+      ]
+    },
+    {
+      "id": "me01",
+      "code": "MEG",
+      "name": "Mega Evolution",
+      "series": "Mega Evolution",
+      "released": "2025-09-26",
+      "official": 132,
+      "total": 188,
+      "logo": "https://assets.tcgdex.net/en/me/me01/logo",
+      "symbol": "https://assets.tcgdex.net/univ/me/me01/symbol",
+      "img": "https://assets.tcgdex.net/en/me/me01/",
+      "cards": [
+        {
+          "n": "076",
+          "nm": "Riolu",
+          "c": "P",
+          "st": "Basic",
+          "hp": 80,
+          "ty": "F",
+          "rm": "I",
+          "il": "hncl",
+          "ra": "Common",
+          "rt": 2,
+          "dx": [447],
+          "at": [
+            [
+              "Accelerating Stab",
+              "F",
+              "30",
+              "During your next turn, this Pokémon can't use Accelerating Stab."
+            ]
+          ],
+          "wk": "P",
+          "lg": 3
+        },
+        {
+          "n": "077",
+          "nm": "Mega Lucario ex",
+          "c": "P",
+          "st": "Stage 1",
+          "hp": 340,
+          "ty": "F",
+          "ef": "Riolu",
+          "rm": "I",
+          "il": "5ban Graphics",
+          "ra": "Double rare",
+          "rt": 2,
+          "dx": [448],
+          "at": [
+            [
+              "Aura Jab",
+              "F",
+              "130",
+              "Attach up to 3 Basic {F} Energy cards from your discard pile to your Benched Pokémon in any way you like."
+            ],
+            [
+              "Mega Brave",
+              "FF",
+              "270",
+              "During your next turn, this Pokémon can't use Mega Brave."
+            ]
+          ],
+          "wk": "P",
+          "tg": ["ex", "Mega"],
+          "lg": 3
+        },
+        {
+          "n": "114",
+          "nm": "Boss's Orders",
+          "c": "T",
+          "tt": "Supporter",
+          "tx": "Switch in 1 of your opponent's Benched Pokémon to the Active Spot.",
+          "rm": "I",
+          "il": "NC Empire",
+          "ra": "Uncommon",
+          "lg": 3
+        },
+        {
+          "n": "119",
+          "nm": "Lillie's Determination",
+          "c": "T",
+          "tt": "Supporter",
+          "tx": "Shuffle your hand into your deck. Then, draw 6 cards. If you have exactly 6 Prize cards remaining, draw 8 cards instead.",
+          "rm": "I",
+          "il": "Atsushi Furusawa",
+          "ra": "Uncommon",
+          "lg": 3
+        },
+        {
+          "n": "125",
+          "nm": "Rare Candy",
+          "c": "T",
+          "tt": "Item",
+          "tx": "Choose 1 of your Basic Pokémon in play. If you have a Stage 2 card in your hand that evolves from that Pokémon, put that card onto the Basic Pokémon to evolve it, skipping the Stage 1. You can't use this card during your first turn or on a Basic Pokémon that was put into play this turn.",
+          "rm": "I",
+          "il": "Studio Bora Inc.",
+          "ra": "Common",
+          "lg": 3
+        },
+        {
+          "n": "131",
+          "nm": "Ultra Ball",
+          "c": "T",
+          "tt": "Item",
+          "tx": "You can use this card only if you discard 2 other cards from your hand.\n\nSearch your deck for a Pokémon, reveal it, and put it into your hand. Then, shuffle your deck.",
+          "rm": "I",
+          "il": "Ayaka Yoshida",
+          "ra": "Common",
+          "lg": 3
+        }
+      ]
+    },
+    {
+      "id": "mee",
+      "code": "MEE",
+      "name": "Mega Evolution Energy",
+      "series": "Mega Evolution",
+      "released": "2025-09-25",
+      "official": 8,
+      "total": 8,
+      "cards": [
+        {
+          "n": "002",
+          "nm": "Fire Energy",
+          "c": "E",
+          "et": "B",
+          "ra": "Common",
+          "lg": 3,
+          "im": ""
+        },
+        {
+          "n": "005",
+          "nm": "Psychic Energy",
+          "c": "E",
+          "et": "B",
+          "ra": "Common",
+          "lg": 3,
+          "im": ""
+        }
+      ]
+    },
+    {
+      "id": "A1",
+      "code": "A1",
+      "name": "Genetic Apex",
+      "series": "Pokémon TCG Pocket",
+      "released": "2024-10-30",
+      "official": 226,
+      "total": 286,
+      "logo": "https://assets.tcgdex.net/en/tcgp/A1/logo",
+      "symbol": "https://assets.tcgdex.net/univ/tcgp/A1/symbol",
+      "pocket": true,
+      "img": "https://assets.tcgdex.net/en/tcgp/A1/",
+      "cards": [
+        {
+          "n": "001",
+          "nm": "Bulbasaur",
+          "c": "P",
+          "st": "Basic",
+          "hp": 70,
+          "ty": "G",
+          "il": "Narumi Sato",
+          "ra": "One Diamond",
+          "rt": 1,
+          "dx": [1],
+          "at": [["Vine Whip", "GC", "40"]],
+          "wk": "R"
+        },
+        {
+          "n": "096",
+          "nm": "Pikachu ex",
+          "c": "P",
+          "st": "Basic",
+          "hp": 120,
+          "ty": "L",
+          "il": "PLANETA CG Works",
+          "ra": "Four Diamond",
+          "rt": 1,
+          "dx": [25],
+          "at": [
+            [
+              "Circle Circuit",
+              "LL",
+              "30×",
+              "This attack does 30 damage for each of your Benched {L} Pokémon."
+            ]
+          ],
+          "wk": "F",
+          "tg": ["ex"]
+        },
+        {
+          "n": "129",
+          "nm": "Mewtwo ex",
+          "c": "P",
+          "st": "Basic",
+          "hp": 150,
+          "ty": "P",
+          "il": "PLANETA Mochizuki",
+          "ra": "Four Diamond",
+          "rt": 2,
+          "dx": [150],
+          "at": [
+            ["Psychic Sphere", "PC", "50"],
+            [
+              "Psydrive",
+              "PPCC",
+              "150",
+              "Discard 2 {P} Energy from this Pokémon."
+            ]
+          ],
+          "wk": "D",
+          "tg": ["ex"]
+        },
+        {
+          "n": "220",
+          "nm": "Misty",
+          "c": "T",
+          "tt": "Supporter",
+          "tx": "Choose 1 of your {W} Pokémon, and flip a coin until you get tails. For each heads, take a {W} Energy from your Energy Zone and attach it to that Pokémon.",
+          "il": "Sanosuke Sakuma",
+          "ra": "Two Diamond"
+        }
+      ]
+    },
+    {
+      "id": "P-A",
+      "code": "P-A",
+      "name": "Promos-A",
+      "series": "Pokémon TCG Pocket",
+      "released": "2024-10-30",
+      "official": 0,
+      "total": 100,
+      "logo": "https://assets.tcgdex.net/en/tcgp/P-A/logo",
+      "pocket": true,
+      "img": "https://assets.tcgdex.net/en/tcgp/P-A/",
+      "cards": [
+        {
+          "n": "007",
+          "nm": "Professor's Research",
+          "c": "T",
+          "tt": "Supporter",
+          "tx": "Draw 2 cards.",
+          "il": "Naoki Saito"
+        }
+      ]
+    },
+    {
+      "id": "sv07",
+      "code": "SCR",
+      "name": "Stellar Crown",
+      "series": "Scarlet & Violet",
+      "released": "2024-09-13",
+      "official": 142,
+      "total": 175,
+      "logo": "https://assets.tcgdex.net/en/sv/sv07/logo",
+      "img": "https://assets.tcgdex.net/en/sv/sv07/",
+      "cards": [
+        {
+          "n": "131",
+          "nm": "Area Zero Underdepths",
+          "c": "T",
+          "tt": "Stadium",
+          "tx": "Each player who has any Tera Pokémon in play can have up to 8 Pokémon on their Bench.\n\nIf a player no longer has any Tera Pokémon in play, that player discards Pokémon from their Bench until they have 5. When this card leaves play, both players discard Pokémon from their Bench until they have 5, and the player who played this card discards first.",
+          "rm": "H",
+          "il": "MARINA Chikazawa",
+          "ra": "Uncommon",
+          "lg": 3
+        }
+      ]
+    },
+    {
+      "id": "sv06.5",
+      "code": "SFA",
+      "name": "Shrouded Fable",
+      "series": "Scarlet & Violet",
+      "released": "2024-08-02",
+      "official": 64,
+      "total": 99,
+      "logo": "https://assets.tcgdex.net/en/sv/sv06.5/logo",
+      "symbol": "https://assets.tcgdex.net/univ/sv/sv06.5/symbol",
+      "img": "https://assets.tcgdex.net/en/sv/sv06.5/",
+      "cards": [
+        {
+          "n": "038",
+          "nm": "Fezandipiti ex",
+          "c": "P",
+          "st": "Basic",
+          "hp": 210,
+          "ty": "D",
+          "rm": "H",
+          "il": "takuyoa",
+          "ra": "Double rare",
+          "rt": 1,
+          "dx": [1016],
+          "ab": [
+            [
+              "Ability",
+              "Flip the Script",
+              "Once during your turn, if any of your Pokémon were Knocked Out during your opponent's last turn, you may draw 3 cards. You can't use more than 1 Flip the Script Ability each turn."
+            ]
+          ],
+          "at": [
+            [
+              "Cruel Arrow",
+              "CCC",
+              "",
+              "This attack does 100 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            ]
+          ],
+          "wk": "F",
+          "tg": ["ex"],
+          "lg": 3
+        },
+        {
+          "n": "039",
+          "nm": "Pecharunt ex",
+          "c": "P",
+          "st": "Basic",
+          "hp": 190,
+          "ty": "D",
+          "rm": "H",
+          "il": "aky CG Works",
+          "ra": "Double rare",
+          "rt": 1,
+          "dx": [1025],
+          "ab": [
+            [
+              "Ability",
+              "Subjugating Chains",
+              "Once during your turn, you may switch 1 of your Benched {D} Pokémon, except any Pecharunt ex, with your Active Pokémon. If you do, the new Active Pokémon is now Poisoned. You can't use more than 1 Subjugating Chains Ability each turn."
+            ]
+          ],
+          "at": [
+            [
+              "Irritated Outburst",
+              "DD",
+              "60×",
+              "This attack does 60 damage for each Prize card your opponent has taken."
+            ]
+          ],
+          "wk": "F",
+          "tg": ["ex"],
+          "lg": 3
+        }
+      ]
+    },
+    {
+      "id": "sv06",
+      "code": "TWM",
+      "name": "Twilight Masquerade",
+      "series": "Scarlet & Violet",
+      "released": "2024-05-24",
+      "official": 167,
+      "total": 226,
+      "logo": "https://assets.tcgdex.net/en/sv/sv06/logo",
+      "symbol": "https://assets.tcgdex.net/univ/sv/sv06/symbol",
+      "img": "https://assets.tcgdex.net/en/sv/sv06/",
+      "cards": [
+        {
+          "n": "025",
+          "nm": "Teal Mask Ogerpon ex",
+          "c": "P",
+          "st": "Basic",
+          "hp": 210,
+          "ty": "G",
+          "rm": "H",
+          "il": "5ban Graphics",
+          "ra": "Double rare",
+          "rt": 1,
+          "dx": [1017],
+          "ab": [
+            [
+              "Ability",
+              "Teal Dance",
+              "Once during your turn, you may attach a Basic {G} Energy card from your hand to this Pokémon. If you attached Energy to a Pokémon in this way, draw a card."
+            ]
+          ],
+          "at": [
+            [
+              "Myriad Leaf Shower",
+              "GGG",
+              "30+",
+              "This attack does 30 more damage for each Energy attached to both Active Pokémon."
+            ]
+          ],
+          "wk": "R",
+          "tg": ["ex", "Tera"],
+          "lg": 3
+        },
+        {
+          "n": "095",
+          "nm": "Munkidori",
+          "c": "P",
+          "st": "Basic",
+          "hp": 110,
+          "ty": "P",
+          "rm": "H",
+          "il": "kodama",
+          "ra": "Rare",
+          "rt": 1,
+          "dx": [1015],
+          "ab": [
+            [
+              "Ability",
+              "Adrena-Brain",
+              "Once during your turn, if this Pokémon has any {D} Energy attached, you may move up to 3 damage counters from 1 of your Pokémon to 1 of your opponent's Pokémon."
+            ]
+          ],
+          "at": [
+            [
+              "Mind Bend",
+              "PC",
+              "60",
+              "Your opponent's Active Pokémon is now Confused."
+            ]
+          ],
+          "wk": "D",
+          "rs": "F",
+          "lg": 3
+        },
+        {
+          "n": "128",
+          "nm": "Dreepy",
+          "c": "P",
+          "st": "Basic",
+          "hp": 70,
+          "ty": "N",
+          "rm": "H",
+          "il": "Scav",
+          "ra": "Common",
+          "rt": 1,
+          "dx": [885],
+          "at": [
+            ["Petty Grudge", "P", "10"],
+            ["Bite", "RP", "40"]
+          ],
+          "lg": 3
+        },
+        {
+          "n": "129",
+          "nm": "Drakloak",
+          "c": "P",
+          "st": "Stage 1",
+          "hp": 90,
+          "ty": "N",
+          "ef": "Dreepy",
+          "rm": "H",
+          "il": "cochi8i",
+          "ra": "Common",
+          "rt": 1,
+          "dx": [886],
+          "ab": [
+            [
+              "Ability",
+              "Recon Directive",
+              "Once during your turn, you may look at the top 2 cards of your deck and put 1 of them into your hand. Put the other card on the bottom of your deck."
+            ]
+          ],
+          "at": [["Dragon Headbutt", "RP", "70"]],
+          "lg": 3
+        },
+        {
+          "n": "130",
+          "nm": "Dragapult ex",
+          "c": "P",
+          "st": "Stage 2",
+          "hp": 320,
+          "ty": "N",
+          "ef": "Drakloak",
+          "rm": "H",
+          "il": "5ban Graphics",
+          "ra": "Double rare",
+          "rt": 1,
+          "dx": [887],
+          "at": [
+            ["Jet Headbutt", "C", "70"],
+            [
+              "Phantom Dive",
+              "RP",
+              "200",
+              "Put 6 damage counters on your opponent's Benched Pokémon in any way you like."
+            ]
+          ],
+          "tg": ["ex", "Tera"],
+          "lg": 3
+        },
+        {
+          "n": "153",
+          "nm": "Jamming Tower",
+          "c": "T",
+          "tt": "Stadium",
+          "tx": "Pokémon Tools attached to each Pokémon (both yours and your opponent's) have no effect.",
+          "rm": "H",
+          "il": "AYUMI ODASHIMA",
+          "ra": "Uncommon",
+          "lg": 3
+        },
+        {
+          "n": "165",
+          "nm": "Unfair Stamp",
+          "c": "T",
+          "tt": "Item",
+          "tx": "You can use this card only if any of your Pokémon were Knocked Out during your opponent's last turn.\n\nEach player shuffles their hand into their deck. Then, you draw 5 cards, and your opponent draws 2 cards.",
+          "rm": "H",
+          "il": "Toyste Beach",
+          "ra": "ACE SPEC Rare",
+          "tg": ["ACE SPEC"],
+          "lg": 3
+        },
+        {
+          "n": "200",
+          "nm": "Dragapult ex",
+          "c": "P",
+          "st": "Stage 2",
+          "hp": 320,
+          "ty": "N",
+          "ef": "Drakloak",
+          "rm": "H",
+          "il": "5ban Graphics",
+          "ra": "Ultra Rare",
+          "rt": 1,
+          "dx": [887],
+          "at": [
+            ["Jet Headbutt", "C", "70"],
+            [
+              "Phantom Dive",
+              "RP",
+              "200",
+              "Put 6 damage counters on your opponent's Benched Pokémon in any way you like."
+            ]
+          ],
+          "tg": ["ex", "Tera"],
+          "lg": 3
+        }
+      ]
+    },
+    {
+      "id": "sv05",
+      "code": "TEF",
+      "name": "Temporal Forces",
+      "series": "Scarlet & Violet",
+      "released": "2024-03-22",
+      "official": 162,
+      "total": 218,
+      "symbol": "https://assets.tcgdex.net/univ/sv/sv05/symbol",
+      "img": "https://assets.tcgdex.net/en/sv/sv05/",
+      "cards": [
+        {
+          "n": "081",
+          "nm": "Iron Crown ex",
+          "c": "P",
+          "st": "Basic",
+          "hp": 220,
+          "ty": "P",
+          "rm": "H",
+          "il": "5ban Graphics",
+          "ra": "Double rare",
+          "rt": 2,
+          "dx": [1023],
+          "ab": [
+            [
+              "Ability",
+              "Cobalt Command",
+              "Attacks used by your Future Pokémon, except any Iron Crown ex, do 20 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance)."
+            ]
+          ],
+          "at": [
+            [
+              "Twin Shotels",
+              "PCC",
+              "",
+              "This attack does 50 damage to 2 of your opponent's Pokémon. This attack's damage isn't affected by Weakness or Resistance, or by any effects on those Pokémon."
+            ]
+          ],
+          "wk": "D",
+          "rs": "F",
+          "tg": ["ex", "Future"],
+          "lg": 3
+        },
+        {
+          "n": "123",
+          "nm": "Raging Bolt ex",
+          "c": "P",
+          "st": "Basic",
+          "hp": 240,
+          "ty": "N",
+          "rm": "H",
+          "il": "aky CG Works",
+          "ra": "Double rare",
+          "rt": 3,
+          "dx": [1021],
+          "at": [
+            ["Burst Roar", "C", "", "Discard your hand and draw 6 cards."],
+            [
+              "Bellowing Thunder",
+              "LF",
+              "70×",
+              "You may discard any amount of Basic Energy from your Pokémon. This attack does 70 damage for each card you discarded in this way."
+            ]
+          ],
+          "tg": ["ex", "Ancient"],
+          "lg": 3
+        },
+        {
+          "n": "144",
+          "nm": "Buddy-Buddy Poffin",
+          "c": "T",
+          "tt": "Item",
+          "tx": "Search your deck for up to 2 Basic Pokémon with 70 HP or less and put them onto your Bench. Then, shuffle your deck.",
+          "rm": "H",
+          "il": "AYUMI ODASHIMA",
+          "ra": "Uncommon",
+          "lg": 3
+        },
+        {
+          "n": "157",
+          "nm": "Prime Catcher",
+          "c": "T",
+          "tt": "Item",
+          "tx": "Switch in 1 of your opponent's Benched Pokémon to the Active Spot. If you do, switch your Active Pokémon with 1 of your Benched Pokémon.",
+          "rm": "H",
+          "il": "Toyste Beach",
+          "ra": "ACE SPEC Rare",
+          "tg": ["ACE SPEC"],
+          "lg": 3
+        },
+        {
+          "n": "161",
+          "nm": "Mist Energy",
+          "c": "E",
+          "et": "S",
+          "tx": "As long as this card is attached to a Pokémon, it provides {C} Energy.\n\nPrevent all effects of attacks used by your opponent's Pokémon done to the Pokémon this card is attached to. (Existing effects are not removed. Damage is not an effect.)",
+          "rm": "H",
+          "ra": "Uncommon",
+          "lg": 3
+        },
+        {
+          "n": "162",
+          "nm": "Neo Upper Energy",
+          "c": "E",
+          "et": "S",
+          "tx": "As long as this card is attached to a Pokémon, it provides {C} Energy.\n\nIf this card is attached to a Stage 2 Pokémon, this card provides every type of Energy but provides only 2 Energy at a time.",
+          "rm": "H",
+          "ra": "ACE SPEC Rare",
+          "tg": ["ACE SPEC"],
+          "lg": 3
+        }
+      ]
+    },
+    {
+      "id": "sv04.5",
+      "code": "PAF",
+      "name": "Paldean Fates",
+      "series": "Scarlet & Violet",
+      "released": "2024-01-26",
+      "official": 91,
+      "total": 245,
+      "logo": "https://assets.tcgdex.net/en/sv/sv04.5/logo",
+      "symbol": "https://assets.tcgdex.net/univ/sv/sv04.5/symbol",
+      "img": "https://assets.tcgdex.net/en/sv/sv04.5/",
+      "cards": [
+        {
+          "n": "007",
+          "nm": "Charmander",
+          "c": "P",
+          "st": "Basic",
+          "hp": 70,
+          "ty": "R",
+          "rm": "G",
+          "il": "GIDORA",
+          "ra": "Common",
+          "rt": 1,
+          "dx": [4],
+          "at": [
+            ["Blazing Destruction", "R", "", "Discard a Stadium in play."],
+            ["Steady Firebreathing", "RR", "30"]
+          ],
+          "wk": "W",
+          "lg": 2
+        }
+      ]
+    },
+    {
+      "id": "sv04",
+      "code": "PAR",
+      "name": "Paradox Rift",
+      "series": "Scarlet & Violet",
+      "released": "2023-11-03",
+      "official": 182,
+      "total": 266,
+      "logo": "https://assets.tcgdex.net/en/sv/sv04/logo",
+      "symbol": "https://assets.tcgdex.net/univ/sv/sv04/symbol",
+      "img": "https://assets.tcgdex.net/en/sv/sv04/",
+      "cards": [
+        {
+          "n": "087",
+          "nm": "Gimmighoul",
+          "c": "P",
+          "st": "Basic",
+          "hp": 50,
+          "ty": "P",
+          "rm": "G",
+          "il": "Mizue",
+          "ra": "Common",
+          "rt": 1,
+          "dx": [999],
+          "at": [
+            [
+              "Call for Family",
+              "C",
+              "",
+              "Search your deck for a Basic Pokémon and put it onto your Bench. Then, shuffle your deck."
+            ],
+            ["Corkscrew Punch", "CC", "20"]
+          ],
+          "wk": "D",
+          "rs": "F",
+          "lg": 2
+        },
+        {
+          "n": "139",
+          "nm": "Gholdengo ex",
+          "c": "P",
+          "st": "Stage 1",
+          "hp": 260,
+          "ty": "M",
+          "ef": "Gimmighoul",
+          "rm": "G",
+          "il": "takuyoa",
+          "ra": "Double rare",
+          "rt": 2,
+          "dx": [1000],
+          "ab": [
+            [
+              "Ability",
+              "Coin Bonus",
+              "Once during your turn, you may draw a card. If this Pokémon is in the Active Spot, draw 1 more card."
+            ]
+          ],
+          "at": [
+            [
+              "Make It Rain",
+              "M",
+              "50×",
+              "Discard any number of Basic Energy cards from your hand. This attack does 50 damage for each card you discarded in this way."
+            ]
+          ],
+          "wk": "R",
+          "rs": "G",
+          "tg": ["ex"],
+          "lg": 2
+        },
+        {
+          "n": "160",
+          "nm": "Counter Catcher",
+          "c": "T",
+          "tt": "Item",
+          "tx": "You can use this card only if you have more Prize cards remaining than your opponent.\n\nSwitch in 1 of your opponent's Benched Pokémon to the Active Spot.",
+          "rm": "G",
+          "il": "Toyste Beach",
+          "ra": "Uncommon",
+          "lg": 2
+        },
+        {
+          "n": "163",
+          "nm": "Earthen Vessel",
+          "c": "T",
+          "tt": "Item",
+          "tx": "You can use this card only if you discard another card from your hand.\n\nSearch your deck for up to 2 Basic Energy cards, reveal them, and put them into your hand. Then, shuffle your deck.",
+          "rm": "G",
+          "il": "AYUMI ODASHIMA",
+          "ra": "Uncommon",
+          "tg": ["Ancient"],
+          "lg": 2
+        }
+      ]
+    },
+    {
+      "id": "sv03.5",
+      "code": "MEW",
+      "name": "151",
+      "series": "Scarlet & Violet",
+      "released": "2023-09-22",
+      "official": 165,
+      "total": 207,
+      "logo": "https://assets.tcgdex.net/en/sv/sv03.5/logo",
+      "symbol": "https://assets.tcgdex.net/univ/sv/sv03.5/symbol",
+      "img": "https://assets.tcgdex.net/en/sv/sv03.5/",
+      "cards": [
+        {
+          "n": "151",
+          "nm": "Mew ex",
+          "c": "P",
+          "st": "Basic",
+          "hp": 180,
+          "ty": "P",
+          "rm": "G",
+          "il": "aky CG Works",
+          "ra": "Double rare",
+          "rt": 0,
+          "dx": [151],
+          "ab": [
+            [
+              "Ability",
+              "Restart",
+              "Once during your turn, you may draw cards until you have 3 cards in your hand."
+            ]
+          ],
+          "at": [
+            [
+              "Genome Hacking",
+              "CCC",
+              "",
+              "Choose 1 of your opponent's Active Pokémon's attacks and use it as this attack."
+            ]
+          ],
+          "wk": "D",
+          "rs": "F",
+          "tg": ["ex"],
+          "lg": 2
+        }
+      ]
+    },
+    {
+      "id": "sv03",
+      "code": "OBF",
+      "name": "Obsidian Flames",
+      "series": "Scarlet & Violet",
+      "released": "2023-08-11",
+      "official": 197,
+      "total": 230,
+      "logo": "https://assets.tcgdex.net/en/sv/sv03/logo",
+      "symbol": "https://assets.tcgdex.net/univ/sv/sv03/symbol",
+      "img": "https://assets.tcgdex.net/en/sv/sv03/",
+      "cards": [
+        {
+          "n": "027",
+          "nm": "Charmeleon",
+          "c": "P",
+          "st": "Stage 1",
+          "hp": 90,
+          "ty": "R",
+          "ef": "Charmander",
+          "rm": "G",
+          "il": "Ryota Murayama",
+          "ra": "Uncommon",
+          "rt": 2,
+          "dx": [5],
+          "at": [
+            [
+              "Heat Tackle",
+              "RR",
+              "70",
+              "This Pokémon also does 20 damage to itself."
+            ]
+          ],
+          "wk": "W",
+          "lg": 2
+        },
+        {
+          "n": "125",
+          "nm": "Charizard ex",
+          "c": "P",
+          "st": "Stage 2",
+          "hp": 330,
+          "ty": "D",
+          "ef": "Charmeleon",
+          "rm": "G",
+          "il": "5ban Graphics",
+          "ra": "Double rare",
+          "rt": 2,
+          "dx": [6],
+          "ab": [
+            [
+              "Ability",
+              "Infernal Reign",
+              "When you play this Pokémon from your hand to evolve 1 of your Pokémon during your turn, you may search your deck for up to 3 Basic {R} Energy cards and attach them to your Pokémon in any way you like. Then, shuffle your deck."
+            ]
+          ],
+          "at": [
+            [
+              "Burning Darkness",
+              "RR",
+              "180+",
+              "This attack does 30 more damage for each Prize card your opponent has taken."
+            ]
+          ],
+          "wk": "G",
+          "tg": ["ex", "Tera"],
+          "lg": 2
+        },
+        {
+          "n": "162",
+          "nm": "Pidgey",
+          "c": "P",
+          "st": "Basic",
+          "hp": 60,
+          "ty": "C",
+          "rm": "G",
+          "il": "Naoyo Kimura",
+          "ra": "Common",
+          "rt": 1,
+          "dx": [16],
+          "at": [["Gust", "C", "20"]],
+          "wk": "L",
+          "rs": "F",
+          "lg": 2
+        },
+        {
+          "n": "164",
+          "nm": "Pidgeot ex",
+          "c": "P",
+          "st": "Stage 2",
+          "hp": 280,
+          "ty": "C",
+          "ef": "Pidgeotto",
+          "rm": "G",
+          "il": "takuyoa",
+          "ra": "Double rare",
+          "rt": 0,
+          "dx": [18],
+          "ab": [
+            [
+              "Ability",
+              "Quick Search",
+              "Once during your turn, you may search your deck for a card and put it into your hand. Then, shuffle your deck. You can't use more than 1 Quick Search Ability each turn."
+            ]
+          ],
+          "at": [
+            ["Blustery Wind", "CC", "120", "You may discard a Stadium in play."]
+          ],
+          "wk": "L",
+          "rs": "F",
+          "tg": ["ex"],
+          "lg": 2
+        },
+        {
+          "n": "186",
+          "nm": "Arven",
+          "c": "T",
+          "tt": "Supporter",
+          "tx": "Search your deck for an Item card and a Pokémon Tool card, reveal them, and put them into your hand. Then, shuffle your deck.",
+          "rm": "G",
+          "il": "GIDORA",
+          "ra": "Uncommon",
+          "lg": 2
+        },
+        {
+          "n": "215",
+          "nm": "Charizard ex",
+          "c": "P",
+          "st": "Stage 2",
+          "hp": 330,
+          "ty": "D",
+          "ef": "Charmeleon",
+          "rm": "G",
+          "il": "5ban Graphics",
+          "ra": "Ultra Rare",
+          "rt": 2,
+          "dx": [6],
+          "ab": [
+            [
+              "Ability",
+              "Infernal Reign",
+              "When you play this Pokémon from your hand to evolve 1 of your Pokémon during your turn, you may search your deck for up to 3 Basic {R} Energy cards and attach them to your Pokémon in any way you like. Then, shuffle your deck."
+            ]
+          ],
+          "at": [
+            [
+              "Burning Darkness",
+              "RR",
+              "180+",
+              "This attack does 30 more damage for each Prize card your opponent has taken."
+            ]
+          ],
+          "wk": "G",
+          "tg": ["ex", "Tera"],
+          "lg": 2
+        }
+      ]
+    },
+    {
+      "id": "sv02",
+      "code": "PAL",
+      "name": "Paldea Evolved",
+      "series": "Scarlet & Violet",
+      "released": "2023-06-09",
+      "official": 193,
+      "total": 279,
+      "logo": "https://assets.tcgdex.net/en/sv/sv02/logo",
+      "symbol": "https://assets.tcgdex.net/univ/sv/sv02/symbol",
+      "img": "https://assets.tcgdex.net/en/sv/sv02/",
+      "cards": [
+        {
+          "n": "169",
+          "nm": "Squawkabilly ex",
+          "c": "P",
+          "st": "Basic",
+          "hp": 160,
+          "ty": "C",
+          "rm": "G",
+          "il": "PLANETA Mochizuki",
+          "ra": "Double rare",
+          "rt": 1,
+          "dx": [931],
+          "ab": [
+            [
+              "Ability",
+              "Squawk and Seize",
+              "Once during your first turn, you may discard your hand and draw 6 cards. You can't use more than 1 Squawk and Seize Ability during your turn."
+            ]
+          ],
+          "at": [
+            [
+              "Motivate",
+              "C",
+              "20",
+              "Attach up to 2 Basic Energy cards from your discard pile to 1 of your Benched Pokémon."
+            ]
+          ],
+          "wk": "L",
+          "rs": "F",
+          "tg": ["ex"],
+          "lg": 2
+        },
+        {
+          "n": "173",
+          "nm": "Bravery Charm",
+          "c": "T",
+          "tt": "Tool",
+          "tx": "The Basic Pokémon this card is attached to gets +50 HP.",
+          "rm": "G",
+          "il": "Toyste Beach",
+          "ra": "Uncommon",
+          "lg": 2
+        },
+        {
+          "n": "185",
+          "nm": "Iono",
+          "c": "T",
+          "tt": "Supporter",
+          "tx": "Each player shuffles their hand and puts it on the bottom of their deck. If either player put any cards on the bottom of their deck in this way, each player draws a card for each of their remaining Prize cards.",
+          "rm": "G",
+          "il": "Sanosuke Sakuma",
+          "ra": "Uncommon",
+          "lg": 2
+        },
+        {
+          "n": "188",
+          "nm": "Super Rod",
+          "c": "T",
+          "tt": "Item",
+          "tx": "Shuffle up to 3 in any combination of Pokémon and Basic Energy cards from your discard pile into your deck.",
+          "rm": "G",
+          "il": "Toyste Beach",
+          "ra": "Common",
+          "lg": 2
+        },
+        {
+          "n": "190",
+          "nm": "Jet Energy",
+          "c": "E",
+          "et": "S",
+          "tx": "As long as this card is attached to a Pokémon, it provides {C} Energy.\n\nWhen you attach this card from your hand to 1 of your Benched Pokémon, switch that Pokémon with your Active Pokémon.",
+          "rm": "G",
+          "ra": "Uncommon",
+          "lg": 2
+        }
+      ]
+    },
+    {
+      "id": "sv01",
+      "code": "SVI",
+      "name": "Scarlet & Violet",
+      "series": "Scarlet & Violet",
+      "released": "2023-03-31",
+      "official": 198,
+      "total": 258,
+      "logo": "https://assets.tcgdex.net/en/sv/sv01/logo",
+      "symbol": "https://assets.tcgdex.net/univ/sv/sv01/symbol",
+      "img": "https://assets.tcgdex.net/en/sv/sv01/",
+      "cards": [
+        {
+          "n": "084",
+          "nm": "Ralts",
+          "c": "P",
+          "st": "Basic",
+          "hp": 70,
+          "ty": "P",
+          "rm": "G",
+          "il": "Tika Matsuno",
+          "ra": "Common",
+          "rt": 1,
+          "dx": [280],
+          "at": [["Psyshot", "PC", "30"]],
+          "wk": "D",
+          "rs": "F",
+          "lg": 2
+        },
+        {
+          "n": "085",
+          "nm": "Kirlia",
+          "c": "P",
+          "st": "Stage 1",
+          "hp": 90,
+          "ty": "P",
+          "ef": "Ralts",
+          "rm": "G",
+          "il": "kawayoo",
+          "ra": "Common",
+          "rt": 1,
+          "dx": [281],
+          "at": [
+            ["Magical Shot", "PC", "30"],
+            [
+              "Psychic",
+              "PPC",
+              "60+",
+              "This attack does 20 more damage for each Energy attached to your opponent's Active Pokémon."
+            ]
+          ],
+          "wk": "D",
+          "rs": "F",
+          "lg": 2
+        },
+        {
+          "n": "086",
+          "nm": "Gardevoir ex",
+          "c": "P",
+          "st": "Stage 2",
+          "hp": 310,
+          "ty": "P",
+          "ef": "Kirlia",
+          "rm": "G",
+          "il": "N-DESIGN Inc.",
+          "ra": "Double rare",
+          "rt": 2,
+          "dx": [282],
+          "ab": [
+            [
+              "Ability",
+              "Psychic Embrace",
+              "As often as you like during your turn, you may attach a Basic {P} Energy card from your discard pile to 1 of your {P} Pokémon. If you attached Energy to a Pokémon in this way, put 2 damage counters on that Pokémon. You can't use this Ability on a Pokémon that would be Knocked Out."
+            ]
+          ],
+          "at": [
+            [
+              "Miracle Force",
+              "PPC",
+              "190",
+              "This Pokémon recovers from all Special Conditions."
+            ]
+          ],
+          "wk": "D",
+          "rs": "F",
+          "tg": ["ex"],
+          "lg": 2
+        },
+        {
+          "n": "176",
+          "nm": "Judge",
+          "c": "T",
+          "tt": "Supporter",
+          "tx": "Each player shuffles their hand into their deck and draws 4 cards.",
+          "rm": "G",
+          "il": "Hideki Ishikawa",
+          "ra": "Uncommon",
+          "lg": 2
+        },
+        {
+          "n": "181",
+          "nm": "Nest Ball",
+          "c": "T",
+          "tt": "Item",
+          "tx": "Search your deck for a Basic Pokémon and put it onto your Bench. Then, shuffle your deck.",
+          "rm": "G",
+          "il": "Toyste Beach",
+          "ra": "Uncommon",
+          "lg": 2
+        },
+        {
+          "n": "189",
+          "nm": "Professor's Research",
+          "c": "T",
+          "tt": "Supporter",
+          "tx": "Discard your hand and draw 7 cards.",
+          "rm": "G",
+          "il": "kirisAki",
+          "ra": "Rare",
+          "lg": 2
+        },
+        {
+          "n": "191",
+          "nm": "Rare Candy",
+          "c": "T",
+          "tt": "Item",
+          "tx": "Choose 1 of your Basic Pokémon in play. If you have a Stage 2 card in your hand that evolves from that Pokémon, put that card onto the Basic Pokémon to evolve it, skipping the Stage 1. You can't use this card during your first turn or on a Basic Pokémon that was put into play this turn.",
+          "rm": "G",
+          "il": "Studio Bora Inc.",
+          "ra": "Common",
+          "lg": 2
+        }
+      ]
+    },
+    {
+      "id": "sve",
+      "code": "SVE",
+      "name": "Scarlet & Violet Energy",
+      "series": "Scarlet & Violet",
+      "released": "2023-03-31",
+      "official": 24,
+      "total": 24,
+      "cards": [
+        {
+          "n": "004",
+          "nm": "Lightning Energy",
+          "c": "E",
+          "et": "B",
+          "ra": "Common",
+          "lg": 3,
+          "im": ""
+        },
+        {
+          "n": "005",
+          "nm": "Psychic Energy",
+          "c": "E",
+          "et": "B",
+          "ra": "Common",
+          "lg": 3,
+          "im": ""
+        },
+        {
+          "n": "006",
+          "nm": "Fighting Energy",
+          "c": "E",
+          "et": "B",
+          "ra": "Common",
+          "lg": 3,
+          "im": ""
+        }
+      ]
+    },
+    {
+      "id": "swsh11",
+      "code": "LOR",
+      "name": "Lost Origin",
+      "series": "Sword & Shield",
+      "released": "2022-09-09",
+      "official": 196,
+      "total": 217,
+      "logo": "https://assets.tcgdex.net/en/swsh/swsh11/logo",
+      "symbol": "https://assets.tcgdex.net/univ/swsh/swsh11/symbol",
+      "img": "https://assets.tcgdex.net/en/swsh/swsh11/",
+      "cards": [
+        {
+          "n": "058",
+          "nm": "Rotom V",
+          "c": "P",
+          "st": "Basic",
+          "hp": 190,
+          "ty": "L",
+          "rm": "F",
+          "il": "5ban Graphics",
+          "ra": "Holo Rare VMAX",
+          "rt": 1,
+          "dx": [479],
+          "ab": [
+            [
+              "Ability",
+              "Instant Charge",
+              "Once during your turn, you may draw 3 cards. If you use this Ability, your turn ends."
+            ]
+          ],
+          "at": [
+            [
+              "Scrap Short",
+              "LL",
+              "40+",
+              "Put any number of Pokémon Tool cards from your discard pile in the Lost Zone. This attack does 40 more damage for each card you put in the Lost Zone in this way."
+            ]
+          ],
+          "tg": ["V"],
+          "lg": 2
+        }
+      ]
+    },
+    {
+      "id": "swsh10.5",
+      "code": "PGO",
+      "name": "Pokémon GO",
+      "series": "Sword & Shield",
+      "released": "2022-07-01",
+      "official": 78,
+      "total": 88,
+      "logo": "https://assets.tcgdex.net/en/swsh/swsh10.5/logo",
+      "symbol": "https://assets.tcgdex.net/univ/swsh/swsh10.5/symbol",
+      "img": "https://assets.tcgdex.net/en/swsh/swsh10.5/",
+      "cards": [
+        {
+          "n": "011",
+          "nm": "Radiant Charizard",
+          "c": "P",
+          "st": "Basic",
+          "hp": 160,
+          "ty": "R",
+          "rm": "F",
+          "il": "Shigenori Negishi",
+          "ra": "Radiant Rare",
+          "rt": 3,
+          "dx": [6],
+          "ab": [
+            [
+              "Ability",
+              "Excited Heart",
+              "This Pokémon's attacks cost Colorless less for each Prize card your opponent has taken."
+            ]
+          ],
+          "at": [
+            [
+              "Combustion Blast",
+              "RCCCC",
+              "250",
+              "During your next turn, this Pokémon can't use Combustion Blast."
+            ]
+          ],
+          "wk": "W",
+          "tg": ["Radiant"],
+          "lg": 2
+        }
+      ]
+    },
+    {
+      "id": "swsh9",
+      "code": "BRS",
+      "name": "Brilliant Stars",
+      "series": "Sword & Shield",
+      "released": "2022-02-25",
+      "official": 172,
+      "total": 186,
+      "logo": "https://assets.tcgdex.net/en/swsh/swsh9/logo",
+      "symbol": "https://assets.tcgdex.net/univ/swsh/swsh9/symbol",
+      "img": "https://assets.tcgdex.net/en/swsh/swsh9/",
+      "cards": [
+        {
+          "n": "040",
+          "nm": "Lumineon V",
+          "c": "P",
+          "st": "Basic",
+          "hp": 170,
+          "ty": "W",
+          "rm": "F",
+          "il": "takuyoa",
+          "ra": "Holo Rare V",
+          "rt": 1,
+          "dx": [457],
+          "ab": [
+            [
+              "Ability",
+              "Luminous Sign",
+              "When you play this Pokémon from your hand onto your Bench during your turn, you may search your deck for a Supporter card, reveal it, and put it into your hand. Then, shuffle your deck."
+            ]
+          ],
+          "at": [
+            [
+              "Aqua Return",
+              "WCC",
+              "120",
+              "Shuffle this Pokémon and all attached cards into your deck."
+            ]
+          ],
+          "wk": "L",
+          "tg": ["V"],
+          "lg": 2
+        },
+        {
+          "n": "122",
+          "nm": "Arceus V",
+          "c": "P",
+          "st": "Basic",
+          "hp": 220,
+          "ty": "C",
+          "rm": "F",
+          "il": "N-DESIGN Inc.",
+          "ra": "Holo Rare V",
+          "rt": 2,
+          "dx": [493],
+          "at": [
+            [
+              "Trinity Charge",
+              "CC",
+              "",
+              "Search your deck for up to 3 basic Energy cards and attach them to your Pokémon V in any way you like. Then, shuffle your deck."
+            ],
+            ["Power Edge", "CCC", "130"]
+          ],
+          "wk": "F",
+          "tg": ["V"],
+          "lg": 2
+        },
+        {
+          "n": "123",
+          "nm": "Arceus VSTAR",
+          "c": "P",
+          "st": "VSTAR",
+          "hp": 280,
+          "ty": "C",
+          "ef": "Arceus V",
+          "rm": "F",
+          "il": "5ban Graphics",
+          "ra": "Holo Rare VSTAR",
+          "rt": 2,
+          "dx": [493],
+          "at": [
+            [
+              "Trinity Nova",
+              "CCC",
+              "200",
+              "Search your deck for up to 3 basic Energy cards and attach them to your Pokémon V in any way you like. Then, shuffle your deck."
+            ]
+          ],
+          "wk": "F",
+          "tg": ["V", "VSTAR"],
+          "lg": 2
+        },
+        {
+          "n": "151",
+          "nm": "Double Turbo Energy",
+          "c": "E",
+          "et": "S",
+          "tx": "As long as this card is attached to a Pokémon, it provides ColorlessColorless Energy.\nThe attacks of the Pokémon this card is attached to do 20 less damage to your opponent's Pokémon (before applying Weakness and Resistance).",
+          "rm": "F",
+          "ra": "Uncommon",
+          "lg": 2
+        }
+      ]
+    },
+    {
+      "id": "swsh6",
+      "code": "CRE",
+      "name": "Chilling Reign",
+      "series": "Sword & Shield",
+      "released": "2021-06-18",
+      "official": 198,
+      "total": 233,
+      "logo": "https://assets.tcgdex.net/en/swsh/swsh6/logo",
+      "symbol": "https://assets.tcgdex.net/univ/swsh/swsh6/symbol",
+      "img": "https://assets.tcgdex.net/en/swsh/swsh6/",
+      "cards": [
+        {
+          "n": "148",
+          "nm": "Path to the Peak",
+          "c": "T",
+          "tt": "Stadium",
+          "tx": "Pokémon with a Rule Box in play (both yours and your opponent's) have no Abilities. (Pokémon V, Pokémon-GX, etc. have Rule Boxes.)",
+          "rm": "E",
+          "il": "Oswaldo KATO",
+          "ra": "Uncommon",
+          "lg": 2
+        }
+      ]
+    },
+    {
+      "id": "sm9",
+      "code": "TEU",
+      "name": "Team Up",
+      "series": "Sun & Moon",
+      "released": "2019-01-31",
+      "official": 181,
+      "total": 196,
+      "logo": "https://assets.tcgdex.net/en/sm/sm9/logo",
+      "symbol": "https://assets.tcgdex.net/univ/sm/sm9/symbol",
+      "img": "https://assets.tcgdex.net/en/sm/sm9/",
+      "cards": [
+        {
+          "n": "51",
+          "nm": "Tapu Koko ◇",
+          "c": "P",
+          "st": "Basic",
+          "hp": 130,
+          "ty": "L",
+          "il": "Kouki Saitou",
+          "ra": "Rare",
+          "rt": 1,
+          "dx": [785],
+          "ab": [
+            [
+              "Ability",
+              "Dance of the Ancients",
+              "Once during your turn (before your attack), if this Pokémon is on your Bench, you may choose 2 of your Benched Pokémon and attach a Lightning Energy card from your discard pile to each of them. If you do, discard all cards from this Pokémon and put it in the Lost Zone."
+            ]
+          ],
+          "at": [["Mach Bolt", "LLC", "120"]],
+          "wk": "F",
+          "rs": "M",
+          "tg": ["Prism Star"],
+          "lg": 2
+        }
+      ]
+    },
+    {
+      "id": "sm8",
+      "code": "LOT",
+      "name": "Lost Thunder",
+      "series": "Sun & Moon",
+      "released": "2018-11-02",
+      "official": 214,
+      "total": 236,
+      "logo": "https://assets.tcgdex.net/en/sm/sm8/logo",
+      "symbol": "https://assets.tcgdex.net/univ/sm/sm8/symbol",
+      "img": "https://assets.tcgdex.net/en/sm/sm8/",
+      "cards": [
+        {
+          "n": "90",
+          "nm": "Unown",
+          "c": "P",
+          "st": "Basic",
+          "hp": 60,
+          "ty": "P",
+          "il": "Masakazu Fukuda",
+          "ra": "Rare",
+          "rt": 1,
+          "dx": [201],
+          "ab": [
+            [
+              "Ability",
+              "DAMAGE",
+              "Once during your turn (before your attack), if this Pokémon is your Active Pokémon, and if there are 66 or more damage counters on your Benched Pokémon, you may use this Ability. If you do, you win this game."
+            ]
+          ],
+          "at": [["Hidden Power", "P", "10"]],
+          "wk": "P"
+        }
+      ]
+    },
+    {
+      "id": "xy7",
+      "code": "AOR",
+      "name": "Ancient Origins",
+      "series": "XY",
+      "released": "2015-08-12",
+      "official": 98,
+      "total": 101,
+      "logo": "https://assets.tcgdex.net/en/xy/xy7/logo",
+      "symbol": "https://assets.tcgdex.net/univ/xy/xy7/symbol",
+      "img": "https://assets.tcgdex.net/en/xy/xy7/",
+      "cards": [
+        {
+          "n": "75",
+          "nm": "Hex Maniac",
+          "c": "T",
+          "tt": "Supporter",
+          "tx": "Until the end of your opponent's next turn, each Pokémon in play, in each player's hand, and in each player's discard pile has no Abilities. (This includes cards that come into play on that turn.)",
+          "il": "Yusuke Ohmura",
+          "ra": "Uncommon"
+        }
+      ]
+    },
+    {
+      "id": "xy6",
+      "code": "ROS",
+      "name": "Roaring Skies",
+      "series": "XY",
+      "released": "2015-05-06",
+      "official": 108,
+      "total": 112,
+      "logo": "https://assets.tcgdex.net/en/xy/xy6/logo",
+      "symbol": "https://assets.tcgdex.net/univ/xy/xy6/symbol",
+      "img": "https://assets.tcgdex.net/en/xy/xy6/",
+      "cards": [
+        {
+          "n": "77a",
+          "nm": "Shaymin EX",
+          "c": "P",
+          "st": "Basic",
+          "hp": 110,
+          "ty": "C",
+          "il": "Ayaka Yoshida",
+          "ra": "Rare",
+          "rt": 1,
+          "dx": [492],
+          "ab": [
+            [
+              "Ability",
+              "Set Up",
+              "When you play this Pokémon from your hand onto your Bench, you may draw cards until you have 6 cards in your hand."
+            ]
+          ],
+          "at": [
+            [
+              "Sky Return",
+              "CC",
+              "30",
+              "Return this Pokémon and all cards attached to it to your hand."
+            ]
+          ],
+          "wk": "L",
+          "rs": "F",
+          "tg": ["EX"]
+        },
+        {
+          "n": "77",
+          "nm": "Shaymin EX",
+          "c": "P",
+          "st": "Basic",
+          "hp": 110,
+          "ty": "C",
+          "il": "Ayaka Yoshida",
+          "ra": "Ultra Rare",
+          "rt": 1,
+          "dx": [492],
+          "ab": [
+            [
+              "Ability",
+              "Set Up",
+              "When you play this Pokémon from your hand onto your Bench, you may draw cards until you have 6 cards in your hand."
+            ]
+          ],
+          "at": [
+            [
+              "Sky Return",
+              "CC",
+              "30",
+              "Return this Pokémon and all cards attached to it to your hand."
+            ]
+          ],
+          "wk": "L",
+          "rs": "F",
+          "tg": ["EX"]
+        }
+      ]
+    },
+    {
+      "id": "xy4",
+      "code": "PHF",
+      "name": "Phantom Forces",
+      "series": "XY",
+      "released": "2014-11-05",
+      "official": 119,
+      "total": 124,
+      "logo": "https://assets.tcgdex.net/en/xy/xy4/logo",
+      "symbol": "https://assets.tcgdex.net/univ/xy/xy4/symbol",
+      "img": "https://assets.tcgdex.net/en/xy/xy4/",
+      "cards": [
+        {
+          "n": "99",
+          "nm": "Lysandre's Trump Card",
+          "c": "T",
+          "tt": "Supporter",
+          "tx": "Each player shuffles all cards in his or her discard pile into his or her deck (except for Lysandre's Trump Card).",
+          "il": "Hitoshi Ariga",
+          "ra": "Uncommon"
+        }
+      ]
+    },
+    {
+      "id": "bw7",
+      "code": "BCR",
+      "name": "Boundaries Crossed",
+      "series": "Black & White",
+      "released": "2012-11-07",
+      "official": 149,
+      "total": 153,
+      "logo": "https://assets.tcgdex.net/en/bw/bw7/logo",
+      "symbol": "https://assets.tcgdex.net/univ/bw/bw7/symbol",
+      "img": "https://assets.tcgdex.net/en/bw/bw7/",
+      "cards": [
+        {
+          "n": "137",
+          "nm": "Computer Search",
+          "c": "T",
+          "tt": "Item",
+          "tx": "Discard 2 cards from your hand. (If you can’t discard 2 cards, you can’t play this card.) Search your deck for a card and put it into your hand. Shuffle your deck afterward.",
+          "il": "Ryo Ueda",
+          "ra": "Rare",
+          "tg": ["ACE SPEC"],
+          "lg": 2
+        }
+      ]
+    },
+    {
+      "id": "base1",
+      "code": "BS",
+      "name": "Base Set",
+      "series": "Base",
+      "released": "1999-01-09",
+      "official": 102,
+      "total": 102,
+      "logo": "https://assets.tcgdex.net/en/base/base1/logo",
+      "img": "https://assets.tcgdex.net/en/base/base1/",
+      "cards": [
+        {
+          "n": "4",
+          "nm": "Charizard",
+          "c": "P",
+          "st": "Stage 2",
+          "hp": 120,
+          "ty": "R",
+          "ef": "Charmeleon",
+          "il": "Mitsuhiro Arita",
+          "ra": "Rare",
+          "rt": 3,
+          "dx": [6],
+          "ab": [
+            [
+              "Pokemon Power",
+              "Energy Burn",
+              "As often as you like during your turn (before your attack), you may turn all Energy attached to Charizard into Fire Energy for the rest of the turn. This power can't be used if Charizard is Asleep, Confused, or Paralyzed."
+            ]
+          ],
+          "at": [
+            [
+              "Fire Spin",
+              "RRRR",
+              "100",
+              "Discard 2 Energy cards attached to Charizard in order to use this attack."
+            ]
+          ],
+          "wk": "W",
+          "rs": "F"
+        }
+      ]
+    }
+  ]
+}

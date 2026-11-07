@@ -1,0 +1,1818 @@
+import {
+  isCardBackValue,
+  isCoinValue,
+  isPlaymatValue,
+  isPlayerDisplayName,
+  MAX_COIN_FLIP_COUNT,
+  MAX_UNTIL_TAILS_FLIPS,
+  isCardPrint,
+  isCardText,
+  type CardText,
+} from '@ptcgsim/game-core';
+import * as v from 'valibot';
+import {
+  MAX_CARD_STEPS,
+  MAX_CHAT_CODE_UNITS,
+  MAX_DECK_CARDS,
+  MAX_DECK_ENTRIES,
+  MAX_IMAGE_URL_CODE_UNITS,
+  MAX_PRESENTATION_EVENTS,
+  MAX_REPLAY_FRAMES,
+  MAX_ROOM_CODE_LENGTH,
+  PROTOCOL_VERSION,
+  ROOM_ALIAS_PATTERN,
+  V2_ROOM_CODE_PATTERN,
+} from './constants.js';
+
+const boundedString = (maximum: number, minimum = 1) =>
+  v.pipe(v.string(), v.minLength(minimum), v.maxLength(maximum));
+const IdentifierSchema = boundedString(128);
+const UrlSchema = boundedString(MAX_IMAGE_URL_CODE_UNITS);
+/**
+ * A card back a player sets: a reference (ADR-041), or a legacy URL as
+ * older clients still send. Views keep the plain bound, so replays recorded
+ * before references keep reading.
+ */
+const CardBackSchema = v.pipe(
+  UrlSchema,
+  v.check((value: string) => isCardBackValue(value), 'Invalid card back')
+);
+const CoinSchema = v.pipe(
+  boundedString(128),
+  v.check((value: string) => isCoinValue(value), 'Invalid coin')
+);
+const SafeIntegerSchema = v.pipe(v.number(), v.safeInteger());
+const NonNegativeIntegerSchema = v.pipe(SafeIntegerSchema, v.minValue(0));
+const PositiveIntegerSchema = v.pipe(SafeIntegerSchema, v.minValue(1));
+const RevisionSchema = NonNegativeIntegerSchema;
+const CardCategorySchema = v.picklist([
+  'Pokémon',
+  'Trainer',
+  'Energy',
+  'Unknown',
+] as const);
+const QuarterTurnsSchema = v.picklist([0, 1, 2, 3] as const);
+const CapabilitySchema = boundedString(512, 32);
+const ContinuationSaveIdSchema = v.pipe(
+  v.string(),
+  v.regex(/^[A-Za-z0-9_-]{22}$/u, 'Invalid continuation save ID')
+);
+const ContinuationOperationIdSchema = v.pipe(
+  v.string(),
+  v.regex(/^[A-Za-z0-9_-]{43}$/u, 'Invalid continuation operation ID')
+);
+const ContinuationCapabilitySchema = v.pipe(
+  v.string(),
+  v.regex(
+    /^ptcgsave\.v1\.[A-Za-z0-9_-]{22}\.[A-Za-z0-9_-]{43}$/u,
+    'Invalid continuation capability'
+  )
+);
+const RoomCodeSchema = v.pipe(
+  v.string(),
+  v.regex(V2_ROOM_CODE_PATTERN, 'Invalid room code')
+);
+
+const RoomModeSchema = v.picklist(['solo', 'multiplayer'] as const);
+
+const RoomAliasSchema = v.pipe(
+  v.string(),
+  v.regex(ROOM_ALIAS_PATTERN, 'Invalid room alias')
+);
+
+/** Join a room by its public code, choosing to play or watch (ADR-047). */
+export const RoomCodeJoinRequestSchema = v.strictObject({
+  code: RoomAliasSchema,
+  requestedRole: v.picklist(['player', 'spectator'] as const),
+  displayName: boundedString(64),
+});
+
+/** Admitted: the room behind the code, and a ticket to connect with. */
+export const RoomCodeJoinResponseSchema = v.strictObject({
+  roomCode: RoomCodeSchema,
+  requestedRole: v.picklist(['player', 'spectator'] as const),
+  admissionTicket: CapabilitySchema,
+  resumeToken: CapabilitySchema,
+  expiresAt: NonNegativeIntegerSchema,
+});
+
+/**
+ * A room's public code, asked for by a session in it (its resume bearer):
+ * the current one, made if it has none, or `code` chosen by the host.
+ */
+export const RoomAliasRequestSchema = v.strictObject({
+  resumeToken: CapabilitySchema,
+  code: v.optional(RoomAliasSchema),
+});
+
+export const RoomAliasResponseSchema = v.strictObject({
+  code: RoomAliasSchema,
+  /** Whether the asker may choose another (the host). */
+  canChange: v.boolean(),
+});
+
+export const RoomCreationRequestSchema = v.strictObject({
+  mode: v.optional(RoomModeSchema, 'multiplayer'),
+});
+
+export const RoomCreationResponseSchema = v.variant('mode', [
+  v.strictObject({
+    mode: v.literal('solo'),
+    roomCode: RoomCodeSchema,
+    credentials: v.strictObject({
+      playerOneSeatCapability: CapabilitySchema,
+      spectatorCapability: v.optional(CapabilitySchema),
+    }),
+  }),
+  v.strictObject({
+    mode: v.literal('multiplayer'),
+    roomCode: RoomCodeSchema,
+    credentials: v.strictObject({
+      playerOneSeatCapability: CapabilitySchema,
+      playerTwoSeatCapability: CapabilitySchema,
+      spectatorCapability: v.optional(CapabilitySchema),
+    }),
+  }),
+]);
+
+export const RoomInvitationIssueRequestSchema = v.strictObject({
+  capability: CapabilitySchema,
+  requestedRole: v.picklist(['player', 'spectator'] as const),
+});
+
+export const RoomInvitationIssueResponseSchema = v.strictObject({
+  invitation: CapabilitySchema,
+  requestedRole: v.picklist(['player', 'spectator'] as const),
+  expiresAt: NonNegativeIntegerSchema,
+});
+
+export const RoomInvitationHandoffSchema = v.strictObject({
+  roomCode: RoomCodeSchema,
+  invitation: CapabilitySchema,
+  requestedRole: v.picklist(['player', 'spectator'] as const),
+  expiresAt: NonNegativeIntegerSchema,
+});
+
+/**
+ * A Solo room opened to an opponent in place (ADR-044): its player's own
+ * seat claim, and the name they play under now that someone else will see
+ * it. The answer holds the second seat's claim and the spectators', new.
+ */
+export const RoomOpenRequestSchema = v.strictObject({
+  capability: CapabilitySchema,
+  displayName: boundedString(64),
+});
+
+export const RoomOpenResponseSchema = v.strictObject({
+  mode: v.literal('multiplayer'),
+  credentials: v.strictObject({
+    playerTwoSeatCapability: CapabilitySchema,
+    spectatorCapability: CapabilitySchema,
+  }),
+});
+
+export const RoomAdmissionTicketRequestSchema = v.strictObject({
+  capability: CapabilitySchema,
+  displayName: boundedString(64),
+  requestedRole: v.picklist(['player', 'spectator'] as const),
+});
+
+export const RoomAdmissionTicketResponseSchema = v.strictObject({
+  admissionTicket: CapabilitySchema,
+  resumeToken: CapabilitySchema,
+  expiresAt: NonNegativeIntegerSchema,
+});
+
+export const ContinuationCreationRequestSchema = v.strictObject({
+  resumeToken: CapabilitySchema,
+  operationId: ContinuationOperationIdSchema,
+});
+
+export const ContinuationCreationResponseSchema = v.pipe(
+  v.strictObject({
+    format: v.literal('ptcgsim-continuation-creation-result-v1'),
+    saveId: ContinuationSaveIdSchema,
+    operationId: ContinuationOperationIdSchema,
+    capability: ContinuationCapabilitySchema,
+    createdAt: NonNegativeIntegerSchema,
+    expiresAt: NonNegativeIntegerSchema,
+  }),
+  v.check(
+    (value) =>
+      value.expiresAt > value.createdAt &&
+      value.capability.startsWith(`ptcgsave.v1.${value.saveId}.`),
+    'Continuation creation result is inconsistent'
+  )
+);
+
+/** Small browser/file handoff. Canonical match state remains server-held. */
+export const ContinuationHandoffSchema = v.pipe(
+  v.strictObject({
+    format: v.literal('ptcgsim-continuation-handoff-v1'),
+    saveId: ContinuationSaveIdSchema,
+    capability: ContinuationCapabilitySchema,
+    expiresAt: NonNegativeIntegerSchema,
+  }),
+  v.check(
+    (value) => value.capability.startsWith(`ptcgsave.v1.${value.saveId}.`),
+    'Continuation handoff is inconsistent'
+  )
+);
+
+export const ContinuationRestoreRequestSchema = v.strictObject({
+  capability: ContinuationCapabilitySchema,
+  operationId: ContinuationOperationIdSchema,
+});
+
+export const ContinuationRevocationRequestSchema = v.strictObject({
+  capability: ContinuationCapabilitySchema,
+});
+
+export const ContinuationRestoreResponseSchema = v.pipe(
+  v.strictObject({
+    format: v.literal('ptcgsim-continuation-restore-result-v1'),
+    saveId: ContinuationSaveIdSchema,
+    operationId: ContinuationOperationIdSchema,
+    completedAt: NonNegativeIntegerSchema,
+    targetRoomCode: RoomCodeSchema,
+    requesterSeatCapability: CapabilitySchema,
+    opponentInvitation: v.strictObject({
+      invitation: CapabilitySchema,
+      expiresAt: NonNegativeIntegerSchema,
+    }),
+  }),
+  v.check(
+    (value) => value.opponentInvitation.expiresAt > value.completedAt,
+    'Continuation restore result is expired'
+  )
+);
+
+const CardPresentationSchema = v.pipe(
+  v.strictObject({
+    readingQuarterTurns: v.picklist([0, 1, 2, 3] as const),
+    overlay: v.optional(v.literal('upper-half')),
+    finish: v.optional(v.picklist(['matte', 'sheen', 'holo', 'rainbow'])),
+    foilRegion: v.optional(v.picklist(['artwork', 'full', 'none'])),
+    join: v.optional(
+      v.strictObject({
+        key: v.pipe(
+          boundedString(128),
+          v.check((key) => key.trim().length > 0)
+        ),
+        columns: v.picklist([1, 2, 3, 4] as const),
+        rows: v.picklist([1, 2, 3, 4] as const),
+        part: v.picklist([0, 1, 2, 3] as const),
+      })
+    ),
+  }),
+  v.check(
+    (value) =>
+      !value.join ||
+      (!value.overlay &&
+        value.join.columns * value.join.rows > 1 &&
+        value.join.columns * value.join.rows <= 4 &&
+        value.join.part < value.join.columns * value.join.rows)
+  )
+);
+
+/** A catalog print id ("PAL 185"), game-core's `isCardPrint`. */
+const CardPrintSchema = v.custom<string>(isCardPrint, 'Invalid card print');
+
+/** What a card says, bounded (game-core's `isCardText`). */
+const CardTextSchema = v.custom<CardText>(isCardText, 'Invalid card text');
+
+export const SerializedCardDefinitionSchema = v.object({
+  id: IdentifierSchema,
+  name: boundedString(256),
+  category: CardCategorySchema,
+  imageUrl: UrlSchema,
+  imageUrlSmall: v.optional(UrlSchema),
+  presentation: v.optional(CardPresentationSchema),
+  /** The other kind its print lets it be played as (game-core's). */
+  playsAs: v.optional(v.picklist(['Pokémon', 'Energy'] as const)),
+  /** The catalog's print, whose text the table shows (ADR-043). */
+  print: v.optional(CardPrintSchema),
+  /** The deck's own text for the card (ADR-043). */
+  text: v.optional(CardTextSchema),
+});
+
+const WireDeckEntrySchema = v.object({
+  definition: SerializedCardDefinitionSchema,
+  count: v.pipe(PositiveIntegerSchema, v.maxValue(200)),
+});
+
+const MoveCardCommandSchema = v.object({
+  type: v.literal('MoveCard'),
+  cardId: IdentifierSchema,
+  expectedSourceZoneId: IdentifierSchema,
+  destinationZoneId: IdentifierSchema,
+  destinationIndex: v.optional(NonNegativeIntegerSchema),
+});
+
+const MoveCardFromStackCommandSchema = v.object({
+  type: v.literal('MoveCardFromStack'),
+  cardId: IdentifierSchema,
+  expectedStackId: IdentifierSchema,
+  destinationZoneId: IdentifierSchema,
+  destinationIndex: v.optional(NonNegativeIntegerSchema),
+});
+
+const MovePlayStackToZoneCommandSchema = v.object({
+  type: v.literal('MovePlayStackToZone'),
+  stackId: IdentifierSchema,
+  // As many as a stack can show (StackViewSchema): a command for any
+  // Pokémon on the table must pass, or the room never answers it.
+  expectedEvolutionCardIds: v.pipe(
+    v.array(IdentifierSchema),
+    v.minLength(1),
+    v.maxLength(200)
+  ),
+  expectedAttachmentCardIds: v.pipe(
+    v.array(IdentifierSchema),
+    v.maxLength(200)
+  ),
+  destinationZoneId: IdentifierSchema,
+  destinationIndex: v.optional(NonNegativeIntegerSchema),
+});
+
+const MoveInspectedCardCommandSchema = v.object({
+  type: v.literal('MoveInspectedCard'),
+  cardId: IdentifierSchema,
+  expectedWorkAreaId: IdentifierSchema,
+  destinationZoneId: IdentifierSchema,
+  destinationIndex: v.optional(NonNegativeIntegerSchema),
+});
+
+const MoveStagedCardCommandSchema = v.object({
+  type: v.literal('MoveStagedCard'),
+  cardId: IdentifierSchema,
+  expectedWorkAreaId: IdentifierSchema,
+  destinationZoneId: IdentifierSchema,
+  destinationIndex: v.optional(NonNegativeIntegerSchema),
+});
+
+const MoveCardToPlayCommandSchema = v.object({
+  type: v.literal('MoveCardToPlay'),
+  cardId: IdentifierSchema,
+  expectedSourceZoneId: IdentifierSchema,
+  boardPlayerId: IdentifierSchema,
+  slot: v.picklist(['active', 'bench'] as const),
+  targetStackId: v.optional(IdentifierSchema),
+  benchIndex: v.optional(NonNegativeIntegerSchema),
+  /** Onto a Pokémon, attached as an Energy whatever its kind. */
+  asCategory: v.optional(v.literal('Energy')),
+});
+
+const MoveInspectedCardToPlayCommandSchema = v.strictObject({
+  // A card being looked at, played straight to Active or the Bench.
+  type: v.literal('MoveInspectedCardToPlay'),
+  cardId: IdentifierSchema,
+  expectedWorkAreaId: IdentifierSchema,
+  boardPlayerId: IdentifierSchema,
+  slot: v.picklist(['active', 'bench'] as const),
+  benchIndex: v.optional(NonNegativeIntegerSchema),
+});
+
+const PlaceCardOnPlayStackCommandSchema = v.strictObject({
+  type: v.literal('PlaceCardOnPlayStack'),
+  cardId: IdentifierSchema,
+  expectedSourceId: IdentifierSchema,
+  targetStackId: IdentifierSchema,
+  expectedTargetTopCardId: IdentifierSchema,
+  mode: v.picklist(['attachment', 'evolution'] as const),
+  /** Attached as an Energy whatever its kind. */
+  asCategory: v.optional(v.literal('Energy')),
+});
+
+const MoveCardToStadiumCommandSchema = v.object({
+  type: v.literal('MoveCardToStadium'),
+  cardId: IdentifierSchema,
+  expectedSourceId: IdentifierSchema,
+  expectedStadiumCardId: v.nullable(IdentifierSchema),
+  expectedStadiumCardIds: v.optional(
+    v.pipe(v.array(IdentifierSchema), v.maxLength(4))
+  ),
+  placement: v.optional(v.literal('add')),
+});
+
+const MoveCardToDeckTopCommandSchema = v.object({
+  type: v.literal('MoveCardToDeckTop'),
+  cardId: IdentifierSchema,
+  expectedSourceId: IdentifierSchema,
+});
+
+const MoveCardToDeckBottomCommandSchema = v.object({
+  type: v.literal('MoveCardToDeckBottom'),
+  cardId: IdentifierSchema,
+  expectedSourceId: IdentifierSchema,
+});
+
+const SetDamageCommandSchema = v.object({
+  type: v.literal('SetDamage'),
+  stackId: IdentifierSchema,
+  damage: v.nullable(v.pipe(NonNegativeIntegerSchema, v.maxValue(9_990))),
+});
+
+const SetSpecialConditionCommandSchema = v.object({
+  type: v.literal('SetSpecialCondition'),
+  stackId: IdentifierSchema,
+  condition: v.nullable(boundedString(16, 0)),
+});
+
+/** A move's name as an announcement carries it (game-core isMoveName). */
+const MoveNameSchema = v.pipe(
+  boundedString(64),
+  v.check((name) => name.trim().length > 0 && !/[\r\n]/u.test(name))
+);
+
+const SetAbilityUsedCommandSchema = v.object({
+  type: v.literal('SetAbilityUsed'),
+  stackId: IdentifierSchema,
+  used: v.boolean(),
+  /** The Ability picked from the Pokémon's text (ADR-043). */
+  ability: v.optional(MoveNameSchema),
+});
+
+/** The reminders a player can put on a Pokémon (game-core STACK_REMINDERS). */
+const StackReminderSchema = v.picklist([
+  'cantAttack',
+  'cantRetreat',
+  'takesLess',
+  'hitsHarder',
+  'noAbilities',
+] as const);
+
+/** game-core HP_MODIFIER_LIMIT: an effect's HP, a multiple of 10. */
+const HpModifierSchema = v.pipe(
+  v.number(),
+  v.integer(),
+  v.minValue(-990),
+  v.maxValue(990),
+  v.check((modifier) => modifier % 10 === 0)
+);
+
+const SetHpModifierCommandSchema = v.object({
+  type: v.literal('SetHpModifier'),
+  stackId: IdentifierSchema,
+  modifier: HpModifierSchema,
+});
+
+const SetStackReminderCommandSchema = v.object({
+  type: v.literal('SetStackReminder'),
+  stackId: IdentifierSchema,
+  reminder: StackReminderSchema,
+  on: v.boolean(),
+});
+
+const SetCardAbilityUsedCommandSchema = v.object({
+  type: v.literal('SetCardAbilityUsed'),
+  cardId: IdentifierSchema,
+  used: v.boolean(),
+});
+
+const SetPublicRevealCommandSchema = v.object({
+  type: v.literal('SetPublicReveal'),
+  cardId: IdentifierSchema,
+  expectedSourceId: IdentifierSchema,
+  revealed: v.boolean(),
+});
+
+const RotateStackCommandSchema = v.object({
+  type: v.literal('RotateStack'),
+  stackId: IdentifierSchema,
+  rotationQuarterTurns: QuarterTurnsSchema,
+});
+
+const SetCardOrientationCommandSchema = v.object({
+  type: v.literal('SetCardOrientation'),
+  cardId: IdentifierSchema,
+  orientationQuarterTurns: QuarterTurnsSchema,
+});
+
+const ShuffleZoneCommandSchema = v.object({
+  type: v.literal('ShuffleZone'),
+  zoneId: IdentifierSchema,
+});
+
+/**
+ * The Pokémon an earlier step of the same command made, by that step's
+ * place among the steps: a V-UNION's or LEGEND's later pieces go onto the
+ * Pokémon its first piece has just become, which has no id until the room
+ * makes it.
+ */
+const CardStepRefSchema = v.pipe(
+  NonNegativeIntegerSchema,
+  v.maxValue(MAX_CARD_STEPS - 1)
+);
+
+const MoveCardToPlayStepSchema = v.object({
+  ...MoveCardToPlayCommandSchema.entries,
+  targetStackRef: v.optional(CardStepRefSchema),
+});
+
+const PlaceCardOnPlayStackStepSchema = v.strictObject({
+  ...PlaceCardOnPlayStackCommandSchema.entries,
+  targetStackId: v.optional(IdentifierSchema),
+  targetStackRef: v.optional(CardStepRefSchema),
+});
+
+/**
+ * One step of a group's move (ApplyCardSteps): a single-card command, as it
+ * would be sent alone, from a short list. The two that put a card on a
+ * Pokémon may name one an earlier step made (`targetStackRef`) instead.
+ */
+export const WireCardStepSchema = v.variant('type', [
+  MoveCardCommandSchema,
+  MoveCardFromStackCommandSchema,
+  MovePlayStackToZoneCommandSchema,
+  MoveInspectedCardCommandSchema,
+  MoveStagedCardCommandSchema,
+  MoveCardToPlayStepSchema,
+  MoveInspectedCardToPlayCommandSchema,
+  PlaceCardOnPlayStackStepSchema,
+  MoveCardToStadiumCommandSchema,
+  MoveCardToDeckTopCommandSchema,
+  MoveCardToDeckBottomCommandSchema,
+  SetDamageCommandSchema,
+  SetSpecialConditionCommandSchema,
+  SetAbilityUsedCommandSchema,
+  SetStackReminderCommandSchema,
+  SetCardAbilityUsedCommandSchema,
+  SetPublicRevealCommandSchema,
+  RotateStackCommandSchema,
+  SetCardOrientationCommandSchema,
+  ShuffleZoneCommandSchema,
+]);
+
+type CardStepShape = v.InferOutput<typeof WireCardStepSchema>;
+
+/** Whether a step makes a new Pokémon a later step may put cards on. */
+export const cardStepMakesPokemon = (
+  step: CardStepShape
+): step is Extract<
+  CardStepShape,
+  { readonly type: 'MoveCardToPlay' | 'MoveInspectedCardToPlay' }
+> =>
+  (step.type === 'MoveCardToPlay' &&
+    step.targetStackId === undefined &&
+    step.targetStackRef === undefined) ||
+  step.type === 'MoveInspectedCardToPlay';
+
+/**
+ * The steps' shape, before the room reads them: a step names only a
+ * Pokémon an earlier step made, a card put on a Pokémon names it one way
+ * only, and shuffles come last (a deck shuffled once its cards are in).
+ * What the steps do is checked by the room, step by step, as if each came
+ * alone.
+ */
+const wellFormedCardSteps = (steps: CardStepShape[]): boolean => {
+  let shuffled = false;
+  return steps.every((step, index) => {
+    if (step.type === 'ShuffleZone') {
+      shuffled = true;
+      return true;
+    }
+    if (shuffled) return false;
+    if (step.type !== 'MoveCardToPlay' && step.type !== 'PlaceCardOnPlayStack')
+      return true;
+    const ref = step.targetStackRef;
+    if (ref !== undefined && step.targetStackId !== undefined) return false;
+    if (step.type === 'PlaceCardOnPlayStack' && ref === undefined)
+      return step.targetStackId !== undefined;
+    return (
+      ref === undefined || (ref < index && cardStepMakesPokemon(steps[ref]!))
+    );
+  });
+};
+
+const ApplyCardStepsCommandSchema = v.object({
+  type: v.literal('ApplyCardSteps'),
+  steps: v.pipe(
+    v.array(WireCardStepSchema),
+    v.minLength(2),
+    v.maxLength(MAX_CARD_STEPS),
+    v.check(wellFormedCardSteps, 'Malformed card steps')
+  ),
+});
+
+export const WireGameCommandSchema = v.variant('type', [
+  v.object({
+    type: v.literal('LoadDeck'),
+    targetPlayerId: v.optional(IdentifierSchema),
+    entries: v.pipe(
+      v.array(WireDeckEntrySchema),
+      v.maxLength(MAX_DECK_ENTRIES),
+      // Entry count alone does not bound the deck: the reducer rejects more
+      // than MAX_DECK_CARDS instances, so reject it at the wire boundary too
+      // rather than materializing the copies first.
+      v.check(
+        (entries) =>
+          entries.reduce((total, entry) => total + entry.count, 0) <=
+          MAX_DECK_CARDS,
+        'Deck exceeds the maximum card count'
+      )
+    ),
+  }),
+  v.object({
+    type: v.literal('SetCardBack'),
+    targetPlayerId: v.optional(IdentifierSchema),
+    cardBackUrl: CardBackSchema,
+  }),
+  v.object({
+    type: v.literal('SetPlayerProfile'),
+    targetPlayerId: v.optional(IdentifierSchema),
+    displayName: v.optional(
+      v.pipe(
+        boundedString(64),
+        v.check((value: string) => isPlayerDisplayName(value), 'Invalid name')
+      )
+    ),
+    playmat: v.optional(
+      v.pipe(
+        UrlSchema,
+        v.check((value: string) => isPlaymatValue(value), 'Invalid playmat')
+      )
+    ),
+  }),
+  v.object({
+    type: v.literal('SetCoin'),
+    targetPlayerId: v.optional(IdentifierSchema),
+    coin: CoinSchema,
+  }),
+  v.object({
+    type: v.literal('ResetPlayer'),
+    targetPlayerId: v.optional(IdentifierSchema),
+  }),
+  v.object({
+    type: v.literal('SetupPlayer'),
+    targetPlayerId: v.optional(IdentifierSchema),
+  }),
+  MoveCardCommandSchema,
+  MoveCardToStadiumCommandSchema,
+  MoveCardToPlayCommandSchema,
+  PlaceCardOnPlayStackCommandSchema,
+  MoveCardFromStackCommandSchema,
+  MovePlayStackToZoneCommandSchema,
+  v.object({
+    type: v.literal('MovePlayStack'),
+    stackId: IdentifierSchema,
+    // The board it was seen on: a Pokémon can now change boards.
+    expectedSourceBoardPlayerId: v.optional(IdentifierSchema),
+    expectedSourceSlot: v.picklist(['active', 'bench'] as const),
+    expectedActiveStackId: v.nullable(IdentifierSchema),
+    expectedBenchStackIds: v.pipe(v.array(IdentifierSchema), v.maxLength(200)),
+    destinationSlot: v.picklist(['active', 'bench'] as const),
+    targetStackId: v.optional(IdentifierSchema),
+    benchIndex: v.optional(NonNegativeIntegerSchema),
+    // Onto the other player's board, as last seen: a Pokémon moved across.
+    destinationBoard: v.optional(
+      v.object({
+        boardPlayerId: IdentifierSchema,
+        expectedActiveStackId: v.nullable(IdentifierSchema),
+        expectedBenchStackIds: v.pipe(
+          v.array(IdentifierSchema),
+          v.maxLength(200)
+        ),
+      })
+    ),
+  }),
+  MoveInspectedCardCommandSchema,
+  MoveInspectedCardToPlayCommandSchema,
+  v.object({
+    // A card dragged into an open work-area popup, as v1's `viewCards` and
+    // `attachedCards` containers accept drops from anywhere on the board.
+    type: v.literal('MoveCardToWorkArea'),
+    cardId: IdentifierSchema,
+    expectedWorkAreaId: IdentifierSchema,
+  }),
+  MoveStagedCardCommandSchema,
+  v.object({
+    type: v.literal('RestoreStagedStack'),
+    targetPlayerId: v.optional(IdentifierSchema),
+    expectedWorkAreaId: IdentifierSchema,
+    // The board it is restored onto: the player's own, or this one's.
+    expectedActiveStackId: v.nullable(IdentifierSchema),
+    expectedBenchStackIds: v.pipe(v.array(IdentifierSchema), v.maxLength(200)),
+    destinationSlot: v.picklist(['active', 'bench'] as const),
+    benchIndex: v.optional(NonNegativeIntegerSchema),
+    destinationBoardPlayerId: v.optional(IdentifierSchema),
+  }),
+  v.object({
+    type: v.literal('ResolveStagedCards'),
+    targetPlayerId: v.optional(IdentifierSchema),
+    expectedWorkAreaId: IdentifierSchema,
+    destination: v.picklist([
+      'discard',
+      'lostZone',
+      'hand',
+      'shuffleIntoDeck',
+      'shuffleToDeckBottom',
+    ] as const),
+  }),
+  v.object({
+    type: v.literal('ResolveInspectionCards'),
+    targetPlayerId: v.optional(IdentifierSchema),
+    expectedWorkAreaId: IdentifierSchema,
+    destination: v.picklist([
+      'discard',
+      'lostZone',
+      'hand',
+      'shuffleIntoDeck',
+      'shuffleToDeckBottom',
+    ] as const),
+  }),
+  MoveCardToDeckTopCommandSchema,
+  MoveCardToDeckBottomCommandSchema,
+  v.object({
+    type: v.literal('ShuffleCardIntoDeck'),
+    cardId: IdentifierSchema,
+    expectedSourceId: IdentifierSchema,
+  }),
+  v.object({
+    type: v.literal('SwapCardWithDeckTop'),
+    cardId: IdentifierSchema,
+    expectedSourceId: IdentifierSchema,
+  }),
+  v.object({
+    type: v.literal('MovePrizesToDeckBottom'),
+    targetPlayerId: v.optional(IdentifierSchema),
+  }),
+  ShuffleZoneCommandSchema,
+  v.object({
+    type: v.literal('DrawCards'),
+    count: v.pipe(PositiveIntegerSchema, v.maxValue(200)),
+    /** The seat that draws; defaults to the submitting seat. */
+    targetPlayerId: v.optional(IdentifierSchema),
+  }),
+  v.strictObject({
+    type: v.literal('PlayRandomCardFaceDown'),
+    targetPlayerId: IdentifierSchema,
+  }),
+  v.object({
+    type: v.literal('StartTurn'),
+    targetPlayerId: IdentifierSchema,
+  }),
+  v.object({
+    type: v.literal('DeclareAttack'),
+    targetPlayerId: IdentifierSchema,
+    /** The attack picked from a Pokémon's text (ADR-043). */
+    attack: v.optional(
+      v.object({ stackId: IdentifierSchema, name: MoveNameSchema })
+    ),
+  }),
+  v.object({
+    type: v.literal('PassTurn'),
+    targetPlayerId: IdentifierSchema,
+  }),
+  v.object({
+    type: v.literal('MoveZoneContents'),
+    sourceZoneId: IdentifierSchema,
+    destinationZoneId: IdentifierSchema,
+  }),
+  v.object({
+    type: v.literal('ResolveLooseBoardCards'),
+    targetPlayerId: IdentifierSchema,
+    expectedBoardCardIds: v.pipe(
+      v.array(IdentifierSchema),
+      v.minLength(1),
+      v.maxLength(200)
+    ),
+    destination: v.picklist([
+      'discard',
+      'lostZone',
+      'hand',
+      'shuffleIntoDeck',
+    ] as const),
+  }),
+  v.object({
+    type: v.literal('ShuffleZoneIntoDeck'),
+    sourceZoneId: IdentifierSchema,
+  }),
+  v.object({
+    type: v.literal('ShuffleZoneToDeckBottom'),
+    sourceZoneId: IdentifierSchema,
+  }),
+  v.object({
+    type: v.literal('DiscardHandAndDraw'),
+    count: v.pipe(NonNegativeIntegerSchema, v.maxValue(200)),
+    targetPlayerId: v.optional(IdentifierSchema),
+  }),
+  v.object({
+    type: v.literal('ShuffleHandIntoDeckAndDraw'),
+    count: v.pipe(NonNegativeIntegerSchema, v.maxValue(200)),
+    targetPlayerId: v.optional(IdentifierSchema),
+  }),
+  v.object({
+    type: v.literal('ShuffleHandToDeckBottomAndDraw'),
+    count: v.pipe(NonNegativeIntegerSchema, v.maxValue(200)),
+    targetPlayerId: v.optional(IdentifierSchema),
+  }),
+  SetDamageCommandSchema,
+  SetSpecialConditionCommandSchema,
+  SetAbilityUsedCommandSchema,
+  SetStackReminderCommandSchema,
+  SetHpModifierCommandSchema,
+  RotateStackCommandSchema,
+  SetCardOrientationCommandSchema,
+  SetCardAbilityUsedCommandSchema,
+  v.object({
+    type: v.literal('ChangeCardCategory'),
+    cardId: IdentifierSchema,
+    expectedSourceId: IdentifierSchema,
+    category: v.picklist(['Pokémon', 'Trainer', 'Energy'] as const),
+  }),
+  v.object({
+    type: v.literal('SetCardFace'),
+    cardId: IdentifierSchema,
+    face: v.picklist(['up', 'down'] as const),
+  }),
+  SetPublicRevealCommandSchema,
+  v.object({
+    type: v.literal('SetZonePublicReveal'),
+    targetPlayerId: IdentifierSchema,
+    zoneId: IdentifierSchema,
+    expectedCardIds: v.pipe(
+      v.array(IdentifierSchema),
+      v.minLength(1),
+      v.maxLength(200)
+    ),
+    revealed: v.boolean(),
+  }),
+  v.object({
+    type: v.literal('BeginZoneInspection'),
+    targetPlayerId: IdentifierSchema,
+    zoneId: IdentifierSchema,
+    expectedCardIds: v.pipe(
+      v.array(IdentifierSchema),
+      v.minLength(1),
+      v.maxLength(200)
+    ),
+  }),
+  v.object({
+    type: v.literal('BeginCardInspection'),
+    cardId: IdentifierSchema,
+    expectedSourceId: IdentifierSchema,
+  }),
+  v.object({
+    type: v.literal('EndPrivateInspection'),
+    inspectionId: IdentifierSchema,
+  }),
+  v.object({
+    type: v.literal('ExtractDeckCardsForInspection'),
+    ownerPlayerId: IdentifierSchema,
+    count: v.pipe(PositiveIntegerSchema, v.maxValue(200)),
+    edge: v.picklist(['top', 'bottom'] as const),
+    visibility: v.picklist(['private', 'public'] as const),
+  }),
+  v.object({
+    type: v.literal('CloseInspection'),
+    expectedWorkAreaId: IdentifierSchema,
+    returnTo: v.picklist(['top', 'bottom'] as const),
+  }),
+  v.strictObject({
+    type: v.literal('SetCoachingConsent'),
+    consent: v.boolean(),
+  }),
+  v.object({
+    type: v.literal('SetOncePerGameMarker'),
+    targetPlayerId: IdentifierSchema,
+    marker: v.picklist(['gx', 'vstar'] as const),
+    used: v.boolean(),
+  }),
+  v.strictObject({
+    type: v.literal('ApplySoloUndo'),
+    targetPlayerId: IdentifierSchema,
+  }),
+  v.object({
+    type: v.literal('FlipCoin'),
+    targetPlayerId: v.optional(IdentifierSchema),
+    // Several coins at once: so many, or until one lands tails.
+    series: v.optional(
+      v.variant('kind', [
+        v.strictObject({
+          kind: v.literal('count'),
+          count: v.pipe(
+            v.number(),
+            v.integer(),
+            v.minValue(2),
+            v.maxValue(MAX_COIN_FLIP_COUNT)
+          ),
+        }),
+        v.strictObject({ kind: v.literal('untilTails') }),
+      ])
+    ),
+  }),
+  ApplyCardStepsCommandSchema,
+]);
+
+const HelloSchema = v.object({
+  type: v.literal('Hello'),
+  protocolVersion: v.literal(PROTOCOL_VERSION),
+  buildId: boundedString(128),
+  roomCode: boundedString(MAX_ROOM_CODE_LENGTH),
+  displayName: boundedString(64),
+  requestedRole: v.picklist(['player', 'spectator'] as const),
+  admissionTicket: v.optional(boundedString(512)),
+  /** The presentation events it reads (`PRESENTATION_LEVEL`); none: 0. */
+  presentationLevel: v.optional(
+    v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(1_000))
+  ),
+  /**
+   * A ticket-bound resume bearer is sent alongside a new admission ticket.
+   * Retrying that exact pair is safe whether ticket redemption did not run or
+   * committed before its Welcome was lost.
+   */
+  resumeToken: v.optional(CapabilitySchema),
+});
+
+const CommandSchema = v.object({
+  type: v.literal('Command'),
+  protocolVersion: v.literal(PROTOCOL_VERSION),
+  sessionId: IdentifierSchema,
+  clientSequence: PositiveIntegerSchema,
+  commandId: IdentifierSchema,
+  lastSeenRevision: RevisionSchema,
+  command: WireGameCommandSchema,
+});
+
+/**
+ * `targetPlayerId` on these three names the seat the sender is acting for,
+ * which on a flipped board is the seat at the bottom (v1's
+ * `systemState.initiator`). It is a request, never an identity: the room
+ * authenticates it against the sender's own seat and the room's flip rules,
+ * and falls back to the sender's seat when it is not theirs to act for.
+ */
+const SendChatSchema = v.object({
+  type: v.literal('SendChat'),
+  protocolVersion: v.literal(PROTOCOL_VERSION),
+  message: boundedString(MAX_CHAT_CODE_UNITS),
+  targetPlayerId: v.optional(IdentifierSchema),
+});
+
+const DeclareMulliganSchema = v.object({
+  type: v.literal('DeclareMulligan'),
+  protocolVersion: v.literal(PROTOCOL_VERSION),
+  targetPlayerId: v.optional(IdentifierSchema),
+});
+
+const DeclareDeckViewSchema = v.object({
+  type: v.literal('DeclareDeckView'),
+  protocolVersion: v.literal(PROTOCOL_VERSION),
+  targetPlayerId: v.optional(IdentifierSchema),
+});
+
+const PingSchema = v.object({
+  type: v.literal('Ping'),
+  protocolVersion: v.literal(PROTOCOL_VERSION),
+  id: NonNegativeIntegerSchema,
+});
+
+const LeaveSchema = v.object({
+  type: v.literal('Leave'),
+  protocolVersion: v.literal(PROTOCOL_VERSION),
+});
+
+const RequestReplaySchema = v.strictObject({
+  type: v.literal('RequestReplay'),
+  protocolVersion: v.literal(PROTOCOL_VERSION),
+});
+
+export const ClientMessageSchema = v.variant('type', [
+  HelloSchema,
+  CommandSchema,
+  SendChatSchema,
+  DeclareMulliganSchema,
+  DeclareDeckViewSchema,
+  PingSchema,
+  RequestReplaySchema,
+  LeaveSchema,
+]);
+
+const KnownViewCardSchema = v.object({
+  kind: v.literal('known'),
+  id: IdentifierSchema,
+  definitionId: IdentifierSchema,
+  ownerId: IdentifierSchema,
+  category: CardCategorySchema,
+  face: v.picklist(['up', 'down'] as const),
+  orientationQuarterTurns: QuarterTurnsSchema,
+  abilityUsed: v.boolean(),
+  publiclyRevealed: v.boolean(),
+  // Display-only decklist position, shared by every copy of a name, so the
+  // Sort checkbox can paint v1's declared order.
+  decklistRank: v.optional(NonNegativeIntegerSchema),
+});
+
+const ConcealedViewCardSchema = v.object({
+  kind: v.literal('concealed'),
+  id: IdentifierSchema,
+  ownerId: IdentifierSchema,
+  cardBackUrl: UrlSchema,
+  publiclyRevealed: v.literal(false),
+  // A face-down card on the table, turned: everyone sees how it lies.
+  orientationQuarterTurns: v.optional(QuarterTurnsSchema),
+});
+
+export const ViewCardSchema = v.variant('kind', [
+  KnownViewCardSchema,
+  ConcealedViewCardSchema,
+]);
+
+const ViewDefinitionSchema = v.object({
+  id: IdentifierSchema,
+  name: boundedString(256),
+  category: CardCategorySchema,
+  imageUrl: UrlSchema,
+  imageUrlSmall: v.optional(UrlSchema),
+  presentation: v.optional(CardPresentationSchema),
+  playsAs: v.optional(v.picklist(['Pokémon', 'Energy'] as const)),
+  print: v.optional(CardPrintSchema),
+  text: v.optional(CardTextSchema),
+});
+
+const PlayerViewSchema = v.object({
+  id: IdentifierSchema,
+  displayName: boundedString(64),
+  cardBackUrl: UrlSchema,
+  coin: v.optional(CoinSchema),
+  playmat: v.optional(boundedString(MAX_IMAGE_URL_CODE_UNITS)),
+  coachingConsent: v.boolean(),
+  oncePerGame: v.object({ gxUsed: v.boolean(), vstarUsed: v.boolean() }),
+});
+
+const ZoneViewSchema = v.object({
+  id: IdentifierSchema,
+  kind: v.picklist([
+    'deck',
+    'hand',
+    'prizes',
+    'discard',
+    'lostZone',
+    'board',
+    'stadium',
+  ] as const),
+  ownerId: v.nullable(IdentifierSchema),
+  cards: v.pipe(v.array(ViewCardSchema), v.maxLength(200)),
+});
+
+const BoardViewSchema = v.object({
+  activeStackId: v.nullable(IdentifierSchema),
+  benchStackIds: v.pipe(v.array(IdentifierSchema), v.maxLength(200)),
+});
+
+const StackViewSchema = v.object({
+  id: IdentifierSchema,
+  boardPlayerId: IdentifierSchema,
+  slot: v.picklist(['active', 'bench'] as const),
+  evolutionCards: v.pipe(v.array(ViewCardSchema), v.maxLength(200)),
+  attachmentCards: v.pipe(v.array(ViewCardSchema), v.maxLength(200)),
+  rotationQuarterTurns: QuarterTurnsSchema,
+  damage: v.nullable(v.pipe(NonNegativeIntegerSchema, v.maxValue(9_990))),
+  specialCondition: v.nullable(boundedString(16, 0)),
+  abilityUsed: v.boolean(),
+  // Absent from a view made before reminders (a stored replay).
+  reminders: v.optional(v.pipe(v.array(StackReminderSchema), v.maxLength(5))),
+  // The Abilities marked used (game-core ABILITIES_USED_LIMIT); absent when
+  // none, and from a view made before them.
+  abilitiesUsed: v.optional(v.pipe(v.array(MoveNameSchema), v.maxLength(8))),
+  // An effect's HP; absent when none.
+  hpModifier: v.optional(HpModifierSchema),
+});
+
+const WorkAreaViewSchema = v.object({
+  inspection: v.nullable(
+    v.object({
+      id: IdentifierSchema,
+      cards: v.pipe(v.array(ViewCardSchema), v.maxLength(200)),
+      sourceZoneId: IdentifierSchema,
+    })
+  ),
+  attachmentResolution: v.nullable(
+    v.object({
+      id: IdentifierSchema,
+      sourceStackId: IdentifierSchema,
+      cards: v.pipe(v.array(ViewCardSchema), v.maxLength(200)),
+      evolutionCards: v.pipe(v.array(ViewCardSchema), v.maxLength(200)),
+      attachmentCards: v.pipe(v.array(ViewCardSchema), v.maxLength(200)),
+      suggestedSlot: v.picklist(['active', 'bench'] as const),
+    })
+  ),
+});
+
+const PrivateInspectionViewSchema = v.object({
+  id: IdentifierSchema,
+  sourcePlayerId: IdentifierSchema,
+  sourceId: IdentifierSchema,
+  cardIds: v.pipe(v.array(IdentifierSchema), v.minLength(1), v.maxLength(200)),
+});
+
+export const ViewerRoleSchema = v.variant('kind', [
+  v.object({ kind: v.literal('player'), playerId: IdentifierSchema }),
+  v.object({ kind: v.literal('spectator') }),
+]);
+
+export const MatchViewStateSchema = v.object({
+  matchId: IdentifierSchema,
+  revision: RevisionSchema,
+  lifecycle: v.picklist(['lobby', 'playing', 'finished'] as const),
+  viewer: ViewerRoleSchema,
+  playerOrder: v.pipe(v.array(IdentifierSchema), v.length(2)),
+  players: v.record(IdentifierSchema, PlayerViewSchema),
+  definitions: v.record(IdentifierSchema, ViewDefinitionSchema),
+  zones: v.record(IdentifierSchema, ZoneViewSchema),
+  boards: v.record(IdentifierSchema, BoardViewSchema),
+  stacks: v.record(IdentifierSchema, StackViewSchema),
+  workAreas: v.record(IdentifierSchema, WorkAreaViewSchema),
+  privateInspections: v.pipe(
+    v.array(PrivateInspectionViewSchema),
+    v.maxLength(200)
+  ),
+  turn: v.object({
+    number: NonNegativeIntegerSchema,
+    currentPlayerId: v.nullable(IdentifierSchema),
+  }),
+});
+
+/**
+ * Someone else in the room when a session is welcomed: a player by their
+ * seat, someone watching by name, and whether they are connected now.
+ */
+const RoomOccupantSchema = v.object({
+  /** Who they are to the room, the same on their Presence (opaque). */
+  occupantId: v.optional(IdentifierSchema),
+  playerId: v.optional(IdentifierSchema),
+  displayName: boundedString(64),
+  connected: v.boolean(),
+});
+
+const WelcomeSchema = v.object({
+  type: v.literal('Welcome'),
+  protocolVersion: v.literal(PROTOCOL_VERSION),
+  buildId: boundedString(128),
+  role: v.picklist(['player', 'spectator'] as const),
+  playerId: v.optional(IdentifierSchema),
+  sessionId: IdentifierSchema,
+  resumeToken: CapabilitySchema,
+  nextClientSequence: PositiveIntegerSchema,
+  snapshot: MatchViewStateSchema,
+  /**
+   * The kind of room: a page sitting back down at its Solo table learns
+   * that it was opened to an opponent meanwhile (ADR-044). Absent from
+   * rooms of builds before it.
+   */
+  roomMode: v.optional(RoomModeSchema),
+  /**
+   * Who else is in the room as this session is welcomed: Presence tells of
+   * arrivals after it, never before (ADR-047). Absent from rooms of builds
+   * before it; a page of such a build ignores it.
+   */
+  occupants: v.optional(v.pipe(v.array(RoomOccupantSchema), v.maxLength(64))),
+});
+
+const PresentationCardSourceSchema = v.picklist([
+  'deck',
+  'hand',
+  'prizes',
+  'discard',
+  'lostZone',
+  'board',
+  'stadium',
+  'active',
+  'bench',
+  'inspection',
+  'attachmentResolution',
+] as const);
+
+const PresentationScopeSchema = v.picklist(['card', 'zone'] as const);
+
+const MulliganDeclaredPresentationEventSchema = v.object({
+  type: v.literal('MulliganDeclared'),
+  revision: RevisionSchema,
+  playerId: IdentifierSchema,
+});
+
+const DeckViewDeclaredPresentationEventSchema = v.object({
+  type: v.literal('DeckViewDeclared'),
+  revision: RevisionSchema,
+  playerId: IdentifierSchema,
+});
+
+const OncePerGameMarkerSetPresentationEventSchema = v.object({
+  type: v.literal('OncePerGameMarkerSet'),
+  revision: RevisionSchema,
+  playerId: IdentifierSchema,
+  marker: v.picklist(['gx', 'vstar'] as const),
+  used: v.boolean(),
+});
+
+/**
+ * Battle-log narration for card movement, in v1's grammar. Names are present
+ * only when the card is publicly known before or after the move; the client
+ * prints "card" otherwise, exactly as v1 does for hidden-zone moves.
+ */
+const CardMovedPresentationEventSchema = v.object({
+  type: v.literal('CardMoved'),
+  revision: RevisionSchema,
+  playerId: IdentifierSchema,
+  verb: v.picklist([
+    'moved',
+    'attached',
+    'evolved',
+    'shuffledIntoDeck',
+    'movedToDeckTop',
+    'movedToDeckBottom',
+    'switchedWithDeckTop',
+    // An Active Pokémon and a Benched one changed places: `cardName` left
+    // the Active Spot, `targetCardName` came up from the Bench.
+    'switched',
+  ] as const),
+  source: PresentationCardSourceSchema,
+  destination: v.optional(PresentationCardSourceSchema),
+  /** Whose board it went to, for a Pokémon that changed boards. */
+  destinationPlayerId: v.optional(IdentifierSchema),
+  cardName: v.optional(boundedString(256)),
+  targetCardName: v.optional(boundedString(256)),
+  /**
+   * Played as another kind than its own: a Trainer put into play as a
+   * Pokémon, or a card attached as an Energy.
+   */
+  asCategory: v.optional(v.picklist(['Pokémon', 'Energy'] as const)),
+});
+
+const CardsDrawnPresentationEventSchema = v.object({
+  type: v.literal('CardsDrawn'),
+  revision: RevisionSchema,
+  playerId: IdentifierSchema,
+  cardCount: PositiveIntegerSchema,
+});
+
+const ZoneShuffledPresentationEventSchema = v.object({
+  type: v.literal('ZoneShuffled'),
+  revision: RevisionSchema,
+  playerId: IdentifierSchema,
+  source: PresentationCardSourceSchema,
+});
+
+const DeckCardsLookedPresentationEventSchema = v.object({
+  type: v.literal('DeckCardsLooked'),
+  revision: RevisionSchema,
+  playerId: IdentifierSchema,
+  cardCount: PositiveIntegerSchema,
+  edge: v.picklist(['top', 'bottom'] as const),
+});
+
+/** Several cards moved at once: "moved 3 card(s) from board to discard". */
+const CardsResolvedPresentationEventSchema = v.object({
+  type: v.literal('CardsResolved'),
+  revision: RevisionSchema,
+  playerId: IdentifierSchema,
+  verb: v.picklist(['moved', 'shuffled', 'discarded', 'left'] as const),
+  cardCount: PositiveIntegerSchema,
+  source: PresentationCardSourceSchema,
+  destination: v.picklist([
+    'hand',
+    'discard',
+    'lostZone',
+    'deck',
+    'deckBottom',
+    'play',
+    'prizes',
+    'board',
+  ] as const),
+  /**
+   * A group's cards by name, in the order they moved: "…: Fire Energy,
+   * Switch". Null for a card not publicly known (a face-down prize), so the
+   * line can say how many went unnamed. Absent on lines that fold no group.
+   */
+  cardNames: v.optional(
+    v.pipe(
+      v.array(v.nullable(boundedString(256))),
+      v.minLength(1),
+      v.maxLength(60)
+    )
+  ),
+});
+
+const HandReplacedPresentationEventSchema = v.object({
+  type: v.literal('HandReplaced'),
+  revision: RevisionSchema,
+  playerId: IdentifierSchema,
+  mode: v.picklist([
+    'discard',
+    'shuffleIntoDeck',
+    'shuffleToDeckBottom',
+  ] as const),
+  drawCount: NonNegativeIntegerSchema,
+});
+
+const CardCategoryChangedPresentationEventSchema = v.object({
+  type: v.literal('CardCategoryChanged'),
+  revision: RevisionSchema,
+  playerId: IdentifierSchema,
+  category: v.picklist(['Pokémon', 'Trainer', 'Energy', 'Unknown'] as const),
+  cardName: v.optional(boundedString(256)),
+});
+
+const AbilityUsedPresentationEventSchema = v.object({
+  type: v.literal('AbilityUsed'),
+  revision: RevisionSchema,
+  playerId: IdentifierSchema,
+  source: PresentationCardSourceSchema,
+  cardName: v.optional(boundedString(256)),
+  /** The Ability named, when one was picked from the card's text. */
+  abilityName: v.optional(MoveNameSchema),
+});
+
+/** A player changed what an effect adds to a Pokémon's HP. */
+const HpModifierSetPresentationEventSchema = v.object({
+  type: v.literal('HpModifierSet'),
+  revision: RevisionSchema,
+  playerId: IdentifierSchema,
+  source: v.picklist(['active', 'bench'] as const),
+  cardName: v.optional(boundedString(256)),
+  modifier: HpModifierSchema,
+});
+
+/**
+ * A player set a Pokémon's damage: what it has in all now (0: none), so
+ * a run of changes reads as its last.
+ */
+const DamageSetPresentationEventSchema = v.object({
+  type: v.literal('DamageSet'),
+  revision: RevisionSchema,
+  playerId: IdentifierSchema,
+  /**
+   * The Pokémon (its stack, as every view names it): a run of changes to
+   * it reads as its last, another of the same name's apart.
+   */
+  stackId: v.optional(IdentifierSchema),
+  source: v.picklist(['active', 'bench'] as const),
+  cardName: v.optional(boundedString(256)),
+  damage: v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(9990)),
+});
+
+const SpecialConditionKindSchema = v.picklist([
+  'poisoned',
+  'burned',
+  'asleep',
+  'paralyzed',
+  'confused',
+] as const);
+
+/**
+ * A player changed the Active Pokémon's Special Conditions (ADR-043 §14), or
+ * put a marker they typed on it, or took them all off (`condition` absent).
+ * `condition` is one marker as a client before several were kept reads it:
+ * the note typed, or the condition just put on (else one still on);
+ * `conditions` are all of them as they now stand, in checkup order, and
+ * `off` those this change took off while others stay (level 2).
+ */
+const ConditionSetPresentationEventSchema = v.object({
+  type: v.literal('ConditionSet'),
+  revision: RevisionSchema,
+  playerId: IdentifierSchema,
+  /** The Pokémon, as DamageSet's. */
+  stackId: v.optional(IdentifierSchema),
+  source: v.picklist(['active', 'bench'] as const),
+  cardName: v.optional(boundedString(256)),
+  condition: v.optional(boundedString(16)),
+  conditions: v.optional(
+    v.pipe(v.array(SpecialConditionKindSchema), v.minLength(1), v.maxLength(3))
+  ),
+  off: v.optional(
+    v.pipe(v.array(SpecialConditionKindSchema), v.minLength(1), v.maxLength(3))
+  ),
+});
+
+/** A player put a reminder on a Pokémon in play, or took it off. */
+const ReminderSetPresentationEventSchema = v.object({
+  type: v.literal('ReminderSet'),
+  revision: RevisionSchema,
+  playerId: IdentifierSchema,
+  source: v.picklist(['active', 'bench'] as const),
+  cardName: v.optional(boundedString(256)),
+  reminder: StackReminderSchema,
+  on: v.boolean(),
+});
+
+export const PresentationEventSchema = v.variant('type', [
+  DamageSetPresentationEventSchema,
+  ConditionSetPresentationEventSchema,
+  ReminderSetPresentationEventSchema,
+  HpModifierSetPresentationEventSchema,
+  CardMovedPresentationEventSchema,
+  CardsDrawnPresentationEventSchema,
+  ZoneShuffledPresentationEventSchema,
+  DeckCardsLookedPresentationEventSchema,
+  CardsResolvedPresentationEventSchema,
+  HandReplacedPresentationEventSchema,
+  CardCategoryChangedPresentationEventSchema,
+  AbilityUsedPresentationEventSchema,
+  v.object({
+    type: v.literal('CoinFlipped'),
+    revision: RevisionSchema,
+    playerId: IdentifierSchema,
+    result: v.picklist(['heads', 'tails'] as const),
+    // Several coins: each, in order (the last is `result`).
+    results: v.optional(
+      v.pipe(
+        v.array(v.picklist(['heads', 'tails'] as const)),
+        // Until tails may land tails at once: one coin.
+        v.minLength(1),
+        v.maxLength(MAX_UNTIL_TAILS_FLIPS)
+      )
+    ),
+    untilTails: v.optional(v.literal(true)),
+  }),
+  v.object({
+    type: v.literal('PlayerReset'),
+    revision: RevisionSchema,
+    playerId: IdentifierSchema,
+  }),
+  v.object({
+    type: v.literal('DeckLoaded'),
+    revision: RevisionSchema,
+    playerId: IdentifierSchema,
+    cardCount: NonNegativeIntegerSchema,
+  }),
+  v.object({
+    type: v.literal('PlayerSetup'),
+    revision: RevisionSchema,
+    playerId: IdentifierSchema,
+    handCount: NonNegativeIntegerSchema,
+    prizeCount: NonNegativeIntegerSchema,
+  }),
+  v.object({
+    type: v.literal('RandomCardPlayedFaceDown'),
+    revision: RevisionSchema,
+    actorPlayerId: IdentifierSchema,
+    targetPlayerId: IdentifierSchema,
+  }),
+  v.object({
+    type: v.literal('TurnStarted'),
+    revision: RevisionSchema,
+    playerId: IdentifierSchema,
+    turnNumber: NonNegativeIntegerSchema,
+  }),
+  v.object({
+    type: v.literal('TurnStartFailedNoDeck'),
+    revision: RevisionSchema,
+    playerId: IdentifierSchema,
+    turnNumber: NonNegativeIntegerSchema,
+  }),
+  v.object({
+    type: v.literal('AttackDeclared'),
+    revision: RevisionSchema,
+    playerId: IdentifierSchema,
+    turnNumber: NonNegativeIntegerSchema,
+    /** The attack named, when one was picked from a Pokémon's text. */
+    attackName: v.optional(MoveNameSchema),
+    /** The Pokémon it is from, when everyone can see it. */
+    cardName: v.optional(boundedString(256)),
+  }),
+  v.object({
+    type: v.literal('PassDeclared'),
+    revision: RevisionSchema,
+    playerId: IdentifierSchema,
+    turnNumber: NonNegativeIntegerSchema,
+  }),
+  v.object({
+    type: v.literal('PublicCardsRevealed'),
+    revision: RevisionSchema,
+    actorPlayerId: IdentifierSchema,
+    playerId: IdentifierSchema,
+    scope: PresentationScopeSchema,
+    source: PresentationCardSourceSchema,
+    cardCount: PositiveIntegerSchema,
+    cardName: v.optional(boundedString(256)),
+    /**
+     * A group's cards revealed one by one, by name in order (ADR-042 §6):
+     * "revealed 2 cards in Red's hand: …". Absent on a single card's line.
+     */
+    cardNames: v.optional(
+      v.pipe(
+        v.array(v.nullable(boundedString(256))),
+        v.minLength(2),
+        v.maxLength(60)
+      )
+    ),
+  }),
+  v.object({
+    type: v.literal('PublicCardsHidden'),
+    revision: RevisionSchema,
+    actorPlayerId: IdentifierSchema,
+    playerId: IdentifierSchema,
+    scope: PresentationScopeSchema,
+    source: PresentationCardSourceSchema,
+    cardCount: PositiveIntegerSchema,
+  }),
+  v.object({
+    type: v.literal('PrivateInspectionStarted'),
+    revision: RevisionSchema,
+    sourcePlayerId: IdentifierSchema,
+    viewerPlayerId: IdentifierSchema,
+    scope: PresentationScopeSchema,
+    source: PresentationCardSourceSchema,
+    cardCount: PositiveIntegerSchema,
+  }),
+  v.object({
+    type: v.literal('PrivateInspectionEnded'),
+    revision: RevisionSchema,
+    sourcePlayerId: IdentifierSchema,
+    viewerPlayerId: IdentifierSchema,
+    scope: PresentationScopeSchema,
+    source: PresentationCardSourceSchema,
+    cardCount: PositiveIntegerSchema,
+  }),
+  v.object({
+    type: v.literal('UndoApplied'),
+    revision: RevisionSchema,
+    actorPlayerId: IdentifierSchema,
+    targetPlayerId: IdentifierSchema,
+    revertedRevision: RevisionSchema,
+  }),
+  OncePerGameMarkerSetPresentationEventSchema,
+  MulliganDeclaredPresentationEventSchema,
+  DeckViewDeclaredPresentationEventSchema,
+]);
+
+const StatePublicationSchema = v.object({
+  type: v.literal('StatePublication'),
+  protocolVersion: v.literal(PROTOCOL_VERSION),
+  coveringCommandId: v.optional(IdentifierSchema),
+  executedClientSequence: NonNegativeIntegerSchema,
+  snapshot: MatchViewStateSchema,
+  presentationEvents: v.optional(
+    v.pipe(
+      v.array(PresentationEventSchema),
+      v.maxLength(MAX_PRESENTATION_EVENTS)
+    )
+  ),
+});
+
+/**
+ * Authority metadata can change without executing a game command. This
+ * message is intentionally distinct from StatePublication so an
+ * equal-revision replacement cannot be mistaken for a command publication.
+ */
+const ProjectionRefreshSchema = v.object({
+  type: v.literal('ProjectionRefresh'),
+  protocolVersion: v.literal(PROTOCOL_VERSION),
+  /**
+   * `room_opened`: a Solo room became a multiplayer one in place (ADR-044),
+   * so what this viewer may see changed at the same revision.
+   */
+  cause: v.picklist(['authority_reconciled', 'room_opened'] as const),
+  snapshot: MatchViewStateSchema,
+});
+
+const CommandResultSchema = v.object({
+  type: v.literal('CommandResult'),
+  protocolVersion: v.literal(PROTOCOL_VERSION),
+  commandId: IdentifierSchema,
+  clientSequence: PositiveIntegerSchema,
+  accepted: v.boolean(),
+  revision: RevisionSchema,
+  code: v.optional(
+    v.picklist([
+      'invalid_message',
+      'invalid_sequence',
+      'unauthorized',
+      'stale_reference',
+      'precondition_failed',
+      'rate_limited',
+      'room_not_ready',
+      'room_full',
+      'session_superseded',
+      'internal_retryable',
+    ] as const)
+  ),
+});
+
+const ChatMessageSchema = v.object({
+  type: v.literal('ChatMessage'),
+  protocolVersion: v.literal(PROTOCOL_VERSION),
+  messageId: IdentifierSchema,
+  playerId: v.optional(IdentifierSchema),
+  displayName: boundedString(64),
+  message: boundedString(MAX_CHAT_CODE_UNITS),
+  createdAtMs: NonNegativeIntegerSchema,
+});
+
+/** Ephemeral room delivery. It is intentionally absent from replay history. */
+const MulliganAnnouncementSchema = v.object({
+  type: v.literal('MulliganAnnouncement'),
+  protocolVersion: v.literal(PROTOCOL_VERSION),
+  event: MulliganDeclaredPresentationEventSchema,
+});
+
+/** Ephemeral room delivery. It is intentionally absent from replay history. */
+const DeckViewAnnouncementSchema = v.object({
+  type: v.literal('DeckViewAnnouncement'),
+  protocolVersion: v.literal(PROTOCOL_VERSION),
+  event: DeckViewDeclaredPresentationEventSchema,
+});
+
+const PresenceSchema = v.object({
+  type: v.literal('Presence'),
+  protocolVersion: v.literal(PROTOCOL_VERSION),
+  /**
+   * Whose arrival or departure, as Welcome's occupants name them (ADR-047):
+   * opaque, and telling apart two watching under one name. Absent from
+   * rooms of builds before it; a page of such a build ignores it.
+   */
+  occupantId: v.optional(IdentifierSchema),
+  playerId: v.optional(IdentifierSchema),
+  displayName: boundedString(64),
+  status: v.picklist([
+    'joined',
+    'disconnected',
+    'reconnected',
+    'left',
+  ] as const),
+});
+
+const PongSchema = v.object({
+  type: v.literal('Pong'),
+  protocolVersion: v.literal(PROTOCOL_VERSION),
+  id: NonNegativeIntegerSchema,
+});
+
+const ServerNoticeSchema = v.object({
+  type: v.literal('ServerNotice'),
+  protocolVersion: v.literal(PROTOCOL_VERSION),
+  code: boundedString(64),
+  message: boundedString(512),
+  retryable: v.boolean(),
+});
+
+const SessionSupersededSchema = v.object({
+  type: v.literal('SessionSuperseded'),
+  protocolVersion: v.literal(PROTOCOL_VERSION),
+});
+
+const ReplayStartedSchema = v.strictObject({
+  type: v.literal('ReplayStarted'),
+  protocolVersion: v.literal(PROTOCOL_VERSION),
+  replayId: IdentifierSchema,
+  viewer: ViewerRoleSchema,
+  startRevision: RevisionSchema,
+  endRevision: RevisionSchema,
+  truncated: v.boolean(),
+  frameCount: v.pipe(PositiveIntegerSchema, v.maxValue(MAX_REPLAY_FRAMES)),
+  localDisclosureDefinitions: v.optional(
+    v.pipe(v.array(ViewDefinitionSchema), v.maxLength(MAX_DECK_CARDS * 2))
+  ),
+});
+
+const ReplayLocalDisclosureCardSchema = v.strictObject({
+  kind: v.literal('known'),
+  id: IdentifierSchema,
+  definitionId: IdentifierSchema,
+  ownerId: IdentifierSchema,
+  category: CardCategorySchema,
+  face: v.literal('up'),
+  orientationQuarterTurns: QuarterTurnsSchema,
+  abilityUsed: v.boolean(),
+  publiclyRevealed: v.literal(false),
+});
+
+const ReplayLocalDisclosureSchema = v.strictObject({
+  zoneIds: v.pipe(v.array(IdentifierSchema), v.maxLength(3)),
+  cards: v.pipe(
+    v.array(ReplayLocalDisclosureCardSchema),
+    v.maxLength(MAX_DECK_CARDS * 2)
+  ),
+});
+
+const ReplayFrameSchema = v.strictObject({
+  type: v.literal('ReplayFrame'),
+  protocolVersion: v.literal(PROTOCOL_VERSION),
+  replayId: IdentifierSchema,
+  index: v.pipe(NonNegativeIntegerSchema, v.maxValue(MAX_REPLAY_FRAMES - 1)),
+  snapshot: MatchViewStateSchema,
+  localDisclosure: v.optional(ReplayLocalDisclosureSchema),
+  presentationEvents: v.optional(
+    v.pipe(
+      v.array(PresentationEventSchema),
+      v.maxLength(MAX_PRESENTATION_EVENTS)
+    )
+  ),
+});
+
+const ReplayCompletedSchema = v.strictObject({
+  type: v.literal('ReplayCompleted'),
+  protocolVersion: v.literal(PROTOCOL_VERSION),
+  replayId: IdentifierSchema,
+  frameCount: v.pipe(PositiveIntegerSchema, v.maxValue(MAX_REPLAY_FRAMES)),
+});
+
+export const ServerMessageSchema = v.variant('type', [
+  WelcomeSchema,
+  StatePublicationSchema,
+  ProjectionRefreshSchema,
+  CommandResultSchema,
+  ChatMessageSchema,
+  MulliganAnnouncementSchema,
+  DeckViewAnnouncementSchema,
+  PresenceSchema,
+  PongSchema,
+  ServerNoticeSchema,
+  SessionSupersededSchema,
+  ReplayStartedSchema,
+  ReplayFrameSchema,
+  ReplayCompletedSchema,
+]);
+
+export type WireGameCommand = v.InferOutput<typeof WireGameCommandSchema>;
+/** One step of a group's move (ApplyCardSteps). */
+export type WireCardStep = v.InferOutput<typeof WireCardStepSchema>;
+export type RoomCreationRequest = v.InferOutput<
+  typeof RoomCreationRequestSchema
+>;
+export type RoomCreationResponse = v.InferOutput<
+  typeof RoomCreationResponseSchema
+>;
+export type RoomInvitationIssueRequest = v.InferOutput<
+  typeof RoomInvitationIssueRequestSchema
+>;
+export type RoomInvitationIssueResponse = v.InferOutput<
+  typeof RoomInvitationIssueResponseSchema
+>;
+export type RoomInvitationHandoff = v.InferOutput<
+  typeof RoomInvitationHandoffSchema
+>;
+export type RoomOpenRequest = v.InferOutput<typeof RoomOpenRequestSchema>;
+export type RoomOpenResponse = v.InferOutput<typeof RoomOpenResponseSchema>;
+export type RoomCodeJoinRequest = v.InferOutput<
+  typeof RoomCodeJoinRequestSchema
+>;
+export type RoomCodeJoinResponse = v.InferOutput<
+  typeof RoomCodeJoinResponseSchema
+>;
+export type RoomAliasRequest = v.InferOutput<typeof RoomAliasRequestSchema>;
+export type RoomAliasResponse = v.InferOutput<typeof RoomAliasResponseSchema>;
+export type RoomAdmissionTicketRequest = v.InferOutput<
+  typeof RoomAdmissionTicketRequestSchema
+>;
+export type RoomAdmissionTicketResponse = v.InferOutput<
+  typeof RoomAdmissionTicketResponseSchema
+>;
+export type ContinuationCreationRequest = v.InferOutput<
+  typeof ContinuationCreationRequestSchema
+>;
+export type ContinuationCreationResponse = v.InferOutput<
+  typeof ContinuationCreationResponseSchema
+>;
+export type ContinuationHandoff = v.InferOutput<
+  typeof ContinuationHandoffSchema
+>;
+export type ContinuationRestoreRequest = v.InferOutput<
+  typeof ContinuationRestoreRequestSchema
+>;
+export type ContinuationRevocationRequest = v.InferOutput<
+  typeof ContinuationRevocationRequestSchema
+>;
+export type ContinuationRestoreResponse = v.InferOutput<
+  typeof ContinuationRestoreResponseSchema
+>;
+export type PresentationEvent = v.InferOutput<typeof PresentationEventSchema>;
+
+/**
+ * The events a client at `level` reads (`PRESENTATION_LEVEL`): what its
+ * schema would refuse is left out, so its log only misses those lines.
+ */
+export const presentationEventsForLevel = (
+  events: readonly PresentationEvent[],
+  level: number
+): readonly PresentationEvent[] => {
+  if (level >= 2) return events;
+  if (level < 1) {
+    return events.filter(
+      (event) =>
+        event.type !== 'DamageSet' &&
+        event.type !== 'ConditionSet' &&
+        !(event.type === 'CardMoved' && event.verb === 'switched')
+    );
+  }
+  // Level 1 reads one Special Condition (`condition`), not the list.
+  if (
+    !events.some(
+      (event) =>
+        event.type === 'ConditionSet' &&
+        (event.conditions !== undefined || event.off !== undefined)
+    )
+  ) {
+    return events;
+  }
+  return events.map((event) => {
+    if (event.type !== 'ConditionSet') return event;
+    const { conditions: _conditions, off: _off, ...single } = event;
+    return single;
+  });
+};
+export type ClientMessage = v.InferOutput<typeof ClientMessageSchema>;
+export type ServerMessage = v.InferOutput<typeof ServerMessageSchema>;
+export type SerializedMatchViewState = v.InferOutput<
+  typeof MatchViewStateSchema
+>;

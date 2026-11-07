@@ -1,0 +1,281 @@
+import { readFileSync } from 'node:fs';
+
+import { expect, test, type Page } from '@playwright/test';
+
+import { closeSheet, openDeck, openSettings } from './support/table-shell.js';
+import { ownRoomBudget } from './support/room-budget.js';
+import { routeCardCatalog } from './support/card-catalog-fixture.js';
+
+/**
+ * The page's language (ADR-034): the browser's until one is chosen in
+ * Settings, applied live to what is already on screen, and kept after a
+ * reload. Expected words come from the committed catalogs, so a better
+ * translation never breaks this spec.
+ */
+
+type Catalog = Record<
+  string,
+  { message?: string; context?: string; translation: string }
+>;
+
+const catalog = (locale: string): Catalog =>
+  JSON.parse(
+    readFileSync(
+      new URL(`../../apps/web/src/locales/${locale}.json`, import.meta.url),
+      'utf8'
+    )
+  ) as Catalog;
+
+/** A message's translation, by its English and context. */
+const word = (locale: string, message: string, context?: string): string => {
+  const entry = Object.values(catalog(locale)).find(
+    (candidate) =>
+      candidate.message === message && candidate.context === context
+  );
+  if (!entry?.translation) throw new Error(`${locale} lacks "${message}"`);
+  return entry.translation;
+};
+
+const openTable = async (page: Page): Promise<void> => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  await expect(
+    page.locator('[data-app-route="remote-room"][data-session-phase="ready"]')
+  ).toBeVisible({ timeout: 60_000 });
+};
+
+const settingsTitle = (page: Page) =>
+  page.locator('#settings').getByRole('heading').first();
+
+const deckZoneName = (page: Page) =>
+  page
+    .locator('.ptcgsim-zone[data-zone-kind="deck"][data-zone-side="local"]')
+    .getAttribute('aria-label');
+
+test('the table speaks the language chosen in Settings, at once and after a reload', async ({
+  page,
+}) => {
+  // Two tables open (before and after the reload), each up to a minute.
+  test.setTimeout(150_000);
+  await openTable(page);
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  const englishDeck = await deckZoneName(page);
+
+  await openSettings(page);
+  await expect(settingsTitle(page)).toHaveText('Settings');
+  await page.locator('#settingsLanguageRow').click();
+  await page.locator('#settings label[for="language-de"]').click();
+
+  // What is already on screen changes: the sheet, and the table's names.
+  await expect(page.locator('html')).toHaveAttribute('lang', 'de');
+  await page.locator('#settingsBackButton').click();
+  await expect(settingsTitle(page)).toHaveText(word('de', 'Settings'));
+  await expect.poll(() => deckZoneName(page)).not.toBe(englishDeck);
+  await closeSheet(page);
+
+  // ...and stays after a reload, from the first paint.
+  await openTable(page);
+  await expect(page.locator('html')).toHaveAttribute('lang', 'de');
+  await openSettings(page);
+  await expect(settingsTitle(page)).toHaveText(word('de', 'Settings'));
+
+  // Back to the browser's language (English here).
+  await page.locator('#settingsLanguageRow').click();
+  await page.locator('#settings label[for="language-auto"]').click();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  await page.locator('#settingsBackButton').click();
+  await expect(settingsTitle(page)).toHaveText('Settings');
+  await expect.poll(() => deckZoneName(page)).toBe(englishDeck);
+});
+
+test.describe('a browser set to Japanese', () => {
+  test.use({ locale: 'ja-JP' });
+
+  test('opens the table in Japanese', async ({ page }) => {
+    await openTable(page);
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ja');
+    await openSettings(page);
+    await expect(settingsTitle(page)).toHaveText(word('ja', 'Settings'));
+    await page.locator('#settingsLanguageRow').click();
+    await expect(page.locator('#language-auto')).toBeChecked();
+  });
+});
+
+test.describe('Russian, with Settings beside the table', () => {
+  test.use({ locale: 'ru-RU' });
+
+  test('fits every segmented choice inside its card in the docked column', async ({
+    page,
+    context,
+  }) => {
+    test.setTimeout(90_000);
+    await ownRoomBudget(context);
+    await openTable(page);
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
+    for (const at of ['table', 'motion'] as const) {
+      await openSettings(page, at);
+      await expect(page.locator('aside#settings')).toBeVisible();
+      // Russian's longer words wrap onto another line rather than run past
+      // the card (which clips them) in the narrow column.
+      const outside = await page
+        .locator('#settings .settings-group__card')
+        .evaluateAll((cards) =>
+          cards.flatMap((card) => {
+            const box = card.getBoundingClientRect();
+            return [
+              ...card.querySelectorAll(
+                '.ptcgsim-segmented-control__option label'
+              ),
+            ]
+              .filter((label) => {
+                const rect = label.getBoundingClientRect();
+                return (
+                  rect.right > box.right + 0.5 ||
+                  rect.left < box.left - 0.5 ||
+                  label.scrollWidth > label.clientWidth + 1
+                );
+              })
+              .map((label) => label.textContent ?? '');
+          })
+        );
+      expect(outside, at).toEqual([]);
+      expect(await brokenWords(page), at).toEqual([]);
+    }
+  });
+});
+
+/**
+ * The segmented choices' words split across lines ("Relax-ed"): a choice is
+ * never narrower than its longest word; the choices wrap onto another line
+ * first.
+ */
+const brokenWords = (page: Page): Promise<string[]> =>
+  page
+    .locator('#settings .ptcgsim-segmented-control__option label')
+    .evaluateAll((labels) =>
+      labels.flatMap((label) => {
+        const text = label.firstChild;
+        if (!(text instanceof Text)) return [];
+        const value = text.data;
+        const broken: string[] = [];
+        for (const match of value.matchAll(/\S+/gu)) {
+          const range = document.createRange();
+          range.setStart(text, match.index);
+          range.setEnd(text, match.index + match[0].length);
+          const lines = new Set(
+            [...range.getClientRects()].map((rect) => Math.round(rect.top))
+          );
+          if (lines.size > 1) broken.push(match[0]);
+        }
+        return broken;
+      })
+    );
+
+for (const locale of ['en-US', 'de-DE', 'ru-RU']) {
+  for (const [label, viewport] of [
+    ['the docked column', { width: 1440, height: 900 }],
+    ['a phone', { width: 390, height: 844 }],
+  ] as const) {
+    test.describe(`Settings in ${locale}, in ${label}`, () => {
+      test.use({ locale, viewport });
+
+      test('never breaks a segmented choice inside a word', async ({
+        page,
+        context,
+      }) => {
+        test.setTimeout(90_000);
+        await ownRoomBudget(context);
+        await openTable(page);
+        for (const at of ['table', 'cards', 'motion'] as const) {
+          await openSettings(page, at);
+          await expect(page.locator('#settings')).toBeVisible();
+          expect(await brokenWords(page), at).toEqual([]);
+        }
+      });
+    });
+  }
+}
+
+for (const locale of ['ar', 'ru']) {
+  test.describe(`a narrow phone in ${locale}`, () => {
+    test.use({
+      locale,
+      viewport: { width: 320, height: 740 },
+      isMobile: true,
+      hasTouch: true,
+    });
+
+    test('keeps the deck name readable and every editor control reachable', async ({
+      page,
+      context,
+    }) => {
+      await ownRoomBudget(context);
+      await routeCardCatalog(page);
+      await page.goto('/');
+      await expect(
+        page.locator(
+          '[data-app-route="remote-room"][data-session-phase="ready"]'
+        )
+      ).toBeVisible({ timeout: 30_000 });
+      await expect(page.locator('html')).toHaveAttribute('lang', locale);
+      for (const [group, at] of [
+        ['tableView', 'table'],
+        ['animationSpeed', 'motion'],
+      ] as const) {
+        await openSettings(page, at);
+        const edges = await page
+          .locator(`#settings input[name="${group}"]`)
+          .evaluateAll((inputs) =>
+            inputs.map((input) => {
+              const box = input.getBoundingClientRect();
+              return { left: box.left, right: box.right };
+            })
+          );
+        expect(edges.length).toBeGreaterThan(0);
+        for (const edge of edges) {
+          expect(edge.left, group).toBeGreaterThanOrEqual(0);
+          expect(edge.right, group).toBeLessThanOrEqual(320);
+        }
+      }
+      await closeSheet(page);
+      await openDeck(page);
+      await page.locator('#deckNewButton').click();
+      const name = page.locator('#deckNameInput');
+      await name.fill('Pidgey');
+      await name.press('Enter');
+      await page.evaluate(() => document.fonts.ready);
+      const text = await name.evaluate((input) => {
+        const style = getComputedStyle(input);
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d')!;
+        context.font = style.font;
+        return {
+          needed: context.measureText((input as HTMLInputElement).value).width,
+          available:
+            input.clientWidth -
+            parseFloat(style.paddingLeft) -
+            parseFloat(style.paddingRight),
+        };
+      });
+      expect(text.available).toBeGreaterThanOrEqual(text.needed);
+      await expect(
+        page.locator('.card-search__grid > li').first()
+      ).toBeInViewport({
+        ratio: 0.5,
+      });
+      for (const id of [
+        'deckFormat-standard',
+        'deckFormat-expanded',
+        'deckFormat-unlimited',
+        'deckFormat-pocket',
+        'deckUseOnSeatButton',
+      ]) {
+        await expect(page.locator(`#${id}`)).toBeInViewport({ ratio: 1 });
+      }
+      await page.locator('#deckEditorBackButton').click();
+      await expect(page.locator('.deck-tile__name').first()).toHaveText(
+        'Pidgey'
+      );
+    });
+  });
+}

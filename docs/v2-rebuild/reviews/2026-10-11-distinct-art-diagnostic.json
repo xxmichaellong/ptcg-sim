@@ -1,0 +1,284 @@
+{
+  "schema": "ptcgsim-renderer-performance-observation-v1",
+  "project": "chrome-1366x768-dpr1",
+  "repeatEachIndex": 0,
+  "evidenceMode": "diagnostic-headless",
+  "evidence": {
+    "dom:flat": {
+      "mode": "flat",
+      "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/143.0.7499.4 Safari/537.36",
+      "platform": "Linux",
+      "hardwareConcurrency": 24,
+      "deviceMemoryGiB": 8,
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "screen": {
+        "width": 1366,
+        "height": 768,
+        "colorDepth": 24
+      },
+      "devicePixelRatio": 1,
+      "gpu": {
+        "vendor": "Google Inc. (Google)",
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      },
+      "warmupSampleCount": 10,
+      "measuredSampleCount": 100,
+      "cardCount": 120,
+      "distinctArtworkCount": 120,
+      "localTextureBindings": 0,
+      "globalTextureReferences": 0,
+      "zoneCount": 17,
+      "markerCount": 4,
+      "pendingTextureLoads": 0,
+      "textureLoadFailures": 0,
+      "textureUnloadFailures": 0,
+      "idleCommitDelta": 0,
+      "single": {
+        "submissionP50Ms": 0,
+        "submissionP95Ms": 0.10000038146972656,
+        "wallToCommitP50Ms": 0.6000003814697266,
+        "wallToCommitP95Ms": 4.799999237060547
+      },
+      "full": {
+        "submissionP50Ms": 0,
+        "submissionP95Ms": 0.09999942779541016,
+        "wallToCommitP50Ms": 2.1999998092651367,
+        "wallToCommitP95Ms": 5.200000762939453
+      }
+    },
+    "pixi:flat": {
+      "mode": "flat",
+      "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/143.0.7499.4 Safari/537.36",
+      "platform": "Linux",
+      "hardwareConcurrency": 24,
+      "deviceMemoryGiB": 8,
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "screen": {
+        "width": 1366,
+        "height": 768,
+        "colorDepth": 24
+      },
+      "devicePixelRatio": 1,
+      "gpu": {
+        "vendor": "Google Inc. (Google)",
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      },
+      "warmupSampleCount": 10,
+      "measuredSampleCount": 100,
+      "cardCount": 120,
+      "distinctArtworkCount": 120,
+      "localTextureBindings": 120,
+      "globalTextureReferences": 120,
+      "zoneCount": 17,
+      "markerCount": 4,
+      "pendingTextureLoads": 0,
+      "textureLoadFailures": 0,
+      "textureUnloadFailures": 0,
+      "idleCommitDelta": 0,
+      "single": {
+        "submissionP50Ms": 0.9000005722045898,
+        "submissionP95Ms": 1.5,
+        "wallToCommitP50Ms": 1,
+        "wallToCommitP95Ms": 1.6999998092651367
+      },
+      "full": {
+        "submissionP50Ms": 1,
+        "submissionP95Ms": 1.6999998092651367,
+        "wallToCommitP50Ms": 1.1000003814697266,
+        "wallToCommitP95Ms": 1.8999996185302734
+      }
+    },
+    "dom:depth": {
+      "mode": "depth",
+      "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/143.0.7499.4 Safari/537.36",
+      "platform": "Linux",
+      "hardwareConcurrency": 24,
+      "deviceMemoryGiB": 8,
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "screen": {
+        "width": 1366,
+        "height": 768,
+        "colorDepth": 24
+      },
+      "devicePixelRatio": 1,
+      "gpu": {
+        "vendor": "Google Inc. (Google)",
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      },
+      "warmupSampleCount": 10,
+      "measuredSampleCount": 100,
+      "cardCount": 120,
+      "distinctArtworkCount": 120,
+      "localTextureBindings": 0,
+      "globalTextureReferences": 0,
+      "zoneCount": 17,
+      "markerCount": 4,
+      "pendingTextureLoads": 0,
+      "textureLoadFailures": 0,
+      "textureUnloadFailures": 0,
+      "idleCommitDelta": 0,
+      "single": {
+        "submissionP50Ms": 0,
+        "submissionP95Ms": 0.10000038146972656,
+        "wallToCommitP50Ms": 8.300000190734863,
+        "wallToCommitP95Ms": 10.300000190734863
+      },
+      "full": {
+        "submissionP50Ms": 0,
+        "submissionP95Ms": 0.10000038146972656,
+        "wallToCommitP50Ms": 7.699999809265137,
+        "wallToCommitP95Ms": 13.90000057220459
+      }
+    },
+    "pixi:depth": {
+      "mode": "depth",
+      "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/143.0.7499.4 Safari/537.36",
+      "platform": "Linux",
+      "hardwareConcurrency": 24,
+      "deviceMemoryGiB": 8,
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "screen": {
+        "width": 1366,
+        "height": 768,
+        "colorDepth": 24
+      },
+      "devicePixelRatio": 1,
+      "gpu": {
+        "vendor": "Google Inc. (Google)",
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      },
+      "warmupSampleCount": 10,
+      "measuredSampleCount": 100,
+      "cardCount": 120,
+      "distinctArtworkCount": 120,
+      "localTextureBindings": 120,
+      "globalTextureReferences": 120,
+      "zoneCount": 17,
+      "markerCount": 4,
+      "pendingTextureLoads": 0,
+      "textureLoadFailures": 0,
+      "textureUnloadFailures": 0,
+      "idleCommitDelta": 0,
+      "single": {
+        "submissionP50Ms": 2.5,
+        "submissionP95Ms": 3.1000003814697266,
+        "wallToCommitP50Ms": 2.6000003814697266,
+        "wallToCommitP95Ms": 3.200000762939453
+      },
+      "full": {
+        "submissionP50Ms": 2.5,
+        "submissionP95Ms": 3.200000762939453,
+        "wallToCommitP50Ms": 2.6000003814697266,
+        "wallToCommitP95Ms": 3.40000057220459
+      }
+    },
+    "dom:table": {
+      "mode": "table",
+      "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/143.0.7499.4 Safari/537.36",
+      "platform": "Linux",
+      "hardwareConcurrency": 24,
+      "deviceMemoryGiB": 8,
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "screen": {
+        "width": 1366,
+        "height": 768,
+        "colorDepth": 24
+      },
+      "devicePixelRatio": 1,
+      "gpu": {
+        "vendor": "Google Inc. (Google)",
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      },
+      "warmupSampleCount": 10,
+      "measuredSampleCount": 100,
+      "cardCount": 120,
+      "distinctArtworkCount": 120,
+      "localTextureBindings": 0,
+      "globalTextureReferences": 0,
+      "zoneCount": 17,
+      "markerCount": 4,
+      "pendingTextureLoads": 0,
+      "textureLoadFailures": 0,
+      "textureUnloadFailures": 0,
+      "idleCommitDelta": 0,
+      "single": {
+        "submissionP50Ms": 0,
+        "submissionP95Ms": 0.10000038146972656,
+        "wallToCommitP50Ms": 3.40000057220459,
+        "wallToCommitP95Ms": 7.700000762939453
+      },
+      "full": {
+        "submissionP50Ms": 0,
+        "submissionP95Ms": 0.10000038146972656,
+        "wallToCommitP50Ms": 5.800000190734863,
+        "wallToCommitP95Ms": 11.199999809265137
+      }
+    },
+    "pixi:table": {
+      "mode": "table",
+      "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/143.0.7499.4 Safari/537.36",
+      "platform": "Linux",
+      "hardwareConcurrency": 24,
+      "deviceMemoryGiB": 8,
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "screen": {
+        "width": 1366,
+        "height": 768,
+        "colorDepth": 24
+      },
+      "devicePixelRatio": 1,
+      "gpu": {
+        "vendor": "Google Inc. (Google)",
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      },
+      "warmupSampleCount": 10,
+      "measuredSampleCount": 100,
+      "cardCount": 120,
+      "distinctArtworkCount": 120,
+      "localTextureBindings": 120,
+      "globalTextureReferences": 120,
+      "zoneCount": 17,
+      "markerCount": 4,
+      "pendingTextureLoads": 0,
+      "textureLoadFailures": 0,
+      "textureUnloadFailures": 0,
+      "idleCommitDelta": 0,
+      "single": {
+        "submissionP50Ms": 2.59999942779541,
+        "submissionP95Ms": 3.3999996185302734,
+        "wallToCommitP50Ms": 2.6999998092651367,
+        "wallToCommitP95Ms": 3.5
+      },
+      "full": {
+        "submissionP50Ms": 2.59999942779541,
+        "submissionP95Ms": 3.1999998092651367,
+        "wallToCommitP50Ms": 2.6999998092651367,
+        "wallToCommitP95Ms": 3.3000001907348633
+      }
+    }
+  }
+}

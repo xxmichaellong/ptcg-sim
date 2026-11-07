@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.browser.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@lingui/core/macro": ["./tests/browser/support/lingui-macro.ts"]
+    }
+  }
+}

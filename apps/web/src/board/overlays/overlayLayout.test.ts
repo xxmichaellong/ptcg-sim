@@ -1,0 +1,250 @@
+import { CARD_ASPECT_RATIO } from '@ptcgsim/renderer-contract';
+import { describe, expect, it } from 'vitest';
+
+import {
+  OVERLAY_CARD_GAP,
+  OVERLAY_CARD_MAX_HEIGHT,
+  OVERLAY_CARD_MIN_HEIGHT,
+  OVERLAY_HEADER_HEIGHT,
+  OVERLAY_PANEL_MAX_WIDTH,
+  STACK_CARDS_MAX_HEIGHT,
+  STACK_CARDS_MIN_WIDTH,
+  overlayBoardMargin,
+  overlayLargeCardHeight,
+  stackCardsLayout,
+  stackPreviewLayout,
+  workAreaPanelLayout,
+  zoneBrowserLayout,
+  type OverlayBoardSize,
+  type OverlayPanelLayout,
+} from './overlayLayout.js';
+
+/** The board column of a 1440 x 900 window (75.5% wide, full height). */
+const LAPTOP: OverlayBoardSize = { width: 1087, height: 900 };
+const HD: OverlayBoardSize = { width: 1450, height: 1080 };
+const SMALL: OverlayBoardSize = { width: 1280, height: 720 };
+/** v1's "Looking at cards..." card at 1440 x 900, the size players could not read. */
+const V1_WORK_AREA_CARD_HEIGHT = 111;
+
+const expectOnBoard = (
+  layout: OverlayPanelLayout,
+  board: OverlayBoardSize
+): void => {
+  const margin = overlayBoardMargin(board);
+  expect(layout.left).toBeGreaterThanOrEqual(margin - 1e-9);
+  expect(layout.top).toBeGreaterThanOrEqual(margin - 1e-9);
+  expect(layout.left + layout.width).toBeLessThanOrEqual(
+    board.width - margin + 1e-9
+  );
+  expect(layout.top + layout.height).toBeLessThanOrEqual(
+    board.height - margin + 1e-9
+  );
+};
+
+describe('overlay layout', () => {
+  it('sizes cards from the board: a third of its height, at most 300px', () => {
+    expect(overlayLargeCardHeight(LAPTOP)).toBe(OVERLAY_CARD_MAX_HEIGHT);
+    expect(overlayLargeCardHeight(SMALL)).toBeCloseTo(720 * 0.34);
+    expect(overlayLargeCardHeight({ width: 300, height: 100 })).toBe(
+      OVERLAY_CARD_MIN_HEIGHT
+    );
+    expect(overlayBoardMargin(LAPTOP)).toBe(27);
+    expect(overlayBoardMargin({ width: 200, height: 200 })).toBe(12);
+    expect(overlayBoardMargin({ width: 4000, height: 2000 })).toBe(32);
+  });
+
+  it('opens a small pile at full size, centred and fitted to its cards', () => {
+    for (const board of [LAPTOP, HD, SMALL]) {
+      const layout = zoneBrowserLayout(board, 3);
+      expect(layout.cardHeight).toBe(overlayLargeCardHeight(board));
+      expect(layout.cardHeight).toBeGreaterThan(2 * V1_WORK_AREA_CARD_HEIGHT);
+      expectOnBoard(layout, board);
+      expect(layout.left + layout.width / 2).toBeCloseTo(board.width / 2);
+      expect(layout.top + layout.height / 2).toBeCloseTo(board.height / 2);
+      // One row: the panel is no taller than a row of cards and its chrome.
+      expect(layout.height).toBeLessThan(layout.cardHeight * 2);
+    }
+    const empty = zoneBrowserLayout(LAPTOP, 0);
+    expect(empty.cardHeight).toBe(OVERLAY_CARD_MAX_HEIGHT);
+    expectOnBoard(empty, LAPTOP);
+  });
+
+  it('steps a big pile down to the compact size and uses the board to show it', () => {
+    const deck = zoneBrowserLayout(LAPTOP, 47);
+    expect(deck.cardHeight).toBeLessThan(overlayLargeCardHeight(LAPTOP));
+    expect(deck.cardHeight).toBeCloseTo(Math.min(900 * 0.26, 280));
+    // Still about twice v1's deck browser card (74px tall at this size).
+    expect(deck.cardHeight).toBeGreaterThan(2 * 74);
+    expectOnBoard(deck, LAPTOP);
+    expect(deck.height).toBe(LAPTOP.height - 2 * overlayBoardMargin(LAPTOP));
+    const columns = Math.floor(
+      (deck.width - 2 * 16 - 2 - 12 + 12) /
+        (deck.cardHeight * CARD_ASPECT_RATIO + 12)
+    );
+    expect(columns).toBeGreaterThanOrEqual(5);
+
+    const wide = zoneBrowserLayout({ width: 3000, height: 1200 }, 60);
+    expect(wide.width).toBeLessThanOrEqual(OVERLAY_PANEL_MAX_WIDTH);
+    expect(wide.left + wide.width / 2).toBeCloseTo(1500);
+  });
+
+  it('keeps a pile that fits in two large rows at the large size', () => {
+    const contentWidth = LAPTOP.width - 2 * 27 - 2 * 16 - 2 - 12;
+    const perRow = Math.floor(
+      (contentWidth + 12) / (300 * CARD_ASPECT_RATIO + 12)
+    );
+    expect(zoneBrowserLayout(LAPTOP, perRow * 2).cardHeight).toBe(300);
+    expect(zoneBrowserLayout(LAPTOP, perRow * 2 + 1).cardHeight).toBeCloseTo(
+      900 * 0.26
+    );
+  });
+
+  it('scales the fitted card size linearly with zoom, within what fits', () => {
+    const fitted = zoneBrowserLayout(LAPTOP, 47).cardHeight;
+    expect(zoneBrowserLayout(LAPTOP, 47, 1).cardHeight).toBe(fitted);
+    expect(zoneBrowserLayout(LAPTOP, 47, 0.5).cardHeight).toBeCloseTo(
+      fitted * 0.5
+    );
+    expect(zoneBrowserLayout(LAPTOP, 47, 1.5).cardHeight).toBeCloseTo(
+      fitted * 1.5
+    );
+    // Never larger than one card fits the panel, never below the minimum.
+    const huge = zoneBrowserLayout(LAPTOP, 3, 2);
+    expectOnBoard(huge, LAPTOP);
+    expect(huge.cardHeight).toBeLessThan(LAPTOP.height);
+    expect(zoneBrowserLayout(SMALL, 3, 0.01).cardHeight).toBe(
+      OVERLAY_CARD_MIN_HEIGHT
+    );
+    expect(zoneBrowserLayout(LAPTOP, 47, Number.NaN).cardHeight).toBe(fitted);
+  });
+
+  it('keeps the panel where it is, the same size, at every zoom', () => {
+    for (const board of [LAPTOP, SMALL]) {
+      for (const count of [1, 3, 12, 47]) {
+        const box = zoneBrowserLayout(board, count);
+        for (const zoom of [0.5, 0.8, 1.3, 1.7, 2]) {
+          const zoomed = zoneBrowserLayout(board, count, zoom);
+          expect([
+            zoomed.left,
+            zoomed.top,
+            zoomed.width,
+            zoomed.height,
+          ]).toEqual([box.left, box.top, box.width, box.height]);
+          // The cards grow inside it, never wider than it nor taller than
+          // the board.
+          expect(zoomed.cardHeight).toBeLessThan(board.height);
+          expect(zoomed.cardHeight * CARD_ASPECT_RATIO).toBeLessThan(box.width);
+        }
+      }
+    }
+  });
+
+  it('grows a work area around the scene box it covers, on the board', () => {
+    // Where the v1 geometry puts "Looking at cards..." on the lower half.
+    const zone = { x: 141.5, y: 492.75, width: 792, height: 380 };
+    for (const count of [1, 3, 12]) {
+      const layout = workAreaPanelLayout(zone, LAPTOP, count, true);
+      expect(layout.cardHeight).toBe(300);
+      expect(layout.cardHeight).toBeGreaterThan(2.5 * V1_WORK_AREA_CARD_HEIGHT);
+      expectOnBoard(layout, LAPTOP);
+      // It always covers the box where the scene paints its own copies.
+      expect(layout.left).toBeLessThanOrEqual(zone.x);
+      expect(layout.top).toBeLessThanOrEqual(zone.y);
+      expect(layout.left + layout.width).toBeGreaterThanOrEqual(
+        zone.x + zone.width
+      );
+      expect(layout.top + layout.height).toBeGreaterThanOrEqual(
+        zone.y + zone.height
+      );
+    }
+    // Many cards scroll in a row as wide as the board allows.
+    expect(workAreaPanelLayout(zone, LAPTOP, 12, true).width).toBe(
+      LAPTOP.width - 2 * 27
+    );
+    // A read-only panel has no button row, so its cards keep the room.
+    const small = { width: 1280, height: 600 };
+    const readOnly = workAreaPanelLayout(
+      { x: 200, y: 300, width: 600, height: 250 },
+      small,
+      2,
+      false
+    );
+    const interactive = workAreaPanelLayout(
+      { x: 200, y: 300, width: 600, height: 250 },
+      small,
+      2,
+      true
+    );
+    expect(readOnly.height).toBeLessThan(interactive.height);
+  });
+
+  it('lays a stack out upright over its half, in up to three rows', () => {
+    const frame = { x: 0, y: 450, width: 1087, height: 450 };
+    const pair = stackPreviewLayout(frame, LAPTOP, 2);
+    expect(pair.cardHeight).toBe(300);
+    expectOnBoard(pair, LAPTOP);
+    expect(pair.left + pair.width / 2).toBeCloseTo(1087 / 2);
+
+    const big = stackPreviewLayout(frame, LAPTOP, 9);
+    expectOnBoard(big, LAPTOP);
+    expect(big.cardHeight).toBeGreaterThan(150);
+    expect(big.cardHeight).toBeLessThanOrEqual(300);
+
+    const upper = stackPreviewLayout(
+      { x: 0, y: 0, width: 1087, height: 450 },
+      LAPTOP,
+      2
+    );
+    expect(upper.top).toBeLessThan(pair.top);
+    expectOnBoard(upper, LAPTOP);
+  });
+
+  it("lays an assembled card's pieces out over the board, each group on rows of its own, as large as all of them fit", () => {
+    for (const board of [LAPTOP, HD, SMALL, { width: 1440, height: 900 }]) {
+      // Four V-UNION pieces, then three Energy and a Tool.
+      const layout = stackCardsLayout(board, [4, 4]);
+      expectOnBoard(layout, board);
+      expect(layout.columns).toBe(4);
+      const cardWidth = layout.cardHeight * CARD_ASPECT_RATIO;
+      // Two rows of four, a gap further apart between the groups, under
+      // the title bar: the panel holds exactly that.
+      expect(layout.height).toBeCloseTo(
+        OVERLAY_HEADER_HEIGHT +
+          2 * layout.cardHeight +
+          2 * OVERLAY_CARD_GAP +
+          34,
+        6
+      );
+      expect(layout.width).toBeGreaterThanOrEqual(
+        4 * cardWidth + 3 * OVERLAY_CARD_GAP + 34
+      );
+      // Larger than the stack view draws them, for reading.
+      expect(layout.cardHeight).toBeGreaterThan(
+        stackPreviewLayout(
+          {
+            x: 0,
+            y: board.height / 2,
+            width: board.width,
+            height: board.height / 2,
+          },
+          board,
+          8
+        ).cardHeight - 1e-9
+      );
+      expect(layout.cardHeight).toBeLessThanOrEqual(STACK_CARDS_MAX_HEIGHT);
+      // Centred.
+      expect(layout.left + layout.width / 2).toBeCloseTo(board.width / 2, 6);
+    }
+    // Two pieces and nothing attached still leave the title bar its room.
+    const pair = stackCardsLayout(LAPTOP, [2, 0]);
+    expect(pair.width).toBeGreaterThanOrEqual(STACK_CARDS_MIN_WIDTH);
+    expect(pair.height).toBeCloseTo(
+      OVERLAY_HEADER_HEIGHT + pair.cardHeight + 34,
+      6
+    );
+    // Many attached cards wrap onto more rows and stay on the board.
+    const crowded = stackCardsLayout(SMALL, [4, 11]);
+    expectOnBoard(crowded, SMALL);
+    expect(crowded.cardHeight).toBeGreaterThanOrEqual(OVERLAY_CARD_MIN_HEIGHT);
+  });
+});

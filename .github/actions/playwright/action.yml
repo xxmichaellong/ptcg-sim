@@ -1,0 +1,45 @@
+name: Install a Playwright browser
+description: The browser and its system packages, which are kept between runs.
+
+inputs:
+  browser:
+    description: chromium, firefox or webkit
+    required: true
+
+runs:
+  using: composite
+  steps:
+    # The apt mirror is at times too slow to fetch the packages in time.
+    - id: apt
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ~/apt-archives
+        key: apt-archives-${{ runner.os }}-${{ inputs.browser }}-${{ hashFiles('pnpm-lock.yaml') }}
+        restore-keys: apt-archives-${{ runner.os }}-${{ inputs.browser }}-
+    - shell: bash
+      env:
+        BROWSER: ${{ inputs.browser }}
+      run: |
+        # The runner's own Chrome apt source is unrelated and at times broken.
+        sudo rm -f /etc/apt/sources.list.d/google-chrome.list /etc/apt/sources.list.d/google-chrome.sources
+        # Apt waits out a lock another install holds; only the download,
+        # which can hang, is cut off and tried again.
+        echo 'DPkg::Lock::Timeout "600";' | sudo tee /etc/apt/apt.conf.d/90-lock-timeout > /dev/null
+        mkdir -p ~/apt-archives/partial
+        printf 'Dir::Cache::Archives "%s";\nAPT::Keep-Downloaded-Packages "true";\n' ~/apt-archives |
+          sudo tee /etc/apt/apt.conf.d/91-kept-archives > /dev/null
+        for attempt in 1 2 3; do
+          if corepack pnpm exec playwright install-deps "$BROWSER" &&
+            timeout 300 corepack pnpm exec playwright install "$BROWSER"; then
+            sudo chown -R "$(id -u):$(id -g)" ~/apt-archives
+            exit 0
+          fi
+          [ "$attempt" -lt 3 ] || exit 1
+          echo "::warning::Installing $BROWSER failed; trying again in 30 seconds"
+          sleep 30
+        done
+    - if: steps.apt.outputs.cache-hit != 'true'
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ~/apt-archives
+        key: ${{ steps.apt.outputs.cache-primary-key }}

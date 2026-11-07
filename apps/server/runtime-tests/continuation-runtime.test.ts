@@ -1,0 +1,880 @@
+import { env, exports } from 'cloudflare:workers';
+import {
+  asMatchId,
+  asPlayerId,
+  createEmptyMatch,
+  stableHash,
+  stableSerialize,
+} from '@ptcgsim/game-core';
+import {
+  AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
+  createReplayHistory,
+  createRoomAdmissionState,
+  emptyProjectionIdentityState,
+  type RoomAuthoritySnapshot,
+} from '@ptcgsim/room-authority';
+import {
+  PROTOCOL_VERSION,
+  parseRoomAdmissionTicketResponse,
+} from '@ptcgsim/protocol';
+import {
+  evictDurableObject,
+  runDurableObjectAlarm,
+  runInDurableObject,
+} from 'cloudflare:test';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { WebCryptoAuthoritySource } from '../src/authority-crypto.js';
+import { readContinuationQuotaConfiguration } from '../src/continuation-quota-configuration.js';
+import {
+  CONTINUATION_QUOTA_LEASES_STORAGE_KEY,
+  continuationQuotaShardName,
+} from '../src/continuation-quota.js';
+import {
+  CONTINUATION_CREATION_RECEIPT_STORAGE_KEY,
+  CONTINUATION_STORAGE_KEY,
+  DurableContinuationCustody,
+  MINIMUM_CONTINUATION_TTL_MS,
+  createContinuationCapability,
+  parseContinuationCapability,
+  type StoredContinuationRecord,
+} from '../src/continuation-custody.js';
+import { createContinuationCryptographyFromConfiguration } from '../src/continuation-configuration.js';
+import { ROOM_CONTINUATION_CREATION_RATE_LIMIT_STORAGE_KEY } from '../src/continuation-request-rate.js';
+import {
+  DurableRoomContinuationSource,
+  ROOM_CONTINUATION_CREATIONS_STORAGE_KEY,
+} from '../src/continuation-source.js';
+import { largeContinuationSnapshot } from '../src/testing/large-continuation-snapshot.js';
+import { DurableRoomSnapshotStore } from '../src/durable-storage.js';
+import { prepareContinuationFork } from '../src/continuation-fork.js';
+import type { ContinuationRestorePlan } from '../src/continuation-restore-format.js';
+import { continuationTestKeyring } from './continuation-test-keyring.js';
+import { continuationTestQuotaConfiguration } from './continuation-test-quota-configuration.js';
+import {
+  RUNTIME_ORIGIN,
+  commandFrame,
+  nextServerMessage,
+  nextServerMessages,
+} from './runtime-harness.js';
+
+const p1 = asPlayerId('continuation-runtime-player-one');
+const p2 = asPlayerId('continuation-runtime-player-two');
+const playerOneResumeCapability =
+  'resume_continuation-runtime-player-one-000000000001';
+
+const snapshotFixture = (): RoomAuthoritySnapshot => {
+  const state = createEmptyMatch(asMatchId('continuation-runtime-match'), [
+    { playerId: p1, displayName: 'Blue', cardBackUrl: '/blue.png' },
+    { playerId: p2, displayName: 'Red', cardBackUrl: '/red.png' },
+  ]);
+  const admission = createRoomAdmissionState({
+    playerSeatLimit: 2,
+    playerIds: [p1, p2],
+    seatCapabilityDigests: {
+      [p1]: 'a'.repeat(43),
+      [p2]: 'b'.repeat(43),
+    },
+  });
+  return {
+    schemaVersion: AUTHORITY_SNAPSHOT_SCHEMA_VERSION,
+    authorityVersion: 3,
+    mode: 'multiplayer',
+    state,
+    replayHistory: createReplayHistory(state),
+    identities: emptyProjectionIdentityState(),
+    admission: {
+      ...admission,
+      seats: {
+        ...admission.seats,
+        [p1]: {
+          ...admission.seats[p1]!,
+          claimedSessionId: 'continuation-runtime-session-one',
+        },
+        [p2]: {
+          ...admission.seats[p2]!,
+          claimedSessionId: 'continuation-runtime-session-two',
+        },
+      },
+    },
+    sessions: {
+      'continuation-runtime-session-one': {
+        id: 'continuation-runtime-session-one',
+        viewer: { kind: 'player', playerId: p1 },
+        active: true,
+        nextClientSequence: 2,
+        recentOutcomes: [],
+        resumeCapabilityDigest: '8n5oQEIQvJDwkfv3GACKoigDn8TOts9ZDcmUWp2Y7hk',
+      },
+      'continuation-runtime-session-two': {
+        id: 'continuation-runtime-session-two',
+        viewer: { kind: 'player', playerId: p2 },
+        active: true,
+        nextClientSequence: 1,
+        recentOutcomes: [],
+        resumeCapabilityDigest: '2MwtLchA0XgVvBpLGgFz9z379Tp_Spqdb5naWyd10O8',
+      },
+    },
+  };
+};
+
+const tombstone = (createdAt: number, expiresAt: number) => ({
+  format: 'ptcgsim-continuation-record-v1',
+  state: 'revoked',
+  saveId: 'A'.repeat(22),
+  capabilityDigest: 'B'.repeat(43),
+  createdAt,
+  expiresAt,
+  revokedAt: createdAt,
+});
+
+const targetPlan = async (
+  targetRoomCode: string
+): Promise<ContinuationRestorePlan> => {
+  const snapshot = snapshotFixture();
+  const reservedAt = Date.now();
+  const canonicalStateHash = stableHash(snapshot.state);
+  const fork = await prepareContinuationFork(
+    { snapshot, canonicalStateHash, requesterPlayerId: p1 },
+    new WebCryptoAuthoritySource(),
+    reservedAt
+  );
+  return {
+    format: 'ptcgsim-continuation-restore-plan-v1',
+    saveId: 'T'.repeat(22),
+    operationId: 'T'.repeat(43),
+    reservedAt,
+    targetRoomCode,
+    targetUnclaimedExpiresAt: fork.opponentInvitation.expiresAt,
+    requesterPlayerId: p1,
+    canonicalStateHash,
+    ...fork,
+  };
+};
+
+const openTargetSocket = async (targetRoomCode: string): Promise<WebSocket> => {
+  const response = await exports.default.fetch(
+    new Request(`${RUNTIME_ORIGIN}/v2/rooms/${targetRoomCode}/connect`, {
+      headers: { Origin: RUNTIME_ORIGIN, Upgrade: 'websocket' },
+    })
+  );
+  expect(response.status).toBe(101);
+  if (!response.webSocket) throw new Error('Missing target WebSocket');
+  response.webSocket.accept();
+  return response.webSocket;
+};
+
+const closeTargetSocket = async (socket: WebSocket): Promise<void> => {
+  if (socket.readyState === WebSocket.CLOSED) return;
+  const closed = new Promise<void>((resolve) =>
+    socket.addEventListener('close', () => resolve(), { once: true })
+  );
+  socket.close(1000, 'Test complete');
+  await closed;
+};
+
+const admitTarget = async (
+  plan: ContinuationRestorePlan,
+  socket: WebSocket
+) => {
+  const response = await exports.default.fetch(
+    new Request(
+      `${RUNTIME_ORIGIN}/v2/rooms/${plan.targetRoomCode}/admission-tickets`,
+      {
+        method: 'POST',
+        headers: {
+          Origin: RUNTIME_ORIGIN,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          capability: plan.requesterSeatCapability,
+          displayName: 'Restored player',
+          requestedRole: 'player',
+        }),
+      }
+    )
+  );
+  expect(response.status).toBe(201);
+  const ticket = parseRoomAdmissionTicketResponse(await response.json());
+  if (!ticket.ok) throw new Error('Invalid target admission ticket');
+  const received = nextServerMessage(socket);
+  socket.send(
+    JSON.stringify({
+      type: 'Hello',
+      protocolVersion: PROTOCOL_VERSION,
+      buildId: 'local-development',
+      roomCode: plan.targetRoomCode,
+      displayName: 'Restored player',
+      requestedRole: 'player',
+      admissionTicket: ticket.value.admissionTicket,
+      resumeToken: ticket.value.resumeToken,
+    })
+  );
+  const welcome = await received;
+  if (welcome.type !== 'Welcome') throw new Error('Expected target Welcome');
+  return welcome;
+};
+
+describe('continuation Durable Object runtime', () => {
+  beforeEach(() => {
+    vi.spyOn(console, 'info').mockImplementation(() => undefined);
+  });
+
+  it('bounds a shared pending ledger while retaining native retry, completion and expiry', async () => {
+    const room = env.PTCG_ROOM.getByName('HJKMNPQR2345');
+    await runInDurableObject(room, async (_instance, ctx) => {
+      const snapshot = largeContinuationSnapshot(snapshotFixture());
+      await new DurableRoomSnapshotStore(ctx.storage).initialize(snapshot);
+      const crypto = new WebCryptoAuthoritySource();
+      let save = 0;
+      const source = new DurableRoomContinuationSource(
+        ctx.storage,
+        {
+          digestCapability: (value) => crypto.digestCapability(value),
+          nextSaveId: () => String(++save).padStart(22, 'A'),
+        },
+        {
+          maximumPerPlayer: 4,
+          maximumPerRoom: 8,
+          retentionMs: MINIMUM_CONTINUATION_TTL_MS,
+        }
+      );
+      const at = Date.now();
+      const input = {
+        snapshot,
+        requesterSessionId: 'continuation-runtime-session-one',
+        operationId: 'A'.repeat(43),
+        sourceBuild: 'runtime-ledger-capacity',
+        createdAt: at,
+      };
+      const first = await source.reserveCreation(input);
+      expect(first?.state).toBe('pending');
+      if (first?.state !== 'pending') throw new Error('Expected pending plan');
+      const stored = await ctx.storage.get(
+        ROOM_CONTINUATION_CREATIONS_STORAGE_KEY
+      );
+      const second = { ...input, operationId: 'B'.repeat(43) };
+      const refused = await source.reserveCreation(second);
+      expect(refused?.state).toBe('quota_exceeded');
+      if (refused?.state === 'quota_exceeded')
+        expect(refused.scope).toBe('room');
+      expect(
+        await ctx.storage.get(ROOM_CONTINUATION_CREATIONS_STORAGE_KEY)
+      ).toEqual(stored);
+      const retried = await source.reserveCreation(input);
+      expect(retried?.state).toBe('pending');
+      if (retried?.state === 'pending') {
+        expect(retried.created).toBe(false);
+        expect(retried.plan.saveId).toBe(first.plan.saveId);
+      }
+      const reference = {
+        saveId: first.plan.saveId,
+        expiresAt: first.plan.expiresAt,
+      };
+      await expect(
+        source.completeCreation({
+          snapshot,
+          requesterSessionId: input.requesterSessionId,
+          operationId: input.operationId,
+          completedAt: at + 1,
+          reference,
+        })
+      ).resolves.toEqual(reference);
+      await expect(source.reserveCreation(input)).resolves.toEqual({
+        state: 'completed',
+        reference,
+      });
+      expect(
+        (await source.reserveCreation({ ...second, createdAt: at + 2 }))?.state
+      ).toBe('pending');
+      expect(
+        (
+          await source.reserveCreation({
+            ...second,
+            operationId: 'C'.repeat(43),
+            createdAt: at + MINIMUM_CONTINUATION_TTL_MS + 2,
+          })
+        )?.state
+      ).toBe('pending');
+    });
+  });
+
+  it('rejects a delayed target initialization after admission without replacing its live hub, including after eviction', async () => {
+    const plan = await targetPlan('FGHJKMNP3456');
+    const room = env.PTCG_ROOM.getByName(plan.targetRoomCode);
+    await expect(room.initializeContinuation(plan)).resolves.toEqual({
+      created: true,
+      targetRoomCode: plan.targetRoomCode,
+    });
+    const socket = await openTargetSocket(plan.targetRoomCode);
+    try {
+      const welcome = await admitTarget(plan, socket);
+      for (const [index, evict] of [false, true].entries()) {
+        if (evict) await evictDurableObject(room);
+        const rejected = await runInDurableObject(room, async (instance) => {
+          try {
+            await instance.initializeContinuation(plan);
+            return null;
+          } catch (error) {
+            return error instanceof Error ? error.message : 'Unknown failure';
+          }
+        });
+        expect(rejected).toBe('Stored continuation target is incomplete');
+        const ping = nextServerMessage(socket);
+        socket.send(
+          JSON.stringify({
+            type: 'Ping',
+            protocolVersion: PROTOCOL_VERSION,
+            id: index,
+          })
+        );
+        await expect(ping).resolves.toMatchObject({ type: 'Pong', id: index });
+        const messages = nextServerMessages(socket, 2);
+        socket.send(
+          commandFrame(welcome, index + 1, index, `target-move-${index}`, {
+            type: 'FlipCoin',
+          })
+        );
+        const result = await messages;
+        expect(result.map((message) => message.type)).toEqual([
+          'StatePublication',
+          'CommandResult',
+        ]);
+        expect(result[1]).toMatchObject({
+          accepted: true,
+          revision: index + 1,
+        });
+      }
+    } finally {
+      await closeTargetSocket(socket);
+    }
+  });
+
+  it.each([
+    ['GHJKMNPQ4567', false],
+    ['HJKMNPQR5678', true],
+  ] as const)(
+    'admits a pre-Hello socket after a pristine target initialization retry (%s, eviction %s)',
+    async (targetRoomCode, evict) => {
+      const plan = await targetPlan(targetRoomCode);
+      const room = env.PTCG_ROOM.getByName(targetRoomCode);
+      const initialized = await Promise.all([
+        room.initializeContinuation(plan),
+        room.initializeContinuation(plan),
+      ]);
+      expect(initialized.map((result) => result?.created).sort()).toEqual([
+        false,
+        true,
+      ]);
+      const socket = await openTargetSocket(targetRoomCode);
+      try {
+        if (evict) await evictDurableObject(room);
+        await expect(room.initializeContinuation(plan)).resolves.toEqual({
+          created: false,
+          targetRoomCode,
+        });
+        const welcome = await admitTarget(plan, socket);
+        expect(welcome.role).toBe('player');
+        const ping = nextServerMessage(socket);
+        socket.send(
+          JSON.stringify({
+            type: 'Ping',
+            protocolVersion: PROTOCOL_VERSION,
+            id: 9,
+          })
+        );
+        await expect(ping).resolves.toMatchObject({ type: 'Pong', id: 9 });
+      } finally {
+        await closeTargetSocket(socket);
+      }
+    }
+  );
+
+  it('is provisioned while exact production-default edge routes remain absent', async () => {
+    const creation = await exports.default.fetch(
+      new Request('https://play.example/v2/rooms/ABCDEFGH2345/continuations', {
+        method: 'POST',
+        headers: {
+          Origin: 'https://play.example',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          resumeToken: playerOneResumeCapability,
+          operationId: 'C'.repeat(43),
+        }),
+      })
+    );
+    const restore = await exports.default.fetch(
+      new Request(
+        `https://play.example/v2/continuations/${'A'.repeat(22)}/restore`,
+        {
+          method: 'POST',
+          headers: {
+            Origin: 'https://play.example',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            capability: `ptcgsave.v1.${'A'.repeat(22)}.${'B'.repeat(43)}`,
+            operationId: 'R'.repeat(43),
+          }),
+        }
+      )
+    );
+    const revocation = await exports.default.fetch(
+      new Request(`https://play.example/v2/continuations/${'A'.repeat(22)}`, {
+        method: 'DELETE',
+        headers: {
+          Origin: 'https://play.example',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          capability: `ptcgsave.v1.${'A'.repeat(22)}.${'B'.repeat(43)}`,
+        }),
+      })
+    );
+
+    expect(env.PTCG_CONTINUATION).toBeDefined();
+    expect(env.PTCG_CONTINUATION_QUOTA).toBeDefined();
+    expect(creation.status).toBe(404);
+    expect(restore.status).toBe(404);
+    expect(revocation.status).toBe(404);
+  });
+
+  it('reserves only the exact configured quota shard and recovers after eviction', async () => {
+    const sourceRoomCode = 'CDEFGHJK2345';
+    const configuration = readContinuationQuotaConfiguration(
+      continuationTestQuotaConfiguration
+    );
+    const shardName = await continuationQuotaShardName(
+      sourceRoomCode,
+      configuration.shardCount,
+      new WebCryptoAuthoritySource()
+    );
+    const quota = env.PTCG_CONTINUATION_QUOTA.getByName(shardName);
+    const createdAt = Date.now();
+    const input = {
+      sourceRoomCode,
+      operationId: 'Q'.repeat(43),
+      saveId: 'Q'.repeat(22),
+      createdAt,
+      expiresAt: createdAt + MINIMUM_CONTINUATION_TTL_MS,
+      requestedAt: createdAt,
+    };
+    await expect(quota.reserveContinuation(input)).resolves.toEqual({
+      state: 'reserved',
+      created: true,
+    });
+    const stored = await runInDurableObject(quota, async (_instance, state) =>
+      state.storage.get(CONTINUATION_QUOTA_LEASES_STORAGE_KEY)
+    );
+    expect(JSON.stringify(stored)).not.toContain(sourceRoomCode);
+    expect(JSON.stringify(stored)).not.toContain(input.operationId);
+    expect(JSON.stringify(stored)).toContain(input.saveId);
+
+    const wrongShard = env.PTCG_CONTINUATION_QUOTA.getByName(
+      'continuation-quota-v1-fff'
+    );
+    await expect(
+      wrongShard.reserveContinuation(input)
+    ).resolves.toBeUndefined();
+    await expect(
+      runInDurableObject(wrongShard, async (_instance, state) =>
+        state.storage.list()
+      )
+    ).resolves.toEqual(new Map());
+
+    await evictDurableObject(quota);
+    await expect(
+      quota.reserveContinuation({ ...input, requestedAt: createdAt + 1 })
+    ).resolves.toEqual({ state: 'reserved', created: false });
+
+    const now = Date.now();
+    await runInDurableObject(quota, async (_instance, state) => {
+      const ledger = await state.storage.get<{
+        format: string;
+        leases: readonly Record<string, unknown>[];
+      }>(CONTINUATION_QUOTA_LEASES_STORAGE_KEY);
+      if (!ledger) throw new Error('expected quota ledger');
+      await state.storage.put(CONTINUATION_QUOTA_LEASES_STORAGE_KEY, {
+        ...ledger,
+        leases: ledger.leases.map((lease) => ({
+          ...lease,
+          createdAt: now - MINIMUM_CONTINUATION_TTL_MS - 1,
+          expiresAt: now - 1,
+        })),
+      });
+      await state.storage.setAlarm(now + MINIMUM_CONTINUATION_TTL_MS);
+    });
+    await evictDurableObject(quota);
+    await expect(runDurableObjectAlarm(quota)).resolves.toBe(true);
+    await expect(
+      runInDurableObject(quota, async (_instance, state) =>
+        state.storage.list()
+      )
+    ).resolves.toEqual(new Map());
+  });
+
+  it('deletes expired custody after eviction without requiring a decrypt key', async () => {
+    const stub = env.PTCG_CONTINUATION.getByName('expired-runtime-record');
+    const now = Date.now();
+    const createdAt = now - MINIMUM_CONTINUATION_TTL_MS - 1;
+    const expiresAt = now - 1;
+    await runInDurableObject(stub, async (_instance, state) => {
+      await state.storage.put(
+        CONTINUATION_STORAGE_KEY,
+        tombstone(createdAt, expiresAt)
+      );
+      // Prevent automatic local delivery from racing the explicit test helper.
+      await state.storage.setAlarm(now + MINIMUM_CONTINUATION_TTL_MS);
+    });
+    await evictDurableObject(stub);
+
+    expect(await runDurableObjectAlarm(stub)).toBe(true);
+    const result = await runInDurableObject(stub, async (_instance, state) => ({
+      record: await state.storage.get(CONTINUATION_STORAGE_KEY),
+      alarm: await state.storage.getAlarm(),
+    }));
+    expect(result).toEqual({ record: undefined, alarm: null });
+  });
+
+  it('reschedules an early continuation alarm at the exact expiry', async () => {
+    const stub = env.PTCG_CONTINUATION.getByName('early-runtime-record');
+    const now = Date.now();
+    const createdAt = now - 1;
+    const expiresAt = createdAt + MINIMUM_CONTINUATION_TTL_MS;
+    await runInDurableObject(stub, async (_instance, state) => {
+      await state.storage.put(
+        CONTINUATION_STORAGE_KEY,
+        tombstone(createdAt, expiresAt)
+      );
+      await state.storage.setAlarm(expiresAt + MINIMUM_CONTINUATION_TTL_MS);
+    });
+
+    expect(await runDurableObjectAlarm(stub)).toBe(true);
+    const result = await runInDurableObject(stub, async (_instance, state) => ({
+      record: await state.storage.get(CONTINUATION_STORAGE_KEY),
+      alarm: await state.storage.getAlarm(),
+    }));
+    expect(result.record).toEqual(tombstone(createdAt, expiresAt));
+    expect(result.alarm).toBe(expiresAt);
+  });
+
+  it('restores through private object RPC and converges after both objects are evicted', async () => {
+    const capability = createContinuationCapability().capability;
+    const saveId = parseContinuationCapability(capability)!.saveId;
+    const continuation = env.PTCG_CONTINUATION.getByName(saveId);
+    const source = snapshotFixture();
+    const createdAt = Date.now() - 1_000;
+    await runInDurableObject(continuation, async (_instance, state) => {
+      const cryptography =
+        await createContinuationCryptographyFromConfiguration(
+          continuationTestKeyring
+        );
+      await new DurableContinuationCustody(state.storage, cryptography).create({
+        capability,
+        snapshot: source,
+        requesterSessionId: 'continuation-runtime-session-one',
+        sourceBuild: 'continuation-runtime-test',
+        createdAt,
+      });
+    });
+
+    const operationId = 'R'.repeat(43);
+    const [restored, concurrentRetry] = await Promise.all([
+      continuation.restore({ capability, operationId }),
+      continuation.restore({ capability, operationId }),
+    ]);
+    expect(restored).toMatchObject({ saveId, operationId });
+    expect(concurrentRetry).toEqual(restored);
+    const target = env.PTCG_ROOM.getByName(restored!.targetRoomCode);
+    const firstTarget = await runInDurableObject(
+      target,
+      async (_instance, state) => ({
+        snapshot: await new DurableRoomSnapshotStore(state.storage).load(),
+        alarm: await state.storage.getAlarm(),
+        entries: await state.storage.list(),
+      })
+    );
+    expect(stableHash(firstTarget.snapshot!.state)).toBe(
+      stableHash(source.state)
+    );
+    expect(stableSerialize(firstTarget.snapshot!.state)).toBe(
+      stableSerialize(source.state)
+    );
+    expect(firstTarget.snapshot).toMatchObject({
+      authorityVersion: 0,
+      sessions: {},
+      identities: { cardAliases: [], definitionAliases: [] },
+    });
+    expect(firstTarget.alarm).toBeGreaterThan(Date.now());
+    expect(
+      JSON.stringify(firstTarget.entries.get('room:continuation-origin'))
+    ).not.toContain(saveId);
+    const completed = await runInDurableObject(
+      continuation,
+      async (_instance, state) =>
+        state.storage.get<StoredContinuationRecord>(CONTINUATION_STORAGE_KEY)
+    );
+    expect(completed?.state).toBe('completed');
+
+    await evictDurableObject(target);
+    await evictDurableObject(continuation);
+    await expect(
+      continuation.restore({ capability, operationId })
+    ).resolves.toEqual(restored);
+    const afterRetry = await runInDurableObject(
+      target,
+      async (_instance, state) => ({
+        alarm: await state.storage.getAlarm(),
+        entries: await state.storage.list(),
+      })
+    );
+    expect(afterRetry).toEqual({
+      alarm: firstTarget.alarm,
+      entries: firstTarget.entries,
+    });
+  });
+
+  it('creates and recovers an encrypted receipt through the private save RPC', async () => {
+    const saveId = 'L'.repeat(22);
+    const continuation = env.PTCG_CONTINUATION.getByName(saveId);
+    const operationId = 'P'.repeat(43);
+    const createdAt = Date.now();
+    const input = {
+      saveId,
+      operationId,
+      snapshot: snapshotFixture(),
+      requesterSessionId: 'continuation-runtime-session-one',
+      sourceBuild: 'continuation-runtime-test',
+      createdAt,
+      expiresAt: createdAt + MINIMUM_CONTINUATION_TTL_MS,
+      requestedAt: createdAt + 1,
+    };
+    const created = await continuation.createContinuation(input);
+    expect(created).toMatchObject({
+      created: true,
+      receipt: { saveId, operationId },
+    });
+    await expect(
+      continuation.recoverContinuation({
+        saveId,
+        operationId,
+        requestedAt: createdAt + 2,
+      })
+    ).resolves.toEqual(created!.receipt);
+  });
+
+  it('creates through private room/save RPCs and converges concurrently and after eviction', async () => {
+    const room = env.PTCG_ROOM.getByName('CDEFGHJK2345');
+    const source = snapshotFixture();
+    await runInDurableObject(room, async (_instance, state) => {
+      await new DurableRoomSnapshotStore(state.storage).initialize(source);
+    });
+    await evictDurableObject(room);
+
+    const operationId = 'C'.repeat(43);
+    const input = {
+      resumeToken: playerOneResumeCapability,
+      operationId,
+    };
+    await expect(
+      room.createContinuation({ ...input, extra: true })
+    ).resolves.toBeUndefined();
+    await expect(
+      room.createContinuation({
+        ...input,
+        resumeToken: 'resume_wrong-runtime-player-00000000000000000001',
+      })
+    ).resolves.toBeUndefined();
+    const sourceHead = await runInDurableObject(
+      room,
+      async (_instance, state) =>
+        new DurableRoomSnapshotStore(state.storage).load()
+    );
+    expect(sourceHead).toBeDefined();
+
+    const secondOperation = 'D'.repeat(43);
+    const [created, concurrentRetry] = await Promise.all([
+      room.createContinuation(input),
+      room.createContinuation(input),
+    ]);
+    expect(created).toMatchObject({
+      state: 'created',
+      receipt: {
+        operationId,
+        format: 'ptcgsim-continuation-creation-result-v1',
+      },
+    });
+    expect(concurrentRetry).toEqual(created);
+    if (created?.state !== 'created') throw new Error('expected create result');
+    const parsed = parseContinuationCapability(created.receipt.capability);
+    expect(parsed?.saveId).toBe(created.receipt.saveId);
+    const continuation = env.PTCG_CONTINUATION.getByName(
+      created.receipt.saveId
+    );
+    const quotaConfiguration = readContinuationQuotaConfiguration(
+      continuationTestQuotaConfiguration
+    );
+    const quota = env.PTCG_CONTINUATION_QUOTA.getByName(
+      await continuationQuotaShardName(
+        'CDEFGHJK2345',
+        quotaConfiguration.shardCount,
+        new WebCryptoAuthoritySource()
+      )
+    );
+    const sourceLedger = await runInDurableObject(
+      room,
+      async (_instance, state) =>
+        state.storage.get(ROOM_CONTINUATION_CREATIONS_STORAGE_KEY)
+    );
+    expect(JSON.stringify(sourceLedger)).not.toContain(
+      'continuation-runtime-match'
+    );
+    expect(JSON.stringify(sourceLedger)).not.toContain(operationId);
+    const saveEntries = await runInDurableObject(
+      continuation,
+      async (_instance, state) => state.storage.list()
+    );
+    expect(saveEntries.has(CONTINUATION_STORAGE_KEY)).toBe(true);
+    expect(saveEntries.has(CONTINUATION_CREATION_RECEIPT_STORAGE_KEY)).toBe(
+      true
+    );
+    expect(JSON.stringify([...saveEntries])).not.toContain(
+      created.receipt.capability
+    );
+    expect(JSON.stringify([...saveEntries])).not.toContain(operationId);
+    expect(JSON.stringify([...saveEntries])).not.toContain(
+      'continuation-runtime-match'
+    );
+    const quotaEntries = await runInDurableObject(
+      quota,
+      async (_instance, state) => state.storage.list()
+    );
+    expect(quotaEntries.has(CONTINUATION_QUOTA_LEASES_STORAGE_KEY)).toBe(true);
+    expect(JSON.stringify([...quotaEntries])).not.toContain(
+      created.receipt.capability
+    );
+    expect(JSON.stringify([...quotaEntries])).not.toContain(operationId);
+    expect(JSON.stringify([...quotaEntries])).not.toContain('CDEFGHJK2345');
+    const opened = await runInDurableObject(
+      continuation,
+      async (_instance, state) => {
+        const cryptography =
+          await createContinuationCryptographyFromConfiguration(
+            continuationTestKeyring
+          );
+        return new DurableContinuationCustody(state.storage, cryptography).open(
+          created.receipt.capability,
+          Date.now()
+        );
+      }
+    );
+    expect(stableSerialize(opened!.checkpoint.snapshot)).toBe(
+      stableSerialize(sourceHead)
+    );
+
+    await evictDurableObject(continuation);
+    await evictDurableObject(quota);
+    await evictDurableObject(room);
+    await expect(room.createContinuation(input)).resolves.toEqual(created);
+    await expect(
+      room.createContinuation({ ...input, operationId: secondOperation })
+    ).resolves.toMatchObject({ state: 'created' });
+  });
+
+  it('atomically rate limits authenticated new create operations without charging exact retries', async () => {
+    const room = env.PTCG_ROOM.getByName('DEFGHJKM3456');
+    await runInDurableObject(room, async (_instance, state) => {
+      await new DurableRoomSnapshotStore(state.storage).initialize(
+        snapshotFixture()
+      );
+    });
+    await evictDurableObject(room);
+
+    await expect(
+      room.createContinuation({
+        resumeToken: 'resume_wrong-runtime-player-00000000000000000001',
+        operationId: 'Z'.repeat(43),
+      })
+    ).resolves.toBeUndefined();
+    await expect(
+      runInDurableObject(room, async (_instance, state) =>
+        Promise.all([
+          state.storage.get(ROOM_CONTINUATION_CREATIONS_STORAGE_KEY),
+          state.storage.get(ROOM_CONTINUATION_CREATION_RATE_LIMIT_STORAGE_KEY),
+        ])
+      )
+    ).resolves.toEqual([undefined, undefined]);
+
+    const inputs = Array.from({ length: 13 }, (_, index) => ({
+      resumeToken: playerOneResumeCapability,
+      operationId: String.fromCharCode(65 + index).repeat(43),
+    }));
+    const results = await Promise.all(
+      inputs.map((createInput) => room.createContinuation(createInput))
+    );
+    expect(
+      results.filter((result) => result?.state === 'created')
+    ).toHaveLength(4);
+    expect(
+      results.filter((result) => result?.state === 'quota_exceeded')
+    ).toHaveLength(8);
+    expect(
+      results.filter((result) => result?.state === 'rate_limited')
+    ).toHaveLength(1);
+
+    const storedBeforeRetry = await runInDurableObject(
+      room,
+      async (_instance, state) =>
+        state.storage.get(ROOM_CONTINUATION_CREATION_RATE_LIMIT_STORAGE_KEY)
+    );
+    expect(storedBeforeRetry).toMatchObject({
+      buckets: [{ requesterPlayerId: p1, attempts: 12 }],
+    });
+    expect(JSON.stringify(storedBeforeRetry)).not.toContain(
+      inputs[0]!.operationId
+    );
+
+    const createdIndex = results.findIndex(
+      (result) => result?.state === 'created'
+    );
+    if (createdIndex < 0) throw new Error('expected one created continuation');
+    await evictDurableObject(room);
+    await expect(
+      room.createContinuation(inputs[createdIndex]!)
+    ).resolves.toEqual(results[createdIndex]);
+    await expect(
+      runInDurableObject(room, async (_instance, state) =>
+        state.storage.get(ROOM_CONTINUATION_CREATION_RATE_LIMIT_STORAGE_KEY)
+      )
+    ).resolves.toEqual(storedBeforeRetry);
+  });
+
+  it('rejects malformed and wrong-locator private restore RPC input without target work', async () => {
+    const capability = createContinuationCapability().capability;
+    const saveId = parseContinuationCapability(capability)!.saveId;
+    const correct = env.PTCG_CONTINUATION.getByName(saveId);
+    const wrong = env.PTCG_CONTINUATION.getByName('A'.repeat(22));
+    const operationId = 'R'.repeat(43);
+
+    await expect(
+      correct.restore({ capability, operationId, extra: true })
+    ).resolves.toBeUndefined();
+    await expect(
+      wrong.restore({ capability, operationId })
+    ).resolves.toBeUndefined();
+    const wrongStorage = await runInDurableObject(
+      wrong,
+      async (_instance, state) => state.storage.list()
+    );
+    expect(wrongStorage.size).toBe(0);
+
+    const room = env.PTCG_ROOM.getByName('BCDEFGHJ2345');
+    await expect(room.initializeContinuation({})).resolves.toBeUndefined();
+    const roomStorage = await runInDurableObject(
+      room,
+      async (_instance, state) => state.storage.list()
+    );
+    expect(roomStorage.size).toBe(0);
+  });
+});

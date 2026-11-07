@@ -1,0 +1,403 @@
+{
+  "schemaVersion": 1,
+  "recordingMethod": "Chromium 151 CSS-pixel capture of twelve independent inert replays (local/opponent x active/sole bench x fresh BREAK q0/returned BREAK q0/BREAK q2) against the checked-in board surface. The three-Pokemon evolution construction, layout sources, and controlled cardback asset are inherited from the digest-pinned compound BREAK oracle. The application module is stubbed; BREAK setup, refresh reconstruction, synchronous ghost-wrapper overlap, and two-animation-frame cleanup are narrowly transcribed from digest-pinned source.",
+  "input": {
+    "viewport": { "width": 1600, "height": 900, "devicePixelRatio": 1 },
+    "asset": {
+      "path": "/src/assets/cardback.png",
+      "naturalWidth": 736,
+      "naturalHeight": 1024
+    },
+    "evolutionOrder": ["base", "middle", "top"],
+    "scenarios": [
+      "breakRefreshFreshQ0",
+      "breakRefreshReturnedQ0",
+      "breakRefreshQ2"
+    ],
+    "slots": ["active", "bench"],
+    "sides": ["local", "opponent"],
+    "phaseSequence": [
+      "pre-refresh",
+      "synchronous-post-refresh",
+      "settled-post-refresh"
+    ]
+  },
+  "tolerances": {
+    "anchorPixels": 2,
+    "cardSizeRelative": 0.01,
+    "rotationDegrees": 0.1,
+    "structuredPixels": 0.001
+  },
+  "scope": {
+    "included": [
+      "fresh BREAK q0 refresh, returned BREAK q0 refresh after four group turns, and BREAK q2 refresh after two group turns",
+      "independent local/opponent active and sole-bench cases at the default 1600x900 DPR-1 layout",
+      "pre-refresh, synchronous two-wrapper overlap, and observer-settled replacement geometry",
+      "selected-transform-derived replay count, exact operation trace, wrapper replacement, stable card identity, topology, margins, authored/painted geometry, and native hit regions",
+      "the active-slot history split where fresh, returned, and reconstructed BREAK q0 have identical card rotations but different wrapper geometry"
+    ],
+    "excluded": [
+      "BREAK q3 refresh, where the legacy negative replay count collapses the prior group orientation",
+      "single rotation while group orientation is nonzero because legacy snaps the selected effective angle to absolute q0",
+      "BREAK on a lower evolution, group rotation initiated below the top, converted categories, and non-Pokemon initiators",
+      "Energy, Trainer, Tool, markers, attachment timing/syncRotation histories, mixed dimensions, and noncanonical assets",
+      "additional bench siblings, flex shrink, overflow, active/bench movement, promotion, evolution/removal while BREAK, leaveAll, undo, and replay",
+      "resize-driven board layout, explicit flip, fullscreen, alternate viewport/DPR, concealment, application/network execution, candidate parity, and production geometry"
+    ]
+  },
+  "dependencies": [
+    {
+      "path": "tests/legacy-fixtures/renderer/compound-break-rotation-v1.json",
+      "sha256": "cc9b03a34a183395812fce9bbfc79ab27c4ae23c243856e94368b80ec539c487"
+    }
+  ],
+  "expected": {
+    "frames": {
+      "local": { "x": 0, "y": 450, "width": 1208, "height": 450 },
+      "opponent": { "x": 0, "y": 0, "width": 1208, "height": 450 }
+    },
+    "frameTransforms": {
+      "local": { "a": 1, "b": 0, "c": 0, "d": 1, "rotationDegrees": 0 },
+      "opponent": { "a": -1, "b": 0, "c": 0, "d": -1, "rotationDegrees": 180 }
+    },
+    "frameRotationDegrees": { "local": 0, "opponent": 180 },
+    "localQuarterTurnsByScenario": {
+      "breakRefreshFreshQ0": { "top": 1, "middle": 0, "base": 0 },
+      "breakRefreshReturnedQ0": { "top": 1, "middle": 0, "base": 0 },
+      "breakRefreshQ2": { "top": 3, "middle": 2, "base": 2 }
+    },
+    "geometryKeyByScenarioAndSlot": {
+      "breakRefreshFreshQ0": {
+        "active": ["activeFreshPre", "activeFreshSync", "activeQ0Settled"],
+        "bench": ["benchStable", "benchSync", "benchStable"]
+      },
+      "breakRefreshReturnedQ0": {
+        "active": [
+          "activeReturnedPre",
+          "activeReturnedQ0Sync",
+          "activeQ0Settled"
+        ],
+        "bench": ["benchStable", "benchSync", "benchStable"]
+      },
+      "breakRefreshQ2": {
+        "active": ["activeReturnedPre", "activeQ2Sync", "activeReturnedPre"],
+        "bench": ["benchStable", "benchSync", "benchStable"]
+      }
+    },
+    "geometryEvidenceByKey": {
+      "activeFreshPre": {
+        "stackRect": [558.484375, 31.5, 91, 126],
+        "clientSize": [91, 126],
+        "offsetSize": [91, 126],
+        "computedSize": [91, 126],
+        "authoredWidthPx": 91,
+        "inlineMargins": ["", ""],
+        "computedMarginsPx": [0, 0],
+        "paintedCardRects": [
+          [540.765625, 49.21875, 126, 90.5625],
+          [558.484375, 25.4375, 90.5625, 126],
+          [558.484375, 19.375, 90.5625, 126]
+        ],
+        "authoredCardRects": [
+          [558.484375, 31.5, 90.5625, 126],
+          [558.484375, 25.4375, 90.5625, 126],
+          [558.484375, 19.375, 90.5625, 126]
+        ],
+        "hitPoints": [
+          [560.734375, 51.46875],
+          [543.015625, 51.46875],
+          [560.734375, 27.6875],
+          [560.734375, 21.625],
+          [543.015625, 51.46875],
+          [560.734375, 33.75]
+        ]
+      },
+      "activeFreshSync": {
+        "stackRect": [602.046875, 31.5, 91, 126],
+        "clientSize": [91, 126],
+        "offsetSize": [91, 126],
+        "computedSize": [91, 126],
+        "authoredWidthPx": 91,
+        "inlineMargins": ["3%", "2%"],
+        "computedMarginsPx": [11.5938, 7.71875],
+        "paintedCardRects": [
+          [584.328125, 49.21875, 126, 90.5625],
+          [602.046875, 25.4375, 90.5625, 126],
+          [602.046875, 19.375, 90.5625, 126]
+        ],
+        "authoredCardRects": [
+          [602.046875, 31.5, 90.5625, 126],
+          [602.046875, 25.4375, 90.5625, 126],
+          [602.046875, 19.375, 90.5625, 126]
+        ],
+        "hitPoints": [
+          [604.296875, 51.46875],
+          [586.578125, 51.46875],
+          [604.296875, 27.6875],
+          [604.296875, 21.625],
+          [586.578125, 51.46875],
+          [604.296875, 33.75]
+        ]
+      },
+      "activeQ0Settled": {
+        "stackRect": [556.546875, 31.5, 91, 126],
+        "clientSize": [91, 126],
+        "offsetSize": [91, 126],
+        "computedSize": [91, 126],
+        "authoredWidthPx": 91,
+        "inlineMargins": ["3%", "2%"],
+        "computedMarginsPx": [11.5938, 7.71875],
+        "paintedCardRects": [
+          [538.828125, 49.21875, 126, 90.5625],
+          [556.546875, 25.4375, 90.5625, 126],
+          [556.546875, 19.375, 90.5625, 126]
+        ],
+        "authoredCardRects": [
+          [556.546875, 31.5, 90.5625, 126],
+          [556.546875, 25.4375, 90.5625, 126],
+          [556.546875, 19.375, 90.5625, 126]
+        ],
+        "hitPoints": [
+          [558.796875, 51.46875],
+          [541.078125, 51.46875],
+          [558.796875, 27.6875],
+          [558.796875, 21.625],
+          [541.078125, 51.46875],
+          [558.796875, 33.75]
+        ]
+      },
+      "activeReturnedPre": {
+        "stackRect": [556.5625, 31.5, 91, 126],
+        "clientSize": [91, 126],
+        "offsetSize": [91, 126],
+        "computedSize": [91, 126],
+        "authoredWidthPx": 91,
+        "inlineMargins": ["1%", "0%"],
+        "computedMarginsPx": [3.85938, 0],
+        "paintedCardRects": [
+          [538.84375, 49.21875, 126, 90.5625],
+          [556.5625, 25.4375, 90.5625, 126],
+          [556.5625, 19.375, 90.5625, 126]
+        ],
+        "authoredCardRects": [
+          [556.5625, 31.5, 90.5625, 126],
+          [556.5625, 25.4375, 90.5625, 126],
+          [556.5625, 19.375, 90.5625, 126]
+        ],
+        "hitPoints": [
+          [558.8125, 51.46875],
+          [541.09375, 51.46875],
+          [558.8125, 27.6875],
+          [558.8125, 21.625],
+          [541.09375, 51.46875],
+          [558.8125, 33.75]
+        ]
+      },
+      "activeReturnedQ0Sync": {
+        "stackRect": [603.984375, 31.5, 91, 126],
+        "clientSize": [91, 126],
+        "offsetSize": [91, 126],
+        "computedSize": [91, 126],
+        "authoredWidthPx": 91,
+        "inlineMargins": ["3%", "2%"],
+        "computedMarginsPx": [11.5938, 7.71875],
+        "paintedCardRects": [
+          [586.265625, 49.21875, 126, 90.5625],
+          [603.984375, 25.4375, 90.5625, 126],
+          [603.984375, 19.375, 90.5625, 126]
+        ],
+        "authoredCardRects": [
+          [603.984375, 31.5, 90.5625, 126],
+          [603.984375, 25.4375, 90.5625, 126],
+          [603.984375, 19.375, 90.5625, 126]
+        ],
+        "hitPoints": [
+          [606.234375, 51.46875],
+          [588.515625, 51.46875],
+          [606.234375, 27.6875],
+          [606.234375, 21.625],
+          [588.515625, 51.46875],
+          [606.234375, 33.75]
+        ]
+      },
+      "activeQ2Sync": {
+        "stackRect": [603.984375, 31.5, 91, 126],
+        "clientSize": [91, 126],
+        "offsetSize": [91, 126],
+        "computedSize": [91, 126],
+        "authoredWidthPx": 91,
+        "inlineMargins": ["1%", "0%"],
+        "computedMarginsPx": [3.85938, 0],
+        "paintedCardRects": [
+          [586.265625, 49.21875, 126, 90.5625],
+          [603.984375, 25.4375, 90.5625, 126],
+          [603.984375, 19.375, 90.5625, 126]
+        ],
+        "authoredCardRects": [
+          [603.984375, 31.5, 90.5625, 126],
+          [603.984375, 25.4375, 90.5625, 126],
+          [603.984375, 19.375, 90.5625, 126]
+        ],
+        "hitPoints": [
+          [606.234375, 51.46875],
+          [588.515625, 51.46875],
+          [606.234375, 27.6875],
+          [606.234375, 21.625],
+          [588.515625, 51.46875],
+          [606.234375, 33.75]
+        ]
+      },
+      "benchStable": {
+        "stackRect": [552.671875, 180, 81, 112.5],
+        "clientSize": [81, 113],
+        "offsetSize": [81, 113],
+        "computedSize": [81, 112.5],
+        "authoredWidthPx": 81,
+        "inlineMargins": ["3%", "2%"],
+        "computedMarginsPx": [28.625, 19.0781],
+        "paintedCardRects": [
+          [536.8515625, 195.8203125, 112.5, 80.859375],
+          [552.671875, 174.609375, 80.859375, 112.5],
+          [552.671875, 169.203125, 80.859375, 112.5]
+        ],
+        "authoredCardRects": [
+          [552.671875, 180, 80.859375, 112.5],
+          [552.671875, 174.609375, 80.859375, 112.5],
+          [552.671875, 169.203125, 80.859375, 112.5]
+        ],
+        "hitPoints": [
+          [554.921875, 198.0703125],
+          [539.1015625, 198.0703125],
+          [554.921875, 176.859375],
+          [554.921875, 171.453125],
+          [539.1015625, 198.0703125],
+          [554.921875, 182.25]
+        ]
+      },
+      "benchSync": {
+        "stackRect": [617.03125, 180, 81, 112.5],
+        "clientSize": [81, 113],
+        "offsetSize": [81, 113],
+        "computedSize": [81, 112.5],
+        "authoredWidthPx": 81,
+        "inlineMargins": ["3%", "2%"],
+        "computedMarginsPx": [28.625, 19.0781],
+        "paintedCardRects": [
+          [601.2109375, 195.8203125, 112.5, 80.859375],
+          [617.03125, 174.609375, 80.859375, 112.5],
+          [617.03125, 169.203125, 80.859375, 112.5]
+        ],
+        "authoredCardRects": [
+          [617.03125, 180, 80.859375, 112.5],
+          [617.03125, 174.609375, 80.859375, 112.5],
+          [617.03125, 169.203125, 80.859375, 112.5]
+        ],
+        "hitPoints": [
+          [619.28125, 198.0703125],
+          [603.4609375, 198.0703125],
+          [619.28125, 176.859375],
+          [619.28125, 171.453125],
+          [603.4609375, 198.0703125],
+          [619.28125, 182.25]
+        ]
+      }
+    },
+    "hitOrder": {
+      "commonOverlap": ["top", "middle", "base"],
+      "topOnly": ["top"],
+      "middleAndBaseOverlap": ["middle", "base"],
+      "baseOnly": ["base"],
+      "topPaintedOnly": ["top"],
+      "topAuthoredOnly": ["middle", "base"]
+    },
+    "topology": {
+      "logicalRoles": ["top", "middle", "base"],
+      "domRoles": ["top", "base", "middle"],
+      "zByRole": { "top": 0, "middle": -1, "base": -2 },
+      "bottomLayerMultipliers": { "top": 0, "middle": 1, "base": 2 },
+      "topLayer": 2,
+      "energyLayer": 0,
+      "wrapperTransform": "none",
+      "wrapperZIndex": 0
+    },
+    "operationTraceByScenario": {
+      "breakRefreshFreshQ0": [
+        "evolve:base->middle",
+        "refresh:middle:break=false:groupTurns=0",
+        "evolve:middle->top",
+        "refresh:top:break=false:groupTurns=0",
+        "rotate:top:index=0:single=true:0->90:break=false->true",
+        "refresh:top:break=true:groupTurns=0"
+      ],
+      "breakRefreshReturnedQ0": [
+        "evolve:base->middle",
+        "refresh:middle:break=false:groupTurns=0",
+        "evolve:middle->top",
+        "refresh:top:break=false:groupTurns=0",
+        "rotate:top:index=0:single=true:0->90:break=false->true",
+        "rotate:top:index=0:single=false:90->180:break=true->true",
+        "rotate:top:index=0:single=false:180->270:break=true->true",
+        "rotate:top:index=0:single=false:270->0:break=true->true",
+        "rotate:top:index=0:single=false:0->90:break=true->true",
+        "refresh:top:break=true:groupTurns=0"
+      ],
+      "breakRefreshQ2": [
+        "evolve:base->middle",
+        "refresh:middle:break=false:groupTurns=0",
+        "evolve:middle->top",
+        "refresh:top:break=false:groupTurns=0",
+        "rotate:top:index=0:single=true:0->90:break=false->true",
+        "rotate:top:index=0:single=false:90->180:break=true->true",
+        "rotate:top:index=0:single=false:180->270:break=true->true",
+        "refresh:top:break=true:groupTurns=2",
+        "replay-rotate:top:index=0:single=false:90->180:break=true->true",
+        "replay-rotate:top:index=0:single=false:180->270:break=true->true"
+      ]
+    },
+    "transitionTraceByScenario": {
+      "breakRefreshFreshQ0": ["refresh:top:break=true:groupTurns=0"],
+      "breakRefreshReturnedQ0": ["refresh:top:break=true:groupTurns=0"],
+      "breakRefreshQ2": [
+        "refresh:top:break=true:groupTurns=2",
+        "replay-rotate:top:index=0:single=false:90->180:break=true->true",
+        "replay-rotate:top:index=0:single=false:180->270:break=true->true"
+      ]
+    },
+    "refresh": {
+      "wrapperCountsByPhase": [1, 2, 1],
+      "synchronousWrapperCount": 2,
+      "oldWrapperConnectedImmediately": true,
+      "stableWrapperCount": 1,
+      "oldWrapperConnectedAfterSettle": false,
+      "wrapperIdentityChanged": true,
+      "cardNodeIdentityPreserved": true,
+      "observerPairsCreated": 4,
+      "minimumResizeCallbacksBeforeCardRemoval": 4,
+      "resizeCallbacksAddedAfterCardRemoval": 1,
+      "transcribedSourceDisconnectCalls": 0,
+      "harnessDisconnectCallsPerObserverKind": 4
+    }
+  },
+  "provenance": [
+    {
+      "path": "client/src/actions/general/rotate-card.js",
+      "encoding": "utf8",
+      "sha256": "d0870b070c5fedc7225e81661e3bbbfd31225731cf5ac516972d4fe5ac17f5d1"
+    },
+    {
+      "path": "client/src/setup/sizing/refresh-board.js",
+      "encoding": "utf8",
+      "sha256": "b786a66c078de9623e46884e640db2e80f6b9ea8f1078573fee96bd71ecade7d"
+    }
+  ],
+  "provenanceClaims": [
+    {
+      "claim": "BREAK setup, returned/q2 group history, and replay rotation semantics",
+      "sources": ["client/src/actions/general/rotate-card.js"]
+    },
+    {
+      "claim": "refresh entry, BREAK-adjusted replay count, same-zone re-entry, replay-rotation loop, and final adjustment request",
+      "sources": ["client/src/setup/sizing/refresh-board.js"]
+    }
+  ]
+}

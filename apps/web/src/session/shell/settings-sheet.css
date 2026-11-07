@@ -1,0 +1,210 @@
+/* Settings (SettingsSheet.tsx, ADR-045): pages of grouped rows, after
+   Magic Garden's system menu. The rows are in ui/settings-list.css. */
+
+/* ---- A page --------------------------------------------------------- */
+
+.settings-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  min-width: 0;
+  padding-block-end: var(--space-2);
+}
+
+/* A page opened from a row slides in from the end of the line; back, the
+   page it came from slides in from the start. */
+.settings-page[data-enter='push'] {
+  animation: settings-page-in var(--duration-slow) var(--ease-out) both;
+  --settings-page-from: 28px;
+}
+
+.settings-page[data-enter='pop'] {
+  animation: settings-page-in var(--duration-slow) var(--ease-out) both;
+  --settings-page-from: -28px;
+}
+
+.settings-page:dir(rtl) {
+  --settings-page-direction: -1;
+}
+
+@keyframes settings-page-in {
+  from {
+    opacity: 0;
+    transform: translateX(
+      calc(var(--settings-page-from) * var(--settings-page-direction, 1))
+    );
+  }
+}
+
+/* Reduced motion: the page fades in, without travel. */
+@keyframes settings-page-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+:root[data-motion='reduced']
+  .settings-page[data-enter]:not([data-enter='none']) {
+  animation: settings-page-fade 150ms var(--ease-fade) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion='full'])
+    .settings-page[data-enter]:not([data-enter='none']) {
+    animation: settings-page-fade 150ms var(--ease-fade) both;
+  }
+}
+
+:root[data-motion-speed='instant'] .settings-page {
+  animation: none;
+}
+
+/* A line of words above a page's rows (Report a bug). */
+.settings-intro {
+  margin: 0;
+  padding-inline: var(--space-3);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  line-height: 1.45;
+}
+
+/* ---- The header: back, the page's title, close ------------------------- */
+
+.settings-back {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin-block: -4px 0;
+  margin-inline: -6px 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  font-size: 18px;
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-out);
+}
+
+.settings-back:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .settings-back:hover {
+    background: var(--color-surface-hover);
+  }
+}
+
+.settings-back:active {
+  background: var(--color-surface-pressed);
+}
+
+/* The title takes the focus as a page opens, to be read out; no ring. */
+:is(.ptcgsim-settings-sheet, .ptcgsim-settings-dock)
+  :is(.ptcgsim-sheet__title, .settings-sheet__title):focus {
+  outline: none;
+}
+
+/* ---- The foot: the way out ----------------------------------------------- */
+
+.settings-footer {
+  margin-block-start: auto;
+  padding-block-start: var(--space-2);
+}
+
+.settings-footer__action {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  gap: var(--space-1-5);
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
+}
+
+.settings-footer__action > svg {
+  width: 16px;
+  height: 16px;
+}
+
+.settings-footer__action[data-danger='true'] {
+  color: var(--color-danger);
+}
+
+.settings-footer__action:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .settings-footer__action:hover {
+    background: var(--color-surface-hover);
+    color: var(--color-text);
+  }
+  .settings-footer__action[data-danger='true']:hover {
+    background: var(--color-danger-soft);
+    color: var(--color-danger);
+  }
+}
+
+/* ---- Controls inside a row ------------------------------------------------ */
+
+/* A segmented choice, a slider or the swatches fill their row. */
+.settings-row[data-kind='block'] > .ptcgsim-form-group {
+  gap: var(--space-2);
+}
+
+/* ---- Settings in the log's column (SettingsDock) ------------------------ */
+
+/* The aside itself takes the focus as it opens; no ring round all of it. */
+.ptcgsim-settings-dock:focus {
+  outline: none;
+}
+
+.ptcgsim-settings-dock__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 var(--sheet-pad) var(--sheet-pad);
+  scrollbar-color: var(--color-border-strong) transparent;
+  scrollbar-width: thin;
+}
+
+/* The page fills the body, so the way out sits at its foot. */
+:is(
+  .ptcgsim-settings-dock__body,
+  .ptcgsim-settings-sheet .ptcgsim-sheet__body
+) {
+  display: flex;
+  flex-direction: column;
+}
+
+:is(.ptcgsim-settings-dock__body, .ptcgsim-settings-sheet .ptcgsim-sheet__body)
+  > .settings-page {
+  flex: 1 0 auto;
+  min-height: auto;
+}
+
+@media (pointer: coarse) {
+  .settings-back {
+    width: 44px;
+    height: 44px;
+  }
+  .settings-footer__action {
+    min-height: 44px;
+  }
+}

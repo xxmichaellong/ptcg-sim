@@ -1,0 +1,126 @@
+/*
+ * The background chooser (BackgroundChooser.tsx): tiles as the table
+ * style's swatches are (table-art-controls.css), each showing the
+ * background itself.
+ */
+
+.background-chooser {
+  border-radius: var(--radius-md);
+  transition: box-shadow var(--duration-fast) var(--ease-out);
+}
+
+/* A picture dragged over it says it will be taken. */
+.background-chooser[data-dragging='true'] {
+  box-shadow: 0 0 0 2px var(--color-accent);
+}
+
+/* Names wrap rather than cut short ("Custom image…" on two lines). */
+/* Every preview as wide as its tile, whatever it holds. */
+.background-tile label,
+.background-tile--add button {
+  justify-items: stretch;
+  min-width: 0;
+}
+.background-tile .table-art-swatch__desk {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+}
+
+.background-tile .table-art-swatch__name {
+  white-space: normal;
+  text-align: center;
+  text-wrap: balance;
+  font-size: var(--text-2xs);
+  line-height: 1.2;
+}
+
+/* The desk as the table shows it: grain under the lamp. */
+.background-tile__desk {
+  background:
+    radial-gradient(
+      ellipse 70% 60% at 42% 40%,
+      var(--color-lamp),
+      transparent 72%
+    ),
+    var(--desk-grain), linear-gradient(var(--color-desk-hi), var(--color-desk));
+  background-size:
+    auto,
+    160px 90px,
+    auto;
+}
+
+.background-tile__picture {
+  overflow: hidden;
+  background: var(--color-surface-3);
+}
+
+.background-tile__picture img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* None: the desk's own colour, plain. */
+.background-tile__plain {
+  background: var(--color-desk);
+}
+
+/* Custom image…: a button, not a choice, drawn as one more tile. */
+.background-tile--add button {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  justify-items: center;
+  gap: 4px;
+  margin: 0;
+  padding: 4px 2px 3px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+}
+
+.background-tile--add button:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
+.background-tile--add button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.background-tile__add {
+  display: grid;
+  place-items: center;
+  border: 1px dashed var(--color-border-strong);
+  background: var(--color-surface-2);
+  box-shadow: none;
+  color: var(--color-text-muted);
+  font-size: 18px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .background-tile--add button:hover:not(:disabled) {
+    background: var(--color-surface-hover);
+    color: var(--color-text);
+  }
+}
+
+.background-chooser__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-2);
+}
+
+.background-chooser__footer .ptcgsim-form-hint {
+  margin: 0;
+}

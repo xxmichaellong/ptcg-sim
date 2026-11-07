@@ -1,0 +1,309 @@
+/*
+ * What the table offers at an empty zone (TableZoneAffordances.tsx): the
+ * deck's `+` before a seat has a deck, and the optional Lost Zone's add and
+ * hide controls. Each sits in its zone's slot and takes presses only on the
+ * control itself.
+ */
+
+.table-zone-affordances {
+  position: absolute;
+  inset: 0;
+  z-index: var(--table-layer-affordances);
+  pointer-events: none;
+}
+
+.table-zone-affordance {
+  position: absolute;
+  display: grid;
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
+.table-zone-affordance > * {
+  pointer-events: auto;
+}
+
+/* ---- An empty deck: load one ------------------------------------------ */
+
+/* The + takes the middle of its pile, so the pile's hover name (centred in
+   every other spot) sits under it instead: on the near deck clear of the
+   count badge in its bottom corner, on the far one (its badge at the top)
+   across the pile. The board marks the decks that show one
+   (RemoteSessionBoard, `loadDeckSides`). */
+.board-spike-host[data-load-deck-sides~='local']
+  .ptcgsim-board-surface[data-geometry='2']
+  .ptcgsim-zone-deck[data-zone-side='local'][data-zone-outline='true'][data-zone-label]::after {
+  inset: auto 16px 6px;
+  display: block;
+}
+
+.board-spike-host[data-load-deck-sides~='opponent']
+  .ptcgsim-board-surface[data-geometry='2']
+  .ptcgsim-zone-deck[data-zone-side='opponent'][data-zone-outline='true'][data-zone-label]::after {
+  inset: auto 2px 6px;
+  display: block;
+}
+
+.table-zone-affordance--deck {
+  place-items: center;
+}
+
+.table-zone-add {
+  display: inline-grid;
+  place-items: center;
+  /* The deck's + is sized and moved off its pile's count inline
+     (deckPlusPlacement); this is the same size where it isn't. */
+  width: clamp(36px, 42%, 52px);
+  aspect-ratio: 1;
+  padding: 0;
+  border: 1.5px dashed color-mix(in oklab, var(--color-accent) 70%, transparent);
+  border-radius: 50%;
+  background: color-mix(
+    in oklab,
+    var(--color-accent) 16%,
+    var(--color-surface-2)
+  );
+  box-shadow: var(--shadow-2), var(--highlight-top);
+  color: var(--color-accent);
+  font-size: 22px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out),
+    scale var(--control-press-timing);
+}
+
+.table-zone-affordance--deck[data-seat-tone='opponent'] .table-zone-add {
+  border-color: color-mix(in oklab, var(--color-opponent) 70%, transparent);
+  background: color-mix(
+    in oklab,
+    var(--color-opponent) 14%,
+    var(--color-surface-2)
+  );
+  color: var(--color-opponent);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .table-zone-add:hover {
+    border-style: solid;
+    background-color: var(--color-surface-3);
+  }
+}
+
+.table-zone-add:active {
+  scale: var(--control-press-scale);
+}
+
+.table-zone-add:focus-visible {
+  outline: 2px solid var(--color-felt-focus, var(--color-accent));
+  outline-offset: 2px;
+  box-shadow:
+    0 0 0 2px var(--color-felt-focus-halo, transparent),
+    var(--shadow-2),
+    var(--highlight-top);
+  /* Its ring drawn at full strength, as the button is under a pointer. */
+  opacity: 1;
+}
+
+/* ---- The optional pieces: the Lost Zone and the markers ---------------- */
+
+/* Their `+`: a small round button in the viewer's staging area, by the
+   prizes, that opens what can be added or taken away. */
+.table-zone-affordance--extras {
+  place-items: stretch;
+}
+
+.table-zone-extras {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  /* Printed on the mat like the rail's actions (TableRail.css): its cloth,
+     outline and ink, solid so no outline under it shows through, and light
+     on a light mat rather than the app's grey. */
+  border: 1.5px solid var(--color-felt-line-strong, var(--color-border-strong));
+  border-radius: 50%;
+  background-color: var(--color-felt, var(--color-surface-2));
+  background-image: linear-gradient(
+    var(--color-felt-mark, transparent),
+    var(--color-felt-mark, transparent)
+  );
+  box-shadow: inset 0 1px 1.5px
+    color-mix(in oklab, var(--color-felt-rim, black) 30%, transparent);
+  color: var(--color-felt-label, var(--color-text-muted));
+  font-size: 14px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    opacity var(--duration-fast) var(--ease-out),
+    background-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out),
+    scale var(--control-press-timing);
+}
+
+/* A finger's worth of target around the small button. */
+.table-zone-extras::before {
+  content: '';
+  position: absolute;
+  inset: -9px;
+}
+
+/* Pointed at or open: inked in, as a printed action under the pointer. */
+.table-zone-extras[aria-expanded='true'] {
+  border-color: var(--color-felt-hover-line, var(--color-border-strong));
+  background-image: linear-gradient(
+    var(--color-felt-hover, transparent),
+    var(--color-felt-hover, transparent)
+  );
+  color: var(--color-desk-ink, var(--color-text));
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .table-zone-extras:hover {
+    border-color: var(--color-felt-hover-line, var(--color-border-strong));
+    background-image: linear-gradient(
+      var(--color-felt-hover, transparent),
+      var(--color-felt-hover, transparent)
+    );
+    color: var(--color-desk-ink, var(--color-text));
+  }
+}
+
+.table-zone-extras:active {
+  scale: var(--control-press-scale);
+}
+
+.table-zone-extras:focus-visible {
+  outline: 2px solid var(--color-felt-focus, var(--color-accent));
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--color-felt-focus-halo, transparent);
+  opacity: 1;
+}
+
+/* The markers lie on the mat beside the prizes, VSTAR nearest the centre
+   line: the real tiles, face down once used. */
+.table-markers {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 4px;
+}
+
+.table-markers[data-order='up'] {
+  flex-direction: column-reverse;
+}
+
+/* Side by side, VSTAR first in the player's own order: across the table,
+   from the viewer's right. */
+.table-markers[data-flow='row'] {
+  flex-direction: row;
+  justify-content: center;
+}
+
+.table-markers[data-flow='row'][data-order='up'] {
+  flex-direction: row-reverse;
+}
+
+.table-markers[data-flow='row'] .table-marker {
+  flex: 0 0 auto;
+  height: 100%;
+}
+
+.table-markers[data-covered='true'] {
+  opacity: 0.35;
+}
+
+.table-markers[data-covered='true'] > * {
+  pointer-events: none;
+}
+
+.table-marker {
+  flex: 1 1 0;
+  min-height: 0;
+  max-width: 100%;
+  aspect-ratio: var(--table-marker-aspect, 2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm, 6px);
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  perspective: 240px;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    translate var(--duration-fast) var(--ease-out),
+    scale var(--control-press-timing);
+}
+
+.table-marker:focus-visible {
+  outline: 2px solid var(--color-felt-focus, var(--color-accent));
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--color-felt-focus-halo, transparent);
+}
+
+.table-marker .once-per-game-tile {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform var(--duration-slow) var(--ease-snappy);
+}
+
+.table-marker[aria-pressed='true'] .once-per-game-tile {
+  transform: rotateY(180deg);
+}
+
+.table-marker .once-per-game-tile__face {
+  position: absolute;
+  inset: 0;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+.table-marker .once-per-game-tile__face--back {
+  transform: rotateY(180deg);
+}
+
+.table-marker .once-per-game-tile__face > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 1px 1.5px rgb(0 0 0 / 0.45));
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .table-marker:hover {
+    translate: 0 -1px;
+  }
+}
+
+.table-marker:active {
+  scale: 0.96;
+}
+
+:root[data-motion='reduced'] .table-marker,
+:root[data-motion='reduced'] .table-marker .once-per-game-tile {
+  transition: none;
+}
+
+/* What the table offers fades in where it appears (a seat with no deck, a
+   marker put out, the + in the staging area). */
+:root:not([data-motion='reduced']) .table-zone-affordance {
+  transition: opacity calc(var(--duration-normal) * var(--motion-scale, 1))
+    var(--ease-out);
+}
+
+@starting-style {
+  :root:not([data-motion='reduced']) .table-zone-affordance {
+    opacity: 0;
+  }
+}
